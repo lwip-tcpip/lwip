@@ -343,7 +343,7 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   pcb_remote_ip.addr = pcb->remote_ip.addr;
   pcb_remote_port = pcb->remote_port;
   /* copy packet destination address to PCB remote peer address */
-  pcb->remote_ip.addr = dst_ip.addr;
+  pcb->remote_ip.addr = dst_ip->addr;
   pcb->remote_port = dst_port;
   /* send to the packet destination address */
   err = udp_send(pcb, p);
