@@ -2,6 +2,12 @@
  * @file
  *
  * Transmission Control Protocol, incoming traffic
+ *
+ * The input processing functions of TCP.
+ *
+ * These functions are generally called in the order (ip_input() ->) tcp_input() ->
+ * tcp_process() -> tcp_receive() (-> application).
+ * 
  */
 
 /*
@@ -35,18 +41,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-
-
-/* tcp_input.c
- *
- * The input processing functions of TCP.
- *
- * These functions are generally called in the order (ip_input() ->) tcp_input() ->
- * tcp_process() -> tcp_receive() (-> application).
- *
- */
-
-
 
 #include "lwip/def.h"
 #include "lwip/opt.h"

@@ -2,7 +2,11 @@
  * @file
  *
  * Transmission Control Protocol, outgoing traffic
+ *
+ * The output functions of TCP.
+ *
  */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -34,15 +38,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-
-
-/* tcp_output.c
- *
- * The output functions of TCP.
- *
- */
-
-
 
 #include "lwip/def.h"
 #include "lwip/opt.h"
