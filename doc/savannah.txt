@@ -1,0 +1,88 @@
+Daily Use Guide for using Savannah for lwIP
+
+Table of Contents:
+
+1 - Anonymous CVS checkouts and updates (to be elaborated)
+2 - Committers/developers CVS access using SSH (to be written)
+3 - How to release lwIP
+
+
+1 Anonymous CVS checkouts and updates
+-------------------------------------
+
+Obtain lwIP from the STABLE tree (on the CVS main trunk)
+
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
+
+Or, obtain a specific release as follows:
+
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_6_3 -d lwip-0.6.3 lwip
+
+Or, obtain a development branch as follows:
+
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-devel lwip
+
+3 How to release lwIP
+---------------------
+
+First, checkout a clean copy of the branch to be released. Tag this set with
+tag name "STABLE-0_6_3". (I use release number 0.6.3 throughout this example).
+
+Login CVS using pserver authentication, then export a clean copy of the
+tagged tree. Export is similar to a checkout, except that the CVS metadata
+is not created locally. 
+
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip export -r STABLE-0_6_3 -d lwip-0.6.3 lwip
+
+Archive this directory using tar.
+
+tar czvf lwip-0.6.3.tar.gz lwip-0.6.3
+
+First, make a local release directory to work in, I use "lwip-releases":
+
+mkdir lwip-releases
+cd lwip-releases
+
+Now, make a new release by creating a new directory for it (these are
+Savannah conventions so that it shows up in the Files list real nice):
+
+mkdir stable.pkg
+cd stable.pkg
+mkdir 0.6.3
+cd 0.6.3
+
+We can now copy the tar archive we made earlier into the release directory:
+
+cp /../../../lwip-0.6.3.tar.gz .
+
+Finally, synchronize this directory upwards to Savannah:
+
+rsync -n -e "ssh -1" -t -u -v -r . likewise@savannah.nongnu.org:/upload/lwip
+
+This does a "dry run": no files are modified! After you have confirmed that
+this is what you intended to do, remove "-n" and actually synchronize for
+real. The release should now be available here:
+
+http://savannah.nongnu.org/files/?group=lwip
+
+---
+Explanation of rsync options used:
+
+-t: preserve file timestamps
+-u: do not overwrite existing files, unless they are older
+-v: be verbose (long format file attributes)
+-r: recurse into directories
+-n: dry-run, do not modify anything. 
+---
+
+Additionally, you may post a news item on Savannah, like this:
+
+A new 0.6.3 release is now available here:
+http://savannah.nongnu.org/files/?group=lwip&highlight=0.6.3
+
+You will have to submit this via the user News interface, then approve
+this via the Administrator News interface.
