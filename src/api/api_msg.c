@@ -258,6 +258,7 @@ do_delconn(struct api_msg_msg *msg)
 #if LWIP_TCP      
     case NETCONN_TCP:
       if(msg->conn->pcb.tcp->state == LISTEN) {
+	tcp_arg(msg->conn->pcb.tcp, NULL);
 	tcp_accept(msg->conn->pcb.tcp, NULL);	
 	tcp_close(msg->conn->pcb.tcp);
       } else {
