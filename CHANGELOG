@@ -1,4 +1,4 @@
-TODO
+FUTURE
 
   * TODO: The lwIP source code makes some invalid assumptions on processor
     word-length, storage sizes and alignment. See the mailing lists for
@@ -7,16 +7,18 @@ TODO
 
 HISTORY
 
-(active STABLE-0_7 branch)
+(STABLE-0_7 branch)
 
   ++ Bug fixes:
-
-  Merged several compilation and documentation fixes from HEAD.
 
   2004-04-23 Leon Woestenberg <leon.woestenberg@gmx.net>
   * memp.c: Fixed cast in mem_malloc().
   * sockets.c, tcp_in.c, udp.c: #ifdef SO_REUSE now #if SO_REUSE.
   * dhcp.c: #if LWIP_DHCP fixed.
+  * etharp.c: Fixed the case where the packet that initiates the ARP request
+    is not queued, and gets lost. Fixed the case where the packets destination
+    address is already known; we now always queue the packet and perform an ARP
+    request.
 
   2004-03-23 Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp.c: #ifdef SO_REUSE now #if SO_REUSE.
