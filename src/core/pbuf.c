@@ -655,7 +655,7 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 
   LWIP_ASSERT("h != NULL", h != NULL);
   LWIP_ASSERT("t != NULL", t != NULL);
-  if ((h = NULL) || (t == NULL)) return;
+  if ((h == NULL) || (t == NULL)) return;
 
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
