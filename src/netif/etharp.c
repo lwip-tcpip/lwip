@@ -11,7 +11,9 @@
  */
 
 /*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2003-2004 Leon Woestenberg <leon.woestenberg@axon.tv>
+ * Copyright (c) 2003-2004 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -417,8 +419,8 @@ update_arp_entry(struct netif *netif, struct ip_addr2 *ipaddr, struct eth_addr *
   LWIP_ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: IP address not yet in table\n"));
-  /* allowed to insert an entry? */
-  if ((ETHARP_ALWAYS_INSERT) || (flags & ARP_INSERT_FLAG))
+  /* allowed to insert a new entry? */
+  if (flags & ARP_INSERT_FLAG)
   {
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: adding entry to table\n"));
     /* find an empty or old entry. */
