@@ -191,10 +191,10 @@ void dhcp_fine_tmr(void);
 #define DHCP_OPTION_MESSAGE_TYPE_LEN 1
 
 
-#define DHCP_OPTION_SERVER_ID 54 /* RFC 2131 9.7, server IP address */
-#define DHCP_OPTION_PARAMETER_REQUEST_LIST 55 /* RFC 2131 9.8, requested option types */
+#define DHCP_OPTION_SERVER_ID 54 /* RFC 2132 9.7, server IP address */
+#define DHCP_OPTION_PARAMETER_REQUEST_LIST 55 /* RFC 2132 9.8, requested option types */
 
-#define DHCP_OPTION_MAX_MSG_SIZE 57 /* RFC 2131 9.10, message size accepted >= 576 */
+#define DHCP_OPTION_MAX_MSG_SIZE 57 /* RFC 2132 9.10, message size accepted >= 576 */
 #define DHCP_OPTION_MAX_MSG_SIZE_LEN 2
 
 #define DHCP_OPTION_T1 58 /* T1 renewal time */
