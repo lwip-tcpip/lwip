@@ -75,7 +75,7 @@ low_level_init(struct netif *netif)
   /* set MAC hardware address */
   netif->hwaddr[0] = ;
   ...
-  netif->hwaddr[6] = ;
+  netif->hwaddr[5] = ;
 
   /* maximum transfer unit */
   netif->mtu = 1500;
@@ -169,7 +169,7 @@ low_level_input(struct ethernetif *ethernetif)
  *
  * This function is called by the TCP/IP stack when an IP packet
  * should be sent. It calls the function called low_level_output() to
- * do the actuall transmission of the packet.
+ * do the actual transmission of the packet.
  *
  */
 
