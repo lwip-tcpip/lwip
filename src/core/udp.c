@@ -128,7 +128,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
     ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src), ntohs(udphdr->src)));
 
-#ifdef SO_REUSE
+#if SO_REUSE
   pcb_temp = udp_pcbs;
   
  again_1:
@@ -158,7 +158,7 @@ udp_input(struct pbuf *p, struct netif *inp)
        (ip_addr_isany(&pcb->local_ip) ||
        /* PCB local IP address matches UDP destination IP address? */
         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-#ifdef SO_REUSE
+#if SO_REUSE
       if(pcb->so_options & SOF_REUSEPORT) {
         if(reuse) {
           /* We processed one PCB already */
@@ -187,7 +187,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     /* Iterate through the UDP PCB list for a pcb that matches
        the local address. */
 
-#ifdef SO_REUSE
+#if SO_REUSE
     pcb_temp = udp_pcbs;
     
   again_2:
@@ -209,7 +209,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         (ip_addr_isany(&pcb->local_ip) ||
         /* ...matching interface address? */
         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-#ifdef SO_REUSE
+#if SO_REUSE
         if(pcb->so_options & SOF_REUSEPORT) {
           if(reuse) {
             /* We processed one PCB already */
@@ -279,7 +279,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
       pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
-#ifdef SO_REUSE
+#if SO_REUSE
       /* First socket should receive now */
       if(reuse_port_1 || reuse_port_2) {
         /* We want to search on next socket after receiving */
@@ -299,7 +299,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
 #endif /* SO_REUSE */ 
     } else {
-#ifdef SO_REUSE
+#if SO_REUSE
       if(reuse) {
         LWIP_DEBUGF(UDP_DEBUG, ("udp_input: freeing PBUF with reference counter set to %i\n", p->ref));
         pbuf_free(p);
@@ -517,7 +517,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
-#ifdef SO_REUSE
+#if SO_REUSE
   int reuse_port_all_set = 1;
 #endif /* SO_REUSE */
   LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = "));
@@ -535,7 +535,8 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       rebind = 1;
     }
 
-#ifndef SO_REUSE
+#if SO_REUSE
+#else
 /* this code does not allow upper layer to share a UDP port for
    listening to broadcast or multicast traffic (See SO_REUSE_ADDR and
    SO_REUSE_PORT under *BSD). TODO: See where it fits instead, OR
@@ -589,7 +590,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
   }
 
-#ifdef SO_REUSE
+#if SO_REUSE
   /* If SOF_REUSEPORT isn't set in all PCB's bound to specified port and local address specified then 
      {IP, port} can't be reused. */
   if(!reuse_port_all_set) {

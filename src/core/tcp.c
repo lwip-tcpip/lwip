@@ -251,7 +251,8 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   if (port == 0) {
     port = tcp_new_port();
   }
-#ifndef SO_REUSE
+#if SO_REUSE
+#else
   /* Check if the address already is in use. */
   for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs;
       cpcb != NULL; cpcb = cpcb->next) {

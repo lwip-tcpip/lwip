@@ -175,7 +175,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
      for an active connection. */
   prev = NULL;
 
-#ifdef SO_REUSE
+#if SO_REUSE
   pcb_temp = tcp_active_pcbs;
   
  again_1:
@@ -193,7 +193,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
        ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
        ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest))) {
 
-#ifdef SO_REUSE
+#if SO_REUSE
       if(pcb->so_options & SOF_REUSEPORT) {
         if(reuse) {
           /* We processed one PCB already */
@@ -363,7 +363,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     tcp_debug_print_state(pcb->state);
 #endif /* TCP_DEBUG */
 #endif /* TCP_INPUT_DEBUG */
-#ifdef SO_REUSE
+#if SO_REUSE
     /* First socket should receive now */
     if(reuse_port) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: searching next PCB.\n"));
@@ -375,7 +375,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
 
   } else {
-#ifdef SO_REUSE
+#if SO_REUSE
     if(reuse) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: freeing PBUF with reference counter set to %i\n", p->ref));
       pbuf_free(p);
@@ -394,7 +394,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     }
     pbuf_free(p);
   }
-#ifdef SO_REUSE
+#if SO_REUSE
  end:
 #endif /* SO_REUSE */
   LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
