@@ -59,19 +59,22 @@ struct eth_hdr {
 
 /** the ARP message */
 struct etharp_hdr {
+  /* Ethernet header */
   struct eth_hdr ethhdr;
   u16_t hwtype;
   u16_t proto;
   u16_t _hwlen_protolen;
   u16_t opcode;
   struct eth_addr shwaddr;
+  /* assume 2-byte alignment */
   struct ip_addr2 sipaddr;
   struct eth_addr dhwaddr;
+  /* assume 2-byte alignment */
   struct ip_addr2 dipaddr;
 };
 
 struct ethip_hdr {
-  struct eth_hdr eth);
+  struct eth_hdr eth;
   struct ip_hdr ip;
 };
 
