@@ -163,10 +163,13 @@ a lot of data that needs to be copied, this should be set high. */
 
 /**
  * If enabled, outgoing packets are queued during hardware address
- * resolution. The etharp.c implementation queues 1 packet only.
+ * resolution.
+ *
+ * This feature has not stabilized yet. Defaults to 0 (disabled).
+ *
  */
 #ifndef ARP_QUEUEING
-#define ARP_QUEUEING                    1
+#define ARP_QUEUEING                    0
 #endif
 
 /* This option is deprecated */
