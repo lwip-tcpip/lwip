@@ -103,9 +103,9 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   left = len;
   ptr = arg;
-  
+  /* fail on too much data */
   if(len > pcb->snd_buf) {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too much data %d\n", len));
+    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too much data (len=%d > snd_buf=%d)\n", len, pcb->snd_buf));
     return ERR_MEM;
   }
 
