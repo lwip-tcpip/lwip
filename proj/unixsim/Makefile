@@ -46,8 +46,7 @@ COREFILES=$(LWIPDIR)/core/mem.c $(LWIPDIR)/core/memp.c $(LWIPDIR)/core/netif.c \
 	$(LWIPDIR)/core/pbuf.c $(LWIPDIR)/core/stats.c $(LWIPDIR)/core/sys.c \
         $(LWIPDIR)/core/tcp.c $(LWIPDIR)/core/tcp_in.c \
         $(LWIPDIR)/core/tcp_out.c $(LWIPDIR)/core/udp.c 
-CORE4FILES=$(LWIPDIR)/core/ipv4/icmp.c $(LWIPDIR)/core/ipv4/ip.c \
-	$(LWIPDIR)/core/inet.c $(LWIPDIR)/core/ipv4/ip_addr.c
+CORE4FILES=$(wildcard $(LWIPDIR)/core/ipv4/*.c) $(LWIPDIR)/core/inet.c
 
 
 # APIFILES: The files which implement the sequential and socket APIs.
@@ -56,7 +55,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c $(LWIPDIR)/api/api_msg.c $(LWIPDIR)/api/tcpip.
 
 # NETIFFILES: Files implementing various generic network interface functions.'
 NETIFFILES=$(LWIPDIR)/netif/loopif.c \
-	$(LWIPDIR)/netif/tcpdump.c $(LWIPDIR)/netif/etharp.c
+	$(LWIPDIR)/netif/tcpdump.c $(LWIPDIR)/netif/etharp.c $(LWIPDIR)/netif/slipif.c 
 
 # ARCHFILES: Archiecture specific files.
 ARCHFILES=$(wildcard $(LWIPDIR)/arch/$(LWIPARCH)/*.c $(LWIPDIR)/arch/$(LWIPARCH)/netif/*.c)
