@@ -54,6 +54,9 @@
 
 #include "arch/perf.h"
 
+#if LWIP_SNMP > 0
+#  include "snmp.h"
+#endif
 #if LWIP_DHCP
 #include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
@@ -163,6 +166,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     DEBUGF(IP_DEBUG, ("ip_forward: no forwarding route for 0x%lx found\n",
 		      iphdr->dest.addr));
 
+#if LWIP_SNMP > 0
+    snmp_inc_ipnoroutes();
+#endif
     return;
   }
 
@@ -171,6 +177,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   if(netif == inp) {
     DEBUGF(IP_DEBUG, ("ip_forward: not forward packets back on incoming interface.\n"));
 
+#if LWIP_SNMP > 0
+    snmp_inc_ipnoroutes();
+#endif
     return;
   }
   
@@ -180,6 +189,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     /* Don't send ICMP messages in response to ICMP messages */
     if(IPH_PROTO(iphdr) != IP_PROTO_ICMP) {
       icmp_time_exceeded(p, ICMP_TE_TTL);
+#if LWIP_SNMP > 0
+      snmp_inc_icmpouttimeexcds();
+#endif
     }
     return;       
   }
@@ -198,6 +210,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   ++stats.ip.fw;
   ++stats.ip.xmit;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipforwdatagrams();
+#endif
 
   PERF_STOP("ip_forward");
   
@@ -389,6 +404,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #ifdef IP_STATS
   ++stats.ip.recv;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipinreceives();
+#endif
 
   /* identify the IP header */
   iphdr = p->payload;
@@ -402,6 +420,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.err;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipunknownprotos();
+#endif
     return ERR_OK;
   }
   
@@ -415,6 +436,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.lenerr;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipindiscards();
+#endif
     return ERR_OK;
   }
 
@@ -430,6 +454,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.chkerr;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipindiscards();
+#endif
     return ERR_OK;
   }
   
@@ -475,7 +502,13 @@ ip_input(struct pbuf *p, struct netif *inp) {
     if(!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) {
       ip_forward(p, iphdr, inp);
     }
+    else
 #endif /* IP_FORWARD */
+    {
+#if LWIP_SNMP > 0
+      snmp_inc_ipindiscards();
+#endif
+    }
     pbuf_free(p);
     return ERR_OK;
   }
@@ -497,6 +530,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.opterr;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipunknownprotos();
+#endif
     return ERR_OK;
   }
 #endif /* IP_REASSEMBLY */
@@ -510,6 +546,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.opterr;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipunknownprotos();
+#endif
     return ERR_OK;
   }  
 #endif /* IP_OPTIONS == 0 */
@@ -525,15 +564,24 @@ ip_input(struct pbuf *p, struct netif *inp) {
   switch(IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0    
   case IP_PROTO_UDP:
+#if LWIP_SNMP > 0
+    snmp_inc_ipindelivers();
+#endif
     udp_input(p, inp);
     break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP > 0    
   case IP_PROTO_TCP:
+#if LWIP_SNMP > 0
+    snmp_inc_ipindelivers();
+#endif
     tcp_input(p, inp);
     break;
 #endif /* LWIP_TCP */
   case IP_PROTO_ICMP:
+#if LWIP_SNMP > 0
+    snmp_inc_ipindelivers();
+#endif
     icmp_input(p, inp);
     break;
   default:
@@ -551,6 +599,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ++stats.ip.proterr;
     ++stats.ip.drop;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipunknownprotos();
+#endif
 
   }
   return ERR_OK;
@@ -574,6 +625,9 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   static u16_t ip_id = 0;
 
   
+#if LWIP_SNMP > 0
+    snmp_inc_ipoutrequests();
+#endif
   
   if(dest != IP_HDRINCL) {
     if(pbuf_header(p, IP_HLEN)) {
@@ -582,6 +636,9 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #ifdef IP_STATS
       ++stats.ip.err;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipoutdiscards();
+#endif
       return ERR_BUF;
     }
     
@@ -619,6 +676,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   ip_debug_print(p);
 #endif /* IP_DEBUG */
 
+   DEBUGF(IP_DEBUG, ("netif->output()"));
 
   return netif->output(netif, p, dest);  
 }
@@ -642,6 +700,9 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #ifdef IP_STATS
     ++stats.ip.rterr;
 #endif /* IP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_ipoutdiscards();
+#endif
     return ERR_RTE;
   }
 

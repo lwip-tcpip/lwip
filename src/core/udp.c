@@ -28,6 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
+ * $Id: udp.c,v 1.3 2002/11/21 10:32:19 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -49,6 +50,9 @@
 #include "lwip/stats.h"
 
 #include "arch/perf.h"
+#if LWIP_SNMP > 0
+#  include "snmp.h"
+#endif
 
 /*-----------------------------------------------------------------------------------*/
 
@@ -219,6 +223,9 @@ udp_input(struct pbuf *p, struct netif *inp)
 	++stats.udp.chkerr;
 	++stats.udp.drop;
 #endif /* UDP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_udpinerrors();
+#endif
 	pbuf_free(p);
 	goto end;
       }
@@ -233,6 +240,9 @@ udp_input(struct pbuf *p, struct netif *inp)
 	  ++stats.udp.chkerr;
 	  ++stats.udp.drop;
 #endif /* UDP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_udpinerrors();
+#endif
 	  pbuf_free(p);
 	  goto end;
 	}
@@ -240,6 +250,9 @@ udp_input(struct pbuf *p, struct netif *inp)
     }
     pbuf_header(p, -UDP_HLEN);    
     if(pcb != NULL) {
+#if LWIP_SNMP > 0
+      snmp_inc_udpindatagrams();
+#endif
       pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
     } else {
       DEBUGF(UDP_DEBUG, ("udp_input: not for us.\n"));
@@ -262,6 +275,9 @@ udp_input(struct pbuf *p, struct netif *inp)
       ++stats.udp.proterr;
       ++stats.udp.drop;
 #endif /* UDP_STATS */
+#if LWIP_SNMP > 0
+    snmp_inc_udpnoports();
+#endif
       pbuf_free(p);
     }
   } else {
@@ -281,6 +297,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   err_t err;
   struct pbuf *hdr;
 
+
+  DEBUGF(UDP_DEBUG, ("udp_send"));
   /* hdr will point to the UDP header pbuf if an extra header pbuf has
      to be allocated. */
   hdr = NULL;
@@ -293,6 +311,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     pbuf_chain(hdr, p);
     p = hdr;
   }
+  DEBUGF(UDP_DEBUG, ("udp_send: got pbuf"));
 
   udphdr = p->payload;
   udphdr->src = htons(pcb->local_port);
@@ -316,6 +335,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %d\n", p->tot_len));
   
   if(pcb->flags & UDP_FLAGS_UDPLITE) {
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u", p->tot_len));
     udphdr->len = htons(pcb->chksum_len);
     /* calculate checksum */
     udphdr->chksum = inet_chksum_pseudo(p, src_ip, &(pcb->remote_ip),
@@ -324,7 +344,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       udphdr->chksum = 0xffff;
     }
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
+#if LWIP_SNMP > 0
+    snmp_inc_udpoutdatagrams();
+#endif
   } else {
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u", p->tot_len));
     udphdr->len = htons(p->tot_len);
     /* calculate checksum */
     if((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
@@ -334,6 +358,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 	udphdr->chksum = 0xffff;
       }
     }
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x", udphdr->chksum));
+#if LWIP_SNMP > 0
+    snmp_inc_udpoutdatagrams();
+#endif
+    DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)"));
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
 
