@@ -188,13 +188,13 @@ memp_malloc(memp_t type)
 {
   struct memp *memp;
   void *mem;
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_DECL_PROTECT(old_level);
 #endif
  
   LWIP_ASSERT("memp_malloc: type < MEMP_MAX", type < MEMP_MAX);
 
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_PROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */  
   sys_sem_wait(mutex);
@@ -211,7 +211,7 @@ memp_malloc(memp_t type)
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
     SYS_ARCH_UNPROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */
     sys_sem_signal(mutex);
@@ -241,7 +241,7 @@ void
 memp_free(memp_t type, void *mem)
 {
   struct memp *memp;
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_DECL_PROTECT(old_level);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
 
@@ -250,7 +250,7 @@ memp_free(memp_t type, void *mem)
   }
   memp = (struct memp *)((u8_t *)mem - sizeof(struct memp));
 
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
     SYS_ARCH_PROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */  
   sys_sem_wait(mutex);
