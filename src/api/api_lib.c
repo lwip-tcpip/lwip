@@ -467,6 +467,7 @@ netconn_recv(struct netconn *conn)
   struct api_msg *msg;
   struct netbuf *buf;
   struct pbuf *p;
+  u16_t len;
     
   if(conn == NULL) {
     return NULL;
@@ -497,12 +498,17 @@ netconn_recv(struct netconn *conn)
     
     sys_mbox_fetch(conn->recvmbox, (void **)&p);
 
-    if (p != NULL) {
-      conn->recv_avail -= p->tot_len;
-      /* Register event with callback */
-      if (conn->callback)
-        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, p->tot_len);
+    if (p != NULL)
+    {
+        len = p->tot_len;
+        conn->recv_avail -= len;
     }
+    else
+        len = 0;
+    
+    /* Register event with callback */
+      if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
 
     /* If we are closed, we indicate that we no longer wish to recieve
        data by setting conn->recvmbox to SYS_MBOX_NULL. */

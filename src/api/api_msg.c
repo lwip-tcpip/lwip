@@ -42,7 +42,8 @@ static err_t
 recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
   struct netconn *conn;
-
+  u16_t len;
+  
   conn = arg;
 
   if(conn == NULL) {
@@ -54,11 +55,14 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     	  
     conn->err = err;
     if (p != NULL) {
-      conn->recv_avail += p->tot_len;
-      /* Register event with callback */
-      if (conn->callback)
-        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-    }  
+        len = p->tot_len;
+        conn->recv_avail += len;
+    }
+    else
+        len = 0;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
     sys_mbox_post(conn->recvmbox, p);
   }  
   return ERR_OK;

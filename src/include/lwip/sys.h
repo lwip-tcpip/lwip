@@ -114,7 +114,7 @@ u32_t sys_arch_protect(void);
 void sys_arch_unprotect(u32_t pval);
 
 /* Thread functions. */
-void sys_thread_new(void (* thread)(void *arg), void *arg);
+sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg);
 
 /* The following functions are used only in Unix code, and
    can be omitted when porting the stack. */
