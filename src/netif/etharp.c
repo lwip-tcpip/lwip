@@ -285,6 +285,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
           ethhdr = p->payload;
           for (k = 0; k < netif->hwaddr_len; ++k) {
             ethhdr->dest.addr[k] = ethaddr->addr[k];
+            ethhdr->src.addr[k] = netif->hwaddr[k];
           }
           ethhdr->type = htons(ETHTYPE_IP);
           LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet.\n"));
