@@ -74,8 +74,14 @@ struct pbuf {
   /* Length of this buffer. */
   u16_t len;  
 
-  /* Flags and reference count. */
-  u16_t flags, ref;
+  /* flags */
+  u16_t flags;
+  
+  /** the reference count always equals the number of pointers
+   * that refer to this pbuf. This can be pointers from an application,
+   * the stack itself, or pbuf->next pointers from a chain.
+   */
+  u16_t ref;
   
 };
 

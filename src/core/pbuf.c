@@ -2,6 +2,7 @@
  * @file
  * Packet buffers/chains management module
  */
+
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -34,9 +35,6 @@
  *
  */
 
-#define NEW_PBUF_REALLOC 1 /* enabling this should fix bug #1903 */
-#define PBUF_CHAIN_DOES_REFER 1 /** enabling this fixes bug #2968 */
-
 #include "lwip/opt.h"
 
 #include "lwip/stats.h"
@@ -61,23 +59,23 @@ static struct pbuf *pbuf_pool = NULL;
 static struct pbuf *pbuf_pool_alloc_cache = NULL;
 static struct pbuf *pbuf_pool_free_cache = NULL;
 
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_init():
+/**
  *
- * Initializes the pbuf module. A large part of memory is allocated
- * for holding the pool of pbufs. The size of the individual pbufs in
- * the pool is given by the size parameter, and the number of pbufs in
- * the pool by the num parameter.
+ * Initializes the pbuf module.
+ *
+ * A large part of memory is allocated for holding the pool of pbufs.
+ * The size of the individual pbufs in the pool is given by the size
+ * parameter, and the number of pbufs in the pool by the num parameter.
  *
  * After the memory has been allocated, the pbufs are set up. The
  * ->next pointer in each pbuf is set up to point to the next pbuf in
  * the pool.
+ *
  */
-/*-----------------------------------------------------------------------------------*/
 void
 pbuf_init(void)
 {
-  struct pbuf *p, *q = 0;
+  struct pbuf *p, *q = NULL;
   u16_t i;
 
   pbuf_pool = (struct pbuf *)&pbuf_pool_memory[0];
@@ -108,9 +106,10 @@ pbuf_init(void)
   pbuf_pool_free_sem = sys_sem_new(1);
 #endif  
 }
-/*-----------------------------------------------------------------------------------*/
-/* The following two functions are only called from pbuf_alloc(). */
-/*-----------------------------------------------------------------------------------*/
+
+/**
+ * @internal only called from pbuf_alloc()
+ */
 static struct pbuf *
 pbuf_pool_alloc(void)
 {
@@ -163,7 +162,10 @@ pbuf_pool_alloc(void)
   SYS_ARCH_UNPROTECT(old_level);
   return p;   
 }
-/*-----------------------------------------------------------------------------------*/
+
+/**
+ * @internal only called from pbuf_alloc()
+ */
 static void
 pbuf_pool_free(struct pbuf *p)
 {
@@ -185,42 +187,41 @@ pbuf_pool_free(struct pbuf *p)
   }
   SYS_ARCH_UNPROTECT(old_level);
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_alloc():
+
+/**
  *
- * Allocates a pbuf at protocol layer l. The actual memory allocated
- * for the pbuf is determined by the layer at which the pbuf is
- * allocated and the requested size (from the size parameter). The
- * flag parameter decides how and where the pbuf should be allocated
- * as follows:
+ * Allocates a pbuf at protocol layer l.
+ * The actual memory allocated for the pbuf is determined by the
+ * layer at which the pbuf is allocated and the requested size
+ * (from the size parameter). The flag parameter decides how and
+ * where the pbuf should be allocated as follows:
  * 
- * * PBUF_RAM: buffer memory for pbuf is allocated as one large
+ * - PBUF_RAM: buffer memory for pbuf is allocated as one large
  *             chunk. This includes protocol headers as well. 
- * * PBUF_ROM: no buffer memory is allocated for the pbuf, even for
+ * - PBUF_ROM: no buffer memory is allocated for the pbuf, even for
  *             protocol headers. Additional headers must be prepended
  *             by allocating another pbuf and chain in to the front of
  *             the ROM pbuf. It is assumed that the memory used is really
  *             similar to ROM in that it is immutable and will not be
  *             changed. Memory which is dynamic should generally not
  *             be attached to PBUF_ROM pbufs. Use PBUF_REF instead.
- * * PBUF_REF: no buffer memory is allocated for the pbuf, even for
+ * - PBUF_REF: no buffer memory is allocated for the pbuf, even for
  *             protocol headers. It is assumed that the pbuf is only
  *             being used in a single thread. If the pbuf gets queued,
  *             then pbuf_take should be called to copy the buffer.
- * * PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
+ * - PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
  *              the pbuf pool that is allocated during pbuf_init().
  */
-/*-----------------------------------------------------------------------------------*/
 struct pbuf *
 pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
 {
   struct pbuf *p, *q, *r;
   u16_t offset;
-  s32_t rsize;
+  s32_t rem_len;
 
   /* determine header offset */
   offset = 0;
-  switch(l) {
+  switch (l) {
   case PBUF_TRANSPORT:
     offset += PBUF_TRANSPORT_HLEN;
     /* FALLTHROUGH */
@@ -237,11 +238,11 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     return NULL;
   }
 
-  switch(flag) {
+  switch (flag) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
     p = pbuf_pool_alloc();
-    if(p == NULL) {
+    if (p == NULL) {
 #ifdef PBUF_STATS
       ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
@@ -251,36 +252,34 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     
     /* make the payload pointer points offset bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
-
     /* the total length of the pbuf is the requested size */
     p->tot_len = size;
-
     /* set the length of the first pbuf is the chain */
     p->len = size > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: size;
-
     p->flags = PBUF_FLAG_POOL;
     
     /* allocate the tail of the pbuf chain. */
     r = p;
-    rsize = size - p->len;
-    while(rsize > 0) {      
+    rem_len = size - p->len;
+    while(rem_len > 0) {      
       q = pbuf_pool_alloc();
       if (q == NULL) {
 	DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
 #ifdef PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
+        /* bail out unsuccesfully */
         pbuf_pool_free(p);
         return NULL;
       }
       q->next = NULL;
       r->next = q;
-      q->len = rsize > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rsize;
+      q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rem_len;
       q->flags = PBUF_FLAG_POOL;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       r = q;
       q->ref = 1;
-      rsize -= PBUF_POOL_BUFSIZE;
+      rem_len -= PBUF_POOL_BUFSIZE;
     }
     /* end of chain */
     r->next = NULL;
@@ -291,7 +290,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
     p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + size + offset));
-    if(p == NULL) {
+    if (p == NULL) {
       return NULL;
     }
     /* Set up internal structure of the pbuf. */
@@ -309,11 +308,11 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
   case PBUF_REF:
     /* only allocate memory for the pbuf structure */
     p = memp_mallocp(MEMP_PBUF);
-    if(p == NULL) {
+    if (p == NULL) {
       DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_REF.\n"));
       return NULL;
     }
-	  /* caller must set this field properly, afterwards */
+    /* caller must set this field properly, afterwards */
     p->payload = NULL;
     p->len = p->tot_len = size;
     p->next = NULL;
@@ -326,14 +325,13 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
   p->ref = 1;
   return p;
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_refresh():
+
+/**
  *
  * Moves free buffers from the pbuf_pool_free_cache to the pbuf_pool
  * list (if possible).
  *
  */
-/*-----------------------------------------------------------------------------------*/
 void
 pbuf_refresh(void)
 {
@@ -401,24 +399,19 @@ pbuf_refresh(void)
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 /**
- * Shrink a pbuf chain to a certain size.
+ * Shrink a pbuf chain to a desired length.
  *
  * @param p pbuf to shrink.
- * @param size new size
+ * @param new_len desired new length of pbuf chain
  *
- * Depending on the desired size, the first few pbufs in a chain might
- * be skipped.
+ * Depending on the desired length, the first few pbufs in a chain might
+ * be skipped and left unchanged. The new last pbuf in the chain will be
+ * resized, and any remaining pbufs will be freed.
+ * 
  * @note If the pbuf is ROM/REF, only the ->tot_len and ->len fields are adjusted.
- * If the chain
- * a pbuf chain, as it might be with both pbufs in dynamically
- * allocated RAM and for pbufs from the pbuf pool, we have to step
- * through the chain until we find the new endpoint in the pbuf chain.
- * Then the pbuf that is right on the endpoint is resized and any
- * further pbufs on the chain are deallocated.
- * @bug Cannot grow the size of a pbuf (chain).
+ *
+ * @bug Cannot grow the size of a pbuf (chain) (yet).
  */
-/*-----------------------------------------------------------------------------------*/
-#if NEW_PBUF_REALLOC
 void
 pbuf_realloc(struct pbuf *p, u16_t new_len)
 {
@@ -431,12 +424,14 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
               p->flags == PBUF_FLAG_RAM ||
               p->flags == PBUF_FLAG_REF);
 
+  /* desired length larger than current length? */
   if (new_len >= p->tot_len) {
-    /** enlarging not yet supported */
+    /* enlarging not yet supported */
     return;
   }
   
-  /* { the pbuf chains grows by (new_len - p->tot_len) bytes } */
+  /* the pbuf chain grows by (new_len - p->tot_len) bytes
+   * (which may be negative in case of shrinking) */
   grow = new_len - p->tot_len;
   
   /* first, step over any pbufs that should remain in the chain */
@@ -446,120 +441,37 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   while (rem_len > q->len) {
     /* decrease remaining length by pbuf length */
     rem_len -= q->len;
+    /* decrease total length indicator */
     q->tot_len += grow;
+    /* proceed to next pbuf in chain */
     q = q->next;
   }
-  /* { we have now reached the new last pbuf } */
-  /* { rem_len == desired length for pbuf q } */  
+  /* we have now reached the new last pbuf (in q) */
+  /* rem_len == desired length for pbuf q */  
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if ((q->flags == PBUF_FLAG_RAM) && (rem_len != q->len )) {
+  if ((q->flags == PBUF_FLAG_RAM) && (rem_len != q->len)) {
     /* reallocate and adjust the length of the pbuf that will be split */
     mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
   }
-  /* adjust length fields */
+  /* adjust length fields for new last pbuf */
   q->len = rem_len;
   q->tot_len = q->len;
 
-  /* deallocate any left over pbufs */
-  /* remember next pbuf in chain */
-  r = q->next;
+  /* any remaining pbufs in chain? */
+  if (q->next != NULL) {
+    /* free remaining pbufs in chain */
+    pbuf_free(q->next);
+  }
   /* q is last packet in chain */
   q->next = NULL;
-  /* first pbuf to be dealloced */
-  q = r;
-  /* any pbuf left? */
-  while(q != NULL) {
-    /* remember next pbuf in chain */
-    r = q->next;
-    /* deallocate pbuf */
-    if (q->flags == PBUF_FLAG_POOL) {
-      PBUF_POOL_FREE(q);
-    } else {
-      pbuf_free(q);
-    }
-    q = r;
-  }
 
   pbuf_refresh();
 }
-#else /* pbuf_realloc() of CVS version 1.23 */
-void
-pbuf_realloc(struct pbuf *p, u16_t size)
-{
-  struct pbuf *q, *r;
-  u16_t rsize;
-
-  LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
-              p->flags == PBUF_FLAG_ROM ||
-              p->flags == PBUF_FLAG_RAM ||
-              p->flags == PBUF_FLAG_REF);
-
-  if(p->tot_len <= size) {
-    return;
-  }
-  
-  switch(p->flags) {
-  case PBUF_FLAG_POOL:
-    /* First, step over any pbufs that should still be in the chain. */
-    rsize = size;
-    q = p;  
-    while(rsize > q->len) {
-      rsize -= q->len;      
-      q = q->next;
-    }
-    /* Adjust the length of the pbuf that will be halved. */
-    q->len = rsize;
-
-    /* And deallocate any left over pbufs. */
-    r = q->next;
-    q->next = NULL;
-    q = r;
-    while(q != NULL) {
-      r = q->next;
-      PBUF_POOL_FREE(q);
-      q = r;
-    }
-    break;
-  case PBUF_FLAG_ROM:
-  case PBUF_FLAG_REF:
-    p->len = size;
-    break;
-  case PBUF_FLAG_RAM:
-    /* First, step over the pbufs that should still be in the chain. */
-    rsize = size;
-    q = p;
-    while(rsize > q->len) {
-      rsize -= q->len;
-      q = q->next;
-    }
-    if(q->flags == PBUF_FLAG_RAM) {
-    /* Reallocate and adjust the length of the pbuf that will be halved. */
-      mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rsize);
-    }
-    
-    q->len = rsize;
-    
-    /* And deallocate any left over pbufs. */
-    r = q->next;
-    q->next = NULL;
-    q = r;
-    while(q != NULL) {
-      r = q->next;
-      pbuf_free(q);
-      q = r;
-    }
-    break;
-  }
-  p->tot_len = size;
-
-  pbuf_refresh();
-}
-#endif
 
 /**
- * Decreases the header size by the given amount.
+ * Tries to decrease the payload pointer by the given header size.
  * 
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
@@ -569,14 +481,15 @@ pbuf_realloc(struct pbuf *p, u16_t size)
  *
  * @return 1 on failure, 0 on succes.
  */
-/*-----------------------------------------------------------------------------------*/
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size)
 {
   void *payload;
   /* referencing pbufs cannot be realloc()ed */
+  /* TODO: WHY NOT? just adjust payload, tot_len and len? */
   if (p->flags == PBUF_FLAG_ROM ||
       p->flags == PBUF_FLAG_REF) {
+    /* failure */
     return 1;
   }
   
@@ -603,28 +516,34 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 /**
  * Free a pbuf (chain) from its user, de-allocate if zero users.
  *
- * For a single pbuf, decrement its reference count. If it reaches
- * zero, de-allocate the associated memory.
+ * Decrements the pbuf reference count. If it reaches
+ * zero, the pbuf is deallocated.
  *
- * For chained pbufs, all reference counts of the pbufs in the chain
- * are decremented. Only if the first pbuf reference count reaches
- * zero, all pbufs are de-allocated.
+ * This is repeated for each pbuf in the chain, until a non-zero
+ * reference count is encountered, or the end of the chain is reached. 
  *
  * @param pbuf pbuf (chain) to be freed from its user.
  *
- * @note The reference count should not decrease when inspecting the
- * pbuf chain from head to tail.
+ * @return the number of unreferenced pbufs that were de-allocated 
+ * from the head of the chain.
  *
- * @note Chained pbufs with different reference counts should really
- * not occur. Something that references to the first pbuf, has access
- * to the complete chain, so all references
+ * @note the reference counter of a pbuf equals the number of pointers
+ * that refer to the pbuf (or into the pbuf).
+ *
+ * @internal examples:
+ *
+ * 1->2->3 becomes ...1->3
+ * 3->3->3 becomes 2->3->3
+ * 1->1->2 becomes ....->1
+ * 2->1->1 becomes 1->1->1
+ * 1->1->1 becomes .......
+ * 
  */ 
-/*-----------------------------------------------------------------------------------*/
 u8_t
 pbuf_free(struct pbuf *p)
 {
   struct pbuf *q;
-  u8_t count = 0;
+  u8_t count;
   SYS_ARCH_DECL_PROTECT(old_level);
 
   if (p == NULL) {
@@ -639,119 +558,109 @@ pbuf_free(struct pbuf *p)
     p->flags == PBUF_FLAG_RAM ||
     p->flags == PBUF_FLAG_REF );
 
-  LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
-  p->ref--;
-
-  /* Since decrementing ref cannot be guarranteed to be a single machine operation
+  q = p;
+  count = 0;
+  /* Since decrementing ref cannot be guaranteed to be a single machine operation
    * we must protect it. Also, the later test of ref must be protected.
    */
   SYS_ARCH_PROTECT(old_level);
-  /* decrement individual reference count for each pbuf in chain */
-  for (q = p->next; q != NULL; q = q->next) {
-    /* reference counts can be 0, as 2nd and further pbufs will
-       only be freed if the head of the chain is freed */
-    LWIP_ASSERT("pbuf_free: q->ref >= 0", q->ref >= 0);
-    /* decrease reference count, but do not wrap! */
-    if (q->ref > 0)
-      q->ref--;
-  }
-
-  /* first pbuf now no longer needed? */
-  if (p->ref == 0) {
-    SYS_ARCH_UNPROTECT(old_level);
-
-    while (p != NULL) {
-      /* remember next in chain */
+  /* de-allocate all consecutive pbufs from the head of the chain that
+   * obtain a zero reference count */
+  while (p != NULL) {
+    /* all pbufs in a chain are referenced at least once */
+    LWIP_ASSERT("pbuf_free: q->ref > 0", q->ref > 0);
+    p->ref--;
+    /* this pbuf is no longer referenced to? */
+    if (p->ref == 0)
+    {
+      /* remember next pbuf in chain for next iteration */
       q = p->next;
-      /* this is a pbuf from the pool? */
+  
+      /* is this a pbuf from the pool? */
       if (p->flags == PBUF_FLAG_POOL) {
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
         p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
         PBUF_POOL_FREE(p);
-      /* RAM/ROM referencing pbuf */
+      /* a RAM/ROM referencing pbuf */
       } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
         memp_freep(MEMP_PBUF, p);
       /* pbuf with data */
       } else {
         mem_free(p);
       }
-      /* next in chain */
+      count++;
+      /* proceed to next pbuf */
       p = q;
-      /* Only free the next one in a chain if it's reference count is 0.
-      This allows buffer chains to have multiple headers pointing to them. */
-      if (p != NULL)
-      {
-        p->ref--;
-        if (p->ref > 0)
-          break;
-      }
-
-      ++count;
+    /* p->ref > 0, this pbuf is still referenced to */
+    /* (so the remaining pbufs in chain as well)    */
+    } else {
+      /* stop walking through chain */
+      p = NULL;
     }
-    pbuf_refresh();
-  } else
-    SYS_ARCH_UNPROTECT(old_level);
+  }
+  SYS_ARCH_UNPROTECT(old_level);
+  pbuf_refresh();
   PERF_STOP("pbuf_free");
-
+  /* return number of de-allocated pbufs */
   return count;
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_clen():
+
+/**
+ * Count number of pbufs in a chain
  *
- * Returns the length of the pbuf chain.
+ * @param p first pbuf of chain
+ * @return the number of pbufs in a chain
  */
-/*-----------------------------------------------------------------------------------*/
+
 u8_t
 pbuf_clen(struct pbuf *p)
 {
   u8_t len;
 
-  if(p == NULL) {
-    return 0;
-  }
-  
-  for(len = 0; p != NULL; p = p->next) {
+  len = 0;  
+  while (p != NULL) {
     ++len;
+    p = p->next;
   }
   return len;
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_ref():
+/**
  *
- * Increments the reference count of the pbuf.
+ * Increment the reference count of the pbuf.
+ *
+ * @param p pbuf to increase reference counter of
+ *
  */
-/*-----------------------------------------------------------------------------------*/
 void
 pbuf_ref(struct pbuf *p)
 {
-    SYS_ARCH_DECL_PROTECT(old_level);
-    
-  if(p == NULL) {
-    return;
+  SYS_ARCH_DECL_PROTECT(old_level);
+  /* pbuf given? */  
+  if(p != NULL) {
+    SYS_ARCH_PROTECT(old_level);
+    ++(p->ref);
+    SYS_ARCH_UNPROTECT(old_level);
   }
-
-  SYS_ARCH_PROTECT(old_level);
-  ++(p->ref);
-  SYS_ARCH_UNPROTECT(old_level);
 }
 
-/*------------------------------------------------------------------------------*/
-/* pbuf_ref_chain():
+/**
  *
- * Increments the reference count of all pbufs in a chain.
+ * Increment the reference count of all pbufs in a chain.
+ *
+ * @param p first pbuf of chain
+ *
  */
 void
 pbuf_ref_chain(struct pbuf *p)
 {
-    SYS_ARCH_DECL_PROTECT(old_level);
-    SYS_ARCH_PROTECT(old_level);
+  SYS_ARCH_DECL_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);
     
-    while (p != NULL) {
-        p->ref++;
-        p=p->next;
-    }
-
-    SYS_ARCH_UNPROTECT(old_level);
+  while (p != NULL) {
+    ++p->ref;
+    p = p->next;
+  }
+  SYS_ARCH_UNPROTECT(old_level);
 }
 
 
@@ -761,7 +670,6 @@ pbuf_ref_chain(struct pbuf *p)
  * 
  * The ->tot_len field of the first pbuf (h) is adjusted.
  */
-/*-----------------------------------------------------------------------------------*/
 void
 pbuf_chain(struct pbuf *h, struct pbuf *t)
 {
@@ -771,17 +679,15 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_ASSERT("t != NULL", t != NULL);
   
   /* proceed to last pbuf of chain */
-  for(p = h; p->next != NULL; p = p->next) {
+  for (p = h; p->next != NULL; p = p->next) {
     /* add length of second chain to totals of first chain */
     p->tot_len += t->tot_len;
   }
-  /* chain */
+  /* chain last pbuf of h chain (p) with first of tail (t) */
   p->next = t;
-#if PBUF_CHAIN_DOES_REFER /** TODO (WORK IN PROGRESS) */
   /* t is now referenced to one more time */
   pbuf_ref(t);
-  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing %p\n", (void *) t));
-#endif
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing tail %p\n", (void *) t));
 }
 
 /**
@@ -789,13 +695,13 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
  *
  * Makes p->tot_len field equal to p->len.
  * @param p pbuf to dechain
- * @return remainder (if any) of the pbuf chain.
+ * @return remainder of the pbuf chain, or NULL if it was de-allocated.
  */
 struct pbuf *
 pbuf_dechain(struct pbuf *p)
 {
   struct pbuf *q;
-  
+  /* tail */  
   q = p->next;
   /* pbuf has successor in chain? */
   if (q != NULL) {
@@ -809,10 +715,11 @@ pbuf_dechain(struct pbuf *p)
   p->next = NULL;
 #if PBUF_CHAIN_DOES_REFER /** TODO (WORK IN PROGRESS) */
   /* q is no longer referenced by p */
-  pbuf_free(q);
+  deallocated = pbuf_free(q);
   DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dechain: unreferencing %p\n", (void *) q));
 #endif
-  return q;
+  /* return remaining tail or NULL if deallocated */
+  return (deallocated? NULL: q);
 }
 
 /**
@@ -823,19 +730,25 @@ pbuf_dechain(struct pbuf *p)
  * with PBUF_POOL (or PBUF_RAM) pbufs, each taking a copy of
  * the referenced data.
  *
- * Used to queue packets on behalf of the lwIP stack, such as ARP based
- * queueing.
+ * @note The pbuf you give as argument, may have been replaced
+ * by calling pbuf_take(p). You must therefore explicitly use
+ * p = pbuf_take(p);
+ * @note Any replaced pbufs will be freed through pbuf_free().
+ *
+ * Used to queue packets on behalf of the lwIP stack, such as
+ * ARP based queueing.
  *
  * @param f Head of pbuf chain to process
  *
- * @return Pointer to new head of pbuf chain.
+ * @return Pointer to new head of pbuf chain (which may have been
+ * replaced itself). 
  */
 struct pbuf *
 pbuf_take(struct pbuf *f)
 {
   struct pbuf *p, *prev, *top;
   LWIP_ASSERT("pbuf_take: f != NULL", f != NULL);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)f));
+  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)", (void*)f));
 
   prev = NULL;
   p = f;
@@ -848,29 +761,44 @@ pbuf_take(struct pbuf *f)
     {
       /* the replacement pbuf */
       struct pbuf *q;
-      q = NULL;
-      DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
+      DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p", (void *)p));
       /* allocate a pbuf (w/ payload) fully in RAM */
       /* PBUF_POOL buffers are faster if we can use them */
       if (p->len <= PBUF_POOL_BUFSIZE) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAW\n"));
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL"));
+      } else {
+      	/* no replacement pbuf yet */
+        q = NULL;
+        DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF"));
       }
       /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
       if (q == NULL) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM"));
       }
+      /* replacement pbuf could be allocated? */
       if (q != NULL)
       {  
         /* copy successor */
         q->next = p->next;
+        /* remove linkage from original pbuf */
+        p->next = NULL;
+        /* remove linkage to original pbuf */
         if (prev != NULL)
-          /* Break chain and insert new pbuf instead */
+          /* prev->next == p at this point */
+          /* break chain and insert new pbuf instead */
           prev->next = q;
+          /* p is no longer pointed to by prev or by our caller, 
+           * as the caller must do p = pbuf_take(p); so free it
+           * from our usage.
+           * note that we have set p->next to NULL already so that
+           * we will not free the rest of the chain by accident.
+           */
+          pbuf_free(p);
+        /* prev == NULL, so we replaced the top pbuf of the chain */
         else
           top = q;
-        p->next = NULL;
         /* copy pbuf payload */
         memcpy(q->payload, p->payload, p->len);
         q->tot_len = p->tot_len;
