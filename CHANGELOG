@@ -9,6 +9,11 @@ HISTORY
 
 (HEAD)
 
+(STABLE-1_1_0-RC1)
+
+  2004-09-12 Kieran Mansley <kjm25@cam.ac.uk>
+  * tcp*.* Retransmit time-out handling improvement by Sam Jansen.
+
   2004-08-20 Tony Mountifield <tony@softins.co.uk>
   * etharp.c Make sure the first pbuf queued on an ARP entry
     is properly ref counted.
