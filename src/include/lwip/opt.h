@@ -340,15 +340,41 @@ a lot of data that needs to be copied, this should be set high. */
 
 #if LWIP_STATS
 
-#define LINK_STATS
-#define IP_STATS
-#define ICMP_STATS
-#define UDP_STATS
-#define TCP_STATS
-#define MEM_STATS
-#define MEMP_STATS
-#define PBUF_STATS
-#define SYS_STATS
+#ifndef LINK_STATS
+#define LINK_STATS	1
+#endif
+
+#ifndef IP_STATS
+#define IP_STATS	1
+#endif
+
+#ifndef ICMP_STATS
+#define ICMP_STATS	1
+#endif
+
+#ifndef USP_STATS
+#define UDP_STATS	1
+#endif
+
+#ifndef TCP_STATS
+#define TCP_STATS	1
+#endif
+
+#ifndef MEM_STATS
+#define MEM_STATS	1
+#endif
+
+#ifndef MEMP_STATS
+#define MEMP_STATS	1
+#endif
+
+#ifndef PBUF_STATS
+#define PBUF_STATS	1
+#endif
+
+#ifndef SYS_STATS
+#define SYS_STATS	1
+#endif
 
 #endif /* LWIP_STATS */
 
