@@ -791,7 +791,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     i = find_arp_entry();
     /* bail out if no ARP entries are available */
     if (i == ERR_MEM) {
-      LWIP_DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available. Should seldomly occur.\n"));
+      LWIP_DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available. Should seldom occur.\n"));
       return ERR_MEM;
     }
     /* i is available, create ARP entry */
