@@ -34,8 +34,7 @@
 
 #include "lwip/arch.h"
 
-#define IP_ADDR_ANY 0
-
+#define IP_ADDR_ANY (&ip_addr_any)
 #define IP_ADDR_BROADCAST (&ip_addr_broadcast)
 
 #ifdef PACK_STRUCT_USE_INCLUDES
