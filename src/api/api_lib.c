@@ -280,9 +280,10 @@ netconn_delete(struct netconn *conn)
   if (conn->recvmbox != SYS_MBOX_NULL) {
     while (sys_arch_mbox_fetch(conn->recvmbox, &mem, 1) != SYS_ARCH_TIMEOUT) {
       if (conn->type == NETCONN_TCP) {
-  pbuf_free((struct pbuf *)mem);
+        if(mem != NULL)
+          pbuf_free((struct pbuf *)mem);
       } else {
-  netbuf_delete((struct netbuf *)mem);
+        netbuf_delete((struct netbuf *)mem);
       }
     }
     sys_mbox_free(conn->recvmbox);
