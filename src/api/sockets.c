@@ -418,7 +418,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
   } else {
-#if SOCKETS_DEBUG != 0
+#if SOCKETS_DEBUG
     addr = netbuf_fromaddr(buf);
     port = netbuf_fromport(buf);
 
