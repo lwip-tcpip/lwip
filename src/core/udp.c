@@ -344,12 +344,11 @@ udp_input(struct pbuf *p, struct netif *inp)
  * be restored after the data is sent.
  * 
  * @return lwIP error code.
- * @return lwIP error code.
  * - ERR_OK. Successful. No error occured.
  * - ERR_MEM. Out of memory.
  * - ERR_RTE. Could not find route to destination address.
  *
- * @see udp_disconnect()
+ * @see udp_disconnect() udp_send()
  */
 err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
@@ -383,7 +382,7 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
  * - ERR_MEM. Out of memory.
  * - ERR_RTE. Could not find route to destination address.
  *
- * @see udp_disconnect()
+ * @see udp_disconnect() udp_sendto()
  */
 err_t
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
