@@ -1,3 +1,5 @@
+INTRODUCTION
+
 lwIP is a small independent implementation of the TCP/IP protocol
 suite that has been developed by Adam Dunkels at the Computer and
 Networks Architectures (CNA) lab at the Swedish Institute of Computer
@@ -8,7 +10,8 @@ while still having a full scale TCP. This making lwIP suitable for use
 in embedded systems with tenths of kilobytes of free RAM and room for
 around 40 kilobytes of code ROM.
 
-lwIP features:
+FEATURES
+
  * IP (Internet Protocol) including packet forwarding over multiple
    network interfaces
  * ICMP (Internet Control Message Protocol) for network maintenance
@@ -20,7 +23,11 @@ lwIP features:
  * Specialized API for enhanced performance
  * Optional Berkeley socket API
 
+LICENSE
+
 lwIP is freely available under a BSD license.
+
+DEVELOPMENT
 
 lwIP has grown into an excellent TCP/IP stack for embedded devices,
 and developers using the stack often submit bug fixes, improvements,
@@ -30,30 +37,44 @@ Development of lwIP is hosted on Savannah, a central point for
 software development, maintenance and distribution. A core team
 will improve lwIP by the use of Savannah's interface and CVS.
 
+The lwIP TCP/IP stack is maintained in the 'lwip' CVS module and
+contributions (such as platform ports) are in the 'contrib' module.
+
 The current lwIP CVS tree can be checked out by doing:
   cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
   cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co lwip
 
+The current contrib CVS tree can be checked out by doing:
+  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co contrib
+
 Last night's CVS tar ball can be downloaded from:
   http://savannah.gnu.org/cvs.backups/lwip.tar.gz
 
-The current CVS tree is web-browsable:
-http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/lwip/
+The current CVS trees are web-browsable:
+  http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/lwip/
+  http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/contrib/
 
 Submit patches and bugs via the lwIP project page:
   http://savannah.nongnu.org/projects/lwip/
 
-Stable releases have not been released yet. For development we
-suggest downloading the latest CVS and keeping track of the
-lwIP mailing list.
+The main branch is the active development branch, whereas the 'STABLE'
+branch aims to be bug-free, without the latest changes. Keep track of
+the lwIP users mailing list for the statusses of both.
 
-The mailing list (with searchable archives), as well as Adam
-Dunkels' papers on lwIP are at the official lwIP home page:
+DOCUMENTATION
+
+The original out-dated homepage of lwIP and Adam Dunkels' papers on
+lwIP are at the official lwIP home page:
   http://www.sics.se/~adam/lwip/
 
-Reading Adam's papers and browsing the mailing list archives
-is a good way to become familiar with the design of lwIP.
+Self documentation of the source code is regularly extracted from the
+current CVS sources and is available from this web page:
+  http://www.nongnu.org/lwip/
+
+Reading Adam's papers, the files in docs/, browsing the source code
+documentation and browsing the mailing list archives is a good way to
+become familiar with the design of lwIP.
 
 Adam Dunkels <adam@sics.se>
 Leon Woestenberg <leon.woestenberg@gmx.net>		    
-
