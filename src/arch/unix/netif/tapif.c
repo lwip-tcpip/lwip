@@ -346,9 +346,9 @@ tapif_init(struct netif *netif)
   netif->name[1] = IFNAME1;
   netif->output = tapif_output;
   netif->linkoutput = low_level_output;
+  netif->mtu = 1500; 	 
   
   tapif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
-  
   low_level_init(netif);
   etharp_init();
   
