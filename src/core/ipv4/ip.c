@@ -85,7 +85,7 @@ ip_route(struct ip_addr *dest)
   /* iterate through netifs */
   for(netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
-    if (ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+    if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
       /* return netif on which to forward IP packet */
       return netif;
     }
@@ -240,7 +240,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
       if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
         /* or broadcast matching this interface network address? */
         (ip_addr_isbroadcast(&(iphdr->dest), netif) &&
-         ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
+         ip_addr_netcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
          /* or restricted broadcast? */
          ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
         LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",

@@ -35,7 +35,7 @@
 
 
 int
-ip_addr_maskcmp(struct ip_addr *addr1, struct ip_addr *addr2,
+ip_addr_netcmp(struct ip_addr *addr1, struct ip_addr *addr2,
                 struct ip_addr *mask)
 {
   return((addr1->addr[0] & mask->addr[0]) == (addr2->addr[0] & mask->addr[0]) &&

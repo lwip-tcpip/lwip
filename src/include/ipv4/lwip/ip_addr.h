@@ -125,7 +125,7 @@ extern const struct ip_addr ip_addr_broadcast;
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-#define ip_addr_maskcmp(addr1, addr2, mask) (((addr1)->addr & \
+#define ip_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \
                                               (mask)->addr))

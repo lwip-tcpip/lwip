@@ -77,7 +77,7 @@ ip_route(struct ip_addr *dest)
   struct netif *netif;
 
   for(netif = netif_list; netif != NULL; netif = netif->next) {
-    if (ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+    if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
       return netif;
     }
   }
