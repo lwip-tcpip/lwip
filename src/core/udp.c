@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.14 2003/01/27 12:35:16 likewise Exp $
+ * $Id: udp.c,v 1.15 2003/01/27 13:58:45 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -91,24 +91,25 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
   struct udp_pcb *pcb;
   struct udp_hdr *udphdr;
   u16_t src, dest;
-  
-  PERF_START;
-  
-  udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
+
+    PERF_START;
+
+    udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
 
   src = NTOHS(udphdr->src);
   dest = NTOHS(udphdr->dest);
-  
-  pcb = pcb_cache;
+
+    pcb = pcb_cache;
   if(pcb != NULL &&
-     pcb->remote_port == src &&
-     pcb->local_port == dest &&
-     (ip_addr_isany(&pcb->remote_ip) ||
-      ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
-     (ip_addr_isany(&pcb->local_ip) ||
-      ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
+    pcb->remote_port == src &&
+    pcb->local_port == dest &&
+    (ip_addr_isany(&pcb->remote_ip) ||
+    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
+    (ip_addr_isany(&pcb->local_ip) ||
+    ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
     return 1;
-  } else {  
+  }
+  else {  
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
       if(pcb->remote_port == src &&
 	 pcb->local_port == dest &&
@@ -117,8 +118,8 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 	 (ip_addr_isany(&pcb->local_ip) ||
 	  ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 	pcb_cache = pcb;
-	break;
-      }
+        break;
+        }
     }
 
     if(pcb == NULL) {
@@ -130,21 +131,32 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 	   (ip_addr_isany(&pcb->local_ip) ||
 	    ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 	  break;
-	}
+          }
       }
     }
   }
 
   PERF_STOP("udp_lookup");
-  
+
   if(pcb != NULL) {
     return 1;
-  } else {  
+  }
+  else {  
     return 1;
   }
 }
 #endif /* LWIP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Process an incoming UDP datagram.
+ *
+ * Given an incoming UDP datagram (as a chain of pbufs) this function
+ * finds a corresponding UDP PCB and
+ *
+ * @param pbuf pbuf to be demultiplexed to a UDP PCB.
+ * @param netif network interface on which the datagram was received.
+ *
+ * @see udp_disconnect()
+ */
 void
 udp_input(struct pbuf *p, struct netif *inp)
 {
@@ -299,7 +311,20 @@ udp_input(struct pbuf *p, struct netif *inp)
     
   PERF_STOP("udp_input");
 }
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Send data using UDP. 
+ *
+ * @param pcb UDP PCB used to send the data.
+ * @param pbuf chain of pbuf's to be sent.
+ *
+ * @return lwIP error code.
+ * - ERR_OK. Successful. No error occured.
+ * - ERR_MEM. Out of memory.
+ * - ERR_USE. The specified ipaddr and port are already bound to by
+ * another UDP PCB.
+ * 
+ * @see udp_disconnect()
+ */
 err_t
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
@@ -309,18 +334,22 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   err_t err;
   struct pbuf *hdr;
 
-
   DEBUGF(UDP_DEBUG, ("udp_send"));
   /* hdr will point to the UDP header pbuf if an extra header pbuf has
      to be allocated. */
   hdr = NULL;
   
+  /* succeeding in adding an UDP header to first given pbuf in chain? */
   if(pbuf_header(p, UDP_HLEN)) {
+    /* allocate header in new pbuf */
     hdr = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
+    /* new header pbuf could not be allocated? */
     if(hdr == NULL) {
       return ERR_MEM;
     }
+    /* chain header in front of given pbuf */
     pbuf_chain(hdr, p);
+    /* have p point to header pbuf */
     p = hdr;
   }
   DEBUGF(UDP_DEBUG, ("udp_send: got pbuf"));
@@ -337,15 +366,18 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #endif /* UDP_STATS */
     return ERR_RTE;
   }
-
+  /* using IP_ANY_ADDR? */
   if(ip_addr_isany(&pcb->local_ip)) {
+    /* use network interface IP address as source address */
     src_ip = &(netif->ip_addr);
   } else {
+    /* use UDP PCB local IP address as source address */
     src_ip = &(pcb->local_ip);
   }
   
   DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %d\n", p->tot_len));
   
+  /* UDP Lite protocol? */
   if(pcb->flags & UDP_FLAGS_UDPLITE) {
     DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u", p->tot_len));
     /* set UDP message length in UDP header */
@@ -353,9 +385,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* calculate checksum */
     udphdr->chksum = inet_chksum_pseudo(p, src_ip, &(pcb->remote_ip),
 					IP_PROTO_UDP, pcb->chksum_len);
-    if(udphdr->chksum == 0x0000) {
-      udphdr->chksum = 0xffff;
-    }
+    /* chksum zero must become 0xffff, as zero means 'no checksum' */
+    if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
+    /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
 #if LWIP_SNMP > 0
     snmp_inc_udpoutdatagrams();
@@ -365,20 +397,19 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     udphdr->len = htons(p->tot_len);
     /* calculate checksum */
     if((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
-      udphdr->chksum = inet_chksum_pseudo(p, src_ip, &pcb->remote_ip,
-					  IP_PROTO_UDP, p->tot_len);
-      if(udphdr->chksum == 0x0000) {
-	udphdr->chksum = 0xffff;
-      }
+      udphdr->chksum = inet_chksum_pseudo(p, src_ip, &pcb->remote_ip, IP_PROTO_UDP, p->tot_len);
+      /* chksum zero must become 0xffff, as zero means 'no checksum' */
+      if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
     DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x", udphdr->chksum));
 #if LWIP_SNMP > 0
     snmp_inc_udpoutdatagrams();
 #endif
     DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)"));
+    /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
-
+  /* dechain and free the header pbuf */
   if(hdr != NULL) {
     pbuf_dechain(hdr);
     pbuf_free(hdr);
@@ -389,32 +420,47 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #endif /* UDP_STATS */
   return err;
 }
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Bind an UDP PCB.
+ *
+ * @param pcb UDP PCB to be bound with a local address ipaddr and port.
+ * @param ipaddr local IP address to bind with. Use IP_ADDR_ANY to
+ * bind to all local interfaces.
+ * @param port local UDP port to bind with.
+ *
+ * @return lwIP error code.
+ * - ERR_OK. Successful. No error occured.
+ * - ERR_USE. The specified ipaddr and port are already bound to by
+ * another UDP PCB.
+ * 
+ * @see udp_disconnect()
+ */
 err_t
 udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind = 0;
-  
+
   /* Check for double bind and rebind of the same pcb */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
+    /* is this UDP PCB already on active list? */ 
     if (pcb == ipcb) {
-	 rebind = 1;
-	 break;
-    }  else	 
-    if (ipcb->local_port == port) {
-      if(ip_addr_isany(&(ipcb->local_ip)) ||
-	 ip_addr_isany(ipaddr) ||
-	 ip_addr_cmp(&(ipcb->local_ip), ipaddr)) {
-          /* Port/IP pair already bound */
-          return ERR_USE;	   
-      } 
+	    rebind = 1;
+    }
+    /* port matches that of PCB in list? */
+    if ((ipcb->local_port == port) &&
+       /* IP address matches, or one is IP_ADDR_ANY? */
+      (ip_addr_isany(&(ipcb->local_ip)) ||
+	     ip_addr_isany(ipaddr) ||
+	     ip_addr_cmp(&(ipcb->local_ip), ipaddr))) {
+      /* other PCB already binds to this local IP and port */
+      return ERR_USE;	   
     }
   }
-  
+  /* bind local address */
   ip_addr_set(&pcb->local_ip, ipaddr);
   pcb->local_port = port;
-  
+
   /* We need to place the PCB on the list if not already there. */
   if (rebind == 0) {
     pcb->next = udp_pcbs;
@@ -424,7 +470,17 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %d\n", port));
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Connect an UDP PCB.
+ *
+ * @param pcb UDP PCB to be connected with remote address ipaddr and port.
+ * @param ipaddr remote IP address to connect with.
+ * @param port remote UDP port to connect with.
+ *
+ * @return lwIP error code
+ * 
+ * @see udp_disconnect()
+ */
 err_t
 udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
@@ -436,11 +492,11 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     if(pcb == ipcb) {
-      /* Already on the list, just return. */
+      /* already on the list, just return */
       return ERR_OK;
     }
   }
-  /* We need to place the PCB on the list. */
+  /* PCB not yet on the list, add PCB now */
   pcb->next = udp_pcbs;
   udp_pcbs = pcb;
   return ERR_OK;
@@ -458,37 +514,54 @@ udp_recv(struct udp_pcb *pcb,
 		       struct ip_addr *addr, u16_t port),
 	 void *recv_arg)
 {
+  /* remember recv() callback and user data */
   pcb->recv = recv;
   pcb->recv_arg = recv_arg;
 }
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Remove an UDP PCB.
+ *
+ * @param pcb UDP PCB to be removed. The PCB is removed from the list of
+ * UDP PCB's and the data structure is freed from memory.
+ * 
+ * @see udp_new()
+ */
 void
 udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
-  
-  if(udp_pcbs == pcb) {
+  /* pcb to be removed is first in list? */
+  if (udp_pcbs == pcb) {
+    /* make list start at 2nd pcb */
     udp_pcbs = udp_pcbs->next;
+  /* pcb not 1st in list */
   } else for(pcb2 = udp_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
+    /* find pcb in udp_pcbs list */
     if(pcb2->next != NULL && pcb2->next == pcb) {
+      /* remove pcb from list */
       pcb2->next = pcb->next;
     }
   }
-
   memp_free(MEMP_UDP_PCB, pcb);  
 }
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Create a UDP PCB.
+ *
+ * @return The UDP PCB which was created. NULL if the PCB data structure
+ * could not be allocated.
+ * 
+ * @see udp_remove()
+ */
 struct udp_pcb *
 udp_new(void) {
   struct udp_pcb *pcb;
   pcb = memp_malloc(MEMP_UDP_PCB);
+  /* could allocate UDP PCB? */
   if(pcb != NULL) {
-    pcb->flags = 0;
+    /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
-    return pcb;
   }
-  return NULL;
-
+  return pcb;
 }
 /*-----------------------------------------------------------------------------------*/
 #if UDP_DEBUG
