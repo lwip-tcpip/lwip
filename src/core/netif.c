@@ -60,24 +60,29 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 {
   struct netif *netif;
   static int netifnum = 0;
-  
+
+  /* allocate netif structure */  
   netif = mem_malloc(sizeof(struct netif));
 
   if(netif == NULL) {
+    DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
     return NULL;
   }
   
+  /* remember netif specific state information data */
   netif->state = state;
   netif->num = netifnum++;
   netif->input = input;
 
   netif_set_addr(netif, ipaddr, netmask, gw);
   
+  /* call user specified initialization function for netif */
   if (init(netif) != ERR_OK) {
       mem_free(netif);
       return NULL;
   }
  
+  /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
 #if NETIF_DEBUG
