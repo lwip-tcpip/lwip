@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.30  2003/03/16 22:44:05  likewise
+ * Fixed bug #2841 (etharp.c packet queueing always picks table entry 6).
+ *
  * Revision 1.29  2003/02/24 10:49:05  jani
  * cleaned up opt.h a bit, added more option defaults ad changed SYS_LIGHTWEIGHT_PROT to be a 0/1 define.The same for COMPAT_SOCKET
  *
@@ -737,8 +740,9 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   u8_t i;
 
   srcaddr = (struct eth_addr *)netif->hwaddr;
+  i = 0;
   /* bail out if this IP address is pending */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+  for(i; i < ARP_TABLE_SIZE; ++i) {
     if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG, ("etharp_query: requested IP already pending\n"));
@@ -776,13 +780,14 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
   /* could allocate pbuf? */
   if (p != NULL) {
+    u8_t j;
     DEBUGF(ETHARP_DEBUG, ("etharp_query: sending ARP request.\n"));
     hdr = p->payload;
     hdr->opcode = htons(ARP_REQUEST);
-    for(i = 0; i < 6; ++i)
+    for(j = 0; j < 6; ++j)
     {
-      hdr->dhwaddr.addr[i] = 0x00;
-      hdr->shwaddr.addr[i] = srcaddr->addr[i];
+      hdr->dhwaddr.addr[j] = 0x00;
+      hdr->shwaddr.addr[j] = srcaddr->addr[j];
     }
     ip_addr_set(&(hdr->dipaddr), ipaddr);
     ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
@@ -792,10 +797,10 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
 
     hdr->proto = htons(ETHTYPE_IP);
     ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    for(i = 0; i < 6; ++i)
+    for(j = 0; j < 6; ++j)
     {
-      hdr->ethhdr.dest.addr[i] = 0xff;
-      hdr->ethhdr.src.addr[i] = srcaddr->addr[i];
+      hdr->ethhdr.dest.addr[j] = 0xff;
+      hdr->ethhdr.src.addr[j] = srcaddr->addr[j];
     }
     hdr->ethhdr.type = htons(ETHTYPE_ARP);      
     /* send ARP query */
