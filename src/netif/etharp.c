@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.12  2002/11/28 09:26:18  likewise
+ * All ARP queueing code is now conditionally compiled-in.
+ *
  * Revision 1.11  2002/11/18 10:31:05  likewise
  * Conditionally have ARP queue outgoing pbufs.
  *
@@ -105,7 +108,6 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #ifndef ETHARP_SNOOP_UPDATES
 #  define ETHARP_SNOOP_UPDATES 0
 #endif
- 
 
 #define HWTYPE_ETHERNET 1
 
@@ -129,7 +131,9 @@ struct etharp_entry {
   struct ip_addr ipaddr;
   struct eth_addr ethaddr;
   enum etharp_state state;
+#if ARP_QUEUEING
   struct pbuf *p;
+#endif
   u8_t ctime;
 };
 
@@ -177,9 +181,11 @@ etharp_tmr(void)
 	      (ctime - arp_table[i].ctime >= ARP_MAXPENDING)) {
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, arp_table[i].p));
       arp_table[i].state = ETHARP_STATE_EMPTY;
+#if ARP_QUEUEING
       /* remove any queued packet */
       pbuf_free(arp_table[i].p);      
       arp_table[i].p = NULL;
+#endif
     }
   }  
 }
@@ -240,8 +246,10 @@ static struct pbuf *
 update_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   u8_t i, k;
-  struct pbuf *p;
   struct eth_hdr *ethhdr;
+#if ARP_QUEUEING
+  struct pbuf *p;
+#endif
 
   /* Walk through the ARP mapping table and try to find an entry to
   update. If none is found, the IP -> MAC address mapping is
@@ -270,6 +278,7 @@ update_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
         }
         arp_table[i].ctime = ctime;
         arp_table[i].state = ETHARP_STATE_STABLE;
+#if ARP_QUEUEING
         p = arp_table[i].p;
         // queued packet present? */
         if(p != NULL) {	
@@ -288,6 +297,10 @@ update_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
         }
         /* return queued packet, if any */
         return p;
+#else
+        /* ARP queueing disabled */
+        return NULL;
+#endif
       }
     }
   }
