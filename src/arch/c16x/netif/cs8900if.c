@@ -584,8 +584,6 @@ err_t cs8900if_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipadd
   {
 	  /* send out the packet */
     cs8900_output(netif, p);
-	  /* ARP cleanup */
-    etharp_output_sent(p);
     p = NULL;
   }
   // { p == NULL }

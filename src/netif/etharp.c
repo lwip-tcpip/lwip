@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.18  2003/01/08 09:24:50  likewise
+ * Removed etharp_output_sent() as etharp.c no longer returns ARP packets to the driver.
+ *
  * Revision 1.17  2002/12/18 12:49:02  jani
  * renamed (hopefully everywhere) stats to lwip_stats.closes bug #1901
  *
@@ -10,17 +13,6 @@
  * Use C style comments.In debug stataments cast various struct pointers to void* to
  * avoid printf warnings.misc warnings in etharp.
  *
- * Revision 1.15  2002/12/05 09:41:52  kieranm
- * Fixed compiler warnings when ARP_QUEUEING is not defined.
- *
- * Revision 1.14  2002/12/02 16:08:09  likewise
- * Fixed wrong assertion condition.
- *
- * Revision 1.13  2002/11/29 16:02:11  likewise
- * More complete ARP protocol implementation.
- *
- * Revision 1.12  2002/11/28 09:26:18  likewise
- * All ARP queueing code is now conditionally compiled-in.
  */
 
 /*
@@ -643,31 +635,6 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   }
   /* never reached; here for safety */ 
   return NULL;
-}
-
-/**
- * Free the ARP request pbuf.
- *
- * Free the ARP request pbuf that was allocated by ARP
- *
- * as a result of calling etharp_output(). Must be called
- * with the pbuf returned by etharp_output(), after you
- * have sent that packet.
- *
- * @param p pbuf returned earlier by etharp_output().
- *
- * @see etharp_output().
- */
-struct pbuf *
-etharp_output_sent(struct pbuf *p)
-{
-  struct etharp_hdr *hdr;
-  hdr = p->payload;
-  if (hdr->opcode == htons(ARP_REQUEST)) {
-    pbuf_free(p);
-    p = NULL;
-  }
-  return p;
 }
 
 /**
