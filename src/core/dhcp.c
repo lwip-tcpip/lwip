@@ -406,7 +406,6 @@ static void dhcp_t2_timeout(struct netif *netif)
 }
 
 /**
- * Extract options from the server ACK message.
  *
  * @param netif the netif under DHCP control
  */
@@ -1240,10 +1239,10 @@ static err_t dhcp_create_request(struct netif *netif)
   dhcp->msg_out->xid = htonl(dhcp->xid);
   dhcp->msg_out->secs = 0;
   dhcp->msg_out->flags = 0;
-  dhcp->msg_out->ciaddr = netif->ip_addr.addr;
-  dhcp->msg_out->yiaddr = 0;
-  dhcp->msg_out->siaddr = 0;
-  dhcp->msg_out->giaddr = 0;
+  dhcp->msg_out->ciaddr.addr = netif->ip_addr.addr;
+  dhcp->msg_out->yiaddr.addr = 0;
+  dhcp->msg_out->siaddr.addr = 0;
+  dhcp->msg_out->giaddr.addr = 0;
   for (i = 0; i < DHCP_CHADDR_LEN; i++) {
     /* copy netif hardware address, pad with zeroes */
     dhcp->msg_out->chaddr[i] = (i < netif->hwaddr_len) ? netif->hwaddr[i] : 0/* pad byte*/;
