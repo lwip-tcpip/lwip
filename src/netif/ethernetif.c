@@ -64,9 +64,7 @@ static err_t ethernetif_output(struct netif *netif, struct pbuf *p,
 static void
 low_level_init(struct netif *netif)
 {
-  struct ethernetif *ethernetif;
-
-  ethernetif = netif->state;
+  struct ethernetif *ethernetif = netif->state;
   
   /* set MAC hardware address length */
   netif->hwaddr_len = 6;
@@ -95,8 +93,9 @@ low_level_init(struct netif *netif)
  */
 
 static err_t
-low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
+low_level_output(struct netif *netif, struct pbuf *p)
 {
+  struct ethernetif *ethernetif = netif->state;
   struct pbuf *q;
 
   initiate transfer();
@@ -134,8 +133,9 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
  */
 
 static struct pbuf *
-low_level_input(struct ethernetif *ethernetif)
+low_level_input(struct netif *netif)
 {
+  struct ethernetif *ethernetif = netif->state;
   struct pbuf *p, *q;
   u16_t len;
 
@@ -223,7 +223,7 @@ ethernetif_input(struct netif *netif)
   ethernetif = netif->state;
   
   /* move received packet into a new pbuf */
-  p = low_level_input(ethernetif);
+  p = low_level_input(netif);
   /* no packet could be read, silently ignore this */
   if (p == NULL) return;
   /* points to packet payload, which starts with an Ethernet header */
