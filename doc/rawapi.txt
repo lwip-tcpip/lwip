@@ -272,6 +272,11 @@ level of complexity of UDP, the interface is significantly simpler.
   Sets the remote end of the pcb. This function does not generate any
   network traffic, but only set the remote address of the pcb.
 
+- err_t udp_disconnect(struct udp_pcb *pcb)
+
+  Remove the remote end of the pcb. This function does not generate
+  any network traffic, but only removes the remote address of the pcb.
+
 - err_t udp_send(struct udp_pcb *pcb, struct pbuf *p)
 
   Sends the pbuf p. The pbuf is not deallocated.
