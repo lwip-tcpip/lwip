@@ -32,6 +32,7 @@
 *****************************************************************************/
 
 #include "ppp.h"
+#if PPP_SUPPORT > 0
 #include "md5.h"
 #include "randm.h"
 
@@ -237,4 +238,5 @@ u32_t avRandom()
 
 
 #endif /* MD5_SUPPORT */
+#endif /* PPP_SUPPORT */
 

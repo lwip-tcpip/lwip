@@ -29,7 +29,7 @@
 *   Ported to lwIP.
 * 98-01-30 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
 *	Original built from BSD network code.
-******************************************************************************
+******************************************************************************/
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
  *
@@ -51,7 +51,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chpms.h,v 1.1 2003/05/27 14:37:56 jani Exp $
+ * $Id: chpms.h,v 1.2 2003/11/14 14:56:31 likewise Exp $
  */
 
 #ifndef CHPMS_H

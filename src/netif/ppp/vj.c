@@ -35,7 +35,7 @@
 
 #if VJ_SUPPORT > 0
 
-#ifdef LINK_STATS
+#if LINK_STATS
 #define INCR(counter) ++comp->stats.counter
 #else
 #define INCR(counter)
@@ -611,8 +611,7 @@ int vj_uncompress_tcp(
 			*nb = NULL;
 			goto bad;
 		}
-		pbuf_chain(np, n0);
-		pbuf_free(n0);
+		pbuf_cat(np, n0);
 		n0 = np;
 	}
 	LWIP_ASSERT("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);

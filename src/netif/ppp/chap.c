@@ -245,7 +245,7 @@ static void ChapChallengeTimeout(void *arg)
 	
 	if (cstate->chal_transmits >= cstate->max_transmits) {
 		/* give up on peer */
-		ppp_trace(LOG_ERR, "Peer failed to respond to CHAP challenge\n");
+		CHAPDEBUG((LOG_ERR, "Peer failed to respond to CHAP challenge\n"));
 		cstate->serverstate = CHAPSS_BADAUTH;
 		auth_peer_fail(cstate->unit, PPP_CHAP);
 		return;
@@ -405,7 +405,7 @@ static void ChapInput(int unit, u_char *inpacket, int packet_len)
 		break;
 	
 	default:				/* Need code reject? */
-		ppp_trace(LOG_WARNING, "Unknown CHAP code (%d) received.\n", code);
+		CHAPDEBUG((LOG_WARNING, "Unknown CHAP code (%d) received.\n", code));
 		break;
 	}
 }
@@ -466,7 +466,7 @@ static void ChapReceiveChallenge(chap_state *cstate, u_char *inp, int id, int le
 	if (!get_secret(cstate->unit, cstate->resp_name, rhostname,
 			    secret, &secret_len, 0)) {
 		secret_len = 0;		/* assume null secret if can't find one */
-		ppp_trace(LOG_WARNING, "No CHAP secret found for authenticating us to %s\n", rhostname);
+		CHAPDEBUG((LOG_WARNING, "No CHAP secret found for authenticating us to %s\n", rhostname));
 	}
 	
 	/* cancel response send timeout if necessary */
@@ -576,8 +576,8 @@ static void ChapReceiveResponse(chap_state *cstate, u_char *inp, int id, int len
 	if (!get_secret(cstate->unit, rhostname, cstate->chal_name,
 	secret, &secret_len, 1)) {
 /*        CHAPDEBUG((LOG_WARNING, TL_CHAP, "No CHAP secret found for authenticating %s\n", rhostname)); */
-		ppp_trace(LOG_WARNING, "No CHAP secret found for authenticating %s\n",
-		rhostname);
+		CHAPDEBUG((LOG_WARNING, "No CHAP secret found for authenticating %s\n",
+		rhostname));
 	} else {
 	
 		/*  generate MD based on negotiated type */
@@ -614,7 +614,7 @@ static void ChapReceiveResponse(chap_state *cstate, u_char *inp, int id, int len
 		if (cstate->chal_interval != 0)
 			TIMEOUT(ChapRechallenge, cstate, cstate->chal_interval);
 	} else {
-		ppp_trace(LOG_ERR, "CHAP peer authentication failed\n");
+		CHAPDEBUG((LOG_ERR, "CHAP peer authentication failed\n"));
 		cstate->serverstate = CHAPSS_BADAUTH;
 		auth_peer_fail(cstate->unit, PPP_CHAP);
 	}
@@ -675,7 +675,7 @@ static void ChapReceiveFailure(chap_state *cstate, u_char *inp, u_char id, int l
 	if (len > 0)
 		PRINTMSG(inp, len);
 	
-	ppp_trace(LOG_ERR, "CHAP authentication failed\n");
+	CHAPDEBUG((LOG_ERR, "CHAP authentication failed\n"));
 	auth_withpeer_fail(cstate->unit, PPP_CHAP);
 }
 

@@ -1,7 +1,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Id: vj.h,v 1.2 2003/06/02 11:12:56 jani Exp $
+ * $Id: vj.h,v 1.3 2003/11/14 14:56:31 likewise Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -136,7 +136,7 @@ struct vjcompress {
     u_short flags;
     u_char maxSlotIndex;
     u_char compressSlot;	/* Flag indicating OK to compress slot ID. */
-#ifdef LINK_STATS
+#if LINK_STATS
     struct vjstat stats;
 #endif
     struct cstate tstate[MAX_SLOTS];	/* xmit connection states */
