@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.19 2003/02/10 21:58:34 davidhaas Exp $
+ * $Id: udp.c,v 1.20 2003/02/14 15:49:02 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -440,56 +440,67 @@ err_t
 udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
-  u8_t rebind = 0;
+  u8_t rebind;
 
+  rebind = 0;
   /* Check for double bind and rebind of the same pcb */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     /* is this UDP PCB already on active list? */ 
     if (pcb == ipcb) {
+      /* TODO: add assert that rebind is 0 here (pcb may
+         occur at most once in list) */
 	    rebind = 1;
     }
+/* this code does not allow upper layer to share a UDP port for
+   listening to broadcast or multicast traffic (See SO_REUSE_ADDR and
+   SO_REUSE_PORT under *BSD). TODO: See where it fits instead, OR
+   combine with implementation of UDP PCB flags. Leon Woestenberg. */
+#if 0 
     /* port matches that of PCB in list? */
-    if ((ipcb->local_port == port) &&
+    else if ((ipcb->local_port == port) &&
        /* IP address matches, or one is IP_ADDR_ANY? */
-      (ip_addr_isany(&(ipcb->local_ip)) ||
+       (ip_addr_isany(&(ipcb->local_ip)) ||
 	     ip_addr_isany(ipaddr) ||
 	     ip_addr_cmp(&(ipcb->local_ip), ipaddr))) {
       /* other PCB already binds to this local IP and port */
+      DEBUGF(UDP_DEBUG, ("udp_bind: local port %u already bound by another pcb\n", port));
       return ERR_USE;	   
     }
+#endif
   }
   /* bind local address */
   ip_addr_set(&pcb->local_ip, ipaddr);
-  if(port == 0) {
+  if (port == 0) {
 #ifndef UDP_LOCAL_PORT_RANGE_START
 #define UDP_LOCAL_PORT_RANGE_START 4096
 #define UDP_LOCAL_PORT_RANGE_END   0x7fff
 #endif
-	port = UDP_LOCAL_PORT_RANGE_START;
-	ipcb = udp_pcbs;
-	while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
-		if(ipcb->local_port == port) {
-			port++;
-			ipcb = udp_pcbs;
-		} else
-			ipcb = ipcb->next;
-	}
-	if(ipcb) /* no more ports available in local range */
-		return ERR_USE;
+  	port = UDP_LOCAL_PORT_RANGE_START;
+  	ipcb = udp_pcbs;
+  	while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
+  		if(ipcb->local_port == port) {
+  			port++;
+  			ipcb = udp_pcbs;
+  		} else
+  			ipcb = ipcb->next;
+  	}
+  	if(ipcb) /* no more ports available in local range */
+      DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
+  		return ERR_USE;
   }
   pcb->local_port = port;
-
   /* We need to place the PCB on the list if not already there. */
   if (rebind == 0) {
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
   }  
-
   DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %u\n", port));
   return ERR_OK;
 }
 /**
  * Connect an UDP PCB.
+ *
+ * This will associate the UDP PCB with the remote address.
  *
  * @param pcb UDP PCB to be connected with remote address ipaddr and port.
  * @param ipaddr remote IP address to connect with.
@@ -512,7 +523,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
-#if 1
+/** TODO: this functionality belongs in upper layers */
+#if 0
+
   pcb->flags |= UDP_FLAGS_CONNECTED;
   /* Nail down local IP for netconn_addr()/getsockname() */
   if(ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
@@ -525,7 +538,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #endif /* UDP_STATS */
     	return ERR_RTE;
     }
-
+    /** TODO: this will bind the udp pcb locally, to the interface which
+        is used to route output packets to the remote address. However, we
+        might want to accept incoming packets on any interface! */
     pcb->local_ip = netif->ip_addr;
   } else if(ip_addr_isany(&pcb->remote_ip)) { 
     pcb->local_ip.addr = 0;
