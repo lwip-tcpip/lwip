@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.4 2002/12/18 10:40:01 jani Exp $
+ * $Id: udp.c,v 1.5 2002/12/18 12:49:02 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -156,7 +156,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   PERF_START;
   
 #ifdef UDP_STATS
-  ++stats.udp.recv;
+  ++lwip_stats.udp.recv;
 #endif /* UDP_STATS */
 
   iphdr = p->payload;
@@ -220,8 +220,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 			    IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
 	DEBUGF(UDP_DEBUG, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
 #ifdef UDP_STATS
-	++stats.udp.chkerr;
-	++stats.udp.drop;
+	++lwip_stats.udp.chkerr;
+	++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
 #if LWIP_SNMP > 0
     snmp_inc_udpinerrors();
@@ -237,8 +237,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 	  DEBUGF(UDP_DEBUG, ("udp_input: UDP datagram discarded due to failing checksum\n"));
 	  
 #ifdef UDP_STATS
-	  ++stats.udp.chkerr;
-	  ++stats.udp.drop;
+	  ++lwip_stats.udp.chkerr;
+	  ++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
 #if LWIP_SNMP > 0
     snmp_inc_udpinerrors();
@@ -272,8 +272,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 	icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
 #ifdef UDP_STATS
-      ++stats.udp.proterr;
-      ++stats.udp.drop;
+      ++lwip_stats.udp.proterr;
+      ++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
 #if LWIP_SNMP > 0
     snmp_inc_udpnoports();
@@ -321,7 +321,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     DEBUGF(UDP_DEBUG, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
 #ifdef UDP_STATS
-    ++stats.udp.rterr;
+    ++lwip_stats.udp.rterr;
 #endif /* UDP_STATS */
     return ERR_RTE;
   }
@@ -372,7 +372,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   }
   
 #ifdef UDP_STATS
-  ++stats.udp.xmit;
+  ++lwip_stats.udp.xmit;
 #endif /* UDP_STATS */
   return err;
 }

@@ -120,7 +120,7 @@ slipif_input( struct netif * netif )
 	pbuf_realloc(q, recved);
 	
 #ifdef LINK_STATS
-	++stats.link.recv;
+	++lwip_stats.link.recv;
 #endif /* LINK_STATS */         
 	
 	DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
@@ -147,7 +147,7 @@ slipif_input( struct netif * netif )
 
 #ifdef LINK_STATS           
 	if(p == NULL) {
-	  ++stats.link.drop;
+	  ++lwip_stats.link.drop;
 	  DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
 	}
 #endif /* LINK_STATS */                  

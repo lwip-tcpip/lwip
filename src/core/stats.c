@@ -41,14 +41,14 @@
 
 
 #ifdef STATS
-struct stats_ stats;
+struct stats_ lwip_stats;
 #endif /* STATS */
 /*-----------------------------------------------------------------------------------*/
 void
 stats_init(void)
 {
 #ifdef STATS
-  memset(&stats, 0, sizeof(struct stats_));
+  memset(&lwip_stats, 0, sizeof(struct stats_));
 #endif /* STATS */
 }
 /*-----------------------------------------------------------------------------------*/

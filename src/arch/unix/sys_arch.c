@@ -183,9 +183,9 @@ sys_mbox_new()
   mbox->wait_send = 0;
   
 #ifdef SYS_STATS
-  stats.sys.mbox.used++;
-  if(stats.sys.mbox.used > stats.sys.mbox.max) {
-    stats.sys.mbox.max = stats.sys.mbox.used;
+  lwip_stats.sys.mbox.used++;
+  if(lwip_stats.sys.mbox.used > lwip_stats.sys.mbox.max) {
+    lwip_stats.sys.mbox.max = lwip_stats.sys.mbox.used;
   }
 #endif /* SYS_STATS */
   
@@ -197,7 +197,7 @@ sys_mbox_free(struct sys_mbox *mbox)
 {
   if(mbox != SYS_MBOX_NULL) {
 #ifdef SYS_STATS
-    stats.sys.mbox.used--;
+    lwip_stats.sys.mbox.used--;
 #endif /* SYS_STATS */
     sys_sem_wait(mbox->mutex);
     
@@ -293,9 +293,9 @@ struct sys_sem *
 sys_sem_new(u8_t count)
 {
 #ifdef SYS_STATS
-  stats.sys.sem.used++;
-  if(stats.sys.sem.used > stats.sys.sem.max) {
-    stats.sys.sem.max = stats.sys.sem.used;
+  lwip_stats.sys.sem.used++;
+  if(lwip_stats.sys.sem.used > lwip_stats.sys.sem.max) {
+    lwip_stats.sys.sem.max = lwip_stats.sys.sem.used;
   }
 #endif /* SYS_STATS */
   return sys_sem_new_(count);
@@ -404,7 +404,7 @@ sys_sem_free(struct sys_sem *sem)
 {
   if(sem != SYS_SEM_NULL) {
 #ifdef SYS_STATS
-    stats.sys.sem.used--;
+    lwip_stats.sys.sem.used--;
 #endif /* SYS_STATS */
     sys_sem_free_(sem);
   }

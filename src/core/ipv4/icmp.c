@@ -56,7 +56,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   u16_t hlen;
   
 #ifdef ICMP_STATS
-  ++stats.icmp.recv;
+  ++lwip_stats.icmp.recv;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
   snmp_inc_icmpinmsgs();
@@ -75,7 +75,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
        ip_addr_ismulticast(&iphdr->dest)) {
       DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
 #ifdef ICMP_STATS
-      ++stats.icmp.err;
+      ++lwip_stats.icmp.err;
 #endif /* ICMP_STATS */
       pbuf_free(p);
       return;
@@ -86,7 +86,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
-      ++stats.icmp.lenerr;
+      ++lwip_stats.icmp.lenerr;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
       snmp_inc_icmpinerrors();
@@ -99,7 +99,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
-      ++stats.icmp.chkerr;
+      ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
       snmp_inc_icmpinerrors();
@@ -117,7 +117,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       iecho->chksum += htons(ICMP_ECHO << 8);
     }
 #ifdef ICMP_STATS
-    ++stats.icmp.xmit;
+    ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
     /* increase number of messages attempted to send */
@@ -133,8 +133,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
   default:
     DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type not supported.\n"));
 #ifdef ICMP_STATS
-    ++stats.icmp.proterr;
-    ++stats.icmp.drop;
+    ++lwip_stats.icmp.proterr;
+    ++lwip_stats.icmp.drop;
 #endif /* ICMP_STATS */
   }
   pbuf_free(p);
@@ -162,7 +162,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   idur->chksum = 0;
   idur->chksum = inet_chksum(idur, q->len);
 #ifdef ICMP_STATS
-  ++stats.icmp.xmit;
+  ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
   /* increase number of messages attempted to send */
@@ -206,7 +206,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   tehdr->chksum = 0;
   tehdr->chksum = inet_chksum(tehdr, q->len);
 #ifdef ICMP_STATS
-  ++stats.icmp.xmit;
+  ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 #if LWIP_SNMP > 0
   /* increase number of messages attempted to send */

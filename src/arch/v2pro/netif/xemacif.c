@@ -303,7 +303,7 @@ static err_t low_level_output(struct xemacif *xemacif_ptr, struct pbuf *p)
    if (Result != XST_SUCCESS) return ERR_MEM;      
 
 #ifdef LINK_STATS
-   stats.link.xmit++;
+   lwip_stats.link.xmit++;
 #endif /* LINK_STATS */
 
    return ERR_OK;
@@ -365,14 +365,14 @@ static struct pbuf * low_level_input(struct xemacif *xemacif_ptr)
       }
 
 #ifdef LINK_STATS
-      stats.link.recv++;
+      lwip_stats.link.recv++;
 #endif /* LINK_STATS */      
 
    } else {
 
 #ifdef LINK_STATS
-      stats.link.memerr++;
-      stats.link.drop++;
+      lwip_stats.link.memerr++;
+      lwip_stats.link.drop++;
 #endif /* LINK_STATS */ 
       ;
    }

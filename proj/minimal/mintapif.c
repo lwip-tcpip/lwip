@@ -260,7 +260,7 @@ mintapif_input(struct netif *netif)
   if(p != NULL) {
 
 #ifdef LINK_STATS
-    stats.link.recv++;
+    lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
     ethhdr = p->payload;

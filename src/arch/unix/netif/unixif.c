@@ -225,7 +225,7 @@ unixif_input_handler(void *data)
       }
       pbuf_realloc(p, len);
 #ifdef LINK_STATS
-      stats.link.recv++;
+      lwip_stats.link.recv++;
 #endif /* LINK_STATS */
       tcpdump(p);
       netif->input(p, netif);
@@ -319,7 +319,7 @@ unixif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
       
 #endif /* UNIXIF_DROP_FIRST */
 #ifdef LINK_STATS
-      stats.link.drop++;
+      lwip_stats.link.drop++;
 #endif /* LINK_STATS */
 
     } else {
@@ -393,7 +393,7 @@ unixif_output_timeout(void *arg)
   }
   tcpdump(p);
 #ifdef LINK_STATS
-  stats.link.xmit++;
+  lwip_stats.link.xmit++;
 #endif /* LINK_STATS */
 
   free(data);

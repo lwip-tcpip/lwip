@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.17  2002/12/18 12:49:02  jani
+ * renamed (hopefully everywhere) stats to lwip_stats.closes bug #1901
+ *
  * Revision 1.16  2002/12/17 09:41:16  jani
  * Use C style comments.In debug stataments cast various struct pointers to void* to
  * avoid printf warnings.misc warnings in etharp.
@@ -548,7 +551,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     out if it does.. */
     DEBUGF(ETHARP_DEBUG, ("etharp_output: could not allocate room for header.\n"));
 #ifdef LINK_STATS
-    ++stats.link.lenerr;
+    ++lwip_stats.link.lenerr;
 #endif /* LINK_STATS */
     return NULL;
   }

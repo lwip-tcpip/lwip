@@ -294,7 +294,7 @@ low_level_output(struct netif *ethernetif, struct pbuf *p)
 	PacketFreePacket(lpPacket);
 
 #ifdef LINK_STATS
-  stats.link.xmit++;
+  lwip_stats.link.xmit++;
 #endif /* LINK_STATS */      
   return ERR_OK;
 }
@@ -346,14 +346,14 @@ low_level_input(struct netif *ethernetif)
     /* acknowledge that packet has been read(); */
     cur_length=0;
 #ifdef LINK_STATS
-    stats.link.recv++;
+    lwip_stats.link.recv++;
 #endif /* LINK_STATS */      
   } else {
     /* drop packet(); */
     cur_length=0;
 #ifdef LINK_STATS
-    stats.link.memerr++;
-    stats.link.drop++;
+    lwip_stats.link.memerr++;
+    lwip_stats.link.drop++;
 #endif /* LINK_STATS */      
   }
 
@@ -405,7 +405,7 @@ ethernetif_input(struct netif *netif)
   if(p != NULL) {
 
 #ifdef LINK_STATS
-    stats.link.recv++;
+    lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
     ethhdr = p->payload;

@@ -53,7 +53,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   
  
 #ifdef ICMP_STATS
-  ++stats.icmp.recv;
+  ++lwip_stats.icmp.recv;
 #endif /* ICMP_STATS */
 
   type = ((char *)p->payload)[0];
@@ -67,7 +67,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
       pbuf_free(p);
 #ifdef ICMP_STATS
-      ++stats.icmp.lenerr;
+      ++lwip_stats.icmp.lenerr;
 #endif /* ICMP_STATS */
 
       return;      
@@ -78,7 +78,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 
 #ifdef ICMP_STATS
-      ++stats.icmp.chkerr;
+      ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
     /*      return;*/
     }
@@ -95,7 +95,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     }
     DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 #ifdef ICMP_STATS
-    ++stats.icmp.xmit;
+    ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
     /*    DEBUGF("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len);*/
@@ -106,8 +106,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type not supported.\n"));
 
 #ifdef ICMP_STATS
-    ++stats.icmp.proterr;
-    ++stats.icmp.drop;
+    ++lwip_stats.icmp.proterr;
+    ++lwip_stats.icmp.drop;
 #endif /* ICMP_STATS */
   }
 
@@ -136,7 +136,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   idur->chksum = 0;
   idur->chksum = inet_chksum(idur, q->len);
 #ifdef ICMP_STATS
-  ++stats.icmp.xmit;
+  ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
   ip_output(q, NULL,
@@ -168,7 +168,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   tehdr->chksum = 0;
   tehdr->chksum = inet_chksum(tehdr, q->len);
 #ifdef ICMP_STATS
-  ++stats.icmp.xmit;
+  ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
   ip_output(q, NULL, 
 	    (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);

@@ -143,9 +143,9 @@ memp_init(void)
       
 #ifdef MEMP_STATS
   for(i = 0; i < MEMP_MAX; ++i) {
-    stats.memp[i].used = stats.memp[i].max =
-      stats.memp[i].err = 0;
-    stats.memp[i].avail = memp_num[i];
+    lwip_stats.memp[i].used = lwip_stats.memp[i].max =
+      lwip_stats.memp[i].err = 0;
+    lwip_stats.memp[i].avail = memp_num[i];
   }
 #endif /* MEMP_STATS */
 
@@ -187,9 +187,9 @@ memp_malloc(memp_t type)
     memp_tab[type] = memp->next;    
     memp->next = NULL;
 #ifdef MEMP_STATS
-    ++stats.memp[type].used;
-    if(stats.memp[type].used > stats.memp[type].max) {
-      stats.memp[type].max = stats.memp[type].used;
+    ++lwip_stats.memp[type].used;
+    if(lwip_stats.memp[type].used > lwip_stats.memp[type].max) {
+      lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
     ASSERT("memp_malloc: memp properly aligned",
@@ -202,7 +202,7 @@ memp_malloc(memp_t type)
   } else {
     DEBUGF(MEMP_DEBUG, ("memp_malloc: out of memory in pool %d\n", type));
 #ifdef MEMP_STATS
-    ++stats.memp[type].err;
+    ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */
     return NULL;
   }
@@ -253,7 +253,7 @@ memp_free(memp_t type, void *mem)
   memp = (struct memp *)((u8_t *)mem - sizeof(struct memp));
 
 #ifdef MEMP_STATS
-  stats.memp[type].used--; 
+  lwip_stats.memp[type].used--; 
 #endif /* MEMP_STATS */
   
   memp->next = memp_tab[type]; 

@@ -441,7 +441,7 @@ com_stat(struct command *com)
   u16_t len;
   
   for(i = 0; i < sizeof(struct stats_) / 2; i++) {
-    len = sprintf(buf, "%d", ((u16_t *)&stats)[i]);
+    len = sprintf(buf, "%d", ((u16_t *)&lwip_stats)[i]);
     sendstr(stat_msgs[i], com->conn);
     netconn_write(com->conn, buf, len, NETCONN_COPY);
     sendstr("\n", com->conn);

@@ -108,7 +108,7 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
   signal that packet should be sent();
   
 #ifdef LINK_STATS
-  stats.link.xmit++;
+  lwip_stats.link.xmit++;
 #endif /* LINK_STATS */      
 
   return ERR_OK;
@@ -146,13 +146,13 @@ low_level_input(struct ethernetif *ethernetif)
     }
     acknowledge that packet has been read();
 #ifdef LINK_STATS
-    stats.link.recv++;
+    lwip_stats.link.recv++;
 #endif /* LINK_STATS */      
   } else {
     drop packet();
 #ifdef LINK_STATS
-    stats.link.memerr++;
-    stats.link.drop++;
+    lwip_stats.link.memerr++;
+    lwip_stats.link.drop++;
 #endif /* LINK_STATS */      
   }
 
@@ -189,8 +189,8 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
     q = pbuf_alloc(PBUF_LINK, 14, PBUF_RAM);
     if(q == NULL) {
 #ifdef LINK_STATS
-      stats.link.drop++;
-      stats.link.memerr++;
+      lwip_stats.link.drop++;
+      lwip_stats.link.memerr++;
 #endif /* LINK_STATS */      
       return ERR_MEM;
     }
@@ -240,8 +240,8 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
       return err;
     }
 #ifdef LINK_STATS
-    stats.link.drop++;
-    stats.link.memerr++;
+    lwip_stats.link.drop++;
+    lwip_stats.link.memerr++;
 #endif /* LINK_STATS */          
     return ERR_MEM;
   }
@@ -283,7 +283,7 @@ ethernetif_input(struct netif *netif)
   if(p != NULL) {
 
 #ifdef LINK_STATS
-    stats.link.recv++;
+    lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
     ethhdr = p->payload;

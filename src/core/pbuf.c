@@ -81,7 +81,7 @@ pbuf_init(void)
   ASSERT("pbuf_init: pool aligned", (long)pbuf_pool % MEM_ALIGNMENT == 0);
    
 #ifdef PBUF_STATS
-  stats.pbuf.avail = PBUF_POOL_SIZE;
+  lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
 #endif /* PBUF_STATS */
   
   /* Set up ->next pointers to link the pbufs of the pool together. */
@@ -123,7 +123,7 @@ pbuf_pool_alloc(void)
        pretend to be out of buffers and return NULL. */
     if(pbuf_pool_free_lock) {
 #ifdef PBUF_STATS
-      ++stats.pbuf.alloc_locked;
+      ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
       return NULL;
     }
@@ -135,7 +135,7 @@ pbuf_pool_alloc(void)
       }
 #ifdef PBUF_STATS
     } else {
-      ++stats.pbuf.alloc_locked;
+      ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
     }
     pbuf_pool_alloc_lock = 0;
@@ -143,9 +143,9 @@ pbuf_pool_alloc(void)
 
 #ifdef PBUF_STATS
   if(p != NULL) {    
-    ++stats.pbuf.used;
-    if(stats.pbuf.used > stats.pbuf.max) {
-      stats.pbuf.max = stats.pbuf.used;
+    ++lwip_stats.pbuf.used;
+    if(lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
+      lwip_stats.pbuf.max = lwip_stats.pbuf.used;
     }
   }
 #endif /* PBUF_STATS */
@@ -160,7 +160,7 @@ pbuf_pool_free(struct pbuf *p)
 
 #ifdef PBUF_STATS
     for(q = p; q != NULL; q = q->next) {
-      --stats.pbuf.used;
+      --lwip_stats.pbuf.used;
     }
 #endif /* PBUF_STATS */
   
@@ -221,7 +221,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     p = pbuf_pool_alloc();
     if(p == NULL) {
 #ifdef PBUF_STATS
-      ++stats.pbuf.err;
+      ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
       return NULL;
     }
@@ -247,7 +247,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
       if(q == NULL) {
 	DEBUGF(PBUF_DEBUG, ("pbuf_alloc: Out of pbufs in pool,\n"));
 #ifdef PBUF_STATS
-        ++stats.pbuf.err;
+        ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
         pbuf_pool_free(p);
         return NULL;
@@ -328,7 +328,7 @@ pbuf_refresh(void)
       pbuf_pool_free_cache = NULL;
 #ifdef PBUF_STATS
     } else {
-      ++stats.pbuf.refresh_locked;
+      ++lwip_stats.pbuf.refresh_locked;
 #endif /* PBUF_STATS */
     }
     
@@ -390,7 +390,7 @@ pbuf_realloc(struct pbuf *p, u16_t size)
       r = q->next;
       PBUF_POOL_FREE(q);
 #ifdef PBUF_STATS
-      --stats.pbuf.used;
+      --lwip_stats.pbuf.used;
 #endif /* PBUF_STATS */
       q = r;
     }
@@ -502,7 +502,7 @@ pbuf_free(struct pbuf *p)
 	q = p->next;
 	PBUF_POOL_FREE(p);
 #ifdef PBUF_STATS
-	--stats.pbuf.used;
+	--lwip_stats.pbuf.used;
 #endif /* PBUF_STATS */
       } else if(p->flags == PBUF_FLAG_ROM) {
 	q = p->next;

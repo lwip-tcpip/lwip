@@ -134,8 +134,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
   DEBUGF(IP_DEBUG, ("\n"));
 
 #ifdef IP_STATS
-  ++stats.ip.fw;
-  ++stats.ip.xmit;
+  ++lwip_stats.ip.fw;
+  ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
 
   PERF_STOP("ip_forward");
@@ -167,7 +167,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   
 #ifdef IP_STATS
-  ++stats.ip.recv;
+  ++lwip_stats.ip.recv;
 #endif /* IP_STATS */
   
   /* identify the IP header */
@@ -181,8 +181,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif /* IP_DEBUG */
     pbuf_free(p);
 #ifdef IP_STATS
-    ++stats.ip.err;
-    ++stats.ip.drop;
+    ++lwip_stats.ip.err;
+    ++lwip_stats.ip.drop;
 #endif /* IP_STATS */
     return;
   }
@@ -241,8 +241,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 		      iphdr->nexthdr));
 
 #ifdef IP_STATS
-    ++stats.ip.proterr;
-    ++stats.ip.drop;
+    ++lwip_stats.ip.proterr;
+    ++lwip_stats.ip.drop;
 #endif /* IP_STATS */
 
   }
@@ -270,7 +270,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   if(pbuf_header(p, IP_HLEN)) {
     DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
 #ifdef IP_STATS
-    ++stats.ip.err;
+    ++lwip_stats.ip.err;
 #endif /* IP_STATS */
 
     return ERR_BUF;
@@ -300,7 +300,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   }
 
 #ifdef IP_STATS
-  ++stats.ip.xmit;
+  ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
 
   DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %d)\n", netif->name[0], netif->name[1], p->tot_len));
@@ -326,7 +326,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   if((netif = ip_route(dest)) == NULL) {
     DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%lx\n", dest->addr));
 #ifdef IP_STATS
-    ++stats.ip.rterr;
+    ++lwip_stats.ip.rterr;
 #endif /* IP_STATS */
     return ERR_RTE;
   }

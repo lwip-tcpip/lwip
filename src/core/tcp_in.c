@@ -102,7 +102,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   
 #ifdef TCP_STATS
-  ++stats.tcp.recv;
+  ++lwip_stats.tcp.recv;
 #endif /* TCP_STATS */
 
   iphdr = p->payload;
@@ -129,8 +129,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
     tcp_debug_print(tcphdr);
 #endif /* TCP_DEBUG */
 #ifdef TCP_STATS
-    ++stats.tcp.chkerr;
-    ++stats.tcp.drop;
+    ++lwip_stats.tcp.chkerr;
+    ++lwip_stats.tcp.drop;
 #endif /* TCP_STATS */
 
     pbuf_free(p);
@@ -316,8 +316,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
     DEBUGF(TCP_RST_DEBUG, ("tcp_input: no PCB match found, resetting.\n"));
     if(!(TCPH_FLAGS(tcphdr) & TCP_RST)) {
 #ifdef TCP_STATS
-      ++stats.tcp.proterr;
-      ++stats.tcp.drop;
+      ++lwip_stats.tcp.proterr;
+      ++lwip_stats.tcp.drop;
 #endif /* TCP_STATS */      
       tcp_rst(ackno, seqno + tcplen,
 	      &(iphdr->dest), &(iphdr->src),
@@ -360,7 +360,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     if(npcb == NULL) {
       DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
 #ifdef TCP_STATS
-      ++stats.tcp.memerr;
+      ++lwip_stats.tcp.memerr;
 #endif /* TCP_STATS */
       return ERR_MEM;
     }

@@ -96,7 +96,7 @@ struct stats_ {
   struct stats_sys sys;
 };
 
-extern struct stats_ stats;
+extern struct stats_ lwip_stats;
 
 #endif /* STATS */
 

@@ -203,7 +203,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
 	
 #ifdef TCP_STATS
-      ++stats.tcp.err;
+      ++lwip_stats.tcp.err;
 #endif /* TCP_STATS */
       goto memerr;
     }
@@ -292,7 +292,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   return ERR_OK;
  memerr:
 #ifdef TCP_STATS
-  ++stats.tcp.memerr;
+  ++lwip_stats.tcp.memerr;
 #endif /* TCP_STATS */
 
   if(queue != NULL) {
@@ -354,7 +354,7 @@ tcp_output(struct tcp_pcb *pcb)
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) no room for TCP header in pbuf.\n"));
       
 #ifdef TCP_STATS
-      ++stats.tcp.err;
+      ++lwip_stats.tcp.err;
 #endif /* TCP_STATS */
       pbuf_free(p);
       return ERR_BUF;
@@ -495,7 +495,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 					   &(pcb->remote_ip),
 					   IP_PROTO_TCP, seg->p->tot_len);
 #ifdef TCP_STATS
-  ++stats.tcp.xmit;
+  ++lwip_stats.tcp.xmit;
 #endif /* TCP_STATS */
 
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), TCP_TTL,
@@ -520,7 +520,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_rst: no room for TCP header in pbuf.\n"));
 
 #ifdef TCP_STATS
-    ++stats.tcp.err;
+    ++lwip_stats.tcp.err;
 #endif /* TCP_STATS */
     return;
   }
@@ -540,7 +540,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
 				      IP_PROTO_TCP, p->tot_len);
 
 #ifdef TCP_STATS
-  ++stats.tcp.xmit;
+  ++lwip_stats.tcp.xmit;
 #endif /* TCP_STATS */
   ip_output(p, local_ip, remote_ip, TCP_TTL, IP_PROTO_TCP);
   pbuf_free(p);
