@@ -255,7 +255,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Finally, if we still did not get a match, we check all PCBs that
      are LISTENing for incoming connections. */
     prev = NULL;
-    for(lpcb = tcp_listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if ((ip_addr_isany(&(lpcb->local_ip)) ||
     ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest))) &&
    lpcb->local_port == tcphdr->dest) {
@@ -265,9 +265,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (prev != NULL) {
     ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
           /* our successor is the remainder of the listening list */
-    lpcb->next = tcp_listen_pcbs;
+    lpcb->next = tcp_listen_pcbs.listen_pcbs;
           /* put this listening pcb at the head of the listening list */
-    tcp_listen_pcbs = lpcb;
+    tcp_listen_pcbs.listen_pcbs = lpcb;
   }
 
   LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
