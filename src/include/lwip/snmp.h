@@ -55,6 +55,8 @@ void snmp_inc_ipindiscards(void);
 void snmp_inc_ipoutdiscards(void);
 void snmp_inc_ipoutrequests(void);
 void snmp_inc_ipunknownprotos(void);
+void snmp_inc_ipnoroutes(void);
+void snmp_inc_ipforwdatagrams(void);
 
 /* ICMP */
 void snmp_inc_icmpinmsgs(void);
@@ -173,4 +175,4 @@ void snmp_inc_udpoutdatagrams(void);
 
 #endif
 
-#endif //__LWIP_SNMP_H__
+#endif /* __LWIP_SNMP_H__ */
