@@ -42,7 +42,7 @@
 
 #include "lwip/stats.h"
 
-#include "snmp.h"
+#include "lwip/snmp.h"
 /*-----------------------------------------------------------------------------------*/
 void
 icmp_input(struct pbuf *p, struct netif *inp)

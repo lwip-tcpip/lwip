@@ -55,7 +55,7 @@
 
 #include "arch/perf.h"
 
-#include "snmp.h"
+#include "lwip/snmp.h"
 #if LWIP_DHCP
 #include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */

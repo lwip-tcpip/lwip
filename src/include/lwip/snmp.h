@@ -123,6 +123,8 @@ void snmp_inc_udpoutdatagrams(void);
 #define snmp_inc_ipoutdiscards()
 #define snmp_inc_ipoutrequests()
 #define snmp_inc_ipunknownprotos()
+#define snmp_inc_ipnoroutes()
+#define snmp_inc_ipforwdatagrams()
 
 // ICMP
 #define snmp_inc_icmpinmsgs()
