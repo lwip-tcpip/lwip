@@ -100,7 +100,7 @@ void pbuf_init(void);
                 prepended by allocating another pbuf and chain in to
                 the front of the ROM pbuf.
 
-   * PBUF_ROOL: the pbuf is allocated as a pbuf chain, with pbufs from
+   * PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
                 the pbuf pool that is allocated during pbuf_init().  */
 struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
 
@@ -123,12 +123,12 @@ u8_t pbuf_header(struct pbuf *p, s16_t header_size);
    Increments the reference count of the pbuf p.
  */
 void pbuf_ref(struct pbuf *p);
-
+void pbuf_ref_chain(struct pbuf *p);
 /* pbuf_free():
 
    Decrements the reference count and deallocates the pbuf if the
    reference count is zero. If the pbuf is a chain all pbufs in the
-   chain are deallocated.  */
+   chain are deallocated. */
 u8_t pbuf_free(struct pbuf *p);
 
 /* pbuf_clen():

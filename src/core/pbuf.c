@@ -555,6 +555,20 @@ pbuf_ref(struct pbuf *p)
   }
   ++(p->ref);
 }
+
+/*------------------------------------------------------------------------------
+/* pbuf_ref_chain():
+ *
+ * Increments the reference count of all pbufs in a chain.
+ */
+void
+pbuf_ref_chain(struct pbuf *p)
+{
+  while (p != NULL) {
+    p->ref++;
+    p=p->next;
+  }
+}
 /*-----------------------------------------------------------------------------------*/
 /* pbuf_chain():
  *
