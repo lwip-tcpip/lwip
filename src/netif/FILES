@@ -1,17 +1,18 @@
 This directory contains generic network interface device drivers that
-don't contain any hardware or architecture specific code. The files
+do not contain any hardware or architecture specific code. The files
 are:
 
 etharp.c
           Implements the ARP (Address Resolution Protocol) over
           Ethernet. The code in this file should be used together with
-          Ethernet device drivers.
+          Ethernet device drivers. Note that this module has been
+          largely made Ethernet independent so you should be able to
+          adapt this for other link layers (such as Firewire).
 
 ethernetif.c
           An example of how an Ethernet device driver could look. This
           file can be used as a "skeleton" for developing new Ethernet
           network device drivers. It uses the etharp.c ARP code.
-	  !!!THIS FILE IS NOT IN SYNC WITH CURRENT CODE !!!!
 
 loopif.c
           An example network interface that shows how a "loopback"
