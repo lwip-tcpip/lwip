@@ -92,10 +92,8 @@ The following functions must be implemented by the sys_arch:
   ptr"). The "msg" parameter maybe NULL to indicate that the message
   should be dropped.
 
-  The return values are the same as for the sys_arch_sem_wait()
-  function and the function must not return zero even if a message was
-  present in the mailbox and the time spent waiting was zero
-  milliseconds. 
+  The return values are the same as for the sys_arch_sem_wait() function:
+  Number of milliseconds spent waitng or 0xffffffff if there was a timeout.
 
   Note that a function with a similar name, sys_mbox_fetch(), is
   implemented by lwIP. 
