@@ -208,8 +208,11 @@ enum NPmode {
 #define BCMP(s0, s1, l)     memcmp((u_char *)(s0), (u_char *)(s1), (l))
 #define BCOPY(s, d, l)      memcpy((d), (s), (l))
 #define BZERO(s, n)         memset(s, 0, n)
-
+#if PPP_DEBUG
 #define PRINTMSG(m, l)  { m[l] = '\0'; ppp_trace(LOG_INFO, "Remote message: %s\n", m); }
+#else
+#define PRINTMSG(m, l)
+#endif
 
 /*
  * MAKEHEADER - Add PPP Header fields to a packet.

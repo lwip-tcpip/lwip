@@ -194,7 +194,7 @@ void link_terminated(int unit)
     if (logged_in)
         logout();
     lcp_phase[unit] = PHASE_DEAD;
-    ppp_trace(LOG_NOTICE, "Connection terminated.\n");
+    AUTHDEBUG((LOG_NOTICE, "Connection terminated.\n"));
 	pppMainWakeup(unit);
 }
 
@@ -257,7 +257,7 @@ void link_established(int unit)
          * of "" and a password of "".  If that's not OK, boot it out.
          */
         if (!wo->neg_upap || !null_login(unit)) {
-            ppp_trace(LOG_WARNING, "peer refused to authenticate\n");
+            AUTHDEBUG((LOG_WARNING, "peer refused to authenticate\n"));
             lcp_close(unit, "peer refused to authenticate");
             return;
         }
@@ -294,7 +294,7 @@ void link_established(int unit)
         if (ppp_settings.passwd[0] == 0) {
             passwd_from_file = 1;
             if (!get_pap_passwd(unit, ppp_settings.user, ppp_settings.passwd))
-                ppp_trace(LOG_ERR, "No secret found for PAP login\n");
+                AUTHDEBUG((LOG_ERR, "No secret found for PAP login\n"));
         }
         upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
         auth |= PAP_WITHPEER;
@@ -337,8 +337,8 @@ void auth_peer_success(int unit, u16_t protocol, char *name, int namelen)
         pbit = PAP_PEER;
         break;
     default:
-        ppp_trace(LOG_WARNING, "auth_peer_success: unknown protocol %x\n",
-               protocol);
+        AUTHDEBUG((LOG_WARNING, "auth_peer_success: unknown protocol %x\n",
+               protocol));
         return;
     }
     
@@ -400,8 +400,8 @@ void auth_withpeer_success(int unit, u16_t protocol)
         pbit = PAP_WITHPEER;
         break;
     default:
-        ppp_trace(LOG_WARNING, "auth_peer_success: unknown protocol %x\n",
-               protocol);
+        AUTHDEBUG((LOG_WARNING, "auth_peer_success: unknown protocol %x\n",
+               protocol));
         pbit = 0;
     }
     
@@ -541,7 +541,7 @@ int check_passwd(
          * On 10'th, drop the connection.
          */
         if (attempts++ >= 10) {
-            ppp_trace(LOG_WARNING, "%d LOGIN FAILURES BY %s\n", attempts, user);
+            AUTHDEBUG((LOG_WARNING, "%d LOGIN FAILURES BY %s\n", attempts, user));
             /*ppp_panic("Excess Bad Logins");*/
         }
         if (attempts > 3) {
@@ -616,7 +616,7 @@ int get_secret(
 
     len = strlen(ppp_settings.passwd);
     if (len > MAXSECRETLEN) {
-        ppp_trace(LOG_ERR, "Secret for %s on %s is too long\n", client, server);
+        AUTHDEBUG((LOG_ERR, "Secret for %s on %s is too long\n", client, server));
         len = MAXSECRETLEN;
     }
     BCOPY(ppp_settings.passwd, secret, len);
@@ -640,7 +640,7 @@ int get_secret(
     
     len = strlen(secbuf);
     if (len > MAXSECRETLEN) {
-        ppp_trace(LOG_ERR, "Secret for %s on %s is too long\n", client, server);
+        AUTHDEBUG((LOG_ERR, "Secret for %s on %s is too long\n", client, server));
         len = MAXSECRETLEN;
     }
     BCOPY(secbuf, secret, len);
@@ -753,7 +753,7 @@ static void check_idle(void *arg)
     itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
     if (itime >= ppp_settings.idle_time_limit) {
         /* link is idle: shut it down. */
-        ppp_trace(LOG_INFO, "Terminating connection due to lack of activity.\n");
+        AUTHDEBUG((LOG_INFO, "Terminating connection due to lack of activity.\n"));
         lcp_close(0, "Link inactive");
     } else {
         TIMEOUT(check_idle, NULL, ppp_settings.idle_time_limit - itime);
@@ -767,7 +767,7 @@ static void connect_time_expired(void *arg)
 {
 	(void)arg;
 
-    ppp_trace(LOG_INFO, "Connect time expired\n");
+    AUTHDEBUG((LOG_INFO, "Connect time expired\n"));
     lcp_close(0, "Connect time expired");   /* Close connection */
 }
 

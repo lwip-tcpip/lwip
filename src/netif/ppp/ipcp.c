@@ -1192,12 +1192,12 @@ static void ipcp_up(fsm *f)
 		ho->hisaddr = wo->hisaddr;
 	
 	if (ho->hisaddr == 0) {
-		ppp_trace(LOG_ERR, "Could not determine remote IP address\n");
+		IPCPDEBUG((LOG_ERR, "Could not determine remote IP address\n"));
 		ipcp_close(f->unit, "Could not determine remote IP address");
 		return;
 	}
 	if (go->ouraddr == 0) {
-		ppp_trace(LOG_ERR, "Could not determine local IP address\n");
+		IPCPDEBUG((LOG_ERR, "Could not determine local IP address\n"));
 		ipcp_close(f->unit, "Could not determine local IP address");
 		return;
 	}
@@ -1210,8 +1210,8 @@ static void ipcp_up(fsm *f)
 	 * Check that the peer is allowed to use the IP address it wants.
 	 */
 	if (!auth_ip_addr(f->unit, ho->hisaddr)) {
-		ppp_trace(LOG_ERR, "Peer is not authorized to use remote address %s\n",
-				inet_ntoa(ho->hisaddr));
+		IPCPDEBUG((LOG_ERR, "Peer is not authorized to use remote address %s\n",
+				inet_ntoa(ho->hisaddr)));
 		ipcp_close(f->unit, "Unauthorized remote IP address");
 		return;
 	}

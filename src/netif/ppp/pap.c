@@ -216,7 +216,7 @@ static void upap_timeout(void *arg)
 	
 	if (u->us_transmits >= u->us_maxtransmits) {
 		/* give up in disgust */
-		ppp_trace(LOG_ERR, "No response to PAP authenticate-requests\n");
+		UPAPDEBUG((LOG_ERR, "No response to PAP authenticate-requests\n"));
 		u->us_clientstate = UPAPCS_BADAUTH;
 		auth_withpeer_fail(u->us_unit, PPP_PAP);
 		return;
@@ -299,11 +299,11 @@ static void upap_protrej(int unit)
 	upap_state *u = &upap[unit];
 	
 	if (u->us_clientstate == UPAPCS_AUTHREQ) {
-		ppp_trace(LOG_ERR, "PAP authentication failed due to protocol-reject\n");
+		UPAPDEBUG((LOG_ERR, "PAP authentication failed due to protocol-reject\n"));
 		auth_withpeer_fail(unit, PPP_PAP);
 	}
 	if (u->us_serverstate == UPAPSS_LISTEN) {
-		ppp_trace(LOG_ERR, "PAP authentication of peer failed (protocol-reject)\n");
+		UPAPDEBUG((LOG_ERR, "PAP authentication of peer failed (protocol-reject)\n"));
 		auth_peer_fail(unit, PPP_PAP);
 	}
 	upap_lowerdown(unit);
@@ -518,7 +518,7 @@ static void upap_rauthnak(
 	
 	u->us_clientstate = UPAPCS_BADAUTH;
 	
-	ppp_trace(LOG_ERR, "PAP authentication failed\n");
+	UPAPDEBUG((LOG_ERR, "PAP authentication failed\n"));
 	auth_withpeer_fail(u->us_unit, PPP_PAP);
 }
 
