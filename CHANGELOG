@@ -11,7 +11,7 @@ HISTORY
 
 (STABLE-1_1_0-RC1)
 
-  2004-10-16 Kieran Mansley - kjm25@cam.ac.uk
+  2004-10-16 Kieran Mansley <kjm25@cam.ac.uk>
   * tcp.c Add code to tcp_recved() to send an ACK (window update) immediately,
 	even if one is already pending, if the rcv_wnd is above a threshold
 	(currently TCP_WND/2). This avoids waiting for a timer to expire to send a
