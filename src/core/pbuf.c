@@ -415,7 +415,7 @@ pbuf_refresh(void)
 void
 pbuf_realloc(struct pbuf *p, u16_t new_len)
 {
-  struct pbuf *q, *r;
+  struct pbuf *q;
   u16_t rem_len; /* remaining length */
   s16_t grow;
 
@@ -701,6 +701,7 @@ struct pbuf *
 pbuf_dechain(struct pbuf *p)
 {
   struct pbuf *q;
+  u8_t deallocated;
   /* tail */  
   q = p->next;
   /* pbuf has successor in chain? */
@@ -713,13 +714,11 @@ pbuf_dechain(struct pbuf *p)
   /* decouple pbuf from remainder */
   p->tot_len = p->len;
   p->next = NULL;
-#if PBUF_CHAIN_DOES_REFER /** TODO (WORK IN PROGRESS) */
-  /* q is no longer referenced by p */
+  /* q is no longer referenced by p, free */
   deallocated = pbuf_free(q);
   DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dechain: unreferencing %p\n", (void *) q));
-#endif
   /* return remaining tail or NULL if deallocated */
-  return (deallocated? NULL: q);
+  return (deallocated > 0? NULL: q);
 }
 
 /**
@@ -785,19 +784,19 @@ pbuf_take(struct pbuf *f)
         /* remove linkage from original pbuf */
         p->next = NULL;
         /* remove linkage to original pbuf */
-        if (prev != NULL)
+        if (prev != NULL) {
           /* prev->next == p at this point */
           /* break chain and insert new pbuf instead */
           prev->next = q;
           /* p is no longer pointed to by prev or by our caller, 
            * as the caller must do p = pbuf_take(p); so free it
-           * from our usage.
+           * from reference through linkage.
            * note that we have set p->next to NULL already so that
            * we will not free the rest of the chain by accident.
            */
           pbuf_free(p);
         /* prev == NULL, so we replaced the top pbuf of the chain */
-        else
+        } else
           top = q;
         /* copy pbuf payload */
         memcpy(q->payload, p->payload, p->len);
