@@ -34,8 +34,7 @@
 #define __LWIP_MEMP_H__
 
 #include "lwip/debug.h"
-#include "arch/cc.h"
-#include "lwipopts.h"
+#include "lwip/opt.h"
 
 typedef enum {
   MEMP_PBUF,

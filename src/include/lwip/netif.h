@@ -32,7 +32,6 @@
 #ifndef __LWIP_NETIF_H__
 #define __LWIP_NETIF_H__
 
-#include "lwipopts.h"
 #include "lwip/opt.h"
 
 #include "lwip/err.h"

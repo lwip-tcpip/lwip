@@ -5,7 +5,7 @@
 #define __LWIP_DHCP_H__
 
 #include "udp.h"
-#include "lwipopts.h"
+#include "lwip/opt.h"
 
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS 60 

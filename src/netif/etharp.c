@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.27  2003/02/20 16:32:24  jani
+ * do not directly include lwipopts.h but lwip/opt.h instead
+ *
  * Revision 1.26  2003/02/20 13:13:56  likewise
  * Fixed some issues open after merging 'leon-dhcp'. Added new debugging.
  *
@@ -158,7 +161,6 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
-#include "lwipopts.h"
 
 /* ARP needs to inform DHCP of any ARP replies? */
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)

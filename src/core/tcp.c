@@ -48,7 +48,7 @@
 
 #include "lwip/tcp.h"
 
-#include "lwipopts.h"
+#include "lwip/opt.h"
 
 /* Incremented every coarse grained timer shot
    (typically every 500 ms, determined by TCP_COARSE_TIMEOUT). */

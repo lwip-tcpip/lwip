@@ -68,7 +68,7 @@
 #include "netif/etharp.h"
 
 #include "lwip/sys.h"
-#include "lwipopts.h"
+#include "lwip/opt.h"
 #include "lwip/dhcp.h"
 
 /** transaction identifier, unique over all DHCP requests */

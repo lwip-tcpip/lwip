@@ -30,7 +30,7 @@
  *
  */
 
-#include "lwipopts.h"
+#include "lwip/opt.h"
 
 #include "lwip/memp.h"
 
