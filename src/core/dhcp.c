@@ -914,10 +914,10 @@ static err_t dhcp_release(struct netif *netif)
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
   /* clean old DHCP offer */
-  ip_addr server_ip_addr = 0;
-  ip_addr offered_ip_addr = ip_addr offered_sn_mask = 0;
-  ip_addr offered_gw_addr = ip_addr offered_bc_addr = 0;
-  offered_t0_lease = offered_t1_renew = offered_t2_rebind = 0;
+  dhcp->server_ip_addr = 0;
+  dhcp->offered_ip_addr = dhcp->ip_addr offered_sn_mask = 0;
+  dhcp->ip_addr offered_gw_addr = dhcp->ip_addr offered_bc_addr = 0;
+  dhcp->offered_t0_lease = dhcp->offered_t1_renew = offered_t2_rebind = 0;
   
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
