@@ -52,7 +52,13 @@ struct eth_addr {
   PACK_STRUCT_FIELD(u8_t addr[6]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 struct eth_hdr {
 #if ETH_PAD_SIZE
@@ -63,7 +69,13 @@ struct eth_hdr {
   PACK_STRUCT_FIELD(u16_t type);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 /** the ARP message */
 struct etharp_hdr {
@@ -78,12 +90,19 @@ struct etharp_hdr {
   PACK_STRUCT_FIELD(struct ip_addr2 dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 struct ethip_hdr {
   PACK_STRUCT_FIELD(struct eth_hdr eth);
   PACK_STRUCT_FIELD(struct ip_hdr ip);
-};
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
