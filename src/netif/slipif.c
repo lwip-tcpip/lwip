@@ -199,6 +199,7 @@ slipif_init(struct netif *netif)
   netif->name[1] = 'l';
   netif->output = slipif_output;
   netif->mtu = 1500;  
+  netif->flags = NETIF_FLAG_POINTTOPOINT;
 
   netif->state = sio_open(netif->num);
   if (!netif->state)
