@@ -872,7 +872,7 @@ tcp_receive(struct tcp_pcb *pcb)
 	/* the whole segment is < rcv_nxt */
 	/* must be a duplicate of a packet that has already been correctly handled */
 	
-	DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %ld\n", seqno));
+	DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %lu\n", seqno));
       }
     }
 
