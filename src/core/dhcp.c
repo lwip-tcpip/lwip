@@ -72,9 +72,9 @@
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
+#include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/inet.h"
-#include "lwip/ip_addr.h"
 #include "netif/etharp.h"
 
 #include "lwip/sys.h"

@@ -40,7 +40,9 @@
 
 #include "lwip/inet.h"
 #include "lwip/pbuf.h"
-#include "lwip/dhcp.h"
+#if LWIP_DHCP
+#  include "lwip/dhcp.h"
+#endif
 
 /** must be the maximum of all used hardware address lengths
     across all types of interfaces in use */

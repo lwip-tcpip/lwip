@@ -37,6 +37,7 @@
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 
+#include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
 #define ICMP_ER 0      /* echo reply */

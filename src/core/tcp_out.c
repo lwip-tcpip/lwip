@@ -51,6 +51,7 @@
 #include "lwip/memp.h"
 #include "lwip/sys.h"
 
+#include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
 #include "lwip/inet.h"
@@ -62,8 +63,6 @@
 
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
-
-
 
 err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
