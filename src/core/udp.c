@@ -457,7 +457,9 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = %lx, port = %u)\n", ipaddr->addr, port));
+  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = "));
+  ip_addr_debug_print(UDP_DEBUG, ipaddr);
+  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, (", port = %u)\n", port));
   rebind = 0;
   /* Check for double bind and rebind of the same pcb */
   for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
