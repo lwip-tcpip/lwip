@@ -235,6 +235,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 {
   u8_t i, k;
 #if ARP_QUEUEING
+  struct pbuf *p;
   struct eth_hdr *ethhdr;
 #endif
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry()"));
@@ -270,21 +271,20 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         arp_table[i].ctime = 0;
 #if ARP_QUEUEING
         /* queued packet present? */
-        if(arp_table[i].p != NULL) {	
-
+        if((p = arp_table[i].p) != NULL) {
+          /* Null out attached buffer immediately */
+          arp_table[i].p = NULL;
           /* fill-in Ethernet header */
-          ethhdr = arp_table[i].p->payload;
+          ethhdr = p->payload;
           for(k = 0; k < 6; ++k) {
             ethhdr->dest.addr[k] = ethaddr->addr[k];
           }
           ethhdr->type = htons(ETHTYPE_IP);	  	 	  
           DEBUGF(ETHARP_DEBUG, ("update_arp_entry: sending queued IP packet.\n"));
           /* send the queued IP packet */
-          netif->linkoutput(netif, arp_table[i].p);
+          netif->linkoutput(netif, p);
           /* free the queued IP packet */
-          pbuf_free(arp_table[i].p);
-          /* remove queued packet from ARP entry (must be freed by the caller) */
-          arp_table[i].p = NULL;	
+          pbuf_free(p);
         }
 #endif
         return NULL;

@@ -411,7 +411,6 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   }
   /* dechain and free the header pbuf */
   if(hdr != NULL) {
-    pbuf_dechain(hdr);
     pbuf_free(hdr);
   }
   

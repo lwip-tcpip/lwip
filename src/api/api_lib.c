@@ -96,7 +96,7 @@ netbuf_ref(struct netbuf *buf, void *dataptr, u16_t size)
   if(buf->p != NULL) {
     pbuf_free(buf->p);
   }
-  buf->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_ROM);
+  buf->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
   buf->p->payload = dataptr;
   buf->p->len = buf->p->tot_len = size;
   buf->ptr = buf->p;

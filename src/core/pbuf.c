@@ -200,7 +200,14 @@ pbuf_pool_free(struct pbuf *p)
  * * PBUF_ROM: no buffer memory is allocated for the pbuf, even for
  *             protocol headers. Additional headers must be prepended
  *             by allocating another pbuf and chain in to the front of
- *             the ROM pbuf.	       
+ *             the ROM pbuf. It is assumed that the memory used is really
+ *             similar to ROM in that it is immutable and will not be
+ *             changed. Memory which is dynamic should generally not
+ *             be attached to PBUF_ROM pbufs. Use PBUF_REF instead.
+ * * PBUF_REF: no buffer memory is allocated for the pbuf, even for
+ *             protocol headers. It is assumed that the pbuf is only
+ *             being used in a single thread. If the pbuf gets queued,
+ *             then pbuf_unref should be called to copy the buffer.
  * * PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
  *              the pbuf pool that is allocated during pbuf_init().
  */
@@ -297,7 +304,8 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
 	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
-  case PBUF_ROM:
+   case PBUF_ROM:
+   case PBUF_REF:
     /* If the pbuf should point to ROM, we only need to allocate
        memory for the pbuf structure. */
     p = memp_mallocp(MEMP_PBUF);
@@ -307,7 +315,10 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     p->payload = NULL;
     p->len = p->tot_len = size;
     p->next = NULL;
-    p->flags = PBUF_FLAG_ROM;
+    if (flag == PBUF_ROM)
+      p->flags = PBUF_FLAG_ROM;
+    else
+      p->flags = PBUF_FLAG_REF;
     break;
   default:
     LWIP_ASSERT("pbuf_alloc: erroneous flag", 0);
@@ -408,8 +419,9 @@ pbuf_realloc(struct pbuf *p, u16_t size)
   u16_t rsize;
 
   LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
-         p->flags == PBUF_FLAG_ROM ||
-         p->flags == PBUF_FLAG_RAM);
+              p->flags == PBUF_FLAG_ROM ||
+              p->flags == PBUF_FLAG_RAM ||
+              p->flags == PBUF_FLAG_REF);
 
   
   if(p->tot_len <= size) {
@@ -438,7 +450,8 @@ pbuf_realloc(struct pbuf *p, u16_t size)
       q = r;
     }
     break;
-  case PBUF_FLAG_ROM:    
+  case PBUF_FLAG_ROM:
+  case PBUF_FLAG_REF:
     p->len = size;
     break;
   case PBUF_FLAG_RAM:
@@ -486,7 +499,8 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 {
   void *payload;
 
-  if(p->flags & PBUF_FLAG_ROM) {
+  if(p->flags == PBUF_FLAG_ROM ||
+     p->flags == PBUF_FLAG_REF) {
     return 1;
   }
   
@@ -530,7 +544,8 @@ pbuf_free(struct pbuf *p)
   
   LWIP_ASSERT("pbuf_free: sane flags", p->flags == PBUF_FLAG_POOL ||
          p->flags == PBUF_FLAG_ROM ||
-         p->flags == PBUF_FLAG_RAM);
+         p->flags == PBUF_FLAG_RAM ||
+         p->flags == PBUF_FLAG_REF );
   
   LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
 
@@ -554,7 +569,7 @@ pbuf_free(struct pbuf *p)
               q = p->next;
               PBUF_POOL_FREE(p);
           } else {
-              if(p->flags == PBUF_FLAG_ROM) {
+              if(p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
                   q = p->next;
                   memp_freep(MEMP_PBUF, p);
               } else {
@@ -564,6 +579,15 @@ pbuf_free(struct pbuf *p)
           }
           
           p = q;
+          /* Only free the next one in a chain if it's reference count is 0.
+             This allows buffer chains to have multiple headers pointing to them. */
+          if (p)
+          {
+            p->ref--;
+            if (p->ref > 0)
+              break;
+          }
+          
           ++count;
       }
       pbuf_refresh();
@@ -673,56 +697,71 @@ pbuf_dechain(struct pbuf *p)
   return q;
 }
 /*-----------------------------------------------------------------------------------*/
+/** Replace any pbufs of type PBUF_FLAG_REF with PBUF_POOL buffers.
 
+    Go through pbuf chain and replace any PBUF_REF buffers with PBUF_POOL
+    buffers. This is generally done for buffer chains which need to be queued
+    in some way (either on an output queue or on the arp queue). All pbufs
+    replaced will be freed immediately.
 
+    @param f Head of pbuf chain to process
+
+    @return Pointer to new head of pbuf chain.
+*/
 struct pbuf *
 pbuf_unref(struct pbuf *f)
 {
-  struct pbuf *p, *q;
+  struct pbuf *p, *prev, *q, *top;
   DEBUGF(PBUF_DEBUG, ("pbuf_unref: %p \n", (void*)f));
-  /* first pbuf is of type PBUF_REF? */
-  if (f->flags == PBUF_FLAG_REF)
-  {
-    /* allocate a pbuf (w/ payload) fully in RAM */
-    p = pbuf_alloc(PBUF_RAW, f->len, PBUF_RAM);
-    if (p != 0)
-    {  
-      int i;
-      unsigned char *src, *dst;
-      /* copy pbuf struct */
-      p->next = f->next;
-      src = f->payload;
-      dst = p->payload;
-      i = 0;
-      /* copy payload to RAM pbuf */
-      while(i < p->len)
-      {
-        *dst = *src;
-        dst++;
-        src++;
-      }
-      f->next = NULL;
-      /* de-allocate PBUF_REF */
-      pbuf_free(f);
-      f = p;
-      DEBUGF(PBUF_DEBUG, ("pbuf_unref: succesful %p \n", (void *)f));
-    }
-    else
-    {
-      /* deallocate chain */
-      pbuf_free(f);
-      f = NULL;
-      DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n"));
-      return NULL;
-    }
-  }
-  /* p = previous pbuf == first pbuf  */
+
+  prev = 0;
   p = f;
-  /* q = current pbuf */
-  q = f->next;
-  while (q != NULL)
+  top = f;
+  do
   {
-    q = q->next;
-  }
-  return f;
+    /* pbuf is of type PBUF_REF? */
+    if (p->flags == PBUF_FLAG_REF)
+    {
+      /* allocate a pbuf (w/ payload) fully in RAM */
+      /* PBUF_POOL buffers are faster if we can use them */
+      if (p->len <= PBUF_POOL_BUFSIZE)
+        q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
+      else
+        q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
+      if (q != 0)
+      {  
+        /* copy pbuf struct */
+        q->next = p->next;
+        if (prev)
+          /* Break chain and insert new pbuf instead */
+          prev->next = q;
+        else
+          top = q;
+        p->next = NULL;
+        
+        memcpy(q->payload, p->payload, p->len);
+        q->tot_len = p->tot_len;
+        q->len = p->len;
+        
+        /* Don't copy ref, since someone else might be using the old buffer */
+        
+        /* de-allocate PBUF_REF */
+        /* pbuf is not freed because it is assumed that some upper level
+           program has a direct pointer to this pbuf and will free it. */
+        p = q;
+        DEBUGF(PBUF_DEBUG, ("pbuf_unref: succesful %p \n", (void *)p));
+      }
+      else
+      {
+        /* deallocate chain */
+        pbuf_free(top);
+        DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n"));
+        return NULL;
+      }
+    }
+    prev = p;
+    p = p->next;
+  } while (p);
+  
+  return top;
 }

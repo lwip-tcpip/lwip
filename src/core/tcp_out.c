@@ -184,7 +184,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       /* Do not copy the data. */
 
       /* First, allocate a pbuf for holding the data. */
-      if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
+      if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_REF)) == NULL) {
         DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for pbuf non-copy\n"));	  	  
         goto memerr;
       }

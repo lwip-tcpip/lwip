@@ -299,7 +299,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   u16_t tmp;
 
   /* Get a RAM based MTU sized pbuf */
-  rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_ROM);
+  rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
   rambuf->tot_len = rambuf->len = mtu;
   rambuf->payload = buf;
 
@@ -349,7 +349,6 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 #ifdef IP_STATS
     ++lwip_stats.ip_frag.xmit;
 #endif /* IP_STATS */
-    pbuf_dechain(header);
     pbuf_free(header);
 
     left -= cop;
