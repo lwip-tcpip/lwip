@@ -81,13 +81,7 @@ struct icmp_echo_hdr {
   PACK_STRUCT_FIELD(u16_t seqno);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
 PACK_STRUCT_BEGIN
 struct icmp_dur_hdr {
   PACK_STRUCT_FIELD(u16_t _type_code);
@@ -95,13 +89,7 @@ struct icmp_dur_hdr {
   PACK_STRUCT_FIELD(u32_t unused);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
 PACK_STRUCT_BEGIN
 struct icmp_te_hdr {
   PACK_STRUCT_FIELD(u16_t _type_code);
