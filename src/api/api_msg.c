@@ -38,7 +38,7 @@
 #include "lwip/tcpip.h"
 
 #if LWIP_RAW
-static int
+static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr)
 {
