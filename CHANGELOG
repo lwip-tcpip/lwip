@@ -1,5 +1,13 @@
-Changelog that precedes the move to Savannah:
+HISTORY
 
+(0.6.0)
+
+- IP_ADDR_ANY is no longer a NULL pointer. Instead, it is a pointer
+  to a '0.0.0.0' IP address.
+
+(0.5.x) This file has been unmaintained up to 0.6.1. All changes are
+  logged in CVS but have not been explained here.
+  
 (0.5.3) Changes since version 0.5.2
 
   ++ Bugfixes:
