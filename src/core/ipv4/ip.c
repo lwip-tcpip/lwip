@@ -158,7 +158,7 @@ ip_route(struct ip_addr *dest)
 static void
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
-  static struct netif *netif;
+  struct netif *netif;
   
   PERF_START;
   
@@ -539,8 +539,7 @@ err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 	  u8_t ttl, u8_t proto)
 {
-  static struct netif *netif;
-
+  struct netif *netif;
   
   if((netif = ip_route(dest)) == NULL) {
     DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%lx\n", dest->addr));
