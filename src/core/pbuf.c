@@ -710,13 +710,11 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_ASSERT("t != NULL", t != NULL);
   
   /* proceed to last pbuf of chain */
-  for (p = h; p->next != NULL; p = p->next) {
+  for (p = h; p != NULL; p = p->next) {
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
-  /* add total length of second chain to last buffer tot_len in first chain */
-  p->tot_len += t->tot_len;
-  
+
   /* chain last pbuf of h chain (p) with first of tail (t) */
   p->next = t;
   /* t is now referenced to one more time */
@@ -843,9 +841,7 @@ pbuf_take(struct pbuf *f)
          */
         pbuf_free(p);
         p = q;
-      }
-      else
-      {
+      } else {
         /* deallocate chain */
         pbuf_free(top);
         DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
