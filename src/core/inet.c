@@ -232,12 +232,12 @@ inet_chksum_pbuf(struct pbuf *p)
                  base = 8;
          }
          for (;;) {
-             if (isascii(c) && isdigit(c)) {
-                 val = (val * base) + (c - '0');
+             if (isdigit(c)) {
+                 val = (val * base) + (int)(c - '0');
                  c = *++cp;
-             } else if (base == 16 && isascii(c) && isxdigit(c)) {
+             } else if (base == 16 && isxdigit(c)) {
                  val = (val << 4) |
-                     (c + 10 - (islower(c) ? 'a' : 'A'));
+                     (int)(c + 10 - (islower(c) ? 'a' : 'A'));
                  c = *++cp;
              } else
              break;
