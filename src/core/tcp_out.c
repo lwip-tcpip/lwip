@@ -76,7 +76,7 @@ tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 {
-  DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%u, copy=%d)\n", pcb, arg, len, copy));
+  DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%u, copy=%d)\n", (void *)pcb, arg, len, copy));
   if(pcb->state == SYN_SENT ||
      pcb->state == SYN_RCVD ||
      pcb->state == ESTABLISHED ||
@@ -103,7 +103,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   void *ptr;
   u8_t queuelen;
 
-  DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%u, flags=%x, copy=%d)\n", pcb, arg, len, flags, copy));
+  DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%u, flags=%x, copy=%d)\n", (void *)pcb, arg, len, flags, copy));
   left = len;
   ptr = arg;
   /* fail on too much data */
