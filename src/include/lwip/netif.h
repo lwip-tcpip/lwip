@@ -60,9 +60,13 @@ struct netif {
 
   char name[2];
   /* This function is called by the IP module when it wants
-     to send a packet on the interface. */
+     to send a packet on the interface. This function typically
+     first resolves the hardware address, then sends the packet. */
   err_t (* output)(struct netif *netif, struct pbuf *p,
 		   struct ip_addr *ipaddr);
+  /* This function is called by the ARP module when it wants
+     to send a packet on the interface. This function outputs
+     the pbuf on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
 
   /* This field can be set bu the device driver and could point
