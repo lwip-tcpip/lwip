@@ -590,7 +590,6 @@ tcp_slowtmr(void)
         if (pcb->state != SYN_SENT) {
           pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
         }
-        tcp_rexmit(pcb);
         /* Reduce congestion window and ssthresh. */
         eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
         pcb->ssthresh = eff_wnd >> 1;
@@ -600,7 +599,10 @@ tcp_slowtmr(void)
         pcb->cwnd = pcb->mss;
         LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %u ssthresh %u\n",
                                 pcb->cwnd, pcb->ssthresh));
-      }
+ 
+        /* The following needs to be called AFTER cwnd is set to one mss - STJ */
+        tcp_rexmit_rto(pcb);
+     }
     }
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
     if (pcb->state == FIN_WAIT_2) {

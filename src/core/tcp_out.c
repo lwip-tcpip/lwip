@@ -462,8 +462,16 @@ tcp_output(struct tcp_pcb *pcb)
         pcb->unacked = seg;
         useg = seg;
       } else {
-        useg->next = seg;
-        useg = useg->next;
+        /* In the case of fast retransmit, the packet should not go to the end
+         * of the unacked queue, but rather at the start. We need to check for
+         * this case. -STJ Jul 27, 2004 */
+        if (TCP_SEQ_LT(ntohl(seg->tcphdr->seqno), ntohl(useg->tcphdr->seqno))){
+          seg->next = pcb->unacked;
+          pcb->unacked = seg;
+        } else {
+          useg->next = seg;
+          useg = useg->next;
+        }
       }
     } else {
       tcp_seg_free(seg);
@@ -569,6 +577,33 @@ tcp_rst(u32_t seqno, u32_t ackno,
 }
 
 void
+tcp_rexmit_rto(struct tcp_pcb *pcb)
+{
+  struct tcp_seg *seg;
+
+  if (pcb->unacked == NULL) {
+    return;
+  }
+
+  /* Move all unacked segments to the unsent queue. */
+  for (seg = pcb->unacked; seg->next != NULL; seg = seg->next);
+  seg->next = pcb->unsent;
+  pcb->unsent = pcb->unacked;
+  pcb->unacked = NULL;
+
+  pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
+
+  ++pcb->nrtx;
+
+  /* Don't take any rtt measurements after retransmitting. */
+  pcb->rttest = 0;
+
+  /* Do the actual retransmission. */
+  tcp_output(pcb);
+
+}
+
+void
 tcp_rexmit(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg;
@@ -594,6 +629,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 
 }
+
 
 void
 tcp_keepalive(struct tcp_pcb *pcb)

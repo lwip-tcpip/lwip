@@ -818,10 +818,6 @@ tcp_receive(struct tcp_pcb *pcb)
        rationale is that lwIP puts all outstanding segments on the
        ->unsent list after a retransmission, so these segments may
        in fact have been sent once. */
-    /* KJM 13th July 2004
-       I don't think is is necessary as we no longer move all unacked
-       segments on the unsent queue when performing retransmit */
-#if 0
     while (pcb->unsent != NULL &&
            /*TCP_SEQ_LEQ(ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent), ackno) &&
              TCP_SEQ_LEQ(ackno, pcb->snd_max)*/
@@ -846,7 +842,6 @@ tcp_receive(struct tcp_pcb *pcb)
         pcb->snd_nxt = htonl(pcb->unsent->tcphdr->seqno);
       }
     }
-#endif
     /* End of ACK for new data processing. */
 
     LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: pcb->rttest %u rtseq %lu ackno %lu\n",

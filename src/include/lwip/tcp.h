@@ -105,6 +105,7 @@ void             tcp_input   (struct pbuf *p, struct netif *inp);
 /* Used within the TCP code only: */
 err_t            tcp_output  (struct tcp_pcb *pcb);
 void             tcp_rexmit  (struct tcp_pcb *pcb);
+void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
 
 
