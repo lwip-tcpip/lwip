@@ -1033,6 +1033,7 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
   u8_t *ptr;
   u16_t i;
   u16_t j = 0;
+  LWIP_ASSERT("dhcp->p != NULL", dhcp->p != NULL);
   /* free any left-overs from previous unfolds */
   dhcp_free_reply(dhcp);
   /* options present? */
@@ -1129,6 +1130,8 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   if (reply_msg->op != DHCP_BOOTREPLY) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("not a DHCP reply message, but type %u\n", reply_msg->op));
     pbuf_free(p);
+    dhcp->p = NULL;
+    return;
   }
   /* iterate through hardware address and match against DHCP message */
   for (i = 0; i < netif->hwaddr_len; i++) {
@@ -1136,6 +1139,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
       DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("netif->hwaddr[%u]==%02x != reply_msg->chaddr[%u]==%02x\n",
         i, netif->hwaddr[i], i, reply_msg->chaddr[i]));
       pbuf_free(p);
+      dhcp->p = NULL;
       return;
     }
   }
@@ -1143,12 +1147,14 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   if (ntohl(reply_msg->xid) != dhcp->xid) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("transaction id mismatch\n"));
     pbuf_free(p);
+    dhcp->p = NULL;
     return;
   }
   /* option fields could be unfold? */
   if (dhcp_unfold_reply(dhcp) != ERR_OK) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("problem unfolding DHCP message - too short on memory?\n"));
     pbuf_free(p);
+    dhcp->p = NULL;
     return;
   }
   
@@ -1158,6 +1164,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   if (options_ptr == NULL) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_OPTION_MESSAGE_TYPE option not found\n")); 
     pbuf_free(p);
+    dhcp->p = NULL;
     return;
   }  
 
@@ -1200,6 +1207,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     dhcp_handle_offer(netif);
   }
   pbuf_free(p);
+  dhcp->p = NULL;
 }
 
 
