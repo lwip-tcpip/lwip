@@ -6,8 +6,8 @@
 
 /*
  *
- * Copyright (c) 2001-2003 Leon Woestenberg <leon.woestenberg@gmx.net>
- * Copyright (c) 2001-2003 Axon Digital Design B.V., The Netherlands.
+ * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
+ * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -67,6 +67,8 @@
  * to remove the DHCP client.
  *
  */
+#ifdef LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
+
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
@@ -1418,3 +1420,5 @@ static u32_t dhcp_get_option_long(u8_t *ptr)
   LWIP_DEBUGF(DHCP_DEBUG, ("option long value=%lu\n", value));
   return value;
 }
+
+#endif /* LWIP_DHCP */

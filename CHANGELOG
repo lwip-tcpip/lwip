@@ -9,6 +9,11 @@ HISTORY
 
 (active STABLE-0_7 branch)
 
+  ++ Bug fixes:
+
+  2004-03-11 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * dhcp.c: Added missing #if LWIP_DHCP #endif pair.
+
 (STABLE-0_7_1)
 
   ++ Bug fixes:
