@@ -48,8 +48,27 @@ struct command {
   char *args[10];
 };
 
+/* Following #undefs are here to keep compiler from issuing warnings
+   about them being double defined. (They are defined in lwip/inet.h
+   as well as the Unix #includes below.) */
+#undef htonl
+#undef ntohl
+#undef htons
+#undef ntohs
+#undef HTONL
+#undef NTOHL
+#undef HTONS
+#undef NTOHS
+#undef IP_HDRINCL
+
 #include <stdio.h>
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <stdlib.h>
+#include <limits.h>
 
 #define ESUCCESS 0
 #define ESYNTAX -1
@@ -225,7 +244,7 @@ com_open(struct command *com)
   int i;
   err_t err;
 
-  if(inet_aton(com->args[0], &ipaddr) == -1) {
+  if(inet_aton(com->args[0], (struct in_addr *)&ipaddr) == -1) {
     sendstr(strerror(errno), com->conn);
     return ESYNTAX;
   }
@@ -266,8 +285,8 @@ com_open(struct command *com)
   }
 
   sendstr("Opened connection, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -328,8 +347,8 @@ com_lstn(struct command *com)
   }
 
   sendstr("Opened connection, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -408,8 +427,8 @@ com_acpt(struct command *com)
   }
 
   sendstr("Accepted connection, connection identifier for new connection is ", com->conn);
-  sprintf(buffer, "%d\n", j);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", j);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
 
   return ESUCCESS;
 }
@@ -526,7 +545,7 @@ com_udpc(struct command *com)
   err_t err;
 
   lport = strtol(com->args[0], NULL, 10);
-  if(inet_aton(com->args[1], &ipaddr) == -1) {
+  if(inet_aton(com->args[1], (struct in_addr *)&ipaddr) == -1) {
     sendstr(strerror(errno), com->conn);
     return ESYNTAX;
   }
@@ -583,8 +602,8 @@ com_udpc(struct command *com)
   }
 
   sendstr("Connection set up, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -598,7 +617,7 @@ com_udpl(struct command *com)
   err_t err;
 
   lport = strtol(com->args[0], NULL, 10);
-  if(inet_aton(com->args[1], &ipaddr) == -1) {
+  if(inet_aton(com->args[1], (struct in_addr *)&ipaddr) == -1) {
     sendstr(strerror(errno), com->conn);
     return ESYNTAX;
   }
@@ -655,8 +674,8 @@ com_udpl(struct command *com)
   }
 
   sendstr("Connection set up, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -670,7 +689,7 @@ com_udpn(struct command *com)
   err_t err;
 
   lport = strtol(com->args[0], NULL, 10);
-  if(inet_aton(com->args[1], &ipaddr) == -1) {
+  if(inet_aton(com->args[1], (struct in_addr *)&ipaddr) == -1) {
     sendstr(strerror(errno), com->conn);
     return ESYNTAX;
   }
@@ -727,8 +746,8 @@ com_udpn(struct command *com)
   }
 
   sendstr("Connection set up, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -743,7 +762,7 @@ com_udpb(struct command *com)
   struct ip_addr bcaddr;
 
   lport = strtol(com->args[0], NULL, 10);
-  if(inet_aton(com->args[1], &ipaddr) == -1) {
+  if(inet_aton(com->args[1], (struct in_addr *)&ipaddr) == -1) {
     sendstr(strerror(errno), com->conn);
     return ESYNTAX;
   }
@@ -799,8 +818,8 @@ com_udpb(struct command *com)
   }
 
   sendstr("Connection set up, connection identifier is ", com->conn);
-  sprintf(buffer, "%d\n", i);
-  netconn_write(com->conn, buffer, strlen(buffer), NETCONN_COPY);
+  sprintf((char *)buffer, "%d\n", i);
+  netconn_write(com->conn, buffer, strlen((const char *)buffer), NETCONN_COPY);
   
   return ESUCCESS;
 }
@@ -862,46 +881,46 @@ parse_command(struct command *com, u32_t len)
   u16_t i;
   u16_t bufp;
   
-  if(strncmp(buffer, "open", 4) == 0) {
+  if(strncmp((const char *)buffer, "open", 4) == 0) {
     com->exec = com_open;
     com->nargs = 2;
-  } else if(strncmp(buffer, "lstn", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "lstn", 4) == 0) {
     com->exec = com_lstn;
     com->nargs = 1;
-  } else if(strncmp(buffer, "acpt", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "acpt", 4) == 0) {
     com->exec = com_acpt;
     com->nargs = 1;
-  } else if(strncmp(buffer, "clos", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "clos", 4) == 0) {
     com->exec = com_clos;
     com->nargs = 1;
-  } else if(strncmp(buffer, "stat", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "stat", 4) == 0) {
     com->exec = com_stat;
     com->nargs = 0;
-  } else if(strncmp(buffer, "send", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "send", 4) == 0) {
     com->exec = com_send;
     com->nargs = 2;
-  } else if(strncmp(buffer, "recv", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "recv", 4) == 0) {
     com->exec = com_recv;
     com->nargs = 1;
-  } else if(strncmp(buffer, "udpc", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "udpc", 4) == 0) {
     com->exec = com_udpc;
     com->nargs = 3;
-  } else if(strncmp(buffer, "udpb", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "udpb", 4) == 0) {
     com->exec = com_udpb;
     com->nargs = 2;
-  } else if(strncmp(buffer, "udpl", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "udpl", 4) == 0) {
     com->exec = com_udpl;
     com->nargs = 3;
-  } else if(strncmp(buffer, "udpn", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "udpn", 4) == 0) {
     com->exec = com_udpn;
     com->nargs = 3;
-  } else if(strncmp(buffer, "usnd", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "usnd", 4) == 0) {
     com->exec = com_usnd;
     com->nargs = 2;
-  } else if(strncmp(buffer, "help", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "help", 4) == 0) {
     com->exec = com_help;
     com->nargs = 0;
-  } else if(strncmp(buffer, "quit", 4) == 0) {
+  } else if(strncmp((const char *)buffer, "quit", 4) == 0) {
     printf("quit\n");
     return ECLOSED;
   } else {
@@ -929,7 +948,7 @@ parse_command(struct command *com, u32_t len)
     if(bufp > len) {
       return ETOOFEW;
     }    
-    com->args[i] = &buffer[bufp];
+    com->args[i] = (char *)&buffer[bufp];
     for(; bufp < len && buffer[bufp] != ' ' && buffer[bufp] != '\r' &&
 	  buffer[bufp] != '\n'; bufp++) {
       if(buffer[bufp] == '\\') {
