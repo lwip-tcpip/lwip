@@ -1,4 +1,4 @@
-sys_arch interface for lwIP 0.5
+sys_arch interface for lwIP 0.6++
 
 Author: Adam Dunkels
 
@@ -60,15 +60,11 @@ The following functions must be implemented by the sys_arch:
   only be blocked for the specified time (measured in
   milliseconds).
 
-  If the timeout argument is non-zero, the return value is the amount
-  of time spent waiting for the semaphore to be signaled. If the
-  semaphore wasn't signaled within the specified time, the return
-  value is zero. If the thread didn't have to wait for the semaphore
-  (i.e., it was already signaled), care must be taken to ensure that
-  the function does not return a zero value since this is used to
-  indicate that a timeout occured. A suitable way to implement this is
-  to check if the time spent waiting is zero and if so, the value 1 is
-  returned.
+  If the timeout argument is non-zero, the return value is the number of
+  milliseconds spent waiting for the semaphore to be signaled. If the
+  semaphore wasn't signaled within the specified time, the return value is
+  0xffffffff. If the thread didn't have to wait for the semaphore (i.e., it
+  was already signaled), the function may return zero.
 
   Notice that lwIP implements a function with a similar name,
   sys_sem_wait(), that uses the sys_arch_sem_wait() function.
@@ -124,7 +120,8 @@ to be implemented as well:
 
   Starts a new thread with priority "prio" that will begin its execution in the
   function "thread()". The "arg" argument will be passed as an argument to the
-  thread() function. The id of the new thread is returned.
+  thread() function. The id of the new thread is returned. Both the id and
+  the priority are system dependent.
 
 - sys_prot_t sys_arch_protect(void)
 

@@ -64,11 +64,11 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
     if(timeouts->next->time > 0) {
       time = sys_arch_mbox_fetch(mbox, msg, timeouts->next->time);
     } else {
-      time = 0;
+      time = 0xffffffff;
     }
 
-    if(time == 0) {
-      /* If time == 0, a timeout occured before a message could be
+    if(time == 0xffffffff) {
+      /* If time == 0xffffffff, a timeout occured before a message could be
 	 fetched. We should now call the timeout handler and
 	 deallocate the memory allocated for the timeout. */
       tmptimeout = timeouts->next;
@@ -84,9 +84,9 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
-      /* If time > 0, a message was received before the timeout
+      /* If time != 0xffffffff, a message was received before the timeout
 	 occured. The time variable is set to the number of
-	 microseconds we waited for the message. */
+	 milliseconds we waited for the message. */
       if(time <= timeouts->next->time) {
 	timeouts->next->time -= time;
       } else {
@@ -119,11 +119,11 @@ sys_sem_wait(sys_sem_t sem)
     if(timeouts->next->time > 0) {
       time = sys_arch_sem_wait(sem, timeouts->next->time);
     } else {
-      time = 0;
+      time = 0xffffffff;
     }
 
-    if(time == 0) {
-      /* If time == 0, a timeout occured before a message could be
+    if(time == 0xffffffff) {
+      /* If time == 0xffffffff, a timeout occured before a message could be
 	 fetched. We should now call the timeout handler and
 	 deallocate the memory allocated for the timeout. */
       tmptimeout = timeouts->next;
@@ -140,9 +140,9 @@ sys_sem_wait(sys_sem_t sem)
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
-      /* If time > 0, a message was received before the timeout
+      /* If time != 0xffffffff, a message was received before the timeout
 	 occured. The time variable is set to the number of
-	 microseconds we waited for the message. */
+	 milliseconds we waited for the message. */
       if(time <= timeouts->next->time) {
 	timeouts->next->time -= time;
       } else {
