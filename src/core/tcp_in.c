@@ -506,9 +506,11 @@ tcp_process(struct tcp_pcb *pcb)
   acceptable = 1;
       }
     } else {
-      if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
-   TCP_SEQ_LEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
-  acceptable = 1;
+      /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
+          TCP_SEQ_LEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
+      */
+      if(TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)){
+        acceptable = 1;
       }
     }
 
@@ -562,8 +564,9 @@ tcp_process(struct tcp_pcb *pcb)
   case SYN_RCVD:
     if (flags & TCP_ACK &&
        !(flags & TCP_RST)) {
-      if (TCP_SEQ_LT(pcb->lastack, ackno) &&
-          TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
+      /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
+        TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) { */
+      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt))
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
@@ -732,8 +735,10 @@ tcp_receive(struct tcp_pcb *pcb)
         LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %lu %lu\n",
                                    pcb->snd_wl1 + pcb->snd_wnd, right_wnd_edge));
       }
-    } else if (TCP_SEQ_LT(pcb->lastack, ackno) &&
-               TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
+    } else
+      /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
+        TCP_SEQ_LEQ(ackno, pcb->snd_max)) { */
+      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_max)){
       /* We come here when the ACK acknowledges new data. */
       
       /* Reset the "IN Fast Retransmit" flag, since we are no longer
@@ -818,12 +823,13 @@ tcp_receive(struct tcp_pcb *pcb)
        segments on the unsent queue when performing retransmit */
 #if 0
     while (pcb->unsent != NULL &&
-      TCP_SEQ_LEQ(ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent),
-      ackno) &&
-      TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
+           /*TCP_SEQ_LEQ(ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent), ackno) &&
+             TCP_SEQ_LEQ(ackno, pcb->snd_max)*/
+           TCP_SEQ_BETWEEN(ackno, ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent), pcb->snd_max)
+           ) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %lu:%lu from pcb->unsent\n",
-        ntohl(pcb->unsent->tcphdr->seqno), ntohl(pcb->unsent->tcphdr->seqno) +
-        TCP_TCPLEN(pcb->unsent)));
+                                    ntohl(pcb->unsent->tcphdr->seqno), ntohl(pcb->unsent->tcphdr->seqno) +
+                                    TCP_TCPLEN(pcb->unsent)));
 
       next = pcb->unsent;
       pcb->unsent = pcb->unsent->next;
@@ -903,55 +909,57 @@ tcp_receive(struct tcp_pcb *pcb)
        this if the sequence number of the incoming segment is less
        than rcv_nxt, and the sequence number plus the length of the
        segment is larger than rcv_nxt. */
-    if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
-      if (TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {
-        /* Trimming the first edge is done by pushing the payload
-           pointer in the pbuf downwards. This is somewhat tricky since
-           we do not want to discard the full contents of the pbuf up to
-           the new starting point of the data since we have to keep the
-           TCP header which is present in the first pbuf in the chain.
-
-           What is done is really quite a nasty hack: the first pbuf in
-           the pbuf chain is pointed to by inseg.p. Since we need to be
-           able to deallocate the whole pbuf, we cannot change this
-           inseg.p pointer to point to any of the later pbufs in the
-           chain. Instead, we point the ->payload pointer in the first
-           pbuf to data in one of the later pbufs. We also set the
-           inseg.data pointer to point to the right place. This way, the
-           ->p pointer will still point to the first pbuf, but the
-           ->p->payload pointer will point to data in another pbuf.
-
-           After we are done with adjusting the pbuf pointers we must
-           adjust the ->data pointer in the seg and the segment
-           length.*/
-
-        off = pcb->rcv_nxt - seqno;
-        p = inseg.p;
-        if (inseg.p->len < off) {
-          new_tot_len = inseg.p->tot_len - off;
-          while (p->len < off) {
-            off -= p->len;
-            /* KJM following line changed (with addition of new_tot_len var)
-               to fix bug #9076
-               inseg.p->tot_len -= p->len; */
-            p->tot_len = new_tot_len;
-            p->len = 0;
-            p = p->next;
-          }
-          pbuf_header(p, -off);
-        } else {
-          pbuf_header(inseg.p, -off);
+    /*    if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
+          if (TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {*/
+    if(TCP_SEQ_BETWEEN(pcb->rcv_nxt, seqno+1, seqno+tcplen-1)){
+      /* Trimming the first edge is done by pushing the payload
+         pointer in the pbuf downwards. This is somewhat tricky since
+         we do not want to discard the full contents of the pbuf up to
+         the new starting point of the data since we have to keep the
+         TCP header which is present in the first pbuf in the chain.
+         
+         What is done is really quite a nasty hack: the first pbuf in
+         the pbuf chain is pointed to by inseg.p. Since we need to be
+         able to deallocate the whole pbuf, we cannot change this
+         inseg.p pointer to point to any of the later pbufs in the
+         chain. Instead, we point the ->payload pointer in the first
+         pbuf to data in one of the later pbufs. We also set the
+         inseg.data pointer to point to the right place. This way, the
+         ->p pointer will still point to the first pbuf, but the
+         ->p->payload pointer will point to data in another pbuf.
+         
+         After we are done with adjusting the pbuf pointers we must
+         adjust the ->data pointer in the seg and the segment
+         length.*/
+      
+      off = pcb->rcv_nxt - seqno;
+      p = inseg.p;
+      if (inseg.p->len < off) {
+        new_tot_len = inseg.p->tot_len - off;
+        while (p->len < off) {
+          off -= p->len;
+          /* KJM following line changed (with addition of new_tot_len var)
+             to fix bug #9076
+             inseg.p->tot_len -= p->len; */
+          p->tot_len = new_tot_len;
+          p->len = 0;
+          p = p->next;
         }
-        /* KJM following line changed to use p->payload rather than inseg->p->payload
-           to fix bug #9076 */
-        inseg.dataptr = p->payload;
-        inseg.len -= pcb->rcv_nxt - seqno;
-        inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
+        pbuf_header(p, -off);
+      } else {
+        pbuf_header(inseg.p, -off);
       }
-      else{
+      /* KJM following line changed to use p->payload rather than inseg->p->payload
+         to fix bug #9076 */
+      inseg.dataptr = p->payload;
+      inseg.len -= pcb->rcv_nxt - seqno;
+      inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
+    }
+    else{
+      if(TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
         /* the whole segment is < rcv_nxt */
         /* must be a duplicate of a packet that has already been correctly handled */
-
+        
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %lu\n", seqno));
         tcp_ack_now(pcb);
       }
@@ -960,8 +968,9 @@ tcp_receive(struct tcp_pcb *pcb)
     /* The sequence number must be within the window (above rcv_nxt
        and below rcv_nxt + rcv_wnd) in order to be further
        processed. */
-    if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
-        TCP_SEQ_LT(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
+    /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
+      TCP_SEQ_LT(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
+    if(TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
         /* The incoming segment is the next in sequence. We check if
            we have to trim the end of the segment and update rcv_nxt
@@ -1115,8 +1124,10 @@ tcp_receive(struct tcp_pcb *pcb)
                   }
                   break;
                 }
-              } else if (TCP_SEQ_LT(prev->tcphdr->seqno, seqno) &&
-                         TCP_SEQ_LT(seqno, next->tcphdr->seqno)) {
+              } else 
+                /*if (TCP_SEQ_LT(prev->tcphdr->seqno, seqno) &&
+                  TCP_SEQ_LT(seqno, next->tcphdr->seqno)) {*/
+                if(TCP_SEQ_BETWEEN(seqno, prev->tcphdr->seqno, next->tcphdr->seqno-1)){
                 /* The sequence number of the incoming segment is in
                    between the sequence numbers of the previous and
                    the next segment on ->ooseq. We trim and insert the
@@ -1163,16 +1174,18 @@ tcp_receive(struct tcp_pcb *pcb)
 
       }
     } else {
-      if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
-          TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
+      /*if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
+        TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
+      if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd-1)){
         tcp_ack_now(pcb);
       }
     }
   } else {
     /* Segments with length 0 is taken care of here. Segments that
        fall out of the window are ACKed. */
-    if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
-        TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
+    /*if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
+      TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
+    if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd-1)){
       tcp_ack_now(pcb);
     }
   }

@@ -112,7 +112,8 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 #define TCP_SEQ_LEQ(a,b)    ((s32_t)((a)-(b)) <= 0)
 #define TCP_SEQ_GT(a,b)     ((s32_t)((a)-(b)) > 0)
 #define TCP_SEQ_GEQ(a,b)    ((s32_t)((a)-(b)) >= 0)
-
+/* is b<=a<=c? */
+#define TCP_SEQ_BETWEEN(a,b,c) ((c)-(b) >= (a)-(b))
 #define TCP_FIN 0x01U
 #define TCP_SYN 0x02U
 #define TCP_RST 0x04U
