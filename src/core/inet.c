@@ -312,7 +312,7 @@ char *inet_ntoa(struct in_addr addr)
   u8_t i;
 
   rp = str;
-  ap = (u8_t *)&s_addr;
+  ap = (char *)&s_addr;
   for(n = 0; n < 4; n++) {
     i = 0;
     do {
