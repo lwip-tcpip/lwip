@@ -160,7 +160,7 @@ raw_send_payload(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
   LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("raw_send_payload\n"));
 
   if ((netif = ip_route(ipaddr)) == NULL) {
-    LWIP_DEBUGF(UDP_DEBUG | 1, ("raw_send_payload: No route to 0x%lx\n", ipaddr));
+    LWIP_DEBUGF(UDP_DEBUG | 1, ("raw_send_payload: No route to 0x%lx\n", ipaddr->addr));
 #ifdef RAW_STATS
 /*    ++lwip_stats.raw.rterr;*/
 #endif /* UDP_STATS */
