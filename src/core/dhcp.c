@@ -1099,9 +1099,15 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   u8_t *options_ptr;
   u8_t msg_type;
   u8_t i;
-  DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_recv()\n"));
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_recv(pbuf = %p) from DHCP server %u.%u.%u.%u port %u\n", p,
+    (u8_t)(ntohl(addr->addr) >> 24 & 0xff),
+    (u8_t)(ntohl(addr->addr) >> 16 & 0xff),
+    (u8_t)(ntohl(addr->addr) >>  8 & 0xff),
+    (u8_t)(ntohl(addr->addr) & 0xff), port));
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->len = %u\n", p->len));
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->tot_len = %u\n", p->tot_len));
+  /* prevent warning */
+  if (pcb || addr || port);
   dhcp->p = p;
   if (reply_msg->op != DHCP_BOOTREPLY) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("not a DHCP reply message, but type %u\n", reply_msg->op));
