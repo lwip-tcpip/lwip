@@ -32,6 +32,8 @@
 #ifndef __LWIP_DEBUG_H__
 #define __LWIP_DEBUG_H__
 
+#include <stdlib.h>
+
 #include "lwipopts.h"
 
 #ifdef LWIP_DEBUG
