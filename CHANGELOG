@@ -2,6 +2,14 @@ HISTORY
 
 (current)
 
+  ++ Changes:
+
+  * ARP queueuing now queues the latest packet instead of the first.
+    This is the recommended behaviour, but can be overridden in
+    lwipopts.h.
+
+(0.6.2)
+
   ++ Bugfixes:
 
   * TCP has been fixed to deal with the new use of the pbuf->ref
@@ -46,6 +54,13 @@ HISTORY
   * The packet buffer implementation is changed. The pbuf->ref counter
     meaning has changed, and several pbuf functions have been
     adapted accordingly.
+
+  * netif drivers have to be changed to set the hardware address length field
+    that must be initialized correctly by the driver (hint: 6 for Ethernet MAC).
+    See the contrib/ports/c16x cs8900 driver as a driver example.
+
+  * netif's have a dhcp field that must be initialized to NULL by the driver.
+    See the contrib/ports/c16x cs8900 driver as a driver example.
   
 (0.5.x) This file has been unmaintained up to 0.6.1. All changes are
   logged in CVS but have not been explained here.
