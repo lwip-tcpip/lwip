@@ -67,8 +67,6 @@
  * to remove the DHCP client.
  *
  */
-#ifdef LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
-
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
@@ -80,6 +78,8 @@
 #include "lwip/sys.h"
 #include "lwip/opt.h"
 #include "lwip/dhcp.h"
+
+#ifdef LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
 
 /** global transaction identifier, must be
  *  unique for each DHCP request. */
@@ -710,7 +710,7 @@ static err_t dhcp_discover(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
-    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, , DHCP_SERVER_PORT);
+    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_discover: SELECTING\n"));
