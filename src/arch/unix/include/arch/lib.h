@@ -31,6 +31,7 @@
  */
 #ifndef __ARCH_LIB_H__
 #define __ARCH_LIB_H__
+#include <string.h>
 
 #ifndef _STRING_H_
 #ifndef _STRING_H
