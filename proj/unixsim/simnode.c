@@ -52,9 +52,6 @@
 
 #include "netif/tcpdump.h"
 
-#include "netif/sioslipif.h"
-
-
 #include "lwip/ip_addr.h"
 
 #include "arch/perf.h"
