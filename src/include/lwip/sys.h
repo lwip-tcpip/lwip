@@ -59,11 +59,6 @@ struct sys_timeout {u8_t dummy;};
 
 #define sys_thread_new(t,a,p)
 
-/* We don't need protection if there is no OS */
-#define SYS_ARCH_DECL_PROTECT(lev)
-#define SYS_ARCH_PROTECT(lev)
-#define SYS_ARCH_UNPROTECT(lev)
-
 #else /* NO_SYS */
 
 #include "arch/sys_arch.h"
@@ -115,6 +110,17 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 void sys_mbox_free(sys_mbox_t mbox);
 void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 
+
+/* Thread functions. */
+sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio);
+
+/* The following functions are used only in Unix code, and
+   can be omitted when porting the stack. */
+/* Returns the current time in microseconds. */
+unsigned long sys_now(void);
+
+#endif /* NO_SYS */
+
 /* Critical Region Protection */
 /* These functions must be implemented in the sys_arch.c file.
    In some implementations they can provide a more light-weight protection
@@ -155,18 +161,15 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 #define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
 sys_prot_t sys_arch_protect(void);
 void sys_arch_unprotect(sys_prot_t pval);
+
+#else
+
+#define SYS_ARCH_DECL_PROTECT(lev)
+#define SYS_ARCH_PROTECT(lev)
+#define SYS_ARCH_UNPROTECT(lev)
+
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 #endif /* SYS_ARCH_PROTECT */
-
-/* Thread functions. */
-sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio);
-
-/* The following functions are used only in Unix code, and
-   can be omitted when porting the stack. */
-/* Returns the current time in microseconds. */
-unsigned long sys_now(void);
-
-#endif /* NO_SYS */
 
 #endif /* __LWIP_SYS_H__ */
