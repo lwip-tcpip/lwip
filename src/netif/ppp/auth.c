@@ -542,10 +542,10 @@ int check_passwd(
          */
         if (attempts++ >= 10) {
             ppp_trace(LOG_WARNING, "%d LOGIN FAILURES BY %s\n", attempts, user);
-            ppp_panic("Excess Bad Logins");
+            /*ppp_panic("Excess Bad Logins");*/
         }
         if (attempts > 3) {
-            ppp_msleep((attempts - 3) * 5);
+            sys_msleep((attempts - 3) * 5);
         }
         if (addrs != NULL) {
             free_wordlist(addrs);

@@ -1,7 +1,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Id: vj.h,v 1.1 2003/05/27 14:37:56 jani Exp $
+ * $Id: vj.h,v 1.2 2003/06/02 11:12:56 jani Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -144,7 +144,7 @@ struct vjcompress {
 };
 
 /* flag values */
-#define VJF_TOSS 1		/* tossing rcvd frames because of input err */
+#define VJF_TOSS 1U		/* tossing rcvd frames because of input err */
 
 extern void  vj_compress_init (struct vjcompress *comp);
 extern u_int vj_compress_tcp (struct vjcompress *comp, struct pbuf *pb);

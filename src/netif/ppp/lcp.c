@@ -1880,8 +1880,8 @@ static void LcpEchoCheck (fsm *f)
 	/*
 	 * Start the timer for the next interval.
 	 */
-	if (lcp_echo_timer_running != 0)
-		ppp_panic("LcpEchoCheck");
+	LWIP_ASSERT("lcp_echo_timer_running == 0", lcp_echo_timer_running == 0);
+
 	TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
 	lcp_echo_timer_running = 1;
 }

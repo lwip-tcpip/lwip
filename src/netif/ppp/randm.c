@@ -191,7 +191,7 @@ void avRandomInit()
     avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
              + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
 #else
-    avRandomSeed += ppp_jiffies(); /* XXX */
+    avRandomSeed += sys_jiffies(); /* XXX */
 #endif
         
     /* Initialize the Borland random number generator. */
@@ -215,9 +215,9 @@ void avRandomize(void)
         /* The initialization function also updates the seed. */
     } else {
 /*        avRandomSeed += (avRandomSeed << 16) + TM1; */
-    	avRandomSeed += (ppp_jiffies() - last_jiffies); /* XXX */
+    	avRandomSeed += (sys_jiffies() - last_jiffies); /* XXX */
     }
-    last_jiffies = ppp_jiffies();
+    last_jiffies = sys_jiffies();
 }
 
 /*

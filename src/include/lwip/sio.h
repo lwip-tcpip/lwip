@@ -34,9 +34,30 @@
 
 #include "arch/cc.h"
 
-void * sio_open(u8_t);
-void sio_send(u8_t, void*);
-u8_t sio_recv(void *);
-u32_t sio_read(void *, u8_t *, u32_t);
-u32_t sio_write(void *, u8_t *, u32_t);
+#ifndef __sio_fd_t_defined
+typedef void * sio_fd_t;
+#endif
 
+#ifndef sio_open
+sio_fd_t sio_open(u8_t);
+#endif
+
+#ifndef sio_send
+void sio_send(u8_t, sio_fd_t);
+#endif
+
+#ifndef sio_recv
+u8_t sio_recv(sio_fd_t);
+#endif
+
+#ifndef sio_read
+u32_t sio_read(sio_fd_t, u8_t *, u32_t);
+#endif
+
+#ifndef sio_write
+u32_t sio_write(sio_fd_t, u8_t *, u32_t);
+#endif
+
+#ifndef sio_read_abort
+void sio_read_abort(void);
+#endif

@@ -593,12 +593,12 @@ static int ipcp_nakci(fsm *f, u_char *p, int len)
 	  if (go->accept_local && ciaddr1) { /* Do we know our address? */
 		  try.ouraddr = ciaddr1;
 		  IPCPDEBUG((LOG_INFO, "local IP address %s\n",
-			     ip_ntoa(ciaddr1)));
+			     inet_ntoa(ciaddr1)));
 	  }
 	  if (go->accept_remote && ciaddr2) { /* Does he know his? */
 		  try.hisaddr = ciaddr2;
 		  IPCPDEBUG((LOG_INFO, "remote IP address %s\n",
-			     ip_ntoa(ciaddr2)));
+			     inet_ntoa(ciaddr2)));
 	  }
 	);
 	
@@ -633,12 +633,12 @@ static int ipcp_nakci(fsm *f, u_char *p, int len)
 	
 	NAKCIDNS(CI_MS_DNS1, req_dns1,
 			try.dnsaddr[0] = cidnsaddr;
-		  	IPCPDEBUG((LOG_INFO, "primary DNS address %s\n", ip_ntoa(cidnsaddr)));
+		  	IPCPDEBUG((LOG_INFO, "primary DNS address %s\n", inet_ntoa(cidnsaddr)));
 			);
 
 	NAKCIDNS(CI_MS_DNS2, req_dns2,
 			try.dnsaddr[1] = cidnsaddr;
-		  	IPCPDEBUG((LOG_INFO, "secondary DNS address %s\n", ip_ntoa(cidnsaddr)));
+		  	IPCPDEBUG((LOG_INFO, "secondary DNS address %s\n", inet_ntoa(cidnsaddr)));
 			);
 
 	/*
@@ -898,7 +898,7 @@ static int ipcp_reqci(
 			 */
 			GETLONG(tl, p);		/* Parse source address (his) */
 			ciaddr1 = htonl(tl);
-			IPCPDEBUG((LOG_INFO, "his addr %s\n", ip_ntoa(ciaddr1)));
+			IPCPDEBUG((LOG_INFO, "his addr %s\n", inet_ntoa(ciaddr1)));
 			if (ciaddr1 != wo->hisaddr
 					&& (ciaddr1 == 0 || !wo->accept_remote)) {
 				orc = CONFNAK;
@@ -922,7 +922,7 @@ static int ipcp_reqci(
 			 */
 			GETLONG(tl, p);		/* Parse desination address (ours) */
 			ciaddr2 = htonl(tl);
-			IPCPDEBUG((LOG_INFO, "our addr %s\n", ip_ntoa(ciaddr2)));
+			IPCPDEBUG((LOG_INFO, "our addr %s\n", inet_ntoa(ciaddr2)));
 			if (ciaddr2 != wo->ouraddr) {
 				if (ciaddr2 == 0 || !wo->accept_local) {
 					orc = CONFNAK;
@@ -970,12 +970,12 @@ static int ipcp_reqci(
 					tl = ntohl(wo->hisaddr);
 					PUTLONG(tl, p);
 				}
-				IPCPDEBUG((LOG_INFO, "ipcp_reqci: Nak ADDR %s\n", ip_ntoa(ciaddr1)));
+				IPCPDEBUG((LOG_INFO, "ipcp_reqci: Nak ADDR %s\n", inet_ntoa(ciaddr1)));
 			} else if (ciaddr1 == 0 && wo->hisaddr == 0) {
 				/*
 				 * Don't ACK an address of 0.0.0.0 - reject it instead.
 				 */
-				IPCPDEBUG((LOG_INFO, "ipcp_reqci: Reject ADDR %s\n", ip_ntoa(ciaddr1)));
+				IPCPDEBUG((LOG_INFO, "ipcp_reqci: Reject ADDR %s\n", inet_ntoa(ciaddr1)));
 				orc = CONFREJ;
 				wo->req_addr = 0;	/* don't NAK with 0.0.0.0 later */
 				break;
@@ -983,7 +983,7 @@ static int ipcp_reqci(
 			
 			ho->neg_addr = 1;
 			ho->hisaddr = ciaddr1;
-			IPCPDEBUG((LOG_INFO, "ipcp_reqci: ADDR %s\n", ip_ntoa(ciaddr1)));
+			IPCPDEBUG((LOG_INFO, "ipcp_reqci: ADDR %s\n", inet_ntoa(ciaddr1)));
 			break;
 		
 		case CI_MS_DNS1:
@@ -1001,7 +1001,7 @@ static int ipcp_reqci(
 			GETLONG(tl, p);
 			if (htonl(tl) != ao->dnsaddr[d]) {
 				IPCPDEBUG((LOG_INFO, "ipcp_reqci: Naking DNS%d Request %d\n",
-							d+1, ip_ntoa(tl)));
+							d+1, inet_ntoa(tl)));
 				DECPTR(sizeof(u32_t), p);
 				tl = ntohl(ao->dnsaddr[d]);
 				PUTLONG(tl, p);
@@ -1211,7 +1211,7 @@ static void ipcp_up(fsm *f)
 	 */
 	if (!auth_ip_addr(f->unit, ho->hisaddr)) {
 		ppp_trace(LOG_ERR, "Peer is not authorized to use remote address %s\n",
-				ip_ntoa(ho->hisaddr));
+				inet_ntoa(ho->hisaddr));
 		ipcp_close(f->unit, "Unauthorized remote IP address");
 		return;
 	}
@@ -1224,13 +1224,11 @@ static void ipcp_up(fsm *f)
 	 */
 	mask = GetMask(go->ouraddr);
 	
-#if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask, go->dnsaddr[0], go->dnsaddr[1])) {
 		IPCPDEBUG((LOG_WARNING, "sifaddr failed\n"));
 		ipcp_close(f->unit, "Interface configuration failed");
 		return;
 	}
-#endif
 	
 	/* bring the interface up for IP */
 	if (!sifup(f->unit)) {
@@ -1239,13 +1237,6 @@ static void ipcp_up(fsm *f)
 		return;
 	}
 	
-#if (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
-		IPCPDEBUG((LOG_WARNING, "sifaddr failed\n"));
-		ipcp_close(f->unit, "Interface configuration failed");
-		return;
-	}
-#endif
 	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 	
 	/* assign a default route through the interface if required */
@@ -1253,13 +1244,13 @@ static void ipcp_up(fsm *f)
 		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
 			default_route_set[f->unit] = 1;
 	
-	IPCPDEBUG((LOG_NOTICE, "local  IP address %s\n", ip_ntoa(go->ouraddr)));
-	IPCPDEBUG((LOG_NOTICE, "remote IP address %s\n", ip_ntoa(ho->hisaddr)));
+	IPCPDEBUG((LOG_NOTICE, "local  IP address %s\n", inet_ntoa(go->ouraddr)));
+	IPCPDEBUG((LOG_NOTICE, "remote IP address %s\n", inet_ntoa(ho->hisaddr)));
 	if (go->dnsaddr[0]) {
-		IPCPDEBUG((LOG_NOTICE, "primary   DNS address %s\n", ip_ntoa(go->dnsaddr[0])));
+		IPCPDEBUG((LOG_NOTICE, "primary   DNS address %s\n", inet_ntoa(go->dnsaddr[0])));
 	}
 	if (go->dnsaddr[1]) {
-		IPCPDEBUG((LOG_NOTICE, "secondary DNS address %s\n", ip_ntoa(go->dnsaddr[1])));
+		IPCPDEBUG((LOG_NOTICE, "secondary DNS address %s\n", inet_ntoa(go->dnsaddr[1])));
 	}
 }
 

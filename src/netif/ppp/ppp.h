@@ -34,9 +34,17 @@
 #ifndef PPP_H
 #define PPP_H
 
-#include "target.h"
+#include "lwip/opt.h"
 
 #if PPP_SUPPORT > 0
+#include "lwip/sio.h"
+#include "lwip/api.h"
+#include "lwip/sockets.h"
+#include "lwip/stats.h"
+#include "lwip/mem.h"
+#include "lwip/tcpip.h"
+#include "lwip/netif.h"
+
 /*
  * pppd.h - PPP daemon global declarations.
  *
@@ -82,6 +90,20 @@
  * OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS,
  * OR MODIFICATIONS.
  */
+
+#define TIMEOUT(f, a, t)    sys_untimeout((f), (a)), sys_timeout((t)*1000, (f), (a))
+#define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
+
+
+# ifndef __u_char_defined
+
+/* Type definitions for BSD code. */
+typedef unsigned long u_long;
+typedef unsigned int u_int;
+typedef unsigned short u_short;
+typedef unsigned char u_char;
+
+#endif
 
 /*
  * Constants and structures defined by the internet system,
@@ -196,40 +218,6 @@ enum NPmode {
     PUTCHAR(PPP_ALLSTATIONS, p); \
     PUTCHAR(PPP_UI, p); \
     PUTSHORT(t, p); }
-
-/*
- * Definitions of bits in internet address integers.
- * On subnets, the decomposition of addresses to host and net parts
- * is done according to subnet mask, not the masks here.
- */
-#define IN_CLASSA(i)        (((long)(i) & 0x80000000) == 0)
-#define IN_CLASSA_NET       0xff000000
-#define IN_CLASSA_NSHIFT    24
-#define IN_CLASSA_HOST      0x00ffffff
-#define IN_CLASSA_MAX       128
-
-#define IN_CLASSB(i)        (((long)(i) & 0xc0000000) == 0x80000000)
-#define IN_CLASSB_NET       0xffff0000
-#define IN_CLASSB_NSHIFT    16
-#define IN_CLASSB_HOST      0x0000ffff
-#define IN_CLASSB_MAX       65536
-
-#define IN_CLASSC(i)        (((long)(i) & 0xe0000000) == 0xc0000000)
-#define IN_CLASSC_NET       0xffffff00
-#define IN_CLASSC_NSHIFT    8
-#define IN_CLASSC_HOST      0x000000ff
-
-#define IN_CLASSD(i)        (((long)(i) & 0xf0000000) == 0xe0000000)
-#define IN_CLASSD_NET       0xf0000000  /* These ones aren't really */
-#define IN_CLASSD_NSHIFT    28      /* net and host fields, but */
-#define IN_CLASSD_HOST      0x0fffffff  /* routing needn't know.    */
-#define IN_MULTICAST(i)     IN_CLASSD(i)
-
-#define IN_EXPERIMENTAL(i)  (((long)(i) & 0xf0000000) == 0xf0000000)
-#define IN_BADCLASS(i)      (((long)(i) & 0xf0000000) == 0xf0000000)
-
-#define IN_LOOPBACKNET      127         /* official! */
-
 
 /*************************
 *** PUBLIC DEFINITIONS ***
@@ -358,7 +346,7 @@ void pppSetAuth(const char *user, const char *passwd);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. 
  */
-int pppOpen(ppp_sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg);
+int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg);
 
 /*
  * Close a PPP connection and release the descriptor. 
@@ -410,7 +398,7 @@ int  sifnpmode (int u, int proto, enum NPmode mode);
 /* Configure i/f down (for IP) */
 int  sifdown (int);	
 /* Configure IP addresses for i/f */
-int  sifaddr (int, u32_t, u32_t, u32_t);
+int  sifaddr (int, u32_t, u32_t, u32_t, u32_t, u32_t);
 /* Reset i/f IP addresses */
 int  cifaddr (int, u32_t, u32_t);
 /* Create default route through i/f */

@@ -97,7 +97,6 @@
 #endif
 
 #include "pppdebug.h"
-#include "lwip/sio.h"
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/
@@ -132,7 +131,7 @@ typedef enum {
 typedef struct PPPControl_s {
     char openFlag;                      /* True when in use. */
     char oldFrame;                      /* Old framing character for fd. */
-    ppp_sio_fd_t fd;                    /* File device ID of port. */
+    sio_fd_t fd;                    /* File device ID of port. */
     int  kill_link;                     /* Shut the link down. */
     int  sig_hup;                       /* Carrier lost. */
     int  if_up;                         /* True when the interface is up. */
@@ -156,7 +155,7 @@ typedef struct PPPControl_s {
 
     struct netif *netif;
 
-	struct ip_addr our_ipaddr, his_ipaddr, netmask;
+	struct ip_addr our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 
 	void (*linkStatusCB)(void *arg, int errCode);
 	void *linkStatusArg;
@@ -340,17 +339,11 @@ void pppSetAuth(const char *user, const char *passwd)
  * established before calling this.
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. */
-int pppOpen(ppp_sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg)
+int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg)
 {
     PPPControl *pc;
     int pd;
-    
-    /* XXX
-     * Ensure that fd is not already used for PPP
-     * for now this is left for the lower layer to check
-     * so the arg passed to sio_open means nothing
-     */
-    fd = sio_open(2);
+
     /* Find a free PPP session descriptor. Critical region? */
     for (pd = 0; pd < NUM_PPP && pppControl[pd].openFlag != 0; pd++);
     if (pd >= NUM_PPP)
@@ -396,7 +389,7 @@ int pppOpen(ppp_sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void 
 	sys_thread_new(pppMain, (void*)pd, PPP_THREAD_PRIO);
 	if(!linkStatusCB) {
 		while(pd >= 0 && !pc->if_up) {
-			ppp_msleep(500);
+			sys_msleep(500);
 			if (lcp_phase[pd] == PHASE_DEAD) {
 				pppClose(pd);
 				if (pc->errCode)
@@ -424,7 +417,7 @@ int pppClose(int pd)
     
     if(!pc->linkStatusCB) {
 	    while(st >= 0 && lcp_phase[pd] != PHASE_DEAD) {
-		    ppp_msleep(500);
+		    sys_msleep(500);
 		    break;
 	    }
     }
@@ -448,7 +441,7 @@ static void nPut(PPPControl *pc, struct pbuf *nb)
 	for(b = nb; b != NULL; b = b->next) {
 	    if((c = sio_write(pc->fd, b->payload, b->len)) != b->len) {
 		PPPDEBUG((LOG_WARNING,
-			    "PPP nPut: incomplete ppp_sio_write(%d,, %u) = %d\n", pc->fd, b->len, c));
+			    "PPP nPut: incomplete sio_write(%d,, %u) = %d\n", pc->fd, b->len, c));
 #ifdef LINK_STATS
 		lwip_stats.link.err++;
 #endif /* LINK_STATS */
@@ -542,9 +535,9 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
     tailMB = headMB;
         
     /* Build the PPP header. */
-    if ((ppp_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG)
+    if ((sys_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG)
         tailMB = pppMPutRaw(PPP_FLAG, tailMB);
-    pc->lastXMit = ppp_jiffies();
+    pc->lastXMit = sys_jiffies();
     if (!pc->accomp) {
         fcsOut = PPP_FCS(fcsOut, PPP_ALLSTATIONS);
         tailMB = pppMPutC(PPP_ALLSTATIONS, &pc->outACCM, tailMB);
@@ -637,7 +630,7 @@ int  pppIOCtl(int pd, int cmd, void *arg)
             break;
         case PPPCTLG_FD:
             if (arg) 
-                *(ppp_sio_fd_t *)arg = pc->fd;
+                *(sio_fd_t *)arg = pc->fd;
             else
                 st = PPPERR_PARAM;
             break;
@@ -691,9 +684,9 @@ int pppWrite(int pd, const u_char *s, int n)
         
     /* If the link has been idle, we'll send a fresh flag character to
      * flush any noise. */
-    if ((ppp_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG)
+    if ((sys_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG)
         tailMB = pppMPutRaw(PPP_FLAG, tailMB);
-    pc->lastXMit = ppp_jiffies();
+    pc->lastXMit = sys_jiffies();
      
     /* Load output buffer. */
     while (n-- > 0) {
@@ -938,8 +931,9 @@ int sifup(int pd)
 		if(pc->netif) {
         	pc->if_up = 1;
         	pc->errCode = 0;
-			if(pc->linkStatusCB)
-				pc->linkStatusCB(pc->linkStatusArg, pc->errCode);
+
+		if(pc->linkStatusCB)
+	           pc->linkStatusCB(pc->linkStatusArg, pc->errCode);
 		} else {
         	st = 0;
         	PPPDEBUG((LOG_ERR, "sifup[%d]: netif_add failed\n", pd));
@@ -954,10 +948,10 @@ int sifup(int pd)
  */
 int sifnpmode(int u, int proto, enum NPmode mode)
 {
-	(void)u;
-	(void)proto;
-	(void)mode;
-    return 0;
+  (void)u;
+  (void)proto;
+  (void)mode;
+  return 0;
 }
 
 /*
@@ -989,7 +983,9 @@ int sifaddr(
     int pd,             /* Interface unit ??? */
     u32_t o,        /* Our IP address ??? */
     u32_t h,        /* His IP address ??? */
-    u32_t m         /* IP subnet mask ??? */
+    u32_t m,        /* IP subnet mask ??? */
+    u32_t ns1,      /* Primary DNS */
+    u32_t ns2       /* Secondary DNS */
 )
 {
     PPPControl *pc = &pppControl[pd];
@@ -1002,6 +998,8 @@ int sifaddr(
 		memcpy(&pc->our_ipaddr, &o, sizeof(o));
 		memcpy(&pc->his_ipaddr, &h, sizeof(h));
 		memcpy(&pc->netmask, &m, sizeof(m));
+		memcpy(&pc->dns1, &ns1, sizeof(ns1));
+		memcpy(&pc->dns2, &ns2, sizeof(ns2));
     }
     return st;
 }
@@ -1028,6 +1026,8 @@ int cifaddr(
 		IP4_ADDR(&pc->our_ipaddr, 0,0,0,0);
 		IP4_ADDR(&pc->his_ipaddr, 0,0,0,0);
 		IP4_ADDR(&pc->netmask, 255,255,255,0);
+		IP4_ADDR(&pc->dns1, 0,0,0,0);
+		IP4_ADDR(&pc->dns2, 0,0,0,0);
     }
     return st;
 }
@@ -1121,10 +1121,14 @@ static void pppMain(void *arg)
     int pd = (int)arg;
     struct pbuf *p;
     PPPControl* pc;
+
     pc = &pppControl[pd];
+
     p = pbuf_alloc(PBUF_RAW, PPP_MRU+PPP_HDRLEN, PBUF_RAM);
     if(!p) {
-	ppp_panic("pppMain: unable to allocate pbuf");
+		LWIP_ASSERT("p != NULL", p);
+		pc->errCode = PPPERR_ALLOC;
+		goto out;
     }
 
     /*
@@ -1150,6 +1154,8 @@ static void pppMain(void *arg)
         }
     }
     pbuf_free(p);
+
+out:
     if(pc->linkStatusCB)
 	    pc->linkStatusCB(pc->linkStatusArg, pc->errCode ? pc->errCode : PPPERR_PROTOCOL);
 
