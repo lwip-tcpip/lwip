@@ -13,11 +13,18 @@
  * Multiple packets may be queued, also using this singly linked list.
  * This is called a "packet queue". So, a packet queue consists of one
  * or more pbuf chains, each of which consist of one or more pbufs.
+ * The differences between a pbuf chain and a packet queue are very
+ * subtle. Currently, queues are only supported in a limited section
+ * of lwIP, this is the etharp queueing code. Outside of this section
+ * no packet queues are supported as of yet.
  *
  * The last pbuf of a packet has a ->tot_len field that equals the
  * ->len field. It can be found by traversing the list. If the last
  * pbuf of a packet has a ->next field other than NULL, more packets
  * are on the queue.
+ *
+ * Therefore, looping through a pbuf of a single packet, has an
+ * loop end condition (tot_len == p->len), NOT (next == NULL).
  */
 
 /*
