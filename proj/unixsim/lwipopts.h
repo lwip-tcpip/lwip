@@ -31,7 +31,6 @@
  */
 #ifndef __LWIPOPTS_H__
 #define __LWIPOPTS_H__
-
 /* ---------- Memory options ---------- */
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which
    lwIP is compiled. 4 byte alignment -> define MEM_ALIGNMENT to 4, 2
@@ -62,7 +61,6 @@ a lot of data that needs to be copied, this should be set high. */
    timeouts. */
 #define MEMP_NUM_SYS_TIMEOUT    3
 
-
 /* The following four are used only with the sequential API and can be
    set to 0 if the application only will use the raw API. */
 /* MEMP_NUM_NETBUF: the number of struct netbufs. */
@@ -85,7 +83,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- Pbuf options ---------- */
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
-#define PBUF_POOL_SIZE          6
+#define PBUF_POOL_SIZE          100
 
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 #define PBUF_POOL_BUFSIZE       128
@@ -136,9 +134,13 @@ a lot of data that needs to be copied, this should be set high. */
    defined to 0, all packets with IP options are dropped. */
 #define IP_OPTIONS              1
 
+/* IP reassembly and segmentation.These are orthogonal even
+ * if they both deal with IP fragments */
+#define IP_REASSEMBLY     1
+#define IP_FRAG           1
+
 /* ---------- ICMP options ---------- */
 #define ICMP_TTL                255
-
 
 /* ---------- DHCP options ---------- */
 /* Define LWIP_DHCP to 1 if you want DHCP configuration of
