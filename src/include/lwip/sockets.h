@@ -108,7 +108,9 @@ struct linger {
 #define AF_UNSPEC       0
 #define AF_INET         2
 #define PF_INET         AF_INET
+#define PF_UNSPEC       AF_UNSPEC
 
+#define IPPROTO_IP      0
 #define IPPROTO_TCP     6
 #define IPPROTO_UDP     17
 
@@ -225,7 +227,7 @@ int lwip_ioctl(int s, long cmd, void *argp);
 #define socket(a,b,c)         lwip_socket(a,b,c)
 #define write(a,b,c)          lwip_write(a,b,c)
 #define select(a,b,c,d,e)     lwip_select(a,b,c,d,e)
-#define ioctlsocket(a,b,c)     lwip_ioctl(a,b,c)
+#define ioctlsocket(a,b,c)    lwip_ioctl(a,b,c)
 #endif /* LWIP_COMPAT_SOCKETS */
 
 #endif /* __LWIP_SOCKETS_H__ */
