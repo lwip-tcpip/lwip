@@ -28,16 +28,17 @@
 # 
 # Author: Adam Dunkels <adam@sics.se>
 #
- 
+
 CCDEP=gcc
 CC=gcc
 CFLAGS=-g -Wall -DIPv4 -Os -fpack-struct
 LWIPARCH=unix
 ARFLAGS=rs
 LWIPDIR=../../src
+CONTRIBDIR=../../../contrib
 
 CFLAGS:=$(CFLAGS) \
-	-I$(LWIPDIR)/include -I$(LWIPDIR)/arch/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
+	-I$(LWIPDIR)/include -I$(CONTRIBDIR)/ports/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
 	-Iapps -I.
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.

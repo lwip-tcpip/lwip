@@ -36,9 +36,10 @@ LDFLAGS=-lpcap
 LWIPARCH=unix
 ARFLAGS=rs
 LWIPDIR=../../src
+CONTRIBDIR=../../../contrib
 
 CFLAGS:=$(CFLAGS) \
-	-I$(LWIPDIR)/include -I$(LWIPDIR)/arch/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
+	-I$(LWIPDIR)/include -I$(CONTRIBDIR)/ports/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
 	-Iapps -I.
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
@@ -58,7 +59,7 @@ NETIFFILES=$(LWIPDIR)/netif/loopif.c \
 	$(LWIPDIR)/netif/etharp.c $(LWIPDIR)/netif/slipif.c 
 
 # ARCHFILES: Archiecture specific files.
-ARCHFILES=$(wildcard $(LWIPDIR)/arch/$(LWIPARCH)/*.c $(LWIPDIR)/arch/$(LWIPARCH)/netif/*.c)
+ARCHFILES=$(wildcard $(CONTRIBDIR)/ports/$(LWIPARCH)/*.c $(CONTRIBDIR)/ports/$(LWIPARCH)/netif/*.c)
 
 # APPFILES: Applications.
 APPFILES=apps/fs.c apps/httpd.c \

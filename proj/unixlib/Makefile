@@ -34,9 +34,10 @@ CC=gcc
 CFLAGS=-g -Wall -fPIC -DIPv4 -DLWIP_DEBUG
 LWIPARCH=unix
 LWIPDIR=../../src
+CONTRIBDIR=../../../contrib
 
 CFLAGS:=$(CFLAGS) \
-	-I$(LWIPDIR)/include -I$(LWIPDIR)/arch/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
+	-I$(LWIPDIR)/include -I$(CONTRIBDIR)/ports/$(LWIPARCH)/include -I$(LWIPDIR)/include/ipv4 \
 	-Iapps -I.
 
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
