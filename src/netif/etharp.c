@@ -216,7 +216,7 @@ find_arp_entry(void)
     if (j != ARP_TABLE_SIZE) {
       DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
     } else {
-      DEBUGF(ETHARP_DEBUG, ("find_arp_entry: no replacable entry could be found\n", j));
+      DEBUGF(ETHARP_DEBUG, ("find_arp_entry: no replacable entry could be found\n"));
     }
     i = j;
   }
