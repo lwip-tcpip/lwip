@@ -103,6 +103,14 @@ void sys_sem_free(sys_sem_t sem);
 void sys_sem_wait(sys_sem_t sem);
 int sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout);
 
+/* Time functions. */
+#ifndef sys_msleep
+void sys_msleep(u32_t ms); /* only has a (close to) 1 jiffy resolution. */
+#endif
+#ifndef sys_jiffies
+u32_t sys_jiffies(void); /* since power up. */
+#endif
+
 /* Mailbox functions. */
 sys_mbox_t sys_mbox_new(void);
 void sys_mbox_post(sys_mbox_t mbox, void *msg);

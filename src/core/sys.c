@@ -279,5 +279,15 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 }
 
 /*-----------------------------------------------------------------------------------*/
+void
+sys_msleep(u32_t ms)
+{
+	sys_sem_t delaysem = sys_sem_new(0);
+
+	sys_sem_wait_timeout(delaysem, ms);
+
+	sys_sem_free(delaysem);
+}
+/*-----------------------------------------------------------------------------------*/
 
 #endif /* NO_SYS */
