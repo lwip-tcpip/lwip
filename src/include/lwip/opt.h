@@ -74,6 +74,11 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_PBUF                   16
 #endif
 
+/* Number of raw connection PCBs */
+#ifndef MEMP_NUM_RAW_PCB
+#define MEMP_NUM_RAW_PCB                4
+#endif
+
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
 #ifndef MEMP_NUM_UDP_PCB
