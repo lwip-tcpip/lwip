@@ -636,11 +636,12 @@ pbuf_ref(struct pbuf *p)
 
 /**
  * Concatenate two pbufs (each may be a pbuf chain) and take over
- * the reference of the tail pbuf.
+ * the caller's reference of the tail pbuf.
  * 
- *  @note The caller MAY NOT reference the tail pbuf afterwards.
+ * @note The caller MAY NOT reference the tail pbuf afterwards.
+ * Use pbuf_chain() for that purpose.
  * 
- *  @see pbuf_chain()
+ * @see pbuf_chain()
  */
 
 void
@@ -650,16 +651,14 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 
   LWIP_ASSERT("h != NULL", h != NULL);
   LWIP_ASSERT("t != NULL", t != NULL);
-
-  if (t == NULL)
-    return;
+  if ((h = NULL) || (t == NULL)) return;
 
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
-  /* p is last pbuf of first h chain */
+  /* { p is last pbuf of first h chain, p->next == NULL } */
   LWIP_ASSERT("p->tot_len == p->len (of last pbuf in chain)", p->tot_len == p->len);
   /* add total length of second chain to last pbuf total of first chain */
   p->tot_len += t->tot_len;
@@ -668,13 +667,15 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 }
 
 /**
- * Chain two pbufs (or pbuf chains) together. They must belong to the same packet.
- * It's the same as pbuf_cat with the addition that it increases the reference count
- * of the tail.
+ * Chain two pbufs (or pbuf chains) together.
+ * 
+ * The caller MUST call pbuf_free(t) once it has stopped
+ * using it. Use pbuf_cat() instead if you no longer use t.
  * 
  * @param h head pbuf (chain)
  * @param t tail pbuf (chain)
- * @note May not be called on a packet queue.
+ * @note The pbufs MUST belong to the same packet.
+ * @note MAY NOT be called on a packet queue.
  *
  * The ->tot_len fields of all pbufs of the head chain are adjusted.
  * The ->next field of the last pbuf of the head chain is adjusted.
@@ -685,7 +686,7 @@ void
 pbuf_chain(struct pbuf *h, struct pbuf *t)
 {
   pbuf_cat(h, t);
-  /* t is now referenced to one more time */
+  /* t is now referenced by h */
   pbuf_ref(t);
   LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }
