@@ -1119,8 +1119,8 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   u8_t msg_type;
   u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_recv(pbuf = %p) from DHCP server %u.%u.%u.%u port %u\n", p,
-    (u8_t)(ntohl(addr->addr) >> 24 & 0xff), (u8_t)(ntohl(addr->addr) >> 16 & 0xff),
-    (u8_t)(ntohl(addr->addr) >>  8 & 0xff), (u8_t)(ntohl(addr->addr) & 0xff), port));
+    (unsigned int)(ntohl(addr->addr) >> 24 & 0xff), (unsigned int)(ntohl(addr->addr) >> 16 & 0xff),
+    (unsigned int)(ntohl(addr->addr) >>  8 & 0xff), (unsigned int)(ntohl(addr->addr) & 0xff), port));
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->len = %u\n", p->len));
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->tot_len = %u\n", p->tot_len));
   /* prevent warnings about unused arguments */

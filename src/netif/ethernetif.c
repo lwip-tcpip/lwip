@@ -39,8 +39,6 @@
  * THIS CODE NEEDS TO BE FIXED - IT IS NOT In SYNC WITH CURRENT ETHARP API
  */
 
-#include "lwip/debug.h"
-
 #include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"

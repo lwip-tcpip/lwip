@@ -291,7 +291,10 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 static err_t
 tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 {
-  if (arg || pcb || err);
+  (void)arg;
+  (void)pcb;
+  (void)err;
+
   return ERR_ABRT;
 }
 #endif /* LWIP_CALLBACK_API */

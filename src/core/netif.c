@@ -100,11 +100,11 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if NETIF_DEBUG
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
-  ip_addr_debug_print(ipaddr);
+  ip_addr_debug_print(NETIF_DEBUG, ipaddr);
   LWIP_DEBUGF(NETIF_DEBUG, (" netmask "));
-  ip_addr_debug_print(netmask);
-  LWIP_DEBUGF(NETIF_DEBUG, (" gw "));  
-  ip_addr_debug_print(gw);
+  ip_addr_debug_print(NETIF_DEBUG, netmask);
+  LWIP_DEBUGF(NETIF_DEBUG, (" gw "));
+  ip_addr_debug_print(NETIF_DEBUG, gw);
   LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
 #endif /* NETIF_DEBUG */
   return netif;
@@ -211,11 +211,11 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 #endif
   ip_addr_set(&(netif->ip_addr), ipaddr);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
-    netif->name[0], netif->name[1], 
-    (u8_t)(ntohl(netif->ip_addr.addr) >> 24 & 0xff),
-    (u8_t)(ntohl(netif->ip_addr.addr) >> 16 & 0xff),
-    (u8_t)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
-    (u8_t)(ntohl(netif->ip_addr.addr) & 0xff)));
+    netif->name[0], netif->name[1],
+    (unsigned int)(ntohl(netif->ip_addr.addr) >> 24 & 0xff),
+    (unsigned int)(ntohl(netif->ip_addr.addr) >> 16 & 0xff),
+    (unsigned int)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
+    (unsigned int)(ntohl(netif->ip_addr.addr) & 0xff)));
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -224,10 +224,10 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
   ip_addr_set(&(netif->gw), gw);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
            netif->name[0], netif->name[1],
-           (u8_t)(ntohl(netif->gw.addr) >> 24 & 0xff),
-           (u8_t)(ntohl(netif->gw.addr) >> 16 & 0xff),
-           (u8_t)(ntohl(netif->gw.addr) >> 8 & 0xff),
-           (u8_t)(ntohl(netif->gw.addr) & 0xff)));
+           (unsigned int)(ntohl(netif->gw.addr) >> 24 & 0xff),
+           (unsigned int)(ntohl(netif->gw.addr) >> 16 & 0xff),
+           (unsigned int)(ntohl(netif->gw.addr) >> 8 & 0xff),
+           (unsigned int)(ntohl(netif->gw.addr) & 0xff)));
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -236,10 +236,10 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
   ip_addr_set(&(netif->netmask), netmask);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
            netif->name[0], netif->name[1],
-           (u8_t)(ntohl(netif->netmask.addr) >> 24 & 0xff),
-           (u8_t)(ntohl(netif->netmask.addr) >> 16 & 0xff),
-           (u8_t)(ntohl(netif->netmask.addr) >> 8 & 0xff),
-           (u8_t)(ntohl(netif->netmask.addr) & 0xff)));
+           (unsigned int)(ntohl(netif->netmask.addr) >> 24 & 0xff),
+           (unsigned int)(ntohl(netif->netmask.addr) >> 16 & 0xff),
+           (unsigned int)(ntohl(netif->netmask.addr) >> 8 & 0xff),
+           (unsigned int)(ntohl(netif->netmask.addr) & 0xff)));
 }
 /*-----------------------------------------------------------------------------------*/
 void

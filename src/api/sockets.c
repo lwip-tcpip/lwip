@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  * Improved by Marc Boucher <marc@mbsi.ca> and David Haas <dhaas@alum.rpi.edu>
@@ -51,7 +51,7 @@ struct lwip_socket {
   int err;
 };
 
-struct lwip_select_cb 
+struct lwip_select_cb
 {
     struct lwip_select_cb *next;
     fd_set *readset;
@@ -104,13 +104,13 @@ static struct lwip_socket *
 get_socket(int s)
 {
   struct lwip_socket *sock;
-  
+
   if ((s < 0) || (s > NUM_SOCKETS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s));
     set_errno(EBADF);
     return NULL;
   }
-  
+
   sock = &sockets[s];
 
   if (!sock->conn) {
@@ -132,7 +132,7 @@ alloc_socket(struct netconn *newconn)
 
   /* Protect socket array */
   sys_sem_wait(socksem);
-  
+
   /* allocate a new socket identifier */
   for(i = 0; i < NUM_SOCKETS; ++i) {
     if (!sockets[i].conn) {
@@ -166,12 +166,12 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (!sock) {
     return -1;
   }
-  
+
   newconn = netconn_accept(sock->conn);
-    
+
   /* get the IP address and port of the remote host */
   netconn_peer(newconn, &naddr, &port);
-  
+
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
   sin.sin_family = AF_INET;
@@ -184,14 +184,14 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   memcpy(addr, &sin, *addrlen);
 
   newsock = alloc_socket(newconn);
-  if (newsock == -1) {  
+  if (newsock == -1) {
     netconn_delete(newconn);
   sock_set_errno(sock, ENOBUFS);
   return -1;
   }
   newconn->callback = event_callback;
   sock = get_socket(newsock);
-  
+
   sys_sem_wait(socksem);
   sock->rcvevent += -1 - newconn->socket;
   newconn->socket = newsock;
@@ -199,10 +199,10 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
 #if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
-  ip_addr_debug_print(&naddr);
+  ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", port));
 #endif
-  
+
   sock_set_errno(sock, 0);
   return newsock;
 }
@@ -214,21 +214,21 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
   struct ip_addr local_addr;
   u16_t local_port;
   err_t err;
-  
+
   sock = get_socket(s);
   if (!sock) {
     return -1;
   }
-  
+
   local_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
   local_port = ((struct sockaddr_in *)name)->sin_port;
 
 #if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
-  ip_addr_debug_print(&local_addr);
+  ip_addr_debug_print(SOCKETS_DEBUG, &local_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u)\n", ntohs(local_port)));
 #endif
-  
+
   err = netconn_bind(sock->conn, &local_addr, ntohs(local_port));
 
   if (err != ERR_OK) {
@@ -246,20 +246,20 @@ int
 lwip_close(int s)
 {
   struct lwip_socket *sock;
-  
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_close(%d)\n", s));
   if (!socksem)
       socksem = sys_sem_new(1);
 
   /* We cannot allow multiple closes of the same socket. */
   sys_sem_wait(socksem);
-  
+
   sock = get_socket(s);
   if (!sock) {
       sys_sem_signal(socksem);
       return -1;
   }
-  
+
   netconn_delete(sock->conn);
   if (sock->lastdata) {
     netbuf_delete(sock->lastdata);
@@ -282,7 +282,7 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
   if (!sock) {
     return -1;
   }
-  
+
   if (((struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
     err = netconn_disconnect(sock->conn);
@@ -295,10 +295,10 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
 
 #if SOCKETS_DEBUG
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
-    ip_addr_debug_print(&remote_addr);
+    ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u)\n", ntohs(remote_port)));
 #endif
-        
+
     err = netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
    }
 
@@ -316,15 +316,15 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
 int
 lwip_listen(int s, int backlog)
 {
-  struct lwip_socket *sock;    
+  struct lwip_socket *sock;
   err_t err;
-  
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
   sock = get_socket(s);
   if (!sock) {
     return -1;
   }
- 
+
   err = netconn_listen(sock->conn);
 
   if (err != ERR_OK) {
@@ -347,7 +347,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   struct ip_addr *addr;
   u16_t port;
 
-  
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %d, 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
   if (!sock) {
@@ -355,7 +355,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   }
 
   /* Check if there is data left from the last recv operation. */
-  if (sock->lastdata) {    
+  if (sock->lastdata) {
     buf = sock->lastdata;
   } else {
     /* If this is non-blocking call, then check first */
@@ -366,11 +366,11 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
       sock_set_errno(sock, EWOULDBLOCK);
       return -1;
     }
-      
+
     /* No data was left from the previous operation, so we try to get
        some from the network. */
     buf = netconn_recv(sock->conn);
-    
+
     if (!buf) {
       /* We should really do some error checking here. */
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
@@ -378,17 +378,17 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
       return 0;
     }
   }
-  
+
   buflen = netbuf_len(buf);
 
   buflen -= sock->lastoffset;
-  
+
   if (len > buflen) {
     copylen = buflen;
   } else {
     copylen = len;
   }
-  
+
   /* copy the contents of the received buffer into
      the supplied memory pointer mem */
   netbuf_copy_partial(buf, mem, copylen, sock->lastoffset);
@@ -413,21 +413,21 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
 #if SOCKETS_DEBUG
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
-    ip_addr_debug_print(addr);
+    ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
 #endif
   } else {
 #if SOCKETS_DEBUG > 0
     addr = netbuf_fromaddr(buf);
-    port = netbuf_fromport(buf);  
+    port = netbuf_fromport(buf);
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
-    ip_addr_debug_print(addr);
+    ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
 #endif
 
   }
- 
+
   /* If this is a TCP socket, check if there is data left in the
      buffer. If so, it should be saved in the sock structure for next
      time around. */
@@ -440,7 +440,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     netbuf_delete(buf);
   }
 
- 
+
   sock_set_errno(sock, 0);
   return copylen;
 }
@@ -469,8 +469,8 @@ lwip_send(int s, void *data, int size, unsigned int flags)
   sock = get_socket(s);
   if (!sock) {
     return -1;
-  }  
-  
+  }
+
   switch (netconn_type(sock->conn)) {
   case NETCONN_UDP:
     /* create a buffer */
@@ -481,7 +481,7 @@ lwip_send(int s, void *data, int size, unsigned int flags)
       sock_set_errno(sock, ENOBUFS);
       return -1;
     }
-    
+
     /* make the buffer point to the data that should
        be sent */
     netbuf_ref(buf, data, size);
@@ -502,7 +502,7 @@ lwip_send(int s, void *data, int size, unsigned int flags)
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) err=%d\n", s, err));
     sock_set_errno(sock, err_to_errno(err));
-    return -1;    
+    return -1;
   }
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) ok size=%d\n", s, size));
@@ -523,21 +523,21 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   if (!sock) {
     return -1;
   }
-  
+
   /* get the peer if currently connected */
   connected = (netconn_peer(sock->conn, &addr, &port) == ERR_OK);
-  
+
   remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
   remote_port = ((struct sockaddr_in *)to)->sin_port;
 
 #if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, size=%d, flags=0x%x to=", s, data, size, flags));
-  ip_addr_debug_print(&remote_addr);
+  ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", ntohs(remote_port)));
 #endif
-  
+
   netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
-  
+
   ret = lwip_send(s, data, size, flags);
 
   /* reset the remote address and port number
@@ -607,7 +607,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
     FD_ZERO(&lreadset);
     FD_ZERO(&lwriteset);
     FD_ZERO(&lexceptset);
-    
+
     /* Go through each socket in each list to count number of sockets which
        currently match */
     for(i = 0; i < maxfdp1; i++)
@@ -662,12 +662,12 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb.writeset = writeset;
     select_cb.exceptset = exceptset;
     select_cb.sem_signalled = 0;
-    
+
     /* Protect ourselves searching through the list */
     if (!selectsem)
         selectsem = sys_sem_new(1);
     sys_sem_wait(selectsem);
-    
+
     if (readset)
         lreadset = *readset;
     else
@@ -680,11 +680,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         lexceptset = *exceptset;
     else
         FD_ZERO(&lexceptset);
-    
+
     /* Go through each socket in each list to count number of sockets which
        currently match */
     nready = lwip_selscan(maxfdp1, &lreadset, &lwriteset, &lexceptset);
-    
+
     /* If we don't have any current events, then suspend if we are supposed to */
     if (!nready)
     {
@@ -703,7 +703,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
             return 0;
         }
-        
+
         /* add our semaphore to list */
         /* We don't actually need any dynamic memory. Our entry on the
          * list is only valid while we are in this function, so it's ok
@@ -738,9 +738,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                     p_selcb->next = select_cb.next;
                     break;
                 }
-        
+
         sys_sem_signal(selectsem);
-        
+
         sys_sem_free(select_cb.sem);
         if (i == 0)             /* Timeout */
         {
@@ -775,14 +775,14 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     }
     else
         sys_sem_signal(selectsem);
-    
+
     if (readset)
         *readset = lreadset;
     if (writeset)
         *writeset = lwriteset;
     if (exceptset)
         *exceptset = lexceptset;
-    
+
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: nready=%d\n", nready));
     set_errno(0);
 
@@ -796,7 +796,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     int s;
     struct lwip_socket *sock;
     struct lwip_select_cb *scb;
-    
+
     /* Get socket */
     if (conn)
     {
@@ -812,7 +812,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
                 conn->socket--;
             return;
         }
-        
+
         sock = get_socket(s);
         if (!sock)
             return;
@@ -822,7 +822,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 
     if (!selectsem)
         selectsem = sys_sem_new(1);
-    
+
     sys_sem_wait(selectsem);
     /* Set event as required */
     switch (evt)
@@ -841,7 +841,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
         break;
     }
     sys_sem_signal(selectsem);
-    
+
     /* Now decide if anyone is waiting for this socket */
     /* NOTE: This code is written this way to protect the select link list
        but to avoid a deadlock situation by releasing socksem before
@@ -875,7 +875,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
             break;
         }
     }
-    
+
 }
 
 /*-----------------------------------------------------------------------------------*/
@@ -897,20 +897,20 @@ int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
   if (!sock) {
     return -1;
   }
-  
+
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
   sin.sin_family = AF_INET;
 
   /* get the IP address and port of the remote host */
   netconn_peer(sock->conn, &naddr, &sin.sin_port);
-  
+
 #if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getpeername(%d, addr=", s));
-  ip_addr_debug_print(&naddr);
+  ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
 #endif
-  
+
   sin.sin_port = htons(sin.sin_port);
   sin.sin_addr.s_addr = naddr.addr;
 
@@ -932,7 +932,7 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
   if (!sock) {
     return -1;
   }
-  
+
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
   sin.sin_family = AF_INET;
@@ -942,10 +942,10 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
 
 #if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockname(%d, addr=", s));
-  ip_addr_debug_print(naddr);
+  ip_addr_debug_print(SOCKETS_DEBUG, naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
 #endif
-  
+
   sin.sin_port = htons(sin.sin_port);
   sin.sin_addr.s_addr = naddr->addr;
 
