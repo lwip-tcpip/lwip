@@ -57,9 +57,6 @@
 #include "arch/perf.h"
 #include "lwip/snmp.h"
 
-//#undef DEBUGF
-//#define DEBUGF(x,y) { page_printf("\f"); page_printf y; };
-
 /* The list of UDP PCBs */
 #if LWIP_UDP
 /* was static, but we may want to access this from a socket layer */

@@ -269,7 +269,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
         pbuf_free(p);
         return NULL;
       }
-      //q->next = NULL;
+      /*q->next = NULL;*/
       /* make previous pbuf point to this pbuf */
       r->next = q;
       /* set length of this pbuf */
