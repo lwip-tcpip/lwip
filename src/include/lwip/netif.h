@@ -41,6 +41,8 @@
 #include "lwip/inet.h"
 #include "lwip/pbuf.h"
 
+/** must be the maximum of all used hardware address lengths */
+#define NETIF_HWADDR_LEN 6
 
 struct netif {
   struct netif *next;
@@ -49,7 +51,7 @@ struct netif {
   struct ip_addr ip_addr;
   struct ip_addr netmask;  /* netmask in network byte order */
   struct ip_addr gw;
-  unsigned char hwaddr[6];
+  unsigned char hwaddr[NETIF_HWADDR_LEN];
 
   /* This function is called by the network device driver
      when it wants to pass a packet to the TCP/IP stack. */
@@ -69,15 +71,15 @@ struct netif {
      the pbuf on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
 
-  /* This field can be set bu the device driver and could point
+  /* This field can be set by the device driver and could point
      to state information for the device. */
   void *state;
 };
 
-/* The list of network interfaces. */
+/** The list of network interfaces. */
 extern struct netif *netif_list;
+/** The default network interface. */
 extern struct netif *netif_default;
-
 
 /* netif_init() must be called first. */
 void netif_init(void);
