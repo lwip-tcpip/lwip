@@ -933,9 +933,10 @@ static err_t dhcp_release(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_OFF);
   /* clean old DHCP offer */
   dhcp->server_ip_addr = 0;
-  dhcp->offered_ip_addr = dhcp->ip_addr offered_sn_mask = 0;
-  dhcp->ip_addr offered_gw_addr = dhcp->ip_addr offered_bc_addr = 0;
-  dhcp->offered_t0_lease = dhcp->offered_t1_renew = offered_t2_rebind = 0;
+  dhcp->offered_ip_addr = dhcp->offered_sn_mask = 0;
+  dhcp->offered_gw_addr = dhcp->offered_bc_addr = 0;
+  dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
+  dhcp->dns_count = 0;
   
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
