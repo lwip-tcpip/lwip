@@ -273,7 +273,9 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       /*q->next = NULL;*/
       /* make previous pbuf point to this pbuf */
       r->next = q;
-      /* set length of this pbuf */
+      /* set total length of this pbuf and next in chain */
+      q->tot_len = rem_len;
+      /* this pbuf length is pool size, unless smaller sized tail */
       q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rem_len;
       q->flags = PBUF_FLAG_POOL;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
