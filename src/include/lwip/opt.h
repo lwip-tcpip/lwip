@@ -168,12 +168,10 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef ARP_QUEUEING
 #define ARP_QUEUEING                    1
 #endif
-/** If enabled, the first packet queued will not be overwritten by
- * later packets. If disabled, later packets overwrite early packets
- * in the queue. Default is disabled, which is recommended. 
- */
-#ifndef ARP_QUEUE_FIRST
-#define ARP_QUEUE_FIRST                 0
+
+/* This option is deprecated */
+#ifdef ETHARP_QUEUE_FIRST
+#error ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h.
 #endif
 
 /* This option is removed to comply with the ARP standard */

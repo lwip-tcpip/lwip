@@ -190,7 +190,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 {
   s8_t old_pending, old_stable, empty, i;
   u8_t age_pending, age_stable;
-#if ETHARP_QUEUEING
+#if ARP_QUEUEING
   s8_t old_queue = ARP_TABLE_SIZE;;
   u8_t age_queue = 0;
 #endif
@@ -227,7 +227,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: found matching pending entry %d\n", i));
         /* found match, simply bail out */
         return i;
-#if ETHARP_QUEUEING
+#if ARP_QUEUEING
       /* pending with queued packets? */
       } else if (arp_table[i].p != NULL) {
         if (arp_table[i].ctime >= age_queue) {
