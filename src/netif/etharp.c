@@ -130,7 +130,7 @@ etharp_init(void)
 /**
  * Clears expired entries in the ARP table.
  *
- * This function should be called every ETHARP_TMR_INTERVAL microseconds (10 seconds),
+ * This function should be called every ETHARP_TMR_INTERVAL microseconds (5 seconds),
  * in order to expire entries in the ARP table.
  */
 void
@@ -201,8 +201,9 @@ etharp_tmr(void)
  */
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 {
-  s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE, empty = ARP_TABLE_SIZE, i;
-  u8_t age_pending = 0, age_stable = 0;
+  s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
+  s8_t empty = ARP_TABLE_SIZE;
+  u8_t i = 0, age_pending = 0, age_stable = 0;
 #if ARP_QUEUEING
   /* oldest entry with packets on queue */
   s8_t old_queue = ARP_TABLE_SIZE;
@@ -272,7 +273,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* { we have no match } => try to create a new entry */
    
   /* no empty entry found and not allowed to recycle? */
-  if ((i == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
+  if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
   {
   	return (s8_t)ERR_MEM;
   }
@@ -311,8 +312,10 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     /* recycle oldest pending */
     i = old_queue;
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest pending entry %d, freeing packet queue %p\n", i, (void *)(arp_table[i].p)));
-    /* no empty or recyclable entries found */
+    pbuf_free(arp_table[i].p);
+    arp_table[i].p = NULL;
 #endif
+    /* no empty or recyclable entries found */
   } else {
     return (s8_t)ERR_MEM;
   }
@@ -323,17 +326,13 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 
   /* recycle entry (no-op for an already empty entry) */
   arp_table[i].state = ETHARP_STATE_EMPTY;
+
   /* IP address given? */
   if (ipaddr != NULL) {
     /* set IP address */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
   }
   arp_table[i].ctime = 0;
-#if ARP_QUEUEING
-  /* remove any queued packets */
-  if (arp_table[i].p != NULL) pbuf_free(arp_table[i].p);
-  arp_table[i].p = NULL;
-#endif
   return (err_t)i;
 }
 
@@ -556,8 +555,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-    /* DHCP wants to know about ARP replies to our wanna-have-address */
-    if (for_us) dhcp_arp_reply(netif, &sipaddr);
+    /* When unconfigured, DHCP wants to know about ARP replies from the
+     * address offered to us, as that means someone else uses it already! */
+    if (netif->ip_addr.addr == 0) dhcp_arp_reply(netif, &sipaddr);
 #endif
     break;
   default:
