@@ -11,8 +11,15 @@ HISTORY
 
   ++ Bug fixes:
 
+  Merged several compilation and documentation fixes from HEAD.
+
+  2004-04-23 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * memp.c: Fixed cast in mem_malloc().
+  * sockets.c, tcp_in.c, udp.c: #ifdef SO_REUSE now #if SO_REUSE.
+  * dhcp.c: #if LWIP_DHCP fixed.
+
   2004-03-23 Leon Woestenberg <leon.woestenberg@gmx.net>
-  * sockets.c, tcp.c, tcp_in.c, udp.c, : #ifdef SO_REUSE now #if SO_REUSE.
+  * tcp.c: #ifdef SO_REUSE now #if SO_REUSE.
 
   2004-03-11 Leon Woestenberg <leon.woestenberg@gmx.net>
   * dhcp.c: Added missing #if LWIP_DHCP #endif pair.
