@@ -41,6 +41,8 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/netif.h"
+#include "lwip/ip_addr.h"
+
 
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;

@@ -49,14 +49,13 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
+extern struct ip_addr ip_addr_any;
 extern struct ip_addr ip_addr_broadcast;
 
 #define IP4_ADDR(ipaddr, a,b,c,d) (ipaddr)->addr = htonl(((u32_t)(a & 0xff) << 24) | ((u32_t)(b & 0xff) << 16) | \
                                                          ((u32_t)(c & 0xff) << 8) | (u32_t)(d & 0xff))
 
-#define ip_addr_set(dest, src) (dest)->addr = \
-                               ((src) == IP_ADDR_ANY? IP_ADDR_ANY:\
-				((struct ip_addr *)src)->addr)
+#define ip_addr_set(dest, src) (dest)->addr = ((struct ip_addr *)src)->addr
 #define ip_addr_maskcmp(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \
