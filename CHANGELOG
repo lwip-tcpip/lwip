@@ -11,8 +11,9 @@ FUTURE
 
 HISTORY
 
-  2005-02-03 Leon Woestenberg <leon.woestenberg@gmx.net>
+  2005-02-04 Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp_out.c: Fixed uninitialized 'queue' referenced in memerr branch.
+  * tcp_{out|in}.c: Applied patch fixing unaligned access.
 
   2005-01-04 Leon Woestenberg <leon.woestenberg@gmx.net>
   * pbuf.c: Fixed missing semicolon after LWIP_DEBUG statement.
