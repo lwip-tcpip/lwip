@@ -926,10 +926,10 @@ tcp_receive(struct tcp_pcb *pcb)
 	  if(cseg->p->tot_len > 0) {
 	    /* Chain this pbuf onto the pbuf that we will pass to
 	       the application. */
-	    if(pcb->recv_data) {
-	      pbuf_chain(pcb->recv_data, cseg->p);
+	    if(recv_data) {
+	      pbuf_chain(recv_data, cseg->p);
 	    } else {
-	      pcb->recv_data = cseg->p;
+	      recv_data = cseg->p;
 	    }
 	    cseg->p = NULL;
 	  }
