@@ -689,7 +689,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     {
         if (timeout && timeout->tv_sec == 0 && timeout->tv_usec == 0)
         {
-            sys_sem_signal(socksem);
+            sys_sem_signal(selectsem);
             if (readset)
                 FD_ZERO(readset);
             if (writeset)
