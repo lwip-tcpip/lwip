@@ -460,25 +460,27 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
  * the call will fail. A check is made that the increase in header size does
  * not move the payload pointer in front of the start of the buffer.
- * @return 1 on failure, 0 on success.
+ * @return non-zero on failure, zero on success.
  *
- * @note May not be called on a packet queue.
  */
 u8_t
-pbuf_header(struct pbuf *p, s16_t header_size)
+pbuf_header(struct pbuf *p, s16_t header_size_increment)
 {
   void *payload;
 
+  LWIP_ASSERT("p != NULL", p != NULL);
+  if ((header_size_increment == 0) || (p == NULL)) return 0;
+ 
   /* remember current payload pointer */
   payload = p->payload;
 
   /* pbuf types containing payloads? */
   if (p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL) {
     /* set new payload pointer */
-    p->payload = (u8_t *)p->payload - header_size;
+    p->payload = (u8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
     if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
-      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
+      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p (not enough space for new header size)\n",
         (u8_t *)p->payload,
         (u8_t *)p + sizeof(struct pbuf)) );\
       /* restore old payload pointer */
@@ -486,22 +488,24 @@ pbuf_header(struct pbuf *p, s16_t header_size)
       /* bail out unsuccesfully */
       return 1;
     }
-  /* pbuf types refering to payloads? */
+  /* pbuf types refering to external payloads? */
   } else if (p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_ROM) {
     /* hide a header in the payload? */
-    if ((header_size < 0) && (header_size - p->len <= 0)) {
+    if ((header_size_increment < 0) && (header_size_increment - p->len <= 0)) {
       /* increase payload pointer */
-      p->payload = (u8_t *)p->payload - header_size;
+      p->payload = (u8_t *)p->payload - header_size_increment;
     } else {
       /* cannot expand payload to front (yet!)
        * bail out unsuccesfully */
       return 1;
     }
   }
-  LWIP_DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", (void *)payload, (void *)p->payload, header_size) );
   /* modify pbuf length fields */
-  p->len += header_size;
-  p->tot_len += header_size;
+  p->len += header_size_increment;
+  p->tot_len += header_size_increment;
+
+  LWIP_DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n",
+    (void *)payload, (void *)p->payload, header_size_increment));
 
   return 0;
 }
@@ -510,8 +514,8 @@ pbuf_header(struct pbuf *p, s16_t header_size)
  * Dereference a pbuf chain or queue and deallocate any no-longer-used
  * pbufs at the head of this chain or queue.
  *
- * Decrements the pbuf reference count. If it reaches
- * zero, the pbuf is deallocated.
+ * Decrements the pbuf reference count. If it reaches zero, the pbuf is
+ * deallocated.
  *
  * For a pbuf chain, this is repeated for each pbuf in the chain,
  * up to the first pbuf which has a non-zero reference count after
@@ -522,7 +526,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
  * @return the number of pbufs that were de-allocated
  * from the head of the chain.
  *
- * @note MUST NOT be called on a packet queue.
+ * @note MUST NOT be called on a packet queue (Not verified to work yet).
  * @note the reference counter of a pbuf equals the number of pointers
  * that refer to the pbuf (or into the pbuf).
  *
@@ -711,12 +715,15 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
  *
  */
 void
-pbuf_queue(struct pbuf *p, struct pbuf *n)
+pbuf_queue(struct pbuf *q, struct pbuf *n)
 {
+  struct pbuf *p;
+  /* programmer stupidity checks */
   LWIP_ASSERT("p != NULL", p != NULL);
   LWIP_ASSERT("n != NULL", n != NULL);
   if ((p == NULL) || (n == NULL)) return;
 
+  p = q;
   /* iterate through all packets on queue */
   while (p->next != NULL) {
 /* be very picky about pbuf chain correctness */
@@ -728,10 +735,10 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
       /* make sure each packet is complete */
       LWIP_ASSERT("p->next != NULL", p->next != NULL);
       p = p->next;
-      /* { p->tot_len == p->len } => p is last pbuf of a packet */
+      /* { p->tot_len == p->len => p is last pbuf of a packet } */
     }
 #endif
-    /* { p->tot_len == p->len } => p is last pbuf of a packet */
+    /* { p->tot_len == p->len and p is last pbuf of a packet } */
     /* proceed to next packet on queue */
     if (p->next != NULL) p = p->next;
   }
@@ -739,9 +746,11 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
    * { p is last pbuf of last packet on queue } */
   /* chain last pbuf of queue with n */
   p->next = n;
-  /* n is now referenced to one more time */
+  /* n is now referenced to by the (packet p in the) queue */
   pbuf_ref(n);
-  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_queue: referencing queued packet %p\n", (void *)n));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2,
+    ("pbuf_queue: newly queued packet %p sits after packet %p in queue %p\n",
+    (void *)n, (void *)p, (void *)q));
 }
 
 /**

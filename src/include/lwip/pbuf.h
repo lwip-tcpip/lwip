@@ -53,8 +53,8 @@ typedef enum {
   PBUF_POOL
 } pbuf_flag;
 
-/* Definitions for the pbuf flag field (these are not the flags that
-   are passed to pbuf_alloc()). */
+/* Definitions for the pbuf flag field. These are NOT the flags that
+ * are passed to pbuf_alloc(). */
 #define PBUF_FLAG_RAM   0x00U    /* Flags that pbuf data is stored in RAM */
 #define PBUF_FLAG_ROM   0x01U    /* Flags that pbuf data is stored in ROM */
 #define PBUF_FLAG_POOL  0x02U    /* Flags that the pbuf comes from the pbuf pool */
@@ -79,10 +79,10 @@ struct pbuf {
    */
   u16_t tot_len;
   
-  /* length of this buffer */
+  /** length of this buffer */
   u16_t len;  
 
-  /* flags telling the type of pbuf */
+  /** flags telling the type of pbuf, see PBUF_FLAG_ */
   u16_t flags;
   
   /**
@@ -94,11 +94,6 @@ struct pbuf {
   
 };
 
-/* pbuf_init():
-
-   Initializes the pbuf module. The num parameter determines how many
-   pbufs that should be allocated to the pbuf pool, and the size
-   parameter specifies the size of the data allocated to those.  */
 void pbuf_init(void);
 
 struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
