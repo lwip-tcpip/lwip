@@ -50,12 +50,14 @@ struct netif *netif_default = NULL;
 /**
  * Add a network interface to the list of lwIP netifs.
  *
+ * @param netif a pre-allocated netif structure
  * @param ipaddr IP address for the new netif
  * @param netmask network mask for the new netif
  * @param gw default gateway IP address for the new netif
  * @param state opaque data passed to the new netif
  * @param init callback function that initializes the interface
- * @param input callback function that...
+ * @param input callback function that is called to pass
+ * ingress packets up in the protocol layer stack.
  *
  * @return netif, or NULL if failed.
  */
