@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.20  2003/01/08 10:49:16  likewise
+ * Added check if ARP_QUEUEING is 1 for a queueing related debug statement.
+ *
  * Revision 1.19  2003/01/08 10:09:43  likewise
  * Updated lwIP module copyright years to include 2003. Committers must check theirs.
  *
@@ -339,7 +342,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     if (arp_table[i].state == ETHARP_STATE_STABLE) {
       DEBUGF(ETHARP_DEBUG, ("update_arp_entry: overwriting old stable entry %u\n", i));
       /* stable entries should have no queued packets (TODO: allow later) */
+#if ARP_QUEUEING
       ASSERT("update_arp_entry: arp_table[i].p == NULL", arp_table[i].p == NULL);
+#endif
     } else {
       DEBUGF(ETHARP_DEBUG, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].state));
       ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
