@@ -217,7 +217,7 @@ struct tcp_pcb {
   u8_t polltmr, pollinterval;
   
   /* Retransmission timer. */
-  u8_t rtime;
+  u16_t rtime;
   
   u16_t mss;   /* maximum segment size */
 
