@@ -43,7 +43,12 @@ struct dhcp_state
   u32_t offered_t2_rebind; // recommended rebind time (usually 66% of lease period)
 };
 
-// always present fields of any DHCP message
+/* MUST be compiled with "pack structs" or equivalent! */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+// minimum set of fields of any DHCP message
 struct dhcp_msg
 {
   u8_t op;
@@ -72,6 +77,10 @@ struct dhcp_msg
 #endif
 	u8_t options[DHCP_OPTIONS_LEN];
 };
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 // initialize DHCP client
 void dhcp_init(void);
