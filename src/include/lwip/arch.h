@@ -54,24 +54,6 @@
 #define PACK_STRUCT_FIELD(x) x
 #endif /* PACK_STRUCT_FIELD */
 
-#ifndef FD_SET
-  #undef  FD_SETSIZE
-  #define FD_SETSIZE    16
-  #define FD_SET(n, p)  ((p)->fd_bits[(n)/8] |=  (1 << ((n) & 7)))
-  #define FD_CLR(n, p)  ((p)->fd_bits[(n)/8] &= ~(1 << ((n) & 7)))
-  #define FD_ISSET(n,p) ((p)->fd_bits[(n)/8] &   (1 << ((n) & 7)))
-  #define FD_ZERO(p)    memset((void*)(p),0,sizeof(*(p)))
-
-  typedef struct fd_set {
-          unsigned char fd_bits [(FD_SETSIZE+7)/8];
-        } fd_set;
-
-  struct timeval {
-	  long    tv_sec;         /* seconds */
-	  long    tv_usec;        /* and microseconds */
-  };
-
-#endif
 
 
 #ifdef LWIP_PROVIDE_ERRNO

@@ -646,7 +646,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
 /*-----------------------------------------------------------------------------------*/
 int
 lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
-               const struct timeval *timeout)
+               struct timeval *timeout)
 {
     int i;
     int nready;

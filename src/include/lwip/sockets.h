@@ -164,6 +164,25 @@ struct linger {
 #define O_NONBLOCK    04000
 #endif
 
+#ifndef FD_SET
+  #undef  FD_SETSIZE
+  #define FD_SETSIZE    16
+  #define FD_SET(n, p)  ((p)->fd_bits[(n)/8] |=  (1 << ((n) & 7)))
+  #define FD_CLR(n, p)  ((p)->fd_bits[(n)/8] &= ~(1 << ((n) & 7)))
+  #define FD_ISSET(n,p) ((p)->fd_bits[(n)/8] &   (1 << ((n) & 7)))
+  #define FD_ZERO(p)    memset((void*)(p),0,sizeof(*(p)))
+
+  typedef struct fd_set {
+          unsigned char fd_bits [(FD_SETSIZE+7)/8];
+        } fd_set;
+
+  struct timeval {
+	  long    tv_sec;         /* seconds */
+	  long    tv_usec;        /* and microseconds */
+  };
+
+#endif
+
 int lwip_accept(int s, struct sockaddr *addr, int *addrlen);
 int lwip_bind(int s, struct sockaddr *name, int namelen);
 int lwip_shutdown(int s, int how);
@@ -184,7 +203,7 @@ int lwip_sendto(int s, void *dataptr, int size, unsigned int flags,
 int lwip_socket(int domain, int type, int protocol);
 int lwip_write(int s, void *dataptr, int size);
 int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
-                const struct timeval *timeout);
+                struct timeval *timeout);
 int lwip_ioctl(int s, long cmd, void *argp);
 
 #ifdef LWIP_COMPAT_SOCKETS
