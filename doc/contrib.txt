@@ -27,7 +27,7 @@ features of Savannah help us not lose users' input.
 
 1. JavaDoc compliant and Doxygen compatible.
 2. Function documentation above functions in .c files, not .h files.
-   (This forces you to synchronize documentation and behaviour.)
+   (This forces you to synchronize documentation and implementation.)
 3. Use current documentation style as further reference.
  
 2.3 Bug reports and patches:
