@@ -50,11 +50,12 @@ icmp_input(struct pbuf *p, struct netif *inp)
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
-  
  
 #ifdef ICMP_STATS
   ++lwip_stats.icmp.recv;
 #endif /* ICMP_STATS */
+
+  /* TODO: check length before accessing payload! */
 
   type = ((char *)p->payload)[0];
 
@@ -103,8 +104,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 		 iphdr->hoplim, IP_PROTO_ICMP, inp);
     break; 
   default:
-    DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type not supported.\n"));
-
+    DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d not supported.\n", (int)type));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;

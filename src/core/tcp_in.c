@@ -112,8 +112,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
- 
-  if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4)))) {
+
+  /* remove header from payload */ 
+  if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
     /* drop short packets */
     DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%u bytes) discarded\n", p->tot_len));
 #ifdef TCP_STATS

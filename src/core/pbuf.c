@@ -10,13 +10,14 @@
  * A packet may span over multiple pbufs, chained as a singly linked
  * list. This is called a "pbuf chain".
  *
- * Multiple packets may be queued using this singly linked list. This
- * is called a "pbuf queue". So, a pbuf queue consists of one or more
- * pbuf chains, each of which consist of one or more pbufs.
+ * Multiple packets may be queued, also using this singly linked list.
+ * This is called a "packet queue". So, a packet queue consists of one
+ * or more pbuf chains, each of which consist of one or more pbufs.
  *
- * In order to find the last pbuf of a packet, traverse the linked list
- * until the ->tot_len field equals the ->len field. If the ->next field
- * of this packet is not NULL, more packets are on the queue.
+ * The last pbuf of a packet has a ->tot_len field that equals the
+ * ->len field. It can be found by traversing the list. If the last
+ * pbuf of a packet has a ->next field other than NULL, more packets
+ * are on the queue.
  */
 
 /*
@@ -366,6 +367,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
  * resized, and any remaining pbufs will be freed.
  * 
  * @note If the pbuf is ROM/REF, only the ->tot_len and ->len fields are adjusted.
+ * @note May not be called on a packet queue.
  *
  * @bug Cannot grow the size of a pbuf (chain) (yet).
  */
@@ -442,6 +444,8 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  * the call will fail. A check is made that the increase in header size does
  * not move the payload pointer in front of the start of the buffer. 
  * @return 1 on failure, 0 on success.
+ *
+ * @note May not be called on a packet queue.
  */
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size)
@@ -500,6 +504,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
  * @return the number of unreferenced pbufs that were de-allocated 
  * from the head of the chain.
  *
+ * @note May not be called on a packet queue.
  * @note the reference counter of a pbuf equals the number of pointers
  * that refer to the pbuf (or into the pbuf).
  *
@@ -593,6 +598,7 @@ pbuf_clen(struct pbuf *p)
   }
   return len;
 }
+
 /**
  *
  * Increment the reference count of the pbuf.
@@ -618,6 +624,7 @@ pbuf_ref(struct pbuf *p)
  *
  * @param h head pbuf (chain)
  * @param t tail pbuf (chain)
+ * @note May not be called on a packet queue.
  * 
  * The ->tot_len fields of all pbufs of the head chain are adjusted.
  * The ->next field of the last pbuf of the head chain is adjusted.
@@ -651,8 +658,9 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing tail %p\n", (void *) t));
 }
 
-/* TODO: Will be enabled soon. Please review code. */
-#if 1
+/* For packet queueing. Note that queued packets must be dequeued first
+ * before calling any pbuf functions. */
+#if ARP_QUEUEING
 /**
  * Add a packet to the end of a queue.
  *
@@ -680,6 +688,8 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
       p = p->next;
     }
 #endif
+    /* now p->tot_len == p->len */
+    /* proceed to next packet on queue */
     p = p->next;
   }  
   /* chain last pbuf of h chain (p) with first of tail (t) */
@@ -714,7 +724,7 @@ pbuf_dequeue(struct pbuf *p)
   p->next = NULL;
   /* q is now referenced to one less time */
   pbuf_free(q);
-  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue%p\n", (void *)q));
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue %p\n", (void *)q));
   return q;
 }
 #endif
@@ -831,6 +841,7 @@ pbuf_take(struct pbuf *p)
  * Makes p->tot_len field equal to p->len.
  * @param p pbuf to dechain
  * @return remainder of the pbuf chain, or NULL if it was de-allocated.
+ * @note May not be called on a packet queue.
  */
 struct pbuf *
 pbuf_dechain(struct pbuf *p)

@@ -1105,7 +1105,7 @@ static void dhcp_free_reply(struct dhcp *dhcp)
 
 
 /**
- * If an incoming DHCP message is in response to use, then trigger the state machine
+ * If an incoming DHCP message is in response to us, then trigger the state machine
  */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
@@ -1116,15 +1116,14 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   u8_t msg_type;
   u8_t i;
   DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_recv(pbuf = %p) from DHCP server %u.%u.%u.%u port %u\n", p,
-    (u8_t)(ntohl(addr->addr) >> 24 & 0xff),
-    (u8_t)(ntohl(addr->addr) >> 16 & 0xff),
-    (u8_t)(ntohl(addr->addr) >>  8 & 0xff),
-    (u8_t)(ntohl(addr->addr) & 0xff), port));
+    (u8_t)(ntohl(addr->addr) >> 24 & 0xff), (u8_t)(ntohl(addr->addr) >> 16 & 0xff),
+    (u8_t)(ntohl(addr->addr) >>  8 & 0xff), (u8_t)(ntohl(addr->addr) & 0xff), port));
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->len = %u\n", p->len));
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("pbuf->tot_len = %u\n", p->tot_len));
-  /* prevent warning */
-  if (pcb || addr || port);
+  /* prevent warnings about unused arguments */
+  (void)pcb; (void)addr; (void)port;
   dhcp->p = p;
+  /* TODO: check packet length before reading them */
   if (reply_msg->op != DHCP_BOOTREPLY) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("not a DHCP reply message, but type %u\n", reply_msg->op));
     pbuf_free(p);
