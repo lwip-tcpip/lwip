@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.15  2002/12/05 09:41:52  kieranm
+ * Fixed compiler warnings when ARP_QUEUEING is not defined.
+ *
  * Revision 1.14  2002/12/02 16:08:09  likewise
  * Fixed wrong assertion condition.
  *
@@ -168,7 +171,9 @@ etharp_init(void)
   /* clear ARP entries */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
+#if ARP_QUEUEING
     arp_table[i].p = NULL;
+#endif
   }
   /* reset ARP current time */
   ctime = 0;
@@ -207,7 +212,7 @@ etharp_tmr(void)
       pbuf_free(arp_table[i].p);      
       arp_table[i].p = NULL;
 #else
-      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i);
+      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i));
 #endif
     }
   }  
@@ -271,7 +276,9 @@ static struct pbuf *
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   u8_t i, k;
+#if ARP_QUEUEING
   struct eth_hdr *ethhdr;
+#endif
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry()"));
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
   ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5], ethaddr->addr[6]));
@@ -361,7 +368,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     /* mark as stable */  
     arp_table[i].state = ETHARP_STATE_STABLE;
     /* no queued packet */  
+#if ARP_QUEUEING
     arp_table[i].p = NULL;
+#endif
   }
   else
   {
@@ -733,7 +742,9 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
     arp_table[i].ctime = ctime;
     arp_table[i].state = ETHARP_STATE_PENDING;
+#if ARP_QUEUEING
     arp_table[i].p = NULL;
+#endif
   }
   /* allocate a pbuf for the outgoing ARP request packet */
   p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
