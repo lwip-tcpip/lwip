@@ -566,7 +566,7 @@ tcp_process(struct tcp_pcb *pcb)
        !(flags & TCP_RST)) {
       /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
         TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) { */
-      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt))
+      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)){
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
