@@ -609,3 +609,56 @@ pbuf_dechain(struct pbuf *p)
   return q;
 }
 /*-----------------------------------------------------------------------------------*/
+
+
+struct pbuf *
+pbuf_unref(struct pbuf *f)
+{
+  struct pbuf *p, *q;
+  DEBUGF(PBUF_DEBUG, ("pbuf_unref: %p \n", f));
+  /* first pbuf is of type PBUF_REF? */
+  if (f->flags == PBUF_FLAG_REF)
+  {
+    /* allocate a pbuf (w/ payload) fully in RAM */
+    p = pbuf_alloc(PBUF_RAW, f->len, PBUF_RAM);
+    if (p != 0)
+    {  
+      int i;
+      unsigned char *src, *dst;
+      /* copy pbuf struct */
+      p->next = f->next;
+      src = f->payload;
+      dst = p->payload;
+      i = 0;
+      /* copy payload to RAM pbuf */
+      while(i < p->len)
+      {
+        *dst = *src;
+        dst++;
+        src++;
+      }
+      f->next = NULL;
+      /* de-allocate PBUF_REF */
+      pbuf_free(f);
+      f = p;
+      DEBUGF(PBUF_DEBUG, ("pbuf_unref: succesful %p \n", f));
+    }
+    else
+    {
+      /* deallocate chain */
+      pbuf_free(f);
+      f = NULL;
+      DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n", f));
+      return NULL;
+    }
+  }
+  /* p = previous pbuf == first pbuf  */
+  p = f;
+  /* q = current pbuf */
+  q = f->next;
+  while (q != NULL)
+  {
+    q = q->next;
+  }
+  return f;
+}

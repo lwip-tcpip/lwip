@@ -50,6 +50,7 @@ typedef enum {
 typedef enum {
   PBUF_RAM,
   PBUF_ROM,
+  PBUF_REF,
   PBUF_POOL
 } pbuf_flag;
 
@@ -59,6 +60,7 @@ typedef enum {
 #define PBUF_FLAG_ROM   0x01    /* Flags that pbuf data is stored in ROM. */
 #define PBUF_FLAG_POOL  0x02    /* Flags that the pbuf comes from the
 				   pbuf pool. */
+#define PBUF_FLAG_REF   0x03
 
 struct pbuf {
   struct pbuf *next;
@@ -148,5 +150,8 @@ void pbuf_chain(struct pbuf *h, struct pbuf *t);
    Picks off the first pbuf from the pbuf chain p. Returns the tail of
    the pbuf chain or NULL if the pbuf p was not chained. */
 struct pbuf *pbuf_dechain(struct pbuf *p);
+
+struct pbuf *pbuf_unref(struct pbuf *f);
+
 
 #endif /* __LWIP_PBUF_H__ */
