@@ -218,6 +218,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- RAW options ---------- */
 
+#ifndef LWIP_RAW
+#define LWIP_RAW                        1
+#endif
+
 #ifndef RAW_TTL
 #define RAW_TTL                        255
 #endif
