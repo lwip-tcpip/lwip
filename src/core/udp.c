@@ -535,8 +535,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       rebind = 1;
     }
 
-#if SO_REUSE
-#else
+#if SO_REUSE == 0
 /* this code does not allow upper layer to share a UDP port for
    listening to broadcast or multicast traffic (See SO_REUSE_ADDR and
    SO_REUSE_PORT under *BSD). TODO: See where it fits instead, OR
