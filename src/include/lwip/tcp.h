@@ -40,8 +40,6 @@
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
 
-#include "lwip/sys.h"
-
 #include "lwip/err.h"
 
 struct tcp_pcb;
