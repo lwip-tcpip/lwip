@@ -182,11 +182,11 @@ pbuf_pool_free(struct pbuf *p)
  * 
  * * PBUF_RAM: buffer memory for pbuf is allocated as one large
  *             chunk. This includes protocol headers as well. 
- * * RBUF_ROM: no buffer memory is allocated for the pbuf, even for
+ * * PBUF_ROM: no buffer memory is allocated for the pbuf, even for
  *             protocol headers. Additional headers must be prepended
  *             by allocating another pbuf and chain in to the front of
  *             the ROM pbuf.	       
- * * PBUF_ROOL: the pbuf is allocated as a pbuf chain, with pbufs from
+ * * PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
  *              the pbuf pool that is allocated during pbuf_init().
  */
 /*-----------------------------------------------------------------------------------*/
@@ -556,7 +556,7 @@ pbuf_ref(struct pbuf *p)
   ++(p->ref);
 }
 
-/*------------------------------------------------------------------------------
+/*------------------------------------------------------------------------------*/
 /* pbuf_ref_chain():
  *
  * Increments the reference count of all pbufs in a chain.
