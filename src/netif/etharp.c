@@ -101,8 +101,8 @@ static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 
 /** ask update_arp_entry() to create new entry instead of merely update existing */
 /** ask find_entry() to create new entry instead of merely finding existing */
-#define ARP_CREATE 1
-static s8_t find_entry(struct ip_addr *ipaddr, flags);
+#define ETHARP_CREATE 1
+static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 /**
  * Initializes ARP module.
@@ -244,9 +244,9 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
         /* found match, simply bail out */
         return i;
       /* remember entry with oldest stable entry in oldest, its age in maxtime */
-      } else if (arp_table[i].ctime >= maxtime) {
+      } else if (arp_table[i].ctime >= age_stable) {
         old_stable = i;
-        time_stable = arp_table[i].ctime;
+        age_stable = arp_table[i].ctime;
       }
     }
   }
@@ -308,7 +308,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     arp_table[i].ctime = 0;
 #if ARP_QUEUEING
     /* remove any queued packets */
-    if (p != NULL) pbuf_free(arp_table[i].p);
+    if (arp_table[i].p != NULL) pbuf_free(arp_table[i].p);
     arp_table[i].p = NULL;
 #endif
   /* no entry available */
@@ -329,12 +329,12 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
  * @param flags Defines behaviour:
- * - ARP_CREATE Allows ARP to insert this as a new item. If not specified,
+ * - ETHARP_CREATE Allows ARP to insert this as a new item. If not specified,
  * only existing ARP entries will be updated.
  *
  * @return
  * - ERR_OK Succesfully updated ARP cache.
- * - ERR_MEM If we could not add a new ARP entry when ARP_CREATE was set.
+ * - ERR_MEM If we could not add a new ARP entry when ETHARP_CREATE was set.
  * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
  * @see pbuf_free()
@@ -428,7 +428,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
   /* update ARP table, ask to insert entry */
-  update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ARP_CREATE);
+  update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ETHARP_CREATE);
 }
 
 
@@ -481,7 +481,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   if (for_us) {
     /* add IP address in ARP cache; assume requester wants to talk to us.
      * can result in directly sending the queued packets for this host. */
-    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), ARP_CREATE);
+    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), ETHARP_CREATE);
   /* ARP message not directed to us? */
   } else {
     /* update the source IP address in the cache, if present */
@@ -698,7 +698,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   }
 
   /* send out ARP request */
-  result = etharp_request(struct netif *netif, struct ip_addr *ipaddr);
+  result = etharp_request(netif, ipaddr);
 
   /* find entry in ARP cache */
   i = find_entry(&arp_table[i].ipaddr, q?ETHARP_CREATE:0);
