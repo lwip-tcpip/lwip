@@ -451,7 +451,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->rcv_nxt = seqno + 1;
     npcb->snd_wnd = tcphdr->wnd;
     npcb->ssthresh = npcb->snd_wnd;
-    npcb->snd_wl1 = seqno;
+    npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
     npcb->callback_arg = pcb->callback_arg;
 #if LWIP_CALLBACK_API
     npcb->accept = pcb->accept;
@@ -555,7 +555,8 @@ tcp_process(struct tcp_pcb *pcb)
        ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
       pcb->rcv_nxt = seqno + 1;
       pcb->lastack = ackno;
-      pcb->snd_wnd = pcb->snd_wl1 = tcphdr->wnd;
+      pcb->snd_wnd = tcphdr->wnd;
+      pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;
       pcb->cwnd = pcb->mss;
       --pcb->snd_queuelen;
