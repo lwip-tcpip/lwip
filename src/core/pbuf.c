@@ -887,27 +887,3 @@ pbuf_dechain(struct pbuf *p)
   LWIP_ASSERT("p->tot_len == p->len", p->tot_len == p->len);
   return (tail_gone > 0? NULL: q);
 }
-
-/* TODO: This function is unused in the lwIP stack and will be deprecated. This is due
- * to the new way chains are built. */
-#if 0
-/**
- *
- * Increment the reference count of all pbufs in a chain.
- *
- * @param p first pbuf of chain
- *
- */
-void
-pbuf_ref_chain(struct pbuf *p)
-{
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-
-  while (p != NULL) {
-    ++p->ref;
-    p = p->next;
-  }
-  SYS_ARCH_UNPROTECT(old_level);
-}
-#endif
