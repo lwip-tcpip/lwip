@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.22  2003/01/13 09:38:21  jani
+ * remove global ctime.Each entry's ctime is now absolute.This avoids wrapping and also solves naming clash reported on the list
+ *
  * Revision 1.21  2003/01/08 11:04:36  likewise
  * Moved ETHARP_ALWAYS_INSERT switch to lwipopts.h
  *
@@ -137,7 +140,6 @@ struct etharp_entry {
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
-static u8_t ctime;
 
 static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 #define ARP_INSERT_FLAG 1
@@ -156,8 +158,6 @@ etharp_init(void)
     arp_table[i].p = NULL;
 #endif
   }
-  /* reset ARP current time */
-  ctime = 0;
 }
 
 /**
@@ -171,12 +171,12 @@ etharp_tmr(void)
 {
   u8_t i;
   
-  ++ctime;
   DEBUGF(ETHARP_DEBUG, ("etharp_timer\n"));
   /* remove expired entries from the ARP table */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+    arp_table[i].ctime++;	  
     if((arp_table[i].state == ETHARP_STATE_STABLE) &&       
-       (ctime - arp_table[i].ctime >= ARP_MAXAGE)) {
+       (arp_table[i].ctime >= ARP_MAXAGE)) {
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %u.\n", i));
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
@@ -185,7 +185,7 @@ etharp_tmr(void)
       arp_table[i].p = NULL;
 #endif
     } else if((arp_table[i].state == ETHARP_STATE_PENDING) &&
-	      (ctime - arp_table[i].ctime >= ARP_MAXPENDING)) {
+	      (arp_table[i].ctime >= ARP_MAXPENDING)) {
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, (void *)(arp_table[i].p)));
@@ -227,8 +227,8 @@ find_arp_entry(void)
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* remember entry with oldest stable entry in j*/
       if((arp_table[i].state == ETHARP_STATE_STABLE) &&
-      (ctime - arp_table[i].ctime > maxtime)) {
-        maxtime = ctime - arp_table[i].ctime;
+      (arp_table[i].ctime > maxtime)) {
+        maxtime = arp_table[i].ctime;
 	      j = i;
       }
     }
@@ -289,8 +289,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         for(k = 0; k < 6; ++k) {
           arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
         }
-        /* time stamp */
-        arp_table[i].ctime = ctime;
+        /* reset time stamp */
+        arp_table[i].ctime = 0;
 #if ARP_QUEUEING
         /* queued packet present? */
         if(arp_table[i].p != NULL) {	
@@ -346,8 +346,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     for(k = 0; k < 6; ++k) {
       arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
     }
-    /* time-stamp */  
-    arp_table[i].ctime = ctime;
+    /* reset time-stamp */  
+    arp_table[i].ctime = 0;
     /* mark as stable */  
     arp_table[i].state = ETHARP_STATE_STABLE;
     /* no queued packet */  
@@ -698,7 +698,7 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     DEBUGF(ETHARP_DEBUG, ("etharp_query: created ARP table entry.\n"));
     /* i is available, create ARP entry */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-    arp_table[i].ctime = ctime;
+    arp_table[i].ctime = 0;
     arp_table[i].state = ETHARP_STATE_PENDING;
 #if ARP_QUEUEING
     arp_table[i].p = NULL;
