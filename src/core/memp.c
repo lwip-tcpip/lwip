@@ -218,30 +218,6 @@ memp_mallocp(memp_t type)
   return mem;
 }
 /*-----------------------------------------------------------------------------------*/
-#if 0
-void *
-memp_realloc(memp_t fromtype, memp_t totype, void *mem)
-{
-  void *rmem;
-  u16_t size;
-  
-  if(mem == NULL) {
-    return NULL;
-  }
-  
-  rmem = memp_malloc(totype);
-  if(rmem != NULL) { 
-    size = memp_sizes[totype];
-    if(memp_sizes[fromtype] < size) {
-      size = memp_sizes[fromtype];
-    }
-    bcopy(mem, rmem, size);
-    memp_free(fromtype, mem);
-  }
-  return rmem;
-}
-#endif /* 0 */
-/*-----------------------------------------------------------------------------------*/
 void
 memp_free(memp_t type, void *mem)
 {
