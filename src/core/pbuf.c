@@ -486,7 +486,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 }
 
 /**
- * Tries to add a header to the payload.
+ * Tries to expand the payload with towards the front.
  * 
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
@@ -494,7 +494,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  * @param hdr_decrement Number of bytes to decrement header size.
  * (Using a negative value increases the header size.)
  *
- * @return 1 on failure, 0 on succes.
+ * @return 1 on failure, 0 on success.
  */
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size)
@@ -503,12 +503,11 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 
   /* remember current payload pointer */
   payload = p->payload;
-  /* set new payload pointer */
-  p->payload = (u8_t *)p->payload - header_size;
 
   /* pbuf types containing payloads? */
-  if (p->flags == PBUF_FLAG_RAM ||
-    p->flags == PBUF_FLAG_POOL) {
+  if (p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL) {
+    /* set new payload pointer */
+    p->payload = (u8_t *)p->payload - header_size;
     /* boundary check fails? */
     if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
       DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
@@ -519,8 +518,18 @@ pbuf_header(struct pbuf *p, s16_t header_size)
       /* bail out unsuccesfully */
       return 1;
     }
+  /* pbuf types refering to payloads? */
+  } else if (p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_ROM) {
+    /* hide a header in the payload? */
+    if ((header_size < 0) && (header_size - p->len <= 0)) {
+      /* increase payload pointer */
+      p->payload = (u8_t *)p->payload - header_size;
+    } else {
+      /* cannot expand payload to front (yet!)
+       * bail out unsuccesfully */
+      return 1;
+    }
   }
-
   DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size) );
   /* modify pbuf length fields */
   p->len += header_size;
