@@ -41,7 +41,10 @@
  * - 3 severe
  */
 #define DBG_MASK_LEVEL 3
+// LW: moved to lwipopts.h
+#if 0
 #define DBG_TYPES_ON 0
+#endif
 /** print only debug messages with this level or higher */
 #define DBG_MIN_LEVEL 0
 
@@ -50,15 +53,14 @@
 /** flag for DEBUGF to disable the debug message */
 #define DBG_OFF 0x00U
 
-/** flag for DEBUGF to indicate it is a tracing message (to follow program flow) */
+/** flag for DEBUGF indicating a tracing message (to follow program flow) */
 #define DBG_TRACE   0x40
-/** flag for DEBUGF to indicate it is a state debug message (to follow states) */
+/** flag for DEBUGF indicating a state debug message (to follow states) */
 #define DBG_STATE   0x20
-/** flag for DEBUGF that indicates newly added code, not thoroughly tested yet */
+/** flag for DEBUGF indicating newly added code, not thoroughly tested yet */
 #define DBG_FRESH   0x10
 /** flag for DEBUGF to halt after printing this debug message */
 #define DBG_HALT    0x08
-
 
 #ifdef LWIP_DEBUG
 
