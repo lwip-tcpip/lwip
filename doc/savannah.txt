@@ -4,7 +4,8 @@ Table of Contents:
 
 1 - Anonymous CVS checkouts and updates (to be elaborated)
 2 - Committers/developers CVS access using SSH (to be written)
-3 - How to release lwIP
+3 - Merging from DEVEL branch to main trunk (stable branch)
+4 - How to release lwIP
 
 
 1 Anonymous CVS checkouts and updates
@@ -25,7 +26,29 @@ Or, obtain a development branch as follows:
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-devel lwip
 
-3 How to release lwIP
+
+3 Merging from DEVEL branch to main trunk (stable branch)
+---------------------------------------------------------
+
+Merging from DEVEL to main requires that the DEVEL branch
+has a tag indicating the previous merger. This tag is
+called 'merged_from_DEVEL_to_main'.
+
+IMPORTANT: AFTER COMMITTING A SUCCESFUL MERGE IN THE
+REPOSITORY, THE TAG MUST BE SET ON THE SOURCE OF THE
+MERGE BRANCH (REPLACING EXISTING TAGS WITH THE SAME NAME).
+
+Merge all changes in DEVEL since our last merge to main:
+
+In the working copy of the main trunk:
+cvs update -P -jmerged_from_DEVEL_to_main -jDEVEL 
+
+Now move the tag in the DEVEL branch to this merge point,
+so we can use this for future merges.
+
+cvs -z4 rtag -F -r DEVEL merged_from_DEVEL_to_main lwip 
+
+4 How to release lwIP
 ---------------------
 
 First, checkout a clean copy of the branch to be released. Tag this set with
