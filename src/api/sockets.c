@@ -271,17 +271,8 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     ((struct sockaddr_in *)from)->sin_port = port;
     *fromlen = sizeof(struct sockaddr_in);
   }
-
   
-  /* if the length of the received data is larger than
-     len, this data is discarded and we return len.
-     otherwise we return the actual length of the received
-     data */
-  if(len > copylen) {
-    return copylen;
-  } else {
-    return len;
-  }
+  return copylen;
 }
 /*-----------------------------------------------------------------------------------*/
 int
@@ -411,31 +402,6 @@ lwip_socket(int domain, int type, int protocol)
 int
 lwip_write(int s, void *data, int size)
 {
-  struct lwip_socket *sock;
-  err_t err;
-
-  DEBUGF(SOCKETS_DEBUG, ("write: socket %d, size %d\n", s, size));
-
-  sock = get_socket(s);
-  if(sock == NULL) {
-    return -1;
-  }
-    
-  switch(netconn_type(sock->conn)) {
-  case NETCONN_UDP:
-    return lwip_send(s, data, size, 0);
-
-  case NETCONN_TCP:
-    err = netconn_write(sock->conn, data, size, NETCONN_COPY);
-    break;
-  default:
-    err = ERR_ARG;
-    break;
-  }
-  if(err != ERR_OK) {
-    /* errno = ... */
-    return -1;
-  }
-  return size;
+   return lwip_send(s, data, size, 0);
 }
 /*-----------------------------------------------------------------------------------*/
