@@ -433,7 +433,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
-  /* source is on local network? */
+  /* source is not on the local network? */
   if (!ip_addr_netcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
     /* do nothing */
     return;
