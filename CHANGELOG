@@ -11,7 +11,13 @@ FUTURE
 
 HISTORY
 
-(HEAD)
+  2005-01-04 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * pbuf.c: Fixed missing semicolon after LWIP_DEBUG statement.
+
+  2005-01-03 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * udp.c: UDP pcb->recv() was called even when it was NULL.
+
+(STABLE-1_1_0)
 
   2004-12-28 Leon Woestenberg <leon.woestenberg@gmx.net>
   * etharp.*: Disabled multiple packets on the ARP queue.
