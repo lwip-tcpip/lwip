@@ -643,8 +643,9 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   struct eth_addr *srcaddr;
   struct etharp_hdr *hdr;
   struct pbuf *p;
-  err_t result;
+  err_t result = ERR_OK;
   u8_t i;
+  u8_t perform_arp_request = 1;
   /* prevent warning if ARP_QUEUEING == 0 */
   if (q);
 
@@ -659,8 +660,10 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
-        /* TODO: user may wish to queue a packet on a stable entry. */
-        return NULL;
+        /* user may wish to queue a packet on a stable entry, so we proceed without ARP requesting */
+        /* TODO: even if the ARP entry is stable, we might do an ARP request anyway in some cases? */
+        perform_arp_request = 0;
+        break;
       }
     }
   }
@@ -672,7 +675,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* bail out if no ARP entries are available */
     if (i == ARP_TABLE_SIZE) {
       DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available.\n"));
-      return NULL;
+      return ERR_MEM;
     }
     DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: created ARP table entry %u.\n", i));
     /* i is available, create ARP entry */
@@ -680,56 +683,77 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     arp_table[i].ctime = 0;
     arp_table[i].state = ETHARP_STATE_PENDING;
 #if ARP_QUEUEING
-    arp_table[i].p = NULL;
+    /* free queued packet, as entry is now invalidated */
+    if (arp_table[i].p != NULL) {
+      pbuf_free(arp_table[i].p);
+      arp_table[i].p = NULL;
+      DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet on ARP queue. Should not occur.\n"));
+    }
 #endif
   }
 #if ARP_QUEUEING
   /* any pbuf to queue and queue is empty? */
-  if ((q != NULL) && (arp_table[i].p == NULL)) {
-    /* copy PBUF_REF referenced payloads to PBUF_RAM */
-    q = pbuf_take(q);
-    /* remember pbuf to queue, if any */
-    arp_table[i].p = q;
-    /* pbufs are queued, increase the reference count */
-    pbuf_ref(q);
-    DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
+  if (q != NULL) {
+/* yield later packets over older packets? */
+#if ARP_QUEUE_FIRST == 0
+    /* earlier queued packet on this entry? */
+    if (arp_table[i].p != NULL) {
+      pbuf_free(arp_table[i].p);
+      arp_table[i].p = NULL;
+      DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet on ARP queue. Should not occur.\n"));
+    }
+#endif
+    /* packet can be queued? */
+    if (arp_table[i].p == NULL) {
+      /* copy PBUF_REF referenced payloads to PBUF_RAM */
+      q = pbuf_take(q);
+      /* remember pbuf to queue, if any */
+      arp_table[i].p = q;
+      /* pbufs are queued, increase the reference count */
+      pbuf_ref(q);
+      DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
+    }
   }
 #endif
-  /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
-  /* could allocate pbuf? */
-  if (p != NULL) {
-    u8_t j;
-    DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: sending ARP request.\n"));
-    hdr = p->payload;
-    hdr->opcode = htons(ARP_REQUEST);
-    for(j = 0; j < netif->hwaddr_len; ++j)
-    {
-      hdr->dhwaddr.addr[j] = 0x00;
-      hdr->shwaddr.addr[j] = srcaddr->addr[j];
-    }
-    ip_addr_set(&(hdr->dipaddr), ipaddr);
-    ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
+  /* ARP request? */
+  if (perform_arp_request)
+  {
+    /* allocate a pbuf for the outgoing ARP request packet */
+    p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
+    /* could allocate pbuf? */
+    if (p != NULL) {
+      u8_t j;
+      DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: sending ARP request.\n"));
+      hdr = p->payload;
+      hdr->opcode = htons(ARP_REQUEST);
+      for(j = 0; j < netif->hwaddr_len; ++j)
+      {
+        hdr->dhwaddr.addr[j] = 0x00;
+        hdr->shwaddr.addr[j] = srcaddr->addr[j];
+      }
+      ip_addr_set(&(hdr->dipaddr), ipaddr);
+      ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
 
-    hdr->hwtype = htons(HWTYPE_ETHERNET);
-    ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
+      hdr->hwtype = htons(HWTYPE_ETHERNET);
+      ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
 
-    hdr->proto = htons(ETHTYPE_IP);
-    ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    for(j = 0; j < netif->hwaddr_len; ++j)
-    {
-      hdr->ethhdr.dest.addr[j] = 0xff;
-      hdr->ethhdr.src.addr[j] = srcaddr->addr[j];
+      hdr->proto = htons(ETHTYPE_IP);
+      ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
+      for(j = 0; j < netif->hwaddr_len; ++j)
+      {
+        hdr->ethhdr.dest.addr[j] = 0xff;
+        hdr->ethhdr.src.addr[j] = srcaddr->addr[j];
+      }
+      hdr->ethhdr.type = htons(ETHTYPE_ARP);      
+      /* send ARP query */
+      result = netif->linkoutput(netif, p);
+      /* free ARP query packet */
+      pbuf_free(p);
+      p = NULL;
+    } else {
+      result = ERR_MEM;
+      DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_query: could not allocate pbuf for ARP request.\n"));
     }
-    hdr->ethhdr.type = htons(ETHTYPE_ARP);      
-    /* send ARP query */
-    result = netif->linkoutput(netif, p);
-    /* free ARP query packet */
-    pbuf_free(p);
-    p = NULL;
-  } else {
-    result = ERR_MEM;
-    DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_query: could not allocate pbuf for ARP request.\n"));
   }
   return result;
 }
