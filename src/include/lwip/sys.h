@@ -110,8 +110,21 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
    In some implementations they can provide a more light-weight protection
    mechanism than using semaphores. Otherwise semaphores can be used for
    implementation */
+#ifndef SYS_ARCH_PROTECT
+#ifdef SYS_LIGHTWEIGHT_PROT
+#define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
+#define SYS_ARCH_PROTECT(lev) lev = sys_arch_protect()
+#define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
+
 sys_prot_t sys_arch_protect(void);
 void sys_arch_unprotect(sys_prot_t pval);
+#else /* SYS_LIGHTWEIGHT_PROT */
+#define SYS_ARCH_DECL_PROTECT(lev)
+#define SYS_ARCH_PROTECT(lev)
+#define SYS_ARCH_UNPROTECT(lev)
+#endif /* SYS_LIGHTWEIGHT_PROT */
+
+#endif /* SYS_ARCH_PROTECT */
 
 /* Thread functions. */
 sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg);
