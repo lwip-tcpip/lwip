@@ -482,9 +482,9 @@ tcp_slowtmr(void)
 
 	/* Double retransmission time-out unless we are trying to
            connect to somebody (i.e., we are in SYN_SENT). */
-	/*	if(pcb->state != SYN_SENT) {
+	if(pcb->state != SYN_SENT) {
 	  pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
-	  }*/
+	}
 
 	tcp_rexmit(pcb);
 	
@@ -544,9 +544,6 @@ tcp_slowtmr(void)
       }
 
       TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_ABRT);
-      /*      if(pcb->errf != NULL) {
-	pcb->errf(pcb->callback_arg, ERR_ABRT);
-	}*/
 
       pcb2 = pcb->next;
       memp_free(MEMP_TCP_PCB, pcb);
@@ -558,7 +555,6 @@ tcp_slowtmr(void)
       if(pcb->polltmr >= pcb->pollinterval) {
 	pcb->polltmr = 0;
 	TCP_EVENT_POLL(pcb, err);
-	/*	pcb->poll(pcb->callback_arg, pcb);*/
 	if(err == ERR_OK) {
 	  tcp_output(pcb);
 	}
