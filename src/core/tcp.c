@@ -307,6 +307,7 @@ tcp_listen(struct tcp_pcb *pcb)
   }
   lpcb->callback_arg = pcb->callback_arg;
   lpcb->local_port = pcb->local_port;
+  lpcb->state = LISTEN;
   ip_addr_set(&lpcb->local_ip, &pcb->local_ip);
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
@@ -475,7 +476,7 @@ tcp_slowtmr(void)
       if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
 
 	/* Time for a retransmission. */
-        DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %ld pcb->rto %d\n",
+        DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %d pcb->rto %d\n",
                                pcb->rtime, pcb->rto));
 
 	/* Double retransmission time-out unless we are trying to

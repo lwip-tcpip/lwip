@@ -149,7 +149,12 @@ low_level_output(struct netif *netif, struct pbuf *p)
   struct tapif *tapif;
 
   tapif = netif->state;
-  
+#if 0  
+    if(((double)rand()/(double)RAND_MAX) < 0.2) {
+    printf("drop output\n");
+    return ERR_OK;
+    }
+#endif 
   /* initiate transfer(); */
   
   bufptr = &buf[0];
@@ -189,12 +194,12 @@ low_level_input(struct tapif *tapif)
   /* Obtain the size of the packet and put it into the "len"
      variable. */
   len = read(tapif->fd, buf, sizeof(buf));
-
-  /*  if(((double)rand()/(double)RAND_MAX) < 0.1) {
+#if 0
+    if(((double)rand()/(double)RAND_MAX) < 0.2) {
     printf("drop\n");
     return NULL;
-    }*/
-
+    }
+#endif
   
   /* We allocate a pbuf chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);

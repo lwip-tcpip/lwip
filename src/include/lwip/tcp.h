@@ -202,6 +202,7 @@ struct tcp_pcb {
 
   struct ip_addr local_ip;
   u16_t local_port;
+  enum tcp_state state;   /* TCP state */
   
   struct ip_addr remote_ip;
   u16_t remote_port;
@@ -210,7 +211,6 @@ struct tcp_pcb {
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
 
-  enum tcp_state state;   /* TCP state */
   
   /* Timers */
   u32_t tmr;
@@ -293,7 +293,12 @@ struct tcp_pcb_listen {
   void *callback_arg;
   
   struct ip_addr local_ip;
-  u16_t local_port;  
+  u16_t local_port; 
+  /* Even if state is obviously LISTEN this is here for
+   * field compatibility with tpc_pcb to which it is cast sometimes
+   * Until a cleaner solution emerges this is here.FIXME
+   */ 
+  enum tcp_state state;   /* TCP state */
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
