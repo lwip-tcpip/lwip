@@ -64,7 +64,7 @@ lwip_chksum(void *dataptr, int len)
   }
   acc = (acc >> 16) + (acc & 0xffffUL);
 
-  if(acc & 0xffff0000 != 0) {
+  if((acc & 0xffff0000) != 0) {
     acc = (acc >> 16) + (acc & 0xffffUL);
   }
 
