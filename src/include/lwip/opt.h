@@ -216,6 +216,12 @@ a lot of data that needs to be copied, this should be set high. */
 #define ICMP_TTL                        255
 #endif
 
+/* ---------- RAW options ---------- */
+
+#ifndef RAW_TTL
+#define RAW_TTL                        255
+#endif
+
 /* ---------- DHCP options ---------- */
 
 #ifndef LWIP_DHCP
@@ -380,6 +386,10 @@ a lot of data that needs to be copied, this should be set high. */
 #define SYS_STATS	1
 #endif
 
+#ifndef RAW_STATS
+#define RAW_STATS	0
+#endif
+
 #else
 
 #define LINK_STATS	0
@@ -392,6 +402,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_STATS	0
 #define PBUF_STATS	0
 #define SYS_STATS	0
+#define RAW_STATS	0
 
 #endif /* LWIP_STATS */
 
