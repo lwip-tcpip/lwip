@@ -325,6 +325,14 @@ a lot of data that needs to be copied, this should be set high. */
 #define DEFAULT_THREAD_PRIO             1
 #endif
 
+
+/* ---------- Socket Options ---------- */
+/* Enable SO_REUSEADDR and SO_REUSEPORT options */ 
+#ifndef SO_REUSE
+# define SO_REUSE 1
+#endif                                                                        
+
+
 /* ---------- Statistics options ---------- */
 #ifndef LWIP_STATS
 #define LWIP_STATS                      1

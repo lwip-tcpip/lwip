@@ -102,6 +102,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
   u8_t hdrlen;
   err_t err;
 
+#ifdef SO_REUSE
+  struct tcp_pcb *pcb_temp;
+  int reuse = 0;
+  int reuse_port = 0;
+#endif /* SO_REUSE */
 
   PERF_START;
 
@@ -174,7 +179,17 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Demultiplex an incoming segment. First, we check if it is destined
      for an active connection. */
   prev = NULL;
+
+#ifdef SO_REUSE
+  pcb_temp = tcp_active_pcbs;
+  
+ again_1:
+  
+  /* Iterate through the TCP pcb list for a fully matching pcb */
+  for(pcb = pcb_temp; pcb != NULL; pcb = pcb->next) {
+#else  /* SO_REUSE */
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+#endif  /* SO_REUSE */
     LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
@@ -182,6 +197,32 @@ tcp_input(struct pbuf *p, struct netif *inp)
        pcb->local_port == tcphdr->dest &&
        ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
        ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest))) {
+
+#ifdef SO_REUSE
+      if(pcb->so_options & SOF_REUSEPORT) {
+        if(reuse) {
+          /* We processed one PCB already */
+          LWIP_DEBUGF(TCP_INPUT_DEBUG,("tcp_input: second or later PCB and SOF_REUSEPORT set.\n"));
+        } else {
+          /* First PCB with this address */
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: first PCB and SOF_REUSEPORT set.\n"));
+          reuse = 1;
+        }
+        
+        reuse_port = 1; 
+        p->ref++;
+        
+        /* We want to search on next socket after receiving */
+        pcb_temp = pcb->next;
+        
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: reference counter on PBUF set to %i\n", p->ref));
+      } else  {
+        if(reuse) {
+          /* We processed one PCB already */
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: second or later PCB but SOF_REUSEPORT not set !\n"));
+        }
+      }
+#endif /* SO_REUSE */
 
       /* Move this PCB to the front of the list so that subsequent
    lookups will be faster (we exploit locality in TCP segment
@@ -327,8 +368,25 @@ tcp_input(struct pbuf *p, struct netif *inp)
     tcp_debug_print_state(pcb->state);
 #endif /* TCP_DEBUG */
 #endif /* TCP_INPUT_DEBUG */
+#ifdef SO_REUSE
+    /* First socket should receive now */
+    if(reuse_port) {
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: searching next PCB.\n"));
+      reuse_port = 0;
+      
+      /* We are searching connected sockets */
+      goto again_1;
+    }
+#endif /* SO_REUSE */
 
   } else {
+#ifdef SO_REUSE
+    if(reuse) {
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: freeing PBUF with reference counter set to %i\n", p->ref));
+      pbuf_free(p);
+      goto end;
+    }
+#endif /* SO_REUSE */
     /* If no matching PCB was found, send a TCP RST (reset) to the
        sender. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_input: no PCB match found, resetting.\n"));
@@ -343,7 +401,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
     }
     pbuf_free(p);
   }
-
+#ifdef SO_REUSE
+ end:
+#endif /* SO_REUSE */
   LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
   PERF_STOP("tcp_input");
 }

@@ -1007,8 +1007,10 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       /* UNIMPL case SO_SNDBUF: */
       /* UNIMPL case SO_RCVLOWAT: */
       /* UNIMPL case SO_SNDLOWAT: */
-      /* UNIMPL case SO_REUSEADDR: */
-      /* UNIMPL case SO_REUSEPORT: */
+#ifdef SO_REUSE
+      case SO_REUSEADDR:
+      case SO_REUSEPORT:
+#endif /* SO_REUSE */
       case SO_TYPE:
       /* UNIMPL case SO_USELOOPBACK: */
         if( *optlen < sizeof(int) ) {
@@ -1091,8 +1093,10 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case SO_OOBINCLUDE: */
-    /* UNIMPL case SO_REUSEADDR: */
-    /* UNIMPL case SO_REUSEPORT: */
+#ifdef SO_REUSE
+    case SO_REUSEADDR:
+    case SO_REUSEPORT:
+#endif /* SO_REUSE */
     /*case SO_USELOOPBACK: UNIMPL */
       *(int*)optval = sock->conn->pcb.tcp->so_options & optname;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, optname=0x%x, ..) = %s\n", s, optname, (*(int*)optval?"on":"off")));
@@ -1192,8 +1196,10 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     /* UNIMPL case SO_SNDBUF: */
     /* UNIMPL case SO_RCVLOWAT: */
     /* UNIMPL case SO_SNDLOWAT: */
-    /* UNIMPL case SO_REUSEADDR: */
-    /* UNIMPL case SO_REUSEPORT: */
+#ifdef SO_REUSE
+    case SO_REUSEADDR:
+    case SO_REUSEPORT:
+#endif /* SO_REUSE */
     /* UNIMPL case SO_USELOOPBACK: */
       if( optlen < sizeof(int) ) {
         err = EINVAL;
@@ -1272,8 +1278,10 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case SO_OOBINCLUDE: */
-    /* UNIMPL case SO_REUSEADDR: */
-    /* UNIMPL case SO_REUSEPORT: */
+#ifdef SO_REUSE
+    case SO_REUSEADDR:
+    case SO_REUSEPORT:
+#endif /* SO_REUSE */
     /* UNIMPL case SO_USELOOPBACK: */
       if ( *(int*)optval ) {
         sock->conn->pcb.tcp->so_options |= optname;

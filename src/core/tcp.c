@@ -247,11 +247,14 @@ err_t
 tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct tcp_pcb *cpcb;
+#ifdef SO_REUSE
+  int reuse_port_all_set = 1;
+#endif /* SO_REUSE */
 
   if (port == 0) {
     port = tcp_new_port();
   }
-
+#ifndef SO_REUSE
   /* Check if the address already is in use. */
   for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
@@ -273,6 +276,102 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       }
     }
   }
+#else /* SO_REUSE */
+  /* Search through list of PCB's in LISTEN state. 
+     
+  If there is a PCB bound to specified port and IP_ADDR_ANY another PCB can be bound to the interface IP
+  or to the loopback address on the same port if SOF_REUSEADDR is set. Any combination of PCB's bound to 
+  the same local port, but to one address out of {IP_ADDR_ANY, 127.0.0.1, interface IP} at a time is valid.
+  But no two PCB's bound to same local port and same local address is valid.
+  
+  If SOF_REUSEPORT is set several PCB's can be bound to same local port and same local address also. But then 
+  all PCB's must have the SOF_REUSEPORT option set.
+  
+  When the two options aren't set and specified port is already bound, ERR_USE is returned saying that 
+  address is already in use. */
+  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+    if(cpcb->local_port == port) {
+      if(ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        if(pcb->so_options & SOF_REUSEPORT) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in listening PCB's: SO_REUSEPORT set and same address.\n"));
+          reuse_port_all_set = (reuse_port_all_set && (cpcb->so_options & SOF_REUSEPORT));
+        }
+        else {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in listening PCB's: SO_REUSEPORT not set and same address.\n"));
+          return ERR_USE;
+        }
+      }
+      else if((ip_addr_isany(ipaddr) && !ip_addr_isany(&(cpcb->local_ip))) ||
+              (!ip_addr_isany(ipaddr) && ip_addr_isany(&(cpcb->local_ip)))) {
+        if(!(pcb->so_options & SOF_REUSEADDR) && !(pcb->so_options & SOF_REUSEPORT)) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in listening PCB's SO_REUSEPORT or SO_REUSEADDR not set and not the same address.\n"));
+          return ERR_USE;
+        }      
+        else {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in listening PCB's SO_REUSEPORT or SO_REUSEADDR set and not the same address.\n"));
+        }     
+      }
+    }
+  }
+
+  /* Search through list of PCB's in a state in which they can accept or send data. Same decription as for 
+     PCB's in state LISTEN applies to this PCB's regarding the options SOF_REUSEADDR and SOF_REUSEPORT. */
+  for(cpcb = tcp_active_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+    if(cpcb->local_port == port) {
+      if(ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        if(pcb->so_options & SOF_REUSEPORT) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in active PCB's SO_REUSEPORT set and same address.\n"));
+          reuse_port_all_set = (reuse_port_all_set && (cpcb->so_options & SOF_REUSEPORT));
+        }
+        else {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in active PCB's SO_REUSEPORT not set and same address.\n"));
+          return ERR_USE;
+        }
+      }
+      else if((ip_addr_isany(ipaddr) && !ip_addr_isany(&(cpcb->local_ip))) ||
+              (!ip_addr_isany(ipaddr) && ip_addr_isany(&(cpcb->local_ip)))) {
+        if(!(pcb->so_options & SOF_REUSEADDR) && !(pcb->so_options & SOF_REUSEPORT)) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in active PCB's SO_REUSEPORT or SO_REUSEADDR not set and not the same address.\n"));
+          return ERR_USE;
+        }   
+        else {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in active PCB's SO_REUSEPORT or SO_REUSEADDR set and not the same address.\n"));
+        }        
+      }
+    }
+  }
+
+  /* Search through list of PCB's in TIME_WAIT state. If SO_REUSEADDR is set a bound combination [IP, port} 
+     can be rebound. The same applies when SOF_REUSEPORT is set. 
+     
+     If SOF_REUSEPORT is set several PCB's can be bound to same local port and same local address also. But then 
+     all PCB's must have the SOF_REUSEPORT option set.
+     
+     When the two options aren't set and specified port is already bound, ERR_USE is returned saying that 
+     address is already in use. */
+  for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+    if(cpcb->local_port == port) {
+      if(ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        if(!(pcb->so_options & SOF_REUSEADDR) && !(pcb->so_options & SOF_REUSEPORT)) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in TIME_WAIT PCB's SO_REUSEPORT or SO_REUSEADDR not set and same address.\n"));
+          return ERR_USE;
+        }
+        else if(pcb->so_options & SOF_REUSEPORT) {
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: in TIME_WAIT PCB's SO_REUSEPORT set and same address.\n"));
+          reuse_port_all_set = (reuse_port_all_set && (cpcb->so_options & SOF_REUSEPORT));
+        }
+      }
+    }
+  }
+
+  /* If SOF_REUSEPORT isn't set in all PCB's bound to specified port and local address specified then 
+     {IP, port} can't be reused. */
+  if(!reuse_port_all_set) {
+    LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: not all sockets have SO_REUSEPORT set.\n"));
+    return ERR_USE;
+  }
+#endif /* SO_REUSE */
+
   if (!ip_addr_isany(ipaddr)) {
     pcb->local_ip = *ipaddr;
   }
