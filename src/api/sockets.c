@@ -32,7 +32,7 @@
  *
  */
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 #include "lwip/api.h"
 #include "lwip/arch.h"
 #include "lwip/sys.h"

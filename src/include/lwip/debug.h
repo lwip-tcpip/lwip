@@ -41,7 +41,7 @@
  * - 3 severe
  */
 #define DBG_MASK_LEVEL 3
-
+#define DBG_TYPES_ON 0
 /** print only debug messages with this level or higher */
 #define DBG_MIN_LEVEL 0
 
@@ -59,6 +59,7 @@
 /** flag for DEBUGF to halt after printing this debug message */
 #define DBG_HALT    0x08
 
+
 #ifdef LWIP_DEBUG
 
 #define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x); } while(0)
@@ -66,53 +67,12 @@
   * AND is at least DBG_LEVEL */
 #define DEBUGF(debug, x) do { if ((debug & DBG_ON) && (debug & DBG_TYPES_ON) && ((debug & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if (debug & DBG_HALT) while(1); } } while(0)
 #define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x); } while(0)	
-
 #else /* LWIP_DEBUG */
 
 #define LWIP_ASSERT(x,y) 
 #define DEBUGF(debug, x) 
 #define LWIP_ERROR(x)	
 
-#define DBG_TYPES_ON 0U
-
- /**
- * Disable all debug messages
- */
-#define DEMO_DEBUG       DBG_OFF
-#define ETHARP_DEBUG     DBG_OFF
-#define NETIF_DEBUG      DBG_OFF
-#define PBUF_DEBUG       DBG_OFF
-#define DELIF_DEBUG      DBG_OFF
-#define DROPIF_DEBUG     DBG_OFF
-#define TUNIF_DEBUG      DBG_OFF
-#define UNIXIF_DEBUG     DBG_OFF
-#define TAPIF_DEBUG      DBG_OFF
-#define SIO_FIFO_DEBUG   DBG_OFF
-#define PPP_DEBUG        DBG_OFF
-#define API_LIB_DEBUG    DBG_OFF
-#define API_MSG_DEBUG    DBG_OFF
-#define SOCKETS_DEBUG    DBG_OFF
-#define ICMP_DEBUG       DBG_OFF
-#define INET_DEBUG       DBG_OFF
-#define IP_DEBUG         DBG_OFF
-#define IP_REASS_DEBUG   DBG_OFF
-#define MEM_DEBUG        DBG_OFF
-#define MEMP_DEBUG       DBG_OFF
-#define SYS_DEBUG        DBG_OFF
-#define TCP_DEBUG        DBG_OFF
-#define TCP_INPUT_DEBUG  DBG_OFF
-#define TCP_FR_DEBUG     DBG_OFF
-#define TCP_RTO_DEBUG    DBG_OFF
-#define TCP_REXMIT_DEBUG DBG_OFF
-#define TCP_CWND_DEBUG   DBG_OFF
-#define TCP_WND_DEBUG    DBG_OFF
-#define TCP_OUTPUT_DEBUG DBG_OFF
-#define TCP_RST_DEBUG    DBG_OFF
-#define TCP_QLEN_DEBUG   DBG_OFF
-#define UDP_DEBUG        DBG_OFF
-#define TCPIP_DEBUG      DBG_OFF
-#define TCPDUMP_DEBUG    DBG_OFF
-#define DHCP_DEBUG       DBG_OFF
 
 #endif /* LWIP_DEBUG */
 

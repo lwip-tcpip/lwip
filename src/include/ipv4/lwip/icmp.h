@@ -101,11 +101,11 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define ICMPH_TYPE(hdr) (NTOHS((hdr)->_type_code) >> 8)
-#define ICMPH_CODE(hdr) (NTOHS((hdr)->_type_code) & 0xff)
+#define ICMPH_TYPE(hdr) (ntohs((hdr)->_type_code) >> 8)
+#define ICMPH_CODE(hdr) (ntohs((hdr)->_type_code) & 0xff)
 
-#define ICMPH_TYPE_SET(hdr, type) ((hdr)->_type_code = HTONS(ICMPH_CODE(hdr) | ((type) << 8)))
-#define ICMPH_CODE_SET(hdr, code) ((hdr)->_type_code = HTONS((code) | (ICMPH_TYPE(hdr) << 8)))
+#define ICMPH_TYPE_SET(hdr, type) ((hdr)->_type_code = htons(ICMPH_CODE(hdr) | ((type) << 8)))
+#define ICMPH_CODE_SET(hdr, code) ((hdr)->_type_code = htons((code) | (ICMPH_TYPE(hdr) << 8)))
 
 #endif /* __LWIP_ICMP_H__ */
 	  

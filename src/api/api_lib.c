@@ -33,12 +33,10 @@
 /* This is the part of the API that is linked with
    the application */
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
 #include "lwip/memp.h"
-
-#include "lwip/debug.h"
 
 /*-----------------------------------------------------------------------------------*/
 struct

@@ -43,20 +43,6 @@ u16_t inet_chksum_pbuf(struct pbuf *p);
 u16_t inet_chksum_pseudo(struct pbuf *p,
 			 struct ip_addr *src, struct ip_addr *dest,
 			 u8_t proto, u16_t proto_len);
-
-#ifdef HTONS
-#undef HTONS
-#endif /* HTONS */
-#ifdef NTOHS
-#undef NTOHS
-#endif /* NTOHS */
-#ifdef HTONL
-#undef HTONL
-#endif /* HTONL */
-#ifdef NTOHL
-#undef NTOHL
-#endif /* NTOHL */
-
 #ifdef htons
 #undef htons
 #endif /* htons */
@@ -70,36 +56,17 @@ u16_t inet_chksum_pseudo(struct pbuf *p,
 #undef ntohl
 #endif /* ntohl */
 
-
-
-#ifndef HTONS
-#   if BYTE_ORDER == BIG_ENDIAN
-#      define HTONS(n) (n)
-#   else /* BYTE_ORDER == BIG_ENDIAN */
-#      define HTONS(n) (((((u16_t)(n) & 0xff)) << 8) | (((u16_t)(n) & 0xff00) >> 8))
-#   endif /* BYTE_ORDER == BIG_ENDIAN */
-#endif /* HTONS */
-
-#define htons HTONS
-#define NTOHS HTONS
-#define ntohs htons
-
-
-#ifndef HTONL
-#   if BYTE_ORDER == BIG_ENDIAN
-#      define HTONL(n) (n)
-#   else /* BYTE_ORDER == BIG_ENDIAN */
-#      define HTONL(n) (((((u32_t)(n) & 0xff)) << 24) | \
-                        ((((u32_t)(n) & 0xff00)) << 8) | \
-                        ((((u32_t)(n) & 0xff0000)) >> 8) | \
-                        ((((u32_t)(n) & 0xff000000)) >> 24))
-#   endif /* BYTE_ORDER == BIG_ENDIAN */
-#endif /* HTONL */
-
-
-#define htonl HTONL
-#define NTOHL HTONL
-#define ntohl htonl
+#if BYTE_ORDER == BIG_ENDIAN
+#define htons(x) (x)
+#define ntohs(x) (x)
+#define htonl(x) (x)
+#define ntohl(x) (x)
+#else
+u16_t htons(u16_t x);
+u16_t ntohs(u16_t x);
+u32_t htonl(u32_t x);
+u32_t ntohl(u32_t x);
+#endif
 
 #endif /* __LWIP_INET_H__ */
 

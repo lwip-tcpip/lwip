@@ -37,7 +37,7 @@
  *
  */
 /*-----------------------------------------------------------------------------------*/
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 
 #include "lwip/def.h"
 #include "lwip/memp.h"
@@ -94,8 +94,8 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 
     udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
 
-  src = NTOHS(udphdr->src);
-  dest = NTOHS(udphdr->dest);
+  src = ntohs(udphdr->src);
+  dest = ntohs(udphdr->dest);
 
     pcb = pcb_cache;
   if(pcb != NULL &&
@@ -177,8 +177,8 @@ udp_input(struct pbuf *p, struct netif *inp)
   
   DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %u\n", p->tot_len));
 	
-  src = NTOHS(udphdr->src);
-  dest = NTOHS(udphdr->dest);
+  src = ntohs(udphdr->src);
+  dest = ntohs(udphdr->dest);
 
 #if UDP_DEBUG
   udp_debug_print(udphdr);

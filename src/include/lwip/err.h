@@ -32,7 +32,7 @@
 #ifndef __LWIP_ERR_H__
 #define __LWIP_ERR_H__
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 
 #include "arch/cc.h"
 

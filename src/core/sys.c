@@ -30,8 +30,6 @@
  *
  */
 
-#include "lwip/debug.h"
-
 #include "lwip/sys.h"
 #include "lwip/opt.h"
 #include "lwip/def.h"

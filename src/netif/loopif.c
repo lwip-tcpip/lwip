@@ -29,7 +29,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#include "lwip/debug.h"
 #include "lwip/mem.h"
 #include "lwip/opt.h"
 #include "netif/loopif.h"

@@ -30,7 +30,6 @@
  *
  */
 
-#include "lwip/debug.h"
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 

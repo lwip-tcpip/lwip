@@ -40,15 +40,14 @@
  */
 /*-----------------------------------------------------------------------------------*/
 
-#include "lwip/debug.h"
 
+#include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 
 #include "lwip/tcp.h"
 
-#include "lwip/opt.h"
 
 /* Incremented every coarse grained timer shot
    (typically every 500 ms, determined by TCP_COARSE_TIMEOUT). */
@@ -430,7 +429,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   TCP_REG(&tcp_active_pcbs, pcb);
   
   /* Build an MSS option */
-  optdata = HTONL(((u32_t)2 << 24) | 
+  optdata = htonl(((u32_t)2 << 24) | 
 		  ((u32_t)4 << 16) | 
 		  (((u32_t)pcb->mss / 256) << 8) |
 		  (pcb->mss & 255));

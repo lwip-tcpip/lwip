@@ -41,7 +41,6 @@
  */
 /*-----------------------------------------------------------------------------------*/
 
-#include "lwip/debug.h"
 
 #include "lwip/def.h"
 #include "lwip/opt.h"
@@ -387,7 +386,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     tcp_parseopt(npcb);
     
     /* Build an MSS option. */
-    optdata = HTONL(((u32_t)2 << 24) | 
+    optdata = htonl(((u32_t)2 << 24) | 
 		    ((u32_t)4 << 16) | 
 		    (((u32_t)npcb->mss / 256) << 8) |
 		    (npcb->mss & 255));
@@ -725,12 +724,10 @@ tcp_receive(struct tcp_pcb *pcb)
 	tcp_seg_free(next);
 	
 	DEBUGF(TCP_QLEN_DEBUG, ("%d (after freeing unacked)\n", pcb->snd_queuelen));
-#ifdef LWIP_DEBUG
 	if(pcb->snd_queuelen != 0) {
 	  LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
 		 pcb->unsent != NULL);      
 	}
-#endif /* LWIP_DEBUG */
       }
       pcb->polltmr = 0;
     }
@@ -756,12 +753,10 @@ tcp_receive(struct tcp_pcb *pcb)
 	pcb->snd_queuelen -= pbuf_clen(next->p);
 	tcp_seg_free(next);
 	DEBUGF(TCP_QLEN_DEBUG, ("%d (after freeing unsent)\n", pcb->snd_queuelen));
-#ifdef LWIP_DEBUG
 	if(pcb->snd_queuelen != 0) {
 	  LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
 		 pcb->unsent != NULL);      
 	}
-#endif /* LWIP_DEBUG */
 	
         if(pcb->unsent != NULL) {
           pcb->snd_nxt = htonl(pcb->unsent->tcphdr->seqno);

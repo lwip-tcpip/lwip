@@ -38,7 +38,6 @@
  */
 /*-----------------------------------------------------------------------------------*/
 
-#include "lwip/debug.h"
 
 #include "lwip/def.h"
 #include "lwip/opt.h"
@@ -125,12 +124,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     goto memerr;
   }   
 
-#ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
     pcb->unsent != NULL);      
   }
-#endif /* LWIP_DEBUG */
 
   seg = NULL;
   seglen = 0;
@@ -306,13 +303,11 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   pcb->snd_buf -= len;
   pcb->snd_queuelen = queuelen;
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (after enqueued)\n", pcb->snd_queuelen));
-#ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
   }
-#endif /* LWIP_DEBUG */
 
   /* Set the PSH flag in the last segment that we enqueued, but only
   if the segment has data (indicated by seglen > 0). */
@@ -329,13 +324,11 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   if(queue != NULL) {
     tcp_segs_free(queue);
   }
-#ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
   }
-#endif /* LWIP_DEBUG */
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (with mem err)\n", pcb->snd_queuelen));
   return ERR_MEM;
 }

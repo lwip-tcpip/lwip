@@ -168,11 +168,11 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define TCPH_OFFSET(hdr) (NTOHS((hdr)->_offset_flags) >> 8)
-#define TCPH_FLAGS(hdr) (NTOHS((hdr)->_offset_flags) & 0xff)
+#define TCPH_OFFSET(hdr) (ntohs((hdr)->_offset_flags) >> 8)
+#define TCPH_FLAGS(hdr) (ntohs((hdr)->_offset_flags) & 0xff)
 
-#define TCPH_OFFSET_SET(hdr, offset) (hdr)->_offset_flags = HTONS(((offset) << 8) | TCPH_FLAGS(hdr))
-#define TCPH_FLAGS_SET(hdr, flags) (hdr)->_offset_flags = HTONS((TCPH_OFFSET(hdr) << 8) | (flags))
+#define TCPH_OFFSET_SET(hdr, offset) (hdr)->_offset_flags = htons(((offset) << 8) | TCPH_FLAGS(hdr))
+#define TCPH_FLAGS_SET(hdr, flags) (hdr)->_offset_flags = htons((TCPH_OFFSET(hdr) << 8) | (flags))
 
 #define TCP_TCPLEN(seg) ((seg)->len + ((TCPH_FLAGS((seg)->tcphdr) & TCP_FIN || \
 					TCPH_FLAGS((seg)->tcphdr) & TCP_SYN)? 1: 0))

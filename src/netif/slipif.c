@@ -37,7 +37,7 @@
  */ 
 
 #include "netif/slipif.h"
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"

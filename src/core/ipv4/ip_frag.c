@@ -39,7 +39,7 @@
  */
 /*-----------------------------------------------------------------------------------*/
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 #include "lwip/sys.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"

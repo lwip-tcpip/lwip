@@ -30,7 +30,7 @@
  *
  */
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 
 #include "lwip/def.h"
 #include "lwip/mem.h"

@@ -32,7 +32,6 @@
 #ifndef __LWIP_MEM_H__
 #define __LWIP_MEM_H__
 
-#include "lwip/debug.h"
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 

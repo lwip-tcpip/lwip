@@ -3,6 +3,10 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.28  2003/02/21 16:43:46  jani
+ * byte-order handling functions are in inet.c now and the uperrcase counterparts are gone. opt.h has all the
+ * configurable items debug does not need to be directly included.
+ *
  * Revision 1.27  2003/02/20 16:32:24  jani
  * do not directly include lwipopts.h but lwip/opt.h instead
  *
@@ -156,7 +160,6 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 */
 
 #include "lwip/opt.h"
-#include "lwip/debug.h"
 #include "lwip/inet.h"
 #include "netif/etharp.h"
 #include "lwip/ip.h"
@@ -182,11 +185,11 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
 
-#define ARPH_HWLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) >> 8)
-#define ARPH_PROTOLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) & 0xff)
+#define ARPH_HWLEN(hdr) (ntohs((hdr)->_hwlen_protolen) >> 8)
+#define ARPH_PROTOLEN(hdr) (ntohs((hdr)->_hwlen_protolen) & 0xff)
 
-#define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS(ARPH_PROTOLEN(hdr) | ((len) << 8))
-#define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS((len) | (ARPH_HWLEN(hdr) << 8))
+#define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = htons(ARPH_PROTOLEN(hdr) | ((len) << 8))
+#define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = htons((len) | (ARPH_HWLEN(hdr) << 8))
 
 enum etharp_state {
   ETHARP_STATE_EMPTY,

@@ -33,7 +33,7 @@
 /* Some ICMP messages should be passed to the transport protocols. This
    is not implemented. */
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 
 #include "lwip/icmp.h"
 #include "lwip/inet.h"

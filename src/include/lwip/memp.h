@@ -33,7 +33,6 @@
 #ifndef __LWIP_MEMP_H__
 #define __LWIP_MEMP_H__
 
-#include "lwip/debug.h"
 #include "lwip/opt.h"
 
 typedef enum {

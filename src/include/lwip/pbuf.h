@@ -33,8 +33,7 @@
 #ifndef __LWIP_PBUF_H__
 #define __LWIP_PBUF_H__
 
-#include "lwip/debug.h"
-#include "lwip/arch.h"
+#include "arch/cc.h"
 
 
 #define PBUF_TRANSPORT_HLEN 20

@@ -32,7 +32,7 @@
 #ifndef __LWIP_IP_H__
 #define __LWIP_IP_H__
 
-#include "lwip/debug.h"
+#include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
