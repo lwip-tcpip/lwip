@@ -174,6 +174,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
     (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
+
   if (timeouts->next == NULL) {
     timeouts->next = timeout;
     return;
@@ -186,14 +187,13 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   } else {
     for(t = timeouts->next; t != NULL; t = t->next) {
       timeout->time -= t->time;
-      if (t->next == NULL ||
-   t->next->time > timeout->time) {
-  if (t->next != NULL) {
-    t->next->time -= timeout->time;
-  }
-  timeout->next = t->next;
-  t->next = timeout;
-  break;
+      if (t->next == NULL || t->next->time > timeout->time) {
+        if (t->next != NULL) {
+          t->next->time -= timeout->time;
+        }
+        timeout->next = t->next;
+        t->next = timeout;
+        break;
       }
     }
   }
