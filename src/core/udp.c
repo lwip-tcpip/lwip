@@ -352,7 +352,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* chain header q in front of given pbuf p */
     pbuf_chain(q, p);
     /* { first pbuf q points to header pbuf } */
-    DEBUGF(UDP_DEBUG, ("udp_send: added header pbuf %q before given pbuf %p\n", (void *)q, (void *)p));
+    DEBUGF(UDP_DEBUG, ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
   }	else {
     /* first pbuf q equals given pbuf */
     q = p;
