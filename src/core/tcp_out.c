@@ -88,7 +88,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
     }
     return ERR_OK;
   } else {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write() called in invalid state\n"));
+    DEBUGF(TCP_OUTPUT_DEBUG | DBG_STATE | 3, ("tcp_write() called in invalid state\n"));
     return ERR_CONN;
   }
 }
@@ -110,7 +110,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   ptr = arg;
   /* fail on too much data */
   if(len > pcb->snd_buf) {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too much data (len=%d > snd_buf=%d)\n", len, pcb->snd_buf));
+    DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%d > snd_buf=%d)\n", len, pcb->snd_buf));
     return ERR_MEM;
   }
 
@@ -125,7 +125,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   length. If so, we return an error. */
   queuelen = pcb->snd_queuelen;
   if(queuelen >= TCP_SND_QUEUELEN) {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
+    DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
     goto memerr;
   }   
 
@@ -148,7 +148,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Allocate memory for tcp_seg, and fill in fields. */
     seg = memp_malloc(MEMP_TCP_SEG);
     if(seg == NULL) {
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
+      DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
       goto memerr;
     }
     seg->next = NULL;
@@ -176,7 +176,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     else if (copy) {
       if((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
-        DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for pbuf copy size %u\n", seglen));	  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));	  
         goto memerr;
       }
       ++queuelen;
@@ -194,7 +194,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        * instead of PBUF_REF here.
        */
       if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
-        DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));	  	  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));	  	  
         goto memerr;
       }
       ++queuelen;
@@ -206,7 +206,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
         /* If allocation fails, we have to deallocate the data pbuf as
            well. */
         pbuf_free(p);
-        DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for header pbuf\n"));		  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));		  
         goto memerr;
       }
       ++queuelen;
@@ -219,7 +219,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum. */
     if(queuelen > TCP_SND_QUEUELEN) {
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN)); 	
+      DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN)); 	
       goto memerr;
     }
 
@@ -231,7 +231,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Build TCP header. */
     if(pbuf_header(seg->p, TCP_HLEN)) {
 
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
+      DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
 
 #ifdef TCP_STATS
       ++lwip_stats.tcp.err;
@@ -257,7 +257,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        segments such as SYN|ACK. */
       memcpy(seg->dataptr, optdata, optlen);
     }
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: queueing %lu:%lu (0x%x)\n",
+    DEBUGF(TCP_OUTPUT_DEBUG | DBG_TRACE, ("tcp_enqueue: queueing %lu:%lu (0x%x)\n",
       ntohl(seg->tcphdr->seqno),
       ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg),
       flags));
@@ -295,7 +295,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg->len += queue->len;
     useg->next = queue->next;
 
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: chaining, new len %u\n", useg->len));
+    DEBUGF(TCP_OUTPUT_DEBUG | DBG_TRACE | DBG_STATE, ("tcp_enqueue: chaining, new len %u\n", useg->len));
     if(seg == queue) {
       seg = NULL;
     }
@@ -343,7 +343,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       pcb->unsent != NULL);
 
   }
-  DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (with mem err)\n", pcb->snd_queuelen));
+  DEBUGF(TCP_QLEN_DEBUG | DBG_STATE, ("tcp_enqueue: %d (with mem err)\n", pcb->snd_queuelen));
   return ERR_MEM;
 }
 /*-----------------------------------------------------------------------------------*/
