@@ -36,7 +36,7 @@
 
 #include "lwip/netif.h"
 
-void slipif_init(struct netif * netif);
+err_t slipif_init(struct netif * netif);
  
 #endif 
 

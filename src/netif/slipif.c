@@ -197,7 +197,7 @@ slipif_loop(void *nf)
  * Call the arch specific sio_open and remember
  * the opened device in the state field of the netif.
  */ 
-void
+err_t
 slipif_init(struct netif *netif)
 {
 	
@@ -209,6 +209,9 @@ slipif_init(struct netif *netif)
   netif->mtu = 1500;	
 
   netif->state = sio_open(netif->num);
+  if (!netif->state)
+      return ERR_IF;
 
   sys_thread_new(slipif_loop, netif);
+  return ERR_OK;
 }

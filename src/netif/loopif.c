@@ -67,12 +67,13 @@ loopif_output(struct netif *netif, struct pbuf *p,
   return ERR_MEM;
 }
 /*-----------------------------------------------------------------------------------*/
-void
+err_t
 loopif_init(struct netif *netif)
 {
   netif->name[0] = 'l';
   netif->name[1] = 'o';
   netif->output = loopif_output;
+  return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
 

@@ -58,6 +58,7 @@ typedef s8_t err_t;
 
 #define ERR_USE  -10     /* Address in use.          */
 
+#define ERR_IF   -11     /* Low-level netif error    */
 
 
 #ifdef LWIP_DEBUG

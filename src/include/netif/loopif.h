@@ -34,6 +34,6 @@
 
 #include "lwip/netif.h"
 
-void loopif_init(struct netif *netif);
+err_t loopif_init(struct netif *netif);
 
 #endif /* __NETIF_LOOPIF_H__ */

@@ -55,7 +55,7 @@ struct netif *
 netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 	  struct ip_addr *gw,
 	  void *state,
-	  void (* init)(struct netif *netif),
+	  err_t (* init)(struct netif *netif),
 	  err_t (* input)(struct pbuf *p, struct netif *netif))
 {
   struct netif *netif;
@@ -74,8 +74,11 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   ip_addr_set(&(netif->netmask), netmask);
   ip_addr_set(&(netif->gw), gw);
 
-  init(netif);
-  
+  if (init(netif) != ERR_OK) {
+      mem_free(netif);
+      return NULL;
+  }
+ 
   netif->next = netif_list;
   netif_list = netif;
 #if NETIF_DEBUG
