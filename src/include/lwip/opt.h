@@ -159,6 +159,13 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef ARP_QUEUEING
 #define ARP_QUEUEING 1
 #endif
+/** If enabled, the first packet queued will not be overwritten by
+ * later packets. If disabled, later packets overwrite early packets
+ * in the queue. Default is disabled, which is recommended. 
+ */
+#ifndef ARP_QUEUE_FIRST
+#define ARP_QUEUE_FIRST         0
+#endif
 /**
  * If defined to 1, cache entries are updated or added for every kind of ARP traffic
  * or broadcast IP traffic. Recommended for routers.
