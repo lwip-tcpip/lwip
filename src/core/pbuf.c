@@ -453,9 +453,10 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  *
  * The ->payload, ->tot_len and ->len fields are adjusted.
  *
- * @param hdr_size Number of bytes to increment header size which
+ * @param hdr_size_inc Number of bytes to increment header size which
  * increases the size of the pbuf. New space is on the front.
  * (Using a negative value decreases the header size.)
+ * If hdr_size_inc is 0, this function does nothing and returns succesful.
  *
  * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
  * the call will fail. A check is made that the increase in header size does

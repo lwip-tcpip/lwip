@@ -35,8 +35,8 @@
 #ifndef __NETIF_ETHARP_H__
 #define __NETIF_ETHARP_H__
 
-#ifndef PAD_ETH_SIZE
-#define PAD_ETH_SIZE 0
+#ifndef ETH_PAD_SIZE
+#define ETH_PAD_SIZE 0
 #endif
 
 #include "lwip/pbuf.h"
@@ -55,8 +55,8 @@ PACK_STRUCT_END
 
 PACK_STRUCT_BEGIN
 struct eth_hdr {
-#if PAD_ETH_SIZE
-  PACK_STRUCT_FIELD(u8_t padding[PAD_ETH_SIZE]);
+#if ETH_PAD_SIZE
+  PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
 #endif
   PACK_STRUCT_FIELD(struct eth_addr dest);
   PACK_STRUCT_FIELD(struct eth_addr src);

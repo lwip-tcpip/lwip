@@ -103,8 +103,8 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
 
   initiate transfer();
   
-#if PAD_ETH_SIZE
-  pbuf_header(p, -PAD_ETH_SIZE);			/* drop the padding word */
+#if ETH_PAD_SIZE
+  pbuf_header(p, -ETH_PAD_SIZE);			/* drop the padding word */
 #endif
 
   for(q = p; q != NULL; q = q->next) {
@@ -116,8 +116,8 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
 
   signal that packet should be sent();
 
-#if PAD_ETH_SIZE
-  pbuf_header(p, PAD_ETH_SIZE);			/* reclaim the padding word */
+#if ETH_PAD_SIZE
+  pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
 #endif
   
 #ifdef LINK_STATS
@@ -145,8 +145,8 @@ low_level_input(struct ethernetif *ethernetif)
      variable. */
   len = ;
 
-#if PAD_ETH_SIZE
-  len += PAD_ETH_SIZE;						/* allow room for Ethernet padding */
+#if ETH_PAD_SIZE
+  len += ETH_PAD_SIZE;						/* allow room for Ethernet padding */
 #endif
 
   /* We allocate a pbuf chain of pbufs from the pool. */
@@ -154,22 +154,22 @@ low_level_input(struct ethernetif *ethernetif)
   
   if (p != NULL) {
 
-#if PAD_ETH_SIZE
-    pbuf_header(p, -PAD_ETH_SIZE);			/* drop the padding word */
+#if ETH_PAD_SIZE
+    pbuf_header(p, -ETH_PAD_SIZE);			/* drop the padding word */
 #endif
 
     /* We iterate over the pbuf chain until we have read the entire
-       packet into the pbuf. */
+     * packet into the pbuf. */
     for(q = p; q != NULL; q = q->next) {
       /* Read enough bytes to fill this pbuf in the chain. The
-         available data in the pbuf is given by the q->len
-         variable. */
+       * available data in the pbuf is given by the q->len
+       * variable. */
       read data into(q->payload, q->len);
     }
     acknowledge that packet has been read();
 
-#if PAD_ETH_SIZE
-    pbuf_header(p, PAD_ETH_SIZE);			/* reclaim the padding word */
+#if ETH_PAD_SIZE
+    pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
 #endif
 
 #ifdef LINK_STATS
