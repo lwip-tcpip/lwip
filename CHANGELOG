@@ -1,6 +1,9 @@
 HISTORY
 
 (current)
+  ++ New features:
+
+  * Added PPP stack contributed by Marc Boucher
 
   ++ Changes:
   
