@@ -100,7 +100,7 @@ pbuf_init(void)
   u16_t i;
 
   pbuf_pool = (struct pbuf *)&pbuf_pool_memory[0];
-  LWIP_ASSERT("pbuf_init: pool aligned", (long)pbuf_pool % MEM_ALIGNMENT == 0);
+  LWIP_ASSERT("pbuf_init: pool aligned", (mem_ptr_t)pbuf_pool % MEM_ALIGNMENT == 0);
 
 #if PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
@@ -254,7 +254,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
     LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
-            ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
+            ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
@@ -290,7 +290,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rem_len;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
-              ((u32_t)q->payload % MEM_ALIGNMENT) == 0);
+              ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
       /* calculate remaining length to be allocated */
       rem_len -= q->len;
@@ -314,7 +314,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->flags = PBUF_FLAG_RAM;
 
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
-           ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
+           ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
   /* pbuf references existing (static constant) ROM payload? */
   case PBUF_ROM:
