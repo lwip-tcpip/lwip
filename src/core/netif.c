@@ -62,10 +62,10 @@ struct netif *netif_default = NULL;
  */
 struct netif *
 netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
-	  struct ip_addr *gw,
-	  void *state,
-	  err_t (* init)(struct netif *netif),
-	  err_t (* input)(struct pbuf *p, struct netif *netif))
+  struct ip_addr *gw,
+  void *state,
+  err_t (* init)(struct netif *netif),
+  err_t (* input)(struct pbuf *p, struct netif *netif))
 {
   struct netif *netif;
   static int netifnum = 0;
@@ -73,7 +73,7 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* allocate netif structure */  
   netif = mem_malloc(sizeof(struct netif));
 
-  if(netif == NULL) {
+  if (netif == NULL) {
     DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
     return NULL;
   }
@@ -90,8 +90,8 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   
   /* call user specified initialization function for netif */
   if (init(netif) != ERR_OK) {
-      mem_free(netif);
-      return NULL;
+    mem_free(netif);
+    return NULL;
   }
  
   /* add this netif to the list */
@@ -99,7 +99,7 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif_list = netif;
 #if NETIF_DEBUG
   DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
-		       netif->name[0], netif->name[1]));
+    netif->name[0], netif->name[1]));
   ip_addr_debug_print(ipaddr);
   DEBUGF(NETIF_DEBUG, (" netmask "));
   ip_addr_debug_print(netmask);
@@ -119,38 +119,34 @@ netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netma
   netif_set_gw(netif, gw);
 }
 
-/*-----------------------------------------------------------------------------------*/
 void netif_remove(struct netif * netif)
 {
-	if ( netif == NULL ) return;  
- 
-	/*  is it the first netif? */
-	if(netif_list == netif) {
-		netif_list = netif->next;
-	}    
-	else
-	{	
-		/*  look for netif further down the list */
-		struct netif * tmpNetif;
- 		for(tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
-			if(tmpNetif->next == netif) {
-				tmpNetif->next = netif->next;
-				break;
-			}    
-		}
-		if(tmpNetif == NULL)
-			return; /*  we didn't find any netif today */
-	}
-  /* this netif is default? */
-	if (netif_default == netif)
-    /* reset default netif */
-		netif_default = NULL;
+  if ( netif == NULL ) return;  
 
-	DEBUGF(NETIF_DEBUG, ("netif_remove: removed netif\n"));
-	mem_free( netif );
+  /*  is it the first netif? */
+  if (netif_list == netif) {
+    netif_list = netif->next;
+  }
+  else {	
+    /*  look for netif further down the list */
+    struct netif * tmpNetif;
+    for (tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
+			if (tmpNetif->next == netif) {
+				tmpNetif->next = netif->next;
+        break;
+        }    
+		}
+		if (tmpNetif == NULL)
+			return; /*  we didn't find any netif today */
+  }
+  /* this netif is default? */
+  if (netif_default == netif)
+    /* reset default netif */
+    netif_default = NULL;
+  DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
+  mem_free( netif );
 }
 
-/*-----------------------------------------------------------------------------------*/
 struct netif *
 netif_find(char *name)
 {
@@ -167,11 +163,11 @@ netif_find(char *name)
     if(num == netif->num &&
        name[0] == netif->name[0] &&
        name[1] == netif->name[1]) {
-      DEBUGF(NETIF_DEBUG, ("netif_find: found %s\n", name));
+      DEBUGF(NETIF_DEBUG, ("netif_find: found %c%c\n", name[0], name[1]));
       return netif;
     }    
   }
-  DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %s\n", name));
+  DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return NULL;
 }
 /*-----------------------------------------------------------------------------------*/
