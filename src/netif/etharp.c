@@ -464,7 +464,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
  *
  * @see pbuf_free()
  */
-struct pbuf *
+void
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct ethip_hdr *hdr;
@@ -475,13 +475,13 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   /* source is on local network? */
   if (!ip_addr_maskcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
     /* do nothing */
-    return NULL;
+    return;
   }
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
   /* update ARP table, ask to insert entry */
   update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ARP_INSERT_FLAG);
-  return NULL;
+  return;
 }
 
 
@@ -500,7 +500,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
  *
  * @see pbuf_free()
  */
-struct pbuf *
+void
 etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 {
   struct etharp_hdr *hdr;
@@ -511,7 +511,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   if (p->tot_len < sizeof(struct etharp_hdr)) {
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 1, ("etharp_arp_input: packet dropped, too short (%d/%d)\n", p->tot_len, sizeof(struct etharp_hdr)));
     pbuf_free(p);
-    return NULL;
+    return;
   }
 
   hdr = p->payload;
@@ -538,7 +538,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     if (netif->ip_addr.addr == 0) {
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: we are unconfigured, ARP request ignored.\n"));
       pbuf_free(p);
-      return NULL;
+      return;
     }
     /* ARP request for our address? */
     if (for_us) {
@@ -599,8 +599,6 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   /* free ARP packet */
   pbuf_free(p);
   p = NULL;
-  /* nothing to send, we did it! */
-  return NULL;
 }
 
 /**
