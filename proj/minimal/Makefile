@@ -30,7 +30,7 @@
 # 
 # Author: Adam Dunkels <adam@sics.se>
 #
-# $Id: Makefile,v 1.1 2002/10/19 12:59:33 likewise Exp $
+# $Id: Makefile,v 1.1.1.1 2002/10/19 12:59:33 likewise Exp $
 
 CCDEP=gcc
 CC=gcc

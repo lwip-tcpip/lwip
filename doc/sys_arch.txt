@@ -2,7 +2,7 @@ sys_arch interface for lwIP 0.5
 
 Author: Adam Dunkels
 
-$Id: sys_arch.txt,v 1.1 2002/10/19 12:59:33 likewise Exp $
+$Id: sys_arch.txt,v 1.1.1.1 2002/10/19 12:59:33 likewise Exp $
 
 The operating system emulation layer provides a common interface
 between the lwIP code and the underlying operating system kernel. The
