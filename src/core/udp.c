@@ -413,21 +413,10 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 
   /* did we chain a header? */
   if (q != p) {
-    /* chained header still in front of given pbuf? */
-    if (q->next == p) {
-      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: dechaining and freeing header pbuf %p\n", (void *)q));
-      /* detach the header prepended earlier */
-      pbuf_dechain(q);
-      /* free the header */
-      pbuf_free(q);
-    } else {
-      /* the header now points to something else then the given pbuf */
-      /* this can only happen if queueing is enabled */
-      LWIP_ASSERT("ARP_QUEUEING == 1\n", ARP_QUEUEING == 1);
-      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: pbuf header %p not freed, seems queued.\n", (void *)q));
-   	}
+    /* free the header */
+    pbuf_free(q);
   }
-  
+    
 #ifdef UDP_STATS
   ++lwip_stats.udp.xmit;
 #endif /* UDP_STATS */
