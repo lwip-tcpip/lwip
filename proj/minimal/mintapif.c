@@ -154,7 +154,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
        time. The size of the data in each pbuf is kept in the ->len
        variable. */    
     /* send data from(q->payload, q->len); */
-    bcopy(q->payload, bufptr, q->len);
+    memcpy(bufptr, q->payload, q->len);
     bufptr += q->len;
   }
 
@@ -203,7 +203,7 @@ low_level_input(struct mintapif *mintapif)
          avaliable data in the pbuf is given by the q->len
          variable. */
       /* read data into(q->payload, q->len); */
-      bcopy(bufptr, q->payload, q->len);
+      memcpy(q->payload, bufptr, q->len);
       bufptr += q->len;
     }
     /* acknowledge that packet has been read(); */

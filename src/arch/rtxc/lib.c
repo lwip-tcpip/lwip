@@ -36,28 +36,3 @@
  * assembler.
  */
 
-#if 0 /* Define to 1 if these are really needed. */
-/*-----------------------------------------------------------------------------------*/
-void
-bcopy(const void *src, void *dst, unsigned int size)
-{
-  char *csrc, *cdst;
-  unsigned int i;
-
-  csrc = (char *)src;
-  cdst = dst;
-  
-  for(i = 0; i < size; ++i) {
-    cdst[i] = csrc[i];
-  }    
-}
-/*-----------------------------------------------------------------------------------*/
-void
-bzero(void *s, int n)
-{
-  for(--n ;n >= 0; --n) {
-    ((char *)s)[n] = 0;
-  }
-}
-/*-----------------------------------------------------------------------------------*/
-#endif /* 0 */

@@ -34,7 +34,5 @@
 
 #include <string.h>
 
-#define bcopy(s, d, l) memcpy(d, s, l)
-#define bzero(d, l)    memset(d, 0, l)
 
 #endif /* __LIB_H__ */

@@ -34,7 +34,5 @@
 #ifndef __ARCH_LIB_H__
 #define __ARCH_LIB_H__
 
-void bcopy(const void *src, void *dest, int len);
-void bzero(void *data, int n);
 
 #endif /* __ARCH_LIB_H__ */

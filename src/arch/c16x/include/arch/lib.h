@@ -30,14 +30,10 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: lib.h,v 1.1 2002/11/29 11:03:34 likewise Exp $
+ * $Id: lib.h,v 1.2 2002/12/19 10:37:08 jani Exp $
  */
 #ifndef __LIB_H__
 #define __LIB_H__
 
-//int strlen(const char *str);
-//int strncmp(const char *str1, const char *str2, int len);
-void bcopy(const void *src, void *dest, int len);
-void bzero(void *data, int n);
 
 #endif /* __LIB_H__ */

@@ -30,7 +30,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: lib.c,v 1.1 2002/11/29 11:03:34 likewise Exp $
+ * $Id: lib.c,v 1.2 2002/12/19 10:37:07 jani Exp $
  */
 
 /* These are generic implementations of various library functions used
@@ -71,26 +71,3 @@ ntohl(u32_t n)
 }
 /*-----------------------------------------------------------------------------------*/
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
-
-void
-bcopy(const void *src, void *dst, unsigned int size)
-{
-  char *csrc, *cdst;
-  int i;
-
-  csrc = (char *)src;
-  cdst = dst;
-  
-  for(i = 0; i < size; i++) {
-    cdst[i] = csrc[i];
-  }    
-}
-/*-----------------------------------------------------------------------------------*/
-void
-bzero(void *s, int n)
-{
-  for(n--; n > 0; n--) {
-    ((char *)s)[n] = 0;
-  }
-}
-/*-----------------------------------------------------------------------------------*/
