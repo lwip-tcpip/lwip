@@ -306,6 +306,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* Debugging options all default to off */
 
+#ifndef DBG_TYPES_ON
+#define DBG_TYPES_ON 0
+#endif
+
 #ifndef DEMO_DEBUG
 #define DEMO_DEBUG      DBG_OFF
 #endif
