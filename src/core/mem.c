@@ -149,7 +149,7 @@ mem_free(void *rmem)
   
   
   if((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    DEBUGF(MEM_DEBUG, ("mem_free: illegal memory\n"));
+    DEBUGF(MEM_DEBUG | 3, ("mem_free: illegal memory\n"));
 #ifdef MEM_STATS
     ++lwip_stats.mem.err;
 #endif /* MEM_STATS */
@@ -199,7 +199,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
 	 (u8_t *)rmem < (u8_t *)ram_end);
   
   if((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    DEBUGF(MEM_DEBUG, ("mem_realloc: illegal memory\n"));
+    DEBUGF(MEM_DEBUG | 3, ("mem_realloc: illegal memory\n"));
     return rmem;
   }
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
@@ -291,7 +291,7 @@ mem_malloc(mem_size_t size)
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
     }    
   }
-  DEBUGF(MEM_DEBUG, ("mem_malloc: could not allocate %d bytes\n", (int)size));
+  DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %d bytes\n", (int)size));
 #ifdef MEM_STATS
   ++lwip_stats.mem.err;
 #endif /* MEM_STATS */  

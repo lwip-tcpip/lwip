@@ -204,7 +204,7 @@ memp_malloc(memp_t type)
     memset(mem, 0, memp_sizes[type]);	
     return mem;
   } else {
-    DEBUGF(MEMP_DEBUG, ("memp_malloc: out of memory in pool %d\n", type));
+    DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %d\n", type));
 #ifdef MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */

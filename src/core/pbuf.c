@@ -267,7 +267,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     while(rsize > 0) {      
       q = pbuf_pool_alloc();
       if(q == NULL) {
-	DEBUGF(PBUF_DEBUG, ("pbuf_alloc: Out of pbufs in pool,\n"));
+	DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
 #ifdef PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
@@ -510,7 +510,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
   DEBUGF(PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size));
   
   if((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
-    DEBUGF(PBUF_DEBUG, ("pbuf_header: failed %p %p\n",
+    DEBUGF(PBUF_DEBUG | 2, ("pbuf_header: failed %p %p\n",
 			(u8_t *)p->payload,
 			(u8_t *)p + sizeof(struct pbuf)));
     p->payload = payload;
@@ -757,7 +757,7 @@ pbuf_unref(struct pbuf *f)
       {
         /* deallocate chain */
         pbuf_free(top);
-        DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n"));
+        DEBUGF(PBUF_DEBUG | 2, ("pbuf_unref: failed\n"));
         return NULL;
       }
     }
