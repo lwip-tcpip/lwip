@@ -594,7 +594,10 @@ tcp_process(struct tcp_pcb *pcb)
 static void
 tcp_receive(struct tcp_pcb *pcb)
 {
-  struct tcp_seg *next, *prev, *cseg;
+  struct tcp_seg *next;
+#if TCP_QUEUE_OOSEQ
+  struct tcp_seg *prev, *cseg;
+#endif
   struct pbuf *p;
   s32_t off;
   int m;
