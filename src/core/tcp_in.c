@@ -103,7 +103,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   u8_t hdrlen;
   err_t err;
 
-#ifdef SO_REUSE
+#if SO_REUSE
   struct tcp_pcb *pcb_temp;
   int reuse = 0;
   int reuse_port = 0;

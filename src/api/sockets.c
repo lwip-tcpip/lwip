@@ -993,7 +993,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       /* UNIMPL case SO_SNDBUF: */
       /* UNIMPL case SO_RCVLOWAT: */
       /* UNIMPL case SO_SNDLOWAT: */
-#ifdef SO_REUSE
+#if SO_REUSE
       case SO_REUSEADDR:
       case SO_REUSEPORT:
 #endif /* SO_REUSE */

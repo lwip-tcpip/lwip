@@ -244,7 +244,7 @@ err_t
 tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct tcp_pcb *cpcb;
-#ifdef SO_REUSE
+#if SO_REUSE
   int reuse_port_all_set = 1;
 #endif /* SO_REUSE */
 

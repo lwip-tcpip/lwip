@@ -89,7 +89,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   struct ip_hdr *iphdr;
   u16_t src, dest;
 
-#ifdef SO_REUSE
+#if SO_REUSE
   struct udp_pcb *pcb_temp;
   int reuse = 0;
   int reuse_port_1 = 0;
