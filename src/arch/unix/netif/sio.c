@@ -5,6 +5,18 @@
 #include "lwip/sys.h"
 #include "lwip/arch.h"
 
+/* Following #undefs are here to keep compiler from issuing warnings
+   about them being double defined. (They are defined in lwip/inet.h
+   as well as the Unix #includes below.) */
+#undef htonl
+#undef ntohl
+#undef htons
+#undef ntohs
+#undef HTONL
+#undef NTOHL
+#undef HTONS
+#undef NTOHS
+
 #include <stdlib.h>
 #include <termios.h>
 #include <stdio.h>
