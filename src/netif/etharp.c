@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.7  2002/11/13 08:56:11  likewise
+ * Implemented conditional insertion of ARP entries to update_arp_entry using ARP_INSERT_FLAG.
+ *
  * Revision 1.6  2002/11/11 14:34:29  likewise
  * Changed static etharp_query() to support queueing packets. This fix  missed in last commit.
  *
@@ -53,6 +56,38 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
+ 
+/*
+ * TODO:
+ *
+RFC 3220 4.6          IP Mobility Support for IPv4          January 2002 
+
+      -  A Gratuitous ARP [45] is an ARP packet sent by a node in order 
+         to spontaneously cause other nodes to update an entry in their 
+         ARP cache.  A gratuitous ARP MAY use either an ARP Request or 
+         an ARP Reply packet.  In either case, the ARP Sender Protocol 
+         Address and ARP Target Protocol Address are both set to the IP 
+         address of the cache entry to be updated, and the ARP Sender 
+         Hardware Address is set to the link-layer address to which this 
+         cache entry should be updated.  When using an ARP Reply packet, 
+         the Target Hardware Address is also set to the link-layer 
+         address to which this cache entry should be updated (this field 
+         is not used in an ARP Request packet). 
+
+         In either case, for a gratuitous ARP, the ARP packet MUST be 
+         transmitted as a local broadcast packet on the local link.  As 
+         specified in [36], any node receiving any ARP packet (Request 
+         or Reply) MUST update its local ARP cache with the Sender 
+         Protocol and Hardware Addresses in the ARP packet, if the 
+         receiving node has an entry for that IP address already in its 
+         ARP cache.  This requirement in the ARP protocol applies even 
+         for ARP Request packets, and for ARP Reply packets that do not 
+         match any ARP Request transmitted by the receiving node [36]. 
+*
+  My suggestion would be to send a ARP request for our newly obtained
+  address upon configuration of an Ethernet interface.
+
+*/
 
 #include "lwip/opt.h"
 #include "lwip/debug.h"
@@ -67,10 +102,10 @@
 #  include "lwip/dhcp.h"
 #endif
 
-/** the time an ARP entry stays valid after its last update */
-#define ARP_MAXAGE 120  /* 120 * 10 seconds = 20 minutes. */
-/** the maximum time waiting for ARP reply to a ARP request */
-#define ARP_MAXPENDING 2 /* 2 * 10 seconds = 20 seconds. */
+/** the time an ARP entry stays valid after its last update, (120 * 10) seconds = 20 minutes. */
+#define ARP_MAXAGE 120  
+/** the time an ARP entry stays pending after first request, (2 * 10) seconds = 20 seconds. */
+#define ARP_MAXPENDING 2 
 
 #define HWTYPE_ETHERNET 1
 
@@ -138,7 +173,8 @@ static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 static u8_t ctime;
 
-static struct pbuf *insert_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr);
+static struct pbuf *update_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+#define ARP_INSERT_FLAG 1
 
 /**
  * Initializes ARP module.
@@ -151,6 +187,7 @@ etharp_init(void)
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
   }
+  /* reset ARP current time */
   ctime = 0;
 }
 
@@ -223,18 +260,20 @@ find_arp_entry(void)
 }
 
 /**
- * Insert an entry into the ARP cache, or update an existing one.
+ * Update (or insert) an entry in the ARP cache.
  *
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
- *
+ * @param flags Defines behaviour:
+ * - ARP_INSERT_FLAG Allows ARP to insert this as a new item. If not specified,
+ * only existing ARP entries will be updated.
  * @return pbuf If non-NULL, a packet that was queued on a pending entry.
  * You should sent it and must call pbuf_free().
  *
  * @see pbuf_free()
  */
 static struct pbuf *
-insert_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr)
+update_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   u8_t i, k;
   struct pbuf *p;
@@ -250,7 +289,7 @@ insert_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr)
 
       /* check those entries that are already in use. */
       if(arp_table[i].state == ETHARP_STATE_STABLE) {
-        DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: updating stable entry %u\n", i));
+        DEBUGF(ETHARP_DEBUG, ("update_arp_entry: updating stable entry %u\n", i));
         /* An old entry found, update this and return. */
         for(k = 0; k < 6; ++k) {
           arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
@@ -260,8 +299,8 @@ insert_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr)
       }
       else if(arp_table[i].state == ETHARP_STATE_PENDING) {
         /* A pending entry was found, so we fill this in and return
-           the queued packet (if any). */
-        DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: pending entry %u made stable\n", i));
+        the queued packet (if any). */
+        DEBUGF(ETHARP_DEBUG, ("update_arp_entry: pending entry %u made stable\n", i));
         for(k = 0; k < 6; ++k) {
           arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
         }
@@ -281,34 +320,38 @@ insert_arp_entry(struct ip_addr *ipaddr, struct eth_addr *ethaddr)
           }
 
           ethhdr->type = htons(ETHTYPE_IP);	  	 	  
-          DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: returning queued packet %p\n", p));
+          DEBUGF(ETHARP_DEBUG, ("update_arp_entry: returning queued packet %p\n", p));
         }
         /* return queued packet, if any */
         return p;
       }
     }
   }
-  /* no matching ARP entry was found. find an empty or old entry. */
-  i = find_arp_entry();
-  if(i == ARP_TABLE_SIZE) {
-    DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: no available entry found\n"));
-    return NULL;
-  }
+  /* no matching ARP entry was found */
+  /* allowed to insert an entry? */
+  if (flags & ARP_INSERT_FLAG)
+  {
+    /* find an empty or old entry. */
+    i = find_arp_entry();
+    if(i == ARP_TABLE_SIZE) {
+      DEBUGF(ETHARP_DEBUG, ("update_arp_entry: no available entry found\n"));
+      return NULL;
+    }
 
-  if (arp_table[i].state == ETHARP_STATE_STABLE) {
-    DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: overwriting old stable entry %u\n", i));
+    if (arp_table[i].state == ETHARP_STATE_STABLE) {
+      DEBUGF(ETHARP_DEBUG, ("update_arp_entry: overwriting old stable entry %u\n", i));
+    }
+    else {
+      DEBUGF(ETHARP_DEBUG, ("update_arp_entry: using empty entry %u\n", i));
+    }  
+    ip_addr_set(&arp_table[i].ipaddr, ipaddr);
+    for(k = 0; k < 6; ++k) {
+      arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
+    }
+    arp_table[i].ctime = ctime;
+    arp_table[i].state = ETHARP_STATE_STABLE;
+    arp_table[i].p = NULL;
   }
-  else {
-    DEBUGF(ETHARP_DEBUG, ("insert_arp_entry: using empty entry %u\n", i));
-  }  
-  ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-  for(k = 0; k < 6; ++k) {
-    arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
-  }
-  arp_table[i].ctime = ctime;
-  arp_table[i].state = ETHARP_STATE_STABLE;
-  arp_table[i].p = NULL;
-
   return NULL;
 }
 
@@ -346,8 +389,8 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
     return NULL;
   }
   DEBUGF(ETHARP_DEBUG, ("etharp_ip_input: updating ETHARP table.\n"));
-  /* update ARP table */
-  return insert_arp_entry(&(hdr->ip.src), &(hdr->eth.src));
+  /* update ARP table, may insert */
+  return update_arp_entry(&(hdr->ip.src), &(hdr->eth.src), ARP_INSERT_FLAG);
 }
 
 
@@ -432,9 +475,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {     
       struct pbuf *q;
       DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply for us\n"));
-      /* insert_arp_entry() can return a pbuf that has previously been
+      /* update_arp_entry() can return a pbuf that has previously been
       queued waiting for this IP address to become ARP stable. */
-      q = insert_arp_entry(&(hdr->sipaddr), &(hdr->shwaddr));
+      q = update_arp_entry(&(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
       /* free incoming ARP reply pbuf */
       pbuf_free(p);
       p = NULL;
