@@ -703,6 +703,10 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 void
 udp_disconnect(struct udp_pcb *pcb)
 {
+  /* reset remote address association */
+  ip_addr_set(&pcb->remote_ip, IP_ADDR_ANY);
+  pcb->remote_port = 0;
+  /* mark PCB as unconnected */
   pcb->flags &= ~UDP_FLAGS_CONNECTED;
 }
 
