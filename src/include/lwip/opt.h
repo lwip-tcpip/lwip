@@ -297,9 +297,12 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- Statistics options ---------- */
-#define STATS
+#ifndef LWIP_STATS
+#define LWIP_STATS	1
+#endif
 
-#ifdef STATS
+#if LWIP_STATS
+
 #define LINK_STATS
 #define IP_STATS
 #define ICMP_STATS
@@ -309,7 +312,8 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_STATS
 #define PBUF_STATS
 #define SYS_STATS
-#endif /* STATS */
+
+#endif /* LWIP_STATS */
 
 /* Debugging options all default to off */
 

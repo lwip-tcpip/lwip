@@ -39,15 +39,13 @@
 #include "lwip/mem.h"
 
 
-#ifdef STATS
+#if LWIP_STATS
 struct stats_ lwip_stats;
-#endif /* STATS */
 /*-----------------------------------------------------------------------------------*/
 void
 stats_init(void)
 {
-#ifdef STATS
   memset(&lwip_stats, 0, sizeof(struct stats_));
-#endif /* STATS */
 }
+#endif /* LWIP_STATS */
 /*-----------------------------------------------------------------------------------*/

@@ -38,7 +38,7 @@
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 
-#ifdef STATS
+#if LWIP_STATS
 
 struct stats_proto {
   u16_t xmit;    /* Transmitted packets. */
@@ -99,9 +99,11 @@ struct stats_ {
 
 extern struct stats_ lwip_stats;
 
-#endif /* STATS */
 
 void stats_init(void);
+#else
+#define stats_init()
+#endif /* LWIP_STATS */
 #endif /* __LWIP_STATS_H__ */
 
 

@@ -87,9 +87,6 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-/* Declare here to avoid including netif.h creating a circular dependency */
-//struct netif;
-
 /** start DHCP configuration */
 err_t dhcp_start(struct netif *netif);
 /** stop DHCP configuration */
