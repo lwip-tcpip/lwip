@@ -685,7 +685,7 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   /* any pbuf to queue and queue is empty? */
   if ((q != NULL) && (arp_table[i].p == NULL)) {
     /* copy PBUF_REF referenced payloads to PBUF_RAM */
-    q = pbuf_unref(q);
+    q = pbuf_take(q);
     /* pbufs are queued, increase the reference count */
     pbuf_ref_chain(q);
     /* remember pbuf to queue, if any */

@@ -67,7 +67,8 @@ struct pbuf {
   /* Pointer to the actual data in the buffer. */
   void *payload;
   
-  /* Total length of buffer + additionally chained buffers. */
+  /* total length of this buffer and additionally chained buffers */
+  /* (p->tot_len = p->len + p->next->tot_len) */
   u16_t tot_len;
   
   /* Length of this buffer. */
@@ -150,7 +151,7 @@ void pbuf_chain(struct pbuf *h, struct pbuf *t);
    the pbuf chain or NULL if the pbuf p was not chained. */
 struct pbuf *pbuf_dechain(struct pbuf *p);
 
-struct pbuf *pbuf_unref(struct pbuf *f);
+struct pbuf *pbuf_take(struct pbuf *f);
 
 
 #endif /* __LWIP_PBUF_H__ */
