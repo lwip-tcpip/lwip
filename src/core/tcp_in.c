@@ -601,10 +601,11 @@ tcp_receive(struct tcp_pcb *pcb)
   struct pbuf *p;
   s32_t off;
   int m;
+  u32_t right_wnd_edge;
 
       
   if(flags & TCP_ACK) {
-    unsigned long int right_wnd_edge = pcb->snd_wnd + pcb->snd_wl1;
+    right_wnd_edge = pcb->snd_wnd + pcb->snd_wl1;
 
     /* Update window. */
     if(TCP_SEQ_LT(pcb->snd_wl1, seqno) ||
@@ -625,7 +626,7 @@ tcp_receive(struct tcp_pcb *pcb)
     
 
     if(pcb->lastack == ackno) {
-      if(pcb->snd_wl1+pcb->snd_wnd==right_wnd_edge){
+      if(pcb->snd_wl1 + pcb->snd_wnd == right_wnd_edge){
 	++pcb->dupacks;
 	if(pcb->dupacks >= 3 && pcb->unacked != NULL) {
 	  if(!(pcb->flags & TF_INFR)) {
@@ -649,9 +650,9 @@ tcp_receive(struct tcp_pcb *pcb)
 	    }
 	  }
 	}
-      }
-      else{
-	DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %lu %lu\n", pcb->snd_wl1+pcb->snd_wnd, right_wnd_edge));	
+      } else {
+	DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %lu %lu\n",
+			      pcb->snd_wl1 + pcb->snd_wnd, right_wnd_edge));	
       }
     } else if(TCP_SEQ_LT(pcb->lastack, ackno) &&
               TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
