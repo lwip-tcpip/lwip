@@ -825,43 +825,50 @@ tcp_receive(struct tcp_pcb *pcb)
        this if the sequence number of the incoming segment is less
        than rcv_nxt, and the sequence number plus the length of the
        segment is larger than rcv_nxt. */
-    if(TCP_SEQ_LT(seqno, pcb->rcv_nxt) &&
-       TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {
-      /* Trimming the first edge is done by pushing the payload
-         pointer in the pbuf downwards. This is somewhat tricky since
-         we do not want to discard the full contents of the pbuf up to
-         the new starting point of the data since we have to keep the
-         TCP header which is present in the first pbuf in the chain.
-
-	 What is done is really quite a nasty hack: the first pbuf in
-	 the pbuf chain is pointed to by inseg.p. Since we need to be
-	 able to deallocate the whole pbuf, we cannot change this
-	 inseg.p pointer to point to any of the later pbufs in the
-	 chain. Instead, we point the ->payload pointer in the first
-	 pbuf to data in one of the later pbufs. We also set the
-	 inseg.data pointer to point to the right place. This way, the
-	 ->p pointer will still point to the first pbuf, but the
-	 ->p->payload pointer will point to data in another pbuf.
-	 
-	 After we are done with adjusting the pbuf pointers we must
-	 adjust the ->data pointer in the seg and the segment
-	 length.*/
-      off = pcb->rcv_nxt - seqno;
-      if(inseg.p->len < off) {
-	p = inseg.p;
-	while(p->len < off) {
-	  off -= p->len;
-	  inseg.p->tot_len -= p->len;
-	  p->len = 0;
-	  p = p->next;
+    if(TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
+      if(TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {
+	/* Trimming the first edge is done by pushing the payload
+	   pointer in the pbuf downwards. This is somewhat tricky since
+	   we do not want to discard the full contents of the pbuf up to
+	   the new starting point of the data since we have to keep the
+	   TCP header which is present in the first pbuf in the chain.
+	   
+	   What is done is really quite a nasty hack: the first pbuf in
+	   the pbuf chain is pointed to by inseg.p. Since we need to be
+	   able to deallocate the whole pbuf, we cannot change this
+	   inseg.p pointer to point to any of the later pbufs in the
+	   chain. Instead, we point the ->payload pointer in the first
+	   pbuf to data in one of the later pbufs. We also set the
+	   inseg.data pointer to point to the right place. This way, the
+	   ->p pointer will still point to the first pbuf, but the
+	   ->p->payload pointer will point to data in another pbuf.
+	   
+	   After we are done with adjusting the pbuf pointers we must
+	   adjust the ->data pointer in the seg and the segment
+	   length.*/
+	off = pcb->rcv_nxt - seqno;
+	if(inseg.p->len < off) {
+	  p = inseg.p;
+	  while(p->len < off) {
+	    off -= p->len;
+	    inseg.p->tot_len -= p->len;
+	    p->len = 0;
+	    p = p->next;
+	  }
+	  pbuf_header(p, -off);
+	} else {
+	  pbuf_header(inseg.p, -off);
 	}
-	pbuf_header(p, -off);
-      } else {
-	pbuf_header(inseg.p, -off);
+	inseg.dataptr = inseg.p->payload;
+	inseg.len -= pcb->rcv_nxt - seqno;      
+	inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
       }
-      inseg.dataptr = inseg.p->payload;
-      inseg.len -= pcb->rcv_nxt - seqno;      
-      inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
+      else{
+	/* the whole segment is < rcv_nxt */
+	/* must be a duplicate of a packet that has already been correctly handled */
+	
+	DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %ld\n", seqno));
+      }
     }
 
     /* The sequence number must be within the window (above rcv_nxt
