@@ -107,12 +107,12 @@ ip_lookup(void *header, struct netif *inp)
 #endif /* IP_OPTIONS == 0 */
 
   switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP > 0
+#if LWIP_UDP
   case IP_PROTO_UDP:
   case IP_PROTO_UDPLITE:
     return udp_lookup(iphdr, inp);
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0
+#if LWIP_TCP
   case IP_PROTO_TCP:
     return 1;
 #endif /* LWIP_TCP */
@@ -380,19 +380,19 @@ ip_input(struct pbuf *p, struct netif *inp) {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 #endif /* IP_DEBUG */
 
-#if LWIP_RAW > 0
+#if LWIP_RAW
   if (!raw_input(p, inp)) {
 #endif /* LWIP_RAW */
 
   switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP > 0
+#if LWIP_UDP
   case IP_PROTO_UDP:
   case IP_PROTO_UDPLITE:
     snmp_inc_ipindelivers();
     udp_input(p, inp);
     break;
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0
+#if LWIP_TCP
   case IP_PROTO_TCP:
     snmp_inc_ipindelivers();
     tcp_input(p, inp);
@@ -418,7 +418,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     snmp_inc_ipunknownprotos();
 
   }
-#if LWIP_RAW > 0
+#if LWIP_RAW
   } /* LWIP_RAW */
 #endif
   return ERR_OK;
