@@ -194,7 +194,8 @@ netbuf_fromport(struct netbuf *buf)
 }
 /*-----------------------------------------------------------------------------------*/
 struct
-netconn *netconn_new(enum netconn_type t)
+netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
+                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
   struct netconn *conn;
   struct api_msg *msg;
@@ -217,7 +218,7 @@ netconn *netconn_new(enum netconn_type t)
   conn->sem = SYS_SEM_NULL;
   conn->state = NETCONN_NONE;
   conn->socket = 0;
-  conn->callback = 0;
+  conn->callback = callback;
   conn->recv_avail = 0;
 
   if((msg = memp_malloc(MEMP_API_MSG)) == NULL) {
@@ -226,6 +227,7 @@ netconn *netconn_new(enum netconn_type t)
   }
   
   msg->type = API_MSG_NEWCONN;
+  msg->msg.msg.bc.port = proto; /* misusing the port field */
   msg->msg.conn = conn;
   api_msg_post(msg);  
   sys_mbox_fetch(conn->mbox, NULL);
@@ -238,18 +240,19 @@ netconn *netconn_new(enum netconn_type t)
 
   return conn;
 }
+
+/*-----------------------------------------------------------------------------------*/
+struct
+netconn *netconn_new(enum netconn_type t)
+{
+  return netconn_new_with_proto_and_callback(t,0,NULL);
+}
 /*-----------------------------------------------------------------------------------*/
 struct
 netconn *netconn_new_with_callback(enum netconn_type t,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
-    struct netconn *conn;
-    
-    /* get a netconn and then initialize callback pointer and socket */
-    conn = netconn_new(t);
-    if (conn)
-        conn->callback = callback;
-    return conn;
+  return netconn_new_with_proto_and_callback(t,0,callback);
 }
 
 /*-----------------------------------------------------------------------------------*/
@@ -318,6 +321,9 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr,
        u16_t *port)
 {
   switch (conn->type) {
+  case NETCONN_RAW:
+    /* return an error as connecting is only a helper for upper layers */
+    return ERR_CONN;
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
@@ -342,6 +348,10 @@ netconn_addr(struct netconn *conn, struct ip_addr **addr,
        u16_t *port)
 {
   switch (conn->type) {
+  case NETCONN_RAW:
+    *addr = &(conn->pcb.raw->local_ip);
+    *port = conn->pcb.raw->protocol;
+    break;
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:

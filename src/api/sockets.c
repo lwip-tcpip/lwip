@@ -479,6 +479,7 @@ lwip_send(int s, void *data, int size, unsigned int flags)
   }
 
   switch (netconn_type(sock->conn)) {
+  case NETCONN_RAW:
   case NETCONN_UDP:
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
@@ -567,6 +568,10 @@ lwip_socket(int domain, int type, int protocol)
 
   /* create a netconn */
   switch (type) {
+  case SOCK_RAW:
+    conn = netconn_new_with_proto_and_callback(NETCONN_RAW, protocol, event_callback);
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_RAW, %d) = ", domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
+    break;
   case SOCK_DGRAM:
     conn = netconn_new_with_callback(NETCONN_UDP, event_callback);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_DGRAM, %d) = ", domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
@@ -1095,6 +1100,9 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
 
     case SO_TYPE:
       switch (sock->conn->type) {
+      case NETCONN_RAW:
+        *(int*)optval = SOCK_RAW;
+        break;
       case NETCONN_TCP:
         *(int*)optval = SOCK_STREAM;
         break;
