@@ -758,7 +758,9 @@ tcp_receive(struct tcp_pcb *pcb)
 
       /* Update the send buffer space. */
       pcb->acked = ackno - pcb->lastack;
-      pcb->snd_buf += pcb->acked;
+
+      /* FIX: Data split over odd boundaries */
+      pcb->snd_buf += ((pcb->acked+1) & ~0x1); /* Even the send buffer */
 
       /* Reset the fast retransmit variables. */
       pcb->dupacks = 0;
