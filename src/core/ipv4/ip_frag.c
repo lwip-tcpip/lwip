@@ -1,3 +1,9 @@
+/* @file
+ * 
+ * This is the IP packet segmentation and reassembly implementation.
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -30,14 +36,6 @@
  * original reassembly code by Adam Dunkels <adam@sics.se>
  * 
  */
-
-
-/* ip_frag.c
- *
- * This is the code for IP segmentation and reassembly
- *
- */
-
 
 #include "lwip/opt.h"
 #include "lwip/sys.h"
@@ -293,7 +291,6 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
   rambuf->tot_len = rambuf->len = mtu;
   rambuf->payload = MEM_ALIGN((void *)buf);
-
 
   /* Copy the IP header in it */
   iphdr = rambuf->payload;

@@ -1,3 +1,10 @@
+/* @file
+ *
+ * This is the IP layer implementation for incoming and outgoing IP traffic.
+ * 
+ * @see ip_frag.c
+ *
+ */
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -30,17 +37,7 @@
  *
  */
 
-
-
-/* ip.c
- *
- * This is the code for the IP layer.
- *
- */
-
-
 #include "lwip/opt.h"
-
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -63,18 +60,17 @@
 #endif /* LWIP_DHCP */
 
 
-/* ip_init:
- *
+/**
  * Initializes the IP layer.
  */
 
 void
 ip_init(void)
 {
+  /* no initializations as of yet */
 }
 
-/* ip_route:
- *
+/**
  * Finds the appropriate network interface for a given IP address. It
  * searches the list of network interfaces linearly. A match is found
  * if the masked IP address of the network interface equals the masked
@@ -99,8 +95,7 @@ ip_route(struct ip_addr *dest)
 }
 #if IP_FORWARD
 
-/* ip_forward:
- *
+/**
  * Forwards an IP packet. It finds an appropriate route for the
  * packet, decrements the TTL value of the packet, adjusts the
  * checksum and outputs the packet on the appropriate interface.
@@ -121,7 +116,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     return;
   }
   /* Do not forward packets onto the same network interface on which
-     they arrived. */
+   * they arrived. */
   if (netif == inp) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_forward: not bouncing packets back on incoming interface.\n"));
     snmp_inc_ipnoroutes();
@@ -160,8 +155,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 }
 #endif /* IP_FORWARD */
 
-/* ip_input:
- *
+/**
  * This function is called by the network interface device driver when
  * an IP packet is received. The function does the basic checks of the
  * IP header such as packet size being at least larger than the header
@@ -223,7 +217,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif
 
   /* Trim pbuf. This should have been done at the netif layer,
-     but we'll do it anyway just to be sure that its done. */
+   * but we'll do it anyway just to be sure that its done. */
   pbuf_realloc(p, ntohs(IPH_LEN(iphdr)));
 
   /* is this packet for us? */
@@ -254,8 +248,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 #if LWIP_DHCP
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
-     using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
-     According to RFC 1542 section 3.1.1, referred by RFC 2131). */
+   * using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
+   * According to RFC 1542 section 3.1.1, referred by RFC 2131). */
   if (netif == NULL) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
@@ -286,19 +280,19 @@ ip_input(struct pbuf *p, struct netif *inp) {
     pbuf_free(p);
     return ERR_OK;
   }
-
-#if IP_REASSEMBLY
+  /* packet consists of multiple fragments? */
   if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+#if IP_REASSEMBLY /* packet fragment reassembly code present? */
     LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04x tot_len=%u len=%u MF=%u offset=%u), calling ip_reass()\n",
       ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & htons(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
+    /* reassemble the packet*/
     p = ip_reass(p);
+    /* packet not fully reassembled yet? */
     if (p == NULL) {
       return ERR_OK;
     }
     iphdr = p->payload;
-  }
-#else /* IP_REASSEMBLY */
-  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+#else /* IP_REASSEMBLY == 0, no packet fragment reassembly code present */
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
                   ntohs(IPH_OFFSET(iphdr))));
@@ -306,10 +300,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
     IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
-  }
 #endif /* IP_REASSEMBLY */
+  }
 
-#if IP_OPTIONS == 0
+#if IP_OPTIONS == 0 /* no support for IP options in the IP header? */
   if (iphdrlen > IP_HLEN) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);
@@ -326,7 +320,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 
 #if LWIP_RAW
-  if (!raw_input(p, inp)) {
+  /* raw input did not eat the packet? */
+  if (raw_input(p, inp) == 0) {
 #endif /* LWIP_RAW */
 
   switch (IPH_PROTO(iphdr)) {
@@ -361,7 +356,6 @@ ip_input(struct pbuf *p, struct netif *inp) {
     IP_STATS_INC(ip.proterr);
     IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
-
   }
 #if LWIP_RAW
   } /* LWIP_RAW */
@@ -369,9 +363,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   return ERR_OK;
 }
 
-
-/* ip_output_if:
- *
+/**
  * Sends an IP packet on a network interface. This function constructs
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
@@ -441,8 +433,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   return netif->output(netif, p, dest);
 }
 
-/* ip_output:
- *
+/**
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  */
