@@ -654,7 +654,7 @@ tcp_receive(struct tcp_pcb *pcb)
 				  ntohl(pcb->unacked->tcphdr->seqno)));
 	    tcp_rexmit(pcb);
 	    /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
-	    pcb->ssthresh = UMAX((pcb->snd_max -
+	    pcb->ssthresh = LWIP_MAX((pcb->snd_max -
 				  pcb->lastack) / 2,
 				 2 * pcb->mss);
 	    

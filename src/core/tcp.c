@@ -70,8 +70,6 @@ struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 struct tcp_pcb *tcp_tmp_pcb;
 
-#define LWIP_MIN(x,y) (x) < (y)? (x): (y)
-
 static u8_t tcp_timer;
 
 static u16_t tcp_new_port(void);

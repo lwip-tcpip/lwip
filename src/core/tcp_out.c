@@ -59,9 +59,6 @@
 #include "lwip/stats.h"
 
 #if LWIP_TCP
-#define LWIP_MIN(x,y) (x) < (y)? (x): (y)
-
-
 
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
