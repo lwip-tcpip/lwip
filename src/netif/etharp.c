@@ -752,8 +752,14 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       p = pbuf_take(q);
       /* packet could be taken over? */
       if (p != NULL) {
-        /* queue packet */
-        pbuf_queue(arp_table[i].p, p);
+        /* queue packet ... */
+        if (arp_table[i].p == NULL) {
+        	/* ... in the empty queue */
+        	arp_table[i].p = p;
+        } else {
+        	/* ... at tail of non-empty queue */
+          pbuf_queue(arp_table[i].p, p);
+        }
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %d\n", (void *)q, i));
         result = ERR_OK;
       } else {
