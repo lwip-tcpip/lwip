@@ -812,6 +812,7 @@ tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 {
   pcb->prio = prio;
 }
+#if TCP_QUEUE_OOSEQ
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_seg_copy():
@@ -833,6 +834,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   pbuf_ref(cseg->p);
   return cseg;
 }
+#endif
 /*-----------------------------------------------------------------------------------*/
 #if LWIP_CALLBACK_API
 static err_t
