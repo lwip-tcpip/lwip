@@ -118,16 +118,15 @@ memp_sanity(void)
 {
   int i, c;
   struct memp *m, *n;
-  
+
   for(i = 0; i < MEMP_MAX; i++) {
     for(m = memp_tab[i]; m != NULL; m = m->next) {
       c = 1;
       for(n = memp_tab[i]; n != NULL; n = n->next) {
-	if(n == m) {
-	  --c;
-	}
-	if(c < 0)
-	  abort();
+       	if(n == m) {
+	        --c;
+        }
+	      if(c < 0) return 0; /* LW was: abort(); */
       }
     }
   }
@@ -178,7 +177,8 @@ void *
 memp_malloc(memp_t type)
 {
   struct memp *memp;
-
+  void *mem;
+ 
   ASSERT("memp_malloc: type < MEMP_MAX", type < MEMP_MAX);
 
   memp = memp_tab[type];
@@ -195,7 +195,10 @@ memp_malloc(memp_t type)
     ASSERT("memp_malloc: memp properly aligned",
 	   ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
-    return MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
+    mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
+    /* initialize memp memory with zeroes */
+    bzero(mem, memp_sizes[type]);	
+    return mem;
   } else {
     DEBUGF(MEMP_DEBUG, ("memp_malloc: out of memory in pool %d\n", type));
 #ifdef MEMP_STATS
