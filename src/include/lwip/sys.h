@@ -47,6 +47,7 @@ struct sys_timeout {u8_t dummy;};
 
 #define sys_init()
 #define sys_timeout(m,h,a)
+#define sys_untimeout(m,a)
 #define sys_sem_new(c) c
 #define sys_sem_signal(s)
 #define sys_sem_wait(s)
