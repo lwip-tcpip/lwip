@@ -190,7 +190,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
       if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
         /* The PCB is connected using the old ipaddr and must be aborted */
         struct tcp_pcb *next = pcb->next;
-        DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", pcb));
+        DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", (void *)pcb));
         tcp_abort(pcb);
         pcb = next;
       } else {
