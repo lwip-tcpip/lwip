@@ -110,8 +110,6 @@ u8_t pbuf_free(struct pbuf *p);
 u8_t pbuf_clen(struct pbuf *p);  
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_take(struct pbuf *f);
-#if 0 /* see remark in code */
 struct pbuf *pbuf_dechain(struct pbuf *p);
-#endif
 
 #endif /* __LWIP_PBUF_H__ */
