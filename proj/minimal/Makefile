@@ -43,8 +43,8 @@ CFLAGS:=$(CFLAGS) \
 # COREFILES, CORE4FILES: The minimum set of files needed for lwIP.
 COREFILES=$(LWIPDIR)/core/mem.c $(LWIPDIR)/core/memp.c $(LWIPDIR)/core/netif.c \
 	$(LWIPDIR)/core/pbuf.c $(LWIPDIR)/core/stats.c $(LWIPDIR)/core/sys.c \
-        $(LWIPDIR)/core/tcp.c $(LWIPDIR)/core/tcp_input.c \
-        $(LWIPDIR)/core/tcp_output.c $(LWIPDIR)/core/udp.c 
+        $(LWIPDIR)/core/tcp.c $(LWIPDIR)/core/tcp_in.c \
+        $(LWIPDIR)/core/tcp_out.c $(LWIPDIR)/core/udp.c 
 CORE4FILES=$(LWIPDIR)/core/ipv4/icmp.c $(LWIPDIR)/core/ipv4/ip.c \
 	$(LWIPDIR)/core/inet.c $(LWIPDIR)/core/ipv4/ip_addr.c
 
