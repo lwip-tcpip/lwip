@@ -251,6 +251,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->len = length > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: length;
     /* set pbuf type */
     p->flags = PBUF_FLAG_POOL;
+    /* set reference count (needed here in case we fail) */
+    p->ref = 1;
     
     /* now allocate the tail of the pbuf chain */
     
@@ -266,11 +268,12 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
 #ifdef PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
-        /* bail out unsuccesfully */
+        /* free chain so far allocated */
         pbuf_free(p);
+        /* bail out unsuccesfully */
         return NULL;
       }
-      /*q->next = NULL;*/
+      q->next = NULL;
       /* make previous pbuf point to this pbuf */
       r->next = q;
       /* set total length of this pbuf and next in chain */
@@ -326,6 +329,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     LWIP_ASSERT("pbuf_alloc: erroneous flag", 0);
     return NULL;
   }
+  /* set reference count */
   p->ref = 1;
   return p;
 }
