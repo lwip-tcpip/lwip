@@ -540,7 +540,7 @@ ip_debug_print(struct pbuf *p)
   
   DEBUGF(IP_DEBUG, ("IP header:\n"));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(IP_DEBUG, ("|%2d |%2d |   %2u  |      %4u     | (v, hl, tos, len)\n",
+  DEBUGF(IP_DEBUG, ("|%2d |%2d |  0x%02x |     %5u     | (v, hl, tos, len)\n",
                     IPH_V(iphdr),
                     IPH_HL(iphdr),
                     IPH_TOS(iphdr),
@@ -553,7 +553,7 @@ ip_debug_print(struct pbuf *p)
                     ntohs(IPH_OFFSET(iphdr)) >> 13 & 1,
                     ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(IP_DEBUG, ("|   %2u  |   %2u  |    0x%04x     | (ttl, proto, chksum)\n",
+  DEBUGF(IP_DEBUG, ("|  %3u  |  %3u  |    0x%04x     | (ttl, proto, chksum)\n",
                     IPH_TTL(iphdr),
                     IPH_PROTO(iphdr),
                     ntohs(IPH_CHKSUM(iphdr))));
