@@ -2,14 +2,21 @@
  * @file
  * Packet buffer management
  *
- * Packets are represented by the pbuf data structure. It supports dynamic
+ * Packets are built from the pbuf data structure. It supports dynamic
  * memory allocation for packet contents or can reference externally
  * managed packet contents both in RAM and ROM. Quick allocation for
  * incoming packets is provided through pools with fixed sized pbufs.
  *
- * Pbufs can be chained as a singly linked list, called a pbuf chain, so
- * that a packet may span over several pbufs.
+ * A packet may span over multiple pbufs, chained as a singly linked
+ * list. This is called a "pbuf chain".
  *
+ * Multiple packets may be queued using this singly linked list. This
+ * is called a "pbuf queue". So, a pbuf queue consists of one or more
+ * pbuf chains, each of which consist of one or more pbufs.
+ *
+ * In order to find the last pbuf of a packet, traverse the linked list
+ * until the ->tot_len field equals the ->len field. If the ->next field
+ * of this packet is not NULL, more packets are on the queue.
  */
 
 /*
@@ -607,33 +614,15 @@ pbuf_ref(struct pbuf *p)
 
 /**
  *
- * Increment the reference count of all pbufs in a chain.
- *
- * @param p first pbuf of chain
- *
- */
-void
-pbuf_ref_chain(struct pbuf *p)
-{
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-    
-  while (p != NULL) {
-    ++p->ref;
-    p = p->next;
-  }
-  SYS_ARCH_UNPROTECT(old_level);
-}
-
-
-/**
- *
- * Link two pbufs (or chains) together.
+ * Chain two pbufs (or pbuf chains) together. They must belong to the same packet.
  *
  * @param h head pbuf (chain)
  * @param t tail pbuf (chain)
  * 
- * The ->tot_len field of the first pbuf (h) is adjusted.
+ * The ->tot_len fields of all pbufs of the head chain are adjusted.
+ * The ->next field of the last pbuf of the head chain is adjusted.
+ * The ->ref field of the first pbuf of the tail chain is adjusted.
+ * 
  */
 void
 pbuf_chain(struct pbuf *h, struct pbuf *t)
@@ -652,6 +641,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
     p->tot_len += t->tot_len;
   }
   /* p is last pbuf of first h chain */
+  LWIP_ASSERT("p->tot_len == p->len (of last pbuf in chain)", p->tot_len == p->len);
   /* add total length of second chain to last pbuf total of first chain */
   p->tot_len += t->tot_len;
   /* chain last pbuf of h chain (p) with first of tail (t) */
@@ -661,11 +651,80 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing tail %p\n", (void *) t));
 }
 
+/* TODO: Will be enabled soon. Please review code. */
+#if 1
+/**
+ * Add a packet to the end of a queue.
+ *
+ * @param q pointer to first packet on the queue
+ * @param n packet to be queued
+ * 
+ */
+void
+pbuf_queue(struct pbuf *p, struct pbuf *n)
+{
+  LWIP_ASSERT("p != NULL", p != NULL);
+  LWIP_ASSERT("n != NULL", n != NULL);
 
+  if ((p == NULL) || (n == NULL))
+    return;
+
+  /* iterate through all packets on queue */
+  while (p->next != NULL) {
+/* be very picky about pbuf chain correctness */
+#if PBUF_DEBUG
+    /* iterate through all pbufs in packet */
+    while (p->tot_len != p->len) {
+      /* make sure each packet is complete */
+      LWIP_ASSERT("p->next != NULL", p->next != NULL);
+      p = p->next;
+    }
+#endif
+    p = p->next;
+  }  
+  /* chain last pbuf of h chain (p) with first of tail (t) */
+  p->next = n;
+  /* t is now referenced to one more time */
+  pbuf_ref(n);
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_queue: referencing queued packet %p\n", (void *)n));
+}
+
+/**
+ * Remove a packet from the head of a queue.
+ *
+ * @param p pointer to first packet on the queue which will be dequeued.
+ * @return first packet on the remaining queue (NULL if no further packets).
+ * 
+ */
+struct pbuf *
+pbuf_dequeue(struct pbuf *p)
+{
+  struct pbuf *q;
+  LWIP_ASSERT("p != NULL", p != NULL);
+
+  /* iterate through all pbufs in packet */
+  while (p->tot_len != p->len) {
+    /* make sure each packet is complete */
+    LWIP_ASSERT("p->next != NULL", p->next != NULL);
+    p = p->next;
+  }
+  /* remember next packet on queue */
+  q = p->next;
+  /* dequeue p from queue */
+  p->next = NULL;
+  /* q is now referenced to one less time */
+  pbuf_free(q);
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue%p\n", (void *)q));
+  return q;
+}
+#endif
 
 /**
  *
  * Create PBUF_POOL (or PBUF_RAM) copies of PBUF_REF pbufs.
+ *
+ * Used to queue packets on behalf of the lwIP stack, such as
+ * ARP based queueing.
  *
  * Go through a pbuf chain and replace any PBUF_REF buffers
  * with PBUF_POOL (or PBUF_RAM) pbufs, each taking a copy of
@@ -676,13 +735,11 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
  * by pbuf_take()!
  *
  * @note Any replaced pbufs will be freed through pbuf_free().
- *
- * Used to queue packets on behalf of the lwIP stack, such as
- * ARP based queueing.
+ * This may allocate them if they become no longer referenced.
  *
  * @param p Head of pbuf chain to process
  *
- * @return Pointer to new head of pbuf chain 
+ * @return Pointer to head of pbuf chain 
  */
 struct pbuf *
 pbuf_take(struct pbuf *p)
@@ -767,7 +824,7 @@ pbuf_take(struct pbuf *p)
   return head;
 }
 
-#if 0 /* expected to enabled again, once needed (multiple chain queueing comes to mind) */
+#if 0 /* TODO: See if we might need this for future features */
 /**
  * Dechains the first pbuf from its succeeding pbufs in the chain.
  *
@@ -802,3 +859,27 @@ pbuf_dechain(struct pbuf *p)
   return (tail_gone > 0? NULL: q);
 }
 #endif /* pbuf_dechain() */
+
+/* TODO: This function is unused in the lwIP stack and will be deprecated. This is due
+ * to the new way chains are built. */
+#if 0 
+/**
+ *
+ * Increment the reference count of all pbufs in a chain.
+ *
+ * @param p first pbuf of chain
+ *
+ */
+void
+pbuf_ref_chain(struct pbuf *p)
+{
+  SYS_ARCH_DECL_PROTECT(old_level);
+  SYS_ARCH_PROTECT(old_level);
+    
+  while (p != NULL) {
+    ++p->ref;
+    p = p->next;
+  }
+  SYS_ARCH_UNPROTECT(old_level);
+}
+#endif
