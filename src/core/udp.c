@@ -309,11 +309,10 @@ udp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: not for us.\n"));
 
       /* No match was found, send ICMP destination port unreachable unless
-   destination address was broadcast/multicast. */
+      destination address was broadcast/multicast. */
 
-      if (!((inp->flags & NETIF_FLAG_BROADCAST) &&
-      		ip_addr_isbroadcast(&iphdr->dest, &inp->netmask)) &&
-   !ip_addr_ismulticast(&iphdr->dest)) {
+      if (!ip_addr_isbroadcast(&iphdr->dest, inp) &&
+          !ip_addr_ismulticast(&iphdr->dest)) {
 
   /* adjust pbuf pointer */
   p->payload = iphdr;

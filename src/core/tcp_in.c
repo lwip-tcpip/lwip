@@ -130,9 +130,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
-  if (((inp->flags & NETIF_FLAG_BROADCAST) &&
-  		ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) ||
-     ip_addr_ismulticast(&(iphdr->dest))) {
+  if (ip_addr_isbroadcast(&(iphdr->dest), inp) ||
+      ip_addr_ismulticast(&(iphdr->dest))) {
     pbuf_free(p);
     return;
   }

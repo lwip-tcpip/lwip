@@ -646,8 +646,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
      ARP table. */
 
   /* destination IP address is an IP broadcast address? */
-  if (ip_addr_isany(ipaddr) ||
-    ip_addr_isbroadcast(ipaddr, &(netif->netmask))) {
+  if (ip_addr_isany(ipaddr) || ip_addr_isbroadcast(ipaddr, netif)) {
     /* broadcast on Ethernet also */
     dest = (struct eth_addr *)&ethbroadcast;
   }

@@ -210,8 +210,7 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
      multicasts are special, all other addresses are looked up in the
      ARP table. */
   queryaddr = ipaddr;
-  if (ip_addr_isany(ipaddr) ||
-     ip_addr_isbroadcast(ipaddr, &(netif->netmask))) {
+  if (ip_addr_isany(ipaddr) || ip_addr_isbroadcast(ipaddr, netif)) {
     dest = (struct eth_addr *)&ethbroadcast;
   } else if (ip_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address. */

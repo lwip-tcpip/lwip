@@ -241,7 +241,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
       /* unicast to this interface address? */
       if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
         /* or broadcast matching this interface network address? */
-        (ip_addr_isbroadcast(&(iphdr->dest), &(netif->netmask)) &&
+        (ip_addr_isbroadcast(&(iphdr->dest), netif) &&
          ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
          /* or restricted broadcast? */
          ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
@@ -274,7 +274,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     LWIP_DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
 #if IP_FORWARD
     /* non-broadcast packet? */
-    if (!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) {
+    if (!ip_addr_isbroadcast(&(iphdr->dest), inp)) {
       /* try to forward IP packet on (other) interfaces */
       ip_forward(p, iphdr, inp);
     }
@@ -349,8 +349,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     break;
   default:
     /* send ICMP destination protocol unreachable unless is was a broadcast */
-    if (!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask)) &&
-       !ip_addr_ismulticast(&(iphdr->dest))) {
+    if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&
+        !ip_addr_ismulticast(&(iphdr->dest))) {
       p->payload = iphdr;
       icmp_dest_unreach(p, ICMP_DUR_PROTO);
     }

@@ -72,9 +72,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
   code = *(((u8_t *)p->payload)+1);
   switch (type) {
   case ICMP_ECHO:
-    if (((inp->flags & NETIF_FLAG_BROADCAST) && 
-    	 ip_addr_isbroadcast(&iphdr->dest, &inp->netmask)) ||
-       ip_addr_ismulticast(&iphdr->dest)) {
+    /* broadcast or multicast destination address? */
+    if (ip_addr_isbroadcast(&iphdr->dest, inp) || ip_addr_ismulticast(&iphdr->dest)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
       ICMP_STATS_INC(icmp.err);
       pbuf_free(p);
