@@ -202,7 +202,7 @@ find_arp_entry(void)
       /* remember entry with oldest stable entry in j*/
       if((arp_table[i].state == ETHARP_STATE_STABLE) &&
 #if ARP_QUEUEING /* do not want to re-use an entry with queued packets */
-      (arp_table[i].p != NULL) &&
+      (arp_table[i].p == NULL) &&
 #endif
       (arp_table[i].ctime >= maxtime)) {
         maxtime = arp_table[i].ctime;
@@ -682,6 +682,18 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     arp_table[i].p = NULL;
 #endif
   }
+#if ARP_QUEUEING
+  /* any pbuf to queue and queue is empty? */
+  if ((q != NULL) && (arp_table[i].p == NULL)) {
+    /* copy PBUF_REF referenced payloads to PBUF_RAM */
+    q = pbuf_unref(q);
+    /* pbufs are queued, increase the reference count */
+    pbuf_ref_chain(q);
+    /* remember pbuf to queue, if any */
+    arp_table[i].p = q;
+    DEBUGF(ETHARP_DEBUG, ("etharp_query: queued packet on ARP entry.\n"));
+  }
+#endif
   /* allocate a pbuf for the outgoing ARP request packet */
   p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
   /* could allocate pbuf? */
@@ -717,17 +729,5 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   } else {
     DEBUGF(ETHARP_DEBUG, ("etharp_query: could not allocate pbuf for ARP request.\n"));
   }
-#if ARP_QUEUEING
-  /* any pbuf to queue and queue is empty? */
-  if ((q != NULL) && (arp_table[i].p == NULL)) {
-    /* copy PBUF_REF referenced payloads to PBUF_RAM */
-    q = pbuf_unref(q);
-    /* pbufs are queued, increase the reference count */
-    pbuf_ref_chain(q);
-    /* remember pbuf to queue, if any */
-    arp_table[i].p = q;
-    DEBUGF(ETHARP_DEBUG, ("etharp_query: queued packet on ARP entry.\n"));
-  }
-#endif
   return NULL;
 }
