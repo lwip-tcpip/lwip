@@ -33,7 +33,6 @@
 #define __LWIP_IP_ADDR_H__
 
 #include "lwip/arch.h"
-#include "lwip/netif.h"
 
 /** IP_ADDR_ can be used as a fixed IP address
  *  for the wildcard and the broadcast address
