@@ -699,7 +699,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   result = etharp_request(netif, ipaddr);
 
   /* find entry in ARP cache */
-  i = find_entry(&arp_table[i].ipaddr, q?ETHARP_CREATE:0);
+  i = find_entry(ipaddr, q?ETHARP_CREATE:0);
 
   /* could not find or create entry? */
   if (i < 0) return (err_t)i;
