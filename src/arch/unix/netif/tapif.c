@@ -159,7 +159,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
        time. The size of the data in each pbuf is kept in the ->len
        variable. */    
     /* send data from(q->payload, q->len); */
-    bcopy(q->payload, bufptr, q->len);
+    memcpy(bufptr, q->payload, q->len);
     bufptr += q->len;
   }
 
@@ -197,7 +197,7 @@ low_level_input(struct tapif *tapif)
 
   
   /* We allocate a pbuf chain of pbufs from the pool. */
-  p = pbuf_alloc(PBUF_LINK, len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
   
   if(p != NULL) {
     /* We iterate over the pbuf chain until we have read the entire
@@ -208,7 +208,7 @@ low_level_input(struct tapif *tapif)
          avaliable data in the pbuf is given by the q->len
          variable. */
       /* read data into(q->payload, q->len); */
-      bcopy(bufptr, q->payload, q->len);
+      memcpy(q->payload, bufptr, q->len);
       bufptr += q->len;
     }
     /* acknowledge that packet has been read(); */
