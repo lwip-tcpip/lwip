@@ -37,8 +37,8 @@
 /** IP_ADDR_ can be used as a fixed IP address
  *  for the wildcard and the broadcast address
  */
-#define IP_ADDR_ANY (&ip_addr_any)
-#define IP_ADDR_BROADCAST (&ip_addr_broadcast)
+#define IP_ADDR_ANY ((struct ip_addr *)&ip_addr_any)
+#define IP_ADDR_BROADCAST ((struct ip_addr *)&ip_addr_broadcast)
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
