@@ -363,7 +363,13 @@ tcp_output(struct tcp_pcb *pcb)
 
 
   seg = pcb->unsent;
-   useg = pcb->unacked;
+
+  /* useg should point to last segment on unacked queue */
+  useg = pcb->unacked;
+  if (useg != NULL) {
+    for (; useg->next != NULL; useg = useg->next);
+  }                                                                             
+
    
   /* If the TF_ACK_NOW flag is set, we check if there is data that is
      to be sent. If data is to be sent out, we'll just piggyback our
