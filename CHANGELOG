@@ -2,14 +2,28 @@ FUTURE
 
   * TODO: The lwIP source code makes some invalid assumptions on processor
     word-length, storage sizes and alignment. See the mailing lists for
-    problems with exoteric architectures showing these problems.
-    We still have to fix this neatly.
+    problems with exoteric (/DSP) architectures showing these problems.
+    We still have to fix some of these issues neatly.
 
 HISTORY
 
 (HEAD)
 
+  ++ Changes:
+
+  2004-04-29 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * tcp*.c: Cleaned up source comment documentation for Doxygen processing.
+  * opt.h: ETHHARP_ALWAYS_INSERT option removed to comply with ARP RFC.
+  * etharp.c: update_arp_entry() only adds new ARP entries when adviced to by
+    the caller. This deprecates the ETHHARP_ALWAYS_INSERT overrule option.
+
   ++ Bug fixes:
+
+  2004-04-27 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * etharp.c: Applied patch of bug #8708 by Toni Mountifield with a solution
+    suggested by Timmy Brolin. Fix for 32-bit processors that cannot access
+    non-aligned 32-bit words, such as soms 32-bit TCP/IP header fields. Fix
+    is to prefix the 14-bit Ethernet headers with two padding bytes.
 
   2004-04-23 Leon Woestenberg <leon.woestenberg@gmx.net>
   * ip_addr.c: Fix in the ip_addr_isbroadcast() check.
