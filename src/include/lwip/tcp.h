@@ -254,7 +254,7 @@ struct tcp_pcb {
   u16_t mss;   /* maximum segment size */
   
   /* RTT estimation variables. */
-  u16_t rttest; /* RTT estimate in 500ms ticks */
+  u32_t rttest; /* RTT estimate in 500ms ticks */
   u32_t rtseq;  /* sequence number being timed */
   s16_t sa, sv;
 
