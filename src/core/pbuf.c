@@ -520,7 +520,8 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
  *
  * For a pbuf chain, this is repeated for each pbuf in the chain,
  * up to the first pbuf which has a non-zero reference count after
- * decrementing. (This might de-allocate the whole chain.)
+ * decrementing. So, when all reference counts are one, the whole
+ * chain is free'd.
  *
  * @param pbuf The pbuf (chain) to be dereferenced.
  *
@@ -586,7 +587,7 @@ pbuf_free(struct pbuf *p)
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
         p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
         PBUF_POOL_FREE(p);
-      /* a ROM or RAM referencing pbuf */
+      /* is this a ROM or RAM referencing pbuf? */
       } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
         memp_free(MEMP_PBUF, p);
       /* p->flags == PBUF_FLAG_RAM */
@@ -600,7 +601,7 @@ pbuf_free(struct pbuf *p)
     /* (and so the remaining pbufs in chain as well) */
     } else {
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: %p has ref %u, ending here.\n", (void *)p, (unsigned int)p->ref));
-      /* stop walking through chain */
+      /* stop walking through the chain */
       p = NULL;
     }
   }
@@ -739,9 +740,10 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
       p = p->next;
       /* { p->tot_len == p->len => p is last pbuf of a packet } */
     }
-#endif
-    /* { p->tot_len == p->len and p is last pbuf of a packet } */
+    /* { p is last pbuf of a packet }
     /* proceed to next packet on queue */
+#endif
+    /* proceed to next pbuf */
     if (p->next != NULL) p = p->next;
   }
   /* { p->tot_len == p->len and p->next == NULL } ==>
@@ -760,7 +762,9 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
 /**
  * Remove a packet from the head of a queue.
  *
- * The caller MUST reference the remainder of the queue (as returned).
+ * The caller MUST reference the remainder of the queue (as returned). The
+ * caller MUST NOT call pbuf_ref() as it implicitly takes over the reference
+ * from p.
  * 
  * @param p pointer to first packet on the queue which will be dequeued.
  * @return first packet on the remaining queue (NULL if no further packets).
@@ -772,7 +776,7 @@ pbuf_dequeue(struct pbuf *p)
   struct pbuf *q;
   LWIP_ASSERT("p != NULL", p != NULL);
 
-  /* iterate through all pbufs in packet */
+  /* iterate through all pbufs in packet p */
   while (p->tot_len != p->len) {
     /* make sure invariant condition holds */
     LWIP_ASSERT("p->len < p->tot_len", p->len < p->tot_len);
@@ -781,15 +785,16 @@ pbuf_dequeue(struct pbuf *p)
     p = p->next;
   }
   /* { p->tot_len == p->len } => p is the last pbuf of the first packet */
-  /* remember next packet on queue */
+  /* remember next packet on queue in q */
   q = p->next;
   /* dequeue p from queue */
   p->next = NULL;
   /* any next packet on queue? */
   if (q != NULL) {
     /* although q is no longer referenced by p, it MUST be referenced by
-     * the caller, who is maintaining this packet queue */
-    LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: at least one packet on queue, first %p\n", (void *)q));
+     * the caller, who is maintaining this packet queue. So, we do not call
+     * pbuf_free(q) here, resulting in an implicit pbuf_ref(q) for the caller. */
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: first remaining packet on queue is %p\n", (void *)q));
   } else {
     LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: no further packets on queue\n"));
   }
@@ -810,7 +815,7 @@ pbuf_dequeue(struct pbuf *p)
  *
  * @note You MUST explicitly use p = pbuf_take(p);
  * The pbuf you give as argument, may have been replaced
- * by pbuf_take()!
+ * by a (differently located) copy through pbuf_take()!
  *
  * @note Any replaced pbufs will be freed through pbuf_free().
  * This may deallocate them if they become no longer referenced.
