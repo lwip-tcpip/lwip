@@ -1126,6 +1126,12 @@ tcp_debug_print_flags(u8_t flags)
   if (flags & TCP_URG) {
     LWIP_DEBUGF(TCP_DEBUG, ("URG "));
   }
+  if (flags & TCP_ECE) {
+    LWIP_DEBUGF(TCP_DEBUG, ("ECE "));
+  }
+  if (flags & TCP_CWR) {
+    LWIP_DEBUGF(TCP_DEBUG, ("CWR "));
+  }
 }
 /*-----------------------------------------------------------------------------------*/
 void

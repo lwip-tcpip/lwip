@@ -121,6 +121,8 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 #define TCP_PSH 0x08U
 #define TCP_ACK 0x10U
 #define TCP_URG 0x20U
+#define TCP_ECE 0x40U
+#define TCP_CWR 0x80U
 
 #define TCP_FLAGS 0x3fU
 
