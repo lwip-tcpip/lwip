@@ -351,7 +351,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
        increase the reference counter in the pbuf. If so, the buffer
        isn't actually deallocated by the call to pbuf_free(), only the
        reference count is decreased. */
-    pbuf_free(inseg.p);
+    if (inseg.p != NULL) pbuf_free(inseg.p);
 #if TCP_INPUT_DEBUG
 #if TCP_DEBUG
     tcp_debug_print_state(pcb->state);
