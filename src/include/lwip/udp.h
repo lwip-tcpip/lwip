@@ -72,10 +72,10 @@ struct udp_pcb {
 struct udp_pcb * udp_new        (void);
 void             udp_remove     (struct udp_pcb *pcb);
 err_t            udp_bind       (struct udp_pcb *pcb, struct ip_addr *ipaddr,
-				 u16_t port);
+                 u16_t port);
 err_t            udp_connect    (struct udp_pcb *pcb, struct ip_addr *ipaddr,
-				 u16_t port);
-void            udp_disconnect    (struct udp_pcb *pcb);
+                 u16_t port);
+void             udp_disconnect    (struct udp_pcb *pcb);
 void             udp_recv       (struct udp_pcb *pcb,
 				 void (* recv)(void *arg, struct udp_pcb *upcb,
 					       struct pbuf *p,

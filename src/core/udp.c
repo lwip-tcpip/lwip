@@ -337,12 +337,12 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 
   DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_send\n"));
 
-  /* if the PCB is not yet bound, bind it here */
+  /* if the PCB is not yet bound to a port, bind it here */
   if (pcb->local_port == 0) {
-    DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: not yet bound\n"));
+    DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: not yet bound to a port, binding now\n"));
     err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if (err != ERR_OK) {
-      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: forced bind failed\n"));
+      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: forced port bind failed\n"));
       return err;
     }
   }
@@ -360,6 +360,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     pbuf_chain(q, p);
     /* { first pbuf q points to header pbuf } */
     DEBUGF(UDP_DEBUG, ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
+  /* adding a header within p succeeded */
   }	else {
     /* first pbuf q equals given pbuf */
     q = p;
@@ -371,7 +372,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   udphdr->dest = htons(pcb->remote_port);
   udphdr->chksum = 0x0000;
 
-  if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
+  if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
 #ifdef UDP_STATS
     ++lwip_stats.udp.rterr;
@@ -379,8 +380,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     return ERR_RTE;
   }
   /* using IP_ANY_ADDR? */
-  if(ip_addr_isany(&pcb->local_ip)) {
-    /* use network interface IP address as source address */
+  if (ip_addr_isany(&pcb->local_ip)) {
+    /* use outgoing network interface IP address as source address */
     src_ip = &(netif->ip_addr);
   } else {
     /* use UDP PCB local IP address as source address */
@@ -390,7 +391,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %u\n", q->tot_len));
   
   /* UDP Lite protocol? */
-  if(pcb->flags & UDP_FLAGS_UDPLITE) {
+  if (pcb->flags & UDP_FLAGS_UDPLITE) {
     DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u\n", q->tot_len));
     /* set UDP message length in UDP header */
     udphdr->len = htons(pcb->chksum_len);
@@ -406,10 +407,10 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
     udphdr->len = htons(q->tot_len);
     /* calculate checksum */
-    if((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
+    if ((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
       udphdr->chksum = inet_chksum_pseudo(q, src_ip, &pcb->remote_ip, IP_PROTO_UDP, q->tot_len);
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
-      if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
+      if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
     DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
     snmp_inc_udpoutdatagrams();
@@ -453,7 +454,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = %lx, port = %u)\n", ipaddr->addr, port));
   rebind = 0;
   /* Check for double bind and rebind of the same pcb */
-  for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
+  for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     /* is this UDP PCB already on active list? */ 
     if (pcb == ipcb) {
       /* pcb may occur at most once in active list */

@@ -266,9 +266,9 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       cpcb != NULL; cpcb = cpcb->next) {
     if(cpcb->local_port == port) {
       if(ip_addr_isany(&(cpcb->local_ip)) ||
-	 ip_addr_isany(ipaddr) ||
-	 ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-	return ERR_USE;
+        ip_addr_isany(ipaddr) ||
+        ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+          return ERR_USE;
       }
     }
   }
@@ -467,16 +467,16 @@ tcp_slowtmr(void)
   u32_t eff_wnd;
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   err_t err;
-  
+
   err = ERR_OK;
 
   ++tcp_ticks;
-  
+
   /* Steps through all of the active PCBs. */
   prev = NULL;
   pcb = tcp_active_pcbs;
   if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs\n"));
-  while(pcb != NULL) {
+  while (pcb != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb\n"));
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != CLOSED\n", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != LISTEN\n", pcb->state != LISTEN);
@@ -484,29 +484,27 @@ tcp_slowtmr(void)
 
     pcb_remove = 0;
 
-    if(pcb->state == SYN_SENT && pcb->nrtx == TCP_SYNMAXRTX) {
+    if (pcb->state == SYN_SENT && pcb->nrtx == TCP_SYNMAXRTX) {
       ++pcb_remove;
       DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max SYN retries reached\n"));
     }
-    else if(pcb->nrtx == TCP_MAXRTX) {
+    else if (pcb->nrtx == TCP_MAXRTX) {
       ++pcb_remove;
       DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
       ++pcb->rtime;
-      if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
+      if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
 
-	/* Time for a retransmission. */
+        /* Time for a retransmission. */
         DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %u pcb->rto %u\n",
-                               pcb->rtime, pcb->rto));
+          pcb->rtime, pcb->rto));
 
-	/* Double retransmission time-out unless we are trying to
-           connect to somebody (i.e., we are in SYN_SENT). */
-	if(pcb->state != SYN_SENT) {
-	  pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
-	}
-
-	tcp_rexmit(pcb);
-	
+        /* Double retransmission time-out unless we are trying to
+         * connect to somebody (i.e., we are in SYN_SENT). */
+        if (pcb->state != SYN_SENT) {
+          pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
+        }
+        tcp_rexmit(pcb);
         /* Reduce congestion window and ssthresh. */
         eff_wnd = MIN(pcb->cwnd, pcb->snd_wnd);
         pcb->ssthresh = eff_wnd >> 1;
@@ -514,16 +512,14 @@ tcp_slowtmr(void)
           pcb->ssthresh = pcb->mss * 2;
         }
         pcb->cwnd = pcb->mss;
-
         DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %u ssthresh %u\n",
                                 pcb->cwnd, pcb->ssthresh));
       }
     }
-	  
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
-    if(pcb->state == FIN_WAIT_2) {
+    if (pcb->state == FIN_WAIT_2) {
       if((u32_t)(tcp_ticks - pcb->tmr) >
-	 TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
+        TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
       }

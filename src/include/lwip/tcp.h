@@ -208,7 +208,6 @@ struct tcp_pcb {
   /* receiver varables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
-
   
   /* Timers */
   u32_t tmr;

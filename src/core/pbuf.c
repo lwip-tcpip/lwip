@@ -529,10 +529,11 @@ pbuf_free(struct pbuf *p)
    */
   SYS_ARCH_PROTECT(old_level);
   /* de-allocate all consecutive pbufs from the head of the chain that
-   * obtain a zero reference count */
+   * obtain a zero reference count after decrementing*/
   while (p != NULL) {
     /* all pbufs in a chain are referenced at least once */
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
+    /* decrease reference count (number of pointers to pbuf) */
     p->ref--;
     /* this pbuf is no longer referenced to? */
     if (p->ref == 0) {
@@ -543,10 +544,10 @@ pbuf_free(struct pbuf *p)
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
         p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
         PBUF_POOL_FREE(p);
-      /* a RAM/ROM referencing pbuf */
+      /* a ROM or RAM referencing pbuf */
       } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
         memp_freep(MEMP_PBUF, p);
-      /* pbuf with data */
+      /* p->flags == PBUF_FLAG_RAM */
       } else {
         mem_free(p);
       }
@@ -554,7 +555,7 @@ pbuf_free(struct pbuf *p)
       /* proceed to next pbuf */
       p = q;
     /* p->ref > 0, this pbuf is still referenced to */
-    /* (so the remaining pbufs in chain as well)    */
+    /* (and so the remaining pbufs in chain as well) */
     } else {
       /* stop walking through chain */
       p = NULL;
