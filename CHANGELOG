@@ -11,11 +11,26 @@ HISTORY
 
   ++ Changes:
 
+  2004-07-05 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * sockets.* Restructured LWIP_PRIVATE_TIMEVAL. Make sure
+    your cc.h file defines this either 1 or 0. If non-defined,
+    defaults to 1.
+  * .c: Added <string.h> and <errno.h> includes where used.
+  * etharp.c: Made some array indices unsigned.
+
+  2004-06-27 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * netif.*: Added netif_set_up()/down().
+  * dhcp.c: Changes to restart program flow.
+
+  2004-05-07 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * etharp.c: In find_entry(), instead of a list traversal per candidate, do a
+    single-pass lookup for different candidates. Should exploit locality.
+
   2004-04-29 Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp*.c: Cleaned up source comment documentation for Doxygen processing.
-  * opt.h: ETHHARP_ALWAYS_INSERT option removed to comply with ARP RFC.
+  * opt.h: ETHARP_ALWAYS_INSERT option removed to comply with ARP RFC.
   * etharp.c: update_arp_entry() only adds new ARP entries when adviced to by
-    the caller. This deprecates the ETHHARP_ALWAYS_INSERT overrule option.
+    the caller. This deprecates the ETHARP_ALWAYS_INSERT overrule option.
 
   ++ Bug fixes:
 
