@@ -625,7 +625,6 @@ pbuf_free(struct pbuf *p)
 {
   struct pbuf *q;
   u8_t count = 0;
-  u16_t last_ref_count;
   SYS_ARCH_DECL_PROTECT(old_level);
 
   if (p == NULL) {
@@ -781,7 +780,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
 #if PBUF_CHAIN_DOES_REFER /** TODO (WORK IN PROGRESS) */
   /* t is now referenced to one more time */
   pbuf_ref(t);
-  DEBUGF(DEBUG_PBUF | DBG_FRESH | 2, ("pbuf_chain: referencing %p\n", q));
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing %p\n", (void *) t));
 #endif
 }
 
@@ -811,7 +810,7 @@ pbuf_dechain(struct pbuf *p)
 #if PBUF_CHAIN_DOES_REFER /** TODO (WORK IN PROGRESS) */
   /* q is no longer referenced by p */
   pbuf_free(q);
-  DEBUGF(DEBUG_PBUF | DBG_FRESH | 2, ("pbuf_dechain: unreferencing %p\n", q));
+  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dechain: unreferencing %p\n", (void *) q));
 #endif
   return q;
 }
@@ -878,7 +877,7 @@ pbuf_take(struct pbuf *f)
         q->len = p->len;
         /* do not copy ref, since someone else might be using the old buffer */
         /* pbuf is not freed, as this is the responsibility of the application */
-        DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %q\n", (void *)p, (void *)q));
+        DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
         p = q;
       }
       else
