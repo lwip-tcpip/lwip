@@ -273,7 +273,7 @@ arp_timer(void *arg)
  *
  */
 
-void
+err_t
 ethernetif_init(struct netif *netif)
 {
   struct ethernetif *ethernetif;
@@ -299,5 +299,7 @@ ethernetif_init(struct netif *netif)
   etharp_init();
 
   sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
+
+  return ERR_OK;
 }
 
