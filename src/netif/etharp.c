@@ -350,7 +350,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
  *
  * @see pbuf_free()
  */
-err_t
+static err_t
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i, k;
