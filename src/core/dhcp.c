@@ -140,7 +140,7 @@ static void dhcp_handle_nak(struct dhcp_state *state) {
 	u16_t msecs = 10 * 1000;
  	DEBUGF(DHCP_DEBUG, ("dhcp_handle_nak()"));
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_handle_nak(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_handle_nak(): set request timeout %u msecs", msecs));
 	dhcp_set_state(state, DHCP_BACKING_OFF);
 }
 
@@ -165,9 +165,9 @@ static void dhcp_check(struct dhcp_state *state)
     pbuf_free(p);
   }
 	state->tries++;
-	msecs = state->tries * 1000;
+	msecs = 500;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_check(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_check(): set request timeout %u msecs", msecs));
 	dhcp_set_state(state, DHCP_CHECKING);
 }
 
@@ -240,7 +240,7 @@ static err_t dhcp_select(struct dhcp_state *state)
 	state->tries++;
 	msecs = state->tries < 4 ? state->tries * 1000 : 4 * 1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_select(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_select(): set request timeout %u msecs", msecs));
 	dhcp_set_state(state, DHCP_REQUESTING);
 	return result;
 }
@@ -664,7 +664,7 @@ static err_t dhcp_decline(struct dhcp_state *state)
 	state->tries++;
 	msecs = 10*1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_decline(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_decline(): set request timeout %u msecs", msecs));
 	return result;
 }
 #endif
@@ -711,7 +711,7 @@ static err_t dhcp_discover(struct dhcp_state *state)
 	state->tries++;
 	msecs = state->tries < 4 ? (state->tries + 1) * 1000 : 10 * 1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_discover(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_discover(): set request timeout %u msecs", msecs));
 	dhcp_set_state(state, DHCP_SELECTING);
 	return result;
 }
@@ -731,7 +731,7 @@ static void dhcp_bind(struct dhcp_state *state)
    	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): t1 renewal timer %lu secs", state->offered_t1_renew));
    	state->t1_timeout = (state->offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
 		if (state->t1_timeout == 0) state->t1_timeout = 1;
- 	  DEBUGF(DHCP_DEBUG, ("dhcp_bind(): request timeout %u msecs", state->offered_t1_renew*1000));
+ 	  DEBUGF(DHCP_DEBUG, ("dhcp_bind(): set request timeout %u msecs", state->offered_t1_renew*1000));
 	}
   /* set renewal period timer */
   if (state->offered_t2_rebind != 0xffffffffUL)
@@ -739,7 +739,7 @@ static void dhcp_bind(struct dhcp_state *state)
    	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): t2 rebind timer %lu secs", state->offered_t2_rebind));
    	state->t2_timeout = (state->offered_t2_rebind + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
 		if (state->t2_timeout == 0) state->t2_timeout = 1;
-   	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): request timeout %u msecs", state->offered_t2_rebind*1000));
+   	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): set request timeout %u msecs", state->offered_t2_rebind*1000));
 	}
 
   ip_addr_set(&sn_mask, &state->offered_sn_mask);
@@ -814,7 +814,7 @@ err_t dhcp_renew(struct dhcp_state *state)
   // back-off on retries, but to a maximum of 20 seconds
 	msecs = state->tries < 10 ? state->tries * 2000 : 20 * 1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_renew(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_renew(): set request timeout %u msecs", msecs));
 	return result;
 }
 
@@ -861,7 +861,7 @@ static err_t dhcp_rebind(struct dhcp_state *state)
 	state->tries++;
 	msecs = state->tries < 10 ? state->tries * 1000 : 10 * 1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_rebind(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_rebind(): set request timeout %u msecs", msecs));
 	return result;
 }
 
@@ -896,7 +896,7 @@ static err_t dhcp_release(struct dhcp_state *state)
 	state->tries++;
 	msecs = state->tries < 10 ? state->tries * 1000 : 10 * 1000;
 	state->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
- 	DEBUGF(DHCP_DEBUG, ("dhcp_release(): request timeout %u msecs", msecs));
+ 	DEBUGF(DHCP_DEBUG, ("dhcp_release(): set request timeout %u msecs", msecs));
   // remove IP address from interface
 	netif_set_ipaddr(state->netif, IP_ADDR_ANY);
 	netif_set_gw(state->netif, IP_ADDR_ANY);
