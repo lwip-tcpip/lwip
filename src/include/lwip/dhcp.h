@@ -5,12 +5,11 @@
 #define __LWIP_DHCP_H__
 
 #include "udp.h"
-#include "lwip/netif.h"
 #include "lwipopts.h"
 
-// period (in seconds) of the application calling dhcp_coarse_tmr()
+/** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS 60 
-// period (in milliseconds) of the application calling dhcp_fine_tmr()
+/** period (in milliseconds) of the application calling dhcp_fine_tmr() */
 #define DHCP_FINE_TIMER_MSECS 500 
 
 struct dhcp
@@ -32,20 +31,20 @@ struct dhcp
   /** ingoing msg options length */
   u16_t options_in_len;
 
-  struct pbuf *p_out; // pbuf of outcoming msg
-  struct dhcp_msg *msg_out; // outgoing msg
-  u16_t options_out_len; // outgoing msg options length
-  u16_t request_timeout; // #ticks with period DHCP_FINE_TIMER_SECS for request timeout
-  u16_t t1_timeout;	// #ticks with period DHCP_COARSE_TIMER_SECS for renewal time
-  u16_t t2_timeout;	// #ticks with period DHCP_COARSE_TIMER_SECS for rebind time
-  struct ip_addr server_ip_addr; // dhcp server address that offered this lease 
+  struct pbuf *p_out; /* pbuf of outcoming msg */
+  struct dhcp_msg *msg_out; /* outgoing msg */
+  u16_t options_out_len; /* outgoing msg options length */
+  u16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
+  u16_t t1_timeout;	/* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
+  u16_t t2_timeout;	/* #ticks with period DHCP_COARSE_TIMER_SECS for rebind time */
+  struct ip_addr server_ip_addr; /* dhcp server address that offered this lease */
   struct ip_addr offered_ip_addr;
   struct ip_addr offered_sn_mask;
   struct ip_addr offered_gw_addr;
   struct ip_addr offered_bc_addr;
-  u32_t offered_t0_lease; // lease period (in seconds)
-  u32_t offered_t1_renew; // recommended renew time (usually 50% of lease period)
-  u32_t offered_t2_rebind; // recommended rebind time (usually 66% of lease period)
+  u32_t offered_t0_lease; /* lease period (in seconds) */
+  u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
+  u32_t offered_t2_rebind; /* recommended rebind time (usually 66% of lease period)	*/
 };
 
 /* MUST be compiled with "pack structs" or equivalent! */
@@ -177,30 +176,30 @@ void dhcp_fine_tmr(void);
 #define DHCP_OPTION_END 255
 
 /** DHCP options */
-#define DHCP_OPTION_REQUESTED_IP 50 // RFC 2132 9.1, requested IP address
-#define DHCP_OPTION_LEASE_TIME 51 // RFC 2132 9.2, time in seconds, in 4 bytes 
-#define DHCP_OPTION_OVERLOAD 52 // RFC2132 9.3, use file and/or sname field for options
+#define DHCP_OPTION_REQUESTED_IP 50 /* RFC 2132 9.1, requested IP address */
+#define DHCP_OPTION_LEASE_TIME 51 /* RFC 2132 9.2, time in seconds, in 4 bytes */
+#define DHCP_OPTION_OVERLOAD 52 /* RFC2132 9.3, use file and/or sname field for options */
 
-#define DHCP_OPTION_MESSAGE_TYPE 53 // RFC 2132 9.6, important for DHCP
+#define DHCP_OPTION_MESSAGE_TYPE 53 /* RFC 2132 9.6, important for DHCP */
 #define DHCP_OPTION_MESSAGE_TYPE_LEN 1
 
 
-#define DHCP_OPTION_SERVER_ID 54 // RFC 2131 9.7, server IP address
-#define DHCP_OPTION_PARAMETER_REQUEST_LIST 55 // RFC 2131 9.8, requested option types
+#define DHCP_OPTION_SERVER_ID 54 /* RFC 2131 9.7, server IP address */
+#define DHCP_OPTION_PARAMETER_REQUEST_LIST 55 /* RFC 2131 9.8, requested option types */
 
-#define DHCP_OPTION_MAX_MSG_SIZE 57 // RFC 2131 9.10, message size accepted >= 576
+#define DHCP_OPTION_MAX_MSG_SIZE 57 /* RFC 2131 9.10, message size accepted >= 576 */
 #define DHCP_OPTION_MAX_MSG_SIZE_LEN 2
 
-#define DHCP_OPTION_T1 58 // T1 renewal time
-#define DHCP_OPTION_T2 59 // T2 rebinding time
+#define DHCP_OPTION_T1 58 /* T1 renewal time */
+#define DHCP_OPTION_T2 59 /* T2 rebinding time */
 #define DHCP_OPTION_CLIENT_ID 61
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE 67
 
-/** possible combinations of overloading	the file and sname fields with options */
+/** possible combinations of overloading the file and sname fields with options */
 #define DHCP_OVERLOAD_NONE 0
 #define DHCP_OVERLOAD_FILE 1
 #define DHCP_OVERLOAD_SNAME	2
 #define DHCP_OVERLOAD_SNAME_FILE 3
 
-#endif //__LWIP_DHCP_H__
+#endif /*__LWIP_DHCP_H__*/

@@ -881,8 +881,6 @@ void dhcp_stop(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   DEBUGF(DHCP_DEBUG, ("dhcp_stop()"));
-  LWIP_ASSERT("dhcp_stop: dhcp != NULL", dhcp != NULL);
-  LWIP_ASSERT("dhcp_stop: dhcp->pcb != NULL", dhcp->pcb != NULL);
   /* netif is DHCP configured? */
   if (dhcp != NULL)
   {
