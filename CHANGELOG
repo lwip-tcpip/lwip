@@ -9,9 +9,13 @@ HISTORY
 
 (active STABLE-0_7 branch)
 
+(STABLE-0_7_1)
+
   ++ Bug fixes:
 
   * Fixed updating the ARP cache from a request pbuf that was recycled earlier for reply.
+  * Removed updating ARP cache using destination address (which is wrong for requests and
+    does not work for replies as those are unicast anyway).
   
 (STABLE-0_7_0)
 
