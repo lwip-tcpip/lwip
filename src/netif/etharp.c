@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.10  2002/11/18 08:41:31  jani
+ * Move etharp packed structures to the header file.
+ *
  * Revision 1.9  2002/11/15 12:41:59  likewise
  * ETHARP_SNOOP_UPDATES made externally configurable.
  *
@@ -107,47 +110,11 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
 
-/* MUST be compiled with "pack structs" or equivalent! */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-/** the ARP message */
-struct etharp_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
-  PACK_STRUCT_FIELD(u16_t hwtype);
-  PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
-  PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr sipaddr);
-  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr dipaddr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
 #define ARPH_HWLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) >> 8)
 #define ARPH_PROTOLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) & 0xff)
 
 #define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS(ARPH_PROTOLEN(hdr) | ((len) << 8))
 #define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS((len) | (ARPH_HWLEN(hdr) << 8))
-
-/* MUST be compiled with "pack structs" or equivalent! */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ethip_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr eth);
-  PACK_STRUCT_FIELD(struct ip_hdr ip);
-};
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
 
 enum etharp_state {
   ETHARP_STATE_EMPTY,

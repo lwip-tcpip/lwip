@@ -36,6 +36,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
+#include "lwip/ip.h"
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -45,13 +46,7 @@ struct eth_addr {
   PACK_STRUCT_FIELD(u8_t addr[6]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
 PACK_STRUCT_BEGIN
 struct eth_hdr {
   PACK_STRUCT_FIELD(struct eth_addr dest);
@@ -59,6 +54,27 @@ struct eth_hdr {
   PACK_STRUCT_FIELD(u16_t type);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+
+PACK_STRUCT_BEGIN
+/** the ARP message */
+struct etharp_hdr {
+  PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
+  PACK_STRUCT_FIELD(u16_t hwtype);
+  PACK_STRUCT_FIELD(u16_t proto);
+  PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
+  PACK_STRUCT_FIELD(u16_t opcode);
+  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
+  PACK_STRUCT_FIELD(struct ip_addr sipaddr);
+  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
+  PACK_STRUCT_FIELD(struct ip_addr dipaddr);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+
+PACK_STRUCT_BEGIN
+struct ethip_hdr {
+  PACK_STRUCT_FIELD(struct eth_hdr eth);
+  PACK_STRUCT_FIELD(struct ip_hdr ip);
+};
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
