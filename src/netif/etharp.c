@@ -197,7 +197,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   s8_t old_pending, old_stable, empty, i;
   u8_t age_pending, age_stable;
 #if ARP_QUEUEING
-  s8_t old_queue = ARP_TABLE_SIZE;;
+  s8_t old_queue = ARP_TABLE_SIZE;
   u8_t age_queue = 0;
 #endif
 
@@ -764,7 +764,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
         /* { result == ERR_MEM } through initialization */
       }
 #else /* ARP_QUEUEING == 0 */
-      /* q && state == PENDING && ARP_QUEUEING == 0 => result = ERR_MEM
+      /* q && state == PENDING && ARP_QUEUEING == 0 => result = ERR_MEM */
       /* { result == ERR_MEM } through initialization */
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: Ethernet destination address unknown, queueing disabled, packet %p dropped\n", (void *)q));
 #endif
