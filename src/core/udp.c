@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.12 2003/01/23 16:46:01 jani Exp $
+ * $Id: udp.c,v 1.13 2003/01/27 08:50:28 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -206,9 +206,13 @@ udp_input(struct pbuf *p, struct netif *inp)
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
       DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %d (dgram %d)\n",
 			 pcb->local_port, dest));
+      /* unconnected? */
       if((pcb->flags & UDP_FLAGS_CONNECTED) == 0 &&
+	  /* destination port matches? */
 	  pcb->local_port == dest &&
+	  /* not bound to a specific (local) interface address? or... */
 	 (ip_addr_isany(&pcb->local_ip) ||
+	  /* ...matching interface address? */
 	  ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 	break;
       }      
