@@ -663,7 +663,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 }
 
 /**
- * Send an ARP request for the given IP address.
+ * Send an ARP request for the given IP address and/or queue a packet.
  *
  * If the IP address was not yet in the cache, a pending ARP cache entry
  * is added and an ARP request is sent for the given address. The packet
@@ -672,8 +672,11 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * If the IP address was already pending in the cache, a new ARP request
  * is sent for the given address. The packet is queued on this entry.
  *
- * If the IP address was already stable in the cache, the packet is
- * directly sent. An ARP request is sent out.
+ * If the IP address was already stable in the cache, and a packet is
+ * given, it is directly sent and no ARP request is sent out. 
+ * 
+ * If the IP address was already stable in the cache, and no packet is
+ * given, an ARP request is sent out.
  * 
  * @param netif The lwIP network interface on which ipaddr
  * must be queried for.
@@ -723,7 +726,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
    (arp_table[i].state == ETHARP_STATE_STABLE)));
 
   /* do we have a pending entry? */
-  if (arp_table[i].state == ETHARP_STATE_PENDING) {
+  if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {
     /* try to resolve it; send out ARP request */
     result = etharp_request(netif, ipaddr);
   }
