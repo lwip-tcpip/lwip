@@ -687,7 +687,7 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     /* copy PBUF_REF referenced payloads to PBUF_RAM */
     q = pbuf_take(q);
     /* pbufs are queued, increase the reference count */
-    pbuf_ref_chain(q);
+    pbuf_ref(q);
     /* remember pbuf to queue, if any */
     arp_table[i].p = q;
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));

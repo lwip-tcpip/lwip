@@ -719,7 +719,7 @@ tcp_seg_copy(struct tcp_seg *seg)
     return NULL;
   }
   memcpy((char *)cseg, (const char *)seg, sizeof(struct tcp_seg)); 
-  pbuf_ref_chain(cseg->p);
+  pbuf_ref(cseg->p);
   return cseg;
 }
 /*-----------------------------------------------------------------------------------*/
