@@ -405,7 +405,8 @@ tcp_output(struct tcp_pcb *pcb)
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
           IP_PROTO_TCP, p->tot_len);
 
-    ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), TCP_TTL,
+
+    ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
         IP_PROTO_TCP);
     pbuf_free(p);
 
@@ -527,7 +528,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   ++lwip_stats.tcp.xmit;
 #endif /* TCP_STATS */
 
-  ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), TCP_TTL,
+  ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
 }
 /*-----------------------------------------------------------------------------------*/
@@ -561,7 +562,8 @@ tcp_rst(u32_t seqno, u32_t ackno,
 #ifdef TCP_STATS
   ++lwip_stats.tcp.xmit;
 #endif /* TCP_STATS */
-  ip_output(p, local_ip, remote_ip, TCP_TTL, IP_PROTO_TCP);
+   /* Send output with hardcoded TTL since we have no access to the pcb */
+  ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
   pbuf_free(p);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %lu ackno %lu.\n", seqno, ackno));
 }
@@ -595,6 +597,50 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 
 }
+/*-----------------------------------------------------------------------------------*/
+void
+tcp_keepalive(struct tcp_pcb *pcb)
+{
+   struct pbuf *p;
+   struct tcp_hdr *tcphdr;
+
+   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %u.%u.%u.%u\n",
+                           ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+                           ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+
+   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %ld   pcb->tmr %ld  pcb->keep_cnt %ld\n", tcp_ticks, pcb->tmr, pcb->keep_cnt));
+   
+   p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
+
+   if(p == NULL) {
+      LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: could not allocate memory for pbuf\n"));
+      return;
+   }
+
+   tcphdr = p->payload;
+   tcphdr->src = htons(pcb->local_port);
+   tcphdr->dest = htons(pcb->remote_port);
+   tcphdr->seqno = htonl(pcb->snd_nxt - 1);
+   tcphdr->ackno = htonl(pcb->rcv_nxt);
+   tcphdr->wnd = htons(pcb->rcv_wnd);
+   tcphdr->urgp = 0;
+   TCPH_HDRLEN_SET(tcphdr, 5);
+   
+   tcphdr->chksum = 0;
+   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip, IP_PROTO_TCP, p->tot_len);
+
+#ifdef TCP_STATS
+  ++lwip_stats.tcp.xmit;
+#endif /* TCP_STATS */
+
+   /* Send output to IP */
+  ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
+
+  pbuf_free(p);
+
+  LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_keepalive: seqno %lu ackno %lu.\n", pcb->snd_nxt - 1, pcb->rcv_nxt));
+}
+
 #endif /* LWIP_TCP */
 
 

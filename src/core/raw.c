@@ -175,7 +175,7 @@ raw_send_payload(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
     src_ip = &(pcb->local_ip);
   }
 
-  err = ip_output_if (p, src_ip, ipaddr, 64, pcb->protocol, netif);
+  err = ip_output_if (p, src_ip, ipaddr, 64, pcb->tos, pcb->protocol, netif);
 
   return ERR_OK;
 }

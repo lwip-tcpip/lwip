@@ -448,8 +448,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
  */
 /*-----------------------------------------------------------------------------------*/
 err_t
-ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-             u8_t ttl,
+ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+             u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
   static struct ip_hdr *iphdr;
@@ -475,7 +475,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     ip_addr_set(&(iphdr->dest), dest);
 
-    IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, 0);
+    IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, tos);
     IPH_LEN_SET(iphdr, htons(p->tot_len));
     IPH_OFFSET_SET(iphdr, htons(IP_DF));
     IPH_ID_SET(iphdr, htons(ip_id));
@@ -521,7 +521,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 /*-----------------------------------------------------------------------------------*/
 err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-          u8_t ttl, u8_t proto)
+          u8_t ttl, u8_t tos, u8_t proto)
 {
   struct netif *netif;
 
@@ -535,7 +535,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     return ERR_RTE;
   }
 
-  return ip_output_if (p, src, dest, ttl, proto, netif);
+  return ip_output_if(p, src, dest, ttl, tos, proto, netif);
 }
 /*-----------------------------------------------------------------------------------*/
 #if IP_DEBUG

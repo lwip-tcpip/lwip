@@ -318,6 +318,10 @@ tcp_listen(struct tcp_pcb *pcb)
   lpcb->callback_arg = pcb->callback_arg;
   lpcb->local_port = pcb->local_port;
   lpcb->state = LISTEN;
+  lpcb->so_options = pcb->so_options;
+  lpcb->so_options |= SOF_ACCEPTCONN;
+  lpcb->ttl = pcb->ttl;
+  lpcb->tos = pcb->tos;
   ip_addr_set(&lpcb->local_ip, &pcb->local_ip);
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
@@ -519,6 +523,21 @@ tcp_slowtmr(void)
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
       }
     }
+
+   /* Check if KEEPALIVE should be sent */
+   if((pcb->so_options & SOF_KEEPALIVE) && ((pcb->state == ESTABLISHED) || (pcb->state == CLOSE_WAIT))) {
+      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keepalive + TCP_MAXIDLE) / TCP_SLOW_INTERVAL)  {
+         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %u.%u.%u.%u.\n",
+                                 ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+                                 ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+
+         tcp_abort(pcb);
+      }
+      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keepalive + pcb->keep_cnt * TCP_KEEPINTVL) / TCP_SLOW_INTERVAL) {
+         tcp_keepalive(pcb);
+         pcb->keep_cnt++;
+      }
+   }
 
     /* If this PCB has queued out of sequence data, but has been
        inactive for too long, will drop the data (it will eventually
@@ -810,6 +829,8 @@ tcp_alloc(u8_t prio)
     pcb->snd_buf = TCP_SND_BUF;
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
+    pcb->tos = 0;
+    pcb->ttl = TCP_TTL;
     pcb->mss = TCP_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sa = 0;
@@ -829,6 +850,10 @@ tcp_alloc(u8_t prio)
 #if LWIP_CALLBACK_API
     pcb->recv = tcp_recv_null;
 #endif /* LWIP_CALLBACK_API */  
+    
+    /* Init KEEPALIVE timer */
+    pcb->keepalive = TCP_KEEPDEFAULT;
+    pcb->keep_cnt = 0;
   }
   return pcb;
 }

@@ -238,7 +238,62 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 static void
 do_newconn(struct api_msg_msg *msg)
 {
+   if(msg->conn->pcb.tcp != NULL) {
+   /* This "new" connection already has a PCB allocated. */
+   /* Is this an error condition? Should it be deleted? 
+      We currently just are happy and return. */
+     sys_mbox_post(msg->conn->mbox, NULL);
+     return;
+   }
+
+   msg->conn->err = ERR_OK;
+
+   /* Allocate a PCB for this connection */
+   switch(msg->conn->type) {
+#if LWIP_UDP
+   case NETCONN_UDPLITE:
+      msg->conn->pcb.udp = udp_new();
+      if(msg->conn->pcb.udp == NULL) {
+         msg->conn->err = ERR_MEM;
+         break;
+      }
+      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
+      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
+      break;
+   case NETCONN_UDPNOCHKSUM:
+      msg->conn->pcb.udp = udp_new();
+      if(msg->conn->pcb.udp == NULL) {
+         msg->conn->err = ERR_MEM;
+         break;
+      }
+      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
+      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
+      break;
+   case NETCONN_UDP:
+      msg->conn->pcb.udp = udp_new();
+      if(msg->conn->pcb.udp == NULL) {
+         msg->conn->err = ERR_MEM;
+         break;
+      }
+      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
+      break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
+   case NETCONN_TCP:
+      msg->conn->pcb.tcp = tcp_new();
+      if(msg->conn->pcb.tcp == NULL) {
+         msg->conn->err = ERR_MEM;
+         break;
+      }
+      setup_tcp(msg->conn);
+      break;
+#endif
+   }
+   
+  
+  sys_mbox_post(msg->conn->mbox, NULL);
 }
+
 /*-----------------------------------------------------------------------------------*/
 static void
 do_delconn(struct api_msg_msg *msg)
@@ -571,7 +626,7 @@ do_write(struct api_msg_msg *msg)
    segments when new outgoing data arrives from the user if any
    previously transmitted data on the connection remains
    unacknowledged. */
-      if (err == ERR_OK && msg->conn->pcb.tcp->unacked == NULL) {
+      if(err == ERR_OK && (msg->conn->pcb.tcp->unacked == NULL || (msg->conn->pcb.tcp->flags & TF_NODELAY)) ) {
   tcp_output(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;

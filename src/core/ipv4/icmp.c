@@ -126,8 +126,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     snmp_inc_icmpoutechoreps();
 
     pbuf_header(p, hlen);
-    ip_output_if (p, &(iphdr->src), IP_HDRINCL,
-     IPH_TTL(iphdr), IP_PROTO_ICMP, inp);
+    ip_output_if(p, &(iphdr->src), IP_HDRINCL,
+		 IPH_TTL(iphdr), 0, IP_PROTO_ICMP, inp);
     break;
   default:
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d code %d not supported.\n", (int)type, (int)code));
@@ -169,7 +169,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   snmp_inc_icmpoutdestunreachs();
 
   ip_output(q, NULL, &(iphdr->src),
-      ICMP_TTL, IP_PROTO_ICMP);
+	    ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 /*-----------------------------------------------------------------------------------*/
@@ -210,7 +210,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpouttimeexcds();
   ip_output(q, NULL, &(iphdr->src),
-      ICMP_TTL, IP_PROTO_ICMP);
+	    ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 

@@ -407,7 +407,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     /* output to IP */
-    err = ip_output_if (q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);
+    err = ip_output_if (p, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
   } else {
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
@@ -422,7 +422,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     snmp_inc_udpoutdatagrams();
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
-    err = ip_output_if (q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);
+    err = ip_output_if(p, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
   }
 
   /* did we chain a header earlier? */
@@ -650,6 +650,9 @@ udp_new(void) {
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
   }
+  
+  pcb->ttl = UDP_TTL;
+  
   return pcb;
 }
 /*-----------------------------------------------------------------------------------*/

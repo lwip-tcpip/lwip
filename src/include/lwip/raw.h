@@ -39,9 +39,11 @@
 #include "lwip/ip.h"
 
 struct raw_pcb {
+/* Common members of all PCB types */
+  IP_PCB;
+
   struct raw_pcb *next;
 
-  struct ip_addr local_ip;/*, remote_ip;*/
   u16_t protocol;
 
   void (* recv)(void *arg, struct raw_pcb *pcb, struct pbuf *p,

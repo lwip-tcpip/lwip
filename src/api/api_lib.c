@@ -154,7 +154,7 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
 
   left = 0;
 
-  if (buf == NULL) {
+  if(buf == NULL || dataptr == NULL) {
     return;
   }
   
@@ -197,11 +197,14 @@ struct
 netconn *netconn_new(enum netconn_type t)
 {
   struct netconn *conn;
+  struct api_msg *msg;
 
   conn = memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
     return NULL;
   }
+  
+  conn->err = ERR_OK;
   conn->type = t;
   conn->pcb.tcp = NULL;
 
@@ -216,6 +219,23 @@ netconn *netconn_new(enum netconn_type t)
   conn->socket = 0;
   conn->callback = 0;
   conn->recv_avail = 0;
+
+  if((msg = memp_malloc(MEMP_API_MSG)) == NULL) {
+    memp_free(MEMP_NETCONN, conn);
+    return NULL;
+  }
+  
+  msg->type = API_MSG_NEWCONN;
+  msg->msg.conn = conn;
+  api_msg_post(msg);  
+  sys_mbox_fetch(conn->mbox, NULL);
+  memp_free(MEMP_API_MSG, msg);
+
+  if ( conn->err != ERR_OK ) {
+    memp_free(MEMP_NETCONN, conn);
+    return NULL;
+  }
+
   return conn;
 }
 /*-----------------------------------------------------------------------------------*/

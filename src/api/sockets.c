@@ -164,6 +164,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -217,6 +218,7 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -257,6 +259,7 @@ lwip_close(int s)
   sock = get_socket(s);
   if (!sock) {
       sys_sem_signal(socksem);
+      set_errno(EBADF);
       return -1;
   }
 
@@ -280,6 +283,7 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -322,6 +326,7 @@ lwip_listen(int s, int backlog)
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -351,6 +356,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %d, 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -468,11 +474,14 @@ lwip_send(int s, void *data, int size, unsigned int flags)
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
   switch (netconn_type(sock->conn)) {
   case NETCONN_UDP:
+  case NETCONN_UDPLITE:
+  case NETCONN_UDPNOCHKSUM:
     /* create a buffer */
     buf = netbuf_new();
 
@@ -521,6 +530,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -895,6 +905,7 @@ int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -930,6 +941,7 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
 
   sock = get_socket(s);
   if (!sock) {
+    set_errno(EBADF);
     return -1;
   }
 
@@ -959,32 +971,183 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
 
 int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *optlen)
 {
-  int err = ENOSYS;
+  int err = 0;
   struct lwip_socket *sock = get_socket(s);
 
-  if (!sock) {
+  if(!sock) {
+   	set_errno(EBADF);
     return -1;
   }
 
-  if (level == SOL_SOCKET) {
-    switch (optname) {
+  if( NULL == optval || NULL == optlen ) {
+    sock_set_errno( sock, EFAULT );
+    return -1;
+  }
+
+  /* Do length and type checks for the various options first, to keep it readable. */
+  switch( level ) {
+   
+/* Level: SOL_SOCKET */
+  case SOL_SOCKET:
+      switch(optname) {
+         
+      case SO_ACCEPTCONN:
+      case SO_BROADCAST:
+      /* UNIMPL case SO_DEBUG: */
+      /* UNIMPL case SO_DONTROUTE: */
       case SO_ERROR:
-        if (!optval || !optlen || (*optlen != sizeof(int))) {
+      case SO_KEEPALIVE:
+      /* UNIMPL case SO_OOBINLINE: */
+      /* UNIMPL case SO_RCVBUF: */
+      /* UNIMPL case SO_SNDBUF: */
+      /* UNIMPL case SO_RCVLOWAT: */
+      /* UNIMPL case SO_SNDLOWAT: */
+      /* UNIMPL case SO_REUSEADDR: */
+      /* UNIMPL case SO_REUSEPORT: */
+      case SO_TYPE:
+      /* UNIMPL case SO_USELOOPBACK: */
+        if( *optlen < sizeof(int) ) {
           err = EINVAL;
-          break;
         }
-        *(int *)optval = sock->err;
-        sock->err = 0;
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n", s, *(int *)optval));
-        err = 0;
-        break;
+          break;
+
       default:
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n", s, optname));
+        err = ENOPROTOOPT;
+      }  /* switch */
+      break;
+                     
+/* Level: IPPROTO_IP */
+  case IPPROTO_IP:
+      switch(optname) {
+      /* UNIMPL case IP_HDRINCL: */
+      /* UNIMPL case IP_RCVDSTADDR: */
+      /* UNIMPL case IP_RCVIF: */
+      case IP_TTL:
+      case IP_TOS:
+        if( *optlen < sizeof(int) ) {
+          err = EINVAL;
+        }
+        break;
+
+      default:
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n", s, optname));
+        err = ENOPROTOOPT;
+      }  /* switch */
+      break;
+         
+/* Level: IPPROTO_TCP */
+  case IPPROTO_TCP:
+      if( *optlen < sizeof(int) ) {
+        err = EINVAL;
         break;
     }
-  } else {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n", s, level, optname));
+      
+      /* If this is no TCP socket, ignore any options. */
+      if ( sock->conn->type != NETCONN_TCP ) return 0;
+
+      switch( optname ) {
+      case TCP_NODELAY:
+      case TCP_KEEPALIVE:
+        break;
+         
+      default:
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, UNIMPL: optname=0x%x, ..)\n", s, optname));
+        err = ENOPROTOOPT;
+      }  /* switch */
+      break;
+
+/* UNDEFINED LEVEL */
+  default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n", s, level, optname));
+      err = ENOPROTOOPT;
+  }  /* switch */
+
+   
+  if( 0 != err ) {
+    sock_set_errno(sock, err);
+    return -1;
   }
+   
+
+
+  /* Now do the actual option processing */
+
+  switch(level) {
+   
+/* Level: SOL_SOCKET */
+  case SOL_SOCKET:
+    switch( optname ) {
+
+    /* The option flags */
+    case SO_ACCEPTCONN:
+    case SO_BROADCAST:
+    /* UNIMPL case SO_DEBUG: */
+    /* UNIMPL case SO_DONTROUTE: */
+    case SO_KEEPALIVE:
+    /* UNIMPL case SO_OOBINCLUDE: */
+    /* UNIMPL case SO_REUSEADDR: */
+    /* UNIMPL case SO_REUSEPORT: */
+    /*case SO_USELOOPBACK: UNIMPL */
+      *(int*)optval = sock->conn->pcb.tcp->so_options & optname;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, optname=0x%x, ..) = %s\n", s, optname, (*(int*)optval?"on":"off")));
+      break;
+
+    case SO_TYPE:
+      switch (sock->conn->type) {
+      case NETCONN_TCP:
+        *(int*)optval = SOCK_STREAM;
+        break;
+      case NETCONN_UDP:
+      case NETCONN_UDPLITE:
+      case NETCONN_UDPNOCHKSUM:
+        *(int*)optval = SOCK_DGRAM;
+        break;
+      default: /* unrecognized socket type */
+        *(int*)optval = sock->conn->type;
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_TYPE): unrecognized socket type %d\n", s, *(int *)optval));
+      }  /* switch */
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_TYPE) = %d\n", s, *(int *)optval));
+      break;
+
+    case SO_ERROR:
+      *(int *)optval = sock->err;
+      sock->err = 0;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n", s, *(int *)optval));
+      break;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_IP */
+  case IPPROTO_IP:
+    switch( optname ) {
+    case IP_TTL:
+      *(int*)optval = sock->conn->pcb.tcp->ttl;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_TTL) = %d\n", s, *(int *)optval));
+      break;
+    case IP_TOS:
+      *(int*)optval = sock->conn->pcb.tcp->tos;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_TOS) = %d\n", s, *(int *)optval));
+      break;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_TCP */
+  case IPPROTO_TCP:
+    switch( optname ) {
+    case TCP_NODELAY:
+      *(int*)optval = (sock->conn->pcb.tcp->flags & TF_NODELAY);
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, TCP_NODELAY) = %s\n", s, (*(int*)optval)?"on":"off") );
+      break;
+    case TCP_KEEPALIVE:
+      *(int*)optval = sock->conn->pcb.tcp->keepalive;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, TCP_KEEPALIVE) = %d\n", s, *(int *)optval));
+      break;
+    }  /* switch */
+    break;
+  }
+
+
   sock_set_errno(sock, err);
   return err ? -1 : 0;
 }
@@ -992,26 +1155,160 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
 int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_t optlen)
 {
   struct lwip_socket *sock = get_socket(s);
-  int err = ENOSYS;
+  int err = 0;
 
-  if (!sock) {
+  if(!sock) {
+   	set_errno(EBADF);
     return -1;
   }
 
-  if (level == SOL_SOCKET) {
-    switch (optname) {
-      case SO_REUSEADDR:
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, SO_REUSEADDR, ..)\n", s));
-           /* XXX just pretend we support this for now */
-          err = 0;
+  if( NULL == optval ) {
+    sock_set_errno( sock, EFAULT );
+    return -1;
+  }
+
+
+  /* Do length and type checks for the various options first, to keep it readable. */
+  switch( level ) {
+
+/* Level: SOL_SOCKET */
+  case SOL_SOCKET:
+    switch(optname) {
+
+    case SO_BROADCAST:
+    /* UNIMPL case SO_DEBUG: */
+    /* UNIMPL case SO_DONTROUTE: */
+    case SO_KEEPALIVE:
+    /* UNIMPL case SO_OOBINLINE: */
+    /* UNIMPL case SO_RCVBUF: */
+    /* UNIMPL case SO_SNDBUF: */
+    /* UNIMPL case SO_RCVLOWAT: */
+    /* UNIMPL case SO_SNDLOWAT: */
+    /* UNIMPL case SO_REUSEADDR: */
+    /* UNIMPL case SO_REUSEPORT: */
+    /* UNIMPL case SO_USELOOPBACK: */
+      if( optlen < sizeof(int) ) {
+        err = EINVAL;
+      }
+      break;
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n", s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_IP */
+  case IPPROTO_IP:
+    switch(optname) {
+    /* UNIMPL case IP_HDRINCL: */
+    /* UNIMPL case IP_RCVDSTADDR: */
+    /* UNIMPL case IP_RCVIF: */
+    case IP_TTL:
+    case IP_TOS:
+      if( optlen < sizeof(int) ) {
+        err = EINVAL;
+      }
         break;
       default:
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n", s, optname));
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n", s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_TCP */
+  case IPPROTO_TCP:
+    if( optlen < sizeof(int) ) {
+      err = EINVAL;
         break;
     }
-  } else {
+
+    /* If this is no TCP socket, ignore any options. */
+    if ( sock->conn->type != NETCONN_TCP ) return 0;
+
+    switch( optname ) {
+    case TCP_NODELAY:
+    case TCP_KEEPALIVE:
+      break;
+
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, UNIMPL: optname=0x%x, ..)\n", s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch */
+    break;
+
+/* UNDEFINED LEVEL */      
+  default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n", s, level, optname));
+    err = ENOPROTOOPT;
+  }  /* switch */
+
+
+  if( 0 != err ) {
+    sock_set_errno(sock, err);
+    return -1;
   }
+
+
+
+  /* Now do the actual option processing */
+
+  switch(level) {
+
+/* Level: SOL_SOCKET */
+  case SOL_SOCKET:
+    switch(optname) {
+
+    /* The option flags */
+    case SO_BROADCAST:
+    /* UNIMPL case SO_DEBUG: */
+    /* UNIMPL case SO_DONTROUTE: */
+    case SO_KEEPALIVE:
+    /* UNIMPL case SO_OOBINCLUDE: */
+    /* UNIMPL case SO_REUSEADDR: */
+    /* UNIMPL case SO_REUSEPORT: */
+    /* UNIMPL case SO_USELOOPBACK: */
+      if ( *(int*)optval ) {
+        sock->conn->pcb.tcp->so_options |= optname;
+      } else {
+        sock->conn->pcb.tcp->so_options &= ~optname;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n", s, optname, (*(int*)optval?"on":"off")));
+      break;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_IP */
+  case IPPROTO_IP:
+    switch( optname ) {
+    case IP_TTL:
+      sock->conn->pcb.tcp->ttl = (u8_t)(*(int*)optval);
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TTL, ..) -> %u\n", s, sock->conn->pcb.tcp->ttl));
+      break;
+    case IP_TOS:
+      sock->conn->pcb.tcp->tos = (u8_t)(*(int*)optval);
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TOS, ..)-> %u\n", s, sock->conn->pcb.tcp->tos));
+      break;
+    }  /* switch */
+    break;
+
+/* Level: IPPROTO_TCP */
+  case IPPROTO_TCP:
+    switch( optname ) {
+    case TCP_NODELAY:
+      if ( *(int*)optval ) {
+        sock->conn->pcb.tcp->flags |= TF_NODELAY;
+      } else {
+        sock->conn->pcb.tcp->flags &= ~TF_NODELAY;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_NODELAY) -> %s\n", s, (*(int *)optval)?"on":"off") );
+      break;
+    case TCP_KEEPALIVE:
+      sock->conn->pcb.tcp->keepalive = (u32_t)(*(int*)optval);;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_KEEPALIVE) -> %u\n", s, sock->conn->pcb.tcp->keepalive));
+      break;
+    }  /* switch */
+    break;
+  }  /* switch */
 
   sock_set_errno(sock, err);
   return err ? -1 : 0;
@@ -1021,7 +1318,8 @@ int lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_socket *sock = get_socket(s);
 
-  if (!sock) {
+  if(!sock) {
+   	set_errno(EBADF);
     return -1;
   }
 
@@ -1035,7 +1333,7 @@ int lwip_ioctl(int s, long cmd, void *argp)
     *((u16_t*)argp) = sock->conn->recv_avail;
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %u\n", s, argp, *((u16_t*)argp)));
-      sock_set_errno(sock, 0);
+    sock_set_errno(sock, 0);
     return 0;
 
   case FIONBIO:
@@ -1044,7 +1342,7 @@ int lwip_ioctl(int s, long cmd, void *argp)
     else
       sock->flags &= ~O_NONBLOCK;
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONBIO, %d)\n", s, !!(sock->flags & O_NONBLOCK)));
-      sock_set_errno(sock, 0);
+    sock_set_errno(sock, 0);
     return 0;
 
   default:

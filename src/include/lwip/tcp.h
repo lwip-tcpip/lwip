@@ -151,6 +151,19 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 
 #define TCP_MSL 60000  /* The maximum segment lifetime in microseconds */
 
+/*
+ * User-settable options (used with setsockopt).
+ */
+#define	TCP_NODELAY	   0x01	   /* don't delay send to coalesce packets */
+#define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keepalive miliseconds */
+
+/* Keepalive values */
+#define  TCP_KEEPDEFAULT   7200000                       /* KEEPALIVE timer in miliseconds */
+#define  TCP_KEEPINTVL     75000                         /* Time between KEEPALIVE probes in miliseconds */
+#define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
+#define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
+
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -200,17 +213,30 @@ enum tcp_state {
 
 /* the TCP protocol control block */
 struct tcp_pcb {
+/* Common members of all PCB types */
+  IP_PCB;
+
+/* Protocol specific PCB members */
+
   struct tcp_pcb *next;   /* for the linked list */
+
+  enum tcp_state state;   /* TCP state */
+
   u8_t prio;
   void *callback_arg;
 
-  struct ip_addr local_ip;
   u16_t local_port;
-  enum tcp_state state;   /* TCP state */
-  
-  struct ip_addr remote_ip;
   u16_t remote_port;
   
+  u8_t flags;
+#define TF_ACK_DELAY (u8_t)0x01U   /* Delayed ACK. */
+#define TF_ACK_NOW   (u8_t)0x02U   /* Immediate ACK. */
+#define TF_INFR      (u8_t)0x04U   /* In fast recovery. */
+#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
+#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
+#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
+#define TF_NODELAY   (u8_t)0x40U   /* Disable Nagle algorithm */
+
   /* receiver varables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
@@ -223,14 +249,6 @@ struct tcp_pcb {
   u16_t rtime;
   
   u16_t mss;   /* maximum segment size */
-
-  u8_t flags;
-#define TF_ACK_DELAY (u8_t)0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW   (u8_t)0x02U   /* Immediate ACK. */
-#define TF_INFR      (u8_t)0x04U   /* In fast recovery. */
-#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
-#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
-#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
   
   /* RTT estimation variables. */
   u16_t rttest; /* RTT estimate in 500ms ticks */
@@ -288,20 +306,31 @@ struct tcp_pcb {
   /* Function to be called whenever a fatal error occurs. */
   void (* errf)(void *arg, err_t err);
 #endif /* LWIP_CALLBACK_API */
+
+  /* idle time before KEEPALIVE is sent */
+  u32_t keepalive;
+  
+  /* KEEPALIVE counter */
+  u8_t keep_cnt;
 };
 
 struct tcp_pcb_listen {  
+/* Common members of all PCB types */
+  IP_PCB;
+
+/* Protocol specific PCB members */
   struct tcp_pcb_listen *next;   /* for the linked list */
-  u8_t prio;
-  void *callback_arg;
   
-  struct ip_addr local_ip;
-  u16_t local_port; 
   /* Even if state is obviously LISTEN this is here for
    * field compatibility with tpc_pcb to which it is cast sometimes
    * Until a cleaner solution emerges this is here.FIXME
    */ 
   enum tcp_state state;   /* TCP state */
+
+  u8_t prio;
+  void *callback_arg;
+  
+  u16_t local_port; 
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
@@ -401,6 +430,8 @@ void tcp_rst(u32_t seqno, u32_t ackno,
        u16_t local_port, u16_t remote_port);
 
 u32_t tcp_next_iss(void);
+
+void tcp_keepalive(struct tcp_pcb *pcb);
 
 extern struct tcp_pcb *tcp_input_pcb;
 extern u32_t tcp_ticks;

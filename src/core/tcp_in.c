@@ -396,7 +396,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #if LWIP_CALLBACK_API
     npcb->accept = pcb->accept;
 #endif /* LWIP_CALLBACK_API */
-
+    /* inherit socket options */
+    npcb->so_options = pcb->so_options & (SOF_DEBUG|SOF_DONTROUTE|SOF_KEEPALIVE|SOF_OOBINLINE|SOF_LINGER);
     /* Register the new PCB so that we can begin receiving segments
        for it. */
     TCP_REG(&tcp_active_pcbs, npcb);
@@ -483,6 +484,7 @@ tcp_process(struct tcp_pcb *pcb)
 
   /* Update the PCB (in)activity timer. */
   pcb->tmr = tcp_ticks;
+  pcb->keep_cnt = 0;
 
   /* Do different things depending on the TCP state. */
   switch (pcb->state) {
