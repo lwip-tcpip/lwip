@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -65,6 +65,10 @@
 a lot of data that needs to be copied, this should be set high. */
 #ifndef MEM_SIZE
 #define MEM_SIZE                        1600
+#endif
+
+#ifndef MEMP_SANITY_CHECK
+#define MEMP_SANITY_CHECK		0
 #endif
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
@@ -218,6 +222,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- RAW options ---------- */
 
+#ifndef LWIP_RAW
+#define LWIP_RAW                        1
+#endif
+
 #ifndef RAW_TTL
 #define RAW_TTL                        255
 #endif
@@ -348,6 +356,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 #if LWIP_STATS
 
+#ifndef LWIP_STATS_DISPLAY
+#define LWIP_STATS_DISPLAY 0
+#endif
+
 #ifndef LINK_STATS
 #define LINK_STATS	1
 #endif
@@ -405,6 +417,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define PBUF_STATS	0
 #define SYS_STATS	0
 #define RAW_STATS	0
+#define LWIP_STATS_DISPLAY	0
 
 #endif /* LWIP_STATS */
 

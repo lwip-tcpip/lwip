@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 

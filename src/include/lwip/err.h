@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -59,6 +59,7 @@ typedef s8_t err_t;
 #define ERR_USE  -10     /* Address in use.          */
 
 #define ERR_IF   -11     /* Low-level netif error    */
+#define ERR_ISCONN -12   /* Already connected.       */
 
 
 #ifdef LWIP_DEBUG

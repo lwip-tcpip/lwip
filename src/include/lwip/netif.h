@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -40,7 +40,9 @@
 
 #include "lwip/inet.h"
 #include "lwip/pbuf.h"
-#include "lwip/dhcp.h"
+#if LWIP_DHCP
+#  include "lwip/dhcp.h"
+#endif
 
 /** must be the maximum of all used hardware address lengths
     across all types of interfaces in use */
