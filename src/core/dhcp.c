@@ -293,18 +293,20 @@ void dhcp_coarse_tmr()
 /**
  * DHCP transaction timeout handling
  *
- * A DHCP server is expected to respond within a
- * short period of time.
+ * A DHCP server is expected to respond within a short period of time.
+ * This timer checks whether an outstanding DHCP request is timed out.
+ * 
  */
 void dhcp_fine_tmr()
 {
   struct netif *netif = netif_list;
-  /* loop through clients */
+  /* loop through netif's */
   while (netif != NULL) {
     /* only act on DHCP configured interfaces */
     if (netif->dhcp != NULL) {
-      /* timer is active (non zero), and triggers (zeroes) now */
+      /* timer is active (non zero), and is about to trigger now */
       if (netif->dhcp->request_timeout-- == 1) {
+        /* { netif->dhcp->request_timeout == 0 } */
         LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_fine_tmr(): request timeout\n"));
         /* this clients' request timeout triggered */
         dhcp_timeout(netif);
@@ -383,8 +385,8 @@ static void dhcp_t1_timeout(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_t1_timeout()\n"));
   if ((dhcp->state == DHCP_REQUESTING) || (dhcp->state == DHCP_BOUND) || (dhcp->state == DHCP_RENEWING)) {
-    /* just retry to renew */
-    /* note that the rebind timer will eventually time-out if renew does not work */
+    /* just retry to renew - note that the rebind timer (t2) will
+     * eventually time-out if renew tries fail. */
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_t1_timeout(): must renew\n"));
     dhcp_renew(netif);
   }
@@ -501,39 +503,43 @@ err_t dhcp_start(struct netif *netif)
 
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_start(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
+  netif->flags &= ~NETIF_FLAG_DHCP;
 
+  /* no DHCP client attached yet? */
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
     dhcp = mem_malloc(sizeof(struct dhcp));
     if (dhcp == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): could not allocate dhcp\n"));
-      netif->flags &= ~NETIF_FLAG_DHCP;
-      return ERR_MEM;
-    }
-    /* clear data structure */
-    memset(dhcp, 0, sizeof(struct dhcp));
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): allocated dhcp"));
-    dhcp->pcb = udp_new();
-    if (dhcp->pcb == NULL) {
-      LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
-      mem_free((void *)dhcp);
-      dhcp = NULL;
-      netif->flags &= ~NETIF_FLAG_DHCP;
       return ERR_MEM;
     }
     /* store this dhcp client in the netif */
     netif->dhcp = dhcp;
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): created new udp pcb\n"));
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): allocated dhcp"));
+  /* already has DHCP client attached */
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE | 3, ("dhcp_start(): restarting DHCP configuration\n"));
   }
+  	
+	/* clear data structure */
+	memset(dhcp, 0, sizeof(struct dhcp));
+  /* allocate UDP PCB */
+	dhcp->pcb = udp_new();
+	if (dhcp->pcb == NULL) {
+	  LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
+	  mem_free((void *)dhcp);
+	  netif->dhcp = dhcp = NULL;
+	  return ERR_MEM;
+	}
+	LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
   if (result != ERR_OK) {
     /* free resources allocated above */
     dhcp_stop(netif);
+    return ERR_MEM;
   }
+  netif->flags |= NETIF_FLAG_DHCP;
   return result;
 }
 
@@ -907,8 +913,12 @@ static err_t dhcp_release(struct netif *netif)
 
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
-
-
+  /* clean old DHCP offer */
+  ip_addr server_ip_addr = 0;
+  ip_addr offered_ip_addr = ip_addr offered_sn_mask = 0;
+  ip_addr offered_gw_addr = ip_addr offered_bc_addr = 0;
+  offered_t0_lease = offered_t1_renew = offered_t2_rebind = 0;
+  
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
   if (result == ERR_OK) {
