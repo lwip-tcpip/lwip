@@ -46,7 +46,7 @@ struct raw_pcb {
 
   u16_t protocol;
 
-  int (* recv)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
+  u8_t (* recv)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr);
   void *recv_arg;
 };
