@@ -36,6 +36,7 @@
  *
  */
 
+#include <string.h>
 
 #include "lwip/arch.h"
 #include "lwip/opt.h"
