@@ -1162,6 +1162,11 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif /* TCP_QUEUE_OOSEQ */
 
       }
+    } else {
+      if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
+          TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
+        tcp_ack_now(pcb);
+      }
     }
   } else {
     /* Segments with length 0 is taken care of here. Segments that
@@ -1201,7 +1206,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
         ++c;
         /* NOP option. */
       } else if (opt == 0x02 &&
-                opts[c + 1] == 0x04) {
+        opts[c + 1] == 0x04) {
         /* An MSS option with the right option length. */
         mss = (opts[c + 2] << 8) | opts[c + 3];
         pcb->mss = mss > TCP_MSS? TCP_MSS: mss;
