@@ -648,7 +648,7 @@ pbuf_unref(struct pbuf *f)
       /* deallocate chain */
       pbuf_free(f);
       f = NULL;
-      DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n", f));
+      DEBUGF(PBUF_DEBUG, ("pbuf_unref: failed\n"));
       return NULL;
     }
   }
