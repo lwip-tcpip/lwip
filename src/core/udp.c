@@ -311,7 +311,8 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* No match was found, send ICMP destination port unreachable unless
    destination address was broadcast/multicast. */
 
-      if (!ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) &&
+      if (!((inp->flags & NETIF_FLAG_BROADCAST) &&
+      		ip_addr_isbroadcast(&iphdr->dest, &inp->netmask)) &&
    !ip_addr_ismulticast(&iphdr->dest)) {
 
   /* adjust pbuf pointer */
