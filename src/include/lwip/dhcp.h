@@ -29,7 +29,7 @@ struct dhcp
   struct dhcp_msg *msg_in;
   /** incoming msg options */
   struct dhcp_msg *options_in; 
-   ** ingoing msg options length */
+  /** ingoing msg options length */
   u16_t options_in_len;
 
   struct pbuf *p_out; // pbuf of outcoming msg
