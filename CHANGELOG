@@ -9,6 +9,37 @@ HISTORY
 
 (HEAD)
 
+  2004-08-20 Tony Mountifield <tony@softins.co.uk>
+  * etharp.c Make sure the first pbuf queued on an ARP entry
+    is properly ref counted.
+
+  2004-07-27 Tony Mountifield <tony@softins.co.uk>
+  * debug.h Added (int) cast in LWIP_DEBUGF() to avoid compiler
+    warnings about comparison.
+  * pbuf.c Stopped compiler complaining of empty if statement
+    when LWIP_DEBUGF() empty.  Closed an unclosed comment.
+  * tcp.c Stopped compiler complaining of empty if statement
+    when LWIP_DEBUGF() empty.
+  * ip.h Corrected IPH_TOS() macro: returns a byte, so doesn't need htons().
+  * inet.c Added a couple of casts to quiet the compiler.
+    No need to test isascii(c) before isdigit(c) or isxdigit(c).
+
+  2004-07-22 Tony Mountifield <tony@softins.co.uk>
+  * inet.c Made data types consistent in inet_ntoa().
+    Added casts for return values of checksum routines, to pacify compiler.
+  * ip_frag.c, tcp_out.c, sockets.c, pbuf.c
+    Small corrections to some debugging statements, to pacify compiler.
+
+  2004-07-21 Tony Mountifield <tony@softins.co.uk>
+  * etharp.c Removed spurious semicolon and added missing end-of-comment.
+  * ethernetif.c Updated low_level_output() to match prototype for
+    netif->linkoutput and changed low_level_input() similarly for consistency.
+  * api_msg.c Changed recv_raw() from int to u8_t, to match prototype
+    of raw_recv() in raw.h and so avoid compiler error.
+  * sockets.c Added trivial (int) cast to keep compiler happier.
+  * ip.c, netif.c Changed debug statements to use the tidier ip4_addrN() macros.
+
+  
 (STABLE-1_0_0)
 
   ++ Changes:
