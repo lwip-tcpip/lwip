@@ -148,7 +148,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   queuelen = pcb->snd_queuelen;
   if (queuelen >= TCP_SND_QUEUELEN) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %u (max %u)\n", queuelen, TCP_SND_QUEUELEN));
-    goto memerr;
+    TCP_STATS_INC(tcp.memerr);
+    return ERR_MEM;
   }
   if (queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: pbufs on queue => at least one queue non-empty",
@@ -352,7 +353,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
 
   return ERR_OK;
-  memerr:
+memerr:
   TCP_STATS_INC(tcp.memerr);
 
   if (queue != NULL) {
