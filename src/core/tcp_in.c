@@ -503,7 +503,7 @@ tcp_process(struct tcp_pcb *pcb)
     /* First, determine if the reset is acceptable. */
     if (pcb->state == SYN_SENT) {
       if (ackno == pcb->snd_nxt) {
-  acceptable = 1;
+        acceptable = 1;
       }
     } else {
       /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
@@ -540,6 +540,7 @@ tcp_process(struct tcp_pcb *pcb)
      pcb->snd_nxt, ntohl(pcb->unacked->tcphdr->seqno)));
     if ((flags & TCP_ACK) && (flags & TCP_SYN)
         && ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
+      pcb->snd_buf ++;
       pcb->rcv_nxt = seqno + 1;
       pcb->lastack = ackno;
       pcb->snd_wnd = tcphdr->wnd;
