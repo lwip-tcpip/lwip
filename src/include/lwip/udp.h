@@ -41,11 +41,11 @@
 #define UDP_HLEN 8
 
 struct udp_hdr {
-  PACK_STRUCT_FIELD(u16_t src);
-  PACK_STRUCT_FIELD(u16_t dest);  /* src/dest UDP ports */
-  PACK_STRUCT_FIELD(u16_t len);
-  PACK_STRUCT_FIELD(u16_t chksum);
-} PACK_STRUCT_STRUCT;
+  u16_t src;
+  u16_t dest;  /* src/dest UDP ports */
+  u16_t len;
+  u16_t chksum;
+};
 
 #define UDP_FLAGS_NOCHKSUM 0x01U
 #define UDP_FLAGS_UDPLITE  0x02U

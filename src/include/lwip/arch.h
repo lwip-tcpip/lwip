@@ -42,20 +42,6 @@
 
 #include "arch/cc.h"
 
-#ifndef PACK_STRUCT_BEGIN
-#define PACK_STRUCT_BEGIN
-#endif /* PACK_STRUCT_BEGIN */
-
-#ifndef PACK_STRUCT_END
-#define PACK_STRUCT_END
-#endif /* PACK_STRUCT_END */
-
-#ifndef PACK_STRUCT_FIELD
-#define PACK_STRUCT_FIELD(x) x
-#endif /* PACK_STRUCT_FIELD */
-
-
-
 #ifdef LWIP_PROVIDE_ERRNO
 
 #define  EPERM     1  /* Operation not permitted */

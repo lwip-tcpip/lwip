@@ -34,29 +34,13 @@
 
 #include "lwip/arch.h"
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct ip_addr {
-  PACK_STRUCT_FIELD(u32_t addr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+  u32_t addr;
+};
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct ip_addr2 {
-  PACK_STRUCT_FIELD(u16_t addrw[2]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+  u16_t addrw[2];
+};
 
 /* For compatibility with BSD code */
 struct in_addr {

@@ -161,25 +161,16 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 #define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
 #define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
 
-
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct tcp_hdr {
-  PACK_STRUCT_FIELD(u16_t src);
-  PACK_STRUCT_FIELD(u16_t dest);
-  PACK_STRUCT_FIELD(u32_t seqno);
-  PACK_STRUCT_FIELD(u32_t ackno);
-  PACK_STRUCT_FIELD(u16_t _hdrlen_rsvd_flags);
-  PACK_STRUCT_FIELD(u16_t wnd);
-  PACK_STRUCT_FIELD(u16_t chksum);
-  PACK_STRUCT_FIELD(u16_t urgp);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+  u16_t src;
+  u16_t dest;
+  u32_t seqno;
+  u32_t ackno;
+  u16_t _hdrlen_rsvd_flags;
+  u16_t wnd;
+  u16_t chksum;
+  u16_t urgp;
+};
 
 #define TCPH_OFFSET(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 8)
 #define TCPH_HDRLEN(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 12)

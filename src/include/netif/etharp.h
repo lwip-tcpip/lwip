@@ -44,49 +44,36 @@
 #include "lwip/netif.h"
 #include "lwip/ip.h"
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
 struct eth_addr {
-  PACK_STRUCT_FIELD(u8_t addr[6]);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
+  u8_t addr[6];
+};
 
-PACK_STRUCT_BEGIN
 struct eth_hdr {
 #if ETH_PAD_SIZE
-  PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
+  u8_t padding[ETH_PAD_SIZE];
 #endif
-  PACK_STRUCT_FIELD(struct eth_addr dest);
-  PACK_STRUCT_FIELD(struct eth_addr src);
-  PACK_STRUCT_FIELD(u16_t type);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
+  struct eth_addr dest;
+  struct eth_addr src;
+  u16_t type;
+};
 
-PACK_STRUCT_BEGIN
 /** the ARP message */
 struct etharp_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
-  PACK_STRUCT_FIELD(u16_t hwtype);
-  PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
-  PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);
-  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr2 dipaddr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-
-PACK_STRUCT_BEGIN
-struct ethip_hdr {
-  PACK_STRUCT_FIELD(struct eth_hdr eth);
-  PACK_STRUCT_FIELD(struct ip_hdr ip);
+  struct eth_hdr ethhdr;
+  u16_t hwtype;
+  u16_t proto;
+  u16_t _hwlen_protolen;
+  u16_t opcode;
+  struct eth_addr shwaddr;
+  struct ip_addr2 sipaddr;
+  struct eth_addr dhwaddr;
+  struct ip_addr2 dipaddr;
 };
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+
+struct ethip_hdr {
+  struct eth_hdr eth);
+  struct ip_hdr ip;
+};
 
 #define ARP_TMR_INTERVAL 10000
 
@@ -101,7 +88,5 @@ void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
 err_t etharp_output(struct netif *netif, struct ip_addr *ipaddr,
          struct pbuf *q);
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
-
-
 
 #endif /* __NETIF_ARP_H__ */
