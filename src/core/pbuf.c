@@ -404,14 +404,18 @@ pbuf_refresh(void)
  *
  * @param p pbuf to shrink.
  * @param size new size
- * If the pbuf is in ROM, only the ->tot_len and ->len fields are adjusted.
+ *
+ * Depending on the desired size, the first few pbufs in a chain might
+ * be skipped.
+ * @note If the pbuf is ROM/REF, only the ->tot_len and ->len fields are adjusted.
  * If the chain
  * a pbuf chain, as it might be with both pbufs in dynamically
  * allocated RAM and for pbufs from the pbuf pool, we have to step
  * through the chain until we find the new endpoint in the pbuf chain.
  * Then the pbuf that is right on the endpoint is resized and any
  * further pbufs on the chain are deallocated.
- * @bug #1903
+ * @bug #1903 should be fixed
+ * @bug Does not grow pbuf chains
  */
 /*-----------------------------------------------------------------------------------*/
 #if NEW_PBUF_REALLOC
@@ -420,6 +424,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 {
   struct pbuf *q, *r;
   u16_t rem_len; /* remaining length */
+  s16_t grow;
 
   LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
               p->flags == PBUF_FLAG_ROM ||
@@ -430,14 +435,18 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
     /** enlarging not yet supported */
     return;
   }
-
+  
+  /* { the pbuf chains grows by (new_len - p->tot_len) bytes } */
+  grow = new_len - p->tot_len;
+  
   /* first, step over any pbufs that should remain in the chain */
   rem_len = new_len;
   q = p;  
   /* this pbuf should be kept? */
   while (rem_len > q->len) {
     /* decrease remaining length by pbuf length */
-    rem_len -= q->len;      
+    rem_len -= q->len;
+    q->tot_len += grow;
     q = q->next;
   }
   /* { we have now reached the new last pbuf } */
@@ -445,11 +454,11 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if (q->flags == PBUF_FLAG_RAM) {
+  if ((q->flags == PBUF_FLAG_RAM) && (rem_len != q->len )) {
     /* reallocate and adjust the length of the pbuf that will be split */
     mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
   }
-  
+  /* adjust length fields */
   q->len = rem_len;
   q->tot_len = q->len;
 
@@ -465,12 +474,10 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
     /* remember next pbuf in chain */
     r = q->next;
     /* deallocate pbuf */
-    if (q->flags == PBUF_FLAG_RAM) {
+    if (q->flags == PBUF_FLAG_POOL) {
+      PBUF_POOL_FREE(q);
+    } else {
       pbuf_free(q);
-    } else if ((q->flags == PBUF_FLAG_ROM) || (q->flags == PBUF_FLAG_REF)) {
-      PBUF_POOL_FREE(q);
-    } else if (q->flags == PBUF_FLAG_POOL) {
-      PBUF_POOL_FREE(q);
     }
     q = r;
   }
