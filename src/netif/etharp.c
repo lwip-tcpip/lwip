@@ -178,7 +178,7 @@ etharp_tmr(void)
 }
 
 /**
- * Search the ARP table for a specific entry.
+ * Search the ARP table for a matching or new entry.
  * 
  * If an IP address is given, return a pending or stable ARP entry that matches
  * the address. If no match is found, create a new entry with this address set,
@@ -193,22 +193,22 @@ etharp_tmr(void)
  *
  * @param ipaddr IP address to find in ARP cache, or to add if not found.
  * @param flags
- * - ETHARP_TRY_HARD: Try hard to create a entry by allowing recycling.
+ * - ETHARP_TRY_HARD: Try hard to create a entry by allowing recycling of
+ * active (stable or pending) entries.
  *  
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 {
-  s8_t old_pending, old_stable, empty, i;
-  u8_t age_pending, age_stable;
+  s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE, empty = ARP_TABLE_SIZE, i;
+  u8_t age_pending = 0, age_stable = 0;
 #if ARP_QUEUEING
+  /* oldest entry with packets on queue */
   s8_t old_queue = ARP_TABLE_SIZE;
+  /* its age */
   u8_t age_queue = 0;
 #endif
-
-  old_pending = old_stable = empty = ARP_TABLE_SIZE;
-  age_pending = age_stable = 0;
 
   /**
    * a) do a search through the cache, remember candidates
@@ -237,7 +237,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
       /* if given, does IP address match IP address in ARP entry? */
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: found matching pending entry %d\n", i));
-        /* found match, simply bail out */
+        /* found exact IP address match, simply bail out */
         return i;
 #if ARP_QUEUEING
       /* pending with queued packets? */
@@ -260,7 +260,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
       /* if given, does IP address match IP address in ARP entry? */
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: found matching stable entry %d\n", i));
-        /* found match, simply bail out */
+        /* found exact IP address match, simply bail out */
         return i;
       /* remember entry with oldest stable entry in oldest, its age in maxtime */
       } else if (arp_table[i].ctime >= age_stable) {
@@ -269,12 +269,21 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
       }
     }
   }
+  /* { we have no match } => try to create a new entry */
+   
+  /* no empty entry found and not allowed to recycle? */
+  if ((i == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
+  {
+  	return (s8_t)ERR_MEM;
+  }
   
   /* b) choose the least destructive entry to recycle:
    * 1) empty entry
    * 2) oldest stable entry
    * 3) oldest pending entry without queued packets
    * 4) oldest pending entry without queued packets
+   * 
+   * { ETHARP_TRY_HARD is set at this point }
    */ 
 
   /* 1) empty entry available? */
@@ -305,38 +314,26 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     /* no empty or recyclable entries found */
 #endif
   } else {
-    return ERR_MEM;
+    return (s8_t)ERR_MEM;
   }
 
   /* { empty or recyclable entry found } */
   LWIP_ASSERT("i >= 0", i >= 0);
   LWIP_ASSERT("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
 
-  /* allowed to recycle a entry? */
-  if (flags & ETHARP_TRY_HARD) {
-    /* recycle (no-op for an already empty entry) */
-    arp_table[i].state = ETHARP_STATE_EMPTY;
+  /* recycle entry (no-op for an already empty entry) */
+  arp_table[i].state = ETHARP_STATE_EMPTY;
+  /* IP address given? */
+  if (ipaddr != NULL) {
+    /* set IP address */
+    ip_addr_set(&arp_table[i].ipaddr, ipaddr);
   }
-
-  /* empty entry found or created? */
-  if (arp_table[i].state == ETHARP_STATE_EMPTY) {
-    /* IP address given? */
-    if (ipaddr != NULL) {
-      /* set IP address */
-      ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-    }
-    arp_table[i].ctime = 0;
+  arp_table[i].ctime = 0;
 #if ARP_QUEUEING
-    /* remove any queued packets */
-    if (arp_table[i].p != NULL) pbuf_free(arp_table[i].p);
-    arp_table[i].p = NULL;
+  /* remove any queued packets */
+  if (arp_table[i].p != NULL) pbuf_free(arp_table[i].p);
+  arp_table[i].p = NULL;
 #endif
-  /* no entry available */
-  } else {
-    /* return failure */
-    i = (s8_t)ERR_MEM;
-  }
-        
   return (err_t)i;
 }
 
