@@ -34,15 +34,15 @@
 
 struct fsdata_file {
   const struct fsdata_file *next;
-  const char *name;
-  const char *data;
+  const unsigned char *name;
+  const unsigned char *data;
   const int len;
 };
 
 struct fsdata_file_noconst {
   struct fsdata_file *next;
-  char *name;
-  char *data;
+  unsigned char *name;
+  unsigned char *data;
   int len;
 };
 
