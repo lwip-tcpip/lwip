@@ -3,11 +3,13 @@ FUTURE
   * TODO: The lwIP source code makes some invalid assumptions on processor
     word-length, storage sizes and alignment. See the mailing lists for
     problems with exoteric architectures showing these problems.
-    We still have to fix this neatly.
+    Neat fixes are needed.
 
 HISTORY
 
 (STABLE-0_7 branch)
+
+(STABLE-0_7_2)
 
   ++ Bug fixes:
 
