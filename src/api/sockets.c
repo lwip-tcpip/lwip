@@ -32,12 +32,14 @@
  *
  */
 
+#include <string.h>
+#include <errno.h>
+
 #include "lwip/opt.h"
 #include "lwip/api.h"
 #include "lwip/arch.h"
 #include "lwip/sys.h"
 
-#define LWIP_TIMEVAL_PRIVATE
 #include "lwip/sockets.h"
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
