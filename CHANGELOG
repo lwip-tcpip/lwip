@@ -2,12 +2,21 @@ HISTORY
 
 (current)
 
+  ++ Bug fixes:
 
+  * some debug formatters and casts fixed.
+  * numereous fixes in PPP.
+
+  ++ Changes:
+
+  * DEBUGF now is LWIP_DEBUGF
+  * pbuf_dechain() has been re-enabled.
+  * Mentioned the changed use of CVS branches in README.
 
 (STABLE-0_6_3)
 
   ++ Bug fixes:
-  
+
   * Fixed pool pbuf memory leak in pbuf_alloc().
     Occured if not enough PBUF_POOL pbufs for a packet pbuf chain.
     Reported by Savin Zlobec.
@@ -20,11 +29,11 @@ HISTORY
   * Added PPP stack contributed by Marc Boucher
 
   ++ Changes:
-  
+
   * Now drops short packets for ICMP/UDP/TCP protocols. More robust.
 
   * ARP queueuing now queues the latest packet instead of the first.
-    This is the recommended behaviour, but can be overridden in
+    This is the RFC recommended behaviour, but can be overridden in
     lwipopts.h.
 
 (0.6.2)
@@ -80,10 +89,10 @@ HISTORY
 
   * netif's have a dhcp field that must be initialized to NULL by the driver.
     See the contrib/ports/c16x cs8900 driver as a driver example.
-  
+
 (0.5.x) This file has been unmaintained up to 0.6.1. All changes are
   logged in CVS but have not been explained here.
-  
+
 (0.5.3) Changes since version 0.5.2
 
   ++ Bugfixes:
@@ -115,7 +124,7 @@ HISTORY
   * pbuf_dechain() did not update the ->tot_len field of the tail.
 
   * Aborted TCP connections were not handled correctly in all
-    situations. 
+    situations.
 
   ++ Other changes:
 
@@ -123,7 +132,7 @@ HISTORY
 
   * The ->len field in the tcp_seg structure now counts the actual
     amount of data, and does not add one for SYN and FIN segments.
-    
+
 (0.5.1) Changes since version 0.5.0
 
   ++ New features:
@@ -133,16 +142,16 @@ HISTORY
   * Preliminary support for cross platform packed structs.
 
   * ARP timer now implemented.
-  
+
   ++ Bugfixes:
 
   * TCP output queue length was badly initialized when opening
     connections.
 
   * TCP delayed ACKs were not sent correctly.
-  
+
   * Explicit initialization of BSS segment variables.
-  
+
   * read() in BSD socket library could drop data.
 
   * Problems with memory alignment.
@@ -156,7 +165,7 @@ HISTORY
 
   * IP multicast address tests had endianess problems.
 
-  * ARP requests had wrong destination hardware address. 
+  * ARP requests had wrong destination hardware address.
 
   ++ Other changes:
 
@@ -166,8 +175,8 @@ HISTORY
 
   * TCP and UDP ->dest_* struct members where changed to ->remote_*.
 
-  * ntoh* macros are now null definitions for big endian CPUs. 
-  
+  * ntoh* macros are now null definitions for big endian CPUs.
+
 (0.5.0) Changes since version 0.4.2
 
   ++ New features:
@@ -175,9 +184,9 @@ HISTORY
   * Redesigned operating system emulation layer to make porting easier.
 
   * Better control over TCP output buffers.
-    
+
   * Documenation added.
-  
+
   ++ Bugfixes:
 
   * Locking issues in buffer management.
@@ -190,7 +199,7 @@ HISTORY
 
   * Directory structure somewhat changed; the core/ tree has been
     collapsed.
-  
+
 (0.4.2) Changes since version 0.4.1
 
   ++ New features:
@@ -213,7 +222,7 @@ HISTORY
 
   * Variable++ have in appliciable cases been translated to ++variable
     since some compilers generate better code in the latter case.
-    
+
 (0.4.1) Changes since version 0.4
 
   ++ New features:
@@ -225,43 +234,43 @@ HISTORY
   * UDP: experimental support for UDP-Lite extensions.
 
   ++ Bugfixes:
-    
+
   * TCP: out of order segments were in some cases handled incorrectly,
     and this has now been fixed. Delayed acknowledgements was broken
     in 0.4, has now been fixed. Binding to an address that is in use
     now results in an error. Reset connections sometimes hung an
-    application; this has been fixed. 
+    application; this has been fixed.
 
   * Checksum calculation sometimes failed for chained pbufs with odd
     lengths. This has been fixed.
-    
+
   * API: a lot of bug fixes in the API. The UDP API has been improved
     and tested. Error reporting and handling has been
     improved. Logical flaws and race conditions for incoming TCP
-    connections has been found and removed. 
- 
+    connections has been found and removed.
+
   * Memory manager: alignment issues. Reallocating memory sometimes
     failed, this has been fixed.
 
-  * Generic library: bcopy was flawed and has been fixed. 
+  * Generic library: bcopy was flawed and has been fixed.
 
   ++ Other changes:
-  
+
   * API: all datatypes has been changed from generic ones such as
     ints, to specified ones such as u16_t. Functions that return
     errors now have the correct type (err_t).
-  
+
   * General: A lot of code cleaned up and debugging code removed. Many
     portability issues have been fixed.
 
-  * The license was changed; the advertising clause was removed. 
+  * The license was changed; the advertising clause was removed.
 
   * C64 port added.
 
   * Thanks: Huge thanks go to Dagan Galarneau, Horst Garnetzke, Petri
     Kosunen, Mikael Caleres, and Frits Wilmink for reporting and
     fixing bugs!
-  
+
 (0.4) Changes since version 0.3.1
 
   * Memory management has been radically changed; instead of
@@ -269,14 +278,14 @@ HISTORY
     rapidly allocated and deallocated is now kept in pools. Allocation
     and deallocation from those memory pools is very fast. The shared
     heap is still present but is used less frequently.
-    
+
   * The memory, memory pool, and packet buffer subsystems now support
     4-, 2-, or 1-byte alignment.
 
   * "Out of memory" situations are handled in a more robust way.
- 
+
   * Stack usage has been reduced.
-    
+
   * Easier configuration of lwIP parameters such as memory usage,
     TTLs, statistics gathering, etc. All configuration parameters are
     now kept in a single header file "lwipopts.h".
@@ -290,7 +299,7 @@ HISTORY
 
   * The code for the RTXC architecture has been implemented, tested
     and put to use.
-    
+
   * Bugs have been found and corrected in the TCP, UDP, IP, API, and
     the Internet checksum modules.
 
@@ -299,7 +308,7 @@ HISTORY
 
   * The license has been changed slightly to conform more with the
     original BSD license, including the advertisement clause.
-  
+
 (0.3.1) Changes since version 0.3
 
   * Fix of a fatal bug in the buffer management. Pbufs with allocated
@@ -325,10 +334,10 @@ HISTORY
     to free some memory and retry the allocation.
 
   * Much testing has been done with limited memory
-    configurations. lwIP now does a better job when overloaded. 
+    configurations. lwIP now does a better job when overloaded.
 
   * Some bugfixes and improvements to the buffer (pbuf) subsystem.
-    
+
   * Many bugfixes in the TCP code:
 
     - Fixed a bug in tcp_close().
@@ -355,15 +364,15 @@ HISTORY
     - TCP retransmission timeout backoffs are not correctly computed
       (ala BSD). After a number of retransmissions, TCP now gives up
       the connection.
-      
+
   * TCP connections now are kept on three lists, one for active
     connections, one for listening connections, and one for
     connections that are in TIME-WAIT. This greatly speeds up the fast
     timeout processing for sending delayed ACKs.
-  
+
   * TCP now provides proper feedback to the application when a
     connection has been successfully set up.
-  
+
   * More comments have been added to the code. The code has also been
     somewhat cleaned up.
 
