@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.3  2002/11/06 11:43:21  likewise
+ * find_arp_entry() returned 0 instead of ARP_TABLE_SIZE if full pending cache (bug #1625).
+ *
  * Revision 1.2  2002/11/04 14:56:40  likewise
  * Fixed NULL pointer bug (#1493). Fix for memory leak bug (#1601), etharp_output_sent(). Added etharp_query for DHCP.
  *
@@ -173,7 +176,7 @@ find_arp_entry(void)
      throw it away. */
   if(i == ARP_TABLE_SIZE) {
     maxtime = 0;
-    j = 0;
+    j = ARP_TABLE_SIZE;
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
       if(arp_table[i].state == ETHARP_STATE_STABLE &&
 	 ctime - arp_table[i].ctime > maxtime) {
