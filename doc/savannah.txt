@@ -13,18 +13,17 @@ Table of Contents:
 
 Obtain lwIP from the CVS main trunk (stable)
 
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
+export CVS_RSH=ssh
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
+
+(If SSH asks about authenticity of the host, you can check the key
+ fingerprint against http://savannah.nongnu.org/cvs/?group=lwip)
 
 Or, obtain a specific release as follows:
-
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_6_3 -d lwip-0.6.3 lwip
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_6_3 -d lwip-0.6.3 lwip
 
 Or, obtain a development branch as follows:
-
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-DEVEL lwip
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-DEVEL lwip
 
 
 3 Merging from DEVEL branch to main trunk (stable)
@@ -51,6 +50,9 @@ cvs update -P -jmerged_from_DEVEL_to_main -jDEVEL
 (This will apply the changes between 'merged_from_DEVEL_to_main'
 and 'DEVEL' to your work set of files)
 
+We can now commit the merge result.
+cvs commit -R -m "Merged from DEVEL to main." 
+
 If this worked out OK, we now move the tag in the DEVEL branch
 to this merge point, so we can use this point for future merges:
 
@@ -66,8 +68,8 @@ Login CVS using pserver authentication, then export a clean copy of the
 tagged tree. Export is similar to a checkout, except that the CVS metadata
 is not created locally. 
 
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip export -r STABLE-0_6_3 -d lwip-0.6.3 lwip
+export CVS_RSH=ssh
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip export -r STABLE-0_6_3 -d lwip-0.6.3 lwip
 
 Archive this directory using tar, gzip'd, bzip2'd and zip'd.
 
