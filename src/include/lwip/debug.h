@@ -51,6 +51,8 @@
 #define TUNIF_DEBUG      0
 #define UNIXIF_DEBUG     0
 #define TAPIF_DEBUG      1
+#define SIO_FIFO_DEBUG   0
+#define PPP_DEBUG        0
 
 #define API_LIB_DEBUG    0
 #define API_MSG_DEBUG    0
@@ -99,6 +101,8 @@
 #define TUNIF_DEBUG      0
 #define UNIXIF_DEBUG     0
 #define TAPIF_DEBUG      0
+#define SIO_FIFO_DEBUG   0
+#define PPP_DEBUG        0
 #define API_LIB_DEBUG    0
 #define API_MSG_DEBUG    0
 #define SOCKETS_DEBUG    0
