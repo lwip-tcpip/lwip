@@ -2,7 +2,7 @@ Daily Use Guide for using Savannah for lwIP
 
 Table of Contents:
 
-1 - Anonymous CVS checkouts and updates (to be elaborated)
+1 - Obtaining lwIP from the CVS repository
 2 - Committers/developers CVS access using SSH (to be written)
 3 - Merging from DEVEL branch to main trunk (stable branch)
 4 - How to release lwIP
@@ -30,6 +30,39 @@ cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_7_0 -d
 Or, obtain a development branch (considered unstable!) as follows:
 cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-DEVEL lwip
 
+3 Committers/developers CVS access using SSH
+--------------------------------------------
+
+The Savannah server uses SSH (Secure Shell) protocol 2 authentication and encryption.
+As such, CVS commits to the server occur through a SSH tunnel for project members.
+To create a SSH2 key pair in UNIX-like environments, do this:
+
+ssh-keygen -t dsa
+
+Under Windows, a recommended SSH client is "PuTTY", freely available with good
+documentation and a graphic user interface. Use its key generator.
+
+Now paste the id_dsa.pub contents into your Savannah account public key list. Wait
+a while so that Savannah can update its configuration (This can take minutes).
+
+Try to login using SSH:
+
+ssh -v your_login@subversions.gnu.org
+
+If it tells you:
+
+Authenticating with public key "your_key_name"...
+Server refused to allocate pty
+
+then you could login; Savannah refuses to give you a shell - which is OK, as we
+are allowed to use SSH for CVS only. Now, you should be able to do this:
+
+export CVS_RSH=ssh
+cvs -d:ext:your_login@subversions.gnu.org:/cvsroot/lwip checkout lwip
+
+after which you can edit your local files with bug fixes or new features and
+commit them. Make sure you know what you are doing when using CVS to make
+changes on the repository. If in doubt, ask on the lwip-members mailing list.
 
 3 Merging from DEVEL branch to main trunk (stable)
 --------------------------------------------------
