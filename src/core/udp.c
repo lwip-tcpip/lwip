@@ -56,11 +56,13 @@
 #include "arch/perf.h"
 #include "lwip/snmp.h"
 
-/*-----------------------------------------------------------------------------------*/
+//#undef DEBUGF
+//#define DEBUGF(x,y) { page_printf("\f"); page_printf y; };
 
-/* The list of UDP PCBs. */
+/* The list of UDP PCBs */
 #if LWIP_UDP
-/*static*/ struct udp_pcb *udp_pcbs = NULL;
+/* was static, but we may want to access this from a socket layer */
+struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;
 
@@ -335,10 +337,13 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_send\n"));
 
   /* if the PCB is not yet bound, bind it here */
-  if(pcb->local_port == 0) {
+  if (pcb->local_port == 0) {
+    DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: not yet bound\n"));
     err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-    if(err != ERR_OK)
+    if (err != ERR_OK) {
+      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: forced bind failed\n"));
       return err;
+    }
   }
 
   /* not enough space to add an UDP header to first pbuf in given p chain? */
@@ -347,6 +352,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */
     if (q == NULL) {
+      DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: could not allocate header\n"));
       return ERR_MEM;
     }
     /* chain header q in front of given pbuf p */
