@@ -37,7 +37,8 @@
  * RFC 2131 and RFC 2132.
  *
  * KNOWN BUG:
- * - This client will fail on servers using file/sname field overloading
+ * - Parsing of DHCP messages which use file/sname field overloading will
+ * probably fail. Additional support for this must go into dhcp_unfold().
  * TODO:
  * - Add JavaDoc style documentation (API, internals).
  * - Make the unfold routine smarter to handle this
@@ -62,10 +63,11 @@
  *
  * Then, use
  * struct dhcp_state *client = dhcp_start(struct netif *netif)
- * to start the dhcp client to configure the interface by
+ * starts a DHCP client instance which configures the interface by
  * obtaining an IP address lease and maintaining it.
  *
- * Use dhcp_stop(client) to stop the lease.
+ * Use dhcp_release(client) to end the lease and use dhcp_stop(client)
+ * to remove the DHCP client.
  *
  */
 #include "lwip/debug.h"
@@ -78,12 +80,15 @@
 #include "lwipopts.h"
 #include "lwip/dhcp.h"
 
-/// transaction identifier, unique over all DHCP client and all DHCP requests
+/** find the active DHCP attached to the given network interface */
+struct dhcp_state *dhcp_find_client(struct netif *netif);
+
+/** transaction identifier, unique over all DHCP requests */
 static u32_t xid = 0xABCD0000;
-/// singly-linked list of DHCP clients that are active
+/** singly-linked list of DHCP clients that are active */
 static struct dhcp_state *client_list = NULL;
 
-/// DHCP client state machine functions
+/** DHCP client state machine functions */
 static void dhcp_handle_ack(struct dhcp_state *state);
 static void dhcp_handle_nak(struct dhcp_state *state);
 static void dhcp_handle_offer(struct dhcp_state *state);
@@ -96,7 +101,7 @@ static err_t dhcp_rebind(struct dhcp_state *state);
 static err_t dhcp_release(struct dhcp_state *state);
 static void dhcp_set_state(struct dhcp_state *state, unsigned char new_state);
 
-// receive, unfold, process and free incoming messages
+/** receive, unfold, parse and free incoming messages */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static err_t dhcp_unfold_reply(struct dhcp_state *state);
 static u8_t *dhcp_get_option_ptr(struct dhcp_state *state, u8_t option_type);
@@ -104,12 +109,18 @@ static u8_t dhcp_get_option_byte(u8_t *ptr);
 static u16_t dhcp_get_option_short(u8_t *ptr);
 static u32_t dhcp_get_option_long(u8_t *ptr);
 static void dhcp_free_reply(struct dhcp_state *state);
+
+/** set the DHCP timers */
 static void dhcp_timeout(struct dhcp_state *state);
 static void dhcp_t1_timeout(struct dhcp_state *state);
 static void dhcp_t2_timeout(struct dhcp_state *state);
-void dhcp_arp_reply(struct ip_addr *addr);
 
-// build outgoing messages
+#if DHCP_DOES_ARP_CHECK
+/** called by ARP to notify us of ARP replies */
+void dhcp_arp_reply(struct ip_addr *addr);
+#endif
+
+/** build outgoing messages */
 static err_t dhcp_create_request(struct dhcp_state *state);
 static void dhcp_delete_request(struct dhcp_state *state);
 static void dhcp_option(struct dhcp_state *state, u8_t option_type, u8_t option_len);
@@ -118,9 +129,13 @@ static void dhcp_option_short(struct dhcp_state *state, u16_t value);
 static void dhcp_option_long(struct dhcp_state *state, u32_t value);
 static void dhcp_option_trailer(struct dhcp_state *state);
 
-// find a client in the singly-linked list of DHCP clients
-struct dhcp_state *dhcp_find_client(struct netif *netif);
-
+/**
+ * Back-off the DHCP client because of a received NAK. Receiving a
+ * NAK means the client asked for something non-sensible, for
+ * example when it tries to renew a lease obtained on another network.
+ *
+ * We back-off and will end up restarting a fresh DHCP negotiation later.
+ */ 
 static void dhcp_handle_nak(struct dhcp_state *state) {
 	u16_t msecs = 10 * 1000;
  	DEBUGF(DHCP_DEBUG, ("dhcp_handle_nak()"));
@@ -129,8 +144,13 @@ static void dhcp_handle_nak(struct dhcp_state *state) {
 	dhcp_set_state(state, DHCP_BACKING_OFF);
 }
 
-// checks if the offered address is already in use
-// it does so by sending an ARP query
+/**
+ * Checks if the offered address from the server is already in use.
+ * 
+ * It does so by sending an ARP request for the offered address and
+ * entering CHECKING state. If no ARP reply is received within a small
+ * interval, the address is assumed to be free for use by us.
+ */
 static void dhcp_check(struct dhcp_state *state)
 {
   struct pbuf *p;
@@ -143,8 +163,6 @@ static void dhcp_check(struct dhcp_state *state)
    	DEBUGF(DHCP_DEBUG, ("dhcp_check(): sending ARP request len %u", p->tot_len));
     result = state->netif->linkoutput(state->netif, p);
     pbuf_free(p);
-
-    //return /*result*/;
   }
 	state->tries++;
 	msecs = state->tries * 1000;
@@ -153,6 +171,10 @@ static void dhcp_check(struct dhcp_state *state)
 	dhcp_set_state(state, DHCP_CHECKING);
 }
 
+/**
+ * Remember the configuration offered by a DHCP server.
+ * 
+ */
 static void dhcp_handle_offer(struct dhcp_state *state)
 {
   u8_t *option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_SERVER_ID);
@@ -174,7 +196,7 @@ static void dhcp_handle_offer(struct dhcp_state *state)
 /**
  * Select a DHCP server offer out of all offers.
  *
- * Simply select the first offer received, ignore others
+ * Simply select the first offer received.
  */
 static err_t dhcp_select(struct dhcp_state *state)
 {
@@ -223,6 +245,10 @@ static err_t dhcp_select(struct dhcp_state *state)
 	return result;
 }
 
+/**
+ * The DHCP timer that checks for lease renewal/rebind timeouts.
+ *
+ */
 void dhcp_coarse_tmr()
 {
   struct dhcp_state *list_state = client_list;
@@ -249,6 +275,10 @@ void dhcp_coarse_tmr()
 	}
 }
 
+/**
+ * The DHCP timer that handles DHCP negotiotion transaction timeouts.
+ *
+ */
 void dhcp_fine_tmr()
 {
   struct dhcp_state *list_state = client_list;
@@ -268,7 +298,11 @@ void dhcp_fine_tmr()
 	}
 }
 
-// something has timed out, handle this
+/**
+ * A DHCP negotiation transaction, or ARP request, has timed out.
+ *
+ * 
+ */
 static void dhcp_timeout(struct dhcp_state *state)
 {
   DEBUGF(DHCP_DEBUG, ("dhcp_timeout()"));
@@ -319,13 +353,17 @@ static void dhcp_timeout(struct dhcp_state *state)
 		}
 	  else
 		{
-	    DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REBINDING, release, restart"));
+	    DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): RELEASING, DISCOVERING"));
       dhcp_release(state);
       dhcp_discover(state);
 		}
   }
 }
 
+/**
+ * The renewal period has timed out.
+ *
+ */
 static void dhcp_t1_timeout(struct dhcp_state *state)
 {
   DEBUGF(DHCP_DEBUG, ("dhcp_t1_timeout()"));
@@ -335,6 +373,11 @@ static void dhcp_t1_timeout(struct dhcp_state *state)
     dhcp_renew(state);
 	}
 }
+
+/**
+ * The rebind period has timed out.
+ *
+ */
 static void dhcp_t2_timeout(struct dhcp_state *state)
 {
   DEBUGF(DHCP_DEBUG, ("dhcp_t2_timeout()"));
@@ -352,6 +395,7 @@ static void dhcp_t2_timeout(struct dhcp_state *state)
 static void dhcp_handle_ack(struct dhcp_state *state)
 {
   u8_t *option_ptr;
+  /* clear options we might not get from the ACK */
   state->offered_sn_mask.addr = 0;
   state->offered_gw_addr.addr = 0;
   state->offered_bc_addr.addr = 0;
@@ -363,31 +407,36 @@ static void dhcp_handle_ack(struct dhcp_state *state)
     state->offered_t1_renew = state->offered_t0_lease / 2;
     state->offered_t2_rebind = state->offered_t0_lease;
   }
-
+  /* renewal period */
   option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_T1);
   if (option_ptr != NULL)
 	{
     state->offered_t1_renew = dhcp_get_option_long(option_ptr + 2);
   }
+  /* rebind period */
   option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_T2);
   if (option_ptr != NULL)
 	{
     state->offered_t2_rebind = dhcp_get_option_long(option_ptr + 2);
   }
+  /* (y)our internet address */
   ip_addr_set(&state->offered_ip_addr, &state->msg_in->yiaddr);
 
+  /* subnet mask */
   option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_SUBNET_MASK);
 	if (option_ptr != NULL)
 	{
     state->offered_sn_mask.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
 	}
 
+  /* gateway router */
   option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_ROUTER);
 	if (option_ptr != NULL)
 	{
     state->offered_gw_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
 	}
 
+  /* broadcast address */
   option_ptr = dhcp_get_option_ptr(state, DHCP_OPTION_BROADCAST);
 	if (option_ptr != NULL)
 	{
@@ -415,7 +464,14 @@ void dhcp_init(void)
  * Start DHCP negotiation for a network interface.
  *
  * If no DHCP client instance was attached to this interface,
- * a new client is created first.
+ * a new client is created first. If a DHCP client instance
+ * was already present, it restarts negotiation.
+ *
+ * @return The DHCP client state, which must be passed for 
+ * all subsequential dhcp_*() calls. NULL means there is
+ * no (longer a) DHCP client attached to the interface
+ * (due to unavailable memory or network resources).
+ *
  */
 struct dhcp_state *dhcp_start(struct netif *netif)
 {
@@ -425,14 +481,14 @@ struct dhcp_state *dhcp_start(struct netif *netif)
 
 	DEBUGF(DHCP_DEBUG, ("dhcp_start()"));
 
-  // find the DHCP client attached to the given interface
+  /* find the DHCP client attached to the given interface */
 	state = dhcp_find_client(netif);
 	DEBUGF(DHCP_DEBUG, ("dhcp_start(): finished parsing through list"));
-  // a DHCP client already attached to this interface
+  /* a DHCP client already attached to this interface? */
   if (state != NULL)
 	{
 		DEBUGF(DHCP_DEBUG, ("dhcp_start(): already active on interface"));
-    // just restart the DHCP negotiation
+    /* just restart the DHCP negotiation */
   	result = dhcp_discover(state);
     if (result == ERR_OK)
     {
@@ -464,26 +520,33 @@ struct dhcp_state *dhcp_start(struct netif *netif)
 	}
 	DEBUGF(DHCP_DEBUG, ("dhcp_start(): created new udp pcb"));
 	state->netif = netif;
-	// enqueue in list of clients
-	// we are last in list 
+	/* enqueue in list of clients */
+	/* we are last in list */
 	state->next = NULL;
-  // empty list?
+  /* empty list? */
 	if (client_list == NULL)
 	{
-    // single item at head of list
+    /* single item at head of list */
 	  client_list = state;
   }
 	else
 	{
-    // proceed to the last DHCP client state
+    /* proceed to the last DHCP client state 
     while (list_state->next != NULL) list_state = list_state->next;
-    // { list_state->next == NULL }
 	  list_state->next = state;
 	}
 	dhcp_discover(state);
 	return state;
 }
 
+/**
+ * Inform a DHCP server of our manual configuration.
+ * 
+ * This informs DHCP servers of our fixed IP address configuration
+ * by send an INFORM message. It does not involve DHCP address
+ * configuration, it is just here to be nice.
+ *
+ */ 
 void dhcp_inform(struct netif *netif)
 {
 	struct dhcp_state *state = NULL;
@@ -568,7 +631,11 @@ void dhcp_arp_reply(struct ip_addr *addr)
 	}
 }
 
-// decline a
+/** 
+ * Decline a
+ *
+ *
+ */
 static err_t dhcp_decline(struct dhcp_state *state)
 {
 	err_t result = ERR_OK;
@@ -604,7 +671,7 @@ static err_t dhcp_decline(struct dhcp_state *state)
 
 
 /**
- * Start the DHCP process, discover a server
+ * Start the DHCP process, discover a DHCP server.
  *
  */
 static err_t dhcp_discover(struct dhcp_state *state)
@@ -658,14 +725,15 @@ static void dhcp_bind(struct dhcp_state *state)
 {
   struct ip_addr sn_mask, gw_addr;
 	dhcp_set_state(state, DHCP_BOUND);
-
-  if (state->offered_t1_renew != 0xffffffffUL)
-	{
+  /* temporary DHCP lease? */
+  if (state->offered_t1_renew != 0xffffffffUL) {
+    /* set renewal period timer */
    	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): t1 renewal timer %lu secs", state->offered_t1_renew));
    	state->t1_timeout = (state->offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
 		if (state->t1_timeout == 0) state->t1_timeout = 1;
  	  DEBUGF(DHCP_DEBUG, ("dhcp_bind(): request timeout %u msecs", state->offered_t1_renew*1000));
 	}
+  /* set renewal period timer */
   if (state->offered_t2_rebind != 0xffffffffUL)
 	{
    	DEBUGF(DHCP_DEBUG, ("dhcp_bind(): t2 rebind timer %lu secs", state->offered_t2_rebind));
@@ -701,8 +769,10 @@ static void dhcp_bind(struct dhcp_state *state)
 	netif_set_ipaddr(state->netif, &state->offered_ip_addr);
 }
 
-
-
+/**
+ * Renew an existing DHCP lease at the involved DHCP server.
+ * 
+ */
 err_t dhcp_renew(struct dhcp_state *state)
 {
 	err_t result;
@@ -748,6 +818,10 @@ err_t dhcp_renew(struct dhcp_state *state)
 	return result;
 }
 
+/**
+ * Rebind with a DHCP server for an existing DHCP lease.
+ * 
+ */
 static err_t dhcp_rebind(struct dhcp_state *state)
 {
 	err_t result;
@@ -791,6 +865,10 @@ static err_t dhcp_rebind(struct dhcp_state *state)
 	return result;
 }
 
+/**
+ * Rebind with a DHCP server for an existing DHCP lease.
+ * 
+ */
 static err_t dhcp_release(struct dhcp_state *state)
 {
 	err_t result;
@@ -825,7 +903,11 @@ static err_t dhcp_release(struct dhcp_state *state)
 	netif_set_netmask(state->netif, IP_ADDR_ANY);
 	return result;
 }
-
+/**
+ * Remove the DHCP client from the interface.
+ *
+ * @param state The DHCP client state 
+ */
 void dhcp_stop(struct dhcp_state *state)
 {
 	struct dhcp_state *list_state = client_list;
@@ -1158,8 +1240,15 @@ static void dhcp_option_trailer(struct dhcp_state *state)
 	}
 }
 
-// return a byte offset into the udp message where the option was found, or
-// zero if the given option was not found.
+/**
+ * Find the offset of a DHCP option inside the DHCP message.
+ *
+ * @param client DHCP client
+ * @param option_type
+ *
+ * @return a byte offset into the UDP message where the option was found, or
+ * zero if the given option was not found.
+ */
 static u8_t *dhcp_get_option_ptr(struct dhcp_state *state, u8_t option_type)
 {
   u8_t overload = DHCP_OVERLOAD_NONE;
@@ -1244,12 +1333,28 @@ static u8_t *dhcp_get_option_ptr(struct dhcp_state *state, u8_t option_type)
 	return 0;
 }
 
+/**
+ * Return the byte of DHCP option data.
+ *
+ * @param client DHCP client.
+ * @param ptr pointer obtained by dhcp_get_option_ptr().
+ *
+ * @return byte value at the given address.
+ */
 static u8_t dhcp_get_option_byte(u8_t *ptr)
 {
 	DEBUGF(DHCP_DEBUG, ("option byte value=%u", *ptr));
 	return *ptr;
 }														 
 
+/**
+ * Return the 16-bit value of DHCP option data.
+ *
+ * @param client DHCP client.
+ * @param ptr pointer obtained by dhcp_get_option_ptr().
+ *
+ * @return byte value at the given address.
+ */
 static u16_t dhcp_get_option_short(u8_t *ptr)
 {
   u16_t value;
@@ -1259,6 +1364,14 @@ static u16_t dhcp_get_option_short(u8_t *ptr)
   return value;
 }														 
 
+/**
+ * Return the 32-bit value of DHCP option data.
+ *
+ * @param client DHCP client.
+ * @param ptr pointer obtained by dhcp_get_option_ptr().
+ *
+ * @return byte value at the given address.
+ */
 static u32_t dhcp_get_option_long(u8_t *ptr)
 {
   u32_t value;
