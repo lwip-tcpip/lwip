@@ -63,49 +63,15 @@ PACK_STRUCT_END
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
 
-/* Initializes ARP. */
 void etharp_init(void);
-
-/* The etharp_tmr() function should be called every ETHARP_TMR_INTERVAL
-   microseconds (10 seconds). This function is responsible for
-   expiring old entries in the ARP table. */
 void etharp_tmr(void);
-
-/* Should be called for all incoming packets of IP kind. The function
-   does not alter the packet in any way, it just updates the ARP
-   table. After this function has been called, the normal TCP/IP stack
-   input function should be called.
-
-   The function may return a pbuf containing a packet that had
-   previously been queued for transmission. The device driver must
-   transmit this packet onto the network, and call pbuf_free() for the
-   pbuf.
-*/
 struct pbuf *etharp_ip_input(struct netif *netif, struct pbuf *p);
-
-/* Should be called for incoming ARP packets. The pbuf in the argument
-   is freed by this function. If the function returns a pbuf (i.e.,
-   returns non-NULL), that pbuf constitutes an ARP reply and should be
-   sent out on the Ethernet.
-
-   The driver must call pbuf_free() for the returned pbuf when the
-   packet has been sent. 
-*/
 struct pbuf *etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
 			   struct pbuf *p);
-
-
-/* The etharp_output() function should be called for all outgoing
-   packets. The pbuf returned by the function should be sent out on
-   the Ethernet.
-
-   The function prepares the packet for transmission over the Ethernet
-   by adding an Ethernet header. If there is no IP -> MAC address
-   mapping, the function will queue the outgoing packet and return an
-   ARP request.
-*/
 struct pbuf *etharp_output(struct netif *netif, struct ip_addr *ipaddr,
 			   struct pbuf *q);
+struct pbuf *etharp_output_sent(struct pbuf *p);
+struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr);
 
 
 #endif /* __NETIF_ARP_H__ */
