@@ -477,6 +477,10 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_REASS_DEBUG                  DBG_OFF
 #endif
 
+#ifndef RAW_DEBUG
+#define RAW_DEBUG                       DBG_OFF
+#endif
+
 #ifndef MEM_DEBUG
 #define MEM_DEBUG                       DBG_OFF
 #endif

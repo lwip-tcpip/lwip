@@ -49,6 +49,7 @@
 #include "lwip/inet.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"
+#include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 
@@ -392,6 +393,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 #endif /* IP_DEBUG */
 
+#if LWIP_RAW > 0
+  if (!raw_input(p, inp)) {
+#endif /* LWIP_RAW */
+
   switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
@@ -427,6 +432,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
     snmp_inc_ipunknownprotos();
 
   }
+#if LWIP_RAW > 0
+  } /* LWIP_RAW */
+#endif
   return ERR_OK;
 }
 

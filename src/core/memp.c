@@ -36,6 +36,7 @@
 
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
+#include "lwip/raw.h"
 #include "lwip/tcp.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
@@ -54,6 +55,7 @@ static struct memp *memp_tab[MEMP_MAX];
 
 static const u16_t memp_sizes[MEMP_MAX] = {
   sizeof(struct pbuf),
+  sizeof(struct raw_pcb),
   sizeof(struct udp_pcb),
   sizeof(struct tcp_pcb),
   sizeof(struct tcp_pcb_listen),
@@ -67,6 +69,7 @@ static const u16_t memp_sizes[MEMP_MAX] = {
 
 static const u16_t memp_num[MEMP_MAX] = {
   MEMP_NUM_PBUF,
+  MEMP_NUM_RAW_PCB,
   MEMP_NUM_UDP_PCB,
   MEMP_NUM_TCP_PCB,
   MEMP_NUM_TCP_PCB_LISTEN,
@@ -80,6 +83,9 @@ static const u16_t memp_num[MEMP_MAX] = {
 
 static u8_t memp_memory[(MEMP_NUM_PBUF *
        MEM_ALIGN_SIZE(sizeof(struct pbuf) +
+          sizeof(struct memp)) +
+      MEMP_NUM_RAW_PCB *
+       MEM_ALIGN_SIZE(sizeof(struct raw_pcb) +
           sizeof(struct memp)) +
       MEMP_NUM_UDP_PCB *
        MEM_ALIGN_SIZE(sizeof(struct udp_pcb) +
