@@ -540,8 +540,8 @@ tcp_process(struct tcp_pcb *pcb)
   case SYN_SENT:
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN-SENT: ackno %lu pcb->snd_nxt %lu unacked %lu\n", ackno,
      pcb->snd_nxt, ntohl(pcb->unacked->tcphdr->seqno)));
-    if (flags & (TCP_ACK | TCP_SYN) &&
-       ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
+    if ((flags & TCP_ACK) && (flags & TCP_SYN)
+        && ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
       pcb->rcv_nxt = seqno + 1;
       pcb->lastack = ackno;
       pcb->snd_wnd = tcphdr->wnd;
