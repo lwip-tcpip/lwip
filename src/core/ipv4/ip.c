@@ -489,17 +489,17 @@ ip_debug_print(struct pbuf *p)
                     IPH_PROTO(iphdr),
                     ntohs(IPH_CHKSUM(iphdr))));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|  %3ld  |  %3ld  |  %3ld  |  %3ld  | (src)\n",
-                    ntohl(iphdr->src.addr) >> 24 & 0xff,
-                    ntohl(iphdr->src.addr) >> 16 & 0xff,
-                    ntohl(iphdr->src.addr) >> 8 & 0xff,
-                    ntohl(iphdr->src.addr) & 0xff));
+  LWIP_DEBUGF(IP_DEBUG, ("|  %3u  |  %3u  |  %3u  |  %3u  | (src)\n",
+                    ip4_addr1(&iphdr->src),
+                    ip4_addr2(&iphdr->src),
+                    ip4_addr3(&iphdr->src),
+                    ip4_addr4(&iphdr->src)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|  %3ld  |  %3ld  |  %3ld  |  %3ld  | (dest)\n",
-                    ntohl(iphdr->dest.addr) >> 24 & 0xff,
-                    ntohl(iphdr->dest.addr) >> 16 & 0xff,
-                    ntohl(iphdr->dest.addr) >> 8 & 0xff,
-                    ntohl(iphdr->dest.addr) & 0xff));
+  LWIP_DEBUGF(IP_DEBUG, ("|  %3u  |  %3u  |  %3u  |  %3u  | (dest)\n",
+                    ip4_addr1(&iphdr->dest),
+                    ip4_addr2(&iphdr->dest),
+                    ip4_addr3(&iphdr->dest),
+                    ip4_addr4(&iphdr->dest)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */

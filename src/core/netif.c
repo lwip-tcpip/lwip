@@ -207,10 +207,10 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 #endif
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
     netif->name[0], netif->name[1],
-    (unsigned int)(ntohl(netif->ip_addr.addr) >> 24 & 0xff),
-    (unsigned int)(ntohl(netif->ip_addr.addr) >> 16 & 0xff),
-    (unsigned int)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
-    (unsigned int)(ntohl(netif->ip_addr.addr) & 0xff)));
+    ip4_addr1(&netif->ip_addr),
+    ip4_addr2(&netif->ip_addr),
+    ip4_addr3(&netif->ip_addr),
+    ip4_addr4(&netif->ip_addr)));
 }
 
 void
@@ -218,11 +218,11 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
   ip_addr_set(&(netif->gw), gw);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
-           netif->name[0], netif->name[1],
-           (unsigned int)(ntohl(netif->gw.addr) >> 24 & 0xff),
-           (unsigned int)(ntohl(netif->gw.addr) >> 16 & 0xff),
-           (unsigned int)(ntohl(netif->gw.addr) >> 8 & 0xff),
-           (unsigned int)(ntohl(netif->gw.addr) & 0xff)));
+    netif->name[0], netif->name[1],
+    ip4_addr1(&netif->gw),
+    ip4_addr2(&netif->gw),
+    ip4_addr3(&netif->gw),
+    ip4_addr4(&netif->gw)));
 }
 
 void
@@ -230,11 +230,11 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
   ip_addr_set(&(netif->netmask), netmask);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
-           netif->name[0], netif->name[1],
-           (unsigned int)(ntohl(netif->netmask.addr) >> 24 & 0xff),
-           (unsigned int)(ntohl(netif->netmask.addr) >> 16 & 0xff),
-           (unsigned int)(ntohl(netif->netmask.addr) >> 8 & 0xff),
-           (unsigned int)(ntohl(netif->netmask.addr) & 0xff)));
+    netif->name[0], netif->name[1],
+    ip4_addr1(&netif->netmask),
+    ip4_addr2(&netif->netmask),
+    ip4_addr3(&netif->netmask),
+    ip4_addr4(&netif->netmask)));
 }
 
 void
