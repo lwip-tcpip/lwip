@@ -558,7 +558,7 @@ tcp_process(struct tcp_pcb *pcb)
       tcp_parseopt(pcb);
 
       /* Call the user specified function to call when sucessfully
-   connected. */
+       * connected. */
       TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
       tcp_ack(pcb);
     }
@@ -567,22 +567,24 @@ tcp_process(struct tcp_pcb *pcb)
     if (flags & TCP_ACK &&
        !(flags & TCP_RST)) {
       if (TCP_SEQ_LT(pcb->lastack, ackno) &&
-   TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
+          TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
-  LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
-  /* Call the accept function. */
-  TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
-  if (err != ERR_OK) {
-    /* If the accept function returns with an error, we abort
-       the connection. */
-    tcp_abort(pcb);
-    return ERR_ABRT;
-  }
-  /* If there was any data contained within this ACK,
-     we'd better pass it on to the application as well. */
-  tcp_receive(pcb);
-  pcb->cwnd = pcb->mss;
+#if LWIP_CALLBACK_API
+        LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
+#endif
+        /* Call the accept function. */
+        TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
+        if (err != ERR_OK) {
+          /* If the accept function returns with an error, we abort
+           * the connection. */
+          tcp_abort(pcb);
+          return ERR_ABRT;
+        }
+        /* If there was any data contained within this ACK,
+         * we'd better pass it on to the application as well. */
+        tcp_receive(pcb);
+        pcb->cwnd = pcb->mss;
       }
     }
     break;

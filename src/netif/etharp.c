@@ -124,22 +124,27 @@ struct etharp_entry {
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 
-static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+static s8_t find_arp_entry(void);
 #define ARP_INSERT_FLAG 1
-
+static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+#if ARP_QUEUEING
+static struct pbuf *etharp_enqueue(s8_t i, struct pbuf *q);
+static struct pbuf *etharp_dequeue(s8_t i);
+#endif
 /**
  * Initializes ARP module.
  */
 void
 etharp_init(void)
 {
-  u8_t i;
+  s8_t i;
   /* clear ARP entries */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
     arp_table[i].p = NULL;
 #endif
+    arp_table[i].ctime = 0;
   }
 }
 
@@ -152,7 +157,7 @@ etharp_init(void)
 void
 etharp_tmr(void)
 {
-  u8_t i;
+  s8_t i;
 
   LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer\n"));
   /* remove expired entries from the ARP table */
@@ -186,52 +191,100 @@ etharp_tmr(void)
 }
 
 /**
- * Return an empty ARP entry or, if the table is full, ARP_TABLE_SIZE if all
- * entries are pending, otherwise the oldest entry.
+ * Return an empty ARP entry (possibly recycling the oldest stable entry).
  *
- * @return The ARP entry index that is available, ARP_TABLE_SIZE if no usable
+ * @return The ARP entry index that is available, ERR_MEM if no usable
  * entry is found.
  */
-static u8_t
+static s8_t
 find_arp_entry(void)
 {
-  u8_t i, j, maxtime;
+  s8_t i, j;
+  u8_t maxtime = 0;
 
-  /* Try to find an unused entry in the ARP table. */
+  j = ARP_TABLE_SIZE;
+  /* search ARP table for an unused or old entry */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+  	/* empty entry? */
     if (arp_table[i].state == ETHARP_STATE_EMPTY) {
-      LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found empty entry %u\n", i));
-      break;
+      LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning empty entry %u\n", i));
+      return i;
+  	/* stable entry? */
+    } else if (arp_table[i].state == ETHARP_STATE_STABLE) {
+      /* remember entry with oldest stable entry in j */
+      if (arp_table[i].ctime >= maxtime) maxtime = arp_table[j = i].ctime;
     }
+  }
+  /* no empty entry found? */
+  if (i == ARP_TABLE_SIZE) {
+  	LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
+    /* fall-back to oldest stable */
+  	i = j;
+  }
+  /* no available entry found? */
+  if (i == ARP_TABLE_SIZE) {
+    LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: no replacable entry could be found\n"));
+    /* return failure */
+    return ERR_MEM;
   }
 
-  /* If no unused entry is found, we try to find the oldest entry and
-     throw it away. If all entries are new and ctime drop one */
-  if (i == ARP_TABLE_SIZE) {
-    maxtime = 0;
-    j = ARP_TABLE_SIZE;
-    for (i = 0; i < ARP_TABLE_SIZE; ++i) {
-      /* remember entry with oldest stable entry in j */
-      if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
-#if ARP_QUEUEING /* do not want to re-use an entry with queued packets */
-      (arp_table[i].p == NULL) &&
+  /* clean up the recycled stable entry */
+  if (arp_table[i].state == ETHARP_STATE_STABLE) {
+#if ARP_QUEUEING
+  	struct pbuf *q;
+    /* free packets on queue */
+    q = etharp_dequeue(i);
+    if (q != NULL) pbuf_free(q);
 #endif
-      (arp_table[i].ctime >= maxtime)) {
-        maxtime = arp_table[i].ctime;
-        j = i;
-        /* { j = oldest stable entry } */
-      }
-    }
-    if (j != ARP_TABLE_SIZE) {
-      LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
-    } else {
-      LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: no replacable entry could be found\n"));
-    }
-    i = j;
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_arp_entry: recycling oldest stable entry %u\n", i));
+    arp_table[i].state = ETHARP_STATE_EMPTY;
+    arp_table[i].ctime = 0;
   }
-  LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning %u, state %u\n", i, arp_table[i].state));
+  LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning %u\n", i));
   return i;
 }
+
+#if ARP_QUEUEING
+static struct pbuf *
+etharp_enqueue(s8_t i, struct pbuf *q)
+{
+  /* any pbuf to queue? */
+  if (q != NULL) {
+/* remove old packet on queue? */
+#if ARP_QUEUE_FIRST == 0
+    struct pbuf *p;
+    p = etharp_dequeue(i);
+    if (p != NULL) pbuf_free(p);
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet %p on ARP queue. Should not occur.\n", (void *)arp_table[i].p));
+#endif
+    /* packet can be queued? */
+    if (arp_table[i].p == NULL) {
+      /* copy PBUF_REF referenced payloads into PBUF_RAM */
+      q = pbuf_take(q);
+      /* remember pbuf to queue, if any */
+      arp_table[i].p = q;
+      /* pbufs are queued, increase the reference count */
+      pbuf_ref(q);
+      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
+    }
+  }
+  return arp_table[i].p;
+}
+
+static struct pbuf *
+etharp_dequeue(s8_t i)
+{
+  /* queued packets on a stable entry (work in progress) */
+  if (arp_table[i].p != NULL) {
+    /* send the queued IP packets */
+    netif->linkoutput(netif, arp_table[i].p);
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3,
+      ("find_arp_entry: sent queued packet %p.\n", (void *)arp_table[i].p));
+    arp_table[i].p = NULL;
+  }
+  return arp_table[i].p;
+}
+#endif
 
 /**
  * Update (or insert) a IP/MAC address pair in the ARP cache.
@@ -250,7 +303,7 @@ find_arp_entry(void)
 static struct pbuf *
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
-  u8_t i, k;
+  s8_t i, k;
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("update_arp_entry()\n"));
   LWIP_ASSERT("netif->hwaddr_len != 0", netif->hwaddr_len != 0);
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
@@ -322,20 +375,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: adding entry to table\n"));
     /* find an empty or old entry. */
     i = find_arp_entry();
-    if (i == ARP_TABLE_SIZE) {
+    if (i == ERR_MEM) {
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: no available entry found\n"));
       return NULL;
-    }
-    /* see if find_arp_entry() gave us an old stable, or empty entry to re-use */
-    if (arp_table[i].state == ETHARP_STATE_STABLE) {
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: overwriting old stable entry %u\n", i));
-      /* stable entries should have no queued packets (TODO: allow later) */
-#if ARP_QUEUEING
-      LWIP_ASSERT("update_arp_entry: arp_table[i].p == NULL", arp_table[i].p == NULL);
-#endif
-    } else {
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].state));
-      LWIP_ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
     }
     /* set IP address */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
@@ -538,7 +580,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct eth_addr *dest, *srcaddr, mcastaddr;
   struct eth_hdr *ethhdr;
-  u8_t i;
+  s8_t i;
 
   /* make room for Ethernet header */
   if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
@@ -667,7 +709,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   struct eth_addr *srcaddr;
   struct etharp_hdr *hdr;
   err_t result = ERR_OK;
-  u8_t i;
+  s8_t i;
   u8_t perform_arp_request = 1;
   /* prevent 'unused argument' warning if ARP_QUEUEING == 0 */
   (void)q;
@@ -677,7 +719,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     if (ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
-        /* break out of for-loop, user may wish to queue a packet on a stable entry */
+        /* break out of for-loop, user may wish to queue a packet on a pending entry */
         /* TODO: we will issue a new ARP request, which should not occur too often */
         /* we might want to run a faster timer on ARP to limit this */
         break;
@@ -697,51 +739,19 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* find an available (unused or old) entry */
     i = find_arp_entry();
     /* bail out if no ARP entries are available */
-    if (i == ARP_TABLE_SIZE) {
+    if (i == ERR_MEM) {
       LWIP_DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available. Should seldom occur.\n"));
       return ERR_MEM;
     }
-    /* we will now recycle entry i */
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: created ARP table entry %u.\n", i));
     /* i is available, create ARP entry */
-    ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-    arp_table[i].ctime = 0;
     arp_table[i].state = ETHARP_STATE_PENDING;
-#if ARP_QUEUEING /* deal with queue of recycled entry */
-    /* free queued packet, as entry is now invalidated and recycled */
-    if (arp_table[i].p != NULL) {
-      pbuf_free(arp_table[i].p);
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3,
-        ("etharp_query: dropped packet %p from recycled ARP entry queue. Should not occur.\n", (void *)arp_table[i].p));
-      arp_table[i].p = NULL;
-    }
-#endif
-  }
+    ip_addr_set(&arp_table[i].ipaddr, ipaddr);
+  /* queried address was already in ARP table */
+  } else {
 #if ARP_QUEUEING
-  /* any pbuf to queue and queue is empty? */
-  if (q != NULL) {
-/* yield later packets over older packets? */
-#if ARP_QUEUE_FIRST == 0
-    /* earlier queued packet on this entry? */
-    if (arp_table[i].p != NULL) {
-      pbuf_free(arp_table[i].p);
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet %p on ARP queue. Should not occur.\n", (void *)arp_table[i].p));
-      arp_table[i].p = NULL;
-      /* fall-through into next if */
-    }
+    etharp_enqueue(i, q);
 #endif
-    /* packet can be queued? */
-    if (arp_table[i].p == NULL) {
-      /* copy PBUF_REF referenced payloads into PBUF_RAM */
-      q = pbuf_take(q);
-      /* remember pbuf to queue, if any */
-      arp_table[i].p = q;
-      /* pbufs are queued, increase the reference count */
-      pbuf_ref(q);
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
-    }
   }
-#endif
   /* ARP request? */
   if (perform_arp_request)
   {
