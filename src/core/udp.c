@@ -339,7 +339,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
      to be allocated. */
   hdr = NULL;
   
-  /* succeeding in adding an UDP header to first given pbuf in chain? */
+  /* not enough space to add an UDP header to first pbuf in given p chain? */
   if(pbuf_header(p, UDP_HLEN)) {
     /* allocate header in new pbuf */
     hdr = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
@@ -405,8 +405,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
-  /* dechain and free the header pbuf */
+  /* dechain and free any header pbuf */
   if(hdr != NULL) {
+    /* detach the header prepended earlier */
+    pbuf_dechain(hdr);
+    /* free the header */
     pbuf_free(hdr);
   }
   
