@@ -30,14 +30,14 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* inet.c
  *
  * Functions common to all TCP/IP modules, such as the Internet checksum and the
  * byte order functions.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 #include "lwip/opt.h"
 
@@ -47,7 +47,7 @@
 #include "lwip/inet.h"
 
 
-/*-----------------------------------------------------------------------------------*/
+
 static u16_t
 lwip_chksum(void *dataptr, int len)
 {
@@ -75,12 +75,12 @@ lwip_chksum(void *dataptr, int len)
 
   return (u16_t)acc;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* inet_chksum_pseudo:
  *
  * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
  */
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum_pseudo(struct pbuf *p,
        struct ip_addr *src, struct ip_addr *dest,
@@ -124,13 +124,13 @@ inet_chksum_pseudo(struct pbuf *p,
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
   return ~(acc & 0xffffUL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* inet_chksum:
  *
  * Calculates the Internet checksum over a portion of memory. Used primarely for IP
  * and ICMP.
  */
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum(void *dataptr, u16_t len)
 {
@@ -142,7 +142,7 @@ inet_chksum(void *dataptr, u16_t len)
   }
   return ~(acc & 0xffff);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum_pbuf(struct pbuf *p)
 {
@@ -179,7 +179,7 @@ inet_chksum_pbuf(struct pbuf *p)
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
 #endif		
 		
-/*-----------------------------------------------------------------------------------*/
+
  /*
   * Ascii internet address interpretation routine.
   * The value returned is in network order.
@@ -328,24 +328,24 @@ u8_t *inet_ntoa(u32_t addr)
   return str;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 #ifndef BYTE_ORDER
 #error BYTE_ORDER is not defined
 #endif
 #if BYTE_ORDER == LITTLE_ENDIAN
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 htons(u16_t n)
 {
   return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 ntohs(u16_t n)
 {
   return htons(n);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 htonl(u32_t n)
 {
@@ -354,11 +354,11 @@ htonl(u32_t n)
     ((n & 0xff0000) >> 8) |
     ((n & 0xff000000) >> 24);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 ntohl(u32_t n)
 {
   return htonl(n);
 }
-/*-----------------------------------------------------------------------------------*/
+
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */

@@ -103,7 +103,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 }
 #endif /* LWIP_UDP */
 #if LWIP_TCP
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
@@ -134,7 +134,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   return ERR_OK;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
@@ -148,7 +148,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
   }
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
@@ -165,7 +165,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 err_tcp(void *arg, err_t err)
 {
@@ -196,7 +196,7 @@ err_tcp(void *arg, err_t err)
     sys_sem_signal(conn->sem);
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 setup_tcp(struct netconn *conn)
 {
@@ -209,7 +209,7 @@ setup_tcp(struct netconn *conn)
   tcp_poll(pcb, poll_tcp, 4);
   tcp_err(pcb, err_tcp);
 }
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
@@ -265,7 +265,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_newconn(struct api_msg_msg *msg)
 {
@@ -331,7 +331,7 @@ do_newconn(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_delconn(struct api_msg_msg *msg)
 {
@@ -384,7 +384,7 @@ do_delconn(struct api_msg_msg *msg)
     sys_mbox_post(msg->conn->mbox, NULL);
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_bind(struct api_msg_msg *msg)
 {
@@ -447,7 +447,7 @@ do_bind(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 #if LWIP_TCP
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
@@ -467,7 +467,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   return ERR_OK;
 }
 #endif  
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_connect(struct api_msg_msg *msg)
 {
@@ -579,7 +579,7 @@ do_disconnect(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_listen(struct api_msg_msg *msg)
 {
@@ -622,7 +622,7 @@ do_listen(struct api_msg_msg *msg)
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_accept(struct api_msg_msg *msg)
 {
@@ -647,7 +647,7 @@ do_accept(struct api_msg_msg *msg)
     }
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_send(struct api_msg_msg *msg)
 {
@@ -673,7 +673,7 @@ do_send(struct api_msg_msg *msg)
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_recv(struct api_msg_msg *msg)
 {
@@ -686,7 +686,7 @@ do_recv(struct api_msg_msg *msg)
 #endif  
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_write(struct api_msg_msg *msg)
 {
@@ -734,7 +734,7 @@ do_write(struct api_msg_msg *msg)
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 do_close(struct api_msg_msg *msg)
 {
@@ -769,7 +769,7 @@ do_close(struct api_msg_msg *msg)
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 typedef void (* api_msg_decode)(struct api_msg_msg *msg);
 static api_msg_decode decode[API_MSG_MAX] = {
   do_newconn,
@@ -789,12 +789,12 @@ api_msg_input(struct api_msg *msg)
 {  
   decode[msg->type](&(msg->msg));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 api_msg_post(struct api_msg *msg)
 {
   tcpip_apimsg(msg);
 }
-/*-----------------------------------------------------------------------------------*/
+
 
 

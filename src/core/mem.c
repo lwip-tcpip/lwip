@@ -183,7 +183,7 @@ mem_reallocm(void *rmem, mem_size_t newsize)
   mem_free(rmem);
   return nmem;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void *
 mem_realloc(void *rmem, mem_size_t newsize)
 {

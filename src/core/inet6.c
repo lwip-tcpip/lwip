@@ -30,14 +30,14 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* inet6.c
  *
  * Functions common to all TCP/IP modules, such as the Internet checksum and the
  * byte order functions.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 #include "lwip/opt.h"
 
@@ -45,7 +45,7 @@
 #include "lwip/inet.h"
 
 
-/*-----------------------------------------------------------------------------------*/
+
 /* chksum:
  *
  * Sums up all 16 bit words in a memory portion. Also includes any odd byte.
@@ -54,7 +54,7 @@
  * For now, this is not optimized. Must be optimized for the particular processor
  * arcitecture on which it is to run. Preferebly coded in assembler.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static u32_t
 chksum(void *dataptr, u16_t len)
 {
@@ -74,12 +74,12 @@ chksum(void *dataptr, u16_t len)
   return acc;
 
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* inet_chksum_pseudo:
  *
  * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
  */
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum_pseudo(struct pbuf *p,
        struct ip_addr *src, struct ip_addr *dest,
@@ -122,13 +122,13 @@ inet_chksum_pseudo(struct pbuf *p,
   }
   return ~(acc & 0xffff);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* inet_chksum:
  *
  * Calculates the Internet checksum over a portion of memory. Used primarely for IP
  * and ICMP.
  */
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum(void *dataptr, u16_t len)
 {
@@ -139,7 +139,7 @@ inet_chksum(void *dataptr, u16_t len)
   sum += (sum >> 16);
   return ~(sum & 0xffff);
 }
-/*-----------------------------------------------------------------------------------*/
+
 u16_t
 inet_chksum_pbuf(struct pbuf *p)
 {
@@ -165,4 +165,4 @@ inet_chksum_pbuf(struct pbuf *p)
   }
   return ~(acc & 0xffff);
 }
-/*-----------------------------------------------------------------------------------*/
+

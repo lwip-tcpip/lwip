@@ -43,7 +43,7 @@
 #include "lwip/stats.h"
 
 #include "lwip/snmp.h"
-/*-----------------------------------------------------------------------------------*/
+
 void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
@@ -124,7 +124,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   }
   pbuf_free(p);
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 {
@@ -156,7 +156,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 	    ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
-/*-----------------------------------------------------------------------------------*/
+
 #if IP_FORWARD
 void
 icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)

@@ -35,13 +35,13 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* udp.c
  *
  * The code for the User Datagram Protocol UDP.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
@@ -64,20 +64,20 @@ struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;
 
-/*-----------------------------------------------------------------------------------*/
+
 void
 udp_init(void)
 {
   udp_pcbs = pcb_cache = NULL;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 /* udp_lookup:
  *
  * An experimental feature that will be changed in future versions. Do
  * not depend on it yet...
  */
-/*-----------------------------------------------------------------------------------*/
+
 #ifdef LWIP_DEBUG
 u8_t
 udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
@@ -718,7 +718,7 @@ udp_disconnect(struct udp_pcb *pcb)
 {
   pcb->flags &= ~UDP_FLAGS_CONNECTED;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 udp_recv(struct udp_pcb *pcb,
    void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p,
@@ -777,7 +777,7 @@ udp_new(void) {
   
   return pcb;
 }
-/*-----------------------------------------------------------------------------------*/
+
 #if UDP_DEBUG
 int
 udp_debug_print(struct udp_hdr *udphdr)
@@ -793,7 +793,7 @@ udp_debug_print(struct udp_hdr *udphdr)
   return 0;
 }
 #endif /* UDP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 #endif /* LWIP_UDP */
 
 

@@ -99,7 +99,7 @@ static int err_to_errno_table[11] = {
       set_errno(sk->err); \
 } while (0)
 
-/*-----------------------------------------------------------------------------------*/
+
 static struct lwip_socket *
 get_socket(int s)
 {
@@ -121,7 +121,7 @@ get_socket(int s)
 
   return sock;
 }
-/*-----------------------------------------------------------------------------------*/
+
 static int
 alloc_socket(struct netconn *newconn)
 {
@@ -150,7 +150,7 @@ alloc_socket(struct netconn *newconn)
   sys_sem_signal(socksem);
   return -1;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
@@ -205,7 +205,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   sock_set_errno(sock, 0);
   return newsock;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
 {
@@ -239,7 +239,7 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
   sock_set_errno(sock, 0);
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_close(int s)
 {
@@ -270,7 +270,7 @@ lwip_close(int s)
   sock_set_errno(sock, 0);
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
 {
@@ -310,7 +310,7 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
   sock_set_errno(sock, 0);
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_listen(int s, int backlog)
 {
@@ -335,7 +335,7 @@ lwip_listen(int s, int backlog)
   sock_set_errno(sock, 0);
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
         struct sockaddr *from, socklen_t *fromlen)
@@ -442,19 +442,19 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   sock_set_errno(sock, 0);
   return copylen;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_read(int s, void *mem, int len)
 {
   return lwip_recvfrom(s, mem, len, 0, NULL, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_recv(int s, void *mem, int len, unsigned int flags)
 {
   return lwip_recvfrom(s, mem, len, flags, NULL, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_send(int s, void *data, int size, unsigned int flags)
 {
@@ -511,7 +511,7 @@ lwip_send(int s, void *data, int size, unsigned int flags)
   sock_set_errno(sock, 0);
   return size;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_sendto(int s, void *data, int size, unsigned int flags,
        struct sockaddr *to, socklen_t tolen)
@@ -549,7 +549,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   netconn_disconnect(sock->conn);
   return ret;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_socket(int domain, int type, int protocol)
 {
@@ -594,14 +594,14 @@ lwip_socket(int domain, int type, int protocol)
   set_errno(0);
   return i;
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_write(int s, void *data, int size)
 {
    return lwip_send(s, data, size, 0);
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static int
 lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
 {
@@ -648,7 +648,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
 }
 
 
-/*-----------------------------------------------------------------------------------*/
+
 int
 lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                struct timeval *timeout)
@@ -794,7 +794,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     return nready;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 {
@@ -883,7 +883,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 
 
 int lwip_shutdown(int s, int how)

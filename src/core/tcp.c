@@ -36,7 +36,7 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp.c
  *
  * This file contains common functions for the TCP implementation, such as functinos
@@ -44,7 +44,7 @@
  * related to input and output is found in tcp_input.c and tcp_output.c respectively.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 #include "lwip/opt.h"
@@ -74,13 +74,13 @@ static u8_t tcp_timer;
 
 static u16_t tcp_new_port(void);
 
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_init():
  *
  * Initializes the TCP layer.
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_init(void)
 {
@@ -95,14 +95,14 @@ tcp_init(void)
   tcp_timer = 0;
   
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_tmr():
  *
  * Called periodically to dispatch TCP timers.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_tmr(void)
 {
@@ -115,14 +115,14 @@ tcp_tmr(void)
     tcp_slowtmr();
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_close():
  *
  * Closes the connection held by the PCB.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_close(struct tcp_pcb *pcb)
 {
@@ -176,7 +176,7 @@ tcp_close(struct tcp_pcb *pcb)
   }
   return err;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_abort()
  *
@@ -185,7 +185,7 @@ tcp_close(struct tcp_pcb *pcb)
  * killed because of shortage of memory.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_abort(struct tcp_pcb *pcb)
 {
@@ -233,7 +233,7 @@ tcp_abort(struct tcp_pcb *pcb)
     tcp_rst(seqno, ackno, &local_ip, &remote_ip, local_port, remote_port);
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_bind():
  *
@@ -242,7 +242,7 @@ tcp_abort(struct tcp_pcb *pcb)
  * the outgoing network interface is used instead.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
@@ -390,7 +390,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
   return ERR_ABRT;
 }
 #endif /* LWIP_CALLBACK_API */
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_listen():
  *
@@ -400,7 +400,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * connection to LISTEN is an irreversible process.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 struct tcp_pcb *
 tcp_listen(struct tcp_pcb *pcb)
 {
@@ -429,7 +429,7 @@ tcp_listen(struct tcp_pcb *pcb)
   TCP_REG(&tcp_listen_pcbs, lpcb);
   return (struct tcp_pcb *)lpcb;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_recved():
  *
@@ -438,7 +438,7 @@ tcp_listen(struct tcp_pcb *pcb)
  * when the data has been processed.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
@@ -455,14 +455,14 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %u bytes, wnd %u (%u).\n",
          len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_new_port():
  *
  * A nastly hack featuring 'goto' statements that allocates a
  * new TCP local port.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static u16_t
 tcp_new_port(void)
 {
@@ -495,7 +495,7 @@ tcp_new_port(void)
   }
   return port;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_connect():
  *
@@ -503,7 +503,7 @@ tcp_new_port(void)
  * argument will be called when the connection has been established.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
       err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
@@ -550,7 +550,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   }
   return ret;
 } 
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_slowtmr():
  *
@@ -558,7 +558,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
  * removes PCBs that have been in TIME-WAIT for enough time. It also increments
  * various timers such as the inactivity timer in each PCB.
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_slowtmr(void)
 {
@@ -734,13 +734,13 @@ tcp_slowtmr(void)
     }
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_fasttmr():
  *
  * Is called every TCP_FAST_INTERVAL (250 ms) and sends delayed ACKs.
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_fasttmr(void)
 {
@@ -755,14 +755,14 @@ tcp_fasttmr(void)
     }
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_segs_free():
  *
  * Deallocates a list of TCP segments (tcp_seg structures).
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 u8_t
 tcp_segs_free(struct tcp_seg *seg)
 {
@@ -775,14 +775,14 @@ tcp_segs_free(struct tcp_seg *seg)
   }
   return count;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_seg_free():
  *
  * Frees a TCP segment.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 u8_t
 tcp_seg_free(struct tcp_seg *seg)
 {
@@ -799,28 +799,28 @@ tcp_seg_free(struct tcp_seg *seg)
   }
   return count;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_setprio():
  *
  * Sets the priority of a connection.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 {
   pcb->prio = prio;
 }
 #if TCP_QUEUE_OOSEQ
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_seg_copy():
  *
  * Returns a copy of the given TCP segment.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 struct tcp_seg *
 tcp_seg_copy(struct tcp_seg *seg)
 {
@@ -835,7 +835,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   return cseg;
 }
 #endif
-/*-----------------------------------------------------------------------------------*/
+
 #if LWIP_CALLBACK_API
 static err_t
 tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
@@ -849,7 +849,7 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   return ERR_OK;
 }
 #endif /* LWIP_CALLBACK_API */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcp_kill_prio(u8_t prio)
 {
@@ -880,7 +880,7 @@ tcp_kill_prio(u8_t prio)
   }      
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcp_kill_timewait(void)
 {
@@ -902,8 +902,8 @@ tcp_kill_timewait(void)
   }      
 }
 
-/*-----------------------------------------------------------------------------------*/
-/*-----------------------------------------------------------------------------------*/
+
+
 struct tcp_pcb *
 tcp_alloc(u8_t prio)
 {
@@ -955,7 +955,7 @@ tcp_alloc(u8_t prio)
   }
   return pcb;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_new():
  *
@@ -963,13 +963,13 @@ tcp_alloc(u8_t prio)
  * any of the TCP PCB lists.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 struct tcp_pcb *
 tcp_new(void)
 {
   return tcp_alloc(TCP_PRIO_NORMAL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_arg():
  *
@@ -977,14 +977,14 @@ tcp_new(void)
  * functions.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_arg(struct tcp_pcb *pcb, void *arg)
 {  
   pcb->callback_arg = arg;
 }
 #if LWIP_CALLBACK_API
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_recv():
  *
@@ -992,14 +992,14 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
  * connection receives data.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_recv(struct tcp_pcb *pcb,
    err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
 {
   pcb->recv = recv;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_sent():
  *
@@ -1007,14 +1007,14 @@ tcp_recv(struct tcp_pcb *pcb,
  * has been successfully delivered to the remote host.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_sent(struct tcp_pcb *pcb,
    err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
 {
   pcb->sent = sent;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_err():
  *
@@ -1022,14 +1022,14 @@ tcp_sent(struct tcp_pcb *pcb,
  * has occured on the connection.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_err(struct tcp_pcb *pcb,
    void (* errf)(void *arg, err_t err))
 {
   pcb->errf = errf;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_accept():
  *
@@ -1037,7 +1037,7 @@ tcp_err(struct tcp_pcb *pcb,
  * LISTENing connection has been connected to another host.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_accept(struct tcp_pcb *pcb,
      err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
@@ -1046,7 +1046,7 @@ tcp_accept(struct tcp_pcb *pcb,
 }
 #endif /* LWIP_CALLBACK_API */
 
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_poll():
  *
@@ -1055,7 +1055,7 @@ tcp_accept(struct tcp_pcb *pcb,
  * timer interval, which is called twice a second.
  *
  */ 
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_poll(struct tcp_pcb *pcb,
    err_t (* poll)(void *arg, struct tcp_pcb *tpcb), u8_t interval)
@@ -1065,14 +1065,14 @@ tcp_poll(struct tcp_pcb *pcb,
 #endif /* LWIP_CALLBACK_API */  
   pcb->pollinterval = interval;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_pcb_purge():
  *
  * Purges a TCP PCB. Removes any buffered data and frees the buffer memory.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_pcb_purge(struct tcp_pcb *pcb)
 {
@@ -1107,14 +1107,14 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
       NULL;
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_pcb_remove():
  *
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
 {
@@ -1133,14 +1133,14 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
 
   LWIP_ASSERT("tcp_pcb_remove: tcp_pcbs_sane()", tcp_pcbs_sane());
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_next_iss():
  *
  * Calculates a new initial sequence number for new connections.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 u32_t
 tcp_next_iss(void)
 {
@@ -1149,7 +1149,7 @@ tcp_next_iss(void)
   iss += tcp_ticks;       /* XXX */
   return iss;
 }
-/*-----------------------------------------------------------------------------------*/
+
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 void
 tcp_debug_print(struct tcp_hdr *tcphdr)
@@ -1181,7 +1181,7 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
          ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_debug_print_state(enum tcp_state s)
 {
@@ -1222,7 +1222,7 @@ tcp_debug_print_state(enum tcp_state s)
    break;
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_debug_print_flags(u8_t flags)
 {
@@ -1251,7 +1251,7 @@ tcp_debug_print_flags(u8_t flags)
     LWIP_DEBUGF(TCP_DEBUG, ("CWR "));
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_debug_print_pcbs(void)
 {
@@ -1278,7 +1278,7 @@ tcp_debug_print_pcbs(void)
     tcp_debug_print_state(pcb->state);
   }    
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 tcp_pcbs_sane(void)
 {
@@ -1295,7 +1295,7 @@ tcp_pcbs_sane(void)
 }
 #endif /* TCP_DEBUG */
 #endif /* LWIP_TCP */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 

@@ -50,7 +50,7 @@ static sys_mbox_t mbox;
 static int tcpip_tcp_timer_active = 0;
 
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcpip_tcp_timer(void *arg)
 {
@@ -73,7 +73,7 @@ tcp_timer_needed(void)
   }
 }
 #endif /* LWIP_TCP */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcpip_thread(void *arg)
 {
@@ -113,7 +113,7 @@ tcpip_thread(void *arg)
     memp_free(MEMP_TCPIP_MSG, msg);
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
@@ -131,7 +131,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   sys_mbox_post(mbox, msg);
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcpip_callback(void (*f)(void *ctx), void *ctx)
 {
@@ -148,7 +148,7 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
   sys_mbox_post(mbox, msg);
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcpip_apimsg(struct api_msg *apimsg)
 {
@@ -162,7 +162,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   msg->msg.apimsg = apimsg;
   sys_mbox_post(mbox, msg);
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcpip_init(void (* initfunc)(void *), void *arg)
 {
@@ -171,7 +171,7 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   mbox = sys_mbox_new();
   sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
-/*-----------------------------------------------------------------------------------*/
+
 
 
 

@@ -168,7 +168,7 @@ netif_find(char *name)
   LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return NULL;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 {
@@ -214,7 +214,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
     (unsigned int)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
     (unsigned int)(ntohl(netif->ip_addr.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
@@ -226,7 +226,7 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
            (unsigned int)(ntohl(netif->gw.addr) >> 8 & 0xff),
            (unsigned int)(ntohl(netif->gw.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
@@ -238,7 +238,7 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
            (unsigned int)(ntohl(netif->netmask.addr) >> 8 & 0xff),
            (unsigned int)(ntohl(netif->netmask.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_default(struct netif *netif)
 {
@@ -246,10 +246,10 @@ netif_set_default(struct netif *netif)
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_init(void)
 {
   netif_list = netif_default = NULL;
 }
-/*-----------------------------------------------------------------------------------*/
+

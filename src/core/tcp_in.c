@@ -36,7 +36,7 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_input.c
  *
  * The input processing functions of TCP.
@@ -45,7 +45,7 @@
  * tcp_process() -> tcp_receive() (-> application).
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 #include "lwip/def.h"
@@ -85,7 +85,7 @@ static void tcp_parseopt(struct tcp_pcb *pcb);
 static err_t tcp_listen_input(struct tcp_pcb_listen *pcb);
 static err_t tcp_timewait_input(struct tcp_pcb *pcb);
 
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_input:
  *
  * The initial input processing of TCP. It verifies the TCP header, demultiplexes
@@ -93,7 +93,7 @@ static err_t tcp_timewait_input(struct tcp_pcb *pcb);
  * the TCP finite state machine. This function is called by the IP layer (in
  * ip_input()).
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_input(struct pbuf *p, struct netif *inp)
 {
@@ -398,13 +398,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
   LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
   PERF_STOP("tcp_input");
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_listen_input():
  *
  * Called by tcp_input() when a segment arrives for a listening
  * connection.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
@@ -465,13 +465,13 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
   }
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_timewait_input():
  *
  * Called by tcp_input() when a segment arrives for a connection in
  * TIME_WAIT.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 tcp_timewait_input(struct tcp_pcb *pcb)
 {
@@ -483,7 +483,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
   }
   return tcp_output(pcb);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_process
  *
  * Implements the TCP state machine. Called by tcp_input. In some
@@ -491,7 +491,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
  * argument will be freed by the caller (tcp_input()) unless the
  * recv_data pointer in the pcb is set.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 tcp_process(struct tcp_pcb *pcb)
 {
@@ -650,7 +650,7 @@ tcp_process(struct tcp_pcb *pcb)
 
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_receive:
  *
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
@@ -662,7 +662,7 @@ tcp_process(struct tcp_pcb *pcb)
  * If the incoming segment constitutes an ACK for a segment that was used for RTT
  * estimation, the RTT is estimated here as well.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcp_receive(struct tcp_pcb *pcb)
 {
@@ -1158,7 +1158,7 @@ tcp_receive(struct tcp_pcb *pcb)
     }
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * tcp_parseopt:
  *
@@ -1166,7 +1166,7 @@ tcp_receive(struct tcp_pcb *pcb)
  * from uIP with only small changes.)
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
@@ -1208,5 +1208,5 @@ tcp_parseopt(struct tcp_pcb *pcb)
   }
 }
 #endif /* LWIP_TCP */
-/*-----------------------------------------------------------------------------------*/
+
 

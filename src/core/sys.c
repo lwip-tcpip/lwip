@@ -44,7 +44,7 @@ struct sswt_cb
 };
 
 
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 {
@@ -96,7 +96,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_sem_wait(sys_sem_t sem)
 {
@@ -152,7 +152,7 @@ sys_sem_wait(sys_sem_t sem)
 
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
@@ -203,7 +203,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 /* Go through timeout list (for this task only) and remove the first matching entry,
    even though the timeout has not triggered yet.
 */
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_untimeout(sys_timeout_handler h, void *arg)
 {
@@ -238,7 +238,7 @@ sys_untimeout(sys_timeout_handler h, void *arg)
 
 
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 sswt_handler(void *arg)
 {
@@ -252,7 +252,7 @@ sswt_handler(void *arg)
 /* Wait for a semaphore with timeout (specified in ms) */
 /* timeout = 0: wait forever */
 /* Returns 0 on timeout. 1 otherwise */
-/*-----------------------------------------------------------------------------------*/
+
 int
 sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 {
@@ -279,7 +279,7 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 void
 sys_msleep(u32_t ms)
 {
@@ -289,6 +289,6 @@ sys_msleep(u32_t ms)
 
   sys_sem_free(delaysem);
 }
-/*-----------------------------------------------------------------------------------*/
+
 
 #endif /* NO_SYS */

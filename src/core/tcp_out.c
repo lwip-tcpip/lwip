@@ -35,13 +35,13 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* tcp_output.c
  *
  * The output functions of TCP.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 #include "lwip/def.h"
@@ -64,14 +64,14 @@
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
 
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 {
   return tcp_enqueue(pcb, NULL, 0, flags, 1, NULL, 0);
 
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 {
@@ -90,7 +90,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
     return ERR_CONN;
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       u8_t flags, u8_t copy,
@@ -338,7 +338,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   LWIP_DEBUGF(TCP_QLEN_DEBUG | DBG_STATE, ("tcp_enqueue: %d (with mem err)\n", pcb->snd_queuelen));
   return ERR_MEM;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* find out what we can send and send it */
 err_t
 tcp_output(struct tcp_pcb *pcb)
@@ -468,7 +468,7 @@ tcp_output(struct tcp_pcb *pcb)
   }
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 {
@@ -526,7 +526,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_rst(u32_t seqno, u32_t ackno,
   struct ip_addr *local_ip, struct ip_addr *remote_ip,
@@ -560,7 +560,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   pbuf_free(p);
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %lu ackno %lu.\n", seqno, ackno));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_rexmit(struct tcp_pcb *pcb)
 {
@@ -590,7 +590,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 tcp_keepalive(struct tcp_pcb *pcb)
 {

@@ -31,13 +31,13 @@
  */
 
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip.c
  *
  * This is the code for the IP layer.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 #include "lwip/opt.h"
 
@@ -62,23 +62,23 @@
 #  include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_init:
  *
  * Initializes the IP layer.
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 ip_init(void)
 {
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_lookup:
  *
  * An experimental feature that will be changed in future versions. Do
  * not depend on it yet...
  */
-/*-----------------------------------------------------------------------------------*/
+
 #ifdef LWIP_DEBUG
 u8_t
 ip_lookup(void *header, struct netif *inp)
@@ -123,7 +123,7 @@ ip_lookup(void *header, struct netif *inp)
   }
 }
 #endif /* LWIP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_route:
  *
  * Finds the appropriate network interface for a given IP address. It
@@ -131,7 +131,7 @@ ip_lookup(void *header, struct netif *inp)
  * if the masked IP address of the network interface equals the masked
  * IP address given to the function.
  */
-/*-----------------------------------------------------------------------------------*/
+
 struct netif *
 ip_route(struct ip_addr *dest)
 {
@@ -149,14 +149,14 @@ ip_route(struct ip_addr *dest)
   return netif_default;
 }
 #if IP_FORWARD
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_forward:
  *
  * Forwards an IP packet. It finds an appropriate route for the
  * packet, decrements the TTL value of the packet, adjusts the
  * checksum and outputs the packet on the appropriate interface.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
@@ -210,7 +210,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   netif->output(netif, p, (struct ip_addr *)&(iphdr->dest));
 }
 #endif /* IP_FORWARD */
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_input:
  *
  * This function is called by the network interface device driver when
@@ -221,7 +221,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
  *
  * Finally, the packet is sent to the upper layer protocol input function.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 ip_input(struct pbuf *p, struct netif *inp) {
   static struct ip_hdr *iphdr;
@@ -418,7 +418,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   return ERR_OK;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_output_if:
  *
  * Sends an IP packet on a network interface. This function constructs
@@ -426,7 +426,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
  * IP address is NULL, the IP address of the outgoing network
  * interface is filled in as source address.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
              u8_t ttl, u8_t tos,
@@ -487,13 +487,13 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   return netif->output(netif, p, dest);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_output:
  *
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
           u8_t ttl, u8_t tos, u8_t proto)
@@ -510,7 +510,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   return ip_output_if(p, src, dest, ttl, tos, proto, netif);
 }
-/*-----------------------------------------------------------------------------------*/
+
 #if IP_DEBUG
 void
 ip_debug_print(struct pbuf *p)
@@ -554,7 +554,7 @@ ip_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 

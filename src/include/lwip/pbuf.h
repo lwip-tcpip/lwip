@@ -29,7 +29,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 #ifndef __LWIP_PBUF_H__
 #define __LWIP_PBUF_H__
 

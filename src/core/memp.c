@@ -115,11 +115,11 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
        MEM_ALIGN_SIZE(sizeof(struct sys_timeout) +
           sizeof(struct memp)))];
 
-/*-----------------------------------------------------------------------------------*/
+
 #if !SYS_LIGHTWEIGHT_PROT
 static sys_sem_t mutex;
 #endif
-/*-----------------------------------------------------------------------------------*/
+
 #ifndef LWIP_NOASSERT
 static int
 memp_sanity(void)
@@ -141,7 +141,7 @@ memp_sanity(void)
   return 1;
 }
 #endif /* LWIP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 void
 memp_init(void)
 {
@@ -182,7 +182,7 @@ memp_init(void)
 
   
 }
-/*-----------------------------------------------------------------------------------*/
+
 void *
 memp_malloc(memp_t type)
 {
@@ -236,7 +236,7 @@ memp_malloc(memp_t type)
     return NULL;
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 memp_free(memp_t type, void *mem)
 {
@@ -271,4 +271,4 @@ memp_free(memp_t type, void *mem)
   sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
 }
-/*-----------------------------------------------------------------------------------*/
+
