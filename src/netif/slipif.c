@@ -50,6 +50,11 @@
 
 #define MAX_SIZE     1500
 
+/* Low level serial functions */
+extern void sio_send(u8_t, void*);
+extern u8_t sio_recv(void *);
+extern void * sio_open(u8_t);
+
 /**
  * Send a pbuf doing the necessary SLIP encapsulation
  *
@@ -138,7 +143,7 @@ slipif_input( struct netif * netif )
     default:
       if(p == NULL) {
 	DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
-	p = pbuf_alloc(PBUF_LINK, 128, PBUF_POOL);
+	p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
 #ifdef LINK_STATS           
 	if(p == NULL) {
@@ -201,6 +206,7 @@ slipif_init(struct netif *netif)
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
+  netif->mtu = 1500;	
 
   netif->state = sio_open(netif->num);
 
