@@ -628,6 +628,8 @@ tcp_receive(struct tcp_pcb *pcb)
     
 
     if(pcb->lastack == ackno) {
+      pcb->acked = 0;
+
       if(pcb->snd_wl1 + pcb->snd_wnd == right_wnd_edge){
 	++pcb->dupacks;
 	if(pcb->dupacks >= 3 && pcb->unacked != NULL) {
