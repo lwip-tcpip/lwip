@@ -5,7 +5,19 @@ TODO
 
 HISTORY
 
+(STABLE-0_6_6)
+
+  ++ Bug fixes:
+
+  * Fixed DHCP which did not include the IP address in DECLINE messages.
+
+  ++ Changes:
+
+  * etharp.c has been hauled over a bit.
+
 (STABLE-0_6_5)
+
+  ++ Bug fixes:
 
   * Fixed TCP bug induced by bad window resizing with unidirectional TCP traffic.
   * Packets sent from ARP queue had invalid source hardware address.

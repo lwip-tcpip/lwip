@@ -133,7 +133,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     pcb->unsent != NULL);
   }
 
-  seg = NULL;
+  seg = useg = NULL;
   seglen = 0;
 
   /* First, break up the data into segments and tuck them together in
@@ -158,6 +158,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     else {
       /* Attach the segment to the end of the queued segments. */
+      LWIP_ASSERT("useg != NULL", useg != NULL);
       useg->next = seg;
       useg = seg;
     }

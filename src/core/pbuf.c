@@ -504,29 +504,33 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 }
 
 /**
- * Free a pbuf (chain) from usage, de-allocate non-used head of chain.
+ * Dereference a pbuf (chain) and deallocate any no-longer-used
+ * pbufs at the head of this chain.
  *
  * Decrements the pbuf reference count. If it reaches
  * zero, the pbuf is deallocated.
  *
- * For a pbuf chain, this is repeated for each pbuf in the chain, up to the 
- * pbuf which has a non-zero reference count after decrementing. 
- * (This might be the whole chain.)
+ * For a pbuf chain, this is repeated for each pbuf in the chain,
+ * up to a pbuf which has a non-zero reference count after
+ * decrementing. (This might de-allocate the whole chain.)
  *
- * @param pbuf pbuf (chain) to be freed from one user.
+ * @param pbuf The pbuf (chain) to be dereferenced.
  *
- * @return the number of unreferenced pbufs that were de-allocated
+ * @return the number of pbufs that were de-allocated
  * from the head of the chain.
  *
- * @note May not be called on a packet queue.
+ * @note MUST NOT be called on a packet queue.
  * @note the reference counter of a pbuf equals the number of pointers
  * that refer to the pbuf (or into the pbuf).
  *
  * @internal examples:
  *
+ * Assuming existing chains a->b->c with the following reference
+ * counts, calling pbuf_free(a) results in:
+ * 
  * 1->2->3 becomes ...1->3
  * 3->3->3 becomes 2->3->3
- * 1->1->2 becomes ....->1
+ * 1->1->2 becomes ......1
  * 2->1->1 becomes 1->1->1
  * 1->1->1 becomes .......
  *
@@ -636,11 +640,12 @@ pbuf_ref(struct pbuf *p)
 
 /**
  * Concatenate two pbufs (each may be a pbuf chain) and take over
- * the reference of the tail pbuf.
+ * the caller's reference of the tail pbuf.
  * 
- *  @note The caller MAY NOT reference the tail pbuf afterwards.
+ * @note The caller MAY NOT reference the tail pbuf afterwards.
+ * Use pbuf_chain() for that purpose.
  * 
- *  @see pbuf_chain()
+ * @see pbuf_chain()
  */
 
 void
@@ -650,16 +655,14 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 
   LWIP_ASSERT("h != NULL", h != NULL);
   LWIP_ASSERT("t != NULL", t != NULL);
-
-  if (t == NULL)
-    return;
+  if ((h == NULL) || (t == NULL)) return;
 
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
-  /* p is last pbuf of first h chain */
+  /* { p is last pbuf of first h chain, p->next == NULL } */
   LWIP_ASSERT("p->tot_len == p->len (of last pbuf in chain)", p->tot_len == p->len);
   /* add total length of second chain to last pbuf total of first chain */
   p->tot_len += t->tot_len;
@@ -668,13 +671,15 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 }
 
 /**
- * Chain two pbufs (or pbuf chains) together. They must belong to the same packet.
- * It's the same as pbuf_cat with the addition that it increases the reference count
- * of the tail.
+ * Chain two pbufs (or pbuf chains) together.
+ * 
+ * The caller MUST call pbuf_free(t) once it has stopped
+ * using it. Use pbuf_cat() instead if you no longer use t.
  * 
  * @param h head pbuf (chain)
  * @param t tail pbuf (chain)
- * @note May not be called on a packet queue.
+ * @note The pbufs MUST belong to the same packet.
+ * @note MAY NOT be called on a packet queue.
  *
  * The ->tot_len fields of all pbufs of the head chain are adjusted.
  * The ->next field of the last pbuf of the head chain is adjusted.
@@ -685,7 +690,7 @@ void
 pbuf_chain(struct pbuf *h, struct pbuf *t)
 {
   pbuf_cat(h, t);
-  /* t is now referenced to one more time */
+  /* t is now referenced by h */
   pbuf_ref(t);
   LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }

@@ -192,6 +192,7 @@ static void dhcp_handle_offer(struct netif *netif)
     /* remember offered address */
     ip_addr_set(&dhcp->offered_ip_addr, (struct ip_addr *)&dhcp->msg_in->yiaddr);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_handle_offer(): offer for 0x%08lx\n", dhcp->offered_ip_addr.addr));
+
     dhcp_select(netif);
   }
 }
@@ -645,6 +646,9 @@ static err_t dhcp_decline(struct netif *netif)
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, 576);
+
+    dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
+    dhcp_option_long(dhcp, ntohl(dhcp->offered_ip_addr.addr));
 
     dhcp_option_trailer(dhcp);
     /* resize pbuf to reflect true size of options */

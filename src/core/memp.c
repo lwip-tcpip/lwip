@@ -220,8 +220,6 @@ memp_malloc(memp_t type)
      ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
-    /* initialize memp memory with zeroes */
-    memset(mem, 0, memp_sizes[type]);  
     return mem;
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %d\n", type));
