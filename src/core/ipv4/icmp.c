@@ -80,7 +80,6 @@ icmp_input(struct pbuf *p, struct netif *inp)
       return;
     }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
-    LWIP_DEBUGF(DEMO_DEBUG, ("Pong!\n"));
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       pbuf_free(p);

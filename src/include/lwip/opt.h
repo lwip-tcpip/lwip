@@ -502,10 +502,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define DBG_TYPES_ON                    0
 #endif
 
-#ifndef DEMO_DEBUG
-#define DEMO_DEBUG                      DBG_OFF
-#endif
-
 #ifndef ETHARP_DEBUG
 #define ETHARP_DEBUG                    DBG_OFF
 #endif

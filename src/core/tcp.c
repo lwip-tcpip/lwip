@@ -147,11 +147,6 @@ tcp_close(struct tcp_pcb *pcb)
     pcb = NULL;
     break;
   case SYN_RCVD:
-    err = tcp_send_ctrl(pcb, TCP_FIN);
-    if (err == ERR_OK) {
-      pcb->state = FIN_WAIT_1;
-    }
-    break;
   case ESTABLISHED:
     err = tcp_send_ctrl(pcb, TCP_FIN);
     if (err == ERR_OK) {
@@ -1082,7 +1077,6 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge\n"));
     
-#if TCP_DEBUG
     if (pcb->unsent != NULL) {    
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: not all data sent\n"));
     }
@@ -1093,18 +1087,13 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if (pcb->ooseq != NULL) {    
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
-#endif
-#endif /* TCP_DEBUG */
-    tcp_segs_free(pcb->unsent);
-#if TCP_QUEUE_OOSEQ
+    
     tcp_segs_free(pcb->ooseq);
+    pcb->ooseq = NULL;
 #endif /* TCP_QUEUE_OOSEQ */
+    tcp_segs_free(pcb->unsent);
     tcp_segs_free(pcb->unacked);
-    pcb->unacked = pcb->unsent =
-#if TCP_QUEUE_OOSEQ
-      pcb->ooseq =
-#endif /* TCP_QUEUE_OOSEQ */
-      NULL;
+    pcb->unacked = pcb->unsent = NULL;
   }
 }
 

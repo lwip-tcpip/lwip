@@ -1,9 +1,19 @@
 TODO
 
-  * TODO: Fix unaligned 16-bit access in checksum routine.
-  * TODO: Fix assumptions on storage sizes wherever we cast.
+  * TODO: The lwIP source code makes some invalid assumptions on processor
+    word-length, storage sizes and alignment. See the mailing lists for
+    problems with exoteric architectures showing these problems.
+    We still have to fix this neatly.
 
 HISTORY
+
+(STABLE-0_7_0)
+
+  ++ Bug fixes:
+
+  * Fixed TCP bug for SYN_SENT to ESTABLISHED state transition.
+  * Fixed TCP bug in dequeueing of FIN from out of order segment queue.
+  * Fixed two possible NULL references in rare cases.
 
 (STABLE-0_6_6)
 
