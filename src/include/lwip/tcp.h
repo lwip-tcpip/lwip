@@ -396,7 +396,11 @@ int tcp_pcbs_sane(void);
 #define tcp_pcbs_sane() 1
 #endif /* TCP_DEBUG */
 
+#if NO_SYS
+#define tcp_timer_needed()
+#else
 void tcp_timer_needed(void);
+#endif
 
 /* The TCP PCB lists. */
 extern struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
