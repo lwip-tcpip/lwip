@@ -249,10 +249,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* Copy the options into the header, if they are present. */
     if (optdata == NULL) {
-      TCPH_OFFSET_SET(seg->tcphdr, 5 << 4);
+      TCPH_HDRLEN_SET(seg->tcphdr, 5);
     }
     else {
-      TCPH_OFFSET_SET(seg->tcphdr, (5 + optlen / 4) << 4);
+      TCPH_HDRLEN_SET(seg->tcphdr, (5 + optlen / 4));
       /* Copy options into data portion of segment.
        Options can thus only be sent in non data carrying
        segments such as SYN|ACK. */
@@ -327,7 +327,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   /* Set the PSH flag in the last segment that we enqueued, but only
   if the segment has data (indicated by seglen > 0). */
   if (seg != NULL && seglen > 0 && seg->tcphdr != NULL) {
-    TCPH_FLAGS_SET(seg->tcphdr, TCPH_FLAGS(seg->tcphdr) | TCP_PSH);
+    TCPH_SET_FLAG(seg->tcphdr, TCP_PSH);
   }
 
   return ERR_OK;
@@ -372,7 +372,8 @@ tcp_output(struct tcp_pcb *pcb)
 
 
   seg = pcb->unsent;
-
+   useg = pcb->unacked;
+   
   /* If the TF_ACK_NOW flag is set, we check if there is data that is
      to be sent. If data is to be sent out, we'll just piggyback our
      acknowledgement with the outgoing segment. If no data will be
@@ -398,7 +399,7 @@ tcp_output(struct tcp_pcb *pcb)
     TCPH_FLAGS_SET(tcphdr, TCP_ACK);
     tcphdr->wnd = htons(pcb->rcv_wnd);
     tcphdr->urgp = 0;
-    TCPH_OFFSET_SET(tcphdr, 5 << 4);
+    TCPH_HDRLEN_SET(tcphdr, 5);
 
     tcphdr->chksum = 0;
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
@@ -443,7 +444,7 @@ tcp_output(struct tcp_pcb *pcb)
     pcb->unsent = seg->next;
 
     if (pcb->state != SYN_SENT) {
-      TCPH_FLAGS_SET(seg->tcphdr, TCPH_FLAGS(seg->tcphdr) | TCP_ACK);
+      TCPH_SET_FLAG(seg->tcphdr, TCP_ACK);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
 
@@ -457,11 +458,10 @@ tcp_output(struct tcp_pcb *pcb)
       seg->next = NULL;
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
-
-
+        useg = seg;
       } else {
-        for (useg = pcb->unacked; useg->next != NULL; useg = useg->next);
         useg->next = seg;
+        useg = useg->next;
       }
     } else {
       tcp_seg_free(seg);
@@ -552,7 +552,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCPH_FLAGS_SET(tcphdr, TCP_RST | TCP_ACK);
   tcphdr->wnd = htons(TCP_WND);
   tcphdr->urgp = 0;
-  TCPH_OFFSET_SET(tcphdr, 5 << 4);
+  TCPH_HDRLEN_SET(tcphdr, 5);
 
   tcphdr->chksum = 0;
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,

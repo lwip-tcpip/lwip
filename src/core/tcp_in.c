@@ -99,7 +99,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 {
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
-  u8_t offset;
+  u8_t hdrlen;
   err_t err;
 
 
@@ -112,6 +112,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
+
+#if TCP_INPUT_DEBUG
+  tcp_debug_print(tcphdr);
+#endif
 
   /* remove header from payload */
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
@@ -154,8 +158,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
-  offset = TCPH_OFFSET(tcphdr) >> 4;
-  pbuf_header(p, -(offset * 4));
+  hdrlen = TCPH_HDRLEN(tcphdr);
+  pbuf_header(p, -(hdrlen * 4));
 
   /* Convert fields in TCP header to host byte order. */
   tcphdr->src = ntohs(tcphdr->src);
@@ -934,7 +938,7 @@ tcp_receive(struct tcp_pcb *pcb)
     inseg.p = NULL;
   }
   if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
-    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: received FIN."));
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: received FIN.\n"));
     recv_flags = TF_GOT_FIN;
   }
 
@@ -965,7 +969,7 @@ tcp_receive(struct tcp_pcb *pcb)
       cseg->p = NULL;
     }
     if (flags & TCP_FIN) {
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: dequeued FIN."));
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: dequeued FIN.\n"));
       recv_flags = TF_GOT_FIN;
     }
 
@@ -1122,8 +1126,8 @@ tcp_parseopt(struct tcp_pcb *pcb)
   opts = (u8_t *)tcphdr + TCP_HLEN;
 
   /* Parse the TCP MSS option, if present. */
-  if ((TCPH_OFFSET(tcphdr) & 0xf0) > 0x50) {
-    for(c = 0; c < ((TCPH_OFFSET(tcphdr) >> 4) - 5) << 2 ;) {
+  if(TCPH_HDRLEN(tcphdr) > 0x5) {
+    for(c = 0; c < (TCPH_HDRLEN(tcphdr) - 5) << 2 ;) {
       opt = opts[c];
       if (opt == 0x00) {
         /* End of options. */

@@ -1038,24 +1038,24 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
 {
   LWIP_DEBUGF(TCP_DEBUG, ("TCP header:\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(TCP_DEBUG, ("|      %04x     |      %04x     | (src port, dest port)\n",
-         tcphdr->src, tcphdr->dest));
+  LWIP_DEBUGF(TCP_DEBUG, ("|    %5u      |    %5u      | (src port, dest port)\n",
+         ntohs(tcphdr->src), ntohs(tcphdr->dest)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(TCP_DEBUG, ("|            %08lu           | (seq no)\n",
-          tcphdr->seqno));
+  LWIP_DEBUGF(TCP_DEBUG, ("|           %010lu          | (seq no)\n",
+          ntohl(tcphdr->seqno)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(TCP_DEBUG, ("|            %08lu           | (ack no)\n",
-         tcphdr->ackno));
+  LWIP_DEBUGF(TCP_DEBUG, ("|           %010lu          | (ack no)\n",
+         ntohl(tcphdr->ackno)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(TCP_DEBUG, ("| %2u |    |%u%u%u%u%u|    %5u      | (offset, flags (",
-       TCPH_OFFSET(tcphdr),
-         TCPH_FLAGS(tcphdr) >> 4 & 1,
+  LWIP_DEBUGF(TCP_DEBUG, ("| %2u |   |%u%u%u%u%u%u|     %5u     | (hdrlen, flags (",
+       TCPH_HDRLEN(tcphdr),
+         TCPH_FLAGS(tcphdr) >> 5 & 1,
          TCPH_FLAGS(tcphdr) >> 4 & 1,
          TCPH_FLAGS(tcphdr) >> 3 & 1,
          TCPH_FLAGS(tcphdr) >> 2 & 1,
          TCPH_FLAGS(tcphdr) >> 1 & 1,
          TCPH_FLAGS(tcphdr) & 1,
-         tcphdr->wnd));
+         ntohs(tcphdr->wnd)));
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   LWIP_DEBUGF(TCP_DEBUG, ("), win)\n"));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));

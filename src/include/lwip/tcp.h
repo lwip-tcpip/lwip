@@ -158,7 +158,7 @@ struct tcp_hdr {
   PACK_STRUCT_FIELD(u16_t dest);
   PACK_STRUCT_FIELD(u32_t seqno);
   PACK_STRUCT_FIELD(u32_t ackno);
-  PACK_STRUCT_FIELD(u16_t _offset_flags);
+  PACK_STRUCT_FIELD(u16_t _hdrlen_rsvd_flags);
   PACK_STRUCT_FIELD(u16_t wnd);
   PACK_STRUCT_FIELD(u16_t chksum);
   PACK_STRUCT_FIELD(u16_t urgp);
@@ -168,11 +168,15 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define TCPH_OFFSET(hdr) (ntohs((hdr)->_offset_flags) >> 8)
-#define TCPH_FLAGS(hdr) (ntohs((hdr)->_offset_flags) & 0xff)
+#define TCPH_OFFSET(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 8)
+#define TCPH_HDRLEN(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 12)
+#define TCPH_FLAGS(phdr)  (ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)
 
-#define TCPH_OFFSET_SET(hdr, offset) (hdr)->_offset_flags = htons(((offset) << 8) | TCPH_FLAGS(hdr))
-#define TCPH_FLAGS_SET(hdr, flags) (hdr)->_offset_flags = htons((TCPH_OFFSET(hdr) << 8) | (flags))
+#define TCPH_OFFSET_SET(phdr, offset) (phdr)->_hdrlen_rsvd_flags = htons(((offset) << 8) | TCPH_FLAGS(phdr))
+#define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | TCPH_FLAGS(phdr))
+#define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons((ntohs((phdr)->_hdrlen_rsvd_flags) & ~TCP_FLAGS) | (flags))
+#define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (flags))
+#define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (TCPH_FLAGS(phdr) & ~(flags)) )
 
 #define TCP_TCPLEN(seg) ((seg)->len + ((TCPH_FLAGS((seg)->tcphdr) & TCP_FIN || \
           TCPH_FLAGS((seg)->tcphdr) & TCP_SYN)? 1: 0))
@@ -219,12 +223,12 @@ struct tcp_pcb {
   u16_t mss;   /* maximum segment size */
 
   u8_t flags;
-#define TF_ACK_DELAY 0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW   0x02U   /* Immediate ACK. */
-#define TF_INFR      0x04U   /* In fast recovery. */
-#define TF_RESET     0x08U   /* Connection was reset. */
-#define TF_CLOSED    0x10U   /* Connection was sucessfully closed. */
-#define TF_GOT_FIN   0x20U   /* Connection was closed by the remote end. */
+#define TF_ACK_DELAY (u8_t)0x01U   /* Delayed ACK. */
+#define TF_ACK_NOW   (u8_t)0x02U   /* Immediate ACK. */
+#define TF_INFR      (u8_t)0x04U   /* In fast recovery. */
+#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
+#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
+#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
   
   /* RTT estimation variables. */
   u16_t rttest; /* RTT estimate in 500ms ticks */
@@ -406,7 +410,11 @@ void tcp_debug_print_state(enum tcp_state s);
 void tcp_debug_print_pcbs(void);
 int tcp_pcbs_sane(void);
 #else
-#define tcp_pcbs_sane() 1
+#  define tcp_debug_print(tcphdr)
+#  define tcp_debug_print_flags(flags)
+#  define tcp_debug_print_state(s)
+#  define tcp_debug_print_pcbs()
+#  define tcp_pcbs_sane() 1
 #endif /* TCP_DEBUG */
 
 #if NO_SYS
