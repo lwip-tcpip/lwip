@@ -509,10 +509,10 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     udp_pcbs = pcb;
   }  
   DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE, ("udp_bind: bound to %u.%u.%u.%u, port %u\n",
-   (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
-   (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
-   (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
-   (u8_t)(ntohl(ipaddr->addr) & 0xff), port));
+   (u8_t)(ntohl(pcb->local_ip.addr) >> 24 & 0xff),
+   (u8_t)(ntohl(pcb->local_ip.addr) >> 16 & 0xff),
+   (u8_t)(ntohl(pcb->local_ip.addr) >> 8 & 0xff),
+   (u8_t)(ntohl(pcb->local_ip.addr) & 0xff), pcb->local_port));
   return ERR_OK;
 }
 /**
@@ -543,7 +543,6 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   pcb->remote_port = port;
 /** TODO: this functionality belongs in upper layers */
 #if 0
-
   pcb->flags |= UDP_FLAGS_CONNECTED;
   /* Nail down local IP for netconn_addr()/getsockname() */
   if(ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
@@ -564,6 +563,12 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->local_ip.addr = 0;
   }
 #endif
+  DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE, ("udp_connect: connected to %u.%u.%u.%u, port %u\n",
+   (u8_t)(ntohl(pcb->remote_ip.addr) >> 24 & 0xff),
+   (u8_t)(ntohl(pcb->remote_ip.addr) >> 16 & 0xff),
+   (u8_t)(ntohl(pcb->remote_ip.addr) >> 8 & 0xff),
+   (u8_t)(ntohl(pcb->remote_ip.addr) & 0xff), pcb->remote_port));
+
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     if(pcb == ipcb) {
