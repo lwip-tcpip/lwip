@@ -740,7 +740,7 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
       p = p->next;
       /* { p->tot_len == p->len => p is last pbuf of a packet } */
     }
-    /* { p is last pbuf of a packet }
+    /* { p is last pbuf of a packet } */
     /* proceed to next packet on queue */
 #endif
     /* proceed to next pbuf */
@@ -843,7 +843,9 @@ pbuf_take(struct pbuf *p)
       /* PBUF_POOL buffers are faster if we can use them */
       if (p->len <= PBUF_POOL_BUFSIZE) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-        if (q == NULL) LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
+        if (q == NULL) {
+          LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
+        }
       } else {
         /* no replacement pbuf yet */
         q = NULL;
@@ -852,7 +854,9 @@ pbuf_take(struct pbuf *p)
       /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
       if (q == NULL) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-        if (q == NULL) LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
+        if (q == NULL) {
+          LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
+        }
       }
       /* replacement pbuf could be allocated? */
       if (q != NULL)
@@ -935,8 +939,10 @@ pbuf_dechain(struct pbuf *p)
     /* q is no longer referenced by p, free it */
     LWIP_DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *)q));
     tail_gone = pbuf_free(q);
-    if (tail_gone > 0) LWIP_DEBUGF(PBUF_DEBUG | DBG_STATE,
-      ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n", (void *)q));
+    if (tail_gone > 0) {
+      LWIP_DEBUGF(PBUF_DEBUG | DBG_STATE,
+                  ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n", (void *)q));
+    }
     /* return remaining tail or NULL if deallocated */
   }
   /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */
