@@ -595,15 +595,13 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct eth_addr *dest, *srcaddr, mcastaddr;
   struct eth_hdr *ethhdr;
-  s8_t i;
   err_t result = ERR_OK;
 
-  /* make room for Ethernet header - should not fail*/
+  /* make room for Ethernet header - should not fail */
   if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
     /* bail out */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_output: could not allocate room for header.\n"));
     LINK_STATS_INC(link.lenerr);
-    pbuf_free(q);
     return ERR_BUF;
   }
 
@@ -616,9 +614,8 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   if (ip_addr_isany(ipaddr) || ip_addr_isbroadcast(ipaddr, netif)) {
     /* broadcast on Ethernet also */
     dest = (struct eth_addr *)&ethbroadcast;
-  }
   /* destination IP address is an IP multicast address? */
-  else if (ip_addr_ismulticast(ipaddr)) {
+  } else if (ip_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address. */
     mcastaddr.addr[0] = 0x01;
     mcastaddr.addr[1] = 0x00;
@@ -628,33 +625,33 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     mcastaddr.addr[5] = ip4_addr4(ipaddr);
     /* destination Ethernet address is multicast */
     dest = &mcastaddr;
-  }
   /* destination IP address is an IP unicast address */
-  else {
+  } else {
     /* outside local network? */
     if (!ip_addr_maskcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
       /* interface has default gateway? */
       if (netif->gw.addr != 0) {
         /* send to hardware address of default gateway IP address */
         ipaddr = &(netif->gw);
-      /* no default gateway available? */
+      /* no default gateway available */
       } else {
-        /* destination unreachable, discard packet */
-        pbuf_free(q);
+        /* no route to destination error */
         return ERR_RTE;
       }
     }
-    result = etharp_query(netif, ipaddr, q);
-  } /* else unicast */
+    /* queue on destination Ethernet address belonging to ipaddr */
+    return etharp_query(netif, ipaddr, q);
+  }
 
   /* destination Ethernet address known */
   if (dest != NULL) {
+    u8_t i;
     /* obtain source Ethernet address of the given interface */
     srcaddr = (struct eth_addr *)netif->hwaddr;
     /* A valid IP->MAC address mapping was found, fill in the
      * Ethernet header for the outgoing packet */
     ethhdr = q->payload;
-    for(i = 0; i < netif->hwaddr_len; i++) {
+    for (i = 0; i < netif->hwaddr_len; i++) {
       ethhdr->dest.addr[i] = dest->addr[i];
       ethhdr->src.addr[i] = srcaddr->addr[i];
     }
@@ -662,8 +659,6 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* send packet */
     result = netif->linkoutput(netif, q);
   }
-  /* never reached; here for safety */
-  pbuf_free(q);
   return result;
 }
 
@@ -699,7 +694,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct pbuf *p;
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
-  err_t result = ERR_OK;
+  err_t result = ERR_MEM;
   s8_t i; /* ARP entry index */
   u8_t k; /* Ethernet address octet index */
 
@@ -714,8 +709,8 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* send out ARP request */
   result = etharp_request(netif, ipaddr);
 
-  /* find entry in ARP cache */
-  i = find_entry(ipaddr, q?ETHARP_CREATE:0);
+  /* find entry in ARP cache, ask to create entry if queueing packet */
+  i = find_entry(ipaddr, (q != NULL) ? ETHARP_CREATE : 0);
 
   /* could not find or create entry? */
   if (i < 0) return (err_t)i;
@@ -725,7 +720,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     arp_table[i].state = ETHARP_STATE_PENDING;
   }
 
-  /* { i is either a (new or existing) PENDING or STABLE entry } */
+  /* { i is either a STABLE or (new or existing) PENDING entry } */
   LWIP_ASSERT("arp_table[i].state == PENDING or STABLE",
   ((arp_table[i].state == ETHARP_STATE_PENDING) ||
    (arp_table[i].state == ETHARP_STATE_STABLE)));
@@ -745,20 +740,27 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: sending packet %p\n", (void *)q));
       /* send the packet */
       result = netif->linkoutput(netif, q);
-#if ARP_QUEUEING /* queue the given q packet */
     /* pending entry? (either just created or already pending */
     } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
+#if ARP_QUEUEING /* queue the given q packet */
       /* copy any PBUF_REF referenced payloads into PBUF_RAM */
-      /* (the caller assumes the referenced payload can be freed) */
+      /* (the caller of lwIP assumes the referenced payload can be
+       * freed after it returns from the lwIP call that brought us here) */
       p = pbuf_take(q);
-      /* queue packet */
+      /* packet could be taken over? */
       if (p != NULL) {
+        /* queue packet */
         pbuf_queue(arp_table[i].p, p);
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %d\n", (void *)q, i));
+        result = ERR_OK;
       } else {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
-        result = ERR_MEM; 
+        /* { result == ERR_MEM } through initialization */
       }
+#else /* ARP_QUEUEING == 0 */
+      /* q && state == PENDING && ARP_QUEUEING == 0 => result = ERR_MEM
+      /* { result == ERR_MEM } through initialization */
+      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: Ethernet destination address unknown, queueing disabled, packet %p dropped\n", (void *)q));
 #endif
     }
   }
