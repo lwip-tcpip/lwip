@@ -633,8 +633,9 @@ void dhcp_inform(struct netif *netif)
  */
 void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr)
 {
+  LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_arp_reply()\n"));
-  /* is this DHCP client doing an ARP check? */
+  /* is a DHCP client doing an ARP check? */
   if ((netif->dhcp != NULL) && (netif->dhcp->state == DHCP_CHECKING)) {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_arp_reply(): CHECKING, arp reply for 0x%08lx\n", addr->addr));
     /* did a host respond with the address we

@@ -431,7 +431,7 @@ void
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct ethip_hdr *hdr;
-
+  LWIP_ASSERT("netif != NULL", netif != NULL);
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
@@ -473,6 +473,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   u8_t i;
   u8_t for_us;
 
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  
   /* drop short ARP packets */
   if (p->tot_len < sizeof(struct etharp_hdr)) {
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 1, ("etharp_arp_input: packet dropped, too short (%d/%d)\n", p->tot_len, sizeof(struct etharp_hdr)));
@@ -554,9 +556,12 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-    /* When unconfigured, DHCP wants to know about ARP replies from the
-     * address offered to us, as that means someone else uses it already! */
-    if (netif->ip_addr.addr == 0) dhcp_arp_reply(netif, &sipaddr);
+    /* DHCP wants to know about ARP replies from any host with an
+     * IP address also offered to us by the DHCP server. We do not
+     * want to take a duplicate IP address on a single network.
+     * @todo How should we handle redundant (fail-over) interfaces?
+     * */
+    dhcp_arp_reply(netif, &sipaddr);
 #endif
     break;
   default:
