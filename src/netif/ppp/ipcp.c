@@ -49,6 +49,8 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include <string.h>
+
 #include "ppp.h"
 #if PPP_SUPPORT > 0
 #include "auth.h"

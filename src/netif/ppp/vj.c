@@ -28,10 +28,11 @@
  * for a 16 bit processor.
  */
 
+#include <string.h>
+
 #include "ppp.h"
 #include "vj.h"
 #include "pppdebug.h"
-
 
 #if VJ_SUPPORT > 0
 
