@@ -4,8 +4,8 @@
 #ifndef __LWIP_DHCP_H__
 #define __LWIP_DHCP_H__
 
-#include "udp.h"
 #include "lwip/opt.h"
+#include "lwip/udp.h"
 
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS 60 
@@ -85,6 +85,9 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+
+/* Declare here to avoid including netif.h creating a circular dependency */
+struct netif;
 
 /** initialize DHCP client */
 void dhcp_init(void);
@@ -166,7 +169,7 @@ void dhcp_fine_tmr(void);
 
 /** BootP options */
 #define DHCP_OPTION_PAD 0
-#define DHCP_OPTION_SUBNET_MASK 1 // RFC 2132 3.3
+#define DHCP_OPTION_SUBNET_MASK 1 /* RFC 2132 3.3 */
 #define DHCP_OPTION_ROUTER 3 
 #define DHCP_OPTION_HOSTNAME 12
 #define DHCP_OPTION_IP_TTL 23

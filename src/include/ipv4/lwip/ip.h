@@ -37,9 +37,10 @@
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
-#include "lwip/netif.h"
 
 #include "lwip/err.h"
+
+struct netif;
 
 void ip_init(void);
 u8_t ip_lookup(void *header, struct netif *inp);
