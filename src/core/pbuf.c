@@ -1,3 +1,7 @@
+/**
+ * @file
+ * Packet buffers/chains management module
+ */
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -88,7 +92,7 @@ pbuf_init(void)
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
 #endif /* PBUF_STATS */
   
-  /* Set up ->next pointers to link the pbufs of the pool together. */
+  /* Set up ->next pointers to link the pbufs of the pool together */
   p = pbuf_pool;
   
   for(i = 0; i < PBUF_POOL_SIZE; ++i) {
@@ -100,7 +104,7 @@ pbuf_init(void)
   }
   
   /* The ->next pointer of last pbuf is NULL to indicate that there
-     are no more pbufs in the pool. */
+     are no more pbufs in the pool */
   q->next = NULL;
 
 #if !SYS_LIGHTWEIGHT_PROT  
@@ -219,6 +223,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
   u16_t offset;
   s32_t rsize;
 
+  /* determine header offset */
   offset = 0;
   switch(l) {
   case PBUF_TRANSPORT:
@@ -239,7 +244,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
 
   switch(flag) {
   case PBUF_POOL:
-    /* Allocate head of pbuf chain into p. */
+    /* allocate head of pbuf chain into p */
     p = pbuf_pool_alloc();
     if(p == NULL) {
 #ifdef PBUF_STATS
@@ -249,19 +254,18 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     }
     p->next = NULL;
     
-    /* Set the payload pointer so that it points offset bytes into
-       pbuf data memory. */
+    /* make the payload pointer points offset bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
 
-    /* The total length of the pbuf is the requested size. */
+    /* the total length of the pbuf is the requested size */
     p->tot_len = size;
 
-    /* Set the length of the first pbuf is the chain. */
+    /* set the length of the first pbuf is the chain */
     p->len = size > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: size;
 
     p->flags = PBUF_FLAG_POOL;
     
-    /* Allocate the tail of the pbuf chain. */
+    /* allocate the tail of the pbuf chain. */
     r = p;
     rsize = size - p->len;
     while(rsize > 0) {      
@@ -304,7 +308,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
 	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
-  /* pbuf references existing ROM payload? */
+  /* pbuf references existing (static constant) ROM payload? */
   case PBUF_ROM:
   /* pbuf references existing (externally allocated) RAM payload? */
   case PBUF_REF:
@@ -318,10 +322,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     p->payload = NULL;
     p->len = p->tot_len = size;
     p->next = NULL;
-    if (flag == PBUF_ROM)
-      p->flags = PBUF_FLAG_ROM;
-    else
-      p->flags = PBUF_FLAG_REF;
+    p->flags = (flag == PBUF_ROM? PBUF_FLAG_ROM: PBUF_FLAG_REF);
     break;
   default:
     LWIP_ASSERT("pbuf_alloc: erroneous flag", 0);
@@ -426,7 +427,6 @@ pbuf_realloc(struct pbuf *p, u16_t size)
               p->flags == PBUF_FLAG_RAM ||
               p->flags == PBUF_FLAG_REF);
 
-  
   if(p->tot_len <= size) {
     return;
   }
@@ -487,23 +487,25 @@ pbuf_realloc(struct pbuf *p, u16_t size)
 
   pbuf_refresh();
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_header():
- *
+/**
+ * Decreases the header size by the given amount.
+ * 
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
  *
- * Decreases the header size by the given amount.
- * Using a negative value increases the header size.
+ * @param hdr_decrement Number of bytes to decrement header size.
+ * (Using a negative value increases the header size.)
+ *
+ * @return 1 on failure, 0 on succes.
  */
 /*-----------------------------------------------------------------------------------*/
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size)
 {
   void *payload;
-
-  if(p->flags == PBUF_FLAG_ROM ||
-     p->flags == PBUF_FLAG_REF) {
+  /* referencing pbufs cannot be realloc()ed */
+  if (p->flags == PBUF_FLAG_ROM ||
+      p->flags == PBUF_FLAG_REF) {
     return 1;
   }
   
@@ -512,10 +514,12 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 
   DEBUGF(PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size));
   
+  /* */
   if((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
-    DEBUGF(PBUF_DEBUG | 2, ("pbuf_header: failed %p %p\n",
+    DEBUGF(PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
 			(u8_t *)p->payload,
-			(u8_t *)p + sizeof(struct pbuf)));
+			(u8_t *)p + sizeof(struct pbuf)));\
+    /* restore old payload pointer */
     p->payload = payload;
     return 1;
   }
@@ -539,7 +543,8 @@ pbuf_free(struct pbuf *p)
   u8_t count = 0;
   SYS_ARCH_DECL_PROTECT(old_level);
 
-  if(p == NULL) {
+  if (p == NULL) {
+    DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p==NULL) was called.\n"));
     return 0;
   }
 
@@ -551,43 +556,39 @@ pbuf_free(struct pbuf *p)
     p->flags == PBUF_FLAG_REF );
 
   /* Since decrementing ref cannot be guarranteed to be a single machine operation
-  we must protect it. Also, the later test of ref must be protected.
-  */
+   * we must protect it. Also, the later test of ref must be protected.
+   */
   SYS_ARCH_PROTECT(old_level);
-  /* Decrement reference count. */
+  /* decrement individual reference count for each pbufs in chain */
   for (q = p; q != NULL; q = q->next) {
     LWIP_ASSERT("pbuf_free: q->ref > 0", q->ref > 0);
     q->ref--;
-    }
+  }
 
-  /* If reference count == 0, actually deallocate pbuf. */
-  if(p->ref == 0) {
-      SYS_ARCH_UNPROTECT(old_level);
+  /* if reference count == 0, actually deallocate pbuf */
+  if (p->ref == 0) {
+    SYS_ARCH_UNPROTECT(old_level);
 
-    while(p != NULL) {
+    while (p != NULL) {
+      /* remember next in chain */
+      q = p->next;
       /* this is a pbuf from the pool? */
-      if(p->flags == PBUF_FLAG_POOL) {
+      if (p->flags == PBUF_FLAG_POOL) {
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
         p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
-        q = p->next;
         PBUF_POOL_FREE(p);
-        /* not a pbuf from the pool */
+      /* RAM/ROM referencing pbuf */
+      } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
+        memp_freep(MEMP_PBUF, p);
+      /* pbuf with data */
+      } else {
+        mem_free(p);
       }
-      else {
-        if(p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
-          q = p->next;
-          memp_freep(MEMP_PBUF, p);
-        }
-        else {
-          q = p->next;
-          mem_free(p);
-        }
-      }
-
+      /* next in chain */
       p = q;
       /* Only free the next one in a chain if it's reference count is 0.
       This allows buffer chains to have multiple headers pointing to them. */
-      if (p)
+      if (p != NULL)
       {
         p->ref--;
         if (p->ref > 0)
@@ -597,10 +598,8 @@ pbuf_free(struct pbuf *p)
       ++count;
     }
     pbuf_refresh();
-    }
-  else
-      SYS_ARCH_UNPROTECT(old_level);
-
+  } else
+    SYS_ARCH_UNPROTECT(old_level);
   PERF_STOP("pbuf_free");
 
   return count;
@@ -682,22 +681,26 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   p->next = t;
   h->tot_len += t->tot_len;  
 }
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_dechain():
+
+/**
+ * Dechains a pbuf from any succeeding pbufs in the chain.
  *
- * Adjusts the ->tot_len field of the pbuf and returns the tail (if
- * any) of the pbuf chain.
+ * Makes p->tot_len field equal to p->len.
+ * @param p pbuf to dechain
+ * @return remainder (if any) of the pbuf chain.
  */
-/*-----------------------------------------------------------------------------------*/
 struct pbuf *
 pbuf_dechain(struct pbuf *p)
 {
   struct pbuf *q;
   
   q = p->next;
+  /* pbuf has successor in chain? */
   if (q != NULL) {
+    /* LW: shouldn't q->tot_len be already exactly this? (make this an assert?) */
     q->tot_len = p->tot_len - p->len;
   }
+  /* decouple pbuf from remainder */
   p->tot_len = p->len;
   p->next = NULL;
   return q;

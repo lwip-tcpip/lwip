@@ -236,7 +236,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* identify the IP header */
   iphdr = p->payload;
   if(IPH_V(iphdr) != 4) {
-    DEBUGF(IP_DEBUG, ("IP packet dropped due to bad version number %d\n", IPH_V(iphdr)));
+    DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %d\n", IPH_V(iphdr)));
 #if IP_DEBUG
     ip_debug_print(p);
 #endif /* IP_DEBUG */
@@ -255,7 +255,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   /* header length exceeds first pbuf length? */  
   if(iphdrlen > p->len) {
-    DEBUGF(IP_DEBUG, ("IP header (len %u) does not fit in first pbuf (len %u), IP packet droppped.\n",
+    DEBUGF(IP_DEBUG | 2, ("IP header (len %u) does not fit in first pbuf (len %u), IP packet droppped.\n",
       iphdrlen, p->len));
     /* free (drop) packet pbufs */
     pbuf_free(p);
@@ -270,7 +270,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* verify checksum */
   if(inet_chksum(iphdr, iphdrlen) != 0) {
 
-    DEBUGF(IP_DEBUG, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
+    DEBUGF(IP_DEBUG | 2, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
 #if IP_DEBUG
     ip_debug_print(p);
 #endif /* IP_DEBUG */
@@ -320,10 +320,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if(netif == NULL) {
     /* remote port is DHCP server? */
     if(IPH_PROTO(iphdr) == IP_PROTO_UDP) {
-      DEBUGF(IP_DEBUG, ("ip_input: UDP packet to DHCP client port %u\n",
+      DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %u\n",
        ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
-        DEBUGF(IP_DEBUG, ("ip_input: DHCP packet accepted.\n"));
+        DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
       }
     }
@@ -332,7 +332,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
         /* packet not for us? */  
   if(netif == NULL) {
     /* packet not for us, route or discard */
-    DEBUGF(IP_DEBUG, ("ip_input: packet not for us.\n"));
+    DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
 #if IP_FORWARD
     /* non-broadcast packet? */
     if(!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) {
@@ -360,7 +360,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #else /* IP_REASSEMBLY */
   if((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
     pbuf_free(p);
-    DEBUGF(IP_DEBUG, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
+    DEBUGF(IP_DEBUG | 2, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
                   ntohs(IPH_OFFSET(iphdr))));
 #ifdef IP_STATS
     ++lwip_stats.ip.opterr;
@@ -372,8 +372,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif /* IP_REASSEMBLY */
   
 #if IP_OPTIONS == 0
-  if(iphdrlen > IP_HLEN) {
-    DEBUGF(IP_DEBUG, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
+  if (iphdrlen > IP_HLEN) {
+    DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);    
 #ifdef IP_STATS
     ++lwip_stats.ip.opterr;
@@ -417,7 +417,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     }
     pbuf_free(p);
 
-    DEBUGF(IP_DEBUG, ("Unsupported transportation protocol %d\n", IPH_PROTO(iphdr)));
+    DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %d\n", IPH_PROTO(iphdr)));
 
 #ifdef IP_STATS
     ++lwip_stats.ip.proterr;
@@ -450,7 +450,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   
   if(dest != IP_HDRINCL) {
     if(pbuf_header(p, IP_HLEN)) {
-      DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
+      DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
       
 #ifdef IP_STATS
       ++lwip_stats.ip.err;
@@ -517,7 +517,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
   
   if((netif = ip_route(dest)) == NULL) {
-    DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%lx\n", dest->addr));
+    DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%lx\n", dest->addr));
 
 #ifdef IP_STATS
     ++lwip_stats.ip.rterr;

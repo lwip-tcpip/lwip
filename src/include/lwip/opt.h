@@ -174,7 +174,7 @@ a lot of data that needs to be copied, this should be set high. */
    IP packets across network interfaces. If you are going to run lwIP
    on a device with only one network interface, define this to 0. */
 #ifndef IP_FORWARD
-#define IP_FORWARD              1
+#define IP_FORWARD              0
 #endif
 
 /* If defined to 1, IP options are allowed (but not parsed). If

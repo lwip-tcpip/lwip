@@ -650,12 +650,12 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
-        DEBUGF(ETHARP_DEBUG, ("etharp_query: requested IP already pending\n"));
+        DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
         /* break out of for-loop */
         break;
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
-        DEBUGF(ETHARP_DEBUG, ("etharp_query: requested IP already stable\n"));
+        DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
         return NULL;
       }
     }
@@ -663,16 +663,16 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   /* queried address not yet pending in ARP table? */
   if (i == ARP_TABLE_SIZE)
   {
-    DEBUGF(ETHARP_DEBUG, ("etharp_query: IP address non-pending\n"));
+    DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: IP address not found in ARP table\n"));
     /* find an available entry */
     i = find_arp_entry();
     /* bail out if no ARP entries are available */
     if(i == ARP_TABLE_SIZE)
     {
-      DEBUGF(ETHARP_DEBUG, ("etharp_query: no more ARP table entries available.\n"));
+      DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available.\n"));
       return NULL;
     }
-    DEBUGF(ETHARP_DEBUG, ("etharp_query: created ARP table entry.\n"));
+    DEBUGF(ETHARP_DEBUG, ("etharp_query: created ARP table entry %u.\n", i));
     /* i is available, create ARP entry */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
     arp_table[i].ctime = 0;
@@ -690,7 +690,7 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     pbuf_ref_chain(q);
     /* remember pbuf to queue, if any */
     arp_table[i].p = q;
-    DEBUGF(ETHARP_DEBUG, ("etharp_query: queued packet on ARP entry.\n"));
+    DEBUGF(ETHARP_DEBUG, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
   }
 #endif
   /* allocate a pbuf for the outgoing ARP request packet */

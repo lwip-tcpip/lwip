@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * lwIP network interface abstraction
+ */
+
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -132,8 +138,9 @@ void netif_remove(struct netif * netif)
 		if(tmpNetif == NULL)
 			return; /*  we didn't find any netif today */
 	}
-
-	if(netif_default == netif)
+  /* this netif is default? */
+	if (netif_default == netif)
+    /* reset default netif */
 		netif_default = NULL;
 
 	DEBUGF(NETIF_DEBUG, ("netif_remove: removed netif"));

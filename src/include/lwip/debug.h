@@ -42,9 +42,9 @@
  */
 
 #define DBG_LEVEL_OFF     0
-#define DBG_LEVEL_WARNING 1
-#define DBG_LEVEL_SERIOUS 2
-#define DBG_LEVEL_SEVERE  3
+#define DBG_LEVEL_WARNING 1	/* bad checksums, dropped packets, ... */
+#define DBG_LEVEL_SERIOUS 2	/* memory allocation failures, ... */
+#define DBG_LEVEL_SEVERE  3	/* */ 
 #define DBG_MASK_LEVEL    3
 
 /** flag for DEBUGF to enable the debug message */
