@@ -494,7 +494,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #ifdef IP_STATS
   lwip_stats.ip.xmit++;
 #endif /* IP_STATS */
-  DEBUGF(IP_DEBUG, ("ip_output_if: %c%c ", netif->name[0], netif->name[1]));
+  DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%u\n", netif->name[0], netif->name[1], netif->num));
 #if IP_DEBUG
   ip_debug_print(p);
 #endif /* IP_DEBUG */

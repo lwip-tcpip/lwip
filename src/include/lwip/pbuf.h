@@ -59,7 +59,7 @@ typedef enum {
 #define PBUF_FLAG_ROM   0x01    /* Flags that pbuf data is stored in ROM. */
 #define PBUF_FLAG_POOL  0x02    /* Flags that the pbuf comes from the
 				   pbuf pool. */
-#define PBUF_FLAG_REF   0x03
+#define PBUF_FLAG_REF   0x04
 
 struct pbuf {
   struct pbuf *next;

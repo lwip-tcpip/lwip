@@ -410,14 +410,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x\n", udphdr->chksum));
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
     snmp_inc_udpoutdatagrams();
     DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
     err = ip_output_if(q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
 
-  /* did we chain a header? */
+  /* did we chain a header earlier? */
   if (q != p) {
     /* free the header */
     pbuf_free(q);
@@ -504,7 +504,11 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
   }  
-  DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %u\n", port));
+  DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE, ("udp_bind: bound to %u.%u.%u.%u, port %u\n",
+		       (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
+		       (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
+		       (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
+		       (u8_t)(ntohl(ipaddr->addr) & 0xff), port));
   return ERR_OK;
 }
 /**

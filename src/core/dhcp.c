@@ -154,19 +154,13 @@ static void dhcp_handle_nak(struct netif *netif) {
 static void dhcp_check(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
-  struct pbuf *p;
   err_t result;
   u16_t msecs;
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_check()\n"));
   /* create an ARP query for the offered IP address, expecting that no host
      responds, as the IP address should not be in use. */
-  p = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
-  if (p != NULL) {
-    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_check(): sending ARP request len %u\n", p->tot_len));
-    result = netif->linkoutput(netif, p);
-    pbuf_free(p);
-    p = NULL;
-  }	else {
+  result = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
+  if (result != ERR_OK) {
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_check: could not perform ARP query\n"));
   }
   dhcp->tries++;

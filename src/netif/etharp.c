@@ -638,11 +638,12 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * TODO: use the ctime field to see how long ago an ARP request was sent,
  * possibly retry.
  */
-struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
+err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct eth_addr *srcaddr;
   struct etharp_hdr *hdr;
   struct pbuf *p;
+  err_t result;
   u8_t i;
 
   srcaddr = (struct eth_addr *)netif->hwaddr;
@@ -651,24 +652,23 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
-        /* break out of for-loop */
+        /* break out of for-loop, user may wish to queue a packet on a stable entry */
         break;
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
+        /* TODO: user may wish to queue a packet on a stable entry. */
         return NULL;
       }
     }
   }
-  /* queried address not yet pending in ARP table? */
-  if (i == ARP_TABLE_SIZE)
-  {
+  /* queried address not yet in ARP table? */
+  if (i == ARP_TABLE_SIZE) {
     DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: IP address not found in ARP table\n"));
     /* find an available entry */
     i = find_arp_entry();
     /* bail out if no ARP entries are available */
-    if(i == ARP_TABLE_SIZE)
-    {
+    if (i == ARP_TABLE_SIZE) {
       DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available.\n"));
       return NULL;
     }
@@ -686,10 +686,10 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   if ((q != NULL) && (arp_table[i].p == NULL)) {
     /* copy PBUF_REF referenced payloads to PBUF_RAM */
     q = pbuf_take(q);
-    /* pbufs are queued, increase the reference count */
-    pbuf_ref(q);
     /* remember pbuf to queue, if any */
     arp_table[i].p = q;
+    /* pbufs are queued, increase the reference count */
+    pbuf_ref(q);
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
   }
 #endif
@@ -721,12 +721,13 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     }
     hdr->ethhdr.type = htons(ETHTYPE_ARP);      
     /* send ARP query */
-    netif->linkoutput(netif, p);
+    result = netif->linkoutput(netif, p);
     /* free ARP query packet */
     pbuf_free(p);
     p = NULL;
   } else {
+    result = ERR_MEM;
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_query: could not allocate pbuf for ARP request.\n"));
   }
-  return NULL;
+  return result;
 }

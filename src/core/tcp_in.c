@@ -184,7 +184,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     prev = pcb;
   }
 
-  if(pcb == NULL) {
+  if (pcb == NULL) {
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
 
