@@ -486,14 +486,18 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 }
 
 /**
- * Tries to expand the payload with towards the front.
+ * Adjusts the payload pointer +/- for header.
  * 
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
  *
- * @param hdr_decrement Number of bytes to decrement header size.
- * (Using a negative value increases the header size.)
+ * @param hdr_size Number of bytes to increment header size which
+ * increases the size of the pbuf. New space is on the front.
+ * (Using a negative value decreases the header size.)
  *
+ * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
+ * the call will fail. A check is made that the increase in header size does
+ * not move the payload pointer in front of the start of the buffer. 
  * @return 1 on failure, 0 on success.
  */
 u8_t
@@ -710,6 +714,9 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
+  /* add total length of second chain to last buffer tot_len in first chain */
+  p->tot_len += t->tot_len;
+  
   /* chain last pbuf of h chain (p) with first of tail (t) */
   p->next = t;
   /* t is now referenced to one more time */
