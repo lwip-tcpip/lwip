@@ -1,0 +1,5 @@
+src/      - The source code for the lwIP TCP/IP stack.
+
+proj/     - Makefiles and code for compiling lwIP.
+
+See also the FILES file in each subdirectory.
