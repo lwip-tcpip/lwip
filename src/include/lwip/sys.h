@@ -65,7 +65,7 @@ typedef void (* sys_timeout_handler)(void *arg);
 
 struct sys_timeout {
   struct sys_timeout *next;
-  u16_t time;
+  u32_t time;
   sys_timeout_handler h;
   void *arg;
 };
@@ -86,20 +86,20 @@ void sys_init(void);
  * called.
  *
  */
-void sys_timeout(u16_t msecs, sys_timeout_handler h, void *arg);
+void sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 struct sys_timeouts *sys_arch_timeouts(void);
 
 /* Semaphore functions. */
 sys_sem_t sys_sem_new(u8_t count);
 void sys_sem_signal(sys_sem_t sem);
-u16_t sys_arch_sem_wait(sys_sem_t sem, u16_t timeout);
+u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout);
 void sys_sem_free(sys_sem_t sem);
 void sys_sem_wait(sys_sem_t sem);
 
 /* Mailbox functions. */
 sys_mbox_t sys_mbox_new(void);
 void sys_mbox_post(sys_mbox_t mbox, void *msg);
-u16_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u16_t timeout);
+u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 void sys_mbox_free(sys_mbox_t mbox);
 void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 

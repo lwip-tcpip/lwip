@@ -42,7 +42,7 @@
 void
 sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 {
-  u16_t time;
+  u32_t time;
   struct sys_timeouts *timeouts;
   struct sys_timeout *tmptimeout;
   sys_timeout_handler h;
@@ -91,7 +91,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 void
 sys_sem_wait(sys_sem_t sem)
 {
-  u16_t time;
+  u32_t time;
   struct sys_timeouts *timeouts;
   struct sys_timeout *tmptimeout;
   sys_timeout_handler h;
@@ -142,7 +142,7 @@ sys_sem_wait(sys_sem_t sem)
 }
 /*-----------------------------------------------------------------------------------*/
 void
-sys_timeout(u16_t msecs, sys_timeout_handler h, void *arg)
+sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
   struct sys_timeouts *timeouts;
   struct sys_timeout *timeout, *t;
