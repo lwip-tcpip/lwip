@@ -68,10 +68,10 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
     DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
     return NULL;
   }
-
+#if LWIP_DHCP
   /* netif not under DHCP control by default */
   netif->dhcp = NULL;
-  
+#endif  
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netifnum++;
