@@ -234,9 +234,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
       LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
 
-#ifdef TCP_STATS
-      ++lwip_stats.tcp.err;
-#endif /* TCP_STATS */
+      TCP_STATS_INC(tcp.err);
       goto memerr;
     }
     seg->tcphdr = seg->p->payload;
@@ -332,9 +330,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   return ERR_OK;
   memerr:
-#ifdef TCP_STATS
-  ++lwip_stats.tcp.memerr;
-#endif /* TCP_STATS */
+  TCP_STATS_INC(tcp.memerr);
 
   if (queue != NULL) {
     tcp_segs_free(queue);
@@ -524,9 +520,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
              &(pcb->local_ip),
              &(pcb->remote_ip),
              IP_PROTO_TCP, seg->p->tot_len);
-#ifdef TCP_STATS
-  ++lwip_stats.tcp.xmit;
-#endif /* TCP_STATS */
+  TCP_STATS_INC(tcp.xmit);
 
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -559,9 +553,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,
               IP_PROTO_TCP, p->tot_len);
 
-#ifdef TCP_STATS
-  ++lwip_stats.tcp.xmit;
-#endif /* TCP_STATS */
+  TCP_STATS_INC(tcp.xmit);
    /* Send output with hardcoded TTL since we have no access to the pcb */
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
   pbuf_free(p);
@@ -629,9 +621,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
    tcphdr->chksum = 0;
    tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip, IP_PROTO_TCP, p->tot_len);
 
-#ifdef TCP_STATS
-  ++lwip_stats.tcp.xmit;
-#endif /* TCP_STATS */
+  TCP_STATS_INC(tcp.xmit);
 
    /* Send output to IP */
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);

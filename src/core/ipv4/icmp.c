@@ -54,9 +54,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   struct ip_addr tmpaddr;
   u16_t hlen;
 
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.recv;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.recv);
   snmp_inc_icmpinmsgs();
 
 
@@ -65,9 +63,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   if (pbuf_header(p, -((s16_t)hlen)) || (p->tot_len < sizeof(u16_t)*2)) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%u bytes) received\n", p->tot_len));
     pbuf_free(p);
-#ifdef ICMP_STATS
-    ++lwip_stats.icmp.lenerr;
-#endif /* ICMP_STATS */
+    ICMP_STATS_INC(icmp.lenerr);
     snmp_inc_icmpinerrors();
     return;
   }
@@ -79,9 +75,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) ||
        ip_addr_ismulticast(&iphdr->dest)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
-#ifdef ICMP_STATS
-      ++lwip_stats.icmp.err;
-#endif /* ICMP_STATS */
+      ICMP_STATS_INC(icmp.err);
       pbuf_free(p);
       return;
     }
@@ -90,9 +84,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       pbuf_free(p);
-#ifdef ICMP_STATS
-      ++lwip_stats.icmp.lenerr;
-#endif /* ICMP_STATS */
+      ICMP_STATS_INC(icmp.lenerr);
       snmp_inc_icmpinerrors();
 
       return;
@@ -101,9 +93,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (inet_chksum_pbuf(p) != 0) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
       pbuf_free(p);
-#ifdef ICMP_STATS
-      ++lwip_stats.icmp.chkerr;
-#endif /* ICMP_STATS */
+      ICMP_STATS_INC(icmp.chkerr);
       snmp_inc_icmpinerrors();
       return;
     }
@@ -117,9 +107,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else {
       iecho->chksum += htons(ICMP_ECHO << 8);
     }
-#ifdef ICMP_STATS
-    ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+    ICMP_STATS_INC(icmp.xmit);
     /* increase number of messages attempted to send */
     snmp_inc_icmpoutmsgs();
     /* increase number of echo replies attempted to send */
@@ -131,10 +119,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     break;
   default:
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d code %d not supported.\n", (int)type, (int)code));
-#ifdef ICMP_STATS
-    ++lwip_stats.icmp.proterr;
-    ++lwip_stats.icmp.drop;
-#endif /* ICMP_STATS */
+    ICMP_STATS_INC(icmp.proterr);
+    ICMP_STATS_INC(icmp.drop);
   }
   pbuf_free(p);
 }
@@ -160,9 +146,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   /* calculate checksum */
   idur->chksum = 0;
   idur->chksum = inet_chksum(idur, q->len);
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.xmit);
   /* increase number of messages attempted to send */
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
@@ -202,9 +186,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   /* calculate checksum */
   tehdr->chksum = 0;
   tehdr->chksum = inet_chksum(tehdr, q->len);
-#ifdef ICMP_STATS
-  ++lwip_stats.icmp.xmit;
-#endif /* ICMP_STATS */
+  ICMP_STATS_INC(icmp.xmit);
   /* increase number of messages attempted to send */
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */

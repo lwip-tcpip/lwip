@@ -348,6 +348,10 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_STATS	1
 #endif
 
+#ifndef IPFRAG_STATS
+#define IPFRAG_STATS	1
+#endif
+
 #ifndef ICMP_STATS
 #define ICMP_STATS	1
 #endif
@@ -375,6 +379,19 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef SYS_STATS
 #define SYS_STATS	1
 #endif
+
+#else
+
+#define LINK_STATS	0
+#define IP_STATS	0
+#define IPFRAG_STATS	0
+#define ICMP_STATS	0
+#define UDP_STATS	0
+#define TCP_STATS	0
+#define MEM_STATS	0
+#define MEMP_STATS	0
+#define PBUF_STATS	0
+#define SYS_STATS	0
 
 #endif /* LWIP_STATS */
 

@@ -307,7 +307,7 @@ void pppInit(void)
             (*protp->init)(i);
     }
 
-#ifdef LINK_STATS
+#if LINK_STATS
     /* Clear the statistics. */
     memset(&lwip_stats.link, 0, sizeof(lwip_stats.link));
 #endif
@@ -482,7 +482,7 @@ static void nPut(PPPControl *pc, struct pbuf *nb)
 	    if((c = sio_write(pc->fd, b->payload, b->len)) != b->len) {
 		PPPDEBUG((LOG_WARNING,
 			    "PPP nPut: incomplete sio_write(%d,, %u) = %d\n", pc->fd, b->len, c));
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.err++;
 #endif /* LINK_STATS */
 		pc->lastXMit = 0; /* prepend PPP_FLAG to next packet */
@@ -491,7 +491,7 @@ static void nPut(PPPControl *pc, struct pbuf *nb)
 	}
 	pbuf_free(nb);
 
-#ifdef LINK_STATS
+#if LINK_STATS
 	lwip_stats.link.xmit++;
 #endif /* LINK_STATS */
 }
@@ -515,7 +515,7 @@ static struct pbuf *pppAppend(u_char c, struct pbuf *nb, ext_accm *outACCM)
 	if (tb) {
 	    nb->next = tb;
         }
-#ifdef LINK_STATS
+#if LINK_STATS
 	else {
 	    lwip_stats.link.memerr++;
 	}
@@ -552,7 +552,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
 	if (pd < 0 || pd >= NUM_PPP || !pc->openFlag || !pb) {
         PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: bad parms prot=%d pb=%p\n",
                     pd, protocol, pb));
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.opterr++;
 		lwip_stats.link.drop++;
 #endif
@@ -562,7 +562,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
     /* Check that the link is up. */
 	if (lcp_phase[pd] == PHASE_DEAD) {
         PPPDEBUG((LOG_ERR, "pppifOutput[%d]: link not up\n", pd));
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.rterr++;
 		lwip_stats.link.drop++;
 #endif
@@ -573,7 +573,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
 	headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
     if (headMB == NULL) {
         PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: first alloc fail\n", pd));
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.memerr++;
 		lwip_stats.link.drop++;
 #endif /* LINK_STATS */
@@ -600,7 +600,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
             break;
         default:
             PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: bad IP packet\n", pd));
-#ifdef LINK_STATS
+#if LINK_STATS
 			lwip_stats.link.proterr++;
 			lwip_stats.link.drop++;
 #endif
@@ -662,7 +662,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
                     "pppifOutput[%d]: Alloc err - dropping proto=%d\n", 
                     pd, protocol));
         pbuf_free(headMB);
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.memerr++;
 		lwip_stats.link.drop++;
 #endif
@@ -751,7 +751,7 @@ int pppWrite(int pd, const u_char *s, int n)
     struct pbuf *headMB = NULL, *tailMB;
 	headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
     if (headMB == NULL) {
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.memerr++;
 		lwip_stats.link.proterr++;
 #endif /* LINK_STATS */
@@ -791,7 +791,7 @@ int pppWrite(int pd, const u_char *s, int n)
                 "pppWrite[%d]: Alloc err - dropping pbuf len=%d\n", pd, headMB->len));
 /*                "pppWrite[%d]: Alloc err - dropping %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
 		pbuf_free(headMB);
-#ifdef LINK_STATS
+#if LINK_STATS
 		lwip_stats.link.memerr++;
 		lwip_stats.link.proterr++;
 #endif /* LINK_STATS */
@@ -1298,7 +1298,7 @@ static void pppInput(void *arg)
 
     pbuf_header(nb, -(int)sizeof(struct pppInputHeader));
 
-#ifdef LINK_STATS
+#if LINK_STATS
     lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
@@ -1388,7 +1388,7 @@ static void pppInput(void *arg)
     }
 
 drop:
-#ifdef LINK_STATS
+#if LINK_STATS
     lwip_stats.link.drop++;
 #endif
 
@@ -1418,7 +1418,7 @@ static void pppDrop(PPPControl *pc)
     vj_uncompress_err(&pc->vjComp);
 #endif
 
-#ifdef LINK_STATS
+#if LINK_STATS
     lwip_stats.link.drop++;
 #endif /* LINK_STATS */
 }
@@ -1456,7 +1456,7 @@ static void pppInProc(int pd, u_char *s, int l)
                     PPPDEBUG((LOG_WARNING,
                                 "pppInProc[%d]: Dropping incomplete packet %d\n", 
                                 pd, pc->inState));
-#ifdef LINK_STATS
+#if LINK_STATS
 					lwip_stats.link.lenerr++;
 #endif
                     pppDrop(pc);
@@ -1466,7 +1466,7 @@ static void pppInProc(int pd, u_char *s, int l)
                     PPPDEBUG((LOG_INFO,
                                 "pppInProc[%d]: Dropping bad fcs 0x%04X proto=0x%04X\n", 
                                 pd, pc->inFCS, pc->inProtocol));
-#ifdef LINK_STATS
+#if LINK_STATS
 					lwip_stats.link.chkerr++;
 #endif
                     pppDrop(pc);
@@ -1498,7 +1498,7 @@ static void pppInProc(int pd, u_char *s, int l)
                     	PPPDEBUG((LOG_ERR,
 				    "pppInProc[%d]: tcpip_callback() failed, dropping packet\n", pd));
 			pbuf_free(pc->inHead);
-#ifdef LINK_STATS
+#if LINK_STATS
 			lwip_stats.link.drop++;
 #endif
 		    }
@@ -1594,7 +1594,7 @@ static void pppInProc(int pd, u_char *s, int l)
                          * higher layers deal with it.  Continue processing
                          * the received pbuf chain in case a new packet starts. */
                         PPPDEBUG((LOG_ERR, "pppInProc[%d]: NO FREE MBUFS!\n", pd));
-#ifdef LINK_STATS
+#if LINK_STATS
 						lwip_stats.link.memerr++;
 #endif /* LINK_STATS */
                         pppDrop(pc);

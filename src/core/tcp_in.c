@@ -110,10 +110,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   PERF_START;
 
-
-#ifdef TCP_STATS
-  ++lwip_stats.tcp.recv;
-#endif /* TCP_STATS */
+  TCP_STATS_INC(tcp.recv);
 
   iphdr = p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
@@ -126,10 +123,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4))) || (p->tot_len < sizeof(struct tcp_hdr))) {
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%u bytes) discarded\n", p->tot_len));
-#ifdef TCP_STATS
-    ++lwip_stats.tcp.lenerr;
-    ++lwip_stats.tcp.drop;
-#endif /* TCP_STATS */
+    TCP_STATS_INC(tcp.lenerr);
+    TCP_STATS_INC(tcp.drop);
     pbuf_free(p);
     return;
   }
@@ -151,10 +146,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #if TCP_DEBUG
     tcp_debug_print(tcphdr);
 #endif /* TCP_DEBUG */
-#ifdef TCP_STATS
-    ++lwip_stats.tcp.chkerr;
-    ++lwip_stats.tcp.drop;
-#endif /* TCP_STATS */
+    TCP_STATS_INC(tcp.chkerr);
+    TCP_STATS_INC(tcp.drop);
 
     pbuf_free(p);
     return;
@@ -391,10 +384,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
        sender. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_input: no PCB match found, resetting.\n"));
     if (!(TCPH_FLAGS(tcphdr) & TCP_RST)) {
-#ifdef TCP_STATS
-      ++lwip_stats.tcp.proterr;
-      ++lwip_stats.tcp.drop;
-#endif /* TCP_STATS */
+      TCP_STATS_INC(tcp.proterr);
+      TCP_STATS_INC(tcp.drop);
       tcp_rst(ackno, seqno + tcplen,
         &(iphdr->dest), &(iphdr->src),
         tcphdr->dest, tcphdr->src);
@@ -437,9 +428,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
        SYN at a time when we have more memory available. */
     if (npcb == NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
-#ifdef TCP_STATS
-      ++lwip_stats.tcp.memerr;
-#endif /* TCP_STATS */
+      TCP_STATS_INC(tcp.memerr);
       return ERR_MEM;
     }
     /* Set up the new PCB. */

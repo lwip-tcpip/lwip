@@ -35,7 +35,7 @@
 
 #if VJ_SUPPORT > 0
 
-#ifdef LINK_STATS
+#if LINK_STATS
 #define INCR(counter) ++comp->stats.counter
 #else
 #define INCR(counter)
@@ -574,6 +574,33 @@ int vj_uncompress_tcp(
 	/* Remove the compressed header and prepend the uncompressed header. */
 	pbuf_header(n0, -vjlen);
 
+	if(MEM_ALIGN(n0->payload) != n0->payload) {
+		struct pbuf *np, *q;
+		u8_t *bufptr;
+
+		np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
+		if(!np) {
+			PPPDEBUG((LOG_WARNING, "vj_uncompress_tcp: realign failed\n"));
+			*nb = NULL;
+			goto bad;
+		}
+
+		pbuf_header(np, -cs->cs_hlen);
+
+		bufptr = n0->payload;
+		for(q = np; q != NULL; q = q->next) {
+			memcpy(q->payload, bufptr, q->len);
+			bufptr += q->len;
+		}
+
+		if(n0->next) {
+			pbuf_chain(np, n0->next);
+			pbuf_dechain(n0);
+		}
+		pbuf_free(n0);
+		n0 = np;
+	}
+
 	if(pbuf_header(n0, cs->cs_hlen)) {
 		struct pbuf *np;
 
@@ -585,8 +612,10 @@ int vj_uncompress_tcp(
 			goto bad;
 		}
 		pbuf_chain(np, n0);
+		pbuf_free(n0);
 		n0 = np;
 	}
+	LWIP_ASSERT("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
 	memcpy(n0->payload, &cs->cs_ip, cs->cs_hlen);
 
 	*nb = n0;

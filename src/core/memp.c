@@ -149,7 +149,7 @@ memp_init(void)
   u16_t i, j;
   u16_t size;
       
-#ifdef MEMP_STATS
+#if MEMP_STATS
   for(i = 0; i < MEMP_MAX; ++i) {
     lwip_stats.memp[i].used = lwip_stats.memp[i].max =
       lwip_stats.memp[i].err = 0;
@@ -205,7 +205,7 @@ memp_malloc(memp_t type)
   if (memp != NULL) {    
     memp_tab[type] = memp->next;    
     memp->next = NULL;
-#ifdef MEMP_STATS
+#if MEMP_STATS
     ++lwip_stats.memp[type].used;
     if (lwip_stats.memp[type].used > lwip_stats.memp[type].max) {
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
@@ -225,7 +225,7 @@ memp_malloc(memp_t type)
     return mem;
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %d\n", type));
-#ifdef MEMP_STATS
+#if MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */
 #if SYS_LIGHTWEIGHT_PROT
@@ -256,7 +256,7 @@ memp_free(memp_t type, void *mem)
   sys_sem_wait(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
 
-#ifdef MEMP_STATS
+#if MEMP_STATS
   lwip_stats.memp[type].used--; 
 #endif /* MEMP_STATS */
   

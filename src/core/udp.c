@@ -172,19 +172,15 @@ udp_input(struct pbuf *p, struct netif *inp)
   
   PERF_START;
 
-#ifdef UDP_STATS
-  ++lwip_stats.udp.recv;
-#endif /* UDP_STATS */
+  UDP_STATS_INC(udp.recv);
 
   iphdr = p->payload;
 
   if (pbuf_header(p, -((s16_t)(UDP_HLEN + IPH_HL(iphdr) * 4)))) {
     /* drop short packets */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_input: short UDP datagram (%u bytes) discarded\n", p->tot_len));
-#ifdef UDP_STATS
-    ++lwip_stats.udp.lenerr;
-    ++lwip_stats.udp.drop;
-#endif /* UDP_STATS */
+    UDP_STATS_INC(udp.lenerr);
+    UDP_STATS_INC(udp.drop);
     snmp_inc_udpinerrors();
     pbuf_free(p);
     goto end;
@@ -330,10 +326,8 @@ udp_input(struct pbuf *p, struct netif *inp)
          (struct ip_addr *)&(iphdr->dest),
          IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
   LWIP_DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
-#ifdef UDP_STATS
-  ++lwip_stats.udp.chkerr;
-  ++lwip_stats.udp.drop;
-#endif /* UDP_STATS */
+  UDP_STATS_INC(udp.chkerr);
+  UDP_STATS_INC(udp.drop);
   snmp_inc_udpinerrors();
   pbuf_free(p);
   goto end;
@@ -345,10 +339,8 @@ udp_input(struct pbuf *p, struct netif *inp)
         IP_PROTO_UDP, p->tot_len) != 0) {
     LWIP_DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP datagram discarded due to failing checksum\n"));
 
-#ifdef UDP_STATS
-    ++lwip_stats.udp.chkerr;
-    ++lwip_stats.udp.drop;
-#endif /* UDP_STATS */
+    UDP_STATS_INC(udp.chkerr);
+    UDP_STATS_INC(udp.drop);
     snmp_inc_udpinerrors();
     pbuf_free(p);
     goto end;
@@ -398,10 +390,8 @@ udp_input(struct pbuf *p, struct netif *inp)
   p->payload = iphdr;
   icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
-#ifdef UDP_STATS
-      ++lwip_stats.udp.proterr;
-      ++lwip_stats.udp.drop;
-#endif /* UDP_STATS */
+      UDP_STATS_INC(udp.proterr);
+      UDP_STATS_INC(udp.drop);
     snmp_inc_udpnoports();
       pbuf_free(p);
     }
@@ -474,9 +464,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 
   if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
-#ifdef UDP_STATS
-    ++lwip_stats.udp.rterr;
-#endif /* UDP_STATS */
+    UDP_STATS_INC(udp.rterr);
     return ERR_RTE;
   }
   /* using IP_ANY_ADDR? */
@@ -525,9 +513,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     pbuf_free(q);
   }
 
-#ifdef UDP_STATS
-  ++lwip_stats.udp.xmit;
-#endif /* UDP_STATS */
+  UDP_STATS_INC(udp.xmit);
   return err;
 }
 
@@ -703,9 +689,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
     if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
       LWIP_DEBUGF(UDP_DEBUG, ("udp_connect: No route to 0x%lx\n", pcb->remote_ip.addr));
-#ifdef UDP_STATS
-        ++lwip_stats.udp.rterr;
-#endif /* UDP_STATS */
+        UDP_STATS_INC(udp.rterr);
       return ERR_RTE;
     }
     /** TODO: this will bind the udp pcb locally, to the interface which

@@ -102,7 +102,7 @@ pbuf_init(void)
   pbuf_pool = (struct pbuf *)&pbuf_pool_memory[0];
   LWIP_ASSERT("pbuf_init: pool aligned", (long)pbuf_pool % MEM_ALIGNMENT == 0);
 
-#ifdef PBUF_STATS
+#if PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
 #endif /* PBUF_STATS */
 
@@ -144,7 +144,7 @@ pbuf_pool_alloc(void)
   /* Next, check the actual pbuf pool, but if the pool is locked, we
      pretend to be out of buffers and return NULL. */
   if (pbuf_pool_free_lock) {
-#ifdef PBUF_STATS
+#if PBUF_STATS
     ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
     return NULL;
@@ -157,7 +157,7 @@ pbuf_pool_alloc(void)
       pbuf_pool = p->next;
     }
 #if !SYS_LIGHTWEIGHT_PROT
-#ifdef PBUF_STATS
+#if PBUF_STATS
   } else {
     ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
@@ -165,7 +165,7 @@ pbuf_pool_alloc(void)
   pbuf_pool_alloc_lock = 0;
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
-#ifdef PBUF_STATS
+#if PBUF_STATS
   if (p != NULL) {
     ++lwip_stats.pbuf.used;
     if (lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
@@ -244,7 +244,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p = pbuf_pool_alloc();
     LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
-#ifdef PBUF_STATS
+#if PBUF_STATS
       ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
       return NULL;
@@ -273,7 +273,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       q = pbuf_pool_alloc();
       if (q == NULL) {
        LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
-#ifdef PBUF_STATS
+#if PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
         /* free chain so far allocated */
@@ -343,7 +343,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
 }
 
 
-#ifdef PBUF_STATS
+#if PBUF_STATS
 #define DEC_PBUF_STATS do { --lwip_stats.pbuf.used; } while (0)
 #else /* PBUF_STATS */
 #define DEC_PBUF_STATS

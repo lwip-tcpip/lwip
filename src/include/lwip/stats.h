@@ -101,9 +101,49 @@ extern struct stats_ lwip_stats;
 
 
 void stats_init(void);
+
+#define STATS_INC(x) ++lwip_stats.x
 #else
 #define stats_init()
+#define STATS_INC(x)
 #endif /* LWIP_STATS */
+
+#if TCP_STATS
+#define TCP_STATS_INC(x) STATS_INC(x)
+#else
+#define TCP_STATS_INC(x)
+#endif
+
+#if UDP_STATS
+#define UDP_STATS_INC(x) STATS_INC(x)
+#else
+#define UDP_STATS_INC(x)
+#endif
+
+#if ICMP_STATS
+#define ICMP_STATS_INC(x) STATS_INC(x)
+#else
+#define ICMP_STATS_INC(x)
+#endif
+
+#if IP_STATS
+#define IP_STATS_INC(x) STATS_INC(x)
+#else
+#define IP_STATS_INC(x)
+#endif
+
+#if IPFRAG_STATS
+#define IPFRAG_STATS_INC(x) STATS_INC(x)
+#else
+#define IPFRAG_STATS_INC(x)
+#endif
+
+#if LINK_STATS
+#define LINK_STATS_INC(x) STATS_INC(x)
+#else
+#define LINK_STATS_INC(x)
+#endif
+
 #endif /* __LWIP_STATS_H__ */
 
 

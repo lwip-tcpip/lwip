@@ -201,10 +201,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   LWIP_DEBUGF(IP_DEBUG, ("ip_forward: forwarding packet to 0x%lx\n",
                     iphdr->dest.addr));
 
-#ifdef IP_STATS
-  ++lwip_stats.ip.fw;
-  ++lwip_stats.ip.xmit;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.fw);
+  IP_STATS_INC(ip.xmit);
     snmp_inc_ipforwdatagrams();
 
   PERF_STOP("ip_forward");
@@ -230,9 +228,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   static struct netif *netif;
   static u16_t iphdrlen;
 
-#ifdef IP_STATS
-  ++lwip_stats.ip.recv;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.recv);
   snmp_inc_ipinreceives();
 
   /* identify the IP header */
@@ -243,10 +239,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ip_debug_print(p);
 #endif /* IP_DEBUG */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.err;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.err);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
@@ -261,10 +255,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
       iphdrlen, p->len));
     /* free (drop) packet pbufs */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.lenerr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.lenerr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
@@ -277,10 +269,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ip_debug_print(p);
 #endif /* IP_DEBUG */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.chkerr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.chkerr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
@@ -365,10 +355,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
                   ntohs(IPH_OFFSET(iphdr))));
-#ifdef IP_STATS
-    ++lwip_stats.ip.opterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.opterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
@@ -378,10 +366,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (iphdrlen > IP_HLEN) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.opterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.opterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
@@ -427,10 +413,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %d\n", IPH_PROTO(iphdr)));
 
-#ifdef IP_STATS
-    ++lwip_stats.ip.proterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.proterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
 
   }
@@ -463,9 +447,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     if (pbuf_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
 
-#ifdef IP_STATS
-      ++lwip_stats.ip.err;
-#endif /* IP_STATS */
+      IP_STATS_INC(ip.err);
       snmp_inc_ipoutdiscards();
       return ERR_BUF;
     }
@@ -502,9 +484,8 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     return ip_frag(p,netif,dest);
 #endif
 
-#ifdef IP_STATS
-  lwip_stats.ip.xmit++;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.xmit);
+
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%u\n", netif->name[0], netif->name[1], netif->num));
 #if IP_DEBUG
   ip_debug_print(p);
@@ -530,9 +511,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%lx\n", dest->addr));
 
-#ifdef IP_STATS
-    ++lwip_stats.ip.rterr;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.rterr);
     snmp_inc_ipoutdiscards();
     return ERR_RTE;
   }
