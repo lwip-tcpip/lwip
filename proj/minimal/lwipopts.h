@@ -121,6 +121,15 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- ARP options ---------- */
 #define ARP_TABLE_SIZE 10
 #define ARP_QUEUEING 0
+/**
+ * - If enabled, cache entries are generated for every kind of ARP traffic or
+ * broadcast IP traffic. This enhances behaviour for sending to a dynamic set
+ * of hosts, for example if acting as a gateway.
+ * - If disabled, cache entries are generated only for IP destination addresses
+ * in use by lwIP or applications. This enhances performance if sending to a small,
+ * reasonably static number of hosts. Typically for embedded devices.
+ */
+#define ETHARP_ALWAYS_INSERT 0
 
 /* ---------- IP options ---------- */
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward

@@ -3,8 +3,8 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
- * Revision 1.20  2003/01/08 10:49:16  likewise
- * Added check if ARP_QUEUEING is 1 for a queueing related debug statement.
+ * Revision 1.21  2003/01/08 11:04:36  likewise
+ * Moved ETHARP_ALWAYS_INSERT switch to lwipopts.h
  *
  * Revision 1.19  2003/01/08 10:09:43  likewise
  * Updated lwIP module copyright years to include 2003. Committers must check theirs.
@@ -103,15 +103,6 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 /** the time an ARP entry stays pending after first request, (2 * 10) seconds = 20 seconds. */
 #define ARP_MAXPENDING 2 
 
-/**
- * 
- * - If enabled, cache entries are generated for every kind of ARP/IP traffic.
- * This enhances behaviour for sending to a dynamic set of hosts, for example
- * if acting as a gateway.
- * - If disabled, cache entries are generated only for IP destination addresses
- * in use by lwIP or applications. This enhances performance if sending to a small,
- * reasonably static number of hosts. Typically for embedded devices.
- */
 #ifndef ETHARP_ALWAYS_INSERT
 #  define ETHARP_ALWAYS_INSERT 1
 #endif
