@@ -417,6 +417,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define PBUF_STATS	0
 #define SYS_STATS	0
 #define RAW_STATS	0
+#define LWIP_STATS_DISPLAY	0
 
 #endif /* LWIP_STATS */
 
