@@ -79,7 +79,7 @@
 #include "lwip/opt.h"
 #include "lwip/dhcp.h"
 
-#ifdef LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
+#if LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
 
 /** global transaction identifier, must be
  *  unique for each DHCP request. */
