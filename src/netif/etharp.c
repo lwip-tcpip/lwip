@@ -55,10 +55,17 @@
 #  include "lwip/dhcp.h"
 #endif
 
-/** the time an ARP entry stays valid after its last update, (120 * 10) seconds = 20 minutes. */
-#define ARP_MAXAGE 120
-/** the time an ARP entry stays pending after first request, (1 * 10) seconds = 10 seconds. */
-#define ARP_MAXPENDING 1
+/** the time an ARP entry stays valid after its last update,
+ * (240 * 5) seconds = 20 minutes.
+ */
+#define ARP_MAXAGE 240
+/** the time an ARP entry stays pending after first request,
+ * (2 * 5) seconds = 10 seconds.
+ * 
+ * @internal Keep this number at least 2, otherwise it might
+ * run out instantly if the timeout occurs directly after a request.
+ */
+#define ARP_MAXPENDING 2
 
 #define HWTYPE_ETHERNET 1
 

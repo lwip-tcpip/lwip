@@ -107,7 +107,8 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define ARP_TMR_INTERVAL 10000
+/** 5 seconds period */
+#define ARP_TMR_INTERVAL 5000
 
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
