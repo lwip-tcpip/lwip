@@ -55,7 +55,7 @@ loopif_output(struct netif *netif, struct pbuf *p,
     ptr = r->payload;
     
     for(q = p; q != NULL; q = q->next) {
-      bcopy(q->payload, ptr, q->len);
+      memcpy(ptr, q->payload, q->len);
       ptr += q->len;
     }
     netif->input(r, netif);

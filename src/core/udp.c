@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.3 2002/11/21 10:32:19 likewise Exp $
+ * $Id: udp.c,v 1.4 2002/12/18 10:40:01 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -450,7 +450,7 @@ udp_new(void) {
   struct udp_pcb *pcb;
   pcb = memp_malloc(MEMP_UDP_PCB);
   if(pcb != NULL) {
-    bzero(pcb, sizeof(struct udp_pcb));
+    memset(pcb, 0, sizeof(struct udp_pcb));
     return pcb;
   }
   return NULL;

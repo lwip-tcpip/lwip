@@ -58,7 +58,7 @@ ip_addr_cmp(struct ip_addr *addr1, struct ip_addr *addr2)
 void
 ip_addr_set(struct ip_addr *dest, struct ip_addr *src)
 {
-  bcopy(src, dest, sizeof(struct ip_addr));
+  memcpy(dest, src, sizeof(struct ip_addr));
   /*  dest->addr[0] = src->addr[0];
   dest->addr[1] = src->addr[1];
   dest->addr[2] = src->addr[2];

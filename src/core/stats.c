@@ -48,7 +48,7 @@ void
 stats_init(void)
 {
 #ifdef STATS
-  bzero(&stats, sizeof(struct stats_));
+  memset(&stats, 0, sizeof(struct stats_));
 #endif /* STATS */
 }
 /*-----------------------------------------------------------------------------------*/

@@ -110,7 +110,7 @@ mem_init(void)
 {
   struct mem *mem;
 
-  bzero(ram, MEM_SIZE);
+  memset(ram, 0, MEM_SIZE);
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE;
   mem->prev = 0;
@@ -248,7 +248,7 @@ mem_reallocm(void *rmem, mem_size_t newsize)
   if(nmem == NULL) {
     return mem_realloc(rmem, newsize);
   }
-  bcopy(rmem, nmem, newsize);
+  memcpy(nmem, rmem, newsize);
   mem_free(rmem);
   return nmem;
 }

@@ -197,7 +197,7 @@ memp_malloc(memp_t type)
 
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
     /* initialize memp memory with zeroes */
-    bzero(mem, memp_sizes[type]);	
+    memset(mem, 0, memp_sizes[type]);	
     return mem;
   } else {
     DEBUGF(MEMP_DEBUG, ("memp_malloc: out of memory in pool %d\n", type));

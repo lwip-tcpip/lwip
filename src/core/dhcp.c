@@ -508,7 +508,7 @@ struct dhcp_state *dhcp_start(struct netif *netif)
 		DEBUGF(DHCP_DEBUG, ("dhcp_start(): could not allocate dhcp_state"));
 		return NULL;
 	}
-	bzero(state, sizeof(struct dhcp_state));
+	memset(state, 0, sizeof(struct dhcp_state));
 
 	DEBUGF(DHCP_DEBUG, ("dhcp_start(): allocated dhcp_state"));
 	state->pcb = udp_new();
@@ -557,7 +557,7 @@ void dhcp_inform(struct netif *netif)
 		DEBUGF(DHCP_DEBUG, ("dhcp_inform(): could not allocate dhcp_state"));
 		return;
 	}  
-	bzero(state, sizeof(struct dhcp_state));
+	memset(state, 0, sizeof(struct dhcp_state));
 
 	DEBUGF(DHCP_DEBUG, ("dhcp_inform(): allocated dhcp_state"));
 	state->pcb = udp_new();

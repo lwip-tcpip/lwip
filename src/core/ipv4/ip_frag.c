@@ -62,7 +62,7 @@ copy_from_pbuf(struct pbuf *p, u16_t * offset,
   p->len -= *offset;
   while (len) {
     l = len < p->len ? len : p->len;
-    bcopy(p->payload, buffer, l);
+    memcpy(buffer, p->payload, l);
     buffer += l;
     len -= l;
     if (len)
@@ -112,12 +112,12 @@ ip_reass(struct pbuf *p)
      buffer. The timer is updated with the maximum age. */
   if (ip_reasstmr == 0) {
     DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
-    bcopy(fraghdr, iphdr, IP_HLEN);
+    memcpy(iphdr, fraghdr, IP_HLEN);
     ip_reasstmr = IP_REASS_MAXAGE;
     sys_timeout(IP_REASS_TMO, (sys_timeout_handler) ip_reass_timer, NULL);
     ip_reassflags = 0;
     /* Clear the bitmap. */
-    bzero(ip_reassbitmap, sizeof(ip_reassbitmap));
+    memset(ip_reassbitmap, 0, sizeof(ip_reassbitmap));
   }
 
   /* Check if the incoming fragment matches the one currently present
@@ -235,10 +235,10 @@ ip_reass(struct pbuf *p)
 	     avaliable data in the pbuf is given by the q->len
 	     variable. */
 	  DEBUGF(IP_REASS_DEBUG,
-		 ("ip_reass: bcopy from %p (%d) to %p, %d bytes\n",
+		 ("ip_reass: memcpy from %p (%d) to %p, %d bytes\n",
 		  &ip_reassbuf[i], i, q->payload,
 		  q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
-	  bcopy(&ip_reassbuf[i], q->payload,
+	  memcpy(q->payload, &ip_reassbuf[i],
 		q->len > ip_reasslen - i ? ip_reasslen - i : q->len);
 	  i += q->len;
 	}
@@ -284,7 +284,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 
   /* Copy the IP header in it */
   iphdr = rambuf->payload;
-  bcopy(p->payload, iphdr, IP_HLEN);
+  memcpy(iphdr, p->payload, IP_HLEN);
 
   /* Save original offset */
   tmp = ntohs(IPH_OFFSET(iphdr));

@@ -167,7 +167,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       }
       ++queuelen;
       if(arg != NULL) {
-	bcopy(ptr, seg->p->payload, seglen);
+	memcpy(seg->p->payload, ptr, seglen);
       }
       seg->dataptr = seg->p->payload;
     } else {
@@ -222,7 +222,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       /* Copy options into data portion of segment.
 	 Options can thus only be sent in non data carrying
 	 segments such as SYN|ACK. */
-      bcopy(optdata, seg->dataptr, optlen);
+      memcpy(seg->dataptr, optdata, optlen);
     }
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: queueing %lu:%lu (0x%x)\n",
 			      ntohl(seg->tcphdr->seqno),
