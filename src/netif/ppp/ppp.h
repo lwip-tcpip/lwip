@@ -313,11 +313,14 @@ struct ppp_settings {
 	int  maxconnect;         /* Maximum connect time (seconds) */
 
 	char user[MAXNAMELEN + 1];/* Username for PAP */
-	char passwd[MAXNAMELEN + 1];           /* Password for PAP */
+	char passwd[MAXSECRETLEN + 1];           /* Password for PAP, secret for CHAP */
 	char our_name[MAXNAMELEN + 1];         /* Our name for authentication purposes */
 	char remote_name[MAXNAMELEN + 1];      /* Peer's name for authentication */
 };
 
+struct ppp_addrs {
+    struct ip_addr our_ipaddr, his_ipaddr, netmask, dns1, dns2;
+};
 
 /*****************************
 *** PUBLIC DATA STRUCTURES ***
@@ -337,7 +340,13 @@ extern struct protent *ppp_protocols[];/* Table of pointers to supported protoco
 /* Initialize the PPP subsystem. */
 void pppInit(void);
 
-void pppSetAuth(const char *user, const char *passwd);
+enum pppAuthType {
+    PPPAUTHTYPE_NONE,
+    PPPAUTHTYPE_PAP,
+    PPPAUTHTYPE_CHAP
+};
+
+void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
 
 /*
  * Open a new PPP connection using the given I/O device.
@@ -346,7 +355,7 @@ void pppSetAuth(const char *user, const char *passwd);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. 
  */
-int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg);
+int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
 
 /*
  * Close a PPP connection and release the descriptor. 
