@@ -645,6 +645,8 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   struct pbuf *p;
   err_t result;
   u8_t i;
+  /* prevent warning if ARP_QUEUEING == 0 */
+  if (q);
 
   srcaddr = (struct eth_addr *)netif->hwaddr;
   /* bail out if this IP address is pending */
