@@ -156,23 +156,16 @@ etharp_tmr(void)
     if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
         (arp_table[i].ctime >= ARP_MAXAGE)) {
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %u.\n", i));
-      arp_table[i].state = ETHARP_STATE_EMPTY;
-#if ARP_QUEUEING
-      if (arp_table[i].p != NULL) {
-        /* remove any queued packet */
-        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing packet queue %p.\n", i, (void *)(arp_table[i].p)));
-        pbuf_free(arp_table[i].p);
-        arp_table[i].p = NULL;
-      }
-#endif
+      goto empty;
     } else if ((arp_table[i].state == ETHARP_STATE_PENDING) &&
         (arp_table[i].ctime >= ARP_MAXPENDING)) {
-      arp_table[i].state = ETHARP_STATE_EMPTY;
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i));
+  empty:      
+      arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
       if (arp_table[i].p != NULL) {
         /* remove any queued packet */
-        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing packet queue %p.\n", i, (void *)(arp_table[i].p)));
+        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing entry %u, packet queue %p.\n", i, (void *)(arp_table[i].p)));
         pbuf_free(arp_table[i].p);
         arp_table[i].p = NULL;
       }
