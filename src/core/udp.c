@@ -67,7 +67,9 @@ int udp_debug_print(struct udp_hdr *udphdr);
 void
 udp_init(void)
 {
+#if LWIP_UDP
   udp_pcbs = pcb_cache = NULL;
+#endif /* LWIP_UDP */
 }
 
 #if LWIP_UDP
@@ -117,7 +119,8 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 
     if(pcb == NULL) {
       for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-	if(pcb->local_port == dest &&
+	if(pcb->remote_port == 0 &&
+	   pcb->local_port == dest &&
 	   (ip_addr_isany(&pcb->remote_ip) ||
 	    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
 	   (ip_addr_isany(&pcb->local_ip) ||
