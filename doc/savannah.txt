@@ -74,17 +74,15 @@ Now, make a new release by creating a new directory for it (these are
 Savannah conventions so that it shows up in the Files list real nice):
 
 mkdir stable.pkg
-cd stable.pkg
-mkdir 0.6.3
-cd 0.6.3
+mkdir stable.pkg 0.6.3
 
 We can now copy the tar archive we made earlier into the release directory:
 
-cp /../../../lwip-0.6.3.tar.gz .
+cp ../../../lwip-0.6.3.tar.gz .
 
 Finally, synchronize this directory upwards to Savannah:
 
-rsync -n -e "ssh -1" -t -u -v -r . likewise@savannah.nongnu.org:/upload/lwip
+rsync -n -e "ssh -1" -t -u -v -r *.pkg likewise@savannah.nongnu.org:/upload/lwip
 
 This does a "dry run": no files are modified! After you have confirmed that
 this is what you intended to do, remove "-n" and actually synchronize for
