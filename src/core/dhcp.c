@@ -163,6 +163,7 @@ static void dhcp_check(struct dhcp_state *state)
    	DEBUGF(DHCP_DEBUG, ("dhcp_check(): sending ARP request len %u", p->tot_len));
     result = state->netif->linkoutput(state->netif, p);
     pbuf_free(p);
+    p = NULL;
   }
 	state->tries++;
 	msecs = 500;
