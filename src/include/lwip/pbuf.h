@@ -64,20 +64,23 @@ typedef enum {
 struct pbuf {
   struct pbuf *next;
 
-  /* Pointer to the actual data in the buffer. */
+  /** pointer to the actual data in the buffer. */
   void *payload;
   
-  /* total length of this buffer and additionally chained buffers */
-  /* (p->tot_len = p->len + p->next->tot_len) */
+  /**
+   * total length of this buffer and all chained buffers. 
+   * invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0)
+   */
   u16_t tot_len;
   
-  /* Length of this buffer. */
+  /* length of this buffer */
   u16_t len;  
 
   /* flags */
   u16_t flags;
   
-  /** the reference count always equals the number of pointers
+  /**
+   * the reference count always equals the number of pointers
    * that refer to this pbuf. This can be pointers from an application,
    * the stack itself, or pbuf->next pointers from a chain.
    */
@@ -92,71 +95,15 @@ struct pbuf {
    parameter specifies the size of the data allocated to those.  */
 void pbuf_init(void);
 
-/* pbuf_alloc():
-   
-   Allocates a pbuf at protocol layer l. The actual memory allocated
-   for the pbuf is determined by the layer at which the pbuf is
-   allocated and the requested size (from the size parameter). The
-   flag parameter decides how and where the pbuf should be allocated
-   as follows:
- 
-   * PBUF_RAM: buffer memory for pbuf is allocated as one large
-               chunk. This includesprotocol headers as well.
-   
-   * RBUF_ROM: no buffer memory is allocated for the pbuf, even for
-                protocol headers.  Additional headers must be
-                prepended by allocating another pbuf and chain in to
-                the front of the ROM pbuf.
-
-   * PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
-                the pbuf pool that is allocated during pbuf_init().  */
 struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
-
-/* pbuf_realloc():
-
-   Shrinks the pbuf to the size given by the size parameter. 
- */
 void pbuf_realloc(struct pbuf *p, u16_t size); 
-
-/* pbuf_header():
-
-   Tries to move the p->payload pointer header_size number of bytes
-   upward within the pbuf. The return value is non-zero if it
-   fails. If so, an additional pbuf should be allocated for the header
-   and it should be chained to the front. */
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
-
-/* pbuf_ref():
-
-   Increments the reference count of the pbuf p.
- */
 void pbuf_ref(struct pbuf *p);
 void pbuf_ref_chain(struct pbuf *p);
-/* pbuf_free():
-
-   Decrements the reference count and deallocates the pbuf if the
-   reference count is zero. If the pbuf is a chain all pbufs in the
-   chain are deallocated. */
 u8_t pbuf_free(struct pbuf *p);
-
-/* pbuf_clen():
-
-   Returns the length of the pbuf chain. */
 u8_t pbuf_clen(struct pbuf *p);  
-
-/* pbuf_chain():
-
-   Chains pbuf t on the end of pbuf h. Pbuf h will have it's tot_len
-   field adjusted accordingly. Pbuf t should no be used any more after
-   a call to this function, since pbuf t is now a part of pbuf h.  */
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
-
-/* pbuf_dechain():
-
-   Picks off the first pbuf from the pbuf chain p. Returns the tail of
-   the pbuf chain or NULL if the pbuf p was not chained. */
 struct pbuf *pbuf_dechain(struct pbuf *p);
-
 struct pbuf *pbuf_take(struct pbuf *f);
 
 
