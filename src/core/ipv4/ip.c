@@ -109,6 +109,7 @@ ip_lookup(void *header, struct netif *inp)
   switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
+  case IP_PROTO_UDPLITE:
     return udp_lookup(iphdr, inp);
 #endif /* LWIP_UDP */
 #if LWIP_TCP > 0
@@ -400,6 +401,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
+  case IP_PROTO_UDPLITE:
     snmp_inc_ipindelivers();
     udp_input(p, inp);
     break;
