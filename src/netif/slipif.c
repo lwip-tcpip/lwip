@@ -150,6 +150,7 @@ slipif_input( struct netif * netif )
   
   if (q != NULL) {
     pbuf_chain(q, p);
+    pbuf_free(p);
   } else {
     q = p;
   }
