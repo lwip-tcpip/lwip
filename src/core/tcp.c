@@ -444,6 +444,16 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
      * continue to transmit.
      */
     tcp_ack(pcb);
+  } 
+  else if (pcb->flags & TF_ACK_DELAY && pcb->rcv_wnd >= TCP_WND/2) {
+    /* If we can send a window update such that there is a full
+     * segment available in the window, do so now.  This is sort of
+     * nagle-like in its goals, and tries to hit a compromise between
+     * sending acks each time the window is updated, and only sending
+     * window updates when a timer expires.  The "threshold" used
+     * above (currently TCP_WND/2) can be tuned to be more or less
+     * aggressive  */
+    tcp_ack_now(pcb);
   }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %u bytes, wnd %u (%u).\n",
