@@ -85,7 +85,8 @@
 #if LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
 
 /** global transaction identifier, must be
- *  unique for each DHCP request. */
+ *  unique for each DHCP request. We simply increment, starting
+ *  with this value (easy to match with a packet analyzer) */
 static u32_t xid = 0xABCD0000;
 
 /** DHCP client state machine functions */
@@ -805,6 +806,8 @@ static void dhcp_bind(struct netif *netif)
   netif_set_netmask(netif, &sn_mask);
   LWIP_DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_bind(): GW: 0x%08lx\n", gw_addr.addr));
   netif_set_gw(netif, &gw_addr);
+  /* bring the interface up */
+  netif_set_up(netif);
   /* netif is now bound to DHCP leased address */
   dhcp_set_state(dhcp, DHCP_BOUND);
 }
@@ -960,10 +963,13 @@ static err_t dhcp_release(struct netif *netif)
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_release(): set request timeout %u msecs\n", msecs));
+  /* bring the interface down */
+  netif_set_down(netif);
   /* remove IP address from interface */
   netif_set_ipaddr(netif, IP_ADDR_ANY);
   netif_set_gw(netif, IP_ADDR_ANY);
   netif_set_netmask(netif, IP_ADDR_ANY);
+  
   /* TODO: netif_down(netif); */
   return result;
 }
