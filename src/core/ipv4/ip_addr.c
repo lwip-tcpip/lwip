@@ -40,13 +40,10 @@ const struct ip_addr ip_addr_broadcast = { 0xffffffffUL };
 
 /* Determine if an address is a broadcast address on a network interface 
  * 
- * @param addr address to be checkedk
+ * @param addr address to be checked
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  *
- * @intern work in progress - meant to replace ip_addr.h macro
- * as it does not support non-broadcast interfaces.
- * see lwip-devel mailing list on 18-2-2004
  */
 
 u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
@@ -55,9 +52,10 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
   if ((addr->addr == ip_addr_broadcast.addr) ||
       (addr->addr == ip_addr_any.addr))
     return 1;
-  /* no broadcast support on this network interface
-   * we cannot proceed matching against broadcast addresses */
+  /* no broadcast support on this network interface? */
   else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0)
+    /* the given address cannot be a broadcast address */
+     * nor can we check against any broadcast addresses */
     return 0;
   /* address matches network interface address exactly? => no broadcast */
   else if (addr->addr == netif->ip_addr.addr)
