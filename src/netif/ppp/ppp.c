@@ -153,7 +153,7 @@ typedef struct PPPControl_s {
     struct vjcompress vjComp;           /* Van Jabobsen compression header. */
 #endif
 
-    struct netif *netif;
+    struct netif netif;
 
     struct ppp_addrs addrs;
 
@@ -296,7 +296,6 @@ void pppInit(void)
 
     for (i = 0; i < NUM_PPP; i++) {
         pppControl[i].openFlag = 0;
-        pppControl[i].netif = NULL;
 
 		subnetMask = htonl(0xffffff00);
     
@@ -537,14 +536,14 @@ static struct pbuf *pppAppend(u_char c, struct pbuf *nb, ext_accm *outACCM)
 /* Send a packet on the given connection. */
 static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *ipaddr)
 {
-	int pd = (int)netif->state;
-	u_short protocol = PPP_IP;
+    int pd = (int)netif->state;
+    u_short protocol = PPP_IP;
     PPPControl *pc = &pppControl[pd];
     u_int fcsOut = PPP_INITFCS;
     struct pbuf *headMB = NULL, *tailMB = NULL, *p;
     u_char c;
 
-	(void)ipaddr;
+    (void)ipaddr;
 
     /* Validate parameters. */
     /* We let any protocol value go through - it can't hurt us
@@ -1003,12 +1002,10 @@ int sifup(int pd)
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		if(pc->netif)
-			netif_remove(pc->netif);
-		pc->netif = netif_add(&pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input);
-		if(pc->netif) {
-        	pc->if_up = 1;
-        	pc->errCode = PPPERR_NONE;
+		netif_remove(&pc->netif);
+		if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input)) {
+        		pc->if_up = 1;
+        		pc->errCode = PPPERR_NONE;
 
 			PPPDEBUG((LOG_DEBUG, "sifup: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
 			if(pc->linkStatusCB)
@@ -1046,12 +1043,10 @@ int sifdown(int pd)
         PPPDEBUG((LOG_WARNING, "sifdown[%d]: bad parms\n", pd));
     } else {
         pc->if_up = 0;
-		if(pc->netif)
-			netif_remove(pc->netif);
-		pc->netif = NULL;
-		PPPDEBUG((LOG_DEBUG, "sifdown: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
-		if(pc->linkStatusCB)
-			pc->linkStatusCB(pc->linkStatusCtx, PPPERR_CONNECT, NULL);
+	netif_remove(&pc->netif);
+	PPPDEBUG((LOG_DEBUG, "sifdown: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
+	if(pc->linkStatusCB)
+		pc->linkStatusCB(pc->linkStatusCtx, PPPERR_CONNECT, NULL);
 	}
     return st;
 }
@@ -1126,7 +1121,7 @@ int sifdefaultroute(int pd, u32_t l, u32_t g)
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		netif_set_default(pc->netif);
+		netif_set_default(&pc->netif);
     }
 
     /* TODO: check how PPP handled the netMask, previously not set by ipSetDefault */
@@ -1324,7 +1319,7 @@ static void pppInput(void *arg)
          * pass the result to IP.
          */
         if (vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) {
-            pppControl[pd].netif->input(nb, pppControl[pd].netif);
+            pppControl[pd].netif.input(nb, &pppControl[pd].netif);
 			return;
         }
 	/* Something's wrong so drop it. */
@@ -1342,7 +1337,7 @@ static void pppInput(void *arg)
          * the packet to IP.
          */
         if (vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) {
-            pppControl[pd].netif->input(nb, pppControl[pd].netif);
+            pppControl[pd].netif.input(nb, &pppControl[pd].netif);
 			return;
         }
 	/* Something's wrong so drop it. */
@@ -1356,7 +1351,7 @@ static void pppInput(void *arg)
 	break;
     case PPP_IP:            /* Internet Protocol */
         PPPDEBUG((LOG_INFO, "pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
-        pppControl[pd].netif->input(nb, pppControl[pd].netif);
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
 		return;
     default:
 	{

@@ -39,7 +39,6 @@
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
-#include "lwip/mem.h"
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 #include "lwip/tcp.h"
@@ -61,22 +60,15 @@ struct netif *netif_default = NULL;
  * @return netif, or NULL if failed.
  */
 struct netif *
-netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
+netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   struct ip_addr *gw,
   void *state,
   err_t (* init)(struct netif *netif),
   err_t (* input)(struct pbuf *p, struct netif *netif))
 {
-  struct netif *netif;
   static int netifnum = 0;
 
-  /* allocate netif structure */
-  netif = mem_malloc(sizeof(struct netif));
-
-  if (netif == NULL) {
-    LWIP_DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
-    return NULL;
-  }
+  
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
   netif->dhcp = NULL;
@@ -90,7 +82,6 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 
   /* call user specified initialization function for netif */
   if (init(netif) != ERR_OK) {
-    mem_free(netif);
     return NULL;
   }
 
@@ -142,7 +133,6 @@ void netif_remove(struct netif * netif)
     /* reset default netif */
     netif_default = NULL;
   LWIP_DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
-  mem_free( netif );
 }
 
 struct netif *
