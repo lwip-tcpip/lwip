@@ -58,7 +58,6 @@ typedef enum {
  *	ppp_trace - a form of printf to send tracing information to stderr
  */
 void ppp_trace(int level, const char *format,...);
-/////////////////////////////////////////////////////////////////////////////
 
 #if PPP_DEBUG > 0
 

@@ -253,10 +253,10 @@ enum NPmode {
  * Get the up status - 0 for down, non-zero for up.  The argument must
  * point to an int.
  */
-#define PPPCTLG_UPSTATUS 100	// Get the up status - 0 down else up
-#define PPPCTLS_ERRCODE 101		// Set the error code
-#define PPPCTLG_ERRCODE 102		// Get the error code
-#define	PPPCTLG_FD		103		// Get the fd associated with the ppp
+#define PPPCTLG_UPSTATUS 100	/* Get the up status - 0 down else up */
+#define PPPCTLS_ERRCODE 101		/* Set the error code */
+#define PPPCTLG_ERRCODE 102		/* Get the error code */
+#define	PPPCTLG_FD		103		/* Get the fd associated with the ppp */
 
 /************************
 *** PUBLIC DATA TYPES ***

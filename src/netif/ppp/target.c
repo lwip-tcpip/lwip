@@ -25,7 +25,7 @@ char *ip_ntoa(u32_t ipaddr)
     
     ipaddr = ntohl(ipaddr);
 #if 0 
-//    FIXME
+    FIXME
     sprintf(b, "%d.%d.%d.%d",
             (u_char)(ipaddr >> 24),
             (u_char)(ipaddr >> 16),

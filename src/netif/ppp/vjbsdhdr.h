@@ -15,13 +15,13 @@ PACK_STRUCT_BEGIN
 struct ip
 {
 #if defined(NO_CHAR_BITFIELDS)
-	u_char ip_hl_v;	// bug in GCC for mips means the bitfield stuff will sometimes break - so we use a char for both and get round it with macro's instead...
+	u_char ip_hl_v;	/* bug in GCC for mips means the bitfield stuff will sometimes break - so we use a char for both and get round it with macro's instead... */
 #else
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	ip_hl:4,				/* header length */
+	unsigned ip_hl:4,				/* header length */
 		ip_v:4;						/* version */
 #elif BYTE_ORDER == BIG_ENDIAN 
-	u_char	ip_v:4,					/* version */
+	unsigned ip_v:4,					/* version */
 		ip_hl:4;					/* header length */
 #else
 	COMPLAIN - NO BYTE ORDER SELECTED!
@@ -58,11 +58,11 @@ struct tcphdr
 	u_char th_x2_off;
 #else
 #if BYTE_ORDER == LITTLE_ENDIAN
-	u_char	th_x2:4,		/* (unused) */
+	unsigned	th_x2:4,		/* (unused) */
 			th_off:4;		/* data offset */
 #endif
 #if BYTE_ORDER == BIG_ENDIAN 
-	u_char	th_off:4,		/* data offset */
+	unsigned	th_off:4,		/* data offset */
 			th_x2:4;		/* (unused) */
 #endif
 #endif

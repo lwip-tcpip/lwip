@@ -1203,7 +1203,7 @@ static void ipcp_up(fsm *f)
 	}
 	
 	if (ppp_settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
-		//pppGotDNSAddrs(go->dnsaddr[0], go->dnsaddr[1]);
+		/*pppGotDNSAddrs(go->dnsaddr[0], go->dnsaddr[1]);*/
 	}
 
 	/*

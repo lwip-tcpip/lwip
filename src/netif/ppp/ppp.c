@@ -351,14 +351,12 @@ int pppOpen(ppp_sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void 
      * so the arg passed to sio_open means nothing
      */
     fd = sio_open(2);
-    /* Find a free PPP session descriptor. */
-    //OS_ENTER_CRITICAL();
+    /* Find a free PPP session descriptor. Critical region? */
     for (pd = 0; pd < NUM_PPP && pppControl[pd].openFlag != 0; pd++);
     if (pd >= NUM_PPP)
         pd = PPPERR_OPEN;
     else
         pppControl[pd].openFlag = !0;
-    //OS_EXIT_CRITICAL();
 
     /* Launch a deamon thread. */
     if (pd >= 0) {
@@ -876,7 +874,6 @@ u32_t GetMask(u32_t addr)
     else
         nmask = IN_CLASSC_NET;
     /* class D nets are disallowed by bad_ip_adrs */
-//    mask = netMask | htonl(nmask);
     mask = subnetMask | htonl(nmask);
     
     /* XXX
@@ -1310,7 +1307,9 @@ out:
 static void pppDrop(PPPControl *pc)
 {
     if (pc->inHead != NULL) {
-//        PPPDEBUG((LOG_INFO, "pppDrop: %d:%.*H\n", pc->inHead->len, min(60, pc->inHead->len * 2), pc->inHead->payload));
+#if 0	    
+        PPPDEBUG((LOG_INFO, "pppDrop: %d:%.*H\n", pc->inHead->len, min(60, pc->inHead->len * 2), pc->inHead->payload));
+#endif	
         PPPDEBUG((LOG_INFO, "pppDrop: nBuf len=%d\n", pc->inHead->len));
         pbuf_free(pc->inHead);
         pc->inHead = NULL;
@@ -1516,7 +1515,7 @@ static void pppInProc(int pd, u_char *s, int l)
             pc->inFCS = PPP_FCS(pc->inFCS, curChar);
         }
     }
-//	avRandomize();
+	avRandomize();
 }
 
 /* 

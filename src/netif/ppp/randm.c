@@ -78,23 +78,23 @@ void avChurnRand(char *randData, u32_t randLen)
 {
     MD5_CTX md5;
 
-//  ppp_trace(LOG_INFO, "churnRand: %u@%P\n", randLen, randData);
+/*  ppp_trace(LOG_INFO, "churnRand: %u@%P\n", randLen, randData); */
     MD5Init(&md5);
     MD5Update(&md5, (u_char *)randPool, sizeof(randPool));
     if (randData)
         MD5Update(&md5, (u_char *)randData, randLen);
     else {
         struct {
-            // INCLUDE fields for any system sources of randomness
+            /* INCLUDE fields for any system sources of randomness */
             char foobar;
         } sysData;
 
-        // Load sysData fields here.
+        /* Load sysData fields here. */
         ;
         MD5Update(&md5, (u_char *)&sysData, sizeof(sysData));
     }
     MD5Final((u_char *)randPool, &md5);
-//  ppp_trace(LOG_INFO, "churnRand: -> 0\n");
+/*  ppp_trace(LOG_INFO, "churnRand: -> 0\n"); */
 }
 
 /*
@@ -150,8 +150,8 @@ u32_t avRandom()
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-static int  avRandomized = 0;       // Set when truely randomized.
-static u32_t avRandomSeed = 0;      // Seed used for random number generation.
+static int  avRandomized = 0;       /* Set when truely randomized. */
+static u32_t avRandomSeed = 0;      /* Seed used for random number generation. */
 
 
 /***********************************/
@@ -173,10 +173,10 @@ static u32_t avRandomSeed = 0;      // Seed used for random number generation.
  */
 void avRandomInit()
 {
+#if 0
     /* Get a pointer into the last 4 bytes of clockBuf. */
     u32_t *lptr1 = (u32_t *)((char *)&clockBuf[3]);
 
-#if 0
     /*
      * Initialize our seed using the real-time clock, the idle
      * counter, the millisecond timer, and the hardware timer
@@ -188,8 +188,8 @@ void avRandomInit()
      * randomize the lower 16 bits of the seed.
      */
     readClk();
-//    avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
-//             + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
+    avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
+             + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
 #else
     avRandomSeed += ppp_jiffies(); /* XXX */
 #endif
@@ -214,7 +214,7 @@ void avRandomize(void)
         avRandomInit();
         /* The initialization function also updates the seed. */
     } else {
-//        avRandomSeed += (avRandomSeed << 16) + TM1;
+/*        avRandomSeed += (avRandomSeed << 16) + TM1; */
     	avRandomSeed += (ppp_jiffies() - last_jiffies); /* XXX */
     }
     last_jiffies = ppp_jiffies();

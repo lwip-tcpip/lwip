@@ -575,7 +575,7 @@ static void ChapReceiveResponse(chap_state *cstate, u_char *inp, int id, int len
 	code = CHAP_FAILURE;
 	if (!get_secret(cstate->unit, rhostname, cstate->chal_name,
 	secret, &secret_len, 1)) {
-//        CHAPDEBUG((LOG_WARNING, TL_CHAP, "No CHAP secret found for authenticating %s\n", rhostname));
+/*        CHAPDEBUG((LOG_WARNING, TL_CHAP, "No CHAP secret found for authenticating %s\n", rhostname)); */
 		ppp_trace(LOG_WARNING, "No CHAP secret found for authenticating %s\n",
 		rhostname);
 	} else {

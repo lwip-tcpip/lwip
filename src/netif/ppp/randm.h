@@ -77,12 +77,5 @@ void avGenRand(char *buf, u32_t bufLen);
  */
 u32_t avRandom(void);
 
-/*
- * Initialize Borland's random number generator.  This is a library function
- *	but we declare it here rather than including the entire header file
- *	for it.
- */
-//void srand(unsigned seed);
-
 
 #endif /* RANDM_H */

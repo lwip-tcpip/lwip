@@ -21,6 +21,7 @@
 #define UNTIMEOUT(f, a)		sys_untimeout((f), (a))
 
 
+# ifndef __u_char_defined
 
 /* Type definitions for BSD code. */
 typedef unsigned long u_long;
@@ -28,6 +29,7 @@ typedef unsigned int u_int;
 typedef unsigned short u_short;
 typedef unsigned char u_char;
 
+#endif
 
 /*
  * Sleep ms milliseconds.  Note that this only has a (close to) 1 Jiffy 

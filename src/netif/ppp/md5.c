@@ -129,9 +129,11 @@ void MD5Update(MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen)
   int mdi;
   unsigned int i, ii;
 
-//  ppp_trace(LOG_INFO, "MD5Update: %u:%.*H\n", inLen, MIN(inLen, 20) * 2, inBuf);
-//  ppp_trace(LOG_INFO, "MD5Update: %u:%s\n", inLen, inBuf);
-
+#if 0
+  ppp_trace(LOG_INFO, "MD5Update: %u:%.*H\n", inLen, MIN(inLen, 20) * 2, inBuf);
+  ppp_trace(LOG_INFO, "MD5Update: %u:%s\n", inLen, inBuf);
+#endif
+  
   /* compute number of bytes mod 64 */
   mdi = (int)((mdContext->i[0] >> 3) & 0x3F);
 

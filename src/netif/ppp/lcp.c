@@ -91,7 +91,6 @@ static void lcp_up (fsm*);		            /* We're UP */
 static void lcp_down (fsm*);	    	    /* We're DOWN */
 static void lcp_starting (fsm*);   	    /* We need lower layer up */
 static void lcp_finished (fsm*);	        /* We need lower layer down */
-//static int  lcp_extcode (fsm*, int, int, u_char*, int);
 static int  lcp_extcode (fsm*, int, u_char, u_char*, int);
 
 static void lcp_rprotrej (fsm*, u_char*, int);
@@ -371,7 +370,6 @@ static void lcp_input(int unit, u_char *p, int len)
 /*
  * lcp_extcode - Handle a LCP-specific code.
  */
-//static int lcp_extcode(fsm *f, int code, int id, u_char *inp, int len)
 static int lcp_extcode(fsm *f, int code, u_char id, u_char *inp, int len)
 {
 	u_char *magp;
