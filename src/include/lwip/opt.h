@@ -33,10 +33,10 @@
 #define __LWIP_OPT_H__
 
 #include "lwip/debug.h"
-/* Include user options which override defaults */
+/* Include user defined options first */
 #include "lwipopts.h"
 
-/* Define default values for all configuration parameters. */
+/* Define default values for unconfigured parameters. */
 
 /* Platform specific locking */
 
@@ -146,26 +146,28 @@ a lot of data that needs to be copied, this should be set high. */
 
 
 /* ---------- ARP options ---------- */
+
+/** Number of active hardware address, IP address pairs cached */
 #ifndef ARP_TABLE_SIZE
 #define ARP_TABLE_SIZE 10
 #endif
 
+/**
+ * If enabled, outgoing packets are queued during hardware address
+ * resolution. The etharp.c implementation queues 1 packet only.
+ */
 #ifndef ARP_QUEUEING
 #define ARP_QUEUEING 1
 #endif
 /**
- * - If enabled, cache entries are generated for every kind of ARP traffic or
- * broadcast IP traffic. This enhances behaviour for sending to a dynamic set
- * of hosts, for example if acting as a gateway.
- * - If disabled, cache entries are generated only for IP destination addresses
- * in use by lwIP or applications. This enhances performance if sending to a small,
- * reasonably static number of hosts. Typically for embedded devices.
+ * If defined to 1, cache entries are updated or added for every kind of ARP traffic
+ * or broadcast IP traffic. Recommended for routers.
+ * If defined to 0, only existing cache entries are updated. Entries are added when
+ * lwIP is sending to them. Recommended for embedded devices.
  */
-
 #ifndef ETHARP_ALWAYS_INSERT
 #define ETHARP_ALWAYS_INSERT 1
 #endif
-
 
 /* ---------- IP options ---------- */
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward
@@ -181,12 +183,17 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_OPTIONS              1
 #endif
 
-/* IP reassembly and segmentation.These are orthogonal even
- * if they both deal with IP fragments */
+/** IP reassembly and segmentation. Even if they both deal with IP
+ *  fragments, note that these are orthogonal, one dealing with incoming
+ *  packets, the other with outgoing packets
+ */
+
+/** Reassemble incoming fragmented IP packets */
 #ifndef IP_REASSEMBLY
 #define IP_REASSEMBLY     1
 #endif
 
+/** Fragment outgoing IP packets if their size exceeds MTU */
 #ifndef IP_FRAG
 #define IP_FRAG           1
 #endif
