@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.29  2003/02/24 10:49:05  jani
+ * cleaned up opt.h a bit, added more option defaults ad changed SYS_LIGHTWEIGHT_PROT to be a 0/1 define.The same for COMPAT_SOCKET
+ *
  * Revision 1.28  2003/02/21 16:43:46  jani
  * byte-order handling functions are in inet.c now and the uperrcase counterparts are gone. opt.h has all the
  * configurable items debug does not need to be directly included.
@@ -174,10 +177,6 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #define ARP_MAXAGE 120  
 /** the time an ARP entry stays pending after first request, (2 * 10) seconds = 20 seconds. */
 #define ARP_MAXPENDING 2 
-
-#ifndef ETHARP_ALWAYS_INSERT
-#  define ETHARP_ALWAYS_INSERT 1
-#endif
 
 #define HWTYPE_ETHERNET 1
 

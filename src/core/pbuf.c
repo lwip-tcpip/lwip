@@ -53,7 +53,7 @@
 
 static u8_t pbuf_pool_memory[(PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf)))];
 
-#ifndef SYS_LIGHTWEIGHT_PROT
+#if !SYS_LIGHTWEIGHT_PROT
 static volatile u8_t pbuf_pool_free_lock, pbuf_pool_alloc_lock;
 static sys_sem_t pbuf_pool_free_sem;
 #endif
@@ -103,7 +103,7 @@ pbuf_init(void)
      are no more pbufs in the pool. */
   q->next = NULL;
 
-#ifndef SYS_LIGHTWEIGHT_PROT  
+#if !SYS_LIGHTWEIGHT_PROT  
   pbuf_pool_alloc_lock = 0;
   pbuf_pool_free_lock = 0;
   pbuf_pool_free_sem = sys_sem_new(1);
@@ -126,7 +126,7 @@ pbuf_pool_alloc(void)
       pbuf_pool_alloc_cache = p->next; 
     }
   } else {
-#ifndef SYS_LIGHTWEIGHT_PROT      
+#if !SYS_LIGHTWEIGHT_PROT      
     /* Next, check the actual pbuf pool, but if the pool is locked, we
        pretend to be out of buffers and return NULL. */
     if(pbuf_pool_free_lock) {
@@ -142,7 +142,7 @@ pbuf_pool_alloc(void)
       if(p) {
 	pbuf_pool = p->next; 
       }
-#ifndef SYS_LIGHTWEIGHT_PROT      
+#if !SYS_LIGHTWEIGHT_PROT      
 #ifdef PBUF_STATS
     } else {
       ++lwip_stats.pbuf.alloc_locked;
@@ -331,12 +331,12 @@ pbuf_refresh(void)
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
  
-#ifndef SYS_LIGHTWEIGHT_PROT
+#if !SYS_LIGHTWEIGHT_PROT
   sys_sem_wait(pbuf_pool_free_sem);
 #endif /* else SYS_LIGHTWEIGHT_PROT */
   
   if(pbuf_pool_free_cache != NULL) {
-#ifndef SYS_LIGHTWEIGHT_PROT      
+#if !SYS_LIGHTWEIGHT_PROT      
     pbuf_pool_free_lock = 1;
     if(!pbuf_pool_alloc_lock) {
 #endif /* SYS_LIGHTWEIGHT_PROT */
@@ -347,7 +347,7 @@ pbuf_refresh(void)
 	p->next = pbuf_pool_free_cache;   
       }
       pbuf_pool_free_cache = NULL;
-#ifndef SYS_LIGHTWEIGHT_PROT      
+#if !SYS_LIGHTWEIGHT_PROT      
 #ifdef PBUF_STATS
     } else {
       ++lwip_stats.pbuf.refresh_locked;
@@ -358,7 +358,7 @@ pbuf_refresh(void)
 #endif /* SYS_LIGHTWEIGHT_PROT */    
   }
   SYS_ARCH_UNPROTECT(old_level);
-#ifndef SYS_LIGHTWEIGHT_PROT      
+#if !SYS_LIGHTWEIGHT_PROT      
   sys_sem_signal(pbuf_pool_free_sem);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
 }
@@ -375,7 +375,7 @@ pbuf_refresh(void)
                                   DEC_PBUF_STATS;                       \
                                 } while (0)
 
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
 #define PBUF_POOL_FREE(p)  do {                                         \
                                 SYS_ARCH_DECL_PROTECT(old_level);       \
                                 SYS_ARCH_PROTECT(old_level);            \

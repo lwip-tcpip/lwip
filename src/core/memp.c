@@ -110,7 +110,7 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
 					sizeof(struct memp)))];
 
 /*-----------------------------------------------------------------------------------*/
-#ifndef SYS_LIGHTWEIGHT_PROT
+#if !SYS_LIGHTWEIGHT_PROT
 static sys_sem_t mutex;
 #endif
 /*-----------------------------------------------------------------------------------*/
@@ -170,7 +170,7 @@ memp_init(void)
     }
   }
 
-#ifndef SYS_LIGHTWEIGHT_PROT
+#if !SYS_LIGHTWEIGHT_PROT
   mutex = sys_sem_new(1);
 #endif
 
@@ -216,7 +216,7 @@ void *
 memp_mallocp(memp_t type)
 {
   void *mem;
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */  
@@ -225,7 +225,7 @@ memp_mallocp(memp_t type)
 
   mem = memp_malloc(type);
 
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
@@ -258,7 +258,7 @@ memp_free(memp_t type, void *mem)
 void 
 memp_freep(memp_t type, void *mem)
 {
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
     SYS_ARCH_DECL_PROTECT(old_level);
     SYS_ARCH_PROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */  
@@ -267,7 +267,7 @@ memp_freep(memp_t type, void *mem)
 
   memp_free(type, mem);
 
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
