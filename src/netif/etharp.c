@@ -11,7 +11,7 @@
  */
 
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -372,20 +372,22 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 #if ARP_QUEUEING
         /* get the first packet on the queue (if any) */
         p = arp_table[i].p;
-        /* queued packet present? */
+        /* (another) queued packet present? */
         while (p != NULL) {
           struct pbuf *q, *n;
           /* search for second packet on queue (n) */
           q = p;
           while (q->tot_len > q->len) {
-          	/* proceed to next pbuf of this packet */
-          	LWIP_ASSERT("q->next ! NULL", q->next != NULL);
-          	q = q->next;
+            LWIP_ASSERT("q->next != NULL (while q->tot_len > q->len)", q->next != NULL);
+            /* proceed to next pbuf of this packet */
+            q = q->next;
           }
-          /* { q = last pbuf of first packet, q->tot_len = q->len } */
+          /* { q = last pbuf of this packet, q->tot_len == q->len } */
+          LWIP_ASSERT("q->tot_len == q->len", q->tot_len == q->len);
+          /* remember next packet on queue */
           n = q->next;
-          /* { n = first pbuf of 2nd packet, or NULL if no 2nd packet } */
-          /* terminate the first packet pbuf chain */
+          /* { n = first pbuf of next packet, or NULL if no next packet } */
+          /* terminate this packet pbuf chain */
           q->next = NULL;
           /* fill-in Ethernet header */
           ethhdr = p->payload;
@@ -394,7 +396,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
             ethhdr->src.addr[k] = netif->hwaddr[k];
           }
           ethhdr->type = htons(ETHTYPE_IP);
-          LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet %p.\n",(void *)p));
+          LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet %p.\n", (void *)p));
           /* send the queued IP packet */
           netif->linkoutput(netif, p);
           /* free the queued IP packet */
@@ -405,10 +407,11 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         /* NULL attached buffer*/
         arp_table[i].p = NULL;
 #endif
+        /* IP addresses should only occur once in the ARP entry, we are done */
         return NULL;
       }
-    } /* if */
-  } /* for */
+    } /* if STABLE */
+  } /* for all ARP entries */
 
   /* no matching ARP entry was found */
   LWIP_ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);
@@ -582,7 +585,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* ARP reply. We insert or update the ARP table later. */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-    /* DHCP needs to know about ARP replies to our address */
+    /* DHCP wants to know about ARP replies to our wanna-have-address */
     if (for_us) dhcp_arp_reply(netif, &hdr->sipaddr);
 #endif
     break;

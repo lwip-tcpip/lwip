@@ -4,7 +4,7 @@
  *
  */
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -71,76 +71,6 @@ udp_init(void)
   udp_pcbs = pcb_cache = NULL;
 }
 
-
-/* udp_lookup:
- *
- * An experimental feature that will be changed in future versions. Do
- * not depend on it yet...
- */
-
-#ifdef LWIP_DEBUG
-u8_t
-udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
-{
-  struct udp_pcb *pcb;
-  struct udp_hdr *udphdr;
-  u16_t src, dest;
-
-    PERF_START;
-  (void)inp;
-
-    udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
-
-  src = ntohs(udphdr->src);
-  dest = ntohs(udphdr->dest);
-
-    pcb = pcb_cache;
-  if (pcb != NULL &&
-    pcb->remote_port == src &&
-    pcb->local_port == dest &&
-    (ip_addr_isany(&pcb->remote_ip) ||
-    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
-    (ip_addr_isany(&pcb->local_ip) ||
-    ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-    return 1;
-  }
-  else {
-    for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-      if (pcb->remote_port == src &&
-   pcb->local_port == dest &&
-   (ip_addr_isany(&pcb->remote_ip) ||
-    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
-   (ip_addr_isany(&pcb->local_ip) ||
-    ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-  pcb_cache = pcb;
-        break;
-        }
-    }
-
-    if (pcb == NULL) {
-      for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-  if (pcb->remote_port == 0 &&
-     pcb->local_port == dest &&
-     (ip_addr_isany(&pcb->remote_ip) ||
-      ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
-     (ip_addr_isany(&pcb->local_ip) ||
-      ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-        break;
-        }
-      }
-    }
-  }
-
-  PERF_STOP("udp_lookup");
-
-  if (pcb != NULL) {
-    return 1;
-  }
-  else {
-    return 1;
-  }
-}
-#endif /* LWIP_DEBUG */
 /**
  * Process an incoming UDP datagram.
  *

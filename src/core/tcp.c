@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -62,9 +62,7 @@ const u8_t tcp_backoff[13] =
     { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
 
 /* The TCP PCB lists. */
-
-/* List of all TCP PCBs in LISTEN state. */
-union tcp_listen_pcbs_t tcp_listen_pcbs;
+struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
 struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
          state in which they accept or send
          data. */
@@ -87,7 +85,7 @@ void
 tcp_init(void)
 {
   /* Clear globals. */
-  tcp_listen_pcbs.listen_pcbs = NULL;
+  tcp_listen_pcbs = NULL;
   tcp_active_pcbs = NULL;
   tcp_tw_pcbs = NULL;
   tcp_tmp_pcb = NULL;
@@ -138,7 +136,7 @@ tcp_close(struct tcp_pcb *pcb)
   switch (pcb->state) {
   case LISTEN:
     err = ERR_OK;
-    tcp_pcb_remove((struct tcp_pcb **)&tcp_listen_pcbs.pcbs, pcb);
+    tcp_pcb_remove((struct tcp_pcb **)&tcp_listen_pcbs, pcb);
     memp_free(MEMP_TCP_PCB_LISTEN, pcb);
     pcb = NULL;
     break;
@@ -253,7 +251,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   }
 #ifndef SO_REUSE
   /* Check if the address already is in use. */
-  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs;
+  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
@@ -286,7 +284,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   
   When the two options aren't set and specified port is already bound, ERR_USE is returned saying that 
   address is already in use. */
-  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; cpcb != NULL; cpcb = cpcb->next) {
+  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs; cpcb != NULL; cpcb = cpcb->next) {
     if(cpcb->local_port == port) {
       if(ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
         if(pcb->so_options & SOF_REUSEPORT) {
@@ -423,7 +421,7 @@ tcp_listen(struct tcp_pcb *pcb)
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
 #endif /* LWIP_CALLBACK_API */
-  TCP_REG(&tcp_listen_pcbs.listen_pcbs, lpcb);
+  TCP_REG(&tcp_listen_pcbs, lpcb);
   return (struct tcp_pcb *)lpcb;
 }
 
@@ -485,7 +483,7 @@ tcp_new_port(void)
       goto again;
     }
   }
-  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
+  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs; pcb != NULL; pcb = pcb->next) {
     if (pcb->local_port == port) {
       goto again;
     }
@@ -1255,7 +1253,7 @@ tcp_debug_print_pcbs(void)
     tcp_debug_print_state(pcb->state);
   }    
   LWIP_DEBUGF(TCP_DEBUG, ("Listen PCB states:\n"));
-  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
+  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs; pcb != NULL; pcb = pcb->next) {
     LWIP_DEBUGF(TCP_DEBUG, ("Local port %u, foreign port %u snd_nxt %lu rcv_nxt %lu ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));

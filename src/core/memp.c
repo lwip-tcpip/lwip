@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -217,7 +217,7 @@ memp_malloc(memp_t type)
     sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
     LWIP_ASSERT("memp_malloc: memp properly aligned",
-     ((mem_ptr_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
+     ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
     return mem;

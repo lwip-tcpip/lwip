@@ -5,7 +5,7 @@
  */
 
 /* 
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -292,7 +292,7 @@ mem_malloc(mem_size_t size)
       }
       sys_sem_signal(mem_sem);
       LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
-       (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
+       (u32_t)mem + SIZEOF_STRUCT_MEM + size <= (u32_t)ram_end);
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
        (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
