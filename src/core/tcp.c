@@ -312,6 +312,10 @@ tcp_listen(struct tcp_pcb *pcb)
 {
   struct tcp_pcb_listen *lpcb;
 
+  /* already listening? */
+  if(pcb->state == LISTEN) {
+    return pcb;
+  }
   lpcb = memp_malloc(MEMP_TCP_PCB_LISTEN);
   if(lpcb == NULL) {
     return NULL;
