@@ -698,9 +698,9 @@ pbuf_dechain(struct pbuf *p)
   p->next = NULL;
   return q;
 }
-/*-----------------------------------------------------------------------------------*/
-/** Replace any pbufs of type PBUF_FLAG_REF with PBUF_POOL buffers.
 
+/** Replace any pbufs of type PBUF_FLAG_REF with PBUF_POOL buffers.
+ 
     Go through pbuf chain and replace any PBUF_REF buffers with PBUF_POOL
     buffers. This is generally done for buffer chains which need to be queued
     in some way (either on an output queue or on the arp queue). All pbufs
@@ -714,7 +714,7 @@ struct pbuf *
 pbuf_unref(struct pbuf *f)
 {
   struct pbuf *p, *prev, *q, *top;
-  DEBUGF(PBUF_DEBUG, ("pbuf_unref: %p \n", (void*)f));
+  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_unref: %p\n", (void*)f));
 
   prev = 0;
   p = f;
