@@ -312,10 +312,14 @@ ip_input(struct pbuf *p, struct netif *inp) {
 		      netif->ip_addr.addr & netif->netmask.addr,
 		      iphdr->dest.addr & ~(netif->netmask.addr)));
 
+    /* interface unconfigured? */
     if(ip_addr_isany(&(netif->ip_addr)) ||
+       /* or unicast to this interface address? */
        ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
+       /* or broadcast on this interface network address ? */
        (ip_addr_isbroadcast(&(iphdr->dest), &(netif->netmask)) &&
 	ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
+       /* or restricted broadcast? */
        ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
       break;
     }
