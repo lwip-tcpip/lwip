@@ -63,14 +63,20 @@
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
-
-
 err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 {
   return tcp_enqueue(pcb, NULL, 0, flags, 1, NULL, 0);
 
 }
+
+/*
+ * NB. tcp_write() enqueues data for sending, but does not send it
+ * straight away.  It waits in the expectation of more data being sent
+ * soon (as it can send them more efficiently by combining them
+ * together).  To prompt the system to send data now, call
+ * tcp_output() after calling tcp_write().
+ */
 
 err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
@@ -402,7 +408,6 @@ tcp_output(struct tcp_pcb *pcb)
     tcphdr->chksum = 0;
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
           IP_PROTO_TCP, p->tot_len);
-
 
     ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
         IP_PROTO_TCP);

@@ -40,8 +40,6 @@
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
 
-#include "lwip/sys.h"
-
 #include "lwip/err.h"
 
 struct tcp_pcb;
@@ -457,7 +455,11 @@ void tcp_timer_needed(void);
 #endif
 
 /* The TCP PCB lists. */
-extern struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
+union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
+	struct tcp_pcb_listen *listen_pcbs; 
+	struct tcp_pcb *pcbs;
+};
+extern union tcp_listen_pcbs_t tcp_listen_pcbs;
 extern struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
               state in which they accept or send
               data. */
