@@ -110,8 +110,8 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
    In some implementations they can provide a more light-weight protection
    mechanism than using semaphores. Otherwise semaphores can be used for
    implementation */
-u32_t sys_arch_protect(void);
-void sys_arch_unprotect(u32_t pval);
+sys_prot_t sys_arch_protect(void);
+void sys_arch_unprotect(sys_prot_t pval);
 
 /* Thread functions. */
 sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg);
