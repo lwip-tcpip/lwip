@@ -169,6 +169,16 @@ inet_chksum_pbuf(struct pbuf *p)
   return ~(acc & 0xffffUL);
 }
 
+/* Here for now until needed in other places in lwIP */
+#ifndef isascii
+#define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
+#define isascii(c)           in_range(c, 0x20, 0x7f)
+#define isdigit(c)           in_range(c, '0', '9')
+#define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
+#define islower(c)           in_range(c, 'a', 'z')
+#define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
+#endif		
+		
 /*-----------------------------------------------------------------------------------*/
  /*
   * Ascii internet address interpretation routine.
