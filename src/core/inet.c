@@ -83,8 +83,8 @@ lwip_chksum(void *dataptr, int len)
 /*-----------------------------------------------------------------------------------*/
 u16_t
 inet_chksum_pseudo(struct pbuf *p,
-		   struct ip_addr *src, struct ip_addr *dest,
-		   u8_t proto, u16_t proto_len)
+       struct ip_addr *src, struct ip_addr *dest,
+       u8_t proto, u16_t proto_len)
 {
   u32_t acc;
   struct pbuf *q;
@@ -291,30 +291,30 @@ inet_chksum_pbuf(struct pbuf *p)
  */
 u8_t *inet_ntoa(u32_t addr)
 {
-	static u8_t str[16];
-	u8_t inv[3];
-	u8_t *rp;
-	u8_t *ap;
-	u8_t rem;
-	u8_t n;
-	u8_t i;
+  static u8_t str[16];
+  u8_t inv[3];
+  u8_t *rp;
+  u8_t *ap;
+  u8_t rem;
+  u8_t n;
+  u8_t i;
 
-	rp = str;
-	ap = (u8_t *)&addr;
-	for(n = 0; n < 4; n++) {
-		i = 0;
-		do {
-			rem = *ap % (u8_t)10;
-			*ap /= (u8_t)10;
-			inv[i++] = '0' + rem;
-		} while(*ap);
-		while(i--)
-			*rp++ = inv[i];
-		*rp++ = '.';
-		ap++;
-	}
-	*--rp = 0;
-	return str;
+  rp = str;
+  ap = (u8_t *)&addr;
+  for(n = 0; n < 4; n++) {
+    i = 0;
+    do {
+      rem = *ap % (u8_t)10;
+      *ap /= (u8_t)10;
+      inv[i++] = '0' + rem;
+    } while(*ap);
+    while(i--)
+      *rp++ = inv[i];
+    *rp++ = '.';
+    ap++;
+  }
+  *--rp = 0;
+  return str;
 }
 
 /*-----------------------------------------------------------------------------------*/

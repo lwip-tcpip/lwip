@@ -58,9 +58,9 @@ tcpip_tcp_timer(void *arg)
 
   tcp_tmr();
   if (tcp_active_pcbs || tcp_tw_pcbs) {
-  	sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   } else {
-	tcpip_tcp_timer_active = 0;
+  tcpip_tcp_timer_active = 0;
   }
 }
 
@@ -68,8 +68,8 @@ void
 tcp_timer_needed(void)
 {
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
-	tcpip_tcp_timer_active = 1;
-  	sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+  tcpip_tcp_timer_active = 1;
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
 #endif /* LWIP_TCP */

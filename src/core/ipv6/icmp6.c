@@ -101,7 +101,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
     /*    DEBUGF("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len);*/
     ip_output_if (p, &(iphdr->src), IP_HDRINCL,
-		 iphdr->hoplim, IP_PROTO_ICMP, inp);
+     iphdr->hoplim, IP_PROTO_ICMP, inp);
     break; 
   default:
     DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d not supported.\n", (int)type));
@@ -140,7 +140,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 #endif /* ICMP_STATS */
 
   ip_output(q, NULL,
-	    (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
+      (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 /*-----------------------------------------------------------------------------------*/
@@ -171,7 +171,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
   ip_output(q, NULL, 
-	    (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
+      (struct ip_addr *)&(iphdr->src), ICMP_TTL, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 

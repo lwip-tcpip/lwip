@@ -64,8 +64,8 @@ const u8_t tcp_backoff[13] =
 /* The TCP PCB lists. */
 struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
 struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
-				 state in which they accept or send
-				 data. */
+         state in which they accept or send
+         data. */
 struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 struct tcp_pcb *tcp_tmp_pcb;
@@ -274,9 +274,9 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
-	 ip_addr_isany(ipaddr) ||
-	 ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-	return ERR_USE;
+   ip_addr_isany(ipaddr) ||
+   ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+  return ERR_USE;
       }
     }
   }
@@ -352,7 +352,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     tcp_ack(pcb);
   }
   DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %u bytes, wnd %u (%u).\n",
-		     len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
+         len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
 }
 /*-----------------------------------------------------------------------------------*/
 /*
@@ -405,7 +405,7 @@ tcp_new_port(void)
 /*-----------------------------------------------------------------------------------*/
 err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
-	    err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
+      err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
 {
   u32_t optdata;
   err_t ret;
@@ -439,9 +439,9 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   
   /* Build an MSS option */
   optdata = htonl(((u32_t)2 << 24) | 
-		  ((u32_t)4 << 16) | 
-		  (((u32_t)pcb->mss / 256) << 8) |
-		  (pcb->mss & 255));
+      ((u32_t)4 << 16) | 
+      (((u32_t)pcb->mss / 256) << 8) |
+      (pcb->mss & 255));
 
   ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, (u8_t *)&optdata, 4);
   if (ret == ERR_OK) { 
@@ -539,7 +539,7 @@ tcp_slowtmr(void)
     /* Check if this PCB has stayed too long in SYN-RCVD */
     if (pcb->state == SYN_RCVD) {
       if ((u32_t)(tcp_ticks - pcb->tmr) >
-	 TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
+   TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in SYN-RCVD\n"));
       }
@@ -551,7 +551,7 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
-	LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
+  LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
@@ -569,12 +569,12 @@ tcp_slowtmr(void)
       /* We check if we should poll the connection. */
       ++pcb->polltmr;
       if (pcb->polltmr >= pcb->pollinterval) {
-	pcb->polltmr = 0;
+  pcb->polltmr = 0;
         DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
-	TCP_EVENT_POLL(pcb, err);
-	if (err == ERR_OK) {
-	  tcp_output(pcb);
-	}
+  TCP_EVENT_POLL(pcb, err);
+  if (err == ERR_OK) {
+    tcp_output(pcb);
+  }
       }
       
       prev = pcb;
@@ -602,7 +602,7 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_tw_pcbs list. */
       if (prev != NULL) {
-	LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
+  LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
@@ -761,7 +761,7 @@ tcp_kill_prio(u8_t prio)
   }
   if (inactive != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB 0x%p (%ld)\n",
-		       (void *)inactive, inactivity));
+           (void *)inactive, inactivity));
     tcp_abort(inactive);
   }      
 }
@@ -783,7 +783,7 @@ tcp_kill_timewait(void)
   }
   if (inactive != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_kill_timewait: killing oldest TIME-WAIT PCB 0x%p (%ld)\n",
-		       (void *)inactive, inactivity));
+           (void *)inactive, inactivity));
     tcp_abort(inactive);
   }      
 }
@@ -875,7 +875,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 #if LWIP_CALLBACK_API
 void
 tcp_recv(struct tcp_pcb *pcb,
-	 err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
+   err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
 {
   pcb->recv = recv;
 }
@@ -892,7 +892,7 @@ tcp_recv(struct tcp_pcb *pcb,
 #if LWIP_CALLBACK_API
 void
 tcp_sent(struct tcp_pcb *pcb,
-	 err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
+   err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
 {
   pcb->sent = sent;
 }
@@ -909,7 +909,7 @@ tcp_sent(struct tcp_pcb *pcb,
 #if LWIP_CALLBACK_API
 void
 tcp_err(struct tcp_pcb *pcb,
-	 void (* errf)(void *arg, err_t err))
+   void (* errf)(void *arg, err_t err))
 {
   pcb->errf = errf;
 }
@@ -926,7 +926,7 @@ tcp_err(struct tcp_pcb *pcb,
 /*-----------------------------------------------------------------------------------*/
 void
 tcp_poll(struct tcp_pcb *pcb,
-	 err_t (* poll)(void *arg, struct tcp_pcb *tpcb), u8_t interval)
+   err_t (* poll)(void *arg, struct tcp_pcb *tpcb), u8_t interval)
 {
 #if LWIP_CALLBACK_API
   pcb->poll = poll;
@@ -945,7 +945,7 @@ tcp_poll(struct tcp_pcb *pcb,
 #if LWIP_CALLBACK_API
 void
 tcp_accept(struct tcp_pcb *pcb,
-	   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
+     err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
 {
   ((struct tcp_pcb_listen *)pcb)->accept = accept;
 }
@@ -1042,28 +1042,28 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   DEBUGF(TCP_DEBUG, ("TCP header:\n"));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(TCP_DEBUG, ("|      %04x     |      %04x     | (src port, dest port)\n",
-		     tcphdr->src, tcphdr->dest));
+         tcphdr->src, tcphdr->dest));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(TCP_DEBUG, ("|            %08lu           | (seq no)\n",
-			    tcphdr->seqno));
+          tcphdr->seqno));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(TCP_DEBUG, ("|            %08lu           | (ack no)\n",
-		     tcphdr->ackno));
+         tcphdr->ackno));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(TCP_DEBUG, ("| %2u |    |%u%u%u%u%u|    %5u      | (offset, flags (",
-			 TCPH_OFFSET(tcphdr),
-		     TCPH_FLAGS(tcphdr) >> 4 & 1,
-		     TCPH_FLAGS(tcphdr) >> 4 & 1,
-		     TCPH_FLAGS(tcphdr) >> 3 & 1,
-		     TCPH_FLAGS(tcphdr) >> 2 & 1,
-		     TCPH_FLAGS(tcphdr) >> 1 & 1,
-		     TCPH_FLAGS(tcphdr) & 1,
-		     tcphdr->wnd));
+       TCPH_OFFSET(tcphdr),
+         TCPH_FLAGS(tcphdr) >> 4 & 1,
+         TCPH_FLAGS(tcphdr) >> 4 & 1,
+         TCPH_FLAGS(tcphdr) >> 3 & 1,
+         TCPH_FLAGS(tcphdr) >> 2 & 1,
+         TCPH_FLAGS(tcphdr) >> 1 & 1,
+         TCPH_FLAGS(tcphdr) & 1,
+         tcphdr->wnd));
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   DEBUGF(TCP_DEBUG, ("), win)\n"));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(TCP_DEBUG, ("|    0x%04x     |     %5u     | (chksum, urgp)\n",
-		     ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
+         ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
 /*-----------------------------------------------------------------------------------*/

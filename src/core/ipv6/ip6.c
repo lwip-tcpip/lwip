@@ -238,7 +238,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     icmp_dest_unreach(p, ICMP_DUR_PROTO);
     pbuf_free(p);
     DEBUGF(IP_DEBUG, ("Unsupported transport protocol %u\n",
-		      iphdr->nexthdr));
+          iphdr->nexthdr));
 
 #ifdef IP_STATS
     ++lwip_stats.ip.proterr;
@@ -259,8 +259,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 /*-----------------------------------------------------------------------------------*/
 err_t
 ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-	     u8_t ttl,
-	     u8_t proto, struct netif *netif)
+       u8_t ttl,
+       u8_t proto, struct netif *netif)
 {
   struct ip_hdr *iphdr;
 
@@ -320,7 +320,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 /*-----------------------------------------------------------------------------------*/
 err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-	  u8_t ttl, u8_t proto)
+    u8_t ttl, u8_t proto)
 {
   struct netif *netif;
   if ((netif = ip_route(dest)) == NULL) {
@@ -346,40 +346,40 @@ ip_debug_print(struct pbuf *p)
   DEBUGF(IP_DEBUG, ("IP header:\n"));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(IP_DEBUG, ("|%2d |  %x%x  |      %x%x           | (v, traffic class, flow label)\n",
-		    iphdr->v,
-		    iphdr->tclass1, iphdr->tclass2,
-		    iphdr->flow1, iphdr->flow2));
+        iphdr->v,
+        iphdr->tclass1, iphdr->tclass2,
+        iphdr->flow1, iphdr->flow2));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(IP_DEBUG, ("|    %5u      | %2u  |  %2u   | (len, nexthdr, hoplim)\n",
-		    ntohs(iphdr->len),
-		    iphdr->nexthdr,
-		    iphdr->hoplim));
+        ntohs(iphdr->len),
+        iphdr->nexthdr,
+        iphdr->hoplim));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
-		    ntohl(iphdr->src.addr[0]) >> 16 & 0xffff,
-		    ntohl(iphdr->src.addr[0]) & 0xffff));
+        ntohl(iphdr->src.addr[0]) >> 16 & 0xffff,
+        ntohl(iphdr->src.addr[0]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
-		    ntohl(iphdr->src.addr[1]) >> 16 & 0xffff,
-		    ntohl(iphdr->src.addr[1]) & 0xffff));
+        ntohl(iphdr->src.addr[1]) >> 16 & 0xffff,
+        ntohl(iphdr->src.addr[1]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
-		    ntohl(iphdr->src.addr[2]) >> 16 & 0xffff,
-		    ntohl(iphdr->src.addr[2]) & 0xffff));
+        ntohl(iphdr->src.addr[2]) >> 16 & 0xffff,
+        ntohl(iphdr->src.addr[2]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
-		    ntohl(iphdr->src.addr[3]) >> 16 & 0xffff,
-		    ntohl(iphdr->src.addr[3]) & 0xffff));
+        ntohl(iphdr->src.addr[3]) >> 16 & 0xffff,
+        ntohl(iphdr->src.addr[3]) & 0xffff));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
-		    ntohl(iphdr->dest.addr[0]) >> 16 & 0xffff,
-		    ntohl(iphdr->dest.addr[0]) & 0xffff));
+        ntohl(iphdr->dest.addr[0]) >> 16 & 0xffff,
+        ntohl(iphdr->dest.addr[0]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
-		    ntohl(iphdr->dest.addr[1]) >> 16 & 0xffff,
-		    ntohl(iphdr->dest.addr[1]) & 0xffff));
+        ntohl(iphdr->dest.addr[1]) >> 16 & 0xffff,
+        ntohl(iphdr->dest.addr[1]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
-		    ntohl(iphdr->dest.addr[2]) >> 16 & 0xffff,
-		    ntohl(iphdr->dest.addr[2]) & 0xffff));
+        ntohl(iphdr->dest.addr[2]) >> 16 & 0xffff,
+        ntohl(iphdr->dest.addr[2]) & 0xffff));
   DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
-		    ntohl(iphdr->dest.addr[3]) >> 16 & 0xffff,
-		    ntohl(iphdr->dest.addr[3]) & 0xffff));
+        ntohl(iphdr->dest.addr[3]) >> 16 & 0xffff,
+        ntohl(iphdr->dest.addr[3]) & 0xffff));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */

@@ -452,7 +452,7 @@ static void dhcp_handle_ack(struct netif *netif)
   /* boot file name */
   if (dhcp->msg_in->file[0]) {
     dhcp->boot_file_name = mem_malloc(strlen(dhcp->msg_in->file) + 1);
-	  strcpy(dhcp->boot_file_name, dhcp->msg_in->file);
+    strcpy(dhcp->boot_file_name, dhcp->msg_in->file);
   }
 #endif
 

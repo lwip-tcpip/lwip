@@ -63,7 +63,7 @@ struct udp_pcb {
   u16_t chksum_len;
   
   void (* recv)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-		struct ip_addr *addr, u16_t port);
+    struct ip_addr *addr, u16_t port);
   void *recv_arg;  
 };
 
@@ -77,11 +77,11 @@ err_t            udp_connect    (struct udp_pcb *pcb, struct ip_addr *ipaddr,
                  u16_t port);
 void             udp_disconnect    (struct udp_pcb *pcb);
 void             udp_recv       (struct udp_pcb *pcb,
-				 void (* recv)(void *arg, struct udp_pcb *upcb,
-					       struct pbuf *p,
-					       struct ip_addr *addr,
-					       u16_t port),
-				 void *recv_arg);
+         void (* recv)(void *arg, struct udp_pcb *upcb,
+                 struct pbuf *p,
+                 struct ip_addr *addr,
+                 u16_t port),
+         void *recv_arg);
 err_t            udp_send       (struct udp_pcb *pcb, struct pbuf *p);
 
 #define          udp_flags(pcb)  ((pcb)->flags)

@@ -165,10 +165,10 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
       offset -= p->len;
     } else {    
       for(i = offset; i < p->len; ++i) {
-	((char *)dataptr)[left] = ((char *)p->payload)[i];
-	if (++left >= len) {
-	  return;
-	}
+  ((char *)dataptr)[left] = ((char *)p->payload)[i];
+  if (++left >= len) {
+    return;
+  }
       }
       offset = 0;
     }
@@ -257,9 +257,9 @@ netconn_delete(struct netconn *conn)
   if (conn->recvmbox != SYS_MBOX_NULL) {
     while (sys_arch_mbox_fetch(conn->recvmbox, &mem, 1) != SYS_ARCH_TIMEOUT) {
       if (conn->type == NETCONN_TCP) {
-	pbuf_free((struct pbuf *)mem);
+  pbuf_free((struct pbuf *)mem);
       } else {
-	netbuf_delete((struct netbuf *)mem);
+  netbuf_delete((struct netbuf *)mem);
       }
     }
     sys_mbox_free(conn->recvmbox);
@@ -295,14 +295,14 @@ netconn_type(struct netconn *conn)
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_peer(struct netconn *conn, struct ip_addr *addr,
-	     u16_t *port)
+       u16_t *port)
 {
   switch (conn->type) {
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
     if (conn->pcb.udp == NULL ||
-	((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0))
+  ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0))
      return ERR_CONN;
     *addr = (conn->pcb.udp->remote_ip);
     *port = conn->pcb.udp->remote_port;
@@ -319,7 +319,7 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr,
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_addr(struct netconn *conn, struct ip_addr **addr,
-	     u16_t *port)
+       u16_t *port)
 {
   switch (conn->type) {
   case NETCONN_UDPLITE:
@@ -338,7 +338,7 @@ netconn_addr(struct netconn *conn, struct ip_addr **addr,
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_bind(struct netconn *conn, struct ip_addr *addr,
-	    u16_t port)
+      u16_t port)
 {
   struct api_msg *msg;
 
@@ -369,7 +369,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr,
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_connect(struct netconn *conn, struct ip_addr *addr,
-		   u16_t port)
+       u16_t port)
 {
   struct api_msg *msg;
   
@@ -543,7 +543,7 @@ netconn_recv(struct netconn *conn)
     memp_freep(MEMP_API_MSG, msg);
   } else {
     sys_mbox_fetch(conn->recvmbox, (void **)&buf);
-	conn->recv_avail -= buf->p->tot_len;
+  conn->recv_avail -= buf->p->tot_len;
     /* Register event with callback */
     if (conn->callback)
         (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
@@ -621,17 +621,17 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
     
     if (conn->type == NETCONN_TCP) {
       if (tcp_sndbuf(conn->pcb.tcp) == 0) {
-	sys_sem_wait(conn->sem);
-	if (conn->err != ERR_OK) {
-	  goto ret;
-	}
+  sys_sem_wait(conn->sem);
+  if (conn->err != ERR_OK) {
+    goto ret;
+  }
       }
       if (size > tcp_sndbuf(conn->pcb.tcp)) {
-	/* We cannot send more than one send buffer's worth of data at a
-	   time. */
-	len = tcp_sndbuf(conn->pcb.tcp);
+  /* We cannot send more than one send buffer's worth of data at a
+     time. */
+  len = tcp_sndbuf(conn->pcb.tcp);
       } else {
-	len = size;
+  len = size;
       }
     } else {
       len = size;

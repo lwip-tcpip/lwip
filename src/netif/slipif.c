@@ -71,16 +71,16 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
       c = ((u8_t *)q->payload)[i];
       switch (c) {
       case SLIP_END:
-	sio_send(SLIP_ESC, netif->state);
-	sio_send(SLIP_ESC_END, netif->state);
-	break;
+  sio_send(SLIP_ESC, netif->state);
+  sio_send(SLIP_ESC_END, netif->state);
+  break;
       case SLIP_ESC:
-	sio_send(SLIP_ESC, netif->state);
-	sio_send(SLIP_ESC_ESC, netif->state);
-	break;
+  sio_send(SLIP_ESC, netif->state);
+  sio_send(SLIP_ESC_ESC, netif->state);
+  break;
       default:
-	sio_send(c, netif->state);
-	break;
+  sio_send(c, netif->state);
+  break;
       }
     }
   }
@@ -112,15 +112,15 @@ slipif_input( struct netif * netif )
     switch (c) {
     case SLIP_END:
       if (recved > 0) {
-	/* Received whole packet. */
-	pbuf_realloc(q, recved);
-	
+  /* Received whole packet. */
+  pbuf_realloc(q, recved);
+  
 #ifdef LINK_STATS
-	++lwip_stats.link.recv;
+  ++lwip_stats.link.recv;
 #endif /* LINK_STATS */         
-	
-	DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
-	return q;
+  
+  DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
+  return q;
       }
       break;
 
@@ -128,40 +128,40 @@ slipif_input( struct netif * netif )
       c = sio_recv(netif->state);
       switch (c) {
       case SLIP_ESC_END:
-	c = SLIP_END;
-	break;
+  c = SLIP_END;
+  break;
       case SLIP_ESC_ESC:
-	c = SLIP_ESC;
-	break;
+  c = SLIP_ESC;
+  break;
       }
       /* FALLTHROUGH */
       
     default:
       if (p == NULL) {
-	DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
-	p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
+  DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
+  p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
 #ifdef LINK_STATS           
-	if (p == NULL) {
-	  ++lwip_stats.link.drop;
-	  DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
-	}
+  if (p == NULL) {
+    ++lwip_stats.link.drop;
+    DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
+  }
 #endif /* LINK_STATS */                  
-	
-	if (q != NULL) {
-	  pbuf_chain(q, p);
-	} else {
-	  q = p;
-	}
+  
+  if (q != NULL) {
+    pbuf_chain(q, p);
+  } else {
+    q = p;
+  }
       }
       if (p != NULL && recved < MAX_SIZE) {
-	((u8_t *)p->payload)[i] = c;
-	recved++;
-	i++;
-	if (i >= p->len) {
-	  i = 0;
-	  p = NULL;
-	}
+  ((u8_t *)p->payload)[i] = c;
+  recved++;
+  i++;
+  if (i >= p->len) {
+    i = 0;
+    p = NULL;
+  }
       }
       break;
     }
@@ -196,13 +196,13 @@ slipif_loop(void *nf)
 err_t
 slipif_init(struct netif *netif)
 {
-	
+  
   DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
 
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
-  netif->mtu = 1500;	
+  netif->mtu = 1500;  
 
   netif->state = sio_open(netif->num);
   if (!netif->state)

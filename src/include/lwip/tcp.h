@@ -50,45 +50,45 @@ struct tcp_pcb;
 
 /* Lower layer interface to TCP: */
 void             tcp_init    (void);  /* Must be called first to
-					 initialize TCP. */
+           initialize TCP. */
 void             tcp_tmr     (void);  /* Must be called every
-					 TCP_TMR_INTERVAL
-					 ms. (Typically 100 ms). */
+           TCP_TMR_INTERVAL
+           ms. (Typically 100 ms). */
 /* Application program's interface: */
 struct tcp_pcb * tcp_new     (void);
 struct tcp_pcb * tcp_alloc   (u8_t prio);
 
 void             tcp_arg     (struct tcp_pcb *pcb, void *arg);
 void             tcp_accept  (struct tcp_pcb *pcb,
-			      err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
-					       err_t err));
+            err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
+                 err_t err));
 void             tcp_recv    (struct tcp_pcb *pcb,
-			      err_t (* recv)(void *arg, struct tcp_pcb *tpcb,
-				  struct pbuf *p, err_t err));
+            err_t (* recv)(void *arg, struct tcp_pcb *tpcb,
+          struct pbuf *p, err_t err));
 void             tcp_sent    (struct tcp_pcb *pcb,
-			      err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
-					     u16_t len));
+            err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
+               u16_t len));
 void             tcp_poll    (struct tcp_pcb *pcb,
-			      err_t (* poll)(void *arg, struct tcp_pcb *tpcb),
-			      u8_t interval);
+            err_t (* poll)(void *arg, struct tcp_pcb *tpcb),
+            u8_t interval);
 void             tcp_err     (struct tcp_pcb *pcb,
-			      void (* err)(void *arg, err_t err));
+            void (* err)(void *arg, err_t err));
 
 #define          tcp_mss(pcb)      ((pcb)->mss)
 #define          tcp_sndbuf(pcb)   ((pcb)->snd_buf)
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
-			      u16_t port);
+            u16_t port);
 err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
-			      u16_t port, err_t (* connected)(void *arg,
-							      struct tcp_pcb *tpcb,
-							      err_t err));
+            u16_t port, err_t (* connected)(void *arg,
+                    struct tcp_pcb *tpcb,
+                    err_t err));
 struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 err_t            tcp_write   (struct tcp_pcb *pcb, const void *dataptr, u16_t len,
-			      u8_t copy);
+            u8_t copy);
 
 void             tcp_setprio (struct tcp_pcb *pcb, u8_t prio);
 
@@ -175,7 +175,7 @@ PACK_STRUCT_END
 #define TCPH_FLAGS_SET(hdr, flags) (hdr)->_offset_flags = htons((TCPH_OFFSET(hdr) << 8) | (flags))
 
 #define TCP_TCPLEN(seg) ((seg)->len + ((TCPH_FLAGS((seg)->tcphdr) & TCP_FIN || \
-					TCPH_FLAGS((seg)->tcphdr) & TCP_SYN)? 1: 0))
+          TCPH_FLAGS((seg)->tcphdr) & TCP_SYN)? 1: 0))
 
 enum tcp_state {
   CLOSED      = 0,
@@ -247,7 +247,7 @@ struct tcp_pcb {
     snd_max,       /* Highest seqno sent. */
     snd_wnd,       /* sender window */
     snd_wl1, snd_wl2, /* Sequence and acknowledgement numbers of last
-			 window update. */
+       window update. */
     snd_lbb;       /* Sequence number of next byte to be buffered. */
 
   u16_t acked;
@@ -315,23 +315,23 @@ enum lwip_event {
 };
 
 err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
-		     enum lwip_event,
-		     struct pbuf *p,
-		     u16_t size,
-		     err_t err);
+         enum lwip_event,
+         struct pbuf *p,
+         u16_t size,
+         err_t err);
 
 #define TCP_EVENT_ACCEPT(pcb,err,ret)    ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-						    LWIP_EVENT_ACCEPT, NULL, 0, err)
+                LWIP_EVENT_ACCEPT, NULL, 0, err)
 #define TCP_EVENT_SENT(pcb,space,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-					   	    LWIP_EVENT_SENT, NULL, space, ERR_OK)
+                   LWIP_EVENT_SENT, NULL, space, ERR_OK)
 #define TCP_EVENT_RECV(pcb,p,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-						    LWIP_EVENT_RECV, (p), 0, (err))
+                LWIP_EVENT_RECV, (p), 0, (err))
 #define TCP_EVENT_CONNECTED(pcb,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-						    LWIP_EVENT_CONNECTED, NULL, 0, (err))
+                LWIP_EVENT_CONNECTED, NULL, 0, (err))
 #define TCP_EVENT_POLL(pcb,ret)       ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
-						    LWIP_EVENT_POLL, NULL, 0, ERR_OK)
+                LWIP_EVENT_POLL, NULL, 0, ERR_OK)
 #define TCP_EVENT_ERR(errf,arg,err)  lwip_tcp_event((arg), NULL, \
-						    LWIP_EVENT_ERR, NULL, 0, (err))
+                LWIP_EVENT_ERR, NULL, 0, (err))
 #else /* LWIP_EVENT_API */
 #define TCP_EVENT_ACCEPT(pcb,err,ret)     \
                         if((pcb)->accept != NULL) \
@@ -342,7 +342,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
 #define TCP_EVENT_RECV(pcb,p,err,ret) \
                         if((pcb)->recv != NULL) \
                         { ret = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); } else { \
-						pbuf_free(p); }
+            pbuf_free(p); }
 #define TCP_EVENT_CONNECTED(pcb,err,ret) \
                         if((pcb)->connected != NULL) \
                         (ret = (pcb)->connected((pcb)->callback_arg,(pcb),(err)))
@@ -385,14 +385,14 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 
 err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);
 err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
-		u8_t flags, u8_t copy,
+    u8_t flags, u8_t copy,
                 u8_t *optdata, u8_t optlen);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
 void tcp_rst(u32_t seqno, u32_t ackno,
-	     struct ip_addr *local_ip, struct ip_addr *remote_ip,
-	     u16_t local_port, u16_t remote_port);
+       struct ip_addr *local_ip, struct ip_addr *remote_ip,
+       u16_t local_port, u16_t remote_port);
 
 u32_t tcp_next_iss(void);
 
@@ -418,8 +418,8 @@ void tcp_timer_needed(void);
 /* The TCP PCB lists. */
 extern struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
 extern struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
-					    state in which they accept or send
-					    data. */
+              state in which they accept or send
+              data. */
 extern struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
@@ -437,8 +437,8 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #define TCP_REG(pcbs, npcb) do {\
                             DEBUGF(TCP_DEBUG, ("TCP_REG %p local port %d\n", npcb, npcb->local_port)); \
                             for(tcp_tmp_pcb = *pcbs; \
-				  tcp_tmp_pcb != NULL; \
-				tcp_tmp_pcb = tcp_tmp_pcb->next) { \
+          tcp_tmp_pcb != NULL; \
+        tcp_tmp_pcb = tcp_tmp_pcb->next) { \
                                 LWIP_ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != npcb); \
                             } \
                             LWIP_ASSERT("TCP_REG: pcb->state != CLOSED", npcb->state != CLOSED); \
@@ -446,7 +446,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             LWIP_ASSERT("TCP_REG: npcb->next != npcb", npcb->next != npcb); \
                             *(pcbs) = npcb; \
                             LWIP_ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
-							tcp_timer_needed(); \
+              tcp_timer_needed(); \
                             } while(0)
 #define TCP_RMV(pcbs, npcb) do { \
                             LWIP_ASSERT("TCP_RMV: pcbs != NULL", *pcbs != NULL); \
@@ -468,7 +468,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #define TCP_REG(pcbs, npcb) do { \
                             npcb->next = *pcbs; \
                             *(pcbs) = npcb; \
-							tcp_timer_needed(); \
+              tcp_timer_needed(); \
                             } while(0)
 #define TCP_RMV(pcbs, npcb) do { \
                             if(*(pcbs) == npcb) { \

@@ -42,9 +42,9 @@
  */
 
 #define DBG_LEVEL_OFF     0
-#define DBG_LEVEL_WARNING 1	/* bad checksums, dropped packets, ... */
-#define DBG_LEVEL_SERIOUS 2	/* memory allocation failures, ... */
-#define DBG_LEVEL_SEVERE  3	/* */ 
+#define DBG_LEVEL_WARNING 1  /* bad checksums, dropped packets, ... */
+#define DBG_LEVEL_SERIOUS 2  /* memory allocation failures, ... */
+#define DBG_LEVEL_SEVERE  3  /* */ 
 #define DBG_MASK_LEVEL    3
 
 /** flag for DEBUGF to enable that debug message */
@@ -67,11 +67,11 @@
  *  AND is of correct type AND is at least DBG_LEVEL
  */
 #  define DEBUGF(debug,x) do { if (((debug) & DBG_ON) && ((debug) & DBG_TYPES_ON) && (((debug) & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if ((debug) & DBG_HALT) while(1); } } while(0)
-#  define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x); } while(0)	
+#  define LWIP_ERROR(x)   do { LWIP_PLATFORM_DIAG(x); } while(0)  
 #else /* LWIP_DEBUG */
 #  define LWIP_ASSERT(x,y) 
 #  define DEBUGF(debug,x) 
-#  define LWIP_ERROR(x)	
+#  define LWIP_ERROR(x)  
 #endif /* LWIP_DEBUG */
 
 #endif /* __LWIP_DEBUG_H__ */

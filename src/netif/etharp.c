@@ -166,7 +166,7 @@ etharp_tmr(void)
       }
 #endif
     } else if ((arp_table[i].state == ETHARP_STATE_PENDING) &&
-	      (arp_table[i].ctime >= ARP_MAXPENDING)) {
+        (arp_table[i].ctime >= ARP_MAXPENDING)) {
       arp_table[i].state = ETHARP_STATE_EMPTY;
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i));
 #if ARP_QUEUEING
@@ -214,7 +214,7 @@ find_arp_entry(void)
 #endif
       (arp_table[i].ctime >= maxtime)) {
         maxtime = arp_table[i].ctime;
-	      j = i;
+        j = i;
       }
     }
     if (j != ARP_TABLE_SIZE) {

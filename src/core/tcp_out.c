@@ -92,7 +92,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 /*-----------------------------------------------------------------------------------*/
 err_t
 tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
-	    u8_t flags, u8_t copy,
+      u8_t flags, u8_t copy,
             u8_t *optdata, u8_t optlen)
 {
   struct pbuf *p;
@@ -173,7 +173,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     else if (copy) {
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
-        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));	  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));    
         goto memerr;
       }
       ++queuelen;
@@ -191,7 +191,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        * instead of PBUF_REF here.
        */
       if ((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
-        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));	  	  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));        
         goto memerr;
       }
       ++queuelen;
@@ -203,7 +203,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
         /* If allocation fails, we have to deallocate the data pbuf as
          * well. */
         pbuf_free(p);
-        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));		  
+        DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));      
         goto memerr;
       }
       ++queuelen;
@@ -217,7 +217,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum. */
     if (queuelen > TCP_SND_QUEUELEN) {
-      DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN)); 	
+      DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN));   
       goto memerr;
     }
 
@@ -400,10 +400,10 @@ tcp_output(struct tcp_pcb *pcb)
     
     tcphdr->chksum = 0;
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
-					IP_PROTO_TCP, p->tot_len);
+          IP_PROTO_TCP, p->tot_len);
 
     ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), TCP_TTL,
-	      IP_PROTO_TCP);
+        IP_PROTO_TCP);
     pbuf_free(p);
 
     return ERR_OK;
@@ -428,7 +428,7 @@ tcp_output(struct tcp_pcb *pcb)
 #endif /* TCP_CWND_DEBUG */
   
   while (seg != NULL &&
-	ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
+  ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
 #if TCP_CWND_DEBUG
     DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %lu, cwnd %lu, wnd %lu, effwnd %lu, seq %lu, ack %lu, i%d\n",
                             pcb->snd_wnd, pcb->cwnd, wnd,
@@ -455,8 +455,8 @@ tcp_output(struct tcp_pcb *pcb)
       seg->next = NULL;
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
-	
-	
+  
+  
       } else {
         for (useg = pcb->unacked; useg->next != NULL; useg = useg->next);
         useg->next = seg;
@@ -506,8 +506,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     DEBUGF(TCP_RTO_DEBUG, ("tcp_output_segment: rtseq %lu\n", pcb->rtseq));
   }
   DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output_segment: %lu:%lu\n",
-			    htonl(seg->tcphdr->seqno), htonl(seg->tcphdr->seqno) +
-			    seg->len));
+          htonl(seg->tcphdr->seqno), htonl(seg->tcphdr->seqno) +
+          seg->len));
 
   len = (u16_t)((u8_t *)seg->tcphdr - (u8_t *)seg->p->payload);
   
@@ -518,21 +518,21 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     
   seg->tcphdr->chksum = 0;
   seg->tcphdr->chksum = inet_chksum_pseudo(seg->p,
-					   &(pcb->local_ip),
-					   &(pcb->remote_ip),
-					   IP_PROTO_TCP, seg->p->tot_len);
+             &(pcb->local_ip),
+             &(pcb->remote_ip),
+             IP_PROTO_TCP, seg->p->tot_len);
 #ifdef TCP_STATS
   ++lwip_stats.tcp.xmit;
 #endif /* TCP_STATS */
 
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), TCP_TTL,
-	    IP_PROTO_TCP);
+      IP_PROTO_TCP);
 }
 /*-----------------------------------------------------------------------------------*/
 void
 tcp_rst(u32_t seqno, u32_t ackno,
-	struct ip_addr *local_ip, struct ip_addr *remote_ip,
-	u16_t local_port, u16_t remote_port)
+  struct ip_addr *local_ip, struct ip_addr *remote_ip,
+  u16_t local_port, u16_t remote_port)
 {
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
@@ -554,7 +554,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   
   tcphdr->chksum = 0;
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,
-				      IP_PROTO_TCP, p->tot_len);
+              IP_PROTO_TCP, p->tot_len);
 
 #ifdef TCP_STATS
   ++lwip_stats.tcp.xmit;

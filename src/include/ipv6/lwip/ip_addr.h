@@ -46,7 +46,7 @@ struct ip_addr {
                                                (ipaddr)->addr[3] = htonl(((g & 0xffff) << 16) | (h & 0xffff)); } while(0)
 
 int ip_addr_maskcmp(struct ip_addr *addr1, struct ip_addr *addr2,
-		    struct ip_addr *mask);
+        struct ip_addr *mask);
 int ip_addr_cmp(struct ip_addr *addr1, struct ip_addr *addr2);
 void ip_addr_set(struct ip_addr *dest, struct ip_addr *src);
 int ip_addr_isany(struct ip_addr *addr);

@@ -81,7 +81,7 @@ struct netif {
       to send a packet on the interface. This function typically
       first resolves the hardware address, then sends the packet. */
   err_t (* output)(struct netif *netif, struct pbuf *p,
-		   struct ip_addr *ipaddr);
+       struct ip_addr *ipaddr);
   /** This function is called by the ARP module when it wants
       to send a packet on the interface. This function outputs
       the pbuf as-is on the link medium. */
@@ -116,14 +116,14 @@ extern struct netif *netif_default;
 void netif_init(void);
 
 struct netif *netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
-			struct ip_addr *gw,
-			void *state,
-			err_t (* init)(struct netif *netif),
-			err_t (* input)(struct pbuf *p, struct netif *netif));
+      struct ip_addr *gw,
+      void *state,
+      err_t (* init)(struct netif *netif),
+      err_t (* input)(struct pbuf *p, struct netif *netif));
 
 void
 netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
-	  struct ip_addr *gw);
+    struct ip_addr *gw);
 void netif_remove(struct netif * netif);
 
 /* Returns a network interface given its name. The name is of the form

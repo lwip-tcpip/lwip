@@ -69,8 +69,8 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 
     if (time == SYS_ARCH_TIMEOUT) {
       /* If time == SYS_ARCH_TIMEOUT, a timeout occured before a message
-	 could be fetched. We should now call the timeout handler and
-	 deallocate the memory allocated for the timeout. */
+   could be fetched. We should now call the timeout handler and
+   deallocate the memory allocated for the timeout. */
       tmptimeout = timeouts->next;
       timeouts->next = tmptimeout->next;
       h = tmptimeout->h;
@@ -78,19 +78,19 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
         DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
-      	h(arg);
+        h(arg);
       }
       
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
       /* If time != SYS_ARCH_TIMEOUT, a message was received before the timeout
-	 occured. The time variable is set to the number of
-	 milliseconds we waited for the message. */
+   occured. The time variable is set to the number of
+   milliseconds we waited for the message. */
       if (time <= timeouts->next->time) {
-	timeouts->next->time -= time;
+  timeouts->next->time -= time;
       } else {
-	timeouts->next->time = 0;
+  timeouts->next->time = 0;
       }
     }
     
@@ -124,29 +124,29 @@ sys_sem_wait(sys_sem_t sem)
 
     if (time == SYS_ARCH_TIMEOUT) {
       /* If time == SYS_ARCH_TIMEOUT, a timeout occured before a message
-	 could be fetched. We should now call the timeout handler and
-	 deallocate the memory allocated for the timeout. */
+   could be fetched. We should now call the timeout handler and
+   deallocate the memory allocated for the timeout. */
       tmptimeout = timeouts->next;
       timeouts->next = tmptimeout->next;
       h = tmptimeout->h;
       arg = tmptimeout->arg;
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
-	DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
-      	h(arg);
+  DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
+        h(arg);
       }
-	    
+      
       
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
       /* If time != SYS_ARCH_TIMEOUT, a message was received before the timeout
-	 occured. The time variable is set to the number of
-	 milliseconds we waited for the message. */
+   occured. The time variable is set to the number of
+   milliseconds we waited for the message. */
       if (time <= timeouts->next->time) {
-	timeouts->next->time -= time;
+  timeouts->next->time -= time;
       } else {
-	timeouts->next->time = 0;
+  timeouts->next->time = 0;
       }
     }
     
@@ -186,13 +186,13 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
     for(t = timeouts->next; t != NULL; t = t->next) {
       timeout->time -= t->time;
       if (t->next == NULL ||
-	 t->next->time > timeout->time) {
-	if (t->next != NULL) {
-	  t->next->time -= timeout->time;
-	}
-	timeout->next = t->next;
-	t->next = timeout;
-	break;
+   t->next->time > timeout->time) {
+  if (t->next != NULL) {
+    t->next->time -= timeout->time;
+  }
+  timeout->next = t->next;
+  t->next = timeout;
+  break;
       }
     }
   }
@@ -282,11 +282,11 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 void
 sys_msleep(u32_t ms)
 {
-	sys_sem_t delaysem = sys_sem_new(0);
+  sys_sem_t delaysem = sys_sem_new(0);
 
-	sys_sem_wait_timeout(delaysem, ms);
+  sys_sem_wait_timeout(delaysem, ms);
 
-	sys_sem_free(delaysem);
+  sys_sem_free(delaysem);
 }
 /*-----------------------------------------------------------------------------------*/
 

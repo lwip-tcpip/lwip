@@ -41,8 +41,8 @@
 u16_t inet_chksum(void *data, u16_t len);
 u16_t inet_chksum_pbuf(struct pbuf *p);
 u16_t inet_chksum_pseudo(struct pbuf *p,
-			 struct ip_addr *src, struct ip_addr *dest,
-			 u8_t proto, u32_t proto_len);
+       struct ip_addr *src, struct ip_addr *dest,
+       u8_t proto, u32_t proto_len);
 
 u32_t inet_addr(const char *cp);
 int inet_aton(const char *cp, struct in_addr *addr);

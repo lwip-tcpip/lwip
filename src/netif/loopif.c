@@ -43,7 +43,7 @@
 /*-----------------------------------------------------------------------------------*/
 static err_t
 loopif_output(struct netif *netif, struct pbuf *p,
-	     struct ip_addr *ipaddr)
+       struct ip_addr *ipaddr)
 {
   struct pbuf *q, *r;
   char *ptr;

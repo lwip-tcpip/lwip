@@ -112,7 +112,7 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 
 void
 netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
-	  struct ip_addr *gw)
+    struct ip_addr *gw)
 {
   netif_set_ipaddr(netif, ipaddr);
   netif_set_netmask(netif, netmask);
@@ -131,13 +131,13 @@ void netif_remove(struct netif * netif)
     /*  look for netif further down the list */
     struct netif * tmpNetif;
     for (tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
-			if (tmpNetif->next == netif) {
-				tmpNetif->next = netif->next;
+      if (tmpNetif->next == netif) {
+        tmpNetif->next = netif->next;
         break;
         }
-		}
-		if (tmpNetif == NULL)
-			return; /*  we didn't find any netif today */
+    }
+    if (tmpNetif == NULL)
+      return; /*  we didn't find any netif today */
   }
   /* this netif is default? */
   if (netif_default == netif)
@@ -211,7 +211,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 #endif
   ip_addr_set(&(netif->ip_addr), ipaddr);
   DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
-		       netif->name[0], netif->name[1],
+           netif->name[0], netif->name[1],
     (u8_t)(ntohl(netif->ip_addr.addr) >> 24 & 0xff),
     (u8_t)(ntohl(netif->ip_addr.addr) >> 16 & 0xff),
     (u8_t)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
@@ -223,11 +223,11 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
   ip_addr_set(&(netif->gw), gw);
   DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
-		       netif->name[0], netif->name[1],
-		       (u8_t)(ntohl(netif->gw.addr) >> 24 & 0xff),
-		       (u8_t)(ntohl(netif->gw.addr) >> 16 & 0xff),
-		       (u8_t)(ntohl(netif->gw.addr) >> 8 & 0xff),
-		       (u8_t)(ntohl(netif->gw.addr) & 0xff)));
+           netif->name[0], netif->name[1],
+           (u8_t)(ntohl(netif->gw.addr) >> 24 & 0xff),
+           (u8_t)(ntohl(netif->gw.addr) >> 16 & 0xff),
+           (u8_t)(ntohl(netif->gw.addr) >> 8 & 0xff),
+           (u8_t)(ntohl(netif->gw.addr) & 0xff)));
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -235,11 +235,11 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
   ip_addr_set(&(netif->netmask), netmask);
   DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
-		       netif->name[0], netif->name[1],
-		       (u8_t)(ntohl(netif->netmask.addr) >> 24 & 0xff),
-		       (u8_t)(ntohl(netif->netmask.addr) >> 16 & 0xff),
-		       (u8_t)(ntohl(netif->netmask.addr) >> 8 & 0xff),
-		       (u8_t)(ntohl(netif->netmask.addr) & 0xff)));
+           netif->name[0], netif->name[1],
+           (u8_t)(ntohl(netif->netmask.addr) >> 24 & 0xff),
+           (u8_t)(ntohl(netif->netmask.addr) >> 16 & 0xff),
+           (u8_t)(ntohl(netif->netmask.addr) >> 8 & 0xff),
+           (u8_t)(ntohl(netif->netmask.addr) & 0xff)));
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -247,7 +247,7 @@ netif_set_default(struct netif *netif)
 {
   netif_default = netif;
   DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
-		       netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
+           netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
 /*-----------------------------------------------------------------------------------*/
 void

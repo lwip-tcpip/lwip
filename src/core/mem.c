@@ -202,7 +202,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   sys_sem_wait(mem_sem);
   
   LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
-	 (u8_t *)rmem < (u8_t *)ram_end);
+   (u8_t *)rmem < (u8_t *)ram_end);
   
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     DEBUGF(MEM_DEBUG | 3, ("mem_realloc: illegal memory\n"));
@@ -275,24 +275,24 @@ mem_malloc(mem_size_t size)
       lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
       /*      if (lwip_stats.mem.max < lwip_stats.mem.used) {
         lwip_stats.mem.max = lwip_stats.mem.used;
-	} */
+  } */
       if (lwip_stats.mem.max < ptr2) {
         lwip_stats.mem.max = ptr2;
       }      
 #endif /* MEM_STATS */
 
       if (mem == lfree) {
-	/* Find next free block after mem */
+  /* Find next free block after mem */
         while (lfree->used && lfree != ram_end) {
-	  lfree = (struct mem *)&ram[lfree->next];
+    lfree = (struct mem *)&ram[lfree->next];
         }
         LWIP_ASSERT("mem_malloc: !lfree->used", !lfree->used);
       }
       sys_sem_signal(mem_sem);
       LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
-	     (u32_t)mem + SIZEOF_STRUCT_MEM + size <= (u32_t)ram_end);
+       (u32_t)mem + SIZEOF_STRUCT_MEM + size <= (u32_t)ram_end);
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
-	     (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
+       (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
     }    
   }

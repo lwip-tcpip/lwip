@@ -47,10 +47,10 @@ u8_t ip_lookup(void *header, struct netif *inp);
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
 err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-		u8_t ttl, u8_t proto);
+    u8_t ttl, u8_t proto);
 err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-		   u8_t ttl, u8_t proto,
-		   struct netif *netif);
+       u8_t ttl, u8_t proto,
+       struct netif *netif);
 
 #define IP_HLEN 20
 

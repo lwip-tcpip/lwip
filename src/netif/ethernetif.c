@@ -63,7 +63,7 @@ static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 /* Forward declarations. */
 static void  ethernetif_input(struct netif *netif);
 static err_t ethernetif_output(struct netif *netif, struct pbuf *p,
-			       struct ip_addr *ipaddr);
+             struct ip_addr *ipaddr);
 
 /*-----------------------------------------------------------------------------------*/
 static void
@@ -179,7 +179,7 @@ low_level_input(struct ethernetif *ethernetif)
 /*-----------------------------------------------------------------------------------*/
 static err_t
 ethernetif_output(struct netif *netif, struct pbuf *p,
-		  struct ip_addr *ipaddr)
+      struct ip_addr *ipaddr)
 {
   struct ethernetif *ethernetif;
   struct pbuf *q;
@@ -306,8 +306,8 @@ ethernetif_input(struct netif *netif)
     case ETHTYPE_ARP:
       p = arp_arp_input(netif, ethernetif->ethaddr, p);
       if (p != NULL) {
-	low_level_output(ethernetif, p);
-	pbuf_free(p);
+  low_level_output(ethernetif, p);
+  pbuf_free(p);
       }
       break;
     default:
