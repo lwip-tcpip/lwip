@@ -300,7 +300,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       r = q;
     }
     /* end of chain */
-    //r->next = NULL;
+    /*r->next = NULL;*/
 
     break;
   case PBUF_RAM:
