@@ -34,15 +34,30 @@ and developers using the stack often submit bug fixes, improvements,
 and additions to the stack to further increase its usefulness.
 
 Development of lwIP is hosted on Savannah, a central point for
-software development, maintenance and distribution. A core team
-will improve lwIP by the use of Savannah's interface and CVS.
+software development, maintenance and distribution. Everyone can
+help improve lwIP by use of Savannah's interface, CVS and the
+mailing list. A core team of developers will commit changes to the
+CVS source tree.
 
 The lwIP TCP/IP stack is maintained in the 'lwip' CVS module and
 contributions (such as platform ports) are in the 'contrib' module.
 
-The current lwIP CVS tree can be checked out by doing:
+The CVS main trunk is the stable branch, which contains bug fixes and
+tested features. The latest stable branch can be checked out by doing:
   cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
   cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co lwip
+
+The 'STABLE' tag in the stable branch will represent the most stable
+revision (which may be somewhat older to protect us from errors
+introduced by merges). This 'STABLE' tagged version can be checked out
+by doing:
+  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co -r STABLE lwip
+
+The 'DEVEL' branch is the active development branch, which contains
+bleeding edge changes, and may be instable. It can be checkout by doing:
+  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
+  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co -r DEVEL lwip
 
 The current contrib CVS tree can be checked out by doing:
   cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
@@ -58,9 +73,6 @@ The current CVS trees are web-browsable:
 Submit patches and bugs via the lwIP project page:
   http://savannah.nongnu.org/projects/lwip/
 
-The main branch is the active development branch, whereas the 'STABLE'
-branch aims to be bug-free, without the latest changes. Keep track of
-the lwIP users mailing list for the statusses of both.
 
 DOCUMENTATION
 
