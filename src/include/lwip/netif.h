@@ -48,7 +48,7 @@ struct netif {
   struct ip_addr ip_addr;
   struct ip_addr netmask;  /* netmask in network byte order */
   struct ip_addr gw;
-  char hwaddr[6];
+  unsigned char hwaddr[6];
 
   /* This function is called by the network device driver
      when it wants to pass a packet to the TCP/IP stack. */
