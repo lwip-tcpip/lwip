@@ -33,11 +33,7 @@
 
 #ifndef __LWIP_SOCKETS_H__
 #define __LWIP_SOCKETS_H__
-
-struct in_addr {
-  u32_t s_addr;
-};
-
+#include "lwip/ip_addr.h"
 
 struct sockaddr_in {
   u8_t sin_len;
@@ -163,7 +159,7 @@ struct linger {
 #endif
 
 #ifndef O_NONBLOCK
-#define O_NONBLOCK    04000
+#define O_NONBLOCK    04000U
 #endif
 
 #ifndef FD_SET

@@ -168,6 +168,156 @@ inet_chksum_pbuf(struct pbuf *p)
   return ~(acc & 0xffffUL);
 }
 
+/*-----------------------------------------------------------------------------------*/
+ /*
+  * Ascii internet address interpretation routine.
+  * The value returned is in network order.
+  */
+ 
+ /*  */
+ /* inet_addr */
+ u32_t inet_addr(const char *cp)
+ {
+     struct in_addr val;
+ 
+     if (inet_aton(cp, &val)) {
+         return (val.s_addr);
+     }
+     return (INADDR_NONE);
+ }
+ 
+ /* 
+  * Check whether "cp" is a valid ascii representation
+  * of an Internet address and convert to a binary address.
+  * Returns 1 if the address is valid, 0 if not.
+  * This replaces inet_addr, the return value from which
+  * cannot distinguish between failure and a local broadcast address.
+  */
+ /*  */
+ /* inet_aton */
+ int inet_aton(const char *cp, struct in_addr *addr)
+ {
+     u32_t val;
+     int base, n;
+     char c;
+     u32_t parts[4];
+     u32_t* pp = parts;
+ 
+     c = *cp;
+     for (;;) {
+         /*
+          * Collect number up to ``.''.
+          * Values are specified as for C:
+          * 0x=hex, 0=octal, isdigit=decimal.
+          */
+         if (!isdigit(c))
+             return (0);
+         val = 0; base = 10;
+         if (c == '0') {
+             c = *++cp;
+             if (c == 'x' || c == 'X')
+                 base = 16, c = *++cp;
+             else
+                 base = 8;
+         }
+         for (;;) {
+             if (isascii(c) && isdigit(c)) {
+                 val = (val * base) + (c - '0');
+                 c = *++cp;
+             } else if (base == 16 && isascii(c) && isxdigit(c)) {
+                 val = (val << 4) |
+                     (c + 10 - (islower(c) ? 'a' : 'A'));
+                 c = *++cp;
+             } else
+             break;
+         }
+         if (c == '.') {
+             /*
+              * Internet format:
+              *  a.b.c.d
+              *  a.b.c   (with c treated as 16 bits)
+              *  a.b (with b treated as 24 bits)
+              */
+             if (pp >= parts + 3)
+                 return (0);
+             *pp++ = val;
+             c = *++cp;
+         } else
+             break;
+     }
+     /*
+      * Check for trailing characters.
+      */
+     if (c != '\0' && (!isascii(c) || !isspace(c)))
+         return (0);
+     /*
+      * Concoct the address according to
+      * the number of parts specified.
+      */
+     n = pp - parts + 1;
+     switch (n) {
+ 
+     case 0:
+         return (0);     /* initial nondigit */
+ 
+     case 1:             /* a -- 32 bits */
+         break;
+ 
+     case 2:             /* a.b -- 8.24 bits */
+         if (val > 0xffffff)
+             return (0);
+         val |= parts[0] << 24;
+         break;
+ 
+     case 3:             /* a.b.c -- 8.8.16 bits */
+         if (val > 0xffff)
+             return (0);
+         val |= (parts[0] << 24) | (parts[1] << 16);
+         break;
+ 
+     case 4:             /* a.b.c.d -- 8.8.8.8 bits */
+         if (val > 0xff)
+             return (0);
+         val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+         break;
+     }
+     if (addr)
+         addr->s_addr = htonl(val);
+     return (1);
+ }
+
+/* Convert numeric IP address into decimal dotted ASCII representation.
+ * returns ptr to static buffer; not reentrant!
+ */
+u8_t *inet_ntoa(u32_t addr)
+{
+	static u8_t str[16];
+	u8_t inv[3];
+	u8_t *rp;
+	u8_t *ap;
+	u8_t rem;
+	u8_t n;
+	u8_t i;
+
+	rp = str;
+	ap = (u8_t *)&addr;
+	for(n = 0; n < 4; n++) {
+		i = 0;
+		do {
+			rem = *ap % (u8_t)10;
+			*ap /= (u8_t)10;
+			inv[i++] = '0' + rem;
+		} while(*ap);
+		while(i--)
+			*rp++ = inv[i];
+		*rp++ = '.';
+		ap++;
+	}
+	*--rp = 0;
+	return str;
+}
+
+/*-----------------------------------------------------------------------------------*/
 #ifndef BYTE_ORDER
 #error BYTE_ORDER is not defined
 #endif

@@ -43,6 +43,11 @@ u16_t inet_chksum_pbuf(struct pbuf *p);
 u16_t inet_chksum_pseudo(struct pbuf *p,
 			 struct ip_addr *src, struct ip_addr *dest,
 			 u8_t proto, u16_t proto_len);
+
+u32_t inet_addr(const char *cp);
+int inet_aton(const char *cp, struct in_addr *addr);
+u8_t *inet_ntoa(u32_t addr); /* returns ptr to static buffer; not reentrant! */
+
 #ifdef htons
 #undef htons
 #endif /* htons */
