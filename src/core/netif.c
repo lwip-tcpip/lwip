@@ -176,7 +176,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 {
   /* TODO: Handling of obsolete pcbs */
   /* See:  http://mail.gnu.org/archive/html/lwip-users/2003-03/msg00118.html */
-#if 1
+#if LWIP_TCP 
   struct tcp_pcb *pcb;
   struct tcp_pcb_listen *lpcb;
 
