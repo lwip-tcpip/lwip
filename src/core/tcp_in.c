@@ -106,8 +106,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
-
-  pbuf_header(p, -(IPH_HL(iphdr) * 4));
+ 
+  pbuf_header(p, -((s16_t)(IPH_HL(iphdr) * 4)));
   
   /* Don't even process incoming broadcasts/multicasts. */
   if(ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask)) ||
@@ -115,7 +115,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
     pbuf_free(p);
     return;
   }
-
 
   /* Verify TCP checksum. */
   if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),

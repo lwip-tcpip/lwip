@@ -171,7 +171,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
 
-  pbuf_header(p, -(UDP_HLEN + IPH_HL(iphdr) * 4));
+  pbuf_header(p, -((s16_t)(UDP_HLEN + IPH_HL(iphdr) * 4)));
 
   udphdr = (struct udp_hdr *)((u8_t *)p->payload - UDP_HLEN);
   
