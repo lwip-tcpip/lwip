@@ -51,8 +51,6 @@ struct in_addr {
   u32_t s_addr;
 };
 
-struct netif;
-
 extern const struct ip_addr ip_addr_any;
 extern const struct ip_addr ip_addr_broadcast;
 
