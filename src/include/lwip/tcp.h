@@ -213,7 +213,7 @@ struct tcp_pcb {
   enum tcp_state state;   /* TCP state */
   
   /* Timers */
-  u16_t tmr;
+  u32_t tmr;
   u8_t polltmr, pollinterval;
   
   /* Retransmission timer. */
