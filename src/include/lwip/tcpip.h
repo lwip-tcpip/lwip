@@ -38,14 +38,14 @@
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
 void tcpip_apimsg(struct api_msg *apimsg);
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
-err_t tcpip_link_input(struct pbuf *p, struct netif *inp);
+err_t tcpip_callback(void (*f)(void *ctx), void *ctx);
 
 void tcpip_tcp_timer_needed(void);
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
   TCPIP_MSG_INPUT,
-  TCPIP_MSG_LINK
+  TCPIP_MSG_CALLBACK
 };
 
 struct tcpip_msg {
@@ -57,6 +57,10 @@ struct tcpip_msg {
       struct pbuf *p;
       struct netif *netif;
     } inp;
+    struct {
+      void (*f)(void *ctx);
+      void *ctx;
+    } cb;
   } msg;
 };
 

@@ -78,6 +78,8 @@ tcpip_thread(void *arg)
 {
   struct tcpip_msg *msg;
 
+  (void)arg;
+
   ip_init();
   udp_init();
   tcp_init();
@@ -97,9 +99,9 @@ tcpip_thread(void *arg)
       DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
       ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       break;
-    case TCPIP_MSG_LINK:
-      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: LINK packet %p\n", (void *)msg));
-      msg->msg.inp.netif->input(msg->msg.inp.p, msg->msg.inp.netif);
+    case TCPIP_MSG_CALLBACK:
+      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
+      msg->msg.cb.f(msg->msg.cb.ctx);
       break;
     default:
       break;
@@ -127,19 +129,18 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 }
 /*-----------------------------------------------------------------------------------*/
 err_t
-tcpip_link_input(struct pbuf *p, struct netif *inp)
+tcpip_callback(void (*f)(void *ctx), void *ctx)
 {
   struct tcpip_msg *msg;
   
   msg = memp_mallocp(MEMP_TCPIP_MSG);
   if(msg == NULL) {
-    pbuf_free(p);    
     return ERR_MEM;  
   }
   
-  msg->type = TCPIP_MSG_LINK;
-  msg->msg.inp.p = p;
-  msg->msg.inp.netif = inp;
+  msg->type = TCPIP_MSG_CALLBACK;
+  msg->msg.cb.f = f;
+  msg->msg.cb.ctx = ctx;
   sys_mbox_post(mbox, msg);
   return ERR_OK;
 }

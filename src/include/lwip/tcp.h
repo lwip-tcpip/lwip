@@ -265,7 +265,7 @@ struct tcp_pcb {
 #endif /* TCP_QUEUE_OOSEQ */
 
 #if LWIP_CALLBACK_API
-  /* Function to be called when more send buffer space is avaliable. */
+  /* Function to be called when more send buffer space is available. */
   err_t (* sent)(void *arg, struct tcp_pcb *pcb, u16_t space);
   
   /* Function to be called when (in-sequence) data has arrived. */
