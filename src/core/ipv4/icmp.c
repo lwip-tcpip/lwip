@@ -48,6 +48,7 @@ void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
   unsigned char type;
+  unsigned char code;
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
@@ -61,10 +62,18 @@ icmp_input(struct pbuf *p, struct netif *inp)
   
   iphdr = p->payload;
   hlen = IPH_HL(iphdr) * 4;
-  pbuf_header(p, -((s16_t)hlen));
+  if (pbuf_header(p, -((s16_t)hlen)) || (p->tot_len < sizeof(u16_t)*2)) {
+    DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%u bytes) received\n", p->tot_len));
+    pbuf_free(p);
+#ifdef ICMP_STATS
+    ++lwip_stats.icmp.lenerr;
+#endif /* ICMP_STATS */
+    snmp_inc_icmpinerrors();
+    return;      
+  }
 
   type = *((u8_t *)p->payload);
-
+  code = *(((u8_t *)p->payload)+1);
   switch(type) {
   case ICMP_ECHO:
     if(ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) ||
@@ -121,7 +130,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 		 IPH_TTL(iphdr), IP_PROTO_ICMP, inp);
     break; 
   default:
-    DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type not supported.\n"));
+  DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d code %d not supported.\n", (int)type, (int)code));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;
