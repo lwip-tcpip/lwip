@@ -62,16 +62,21 @@ static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 {
+  /* no data, no length, flags, copy=1, no optdata, no optdatalen */
   return tcp_enqueue(pcb, NULL, 0, flags, 1, NULL, 0);
-
 }
 
-/*
- * NB. tcp_write() enqueues data for sending, but does not send it
- * straight away.  It waits in the expectation of more data being sent
- * soon (as it can send them more efficiently by combining them
- * together).  To prompt the system to send data now, call
- * tcp_output() after calling tcp_write().
+/**
+ * Write data for sending (but does not send it immediately).
+ *
+ * It waits in the expectation of more data being sent soon (as
+ * it can send them more efficiently by combining them together).
+ * To prompt the system to send data now, call tcp_output() after
+ * calling tcp_write().
+ * 
+ * @arg pcb Protocol control block of the TCP connection to enqueue data for. 
+ * 
+ * @see tcp_write()
  */
 
 err_t
@@ -95,12 +100,16 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 }
 
 /**
- * Enqueue data for tranmission
+ * Enqueue either data or TCP options (but not both) for tranmission
+ * 
+ * 
  * 
  * @arg pcb Protocol control block for the TCP connection to enqueue data for.
  * @arg arg Pointer to the data to be enqueued for sending.
  * @arg len Data length in bytes
  * @arg flags
+ * @arg copy 1 if data must be copied, 0 if data is non-volatile and can be
+ * referenced.
  * @arg optdata
  * @arg optlen
  */
@@ -118,6 +127,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%u, flags=%x, copy=%u)\n",
     (void *)pcb, arg, len, (unsigned int)flags, (unsigned int)copy));
+  LWIP_ASSERT("tcp_enqueue: len == 0 || optlen == 0 (programmer violates API)",
+      len == 0 || optlen == 0);
+  LWIP_ASSERT("tcp_enqueue: arg == NULL || optdata == NULL (programmer violates API)",
+      arg == NULL || optdata == NULL);
   /* fail on too much data */
   if (len > pcb->snd_buf) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%u > snd_buf=%u)\n", len, pcb->snd_buf));
@@ -132,18 +145,18 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: queuelen: %u\n", (unsigned int)pcb->snd_queuelen));
 
-  /* Check if the queue length exceeds the configured maximum queue
-   * length. If so, we return an error. */
+  /* If total number of pbufs on the unsent/unacked queues exceeds the
+   * configured maximum, return an error */
   queuelen = pcb->snd_queuelen;
   if (queuelen >= TCP_SND_QUEUELEN) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %u (max %u)\n", queuelen, TCP_SND_QUEUELEN));
     goto memerr;
   }
   if (queuelen != 0) {
-    LWIP_ASSERT("tcp_enqueue: queue length non-zero and at least one queue non-empty",
+    LWIP_ASSERT("tcp_enqueue: pbufs on queue => at least one queue non-empty",
       pcb->unacked != NULL || pcb->unsent != NULL);
   } else {
-    LWIP_ASSERT("tcp_enqueue: queue length zero and queues empty",
+    LWIP_ASSERT("tcp_enqueue: no pbufs on queue => both queues empty",
       pcb->unacked == NULL && pcb->unsent == NULL);
   }
 
@@ -168,17 +181,16 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* first segment of to-be-queued data? */
     if (queue == NULL) {
-      useg = queue = seg;
+      queue = seg;
     }
     /* subsequent segments of to-be-queued data */
     else {
-      /* Attach the segment to the end of the queued segments. */
+      /* Attach the segment to the end of the queued segments */
       LWIP_ASSERT("useg != NULL", useg != NULL);
       useg->next = seg;
-      /* remember last segment of to-be-queued data for next iteration */
-      useg = seg;
     }
-    /* { useg == seg } */
+    /* remember last segment of to-be-queued data for next iteration */
+    useg = seg;
 
     /* If copy is set, memory should be allocated
      * and data copied into pbuf, otherwise data comes from
@@ -207,7 +219,6 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     /* do not copy data */
     else {
-
       /* First, allocate a pbuf for holding the data.
        * since the referenced data is available at least until it is sent out on the
        * link (as it has to be ACKed by the remote party) we can safely use PBUF_ROM
@@ -328,6 +339,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
   pcb->snd_lbb += len;
   pcb->snd_buf -= len;
+  /* update number of segments on the queues */
   pcb->snd_queuelen = queuelen;
   LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (after enqueued)\n", pcb->snd_queuelen));
   if (pcb->snd_queuelen != 0) {

@@ -183,7 +183,7 @@ pbuf_pool_alloc(void)
 
 
 /**
- * Allocates a pbuf.
+ * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
  *
  * The actual memory allocated for the pbuf is determined by the
  * layer at which the pbuf is allocated and the requested size
@@ -319,7 +319,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
            ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
-  /* pbuf references existing (static constant) ROM payload? */
+  /* pbuf references existing (non-volatile static constant) ROM payload? */
   case PBUF_ROM:
   /* pbuf references existing (externally allocated) RAM payload? */
   case PBUF_REF:
@@ -664,8 +664,8 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 {
   struct pbuf *p;
 
-  LWIP_ASSERT("h != NULL", h != NULL);
-  LWIP_ASSERT("t != NULL", t != NULL);
+  LWIP_ASSERT("h != NULL (programmer violates API)", h != NULL);
+  LWIP_ASSERT("t != NULL (programmer violates API)", t != NULL);
   if ((h == NULL) || (t == NULL)) return;
 
   /* proceed to last pbuf of chain */
@@ -675,10 +675,14 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
   }
   /* { p is last pbuf of first h chain, p->next == NULL } */
   LWIP_ASSERT("p->tot_len == p->len (of last pbuf in chain)", p->tot_len == p->len);
+  LWIP_ASSERT("p->next == NULL", p->next == NULL);
   /* add total length of second chain to last pbuf total of first chain */
   p->tot_len += t->tot_len;
   /* chain last pbuf of head (p) with first of tail (t) */
   p->next = t;
+  /* p->next now references t, but the caller will drop its reference to t,
+   * so netto there is no change to the reference count of t.
+   */
 }
 
 /**
@@ -792,7 +796,7 @@ pbuf_dequeue(struct pbuf *p)
   /* { p->tot_len == p->len } => p is the last pbuf of the first packet */
   /* remember next packet on queue in q */
   q = p->next;
-  /* dequeue p from queue */
+  /* dequeue packet p from queue */
   p->next = NULL;
   /* any next packet on queue? */
   if (q != NULL) {

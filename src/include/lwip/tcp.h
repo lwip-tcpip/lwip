@@ -213,18 +213,13 @@ enum tcp_state {
   TIME_WAIT   = 10
 };
 
-
 /* the TCP protocol control block */
 struct tcp_pcb {
-/* Common members of all PCB types */
+/** common PCB members */
   IP_PCB;
-
-/* Protocol specific PCB members */
-
-  struct tcp_pcb *next;   /* for the linked list */
-
-  enum tcp_state state;   /* TCP state */
-
+/** protocol specific PCB members */
+  struct tcp_pcb *next; /* for the linked list */
+  enum tcp_state state; /* TCP state */
   u8_t prio;
   void *callback_arg;
 
@@ -240,7 +235,7 @@ struct tcp_pcb {
 #define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
 #define TF_NODELAY   (u8_t)0x40U   /* Disable Nagle algorithm */
 
-  /* receiver varables */
+  /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
   
@@ -253,10 +248,10 @@ struct tcp_pcb {
   
   u16_t mss;   /* maximum segment size */
   
-  /* RTT estimation variables. */
+  /* RTT (round trip time) estimation variables */
   u32_t rttest; /* RTT estimate in 500ms ticks */
   u32_t rtseq;  /* sequence number being timed */
-  s16_t sa, sv;
+  s16_t sa, sv; /* @todo document this */
 
   u16_t rto;    /* retransmission time-out */
   u8_t nrtx;    /* number of retransmissions */
@@ -392,7 +387,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
                         (errf)((arg),(err))
 #endif /* LWIP_EVENT_API */
 
-/* This structure is used to repressent TCP segments when queued. */
+/* This structure represents a TCP segment on the unsent and unacked queues */
 struct tcp_seg {
   struct tcp_seg *next;    /* used when putting segements on a queue */
   struct pbuf *p;          /* buffer containing data + TCP header */
