@@ -14,13 +14,14 @@ features of Savannah help us not lose users' input.
 2.1 Source code style:
 
 1. do not use tabs.
-2. identation is two spaces per level.
+2. indentation is two spaces per level (i.e. per tab).
 3. end debug messages with a trailing newline (\n).
 4. one space between keyword and opening bracket.
 5. no space between function and opening bracket.
 6. one space and no newline before opening curly braces of a block.
-7. spaces surrounding assignment and comparisons.
-8. use current source code style as further reference.
+7. closing curly brace on a single line.
+8. spaces surrounding assignment and comparisons.
+9. use current source code style as further reference.
 
 2.2 Source code documentation style:
 
@@ -55,9 +56,7 @@ features of Savannah help us not lose users' input.
 
 2.4 Platform porters:
 
-1. If you've ported lwIP to a platform (an OS, a uC/processor or a combination of these) and you think it
-   could benefit others[1] you might want to post an url to a tarball or zip from which it can be imported 
-   to the contrib CVS module. Then you get CVS access and have to maintain your port :)
-
-[1] - lwIP CVS should not be just a place to keep your port so you don't have to set up your own CVS :)
-Especially welcome are ports to common enough OS/hardware that others can have access too.
+1. If you have ported lwIP to a platform (an OS, a uC/processor or a combination of these) and
+   you think it could benefit others[1] you might want discuss this on the mailing list. You
+   can also ask for CVS access to submit and maintain your port in the contrib CVS module.
+   
