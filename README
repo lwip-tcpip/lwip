@@ -25,4 +25,9 @@ lwIP is freely available under a BSD license.
 For more information, go to the lwIP homepage at 
 http://www.sics.se/~adam/lwip/
 
-Adam Dunkels <adam@sics.se>		    
+The official development tree of lwIP is hosted
+at http://savannah.nongnu.org/projects/lwip/
+
+Adam Dunkels <adam@sics.se>
+Leon Woestenberg <leon.woestenberg@gmx.net>		    
+
