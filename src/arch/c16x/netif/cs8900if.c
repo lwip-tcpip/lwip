@@ -403,7 +403,7 @@ static struct pbuf *cs8900_input(struct netif *netif)
     if (len > 0)
     {
       // allocate a pbuf chain with total length 'len' 
-      p = pbuf_alloc(PBUF_LINK, len, PBUF_POOL);
+      p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
       if (p != 0)
       {
         for (q = p; q != 0; q = q->next)

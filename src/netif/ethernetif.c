@@ -133,7 +133,7 @@ low_level_input(struct ethernetif *ethernetif)
   len = ;
 
   /* We allocate a pbuf chain of pbufs from the pool. */
-  p = pbuf_alloc(PBUF_LINK, len, PBUF_POOL);
+  p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
   
   if(p != NULL) {
     /* We iterate over the pbuf chain until we have read the entire
