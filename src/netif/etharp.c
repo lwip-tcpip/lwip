@@ -6,8 +6,10 @@
  * to a physical address when sending a packet, and the second part answers
  * requests from other machines for our physical address.
  *
- * This implementation complies with RFC 826 (Ethernet ARP) and supports
- * Gratuitious ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6.
+ * This implementation complies with RFC 826 (Ethernet ARP). It supports
+ * Gratuitious ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6
+ * if an interface calls etharp_query(our_netif, its_ip_addr, NULL) upon
+ * address change.
  */
 
 /*
@@ -40,48 +42,7 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Adam Dunkels <adam@sics.se>
- *
  */
-
-/**
- * TODO:
- * - pbufs should be sent from the queue once an ARP entry state
- *   goes from PENDING to STABLE.
- * - Non-PENDING entries MUST NOT have queued packets.
- */
-
-/*
- * TODO:
- *
-RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
-
-      -  A Gratuitous ARP [45] is an ARP packet sent by a node in order
-         to spontaneously cause other nodes to update an entry in their
-         ARP cache.  A gratuitous ARP MAY use either an ARP Request or
-         an ARP Reply packet.  In either case, the ARP Sender Protocol
-         Address and ARP Target Protocol Address are both set to the IP
-         address of the cache entry to be updated, and the ARP Sender
-         Hardware Address is set to the link-layer address to which this
-         cache entry should be updated.  When using an ARP Reply packet,
-         the Target Hardware Address is also set to the link-layer
-         address to which this cache entry should be updated (this field
-         is not used in an ARP Request packet).
-
-         In either case, for a gratuitous ARP, the ARP packet MUST be
-         transmitted as a local broadcast packet on the local link.  As
-         specified in [36], any node receiving any ARP packet (Request
-         or Reply) MUST update its local ARP cache with the Sender
-         Protocol and Hardware Addresses in the ARP packet, if the
-         receiving node has an entry for that IP address already in its
-         ARP cache.  This requirement in the ARP protocol applies even
-         for ARP Request packets, and for ARP Reply packets that do not
-         match any ARP Request transmitted by the receiving node [36].
-*
-  My suggestion would be to send a ARP request for our newly obtained
-  address upon configuration of an Ethernet interface.
-
-*/
 
 #include "lwip/opt.h"
 #include "lwip/inet.h"
@@ -242,13 +203,13 @@ find_arp_entry(void)
     return ERR_MEM;
   }
 
-  /* clean up the recycled stable entry */
+  /* clean up the oldest stable entry (to be recycled) */
   if (arp_table[i].state == ETHARP_STATE_STABLE) {
 #if ARP_QUEUEING
     /* and empty the packet queue */
     if (arp_table[i].p != NULL) {
-      /* remove all queued packets */
       LWIP_DEBUGF(ETHARP_DEBUG, ("find_arp_entry: freeing entry %u, packet queue %p.\n", i, (void *)(arp_table[i].p)));
+      /* remove all queued packets */
       pbuf_free(arp_table[i].p);
       arp_table[i].p = NULL;
     }
@@ -292,12 +253,11 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: will not add 0.0.0.0 to ARP cache\n"));
     return NULL;
   }
-  /* Walk through the ARP mapping table and try to find an entry to
-  update. If none is found, the IP -> MAC address mapping is
-  inserted in the ARP table. */
+  /* Walk through the ARP mapping table and try to find an entry to update.
+   * If none is found, a new IP -> MAC address mapping is inserted. */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     /* Check if the source IP address of the incoming packet matches
-    the IP address in this ARP table entry. */
+     * the IP address in this ARP table entry. */
     if (arp_table[i].state != ETHARP_STATE_EMPTY &&
     	ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       /* pending entry? */
@@ -307,12 +267,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         arp_table[i].state = ETHARP_STATE_STABLE;
         /* fall-through to next if */
       }
-      /* stable entry? (possibly just marked to become stable) */
+      /* stable entry? (possibly just marked stable) */
       if (arp_table[i].state == ETHARP_STATE_STABLE) {
-#if ARP_QUEUEING
-        struct pbuf *p;
-        struct eth_hdr *ethhdr;
-#endif
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: updating stable entry %u\n", i));
         /* An old entry found, update this and return. */
         for (k = 0; k < netif->hwaddr_len; ++k) {
@@ -324,11 +280,13 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 #if ARP_QUEUEING
         while (arp_table[i].p != NULL) {
           /* get the first packet on the queue (if any) */
-          p = arp_table[i].p;
+          struct pbuf *p = arp_table[i].p;
+          /* Ethernet header */
+          struct eth_hdr *ethhdr = p->payload;;
           /* remember (and reference) remainder of queue */
+          /* note: this will also terminate the p pbuf chain */
           arp_table[i].p = pbuf_dequeue(p);
           /* fill-in Ethernet header */
-          ethhdr = p->payload;
           for (k = 0; k < netif->hwaddr_len; ++k) {
             ethhdr->dest.addr[k] = ethaddr->addr[k];
             ethhdr->src.addr[k] = netif->hwaddr[k];
@@ -521,7 +479,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     }
     break;
   case ARP_REPLY:
-    /* ARP reply. We insert or update the ARP table later. */
+    /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
     /* DHCP wants to know about ARP replies to our wanna-have-address */
@@ -696,20 +654,24 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   err_t result = ERR_OK;
   s8_t i;
   u8_t perform_arp_request = 1;
-  /* prevent 'unused argument' warning if ARP_QUEUEING == 0 */
+  /* prevent 'unused argument' compiler warning if ARP_QUEUEING == 0 */
   (void)q;
   srcaddr = (struct eth_addr *)netif->hwaddr;
   /* bail out if this IP address is pending */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+    /* valid ARP cache entry with matching IP address? */
     if (arp_table[i].state != ETHARP_STATE_EMPTY &&
     	ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
+      /* pending entry? */
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
         /* break out of for-loop, user may wish to queue a packet on a pending entry */
         /* TODO: we will issue a new ARP request, which should not occur too often */
         /* we might want to run a faster timer on ARP to limit this */
+        /* { i != ARP_TABLE_SIZE } */
         break;
       }
+      /* stable entry? */
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
         /* User wishes to queue a packet on a stable entry (or does she want to send
@@ -720,6 +682,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
          * immediately. I chose to implement the former approach.
          */
         perform_arp_request = (q?1:0);
+        /* { i != ARP_TABLE_SIZE } */
         break;
       }
     }
@@ -739,9 +702,11 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
   }
   /* { i is now valid } */
-#if ARP_QUEUEING /* queue packet (even on a stable entry, see above) */
+#if ARP_QUEUEING /* queue the given q packet */
   /* copy any PBUF_REF referenced payloads into PBUF_RAM */
+  /* (the caller assumes the referenced payload can be freed) */
   q = pbuf_take(q);
+  /* queue packet (even on a stable entry, see above) */
   pbuf_queue(arp_table[i].p, q);
 #endif
   /* ARP request? */

@@ -52,7 +52,8 @@
 
 /** whether the network interface is 'up'. this is
  * a software flag used to control whether this network
- * interface is enabled and processes traffic */
+ * interface is enabled and processes traffic.
+ * TODO: who should act on this flag, lwIP stack or driver?? */
 #define NETIF_FLAG_UP 0x1U
 /** if set, the netif has broadcast capability */
 #define NETIF_FLAG_BROADCAST 0x2U
@@ -61,35 +62,36 @@
 /** if set, the interface is configured using DHCP */
 #define NETIF_FLAG_DHCP 0x08U
 /** if set, the interface has an active link
- *  (set by the interface) */
+ *  (set by the network interface driver) */
 #define NETIF_FLAG_LINK_UP 0x10U
 
-/** generic data structure used for all lwIP network interfaces */
+/** Generic data structure used for all lwIP network interfaces.
+ *  The following fields should be filled in by the initialization
+ *  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
+
 struct netif {
   /** pointer to next in linked list */
   struct netif *next;
-  /** The following fields should be filled in by the
-      initialization function for the device driver. */
-  
+
   /** IP address configuration in network byte order */
   struct ip_addr ip_addr;
   struct ip_addr netmask;
   struct ip_addr gw;
 
   /** This function is called by the network device driver
-      to pass a packet up the TCP/IP stack. */
+   *  to pass a packet up the TCP/IP stack. */
   err_t (* input)(struct pbuf *p, struct netif *inp);
   /** This function is called by the IP module when it wants
-      to send a packet on the interface. This function typically
-      first resolves the hardware address, then sends the packet. */
+   *  to send a packet on the interface. This function typically
+   *  first resolves the hardware address, then sends the packet. */
   err_t (* output)(struct netif *netif, struct pbuf *p,
        struct ip_addr *ipaddr);
   /** This function is called by the ARP module when it wants
-      to send a packet on the interface. This function outputs
-      the pbuf as-is on the link medium. */
+   *  to send a packet on the interface. This function outputs
+   *  the pbuf as-is on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
   /** This field can be set by the device driver and could point
-      to state information for the device. */
+   *  to state information for the device. */
   void *state;
 #if LWIP_DHCP
   /** the DHCP client state information for this netif */
@@ -101,12 +103,12 @@ struct netif {
   unsigned char hwaddr[NETIF_MAX_HWADDR_LEN];
   /** maximum transfer unit (in bytes) */
   u16_t mtu;
+  /** flags (see NETIF_FLAG_ above) */
+  u8_t flags;
   /** descriptive abbreviation */
   char name[2];
   /** number of this interface */
   u8_t num;
-  /** NETIF_FLAG_* */
-  u8_t flags;
 };
 
 /** The list of network interfaces. */
