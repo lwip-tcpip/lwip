@@ -713,10 +713,10 @@ pbuf_dechain(struct pbuf *p)
 struct pbuf *
 pbuf_unref(struct pbuf *f)
 {
-  struct pbuf *p, *prev, *q, *top;
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_unref: %p\n", (void*)f));
+  struct pbuf *p, *prev, *top;
+  DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_unref: %p\n", (void*)f));
 
-  prev = 0;
+  prev = NULL;
   p = f;
   top = f;
   do
@@ -724,23 +724,30 @@ pbuf_unref(struct pbuf *f)
     /* pbuf is of type PBUF_REF? */
     if (p->flags == PBUF_FLAG_REF)
     {
+      struct pbuf *q;
+	  q = NULL;
       /* allocate a pbuf (w/ payload) fully in RAM */
       /* PBUF_POOL buffers are faster if we can use them */
-      if (p->len <= PBUF_POOL_BUFSIZE)
+      if (p->len <= PBUF_POOL_BUFSIZE) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-      else
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_unref: Could not allocate PBUF_RAW\n"));
+      }
+      /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
+      if (q == NULL) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-      if (q != 0)
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_unref: Could not allocate PBUF_POOL\n"));
+      }
+      if (q != NULL)
       {  
         /* copy pbuf struct */
         q->next = p->next;
-        if (prev)
+        if (prev != NULL)
           /* Break chain and insert new pbuf instead */
           prev->next = q;
         else
           top = q;
         p->next = NULL;
-        
+        /* copy pbuf payload */
         memcpy(q->payload, p->payload, p->len);
         q->tot_len = p->tot_len;
         q->len = p->len;
