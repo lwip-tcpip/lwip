@@ -62,17 +62,15 @@
  *
  */
 
+#include <string.h>
+
 #include "lwip/opt.h"
-
 #include "lwip/stats.h"
-
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
-
 #include "lwip/sys.h"
-
 #include "arch/perf.h"
 
 static u8_t pbuf_pool_memory[(PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf)))];

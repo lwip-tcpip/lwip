@@ -39,19 +39,17 @@
  *
  */
 
+#include <string.h>
+
 #include "lwip/def.h"
 #include "lwip/opt.h"
-
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/sys.h"
-
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
-
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
-
 #include "lwip/stats.h"
 
 #if LWIP_TCP
