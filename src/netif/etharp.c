@@ -293,11 +293,11 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* allowed to recycle a entry? */
   if (flags & ETHARP_CREATE) {
     /* recycle (no-op for an already empty entry) */
-    arp_table[i].state = ARP_EMPTY;
+    arp_table[i].state = ETHARP_STATE_EMPTY;
   }
 
   /* empty entry found or created? */
-  if (arp_table[i].state == ARP_EMPTY) {
+  if (arp_table[i].state == ETHARP_STATE_EMPTY) {
     /* IP address given? */
     if (ipaddr != NULL) {
       /* set IP address */
