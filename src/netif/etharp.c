@@ -42,6 +42,13 @@
  *
  */
 
+/**
+ * TODO:
+ * - pbufs should be sent from the queue once an ARP entry state
+ *   goes from PENDING to STABLE.
+ * - Non-PENDING entries MUST NOT have queued packets.
+ */
+
 /*
  * TODO:
  *
@@ -307,6 +314,9 @@ etharp_dequeue(s8_t i)
 /**
  * Update (or insert) a IP/MAC address pair in the ARP cache.
  *
+ * If a pending entry is resolved, any queued packets will be sent
+ * at this point.
+ * 
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
  * @param flags Defines behaviour:
@@ -345,7 +355,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         arp_table[i].state = ETHARP_STATE_STABLE;
         /* fall-through to next if */
       }
-      /* stable entry? (possible just marked to become stable) */
+      /* stable entry? (possibly just marked to become stable) */
       if (arp_table[i].state == ETHARP_STATE_STABLE) {
 #if ARP_QUEUEING
         struct pbuf *p;
@@ -358,12 +368,25 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         }
         /* reset time stamp */
         arp_table[i].ctime = 0;
+/* this is where we will send out queued packets! */
 #if ARP_QUEUEING
+        /* get the first packet on the queue (if any) */
         p = arp_table[i].p;
         /* queued packet present? */
-        if (p != NULL) {
-          /* NULL attached buffer immediately */
-          arp_table[i].p = NULL;
+        while (p != NULL) {
+          struct pbuf *q, *n;
+          /* search for second packet on queue (n) */
+          q = p;
+          while (q->tot_len > q->len) {
+          	/* proceed to next pbuf of this packet */
+          	LWIP_ASSERT("q->next ! NULL", q->next != NULL);
+          	q = q->next;
+          }
+          /* { q = last pbuf of first packet, q->tot_len = q->len } */
+          n = q->next;
+          /* { n = first pbuf of 2nd packet, or NULL if no 2nd packet } */
+          /* terminate the first packet pbuf chain */
+          q->next = NULL;
           /* fill-in Ethernet header */
           ethhdr = p->payload;
           for (k = 0; k < netif->hwaddr_len; ++k) {
@@ -371,12 +394,16 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
             ethhdr->src.addr[k] = netif->hwaddr[k];
           }
           ethhdr->type = htons(ETHTYPE_IP);
-          LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet.\n"));
+          LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet %p.\n",(void *)p));
           /* send the queued IP packet */
           netif->linkoutput(netif, p);
           /* free the queued IP packet */
           pbuf_free(p);
+          /* proceed to next packet on queue */
+          p = n;
         }
+        /* NULL attached buffer*/
+        arp_table[i].p = NULL;
 #endif
         return NULL;
       }
@@ -420,7 +447,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 }
 
 /**
- * Updates the ARP table using the given packet.
+ * Updates the ARP table using the given IP packet.
  *
  * Uses the incoming IP packet's source address to update the
  * ARP cache for the local network. The function does not alter
