@@ -146,10 +146,10 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
-   link level header. */
+   link level header. Defaults to 14 for Ethernet. */
 
 #ifndef PBUF_LINK_HLEN
-#define PBUF_LINK_HLEN                  0
+#define PBUF_LINK_HLEN                  14
 #endif
 
 
