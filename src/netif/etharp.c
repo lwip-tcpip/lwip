@@ -755,6 +755,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
         /* queue packet ... */
         if (arp_table[i].p == NULL) {
         	/* ... in the empty queue */
+        	pbuf_ref(p);
         	arp_table[i].p = p;
         } else {
         	/* ... at tail of non-empty queue */
