@@ -5,6 +5,7 @@
 #define __LWIP_DHCP_H__
 
 #include "lwip/opt.h"
+#include "lwip/netif.h"
 #include "lwip/udp.h"
 
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
@@ -87,10 +88,8 @@ PACK_STRUCT_END
 #endif
 
 /* Declare here to avoid including netif.h creating a circular dependency */
-struct netif;
+//struct netif;
 
-/** initialize DHCP client */
-void dhcp_init(void);
 /** start DHCP configuration */
 err_t dhcp_start(struct netif *netif);
 /** stop DHCP configuration */
