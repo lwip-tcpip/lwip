@@ -526,7 +526,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   struct eth_addr *dest, *srcaddr, mcastaddr;
   struct eth_hdr *ethhdr;
   s8_t i;
-  err_t result;
+  err_t result = ERR_OK;
 
   /* make room for Ethernet header - should not fail*/
   if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
@@ -631,6 +631,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct pbuf *p;
+  struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_OK;
   s8_t i; /* ARP entry index */
   u8_t k; /* Ethernet address octet index */
@@ -720,12 +721,11 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* { i is either a (new or existing) PENDING or STABLE entry } */
   
   /* packet given? */
-  if (q != NULL)
+  if (q != NULL) {
     /* stable entry? */
     if (arp_table[i].state == ETHARP_STATE_STABLE) {
       /* we have a valid IP->Ethernet address mapping,
        * fill in the Ethernet header for the outgoing packet */
-      struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
       struct eth_hdr *ethhdr = q->payload;
       for(k = 0; k < netif->hwaddr_len; k++) {
         ethhdr->dest.addr[k] = arp_table[i].ethaddr.addr[k];
