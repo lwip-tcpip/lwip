@@ -67,6 +67,13 @@ u8_t *inet_ntoa(u32_t addr); /* returns ptr to static buffer; not reentrant! */
 #define htonl(x) (x)
 #define ntohl(x) (x)
 #else
+#ifdef LWIP_PREFIX_BYTEORDER_FUNCS
+/* workaround for naming collisions on some platforms */
+#define htons lwip_htons
+#define ntohs lwip_ntohs
+#define htonl lwip_htonl
+#define ntohl lwip_ntohl
+#endif
 u16_t htons(u16_t x);
 u16_t ntohs(u16_t x);
 u32_t htonl(u32_t x);
