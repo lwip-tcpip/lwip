@@ -323,7 +323,8 @@ struct tcp_pcb_listen {
                         (ret = (pcb)->sent((pcb)->callback_arg,(pcb),(space)))
 #define TCP_EVENT_RECV(pcb,p,err,ret) \
                         if((pcb)->recv != NULL) \
-                        (ret = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)))
+                        { ret = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); } else { \
+						pbuf_free(p); }
 #define TCP_EVENT_CONNECTED(pcb,err,ret) \
                         if((pcb)->connected != NULL) \
                         (ret = (pcb)->connected((pcb)->callback_arg,(pcb),(err)))
