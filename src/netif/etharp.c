@@ -386,7 +386,8 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 
 
 /**
- * Responds to ARP requests, updates ARP entries and sends queued IP packets.
+ * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache  
+ * send out queued IP packets. Updates cache with snooped address pairs.
  *
  * Should be called for incoming ARP packets. The pbuf in the argument
  * is freed by this function.
@@ -404,15 +405,24 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 {
   struct etharp_hdr *hdr;
   u8_t i;
+  u8_t for_us;
 
   /* drop short ARP packets */
   if (p->tot_len < sizeof(struct etharp_hdr)) {
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 1, ("etharp_arp_input: packet too short (%d/%d)\n", p->tot_len, sizeof(struct etharp_hdr)));
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 1, ("etharp_arp_input: packet dropped, too short (%d/%d)\n", p->tot_len, sizeof(struct etharp_hdr)));
     pbuf_free(p);
     return NULL;
   }
 
   hdr = p->payload;
+ 
+  /* this interface is not configured? */
+  if (netif->ip_addr.addr == 0) {
+    for_us = 0;
+  } else {
+    /* ARP packet directed to us? */
+    for_us = ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr));
+  }
 
   switch (htons(hdr->opcode)) {
   /* ARP request? */
@@ -428,10 +438,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       pbuf_free(p);
       return NULL;
     }
-    /* update the ARP cache */
-    update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
     /* ARP request for our address? */
-    if (ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
+    if (for_us) {
 
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: replying to ARP request for our IP address\n"));
       /* re-use pbuf to send ARP reply */
@@ -450,40 +458,41 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       hdr->hwtype = htons(HWTYPE_ETHERNET);
       ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
 
-        hdr->proto = htons(ETHTYPE_IP);
+      hdr->proto = htons(ETHTYPE_IP);
       ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
 
-        hdr->ethhdr.type = htons(ETHTYPE_ARP);
+      hdr->ethhdr.type = htons(ETHTYPE_ARP);
       /* return ARP reply */
       netif->linkoutput(netif, p);
+
+    /* request was not directed to us */
     } else {
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP request was not for us.\n"));
     }
     break;
   case ARP_REPLY:
-    /* ARP reply. We insert or update the ARP table. */
+    /* ARP reply. We insert or update the ARP table later. */
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-    /* DHCP needs to know about ARP replies */
-    dhcp_arp_reply(netif, &hdr->sipaddr);
+    /* DHCP needs to know about ARP replies to our address */
+    if (for_us) dhcp_arp_reply(netif, &hdr->sipaddr);
 #endif
-    /* ARP reply directed to us? */
-    if (ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply is for us\n"));
-      /* update_the ARP cache, ask to insert */
-      update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
-    /* ARP reply not directed to us */
-    } else {
-      LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply is not for us\n"));
-      /* update the destination address pair */
-      update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
-      /* update the destination address pair */
-      update_arp_entry(netif, &(hdr->dipaddr), &(hdr->dhwaddr), 0);
-    }
     break;
   default:
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: ARP unknown opcode type %d\n", htons(hdr->opcode)));
     break;
+  }
+  /* add or update entries in the ARP cache */
+  if (for_us) {
+    /* insert IP address in ARP cache (assume requester wants to talk to us)
+     * we might even send out a queued packet to this host */
+    update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
+  /* request was not directed to us, but snoop anyway */
+  } else {
+    /* update or insert the source IP address in the cache */
+    update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
+    /* update or insert the destination IP address pair in the cache */
+    update_arp_entry(netif, &(hdr->dipaddr), &(hdr->dhwaddr), 0);
   }
   /* free ARP packet */
   pbuf_free(p);
@@ -734,10 +743,12 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: sending ARP request.\n"));
       hdr = p->payload;
       hdr->opcode = htons(ARP_REQUEST);
-      for(j = 0; j < netif->hwaddr_len; ++j)
+      for (j = 0; j < netif->hwaddr_len; ++j)
       {
-        hdr->dhwaddr.addr[j] = 0x00;
         hdr->shwaddr.addr[j] = srcaddr->addr[j];
+        /* the hardware address is what we ask for, in
+         * a request it is a don't-care, we use 0's */
+        hdr->dhwaddr.addr[j] = 0x00;
       }
       ip_addr_set(&(hdr->dipaddr), ipaddr);
       ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
@@ -747,7 +758,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 
       hdr->proto = htons(ETHTYPE_IP);
       ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-      for(j = 0; j < netif->hwaddr_len; ++j)
+      for (j = 0; j < netif->hwaddr_len; ++j)
       {
         hdr->ethhdr.dest.addr[j] = 0xff;
         hdr->ethhdr.src.addr[j] = srcaddr->addr[j];
