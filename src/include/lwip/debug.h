@@ -82,6 +82,10 @@
 #define SIO_FIFO_DEBUG   0
 #endif
 
+#ifndef SLIP_DEBUG
+#define SLIP_DEBUG        0
+#endif
+
 #ifndef PPP_DEBUG
 #define PPP_DEBUG        0
 #endif
