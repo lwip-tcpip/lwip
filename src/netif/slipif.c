@@ -31,13 +31,17 @@
  * Author: Magnus Ivarsson <magnus.ivarsson(at)volvo.com> 
  */
 
+/* 
+ * This is an arch independent SLIP netif. The specific serial hooks must be provided 
+ * by another file.They are sio_open, sio_recv and sio_send
+ */ 
+
 #include "netif/slipif.h"
 #include "lwip/debug.h"
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
-#include "netif/sio.h"
 
 #define SLIP_END     0300
 #define SLIP_ESC     0333
@@ -45,53 +49,54 @@
 #define SLIP_ESC_ESC 0335
 
 #define MAX_SIZE     1500
-#define SLIPIF_NUM_OF_INTERFACES 2
 
-typedef struct slip_status_t {
-	void *sio;
-} slip_status_t;
-
-/* yes, this is ugly; TODO: should be dynamicaly allocated instead */
-static slip_status_t statusar[SLIPIF_NUM_OF_INTERFACES];
-
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Send a pbuf doing the necessary SLIP encapsulation
+ *
+ * Uses the serial layer's sio_send() 
+ */ 
 err_t
 slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
 {
-  slip_status_t *slipState = (slip_status_t *)netif->state;
   struct pbuf *q;
   int i;
   u8_t c;
 
   /* Send pbuf out on the serial I/O device. */
-  sio_send(SLIP_END, slipState->sio);
+  sio_send(SLIP_END, netif->state);
 
   for(q = p; q != NULL; q = q->next) {
     for(i = 0; i < q->len; i++) {
       c = ((u8_t *)q->payload)[i];
       switch(c) {
       case SLIP_END:
-	sio_send(SLIP_ESC, slipState->sio);
-	sio_send(SLIP_ESC_END, slipState->sio);
+	sio_send(SLIP_ESC, netif->state);
+	sio_send(SLIP_ESC_END, netif->state);
 	break;
       case SLIP_ESC:
-	sio_send(SLIP_ESC, slipState->sio);
-	sio_send(SLIP_ESC_ESC, slipState->sio);
+	sio_send(SLIP_ESC, netif->state);
+	sio_send(SLIP_ESC_ESC, netif->state);
 	break;
       default:
-	sio_send(c, slipState->sio);
+	sio_send(c, netif->state);
 	break;
       }
     }
   }
-  sio_send(SLIP_END, slipState->sio);
+  sio_send(SLIP_END, netif->state);
   return 0;
 }
-/*-----------------------------------------------------------------------------------*/
+
+/**
+ * Handle the incoming SLIP stream character by character
+ *
+ * Poll the serial layer by calling sio_recv()
+ * 
+ * @return The IP packet when SLIP_END is received 
+ */ 
 static struct pbuf *
 slipif_input( struct netif * netif )
 {
-  slip_status_t *slipState = (slip_status_t *)netif->state;
   u8_t c;
   struct pbuf *p, *q;
   int recved;
@@ -102,12 +107,9 @@ slipif_input( struct netif * netif )
   c = 0;
 
   while(1) {
-    c = sio_recv(slipState->sio);
+    c = sio_recv(netif->state);
     switch(c) {
     case SLIP_END:
-      if(p == NULL) {
-	return slipif_input(netif);
-      }
       if(recved > 0) {
 	/* Received whole packet. */
 	pbuf_realloc(q, recved);
@@ -122,7 +124,7 @@ slipif_input( struct netif * netif )
       break;
 
     case SLIP_ESC:
-      c = sio_recv(slipState->sio);
+      c = sio_recv(netif->state);
       switch(c) {
       case SLIP_ESC_END:
 	c = SLIP_END;
@@ -166,40 +168,41 @@ slipif_input( struct netif * netif )
   }
   return NULL;
 }
-/*-----------------------------------------------------------------------------------*/
+
+/**
+ * The SLIP input thread 
+ *
+ * Feed the IP layer with incoming packets
+ */ 
 static void
 slipif_loop(void *nf)
 {
   struct pbuf *p;
   struct netif *netif = (struct netif *)nf;
-  /*	slip_status_t *slipState = (slip_status_t *) netif->state; */
 
   while(1) {
     p = slipif_input(netif);
     netif->input(p, netif);
   }
-}			 
-/*-----------------------------------------------------------------------------------*/
+}
+
+/**
+ * SLIP netif initialization
+ *
+ * Call the arch specific sio_open and remember
+ * the opened device in the state field of the netif.
+ */ 
 void
 slipif_init(struct netif *netif)
 {
-  slip_status_t *slipState;
 	
   DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
-  if(netif->num >= SLIPIF_NUM_OF_INTERFACES) {
-    DEBUGF( SLIP_DEBUG, ("ERROR: To many slipifs"));
-    return;
-  }
 
-  /* dynamic allocation would be nice */
-  netif->state = &statusar[netif->num];
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
 
-  slipState = (slip_status_t *)netif->state;
-  slipState->sio = sio_open(netif->num);
+  netif->state = sio_open(netif->num);
 
   sys_thread_new(slipif_loop, netif);
 }
-/*-----------------------------------------------------------------------------------*/
