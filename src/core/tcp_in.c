@@ -672,6 +672,7 @@ tcp_receive(struct tcp_pcb *pcb)
   s32_t off;
   int m;
   u32_t right_wnd_edge;
+  u16_t new_tot_len;
 
 
   if (flags & TCP_ACK) {
@@ -915,22 +916,29 @@ tcp_receive(struct tcp_pcb *pcb)
      After we are done with adjusting the pbuf pointers we must
      adjust the ->data pointer in the seg and the segment
      length.*/
-  off = pcb->rcv_nxt - seqno;
-  if (inseg.p->len < off) {
-    p = inseg.p;
-    while (p->len < off) {
-      off -= p->len;
-      inseg.p->tot_len -= p->len;
-      p->len = 0;
-      p = p->next;
-    }
-    pbuf_header(p, -off);
-  } else {
-    pbuf_header(inseg.p, -off);
-  }
-  inseg.dataptr = inseg.p->payload;
-  inseg.len -= pcb->rcv_nxt - seqno;
-  inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
+
+        off = pcb->rcv_nxt - seqno;
+        p = inseg.p;
+        if (inseg.p->len < off) {
+          new_tot_len = inseg.p->tot_len - off;
+          while (p->len < off) {
+            off -= p->len;
+            /* KJM following line changed (with addition of new_tot_len var)
+               to fix bug #9076
+               inseg.p->tot_len -= p->len; */
+            p->tot_len = new_tot_len;
+            p->len = 0;
+            p = p->next;
+          }
+          pbuf_header(p, -off);
+        } else {
+          pbuf_header(inseg.p, -off);
+        }
+        /* KJM following line changed to use p->payload rather than inseg->p->payload
+           to fix bug #9076 */
+        inseg.dataptr = p->payload;
+        inseg.len -= pcb->rcv_nxt - seqno;
+        inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
       }
       else{
   /* the whole segment is < rcv_nxt */
