@@ -154,12 +154,12 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     seg->p = NULL;
 
     if (queue == NULL) {
-      queue = seg;
+      useg = queue = seg;
     }
     else {
       /* Attach the segment to the end of the queued segments. */
-      for (useg = queue; useg->next != NULL; useg = useg->next);
       useg->next = seg;
+      useg = seg;
     }
 
     /* If copy is set, memory should be allocated
