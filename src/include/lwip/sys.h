@@ -36,6 +36,10 @@
 
 #include "lwip/opt.h"
 
+#define SYS_ARCH_DECL_PROTECT(lev)
+#define SYS_ARCH_PROTECT(lev)
+#define SYS_ARCH_UNPROTECT(lev)
+
 #if NO_SYS
 
 /* For a totally minimal and standalone system, we provide null
@@ -112,16 +116,15 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
    implementation */
 #ifndef SYS_ARCH_PROTECT
 #ifdef SYS_LIGHTWEIGHT_PROT
-#define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
-#define SYS_ARCH_PROTECT(lev) lev = sys_arch_protect()
-#define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
 
+#undef SYS_ARCH_DECL_PROTECT
+#define SYS_ARCH_DECL_PROTECT(lev) sys_prot_t lev
+#undef SYS_ARCH_PROTECT
+#define SYS_ARCH_PROTECT(lev) lev = sys_arch_protect()
+#undef SYS_ARCH_UNPROTECT
+#define SYS_ARCH_UNPROTECT(lev) sys_arch_unprotect(lev)
 sys_prot_t sys_arch_protect(void);
 void sys_arch_unprotect(sys_prot_t pval);
-#else /* SYS_LIGHTWEIGHT_PROT */
-#define SYS_ARCH_DECL_PROTECT(lev)
-#define SYS_ARCH_PROTECT(lev)
-#define SYS_ARCH_UNPROTECT(lev)
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 #endif /* SYS_ARCH_PROTECT */
