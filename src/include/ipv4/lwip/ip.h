@@ -43,7 +43,6 @@
 struct netif;
 
 void ip_init(void);
-u8_t ip_lookup(void *header, struct netif *inp);
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
 err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,

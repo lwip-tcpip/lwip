@@ -91,7 +91,6 @@ err_t            udp_send       (struct udp_pcb *pcb, struct pbuf *p);
 
 
 /* The following functions are the lower layer interface to UDP. */
-u8_t             udp_lookup     (struct ip_hdr *iphdr, struct netif *inp);
 void             udp_input      (struct pbuf *p, struct netif *inp);
 void             udp_init       (void);
 
