@@ -49,18 +49,6 @@
 #define SYS_LIGHTWEIGHT_PROT           0
 #endif
 
-#ifndef SYS_ARCH_DECL_PROTECT
-#define SYS_ARCH_DECL_PROTECT(lock)
-#endif
-
-#ifndef SYS_ARCH_PROTECT
-#define SYS_ARCH_PROTECT(lock)
-#endif
-
-#ifndef SYS_ARCH_UNPROTECT
-#define SYS_ARCH_UNPROTECT(lock)
-#endif
-
 #ifndef NO_SYS
 #define NO_SYS 0
 #endif
@@ -298,7 +286,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif 
 
 #ifndef LWIP_COMPAT_SOCKETS
-#define LWIP_COMPAT_SOCKETS	1
+#define LWIP_COMPAT_SOCKETS     1
 #endif
 
 /* ---------- Statistics options ---------- */
@@ -319,7 +307,7 @@ a lot of data that needs to be copied, this should be set high. */
 /* Debugging options all default to off */
 
 #ifndef DEMO_DEBUG
-#define DEMO_DEBUG	DBG_OFF
+#define DEMO_DEBUG      DBG_OFF
 #endif
 
 #ifndef ETHARP_DEBUG

@@ -122,7 +122,7 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
  * for certain critical regions during buffer allocation, deallocation and memory
  * allocation and deallocation.
  */
-#ifdef SYS_LIGHTWEIGHT_PROT
+#if SYS_LIGHTWEIGHT_PROT
 
 /** SYS_ARCH_DECL_PROTECT
  * declare a protection variable. This macro will default to defining a variable of
