@@ -723,9 +723,13 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
   struct pbuf *q = p;
 #endif
   /* programmer stupidity checks */
-  LWIP_ASSERT("p != NULL", p != NULL);
-  LWIP_ASSERT("n != NULL", n != NULL);
-  if ((p == NULL) || (n == NULL)) return;
+  LWIP_ASSERT("p == NULL in pbuf_queue: this indicates a programmer error\n", p != NULL);
+  LWIP_ASSERT("n == NULL in pbuf_queue: this indicates a programmer error\n", n != NULL);
+  LWIP_ASSERT("p == n in pbuf_queue: this indicates a programmer error\n", p != n);
+  if ((p == NULL) || (n == NULL) || (p == n)){
+    LWIP_ERRORF(PBUF_DEBUG | DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"))
+    return;
+  }
 
   /* iterate through all packets on queue */
   while (p->next != NULL) {
