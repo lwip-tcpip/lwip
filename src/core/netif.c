@@ -45,8 +45,9 @@ struct netif *netif_default = NULL;
  * @param ipaddr IP address for the new netif
  * @param netmask network mask for the new netif
  * @param gw default gateway IP address for the new netif
- * @init callback function that initializes the interface
- * @input callback function that...
+ * @param state opaque data passed to the new netif
+ * @param init callback function that initializes the interface
+ * @param input callback function that...
  *
  * @return netif, or NULL if failed.
  */
