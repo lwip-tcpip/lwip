@@ -53,7 +53,7 @@ void             tcp_init    (void);  /* Must be called first to
            initialize TCP. */
 void             tcp_tmr     (void);  /* Must be called every
            TCP_TMR_INTERVAL
-           ms. (Typically 100 ms). */
+           ms. (Typically 250 ms). */
 /* Application program's interface: */
 struct tcp_pcb * tcp_new     (void);
 struct tcp_pcb * tcp_alloc   (u8_t prio);
@@ -115,30 +115,30 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 #define TCP_SEQ_GT(a,b)     ((s32_t)((a)-(b)) > 0)
 #define TCP_SEQ_GEQ(a,b)    ((s32_t)((a)-(b)) >= 0)
 
-#define TCP_FIN 0x01
-#define TCP_SYN 0x02
-#define TCP_RST 0x04
-#define TCP_PSH 0x08
-#define TCP_ACK 0x10
-#define TCP_URG 0x20
+#define TCP_FIN 0x01U
+#define TCP_SYN 0x02U
+#define TCP_RST 0x04U
+#define TCP_PSH 0x08U
+#define TCP_ACK 0x10U
+#define TCP_URG 0x20U
 
-#define TCP_FLAGS 0x3f
+#define TCP_FLAGS 0x3fU
 
 /* Length of the TCP header, excluding options. */
 #define TCP_HLEN 20
 
 #ifndef TCP_TMR_INTERVAL
-#define TCP_TMR_INTERVAL       100  /* The TCP timer interval in
+#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in
                                        milliseconds. */
 #endif /* TCP_TMR_INTERVAL */
 
 #ifndef TCP_FAST_INTERVAL
-#define TCP_FAST_INTERVAL      200  /* the fine grained timeout in
+#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in
                                        milliseconds */
 #endif /* TCP_FAST_INTERVAL */
 
 #ifndef TCP_SLOW_INTERVAL
-#define TCP_SLOW_INTERVAL      500  /* the coarse grained timeout in
+#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in
                                        milliseconds */
 #endif /* TCP_SLOW_INTERVAL */
 

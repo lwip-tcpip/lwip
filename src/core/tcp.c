@@ -106,18 +106,11 @@ tcp_init(void)
 void
 tcp_tmr(void)
 {
-  ++tcp_timer;
-  if (tcp_timer == 10) {
-    tcp_timer = 0;
-  }
-  
-  if (tcp_timer & 1) {
-    /* Call tcp_fasttmr() every 200 ms, i.e., every other timer
-       tcp_tmr() is called. */
-    tcp_fasttmr();
-  }
-  if (tcp_timer == 0 || tcp_timer == 5) {
-    /* Call tcp_slowtmr() every 500 ms, i.e., every fifth timer
+  /* Call tcp_fasttmr() every 250 ms */
+  tcp_fasttmr();
+
+  if (++tcp_timer & 1) {
+    /* Call tcp_tmr() every 500 ms, i.e., every other timer
        tcp_tmr() is called. */
     tcp_slowtmr();
   }
@@ -626,7 +619,7 @@ tcp_slowtmr(void)
 /*
  * tcp_fasttmr():
  *
- * Is called every TCP_FINE_TIMEOUT (100 ms) and sends delayed ACKs.
+ * Is called every TCP_FAST_INTERVAL (250 ms) and sends delayed ACKs.
  */
 /*-----------------------------------------------------------------------------------*/
 void
