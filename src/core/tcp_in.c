@@ -604,6 +604,8 @@ tcp_receive(struct tcp_pcb *pcb)
 
       
   if(flags & TCP_ACK) {
+    unsigned long int right_wnd_edge = pcb->snd_wnd + pcb->snd_wl1;
+
     /* Update window. */
     if(TCP_SEQ_LT(pcb->snd_wl1, seqno) ||
        (pcb->snd_wl1 == seqno && TCP_SEQ_LT(pcb->snd_wl2, ackno)) ||
@@ -623,29 +625,33 @@ tcp_receive(struct tcp_pcb *pcb)
     
 
     if(pcb->lastack == ackno) {
-      ++pcb->dupacks;
-      if(pcb->dupacks >= 3 && pcb->unacked != NULL) {
-        if(!(pcb->flags & TF_INFR)) {
-          /* This is fast retransmit. Retransmit the first unacked segment. */
-          DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupacks %d (%lu), fast retransmit %lu\n",
-                                pcb->dupacks, pcb->lastack,
-                                ntohl(pcb->unacked->tcphdr->seqno)));
-          tcp_rexmit(pcb);
-          /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
-          pcb->ssthresh = UMAX((pcb->snd_max -
-                                pcb->lastack) / 2,
-                               2 * pcb->mss);
-
-          pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
-          pcb->flags |= TF_INFR;          
-        } else {
-	  /* Inflate the congestion window, but not if it means that
-	     the value overflows. */
-	  if((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-	    pcb->cwnd += pcb->mss;
+      if(pcb->snd_wl1+pcb->snd_wnd==right_wnd_edge){
+	++pcb->dupacks;
+	if(pcb->dupacks >= 3 && pcb->unacked != NULL) {
+	  if(!(pcb->flags & TF_INFR)) {
+	    /* This is fast retransmit. Retransmit the first unacked segment. */
+	    DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupacks %d (%lu), fast retransmit %lu\n",
+				  pcb->dupacks, pcb->lastack,
+				  ntohl(pcb->unacked->tcphdr->seqno)));
+	    tcp_rexmit(pcb);
+	    /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
+	    pcb->ssthresh = UMAX((pcb->snd_max -
+				  pcb->lastack) / 2,
+				 2 * pcb->mss);
+	    
+	    pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
+	    pcb->flags |= TF_INFR;          
+	  } else {
+	    /* Inflate the congestion window, but not if it means that
+	       the value overflows. */
+	    if((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
+	      pcb->cwnd += pcb->mss;
+	    }
 	  }
-	  
-        }
+	}
+      }
+      else{
+	DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %lu %lu\n", pcb->snd_wl1+pcb->snd_wnd, right_wnd_edge));	
       }
     } else if(TCP_SEQ_LT(pcb->lastack, ackno) &&
               TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
