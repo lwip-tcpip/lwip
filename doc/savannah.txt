@@ -31,12 +31,13 @@ cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lw
 ---------------------------------------------------------
 
 Merging is a delicate process in CVS and requires the
-following disciplined manual in order to prevent future conflicts.
+following disciplined steps in order to prevent conflicts
+in the future. Conflicts can be hard to solve!
 
 Merging from branch A to branch B requires that the A branch
 has a tag indicating the previous merger. This tag is called
-'merged_from_A_to_B'. After merging the tag is overwritten in
-the A branch to remember this merger for future merge actions.
+'merged_from_A_to_B'. After merging, the tag is moved in the
+A branch to remember this merger for future merge actions.
 
 IMPORTANT: AFTER COMMITTING A SUCCESFUL MERGE IN THE
 REPOSITORY, THE TAG MUST BE SET ON THE SOURCE BRANCH OF THE
