@@ -8,10 +8,12 @@ Table of Contents:
 4 - How to release lwIP
 
 
-1 Anonymous CVS checkouts and updates
--------------------------------------
 
-Obtain lwIP from the CVS main trunk (stable)
+1 Obtaining lwIP from the CVS repository
+----------------------------------------
+
+To perform an anonymous CVS checkout of the main trunk (this is where
+bug fixes and incremental enhancements occur), do this:
 
 export CVS_RSH=ssh
 cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
@@ -19,15 +21,18 @@ cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
 (If SSH asks about authenticity of the host, you can check the key
  fingerprint against http://savannah.nongnu.org/cvs/?group=lwip)
 
-Or, obtain a specific release as follows:
-cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_6_3 -d lwip-0.6.3 lwip
+Or, obtain a stable branch (updated with bug fixes only) as follows:
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_7 -d lwip-0.7 lwip
 
-Or, obtain a development branch as follows:
+Or, obtain a specific (fixed) release as follows:
+cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_7_0 -d lwip-0.7.0 lwip
+
+Or, obtain a development branch (considered unstable!) as follows:
 cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-DEVEL lwip
 
 
 3 Merging from DEVEL branch to main trunk (stable)
----------------------------------------------------------
+--------------------------------------------------
 
 Merging is a delicate process in CVS and requires the
 following disciplined steps in order to prevent conflicts
