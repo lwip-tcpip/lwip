@@ -5,6 +5,10 @@ rtxc/      - Architectural files for the RTXC operating system.
 unix/      - Architectural files for testing on unix-like systems
              (assuming gcc and pthreads).
 
+v2pro/     - Architectural files for the Xilinx Virtex-II PRO device with 
+             embedded PowerPC 405 Processor.  Supports lwIP Raw API only.
+             (requires V2PDK - http://www.xilinx.com/ise/vii_pro/kit.htm)
+
 Each subdirectory (may) also include:
 
 perf.c     - Optional file that should be implemented when running
@@ -12,4 +16,7 @@ perf.c     - Optional file that should be implemented when running
 
 sys.c      - Implementation of the operating system emulation layer.
 
-netif/	   - Architectural specific network interfaces.
+include/   - Architectural specific header files.
+
+netif/     - Architectural specific network interfaces.
+
