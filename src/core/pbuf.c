@@ -617,7 +617,6 @@ pbuf_clen(struct pbuf *p)
 }
 
 /**
- *
  * Increment the reference count of the pbuf.
  *
  * @param p pbuf to increase reference counter of
@@ -636,20 +635,16 @@ pbuf_ref(struct pbuf *p)
 }
 
 /**
- *
- * Chain two pbufs (or pbuf chains) together. They must belong to the same packet.
- *
- * @param h head pbuf (chain)
- * @param t tail pbuf (chain)
- * @note May not be called on a packet queue.
- *
- * The ->tot_len fields of all pbufs of the head chain are adjusted.
- * The ->next field of the last pbuf of the head chain is adjusted.
- * The ->ref field of the first pbuf of the tail chain is adjusted.
- *
+ * Concatenate two pbufs (each may be a pbuf chain) and take over
+ * the reference of the tail pbuf.
+ * 
+ *  @note The caller MAY NOT reference the tail pbuf afterwards.
+ * 
+ *  @see pbuf_chain()
  */
+
 void
-pbuf_chain(struct pbuf *h, struct pbuf *t)
+pbuf_cat(struct pbuf *h, struct pbuf *t)
 {
   struct pbuf *p;
 
@@ -670,9 +665,29 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   p->tot_len += t->tot_len;
   /* chain last pbuf of head (p) with first of tail (t) */
   p->next = t;
+}
+
+/**
+ * Chain two pbufs (or pbuf chains) together. They must belong to the same packet.
+ * It's the same as pbuf_cat with the addition that it increases the reference count
+ * of the tail.
+ * 
+ * @param h head pbuf (chain)
+ * @param t tail pbuf (chain)
+ * @note May not be called on a packet queue.
+ *
+ * The ->tot_len fields of all pbufs of the head chain are adjusted.
+ * The ->next field of the last pbuf of the head chain is adjusted.
+ * The ->ref field of the first pbuf of the tail chain is adjusted.
+ *
+ */
+void
+pbuf_chain(struct pbuf *h, struct pbuf *t)
+{
+  pbuf_cat(h, t);
   /* t is now referenced to one more time */
   pbuf_ref(t);
-  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)p, (void *)t));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }
 
 /* For packet queueing. Note that queued packets must be dequeued first

@@ -1480,14 +1480,12 @@ static void pppInProc(int pd, u_char *s, int l)
 
 			pc->inTail->tot_len = pc->inTail->len;
 			if (pc->inTail != pc->inHead) {
-			    pbuf_chain(pc->inHead, pc->inTail);
-			    pbuf_free(pc->inTail);
+			    pbuf_cat(pc->inHead, pc->inTail);
 			}
 		    } else {
 			pc->inTail->tot_len = pc->inTail->len;
 			if (pc->inTail != pc->inHead) {
-			    pbuf_chain(pc->inHead, pc->inTail);
-			    pbuf_free(pc->inTail);
+			    pbuf_cat(pc->inHead, pc->inTail);
 			}
 
 			pbuf_realloc(pc->inHead, pc->inHead->tot_len - 2);
@@ -1583,8 +1581,7 @@ static void pppInProc(int pd, u_char *s, int l)
 		    if(pc->inTail) {
 			pc->inTail->tot_len = pc->inTail->len;
 			if (pc->inTail != pc->inHead) {
-			    pbuf_chain(pc->inHead, pc->inTail);
-			    pbuf_free(pc->inTail);
+			    pbuf_cat(pc->inHead, pc->inTail);
 			}
 		    }
                     /* If we haven't started a packet, we need a packet header. */

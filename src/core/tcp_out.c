@@ -210,9 +210,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       }
       ++queuelen;
 
-      /* Chain the headers and data pbufs together. */
-      pbuf_chain(seg->p, p);
-      pbuf_free(p);
+      /* Concatenate the headers and data pbufs together. */
+      pbuf_cat(seg->p, p);
       p = NULL;
     }
 
@@ -286,11 +285,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg->len + queue->len <= pcb->mss) {
     /* Remove TCP header from first segment. */
     pbuf_header(queue->p, -TCP_HLEN);
-    pbuf_chain(useg->p, queue->p);
-    /* Free buffer which was merged. Note that the previous pbuf_chain call
-     * will have incremented the ref count, so here the ref count will still
-     * be 1 for the 1 pointer still being used on this buffer. */
-    pbuf_free(queue->p);
+    pbuf_cat(useg->p, queue->p);
     useg->len += queue->len;
     useg->next = queue->next;
 

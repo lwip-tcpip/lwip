@@ -145,8 +145,7 @@ slipif_input( struct netif * netif )
   }
   
   if (q != NULL) {
-    pbuf_chain(q, p);
-    pbuf_free(p);
+    pbuf_cat(q, p);
   } else {
     q = p;
   }
