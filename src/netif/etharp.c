@@ -55,9 +55,6 @@
 #  include "lwip/dhcp.h"
 #endif
 
-/* allows new queueing code to be disabled (0) for regression testing */
-#define ARP_NEW_QUEUE 1
-
 /** the time an ARP entry stays valid after its last update, (120 * 10) seconds = 20 minutes. */
 #define ARP_MAXAGE 120
 /** the time an ARP entry stays pending after first request, (1 * 10) seconds = 10 seconds. */
