@@ -63,8 +63,8 @@ The following functions must be implemented by the sys_arch:
   If the timeout argument is non-zero, the return value is the number of
   milliseconds spent waiting for the semaphore to be signaled. If the
   semaphore wasn't signaled within the specified time, the return value is
-  0xffffffff. If the thread didn't have to wait for the semaphore (i.e., it
-  was already signaled), the function may return zero.
+  SYS_ARCH_TIMEOUT. If the thread didn't have to wait for the semaphore
+  (i.e., it was already signaled), the function may return zero.
 
   Notice that lwIP implements a function with a similar name,
   sys_sem_wait(), that uses the sys_arch_sem_wait() function.
@@ -93,7 +93,8 @@ The following functions must be implemented by the sys_arch:
   should be dropped.
 
   The return values are the same as for the sys_arch_sem_wait() function:
-  Number of milliseconds spent waitng or 0xffffffff if there was a timeout.
+  Number of milliseconds spent waiting or SYS_ARCH_TIMEOUT if there was a
+  timeout.
 
   Note that a function with a similar name, sys_mbox_fetch(), is
   implemented by lwIP. 

@@ -511,7 +511,7 @@ netconn_recv(struct netconn *conn)
       if (conn->callback)
         (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
 
-    /* If we are closed, we indicate that we no longer wish to recieve
+    /* If we are closed, we indicate that we no longer wish to receive
        data by setting conn->recvmbox to SYS_MBOX_NULL. */
     if (p == NULL) {
       memp_freep(MEMP_NETBUF, buf);

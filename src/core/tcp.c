@@ -70,7 +70,7 @@ struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
 
 struct tcp_pcb *tcp_tmp_pcb;
 
-#define MIN(x,y) (x) < (y)? (x): (y)
+#define LWIP_MIN(x,y) (x) < (y)? (x): (y)
 
 static u8_t tcp_timer;
 
@@ -506,7 +506,7 @@ tcp_slowtmr(void)
         }
         tcp_rexmit(pcb);
         /* Reduce congestion window and ssthresh. */
-        eff_wnd = MIN(pcb->cwnd, pcb->snd_wnd);
+        eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
         pcb->ssthresh = eff_wnd >> 1;
         if (pcb->ssthresh < pcb->mss) {
           pcb->ssthresh = pcb->mss * 2;

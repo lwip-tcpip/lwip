@@ -252,8 +252,8 @@ struct tcp_pcb {
 
   u16_t acked;
   
-  u16_t snd_buf;   /* Avaliable buffer space for sending (in bytes). */
-  u8_t snd_queuelen; /* Avaliable buffer space for sending (in tcp_segs). */
+  u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
+  u8_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
   
   
   /* These are ordered by sequence number: */
@@ -424,7 +424,7 @@ extern struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. *
 
 extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 
-/* Axoims about the above lists:   
+/* Axioms about the above lists:   
    1) Every TCP PCB that is not CLOSED is in one of the lists.
    2) A PCB is only in one of the lists.
    3) All PCBs in the tcp_listen_pcbs list is in LISTEN state.

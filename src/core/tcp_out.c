@@ -59,7 +59,7 @@
 #include "lwip/stats.h"
 
 #if LWIP_TCP
-#define MIN(x,y) (x) < (y)? (x): (y)
+#define LWIP_MIN(x,y) (x) < (y)? (x): (y)
 
 
 
@@ -367,7 +367,7 @@ tcp_output(struct tcp_pcb *pcb)
     return ERR_OK;
   }
   
-  wnd = MIN(pcb->snd_wnd, pcb->cwnd);
+  wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
   
   seg = pcb->unsent;

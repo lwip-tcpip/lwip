@@ -237,7 +237,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     /* send ICMP destination protocol unreachable */
     icmp_dest_unreach(p, ICMP_DUR_PROTO);
     pbuf_free(p);
-    DEBUGF(IP_DEBUG, ("Unsupported transportation protocol %u\n",
+    DEBUGF(IP_DEBUG, ("Unsupported transport protocol %u\n",
 		      iphdr->nexthdr));
 
 #ifdef IP_STATS
