@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.10 2003/01/21 14:09:31 jani Exp $
+ * $Id: udp.c,v 1.11 2003/01/22 16:18:05 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -199,16 +199,15 @@ udp_input(struct pbuf *p, struct netif *inp)
       break;
     }
   }
-  /* no fully matching pcb found? */
+  /* no fully matching pcb found? then look for an unconnected pcb */
   if(pcb == NULL) {
     /* Iterate through the UDP pcb list for a pcb that matches
        the local address. */
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
       DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %d (dgram %d)\n",
 			 pcb->local_port, dest));
-      if(pcb->local_port == dest &&
-	 (ip_addr_isany(&pcb->remote_ip) ||
-	  ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
+      if((pcb->flags & UDP_FLAGS_CONNECTED) == 0 &&
+	  pcb->local_port == dest &&
 	 (ip_addr_isany(&pcb->local_ip) ||
 	  ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 	break;
@@ -396,13 +395,14 @@ err_t
 udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
-
-  /* Insert UDP PCB into the list of active UDP PCBs. */
+  u8_t rebind = 0;
+  
+  /* Check for double bind and rebind of the same pcb */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
-    if(pcb == ipcb) {
-      /* Already on the list, just return. */
-      return ERR_OK;
-    }
+    if (pcb == ipcb) {
+	 rebind = 1;
+	 break;
+    }  else	 
     if (ipcb->local_port == port) {
       if(ip_addr_isany(&(ipcb->local_ip)) ||
 	 ip_addr_isany(ipaddr) ||
@@ -416,9 +416,11 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   ip_addr_set(&pcb->local_ip, ipaddr);
   pcb->local_port = port;
   
-  /* We need to place the PCB on the list. */
-  pcb->next = udp_pcbs;
-  udp_pcbs = pcb;
+  /* We need to place the PCB on the list if not already there. */
+  if (rebind == 0) {
+    pcb->next = udp_pcbs;
+    udp_pcbs = pcb;
+  }  
 
   DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %d\n", port));
   return ERR_OK;
@@ -430,6 +432,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   struct udp_pcb *ipcb;
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
+  pcb->flags |= UDP_FLAGS_CONNECTED;
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
@@ -442,6 +445,12 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   pcb->next = udp_pcbs;
   udp_pcbs = pcb;
   return ERR_OK;
+}
+
+void
+udp_disconnect(struct udp_pcb *pcb)
+{
+  	pcb->flags &= ~UDP_FLAGS_CONNECTED;
 }
 /*-----------------------------------------------------------------------------------*/
 void
@@ -474,6 +483,7 @@ struct udp_pcb *
 udp_new(void) {
   struct udp_pcb *pcb;
   pcb = memp_malloc(MEMP_UDP_PCB);
+  pcb->flags = 0;
   if(pcb != NULL) {
     memset(pcb, 0, sizeof(struct udp_pcb));
     return pcb;

@@ -71,7 +71,6 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     pbuf_free(p);
     return;
   }
-
   if(conn->recvmbox != SYS_MBOX_NULL) {
     buf = memp_mallocp(MEMP_NETBUF);
     if(buf == NULL) {
@@ -370,6 +369,26 @@ do_connect(struct api_msg_msg *msg)
     break;
   }
 }
+
+static void
+do_disconnect(struct api_msg_msg *msg)
+{
+
+  switch(msg->conn->type) {
+#if LWIP_UDP
+  case NETCONN_UDPLITE:
+    /* FALLTHROUGH */
+  case NETCONN_UDPNOCHKSUM:
+    /* FALLTHROUGH */
+  case NETCONN_UDP:
+    udp_disconnect(msg->conn->pcb.udp);
+    break;
+#endif 
+  case NETCONN_TCP:
+    break;
+  }
+}
+
 /*-----------------------------------------------------------------------------------*/
 static void
 do_listen(struct api_msg_msg *msg)
@@ -524,6 +543,7 @@ static api_msg_decode decode[API_MSG_MAX] = {
   do_delconn,
   do_bind,
   do_connect,
+  do_disconnect,
   do_listen,
   do_accept,
   do_send,

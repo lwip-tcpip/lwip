@@ -49,6 +49,7 @@ enum api_msg_type {
   
   API_MSG_BIND,
   API_MSG_CONNECT,
+  API_MSG_DISCONNECT,
 
   API_MSG_LISTEN,
   API_MSG_ACCEPT,

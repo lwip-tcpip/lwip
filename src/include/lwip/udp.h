@@ -51,6 +51,7 @@ struct udp_hdr {
 
 #define UDP_FLAGS_NOCHKSUM 0x01
 #define UDP_FLAGS_UDPLITE  0x02
+#define UDP_FLAGS_CONNECTED  0x04
 
 struct udp_pcb {
   struct udp_pcb *next;
@@ -74,6 +75,7 @@ err_t            udp_bind       (struct udp_pcb *pcb, struct ip_addr *ipaddr,
 				 u16_t port);
 err_t            udp_connect    (struct udp_pcb *pcb, struct ip_addr *ipaddr,
 				 u16_t port);
+void            udp_disconnect    (struct udp_pcb *pcb);
 void             udp_recv       (struct udp_pcb *pcb,
 				 void (* recv)(void *arg, struct udp_pcb *upcb,
 					       struct pbuf *p,

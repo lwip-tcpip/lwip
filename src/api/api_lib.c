@@ -286,6 +286,8 @@ netconn_peer(struct netconn *conn, struct ip_addr **addr,
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
+    if ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0)
+     return -1;
     *addr = &(conn->pcb.udp->remote_ip);
     *port = conn->pcb.udp->remote_port;
     break;
@@ -345,6 +347,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr,
   memp_freep(MEMP_API_MSG, msg);
   return conn->err;
 }
+
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_connect(struct netconn *conn, struct ip_addr *addr,
@@ -374,6 +377,26 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr,
   sys_mbox_fetch(conn->mbox, NULL);
   memp_freep(MEMP_API_MSG, msg);
   return conn->err;
+}
+
+err_t
+netconn_disconnect(struct netconn *conn)
+{
+  struct api_msg *msg;
+  
+  if(conn == NULL) {
+    return ERR_VAL;
+  }
+
+  if((msg = memp_mallocp(MEMP_API_MSG)) == NULL) {
+    return ERR_MEM;
+  }
+  msg->type = API_MSG_DISCONNECT;
+  msg->msg.conn = conn;  
+  api_msg_post(msg);
+  memp_freep(MEMP_API_MSG, msg);
+  return conn->err;
+
 }
 /*-----------------------------------------------------------------------------------*/
 err_t

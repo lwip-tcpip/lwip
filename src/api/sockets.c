@@ -172,11 +172,14 @@ lwip_connect(int s, struct sockaddr *name, int namelen)
   if(sock == NULL) {
     return -1;
   }
-  
-  remote_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
-  remote_port = ((struct sockaddr_in *)name)->sin_port;
-  
-  err = netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
+ 
+  if (((struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
+    err = netconn_disconnect(sock->conn);
+  } else {  
+    remote_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
+    remote_port = ((struct sockaddr_in *)name)->sin_port;
+    err = netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
+  }  
 
   if(err != ERR_OK) {
     /* errno = ... */
@@ -343,7 +346,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   struct lwip_socket *sock;
   struct ip_addr remote_addr, *addr;
   u16_t remote_port, port;
-  int ret;
+  int ret,connected;
 
   sock = get_socket(s);
   if(sock == NULL) {
@@ -351,7 +354,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   }
   
   /* get the peer if currently connected */
-  netconn_peer(sock->conn, &addr, &port);
+  connected = (netconn_peer(sock->conn, &addr, &port) == ERR_OK);
   
   remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
   remote_port = ((struct sockaddr_in *)to)->sin_port;
@@ -361,7 +364,10 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
 
   /* reset the remote address and port number
      of the connection */
-  netconn_connect(sock->conn, addr, port);
+  if (connected)
+    netconn_connect(sock->conn, addr, port);
+  else
+    netconn_disconnect(sock->conn);	  
   return ret;
 }
 /*-----------------------------------------------------------------------------------*/
