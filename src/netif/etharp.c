@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.5  2002/11/08 22:14:24  likewise
+ * Fixed numerous bugs. Re-used etharp_query()  in etharp_output(). Added comments and JavaDoc documentation.
+ *
  * Revision 1.4  2002/11/08 12:54:43  proff_fs
  * Added includeds for bpstruct and epstruct.
  * Ports should update from using PACK_STRUCT_BEGIN and PACK_STRUCT_END to use these includes.
@@ -55,22 +58,28 @@
 #include "lwip/ip.h"
 #include "lwip/stats.h"
 
-#if LWIP_DHCP
+/* ARP needs to inform DHCP of any ARP replies? */
+#if (LWIP_DHCP && DHPC_DOES_ARP_CHECK)
 #  include "lwip/dhcp.h"
 #endif
 
-
+/** the time an ARP entry stays valid after its last update */
 #define ARP_MAXAGE 120  /* 120 * 10 seconds = 20 minutes. */
+/** the maximum time waiting for ARP reply to a ARP request */
 #define ARP_MAXPENDING 2 /* 2 * 10 seconds = 20 seconds. */
 
 #define HWTYPE_ETHERNET 1
 
+/** ARP message types */
 #define ARP_REQUEST 1
 #define ARP_REPLY 2
 
 /* MUST be compiled with "pack structs" or equivalent! */
-#include "arch/bpstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
+/** the ARP message */
 struct etharp_hdr {
   PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
   PACK_STRUCT_FIELD(u16_t hwtype);
@@ -83,23 +92,29 @@ struct etharp_hdr {
   PACK_STRUCT_FIELD(struct ip_addr dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#include "arch/epstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 #define ARPH_HWLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) >> 8)
 #define ARPH_PROTOLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) & 0xff)
 
-
 #define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS(ARPH_PROTOLEN(hdr) | ((len) << 8))
 #define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS((len) | (ARPH_HWLEN(hdr) << 8))
 
-#include "arch/bpstruct.h"
+/* MUST be compiled with "pack structs" or equivalent! */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 struct ethip_hdr {
   PACK_STRUCT_FIELD(struct eth_hdr eth);
   PACK_STRUCT_FIELD(struct ip_hdr ip);
 };
 PACK_STRUCT_END
-#include "arch/epstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 enum etharp_state {
   ETHARP_STATE_EMPTY,
@@ -112,8 +127,6 @@ struct etharp_entry {
   struct eth_addr ethaddr;
   enum etharp_state state;
   struct pbuf *p;
-  void *payload;
-  u16_t len, tot_len;
   u8_t ctime;
 };
 
