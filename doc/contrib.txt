@@ -8,29 +8,36 @@ features of Savannah help us not lose users' input.
 
 Source code style:
 
-- indentation is two spaces per level, no tabs.
+- do not use tabs.
+- indentation is two spaces per level.
 - end debug messages with a trailing newline (\n).
-- no space between function and opening bracket.
 - one space between keyword and opening bracket.
-- one space and no newline before opening curly braces.
+- no space between function and opening bracket.
+- one space and no newline before opening curly braces of a block.
 - spaces surrounding assignment and comparisons.
 - use current source code style as further reference.
 
-Source code self documentation style:
+Source code documentation style:
 
 - JavaDoc compliant and Doxygen compatible.
 - Function documentation above functions in .c files, not .h files.
+  (This forces you to synchronize documentation and behaviour.)
 - Use current documentation style as further reference.
  
 Bug reports and patches:
 
-- Make sure you are reporting bugs or send patches against the latest sources.That usually means code in CVS
-- If you think you found a bug make sure it's not already filed in the bugtracker at savannah
-- If you have a fix put the patch on Savannah. If it's a patch that affects both core and arch specific
-stuff please separate them so that the core can be applied separately while leaving the other patch 'open'
-The prefered way is to NOT touch archs you can't test and let maintainers take care of them. This is a good
-way to see if they are used at all - the same goes for unix netifs except tapif.
-- Do not file a bug and post a fix to it to the patch area. Either a bug report or a patch will be enough.
+- Make sure you are reporting bugs or send patches against the latest
+  sources. (From the latest release and/or the current CVS sources.)
+- If you think you found a bug make sure it's not already filed in the
+  bugtracker at Savannah.
+- If you have a fix put the patch on Savannah. If it is a patch that affects
+  both core and arch specific stuff please separate them so that the core can
+  be applied separately while leaving the other patch 'open'. The prefered way
+  is to NOT touch archs you can't test and let maintainers take care of them.
+  This is a good way to see if they are used at all - the same goes for unix
+  netifs except tapif.
+- Do not file a bug and post a fix to it to the patch area. Either a bug report
+or a patch will be enough.
 If you correct an existing bug then attach the patch to the bug rather than creating a new entry in the patch area.
 - Trivial patches (compiler warning, indentation and spelling fixes or anything obvious which takes a line or two)
 can go to the lwip-users list. This is still the fastest way of interaction and the list is not so crowded

@@ -3,6 +3,8 @@ HISTORY
 (current)
 
   ++ Changes:
+  
+  * Now drops short packets for ICMP/UDP/TCP protocols. More robust.
 
   * ARP queueuing now queues the latest packet instead of the first.
     This is the recommended behaviour, but can be overridden in

@@ -79,11 +79,11 @@ err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 {
   DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%u, copy=%d)\n", (void *)pcb, arg, len, copy));
-  if(pcb->state == SYN_SENT ||
+  if (pcb->state == SYN_SENT ||
      pcb->state == SYN_RCVD ||
      pcb->state == ESTABLISHED ||
      pcb->state == CLOSE_WAIT) {
-    if(len > 0) {
+    if (len > 0) {
       return tcp_enqueue(pcb, (void *)arg, len, 0, copy, NULL, 0);
     }
     return ERR_OK;
@@ -109,7 +109,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   left = len;
   ptr = arg;
   /* fail on too much data */
-  if(len > pcb->snd_buf) {
+  if (len > pcb->snd_buf) {
     DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%d > snd_buf=%d)\n", len, pcb->snd_buf));
     return ERR_MEM;
   }
@@ -124,12 +124,12 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   /* Check if the queue length exceeds the configured maximum queue
   length. If so, we return an error. */
   queuelen = pcb->snd_queuelen;
-  if(queuelen >= TCP_SND_QUEUELEN) {
+  if (queuelen >= TCP_SND_QUEUELEN) {
     DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
     goto memerr;
   }   
 
-  if(pcb->snd_queuelen != 0) {
+  if (pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
     pcb->unsent != NULL);      
   }
@@ -139,7 +139,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   /* First, break up the data into segments and tuck them together in
   the local "queue" variable. */
-  while(queue == NULL || left > 0) {
+  while (queue == NULL || left > 0) {
 
     /* The segment length should be the MSS if the data to be enqueued
     is larger than the MSS. */
@@ -147,14 +147,14 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* Allocate memory for tcp_seg, and fill in fields. */
     seg = memp_malloc(MEMP_TCP_SEG);
-    if(seg == NULL) {
+    if (seg == NULL) {
       DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
       goto memerr;
     }
     seg->next = NULL;
     seg->p = NULL;
 
-    if(queue == NULL) {
+    if (queue == NULL) {
       queue = seg;
     }
     else {
@@ -168,19 +168,19 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     ROM or other static memory, and need not be copied. If
     optdata is != NULL, we have options instead of data. */
     if (optdata != NULL) {
-      if((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
+      if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
         goto memerr;
       }
       ++queuelen;
       seg->dataptr = seg->p->payload;
     }
     else if (copy) {
-      if((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
+      if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
         DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));	  
         goto memerr;
       }
       ++queuelen;
-      if(arg != NULL) {
+      if (arg != NULL) {
         memcpy(seg->p->payload, ptr, seglen);
       }
       seg->dataptr = seg->p->payload;
@@ -193,7 +193,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        * link (as it has to be ACKed by the remote party) we can safely use PBUF_ROM
        * instead of PBUF_REF here.
        */
-      if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
+      if ((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
         DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));	  	  
         goto memerr;
       }
@@ -202,7 +202,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       seg->dataptr = ptr;
 
       /* Second, allocate a pbuf for the headers. */
-      if((seg->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM)) == NULL) {
+      if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM)) == NULL) {
         /* If allocation fails, we have to deallocate the data pbuf as
            well. */
         pbuf_free(p);
@@ -218,18 +218,18 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum. */
-    if(queuelen > TCP_SND_QUEUELEN) {
+    if (queuelen > TCP_SND_QUEUELEN) {
       DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN)); 	
       goto memerr;
     }
 
     seg->len = seglen;
-    /*    if((flags & TCP_SYN) || (flags & TCP_FIN)) { 
+    /*    if ((flags & TCP_SYN) || (flags & TCP_FIN)) { 
     ++seg->len;
     }*/
 
     /* Build TCP header. */
-    if(pbuf_header(seg->p, TCP_HLEN)) {
+    if (pbuf_header(seg->p, TCP_HLEN)) {
 
       DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
 
@@ -247,7 +247,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* don't fill in tcphdr->ackno and tcphdr->wnd until later */
 
     /* Copy the options into the header, if they are present. */
-    if(optdata == NULL) {
+    if (optdata == NULL) {
       TCPH_OFFSET_SET(seg->tcphdr, 5 << 4);
     }
     else {
@@ -271,7 +271,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   /* Now that the data to be enqueued has been broken up into TCP
   segments in the queue variable, we add them to the end of the
   pcb->unsent queue. */
-  if(pcb->unsent == NULL) {
+  if (pcb->unsent == NULL) {
     useg = NULL;
   }
   else {
@@ -280,7 +280,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   /* If there is room in the last pbuf on the unsent queue,
   chain the first pbuf on the queue together with that. */
-  if(useg != NULL &&
+  if (useg != NULL &&
     TCP_TCPLEN(useg) != 0 &&
     !(TCPH_FLAGS(useg->tcphdr) & (TCP_SYN | TCP_FIN)) &&
     !(flags & (TCP_SYN | TCP_FIN)) &&
@@ -296,13 +296,13 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg->next = queue->next;
 
     DEBUGF(TCP_OUTPUT_DEBUG | DBG_TRACE | DBG_STATE, ("tcp_enqueue: chaining, new len %u\n", useg->len));
-    if(seg == queue) {
+    if (seg == queue) {
       seg = NULL;
     }
     memp_free(MEMP_TCP_SEG, queue);
   }
   else {      
-    if(useg == NULL) {
+    if (useg == NULL) {
       pcb->unsent = queue;
 
     }
@@ -310,14 +310,14 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       useg->next = queue;
     }
   }
-  if((flags & TCP_SYN) || (flags & TCP_FIN)) {
+  if ((flags & TCP_SYN) || (flags & TCP_FIN)) {
     ++len;
   }
   pcb->snd_lbb += len;
   pcb->snd_buf -= len;
   pcb->snd_queuelen = queuelen;
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (after enqueued)\n", pcb->snd_queuelen));
-  if(pcb->snd_queuelen != 0) {
+  if (pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
@@ -325,7 +325,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   /* Set the PSH flag in the last segment that we enqueued, but only
   if the segment has data (indicated by seglen > 0). */
-  if(seg != NULL && seglen > 0 && seg->tcphdr != NULL) {
+  if (seg != NULL && seglen > 0 && seg->tcphdr != NULL) {
     TCPH_FLAGS_SET(seg->tcphdr, TCPH_FLAGS(seg->tcphdr) | TCP_PSH);
   }
 
@@ -335,10 +335,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   ++lwip_stats.tcp.memerr;
 #endif /* TCP_STATS */
 
-  if(queue != NULL) {
+  if (queue != NULL) {
     tcp_segs_free(queue);
   }
-  if(pcb->snd_queuelen != 0) {
+  if (pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
@@ -363,7 +363,7 @@ tcp_output(struct tcp_pcb *pcb)
      code. If so, we do not output anything. Instead, we rely on the
      input processing code to call us when input processing is done
      with. */
-  if(tcp_input_pcb == pcb) {
+  if (tcp_input_pcb == pcb) {
     return ERR_OK;
   }
   
@@ -378,12 +378,12 @@ tcp_output(struct tcp_pcb *pcb)
      sent (either because the ->unsent queue is empty or because the
      window doesn't allow it) we'll have to construct an empty ACK
      segment and send it. */
-  if(pcb->flags & TF_ACK_NOW &&
+  if (pcb->flags & TF_ACK_NOW &&
      (seg == NULL ||
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
     pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
-    if(p == NULL) {
+    if (p == NULL) {
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
       return ERR_BUF;
     }
@@ -411,12 +411,12 @@ tcp_output(struct tcp_pcb *pcb)
   } 
   
 #if TCP_OUTPUT_DEBUG
-  if(seg == NULL) {
+  if (seg == NULL) {
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n", pcb->unsent));
   }
 #endif /* TCP_OUTPUT_DEBUG */
 #if TCP_CWND_DEBUG
-  if(seg == NULL) {
+  if (seg == NULL) {
     DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %lu, cwnd %lu, wnd %lu, seg == NULL, ack %lu\n",
                             pcb->snd_wnd, pcb->cwnd, wnd,
                             pcb->lastack));
@@ -428,7 +428,7 @@ tcp_output(struct tcp_pcb *pcb)
   }
 #endif /* TCP_CWND_DEBUG */
   
-  while(seg != NULL &&
+  while (seg != NULL &&
 	ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
 #if TCP_CWND_DEBUG
     DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %lu, cwnd %lu, wnd %lu, effwnd %lu, seq %lu, ack %lu, i%d\n",
@@ -441,20 +441,20 @@ tcp_output(struct tcp_pcb *pcb)
 
     pcb->unsent = seg->next;
     
-    if(pcb->state != SYN_SENT) {
+    if (pcb->state != SYN_SENT) {
       TCPH_FLAGS_SET(seg->tcphdr, TCPH_FLAGS(seg->tcphdr) | TCP_ACK);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
     
     tcp_output_segment(seg, pcb);
     pcb->snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
-    if(TCP_SEQ_LT(pcb->snd_max, pcb->snd_nxt)) {
+    if (TCP_SEQ_LT(pcb->snd_max, pcb->snd_nxt)) {
       pcb->snd_max = pcb->snd_nxt;
     }
     /* put segment on unacknowledged list if length > 0 */
-    if(TCP_TCPLEN(seg) > 0) {
+    if (TCP_TCPLEN(seg) > 0) {
       seg->next = NULL;
-      if(pcb->unacked == NULL) {
+      if (pcb->unacked == NULL) {
         pcb->unacked = seg;
 	
 	
@@ -481,7 +481,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   seg->tcphdr->ackno = htonl(pcb->rcv_nxt);
 
   /* silly window avoidance */
-  if(pcb->rcv_wnd < pcb->mss) {
+  if (pcb->rcv_wnd < pcb->mss) {
     seg->tcphdr->wnd = 0;
   } else {
     /* advertise our receive window size in this TCP segment */
@@ -490,9 +490,9 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
-  if(ip_addr_isany(&(pcb->local_ip))) {
+  if (ip_addr_isany(&(pcb->local_ip))) {
     netif = ip_route(&(pcb->remote_ip));
-    if(netif == NULL) {
+    if (netif == NULL) {
       return;
     }
     ip_addr_set(&(pcb->local_ip), &(netif->ip_addr));
@@ -500,7 +500,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   pcb->rtime = 0;
   
-  if(pcb->rttest == 0) {
+  if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;
     pcb->rtseq = ntohl(seg->tcphdr->seqno);
 
@@ -538,7 +538,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
-  if(p == NULL) {
+  if (p == NULL) {
       DEBUGF(TCP_DEBUG, ("tcp_rst: could not allocate memory for pbuf\n"));
       return;
   }
@@ -570,7 +570,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg;
 
-  if(pcb->unacked == NULL) {
+  if (pcb->unacked == NULL) {
     return;
   }
   

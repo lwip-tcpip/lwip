@@ -87,8 +87,8 @@ plug_holes(struct mem *mem)
   LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE", mem->next <= MEM_SIZE);
   
   nmem = (struct mem *)&ram[mem->next];
-  if(mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
-    if(lfree == nmem) {
+  if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
+    if (lfree == nmem) {
       lfree = mem;
     }
     mem->next = nmem->next;
@@ -97,8 +97,8 @@ plug_holes(struct mem *mem)
 
   /* plug hole backward */
   pmem = (struct mem *)&ram[mem->prev];
-  if(pmem != mem && pmem->used == 0) {
-    if(lfree == mem) {
+  if (pmem != mem && pmem->used == 0) {
+    if (lfree == mem) {
       lfree = pmem;
     }
     pmem->next = mem->next;
@@ -224,7 +224,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
     mem2->next = mem->next;
     mem2->prev = ptr;
     mem->next = ptr2;
-    if(mem2->next != MEM_SIZE) {
+    if (mem2->next != MEM_SIZE) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
 
@@ -257,7 +257,7 @@ mem_malloc(mem_size_t size)
 
   for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE; ptr = ((struct mem *)&ram[ptr])->next) {
     mem = (struct mem *)&ram[ptr];
-    if(!mem->used &&
+    if (!mem->used &&
        mem->next - (ptr + SIZEOF_STRUCT_MEM) >= size + SIZEOF_STRUCT_MEM) {
       ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
       mem2 = (struct mem *)&ram[ptr2];
@@ -273,7 +273,7 @@ mem_malloc(mem_size_t size)
       mem->used = 1;
 #ifdef MEM_STATS
       lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
-      /*      if(lwip_stats.mem.max < lwip_stats.mem.used) {
+      /*      if (lwip_stats.mem.max < lwip_stats.mem.used) {
         lwip_stats.mem.max = lwip_stats.mem.used;
 	} */
       if (lwip_stats.mem.max < ptr2) {
@@ -283,7 +283,7 @@ mem_malloc(mem_size_t size)
 
       if (mem == lfree) {
 	/* Find next free block after mem */
-        while(lfree->used && lfree != ram_end) {
+        while (lfree->used && lfree != ram_end) {
 	  lfree = (struct mem *)&ram[lfree->next];
         }
         LWIP_ASSERT("mem_malloc: !lfree->used", !lfree->used);

@@ -53,7 +53,7 @@ loopif_output(struct netif *netif, struct pbuf *p,
 #endif /* LWIP_DEBUG && LWIP_TCPDUMP */
   
   r = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if(r != NULL) {
+  if (r != NULL) {
     ptr = r->payload;
     
     for(q = p; q != NULL; q = q->next) {

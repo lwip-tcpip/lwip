@@ -57,7 +57,7 @@ tcpip_tcp_timer(void *arg)
   (void)arg;
 
   tcp_tmr();
-  if(tcp_active_pcbs || tcp_tw_pcbs) {
+  if (tcp_active_pcbs || tcp_tw_pcbs) {
   	sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   } else {
 	tcpip_tcp_timer_active = 0;
@@ -67,7 +67,7 @@ tcpip_tcp_timer(void *arg)
 void
 tcp_timer_needed(void)
 {
-  if(!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
+  if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
 	tcpip_tcp_timer_active = 1;
   	sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
@@ -88,13 +88,13 @@ tcpip_thread(void *arg)
 #if LWIP_TCP
   tcp_init();
 #endif
-  if(tcpip_init_done != NULL) {
+  if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
 
-  while(1) {                          /* MAIN Loop */
+  while (1) {                          /* MAIN Loop */
     sys_mbox_fetch(mbox, (void *)&msg);
-    switch(msg->type) {
+    switch (msg->type) {
     case TCPIP_MSG_API:
       DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       api_msg_input(msg->msg.apimsg);
@@ -120,7 +120,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   struct tcpip_msg *msg;
   
   msg = memp_mallocp(MEMP_TCPIP_MSG);
-  if(msg == NULL) {
+  if (msg == NULL) {
     pbuf_free(p);    
     return ERR_MEM;  
   }
@@ -138,7 +138,7 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
   struct tcpip_msg *msg;
   
   msg = memp_mallocp(MEMP_TCPIP_MSG);
-  if(msg == NULL) {
+  if (msg == NULL) {
     return ERR_MEM;  
   }
   
@@ -154,7 +154,7 @@ tcpip_apimsg(struct api_msg *apimsg)
 {
   struct tcpip_msg *msg;
   msg = memp_mallocp(MEMP_TCPIP_MSG);
-  if(msg == NULL) {
+  if (msg == NULL) {
     memp_free(MEMP_API_MSG, apimsg);
     return;
   }

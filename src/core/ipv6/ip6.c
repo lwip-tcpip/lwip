@@ -77,7 +77,7 @@ ip_route(struct ip_addr *dest)
   struct netif *netif;
   
   for(netif = netif_list; netif != NULL; netif = netif->next) {
-    if(ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+    if (ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
       return netif;
     }
   }
@@ -99,7 +99,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
   
   PERF_START;
   
-  if((netif = ip_route((struct ip_addr *)&(iphdr->dest))) == NULL) {
+  if ((netif = ip_route((struct ip_addr *)&(iphdr->dest))) == NULL) {
 
     DEBUGF(IP_DEBUG, ("ip_input: no forwarding route found for "));
 #if IP_DEBUG
@@ -110,9 +110,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
     return;
   }
   /* Decrement TTL and send ICMP if ttl == 0. */
-  if(--iphdr->hoplim == 0) {
+  if (--iphdr->hoplim == 0) {
     /* Don't send ICMP messages in response to ICMP messages */
-    if(iphdr->nexthdr != IP_PROTO_ICMP) {
+    if (iphdr->nexthdr != IP_PROTO_ICMP) {
       icmp_time_exceeded(p, ICMP_TE_TTL);
     }
     pbuf_free(p);
@@ -174,7 +174,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   iphdr = p->payload;
 
   
-  if(iphdr->v != 6) {
+  if (iphdr->v != 6) {
     DEBUGF(IP_DEBUG, ("IP packet dropped due to bad version number\n"));
 #if IP_DEBUG
     ip_debug_print(p);
@@ -196,13 +196,13 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ip_addr_debug_print(&(netif->ip_addr));
     DEBUGF(IP_DEBUG, ("\n"));
 #endif /* IP_DEBUG */
-    if(ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr))) {
+    if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr))) {
       break;
     }
   }
 
   
-  if(netif == NULL) {
+  if (netif == NULL) {
     /* packet not for us, route or discard */
 #ifdef IP_FORWARD
     ip_forward(p, iphdr);
@@ -223,7 +223,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   pbuf_header(p, -IP_HLEN);
 
-  switch(iphdr->nexthdr) {
+  switch (iphdr->nexthdr) {
   case IP_PROTO_UDP:
     udp_input(p);
     break;
@@ -258,7 +258,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
  */
 /*-----------------------------------------------------------------------------------*/
 err_t
-ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 	     u8_t ttl,
 	     u8_t proto, struct netif *netif)
 {
@@ -267,7 +267,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   PERF_START;
 
   printf("len %u tot_len %u\n", p->len, p->tot_len);
-  if(pbuf_header(p, IP_HLEN)) {
+  if (pbuf_header(p, IP_HLEN)) {
     DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
 #ifdef IP_STATS
     ++lwip_stats.ip.err;
@@ -280,7 +280,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   iphdr = p->payload;
   
 
-  if(dest != IP_HDRINCL) {
+  if (dest != IP_HDRINCL) {
     printf("!IP_HDRLINCL\n");
     iphdr->hoplim = ttl;
     iphdr->nexthdr = proto;
@@ -289,7 +289,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     iphdr->v = 6;
 
-    if(ip_addr_isany(src)) {
+    if (ip_addr_isany(src)) {
       ip_addr_set(&(iphdr->src), &(netif->ip_addr));
     } else {
       ip_addr_set(&(iphdr->src), src);
@@ -323,7 +323,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 	  u8_t ttl, u8_t proto)
 {
   struct netif *netif;
-  if((netif = ip_route(dest)) == NULL) {
+  if ((netif = ip_route(dest)) == NULL) {
     DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%lx\n", dest->addr));
 #ifdef IP_STATS
     ++lwip_stats.ip.rterr;
@@ -331,7 +331,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     return ERR_RTE;
   }
 
-  return ip_output_if(p, src, dest, ttl, proto, netif);
+  return ip_output_if (p, src, dest, ttl, proto, netif);
 }
 /*-----------------------------------------------------------------------------------*/
 #if IP_DEBUG

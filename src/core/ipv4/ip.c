@@ -87,25 +87,25 @@ ip_lookup(void *header, struct netif *inp)
   iphdr = header;
 
   /* not IP v4? */
-  if(IPH_V(iphdr) != 4) {
+  if (IPH_V(iphdr) != 4) {
     return 0;
   }
 
   /* Immediately accept/decline packets that are fragments or has
      options. */
 #if IP_REASSEMBLY == 0
-  /*  if((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+  /*  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
     return 0;
     }*/
 #endif /* IP_REASSEMBLY == 0 */
 
 #if IP_OPTIONS == 0
-  if(IPH_HL(iphdr) != 5) {
+  if (IPH_HL(iphdr) != 5) {
     return 0;
   }
 #endif /* IP_OPTIONS == 0 */
   
-  switch(IPH_PROTO(iphdr)) {
+  switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
     return udp_lookup(iphdr, inp);
@@ -138,7 +138,7 @@ ip_route(struct ip_addr *dest)
   /* iterate through netifs */  
   for(netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
-    if(ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+    if (ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
       /* return netif on which to forward IP packet */
       return netif;
     }
@@ -163,7 +163,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   PERF_START;
   /* Find network interface where to forward this IP packet to. */
   netif = ip_route((struct ip_addr *)&(iphdr->dest));
-  if(netif == NULL) {
+  if (netif == NULL) {
     DEBUGF(IP_DEBUG, ("ip_forward: no forwarding route for 0x%lx found\n",
                       iphdr->dest.addr));
     snmp_inc_ipnoroutes();
@@ -171,7 +171,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   }
   /* Do not forward packets onto the same network interface on which
      they arrived. */
-  if(netif == inp) {
+  if (netif == inp) {
     DEBUGF(IP_DEBUG, ("ip_forward: not bouncing packets back on incoming interface.\n"));
     snmp_inc_ipnoroutes();
     return;
@@ -180,9 +180,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   /* decrement TTL */
   IPH_TTL_SET(iphdr, IPH_TTL(iphdr) - 1);
   /* send ICMP if TTL == 0 */
-  if(IPH_TTL(iphdr) == 0) {
+  if (IPH_TTL(iphdr) == 0) {
     /* Don't send ICMP messages in response to ICMP messages */
-    if(IPH_PROTO(iphdr) != IP_PROTO_ICMP) {
+    if (IPH_PROTO(iphdr) != IP_PROTO_ICMP) {
       icmp_time_exceeded(p, ICMP_TE_TTL);
       snmp_inc_icmpouttimeexcds();
     }
@@ -190,7 +190,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   }
   
   /* Incrementally update the IP checksum. */
-  if(IPH_CHKSUM(iphdr) >= htons(0xffff - 0x100)) {
+  if (IPH_CHKSUM(iphdr) >= htons(0xffff - 0x100)) {
     IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100) + 1);
   } else {
     IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100));
@@ -235,7 +235,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   /* identify the IP header */
   iphdr = p->payload;
-  if(IPH_V(iphdr) != 4) {
+  if (IPH_V(iphdr) != 4) {
     DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %d\n", IPH_V(iphdr)));
 #if IP_DEBUG
     ip_debug_print(p);
@@ -254,7 +254,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   iphdrlen *= 4;
 
   /* header length exceeds first pbuf length? */  
-  if(iphdrlen > p->len) {
+  if (iphdrlen > p->len) {
     DEBUGF(IP_DEBUG | 2, ("IP header (len %u) does not fit in first pbuf (len %u), IP packet droppped.\n",
       iphdrlen, p->len));
     /* free (drop) packet pbufs */
@@ -268,7 +268,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 
   /* verify checksum */
-  if(inet_chksum(iphdr, iphdrlen) != 0) {
+  if (inet_chksum(iphdr, iphdrlen) != 0) {
 
     DEBUGF(IP_DEBUG | 2, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
 #if IP_DEBUG
@@ -297,10 +297,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
                       iphdr->dest.addr & ~(netif->netmask.addr)));
 
     /* interface configured? */
-    if(!ip_addr_isany(&(netif->ip_addr)))
+    if (!ip_addr_isany(&(netif->ip_addr)))
     {
       /* unicast to this interface address? */
-      if(ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
+      if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
         /* or broadcast matching this interface network address? */
         (ip_addr_isbroadcast(&(iphdr->dest), &(netif->netmask)) &&
          ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
@@ -317,9 +317,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
      using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
      According to RFC 1542 section 3.1.1, referred by RFC 2131). */
-  if(netif == NULL) {
+  if (netif == NULL) {
     /* remote port is DHCP server? */
-    if(IPH_PROTO(iphdr) == IP_PROTO_UDP) {
+    if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %u\n",
         ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
@@ -330,12 +330,12 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 #endif /* LWIP_DHCP */
         /* packet not for us? */  
-  if(netif == NULL) {
+  if (netif == NULL) {
     /* packet not for us, route or discard */
     DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
 #if IP_FORWARD
     /* non-broadcast packet? */
-    if(!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) {
+    if (!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask))) {
       /* try to forward IP packet on (other) interfaces */
       ip_forward(p, iphdr, inp);
     }
@@ -349,16 +349,16 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 
 #if IP_REASSEMBLY
-  if((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
     DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04x tot_len=%u len=%u MF=%u offset=%u), calling ip_reass()\n", ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & htons(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
     p = ip_reass(p);
-    if(p == NULL) {
+    if (p == NULL) {
       return ERR_OK;
     }
     iphdr = p->payload;
   }
 #else /* IP_REASSEMBLY */
-  if((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
     pbuf_free(p);
     DEBUGF(IP_DEBUG | 2, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
                   ntohs(IPH_OFFSET(iphdr))));
@@ -391,7 +391,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
 #endif /* IP_DEBUG */   
 
-  switch(IPH_PROTO(iphdr)) {
+  switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0    
   case IP_PROTO_UDP:
     snmp_inc_ipindelivers();
@@ -410,7 +410,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     break;
   default:
     /* send ICMP destination protocol unreachable unless is was a broadcast */
-    if(!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask)) &&
+    if (!ip_addr_isbroadcast(&(iphdr->dest), &(inp->netmask)) &&
        !ip_addr_ismulticast(&(iphdr->dest))) {
       p->payload = iphdr;
       icmp_dest_unreach(p, ICMP_DUR_PROTO);
@@ -439,7 +439,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
  */
 /*-----------------------------------------------------------------------------------*/
 err_t
-ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
              u8_t ttl,
              u8_t proto, struct netif *netif)
 {
@@ -448,8 +448,8 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   snmp_inc_ipoutrequests();
   
-  if(dest != IP_HDRINCL) {
-    if(pbuf_header(p, IP_HLEN)) {
+  if (dest != IP_HDRINCL) {
+    if (pbuf_header(p, IP_HLEN)) {
       DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
       
 #ifdef IP_STATS
@@ -472,7 +472,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     IPH_ID_SET(iphdr, htons(ip_id));
     ++ip_id;
 
-    if(ip_addr_isany(src)) {
+    if (ip_addr_isany(src)) {
       ip_addr_set(&(iphdr->src), &(netif->ip_addr));
     } else {
       ip_addr_set(&(iphdr->src), src);
@@ -516,7 +516,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 {
   struct netif *netif;
   
-  if((netif = ip_route(dest)) == NULL) {
+  if ((netif = ip_route(dest)) == NULL) {
     DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%lx\n", dest->addr));
 
 #ifdef IP_STATS
@@ -526,7 +526,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     return ERR_RTE;
   }
 
-  return ip_output_if(p, src, dest, ttl, proto, netif);
+  return ip_output_if (p, src, dest, ttl, proto, netif);
 }
 /*-----------------------------------------------------------------------------------*/
 #if IP_DEBUG

@@ -58,16 +58,16 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
  again:
   timeouts = sys_arch_timeouts();
     
-  if(!timeouts || !timeouts->next) {
+  if (!timeouts || !timeouts->next) {
     sys_arch_mbox_fetch(mbox, msg, 0);
   } else {
-    if(timeouts->next->time > 0) {
+    if (timeouts->next->time > 0) {
       time = sys_arch_mbox_fetch(mbox, msg, timeouts->next->time);
     } else {
       time = 0xffffffff;
     }
 
-    if(time == 0xffffffff) {
+    if (time == 0xffffffff) {
       /* If time == 0xffffffff, a timeout occured before a message could be
 	 fetched. We should now call the timeout handler and
 	 deallocate the memory allocated for the timeout. */
@@ -76,7 +76,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       h = tmptimeout->h;
       arg = tmptimeout->arg;
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
-      if(h != NULL) {
+      if (h != NULL) {
         DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
       	h(arg);
       }
@@ -87,7 +87,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       /* If time != 0xffffffff, a message was received before the timeout
 	 occured. The time variable is set to the number of
 	 milliseconds we waited for the message. */
-      if(time <= timeouts->next->time) {
+      if (time <= timeouts->next->time) {
 	timeouts->next->time -= time;
       } else {
 	timeouts->next->time = 0;
@@ -106,23 +106,23 @@ sys_sem_wait(sys_sem_t sem)
   sys_timeout_handler h;
   void *arg;
   
-  /*  while(sys_arch_sem_wait(sem, 1000) == 0);
+  /*  while (sys_arch_sem_wait(sem, 1000) == 0);
       return;*/
 
  again:
   
   timeouts = sys_arch_timeouts();
   
-  if(!timeouts || !timeouts->next) {
+  if (!timeouts || !timeouts->next) {
     sys_arch_sem_wait(sem, 0);
   } else {
-    if(timeouts->next->time > 0) {
+    if (timeouts->next->time > 0) {
       time = sys_arch_sem_wait(sem, timeouts->next->time);
     } else {
       time = 0xffffffff;
     }
 
-    if(time == 0xffffffff) {
+    if (time == 0xffffffff) {
       /* If time == 0xffffffff, a timeout occured before a message could be
 	 fetched. We should now call the timeout handler and
 	 deallocate the memory allocated for the timeout. */
@@ -131,7 +131,7 @@ sys_sem_wait(sys_sem_t sem)
       h = tmptimeout->h;
       arg = tmptimeout->arg;
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
-      if(h != NULL) {
+      if (h != NULL) {
 	DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
       	h(arg);
       }
@@ -143,7 +143,7 @@ sys_sem_wait(sys_sem_t sem)
       /* If time != 0xffffffff, a message was received before the timeout
 	 occured. The time variable is set to the number of
 	 milliseconds we waited for the message. */
-      if(time <= timeouts->next->time) {
+      if (time <= timeouts->next->time) {
 	timeouts->next->time -= time;
       } else {
 	timeouts->next->time = 0;
@@ -160,7 +160,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   struct sys_timeout *timeout, *t;
 
   timeout = memp_malloc(MEMP_SYS_TIMEOUT);
-  if(timeout == NULL) {
+  if (timeout == NULL) {
     return;
   }
   timeout->next = NULL;
@@ -173,21 +173,21 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
-  if(timeouts->next == NULL) {
+  if (timeouts->next == NULL) {
     timeouts->next = timeout;
     return;
   }  
   
-  if(timeouts->next->time > msecs) {
+  if (timeouts->next->time > msecs) {
     timeouts->next->time -= msecs;
     timeout->next = timeouts->next;
     timeouts->next = timeout;
   } else {
     for(t = timeouts->next; t != NULL; t = t->next) {
       timeout->time -= t->time;
-      if(t->next == NULL ||
+      if (t->next == NULL ||
 	 t->next->time > timeout->time) {
-	if(t->next != NULL) {
+	if (t->next != NULL) {
 	  t->next->time -= timeout->time;
 	}
 	timeout->next = t->next;

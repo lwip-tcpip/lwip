@@ -69,7 +69,7 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
   for(q = p; q != NULL; q = q->next) {
     for(i = 0; i < q->len; i++) {
       c = ((u8_t *)q->payload)[i];
-      switch(c) {
+      switch (c) {
       case SLIP_END:
 	sio_send(SLIP_ESC, netif->state);
 	sio_send(SLIP_ESC_END, netif->state);
@@ -107,11 +107,11 @@ slipif_input( struct netif * netif )
   recved = i = 0;
   c = 0;
 
-  while(1) {
+  while (1) {
     c = sio_recv(netif->state);
-    switch(c) {
+    switch (c) {
     case SLIP_END:
-      if(recved > 0) {
+      if (recved > 0) {
 	/* Received whole packet. */
 	pbuf_realloc(q, recved);
 	
@@ -126,7 +126,7 @@ slipif_input( struct netif * netif )
 
     case SLIP_ESC:
       c = sio_recv(netif->state);
-      switch(c) {
+      switch (c) {
       case SLIP_ESC_END:
 	c = SLIP_END;
 	break;
@@ -137,28 +137,28 @@ slipif_input( struct netif * netif )
       /* FALLTHROUGH */
       
     default:
-      if(p == NULL) {
+      if (p == NULL) {
 	DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
 	p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
 #ifdef LINK_STATS           
-	if(p == NULL) {
+	if (p == NULL) {
 	  ++lwip_stats.link.drop;
 	  DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
 	}
 #endif /* LINK_STATS */                  
 	
-	if(q != NULL) {
+	if (q != NULL) {
 	  pbuf_chain(q, p);
 	} else {
 	  q = p;
 	}
       }
-      if(p != NULL && recved < MAX_SIZE) {
+      if (p != NULL && recved < MAX_SIZE) {
 	((u8_t *)p->payload)[i] = c;
 	recved++;
 	i++;
-	if(i >= p->len) {
+	if (i >= p->len) {
 	  i = 0;
 	  p = NULL;
 	}
@@ -181,7 +181,7 @@ slipif_loop(void *nf)
   struct pbuf *p;
   struct netif *netif = (struct netif *)nf;
 
-  while(1) {
+  while (1) {
     p = slipif_input(netif);
     netif->input(p, netif);
   }

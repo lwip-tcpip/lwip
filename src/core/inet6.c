@@ -67,7 +67,7 @@ chksum(void *dataptr, u16_t len)
   }
 
   /* add up any odd byte */
-  if(len == 1) {
+  if (len == 1) {
     acc += htons((u16_t)(*(u8_t *)dataptr) << 8);
   }
 
@@ -93,23 +93,23 @@ inet_chksum_pseudo(struct pbuf *p,
   swapped = 0;
   for(q = p; q != NULL; q = q->next) {    
     acc += chksum(q->payload, q->len);
-    while(acc >> 16) {
+    while (acc >> 16) {
       acc = (acc & 0xffff) + (acc >> 16);
     }
-    if(q->len % 2 != 0) {
+    if (q->len % 2 != 0) {
       swapped = 1 - swapped;
       acc = ((acc & 0xff) << 8) | ((acc & 0xff00) >> 8);
     }
   }
 
-  if(swapped) {
+  if (swapped) {
     acc = ((acc & 0xff) << 8) | ((acc & 0xff00) >> 8);
   }
   
   for(i = 0; i < 8; i++) {
     acc += ((u16_t *)src->addr)[i] & 0xffff;
     acc += ((u16_t *)dest->addr)[i] & 0xffff;
-    while(acc >> 16) {
+    while (acc >> 16) {
       acc = (acc & 0xffff) + (acc >> 16);
     }
   }
@@ -117,7 +117,7 @@ inet_chksum_pseudo(struct pbuf *p,
   acc += ((u16_t *)&proto_len)[0] & 0xffff;
   acc += ((u16_t *)&proto_len)[1] & 0xffff;
 
-  while(acc >> 16) {
+  while (acc >> 16) {
     acc = (acc & 0xffff) + (acc >> 16);
   }
   return ~(acc & 0xffff);
@@ -151,16 +151,16 @@ inet_chksum_pbuf(struct pbuf *p)
   swapped = 0;
   for(q = p; q != NULL; q = q->next) {
     acc += chksum(q->payload, q->len);
-    while(acc >> 16) {
+    while (acc >> 16) {
       acc = (acc & 0xffff) + (acc >> 16);
     }    
-    if(q->len % 2 != 0) {
+    if (q->len % 2 != 0) {
       swapped = 1 - swapped;
       acc = (acc & 0xff << 8) | (acc & 0xff00 >> 8);
     }
   }
  
-  if(swapped) {
+  if (swapped) {
     acc = ((acc & 0xff) << 8) | ((acc & 0xff00) >> 8);
   }
   return ~(acc & 0xffff);

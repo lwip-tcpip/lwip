@@ -61,7 +61,7 @@ lwip_chksum(void *dataptr, int len)
   }
 
   /* add up any odd byte */
-  if(len == 1) {
+  if (len == 1) {
     acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
     DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", *(u8_t *)dataptr));
   } else {
@@ -69,7 +69,7 @@ lwip_chksum(void *dataptr, int len)
   }
   acc = (acc >> 16) + (acc & 0xffffUL);
 
-  if((acc & 0xffff0000) != 0) {
+  if ((acc & 0xffff0000) != 0) {
     acc = (acc >> 16) + (acc & 0xffffUL);
   }
 
@@ -97,17 +97,17 @@ inet_chksum_pseudo(struct pbuf *p,
     DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n", (void *) q, (void *)q->next));
     acc += lwip_chksum(q->payload, q->len);
     /*DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%lx \n", acc));*/
-    while(acc >> 16) {
+    while (acc >> 16) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }
-    if(q->len % 2 != 0) {
+    if (q->len % 2 != 0) {
       swapped = 1 - swapped;
       acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
     }
     /*DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%lx \n", acc));*/
   }
 
-  if(swapped) {
+  if (swapped) {
     acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
   }
   acc += (src->addr & 0xffffUL);
@@ -117,7 +117,7 @@ inet_chksum_pseudo(struct pbuf *p,
   acc += (u32_t)htons((u16_t)proto);
   acc += (u32_t)htons(proto_len);  
   
-  while(acc >> 16) {
+  while (acc >> 16) {
     acc = (acc & 0xffffUL) + (acc >> 16);
   }    
   DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
@@ -136,7 +136,7 @@ inet_chksum(void *dataptr, u16_t len)
   u32_t acc;
 
   acc = lwip_chksum(dataptr, len);
-  while(acc >> 16) {
+  while (acc >> 16) {
     acc = (acc & 0xffff) + (acc >> 16);
   }    
   return ~(acc & 0xffff);
@@ -153,16 +153,16 @@ inet_chksum_pbuf(struct pbuf *p)
   swapped = 0;
   for(q = p; q != NULL; q = q->next) {
     acc += lwip_chksum(q->payload, q->len);
-    while(acc >> 16) {
+    while (acc >> 16) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }    
-    if(q->len % 2 != 0) {
+    if (q->len % 2 != 0) {
       swapped = 1 - swapped;
       acc = (acc & 0x00ffUL << 8) | (acc & 0xff00UL >> 8);
     }
   }
  
-  if(swapped) {
+  if (swapped) {
     acc = ((acc & 0x00ffUL) << 8) | ((acc & 0xff00UL) >> 8);
   }
   return ~(acc & 0xffffUL);

@@ -2,6 +2,10 @@
  * @file
  * Address Resolution Protocol module for IP over Ethernet
  *
+ * Functionally, ARP is divided into two parts. The first maps an IP address
+ * to a physical address when sending a packet, and the second part answers
+ * requests from other machines.
+ *
  */
 
 /*
@@ -147,10 +151,10 @@ etharp_tmr(void)
   
   DEBUGF(ETHARP_DEBUG, ("etharp_timer\n"));
   /* remove expired entries from the ARP table */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
-    arp_table[i].ctime++;	  
-    if((arp_table[i].state == ETHARP_STATE_STABLE) &&       
-       (arp_table[i].ctime >= ARP_MAXAGE)) {
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+    arp_table[i].ctime++;
+    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&       
+        (arp_table[i].ctime >= ARP_MAXAGE)) {
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %u.\n", i));
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
@@ -158,7 +162,7 @@ etharp_tmr(void)
       pbuf_free(arp_table[i].p);      
       arp_table[i].p = NULL;
 #endif
-    } else if((arp_table[i].state == ETHARP_STATE_PENDING) &&
+    } else if ((arp_table[i].state == ETHARP_STATE_PENDING) &&
 	      (arp_table[i].ctime >= ARP_MAXPENDING)) {
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
@@ -186,8 +190,8 @@ find_arp_entry(void)
   u8_t i, j, maxtime;
   
   /* Try to find an unused entry in the ARP table. */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
-    if(arp_table[i].state == ETHARP_STATE_EMPTY) {
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+    if (arp_table[i].state == ETHARP_STATE_EMPTY) {
       DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found empty entry %u\n", i));
       break;
     }
@@ -195,12 +199,12 @@ find_arp_entry(void)
   
   /* If no unused entry is found, we try to find the oldest entry and
      throw it away. If all entries are new and have 0 ctime drop one  */
-  if(i == ARP_TABLE_SIZE) {
+  if (i == ARP_TABLE_SIZE) {
     maxtime = 0;
     j = ARP_TABLE_SIZE;
-    for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+    for (i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* remember entry with oldest stable entry in j*/
-      if((arp_table[i].state == ETHARP_STATE_STABLE) &&
+      if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
 #if ARP_QUEUEING /* do not want to re-use an entry with queued packets */
       (arp_table[i].p == NULL) &&
 #endif
@@ -209,7 +213,11 @@ find_arp_entry(void)
 	      j = i;
       }
     }
-    DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
+    if (j != ARP_TABLE_SIZE) {
+      DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
+    } else {
+      DEBUGF(ETHARP_DEBUG, ("find_arp_entry: no replacable entry could be found\n", j));
+    }
     i = j;
   }
   DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning %u, state %u\n", i, arp_table[i].state));
@@ -234,11 +242,8 @@ static struct pbuf *
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   u8_t i, k;
-#if ARP_QUEUEING
-  struct pbuf *p;
-  struct eth_hdr *ethhdr;
-#endif
   DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("update_arp_entry()\n"));
+  LWIP_ASSERT("netif->hwaddr_len != 0", netif->hwaddr_len != 0);
   DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
   ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
   /* do not update for 0.0.0.0 addresses */
@@ -249,34 +254,39 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   /* Walk through the ARP mapping table and try to find an entry to
   update. If none is found, the IP -> MAC address mapping is
   inserted in the ARP table. */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     /* Check if the source IP address of the incoming packet matches
     the IP address in this ARP table entry. */
-    if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
+    if (ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       /* pending entry? */
-      if(arp_table[i].state == ETHARP_STATE_PENDING) {
+      if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: pending entry %u goes stable\n", i));
         /* A pending entry was found, mark it stable */
         arp_table[i].state = ETHARP_STATE_STABLE;
         /* fall-through to next if */
       }
       /* stable entry? (possible just marked to become stable) */
-      if(arp_table[i].state == ETHARP_STATE_STABLE) {
+      if (arp_table[i].state == ETHARP_STATE_STABLE) {
+#if ARP_QUEUEING
+        struct pbuf *p;
+        struct eth_hdr *ethhdr;
+#endif
         DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: updating stable entry %u\n", i));
         /* An old entry found, update this and return. */
-        for(k = 0; k < netif->hwaddr_len; ++k) {
+        for (k = 0; k < netif->hwaddr_len; ++k) {
           arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
         }
         /* reset time stamp */
         arp_table[i].ctime = 0;
 #if ARP_QUEUEING
+        p = arp_table[i].p;
         /* queued packet present? */
-        if((p = arp_table[i].p) != NULL) {
-          /* Null out attached buffer immediately */
+        if (p != NULL) {
+          /* NULL attached buffer immediately */
           arp_table[i].p = NULL;
           /* fill-in Ethernet header */
           ethhdr = p->payload;
-          for(k = 0; k < netif->hwaddr_len; ++k) {
+          for (k = 0; k < netif->hwaddr_len; ++k) {
             ethhdr->dest.addr[k] = ethaddr->addr[k];
           }
           ethhdr->type = htons(ETHTYPE_IP);	  	 	  
@@ -302,7 +312,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: adding entry to table\n"));
     /* find an empty or old entry. */
     i = find_arp_entry();
-    if(i == ARP_TABLE_SIZE) {
+    if (i == ARP_TABLE_SIZE) {
       DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: no available entry found\n"));
       return NULL;
     }
@@ -320,7 +330,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     /* set IP address */  
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
     /* set Ethernet hardware address */  
-    for(k = 0; k < netif->hwaddr_len; ++k) {
+    for (k = 0; k < netif->hwaddr_len; ++k) {
       arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
     }
     /* reset time-stamp */  
@@ -363,7 +373,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
   /* source is on local network? */
-  if(!ip_addr_maskcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
+  if (!ip_addr_maskcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
     /* do nothing */
     return NULL;
   }
@@ -396,7 +406,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   u8_t i;
 
   /* drop short ARP packets */
-  if(p->tot_len < sizeof(struct etharp_hdr)) {
+  if (p->tot_len < sizeof(struct etharp_hdr)) {
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | 1, ("etharp_arp_input: packet too short (%d/%d)\n", p->tot_len, sizeof(struct etharp_hdr)));
     pbuf_free(p);
     return NULL;
@@ -404,16 +414,16 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   hdr = p->payload;
 
-  switch(htons(hdr->opcode)) {
+  switch (htons(hdr->opcode)) {
   /* ARP request? */
   case ARP_REQUEST:
     /* ARP request. If it asked for our address, we send out a
     reply. In any case, we time-stamp any existing ARP entry,
     and possiby send out an IP packet that was queued on it. */
 
-    DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP request\n"));
+    DEBUGF (ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP request\n"));
     /* we are not configured? */
-    if(netif->ip_addr.addr == 0) {
+    if (netif->ip_addr.addr == 0) {
       DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: we are unconfigured, ARP request ignored.\n"));
       pbuf_free(p);
       return NULL;
@@ -421,7 +431,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* update the ARP cache */
     update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
     /* ARP request for our address? */
-    if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
+    if (ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
 
       DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: replying to ARP request for our IP address\n"));
       /* re-use pbuf to send ARP reply */
@@ -458,7 +468,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     dhcp_arp_reply(netif, &hdr->sipaddr);
 #endif
     /* ARP reply directed to us? */
-    if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
+    if (ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
       DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply is for us\n"));
       /* update_the ARP cache, ask to insert */
       update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
@@ -514,7 +524,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   u8_t i;
 
   /* Make room for Ethernet header. */
-  if(pbuf_header(q, sizeof(struct eth_hdr)) != 0) {    
+  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {    
     /* The pbuf_header() call shouldn't fail, and we'll just bail
     out if it does.. */
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_output: could not allocate room for header.\n"));
@@ -535,13 +545,13 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   ARP table. */
 
   /* destination IP address is an IP broadcast address? */
-  if(ip_addr_isany(ipaddr) ||
+  if (ip_addr_isany(ipaddr) ||
     ip_addr_isbroadcast(ipaddr, &(netif->netmask))) {
     /* broadcast on Ethernet also */
     dest = (struct eth_addr *)&ethbroadcast;
   }
   /* destination IP address is an IP multicast address? */
-  else if(ip_addr_ismulticast(ipaddr)) {
+  else if (ip_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address. */
     mcastaddr.addr[0] = 0x01;
     mcastaddr.addr[1] = 0x0;
@@ -556,7 +566,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   else {
     /* destination IP network address not on local network? */
     /* this occurs if the packet is routed to the default gateway on this interface */
-    if(!ip_addr_maskcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
+    if (!ip_addr_maskcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
       /* gateway available? */
       if (netif->gw.addr != 0)
       {
@@ -574,7 +584,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* Ethernet address for IP destination address is in ARP cache? */
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* match found? */    
-      if(arp_table[i].state == ETHARP_STATE_STABLE &&
+      if (arp_table[i].state == ETHARP_STATE_STABLE &&
         ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         dest = &arp_table[i].ethaddr;
         break;
@@ -652,16 +662,18 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   srcaddr = (struct eth_addr *)netif->hwaddr;
   /* bail out if this IP address is pending */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
-    if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
+    if (ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
         /* break out of for-loop, user may wish to queue a packet on a stable entry */
+        /* TODO: we will issue a new ARP request, which should not occur too often */
+        /* we might want to run a faster timer on ARP to limit this */
         break;
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
         /* user may wish to queue a packet on a stable entry, so we proceed without ARP requesting */
-        /* TODO: even if the ARP entry is stable, we might do an ARP request anyway in some cases? */
+        /* TODO: even if the ARP entry is stable, we might do an ARP request anyway */
         perform_arp_request = 0;
         break;
       }
@@ -677,6 +689,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available.\n"));
       return ERR_MEM;
     }
+    /* we will now recycle entry i */
     DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: created ARP table entry %u.\n", i));
     /* i is available, create ARP entry */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
@@ -701,11 +714,12 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       pbuf_free(arp_table[i].p);
       arp_table[i].p = NULL;
       DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet on ARP queue. Should not occur.\n"));
+      /* fall-through into next if */
     }
 #endif
     /* packet can be queued? */
     if (arp_table[i].p == NULL) {
-      /* copy PBUF_REF referenced payloads to PBUF_RAM */
+      /* copy PBUF_REF referenced payloads into PBUF_RAM */
       q = pbuf_take(q);
       /* remember pbuf to queue, if any */
       arp_table[i].p = q;

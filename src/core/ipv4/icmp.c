@@ -74,9 +74,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
   type = *((u8_t *)p->payload);
   code = *(((u8_t *)p->payload)+1);
-  switch(type) {
+  switch (type) {
   case ICMP_ECHO:
-    if(ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) ||
+    if (ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) ||
        ip_addr_ismulticast(&iphdr->dest)) {
       DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
 #ifdef ICMP_STATS
@@ -87,7 +87,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     }
     DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
     DEBUGF(DEMO_DEBUG, ("Pong!\n"));
-    if(p->tot_len < sizeof(struct icmp_echo_hdr)) {
+    if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
       DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
@@ -98,7 +98,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       return;      
     }
     iecho = p->payload;    
-    if(inet_chksum_pbuf(p) != 0) {
+    if (inet_chksum_pbuf(p) != 0) {
       DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
@@ -112,7 +112,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     iphdr->dest.addr = tmpaddr.addr;
     ICMPH_TYPE_SET(iecho, ICMP_ER);
     /* adjust the checksum */
-    if(iecho->chksum >= htons(0xffff - (ICMP_ECHO << 8))) {
+    if (iecho->chksum >= htons(0xffff - (ICMP_ECHO << 8))) {
       iecho->chksum += htons(ICMP_ECHO << 8) + 1;
     } else {
       iecho->chksum += htons(ICMP_ECHO << 8);
@@ -126,7 +126,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     snmp_inc_icmpoutechoreps();
 
     pbuf_header(p, hlen);
-    ip_output_if(p, &(iphdr->src), IP_HDRINCL,
+    ip_output_if (p, &(iphdr->src), IP_HDRINCL,
 		 IPH_TTL(iphdr), IP_PROTO_ICMP, inp);
     break; 
   default:

@@ -134,17 +134,17 @@ pbuf_pool_alloc(void)
 #if !SYS_LIGHTWEIGHT_PROT      
   /* Next, check the actual pbuf pool, but if the pool is locked, we
      pretend to be out of buffers and return NULL. */
-  if(pbuf_pool_free_lock) {
+  if (pbuf_pool_free_lock) {
 #ifdef PBUF_STATS
     ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
     return NULL;
   }
   pbuf_pool_alloc_lock = 1;
-  if(!pbuf_pool_free_lock) {
+  if (!pbuf_pool_free_lock) {
 #endif /* SYS_LIGHTWEIGHT_PROT */        
     p = pbuf_pool;
-    if(p) {
+    if (p) {
       pbuf_pool = p->next; 
     }
 #if !SYS_LIGHTWEIGHT_PROT      
@@ -157,9 +157,9 @@ pbuf_pool_alloc(void)
 #endif /* SYS_LIGHTWEIGHT_PROT */    
   
 #ifdef PBUF_STATS
-  if(p != NULL) {    
+  if (p != NULL) {    
     ++lwip_stats.pbuf.used;
-    if(lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
+    if (lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
       lwip_stats.pbuf.max = lwip_stats.pbuf.used;
     }
   }
@@ -258,7 +258,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* remaining length to be allocated */
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
-    while(rem_len > 0) {      
+    while (rem_len > 0) {      
       q = pbuf_pool_alloc();
       if (q == NULL) {
        DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
@@ -346,13 +346,13 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
                                 SYS_ARCH_PROTECT(old_level);            \
                                 PBUF_POOL_FAST_FREE(p);                 \
                                 SYS_ARCH_UNPROTECT(old_level);          \
-                               } while(0)
+                               } while (0)
 #else /* SYS_LIGHTWEIGHT_PROT */
 #define PBUF_POOL_FREE(p)  do {                                         \
                              sys_sem_wait(pbuf_pool_free_sem);          \
                              PBUF_POOL_FAST_FREE(p);                    \
                              sys_sem_signal(pbuf_pool_free_sem);        \
-                           } while(0)
+                           } while (0)
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 /**
@@ -632,7 +632,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_ASSERT("h != NULL", h != NULL);
   LWIP_ASSERT("t != NULL", t != NULL);
 
-  if(t == NULL)
+  if (t == NULL)
     return;
   
   /* proceed to last pbuf of chain */

@@ -153,14 +153,14 @@ netif_find(char *name)
   struct netif *netif;
   u8_t num;
   
-  if(name == NULL) {
+  if (name == NULL) {
     return NULL;
   }
 
   num = name[2] - '0';
  
   for(netif = netif_list; netif != NULL; netif = netif->next) {
-    if(num == netif->num &&
+    if (num == netif->num &&
        name[0] == netif->name[0] &&
        name[1] == netif->name[1]) {
       DEBUGF(NETIF_DEBUG, ("netif_find: found %c%c\n", name[0], name[1]));

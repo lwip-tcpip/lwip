@@ -47,13 +47,13 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   conn = arg;
   
-  if(conn == NULL) {
+  if (conn == NULL) {
     pbuf_free(p);
     return;
   }
-  if(conn->recvmbox != SYS_MBOX_NULL) {
+  if (conn->recvmbox != SYS_MBOX_NULL) {
     buf = memp_mallocp(MEMP_NETBUF);
-    if(buf == NULL) {
+    if (buf == NULL) {
       pbuf_free(p);
       return;
     } else {
@@ -81,12 +81,12 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   
   conn = arg;
 
-  if(conn == NULL) {
+  if (conn == NULL) {
     pbuf_free(p);
     return ERR_VAL;
   }
 
-  if(conn->recvmbox != SYS_MBOX_NULL) {
+  if (conn->recvmbox != SYS_MBOX_NULL) {
     	  
     conn->err = err;
     if (p != NULL) {
@@ -110,7 +110,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
   struct netconn *conn;
 
   conn = arg;
-  if(conn != NULL &&
+  if (conn != NULL &&
      (conn->state == NETCONN_WRITE || conn->state == NETCONN_CLOSE) &&
      conn->sem != SYS_SEM_NULL) {
     sys_sem_signal(conn->sem);
@@ -124,7 +124,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   struct netconn *conn;
 
   conn = arg;
-  if(conn != NULL && conn->sem != SYS_SEM_NULL) {
+  if (conn != NULL && conn->sem != SYS_SEM_NULL) {
     sys_sem_signal(conn->sem);
   }
 
@@ -146,22 +146,22 @@ err_tcp(void *arg, err_t err)
 
   
   conn->err = err;
-  if(conn->recvmbox != SYS_MBOX_NULL) {
+  if (conn->recvmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
     if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->recvmbox, NULL);
   }
-  if(conn->mbox != SYS_MBOX_NULL) {
+  if (conn->mbox != SYS_MBOX_NULL) {
     sys_mbox_post(conn->mbox, NULL);
   }
-  if(conn->acceptmbox != SYS_MBOX_NULL) {
+  if (conn->acceptmbox != SYS_MBOX_NULL) {
      /* Register event with callback */
     if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->acceptmbox, NULL);
   }
-  if(conn->sem != SYS_SEM_NULL) {
+  if (conn->sem != SYS_SEM_NULL) {
     sys_sem_signal(conn->sem);
   }
 }
@@ -194,25 +194,25 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   conn = (struct netconn *)arg;
   mbox = conn->acceptmbox;
   newconn = memp_mallocp(MEMP_NETCONN);
-  if(newconn == NULL) {
+  if (newconn == NULL) {
     return ERR_MEM;
   }
   newconn->type = NETCONN_TCP;
   newconn->pcb.tcp = newpcb;
   setup_tcp(newconn);
   newconn->recvmbox = sys_mbox_new();
-  if(newconn->recvmbox == SYS_MBOX_NULL) {
+  if (newconn->recvmbox == SYS_MBOX_NULL) {
     memp_free(MEMP_NETCONN, newconn);
     return ERR_MEM;
   }
   newconn->mbox = sys_mbox_new();
-  if(newconn->mbox == SYS_MBOX_NULL) {
+  if (newconn->mbox == SYS_MBOX_NULL) {
     sys_mbox_free(newconn->recvmbox);
     memp_free(MEMP_NETCONN, newconn);
     return ERR_MEM;
   }
   newconn->sem = sys_sem_new(0);
-  if(newconn->sem == SYS_SEM_NULL) {
+  if (newconn->sem == SYS_SEM_NULL) {
     sys_mbox_free(newconn->recvmbox);
     sys_mbox_free(newconn->mbox);
     memp_free(MEMP_NETCONN, newconn);
@@ -243,8 +243,8 @@ do_newconn(struct api_msg_msg *msg)
 static void
 do_delconn(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -257,7 +257,7 @@ do_delconn(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP      
     case NETCONN_TCP:
-      if(msg->conn->pcb.tcp->state == LISTEN) {
+      if (msg->conn->pcb.tcp->state == LISTEN) {
 	tcp_arg(msg->conn->pcb.tcp, NULL);
 	tcp_accept(msg->conn->pcb.tcp, NULL);	
 	tcp_close(msg->conn->pcb.tcp);
@@ -267,7 +267,7 @@ do_delconn(struct api_msg_msg *msg)
 	tcp_recv(msg->conn->pcb.tcp, NULL);	
 	tcp_poll(msg->conn->pcb.tcp, NULL, 0);
 	tcp_err(msg->conn->pcb.tcp, NULL);
-	if(tcp_close(msg->conn->pcb.tcp) != ERR_OK) {
+	if (tcp_close(msg->conn->pcb.tcp) != ERR_OK) {
 	  tcp_abort(msg->conn->pcb.tcp);
 	}
       }
@@ -283,7 +283,7 @@ do_delconn(struct api_msg_msg *msg)
       (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDPLUS, 0);
   }
   
-  if(msg->conn->mbox != SYS_MBOX_NULL) {
+  if (msg->conn->mbox != SYS_MBOX_NULL) {
     sys_mbox_post(msg->conn->mbox, NULL);
   }
 }
@@ -291,8 +291,8 @@ do_delconn(struct api_msg_msg *msg)
 static void
 do_bind(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp == NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp == NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       msg->conn->pcb.udp = udp_new();
@@ -318,7 +318,7 @@ do_bind(struct api_msg_msg *msg)
     break;
     }
   }
-  switch(msg->conn->type) {
+  switch (msg->conn->type) {
 #if LWIP_UDP
   case NETCONN_UDPLITE:
     /* FALLTHROUGH */
@@ -347,12 +347,12 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 
   conn = arg;
 
-  if(conn == NULL) {
+  if (conn == NULL) {
     return ERR_VAL;
   }
   
   conn->err = err;
-  if(conn->type == NETCONN_TCP && err == ERR_OK) {
+  if (conn->type == NETCONN_TCP && err == ERR_OK) {
     setup_tcp(conn);
   }    
   sys_mbox_post(conn->mbox, NULL);
@@ -363,12 +363,12 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 static void
 do_connect(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp == NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp == NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       msg->conn->pcb.udp = udp_new();
-      if(msg->conn->pcb.udp == NULL) {
+      if (msg->conn->pcb.udp == NULL) {
 	msg->conn->err = ERR_MEM;
 	sys_mbox_post(msg->conn->mbox, NULL);
 	return;
@@ -378,7 +378,7 @@ do_connect(struct api_msg_msg *msg)
       break;
     case NETCONN_UDPNOCHKSUM:
       msg->conn->pcb.udp = udp_new();
-      if(msg->conn->pcb.udp == NULL) {
+      if (msg->conn->pcb.udp == NULL) {
 	msg->conn->err = ERR_MEM;
 	sys_mbox_post(msg->conn->mbox, NULL);
 	return;
@@ -388,7 +388,7 @@ do_connect(struct api_msg_msg *msg)
       break;
     case NETCONN_UDP:
       msg->conn->pcb.udp = udp_new();
-      if(msg->conn->pcb.udp == NULL) {
+      if (msg->conn->pcb.udp == NULL) {
 	msg->conn->err = ERR_MEM;
 	sys_mbox_post(msg->conn->mbox, NULL);
 	return;
@@ -399,7 +399,7 @@ do_connect(struct api_msg_msg *msg)
 #if LWIP_TCP      
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_new();      
-      if(msg->conn->pcb.tcp == NULL) {
+      if (msg->conn->pcb.tcp == NULL) {
 	msg->conn->err = ERR_MEM;
 	sys_mbox_post(msg->conn->mbox, NULL);
 	return;
@@ -409,7 +409,7 @@ do_connect(struct api_msg_msg *msg)
       break;
     }
   }
-  switch(msg->conn->type) {
+  switch (msg->conn->type) {
 #if LWIP_UDP
   case NETCONN_UDPLITE:
     /* FALLTHROUGH */
@@ -437,7 +437,7 @@ static void
 do_disconnect(struct api_msg_msg *msg)
 {
 
-  switch(msg->conn->type) {
+  switch (msg->conn->type) {
 #if LWIP_UDP
   case NETCONN_UDPLITE:
     /* FALLTHROUGH */
@@ -457,8 +457,8 @@ do_disconnect(struct api_msg_msg *msg)
 static void
 do_listen(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -471,12 +471,12 @@ do_listen(struct api_msg_msg *msg)
 #if LWIP_TCP      
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_listen(msg->conn->pcb.tcp);
-      if(msg->conn->pcb.tcp == NULL) {
+      if (msg->conn->pcb.tcp == NULL) {
 	msg->conn->err = ERR_MEM;
       } else {
-	if(msg->conn->acceptmbox == SYS_MBOX_NULL) {
+	if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
 	  msg->conn->acceptmbox = sys_mbox_new();
-	  if(msg->conn->acceptmbox == SYS_MBOX_NULL) {
+	  if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
 	    msg->conn->err = ERR_MEM;
 	    break;
 	  }
@@ -495,8 +495,8 @@ do_listen(struct api_msg_msg *msg)
 static void
 do_accept(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -515,8 +515,8 @@ do_accept(struct api_msg_msg *msg)
 static void
 do_send(struct api_msg_msg *msg)
 {
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -537,8 +537,8 @@ static void
 do_recv(struct api_msg_msg *msg)
 {
 #if LWIP_TCP
-  if(msg->conn->pcb.tcp != NULL) {
-    if(msg->conn->type == NETCONN_TCP) {
+  if (msg->conn->pcb.tcp != NULL) {
+    if (msg->conn->type == NETCONN_TCP) {
       tcp_recved(msg->conn->pcb.tcp, msg->msg.len);
     }
   }
@@ -552,8 +552,8 @@ do_write(struct api_msg_msg *msg)
 #if LWIP_TCP	
   err_t err;
 #endif  
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP 
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -571,7 +571,7 @@ do_write(struct api_msg_msg *msg)
 	 segments when new outgoing data arrives from the user if any
 	 previously transmitted data on the connection remains
 	 unacknowledged. */
-      if(err == ERR_OK && msg->conn->pcb.tcp->unacked == NULL) {
+      if (err == ERR_OK && msg->conn->pcb.tcp->unacked == NULL) {
 	tcp_output(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;
@@ -596,8 +596,8 @@ do_close(struct api_msg_msg *msg)
 
   err = ERR_OK;
 
-  if(msg->conn->pcb.tcp != NULL) {
-    switch(msg->conn->type) {
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -608,7 +608,7 @@ do_close(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case NETCONN_TCP:
-      if(msg->conn->pcb.tcp->state == LISTEN) {
+      if (msg->conn->pcb.tcp->state == LISTEN) {
 	err = tcp_close(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;      

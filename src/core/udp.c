@@ -102,7 +102,7 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
   dest = ntohs(udphdr->dest);
 
     pcb = pcb_cache;
-  if(pcb != NULL &&
+  if (pcb != NULL &&
     pcb->remote_port == src &&
     pcb->local_port == dest &&
     (ip_addr_isany(&pcb->remote_ip) ||
@@ -113,7 +113,7 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
   }
   else {  
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-      if(pcb->remote_port == src &&
+      if (pcb->remote_port == src &&
 	 pcb->local_port == dest &&
 	 (ip_addr_isany(&pcb->remote_ip) ||
 	  ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
@@ -124,9 +124,9 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
         }
     }
 
-    if(pcb == NULL) {
+    if (pcb == NULL) {
       for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-	if(pcb->remote_port == 0 &&
+	if (pcb->remote_port == 0 &&
 	   pcb->local_port == dest &&
 	   (ip_addr_isany(&pcb->remote_ip) ||
 	    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
@@ -140,7 +140,7 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 
   PERF_STOP("udp_lookup");
 
-  if(pcb != NULL) {
+  if (pcb != NULL) {
     return 1;
   }
   else {  
@@ -214,7 +214,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
 
        /* PCB remote port matches UDP source port? */
-    if((pcb->remote_port == src) &&
+    if ((pcb->remote_port == src) &&
        /* PCB local port matches UDP destination port? */
        (pcb->local_port == dest) &&
        /* accepting from any remote (source) IP address? or... */
@@ -239,7 +239,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
         ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
       /* unconnected? */
-      if(((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
+      if (((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
      	  /* destination port matches? */
 	      (pcb->local_port == dest) &&
 	      /* not bound to a specific (local) interface address? or... */
@@ -252,17 +252,17 @@ udp_input(struct pbuf *p, struct netif *inp)
   }
 
   /* Check checksum if this is a match or if it was directed at us. */
-  if(pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
+  if (pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
     {
     DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: calculating checksum\n"));
     pbuf_header(p, UDP_HLEN);    
 #ifdef IPv6
-    if(iphdr->nexthdr == IP_PROTO_UDPLITE) {    
+    if (iphdr->nexthdr == IP_PROTO_UDPLITE) {    
 #else
-    if(IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {    
+    if (IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {    
 #endif /* IPv4 */
       /* Do the UDP Lite checksum */
-      if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
+      if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
 			   (struct ip_addr *)&(iphdr->dest),
 			   IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
 	DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
@@ -275,8 +275,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 	goto end;
       }
     } else {
-      if(udphdr->chksum != 0) {
-	if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
+      if (udphdr->chksum != 0) {
+	if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
 			 (struct ip_addr *)&(iphdr->dest),
 			  IP_PROTO_UDP, p->tot_len) != 0) {
 	  DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP datagram discarded due to failing checksum\n"));
@@ -292,7 +292,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
     }
     pbuf_header(p, -UDP_HLEN);    
-    if(pcb != NULL) {
+    if (pcb != NULL) {
       snmp_inc_udpindatagrams();
       pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
     } else {
@@ -301,7 +301,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* No match was found, send ICMP destination port unreachable unless
 	 destination address was broadcast/multicast. */
       
-      if(!ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) &&
+      if (!ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) &&
 	 !ip_addr_ismulticast(&iphdr->dest)) {
 	
 	/* adjust pbuf pointer */
@@ -409,9 +409,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     udphdr->chksum = inet_chksum_pseudo(q, src_ip, &(pcb->remote_ip),
 					IP_PROTO_UDP, pcb->chksum_len);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
-    if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
+    if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     /* output to IP */
-    err = ip_output_if(q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
+    err = ip_output_if (q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
   } else {
     DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
@@ -424,9 +424,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     }
     DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
     snmp_inc_udpoutdatagrams();
-    DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)\n"));
+    DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
-    err = ip_output_if(q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
+    err = ip_output_if (q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
 
   /* did we chain a header earlier? */
@@ -544,9 +544,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 
-  if(pcb->local_port == 0) {
+  if (pcb->local_port == 0) {
     err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-    if(err != ERR_OK)
+    if (err != ERR_OK)
       return err;
   }
 
@@ -556,10 +556,10 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #if 0
   pcb->flags |= UDP_FLAGS_CONNECTED;
   /* Nail down local IP for netconn_addr()/getsockname() */
-  if(ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
+  if (ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
     struct netif *netif;
 
-    if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
+    if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     	DEBUGF(UDP_DEBUG, ("udp_connect: No route to 0x%lx\n", pcb->remote_ip.addr));
 #ifdef UDP_STATS
         ++lwip_stats.udp.rterr;
@@ -570,7 +570,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
         is used to route output packets to the remote address. However, we
         might want to accept incoming packets on any interface! */
     pcb->local_ip = netif->ip_addr;
-  } else if(ip_addr_isany(&pcb->remote_ip)) { 
+  } else if (ip_addr_isany(&pcb->remote_ip)) { 
     pcb->local_ip.addr = 0;
   }
 #endif
@@ -582,7 +582,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
-    if(pcb == ipcb) {
+    if (pcb == ipcb) {
       /* already on the list, just return */
       return ERR_OK;
     }
@@ -628,7 +628,7 @@ udp_remove(struct udp_pcb *pcb)
   /* pcb not 1st in list */
   } else for(pcb2 = udp_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
     /* find pcb in udp_pcbs list */
-    if(pcb2->next != NULL && pcb2->next == pcb) {
+    if (pcb2->next != NULL && pcb2->next == pcb) {
       /* remove pcb from list */
       pcb2->next = pcb->next;
     }
@@ -648,7 +648,7 @@ udp_new(void) {
   struct udp_pcb *pcb;
   pcb = memp_malloc(MEMP_UDP_PCB);
   /* could allocate UDP PCB? */
-  if(pcb != NULL) {
+  if (pcb != NULL) {
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
   }

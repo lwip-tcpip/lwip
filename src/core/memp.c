@@ -125,10 +125,10 @@ memp_sanity(void)
     for(m = memp_tab[i]; m != NULL; m = m->next) {
       c = 1;
       for(n = memp_tab[i]; n != NULL; n = n->next) {
-       	if(n == m) {
+       	if (n == m) {
 	        --c;
         }
-	      if(c < 0) return 0; /* LW was: abort(); */
+	      if (c < 0) return 0; /* LW was: abort(); */
       }
     }
   }
@@ -154,7 +154,7 @@ memp_init(void)
   memp = (struct memp *)&memp_memory[0];
   for(i = 0; i < MEMP_MAX; ++i) {
     size = MEM_ALIGN_SIZE(memp_sizes[i] + sizeof(struct memp));
-    if(memp_num[i] > 0) {
+    if (memp_num[i] > 0) {
       memp_tab[i] = memp;
       m = memp;
       
@@ -187,12 +187,12 @@ memp_malloc(memp_t type)
 
   memp = memp_tab[type];
   
-  if(memp != NULL) {    
+  if (memp != NULL) {    
     memp_tab[type] = memp->next;    
     memp->next = NULL;
 #ifdef MEMP_STATS
     ++lwip_stats.memp[type].used;
-    if(lwip_stats.memp[type].used > lwip_stats.memp[type].max) {
+    if (lwip_stats.memp[type].used > lwip_stats.memp[type].max) {
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
@@ -238,7 +238,7 @@ memp_free(memp_t type, void *mem)
 {
   struct memp *memp;
 
-  if(mem == NULL) {
+  if (mem == NULL) {
     return;
   }
   memp = (struct memp *)((u8_t *)mem - sizeof(struct memp));
