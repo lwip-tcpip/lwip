@@ -641,7 +641,7 @@ tcp_receive(struct tcp_pcb *pcb)
         } else {
 	  /* Inflate the congestion window, but not if it means that
 	     the value overflows. */
-	  if(pcb->cwnd + pcb->mss > pcb->cwnd) {
+	  if((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
 	    pcb->cwnd += pcb->mss;
 	  }
 	  
@@ -677,15 +677,16 @@ tcp_receive(struct tcp_pcb *pcb)
          ssthresh). */
       if(pcb->state >= ESTABLISHED) {
         if(pcb->cwnd < pcb->ssthresh) {
-	  if(pcb->cwnd + pcb->mss > pcb->cwnd) {
+	  if((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
 	    pcb->cwnd += pcb->mss;
 	  }
           DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: slow start cwnd %u\n", pcb->cwnd));
         } else {
-	  if(pcb->cwnd + pcb->mss * pcb->mss / pcb->cwnd > pcb->cwnd) {
-	    pcb->cwnd += pcb->mss * pcb->mss / pcb->cwnd;
+	  u16_t new_cwnd = (pcb->cwnd + pcb->mss * pcb->mss / pcb->cwnd);
+	  if(new_cwnd > pcb->cwnd) {
+	    pcb->cwnd = new_cwnd;
 	  }
-          DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %u\n", pcb->cwnd));
+          DEBUGF(TCP_CWND_DEBUG, ("tcp_receive: congestion avoidance cwnd %u\n", pcb->cwnd)); 
         }
       }
       DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: ACK for %lu, unacked->seqno %lu:%lu\n",
