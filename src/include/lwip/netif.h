@@ -53,7 +53,7 @@
 /** whether the network interface is 'up'. this is
  * a software flag used to control whether this network
  * interface is enabled and processes traffic.
- * TODO: who should act on this flag, lwIP stack or driver?? */
+ */
 #define NETIF_FLAG_UP 0x1U
 /** if set, the netif has broadcast capability */
 #define NETIF_FLAG_BROADCAST 0x2U
@@ -105,6 +105,8 @@ struct netif {
   u16_t mtu;
   /** flags (see NETIF_FLAG_ above) */
   u8_t flags;
+  /** link type */
+  u8_t link_type;
   /** descriptive abbreviation */
   char name[2];
   /** number of this interface */
@@ -141,5 +143,8 @@ void netif_set_default(struct netif *netif);
 void netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr);
 void netif_set_netmask(struct netif *netif, struct ip_addr *netmast);
 void netif_set_gw(struct netif *netif, struct ip_addr *gw);
+void netif_set_up(struct netif *netif);
+void netif_set_down(struct netif *netif);
+u8_t netif_is_up(struct netif *netif);
 
 #endif /* __LWIP_NETIF_H__ */

@@ -68,7 +68,6 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   err_t (* input)(struct pbuf *p, struct netif *netif))
 {
   static int netifnum = 0;
-
   
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
@@ -244,6 +243,41 @@ netif_set_default(struct netif *netif)
   netif_default = netif;
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
+}
+
+/**
+ * Bring an interface up, available for processing
+ * traffic.
+ * 
+ * @note: Enabling DHCP on a down interface will make it come
+ * up once configured.
+ * 
+ * @see dhcp_start()
+ */ 
+void netif_set_up(struct netif *netif)
+{
+  netif->flags |= NETIF_FLAG_UP;
+}
+
+/**
+ * Ask if an interface is up
+ */ 
+u8_t netif_is_up(struct netif *netif)
+{
+  return (netif->flags & NETIF_FLAG_UP)?1:0;
+}
+
+/**
+ * Bring an interface down, disabling any traffic processing.
+ *
+ * @note: Enabling DHCP on a down interface will make it come
+ * up once configured.
+ * 
+ * @see dhcp_start()
+ */ 
+void netif_set_down(struct netif *netif)
+{
+  netif->flags &= ~NETIF_FLAG_UP;
 }
 
 void
