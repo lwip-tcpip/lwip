@@ -116,7 +116,7 @@ extern const struct ip_addr ip_addr_broadcast;
 
 #define ip_addr_set(dest, src) (dest)->addr = \
                                ((src) == NULL? 0:\
-                               ((struct ip_addr *)src)->addr)
+                               (src)->addr)
 #define ip_addr_maskcmp(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \

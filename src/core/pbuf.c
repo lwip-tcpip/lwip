@@ -11,12 +11,15 @@
  * list. This is called a "pbuf chain".
  *
  * Multiple packets may be queued, also using this singly linked list.
- * This is called a "packet queue". So, a packet queue consists of one
- * or more pbuf chains, each of which consist of one or more pbufs.
+ * This is called a "packet queue".
+ * 
+ * So, a packet queue consists of one or more pbuf chains, each of
+ * which consist of one or more pbufs. Currently, queues are only
+ * supported in a limited section of lwIP, this is the etharp queueing
+ * code. Outside of this section no packet queues are supported yet.
+ * 
  * The differences between a pbuf chain and a packet queue are very
- * subtle. Currently, queues are only supported in a limited section
- * of lwIP, this is the etharp queueing code. Outside of this section
- * no packet queues are supported as of yet.
+ * precise but subtle. 
  *
  * The last pbuf of a packet has a ->tot_len field that equals the
  * ->len field. It can be found by traversing the list. If the last
@@ -504,14 +507,14 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 }
 
 /**
- * Dereference a pbuf (chain) and deallocate any no-longer-used
- * pbufs at the head of this chain.
+ * Dereference a pbuf chain or queue and deallocate any no-longer-used
+ * pbufs at the head of this chain or queue.
  *
  * Decrements the pbuf reference count. If it reaches
  * zero, the pbuf is deallocated.
  *
  * For a pbuf chain, this is repeated for each pbuf in the chain,
- * up to a pbuf which has a non-zero reference count after
+ * up to the first pbuf which has a non-zero reference count after
  * decrementing. (This might de-allocate the whole chain.)
  *
  * @param pbuf The pbuf (chain) to be dereferenced.
@@ -542,6 +545,8 @@ pbuf_free(struct pbuf *p)
   u8_t count;
   SYS_ARCH_DECL_PROTECT(old_level);
 
+  LWIP_ASSERT("p != NULL", p != NULL);
+  /* if assertions are disabled, proceed with debug output */
   if (p == NULL) {
     LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p == NULL) was called.\n"));
     return 0;
@@ -710,9 +715,7 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
 {
   LWIP_ASSERT("p != NULL", p != NULL);
   LWIP_ASSERT("n != NULL", n != NULL);
-
-  if ((p == NULL) || (n == NULL))
-    return;
+  if ((p == NULL) || (n == NULL)) return;
 
   /* iterate through all packets on queue */
   while (p->next != NULL) {
@@ -720,15 +723,20 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
 #if PBUF_DEBUG
     /* iterate through all pbufs in packet */
     while (p->tot_len != p->len) {
+      /* make sure invariant condition holds */
+      LWIP_ASSERT("p->len < p->tot_len", p->len < p->tot_len);
       /* make sure each packet is complete */
       LWIP_ASSERT("p->next != NULL", p->next != NULL);
       p = p->next;
+      /* { p->tot_len == p->len } => p is last pbuf of a packet */
     }
 #endif
-    /* now p->tot_len == p->len */
+    /* { p->tot_len == p->len } => p is last pbuf of a packet */
     /* proceed to next packet on queue */
-    p = p->next;
+    if (p->next != NULL) p = p->next;
   }
+  /* { p->tot_len == p->len and p->next == NULL } ==>
+   * { p is last pbuf of last packet on queue } */
   /* chain last pbuf of queue with n */
   p->next = n;
   /* n is now referenced to one more time */
@@ -739,6 +747,8 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
 /**
  * Remove a packet from the head of a queue.
  *
+ * The caller MUST reference the remainder of the queue (as returned).
+ * 
  * @param p pointer to first packet on the queue which will be dequeued.
  * @return first packet on the remaining queue (NULL if no further packets).
  *
@@ -751,17 +761,25 @@ pbuf_dequeue(struct pbuf *p)
 
   /* iterate through all pbufs in packet */
   while (p->tot_len != p->len) {
+    /* make sure invariant condition holds */
+    LWIP_ASSERT("p->len < p->tot_len", p->len < p->tot_len);
     /* make sure each packet is complete */
     LWIP_ASSERT("p->next != NULL", p->next != NULL);
     p = p->next;
   }
+  /* { p->tot_len == p->len } => p is the last pbuf of the first packet */
   /* remember next packet on queue */
   q = p->next;
   /* dequeue p from queue */
   p->next = NULL;
-  /* q is now referenced to one less time */
-  pbuf_free(q);
-  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue %p\n", (void *)q));
+  /* any next packet on queue? */
+  if (q != NULL) {
+    /* although q is no longer referenced by p, it MUST be referenced by
+     * the caller, who is maintaining this packet queue */
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: at least one packet on queue, first %p\n", (void *)q));
+  } else {
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: no further packets on queue\n"));
+  }
   return q;
 }
 #endif
