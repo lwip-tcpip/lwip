@@ -280,14 +280,18 @@ udp_input(struct pbuf *p, struct netif *inp)
     pbuf_header(p, -UDP_HLEN);
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
-      pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
+      /* callback */
+      if (pcb->recv != NULL)
+      {
+        pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
+      }
 #if SO_REUSE
       /* First socket should receive now */
-      if(reuse_port_1 || reuse_port_2) {
+      if (reuse_port_1 || reuse_port_2) {
         /* We want to search on next socket after receiving */
         pcb_temp = pcb->next;
         
-        if(reuse_port_1) {
+        if (reuse_port_1) {
           /* We are searching connected sockets */
           reuse_port_1 = 0;
           reuse_port_2 = 0;
