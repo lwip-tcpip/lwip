@@ -177,12 +177,41 @@ netif_find(char *name)
 void
 netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 {
+  /* TODO: Handling of obsolete pcbs */
+  /* See:  http://mail.gnu.org/archive/html/lwip-users/2003-03/msg00118.html */
+#if 0
+  struct tcp_pcb *pcb;
+  struct tcp_pcb_listen *lpcb;
+
+  /* address has changed? */
+  if ((ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) == 0)
+  {
+  pcb = tcp_active_pcbs;
+  while (pcb != NULL) {
+    if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
+      /* The PCB is connected using the old ipaddr and must be aborted */
+      struct tcp_pcb *next = pcb->next;
+      tcp_abort(pcb);
+      pcb = next;
+    } else {
+      pcb=pcb->next;
+    }
+  }
+  for (lpcb = tcp_listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    if (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr))) {
+      /* The PCB is listening to the old ipaddr and
+       * is set to listen to the  new one instead */
+      ip_addr_set(&(lpcb->local_ip), ipaddr);
+    }
+  }
+  }
+#endif
   DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE, ("netif: setting IP address of interface %c%c%u to %u.%u.%u.%u\n",
-		       netif->name[0], netif->name[1], netif->num,
-		       (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) & 0xff)));
+    netif->name[0], netif->name[1], netif->num,
+    (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
+    (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
+    (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
+    (u8_t)(ntohl(ipaddr->addr) & 0xff)));
   ip_addr_set(&(netif->ip_addr), ipaddr);
 }
 /*-----------------------------------------------------------------------------------*/
