@@ -54,6 +54,8 @@ struct mem {
   u16_t used;
 #elif MEM_ALIGNMENT == 4
   u32_t used;
+#elif MEM_ALIGNMENT == 8
+  u64_t used;
 #else
 #error "unhandled MEM_ALIGNMENT size"
 #endif /* MEM_ALIGNMENT */
