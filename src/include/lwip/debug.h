@@ -41,12 +41,6 @@
  * - 3 severe
  */
 #define DBG_MASK_LEVEL 3
-// LW: moved to lwipopts.h
-#if 0
-#define DBG_TYPES_ON 0
-#endif
-/** print only debug messages with this level or higher */
-#define DBG_MIN_LEVEL 0
 
 /** flag for DEBUGF to enable the debug message */
 #define DBG_ON  0x80U
