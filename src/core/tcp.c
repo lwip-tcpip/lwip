@@ -476,7 +476,7 @@ tcp_slowtmr(void)
 
 	/* Time for a retransmission. */
         DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %ld pcb->rto %d\n",
-                               tcp_ticks - pcb->rtime, pcb->rto));
+                               pcb->rtime, pcb->rto));
 
 	/* Double retransmission time-out unless we are trying to
            connect to somebody (i.e., we are in SYN_SENT). */
