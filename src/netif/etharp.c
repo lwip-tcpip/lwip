@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.9  2002/11/15 12:41:59  likewise
+ * ETHARP_SNOOP_UPDATES made externally configurable.
+ *
  * Revision 1.8  2002/11/13 09:10:19  likewise
  * ARP entries can now be updated (but not added) on any ARP traffic. Set #define ETHARP_SNOOP_UPDATES 1 to enable.
  *
@@ -93,7 +96,10 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #define ARP_MAXPENDING 2 
 
 /** dis/enable existing ARP entries updates on any ARP traffic */
-#define ETHARP_SNOOP_UPDATES 0
+#ifndef ETHARP_SNOOP_UPDATES
+#  define ETHARP_SNOOP_UPDATES 0
+#endif
+ 
 
 #define HWTYPE_ETHERNET 1
 
