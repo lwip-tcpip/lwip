@@ -352,7 +352,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define ICMP_STATS	1
 #endif
 
-#ifndef USP_STATS
+#ifndef UDP_STATS
 #define UDP_STATS	1
 #endif
 
