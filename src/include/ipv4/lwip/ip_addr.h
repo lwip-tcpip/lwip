@@ -117,6 +117,14 @@ extern const struct ip_addr ip_addr_broadcast;
 #define ip_addr_set(dest, src) (dest)->addr = \
                                ((src) == NULL? 0:\
                                (src)->addr)
+/**
+ * Determine if two address are on the same network.
+ *
+ * @arg addr1 IP address 1
+ * @arg addr2 IP address 2
+ * @arg mask network identifier mask
+ * @return !0 if the network identifiers of both address match
+ */
 #define ip_addr_maskcmp(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \

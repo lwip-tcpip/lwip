@@ -679,8 +679,10 @@ static err_t dhcp_decline(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
-    udp_send(dhcp->pcb, dhcp->p_out);
+    /* @todo: should we really connect here? we are performing sendto() */
+    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    /* per section 4.4.4, broadcast DECLINE messages */
+    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
   } else {

@@ -356,9 +356,10 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   struct ip_addr *dst_ip, u16_t dst_port)
 {
   err_t err;
+  /* temporary space for current PCB remote address */
   struct ip_addr pcb_remote_ip;
   u16_t pcb_remote_port;
-  /* remember remote peer address of PCB */
+  /* remember current remote peer address of PCB */
   pcb_remote_ip.addr = pcb->remote_ip.addr;
   pcb_remote_port = pcb->remote_port;
   /* copy packet destination address to PCB remote peer address */
@@ -366,7 +367,7 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   pcb->remote_port = dst_port;
   /* send to the packet destination address */
   err = udp_send(pcb, p);
-  /* reset PCB remote peer address */
+  /* restore PCB remote peer address */
   pcb->remote_ip.addr = pcb_remote_ip.addr;
   pcb->remote_port = pcb_remote_port;
   return err;
@@ -433,7 +434,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   udphdr->chksum = 0x0000; 
 
   /* find the outgoing network interface for this packet */
-  if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
+  netif = ip_route(&(pcb->remote_ip));
+  /* no outgoing network interface could be found? */
+  if (netif == NULL) {
     LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
     UDP_STATS_INC(udp.rterr);
     return ERR_RTE;
