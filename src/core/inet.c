@@ -168,6 +168,9 @@ inet_chksum_pbuf(struct pbuf *p)
   return ~(acc & 0xffffUL);
 }
 
+#ifndef BYTE_ORDER
+#error BYTE_ORDER is not defined
+#endif
 #if BYTE_ORDER == LITTLE_ENDIAN
 /*-----------------------------------------------------------------------------------*/
 u16_t
