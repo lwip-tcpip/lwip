@@ -90,7 +90,7 @@ PACK_STRUCT_END
 /** initialize DHCP client */
 void dhcp_init(void);
 /** start DHCP configuration */
-struct dhcp_state *dhcp_start(struct netif *netif);
+err_t dhcp_start(struct netif *netif);
 /** stop DHCP configuration */
 void dhcp_stop(struct netif *netif);
 /** enforce lease renewal */
@@ -99,7 +99,7 @@ err_t dhcp_renew(struct netif *netif);
 void dhcp_inform(struct netif *netif);
 
 /** if enabled, check whether the offered IP address is not in use, using ARP */
-#if	DHCP_DOES_ARP_CHECK
+#if DHCP_DOES_ARP_CHECK
 void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr);
 #endif
 

@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.26  2003/02/20 13:13:56  likewise
+ * Fixed some issues open after merging 'leon-dhcp'. Added new debugging.
+ *
  * Revision 1.25  2003/02/20 08:42:04  likewise
  * Merged with leon-dhcp branch. Tagged as POST_leon-dhcp afterwards.
  *
@@ -539,7 +542,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
     /* DHCP needs to know about ARP replies */
-    dhcp_arp_reply(struct netif *netif, &hdr->sipaddr);
+    dhcp_arp_reply(netif, &hdr->sipaddr);
 #endif
     /* ARP reply directed to us? */
     if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {

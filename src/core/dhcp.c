@@ -75,9 +75,9 @@
 static u32_t xid = 0xABCD0000;
 
 /** DHCP client state machine functions */
-static void dhcp_handle_ack(struct dhcp *dhcp);
-static void dhcp_handle_nak(struct dhcp *dhcp);
-static void dhcp_handle_offer(struct dhcp *dhcp);
+static void dhcp_handle_ack(struct netif *netif);
+static void dhcp_handle_nak(struct netif *netif);
+static void dhcp_handle_offer(struct netif *netif);
 
 static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
@@ -99,12 +99,12 @@ static void dhcp_free_reply(struct dhcp *dhcp);
 
 /** set the DHCP timers */
 static void dhcp_timeout(struct netif *netif);
-static void dhcp_t1_timeout(struct dhcp *dhcp);
-static void dhcp_t2_timeout(struct dhcp *dhcp);
+static void dhcp_t1_timeout(struct netif *netif);
+static void dhcp_t2_timeout(struct netif *netif);
 
 /** build outgoing messages */
-static err_t dhcp_create_request(struct dhcp *dhcp);
-static void dhcp_delete_request(struct dhcp *dhcp);
+static err_t dhcp_create_request(struct netif *netif);
+static void dhcp_delete_request(struct netif *netif);
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len);
 static void dhcp_option_byte(struct dhcp *dhcp, u8_t value);
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value);
@@ -122,7 +122,7 @@ static void dhcp_option_trailer(struct dhcp *dhcp);
  *
  * @param state pointer to DHCP state structure
  */ 
-static void dhcp_handle_nak(struct dhcp *dhcp) {
+static void dhcp_handle_nak(struct netif *netif) {
   struct dhcp *dhcp = netif->dhcp;
   u16_t msecs = 10 * 1000;
   DEBUGF(DHCP_DEBUG, ("dhcp_handle_nak()"));
@@ -150,7 +150,7 @@ static void dhcp_check(struct netif *netif)
   p = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
   if (p != NULL) {
     DEBUGF(DHCP_DEBUG, ("dhcp_check(): sending ARP request len %u", p->tot_len));
-    result = dhcp->netif->linkoutput(netif, p);
+    result = netif->linkoutput(netif, p);
     pbuf_free(p);
     p = NULL;
   }
@@ -166,8 +166,9 @@ static void dhcp_check(struct netif *netif)
  * 
  * @param state pointer to DHCP state structure
  */
-static void dhcp_handle_offer(struct dhcp *dhcp)
+static void dhcp_handle_offer(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   /* obtain the server address */
   u8_t *option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_SERVER_ID);
   if (option_ptr != NULL)
@@ -177,7 +178,7 @@ static void dhcp_handle_offer(struct dhcp *dhcp)
     /* remember offered address */
     ip_addr_set(&dhcp->offered_ip_addr, (struct ip_addr *)&dhcp->msg_in->yiaddr);
     DEBUGF(DHCP_DEBUG, ("dhcp_handle_offer(): offer for 0x%08lx", dhcp->offered_ip_addr.addr));
-    dhcp_select(dhcp);
+    dhcp_select(netif);
   }
 }
 
@@ -189,14 +190,15 @@ static void dhcp_handle_offer(struct dhcp *dhcp)
  * @param dhcp pointer to DHCP state structure
  * @return lwIP specific error (see error.h)
  */
-static err_t dhcp_select(struct dhcp *dhcp)
+static err_t dhcp_select(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u32_t msecs;
   DEBUGF(DHCP_DEBUG, ("dhcp_select()"));
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK)
   {
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
@@ -229,7 +231,7 @@ static err_t dhcp_select(struct dhcp *dhcp)
     udp_send(dhcp->pcb, dhcp->p_out);
     /* reconnect to any (or to server here?!) */
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   msecs = dhcp->tries < 4 ? dhcp->tries * 1000 : 4 * 1000;
@@ -302,20 +304,21 @@ void dhcp_fine_tmr()
  */
 static void dhcp_timeout(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   DEBUGF(DHCP_DEBUG, ("dhcp_timeout()"));
   /* back-off period has passed, or server selection timed out */
   if ((dhcp->state == DHCP_BACKING_OFF) || (dhcp->state == DHCP_SELECTING)) {
     DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): restarting discovery"));
-    dhcp_discover(dhcp);
+    dhcp_discover(netif);
   /* receiving the requested lease timed out */
   } else if (dhcp->state == DHCP_REQUESTING) {
     DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REQUESTING, DHCP request timed out"));
     if (dhcp->tries <= 5) {
-      dhcp_select(dhcp);
+      dhcp_select(netif);
     } else {
       DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REQUESTING, releasing, restarting"));
-      dhcp_release(dhcp);
-      dhcp_discover(dhcp);
+      dhcp_release(netif);
+      dhcp_discover(netif);
     }
   /* received no ARP reply for the offered address (which is good) */
   } else if (dhcp->state == DHCP_CHECKING) {
@@ -334,16 +337,16 @@ static void dhcp_timeout(struct netif *netif)
     DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): RENEWING, DHCP request timed out"));
     /* just retry renewal */ 
     /* note that the rebind timer will eventually time-out if renew does not work */
-    dhcp_renew(dhcp);
+    dhcp_renew(netif);
   /* did not get response to rebind request? */
   } else if (dhcp->state == DHCP_REBINDING) {
     DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REBINDING, DHCP request timed out"));
     if (dhcp->tries <= 8) {
-      dhcp_rebind(dhcp);
+      dhcp_rebind(netif);
     } else {
       DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): RELEASING, DISCOVERING"));
-      dhcp_release(dhcp);
-      dhcp_discover(dhcp);
+      dhcp_release(netif);
+      dhcp_discover(netif);
     }
   }
 }
@@ -385,8 +388,9 @@ static void dhcp_t2_timeout(struct netif *netif)
  *
  * @param dhcp pointer to DHCP state structure
  */
-static void dhcp_handle_ack(struct dhcp *dhcp)
+static void dhcp_handle_ack(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   u8_t *option_ptr;
   /* clear options we might not get from the ACK */
   dhcp->offered_sn_mask.addr = 0;
@@ -456,12 +460,12 @@ static void dhcp_handle_ack(struct dhcp *dhcp)
  * (due to unavailable memory or network resources).
  *
  */
-struct dhcp *dhcp_start(struct netif *netif)
+err_t dhcp_start(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   err_t result = ERR_OK;
 
-  DEBUGF(DHCP_DEBUG, ("dhcp_start(netif=%c%c%u)", netif->, netif->, netif->num));
+  DEBUGF(DHCP_DEBUG, ("dhcp_start(netif=%c%c%u)", netif->name[0], netif->name[1], netif->num));
 
   if (dhcp == NULL) {
     DEBUGF(DHCP_DEBUG, ("dhcp_start(): starting new DHCP client"));
@@ -528,7 +532,7 @@ void dhcp_inform(struct netif *netif)
   }
   DEBUGF(DHCP_DEBUG, ("dhcp_inform(): created new udp pcb"));
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK) {
 
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
@@ -546,7 +550,7 @@ void dhcp_inform(struct netif *netif)
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
 
   if (dhcp != NULL)
@@ -572,7 +576,7 @@ void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr)
     DEBUGF(DHCP_DEBUG, ("dhcp_arp_reply(): CHECKING, arp reply for 0x%08lx", addr->addr));
     /* did a host respond with the address we
        were offered by the DHCP server? */
-    if (ip_addr_cmp(addr, &dhcp->offered_ip_addr)) {
+    if (ip_addr_cmp(addr, &netif->dhcp->offered_ip_addr)) {
       /* we will not accept the offered address */
       DEBUGF(DHCP_DEBUG, ("dhcp_arp_reply(): arp reply matched with offered address, declining"));
       dhcp_decline(netif);
@@ -595,7 +599,7 @@ static err_t dhcp_decline(struct netif *netif)
   DEBUGF(DHCP_DEBUG, ("dhcp_decline()"));
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK)
   {
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
@@ -611,7 +615,7 @@ static err_t dhcp_decline(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   msecs = 10*1000;
@@ -634,7 +638,7 @@ static err_t dhcp_discover(struct netif *netif)
   DEBUGF(DHCP_DEBUG, ("dhcp_discover()"));
   ip_addr_set(&dhcp->offered_ip_addr, IP_ADDR_ANY);
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK)
   {
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
@@ -660,7 +664,7 @@ static err_t dhcp_discover(struct netif *netif)
     udp_send(dhcp->pcb, dhcp->p_out);
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   msecs = dhcp->tries < 4 ? (dhcp->tries + 1) * 1000 : 10 * 1000;
@@ -700,7 +704,7 @@ static void dhcp_bind(struct netif *netif)
   ip_addr_set(&sn_mask, &dhcp->offered_sn_mask);
 
   /* subnet mask not given? */
-  /* TODO: this is not a valid check. what if the network mask is 0??!! */
+  /* TODO: this is not a valid check. what if the network mask is 0? */
   if (sn_mask.addr == 0) {
     /* choose a safe subnet mask given the network class */
     u8_t first_octet = ip4_addr1(&sn_mask);
@@ -713,7 +717,7 @@ static void dhcp_bind(struct netif *netif)
   /* gateway address not given? */
   if (gw_addr.addr == 0) {
     /* copy network address */
-    gw_addr.addr = (&dhcp->offered_ip_addr & sn_mask.addr);
+    gw_addr.addr = (dhcp->offered_ip_addr.addr & sn_mask.addr);
     /* use first host address on network as gateway */
     gw_addr.addr |= htonl(0x00000001);
   }
@@ -742,7 +746,7 @@ err_t dhcp_renew(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_RENEWING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK) {
 
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
@@ -769,7 +773,7 @@ err_t dhcp_renew(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   /* back-off on retries, but to a maximum of 20 seconds */
@@ -793,7 +797,7 @@ static err_t dhcp_rebind(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_REBINDING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK)
   {
 
@@ -819,7 +823,7 @@ static err_t dhcp_rebind(struct netif *netif)
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
@@ -843,7 +847,7 @@ static err_t dhcp_release(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_OFF);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(dhcp);
+  result = dhcp_create_request(netif);
   if (result == ERR_OK) {
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
     dhcp_option_byte(dhcp, DHCP_RELEASE);
@@ -855,7 +859,7 @@ static err_t dhcp_release(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_request(netif);
   }
   dhcp->tries++;
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
@@ -1090,7 +1094,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     DEBUGF(DHCP_DEBUG, ("DHCP_ACK received")); 
     /* in requesting state? */
     if (dhcp->state == DHCP_REQUESTING) {
-      dhcp_handle_ack(dhcp);
+      dhcp_handle_ack(netif);
       dhcp->request_timeout = 0;
 #if DHCP_DOES_ARP_CHECK
       /* check if the acknowledged lease address is already in use */
@@ -1112,21 +1116,22 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
      (dhcp->state == DHCP_REBINDING) || (dhcp->state == DHCP_RENEWING  ))) {
     DEBUGF(DHCP_DEBUG, ("DHCP_NAK received")); 
     dhcp->request_timeout = 0;
-    dhcp_handle_nak(dhcp);
+    dhcp_handle_nak(netif);
   }
   /* received a DHCP_OFFER in DHCP_SELECTING state? */
   else if ((msg_type == DHCP_OFFER) && (dhcp->state == DHCP_SELECTING)) {
     DEBUGF(DHCP_DEBUG, ("DHCP_OFFER received in DHCP_SELECTING state")); 
     dhcp->request_timeout = 0;
     /* remember offered lease */
-    dhcp_handle_offer(dhcp);
+    dhcp_handle_offer(netif);
   }
   pbuf_free(p);
 }
 
 
-static err_t dhcp_create_request(struct dhcp *dhcp)
+static err_t dhcp_create_request(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   u16_t i;
   LWIP_ASSERT("dhcp_create_request: dhcp->p_out == NULL", dhcp->p_out == NULL);
   LWIP_ASSERT("dhcp_create_request: dhcp->msg_out == NULL", dhcp->msg_out == NULL);
@@ -1166,8 +1171,9 @@ static err_t dhcp_create_request(struct dhcp *dhcp)
   return ERR_OK;
 }
 
-static void dhcp_delete_request(struct dhcp *dhcp)
+static void dhcp_delete_request(struct netif *netif)
 {
+  struct dhcp *dhcp = netif->dhcp;
   LWIP_ASSERT("dhcp_free_msg: dhcp->p_out != NULL", dhcp->p_out != NULL);
   LWIP_ASSERT("dhcp_free_msg: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
   pbuf_free(dhcp->p_out);
