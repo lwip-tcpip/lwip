@@ -788,28 +788,24 @@ pbuf_dechain(struct pbuf *p)
  * Used to queue packets on behalf of the lwIP stack, such as
  * ARP based queueing.
  *
- * @param f Head of pbuf chain to process
+ * @param p Head of pbuf chain to process
  *
  * @return Pointer to new head of pbuf chain 
  */
 struct pbuf *
-pbuf_take(struct pbuf *f)
+pbuf_take(struct pbuf *p)
 {
-  struct pbuf *p, *prev, *top;
-  LWIP_ASSERT("pbuf_take: f != NULL\n", f != NULL);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)f));
+  struct pbuf *q , *prev, *head;
+  LWIP_ASSERT("pbuf_take: p != NULL\n", p != NULL);
+  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)p));
 
   prev = NULL;
-  p = f;
-  top = f;
+  head = p;
   /* iterate through pbuf chain */
   do
   {
     /* pbuf is of type PBUF_REF? */
-    if (p->flags == PBUF_FLAG_REF)
-    {
-      /* the replacement pbuf */
-      struct pbuf *q;
+    if (p->flags == PBUF_FLAG_REF) {
       DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
       /* allocate a pbuf (w/ payload) fully in RAM */
       /* PBUF_POOL buffers are faster if we can use them */
@@ -837,11 +833,12 @@ pbuf_take(struct pbuf *f)
         /* remove linkage to original pbuf */
         if (prev != NULL) {
           /* prev->next == p at this point */
+          LWIP_ASSERT("prev->next == p", prev->next == p);
           /* break chain and insert new pbuf instead */
           prev->next = q;
-        /* prev == NULL, so we replaced the top pbuf of the chain */
+        /* prev == NULL, so we replaced the head pbuf of the chain */
         } else {
-          top = q;
+          head = q;
         }
         /* copy pbuf payload */
         memcpy(q->payload, p->payload, p->len);
@@ -860,7 +857,7 @@ pbuf_take(struct pbuf *f)
         p = q;
       } else {
         /* deallocate chain */
-        pbuf_free(top);
+        pbuf_free(head);
         DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
         return NULL;
       }
@@ -875,6 +872,6 @@ pbuf_take(struct pbuf *f)
   } while (p);
   DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
   
-  return top;
+  return head;
 }
 
