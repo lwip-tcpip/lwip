@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -52,8 +52,8 @@ static u16_t
 lwip_chksum(void *dataptr, int len)
 {
   u32_t acc;
-    
-  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", dataptr, len));
+
+  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", (void *)dataptr, len));
   for(acc = 0; len > 1; len -= 2) {
       /*    acc = acc + *((u16_t *)dataptr)++;*/
     acc += *(u16_t *)dataptr;
@@ -63,7 +63,7 @@ lwip_chksum(void *dataptr, int len)
   /* add up any odd byte */
   if (len == 1) {
     acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
-    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", *(u8_t *)dataptr));
+    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", (unsigned int)(*(u8_t *)dataptr)));
   } else {
     LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
   }
@@ -93,8 +93,9 @@ inet_chksum_pseudo(struct pbuf *p,
   acc = 0;
   swapped = 0;
   /* iterate through all pbuf in chain */
-  for(q = p; q != NULL; q = q->next) {    
-    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n", (void *) q, (void *)q->next));
+  for(q = p; q != NULL; q = q->next) {
+    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
+      (void *)q, (void *)q->next));
     acc += lwip_chksum(q->payload, q->len);
     /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%lx \n", acc));*/
     while (acc >> 16) {
@@ -115,11 +116,11 @@ inet_chksum_pseudo(struct pbuf *p,
   acc += (dest->addr & 0xffffUL);
   acc += ((dest->addr >> 16) & 0xffffUL);
   acc += (u32_t)htons((u16_t)proto);
-  acc += (u32_t)htons(proto_len);  
-  
+  acc += (u32_t)htons(proto_len);
+
   while (acc >> 16) {
     acc = (acc & 0xffffUL) + (acc >> 16);
-  }    
+  }
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
   return ~(acc & 0xffffUL);
 }
@@ -138,7 +139,7 @@ inet_chksum(void *dataptr, u16_t len)
   acc = lwip_chksum(dataptr, len);
   while (acc >> 16) {
     acc = (acc & 0xffff) + (acc >> 16);
-  }    
+  }
   return ~(acc & 0xffff);
 }
 /*-----------------------------------------------------------------------------------*/
@@ -148,20 +149,20 @@ inet_chksum_pbuf(struct pbuf *p)
   u32_t acc;
   struct pbuf *q;
   u8_t swapped;
-  
+
   acc = 0;
   swapped = 0;
   for(q = p; q != NULL; q = q->next) {
     acc += lwip_chksum(q->payload, q->len);
     while (acc >> 16) {
       acc = (acc & 0xffffUL) + (acc >> 16);
-    }    
+    }
     if (q->len % 2 != 0) {
       swapped = 1 - swapped;
       acc = (acc & 0x00ffUL << 8) | (acc & 0xff00UL >> 8);
     }
   }
- 
+
   if (swapped) {
     acc = ((acc & 0x00ffUL) << 8) | ((acc & 0xff00UL) >> 8);
   }
@@ -173,20 +174,20 @@ inet_chksum_pbuf(struct pbuf *p)
   * Ascii internet address interpretation routine.
   * The value returned is in network order.
   */
- 
+
  /*  */
  /* inet_addr */
  u32_t inet_addr(const char *cp)
  {
      struct in_addr val;
- 
+
      if (inet_aton(cp, &val)) {
          return (val.s_addr);
      }
      return (INADDR_NONE);
  }
- 
- /* 
+
+ /*
   * Check whether "cp" is a valid ascii representation
   * of an Internet address and convert to a binary address.
   * Returns 1 if the address is valid, 0 if not.
@@ -202,7 +203,7 @@ inet_chksum_pbuf(struct pbuf *p)
      char c;
      u32_t parts[4];
      u32_t* pp = parts;
- 
+
      c = *cp;
      for (;;) {
          /*
@@ -256,25 +257,25 @@ inet_chksum_pbuf(struct pbuf *p)
       */
      n = pp - parts + 1;
      switch (n) {
- 
+
      case 0:
          return (0);     /* initial nondigit */
- 
+
      case 1:             /* a -- 32 bits */
          break;
- 
+
      case 2:             /* a.b -- 8.24 bits */
          if (val > 0xffffff)
              return (0);
          val |= parts[0] << 24;
          break;
- 
+
      case 3:             /* a.b.c -- 8.8.16 bits */
          if (val > 0xffff)
              return (0);
          val |= (parts[0] << 24) | (parts[1] << 16);
          break;
- 
+
      case 4:             /* a.b.c.d -- 8.8.8.8 bits */
          if (val > 0xff)
              return (0);

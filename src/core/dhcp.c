@@ -3,14 +3,14 @@
  *
  * Dynamic Host Configuration Protocol client
  */
- 
+
 /*
  *
  * Copyright (c) 2001-2003 Leon Woestenberg <leon.woestenberg@gmx.net>
  * Copyright (c) 2001-2003 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or without modification, 
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -19,26 +19,26 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is a contribution to the lwIP TCP/IP stack.
  * The Swedish Institute of Computer Science and Adam Dunkels
  * are specifically granted permission to redistribute this
  * source code.
- * 
+ *
  * Author: Leon Woestenberg <leon.woestenberg@gmx.net>
- * 
+ *
  * This is a DHCP client for the lwIP TCP/IP stack. It aims to conform
  * with RFC 2131 and RFC 2132.
  *
@@ -135,11 +135,12 @@ static void dhcp_option_trailer(struct dhcp *dhcp);
  * We back-off and will end up restarting a fresh DHCP negotiation later.
  *
  * @param state pointer to DHCP state structure
- */ 
+ */
 static void dhcp_handle_nak(struct netif *netif) {
   struct dhcp *dhcp = netif->dhcp;
   u16_t msecs = 10 * 1000;
-  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_nak(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_nak(netif=%p) %c%c%u\n", netif,
+    netif->name[0], netif->name[1], (unsigned int)netif->num));
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_handle_nak(): set request timeout %u msecs\n", msecs));
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
@@ -147,7 +148,7 @@ static void dhcp_handle_nak(struct netif *netif) {
 
 /**
  * Checks if the offered IP address is already in use.
- * 
+ *
  * It does so by sending an ARP request for the offered address and
  * entering CHECKING state. If no ARP reply is received within a small
  * interval, the address is assumed to be free for use by us.
@@ -157,7 +158,8 @@ static void dhcp_check(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
-  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_check(netif=%p) %c%c\n", netif, netif->name[0], netif->name[1]));
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_check(netif=%p) %c%c\n", (void *)netif, (unsigned int)netif->name[0],
+    (unsigned int)netif->name[1]));
   /* create an ARP query for the offered IP address, expecting that no host
      responds, as the IP address should not be in use. */
   result = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
@@ -173,7 +175,7 @@ static void dhcp_check(struct netif *netif)
 
 /**
  * Remember the configuration offered by a DHCP server.
- * 
+ *
  * @param state pointer to DHCP state structure
  */
 static void dhcp_handle_offer(struct netif *netif)
@@ -181,7 +183,8 @@ static void dhcp_handle_offer(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   /* obtain the server address */
   u8_t *option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_SERVER_ID);
-  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_offer(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_offer(netif=%p) %c%c%u\n", netif,
+    netif->name[0], netif->name[1], netif->num));
   if (option_ptr != NULL)
   {
     dhcp->server_ip_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
@@ -313,10 +316,10 @@ void dhcp_fine_tmr()
  * A DHCP negotiation transaction, or ARP request, has timed out.
  *
  * The timer that was started with the DHCP or ARP request has
- * timed out, indicating no response was received in time. 
+ * timed out, indicating no response was received in time.
  *
  * @param netif the netif under DHCP control
- * 
+ *
  */
 static void dhcp_timeout(struct netif *netif)
 {
@@ -341,7 +344,7 @@ static void dhcp_timeout(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_timeout(): CHECKING, ARP request timed out\n"));
     if (dhcp->tries <= 1) {
       dhcp_check(netif);
-    /* no ARP replies on the offered address, 
+    /* no ARP replies on the offered address,
        looks like the IP address is indeed free */
     } else {
       /* bind the interface to the offered address */
@@ -351,7 +354,7 @@ static void dhcp_timeout(struct netif *netif)
   /* did not get response to renew request? */
   else if (dhcp->state == DHCP_RENEWING) {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_timeout(): RENEWING, DHCP request timed out\n"));
-    /* just retry renewal */ 
+    /* just retry renewal */
     /* note that the rebind timer will eventually time-out if renew does not work */
     dhcp_renew(netif);
   /* did not get response to rebind request? */
@@ -483,7 +486,7 @@ static void dhcp_handle_ack(struct netif *netif)
  * a new client is created first. If a DHCP client instance
  * was already present, it restarts negotiation.
  *
- * @param netif The lwIP network interface 
+ * @param netif The lwIP network interface
  * @return lwIP error code
  * - ERR_OK - No error
  * - ERR_MEM - Out of memory
@@ -534,14 +537,14 @@ err_t dhcp_start(struct netif *netif)
 
 /**
  * Inform a DHCP server of our manual configuration.
- * 
+ *
  * This informs DHCP servers of our fixed IP address configuration
  * by sending an INFORM message. It does not involve DHCP address
  * configuration, it is just here to be nice to the network.
  *
- * @param netif The lwIP network interface 
+ * @param netif The lwIP network interface
  *
- */ 
+ */
 void dhcp_inform(struct netif *netif)
 {
   struct dhcp *dhcp;
@@ -550,7 +553,7 @@ void dhcp_inform(struct netif *netif)
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_inform(): could not allocate dhcp\n"));
     return;
-  }  
+  }
   netif->dhcp = dhcp;
   memset(dhcp, 0, sizeof(struct dhcp));
 
@@ -619,7 +622,7 @@ void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr)
   }
 }
 
-/** 
+/**
  * Decline an offered lease.
  *
  * Tell the DHCP server we do not accept the offered address.
@@ -735,7 +738,7 @@ static void dhcp_bind(struct netif *netif)
   LWIP_ASSERT("dhcp_bind: netif != NULL", netif != NULL);
   LWIP_ASSERT("dhcp_bind: dhcp != NULL", dhcp != NULL);
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_bind(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
-  
+
   /* temporary DHCP lease? */
   if (dhcp->offered_t1_renew != 0xffffffffUL) {
     /* set renewal period timer */
@@ -785,7 +788,7 @@ static void dhcp_bind(struct netif *netif)
 
 /**
  * Renew an existing DHCP lease at the involved DHCP server.
- * 
+ *
  * @param netif network interface which must renew its lease
  */
 err_t dhcp_renew(struct netif *netif)
@@ -840,7 +843,7 @@ err_t dhcp_renew(struct netif *netif)
 
 /**
  * Rebind with a DHCP server for an existing DHCP lease.
- * 
+ *
  * @param netif network interface which must rebind with a DHCP server
  */
 static err_t dhcp_rebind(struct netif *netif)
@@ -892,7 +895,7 @@ static err_t dhcp_rebind(struct netif *netif)
 
 /**
  * Release a DHCP lease.
- * 
+ *
  * @param netif network interface which must release its lease
  */
 static err_t dhcp_release(struct netif *netif)
@@ -968,7 +971,7 @@ void dhcp_stop(struct netif *netif)
 
 /*
  * Set the DHCP state of a DHCP client.
- * 
+ *
  * If the state changed, reset the number of tries.
  *
  * TODO: we might also want to reset the timeout here?
@@ -1001,7 +1004,7 @@ static void dhcp_option_byte(struct dhcp *dhcp, u8_t value)
 {
   LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len < DHCP_OPTIONS_LEN", dhcp->options_out_len < DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = value;
-}                             
+}
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value)
 {
   LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN);
@@ -1025,7 +1028,7 @@ static void dhcp_option_long(struct dhcp *dhcp, u32_t value)
  * and also allows overriding some fields for options, the easy approach
  * is to first unfold the options into a conitguous piece of memory, and
  * use that further on.
- * 
+ *
  */
 static err_t dhcp_unfold_reply(struct dhcp *dhcp)
 {
@@ -1043,14 +1046,14 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
     dhcp->options_in = mem_malloc(dhcp->options_in_len);
     if (dhcp->options_in == NULL)
     {
-      LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->options\n")); 
+      LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->options\n"));
       return ERR_MEM;
     }
   }
   dhcp->msg_in = mem_malloc(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
   if (dhcp->msg_in == NULL)
   {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n")); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n"));
     mem_free((void *)dhcp->options_in);
     dhcp->options_in = NULL;
     return ERR_MEM;
@@ -1069,7 +1072,7 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
       j = 0;
     }
   }
-  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_unfold_reply(): copied %u bytes into dhcp->msg_in[]\n", i)); 
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_unfold_reply(): copied %u bytes into dhcp->msg_in[]\n", i));
   if (dhcp->options_in != NULL) {
     ptr = (u8_t *)dhcp->options_in;
     /* proceed through options */
@@ -1082,13 +1085,13 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
         j = 0;
       }
     }
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_unfold_reply(): copied %u bytes to dhcp->options_in[]\n", i)); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_unfold_reply(): copied %u bytes to dhcp->options_in[]\n", i));
   }
   return ERR_OK;
 }
 
 /**
- * Free the incoming DHCP message including contiguous copy of 
+ * Free the incoming DHCP message including contiguous copy of
  * its DHCP options.
  *
  */
@@ -1103,7 +1106,7 @@ static void dhcp_free_reply(struct dhcp *dhcp)
     dhcp->options_in = NULL;
     dhcp->options_in_len = 0;
   }
-  LWIP_DEBUGF(DHCP_DEBUG, ("dhcp_free_reply(): free'd\n")); 
+  LWIP_DEBUGF(DHCP_DEBUG, ("dhcp_free_reply(): free'd\n"));
 }
 
 
@@ -1135,7 +1138,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   }
   /* iterate through hardware address and match against DHCP message */
   for (i = 0; i < netif->hwaddr_len; i++) {
-    if (netif->hwaddr[i] != reply_msg->chaddr[i]) { 
+    if (netif->hwaddr[i] != reply_msg->chaddr[i]) {
       LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("netif->hwaddr[%u]==%02x != reply_msg->chaddr[%u]==%02x\n",
         i, netif->hwaddr[i], i, reply_msg->chaddr[i]));
       pbuf_free(p);
@@ -1157,22 +1160,22 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     dhcp->p = NULL;
     return;
   }
-  
+
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("searching DHCP_OPTION_MESSAGE_TYPE\n"));
-  /* obtain pointer to DHCP message type */ 
+  /* obtain pointer to DHCP message type */
   options_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_MESSAGE_TYPE);
   if (options_ptr == NULL) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_OPTION_MESSAGE_TYPE option not found\n")); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_OPTION_MESSAGE_TYPE option not found\n"));
     pbuf_free(p);
     dhcp->p = NULL;
     return;
-  }  
+  }
 
   /* read DHCP message type */
   msg_type = dhcp_get_option_byte(options_ptr + 2);
   /* message type is DHCP ACK? */
   if (msg_type == DHCP_ACK) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_ACK received\n")); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_ACK received\n"));
     /* in requesting state? */
     if (dhcp->state == DHCP_REQUESTING) {
       dhcp_handle_ack(netif);
@@ -1193,15 +1196,15 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   }
   /* received a DHCP_NAK in appropriate state? */
   else if ((msg_type == DHCP_NAK) &&
-    ((dhcp->state == DHCP_REBOOTING) || (dhcp->state == DHCP_REQUESTING) || 
+    ((dhcp->state == DHCP_REBOOTING) || (dhcp->state == DHCP_REQUESTING) ||
      (dhcp->state == DHCP_REBINDING) || (dhcp->state == DHCP_RENEWING  ))) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_NAK received\n")); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_NAK received\n"));
     dhcp->request_timeout = 0;
     dhcp_handle_nak(netif);
   }
   /* received a DHCP_OFFER in DHCP_SELECTING state? */
   else if ((msg_type == DHCP_OFFER) && (dhcp->state == DHCP_SELECTING)) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_OFFER received in DHCP_SELECTING state\n")); 
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 1, ("DHCP_OFFER received in DHCP_SELECTING state\n"));
     dhcp->request_timeout = 0;
     /* remember offered lease */
     dhcp_handle_offer(netif);
@@ -1223,17 +1226,17 @@ static err_t dhcp_create_request(struct netif *netif)
     return ERR_MEM;
   }
   /* give unique transaction identifier to this request */
-  dhcp->xid = xid++;  
+  dhcp->xid = xid++;
 
   dhcp->msg_out = (struct dhcp_msg *)dhcp->p_out->payload;
 
   dhcp->msg_out->op = DHCP_BOOTREQUEST;
-  /* TODO: make link layer independent */  
-  dhcp->msg_out->htype = DHCP_HTYPE_ETH;  
-  /* TODO: make link layer independent */  
-  dhcp->msg_out->hlen = DHCP_HLEN_ETH;  
+  /* TODO: make link layer independent */
+  dhcp->msg_out->htype = DHCP_HTYPE_ETH;
+  /* TODO: make link layer independent */
+  dhcp->msg_out->hlen = DHCP_HLEN_ETH;
   dhcp->msg_out->hops = 0;
-  dhcp->msg_out->xid = htonl(dhcp->xid);  
+  dhcp->msg_out->xid = htonl(dhcp->xid);
   dhcp->msg_out->secs = 0;
   dhcp->msg_out->flags = 0;
   dhcp->msg_out->ciaddr = netif->ip_addr.addr;
@@ -1374,7 +1377,7 @@ static u8_t dhcp_get_option_byte(u8_t *ptr)
 {
   LWIP_DEBUGF(DHCP_DEBUG, ("option byte value=%u\n", *ptr));
   return *ptr;
-}                             
+}
 
 /**
  * Return the 16-bit value of DHCP option data.
@@ -1391,7 +1394,7 @@ static u16_t dhcp_get_option_short(u8_t *ptr)
   value |= *ptr;
   LWIP_DEBUGF(DHCP_DEBUG, ("option short value=%u\n", value));
   return value;
-}                             
+}
 
 /**
  * Return the 32-bit value of DHCP option data.
@@ -1410,4 +1413,4 @@ static u32_t dhcp_get_option_long(u8_t *ptr)
   value |= (u32_t)(*ptr++);
   LWIP_DEBUGF(DHCP_DEBUG, ("option long value=%lu\n", value));
   return value;
-}                             
+}

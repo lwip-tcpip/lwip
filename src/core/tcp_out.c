@@ -5,9 +5,9 @@
  */
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -16,21 +16,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -75,7 +75,8 @@ tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 {
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%u, copy=%d)\n", (void *)pcb, arg, len, copy));
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%u, copy=%d)\n", (void *)pcb,
+    arg, len, (unsigned int)copy));
   if (pcb->state == SYN_SENT ||
      pcb->state == SYN_RCVD ||
      pcb->state == ESTABLISHED ||
@@ -102,12 +103,13 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   void *ptr;
   u8_t queuelen;
 
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%u, flags=%x, copy=%d)\n", (void *)pcb, arg, len, flags, copy));
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%u, flags=%x, copy=%u)\n",
+    (void *)pcb, arg, len, (unsigned int)flags, (unsigned int)copy));
   left = len;
   ptr = arg;
   /* fail on too much data */
   if (len > pcb->snd_buf) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%d > snd_buf=%d)\n", len, pcb->snd_buf));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%u > snd_buf=%u)\n", len, pcb->snd_buf));
     return ERR_MEM;
   }
 
@@ -116,19 +118,19 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   seqno = pcb->snd_lbb;
 
   queue = NULL;
-  LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: queuelen: %d\n", pcb->snd_queuelen));
+  LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: queuelen: %u\n", (unsigned int)pcb->snd_queuelen));
 
   /* Check if the queue length exceeds the configured maximum queue
    * length. If so, we return an error. */
   queuelen = pcb->snd_queuelen;
   if (queuelen >= TCP_SND_QUEUELEN) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %u (max %u)\n", queuelen, TCP_SND_QUEUELEN));
     goto memerr;
-  }   
+  }
 
   if (pcb->snd_queuelen != 0) {
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
-    pcb->unsent != NULL);      
+    pcb->unsent != NULL);
   }
 
   seg = NULL;
@@ -173,7 +175,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     else if (copy) {
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));    
+        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %u\n", seglen));
         goto memerr;
       }
       ++queuelen;
@@ -191,7 +193,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        * instead of PBUF_REF here.
        */
       if ((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));        
+        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));
         goto memerr;
       }
       ++queuelen;
@@ -203,7 +205,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
         /* If allocation fails, we have to deallocate the data pbuf as
          * well. */
         pbuf_free(p);
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));      
+        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));
         goto memerr;
       }
       ++queuelen;
@@ -217,13 +219,13 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum. */
     if (queuelen > TCP_SND_QUEUELEN) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN));   
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %u (%u)\n", queuelen, TCP_SND_QUEUELEN));
       goto memerr;
     }
 
     seg->len = seglen;
 #if 0 /* Was commented out. TODO: can someone say why this is here? */
-    if ((flags & TCP_SYN) || (flags & TCP_FIN)) { 
+    if ((flags & TCP_SYN) || (flags & TCP_FIN)) {
       ++seg->len;
     }
 #endif
@@ -300,7 +302,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     memp_free(MEMP_TCP_SEG, queue);
   }
-  else {      
+  else {
     if (useg == NULL) {
       pcb->unsent = queue;
 
@@ -365,10 +367,10 @@ tcp_output(struct tcp_pcb *pcb)
   if (tcp_input_pcb == pcb) {
     return ERR_OK;
   }
-  
+
   wnd = LWIP_MIN(pcb->snd_wnd, pcb->cwnd);
 
-  
+
   seg = pcb->unsent;
 
   /* If the TF_ACK_NOW flag is set, we check if there is data that is
@@ -386,8 +388,8 @@ tcp_output(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
       return ERR_BUF;
     }
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: sending ACK for %lu\n", pcb->rcv_nxt));    
-    
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: sending ACK for %lu\n", pcb->rcv_nxt));
+
     tcphdr = p->payload;
     tcphdr->src = htons(pcb->local_port);
     tcphdr->dest = htons(pcb->remote_port);
@@ -397,7 +399,7 @@ tcp_output(struct tcp_pcb *pcb)
     tcphdr->wnd = htons(pcb->rcv_wnd);
     tcphdr->urgp = 0;
     TCPH_OFFSET_SET(tcphdr, 5 << 4);
-    
+
     tcphdr->chksum = 0;
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
           IP_PROTO_TCP, p->tot_len);
@@ -407,8 +409,8 @@ tcp_output(struct tcp_pcb *pcb)
     pbuf_free(p);
 
     return ERR_OK;
-  } 
-  
+  }
+
 #if TCP_OUTPUT_DEBUG
   if (seg == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: nothing to send (%p)\n", pcb->unsent));
@@ -426,7 +428,7 @@ tcp_output(struct tcp_pcb *pcb)
                             ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 #endif /* TCP_CWND_DEBUG */
-  
+
   while (seg != NULL &&
   ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
 #if TCP_CWND_DEBUG
@@ -439,12 +441,12 @@ tcp_output(struct tcp_pcb *pcb)
 #endif /* TCP_CWND_DEBUG */
 
     pcb->unsent = seg->next;
-    
+
     if (pcb->state != SYN_SENT) {
       TCPH_FLAGS_SET(seg->tcphdr, TCPH_FLAGS(seg->tcphdr) | TCP_ACK);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
-    
+
     tcp_output_segment(seg, pcb);
     pcb->snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_max, pcb->snd_nxt)) {
@@ -455,8 +457,8 @@ tcp_output(struct tcp_pcb *pcb)
       seg->next = NULL;
       if (pcb->unacked == NULL) {
         pcb->unacked = seg;
-  
-  
+
+
       } else {
         for (useg = pcb->unacked; useg->next != NULL; useg = useg->next);
         useg->next = seg;
@@ -465,7 +467,7 @@ tcp_output(struct tcp_pcb *pcb)
       tcp_seg_free(seg);
     }
     seg = pcb->unsent;
-  }  
+  }
   return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -498,7 +500,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   }
 
   pcb->rtime = 0;
-  
+
   if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;
     pcb->rtseq = ntohl(seg->tcphdr->seqno);
@@ -510,12 +512,12 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
           seg->len));
 
   len = (u16_t)((u8_t *)seg->tcphdr - (u8_t *)seg->p->payload);
-  
+
   seg->p->len -= len;
   seg->p->tot_len -= len;
-  
+
   seg->p->payload = seg->tcphdr;
-    
+
   seg->tcphdr->chksum = 0;
   seg->tcphdr->chksum = inet_chksum_pseudo(seg->p,
              &(pcb->local_ip),
@@ -551,7 +553,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   tcphdr->wnd = htons(TCP_WND);
   tcphdr->urgp = 0;
   TCPH_OFFSET_SET(tcphdr, 5 << 4);
-  
+
   tcphdr->chksum = 0;
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,
               IP_PROTO_TCP, p->tot_len);
@@ -572,23 +574,23 @@ tcp_rexmit(struct tcp_pcb *pcb)
   if (pcb->unacked == NULL) {
     return;
   }
-  
+
   /* Move all unacked segments to the unsent queue. */
   for (seg = pcb->unacked; seg->next != NULL; seg = seg->next);
-  
+
   seg->next = pcb->unsent;
   pcb->unsent = pcb->unacked;
-  
+
   pcb->unacked = NULL;
-  
-  
+
+
   pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
-  
+
   ++pcb->nrtx;
-  
-  /* Don't take any rtt measurements after retransmitting. */    
+
+  /* Don't take any rtt measurements after retransmitting. */
   pcb->rttest = 0;
-  
+
   /* Do the actual retransmission. */
   tcp_output(pcb);
 

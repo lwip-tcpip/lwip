@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -36,7 +36,7 @@
  *
  * This is the code for the IP layer.
  *
- */   
+ */
 /*-----------------------------------------------------------------------------------*/
 
 #include "lwip/opt.h"
@@ -104,13 +104,13 @@ ip_lookup(void *header, struct netif *inp)
     return 0;
   }
 #endif /* IP_OPTIONS == 0 */
-  
+
   switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
     return udp_lookup(iphdr, inp);
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0    
+#if LWIP_TCP > 0
   case IP_PROTO_TCP:
     return 1;
 #endif /* LWIP_TCP */
@@ -135,7 +135,7 @@ ip_route(struct ip_addr *dest)
 {
   struct netif *netif;
 
-  /* iterate through netifs */  
+  /* iterate through netifs */
   for(netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
     if (ip_addr_maskcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
@@ -159,7 +159,7 @@ static void
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
-  
+
   PERF_START;
   /* Find network interface where to forward this IP packet to. */
   netif = ip_route((struct ip_addr *)&(iphdr->dest));
@@ -176,7 +176,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     snmp_inc_ipnoroutes();
     return;
   }
-  
+
   /* decrement TTL */
   IPH_TTL_SET(iphdr, IPH_TTL(iphdr) - 1);
   /* send ICMP if TTL == 0 */
@@ -186,9 +186,9 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
       icmp_time_exceeded(p, ICMP_TE_TTL);
       snmp_inc_icmpouttimeexcds();
     }
-    return;       
+    return;
   }
-  
+
   /* Incrementally update the IP checksum. */
   if (IPH_CHKSUM(iphdr) >= htons(0xffff - 0x100)) {
     IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100) + 1);
@@ -227,7 +227,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   static struct ip_hdr *iphdr;
   static struct netif *netif;
   static u16_t iphdrlen;
-  
+
 #ifdef IP_STATS
   ++lwip_stats.ip.recv;
 #endif /* IP_STATS */
@@ -236,7 +236,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* identify the IP header */
   iphdr = p->payload;
   if (IPH_V(iphdr) != 4) {
-    LWIP_DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %d\n", IPH_V(iphdr)));
+    LWIP_DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %u\n", IPH_V(iphdr)));
 #if IP_DEBUG
     ip_debug_print(p);
 #endif /* IP_DEBUG */
@@ -253,7 +253,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* calculate IP header length in bytes */
   iphdrlen *= 4;
 
-  /* header length exceeds first pbuf length? */  
+  /* header length exceeds first pbuf length? */
   if (iphdrlen > p->len) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP header (len %u) does not fit in first pbuf (len %u), IP packet droppped.\n",
       iphdrlen, p->len));
@@ -282,7 +282,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
-  
+
   /* Trim pbuf. This should have been done at the netif layer,
      but we'll do it anyway just to be sure that its done. */
   pbuf_realloc(p, ntohs(IPH_LEN(iphdr)));
@@ -329,7 +329,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     }
   }
 #endif /* LWIP_DHCP */
-        /* packet not for us? */  
+        /* packet not for us? */
   if (netif == NULL) {
     /* packet not for us, route or discard */
     LWIP_DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
@@ -350,7 +350,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
 #if IP_REASSEMBLY
   if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
-    LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04x tot_len=%u len=%u MF=%u offset=%u), calling ip_reass()\n", ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & htons(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
+    LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04x tot_len=%u len=%u MF=%u offset=%u),
+      calling ip_reass()\n", ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & htons(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
     p = ip_reass(p);
     if (p == NULL) {
       return ERR_OK;
@@ -370,18 +371,18 @@ ip_input(struct pbuf *p, struct netif *inp) {
     return ERR_OK;
   }
 #endif /* IP_REASSEMBLY */
-  
+
 #if IP_OPTIONS == 0
   if (iphdrlen > IP_HLEN) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
-    pbuf_free(p);    
+    pbuf_free(p);
 #ifdef IP_STATS
     ++lwip_stats.ip.opterr;
     ++lwip_stats.ip.drop;
 #endif /* IP_STATS */
     snmp_inc_ipunknownprotos();
     return ERR_OK;
-  }  
+  }
 #endif /* IP_OPTIONS == 0 */
 
   /* send to upper layers */
@@ -389,16 +390,16 @@ ip_input(struct pbuf *p, struct netif *inp) {
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: \n"));
   ip_debug_print(p);
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
-#endif /* IP_DEBUG */   
+#endif /* IP_DEBUG */
 
   switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP > 0    
+#if LWIP_UDP > 0
   case IP_PROTO_UDP:
     snmp_inc_ipindelivers();
     udp_input(p, inp);
     break;
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0    
+#if LWIP_TCP > 0
   case IP_PROTO_TCP:
     snmp_inc_ipindelivers();
     tcp_input(p, inp);
@@ -447,23 +448,23 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   static u16_t ip_id = 0;
 
   snmp_inc_ipoutrequests();
-  
+
   if (dest != IP_HDRINCL) {
     if (pbuf_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
-      
+
 #ifdef IP_STATS
       ++lwip_stats.ip.err;
 #endif /* IP_STATS */
       snmp_inc_ipoutdiscards();
       return ERR_BUF;
     }
-    
+
     iphdr = p->payload;
-    
+
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
-    
+
     ip_addr_set(&(iphdr->dest), dest);
 
     IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, 0);
@@ -485,12 +486,12 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     dest = &(iphdr->dest);
   }
 
-#if IP_FRAG     
+#if IP_FRAG
   /* don't fragment if interface has mtu set to 0 [loopif] */
   if (netif->mtu && (p->tot_len > netif->mtu))
     return ip_frag(p,netif,dest);
 #endif
-  
+
 #ifdef IP_STATS
   lwip_stats.ip.xmit++;
 #endif /* IP_STATS */
@@ -501,7 +502,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
 
-  return netif->output(netif, p, dest);  
+  return netif->output(netif, p, dest);
 }
 /*-----------------------------------------------------------------------------------*/
 /* ip_output:
@@ -515,7 +516,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
           u8_t ttl, u8_t proto)
 {
   struct netif *netif;
-  
+
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%lx\n", dest->addr));
 
@@ -537,7 +538,7 @@ ip_debug_print(struct pbuf *p)
   u8_t *payload;
 
   payload = (u8_t *)iphdr + IP_HLEN;
-  
+
   LWIP_DEBUGF(IP_DEBUG, ("IP header:\n"));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|%2d |%2d |  0x%02x |     %5u     | (v, hl, tos, len)\n",

@@ -1,8 +1,8 @@
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -11,21 +11,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -54,10 +54,10 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
   sys_timeout_handler h;
   void *arg;
 
-    
+
  again:
   timeouts = sys_arch_timeouts();
-    
+
   if (!timeouts || !timeouts->next) {
     sys_arch_mbox_fetch(mbox, msg, 0);
   } else {
@@ -80,7 +80,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
         LWIP_DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
       	h(arg);
       }
-      
+
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
@@ -93,7 +93,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
   timeouts->next->time = 0;
       }
     }
-    
+
   }
 }
 /*-----------------------------------------------------------------------------------*/
@@ -105,14 +105,14 @@ sys_sem_wait(sys_sem_t sem)
   struct sys_timeout *tmptimeout;
   sys_timeout_handler h;
   void *arg;
-  
+
   /*  while (sys_arch_sem_wait(sem, 1000) == 0);
       return;*/
 
  again:
-  
+
   timeouts = sys_arch_timeouts();
-  
+
   if (!timeouts || !timeouts->next) {
     sys_arch_sem_wait(sem, 0);
   } else {
@@ -135,8 +135,8 @@ sys_sem_wait(sys_sem_t sem)
         LWIP_DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
         h(arg);
       }
-      
-      
+
+
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
@@ -149,7 +149,7 @@ sys_sem_wait(sys_sem_t sem)
   timeouts->next->time = 0;
       }
     }
-    
+
   }
 }
 /*-----------------------------------------------------------------------------------*/
@@ -167,17 +167,18 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   timeout->h = h;
   timeout->arg = arg;
   timeout->time = msecs;
-  
+
   timeouts = sys_arch_timeouts();
-  
-  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
+
+  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n",
+    (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
   if (timeouts->next == NULL) {
     timeouts->next = timeout;
     return;
-  }  
-  
+  }
+
   if (timeouts->next->time > msecs) {
     timeouts->next->time -= msecs;
     timeout->next = timeouts->next;
@@ -196,7 +197,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
       }
     }
   }
-  
+
 }
 
 /* Go through timeout list (for this task only) and remove the first matching entry,
@@ -210,7 +211,7 @@ sys_untimeout(sys_timeout_handler h, void *arg)
     struct sys_timeout *prev_t, *t;
 
     timeouts = sys_arch_timeouts();
-    
+
     if (timeouts->next == NULL)
         return;
 
@@ -234,15 +235,15 @@ sys_untimeout(sys_timeout_handler h, void *arg)
     return;
 }
 
-            
-                
-    
+
+
+
 /*-----------------------------------------------------------------------------------*/
 static void
 sswt_handler(void *arg)
 {
     struct sswt_cb *sswt_cb = (struct sswt_cb *) arg;
-    
+
     /* Timeout. Set flag to TRUE and signal semaphore */
     sswt_cb->timeflag = 1;
     sys_sem_signal(*(sswt_cb->psem));
@@ -259,7 +260,7 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 
     sswt_cb.psem = &sem;
     sswt_cb.timeflag = 0;
-    
+
     /* If timeout is zero, then just wait forever */
     if (timeout > 0)
         /* Create a timer and pass it the address of our flag */
@@ -275,7 +276,7 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
         sys_untimeout(sswt_handler, &sswt_cb);
         return 1;
     }
-    
+
 }
 
 /*-----------------------------------------------------------------------------------*/
