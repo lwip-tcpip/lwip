@@ -445,7 +445,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
   }
   
   payload = p->payload;
-  p->payload = (u8_t *)p->payload - header_size/sizeof(u8_t);
+  p->payload = (u8_t *)p->payload - header_size;
 
   DEBUGF(PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size));
   

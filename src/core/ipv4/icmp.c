@@ -64,7 +64,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
   
   iphdr = p->payload;
-  hlen = IPH_HL(iphdr) * 4/sizeof(u8_t);
+  hlen = IPH_HL(iphdr) * 4;
   pbuf_header(p, -hlen);
 
   type = *((u8_t *)p->payload);

@@ -332,7 +332,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
      node (as recommended by RFC 1542 section 3.1.1, referred by RFC
      2131). */
   if(IPH_PROTO(iphdr) == IP_PROTO_UDP &&
-     ((struct udp_hdr *)((u8_t *)iphdr + IPH_HL(iphdr) * 4/sizeof(u8_t)))->src ==
+     ((struct udp_hdr *)((u8_t *)iphdr + IPH_HL(iphdr) * 4))->src ==
      DHCP_SERVER_PORT) {
     netif = inp;
   }  
@@ -563,7 +563,7 @@ ip_debug_print(struct pbuf *p)
   struct ip_hdr *iphdr = p->payload;
   u8_t *payload;
 
-  payload = (u8_t *)iphdr + IP_HLEN/sizeof(u8_t);
+  payload = (u8_t *)iphdr + IP_HLEN;
   
   DEBUGF(IP_DEBUG, ("IP header:\n"));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));

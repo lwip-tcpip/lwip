@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.5 2002/12/18 12:49:02 jani Exp $
+ * $Id: udp.c,v 1.6 2002/12/19 09:04:58 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -94,7 +94,7 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
   
   PERF_START;
   
-  udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4/sizeof(u8_t);
+  udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
 
   src = NTOHS(udphdr->src);
   dest = NTOHS(udphdr->dest);
