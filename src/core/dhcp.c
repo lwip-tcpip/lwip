@@ -708,15 +708,9 @@ static err_t dhcp_discover(struct netif *netif)
     /* set receive callback function with netif as user data */
     udp_recv(dhcp->pcb, dhcp_recv, netif);
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
-
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: send()ing\n"));
-
-    udp_send(dhcp->pcb, dhcp->p_out);
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: bind()ing\n"));
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: connect()ing\n"));
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
+    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, , DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_discover: SELECTING\n"));
@@ -883,10 +877,11 @@ static err_t dhcp_rebind(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
+    /* set remote IP association to any DHCP server */
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
-    udp_send(dhcp->pcb, dhcp->p_out);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    /* broadcast to server */
+    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_rebind: REBINDING\n"));
   } else {
