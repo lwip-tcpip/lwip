@@ -100,7 +100,6 @@ static void dhcp_check(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
 static err_t dhcp_decline(struct netif *netif);
 static err_t dhcp_rebind(struct netif *netif);
-static err_t dhcp_release(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, unsigned char new_state);
 
 /** receive, unfold, parse and free incoming messages */
@@ -925,7 +924,7 @@ static err_t dhcp_rebind(struct netif *netif)
  *
  * @param netif network interface which must release its lease
  */
-static err_t dhcp_release(struct netif *netif)
+err_t dhcp_release(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   err_t result;

@@ -86,8 +86,12 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u8_t file[DHCP_FILE_LEN]);
   PACK_STRUCT_FIELD(u32_t cookie);
 #define DHCP_MIN_OPTIONS_LEN 68U
+/** make sure user does not configure this too small */
+#if ((defined(DHCP_OPTIONS_LEN)) && (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
+#  undef DHCP_OPTIONS_LEN
+#endif
 /** allow this to be configured in lwipopts.h, but not too small */
-#if ((!defined(DHCP_OPTIONS_LEN)) || (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
+#if (!defined(DHCP_OPTIONS_LEN))
 /** set this to be sufficient for your options in outgoing DHCP msgs */
 #  define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
 #endif
@@ -100,11 +104,13 @@ PACK_STRUCT_END
 
 /** start DHCP configuration */
 err_t dhcp_start(struct netif *netif);
+/** enforce early lease renewal (not needed normally)*/
+err_t dhcp_renew(struct netif *netif);
+/** release the DHCP lease, usually called before dhcp_stop()*/
+err_t dhcp_release(struct netif *netif);
 /** stop DHCP configuration */
 void dhcp_stop(struct netif *netif);
-/** enforce lease renewal */
-err_t dhcp_renew(struct netif *netif);
-/** inform server of our IP address */
+/** inform server of our manual IP address */
 void dhcp_inform(struct netif *netif);
 
 /** if enabled, check whether the offered IP address is not in use, using ARP */
