@@ -1013,8 +1013,6 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
   u16_t j = 0;
   /* free any left-overs from previous unfolds */
   dhcp_free_reply(dhcp);
-  dhcp->msg_in = NULL;
-  dhcp->options_in = NULL;
   /* options present? */
   if (dhcp->p->tot_len > (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN))
   {
