@@ -122,6 +122,18 @@ tcp_close(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 #endif /* TCP_DEBUG */
   switch (pcb->state) {
+  case CLOSED:
+    /* Closing a pcb in the CLOSED state might seem erroneous,
+     * however, it is in this state once allocated and as yet unused
+     * and the user needs some way to free it should the need arise.
+     * Calling tcp_close() with a pcb that has already been closed, (i.e. twice)
+     * or for a pcb that has been used and then entered the CLOSED state 
+     * is erroneous, but this should never happen as the pcb has in those cases
+     * been freed, and so any remaining handles are bogus. */
+    err = ERR_OK;
+    memp_free(MEMP_TCP_PCB, pcb);
+    pcb = NULL;
+    break;
   case LISTEN:
     err = ERR_OK;
     tcp_pcb_remove((struct tcp_pcb **)&tcp_listen_pcbs.pcbs, pcb);
