@@ -262,6 +262,8 @@ tapif_output(struct netif *netif, struct pbuf *p,
   p = etharp_output(netif, ipaddr, p);
   if(p != NULL) {
     return low_level_output(netif, p);
+    etharp_output_sent(p);
+    p = NULL;
   }
   return ERR_OK;
 }
