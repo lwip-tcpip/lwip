@@ -1,0 +1,13 @@
+api/      - The code for the API.	   
+
+arch/     - Architectural specific files are kept here.
+
+core/     - The core files including protocol implementations, memory
+            and buffer management etc.
+	    
+include/  - lwIP include files.
+
+netif/    - Generic network interface device drivers are kept here.
+
+For more information on the various subdirectories, check the FILES
+file in each directory.

@@ -1,0 +1,15 @@
+6502/      - Architectural files for the 6502 CPU.
+
+rtxc/      - Architectural files for the RTXC operating system.
+
+unix/      - Architectural files for testing on unix-like systems
+             (assuming gcc and pthreads).
+
+Each subdirectory (may) also include:
+
+perf.c     - Optional file that should be implemented when running
+             performance tests of lwIP.
+
+sys.c      - Implementation of the operating system emulation layer.
+
+netif/	   - Architectural specific network interfaces.

@@ -1,0 +1,225 @@
+
+
+
+
+
+
+
+
+
+
+
+
+<html>
+<head><title>lwIP - A Lightweight TCP/IP Stack - OS vs non-OS</title></head>
+
+
+<body bgcolor="white">
+
+<table width="640" border="0" cellpadding="0"
+cellspacing="0">
+<tr><td>
+<center><h1>lwIP - A Lightweight TCP/IP Stack</h1></center>
+</td></tr></table>
+
+
+<table width="640" border="0" cellpadding="0"
+cellspacing="0">
+<tr><td align="center">
+<hr>
+
+
+
+
+<a href="index.html">Introduction</a>
+
+|
+
+<a href="news.html">News</a>
+
+|
+
+<a href="documentation.html">Documentation</a>
+
+|
+
+<a href="mailinglist.html">Mailing list</a>
+
+|
+
+<a href="changelog.html">Changelog</a>
+
+|
+
+<a href="download.html">Download</a>
+
+|
+
+<a href="links.html">Links</a>
+
+
+
+<hr>
+</td></tr>
+<tr>
+<td><center><h2>OS vs non-OS</h2></center>
+</td></tr></table>
+
+<table width="640" border="0" cellpadding="0"
+cellspacing="0"><tr>
+<td width="50">
+&nbsp;
+</td>
+<td bgcolor="white" width="540">
+
+<h2>Using lwIP with or without an operating system</h2>
+
+<p align="justify">
+There has been a few questions about how lwIP can be used in a
+standalone environment (i.e., an environment without a multi-threaded
+operating system) lately. The purpose of this document is to describe
+how lwIP is designed to be used with and without a multi-threaded
+operating system.
+</p>
+
+<center><img src="os.png"></center>
+
+<h3>The lwIP single-threaded core</h3>
+<p align="justify">
+The core of lwIP consists of the actual implementations of the IP,
+ICMP, UDP, and TCP protocols, as well as the support functions such as
+buffer and memory management. The core components are the only ones
+that are needed when lwIP is to be run in a single-threaded (non-OS)
+environment. 
+</p>
+<p align="justify">
+The core components can be viewed as a software library which has the
+following interface:
+</p>
+<ul>
+<li><tt>ip_input(pbuf, netif)</tt>: Takes an IP packet and the incoming network
+interface as arguments and does the TCP/IP processing for the packet.
+<li><tt>tcp_tmr()</tt>: Should be called every 100 ms. Does all TCP
+timer processing such as doing retransmissions.
+</ul>
+<p align="justify">
+Because none of the core functions ever needs to block when run in a
+single-threaded environment, the <tt>sys_arch</tt> (the operating
+system abstraction layer) does not need to implement locking
+semaphores or mailboxes. In future versions of lwIP, the dependancy of
+the <tt>sys_arch</tt> will be removed in the single-threaded case.
+</p>
+<p align="justify">
+A simple main loop for a single-threaded system might look
+like this:
+</p>
+<pre>
+  while(1) {
+    if(poll_driver(netif) == PACKET_READY) {
+      pbuf = get_packet(netif);
+      ip_input(pbuf, netif);
+    }
+
+    if(clock() - last_time == 100 * CLOCK_MS) {
+      tcp_tmr();
+      last_time = clock();
+    }    
+  }
+</pre>
+
+<h3>lwIP in a multi-threaded system</h3>
+<p align="justify">
+lwIP is designed to be able to be run in a multi-threaded system with
+applications running in concurrent threads. The model used in this
+case is that all TCP/IP processing is done in a single thread. The
+application thread communicate with the TCP/IP thread using the
+sequential API.
+</p>
+
+<center><img src="threads.png"></center>
+
+<p align="justify">
+The inter-thread communication is implemented in the two files
+<tt>api_lib.c</tt> and <tt>api_msg.c</tt>. The former contains the
+functions used by the application programs and the latter implements
+the TCP/IP stack interface. A third file, <tt>tcpip.c</tt>, handles
+incoming packets and timer events as described in the previous
+section. 
+</p>
+
+<p align="justify">
+When run in a multi-threaded environment, incoming packets are handled
+by the function <tt>tcpip_input()</tt>, which takes the same arguments
+as the <tt>ip_input()</tt> function. The difference between the two
+functions is that the <tt>tcpip_input()</tt> function does not process
+the incoming packet immediately. It merely puts the packet on a queue
+which later is drained by the TCP/IP thread.
+</p>
+
+<p align="justify">
+When being run in a multi-threaded system, timer events are taken care
+of internally in <tt>tcpip.c</tt>.
+</p>
+
+<p align="right">        
+<font size="-1"><i>
+$Date: 2002/10/19 13:00:03 $
+</i></font>
+</p>        
+        
+
+</td>
+<td width="50">
+&nbsp;
+</td>
+</tr></table>
+
+<table width="640" border="0" cellpadding="0"
+cellspacing="0">
+<tr><td align="center">
+
+<hr>
+
+
+
+
+<a href="index.html">Introduction</a>
+
+|
+
+<a href="news.html">News</a>
+
+|
+
+<a href="documentation.html">Documentation</a>
+
+|
+
+<a href="mailinglist.html">Mailing list</a>
+
+|
+
+<a href="changelog.html">Changelog</a>
+
+|
+
+<a href="download.html">Download</a>
+
+|
+
+<a href="links.html">Links</a>
+
+
+
+<hr>
+
+</td></tr><tr>
+<td>
+<div align="right">
+<a href="http://www.sics.se/~adam/">Adam Dunkels</a></div>
+</td>
+</tr>
+</table>
+
+</body>
+</html>

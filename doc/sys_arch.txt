@@ -1,0 +1,125 @@
+sys_arch interface for lwIP 0.5
+
+Author: Adam Dunkels
+
+$Id: sys_arch.txt,v 1.1 2002/10/19 12:59:33 likewise Exp $
+
+The operating system emulation layer provides a common interface
+between the lwIP code and the underlying operating system kernel. The
+general idea is that porting lwIP to new architectures requires only
+small changes to a few header files and a new sys_arch
+implementation. It is also possible to do a sys_arch implementation
+that does not rely on any underlying operating system.
+
+The sys_arch provides semaphores and mailboxes to lwIP. For the full
+lwIP functionality, multiple threads support can be implemented in the
+sys_arch, but this is not required for the basic lwIP
+functionality. Previous versions of lwIP required the sys_arch to
+implement timer scheduling as well but as of lwIP 0.5 this is
+implemented in a higher layer.
+
+Semaphores can be either counting or binary - lwIP works with both
+kinds. Mailboxes are used for message passing and can be implemented
+either as a queue which allows multiple messages to be posted to a
+mailbox, or as a rendez-vous point where only one message can be
+posted at a time. lwIP works with both kinds, but the former type will
+be more efficient. A message in a mailbox is just a pointer, nothing
+more. 
+
+Semaphores are represented by the type "sys_sem_t" which is typedef'd
+in the sys_arch.h file. Mailboxes are equivalently represented by the
+type "sys_mbox_t". lwIP does not place any restrictions on how
+sys_sem_t or sys_mbox_t are represented internally.
+
+The following functions must be implemented by the sys_arch:
+
+- void sys_init(void)
+
+  Is called to initialize the sys_arch layer.
+
+- sys_sem_t sys_sem_new(u8_t count)
+
+  Creates and returns a new semaphore. The "count" argument specifies
+  the initial state of the semaphore.
+
+- void sys_sem_free(sys_sem_t sem)
+
+  Deallocates a semaphore. 
+
+- void sys_sem_signal(sys_sem_t sem)
+
+  Signals a semaphore.
+
+- u16_t sys_arch_sem_wait(sys_sem_t sem, u16_t timeout)
+
+  Blocks the thread while waiting for the semaphore to be
+  signaled. If the "timeout" argument is non-zero, the thread should
+  only be blocked for the specified time (measured in
+  milliseconds).
+
+  If the timeout argument is non-zero, the return value is the amount
+  of time spent waiting for the semaphore to be signaled. If the
+  semaphore wasn't signaled within the specified time, the return
+  value is zero. If the thread didn't have to wait for the semaphore
+  (i.e., it was already signaled), care must be taken to ensure that
+  the function does not return a zero value since this is used to
+  indicate that a timeout occured. A suitable way to implement this is
+  to check if the time spent waiting is zero and if so, the value 1 is
+  returned.
+
+  Notice that lwIP implements a function with a similar name,
+  sys_sem_wait(), that uses the sys_arch_sem_wait() function.
+
+- sys_mbox_t sys_mbox_new(void)
+
+  Creates an empty mailbox.
+
+- void sys_mbox_free(sys_mbox_t mbox)
+
+  Deallocates a mailbox. If there are messages still present in the
+  mailbox when the mailbox is deallocated, it is an indication of a
+  programming error in lwIP and the developer should be notified.
+
+- void sys_mbox_post(sys_mbox_t mbox, void *msg)
+
+  Posts the "msg" to the mailbox.
+
+- u16_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u16_t timeout)
+
+  Blocks the thread until a message arrives in the mailbox, but does
+  not block the thread longer than "timeout" milliseconds (similar to
+  the sys_arch_sem_wait() function). The "msg" argument is a result
+  parameter that is set by the function (i.e., by doing "*msg =
+  ptr"). The "msg" parameter maybe NULL to indicate that the message
+  should be dropped.
+
+  The return values are the same as for the sys_arch_sem_wait()
+  function and the function must not return zero even if a message was
+  present in the mailbox and the time spent waiting was zero
+  milliseconds. 
+
+  Note that a function with a similar name, sys_mbox_fetch(), is
+  implemented by lwIP. 
+  
+- struct sys_timeouts *sys_arch_timeouts(void)
+
+  Returns a pointer to the per-thread sys_timeouts structure. In lwIP,
+  each thread has a list of timeouts which is repressented as a linked
+  list of sys_timeout structures. The sys_timeouts structure holds a
+  pointer to a linked list of timeouts. This function is called by
+  the lwIP timeout scheduler and must not return a NULL value. 
+
+  In a single threadd sys_arch implementation, this function will
+  simply return a pointer to a global sys_timeouts variable stored in
+  the sys_arch module.
+  
+If threads are supported by the underlying operating system and if
+such functionality is needed in lwIP, the following function will have
+to be implemented as well:
+
+- void sys_thread_new(void (* thread)(void *arg), void *arg)
+
+  Starts a new thread that will begin its execution in the function
+  "thread()". The "arg" argument will be passed as an argument to the
+  thread() function.
+

@@ -1,0 +1,284 @@
+(0.5.3) Changes since version 0.5.2
+
+  ++ Bugfixes:
+
+  * memp_malloc(MEMP_API_MSG) could fail with multiple application
+    threads because it wasn't protected by semaphores.
+
+  ++ Other changes:
+
+  * struct ip_addr now packed.
+
+  * The name of the time variable in arp.c has been changed to ctime
+    to avoid conflicts with the time() function.
+
+(0.5.2) Changes since version 0.5.1
+
+  ++ New features:
+
+  * A new TCP function, tcp_tmr(), now handles both TCP timers.
+
+  ++ Bugfixes:
+
+  * A bug in tcp_parseopt() could cause the stack to hang because of a
+    malformed TCP option.
+
+  * The address of new connections in the accept() function in the BSD
+    socket library was not handled correctly.
+
+  * pbuf_dechain() did not update the ->tot_len field of the tail.
+
+  * Aborted TCP connections were not handled correctly in all
+    situations. 
+
+  ++ Other changes:
+
+  * All protocol header structs are now packed.
+
+  * The ->len field in the tcp_seg structure now counts the actual
+    amount of data, and does not add one for SYN and FIN segments.
+    
+(0.5.1) Changes since version 0.5.0
+
+  ++ New features:
+
+  * Possible to run as a user process under Linux.
+
+  * Preliminary support for cross platform packed structs.
+
+  * ARP timer now implemented.
+  
+  ++ Bugfixes:
+
+  * TCP output queue length was badly initialized when opening
+    connections.
+
+  * TCP delayed ACKs were not sent correctly.
+  
+  * Explicit initialization of BSS segment variables.
+  
+  * read() in BSD socket library could drop data.
+
+  * Problems with memory alignment.
+
+  * Situations when all TCP buffers were used could lead to
+    starvation.
+
+  * TCP MSS option wasn't parsed correctly.
+
+  * Problems with UDP checksum calculation.
+
+  * IP multicast address tests had endianess problems.
+
+  * ARP requests had wrong destination hardware address. 
+
+  ++ Other changes:
+
+  * struct eth_addr changed from u16_t[3] array to u8_t[6].
+
+  * A ->linkoutput() member was added to struct netif.
+
+  * TCP and UDP ->dest_* struct members where changed to ->remote_*.
+
+  * ntoh* macros are now null definitions for big endian CPUs. 
+  
+(0.5.0) Changes since version 0.4.2
+
+  ++ New features:
+
+  * Redesigned operating system emulation layer to make porting easier.
+
+  * Better control over TCP output buffers.
+    
+  * Documenation added.
+  
+  ++ Bugfixes:
+
+  * Locking issues in buffer management.
+
+  * Bugfixes in the sequential API.
+
+  * IP forwarding could cause memory leakage. This has been fixed.
+
+  ++ Other changes:
+
+  * Directory structure somewhat changed; the core/ tree has been
+    collapsed.
+  
+(0.4.2) Changes since version 0.4.1
+
+  ++ New features:
+
+  * Experimental ARP implementation added.
+
+  * Skeleton Ethernet driver added.
+
+  * Experimental BSD socket API library added.
+
+  ++ Bugfixes:
+
+  * In very intense situations, memory leakage could occur. This has
+    been fixed.
+
+  ++ Other changes:
+
+  * Variables named "data" and "code" have been renamed in order to
+    avoid name conflicts in certain compilers.
+
+  * Variable++ have in appliciable cases been translated to ++variable
+    since some compilers generate better code in the latter case.
+    
+(0.4.1) Changes since version 0.4
+
+  ++ New features:
+
+  * TCP: Connection attempts time out earlier than data
+    transmissions. Nagle algorithm implemented. Push flag set on the
+    last segment in a burst.
+
+  * UDP: experimental support for UDP-Lite extensions.
+
+  ++ Bugfixes:
+    
+  * TCP: out of order segments were in some cases handled incorrectly,
+    and this has now been fixed. Delayed acknowledgements was broken
+    in 0.4, has now been fixed. Binding to an address that is in use
+    now results in an error. Reset connections sometimes hung an
+    application; this has been fixed. 
+
+  * Checksum calculation sometimes failed for chained pbufs with odd
+    lengths. This has been fixed.
+    
+  * API: a lot of bug fixes in the API. The UDP API has been improved
+    and tested. Error reporting and handling has been
+    improved. Logical flaws and race conditions for incoming TCP
+    connections has been found and removed. 
+ 
+  * Memory manager: alignment issues. Reallocating memory sometimes
+    failed, this has been fixed.
+
+  * Generic library: bcopy was flawed and has been fixed. 
+
+  ++ Other changes:
+  
+  * API: all datatypes has been changed from generic ones such as
+    ints, to specified ones such as u16_t. Functions that return
+    errors now have the correct type (err_t).
+  
+  * General: A lot of code cleaned up and debugging code removed. Many
+    portability issues have been fixed.
+
+  * The license was changed; the advertising clause was removed. 
+
+  * C64 port added.
+
+  * Thanks: Huge thanks go to Dagan Galarneau, Horst Garnetzke, Petri
+    Kosunen, Mikael Caleres, and Frits Wilmink for reporting and
+    fixing bugs!
+  
+(0.4) Changes since version 0.3.1
+
+  * Memory management has been radically changed; instead of
+    allocating memory from a shared heap, memory for objects that are
+    rapidly allocated and deallocated is now kept in pools. Allocation
+    and deallocation from those memory pools is very fast. The shared
+    heap is still present but is used less frequently.
+    
+  * The memory, memory pool, and packet buffer subsystems now support
+    4-, 2-, or 1-byte alignment.
+
+  * "Out of memory" situations are handled in a more robust way.
+ 
+  * Stack usage has been reduced.
+    
+  * Easier configuration of lwIP parameters such as memory usage,
+    TTLs, statistics gathering, etc. All configuration parameters are
+    now kept in a single header file "lwipopts.h".
+
+  * The directory structure has been changed slightly so that all
+    architecture specific files are kept under the src/arch
+    hierarchy.
+
+  * Error propagation has been improved, both in the protocol modules
+    and in the API.
+
+  * The code for the RTXC architecture has been implemented, tested
+    and put to use.
+    
+  * Bugs have been found and corrected in the TCP, UDP, IP, API, and
+    the Internet checksum modules.
+
+  * Bugs related to porting between a 32-bit and a 16-bit architecture
+    have been found and corrected.
+
+  * The license has been changed slightly to conform more with the
+    original BSD license, including the advertisement clause.
+  
+(0.3.1) Changes since version 0.3
+
+  * Fix of a fatal bug in the buffer management. Pbufs with allocated
+    RAM never returned the RAM when the pbuf was deallocated.
+
+  * TCP congestion control, window updates and retransmissions did not
+    work correctly. This has now been fixed.
+
+  * Bugfixes in the API.
+
+(0.3) Changes since version 0.2
+
+  * New and improved directory structure. All include files are now
+    kept in a dedicated include/ directory.
+
+  * The API now has proper error handling. A new function,
+    netconn_err(), now returns an error code for the connection in
+    case of errors.
+
+  * Improvements in the memory management subsystem. The system now
+    keeps a pointer to the lowest free memory block. A new function,
+    mem_malloc2() tries to allocate memory once, and if it fails tries
+    to free some memory and retry the allocation.
+
+  * Much testing has been done with limited memory
+    configurations. lwIP now does a better job when overloaded. 
+
+  * Some bugfixes and improvements to the buffer (pbuf) subsystem.
+    
+  * Many bugfixes in the TCP code:
+
+    - Fixed a bug in tcp_close().
+
+    - The TCP receive window was incorrectly closed when out of
+      sequence segments was received. This has been fixed.
+
+    - Connections are now timed-out of the FIN-WAIT-2 state.
+
+    - The initial congestion window could in some cases be too
+      large. This has been fixed.
+
+    - The retransmission queue could in some cases be screwed up. This
+      has been fixed.
+
+    - TCP RST flag now handled correctly.
+
+    - Out of sequence data was in some cases never delivered to the
+      application. This has been fixed.
+
+    - Retransmitted segments now contain the correct acknowledgment
+      number and advertised window.
+
+    - TCP retransmission timeout backoffs are not correctly computed
+      (ala BSD). After a number of retransmissions, TCP now gives up
+      the connection.
+      
+  * TCP connections now are kept on three lists, one for active
+    connections, one for listening connections, and one for
+    connections that are in TIME-WAIT. This greatly speeds up the fast
+    timeout processing for sending delayed ACKs.
+  
+  * TCP now provides proper feedback to the application when a
+    connection has been successfully set up.
+  
+  * More comments have been added to the code. The code has also been
+    somewhat cleaned up.
+
+(0.2) Initial public release.
