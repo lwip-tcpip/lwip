@@ -236,12 +236,15 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   offset = 0;
   switch (l) {
   case PBUF_TRANSPORT:
+    /* add room for transport (often TCP) layer header */
     offset += PBUF_TRANSPORT_HLEN;
     /* FALLTHROUGH */
   case PBUF_IP:
+    /* add room for IP layer header */
     offset += PBUF_IP_HLEN;
     /* FALLTHROUGH */
   case PBUF_LINK:
+    /* add room for link layer header */
     offset += PBUF_LINK_HLEN;
     break;
   case PBUF_RAW:
@@ -263,15 +266,20 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     }
     p->next = NULL;
     
-    /* make the payload pointer point offset bytes into pbuf data memory */
+    /* make the payload pointer point 'offset' bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
-    /* the total length of the pbuf is the requested size */
+    LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
+	    ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
+    /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
     p->len = length > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: length;
+    /* set pbuf type */
     p->flags = PBUF_FLAG_POOL;
     
-    /* allocate the tail of the pbuf chain. */
+    /* now allocate the tail of the pbuf chain */
+    
+    /* remember first pbuf for linkage in next iteration */
     r = p;
     /* remaining length to be allocated */
     rem_len = length - p->len;
@@ -279,7 +287,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     while(rem_len > 0) {      
       q = pbuf_pool_alloc();
       if (q == NULL) {
-	DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
+       DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
 #ifdef PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
@@ -287,20 +295,24 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
         pbuf_pool_free(p);
         return NULL;
       }
-      q->next = NULL;
+      //q->next = NULL;
+      /* make previous pbuf point to this pbuf */
       r->next = q;
+      /* set length of this pbuf */
       q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rem_len;
       q->flags = PBUF_FLAG_POOL;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
-      r = q;
+      LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
+	      ((u32_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
+      /* calculate remaining length to be allocated */
       rem_len -= q->len;
+      /* remember this pbuf for linkage in next iteration */
+      r = q;
     }
     /* end of chain */
     r->next = NULL;
 
-    LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
-	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
@@ -486,10 +498,12 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 }
 
 /**
- * Adjusts the payload pointer +/- for header.
+ * Adjusts the payload pointer to hide or reveal headers in the payload.
  * 
- * Adjusts the ->payload pointer so that space for a header appears in
- * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
+ * Adjusts the ->payload pointer so that space for a header
+ * (dis)appears in the pbuf payload.
+ *
+ * The ->payload, ->tot_len and ->len fields are adjusted.
  *
  * @param hdr_size Number of bytes to increment header size which
  * increases the size of the pbuf. New space is on the front.
@@ -543,15 +557,16 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 }
 
 /**
- * Free a pbuf (chain) from its user, de-allocate if zero users.
+ * Free a pbuf (chain) from usage, de-allocate non-used head of chain.
  *
  * Decrements the pbuf reference count. If it reaches
  * zero, the pbuf is deallocated.
  *
- * This is repeated for each pbuf in the chain, until a non-zero
- * reference count is encountered, or the end of the chain is reached. 
+ * For a pbuf chain, this is repeated for each pbuf in the chain, until
+ * a non-zero reference count is encountered, or the end of the chain is
+ * reached. 
  *
- * @param pbuf pbuf (chain) to be freed from its user.
+ * @param pbuf pbuf (chain) to be freed from one user.
  *
  * @return the number of unreferenced pbufs that were de-allocated 
  * from the head of the chain.
@@ -714,6 +729,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
+  /* p is last pbuf of first h chain */
   /* add total length of second chain to last pbuf total of first chain */
   p->tot_len += t->tot_len;
   /* chain last pbuf of h chain (p) with first of tail (t) */
@@ -748,7 +764,7 @@ pbuf_dechain(struct pbuf *p)
     /* total length of pbuf p is its own length only */
     p->tot_len = p->len;
     /* q is no longer referenced by p, free it */
-    DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dechain: unreferencing %p\n", (void *) q));
+    DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *) q));
     tail_gone = pbuf_free(q);
     /* return remaining tail or NULL if deallocated */
   }
@@ -765,9 +781,10 @@ pbuf_dechain(struct pbuf *p)
  * with PBUF_POOL (or PBUF_RAM) pbufs, each taking a copy of
  * the referenced data.
  *
- * @note The pbuf you give as argument, may have been replaced
- * by calling pbuf_take(p). You must therefore explicitly use
- * p = pbuf_take(p);
+ * @note You MUST explicitly use p = pbuf_take(p);
+ * The pbuf you give as argument, may have been replaced
+ * by pbuf_take()!
+ *
  * @note Any replaced pbufs will be freed through pbuf_free().
  *
  * Used to queue packets on behalf of the lwIP stack, such as
@@ -775,14 +792,13 @@ pbuf_dechain(struct pbuf *p)
  *
  * @param f Head of pbuf chain to process
  *
- * @return Pointer to new head of pbuf chain (which may have been
- * replaced itself). 
+ * @return Pointer to new head of pbuf chain 
  */
 struct pbuf *
 pbuf_take(struct pbuf *f)
 {
   struct pbuf *p, *prev, *top;
-  LWIP_ASSERT("pbuf_take: f != NULL", f != NULL);
+  LWIP_ASSERT("pbuf_take: f != NULL\n", f != NULL);
   DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)f));
 
   prev = NULL;
@@ -814,7 +830,8 @@ pbuf_take(struct pbuf *f)
       }
       /* replacement pbuf could be allocated? */
       if (q != NULL)
-      {  
+      {
+        /* copy p to q */  
         /* copy successor */
         q->next = p->next;
         /* remove linkage from original pbuf */
@@ -825,14 +842,22 @@ pbuf_take(struct pbuf *f)
           /* break chain and insert new pbuf instead */
           prev->next = q;
         /* prev == NULL, so we replaced the top pbuf of the chain */
-        } else
+        } else {
           top = q;
+        }
         /* copy pbuf payload */
         memcpy(q->payload, p->payload, p->len);
         q->tot_len = p->tot_len;
         q->len = p->len;
+        /* in case p was the first pbuf, it is no longer refered to by
+         * our caller, as the caller MUST do p = pbuf_take(p);
+         * in case p was not the first pbuf, it is no longer refered to
+         * by prev. we can safely free the pbuf here.
+         * (note that we have set p->next to NULL already so that
+         * we will not free the rest of the chain by accident.)
+         */
+        pbuf_free(p);
         /* do not copy ref, since someone else might be using the old buffer */
-        /* pbuf is not freed, as this is the responsibility of the application */
         DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
         /* p is no longer pointed to by prev or by our caller, 
          * as the caller must do p = pbuf_take(p); so free it
@@ -848,12 +873,13 @@ pbuf_take(struct pbuf *f)
         DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
         return NULL;
       }
+    /* p->flags != PBUF_FLAG_REF */
+    } else {
+      DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: skipping pbuf not of type PBUF_REF\n"));
     }
-    else {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: not PBUF_REF\n"));
-    }
-
+    /* remember this pbuf */
     prev = p;
+    /* proceed to next pbuf in original chain */
     p = p->next;
   } while (p);
   DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
