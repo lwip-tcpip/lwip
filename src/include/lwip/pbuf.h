@@ -55,28 +55,28 @@ typedef enum {
 
 /* Definitions for the pbuf flag field (these are not the flags that
    are passed to pbuf_alloc()). */
-#define PBUF_FLAG_RAM   0x00    /* Flags that pbuf data is stored in RAM. */
-#define PBUF_FLAG_ROM   0x01    /* Flags that pbuf data is stored in ROM. */
-#define PBUF_FLAG_POOL  0x02    /* Flags that the pbuf comes from the
-				   pbuf pool. */
-#define PBUF_FLAG_REF   0x04
+#define PBUF_FLAG_RAM   0x00    /* Flags that pbuf data is stored in RAM */
+#define PBUF_FLAG_ROM   0x01    /* Flags that pbuf data is stored in ROM */
+#define PBUF_FLAG_POOL  0x02    /* Flags that the pbuf comes from the pbuf pool */
+#define PBUF_FLAG_REF   0x04    /* Flags thet the pbuf payload refers to RAM */
 
 struct pbuf {
+  /** next pbuf in singly linked pbuf chain */
   struct pbuf *next;
 
-  /** pointer to the actual data in the buffer. */
+  /** pointer to the actual data in the buffer */
   void *payload;
   
   /**
-   * total length of this buffer and all chained buffers. 
-   * invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0)
+   * total length of this buffer and all next buffers in chain
+   * invariant: p->tot_len == p->len + (p->next? p->next->tot_len: 0)
    */
   u16_t tot_len;
   
   /* length of this buffer */
   u16_t len;  
 
-  /* flags */
+  /* flags telling the type of pbuf */
   u16_t flags;
   
   /**
