@@ -11,6 +11,7 @@
  * pragmatically since otherwise unsigned comparisons can result
  * against negative integers quite easily, and fail in subtle ways.
  */
+PACK_STRUCT_BEGIN
 struct ip
 {
 #if defined(NO_CHAR_BITFIELDS)
@@ -38,6 +39,7 @@ struct ip
 	u_short	ip_sum;					/* checksum */
 	struct	in_addr ip_src,ip_dst;	/* source and dest address */
 };
+PACK_STRUCT_END
 
 typedef u32_t tcp_seq;
 
@@ -45,6 +47,7 @@ typedef u32_t tcp_seq;
  * TCP header.
  * Per RFC 793, September, 1981.
  */
+PACK_STRUCT_BEGIN
 struct tcphdr  
 {
 	u_short	th_sport;		/* source port */
@@ -68,5 +71,6 @@ struct tcphdr
 	u_short	th_sum;			/* checksum */
 	u_short	th_urp;			/* urgent pointer */
 };
+PACK_STRUCT_END
 
 #endif /* VJBSDHDR_H */

@@ -71,24 +71,36 @@ void icmp_input(struct pbuf *p, struct netif *inp);
 void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
 struct icmp_echo_hdr {
-  u16_t _type_code;
-  u16_t chksum;
-  u16_t id;
-  u16_t seqno;
-};
+  PACK_STRUCT_FIELD(u16_t _type_code);
+  PACK_STRUCT_FIELD(u16_t chksum);
+  PACK_STRUCT_FIELD(u16_t id);
+  PACK_STRUCT_FIELD(u16_t seqno);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
 
+PACK_STRUCT_BEGIN
 struct icmp_dur_hdr {
-  u16_t _type_code;
-  u16_t chksum;
-  u32_t unused;
-};
+  PACK_STRUCT_FIELD(u16_t _type_code);
+  PACK_STRUCT_FIELD(u16_t chksum);
+  PACK_STRUCT_FIELD(u32_t unused);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
 
+PACK_STRUCT_BEGIN
 struct icmp_te_hdr {
-  u16_t _type_code;
-  u16_t chksum;
-  u32_t unused;
-};
+  PACK_STRUCT_FIELD(u16_t _type_code);
+  PACK_STRUCT_FIELD(u16_t chksum);
+  PACK_STRUCT_FIELD(u32_t unused);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 #define ICMPH_TYPE(hdr) (ntohs((hdr)->_type_code) >> 8)
 #define ICMPH_CODE(hdr) (ntohs((hdr)->_type_code) & 0xff)

@@ -154,6 +154,12 @@ cc.h       - Architecture environment, some compiler specific, some
   Typedefs for the types used by lwip -
     u8_t, s8_t, u16_t, s16_t, u32_t, s32_t, mem_ptr_t
 
+  Compiler hints for packing lwip's structures -
+    PACK_STRUCT_FIELD(x)
+    PACK_STRUCT_STRUCT
+    PACK_STRUCT_BEGIN
+    PACK_STRUCT_END
+
   Platform specific diagnostic output -
     LWIP_PLATFORM_DIAG(x)    - non-fatal, print a message.
     LWIP_PLATFORM_ASSERT(x)  - fatal, print message and abandon execution.
