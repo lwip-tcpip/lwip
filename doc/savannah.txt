@@ -112,6 +112,8 @@ cvs -d:ext:anoncvs@subversions.gnu.org:/cvsroot/lwip export -r STABLE-0_6_3 -d l
 Archive this directory using tar, gzip'd, bzip2'd and zip'd.
 
 tar czvf lwip-0.6.3.tar.gz lwip-0.6.3
+tar cjvf lwip-0.6.3.tar.bz2 lwip-0.6.3
+zip -r lwip-0.6.3.zip lwip-0.6.3
 
 First, make a local release directory to work in, I use "lwip-releases":
 
