@@ -47,7 +47,7 @@
 #include "lwip/memp.h"
 
 #include "lwip/tcp.h"
-
+#if LWIP_TCP
 
 /* Incremented every coarse grained timer shot
    (typically every 500 ms, determined by TCP_COARSE_TIMEOUT). */
@@ -1168,6 +1168,7 @@ tcp_pcbs_sane(void)
   return 1;
 }
 #endif /* TCP_DEBUG */
+#endif /* LWIP_TCP */
 /*-----------------------------------------------------------------------------------*/
 
 

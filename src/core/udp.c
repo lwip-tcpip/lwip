@@ -58,7 +58,6 @@
 /*static*/ struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;
-#endif /* LWIP_UDP */
 
 #if UDP_DEBUG
 int udp_debug_print(struct udp_hdr *udphdr);
@@ -68,12 +67,9 @@ int udp_debug_print(struct udp_hdr *udphdr);
 void
 udp_init(void)
 {
-#if LWIP_UDP
   udp_pcbs = pcb_cache = NULL;
-#endif /* LWIP_UDP */
 }
 
-#if LWIP_UDP
 /*-----------------------------------------------------------------------------------*/
 /* udp_lookup:
  *

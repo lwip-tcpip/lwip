@@ -53,7 +53,7 @@
 
 #include "lwip/stats.h"
 
-
+#if LWIP_TCP
 #define MIN(x,y) (x) < (y)? (x): (y)
 
 
@@ -580,7 +580,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 
 }
-
+#endif /* LWIP_TCP */
 
 
 

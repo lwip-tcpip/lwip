@@ -46,7 +46,7 @@
 static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg;
 static sys_mbox_t mbox;
-
+#if LWIP_TCP
 static int tcpip_tcp_timer_active = 0;
 
 
@@ -72,6 +72,7 @@ tcp_timer_needed(void)
   	sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
+#endif /* LWIP_TCP */
 /*-----------------------------------------------------------------------------------*/
 static void
 tcpip_thread(void *arg)
@@ -81,9 +82,12 @@ tcpip_thread(void *arg)
   (void)arg;
 
   ip_init();
+#if LWIP_UDP  
   udp_init();
+#endif
+#if LWIP_TCP
   tcp_init();
-
+#endif
   if(tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }

@@ -37,37 +37,6 @@
 #include "lwip/sys.h"
 #include "lwip/tcpip.h"
 
-/*-----------------------------------------------------------------------------------*/
-static err_t
-recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
-{
-  struct netconn *conn;
-  u16_t len;
-  
-  conn = arg;
-
-  if(conn == NULL) {
-    pbuf_free(p);
-    return ERR_VAL;
-  }
-
-  if(conn->recvmbox != SYS_MBOX_NULL) {
-    	  
-    conn->err = err;
-    if (p != NULL) {
-        len = p->tot_len;
-        conn->recv_avail += len;
-    }
-    else
-        len = 0;
-    /* Register event with callback */
-    if (conn->callback)
-        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
-    sys_mbox_post(conn->recvmbox, p);
-  }  
-  return ERR_OK;
-}
-/*-----------------------------------------------------------------------------------*/
 #if LWIP_UDP
 static void
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
@@ -102,6 +71,38 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   }
 }
 #endif /* LWIP_UDP */
+#if LWIP_TCP
+/*-----------------------------------------------------------------------------------*/
+static err_t
+recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
+{
+  struct netconn *conn;
+  u16_t len;
+  
+  conn = arg;
+
+  if(conn == NULL) {
+    pbuf_free(p);
+    return ERR_VAL;
+  }
+
+  if(conn->recvmbox != SYS_MBOX_NULL) {
+    	  
+    conn->err = err;
+    if (p != NULL) {
+        len = p->tot_len;
+        conn->recv_avail += len;
+    }
+    else
+        len = 0;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
+    sys_mbox_post(conn->recvmbox, p);
+  }  
+  return ERR_OK;
+}
+
 /*-----------------------------------------------------------------------------------*/
 static err_t
 poll_tcp(void *arg, struct tcp_pcb *pcb)
@@ -232,6 +233,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   sys_mbox_post(mbox, newconn);
   return ERR_OK;
 }
+#endif /* LWIP_TCP */
 /*-----------------------------------------------------------------------------------*/
 static void
 do_newconn(struct api_msg_msg *msg)
@@ -253,6 +255,7 @@ do_delconn(struct api_msg_msg *msg)
       udp_remove(msg->conn->pcb.udp);
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP      
     case NETCONN_TCP:
       if(msg->conn->pcb.tcp->state == LISTEN) {
 	tcp_accept(msg->conn->pcb.tcp, NULL);	
@@ -267,6 +270,8 @@ do_delconn(struct api_msg_msg *msg)
 	  tcp_abort(msg->conn->pcb.tcp);
 	}
       }
+#endif
+    default:  
     break;
     }
   }
@@ -303,10 +308,13 @@ do_bind(struct api_msg_msg *msg)
       udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP      
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_new();
       setup_tcp(msg->conn);
-      break;
+#endif /* LWIP_TCP */
+    default:  
+    break;
     }
   }
   switch(msg->conn->type) {
@@ -319,13 +327,17 @@ do_bind(struct api_msg_msg *msg)
     msg->conn->err = udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
     break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP
   case NETCONN_TCP:
     msg->conn->err = tcp_bind(msg->conn->pcb.tcp,
 			      msg->msg.bc.ipaddr, msg->msg.bc.port);
+#endif /* LWIP_TCP */
+  default:
     break;
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
+#if LWIP_TCP
 /*-----------------------------------------------------------------------------------*/
 static err_t
 do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
@@ -339,14 +351,13 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   }
   
   conn->err = err;
-
   if(conn->type == NETCONN_TCP && err == ERR_OK) {
     setup_tcp(conn);
   }    
-  
   sys_mbox_post(conn->mbox, NULL);
   return ERR_OK;
 }
+#endif  
 /*-----------------------------------------------------------------------------------*/
 static void
 do_connect(struct api_msg_msg *msg)
@@ -384,6 +395,7 @@ do_connect(struct api_msg_msg *msg)
       udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP      
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_new();      
       if(msg->conn->pcb.tcp == NULL) {
@@ -391,6 +403,8 @@ do_connect(struct api_msg_msg *msg)
 	sys_mbox_post(msg->conn->mbox, NULL);
 	return;
       }
+#endif
+    default:
       break;
     }
   }
@@ -405,12 +419,15 @@ do_connect(struct api_msg_msg *msg)
     sys_mbox_post(msg->conn->mbox, NULL);
     break;
 #endif 
+#if LWIP_TCP      
   case NETCONN_TCP:
     /*    tcp_arg(msg->conn->pcb.tcp, msg->conn);*/
     setup_tcp(msg->conn);
     tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
 		do_connected);
     /*tcp_output(msg->conn->pcb.tcp);*/
+#endif
+  default:
     break;
   }
 }
@@ -450,6 +467,7 @@ do_listen(struct api_msg_msg *msg)
       DEBUGF(API_MSG_DEBUG, ("api_msg: listen UDP: cannot listen for UDP.\n"));
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP      
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_listen(msg->conn->pcb.tcp);
       if(msg->conn->pcb.tcp == NULL) {
@@ -465,6 +483,8 @@ do_listen(struct api_msg_msg *msg)
 	tcp_arg(msg->conn->pcb.tcp, msg->conn);
 	tcp_accept(msg->conn->pcb.tcp, accept_function);
       }
+#endif
+    default:
       break;
     }
   }
@@ -515,18 +535,22 @@ do_send(struct api_msg_msg *msg)
 static void
 do_recv(struct api_msg_msg *msg)
 {
+#if LWIP_TCP
   if(msg->conn->pcb.tcp != NULL) {
     if(msg->conn->type == NETCONN_TCP) {
       tcp_recved(msg->conn->pcb.tcp, msg->msg.len);
     }
   }
+#endif  
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 /*-----------------------------------------------------------------------------------*/
 static void
 do_write(struct api_msg_msg *msg)
 {
+#if LWIP_TCP	
   err_t err;
+#endif  
   if(msg->conn->pcb.tcp != NULL) {
     switch(msg->conn->type) {
 #if LWIP_UDP 
@@ -538,6 +562,7 @@ do_write(struct api_msg_msg *msg)
       msg->conn->err = ERR_VAL;
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP 
     case NETCONN_TCP:      
       err = tcp_write(msg->conn->pcb.tcp, msg->msg.w.dataptr,
                       msg->msg.w.len, msg->msg.w.copy);
@@ -555,6 +580,8 @@ do_write(struct api_msg_msg *msg)
               if (tcp_sndbuf(msg->conn->pcb.tcp) <= TCP_SNDLOWAT)
                   (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDMINUS, msg->msg.w.len);
           }
+#endif
+    default:
       break;
     }
   }
@@ -578,11 +605,14 @@ do_close(struct api_msg_msg *msg)
     case NETCONN_UDP:
       break;
 #endif /* LWIP_UDP */
+#if LWIP_TCP
     case NETCONN_TCP:
       if(msg->conn->pcb.tcp->state == LISTEN) {
 	err = tcp_close(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;      
+#endif
+    default:      
       break;
     }
   }

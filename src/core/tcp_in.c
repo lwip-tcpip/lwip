@@ -55,7 +55,7 @@
 #include "lwip/stats.h"
 
 #include "arch/perf.h"
-
+#if LWIP_TCP
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
    function. */
@@ -1135,5 +1135,6 @@ tcp_parseopt(struct tcp_pcb *pcb)
     }
   }
 }
+#endif /* LWIP_TCP */
 /*-----------------------------------------------------------------------------------*/
   
