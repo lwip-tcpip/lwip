@@ -985,6 +985,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 {  
   pcb->callback_arg = arg;
 }
+#if LWIP_CALLBACK_API
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_recv():
@@ -994,14 +995,12 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
  *
  */ 
 /*-----------------------------------------------------------------------------------*/
-#if LWIP_CALLBACK_API
 void
 tcp_recv(struct tcp_pcb *pcb,
    err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
 {
   pcb->recv = recv;
 }
-#endif /* LWIP_CALLBACK_API */
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_sent():
@@ -1011,14 +1010,12 @@ tcp_recv(struct tcp_pcb *pcb,
  *
  */ 
 /*-----------------------------------------------------------------------------------*/
-#if LWIP_CALLBACK_API
 void
 tcp_sent(struct tcp_pcb *pcb,
    err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
 {
   pcb->sent = sent;
 }
-#endif /* LWIP_CALLBACK_API */
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_err():
@@ -1028,14 +1025,29 @@ tcp_sent(struct tcp_pcb *pcb,
  *
  */ 
 /*-----------------------------------------------------------------------------------*/
-#if LWIP_CALLBACK_API
 void
 tcp_err(struct tcp_pcb *pcb,
    void (* errf)(void *arg, err_t err))
 {
   pcb->errf = errf;
 }
+/*-----------------------------------------------------------------------------------*/
+/*
+ * tcp_accept():
+ *
+ * Used for specifying the function that should be called when a
+ * LISTENing connection has been connected to another host.
+ *
+ */ 
+/*-----------------------------------------------------------------------------------*/
+void
+tcp_accept(struct tcp_pcb *pcb,
+     err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
+{
+  ((struct tcp_pcb_listen *)pcb)->accept = accept;
+}
 #endif /* LWIP_CALLBACK_API */
+
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_poll():
@@ -1055,23 +1067,6 @@ tcp_poll(struct tcp_pcb *pcb,
 #endif /* LWIP_CALLBACK_API */  
   pcb->pollinterval = interval;
 }
-/*-----------------------------------------------------------------------------------*/
-/*
- * tcp_accept():
- *
- * Used for specifying the function that should be called when a
- * LISTENing connection has been connected to another host.
- *
- */ 
-/*-----------------------------------------------------------------------------------*/
-#if LWIP_CALLBACK_API
-void
-tcp_accept(struct tcp_pcb *pcb,
-     err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
-{
-  ((struct tcp_pcb_listen *)pcb)->accept = accept;
-}
-#endif /* LWIP_CALLBACK_API */
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_pcb_purge():
