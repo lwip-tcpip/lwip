@@ -417,6 +417,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 				tcp_tmp_pcb = tcp_tmp_pcb->next) { \
                                 ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != npcb); \
                             } \
+							/* TODO: state field doesn't exist in listen pcbs */ \
                             ASSERT("TCP_REG: pcb->state != CLOSED", npcb->state != CLOSED); \
                             npcb->next = *pcbs; \
                             ASSERT("TCP_REG: npcb->next != npcb", npcb->next != npcb); \
