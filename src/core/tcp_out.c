@@ -108,11 +108,16 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too much data %d\n", len));
     return ERR_MEM;
   }
-  
+
+  /* seqno will be the sequence number of the first segment enqueued
+     by the call to this function. */
   seqno = pcb->snd_lbb;
   
   queue = NULL;
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d\n", pcb->snd_queuelen));
+
+  /* Check if the queue length exceeds the configured maximum queue
+     length. If so, we return an error. */
   queuelen = pcb->snd_queuelen;
   if(queuelen >= TCP_SND_QUEUELEN) {
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
@@ -128,12 +133,16 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   
   seg = NULL;
   seglen = 0;
-  
+
+  /* First, break up the data into segments and tuck them together in
+     the local "queue" variable. */
   while(queue == NULL || left > 0) {
-    
+
+    /* The segment length should be the MSS if the data to be enqueued
+       is larger than the MSS. */
     seglen = left > pcb->mss? pcb->mss: left;
     
-    /* allocate memory for tcp_seg, and fill in fields */
+    /* Allocate memory for tcp_seg, and fill in fields. */
     seg = memp_malloc(MEMP_TCP_SEG);
     if(seg == NULL) {
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
@@ -142,10 +151,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     seg->next = NULL;
     seg->p = NULL;
     
-    
     if(queue == NULL) {
       queue = seg;
     } else {
+      /* Attach the segment to the end of the queued segments. */
       for(useg = queue; useg->next != NULL; useg = useg->next);
       useg->next = seg;
     }
@@ -172,6 +181,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       seg->dataptr = seg->p->payload;
     } else {
       /* Do not copy the data. */
+
+      /* First, allocate a pbuf for holding the data. */
       if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
 	DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for pbuf non-copy\n"));	  	  
 	goto memerr;
@@ -179,14 +190,23 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       ++queuelen;
       p->payload = ptr;
       seg->dataptr = ptr;
+
+      /* Second, allocate a pbuf for the headers. */
       if((seg->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM)) == NULL) {
+	/* If allocation fails, we have to deallocate the data pbuf as
+	   well. */
 	pbuf_free(p);
 	DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for header pbuf\n"));		  
 	goto memerr;
       }
       ++queuelen;
+
+      /* Chain the headers and data pbufs together. */
       pbuf_chain(seg->p, p);
     }
+
+    /* Now that there are more segments queued, we check again if the
+       length of the queue exceeds the configured maximum. */
     if(queuelen > TCP_SND_QUEUELEN) {
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: queue too long %d (%d)\n", queuelen, TCP_SND_QUEUELEN)); 	
       goto memerr;
@@ -197,7 +217,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       ++seg->len;
       }*/
       
-    /* build TCP header */
+    /* Build TCP header. */
     if(pbuf_header(seg->p, TCP_HLEN)) {
 	
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
@@ -214,7 +234,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     seg->tcphdr->urgp = 0;
     TCPH_FLAGS_SET(seg->tcphdr, flags);
     /* don't fill in tcphdr->ackno and tcphdr->wnd until later */
-      
+
+    /* Copy the options into the header, if they are present. */
     if(optdata == NULL) {
       TCPH_OFFSET_SET(seg->tcphdr, 5 << 4);
     } else {
@@ -235,7 +256,9 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
 
     
-  /* Go to the last segment on the ->unsent queue. */    
+  /* Now that the data to be enqueued has been broken up into TCP
+     segments in the queue variable, we add them to the end of the
+     pcb->unsent queue. */    
   if(pcb->unsent == NULL) {
     useg = NULL;
   } else {
