@@ -474,18 +474,20 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #define UDP_LOCAL_PORT_RANGE_START 4096
 #define UDP_LOCAL_PORT_RANGE_END   0x7fff
 #endif
-  	port = UDP_LOCAL_PORT_RANGE_START;
-  	ipcb = udp_pcbs;
-  	while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
-  		if(ipcb->local_port == port) {
-  			port++;
-  			ipcb = udp_pcbs;
-  		} else
-  			ipcb = ipcb->next;
-  	}
-  	if(ipcb) /* no more ports available in local range */
+    port = UDP_LOCAL_PORT_RANGE_START;
+    ipcb = udp_pcbs;
+    while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
+      if(ipcb->local_port == port) {
+        port++;
+        ipcb = udp_pcbs;
+      } else
+  	ipcb = ipcb->next;
+    }
+    if(ipcb)  {
+      /* no more ports available in local range */
       DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
-  		return ERR_USE;
+      return ERR_USE;
+    }	
   }
   pcb->local_port = port;
   /* We need to place the PCB on the list if not already there. */
