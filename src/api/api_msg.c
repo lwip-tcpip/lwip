@@ -272,7 +272,7 @@ do_bind(struct api_msg_msg *msg)
   case NETCONN_UDPNOCHKSUM:
     /* FALLTHROUGH */
   case NETCONN_UDP:
-    udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+    msg->conn->err = udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
     break;
 #endif /* LWIP_UDP */
   case NETCONN_TCP:

@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.9 2003/01/17 15:16:33 likewise Exp $
+ * $Id: udp.c,v 1.10 2003/01/21 14:09:31 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -396,8 +396,6 @@ err_t
 udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
-  ip_addr_set(&pcb->local_ip, ipaddr);
-  pcb->local_port = port;
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
@@ -405,7 +403,19 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       /* Already on the list, just return. */
       return ERR_OK;
     }
+    if (ipcb->local_port == port) {
+      if(ip_addr_isany(&(ipcb->local_ip)) ||
+	 ip_addr_isany(ipaddr) ||
+	 ip_addr_cmp(&(ipcb->local_ip), ipaddr)) {
+          /* Port/IP pair already bound */
+          return ERR_USE;	   
+      } 
+    }
   }
+  
+  ip_addr_set(&pcb->local_ip, ipaddr);
+  pcb->local_port = port;
+  
   /* We need to place the PCB on the list. */
   pcb->next = udp_pcbs;
   udp_pcbs = pcb;
