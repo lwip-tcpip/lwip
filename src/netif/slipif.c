@@ -212,6 +212,6 @@ slipif_init(struct netif *netif)
   if (!netif->state)
       return ERR_IF;
 
-  sys_thread_new(slipif_loop, netif);
+  sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);
   return ERR_OK;
 }

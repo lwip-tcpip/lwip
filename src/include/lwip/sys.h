@@ -57,7 +57,7 @@ struct sys_timeout {u8_t dummy;};
 #define sys_mbox_post(m,d)
 #define sys_mbox_free(m)
 
-#define sys_thread_new(t,a)
+#define sys_thread_new(t,a,p)
 
 /* We don't need protection if there is no OS */
 #define SYS_ARCH_DECL_PROTECT(lev)
@@ -157,7 +157,7 @@ void sys_arch_unprotect(sys_prot_t pval);
 #endif /* SYS_ARCH_PROTECT */
 
 /* Thread functions. */
-sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg);
+sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio);
 
 /* The following functions are used only in Unix code, and
    can be omitted when porting the stack. */

@@ -296,6 +296,18 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_COMPAT_SOCKETS     1
 #endif
 
+
+#ifndef TCPIP_THREAD_PRIO
+#define TCPIP_THREAD_PRIO 1
+#endif
+
+#ifndef SLIPIF_THREAD_PRIO
+#define SLIPIF_THREAD_PRIO 1
+#endif
+
+#ifndef DEFAULT_THREAD_PRIO
+#define DEFAULT_THREAD_PRIO 1
+#endif
 /* ---------- Statistics options ---------- */
 #ifndef LWIP_STATS
 #define LWIP_STATS	1

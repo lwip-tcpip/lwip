@@ -165,7 +165,7 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
   mbox = sys_mbox_new();
-  sys_thread_new(tcpip_thread, NULL);
+  sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
 /*-----------------------------------------------------------------------------------*/
 
