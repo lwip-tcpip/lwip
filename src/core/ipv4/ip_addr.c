@@ -36,3 +36,34 @@
 /* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 const struct ip_addr ip_addr_any = { 0x00000000UL };
 const struct ip_addr ip_addr_broadcast = { 0xffffffffUL };
+
+/* work in progress - meant to replace ip_addr.h macro
+ * as it does not support non-broadcast interfaces.
+ * lwip-devel 18-2-2004
+ */
+#if 0
+#include "lwip/netif.h"
+
+bool ip_addr_isbroadcast(ip_addr *addr1, struct netif *netif)
+
+bool ip_addr_isbroadcast(addr1, netif)
+{
+  /* all ones (broadcast) or all zeroes (old skool broadcast) */
+  if (addr1->addr == ip_addr_broadcast.ip_addr) ||
+      addr1->addr == ip_addr_any.ip_addr))
+    return 1;
+  /* no broadcast support on this network interface
+   * we cannot proceed matching against broadcast addresses */
+  else if (netif->flags &= NETIF_FLAG_BROADCAST == 0)
+    return 0;
+  /* address matches network interface address exactly? */
+  else if (netif->ip_addr.addr == addr1->addr)
+    return 0;
+  /* host identifier bits are all ones? => broadcast address */
+  else if (~netif->netmask.addr & addr1->addr ==
+           ~netif->netmask.addr & ip_addr_broadcast.ip_addr)
+    return 1;
+  else
+    return 0;
+}
+#endif
