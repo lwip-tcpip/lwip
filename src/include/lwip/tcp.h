@@ -129,13 +129,21 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 /* Length of the TCP header, excluding options. */
 #define TCP_HLEN 20
 
+#ifndef TCP_TMR_INTERVAL
 #define TCP_TMR_INTERVAL       100  /* The TCP timer interval in
-				       milliseconds. */
+                                       milliseconds. */
+#endif /* TCP_TMR_INTERVAL */
 
+#ifndef TCP_FAST_INTERVAL
 #define TCP_FAST_INTERVAL      200  /* the fine grained timeout in
-				       milliseconds */
+                                       milliseconds */
+#endif /* TCP_FAST_INTERVAL */
+
+#ifndef TCP_SLOW_INTERVAL
 #define TCP_SLOW_INTERVAL      500  /* the coarse grained timeout in
-				       milliseconds */
+                                       milliseconds */
+#endif /* TCP_SLOW_INTERVAL */
+
 #define TCP_FIN_WAIT_TIMEOUT 20000 /* milliseconds */
 #define TCP_SYN_RCVD_TIMEOUT 20000 /* milliseconds */
 
