@@ -772,9 +772,14 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       }
       else if (arp_table[i].state == ETHARP_STATE_STABLE) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already stable as entry %u\n", i));
-        /* user may wish to queue a packet on a stable entry, so we proceed without ARP requesting */
-        /* TODO: even if the ARP entry is stable, we might do an ARP request anyway */
-        perform_arp_request = 0;
+        /* User wishes to queue a packet on a stable entry (or does she want to send
+         * out the packet immediately, we will not know), so we force an ARP request.
+         * Upon response we will send out the queued packet in etharp_update().
+         * 
+         * Alternatively, we could accept the stable entry, and just send out the packet
+         * immediately. I chose to implement the former approach.
+         */
+        perform_arp_request = (q?1:0);
         break;
       }
     }
@@ -786,18 +791,17 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     i = find_arp_entry();
     /* bail out if no ARP entries are available */
     if (i == ERR_MEM) {
-      LWIP_DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available. Should seldom occur.\n"));
+      LWIP_DEBUGF(ETHARP_DEBUG | 2, ("etharp_query: no more ARP entries available. Should seldomly occur.\n"));
       return ERR_MEM;
     }
     /* i is available, create ARP entry */
     arp_table[i].state = ETHARP_STATE_PENDING;
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-  /* queried address was already in ARP table */
-  } else {
-#if ARP_QUEUEING
-    etharp_enqueue(i, q);
-#endif
   }
+  /* { i is now valid } */
+#if ARP_QUEUEING /* queue packet (even on a stable entry, see above) */
+  etharp_enqueue(i, q);
+#endif
   /* ARP request? */
   if (perform_arp_request)
   {
