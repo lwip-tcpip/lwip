@@ -70,10 +70,10 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u32_t xid);
   PACK_STRUCT_FIELD(u16_t secs);
   PACK_STRUCT_FIELD(u16_t flags);
-  PACK_STRUCT_FIELD(u32_t ciaddr);
-  PACK_STRUCT_FIELD(u32_t yiaddr);
-  PACK_STRUCT_FIELD(u32_t siaddr);
-  PACK_STRUCT_FIELD(u32_t giaddr);
+  PACK_STRUCT_FIELD(struct ip_addr ciaddr);
+  PACK_STRUCT_FIELD(struct ip_addr yiaddr);
+  PACK_STRUCT_FIELD(struct ip_addr siaddr);
+  PACK_STRUCT_FIELD(struct ip_addr giaddr);
 #define DHCP_CHADDR_LEN 16U
   PACK_STRUCT_FIELD(u8_t chaddr[DHCP_CHADDR_LEN]);
 #define DHCP_SNAME_LEN 64U
