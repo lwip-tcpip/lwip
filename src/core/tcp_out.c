@@ -115,14 +115,14 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
 
   /* seqno will be the sequence number of the first segment enqueued
-  by the call to this function. */
+   * by the call to this function. */
   seqno = pcb->snd_lbb;
 
-    queue = NULL;
+  queue = NULL;
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: queuelen: %d\n", pcb->snd_queuelen));
 
   /* Check if the queue length exceeds the configured maximum queue
-  length. If so, we return an error. */
+   * length. If so, we return an error. */
   queuelen = pcb->snd_queuelen;
   if (queuelen >= TCP_SND_QUEUELEN) {
     DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %d (max %d)\n", queuelen, TCP_SND_QUEUELEN));
@@ -138,11 +138,11 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   seglen = 0;
 
   /* First, break up the data into segments and tuck them together in
-  the local "queue" variable. */
+   * the local "queue" variable. */
   while (queue == NULL || left > 0) {
 
     /* The segment length should be the MSS if the data to be enqueued
-    is larger than the MSS. */
+     * is larger than the MSS. */
     seglen = left > pcb->mss? pcb->mss: left;
 
     /* Allocate memory for tcp_seg, and fill in fields. */
@@ -159,14 +159,14 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     else {
       /* Attach the segment to the end of the queued segments. */
-      for(useg = queue; useg->next != NULL; useg = useg->next);
+      for (useg = queue; useg->next != NULL; useg = useg->next);
       useg->next = seg;
     }
 
     /* If copy is set, memory should be allocated
-    and data copied into pbuf, otherwise data comes from
-    ROM or other static memory, and need not be copied. If
-    optdata is != NULL, we have options instead of data. */
+     * and data copied into pbuf, otherwise data comes from
+     * ROM or other static memory, and need not be copied. If
+     * optdata is != NULL, we have options instead of data. */
     if (optdata != NULL) {
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
         goto memerr;
@@ -204,7 +204,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       /* Second, allocate a pbuf for the headers. */
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM)) == NULL) {
         /* If allocation fails, we have to deallocate the data pbuf as
-           well. */
+         * well. */
         pbuf_free(p);
         DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));		  
         goto memerr;
@@ -214,6 +214,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       /* Chain the headers and data pbufs together. */
       pbuf_chain(seg->p, p);
       pbuf_free(p);
+      p = NULL;
     }
 
     /* Now that there are more segments queued, we check again if the
@@ -224,10 +225,11 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
 
     seg->len = seglen;
-    /*    if ((flags & TCP_SYN) || (flags & TCP_FIN)) { 
-    ++seg->len;
-    }*/
-
+#if 0 /* Was commented out. TODO: can someone say why this is here? */
+    if ((flags & TCP_SYN) || (flags & TCP_FIN)) { 
+      ++seg->len;
+    }
+#endif
     /* Build TCP header. */
     if (pbuf_header(seg->p, TCP_HLEN)) {
 
@@ -275,7 +277,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg = NULL;
   }
   else {
-    for(useg = pcb->unsent; useg->next != NULL; useg = useg->next);
+    for (useg = pcb->unsent; useg->next != NULL; useg = useg->next);
   }
 
   /* If there is room in the last pbuf on the unsent queue,
@@ -459,7 +461,7 @@ tcp_output(struct tcp_pcb *pcb)
 	
 	
       } else {
-        for(useg = pcb->unacked; useg->next != NULL; useg = useg->next);
+        for (useg = pcb->unacked; useg->next != NULL; useg = useg->next);
         useg->next = seg;
       }
     } else {
@@ -575,7 +577,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
   }
   
   /* Move all unacked segments to the unsent queue. */
-  for(seg = pcb->unacked; seg->next != NULL; seg = seg->next);
+  for (seg = pcb->unacked; seg->next != NULL; seg = seg->next);
   
   seg->next = pcb->unsent;
   pcb->unsent = pcb->unacked;
