@@ -710,11 +710,12 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_ASSERT("t != NULL", t != NULL);
   
   /* proceed to last pbuf of chain */
-  for (p = h; p != NULL; p = p->next) {
+  for (p = h; p->next != NULL; p = p->next) {
     /* add total length of second chain to all totals of first chain */
     p->tot_len += t->tot_len;
   }
-
+  /* add total length of second chain to last pbuf total of first chain */
+  p->tot_len += t->tot_len;
   /* chain last pbuf of h chain (p) with first of tail (t) */
   p->next = t;
   /* t is now referenced to one more time */
