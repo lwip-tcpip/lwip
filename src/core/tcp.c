@@ -768,12 +768,10 @@ tcp_segs_free(struct tcp_seg *seg)
 {
   u8_t count = 0;
   struct tcp_seg *next;
- again:  
-  if (seg != NULL) {
+  while (seg != NULL) {
     next = seg->next;
     count += tcp_seg_free(seg);
     seg = next;
-    goto again;
   }
   return count;
 }
@@ -791,15 +789,13 @@ tcp_seg_free(struct tcp_seg *seg)
   u8_t count = 0;
   
   if (seg != NULL) {
-    if (seg->p == NULL) {
-      memp_free(MEMP_TCP_SEG, seg);
-    } else {
+    if (seg->p != NULL) {
       count = pbuf_free(seg->p);
 #if TCP_DEBUG
       seg->p = NULL;
 #endif /* TCP_DEBUG */
-      memp_free(MEMP_TCP_SEG, seg);
     }
+    memp_free(MEMP_TCP_SEG, seg);
   }
   return count;
 }
