@@ -42,9 +42,7 @@
 
 #include "lwip/stats.h"
 
-#if LWIP_SNMP > 0
-#  include "snmp.h"
-#endif
+#include "snmp.h"
 /*-----------------------------------------------------------------------------------*/
 void
 icmp_input(struct pbuf *p, struct netif *inp)
@@ -58,9 +56,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #ifdef ICMP_STATS
   ++lwip_stats.icmp.recv;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
   snmp_inc_icmpinmsgs();
-#endif
 
   
   iphdr = p->payload;
@@ -88,9 +84,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.lenerr;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
       snmp_inc_icmpinerrors();
-#endif
 
       return;      
     }
@@ -101,9 +95,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
       snmp_inc_icmpinerrors();
-#endif
       return;
     }
     tmpaddr.addr = iphdr->src.addr;
@@ -119,12 +111,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
     /* increase number of messages attempted to send */
     snmp_inc_icmpoutmsgs();
     /* increase number of echo replies attempted to send */
     snmp_inc_icmpoutechoreps();
-#endif
 
     pbuf_header(p, hlen);
     ip_output_if(p, &(iphdr->src), IP_HDRINCL,
@@ -164,12 +154,10 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 #ifdef ICMP_STATS
   ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
   /* increase number of messages attempted to send */
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpoutdestunreachs();
-#endif
 
   ip_output(q, NULL, &(iphdr->src),
 	    ICMP_TTL, IP_PROTO_ICMP);
@@ -208,12 +196,10 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 #ifdef ICMP_STATS
   ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
-#if LWIP_SNMP > 0
   /* increase number of messages attempted to send */
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpouttimeexcds();
-#endif
   ip_output(q, NULL, &(iphdr->src),
 	    ICMP_TTL, IP_PROTO_ICMP);
   pbuf_free(q);

@@ -29,6 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
+#error this is the original lwIP debug.h file. do not include
+
 #ifndef __LWIP_DEBUG_H__
 #define __LWIP_DEBUG_H__
 

@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.17 2003/02/06 22:18:56 davidhaas Exp $
+ * $Id: udp.c,v 1.18 2003/02/10 13:47:47 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -50,9 +50,7 @@
 #include "lwip/stats.h"
 
 #include "arch/perf.h"
-#if LWIP_SNMP > 0
-#  include "snmp.h"
-#endif
+#include "snmp.h"
 
 /*-----------------------------------------------------------------------------------*/
 
@@ -259,9 +257,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 	++lwip_stats.udp.chkerr;
 	++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
-#if LWIP_SNMP > 0
-    snmp_inc_udpinerrors();
-#endif
+  snmp_inc_udpinerrors();
 	pbuf_free(p);
 	goto end;
       }
@@ -276,9 +272,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 	  ++lwip_stats.udp.chkerr;
 	  ++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
-#if LWIP_SNMP > 0
     snmp_inc_udpinerrors();
-#endif
 	  pbuf_free(p);
 	  goto end;
 	}
@@ -286,10 +280,8 @@ udp_input(struct pbuf *p, struct netif *inp)
     }
     pbuf_header(p, -UDP_HLEN);    
     if(pcb != NULL) {
-#if LWIP_SNMP > 0
       snmp_inc_udpindatagrams();
-#endif
-      pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), udphdr->src);
+      pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
     } else {
       DEBUGF(UDP_DEBUG, ("udp_input: not for us.\n"));
       
@@ -307,9 +299,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       ++lwip_stats.udp.proterr;
       ++lwip_stats.udp.drop;
 #endif /* UDP_STATS */
-#if LWIP_SNMP > 0
     snmp_inc_udpnoports();
-#endif
       pbuf_free(p);
     }
   } else {
@@ -404,9 +394,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
-#if LWIP_SNMP > 0
     snmp_inc_udpoutdatagrams();
-#endif
   } else {
     DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", p->tot_len));
     udphdr->len = htons(p->tot_len);
@@ -417,9 +405,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
     DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x\n", udphdr->chksum));
-#if LWIP_SNMP > 0
     snmp_inc_udpoutdatagrams();
-#endif
     DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
@@ -519,15 +505,15 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   struct udp_pcb *ipcb;
 
   if(pcb->local_port == 0) {
-	  err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-	  if(err != ERR_OK)
-		  return err;
+    err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
+    if(err != ERR_OK)
+      return err;
   }
 
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
+#if 1
   pcb->flags |= UDP_FLAGS_CONNECTED;
-
   /* Nail down local IP for netconn_addr()/getsockname() */
   if(ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
     struct netif *netif;
@@ -535,7 +521,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     	DEBUGF(UDP_DEBUG, ("udp_connect: No route to 0x%lx\n", pcb->remote_ip.addr));
 #ifdef UDP_STATS
-	++lwip_stats.udp.rterr;
+        ++lwip_stats.udp.rterr;
 #endif /* UDP_STATS */
     	return ERR_RTE;
     }
@@ -544,7 +530,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   } else if(ip_addr_isany(&pcb->remote_ip)) { 
     pcb->local_ip.addr = 0;
   }
-
+#endif
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     if(pcb == ipcb) {

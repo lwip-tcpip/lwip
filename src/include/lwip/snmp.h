@@ -106,6 +106,24 @@ void snmp_inc_udpoutdatagrams(void);
 /* define everything to be empty */
 #else
 
+/* network interface */
+#define snmp_add_ifinoctets() 
+#define snmp_inc_ifinucastpkts()
+#define snmp_inc_ifinnucastpkts()
+#define snmp_inc_ifindiscards()
+#define snmp_add_ifoutoctets()
+#define snmp_inc_ifoutucastpkts()
+#define snmp_inc_ifoutnucastpkts()
+#define snmp_inc_ifoutdiscards()
+
+/* IP */
+#define snmp_inc_ipinreceives()
+#define snmp_inc_ipindelivers()
+#define snmp_inc_ipindiscards()
+#define snmp_inc_ipoutdiscards()
+#define snmp_inc_ipoutrequests()
+#define snmp_inc_ipunknownprotos()
+
 // ICMP
 #define snmp_inc_icmpinmsgs()
 #define snmp_inc_icmpinerrors() 
@@ -133,7 +151,6 @@ void snmp_inc_udpoutdatagrams(void);
 #define snmp_inc_icmpouttimestampreps()
 #define snmp_inc_icmpoutaddrmasks()
 #define snmp_inc_icmpoutaddrmaskreps()
-
 // TCP
 #define snmp_inc_tcpactiveopens()
 #define snmp_inc_tcppassiveopens()

@@ -39,7 +39,17 @@
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
 
-/*-----------------------------------------------------------------------------------*/
+/**
+ * Add a network interface to the list of lwIP netifs.
+ *
+ * @param ipaddr IP address for the new netif
+ * @param netmask network mask for the new netif
+ * @param gw default gateway IP address for the new netif
+ * @init callback function that initializes the interface
+ * @input callback function that...
+ *
+ * @return netif, or NULL if failed.
+ */
 struct netif *
 netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 	  struct ip_addr *gw,

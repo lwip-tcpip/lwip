@@ -114,8 +114,6 @@ PACK_STRUCT_END
 #define IPH_PROTO_SET(hdr, proto) (hdr)->_ttl_proto = (HTONS((proto) | (IPH_TTL(hdr) << 8)))
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
-
-
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #endif /* IP_DEBUG */
