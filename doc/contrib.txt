@@ -7,7 +7,15 @@ to fixes or questions might often come late. Hopefully the bug and patch trackin
 features of Savannah help us not lose users' input.
 
 
-The suggestions:
+Source code style:
+
+- end debug messages with a newline (\n)
+- no space between function and opening bracket.
+- one space between keyword and opening bracket.
+- one space and no newline before opening curly braces.
+
+Bug reports and patches:
+
 - Make sure you are reporting bugs or send patches against the latest sources.That usually means code in CVS
 - If you think you found a bug make sure it's not already filed in the bugtracker at savannah
 - If you have a fix put the patch on Savannah. If it's a patch that affects both core and arch specific
