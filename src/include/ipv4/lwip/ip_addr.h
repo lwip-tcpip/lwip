@@ -34,6 +34,9 @@
 
 #include "lwip/arch.h"
 
+/** IP_ADDR_ can be used as a fixed IP address
+ *  for the wildcard and the broadcast address
+ */
 #define IP_ADDR_ANY (&ip_addr_any)
 #define IP_ADDR_BROADCAST (&ip_addr_broadcast)
 
@@ -49,8 +52,8 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-extern struct ip_addr ip_addr_any;
-extern struct ip_addr ip_addr_broadcast;
+extern const struct ip_addr ip_addr_any;
+extern const struct ip_addr ip_addr_broadcast;
 
 #define IP4_ADDR(ipaddr, a,b,c,d) (ipaddr)->addr = htonl(((u32_t)(a & 0xff) << 24) | ((u32_t)(b & 0xff) << 16) | \
                                                          ((u32_t)(c & 0xff) << 8) | (u32_t)(d & 0xff))
