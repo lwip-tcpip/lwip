@@ -129,7 +129,7 @@ static s8_t find_arp_entry(void);
 static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 #if ARP_QUEUEING
 static struct pbuf *etharp_enqueue(s8_t i, struct pbuf *q);
-static struct pbuf *etharp_dequeue(s8_t i);
+static u8_t etharp_dequeue(s8_t i);
 #endif
 /**
  * Initializes ARP module.
@@ -231,10 +231,8 @@ find_arp_entry(void)
   /* clean up the recycled stable entry */
   if (arp_table[i].state == ETHARP_STATE_STABLE) {
 #if ARP_QUEUEING
-  	struct pbuf *q;
     /* free packets on queue */
-    q = etharp_dequeue(i);
-    if (q != NULL) pbuf_free(q);
+    etharp_dequeue(i);
 #endif
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_arp_entry: recycling oldest stable entry %u\n", i));
     arp_table[i].state = ETHARP_STATE_EMPTY;
@@ -245,25 +243,38 @@ find_arp_entry(void)
 }
 
 #if ARP_QUEUEING
+/*
+ * Enqueues a pbuf (chain) on an ARP entry.
+ * 
+ * Places the pbuf (chain) on the queue (if space allows). The
+ * caller may safely free the pbuf (chain) afterwards, as the
+ * pbufs will be referenced by the queue and copies are made of
+ * pbufs referencing external payloads.
+ * 
+ * @ i the ARP entry index
+ * @arg q the pbuf (chain) to be queued on the ARP entry
+ * 
+ * @return Returns the new head of queue of the ARP entry.
+ * 
+ */
 static struct pbuf *
 etharp_enqueue(s8_t i, struct pbuf *q)
 {
   /* any pbuf to queue? */
   if (q != NULL) {
-/* remove old packet on queue? */
+/* queue later packet over earliers? TODO: Implement multiple pbuf queue */
 #if ARP_QUEUE_FIRST == 0
-    struct pbuf *p;
-    p = etharp_dequeue(i);
-    if (p != NULL) pbuf_free(p);
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dropped packet %p on ARP queue. Should not occur.\n", (void *)arp_table[i].p));
+    /* remove any pbufs on queue */
+    u8_t deq = etharp_dequeue(i);
+    if (deq > 0) LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("etharp_query: dequeued %u pbufs from ARP entry %u. Should not occur.\n", deq, i));
 #endif
-    /* packet can be queued? */
+    /* packet can be queued? TODO: Implement multiple pbuf queue */
     if (arp_table[i].p == NULL) {
-      /* copy PBUF_REF referenced payloads into PBUF_RAM */
+      /* copy any PBUF_REF referenced payloads into PBUF_RAM */
       q = pbuf_take(q);
-      /* remember pbuf to queue, if any */
+      /* add pbuf to queue */
       arp_table[i].p = q;
-      /* pbufs are queued, increase the reference count */
+      /* pbuf (chain) now queued, increase the reference count */
       pbuf_ref(q);
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: queued packet %p on ARP entry %u.\n", (void *)q, i));
     }
@@ -271,18 +282,25 @@ etharp_enqueue(s8_t i, struct pbuf *q)
   return arp_table[i].p;
 }
 
-static struct pbuf *
+/**
+ * Dequeues any pbufs queued on an ARP entry
+ * 
+ * @return number of pbufs removed from the queue
+ * 
+ * TODO: decide what is a sensible return value?
+ */
+static u8_t
 etharp_dequeue(s8_t i)
 {
   /* queued packets on a stable entry (work in progress) */
   if (arp_table[i].p != NULL) {
-    /* send the queued IP packets */
-    netif->linkoutput(netif, arp_table[i].p);
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3,
-      ("find_arp_entry: sent queued packet %p.\n", (void *)arp_table[i].p));
+  	/* queue no longer references pbuf */
+  	pbuf_free(arp_table[i].p);
     arp_table[i].p = NULL;
+    return 1;
+  } else {
+    return 0;
   }
-  return arp_table[i].p;
 }
 #endif
 
