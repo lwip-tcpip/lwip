@@ -13,6 +13,10 @@ HISTORY
 
 (HEAD)
 
+  2004-12-28 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * etharp.*: Disabled multiple packets on the ARP queue.
+    This clashes with TCP queueing.
+
   2004-11-28 Leon Woestenberg <leon.woestenberg@gmx.net>
   * etharp.*: Fixed race condition from ARP request to ARP timeout.
     Halved the ARP period, doubled the period counts.
