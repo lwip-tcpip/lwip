@@ -495,6 +495,31 @@ a lot of data that needs to be copied, this should be set high. */
 
 #endif /* PPP_SUPPORT */
 
+/* checksum options - set to zero for hardware checksum support */
+
+#ifndef CHECKSUM_GEN_IP
+#define CHECKSUM_GEN_IP                 1
+#endif
+ 
+#ifndef CHECKSUM_GEN_UDP
+#define CHECKSUM_GEN_UDP                1
+#endif
+ 
+#ifndef CHECKSUM_GEN_TCP
+#define CHECKSUM_GEN_TCP                1
+#endif
+ 
+#ifndef CHECKSUM_CHECK_IP
+#define CHECKSUM_CHECK_IP               1
+#endif
+ 
+#ifndef CHECKSUM_CHECK_UDP
+#define CHECKSUM_CHECK_UDP              1
+#endif
+
+#ifndef CHECKSUM_CHECK_TCP
+#define CHECKSUM_CHECK_TCP              1
+#endif
 
 /* Debugging options all default to off */
 

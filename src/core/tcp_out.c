@@ -400,9 +400,10 @@ tcp_output(struct tcp_pcb *pcb)
     TCPH_HDRLEN_SET(tcphdr, 5);
 
     tcphdr->chksum = 0;
+#if CHECKSUM_GEN_TCP
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
           IP_PROTO_TCP, p->tot_len);
-
+#endif
 
     ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
         IP_PROTO_TCP);
@@ -518,10 +519,12 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   seg->p->payload = seg->tcphdr;
 
   seg->tcphdr->chksum = 0;
+#if CHECKSUM_GEN_TCP
   seg->tcphdr->chksum = inet_chksum_pseudo(seg->p,
              &(pcb->local_ip),
              &(pcb->remote_ip),
              IP_PROTO_TCP, seg->p->tot_len);
+#endif
   TCP_STATS_INC(tcp.xmit);
 
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
@@ -552,9 +555,10 @@ tcp_rst(u32_t seqno, u32_t ackno,
   TCPH_HDRLEN_SET(tcphdr, 5);
 
   tcphdr->chksum = 0;
+#if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,
               IP_PROTO_TCP, p->tot_len);
-
+#endif
   TCP_STATS_INC(tcp.xmit);
    /* Send output with hardcoded TTL since we have no access to the pcb */
   ip_output(p, local_ip, remote_ip, TCP_TTL, 0, IP_PROTO_TCP);
@@ -621,8 +625,9 @@ tcp_keepalive(struct tcp_pcb *pcb)
    TCPH_HDRLEN_SET(tcphdr, 5);
    
    tcphdr->chksum = 0;
+#if CHECKSUM_GEN_TCP
    tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip, IP_PROTO_TCP, p->tot_len);
-
+#endif
   TCP_STATS_INC(tcp.xmit);
 
    /* Send output to IP */

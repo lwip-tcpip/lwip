@@ -246,6 +246,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {
 #endif /* IPv4 */
       /* Do the UDP Lite checksum */
+#if CHECKSUM_CHECK_UDP
       if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
          (struct ip_addr *)&(iphdr->dest),
          IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
@@ -256,7 +257,9 @@ udp_input(struct pbuf *p, struct netif *inp)
   pbuf_free(p);
   goto end;
       }
+#endif
     } else {
+#if CHECKSUM_CHECK_UDP
       if (udphdr->chksum != 0) {
   if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
        (struct ip_addr *)&(iphdr->dest),
@@ -270,6 +273,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     goto end;
   }
       }
+#endif
     }
     pbuf_header(p, -UDP_HLEN);
     if (pcb != NULL) {
@@ -408,10 +412,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* set UDP message length in UDP header */
     udphdr->len = htons(pcb->chksum_len);
     /* calculate checksum */
+#if CHECKSUM_GEN_UDP
     udphdr->chksum = inet_chksum_pseudo(q, src_ip, &(pcb->remote_ip),
           IP_PROTO_UDP, pcb->chksum_len);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
+#else
+    udphdr->chksum = 0x0000;
+#endif
     /* output to IP */
     err = ip_output_if (q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
@@ -419,11 +427,15 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
     udphdr->len = htons(q->tot_len);
     /* calculate checksum */
+#if CHECKSUM_GEN_UDP
     if ((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
       udphdr->chksum = inet_chksum_pseudo(q, src_ip, &pcb->remote_ip, IP_PROTO_UDP, q->tot_len);
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
+#else
+    udphdr->chksum = 0x0000;
+#endif
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
     snmp_inc_udpoutdatagrams();
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));

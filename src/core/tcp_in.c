@@ -136,6 +136,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     return;
   }
 
+#if CHECKSUM_CHECK_TCP
   /* Verify TCP checksum. */
   if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
       (struct ip_addr *)&(iphdr->dest),
@@ -152,7 +153,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     pbuf_free(p);
     return;
   }
-
+#endif
 
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */

@@ -209,6 +209,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 
   /* verify checksum */
+#if CHECKSUM_CHECK_IP
   if (inet_chksum(iphdr, iphdrlen) != 0) {
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
@@ -219,6 +220,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
+#endif
 
   /* Trim pbuf. This should have been done at the netif layer,
      but we'll do it anyway just to be sure that its done. */
@@ -415,7 +417,9 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     }
 
     IPH_CHKSUM_SET(iphdr, 0);
+#if CHECKSUM_GEN_IP
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+#endif
   } else {
     iphdr = p->payload;
     dest = &(iphdr->dest);
