@@ -485,6 +485,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* output to IP */
     err = ip_output_if (p, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
+  /* UDP protocol? */
   } else {
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
     udphdr->len = htons(q->tot_len);
@@ -498,7 +499,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     snmp_inc_udpoutdatagrams();
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
-    err = ip_output_if(p, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
+    err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
   }
 
   /* did we chain a header earlier? */
