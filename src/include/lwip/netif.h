@@ -44,18 +44,18 @@
 
 /** must be the maximum of all used hardware address lengths
     across all types of interfaces in use */
-#define NETIF_MAX_HWADDR_LEN 6
+#define NETIF_MAX_HWADDR_LEN 6U
 
 /** TODO: define the use (where, when, whom) of netif flags */
 
 /** whether the network interface is 'up'. this is
  * a software flag used to control whether this network
  * interface is enabled and processes traffic */
-#define NETIF_FLAG_UP 1U
+#define NETIF_FLAG_UP 0x1U
 /** if set, the netif has broadcast capability */
-#define NETIF_FLAG_BROADCAST 2U
+#define NETIF_FLAG_BROADCAST 0x2U
 /** if set, the netif is one end of a point-to-point connection */
-#define NETIF_FLAG_POINTTOPOINT 4U
+#define NETIF_FLAG_POINTTOPOINT 0x4U
 /** if set, the interface is configured using DHCP */
 #define NETIF_FLAG_DHCP 0x08U
 /** if set, the interface has an active link
