@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.19  2003/01/08 10:09:43  likewise
+ * Updated lwIP module copyright years to include 2003. Committers must check theirs.
+ *
  * Revision 1.18  2003/01/08 09:24:50  likewise
  * Removed etharp_output_sent() as etharp.c no longer returns ARP packets to the driver.
  *
@@ -16,7 +19,7 @@
  */
 
 /*
- * Copyright (c) 2001, 2002 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 

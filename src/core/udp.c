@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001, 2002 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.6 2002/12/19 09:04:58 jani Exp $
+ * $Id: udp.c,v 1.7 2003/01/08 10:09:42 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
