@@ -732,7 +732,7 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
   LWIP_ASSERT("n == NULL in pbuf_queue: this indicates a programmer error\n", n != NULL);
   LWIP_ASSERT("p == n in pbuf_queue: this indicates a programmer error\n", p != n);
   if ((p == NULL) || (n == NULL) || (p == n)){
-    LWIP_DEBUGF(PBUF_DEBUG | DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"))
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"));
     return;
   }
 
