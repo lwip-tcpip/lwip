@@ -1021,7 +1021,7 @@ tcp_receive(struct tcp_pcb *pcb)
       }
       cseg->p = NULL;
     }
-    if (flags & TCP_FIN) {
+    if (TCPH_FLAGS(cseg->tcphdr) & TCP_FIN) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: dequeued FIN.\n"));
       recv_flags = TF_GOT_FIN;
     }
