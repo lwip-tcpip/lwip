@@ -45,6 +45,7 @@
 struct netif {
   struct netif *next;
   u8_t num;
+  u16_t mtu;
   struct ip_addr ip_addr;
   struct ip_addr netmask;  /* netmask in network byte order */
   struct ip_addr gw;
