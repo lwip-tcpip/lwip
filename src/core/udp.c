@@ -332,6 +332,25 @@ udp_input(struct pbuf *p, struct netif *inp)
   PERF_STOP("udp_input");
 }
 
+/**
+ * Send data to a specified address using UDP.
+ *
+ * @param pcb UDP PCB used to send the data.
+ * @param pbuf chain of pbuf's to be sent.
+ * @param dst_ip Destination IP address.
+ * @param dst_port Destination UDP port.
+ *
+ * If the PCB already has a remote address association, it will
+ * be restored after the data is sent.
+ * 
+ * @return lwIP error code.
+ * @return lwIP error code.
+ * - ERR_OK. Successful. No error occured.
+ * - ERR_MEM. Out of memory.
+ * - ERR_RTE. Could not find route to destination address.
+ *
+ * @see udp_disconnect()
+ */
 err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   struct ip_addr *dst_ip, u16_t dst_port)
@@ -362,8 +381,7 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
  * @return lwIP error code.
  * - ERR_OK. Successful. No error occured.
  * - ERR_MEM. Out of memory.
- * - ERR_USE. The specified ipaddr and port are already bound to by
- * another UDP PCB.
+ * - ERR_RTE. Could not find route to destination address.
  *
  * @see udp_disconnect()
  */
