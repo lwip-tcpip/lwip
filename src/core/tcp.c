@@ -457,9 +457,9 @@ tcp_slowtmr(void)
   if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs"));
   while(pcb != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb"));
-    ASSERT("tcp_timer_coarse: active pcb->state != CLOSED", pcb->state != CLOSED);
-    ASSERT("tcp_timer_coarse: active pcb->state != LISTEN", pcb->state != LISTEN);
-    ASSERT("tcp_timer_coarse: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+    ASSERT("tcp_slowtmr: active pcb->state != CLOSED", pcb->state != CLOSED);
+    ASSERT("tcp_slowtmr: active pcb->state != LISTEN", pcb->state != LISTEN);
+    ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
 
     pcb_remove = 0;
 
@@ -475,7 +475,7 @@ tcp_slowtmr(void)
       if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
 
 	/* Time for a retransmission. */
-        DEBUGF(TCP_RTO_DEBUG, ("tcp_timer_coarse: rtime %ld pcb->rto %d\n",
+        DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %ld pcb->rto %d\n",
                                tcp_ticks - pcb->rtime, pcb->rto));
 
 	/* Double retransmission time-out unless we are trying to
@@ -494,7 +494,7 @@ tcp_slowtmr(void)
         }
         pcb->cwnd = pcb->mss;
 
-        DEBUGF(TCP_CWND_DEBUG, ("tcp_rexmit_seg: cwnd %u ssthresh %u\n",
+        DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %u ssthresh %u\n",
                                 pcb->cwnd, pcb->ssthresh));
       }
     }
@@ -517,7 +517,7 @@ tcp_slowtmr(void)
        pcb->rto * TCP_OOSEQ_TIMEOUT) {
       tcp_segs_free(pcb->ooseq);
       pcb->ooseq = NULL;
-      DEBUGF(TCP_CWND_DEBUG, ("tcp: dropping OOSEQ queued data\n"));
+      DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: dropping OOSEQ queued data\n"));
     }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -526,7 +526,7 @@ tcp_slowtmr(void)
       if((u32_t)(tcp_ticks - pcb->tmr) >
 	 TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
-        DEBUGF(TCP_DEBUG, ("tcp_slottmr: removing pcb stuck in SYN-RCVD\n"));
+        DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in SYN-RCVD\n"));
       }
     }
 
@@ -536,11 +536,11 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_active_pcbs list. */
       if(prev != NULL) {
-	ASSERT("tcp_timer_coarse: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
+	ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
-        ASSERT("tcp_timer_coarse: first pcb == tcp_active_pcbs", tcp_active_pcbs == pcb);
+        ASSERT("tcp_slowtmr: first pcb == tcp_active_pcbs", tcp_active_pcbs == pcb);
         tcp_active_pcbs = pcb->next;
       }
 
@@ -555,7 +555,7 @@ tcp_slowtmr(void)
       ++pcb->polltmr;
       if(pcb->polltmr >= pcb->pollinterval) {
 	pcb->polltmr = 0;
-        DEBUGF(TCP_DEBUG, ("tcp_slottmr: polling application\n"));
+        DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
 	TCP_EVENT_POLL(pcb, err);
 	if(err == ERR_OK) {
 	  tcp_output(pcb);
@@ -572,7 +572,7 @@ tcp_slowtmr(void)
   prev = NULL;    
   pcb = tcp_tw_pcbs;
   while(pcb != NULL) {
-    ASSERT("tcp_timer_coarse: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+    ASSERT("tcp_slowtmr: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
     pcb_remove = 0;
 
     /* Check if this PCB has stayed long enough in TIME-WAIT */
@@ -587,11 +587,11 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_tw_pcbs list. */
       if(prev != NULL) {
-	ASSERT("tcp_timer_coarse: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
+	ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
-        ASSERT("tcp_timer_coarse: first pcb == tcp_tw_pcbs", tcp_tw_pcbs == pcb);
+        ASSERT("tcp_slowtmr: first pcb == tcp_tw_pcbs", tcp_tw_pcbs == pcb);
         tcp_tw_pcbs = pcb->next;
       }
       pcb2 = pcb->next;
