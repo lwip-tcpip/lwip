@@ -62,10 +62,10 @@ u8_t *inet_ntoa(u32_t addr); /* returns ptr to static buffer; not reentrant! */
 #endif /* ntohl */
 
 #if BYTE_ORDER == BIG_ENDIAN
-#define htons(x) (x)
-#define ntohs(x) (x)
-#define htonl(x) (x)
-#define ntohl(x) (x)
+#define htons(n) (n)
+#define ntohs(n) (n)
+#define htonl(n) (n)
+#define ntohl(n) (n)
 #else
 #ifdef LWIP_PREFIX_BYTEORDER_FUNCS
 /* workaround for naming collisions on some platforms */
@@ -74,10 +74,10 @@ u8_t *inet_ntoa(u32_t addr); /* returns ptr to static buffer; not reentrant! */
 #define htonl lwip_htonl
 #define ntohl lwip_ntohl
 #endif
-u16_t htons(u16_t x);
-u16_t ntohs(u16_t x);
-u32_t htonl(u32_t x);
-u32_t ntohl(u32_t x);
+u16_t htons(u16_t n);
+u16_t ntohs(u16_t n);
+u32_t htonl(u32_t n);
+u32_t ntohl(u32_t n);
 #endif
 
 #endif /* __LWIP_INET_H__ */
