@@ -873,6 +873,7 @@ tcp_receive(struct tcp_pcb *pcb)
 	/* must be a duplicate of a packet that has already been correctly handled */
 	
 	DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %lu\n", seqno));
+	tcp_ack_now(pcb);
       }
     }
 
