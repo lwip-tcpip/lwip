@@ -38,8 +38,6 @@
 #include "lwip/inet.h"
 #include "lwip/ip.h"
 
-#include "lwip/err.h"
-
 #define UDP_HLEN 8
 
 struct udp_hdr {

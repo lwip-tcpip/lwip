@@ -119,10 +119,10 @@ extern const struct ip_addr ip_addr_broadcast;
 
 
 #define ip_addr_debug_print(debug, ipaddr) LWIP_DEBUGF(debug, ("%u.%u.%u.%u", \
-        (unsigned int)(ntohl((ipaddr)->addr) >> 24) & 0xff, \
-        (unsigned int)(ntohl((ipaddr)->addr) >> 16) & 0xff, \
-        (unsigned int)(ntohl((ipaddr)->addr) >> 8) & 0xff, \
-        (unsigned int)ntohl((ipaddr)->addr) & 0xff))
+        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 24) & 0xff:0, \
+        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 16) & 0xff:0, \
+        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 8) & 0xff:0, \
+        ipaddr?(unsigned int)ntohl((ipaddr)->addr) & 0xff:0U))
 
 /* cast to unsigned int, as it is used as argument to printf functions
  * which expect integer arguments */
