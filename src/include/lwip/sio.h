@@ -30,7 +30,6 @@
 /*
  * This is the interface to the platform specific serial IO module
  * It needs to be implemented by those platforms which need SLIP or PPP
- * This is still preliminary and will surely be extended for PPP
  */
 
 #include "arch/cc.h"
@@ -38,3 +37,6 @@
 void * sio_open(u8_t);
 void sio_send(u8_t, void*);
 u8_t sio_recv(void *);
+u32_t sio_read(void *, u8_t *, u32_t);
+u32_t sio_write(void *, u8_t *, u32_t);
+
