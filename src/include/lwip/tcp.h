@@ -151,7 +151,9 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 
 #define TCP_MSL 60000  /* The maximum segment lifetime in microseconds */
 
-#include "arch/bpstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 struct tcp_hdr {
   PACK_STRUCT_FIELD(u16_t src);
@@ -164,7 +166,9 @@ struct tcp_hdr {
   PACK_STRUCT_FIELD(u16_t urgp);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#include "arch/epstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 #define TCPH_OFFSET(hdr) (NTOHS((hdr)->_offset_flags) >> 8)
 #define TCPH_FLAGS(hdr) (NTOHS((hdr)->_offset_flags) & 0xff)

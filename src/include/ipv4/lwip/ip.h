@@ -66,7 +66,9 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #endif /* IP_HDRINCL */
 #define IP_HDRINCL  NULL
 
-#include "arch/bpstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
 PACK_STRUCT_BEGIN
 struct ip_hdr {
   /* version / header length / type of service */
@@ -90,7 +92,9 @@ struct ip_hdr {
   PACK_STRUCT_FIELD(struct ip_addr dest); 
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
-#include "arch/epstruct.h"
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 #define IPH_V(hdr)  (NTOHS((hdr)->_v_hl_tos) >> 12)
 #define IPH_HL(hdr) ((NTOHS((hdr)->_v_hl_tos) >> 8) & 0x0f)
