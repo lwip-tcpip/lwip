@@ -37,7 +37,7 @@
 #include "lwip/def.h"
 #include "lwip/memp.h"
 
-#ifndef NO_SYS
+#if (NO_SYS == 0)
 /*-----------------------------------------------------------------------------------*/
 void
 sys_mbox_fetch(sys_mbox_t mbox, void **msg)
