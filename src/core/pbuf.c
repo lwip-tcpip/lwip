@@ -34,14 +34,8 @@
  *
  */
 
-/*-----------------------------------------------------------------------------------*/
-/* pbuf.c
- *
- * Functions for the manipulation of pbufs. The pbufs holds all packets in the
- * system.
- *
- */
-/*-----------------------------------------------------------------------------------*/
+#define NEW_PBUF_REALLOC 1 /* should fix bug #1903 */
+
 #include "lwip/opt.h"
 
 #include "lwip/stats.h"
@@ -404,18 +398,86 @@ pbuf_refresh(void)
                              sys_sem_signal(pbuf_pool_free_sem);        \
                            } while(0)
 #endif /* SYS_LIGHTWEIGHT_PROT */
-/*-----------------------------------------------------------------------------------*/
-/* pbuf_realloc:
+
+/**
+ * Shrink a pbuf chain to a certain size.
  *
- * Reallocates the memory for a pbuf. If the pbuf is in ROM, this as
- * simple as to adjust the ->tot_len and ->len fields. If the pbuf is
+ * @param p pbuf to shrink.
+ * @param size new size
+ * If the pbuf is in ROM, only the ->tot_len and ->len fields are adjusted.
+ * If the chain
  * a pbuf chain, as it might be with both pbufs in dynamically
  * allocated RAM and for pbufs from the pbuf pool, we have to step
  * through the chain until we find the new endpoint in the pbuf chain.
  * Then the pbuf that is right on the endpoint is resized and any
  * further pbufs on the chain are deallocated.
+ * @bug #1903
  */
 /*-----------------------------------------------------------------------------------*/
+#if NEW_PBUF_REALLOC
+void
+pbuf_realloc(struct pbuf *p, u16_t new_len)
+{
+  struct pbuf *q, *r;
+  u16_t rem_len; /* remaining length */
+
+  LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
+              p->flags == PBUF_FLAG_ROM ||
+              p->flags == PBUF_FLAG_RAM ||
+              p->flags == PBUF_FLAG_REF);
+
+  if (new_len >= p->tot_len) {
+    /** enlarging not yet supported */
+    return;
+  }
+
+  /* first, step over any pbufs that should remain in the chain */
+  rem_len = new_len;
+  q = p;  
+  /* this pbuf should be kept? */
+  while (rem_len > q->len) {
+    /* decrease remaining length by pbuf length */
+    rem_len -= q->len;      
+    q = q->next;
+  }
+  /* { we have now reached the new last pbuf } */
+  /* { rem_len == desired length for pbuf q } */  
+
+  /* shrink allocated memory for PBUF_RAM */
+  /* (other types merely adjust their length fields */
+  if (q->flags == PBUF_FLAG_RAM) {
+    /* reallocate and adjust the length of the pbuf that will be split */
+    mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
+  }
+  
+  q->len = rem_len;
+  q->tot_len = q->len;
+
+  /* deallocate any left over pbufs */
+  /* remember next pbuf in chain */
+  r = q->next;
+  /* q is last packet in chain */
+  q->next = NULL;
+  /* first pbuf to be dealloced */
+  q = r;
+  /* any pbuf left? */
+  while(q != NULL) {
+    /* remember next pbuf in chain */
+    r = q->next;
+    /* deallocate pbuf */
+    if (q->flags == PBUF_FLAG_RAM) {
+      pbuf_free(q);
+    } else if ((q->flags == PBUF_FLAG_ROM) || (q->flags == PBUF_FLAG_REF)) {
+      PBUF_POOL_FREE(q);
+    } else if (q->flags == PBUF_FLAG_POOL) {
+      PBUF_POOL_FREE(q);
+    }
+    q = r;
+  }
+
+  pbuf_refresh();
+}
+#else /* pbuf_realloc() of CVS version 1.23 */
 void
 pbuf_realloc(struct pbuf *p, u16_t size)
 {
@@ -487,6 +549,8 @@ pbuf_realloc(struct pbuf *p, u16_t size)
 
   pbuf_refresh();
 }
+#endif
+
 /**
  * Decreases the header size by the given amount.
  * 
@@ -789,3 +853,4 @@ pbuf_unref(struct pbuf *f)
   
   return top;
 }
+
