@@ -272,6 +272,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     port = netbuf_fromport(buf);  
     ((struct sockaddr_in *)from)->sin_addr.s_addr = addr->addr;
     ((struct sockaddr_in *)from)->sin_port = port;
+    ((struct sockaddr_in *)from)->sin_family = AF_INET;
     *fromlen = sizeof(struct sockaddr_in);
   }
   
@@ -358,7 +359,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   
   remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
   remote_port = ((struct sockaddr_in *)to)->sin_port;
-  netconn_connect(sock->conn, &remote_addr, remote_port);
+  netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
   
   ret = lwip_send(s, data, size, flags);
 

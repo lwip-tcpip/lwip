@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.11 2003/01/22 16:18:05 jani Exp $
+ * $Id: udp.c,v 1.12 2003/01/23 16:46:01 jani Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -217,9 +217,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 
 
   /* Check checksum if this is a match or if it was directed at us. */
-  /*  if(pcb != NULL ||
-      ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) {*/
-  if(pcb != NULL) {
+    if(pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
+    {
     DEBUGF(UDP_DEBUG, ("udp_input: calculating checksum\n"));
     pbuf_header(p, UDP_HLEN);    
 #ifdef IPv6
@@ -266,7 +265,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #if LWIP_SNMP > 0
       snmp_inc_udpindatagrams();
 #endif
-      pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
+      pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), udphdr->src);
     } else {
       DEBUGF(UDP_DEBUG, ("udp_input: not for us.\n"));
       
@@ -275,10 +274,6 @@ udp_input(struct pbuf *p, struct netif *inp)
       
       if(!ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) &&
 	 !ip_addr_ismulticast(&iphdr->dest)) {
-	
-	/* deconvert from host to network byte order */
-	udphdr->src = htons(udphdr->src);
-	udphdr->dest = htons(udphdr->dest); 
 	
 	/* adjust pbuf pointer */
 	p->payload = iphdr;
