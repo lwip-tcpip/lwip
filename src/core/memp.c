@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -120,7 +120,7 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
 static sys_sem_t mutex;
 #endif
 
-#ifndef LWIP_NOASSERT
+#if MEMP_SANITY_CHECK
 static int
 memp_sanity(void)
 {
@@ -140,7 +140,7 @@ memp_sanity(void)
   }
   return 1;
 }
-#endif /* LWIP_DEBUG */
+#endif /* MEMP_SANITY_CHECK*/
 
 void
 memp_init(void)
@@ -217,7 +217,7 @@ memp_malloc(memp_t type)
     sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
     LWIP_ASSERT("memp_malloc: memp properly aligned",
-     ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
+     ((mem_ptr_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
     return mem;
@@ -261,7 +261,9 @@ memp_free(memp_t type, void *mem)
   memp->next = memp_tab[type]; 
   memp_tab[type] = memp;
 
+#if MEMP_SANITY_CHECK
   LWIP_ASSERT("memp sanity", memp_sanity());
+#endif  
 
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
