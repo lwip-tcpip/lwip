@@ -212,9 +212,19 @@ void *
 memp_mallocp(memp_t type)
 {
   void *mem;
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level = sys_arch_protect();
+#else /* SYS_LIGHTWEIGHT_PROT */  
   sys_sem_wait(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
+
   mem = memp_malloc(type);
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
   return mem;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -243,8 +253,19 @@ memp_free(memp_t type, void *mem)
 void 
 memp_freep(memp_t type, void *mem)
 {
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level = sys_arch_protect();
+#else /* SYS_LIGHTWEIGHT_PROT */  
   sys_sem_wait(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
+
   memp_free(type, mem);
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
+
 }
 /*-----------------------------------------------------------------------------------*/

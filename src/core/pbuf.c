@@ -52,8 +52,12 @@
 #include "arch/perf.h"
 
 static u8_t pbuf_pool_memory[(PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf)))];
+
+#ifndef SYS_LIGHTWEIGHT_PROT
 static volatile u8_t pbuf_pool_free_lock, pbuf_pool_alloc_lock;
 static sys_sem_t pbuf_pool_free_sem;
+#endif
+
 static struct pbuf *pbuf_pool = NULL;
 static struct pbuf *pbuf_pool_alloc_cache = NULL;
 static struct pbuf *pbuf_pool_free_cache = NULL;
@@ -99,10 +103,11 @@ pbuf_init(void)
      are no more pbufs in the pool. */
   q->next = NULL;
 
+#ifndef SYS_LIGHTWEIGHT_PROT  
   pbuf_pool_alloc_lock = 0;
   pbuf_pool_free_lock = 0;
   pbuf_pool_free_sem = sys_sem_new(1);
-  
+#endif  
 }
 /*-----------------------------------------------------------------------------------*/
 /* The following two functions are only called from pbuf_alloc(). */
@@ -112,6 +117,12 @@ pbuf_pool_alloc(void)
 {
   struct pbuf *p = NULL;
 
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level;
+
+  old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */
+  
   /* First, see if there are pbufs in the cache. */
   if(pbuf_pool_alloc_cache) {
     p = pbuf_pool_alloc_cache;
@@ -119,6 +130,7 @@ pbuf_pool_alloc(void)
       pbuf_pool_alloc_cache = p->next; 
     }
   } else {
+#ifndef SYS_LIGHTWEIGHT_PROT      
     /* Next, check the actual pbuf pool, but if the pool is locked, we
        pretend to be out of buffers and return NULL. */
     if(pbuf_pool_free_lock) {
@@ -129,18 +141,21 @@ pbuf_pool_alloc(void)
     }
     pbuf_pool_alloc_lock = 1;
     if(!pbuf_pool_free_lock) {
+#endif /* SYS_LIGHTWEIGHT_PROT */        
       p = pbuf_pool;
       if(p) {
 	pbuf_pool = p->next; 
       }
+#ifndef SYS_LIGHTWEIGHT_PROT      
 #ifdef PBUF_STATS
     } else {
       ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
     }
     pbuf_pool_alloc_lock = 0;
+#endif /* SYS_LIGHTWEIGHT_PROT */    
   }
-
+  
 #ifdef PBUF_STATS
   if(p != NULL) {    
     ++lwip_stats.pbuf.used;
@@ -150,6 +165,10 @@ pbuf_pool_alloc(void)
   }
 #endif /* PBUF_STATS */
 
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
+
   return p;   
 }
 /*-----------------------------------------------------------------------------------*/
@@ -157,19 +176,33 @@ static void
 pbuf_pool_free(struct pbuf *p)
 {
   struct pbuf *q;
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level;
+#endif /* SYS_LIGHTWEIGHT_PROT */
+  
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+    old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */
 
 #ifdef PBUF_STATS
     for(q = p; q != NULL; q = q->next) {
       --lwip_stats.pbuf.used;
     }
 #endif /* PBUF_STATS */
-  
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+    old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */    
   if(pbuf_pool_alloc_cache == NULL) {
     pbuf_pool_alloc_cache = p;
   } else {  
     for(q = pbuf_pool_alloc_cache; q->next != NULL; q = q->next);
     q->next = p;    
   }
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 }
 /*-----------------------------------------------------------------------------------*/
 /* pbuf_alloc():
@@ -313,12 +346,19 @@ void
 pbuf_refresh(void)
 {
   struct pbuf *p;
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level;
 
+  old_level = sys_arch_protect();
+#else /* SYS_LIGHTWEIGHT_PROT */  
   sys_sem_wait(pbuf_pool_free_sem);
+#endif /* else SYS_LIGHTWEIGHT_PROT */
   
   if(pbuf_pool_free_cache != NULL) {
+#ifndef SYS_LIGHTWEIGHT_PROT      
     pbuf_pool_free_lock = 1;
     if(!pbuf_pool_alloc_lock) {
+#endif /* SYS_LIGHTWEIGHT_PROT */
       if(pbuf_pool == NULL) {
 	pbuf_pool = pbuf_pool_free_cache;	
       } else {  
@@ -326,23 +366,48 @@ pbuf_refresh(void)
 	p->next = pbuf_pool_free_cache;   
       }
       pbuf_pool_free_cache = NULL;
+#ifndef SYS_LIGHTWEIGHT_PROT      
 #ifdef PBUF_STATS
     } else {
       ++lwip_stats.pbuf.refresh_locked;
 #endif /* PBUF_STATS */
     }
     
-    pbuf_pool_free_lock = 0;  
+    pbuf_pool_free_lock = 0;
+#endif /* SYS_LIGHTWEIGHT_PROT */    
   }
-  
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#else  /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(pbuf_pool_free_sem);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 }
-#define PBUF_POOL_FREE(p)  do {                             \
-                             sys_sem_wait(pbuf_pool_free_sem);   \
-                             p->next = pbuf_pool_free_cache;           \
-                             pbuf_pool_free_cache = p;                 \
-                             sys_sem_signal(pbuf_pool_free_sem); \
+
+#ifdef PBUF_STATS
+#define DEC_PBUF_STATS do { --lwip_stats.pbuf.used; } while (0)
+#else /* PBUF_STATS */
+#define DEC_PBUF_STATS
+#endif /* PBUF_STATS */
+
+#define PBUF_POOL_FAST_FREE(p)  do {                                    \
+                                  p->next = pbuf_pool_free_cache;       \
+                                  pbuf_pool_free_cache = p;             \
+                                  DEC_PBUF_STATS;                       \
+                                } while (0)
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+#define PBUF_POOL_FREE(p)  do {                                                 \
+                             u32_t old_level = sys_arch_protect();        \
+                             PBUF_POOL_FAST_FREE(p);                            \
+                             sys_arch_unprotect(old_level);                 \
                            } while(0)
+#else /* SYS_LIGHTWEIGHT_PROT */
+#define PBUF_POOL_FREE(p)  do {                                         \
+                             sys_sem_wait(pbuf_pool_free_sem);          \
+                             PBUF_POOL_FAST_FREE(p);                    \
+                             sys_sem_signal(pbuf_pool_free_sem);        \
+                           } while(0)
+#endif /* SYS_LIGHTWEIGHT_PROT */
 /*-----------------------------------------------------------------------------------*/
 /* pbuf_realloc:
  *
@@ -389,9 +454,6 @@ pbuf_realloc(struct pbuf *p, u16_t size)
     while(q != NULL) {
       r = q->next;
       PBUF_POOL_FREE(q);
-#ifdef PBUF_STATS
-      --lwip_stats.pbuf.used;
-#endif /* PBUF_STATS */
       q = r;
     }
     break;
@@ -477,7 +539,10 @@ pbuf_free(struct pbuf *p)
 {
   struct pbuf *q;
   u8_t count = 0;
-    
+#ifdef SYS_LIGHTWEIGHT_PROT
+  u32_t old_level;
+#endif /* SYS_LIGHTWEIGHT_PROT */
+  
   if(p == NULL) {
     return 0;
   }
@@ -489,14 +554,23 @@ pbuf_free(struct pbuf *p)
          p->flags == PBUF_FLAG_RAM);
   
   ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
-    
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  /* Since decrementing ref cannot be guarranteed to be a single machine operation
+     we must protect it. Also, the later test of ref must be protected.
+  */
+  old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */  
   /* Decrement reference count. */  
   p->ref--;
 
   q = NULL;
   /* If reference count == 0, actually deallocate pbuf. */
   if(p->ref == 0) {
-
+#ifdef SYS_LIGHTWEIGHT_PROT
+      sys_arch_unprotect(old_level);
+#endif     
+      
     while(p != NULL) {
       /* Check if this is a pbuf from the pool. */
       if(p->flags == PBUF_FLAG_POOL) {
@@ -504,21 +578,25 @@ pbuf_free(struct pbuf *p)
 	p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
 	q = p->next;
 	PBUF_POOL_FREE(p);
-#ifdef PBUF_STATS
-	--lwip_stats.pbuf.used;
-#endif /* PBUF_STATS */
-      } else if(p->flags == PBUF_FLAG_ROM) {
-	q = p->next;
-	memp_freep(MEMP_PBUF, p);
       } else {
-	q = p->next;
-	mem_free(p);
+          if(p->flags == PBUF_FLAG_ROM) {
+              q = p->next;
+              memp_freep(MEMP_PBUF, p);
+          } else {
+              q = p->next;
+              mem_free(p);
+          }
       }
+      
       p = q;
       ++count;
     }
     pbuf_refresh();
   }
+#ifdef SYS_LIGHTWEIGHT_PROT
+  else
+      sys_arch_unprotect(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 
   PERF_STOP("pbuf_free");
   
@@ -553,10 +631,21 @@ pbuf_clen(struct pbuf *p)
 void
 pbuf_ref(struct pbuf *p)
 {
+#ifdef SYS_LIGHTWEIGHT_PROT
+    u32_t old_level;
+#endif /* SYS_LIGHTWEIGHT_PROT */
+    
   if(p == NULL) {
     return;
   }
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */  
   ++(p->ref);
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 }
 
 /*------------------------------------------------------------------------------*/
@@ -567,10 +656,18 @@ pbuf_ref(struct pbuf *p)
 void
 pbuf_ref_chain(struct pbuf *p)
 {
+#ifdef SYS_LIGHTWEIGHT_PROT
+    u32_t old_level = sys_arch_protect();
+#endif /* SYS_LIGHTWEIGHT_PROT */
+    
   while (p != NULL) {
     p->ref++;
     p=p->next;
   }
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  sys_arch_unprotect(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 }
 /*-----------------------------------------------------------------------------------*/
 /* pbuf_chain():
@@ -665,5 +762,3 @@ pbuf_unref(struct pbuf *f)
   }
   return f;
 }
-
-

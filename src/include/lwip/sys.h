@@ -103,6 +103,14 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 void sys_mbox_free(sys_mbox_t mbox);
 void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 
+/* Critical Region Protection */
+/* These functions must be implemented in the sys_arch.c file.
+   In some implementations they can provide a more light-weight protection
+   mechanism than using semaphores. Otherwise semaphores can be used for
+   implementation */
+u32_t sys_arch_protect(void);
+void sys_arch_unprotect(u32_t pval);
+
 /* Thread functions. */
 void sys_thread_new(void (* thread)(void *arg), void *arg);
 
