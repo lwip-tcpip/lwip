@@ -120,7 +120,7 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
 static sys_sem_t mutex;
 #endif
 
-#ifndef LWIP_NOASSERT
+#if MEMP_SANITY_CHECK
 static int
 memp_sanity(void)
 {
@@ -140,7 +140,7 @@ memp_sanity(void)
   }
   return 1;
 }
-#endif /* LWIP_DEBUG */
+#endif /* MEMP_SANITY_CHECK*/
 
 void
 memp_init(void)
@@ -261,7 +261,9 @@ memp_free(memp_t type, void *mem)
   memp->next = memp_tab[type]; 
   memp_tab[type] = memp;
 
+#if MEMP_SANITY_CHECK
   LWIP_ASSERT("memp sanity", memp_sanity());
+#endif  
 
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
