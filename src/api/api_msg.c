@@ -465,7 +465,7 @@ do_listen(struct api_msg_msg *msg)
     case NETCONN_UDPNOCHKSUM:
       /* FALLTHROUGH */
     case NETCONN_UDP:
-      DEBUGF(API_MSG_DEBUG, ("api_msg: listen UDP: cannot listen for UDP.\n"));
+      LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: listen UDP: cannot listen for UDP.\n"));
       break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP      
@@ -503,7 +503,7 @@ do_accept(struct api_msg_msg *msg)
     case NETCONN_UDPNOCHKSUM:
       /* FALLTHROUGH */
     case NETCONN_UDP:    
-      DEBUGF(API_MSG_DEBUG, ("api_msg: accept UDP: cannot accept for UDP.\n"));
+      LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: accept UDP: cannot accept for UDP.\n"));
       break;
 #endif /* LWIP_UDP */
     case NETCONN_TCP:

@@ -552,7 +552,7 @@ netconn_recv(struct netconn *conn)
   
 
     
-  DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));
+  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));
 
 
   return buf;
@@ -575,7 +575,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
     return (conn->err = ERR_MEM);
   }
 
-  DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
+  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
   msg->type = API_MSG_SEND;
   msg->msg.conn = conn;
   msg->msg.msg.p = buf->p;
@@ -637,7 +637,7 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
       len = size;
     }
     
-    DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
+    LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
     msg->msg.msg.w.len = len;
     api_msg_post(msg);
     sys_mbox_fetch(conn->mbox, NULL);    

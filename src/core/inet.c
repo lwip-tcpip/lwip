@@ -53,7 +53,7 @@ lwip_chksum(void *dataptr, int len)
 {
   u32_t acc;
     
-  DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", dataptr, len));
+  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", dataptr, len));
   for(acc = 0; len > 1; len -= 2) {
       /*    acc = acc + *((u16_t *)dataptr)++;*/
     acc += *(u16_t *)dataptr;
@@ -63,9 +63,9 @@ lwip_chksum(void *dataptr, int len)
   /* add up any odd byte */
   if (len == 1) {
     acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
-    DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", *(u8_t *)dataptr));
+    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", *(u8_t *)dataptr));
   } else {
-    DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
+    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
   }
   acc = (acc >> 16) + (acc & 0xffffUL);
 
@@ -94,9 +94,9 @@ inet_chksum_pseudo(struct pbuf *p,
   swapped = 0;
   /* iterate through all pbuf in chain */
   for(q = p; q != NULL; q = q->next) {    
-    DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n", (void *) q, (void *)q->next));
+    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n", (void *) q, (void *)q->next));
     acc += lwip_chksum(q->payload, q->len);
-    /*DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%lx \n", acc));*/
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%lx \n", acc));*/
     while (acc >> 16) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }
@@ -104,7 +104,7 @@ inet_chksum_pseudo(struct pbuf *p,
       swapped = 1 - swapped;
       acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
     }
-    /*DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%lx \n", acc));*/
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%lx \n", acc));*/
   }
 
   if (swapped) {
@@ -120,7 +120,7 @@ inet_chksum_pseudo(struct pbuf *p,
   while (acc >> 16) {
     acc = (acc & 0xffffUL) + (acc >> 16);
   }    
-  DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
+  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
   return ~(acc & 0xffffUL);
 }
 /*-----------------------------------------------------------------------------------*/

@@ -119,7 +119,7 @@ ip_reass(struct pbuf *p)
      write the IP header of the fragment into the reassembly
      buffer. The timer is updated with the maximum age. */
   if (ip_reasstmr == 0) {
-    DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
+    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
     memcpy(iphdr, fraghdr, IP_HLEN);
     ip_reasstmr = IP_REASS_MAXAGE;
     sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
@@ -134,7 +134,7 @@ ip_reass(struct pbuf *p)
   if (ip_addr_cmp(&iphdr->src, &fraghdr->src) &&
       ip_addr_cmp(&iphdr->dest, &fraghdr->dest) &&
       IPH_ID(iphdr) == IPH_ID(fraghdr)) {
-    DEBUGF(IP_REASS_DEBUG, ("ip_reass: matching old packet\n"));
+    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: matching old packet\n"));
 #ifdef IP_STATS
     ++lwip_stats.ip_frag.cachehit;
 #endif /* IP_STATS */
@@ -146,7 +146,7 @@ ip_reass(struct pbuf *p)
     /* If the offset or the offset + fragment length overflows the
        reassembly buffer, we discard the entire packet. */
     if (offset > IP_REASS_BUFSIZE || offset + len > IP_REASS_BUFSIZE) {
-      DEBUGF(IP_REASS_DEBUG,
+      LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: fragment outside of buffer (%d:%d/%d).\n", offset,
         offset + len, IP_REASS_BUFSIZE));
       sys_untimeout(ip_reass_timer, NULL);
@@ -156,7 +156,7 @@ ip_reass(struct pbuf *p)
 
     /* Copy the fragment into the reassembly buffer, at the right
        offset. */
-    DEBUGF(IP_REASS_DEBUG,
+    LWIP_DEBUGF(IP_REASS_DEBUG,
      ("ip_reass: copying with offset %d into %d:%d\n", offset,
       IP_HLEN + offset, IP_HLEN + offset + len));
     i = IPH_HL(fraghdr) * 4;
@@ -164,7 +164,7 @@ ip_reass(struct pbuf *p)
 
     /* Update the bitmap. */
     if (offset / (8 * 8) == (offset + len) / (8 * 8)) {
-      DEBUGF(IP_REASS_DEBUG,
+      LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: updating single byte in bitmap.\n"));
       /* If the two endpoints are in the same byte, we only update
          that byte. */
@@ -176,7 +176,7 @@ ip_reass(struct pbuf *p)
          bytes in the endpoints and fill the stuff inbetween with
          0xff. */
       ip_reassbitmap[offset / (8 * 8)] |= bitmap_bits[(offset / 8) & 7];
-      DEBUGF(IP_REASS_DEBUG,
+      LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: updating many bytes in bitmap (%d:%d).\n",
         1 + offset / (8 * 8), (offset + len) / (8 * 8)));
       for (i = 1 + offset / (8 * 8); i < (offset + len) / (8 * 8); ++i) {
@@ -195,7 +195,7 @@ ip_reass(struct pbuf *p)
     if ((ntohs(IPH_OFFSET(fraghdr)) & IP_MF) == 0) {
       ip_reassflags |= IP_REASS_FLAG_LASTFRAG;
       ip_reasslen = offset + len;
-      DEBUGF(IP_REASS_DEBUG,
+      LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: last fragment seen, total len %d\n",
         ip_reasslen));
     }
@@ -208,7 +208,7 @@ ip_reass(struct pbuf *p)
          the bitmap. */
       for (i = 0; i < ip_reasslen / (8 * 8) - 1; ++i) {
   if (ip_reassbitmap[i] != 0xff) {
-    DEBUGF(IP_REASS_DEBUG,
+    LWIP_DEBUGF(IP_REASS_DEBUG,
      ("ip_reass: last fragment seen, bitmap %d/%d failed (%x)\n",
       i, ip_reasslen / (8 * 8) - 1, ip_reassbitmap[i]));
     goto nullreturn;
@@ -218,7 +218,7 @@ ip_reass(struct pbuf *p)
          right amount of bits. */
       if (ip_reassbitmap[ip_reasslen / (8 * 8)] !=
     (u8_t) ~ bitmap_bits[ip_reasslen / 8 & 7]) {
-  DEBUGF(IP_REASS_DEBUG,
+  LWIP_DEBUGF(IP_REASS_DEBUG,
          ("ip_reass: last fragment seen, bitmap %d didn't contain %x (%x)\n",
     ip_reasslen / (8 * 8), ~bitmap_bits[ip_reasslen / 8 & 7],
     ip_reassbitmap[ip_reasslen / (8 * 8)]));
@@ -247,7 +247,7 @@ ip_reass(struct pbuf *p)
     /* Copy enough bytes to fill this pbuf in the chain. The
        available data in the pbuf is given by the q->len
        variable. */
-    DEBUGF(IP_REASS_DEBUG,
+    LWIP_DEBUGF(IP_REASS_DEBUG,
      ("ip_reass: memcpy from %p (%d) to %p, %d bytes\n",
       &ip_reassbuf[i], i, q->payload,
       q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
@@ -263,7 +263,7 @@ ip_reass(struct pbuf *p)
   ++lwip_stats.ip_frag.memerr;
 #endif /* IP_STATS */
       }
-      DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
+      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
       return p;
     }
   }

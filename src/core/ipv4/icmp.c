@@ -63,7 +63,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   iphdr = p->payload;
   hlen = IPH_HL(iphdr) * 4;
   if (pbuf_header(p, -((s16_t)hlen)) || (p->tot_len < sizeof(u16_t)*2)) {
-    DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%u bytes) received\n", p->tot_len));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%u bytes) received\n", p->tot_len));
     pbuf_free(p);
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.lenerr;
@@ -78,17 +78,17 @@ icmp_input(struct pbuf *p, struct netif *inp)
   case ICMP_ECHO:
     if (ip_addr_isbroadcast(&iphdr->dest, &inp->netmask) ||
        ip_addr_ismulticast(&iphdr->dest)) {
-      DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
+      LWIP_DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.err;
 #endif /* ICMP_STATS */
       pbuf_free(p);
       return;
     }
-    DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
-    DEBUGF(DEMO_DEBUG, ("Pong!\n"));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
+    LWIP_DEBUGF(DEMO_DEBUG, ("Pong!\n"));
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
-      DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.lenerr;
@@ -99,7 +99,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     }
     iecho = p->payload;    
     if (inet_chksum_pbuf(p) != 0) {
-      DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
       pbuf_free(p);
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.chkerr;
@@ -130,7 +130,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
      IPH_TTL(iphdr), IP_PROTO_ICMP, inp);
     break; 
   default:
-  DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d code %d not supported.\n", (int)type, (int)code));
+  LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d code %d not supported.\n", (int)type, (int)code));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;
@@ -185,11 +185,11 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 
   iphdr = p->payload;
 #if ICMP_DEBUG
-  DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
+  LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
   ip_addr_debug_print(&(iphdr->src));
-  DEBUGF(ICMP_DEBUG, (" to "));
+  LWIP_DEBUGF(ICMP_DEBUG, (" to "));
   ip_addr_debug_print(&(iphdr->dest));
-  DEBUGF(ICMP_DEBUG, ("\n"));
+  LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
 #endif /* ICMP_DEBNUG */
 
   tehdr = q->payload;

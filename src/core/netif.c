@@ -74,7 +74,7 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif = mem_malloc(sizeof(struct netif));
 
   if (netif == NULL) {
-    DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
+    LWIP_DEBUGF(NETIF_DEBUG, ("netif_add(): out of memory for netif\n"));
     return NULL;
   }
 #if LWIP_DHCP
@@ -98,14 +98,14 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif->next = netif_list;
   netif_list = netif;
 #if NETIF_DEBUG
-  DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
+  LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
   ip_addr_debug_print(ipaddr);
-  DEBUGF(NETIF_DEBUG, (" netmask "));
+  LWIP_DEBUGF(NETIF_DEBUG, (" netmask "));
   ip_addr_debug_print(netmask);
-  DEBUGF(NETIF_DEBUG, (" gw "));
+  LWIP_DEBUGF(NETIF_DEBUG, (" gw "));  
   ip_addr_debug_print(gw);
-  DEBUGF(NETIF_DEBUG, ("\n"));
+  LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
 #endif /* NETIF_DEBUG */
   return netif;
 }
@@ -143,7 +143,7 @@ void netif_remove(struct netif * netif)
   if (netif_default == netif)
     /* reset default netif */
     netif_default = NULL;
-  DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
+  LWIP_DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
   mem_free( netif );
 }
 
@@ -163,11 +163,11 @@ netif_find(char *name)
     if (num == netif->num &&
        name[0] == netif->name[0] &&
        name[1] == netif->name[1]) {
-      DEBUGF(NETIF_DEBUG, ("netif_find: found %c%c\n", name[0], name[1]));
+      LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: found %c%c\n", name[0], name[1]));
       return netif;
     }
   }
-  DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
+  LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return NULL;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -184,14 +184,14 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
   if ((ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0)
   {
     extern struct tcp_pcb *tcp_active_pcbs;
-    DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: netif address being changed\n"));
+    LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: netif address being changed\n"));
     pcb = tcp_active_pcbs;
     while (pcb != NULL) {
       /* PCB bound to current local interface address? */
       if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
         /* this connection must be aborted */
         struct tcp_pcb *next = pcb->next;
-        DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", (void *)pcb));
+        LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", (void *)pcb));
         tcp_abort(pcb);
         pcb = next;
       } else {
@@ -210,8 +210,8 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
   }
 #endif
   ip_addr_set(&(netif->ip_addr), ipaddr);
-  DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
-           netif->name[0], netif->name[1],
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
+    netif->name[0], netif->name[1], 
     (u8_t)(ntohl(netif->ip_addr.addr) >> 24 & 0xff),
     (u8_t)(ntohl(netif->ip_addr.addr) >> 16 & 0xff),
     (u8_t)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
@@ -222,7 +222,7 @@ void
 netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
   ip_addr_set(&(netif->gw), gw);
-  DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
            netif->name[0], netif->name[1],
            (u8_t)(ntohl(netif->gw.addr) >> 24 & 0xff),
            (u8_t)(ntohl(netif->gw.addr) >> 16 & 0xff),
@@ -234,7 +234,7 @@ void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
   ip_addr_set(&(netif->netmask), netmask);
-  DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
            netif->name[0], netif->name[1],
            (u8_t)(ntohl(netif->netmask.addr) >> 24 & 0xff),
            (u8_t)(ntohl(netif->netmask.addr) >> 16 & 0xff),
@@ -246,7 +246,7 @@ void
 netif_set_default(struct netif *netif)
 {
   netif_default = netif;
-  DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
+  LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
 /*-----------------------------------------------------------------------------------*/

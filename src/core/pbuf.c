@@ -213,7 +213,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   struct pbuf *p, *q, *r;
   u16_t offset;
   s32_t rem_len; /* remaining length */
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%u)\n", length));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%u)\n", length));
 
   /* determine header offset */
   offset = 0;
@@ -241,7 +241,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
     p = pbuf_pool_alloc();
-    DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", p));
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", p));
     if (p == NULL) {
 #ifdef PBUF_STATS
       ++lwip_stats.pbuf.err;
@@ -273,7 +273,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     while (rem_len > 0) {      
       q = pbuf_pool_alloc();
       if (q == NULL) {
-       DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
+       LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
 #ifdef PBUF_STATS
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
@@ -325,7 +325,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* only allocate memory for the pbuf structure */
     p = memp_mallocp(MEMP_PBUF);
     if (p == NULL) {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_%s.\n", flag == PBUF_ROM?"ROM":"REF"));
+      LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_%s.\n", flag == PBUF_ROM?"ROM":"REF"));
       return NULL;
     }
     /* caller must set this field properly, afterwards */
@@ -340,7 +340,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   }
   /* set reference count */
   p->ref = 1;
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%u) == %p\n", length, (void *)p));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%u) == %p\n", length, (void *)p));
   return p;
 }
 
@@ -477,7 +477,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
     p->payload = (u8_t *)p->payload - header_size;
     /* boundary check fails? */
     if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
-      DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
+      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
         (u8_t *)p->payload,
         (u8_t *)p + sizeof(struct pbuf)) );\
       /* restore old payload pointer */
@@ -497,7 +497,7 @@ pbuf_header(struct pbuf *p, s16_t header_size)
       return 1;
     }
   }
-  DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size) );
+  LWIP_DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size) );
   /* modify pbuf length fields */
   p->len += header_size;
   p->tot_len += header_size;
@@ -541,10 +541,10 @@ pbuf_free(struct pbuf *p)
   SYS_ARCH_DECL_PROTECT(old_level);
 
   if (p == NULL) {
-    DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p == NULL) was called.\n"));
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p == NULL) was called.\n"));
     return 0;
   }
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_free(%p)\n", (void *)p));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_free(%p)\n", (void *)p));
 
   PERF_START;
 
@@ -568,7 +568,7 @@ pbuf_free(struct pbuf *p)
     if (p->ref == 0) {
       /* remember next pbuf in chain for next iteration */
       q = p->next;
-      DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: deallocating %p\n", (void *)p));
+      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: deallocating %p\n", (void *)p));
       /* is this a pbuf from the pool? */
       if (p->flags == PBUF_FLAG_POOL) {
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
@@ -587,7 +587,7 @@ pbuf_free(struct pbuf *p)
     /* p->ref > 0, this pbuf is still referenced to */
     /* (and so the remaining pbufs in chain as well) */
     } else {
-      DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: %p has ref %u, ending here.\n", (void *)p, p->ref));
+      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: %p has ref %u, ending here.\n", (void *)p, p->ref));
       /* stop walking through chain */
       p = NULL;
     }
@@ -674,7 +674,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   p->next = t;
   /* t is now referenced to one more time */
   pbuf_ref(t);
-  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)p, (void *)t));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)p, (void *)t));
 }
 
 /* For packet queueing. Note that queued packets must be dequeued first
@@ -715,7 +715,7 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
   p->next = n;
   /* t is now referenced to one more time */
   pbuf_ref(n);
-  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_queue: referencing queued packet %p\n", (void *)n));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_queue: referencing queued packet %p\n", (void *)n));
 }
 
 /**
@@ -743,7 +743,7 @@ pbuf_dequeue(struct pbuf *p)
   p->next = NULL;
   /* q is now referenced to one less time */
   pbuf_free(q);
-  DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue %p\n", (void *)q));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_dequeue: dereferencing remaining queue %p\n", (void *)q));
   return q;
 }
 #endif
@@ -775,7 +775,7 @@ pbuf_take(struct pbuf *p)
 {
   struct pbuf *q , *prev, *head;
   LWIP_ASSERT("pbuf_take: p != NULL\n", p != NULL);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)p));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)p));
 
   prev = NULL;
   head = p;
@@ -784,21 +784,21 @@ pbuf_take(struct pbuf *p)
   {
     /* pbuf is of type PBUF_REF? */
     if (p->flags == PBUF_FLAG_REF) {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
+      LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
       /* allocate a pbuf (w/ payload) fully in RAM */
       /* PBUF_POOL buffers are faster if we can use them */
       if (p->len <= PBUF_POOL_BUFSIZE) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
+        if (q == NULL) LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
       } else {
         /* no replacement pbuf yet */
         q = NULL;
-        DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF\n"));
+        LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF\n"));
       }
       /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
       if (q == NULL) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
+        if (q == NULL) LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
       }
       /* replacement pbuf could be allocated? */
       if (q != NULL)
@@ -831,24 +831,24 @@ pbuf_take(struct pbuf *p)
          */
         pbuf_free(p);
         /* do not copy ref, since someone else might be using the old buffer */
-        DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
+        LWIP_DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
         p = q;
       } else {
         /* deallocate chain */
         pbuf_free(head);
-        DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
+        LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
         return NULL;
       }
     /* p->flags != PBUF_FLAG_REF */
     } else {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: skipping pbuf not of type PBUF_REF\n"));
+      LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: skipping pbuf not of type PBUF_REF\n"));
     }
     /* remember this pbuf */
     prev = p;
     /* proceed to next pbuf in original chain */
     p = p->next;
   } while (p);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
+  LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
   
   return head;
 }
@@ -880,9 +880,9 @@ pbuf_dechain(struct pbuf *p)
     /* total length of pbuf p is its own length only */
     p->tot_len = p->len;
     /* q is no longer referenced by p, free it */
-    DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *) q));
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *) q));
     tail_gone = pbuf_free(q);
-    if (tail_gone > 0) DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n", (void *) q));
+    if (tail_gone > 0) LWIP_DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: deallocated %p (as it is no longer referenced)\n", (void *) q));
     /* return remaining tail or NULL if deallocated */
   }
   /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */

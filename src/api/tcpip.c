@@ -96,15 +96,15 @@ tcpip_thread(void *arg)
     sys_mbox_fetch(mbox, (void *)&msg);
     switch (msg->type) {
     case TCPIP_MSG_API:
-      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       api_msg_input(msg->msg.apimsg);
       break;
     case TCPIP_MSG_INPUT:
-      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
       ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       break;
     case TCPIP_MSG_CALLBACK:
-      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
       msg->msg.cb.f(msg->msg.cb.ctx);
       break;
     default:

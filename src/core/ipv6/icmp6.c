@@ -61,10 +61,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
   switch (type) {
   case ICMP6_ECHO:
-    DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
 
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
-      DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
 
       pbuf_free(p);
 #ifdef ICMP_STATS
@@ -76,14 +76,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
     iecho = p->payload;
     iphdr = (struct ip_hdr *)((char *)p->payload - IP_HLEN);
     if (inet_chksum_pbuf(p) != 0) {
-      DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
     /*      return;*/
     }
-    DEBUGF(ICMP_DEBUG, ("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len));
     ip_addr_set(&tmpaddr, &(iphdr->src));
     ip_addr_set(&(iphdr->src), &(iphdr->dest));
     ip_addr_set(&(iphdr->dest), &tmpaddr);
@@ -94,17 +94,17 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else {
       iecho->chksum += htons(ICMP6_ECHO << 8);
     }
-    DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
-    /*    DEBUGF("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len);*/
+    /*    LWIP_DEBUGF("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len);*/
     ip_output_if (p, &(iphdr->src), IP_HDRINCL,
      iphdr->hoplim, IP_PROTO_ICMP, inp);
     break; 
   default:
-    DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d not supported.\n", (int)type));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d not supported.\n", (int)type));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;
@@ -151,7 +151,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   struct ip_hdr *iphdr;
   struct icmp_te_hdr *tehdr;
 
-  DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded\n"));
+  LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded\n"));
   
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
 

@@ -119,7 +119,7 @@ slipif_input( struct netif * netif )
   ++lwip_stats.link.recv;
 #endif /* LINK_STATS */         
   
-  DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
   return q;
       }
       break;
@@ -138,13 +138,13 @@ slipif_input( struct netif * netif )
       
     default:
       if (p == NULL) {
-  DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
   p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
 #ifdef LINK_STATS           
   if (p == NULL) {
     ++lwip_stats.link.drop;
-    DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
+    LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
   }
 #endif /* LINK_STATS */                  
   
@@ -197,7 +197,7 @@ err_t
 slipif_init(struct netif *netif)
 {
   
-  DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
 
   netif->name[0] = 's';
   netif->name[1] = 'l';

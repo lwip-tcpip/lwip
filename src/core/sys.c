@@ -77,8 +77,8 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       arg = tmptimeout->arg;
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
-        DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
-        h(arg);
+        LWIP_DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", (void *)h, (void *)arg));
+      	h(arg);
       }
       
       /* We try again to fetch a message from the mbox. */
@@ -132,7 +132,7 @@ sys_sem_wait(sys_sem_t sem)
       arg = tmptimeout->arg;
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
-  DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
+        LWIP_DEBUGF(SYS_DEBUG, ("ssw h=%p(%p)\n", (void *)h, (void *)arg));
         h(arg);
       }
       
@@ -170,7 +170,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   
   timeouts = sys_arch_timeouts();
   
-  DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
+  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
   if (timeouts->next == NULL) {
