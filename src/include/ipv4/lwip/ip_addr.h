@@ -111,13 +111,13 @@ extern const struct ip_addr ip_addr_broadcast;
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == 0)
 
-u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif);
-
-#if 0 /* replaced by function in ip_addr.c */
+#if 1 /* replaced by function in ip_addr.c */
 #define ip_addr_isbroadcast(addr1, mask) (((((addr1)->addr) & ~((mask)->addr)) == \
            (0xffffffff & ~((mask)->addr))) || \
                                          ((addr1)->addr == 0xffffffff) || \
                                          ((addr1)->addr == 0x00000000))
+#else
+u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif);
 #endif
 
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000)) == ntohl(0xe0000000))

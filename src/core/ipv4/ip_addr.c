@@ -41,7 +41,7 @@ const struct ip_addr ip_addr_broadcast = { 0xffffffffUL };
  * as it does not support non-broadcast interfaces.
  * lwip-devel 18-2-2004
  */
-#if 1 /* replaces macro in ip_addr.h */
+#if 0 /* going to replace macro in ip_addr.h */
 #include "lwip/netif.h"
 
 u8_t ip_addr_isbroadcast(struct ip_addr *addr, netif)
