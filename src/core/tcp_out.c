@@ -72,6 +72,14 @@ tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 
 }
 
+/*
+ * NB. tcp_write() enqueues data for sending, but does not send it
+ * straight away.  It waits in the expectation of more data being sent
+ * soon (as it can send them more efficiently by combining them
+ * together).  To prompt the system to send data now, call
+ * tcp_output() after calling tcp_write().
+ */
+
 err_t
 tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 {
