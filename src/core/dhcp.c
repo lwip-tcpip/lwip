@@ -352,9 +352,6 @@ static void dhcp_t2_timeout(struct dhcp_state *state)
 static void dhcp_handle_ack(struct dhcp_state *state)
 {
   u8_t *option_ptr;
-  state->offered_t0_lease;
-  state->offered_t1_renew;
-  state->offered_t2_rebind;
   state->offered_sn_mask.addr = 0;
   state->offered_gw_addr.addr = 0;
   state->offered_bc_addr.addr = 0;
@@ -1279,7 +1276,6 @@ struct dhcp_state *dhcp_find_client(struct netif *netif)
 {
 	struct dhcp_state *state = NULL;
 	struct dhcp_state *list_state = client_list;
-	err_t result = ERR_OK;
 
 	DEBUGF(DHCP_DEBUG, ("dhcp_find_client()"));
   while ((state == NULL) && (list_state != NULL))
