@@ -139,7 +139,7 @@ static void dhcp_option_trailer(struct dhcp *dhcp);
 static void dhcp_handle_nak(struct netif *netif) {
   struct dhcp *dhcp = netif->dhcp;
   u16_t msecs = 10 * 1000;
-  DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_handle_nak()\n"));
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_nak(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_handle_nak(): set request timeout %u msecs\n", msecs));
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
@@ -157,7 +157,7 @@ static void dhcp_check(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
-  DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_check()\n"));
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_check(netif=%p) %c%c\n", netif, netif->name[0], netif->name[1]));
   /* create an ARP query for the offered IP address, expecting that no host
      responds, as the IP address should not be in use. */
   result = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
@@ -181,6 +181,7 @@ static void dhcp_handle_offer(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   /* obtain the server address */
   u8_t *option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_SERVER_ID);
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_handle_offer(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
   if (option_ptr != NULL)
   {
     dhcp->server_ip_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
@@ -205,7 +206,7 @@ static err_t dhcp_select(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u32_t msecs;
-  DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_select()\n"));
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_select(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
 
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
@@ -715,6 +716,9 @@ static void dhcp_bind(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   struct ip_addr sn_mask, gw_addr;
+  LWIP_ASSERT("dhcp_bind: netif != NULL", netif != NULL);
+  LWIP_ASSERT("dhcp_bind: dhcp != NULL", dhcp != NULL);
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_bind(netif=%p) %c%c%u\n", netif, netif->name[0], netif->name[1], netif->num));
   
   /* temporary DHCP lease? */
   if (dhcp->offered_t1_renew != 0xffffffffUL) {
