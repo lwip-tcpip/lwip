@@ -605,7 +605,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
                            ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
                            ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
 
-   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %ld   pcb->tmr %ld  pcb->keep_cnt %ld\n", tcp_ticks, pcb->tmr, pcb->keep_cnt));
+   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %lu   pcb->tmr %lu  pcb->keep_cnt %u\n", tcp_ticks, pcb->tmr, pcb->keep_cnt));
    
    p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
 

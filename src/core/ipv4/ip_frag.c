@@ -243,7 +243,7 @@ ip_reass(struct pbuf *p)
        variable. */
     LWIP_DEBUGF(IP_REASS_DEBUG,
      ("ip_reass: memcpy from %p (%d) to %p, %d bytes\n",
-      &ip_reassbuf[i], i, q->payload,
+      (void *)&ip_reassbuf[i], i, q->payload,
       q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
     memcpy(q->payload, &ip_reassbuf[i],
     q->len > ip_reasslen - i ? ip_reasslen - i : q->len);

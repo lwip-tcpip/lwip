@@ -482,8 +482,8 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     /* boundary check fails? */
     if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p (not enough space for new header size)\n",
-        (u8_t *)p->payload,
-        (u8_t *)p + sizeof(struct pbuf)) );\
+        (void *)p->payload,
+        (void *)(p + 1)));\
       /* restore old payload pointer */
       p->payload = payload;
       /* bail out unsuccesfully */
@@ -750,9 +750,11 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
   p->next = n;
   /* n is now referenced to by the (packet p in the) queue */
   pbuf_ref(n);
+#if PBUF_DEBUG
   LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2,
     ("pbuf_queue: newly queued packet %p sits after packet %p in queue %p\n",
     (void *)n, (void *)p, (void *)q));
+#endif
 }
 
 /**

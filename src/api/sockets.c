@@ -418,7 +418,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
   } else {
-#if SOCKETS_DEBUG > 0
+#if SOCKETS_DEBUG != 0
     addr = netbuf_fromaddr(buf);
     port = netbuf_fromport(buf);
 
@@ -1309,7 +1309,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
       break;
     case TCP_KEEPALIVE:
       sock->conn->pcb.tcp->keepalive = (u32_t)(*(int*)optval);
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_KEEPALIVE) -> %u\n", s, sock->conn->pcb.tcp->keepalive));
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_KEEPALIVE) -> %lu\n", s, sock->conn->pcb.tcp->keepalive));
       break;
     }  /* switch */
     break;
