@@ -67,6 +67,8 @@
  * to remove the DHCP client.
  *
  */
+#ifdef LWIP_DHCP /* don't build if not configured for use in lwipopt.h */
+
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
@@ -1418,3 +1420,5 @@ static u32_t dhcp_get_option_long(u8_t *ptr)
   LWIP_DEBUGF(DHCP_DEBUG, ("option long value=%lu\n", value));
   return value;
 }
+
+#endif /* LWIP_DHCP */
