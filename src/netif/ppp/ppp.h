@@ -340,8 +340,28 @@ extern struct protent *ppp_protocols[];/* Table of pointers to supported protoco
 /* Initialize the PPP subsystem. */
 void pppInit(void);
 
+/* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
+ * RFC 1994 says:
+ *
+ * In practice, within or associated with each PPP server, there is a
+ * database which associates "user" names with authentication
+ * information ("secrets").  It is not anticipated that a particular
+ * named user would be authenticated by multiple methods.  This would
+ * make the user vulnerable to attacks which negotiate the least secure
+ * method from among a set (such as PAP rather than CHAP).  If the same
+ * secret was used, PAP would reveal the secret to be used later with
+ * CHAP.
+ *
+ * Instead, for each user name there should be an indication of exactly
+ * one method used to authenticate that user name.  If a user needs to
+ * make use of different authentication methods under different
+ * circumstances, then distinct user names SHOULD be employed, each of
+ * which identifies exactly one authentication method.
+ *
+ */
 enum pppAuthType {
     PPPAUTHTYPE_NONE,
+    PPPAUTHTYPE_ANY,
     PPPAUTHTYPE_PAP,
     PPPAUTHTYPE_CHAP
 };
