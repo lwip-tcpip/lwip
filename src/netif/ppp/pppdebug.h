@@ -61,14 +61,13 @@ void ppp_trace(int level, const char *format,...);
 
 #if PPP_DEBUG > 0
 
-#define AUTHDEBUG(a) ppp_trace##a
-#define IPCPDEBUG(a) ppp_trace##a
-#define UPAPDEBUG(a) ppp_trace##a
-#define LCPDEBUG(a) ppp_trace##a
-#define FSMDEBUG(a) ppp_trace##a
-#define CHAPDEBUG(a) ppp_trace##a
-
-#define PPPDEBUG(a) ppp_trace##a
+#define AUTHDEBUG(a) ppp_trace a
+#define IPCPDEBUG(a) ppp_trace a
+#define UPAPDEBUG(a) ppp_trace a
+#define LCPDEBUG(a) ppp_trace a
+#define FSMDEBUG(a) ppp_trace a
+#define CHAPDEBUG(a) ppp_trace a
+#define PPPDEBUG(a) ppp_trace a
 
 #define TRACELCP 1
 
