@@ -51,11 +51,14 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   }
 
   if(conn->recvmbox != SYS_MBOX_NULL) {
+    	  
     conn->err = err;
-	conn->recv_avail += p->tot_len;
-    /* Register event with callback */
-    if (conn->callback)
+    if (p != NULL) {
+      conn->recv_avail += p->tot_len;
+      /* Register event with callback */
+      if (conn->callback)
         (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
+    }  
     sys_mbox_post(conn->recvmbox, p);
   }  
   return ERR_OK;

@@ -496,10 +496,13 @@ netconn_recv(struct netconn *conn)
     }
     
     sys_mbox_fetch(conn->recvmbox, (void **)&p);
-	conn->recv_avail -= p->tot_len;
-    /* Register event with callback */
-    if (conn->callback)
+
+    if (p != NULL) {
+      conn->recv_avail -= p->tot_len;
+      /* Register event with callback */
+      if (conn->callback)
         (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, p->tot_len);
+    }
 
     /* If we are closed, we indicate that we no longer wish to recieve
        data by setting conn->recvmbox to SYS_MBOX_NULL. */
