@@ -57,7 +57,7 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
     return 1;
   /* no broadcast support on this network interface
    * we cannot proceed matching against broadcast addresses */
-  else if (netif->flags & NETIF_FLAG_BROADCAST == 0)
+  else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0)
     return 0;
   /* address matches network interface address exactly? => no broadcast */
   else if (addr->addr == netif->ip_addr.addr)
