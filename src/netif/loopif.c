@@ -33,7 +33,10 @@
 #include "lwip/mem.h"
 #include "lwip/opt.h"
 #include "netif/loopif.h"
+
+#if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)
 #include "netif/tcpdump.h"
+#endif /* LWIP_DEBUG && LWIP_TCPDUMP */
 
 #include "lwip/tcp.h"
 #include "lwip/ip.h"
@@ -46,9 +49,9 @@ loopif_output(struct netif *netif, struct pbuf *p,
   struct pbuf *q, *r;
   char *ptr;
 
-#ifdef LWIP_DEBUG
+#if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)
   tcpdump(p);
-#endif /* LWIP_DEBUG */
+#endif /* LWIP_DEBUG && LWIP_TCPDUMP */
   
   r = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
   if(r != NULL) {
