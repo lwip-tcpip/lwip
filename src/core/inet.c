@@ -122,7 +122,7 @@ inet_chksum_pseudo(struct pbuf *p,
     acc = (acc & 0xffffUL) + (acc >> 16);
   }
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
-  return ~(acc & 0xffffUL);
+  return (u16_t)~(acc & 0xffffUL);
 }
 
 /* inet_chksum:
@@ -140,7 +140,7 @@ inet_chksum(void *dataptr, u16_t len)
   while (acc >> 16) {
     acc = (acc & 0xffff) + (acc >> 16);
   }
-  return ~(acc & 0xffff);
+  return (u16_t)~(acc & 0xffff);
 }
 
 u16_t
@@ -166,7 +166,7 @@ inet_chksum_pbuf(struct pbuf *p)
   if (swapped) {
     acc = ((acc & 0x00ffUL) << 8) | ((acc & 0xff00UL) >> 8);
   }
-  return ~(acc & 0xffffUL);
+  return (u16_t)~(acc & 0xffffUL);
 }
 
 /* Here for now until needed in other places in lwIP */
@@ -302,17 +302,17 @@ inet_chksum_pbuf(struct pbuf *p)
  */
 char *inet_ntoa(struct in_addr addr)
 {
-  static u8_t str[16];
+  static char str[16];
   u32_t s_addr = addr.s_addr;
-  u8_t inv[3];
-  u8_t *rp;
+  char inv[3];
+  char *rp;
   u8_t *ap;
   u8_t rem;
   u8_t n;
   u8_t i;
 
   rp = str;
-  ap = (char *)&s_addr;
+  ap = (u8_t *)&s_addr;
   for(n = 0; n < 4; n++) {
     i = 0;
     do {
