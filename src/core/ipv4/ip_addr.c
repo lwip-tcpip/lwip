@@ -32,6 +32,7 @@
 
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
+#include "lwip/netif.h"
 
 /* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
 const struct ip_addr ip_addr_any = { 0x00000000UL };
@@ -47,8 +48,6 @@ const struct ip_addr ip_addr_broadcast = { 0xffffffffUL };
  * as it does not support non-broadcast interfaces.
  * see lwip-devel mailing list on 18-2-2004
  */
-#if 1 /* going to replace macro in ip_addr.h */
-#include "lwip/netif.h"
 
 u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
 {
@@ -70,4 +69,3 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
   else
     return 0;
 }
-#endif
