@@ -613,8 +613,7 @@ pbuf_free(struct pbuf *p)
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
     p->ref--;
     /* this pbuf is no longer referenced to? */
-    if (p->ref == 0)
-    {
+    if (p->ref == 0) {
       /* remember next pbuf in chain for next iteration */
       q = p->next;
       /* is this a pbuf from the pool? */
