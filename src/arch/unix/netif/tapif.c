@@ -144,7 +144,7 @@ static err_t
 low_level_output(struct netif *netif, struct pbuf *p)
 {
   struct pbuf *q;
-  char buf[1500];
+  char buf[1514];
   char *bufptr;
   struct tapif *tapif;
 
@@ -183,7 +183,7 @@ low_level_input(struct tapif *tapif)
 {
   struct pbuf *p, *q;
   u16_t len;
-  char buf[1500];
+  char buf[1514];
   char *bufptr;
 
   /* Obtain the size of the packet and put it into the "len"
