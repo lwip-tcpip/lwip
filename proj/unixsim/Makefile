@@ -55,7 +55,7 @@ APIFILES=$(LWIPDIR)/api/api_lib.c $(LWIPDIR)/api/api_msg.c $(LWIPDIR)/api/tcpip.
 
 # NETIFFILES: Files implementing various generic network interface functions.'
 NETIFFILES=$(LWIPDIR)/netif/loopif.c \
-	$(LWIPDIR)/netif/tcpdump.c $(LWIPDIR)/netif/etharp.c $(LWIPDIR)/netif/slipif.c 
+	$(LWIPDIR)/netif/etharp.c $(LWIPDIR)/netif/slipif.c 
 
 # ARCHFILES: Archiecture specific files.
 ARCHFILES=$(wildcard $(LWIPDIR)/arch/$(LWIPARCH)/*.c $(LWIPDIR)/arch/$(LWIPARCH)/netif/*.c)
