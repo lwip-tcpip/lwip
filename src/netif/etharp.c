@@ -505,16 +505,13 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  *
  * If ARP failed to allocate resources, NULL is returned.
  *
- * A returned non-NULL packet should be sent by the caller and
- * etharp_output_sent() must be called afterwards to free any ARP
- * request.
+ * A returned non-NULL packet should be sent by the caller.
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
  * @param ipaddr The IP address of the packet destination.
  * @param pbuf The pbuf(s) containing the IP packet to be sent.
  * 
  * @return If non-NULL, a packet ready to be sent. 
- * @see etharp_output_sent()
  */
 struct pbuf *
 etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
@@ -641,10 +638,6 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * @note Might be used in the future by manual IP configuration
  * as well.
  *
- * TODO: enqueue q here if possible (BEWARE: possible other packet already
- * queued.
- * TODO: The host requirements RFC states that ARP should save at least one
- * packet, and this should be the _latest_ packet.
  * TODO: use the ctime field to see how long ago an ARP request was sent,
  * possibly retry.
  */
@@ -656,12 +649,11 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   err_t result = ERR_OK;
   u8_t i;
   u8_t perform_arp_request = 1;
-  /* prevent warning if ARP_QUEUEING == 0 */
-  if (q);
-
+  /* prevent 'unused argument' warning if ARP_QUEUEING == 0 */
+  (void)q;
   srcaddr = (struct eth_addr *)netif->hwaddr;
   /* bail out if this IP address is pending */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     if (ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("etharp_query: requested IP already pending as entry %u\n", i));
