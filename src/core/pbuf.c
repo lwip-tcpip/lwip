@@ -204,9 +204,9 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     /* FALLTHROUGH */
   case PBUF_IP:
     offset += PBUF_IP_HLEN;
-    offset += PBUF_LINK_HLEN;
     /* FALLTHROUGH */
   case PBUF_LINK:
+    offset += PBUF_LINK_HLEN;
     break;
   case PBUF_RAW:
     break;
@@ -662,3 +662,5 @@ pbuf_unref(struct pbuf *f)
   }
   return f;
 }
+
+
