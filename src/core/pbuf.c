@@ -433,6 +433,9 @@ pbuf_realloc(struct pbuf *p, u16_t size)
  *
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
+ *
+ * Decreases the header size by the given amount.
+ * Using a negative value increases the header size.
  */
 /*-----------------------------------------------------------------------------------*/
 u8_t
