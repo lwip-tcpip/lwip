@@ -504,29 +504,33 @@ pbuf_header(struct pbuf *p, s16_t header_size)
 }
 
 /**
- * Free a pbuf (chain) from usage, de-allocate non-used head of chain.
+ * Dereference a pbuf (chain) and deallocate any no-longer-used
+ * pbufs at the head of this chain.
  *
  * Decrements the pbuf reference count. If it reaches
  * zero, the pbuf is deallocated.
  *
- * For a pbuf chain, this is repeated for each pbuf in the chain, up to the 
- * pbuf which has a non-zero reference count after decrementing. 
- * (This might be the whole chain.)
+ * For a pbuf chain, this is repeated for each pbuf in the chain,
+ * up to a pbuf which has a non-zero reference count after
+ * decrementing. (This might de-allocate the whole chain.)
  *
- * @param pbuf pbuf (chain) to be freed from one user.
+ * @param pbuf The pbuf (chain) to be dereferenced.
  *
- * @return the number of unreferenced pbufs that were de-allocated
+ * @return the number of pbufs that were de-allocated
  * from the head of the chain.
  *
- * @note May not be called on a packet queue.
+ * @note MUST NOT be called on a packet queue.
  * @note the reference counter of a pbuf equals the number of pointers
  * that refer to the pbuf (or into the pbuf).
  *
  * @internal examples:
  *
+ * Assuming existing chains a->b->c with the following reference
+ * counts, calling pbuf_free(a) results in:
+ * 
  * 1->2->3 becomes ...1->3
  * 3->3->3 becomes 2->3->3
- * 1->1->2 becomes ....->1
+ * 1->1->2 becomes ......1
  * 2->1->1 becomes 1->1->1
  * 1->1->1 becomes .......
  *
