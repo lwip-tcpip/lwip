@@ -110,7 +110,7 @@ static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struc
 void
 etharp_init(void)
 {
-  s8_t i;
+  u8_t i;
   /* clear ARP entries */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
@@ -130,7 +130,7 @@ etharp_init(void)
 void
 etharp_tmr(void)
 {
-  s8_t i;
+  u8_t i;
 
   LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer\n"));
   /* remove expired entries from the ARP table */
