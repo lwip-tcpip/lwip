@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
@@ -1079,7 +1079,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case SO_OOBINCLUDE: */
-#ifdef SO_REUSE
+#if SO_REUSE
     case SO_REUSEADDR:
     case SO_REUSEPORT:
 #endif /* SO_REUSE */
@@ -1182,7 +1182,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     /* UNIMPL case SO_SNDBUF: */
     /* UNIMPL case SO_RCVLOWAT: */
     /* UNIMPL case SO_SNDLOWAT: */
-#ifdef SO_REUSE
+#if SO_REUSE
     case SO_REUSEADDR:
     case SO_REUSEPORT:
 #endif /* SO_REUSE */
@@ -1264,7 +1264,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case SO_OOBINCLUDE: */
-#ifdef SO_REUSE
+#if SO_REUSE
     case SO_REUSEADDR:
     case SO_REUSEPORT:
 #endif /* SO_REUSE */

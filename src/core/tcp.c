@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
+ * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
  * 
  * Redistribution and use in source and binary forms, with or without modification, 
@@ -249,7 +249,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   if (port == 0) {
     port = tcp_new_port();
   }
-#ifndef SO_REUSE
+#if SO_REUSE == 0
   /* Check if the address already is in use. */
   for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
@@ -444,6 +444,16 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   }
   if (!(pcb->flags & TF_ACK_DELAY) &&
      !(pcb->flags & TF_ACK_NOW)) {
+    /*
+     * We send an ACK here (if one is not already pending, hence
+     * the above tests) as tcp_recved() implies that the application
+     * has processed some data, and so we can open the receiver's
+     * window to allow more to be transmitted.  This could result in
+     * two ACKs being sent for each received packet in some limited cases
+     * (where the application is only receiving data, and is slow to
+     * process it) but it is necessary to guarantee that the sender can
+     * continue to transmit.
+     */
     tcp_ack(pcb);
   }
 
