@@ -1,3 +1,5 @@
+/* Author: Magnus Ivarsson <magnus.ivarsson@volvo.com> */
+
 #include "netif/sio.h" 
 #include "netif/fifo.h"
 #include "lwip/debug.h"
@@ -22,6 +24,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 #include <sys/signal.h>
 #include <sys/types.h>
 
@@ -108,7 +111,9 @@ static int sio_init( char * device, int devnum, sio_status_t * siostat )
 	}
 
 	saio.sa_flags = 0;
+#if linux
 	saio.sa_restorer = NULL;
+#endif /* linux */
 	sigaction( SIGIO,&saio,NULL );
 
 	/* allow the process to receive SIGIO */
@@ -180,7 +185,7 @@ void sio_send( u8_t c, sio_status_t * siostat )
 void sio_send_string( u8_t *str, sio_status_t * siostat )
 {
 //	sio_status_t * siostat = ((siostruct_t*)netif->state)->sio;
-	int len = strlen( str );
+	int len = strlen( (const char *)str );
 
 	if ( write( siostat->fd, str, len ) <= 0 )
 	{
