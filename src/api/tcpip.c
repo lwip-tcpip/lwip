@@ -110,7 +110,7 @@ tcpip_thread(void *arg)
     default:
       break;
     }
-    memp_freep(MEMP_TCPIP_MSG, msg);
+    memp_free(MEMP_TCPIP_MSG, msg);
   }
 }
 /*-----------------------------------------------------------------------------------*/
@@ -119,7 +119,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 {
   struct tcpip_msg *msg;
   
-  msg = memp_mallocp(MEMP_TCPIP_MSG);
+  msg = memp_malloc(MEMP_TCPIP_MSG);
   if (msg == NULL) {
     pbuf_free(p);    
     return ERR_MEM;  
@@ -137,7 +137,7 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
 {
   struct tcpip_msg *msg;
   
-  msg = memp_mallocp(MEMP_TCPIP_MSG);
+  msg = memp_malloc(MEMP_TCPIP_MSG);
   if (msg == NULL) {
     return ERR_MEM;  
   }
@@ -153,7 +153,7 @@ void
 tcpip_apimsg(struct api_msg *apimsg)
 {
   struct tcpip_msg *msg;
-  msg = memp_mallocp(MEMP_TCPIP_MSG);
+  msg = memp_malloc(MEMP_TCPIP_MSG);
   if (msg == NULL) {
     memp_free(MEMP_API_MSG, apimsg);
     return;

@@ -52,7 +52,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     return;
   }
   if (conn->recvmbox != SYS_MBOX_NULL) {
-    buf = memp_mallocp(MEMP_NETBUF);
+    buf = memp_malloc(MEMP_NETBUF);
     if (buf == NULL) {
       pbuf_free(p);
       return;
@@ -193,7 +193,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 #endif /* API_MSG_DEBUG */
   conn = (struct netconn *)arg;
   mbox = conn->acceptmbox;
-  newconn = memp_mallocp(MEMP_NETCONN);
+  newconn = memp_malloc(MEMP_NETCONN);
   if (newconn == NULL) {
     return ERR_MEM;
   }
