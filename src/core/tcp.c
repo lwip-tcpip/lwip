@@ -446,6 +446,16 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   }
   if (!(pcb->flags & TF_ACK_DELAY) &&
      !(pcb->flags & TF_ACK_NOW)) {
+    /*
+     * We send an ACK here (if one is not already pending, hence
+     * the above tests) as tcp_recved() implies that the application
+     * has processed some data, and so we can open the receiver's
+     * window to allow more to be transmitted.  This could result in
+     * two ACKs being sent for each received packet in some limited cases
+     * (where the application is only receiving data, and is slow to
+     * process it) but it is necessary to guarantee that the sender can
+     * continue to transmit.
+     */
     tcp_ack(pcb);
   }
 
