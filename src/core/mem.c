@@ -192,6 +192,16 @@ mem_realloc(void *rmem, mem_size_t newsize)
   mem_size_t size;
   mem_size_t ptr, ptr2;
   struct mem *mem, *mem2;
+
+  /* Expand the size of the allocated memory region so that we can
+     adjust for alignment. */
+  if((newsize % MEM_ALIGNMENT) != 0) {
+   newsize += MEM_ALIGNMENT - ((newsize + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
+  }
+  
+  if(newsize > MEM_SIZE) {
+    return NULL;
+  }
   
   sys_sem_wait(mem_sem);
   
