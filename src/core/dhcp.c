@@ -36,17 +36,11 @@
  * lwIP 0.5.3 which has the new "etharp" module. It aims to conform with
  * RFC 2131 and RFC 2132.
  *
- * DONE:
- * - Obtaining renewing, rebinding a lease.
- * - ARP check on the offered address, and address declines on in-use
- *   addresses. (Can be disabled).
- * - Reobtaining a lease
- * - Concurrent multiple interface configuration and lease maintenance
- * - A periodical polling timer method and a callback timer approach
+ * KNOWN BUG:
+ * - This client will fail on servers using file/sname field overloading
  * TODO:
  * - Add JavaDoc style documentation (API, internals).
- * - this client will fail on servers using file/sname field overloading
- * - make the unfold routine smarter to handle this
+ * - Make the unfold routine smarter to handle this
  * - Support for interfaces other than Ethernet (SLIP, PPP, ...)
  * - ...
  *
@@ -292,7 +286,6 @@ static void dhcp_timeout(struct dhcp_state *state)
 		}
     else
 		{
-      struct netif *netif = state->netif;
 	    DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REQUESTING, releasing, restarting"));
       dhcp_release(state);
       dhcp_discover(state);
@@ -326,7 +319,6 @@ static void dhcp_timeout(struct dhcp_state *state)
 		}
 	  else
 		{
-      struct netif *netif = state->netif;
 	    DEBUGF(DHCP_DEBUG, ("dhcp_timeout(): REBINDING, release, restart"));
       dhcp_release(state);
       dhcp_discover(state);
