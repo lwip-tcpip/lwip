@@ -7,6 +7,12 @@ HISTORY
   * TCP has been fixed to deal with the new use of the pbuf->ref
     counter. This was broken in 0.6.1.
 
+  ++ Changes:
+
+  * Removed pbuf_pool_free_cache and pbuf_pool_alloc_cache. Also removed
+    pbuf_refresh(). This has sped up pbuf pool operations considerably.
+    Implemented by David Haas.
+
 (0.6.1)
 
   ++ New features:

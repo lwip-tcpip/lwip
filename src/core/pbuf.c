@@ -65,8 +65,6 @@ static sys_sem_t pbuf_pool_free_sem;
 #endif
 
 static struct pbuf *pbuf_pool = NULL;
-static struct pbuf *pbuf_pool_alloc_cache = NULL;
-static struct pbuf *pbuf_pool_free_cache = NULL;
 
 /**
  * Initializes the pbuf module.
@@ -125,38 +123,31 @@ pbuf_pool_alloc(void)
 
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
-  /* First, see if there are pbufs in the cache. */
-  if(pbuf_pool_alloc_cache) {
-    p = pbuf_pool_alloc_cache;
-    if(p) {
-      pbuf_pool_alloc_cache = p->next; 
-    }
-  } else {
+  
 #if !SYS_LIGHTWEIGHT_PROT      
-    /* Next, check the actual pbuf pool, but if the pool is locked, we
-       pretend to be out of buffers and return NULL. */
-    if(pbuf_pool_free_lock) {
+  /* Next, check the actual pbuf pool, but if the pool is locked, we
+     pretend to be out of buffers and return NULL. */
+  if(pbuf_pool_free_lock) {
 #ifdef PBUF_STATS
-      ++lwip_stats.pbuf.alloc_locked;
+    ++lwip_stats.pbuf.alloc_locked;
 #endif /* PBUF_STATS */
-      return NULL;
-    }
-    pbuf_pool_alloc_lock = 1;
-    if(!pbuf_pool_free_lock) {
-#endif /* SYS_LIGHTWEIGHT_PROT */        
-      p = pbuf_pool;
-      if(p) {
-	pbuf_pool = p->next; 
-      }
-#if !SYS_LIGHTWEIGHT_PROT      
-#ifdef PBUF_STATS
-    } else {
-      ++lwip_stats.pbuf.alloc_locked;
-#endif /* PBUF_STATS */
-    }
-    pbuf_pool_alloc_lock = 0;
-#endif /* SYS_LIGHTWEIGHT_PROT */    
+    return NULL;
   }
+  pbuf_pool_alloc_lock = 1;
+  if(!pbuf_pool_free_lock) {
+#endif /* SYS_LIGHTWEIGHT_PROT */        
+    p = pbuf_pool;
+    if(p) {
+      pbuf_pool = p->next; 
+    }
+#if !SYS_LIGHTWEIGHT_PROT      
+#ifdef PBUF_STATS
+  } else {
+    ++lwip_stats.pbuf.alloc_locked;
+#endif /* PBUF_STATS */
+  }
+  pbuf_pool_alloc_lock = 0;
+#endif /* SYS_LIGHTWEIGHT_PROT */    
   
 #ifdef PBUF_STATS
   if(p != NULL) {    
@@ -171,30 +162,6 @@ pbuf_pool_alloc(void)
   return p;   
 }
 
-/**
- * @internal only called from pbuf_alloc()
- */
-static void
-pbuf_pool_free(struct pbuf *p)
-{
-  struct pbuf *q;
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level); 
-
-#ifdef PBUF_STATS
-    for(q = p; q != NULL; q = q->next) {
-      --lwip_stats.pbuf.used;
-    }
-#endif /* PBUF_STATS */
-
-  if(pbuf_pool_alloc_cache == NULL) {
-    pbuf_pool_alloc_cache = p;
-  } else {  
-    for(q = pbuf_pool_alloc_cache; q->next != NULL; q = q->next);
-    q->next = p;    
-  }
-  SYS_ARCH_UNPROTECT(old_level);
-}
 
 /**
  * Allocates a pbuf.
@@ -269,7 +236,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
     LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
-	    ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
+            ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
@@ -292,7 +259,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
         ++lwip_stats.pbuf.err;
 #endif /* PBUF_STATS */
         /* bail out unsuccesfully */
-        pbuf_pool_free(p);
+        pbuf_free(p);
         return NULL;
       }
       //q->next = NULL;
@@ -303,7 +270,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       q->flags = PBUF_FLAG_POOL;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
-	      ((u32_t)q->payload % MEM_ALIGNMENT) == 0);
+              ((u32_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
       /* calculate remaining length to be allocated */
       rem_len -= q->len;
@@ -327,7 +294,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->flags = PBUF_FLAG_RAM;
 
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
-	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
+           ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
   /* pbuf references existing (static constant) ROM payload? */
   case PBUF_ROM:
@@ -353,50 +320,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   return p;
 }
 
-/**
- *
- * Moves free buffers from the pbuf_pool_free_cache to the pbuf_pool
- * list (if possible).
- *
- */
-void
-pbuf_refresh(void)
-{
-  struct pbuf *p;
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
- 
-#if !SYS_LIGHTWEIGHT_PROT
-  sys_sem_wait(pbuf_pool_free_sem);
-#endif /* else SYS_LIGHTWEIGHT_PROT */
-  
-  if(pbuf_pool_free_cache != NULL) {
-#if !SYS_LIGHTWEIGHT_PROT      
-    pbuf_pool_free_lock = 1;
-    if(!pbuf_pool_alloc_lock) {
-#endif /* SYS_LIGHTWEIGHT_PROT */
-      if(pbuf_pool == NULL) {
-	pbuf_pool = pbuf_pool_free_cache;	
-      } else {  
-	for(p = pbuf_pool; p->next != NULL; p = p->next);
-	p->next = pbuf_pool_free_cache;   
-      }
-      pbuf_pool_free_cache = NULL;
-#if !SYS_LIGHTWEIGHT_PROT      
-#ifdef PBUF_STATS
-    } else {
-      ++lwip_stats.pbuf.refresh_locked;
-#endif /* PBUF_STATS */
-    }
-    
-    pbuf_pool_free_lock = 0;
-#endif /* SYS_LIGHTWEIGHT_PROT */    
-  }
-  SYS_ARCH_UNPROTECT(old_level);
-#if !SYS_LIGHTWEIGHT_PROT      
-  sys_sem_signal(pbuf_pool_free_sem);
-#endif /* SYS_LIGHTWEIGHT_PROT */  
-}
 
 #ifdef PBUF_STATS
 #define DEC_PBUF_STATS do { --lwip_stats.pbuf.used; } while (0)
@@ -405,8 +328,8 @@ pbuf_refresh(void)
 #endif /* PBUF_STATS */
 
 #define PBUF_POOL_FAST_FREE(p)  do {                                    \
-                                  p->next = pbuf_pool_free_cache;       \
-                                  pbuf_pool_free_cache = p;             \
+                                  p->next = pbuf_pool;                  \
+                                  pbuf_pool = p;                        \
                                   DEC_PBUF_STATS;                       \
                                 } while (0)
 
@@ -494,7 +417,6 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   /* q is last packet in chain */
   q->next = NULL;
 
-  pbuf_refresh();
 }
 
 /**
@@ -639,7 +561,6 @@ pbuf_free(struct pbuf *p)
     }
   }
   SYS_ARCH_UNPROTECT(old_level);
-  pbuf_refresh();
   PERF_STOP("pbuf_free");
   /* return number of de-allocated pbufs */
   return count;
@@ -812,7 +733,7 @@ pbuf_take(struct pbuf *p)
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
         if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
       } else {
-      	/* no replacement pbuf yet */
+        /* no replacement pbuf yet */
         q = NULL;
         DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF\n"));
       }
