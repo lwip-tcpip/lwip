@@ -234,10 +234,11 @@ static err_t dhcp_select(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->server_ip_addr.addr));
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, 3);
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, 4/*num options*/);
     dhcp_option_byte(dhcp, DHCP_OPTION_SUBNET_MASK);
     dhcp_option_byte(dhcp, DHCP_OPTION_ROUTER);
     dhcp_option_byte(dhcp, DHCP_OPTION_BROADCAST);
+    dhcp_option_byte(dhcp, DHCP_OPTION_DNS_SERVER);
 
     dhcp_option_trailer(dhcp);
     /* shrink the pbuf to the actual content length */
@@ -484,6 +485,19 @@ static void dhcp_handle_ack(struct netif *netif)
   if (option_ptr != NULL) {
     dhcp->offered_bc_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
   }
+  
+  /* DNS servers */
+  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_DNS_SERVER);
+  if (option_ptr != NULL) {
+    u8_t n;
+    dhcp->dns_count = dhcp_get_option_byte(&option_ptr[1]);
+    /* limit to at most DHCP_MAX_DNS DNS servers */
+    if (dhcp->dns_count > DHCP_MAX_DNS) dhcp->dns_count = DHCP_MAX_DNS;
+    for (n = 0; n < dhcp->dns_count; n++)
+    {
+      dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2+(n<<2)]));
+    }
+  }
 }
 
 /**
@@ -703,10 +717,11 @@ static err_t dhcp_discover(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, 576);
 
-    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, 3);
+    dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, 4/*num options*/);
     dhcp_option_byte(dhcp, DHCP_OPTION_SUBNET_MASK);
     dhcp_option_byte(dhcp, DHCP_OPTION_ROUTER);
     dhcp_option_byte(dhcp, DHCP_OPTION_BROADCAST);
+    dhcp_option_byte(dhcp, DHCP_OPTION_DNS_SERVER);
 
     dhcp_option_trailer(dhcp);
 

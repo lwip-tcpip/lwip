@@ -43,6 +43,10 @@ struct dhcp
   struct ip_addr offered_sn_mask;
   struct ip_addr offered_gw_addr;
   struct ip_addr offered_bc_addr;
+#define DHCP_MAX_DNS 2
+  u32_t dns_count; /* actual number of DNS servers obtained */
+  struct ip_addr offered_dns_addr[DHCP_MAX_DNS]; /* DNS server addresses */
+ 
   u32_t offered_t0_lease; /* lease period (in seconds) */
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
   u32_t offered_t2_rebind; /* recommended rebind time (usually 66% of lease period)  */
@@ -174,7 +178,8 @@ void dhcp_fine_tmr(void);
 /** BootP options */
 #define DHCP_OPTION_PAD 0
 #define DHCP_OPTION_SUBNET_MASK 1 /* RFC 2132 3.3 */
-#define DHCP_OPTION_ROUTER 3 
+#define DHCP_OPTION_ROUTER 3
+#define DHCP_OPTION_DNS_SERVER 6 
 #define DHCP_OPTION_HOSTNAME 12
 #define DHCP_OPTION_IP_TTL 23
 #define DHCP_OPTION_MTU 26
