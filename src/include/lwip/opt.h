@@ -339,7 +339,7 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- Socket Options ---------- */
 /* Enable SO_REUSEADDR and SO_REUSEPORT options */ 
 #ifndef SO_REUSE
-# define SO_REUSE 1
+# define SO_REUSE 0
 #endif                                                                        
 
 
