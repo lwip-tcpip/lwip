@@ -212,7 +212,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 	   arrivals). */
 	if(prev != NULL) {
 	  ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
+          // our successor is the remainder of the listening list
 	  lpcb->next = tcp_listen_pcbs;
+          // put this listening pcb at the head of the listening list
 	  tcp_listen_pcbs = lpcb; 
 	}
 

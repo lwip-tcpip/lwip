@@ -461,7 +461,9 @@ tcp_slowtmr(void)
   /* Steps through all of the active PCBs. */
   prev = NULL;
   pcb = tcp_active_pcbs;
+  if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs"));
   while(pcb != NULL) {
+    DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb"));
     ASSERT("tcp_timer_coarse: active pcb->state != CLOSED", pcb->state != CLOSED);
     ASSERT("tcp_timer_coarse: active pcb->state != LISTEN", pcb->state != LISTEN);
     ASSERT("tcp_timer_coarse: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
@@ -470,8 +472,11 @@ tcp_slowtmr(void)
 
     if(pcb->state == SYN_SENT && pcb->nrtx == TCP_SYNMAXRTX) {
       ++pcb_remove;
-    } else if(pcb->nrtx == TCP_MAXRTX) {
+      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max SYN retries reached"));
+    }
+    else if(pcb->nrtx == TCP_MAXRTX) {
       ++pcb_remove;
+      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached"));
     } else {
       ++pcb->rtime;
       if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
@@ -506,6 +511,7 @@ tcp_slowtmr(void)
       if((u32_t)(tcp_ticks - pcb->tmr) >
 	 TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
+        DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2"));
       }
     }
 
@@ -518,6 +524,7 @@ tcp_slowtmr(void)
        pcb->rto * TCP_OOSEQ_TIMEOUT) {
       tcp_segs_free(pcb->ooseq);
       pcb->ooseq = NULL;
+      DEBUGF(TCP_CWND_DEBUG, ("tcp: dropping OOSEQ queued data\n"));
     }
 #endif /* TCP_QUEUE_OOSEQ */
 
@@ -526,6 +533,7 @@ tcp_slowtmr(void)
       if((u32_t)(tcp_ticks - pcb->tmr) >
 	 TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
+        DEBUGF(TCP_DEBUG, ("tcp_slottmr: removing pcb stuck in SYN-RCVD\n"));
       }
     }
 
@@ -554,6 +562,7 @@ tcp_slowtmr(void)
       ++pcb->polltmr;
       if(pcb->polltmr >= pcb->pollinterval) {
 	pcb->polltmr = 0;
+        DEBUGF(TCP_DEBUG, ("tcp_slottmr: polling application\n"));
 	TCP_EVENT_POLL(pcb, err);
 	if(err == ERR_OK) {
 	  tcp_output(pcb);
@@ -957,9 +966,11 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if(pcb->unacked != NULL) {    
       DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->unacked\n"));
     }
+#if TCP_QUEUE_OOSEQ // LW
     if(pcb->ooseq != NULL) {    
       DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
+#endif
 #endif /* TCP_DEBUG */
     tcp_segs_free(pcb->unsent);
 #if TCP_QUEUE_OOSEQ
