@@ -494,6 +494,9 @@ static void
 do_close(struct api_msg_msg *msg)
 {
   err_t err;
+
+  err = ERR_OK;
+
   if(msg->conn->pcb.tcp != NULL) {
     switch(msg->conn->type) {
 #if LWIP_UDP
