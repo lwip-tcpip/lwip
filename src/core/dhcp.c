@@ -166,6 +166,8 @@ static void dhcp_check(struct netif *netif)
     result = netif->linkoutput(netif, p);
     pbuf_free(p);
     p = NULL;
+  }	else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_check: could not perform ARP query\n"));
   }
   dhcp->tries++;
   msecs = 500;
@@ -245,12 +247,15 @@ static err_t dhcp_select(struct netif *netif)
     /* reconnect to any (or to server here?!) */
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_select: REQUESTING\n"));
+    dhcp_set_state(dhcp, DHCP_REQUESTING);
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_select: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   msecs = dhcp->tries < 4 ? dhcp->tries * 1000 : 4 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   DEBUGF(DHCP_DEBUG | DBG_STATE, ("dhcp_select(): set request timeout %u msecs", msecs));
-  dhcp_set_state(dhcp, DHCP_REQUESTING);
   return result;
 }
 
@@ -506,7 +511,7 @@ err_t dhcp_start(struct netif *netif)
     DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): created new udp pcb"));
     DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration"));
   } else {
-    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): restarting DHCP configuration"));
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE | 3, ("dhcp_start(): restarting DHCP configuration\n"));
   }
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
@@ -563,9 +568,12 @@ void dhcp_inform(struct netif *netif)
 
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_inform: INFORMING\n"));
     udp_send(dhcp->pcb, dhcp->p_out);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_inform: could not allocate DHCP request\n"));
   }
 
   if (dhcp != NULL)
@@ -631,6 +639,9 @@ static err_t dhcp_decline(struct netif *netif)
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
     dhcp_delete_request(netif);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_decline: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   msecs = 10*1000;
@@ -656,6 +667,7 @@ static err_t dhcp_discover(struct netif *netif)
   result = dhcp_create_request(netif);
   if (result == ERR_OK)
   {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: making request"));
     dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
     dhcp_option_byte(dhcp, DHCP_DISCOVER);
 
@@ -669,6 +681,7 @@ static err_t dhcp_discover(struct netif *netif)
 
     dhcp_option_trailer(dhcp);
 
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: realloc()ing"));
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* set receive callback function with netif as user data */
@@ -676,16 +689,24 @@ static err_t dhcp_discover(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
 
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: send()ing\n"));
+
     udp_send(dhcp->pcb, dhcp->p_out);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: bind()ing\n"));
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: connect()ing\n"));
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_request(netif);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_discover: SELECTING\n"));
+    dhcp_set_state(dhcp, DHCP_SELECTING);
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_discover: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   msecs = dhcp->tries < 4 ? (dhcp->tries + 1) * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
-   DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_discover(): set request timeout %u msecs", msecs));
-  dhcp_set_state(dhcp, DHCP_SELECTING);
+  DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_discover(): set request timeout %u msecs", msecs));
   return result;
 }
 
@@ -789,6 +810,10 @@ err_t dhcp_renew(struct netif *netif)
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
     dhcp_delete_request(netif);
+
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_renew: RENEWING\n"));
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_renew: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   /* back-off on retries, but to a maximum of 20 seconds */
@@ -839,6 +864,9 @@ static err_t dhcp_rebind(struct netif *netif)
     udp_send(dhcp->pcb, dhcp->p_out);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_rebind: REBINDING\n"));
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_rebind: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
@@ -858,8 +886,10 @@ static err_t dhcp_release(struct netif *netif)
   err_t result;
   u16_t msecs;
   DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_release()"));
+
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
+
 
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
@@ -875,6 +905,9 @@ static err_t dhcp_release(struct netif *netif)
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_send(dhcp->pcb, dhcp->p_out);
     dhcp_delete_request(netif);
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_release: RELEASED, DHCP_OFF\n"));
+  } else {
+    DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_release: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
