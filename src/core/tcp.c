@@ -454,6 +454,8 @@ tcp_slowtmr(void)
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   err_t err;
   
+  err = ERR_OK;
+
   ++tcp_ticks;
   
   /* Steps through all of the active PCBs. */
