@@ -48,6 +48,8 @@
 
 #include "lwip/tcp.h"
 
+#include "lwipopts.h"
+
 /* Incremented every coarse grained timer shot
    (typically every 500 ms, determined by TCP_COARSE_TIMEOUT). */
 u32_t tcp_ticks;
@@ -310,7 +312,14 @@ tcp_listen(struct tcp_pcb *pcb)
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
 #endif /* LWIP_CALLBACK_API */
+/* workaround for compile error: assignment requires modifiable lvalue in TCP_REG */ 
+#if LWIP_TCP_REG_COMPILE_ERROR
+  // place this pcb at the start the "listening pcbs" list
+  lpcb->next = tcp_listen_pcbs;
+  tcp_listen_pcbs = lpcb;
+#else
   TCP_REG((struct tcp_pcb **)&tcp_listen_pcbs, (struct tcp_pcb *)lpcb);
+#endif
   return (struct tcp_pcb *)lpcb;
 }
 /*-----------------------------------------------------------------------------------*/
