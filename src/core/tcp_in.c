@@ -1122,7 +1122,7 @@ tcp_receive(struct tcp_pcb *pcb)
               } else 
                 /*if (TCP_SEQ_LT(prev->tcphdr->seqno, seqno) &&
                   TCP_SEQ_LT(seqno, next->tcphdr->seqno)) {*/
-                if(TCP_SEQ_BETWEEN(seqno, prev->tcphdr->seqno, next->tcphdr->seqno-1)){
+                if(TCP_SEQ_BETWEEN(seqno, prev->tcphdr->seqno+1, next->tcphdr->seqno-1)){
                 /* The sequence number of the incoming segment is in
                    between the sequence numbers of the previous and
                    the next segment on ->ooseq. We trim and insert the
