@@ -208,10 +208,10 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     /* empty entry? */
-    if ((empty == ARP_TABLE_SIZE) && arp_table[i].state == ETHARP_STATE_EMPTY)) {
+    if (arp_table[i].state == ETHARP_STATE_EMPTY) {
       LWIP_DEBUGF(ETHARP_DEBUG, ("find_entry: found empty entry %d\n", i));
       /* remember first empty entry */
-      empty = i;
+      if (empty == ARP_TABLE_SIZE) empty = i;
     }
     /* pending entry? */
     else if (arp_table[i].state == ETHARP_STATE_PENDING) {
@@ -701,7 +701,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   result = etharp_request(struct netif *netif, struct ip_addr *ipaddr);
 
   /* find entry in ARP cache */
-  i = find_entry(&arp_table[i].ipaddr, q?ETHARP_INSERT:0);
+  i = find_entry(&arp_table[i].ipaddr, q?ETHARP_CREATE:0);
 
   /* could not find or create entry? */
   if (i < 0) return (err_t)i;
