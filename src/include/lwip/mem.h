@@ -49,9 +49,7 @@ void mem_free(void *mem);
 void *mem_realloc(void *mem, mem_size_t size);
 void *mem_reallocm(void *mem, mem_size_t size);
 
-#define MEM_ALIGN_SIZE(size) (size + \
-                             ((((size) % MEM_ALIGNMENT) == 0)? 0 : \
-                             (MEM_ALIGNMENT - ((size) % MEM_ALIGNMENT))))
+#define MEM_ALIGN_SIZE(size) ((size + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
 
 #define MEM_ALIGN(addr) (void *)MEM_ALIGN_SIZE((mem_ptr_t)addr)
 
