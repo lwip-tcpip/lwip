@@ -175,7 +175,17 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
 
-  pbuf_header(p, -((s16_t)(UDP_HLEN + IPH_HL(iphdr) * 4)));
+  if (pbuf_header(p, -((s16_t)(UDP_HLEN + IPH_HL(iphdr) * 4)))) {
+    /* drop short packets */
+	  DEBUGF(UDP_DEBUG, ("udp_input: short UDP datagram (%u bytes) discarded\n", p->tot_len));
+#ifdef UDP_STATS
+  	++lwip_stats.udp.lenerr;
+  	++lwip_stats.udp.drop;
+#endif /* UDP_STATS */
+    snmp_inc_udpinerrors();
+  	pbuf_free(p);
+  	goto end;
+  }
 
   udphdr = (struct udp_hdr *)((u8_t *)p->payload - UDP_HLEN);
   
