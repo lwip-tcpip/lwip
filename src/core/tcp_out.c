@@ -344,21 +344,12 @@ tcp_output(struct tcp_pcb *pcb)
      (seg == NULL ||
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
     pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
-    p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM);
+    p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
     if(p == NULL) {
       DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
       return ERR_BUF;
     }
     DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: sending ACK for %lu\n", pcb->rcv_nxt));    
-    if(pbuf_header(p, TCP_HLEN)) {
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) no room for TCP header in pbuf.\n"));
-      
-#ifdef TCP_STATS
-      ++lwip_stats.tcp.err;
-#endif /* TCP_STATS */
-      pbuf_free(p);
-      return ERR_BUF;
-    }
     
     tcphdr = p->payload;
     tcphdr->src = htons(pcb->local_port);
@@ -509,20 +500,10 @@ tcp_rst(u32_t seqno, u32_t ackno,
 {
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
-  p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM);
+  p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
   if(p == NULL) {
-    if(p == NULL) {
       DEBUGF(TCP_DEBUG, ("tcp_rst: could not allocate memory for pbuf\n"));
       return;
-    }
-  }
-  if(pbuf_header(p, TCP_HLEN)) {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_rst: no room for TCP header in pbuf.\n"));
-
-#ifdef TCP_STATS
-    ++lwip_stats.tcp.err;
-#endif /* TCP_STATS */
-    return;
   }
 
   tcphdr = p->payload;
