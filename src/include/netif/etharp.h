@@ -35,7 +35,9 @@
 #ifndef __NETIF_ETHARP_H__
 #define __NETIF_ETHARP_H__
 
-#define PAD_ETH_SIZE 2
+#ifndef PAD_ETH_SIZE
+#define PAD_ETH_SIZE 0
+#endif
 
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
