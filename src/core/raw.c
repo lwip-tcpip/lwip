@@ -47,8 +47,8 @@
 #include "lwip/def.h"
 #include "lwip/memp.h"
 #include "lwip/inet.h"
-#include "lwip/netif.h"
 #include "lwip/ip_addr.h"
+#include "lwip/netif.h"
 #include "lwip/raw.h"
 
 #include "lwip/stats.h"

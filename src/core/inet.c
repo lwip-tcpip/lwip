@@ -300,9 +300,10 @@ inet_chksum_pbuf(struct pbuf *p)
 /* Convert numeric IP address into decimal dotted ASCII representation.
  * returns ptr to static buffer; not reentrant!
  */
-u8_t *inet_ntoa(u32_t addr)
+char *inet_ntoa(struct in_addr addr)
 {
   static u8_t str[16];
+  u32_t s_addr = addr.s_addr;
   u8_t inv[3];
   u8_t *rp;
   u8_t *ap;
@@ -311,7 +312,7 @@ u8_t *inet_ntoa(u32_t addr)
   u8_t i;
 
   rp = str;
-  ap = (u8_t *)&addr;
+  ap = (u8_t *)&s_addr;
   for(n = 0; n < 4; n++) {
     i = 0;
     do {

@@ -34,6 +34,28 @@
 
 #include "lwip/arch.h"
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct ip_addr {
+  PACK_STRUCT_FIELD(u32_t addr);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+
+/* For compatibility with BSD code */
+struct in_addr {
+  u32_t s_addr;
+};
+
+struct netif;
+
+extern const struct ip_addr ip_addr_any;
+extern const struct ip_addr ip_addr_broadcast;
+
 /** IP_ADDR_ can be used as a fixed IP address
  *  for the wildcard and the broadcast address
  */
@@ -76,25 +98,6 @@
 
 #define IN_LOOPBACKNET      127         /* official! */
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ip_addr {
-  PACK_STRUCT_FIELD(u32_t addr);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
-
-/* For compatibility with BSD code */
-struct in_addr {
-  u32_t s_addr;
-};
-
-extern const struct ip_addr ip_addr_any;
-extern const struct ip_addr ip_addr_broadcast;
 
 #define IP4_ADDR(ipaddr, a,b,c,d) (ipaddr)->addr = htonl(((u32_t)(a & 0xff) << 24) | ((u32_t)(b & 0xff) << 16) | \
                                                          ((u32_t)(c & 0xff) << 8) | (u32_t)(d & 0xff))

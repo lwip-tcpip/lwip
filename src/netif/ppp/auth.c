@@ -610,7 +610,7 @@ int get_secret(
     
     addrs = NULL;
 
-    if(!client || !client[0] && strcmp(client, ppp_settings.user)) {
+    if(!client || !client[0] || strcmp(client, ppp_settings.user)) {
 	return 0;
     }
 

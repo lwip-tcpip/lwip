@@ -174,6 +174,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
     (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
+
   if (timeouts->next == NULL) {
     timeouts->next = timeout;
     return;

@@ -172,7 +172,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
   /* address is actually being changed? */
   if ((ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0)
   {
-    extern struct tcp_pcb *tcp_active_pcbs;
+    /* extern struct tcp_pcb *tcp_active_pcbs; defined by tcp.h */
     LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: netif address being changed\n"));
     pcb = tcp_active_pcbs;
     while (pcb != NULL) {
@@ -187,7 +187,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
         pcb = pcb->next;
       }
     }
-    for (lpcb = tcp_listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       /* PCB bound to current local interface address? */
       if (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr))) {
         /* The PCB is listening to the old ipaddr and
