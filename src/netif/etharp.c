@@ -10,9 +10,9 @@
 
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -21,51 +21,51 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
- 
+
 /*
  * TODO:
  *
-RFC 3220 4.6          IP Mobility Support for IPv4          January 2002 
+RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 
-      -  A Gratuitous ARP [45] is an ARP packet sent by a node in order 
-         to spontaneously cause other nodes to update an entry in their 
-         ARP cache.  A gratuitous ARP MAY use either an ARP Request or 
-         an ARP Reply packet.  In either case, the ARP Sender Protocol 
-         Address and ARP Target Protocol Address are both set to the IP 
-         address of the cache entry to be updated, and the ARP Sender 
-         Hardware Address is set to the link-layer address to which this 
-         cache entry should be updated.  When using an ARP Reply packet, 
-         the Target Hardware Address is also set to the link-layer 
-         address to which this cache entry should be updated (this field 
-         is not used in an ARP Request packet). 
+      -  A Gratuitous ARP [45] is an ARP packet sent by a node in order
+         to spontaneously cause other nodes to update an entry in their
+         ARP cache.  A gratuitous ARP MAY use either an ARP Request or
+         an ARP Reply packet.  In either case, the ARP Sender Protocol
+         Address and ARP Target Protocol Address are both set to the IP
+         address of the cache entry to be updated, and the ARP Sender
+         Hardware Address is set to the link-layer address to which this
+         cache entry should be updated.  When using an ARP Reply packet,
+         the Target Hardware Address is also set to the link-layer
+         address to which this cache entry should be updated (this field
+         is not used in an ARP Request packet).
 
-         In either case, for a gratuitous ARP, the ARP packet MUST be 
-         transmitted as a local broadcast packet on the local link.  As 
-         specified in [36], any node receiving any ARP packet (Request 
-         or Reply) MUST update its local ARP cache with the Sender 
-         Protocol and Hardware Addresses in the ARP packet, if the 
-         receiving node has an entry for that IP address already in its 
-         ARP cache.  This requirement in the ARP protocol applies even 
-         for ARP Request packets, and for ARP Reply packets that do not 
-         match any ARP Request transmitted by the receiving node [36]. 
+         In either case, for a gratuitous ARP, the ARP packet MUST be
+         transmitted as a local broadcast packet on the local link.  As
+         specified in [36], any node receiving any ARP packet (Request
+         or Reply) MUST update its local ARP cache with the Sender
+         Protocol and Hardware Addresses in the ARP packet, if the
+         receiving node has an entry for that IP address already in its
+         ARP cache.  This requirement in the ARP protocol applies even
+         for ARP Request packets, and for ARP Reply packets that do not
+         match any ARP Request transmitted by the receiving node [36].
 *
   My suggestion would be to send a ARP request for our newly obtained
   address upon configuration of an Ethernet interface.
@@ -84,9 +84,9 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #endif
 
 /** the time an ARP entry stays valid after its last update, (120 * 10) seconds = 20 minutes. */
-#define ARP_MAXAGE 120  
+#define ARP_MAXAGE 120
 /** the time an ARP entry stays pending after first request, (2 * 10) seconds = 20 seconds. */
-#define ARP_MAXPENDING 2 
+#define ARP_MAXPENDING 2
 
 #define HWTYPE_ETHERNET 1
 
@@ -148,33 +148,37 @@ void
 etharp_tmr(void)
 {
   u8_t i;
-  
+
   DEBUGF(ETHARP_DEBUG, ("etharp_timer\n"));
   /* remove expired entries from the ARP table */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].ctime++;
-    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&       
+    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
         (arp_table[i].ctime >= ARP_MAXAGE)) {
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %u.\n", i));
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
-      /* remove any queued packet */
-      pbuf_free(arp_table[i].p);      
-      arp_table[i].p = NULL;
+      if (arp_table[i].p != NULL) {
+        /* remove any queued packet */
+        DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing packet queue %p.\n", i, (void *)(arp_table[i].p)));
+        pbuf_free(arp_table[i].p);
+        arp_table[i].p = NULL;
+      }
 #endif
     } else if ((arp_table[i].state == ETHARP_STATE_PENDING) &&
 	      (arp_table[i].ctime >= ARP_MAXPENDING)) {
       arp_table[i].state = ETHARP_STATE_EMPTY;
-#if ARP_QUEUEING
-      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, (void *)(arp_table[i].p)));
-      /* remove any queued packet */
-      pbuf_free(arp_table[i].p);      
-      arp_table[i].p = NULL;
-#else
       DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i));
+#if ARP_QUEUEING
+      if (arp_table[i].p != NULL) {
+        /* remove any queued packet */
+        DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing packet queue %p.\n", i, (void *)(arp_table[i].p)));
+        pbuf_free(arp_table[i].p);
+        arp_table[i].p = NULL;
+      }
 #endif
     }
-  }  
+  }
 }
 
 /**
@@ -188,7 +192,7 @@ static u8_t
 find_arp_entry(void)
 {
   u8_t i, j, maxtime;
-  
+
   /* Try to find an unused entry in the ARP table. */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     if (arp_table[i].state == ETHARP_STATE_EMPTY) {
@@ -196,7 +200,7 @@ find_arp_entry(void)
       break;
     }
   }
-  
+
   /* If no unused entry is found, we try to find the oldest entry and
      throw it away. If all entries are new and have 0 ctime drop one  */
   if (i == ARP_TABLE_SIZE) {
@@ -289,7 +293,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
           for (k = 0; k < netif->hwaddr_len; ++k) {
             ethhdr->dest.addr[k] = ethaddr->addr[k];
           }
-          ethhdr->type = htons(ETHTYPE_IP);	  	 	  
+          ethhdr->type = htons(ETHTYPE_IP);
           DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: sending queued IP packet.\n"));
           /* send the queued IP packet */
           netif->linkoutput(netif, p);
@@ -327,17 +331,17 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
       DEBUGF(ETHARP_DEBUG | DBG_TRACE | DBG_STATE, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].state));
       LWIP_ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
     }
-    /* set IP address */  
+    /* set IP address */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
-    /* set Ethernet hardware address */  
+    /* set Ethernet hardware address */
     for (k = 0; k < netif->hwaddr_len; ++k) {
       arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
     }
-    /* reset time-stamp */  
+    /* reset time-stamp */
     arp_table[i].ctime = 0;
-    /* mark as stable */  
+    /* mark as stable */
     arp_table[i].state = ETHARP_STATE_STABLE;
-    /* no queued packet */  
+    /* no queued packet */
 #if ARP_QUEUEING
     arp_table[i].p = NULL;
 #endif
@@ -359,7 +363,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
  *
  * @param netif The lwIP network interface on which the IP packet pbuf arrived.
  * @param pbuf The IP packet that arrived on netif.
- * 
+ *
  * @return NULL
  *
  * @see pbuf_free()
@@ -368,7 +372,7 @@ struct pbuf *
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct ethip_hdr *hdr;
-  
+
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
@@ -377,7 +381,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
     /* do nothing */
     return NULL;
   }
-  
+
   DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
   /* update ARP table, ask to insert entry */
   update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ARP_INSERT_FLAG);
@@ -387,7 +391,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 
 /**
  * Responds to ARP requests, updates ARP entries and sends queued IP packets.
- * 
+ *
  * Should be called for incoming ARP packets. The pbuf in the argument
  * is freed by this function.
  *
@@ -451,16 +455,16 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
 
         hdr->proto = htons(ETHTYPE_IP);
-      ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));      
+      ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
 
-        hdr->ethhdr.type = htons(ETHTYPE_ARP);      
+        hdr->ethhdr.type = htons(ETHTYPE_ARP);
       /* return ARP reply */
       netif->linkoutput(netif, p);
     } else {
       DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP request was not for us.\n"));
     }
     break;
-  case ARP_REPLY:    
+  case ARP_REPLY:
     /* ARP reply. We insert or update the ARP table. */
     DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
@@ -492,7 +496,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   return NULL;
 }
 
-/** 
+/**
  * Resolve and fill-in Ethernet address header for outgoing packet.
  *
  * If ARP has the Ethernet address in cache, the given packet is
@@ -510,8 +514,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * @param netif The lwIP network interface which the IP packet will be sent on.
  * @param ipaddr The IP address of the packet destination.
  * @param pbuf The pbuf(s) containing the IP packet to be sent.
- * 
- * @return If non-NULL, a packet ready to be sent. 
+ *
+ * @return If non-NULL, a packet ready to be sent.
  */
 struct pbuf *
 etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
@@ -521,7 +525,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   u8_t i;
 
   /* Make room for Ethernet header. */
-  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {    
+  if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
     /* The pbuf_header() call shouldn't fail, and we'll just bail
     out if it does.. */
     DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_output: could not allocate room for header.\n"));
@@ -580,7 +584,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 
     /* Ethernet address for IP destination address is in ARP cache? */
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
-      /* match found? */    
+      /* match found? */
       if (arp_table[i].state == ETHARP_STATE_STABLE &&
         ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         dest = &arp_table[i].ethaddr;
@@ -616,7 +620,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* return the outgoing packet */
     return q;
   }
-  /* never reached; here for safety */ 
+  /* never reached; here for safety */
   return NULL;
 }
 
@@ -750,7 +754,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
         hdr->ethhdr.dest.addr[j] = 0xff;
         hdr->ethhdr.src.addr[j] = srcaddr->addr[j];
       }
-      hdr->ethhdr.type = htons(ETHTYPE_ARP);      
+      hdr->ethhdr.type = htons(ETHTYPE_ARP);
       /* send ARP query */
       result = netif->linkoutput(netif, p);
       /* free ARP query packet */
