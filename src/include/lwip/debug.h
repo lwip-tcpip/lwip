@@ -47,14 +47,14 @@
 #define DBG_LEVEL_SEVERE  3	/* */ 
 #define DBG_MASK_LEVEL    3
 
-/** flag for DEBUGF to enable the debug message */
+/** flag for DEBUGF to enable that debug message */
 #define DBG_ON  0x80U
-/** flag for DEBUGF to disable the debug message */
+/** flag for DEBUGF to disable that debug message */
 #define DBG_OFF 0x00U
 
 /** flag for DEBUGF indicating a tracing message (to follow program flow) */
 #define DBG_TRACE   0x40U
-/** flag for DEBUGF indicating a state debug message (to follow states) */
+/** flag for DEBUGF indicating a state debug message (to follow module states) */
 #define DBG_STATE   0x20U
 /** flag for DEBUGF indicating newly added code, not thoroughly tested yet */
 #define DBG_FRESH   0x10U
@@ -63,12 +63,13 @@
 
 #ifdef LWIP_DEBUG
 #  define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x); } while(0)
-/** print debug message only if debug message is enabled AND is of correct type
-  * AND is at least DBG_LEVEL */
-#  define DEBUGF(debug, x) do { if ((debug & DBG_ON) && (debug & DBG_TYPES_ON) && ((debug & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if (debug & DBG_HALT) while(1); } } while(0)
+/** print debug message only if debug message type is enabled...
+ *  AND is of correct type AND is at least DBG_LEVEL
+ */
+#  define DEBUGF(debug, x) do { if (((debug) & DBG_ON) && ((debug) & DBG_TYPES_ON) && (((debug) & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if (debug & DBG_HALT) while(1); } } while(0)
 #  define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x); } while(0)	
 #else /* LWIP_DEBUG */
-#  define LWIP_ASSERT(x,y) 
+#  define LWIP_ASSERT(x, y) 
 #  define DEBUGF(debug, x) 
 #  define LWIP_ERROR(x)	
 #endif /* LWIP_DEBUG */
