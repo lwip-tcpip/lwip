@@ -144,7 +144,7 @@ memp_init(void)
 #ifdef MEMP_STATS
   for(i = 0; i < MEMP_MAX; ++i) {
     stats.memp[i].used = stats.memp[i].max =
-      stats.memp[i].err = stats.memp[i].reclaimed = 0;
+      stats.memp[i].err = 0;
     stats.memp[i].avail = memp_num[i];
   }
 #endif /* MEMP_STATS */

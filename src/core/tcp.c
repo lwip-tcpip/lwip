@@ -620,7 +620,7 @@ tcp_fasttmr(void)
   /* send delayed ACKs */  
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
     if(pcb->flags & TF_ACK_DELAY) {
-      DEBUGF(TCP_DEBUG, ("tcp_timer_fine: delayed ACK\n"));
+      DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
@@ -747,7 +747,7 @@ tcp_kill_prio(u8_t prio)
     }
   }
   if(inactive != NULL) {
-    DEBUGF(TCP_DEBUG, ("tcp_mem_reclaim: killing oldest PCB 0x%p (%ld)\n",
+    DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB 0x%p (%ld)\n",
 		       inactive, inactivity));
     tcp_abort(inactive);
   }      
@@ -769,7 +769,7 @@ tcp_kill_timewait(void)
     }
   }
   if(inactive != NULL) {
-    DEBUGF(TCP_DEBUG, ("tcp_mem_reclaim: killing oldest TIME-WAIT PCB 0x%p (%ld)\n",
+    DEBUGF(TCP_DEBUG, ("tcp_kill_timewait: killing oldest TIME-WAIT PCB 0x%p (%ld)\n",
 		       inactive, inactivity));
     tcp_abort(inactive);
   }      
@@ -786,7 +786,7 @@ tcp_alloc(u8_t prio)
   pcb = memp_malloc(MEMP_TCP_PCB);
   if(pcb == NULL) {
     /* Try killing oldest connection in TIME-WAIT. */
-    DEBUGF(TCP_DEBUG, ("tcp_new: killing off oldest TIME-WAIT connection\n"));
+    DEBUGF(TCP_DEBUG, ("tcp_alloc: killing off oldest TIME-WAIT connection\n"));
     tcp_kill_timewait();
     pcb = memp_malloc(MEMP_TCP_PCB);
     if(pcb == NULL) {

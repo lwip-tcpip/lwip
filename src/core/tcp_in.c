@@ -345,7 +345,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
   if(flags & TCP_ACK) {
     /* For incoming segments with the ACK flag set, respond with a
        RST. */
-    DEBUGF(TCP_RST_DEBUG, ("tcp_process: ACK in LISTEN, sending reset\n"));
+    DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
     tcp_rst(ackno + 1, seqno + tcplen,
 	    &(iphdr->dest), &(iphdr->src),
 	    tcphdr->dest, tcphdr->src);

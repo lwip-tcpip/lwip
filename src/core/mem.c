@@ -266,7 +266,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
 	 (u8_t *)rmem < (u8_t *)ram_end);
   
   if((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
-    DEBUGF(MEM_DEBUG, ("mem_free: illegal memory\n"));
+    DEBUGF(MEM_DEBUG, ("mem_realloc: illegal memory\n"));
     return rmem;
   }
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);

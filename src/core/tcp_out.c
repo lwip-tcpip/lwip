@@ -255,7 +255,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg->len += queue->len;
     useg->next = queue->next;
       
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: chaining, new len %u\n", useg->len));
+    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: chaining, new len %u\n", useg->len));
     if(seg == queue) {
       seg = NULL;
     }
@@ -346,12 +346,12 @@ tcp_output(struct tcp_pcb *pcb)
     pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_RAM);
     if(p == NULL) {
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: (ACK) could not allocate pbuf\n"));
+      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
       return ERR_BUF;
     }
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: sending ACK for %lu\n", pcb->rcv_nxt));    
+    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: sending ACK for %lu\n", pcb->rcv_nxt));    
     if(pbuf_header(p, TCP_HLEN)) {
-      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: (ACK) no room for TCP header in pbuf.\n"));
+      DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) no room for TCP header in pbuf.\n"));
       
 #ifdef TCP_STATS
       ++stats.tcp.err;
@@ -517,7 +517,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
     }
   }
   if(pbuf_header(p, TCP_HLEN)) {
-    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_send_data: no room for TCP header in pbuf.\n"));
+    DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_rst: no room for TCP header in pbuf.\n"));
 
 #ifdef TCP_STATS
     ++stats.tcp.err;
