@@ -421,7 +421,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       &(iphdr->dest), &(iphdr->src),
       tcphdr->dest, tcphdr->src);
   } else if (flags & TCP_SYN) {
-    LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection request %u -> %u.\n", tcphdr->src, tcphdr->dest));
+    LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %u -> %u.\n", tcphdr->src, tcphdr->dest));
     npcb = tcp_alloc(pcb->prio);
     /* If a new PCB could not be created (probably due to lack of memory),
        we don't do anything, but rely on the sender will retransmit the
@@ -569,7 +569,7 @@ tcp_process(struct tcp_pcb *pcb)
       if (TCP_SEQ_LT(pcb->lastack, ackno) &&
           TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
         pcb->state = ESTABLISHED;
-        LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
+        LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
         LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
 #endif
@@ -601,7 +601,7 @@ tcp_process(struct tcp_pcb *pcb)
     tcp_receive(pcb);
     if (flags & TCP_FIN) {
       if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
-        LWIP_DEBUGF(DEMO_DEBUG,
+        LWIP_DEBUGF(TCP_DEBUG,
          ("TCP connection closed %d -> %d.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
   tcp_ack_now(pcb);
   tcp_pcb_purge(pcb);
@@ -619,7 +619,7 @@ tcp_process(struct tcp_pcb *pcb)
   case FIN_WAIT_2:
     tcp_receive(pcb);
     if (flags & TCP_FIN) {
-      LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
+      LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_ack_now(pcb);
       tcp_pcb_purge(pcb);
       TCP_RMV(&tcp_active_pcbs, pcb);
@@ -630,7 +630,7 @@ tcp_process(struct tcp_pcb *pcb)
   case CLOSING:
     tcp_receive(pcb);
     if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
-      LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
+      LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_ack_now(pcb);
       tcp_pcb_purge(pcb);
       TCP_RMV(&tcp_active_pcbs, pcb);
@@ -641,7 +641,7 @@ tcp_process(struct tcp_pcb *pcb)
   case LAST_ACK:
     tcp_receive(pcb);
     if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
-      LWIP_DEBUGF(DEMO_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
+      LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       pcb->state = CLOSED;
       recv_flags = TF_CLOSED;
     }
