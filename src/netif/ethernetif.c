@@ -103,6 +103,10 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
 
   initiate transfer();
   
+#if PAD_ETH_SIZE
+  pbuf_header(p, -PAD_ETH_SIZE);			/* drop the padding word */
+#endif
+
   for(q = p; q != NULL; q = q->next) {
     /* Send the data from the pbuf to the interface, one pbuf at a
        time. The size of the data in each pbuf is kept in the ->len
@@ -111,6 +115,10 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
   }
 
   signal that packet should be sent();
+
+#if PAD_ETH_SIZE
+  pbuf_header(p, PAD_ETH_SIZE);			/* reclaim the padding word */
+#endif
   
 #ifdef LINK_STATS
   lwip_stats.link.xmit++;
@@ -137,10 +145,19 @@ low_level_input(struct ethernetif *ethernetif)
      variable. */
   len = ;
 
+#if PAD_ETH_SIZE
+  len += PAD_ETH_SIZE;						/* allow room for Ethernet padding */
+#endif
+
   /* We allocate a pbuf chain of pbufs from the pool. */
   p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
   
   if (p != NULL) {
+
+#if PAD_ETH_SIZE
+    pbuf_header(p, -PAD_ETH_SIZE);			/* drop the padding word */
+#endif
+
     /* We iterate over the pbuf chain until we have read the entire
        packet into the pbuf. */
     for(q = p; q != NULL; q = q->next) {
@@ -150,6 +167,11 @@ low_level_input(struct ethernetif *ethernetif)
       read data into(q->payload, q->len);
     }
     acknowledge that packet has been read();
+
+#if PAD_ETH_SIZE
+    pbuf_header(p, PAD_ETH_SIZE);			/* reclaim the padding word */
+#endif
+
 #ifdef LINK_STATS
     lwip_stats.link.recv++;
 #endif /* LINK_STATS */      
@@ -237,7 +259,7 @@ ethernetif_input(struct netif *netif)
   switch (htons(ethhdr->type)) {
     case ETHTYPE_IP:
       q = etharp_ip_input(netif, p);
-      pbuf_header(p, -14);
+      pbuf_header(p, -sizeof(struct eth_hdr));
       netif->input(p, netif);
       break;
       

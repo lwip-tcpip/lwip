@@ -46,6 +46,18 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct ip_addr2 {
+  PACK_STRUCT_FIELD(u16_t addrw[2]);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+
 /* For compatibility with BSD code */
 struct in_addr {
   u32_t s_addr;

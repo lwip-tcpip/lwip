@@ -33,6 +33,8 @@
 #ifndef __NETIF_ETHARP_H__
 #define __NETIF_ETHARP_H__
 
+#define PAD_ETH_SIZE 2
+
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -49,6 +51,9 @@ PACK_STRUCT_END
 
 PACK_STRUCT_BEGIN
 struct eth_hdr {
+#if PAD_ETH_SIZE
+  PACK_STRUCT_FIELD(u8_t padding[PAD_ETH_SIZE]);
+#endif
   PACK_STRUCT_FIELD(struct eth_addr dest);
   PACK_STRUCT_FIELD(struct eth_addr src);
   PACK_STRUCT_FIELD(u16_t type);
@@ -64,9 +69,9 @@ struct etharp_hdr {
   PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
   PACK_STRUCT_FIELD(u16_t opcode);
   PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr sipaddr);
+  PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);
   PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr dipaddr);
+  PACK_STRUCT_FIELD(struct ip_addr2 dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 

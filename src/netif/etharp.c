@@ -133,7 +133,7 @@ static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 
 static s8_t find_arp_entry(void);
 #define ARP_INSERT_FLAG 1
-static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr2 *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 #if ARP_QUEUEING
 static struct pbuf *etharp_enqueue(s8_t i, struct pbuf *q);
 static u8_t etharp_dequeue(s8_t i);
@@ -329,7 +329,7 @@ etharp_dequeue(s8_t i)
  * @see pbuf_free()
  */
 static struct pbuf *
-update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
+update_arp_entry(struct netif *netif, struct ip_addr2 *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i, k;
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("update_arp_entry()\n"));
@@ -337,7 +337,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
   ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
   /* do not update for 0.0.0.0 addresses */
-  if (ipaddr->addr == 0) {
+  if (ipaddr->addrw[0] == 0 && ipaddr->addrw[1] == 0) {
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: will not add 0.0.0.0 to ARP cache\n"));
     return NULL;
   }
@@ -347,7 +347,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     /* Check if the source IP address of the incoming packet matches
     the IP address in this ARP table entry. */
-    if (ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
+    if (!memcmp(ipaddr, &arp_table[i].ipaddr, sizeof(struct ip_addr))) {
       /* pending entry? */
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: pending entry %u goes stable\n", i));
@@ -480,7 +480,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
   /* update ARP table, ask to insert entry */
-  update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ARP_INSERT_FLAG);
+  update_arp_entry(netif, (struct ip_addr2 *)&(hdr->ip.src), &(hdr->eth.src), ARP_INSERT_FLAG);
   return NULL;
 }
 
@@ -521,7 +521,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     for_us = 0;
   } else {
     /* ARP packet directed to us? */
-    for_us = ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr));
+    for_us = !memcmp(&(hdr->dipaddr), &(netif->ip_addr), sizeof(struct ip_addr));
   }
 
   /* add or update entries in the ARP cache */
@@ -556,8 +556,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* re-use pbuf to send ARP reply */
       hdr->opcode = htons(ARP_REPLY);
 
-      ip_addr_set(&(hdr->dipaddr), &(hdr->sipaddr));
-      ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
+      hdr->dipaddr = hdr->sipaddr;
+      hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
 
       for(i = 0; i < netif->hwaddr_len; ++i) {
         hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
@@ -821,8 +821,8 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
          * a request it is a don't-care, we use 0's */
         hdr->dhwaddr.addr[j] = 0x00;
       }
-      ip_addr_set(&(hdr->dipaddr), ipaddr);
-      ip_addr_set(&(hdr->sipaddr), &(netif->ip_addr));
+      hdr->dipaddr = *(struct ip_addr2 *)ipaddr;
+      hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
 
       hdr->hwtype = htons(HWTYPE_ETHERNET);
       ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
