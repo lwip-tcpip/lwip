@@ -646,9 +646,8 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
   u8_t i;
 
   srcaddr = (struct eth_addr *)netif->hwaddr;
-  i = 0;
   /* bail out if this IP address is pending */
-  for(i; i < ARP_TABLE_SIZE; ++i) {
+  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     if(ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
       if (arp_table[i].state == ETHARP_STATE_PENDING) {
         DEBUGF(ETHARP_DEBUG, ("etharp_query: requested IP already pending\n"));
