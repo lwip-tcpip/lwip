@@ -46,7 +46,7 @@
 #define DEMO_DEBUG       0
 #endif
 
-#ifndef ETHARP_DEGUG
+#ifndef ETHARP_DEBUG
 #define ETHARP_DEBUG     0
 #endif
 
