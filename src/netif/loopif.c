@@ -29,9 +29,12 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#include "lwip/mem.h"
 #include "lwip/opt.h"
+
+#if LWIP_HAVE_LOOPIF
+
 #include "netif/loopif.h"
+#include "lwip/mem.h"
 
 #if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)
 #include "netif/tcpdump.h"
@@ -106,6 +109,7 @@ loopif_init(struct netif *netif)
   return ERR_OK;
 }
 
+#endif /* LWIP_HAVE_LOOPIF */
 
 
 

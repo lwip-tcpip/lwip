@@ -299,8 +299,10 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_SNDLOWAT                    TCP_SND_BUF/2
 #endif
 
-
-
+/* Support loop interface (127.0.0.1) */
+#ifndef LWIP_HAVE_LOOPIF
+#define LWIP_HAVE_LOOPIF		1
+#endif
 
 #ifndef LWIP_EVENT_API
 #define LWIP_EVENT_API                  0
