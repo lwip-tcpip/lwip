@@ -312,31 +312,38 @@ ip_input(struct pbuf *p, struct netif *inp) {
 		      netif->ip_addr.addr & netif->netmask.addr,
 		      iphdr->dest.addr & ~(netif->netmask.addr)));
 
-    /* interface unconfigured? */
-    if(ip_addr_isany(&(netif->ip_addr)) ||
-       /* or unicast to this interface address? */
-       ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
-       /* or broadcast on this interface network address ? */
-       (ip_addr_isbroadcast(&(iphdr->dest), &(netif->netmask)) &&
-	ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
-       /* or restricted broadcast? */
-       ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
-      break;
+    /* interface configured? */
+    if(!ip_addr_isany(&(netif->ip_addr)))
+    {
+      /* unicast to this interface address? */
+      if(ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
+        /* or broadcast on this interface network address ? */
+        (ip_addr_isbroadcast(&(iphdr->dest), &(netif->netmask)) &&
+         ip_addr_maskcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
+         /* or restricted broadcast? */
+         ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
+         /* break out of for loop */
+         break;
+      }
     }
+#if LWIP_DHCP
+  /* Pass DHCP messages in case of an unconfigured (0.0.0.0) interface, regardless
+     of destination address. (DHCP replies are sent to the IP address-to-be. This
+     is according to RFC 1542 section 3.1.1, referred by RFC 2131). */
+
+    /* interface unconfigured (0.0.0.0) */
+    else {
+      /* remote port is DHCP server? */
+      if(IPH_PROTO(iphdr) == IP_PROTO_UDP &&
+       ((struct udp_hdr *)((u8_t *)iphdr + IPH_HL(iphdr) * 4))->src == DHCP_SERVER_PORT) {
+         netif = inp;
+         /* break out of for loop */
+         break;
+      }
+    }
+#endif /* LWIP_DHCP */
   }
 
-#if LWIP_DHCP
-  /* If a DHCP packet has arrived on the interface, we pass it up the
-     stack regardless of destination IP address. The reason is that
-     DHCP replies are sent to the IP adress that will be given to this
-     node (as recommended by RFC 1542 section 3.1.1, referred by RFC
-     2131). */
-  if(IPH_PROTO(iphdr) == IP_PROTO_UDP &&
-     ((struct udp_hdr *)((u8_t *)iphdr + IPH_HL(iphdr) * 4))->src ==
-     DHCP_SERVER_PORT) {
-    netif = inp;
-  }  
-#endif /* LWIP_DHCP */
 	  
   if(netif == NULL) {
     /* packet not for us, route or discard */
