@@ -3,26 +3,11 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.8  2002/11/13 09:10:19  likewise
+ * ARP entries can now be updated (but not added) on any ARP traffic. Set #define ETHARP_SNOOP_UPDATES 1 to enable.
+ *
  * Revision 1.7  2002/11/13 08:56:11  likewise
  * Implemented conditional insertion of ARP entries to update_arp_entry using ARP_INSERT_FLAG.
- *
- * Revision 1.6  2002/11/11 14:34:29  likewise
- * Changed static etharp_query() to support queueing packets. This fix  missed in last commit.
- *
- * Revision 1.5  2002/11/08 22:14:24  likewise
- * Fixed numerous bugs. Re-used etharp_query()  in etharp_output(). Added comments and JavaDoc documentation.
- *
- * Revision 1.4  2002/11/08 12:54:43  proff_fs
- * Added includeds for bpstruct and epstruct.
- * Ports should update from using PACK_STRUCT_BEGIN and PACK_STRUCT_END to use these includes.
- * Maybe there should be an PACK_STRUCT_USE_INCLUDES ifdef around these, for ports for which PACK_STRUCT_BEGIN and PACK_STRUCT_END works nicely.
- *
- * Revision 1.3  2002/11/06 11:43:21  likewise
- * find_arp_entry() returned 0 instead of ARP_TABLE_SIZE if full pending cache (bug #1625).
- *
- * Revision 1.2  2002/11/04 14:56:40  likewise
- * Fixed NULL pointer bug (#1493). Fix for memory leak bug (#1601), etharp_output_sent(). Added etharp_query for DHCP.
- *
  */
 
 /*
@@ -106,6 +91,9 @@ RFC 3220 4.6          IP Mobility Support for IPv4          January 2002
 #define ARP_MAXAGE 120  
 /** the time an ARP entry stays pending after first request, (2 * 10) seconds = 20 seconds. */
 #define ARP_MAXPENDING 2 
+
+/** dis/enable existing ARP entries updates on any ARP traffic */
+#define ETHARP_SNOOP_UPDATES 0
 
 #define HWTYPE_ETHERNET 1
 
@@ -413,6 +401,7 @@ struct pbuf *
 etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 {
   struct etharp_hdr *hdr;
+  struct pbuf *q;
   u8_t i;
 
   /* drop short ARP packets */
@@ -457,10 +446,15 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* return ARP reply */
       return p;
     }
-#if 0
-      /* ARP request, NOT for our address */
-      else
-    {
+#if ETHARP_SNOOP_UPDATES
+    /* request, NOT for our address */
+    else {
+      /* update_arp_entry() can return a pbuf that has previously been
+      queued waiting for this IP address to become ARP stable. */
+      q = update_arp_entry(&(hdr->sipaddr), &(hdr->shwaddr), 0);
+      pbuf_free(p);
+      p = NULL;
+      return q;
     }
 #endif
     break;
@@ -468,12 +462,11 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* ARP reply. We insert or update the ARP table. */
     DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-      /* DHCP needs to know about ARP replies */
-      dhcp_arp_reply(&hdr->sipaddr);
+    /* DHCP needs to know about ARP replies */
+    dhcp_arp_reply(&hdr->sipaddr);
 #endif
     /* for our address? */
     if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {     
-      struct pbuf *q;
       DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply for us\n"));
       /* update_arp_entry() can return a pbuf that has previously been
       queued waiting for this IP address to become ARP stable. */
@@ -483,10 +476,15 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       p = NULL;
       return q;
     }
-#if 0
-      /* ARP reply, NOT for our address */
-      else
-    {
+#if ETHARP_SNOOP_UPDATES
+    /* ARP reply, NOT for our address */
+    else {
+      /* update_arp_entry() can return a pbuf that has previously been
+      queued waiting for this IP address to become ARP stable. */
+      q = update_arp_entry(&(hdr->sipaddr), &(hdr->shwaddr), 0);
+      pbuf_free(p);
+      p = NULL;
+      return q;
     }
 #endif
     break;
@@ -494,7 +492,6 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: unknown type %d\n", htons(hdr->opcode)));
     break;
   }
-
   pbuf_free(p);
   return NULL;
 }
