@@ -32,9 +32,9 @@
 #ifndef __LWIP_OPT_H__
 #define __LWIP_OPT_H__
 
-#include "lwip/debug.h"
 /* Include user defined options first */
 #include "lwipopts.h"
+#include "lwip/debug.h"
 
 /* Define default values for unconfigured parameters. */
 

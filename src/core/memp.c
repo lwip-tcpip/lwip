@@ -120,7 +120,7 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
 static sys_sem_t mutex;
 #endif
 /*-----------------------------------------------------------------------------------*/
-#ifdef LWIP_DEBUG
+#ifndef LWIP_NOASSERT
 static int
 memp_sanity(void)
 {
