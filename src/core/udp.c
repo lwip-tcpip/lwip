@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.7 2003/01/08 10:09:42 likewise Exp $
+ * $Id: udp.c,v 1.8 2003/01/13 13:24:11 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -58,7 +58,7 @@
 
 /* The list of UDP PCBs. */
 #if LWIP_UDP
-static struct udp_pcb *udp_pcbs = NULL;
+/*static*/ struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;
 #endif /* LWIP_UDP */
@@ -336,6 +336,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   
   if(pcb->flags & UDP_FLAGS_UDPLITE) {
     DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u", p->tot_len));
+    /* set UDP message length in UDP header */
     udphdr->len = htons(pcb->chksum_len);
     /* calculate checksum */
     udphdr->chksum = inet_chksum_pseudo(p, src_ip, &(pcb->remote_ip),

@@ -274,7 +274,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
       } else {
 	err = ERR_OK;
 	/* If the application has registered a "sent" function to be
-	   called when new send buffer space is avaliable, we call it
+	   called when new send buffer space is available, we call it
 	   now. */
 	if(pcb->acked > 0) {
 	  TCP_EVENT_SENT(pcb, pcb->acked, err);
@@ -356,7 +356,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb = tcp_alloc(pcb->prio);
     /* If a new PCB could not be created (probably due to lack of memory),
        we don't do anything, but rely on the sender will retransmit the
-       SYN at a time when we have more memory avaliable. */
+       SYN at a time when we have more memory available. */
     if(npcb == NULL) {
       DEBUGF(TCP_DEBUG, ("tcp_listen_input: could not allocate PCB\n"));
 #ifdef TCP_STATS

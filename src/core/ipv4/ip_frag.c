@@ -232,7 +232,7 @@ ip_reass(struct pbuf *p)
 	i = 0;
 	for (q = p; q != NULL; q = q->next) {
 	  /* Copy enough bytes to fill this pbuf in the chain. The
-	     avaliable data in the pbuf is given by the q->len
+	     available data in the pbuf is given by the q->len
 	     variable. */
 	  DEBUGF(IP_REASS_DEBUG,
 		 ("ip_reass: memcpy from %p (%d) to %p, %d bytes\n",

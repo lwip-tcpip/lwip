@@ -357,7 +357,7 @@ static struct pbuf * low_level_input(struct xemacif *xemacif_ptr)
     * read the entire packet into the pbuf. */
       for(q = p; q != NULL; q = q->next) {
          /* Read enough bytes to fill this pbuf 
-          * in the chain.  The avaliable data in 
+          * in the chain.  The available data in 
           * the pbuf is given by the q->len variable. */
          for (i = 0 ; i < q->len ; i++) {
             ((u8_t *)q->payload)[i] = *(frame_bytes++);
