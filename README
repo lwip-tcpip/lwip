@@ -47,11 +47,11 @@ Stable releases have not been released yet. For development we
 suggest downloading the latest CVS and keeping track of the
 lwIP mailing list.
 
-The mailing list (and archives), as well as Adam Dunkels' papers
-on lwIP can be found on the official lwIP home page, which is
+The mailing list (with searchable archives), as well as Adam
+Dunkels' papers on lwIP are at the official lwIP home page:
   http://www.sics.se/~adam/lwip/
 
-Reading Adam Dunkels' papers and browsing the mailing list archives
+Reading Adam's papers and browsing the mailing list archives
 is a good way to become familiar with the design of lwIP.
 
 Adam Dunkels <adam@sics.se>
