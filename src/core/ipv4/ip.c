@@ -238,11 +238,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     {
       /* unicast to this interface address? */
       if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
-        /* or broadcast matching this interface network address? */
-        (ip_addr_isbroadcast(&(iphdr->dest), netif) &&
-         ip_addr_netcmp(&(iphdr->dest), &(netif->ip_addr), &(netif->netmask))) ||
-         /* or restricted broadcast? */
-         ip_addr_cmp(&(iphdr->dest), IP_ADDR_BROADCAST)) {
+         /* or broadcast on this interface network address? */
+         ip_addr_isbroadcast(&(iphdr->dest), netif)) {
         LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
           netif->name[0], netif->name[1]));
         /* break out of for loop */

@@ -60,11 +60,12 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
   /* address matches network interface address exactly? => no broadcast */
   else if (addr->addr == netif->ip_addr.addr)
     return 0;
-  /*  on the same (sub) network and
-   *  host identifier bits are all ones? => network broadcast address */
+  /*  on the same (sub) network... */
   else if (ip_addr_netcmp(addr->addr, netif->ip_addr.addr, netif->netmask.addr))
+         /* ...and host identifier bits are all ones? =>... */
           && ((addr->addr & ~netif->netmask.addr) ==
            (ip_addr_broadcast.addr & ~netif->netmask.addr))
+    /* => network broadcast address */
     return 1;
   else
     return 0;
