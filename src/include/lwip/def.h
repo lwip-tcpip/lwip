@@ -38,7 +38,6 @@
 #define NULL ((void *)0)
 #endif
 
-#include "arch/lib.h"
 
 #endif /* __LWIP_DEF_H__ */
 

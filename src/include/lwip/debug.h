@@ -32,14 +32,13 @@
 #ifndef __LWIP_DEBUG_H__
 #define __LWIP_DEBUG_H__
 
-#include <stdlib.h>
-
 #include "lwipopts.h"
 
 #ifdef LWIP_DEBUG
 
-#define LWIP_ASSERT(x,y) if(!(y)) {printf("Assertion \"%s\" failed at line %d in %s\n", \
-                                     x, __LINE__, __FILE__); fflush(NULL); abort();}
+#define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x) } while(0)
+#define DEBUGF(debug, x) do { if(debug) LWIP_PLATFORM_DIAG(x) } while(0)
+#define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x) } while(0)	
 
 /* These defines control the amount of debugging output: */
 #define MEM_TRACKING
@@ -188,16 +187,15 @@
 #define DHCP_DEBUG       0
 #endif
 
-#include <stdio.h>
-#define DEBUGF(debug, x) do { if(debug){ printf x; } } while(0)
 
 
 #else /* LWIP_DEBUG */
 
-/* DEBUG is not defined, so we define null macros for LWIP_ASSERT and DEBUGF */
+/* DEBUG is not defined, so we define null macros for LWIP_ASSERT , DEBUGF and LWIP_ERROR */
 
 #define LWIP_ASSERT(x,y)
 #define DEBUGF(debug, x)
+#define LWIP_ERROR(x)
 
 /* And we define those to be zero: */
 

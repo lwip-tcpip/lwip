@@ -40,7 +40,6 @@
 #define BIG_ENDIAN 4321
 #endif
 
-#include "arch/cpu.h"
 #include "arch/cc.h"
 
 #ifndef PACK_STRUCT_BEGIN
