@@ -35,6 +35,7 @@
 #include "lwip/opt.h"
 #include "arch/cc.h"
 
+#include "lwip/mem.h"
 #include "lwip/memp.h"
 
 #ifdef STATS
@@ -56,11 +57,11 @@ struct stats_proto {
 };
 
 struct stats_mem {
-  u16_t avail;
-  u16_t used;
-  u16_t max;  
-  u16_t err;
-  u16_t reclaimed;
+  mem_size_t avail;
+  mem_size_t used;
+  mem_size_t max;  
+  mem_size_t err;
+  mem_size_t reclaimed;
 };
 
 struct stats_pbuf {
