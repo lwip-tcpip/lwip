@@ -1,10 +1,44 @@
 HISTORY
 
-(0.6.0)
+(current)
 
-- IP_ADDR_ANY is no longer a NULL pointer. Instead, it is a pointer
-  to a '0.0.0.0' IP address.
+  ++ Bugfixes:
 
+  * TCP has been fixed to deal with the new use of the pbuf->ref
+    counter. This was broken in 0.6.1.
+
+(0.6.1)
+
+  ++ New features:
+
+  * The packet buffer implementation has been enhanced to support
+    zero-copy and copy-on-demand for packet buffers which have their
+    payloads in application-managed memory.
+    Implemented by David Haas.
+
+    Use PBUF_REF to make a pbuf refer to RAM. lwIP will use zero-copy
+    if an outgoing packet can be directly sent on the link, or perform
+    a copy-on-demand when necessary.
+
+    The application can safely assume the packet is sent, and the RAM
+    is available to the application directly after calling udp_send()
+    or similar function.
+
+  ++ Bugfixes:
+
+  * ARP_QUEUEING should now correctly work for all cases, including
+    PBUF_REF.
+    Implemented by Leon Woestenberg.
+
+  ++ Changes:
+
+  * IP_ADDR_ANY is no longer a NULL pointer. Instead, it is a pointer
+    to a '0.0.0.0' IP address.
+
+  * The packet buffer implementation is changed. The pbuf->ref counter
+    meaning has changed, and several pbuf functions have been
+    adapted accordingly.
+  
 (0.5.x) This file has been unmaintained up to 0.6.1. All changes are
   logged in CVS but have not been explained here.
   
