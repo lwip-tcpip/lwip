@@ -172,7 +172,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   
   timeouts = sys_arch_timeouts();
   
-  DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%u h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
+  DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n", (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
   if(timeouts->next == NULL) {
