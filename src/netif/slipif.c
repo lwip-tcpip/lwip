@@ -42,6 +42,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
+#include "lwip/sio.h"
 
 #define SLIP_END     0300
 #define SLIP_ESC     0333
@@ -49,11 +50,6 @@
 #define SLIP_ESC_ESC 0335
 
 #define MAX_SIZE     1500
-
-/* Low level serial functions */
-extern void sio_send(u8_t, void*);
-extern u8_t sio_recv(void *);
-extern void * sio_open(u8_t);
 
 /**
  * Send a pbuf doing the necessary SLIP encapsulation
