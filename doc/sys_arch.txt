@@ -16,6 +16,11 @@ functionality. Previous versions of lwIP required the sys_arch to
 implement timer scheduling as well but as of lwIP 0.5 this is
 implemented in a higher layer.
 
+In addition to the source file providing the functionality of sys_arch,
+the OS emulation layer must provide several header files defining
+macros used throughout lwip.  The files required and the macros they
+must define are listed below the sys_arch description.
+
 Semaphores can be either counting or binary - lwIP works with both
 kinds. Mailboxes are used for message passing and can be implemented
 either as a queue which allows multiple messages to be posted to a
@@ -42,13 +47,13 @@ The following functions must be implemented by the sys_arch:
 
 - void sys_sem_free(sys_sem_t sem)
 
-  Deallocates a semaphore. 
+  Deallocates a semaphore.
 
 - void sys_sem_signal(sys_sem_t sem)
 
   Signals a semaphore.
 
-- u16_t sys_arch_sem_wait(sys_sem_t sem, u16_t timeout)
+- u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout)
 
   Blocks the thread while waiting for the semaphore to be
   signaled. If the "timeout" argument is non-zero, the thread should
@@ -82,7 +87,7 @@ The following functions must be implemented by the sys_arch:
 
   Posts the "msg" to the mailbox.
 
-- u16_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u16_t timeout)
+- u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 
   Blocks the thread until a message arrives in the mailbox, but does
   not block the thread longer than "timeout" milliseconds (similar to
@@ -123,24 +128,71 @@ to be implemented as well:
 
 - sys_prot_t sys_arch_protect(void)
 
-This optional function does a "fast" critical region protection and returns
-the previous protection level. This function is only called during very short
-critical regions. An embedded system which supports ISR-based drivers might
-want to implement this function by disabling interrupts. Task-based systems
-might want to implement this by using a mutex or disabling tasking. This
-function should support recursive calls from the same task or interrupt. In
-other words, sys_arch_protect() could be called while already protected. In
-that case the return value indicates that it is already protected.
+  This optional function does a "fast" critical region protection and returns
+  the previous protection level. This function is only called during very short
+  critical regions. An embedded system which supports ISR-based drivers might
+  want to implement this function by disabling interrupts. Task-based systems
+  might want to implement this by using a mutex or disabling tasking. This
+  function should support recursive calls from the same task or interrupt. In
+  other words, sys_arch_protect() could be called while already protected. In
+  that case the return value indicates that it is already protected.
 
-sys_arch_protect() is only required if your port is supporting an operating
-system.
+  sys_arch_protect() is only required if your port is supporting an operating
+  system.
 
 - void sys_arch_unprotect(sys_prot_t pval)
 
-This optional function does a "fast" set of critical region protection to the
-value specified by pval. See the documentation for sys_arch_protect() for
-more information. This function is only required if your port is supporting
-an operating system.
+  This optional function does a "fast" set of critical region protection to the
+  value specified by pval. See the documentation for sys_arch_protect() for
+  more information. This function is only required if your port is supporting
+  an operating system.
+
+-------------------------------------------------------------------------------
+Additional files required for the "OS support" emulation layer:
+-------------------------------------------------------------------------------
+
+cc.h       - Architecture environment, some compiler specific, some
+             environment specific (probably should move env stuff 
+             to sys_arch.h.)
+
+  Typedefs for the types used by lwip -
+    u8_t, s8_t, u16_t, s16_t, u32_t, s32_t, mem_ptr_t
+
+  Compiler hints for packing lwip's structures -
+    PACK_STRUCT_FIELD(x)
+    PACK_STRUCT_STRUCT
+    PACK_STRUCT_BEGIN
+    PACK_STRUCT_END
+
+  Platform specific diagnostic output -
+    LWIP_PLATFORM_DIAG(x)    - non-fatal, print a message.
+    LWIP_PLATFORM_ASSERT(x)  - fatal, print message and abandon execution.
+
+  "lightweight" synchronization mechanisms -
+    SYS_ARCH_DECL_PROTECT(x) - declare a protection state variable.
+    SYS_ARCH_PROTECT(x)      - enter protection mode.
+    SYS_ARCH_UNPROTECT(x)    - leave protection mode.
+
+  If the compiler does not provide memset() this file must include a
+  definition of it, or include a file which defines it.
+
+  This file must either include a system-local <errno.h> which defines
+  the standard *nix error codes, or it should #define LWIP_PROVIDE_ERRNO
+  to make lwip/arch.h define the codes which are used throughout.
 
 
+perf.h     - Architecture specific performance measurement.
+  Measurement calls made throughout lwip, these can be defined to nothing.
+    PERF_START               - start measuring something.
+    PERF_STOP(x)             - stop measuring something, and record the result.
 
+sys_arch.h - Tied to sys_arch.c
+
+  Arch dependent types for the following objects:
+    sys_sem_t, sys_mbox_t, sys_thread_t,
+  And, optionally:
+    sys_prot_t
+
+  Defines to set vars of sys_mbox_t and sys_sem_t to NULL.
+    SYS_MBOX_NULL NULL
+    SYS_SEM_NULL NULL
