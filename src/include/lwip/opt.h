@@ -175,14 +175,10 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef ARP_QUEUE_FIRST
 #define ARP_QUEUE_FIRST                 0
 #endif
-/**
- * If defined to 1, cache entries are updated or added for every kind of ARP traffic
- * or broadcast IP traffic. Recommended for routers.
- * If defined to 0, only existing cache entries are updated. Entries are added when
- * lwIP is sending to them. Recommended for embedded devices.
- */
-#ifndef ETHARP_ALWAYS_INSERT
-#define ETHARP_ALWAYS_INSERT            1
+
+/* This option is removed to comply with the ARP standard */
+#ifdef ETHARP_ALWAYS_INSERT
+#error ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h.
 #endif
 
 /* ---------- IP options ---------- */
