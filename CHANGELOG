@@ -9,45 +9,62 @@ HISTORY
 
 (HEAD)
 
+  2004-11-25 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * dhcp.c: Decline messages were not multicast but unicast.
+  * etharp.c: ETHARP_CREATE is renamed to ETHARP_TRY_HARD.
+    Do not try hard to insert arbitrary packet's source address,
+    etharp_ip_input() now calls etharp_update() without ETHARP_TRY_HARD. 
+    etharp_query() now always DOES call ETHARP_TRY_HARD so that users
+    querying an address will see it appear in the cache (DHCP could
+    suffer from this when a server invalidly gave an in-use address.)
+  * ipv4/ip_addr.h: Renamed ip_addr_maskcmp() to _netcmp() as we are
+    comparing network addresses (identifiers), not the network masks
+    themselves.
+  * ipv4/ip_addr.c: ip_addr_isbroadcast() now checks that the given
+    IP address actually belongs to the network of the given interface.
+
+  2004-11-24 Kieran Mansley <kjm25@cam.ac.uk>
+  * tcp.c: Increment pcb->snd_buf when ACK is received in SYN_SENT state.
+
 (STABLE-1_1_0-RC1)
 
   2004-10-16 Kieran Mansley <kjm25@cam.ac.uk>
-  * tcp.c Add code to tcp_recved() to send an ACK (window update) immediately,
+  * tcp.c: Add code to tcp_recved() to send an ACK (window update) immediately,
 	even if one is already pending, if the rcv_wnd is above a threshold
 	(currently TCP_WND/2). This avoids waiting for a timer to expire to send a
 	delayed ACK in order to open the window if the stack is only receiving data.
 
   2004-09-12 Kieran Mansley <kjm25@cam.ac.uk>
-  * tcp*.* Retransmit time-out handling improvement by Sam Jansen.
+  * tcp*.*: Retransmit time-out handling improvement by Sam Jansen.
 
   2004-08-20 Tony Mountifield <tony@softins.co.uk>
-  * etharp.c Make sure the first pbuf queued on an ARP entry
+  * etharp.c: Make sure the first pbuf queued on an ARP entry
     is properly ref counted.
 
   2004-07-27 Tony Mountifield <tony@softins.co.uk>
-  * debug.h Added (int) cast in LWIP_DEBUGF() to avoid compiler
+  * debug.h: Added (int) cast in LWIP_DEBUGF() to avoid compiler
     warnings about comparison.
-  * pbuf.c Stopped compiler complaining of empty if statement
+  * pbuf.c: Stopped compiler complaining of empty if statement
     when LWIP_DEBUGF() empty.  Closed an unclosed comment.
-  * tcp.c Stopped compiler complaining of empty if statement
+  * tcp.c: Stopped compiler complaining of empty if statement
     when LWIP_DEBUGF() empty.
   * ip.h Corrected IPH_TOS() macro: returns a byte, so doesn't need htons().
-  * inet.c Added a couple of casts to quiet the compiler.
+  * inet.c: Added a couple of casts to quiet the compiler.
     No need to test isascii(c) before isdigit(c) or isxdigit(c).
 
   2004-07-22 Tony Mountifield <tony@softins.co.uk>
-  * inet.c Made data types consistent in inet_ntoa().
+  * inet.c: Made data types consistent in inet_ntoa().
     Added casts for return values of checksum routines, to pacify compiler.
   * ip_frag.c, tcp_out.c, sockets.c, pbuf.c
     Small corrections to some debugging statements, to pacify compiler.
 
   2004-07-21 Tony Mountifield <tony@softins.co.uk>
-  * etharp.c Removed spurious semicolon and added missing end-of-comment.
+  * etharp.c: Removed spurious semicolon and added missing end-of-comment.
   * ethernetif.c Updated low_level_output() to match prototype for
     netif->linkoutput and changed low_level_input() similarly for consistency.
-  * api_msg.c Changed recv_raw() from int to u8_t, to match prototype
+  * api_msg.c: Changed recv_raw() from int to u8_t, to match prototype
     of raw_recv() in raw.h and so avoid compiler error.
-  * sockets.c Added trivial (int) cast to keep compiler happier.
+  * sockets.c: Added trivial (int) cast to keep compiler happier.
   * ip.c, netif.c Changed debug statements to use the tidier ip4_addrN() macros.
 
   
@@ -56,7 +73,7 @@ HISTORY
   ++ Changes:
 
   2004-07-05 Leon Woestenberg <leon.woestenberg@gmx.net>
-  * sockets.* Restructured LWIP_PRIVATE_TIMEVAL. Make sure
+  * sockets.*: Restructured LWIP_PRIVATE_TIMEVAL. Make sure
     your cc.h file defines this either 1 or 0. If non-defined,
     defaults to 1.
   * .c: Added <string.h> and <errno.h> includes where used.
