@@ -1,19 +1,20 @@
-Raw TCP/IP interface for lwIP 0.5
+Raw TCP/IP interface for lwIP
 
-Author: Adam Dunkels
+Authors: Adam Dunkels, Leon Woestenberg
 
 lwIP provides two Application Program's Interfaces (APIs) for programs
-to use for communication with the TCP/IP code: the sequential API
-(often just called "the API") and the raw TCP/IP interface. This
-document is intended as a description of the latter. For lwIP versions
-lower than 0.5, this API was not documented.
+to use for communication with the TCP/IP code:
+* low-level "core" / "callback" or "raw" API.
+* higher-level "sequential" API.
 
 The sequential API provides a way for ordinary, sequential, programs
 to use the lwIP stack. It is quite similar to the BSD socket API. The
-model of execution is based on the open-read-write-close
+model of execution is based on the blocking open-read-write-close
 paradigm. Since the TCP/IP stack is event based by nature, the TCP/IP
 code and the application program must reside in different execution
 contexts (threads).
+
+** The remainder of this document discusses the "raw" API. **
 
 The raw TCP/IP interface allows the application program to integrate
 better with the TCP/IP code. Program execution is event based by
@@ -33,7 +34,6 @@ code size and memory usage.
 Both APIs can be used simultaneously by different application
 programs. In fact, the sequential API is implemented as an application
 program using the raw TCP/IP interface.
-
 
 --- Callbacks
 
