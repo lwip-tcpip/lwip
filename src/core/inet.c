@@ -144,18 +144,18 @@ inet_chksum_pbuf(struct pbuf *p)
   for(q = p; q != NULL; q = q->next) {
     acc += lwip_chksum(q->payload, q->len);
     while(acc >> 16) {
-      acc = (acc & 0xffff) + (acc >> 16);
+      acc = (acc & 0xffffUL) + (acc >> 16);
     }    
     if(q->len % 2 != 0) {
       swapped = 1 - swapped;
-      acc = (acc & 0xff << 8) | (acc & 0xff00 >> 8);
+      acc = (acc & 0x00ffUL << 8) | (acc & 0xff00UL >> 8);
     }
   }
  
   if(swapped) {
-    acc = ((acc & 0xff) << 8) | ((acc & 0xff00) >> 8);
+    acc = ((acc & 0x00ffUL) << 8) | ((acc & 0xff00UL) >> 8);
   }
-  return ~(acc & 0xffff);
+  return ~(acc & 0xffffUL);
 }
 
 
