@@ -71,7 +71,8 @@
 #include "lwip/opt.h"
 #include "lwip/dhcp.h"
 
-/** transaction identifier, unique over all DHCP requests */
+/** global transaction identifier, must be
+ *  unique for each DHCP request. */
 static u32_t xid = 0xABCD0000;
 
 /** DHCP client state machine functions */
@@ -103,12 +104,17 @@ static void dhcp_t1_timeout(struct netif *netif);
 static void dhcp_t2_timeout(struct netif *netif);
 
 /** build outgoing messages */
+/** create a DHCP request, fill in common headers */
 static err_t dhcp_create_request(struct netif *netif);
+/** free a DHCP request */
 static void dhcp_delete_request(struct netif *netif);
+/** add a DHCP option (type, then length in bytes) */
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len);
+/** add option values */
 static void dhcp_option_byte(struct dhcp *dhcp, u8_t value);
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value);
 static void dhcp_option_long(struct dhcp *dhcp, u32_t value);
+/** always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(struct dhcp *dhcp);
 
 /**
@@ -132,7 +138,7 @@ static void dhcp_handle_nak(struct netif *netif) {
 }
 
 /**
- * Checks if the offered address from the server is already in use.
+ * Checks if the offered IP address is already in use.
  * 
  * It does so by sending an ARP request for the offered address and
  * entering CHECKING state. If no ARP reply is received within a small
@@ -187,7 +193,7 @@ static void dhcp_handle_offer(struct netif *netif)
  *
  * Simply select the first offer received.
  *
- * @param dhcp pointer to DHCP state structure
+ * @param netif the netif under DHCP control
  * @return lwIP specific error (see error.h)
  */
 static err_t dhcp_select(struct netif *netif)
@@ -271,8 +277,10 @@ void dhcp_coarse_tmr()
 }
 
 /**
- * The DHCP timer that handles DHCP negotiation transaction timeouts.
+ * DHCP transaction timeout handling
  *
+ * A DHCP server is expected to respond within a
+ * short period of time.
  */
 void dhcp_fine_tmr()
 {
@@ -297,9 +305,9 @@ void dhcp_fine_tmr()
  * A DHCP negotiation transaction, or ARP request, has timed out.
  *
  * The timer that was started with the DHCP or ARP request has
- * timed out, indicating no response was received. 
+ * timed out, indicating no response was received in time. 
  *
- * @param dhcp pointer to DHCP state structure
+ * @param netif the netif under DHCP control
  * 
  */
 static void dhcp_timeout(struct netif *netif)
@@ -354,7 +362,7 @@ static void dhcp_timeout(struct netif *netif)
 /**
  * The renewal period has timed out.
  *
- * @param dhcp pointer to DHCP state structure
+ * @param netif the netif under DHCP control
  */
 static void dhcp_t1_timeout(struct netif *netif)
 {
@@ -386,7 +394,7 @@ static void dhcp_t2_timeout(struct netif *netif)
 /**
  * Extract options from the server ACK message.
  *
- * @param dhcp pointer to DHCP state structure
+ * @param netif the netif under DHCP control
  */
 static void dhcp_handle_ack(struct netif *netif)
 {
@@ -454,10 +462,9 @@ static void dhcp_handle_ack(struct netif *netif)
  * was already present, it restarts negotiation.
  *
  * @param netif The lwIP network interface 
- * @return The DHCP client state, which must be passed for 
- * all subsequential dhcp_*() calls. NULL means there is
- * no (longer a) DHCP client attached to the interface
- * (due to unavailable memory or network resources).
+ * @return lwIP error code
+ * - ERR_OK - No error
+ * - ERR_MEM - Out of memory
  *
  */
 err_t dhcp_start(struct netif *netif)
@@ -465,7 +472,8 @@ err_t dhcp_start(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result = ERR_OK;
 
-  DEBUGF(DHCP_DEBUG, ("dhcp_start(netif=%c%c%u)", netif->name[0], netif->name[1], netif->num));
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  DEBUGF(DHCP_DEBUG, ("dhcp_start(netif=%p) %c%c%u", netif, netif->name[0], netif->name[1], netif->num));
 
   if (dhcp == NULL) {
     DEBUGF(DHCP_DEBUG, ("dhcp_start(): starting new DHCP client"));
@@ -894,6 +902,8 @@ void dhcp_stop(struct netif *netif)
       pbuf_free(dhcp->p);
       dhcp->p = NULL;
     }
+    /* free unfolded reply */
+    dhcp_free_reply(dhcp);
     mem_free((void *)dhcp);
     netif->dhcp = NULL;
   }
@@ -951,9 +961,13 @@ static void dhcp_option_long(struct dhcp *dhcp, u32_t value)
 }
 
 /**
- * Extract the dhcp_msg and options each into linear pieces of memory.
+ * Extract the DHCP message and the DHCP options.
  *
- * 
+ * Extract the DHCP message and the DHCP options, each into a contiguous
+ * piece of memory. As a DHCP message is variable sized by its options,
+ * and also allows overriding some fields for options, the easy approach
+ * is to first unfold the options into a conitguous piece of memory, and
+ * use that further on.
  * 
  */
 static err_t dhcp_unfold_reply(struct dhcp *dhcp)
@@ -962,10 +976,12 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
   u8_t *ptr;
   u16_t i;
   u16_t j = 0;
+  /* free any left-overs from previous unfolds */
+  dhcp_free_reply(dhcp);
   dhcp->msg_in = NULL;
   dhcp->options_in = NULL;
   /* options present? */
-  if (dhcp->p->tot_len > sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN)
+  if (dhcp->p->tot_len > (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN))
   {
     dhcp->options_in_len = dhcp->p->tot_len - (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
     dhcp->options_in = mem_malloc(dhcp->options_in_len);
