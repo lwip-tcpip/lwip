@@ -109,11 +109,11 @@ void snmp_inc_udpoutdatagrams(void);
 #else
 
 /* network interface */
-#define snmp_add_ifinoctets() 
+#define snmp_add_ifinoctets(value) 
 #define snmp_inc_ifinucastpkts()
 #define snmp_inc_ifinnucastpkts()
 #define snmp_inc_ifindiscards()
-#define snmp_add_ifoutoctets()
+#define snmp_add_ifoutoctets(value)
 #define snmp_inc_ifoutucastpkts()
 #define snmp_inc_ifoutnucastpkts()
 #define snmp_inc_ifoutdiscards()
