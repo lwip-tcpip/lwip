@@ -531,7 +531,7 @@ struct dhcp_state *dhcp_start(struct netif *netif)
   }
 	else
 	{
-    /* proceed to the last DHCP client state 
+    /* proceed to the last DHCP client state */
     while (list_state->next != NULL) list_state = list_state->next;
 	  list_state->next = state;
 	}
