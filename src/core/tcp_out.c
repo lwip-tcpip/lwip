@@ -43,8 +43,6 @@
 #include "lwip/def.h"
 #include "lwip/opt.h"
 
-#include "arch/lib.h"
-
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/sys.h"
