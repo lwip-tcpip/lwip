@@ -96,9 +96,11 @@ struct etharp_entry {
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 
-/** ask update_arp_entry() to create new entry instead of merely update existing */
-/** ask find_entry() to create new entry instead of merely finding existing */
-#define ETHARP_CREATE 1
+/**
+ * Try hard to create a new entry - we want the IP address to appear in
+ * the cache (even if this means removing an active entry or so). */
+#define ETHARP_TRY_HARD 1
+
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 /**
@@ -179,12 +181,12 @@ etharp_tmr(void)
  * If ipaddr is NULL, return a initialized new entry in state ETHARP_EMPTY.
  * 
  * In all cases, attempt to create new entries from an empty entry. If no
- * empty entries are available and ETHARP_CREATE flag is set, recycle
+ * empty entries are available and ETHARP_TRY_HARD flag is set, recycle
  * old entries. Heuristic choose the least important entry for recycling.
  *
  * @param ipaddr IP address to find in ARP cache, or to add if not found.
  * @param flags
- * - ETHARP_CREATE: Try hard to create a entry by allowing recycling.
+ * - ETHARP_TRY_HARD: Try hard to create a entry by allowing recycling.
  *  
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
@@ -304,7 +306,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   LWIP_ASSERT("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
 
   /* allowed to recycle a entry? */
-  if (flags & ETHARP_CREATE) {
+  if (flags & ETHARP_TRY_HARD) {
     /* recycle (no-op for an already empty entry) */
     arp_table[i].state = ETHARP_STATE_EMPTY;
   }
@@ -340,12 +342,12 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
  * @param ipaddr IP address of the inserted ARP entry.
  * @param ethaddr Ethernet address of the inserted ARP entry.
  * @param flags Defines behaviour:
- * - ETHARP_CREATE Allows ARP to insert this as a new item. If not specified,
+ * - ETHARP_TRY_HARD Allows ARP to insert this as a new item. If not specified,
  * only existing ARP entries will be updated.
  *
  * @return
  * - ERR_OK Succesfully updated ARP cache.
- * - ERR_MEM If we could not add a new ARP entry when ETHARP_CREATE was set.
+ * - ERR_MEM If we could not add a new ARP entry when ETHARP_TRY_HARD was set.
  * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
  * @see pbuf_free()
@@ -432,14 +434,16 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
   /* source is on local network? */
-  if (!ip_addr_maskcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
+  if (!ip_addr_netcmp(&(hdr->ip.src), &(netif->ip_addr), &(netif->netmask))) {
     /* do nothing */
     return;
   }
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
-  /* update ARP table, ask to insert entry */
-  update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), ETHARP_CREATE);
+  /* update ARP table */
+  /* @todo We could use ETHARP_TRY_HARD if we think we are going to talk
+   * back soon (for example, if the destination IP address is ours. */
+  update_arp_entry(netif, &(hdr->ip.src), &(hdr->eth.src), 0);
 }
 
 
@@ -492,7 +496,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   if (for_us) {
     /* add IP address in ARP cache; assume requester wants to talk to us.
      * can result in directly sending the queued packets for this host. */
-    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), ETHARP_CREATE);
+    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), ETHARP_TRY_HARD);
   /* ARP message not directed to us? */
   } else {
     /* update the source IP address in the cache, if present */
@@ -625,7 +629,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* destination IP address is an IP unicast address */
   } else {
     /* outside local network? */
-    if (!ip_addr_maskcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
+    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
       /* interface has default gateway? */
       if (netif->gw.addr != 0) {
         /* send to hardware address of default gateway IP address */
@@ -707,7 +711,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   }
 
   /* find entry in ARP cache, ask to create entry if queueing packet */
-  i = find_entry(ipaddr, (q != NULL) ? ETHARP_CREATE : 0);
+  i = find_entry(ipaddr, ETHARP_TRY_HARD);
 
   /* could not find or create entry? */
   if (i < 0) return (err_t)i;
