@@ -182,8 +182,17 @@ memp_malloc(memp_t type)
 {
   struct memp *memp;
   void *mem;
+#ifdef SYS_LIGHTWEIGHT_PROT
+  SYS_ARCH_DECL_PROTECT(old_level);
+#endif
  
   LWIP_ASSERT("memp_malloc: type < MEMP_MAX", type < MEMP_MAX);
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+  SYS_ARCH_PROTECT(old_level);
+#else /* SYS_LIGHTWEIGHT_PROT */  
+  sys_sem_wait(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 
   memp = memp_tab[type];
   
@@ -196,6 +205,11 @@ memp_malloc(memp_t type)
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
+#ifdef SYS_LIGHTWEIGHT_PROT
+    SYS_ARCH_UNPROTECT(old_level);
+#else /* SYS_LIGHTWEIGHT_PROT */
+    sys_sem_signal(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
     LWIP_ASSERT("memp_malloc: memp properly aligned",
      ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
@@ -208,40 +222,33 @@ memp_malloc(memp_t type)
 #ifdef MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */
-    return NULL;
-  }
-}
-/*-----------------------------------------------------------------------------------*/
-void *
-memp_mallocp(memp_t type)
-{
-  void *mem;
-#if SYS_LIGHTWEIGHT_PROT
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-#else /* SYS_LIGHTWEIGHT_PROT */  
-  sys_sem_wait(mutex);
-#endif /* SYS_LIGHTWEIGHT_PROT */  
-
-  mem = memp_malloc(type);
-
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
-  return mem;
+    return NULL;
+  }
 }
 /*-----------------------------------------------------------------------------------*/
 void
 memp_free(memp_t type, void *mem)
 {
   struct memp *memp;
+#ifdef SYS_LIGHTWEIGHT_PROT
+  SYS_ARCH_DECL_PROTECT(old_level);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 
   if (mem == NULL) {
     return;
   }
   memp = (struct memp *)((u8_t *)mem - sizeof(struct memp));
+
+#ifdef SYS_LIGHTWEIGHT_PROT
+    SYS_ARCH_PROTECT(old_level);
+#else /* SYS_LIGHTWEIGHT_PROT */  
+  sys_sem_wait(mutex);
+#endif /* SYS_LIGHTWEIGHT_PROT */  
 
 #ifdef MEMP_STATS
   lwip_stats.memp[type].used--; 
@@ -252,26 +259,10 @@ memp_free(memp_t type, void *mem)
 
   LWIP_ASSERT("memp sanity", memp_sanity());
 
-  return;
-}
-/*-----------------------------------------------------------------------------------*/
-void 
-memp_freep(memp_t type, void *mem)
-{
-#if SYS_LIGHTWEIGHT_PROT
-    SYS_ARCH_DECL_PROTECT(old_level);
-    SYS_ARCH_PROTECT(old_level);
-#else /* SYS_LIGHTWEIGHT_PROT */  
-  sys_sem_wait(mutex);
-#endif /* SYS_LIGHTWEIGHT_PROT */  
-
-  memp_free(type, mem);
-
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_UNPROTECT(old_level);
 #else /* SYS_LIGHTWEIGHT_PROT */
   sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
-
 }
 /*-----------------------------------------------------------------------------------*/

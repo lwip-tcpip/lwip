@@ -300,7 +300,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       r = q;
     }
     /* end of chain */
-    //r->next = NULL;
+    /*r->next = NULL;*/
 
     break;
   case PBUF_RAM:
@@ -323,7 +323,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   /* pbuf references existing (externally allocated) RAM payload? */
   case PBUF_REF:
     /* only allocate memory for the pbuf structure */
-    p = memp_mallocp(MEMP_PBUF);
+    p = memp_malloc(MEMP_PBUF);
     if (p == NULL) {
       LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_%s.\n", flag == PBUF_ROM?"ROM":"REF"));
       return NULL;
@@ -576,7 +576,7 @@ pbuf_free(struct pbuf *p)
         PBUF_POOL_FREE(p);
       /* a ROM or RAM referencing pbuf */
       } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
-        memp_freep(MEMP_PBUF, p);
+        memp_free(MEMP_PBUF, p);
       /* p->flags == PBUF_FLAG_RAM */
       } else {
         mem_free(p);

@@ -290,7 +290,7 @@ void pppInit(void)
     
 	memset(&ppp_settings, 0, sizeof(ppp_settings));
 	ppp_settings.usepeerdns = 1;
-	ppp_settings.refuse_chap = (CHAP_SUPPORT == 0);
+	pppSetAuth(PPPAUTHTYPE_NONE, NULL, NULL);
 
 	magicInit();
 
@@ -313,19 +313,40 @@ void pppInit(void)
 #endif
 }
 
-void pppSetAuth(const char *user, const char *passwd)
+void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 {
-	if(user) {
-		strncpy(ppp_settings.user, user, sizeof(ppp_settings.user)-1);
-		ppp_settings.user[sizeof(ppp_settings.user)-1] = '\0';
-	} else
-		ppp_settings.user[0] = '\0';
+    switch(authType) {
+	case PPPAUTHTYPE_NONE:
+	default:
+#ifdef LWIP_PPP_STRICT_PAP_REJECT
+	    ppp_settings.refuse_pap = 1;
+#else
+	    /* some providers request pap and accept an empty login/pw */
+	    ppp_settings.refuse_pap = 0;
+#endif
+	    ppp_settings.refuse_chap = 1;
+	    break;
+	case PPPAUTHTYPE_PAP:
+	    ppp_settings.refuse_pap = 0;
+	    ppp_settings.refuse_chap = 1;
+	    break;
+	case PPPAUTHTYPE_CHAP:
+	    ppp_settings.refuse_pap = 1;
+	    ppp_settings.refuse_chap = 0;
+	    break;
+    }
 
-	if(passwd) {
-		strncpy(ppp_settings.passwd, passwd, sizeof(ppp_settings.passwd)-1);
-		ppp_settings.passwd[sizeof(ppp_settings.passwd)-1] = '\0';
-	} else
-		ppp_settings.passwd[0] = '\0';
+    if(user) {
+	strncpy(ppp_settings.user, user, sizeof(ppp_settings.user)-1);
+	ppp_settings.user[sizeof(ppp_settings.user)-1] = '\0';
+    } else
+	ppp_settings.user[0] = '\0';
+
+    if(passwd) {
+	strncpy(ppp_settings.passwd, passwd, sizeof(ppp_settings.passwd)-1);
+	ppp_settings.passwd[sizeof(ppp_settings.passwd)-1] = '\0';
+    } else
+	ppp_settings.passwd[0] = '\0';
 }
 
 /* Open a new PPP connection using the given I/O device.

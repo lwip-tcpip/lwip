@@ -313,7 +313,7 @@ struct ppp_settings {
 	int  maxconnect;         /* Maximum connect time (seconds) */
 
 	char user[MAXNAMELEN + 1];/* Username for PAP */
-	char passwd[MAXNAMELEN + 1];           /* Password for PAP */
+	char passwd[MAXSECRETLEN + 1];           /* Password for PAP, secret for CHAP */
 	char our_name[MAXNAMELEN + 1];         /* Our name for authentication purposes */
 	char remote_name[MAXNAMELEN + 1];      /* Peer's name for authentication */
 };
@@ -340,7 +340,13 @@ extern struct protent *ppp_protocols[];/* Table of pointers to supported protoco
 /* Initialize the PPP subsystem. */
 void pppInit(void);
 
-void pppSetAuth(const char *user, const char *passwd);
+enum pppAuthType {
+    PPPAUTHTYPE_NONE,
+    PPPAUTHTYPE_PAP,
+    PPPAUTHTYPE_CHAP
+};
+
+void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
 
 /*
  * Open a new PPP connection using the given I/O device.

@@ -122,7 +122,7 @@ static int  get_pap_passwd (int, char *, char *);
 static int  have_pap_secret (void);
 static int  have_chap_secret (char *, char *, u32_t);
 static int  ip_addr_check (u32_t, struct wordlist *);
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT > 0 */
 static void set_allowed_addrs(int unit, struct wordlist *addrs);
 static void free_wordlist (struct wordlist *);
 #endif
@@ -476,7 +476,7 @@ void auth_reset(int unit)
     
     AUTHDEBUG((LOG_INFO, "auth_reset: %d\n", unit));
     ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(unit, NULL, NULL));
-    ao->neg_chap = !ppp_settings.refuse_chap && have_chap_secret(ppp_settings.user, ppp_settings.remote_name, (u32_t)0);
+    ao->neg_chap = !ppp_settings.refuse_chap && ppp_settings.passwd[0] != 0 /*have_chap_secret(ppp_settings.user, ppp_settings.remote_name, (u32_t)0)*/;
     
     if (go->neg_upap && !have_pap_secret())
         go->neg_upap = 0;
@@ -605,7 +605,24 @@ int get_secret(
 )
 {
 #if 1
+    int len;
+    struct wordlist *addrs;
+    
+    addrs = NULL;
+
+    if(!client || !client[0] && strcmp(client, ppp_settings.user)) {
 	return 0;
+    }
+
+    len = strlen(ppp_settings.passwd);
+    if (len > MAXSECRETLEN) {
+        ppp_trace(LOG_ERR, "Secret for %s on %s is too long\n", client, server);
+        len = MAXSECRETLEN;
+    }
+    BCOPY(ppp_settings.passwd, secret, len);
+    *secret_len = len;
+    
+    return 1;
 #else
     int ret = 0, len;
     struct wordlist *addrs;
@@ -841,7 +858,7 @@ static int have_chap_secret(char *client, char *server, u32_t remote)
 }
 
 
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT > 0 */
 /*
  * set_allowed_addrs() - set the list of allowed addresses.
  */
@@ -891,7 +908,7 @@ static int ip_addr_check(u32_t addr, struct wordlist *addrs)
     return 1;
 }
 
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT
+#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT */
 /*
  * free_wordlist - release memory allocated for a wordlist.
  */

@@ -474,7 +474,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
    listening to broadcast or multicast traffic (See SO_REUSE_ADDR and
    SO_REUSE_PORT under *BSD). TODO: See where it fits instead, OR
    combine with implementation of UDP PCB flags. Leon Woestenberg. */
-#if 0
+#ifdef LWIP_UDP_TODO
     /* port matches that of PCB in list? */
     else if ((ipcb->local_port == port) &&
        /* IP address matches, or one is IP_ADDR_ANY? */
@@ -552,7 +552,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   pcb->remote_port = port;
   pcb->flags |= UDP_FLAGS_CONNECTED;
 /** TODO: this functionality belongs in upper layers */
-#if 0
+#ifdef LWIP_UDP_TODO
   /* Nail down local IP for netconn_addr()/getsockname() */
   if (ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) {
     struct netif *netif;
