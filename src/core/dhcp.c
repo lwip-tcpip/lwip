@@ -6,8 +6,8 @@
 
 /*
  *
- * Copyright (c) 2001-2003 Leon Woestenberg <leon.woestenberg@gmx.net>
- * Copyright (c) 2001-2003 Axon Digital Design B.V., The Netherlands.
+ * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
+ * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,
