@@ -1,6 +1,15 @@
 /**
  * @file
- * Packet buffers/chains management module
+ * Packet buffer management
+ *
+ * Packets are represented by the pbuf data structure. It supports dynamic
+ * memory allocation for packet contents or can reference externally
+ * managed packet contents both in RAM and ROM. Quick allocation for
+ * incoming packets is provided through pools with fixed sized pbufs.
+ *
+ * Pbufs can be chained as a singly linked list, called a pbuf chain, so
+ * that a packet may span over several pbufs.
+ *
  */
 
 /*
@@ -60,7 +69,6 @@ static struct pbuf *pbuf_pool_alloc_cache = NULL;
 static struct pbuf *pbuf_pool_free_cache = NULL;
 
 /**
- *
  * Initializes the pbuf module.
  *
  * A large part of memory is allocated for holding the pool of pbufs.
@@ -189,12 +197,14 @@ pbuf_pool_free(struct pbuf *p)
 }
 
 /**
+ * Allocates a pbuf.
  *
- * Allocates a pbuf at protocol layer l.
  * The actual memory allocated for the pbuf is determined by the
  * layer at which the pbuf is allocated and the requested size
- * (from the size parameter). The flag parameter decides how and
- * where the pbuf should be allocated as follows:
+ * (from the size parameter).
+ *
+ * @param flag this parameter decides how and where the pbuf
+ * should be allocated as follows:
  * 
  * - PBUF_RAM: buffer memory for pbuf is allocated as one large
  *             chunk. This includes protocol headers as well. 
@@ -211,13 +221,16 @@ pbuf_pool_free(struct pbuf *p)
  *             then pbuf_take should be called to copy the buffer.
  * - PBUF_POOL: the pbuf is allocated as a pbuf chain, with pbufs from
  *              the pbuf pool that is allocated during pbuf_init().
+ *
+ * @return the allocated pbuf. If multiple pbufs where allocated, this
+ * is the first pbuf of a pbuf chain. 
  */
 struct pbuf *
-pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
+pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
 {
   struct pbuf *p, *q, *r;
   u16_t offset;
-  s32_t rem_len;
+  s32_t rem_len; /* remaining length */
 
   /* determine header offset */
   offset = 0;
@@ -250,17 +263,19 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     }
     p->next = NULL;
     
-    /* make the payload pointer points offset bytes into pbuf data memory */
+    /* make the payload pointer point offset bytes into pbuf data memory */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
     /* the total length of the pbuf is the requested size */
-    p->tot_len = size;
-    /* set the length of the first pbuf is the chain */
-    p->len = size > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: size;
+    p->tot_len = length;
+    /* set the length of the first pbuf in the chain */
+    p->len = length > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: length;
     p->flags = PBUF_FLAG_POOL;
     
     /* allocate the tail of the pbuf chain. */
     r = p;
-    rem_len = size - p->len;
+    /* remaining length to be allocated */
+    rem_len = length - p->len;
+    /* any remaining pbufs to be allocated? */
     while(rem_len > 0) {      
       q = pbuf_pool_alloc();
       if (q == NULL) {
@@ -279,7 +294,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       r = q;
       q->ref = 1;
-      rem_len -= PBUF_POOL_BUFSIZE;
+      rem_len -= q->len;
     }
     /* end of chain */
     r->next = NULL;
@@ -289,13 +304,13 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     break;
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
-    p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + size + offset));
+    p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + length + offset));
     if (p == NULL) {
       return NULL;
     }
     /* Set up internal structure of the pbuf. */
     p->payload = MEM_ALIGN((void *)((u8_t *)p + sizeof(struct pbuf) + offset));
-    p->len = p->tot_len = size;
+    p->len = p->tot_len = length;
     p->next = NULL;
     p->flags = PBUF_FLAG_RAM;
 
@@ -314,7 +329,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     }
     /* caller must set this field properly, afterwards */
     p->payload = NULL;
-    p->len = p->tot_len = size;
+    p->len = p->tot_len = length;
     p->next = NULL;
     p->flags = (flag == PBUF_ROM? PBUF_FLAG_ROM: PBUF_FLAG_REF);
     break;
@@ -471,7 +486,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 }
 
 /**
- * Tries to decrease the payload pointer by the given header size.
+ * Tries to add a header to the payload.
  * 
  * Adjusts the ->payload pointer so that space for a header appears in
  * the pbuf. Also, the ->tot_len and ->len fields are adjusted.
@@ -485,31 +500,32 @@ u8_t
 pbuf_header(struct pbuf *p, s16_t header_size)
 {
   void *payload;
-  /* referencing pbufs cannot be realloc()ed */
-  /* TODO: WHY NOT? just adjust payload, tot_len and len? */
-  if (p->flags == PBUF_FLAG_ROM ||
-      p->flags == PBUF_FLAG_REF) {
-    /* failure */
-    return 1;
-  }
-  
+
+  /* remember current payload pointer */
   payload = p->payload;
+  /* set new payload pointer */
   p->payload = (u8_t *)p->payload - header_size;
 
-  DEBUGF(PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size));
-  
-  /* */
-  if((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
-    DEBUGF(PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
-			(u8_t *)p->payload,
-			(u8_t *)p + sizeof(struct pbuf)));\
-    /* restore old payload pointer */
-    p->payload = payload;
-    return 1;
+  /* pbuf types containing payloads? */
+  if (p->flags == PBUF_FLAG_RAM ||
+    p->flags == PBUF_FLAG_POOL) {
+    /* boundary check fails? */
+    if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
+      DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p\n",
+        (u8_t *)p->payload,
+        (u8_t *)p + sizeof(struct pbuf)) );\
+      /* restore old payload pointer */
+      p->payload = payload;/
+      /* bail out unsuccesfully */
+      return 1;
+    }
   }
+
+  DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%d)\n", payload, p->payload, header_size) );
+  /* modify pbuf length fields */
   p->len += header_size;
   p->tot_len += header_size;
-  
+
   return 0;
 }
 
@@ -547,7 +563,7 @@ pbuf_free(struct pbuf *p)
   SYS_ARCH_DECL_PROTECT(old_level);
 
   if (p == NULL) {
-    DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p==NULL) was called.\n"));
+    DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_free(p == NULL) was called.\n"));
     return 0;
   }
 
@@ -575,7 +591,6 @@ pbuf_free(struct pbuf *p)
     {
       /* remember next pbuf in chain for next iteration */
       q = p->next;
-  
       /* is this a pbuf from the pool? */
       if (p->flags == PBUF_FLAG_POOL) {
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
@@ -680,7 +695,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
-    /* add length of second chain to totals of first chain */
+    /* add total length of second chain to each total of first chain */
     p->tot_len += t->tot_len;
   }
   /* chain last pbuf of h chain (p) with first of tail (t) */
@@ -747,7 +762,7 @@ pbuf_take(struct pbuf *f)
 {
   struct pbuf *p, *prev, *top;
   LWIP_ASSERT("pbuf_take: f != NULL", f != NULL);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)", (void*)f));
+  DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)f));
 
   prev = NULL;
   p = f;
@@ -760,21 +775,21 @@ pbuf_take(struct pbuf *f)
     {
       /* the replacement pbuf */
       struct pbuf *q;
-      DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p", (void *)p));
+      DEBUGF(PBUF_DEBUG | DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
       /* allocate a pbuf (w/ payload) fully in RAM */
       /* PBUF_POOL buffers are faster if we can use them */
       if (p->len <= PBUF_POOL_BUFSIZE) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL"));
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
       } else {
       	/* no replacement pbuf yet */
         q = NULL;
-        DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF"));
+        DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF\n"));
       }
       /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
       if (q == NULL) {
         q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM"));
+        if (q == NULL) DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
       }
       /* replacement pbuf could be allocated? */
       if (q != NULL)
@@ -816,13 +831,13 @@ pbuf_take(struct pbuf *f)
       }
     }
     else {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: not PBUF_REF"));
+      DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: not PBUF_REF\n"));
     }
 
     prev = p;
     p = p->next;
   } while (p);
-  DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached."));
+  DEBUGF(PBUF_DEBUG | DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
   
   return top;
 }

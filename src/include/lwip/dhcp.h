@@ -141,8 +141,9 @@ void dhcp_fine_tmr(void);
 #define DHCP_CHECKING 8
 #define DHCP_PERMANENT 9
 #define DHCP_BOUND 10
-#define DHCP_BACKING_OFF 11
-#define DHCP_OFF 12
+/** not yet implemented #define DHCP_RELEASING 11 */
+#define DHCP_BACKING_OFF 12
+#define DHCP_OFF 13
  
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTREPLY 2

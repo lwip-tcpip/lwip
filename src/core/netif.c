@@ -143,7 +143,7 @@ void netif_remove(struct netif * netif)
     /* reset default netif */
 		netif_default = NULL;
 
-	DEBUGF(NETIF_DEBUG, ("netif_remove: removed netif"));
+	DEBUGF(NETIF_DEBUG, ("netif_remove: removed netif\n"));
 	mem_free( netif );
 }
 

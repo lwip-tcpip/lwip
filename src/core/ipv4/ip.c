@@ -321,7 +321,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     /* remote port is DHCP server? */
     if(IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %u\n",
-       ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
+        ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
         DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;

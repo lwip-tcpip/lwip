@@ -66,11 +66,11 @@
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least DBG_LEVEL
  */
-#  define DEBUGF(debug, x) do { if (((debug) & DBG_ON) && ((debug) & DBG_TYPES_ON) && (((debug) & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if ((debug) & DBG_HALT) while(1); } } while(0)
+#  define DEBUGF(debug,x) do { if (((debug) & DBG_ON) && ((debug) & DBG_TYPES_ON) && (((debug) & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if ((debug) & DBG_HALT) while(1); } } while(0)
 #  define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x); } while(0)	
 #else /* LWIP_DEBUG */
-#  define LWIP_ASSERT(x, y) 
-#  define DEBUGF(debug, x) 
+#  define LWIP_ASSERT(x,y) 
+#  define DEBUGF(debug,x) 
 #  define LWIP_ERROR(x)	
 #endif /* LWIP_DEBUG */
 

@@ -470,22 +470,22 @@ tcp_slowtmr(void)
   /* Steps through all of the active PCBs. */
   prev = NULL;
   pcb = tcp_active_pcbs;
-  if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs"));
+  if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs\n"));
   while(pcb != NULL) {
-    DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb"));
-    LWIP_ASSERT("tcp_slowtmr: active pcb->state != CLOSED", pcb->state != CLOSED);
-    LWIP_ASSERT("tcp_slowtmr: active pcb->state != LISTEN", pcb->state != LISTEN);
-    LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+    DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb\n"));
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != CLOSED\n", pcb->state != CLOSED);
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != LISTEN\n", pcb->state != LISTEN);
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT\n", pcb->state != TIME_WAIT);
 
     pcb_remove = 0;
 
     if(pcb->state == SYN_SENT && pcb->nrtx == TCP_SYNMAXRTX) {
       ++pcb_remove;
-      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max SYN retries reached"));
+      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max SYN retries reached\n"));
     }
     else if(pcb->nrtx == TCP_MAXRTX) {
       ++pcb_remove;
-      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached"));
+      DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
       ++pcb->rtime;
       if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
@@ -520,7 +520,7 @@ tcp_slowtmr(void)
       if((u32_t)(tcp_ticks - pcb->tmr) >
 	 TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
-        DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2"));
+        DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
       }
     }
 
