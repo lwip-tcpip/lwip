@@ -46,10 +46,9 @@
 static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg;
 static sys_mbox_t mbox;
+
 #if LWIP_TCP
 static int tcpip_tcp_timer_active = 0;
-
-
 
 static void
 tcpip_tcp_timer(void *arg)
@@ -68,6 +67,7 @@ tcpip_tcp_timer(void *arg)
   }
 }
 
+#if !NO_SYS
 void
 tcp_timer_needed(void)
 {
@@ -78,6 +78,7 @@ tcp_timer_needed(void)
     sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
+#endif /* !NO_SYS */
 #endif /* LWIP_TCP */
 
 static void
