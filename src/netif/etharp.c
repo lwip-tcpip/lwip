@@ -528,11 +528,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
   /* request was not directed to us, but snoop anyway */
   } else {
-    /* update or insert the source IP address in the cache */
+    /* update the source IP address in the cache */
     update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
-    /* update or insert the destination IP address pair in the cache */
-    /** TODO: this might not work for an ARP request! TODO: Check **/
-    update_arp_entry(netif, &(hdr->dipaddr), &(hdr->dhwaddr), 0);
   }
 
   switch (htons(hdr->opcode)) {
