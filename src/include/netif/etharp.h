@@ -98,7 +98,7 @@ void etharp_tmr(void);
 void etharp_ip_input(struct netif *netif, struct pbuf *p);
 void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
          struct pbuf *p);
-struct pbuf *etharp_output(struct netif *netif, struct ip_addr *ipaddr,
+err_t etharp_output(struct netif *netif, struct ip_addr *ipaddr,
          struct pbuf *q);
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 

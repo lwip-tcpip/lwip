@@ -61,7 +61,6 @@ static void  ethernetif_input(struct netif *netif);
 static err_t ethernetif_output(struct netif *netif, struct pbuf *p,
              struct ip_addr *ipaddr);
 
-
 static void
 low_level_init(struct netif *netif)
 {
@@ -94,7 +93,6 @@ low_level_init(struct netif *netif)
  * might be chained.
  *
  */
-
 
 static err_t
 low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
@@ -199,30 +197,10 @@ static err_t
 ethernetif_output(struct netif *netif, struct pbuf *p,
       struct ip_addr *ipaddr)
 {
-  struct ethernetif *ethernetif;
-  struct pbuf *q;
-  struct eth_hdr *ethhdr;
-  struct eth_addr *dest, mcastaddr;
-  struct ip_addr *queryaddr;
-  err_t err;
-  u8_t i;
   
-  ethernetif = netif->state;
-
-  /* resolve the link destination hardware address */
-  p = etharp_output(netif, ipaddr, p);
-  
-  /* network hardware address obtained? */
-  if (p == NULL)
-  {
-    /* we cannot tell if the packet was sent: the packet could */
-    /* have been queued on an ARP entry that was already pending. */
-  	return ERR_OK;
-  }
-  	
-  /* send out the packet */
-  return low_level_output(ethernetif, p);
-
+ /* resolve hardware address, then send (or queue) packet */
+  return etharp_output(netif, ipaddr, p);
+ 
 }
 
 /*
@@ -240,41 +218,42 @@ ethernetif_input(struct netif *netif)
 {
   struct ethernetif *ethernetif;
   struct eth_hdr *ethhdr;
-  struct pbuf *p, *q;
+  struct pbuf *p;
 
   ethernetif = netif->state;
   
+  /* move received packet into a new pbuf */
   p = low_level_input(ethernetif);
-
-  if (p != NULL)
-    return;
+  /* no packet could be read, silently ignore this */
+  if (p == NULL) return;
+  /* points to packet payload, which starts with an Ethernet header */
+  ethhdr = p->payload;
 
 #ifdef LINK_STATS
   lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
   ethhdr = p->payload;
-  q = NULL;
     
   switch (htons(ethhdr->type)) {
-    case ETHTYPE_IP:
-      q = etharp_ip_input(netif, p);
-      pbuf_header(p, -sizeof(struct eth_hdr));
-      netif->input(p, netif);
-      break;
+  /* IP packet? */
+  case ETHTYPE_IP:
+    /* update ARP table */
+    etharp_ip_input(netif, p);
+    /* skip Ethernet header */
+    pbuf_header(p, -sizeof(struct eth_hdr));
+    /* pass to network layer */
+    netif->input(p, netif);
+    break;
       
     case ETHTYPE_ARP:
-      q = etharp_arp_input(netif, ethernetif->ethaddr, p);
+      /* pass p to ARP module  */
+      etharp_arp_input(netif, ethernetif->ethaddr, p);
       break;
     default:
       pbuf_free(p);
       p = NULL;
       break;
-  }
-  if (q != NULL) {
-    low_level_output(ethernetif, q);
-    pbuf_free(q);
-    q = NULL;
   }
 }
 
