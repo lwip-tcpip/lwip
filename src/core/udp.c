@@ -1,3 +1,8 @@
+/**
+ * @file
+ * User Datagram Protocol module
+ *
+ */
 /*
  * Copyright (c) 2001-2003 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -236,7 +241,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   /* Check checksum if this is a match or if it was directed at us. */
   if(pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
     {
-    DEBUGF(UDP_DEBUG, ("udp_input: calculating checksum\n"));
+    DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: calculating checksum\n"));
     pbuf_header(p, UDP_HLEN);    
 #ifdef IPv6
     if(iphdr->nexthdr == IP_PROTO_UDPLITE) {    
@@ -247,7 +252,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
 			   (struct ip_addr *)&(iphdr->dest),
 			   IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
-	DEBUGF(UDP_DEBUG, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
+	DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
 #ifdef UDP_STATS
 	++lwip_stats.udp.chkerr;
 	++lwip_stats.udp.drop;
@@ -261,7 +266,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 	if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
 			 (struct ip_addr *)&(iphdr->dest),
 			  IP_PROTO_UDP, p->tot_len) != 0) {
-	  DEBUGF(UDP_DEBUG, ("udp_input: UDP datagram discarded due to failing checksum\n"));
+	  DEBUGF(UDP_DEBUG | 2, ("udp_input: UDP datagram discarded due to failing checksum\n"));
 	  
 #ifdef UDP_STATS
 	  ++lwip_stats.udp.chkerr;
@@ -278,7 +283,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       snmp_inc_udpindatagrams();
       pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
     } else {
-      DEBUGF(UDP_DEBUG, ("udp_input: not for us.\n"));
+      DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: not for us.\n"));
       
       /* No match was found, send ICMP destination port unreachable unless
 	 destination address was broadcast/multicast. */
@@ -325,42 +330,42 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   struct netif *netif;
   struct ip_addr *src_ip;
   err_t err;
-  struct pbuf *hdr;
+  struct pbuf *q; /* q will be sent down the stack */
 
-  DEBUGF(UDP_DEBUG, ("udp_send\n"));
+  DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_send\n"));
 
+  /* if the PCB is not yet bound, bind it here */
   if(pcb->local_port == 0) {
     err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if(err != ERR_OK)
       return err;
   }
 
-  /* hdr will point to the UDP header pbuf if an extra header pbuf has
-     to be allocated. */
-  hdr = NULL;
-  
   /* not enough space to add an UDP header to first pbuf in given p chain? */
-  if(pbuf_header(p, UDP_HLEN)) {
+  if (pbuf_header(p, UDP_HLEN)) {
     /* allocate header in new pbuf */
-    hdr = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
+    q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */
-    if(hdr == NULL) {
+    if (q == NULL) {
       return ERR_MEM;
     }
-    /* chain header in front of given pbuf */
-    pbuf_chain(hdr, p);
-    /* have p point to header pbuf */
-    p = hdr;
+    /* chain header q in front of given pbuf p */
+    pbuf_chain(q, p);
+    /* { first pbuf q points to header pbuf } */
+    DEBUGF(UDP_DEBUG, ("udp_send: added header pbuf %q before given pbuf %p\n", (void *)q, (void *)p));
+  }	else {
+    /* first pbuf q equals given pbuf */
+    q = p;
+    DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
   }
-  DEBUGF(UDP_DEBUG, ("udp_send: got pbuf\n"));
 
-  udphdr = p->payload;
+  udphdr = q->payload;
   udphdr->src = htons(pcb->local_port);
   udphdr->dest = htons(pcb->remote_port);
   udphdr->chksum = 0x0000;
 
   if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
-    DEBUGF(UDP_DEBUG, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
+    DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
 #ifdef UDP_STATS
     ++lwip_stats.udp.rterr;
 #endif /* UDP_STATS */
@@ -375,27 +380,27 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     src_ip = &(pcb->local_ip);
   }
   
-  DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %u\n", p->tot_len));
+  DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %u\n", q->tot_len));
   
   /* UDP Lite protocol? */
   if(pcb->flags & UDP_FLAGS_UDPLITE) {
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u\n", p->tot_len));
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u\n", q->tot_len));
     /* set UDP message length in UDP header */
     udphdr->len = htons(pcb->chksum_len);
     /* calculate checksum */
-    udphdr->chksum = inet_chksum_pseudo(p, src_ip, &(pcb->remote_ip),
+    udphdr->chksum = inet_chksum_pseudo(q, src_ip, &(pcb->remote_ip),
 					IP_PROTO_UDP, pcb->chksum_len);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     /* output to IP */
-    err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
+    err = ip_output_if(q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
   } else {
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", p->tot_len));
-    udphdr->len = htons(p->tot_len);
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
+    udphdr->len = htons(q->tot_len);
     /* calculate checksum */
     if((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
-      udphdr->chksum = inet_chksum_pseudo(p, src_ip, &pcb->remote_ip, IP_PROTO_UDP, p->tot_len);
+      udphdr->chksum = inet_chksum_pseudo(q, src_ip, &pcb->remote_ip, IP_PROTO_UDP, q->tot_len);
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
@@ -403,14 +408,21 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     snmp_inc_udpoutdatagrams();
     DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
-    err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
+    err = ip_output_if(q, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
-  /* dechain and free any header pbuf */
-  if(hdr != NULL) {
-    /* detach the header prepended earlier */
-    pbuf_dechain(hdr);
-    /* free the header */
-    pbuf_free(hdr);
+
+  /* did we chain a header? */
+  if (q != p) {
+    /* chained header still in front of given pbuf? */
+    if (q->next == p) {
+      DEBUGF(UDP_DEBUG, ("udp_send: dechaining and freeing header pbuf\n"));
+      /* detach the header prepended earlier */
+      pbuf_dechain(q);
+      /* free the header */
+      pbuf_free(q);
+    } else {
+      DEBUGF(UDP_DEBUG, ("udp_send: pbuf header not freed, seems to be queued.\n"));
+	}
   }
   
 #ifdef UDP_STATS
@@ -418,6 +430,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #endif /* UDP_STATS */
   return err;
 }
+
 /**
  * Bind an UDP PCB.
  *
@@ -479,7 +492,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
         port++;
         ipcb = udp_pcbs;
       } else
-  	ipcb = ipcb->next;
+  	    ipcb = ipcb->next;
     }
     if(ipcb)  {
       /* no more ports available in local range */
