@@ -4,8 +4,10 @@
  *
  * Functionally, ARP is divided into two parts. The first maps an IP address
  * to a physical address when sending a packet, and the second part answers
- * requests from other machines.
+ * requests from other machines for our physical address.
  *
+ * This implementation complies with RFC 826 (Ethernet ARP) and supports
+ * Gratuitious ARP from RFC3220 (IP Mobility Support for IPv4) section 4.6.
  */
 
 /*
@@ -497,9 +499,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * returned, ready to be sent.
  *
  * If ARP does not have the Ethernet address in cache the packet is
- * queued and a ARP request is sent (on a best-effort basis). This
- * ARP request is returned as a pbuf, which should be sent by the
- * caller.
+ * queued (if enabled and space available) and a ARP request is sent.
+ * This ARP request is returned as a pbuf, which should be sent by
+ * the caller.
  *
  * If ARP failed to allocate resources, NULL is returned.
  *
@@ -509,7 +511,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * @param ipaddr The IP address of the packet destination.
  * @param pbuf The pbuf(s) containing the IP packet to be sent.
  *
- * @return If non-NULL, a packet ready to be sent.
+ * @return If non-NULL, a packet ready to be sent by caller.
+ *
  */
 struct pbuf *
 etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
@@ -535,9 +538,9 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* assume unresolved Ethernet address */
   dest = NULL;
   /* Construct Ethernet header. Start with looking up deciding which
-  MAC address to use as a destination address. Broadcasts and
-  multicasts are special, all other addresses are looked up in the
-  ARP table. */
+     MAC address to use as a destination address. Broadcasts and
+     multicasts are special, all other addresses are looked up in the
+     ARP table. */
 
   /* destination IP address is an IP broadcast address? */
   if (ip_addr_isany(ipaddr) ||
@@ -549,7 +552,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   else if (ip_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address. */
     mcastaddr.addr[0] = 0x01;
-    mcastaddr.addr[1] = 0x0;
+    mcastaddr.addr[1] = 0x00;
     mcastaddr.addr[2] = 0x5e;
     mcastaddr.addr[3] = ip4_addr2(ipaddr) & 0x7f;
     mcastaddr.addr[4] = ip4_addr3(ipaddr);
@@ -577,7 +580,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     }
 
     /* Ethernet address for IP destination address is in ARP cache? */
-    for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+    for (i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* match found? */
       if (arp_table[i].state == ETHARP_STATE_STABLE &&
         ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
@@ -588,6 +591,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* could not find the destination Ethernet address in ARP cache? */
     if (dest == NULL) {
       /* ARP query for the IP address, submit this IP packet for queueing */
+      /* TODO: How do we handle netif->ipaddr == ipaddr? */
       etharp_query(netif, ipaddr, q);
       /* return nothing */
       return NULL;
