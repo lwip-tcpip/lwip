@@ -5,7 +5,9 @@ HISTORY
   ++ Bugfixes:
 
   * TCP has been fixed to deal with the new use of the pbuf->ref
-    counter. This was broken in 0.6.1.
+    counter.
+
+  * DHCP dhcp_inform() crash bug fixed.
 
   ++ Changes:
 
