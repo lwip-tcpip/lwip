@@ -118,7 +118,7 @@ extern const struct ip_addr ip_addr_broadcast;
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000)) == ntohl(0xe0000000))
 
 
-#define ip_addr_debug_print(ipaddr) LWIP_DEBUGF(LWIP_DEBUG, ("%d.%d.%d.%d", \
+#define ip_addr_debug_print(debug, ipaddr) LWIP_DEBUGF(debug, ("%u.%u.%u.%u", \
         (unsigned int)(ntohl((ipaddr)->addr) >> 24) & 0xff, \
         (unsigned int)(ntohl((ipaddr)->addr) >> 16) & 0xff, \
         (unsigned int)(ntohl((ipaddr)->addr) >> 8) & 0xff, \
