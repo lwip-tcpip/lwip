@@ -64,6 +64,7 @@
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 #include "lwip/netif.h"
+#include "lwip/inet.h"
 #include "netif/etharp.h"
 
 #include "lwip/sys.h"
