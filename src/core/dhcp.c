@@ -405,6 +405,10 @@ static void dhcp_handle_ack(struct dhcp_state *state)
 void dhcp_init(void)
 {
 	DEBUGF(DHCP_DEBUG, ("dhcp_init()"));
+	/* this would be the proper way to stop all dhcp clients */
+	/* but we need lwIP to be running at this point */
+	/* while(client_list) dhcp_stop(client_list); */
+	client_list = NULL;
 }
 
 /**
