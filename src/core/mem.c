@@ -50,11 +50,16 @@
 
 struct mem {
   mem_size_t next, prev;
+#if MEM_ALIGNMENT == 1
   u8_t used;
-#if MEM_ALIGNMENT == 2
-  u8_t dummy;
-#endif /* MEM_ALIGNEMNT == 2 */
-};
+#elif MEM_ALIGNMENT == 2
+  u16_t used;
+#elif MEM_ALIGNMENT == 4
+  u32_t used;
+#else
+#error "unhandled MEM_ALIGNMENT size"
+#endif /* MEM_ALIGNMENT */
+}; 
 
 static struct mem *ram_end;
 static u8_t ram[MEM_SIZE + sizeof(struct mem) + MEM_ALIGNMENT];
