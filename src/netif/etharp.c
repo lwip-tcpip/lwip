@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.14  2002/12/02 16:08:09  likewise
+ * Fixed wrong assertion condition.
+ *
  * Revision 1.13  2002/11/29 16:02:11  likewise
  * More complete ARP protocol implementation.
  *
@@ -149,7 +152,7 @@ struct etharp_entry {
 };
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-static struct etharp_entry arp_table[ARP_TABLE_SIZE];
+static struct etharp_entry arp_table[ARP_TABLE_SIZE] = { 0 } ;
 static u8_t ctime;
 
 static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
@@ -165,6 +168,7 @@ etharp_init(void)
   /* clear ARP entries */
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
+    arp_table[i].p = NULL;
   }
   /* reset ARP current time */
   ctime = 0;
@@ -196,12 +200,14 @@ etharp_tmr(void)
 #endif
     } else if((arp_table[i].state == ETHARP_STATE_PENDING) &&
 	      (ctime - arp_table[i].ctime >= ARP_MAXPENDING)) {
-      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, arp_table[i].p));
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
+      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, arp_table[i].p));
       /* remove any queued packet */
       pbuf_free(arp_table[i].p);      
       arp_table[i].p = NULL;
+#else
+      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u.\n", i);
 #endif
     }
   }  
@@ -243,6 +249,7 @@ find_arp_entry(void)
     DEBUGF(ETHARP_DEBUG, ("find_arp_entry: found oldest stable entry %u\n", j));
     i = j;
   }
+  DEBUGF(ETHARP_DEBUG, ("find_arp_entry: returning %u, state %u\n", i, arp_table[i].state));
   return i;
 }
 
@@ -265,8 +272,14 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 {
   u8_t i, k;
   struct eth_hdr *ethhdr;
+  DEBUGF(ETHARP_DEBUG, ("update_arp_entry()"));
+  DEBUGF(ETHARP_DEBUG, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
+  ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5], ethaddr->addr[6]));
   /* do not update for 0.0.0.0 addresses */
-  if (ipaddr->addr == 0) return NULL;
+  if (ipaddr->addr == 0) {
+    DEBUGF(ETHARP_DEBUG, ("update_arp_entry: will not add 0.0.0.0 to ARP cache\n"));
+    return NULL;
+  }
   /* Walk through the ARP mapping table and try to find an entry to
   update. If none is found, the IP -> MAC address mapping is
   inserted in the ARP table. */
@@ -317,9 +330,11 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   /* no matching ARP entry was found */
   ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);
 
+  DEBUGF(ETHARP_DEBUG, ("update_arp_entry: IP address not yet in table\n"));
   /* allowed to insert an entry? */
   if ((ETHARP_ALWAYS_INSERT) || (flags & ARP_INSERT_FLAG))
   {
+    DEBUGF(ETHARP_DEBUG, ("update_arp_entry: adding entry to table\n"));
     /* find an empty or old entry. */
     i = find_arp_entry();
     if(i == ARP_TABLE_SIZE) {
@@ -330,9 +345,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     if (arp_table[i].state == ETHARP_STATE_STABLE) {
       DEBUGF(ETHARP_DEBUG, ("update_arp_entry: overwriting old stable entry %u\n", i));
       /* stable entries should have no queued packets (TODO: allow later) */
-      ASSERT("update_arp_entry: arp_table[i].p != NULL", arp_table[i].p != NULL);
+      ASSERT("update_arp_entry: arp_table[i].p == NULL", arp_table[i].p == NULL);
     } else {
-      DEBUGF(ETHARP_DEBUG, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].stat));
+      DEBUGF(ETHARP_DEBUG, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].state));
       ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
     }
     /* set IP address */  
@@ -463,24 +478,24 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* return ARP reply */
       netif->linkoutput(netif, p);
     } else {
-      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP request, but not for us.\n"));
+      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: incoming ARP request was not for us.\n"));
     }
     break;
   case ARP_REPLY:    
     /* ARP reply. We insert or update the ARP table. */
-    DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply\n"));
+    DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
     /* DHCP needs to know about ARP replies */
     dhcp_arp_reply(&hdr->sipaddr);
 #endif
     /* ARP reply directed to us? */
     if(ip_addr_cmp(&(hdr->dipaddr), &(netif->ip_addr))) {
-      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply for us\n"));
+      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: incoming ARP reply is for us\n"));
       /* update_the ARP cache, ask to insert */
       update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), ARP_INSERT_FLAG);
     /* ARP reply not directed to us */
     } else {
-      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP reply, but NOT for us\n"));
+      DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: incoming ARP reply is not for us\n"));
       /* update the destination address pair */
       update_arp_entry(netif, &(hdr->sipaddr), &(hdr->shwaddr), 0);
       /* update the destination address pair */
@@ -488,7 +503,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     }
     break;
   default:
-    DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: unknown type %d\n", htons(hdr->opcode)));
+    DEBUGF(ETHARP_DEBUG, ("etharp_arp_input: ARP unknown opcode type %d\n", htons(hdr->opcode)));
     break;
   }
   /* free ARP packet */
