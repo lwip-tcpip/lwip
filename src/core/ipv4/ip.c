@@ -108,7 +108,6 @@ ip_lookup(void *header, struct netif *inp)
 #if LWIP_UDP > 0
   case IP_PROTO_UDP:
     return udp_lookup(iphdr, inp);
-    break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP > 0    
   case IP_PROTO_TCP:
@@ -116,7 +115,6 @@ ip_lookup(void *header, struct netif *inp)
 #endif /* LWIP_TCP */
   case IP_PROTO_ICMP:
     return 1;
-    break;
   default:
     return 0;
   }

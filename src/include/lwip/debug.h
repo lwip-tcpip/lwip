@@ -36,9 +36,9 @@
 
 #ifdef LWIP_DEBUG
 
-#define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x) } while(0)
-#define DEBUGF(debug, x) do { if(debug) LWIP_PLATFORM_DIAG(x) } while(0)
-#define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x) } while(0)	
+#define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x); } while(0)
+#define DEBUGF(debug, x) do { if(debug) LWIP_PLATFORM_DIAG(x); } while(0)
+#define LWIP_ERROR(x)	 do { LWIP_PLATFORM_DIAG(x); } while(0)	
 
 /* These defines control the amount of debugging output: */
 #define MEM_TRACKING

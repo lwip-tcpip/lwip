@@ -95,7 +95,7 @@ ip_reass_timer(void *arg)
 {
   if(ip_reasstmr > 1) {
     ip_reasstmr--;
-    sys_timeout(IP_REASS_TMO, (sys_timeout_handler) ip_reass_timer, NULL);
+    sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
   } else if(ip_reasstmr == 1)
 	ip_reasstmr = 0;
 }
@@ -121,7 +121,7 @@ ip_reass(struct pbuf *p)
     DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
     memcpy(iphdr, fraghdr, IP_HLEN);
     ip_reasstmr = IP_REASS_MAXAGE;
-    sys_timeout(IP_REASS_TMO, (sys_timeout_handler) ip_reass_timer, NULL);
+    sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
     ip_reassflags = 0;
     /* Clear the bitmap. */
     memset(ip_reassbitmap, 0, sizeof(ip_reassbitmap));
@@ -148,7 +148,7 @@ ip_reass(struct pbuf *p)
       DEBUGF(IP_REASS_DEBUG,
 	     ("ip_reass: fragment outside of buffer (%d:%d/%d).\n", offset,
 	      offset + len, IP_REASS_BUFSIZE));
-      sys_timeout_remove((sys_timeout_handler) ip_reass_timer, NULL);
+      sys_untimeout(ip_reass_timer, NULL);
       ip_reasstmr = 0;
       goto nullreturn;
     }
@@ -236,7 +236,7 @@ ip_reass(struct pbuf *p)
       /* If we have come this far, we have a full packet in the
          buffer, so we allocate a pbuf and copy the packet into it. We
          also reset the timer. */
-      sys_timeout_remove((sys_timeout_handler) ip_reass_timer, NULL);
+      sys_untimeout(ip_reass_timer, NULL);
       ip_reasstmr = 0;
       pbuf_free(p);
       p = pbuf_alloc(PBUF_LINK, ip_reasslen, PBUF_POOL);

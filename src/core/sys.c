@@ -206,7 +206,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 */
 /*-----------------------------------------------------------------------------------*/
 void
-sys_timeout_remove(sys_timeout_handler h, void *arg)
+sys_untimeout(sys_timeout_handler h, void *arg)
 {
     struct sys_timeouts *timeouts;
     struct sys_timeout *prev_t, *t;
@@ -245,7 +245,7 @@ sswt_handler(void *arg)
 {
     struct sswt_cb *sswt_cb = (struct sswt_cb *) arg;
     
-    /* Timeout. Set flag to TRUE and signal semephore */
+    /* Timeout. Set flag to TRUE and signal semaphore */
     sswt_cb->timeflag = 1;
     sys_sem_signal(*(sswt_cb->psem));
 }
@@ -274,7 +274,7 @@ sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
         return 0;
     } else {
         /* Not a timeout. Remove timeout entry */
-        sys_timeout_remove(sswt_handler, &sswt_cb);
+        sys_untimeout(sswt_handler, &sswt_cb);
         return 1;
     }
     

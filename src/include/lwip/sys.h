@@ -91,7 +91,7 @@ void sys_init(void);
  *
  */
 void sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
-void sys_timeout_remove(sys_timeout_handler h, void *arg);
+void sys_untimeout(sys_timeout_handler h, void *arg);
 struct sys_timeouts *sys_arch_timeouts(void);
 
 /* Semaphore functions. */

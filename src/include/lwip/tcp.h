@@ -44,8 +44,6 @@
 
 #include "lwip/err.h"
 
-#include "lwip/event.h"
-
 struct tcp_pcb;
 
 /* Functions for interfacing with TCP: */
@@ -307,6 +305,22 @@ struct tcp_pcb_listen {
 };
 
 #if LWIP_EVENT_API
+
+enum lwip_event {
+  LWIP_EVENT_ACCEPT,
+  LWIP_EVENT_SENT,
+  LWIP_EVENT_RECV,
+  LWIP_EVENT_CONNECTED,
+  LWIP_EVENT_POLL,
+  LWIP_EVENT_ERR
+};
+
+err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
+		     enum lwip_event,
+		     struct pbuf *p,
+		     u16_t size,
+		     err_t err);
+
 #define TCP_EVENT_ACCEPT(pcb,err,ret)    ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
 						    LWIP_EVENT_ACCEPT, NULL, 0, err)
 #define TCP_EVENT_SENT(pcb,space,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\

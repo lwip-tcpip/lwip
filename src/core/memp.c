@@ -110,7 +110,9 @@ static u8_t memp_memory[(MEMP_NUM_PBUF *
 					sizeof(struct memp)))];
 
 /*-----------------------------------------------------------------------------------*/
+#ifndef SYS_LIGHTWEIGHT_PROT
 static sys_sem_t mutex;
+#endif
 /*-----------------------------------------------------------------------------------*/
 #ifdef LWIP_DEBUG
 static int
@@ -168,7 +170,9 @@ memp_init(void)
     }
   }
 
+#ifndef SYS_LIGHTWEIGHT_PROT
   mutex = sys_sem_new(1);
+#endif
 
   
 }
