@@ -7,6 +7,12 @@ TODO
 
 HISTORY
 
+(active STABLE-0_7 branch)
+
+  ++ Bug fixes:
+
+  * Fixed updating the ARP cache from a request pbuf that was recycled earlier for reply.
+  
 (STABLE-0_7_0)
 
   ++ Bug fixes:
