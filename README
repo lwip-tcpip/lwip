@@ -1,0 +1,28 @@
+lwIP is a small independent implementation of the TCP/IP protocol
+suite that has been developed by Adam Dunkels at the Computer and
+Networks Architectures (CNA) lab at the Swedish Institute of Computer
+Science (SICS).
+
+The focus of the lwIP TCP/IP implementation is to reduce the RAM usage
+while still having a full scale TCP. This making lwIP suitable for use
+in embedded systems with tenths of kilobytes of free RAM and room for
+around 40 kilobytes of code ROM.
+
+lwIP features:
+ * IP (Internet Protocol) including packet forwarding over multiple
+   network interfaces
+ * ICMP (Internet Control Message Protocol) for network maintenance
+   and debugging
+ * UDP (User Datagram Protocol) including experimental UDP-lite
+   extensions
+ * TCP (Transmission Control Protocol) with congestion control, RTT
+   estimation and fast recovery/fast retransmit
+ * Specialized API for enhanced performance
+ * Optional Berkeley socket API
+
+lwIP is freely available under a BSD license.
+
+For more information, go to the lwIP homepage at 
+http://www.sics.se/~adam/lwip/
+
+Adam Dunkels <adam@sics.se>		    
