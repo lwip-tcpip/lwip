@@ -198,11 +198,9 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newconn->socket = newsock;
   sys_sem_signal(socksem);
 
-#if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", port));
-#endif
 
   sock_set_errno(sock, 0);
   return newsock;
@@ -225,11 +223,9 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
   local_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
   local_port = ((struct sockaddr_in *)name)->sin_port;
 
-#if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &local_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u)\n", ntohs(local_port)));
-#endif
 
   err = netconn_bind(sock->conn, &local_addr, ntohs(local_port));
 
@@ -297,11 +293,9 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
     remote_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
     remote_port = ((struct sockaddr_in *)name)->sin_port;
 
-#if SOCKETS_DEBUG
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u)\n", ntohs(remote_port)));
-#endif
 
     err = netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
    }
@@ -417,11 +411,9 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
     memcpy(from, &sin, *fromlen);
 
-#if SOCKETS_DEBUG
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
-#endif
   } else {
 #if SOCKETS_DEBUG > 0
     addr = netbuf_fromaddr(buf);
@@ -541,11 +533,9 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
   remote_port = ((struct sockaddr_in *)to)->sin_port;
 
-#if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, size=%d, flags=0x%x to=", s, data, size, flags));
   ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", ntohs(remote_port)));
-#endif
 
   netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
 
@@ -921,11 +911,9 @@ int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
   /* get the IP address and port of the remote host */
   netconn_peer(sock->conn, &naddr, &sin.sin_port);
 
-#if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getpeername(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
-#endif
 
   sin.sin_port = htons(sin.sin_port);
   sin.sin_addr.s_addr = naddr.addr;
@@ -957,11 +945,9 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
   /* get the IP address and port of the remote host */
   netconn_addr(sock->conn, &naddr, &sin.sin_port);
 
-#if SOCKETS_DEBUG
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockname(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
-#endif
 
   sin.sin_port = htons(sin.sin_port);
   sin.sin_addr.s_addr = naddr->addr;

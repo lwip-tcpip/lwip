@@ -235,9 +235,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   iphdr = p->payload;
   if (IPH_V(iphdr) != 4) {
     LWIP_DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %u\n", IPH_V(iphdr)));
-#if IP_DEBUG
     ip_debug_print(p);
-#endif /* IP_DEBUG */
     pbuf_free(p);
     IP_STATS_INC(ip.err);
     IP_STATS_INC(ip.drop);
@@ -265,9 +263,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (inet_chksum(iphdr, iphdrlen) != 0) {
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
-#if IP_DEBUG
     ip_debug_print(p);
-#endif /* IP_DEBUG */
     pbuf_free(p);
     IP_STATS_INC(ip.chkerr);
     IP_STATS_INC(ip.drop);
@@ -374,11 +370,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif /* IP_OPTIONS == 0 */
 
   /* send to upper layers */
-#if IP_DEBUG
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: \n"));
   ip_debug_print(p);
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
-#endif /* IP_DEBUG */
 
 #if LWIP_RAW
   if (!raw_input(p, inp)) {
@@ -487,9 +481,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   IP_STATS_INC(ip.xmit);
 
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%u\n", netif->name[0], netif->name[1], netif->num));
-#if IP_DEBUG
   ip_debug_print(p);
-#endif /* IP_DEBUG */
 
   LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
 

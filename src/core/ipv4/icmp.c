@@ -168,13 +168,11 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
 
   iphdr = p->payload;
-#if ICMP_DEBUG
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
   ip_addr_debug_print(ICMP_DEBUG, &(iphdr->src));
   LWIP_DEBUGF(ICMP_DEBUG, (" to "));
   ip_addr_debug_print(ICMP_DEBUG, &(iphdr->dest));
   LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
-#endif /* ICMP_DEBNUG */
 
   tehdr = q->payload;
   ICMPH_TYPE_SET(tehdr, ICMP_TE);
@@ -196,7 +194,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   pbuf_free(q);
 }
 
-#endif /* IP_FORWARDING > 0 */
+#endif /* IP_FORWARD */
 
 
 

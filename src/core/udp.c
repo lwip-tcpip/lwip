@@ -64,10 +64,6 @@ struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;
 
-#if UDP_DEBUG
-int udp_debug_print(struct udp_hdr *udphdr);
-#endif /* UDP_DEBUG */
-
 /*-----------------------------------------------------------------------------------*/
 void
 udp_init(void)
@@ -193,9 +189,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   src = ntohs(udphdr->src);
   dest = ntohs(udphdr->dest);
 
-#if UDP_DEBUG
   udp_debug_print(udphdr);
-#endif /* UDP_DEBUG */
 
   /* print the UDP source and destination */
   LWIP_DEBUGF(UDP_DEBUG, ("udp (%u.%u.%u.%u, %u) <-- (%u.%u.%u.%u, %u)\n",

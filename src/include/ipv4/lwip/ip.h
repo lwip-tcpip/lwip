@@ -147,6 +147,8 @@ PACK_STRUCT_END
 
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
+#else
+#define ip_debug_print(p)
 #endif /* IP_DEBUG */
 
 #endif /* __LWIP_IP_H__ */

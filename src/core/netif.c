@@ -97,7 +97,6 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
-#if NETIF_DEBUG
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
   ip_addr_debug_print(NETIF_DEBUG, ipaddr);
@@ -106,7 +105,6 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   LWIP_DEBUGF(NETIF_DEBUG, (" gw "));
   ip_addr_debug_print(NETIF_DEBUG, gw);
   LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
-#endif /* NETIF_DEBUG */
   return netif;
 }
 
