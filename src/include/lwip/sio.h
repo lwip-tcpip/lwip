@@ -59,5 +59,5 @@ u32_t sio_write(sio_fd_t, u8_t *, u32_t);
 #endif
 
 #ifndef sio_read_abort
-void sio_read_abort(void);
+void sio_read_abort(sio_fd_t);
 #endif
