@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.23  2003/01/18 16:05:24  jani
+ * When all entries are 0 due to the whole table changing since the last arp tick (past 10 seconds) there's no oldest entry and the new entry does not  get a spot.Fix this (from Ed Sutter)
+ *
  * Revision 1.22  2003/01/13 09:38:21  jani
  * remove global ctime.Each entry's ctime is now absolute.This avoids wrapping and also solves naming clash reported on the list
  *
@@ -220,14 +223,14 @@ find_arp_entry(void)
   }
   
   /* If no unused entry is found, we try to find the oldest entry and
-     throw it away. */
+     throw it away. If all entries are new and have 0 ctime drop one  */
   if(i == ARP_TABLE_SIZE) {
     maxtime = 0;
     j = ARP_TABLE_SIZE;
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* remember entry with oldest stable entry in j*/
       if((arp_table[i].state == ETHARP_STATE_STABLE) &&
-      (arp_table[i].ctime > maxtime)) {
+      (arp_table[i].ctime >= maxtime)) {
         maxtime = arp_table[i].ctime;
 	      j = i;
       }
