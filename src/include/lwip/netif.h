@@ -46,6 +46,8 @@
     across all types of interfaces in use */
 #define NETIF_MAX_HWADDR_LEN 6
 
+/** TODO: define the use (where, when, whom) of netif flags */
+
 /** whether the network interface is 'up'. this is
  * a software flag used to control whether this network
  * interface is enabled and processes traffic */
@@ -55,7 +57,10 @@
 /** if set, the netif is one end of a point-to-point connection */
 #define NETIF_FLAG_POINTTOPOINT 4U
 /** if set, the interface is configured using DHCP */
-#define NETIF_FLAG_DHCP 8U
+#define NETIF_FLAG_DHCP 0x08U
+/** if set, the interface has an active link
+ *  (set by the interface) */
+#define NETIF_FLAG_LINK_UP 0x10U
 
 /** generic data structure used for all lwIP network interfaces */
 struct netif {
