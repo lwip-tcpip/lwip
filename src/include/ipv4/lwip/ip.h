@@ -40,7 +40,6 @@
 
 #include "lwip/err.h"
 
-struct netif;
 
 void ip_init(void);
 struct netif *ip_route(struct ip_addr *dest);
