@@ -857,13 +857,6 @@ pbuf_take(struct pbuf *f)
         pbuf_free(p);
         /* do not copy ref, since someone else might be using the old buffer */
         DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
-        /* p is no longer pointed to by prev or by our caller, 
-         * as the caller must do p = pbuf_take(p); so free it
-         * from reference through linkage.
-         * note that we have set p->next to NULL already so that
-         * we will not free the rest of the chain by accident.
-         */
-        pbuf_free(p);
         p = q;
       } else {
         /* deallocate chain */
