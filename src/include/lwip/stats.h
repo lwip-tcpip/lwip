@@ -61,7 +61,6 @@ struct stats_mem {
   mem_size_t used;
   mem_size_t max;  
   mem_size_t err;
-  mem_size_t reclaimed;
 };
 
 struct stats_pbuf {
@@ -69,7 +68,6 @@ struct stats_pbuf {
   u16_t used;
   u16_t max;  
   u16_t err;
-  u16_t reclaimed;
 
   u16_t alloc_locked;
   u16_t refresh_locked;
