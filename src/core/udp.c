@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.15 2003/01/27 13:58:45 likewise Exp $
+ * $Id: udp.c,v 1.16 2003/01/30 15:02:48 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -130,8 +130,8 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
 	    ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
 	   (ip_addr_isany(&pcb->local_ip) ||
 	    ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-	  break;
-          }
+	      break;
+        }
       }
     }
   }
@@ -186,54 +186,61 @@ udp_input(struct pbuf *p, struct netif *inp)
   udp_debug_print(udphdr);
 #endif /* UDP_DEBUG */
 
+  /* print the UDP source and destination */
+  DEBUGF(UDP_DEBUG, ("udp (%u.%u.%u.%u, %u) <-- (%u.%u.%u.%u, %u)\n",
+    ip4_addr1(&iphdr->dest), ip4_addr2(&iphdr->dest),
+    ip4_addr3(&iphdr->dest), ip4_addr4(&iphdr->dest), ntohs(udphdr->dest),
+    ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
+    ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src), ntohs(udphdr->src)));
   /* Iterate through the UDP pcb list for a fully matching pcb */
   for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-    DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %u, dgram dest port %u)\n",
-		       pcb->local_port, ntohs(udphdr->dest)));
-    DEBUGF(UDP_DEBUG, (" pcb remote ip: %d.%d.%d.%d, dgram src: %d.%d.%d.%d,\n",
-      ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-      ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip),
-      ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
-      ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src)));
-    DEBUGF(UDP_DEBUG, (" pcb local ip: %d.%d.%d.%d, dgram dest: %d.%d.%d.%d\n",
+    /* print the PCB local and remote address */
+    DEBUGF(UDP_DEBUG, ("pcb (%u.%u.%u.%u, %u) --- (%u.%u.%u.%u, %u)\n",
       ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
-      ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip),
-      ip4_addr1(&iphdr->dest), ip4_addr2(&iphdr->dest),
-      ip4_addr3(&iphdr->dest), ip4_addr4(&iphdr->dest)));
+      ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip), pcb->local_port,
+      ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+      ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
 
-    /* Do both local and remote addresses match? */
-    if(pcb->remote_port == src &&
-       pcb->local_port == dest &&
+       /* PCB remote port matches UDP source port? */
+    if((pcb->remote_port == src) &&
+       /* PCB local port matches UDP destination port? */
+       (pcb->local_port == dest) &&
+       /* accepting from any remote (source) IP address? or... */
        (ip_addr_isany(&pcb->remote_ip) ||
-	ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
+       /* PCB remote IP address matches UDP source IP address? */
+      	ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
+       /* accepting on any local (netif) IP address? or... */
        (ip_addr_isany(&pcb->local_ip) ||
-	ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
+       /* PCB local IP address matches UDP destination IP address? */
+      	ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
       break;
     }
   }
   /* no fully matching pcb found? then look for an unconnected pcb */
-  if(pcb == NULL) {
-    /* Iterate through the UDP pcb list for a pcb that matches
+  if (pcb == NULL) {
+    /* Iterate through the UDP PCB list for a pcb that matches
        the local address. */
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-      DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %d (dgram %d)\n",
-			 pcb->local_port, dest));
+      DEBUGF(UDP_DEBUG, ("pcb (%u.%u.%u.%u, %u) --- (%u.%u.%u.%u, %u)\n",
+        ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
+        ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip), pcb->local_port,
+        ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+        ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
       /* unconnected? */
-      if((pcb->flags & UDP_FLAGS_CONNECTED) == 0 &&
-	  /* destination port matches? */
-	  pcb->local_port == dest &&
-	  /* not bound to a specific (local) interface address? or... */
-	 (ip_addr_isany(&pcb->local_ip) ||
-	  /* ...matching interface address? */
-	  ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-	break;
+      if(((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
+     	  /* destination port matches? */
+	      (pcb->local_port == dest) &&
+	      /* not bound to a specific (local) interface address? or... */
+	      (ip_addr_isany(&pcb->local_ip) ||
+	      /* ...matching interface address? */
+	      ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
+	       break;
       }      
     }
   }
 
-
   /* Check checksum if this is a match or if it was directed at us. */
-    if(pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
+  if(pcb != NULL  || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) 
     {
     DEBUGF(UDP_DEBUG, ("udp_input: calculating checksum\n"));
     pbuf_header(p, UDP_HLEN);    
@@ -244,8 +251,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* IPv4 */
       /* Do the UDP Lite checksum */
       if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
-			    (struct ip_addr *)&(iphdr->dest),
-			    IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
+			   (struct ip_addr *)&(iphdr->dest),
+			   IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
 	DEBUGF(UDP_DEBUG, ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
 #ifdef UDP_STATS
 	++lwip_stats.udp.chkerr;
@@ -260,8 +267,8 @@ udp_input(struct pbuf *p, struct netif *inp)
     } else {
       if(udphdr->chksum != 0) {
 	if(inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
-			      (struct ip_addr *)&(iphdr->dest),
-			      IP_PROTO_UDP, p->tot_len) != 0) {
+			 (struct ip_addr *)&(iphdr->dest),
+			  IP_PROTO_UDP, p->tot_len) != 0) {
 	  DEBUGF(UDP_DEBUG, ("udp_input: UDP datagram discarded due to failing checksum\n"));
 	  
 #ifdef UDP_STATS
@@ -505,7 +512,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 void
 udp_disconnect(struct udp_pcb *pcb)
 {
-  	pcb->flags &= ~UDP_FLAGS_CONNECTED;
+	pcb->flags &= ~UDP_FLAGS_CONNECTED;
 }
 /*-----------------------------------------------------------------------------------*/
 void
