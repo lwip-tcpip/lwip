@@ -537,6 +537,7 @@ void dhcp_inform(struct netif *netif)
     DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("dhcp_inform(): could not allocate dhcp\n"));
     return;
   }  
+  netif->dhcp = dhcp;
   memset(dhcp, 0, sizeof(struct dhcp));
 
   DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_inform(): allocated dhcp\n"));
@@ -577,6 +578,7 @@ void dhcp_inform(struct netif *netif)
     if (dhcp->pcb != NULL) udp_remove(dhcp->pcb);
     dhcp->pcb = NULL;
     mem_free((void *)dhcp);
+    netif->dhcp = NULL;
   }
 }
 
