@@ -54,7 +54,7 @@ lwip_chksum(void *dataptr, int len)
   u32_t acc;
     
   for(acc = 0; len > 1; len -= 2) {
-    acc += *((u16_t *)dataptr)++;
+    acc = acc + *((u16_t *)dataptr)++;
   }
 
   /* add up any odd byte */
