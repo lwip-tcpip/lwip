@@ -706,9 +706,6 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     return ERR_ARG;
   }
 
-  /* send out ARP request */
-  result = etharp_request(netif, ipaddr);
-
   /* find entry in ARP cache, ask to create entry if queueing packet */
   i = find_entry(ipaddr, (q != NULL) ? ETHARP_CREATE : 0);
 
@@ -724,6 +721,12 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   LWIP_ASSERT("arp_table[i].state == PENDING or STABLE",
   ((arp_table[i].state == ETHARP_STATE_PENDING) ||
    (arp_table[i].state == ETHARP_STATE_STABLE)));
+
+  /* do we have a pending entry? */
+  if (arp_table[i].state == ETHARP_STATE_PENDING) {
+    /* try to resolve it; send out ARP request */
+    result = etharp_request(netif, ipaddr);
+  }
   
   /* packet given? */
   if (q != NULL) {
