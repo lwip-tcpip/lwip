@@ -580,6 +580,7 @@ tcp_rexmit(struct tcp_pcb *pcb)
   /* Move the first unacked segment to the unsent queue */
   seg = pcb->unacked->next;
   pcb->unacked->next = pcb->unsent;
+  pcb->unsent = pcb->unacked;
   pcb->unacked = seg;
 
   pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
