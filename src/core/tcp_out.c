@@ -425,7 +425,6 @@ tcp_output(struct tcp_pcb *pcb)
   
   while(seg != NULL &&
 	ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
-    pcb->rtime = 0;
 #if TCP_CWND_DEBUG
     DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %lu, cwnd %lu, wnd %lu, effwnd %lu, seq %lu, ack %lu, i%d\n",
                             pcb->snd_wnd, pcb->cwnd, wnd,
@@ -458,7 +457,6 @@ tcp_output(struct tcp_pcb *pcb)
         for(useg = pcb->unacked; useg->next != NULL; useg = useg->next);
         useg->next = seg;
       }
-      /*      seg->rtime = 0;*/      
     } else {
       tcp_seg_free(seg);
     }
@@ -583,7 +581,6 @@ tcp_rexmit(struct tcp_pcb *pcb)
   pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
   
   ++pcb->nrtx;
-  pcb->rtime = 0;
   
   /* Don't take any rtt measurements after retransmitting. */    
   pcb->rttest = 0;
