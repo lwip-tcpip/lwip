@@ -615,7 +615,7 @@ struct pbuf *
 pbuf_unref(struct pbuf *f)
 {
   struct pbuf *p, *q;
-  DEBUGF(PBUF_DEBUG, ("pbuf_unref: %p \n", f));
+  DEBUGF(PBUF_DEBUG, ("pbuf_unref: %p \n", (void*)f));
   /* first pbuf is of type PBUF_REF? */
   if (f->flags == PBUF_FLAG_REF)
   {
@@ -641,7 +641,7 @@ pbuf_unref(struct pbuf *f)
       /* de-allocate PBUF_REF */
       pbuf_free(f);
       f = p;
-      DEBUGF(PBUF_DEBUG, ("pbuf_unref: succesful %p \n", f));
+      DEBUGF(PBUF_DEBUG, ("pbuf_unref: succesful %p \n", (void *)f));
     }
     else
     {

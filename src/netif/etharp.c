@@ -3,6 +3,10 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.16  2002/12/17 09:41:16  jani
+ * Use C style comments.In debug stataments cast various struct pointers to void* to
+ * avoid printf warnings.misc warnings in etharp.
+ *
  * Revision 1.15  2002/12/05 09:41:52  kieranm
  * Fixed compiler warnings when ARP_QUEUEING is not defined.
  *
@@ -14,21 +18,6 @@
  *
  * Revision 1.12  2002/11/28 09:26:18  likewise
  * All ARP queueing code is now conditionally compiled-in.
- *
- * Revision 1.11  2002/11/18 10:31:05  likewise
- * Conditionally have ARP queue outgoing pbufs.
- *
- * Revision 1.10  2002/11/18 08:41:31  jani
- * Move etharp packed structures to the header file.
- *
- * Revision 1.9  2002/11/15 12:41:59  likewise
- * ETHARP_SNOOP_UPDATES made externally configurable.
- *
- * Revision 1.8  2002/11/13 09:10:19  likewise
- * ARP entries can now be updated (but not added) on any ARP traffic. Set #define ETHARP_SNOOP_UPDATES 1 to enable.
- *
- * Revision 1.7  2002/11/13 08:56:11  likewise
- * Implemented conditional insertion of ARP entries to update_arp_entry using ARP_INSERT_FLAG.
  */
 
 /*
@@ -155,7 +144,7 @@ struct etharp_entry {
 };
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-static struct etharp_entry arp_table[ARP_TABLE_SIZE] = { 0 } ;
+static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 static u8_t ctime;
 
 static struct pbuf *update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
@@ -207,7 +196,7 @@ etharp_tmr(void)
 	      (ctime - arp_table[i].ctime >= ARP_MAXPENDING)) {
       arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
-      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, arp_table[i].p));
+      DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %u - dequeueing %p.\n", i, (void *)(arp_table[i].p)));
       /* remove any queued packet */
       pbuf_free(arp_table[i].p);      
       arp_table[i].p = NULL;
@@ -281,7 +270,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 #endif
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry()"));
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry: %u.%u.%u.%u - %02x:%02x:%02x:%02x:%02x:%02x\n", ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr),
-  ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5], ethaddr->addr[6]));
+  ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2], ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
   /* do not update for 0.0.0.0 addresses */
   if (ipaddr->addr == 0) {
     DEBUGF(ETHARP_DEBUG, ("update_arp_entry: will not add 0.0.0.0 to ARP cache\n"));
@@ -311,7 +300,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         /* time stamp */
         arp_table[i].ctime = ctime;
 #if ARP_QUEUEING
-        // queued packet present? */
+        /* queued packet present? */
         if(arp_table[i].p != NULL) {	
 
           /* fill-in Ethernet header */
@@ -374,7 +363,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   }
   else
   {
-    DEBUGF(ETHARP_DEBUG, ("update_arp_entry: no matching stable entry to update\n", i));
+    DEBUGF(ETHARP_DEBUG, ("update_arp_entry: no matching stable entry to update\n"));
   }
   return NULL;
 }
@@ -649,7 +638,7 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* return the outgoing packet */
     return q;
   }
-  // never reached; here for safety 
+  /* never reached; here for safety */ 
   return NULL;
 }
 

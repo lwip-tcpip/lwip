@@ -314,7 +314,7 @@ tcp_listen(struct tcp_pcb *pcb)
 #endif /* LWIP_CALLBACK_API */
 /* workaround for compile error: assignment requires modifiable lvalue in TCP_REG */ 
 #if LWIP_TCP_REG_COMPILE_ERROR
-  // place this pcb at the start the "listening pcbs" list
+  /* place this pcb at the start the "listening pcbs" list */
   lpcb->next = tcp_listen_pcbs;
   tcp_listen_pcbs = lpcb;
 #else
@@ -753,7 +753,7 @@ tcp_kill_prio(u8_t prio)
   }
   if(inactive != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB 0x%p (%ld)\n",
-		       inactive, inactivity));
+		       (void *)inactive, inactivity));
     tcp_abort(inactive);
   }      
 }
@@ -775,7 +775,7 @@ tcp_kill_timewait(void)
   }
   if(inactive != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_kill_timewait: killing oldest TIME-WAIT PCB 0x%p (%ld)\n",
-		       inactive, inactivity));
+		       (void *)inactive, inactivity));
     tcp_abort(inactive);
   }      
 }
@@ -966,7 +966,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if(pcb->unacked != NULL) {    
       DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->unacked\n"));
     }
-#if TCP_QUEUE_OOSEQ // LW
+#if TCP_QUEUE_OOSEQ /* LW */
     if(pcb->ooseq != NULL) {    
       DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }

@@ -490,7 +490,7 @@ netconn_recv(struct netconn *conn)
   
 
     
-  DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", buf, conn->err));
+  DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));
 
 
   return buf;
