@@ -430,6 +430,10 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 
+#ifndef DBG_MIN_LEVEL
+#define DBG_MIN_LEVEL DBG_LEVEL_OFF
+#endif
+
 #endif /* __LWIP_OPT_H__ */
 
 
