@@ -43,9 +43,11 @@ fs_open(char *name, struct fs_file *file)
 {
   struct fsdata_file_noconst *f;
 
-  for(f = (struct fsdata_file_noconst *)FS_ROOT; f != NULL; f = (struct fsdata_file_noconst *)f->next) {
-    if(!strcmp(name, f->name)) {
-      file->data = f->data;
+  for(f = (struct fsdata_file_noconst *)FS_ROOT;
+      f != NULL;
+      f = (struct fsdata_file_noconst *)f->next) {
+    if(!strcmp(name, (char *)f->name)) {
+      file->data = (char *)f->data;
       file->len = f->len;
       return 1;
     }
