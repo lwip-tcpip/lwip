@@ -816,15 +816,14 @@ tcp_receive(struct tcp_pcb *pcb)
     /* KJM 13th July 2004
        I don't think is is necessary as we no longer move all unacked
        segments on the unsent queue when performing retransmit */
-    /*
+#if 0
     while (pcb->unsent != NULL &&
-           TCP_SEQ_LEQ(ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent),
-                       ackno) &&
-           TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
+      TCP_SEQ_LEQ(ntohl(pcb->unsent->tcphdr->seqno) + TCP_TCPLEN(pcb->unsent),
+      ackno) &&
+      TCP_SEQ_LEQ(ackno, pcb->snd_max)) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: removing %lu:%lu from pcb->unsent\n",
-                                    ntohl(pcb->unsent->tcphdr->seqno),
-                                    ntohl(pcb->unsent->tcphdr->seqno) +
-                                    TCP_TCPLEN(pcb->unsent)));
+        ntohl(pcb->unsent->tcphdr->seqno), ntohl(pcb->unsent->tcphdr->seqno) +
+        TCP_TCPLEN(pcb->unsent)));
 
       next = pcb->unsent;
       pcb->unsent = pcb->unsent->next;
@@ -833,16 +832,15 @@ tcp_receive(struct tcp_pcb *pcb)
       tcp_seg_free(next);
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%u (after freeing unsent)\n", (unsigned int)pcb->snd_queuelen));
       if (pcb->snd_queuelen != 0) {
-        LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
-                    pcb->unsent != NULL);
+        LWIP_ASSERT("tcp_receive: valid queue length",
+          pcb->unacked != NULL || pcb->unsent != NULL);
       }
 
       if (pcb->unsent != NULL) {
         pcb->snd_nxt = htonl(pcb->unsent->tcphdr->seqno);
       }
     }
-    */
-
+#endif
     /* End of ACK for new data processing. */
 
     LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: pcb->rttest %u rtseq %lu ackno %lu\n",
