@@ -56,19 +56,25 @@ tcpip_tcp_timer(void *arg)
 {
   (void)arg;
 
+  /* call TCP timer handler */
   tcp_tmr();
+  /* timer still needed? */
   if (tcp_active_pcbs || tcp_tw_pcbs) {
+    /* restart timer */
     sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   } else {
-  tcpip_tcp_timer_active = 0;
+    /* disable timer */
+    tcpip_tcp_timer_active = 0;
   }
 }
 
 void
 tcp_timer_needed(void)
 {
+  /* timer is off but needed again? */
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
-  tcpip_tcp_timer_active = 1;
+    /* enable and start timer */
+    tcpip_tcp_timer_active = 1;
     sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }

@@ -6,7 +6,7 @@ in lwIP development.
 2 How to contribute to lwIP
 
 Here is a short list of suggestions to anybody working with lwIP and 
-trying to contribute bugreports, fixes, enhancements, platform ports etc.
+trying to contribute bug reports, fixes, enhancements, platform ports etc.
 First of all as you may already know lwIP is a volunteer project so feedback
 to fixes or questions might often come late. Hopefully the bug and patch tracking 
 features of Savannah help us not lose users' input.
