@@ -853,7 +853,6 @@ pbuf_take(struct pbuf *p)
   return head;
 }
 
-#if 0 /* TODO: See if we might need this for future features */
 /**
  * Dechains the first pbuf from its succeeding pbufs in the chain.
  *
@@ -890,7 +889,6 @@ pbuf_dechain(struct pbuf *p)
   LWIP_ASSERT("p->tot_len == p->len", p->tot_len == p->len);
   return (tail_gone > 0? NULL: q);
 }
-#endif /* pbuf_dechain() */
 
 /* TODO: This function is unused in the lwIP stack and will be deprecated. This is due
  * to the new way chains are built. */
