@@ -3,6 +3,11 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.4  2002/11/08 12:54:43  proff_fs
+ * Added includeds for bpstruct and epstruct.
+ * Ports should update from using PACK_STRUCT_BEGIN and PACK_STRUCT_END to use these includes.
+ * Maybe there should be an PACK_STRUCT_USE_INCLUDES ifdef around these, for ports for which PACK_STRUCT_BEGIN and PACK_STRUCT_END works nicely.
+ *
  * Revision 1.3  2002/11/06 11:43:21  likewise
  * find_arp_entry() returned 0 instead of ARP_TABLE_SIZE if full pending cache (bug #1625).
  *
@@ -64,6 +69,7 @@
 #define ARP_REPLY 2
 
 /* MUST be compiled with "pack structs" or equivalent! */
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct etharp_hdr {
   PACK_STRUCT_FIELD(struct eth_hdr ethhdr);
@@ -77,6 +83,7 @@ struct etharp_hdr {
   PACK_STRUCT_FIELD(struct ip_addr dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
 #define ARPH_HWLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) >> 8)
 #define ARPH_PROTOLEN(hdr) (NTOHS((hdr)->_hwlen_protolen) & 0xff)
@@ -85,12 +92,14 @@ PACK_STRUCT_END
 #define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS(ARPH_PROTOLEN(hdr) | ((len) << 8))
 #define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = HTONS((len) | (ARPH_HWLEN(hdr) << 8))
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct ethip_hdr {
   PACK_STRUCT_FIELD(struct eth_hdr eth);
   PACK_STRUCT_FIELD(struct ip_hdr ip);
 };
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
 enum etharp_state {
   ETHARP_STATE_EMPTY,

@@ -38,11 +38,13 @@
 
 #define IP_ADDR_BROADCAST (&ip_addr_broadcast)
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct ip_addr {
   PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
 extern struct ip_addr ip_addr_broadcast;
 

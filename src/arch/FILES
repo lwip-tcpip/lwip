@@ -9,6 +9,8 @@ v2pro/     - Architectural files for the Xilinx Virtex-II PRO device with
              embedded PowerPC 405 Processor.  Supports lwIP Raw API only.
              (requires V2PDK - http://www.xilinx.com/ise/vii_pro/kit.htm)
 
+msvc6/     - Architectural files for Microsoft Visual C++ 6.0
+
 Each subdirectory (may) also include:
 
 perf.c     - Optional file that should be implemented when running

@@ -44,12 +44,15 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct eth_addr {
   PACK_STRUCT_FIELD(u8_t addr[6]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct eth_hdr {
   PACK_STRUCT_FIELD(struct eth_addr dest);
@@ -57,6 +60,7 @@ struct eth_hdr {
   PACK_STRUCT_FIELD(u16_t type);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
 #define ARP_TMR_INTERVAL 10000
 

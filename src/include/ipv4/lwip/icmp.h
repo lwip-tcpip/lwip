@@ -70,6 +70,7 @@ void icmp_input(struct pbuf *p, struct netif *inp);
 void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct icmp_echo_hdr {
   PACK_STRUCT_FIELD(u16_t _type_code);
@@ -78,7 +79,9 @@ struct icmp_echo_hdr {
   PACK_STRUCT_FIELD(u16_t seqno);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct icmp_dur_hdr {
   PACK_STRUCT_FIELD(u16_t _type_code);
@@ -86,7 +89,9 @@ struct icmp_dur_hdr {
   PACK_STRUCT_FIELD(u32_t unused);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
+#include "arch/bpstruct.h"
 PACK_STRUCT_BEGIN
 struct icmp_te_hdr {
   PACK_STRUCT_FIELD(u16_t _type_code);
@@ -94,6 +99,7 @@ struct icmp_te_hdr {
   PACK_STRUCT_FIELD(u32_t unused);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
+#include "arch/epstruct.h"
 
 #define ICMPH_TYPE(hdr) (NTOHS((hdr)->_type_code) >> 8)
 #define ICMPH_CODE(hdr) (NTOHS((hdr)->_type_code) & 0xff)
