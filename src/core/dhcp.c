@@ -913,8 +913,8 @@ void dhcp_stop(struct dhcp_state *state)
 {
 	struct dhcp_state *list_state = client_list;
 	DEBUGF(DHCP_DEBUG, ("dhcp_stop()"));
-	ASSERT("dhcp_stop: state != NULL", state != NULL);
-	ASSERT("dhcp_stop: state->pcb != NULL", state->pcb != NULL);
+	LWIP_ASSERT("dhcp_stop: state != NULL", state != NULL);
+	LWIP_ASSERT("dhcp_stop: state->pcb != NULL", state->pcb != NULL);
 
 	if (state != NULL)
 	{
@@ -966,24 +966,24 @@ static void dhcp_set_state(struct dhcp_state *state, unsigned char new_state)
 
 static void dhcp_option(struct dhcp_state *state, u8_t option_type, u8_t option_len)
 {
-  ASSERT("dhcp_option_short: state->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", state->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_short: state->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", state->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN);
   state->msg_out->options[state->options_out_len++] = option_type;
   state->msg_out->options[state->options_out_len++] = option_len;
 }
 static void dhcp_option_byte(struct dhcp_state *state, u8_t value)
 {
-  ASSERT("dhcp_option_short: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_short: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
   state->msg_out->options[state->options_out_len++] = value;
 }														 
 static void dhcp_option_short(struct dhcp_state *state, u16_t value)
 {
-  ASSERT("dhcp_option_short: state->options_out_len + 2 <= DHCP_OPTIONS_LEN", state->options_out_len + 2 <= DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_short: state->options_out_len + 2 <= DHCP_OPTIONS_LEN", state->options_out_len + 2 <= DHCP_OPTIONS_LEN);
   state->msg_out->options[state->options_out_len++] = (value & 0xff00U) >> 8;
   state->msg_out->options[state->options_out_len++] =  value & 0x00ffU;
 }
 static void dhcp_option_long(struct dhcp_state *state, u32_t value)
 {
-  ASSERT("dhcp_option_long: state->options_out_len + 4 <= DHCP_OPTIONS_LEN", state->options_out_len + 4 <= DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_long: state->options_out_len + 4 <= DHCP_OPTIONS_LEN", state->options_out_len + 4 <= DHCP_OPTIONS_LEN);
   state->msg_out->options[state->options_out_len++] = (value & 0xff000000UL) >> 24;
   state->msg_out->options[state->options_out_len++] = (value & 0x00ff0000UL) >> 16;
   state->msg_out->options[state->options_out_len++] = (value & 0x0000ff00UL) >> 8;
@@ -1177,8 +1177,8 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
 static err_t dhcp_create_request(struct dhcp_state *state)
 {
   u16_t i;
-  ASSERT("dhcp_create_request: state->p_out == NULL", state->p_out == NULL);
-  ASSERT("dhcp_create_request: state->msg_out == NULL", state->msg_out == NULL);
+  LWIP_ASSERT("dhcp_create_request: state->p_out == NULL", state->p_out == NULL);
+  LWIP_ASSERT("dhcp_create_request: state->msg_out == NULL", state->msg_out == NULL);
   state->p_out = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dhcp_msg), PBUF_RAM);
 	if (state->p_out == NULL)
 	{
@@ -1213,8 +1213,8 @@ static err_t dhcp_create_request(struct dhcp_state *state)
 
 static void dhcp_delete_request(struct dhcp_state *state)
 {
-  ASSERT("dhcp_free_msg: state->p_out != NULL", state->p_out != NULL);
-  ASSERT("dhcp_free_msg: state->msg_out != NULL", state->msg_out != NULL);
+  LWIP_ASSERT("dhcp_free_msg: state->p_out != NULL", state->p_out != NULL);
+  LWIP_ASSERT("dhcp_free_msg: state->msg_out != NULL", state->msg_out != NULL);
   pbuf_free(state->p_out);
 	state->p_out = NULL;
 	state->msg_out = NULL;
@@ -1229,14 +1229,14 @@ static void dhcp_delete_request(struct dhcp_state *state)
 
 static void dhcp_option_trailer(struct dhcp_state *state)
 {
-  ASSERT("dhcp_option_trailer: state->msg_out != NULL", state->msg_out != NULL);
-  ASSERT("dhcp_option_trailer: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_trailer: state->msg_out != NULL", state->msg_out != NULL);
+  LWIP_ASSERT("dhcp_option_trailer: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
   state->msg_out->options[state->options_out_len++] = DHCP_OPTION_END;
   // packet is still too small, or not 4 byte aligned?
   while ((state->options_out_len < DHCP_MIN_OPTIONS_LEN) || (state->options_out_len & 3))
 	{
     //DEBUGF(DHCP_DEBUG, ("dhcp_option_trailer: state->options_out_len=%u, DHCP_OPTIONS_LEN=%u", state->options_out_len, DHCP_OPTIONS_LEN));
-    ASSERT("dhcp_option_trailer: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
+    LWIP_ASSERT("dhcp_option_trailer: state->options_out_len < DHCP_OPTIONS_LEN", state->options_out_len < DHCP_OPTIONS_LEN);
 	  state->msg_out->options[state->options_out_len++] = 0;
 	}
 }

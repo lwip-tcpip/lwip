@@ -52,6 +52,10 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 
   if(conn->recvmbox != SYS_MBOX_NULL) {
     conn->err = err;
+	conn->recv_avail += p->tot_len;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
     sys_mbox_post(conn->recvmbox, p);
   }  
   return ERR_OK;
@@ -82,7 +86,11 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
       buf->fromaddr = addr;
       buf->fromport = port;
     }
-    
+
+	conn->recv_avail += p->tot_len;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
     sys_mbox_post(conn->recvmbox, buf);
   }
 }
@@ -111,6 +119,11 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   if(conn != NULL && conn->sem != SYS_SEM_NULL) {
     sys_sem_signal(conn->sem);
   }
+
+  if (conn && conn->callback)
+      if (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT)
+          (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, len);
+  
   return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -126,12 +139,18 @@ err_tcp(void *arg, err_t err)
   
   conn->err = err;
   if(conn->recvmbox != SYS_MBOX_NULL) {
+    /* Register event with callback */
+    if (conn->callback)
+      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->recvmbox, NULL);
   }
   if(conn->mbox != SYS_MBOX_NULL) {
     sys_mbox_post(conn->mbox, NULL);
   }
   if(conn->acceptmbox != SYS_MBOX_NULL) {
+     /* Register event with callback */
+    if (conn->callback)
+      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->acceptmbox, NULL);
   }
   if(conn->sem != SYS_SEM_NULL) {
@@ -155,15 +174,17 @@ setup_tcp(struct netconn *conn)
 static err_t
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
-  sys_mbox_t *mbox;
+  sys_mbox_t mbox;
   struct netconn *newconn;
+  struct netconn *conn;
   
 #if API_MSG_DEBUG
 #if TCP_DEBUG
   tcp_debug_print_state(newpcb->state);
 #endif /* TCP_DEBUG */
 #endif /* API_MSG_DEBUG */
-  mbox = (sys_mbox_t *)arg;
+  conn = (struct netconn *)arg;
+  mbox = conn->acceptmbox;
   newconn = memp_mallocp(MEMP_NETCONN);
   if(newconn == NULL) {
     return ERR_MEM;
@@ -191,7 +212,17 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   }
   newconn->acceptmbox = SYS_MBOX_NULL;
   newconn->err = err;
-  sys_mbox_post(*mbox, newconn);
+  /* Register event with callback */
+  if (conn->callback)
+  {
+    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
+    /* We have to set the callback here even though
+     * the new socket is unknown. Mark the socket as -1. */
+    newconn->callback = conn->callback;
+    newconn->socket = -1;
+  }
+  
+  sys_mbox_post(mbox, newconn);
   return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -232,6 +263,13 @@ do_delconn(struct api_msg_msg *msg)
     break;
     }
   }
+  /* Trigger select() in socket layer */
+  if (msg->conn->callback)
+  {
+      (*msg->conn->callback)(msg->conn, NETCONN_EVT_RCVPLUS, 0);
+      (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDPLUS, 0);
+  }
+  
   if(msg->conn->mbox != SYS_MBOX_NULL) {
     sys_mbox_post(msg->conn->mbox, NULL);
   }
@@ -417,7 +455,7 @@ do_listen(struct api_msg_msg *msg)
 	    break;
 	  }
 	}
-	tcp_arg(msg->conn->pcb.tcp, (void *)&(msg->conn->acceptmbox));
+	tcp_arg(msg->conn->pcb.tcp, msg->conn);
 	tcp_accept(msg->conn->pcb.tcp, accept_function);
       }
       break;
@@ -504,6 +542,12 @@ do_write(struct api_msg_msg *msg)
 	tcp_output(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;
+      if (msg->conn->callback)
+          if (err == ERR_OK)
+          {
+              if (tcp_sndbuf(msg->conn->pcb.tcp) <= TCP_SNDLOWAT)
+                  (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDMINUS, msg->msg.w.len);
+          }
       break;
     }
   }

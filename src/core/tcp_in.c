@@ -157,9 +157,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
      for an active connection. */  
   prev = NULL;  
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
-    ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
-    ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
+    LWIP_ASSERT("tcp_input: active pcb->state != CLOSED", pcb->state != CLOSED);
+    LWIP_ASSERT("tcp_input: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+    LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
     if(pcb->remote_port == tcphdr->src &&
        pcb->local_port == tcphdr->dest &&
        ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
@@ -168,13 +168,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
       /* Move this PCB to the front of the list so that subsequent
 	 lookups will be faster (we exploit locality in TCP segment
 	 arrivals). */
-      ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
+      LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
       if(prev != NULL) {
 	prev->next = pcb->next;
 	pcb->next = tcp_active_pcbs;
 	tcp_active_pcbs = pcb; 
       }
-      ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
+      LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
     }
     prev = pcb;
@@ -185,7 +185,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
        in the TIME-WAIT state. */
 
     for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
-      ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+      LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
       if(pcb->remote_port == tcphdr->src &&
 	 pcb->local_port == tcphdr->dest &&
 	 ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
@@ -201,7 +201,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     }  
   
   /* Finally, if we still did not get a match, we check all PCBs that
-     are LISTENing for incomming connections. */
+     are LISTENing for incoming connections. */
     prev = NULL;  
     for(lpcb = tcp_listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if((ip_addr_isany(&(lpcb->local_ip)) ||
@@ -326,7 +326,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     pbuf_free(p);
   }
 
-  ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());  
+  LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());  
   PERF_STOP("tcp_input");
 }
 /*-----------------------------------------------------------------------------------*/
@@ -450,7 +450,7 @@ tcp_process(struct tcp_pcb *pcb)
     
     if(acceptable) {
       DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: Connection RESET\n"));
-      ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
+      LWIP_ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
       recv_flags = TF_RESET;
       pcb->flags &= ~TF_ACK_DELAY;
       return ERR_RST;
@@ -500,7 +500,7 @@ tcp_process(struct tcp_pcb *pcb)
 	 TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) {
         pcb->state = ESTABLISHED;
         DEBUGF(DEMO_DEBUG, ("TCP connection established %d -> %d.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
-	ASSERT("pcb->accept != NULL", pcb->accept != NULL);
+	LWIP_ASSERT("pcb->accept != NULL", pcb->accept != NULL);
 	/* Call the accept function. */
 	TCP_EVENT_ACCEPT(pcb, ERR_OK, err);
 	if(err != ERR_OK) {
@@ -727,7 +727,7 @@ tcp_receive(struct tcp_pcb *pcb)
 	DEBUGF(TCP_QLEN_DEBUG, ("%d (after freeing unacked)\n", pcb->snd_queuelen));
 #ifdef LWIP_DEBUG
 	if(pcb->snd_queuelen != 0) {
-	  ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
+	  LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
 		 pcb->unsent != NULL);      
 	}
 #endif /* LWIP_DEBUG */
@@ -758,7 +758,7 @@ tcp_receive(struct tcp_pcb *pcb)
 	DEBUGF(TCP_QLEN_DEBUG, ("%d (after freeing unsent)\n", pcb->snd_queuelen));
 #ifdef LWIP_DEBUG
 	if(pcb->snd_queuelen != 0) {
-	  ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
+	  LWIP_ASSERT("tcp_receive: valid queue length", pcb->unacked != NULL ||
 		 pcb->unsent != NULL);      
 	}
 #endif /* LWIP_DEBUG */

@@ -38,7 +38,7 @@
 
 #ifdef LWIP_DEBUG
 
-#define ASSERT(x,y) if(!(y)) {printf("Assertion \"%s\" failed at line %d in %s\n", \
+#define LWIP_ASSERT(x,y) if(!(y)) {printf("Assertion \"%s\" failed at line %d in %s\n", \
                                      x, __LINE__, __FILE__); fflush(NULL); abort();}
 
 /* These defines control the amount of debugging output: */
@@ -194,9 +194,9 @@
 
 #else /* LWIP_DEBUG */
 
-/* DEBUG is not defined, so we define null macros for ASSERT and DEBUGF */
+/* DEBUG is not defined, so we define null macros for LWIP_ASSERT and DEBUGF */
 
-#define ASSERT(x,y)
+#define LWIP_ASSERT(x,y)
 #define DEBUGF(debug, x)
 
 /* And we define those to be zero: */

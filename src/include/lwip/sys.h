@@ -87,6 +87,7 @@ void sys_init(void);
  *
  */
 void sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
+void sys_timeout_remove(sys_timeout_handler h, void *arg);
 struct sys_timeouts *sys_arch_timeouts(void);
 
 /* Semaphore functions. */
@@ -95,6 +96,7 @@ void sys_sem_signal(sys_sem_t sem);
 u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout);
 void sys_sem_free(sys_sem_t sem);
 void sys_sem_wait(sys_sem_t sem);
+int sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout);
 
 /* Mailbox functions. */
 sys_mbox_t sys_mbox_new(void);

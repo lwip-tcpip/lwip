@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.16 2003/01/30 15:02:48 likewise Exp $
+ * $Id: udp.c,v 1.17 2003/02/06 22:18:56 davidhaas Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -93,6 +93,7 @@ udp_lookup(struct ip_hdr *iphdr, struct netif *inp)
   u16_t src, dest;
 
     PERF_START;
+  (void)inp;
 
     udphdr = (struct udp_hdr *)(u8_t *)iphdr + IPH_HL(iphdr) * 4;
 
@@ -177,7 +178,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   udphdr = (struct udp_hdr *)((u8_t *)p->payload - UDP_HLEN);
   
-  DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %d\n", p->tot_len));
+  DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %u\n", p->tot_len));
 	
   src = NTOHS(udphdr->src);
   dest = NTOHS(udphdr->dest);
@@ -341,7 +342,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   err_t err;
   struct pbuf *hdr;
 
-  DEBUGF(UDP_DEBUG, ("udp_send"));
+  DEBUGF(UDP_DEBUG, ("udp_send\n"));
+
+  if(pcb->local_port == 0) {
+    err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
+    if(err != ERR_OK)
+      return err;
+  }
+
   /* hdr will point to the UDP header pbuf if an extra header pbuf has
      to be allocated. */
   hdr = NULL;
@@ -359,7 +367,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* have p point to header pbuf */
     p = hdr;
   }
-  DEBUGF(UDP_DEBUG, ("udp_send: got pbuf"));
+  DEBUGF(UDP_DEBUG, ("udp_send: got pbuf\n"));
 
   udphdr = p->payload;
   udphdr->src = htons(pcb->local_port);
@@ -382,11 +390,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     src_ip = &(pcb->local_ip);
   }
   
-  DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %d\n", p->tot_len));
+  DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %u\n", p->tot_len));
   
   /* UDP Lite protocol? */
   if(pcb->flags & UDP_FLAGS_UDPLITE) {
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u", p->tot_len));
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %u\n", p->tot_len));
     /* set UDP message length in UDP header */
     udphdr->len = htons(pcb->chksum_len);
     /* calculate checksum */
@@ -400,7 +408,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     snmp_inc_udpoutdatagrams();
 #endif
   } else {
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u", p->tot_len));
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", p->tot_len));
     udphdr->len = htons(p->tot_len);
     /* calculate checksum */
     if((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
@@ -408,11 +416,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if(udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
-    DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x", udphdr->chksum));
+    DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum %x\n", udphdr->chksum));
 #if LWIP_SNMP > 0
     snmp_inc_udpoutdatagrams();
 #endif
-    DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)"));
+    DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if(,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
     err = ip_output_if(p, src_ip, &pcb->remote_ip, UDP_TTL, IP_PROTO_UDP, netif);    
   }
@@ -466,6 +474,23 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   }
   /* bind local address */
   ip_addr_set(&pcb->local_ip, ipaddr);
+  if(port == 0) {
+#ifndef UDP_LOCAL_PORT_RANGE_START
+#define UDP_LOCAL_PORT_RANGE_START 4096
+#define UDP_LOCAL_PORT_RANGE_END   0x7fff
+#endif
+	port = UDP_LOCAL_PORT_RANGE_START;
+	ipcb = udp_pcbs;
+	while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
+		if(ipcb->local_port == port) {
+			port++;
+			ipcb = udp_pcbs;
+		} else
+			ipcb = ipcb->next;
+	}
+	if(ipcb) /* no more ports available in local range */
+		return ERR_USE;
+  }
   pcb->local_port = port;
 
   /* We need to place the PCB on the list if not already there. */
@@ -474,7 +499,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     udp_pcbs = pcb;
   }  
 
-  DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %d\n", port));
+  DEBUGF(UDP_DEBUG, ("udp_bind: bound to port %u\n", port));
   return ERR_OK;
 }
 /**
@@ -492,9 +517,33 @@ err_t
 udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
+
+  if(pcb->local_port == 0) {
+	  err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
+	  if(err != ERR_OK)
+		  return err;
+  }
+
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
   pcb->flags |= UDP_FLAGS_CONNECTED;
+
+  /* Nail down local IP for netconn_addr()/getsockname() */
+  if(ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
+    struct netif *netif;
+
+    if((netif = ip_route(&(pcb->remote_ip))) == NULL) {
+    	DEBUGF(UDP_DEBUG, ("udp_connect: No route to 0x%lx\n", pcb->remote_ip.addr));
+#ifdef UDP_STATS
+	++lwip_stats.udp.rterr;
+#endif /* UDP_STATS */
+    	return ERR_RTE;
+    }
+
+    pcb->local_ip = netif->ip_addr;
+  } else if(ip_addr_isany(&pcb->remote_ip)) { 
+    pcb->local_ip.addr = 0;
+  }
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
@@ -577,10 +626,10 @@ udp_debug_print(struct udp_hdr *udphdr)
 {
   DEBUGF(UDP_DEBUG, ("UDP header:\n"));
   DEBUGF(UDP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(UDP_DEBUG, ("|     %5d     |     %5d     | (src port, dest port)\n",
+  DEBUGF(UDP_DEBUG, ("|     %5u     |     %5u     | (src port, dest port)\n",
 		     ntohs(udphdr->src), ntohs(udphdr->dest)));
   DEBUGF(UDP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(UDP_DEBUG, ("|     %5d     |     0x%04x    | (len, chksum)\n",
+  DEBUGF(UDP_DEBUG, ("|     %5u     |     0x%04x    | (len, chksum)\n",
 		     ntohs(udphdr->len), ntohs(udphdr->chksum)));
   DEBUGF(UDP_DEBUG, ("+-------------------------------+\n"));
   return 0;

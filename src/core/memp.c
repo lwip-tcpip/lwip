@@ -179,7 +179,7 @@ memp_malloc(memp_t type)
   struct memp *memp;
   void *mem;
  
-  ASSERT("memp_malloc: type < MEMP_MAX", type < MEMP_MAX);
+  LWIP_ASSERT("memp_malloc: type < MEMP_MAX", type < MEMP_MAX);
 
   memp = memp_tab[type];
   
@@ -192,7 +192,7 @@ memp_malloc(memp_t type)
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
-    ASSERT("memp_malloc: memp properly aligned",
+    LWIP_ASSERT("memp_malloc: memp properly aligned",
 	   ((u32_t)MEM_ALIGN((u8_t *)memp + sizeof(struct memp)) % MEM_ALIGNMENT) == 0);
 
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
@@ -245,7 +245,7 @@ memp_free(memp_t type, void *mem)
   memp->next = memp_tab[type]; 
   memp_tab[type] = memp;
 
-  ASSERT("memp sanity", memp_sanity());
+  LWIP_ASSERT("memp sanity", memp_sanity());
 
   return;
 }

@@ -3,6 +3,58 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.24  2003/02/06 22:18:57  davidhaas
+ * Add the following features and bugfixes:
+ *
+ * Added select() functionality to sockets library.
+ * Support for errno in sockets library.
+ * Byte ordering fixes.
+ * basic lwip_ioctl(), FIONREAD, get/setsockopt() etc. support
+ *
+ * - added additional argument to netif_add to pass state pointer so that the
+ * if_init function has access to context information before
+ * the interface is added, without accessing globals.
+ *
+ * - added netif_remove()
+ *
+ * - to conserve cpu load the tcpip_tcp_timer should only be active
+ * when tcbs that need it exist.
+ *
+ * - pass length of available data to callbacks for NETCONN_EVT_RCV events
+ *
+ * - added tcpip_link_input(), a hack to allow processing of PPP
+ * packets in tcpip_thread() context. This saves threads and context
+ * switches.
+ *
+ * - renamed incompatible ASSERT() macro to LWIP_ASSERT() to avoid name
+ * collision.
+ *
+ * - changed a bunch of %d's to %u's in format strings for unsigned values.
+ *
+ * - added ip_frag to lwip_stats.
+ *
+ * - changed IP_REASS_MAXAGE and IP_REASS_TMO defaults to more realistic
+ * values.
+ *
+ * - added sys_timeout_remove() function to cancel timeouts (needed by PPP
+ * amongst other things).
+ *
+ * - tolerate NULL returns from sys_arch_timeouts() since some threads might
+ * not need to use or have timeouts.
+ *
+ * - added sys_sem_wait_timeout()
+ *
+ * - moved mem_malloc() function to end of mem.c to work around tasking
+ * compiler bug.
+ *
+ * - automatically bind to local tcp port if 0.
+ *
+ * - allow customization of port ranges for automatic local bindings.
+ *
+ * - corrected various typos, spelling errors, etc..
+ *
+ * Thanks to Marc Boucher for many of these changes.
+ *
  * Revision 1.23  2003/01/18 16:05:24  jani
  * When all entries are 0 due to the whole table changing since the last arp tick (past 10 seconds) there's no oldest entry and the new entry does not  get a spot.Fix this (from Ed Sutter)
  *
@@ -319,7 +371,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   } /* for */
 
   /* no matching ARP entry was found */
-  ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);
+  LWIP_ASSERT("update_arp_entry: i == ARP_TABLE_SIZE", i == ARP_TABLE_SIZE);
 
   DEBUGF(ETHARP_DEBUG, ("update_arp_entry: IP address not yet in table\n"));
   /* allowed to insert an entry? */
@@ -337,11 +389,11 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
       DEBUGF(ETHARP_DEBUG, ("update_arp_entry: overwriting old stable entry %u\n", i));
       /* stable entries should have no queued packets (TODO: allow later) */
 #if ARP_QUEUEING
-      ASSERT("update_arp_entry: arp_table[i].p == NULL", arp_table[i].p == NULL);
+      LWIP_ASSERT("update_arp_entry: arp_table[i].p == NULL", arp_table[i].p == NULL);
 #endif
     } else {
       DEBUGF(ETHARP_DEBUG, ("update_arp_entry: filling empty entry %u with state %u\n", i, arp_table[i].state));
-      ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
+      LWIP_ASSERT("update_arp_entry: arp_table[i].state == ETHARP_STATE_EMPTY", arp_table[i].state == ETHARP_STATE_EMPTY);
     }
     /* set IP address */  
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);

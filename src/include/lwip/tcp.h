@@ -396,6 +396,7 @@ int tcp_pcbs_sane(void);
 #define tcp_pcbs_sane() 1
 #endif /* TCP_DEBUG */
 
+void tcp_timer_needed(void);
 
 /* The TCP PCB lists. */
 extern struct tcp_pcb_listen *tcp_listen_pcbs;  /* List of all TCP PCBs in LISTEN state. */
@@ -421,17 +422,17 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             for(tcp_tmp_pcb = *pcbs; \
 				  tcp_tmp_pcb != NULL; \
 				tcp_tmp_pcb = tcp_tmp_pcb->next) { \
-                                ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != npcb); \
+                                LWIP_ASSERT("TCP_REG: already registered\n", tcp_tmp_pcb != npcb); \
                             } \
-							/* TODO: state field doesn't exist in listen pcbs */ \
-                            ASSERT("TCP_REG: pcb->state != CLOSED", npcb->state != CLOSED); \
+                            LWIP_ASSERT("TCP_REG: pcb->state != CLOSED", npcb->state != CLOSED); \
                             npcb->next = *pcbs; \
-                            ASSERT("TCP_REG: npcb->next != npcb", npcb->next != npcb); \
+                            LWIP_ASSERT("TCP_REG: npcb->next != npcb", npcb->next != npcb); \
                             *(pcbs) = npcb; \
-                            ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
+                            LWIP_ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
+							tcp_timer_needed(); \
                             } while(0)
 #define TCP_RMV(pcbs, npcb) do { \
-                            ASSERT("TCP_RMV: pcbs != NULL", *pcbs != NULL); \
+                            LWIP_ASSERT("TCP_RMV: pcbs != NULL", *pcbs != NULL); \
                             DEBUGF(TCP_DEBUG, ("TCP_RMV: removing %p from %p\n", npcb, *pcbs)); \
                             if(*pcbs == npcb) { \
                                *pcbs = (*pcbs)->next; \
@@ -442,7 +443,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                                } \
                             } \
                             npcb->next = NULL; \
-                            ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
+                            LWIP_ASSERT("TCP_RMV: tcp_pcbs sane", tcp_pcbs_sane()); \
                             DEBUGF(TCP_DEBUG, ("TCP_RMV: removed %p from %p\n", npcb, *pcbs)); \
                             } while(0)
 
@@ -450,6 +451,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #define TCP_REG(pcbs, npcb) do { \
                             npcb->next = *pcbs; \
                             *(pcbs) = npcb; \
+							tcp_timer_needed(); \
                             } while(0)
 #define TCP_RMV(pcbs, npcb) do { \
                             if(*(pcbs) == npcb) { \

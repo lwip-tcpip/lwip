@@ -62,6 +62,13 @@ enum netconn_state {
   NETCONN_CLOSE
 };
 
+enum netconn_evt {
+  NETCONN_EVT_RCVPLUS,
+  NETCONN_EVT_RCVMINUS,
+  NETCONN_EVT_SENDPLUS,
+  NETCONN_EVT_SENDMINUS
+};
+
 struct netbuf {
   struct pbuf *p, *ptr;
   struct ip_addr *fromaddr;
@@ -81,6 +88,9 @@ struct netconn {
   sys_mbox_t recvmbox;
   sys_mbox_t acceptmbox;
   sys_sem_t sem;
+  int socket;
+  u16_t recv_avail;
+  void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
 };
 
 /* Network buffer functions: */
@@ -108,6 +118,9 @@ u16_t             netbuf_fromport (struct netbuf *buf);
 
 /* Network connection functions: */
 struct netconn *  netconn_new     (enum netconn_type type);
+struct
+netconn *netconn_new_with_callback(enum netconn_type t,
+                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
 err_t             netconn_delete  (struct netconn *conn);
 enum netconn_type netconn_type    (struct netconn *conn);
 err_t             netconn_peer    (struct netconn *conn,

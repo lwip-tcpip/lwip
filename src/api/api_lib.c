@@ -215,8 +215,25 @@ netconn *netconn_new(enum netconn_type t)
   conn->acceptmbox = SYS_MBOX_NULL;
   conn->sem = SYS_SEM_NULL;
   conn->state = NETCONN_NONE;
+  conn->socket = 0;
+  conn->callback = 0;
+  conn->recv_avail = 0;
   return conn;
 }
+/*-----------------------------------------------------------------------------------*/
+struct
+netconn *netconn_new_with_callback(enum netconn_type t,
+                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
+{
+    struct netconn *conn;
+    
+    /* get a netconn and then initialize callback pointer and socket */
+    conn = netconn_new(t);
+    if (conn)
+        conn->callback = callback;
+    return conn;
+}
+
 /*-----------------------------------------------------------------------------------*/
 err_t
 netconn_delete(struct netconn *conn)
@@ -437,7 +454,10 @@ netconn_accept(struct netconn *conn)
   }
   
   sys_mbox_fetch(conn->acceptmbox, (void **)&newconn);
-
+  /* Register event with callback */
+  if (conn->callback)
+      (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
+  
   return newconn;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -476,7 +496,11 @@ netconn_recv(struct netconn *conn)
     }
     
     sys_mbox_fetch(conn->recvmbox, (void **)&p);
-    
+	conn->recv_avail -= p->tot_len;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, p->tot_len);
+
     /* If we are closed, we indicate that we no longer wish to recieve
        data by setting conn->recvmbox to SYS_MBOX_NULL. */
     if(p == NULL) {
@@ -509,6 +533,10 @@ netconn_recv(struct netconn *conn)
     memp_freep(MEMP_API_MSG, msg);
   } else {
     sys_mbox_fetch(conn->recvmbox, (void **)&buf);
+	conn->recv_avail -= buf->p->tot_len;
+    /* Register event with callback */
+    if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
   }
 
   
@@ -620,6 +648,7 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
     sys_sem_free(conn->sem);
     conn->sem = SYS_SEM_NULL;
   }
+  
   return conn->err;
 }
 /*-----------------------------------------------------------------------------------*/
@@ -657,7 +686,3 @@ netconn_err(struct netconn *conn)
   return conn->err;
 }
 /*-----------------------------------------------------------------------------------*/
-
-
-
-

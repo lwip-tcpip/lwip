@@ -85,8 +85,11 @@ void netif_init(void);
 
 struct netif *netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 			struct ip_addr *gw,
+			void *state,
 			void (* init)(struct netif *netif),
 			err_t (* input)(struct pbuf *p, struct netif *netif));
+
+void netif_remove(struct netif * netif);
 
 /* Returns a network interface given its name. The name is of the form
    "et0", where the first two letters are the "name" field in the

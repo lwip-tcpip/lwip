@@ -69,6 +69,8 @@ struct tcp_pcb *tcp_tmp_pcb;
 
 static u8_t tcp_timer;
 
+static u16_t tcp_new_port(void);
+
 /*-----------------------------------------------------------------------------------*/
 /*
  * tcp_init():
@@ -250,6 +252,10 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct tcp_pcb *cpcb;
 
+  if(port == 0) {
+    port = tcp_new_port();
+  }
+
   /* Check if the address already is in use. */
   for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
@@ -275,7 +281,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->local_ip = *ipaddr;
   }
   pcb->local_port = port;
-  DEBUGF(TCP_DEBUG, ("tcp_bind: bind to port %d\n", port));
+  DEBUGF(TCP_DEBUG, ("tcp_bind: bind to port %u\n", port));
   return ERR_OK;
 }
 #if LWIP_CALLBACK_API
@@ -337,7 +343,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
      !(pcb->flags & TF_ACK_NOW)) {
     tcp_ack(pcb);
   }
-  DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %d bytes, wnd %u (%u).\n",
+  DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %u bytes, wnd %u (%u).\n",
 		     len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
 }
 /*-----------------------------------------------------------------------------------*/
@@ -352,11 +358,15 @@ static u16_t
 tcp_new_port(void)
 {
   struct tcp_pcb *pcb;
-  static u16_t port = 4096;
+#ifndef TCP_LOCAL_PORT_RANGE_START
+#define TCP_LOCAL_PORT_RANGE_START 4096
+#define TCP_LOCAL_PORT_RANGE_END   0x7fff
+#endif
+  static u16_t port = TCP_LOCAL_PORT_RANGE_START;
   
  again:
-  if(++port > 0x7fff) {
-    port = 4096;
+  if(++port > TCP_LOCAL_PORT_RANGE_END) {
+    port = TCP_LOCAL_PORT_RANGE_START;
   }
   
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
@@ -393,7 +403,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   err_t ret;
   u32_t iss;
 
-  DEBUGF(TCP_DEBUG, ("tcp_connect to port %d\n", port));
+  DEBUGF(TCP_DEBUG, ("tcp_connect to port %u\n", port));
   if(ipaddr != NULL) {
     pcb->remote_ip = *ipaddr;
   } else {
@@ -458,9 +468,9 @@ tcp_slowtmr(void)
   if (pcb == NULL) DEBUGF(TCP_DEBUG, ("tcp_slowtmr: no active pcbs"));
   while(pcb != NULL) {
     DEBUGF(TCP_DEBUG, ("tcp_slowtmr: processing active pcb"));
-    ASSERT("tcp_slowtmr: active pcb->state != CLOSED", pcb->state != CLOSED);
-    ASSERT("tcp_slowtmr: active pcb->state != LISTEN", pcb->state != LISTEN);
-    ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != CLOSED", pcb->state != CLOSED);
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != LISTEN", pcb->state != LISTEN);
+    LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
 
     pcb_remove = 0;
 
@@ -476,7 +486,7 @@ tcp_slowtmr(void)
       if(pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
 
 	/* Time for a retransmission. */
-        DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %d pcb->rto %d\n",
+        DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %u pcb->rto %u\n",
                                pcb->rtime, pcb->rto));
 
 	/* Double retransmission time-out unless we are trying to
@@ -537,11 +547,11 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_active_pcbs list. */
       if(prev != NULL) {
-	ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
+	LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
-        ASSERT("tcp_slowtmr: first pcb == tcp_active_pcbs", tcp_active_pcbs == pcb);
+        LWIP_ASSERT("tcp_slowtmr: first pcb == tcp_active_pcbs", tcp_active_pcbs == pcb);
         tcp_active_pcbs = pcb->next;
       }
 
@@ -573,7 +583,7 @@ tcp_slowtmr(void)
   prev = NULL;    
   pcb = tcp_tw_pcbs;
   while(pcb != NULL) {
-    ASSERT("tcp_slowtmr: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+    LWIP_ASSERT("tcp_slowtmr: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
     pcb_remove = 0;
 
     /* Check if this PCB has stayed long enough in TIME-WAIT */
@@ -588,11 +598,11 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_tw_pcbs list. */
       if(prev != NULL) {
-	ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
+	LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
-        ASSERT("tcp_slowtmr: first pcb == tcp_tw_pcbs", tcp_tw_pcbs == pcb);
+        LWIP_ASSERT("tcp_slowtmr: first pcb == tcp_tw_pcbs", tcp_tw_pcbs == pcb);
         tcp_tw_pcbs = pcb->next;
       }
       pcb2 = pcb->next;
@@ -1002,7 +1012,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   }  
   pcb->state = CLOSED;
 
-  ASSERT("tcp_pcb_remove: tcp_pcbs_sane()", tcp_pcbs_sane());
+  LWIP_ASSERT("tcp_pcb_remove: tcp_pcbs_sane()", tcp_pcbs_sane());
 }
 /*-----------------------------------------------------------------------------------*/
 /*
@@ -1036,7 +1046,8 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   DEBUGF(TCP_DEBUG, ("|            %08lu           | (ack no)\n",
 		     tcphdr->ackno));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(TCP_DEBUG, ("| %2d |    |%d%d%d%d%d|    %5d      | (offset, flags (",
+  DEBUGF(TCP_DEBUG, ("| %2u |    |%u%u%u%u%u|    %5u      | (offset, flags (",
+			 TCPH_OFFSET(tcphdr),
 		     TCPH_FLAGS(tcphdr) >> 4 & 1,
 		     TCPH_FLAGS(tcphdr) >> 4 & 1,
 		     TCPH_FLAGS(tcphdr) >> 3 & 1,
@@ -1047,7 +1058,7 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   tcp_debug_print_flags(TCPH_FLAGS(tcphdr));
   DEBUGF(TCP_DEBUG, ("), win)\n"));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(TCP_DEBUG, ("|    0x%04x     |     %5d     | (chksum, urgp)\n",
+  DEBUGF(TCP_DEBUG, ("|    0x%04x     |     %5u     | (chksum, urgp)\n",
 		     ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
   DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
@@ -1122,21 +1133,21 @@ tcp_debug_print_pcbs(void)
   struct tcp_pcb *pcb;
   DEBUGF(TCP_DEBUG, ("Active PCB states:\n"));
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    DEBUGF(TCP_DEBUG, ("Local port %d, foreign port %d snd_nxt %lu rcv_nxt %lu ",
+    DEBUGF(TCP_DEBUG, ("Local port %u, foreign port %u snd_nxt %lu rcv_nxt %lu ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
   }    
   DEBUGF(TCP_DEBUG, ("Listen PCB states:\n"));
   for(pcb = (struct tcp_pcb *)tcp_listen_pcbs; pcb != NULL; pcb = pcb->next) {
-    DEBUGF(TCP_DEBUG, ("Local port %d, foreign port %d snd_nxt %lu rcv_nxt %lu ",
+    DEBUGF(TCP_DEBUG, ("Local port %u, foreign port %u snd_nxt %lu rcv_nxt %lu ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
   }    
   DEBUGF(TCP_DEBUG, ("TIME-WAIT PCB states:\n"));
   for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
-    DEBUGF(TCP_DEBUG, ("Local port %d, foreign port %d snd_nxt %lu rcv_nxt %lu ",
+    DEBUGF(TCP_DEBUG, ("Local port %u, foreign port %u snd_nxt %lu rcv_nxt %lu ",
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
@@ -1148,12 +1159,12 @@ tcp_pcbs_sane(void)
 {
   struct tcp_pcb *pcb;
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    ASSERT("tcp_pcbs_sane: active pcb->state != CLOSED", pcb->state != CLOSED);
-    ASSERT("tcp_pcbs_sane: active pcb->state != LISTEN", pcb->state != LISTEN);
-    ASSERT("tcp_pcbs_sane: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
+    LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != CLOSED", pcb->state != CLOSED);
+    LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != LISTEN", pcb->state != LISTEN);
+    LWIP_ASSERT("tcp_pcbs_sane: active pcb->state != TIME-WAIT", pcb->state != TIME_WAIT);
   }
   for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
-    ASSERT("tcp_pcbs_sane: tw pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
+    LWIP_ASSERT("tcp_pcbs_sane: tw pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
   }
   return 1;
 }

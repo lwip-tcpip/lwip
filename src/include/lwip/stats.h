@@ -86,6 +86,7 @@ struct stats_sys {
 
 struct stats_ {
   struct stats_proto link;
+  struct stats_proto ip_frag;
   struct stats_proto ip;
   struct stats_proto icmp;
   struct stats_proto udp;

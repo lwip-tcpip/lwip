@@ -217,7 +217,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #if IP_DEBUG
   /*  DEBUGF("ip_input: \n");
   ip_debug_print(p);
-  DEBUGF("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len);*/
+  DEBUGF("ip_input: p->len %u p->tot_len %u\n", p->len, p->tot_len);*/
 #endif /* IP_DEBUG */
    
 
@@ -237,7 +237,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     /* send ICMP destination protocol unreachable */
     icmp_dest_unreach(p, ICMP_DUR_PROTO);
     pbuf_free(p);
-    DEBUGF(IP_DEBUG, ("Unsupported transportation protocol %d\n",
+    DEBUGF(IP_DEBUG, ("Unsupported transportation protocol %u\n",
 		      iphdr->nexthdr));
 
 #ifdef IP_STATS
@@ -266,7 +266,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   PERF_START;
 
-  printf("len %d tot_len %d\n", p->len, p->tot_len);
+  printf("len %u tot_len %u\n", p->len, p->tot_len);
   if(pbuf_header(p, IP_HLEN)) {
     DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
 #ifdef IP_STATS
@@ -275,7 +275,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     return ERR_BUF;
   }
-  printf("len %d tot_len %d\n", p->len, p->tot_len);
+  printf("len %u tot_len %u\n", p->len, p->tot_len);
   
   iphdr = p->payload;
   
@@ -303,7 +303,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
 
-  DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %d)\n", netif->name[0], netif->name[1], p->tot_len));
+  DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %u)\n", netif->name[0], netif->name[1], p->tot_len));
 #if IP_DEBUG
   ip_debug_print(p);
 #endif /* IP_DEBUG */
@@ -350,7 +350,7 @@ ip_debug_print(struct pbuf *p)
 		    iphdr->tclass1, iphdr->tclass2,
 		    iphdr->flow1, iphdr->flow2));
   DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  DEBUGF(IP_DEBUG, ("|    %5d      | %2d  |  %2d   | (len, nexthdr, hoplim)\n",
+  DEBUGF(IP_DEBUG, ("|    %5u      | %2u  |  %2u   | (len, nexthdr, hoplim)\n",
 		    ntohs(iphdr->len),
 		    iphdr->nexthdr,
 		    iphdr->hoplim));

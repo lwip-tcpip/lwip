@@ -129,7 +129,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
 #ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
-    ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
+    LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
     pcb->unsent != NULL);      
   }
 #endif /* LWIP_DEBUG */
@@ -310,7 +310,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   DEBUGF(TCP_QLEN_DEBUG, ("tcp_enqueue: %d (after enqueued)\n", pcb->snd_queuelen));
 #ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
-    ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
+    LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
   }
@@ -333,7 +333,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
 #ifdef LWIP_DEBUG
   if(pcb->snd_queuelen != 0) {
-    ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
+    LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
 
   }

@@ -78,11 +78,11 @@ static struct pbuf *pbuf_pool_free_cache = NULL;
 void
 pbuf_init(void)
 {
-  struct pbuf *p, *q;
+  struct pbuf *p, *q = 0;
   u16_t i;
 
   pbuf_pool = (struct pbuf *)&pbuf_pool_memory[0];
-  ASSERT("pbuf_init: pool aligned", (long)pbuf_pool % MEM_ALIGNMENT == 0);
+  LWIP_ASSERT("pbuf_init: pool aligned", (long)pbuf_pool % MEM_ALIGNMENT == 0);
    
 #ifdef PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
@@ -191,9 +191,6 @@ pbuf_pool_free(struct pbuf *p)
     }
 #endif /* PBUF_STATS */
 
-#ifdef SYS_LIGHTWEIGHT_PROT
-    old_level = sys_arch_protect();
-#endif /* SYS_LIGHTWEIGHT_PROT */    
   if(pbuf_pool_alloc_cache == NULL) {
     pbuf_pool_alloc_cache = p;
   } else {  
@@ -244,7 +241,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
   case PBUF_RAW:
     break;
   default:
-    ASSERT("pbuf_alloc: bad pbuf layer", 0);
+    LWIP_ASSERT("pbuf_alloc: bad pbuf layer", 0);
     return NULL;
   }
 
@@ -292,12 +289,12 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       r = q;
       q->ref = 1;
-      q = q->next;
+      /*q = q->next;            DJH: Appears to be an unnecessary statement*/
       rsize -= PBUF_POOL_BUFSIZE;
     }
     r->next = NULL;
 
-    ASSERT("pbuf_alloc: pbuf->payload properly aligned",
+    LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
 	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
   case PBUF_RAM:
@@ -312,7 +309,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     p->next = NULL;
     p->flags = PBUF_FLAG_RAM;
 
-    ASSERT("pbuf_alloc: pbuf->payload properly aligned",
+    LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
 	   ((u32_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
   case PBUF_ROM:
@@ -328,7 +325,7 @@ pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag)
     p->flags = PBUF_FLAG_ROM;
     break;
   default:
-    ASSERT("pbuf_alloc: erroneous flag", 0);
+    LWIP_ASSERT("pbuf_alloc: erroneous flag", 0);
     return NULL;
   }
   p->ref = 1;
@@ -426,7 +423,7 @@ pbuf_realloc(struct pbuf *p, u16_t size)
   struct pbuf *q, *r;
   u16_t rsize;
 
-  ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
+  LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
          p->flags == PBUF_FLAG_ROM ||
          p->flags == PBUF_FLAG_RAM);
 
@@ -549,11 +546,11 @@ pbuf_free(struct pbuf *p)
 
   PERF_START;
   
-  ASSERT("pbuf_free: sane flags", p->flags == PBUF_FLAG_POOL ||
+  LWIP_ASSERT("pbuf_free: sane flags", p->flags == PBUF_FLAG_POOL ||
          p->flags == PBUF_FLAG_ROM ||
          p->flags == PBUF_FLAG_RAM);
   
-  ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
+  LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
 
 #ifdef SYS_LIGHTWEIGHT_PROT
   /* Since decrementing ref cannot be guarranteed to be a single machine operation
@@ -564,7 +561,7 @@ pbuf_free(struct pbuf *p)
   /* Decrement reference count. */  
   p->ref--;
 
-  q = NULL;
+  /*q = NULL;           DJH: Unnecessary statement*/
   /* If reference count == 0, actually deallocate pbuf. */
   if(p->ref == 0) {
 #ifdef SYS_LIGHTWEIGHT_PROT

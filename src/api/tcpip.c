@@ -49,15 +49,32 @@ static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg;
 static sys_mbox_t mbox;
 
+static int tcpip_tcp_timer_active = 0;
+
+
 /*-----------------------------------------------------------------------------------*/
 static void
 tcpip_tcp_timer(void *arg)
 {
+  (void)arg;
+
   tcp_tmr();
-  sys_timeout(TCP_TMR_INTERVAL, (sys_timeout_handler)tcpip_tcp_timer, NULL);
+  if(tcp_active_pcbs || tcp_tw_pcbs) {
+  	sys_timeout(TCP_TMR_INTERVAL, (sys_timeout_handler)tcpip_tcp_timer, NULL);
+  } else {
+	tcpip_tcp_timer_active = 0;
+  }
+}
+
+void
+tcp_timer_needed(void)
+{
+  if(!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
+	tcpip_tcp_timer_active = 1;
+  	sys_timeout(TCP_TMR_INTERVAL, (sys_timeout_handler)tcpip_tcp_timer, NULL);
+  }
 }
 /*-----------------------------------------------------------------------------------*/
-
 static void
 tcpip_thread(void *arg)
 {
@@ -67,8 +84,6 @@ tcpip_thread(void *arg)
   udp_init();
   tcp_init();
 
-  sys_timeout(TCP_TMR_INTERVAL, (sys_timeout_handler)tcpip_tcp_timer, NULL);
-  
   if(tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
@@ -83,6 +98,10 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_INPUT:
       DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
       ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+      break;
+    case TCPIP_MSG_LINK:
+      DEBUGF(TCPIP_DEBUG, ("tcpip_thread: LINK packet %p\n", (void *)msg));
+      msg->msg.inp.netif->input(msg->msg.inp.p, msg->msg.inp.netif);
       break;
     default:
       break;
@@ -109,6 +128,24 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   return ERR_OK;
 }
 /*-----------------------------------------------------------------------------------*/
+err_t
+tcpip_link_input(struct pbuf *p, struct netif *inp)
+{
+  struct tcpip_msg *msg;
+  
+  msg = memp_mallocp(MEMP_TCPIP_MSG);
+  if(msg == NULL) {
+    pbuf_free(p);    
+    return ERR_MEM;  
+  }
+  
+  msg->type = TCPIP_MSG_LINK;
+  msg->msg.inp.p = p;
+  msg->msg.inp.netif = inp;
+  sys_mbox_post(mbox, msg);
+  return ERR_OK;
+}
+/*-----------------------------------------------------------------------------------*/
 void
 tcpip_apimsg(struct api_msg *apimsg)
 {
@@ -129,7 +166,7 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
   mbox = sys_mbox_new();
-  sys_thread_new((void *)tcpip_thread, NULL);
+  sys_thread_new(tcpip_thread, NULL);
 }
 /*-----------------------------------------------------------------------------------*/
 

@@ -43,6 +43,7 @@ struct netif *netif_default = NULL;
 struct netif *
 netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 	  struct ip_addr *gw,
+	  void *state,
 	  void (* init)(struct netif *netif),
 	  err_t (* input)(struct pbuf *p, struct netif *netif))
 {
@@ -55,6 +56,7 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
     return NULL;
   }
   
+  netif->state = state;
   netif->num = netifnum++;
   netif->input = input;
   ip_addr_set(&(netif->ip_addr), ipaddr);
@@ -77,6 +79,36 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
 #endif /* NETIF_DEBUG */
   return netif;
 }
+/*-----------------------------------------------------------------------------------*/
+void netif_remove(struct netif * netif)
+{
+	if ( netif == NULL ) return;  
+ 
+	/*  is it the first netif? */
+	if(netif_list == netif) {
+		netif_list = netif->next;
+	}    
+	else
+	{	
+		/*  look for netif further down the list */
+		struct netif * tmpNetif;
+ 		for(tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
+			if(tmpNetif->next == netif) {
+				tmpNetif->next = netif->next;
+				break;
+			}    
+		}
+		if(tmpNetif == NULL)
+			return; /*  we didn't find any netif today */
+	}
+
+	if(netif_default == netif)
+		netif_default = NULL;
+
+	DEBUGF(NETIF_DEBUG, ("netif_remove: removed netif"));
+	mem_free( netif );
+}
+
 /*-----------------------------------------------------------------------------------*/
 struct netif *
 netif_find(char *name)
@@ -131,7 +163,7 @@ netif_set_default(struct netif *netif)
 {
   netif_default = netif;
   DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
-		       netif->name[0], netif->name[1]));
+		       netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
 /*-----------------------------------------------------------------------------------*/
 void
