@@ -772,9 +772,9 @@ udp_new(void) {
   if (pcb != NULL) {
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
+    pcb->ttl = UDP_TTL;
   }
   
-  pcb->ttl = UDP_TTL;
   
   return pcb;
 }
