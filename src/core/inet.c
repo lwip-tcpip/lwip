@@ -302,11 +302,11 @@ inet_chksum_pbuf(struct pbuf *p)
  */
 char *inet_ntoa(struct in_addr addr)
 {
-  static u8_t str[16];
+  static char str[16];
   u32_t s_addr = addr.s_addr;
-  u8_t inv[3];
-  u8_t *rp;
-  u8_t *ap;
+  char inv[3];
+  char *rp;
+  char *ap;
   u8_t rem;
   u8_t n;
   u8_t i;
