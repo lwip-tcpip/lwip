@@ -47,7 +47,7 @@ stats_init(void)
 {
   memset(&lwip_stats, 0, sizeof(struct stats_));
 }
-
+#if LWIP_STATS_DISPLAY
 void
 stats_display_proto(struct stats_proto *proto, char *name)
 {
@@ -109,6 +109,6 @@ stats_display(void)
   }
 	
 }
-
+#endif /* LWIP_STATS_DISPLAY */
 #endif /* LWIP_STATS */
 

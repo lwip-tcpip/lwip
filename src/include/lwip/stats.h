@@ -144,6 +144,11 @@ void stats_init(void);
 #define LINK_STATS_INC(x)
 #endif
 
+/* Display of statistics */
+#if LWIP_STATS_DISPLAY
+void stats_display(void);
+#endif
+
 #endif /* __LWIP_STATS_H__ */
 
 

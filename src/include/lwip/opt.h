@@ -356,6 +356,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 #if LWIP_STATS
 
+#ifndef LWIP_STATS_DISPLAY
+#define LWIP_STATS_DISPLAY 0
+#endif
+
 #ifndef LINK_STATS
 #define LINK_STATS	1
 #endif
