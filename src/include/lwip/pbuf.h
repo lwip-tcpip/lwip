@@ -29,7 +29,7 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 #ifndef __LWIP_PBUF_H__
 #define __LWIP_PBUF_H__
 
@@ -108,6 +108,7 @@ void pbuf_ref(struct pbuf *p);
 void pbuf_ref_chain(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
 u8_t pbuf_clen(struct pbuf *p);  
+void pbuf_cat(struct pbuf *h, struct pbuf *t);
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_take(struct pbuf *f);
 struct pbuf *pbuf_dechain(struct pbuf *p);

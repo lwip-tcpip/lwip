@@ -53,7 +53,7 @@ void             tcp_init    (void);  /* Must be called first to
            initialize TCP. */
 void             tcp_tmr     (void);  /* Must be called every
            TCP_TMR_INTERVAL
-           ms. (Typically 100 ms). */
+           ms. (Typically 250 ms). */
 /* Application program's interface: */
 struct tcp_pcb * tcp_new     (void);
 struct tcp_pcb * tcp_alloc   (u8_t prio);
@@ -115,30 +115,32 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 #define TCP_SEQ_GT(a,b)     ((s32_t)((a)-(b)) > 0)
 #define TCP_SEQ_GEQ(a,b)    ((s32_t)((a)-(b)) >= 0)
 
-#define TCP_FIN 0x01
-#define TCP_SYN 0x02
-#define TCP_RST 0x04
-#define TCP_PSH 0x08
-#define TCP_ACK 0x10
-#define TCP_URG 0x20
+#define TCP_FIN 0x01U
+#define TCP_SYN 0x02U
+#define TCP_RST 0x04U
+#define TCP_PSH 0x08U
+#define TCP_ACK 0x10U
+#define TCP_URG 0x20U
+#define TCP_ECE 0x40U
+#define TCP_CWR 0x80U
 
-#define TCP_FLAGS 0x3f
+#define TCP_FLAGS 0x3fU
 
 /* Length of the TCP header, excluding options. */
 #define TCP_HLEN 20
 
 #ifndef TCP_TMR_INTERVAL
-#define TCP_TMR_INTERVAL       100  /* The TCP timer interval in
+#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in
                                        milliseconds. */
 #endif /* TCP_TMR_INTERVAL */
 
 #ifndef TCP_FAST_INTERVAL
-#define TCP_FAST_INTERVAL      200  /* the fine grained timeout in
+#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in
                                        milliseconds */
 #endif /* TCP_FAST_INTERVAL */
 
 #ifndef TCP_SLOW_INTERVAL
-#define TCP_SLOW_INTERVAL      500  /* the coarse grained timeout in
+#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in
                                        milliseconds */
 #endif /* TCP_SLOW_INTERVAL */
 
@@ -149,6 +151,19 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 
 #define TCP_MSL 60000  /* The maximum segment lifetime in microseconds */
 
+/*
+ * User-settable options (used with setsockopt).
+ */
+#define	TCP_NODELAY	   0x01	   /* don't delay send to coalesce packets */
+#define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keepalive miliseconds */
+
+/* Keepalive values */
+#define  TCP_KEEPDEFAULT   7200000                       /* KEEPALIVE timer in miliseconds */
+#define  TCP_KEEPINTVL     75000                         /* Time between KEEPALIVE probes in miliseconds */
+#define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
+#define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
+
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -158,7 +173,7 @@ struct tcp_hdr {
   PACK_STRUCT_FIELD(u16_t dest);
   PACK_STRUCT_FIELD(u32_t seqno);
   PACK_STRUCT_FIELD(u32_t ackno);
-  PACK_STRUCT_FIELD(u16_t _offset_flags);
+  PACK_STRUCT_FIELD(u16_t _hdrlen_rsvd_flags);
   PACK_STRUCT_FIELD(u16_t wnd);
   PACK_STRUCT_FIELD(u16_t chksum);
   PACK_STRUCT_FIELD(u16_t urgp);
@@ -168,11 +183,15 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define TCPH_OFFSET(hdr) (ntohs((hdr)->_offset_flags) >> 8)
-#define TCPH_FLAGS(hdr) (ntohs((hdr)->_offset_flags) & 0xff)
+#define TCPH_OFFSET(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 8)
+#define TCPH_HDRLEN(phdr) (ntohs((phdr)->_hdrlen_rsvd_flags) >> 12)
+#define TCPH_FLAGS(phdr)  (ntohs((phdr)->_hdrlen_rsvd_flags) & TCP_FLAGS)
 
-#define TCPH_OFFSET_SET(hdr, offset) (hdr)->_offset_flags = htons(((offset) << 8) | TCPH_FLAGS(hdr))
-#define TCPH_FLAGS_SET(hdr, flags) (hdr)->_offset_flags = htons((TCPH_OFFSET(hdr) << 8) | (flags))
+#define TCPH_OFFSET_SET(phdr, offset) (phdr)->_hdrlen_rsvd_flags = htons(((offset) << 8) | TCPH_FLAGS(phdr))
+#define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | TCPH_FLAGS(phdr))
+#define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons((ntohs((phdr)->_hdrlen_rsvd_flags) & ~TCP_FLAGS) | (flags))
+#define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (flags))
+#define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (TCPH_FLAGS(phdr) & ~(flags)) )
 
 #define TCP_TCPLEN(seg) ((seg)->len + ((TCPH_FLAGS((seg)->tcphdr) & TCP_FIN || \
           TCPH_FLAGS((seg)->tcphdr) & TCP_SYN)? 1: 0))
@@ -194,17 +213,30 @@ enum tcp_state {
 
 /* the TCP protocol control block */
 struct tcp_pcb {
+/* Common members of all PCB types */
+  IP_PCB;
+
+/* Protocol specific PCB members */
+
   struct tcp_pcb *next;   /* for the linked list */
+
+  enum tcp_state state;   /* TCP state */
+
   u8_t prio;
   void *callback_arg;
 
-  struct ip_addr local_ip;
   u16_t local_port;
-  enum tcp_state state;   /* TCP state */
-  
-  struct ip_addr remote_ip;
   u16_t remote_port;
   
+  u8_t flags;
+#define TF_ACK_DELAY (u8_t)0x01U   /* Delayed ACK. */
+#define TF_ACK_NOW   (u8_t)0x02U   /* Immediate ACK. */
+#define TF_INFR      (u8_t)0x04U   /* In fast recovery. */
+#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
+#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
+#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
+#define TF_NODELAY   (u8_t)0x40U   /* Disable Nagle algorithm */
+
   /* receiver varables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
@@ -217,14 +249,6 @@ struct tcp_pcb {
   u16_t rtime;
   
   u16_t mss;   /* maximum segment size */
-
-  u8_t flags;
-#define TF_ACK_DELAY 0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW   0x02U   /* Immediate ACK. */
-#define TF_INFR      0x04U   /* In fast recovery. */
-#define TF_RESET     0x08U   /* Connection was reset. */
-#define TF_CLOSED    0x10U   /* Connection was sucessfully closed. */
-#define TF_GOT_FIN   0x20U   /* Connection was closed by the remote end. */
   
   /* RTT estimation variables. */
   u16_t rttest; /* RTT estimate in 500ms ticks */
@@ -282,20 +306,31 @@ struct tcp_pcb {
   /* Function to be called whenever a fatal error occurs. */
   void (* errf)(void *arg, err_t err);
 #endif /* LWIP_CALLBACK_API */
+
+  /* idle time before KEEPALIVE is sent */
+  u32_t keepalive;
+  
+  /* KEEPALIVE counter */
+  u8_t keep_cnt;
 };
 
 struct tcp_pcb_listen {  
+/* Common members of all PCB types */
+  IP_PCB;
+
+/* Protocol specific PCB members */
   struct tcp_pcb_listen *next;   /* for the linked list */
-  u8_t prio;
-  void *callback_arg;
   
-  struct ip_addr local_ip;
-  u16_t local_port; 
   /* Even if state is obviously LISTEN this is here for
    * field compatibility with tpc_pcb to which it is cast sometimes
    * Until a cleaner solution emerges this is here.FIXME
    */ 
   enum tcp_state state;   /* TCP state */
+
+  u8_t prio;
+  void *callback_arg;
+  
+  u16_t local_port; 
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
@@ -396,6 +431,8 @@ void tcp_rst(u32_t seqno, u32_t ackno,
 
 u32_t tcp_next_iss(void);
 
+void tcp_keepalive(struct tcp_pcb *pcb);
+
 extern struct tcp_pcb *tcp_input_pcb;
 extern u32_t tcp_ticks;
 
@@ -406,7 +443,11 @@ void tcp_debug_print_state(enum tcp_state s);
 void tcp_debug_print_pcbs(void);
 int tcp_pcbs_sane(void);
 #else
-#define tcp_pcbs_sane() 1
+#  define tcp_debug_print(tcphdr)
+#  define tcp_debug_print_flags(flags)
+#  define tcp_debug_print_state(s)
+#  define tcp_debug_print_pcbs()
+#  define tcp_pcbs_sane() 1
 #endif /* TCP_DEBUG */
 
 #if NO_SYS

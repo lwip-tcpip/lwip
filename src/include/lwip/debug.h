@@ -61,19 +61,19 @@
 /** flag for LWIP_DEBUGF to halt after printing this debug message */
 #define DBG_HALT    0x08U
 
-#ifdef LWIP_DEBUG
-# ifndef LWIP_NOASSERT
+#ifndef LWIP_NOASSERT
 #  define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x); } while(0)
-# else
+#else
 #  define LWIP_ASSERT(x,y) 
-# endif
+#endif
+
+#ifdef LWIP_DEBUG
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least DBG_LEVEL
  */
 #  define LWIP_DEBUGF(debug,x) do { if (((debug) & DBG_ON) && ((debug) & DBG_TYPES_ON) && (((debug) & DBG_MASK_LEVEL) >= DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if ((debug) & DBG_HALT) while(1); } } while(0)
 #  define LWIP_ERROR(x)   do { LWIP_PLATFORM_DIAG(x); } while(0)  
 #else /* LWIP_DEBUG */
-#  define LWIP_ASSERT(x,y) 
 #  define LWIP_DEBUGF(debug,x) 
 #  define LWIP_ERROR(x)  
 #endif /* LWIP_DEBUG */

@@ -31,13 +31,13 @@
  */
 
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip.c
  *
  * This is the code for the IP layer.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 #include "lwip/opt.h"
 
@@ -49,6 +49,7 @@
 #include "lwip/inet.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"
+#include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 
@@ -61,23 +62,23 @@
 #  include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_init:
  *
  * Initializes the IP layer.
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 ip_init(void)
 {
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_lookup:
  *
  * An experimental feature that will be changed in future versions. Do
  * not depend on it yet...
  */
-/*-----------------------------------------------------------------------------------*/
+
 #ifdef LWIP_DEBUG
 u8_t
 ip_lookup(void *header, struct netif *inp)
@@ -106,11 +107,12 @@ ip_lookup(void *header, struct netif *inp)
 #endif /* IP_OPTIONS == 0 */
 
   switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP > 0
+#if LWIP_UDP
   case IP_PROTO_UDP:
+  case IP_PROTO_UDPLITE:
     return udp_lookup(iphdr, inp);
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0
+#if LWIP_TCP
   case IP_PROTO_TCP:
     return 1;
 #endif /* LWIP_TCP */
@@ -121,7 +123,7 @@ ip_lookup(void *header, struct netif *inp)
   }
 }
 #endif /* LWIP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_route:
  *
  * Finds the appropriate network interface for a given IP address. It
@@ -129,7 +131,7 @@ ip_lookup(void *header, struct netif *inp)
  * if the masked IP address of the network interface equals the masked
  * IP address given to the function.
  */
-/*-----------------------------------------------------------------------------------*/
+
 struct netif *
 ip_route(struct ip_addr *dest)
 {
@@ -147,14 +149,14 @@ ip_route(struct ip_addr *dest)
   return netif_default;
 }
 #if IP_FORWARD
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_forward:
  *
  * Forwards an IP packet. It finds an appropriate route for the
  * packet, decrements the TTL value of the packet, adjusts the
  * checksum and outputs the packet on the appropriate interface.
  */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
@@ -199,10 +201,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   LWIP_DEBUGF(IP_DEBUG, ("ip_forward: forwarding packet to 0x%lx\n",
                     iphdr->dest.addr));
 
-#ifdef IP_STATS
-  ++lwip_stats.ip.fw;
-  ++lwip_stats.ip.xmit;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.fw);
+  IP_STATS_INC(ip.xmit);
     snmp_inc_ipforwdatagrams();
 
   PERF_STOP("ip_forward");
@@ -210,7 +210,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   netif->output(netif, p, (struct ip_addr *)&(iphdr->dest));
 }
 #endif /* IP_FORWARD */
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_input:
  *
  * This function is called by the network interface device driver when
@@ -221,30 +221,24 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
  *
  * Finally, the packet is sent to the upper layer protocol input function.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 ip_input(struct pbuf *p, struct netif *inp) {
   static struct ip_hdr *iphdr;
   static struct netif *netif;
   static u16_t iphdrlen;
 
-#ifdef IP_STATS
-  ++lwip_stats.ip.recv;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.recv);
   snmp_inc_ipinreceives();
 
   /* identify the IP header */
   iphdr = p->payload;
   if (IPH_V(iphdr) != 4) {
     LWIP_DEBUGF(IP_DEBUG | 1, ("IP packet dropped due to bad version number %u\n", IPH_V(iphdr)));
-#if IP_DEBUG
     ip_debug_print(p);
-#endif /* IP_DEBUG */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.err;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.err);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
@@ -259,10 +253,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
       iphdrlen, p->len));
     /* free (drop) packet pbufs */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.lenerr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.lenerr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
@@ -271,14 +263,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (inet_chksum(iphdr, iphdrlen) != 0) {
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Checksum (0x%x) failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
-#if IP_DEBUG
     ip_debug_print(p);
-#endif /* IP_DEBUG */
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.chkerr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.chkerr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipindiscards();
     return ERR_OK;
   }
@@ -363,10 +351,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since it was fragmented (0x%x) (while IP_REASSEMBLY == 0).\n",
                   ntohs(IPH_OFFSET(iphdr))));
-#ifdef IP_STATS
-    ++lwip_stats.ip.opterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.opterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
@@ -376,30 +362,31 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (iphdrlen > IP_HLEN) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);
-#ifdef IP_STATS
-    ++lwip_stats.ip.opterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.opterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
     return ERR_OK;
   }
 #endif /* IP_OPTIONS == 0 */
 
   /* send to upper layers */
-#if IP_DEBUG
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: \n"));
   ip_debug_print(p);
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %d p->tot_len %d\n", p->len, p->tot_len));
-#endif /* IP_DEBUG */
+
+#if LWIP_RAW
+  if (!raw_input(p, inp)) {
+#endif /* LWIP_RAW */
 
   switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP > 0
+#if LWIP_UDP
   case IP_PROTO_UDP:
+  case IP_PROTO_UDPLITE:
     snmp_inc_ipindelivers();
     udp_input(p, inp);
     break;
 #endif /* LWIP_UDP */
-#if LWIP_TCP > 0
+#if LWIP_TCP
   case IP_PROTO_TCP:
     snmp_inc_ipindelivers();
     tcp_input(p, inp);
@@ -420,17 +407,18 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %d\n", IPH_PROTO(iphdr)));
 
-#ifdef IP_STATS
-    ++lwip_stats.ip.proterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.proterr);
+    IP_STATS_INC(ip.drop);
     snmp_inc_ipunknownprotos();
 
   }
+#if LWIP_RAW
+  } /* LWIP_RAW */
+#endif
   return ERR_OK;
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_output_if:
  *
  * Sends an IP packet on a network interface. This function constructs
@@ -438,10 +426,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
  * IP address is NULL, the IP address of the outgoing network
  * interface is filled in as source address.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
-ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-             u8_t ttl,
+ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+             u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
   static struct ip_hdr *iphdr;
@@ -453,9 +441,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     if (pbuf_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
 
-#ifdef IP_STATS
-      ++lwip_stats.ip.err;
-#endif /* IP_STATS */
+      IP_STATS_INC(ip.err);
       snmp_inc_ipoutdiscards();
       return ERR_BUF;
     }
@@ -467,7 +453,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     ip_addr_set(&(iphdr->dest), dest);
 
-    IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, 0);
+    IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, tos);
     IPH_LEN_SET(iphdr, htons(p->tot_len));
     IPH_OFFSET_SET(iphdr, htons(IP_DF));
     IPH_ID_SET(iphdr, htons(ip_id));
@@ -492,44 +478,39 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     return ip_frag(p,netif,dest);
 #endif
 
-#ifdef IP_STATS
-  lwip_stats.ip.xmit++;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.xmit);
+
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%u\n", netif->name[0], netif->name[1], netif->num));
-#if IP_DEBUG
   ip_debug_print(p);
-#endif /* IP_DEBUG */
 
   LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
 
   return netif->output(netif, p, dest);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_output:
  *
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  */
-/*-----------------------------------------------------------------------------------*/
+
 err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-          u8_t ttl, u8_t proto)
+          u8_t ttl, u8_t tos, u8_t proto)
 {
   struct netif *netif;
 
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%lx\n", dest->addr));
 
-#ifdef IP_STATS
-    ++lwip_stats.ip.rterr;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.rterr);
     snmp_inc_ipoutdiscards();
     return ERR_RTE;
   }
 
-  return ip_output_if (p, src, dest, ttl, proto, netif);
+  return ip_output_if(p, src, dest, ttl, tos, proto, netif);
 }
-/*-----------------------------------------------------------------------------------*/
+
 #if IP_DEBUG
 void
 ip_debug_print(struct pbuf *p)
@@ -573,7 +554,7 @@ ip_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+
 
 
 

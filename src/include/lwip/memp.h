@@ -37,6 +37,7 @@
 
 typedef enum {
   MEMP_PBUF,
+  MEMP_RAW_PCB,
   MEMP_UDP_PCB,
   MEMP_TCP_PCB,
   MEMP_TCP_PCB_LISTEN,

@@ -127,7 +127,7 @@ mem_init(void)
 
   lfree = (struct mem *)ram;
 
-#ifdef MEM_STATS
+#if MEM_STATS
   lwip_stats.mem.avail = MEM_SIZE;
 #endif /* MEM_STATS */
 }
@@ -148,7 +148,7 @@ mem_free(void *rmem)
   
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     LWIP_DEBUGF(MEM_DEBUG | 3, ("mem_free: illegal memory\n"));
-#ifdef MEM_STATS
+#if MEM_STATS
     ++lwip_stats.mem.err;
 #endif /* MEM_STATS */
     sys_sem_signal(mem_sem);
@@ -164,7 +164,7 @@ mem_free(void *rmem)
     lfree = mem;
   }
   
-#ifdef MEM_STATS
+#if MEM_STATS
   lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram);
   
 #endif /* MEM_STATS */
@@ -183,7 +183,7 @@ mem_reallocm(void *rmem, mem_size_t newsize)
   mem_free(rmem);
   return nmem;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void *
 mem_realloc(void *rmem, mem_size_t newsize)
 {
@@ -215,7 +215,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   ptr = (u8_t *)mem - ram;
 
   size = mem->next - ptr - SIZEOF_STRUCT_MEM;
-#ifdef MEM_STATS
+#if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
 #endif /* MEM_STATS */
   
@@ -273,7 +273,7 @@ mem_malloc(mem_size_t size)
       
       mem2->used = 0;      
       mem->used = 1;
-#ifdef MEM_STATS
+#if MEM_STATS
       lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
       /*      if (lwip_stats.mem.max < lwip_stats.mem.used) {
         lwip_stats.mem.max = lwip_stats.mem.used;
@@ -299,7 +299,7 @@ mem_malloc(mem_size_t size)
     }    
   }
   LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %d bytes\n", (int)size));
-#ifdef MEM_STATS
+#if MEM_STATS
   ++lwip_stats.mem.err;
 #endif /* MEM_STATS */  
   sys_sem_signal(mem_sem);

@@ -38,6 +38,7 @@
 
 #include "lwip/ip.h"
 
+#include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 
@@ -50,7 +51,8 @@ enum netconn_type {
   NETCONN_TCP,
   NETCONN_UDP,
   NETCONN_UDPLITE,
-  NETCONN_UDPNOCHKSUM
+  NETCONN_UDPNOCHKSUM,
+  NETCONN_RAW
 };
 
 enum netconn_state {
@@ -82,6 +84,7 @@ struct netconn {
   union {
     struct tcp_pcb *tcp;
     struct udp_pcb *udp;
+    struct raw_pcb *raw;
   } pcb;
   err_t err;
   sys_mbox_t mbox;
@@ -120,6 +123,9 @@ u16_t             netbuf_fromport (struct netbuf *buf);
 struct netconn *  netconn_new     (enum netconn_type type);
 struct
 netconn *netconn_new_with_callback(enum netconn_type t,
+                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
+struct
+netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
 err_t             netconn_delete  (struct netconn *conn);
 enum netconn_type netconn_type    (struct netconn *conn);

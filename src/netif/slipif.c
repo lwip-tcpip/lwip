@@ -115,9 +115,7 @@ slipif_input( struct netif * netif )
   /* Received whole packet. */
   pbuf_realloc(q, recved);
   
-#ifdef LINK_STATS
-  ++lwip_stats.link.recv;
-#endif /* LINK_STATS */         
+  LINK_STATS_INC(link.recv);
   
   LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
   return q;
@@ -141,16 +139,13 @@ slipif_input( struct netif * netif )
   LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
   p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
-#ifdef LINK_STATS           
   if (p == NULL) {
-    ++lwip_stats.link.drop;
+    LINK_STATS_INC(link.drop);
     LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
   }
-#endif /* LINK_STATS */                  
   
   if (q != NULL) {
-    pbuf_chain(q, p);
-    pbuf_free(p);
+    pbuf_cat(q, p);
   } else {
     q = p;
   }

@@ -63,7 +63,7 @@ static void  ethernetif_input(struct netif *netif);
 static err_t ethernetif_output(struct netif *netif, struct pbuf *p,
              struct ip_addr *ipaddr);
 
-/*-----------------------------------------------------------------------------------*/
+
 static void
 low_level_init(struct netif *netif)
 {
@@ -87,7 +87,7 @@ low_level_init(struct netif *netif)
  
   /* Do whatever else is needed to initialize interface. */  
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * low_level_output():
  *
@@ -96,7 +96,7 @@ low_level_init(struct netif *netif)
  * might be chained.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 static err_t
 low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
@@ -120,7 +120,7 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
 
   return ERR_OK;
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * low_level_input():
  *
@@ -128,7 +128,7 @@ low_level_output(struct ethernetif *ethernetif, struct pbuf *p)
  * packet from the interface into the pbuf.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 static struct pbuf *
 low_level_input(struct ethernetif *ethernetif)
 {
@@ -165,7 +165,7 @@ low_level_input(struct ethernetif *ethernetif)
 
   return p;  
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * ethernetif_output():
  *
@@ -174,7 +174,7 @@ low_level_input(struct ethernetif *ethernetif)
  * do the actuall transmission of the packet.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 static err_t
 ethernetif_output(struct netif *netif, struct pbuf *p,
       struct ip_addr *ipaddr)
@@ -264,7 +264,7 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
   return low_level_output(ethernetif, p);
 
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * ethernetif_input():
  *
@@ -274,7 +274,7 @@ ethernetif_output(struct netif *netif, struct pbuf *p,
  * interface.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 static void
 ethernetif_input(struct netif *netif)
 {
@@ -314,14 +314,14 @@ ethernetif_input(struct netif *netif)
     }
   }
 }
-/*-----------------------------------------------------------------------------------*/
+
 static void
 arp_timer(void *arg)
 {
   arp_tmr();
   sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+
 /*
  * ethernetif_init():
  *
@@ -330,7 +330,7 @@ arp_timer(void *arg)
  * actual setup of the hardware.
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 void
 ethernetif_init(struct netif *netif)
 {
@@ -350,4 +350,4 @@ ethernetif_init(struct netif *netif)
 
   sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
 }
-/*-----------------------------------------------------------------------------------*/
+

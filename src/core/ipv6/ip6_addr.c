@@ -33,7 +33,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 
-/*-----------------------------------------------------------------------------------*/
+
 int
 ip_addr_maskcmp(struct ip_addr *addr1, struct ip_addr *addr2,
                 struct ip_addr *mask)
@@ -44,7 +44,7 @@ ip_addr_maskcmp(struct ip_addr *addr1, struct ip_addr *addr2,
          (addr1->addr[3] & mask->addr[3]) == (addr2->addr[3] & mask->addr[3]));
         
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 ip_addr_cmp(struct ip_addr *addr1, struct ip_addr *addr2)
 {
@@ -53,7 +53,7 @@ ip_addr_cmp(struct ip_addr *addr1, struct ip_addr *addr2)
          addr1->addr[2] == addr2->addr[2] &&
          addr1->addr[3] == addr2->addr[3]);
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 ip_addr_set(struct ip_addr *dest, struct ip_addr *src)
 {
@@ -63,7 +63,7 @@ ip_addr_set(struct ip_addr *dest, struct ip_addr *src)
   dest->addr[2] = src->addr[2];
   dest->addr[3] = src->addr[3];*/
 }
-/*-----------------------------------------------------------------------------------*/
+
 int
 ip_addr_isany(struct ip_addr *addr)
 {
@@ -71,7 +71,7 @@ ip_addr_isany(struct ip_addr *addr)
   return((addr->addr[0] | addr->addr[1] | addr->addr[2] | addr->addr[3]) == 0);
 }
 
-/*-----------------------------------------------------------------------------------*/
+
 /*#if IP_DEBUG*/
 void
 ip_addr_debug_print(struct ip_addr *addr)
@@ -87,4 +87,4 @@ ip_addr_debug_print(struct ip_addr *addr)
          ntohl(addr->addr[3]) & 0xffff);
 }
 /*#endif*/ /* IP_DEBUG */
-/*-----------------------------------------------------------------------------------*/
+

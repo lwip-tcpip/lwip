@@ -31,13 +31,13 @@
  * 
  */
 
-/*-----------------------------------------------------------------------------------*/
+
 /* ip_frag.c
  *
  * This is the code for IP segmentation and reassembly
  *
  */
-/*-----------------------------------------------------------------------------------*/
+
 
 #include "lwip/opt.h"
 #include "lwip/sys.h"
@@ -109,9 +109,7 @@ ip_reass(struct pbuf *p)
   u16_t offset, len;
   u16_t i;
 
-#ifdef IP_STATS
-  ++lwip_stats.ip_frag.recv;
-#endif /* IP_STATS */
+  IPFRAG_STATS_INC(ip_frag.recv);
 
   iphdr = (struct ip_hdr *) ip_reassbuf;
   fraghdr = (struct ip_hdr *) p->payload;
@@ -135,9 +133,7 @@ ip_reass(struct pbuf *p)
       ip_addr_cmp(&iphdr->dest, &fraghdr->dest) &&
       IPH_ID(iphdr) == IPH_ID(fraghdr)) {
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: matching old packet\n"));
-#ifdef IP_STATS
-    ++lwip_stats.ip_frag.cachehit;
-#endif /* IP_STATS */
+    IPFRAG_STATS_INC(ip_frag.cachehit);
     /* Find out the offset in the reassembly buffer where we should
        copy the fragment. */
     len = ntohs(IPH_LEN(fraghdr)) - IPH_HL(fraghdr) * 4;
@@ -255,13 +251,9 @@ ip_reass(struct pbuf *p)
     q->len > ip_reasslen - i ? ip_reasslen - i : q->len);
     i += q->len;
   }
-#ifdef IP_STATS
-  ++lwip_stats.ip_frag.fw;
-#endif /* IP_STATS */
+  IPFRAG_STATS_INC(ip_frag.fw);
       } else {
-#ifdef IP_STATS
-  ++lwip_stats.ip_frag.memerr;
-#endif /* IP_STATS */
+  IPFRAG_STATS_INC(ip_frag.memerr);
       }
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
       return p;
@@ -269,9 +261,7 @@ ip_reass(struct pbuf *p)
   }
 
 nullreturn:
-#ifdef IP_STATS
-  ++lwip_stats.ip_frag.drop;
-#endif /* IP_STATS */
+  IPFRAG_STATS_INC(ip_frag.drop);
   pbuf_free(p);
   return NULL;
 }
@@ -347,9 +337,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
     header = pbuf_alloc(PBUF_LINK, 0, PBUF_RAM);
     pbuf_chain(header, rambuf);
     netif->output(netif, header, dest);
-#ifdef IP_STATS
-    ++lwip_stats.ip_frag.xmit;
-#endif /* IP_STATS */
+    IPFRAG_STATS_INC(ip_frag.xmit);
     pbuf_free(header);
 
     left -= cop;

@@ -97,7 +97,6 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
-#if NETIF_DEBUG
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
   ip_addr_debug_print(NETIF_DEBUG, ipaddr);
@@ -106,7 +105,6 @@ netif_add(struct ip_addr *ipaddr, struct ip_addr *netmask,
   LWIP_DEBUGF(NETIF_DEBUG, (" gw "));
   ip_addr_debug_print(NETIF_DEBUG, gw);
   LWIP_DEBUGF(NETIF_DEBUG, ("\n"));
-#endif /* NETIF_DEBUG */
   return netif;
 }
 
@@ -170,7 +168,7 @@ netif_find(char *name)
   LWIP_DEBUGF(NETIF_DEBUG, ("netif_find: didn't find %c%c\n", name[0], name[1]));
   return NULL;
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 {
@@ -191,7 +189,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
       if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
         /* this connection must be aborted */
         struct tcp_pcb *next = pcb->next;
-        LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", (void *)pcb));
+        LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting TCP pcb %p\n", (void *)pcb));
         tcp_abort(pcb);
         pcb = next;
       } else {
@@ -202,8 +200,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
       /* PCB bound to current local interface address? */
       if (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr))) {
         /* The PCB is listening to the old ipaddr and
-         * is set to listen to the new one instead
-         * TODO: how do we know it is _listening_? */
+         * is set to listen to the new one instead */
         ip_addr_set(&(lpcb->local_ip), ipaddr);
       }
     }
@@ -217,7 +214,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
     (unsigned int)(ntohl(netif->ip_addr.addr) >> 8 & 0xff),
     (unsigned int)(ntohl(netif->ip_addr.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
@@ -229,7 +226,7 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
            (unsigned int)(ntohl(netif->gw.addr) >> 8 & 0xff),
            (unsigned int)(ntohl(netif->gw.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
@@ -241,7 +238,7 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
            (unsigned int)(ntohl(netif->netmask.addr) >> 8 & 0xff),
            (unsigned int)(ntohl(netif->netmask.addr) & 0xff)));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_set_default(struct netif *netif)
 {
@@ -249,10 +246,10 @@ netif_set_default(struct netif *netif)
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
 }
-/*-----------------------------------------------------------------------------------*/
+
 void
 netif_init(void)
 {
   netif_list = netif_default = NULL;
 }
-/*-----------------------------------------------------------------------------------*/
+

@@ -1,17 +1,30 @@
 HISTORY
 
+(todo)
+
+  * Fix unaligned 16-bit access in checksum routine.
+
 (current)
 
   ++ Bug fixes:
 
-  * some debug formatters and casts fixed.
-  * numerous fixes in PPP.
+  * Fixed TCP bug induced by bad window resizing with unidirectional TCP traffic.
+  * Packets sent from ARP queue had invalid source hardware address.
+  * Some debug formatters and casts fixed.
+  * Numerous fixes in PPP.
 
   ++ Changes:
 
   * DEBUGF now is LWIP_DEBUGF
   * pbuf_dechain() has been re-enabled.
-  * Mentioned the changed use of CVS branches in README.
+  * Mentioned the use of CVS branches in README.
+  * Pass-by ARP requests do now update the cache.
+
+  ++ New features:
+
+  * No longer dependent on ctype.h.
+  * New socket options.
+  * Raw IP pcb support.
 
 (STABLE-0_6_3)
 

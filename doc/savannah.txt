@@ -11,7 +11,7 @@ Table of Contents:
 1 Anonymous CVS checkouts and updates
 -------------------------------------
 
-Obtain lwIP from the STABLE tree (on the CVS main trunk)
+Obtain lwIP from the CVS main trunk (stable)
 
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout lwip
@@ -24,29 +24,37 @@ cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r STABLE-0_6_
 Or, obtain a development branch as follows:
 
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-devel lwip
+cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip checkout -r DEVEL -d lwip-DEVEL lwip
 
 
-3 Merging from DEVEL branch to main trunk (stable branch)
+3 Merging from DEVEL branch to main trunk (stable)
 ---------------------------------------------------------
 
-Merging from DEVEL to main requires that the DEVEL branch
-has a tag indicating the previous merger. This tag is
-called 'merged_from_DEVEL_to_main'.
+Merging is a delicate process in CVS and requires the
+following disciplined steps in order to prevent conflicts
+in the future. Conflicts can be hard to solve!
+
+Merging from branch A to branch B requires that the A branch
+has a tag indicating the previous merger. This tag is called
+'merged_from_A_to_B'. After merging, the tag is moved in the
+A branch to remember this merger for future merge actions.
 
 IMPORTANT: AFTER COMMITTING A SUCCESFUL MERGE IN THE
-REPOSITORY, THE TAG MUST BE SET ON THE SOURCE OF THE
-MERGE BRANCH (REPLACING EXISTING TAGS WITH THE SAME NAME).
+REPOSITORY, THE TAG MUST BE SET ON THE SOURCE BRANCH OF THE
+MERGE ACTION (REPLACING EXISTING TAGS WITH THE SAME NAME).
 
 Merge all changes in DEVEL since our last merge to main:
 
 In the working copy of the main trunk:
 cvs update -P -jmerged_from_DEVEL_to_main -jDEVEL 
 
-Now move the tag in the DEVEL branch to this merge point,
-so we can use this for future merges.
+(This will apply the changes between 'merged_from_DEVEL_to_main'
+and 'DEVEL' to your work set of files)
 
-cvs -z4 rtag -F -r DEVEL merged_from_DEVEL_to_main lwip 
+If this worked out OK, we now move the tag in the DEVEL branch
+to this merge point, so we can use this point for future merges:
+
+cvs rtag -F -r DEVEL merged_from_DEVEL_to_main lwip 
 
 4 How to release lwIP
 ---------------------
@@ -61,7 +69,7 @@ is not created locally.
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
 cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip export -r STABLE-0_6_3 -d lwip-0.6.3 lwip
 
-Archive this directory using tar.
+Archive this directory using tar, gzip'd, bzip2'd and zip'd.
 
 tar czvf lwip-0.6.3.tar.gz lwip-0.6.3
 
@@ -74,17 +82,15 @@ Now, make a new release by creating a new directory for it (these are
 Savannah conventions so that it shows up in the Files list real nice):
 
 mkdir stable.pkg
-cd stable.pkg
-mkdir 0.6.3
-cd 0.6.3
+mkdir stable.pkg 0.6.3
 
 We can now copy the tar archive we made earlier into the release directory:
 
-cp /../../../lwip-0.6.3.tar.gz .
+cp ../../../lwip-0.6.3.tar.gz .
 
 Finally, synchronize this directory upwards to Savannah:
 
-rsync -n -e "ssh -1" -t -u -v -r . likewise@savannah.nongnu.org:/upload/lwip
+rsync -n -e "ssh -1" -t -u -v -r *.pkg likewise@savannah.nongnu.org:/upload/lwip
 
 This does a "dry run": no files are modified! After you have confirmed that
 this is what you intended to do, remove "-n" and actually synchronize for

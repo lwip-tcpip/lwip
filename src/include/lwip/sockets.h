@@ -70,6 +70,7 @@ struct sockaddr {
 #define  SO_USELOOPBACK  0x0040    /* bypass hardware when possible */
 #define  SO_LINGER  0x0080    /* linger on close if data present */
 #define  SO_OOBINLINE  0x0100    /* leave received OOB data in line */
+#define	 SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 
 #define SO_DONTLINGER   (int)(~SO_LINGER)
 
@@ -115,6 +116,36 @@ struct linger {
 
 /* Flags we can use with send and recv. */
 #define MSG_DONTWAIT    0x40            /* Nonblocking i/o for this operation only */
+
+
+/*
+ * Options for level IPPROTO_IP
+ */
+#define IP_TOS       1
+#define IP_TTL       2
+
+
+#define IPTOS_TOS_MASK          0x1E
+#define IPTOS_TOS(tos)          ((tos) & IPTOS_TOS_MASK)
+#define IPTOS_LOWDELAY          0x10
+#define IPTOS_THROUGHPUT        0x08
+#define IPTOS_RELIABILITY       0x04
+#define IPTOS_LOWCOST           0x02
+#define IPTOS_MINCOST           IPTOS_LOWCOST
+
+/*
+ * Definitions for IP precedence (also in ip_tos) (hopefully unused)
+ */
+#define IPTOS_PREC_MASK                 0xe0
+#define IPTOS_PREC(tos)                ((tos) & IPTOS_PREC_MASK)
+#define IPTOS_PREC_NETCONTROL           0xe0
+#define IPTOS_PREC_INTERNETCONTROL      0xc0
+#define IPTOS_PREC_CRITIC_ECP           0xa0
+#define IPTOS_PREC_FLASHOVERRIDE        0x80
+#define IPTOS_PREC_FLASH                0x60
+#define IPTOS_PREC_IMMEDIATE            0x40
+#define IPTOS_PREC_PRIORITY             0x20
+#define IPTOS_PREC_ROUTINE              0x00
 
 
 /*
