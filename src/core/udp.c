@@ -331,6 +331,28 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   PERF_STOP("udp_input");
 }
+
+err_t
+udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
+  struct ip_addr *dst_ip, u16_t dst_port)
+{
+  err_t err;
+  struct ip_addr pcb_remote_ip;
+  u16_t pcb_remote_port;
+  /* remember remote peer address of PCB */
+  pcb_remote_ip.addr = pcb->remote_ip.addr;
+  pcb_remote_port = pcb->remote_port;
+  /* copy packet destination address to PCB remote peer address */
+  pcb->remote_ip.addr = dst_ip.addr;
+  pcb->remote_port = dst_port;
+  /* send to the packet destination address */
+  err = udp_send(pcb, p);
+  /* reset PCB remote peer address */
+  pcb->remote_ip.addr = pcb_remote_ip.addr;
+  pcb->remote_port = pcb_remote_port;
+  return err;
+}
+
 /**
  * Send data using UDP.
  *
@@ -368,7 +390,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 
   /* not enough space to add an UDP header to first pbuf in given p chain? */
   if (pbuf_header(p, UDP_HLEN)) {
-    /* allocate header in new pbuf */
+    /* allocate header in a seperate new pbuf */
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */
     if (q == NULL) {
@@ -380,23 +402,25 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* { first pbuf q points to header pbuf } */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
   /* adding a header within p succeeded */
-  }  else {
+  } else {
     /* first pbuf q equals given pbuf */
     q = p;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
   }
-  /* { q now represents the packet to be sent */
+  /* { q now represents the packet to be sent } */
   udphdr = q->payload;
   udphdr->src = htons(pcb->local_port);
   udphdr->dest = htons(pcb->remote_port);
-  udphdr->chksum = 0x0000;
+  /* in UDP, 0 checksum means 'no checksum' */
+  udphdr->chksum = 0x0000; 
 
+  /* find the outgoing network interface for this packet */
   if ((netif = ip_route(&(pcb->remote_ip))) == NULL) {
     LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%lx\n", pcb->remote_ip.addr));
     UDP_STATS_INC(udp.rterr);
     return ERR_RTE;
   }
-  /* using IP_ANY_ADDR? */
+  /* PCB local address is IP_ANY_ADDR? */
   if (ip_addr_isany(&pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
     src_ip = &(netif->ip_addr);
@@ -422,8 +446,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     udphdr->chksum = 0x0000;
 #endif
     /* output to IP */
+    LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDPLITE,)\n"));
     err = ip_output_if (q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
-    snmp_inc_udpoutdatagrams();
+  /* UDP */
   } else {
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
     udphdr->len = htons(q->tot_len);
@@ -438,17 +463,18 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     udphdr->chksum = 0x0000;
 #endif
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04x\n", udphdr->chksum));
-    snmp_inc_udpoutdatagrams();
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
     err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
   }
+  /* TODO: must this be increased even if error occured? */
+  snmp_inc_udpoutdatagrams();
 
-  /* did we chain a header earlier? */
+  /* did we chain a seperate header pbuf earlier? */
   if (q != p) {
-    /* free the header */
-    /* p is also still referenced by the caller, and will live on */
-    pbuf_free(q);
+    /* free the header pbuf */
+    pbuf_free(q); q = NULL;
+    /* { p is still referenced by the caller, and will live on } */
   }
 
   UDP_STATS_INC(udp.xmit);
