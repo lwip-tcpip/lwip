@@ -28,7 +28,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Id: udp.c,v 1.8 2003/01/13 13:24:11 likewise Exp $
+ * $Id: udp.c,v 1.9 2003/01/17 15:16:33 likewise Exp $
  */
 
 /*-----------------------------------------------------------------------------------*/
@@ -173,11 +173,23 @@ udp_input(struct pbuf *p, struct netif *inp)
 #if UDP_DEBUG
   udp_debug_print(udphdr);
 #endif /* UDP_DEBUG */
-  
-  /* Demultiplex packet. First, go for a perfect match. */
+
+  /* Iterate through the UDP pcb list for a fully matching pcb */
   for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-    DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %d (dgram %d)\n",
+    DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %u, dgram dest port %u)\n",
 		       pcb->local_port, ntohs(udphdr->dest)));
+    DEBUGF(UDP_DEBUG, (" pcb remote ip: %d.%d.%d.%d, dgram src: %d.%d.%d.%d,\n",
+      ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+      ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip),
+      ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
+      ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src)));
+    DEBUGF(UDP_DEBUG, (" pcb local ip: %d.%d.%d.%d, dgram dest: %d.%d.%d.%d\n",
+      ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
+      ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip),
+      ip4_addr1(&iphdr->dest), ip4_addr2(&iphdr->dest),
+      ip4_addr3(&iphdr->dest), ip4_addr4(&iphdr->dest)));
+
+    /* Do both local and remote addresses match? */
     if(pcb->remote_port == src &&
        pcb->local_port == dest &&
        (ip_addr_isany(&pcb->remote_ip) ||
@@ -187,8 +199,10 @@ udp_input(struct pbuf *p, struct netif *inp)
       break;
     }
   }
-
+  /* no fully matching pcb found? */
   if(pcb == NULL) {
+    /* Iterate through the UDP pcb list for a pcb that matches
+       the local address. */
     for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
       DEBUGF(UDP_DEBUG, ("udp_input: pcb local port %d (dgram %d)\n",
 			 pcb->local_port, dest));
