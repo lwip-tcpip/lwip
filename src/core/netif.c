@@ -191,7 +191,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
       if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
         /* this connection must be aborted */
         struct tcp_pcb *next = pcb->next;
-        LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting pcb %p\n", (void *)pcb));
+        LWIP_DEBUGF(NETIF_DEBUG | 1, ("netif_set_ipaddr: aborting TCP pcb %p\n", (void *)pcb));
         tcp_abort(pcb);
         pcb = next;
       } else {
@@ -203,7 +203,6 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
       if (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr))) {
         /* The PCB is listening to the old ipaddr and
          * is set to listen to the new one instead
-         * TODO: how do we know it is _listening_? */
         ip_addr_set(&(lpcb->local_ip), ipaddr);
       }
     }
