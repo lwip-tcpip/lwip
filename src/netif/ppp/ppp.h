@@ -318,6 +318,9 @@ struct ppp_settings {
 	char remote_name[MAXNAMELEN + 1];      /* Peer's name for authentication */
 };
 
+struct ppp_addrs {
+    struct ip_addr our_ipaddr, his_ipaddr, netmask, dns1, dns2;
+};
 
 /*****************************
 *** PUBLIC DATA STRUCTURES ***
@@ -346,7 +349,7 @@ void pppSetAuth(const char *user, const char *passwd);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. 
  */
-int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *arg, int errCode), void *linkStatusArg);
+int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
 
 /*
  * Close a PPP connection and release the descriptor. 
