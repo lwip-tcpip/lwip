@@ -547,14 +547,16 @@ pbuf_free(struct pbuf *p)
          p->flags == PBUF_FLAG_RAM ||
          p->flags == PBUF_FLAG_REF );
   
-  LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
 
   /* Since decrementing ref cannot be guarranteed to be a single machine operation
      we must protect it. Also, the later test of ref must be protected.
   */
   SYS_ARCH_PROTECT(old_level);
   /* Decrement reference count. */  
-  p->ref--;
+  for (q = p; q != NULL; q = q->next) {
+    LWIP_ASSERT("pbuf_free: q->ref == 0", q->ref > 0);
+    q->ref--;
+  }
 
   /*q = NULL;           DJH: Unnecessary statement*/
   /* If reference count == 0, actually deallocate pbuf. */
