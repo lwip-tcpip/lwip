@@ -1,6 +1,20 @@
 HISTORY
 
 (current)
+
+
+
+(STABLE-0_6_3)
+
+  ++ Bug fixes:
+  
+  * Fixed pool pbuf memory leak in pbuf_alloc().
+    Occured if not enough PBUF_POOL pbufs for a packet pbuf chain.
+    Reported by Savin Zlobec.
+
+  * PBUF_POOL chains had their tot_len field not set for non-first
+    pbufs. Fixed in pbuf_alloc().
+
   ++ New features:
 
   * Added PPP stack contributed by Marc Boucher
