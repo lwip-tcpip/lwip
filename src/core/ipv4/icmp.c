@@ -74,7 +74,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   case ICMP_ECHO:
     /* broadcast or multicast destination address? */
     if (ip_addr_isbroadcast(&iphdr->dest, inp) || ip_addr_ismulticast(&iphdr->dest)) {
-      LWIP_DEBUGF(ICMP_DEBUG, ("Smurf.\n"));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
       ICMP_STATS_INC(icmp.err);
       pbuf_free(p);
       return;
