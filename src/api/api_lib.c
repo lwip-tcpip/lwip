@@ -301,12 +301,15 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr,
   case NETCONN_UDPLITE:
   case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
-    if ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0)
-     return -1;
+    if (conn->pcb.udp == NULL ||
+	((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0))
+     return ERR_CONN;
     *addr = (conn->pcb.udp->remote_ip);
     *port = conn->pcb.udp->remote_port;
     break;
   case NETCONN_TCP:
+    if(conn->pcb.tcp == NULL)
+      return ERR_CONN;
     *addr = (conn->pcb.tcp->remote_ip);
     *port = conn->pcb.tcp->remote_port;
     break;
