@@ -450,7 +450,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     q = p;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
   }
-
+  /* { q now represents the packet to be sent */
   udphdr = q->payload;
   udphdr->src = htons(pcb->local_port);
   udphdr->dest = htons(pcb->remote_port);
@@ -483,9 +483,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     /* output to IP */
-    err = ip_output_if (p, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
+    err = ip_output_if (q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
     snmp_inc_udpoutdatagrams();
-  /* UDP protocol? */
   } else {
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP packet length %u\n", q->tot_len));
     udphdr->len = htons(q->tot_len);
@@ -505,6 +504,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   /* did we chain a header earlier? */
   if (q != p) {
     /* free the header */
+    /* p is also still referenced by the caller, and will live on */
     pbuf_free(q);
   }
 
