@@ -706,8 +706,8 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }
 
-/* For packet queueing. Note that queued packets must be dequeued first
- * before calling any pbuf functions. */
+/* For packet queueing. Note that queued packets MUST be dequeued first
+ * using pbuf_dequeue() before calling other pbuf_() functions. */
 #if ARP_QUEUEING
 /**
  * Add a packet to the end of a queue.
@@ -715,6 +715,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
  * @param q pointer to first packet on the queue
  * @param n packet to be queued
  *
+ * Both packets MUST be given, and must be different.
  */
 void
 pbuf_queue(struct pbuf *p, struct pbuf *n)
@@ -727,7 +728,7 @@ pbuf_queue(struct pbuf *p, struct pbuf *n)
   LWIP_ASSERT("n == NULL in pbuf_queue: this indicates a programmer error\n", n != NULL);
   LWIP_ASSERT("p == n in pbuf_queue: this indicates a programmer error\n", p != n);
   if ((p == NULL) || (n == NULL) || (p == n)){
-    LWIP_ERRORF(PBUF_DEBUG | DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"))
+    LWIP_DEBUGF(PBUF_DEBUG | DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"))
     return;
   }
 
