@@ -268,7 +268,6 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     /* recycle oldest stable*/
     i = old_stable;
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest stable entry %d\n", i));
-    arp_table[i].state = ARP_EMPTY;
 #if ARP_QUEUEING
     LWIP_ASSERT("arp_table[i].p == NULL", arp_table[i].p == NULL);
 #endif
@@ -277,7 +276,6 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     /* recycle oldest pending */
     i = old_pending;
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest pending entry %d (without queue)\n", i));
-    arp_table[i].state = ARP_EMPTY;
   /* 4) found recyclable pending entry with queued packets? */
   } else if (old_queue < ARP_TABLE_SIZE) {
     /* recycle oldest pending */
