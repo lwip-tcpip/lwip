@@ -134,10 +134,10 @@ udp_input(struct pbuf *p, struct netif *inp)
  again_1:
   
   /* Iterate through the UDP pcb list for a fully matching pcb */
-  for(pcb = pcb_temp; pcb != NULL; pcb = pcb->next) {
+  for (pcb = pcb_temp; pcb != NULL; pcb = pcb->next) {
 #else  /* SO_REUSE */ 
   /* Iterate through the UDP pcb list for a fully matching pcb */
-  for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+  for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
 #endif  /* SO_REUSE */ 
     /* print the PCB local and remote address */
     LWIP_DEBUGF(UDP_DEBUG, ("pcb (%u.%u.%u.%u, %u) --- (%u.%u.%u.%u, %u)\n",
@@ -159,7 +159,7 @@ udp_input(struct pbuf *p, struct netif *inp)
        /* PCB local IP address matches UDP destination IP address? */
         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 #if SO_REUSE
-      if(pcb->so_options & SOF_REUSEPORT) {
+      if (pcb->so_options & SOF_REUSEPORT) {
         if(reuse) {
           /* We processed one PCB already */
           LWIP_DEBUGF(UDP_DEBUG, ("udp_input: second or later PCB and SOF_REUSEPORT set.\n"));
@@ -173,7 +173,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         p->ref++;
         LWIP_DEBUGF(UDP_DEBUG, ("udp_input: reference counter on PBUF set to %i\n", p->ref));
       } else {
-        if(reuse) {
+        if (reuse) {
           /* We processed one PCB already */
           LWIP_DEBUGF(UDP_DEBUG, ("udp_input: second or later PCB but SOF_REUSEPORT not set !\n"));
         }
@@ -192,9 +192,9 @@ udp_input(struct pbuf *p, struct netif *inp)
     
   again_2:
 
-    for(pcb = pcb_temp; pcb != NULL; pcb = pcb->next) {
+    for (pcb = pcb_temp; pcb != NULL; pcb = pcb->next) {
 #else  /* SO_REUSE */ 
-    for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+    for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
 #endif  /* SO_REUSE */ 
       LWIP_DEBUGF(UDP_DEBUG, ("pcb (%u.%u.%u.%u, %u) --- (%u.%u.%u.%u, %u)\n",
         ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
@@ -210,8 +210,8 @@ udp_input(struct pbuf *p, struct netif *inp)
         /* ...matching interface address? */
         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
 #if SO_REUSE
-        if(pcb->so_options & SOF_REUSEPORT) {
-          if(reuse) {
+        if (pcb->so_options & SOF_REUSEPORT) {
+          if (reuse) {
             /* We processed one PCB already */
             LWIP_DEBUGF(UDP_DEBUG, ("udp_input: second or later PCB and SOF_REUSEPORT set.\n"));
           } else {
@@ -224,7 +224,7 @@ udp_input(struct pbuf *p, struct netif *inp)
           p->ref++;
           LWIP_DEBUGF(UDP_DEBUG, ("udp_input: reference counter on PBUF set to %i\n", p->ref));
         } else {
-          if(reuse) {
+          if (reuse) {
             /* We processed one PCB already */
             LWIP_DEBUGF(UDP_DEBUG, ("udp_input: second or later PCB but SOF_REUSEPORT not set !\n"));
           }
