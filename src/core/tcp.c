@@ -442,9 +442,10 @@ tcp_listen(struct tcp_pcb *pcb)
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
-  pcb->rcv_wnd += len;
-  if (pcb->rcv_wnd > TCP_WND) {
+  if ((u32_t)pcb->rcv_wnd + len > TCP_WND) {
     pcb->rcv_wnd = TCP_WND;
+  } else {
+    pcb->rcv_wnd += len;
   }
   if (!(pcb->flags & TF_ACK_DELAY) &&
      !(pcb->flags & TF_ACK_NOW)) {
