@@ -449,14 +449,15 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
-
+  DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = %lx, port = %u)\n", ipaddr->addr, port));
   rebind = 0;
   /* Check for double bind and rebind of the same pcb */
   for(ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {
     /* is this UDP PCB already on active list? */ 
     if (pcb == ipcb) {
-      /* TODO: add assert that rebind is 0 here (pcb may
-         occur at most once in list) */
+      /* pcb may occur at most once in active list */
+      LWIP_ASSERT("rebind == 0", rebind == 0);
+      /* pcb already in list, just rebind */
 	    rebind = 1;
     }
 /* this code does not allow upper layer to share a UDP port for
@@ -478,6 +479,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   }
   /* bind local address */
   ip_addr_set(&pcb->local_ip, ipaddr);
+  /* no port specified? */
   if (port == 0) {
 #ifndef UDP_LOCAL_PORT_RANGE_START
 #define UDP_LOCAL_PORT_RANGE_START 4096
@@ -485,30 +487,31 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #endif
     port = UDP_LOCAL_PORT_RANGE_START;
     ipcb = udp_pcbs;
-    while((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
-      if(ipcb->local_port == port) {
+    while ((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
+      if (ipcb->local_port == port) {
         port++;
         ipcb = udp_pcbs;
       } else
   	    ipcb = ipcb->next;
     }
-    if(ipcb)  {
+    if (ipcb != NULL) {
       /* no more ports available in local range */
       DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
       return ERR_USE;
     }	
   }
   pcb->local_port = port;
-  /* We need to place the PCB on the list if not already there. */
+  /* pcb not active yet? */
   if (rebind == 0) {
+    /* place the PCB on the active list if not already there */
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
   }  
   DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE, ("udp_bind: bound to %u.%u.%u.%u, port %u\n",
-		       (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
-		       (u8_t)(ntohl(ipaddr->addr) & 0xff), port));
+   (u8_t)(ntohl(ipaddr->addr) >> 24 & 0xff),
+   (u8_t)(ntohl(ipaddr->addr) >> 16 & 0xff),
+   (u8_t)(ntohl(ipaddr->addr) >> 8 & 0xff),
+   (u8_t)(ntohl(ipaddr->addr) & 0xff), port));
   return ERR_OK;
 }
 /**
