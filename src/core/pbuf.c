@@ -715,15 +715,16 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
  *
  */
 void
-pbuf_queue(struct pbuf *q, struct pbuf *n)
+pbuf_queue(struct pbuf *p, struct pbuf *n)
 {
-  struct pbuf *p;
+#if PBUF_DEBUG /* remember head of queue */
+  struct pbuf *q = p;
+#endif
   /* programmer stupidity checks */
   LWIP_ASSERT("p != NULL", p != NULL);
   LWIP_ASSERT("n != NULL", n != NULL);
   if ((p == NULL) || (n == NULL)) return;
 
-  p = q;
   /* iterate through all packets on queue */
   while (p->next != NULL) {
 /* be very picky about pbuf chain correctness */
