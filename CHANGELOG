@@ -2,10 +2,19 @@ TODO
 
   * TODO: Fix unaligned 16-bit access in checksum routine.
   * TODO: Fix assumptions on storage sizes wherever we cast.
+  * TODO: See why large ICMP (ping) packets do not work (fragmentation?).
 
 HISTORY
 
+(DEVEL) 
+
+  ++ Bug fixes:
+
+  * Fixed DHCP which did not include the IP address in DECLINE messages.
+
 (STABLE-0_6_5)
+
+  ++ Bug fixes:
 
   * Fixed TCP bug induced by bad window resizing with unidirectional TCP traffic.
   * Packets sent from ARP queue had invalid source hardware address.
