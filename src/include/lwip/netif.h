@@ -57,22 +57,21 @@ struct netif {
      when it wants to pass a packet to the TCP/IP stack. */
   err_t (* input)(struct pbuf *p, struct netif *inp);
 
-  /* The following two fields should be filled in by the
+  /** The following two fields should be filled in by the
      initialization function for the device driver. */
-
   char name[2];
-  /* This function is called by the IP module when it wants
+  /** This function is called by the IP module when it wants
      to send a packet on the interface. This function typically
      first resolves the hardware address, then sends the packet. */
   err_t (* output)(struct netif *netif, struct pbuf *p,
 		   struct ip_addr *ipaddr);
-  /* This function is called by the ARP module when it wants
+  /** This function is called by the ARP module when it wants
      to send a packet on the interface. This function outputs
      the pbuf on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
 
-  /* This field can be set by the device driver and could point
-     to state information for the device. */
+  /** This field can be set by the device driver and could point
+      to state information for the device. */
   void *state;
 };
 
