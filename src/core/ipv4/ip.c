@@ -73,57 +73,6 @@ ip_init(void)
 {
 }
 
-/* ip_lookup:
- *
- * An experimental feature that will be changed in future versions. Do
- * not depend on it yet...
- */
-
-#ifdef LWIP_DEBUG
-u8_t
-ip_lookup(void *header, struct netif *inp)
-{
-  struct ip_hdr *iphdr;
-
-  iphdr = header;
-
-  /* not IP v4? */
-  if (IPH_V(iphdr) != 4) {
-    return 0;
-  }
-
-  /* Immediately accept/decline packets that are fragments or has
-     options. */
-#if IP_REASSEMBLY == 0
-  /*  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
-    return 0;
-    }*/
-#endif /* IP_REASSEMBLY == 0 */
-
-#if IP_OPTIONS == 0
-  if (IPH_HL(iphdr) != 5) {
-    return 0;
-  }
-#endif /* IP_OPTIONS == 0 */
-
-  switch (IPH_PROTO(iphdr)) {
-#if LWIP_UDP
-  case IP_PROTO_UDP:
-  case IP_PROTO_UDPLITE:
-    return udp_lookup(iphdr, inp);
-#endif /* LWIP_UDP */
-#if LWIP_TCP
-  case IP_PROTO_TCP:
-    return 1;
-#endif /* LWIP_TCP */
-  case IP_PROTO_ICMP:
-    return 1;
-  default:
-    return 0;
-  }
-}
-#endif /* LWIP_DEBUG */
-
 /* ip_route:
  *
  * Finds the appropriate network interface for a given IP address. It
