@@ -2,7 +2,7 @@ HISTORY
 
 (todo)
 
-  * unaligned 16-bit access in checksum routine fixed.
+  * Fix unaligned 16-bit access in checksum routine.
 
 (current)
 
