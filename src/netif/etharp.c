@@ -174,15 +174,21 @@ etharp_tmr(void)
 /**
  * Search the ARP table for a specific entry.
  * 
- * If ipaddr is given, return a matching pending or stable ARP entry. If
- * no matching entry is found, a new pending entry is created. If no empty
- * entry is available and the ETHARP_CREATE flag is given, an old entry
- * is recycled to create the new entry.
+ * If an IP address is given, return a pending or stable ARP entry that matches
+ * the address. If no match is found, create a new entry with this address set,
+ * but in state ETHARP_EMPTY. The caller must check and possibly change the
+ * state of the returned entry.
  * 
- * If ipaddr is NULL, return an empty entry. If no empty entry is found,
- * and the ETHARP_CREATE flag is given, an old stable entry is recycled to
- * create a new empty entry.
+ * If ipaddr is NULL, return a initialized new entry in state ETHARP_EMPTY.
+ * 
+ * In all cases, attempt to create new entries from an empty entry. If no
+ * empty entries are available and ETHARP_CREATE flag is set, recycle
+ * old entries. Heuristic choose the least important entry for recycling.
  *
+ * @param ipaddr IP address to find in ARP cache, or to add if not found.
+ * @param flags
+ * - ETHARP_CREATE: Try hard to create a entry by allowing recycling.
+ *  
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
