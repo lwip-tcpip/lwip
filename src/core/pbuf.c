@@ -657,39 +657,7 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   DEBUGF(PBUF_DEBUG | DBG_FRESH | 2, ("pbuf_chain: referencing tail %p\n", (void *) t));
 }
 
-/**
- * Dechains the first pbuf from its succeeding pbufs in the chain.
- *
- * Makes p->tot_len field equal to p->len.
- * @param p pbuf to dechain
- * @return remainder of the pbuf chain, or NULL if it was de-allocated.
- */
-struct pbuf *
-pbuf_dechain(struct pbuf *p)
-{
-  struct pbuf *q;
-  u8_t tail_gone = 1;
-  /* tail */  
-  q = p->next;
-  /* pbuf has successor in chain? */
-  if (q != NULL) {
-    /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */
-    LWIP_ASSERT("p->tot_len == p->len + q->tot_len", q->tot_len == p->tot_len - p->len);
-    /* enforce invariant if assertion is disabled */
-    q->tot_len = p->tot_len - p->len;
-    /* decouple pbuf from remainder */
-    p->next = NULL;
-    /* total length of pbuf p is its own length only */
-    p->tot_len = p->len;
-    /* q is no longer referenced by p, free it */
-    DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *) q));
-    tail_gone = pbuf_free(q);
-    /* return remaining tail or NULL if deallocated */
-  }
-  /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */
-  LWIP_ASSERT("p->tot_len == p->len", p->tot_len == p->len);
-  return (tail_gone > 0? NULL: q);
-}
+
 
 /**
  *
@@ -795,3 +763,38 @@ pbuf_take(struct pbuf *p)
   return head;
 }
 
+#if 0 /* expected to enabled again, once needed (multiple chain queueing comes to mind) */
+/**
+ * Dechains the first pbuf from its succeeding pbufs in the chain.
+ *
+ * Makes p->tot_len field equal to p->len.
+ * @param p pbuf to dechain
+ * @return remainder of the pbuf chain, or NULL if it was de-allocated.
+ */
+struct pbuf *
+pbuf_dechain(struct pbuf *p)
+{
+  struct pbuf *q;
+  u8_t tail_gone = 1;
+  /* tail */  
+  q = p->next;
+  /* pbuf has successor in chain? */
+  if (q != NULL) {
+    /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */
+    LWIP_ASSERT("p->tot_len == p->len + q->tot_len", q->tot_len == p->tot_len - p->len);
+    /* enforce invariant if assertion is disabled */
+    q->tot_len = p->tot_len - p->len;
+    /* decouple pbuf from remainder */
+    p->next = NULL;
+    /* total length of pbuf p is its own length only */
+    p->tot_len = p->len;
+    /* q is no longer referenced by p, free it */
+    DEBUGF(PBUF_DEBUG | DBG_STATE, ("pbuf_dechain: unreferencing %p\n", (void *) q));
+    tail_gone = pbuf_free(q);
+    /* return remaining tail or NULL if deallocated */
+  }
+  /* assert tot_len invariant: (p->tot_len == p->len + (p->next? p->next->tot_len: 0) */
+  LWIP_ASSERT("p->tot_len == p->len", p->tot_len == p->len);
+  return (tail_gone > 0? NULL: q);
+}
+#endif /* pbuf_dechain() */
