@@ -112,7 +112,7 @@ void pbuf_cat(struct pbuf *h, struct pbuf *t);
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_take(struct pbuf *f);
 struct pbuf *pbuf_dechain(struct pbuf *p);
-void pbuf_queue(struct pbuf *p);
+void pbuf_queue(struct pbuf *p, struct pbuf *n);
 struct pbuf * pbuf_dequeue(struct pbuf *p);
 
 #endif /* __LWIP_PBUF_H__ */
