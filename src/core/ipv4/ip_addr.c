@@ -61,7 +61,7 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
   else if (addr->addr == netif->ip_addr.addr)
     return 0;
   /*  on the same (sub) network... */
-  else if (ip_addr_netcmp(addr->addr, netif->ip_addr.addr, netif->netmask.addr))
+  else if (ip_addr_netcmp(addr->addr, netif->ip_addr.addr, netif->netmask.addr)
          /* ...and host identifier bits are all ones? =>... */
           && ((addr->addr & ~netif->netmask.addr) ==
            (ip_addr_broadcast.addr & ~netif->netmask.addr))
