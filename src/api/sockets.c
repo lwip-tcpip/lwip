@@ -1141,7 +1141,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, TCP_NODELAY) = %s\n", s, (*(int*)optval)?"on":"off") );
       break;
     case TCP_KEEPALIVE:
-      *(int*)optval = sock->conn->pcb.tcp->keepalive;
+      *(int*)optval = (int)sock->conn->pcb.tcp->keepalive;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, TCP_KEEPALIVE) = %d\n", s, *(int *)optval));
       break;
     }  /* switch */
