@@ -79,20 +79,20 @@ enum etharp_state {
   ETHARP_STATE_EMPTY,
   ETHARP_STATE_PENDING,
   ETHARP_STATE_STABLE,
-  /** @internal convenience transitional state used in etharp_tmr() */
+  /** @internal transitional state used in etharp_tmr() for convenience*/
   ETHARP_STATE_EXPIRED
 };
 
 struct etharp_entry {
-  struct ip_addr ipaddr;
-  struct eth_addr ethaddr;
-  enum etharp_state state;
 #if ARP_QUEUEING
   /** 
    * Pointer to queue of pending outgoing packets on this ARP entry.
-   * Must be at most a single packet for now. */
-  struct pbuf *p;
+   */
+   struct pbuf *p;
 #endif
+  struct ip_addr ipaddr;
+  struct eth_addr ethaddr;
+  enum etharp_state state;
   u8_t ctime;
 };
 
@@ -233,12 +233,14 @@ find_arp_entry(void)
  * - ARP_INSERT_FLAG Allows ARP to insert this as a new item. If not specified,
  * only existing ARP entries will be updated.
  *
- * @return pbuf If non-NULL, a packet that was queued on a pending entry.
- * You should sent it and must call pbuf_free() afterwards.
+ * @return
+ * - ERR_OK Succesfully updated ARP cache.
+ * - ERR_MEM If we could not add a new ARP entry when ARP_INSERT_FLAG was set.
+ * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
  * @see pbuf_free()
  */
-static struct pbuf *
+err_t
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i, k;
@@ -248,10 +250,12 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
                                         ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr), 
                                         ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
                                         ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
-  /* do not update for 0.0.0.0 addresses */
-  if (ipaddr->addr == 0) {
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: will not add 0.0.0.0 to ARP cache\n"));
-    return NULL;
+  /* non-unicast address? */
+  if (ip_addr_isany(ipaddr) ||
+      ip_addr_isbroadcast(ipaddr, netif) ||
+      ip_addr_ismulticast(ipaddr)) {
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: will not add non-unicast IP address to ARP cache\n"));
+    return ERR_ARG;
   }
   /* Walk through the ARP mapping table and try to find an entry to update.
    * If none is found, a new IP -> MAC address mapping is inserted. */
@@ -300,7 +304,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
         }
 #endif
         /* IP addresses should only occur once in the ARP entry, we are done */
-        return NULL;
+        return ERR_OK;
       }
     } /* if STABLE */
   } /* for all ARP entries */
@@ -315,9 +319,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: adding entry to table\n"));
     /* find an empty or old entry. */
     i = find_arp_entry();
-    if (i == ERR_MEM) {
+    if (i < 0) {
       LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: no available entry found\n"));
-      return NULL;
+      return (err_t)i;
     }
     /* set IP address */
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
@@ -610,10 +614,11 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * If the IP address was already stable in the cache, the packet is
  * directly sent. An ARP request is sent out.
  * 
- * @param netif The lwIP network interface where ipaddr
+ * @param netif The lwIP network interface on which ipaddr
  * must be queried for.
  * @param ipaddr The IP address to be resolved.
  * @param q If non-NULL, a pbuf that must be delivered to the IP address.
+ * q is not freed by this function.
  *
  * @return
  * - ERR_BUF Could not make room for Ethernet header.
@@ -621,12 +626,8 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  *   to query for address or queue the packet.
  * - ERR_MEM Could not queue packet due to memory shortage.
  * - ERR_RTE No route to destination (no gateway to external networks).
-  *
- * @note Might be used in the future by manual IP configuration
- * as well.
+ * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
- * TODO: use the ctime field to see how long ago an ARP request was sent,
- * possibly retry.
  */
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
@@ -635,6 +636,14 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   err_t result = ERR_OK;
   s8_t i; /* ARP entry index */
   u8_t k; /* Ethernet address octet index */
+
+  /* non-unicast address? */
+  if (ip_addr_isany(ipaddr) ||
+      ip_addr_isbroadcast(ipaddr, netif) ||
+      ip_addr_ismulticast(ipaddr)) {
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: will not add non-unicast IP address to ARP cache\n"));
+    return ERR_ARG;
+  }
 
   /* Do three things in this order (by design):
    * 

@@ -49,6 +49,8 @@ struct eth_addr {
 };
 
 struct eth_hdr {
+  /* Ethernet header is 14 bytes, this breaks natural alignment on
+   * subsequent (TCP/IP) protocol header fields. */
 #if ETH_PAD_SIZE
   u8_t padding[ETH_PAD_SIZE];
 #endif
