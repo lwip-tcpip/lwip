@@ -42,6 +42,7 @@
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
+#include <lwip/stats.h>
 
 #include "netif/etharp.h"
 
@@ -117,7 +118,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
 #endif
   
-#ifdef LINK_STATS
+#if LINK_STATS
   lwip_stats.link.xmit++;
 #endif /* LINK_STATS */      
 
@@ -170,12 +171,12 @@ low_level_input(struct netif *netif)
     pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
 #endif
 
-#ifdef LINK_STATS
+#if LINK_STATS
     lwip_stats.link.recv++;
 #endif /* LINK_STATS */      
   } else {
     drop packet();
-#ifdef LINK_STATS
+#if LINK_STATS
     lwip_stats.link.memerr++;
     lwip_stats.link.drop++;
 #endif /* LINK_STATS */      
@@ -229,7 +230,7 @@ ethernetif_input(struct netif *netif)
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
 
-#ifdef LINK_STATS
+#if LINK_STATS
   lwip_stats.link.recv++;
 #endif /* LINK_STATS */
 
