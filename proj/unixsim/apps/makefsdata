@@ -53,7 +53,7 @@ while($file = <FILES>) {
     $fvar = $file;
     $fvar =~ s-/-_-g;
     $fvar =~ s-\.-_-g;
-    print(OUTPUT "static const char data".$fvar."[] = {\n");
+    print(OUTPUT "static const unsigned char data".$fvar."[] = {\n");
     print(OUTPUT "\t/* $file */\n\t");
     for($j = 0; $j < length($file); $j++) {
 	printf(OUTPUT "%#02x, ", unpack("C", substr($file, $j, 1)));
@@ -61,7 +61,7 @@ while($file = <FILES>) {
     printf(OUTPUT "0,\n");
     
     
-    $i = 0;        
+    $i = 0;
     while(read(FILE, $data, 1)) {
         if($i == 0) {
             print(OUTPUT "\t");
@@ -94,4 +94,4 @@ for($i = 0; $i < @fvars; $i++) {
 }
 
 print(OUTPUT "#define FS_ROOT file$fvars[$i - 1]\n\n");
-print(OUTPUT "#define FS_NUMFILES $i");
+print(OUTPUT "#define FS_NUMFILES $i\n");
