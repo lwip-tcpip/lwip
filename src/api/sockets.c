@@ -87,7 +87,7 @@ lwip_accept(int s, struct sockaddr *addr, int *addrlen)
 {
   struct lwip_socket *sock;
   struct netconn *newconn;
-  struct ip_addr *naddr;
+  struct ip_addr naddr;
   u16_t port;
   int newsock;
 
@@ -101,7 +101,7 @@ lwip_accept(int s, struct sockaddr *addr, int *addrlen)
   /* get the IP address and port of the remote host */
   netconn_peer(newconn, &naddr, &port);
   
-  ((struct sockaddr_in *)addr)->sin_addr.s_addr = naddr->addr;
+  ((struct sockaddr_in *)addr)->sin_addr.s_addr = naddr.addr;
   ((struct sockaddr_in *)addr)->sin_port = port;
 
   newsock = alloc_socket(newconn);
@@ -345,7 +345,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
        struct sockaddr *to, int tolen)
 {
   struct lwip_socket *sock;
-  struct ip_addr remote_addr, *addr;
+  struct ip_addr remote_addr, addr;
   u16_t remote_port, port;
   int ret,connected;
 
@@ -366,7 +366,7 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   /* reset the remote address and port number
      of the connection */
   if (connected)
-    netconn_connect(sock->conn, addr, port);
+    netconn_connect(sock->conn, &addr, port);
   else
     netconn_disconnect(sock->conn);	  
   return ret;

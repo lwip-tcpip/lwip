@@ -111,7 +111,7 @@ struct netconn *  netconn_new     (enum netconn_type type);
 err_t             netconn_delete  (struct netconn *conn);
 enum netconn_type netconn_type    (struct netconn *conn);
 err_t             netconn_peer    (struct netconn *conn,
-				   struct ip_addr **addr,
+				   struct ip_addr *addr,
 				   u16_t *port);
 err_t             netconn_addr    (struct netconn *conn,
 				   struct ip_addr **addr,

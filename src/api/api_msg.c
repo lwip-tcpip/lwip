@@ -387,6 +387,7 @@ do_disconnect(struct api_msg_msg *msg)
   case NETCONN_TCP:
     break;
   }
+  sys_mbox_post(msg->conn->mbox, NULL);
 }
 
 /*-----------------------------------------------------------------------------------*/
