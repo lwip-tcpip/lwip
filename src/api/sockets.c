@@ -152,7 +152,7 @@ alloc_socket(struct netconn *newconn)
 }
 /*-----------------------------------------------------------------------------------*/
 int
-lwip_accept(int s, struct sockaddr *addr, int *addrlen)
+lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
   struct lwip_socket *sock;
   struct netconn *newconn;
@@ -208,7 +208,7 @@ lwip_accept(int s, struct sockaddr *addr, int *addrlen)
 }
 /*-----------------------------------------------------------------------------------*/
 int
-lwip_bind(int s, struct sockaddr *name, int namelen)
+lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
 {
   struct lwip_socket *sock;
   struct ip_addr local_addr;
@@ -273,7 +273,7 @@ lwip_close(int s)
 }
 /*-----------------------------------------------------------------------------------*/
 int
-lwip_connect(int s, struct sockaddr *name, int namelen)
+lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
 {
   struct lwip_socket *sock;
   err_t err;
@@ -339,7 +339,7 @@ lwip_listen(int s, int backlog)
 /*-----------------------------------------------------------------------------------*/
 int
 lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
-	      struct sockaddr *from, int *fromlen)
+	      struct sockaddr *from, socklen_t *fromlen)
 {
   struct lwip_socket *sock;
   struct netbuf *buf;
@@ -512,7 +512,7 @@ lwip_send(int s, void *data, int size, unsigned int flags)
 /*-----------------------------------------------------------------------------------*/
 int
 lwip_sendto(int s, void *data, int size, unsigned int flags,
-       struct sockaddr *to, int tolen)
+       struct sockaddr *to, socklen_t tolen)
 {
   struct lwip_socket *sock;
   struct ip_addr remote_addr, addr;
@@ -881,7 +881,7 @@ int lwip_shutdown(int s, int how)
     return lwip_close(s); /* XXX temporary hack until proper implementation */
 }
 
-int lwip_getpeername (int s, struct sockaddr *name, int *namelen)
+int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
 {
   struct lwip_socket *sock;
   struct sockaddr_in sin;
@@ -916,7 +916,7 @@ int lwip_getpeername (int s, struct sockaddr *name, int *namelen)
   return 0;
 }
 
-int lwip_getsockname (int s, struct sockaddr *name, int *namelen)
+int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
 {
   struct lwip_socket *sock;
   struct sockaddr_in sin;
@@ -951,7 +951,7 @@ int lwip_getsockname (int s, struct sockaddr *name, int *namelen)
   return 0;
 }
 
-int lwip_getsockopt (int s, int level, int optname, char *optval, int *optlen)
+int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *optlen)
 {
 	int err = ENOSYS;
 	struct lwip_socket *sock = get_socket(s);
@@ -983,7 +983,7 @@ int lwip_getsockopt (int s, int level, int optname, char *optval, int *optlen)
 	return err ? -1 : 0;
 }
 
-int lwip_setsockopt (int s, int level, int optname, const char *optval, int optlen)
+int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_t optlen)
 {
 	struct lwip_socket *sock = get_socket(s);
 	int err = ENOSYS;
