@@ -11,6 +11,7 @@ ethernetif.c
           An example of how an Ethernet device driver could look. This
           file can be used as a "skeleton" for developing new Ethernet
           network device drivers. It uses the etharp.c ARP code.
+	  !!!THIS FILE IS NOT IN SYNC WITH CURRENT CODE !!!!
 
 loopif.c
           An example network interface that shows how a "loopback"
@@ -22,7 +23,3 @@ slipif.c
           A generic implementation of the SLIP (Serial Line IP)
           protocol. It requires a sio (serial I/O) module to work.
 
-tcpdump.c
-          Not a network interface driver, but some code that parses a
-          TCP/IP packet and outputs printfs in an tcpdump-like
-          way. Only used for debugging.

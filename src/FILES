@@ -1,7 +1,5 @@
 api/      - The code for the API.	   
 
-arch/     - Architectural specific files are kept here.
-
 core/     - The core files including protocol implementations, memory
             and buffer management etc.
 	    
