@@ -37,6 +37,9 @@ The current lwIP CVS tree can be checked out by doing:
 Last night's CVS tar ball can be downloaded from:
   http://savannah.gnu.org/cvs.backups/lwip.tar.gz
 
+The current CVS tree is web-browsable:
+http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/lwip/
+
 Submit patches and bugs via the lwIP project page:
   http://savannah.nongnu.org/projects/lwip/
 
