@@ -186,7 +186,7 @@ etharp_tmr(void)
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
-s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
+static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 {
   s8_t i, old_pending, old_queue, old_stable, empty;
   u8_t age_pending, age_queue, age_stable;
@@ -195,7 +195,7 @@ s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   age_pending = age_queue = age_stable = 0;
 
   /**
-   * a) do a search through the cache, remember candidates */
+   * a) do a search through the cache, remember candidates
    * b) select candidate entry
    * c) create new entry
    */
