@@ -167,14 +167,14 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     and data copied into pbuf, otherwise data comes from
     ROM or other static memory, and need not be copied. If
     optdata is != NULL, we have options instead of data. */
-    if(optdata != NULL) {
+    if (optdata != NULL) {
       if((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
         goto memerr;
       }
       ++queuelen;
       seg->dataptr = seg->p->payload;
     }
-    else if(copy) {
+    else if (copy) {
       if((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
         DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for pbuf copy size %u\n", seglen));	  
         goto memerr;
@@ -185,12 +185,16 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       }
       seg->dataptr = seg->p->payload;
     }
+    /* do not copy data */
     else {
-      /* Do not copy the data. */
 
-      /* First, allocate a pbuf for holding the data. */
-      if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_REF)) == NULL) {
-        DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for pbuf non-copy\n"));	  	  
+      /* first, allocate a pbuf for holding the data.
+       * since the referenced data is available at least until it is sent out on the
+       * link (as it has to be ACKed by the remote party) we can safely use PBUF_ROM
+       * instead of PBUF_REF here.
+       */
+      if((p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
+        DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));	  	  
         goto memerr;
       }
       ++queuelen;
