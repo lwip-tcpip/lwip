@@ -137,7 +137,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   struct ip_hdr *iphdr;
   struct icmp_dur_hdr *idur;
   
-  q = pbuf_alloc(PBUF_TRANSPORT, 8 + IP_HLEN + 8, PBUF_RAM);
+  q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
   /* ICMP header + IP header + 8 bytes of data */
 
   iphdr = p->payload;
@@ -172,7 +172,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   struct ip_hdr *iphdr;
   struct icmp_te_hdr *tehdr;
 
-  q = pbuf_alloc(PBUF_TRANSPORT, 8 + IP_HLEN + 8, PBUF_RAM);
+  q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
 
   iphdr = p->payload;
 #if ICMP_DEBUG
