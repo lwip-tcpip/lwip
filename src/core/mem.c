@@ -153,6 +153,7 @@ mem_free(void *rmem)
 #ifdef MEM_STATS
     ++lwip_stats.mem.err;
 #endif /* MEM_STATS */
+    sys_sem_signal(mem_sem);
     return;
   }
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
@@ -166,7 +167,7 @@ mem_free(void *rmem)
   }
   
 #ifdef MEM_STATS
-  lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram) - SIZEOF_STRUCT_MEM;
+  lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram);
   
 #endif /* MEM_STATS */
   plug_holes(mem);
@@ -277,7 +278,7 @@ mem_malloc(mem_size_t size)
       mem2->used = 0;      
       mem->used = 1;
 #ifdef MEM_STATS
-      lwip_stats.mem.used += size;
+      lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
       /*      if(lwip_stats.mem.max < lwip_stats.mem.used) {
         lwip_stats.mem.max = lwip_stats.mem.used;
 	} */
