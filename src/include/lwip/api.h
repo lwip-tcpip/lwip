@@ -101,6 +101,8 @@ void              netbuf_first    (struct netbuf *buf);
 
 void              netbuf_copy     (struct netbuf *buf,
 				   void *dataptr, u16_t len);
+void              netbuf_copy_partial(struct netbuf *buf, void *dataptr, 
+				      u16_t len, u16_t offset);
 struct ip_addr *  netbuf_fromaddr (struct netbuf *buf);
 u16_t             netbuf_fromport (struct netbuf *buf);
 
