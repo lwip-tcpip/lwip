@@ -1,5 +1,11 @@
 6502/      - Architectural files for the 6502 CPU.
 
+c16x/      - Architectural files for the C16x/ST10 uC.
+             Supports lwIP Raw API only.
+             CS8900a Ethernet driver for 16-bit mode.
+
+msvc6/     - Architectural files for Microsoft Visual C++ 6.0.
+
 rtxc/      - Architectural files for the RTXC operating system.
 
 unix/      - Architectural files for testing on unix-like systems
@@ -9,7 +15,6 @@ v2pro/     - Architectural files for the Xilinx Virtex-II PRO device with
              embedded PowerPC 405 Processor.  Supports lwIP Raw API only.
              (requires V2PDK - http://www.xilinx.com/ise/vii_pro/kit.htm)
 
-msvc6/     - Architectural files for Microsoft Visual C++ 6.0
 
 Each subdirectory (may) also include:
 
