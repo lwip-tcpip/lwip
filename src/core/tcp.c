@@ -2,6 +2,11 @@
  * @file
  *
  * Transmission Control Protocol for IP
+ *
+ * This file contains common functions for the TCP implementation, such as functinos
+ * for manipulating the data structures and the TCP timer functions. TCP functions
+ * related to input and output is found in tcp_input.c and tcp_output.c respectively.
+ *
  */
 
 /*
@@ -36,17 +41,6 @@
  *
  */
 
-
-/* tcp.c
- *
- * This file contains common functions for the TCP implementation, such as functinos
- * for manipulating the data structures and the TCP timer functions. TCP functions
- * related to input and output is found in tcp_input.c and tcp_output.c respectively.
- *
- */
-
-
-
 #include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -63,26 +57,22 @@ const u8_t tcp_backoff[13] =
 
 /* The TCP PCB lists. */
 
-/* List of all TCP PCBs in LISTEN state. */
+/** List of all TCP PCBs in LISTEN state */
 union tcp_listen_pcbs_t tcp_listen_pcbs;
-struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a
-         state in which they accept or send
-         data. */
-struct tcp_pcb *tcp_tw_pcbs;      /* List of all TCP PCBs in TIME-WAIT. */
+/** List of all TCP PCBs that are in a state in which
+ * they accept or send data. */
+struct tcp_pcb *tcp_active_pcbs;  
+/** List of all TCP PCBs in TIME-WAIT state */
+struct tcp_pcb *tcp_tw_pcbs;
 
 struct tcp_pcb *tcp_tmp_pcb;
 
 static u8_t tcp_timer;
-
 static u16_t tcp_new_port(void);
 
-
-/*
- * tcp_init():
- *
+/**
  * Initializes the TCP layer.
  */
-
 void
 tcp_init(void)
 {
@@ -98,13 +88,10 @@ tcp_init(void)
   
 }
 
-/*
- * tcp_tmr():
- *
+/**
  * Called periodically to dispatch TCP timers.
  *
  */
-
 void
 tcp_tmr(void)
 {
@@ -118,13 +105,10 @@ tcp_tmr(void)
   }
 }
 
-/*
- * tcp_close():
- *
+/**
  * Closes the connection held by the PCB.
  *
  */
-
 err_t
 tcp_close(struct tcp_pcb *pcb)
 {
@@ -174,15 +158,12 @@ tcp_close(struct tcp_pcb *pcb)
   return err;
 }
 
-/*
- * tcp_abort()
- *
+/**
  * Aborts a connection by sending a RST to the remote host and deletes
  * the local protocol control block. This is done when a connection is
  * killed because of shortage of memory.
  *
  */
-
 void
 tcp_abort(struct tcp_pcb *pcb)
 {
@@ -231,9 +212,7 @@ tcp_abort(struct tcp_pcb *pcb)
   }
 }
 
-/*
- * tcp_bind():
- *
+/**
  * Binds the connection to a local portnumber and IP address. If the
  * IP address is not given (i.e., ipaddr == NULL), the IP address of
  * the outgoing network interface is used instead.
@@ -388,16 +367,13 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 #endif /* LWIP_CALLBACK_API */
 
-/*
- * tcp_listen():
- *
+/**
  * Set the state of the connection to be LISTEN, which means that it
  * is able to accept incoming connections. The protocol control block
  * is reallocated in order to consume less memory. Setting the
  * connection to LISTEN is an irreversible process.
  *
  */
-
 struct tcp_pcb *
 tcp_listen(struct tcp_pcb *pcb)
 {
@@ -427,15 +403,12 @@ tcp_listen(struct tcp_pcb *pcb)
   return (struct tcp_pcb *)lpcb;
 }
 
-/*
- * tcp_recved():
- *
+/**
  * This function should be called by the application when it has
  * processed the data. The purpose is to advertise a larger window
  * when the data has been processed.
  *
  */
-
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
@@ -463,13 +436,10 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
          len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
 }
 
-/*
- * tcp_new_port():
- *
+/**
  * A nastly hack featuring 'goto' statements that allocates a
  * new TCP local port.
  */
-
 static u16_t
 tcp_new_port(void)
 {
@@ -503,14 +473,11 @@ tcp_new_port(void)
   return port;
 }
 
-/*
- * tcp_connect():
- *
+/**
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
  *
  */
-
 err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
       err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
@@ -558,14 +525,11 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   return ret;
 } 
 
-/*
- * tcp_slowtmr():
- *
+/**
  * Called every 500 ms and implements the retransmission timer and the timer that
  * removes PCBs that have been in TIME-WAIT for enough time. It also increments
  * various timers such as the inactivity timer in each PCB.
  */
-
 void
 tcp_slowtmr(void)
 {
@@ -742,12 +706,9 @@ tcp_slowtmr(void)
   }
 }
 
-/*
- * tcp_fasttmr():
- *
+/**
  * Is called every TCP_FAST_INTERVAL (250 ms) and sends delayed ACKs.
  */
-
 void
 tcp_fasttmr(void)
 {
@@ -763,13 +724,10 @@ tcp_fasttmr(void)
   }
 }
 
-/*
- * tcp_segs_free():
- *
+/**
  * Deallocates a list of TCP segments (tcp_seg structures).
  *
  */
-
 u8_t
 tcp_segs_free(struct tcp_seg *seg)
 {
@@ -783,13 +741,10 @@ tcp_segs_free(struct tcp_seg *seg)
   return count;
 }
 
-/*
- * tcp_seg_free():
- *
+/**
  * Frees a TCP segment.
  *
  */
-
 u8_t
 tcp_seg_free(struct tcp_seg *seg)
 {
@@ -807,13 +762,10 @@ tcp_seg_free(struct tcp_seg *seg)
   return count;
 }
 
-/*
- * tcp_setprio():
- *
+/**
  * Sets the priority of a connection.
  *
  */
-
 void
 tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 {
@@ -821,13 +773,10 @@ tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 }
 #if TCP_QUEUE_OOSEQ
 
-/*
- * tcp_seg_copy():
- *
+/**
  * Returns a copy of the given TCP segment.
  *
  */ 
-
 struct tcp_seg *
 tcp_seg_copy(struct tcp_seg *seg)
 {
@@ -963,12 +912,13 @@ tcp_alloc(u8_t prio)
   return pcb;
 }
 
-/*
- * tcp_new():
- *
+/**
  * Creates a new TCP protocol control block but doesn't place it on
  * any of the TCP PCB lists.
  *
+ * @internal: Maybe there should be a idle TCP PCB list where these
+ * PCBs are put on. We can then implement port reservation using
+ * tcp_bind(). Currently, we lack this (BSD socket type of) feature.
  */
 
 struct tcp_pcb *
@@ -992,14 +942,11 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 }
 #if LWIP_CALLBACK_API
 
-/*
- * tcp_recv():
- *
+/**
  * Used to specify the function that should be called when a TCP
  * connection receives data.
  *
  */ 
-
 void
 tcp_recv(struct tcp_pcb *pcb,
    err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
@@ -1007,9 +954,7 @@ tcp_recv(struct tcp_pcb *pcb,
   pcb->recv = recv;
 }
 
-/*
- * tcp_sent():
- *
+/**
  * Used to specify the function that should be called when TCP data
  * has been successfully delivered to the remote host.
  *
@@ -1022,14 +967,11 @@ tcp_sent(struct tcp_pcb *pcb,
   pcb->sent = sent;
 }
 
-/*
- * tcp_err():
- *
+/**
  * Used to specify the function that should be called when a fatal error
  * has occured on the connection.
  *
  */ 
-
 void
 tcp_err(struct tcp_pcb *pcb,
    void (* errf)(void *arg, err_t err))
@@ -1037,14 +979,11 @@ tcp_err(struct tcp_pcb *pcb,
   pcb->errf = errf;
 }
 
-/*
- * tcp_accept():
- *
+/**
  * Used for specifying the function that should be called when a
  * LISTENing connection has been connected to another host.
  *
  */ 
-
 void
 tcp_accept(struct tcp_pcb *pcb,
      err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
@@ -1054,15 +993,12 @@ tcp_accept(struct tcp_pcb *pcb,
 #endif /* LWIP_CALLBACK_API */
 
 
-/*
- * tcp_poll():
- *
+/**
  * Used to specify the function that should be called periodically
  * from TCP. The interval is specified in terms of the TCP coarse
  * timer interval, which is called twice a second.
  *
  */ 
-
 void
 tcp_poll(struct tcp_pcb *pcb,
    err_t (* poll)(void *arg, struct tcp_pcb *tpcb), u8_t interval)
@@ -1073,13 +1009,10 @@ tcp_poll(struct tcp_pcb *pcb,
   pcb->pollinterval = interval;
 }
 
-/*
- * tcp_pcb_purge():
- *
+/**
  * Purges a TCP PCB. Removes any buffered data and frees the buffer memory.
  *
  */
-
 void
 tcp_pcb_purge(struct tcp_pcb *pcb)
 {
@@ -1109,13 +1042,10 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
   }
 }
 
-/*
- * tcp_pcb_remove():
- *
+/**
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
  */
-
 void
 tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
 {
@@ -1135,13 +1065,10 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   LWIP_ASSERT("tcp_pcb_remove: tcp_pcbs_sane()", tcp_pcbs_sane());
 }
 
-/*
- * tcp_next_iss():
- *
+/**
  * Calculates a new initial sequence number for new connections.
  *
  */
-
 u32_t
 tcp_next_iss(void)
 {
