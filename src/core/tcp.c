@@ -709,7 +709,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   if(cseg == NULL) {
     return NULL;
   }
-  bcopy(seg, cseg, sizeof(struct tcp_seg));
+  bcopy((const char *)seg, (char *)cseg, sizeof(struct tcp_seg)); 
   pbuf_ref(cseg->p);
   return cseg;
 }
