@@ -597,12 +597,10 @@ pbuf_free(struct pbuf *p)
 
   PERF_START;
 
-  LWIP_ASSERT("pbuf_free: sane flags", p->flags == PBUF_FLAG_POOL ||
-    p->flags == PBUF_FLAG_ROM ||
-    p->flags == PBUF_FLAG_RAM ||
-    p->flags == PBUF_FLAG_REF );
+  LWIP_ASSERT("pbuf_free: sane flags",
+    p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_ROM ||
+    p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_POOL);
 
-  q = p;
   count = 0;
   /* Since decrementing ref cannot be guaranteed to be a single machine operation
    * we must protect it. Also, the later test of ref must be protected.
@@ -612,7 +610,7 @@ pbuf_free(struct pbuf *p)
    * obtain a zero reference count */
   while (p != NULL) {
     /* all pbufs in a chain are referenced at least once */
-    LWIP_ASSERT("pbuf_free: q->ref > 0", q->ref > 0);
+    LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
     p->ref--;
     /* this pbuf is no longer referenced to? */
     if (p->ref == 0)
@@ -679,7 +677,7 @@ pbuf_ref(struct pbuf *p)
 {
   SYS_ARCH_DECL_PROTECT(old_level);
   /* pbuf given? */  
-  if(p != NULL) {
+  if (p != NULL) {
     SYS_ARCH_PROTECT(old_level);
     ++(p->ref);
     SYS_ARCH_UNPROTECT(old_level);
