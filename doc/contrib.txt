@@ -6,14 +6,22 @@ First of all as you may already know lwIP is a volunteer project so feedback
 to fixes or questions might often come late. Hopefully the bug and patch tracking 
 features of Savannah help us not lose users' input.
 
-
 Source code style:
 
-- end debug messages with a newline (\n)
+- indentation is two spaces per level, no tabs.
+- end debug messages with a trailing newline (\n).
 - no space between function and opening bracket.
 - one space between keyword and opening bracket.
 - one space and no newline before opening curly braces.
+- spaces surrounding assignment and comparisons.
+- use current source code style as further reference.
 
+Source code self documentation style:
+
+- JavaDoc compliant and Doxygen compatible.
+- Function documentation above functions in .c files, not .h files.
+- Use current documentation style as further reference.
+ 
 Bug reports and patches:
 
 - Make sure you are reporting bugs or send patches against the latest sources.That usually means code in CVS
