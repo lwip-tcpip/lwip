@@ -306,7 +306,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     break;
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
-    p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + length + offset));
+    p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + offset) + MEM_ALIGN_SIZE(length));
     if (p == NULL) {
       return NULL;
     }
