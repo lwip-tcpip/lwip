@@ -254,6 +254,16 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
      the supplied memory pointer mem */
   netbuf_copy_partial(buf, mem, copylen, sock->lastoffset);
 
+  /* Check to see from where the data was. */
+  if(from != NULL && fromlen != NULL) {
+    addr = netbuf_fromaddr(buf);
+    port = netbuf_fromport(buf);  
+    ((struct sockaddr_in *)from)->sin_addr.s_addr = addr->addr;
+    ((struct sockaddr_in *)from)->sin_port = port;
+    ((struct sockaddr_in *)from)->sin_family = AF_INET;
+    *fromlen = sizeof(struct sockaddr_in);
+  }
+ 
   /* If this is a TCP socket, check if there is data left in the
      buffer. If so, it should be saved in the sock structure for next
      time around. */
@@ -266,16 +276,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     netbuf_delete(buf);
   }
 
-  /* Check to see from where the data was. */
-  if(from != NULL && fromlen != NULL) {
-    addr = netbuf_fromaddr(buf);
-    port = netbuf_fromport(buf);  
-    ((struct sockaddr_in *)from)->sin_addr.s_addr = addr->addr;
-    ((struct sockaddr_in *)from)->sin_port = port;
-    ((struct sockaddr_in *)from)->sin_family = AF_INET;
-    *fromlen = sizeof(struct sockaddr_in);
-  }
-  
+ 
   return copylen;
 }
 /*-----------------------------------------------------------------------------------*/
