@@ -943,6 +943,8 @@ static err_t dhcp_release(struct netif *netif)
 void dhcp_stop(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
+  LWIP_ASSERT("dhcp_stop: netif != NULL", netif != NULL);
+
   DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_stop()\n"));
   /* netif is DHCP configured? */
   if (dhcp != NULL)
