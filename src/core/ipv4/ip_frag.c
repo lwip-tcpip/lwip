@@ -93,6 +93,7 @@ static u8_t ip_reasstmr;
 static void 
 ip_reass_timer(void *arg)
 {
+  (void)arg;
   if(ip_reasstmr > 1) {
     ip_reasstmr--;
     sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
@@ -276,7 +277,7 @@ nullreturn:
 }
 
 #define MAX_MTU 1500
-static u8_t buf[MAX_MTU];
+static u8_t buf[MEM_ALIGN_SIZE(MAX_MTU)];
 
 /**
  * Fragment an IP packet if too large
@@ -301,7 +302,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   /* Get a RAM based MTU sized pbuf */
   rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
   rambuf->tot_len = rambuf->len = mtu;
-  rambuf->payload = buf;
+  rambuf->payload = MEM_ALIGN((void *)buf);
 
 
   /* Copy the IP header in it */
