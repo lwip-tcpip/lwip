@@ -115,40 +115,16 @@ tar czvf lwip-0.6.3.tar.gz lwip-0.6.3
 tar cjvf lwip-0.6.3.tar.bz2 lwip-0.6.3
 zip -r lwip-0.6.3.zip lwip-0.6.3
 
-First, make a local release directory to work in, I use "lwip-releases":
+Now, sign the archives with a detached GPG binary signature as follows:
 
-mkdir lwip-releases
-cd lwip-releases
+gpg -b lwip-0.6.3.tar.gz
+gpg -b lwip-0.6.3.tar.bz2
+gpg -b lwip-0.6.3.zip
 
-Now, make a new release by creating a new directory for it (these are
-Savannah conventions so that it shows up in the Files list real nice):
+Upload these files using anonymous FTP:
+ncftp ftp://savannah.gnu.org/incoming/savannah/lwip
 
-mkdir stable.pkg
-mkdir stable.pkg 0.6.3
-
-We can now copy the tar archive we made earlier into the release directory:
-
-cp ../../../lwip-0.6.3.tar.gz .
-
-Finally, synchronize this directory upwards to Savannah:
-
-rsync -n -e "ssh -1" -t -u -v -r *.pkg likewise@savannah.nongnu.org:/upload/lwip
-
-This does a "dry run": no files are modified! After you have confirmed that
-this is what you intended to do, remove "-n" and actually synchronize for
-real. The release should now be available here:
-
-http://savannah.nongnu.org/files/?group=lwip
-
----
-Explanation of rsync options used:
-
--t: preserve file timestamps
--u: do not overwrite existing files, unless they are older
--v: be verbose (long format file attributes)
--r: recurse into directories
--n: dry-run, do not modify anything. 
----
+ncftp>mput *0.6.3.*
 
 Additionally, you may post a news item on Savannah, like this:
 
