@@ -35,6 +35,8 @@
  * drivers for lwIP. Add code to the low_level functions and do a
  * search-and-replace for the word "ethernetif" to replace it with
  * something that better describes your network interface.
+ *
+ * THIS CODE NEEDS TO BE FIXED - IT IS NOT In SYNC WITH CURRENT ETHARP API
  */
 
 #include "lwip/debug.h"

@@ -3,7 +3,7 @@ don't contain any hardware or architecture specific code. The files
 are:
 
 etharp.c
-          Implementes the ARP (Address Resolution Protocol) over
+          Implements the ARP (Address Resolution Protocol) over
           Ethernet. The code in this file should be used together with
           Ethernet device drivers.
 
