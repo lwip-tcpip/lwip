@@ -123,6 +123,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- ARP options ---------- */
 #define ARP_TABLE_SIZE 10
+#define ARP_QUEUEING 1
 
 /* ---------- IP options ---------- */
 /* Define IP_FORWARD to 1 if you wish to have the ability to forward

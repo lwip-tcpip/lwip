@@ -3,6 +3,9 @@
  * Address Resolution Protocol module for IP over Ethernet
  *
  * $Log: etharp.c,v $
+ * Revision 1.11  2002/11/18 10:31:05  likewise
+ * Conditionally have ARP queue outgoing pbufs.
+ *
  * Revision 1.10  2002/11/18 08:41:31  jani
  * Move etharp packed structures to the header file.
  *
@@ -682,13 +685,19 @@ struct pbuf *etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pb
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
     arp_table[i].ctime = ctime;
     arp_table[i].state = ETHARP_STATE_PENDING;
-    /* remember pbuf to queue, if any */
-    arp_table[i].p = q;
+#if ARP_QUEUEING
     /* any pbuf to queue? */
     if (q != NULL) {
+      /* copy PBUF_REF referenced payloads to PBUF_RAM */
+      q = pbuf_unref(q);
       /* pbufs are queued, increase the reference count */
       pbuf_ref_chain(q);
     }
+    /* remember pbuf to queue, if any */
+    arp_table[i].p = q;
+#else
+    arp_table[i].p = NULL;
+#endif
   }
   /* could not allocate pbuf for ARP request */
   else {
