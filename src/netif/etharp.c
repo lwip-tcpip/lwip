@@ -2,103 +2,6 @@
  * @file
  * Address Resolution Protocol module for IP over Ethernet
  *
- * $Log: etharp.c,v $
- * Revision 1.30  2003/03/16 22:44:05  likewise
- * Fixed bug #2841 (etharp.c packet queueing always picks table entry 6).
- *
- * Revision 1.29  2003/02/24 10:49:05  jani
- * cleaned up opt.h a bit, added more option defaults ad changed SYS_LIGHTWEIGHT_PROT to be a 0/1 define.The same for COMPAT_SOCKET
- *
- * Revision 1.28  2003/02/21 16:43:46  jani
- * byte-order handling functions are in inet.c now and the uperrcase counterparts are gone. opt.h has all the
- * configurable items debug does not need to be directly included.
- *
- * Revision 1.27  2003/02/20 16:32:24  jani
- * do not directly include lwipopts.h but lwip/opt.h instead
- *
- * Revision 1.26  2003/02/20 13:13:56  likewise
- * Fixed some issues open after merging 'leon-dhcp'. Added new debugging.
- *
- * Revision 1.25  2003/02/20 08:42:04  likewise
- * Merged with leon-dhcp branch. Tagged as POST_leon-dhcp afterwards.
- *
- * Revision 1.24.2.1  2003/02/10 22:42:59  likewise
- * Massive amount of refactoring DHCP code.
- *
- * Revision 1.24  2003/02/06 22:18:57  davidhaas
- * Add the following features and bugfixes:
- *
- * Added select() functionality to sockets library.
- * Support for errno in sockets library.
- * Byte ordering fixes.
- * basic lwip_ioctl(), FIONREAD, get/setsockopt() etc. support
- *
- * - added additional argument to netif_add to pass state pointer so that the
- * if_init function has access to context information before
- * the interface is added, without accessing globals.
- *
- * - added netif_remove()
- *
- * - to conserve cpu load the tcpip_tcp_timer should only be active
- * when tcbs that need it exist.
- *
- * - pass length of available data to callbacks for NETCONN_EVT_RCV events
- *
- * - added tcpip_link_input(), a hack to allow processing of PPP
- * packets in tcpip_thread() context. This saves threads and context
- * switches.
- *
- * - renamed incompatible ASSERT() macro to LWIP_ASSERT() to avoid name
- * collision.
- *
- * - changed a bunch of %d's to %u's in format strings for unsigned values.
- *
- * - added ip_frag to lwip_stats.
- *
- * - changed IP_REASS_MAXAGE and IP_REASS_TMO defaults to more realistic
- * values.
- *
- * - added sys_timeout_remove() function to cancel timeouts (needed by PPP
- * amongst other things).
- *
- * - tolerate NULL returns from sys_arch_timeouts() since some threads might
- * not need to use or have timeouts.
- *
- * - added sys_sem_wait_timeout()
- *
- * - moved mem_malloc() function to end of mem.c to work around tasking
- * compiler bug.
- *
- * - automatically bind to local tcp port if 0.
- *
- * - allow customization of port ranges for automatic local bindings.
- *
- * - corrected various typos, spelling errors, etc..
- *
- * Thanks to Marc Boucher for many of these changes.
- *
- * Revision 1.23  2003/01/18 16:05:24  jani
- * When all entries are 0 due to the whole table changing since the last arp tick (past 10 seconds) there's no oldest entry and the new entry does not  get a spot.Fix this (from Ed Sutter)
- *
- * Revision 1.22  2003/01/13 09:38:21  jani
- * remove global ctime.Each entry's ctime is now absolute.This avoids wrapping and also solves naming clash reported on the list
- *
- * Revision 1.21  2003/01/08 11:04:36  likewise
- * Moved ETHARP_ALWAYS_INSERT switch to lwipopts.h
- *
- * Revision 1.19  2003/01/08 10:09:43  likewise
- * Updated lwIP module copyright years to include 2003. Committers must check theirs.
- *
- * Revision 1.18  2003/01/08 09:24:50  likewise
- * Removed etharp_output_sent() as etharp.c no longer returns ARP packets to the driver.
- *
- * Revision 1.17  2002/12/18 12:49:02  jani
- * renamed (hopefully everywhere) stats to lwip_stats.closes bug #1901
- *
- * Revision 1.16  2002/12/17 09:41:16  jani
- * Use C style comments.In debug stataments cast various struct pointers to void* to
- * avoid printf warnings.misc warnings in etharp.
- *
  */
 
 /*
@@ -298,6 +201,9 @@ find_arp_entry(void)
     for(i = 0; i < ARP_TABLE_SIZE; ++i) {
       /* remember entry with oldest stable entry in j*/
       if((arp_table[i].state == ETHARP_STATE_STABLE) &&
+#if ARP_QUEUEING /* do not want to re-use an entry with queued packets */
+      (arp_table[i].p != NULL) &&
+#endif
       (arp_table[i].ctime >= maxtime)) {
         maxtime = arp_table[i].ctime;
 	      j = i;
