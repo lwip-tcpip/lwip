@@ -336,7 +336,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* only allocate memory for the pbuf structure */
     p = memp_mallocp(MEMP_PBUF);
     if (p == NULL) {
-      DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_REF.\n"));
+      DEBUGF(PBUF_DEBUG | DBG_TRACE | 2, ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_ROM/REF.\n"));
       return NULL;
     }
     /* caller must set this field properly, afterwards */
