@@ -73,11 +73,20 @@ low_level_init(struct netif *netif)
 
   ethernetif = netif->state;
   
-  /* Obtain MAC address from network interface. */
-  ethernetif->ethaddr->addr[0] = ;
-  ethernetif->ethaddr->addr[1] = ;
-  ethernetif->ethaddr->addr[2] = ;
+  /* set MAC hardware address length */
+  netif->hwaddr_len = 6;
 
+  /* set MAC hardware address */
+  netif->hwaddr[0] = ;
+  ...
+  netif->hwaddr[6] = ;
+
+  /* maximum transfer unit */
+  netif->mtu = 1500;
+  
+  /* broadcast capability */
+  netif->flags = NETIF_FLAG_BROADCAST;
+ 
   /* Do whatever else is needed to initialize interface. */  
 }
 /*-----------------------------------------------------------------------------------*/

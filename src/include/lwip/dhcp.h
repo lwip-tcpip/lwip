@@ -13,19 +13,24 @@
 // period (in milliseconds) of the application calling dhcp_fine_tmr()
 #define DHCP_FINE_TIMER_MSECS 500 
 
-struct dhcp_state
+struct dhcp
 {
-  struct dhcp_state *next; // for linked list purposes
-  u8_t state; // current DHCP state (of DHCP state machine)
-  u8_t tries; // retries of current request
-  u32_t xid; // id of last sent request
-  struct netif *netif; // interface to be configured
-  struct udp_pcb *pcb; // our connection
-
-  struct pbuf *p; // (first) pbuf of incoming msg
-  struct dhcp_msg *msg_in; // incoming msg
-  struct dhcp_msg *options_in; // incoming msg options
-  u16_t options_in_len; // ingoing msg options length
+  /** current DHCP state machine state */
+  u8_t state;
+  /** retries of current request */
+  u8_t tries;
+  /** transaction identifier of last sent request */ 
+  u32_t xid;
+  /** our connection to the DHCP server */ 
+  struct udp_pcb *pcb;
+  /** (first) pbuf of incoming msg */
+  struct pbuf *p;
+  /** incoming msg */
+  struct dhcp_msg *msg_in;
+  /** incoming msg options */
+  struct dhcp_msg *options_in; 
+   ** ingoing msg options length */
+  u16_t options_in_len;
 
   struct pbuf *p_out; // pbuf of outcoming msg
   struct dhcp_msg *msg_out; // outgoing msg
@@ -48,7 +53,7 @@ struct dhcp_state
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-// minimum set of fields of any DHCP message
+/** minimum set of fields of any DHCP message */
 struct dhcp_msg
 {
   PACK_STRUCT_FIELD(u8_t op);
@@ -70,9 +75,9 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u8_t file[DHCP_FILE_LEN]);
   PACK_STRUCT_FIELD(u32_t cookie);
 #define DHCP_MIN_OPTIONS_LEN 68U
-// allow this to be configured in lwipopts.h, but not too small
+/** allow this to be configured in lwipopts.h, but not too small */
 #if ((!defined(DHCP_OPTIONS_LEN)) || (DHCP_OPTIONS_LEN < DHCP_MIN_OPTIONS_LEN))
-// set this to be sufficient for your options in outgoing DHCP msgs
+/** set this to be sufficient for your options in outgoing DHCP msgs */
 #  define DHCP_OPTIONS_LEN DHCP_MIN_OPTIONS_LEN
 #endif
   PACK_STRUCT_FIELD(u8_t options[DHCP_OPTIONS_LEN]);
@@ -82,28 +87,28 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-// initialize DHCP client
+/** initialize DHCP client */
 void dhcp_init(void);
-// start DHCP configuration
+/** start DHCP configuration */
 struct dhcp_state *dhcp_start(struct netif *netif);
-// stop DHCP configuration
-void dhcp_stop(struct dhcp_state *state);
-// enforce lease renewal
-err_t dhcp_renew(struct dhcp_state *state);
-// inform server of our IP address
+/** stop DHCP configuration */
+void dhcp_stop(struct netif *netif);
+/** enforce lease renewal */
+err_t dhcp_renew(struct netif *netif);
+/** inform server of our IP address */
 void dhcp_inform(struct netif *netif);
 
-// if enabled, check whether the offered IP address is not in use, using ARP
+/** if enabled, check whether the offered IP address is not in use, using ARP */
 #if	DHCP_DOES_ARP_CHECK
-void dhcp_arp_reply(struct ip_addr *addr);
+void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr);
 #endif
 
-// to be called every minute
+/** to be called every minute */
 void dhcp_coarse_tmr(void);
-// to be called every half second
+/** to be called every half second */
 void dhcp_fine_tmr(void);
  
-// DHCP message item offsets and length 
+/** DHCP message item offsets and length */
 #define DHCP_MSG_OFS (UDP_DATA_OFS)  
   #define DHCP_OP_OFS (DHCP_MSG_OFS + 0)
   #define DHCP_HTYPE_OFS (DHCP_MSG_OFS + 1)
@@ -127,7 +132,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_CLIENT_PORT 68	
 #define DHCP_SERVER_PORT 67
 
-// DHCP client states
+/** DHCP client states */
 #define DHCP_REQUESTING 1
 #define DHCP_INIT 2
 #define DHCP_REBOOTING 3
@@ -160,7 +165,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_BROADCAST_FLAG 15
 #define DHCP_BROADCAST_MASK (1 << DHCP_FLAG_BROADCAST)
 
-// BootP options
+/** BootP options */
 #define DHCP_OPTION_PAD 0
 #define DHCP_OPTION_SUBNET_MASK 1 // RFC 2132 3.3
 #define DHCP_OPTION_ROUTER 3 
@@ -171,7 +176,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_OPTION_TCP_TTL 37
 #define DHCP_OPTION_END 255
 
-// DHCP options
+/** DHCP options */
 #define DHCP_OPTION_REQUESTED_IP 50 // RFC 2132 9.1, requested IP address
 #define DHCP_OPTION_LEASE_TIME 51 // RFC 2132 9.2, time in seconds, in 4 bytes 
 #define DHCP_OPTION_OVERLOAD 52 // RFC2132 9.3, use file and/or sname field for options
@@ -192,7 +197,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE 67
 
-// possible combinations of overloading	the file and sname fields with options
+/** possible combinations of overloading	the file and sname fields with options */
 #define DHCP_OVERLOAD_NONE 0
 #define DHCP_OVERLOAD_FILE 1
 #define DHCP_OVERLOAD_SNAME	2

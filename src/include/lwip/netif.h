@@ -32,6 +32,7 @@
 #ifndef __LWIP_NETIF_H__
 #define __LWIP_NETIF_H__
 
+#include "lwipopts.h"
 #include "lwip/opt.h"
 
 #include "lwip/err.h"
@@ -40,39 +41,66 @@
 
 #include "lwip/inet.h"
 #include "lwip/pbuf.h"
+#include "lwip/dhcp.h"
 
-/** must be the maximum of all used hardware address lengths */
-#define NETIF_HWADDR_LEN 6
+/** must be the maximum of all used hardware address lengths
+    across all types of interfaces in use */
+#define NETIF_MAX_HWADDR_LEN 6
 
+/** whether the network interface is 'up'. this is
+ * a software flag used to control whether this network
+ * interface is enabled and processes traffic */
+#define NETIF_FLAG_UP 1
+/** if set, the netif has broadcast capability */
+#define NETIF_FLAG_BROADCAST 2
+/** if set, the netif is one end of a point-to-point connection */
+#define NETIF_FLAG_POINTTOPOINT 4
+/** if set, the interface is configured using DHCP */
+#define NETIF_FLAG_DHCP 8
+
+/** generic data structure used for all lwIP network interfaces */
 struct netif {
+  /** pointer to next in linked list */
   struct netif *next;
-  u8_t num;
-  u16_t mtu;
+  /** The following fields should be filled in by the
+      initialization function for the device driver. */
+  
+  /** IP address configuration in network byte order */
   struct ip_addr ip_addr;
-  struct ip_addr netmask;  /* netmask in network byte order */
+  struct ip_addr netmask;
   struct ip_addr gw;
-  unsigned char hwaddr[NETIF_HWADDR_LEN];
 
-  /* This function is called by the network device driver
-     when it wants to pass a packet to the TCP/IP stack. */
+  /** This function is called by the network device driver
+      to pass a packet up the TCP/IP stack. */
   err_t (* input)(struct pbuf *p, struct netif *inp);
-
-  /** The following two fields should be filled in by the
-     initialization function for the device driver. */
-  char name[2];
   /** This function is called by the IP module when it wants
-     to send a packet on the interface. This function typically
-     first resolves the hardware address, then sends the packet. */
+      to send a packet on the interface. This function typically
+      first resolves the hardware address, then sends the packet. */
   err_t (* output)(struct netif *netif, struct pbuf *p,
 		   struct ip_addr *ipaddr);
   /** This function is called by the ARP module when it wants
-     to send a packet on the interface. This function outputs
-     the pbuf on the link medium. */
+      to send a packet on the interface. This function outputs
+      the pbuf as-is on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
-
   /** This field can be set by the device driver and could point
       to state information for the device. */
   void *state;
+#if LWIP_DHCP
+  /** the DHCP client state information for this netif */
+  struct dhcp *dhcp;
+#endif
+  /** number of bytes used in hwaddr */
+  unsigned char hwaddr_len;
+  /** link level hardware address of this interface */
+  unsigned char hwaddr[NETIF_MAX_HWADDR_LEN];
+  /** maximum transfer unit (in bytes) */
+  u16_t mtu;
+  /** descriptive abbreviation */
+  char name[2];
+  /** number of this interface */
+  u8_t num;
+  /** NETIF_FLAG_* */
+  u8_t flags;
 };
 
 /** The list of network interfaces. */

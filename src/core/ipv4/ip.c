@@ -57,7 +57,7 @@
 
 #include "lwip/snmp.h"
 #if LWIP_DHCP
-#include "lwip/dhcp.h"
+#  include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
 
 /*-----------------------------------------------------------------------------------*/
