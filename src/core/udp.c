@@ -549,9 +549,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
   ip_addr_set(&pcb->remote_ip, ipaddr);
   pcb->remote_port = port;
+  pcb->flags |= UDP_FLAGS_CONNECTED;
 /** TODO: this functionality belongs in upper layers */
 #if 0
-  pcb->flags |= UDP_FLAGS_CONNECTED;
   /* Nail down local IP for netconn_addr()/getsockname() */
   if (ip_addr_isany(&pcb->local_ip) && !ip_addr_isany(&pcb->remote_ip)) { 
     struct netif *netif;
