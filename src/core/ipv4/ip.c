@@ -642,7 +642,6 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #ifdef IP_STATS
     ++stats.ip.rterr;
 #endif /* IP_STATS */
-    pbuf_free(p);
     return ERR_RTE;
   }
 
