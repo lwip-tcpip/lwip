@@ -509,7 +509,7 @@ tcp_process(struct tcp_pcb *pcb)
       /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
           TCP_SEQ_LEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
       */
-      if(TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)){
+      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
         acceptable = 1;
       }
     }
@@ -538,9 +538,10 @@ tcp_process(struct tcp_pcb *pcb)
   case SYN_SENT:
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("SYN-SENT: ackno %lu pcb->snd_nxt %lu unacked %lu\n", ackno,
      pcb->snd_nxt, ntohl(pcb->unacked->tcphdr->seqno)));
+    /* received SYN ACK with expected sequence number? */
     if ((flags & TCP_ACK) && (flags & TCP_SYN)
         && ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
-      pcb->snd_buf ++;
+      pcb->snd_buf++;
       pcb->rcv_nxt = seqno + 1;
       pcb->lastack = ackno;
       pcb->snd_wnd = tcphdr->wnd;
@@ -561,13 +562,18 @@ tcp_process(struct tcp_pcb *pcb)
       TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
       tcp_ack(pcb);
     }
+    /* received ACK? possibly a half-open connection */
+    else if (flags & TCP_ACK) {
+      /* send a RST to bring the other side in a non-synchronized state. */
+      tcp_rst(ackno, seqno + tcplen, &(iphdr->dest), &(iphdr->src),
+        tcphdr->dest, tcphdr->src);
+    }
     break;
   case SYN_RCVD:
     if (flags & TCP_ACK &&
        !(flags & TCP_RST)) {
-      /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
-        TCP_SEQ_LEQ(ackno, pcb->snd_nxt)) { */
-      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)){
+      /* expected ACK number? */
+      if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %u -> %u.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
@@ -586,6 +592,12 @@ tcp_process(struct tcp_pcb *pcb)
         tcp_receive(pcb);
         pcb->cwnd = pcb->mss;
       }
+      /* incorrect ACK number */
+      else {
+        /* send RST */
+        tcp_rst(ackno, seqno + tcplen, &(iphdr->dest), &(iphdr->src),
+          tcphdr->dest, tcphdr->src);
+      }
     }
     break;
   case CLOSE_WAIT:
@@ -602,15 +614,15 @@ tcp_process(struct tcp_pcb *pcb)
     if (flags & TCP_FIN) {
       if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
         LWIP_DEBUGF(TCP_DEBUG,
-         ("TCP connection closed %d -> %d.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
-  tcp_ack_now(pcb);
-  tcp_pcb_purge(pcb);
-  TCP_RMV(&tcp_active_pcbs, pcb);
-  pcb->state = TIME_WAIT;
-  TCP_REG(&tcp_tw_pcbs, pcb);
+          ("TCP connection closed %d -> %d.\n", inseg.tcphdr->src, inseg.tcphdr->dest));
+        tcp_ack_now(pcb);
+        tcp_pcb_purge(pcb);
+        TCP_RMV(&tcp_active_pcbs, pcb);
+        pcb->state = TIME_WAIT;
+        TCP_REG(&tcp_tw_pcbs, pcb);
       } else {
-  tcp_ack_now(pcb);
-  pcb->state = CLOSING;
+        tcp_ack_now(pcb);
+        pcb->state = CLOSING;
       }
     } else if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
       pcb->state = FIN_WAIT_2;
@@ -649,7 +661,6 @@ tcp_process(struct tcp_pcb *pcb)
   default:
     break;
   }
-
   return ERR_OK;
 }
 
