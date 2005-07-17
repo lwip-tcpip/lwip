@@ -11,6 +11,11 @@ FUTURE
 
 HISTORY
 
+  2005-07-17 Leon Woestenberg <leon.woestenberg@gmx.net>
+  * inet.c: Fixed unaligned 16-bit access in the standard checksum
+    routine by Peter Jolasson.
+  * slipif.c: Fixed implementation assumption of single-pbuf datagrams.
+
   2005-02-04 Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp_out.c: Fixed uninitialized 'queue' referenced in memerr branch.
   * tcp_{out|in}.c: Applied patch fixing unaligned access.
