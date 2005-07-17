@@ -51,7 +51,8 @@
 /* This is a reference implementation of the checksum algorithm
 
  - it may not work on all architectures, and all processors, particularly
-   if they have issues with alignment and 16 bit access.
+   if they have issues with alignment and 16 bit access (although this should
+   be fixed since inet.c 1.22).
 
  - in this case you will need to port it to your architecture and 
    #define LWIP_CHKSUM <your_checksum_routine> 
@@ -63,15 +64,22 @@ static u16_t
 lwip_standard_chksum(void *dataptr, int len)
 {
   u32_t acc;
-
   LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", (void *)dataptr, len));
+
+  /* iterate by two bytes at once */
   for(acc = 0; len > 1; len -= 2) {
-      /*    acc = acc + *((u16_t *)dataptr)++;*/
+    /* WAS: acc = acc + *((u16_t *)dataptr)++; BUT THIS IS BROKEN FOR
+     * ARCHITECTURES WHICH DO NOT ALLOW UNALIGNED 16-BIT ACCESSES */
+#if MEM_ALIGNMENT >= 2
+    acc += htons( ((u16_t)(((u8_t *)dataptr)[0])<<8) | ((u8_t *)dataptr)[1] );
+    dataptr += 2;
+#else
     acc += *(u16_t *)dataptr;
     dataptr = (void *)((u16_t *)dataptr + 1);
+#endif
   }
 
-  /* add up any odd byte */
+  /* add up any last odd byte */
   if (len == 1) {
     acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
     LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", (unsigned int)(*(u8_t *)dataptr)));
@@ -79,13 +87,12 @@ lwip_standard_chksum(void *dataptr, int len)
     LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
   }
   acc = (acc >> 16) + (acc & 0xffffUL);
-
   if ((acc & 0xffff0000) != 0) {
     acc = (acc >> 16) + (acc & 0xffffUL);
   }
-
   return (u16_t)acc;
 }
+
 #endif
 
 /* inet_chksum_pseudo:
