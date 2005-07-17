@@ -32,9 +32,9 @@
  */
 
 /* 
- * This is an arch independent SLIP netif. The specific serial hooks must be provided 
- * by another file.They are sio_open, sio_recv and sio_send
- */ 
+ * This is an arch independent SLIP netif. The specific serial hooks must be
+ * provided by another file. They are sio_open, sio_recv and sio_send
+ */
 
 #include "netif/slipif.h"
 #include "lwip/opt.h"
@@ -55,7 +55,7 @@
  * Send a pbuf doing the necessary SLIP encapsulation
  *
  * Uses the serial layer's sio_send() 
- */ 
+ */
 err_t
 slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
 {
@@ -66,21 +66,21 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
   /* Send pbuf out on the serial I/O device. */
   sio_send(SLIP_END, netif->state);
 
-  for(q = p; q != NULL; q = q->next) {
-    for(i = 0; i < q->len; i++) {
+  for (q = p; q != NULL; q = q->next) {
+    for (i = 0; i < q->len; i++) {
       c = ((u8_t *)q->payload)[i];
       switch (c) {
       case SLIP_END:
-  sio_send(SLIP_ESC, netif->state);
-  sio_send(SLIP_ESC_END, netif->state);
-  break;
+        sio_send(SLIP_ESC, netif->state);
+        sio_send(SLIP_ESC_END, netif->state);
+        break;
       case SLIP_ESC:
-  sio_send(SLIP_ESC, netif->state);
-  sio_send(SLIP_ESC_ESC, netif->state);
-  break;
+        sio_send(SLIP_ESC, netif->state);
+        sio_send(SLIP_ESC_ESC, netif->state);
+        break;
       default:
-  sio_send(c, netif->state);
-  break;
+        sio_send(c, netif->state);
+        break;
       }
     }
   }
@@ -94,9 +94,9 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
  * Poll the serial layer by calling sio_recv()
  * 
  * @return The IP packet when SLIP_END is received 
- */ 
+ */
 static struct pbuf *
-slipif_input( struct netif * netif )
+slipif_input(struct netif *netif)
 {
   u8_t c;
   struct pbuf *p, *q;
@@ -112,13 +112,13 @@ slipif_input( struct netif * netif )
     switch (c) {
     case SLIP_END:
       if (recved > 0) {
-  /* Received whole packet. */
-  pbuf_realloc(q, recved);
-  
-  LINK_STATS_INC(link.recv);
-  
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
-  return q;
+        /* Received whole packet. */
+        pbuf_realloc(q, recved);
+        
+        LINK_STATS_INC(link.recv);
+        
+        LWIP_DEBUGF(SLIP_DEBUG, ("slipif: Got packet\n"));
+        return q;
       }
       break;
 
@@ -126,42 +126,45 @@ slipif_input( struct netif * netif )
       c = sio_recv(netif->state);
       switch (c) {
       case SLIP_ESC_END:
-  c = SLIP_END;
-  break;
+        c = SLIP_END;
+        break;
       case SLIP_ESC_ESC:
-  c = SLIP_ESC;
-  break;
+        c = SLIP_ESC;
+        break;
       }
       /* FALLTHROUGH */
-      
+
     default:
       if (p == NULL) {
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
-  p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
+        LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
+        p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
-  if (p == NULL) {
-    LINK_STATS_INC(link.drop);
-    LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
-  }
-  
-  if (q != NULL) {
-    pbuf_cat(q, p);
-  } else {
-    q = p;
-  }
+        if (p == NULL) {
+          LINK_STATS_INC(link.drop);
+          LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
+        }
+
+        if (q != NULL) {
+          pbuf_cat(q, p);
+        } else {
+          q = p;
+        }
       }
       if (p != NULL && recved < MAX_SIZE) {
-  ((u8_t *)p->payload)[i] = c;
-  recved++;
-  i++;
-  if (i >= p->len) {
-    i = 0;
-    p = NULL;
-  }
+        ((u8_t *)p->payload)[i] = c;
+        recved++;
+        i++;
+        if (i >= p->len) {
+          i = 0;
+          if (p->next != NULL && p->next->len > 0)
+            p = p->next;
+          else
+            p = NULL;
+        }
       }
       break;
     }
-    
+
   }
   return NULL;
 }
@@ -170,7 +173,7 @@ slipif_input( struct netif * netif )
  * The SLIP input thread 
  *
  * Feed the IP layer with incoming packets
- */ 
+ */
 static void
 slipif_loop(void *nf)
 {
@@ -188,22 +191,22 @@ slipif_loop(void *nf)
  *
  * Call the arch specific sio_open and remember
  * the opened device in the state field of the netif.
- */ 
+ */
 err_t
 slipif_init(struct netif *netif)
 {
-  
+
   LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
 
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
-  netif->mtu = 1500;  
+  netif->mtu = 1500;
   netif->flags = NETIF_FLAG_POINTTOPOINT;
 
   netif->state = sio_open(netif->num);
   if (!netif->state)
-      return ERR_IF;
+    return ERR_IF;
 
   sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);
   return ERR_OK;
