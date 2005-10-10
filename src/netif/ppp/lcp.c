@@ -1235,7 +1235,7 @@ static int lcp_reqci(fsm *f,
 			ho->neg_mru = 1;		/* Remember he sent MRU */
 			ho->mru = cishort;		/* And remember value */
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " MRU %d", cishort);
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " MRU %d", cishort);
 			traceNdx = strlen(traceBuf);
 #endif
 			break;
@@ -1268,7 +1268,7 @@ static int lcp_reqci(fsm *f,
 			ho->neg_asyncmap = 1;
 			ho->asyncmap = cilong;
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " ASYNCMAP=%lX", cilong);
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " ASYNCMAP=%lX", cilong);
 			traceNdx = strlen(traceBuf);
 #endif
 			break;
@@ -1320,7 +1320,7 @@ static int lcp_reqci(fsm *f,
 				}
 				ho->neg_upap = 1;
 #if TRACELCP > 0
-				sprintf(&traceBuf[traceNdx], " PAP (%X)", cishort);
+				snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " PAP (%X)", cishort);
 				traceNdx = strlen(traceBuf);
 #endif
 				break;
@@ -1358,7 +1358,7 @@ static int lcp_reqci(fsm *f,
 					break;
 				}
 #if TRACELCP > 0
-				sprintf(&traceBuf[traceNdx], " CHAP %X,%d", cishort, cichar);
+				snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CHAP %X,%d", cishort, cichar);
 				traceNdx = strlen(traceBuf);
 #endif
 				ho->chap_mdtype = cichar; /* save md type */
@@ -1390,7 +1390,7 @@ static int lcp_reqci(fsm *f,
 			GETSHORT(cishort, p);
 			GETLONG(cilong, p);
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " QUALITY (%x %x)", cishort, (unsigned int) cilong);
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " QUALITY (%x %x)", cishort, (unsigned int) cilong);
 			traceNdx = strlen(traceBuf);
 #endif
 
@@ -1422,7 +1422,7 @@ static int lcp_reqci(fsm *f,
 			}
 			GETLONG(cilong, p);
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " MAGICNUMBER (%lX)", cilong);
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " MAGICNUMBER (%lX)", cilong);
 			traceNdx = strlen(traceBuf);
 #endif
 
@@ -1445,7 +1445,7 @@ static int lcp_reqci(fsm *f,
 		
 		case CI_PCOMPRESSION:
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " PCOMPRESSION");
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " PCOMPRESSION");
 			traceNdx = strlen(traceBuf);
 #endif
 			if (!ao->neg_pcompression ||
@@ -1458,7 +1458,7 @@ static int lcp_reqci(fsm *f,
 		
 		case CI_ACCOMPRESSION:
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " ACCOMPRESSION");
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " ACCOMPRESSION");
 			traceNdx = strlen(traceBuf);
 #endif
 			if (!ao->neg_accompression ||
@@ -1471,7 +1471,7 @@ static int lcp_reqci(fsm *f,
 		
 		case CI_MRRU:
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " CI_MRRU");
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CI_MRRU");
 			traceNdx = strlen(traceBuf);
 #endif
 			orc = CONFREJ;
@@ -1479,7 +1479,7 @@ static int lcp_reqci(fsm *f,
 		
 		case CI_SSNHF:
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " CI_SSNHF");
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CI_SSNHF");
 			traceNdx = strlen(traceBuf);
 #endif
 			orc = CONFREJ;
@@ -1487,7 +1487,7 @@ static int lcp_reqci(fsm *f,
 		
 		case CI_EPDISC:
 #if TRACELCP > 0
-			sprintf(&traceBuf[traceNdx], " CI_EPDISC");
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CI_EPDISC");
 			traceNdx = strlen(traceBuf);
 #endif
 			orc = CONFREJ;
@@ -1495,7 +1495,7 @@ static int lcp_reqci(fsm *f,
 		
 		default:
 #if TRACELCP
-			sprintf(&traceBuf[traceNdx], " unknown %d", citype);
+			snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " unknown %d", citype);
 			traceNdx = strlen(traceBuf);
 #endif
 			orc = CONFREJ;
