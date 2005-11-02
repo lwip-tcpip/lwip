@@ -1,6 +1,6 @@
 Raw TCP/IP interface for lwIP
 
-Authors: Adam Dunkels, Leon Woestenberg
+Authors: Adam Dunkels, Leon Woestenberg, Christiaan Simons
 
 lwIP provides two Application Program's Interfaces (APIs) for programs
 to use for communication with the TCP/IP code:
@@ -290,3 +290,97 @@ level of complexity of UDP, the interface is significantly simpler.
 
   Specifies a callback function that should be called when a UDP
   datagram is received.
+  
+
+--- System initalization
+
+A truly complete and generic sequence for initializing the lwip stack
+cannot be given because it depends on the build configuration (lwipopts.h)
+and additional initializations for your runtime environment (e.g. timers).
+
+We can give you some idea on how to proceed when using the raw API.
+We assume a configuration using a single Ethernet netif and the
+UDP and TCP transport layers, IPv4 and the DHCP client.
+
+Call these functions in the order of appearance:
+
+- stats_init()
+
+  Clears the structure where runtime statistics are gathered.
+
+- sys_init()
+  
+  Not of much use since we set the NO_SYS 1 option in lwipopts.h,
+  to be called for easy configuration changes.
+
+- mem_init()
+
+  Initializes the dynamic memory heap defined by MEM_SIZE.
+
+- memp_init()
+
+  Initializes the memory pools defined by MEMP_NUM_x.
+
+- pbuf_init()
+
+  Initializes the pbuf memory pool defined by PBUF_POOL_SIZE.
+  
+- etharp_init()
+
+  Initializes the ARP table and queue.
+  Note: you must call etharp_tmr at a 10 second regular interval
+  after this initialization.
+
+- ip_init()
+
+  Doesn't do much, it should be called to handle future changes.
+
+- udp_init()
+
+  Clears the UDP PCB list.
+
+- tcp_init()
+
+  Clears the TCP PCB list and clears some internal TCP timers.
+  Note: you must call tcp_fasttmr() and tcp_slowtmr() at the
+  predefined regular intervals after this initialization. 
+  
+- netif_add(struct netif *netif, struct ip_addr *ipaddr,
+            struct ip_addr *netmask, struct ip_addr *gw,
+            void *state, err_t (* init)(struct netif *netif),
+            err_t (* input)(struct pbuf *p, struct netif *netif))
+
+  Adds your network interface to the netif_list. Allocate a struct
+  netif and pass a pointer to this structure as the first argument.
+  Give pointers to cleared ip_addr structures when using DHCP,
+  or fill them with sane numbers otherwise. The state pointer may be NULL.
+
+  The init function pointer must point to a initialization function for
+  your ethernet netif interface. The following code illustrates it's use.
+  
+  err_t netif_if_init(struct netif *netif)
+  {
+    u8_t i;
+    
+    for(i = 0; i < 6; i++) netif->hwaddr[i] = some_eth_addr[i];
+    init_my_eth_device();
+    return ERR_OK;
+  }
+  
+  The input function pointer must point to the lwip ip_input().
+  
+- netif_set_default(struct netif *netif)
+
+  Registers the default network interface.
+
+- netif_set_up(struct netif *netif)
+
+  When the netif is fully configured this function must be called.
+
+- dhcp_start(struct netif *netif)
+
+  Creates a new DHCP client for this interface on the first call.
+  Note: you must call dhcp_fine_tmr() and dhcp_coarse_tmr() at
+  the predefined regular intervals after starting the client.
+  
+  You can peek in the netif->dhcp struct for the actual DHCP status.
