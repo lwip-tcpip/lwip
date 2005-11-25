@@ -72,7 +72,7 @@ lwip_standard_chksum(void *dataptr, int len)
      * ARCHITECTURES WHICH DO NOT ALLOW UNALIGNED 16-BIT ACCESSES */
 #if MEM_ALIGNMENT >= 2
     acc += htons( ((u16_t)(((u8_t *)dataptr)[0])<<8) | ((u8_t *)dataptr)[1] );
-    dataptr += 2;
+    (void *)((u16_t *)dataptr + 1);
 #else
     acc += *(u16_t *)dataptr;
     dataptr = (void *)((u16_t *)dataptr + 1);
