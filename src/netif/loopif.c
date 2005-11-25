@@ -58,7 +58,7 @@ loopif_output(struct netif *netif, struct pbuf *p,
        struct ip_addr *ipaddr)
 {
   struct pbuf *q, *r;
-  char *ptr;
+  u8_t *ptr;
   void **arg;
 
 #if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)

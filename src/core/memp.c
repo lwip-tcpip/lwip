@@ -124,7 +124,7 @@ static sys_sem_t mutex;
 static int
 memp_sanity(void)
 {
-  int i, c;
+  s16_t i, c;
   struct memp *m, *n;
 
   for(i = 0; i < MEMP_MAX; i++) {
@@ -222,7 +222,7 @@ memp_malloc(memp_t type)
     mem = MEM_ALIGN((u8_t *)memp + sizeof(struct memp));
     return mem;
   } else {
-    LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %d\n", type));
+    LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %"S16_F"\n", type));
 #if MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */

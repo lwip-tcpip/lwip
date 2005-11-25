@@ -81,10 +81,10 @@ void ip_input(struct pbuf *p, struct netif *inp);
 
 /* source and destination addresses in network byte order, please */
 err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-         unsigned char ttl, unsigned char proto);
+         u8_t ttl, u8_t proto);
 
 err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-      unsigned char ttl, unsigned char proto,
+      u8_t ttl, u8_t proto,
       struct netif *netif);
 
 #if IP_DEBUG

@@ -39,7 +39,7 @@
 
 struct sswt_cb
 {
-    int timeflag;
+    s16_t timeflag;
     sys_sem_t *psem;
 };
 
@@ -170,7 +170,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 
   timeouts = sys_arch_timeouts();
 
-  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%lu h=%p arg=%p\n",
+  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p\n",
     (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);

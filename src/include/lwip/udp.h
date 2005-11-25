@@ -95,7 +95,7 @@ void             udp_input      (struct pbuf *p, struct netif *inp);
 void             udp_init       (void);
 
 #if UDP_DEBUG
-int udp_debug_print(struct udp_hdr *udphdr);
+void udp_debug_print(struct udp_hdr *udphdr);
 #else
 #define udp_debug_print(udphdr)
 #endif

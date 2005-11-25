@@ -46,7 +46,7 @@
 void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
-  unsigned char type;
+  u8_t type;
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
@@ -57,7 +57,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
   /* TODO: check length before accessing payload! */
 
-  type = ((char *)p->payload)[0];
+  type = ((u8_t *)p->payload)[0];
 
   switch (type) {
   case ICMP6_ECHO:
@@ -74,16 +74,16 @@ icmp_input(struct pbuf *p, struct netif *inp)
       return;
     }
     iecho = p->payload;
-    iphdr = (struct ip_hdr *)((char *)p->payload - IP_HLEN);
+    iphdr = (struct ip_hdr *)((u8_t *)p->payload - IP_HLEN);
     if (inet_chksum_pbuf(p) != 0) {
-      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 
 #ifdef ICMP_STATS
       ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
     /*      return;*/
     }
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp: p->len %d p->tot_len %d\n", p->len, p->tot_len));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp: p->len %"S16_F" p->tot_len %"S16_F"\n", p->len, p->tot_len));
     ip_addr_set(&tmpaddr, &(iphdr->src));
     ip_addr_set(&(iphdr->src), &(iphdr->dest));
     ip_addr_set(&(iphdr->dest), &tmpaddr);
@@ -94,17 +94,17 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else {
       iecho->chksum += htons(ICMP6_ECHO << 8);
     }
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%x)\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
-    /*    LWIP_DEBUGF("icmp: p->len %u p->tot_len %u\n", p->len, p->tot_len);*/
+    /*    LWIP_DEBUGF("icmp: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len);*/
     ip_output_if (p, &(iphdr->src), IP_HDRINCL,
      iphdr->hoplim, IP_PROTO_ICMP, inp);
     break;
   default:
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %d not supported.\n", (int)type));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" not supported.\n", (s16_t)type));
 #ifdef ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;
@@ -127,10 +127,10 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   iphdr = p->payload;
 
   idur = q->payload;
-  idur->type = (char)ICMP6_DUR;
-  idur->icode = (char)t;
+  idur->type = (u8_t)ICMP6_DUR;
+  idur->icode = (u8_t)t;
 
-  memcpy((char *)q->payload + 8, p->payload, IP_HLEN + 8);
+  memcpy((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   idur->chksum = 0;
@@ -158,11 +158,11 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   iphdr = p->payload;
 
   tehdr = q->payload;
-  tehdr->type = (char)ICMP6_TE;
-  tehdr->icode = (char)t;
+  tehdr->type = (u8_t)ICMP6_TE;
+  tehdr->icode = (u8_t)t;
 
   /* copy fields from original packet */
-  memcpy((char *)q->payload + 8, (char *)p->payload, IP_HLEN + 8);
+  memcpy((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   tehdr->chksum = 0;

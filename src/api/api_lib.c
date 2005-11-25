@@ -165,7 +165,7 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
       offset -= p->len;
     } else {    
       for(i = offset; i < p->len; ++i) {
-  ((char *)dataptr)[left] = ((char *)p->payload)[i];
+  ((u8_t *)dataptr)[left] = ((u8_t *)p->payload)[i];
   if (++left >= len) {
     return;
   }
@@ -673,7 +673,7 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
     api_msg_post(msg);
     sys_mbox_fetch(conn->mbox, NULL);    
     if (conn->err == ERR_OK) {
-      dataptr = (void *)((char *)dataptr + len);
+      dataptr = (void *)((u8_t *)dataptr + len);
       size -= len;
     } else if (conn->err == ERR_MEM) {
       conn->err = ERR_OK;

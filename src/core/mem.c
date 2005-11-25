@@ -301,7 +301,7 @@ mem_malloc(mem_size_t size)
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
     }    
   }
-  LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %d bytes\n", (int)size));
+  LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
 #if MEM_STATS
   ++lwip_stats.mem.err;
 #endif /* MEM_STATS */  

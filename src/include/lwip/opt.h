@@ -346,8 +346,10 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* ---------- Socket Options ---------- */
 /* Enable SO_REUSEADDR and SO_REUSEPORT options */ 
-#ifndef SO_REUSE
-# define SO_REUSE 0
+#ifdef SO_REUSE
+/* I removed the lot since this was an ugly hack. It broke the raw-API.
+   It also came with many ugly goto's, Christiaan Simons. */
+#error "SO_REUSE currently unavailable, this was a hack"
 #endif                                                                        
 
 

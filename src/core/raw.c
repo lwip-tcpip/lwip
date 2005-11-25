@@ -87,7 +87,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 {
   struct raw_pcb *pcb;
   struct ip_hdr *iphdr;
-  int proto;
+  s16_t proto;
   u8_t eaten = 0;
 
   iphdr = p->payload;
@@ -224,7 +224,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
   }
   
   if ((netif = ip_route(ipaddr)) == NULL) {
-    LWIP_DEBUGF(RAW_DEBUG | 1, ("raw_sendto: No route to 0x%lx\n", ipaddr->addr));
+    LWIP_DEBUGF(RAW_DEBUG | 1, ("raw_sendto: No route to 0x%"X32_F"\n", ipaddr->addr));
 #if RAW_STATS
     /*    ++lwip_stats.raw.rterr;*/
 #endif /* RAW_STATS */

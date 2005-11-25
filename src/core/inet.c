@@ -64,7 +64,7 @@ static u16_t
 lwip_standard_chksum(void *dataptr, int len)
 {
   u32_t acc;
-  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %d)\n", (void *)dataptr, len));
+  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %"S16_F")\n", (void *)dataptr, len));
 
   /* iterate by two bytes at once */
   for(acc = 0; len > 1; len -= 2) {
@@ -82,7 +82,7 @@ lwip_standard_chksum(void *dataptr, int len)
   /* add up any last odd byte */
   if (len == 1) {
     acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
-    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %d\n", (unsigned int)(*(u8_t *)dataptr)));
+    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %"U16_F"\n", (u16_t)(*(u8_t *)dataptr)));
   } else {
     LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
   }
@@ -116,7 +116,7 @@ inet_chksum_pseudo(struct pbuf *p,
     LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
       (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%lx \n", acc));*/
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
     while (acc >> 16) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }
@@ -124,7 +124,7 @@ inet_chksum_pseudo(struct pbuf *p,
       swapped = 1 - swapped;
       acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
     }
-    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%lx \n", acc));*/
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
   }
 
   if (swapped) {
@@ -140,7 +140,7 @@ inet_chksum_pseudo(struct pbuf *p,
   while (acc >> 16) {
     acc = (acc & 0xffffUL) + (acc >> 16);
   }
-  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%lx\n", acc));
+  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (u16_t)~(acc & 0xffffUL);
 }
 
@@ -225,10 +225,11 @@ inet_chksum_pbuf(struct pbuf *p)
   */
  /*  */
  /* inet_aton */
- int inet_aton(const char *cp, struct in_addr *addr)
+ s8_t
+ inet_aton(const char *cp, struct in_addr *addr)
  {
      u32_t val;
-     int base, n;
+     s32_t base, n;
      char c;
      u32_t parts[4];
      u32_t* pp = parts;
@@ -252,11 +253,11 @@ inet_chksum_pbuf(struct pbuf *p)
          }
          for (;;) {
              if (isdigit(c)) {
-                 val = (val * base) + (int)(c - '0');
+                 val = (val * base) + (s16_t)(c - '0');
                  c = *++cp;
              } else if (base == 16 && isxdigit(c)) {
                  val = (val << 4) |
-                     (int)(c + 10 - (islower(c) ? 'a' : 'A'));
+                     (s16_t)(c + 10 - (islower(c) ? 'a' : 'A'));
                  c = *++cp;
              } else
              break;

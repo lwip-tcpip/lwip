@@ -53,48 +53,48 @@ void
 stats_display_proto(struct stats_proto *proto, char *name)
 {
   LWIP_PLATFORM_DIAG(("\n%s\n\t", name));
-  LWIP_PLATFORM_DIAG(("xmit: %d\n\t", proto->xmit)); 
-  LWIP_PLATFORM_DIAG(("rexmit: %d\n\t", proto->rexmit)); 
-  LWIP_PLATFORM_DIAG(("recv: %d\n\t", proto->recv)); 
-  LWIP_PLATFORM_DIAG(("fw: %d\n\t", proto->fw)); 
-  LWIP_PLATFORM_DIAG(("drop: %d\n\t", proto->drop)); 
-  LWIP_PLATFORM_DIAG(("chkerr: %d\n\t", proto->chkerr)); 
-  LWIP_PLATFORM_DIAG(("lenerr: %d\n\t", proto->lenerr)); 
-  LWIP_PLATFORM_DIAG(("memerr: %d\n\t", proto->memerr)); 
-  LWIP_PLATFORM_DIAG(("rterr: %d\n\t", proto->rterr)); 
-  LWIP_PLATFORM_DIAG(("proterr: %d\n\t", proto->proterr)); 
-  LWIP_PLATFORM_DIAG(("opterr: %d\n\t", proto->opterr)); 
-  LWIP_PLATFORM_DIAG(("err: %d\n\t", proto->err)); 
-  LWIP_PLATFORM_DIAG(("cachehit: %d\n", proto->cachehit)); 
+  LWIP_PLATFORM_DIAG(("xmit: %"S16_F"\n\t", proto->xmit)); 
+  LWIP_PLATFORM_DIAG(("rexmit: %"S16_F"\n\t", proto->rexmit)); 
+  LWIP_PLATFORM_DIAG(("recv: %"S16_F"\n\t", proto->recv)); 
+  LWIP_PLATFORM_DIAG(("fw: %"S16_F"\n\t", proto->fw)); 
+  LWIP_PLATFORM_DIAG(("drop: %"S16_F"\n\t", proto->drop)); 
+  LWIP_PLATFORM_DIAG(("chkerr: %"S16_F"\n\t", proto->chkerr)); 
+  LWIP_PLATFORM_DIAG(("lenerr: %"S16_F"\n\t", proto->lenerr)); 
+  LWIP_PLATFORM_DIAG(("memerr: %"S16_F"\n\t", proto->memerr)); 
+  LWIP_PLATFORM_DIAG(("rterr: %"S16_F"\n\t", proto->rterr)); 
+  LWIP_PLATFORM_DIAG(("proterr: %"S16_F"\n\t", proto->proterr)); 
+  LWIP_PLATFORM_DIAG(("opterr: %"S16_F"\n\t", proto->opterr)); 
+  LWIP_PLATFORM_DIAG(("err: %"S16_F"\n\t", proto->err)); 
+  LWIP_PLATFORM_DIAG(("cachehit: %"S16_F"\n", proto->cachehit)); 
 }
 
 void
 stats_display_pbuf(struct stats_pbuf *pbuf)
 {
   LWIP_PLATFORM_DIAG(("\nPBUF\n\t"));
-  LWIP_PLATFORM_DIAG(("avail: %d\n\t", pbuf->avail)); 
-  LWIP_PLATFORM_DIAG(("used: %d\n\t", pbuf->used)); 
-  LWIP_PLATFORM_DIAG(("max: %d\n\t", pbuf->max)); 
-  LWIP_PLATFORM_DIAG(("err: %d\n\t", pbuf->err)); 
-  LWIP_PLATFORM_DIAG(("alloc_locked: %d\n\t", pbuf->alloc_locked)); 
-  LWIP_PLATFORM_DIAG(("refresh_locked: %d\n", pbuf->refresh_locked)); 
+  LWIP_PLATFORM_DIAG(("avail: %"S16_F"\n\t", pbuf->avail)); 
+  LWIP_PLATFORM_DIAG(("used: %"S16_F"\n\t", pbuf->used)); 
+  LWIP_PLATFORM_DIAG(("max: %"S16_F"\n\t", pbuf->max)); 
+  LWIP_PLATFORM_DIAG(("err: %"S16_F"\n\t", pbuf->err)); 
+  LWIP_PLATFORM_DIAG(("alloc_locked: %"S16_F"\n\t", pbuf->alloc_locked)); 
+  LWIP_PLATFORM_DIAG(("refresh_locked: %"S16_F"\n", pbuf->refresh_locked)); 
 }
 
 void
 stats_display_mem(struct stats_mem *mem, char *name)
 {
   LWIP_PLATFORM_DIAG(("\n MEM %s\n\t", name));
-  LWIP_PLATFORM_DIAG(("avail: %d\n\t", mem->avail)); 
-  LWIP_PLATFORM_DIAG(("used: %d\n\t", mem->used)); 
-  LWIP_PLATFORM_DIAG(("max: %d\n\t", mem->max)); 
-  LWIP_PLATFORM_DIAG(("err: %d\n", mem->err));
+  LWIP_PLATFORM_DIAG(("avail: %"S16_F"\n\t", mem->avail)); 
+  LWIP_PLATFORM_DIAG(("used: %"S16_F"\n\t", mem->used)); 
+  LWIP_PLATFORM_DIAG(("max: %"S16_F"\n\t", mem->max)); 
+  LWIP_PLATFORM_DIAG(("err: %"S16_F"\n", mem->err));
   
 }
 
 void
 stats_display(void)
 {
-  int i;
+  s16_t i;
   char * memp_names[] = {"PBUF", "RAW_PCB", "UDP_PCB", "TCP_PCB", "TCP_PCB_LISTEN",
 	  		"TCP_SEG", "NETBUF", "NETCONN", "API_MSG", "TCP_MSG", "TIMEOUT"};
   stats_display_proto(&lwip_stats.link, "LINK");

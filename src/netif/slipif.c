@@ -60,7 +60,7 @@ err_t
 slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
 {
   struct pbuf *q;
-  int i;
+  u16_t i;
   u8_t c;
 
   /* Send pbuf out on the serial I/O device. */
@@ -100,8 +100,8 @@ slipif_input(struct netif *netif)
 {
   u8_t c;
   struct pbuf *p, *q;
-  int recved;
-  int i;
+  u16_t recved;
+  u16_t i;
 
   q = p = NULL;
   recved = i = 0;
@@ -170,7 +170,7 @@ slipif_input(struct netif *netif)
 }
 
 /**
- * The SLIP input thread 
+ * The SLIP input thread.
  *
  * Feed the IP layer with incoming packets
  */
@@ -196,7 +196,7 @@ err_t
 slipif_init(struct netif *netif)
 {
 
-  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%x\n", (int)netif->num));
+  LWIP_DEBUGF(SLIP_DEBUG, ("slipif_init: netif->num=%"U16_F"\n", (u16_t)netif->num));
 
   netif->name[0] = 's';
   netif->name[1] = 'l';

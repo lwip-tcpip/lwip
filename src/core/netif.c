@@ -67,7 +67,7 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   err_t (* init)(struct netif *netif),
   err_t (* input)(struct pbuf *p, struct netif *netif))
 {
-  static int netifnum = 0;
+  static s16_t netifnum = 0;
   
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
@@ -205,7 +205,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
    */ 
   etharp_query(netif, ipaddr, NULL);
 #endif
-  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %u.%u.%u.%u\n",
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1(&netif->ip_addr),
     ip4_addr2(&netif->ip_addr),
@@ -217,7 +217,7 @@ void
 netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
   ip_addr_set(&(netif->gw), gw);
-  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %u.%u.%u.%u\n",
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1(&netif->gw),
     ip4_addr2(&netif->gw),
@@ -229,7 +229,7 @@ void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
   ip_addr_set(&(netif->netmask), netmask);
-  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %u.%u.%u.%u\n",
+  LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1(&netif->netmask),
     ip4_addr2(&netif->netmask),

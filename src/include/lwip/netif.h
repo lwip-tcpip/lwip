@@ -98,9 +98,9 @@ struct netif {
   struct dhcp *dhcp;
 #endif
   /** number of bytes used in hwaddr */
-  unsigned char hwaddr_len;
+  u8_t hwaddr_len;
   /** link level hardware address of this interface */
-  unsigned char hwaddr[NETIF_MAX_HWADDR_LEN];
+  u8_t hwaddr[NETIF_MAX_HWADDR_LEN];
   /** maximum transfer unit (in bytes) */
   u16_t mtu;
   /** flags (see NETIF_FLAG_ above) */

@@ -217,7 +217,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #if IP_DEBUG
   /*  LWIP_DEBUGF("ip_input: \n");
   ip_debug_print(p);
-  LWIP_DEBUGF("ip_input: p->len %u p->tot_len %u\n", p->len, p->tot_len);*/
+  LWIP_DEBUGF("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len);*/
 #endif /* IP_DEBUG */
 
 
@@ -237,7 +237,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     /* send ICMP destination protocol unreachable */
     icmp_dest_unreach(p, ICMP_DUR_PROTO);
     pbuf_free(p);
-    LWIP_DEBUGF(IP_DEBUG, ("Unsupported transport protocol %u\n",
+    LWIP_DEBUGF(IP_DEBUG, ("Unsupported transport protocol %"U16_F"\n",
           iphdr->nexthdr));
 
 #ifdef IP_STATS
@@ -266,7 +266,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   PERF_START;
 
-  printf("len %u tot_len %u\n", p->len, p->tot_len);
+  printf("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len);
   if (pbuf_header(p, IP_HLEN)) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
 #ifdef IP_STATS
@@ -275,7 +275,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     return ERR_BUF;
   }
-  printf("len %u tot_len %u\n", p->len, p->tot_len);
+  printf("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len);
 
   iphdr = p->payload;
 
@@ -303,7 +303,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
 
-  LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %u)\n", netif->name[0], netif->name[1], p->tot_len));
+  LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %"U16_F")\n", netif->name[0], netif->name[1], p->tot_len));
 #if IP_DEBUG
   ip_debug_print(p);
 #endif /* IP_DEBUG */
@@ -324,7 +324,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 {
   struct netif *netif;
   if ((netif = ip_route(dest)) == NULL) {
-    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%lx\n", dest->addr));
+    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
 #ifdef IP_STATS
     ++lwip_stats.ip.rterr;
 #endif /* IP_STATS */
@@ -339,45 +339,45 @@ void
 ip_debug_print(struct pbuf *p)
 {
   struct ip_hdr *iphdr = p->payload;
-  char *payload;
+  u8_t *payload;
 
-  payload = (char *)iphdr + IP_HLEN;
+  payload = (u8_t *)iphdr + IP_HLEN;
 
   LWIP_DEBUGF(IP_DEBUG, ("IP header:\n"));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|%2d |  %x%x  |      %x%x           | (v, traffic class, flow label)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|%2"S16_F" |  %"X16_F"%"X16_F"  |      %"X16_F"%"X16_F"           | (v, traffic class, flow label)\n",
         iphdr->v,
         iphdr->tclass1, iphdr->tclass2,
         iphdr->flow1, iphdr->flow2));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|    %5u      | %2u  |  %2u   | (len, nexthdr, hoplim)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|    %5"U16_F"      | %2"U16_F"  |  %2"U16_F"   | (len, nexthdr, hoplim)\n",
         ntohs(iphdr->len),
         iphdr->nexthdr,
         iphdr->hoplim));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (src)\n",
         ntohl(iphdr->src.addr[0]) >> 16 & 0xffff,
         ntohl(iphdr->src.addr[0]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (src)\n",
         ntohl(iphdr->src.addr[1]) >> 16 & 0xffff,
         ntohl(iphdr->src.addr[1]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (src)\n",
         ntohl(iphdr->src.addr[2]) >> 16 & 0xffff,
         ntohl(iphdr->src.addr[2]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (src)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (src)\n",
         ntohl(iphdr->src.addr[3]) >> 16 & 0xffff,
         ntohl(iphdr->src.addr[3]) & 0xffff));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (dest)\n",
         ntohl(iphdr->dest.addr[0]) >> 16 & 0xffff,
         ntohl(iphdr->dest.addr[0]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (dest)\n",
         ntohl(iphdr->dest.addr[1]) >> 16 & 0xffff,
         ntohl(iphdr->dest.addr[1]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (dest)\n",
         ntohl(iphdr->dest.addr[2]) >> 16 & 0xffff,
         ntohl(iphdr->dest.addr[2]) & 0xffff));
-  LWIP_DEBUGF(IP_DEBUG, ("|       %4lx      |       %4lx     | (dest)\n",
+  LWIP_DEBUGF(IP_DEBUG, ("|       %4"X32_F"      |       %4"X32_F"     | (dest)\n",
         ntohl(iphdr->dest.addr[3]) >> 16 & 0xffff,
         ntohl(iphdr->dest.addr[3]) & 0xffff));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));

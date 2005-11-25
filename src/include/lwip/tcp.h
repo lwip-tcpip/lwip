@@ -439,7 +439,7 @@ void tcp_debug_print(struct tcp_hdr *tcphdr);
 void tcp_debug_print_flags(u8_t flags);
 void tcp_debug_print_state(enum tcp_state s);
 void tcp_debug_print_pcbs(void);
-int tcp_pcbs_sane(void);
+s16_t tcp_pcbs_sane(void);
 #else
 #  define tcp_debug_print(tcphdr)
 #  define tcp_debug_print_flags(flags)

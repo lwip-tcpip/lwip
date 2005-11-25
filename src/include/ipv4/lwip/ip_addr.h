@@ -138,18 +138,18 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000)) == ntohl(0xe0000000))
 
 
-#define ip_addr_debug_print(debug, ipaddr) LWIP_DEBUGF(debug, ("%u.%u.%u.%u", \
-        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 24) & 0xff:0, \
-        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 16) & 0xff:0, \
-        ipaddr?(unsigned int)(ntohl((ipaddr)->addr) >> 8) & 0xff:0, \
-        ipaddr?(unsigned int)ntohl((ipaddr)->addr) & 0xff:0U))
+#define ip_addr_debug_print(debug, ipaddr) LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F, \
+        ipaddr?(u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff:0, \
+        ipaddr?(u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff:0, \
+        ipaddr?(u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff:0, \
+        ipaddr?(u16_t)ntohl((ipaddr)->addr) & 0xff:0U))
 
 /* cast to unsigned int, as it is used as argument to printf functions
- * which expect integer arguments */
-#define ip4_addr1(ipaddr) ((unsigned int)(ntohl((ipaddr)->addr) >> 24) & 0xff)
-#define ip4_addr2(ipaddr) ((unsigned int)(ntohl((ipaddr)->addr) >> 16) & 0xff)
-#define ip4_addr3(ipaddr) ((unsigned int)(ntohl((ipaddr)->addr) >> 8) & 0xff)
-#define ip4_addr4(ipaddr) ((unsigned int)(ntohl((ipaddr)->addr)) & 0xff)
+ * which expect integer arguments. CSi: use cc.h formatters (conversion chars)! */
+#define ip4_addr1(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff)
+#define ip4_addr2(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff)
+#define ip4_addr3(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff)
+#define ip4_addr4(ipaddr) ((u16_t)(ntohl((ipaddr)->addr)) & 0xff)
 #endif /* __LWIP_IP_ADDR_H__ */
 
 
