@@ -60,37 +60,50 @@
 */
 #ifndef LWIP_CHKSUM
 #define LWIP_CHKSUM lwip_standard_chksum
+
+/**
+ * lwip checksum
+ *
+ * @param dataptr points to start of data to be summed at any boundary
+ * @param len length of data to be summed
+ * @return network order (!) lwip checksum (non-inverted Internet sum) 
+ *
+ * @note accumulator size limits summable lenght to 64k
+ * @note host endianess is irrelevant (p3 RFC1071)
+ */
 static u16_t
-lwip_standard_chksum(void *dataptr, int len)
+lwip_standard_chksum(void *dataptr, u16_t len)
 {
   u32_t acc;
-  LWIP_DEBUGF(INET_DEBUG, ("lwip_chksum(%p, %"S16_F")\n", (void *)dataptr, len));
+  u16_t src;
+  u8_t *octetptr;
 
-  /* iterate by two bytes at once */
-  for(acc = 0; len > 1; len -= 2) {
-    /* WAS: acc = acc + *((u16_t *)dataptr)++; BUT THIS IS BROKEN FOR
-     * ARCHITECTURES WHICH DO NOT ALLOW UNALIGNED 16-BIT ACCESSES */
-#if MEM_ALIGNMENT >= 2
-    acc += htons( ((u16_t)(((u8_t *)dataptr)[0])<<8) | ((u8_t *)dataptr)[1] );
-    (void *)((u16_t *)dataptr + 1);
-#else
-    acc += *(u16_t *)dataptr;
-    dataptr = (void *)((u16_t *)dataptr + 1);
-#endif
+  acc = 0;
+  /* dataptr may be at odd or even addresses */
+  octetptr = (u8_t*)dataptr;
+  while (len > 1)
+  {
+    /* first octet is most significant */
+    src = (*octetptr) << 8;
+    octetptr++;
+    /* second octet is least significant */
+    src |= (*octetptr);
+    octetptr++;
+    acc += src;
+    len -= 2;
   }
-
-  /* add up any last odd byte */
-  if (len == 1) {
-    acc += htons((u16_t)((*(u8_t *)dataptr) & 0xff) << 8);
-    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: odd byte %"U16_F"\n", (u16_t)(*(u8_t *)dataptr)));
-  } else {
-    LWIP_DEBUGF(INET_DEBUG, ("inet: chksum: no odd byte\n"));
+  if (len > 0)
+  {
+    /* accumulate remaining octet */
+    acc += (*octetptr);
   }
-  acc = (acc >> 16) + (acc & 0xffffUL);
+  /* add deferred carry bits */
+  acc = (acc >> 16) + (acc & 0x0000ffffUL);
   if ((acc & 0xffff0000) != 0) {
-    acc = (acc >> 16) + (acc & 0xffffUL);
+    acc = (acc >> 16) + (acc & 0x0000ffffUL);
   }
-  return (u16_t)acc;
+  /* caller must invert bits for Internet sum ! */
+  return htons((u16_t)acc);
 }
 
 #endif
