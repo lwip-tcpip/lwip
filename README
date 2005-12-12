@@ -42,29 +42,11 @@ CVS source tree.
 The lwIP TCP/IP stack is maintained in the 'lwip' CVS module and
 contributions (such as platform ports) are in the 'contrib' module.
 
-The CVS main trunk is the stable branch, which contains bug fixes and
-tested features. The latest stable branch can be checked out by doing:
-  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co lwip
-
-The 'STABLE' tag in the stable branch will represent the most stable
-revision (which may be somewhat older to protect us from errors
-introduced by merges). This 'STABLE' tagged version can be checked out
-by doing:
-  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co -r STABLE lwip
-
-The 'DEVEL' branch is the active development branch, which contains
-bleeding edge changes, and may be instable. It can be checkout by doing:
-  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co -r DEVEL lwip
-
-The current contrib CVS tree can be checked out by doing:
-  cvs -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip login
-  cvs -z3 -d:pserver:anoncvs@subversions.gnu.org:/cvsroot/lwip co contrib
+See doc/savannah.txt for details on CVS server access for users and
+developers.
 
 Last night's CVS tar ball can be downloaded from:
-  http://savannah.gnu.org/cvs.backups/lwip.tar.gz
+  http://savannah.gnu.org/cvs.backups/lwip.tar.gz [CHANGED - NEEDS FIXING]
 
 The current CVS trees are web-browsable:
   http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/lwip/
