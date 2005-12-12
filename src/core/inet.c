@@ -48,15 +48,12 @@
 
 #include "lwip/sys.h"
 
-/* This is a reference implementation of the checksum algorithm
-
- - it may not work on all architectures, and all processors, particularly
-   if they have issues with alignment and 16 bit access (although this should
-   be fixed since inet.c 1.22).
-
- - in this case you will need to port it to your architecture and 
-   #define LWIP_CHKSUM <your_checksum_routine> 
-   in your sys_arch.h
+/* This is a reference implementation of the checksum algorithm, with the
+ * aim of being simple, correct and fully portable. Checksumming is the
+ * first thing you would want to optimize for your platform. You will
+ * need to port it to your architecture and in your sys_arch.h:\
+ * 
+ * #define LWIP_CHKSUM <your_checksum_routine> 
 */
 #ifndef LWIP_CHKSUM
 #define LWIP_CHKSUM lwip_standard_chksum
