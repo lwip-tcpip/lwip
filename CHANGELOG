@@ -11,6 +11,15 @@ FUTURE
 
 HISTORY
 
+  2005-12-15  Christiaan Simons
+  * inet.c: Standard checksum routine fixed in proper portable C.
+
+  2005-12-14  Leon Woestenberg <leon.woestenberg@gmx.net>
+  * inet.c: Duplicate FIN ACK race condition fix by Kelvin Lawson.
+    Added Curt McDowell's optimized checksumming routine for future
+    inclusion. Need to create test case for unaliged, aligned, odd,
+    even length combination of cases on various endianess machines.
+
   2005-07-17 Leon Woestenberg <leon.woestenberg@gmx.net>
   * inet.c: Fixed unaligned 16-bit access in the standard checksum
     routine by Peter Jolasson.
