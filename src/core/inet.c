@@ -51,7 +51,7 @@
 /* This is a reference implementation of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
  * first thing you would want to optimize for your platform. You will
- * need to port it to your architecture and in your sys_arch.h:\
+ * need to port it to your architecture and in your sys_arch.h:
  * 
  * #define LWIP_CHKSUM <your_checksum_routine> 
 */
@@ -93,7 +93,8 @@ lwip_standard_chksum(void *dataptr, u16_t len)
   if (len > 0)
   {
     /* accumulate remaining octet */
-    acc += (*octetptr);
+    src = (*octetptr) << 8;
+    acc += src;
   }
   /* add deferred carry bits */
   acc = (acc >> 16) + (acc & 0x0000ffffUL);
