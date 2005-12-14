@@ -938,7 +938,12 @@ tcp_receive(struct tcp_pcb *pcb)
 
         tcplen = TCP_TCPLEN(&inseg);
 
-        pcb->rcv_nxt += tcplen;
+        /* First received FIN will be ACKed +1, on any successive (duplicate)
+         * FINs we are already in CLOSE_WAIT and have already done +1.
+         */
+        if (pcb->state != CLOSE_WAIT) {
+          pcb->rcv_nxt += tcplen;
+        }
 
         /* Update the receiver's (our) window. */
         if (pcb->rcv_wnd < tcplen) {
