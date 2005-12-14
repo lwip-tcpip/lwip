@@ -63,7 +63,7 @@
  *
  * @param dataptr points to start of data to be summed at any boundary
  * @param len length of data to be summed
- * @return network order (!) lwip checksum (non-inverted Internet sum) 
+ * @return host order (!) lwip checksum (non-inverted Internet sum) 
  *
  * @note accumulator size limits summable lenght to 64k
  * @note host endianess is irrelevant (p3 RFC1071)
@@ -80,10 +80,11 @@ lwip_standard_chksum(void *dataptr, u16_t len)
   octetptr = (u8_t*)dataptr;
   while (len > 1)
   {
-    /* first octet is most significant */
+    /* delacre first octet as most significant
+       thus assume network order, ignoring host order */
     src = (*octetptr) << 8;
     octetptr++;
-    /* second octet is least significant */
+    /* declare second octet as least significant */
     src |= (*octetptr);
     octetptr++;
     acc += src;
@@ -99,7 +100,9 @@ lwip_standard_chksum(void *dataptr, u16_t len)
   if ((acc & 0xffff0000) != 0) {
     acc = (acc >> 16) + (acc & 0x0000ffffUL);
   }
-  /* caller must invert bits for Internet sum ! */
+  /* This maybe a little confusing: reorder sum using htons()
+     instead of ntohs() since it has a little less call overhead.
+     The caller must invert bits for Internet sum ! */
   return htons((u16_t)acc);
 }
 
