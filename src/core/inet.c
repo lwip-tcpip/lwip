@@ -109,11 +109,12 @@ lwip_standard_chksum(void *dataptr, u16_t len)
 
 #endif
 
-Curt McDowell
-Broadcom Corp.
-csm@broadcom.com
-
+#if 0
 /*
+ * Curt McDowell
+ * Broadcom Corp.
+ * csm@broadcom.com
+ *
  * IP checksum two bytes at a time with support for
  * unaligned buffer.
  * Works for len up to and including 0x20000.
@@ -158,8 +159,6 @@ lwip_standard_chksum2(void *dataptr, int len)
 
   return sum;
 }
-
-#if 0 
 
 /**
  * An optimized checksum routine. Basically, it uses loop-unrolling on
