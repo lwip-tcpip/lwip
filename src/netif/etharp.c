@@ -689,7 +689,6 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  */
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
-  struct pbuf *p;
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_MEM;
   s8_t i; /* ARP entry index */
@@ -748,6 +747,7 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     /* pending entry? (either just created or already pending */
     } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
 #if ARP_QUEUEING /* queue the given q packet */
+      struct pbuf *p;
       /* copy any PBUF_REF referenced payloads into PBUF_RAM */
       /* (the caller of lwIP assumes the referenced payload can be
        * freed after it returns from the lwIP call that brought us here) */
