@@ -9,6 +9,12 @@ FUTURE
     you run from a multitasking OS, serialize access to ARP (called from
     your network device driver and from a timeout thread.)
 
+  * TODO: the PPP code is broken in a few ways. There are namespace
+    collisions on BSD systems and many assumptions on word-length
+    (sizeof(int)). In ppp.c an assumption is made on the availability of
+    a thread subsystem. Either PPP needs to be moved to contrib/ports/???
+    or rearranged to be more generic.
+
 HISTORY
 
   2005-12-20  Leon Woestenberg <leon.woestenberg@gmx.net>
@@ -19,10 +25,18 @@ HISTORY
   * inet.c: Disabled the added summing routine to preserve code space.
 
   2005-12-14  Leon Woestenberg <leon.woestenberg@gmx.net>
-  * inet.c: Duplicate FIN ACK race condition fix by Kelvin Lawson.
+  * tcp_in.c: Duplicate FIN ACK race condition fix by Kelvin Lawson.
     Added Curt McDowell's optimized checksumming routine for future
     inclusion. Need to create test case for unaliged, aligned, odd,
     even length combination of cases on various endianess machines.
+
+  2005-12-09  Christiaan Simons
+  * inet.c: Rewrote standard checksum routine in proper portable C.
+
+  2005-11-25  Christiaan Simons
+  * udp.c tcp.c: Removed SO_REUSE hack. Should reside in socket code only.
+  * *.c: introduced cc.h LWIP_DEBUG formatters matching the u16_t, s16_t,
+    u32_t, s32_t typedefs. This solves most debug word-length assumes.  
 
   2005-07-17 Leon Woestenberg <leon.woestenberg@gmx.net>
   * inet.c: Fixed unaligned 16-bit access in the standard checksum
