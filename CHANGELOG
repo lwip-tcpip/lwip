@@ -11,8 +11,12 @@ FUTURE
 
 HISTORY
 
+  2005-12-20  Leon Woestenberg <leon.woestenberg@gmx.net>
+  * tcp.c: Remove PCBs which stay in LAST_ACK state too long. Patch
+    submitted by Mitrani Hiroshi.
+    
   2005-12-15  Christiaan Simons
-  * inet.c: Standard checksum routine fixed in proper portable C.
+  * inet.c: Disabled the added summing routine to preserve code space.
 
   2005-12-14  Leon Woestenberg <leon.woestenberg@gmx.net>
   * inet.c: Duplicate FIN ACK race condition fix by Kelvin Lawson.

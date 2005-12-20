@@ -555,12 +555,19 @@ tcp_slowtmr(void)
     /* Check if this PCB has stayed too long in SYN-RCVD */
     if (pcb->state == SYN_RCVD) {
       if ((u32_t)(tcp_ticks - pcb->tmr) >
-   TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
+        TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in SYN-RCVD\n"));
       }
     }
 
+    /* Check if this PCB has stayed too long in LAST-ACK */
+    if (pcb->state == LAST_ACK) {
+      if ((u32_t)(tcp_ticks - pcb->tmr) > 2 * TCP_MSL / TCP_SLOW_INTERVAL) {
+        ++pcb_remove;
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in LAST-ACK\n"));
+      }
+    }
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
