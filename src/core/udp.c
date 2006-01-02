@@ -87,8 +87,10 @@ udp_input(struct pbuf *p, struct netif *inp)
 {
   struct udp_hdr *udphdr;
   struct udp_pcb *pcb;
+  struct udp_pcb *uncon_pcb;
   struct ip_hdr *iphdr;
   u16_t src, dest;
+  u8_t local_match;
 
   PERF_START;
 
@@ -122,7 +124,9 @@ udp_input(struct pbuf *p, struct netif *inp)
     ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
     ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src), ntohs(udphdr->src)));
 
-  /* Iterate through the UDP pcb list for a fully matching pcb */
+  local_match = 0;
+  uncon_pcb = NULL;
+  /* Iterate through the UDP pcb list for a matching pcb */
   for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
     /* print the PCB local and remote address */
     LWIP_DEBUGF(UDP_DEBUG, ("pcb (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F") --- (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F")\n",
@@ -131,43 +135,29 @@ udp_input(struct pbuf *p, struct netif *inp)
       ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
       ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
 
-       /* PCB remote port matches UDP source port? */
-    if ((pcb->remote_port == src) &&
-       /* PCB local port matches UDP destination port? */
-       (pcb->local_port == dest) &&
-       /* accepting from any remote (source) IP address? or... */
-       (ip_addr_isany(&pcb->remote_ip) ||
-       /* PCB remote IP address matches UDP source IP address? */
-        ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src))) &&
-       /* accepting on any local (netif) IP address? or... */
+    /* compare PCB local addr+port to UDP destination addr+port */
+    if ((pcb->local_port == dest) &&
        (ip_addr_isany(&pcb->local_ip) ||
-       /* PCB local IP address matches UDP destination IP address? */
         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
+       local_match = 1;
+       if ((uncon_pcb == NULL) && 
+           ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
+         /* the first unconnected matching PCB */     
+         uncon_pcb = pcb;
+       }
+    }
+    /* compare PCB remote addr+port to UDP source addr+port */
+    if ((local_match != 0) &&
+       (pcb->remote_port == src) &&
+       (ip_addr_isany(&pcb->remote_ip) ||
+       ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)))) {
+       /* the first fully matching PCB */
       break;
     }
   }
   /* no fully matching pcb found? then look for an unconnected pcb */
   if (pcb == NULL) {
-    /* Iterate through the UDP PCB list for a pcb that matches
-       the local address. */
-
-    for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
-      LWIP_DEBUGF(UDP_DEBUG, ("pcb (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F") --- (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F")\n",
-        ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
-        ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip), pcb->local_port,
-        ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-        ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
-      /* unconnected? */
-      if (((pcb->flags & UDP_FLAGS_CONNECTED) == 0) &&
-         /* destination port matches? */
-        (pcb->local_port == dest) &&
-        /* not bound to a specific (local) interface address? or... */
-        (ip_addr_isany(&pcb->local_ip) ||
-        /* ...matching interface address? */
-        ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
-        break;
-      }
-    }
+    pcb = uncon_pcb;
   }
 
   /* Check checksum if this is a match or if it was directed at us. */
