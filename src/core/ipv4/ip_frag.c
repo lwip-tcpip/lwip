@@ -40,7 +40,7 @@
 #include <string.h>
 
 #include "lwip/opt.h"
-#include "lwip/sys.h"
+/* #include "lwip/sys.h" */
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/netif.h"
@@ -88,18 +88,26 @@ static u8_t ip_reassflags;
 
 static u8_t ip_reasstmr;
 
-/* Reassembly timer */ 
-static void 
-ip_reass_timer(void *arg)
+/**
+ * Reassembly timer base function
+ * for both NO_SYS == 0 and 1 (!).
+ *
+ * Should be called every 1000 msec.
+ */
+void
+ip_reass_tmr(void)
 {
-  (void)arg;
-  if (ip_reasstmr > 1) {
+  if (ip_reasstmr > 0) {
     ip_reasstmr--;
-    sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
-  } else if (ip_reasstmr == 1)
-  ip_reasstmr = 0;
+  }
 }
 
+/**
+ * Reassembles incoming IP fragments into an IP datagram.
+ *
+ * @param p points to a pbuf chain of the fragment
+ * @return NULL if reassembly is incomplete, ? otherwise
+ */
 struct pbuf *
 ip_reass(struct pbuf *p)
 {
@@ -119,7 +127,6 @@ ip_reass(struct pbuf *p)
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
     memcpy(iphdr, fraghdr, IP_HLEN);
     ip_reasstmr = IP_REASS_MAXAGE;
-    sys_timeout(IP_REASS_TMO, ip_reass_timer, NULL);
     ip_reassflags = 0;
     /* Clear the bitmap. */
     memset(ip_reassbitmap, 0, sizeof(ip_reassbitmap));
@@ -131,7 +138,8 @@ ip_reass(struct pbuf *p)
   if (ip_addr_cmp(&iphdr->src, &fraghdr->src) &&
       ip_addr_cmp(&iphdr->dest, &fraghdr->dest) &&
       IPH_ID(iphdr) == IPH_ID(fraghdr)) {
-    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: matching old packet\n"));
+    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: matching previous fragment ID=%"X16_F"\n",
+      ntohs(IPH_ID(fraghdr))));
     IPFRAG_STATS_INC(ip_frag.cachehit);
     /* Find out the offset in the reassembly buffer where we should
        copy the fragment. */
@@ -144,7 +152,6 @@ ip_reass(struct pbuf *p)
       LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: fragment outside of buffer (%"S16_F":%"S16_F"/%"S16_F").\n", offset,
         offset + len, IP_REASS_BUFSIZE));
-      sys_untimeout(ip_reass_timer, NULL);
       ip_reasstmr = 0;
       goto nullreturn;
     }
@@ -161,8 +168,7 @@ ip_reass(struct pbuf *p)
     if (offset / (8 * 8) == (offset + len) / (8 * 8)) {
       LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: updating single byte in bitmap.\n"));
-      /* If the two endpoints are in the same byte, we only update
-         that byte. */
+      /* If the two endpoints are in the same byte, we only update that byte. */
       ip_reassbitmap[offset / (8 * 8)] |=
     bitmap_bits[(offset / 8) & 7] &
     ~bitmap_bits[((offset + len) / 8) & 7];
@@ -232,7 +238,6 @@ ip_reass(struct pbuf *p)
       /* If we have come this far, we have a full packet in the
          buffer, so we allocate a pbuf and copy the packet into it. We
          also reset the timer. */
-      sys_untimeout(ip_reass_timer, NULL);
       ip_reasstmr = 0;
       pbuf_free(p);
       p = pbuf_alloc(PBUF_LINK, ip_reasslen, PBUF_POOL);
@@ -240,8 +245,7 @@ ip_reass(struct pbuf *p)
   i = 0;
   for (q = p; q != NULL; q = q->next) {
     /* Copy enough bytes to fill this pbuf in the chain. The
-       available data in the pbuf is given by the q->len
-       variable. */
+             available data in the pbuf is given by the q->len variable. */
     LWIP_DEBUGF(IP_REASS_DEBUG,
      ("ip_reass: memcpy from %p (%"S16_F") to %p, %"S16_F" bytes\n",
       (void *)&ip_reassbuf[i], i, q->payload,
@@ -269,9 +273,9 @@ nullreturn:
 static u8_t buf[MEM_ALIGN_SIZE(MAX_MTU)];
 
 /**
- * Fragment an IP packet if too large
+ * Fragment an IP datagram if too large for the netif.
  *
- * Chop the packet in mtu sized chunks and send them in order
+ * Chop the datagram in MTU sized chunks and send them in order
  * by using a fixed size static memory buffer (PBUF_ROM)
  */
 err_t 
