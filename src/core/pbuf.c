@@ -73,7 +73,7 @@
 #include "lwip/sys.h"
 #include "arch/perf.h"
 
-static u8_t pbuf_pool_memory[(PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf)))];
+static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf))];
 
 #if !SYS_LIGHTWEIGHT_PROT
 static volatile u8_t pbuf_pool_free_lock, pbuf_pool_alloc_lock;
@@ -100,8 +100,7 @@ pbuf_init(void)
   struct pbuf *p, *q = NULL;
   u16_t i;
 
-  pbuf_pool = (struct pbuf *)&pbuf_pool_memory[0];
-  LWIP_ASSERT("pbuf_init: pool aligned", (mem_ptr_t)pbuf_pool % MEM_ALIGNMENT == 0);
+  pbuf_pool = (struct pbuf *)MEM_ALIGN(pbuf_pool_memory);
 
 #if PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
