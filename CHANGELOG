@@ -17,6 +17,14 @@ FUTURE
 
 HISTORY
 
+  2006-01-01  Leon Woestenberg <leon.woestenberg@gmx.net>
+  * tcp_{in,out}.c, tcp_out.c: Removed 'even sndbuf' fix in TCP, which is
+    now handled by the checksum routine properly.
+
+  2006-02-27  Leon Woestenberg <leon.woestenberg@gmx.net>
+   * pbuf.c: Fix alignment; pbuf_init() would not work unless
+     pbuf_pool_memory[] was properly aligned. (Patch by Curt McDowell.)
+     
   2005-12-20  Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp.c: Remove PCBs which stay in LAST_ACK state too long. Patch
     submitted by Mitrani Hiroshi.
