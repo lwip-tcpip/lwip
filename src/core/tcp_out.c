@@ -338,8 +338,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   }
   pcb->snd_lbb += len;
 
-  /* FIX: Data split over odd boundaries */
-  pcb->snd_buf -= ((len+1) & ~0x1); /* Even the send buffer */
+  pcb->snd_buf -= len;
 
   /* update number of segments on the queues */
   pcb->snd_queuelen = queuelen;
