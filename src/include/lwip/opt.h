@@ -68,7 +68,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef MEMP_SANITY_CHECK
-#define MEMP_SANITY_CHECK		0
+#define MEMP_SANITY_CHECK       0
 #endif
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
@@ -311,7 +311,7 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* Support loop interface (127.0.0.1) */
 #ifndef LWIP_HAVE_LOOPIF
-#define LWIP_HAVE_LOOPIF		1
+#define LWIP_HAVE_LOOPIF                0
 #endif
 
 #ifndef LWIP_EVENT_API
@@ -365,63 +365,63 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef LINK_STATS
-#define LINK_STATS	1
+#define LINK_STATS  1
 #endif
 
 #ifndef IP_STATS
-#define IP_STATS	1
+#define IP_STATS    1
 #endif
 
 #ifndef IPFRAG_STATS
-#define IPFRAG_STATS	1
+#define IPFRAG_STATS    1
 #endif
 
 #ifndef ICMP_STATS
-#define ICMP_STATS	1
+#define ICMP_STATS  1
 #endif
 
 #ifndef UDP_STATS
-#define UDP_STATS	1
+#define UDP_STATS   1
 #endif
 
 #ifndef TCP_STATS
-#define TCP_STATS	1
+#define TCP_STATS   1
 #endif
 
 #ifndef MEM_STATS
-#define MEM_STATS	1
+#define MEM_STATS   1
 #endif
 
 #ifndef MEMP_STATS
-#define MEMP_STATS	1
+#define MEMP_STATS  1
 #endif
 
 #ifndef PBUF_STATS
-#define PBUF_STATS	1
+#define PBUF_STATS  1
 #endif
 
 #ifndef SYS_STATS
-#define SYS_STATS	1
+#define SYS_STATS   1
 #endif
 
 #ifndef RAW_STATS
-#define RAW_STATS	0
+#define RAW_STATS   0
 #endif
 
 #else
 
-#define LINK_STATS	0
-#define IP_STATS	0
-#define IPFRAG_STATS	0
-#define ICMP_STATS	0
-#define UDP_STATS	0
-#define TCP_STATS	0
-#define MEM_STATS	0
-#define MEMP_STATS	0
-#define PBUF_STATS	0
-#define SYS_STATS	0
-#define RAW_STATS	0
-#define LWIP_STATS_DISPLAY	0
+#define LINK_STATS  0
+#define IP_STATS    0
+#define IPFRAG_STATS    0
+#define ICMP_STATS  0
+#define UDP_STATS   0
+#define TCP_STATS   0
+#define MEM_STATS   0
+#define MEMP_STATS  0
+#define PBUF_STATS  0
+#define SYS_STATS   0
+#define RAW_STATS   0
+#define LWIP_STATS_DISPLAY  0
 
 #endif /* LWIP_STATS */
 
