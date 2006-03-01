@@ -38,6 +38,7 @@
 #include "lwip/pbuf.h"
 
 #include "lwip/ip.h"
+#include "lwip/ip_frag.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 
@@ -81,6 +82,16 @@ tcp_timer_needed(void)
 #endif /* !NO_SYS */
 #endif /* LWIP_TCP */
 
+#if IP_REASSEMBLY
+static void
+ip_timer(void *data)
+{
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: ip_reass_tmr()\n"));
+  ip_reass_tmr();
+  sys_timeout(1000, ip_timer, NULL);
+}
+#endif
+
 static void
 tcpip_thread(void *arg)
 {
@@ -94,6 +105,9 @@ tcpip_thread(void *arg)
 #endif
 #if LWIP_TCP
   tcp_init();
+#endif
+#if IP_REASSEMBLY
+  sys_timeout(1000, ip_timer, NULL);
 #endif
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
