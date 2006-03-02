@@ -78,7 +78,7 @@ copy_from_pbuf(struct pbuf *p, u16_t * offset,
 #define IP_REASS_TMO 1000
 
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
-static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8)];
+static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
 static const u8_t bitmap_bits[8] = { 0xff, 0x7f, 0x3f, 0x1f,
   0x0f, 0x07, 0x03, 0x01
 };
@@ -169,22 +169,28 @@ ip_reass(struct pbuf *p)
       LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: updating single byte in bitmap.\n"));
       /* If the two endpoints are in the same byte, we only update that byte. */
+      LWIP_ASSERT("offset / (8 * 8) < sizeof(ip_reassbitmap)",
+                   offset / (8 * 8) < sizeof(ip_reassbitmap));
       ip_reassbitmap[offset / (8 * 8)] |=
-    bitmap_bits[(offset / 8) & 7] &
-    ~bitmap_bits[((offset + len) / 8) & 7];
+        bitmap_bits[(offset / 8) & 7] &
+        ~bitmap_bits[((offset + len) / 8) & 7];
     } else {
       /* If the two endpoints are in different bytes, we update the
          bytes in the endpoints and fill the stuff inbetween with
          0xff. */
+      LWIP_ASSERT("offset / (8 * 8) < sizeof(ip_reassbitmap)",
+                   offset / (8 * 8) < sizeof(ip_reassbitmap));
       ip_reassbitmap[offset / (8 * 8)] |= bitmap_bits[(offset / 8) & 7];
       LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: updating many bytes in bitmap (%"S16_F":%"S16_F").\n",
         1 + offset / (8 * 8), (offset + len) / (8 * 8)));
       for (i = 1 + offset / (8 * 8); i < (offset + len) / (8 * 8); ++i) {
-  ip_reassbitmap[i] = 0xff;
+        ip_reassbitmap[i] = 0xff;
       }
+      LWIP_ASSERT("(offset + len) / (8 * 8) < sizeof(ip_reassbitmap)",
+                   (offset + len) / (8 * 8) < sizeof(ip_reassbitmap));
       ip_reassbitmap[(offset + len) / (8 * 8)] |=
-    ~bitmap_bits[((offset + len) / 8) & 7];
+        ~bitmap_bits[((offset + len) / 8) & 7];
     }
 
     /* If this fragment has the More Fragments flag set to zero, we
@@ -207,23 +213,27 @@ ip_reass(struct pbuf *p)
     if (ip_reassflags & IP_REASS_FLAG_LASTFRAG) {
       /* Check all bytes up to and including all but the last byte in
          the bitmap. */
+      LWIP_ASSERT("ip_reasslen / (8 * 8) - 1 < sizeof(ip_reassbitmap)",
+                   ip_reasslen / (8 * 8) - 1 < sizeof(ip_reassbitmap));
       for (i = 0; i < ip_reasslen / (8 * 8) - 1; ++i) {
-  if (ip_reassbitmap[i] != 0xff) {
-    LWIP_DEBUGF(IP_REASS_DEBUG,
-     ("ip_reass: last fragment seen, bitmap %"S16_F"/%"S16_F" failed (%"X16_F")\n",
-      i, ip_reasslen / (8 * 8) - 1, ip_reassbitmap[i]));
-    goto nullreturn;
-  }
+        if (ip_reassbitmap[i] != 0xff) {
+          LWIP_DEBUGF(IP_REASS_DEBUG,
+           ("ip_reass: last fragment seen, bitmap %"S16_F"/%"S16_F" failed (%"X16_F")\n",
+            i, ip_reasslen / (8 * 8) - 1, ip_reassbitmap[i]));
+          goto nullreturn;
+        }
       }
       /* Check the last byte in the bitmap. It should contain just the
          right amount of bits. */
+      LWIP_ASSERT("ip_reasslen / (8 * 8) < sizeof(ip_reassbitmap)",
+                   ip_reasslen / (8 * 8) < sizeof(ip_reassbitmap));
       if (ip_reassbitmap[ip_reasslen / (8 * 8)] !=
-    (u8_t) ~ bitmap_bits[ip_reasslen / 8 & 7]) {
-  LWIP_DEBUGF(IP_REASS_DEBUG,
-         ("ip_reass: last fragment seen, bitmap %"S16_F" didn't contain %"X16_F" (%"X16_F")\n",
-    ip_reasslen / (8 * 8), ~bitmap_bits[ip_reasslen / 8 & 7],
-    ip_reassbitmap[ip_reasslen / (8 * 8)]));
-  goto nullreturn;
+        (u8_t) ~ bitmap_bits[ip_reasslen / 8 & 7]) {
+         LWIP_DEBUGF(IP_REASS_DEBUG,
+          ("ip_reass: last fragment seen, bitmap %"S16_F" didn't contain %"X16_F" (%"X16_F")\n",
+        ip_reasslen / (8 * 8), ~bitmap_bits[ip_reasslen / 8 & 7],
+        ip_reassbitmap[ip_reasslen / (8 * 8)]));
+        goto nullreturn;
       }
 
       /* Pretend to be a "normal" (i.e., not fragmented) IP packet
@@ -242,21 +252,21 @@ ip_reass(struct pbuf *p)
       pbuf_free(p);
       p = pbuf_alloc(PBUF_LINK, ip_reasslen, PBUF_POOL);
       if (p != NULL) {
-  i = 0;
-  for (q = p; q != NULL; q = q->next) {
-    /* Copy enough bytes to fill this pbuf in the chain. The
+        i = 0;
+        for (q = p; q != NULL; q = q->next) {
+          /* Copy enough bytes to fill this pbuf in the chain. The
              available data in the pbuf is given by the q->len variable. */
-    LWIP_DEBUGF(IP_REASS_DEBUG,
-     ("ip_reass: memcpy from %p (%"S16_F") to %p, %"S16_F" bytes\n",
-      (void *)&ip_reassbuf[i], i, q->payload,
-      q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
-    memcpy(q->payload, &ip_reassbuf[i],
-    q->len > ip_reasslen - i ? ip_reasslen - i : q->len);
-    i += q->len;
-  }
-  IPFRAG_STATS_INC(ip_frag.fw);
+          LWIP_DEBUGF(IP_REASS_DEBUG,
+           ("ip_reass: memcpy from %p (%"S16_F") to %p, %"S16_F" bytes\n",
+            (void *)&ip_reassbuf[i], i, q->payload,
+            q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
+          memcpy(q->payload, &ip_reassbuf[i],
+            q->len > ip_reasslen - i ? ip_reasslen - i : q->len);
+          i += q->len;
+        }
+        IPFRAG_STATS_INC(ip_frag.fw);
       } else {
-  IPFRAG_STATS_INC(ip_frag.memerr);
+        IPFRAG_STATS_INC(ip_frag.memerr);
       }
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
       return p;
