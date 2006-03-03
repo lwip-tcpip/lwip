@@ -304,6 +304,9 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 
   /* Get a RAM based MTU sized pbuf */
   rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
+  if (rambuf == NULL) {
+    return ERR_MEM;
+  }
   rambuf->tot_len = rambuf->len = mtu;
   rambuf->payload = MEM_ALIGN((void *)buf);
 
@@ -347,11 +350,15 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
      * worked would make things simpler.
      */
     header = pbuf_alloc(PBUF_LINK, 0, PBUF_RAM);
-    pbuf_chain(header, rambuf);
-    netif->output(netif, header, dest);
-    IPFRAG_STATS_INC(ip_frag.xmit);
-    pbuf_free(header);
-
+    if (header != NULL) {
+      pbuf_chain(header, rambuf);
+      netif->output(netif, header, dest);
+      IPFRAG_STATS_INC(ip_frag.xmit);
+      pbuf_free(header);
+    } else {
+      pbuf_free(rambuf);      
+      return ERR_MEM;    
+    }
     left -= cop;
   }
   pbuf_free(rambuf);
