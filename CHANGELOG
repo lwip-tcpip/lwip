@@ -17,6 +17,12 @@ FUTURE
 
 HISTORY
 
+(CVS HEAD)
+
+  * [New changes go here]
+
+(STABLE-1_1_1)
+
   2006-03-03  Christiaan Simons
   * ipv4/ip_frag.c: Added bound-checking assertions on ip_reassbitmap
     access and added pbuf_alloc() return value checks.
