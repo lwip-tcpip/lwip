@@ -464,16 +464,18 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size_increment)
 {
+  u16_t flags;
   void *payload;
 
   LWIP_ASSERT("p != NULL", p != NULL);
   if ((header_size_increment == 0) || (p == NULL)) return 0;
  
+  flags = p->flags;
   /* remember current payload pointer */
   payload = p->payload;
 
   /* pbuf types containing payloads? */
-  if (p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL) {
+  if (flags == PBUF_FLAG_RAM || flags == PBUF_FLAG_POOL) {
     /* set new payload pointer */
     p->payload = (u8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
@@ -487,7 +489,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
       return 1;
     }
   /* pbuf types refering to external payloads? */
-  } else if (p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_ROM) {
+  } else if (flags == PBUF_FLAG_REF || flags == PBUF_FLAG_ROM) {
     /* hide a header in the payload? */
     if ((header_size_increment < 0) && (header_size_increment - p->len <= 0)) {
       /* increase payload pointer */
@@ -544,6 +546,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
 u8_t
 pbuf_free(struct pbuf *p)
 {
+  u16_t flags;
   struct pbuf *q;
   u8_t count;
   SYS_ARCH_DECL_PROTECT(old_level);
@@ -579,15 +582,16 @@ pbuf_free(struct pbuf *p)
       /* remember next pbuf in chain for next iteration */
       q = p->next;
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: deallocating %p\n", (void *)p));
+      flags = p->flags;
       /* is this a pbuf from the pool? */
-      if (p->flags == PBUF_FLAG_POOL) {
+      if (flags == PBUF_FLAG_POOL) {
         p->len = p->tot_len = PBUF_POOL_BUFSIZE;
         p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
         PBUF_POOL_FREE(p);
       /* is this a ROM or RAM referencing pbuf? */
-      } else if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF) {
+      } else if (flags == PBUF_FLAG_ROM || flags == PBUF_FLAG_REF) {
         memp_free(MEMP_PBUF, p);
-      /* p->flags == PBUF_FLAG_RAM */
+      /* flags == PBUF_FLAG_RAM */
       } else {
         mem_free(p);
       }
