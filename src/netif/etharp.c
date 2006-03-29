@@ -381,7 +381,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
-  for (k = 0; k < netif->hwaddr_len; ++k) {
+  k = netif->hwaddr_len;
+  while (k > 0) {
+    k--;
     arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
   }
   /* reset time stamp */
@@ -397,7 +399,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     /* note: this will also terminate the p pbuf chain */
     arp_table[i].p = pbuf_dequeue(p);
     /* fill-in Ethernet header */
-    for (k = 0; k < netif->hwaddr_len; ++k) {
+    k = netif->hwaddr_len;
+    while(k > 0) {
+      k--;
       ethhdr->dest.addr[k] = ethaddr->addr[k];
       ethhdr->src.addr[k] = netif->hwaddr[k];
     }
@@ -526,7 +530,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       hdr->dipaddr = hdr->sipaddr;
       hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
 
-      for(i = 0; i < netif->hwaddr_len; ++i) {
+      i = netif->hwaddr_len;
+      while(i > 0) {
+        i--;
         hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
         hdr->shwaddr.addr[i] = ethaddr->addr[i];
         hdr->ethhdr.dest.addr[i] = hdr->dhwaddr.addr[i];
@@ -647,7 +653,9 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* obtain source Ethernet address of the given interface */
   srcaddr = (struct eth_addr *)netif->hwaddr;
   ethhdr = q->payload;
-  for (i = 0; i < netif->hwaddr_len; i++) {
+  i = netif->hwaddr_len;
+  while(i > 0) {
+    i--;
     ethhdr->dest.addr[i] = dest->addr[i];
     ethhdr->src.addr[i] = srcaddr->addr[i];
   }
@@ -736,7 +744,9 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       /* we have a valid IP->Ethernet address mapping,
        * fill in the Ethernet header for the outgoing packet */
       struct eth_hdr *ethhdr = q->payload;
-      for(k = 0; k < netif->hwaddr_len; k++) {
+      k = netif->hwaddr_len;
+      while(k > 0) {
+        k--;
         ethhdr->dest.addr[k] = arp_table[i].ethaddr.addr[k];
         ethhdr->src.addr[k]  = srcaddr->addr[k];
       }
@@ -795,8 +805,9 @@ err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr)
     struct etharp_hdr *hdr = p->payload;
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_request: sending ARP request.\n"));
     hdr->opcode = htons(ARP_REQUEST);
-    for (k = 0; k < netif->hwaddr_len; k++)
-    {
+    k = netif->hwaddr_len;
+    while(k > 0) {
+      k--;
       hdr->shwaddr.addr[k] = srcaddr->addr[k];
       /* the hardware address is what we ask for, in
        * a request it is a don't-care value, we use zeroes */
@@ -810,8 +821,9 @@ err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr)
 
     hdr->proto = htons(ETHTYPE_IP);
     ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    for (k = 0; k < netif->hwaddr_len; ++k)
-    {
+    k = netif->hwaddr_len;
+    while(k > 0) {
+      k--;
       /* broadcast to all network interfaces on the local network */
       hdr->ethhdr.dest.addr[k] = 0xff;
       hdr->ethhdr.src.addr[k] = srcaddr->addr[k];
