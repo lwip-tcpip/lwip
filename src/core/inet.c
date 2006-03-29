@@ -489,11 +489,23 @@ char *inet_ntoa(struct in_addr addr)
   return str;
 }
 
+/*
+ * These are reference implementations of the byte swapping functions.
+ * Again with the aim of being simple, correct and fully portable.
+ * Byte swapping is the second thing you would want to optimize. You will
+ * need to port it to your architecture and in your cc.h:
+ * 
+ * #define LWIP_PLATFORM_BYTESWAP 1
+ * #define LWIP_PLATFORM_HTONS(x) <your_htons>
+ * #define LWIP_PLATFORM_HTONL(x) <your_htonl>
+ *
+ * Note ntohs() and ntohl() are merely references to the htonx counterparts.
+ */
 
 #ifndef BYTE_ORDER
 #error BYTE_ORDER is not defined
 #endif
-#if BYTE_ORDER == LITTLE_ENDIAN
+#if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
 
 u16_t
 htons(u16_t n)
@@ -522,4 +534,4 @@ ntohl(u32_t n)
   return htonl(n);
 }
 
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+#endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */

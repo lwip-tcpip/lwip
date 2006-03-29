@@ -19,7 +19,10 @@ HISTORY
 
 (CVS HEAD)
 
-  * [New changes go here]
+  2006-03-29 Christiaan Simons
+  * inet.c, inet.h: Added platform byteswap support.
+    Added LWIP_PLATFORM_BYTESWAP define (defaults to 0) and
+    optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
 
 (STABLE-1_1_1)
 
