@@ -384,3 +384,36 @@ Call these functions in the order of appearance:
   the predefined regular intervals after starting the client.
   
   You can peek in the netif->dhcp struct for the actual DHCP status.
+
+
+--- Optimalization hints
+
+The first thing you want to optimize is the lwip_standard_checksum()
+routine from src/core/inet.c. You can override this standard
+function with the #define LWIP_CHKSUM <your_checksum_routine>.
+
+There are C examples given in inet.c or you might want to
+craft an assembly function for this. RFC1071 is a good
+introduction to this subject.
+
+Other significant improvements can be made by supplying
+assembly or inline replacements for htons() and htonl()
+if you're using a little-endian architecture.
+#define LWIP_PLATFORM_BYTESWAP 1
+#define LWIP_PLATFORM_HTONS(x) <your_htons>
+#define LWIP_PLATFORM_HTONL(x) <your_htonl>
+
+Check your network interface driver if it reads at
+a higher speed than the maximum wire-speed. If the
+hardware isn't serviced frequently and fast enough
+buffer overflows are likely to occur.
+
+E.g. when using the cs8900 driver, call cs8900if_service(ethif)
+as frequently as possible. When using an RTOS let the cs8900 interrupt
+wake a high priority task that services your driver using a binary
+semaphore or event flag. Some drivers might allow additional tuning
+to match your application and network.
+
+For a production release it is recommended to set LWIP_STATS to 0.
+Note that speed performance isn't influenced much by simply setting
+high values to the memory options.
