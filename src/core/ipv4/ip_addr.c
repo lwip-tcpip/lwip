@@ -48,9 +48,12 @@ const struct ip_addr ip_addr_broadcast = { 0xffffffffUL };
 
 u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
 {
+  u32_t addr2test;
+
+  addr2test = addr->addr;
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((addr->addr == ip_addr_broadcast.addr) ||
-      (addr->addr == ip_addr_any.addr))
+  if ((addr2test == ip_addr_broadcast.addr) ||
+      (addr2test == ip_addr_any.addr))
     return 1;
   /* no broadcast support on this network interface? */
   else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0)
@@ -58,12 +61,12 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
      * nor can we check against any broadcast addresses */
     return 0;
   /* address matches network interface address exactly? => no broadcast */
-  else if (addr->addr == netif->ip_addr.addr)
+  else if (addr2test == netif->ip_addr.addr)
     return 0;
   /*  on the same (sub) network... */
   else if (ip_addr_netcmp(addr, &(netif->ip_addr), &(netif->netmask))
          /* ...and host identifier bits are all ones? =>... */
-          && ((addr->addr & ~netif->netmask.addr) ==
+          && ((addr2test & ~netif->netmask.addr) ==
            (ip_addr_broadcast.addr & ~netif->netmask.addr)))
     /* => network broadcast address */
     return 1;
