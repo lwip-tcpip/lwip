@@ -3,10 +3,10 @@
  *
  * Transmission Control Protocol, incoming traffic
  *
- * The input processing functions of TCP.
+ * The input processing functions of the TCP layer.
  *
- * These functions are generally called in the order (ip_input() ->) tcp_input() ->
- * tcp_process() -> tcp_receive() (-> application).
+ * These functions are generally called in the order (ip_input() ->)
+ * tcp_input() -> * tcp_process() -> tcp_receive() (-> application).
  * 
  */
 
@@ -79,7 +79,6 @@ static void tcp_parseopt(struct tcp_pcb *pcb);
 
 static err_t tcp_listen_input(struct tcp_pcb_listen *pcb);
 static err_t tcp_timewait_input(struct tcp_pcb *pcb);
-
 
 /* tcp_input:
  *
@@ -174,13 +173,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
        ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest))) {
 
       /* Move this PCB to the front of the list so that subsequent
-   lookups will be faster (we exploit locality in TCP segment
-   arrivals). */
+         lookups will be faster (we exploit locality in TCP segment
+         arrivals). */
       LWIP_ASSERT("tcp_input: pcb->next != pcb (before cache)", pcb->next != pcb);
       if (prev != NULL) {
-  prev->next = pcb->next;
-  pcb->next = tcp_active_pcbs;
-  tcp_active_pcbs = pcb;
+        prev->next = pcb->next;
+        pcb->next = tcp_active_pcbs;
+        tcp_active_pcbs = pcb;
       }
       LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
@@ -191,20 +190,19 @@ tcp_input(struct pbuf *p, struct netif *inp)
   if (pcb == NULL) {
     /* If it did not go to an active connection, we check the connections
        in the TIME-WAIT state. */
-
     for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
       if (pcb->remote_port == tcphdr->src &&
-   pcb->local_port == tcphdr->dest &&
-   ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
+         pcb->local_port == tcphdr->dest &&
+         ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)) &&
          ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest))) {
-  /* We don't really care enough to move this PCB to the front
-     of the list since we are not very likely to receive that
-     many segments for connections in TIME-WAIT. */
-  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
-  tcp_timewait_input(pcb);
-  pbuf_free(p);
-  return;
+        /* We don't really care enough to move this PCB to the front
+           of the list since we are not very likely to receive that
+           many segments for connections in TIME-WAIT. */
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for TIME_WAITing connection.\n"));
+        tcp_timewait_input(pcb);
+        pbuf_free(p);
+        return;
       }
     }
 
@@ -213,23 +211,23 @@ tcp_input(struct pbuf *p, struct netif *inp)
     prev = NULL;
     for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if ((ip_addr_isany(&(lpcb->local_ip)) ||
-    ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest))) &&
-   lpcb->local_port == tcphdr->dest) {
-  /* Move this PCB to the front of the list so that subsequent
-     lookups will be faster (we exploit locality in TCP segment
-     arrivals). */
-  if (prev != NULL) {
-    ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
-          /* our successor is the remainder of the listening list */
-    lpcb->next = tcp_listen_pcbs.listen_pcbs;
-          /* put this listening pcb at the head of the listening list */
-    tcp_listen_pcbs.listen_pcbs = lpcb;
-  }
-
-  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
-  tcp_listen_input(lpcb);
-  pbuf_free(p);
-  return;
+        ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest))) &&
+        lpcb->local_port == tcphdr->dest) {
+        /* Move this PCB to the front of the list so that subsequent
+           lookups will be faster (we exploit locality in TCP segment
+           arrivals). */
+        if (prev != NULL) {
+          ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
+                /* our successor is the remainder of the listening list */
+          lpcb->next = tcp_listen_pcbs.listen_pcbs;
+                /* put this listening pcb at the head of the listening list */
+          tcp_listen_pcbs.listen_pcbs = lpcb;
+        }
+      
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
+        tcp_listen_input(lpcb);
+        pbuf_free(p);
+        return;
       }
       prev = (struct tcp_pcb *)lpcb;
     }
@@ -267,51 +265,51 @@ tcp_input(struct pbuf *p, struct netif *inp)
        and that the pcb has been freed. If so, we don't do anything. */
     if (err != ERR_ABRT) {
       if (recv_flags & TF_RESET) {
-  /* TF_RESET means that the connection was reset by the other
-     end. We then call the error callback to inform the
-     application that the connection is dead before we
-     deallocate the PCB. */
-  TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_RST);
-  tcp_pcb_remove(&tcp_active_pcbs, pcb);
-  memp_free(MEMP_TCP_PCB, pcb);
-      } else if (recv_flags & TF_CLOSED) {
-  /* The connection has been closed and we will deallocate the
-     PCB. */
-  tcp_pcb_remove(&tcp_active_pcbs, pcb);
-  memp_free(MEMP_TCP_PCB, pcb);
-      } else {
-  err = ERR_OK;
-  /* If the application has registered a "sent" function to be
-     called when new send buffer space is available, we call it
-     now. */
-  if (pcb->acked > 0) {
-    TCP_EVENT_SENT(pcb, pcb->acked, err);
-  }
-
-  if (recv_data != NULL) {
-    /* Notify application that data has been received. */
-    TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
-  }
-
-  /* If a FIN segment was received, we call the callback
-     function with a NULL buffer to indicate EOF. */
-  if (recv_flags & TF_GOT_FIN) {
-    TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
-  }
-  /* If there were no errors, we try to send something out. */
-  if (err == ERR_OK) {
-    tcp_output(pcb);
-  }
+        /* TF_RESET means that the connection was reset by the other
+           end. We then call the error callback to inform the
+           application that the connection is dead before we
+           deallocate the PCB. */
+        TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_RST);
+        tcp_pcb_remove(&tcp_active_pcbs, pcb);
+        memp_free(MEMP_TCP_PCB, pcb);
+            } else if (recv_flags & TF_CLOSED) {
+        /* The connection has been closed and we will deallocate the
+           PCB. */
+        tcp_pcb_remove(&tcp_active_pcbs, pcb);
+        memp_free(MEMP_TCP_PCB, pcb);
+            } else {
+        err = ERR_OK;
+        /* If the application has registered a "sent" function to be
+           called when new send buffer space is available, we call it
+           now. */
+        if (pcb->acked > 0) {
+          TCP_EVENT_SENT(pcb, pcb->acked, err);
+        }
+      
+        if (recv_data != NULL) {
+          /* Notify application that data has been received. */
+          TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
+        }
+      
+        /* If a FIN segment was received, we call the callback
+           function with a NULL buffer to indicate EOF. */
+        if (recv_flags & TF_GOT_FIN) {
+          TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
+        }
+        /* If there were no errors, we try to send something out. */
+        if (err == ERR_OK) {
+          tcp_output(pcb);
+        }
       }
     }
 
 
-    /* We deallocate the incoming pbuf. If it was buffered by the
-       application, the application should have called pbuf_ref() to
-       increase the reference counter in the pbuf. If so, the buffer
-       isn't actually deallocated by the call to pbuf_free(), only the
-       reference count is decreased. */
-    if (inseg.p != NULL) pbuf_free(inseg.p);
+    /* give up our reference to inseg.p */
+    if (inseg.p != NULL)
+    {
+      pbuf_free(inseg.p);
+      inseg.p = NULL;
+    }
 #if TCP_INPUT_DEBUG
 #if TCP_DEBUG
     tcp_debug_print_state(pcb->state);
