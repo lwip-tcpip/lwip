@@ -74,7 +74,7 @@ struct tcp_pcb *tcp_input_pcb;
 
 /* Forward declarations. */
 static err_t tcp_process(struct tcp_pcb *pcb);
-static void tcp_receive(struct tcp_pcb *pcb);
+static u8_t tcp_receive(struct tcp_pcb *pcb);
 static void tcp_parseopt(struct tcp_pcb *pcb);
 
 static err_t tcp_listen_input(struct tcp_pcb_listen *pcb);
@@ -434,7 +434,7 @@ tcp_process(struct tcp_pcb *pcb)
   struct tcp_seg *rseg;
   u8_t acceptable = 0;
   err_t err;
-
+  u8_t accepted_inseq;
 
   err = ERR_OK;
 
@@ -543,8 +543,8 @@ tcp_process(struct tcp_pcb *pcb)
   case CLOSE_WAIT:
     /* FALLTHROUGH */
   case ESTABLISHED:
-    tcp_receive(pcb);
-    if (flags & TCP_FIN) {
+    accepted_inseq = tcp_receive(pcb);
+    if ((flags & TCP_FIN) && accepted_inseq) { /* passive close */
       tcp_ack_now(pcb);
       pcb->state = CLOSE_WAIT;
     }
@@ -614,9 +614,11 @@ tcp_process(struct tcp_pcb *pcb)
  *
  * If the incoming segment constitutes an ACK for a segment that was used for RTT
  * estimation, the RTT is estimated here as well.
+ *
+ * @return 1 if 
  */
 
-static void
+static u8_t
 tcp_receive(struct tcp_pcb *pcb)
 {
   struct tcp_seg *next;
@@ -628,7 +630,7 @@ tcp_receive(struct tcp_pcb *pcb)
   s16_t m;
   u32_t right_wnd_edge;
   u16_t new_tot_len;
-
+  u8_t accepted_inseq = 0;
 
   if (flags & TCP_ACK) {
     right_wnd_edge = pcb->snd_wnd + pcb->snd_wl1;
@@ -650,7 +652,6 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif /* TCP_WND_DEBUG */
     }
 
-
     if (pcb->lastack == ackno) {
       pcb->acked = 0;
 
@@ -668,7 +669,7 @@ tcp_receive(struct tcp_pcb *pcb)
                                       pcb->lastack) / 2,
                                       2 * pcb->mss);*/
             /* Set ssthresh to half of the minimum of the currenct cwnd and the advertised window */
-            if(pcb->cwnd > pcb->snd_wnd)
+            if (pcb->cwnd > pcb->snd_wnd)
               pcb->ssthresh = pcb->snd_wnd / 2;
             else
               pcb->ssthresh = pcb->cwnd / 2;
@@ -690,7 +691,7 @@ tcp_receive(struct tcp_pcb *pcb)
     } else
       /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
         TCP_SEQ_LEQ(ackno, pcb->snd_max)) { */
-      if(TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_max)){
+      if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_max)){
       /* We come here when the ACK acknowledges new data. */
       
       /* Reset the "IN Fast Retransmit" flag, since we are no longer
@@ -859,7 +860,7 @@ tcp_receive(struct tcp_pcb *pcb)
        segment is larger than rcv_nxt. */
     /*    if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
           if (TCP_SEQ_LT(pcb->rcv_nxt, seqno + tcplen)) {*/
-    if(TCP_SEQ_BETWEEN(pcb->rcv_nxt, seqno+1, seqno+tcplen-1)){
+    if (TCP_SEQ_BETWEEN(pcb->rcv_nxt, seqno + 1, seqno + tcplen - 1)){
       /* Trimming the first edge is done by pushing the payload
          pointer in the pbuf downwards. This is somewhat tricky since
          we do not want to discard the full contents of the pbuf up to
@@ -882,6 +883,7 @@ tcp_receive(struct tcp_pcb *pcb)
       
       off = pcb->rcv_nxt - seqno;
       p = inseg.p;
+      LWIP_ASSERT("inseg.p != NULL", inseg.p);
       if (inseg.p->len < off) {
         new_tot_len = inseg.p->tot_len - off;
         while (p->len < off) {
@@ -903,8 +905,8 @@ tcp_receive(struct tcp_pcb *pcb)
       inseg.len -= pcb->rcv_nxt - seqno;
       inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
     }
-    else{
-      if(TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
+    else {
+      if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
         /* the whole segment is < rcv_nxt */
         /* must be a duplicate of a packet that has already been correctly handled */
         
@@ -918,8 +920,9 @@ tcp_receive(struct tcp_pcb *pcb)
        processed. */
     /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
       TCP_SEQ_LT(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
-    if(TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd - 1)){
+    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
+        accepted_inseq = 1; 
         /* The incoming segment is the next in sequence. We check if
            we have to trim the end of the segment and update rcv_nxt
            and pass the data to the application. */
@@ -998,6 +1001,9 @@ tcp_receive(struct tcp_pcb *pcb)
           if (TCPH_FLAGS(cseg->tcphdr) & TCP_FIN) {
             LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: dequeued FIN.\n"));
             recv_flags = TF_GOT_FIN;
+            if (pcb->state == ESTABLISHED) { /* force passive close or we can move to active close */
+              pcb->state = CLOSE_WAIT;
+            } 
           }
 
 
@@ -1142,6 +1148,7 @@ tcp_receive(struct tcp_pcb *pcb)
       tcp_ack_now(pcb);
     }
   }
+  return accepted_inseq;
 }
 
 /*
