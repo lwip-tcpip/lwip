@@ -239,8 +239,12 @@ ethernetif_input(struct netif *netif)
   switch (htons(ethhdr->type)) {
   /* IP packet? */
   case ETHTYPE_IP:
+#if 0
+/* CSi disabled ARP table update on ingress IP packets.
+   This seems to work but needs thorough testing. */
     /* update ARP table */
     etharp_ip_input(netif, p);
+#endif
     /* skip Ethernet header */
     pbuf_header(p, -sizeof(struct eth_hdr));
     /* pass to network layer */
