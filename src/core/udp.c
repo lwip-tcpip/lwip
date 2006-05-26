@@ -98,7 +98,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
 
-  if (pbuf_header(p, -((s16_t)(UDP_HLEN + IPH_HL(iphdr) * 4)))) {
+  if (p->tot_len < (IPH_HL(iphdr) * 4 + UDP_HLEN)) {
     /* drop short packets */
     LWIP_DEBUGF(UDP_DEBUG,
                 ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
@@ -109,7 +109,9 @@ udp_input(struct pbuf *p, struct netif *inp)
     goto end;
   }
 
-  udphdr = (struct udp_hdr *)((u8_t *)p->payload - UDP_HLEN);
+  pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4));
+
+  udphdr = (struct udp_hdr *)p->payload;
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 
@@ -168,7 +170,6 @@ udp_input(struct pbuf *p, struct netif *inp)
   /* Check checksum if this is a match or if it was directed at us. */
   if (pcb != NULL || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) {
     LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: calculating checksum\n"));
-    pbuf_header(p, UDP_HLEN);
 #ifdef IPv6
     if (iphdr->nexthdr == IP_PROTO_UDPLITE) {
 #else
@@ -220,7 +221,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (!ip_addr_isbroadcast(&iphdr->dest, inp) &&
           !ip_addr_ismulticast(&iphdr->dest)) {
 
-        /* adjust pbuf pointer */
+        /* restore pbuf pointer */
         p->payload = iphdr;
         icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
