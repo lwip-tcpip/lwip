@@ -14,12 +14,20 @@ FUTURE
     (sizeof(int)). In ppp.c an assumption is made on the availability of
     a thread subsystem. Either PPP needs to be moved to contrib/ports/???
     or rearranged to be more generic.
+    
+  * TODO: review the the sequential netconn and socket API (lwip/src/api)
+    for bugs and performance issues. Frequent system calls (e.g. sys_mbox_fetch)
+    slooow things down considerably. 
 
 HISTORY
 
 (CVS HEAD)
 
   * [Enter new changes just after this line - do not remove this line]
+
+  2006-05-26 Christiaan Simons
+  * api_lib.c: Removed conn->sem creation and destruction 
+    from netconn_write() and added sys_sem_new to netconn_new_*.
 
   2006-03-29 Christiaan Simons
   * inet.c, inet.h: Added platform byteswap support.

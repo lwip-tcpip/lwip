@@ -215,7 +215,11 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
   }
   conn->recvmbox = SYS_MBOX_NULL;
   conn->acceptmbox = SYS_MBOX_NULL;
-  conn->sem = SYS_SEM_NULL;
+  conn->sem = sys_sem_new(0);
+  if (conn->sem == SYS_SEM_NULL) {
+    memp_free(MEMP_NETCONN, conn);
+    return NULL;
+  }
   conn->state = NETCONN_NONE;
   conn->socket = 0;
   conn->callback = callback;
@@ -630,13 +634,6 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
   if (conn->err != ERR_OK) {
     return conn->err;
   }
-  
-  if (conn->sem == SYS_SEM_NULL) {
-    conn->sem = sys_sem_new(0);
-    if (conn->sem == SYS_SEM_NULL) {
-      return ERR_MEM;
-    }
-  }
 
   if ((msg = memp_malloc(MEMP_API_MSG)) == NULL) {
     return (conn->err = ERR_MEM);
@@ -685,10 +682,6 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
  ret:
   memp_free(MEMP_API_MSG, msg);
   conn->state = NETCONN_NONE;
-  if (conn->sem != SYS_SEM_NULL) {
-    sys_sem_free(conn->sem);
-    conn->sem = SYS_SEM_NULL;
-  }
   
   return conn->err;
 }
