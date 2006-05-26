@@ -488,9 +488,10 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   hdr = p->payload;
  
-  /* get aligned copies of addresses */
-  *(struct ip_addr2 *)&sipaddr = hdr->sipaddr;
-  *(struct ip_addr2 *)&dipaddr = hdr->dipaddr;
+  /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
+   * structure packing (not using structure copy which breaks strict-aliasing rules). */
+  memcpy(&sipaddr, &hdr->sipaddr, sizeof(sipaddr));
+  memcpy(&dipaddr, &hdr->dipaddr, sizeof(dipaddr));
 
   /* this interface is not configured? */
   if (netif->ip_addr.addr == 0) {
