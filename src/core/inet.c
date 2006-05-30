@@ -48,16 +48,17 @@
 
 #include "lwip/sys.h"
 
-/* This is a reference implementation of the checksum algorithm, with the
+/* These are some reference implementations of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
- * first thing you would want to optimize for your platform. You will
- * need to port it to your architecture and in your sys_arch.h:
+ * first thing you would want to optimize for your platform. If you create
+ * your own version, link it in and in your sys_arch.h put:
  * 
  * #define LWIP_CHKSUM <your_checksum_routine> 
 */
 #ifndef LWIP_CHKSUM
 #define LWIP_CHKSUM lwip_standard_chksum
 
+#if 1	/* Version A */
 /**
  * lwip checksum
  *
@@ -65,7 +66,7 @@
  * @param len length of data to be summed
  * @return host order (!) lwip checksum (non-inverted Internet sum) 
  *
- * @note accumulator size limits summable lenght to 64k
+ * @note accumulator size limits summable length to 64k
  * @note host endianess is irrelevant (p3 RFC1071)
  */
 static u16_t
@@ -106,10 +107,9 @@ lwip_standard_chksum(void *dataptr, u16_t len)
      The caller must invert bits for Internet sum ! */
   return htons((u16_t)acc);
 }
-
 #endif
 
-#if 0
+#if 0	/* Version B */
 /*
  * Curt McDowell
  * Broadcom Corp.
@@ -122,7 +122,7 @@ lwip_standard_chksum(void *dataptr, u16_t len)
  */
 
 static u16_t
-lwip_standard_chksum2(void *dataptr, int len)
+lwip_standard_chksum(void *dataptr, int len)
 {
   u8_t *pb = dataptr;
   u16_t *ps, t = 0;
@@ -159,7 +159,9 @@ lwip_standard_chksum2(void *dataptr, int len)
 
   return sum;
 }
+#endif
 
+#if 0	/* Version C */
 /**
  * An optimized checksum routine. Basically, it uses loop-unrolling on
  * the checksum loop, treating the head and tail bytes specially, whereas
@@ -168,14 +170,13 @@ lwip_standard_chksum2(void *dataptr, int len)
  * @arg start of buffer to be checksummed. May be an odd byte address.
  * @len number of bytes in the buffer to be checksummed.
  * 
- * @todo First argument type conflicts with generic checksum routine.
- * 
  * by Curt McDowell, Broadcom Corp. December 8th, 2005
  */
 
 static u16_t
-lwip_standard_chksum4(u8_t *pb, int len)
+lwip_standard_chksum(void *dataptr, int len)
 {
+  u8_t *pb = dataptr;
   u16_t *ps, t = 0;
   u32_t *pl;
   u32_t sum = 0, tmp;
@@ -235,6 +236,8 @@ lwip_standard_chksum4(u8_t *pb, int len)
 }
 #endif
 
+#endif /* LWIP_CHKSUM */
+
 /* inet_chksum_pseudo:
  *
  * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
@@ -286,7 +289,7 @@ inet_chksum_pseudo(struct pbuf *p,
 
 /* inet_chksum:
  *
- * Calculates the Internet checksum over a portion of memory. Used primarely for IP
+ * Calculates the Internet checksum over a portion of memory. Used primarily for IP
  * and ICMP.
  */
 
@@ -329,138 +332,135 @@ inet_chksum_pbuf(struct pbuf *p)
 }
 
 /* Here for now until needed in other places in lwIP */
-#ifndef isascii
+#ifndef isprint
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
-#define isascii(c)           in_range(c, 0x20, 0x7f)
+#define isprint(c)           in_range(c, 0x20, 0x7f)
 #define isdigit(c)           in_range(c, '0', '9')
 #define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
 #endif		
 		
+/*
+ * Ascii internet address interpretation routine.
+ * The value returned is in network order.
+ */
 
- /*
-  * Ascii internet address interpretation routine.
-  * The value returned is in network order.
-  */
+u32_t
+inet_addr(const char *cp)
+{
+  struct in_addr val;
 
- /*  */
- /* inet_addr */
- u32_t inet_addr(const char *cp)
- {
-     struct in_addr val;
+  if (inet_aton(cp, &val)) {
+    return (val.s_addr);
+  }
+  return (INADDR_NONE);
+}
 
-     if (inet_aton(cp, &val)) {
-         return (val.s_addr);
-     }
-     return (INADDR_NONE);
- }
+/*
+ * Check whether "cp" is a valid ascii representation
+ * of an Internet address and convert to a binary address.
+ * Returns 1 if the address is valid, 0 if not.
+ * This replaces inet_addr, the return value from which
+ * cannot distinguish between failure and a local broadcast address.
+ */
+int
+inet_aton(const char *cp, struct in_addr *addr)
+{
+  u32_t val;
+  int base, n, c;
+  u32_t parts[4];
+  u32_t *pp = parts;
 
- /*
-  * Check whether "cp" is a valid ascii representation
-  * of an Internet address and convert to a binary address.
-  * Returns 1 if the address is valid, 0 if not.
-  * This replaces inet_addr, the return value from which
-  * cannot distinguish between failure and a local broadcast address.
-  */
- /*  */
- /* inet_aton */
- s8_t
- inet_aton(const char *cp, struct in_addr *addr)
- {
-     u32_t val;
-     s32_t base, n;
-     char c;
-     u32_t parts[4];
-     u32_t* pp = parts;
+  c = *cp;
+  for (;;) {
+    /*
+     * Collect number up to ``.''.
+     * Values are specified as for C:
+     * 0x=hex, 0=octal, 1-9=decimal.
+     */
+    if (!isdigit(c))
+      return (0);
+    val = 0;
+    base = 10;
+    if (c == '0') {
+      c = *++cp;
+      if (c == 'x' || c == 'X') {
+	base = 16;
+	c = *++cp;
+      } else
+	base = 8;
+    }
+    for (;;) {
+      if (isdigit(c)) {
+	val = (val * base) + (int)(c - '0');
+	c = *++cp;
+      } else if (base == 16 && isxdigit(c)) {
+	val = (val << 4) | (int)(c + 10 - (islower(c) ? 'a' : 'A'));
+	c = *++cp;
+      } else
+	break;
+    }
+    if (c == '.') {
+      /*
+       * Internet format:
+       *  a.b.c.d
+       *  a.b.c   (with c treated as 16 bits)
+       *  a.b (with b treated as 24 bits)
+       */
+      if (pp >= parts + 3)
+	return (0);
+      *pp++ = val;
+      c = *++cp;
+    } else
+      break;
+  }
+  /*
+   * Check for trailing characters.
+   */
+  if (c != '\0' && (!isprint(c) || !isspace(c)))
+    return (0);
+  /*
+   * Concoct the address according to
+   * the number of parts specified.
+   */
+  n = pp - parts + 1;
+  switch (n) {
 
-     c = *cp;
-     for (;;) {
-         /*
-          * Collect number up to ``.''.
-          * Values are specified as for C:
-          * 0x=hex, 0=octal, isdigit=decimal.
-          */
-         if (!isdigit(c))
-             return (0);
-         val = 0; base = 10;
-         if (c == '0') {
-             c = *++cp;
-             if (c == 'x' || c == 'X')
-                 base = 16, c = *++cp;
-             else
-                 base = 8;
-         }
-         for (;;) {
-             if (isdigit(c)) {
-                 val = (val * base) + (s16_t)(c - '0');
-                 c = *++cp;
-             } else if (base == 16 && isxdigit(c)) {
-                 val = (val << 4) |
-                     (s16_t)(c + 10 - (islower(c) ? 'a' : 'A'));
-                 c = *++cp;
-             } else
-             break;
-         }
-         if (c == '.') {
-             /*
-              * Internet format:
-              *  a.b.c.d
-              *  a.b.c   (with c treated as 16 bits)
-              *  a.b (with b treated as 24 bits)
-              */
-             if (pp >= parts + 3)
-                 return (0);
-             *pp++ = val;
-             c = *++cp;
-         } else
-             break;
-     }
-     /*
-      * Check for trailing characters.
-      */
-     if (c != '\0' && (!isascii(c) || !isspace(c)))
-         return (0);
-     /*
-      * Concoct the address according to
-      * the number of parts specified.
-      */
-     n = pp - parts + 1;
-     switch (n) {
+  case 0:
+    return (0);       /* initial nondigit */
 
-     case 0:
-         return (0);     /* initial nondigit */
+  case 1:             /* a -- 32 bits */
+    break;
 
-     case 1:             /* a -- 32 bits */
-         break;
+  case 2:             /* a.b -- 8.24 bits */
+    if (val > 0xffffff)
+      return (0);
+    val |= parts[0] << 24;
+    break;
 
-     case 2:             /* a.b -- 8.24 bits */
-         if (val > 0xffffff)
-             return (0);
-         val |= parts[0] << 24;
-         break;
+  case 3:             /* a.b.c -- 8.8.16 bits */
+    if (val > 0xffff)
+      return (0);
+    val |= (parts[0] << 24) | (parts[1] << 16);
+    break;
 
-     case 3:             /* a.b.c -- 8.8.16 bits */
-         if (val > 0xffff)
-             return (0);
-         val |= (parts[0] << 24) | (parts[1] << 16);
-         break;
-
-     case 4:             /* a.b.c.d -- 8.8.8.8 bits */
-         if (val > 0xff)
-             return (0);
-         val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
-         break;
-     }
-     if (addr)
-         addr->s_addr = htonl(val);
-     return (1);
- }
+  case 4:             /* a.b.c.d -- 8.8.8.8 bits */
+    if (val > 0xff)
+      return (0);
+    val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+    break;
+  }
+  if (addr)
+    addr->s_addr = htonl(val);
+  return (1);
+}
 
 /* Convert numeric IP address into decimal dotted ASCII representation.
  * returns ptr to static buffer; not reentrant!
  */
-char *inet_ntoa(struct in_addr addr)
+char *
+inet_ntoa(struct in_addr addr)
 {
   static char str[16];
   u32_t s_addr = addr.s_addr;
