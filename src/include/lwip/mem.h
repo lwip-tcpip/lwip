@@ -47,7 +47,6 @@ void mem_init(void);
 void *mem_malloc(mem_size_t size);
 void mem_free(void *mem);
 void *mem_realloc(void *mem, mem_size_t size);
-void *mem_reallocm(void *mem, mem_size_t size);
 
 #ifndef MEM_ALIGN_SIZE
 #define MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))

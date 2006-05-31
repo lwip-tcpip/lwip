@@ -109,8 +109,8 @@ plug_holes(struct mem *mem)
     pmem->next = mem->next;
     ((struct mem *)&ram[mem->next])->prev = (u8_t *)pmem - ram;
   }
-
 }
+
 void
 mem_init(void)
 {
@@ -134,6 +134,7 @@ mem_init(void)
   lwip_stats.mem.avail = MEM_SIZE;
 #endif /* MEM_STATS */
 }
+
 void
 mem_free(void *rmem)
 {
@@ -173,18 +174,6 @@ mem_free(void *rmem)
 #endif /* MEM_STATS */
   plug_holes(mem);
   sys_sem_signal(mem_sem);
-}
-void *
-mem_reallocm(void *rmem, mem_size_t newsize)
-{
-  void *nmem;
-  nmem = mem_malloc(newsize);
-  if (nmem == NULL) {
-    return mem_realloc(rmem, newsize);
-  }
-  memcpy(nmem, rmem, newsize);
-  mem_free(rmem);
-  return nmem;
 }
 
 void *
@@ -238,6 +227,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   sys_sem_signal(mem_sem);  
   return rmem;
 }
+
 void *
 mem_malloc(mem_size_t size)
 {
@@ -280,16 +270,16 @@ mem_malloc(mem_size_t size)
       lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
       /*      if (lwip_stats.mem.max < lwip_stats.mem.used) {
         lwip_stats.mem.max = lwip_stats.mem.used;
-  } */
+        } */
       if (lwip_stats.mem.max < ptr2) {
         lwip_stats.mem.max = ptr2;
       }      
 #endif /* MEM_STATS */
 
       if (mem == lfree) {
-  /* Find next free block after mem */
+        /* Find next free block after mem */
         while (lfree->used && lfree != ram_end) {
-    lfree = (struct mem *)&ram[lfree->next];
+          lfree = (struct mem *)&ram[lfree->next];
         }
         LWIP_ASSERT("mem_malloc: !lfree->used", !lfree->used);
       }
