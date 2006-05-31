@@ -51,8 +51,7 @@
 #include "lwip/tcp.h"
 #if LWIP_TCP
 
-/* Incremented every coarse grained timer shot
-   (typically every 500 ms, determined by TCP_COARSE_TIMEOUT). */
+/* Incremented every coarse grained timer shot (typically every 500 ms). */
 u32_t tcp_ticks;
 const u8_t tcp_backoff[13] =
     { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
@@ -117,10 +116,10 @@ tcp_close(struct tcp_pcb *pcb)
   err_t err;
 
 #if TCP_DEBUG
-  LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in state "));
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
   tcp_debug_print_state(pcb->state);
-  LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 #endif /* TCP_DEBUG */
+
   switch (pcb->state) {
   case CLOSED:
     /* Closing a pcb in the CLOSED state might seem erroneous,
