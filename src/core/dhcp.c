@@ -107,7 +107,9 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
 static err_t dhcp_unfold_reply(struct dhcp *dhcp);
 static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type);
 static u8_t dhcp_get_option_byte(u8_t *ptr);
+#if 0
 static u16_t dhcp_get_option_short(u8_t *ptr);
+#endif
 static u32_t dhcp_get_option_long(u8_t *ptr);
 static void dhcp_free_reply(struct dhcp *dhcp);
 
@@ -490,12 +492,12 @@ static void dhcp_handle_ack(struct netif *netif)
   option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_DNS_SERVER);
   if (option_ptr != NULL) {
     u8_t n;
-    dhcp->dns_count = dhcp_get_option_byte(&option_ptr[1]);
+    dhcp->dns_count = dhcp_get_option_byte(&option_ptr[1]) / (u32_t)sizeof(struct ip_addr);
     /* limit to at most DHCP_MAX_DNS DNS servers */
-    if (dhcp->dns_count > DHCP_MAX_DNS) dhcp->dns_count = DHCP_MAX_DNS;
-    for (n = 0; n < dhcp->dns_count; n++)
-    {
-      dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2+(n<<2)]));
+    if (dhcp->dns_count > DHCP_MAX_DNS)
+	dhcp->dns_count = DHCP_MAX_DNS;
+    for (n = 0; n < dhcp->dns_count; n++) {
+      dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2 + n * 4]));
     }
   }
 }
@@ -1399,7 +1401,7 @@ static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type)
       }
     }
   }
-  return 0;
+  return NULL;
 }
 
 /**
@@ -1416,6 +1418,7 @@ static u8_t dhcp_get_option_byte(u8_t *ptr)
   return *ptr;
 }
 
+#if 0
 /**
  * Return the 16-bit value of DHCP option data.
  *
@@ -1432,6 +1435,7 @@ static u16_t dhcp_get_option_short(u8_t *ptr)
   LWIP_DEBUGF(DHCP_DEBUG, ("option short value=%"U16_F"\n", value));
   return value;
 }
+#endif
 
 /**
  * Return the 32-bit value of DHCP option data.
