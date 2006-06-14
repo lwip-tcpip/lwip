@@ -228,9 +228,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   if (newconn == NULL) {
     return ERR_MEM;
   }
-  newconn->type = NETCONN_TCP;
-  newconn->pcb.tcp = newpcb;
-  setup_tcp(newconn);
   newconn->recvmbox = sys_mbox_new();
   if (newconn->recvmbox == SYS_MBOX_NULL) {
     memp_free(MEMP_NETCONN, newconn);
@@ -249,6 +246,10 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     memp_free(MEMP_NETCONN, newconn);
     return ERR_MEM;
   }
+  /* Allocations were OK, setup the PCB etc */
+  newconn->type = NETCONN_TCP;
+  newconn->pcb.tcp = newpcb;
+  setup_tcp(newconn);
   newconn->acceptmbox = SYS_MBOX_NULL;
   newconn->err = err;
   /* Register event with callback */
