@@ -37,8 +37,10 @@
 
 #if MEM_SIZE > 64000l
 typedef u32_t mem_size_t;
+#define MEM_SIZE_F U32_F
 #else
 typedef u16_t mem_size_t;
+#define MEM_SIZE_F U16_F
 #endif /* MEM_SIZE > 64000 */
 
 
