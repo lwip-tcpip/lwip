@@ -244,6 +244,16 @@ a lot of data that needs to be copied, this should be set high. */
 #define DHCP_DOES_ARP_CHECK             1
 #endif
 
+/* ---------- SNMP options ---------- */
+/** @todo SNMP isn't functional yet. */
+#ifndef LWIP_SNMP
+#define LWIP_SNMP                       0
+#endif
+
+#ifndef SNMP_PRIVATE_MIB
+#define SNMP_PRIVATE_MIB                0
+#endif
+
 /* ---------- UDP options ---------- */
 #ifndef LWIP_UDP
 #define LWIP_UDP                        1
