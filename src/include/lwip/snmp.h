@@ -39,11 +39,11 @@
 #if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
 
 /* network interface */
-void snmp_add_ifinoctets(unsigned long value); 
+void snmp_add_ifinoctets(u32_t value); 
 void snmp_inc_ifinucastpkts(void);
 void snmp_inc_ifinnucastpkts(void);
 void snmp_inc_ifindiscards(void);
-void snmp_add_ifoutoctets(unsigned long value);
+void snmp_add_ifoutoctets(u32_t value);
 void snmp_inc_ifoutucastpkts(void);
 void snmp_inc_ifoutnucastpkts(void);
 void snmp_inc_ifoutdiscards(void);
@@ -103,6 +103,35 @@ void snmp_inc_udpindatagrams(void);
 void snmp_inc_udpnoports(void);
 void snmp_inc_udpinerrors(void);
 void snmp_inc_udpoutdatagrams(void);
+
+/* SNMP */
+void snmp_inc_snmpinpkts(void);
+void snmp_inc_snmpoutpkts(void);
+void snmp_inc_snmpinbadversions(void);
+void snmp_inc_snmpinbadcommunitynames(void);
+void snmp_inc_snmpinbadcommunityuses(void);
+void snmp_inc_snmpinasnparseerrs(void);
+void snmp_inc_snmpintoobigs(void);
+void snmp_inc_snmpinnosuchnames(void);
+void snmp_inc_snmpinbadvalues(void);
+void snmp_inc_snmpinreadonlys(void);
+void snmp_inc_snmpingenerrs(void);
+void snmp_add_snmpintotalreqvars(u8_t value);
+void snmp_add_snmpintotalsetvars(u8_t value);
+void snmp_inc_snmpingetrequests(void);
+void snmp_inc_snmpingetnexts(void);
+void snmp_inc_snmpinsetrequests(void);
+void snmp_inc_snmpingetresponses(void);
+void snmp_inc_snmpintraps(void);
+void snmp_inc_snmpouttoobigs(void);
+void snmp_inc_snmpoutnosuchnames(void);
+void snmp_inc_snmpoutbadvalues(void);
+void snmp_inc_snmpoutgenerrs(void);
+void snmp_inc_snmpoutgetrequests(void);
+void snmp_inc_snmpoutgetnexts(void);
+void snmp_inc_snmpoutsetrequests(void);
+void snmp_inc_snmpoutgetresponses(void);
+void snmp_inc_snmpouttraps(void);
 
 /* LWIP_SNMP support not available */
 /* define everything to be empty */
@@ -172,6 +201,35 @@ void snmp_inc_udpoutdatagrams(void);
 #define snmp_inc_udpnoports()
 #define snmp_inc_udpinerrors()
 #define snmp_inc_udpoutdatagrams()
+
+/* SNMP */
+#define snmp_inc_snmpinpkts()
+#define snmp_inc_snmpoutpkts()
+#define snmp_inc_snmpinbadversions()
+#define snmp_inc_snmpinbadcommunitynames()
+#define snmp_inc_snmpinbadcommunityuses()
+#define snmp_inc_snmpinasnparseerrs()
+#define snmp_inc_snmpintoobigs()
+#define snmp_inc_snmpinnosuchnames()
+#define snmp_inc_snmpinbadvalues()
+#define snmp_inc_snmpinreadonlys()
+#define snmp_inc_snmpingenerrs()
+#define snmp_add_snmpintotalreqvars(value)
+#define snmp_add_snmpintotalsetvars(value)
+#define snmp_inc_snmpingetrequests()
+#define snmp_inc_snmpingetnexts()
+#define snmp_inc_snmpinsetrequests()
+#define snmp_inc_snmpingetresponses()
+#define snmp_inc_snmpintraps()
+#define snmp_inc_snmpouttoobigs()
+#define snmp_inc_snmpoutnosuchnames()
+#define snmp_inc_snmpoutbadvalues()
+#define snmp_inc_snmpoutgenerrs()
+#define snmp_inc_snmpoutgetrequests()
+#define snmp_inc_snmpoutgetnexts()
+#define snmp_inc_snmpoutsetrequests()
+#define snmp_inc_snmpoutgetresponses()
+#define snmp_inc_snmpouttraps()
 
 #endif
 
