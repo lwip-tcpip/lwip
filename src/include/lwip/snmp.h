@@ -38,6 +38,20 @@
 /* SNMP support available? */
 #if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
 
+/** fixed maximum length for object identifier type */
+#define OBJ_ID_LEN 32
+/** internal object identifier representation */
+struct obj_id
+{
+  u8_t len;
+  s32_t id[OBJ_ID_LEN];
+};
+
+/* system */
+void snmp_inc_sysuptime(void);
+void snmp_get_sysuptime(u32_t *value);
+void snmp_get_sysobjid(const struct obj_id **oid);
+
 /* network interface */
 void snmp_add_ifinoctets(u32_t value); 
 void snmp_inc_ifinucastpkts(void);
@@ -132,10 +146,16 @@ void snmp_inc_snmpoutgetnexts(void);
 void snmp_inc_snmpoutsetrequests(void);
 void snmp_inc_snmpoutgetresponses(void);
 void snmp_inc_snmpouttraps(void);
+void snmp_get_snmpgrpid(const struct obj_id **oid);
 
 /* LWIP_SNMP support not available */
 /* define everything to be empty */
 #else
+
+/* system */
+#define snmp_inc_sysuptime()
+#define snmp_get_sysuptime(value)
+#define snmp_get_sysobjid(oid)
 
 /* network interface */
 #define snmp_add_ifinoctets(value) 
@@ -230,6 +250,7 @@ void snmp_inc_snmpouttraps(void);
 #define snmp_inc_snmpoutsetrequests()
 #define snmp_inc_snmpoutgetresponses()
 #define snmp_inc_snmpouttraps()
+#define snmp_get_snmpgrpid()
 
 #endif
 
