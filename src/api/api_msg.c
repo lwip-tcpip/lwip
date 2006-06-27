@@ -256,11 +256,12 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   if (conn->callback)
   {
     (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-    /* We have to set the callback here even though
-     * the new socket is unknown. Mark the socket as -1. */
-    newconn->callback = conn->callback;
-    newconn->socket = -1;
   }
+  /* We have to set the callback here even though
+   * the new socket is unknown. Mark the socket as -1. */
+  newconn->callback = conn->callback;
+  newconn->socket = -1;
+  newconn->recv_avail = 0;
   
   sys_mbox_post(mbox, newconn);
   return ERR_OK;
