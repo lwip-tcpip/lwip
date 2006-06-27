@@ -25,6 +25,18 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+  2006-06-27 Christiaan Simons
+  * api_msg.c: Applied patch for cold case (bug #11135).
+    In accept_function() ensure newconn->callback is always initialized.
+
+  2006-06-15 Christiaan Simons
+  * mem.h: added MEM_SIZE_F alias to fix an ancient cold case (bug #1748),
+    facilitate printing of mem_size_t and u16_t statistics.
+
+  2006-06-14 Christiaan Simons
+  * api_msg.c: Applied patch #5146 to handle allocation failures
+    in accept() by Kevin Lawson.
+
   2006-05-26 Christiaan Simons
   * api_lib.c: Removed conn->sem creation and destruction 
     from netconn_write() and added sys_sem_new to netconn_new_*.
