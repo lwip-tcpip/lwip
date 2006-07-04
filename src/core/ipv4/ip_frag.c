@@ -40,12 +40,24 @@
 #include <string.h>
 
 #include "lwip/opt.h"
-/* #include "lwip/sys.h" */
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/netif.h"
 #include "lwip/stats.h"
 
+#define IP_REASS_BUFSIZE 5760
+#define IP_REASS_MAXAGE 3
+
+static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
+static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
+static const u8_t bitmap_bits[8] = { 0xff, 0x7f, 0x3f, 0x1f,
+  0x0f, 0x07, 0x03, 0x01
+};
+static u16_t ip_reasslen;
+static u8_t ip_reassflags;
+#define IP_REASS_FLAG_LASTFRAG 0x01
+
+static u8_t ip_reasstmr;
 
 /*
  * Copy len bytes from offset in pbuf to buffer 
@@ -73,20 +85,18 @@ copy_from_pbuf(struct pbuf *p, u16_t * offset,
   return p;
 }
 
-#define IP_REASS_BUFSIZE 5760
-#define IP_REASS_MAXAGE 30
-#define IP_REASS_TMO 1000
 
-static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
-static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
-static const u8_t bitmap_bits[8] = { 0xff, 0x7f, 0x3f, 0x1f,
-  0x0f, 0x07, 0x03, 0x01
-};
-static u16_t ip_reasslen;
-static u8_t ip_reassflags;
-#define IP_REASS_FLAG_LASTFRAG 0x01
-
-static u8_t ip_reasstmr;
+/**
+ * Initializes IP reassembly and fragmentation states.
+ */
+void
+ip_frag_init(void)
+{
+  ip_reasstmr = 0;
+  ip_reassflags = 0;
+  ip_reasslen = 0;
+  memset(ip_reassbitmap, 0, sizeof(ip_reassbitmap));
+}
 
 /**
  * Reassembly timer base function
@@ -99,6 +109,7 @@ ip_reass_tmr(void)
 {
   if (ip_reasstmr > 0) {
     ip_reasstmr--;
+    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n",(u16_t)ip_reasstmr));
   }
 }
 
@@ -148,7 +159,7 @@ ip_reass(struct pbuf *p)
 
     /* If the offset or the offset + fragment length overflows the
        reassembly buffer, we discard the entire packet. */
-    if (offset > IP_REASS_BUFSIZE || offset + len > IP_REASS_BUFSIZE) {
+    if ((offset > IP_REASS_BUFSIZE) || ((offset + len) > IP_REASS_BUFSIZE)) {
       LWIP_DEBUGF(IP_REASS_DEBUG,
        ("ip_reass: fragment outside of buffer (%"S16_F":%"S16_F"/%"S16_F").\n", offset,
         offset + len, IP_REASS_BUFSIZE));
@@ -266,6 +277,8 @@ ip_reass(struct pbuf *p)
         }
         IPFRAG_STATS_INC(ip_frag.fw);
       } else {
+        LWIP_DEBUGF(IP_REASS_DEBUG,
+          ("ip_reass: pbuf_alloc(PBUF_LINK, ip_reasslen=%"U16_F", PBUF_POOL) failed\n", ip_reasslen));
         IPFRAG_STATS_INC(ip_frag.memerr);
       }
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
@@ -305,6 +318,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   /* Get a RAM based MTU sized pbuf */
   rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
   if (rambuf == NULL) {
+    LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc(PBUF_LINK, 0, PBUF_REF) failed\n"));
     return ERR_MEM;
   }
   rambuf->tot_len = rambuf->len = mtu;
@@ -356,6 +370,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
       IPFRAG_STATS_INC(ip_frag.xmit);
       pbuf_free(header);
     } else {
+      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc() for header failed\n"));
       pbuf_free(rambuf);      
       return ERR_MEM;    
     }
