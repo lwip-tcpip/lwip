@@ -67,7 +67,9 @@
 void
 ip_init(void)
 {
-  /* no initializations as of yet */
+#if IP_FRAG
+  ip_frag_init();
+#endif
 }
 
 /**
