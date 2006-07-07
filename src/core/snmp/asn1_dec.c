@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPIRIMENTAL] Abstract Syntax Notation One (ISO 8824, 8825) decoding
+ * [EXPERIMENTAL] Abstract Syntax Notation One (ISO 8824, 8825) decoding
  *
  * @todo not optimised (yet), favor correctness over speed, favor speed over size
  */

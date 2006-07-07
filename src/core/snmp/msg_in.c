@@ -1,8 +1,8 @@
 /**
  * @file
- * [EXPIRIMENTAL] SNMP input message processing (RFC1157).
+ * [EXPERIMENTAL] SNMP input message processing (RFC1157).
  *
- * EXPIRIMENTAL dumb echo, this is not how the agent should respond.
+ * EXPERIMENTAL dumb echo, this is not how the agent should respond.
  * This is for test purposes only, DO NOT USE THIS CODE IN REAL WORLD!!
  */
 
@@ -160,7 +160,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv varbind cnt=%"U16_F"\n",(u16_t)msg_ps->invb.count));
 
-          /** @todo EXPIRIMENTAL dumb echo, this is not how the agent should respond.
+          /** @todo EXPERIMENTAL dumb echo, this is not how the agent should respond.
               This is for test purposes only, do not use this in real world!! */
           msg_ps->outvb = msg_ps->invb;
           err_ret = snmp_send_response(msg_ps);

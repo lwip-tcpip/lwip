@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPIRIMENTAL] SNMP Agent message handling structures.
+ * [EXPERIMENTAL] SNMP Agent message handling structures.
  */
 
 /*

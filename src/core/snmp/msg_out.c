@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPIRIMENTAL] SNMP output message processing (RFC1157).
+ * [EXPERIMENTAL] SNMP output message processing (RFC1157).
  *
  * Output responses and traps are build in two passes:
  *

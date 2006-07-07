@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPIRIMENTAL] Management Information Base II (RFC1213) objects and functions
+ * [EXPERIMENTAL] Management Information Base II (RFC1213) objects and functions
  */
 
 /*
