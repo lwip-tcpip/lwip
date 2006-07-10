@@ -670,6 +670,13 @@ a lot of data that needs to be copied, this should be set high. */
 #define DHCP_DEBUG                      DBG_OFF
 #endif
 
+#ifndef SNMP_MSG_DEBUG 
+#define SNMP_MSG_DEBUG                  DBG_OFF
+#endif
+
+#ifndef SNMP_MIB_DEBUG 
+#define SNMP_MIB_DEBUG                  DBG_OFF
+#endif
 
 #ifndef DBG_MIN_LEVEL
 #define DBG_MIN_LEVEL                   DBG_LEVEL_OFF
