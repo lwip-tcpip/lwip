@@ -57,6 +57,15 @@ Exactly every 10 msec the SNMP uptime timestamp must be updated with
 snmp_inc_sysuptime(). You should call this from a timer interrupt
 or a timer signal handler depending on your runtime environment.
 
+You _must_ create the following support functions for non-volatile storage
+since lwIP does not have notion of files or other non-volatile memories.
+
+void snmp_store_syscontact(u8_t* ocstr, u8_t ocstrlen);
+void snmp_store_sysname(u8_t* ocstr, u8_t ocstrlen);
+void snmp_store_syslocation(u8_t* ocstr, u8_t ocstrlen);
+
+
+
 Private MIBs
 ============
 
@@ -75,8 +84,9 @@ MAINTAINERS!
 
 If you need to create your own private MIB you'll need
 to apply for your own enterprise ID with IANA: http://www.iana.org/numbers.html 
-You can supply it in your lwipopts.h #define SNMP_ENTERPRISE_ID your_id
 
+You can set it by passing a struct snmp_obj_id to the agent
+using snmp_set_sysobjid(&my_object_id), just before snmp_init().
 
 Agent internals [advanced use]
 ==============================

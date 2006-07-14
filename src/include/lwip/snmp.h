@@ -34,6 +34,7 @@
 #define __LWIP_SNMP_H__
 
 #include "lwip/opt.h"
+#include "lwip/netif.h"
 
 /* SNMP support available? */
 #if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
@@ -48,19 +49,29 @@ struct snmp_obj_id
 };
 
 /* system */
+void snmp_set_sysdesr(char* str, u8_t strlen);
+void snmp_set_sysobjid(struct snmp_obj_id *oid);
+void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);
 void snmp_get_sysuptime(u32_t *value);
-void snmp_get_sysobjid(const struct snmp_obj_id **oid);
+void snmp_set_syscontact(u8_t *ocstr, u8_t ocstrlen);
+void snmp_set_sysname(u8_t *ocstr, u8_t ocstrlen);
+void snmp_set_syslocation(u8_t *ocstr, u8_t ocstrlen);
+/** externally supplied system functions 
+    @see lwip/doc/snmp_agent.txt */
+void snmp_store_syscontact(u8_t* ocstr, u8_t ocstrlen);
+void snmp_store_sysname(u8_t* ocstr, u8_t ocstrlen);
+void snmp_store_syslocation(u8_t* ocstr, u8_t ocstrlen);
 
 /* network interface */
-void snmp_add_ifinoctets(u32_t value); 
-void snmp_inc_ifinucastpkts(void);
-void snmp_inc_ifinnucastpkts(void);
-void snmp_inc_ifindiscards(void);
-void snmp_add_ifoutoctets(u32_t value);
-void snmp_inc_ifoutucastpkts(void);
-void snmp_inc_ifoutnucastpkts(void);
-void snmp_inc_ifoutdiscards(void);
+void snmp_add_ifinoctets(struct netif *ni, u32_t value); 
+void snmp_inc_ifinucastpkts(struct netif *ni);
+void snmp_inc_ifinnucastpkts(struct netif *ni);
+void snmp_inc_ifindiscards(struct netif *ni);
+void snmp_add_ifoutoctets(struct netif *ni, u32_t value);
+void snmp_inc_ifoutucastpkts(struct netif *ni);
+void snmp_inc_ifoutnucastpkts(struct netif *ni);
+void snmp_inc_ifoutdiscards(struct netif *ni);
 
 /* IP */
 void snmp_inc_ipinreceives(void);
@@ -146,7 +157,7 @@ void snmp_inc_snmpoutgetnexts(void);
 void snmp_inc_snmpoutsetrequests(void);
 void snmp_inc_snmpoutgetresponses(void);
 void snmp_inc_snmpouttraps(void);
-void snmp_get_snmpgrpid(const struct snmp_obj_id **oid);
+void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
 
 /* LWIP_SNMP support not available */
 /* define everything to be empty */
@@ -155,17 +166,17 @@ void snmp_get_snmpgrpid(const struct snmp_obj_id **oid);
 /* system */
 #define snmp_inc_sysuptime()
 #define snmp_get_sysuptime(value)
-#define snmp_get_sysobjid(oid)
+#define snmp_get_sysobjid_ptr(oid)
 
 /* network interface */
-#define snmp_add_ifinoctets(value) 
-#define snmp_inc_ifinucastpkts()
-#define snmp_inc_ifinnucastpkts()
-#define snmp_inc_ifindiscards()
-#define snmp_add_ifoutoctets(value)
-#define snmp_inc_ifoutucastpkts()
-#define snmp_inc_ifoutnucastpkts()
-#define snmp_inc_ifoutdiscards()
+#define snmp_add_ifinoctets(ni,value) 
+#define snmp_inc_ifinucastpkts(ni)
+#define snmp_inc_ifinnucastpkts(ni)
+#define snmp_inc_ifindiscards(ni)
+#define snmp_add_ifoutoctets(ni,value)
+#define snmp_inc_ifoutucastpkts(ni)
+#define snmp_inc_ifoutnucastpkts(ni)
+#define snmp_inc_ifoutdiscards(ni)
 
 /* IP */
 #define snmp_inc_ipinreceives()
@@ -250,7 +261,7 @@ void snmp_get_snmpgrpid(const struct snmp_obj_id **oid);
 #define snmp_inc_snmpoutsetrequests()
 #define snmp_inc_snmpoutgetresponses()
 #define snmp_inc_snmpouttraps()
-#define snmp_get_snmpgrpid()
+#define snmp_get_snmpgrpid_ptr(oid)
 
 #endif
 

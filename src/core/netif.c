@@ -42,9 +42,13 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/tcp.h"
+#if LWIP_SNMP
+#include "lwip/snmp.h"
+#endif
 
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
+u16_t netif_cnt = 0;
 
 /**
  * Add a network interface to the list of lwIP netifs.
@@ -88,6 +92,7 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
+  netif_cnt++;
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
   ip_addr_debug_print(NETIF_DEBUG, ipaddr);
@@ -115,6 +120,7 @@ void netif_remove(struct netif * netif)
   /*  is it the first netif? */
   if (netif_list == netif) {
     netif_list = netif->next;
+    netif_cnt--;
   }
   else {
     /*  look for netif further down the list */
@@ -122,8 +128,9 @@ void netif_remove(struct netif * netif)
     for (tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
       if (tmpNetif->next == netif) {
         tmpNetif->next = netif->next;
+        netif_cnt--;
         break;
-        }
+      }
     }
     if (tmpNetif == NULL)
       return; /*  we didn't find any netif today */
@@ -257,6 +264,9 @@ netif_set_default(struct netif *netif)
 void netif_set_up(struct netif *netif)
 {
   netif->flags |= NETIF_FLAG_UP;
+#if LWIP_SNMP
+  snmp_get_sysuptime(&netif->ts);
+#endif
 }
 
 /**
@@ -278,11 +288,15 @@ u8_t netif_is_up(struct netif *netif)
 void netif_set_down(struct netif *netif)
 {
   netif->flags &= ~NETIF_FLAG_UP;
+#if LWIP_SNMP
+  snmp_get_sysuptime(&netif->ts);
+#endif
 }
 
 void
 netif_init(void)
 {
   netif_list = netif_default = NULL;
+  netif_cnt = 0;
 }
 
