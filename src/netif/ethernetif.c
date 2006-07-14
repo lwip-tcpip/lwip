@@ -290,6 +290,22 @@ ethernetif_init(struct netif *netif)
   	LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
   	return ERR_MEM;
   }
+
+#if LWIP_SNMP
+  /* ifType ethernetCsmacd(6) @see RFC1213 */
+  netif->link_type = 6;
+  /* your link speed here */
+  netif->link_speed = ;
+  netif->ts = 0;
+  netif->ifinoctets = 0;
+  netif->ifinucastpkts = 0;
+  netif->ifinnucastpkts = 0;
+  netif->ifindiscards = 0;
+  netif->ifoutoctets = 0;
+  netif->ifoutucastpkts = 0;
+  netif->ifoutnucastpkts = 0;
+  netif->ifoutdiscards = 0;
+#endif
   
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;
