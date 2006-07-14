@@ -76,7 +76,7 @@ static u16_t snmp_varbind_list_enc(struct snmp_varbind_root *root, struct pbuf *
  * @return ERR_OK when success, ERR_MEM if we're out of memory
  *
  * @note the caller is responsible for filling in outvb in the m_stat
- * @todo caller must provide error-status and index ...
+ * and provide error-status and index (except for tooBig errors) ...
  */
 err_t
 snmp_send_response(struct snmp_msg_pstat *m_stat)
@@ -85,9 +85,6 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
   struct pbuf *p;
   u16_t tot_len;
   err_t err;
-
-  m_stat->error_status = SNMP_ES_NOERROR;
-  m_stat->error_index = 0;
 
   /* pass 0, calculate length fields */
   tot_len = snmp_varbind_list_sum(&m_stat->outvb);
@@ -207,12 +204,12 @@ snmp_send_trap(struct ip_addr *dst, s8_t generic_trap, s32_t specific_trap)
   if (generic_trap == 6)
   {
     /* enterprise-Specific trap */
-    snmp_get_sysobjid(&trap_msg.enterprise);
+    snmp_get_sysobjid_ptr(&trap_msg.enterprise);
   }
   else
   {
     /* generic (MIB-II) trap */    
-    snmp_get_snmpgrpid(&trap_msg.enterprise);
+    snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
   }
   snmp_get_sysuptime(&trap_msg.ts);
 

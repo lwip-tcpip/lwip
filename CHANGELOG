@@ -25,6 +25,30 @@ HISTORY
 
   * [Enter new changes just after this line - do not remove this line]
 
+  ++ New features:
+  
+  2006-07-14 Christiaan Simons
+  * mib_structs.c: added
+  * include/lwip/snmp_structs.h: added
+  * netif.{c,h}, netif/ethernetif.c: added SNMP statistics to netif struct
+  * mib2.c: changed, inserted object tree
+  * msg_{in,out}.c: changed, added minimalistic GET functionality (needs work)
+
+  2006-07-06 Christiaan Simons
+  * snmp/asn1_{enc,dec}.c added
+  * snmp/mib2.c added
+  * snmp/msg_{in,out}.c added
+  * include/lwip/snmp_asn1.h added
+  * include/lwip/snmp_msg.h added
+  * doc/snmp_agent.txt added  
+
+  2006-03-29 Christiaan Simons
+  * inet.c, inet.h: Added platform byteswap support.
+    Added LWIP_PLATFORM_BYTESWAP define (defaults to 0) and
+    optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
+
+  ++ Bug fixes:
+    
   2006-06-27 Christiaan Simons
   * api_msg.c: Applied patch for cold case (bug #11135).
     In accept_function() ensure newconn->callback is always initialized.
@@ -40,11 +64,6 @@ HISTORY
   2006-05-26 Christiaan Simons
   * api_lib.c: Removed conn->sem creation and destruction 
     from netconn_write() and added sys_sem_new to netconn_new_*.
-
-  2006-03-29 Christiaan Simons
-  * inet.c, inet.h: Added platform byteswap support.
-    Added LWIP_PLATFORM_BYTESWAP define (defaults to 0) and
-    optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
 
 (STABLE-1_1_1)
 

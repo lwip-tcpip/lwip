@@ -47,9 +47,11 @@
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
 
+#include "lwip/snmp_structs.h"
 
 #if LWIP_SNMP
 
+#define LWIP_SNMP_DBG_LOOPBACK_TST 0
 #define SNMP_CONCURRENT_REQUESTS 2
 
 /* public (non-static) constants */
@@ -72,8 +74,16 @@ static void snmp_varbind_list_free(struct snmp_varbind_root *root);
 static void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);
 static struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
 
+/** @todo: move this to  header */
+extern const struct mib_array_node internet;
+extern const struct mib_array_node sys_tem; /* test only */
 
-void snmp_init(void)
+/**
+ * Starts SNMP Agent.
+ * Allocates UDP pcb and binds it to IP_ADDR_ANY port 161.
+ */
+void
+snmp_init(void)
 {
   struct snmp_msg_pstat *msg_ps;
   u8_t i;
@@ -93,6 +103,14 @@ void snmp_init(void)
     msg_ps++;
   }
   trap_msg.pcb = snmp1_pcb;
+}
+
+/**
+ *
+ */
+void
+snmp_msg_event(void)
+{
 }
 
 /* lwIP UDP receive callback function */
@@ -155,14 +173,65 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
         err_ret = snmp_pdu_dec_varbindlist(p, varbind_ofs, &varbind_ofs, msg_ps);
         if (err_ret == ERR_OK)
         {          
+          struct mib_node *mn;
+          struct obj_def object_def;
+
           /* we've decoded the incoming message, release input msg now */
           pbuf_free(p);
 
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv varbind cnt=%"U16_F"\n",(u16_t)msg_ps->invb.count));
 
-          /** @todo EXPERIMENTAL dumb echo, this is not how the agent should respond.
-              This is for test purposes only, do not use this in real world!! */
-          msg_ps->outvb = msg_ps->invb;
+          if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+          { 
+            /** @todo check if count > 0 and if we got .iso.dod.internet  and iterate from vb 0 .. count-1 */
+            mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 2 /* trim iso.dod.internet */,
+                                   msg_ps->invb.head->ident + 2, &object_def);
+            if (mn != NULL)
+            {
+              LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv mn=%p sys_tem=%p node_typ=%"U16_F,
+                                            (void*)mn,(void*)&sys_tem,(u16_t)mn->node_type));
+          
+              if (msg_ps->invb.head->value != NULL)
+              {
+                LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv free value before vb recycle"));
+                mem_free(msg_ps->invb.head->value);
+              }            
+              msg_ps->invb.head->value_type = object_def.asn_type;
+              msg_ps->invb.head->value_len = object_def.v_len;
+              msg_ps->invb.head->value = mem_malloc(object_def.v_len);
+              if (msg_ps->invb.head->value != NULL)
+              {
+                mn->get_value(object_def.id_inst_len, object_def.id_inst_ptr, object_def.v_len, msg_ps->invb.head->value);
+              }
+              else
+              {
+                LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate variable space"));
+              }
+              msg_ps->outvb = msg_ps->invb;
+            }
+            else
+            {
+              /* mn == NULL, noSuchName */
+              msg_ps->error_status = SNMP_ES_NOSUCHNAME;
+              /** @todo current varbind index */
+              msg_ps->error_index = 1;
+              msg_ps->outvb.head = NULL;
+              msg_ps->outvb.tail = NULL;
+              msg_ps->outvb.count = 0;
+              msg_ps->outvb.seqlen = 0;
+              msg_ps->outvb.seqlenlen = 1;
+            }
+          }
+          else
+          {
+            /* request != GET */
+            /** @todo EXPERIMENTAL dumb echo, this is not how the agent should respond.
+                This is for test purposes only, do not use this in real world!! */
+            msg_ps->outvb = msg_ps->invb;
+            msg_ps->error_status = SNMP_ES_NOERROR;
+            msg_ps->error_index = 0;
+          }
+
           err_ret = snmp_send_response(msg_ps);
           if (err_ret == ERR_MEM)
           {

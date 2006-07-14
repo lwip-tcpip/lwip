@@ -49,7 +49,7 @@ struct snmp_obj_id
 };
 
 /* system */
-void snmp_set_sysdesr(char* str, u8_t strlen);
+void snmp_set_sysdesr(u8_t* str, u8_t strlen);
 void snmp_set_sysobjid(struct snmp_obj_id *oid);
 void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);
