@@ -143,6 +143,13 @@ snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
   u8_t cnt;
   
   cnt = 0;
+  if (ident_len > 1)
+  {
+    /* compressed prefix in one octet */
+    cnt++;
+    ident_len -= 2;
+    ident += 2;
+  }
   while(ident_len > 0)
   {
     ident_len--;
@@ -157,8 +164,6 @@ snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
     }
     ident++;
   }
-  /* one extra for compressed iso.dod. prefix */
-  cnt++;
   *octets_needed = cnt;
 }
 
@@ -445,22 +450,41 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
     {      
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
-      /* add compressed prefix .iso.dod */ 
-      *msg_ptr = 0x2b;
-      ofs += 1;
-      if (ofs >= plen)
+      
+      if (ident_len > 1)
       {
-        /* next octet in next pbuf */
-        p = p->next;
-        if (p == NULL) { return ERR_ARG; }
-        msg_ptr = p->payload;
-        plen += p->len;
+        if ((ident[0] == 1) && (ident[1] == 3))
+        {
+          /* compressed (most common) prefix .iso.dod */ 
+          *msg_ptr = 0x2b;
+        }
+        else
+        {
+          /* calculate prefix */
+          *msg_ptr = (ident[0] * 40) + ident[1];
+        }
+        ofs += 1;
+        if (ofs >= plen)
+        {
+          /* next octet in next pbuf */
+          p = p->next;
+          if (p == NULL) { return ERR_ARG; }
+          msg_ptr = p->payload;
+          plen += p->len;
+        }
+        else
+        {
+          /* next octet in same pbuf */
+          msg_ptr++;
+        }
+        ident_len -= 2;
+        ident += 2;
       }
       else
       {
-        /* next octet in same pbuf */
-        msg_ptr++;
-      } 
+        /* ident_len <= 1, at least we need zeroDotZero (0.0) (ident_len == 2) */
+        return ERR_ARG;
+      }
       while (ident_len > 0)
       {
         s32_t sub_id;

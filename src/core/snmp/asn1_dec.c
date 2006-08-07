@@ -420,6 +420,7 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
 {
   u16_t plen, base;
   u8_t *msg_ptr;
+  s32_t *oid_ptr;
 
   plen = 0;
   while (p != NULL)
@@ -431,13 +432,52 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
 
-      if ((len > 1) && (*msg_ptr == 0x2B))
+      oid->len = 0;
+      oid_ptr = &oid->id[0];
+      if (len > 0)
       {
-        s32_t *oid_ptr;
-
-        /* we have compressed 1.3 (iso.org) Z = (X * 40) + Y */
-        len--;
-        /* proceed to .dod */
+        /* first compressed octet */
+        if (*msg_ptr == 0x2B)
+        {
+          /* (most) common case 1.3 (iso.org) */
+          *oid_ptr = 1;
+          oid_ptr++;
+          *oid_ptr = 3;
+          oid_ptr++;
+        }
+        else if (*msg_ptr < 40)
+        {
+          *oid_ptr = 0; 
+          oid_ptr++;
+          *oid_ptr = *msg_ptr;
+          oid_ptr++;
+        }
+        else if (*msg_ptr < 80)
+        {
+          *oid_ptr = 1; 
+          oid_ptr++;
+          *oid_ptr = (*msg_ptr) - 40;
+          oid_ptr++;
+        }
+        else
+        {
+          *oid_ptr = 2; 
+          oid_ptr++;
+          *oid_ptr = (*msg_ptr) - 80;
+          oid_ptr++;
+        }
+        oid->len = 2;
+      }
+      else
+      {
+        /* length == 0, zero length (empty list) isn't allowed here.
+           ISO 8825 (BER) isn't clear about this, but some seem to accept it (why?).
+           zeroDotZero (0.0) must be at least 06 01 00  */
+        return ERR_ARG;
+      }
+      len--;
+      if (len > 0)
+      {
         ofs += 1;
         if (ofs >= plen)
         {
@@ -452,51 +492,18 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
           /* next octet in same pbuf */
           msg_ptr++;
         }
-        oid->len = 0;
-        oid_ptr = &oid->id[0];
-        while ((len > 0) && (oid->len < LWIP_SNMP_OBJ_ID_LEN))
+      }
+      while ((len > 0) && (oid->len < LWIP_SNMP_OBJ_ID_LEN))
+      {
+        /* sub-identifier uses multiple octets */
+        if (*msg_ptr & 0x80)
         {
-          /* sub-identifier uses multiple octets */
-          if (*msg_ptr & 0x80)
-          {
-            s32_t sub_id = 0;          
+          s32_t sub_id = 0;          
 
-            while ((*msg_ptr & 0x80) && (len > 1))
-            {
-              len--;
-              sub_id = (sub_id << 7) + (*msg_ptr & ~0x80);
-              ofs += 1;
-              if (ofs >= plen)
-              {
-                /* next octet in next pbuf */
-                p = p->next;
-                if (p == NULL) { return ERR_ARG; }
-                msg_ptr = p->payload;
-                plen += p->len;
-              }
-              else
-              {
-                /* next octet in same pbuf */
-                msg_ptr++;
-              }
-            }
-            if (!(*msg_ptr & 0x80) && (len > 0))
-            {
-              /* last octet sub-identifier */
-              len--;
-              sub_id = (sub_id << 7) + *msg_ptr;
-              *oid_ptr = sub_id;
-            }
-          }
-          else
+          while ((*msg_ptr & 0x80) && (len > 1))
           {
-            /* !(*msg_ptr & 0x80) sub-identifier uses single octet */
             len--;
-            *oid_ptr = *msg_ptr;
-          }
-          if (len > 0)
-          {
-            /* remaining oid bytes available ... */
+            sub_id = (sub_id << 7) + (*msg_ptr & ~0x80);
             ofs += 1;
             if (ofs >= plen)
             {
@@ -511,26 +518,53 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
               /* next octet in same pbuf */
               msg_ptr++;
             }
-          }          
-          oid_ptr++;
-          oid->len++;
-        }
-        if (len == 0)
-        {
-          /* len == 0, end of oid */
-          return ERR_OK;
+          }
+          if (!(*msg_ptr & 0x80) && (len > 0))
+          {
+            /* last octet sub-identifier */
+            len--;
+            sub_id = (sub_id << 7) + *msg_ptr;
+            *oid_ptr = sub_id;
+          }
         }
         else
         {
-          /* len > 0, oid->len == LWIP_SNMP_OBJ_ID_LEN or malformed encoding */
-          return ERR_ARG;
+          /* !(*msg_ptr & 0x80) sub-identifier uses single octet */
+          len--;
+          *oid_ptr = *msg_ptr;
         }
+        if (len > 0)
+        {
+          /* remaining oid bytes available ... */
+          ofs += 1;
+          if (ofs >= plen)
+          {
+            /* next octet in next pbuf */
+            p = p->next;
+            if (p == NULL) { return ERR_ARG; }
+            msg_ptr = p->payload;
+            plen += p->len;
+          }
+          else
+          {
+            /* next octet in same pbuf */
+            msg_ptr++;
+          }
+        }          
+        oid_ptr++;
+        oid->len++;
+      }
+      if (len == 0)
+      {
+        /* len == 0, end of oid */
+        return ERR_OK;
       }
       else
       {
-        /* length <= 1 OR prefix not 1.3 (iso.org) */
+        /* len > 0, oid->len == LWIP_SNMP_OBJ_ID_LEN or malformed encoding */
         return ERR_ARG;
       }
+
     }
     p = p->next;
   }
