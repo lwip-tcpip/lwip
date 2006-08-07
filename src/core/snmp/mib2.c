@@ -55,8 +55,8 @@
  * http://www.iana.org/numbers.html 
  */
 #define SNMP_ENTERPRISE_ID 26381
-#define SNMP_SYSOBJID_LEN 5
-#define SNMP_SYSOBJID {6, 1, 4, 1, SNMP_ENTERPRISE_ID}
+#define SNMP_SYSOBJID_LEN 7
+#define SNMP_SYSOBJID {1, 3, 6, 1, 4, 1, SNMP_ENTERPRISE_ID}
 
 #ifndef SNMP_SYSSERVICES
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
@@ -278,7 +278,7 @@ const struct mib_array_node internet = {
 /** .iso.org.dod.internet.mgmt.mib-2.sysObjectID  */
 static struct snmp_obj_id sysobjid = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
 /** enterprise ID for generic TRAPs, .iso.org.dod.internet.mgmt.mib-2.snmp */
-static struct snmp_obj_id snmpgrp_id = {5,{6,1,2,1,11}};
+static struct snmp_obj_id snmpgrp_id = {7,{1,3,6,1,2,1,11}};
 /** .iso.org.dod.internet.mgmt.mib-2.sysServices */
 static const s32_t sysservices = SNMP_SYSSERVICES;
 
@@ -291,8 +291,8 @@ static u8_t sysname_len = 0;
 static u8_t sysname[255];
 static u8_t syslocation_len = 0;
 static u8_t syslocation[255];
-/** .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifSpecific */
-static const struct snmp_obj_id ifspecific = {0, {0}};
+/** .iso.org.dod.internet.mgmt.mib-2.interfaces.ifTable.ifEntry.ifSpecific (zeroDotZero) */
+static const struct snmp_obj_id ifspecific = {2, {0, 0}};
 
 /* mib-2.system counter(s) */
 static u32_t sysuptime = 0;
@@ -1217,7 +1217,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(u32_t);
         break;
       case 22: /* ifSpecific */
-        /* @bug not returning null object id ... */
+        /** @note returning zeroDotZero (0.0) no media specific MIB support */
         od->instance = MIB_OBJECT_TAB;
         od->access = MIB_OBJECT_READ_ONLY;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
