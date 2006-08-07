@@ -761,7 +761,10 @@ do_close(struct api_msg_msg *msg)
 #if LWIP_TCP
     case NETCONN_TCP:
       if (msg->conn->pcb.tcp->state == LISTEN) {
-  err = tcp_close(msg->conn->pcb.tcp);
+        err = tcp_close(msg->conn->pcb.tcp);
+      }
+      else if (msg->conn->pcb.tcp->state == CLOSE_WAIT) {
+        err = tcp_output(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;      
 #endif
