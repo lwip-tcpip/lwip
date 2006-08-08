@@ -26,6 +26,10 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2006-08-08 Christiaan Simons
+  * etharp.{c,h}: added etharp_find_addr() to read
+    (stable) ethernet/IP address pair from ARP table
   
   2006-07-14 Christiaan Simons
   * mib_structs.c: added
@@ -48,6 +52,9 @@ HISTORY
     optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
 
   ++ Bug fixes:
+
+  2006-08-07 Christiaan Simons
+  * api_msg.c: Flushing TCP output in do_close() (bug #15926).
     
   2006-06-27 Christiaan Simons
   * api_msg.c: Applied patch for cold case (bug #11135).

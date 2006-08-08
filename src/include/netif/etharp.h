@@ -113,8 +113,11 @@ PACK_STRUCT_END
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
 
+
 void etharp_init(void);
 void etharp_tmr(void);
+s8_t etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
+         struct eth_addr **eth_ret, struct ip_addr **ip_ret);
 void etharp_ip_input(struct netif *netif, struct pbuf *p);
 void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
          struct pbuf *p);

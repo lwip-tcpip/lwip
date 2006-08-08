@@ -98,6 +98,7 @@ struct etharp_entry {
   struct eth_addr ethaddr;
   enum etharp_state state;
   u8_t ctime;
+  struct netif *netif;
 };
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
@@ -124,6 +125,7 @@ etharp_init(void)
     arp_table[i].p = NULL;
 #endif
     arp_table[i].ctime = 0;
+    arp_table[i].netif = NULL;
   }
 }
 
@@ -378,6 +380,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   
   /* mark it stable */
   arp_table[i].state = ETHARP_STATE_STABLE;
+  /* record network interface */
+  arp_table[i].netif = netif;
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
@@ -414,6 +418,39 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   }
 #endif
   return ERR_OK;
+}
+
+/**
+ * Finds (stable) ethernet/IP address pair from ARP table
+ * using interface and IP address index.
+ * @note the addresses in the ARP table are in network order!
+ *
+ * @param netif points to interface index
+ * @param ipaddr points to the (network order) IP address index
+ * @param eth_ret points to return pointer
+ * @param ip_ret points to return pointer
+ * @return table index if found, -1 otherwise
+ */
+s8_t
+etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
+         struct eth_addr **eth_ret, struct ip_addr **ip_ret)
+{
+  s8_t i;
+
+  i = 0;
+  while (i < ARP_TABLE_SIZE)
+  {
+    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
+        (arp_table[i].netif == netif) && 
+        ip_addr_cmp(ipaddr, &arp_table[i].ipaddr) )
+    {
+      *eth_ret = &arp_table[i].ethaddr;
+      *ip_ret = &arp_table[i].ipaddr;
+      return i;
+    }
+    i++;
+  }
+  return -1;
 }
 
 /**
