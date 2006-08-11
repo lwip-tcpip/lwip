@@ -46,7 +46,6 @@
 #include "lwip/snmp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
-
 #include "lwip/snmp_structs.h"
 
 #if LWIP_SNMP
@@ -74,9 +73,7 @@ static void snmp_varbind_list_free(struct snmp_varbind_root *root);
 static void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);
 static struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
 
-/** @todo: move this to  header */
-extern const struct mib_array_node internet;
-extern const struct mib_array_node sys_tem; /* test only */
+
 
 /**
  * Starts SNMP Agent.
@@ -106,11 +103,81 @@ snmp_init(void)
 }
 
 /**
- *
+ * called for each variable binding (also for the fist one)
  */
 void
-snmp_msg_event(void)
+snmp_msg_event(struct snmp_msg_pstat *msg_ps)
 {
+  struct mib_node *mn;
+  struct obj_def object_def;
+
+  if (msg_ps->state == SNMP_MSG_DEMUX)
+  {
+    if (msg_ps->vb_idx == 0)
+    {
+      msg_ps->vb_ptr = msg_ps->invb.head;
+    }
+    else
+    {
+      msg_ps->vb_ptr = msg_ps->vb_ptr->next;
+      msg_ps->vb_idx += 1;
+    }
+    if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+    { 
+      /** test object identifier for .iso.org.dod.internet prefix */
+      if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
+      {
+        mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+                               msg_ps->vb_ptr->ident + 4, &object_def);
+      }
+      else
+      {
+        mn = NULL;
+      }
+      if (mn != NULL)
+      {
+        if (mn->node_type == MIB_NODE_EX)
+        {
+          /* external object */
+          msg_ps->state = SNMP_MSG_EXTERNAL;
+        }
+        else
+        {
+          /* internal object */
+          msg_ps->state = SNMP_MSG_INTERNAL;
+        }
+      }
+      else
+      {
+        /* mn == NULL, noSuchName */
+        msg_ps->error_status = SNMP_ES_NOSUCHNAME;
+        msg_ps->error_index = 1 + msg_ps->vb_idx;
+        msg_ps->outvb.head = NULL;
+        msg_ps->outvb.tail = NULL;
+        msg_ps->outvb.count = 0;
+        msg_ps->outvb.seqlen = 0;
+        msg_ps->outvb.seqlenlen = 1;
+        snmp_send_response(msg_ps);
+        msg_ps->state = SNMP_MSG_EMPTY;
+      }
+    }
+    else if (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ)
+    {
+    }
+    else if (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ)
+    {
+    }
+    else
+    {
+      /** @todo not a request, return generror?? */
+    }
+  }
+  else if (msg_ps->state == SNMP_MSG_INTERNAL)
+  {
+  }
+  else if (msg_ps->state == SNMP_MSG_EXTERNAL)
+  {
+  }
 }
 
 /* lwIP UDP receive callback function */
@@ -156,6 +223,8 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
       msg_ps->sp = port;
       /* demultiplex variable bindings */
       msg_ps->state = SNMP_MSG_DEMUX;
+      /* first variable binding from list to inspect */
+      msg_ps->vb_idx = 0;
       /* read UDP payload length from UDP header */
       payload_len = ntohs(udphdr->len) - UDP_HLEN;
 
@@ -171,7 +240,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
        /* Builds a list of variable bindings. Copy the varbinds from the pbuf
          chain to glue them when these are divided over two or more pbuf's. */
         err_ret = snmp_pdu_dec_varbindlist(p, varbind_ofs, &varbind_ofs, msg_ps);
-        if (err_ret == ERR_OK)
+        if ((err_ret == ERR_OK) && (msg_ps->invb.count > 0))
         {          
           struct mib_node *mn;
           struct obj_def object_def;
@@ -183,14 +252,18 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
           if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
           { 
-            /** @todo check if count > 0 and if we got .iso.dod.internet  and iterate from vb 0 .. count-1 */
-            mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 2 /* trim iso.dod.internet */,
-                                   msg_ps->invb.head->ident + 2, &object_def);
+            /** test object identifier for .iso.org.dod.internet prefix */
+            if (snmp_iso_prefix_tst(msg_ps->invb.head->ident_len, msg_ps->invb.head->ident))
+            {
+              mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 4,
+                                     msg_ps->invb.head->ident + 4, &object_def);
+            }
+            else
+            {
+              mn = NULL;
+            }
             if (mn != NULL)
             {
-              LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv mn=%p sys_tem=%p node_typ=%"U16_F,
-                                            (void*)mn,(void*)&sys_tem,(u16_t)mn->node_type));
-          
               if (msg_ps->invb.head->value != NULL)
               {
                 LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv free value before vb recycle"));
@@ -201,7 +274,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
               msg_ps->invb.head->value = mem_malloc(object_def.v_len);
               if (msg_ps->invb.head->value != NULL)
               {
-                mn->get_value(object_def.id_inst_len, object_def.id_inst_ptr, object_def.v_len, msg_ps->invb.head->value);
+                mn->get_value(&object_def, object_def.v_len, msg_ps->invb.head->value);
               }
               else
               {
@@ -213,8 +286,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
             {
               /* mn == NULL, noSuchName */
               msg_ps->error_status = SNMP_ES_NOSUCHNAME;
-              /** @todo current varbind index */
-              msg_ps->error_index = 1;
+              msg_ps->error_index = 1 + msg_ps->vb_idx;
               msg_ps->outvb.head = NULL;
               msg_ps->outvb.tail = NULL;
               msg_ps->outvb.count = 0;
@@ -232,6 +304,10 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
             msg_ps->error_index = 0;
           }
 
+/* when more variable bindings left msg_ps->state = SNMP_MSG_DEMUX */
+
+
+/* when completed transaction */
           err_ret = snmp_send_response(msg_ps);
           if (err_ret == ERR_MEM)
           {
@@ -247,13 +323,21 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
           /* free varbinds (if available) */
           snmp_varbind_list_free(&msg_ps->invb);
           msg_ps->state = SNMP_MSG_EMPTY;
+
         }
         else
         {
-          /* varbind-list decode failed! */
+          /* varbind-list decode failed, or varbind list empty (silly cmd for agent) */
           pbuf_free(p);
-          /** @todo should  we return SNMP_ES_GENERROR here ? */
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_dec_varbindlist() failed"));
+          msg_ps->error_status = SNMP_ES_GENERROR;
+          msg_ps->error_index = 0;
+          msg_ps->outvb.head = NULL;
+          msg_ps->outvb.tail = NULL;
+          msg_ps->outvb.count = 0;
+          msg_ps->outvb.seqlen = 0;
+          msg_ps->outvb.seqlenlen = 1;
+          snmp_send_response(msg_ps);
         }
       }
       else
@@ -306,14 +390,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinasnparseerrs();
     return ERR_ARG;
   }
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG)))
@@ -335,14 +412,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinbadversions();
     return ERR_ARG;
   }
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR)))
@@ -369,14 +439,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     /** @todo: send authentication failure trap, if we have a trap destination */
     return ERR_ARG;
   }
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if (derr != ERR_OK)
@@ -422,14 +485,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     return ERR_ARG;
   }
   m_stat->rt = type & 0x1F;
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG)))
@@ -445,14 +501,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinasnparseerrs();
     return ERR_ARG;
   }
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG)))
@@ -488,14 +537,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
       snmp_inc_snmpingenerrs();
       break;
   }
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG)))
@@ -505,14 +547,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     return ERR_ARG;
   }
   /* skip 'error-index', usually 0 for incoming requests */
-  if (type & SNMP_ASN1_CONSTR)
-  {
-    ofs += (1 + len_octets);
-  }
-  else
-  {
-    ofs += (1 + len_octets + len);
-  }
+  ofs += (1 + len_octets + len);
   *ofs_ret = ofs;
   return ERR_OK;
 }

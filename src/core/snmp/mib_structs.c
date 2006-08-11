@@ -221,4 +221,26 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
   return NULL;
 }
 
+/**
+ * Test object identifier for the iso.org.dod.internet prefix.
+ *
+ * @param ident_len the length of the supplied object identifier
+ * @param ident points to the array of sub identifiers
+ * @return 1 if it matches, 0 otherwise
+ */
+u8_t
+snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident)
+{
+  if ((ident_len > 3) &&
+      (ident[0] == 1) && (ident[1] == 3) &&
+      (ident[2] == 6) && (ident[3] == 1))
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+}
+
 #endif /* LWIP_SNMP */

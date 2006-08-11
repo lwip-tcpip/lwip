@@ -70,6 +70,8 @@ struct obj_def
   u8_t  id_inst_len;
   /* instance part of supplied object identifier */
   s32_t *id_inst_ptr; 
+  /* optional value address hint */
+  void *addr;
 };
 
 /** MIB const array node */
@@ -88,7 +90,7 @@ struct mib_node
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   /** returns object value for the given object identifier,
      @note the caller must allocate at least len bytes for the value */
-  void (*get_value)(u8_t ident_len, s32_t *ident, u16_t len, void *value);
+  void (*get_value)(struct obj_def *od, u16_t len, void *value);
   /** @todo set_value() */
   /** One out of MIB_NODE_AR, MIB_NODE_LR or MIB_NODE_EX */
   const u8_t node_type;
@@ -102,7 +104,7 @@ struct mib_array_node
 {
   /* inherited "base class" */
   const void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  const void (*get_value)(u8_t ident_len, s32_t *ident, u16_t len, void *value);
+  const void (*get_value)(struct obj_def *od, u16_t len, void *value);
   const u8_t node_type;
   const u16_t maxlength;
 
@@ -117,7 +119,7 @@ struct mib_ram_array_node
 {
   /* inherited "base class" */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(u8_t ident_len, s32_t *ident, u16_t len, void *value);
+  void (*get_value)(struct obj_def *od, u16_t len, void *value);
   u8_t node_type;
   u16_t maxlength;
 
@@ -140,7 +142,7 @@ struct mib_list_rootnode
 {
   /* inherited "base class" */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(u8_t ident_len, s32_t *ident, u16_t len, void *value);
+  void (*get_value)(struct obj_def *od, u16_t len, void *value);
   u8_t node_type;
   u16_t maxlength;
 
@@ -157,13 +159,13 @@ struct mib_external_node
 {
   /* inherited "base class" */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(u8_t ident_len, s32_t *ident, u16_t len, void *value);
+  void (*get_value)(struct obj_def *od, u16_t len, void *value);
   u8_t node_type;
   u16_t maxlength;
 
   /* aditional struct members */
   void (*req_object_def)(u8_t ident_len, s32_t *ident);
-  void (*getreq_value)(u8_t ident_len, s32_t *ident);
+  void (*getreq_value)(struct obj_def *od);
 
   /** compares object sub identifier with externally available id
       return zero when equal, nonzero when unequal */
@@ -174,6 +176,10 @@ struct mib_external_node
   u16_t count;
 };
 
+/** export MIB tree from mib2.c */
+extern const struct mib_array_node internet;
+
 struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def);
+u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 
 #endif

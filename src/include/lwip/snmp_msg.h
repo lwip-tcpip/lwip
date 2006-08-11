@@ -208,8 +208,12 @@ struct snmp_msg_pstat
   u8_t community[SNMP_COMMUNITY_STR_LEN + 1];
   /* community string length (exclusive zero term) */
   u8_t com_strlen;
-  /* one out of MSG_EMPTY, MSG_DEMUX, MSG_MGMT, MSG_PRIVATE */
+  /* one out of MSG_EMPTY, MSG_DEMUX, MSG_INTERNAL, MSG_EXTERNAL */
   u8_t state;
+  /* index into input variable binding list */
+  u8_t vb_idx;
+  /* ptr into input variable binding list */
+  struct snmp_varbind *vb_ptr;
   /* list of variable bindings from input */
   struct snmp_varbind_root invb;
   /* list of variable bindings to output */
@@ -260,7 +264,8 @@ extern struct snmp_msg_trap trap_msg;
 
 /** Agent setup, start listening to port 161. */
 void snmp_init(void);
-
+/** Handles internal/external events. */
+void snmp_msg_event(struct snmp_msg_pstat *msg_ps);
 err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
 err_t snmp_send_trap(struct ip_addr *dst, s8_t generic_trap, s32_t specific_trap);
 

@@ -49,19 +49,14 @@ struct snmp_obj_id
 };
 
 /* system */
-void snmp_set_sysdesr(u8_t* str, u8_t strlen);
+void snmp_set_sysdesr(u8_t* str, u8_t* strlen);
 void snmp_set_sysobjid(struct snmp_obj_id *oid);
 void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);
 void snmp_get_sysuptime(u32_t *value);
-void snmp_set_syscontact(u8_t *ocstr, u8_t ocstrlen);
-void snmp_set_sysname(u8_t *ocstr, u8_t ocstrlen);
-void snmp_set_syslocation(u8_t *ocstr, u8_t ocstrlen);
-/** externally supplied system functions 
-    @see lwip/doc/snmp_agent.txt */
-void snmp_store_syscontact(u8_t* ocstr, u8_t ocstrlen);
-void snmp_store_sysname(u8_t* ocstr, u8_t ocstrlen);
-void snmp_store_syslocation(u8_t* ocstr, u8_t ocstrlen);
+void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen);
+void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen);
+void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen);
 
 /* network interface */
 void snmp_add_ifinoctets(struct netif *ni, u32_t value); 
@@ -75,13 +70,22 @@ void snmp_inc_ifoutdiscards(struct netif *ni);
 
 /* IP */
 void snmp_inc_ipinreceives(void);
-void snmp_inc_ipindelivers(void);
-void snmp_inc_ipindiscards(void);
-void snmp_inc_ipoutdiscards(void);
-void snmp_inc_ipoutrequests(void);
-void snmp_inc_ipunknownprotos(void);
-void snmp_inc_ipnoroutes(void);
+void snmp_inc_ipinhdrerrors(void);
+void snmp_inc_ipinaddrerrors(void);
 void snmp_inc_ipforwdatagrams(void);
+void snmp_inc_ipinunknownprotos(void);
+void snmp_inc_ipindiscards(void);
+void snmp_inc_ipindelivers(void);
+void snmp_inc_ipoutrequests(void);
+void snmp_inc_ipoutdiscards(void);
+void snmp_inc_ipoutnoroutes(void);
+void snmp_inc_ipreasmreqds(void);
+void snmp_inc_ipreasmoks(void);
+void snmp_inc_ipreasmfails(void);
+void snmp_inc_ipfragoks(void);
+void snmp_inc_ipfragfails(void);
+void snmp_inc_ipfragcreates(void);
+void snmp_inc_iproutingdiscards(void);
 
 /* ICMP */
 void snmp_inc_icmpinmsgs(void);
@@ -158,15 +162,18 @@ void snmp_inc_snmpoutsetrequests(void);
 void snmp_inc_snmpoutgetresponses(void);
 void snmp_inc_snmpouttraps(void);
 void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
+void snmp_set_snmpenableauthentraps(u8_t *value);
 
 /* LWIP_SNMP support not available */
 /* define everything to be empty */
 #else
 
 /* system */
+#define snmp_set_sysdesr(str, strlen)
+#define snmp_get_sysobjid_ptr(oid)
 #define snmp_inc_sysuptime()
 #define snmp_get_sysuptime(value)
-#define snmp_get_sysobjid_ptr(oid)
+
 
 /* network interface */
 #define snmp_add_ifinoctets(ni,value) 
@@ -180,13 +187,22 @@ void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
 
 /* IP */
 #define snmp_inc_ipinreceives()
-#define snmp_inc_ipindelivers()
-#define snmp_inc_ipindiscards()
-#define snmp_inc_ipoutdiscards()
-#define snmp_inc_ipoutrequests()
-#define snmp_inc_ipunknownprotos()
-#define snmp_inc_ipnoroutes()
+#define snmp_inc_ipinhdrerrors()
+#define snmp_inc_ipinaddrerrors()
 #define snmp_inc_ipforwdatagrams()
+#define snmp_inc_ipinunknownprotos()
+#define snmp_inc_ipindiscards()
+#define snmp_inc_ipindelivers()
+#define snmp_inc_ipoutrequests()
+#define snmp_inc_ipoutdiscards()
+#define snmp_inc_ipoutnoroutes()
+#define snmp_inc_ipreasmreqds()
+#define snmp_inc_ipreasmoks()
+#define snmp_inc_ipreasmfails()
+#define snmp_inc_ipfragoks()
+#define snmp_inc_ipfragfails()
+#define snmp_inc_ipfragcreates()
+#define snmp_inc_iproutingdiscards()
 
 /* ICMP */
 #define snmp_inc_icmpinmsgs()
@@ -262,6 +278,7 @@ void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
 #define snmp_inc_snmpoutgetresponses()
 #define snmp_inc_snmpouttraps()
 #define snmp_get_snmpgrpid_ptr(oid)
+#define snmp_set_snmpenableauthentraps(value)
 
 #endif
 
