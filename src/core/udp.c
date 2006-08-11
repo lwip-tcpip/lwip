@@ -61,7 +61,7 @@
 
 /* The list of UDP PCBs */
 #if LWIP_UDP
-/* was static, but we may want to access this from a socket layer */
+/* exported in udp.h (was static) */
 struct udp_pcb *udp_pcbs = NULL;
 
 static struct udp_pcb *pcb_cache = NULL;

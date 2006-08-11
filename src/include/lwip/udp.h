@@ -68,6 +68,8 @@ struct udp_pcb {
     struct ip_addr *addr, u16_t port);
   void *recv_arg;  
 };
+/* udp_pcbs export for exernal reference (e.g. SNMP agent) */
+extern struct udp_pcb *udp_pcbs;
 
 /* The following functions is the application layer interface to the
    UDP code. */
