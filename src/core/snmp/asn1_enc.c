@@ -455,7 +455,7 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
       {
         if ((ident[0] == 1) && (ident[1] == 3))
         {
-          /* compressed (most common) prefix .iso.dod */ 
+          /* compressed (most common) prefix .iso.org */ 
           *msg_ptr = 0x2b;
         }
         else
