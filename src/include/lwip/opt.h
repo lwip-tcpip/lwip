@@ -216,10 +216,15 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_FRAG                         1
 #endif
 
+/** Global default value for Time To Live used by transport layers. */
+#ifndef IP_DEFAULT_TTL
+#define IP_DEFAULT_TTL                  255
+#endif
+
 /* ---------- ICMP options ---------- */
 
 #ifndef ICMP_TTL
-#define ICMP_TTL                        255
+#define ICMP_TTL                        (IP_DEFAULT_TTL)
 #endif
 
 /* ---------- RAW options ---------- */
@@ -229,7 +234,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef RAW_TTL
-#define RAW_TTL                        255
+#define RAW_TTL                        (IP_DEFAULT_TTL)
 #endif
 
 /* ---------- DHCP options ---------- */
@@ -245,7 +250,8 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- SNMP options ---------- */
-/** @todo SNMP isn't functional yet. */
+/** @todo SNMP isn't functional yet. 
+    @note UDP must be available for SNMP transport */
 #ifndef LWIP_SNMP
 #define LWIP_SNMP                       0
 #endif
@@ -260,7 +266,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef UDP_TTL
-#define UDP_TTL                         255
+#define UDP_TTL                         (IP_DEFAULT_TTL)
 #endif
 
 /* ---------- TCP options ---------- */
@@ -269,7 +275,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef TCP_TTL
-#define TCP_TTL                         255
+#define TCP_TTL                         (IP_DEFAULT_TTL)
 #endif
 
 #ifndef TCP_WND

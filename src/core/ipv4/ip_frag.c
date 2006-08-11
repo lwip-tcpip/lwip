@@ -43,10 +43,8 @@
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/netif.h"
+#include "lwip/snmp.h"
 #include "lwip/stats.h"
-
-#define IP_REASS_BUFSIZE 5760
-#define IP_REASS_MAXAGE 3
 
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
 static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
@@ -110,6 +108,10 @@ ip_reass_tmr(void)
   if (ip_reasstmr > 0) {
     ip_reasstmr--;
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer dec %"U16_F"\n",(u16_t)ip_reasstmr));
+    if (ip_reasstmr == 0) {
+      /* reassembly timed out */
+      snmp_inc_ipreasmfails();
+    }
   }
 }
 
@@ -128,6 +130,7 @@ ip_reass(struct pbuf *p)
   u16_t i;
 
   IPFRAG_STATS_INC(ip_frag.recv);
+  snmp_inc_ipreasmreqds();
 
   iphdr = (struct ip_hdr *) ip_reassbuf;
   fraghdr = (struct ip_hdr *) p->payload;
@@ -164,6 +167,7 @@ ip_reass(struct pbuf *p)
        ("ip_reass: fragment outside of buffer (%"S16_F":%"S16_F"/%"S16_F").\n", offset,
         offset + len, IP_REASS_BUFSIZE));
       ip_reasstmr = 0;
+      snmp_inc_ipreasmfails();
       goto nullreturn;
     }
 
@@ -276,10 +280,12 @@ ip_reass(struct pbuf *p)
           i += q->len;
         }
         IPFRAG_STATS_INC(ip_frag.fw);
+        snmp_inc_ipreasmoks();
       } else {
         LWIP_DEBUGF(IP_REASS_DEBUG,
           ("ip_reass: pbuf_alloc(PBUF_LINK, ip_reasslen=%"U16_F", PBUF_POOL) failed\n", ip_reasslen));
         IPFRAG_STATS_INC(ip_frag.memerr);
+        snmp_inc_ipreasmfails();
       }
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: p %p\n", (void*)p));
       return p;
@@ -368,6 +374,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
       pbuf_chain(header, rambuf);
       netif->output(netif, header, dest);
       IPFRAG_STATS_INC(ip_frag.xmit);
+      snmp_inc_ipfragcreates();
       pbuf_free(header);
     } else {
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc() for header failed\n"));
@@ -377,5 +384,6 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
     left -= cop;
   }
   pbuf_free(rambuf);
+  snmp_inc_ipfragoks();
   return ERR_OK;
 }

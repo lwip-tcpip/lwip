@@ -39,8 +39,17 @@
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 
-#ifndef IP_REASS_INTERVAL
+/* IP reassemly timer interval in milliseconds */
 #define IP_REASS_INTERVAL 1000
+
+/* IP reassemly default age in seconds */
+#ifndef IP_REASS_MAXAGE
+#define IP_REASS_MAXAGE 3
+#endif
+
+/* IP reassembly buffer size (minus IP header) */
+#ifndef IP_REASS_BUFSIZE
+#define IP_REASS_BUFSIZE 5760
 #endif
 
 void ip_frag_init(void);
