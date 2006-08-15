@@ -179,6 +179,10 @@ struct mib_external_node
 /** export MIB tree from mib2.c */
 extern const struct mib_array_node internet;
 
+/** export for use in private mib */
+void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
+void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
+
 struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def);
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 

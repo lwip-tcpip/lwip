@@ -66,9 +66,6 @@
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
 #endif
 
-/** @todo export this in snmp_structs.h (for use in private mib) */
-void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
-void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
 
 static void system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void system_get_value(struct obj_def *od, u16_t len, void *value);
