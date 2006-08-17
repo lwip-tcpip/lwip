@@ -470,10 +470,9 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
       }
       else
       {
-        /* length == 0, zero length (empty list) isn't allowed here.
-           ISO 8825 (BER) isn't clear about this, but some seem to accept it (why?).
-           zeroDotZero (0.0) must be at least 06 01 00  */
-        return ERR_ARG;
+        /* accepting zero length identifiers e.g. for
+           getnext operation. uncommon but valid */
+        return ERR_OK;
       }
       len--;
       if (len > 0)
