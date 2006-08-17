@@ -53,6 +53,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2006-08-17 Christiaan Simons
+  * udp.c: Fixed bug #17200, added check for broadcast
+    destinations for PCBs bound to a unicast address.
+
   2006-08-07 Christiaan Simons
   * api_msg.c: Flushing TCP output in do_close() (bug #15926).
     
