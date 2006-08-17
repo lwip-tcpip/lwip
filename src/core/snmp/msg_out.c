@@ -192,7 +192,7 @@ snmp_send_trap(struct ip_addr *dst, s8_t generic_trap, s32_t specific_trap)
   u16_t tot_len;
 
   /* network order trap destination */
-  trap_msg.dip.addr = htons(dst->addr);
+  trap_msg.dip.addr = htonl(dst->addr);
   /* lookup current source address for this dst */
   dst_if = ip_route(dst);
   trap_msg.sip_raw[0] = dst_if->ip_addr.addr >> 24;
