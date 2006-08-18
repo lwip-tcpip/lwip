@@ -54,8 +54,9 @@
 #include "lwip/tcp.h"
 
 #include "lwip/stats.h"
-
 #include "arch/perf.h"
+#include "lwip/snmp.h"
+
 #if LWIP_TCP
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
@@ -99,6 +100,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   PERF_START;
 
   TCP_STATS_INC(tcp.recv);
+  snmp_inc_tcpinsegs();
 
   iphdr = p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
@@ -120,6 +122,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&(iphdr->dest), inp) ||
       ip_addr_ismulticast(&(iphdr->dest))) {
+    snmp_inc_tcpinerrs();
     pbuf_free(p);
     return;
   }
@@ -137,7 +140,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* TCP_DEBUG */
     TCP_STATS_INC(tcp.chkerr);
     TCP_STATS_INC(tcp.drop);
-
+    snmp_inc_tcpinerrs();
     pbuf_free(p);
     return;
   }
@@ -389,6 +392,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
     /* Parse any options in the SYN. */
     tcp_parseopt(npcb);
+
+    snmp_inc_tcppassiveopens();
 
     /* Build an MSS option. */
     optdata = htonl(((u32_t)2 << 24) |
