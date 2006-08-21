@@ -32,38 +32,44 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "lwip/snmp_structs.h"
+#include "lwip/opt.h"
 
 #if LWIP_SNMP
+#include "lwip/snmp_structs.h"
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};
 
 #define NODE_STACK_SIZE (LWIP_SNMP_OBJ_ID_LEN)
+/** node stack entry (old news?) */
+struct nse
+{
+  /** right child */
+  struct mib_node* r_ptr;
+  /** right child identifier */
+  s32_t r_id;
+};
 static u8_t node_stack_cnt = 0;
-static struct mib_node* node_stack[NODE_STACK_SIZE];
+static struct nse node_stack[NODE_STACK_SIZE];
 
 static void
-push_node(struct mib_node* node)
+push_node(struct nse* node)
 {
+  LWIP_ASSERT("node_stack_cnt < NODE_STACK_SIZE",node_stack_cnt < NODE_STACK_SIZE);
   if (node_stack_cnt < NODE_STACK_SIZE)
   {
-    node_stack[node_stack_cnt] = node;
+    node_stack[node_stack_cnt] = *node;
     node_stack_cnt++;
   }
 }
 
-static struct mib_node*
-pop_node(void)
+static void
+pop_node(struct nse* node)
 {
   if (node_stack_cnt > 0)
   {
     node_stack_cnt--;
-    return node_stack[node_stack_cnt];
-  }
-  else
-  {
-    return NULL;
+    *node = node_stack[node_stack_cnt];
   }
 }
 
@@ -248,7 +254,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
     else
     {
       /* unknown node_type */
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node_type "U16_F" unkown",(u16_t)node_type));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node_type %"U16_F" unkown",(u16_t)node_type));
       return NULL;
     }
   }
@@ -260,6 +266,8 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
 /**
  * Tree expansion.
  *
+ * @todo function ptrs for tabular items 
+ *       if not empty add first index, nextThing.0 otherwise
  */
 struct mib_node *
 snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
@@ -276,6 +284,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     {
       struct mib_array_node *an;
       u16_t i;
+      u8_t climb_tree;
 
       /* array node (internal ROM or RAM, fixed length) */
       an = (struct mib_array_node *)node;
@@ -290,23 +299,53 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         {
           LWIP_DEBUGF(SNMP_MIB_DEBUG,("an->objid[%"U16_F"]==%"S32_F" *ident==%"S32_F,i,an->objid[i],*ident));
 
+          climb_tree = 0;
+
           /* add identifier to oidret */
           oidret->id[oidret->len] = an->objid[i];
           (oidret->len)++;
         
           if (an->nptr[i] == NULL)
           {
-            /* leaf node */
-            /*
-               if scalar: add '.0'
-               @todo if tabular: if not empty add first index, nextThing otherwise
-            */
-            oidret->id[oidret->len] = 0;
-            (oidret->len)++;
-            return (struct mib_node*)an;
+            /* leaf node,            /*
+               if scalar: if ident_len == 1 add '.0', nextThing.0 otherwise */
+            if (ident_len == 1)
+            {
+              oidret->id[oidret->len] = 0;
+              (oidret->len)++;
+              return (struct mib_node*)an;
+            }
+            else if ((i + 1) < an->maxlength)
+            {
+              (oidret->len)--;
+              oidret->id[oidret->len] = an->objid[i + 1];
+              (oidret->len)++;
+              oidret->id[oidret->len] = 0;
+              (oidret->len)++;
+              return (struct mib_node*)an;
+            }
+            else
+            {
+              (oidret->len)--;
+              climb_tree = 1;
+            }
           }
           else
           {
+            struct nse cur_node;
+
+            /* non-leaf, store right child ptr and id */
+            if ((i + 1) < an->maxlength)
+            {
+              cur_node.r_ptr = an->nptr[i + 1];
+              cur_node.r_id = an->objid[i + 1];
+            }
+            else
+            {
+              cur_node.r_ptr = NULL;
+            }
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F,cur_node.r_ptr,cur_node.r_id));
+            push_node(&cur_node);
             /* follow next child pointer */
             ident_len--;
             ident++;
@@ -315,26 +354,49 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         }
         else
         {
-          /* @todo return to parent */
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed *ident==%"S32_F,*ident));
-          return NULL;
+          /* i == an->maxlength */
+          climb_tree = 1;
+        }
+
+        if (climb_tree)
+        {
+          struct nse child;
+
+          /* find right child ptr */
+          child.r_ptr = NULL;
+          while ((node_stack_cnt > 0) && (child.r_ptr == NULL))
+          {
+            pop_node(&child);
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, pop_node() node=%p id=%"S32_F, child.r_ptr, child.r_id));
+            /* trim returned oid */
+            (oidret->len)--;
+          }
+          if (child.r_ptr != NULL)
+          {
+            /* incoming ident is useless beyond this point */
+            ident_len = 0;
+            oidret->id[oidret->len] = child.r_id;
+            oidret->len++;
+            node = child.r_ptr;
+          }
+          else
+          {
+            /* tree ends here ... */
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand failed, tree ends here"));
+            return NULL;
+          }
         }
       }
       else
       {
-        /* short object identifier, complete it */
-        
-        /* add leftmost '.Thing' */
+        /* ident_len == 0, complete object identifier */
+        /* add leftmost '.thing' */
         oidret->id[oidret->len] = an->objid[0];
         (oidret->len)++;
-                
         if (an->nptr[0] == NULL)
         {
-          /* leaf node */
-          /*
-             if scalar: add '.0'
-             @todo if tabular: if not empty add first index, nextThing otherwise
-           */
+          /* leaf node
+             if scalar: add '.0' */
           oidret->id[oidret->len] = 0;
           (oidret->len)++;
           return (struct mib_node*)an;
@@ -349,12 +411,12 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     else
     {
       /* unknown/unhandled node_type */
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node_type "U16_F" unkown",(u16_t)node_type));
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand failed node_type %"U16_F" unkown",(u16_t)node_type));
       return NULL;
     }
   }
   /* done, found nothing */
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node==%p",(void*)node));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand failed node==%p",(void*)node));
   return NULL;
 }
 
