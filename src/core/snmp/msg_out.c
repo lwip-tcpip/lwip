@@ -42,16 +42,16 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "arch/cc.h"
 #include "lwip/opt.h"
+
+#if LWIP_SNMP
+#include "arch/cc.h"
 #include "lwip/udp.h"
 #include "lwip/netif.h"
 
 #include "lwip/snmp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
-
-#if LWIP_SNMP
 
 /**
  * TRAP message structure

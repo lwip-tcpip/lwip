@@ -35,9 +35,10 @@
  */
  
 #include "lwip/opt.h"
-#include "lwip/snmp_asn1.h"
 
 #if LWIP_SNMP
+#include "lwip/snmp_asn1.h"
+
 /**
  * Returns octet count for length.
  *
@@ -482,6 +483,7 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
       }
       else
       {
+/* @bug:  allow empty varbinds for symmetry (we must decode them for getnext), allow partial compression??  */
         /* ident_len <= 1, at least we need zeroDotZero (0.0) (ident_len == 2) */
         return ERR_ARG;
       }

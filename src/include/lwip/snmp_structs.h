@@ -38,6 +38,8 @@
 #define __LWIP_SNMP_STRUCTS_H__
 
 #include "lwip/opt.h"
+#if LWIP_SNMP
+
 #include "arch/cc.h"
 #include "lwip/snmp.h"
 
@@ -104,8 +106,8 @@ struct mib_node
 struct mib_array_node
 {
   /* inherited "base class" */
-  const void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  const void (*get_value)(struct obj_def *od, u16_t len, void *value);
+  void (* const get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
+  void (* const get_value)(struct obj_def *od, u16_t len, void *value);
   const u8_t node_type;
   const u16_t maxlength;
 
@@ -189,4 +191,5 @@ struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 
+#endif /* LWIP_SNMP */
 #endif

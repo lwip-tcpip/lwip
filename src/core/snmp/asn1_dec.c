@@ -35,9 +35,10 @@
  */
 
 #include "lwip/opt.h"
-#include "lwip/snmp_asn1.h"
 
 #if LWIP_SNMP
+#include "lwip/snmp_asn1.h"
+
 /**
  * Retrieves type field from incoming pbuf chain.
  *
@@ -645,3 +646,4 @@ snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw
 }
 
 #endif /* LWIP_SNMP */
+

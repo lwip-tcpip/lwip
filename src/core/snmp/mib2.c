@@ -34,17 +34,17 @@
 
 #include "arch/cc.h"
 #include "lwip/opt.h"
+
+#if LWIP_SNMP
 #include "lwip/snmp.h"
 #include "lwip/netif.h"
 #include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
+#include "lwip/tcp.h"
 #include "lwip/udp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"
-
-#if LWIP_SNMP
-
 /** 
  * IANA assigned enterprise ID for lwIP is 26381
  * @see http://www.iana.org/assignments/enterprise-numbers
@@ -66,6 +66,18 @@
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
 #endif
 
+/**
+ * @todo
+ * table entry availability test in struct mib_node {},
+ * also we need to be able to expand entry from a partial index
+ *   ifTable, use netif_cnt 
+ *   atTable, use ?
+ *   ipAddrTable, use ?
+ *   ipRouteTable, use ?
+ *   ipNetToMediaTable, use ?
+ *   tcpConnTable, use ?
+ *   udpTable, use ?
+ */
 
 static void system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void system_get_value(struct obj_def *od, u16_t len, void *value);
@@ -559,7 +571,6 @@ static u32_t tcpactiveopens = 0,
              tcppassiveopens = 0,
              tcpattemptfails = 0,
              tcpestabresets = 0,
-             tcpcurrestab = 0,
              tcpinsegs = 0,
              tcpoutsegs = 0,
              tcpretranssegs = 0,
@@ -1001,11 +1012,6 @@ void snmp_inc_tcpattemptfails(void)
 void snmp_inc_tcpestabresets(void)
 {
   tcpestabresets++;
-} 
-
-void snmp_inc_tcpcurrestab(void)
-{
-  tcpcurrestab++; 
 }
 
 void snmp_inc_tcpinsegs(void)
@@ -2604,11 +2610,129 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
+  u8_t id;
+
+  if ((ident_len == 2) && (ident[1] == 0))
+  { 
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
+    
+    id = ident[0];
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0",(u16_t)id));
+
+    switch (id)
+    {
+      case 1: /* tcpRtoAlgorithm */
+      case 2: /* tcpRtoMin */
+      case 3: /* tcpRtoMax */
+      case 4: /* tcpMaxConn */
+        od->instance = MIB_OBJECT_SCALAR;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 5: /* tcpActiveOpens */
+      case 6: /* tcpPassiveOpens */
+      case 7: /* tcpAttemptFails */
+      case 8: /* tcpEstabResets */
+      case 10: /* tcpInSegs */
+      case 11: /* tcpOutSegs */
+      case 12: /* tcpRetransSegs */
+      case 14: /* tcpInErrs */
+      case 15: /* tcpOutRsts */
+        od->instance = MIB_OBJECT_SCALAR;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+        od->v_len = sizeof(u32_t);
+        break;
+      case 9: /* tcpCurrEstab */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE);
+        od->v_len = sizeof(u32_t);
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
+    };
+  }
+  else
+  {
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no scalar"));
+    od->instance = MIB_OBJECT_NONE;
+  }
 }
 
 static void
 tcp_get_value(struct obj_def *od, u16_t len, void *value)
 {
+  u32_t *uint_ptr = value;
+  s32_t *sint_ptr = value;
+  u8_t id;
+
+  if (len){}
+  id = od->id_inst_ptr[0];
+  switch (id)
+  {
+    case 1: /* tcpRtoAlgorithm, vanj(4) */
+      *sint_ptr = 4;
+      break;
+    case 2: /* tcpRtoMin */
+      /* @todo need value */
+      *sint_ptr = 0;
+      break;
+    case 3: /* tcpRtoMax */
+      /* @todo need value */
+      *sint_ptr = 0;
+      break;
+    case 4: /* tcpMaxConn */
+      *sint_ptr = MEMP_NUM_TCP_PCB_LISTEN;
+      break;
+    case 5: /* tcpActiveOpens */
+      *uint_ptr = tcpactiveopens;
+      break;
+    case 6: /* tcpPassiveOpens */
+      *uint_ptr = tcppassiveopens;
+      break;
+    case 7: /* tcpAttemptFails */
+      *uint_ptr = tcpattemptfails;
+      break;
+    case 8: /* tcpEstabResets */
+      *uint_ptr = tcpestabresets;
+      break;
+    case 9: /* tcpCurrEstab */
+      {
+        u16_t tcpcurrestab = 0;
+        struct tcp_pcb *pcb = tcp_active_pcbs;
+        while (pcb != NULL)
+        {
+          if ((pcb->state == ESTABLISHED) ||
+              (pcb->state == CLOSE_WAIT)) 
+          {
+            tcpcurrestab++;
+          }
+          pcb = pcb->next;
+        }
+        *uint_ptr = tcpcurrestab;
+      }
+      break;
+    case 10: /* tcpInSegs */
+      *uint_ptr = tcpinsegs;
+      break;
+    case 11: /* tcpOutSegs */
+      *uint_ptr = tcpoutsegs;
+      break;
+    case 12: /* tcpRetransSegs */
+      *uint_ptr = tcpretranssegs;
+      break;
+    case 14: /* tcpInErrs */
+      *uint_ptr = tcpinerrs;
+      break;
+    case 15: /* tcpOutRsts */
+      *uint_ptr = tcpoutrsts;
+      break;
+  }
 }
 
 static void

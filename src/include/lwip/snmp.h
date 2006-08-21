@@ -120,7 +120,6 @@ void snmp_inc_tcpactiveopens(void);
 void snmp_inc_tcppassiveopens(void);
 void snmp_inc_tcpattemptfails(void);
 void snmp_inc_tcpestabresets(void);
-void snmp_inc_tcpcurrestab(void);
 void snmp_inc_tcpinsegs(void);
 void snmp_inc_tcpoutsegs(void);
 void snmp_inc_tcpretranssegs(void);
@@ -236,7 +235,6 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_tcppassiveopens()
 #define snmp_inc_tcpattemptfails()
 #define snmp_inc_tcpestabresets()
-#define snmp_inc_tcpcurrestab()
 #define snmp_inc_tcpinsegs()
 #define snmp_inc_tcpoutsegs()
 #define snmp_inc_tcpretranssegs()
