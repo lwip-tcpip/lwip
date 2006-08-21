@@ -35,9 +35,11 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
+#include "lwip/opt.h"
+
+#if LWIP_SNMP
 #include <string.h>
 #include "arch/cc.h"
-#include "lwip/opt.h"
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
@@ -47,8 +49,6 @@
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
 #include "lwip/snmp_structs.h"
-
-#if LWIP_SNMP
 
 #define SNMP_CONCURRENT_REQUESTS 2
 
@@ -152,6 +152,9 @@ snmp_msg_event(struct snmp_msg_pstat *msg_ps)
         /* mn == NULL, noSuchName */
         snmp_varbind_list_free(&msg_ps->outvb);
         msg_ps->outvb = msg_ps->invb;
+        msg_ps->invb.head = NULL;
+        msg_ps->invb.tail = NULL;
+        msg_ps->invb.count = 0;
         msg_ps->error_status = SNMP_ES_NOSUCHNAME;
         msg_ps->error_index = 1 + msg_ps->vb_idx;
         snmp_send_response(msg_ps);
@@ -302,6 +305,9 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
               /* @todo move used names back from outvb to invb */
               snmp_varbind_list_free(&msg_ps->outvb);
               msg_ps->outvb = msg_ps->invb;
+              msg_ps->invb.head = NULL;
+              msg_ps->invb.tail = NULL;
+              msg_ps->invb.count = 0;
               msg_ps->error_status = SNMP_ES_NOSUCHNAME;
               msg_ps->error_index = 1 + msg_ps->vb_idx;
             }
@@ -353,6 +359,9 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
               /* mn == NULL, noSuchName */
               snmp_varbind_list_free(&msg_ps->outvb);
               msg_ps->outvb = msg_ps->invb;
+              msg_ps->invb.head = NULL;
+              msg_ps->invb.tail = NULL;
+              msg_ps->invb.count = 0;
               msg_ps->error_status = SNMP_ES_NOSUCHNAME;
               msg_ps->error_index = 1 + msg_ps->vb_idx;
             }
