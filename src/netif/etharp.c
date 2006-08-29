@@ -49,6 +49,7 @@
 #include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
+#include "lwip/snmp.h"
 
 /* ARP needs to inform DHCP of any ARP replies? */
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
@@ -150,6 +151,8 @@ etharp_tmr(void)
         (arp_table[i].ctime >= ARP_MAXAGE)) {
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %"U16_F".\n", (u16_t)i));
       arp_table[i].state = ETHARP_STATE_EXPIRED;
+      /* remove from SNMP ARP index tree */
+      snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
     /* pending entry? */
     } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
       /* entry unresolved/pending for too long? */
@@ -382,6 +385,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   arp_table[i].state = ETHARP_STATE_STABLE;
   /* record network interface */
   arp_table[i].netif = netif;
+
+  /* insert in SNMP ARP index tree */
+  snmp_insert_arpidx_tree(netif, &arp_table[i].ipaddr);
 
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */

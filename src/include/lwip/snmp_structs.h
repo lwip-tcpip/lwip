@@ -186,6 +186,41 @@ extern const struct mib_array_node internet;
 void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
 
+/** forward decl */
+struct idx_root_node;
+/** "index" tree node */
+struct idx_node
+{
+  struct idx_node* next;
+  struct idx_node* prev;
+  /* child id */
+  s32_t objid;
+  /* tree child pointer */
+  struct idx_root_node *nptr;
+};
+/** "index" tree root node */
+struct idx_root_node
+{
+  struct idx_node *head;
+  struct idx_node *tail;   
+  u16_t count;
+};
+
+void snmp_oidtoip(s32_t *ident, struct ip_addr *ip);
+void snmp_iptooid(struct ip_addr *ip, s32_t *ident);
+void snmp_ifindextonetif(s32_t ifindex, struct netif **netif);
+void snmp_netiftoifindex(struct netif *netif, s32_t *ifidx);
+
+struct idx_node* snmp_idx_node_alloc(s32_t id);
+void snmp_idx_node_free(struct idx_node *in);
+struct idx_root_node* snmp_idx_root_node_alloc(void);
+void snmp_idx_root_node_free(struct idx_root_node *irn);
+
+
+s8_t snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **insn);
+s8_t snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn);
+struct idx_root_node *snmp_idx_node_delete(struct idx_root_node *rn, struct idx_node *n);
+
 struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def);
 struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);

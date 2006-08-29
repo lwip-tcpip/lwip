@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Generic MIB tree access/construction functions.
+ * [EXPERIMENTAL] MIB tree access/construction functions.
  */
 
 /*
@@ -36,6 +36,7 @@
 
 #if LWIP_SNMP
 #include "lwip/snmp_structs.h"
+#include "lwip/mem.h"
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};
@@ -52,6 +53,9 @@ struct nse
 static u8_t node_stack_cnt = 0;
 static struct nse node_stack[NODE_STACK_SIZE];
 
+/**
+ * Pushes nse struct onto stack.
+ */
 static void
 push_node(struct nse* node)
 {
@@ -63,6 +67,9 @@ push_node(struct nse* node)
   }
 }
 
+/**
+ * Pops nse struct from stack.
+ */
 static void
 pop_node(struct nse* node)
 {
@@ -71,6 +78,345 @@ pop_node(struct nse* node)
     node_stack_cnt--;
     *node = node_stack[node_stack_cnt];
   }
+}
+
+/**
+ * Conversion from ifIndex to lwIP netif
+ * @param ifindex is a s32_t object sub-identifier
+ * @param netif points to returned netif struct pointer
+ */
+void
+snmp_ifindextonetif(s32_t ifindex, struct netif **netif)
+{
+  struct netif *nif = netif_list;
+  u16_t i, ifidx;
+
+  ifidx = ifindex - 1;
+  i = 0;
+  while ((nif != NULL) && (i < ifidx))
+  {
+    nif = nif->next;
+    i++;
+  }
+  *netif = nif;
+}
+
+/**
+ * Conversion from lwIP netif to ifIndex
+ * @param netif points to a netif struct
+ * @param ifindex points to s32_t object sub-identifier
+ */
+void
+snmp_netiftoifindex(struct netif *netif, s32_t *ifidx)
+{
+  struct netif *nif = netif_list;
+  u16_t i;
+
+  i = 0;
+  while (nif != netif)
+  {
+    nif = nif->next;
+    i++;
+  }
+  *ifidx = i+1;  
+}
+
+/**
+ * Conversion from oid to lwIP ip_addr
+ * @param ident points to s32_t ident[4] input
+ * @param ip points to output struct
+ */
+void
+snmp_oidtoip(s32_t *ident, struct ip_addr *ip)
+{
+  ip->addr = ident[0];
+  ip->addr <<= 8;
+  ip->addr |= ident[1];
+  ip->addr <<= 8;
+  ip->addr |= ident[2];
+  ip->addr <<= 8;
+  ip->addr |= ident[3];
+}
+
+/**
+ * Conversion from lwIP ip_addr to oid
+ * @param ip points to input struct
+ * @param ident points to s32_t ident[4] output
+ */
+void
+snmp_iptooid(struct ip_addr *ip, s32_t *ident)
+{
+  u8_t trnc;
+
+  trnc = ip->addr >> 24;
+  ident[0] = trnc & 0xff;
+  trnc = ip->addr >> 16;
+  ident[1] = trnc & 0xff;
+  trnc = ip->addr >> 8;
+  ident[2] = trnc & 0xff;
+  trnc = ip->addr;
+  ident[3] = trnc & 0xff;
+}
+
+struct idx_node *
+snmp_idx_node_alloc(s32_t id)
+{
+  struct idx_node *in;
+  
+  in = (struct idx_node*)mem_malloc(sizeof(struct idx_node));
+  if (in != NULL)
+  {
+    in->next = NULL;
+    in->prev = NULL;
+    in->objid = id;
+    in->nptr = NULL;
+  }
+  return in;
+}
+
+void
+snmp_idx_node_free(struct idx_node *in)
+{
+  mem_free(in);
+}
+
+struct idx_root_node *
+snmp_idx_root_node_alloc(void)
+{
+  struct idx_root_node *irn;
+  
+  irn = (struct idx_root_node*)mem_malloc(sizeof(struct idx_root_node));
+  if (irn != NULL)
+  {
+    irn->head = NULL;
+    irn->tail = NULL;
+    irn->count = 0;
+  }
+  return irn;
+}
+
+void
+snmp_idx_root_node_free(struct idx_root_node *irn)
+{
+  mem_free(irn);
+}
+
+/**
+ * Inserts node in idx list in a sorted
+ * (ascending order) fashion and
+ * allocates the node if needed.
+ *
+ * @param rn points to the root node
+ * @param objid is the object sub identifier
+ * @param insn points to a pointer to the inserted node
+ *   used for constructing the tree.
+ * @return -1 if failed, 1 if success.
+ */
+s8_t
+snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **insn)
+{
+  struct idx_node *nn;
+  s8_t insert;
+
+  LWIP_ASSERT("rn != NULL",rn != NULL);
+  
+  /* -1 = malloc failure, 0 = not inserted, 1 = inserted (or was present) */
+  insert = 0;
+  if (rn->head == NULL)
+  {
+    /* empty list, add first node */
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc empty list objid==%"S32_F"\n",objid));
+    nn = snmp_idx_node_alloc(objid);
+    if (nn != NULL)
+    {      
+      rn->head = nn;
+      rn->tail = nn;
+      *insn = nn;
+      insert = 1;
+    }
+    else
+    {
+      insert = -1;
+    }
+  }
+  else
+  {
+    struct idx_node *n;
+    /* at least one node is present */
+    n = rn->head;
+    while ((n != NULL) && (insert == 0))
+    {
+      if (n->objid == objid)
+      {
+        /* node is already there */
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("node already there objid==%"S32_F"\n",objid));        
+        *insn = n;
+        insert = 1;
+      }
+      else if (n->objid < objid)
+      {
+        if (n->next == NULL)
+        {
+          /* alloc and insert at the tail */
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc ins tail objid==%"S32_F"\n",objid));
+          nn = snmp_idx_node_alloc(objid);
+          if (nn != NULL)
+          {
+            nn->next = NULL;
+            nn->prev = n;
+            n->next = nn;
+            rn->tail = nn;
+            *insn = nn;
+            insert = 1;
+          }
+          else
+          {
+            /* insertion failure */
+            insert = -1;
+          }
+        }
+        else
+        {
+          /* there's more to explore: traverse list */      
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("traverse list\n"));
+          n = n->next;
+        }
+      }
+      else
+      {
+        /* n->objid > objid */
+        /* alloc and insert between n->prev and n */
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc ins n->prev, objid==%"S32_F", n\n",objid));        
+        nn = snmp_idx_node_alloc(objid);
+        if (nn != NULL)
+        {
+          if (n->prev == NULL)
+          {
+            /* insert at the head */
+            nn->next = n;
+            nn->prev = NULL;
+            rn->head = nn;
+            n->prev = nn;
+          }
+          else
+          {
+            /* insert in the middle */
+            nn->next = n;
+            nn->prev = n->prev;
+            n->prev->next = nn;
+            n->prev = nn;
+          }
+          *insn = nn;
+          insert = 1;
+        }
+        else
+        {
+          /* insertion failure */
+          insert = -1;
+        }
+      }
+    }
+  }
+  if (insert == 1)
+  {
+    rn->count += 1;
+  }
+  LWIP_ASSERT("insert != 0",insert != 0);
+  return insert;
+}
+
+/**
+ * Finds node in idx list and returns deletion mark.
+ *
+ * @param rn points to the root node
+ * @param objid  is the object sub identifier
+ * @param fn returns pointer to found node
+ * @return 0 if not found, 1 if deletable,
+ *   2 can't delete (2 or more children) 
+ */
+s8_t
+snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn)
+{
+  s8_t fc;
+  struct idx_node *n;
+  
+  LWIP_ASSERT("rn != NULL",rn != NULL);
+  n = rn->head;
+  while ((n != NULL) && (n->objid != objid))
+  {
+    n = n->next;
+  }
+  if (n == NULL)
+  {
+    fc = 0;
+  }
+  else if (n->nptr == NULL)
+  {
+    /* leaf, can delete node */
+    fc = 1;
+  }
+  else if (n->nptr->count > 1)
+  {
+    /* can't delete node */
+    fc = 2;
+  }
+  else
+  {
+    /* count <= 1, can delete node */
+    fc = 1;
+  }
+  *fn = n;
+  return fc;
+}
+
+/**
+ * Removes node from idx list
+ * if it has a single child left.
+ *
+ * @param rn points to the root node
+ * @param n points to the node to delete
+ * @return the nptr to be freed by caller
+ */
+struct idx_root_node *
+snmp_idx_node_delete(struct idx_root_node *rn, struct idx_node *n)
+{
+  struct idx_root_node *next;
+
+  LWIP_ASSERT("rn != NULL",rn != NULL);
+  LWIP_ASSERT("n != NULL",n != NULL);
+
+  /* caller must remove this sub-tree */
+  next = n->nptr;
+  rn->count -= 1;
+
+  if (n == rn->head)
+  {
+    rn->head = n->next;
+    if (n->next != NULL)
+    {
+      /* not last node, new list begin */
+      n->next->prev = NULL;
+    }
+  }
+  else if (n == rn->tail)
+  {
+    rn->tail = n->prev;
+    if (n->prev != NULL)
+    {
+      /* not last node, new list end */
+      n->prev->next = NULL;
+    }
+  }
+  else
+  {
+    /* node must be in the middle */
+    n->prev->next = n->next;
+    n->next->prev = n->prev;
+  }
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("free list objid==%"S32_F"\n",n->objid));
+  snmp_idx_node_free(n);    
+
+  return next;
 }
 
 /**
@@ -307,7 +653,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         
           if (an->nptr[i] == NULL)
           {
-            /* leaf node,            /*
+            /* leaf node,
                if scalar: if ident_len == 1 add '.0', nextThing.0 otherwise */
             if (ident_len == 1)
             {
@@ -344,7 +690,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             {
               cur_node.r_ptr = NULL;
             }
-            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F,cur_node.r_ptr,cur_node.r_id));
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F,(void*)cur_node.r_ptr,cur_node.r_id));
             push_node(&cur_node);
             /* follow next child pointer */
             ident_len--;
@@ -367,7 +713,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           while ((node_stack_cnt > 0) && (child.r_ptr == NULL))
           {
             pop_node(&child);
-            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, pop_node() node=%p id=%"S32_F, child.r_ptr, child.r_id));
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, pop_node() node=%p id=%"S32_F,(void *)child.r_ptr, child.r_id));
             /* trim returned oid */
             (oidret->len)--;
           }

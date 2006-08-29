@@ -1,6 +1,9 @@
 /**
  * @file
- * [EXPERIMENTAL] Management Information Base II (RFC1213) objects and functions
+ * [EXPERIMENTAL] Management Information Base II (RFC1213) objects and functions.
+ *
+ * @note the object identifiers for this MIB-2 and private MIB tree
+ * must be kept in sorted ascending order. This to ensure correct getnext operation.
  */
 
 /*
@@ -516,7 +519,8 @@ static u8_t* snmpenableauthentraps_ptr = (u8_t*)&snmpenableauthentraps_default;
 static const struct snmp_obj_id ifspecific = {2, {0, 0}};
 /** mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteInfo (zeroDotZero) */
 static const struct snmp_obj_id iprouteinfo = {2, {0, 0}};
-/** mib-2.snmp.snmpEnableAuthenTraps 1 = enabled 2 = disabled */
+
+static struct idx_root_node arptree_root = {NULL, NULL, 0};
 
 /* mib-2.system counter(s) */
 static u32_t sysuptime = 0;
@@ -776,6 +780,106 @@ void snmp_inc_ifoutnucastpkts(struct netif *ni)
 void snmp_inc_ifoutdiscards(struct netif *ni)
 {
   (ni->ifoutdiscards)++;
+}
+
+/** 
+ * Inserts ARP table indexes (.xIfIndex.xNetAddress)
+ * into arp table index tree.
+ */
+void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
+{
+  struct idx_root_node *at_rn;
+  struct idx_node *at_node;
+  struct ip_addr hip;
+  s32_t arpidx[5];
+  u8_t level;
+
+  LWIP_ASSERT("ni != NULL", ni != NULL);
+  snmp_netiftoifindex(ni, &arpidx[0]);
+  hip.addr = ntohl(ip->addr);
+  snmp_iptooid(&hip, &arpidx[1]);
+  
+  level = 0;
+  at_rn = &arptree_root;
+  while (level < 5)
+  {
+    at_node = NULL;
+    snmp_idx_node_insert(at_rn, arpidx[level], &at_node);
+    if ((level != 4) && (at_node != NULL))
+    {
+      if (at_node->nptr == NULL)
+      {
+        at_rn = snmp_idx_root_node_alloc();
+        at_node->nptr = at_rn;
+      }
+      else
+      {
+        at_rn = at_node->nptr;
+      }
+    }
+    level++;
+  }
+}
+
+/** 
+ * Removes ARP table indexes (.xIfIndex.xNetAddress)
+ * from arp table index tree.
+ */
+void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
+{
+  struct idx_node *at_n, *del_n[5];
+  struct idx_root_node *at_rn, *next, *del_rn[5];
+  struct ip_addr hip;
+  s32_t arpidx[5];
+  u8_t fc, level, del_cnt;
+
+  snmp_netiftoifindex(ni, &arpidx[0]);
+  hip.addr = ntohl(ip->addr);
+  snmp_iptooid(&hip, &arpidx[1]);
+ 
+  /* mark nodes for deletion */
+  level = 0;
+  del_cnt = 0;
+  at_rn = &arptree_root;
+  while ((level < 5) && (at_rn != NULL))
+  {
+    fc = snmp_idx_node_find(at_rn, arpidx[level], &at_n);
+    if (fc == 0)
+    {
+      /* arpidx[level] does not exist */
+      del_cnt = 0;
+      at_rn = NULL;
+    }
+    else if (fc == 1)
+    {
+      del_rn[del_cnt] = at_rn;
+      del_n[del_cnt] = at_n;
+      del_cnt++;
+      at_rn = at_n->nptr;
+    }
+    else if (fc == 2)
+    {
+      /* reset delete (2 or more childs) */
+      del_cnt = 0;
+      at_rn = at_n->nptr;
+    }
+    level++;
+  }
+  /* delete marked index nodes */
+  while (del_cnt > 0)
+  {
+    del_cnt--;
+   
+    at_rn = del_rn[del_cnt];
+    at_n = del_n[del_cnt];
+
+    next = snmp_idx_node_delete(at_rn, at_n);    
+    if (next != NULL)
+    {
+      LWIP_ASSERT("next_count == 0",next->count == 0);
+      snmp_idx_root_node_free(next);
+    }
+  }
 }
 
 void snmp_inc_ipinreceives(void)
@@ -1688,13 +1792,7 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
       netif = netif->next;
       i++;
     }
-    ip.addr = ident[2];
-    ip.addr <<= 8;
-    ip.addr |= ident[3];
-    ip.addr <<= 8;
-    ip.addr |= ident[4];
-    ip.addr <<= 8;
-    ip.addr |= ident[5];
+    snmp_oidtoip(&ident[2], &ip);
     ip.addr = htonl(ip.addr);
     
     if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
@@ -1996,13 +2094,7 @@ ip_addrentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     struct ip_addr ip;
     struct netif *netif = netif_list;
 
-    ip.addr = ident[1];
-    ip.addr <<= 8;
-    ip.addr |= ident[2];
-    ip.addr <<= 8;
-    ip.addr |= ident[3];
-    ip.addr <<= 8;
-    ip.addr |= ident[4];
+    snmp_oidtoip(&ident[1], &ip);
     ip.addr = htonl(ip.addr);
 
     while ((netif != NULL) && !ip_addr_cmp(&ip, &netif->ip_addr))
@@ -2140,13 +2232,7 @@ ip_rteentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     struct ip_addr dest;
     struct netif *netif;
 
-    dest.addr = ident[1];
-    dest.addr <<= 8;
-    dest.addr |= ident[2];
-    dest.addr <<= 8;
-    dest.addr |= ident[3];
-    dest.addr <<= 8;
-    dest.addr |= ident[4];
+    snmp_oidtoip(&ident[1], &dest);
     dest.addr = htonl(dest.addr);
 
     if (dest.addr == 0)
@@ -2236,13 +2322,8 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   netif = od->addr;
   ident = od->id_inst_ptr;
-  dest.addr = ident[1];
-  dest.addr <<= 8;
-  dest.addr |= ident[2];
-  dest.addr <<= 8;
-  dest.addr |= ident[3];
-  dest.addr <<= 8;
-  dest.addr |= ident[4];
+
+  snmp_oidtoip(&ident[1], &dest);
   dest.addr = htonl(dest.addr);
 
   id = ident[0];
@@ -2392,13 +2473,7 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
       netif = netif->next;
       i++;
     }
-    ip.addr = ident[2];
-    ip.addr <<= 8;
-    ip.addr |= ident[3];
-    ip.addr <<= 8;
-    ip.addr |= ident[4];
-    ip.addr <<= 8;
-    ip.addr |= ident[5];
+    snmp_oidtoip(&ident[2], &ip);
     ip.addr = htonl(ip.addr);
     
     if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
@@ -2679,15 +2754,17 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
       *sint_ptr = 4;
       break;
     case 2: /* tcpRtoMin */
-      /* @todo need value */
-      *sint_ptr = 0;
+      /* @todo not the actual value, a guess,
+          needs to be calculated */
+      *sint_ptr = 1000;
       break;
     case 3: /* tcpRtoMax */
-      /* @todo need value */
-      *sint_ptr = 0;
+      /* @todo not the actual value, a guess,
+         needs to be calculated */
+      *sint_ptr = 60000;
       break;
     case 4: /* tcpMaxConn */
-      *sint_ptr = MEMP_NUM_TCP_PCB_LISTEN;
+      *sint_ptr = MEMP_NUM_TCP_PCB;
       break;
     case 5: /* tcpActiveOpens */
       *uint_ptr = tcpactiveopens;
@@ -2738,6 +2815,60 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
+  if (ident_len == 11)
+  {
+    u8_t id;
+    struct ip_addr lip, rip;
+    u16_t lport, rport;
+
+    snmp_oidtoip(&ident[1], &lip);
+    lip.addr = htonl(lip.addr);
+    lport = ident[5];
+    snmp_oidtoip(&ident[6], &rip);
+    rip.addr = htonl(rip.addr);
+    rport = ident[10];
+
+    /* @todo find matching PCB */
+
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
+    
+    id = ident[0];
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0",(u16_t)id));
+
+    switch (id)
+    {
+      case 1: /* tcpConnState */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 2: /* tcpConnLocalAddress */
+      case 4: /* tcpConnRemAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      case 3: /* tcpConnLocalPort */
+      case 5: /* tcpConnRemPort */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
+    };
+  }
+  else
+  {
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object"));
+    od->instance = MIB_OBJECT_NONE;
+  }
 }
 
 static void
@@ -2801,13 +2932,7 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     struct ip_addr ip;
     u16_t port;
 
-    ip.addr = ident[1];
-    ip.addr <<= 8;
-    ip.addr |= ident[2];
-    ip.addr <<= 8;
-    ip.addr |= ident[3];
-    ip.addr <<= 8;
-    ip.addr |= ident[4];
+    snmp_oidtoip(&ident[1], &ip);
     ip.addr = htonl(ip.addr);
 
     port = ident[5];
@@ -2830,13 +2955,13 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
       {
         case 1: /* udpLocalAddress */
           od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
+          od->access = MIB_OBJECT_READ_ONLY;
           od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
           od->v_len = 4;
           break;
         case 2: /* udpLocalPort */
           od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
+          od->access = MIB_OBJECT_READ_ONLY;
           od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
           od->v_len = sizeof(s32_t);
           break;

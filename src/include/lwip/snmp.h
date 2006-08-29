@@ -58,6 +58,10 @@ void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen);
 void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen);
 void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen);
 
+/* ARP */
+void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip);
+void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip);
+
 /* network interface */
 void snmp_add_ifinoctets(struct netif *ni, u32_t value); 
 void snmp_inc_ifinucastpkts(struct netif *ni);
@@ -173,6 +177,9 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_sysuptime()
 #define snmp_get_sysuptime(value)
 
+/* ARP */
+#define snmp_insert_arpidx_tree(ni,ip)
+#define snmp_delete_arpidx_tree(ni,ip)
 
 /* network interface */
 #define snmp_add_ifinoctets(ni,value) 
