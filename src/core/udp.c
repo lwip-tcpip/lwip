@@ -489,6 +489,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     }
   }
   pcb->local_port = port;
+  snmp_insert_udpidx_tree(pcb);
   /* pcb not active yet? */
   if (rebind == 0) {
     /* place the PCB on the active list if not already there */
@@ -602,6 +603,8 @@ void
 udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
+
+  snmp_delete_udpidx_tree(pcb);
   /* pcb to be removed is first in list? */
   if (udp_pcbs == pcb) {
     /* make list start at 2nd pcb */

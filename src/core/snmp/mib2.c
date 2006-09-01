@@ -48,6 +48,7 @@
 #include "lwip/udp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"
+
 /** 
  * IANA assigned enterprise ID for lwIP is 26381
  * @see http://www.iana.org/assignments/enterprise-numbers
@@ -68,19 +69,6 @@
 #ifndef SNMP_SYSSERVICES
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
 #endif
-
-/**
- * @todo
- * table entry availability test in struct mib_node {},
- * also we need to be able to expand entry from a partial index
- *   ifTable, use netif_cnt 
- *   atTable, use ?
- *   ipAddrTable, use ?
- *   ipRouteTable, use ?
- *   ipNetToMediaTable, use ?
- *   tcpConnTable, use ?
- *   udpTable, use ?
- */
 
 static void system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void system_get_value(struct obj_def *od, u16_t len, void *value);
@@ -113,6 +101,7 @@ static void udpentry_get_value(struct obj_def *od, u16_t len, void *value);
 static void snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void snmp_get_value(struct obj_def *od, u16_t len, void *value);
 
+
 /* snmp .1.3.6.1.2.1.11 */
 const s32_t snmp_ids[28] = {
   1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
@@ -136,13 +125,23 @@ const struct mib_array_node snmp = {
 /* lwIP has no EGP, thus may not implement it. (egp .1.3.6.1.2.1.8) */
 
 /* udp .1.3.6.1.2.1.7 */
+/** index root node for udpTable */
+struct mib_list_rootnode udp_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t udpentry_ids[2] = { 1, 2 };
 struct mib_node* const udpentry_nodes[2] = {
-  NULL, NULL,
+  (struct mib_node* const)&udp_root, (struct mib_node* const)&udp_root,
 };
 const struct mib_array_node udpentry = {
-  &udpentry_get_object_def,
-  &udpentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   2,
   udpentry_ids,
@@ -176,6 +175,16 @@ const struct mib_array_node udp = {
 /* tcp .1.3.6.1.2.1.6 */
 #if LWIP_TCP
 /* only if the TCP protocol is available may implement this group */
+/** index root node for tcpConnTable */
+struct mib_list_rootnode tcpconntree_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t tcpconnentry_ids[5] = { 1, 2, 3, 4, 5 };
 struct mib_node* const tcpconnentry_nodes[5] = {
   NULL, NULL, NULL, NULL, NULL
@@ -230,13 +239,24 @@ const struct mib_array_node icmp = {
   icmp_nodes
 };
 
+/** index root node for ipNetToMediaTable */
+struct mib_list_rootnode ipntomtree_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t ipntomentry_ids[4] = { 1, 2, 3, 4 };
 struct mib_node* const ipntomentry_nodes[4] = {
-  NULL, NULL, NULL, NULL
+  (struct mib_node* const)&ipntomtree_root, (struct mib_node* const)&ipntomtree_root,
+  (struct mib_node* const)&ipntomtree_root, (struct mib_node* const)&ipntomtree_root
 };
 const struct mib_array_node ipntomentry = {
-  &ip_ntomentry_get_object_def,
-  &ip_ntomentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   4,
   ipntomentry_ids,
@@ -254,14 +274,29 @@ const struct mib_array_node ipntomtable = {
   &ipntomtable_node
 };
 
+/** index root node for ipRouteTable */
+struct mib_list_rootnode iprtetree_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t iprteentry_ids[13] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
 struct mib_node* const iprteentry_nodes[13] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root, (struct mib_node* const)&iprtetree_root,
+  (struct mib_node* const)&iprtetree_root
 };
 const struct mib_array_node iprteentry = {
-  &ip_rteentry_get_object_def,
-  &ip_rteentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   13,
   iprteentry_ids,
@@ -279,13 +314,27 @@ const struct mib_array_node iprtetable = {
   &iprtetable_node
 };
 
+/** index root node for ipAddrTable */
+struct mib_list_rootnode ipaddrtree_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t ipaddrentry_ids[5] = { 1, 2, 3, 4, 5 };
 struct mib_node* const ipaddrentry_nodes[5] = {
-  NULL, NULL, NULL, NULL, NULL
+  (struct mib_node* const)&ipaddrtree_root,
+  (struct mib_node* const)&ipaddrtree_root,
+  (struct mib_node* const)&ipaddrtree_root,
+  (struct mib_node* const)&ipaddrtree_root,
+  (struct mib_node* const)&ipaddrtree_root
 };
 const struct mib_array_node ipaddrentry = {
-  &ip_addrentry_get_object_def,
-  &ip_addrentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   5,
   ipaddrentry_ids,
@@ -319,13 +368,25 @@ const struct mib_array_node ip = {
   ip_nodes
 };
 
+/** index root node for atTable */
+struct mib_list_rootnode arptree_root = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
 const s32_t atentry_ids[3] = { 1, 2, 3 };
 struct mib_node* const atentry_nodes[3] = {
-  NULL, NULL, NULL
+  (struct mib_node* const)&arptree_root,
+  (struct mib_node* const)&arptree_root,
+  (struct mib_node* const)&arptree_root
 };
 const struct mib_array_node atentry = {
-  &atentry_get_object_def,
-  &atentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value, 
   MIB_NODE_AR,
   3,
   atentry_ids,
@@ -355,14 +416,33 @@ const struct mib_array_node at = {
   &at_node
 };
 
-const s32_t ifentry_ids[22] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 };
-struct mib_node* const ifentry_nodes[22] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
-const struct mib_array_node ifentry = {
+/** index root node for ifTable */
+struct mib_list_rootnode iflist_root = {
   &ifentry_get_object_def,
   &ifentry_get_value,
+  MIB_NODE_LR,
+  0,
+  NULL,
+  NULL,
+  0
+};
+const s32_t ifentry_ids[22] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 };
+struct mib_node* const ifentry_nodes[22] = {
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root,
+  (struct mib_node* const)&iflist_root, (struct mib_node* const)&iflist_root
+};
+const struct mib_array_node ifentry = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   22,
   ifentry_ids,
@@ -520,7 +600,7 @@ static const struct snmp_obj_id ifspecific = {2, {0, 0}};
 /** mib-2.ip.ipRouteTable.ipRouteEntry.ipRouteInfo (zeroDotZero) */
 static const struct snmp_obj_id iprouteinfo = {2, {0, 0}};
 
-static struct idx_root_node arptree_root = {NULL, NULL, 0};
+
 
 /* mib-2.system counter(s) */
 static u32_t sysuptime = 0;
@@ -782,102 +862,145 @@ void snmp_inc_ifoutdiscards(struct netif *ni)
   (ni->ifoutdiscards)++;
 }
 
+void snmp_inc_iflist(void)
+{
+  struct mib_list_node *if_node = NULL;
+  
+  snmp_mib_node_insert(&iflist_root, iflist_root.count + 1, &if_node);
+}
+
+void snmp_dec_iflist(void)
+{
+  snmp_mib_node_delete(&iflist_root, iflist_root.tail);
+}
+
 /** 
  * Inserts ARP table indexes (.xIfIndex.xNetAddress)
- * into arp table index tree.
+ * into arp table index trees (both atTable and ipNetToMediaTable).
  */
 void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
 {
-  struct idx_root_node *at_rn;
-  struct idx_node *at_node;
+  struct mib_list_rootnode *at_rn;
+  struct mib_list_node *at_node;
   struct ip_addr hip;
   s32_t arpidx[5];
-  u8_t level;
+  u8_t level, tree;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
   snmp_netiftoifindex(ni, &arpidx[0]);
   hip.addr = ntohl(ip->addr);
   snmp_iptooid(&hip, &arpidx[1]);
   
-  level = 0;
-  at_rn = &arptree_root;
-  while (level < 5)
+  for (tree = 0; tree < 2; tree++)
   {
-    at_node = NULL;
-    snmp_idx_node_insert(at_rn, arpidx[level], &at_node);
-    if ((level != 4) && (at_node != NULL))
+    if (tree == 0)
     {
-      if (at_node->nptr == NULL)
+      at_rn = &arptree_root;
+    }
+    else
+    {
+      at_rn = &ipntomtree_root;
+    }
+    for (level = 0; level < 5; level++)
+    {
+      at_node = NULL;
+      snmp_mib_node_insert(at_rn, arpidx[level], &at_node);
+      if ((level != 4) && (at_node != NULL))
       {
-        at_rn = snmp_idx_root_node_alloc();
-        at_node->nptr = at_rn;
-      }
-      else
-      {
-        at_rn = at_node->nptr;
+        if (at_node->nptr == NULL)
+        {
+          at_rn = snmp_mib_lrn_alloc();
+          at_node->nptr = (struct mib_node*)at_rn;
+          if (level == 3)
+          {
+            if (tree == 0)
+            {
+              at_rn->get_object_def = atentry_get_object_def;
+              at_rn->get_value = atentry_get_value;
+            }
+            else
+            {
+              at_rn->get_object_def = ip_ntomentry_get_object_def;
+              at_rn->get_value = ip_ntomentry_get_value;
+            }
+          }
+        }
+        else
+        {
+          at_rn = (struct mib_list_rootnode*)at_node->nptr;
+        }
       }
     }
-    level++;
   }
 }
 
 /** 
  * Removes ARP table indexes (.xIfIndex.xNetAddress)
- * from arp table index tree.
+ * from arp table index trees.
  */
 void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
 {
-  struct idx_node *at_n, *del_n[5];
-  struct idx_root_node *at_rn, *next, *del_rn[5];
+  struct mib_list_rootnode *at_rn, *next, *del_rn[5];
+  struct mib_list_node *at_n, *del_n[5];
   struct ip_addr hip;
   s32_t arpidx[5];
-  u8_t fc, level, del_cnt;
+  u8_t fc, tree, level, del_cnt;
 
   snmp_netiftoifindex(ni, &arpidx[0]);
   hip.addr = ntohl(ip->addr);
   snmp_iptooid(&hip, &arpidx[1]);
  
-  /* mark nodes for deletion */
-  level = 0;
-  del_cnt = 0;
-  at_rn = &arptree_root;
-  while ((level < 5) && (at_rn != NULL))
+  for (tree = 0; tree < 2; tree++)
   {
-    fc = snmp_idx_node_find(at_rn, arpidx[level], &at_n);
-    if (fc == 0)
+    /* mark nodes for deletion */
+    if (tree == 0)
     {
-      /* arpidx[level] does not exist */
-      del_cnt = 0;
-      at_rn = NULL;
+      at_rn = &arptree_root;
     }
-    else if (fc == 1)
+    else
     {
-      del_rn[del_cnt] = at_rn;
-      del_n[del_cnt] = at_n;
-      del_cnt++;
-      at_rn = at_n->nptr;
+      at_rn = &ipntomtree_root;
     }
-    else if (fc == 2)
+    level = 0;
+    del_cnt = 0;    
+    while ((level < 5) && (at_rn != NULL))
     {
-      /* reset delete (2 or more childs) */
-      del_cnt = 0;
-      at_rn = at_n->nptr;
+      fc = snmp_mib_node_find(at_rn, arpidx[level], &at_n);
+      if (fc == 0)
+      {
+        /* arpidx[level] does not exist */
+        del_cnt = 0;
+        at_rn = NULL;
+      }
+      else if (fc == 1)
+      {
+        del_rn[del_cnt] = at_rn;
+        del_n[del_cnt] = at_n;
+        del_cnt++;
+        at_rn = (struct mib_list_rootnode*)(at_n->nptr);
+      }
+      else if (fc == 2)
+      {
+        /* reset delete (2 or more childs) */
+        del_cnt = 0;
+        at_rn = (struct mib_list_rootnode*)(at_n->nptr);
+      }
+      level++;
     }
-    level++;
-  }
-  /* delete marked index nodes */
-  while (del_cnt > 0)
-  {
-    del_cnt--;
-   
-    at_rn = del_rn[del_cnt];
-    at_n = del_n[del_cnt];
+    /* delete marked index nodes */
+    while (del_cnt > 0)
+    {
+      del_cnt--;
 
-    next = snmp_idx_node_delete(at_rn, at_n);    
-    if (next != NULL)
-    {
-      LWIP_ASSERT("next_count == 0",next->count == 0);
-      snmp_idx_root_node_free(next);
+      at_rn = del_rn[del_cnt];
+      at_n = del_n[del_cnt];
+
+      next = snmp_mib_node_delete(at_rn, at_n);    
+      if (next != NULL)
+      {
+        LWIP_ASSERT("next_count == 0",next->count == 0);
+        snmp_mib_lrn_free(next);
+      }
     }
   }
 }
@@ -965,6 +1088,251 @@ void snmp_inc_ipfragcreates(void)
 void snmp_inc_iproutingdiscards(void)
 {
   iproutingdiscards++;
+}
+
+/** 
+ * Inserts ipAddrTable indexes (.ipAdEntAddr)
+ * into index tree.
+ */
+void snmp_insert_ipaddridx_tree(struct netif *ni)
+{
+  struct mib_list_rootnode *ipa_rn;
+  struct mib_list_node *ipa_node;
+  struct ip_addr ip;
+  s32_t ipaddridx[4];
+  u8_t level;
+
+  LWIP_ASSERT("ni != NULL", ni != NULL);
+  ip.addr = ntohl(ni->ip_addr.addr);
+  snmp_iptooid(&ip, &ipaddridx[0]);
+
+  level = 0;
+  ipa_rn = &ipaddrtree_root;
+  while (level < 4)
+  {
+    ipa_node = NULL;
+    snmp_mib_node_insert(ipa_rn, ipaddridx[level], &ipa_node);
+    if ((level != 3) && (ipa_node != NULL))
+    {
+      if (ipa_node->nptr == NULL)
+      {
+        ipa_rn = snmp_mib_lrn_alloc();
+        ipa_node->nptr = (struct mib_node*)ipa_rn;
+        if (level == 2)
+        {
+          ipa_rn->get_object_def = ip_addrentry_get_object_def;
+          ipa_rn->get_value = ip_addrentry_get_value;
+        }
+      }
+      else
+      {
+        ipa_rn = (struct mib_list_rootnode*)ipa_node->nptr;
+      }
+    }
+    level++;
+  }
+}
+
+/** 
+ * Removes ipAddrTable indexes (.ipAdEntAddr)
+ * from index tree.
+ */
+void snmp_delete_ipaddridx_tree(struct netif *ni)
+{
+  struct mib_list_rootnode *ipa_rn, *next, *del_rn[4];
+  struct mib_list_node *ipa_n, *del_n[4];
+  struct ip_addr ip;
+  s32_t ipaddridx[4];
+  u8_t fc, level, del_cnt;
+
+  LWIP_ASSERT("ni != NULL", ni != NULL);
+  ip.addr = ntohl(ni->ip_addr.addr);
+  snmp_iptooid(&ip, &ipaddridx[0]);
+ 
+  /* mark nodes for deletion */
+  level = 0;
+  del_cnt = 0;
+  ipa_rn = &ipaddrtree_root;
+  while ((level < 4) && (ipa_rn != NULL))
+  {
+    fc = snmp_mib_node_find(ipa_rn, ipaddridx[level], &ipa_n);
+    if (fc == 0)
+    {
+      /* ipaddridx[level] does not exist */
+      del_cnt = 0;
+      ipa_rn = NULL;
+    }
+    else if (fc == 1)
+    {
+      del_rn[del_cnt] = ipa_rn;
+      del_n[del_cnt] = ipa_n;
+      del_cnt++;
+      ipa_rn = (struct mib_list_rootnode*)(ipa_n->nptr);
+    }
+    else if (fc == 2)
+    {
+      /* reset delete (2 or more childs) */
+      del_cnt = 0;
+      ipa_rn = (struct mib_list_rootnode*)(ipa_n->nptr);
+    }
+    level++;
+  }
+  /* delete marked index nodes */
+  while (del_cnt > 0)
+  {
+    del_cnt--;
+   
+    ipa_rn = del_rn[del_cnt];
+    ipa_n = del_n[del_cnt];
+
+    next = snmp_mib_node_delete(ipa_rn, ipa_n);    
+    if (next != NULL)
+    {
+      LWIP_ASSERT("next_count == 0",next->count == 0);
+      snmp_mib_lrn_free(next);
+    }
+  }
+}
+
+/** 
+ * Inserts ipRouteTable indexes (.ipRouteDest)
+ * into index tree.
+ *
+ * @param dflt non-zero for the default rte, zero for network rte
+ * @param netif points to network interface for this rte
+ */
+void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
+{
+  u8_t insert = 0;
+  struct ip_addr dst;
+
+  if (dflt != 0)
+  {
+    /* the default route 0.0.0.0 */
+    dst.addr = 0;
+    insert = 1;
+  }
+  else
+  {
+    /* route to the network address */
+    dst.addr = ntohl(ni->ip_addr.addr & ni->netmask.addr);
+    /* exclude 0.0.0.0 network (reserved for default rte) */
+    if (dst.addr != 0) insert = 1;
+  }
+  if (insert)
+  {
+    struct mib_list_rootnode *iprte_rn;
+    struct mib_list_node *iprte_node;
+    s32_t iprteidx[4];
+    u8_t level;
+
+    snmp_iptooid(&dst, &iprteidx[0]);
+    level = 0;
+    iprte_rn = &iprtetree_root;
+    while (level < 4)
+    {
+      iprte_node = NULL;
+      snmp_mib_node_insert(iprte_rn, iprteidx[level], &iprte_node);
+      if ((level != 3) && (iprte_node != NULL))
+      {
+        if (iprte_node->nptr == NULL)
+        {
+          iprte_rn = snmp_mib_lrn_alloc();
+          iprte_node->nptr = (struct mib_node*)iprte_rn;
+          if (level == 2)
+          {
+            iprte_rn->get_object_def = ip_rteentry_get_object_def;
+            iprte_rn->get_value = ip_rteentry_get_value;
+          }
+        }
+        else
+        {
+          iprte_rn = (struct mib_list_rootnode*)iprte_node->nptr;
+        }
+      }
+      level++;
+    }
+  }
+}
+
+/** 
+ * Removes ipRouteTable indexes (.ipRouteDest)
+ * from index tree.
+ *
+ * @param dflt non-zero for the default rte, zero for network rte
+ * @param netif points to network interface for this rte or NULL
+ *   for default route to be removed.
+ */
+void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
+{
+  u8_t delete = 0;
+  struct ip_addr dst;
+
+  if (dflt != 0)
+  {
+    /* the default route 0.0.0.0 */
+    dst.addr = 0;
+    delete = 1;
+  }
+  else
+  {
+    /* route to the network address */
+    dst.addr = ntohl(ni->ip_addr.addr & ni->netmask.addr);
+    /* exclude 0.0.0.0 network (reserved for default rte) */
+    if (dst.addr != 0) delete = 1;
+  }
+  if (delete)
+  {
+    struct mib_list_rootnode *iprte_rn, *next, *del_rn[4];
+    struct mib_list_node *iprte_n, *del_n[4];
+    s32_t iprteidx[4];
+    u8_t fc, level, del_cnt;
+
+    snmp_iptooid(&dst, &iprteidx[0]);   
+    /* mark nodes for deletion */
+    level = 0;
+    del_cnt = 0;
+    iprte_rn = &iprtetree_root;
+    while ((level < 4) && (iprte_rn != NULL))
+    {
+      fc = snmp_mib_node_find(iprte_rn, iprteidx[level], &iprte_n);
+      if (fc == 0)
+      {
+        /* iprteidx[level] does not exist */
+        del_cnt = 0;
+        iprte_rn = NULL;
+      }
+      else if (fc == 1)
+      {
+        del_rn[del_cnt] = iprte_rn;
+        del_n[del_cnt] = iprte_n;
+        del_cnt++;
+        iprte_rn = (struct mib_list_rootnode*)(iprte_n->nptr);
+      }
+      else if (fc == 2)
+      {
+        /* reset delete (2 or more childs) */
+        del_cnt = 0;
+        iprte_rn = (struct mib_list_rootnode*)(iprte_n->nptr);
+      }
+      level++;
+    }
+    /* delete marked index nodes */
+    while (del_cnt > 0)
+    {
+      del_cnt--;
+     
+      iprte_rn = del_rn[del_cnt];
+      iprte_n = del_n[del_cnt];
+
+      next = snmp_mib_node_delete(iprte_rn, iprte_n);    
+      if (next != NULL)
+      {
+        LWIP_ASSERT("next_count == 0",next->count == 0);
+        snmp_mib_lrn_free(next);
+      }
+    }
+  }
 }
 
 
@@ -1163,6 +1531,111 @@ void snmp_inc_udpoutdatagrams(void)
   udpoutdatagrams++;
 }
 
+/** 
+ * Inserts udpTable indexes (.udpLocalAddress.udpLocalPort)
+ * into index tree.
+ */
+void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
+{
+  struct mib_list_rootnode *udp_rn;
+  struct mib_list_node *udp_node;
+  struct ip_addr ip;
+  s32_t udpidx[5];
+  u8_t level;
+
+  LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  ip.addr = ntohl(pcb->local_ip.addr);
+  snmp_iptooid(&ip, &udpidx[0]);
+  udpidx[4] = pcb->local_port;
+
+  udp_rn = &udp_root;
+  for (level = 0; level < 5; level++)
+  {
+    udp_node = NULL;
+    snmp_mib_node_insert(udp_rn, udpidx[level], &udp_node);
+    if ((level != 4) && (udp_node != NULL))
+    {
+      if (udp_node->nptr == NULL)
+      {
+        udp_rn = snmp_mib_lrn_alloc();
+        udp_node->nptr = (struct mib_node*)udp_rn;
+        if (level == 3)
+        {
+          udp_rn->get_object_def = udpentry_get_object_def;
+          udp_rn->get_value = udpentry_get_value;
+        }
+      }
+      else
+      {
+        udp_rn = (struct mib_list_rootnode*)udp_node->nptr;
+      }
+    }
+  }
+}
+
+/** 
+ * Removes udpTable indexes (.udpLocalAddress.udpLocalPort)
+ * from index tree.
+ */
+void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
+{
+  struct mib_list_rootnode *udp_rn, *next, *del_rn[5];
+  struct mib_list_node *udp_n, *del_n[5];
+  struct ip_addr ip;
+  s32_t udpidx[5];
+  u8_t fc, level, del_cnt;
+
+  LWIP_ASSERT("pcb != NULL", pcb != NULL);
+  ip.addr = ntohl(pcb->local_ip.addr);
+  snmp_iptooid(&ip, &udpidx[0]);
+  udpidx[4] = pcb->local_port;
+ 
+  /* mark nodes for deletion */
+  level = 0;
+  del_cnt = 0;
+  udp_rn = &udp_root;
+  while ((level < 5) && (udp_rn != NULL))
+  {
+    fc = snmp_mib_node_find(udp_rn, udpidx[level], &udp_n);
+    if (fc == 0)
+    {
+      /* udpidx[level] does not exist */
+      del_cnt = 0;
+      udp_rn = NULL;
+    }
+    else if (fc == 1)
+    {
+      del_rn[del_cnt] = udp_rn;
+      del_n[del_cnt] = udp_n;
+      del_cnt++;
+      udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+    }
+    else if (fc == 2)
+    {
+      /* reset delete (2 or more childs) */
+      del_cnt = 0;
+      udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+    }
+    level++;
+  }
+  /* delete marked index nodes */
+  while (del_cnt > 0)
+  {
+    del_cnt--;
+   
+    udp_rn = del_rn[del_cnt];
+    udp_n = del_n[del_cnt];
+
+    next = snmp_mib_node_delete(udp_rn, udp_n);
+    if (next != NULL)
+    {
+      LWIP_ASSERT("next_count == 0",next->count == 0);
+      snmp_mib_lrn_free(next);
+    }
+  }
+}
+
+
 void snmp_inc_snmpinpkts(void)
 {
   snmpinpkts++;
@@ -1319,16 +1792,13 @@ noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   od->instance = MIB_OBJECT_NONE;
 }
 
-void                                                  
+void
 noleafs_get_value(struct obj_def *od, u16_t len, void *value)
 {
   if (od){}
   if (len){}
   if (value){}
 }
-
-
-
 
 /**
  * Returns systems object definitions.
@@ -1452,6 +1922,7 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
   };
 }
 
+
 /**
  * Returns interfaces.ifnumber object definition.
  *
@@ -1494,7 +1965,7 @@ interfaces_get_value(struct obj_def *od, u16_t len, void *value)
   if (od->id_inst_ptr[0] == 1)
   {
     s32_t *sint_ptr = value;
-    *sint_ptr = netif_cnt;
+    *sint_ptr = iflist_root.count;
   }
 }
 
@@ -1510,7 +1981,10 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
   u8_t id;
 
-  if ((ident_len == 2) && (ident[1] > 0) && (ident[1] <= netif_cnt))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -1520,6 +1994,9 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     switch (id)
     {
       case 1: /* ifIndex */
+      case 3: /* ifType */
+      case 4: /* ifMtu */
+      case 8: /* ifOperStatus */
         od->instance = MIB_OBJECT_TAB;
         od->access = MIB_OBJECT_READ_ONLY;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
@@ -1532,14 +2009,6 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         /** @todo this should be some sort of sizeof(struct netif.name) */
         od->v_len = 2;
         break;
-      case 3: /* ifType */
-      case 4: /* ifMtu */
-      case 8: /* ifOperStatus */
-        od->instance = MIB_OBJECT_TAB;
-        od->access = MIB_OBJECT_READ_ONLY;
-        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-        od->v_len = sizeof(s32_t);
-        break;
       case 5: /* ifSpeed */
       case 21: /* ifOutQLen */
         od->instance = MIB_OBJECT_TAB;
@@ -1549,16 +2018,9 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         break;
       case 6: /* ifPhysAddress */
         {
-          struct netif *netif = netif_list;
-          u16_t i, ifidx;
-
-          ifidx = ident[1] - 1;
-          i = 0;
-          while ((netif != NULL) && (i < ifidx))
-          {
-            netif = netif->next;
-            i++;
-          }
+          struct netif *netif;
+          
+          snmp_ifindextonetif(ident[1], &netif);
           od->instance = MIB_OBJECT_TAB;
           od->access = MIB_OBJECT_READ_ONLY;
           od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
@@ -1624,17 +2086,10 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void                                                  
 ifentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  struct netif *netif = netif_list;
-  u16_t i, ifidx;
+  struct netif *netif;
   u8_t id;
 
-  ifidx = od->id_inst_ptr[1] - 1;
-  i = 0;
-  while ((netif != NULL) && (i < ifidx))
-  {
-    netif = netif->next;
-    i++;
-  }
+  snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   id = od->id_inst_ptr[0];
   switch (id)
   {
@@ -1772,26 +2227,25 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
  * @param od points to object definition.
  *
  * @todo std says objects are writeable, can we ignore it?
+ *
+ * @todo the etharp_find_addr could be a lot smarter
+ *  if our arp index tree provided pointers or index to the requested item
  */
 static void
 atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 6) && 
-      (ident[1] > 0) && (ident[1] <= netif_cnt))
+  /* return to object name, adding index depth (5) */
+  ident_len += 5;
+  ident -= 5;
+
+  if (ident_len == 6)
   {
     struct eth_addr* ethaddr_ret;
     struct ip_addr* ipaddr_ret;
     struct ip_addr ip;
-    struct netif *netif = netif_list;
-    u16_t i, ifidx;
+    struct netif *netif;
 
-    ifidx = ident[1] - 1;
-    i = 0;
-    while ((netif != NULL) && (i < ifidx))
-    {
-      netif = netif->next;
-      i++;
-    }
+    snmp_ifindextonetif(ident[1], &netif);
     snmp_oidtoip(&ident[2], &ip);
     ip.addr = htonl(ip.addr);
     
@@ -1875,7 +2329,6 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
       break;
   }
 }
-
 
 static void
 ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
@@ -2089,6 +2542,10 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 ip_addrentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
+  /* return to object name, adding index depth (4) */
+  ident_len += 4;
+  ident -= 4;
+
   if (ident_len == 5)
   {
     struct ip_addr ip;
@@ -2226,6 +2683,10 @@ static void
 ip_rteentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
   u8_t id;
+
+  /* return to object name, adding index depth (4) */
+  ident_len += 4;
+  ident -= 4;
 
   if (ident_len == 5)
   {
@@ -2457,22 +2918,18 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 6) && 
-      (ident[1] > 0) && (ident[1] <= netif_cnt))
+  /* return to object name, adding index depth (5) */
+  ident_len += 5;
+  ident -= 5;
+
+  if (ident_len == 6)
   {
     struct eth_addr* ethaddr_ret;
     struct ip_addr* ipaddr_ret;
     struct ip_addr ip;
-    struct netif *netif = netif_list;
-    u16_t i, ifidx;
+    struct netif *netif;
 
-    ifidx = ident[1] - 1;
-    i = 0;
-    while ((netif != NULL) && (i < ifidx))
-    {
-      netif = netif->next;
-      i++;
-    }
+    snmp_ifindextonetif(ident[1], &netif);
     snmp_oidtoip(&ident[2], &ip);
     ip.addr = htonl(ip.addr);
     
@@ -2815,6 +3272,8 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
+  /** @todo adjust ident_len and ident after table index traversal */
+
   if (ident_len == 11)
   {
     u8_t id;
@@ -2828,7 +3287,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     rip.addr = htonl(rip.addr);
     rport = ident[10];
 
-    /* @todo find matching PCB */
+    /** @todo find matching PCB */
 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -2926,6 +3385,10 @@ udp_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
+  /* return to object name, adding index depth (5) */
+  ident_len += 5;
+  ident -= 5;
+  
   if (ident_len == 6)
   {
     struct udp_pcb *pcb;

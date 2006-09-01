@@ -105,9 +105,10 @@ struct mib_node
     of sub-identifiers plus a 'child' pointer */
 struct mib_array_node
 {
-  /* inherited "base class" */
+  /* inherited "base class" members */
   void (* const get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (* const get_value)(struct obj_def *od, u16_t len, void *value);
+
   const u8_t node_type;
   const u16_t maxlength;
 
@@ -120,9 +121,10 @@ struct mib_array_node
     of sub-identifiers plus a 'child' pointer */
 struct mib_ram_array_node
 {
-  /* inherited "base class" */
+  /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+
   u8_t node_type;
   u16_t maxlength;
 
@@ -143,9 +145,10 @@ struct mib_list_node
     of sub-identifiers plus a 'child' pointer */
 struct mib_list_rootnode
 {
-  /* inherited "base class" */
+  /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+
   u8_t node_type;
   u16_t maxlength;
 
@@ -160,9 +163,10 @@ struct mib_list_rootnode
     using index ('idx'), with a range 0 .. (count - 1) to address these objects */
 struct mib_external_node
 {
-  /* inherited "base class" */
+  /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+
   u8_t node_type;
   u16_t maxlength;
 
@@ -182,44 +186,23 @@ struct mib_external_node
 /** export MIB tree from mib2.c */
 extern const struct mib_array_node internet;
 
-/** export for use in private mib */
+/** dummy function pointers for non-leaf MIB nodes from mib2.c */
 void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
-
-/** forward decl */
-struct idx_root_node;
-/** "index" tree node */
-struct idx_node
-{
-  struct idx_node* next;
-  struct idx_node* prev;
-  /* child id */
-  s32_t objid;
-  /* tree child pointer */
-  struct idx_root_node *nptr;
-};
-/** "index" tree root node */
-struct idx_root_node
-{
-  struct idx_node *head;
-  struct idx_node *tail;   
-  u16_t count;
-};
 
 void snmp_oidtoip(s32_t *ident, struct ip_addr *ip);
 void snmp_iptooid(struct ip_addr *ip, s32_t *ident);
 void snmp_ifindextonetif(s32_t ifindex, struct netif **netif);
 void snmp_netiftoifindex(struct netif *netif, s32_t *ifidx);
 
-struct idx_node* snmp_idx_node_alloc(s32_t id);
-void snmp_idx_node_free(struct idx_node *in);
-struct idx_root_node* snmp_idx_root_node_alloc(void);
-void snmp_idx_root_node_free(struct idx_root_node *irn);
+struct mib_list_node* snmp_mib_ln_alloc(s32_t id);
+void snmp_mib_ln_free(struct mib_list_node *ln);
+struct mib_list_rootnode* snmp_mib_lrn_alloc(void);
+void snmp_mib_lrn_free(struct mib_list_rootnode *lrn);
 
-
-s8_t snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **insn);
-s8_t snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn);
-struct idx_root_node *snmp_idx_node_delete(struct idx_root_node *rn, struct idx_node *n);
+s8_t snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **insn);
+s8_t snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **fn);
+struct mib_list_rootnode *snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n);
 
 struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def);
 struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);

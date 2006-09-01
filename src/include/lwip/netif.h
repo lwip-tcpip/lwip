@@ -132,8 +132,6 @@ struct netif {
 extern struct netif *netif_list;
 /** The default network interface. */
 extern struct netif *netif_default;
-/** Count of network interfaces currently in the netif_list. */
-extern u16_t netif_cnt;
 
 /* netif_init() must be called first. */
 void netif_init(void);

@@ -48,7 +48,6 @@
 
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
-u16_t netif_cnt = 0;
 
 /**
  * Add a network interface to the list of lwIP netifs.
@@ -92,7 +91,8 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
-  netif_cnt++;
+  snmp_inc_iflist();
+
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));
   ip_addr_debug_print(NETIF_DEBUG, ipaddr);
@@ -117,10 +117,12 @@ void netif_remove(struct netif * netif)
 {
   if ( netif == NULL ) return;
 
+  snmp_delete_ipaddridx_tree(netif);
+
   /*  is it the first netif? */
   if (netif_list == netif) {
     netif_list = netif->next;
-    netif_cnt--;
+    snmp_dec_iflist();
   }
   else {
     /*  look for netif further down the list */
@@ -128,7 +130,7 @@ void netif_remove(struct netif * netif)
     for (tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
       if (tmpNetif->next == netif) {
         tmpNetif->next = netif->next;
-        netif_cnt--;
+        snmp_dec_iflist();
         break;
       }
     }
@@ -203,7 +205,13 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
     }
   }
 #endif
+  snmp_delete_ipaddridx_tree(netif);
+  snmp_delete_iprteidx_tree(0,netif);
+  /* set new IP address to netif */
   ip_addr_set(&(netif->ip_addr), ipaddr);
+  snmp_insert_ipaddridx_tree(netif);
+  snmp_insert_iprteidx_tree(0,netif);
+
 #if 0 /* only allowed for Ethernet interfaces TODO: how can we check? */
   /** For Ethernet network interfaces, we would like to send a
    *  "gratuitous ARP"; this is an ARP packet sent by a node in order
@@ -235,7 +243,10 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
 void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
+  snmp_delete_iprteidx_tree(0, netif);
+  /* set new netmask to netif */
   ip_addr_set(&(netif->netmask), netmask);
+  snmp_insert_iprteidx_tree(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1(&netif->netmask),
@@ -247,6 +258,16 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 void
 netif_set_default(struct netif *netif)
 {
+  if (netif == NULL)
+  {
+    /* remove default route */
+    snmp_delete_iprteidx_tree(1, netif);
+  }
+  else
+  {
+    /* install default route */
+    snmp_insert_iprteidx_tree(1, netif);
+  }
   netif_default = netif;
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
            netif ? netif->name[0] : '\'', netif ? netif->name[1] : '\''));
@@ -297,6 +318,5 @@ void
 netif_init(void)
 {
   netif_list = netif_default = NULL;
-  netif_cnt = 0;
 }
 

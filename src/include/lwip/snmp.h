@@ -35,6 +35,7 @@
 
 #include "lwip/opt.h"
 #include "lwip/netif.h"
+#include "lwip/udp.h"
 
 /* SNMP support available? */
 #if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
@@ -58,10 +59,6 @@ void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen);
 void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen);
 void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen);
 
-/* ARP */
-void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip);
-void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip);
-
 /* network interface */
 void snmp_add_ifinoctets(struct netif *ni, u32_t value); 
 void snmp_inc_ifinucastpkts(struct netif *ni);
@@ -71,6 +68,12 @@ void snmp_add_ifoutoctets(struct netif *ni, u32_t value);
 void snmp_inc_ifoutucastpkts(struct netif *ni);
 void snmp_inc_ifoutnucastpkts(struct netif *ni);
 void snmp_inc_ifoutdiscards(struct netif *ni);
+void snmp_inc_iflist(void);
+void snmp_dec_iflist(void);
+
+/* ARP (for atTable and ipNetToMediaTable) */
+void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip);
+void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip);
 
 /* IP */
 void snmp_inc_ipinreceives(void);
@@ -90,6 +93,10 @@ void snmp_inc_ipfragoks(void);
 void snmp_inc_ipfragfails(void);
 void snmp_inc_ipfragcreates(void);
 void snmp_inc_iproutingdiscards(void);
+void snmp_insert_ipaddridx_tree(struct netif *ni);
+void snmp_delete_ipaddridx_tree(struct netif *ni);
+void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni);
+void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni);
 
 /* ICMP */
 void snmp_inc_icmpinmsgs(void);
@@ -135,6 +142,8 @@ void snmp_inc_udpindatagrams(void);
 void snmp_inc_udpnoports(void);
 void snmp_inc_udpinerrors(void);
 void snmp_inc_udpoutdatagrams(void);
+void snmp_insert_udpidx_tree(struct udp_pcb *pcb);
+void snmp_delete_udpidx_tree(struct udp_pcb *pcb);
 
 /* SNMP */
 void snmp_inc_snmpinpkts(void);
@@ -177,10 +186,6 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_sysuptime()
 #define snmp_get_sysuptime(value)
 
-/* ARP */
-#define snmp_insert_arpidx_tree(ni,ip)
-#define snmp_delete_arpidx_tree(ni,ip)
-
 /* network interface */
 #define snmp_add_ifinoctets(ni,value) 
 #define snmp_inc_ifinucastpkts(ni)
@@ -190,6 +195,12 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_ifoutucastpkts(ni)
 #define snmp_inc_ifoutnucastpkts(ni)
 #define snmp_inc_ifoutdiscards(ni)
+#define snmp_inc_iflist()
+#define snmp_dec_iflist()
+
+/* ARP */
+#define snmp_insert_arpidx_tree(ni,ip)
+#define snmp_delete_arpidx_tree(ni,ip)
 
 /* IP */
 #define snmp_inc_ipinreceives()
@@ -209,6 +220,10 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_ipfragfails()
 #define snmp_inc_ipfragcreates()
 #define snmp_inc_iproutingdiscards()
+#define snmp_insert_ipaddridx_tree(ni)
+#define snmp_delete_ipaddridx_tree(ni)
+#define snmp_insert_iprteidx_tree(ni)
+#define snmp_delete_iprteidx_tree(ni)
 
 /* ICMP */
 #define snmp_inc_icmpinmsgs()
@@ -253,6 +268,8 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_udpnoports()
 #define snmp_inc_udpinerrors()
 #define snmp_inc_udpoutdatagrams()
+#define snmp_insert_udpidx_tree(pcb)
+#define snmp_delete_udpidx_tree(pcb)
 
 /* SNMP */
 #define snmp_inc_snmpinpkts()

@@ -158,47 +158,51 @@ snmp_iptooid(struct ip_addr *ip, s32_t *ident)
   ident[3] = trnc & 0xff;
 }
 
-struct idx_node *
-snmp_idx_node_alloc(s32_t id)
+struct mib_list_node *
+snmp_mib_ln_alloc(s32_t id)
 {
-  struct idx_node *in;
+  struct mib_list_node *ln;
   
-  in = (struct idx_node*)mem_malloc(sizeof(struct idx_node));
-  if (in != NULL)
+  ln = (struct mib_list_node *)mem_malloc(sizeof(struct mib_list_node));
+  if (ln != NULL)
   {
-    in->next = NULL;
-    in->prev = NULL;
-    in->objid = id;
-    in->nptr = NULL;
+    ln->prev = NULL;
+    ln->next = NULL;
+    ln->objid = id;
+    ln->nptr = NULL;
   }
-  return in;
+  return ln;
 }
 
 void
-snmp_idx_node_free(struct idx_node *in)
+snmp_mib_ln_free(struct mib_list_node *ln)
 {
-  mem_free(in);
+  mem_free(ln);
 }
 
-struct idx_root_node *
-snmp_idx_root_node_alloc(void)
+struct mib_list_rootnode *
+snmp_mib_lrn_alloc(void)
 {
-  struct idx_root_node *irn;
+  struct mib_list_rootnode *lrn;
   
-  irn = (struct idx_root_node*)mem_malloc(sizeof(struct idx_root_node));
-  if (irn != NULL)
+  lrn = (struct mib_list_rootnode*)mem_malloc(sizeof(struct mib_list_rootnode));
+  if (lrn != NULL)
   {
-    irn->head = NULL;
-    irn->tail = NULL;
-    irn->count = 0;
+    lrn->get_object_def = noleafs_get_object_def;
+    lrn->get_value = noleafs_get_value;
+    lrn->node_type = MIB_NODE_LR;
+    lrn->maxlength = 0;
+    lrn->head = NULL;
+    lrn->tail = NULL;
+    lrn->count = 0;
   }
-  return irn;
+  return lrn;
 }
 
 void
-snmp_idx_root_node_free(struct idx_root_node *irn)
+snmp_mib_lrn_free(struct mib_list_rootnode *lrn)
 {
-  mem_free(irn);
+  mem_free(lrn);
 }
 
 /**
@@ -213,9 +217,9 @@ snmp_idx_root_node_free(struct idx_root_node *irn)
  * @return -1 if failed, 1 if success.
  */
 s8_t
-snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **insn)
+snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **insn)
 {
-  struct idx_node *nn;
+  struct mib_list_node *nn;
   s8_t insert;
 
   LWIP_ASSERT("rn != NULL",rn != NULL);
@@ -226,7 +230,7 @@ snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **in
   {
     /* empty list, add first node */
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc empty list objid==%"S32_F"\n",objid));
-    nn = snmp_idx_node_alloc(objid);
+    nn = snmp_mib_ln_alloc(objid);
     if (nn != NULL)
     {      
       rn->head = nn;
@@ -241,7 +245,7 @@ snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **in
   }
   else
   {
-    struct idx_node *n;
+    struct mib_list_node *n;
     /* at least one node is present */
     n = rn->head;
     while ((n != NULL) && (insert == 0))
@@ -259,7 +263,7 @@ snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **in
         {
           /* alloc and insert at the tail */
           LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc ins tail objid==%"S32_F"\n",objid));
-          nn = snmp_idx_node_alloc(objid);
+          nn = snmp_mib_ln_alloc(objid);
           if (nn != NULL)
           {
             nn->next = NULL;
@@ -287,7 +291,7 @@ snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **in
         /* n->objid > objid */
         /* alloc and insert between n->prev and n */
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("alloc ins n->prev, objid==%"S32_F", n\n",objid));        
-        nn = snmp_idx_node_alloc(objid);
+        nn = snmp_mib_ln_alloc(objid);
         if (nn != NULL)
         {
           if (n->prev == NULL)
@@ -332,13 +336,13 @@ snmp_idx_node_insert(struct idx_root_node *rn, s32_t objid, struct idx_node **in
  * @param objid  is the object sub identifier
  * @param fn returns pointer to found node
  * @return 0 if not found, 1 if deletable,
- *   2 can't delete (2 or more children) 
+ *   2 can't delete (2 or more children), 3 not a list_node
  */
 s8_t
-snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn)
+snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **fn)
 {
   s8_t fc;
-  struct idx_node *n;
+  struct mib_list_node *n;
   
   LWIP_ASSERT("rn != NULL",rn != NULL);
   n = rn->head;
@@ -355,15 +359,29 @@ snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn)
     /* leaf, can delete node */
     fc = 1;
   }
-  else if (n->nptr->count > 1)
-  {
-    /* can't delete node */
-    fc = 2;
-  }
   else
   {
-    /* count <= 1, can delete node */
-    fc = 1;
+    struct mib_list_rootnode *rn;
+    
+    if (n->nptr->node_type == MIB_NODE_LR)
+    {
+      rn = (struct mib_list_rootnode *)n->nptr;
+      if (rn->count > 1)
+      {
+        /* can't delete node */
+        fc = 2;
+      }
+      else
+      {
+        /* count <= 1, can delete node */
+        fc = 1;
+      }
+    }
+    else
+    {
+      /* other node type */
+      fc = 3;
+    }
   }
   *fn = n;
   return fc;
@@ -377,16 +395,16 @@ snmp_idx_node_find(struct idx_root_node *rn, s32_t objid, struct idx_node **fn)
  * @param n points to the node to delete
  * @return the nptr to be freed by caller
  */
-struct idx_root_node *
-snmp_idx_node_delete(struct idx_root_node *rn, struct idx_node *n)
+struct mib_list_rootnode *
+snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
 {
-  struct idx_root_node *next;
+  struct mib_list_rootnode *next;
 
   LWIP_ASSERT("rn != NULL",rn != NULL);
   LWIP_ASSERT("n != NULL",n != NULL);
 
   /* caller must remove this sub-tree */
-  next = n->nptr;
+  next = (struct mib_list_rootnode*)(n->nptr);
   rn->count -= 1;
 
   if (n == rn->head)
@@ -414,7 +432,7 @@ snmp_idx_node_delete(struct idx_root_node *rn, struct idx_node *n)
     n->next->prev = n->prev;
   }
   LWIP_DEBUGF(SNMP_MIB_DEBUG,("free list objid==%"S32_F"\n",n->objid));
-  snmp_idx_node_free(n);    
+  snmp_mib_ln_free(n);    
 
   return next;
 }
@@ -753,6 +771,10 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           node = an->nptr[0];
         }
       }
+    }
+    else if(node_type == MIB_NODE_LR)
+    {
+      /** @todo need this for indexing tables */
     }
     else
     {
