@@ -4,6 +4,8 @@
  *
  * @note the object identifiers for this MIB-2 and private MIB tree
  * must be kept in sorted ascending order. This to ensure correct getnext operation.
+ *
+ * @todo optimize htonl, ntohl.
  */
 
 /*
@@ -1200,6 +1202,9 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
  *
  * @param dflt non-zero for the default rte, zero for network rte
  * @param netif points to network interface for this rte
+ *
+ * @todo record sysuptime for _this_ route when it is installed
+ *   (needed for ipRouteAge) in the netif.
  */
 void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
 {
@@ -2225,11 +2230,6 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
  * @param ident_len the address length (6)
  * @param ident points to objectname.atifindex.atnetaddress
  * @param od points to object definition.
- *
- * @todo std says objects are writeable, can we ignore it?
- *
- * @todo the etharp_find_addr could be a lot smarter
- *  if our arp index tree provided pointers or index to the requested item
  */
 static void
 atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
@@ -2240,53 +2240,33 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
   if (ident_len == 6)
   {
-    struct eth_addr* ethaddr_ret;
-    struct ip_addr* ipaddr_ret;
-    struct ip_addr ip;
-    struct netif *netif;
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
 
-    snmp_ifindextonetif(ident[1], &netif);
-    snmp_oidtoip(&ident[2], &ip);
-    ip.addr = htonl(ip.addr);
-    
-    if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
+    switch (ident[0])
     {
-      od->id_inst_len = ident_len;
-      od->id_inst_ptr = ident;
-
-      switch (ident[0])
-      {
-        case 1: /* atIfIndex */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          od->addr = NULL;
-          break;
-        case 2: /* atPhysAddress */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
-          od->v_len = sizeof(struct eth_addr);
-          od->addr = ethaddr_ret;
-          break;
-        case 3: /* atNetAddress */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
-          od->v_len = 4;
-          od->addr = ipaddr_ret;
-          break;
-        default:
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no such object"));
-          od->instance = MIB_OBJECT_NONE;
-          break;
-      }
-    }
-    else
-    {
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no scalar"));
-      od->instance = MIB_OBJECT_NONE;
+      case 1: /* atIfIndex */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 2: /* atPhysAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+        od->v_len = sizeof(struct eth_addr);
+        break;
+      case 3: /* atNetAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
     }
   }
   else
@@ -2296,37 +2276,51 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   }
 }
 
+/**
+ * @todo the etharp_find_addr could be a lot smarter
+ *  if our arp index tree provided pointers or index to the requested item
+ */
 static void
 atentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
+  struct eth_addr* ethaddr_ret;
+  struct ip_addr* ipaddr_ret;
+  struct ip_addr ip;
+  struct netif *netif;
 
   if (len) {}
-  id = od->id_inst_ptr[0];
-  switch (id)
+
+  snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
+  snmp_oidtoip(&od->id_inst_ptr[2], &ip);
+  ip.addr = htonl(ip.addr);
+    
+  if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
-    case 1: /* atIfIndex */
-      {
-        s32_t *sint_ptr = value;
-        *sint_ptr = od->id_inst_ptr[1];
-      }
-      break;
-    case 2: /* atPhysAddress */
-      {
-        struct eth_addr *dst = value;
-        struct eth_addr *src = od->addr;
+    id = od->id_inst_ptr[0];
+    switch (id)
+    {
+      case 1: /* atIfIndex */
+        {
+          s32_t *sint_ptr = value;
+          *sint_ptr = od->id_inst_ptr[1];
+        }
+        break;
+      case 2: /* atPhysAddress */
+        {
+          struct eth_addr *dst = value;
 
-        *dst = *src;
-      }
-      break;
-    case 3: /* atNetAddress */
-      {
-        struct ip_addr *dst = value;
-        struct ip_addr *src = od->addr;
+          *dst = *ethaddr_ret;
+        }
+        break;
+      case 3: /* atNetAddress */
+        {
+          struct ip_addr *dst = value;
 
-        *dst = *src;
-      }
-      break;
+          *dst = *ipaddr_ret;
+        }
+        break;
+    }
   }
 }
 
@@ -2548,53 +2542,33 @@ ip_addrentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
   if (ident_len == 5)
   {
-    struct ip_addr ip;
-    struct netif *netif = netif_list;
+    u8_t id;
 
-    snmp_oidtoip(&ident[1], &ip);
-    ip.addr = htonl(ip.addr);
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
 
-    while ((netif != NULL) && !ip_addr_cmp(&ip, &netif->ip_addr))
+    id = ident[0];
+    switch (id)
     {
-      netif = netif->next;
-    }
-    
-    if (netif != NULL)
-    {
-      u8_t id;
-
-      od->id_inst_len = ident_len;
-      od->id_inst_ptr = ident;
-      od->addr = netif;
-
-      id = ident[0];
-      switch (id)
-      {
-        case 1: /* ipAdEntAddr */
-        case 3: /* ipAdEntNetMask */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
-          od->v_len = 4;
-          break;
-        case 2: /* ipAdEntIfIndex */
-        case 4: /* ipAdEntBcastAddr */
-        case 5: /* ipAdEntReasmMaxSize */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          break;
-        default:
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no such object"));
-          od->instance = MIB_OBJECT_NONE;
-          break;
-      }
-    }
-    else
-    {
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no scalar"));
-      od->instance = MIB_OBJECT_NONE;
+      case 1: /* ipAdEntAddr */
+      case 3: /* ipAdEntNetMask */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      case 2: /* ipAdEntIfIndex */
+      case 4: /* ipAdEntBcastAddr */
+      case 5: /* ipAdEntReasmMaxSize */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
     }
   }
   else
@@ -2608,69 +2582,65 @@ static void
 ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
+  u16_t ifidx;
+  struct ip_addr ip;
+  struct netif *netif = netif_list;
 
   if (len) {}
-  id = od->id_inst_ptr[0];
-  switch (id)
+  snmp_oidtoip(&od->id_inst_ptr[1], &ip);
+  ip.addr = htonl(ip.addr);
+  ifidx = 0;
+  while ((netif != NULL) && !ip_addr_cmp(&ip, &netif->ip_addr))
   {
-    case 1: /* ipAdEntAddr */
-      {
-        struct ip_addr *dst = value;
-        struct netif *netif;
-        struct ip_addr *src;
-
-        netif = od->addr;
-        src = &netif->ip_addr;
-        *dst = *src;
-      }
-      break;
-    case 2: /* ipAdEntIfIndex */
-      {
-        s32_t *sint_ptr = value;
-        struct netif *netif = netif_list;
-        u16_t i;
-
-        i = 0;
-        while ((netif != NULL) && (netif != od->addr))
+    netif = netif->next;
+    ifidx++;
+  }
+  
+  if (netif != NULL)
+  {
+    id = od->id_inst_ptr[0];
+    switch (id)
+    {
+      case 1: /* ipAdEntAddr */
         {
-          netif = netif->next;
-          i++;
+          struct ip_addr *dst = value;
+          *dst = netif->ip_addr;
         }
-        *sint_ptr = i + 1;
-      }
-      break;
-    case 3: /* ipAdEntNetMask */
-      {
-        struct ip_addr *dst = value;
-        struct netif *netif;
-        struct ip_addr *src;
+        break;
+      case 2: /* ipAdEntIfIndex */
+        {
+          s32_t *sint_ptr = value;
+          *sint_ptr = ifidx + 1;
+        }
+        break;
+      case 3: /* ipAdEntNetMask */
+        {
+          struct ip_addr *dst = value;
+          *dst = netif->netmask;
+        }
+        break;
+      case 4: /* ipAdEntBcastAddr */
+        {
+          s32_t *sint_ptr = value;      
 
-        netif = od->addr;
-        src = &netif->netmask;
-        *dst = *src;
-      }
-      break;
-    case 4: /* ipAdEntBcastAddr */
-      {
-        s32_t *sint_ptr = value;      
-
-        /* lwIP oddity, there's no broadcast
-          address in the netif we can rely on */
-        *sint_ptr = ip_addr_broadcast.addr & 1;
-      }
-      break;
-    case 5: /* ipAdEntReasmMaxSize */
-      {
-        s32_t *sint_ptr = value;      
+          /* lwIP oddity, there's no broadcast
+            address in the netif we can rely on */
+          *sint_ptr = ip_addr_broadcast.addr & 1;
+        }
+        break;
+      case 5: /* ipAdEntReasmMaxSize */
+        {
+          s32_t *sint_ptr = value;      
 #if IP_REASSEMBLY
-        *sint_ptr = (IP_HLEN + IP_REASS_BUFSIZE);
+          *sint_ptr = (IP_HLEN + IP_REASS_BUFSIZE);
 #else
-        /** @todo returning MTU would be a bad thing and
-           returning a wild guess like '576' isn't good either */
-        *sint_ptr = 0;
+          /** @todo returning MTU would be a bad thing and
+             returning a wild guess like '576' isn't good either */
+          *sint_ptr = 0;
 #endif
-      }
-      break;
+        }
+        break;
+    }
   }
 }
 
@@ -2690,80 +2660,50 @@ ip_rteentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
   if (ident_len == 5)
   {
-    struct ip_addr dest;
-    struct netif *netif;
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
 
-    snmp_oidtoip(&ident[1], &dest);
-    dest.addr = htonl(dest.addr);
-
-    if (dest.addr == 0)
+    id = ident[0];
+    switch (id)
     {
-      /* ip_route() uses default netif for default route */
-      netif = netif_default;
-    }
-    else
-    {
-      /* not using ip_route(), need exact match! */
-      netif = netif_list;
-      while ((netif != NULL) && 
-              !ip_addr_netcmp(&dest, &(netif->ip_addr), &(netif->netmask)) )
-      {      
-        netif = netif->next;
-      }
-    }    
-    if (netif != NULL)
-    {
-      od->id_inst_len = ident_len;
-      od->id_inst_ptr = ident;
-      od->addr = netif;
-
-      id = ident[0];
-      switch (id)
-      {
-        case 1: /* ipRouteDest */
-        case 7: /* ipRouteNextHop */
-        case 11: /* ipRouteMask */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
-          od->v_len = 4;
-          break;
-        case 2: /* ipRouteIfIndex */
-        case 3: /* ipRouteMetric1 */
-        case 4: /* ipRouteMetric2 */
-        case 5: /* ipRouteMetric3 */
-        case 6: /* ipRouteMetric4 */
-        case 8: /* ipRouteType */
-        case 10: /* ipRouteAge */
-        case 12: /* ipRouteMetric5 */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          break;
-        case 9: /* ipRouteProto */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          break;
-        case 13: /* ipRouteInfo */
-          /** @note returning zeroDotZero (0.0) no routing protocol specific MIB */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
-          od->v_len = iprouteinfo.len * sizeof(s32_t);
-          break;
-        default:
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no such object"));
-          od->instance = MIB_OBJECT_NONE;
-          break;
-      }
-    }
-    else
-    {
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no scalar"));
-      od->instance = MIB_OBJECT_NONE;
+      case 1: /* ipRouteDest */
+      case 7: /* ipRouteNextHop */
+      case 11: /* ipRouteMask */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      case 2: /* ipRouteIfIndex */
+      case 3: /* ipRouteMetric1 */
+      case 4: /* ipRouteMetric2 */
+      case 5: /* ipRouteMetric3 */
+      case 6: /* ipRouteMetric4 */
+      case 8: /* ipRouteType */
+      case 10: /* ipRouteAge */
+      case 12: /* ipRouteMetric5 */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 9: /* ipRouteProto */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 13: /* ipRouteInfo */
+        /** @note returning zeroDotZero (0.0) no routing protocol specific MIB */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
+        od->v_len = iprouteinfo.len * sizeof(s32_t);
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
     }
   }
   else
@@ -2781,137 +2721,146 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
   s32_t *ident;
   u8_t id;
 
-  netif = od->addr;
   ident = od->id_inst_ptr;
-
   snmp_oidtoip(&ident[1], &dest);
   dest.addr = htonl(dest.addr);
 
-  id = ident[0];
-  switch (id)
+  if (dest.addr == 0)
   {
-    case 1: /* ipRouteDest */
-      {
-        struct ip_addr *dst = value;
+    /* ip_route() uses default netif for default route */
+    netif = netif_default;
+  }
+  else
+  {
+    /* not using ip_route(), need exact match! */
+    netif = netif_list;
+    while ((netif != NULL) && 
+            !ip_addr_netcmp(&dest, &(netif->ip_addr), &(netif->netmask)) )
+    {      
+      netif = netif->next;
+    }
+  }    
+  if (netif != NULL)
+  {
+    id = ident[0];
+    switch (id)
+    {
+      case 1: /* ipRouteDest */
+        {
+          struct ip_addr *dst = value;
 
-        if (dest.addr == 0)
-        {
-          /* default rte has 0.0.0.0 dest */
-          dst->addr = 0;
+          if (dest.addr == 0)
+          {
+            /* default rte has 0.0.0.0 dest */
+            dst->addr = 0;
+          }
+          else
+          {
+            /* netifs have netaddress dest */
+            dst->addr = netif->ip_addr.addr & netif->netmask.addr;
+          }
         }
-        else
+        break;
+      case 2: /* ipRouteIfIndex */
         {
-          /* netifs have netaddress dest */
-          dst->addr = netif->ip_addr.addr & netif->netmask.addr;
-        }
-      }
-      break;
-    case 2: /* ipRouteIfIndex */
-      {
-        struct netif *ni = netif_list;
-        s32_t *sint_ptr = value;
-        u16_t i;
+          s32_t *sint_ptr = value;
 
-        i = 0;
-        while ((ni != NULL) && (ni != netif))
-        {
-          ni = ni->next;
-          i++;
+          snmp_netiftoifindex(netif, sint_ptr);
         }
-        *sint_ptr = i + 1;
-      }
-      break;
-    case 3: /* ipRouteMetric1 */         
-      {
-        s32_t *sint_ptr = value;
+        break;
+      case 3: /* ipRouteMetric1 */         
+        {
+          s32_t *sint_ptr = value;
 
-        if (dest.addr == 0)
-        {
-          /* default rte has metric 1 */
-          *sint_ptr = 1;
+          if (dest.addr == 0)
+          {
+            /* default rte has metric 1 */
+            *sint_ptr = 1;
+          }
+          else
+          {
+            /* other rtes have metric 0 */
+            *sint_ptr = 0;
+          }
         }
-        else
+        break;
+      case 4: /* ipRouteMetric2 */
+      case 5: /* ipRouteMetric3 */
+      case 6: /* ipRouteMetric4 */
+      case 12: /* ipRouteMetric5 */
         {
-          /* other rtes have metric 0 */
+          s32_t *sint_ptr = value;
+          /* not used */
+          *sint_ptr = -1;
+        }
+        break;
+      case 7: /* ipRouteNextHop */
+        {
+          struct ip_addr *dst = value;
+
+          if (dest.addr == 0)
+          {
+            /* default rte: gateway */
+            *dst = netif->gw;
+          }
+          else
+          {
+            /* other rtes: netif ip_addr  */
+            *dst = netif->ip_addr;
+          }
+        }
+        break;
+      case 8: /* ipRouteType */
+        {
+          s32_t *sint_ptr = value;
+
+          if (dest.addr == 0)
+          {
+            /* default rte is indirect */
+            *sint_ptr = 4;
+          }
+          else
+          {
+            /* other rtes are direct */
+            *sint_ptr = 3;
+          }
+        }
+        break;
+      case 9: /* ipRouteProto */
+        {
+          s32_t *sint_ptr = value;
+          /* locally defined routes */
+          *sint_ptr = 2;
+        }
+        break;
+      case 10: /* ipRouteAge */
+        {
+          s32_t *sint_ptr = value;
+          /** @todo (sysuptime - timestamp last change) / 100
+              @see snmp_insert_iprteidx_tree() */
           *sint_ptr = 0;
         }
-      }
-      break;
-    case 4: /* ipRouteMetric2 */
-    case 5: /* ipRouteMetric3 */
-    case 6: /* ipRouteMetric4 */
-    case 12: /* ipRouteMetric5 */
-      {
-        s32_t *sint_ptr = value;
-        /* not used */
-        *sint_ptr = -1;
-      }
-      break;
-    case 7: /* ipRouteNextHop */
-      {
-        struct ip_addr *dst = value;
+        break;
+      case 11: /* ipRouteMask */
+        {
+          struct ip_addr *dst = value;
 
-        if (dest.addr == 0)
-        {
-          /* default rte: gateway */
-          *dst = netif->gw;
+          if (dest.addr == 0)
+          {
+            /* default rte use 0.0.0.0 mask */
+            dst->addr = 0;
+          }
+          else
+          {
+            /* other rtes use netmask */
+            *dst = netif->netmask;
+          }
         }
-        else
-        {
-          /* other rtes: netif ip_addr  */
-          *dst = netif->ip_addr;
-        }
-      }
-      break;
-    case 8: /* ipRouteType */
-      {
-        s32_t *sint_ptr = value;
-
-        if (dest.addr == 0)
-        {
-          /* default rte is indirect */
-          *sint_ptr = 4;
-        }
-        else
-        {
-          /* other rtes are direct */
-          *sint_ptr = 3;
-        }
-      }
-      break;
-    case 9: /* ipRouteProto */
-      {
-        s32_t *sint_ptr = value;
-        /* locally defined routes */
-        *sint_ptr = 2;
-      }
-      break;
-    case 10: /* ipRouteAge */
-      {
-        s32_t *sint_ptr = value;
-        /** @todo (sysuptime - timestamp last change) / 100 */
-        *sint_ptr = 0;
-      }
-      break;
-    case 11: /* ipRouteMask */
-      {
-        struct ip_addr *dst = value;
-
-        if (dest.addr == 0)
-        {
-          /* default rte use 0.0.0.0 mask */
-          dst->addr = 0;
-        }
-        else
-        {
-          /* other rtes use netmask */
-          *dst = netif->netmask;
-        }
-      }
-      break;
-    case 13: /* ipRouteInfo */
-      objectidncpy((s32_t*)value,(s32_t*)iprouteinfo.id,len / sizeof(s32_t));
-      break;
+        break;
+      case 13: /* ipRouteInfo */
+        objectidncpy((s32_t*)value,(s32_t*)iprouteinfo.id,len / sizeof(s32_t));
+        break;
+    }
   }
 }
 
@@ -2924,57 +2873,37 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
   if (ident_len == 6)
   {
-    struct eth_addr* ethaddr_ret;
-    struct ip_addr* ipaddr_ret;
-    struct ip_addr ip;
-    struct netif *netif;
+    u8_t id;
 
-    snmp_ifindextonetif(ident[1], &netif);
-    snmp_oidtoip(&ident[2], &ip);
-    ip.addr = htonl(ip.addr);
-    
-    if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
+
+    id = ident[0];
+    switch (id)
     {
-      u8_t id;
-
-      od->id_inst_len = ident_len;
-      od->id_inst_ptr = ident;
-
-      id = ident[0];
-      switch (id)
-      {
-        case 1: /* ipNetToMediaIfIndex */
-        case 4: /* ipNetToMediaType */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          od->addr = NULL;
-          break;
-        case 2: /* ipNetToMediaPhysAddress */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
-          od->v_len = sizeof(struct eth_addr);
-          od->addr = ethaddr_ret;
-          break;
-        case 3: /* ipNetToMediaNetAddress */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_WRITE;
-          od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
-          od->v_len = 4;
-          od->addr = ipaddr_ret;
-          break;
-        default:
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no such object"));
-          od->instance = MIB_OBJECT_NONE;
-          break;
-      }
-    }
-    else
-    {
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no scalar"));
-      od->instance = MIB_OBJECT_NONE;
+      case 1: /* ipNetToMediaIfIndex */
+      case 4: /* ipNetToMediaType */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      case 2: /* ipNetToMediaPhysAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+        od->v_len = sizeof(struct eth_addr);
+        break;
+      case 3: /* ipNetToMediaNetAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_WRITE;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
     }
   }
   else
@@ -2988,40 +2917,50 @@ static void
 ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
+  struct eth_addr* ethaddr_ret;
+  struct ip_addr* ipaddr_ret;
+  struct ip_addr ip;
+  struct netif *netif;
 
-  if (len){}
-  id = od->id_inst_ptr[0];
-  switch (id)
+  if (len) {}
+
+  snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
+  snmp_oidtoip(&od->id_inst_ptr[2], &ip);
+  ip.addr = htonl(ip.addr);
+    
+  if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
-    case 1: /* ipNetToMediaIfIndex */
-      {
-        s32_t *sint_ptr = value;
-        *sint_ptr = od->id_inst_ptr[1];
-      }
-      break;
-    case 2: /* ipNetToMediaPhysAddress */
-      {
-        struct eth_addr *dst = value;
-        struct eth_addr *src = od->addr;
+    id = od->id_inst_ptr[0];
+    switch (id)
+    {
+      case 1: /* ipNetToMediaIfIndex */
+        {
+          s32_t *sint_ptr = value;
+          *sint_ptr = od->id_inst_ptr[1];
+        }
+        break;
+      case 2: /* ipNetToMediaPhysAddress */
+        {
+          struct eth_addr *dst = value;
 
-        *dst = *src;
-      }
-      break;
-    case 3: /* ipNetToMediaNetAddress */
-      {
-        struct ip_addr *dst = value;
-        struct ip_addr *src = od->addr;
+          *dst = *ethaddr_ret;
+        }
+        break;
+      case 3: /* ipNetToMediaNetAddress */
+        {
+          struct ip_addr *dst = value;
 
-        *dst = *src;
-      }
-      break;
-    case 4: /* ipNetToMediaType */
-      {
-        s32_t *sint_ptr = value;
-        /* dynamic (?) */
-        *sint_ptr = 3;
-      }
-      break;
+          *dst = *ipaddr_ret;
+        }
+        break;
+      case 4: /* ipNetToMediaType */
+        {
+          s32_t *sint_ptr = value;
+          /* dynamic (?) */
+          *sint_ptr = 3;
+        }
+        break;
+    }
   }
 }
 
@@ -3272,22 +3211,13 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  /** @todo adjust ident_len and ident after table index traversal */
+  /* return to object name, adding index depth (10) */
+  ident_len += 10;
+  ident -= 10;
 
   if (ident_len == 11)
   {
     u8_t id;
-    struct ip_addr lip, rip;
-    u16_t lport, rport;
-
-    snmp_oidtoip(&ident[1], &lip);
-    lip.addr = htonl(lip.addr);
-    lport = ident[5];
-    snmp_oidtoip(&ident[6], &rip);
-    rip.addr = htonl(rip.addr);
-    rport = ident[10];
-
-    /** @todo find matching PCB */
 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -3333,6 +3263,19 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
+  struct ip_addr lip, rip;
+  u16_t lport, rport;
+  s32_t *ident;
+
+  ident = od->id_inst_ptr;
+  snmp_oidtoip(&ident[1], &lip);
+  lip.addr = htonl(lip.addr);
+  lport = ident[5];
+  snmp_oidtoip(&ident[6], &rip);
+  rip.addr = htonl(rip.addr);
+  rport = ident[10];
+
+  /** @todo find matching PCB */
 }
 #endif
 
@@ -3391,53 +3334,27 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   
   if (ident_len == 6)
   {
-    struct udp_pcb *pcb;
-    struct ip_addr ip;
-    u16_t port;
+    od->id_inst_len = ident_len;
+    od->id_inst_ptr = ident;
 
-    snmp_oidtoip(&ident[1], &ip);
-    ip.addr = htonl(ip.addr);
-
-    port = ident[5];
-
-    pcb = udp_pcbs;
-    while ((pcb != NULL) &&
-            (pcb->local_ip.addr != ip.addr) &&
-            (pcb->local_port != port))
-    {      
-      pcb = pcb->next;
-    }
-    
-    if (pcb != NULL)
+    switch (ident[0])
     {
-      od->id_inst_len = ident_len;
-      od->id_inst_ptr = ident;
-      od->addr = pcb;
-
-      switch (ident[0])
-      {
-        case 1: /* udpLocalAddress */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
-          od->v_len = 4;
-          break;
-        case 2: /* udpLocalPort */
-          od->instance = MIB_OBJECT_TAB;
-          od->access = MIB_OBJECT_READ_ONLY;
-          od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-          od->v_len = sizeof(s32_t);
-          break;
-        default:
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no such object"));
-          od->instance = MIB_OBJECT_NONE;
-          break;
-      }
-    }
-    else
-    {
-      LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no scalar"));
-      od->instance = MIB_OBJECT_NONE;
+      case 1: /* udpLocalAddress */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR);
+        od->v_len = 4;
+        break;
+      case 2: /* udpLocalPort */
+        od->instance = MIB_OBJECT_TAB;
+        od->access = MIB_OBJECT_READ_ONLY;
+        od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+        od->v_len = sizeof(s32_t);
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no such object"));
+        od->instance = MIB_OBJECT_NONE;
+        break;
     }
   }
   else
@@ -3450,27 +3367,42 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  struct udp_pcb *pcb;
   u8_t id;
+  struct udp_pcb *pcb;
+  struct ip_addr ip;
+  u16_t port;
 
   if (len){}
-  pcb = od->addr;
-  id = od->id_inst_ptr[0];
-  switch (id)
+  snmp_oidtoip(&od->id_inst_ptr[1], &ip);
+  ip.addr = htonl(ip.addr);
+  port = od->id_inst_ptr[5];
+
+  pcb = udp_pcbs;
+  while ((pcb != NULL) &&
+         !((pcb->local_ip.addr == ip.addr) &&
+           (pcb->local_port == port)))
+  {      
+    pcb = pcb->next;
+  }
+  
+  if (pcb != NULL)
   {
-    case 1: /* udpLocalAddress */
-      {
-        struct ip_addr *dst = value;
-        struct ip_addr *src = &pcb->local_ip;
-        *dst = *src;
-      }
-      break;
-    case 2: /* udpLocalPort */
-      {
-        s32_t *sint_ptr = value;
-        *sint_ptr = pcb->local_port;
-      }
-      break;
+    id = od->id_inst_ptr[0];
+    switch (id)
+    {
+      case 1: /* udpLocalAddress */
+        {
+          struct ip_addr *dst = value;
+          *dst = pcb->local_ip;
+        }
+        break;
+      case 2: /* udpLocalPort */
+        {
+          s32_t *sint_ptr = value;
+          *sint_ptr = pcb->local_port;
+        }
+        break;
+    }
   }
 }
 

@@ -72,9 +72,7 @@ struct obj_def
   /* length of instance part of supplied object identifier */
   u8_t  id_inst_len;
   /* instance part of supplied object identifier */
-  s32_t *id_inst_ptr; 
-  /* optional value address hint */
-  void *addr;
+  s32_t *id_inst_ptr;
 };
 
 /** MIB const array node */
