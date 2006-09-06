@@ -84,12 +84,12 @@ snmp_init(void)
   struct snmp_msg_pstat *msg_ps;
   u8_t i;
   
-	snmp1_pcb = udp_new();
-	if (snmp1_pcb != NULL)
-	{
-		udp_recv(snmp1_pcb, snmp_recv, (void *)SNMP_IN_PORT);
- 		udp_bind(snmp1_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
-	}
+  snmp1_pcb = udp_new();
+  if (snmp1_pcb != NULL)
+  {
+    udp_recv(snmp1_pcb, snmp_recv, (void *)SNMP_IN_PORT);
+    udp_bind(snmp1_pcb, IP_ADDR_ANY, SNMP_IN_PORT);
+  }
   msg_ps = &msg_input_list[0];
   for (i=0; i<SNMP_CONCURRENT_REQUESTS; i++)
   {
@@ -318,8 +318,6 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
             if (snmp_iso_prefix_expand(msg_ps->invb.head->ident_len, msg_ps->invb.head->ident, &oid))
             {
-              /** @todo expand tree and complete oid */
-#if 1
               if (msg_ps->invb.head->ident_len > 3)
               {
                 /* can offset ident_len and ident */
@@ -332,9 +330,6 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
                 /* can't offset ident_len -4, ident + 4 */
                 mn = snmp_expand_tree((struct mib_node*)&internet, 0, NULL, &oid);
               }
-#else
-              mn = (struct mib_node*)&internet;
-#endif
             }
             else
             {
@@ -344,9 +339,12 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
             {
               struct snmp_varbind *vb;
 
-              vb = snmp_varbind_alloc(&oid, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_NUL), 0);
+              mn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
+              
+              vb = snmp_varbind_alloc(&oid, object_def.asn_type, object_def.v_len);
               if (vb != NULL)
               {
+                mn->get_value(&object_def, object_def.v_len, vb->value);
                 snmp_varbind_tail_add(&msg_ps->outvb, vb);
               }
               else

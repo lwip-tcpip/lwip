@@ -75,14 +75,16 @@ struct obj_def
   s32_t *id_inst_ptr;
 };
 
+/** MIB const scalar (.0) node */
+#define MIB_NODE_SC 0x01
 /** MIB const array node */
-#define MIB_NODE_AR 0x01
+#define MIB_NODE_AR 0x02
 /** MIB array node (mem_malloced from RAM) */
-#define MIB_NODE_RA 0x02
+#define MIB_NODE_RA 0x03
 /** MIB list root node (mem_malloced from RAM) */
-#define MIB_NODE_LR 0x03
+#define MIB_NODE_LR 0x04
 /** MIB node for external objects */
-#define MIB_NODE_EX 0x04
+#define MIB_NODE_EX 0x05
 
 /** node "base class" layout, the mandatory fields for a node  */
 struct mib_node
@@ -98,6 +100,9 @@ struct mib_node
   /* array or max list length */
   const u16_t maxlength;
 };
+
+/** derived node for scalars .0 index */
+typedef struct mib_node mib_scalar_node;
 
 /** derived node, points to a fixed size const array
     of sub-identifiers plus a 'child' pointer */

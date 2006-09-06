@@ -4,8 +4,6 @@
  *
  * @note the object identifiers for this MIB-2 and private MIB tree
  * must be kept in sorted ascending order. This to ensure correct getnext operation.
- *
- * @todo optimize htonl, ntohl.
  */
 
 /*
@@ -105,17 +103,35 @@ static void snmp_get_value(struct obj_def *od, u16_t len, void *value);
 
 
 /* snmp .1.3.6.1.2.1.11 */
+const mib_scalar_node snmp_scalar = {
+  &snmp_get_object_def,
+  &snmp_get_value,
+  MIB_NODE_SC,
+  0
+};
 const s32_t snmp_ids[28] = {
   1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
   17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30
 };
 struct mib_node* const snmp_nodes[28] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar,
+  (struct mib_node* const)&snmp_scalar, (struct mib_node* const)&snmp_scalar
 };
 const struct mib_array_node snmp = {
-  &snmp_get_object_def,
-  &snmp_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   28,
   snmp_ids,
@@ -150,24 +166,32 @@ const struct mib_array_node udpentry = {
   udpentry_nodes
 };
 
-const s32_t udptable_id = 1;
-struct mib_node* const udptable_node = (struct mib_node* const)&udpentry;
-const struct mib_array_node udptable = {
+s32_t udptable_id = 1;
+struct mib_node* udptable_node = (struct mib_node* const)&udpentry;
+struct mib_ram_array_node udptable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &udptable_id,
   &udptable_node
 };
 
-const s32_t udp_ids[5] = { 1, 2, 3, 4, 5 };
-struct mib_node* const udp_nodes[5] = {
-  NULL, NULL, NULL, NULL, (struct mib_node* const)&udptable
-};
-const struct mib_array_node udp = {
+const mib_scalar_node udp_scalar = {
   &udp_get_object_def,
   &udp_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t udp_ids[5] = { 1, 2, 3, 4, 5 };
+struct mib_node* const udp_nodes[5] = {
+  (struct mib_node* const)&udp_scalar, (struct mib_node* const)&udp_scalar,
+  (struct mib_node* const)&udp_scalar, (struct mib_node* const)&udp_scalar,
+  (struct mib_node* const)&udptable
+};
+const struct mib_array_node udp = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   5,
   udp_ids,
@@ -189,36 +213,52 @@ struct mib_list_rootnode tcpconntree_root = {
 };
 const s32_t tcpconnentry_ids[5] = { 1, 2, 3, 4, 5 };
 struct mib_node* const tcpconnentry_nodes[5] = {
-  NULL, NULL, NULL, NULL, NULL
+  (struct mib_node* const)&tcpconntree_root, (struct mib_node* const)&tcpconntree_root,
+  (struct mib_node* const)&tcpconntree_root, (struct mib_node* const)&tcpconntree_root,
+  (struct mib_node* const)&tcpconntree_root
 };
 const struct mib_array_node tcpconnentry = {
-  &tcpconnentry_get_object_def,
-  &tcpconnentry_get_value,
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   5,
   tcpconnentry_ids,
   tcpconnentry_nodes
 };
 
-const s32_t tcpconntable_id = 1;
-struct mib_node* const tcpconntable_node = (struct mib_node* const)&tcpconnentry;
-const struct mib_array_node tcpconntable = {
+s32_t tcpconntable_id = 1;
+struct mib_node* tcpconntable_node = (struct mib_node* const)&tcpconnentry;
+struct mib_ram_array_node tcpconntable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+/** @todo update maxlength when inserting / deleting from table
+   0 when table is empty, 1 when more than one entry */
+  0,
   &tcpconntable_id,
   &tcpconntable_node
 };
 
-const s32_t tcp_ids[15] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-struct mib_node* const tcp_nodes[15] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  (struct mib_node* const)&tcpconntable, NULL, NULL
-};
-const struct mib_array_node tcp = {
+const mib_scalar_node tcp_scalar = {
   &tcp_get_object_def,
   &tcp_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t tcp_ids[15] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+struct mib_node* const tcp_nodes[15] = {
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcpconntable, (struct mib_node* const)&tcp_scalar,
+  (struct mib_node* const)&tcp_scalar
+};
+const struct mib_array_node tcp = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   15,
   tcp_ids,
@@ -227,14 +267,31 @@ const struct mib_array_node tcp = {
 #endif
 
 /* icmp .1.3.6.1.2.1.5 */
-const s32_t icmp_ids[26] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
-struct mib_node* const icmp_nodes[26] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL
-};
-const struct mib_array_node icmp = {
+const mib_scalar_node icmp_scalar = {
   &icmp_get_object_def,
   &icmp_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t icmp_ids[26] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
+struct mib_node* const icmp_nodes[26] = {
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar,
+  (struct mib_node* const)&icmp_scalar, (struct mib_node* const)&icmp_scalar
+};
+const struct mib_array_node icmp = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   26,
   icmp_ids,
@@ -265,13 +322,13 @@ const struct mib_array_node ipntomentry = {
   ipntomentry_nodes
 };
 
-const s32_t ipntomtable_id = 1;
-struct mib_node* const ipntomtable_node = (struct mib_node* const)&ipntomentry;
-const struct mib_array_node ipntomtable = {
+s32_t ipntomtable_id = 1;
+struct mib_node* ipntomtable_node = (struct mib_node* const)&ipntomentry;
+struct mib_ram_array_node ipntomtable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &ipntomtable_id,
   &ipntomtable_node
 };
@@ -305,13 +362,13 @@ const struct mib_array_node iprteentry = {
   iprteentry_nodes
 };
 
-const s32_t iprtetable_id = 1;
-struct mib_node* const iprtetable_node = (struct mib_node* const)&iprteentry;
-const struct mib_array_node iprtetable = {
+s32_t iprtetable_id = 1;
+struct mib_node* iprtetable_node = (struct mib_node* const)&iprteentry;
+struct mib_ram_array_node iprtetable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &iprtetable_id,
   &iprtetable_node
 };
@@ -343,27 +400,42 @@ const struct mib_array_node ipaddrentry = {
   ipaddrentry_nodes
 };
 
-const s32_t ipaddrtable_id = 1;
-struct mib_node* const ipaddrtable_node = (struct mib_node* const)&ipaddrentry;
-const struct mib_array_node ipaddrtable = {
+s32_t ipaddrtable_id = 1;
+struct mib_node* ipaddrtable_node = (struct mib_node* const)&ipaddrentry;
+struct mib_ram_array_node ipaddrtable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &ipaddrtable_id,
   &ipaddrtable_node
 };
 
 /* ip .1.3.6.1.2.1.4 */
-const s32_t ip_ids[23] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
-struct mib_node* const ip_nodes[23] = {
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
-  NULL, NULL, NULL, NULL, NULL, NULL, NULL, (struct mib_node* const)&ipaddrtable,
-  (struct mib_node* const)&iprtetable, (struct mib_node* const)&ipntomtable, NULL
-};
-const struct mib_array_node ip = {
+const mib_scalar_node ip_scalar = {
   &ip_get_object_def,
   &ip_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t ip_ids[23] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
+struct mib_node* const ip_nodes[23] = {
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ip_scalar,
+  (struct mib_node* const)&ip_scalar, (struct mib_node* const)&ipaddrtable,
+  (struct mib_node* const)&iprtetable, (struct mib_node* const)&ipntomtable,
+  (struct mib_node* const)&ip_scalar
+};
+const struct mib_array_node ip = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   23,
   ip_ids,
@@ -407,13 +479,13 @@ const struct mib_array_node attable = {
 };
 
 /* at .1.3.6.1.2.1.3 */
-const s32_t at_id = 1;
-struct mib_node* const at_node = (struct mib_node* const)&attable;
-const struct mib_array_node at = {
+s32_t at_id = 1;
+struct mib_node* at_node = (struct mib_node* const)&attable;
+struct mib_ram_array_node at = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &at_id,
   &at_node
 };
@@ -451,37 +523,57 @@ const struct mib_array_node ifentry = {
   ifentry_nodes
 };
 
-const s32_t iftable_id = 1;
-struct mib_node* const iftable_node = (struct mib_node* const)&ifentry;
-const struct mib_array_node iftable = {
+s32_t iftable_id = 1;
+struct mib_node* iftable_node = (struct mib_node* const)&ifentry;
+struct mib_ram_array_node iftable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
-  MIB_NODE_AR,
-  1,
+  MIB_NODE_RA,
+  0,
   &iftable_id,
   &iftable_node
 };
 
 /* interfaces .1.3.6.1.2.1.2 */
-const s32_t interfaces_ids[2] = { 1, 2 };
-struct mib_node* const interfaces_nodes[2] = { NULL, (struct mib_node* const)&iftable };
-const struct mib_array_node interfaces = {
+const mib_scalar_node interfaces_scalar = {
   &interfaces_get_object_def,
   &interfaces_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t interfaces_ids[2] = { 1, 2 };
+struct mib_node* const interfaces_nodes[2] = {
+  (struct mib_node* const)&interfaces_scalar, (struct mib_node* const)&iftable
+};
+const struct mib_array_node interfaces = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   2,
   interfaces_ids,
   interfaces_nodes
 };
 
+
 /*             0 1 2 3 4 5 6 */
 /* system .1.3.6.1.2.1.1 */
-const s32_t sys_tem_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
-struct mib_node* const sys_tem_nodes[7] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-/* work around name issue with 'sys_tem', some compiler(s?) seem to reserve 'system' */
-const struct mib_array_node sys_tem = {
+const mib_scalar_node sys_tem_scalar = {
   &system_get_object_def,
   &system_get_value,
+  MIB_NODE_SC,
+  0
+};
+const s32_t sys_tem_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
+struct mib_node* const sys_tem_nodes[7] = {
+  (struct mib_node* const)&sys_tem_scalar, (struct mib_node* const)&sys_tem_scalar,
+  (struct mib_node* const)&sys_tem_scalar, (struct mib_node* const)&sys_tem_scalar,
+  (struct mib_node* const)&sys_tem_scalar, (struct mib_node* const)&sys_tem_scalar,
+  (struct mib_node* const)&sys_tem_scalar
+};
+/* work around name issue with 'sys_tem', some compiler(s?) seem to reserve 'system' */
+const struct mib_array_node sys_tem = {
+  &noleafs_get_object_def,
+  &noleafs_get_value,
   MIB_NODE_AR,
   7,
   sys_tem_ids,
@@ -869,11 +961,15 @@ void snmp_inc_iflist(void)
   struct mib_list_node *if_node = NULL;
   
   snmp_mib_node_insert(&iflist_root, iflist_root.count + 1, &if_node);
+  /* enable getnext traversal on filled table */
+  iftable.maxlength = 1;
 }
 
 void snmp_dec_iflist(void)
 {
   snmp_mib_node_delete(&iflist_root, iflist_root.tail);
+  /* disable getnext traversal on empty table */
+  if(iflist_root.count == 0) iftable.maxlength = 0;
 }
 
 /** 
@@ -934,6 +1030,9 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
       }
     }
   }
+  /* enable getnext traversal on filled tables */
+  at.maxlength = 1;
+  ipntomtable.maxlength = 1;
 }
 
 /** 
@@ -1005,6 +1104,9 @@ void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
       }
     }
   }
+  /* disable getnext traversal on empty tables */
+  if(arptree_root.count == 0) at.maxlength = 0;
+  if(ipntomtree_root.count == 0) ipntomtable.maxlength = 0;
 }
 
 void snmp_inc_ipinreceives(void)
@@ -1133,6 +1235,8 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
     }
     level++;
   }
+  /* enable getnext traversal on filled table */
+  ipaddrtable.maxlength = 1;
 }
 
 /** 
@@ -1194,6 +1298,8 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
       snmp_mib_lrn_free(next);
     }
   }
+  /* disable getnext traversal on empty table */
+  if (ipaddrtree_root.count == 0) ipaddrtable.maxlength = 0;
 }
 
 /** 
@@ -1258,6 +1364,8 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
       level++;
     }
   }
+  /* enable getnext traversal on filled table */
+  iprtetable.maxlength = 1;
 }
 
 /** 
@@ -1338,6 +1446,8 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
       }
     }
   }
+  /* disable getnext traversal on empty table */
+  if (iprtetree_root.count == 0) iprtetable.maxlength = 0;
 }
 
 
@@ -1576,6 +1686,7 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
       }
     }
   }
+  udptable.maxlength = 1;
 }
 
 /** 
@@ -1588,56 +1699,75 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
   struct mib_list_node *udp_n, *del_n[5];
   struct ip_addr ip;
   s32_t udpidx[5];
-  u8_t fc, level, del_cnt;
+  u8_t bindings, fc, level, del_cnt;
 
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
   ip.addr = ntohl(pcb->local_ip.addr);
   snmp_iptooid(&ip, &udpidx[0]);
   udpidx[4] = pcb->local_port;
  
-  /* mark nodes for deletion */
-  level = 0;
-  del_cnt = 0;
-  udp_rn = &udp_root;
-  while ((level < 5) && (udp_rn != NULL))
-  {
-    fc = snmp_mib_node_find(udp_rn, udpidx[level], &udp_n);
-    if (fc == 0)
+  /* count PCBs for a given binding
+     (e.g. when reusing ports or for temp output PCBs) */
+  bindings = 0;
+  pcb = udp_pcbs;
+  while ((pcb != NULL))
+  {      
+    if ((pcb->local_ip.addr == ip.addr) &&
+        (pcb->local_port == udpidx[4]))
     {
-      /* udpidx[level] does not exist */
-      del_cnt = 0;
-      udp_rn = NULL;
+      bindings++;
     }
-    else if (fc == 1)
-    {
-      del_rn[del_cnt] = udp_rn;
-      del_n[del_cnt] = udp_n;
-      del_cnt++;
-      udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
-    }
-    else if (fc == 2)
-    {
-      /* reset delete (2 or more childs) */
-      del_cnt = 0;
-      udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
-    }
-    level++;
+    pcb = pcb->next;
   }
-  /* delete marked index nodes */
-  while (del_cnt > 0)
+  if (bindings == 1)
   {
-    del_cnt--;
-   
-    udp_rn = del_rn[del_cnt];
-    udp_n = del_n[del_cnt];
+    /* selectively remove */
+    /* mark nodes for deletion */
+    level = 0;
+    del_cnt = 0;
+    udp_rn = &udp_root;
+    while ((level < 5) && (udp_rn != NULL))
+    {
+      fc = snmp_mib_node_find(udp_rn, udpidx[level], &udp_n);
+      if (fc == 0)
+      {
+        /* udpidx[level] does not exist */
+        del_cnt = 0;
+        udp_rn = NULL;
+      }
+      else if (fc == 1)
+      {
+        del_rn[del_cnt] = udp_rn;
+        del_n[del_cnt] = udp_n;
+        del_cnt++;
+        udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+      }
+      else if (fc == 2)
+      {
+        /* reset delete (2 or more childs) */
+        del_cnt = 0;
+        udp_rn = (struct mib_list_rootnode*)(udp_n->nptr);
+      }
+      level++;
+    }
+    /* delete marked index nodes */
+    while (del_cnt > 0)
+    {
+      del_cnt--;
+     
+      udp_rn = del_rn[del_cnt];
+      udp_n = del_n[del_cnt];
 
-    next = snmp_mib_node_delete(udp_rn, udp_n);
-    if (next != NULL)
-    {
-      LWIP_ASSERT("next_count == 0",next->count == 0);
-      snmp_mib_lrn_free(next);
+      next = snmp_mib_node_delete(udp_rn, udp_n);
+      if (next != NULL)
+      {
+        LWIP_ASSERT("next_count == 0",next->count == 0);
+        snmp_mib_lrn_free(next);
+      }
     }
   }
+  /* disable getnext traversal on empty table */
+  if (udp_root.count == 0) udptable.maxlength = 0;
 }
 
 
@@ -1817,7 +1947,10 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
   u8_t id;
 
-  if ((ident_len == 2) && (ident[1] == 0))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   { 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -1938,7 +2071,10 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 interfaces_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 2) && (ident[0] == 1) && (ident[1] == 0))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -2329,7 +2465,10 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
   u8_t id;
 
-  if ((ident_len == 2) && (ident[1] == 0))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   { 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -2967,7 +3106,10 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 icmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 2) && (ident[1] == 0) &&
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if ((ident_len == 2) &&
       (ident[0] > 0) && (ident[0] < 27))
   {
     od->id_inst_len = ident_len;
@@ -3083,7 +3225,10 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
   u8_t id;
 
-  if ((ident_len == 2) && (ident[1] == 0))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   { 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
@@ -3282,7 +3427,10 @@ tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 udp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 2) && (ident[1] == 0) &&
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if ((ident_len == 2) &&
       (ident[0] > 0) && (ident[0] < 6))
   {
     od->id_inst_len = ident_len;
@@ -3409,7 +3557,10 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 static void
 snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
-  if ((ident_len == 2) && (ident[1] == 0))
+  /* return to object name, adding index depth (1) */
+  ident_len += 1;
+  ident -= 1;
+  if (ident_len == 2)
   {
     u8_t id;
 
