@@ -151,8 +151,6 @@ etharp_tmr(void)
         (arp_table[i].ctime >= ARP_MAXAGE)) {
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %"U16_F".\n", (u16_t)i));
       arp_table[i].state = ETHARP_STATE_EXPIRED;
-      /* remove from SNMP ARP index tree */
-      snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
     /* pending entry? */
     } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
       /* entry unresolved/pending for too long? */
@@ -167,6 +165,8 @@ etharp_tmr(void)
     }
     /* clean up entries that have just been expired */
     if (arp_table[i].state == ETHARP_STATE_EXPIRED) {
+      /* remove from SNMP ARP index tree */
+      snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
 #if ARP_QUEUEING
       /* and empty packet queue */
       if (arp_table[i].p != NULL) {
