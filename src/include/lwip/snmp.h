@@ -222,8 +222,8 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_iproutingdiscards()
 #define snmp_insert_ipaddridx_tree(ni)
 #define snmp_delete_ipaddridx_tree(ni)
-#define snmp_insert_iprteidx_tree(ni)
-#define snmp_delete_iprteidx_tree(ni)
+#define snmp_insert_iprteidx_tree(dflt, ni)
+#define snmp_delete_iprteidx_tree(dflt, ni)
 
 /* ICMP */
 #define snmp_inc_icmpinmsgs()

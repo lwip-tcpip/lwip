@@ -42,9 +42,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/tcp.h"
-#if LWIP_SNMP
 #include "lwip/snmp.h"
-#endif
 
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
