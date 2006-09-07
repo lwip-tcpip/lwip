@@ -66,12 +66,6 @@ struct udp_pcb *snmp1_pcb = NULL;
 static void snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static err_t snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat);
 static err_t snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat);
-static struct snmp_varbind* snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len);
-static void snmp_varbind_free(struct snmp_varbind *vb);
-static void snmp_varbind_list_free(struct snmp_varbind_root *root);
-static void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);
-static struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
-
 
 
 /**
@@ -99,6 +93,9 @@ snmp_init(void)
     msg_ps++;
   }
   trap_msg.pcb = snmp1_pcb;
+  /* The coldstart trap will only be output
+     if our outgoing interface is up & configured  */
+  snmp_coldstart_trap();
 }
 
 #if 0
@@ -501,12 +498,11 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   len = ((len < (SNMP_COMMUNITY_STR_LEN))?(len):(SNMP_COMMUNITY_STR_LEN));
   m_stat->community[len] = 0;
   m_stat->com_strlen = len;
-  if (strncmp(snmp_publiccommunity, m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
+  if (strncmp(snmp_publiccommunity, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
   {
     /** @todo: move this if we need to check more names */
     snmp_inc_snmpinbadcommunitynames();
-
-    /** @todo: send authentication failure trap, if we have a trap destination */
+    snmp_authfail_trap();
     return ERR_ARG;
   }
   ofs += (1 + len_octets + len);
@@ -826,7 +822,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
   return ERR_OK;
 }
 
-static struct snmp_varbind*
+struct snmp_varbind*
 snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len)
 {
   struct snmp_varbind *vb;
@@ -885,7 +881,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len)
   return vb;
 }
 
-static void
+void
 snmp_varbind_free(struct snmp_varbind *vb)
 {
   if (vb->value != NULL )
@@ -899,7 +895,7 @@ snmp_varbind_free(struct snmp_varbind *vb)
   mem_free(vb);
 }
 
-static void
+void
 snmp_varbind_list_free(struct snmp_varbind_root *root)
 {
   struct snmp_varbind *vb, *prev;
@@ -916,7 +912,7 @@ snmp_varbind_list_free(struct snmp_varbind_root *root)
   root->tail = NULL;
 }
 
-static void
+void
 snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb)
 {
   if (root->count == 0)
@@ -935,7 +931,7 @@ snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb)
   root->count += 1;
 }
 
-static struct snmp_varbind*
+struct snmp_varbind*
 snmp_varbind_tail_remove(struct snmp_varbind_root *root)
 {
   struct snmp_varbind* vb;

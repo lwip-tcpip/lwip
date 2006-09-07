@@ -175,6 +175,7 @@ void snmp_inc_snmpoutgetresponses(void);
 void snmp_inc_snmpouttraps(void);
 void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
 void snmp_set_snmpenableauthentraps(u8_t *value);
+void snmp_get_snmpenableauthentraps(u8_t *value);
 
 /* LWIP_SNMP support not available */
 /* define everything to be empty */
@@ -301,6 +302,7 @@ void snmp_set_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_snmpouttraps()
 #define snmp_get_snmpgrpid_ptr(oid)
 #define snmp_set_snmpenableauthentraps(value)
+#define snmp_get_snmpenableauthentraps(value)
 
 #endif
 

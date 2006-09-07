@@ -53,10 +53,19 @@
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
 
-/**
- * TRAP message structure
- * @todo turn this into an arg to snmp_create_trap ?
- */
+struct snmp_trap_dst
+{
+  /* destination IP address in network order */
+  struct ip_addr dip;
+  /* set to 0 when disabled, >0 when enabled */
+  u8_t enable;
+};
+#if (SNMP_TRAP_DESTINATIONS == 0)
+#error "need at least one trap destination"
+#endif
+struct snmp_trap_dst trap_dst[SNMP_TRAP_DESTINATIONS];
+
+/** TRAP message structure */
 struct snmp_msg_trap trap_msg;
 
 static u16_t snmp_resp_header_sum(struct snmp_msg_pstat *m_stat, u16_t vb_len);
@@ -67,7 +76,33 @@ static u16_t snmp_resp_header_enc(struct snmp_msg_pstat *m_stat, struct pbuf *p)
 static u16_t snmp_trap_header_enc(struct snmp_msg_trap *m_trap, struct pbuf *p);
 static u16_t snmp_varbind_list_enc(struct snmp_varbind_root *root, struct pbuf *p, u16_t ofs);
 
+/**
+ * Sets enable switch for this trap destination.
+ * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
+ * @param enable switch if 0 destination is disabled >0 enabled.
+ */
+void
+snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
+{
+  if (dst_idx < SNMP_TRAP_DESTINATIONS)
+  {
+    trap_dst[dst_idx].enable = enable;
+  }
+}
 
+/**
+ * Sets IPv4 address for this trap destination.
+ * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
+ * @param dst IPv4 address in host order.
+ */
+void
+snmp_trap_dst_ip_set(u8_t dst_idx, struct ip_addr *dst)
+{
+  if (dst_idx < SNMP_TRAP_DESTINATIONS)
+  {
+    trap_dst[dst_idx].dip.addr = htonl(dst->addr);
+  }
+}
 
 /**
  * Sends a 'getresponse' message to the request originator.
@@ -172,7 +207,6 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
 /**
  * Sends an generic or enterprise specific trap message.
  *
- * @param dst points to the trap destination IPv4 address
  * @param generic_trap is the trap code
  * @param specific_trap used for enterprise traps when generic_trap == 6
  * @return ERR_OK when success, ERR_MEM if we're out of memory
@@ -185,63 +219,96 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
  * (sysObjectID) for specific traps.
  */
 err_t
-snmp_send_trap(struct ip_addr *dst, s8_t generic_trap, s32_t specific_trap)
+snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
 {
+  struct snmp_trap_dst *td;
   struct netif *dst_if;
+  struct ip_addr dst_ip;
   struct pbuf *p;
-  u16_t tot_len;
+  u16_t i,tot_len;
 
-  /* network order trap destination */
-  trap_msg.dip.addr = htonl(dst->addr);
-  /* lookup current source address for this dst */
-  dst_if = ip_route(dst);
-  trap_msg.sip_raw[0] = dst_if->ip_addr.addr >> 24;
-  trap_msg.sip_raw[1] = dst_if->ip_addr.addr >> 16;
-  trap_msg.sip_raw[2] = dst_if->ip_addr.addr >> 8;
-  trap_msg.sip_raw[3] = dst_if->ip_addr.addr;
-  trap_msg.gen_trap = generic_trap;
-  trap_msg.spc_trap = specific_trap;
-  if (generic_trap == 6)
+  for (i=0, td = &trap_dst[0]; i<SNMP_TRAP_DESTINATIONS; i++, td++)
   {
-    /* enterprise-Specific trap */
-    snmp_get_sysobjid_ptr(&trap_msg.enterprise);
-  }
-  else
-  {
-    /* generic (MIB-II) trap */    
-    snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
-  }
-  snmp_get_sysuptime(&trap_msg.ts);
+    if ((td->enable != 0) && (td->dip.addr != 0))
+    {
+      /* network order trap destination */
+      trap_msg.dip.addr = td->dip.addr;
+      /* lookup current source address for this dst */
+      dst_if = ip_route(&td->dip);
+      dst_ip.addr = ntohl(dst_if->ip_addr.addr);
+      trap_msg.sip_raw[0] = dst_ip.addr >> 24;
+      trap_msg.sip_raw[1] = dst_ip.addr >> 16;
+      trap_msg.sip_raw[2] = dst_ip.addr >> 8;
+      trap_msg.sip_raw[3] = dst_ip.addr;
+      trap_msg.gen_trap = generic_trap;
+      trap_msg.spc_trap = specific_trap;
+      if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
+      {
+        /* enterprise-Specific trap */
+        snmp_get_sysobjid_ptr(&trap_msg.enterprise);
+      }
+      else
+      {
+        /* generic (MIB-II) trap */    
+        snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
+      }
+      snmp_get_sysuptime(&trap_msg.ts);
 
-  /* pass 0, calculate length fields */
-  tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
-  tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
+      /* pass 0, calculate length fields */
+      tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
+      tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
 
-  /* allocate pbuf(s) */
-  p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
-  if (p != NULL)
-  {
-    u16_t ofs;
+      /* allocate pbuf(s) */
+      p = pbuf_alloc(PBUF_TRANSPORT, tot_len, PBUF_POOL);
+      if (p != NULL)
+      {
+        u16_t ofs;
     
-    /* pass 1, encode packet ino the pbuf(s) */
-    ofs = snmp_trap_header_enc(&trap_msg, p);
-    snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
+        /* pass 1, encode packet ino the pbuf(s) */
+        ofs = snmp_trap_header_enc(&trap_msg, p);
+        snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
 
-    snmp_inc_snmpouttraps();
-    snmp_inc_snmpoutpkts();
+        snmp_inc_snmpouttraps();
+        snmp_inc_snmpoutpkts();
 
-    /** connect to the TRAP destination */
-    udp_connect(trap_msg.pcb, &trap_msg.dip, SNMP_TRAP_PORT);
-    udp_send(trap_msg.pcb, p);
-    /** disassociate remote address and port with this pcb */
-    udp_disconnect(trap_msg.pcb);
+        /** connect to the TRAP destination */
+        udp_connect(trap_msg.pcb, &trap_msg.dip, SNMP_TRAP_PORT);
+        udp_send(trap_msg.pcb, p);
+        /** disassociate remote address and port with this pcb */
+        udp_disconnect(trap_msg.pcb);
 
-    pbuf_free(p);
-    return ERR_OK;
+        pbuf_free(p);
+      }
+      else
+      {
+        return ERR_MEM;
+      }
+    }
+    td++;
   }
-  else
+  return ERR_OK;
+}
+
+void
+snmp_coldstart_trap(void)
+{  
+  trap_msg.outvb.head = NULL;
+  trap_msg.outvb.tail = NULL;
+  trap_msg.outvb.count = 0;
+  snmp_send_trap(SNMP_GENTRAP_COLDSTART, 0);
+}
+
+void
+snmp_authfail_trap(void)
+{  
+  u8_t enable;
+  snmp_get_snmpenableauthentraps(&enable);
+  if (enable == 1)
   {
-    return ERR_MEM;
+    trap_msg.outvb.head = NULL;
+    trap_msg.outvb.tail = NULL;
+    trap_msg.outvb.count = 0;
+    snmp_send_trap(SNMP_GENTRAP_AUTHFAIL, 0);
   }
 }
 

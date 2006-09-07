@@ -1919,6 +1919,11 @@ void snmp_set_snmpenableauthentraps(u8_t *value)
   }
 }
 
+void snmp_get_snmpenableauthentraps(u8_t *value)
+{
+  *value = *snmpenableauthentraps_ptr;
+}
+
 void
 noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {

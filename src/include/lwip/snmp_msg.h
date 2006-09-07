@@ -53,6 +53,11 @@
 #define SNMP_ES_READONLY 4
 #define SNMP_ES_GENERROR 5
 
+#define SNMP_GENTRAP_COLDSTART 0
+#define SNMP_GENTRAP_WARMSTART 1
+#define SNMP_GENTRAP_AUTHFAIL 4
+#define SNMP_GENTRAP_ENTERPRISESPC 6
+
 struct snmp_varbind
 {
   /* next pointer, NULL for last in list */
@@ -264,9 +269,21 @@ extern struct snmp_msg_trap trap_msg;
 
 /** Agent setup, start listening to port 161. */
 void snmp_init(void);
+void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable);
+void snmp_trap_dst_ip_set(u8_t dst_idx, struct ip_addr *dst);
+
+/** Varbind-list functions. */
+struct snmp_varbind* snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len);
+void snmp_varbind_free(struct snmp_varbind *vb);
+void snmp_varbind_list_free(struct snmp_varbind_root *root);
+void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);
+struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
+
 /** Handles internal/external events. */
 void snmp_msg_event(struct snmp_msg_pstat *msg_ps);
 err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
-err_t snmp_send_trap(struct ip_addr *dst, s8_t generic_trap, s32_t specific_trap);
+err_t snmp_send_trap(s8_t generic_trap, s32_t specific_trap);
+void snmp_coldstart_trap(void);
+void snmp_authfail_trap(void);
 
 #endif

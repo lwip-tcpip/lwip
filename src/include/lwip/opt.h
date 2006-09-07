@@ -250,10 +250,13 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- SNMP options ---------- */
-/** @todo SNMP isn't functional yet. 
-    @note UDP must be available for SNMP transport */
+/** @note UDP must be available for SNMP transport */
 #ifndef LWIP_SNMP
 #define LWIP_SNMP                       0
+#endif
+/** @note At least one trap destination is required */
+#ifndef SNMP_TRAP_DESTINATIONS
+#define SNMP_TRAP_DESTINATIONS          1
 #endif
 
 #ifndef SNMP_PRIVATE_MIB
