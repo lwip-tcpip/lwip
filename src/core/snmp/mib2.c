@@ -1974,7 +1974,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->instance = MIB_OBJECT_SCALAR;
         od->access = MIB_OBJECT_READ_ONLY;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
-        od->v_len = SNMP_SYSOBJID_LEN * sizeof(s32_t);
+        od->v_len = sysobjid.len * sizeof(s32_t);
         break;
       case 3: /* sysUpTime */
         od->instance = MIB_OBJECT_SCALAR;
