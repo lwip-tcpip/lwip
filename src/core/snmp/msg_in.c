@@ -89,7 +89,7 @@ snmp_init(void)
   {
     msg_ps->state = SNMP_MSG_EMPTY;
     msg_ps->error_index = 0;
-    msg_ps->error_status = 0;
+    msg_ps->error_status = SNMP_ES_NOERROR;
     msg_ps++;
   }
   trap_msg.pcb = snmp1_pcb;
@@ -164,10 +164,6 @@ snmp_msg_event(struct snmp_msg_pstat *msg_ps)
     else if (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ)
     {
     }
-    else
-    {
-      /** @todo not a request, return generror?? */
-    }
   }
   else if (msg_ps->state == SNMP_MSG_INTERNAL)
   {
@@ -213,16 +209,12 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
       /* accepting request */
       snmp_inc_snmpinpkts();
-      /* register 'protocol control block' used */
+      /* record used 'protocol control block' */
       msg_ps->pcb = pcb;
       /* source address (network order) */
       msg_ps->sip = *addr;
       /* source port (host order (lwIP oddity)) */
       msg_ps->sp = port;
-      /* demultiplex variable bindings */
-      msg_ps->state = SNMP_MSG_DEMUX;
-      /* first variable binding from list to inspect */
-      msg_ps->vb_idx = 0;
       /* read UDP payload length from UDP header */
       payload_len = ntohs(udphdr->len) - UDP_HLEN;
 
@@ -231,12 +223,24 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
       /* check total length, version, community, pdu type */
       err_ret = snmp_pdu_header_check(p, payload_ofs, payload_len, &varbind_ofs, msg_ps);
+      if ((msg_ps->rt == SNMP_ASN1_PDU_GET_REQ) ||
+          (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ) ||
+          (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ))
+      {
+        /* Only accept requests. (be robust) */
+        err_ret = err_ret;
+      }
+      else
+      {
+        /* Reject response and trap headers as input! */
+        err_ret = ERR_ARG;
+      }
       if (err_ret == ERR_OK)
       {
         LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv ok, community %s\n", msg_ps->community));
-
-       /* Builds a list of variable bindings. Copy the varbinds from the pbuf
-         chain to glue them when these are divided over two or more pbuf's. */
+        
+        /* Builds a list of variable bindings. Copy the varbinds from the pbuf
+          chain to glue them when these are divided over two or more pbuf's. */
         err_ret = snmp_pdu_dec_varbindlist(p, varbind_ofs, &varbind_ofs, msg_ps);
         if ((err_ret == ERR_OK) && (msg_ps->invb.count > 0))
         {          
@@ -245,6 +249,13 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
           /* we've decoded the incoming message, release input msg now */
           pbuf_free(p);
+          
+          msg_ps->error_status = SNMP_ES_NOERROR;
+          msg_ps->error_index = 0;
+          /* demultiplex variable bindings */
+          msg_ps->state = SNMP_MSG_DEMUX;
+          /* first variable binding from list to inspect */
+          msg_ps->vb_idx = 0;
 
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv varbind cnt=%"U16_F"\n",(u16_t)msg_ps->invb.count));
 
@@ -361,14 +372,61 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
               msg_ps->error_index = 1 + msg_ps->vb_idx;
             }
           }
-          else
+          else if (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ)
           {
-            /* request != GET */
-            /** @todo EXPERIMENTAL dumb echo, this is not how the agent should respond.
-                This is for test purposes only, do not use this in real world!! */
-            msg_ps->outvb = msg_ps->invb;
-            msg_ps->error_status = SNMP_ES_NOERROR;
-            msg_ps->error_index = 0;
+            /** test object identifier for .iso.org.dod.internet prefix */
+            if (snmp_iso_prefix_tst(msg_ps->invb.head->ident_len, msg_ps->invb.head->ident))
+            {
+              mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 4,
+                                     msg_ps->invb.head->ident + 4, &object_def);
+            }
+            else
+            {
+              mn = NULL;
+            }
+            if (mn != NULL)
+            {
+              struct snmp_varbind *vb;
+
+              vb = msg_ps->invb.head;
+              if ((object_def.access == MIB_OBJECT_READ_WRITE) &&
+                  (object_def.asn_type == vb->value_type) &&
+                  (mn->set_test(&object_def,vb->value_len,vb->value) != 0))
+              {
+                 /** @todo change this if we support vb-lists,
+                     first test all vbs, then either set all or give badvalue */
+                 mn->set_value(&object_def,vb->value_len,vb->value);
+                 /** simply echo the input if we can set it */
+                 msg_ps->outvb = msg_ps->invb;
+                 msg_ps->invb.head = NULL;
+                 msg_ps->invb.tail = NULL;
+                 msg_ps->invb.count = 0;
+              }
+              else
+              {
+                /* bad value */
+                /* @todo move used names back from outvb to invb */
+                snmp_varbind_list_free(&msg_ps->outvb);
+                msg_ps->outvb = msg_ps->invb;
+                msg_ps->invb.head = NULL;
+                msg_ps->invb.tail = NULL;
+                msg_ps->invb.count = 0;
+                msg_ps->error_status = SNMP_ES_BADVALUE;
+                msg_ps->error_index = 1 + msg_ps->vb_idx;
+              }
+            }
+            else
+            {
+              /* mn == NULL, noSuchName */
+              /* @todo move used names back from outvb to invb */
+              snmp_varbind_list_free(&msg_ps->outvb);
+              msg_ps->outvb = msg_ps->invb;
+              msg_ps->invb.head = NULL;
+              msg_ps->invb.tail = NULL;
+              msg_ps->invb.count = 0;
+              msg_ps->error_status = SNMP_ES_NOSUCHNAME;
+              msg_ps->error_index = 1 + msg_ps->vb_idx;
+            }
           }
 
 /* when more variable bindings left msg_ps->state = SNMP_MSG_DEMUX */

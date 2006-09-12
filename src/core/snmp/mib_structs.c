@@ -190,6 +190,8 @@ snmp_mib_lrn_alloc(void)
   {
     lrn->get_object_def = noleafs_get_object_def;
     lrn->get_value = noleafs_get_value;
+    lrn->set_test = noleafs_set_test;
+    lrn->set_value = noleafs_set_value;
     lrn->node_type = MIB_NODE_LR;
     lrn->maxlength = 0;
     lrn->head = NULL;

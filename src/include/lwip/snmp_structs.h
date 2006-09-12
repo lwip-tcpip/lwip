@@ -94,7 +94,10 @@ struct mib_node
   /** returns object value for the given object identifier,
      @note the caller must allocate at least len bytes for the value */
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
-  /** @todo set_value() */
+  /** tests length and/or range BEFORE setting */
+  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
+  /** sets object value, only to be called when set_test()  */
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);  
   /** One out of MIB_NODE_AR, MIB_NODE_LR or MIB_NODE_EX */
   const u8_t node_type;
   /* array or max list length */
@@ -111,6 +114,8 @@ struct mib_array_node
   /* inherited "base class" members */
   void (* const get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (* const get_value)(struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);
 
   const u8_t node_type;
   const u16_t maxlength;
@@ -127,6 +132,8 @@ struct mib_ram_array_node
   /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);
 
   u8_t node_type;
   u16_t maxlength;
@@ -151,6 +158,8 @@ struct mib_list_rootnode
   /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);
 
   u8_t node_type;
   u16_t maxlength;
@@ -169,6 +178,8 @@ struct mib_external_node
   /* inherited "base class" members */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value)(struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
+  void (*set_value)(struct obj_def *od, u16_t len, void *value);
 
   u8_t node_type;
   u16_t maxlength;
@@ -192,6 +203,8 @@ extern const struct mib_array_node internet;
 /** dummy function pointers for non-leaf MIB nodes from mib2.c */
 void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
+u8_t noleafs_set_test(struct obj_def *od, u16_t len, void *value);
+void noleafs_set_value(struct obj_def *od, u16_t len, void *value);
 
 void snmp_oidtoip(s32_t *ident, struct ip_addr *ip);
 void snmp_iptooid(struct ip_addr *ip, s32_t *ident);
