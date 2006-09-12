@@ -284,7 +284,6 @@ snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
         return ERR_MEM;
       }
     }
-    td++;
   }
   return ERR_OK;
 }
