@@ -75,6 +75,12 @@ struct obj_def
   s32_t *id_inst_ptr;
 };
 
+struct snmp_name_ptr
+{
+  u8_t ident_len;
+  s32_t *ident;
+};
+
 /** MIB const scalar (.0) node */
 #define MIB_NODE_SC 0x01
 /** MIB const array node */
@@ -172,7 +178,7 @@ struct mib_list_rootnode
 };
 
 /** derived node, has access functions for mib object in external memory or device
-    using index ('idx'), with a range 0 .. (count - 1) to address these objects */
+    using 'tree_level' and 'idx', with a range 0 .. (level_length() - 1) */
 struct mib_external_node
 {
   /* inherited "base class" members */
@@ -185,16 +191,23 @@ struct mib_external_node
   u16_t maxlength;
 
   /* aditional struct members */
-  void (*req_object_def)(u8_t ident_len, s32_t *ident);
-  void (*getreq_value)(struct obj_def *od);
-
-  /** compares object sub identifier with externally available id
+  /** points to an extenal (in memory) record of some sort of addressing
+      information, passed to and interpreted by the funtions below */
+  void* addr_inf;
+  /** tree levels under this node */
+  u8_t tree_levels;
+  /** number of objects at this level */
+  u16_t (*level_length)(void* addr_inf, u8_t level);
+  /** compares object sub identifier with external id
       return zero when equal, nonzero when unequal */
-  u16_t (*ident_cmp)(u16_t idx, s32_t sub_id);
-  /** returns next pointer for given index (NULL for scalar 'leaf') */
-  struct mib_extern_node* (*get_nptr)(u16_t idx);
-  /* counts actual number of external objects  */
-  u16_t count;
+  s32_t (*ident_cmp)(void* addr_inf, u8_t level, u16_t idx, s32_t sub_id);
+  void (*get_objid)(void* addr_inf, u8_t level, u16_t idx, s32_t *sub_id);
+
+  /** async requests */
+  void (*get_object_def_r)(u8_t ident_len, s32_t *ident, struct obj_def *od);
+  void (*get_value_r)(struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test_r)(struct obj_def *od, u16_t len, void *value);
+  void (*set_value_r)(struct obj_def *od, u16_t len, void *value);
 };
 
 /** export MIB tree from mib2.c */
@@ -220,7 +233,7 @@ s8_t snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_
 s8_t snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **fn);
 struct mib_list_rootnode *snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n);
 
-struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def);
+struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np);
 struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);

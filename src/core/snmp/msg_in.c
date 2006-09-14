@@ -121,11 +121,13 @@ snmp_msg_event(struct snmp_msg_pstat *msg_ps)
     }
     if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
     { 
+      struct snmp_name_ptr np;
+
       /** test object identifier for .iso.org.dod.internet prefix */
       if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
       {
         mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
-                               msg_ps->vb_ptr->ident + 4, &object_def);
+                               msg_ps->vb_ptr->ident + 4, &np);
       }
       else
       {
@@ -137,14 +139,35 @@ snmp_msg_event(struct snmp_msg_pstat *msg_ps)
         {
           /* external object */
           msg_ps->state = SNMP_MSG_EXTERNAL;
+          mn->get_object_def_r(np.ident_len, np.ident, &object_def);
+          if (object_def.instance != MIB_OBJECT_NONE)
+          {
+            mn = mn;
+          }
+          else
+          {
+            /* search failed, object id points to unknown object (nosuchname) */
+            mn =  NULL;
+          }          
         }
         else
         {
           /* internal object */
-          msg_ps->state = SNMP_MSG_INTERNAL;
+          msg_ps->state = SNMP_MSG_INTERNAL;              
+          mn->get_object_def(np.ident_len, np.ident, &object_def);
+          if (object_def.instance != MIB_OBJECT_NONE)
+          {
+            mn = mn;
+          }
+          else
+          {
+            /* search failed, object id points to unknown object (nosuchname) */
+            mn =  NULL;
+          }
+          msg_ps->state = SNMP_MSG_DEMUX;
         }
       }
-      else
+      if (mn != NULL)
       {
         /* mn == NULL, noSuchName */
         snmp_varbind_list_free(&msg_ps->outvb);
@@ -264,8 +287,26 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
             /** test object identifier for .iso.org.dod.internet prefix */
             if (snmp_iso_prefix_tst(msg_ps->invb.head->ident_len, msg_ps->invb.head->ident))
             {
+              struct snmp_name_ptr np;
+              
               mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 4,
-                                     msg_ps->invb.head->ident + 4, &object_def);
+                                     msg_ps->invb.head->ident + 4, &np);
+              if (mn != NULL)
+              {
+                /* retrieve object definition with get_object_def() 
+                   is it scalar, table item, external or non-existent? */               
+                mn->get_object_def(np.ident_len, np.ident, &object_def);
+                if (object_def.instance != MIB_OBJECT_NONE)
+                {
+                  mn = mn;
+                }
+                else
+                {
+                  /* search failed, object id points to unknown object (nosuchname) */
+                  LWIP_DEBUGF(SNMP_MIB_DEBUG,("mn search failed, object not in this MIB\n"));
+                  mn =  NULL;
+                }
+              }
             }
             else
             {
@@ -377,8 +418,26 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
             /** test object identifier for .iso.org.dod.internet prefix */
             if (snmp_iso_prefix_tst(msg_ps->invb.head->ident_len, msg_ps->invb.head->ident))
             {
+              struct snmp_name_ptr np;
+              
               mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->invb.head->ident_len - 4,
-                                     msg_ps->invb.head->ident + 4, &object_def);
+                                     msg_ps->invb.head->ident + 4, &np);
+              if (mn != NULL)
+              {
+                /* retrieve object definition with get_object_def() 
+                   is it scalar, table item, external or non-existent? */
+                mn->get_object_def(np.ident_len, np.ident, &object_def);
+                if (object_def.instance != MIB_OBJECT_NONE)
+                {
+                  mn = mn;
+                }
+                else
+                {
+                  /* search failed, object id points to unknown object (nosuchname) */
+                  LWIP_DEBUGF(SNMP_MIB_DEBUG,("mn search failed, object not in this MIB\n"));
+                  mn =  NULL;
+                }
+              }
             }
             else
             {

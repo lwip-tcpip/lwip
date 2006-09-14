@@ -447,14 +447,15 @@ snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
  * @param node points to the root of the tree ('.internet')
  * @param ident_len the length of the supplied object identifier
  * @param ident points to the array of sub identifiers
- * @param object_def points to the object definition to return
+ * @param np points to the found object instance (rerurn)
  * @return pointer to the requested parent (!) node if success, NULL otherwise
  */
 struct mib_node *
-snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj_def *object_def)
+snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np)
 {
-  u8_t node_type;
+  u8_t node_type, ext_level;
 
+  ext_level = 0;
   LWIP_DEBUGF(SNMP_MIB_DEBUG,("node==%p *ident==%"S32_F"\n",(void*)node,*ident));
   while (node != NULL)
   {
@@ -481,20 +482,9 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
           {
             /* a scalar leaf OR table,
                inspect remaining instance number / table index */
-            /* retrieve object definition with get_object_def() 
-               is it scalar, or a valid table item, or non-existent? */
-            an->get_object_def(ident_len, ident, object_def);
-            if (object_def->instance != MIB_OBJECT_NONE)
-            {
-              /** @todo return something more usefull ?? */
-              return (struct mib_node*)an;
-            }
-            else
-            {
-              /* search failed, object id points to unknown object (nosuchname) */
-              LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, object not in this MIB\n"));
-              return NULL;
-            }
+            np->ident_len = ident_len;
+            np->ident = ident;
+            return (struct mib_node*)an;
           }
           else
           {
@@ -507,14 +497,14 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
         else
         {
           /* search failed, identifier mismatch (nosuchname) */
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed *ident==%"S32_F"\n",*ident));
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("an search failed *ident==%"S32_F"\n",*ident));
           return NULL;
         }
       }
       else
       {
         /* search failed, short object identifier (nosuchname) */
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, short object identifier\n"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("an search failed, short object identifier\n"));
         return NULL;
       }
     }
@@ -539,18 +529,9 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
           LWIP_DEBUGF(SNMP_MIB_DEBUG,("ln->objid==%"S32_F" *ident==%"S32_F"\n",ln->objid,*ident));
           if (ln->nptr == NULL)
           {
-            lrn->get_object_def(ident_len, ident, object_def);
-            if (object_def->instance != MIB_OBJECT_NONE)
-            {
-              /** @todo return something more usefull ?? */
-              return (struct mib_node*)lrn;
-            }
-            else
-            {
-              /* search failed, object id points to unknown object (nosuchname) */
-              LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, object not in this MIB\n"));
-              return NULL;
-            }
+            np->ident_len = ident_len;
+            np->ident = ident;
+            return (struct mib_node*)lrn;
           }
           else
           {
@@ -563,38 +544,43 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
         else
         {
           /* search failed */
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed *ident==%"S32_F"\n",*ident));
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("ln search failed *ident==%"S32_F"\n",*ident));
           return NULL;
         }
       }
       else
       {
         /* search failed, short object identifier (nosuchname) */
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, short object identifier\n"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ln search failed, short object identifier\n"));
         return NULL;
       }
     }
     else if(node_type == MIB_NODE_EX)
     {
       struct mib_external_node *en;
-      u16_t i;
+      u16_t i, len;
 
       if (ident_len > 0)
       { 
         /* external node (addressing and access via functions) */
         en = (struct mib_external_node *)node;
+        
         i = 0;
-        while ((i < en->count) && en->ident_cmp(i,*ident))
+        len = en->level_length(en->addr_inf,ext_level);
+        while ((i < len) && (en->ident_cmp(en->addr_inf,ext_level,i,*ident) != 0))
         {
           i++;
         }
-        if (i < en->count)
+        if (i < len)
         {
-          if (en->get_nptr(i) == NULL)
+          s32_t debug_id;
+        
+          en->get_objid(en->addr_inf,ext_level,i,&debug_id);
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("en->objid==%"S32_F" *ident==%"S32_F"\n",debug_id,*ident));
+          if ((ext_level + 1) == en->tree_levels)
           {
-/** @todo, this object is elsewhere, we can only start the request,
-     but can't return something usefull yet.*/
-            en->req_object_def(ident_len, ident);
+            np->ident_len = ident_len;
+            np->ident = ident;
             return (struct mib_node*)en;
           }
           else
@@ -602,20 +588,20 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
             /* found it, proceed to child */
             ident_len--;
             ident++;
-            node = (struct mib_node*)en->get_nptr(i);
+            ext_level++;
           }
         }
         else
         {
           /* search failed */
-          LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed *ident==%"S32_F"\n",*ident));
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("en search failed *ident==%"S32_F"\n",*ident));
           return NULL;
         }
       }
       else
       {
         /* search failed, short object identifier (nosuchname) */
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, short object identifier\n"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("en search failed, short object identifier\n"));
         return NULL;
       }
     }
@@ -626,7 +612,8 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct obj
       sn = (mib_scalar_node *)node;
       if ((ident_len == 1) && (*ident == 0))
       {
-        sn->get_object_def(ident_len, ident, object_def);
+        np->ident_len = ident_len;
+        np->ident = ident;
         return (struct mib_node*)sn;
       }
       else

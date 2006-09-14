@@ -267,6 +267,8 @@ struct mib_ram_array_node tcpconntable = {
 const mib_scalar_node tcp_scalar = {
   &tcp_get_object_def,
   &tcp_get_value,
+  &noleafs_set_test,
+  &noleafs_set_value,
   MIB_NODE_SC,
   0
 };
