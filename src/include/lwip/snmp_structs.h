@@ -203,11 +203,16 @@ struct mib_external_node
   s32_t (*ident_cmp)(void* addr_inf, u8_t level, u16_t idx, s32_t sub_id);
   void (*get_objid)(void* addr_inf, u8_t level, u16_t idx, s32_t *sub_id);
 
-  /** async requests */
-  void (*get_object_def_r)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value_r)(struct obj_def *od, u16_t len, void *value);
-  u8_t (*set_test_r)(struct obj_def *od, u16_t len, void *value);
-  void (*set_value_r)(struct obj_def *od, u16_t len, void *value);
+  /** async Questions */
+  void (*get_object_def_q)(void* addr_inf, u8_t rid, u8_t ident_len, s32_t *ident);
+  void (*get_value_q)(u8_t rid, struct obj_def *od);
+  void (*set_test_q)(u8_t rid, struct obj_def *od);
+  void (*set_value_q)(u8_t rid, struct obj_def *od);
+  /** async Answers */
+  void (*get_object_def_a)(u8_t rid, u8_t ident_len, s32_t *ident, struct obj_def *od);
+  void (*get_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
+  u8_t (*set_test_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
+  void (*set_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
 };
 
 /** export MIB tree from mib2.c */

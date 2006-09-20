@@ -38,6 +38,7 @@
 #include "lwip/opt.h"
 #include "arch/cc.h"
 #include "lwip/snmp.h"
+#include "lwip/snmp_structs.h"
 
 #if SNMP_PRIVATE_MIB
 #include "private_mib.h"
@@ -186,8 +187,10 @@ struct snmp_trap_header_lengths
 /* perform SNMP operation on varbind for in-memory case */
 #define SNMP_MSG_INTERNAL 2
 /* perform SNMP operation on private varbind external case */
-#define SNMP_MSG_EXTERNAL 3
-
+#define SNMP_MSG_EXTERNAL_GET_OBJDEF 3
+#define SNMP_MSG_EXTERNAL_GET_VALUE  4
+#define SNMP_MSG_EXTERNAL_SET_TEST   5
+#define SNMP_MSG_EXTERNAL_SET_VALUE  6
 
 #define SNMP_COMMUNITY_STR_LEN 64
 struct snmp_msg_pstat
@@ -213,8 +216,12 @@ struct snmp_msg_pstat
   u8_t community[SNMP_COMMUNITY_STR_LEN + 1];
   /* community string length (exclusive zero term) */
   u8_t com_strlen;
-  /* one out of MSG_EMPTY, MSG_DEMUX, MSG_INTERNAL, MSG_EXTERNAL */
+  /* one out of MSG_EMPTY, MSG_DEMUX, MSG_INTERNAL, MSG_EXTERNAL_x */
   u8_t state;
+  /* saved arguments for MSG_EXTERNAL_x */
+  struct mib_external_node *ext_mib_node;
+  struct snmp_name_ptr ext_name_ptr;
+  struct obj_def ext_object_def;
   /* index into input variable binding list */
   u8_t vb_idx;
   /* ptr into input variable binding list */
@@ -226,7 +233,8 @@ struct snmp_msg_pstat
   /* output response lengths used in ASN encoding */
   struct snmp_resp_header_lengths rhl;
 #if SNMP_PRIVATE_MIB
-  struct private_state ps;
+  /* private MIB event info */
+  struct private_msg pm;
 #endif
 };
 
@@ -254,10 +262,6 @@ struct snmp_msg_trap
   struct snmp_varbind_root outvb;
   /* output trap lengths used in ASN encoding */
   struct snmp_trap_header_lengths thl;
-#if SNMP_PRIVATE_MIB
-  /** @todo is this really needed? */
-  struct private_state ps;
-#endif
 };
 
 /** Agent Version constant, 0 = v1 oddity */
@@ -280,7 +284,7 @@ void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *
 struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
 
 /** Handles internal/external events. */
-void snmp_msg_event(struct snmp_msg_pstat *msg_ps);
+void snmp_msg_event(u8_t request_id);
 err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
 err_t snmp_send_trap(s8_t generic_trap, s32_t specific_trap);
 void snmp_coldstart_trap(void);

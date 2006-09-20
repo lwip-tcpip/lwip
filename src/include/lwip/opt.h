@@ -254,6 +254,12 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef LWIP_SNMP
 #define LWIP_SNMP                       0
 #endif
+
+/** @note At least one request buffer is required.  */
+#ifndef SNMP_CONCURRENT_REQUESTS
+#define SNMP_CONCURRENT_REQUESTS        1
+#endif
+
 /** @note At least one trap destination is required */
 #ifndef SNMP_TRAP_DESTINATIONS
 #define SNMP_TRAP_DESTINATIONS          1
