@@ -50,7 +50,7 @@
 #include "lwip/snmp_msg.h"
 #include "lwip/snmp_structs.h"
 
-#define TODO_SNMP_MSG_EVENT 0
+#define TODO_SNMP_MSG_EVENT 1
 
 /* public (non-static) constants */
 /** SNMP v1 == 0 */
@@ -104,121 +104,129 @@ snmp_init(void)
 
 #if TODO_SNMP_MSG_EVENT
 /**
- * called for each variable binding (also for the fist one)
+ * Handle a single internal or external event.
+ * Called for each variable binding (also for the fist one).
  * 
  * @param request_id identifies requests from 0 to (SNMP_CONCURRENT_REQUESTS-1)
- * @param pm points to a private message used for
+ * @param msg_ps points to the assosicated message process state
  */
 void
-snmp_msg_event(u8_t request_id)
+snmp_msg_event_service(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 {
-  struct snmp_msg_pstat *msg_ps;
   struct mib_node *mn;
   struct snmp_name_ptr np;
 
-  if (request_id < SNMP_CONCURRENT_REQUESTS)
+  LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: msg_ps->state==%"U16_F"\n",(u16_t)msg_ps->state));
+  if (msg_ps->state == SNMP_MSG_DEMUX)
   {
-    msg_ps = &msg_input_list[request_id];
-    
-    LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: msg_ps->state==%"U16_F"\n",(u16_t)msg_ps->state));
-    if (msg_ps->state == SNMP_MSG_DEMUX)
+    if (msg_ps->vb_idx == 0)
     {
-      if (msg_ps->vb_idx == 0)
+      msg_ps->vb_ptr = msg_ps->invb.head;
+    }
+    else
+    {
+      msg_ps->vb_ptr = msg_ps->vb_ptr->next;
+    }
+    if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+    {
+      /** test object identifier for .iso.org.dod.internet prefix */
+      if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
       {
-        msg_ps->vb_ptr = msg_ps->invb.head;
+        mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+                               msg_ps->vb_ptr->ident + 4, &np);
       }
       else
       {
-        msg_ps->vb_ptr = msg_ps->vb_ptr->next;
-        msg_ps->vb_idx += 1;
+        mn = NULL;
       }
-      if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+      if (mn != NULL)
       {
-        /** test object identifier for .iso.org.dod.internet prefix */
-        if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
+        if (mn->node_type == MIB_NODE_EX)
         {
-          mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
-                                 msg_ps->vb_ptr->ident + 4, &np);
+          /* external object */
+          struct mib_external_node *en = (struct mib_external_node*)mn;
+
+          msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
+          /* save en && args in msg_ps!! */
+          msg_ps->ext_mib_node = en;
+          msg_ps->ext_name_ptr = np;
+
+          en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);          
         }
         else
         {
-          mn = NULL;
-        }
-        if (mn != NULL)
-        {
-          if (mn->node_type == MIB_NODE_EX)
+          /* internal object */
+          struct obj_def object_def;
+
+          msg_ps->state = SNMP_MSG_INTERNAL;              
+          mn->get_object_def(np.ident_len, np.ident, &object_def);
+          if (object_def.instance != MIB_OBJECT_NONE)
           {
-            /* external object */
-            struct mib_external_node *en = (struct mib_external_node*)mn;
-
-            msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
-            /* save en && args in msg_ps!! */
-            msg_ps->ext_mib_node = en;
-            msg_ps->ext_name_ptr = np;
-
-            en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);          
+            mn = mn;
           }
           else
           {
-            /* internal object */
-            struct obj_def object_def;
+            /* search failed, object id points to unknown object (nosuchname) */
+            mn =  NULL;
+          }
+          if (mn != NULL)
+          {
+            struct snmp_varbind *vb;
 
-            msg_ps->state = SNMP_MSG_INTERNAL;              
-            mn->get_object_def(np.ident_len, np.ident, &object_def);
-            if (object_def.instance != MIB_OBJECT_NONE)
+            /* allocate output varbind */
+            vb = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
+            LWIP_ASSERT("vb != NULL",vb != NULL);
+            if (vb != NULL)
             {
-              mn = mn;
+              vb->next = NULL;
+              vb->prev = NULL;
+
+              /* move name from invb to outvb */
+              vb->ident = msg_ps->vb_ptr->ident;
+              vb->ident_len = msg_ps->vb_ptr->ident_len;
+              /* ensure this memory is refereced once only */
+              msg_ps->vb_ptr->ident = NULL;
+              msg_ps->vb_ptr->ident_len = 0;
+
+              vb->value_type = object_def.asn_type;
+              vb->value_len = object_def.v_len;
+              if (vb->value_len > 0)
+              {
+                vb->value = mem_malloc(vb->value_len);
+                LWIP_ASSERT("vb->value != NULL",vb->value != NULL);
+                if (vb->value != NULL)
+                {
+                  mn->get_value(&object_def, vb->value_len, vb->value);
+                  snmp_varbind_tail_add(&msg_ps->outvb, vb);
+                }
+                else
+                {
+                  LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: couldn't allocate variable space\n"));
+                  msg_ps->vb_ptr->ident = vb->ident;
+                  msg_ps->vb_ptr->ident_len = vb->ident_len;
+                  mem_free(vb);
+                  /** @todo end varbind loop!! */
+                }
+              }
+              else
+              {
+                /* vb->value_len == 0, empty value (e.g. empty string) */
+                vb->value = NULL;
+                snmp_varbind_tail_add(&msg_ps->outvb, vb);
+              }                       
             }
             else
             {
-              /* search failed, object id points to unknown object (nosuchname) */
-              mn =  NULL;
+               LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: couldn't allocate outvb space\n"));
+               /** @todo end varbind loop!! */
             }
-            msg_ps->state = SNMP_MSG_DEMUX;
           }
-        }
-        if (mn == NULL)
-        {
-          /* mn == NULL, noSuchName */
-          snmp_varbind_list_free(&msg_ps->outvb);
-          msg_ps->outvb = msg_ps->invb;
-          msg_ps->invb.head = NULL;
-          msg_ps->invb.tail = NULL;
-          msg_ps->invb.count = 0;
-          msg_ps->error_status = SNMP_ES_NOSUCHNAME;
-          msg_ps->error_index = 1 + msg_ps->vb_idx;
-          snmp_send_response(msg_ps);
-          msg_ps->state = SNMP_MSG_EMPTY;
+          msg_ps->state = SNMP_MSG_DEMUX;
         }
       }
-    }
-    else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF)
-    {      
-      struct mib_external_node *en;
-
-      /* get_object_def() answer*/
-      en = msg_ps->ext_mib_node;
-      np = msg_ps->ext_name_ptr;
-
-      /* translate answer into a known lifeform */
-      en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
-
-      if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
+      if (mn == NULL)
       {
-        if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
-        {
-          msg_ps->state = SNMP_MSG_EXTERNAL_GET_VALUE;
-          en->get_value_q(request_id, &msg_ps->ext_object_def);
-        }
-        else
-        {
-          /** @todo other SNMP requests */
-        }
-      }
-      else
-      {
-        /* search failed, object id points to unknown object (nosuchname) */
-        mn = NULL;
+         /* mn == NULL, noSuchName */
         snmp_varbind_list_free(&msg_ps->outvb);
         msg_ps->outvb = msg_ps->invb;
         msg_ps->invb.head = NULL;
@@ -230,70 +238,209 @@ snmp_msg_event(u8_t request_id)
         msg_ps->state = SNMP_MSG_EMPTY;
       }
     }
-    else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_VALUE)
+    else if (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ)
     {
-      struct mib_external_node *en;
+      struct snmp_obj_id oid;
 
-      /* get_value() answer */
-      en = msg_ps->ext_mib_node;
-
-      /* translate answer into a known lifeform */
-      if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+      if (snmp_iso_prefix_expand(msg_ps->vb_ptr->ident_len, msg_ps->vb_ptr->ident, &oid))
       {
-        struct snmp_varbind *vb;
-
-        /* allocate output varbind */
-        vb = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
-        if (vb != NULL)
+        if (msg_ps->vb_ptr->ident_len > 3)
         {
-          vb->next = NULL;
-          vb->prev = NULL;
+          /* can offset ident_len and ident */
+          mn = snmp_expand_tree((struct mib_node*)&internet,
+                                msg_ps->vb_ptr->ident_len - 4,
+                                msg_ps->vb_ptr->ident + 4, &oid);
+        }
+        else
+        {
+          /* can't offset ident_len -4, ident + 4 */
+          mn = snmp_expand_tree((struct mib_node*)&internet, 0, NULL, &oid);
+        }
+      }
+      else
+      {
+        mn = NULL;
+      }
+      if (mn != NULL)
+      {
+        if (mn->node_type == MIB_NODE_EX)
+        {
+          /* external object */
+          struct mib_external_node *en = (struct mib_external_node*)mn;
 
-          /* move name from invb to outvb */
-          vb->ident = msg_ps->vb_ptr->ident;
-          vb->ident_len = msg_ps->vb_ptr->ident_len;
-          /* ensure this memory is refereced once only */
-          msg_ps->vb_ptr->ident = NULL;
-          msg_ps->vb_ptr->ident_len = 0;
-          
-          vb->value_type = msg_ps->ext_object_def.asn_type;
-          vb->value_len =  msg_ps->ext_object_def.v_len;
-          vb->value = mem_malloc(msg_ps->ext_object_def.v_len);                
+          msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
+          /* save en && args in msg_ps!! */
+          msg_ps->ext_mib_node = en;
+          msg_ps->ext_name_ptr = np;
+
+          en->get_object_def_q(en->addr_inf, request_id, np.ident_len, np.ident);          
+        }
+        else
+        {
+          /* internal object */
+          struct obj_def object_def;
+          struct snmp_varbind *vb;
+
+          msg_ps->state = SNMP_MSG_INTERNAL;              
+
+          mn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
+
+          vb = snmp_varbind_alloc(&oid, object_def.asn_type, object_def.v_len);
+          if (vb != NULL)
+          {
+            mn->get_value(&object_def, object_def.v_len, vb->value);
+            snmp_varbind_tail_add(&msg_ps->outvb, vb);
+          }
+          else
+          {
+            LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space\n"));
+            /** @todo end varbind loop!! */
+          }       
+        
+          msg_ps->state = SNMP_MSG_DEMUX; 
+        }  
+      }
+      if (mn == NULL)
+      {
+         /* mn == NULL, noSuchName */
+        snmp_varbind_list_free(&msg_ps->outvb);
+        msg_ps->outvb = msg_ps->invb;
+        msg_ps->invb.head = NULL;
+        msg_ps->invb.tail = NULL;
+        msg_ps->invb.count = 0;
+        msg_ps->error_status = SNMP_ES_NOSUCHNAME;
+        msg_ps->error_index = 1 + msg_ps->vb_idx;
+        snmp_send_response(msg_ps);
+        msg_ps->state = SNMP_MSG_EMPTY;
+      }
+    }
+    else if (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ)
+    {
+      /** @todo actual SNMP SET */
+    }
+  }
+  else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF)
+  {      
+    struct mib_external_node *en;
+
+    /* get_object_def() answer*/
+    en = msg_ps->ext_mib_node;
+    np = msg_ps->ext_name_ptr;
+
+    /* translate answer into a known lifeform */
+    en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
+
+    if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
+    {
+      if ((msg_ps->rt == SNMP_ASN1_PDU_GET_REQ) ||
+          (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ))
+      {
+        msg_ps->state = SNMP_MSG_EXTERNAL_GET_VALUE;
+        en->get_value_q(request_id, &msg_ps->ext_object_def);
+      }
+      else
+      {
+        /** @todo SNMP SET */
+      }
+    }
+    else
+    {
+      /* search failed, object id points to unknown object (nosuchname) */
+      mn = NULL;
+      snmp_varbind_list_free(&msg_ps->outvb);
+      msg_ps->outvb = msg_ps->invb;
+      msg_ps->invb.head = NULL;
+      msg_ps->invb.tail = NULL;
+      msg_ps->invb.count = 0;
+      msg_ps->error_status = SNMP_ES_NOSUCHNAME;
+      msg_ps->error_index = 1 + msg_ps->vb_idx;
+      snmp_send_response(msg_ps);
+      msg_ps->state = SNMP_MSG_EMPTY;
+    }
+  }
+  else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_VALUE)
+  {
+    struct mib_external_node *en;
+
+    /* get_value() answer */
+    en = msg_ps->ext_mib_node;
+
+    /* translate answer into a known lifeform */
+    if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
+    {
+      struct snmp_varbind *vb;
+
+      /* allocate output varbind */
+      vb = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
+      LWIP_ASSERT("vb != NULL",vb != NULL);
+      if (vb != NULL)
+      {
+        vb->next = NULL;
+        vb->prev = NULL;
+
+        /* move name from invb to outvb */
+        vb->ident = msg_ps->vb_ptr->ident;
+        vb->ident_len = msg_ps->vb_ptr->ident_len;
+        /* ensure this memory is refereced once only */
+        msg_ps->vb_ptr->ident = NULL;
+        msg_ps->vb_ptr->ident_len = 0;
+
+        vb->value_type = msg_ps->ext_object_def.asn_type;
+        vb->value_len =  msg_ps->ext_object_def.v_len;
+        if (vb->value_len > 0)
+        {
+          vb->value = mem_malloc(vb->value_len);                
+          LWIP_ASSERT("vb->value != NULL",vb->value != NULL);
           if (vb->value != NULL)
           {
-            en->get_value_a(request_id, &msg_ps->ext_object_def, msg_ps->ext_object_def.v_len, vb->value);
+            en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value_len, vb->value);
             snmp_varbind_tail_add(&msg_ps->outvb, vb);
           }
           else
           {
             LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no variable space\n"));
+            msg_ps->vb_ptr->ident = vb->ident;
+            msg_ps->vb_ptr->ident_len = vb->ident_len;
+            mem_free(vb);
+            /** @todo end varbind loop */
           }
         }
         else
         {
-           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no outvb space\n"));
+          /* vb->value_len == 0, empty value (e.g. empty string) */
+          vb->value = NULL;
+          snmp_varbind_tail_add(&msg_ps->outvb, vb);
         }
       }
       else
       {
-        /** @todo other SNMP requests */
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no outvb space\n"));
+        /** @todo end varbind loop!! */
       }
-      msg_ps->state = SNMP_MSG_DEMUX;
     }
-    else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_TEST)
+    else
     {
-
+      /** @todo other SNMP requests */
     }
-    else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_VALUE)
+    msg_ps->state = SNMP_MSG_DEMUX;
+  }
+  else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_TEST)
+  {
+  }
+  else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_VALUE)
+  {
+  }
+
+
+  /* if next state is demuxing AND we demuxed all input varbinds,
+     we can make a reply and set the state to SNMP_MSG_EMPTY. */
+  if (msg_ps->state == SNMP_MSG_DEMUX)
+  {
+    if (msg_ps->vb_idx < msg_ps->invb.count)
     {
-
+      msg_ps->vb_idx += 1;
     }
-
-
-    /* if next state is demuxing AND we demuxed all input varbinds,
-       we can make a reply and set the state to SNMP_MSG_EMPTY. */
-    if ((msg_ps->state == SNMP_MSG_DEMUX) &&
-        ((msg_ps->vb_idx + 1) == msg_ps->invb.count))
+    if (msg_ps->vb_idx == msg_ps->invb.count)
     {
       err_t err_ret;
 
@@ -314,7 +461,46 @@ snmp_msg_event(u8_t request_id)
       snmp_varbind_list_free(&msg_ps->outvb);
       msg_ps->state = SNMP_MSG_EMPTY;
     }
+  }
+}
 
+/**
+ * Handle one internal or external event.
+ * Called for one async event. (recv external/private answer)
+ * 
+ * @param request_id identifies requests from 0 to (SNMP_CONCURRENT_REQUESTS-1)
+ */
+void
+snmp_msg_event(u8_t request_id)
+{
+  struct snmp_msg_pstat *msg_ps;
+
+  if (request_id < SNMP_CONCURRENT_REQUESTS)
+  {
+    msg_ps = &msg_input_list[request_id];
+    snmp_msg_event_service(request_id, msg_ps);
+  }
+}
+
+/**
+ * Handle internal or external events until external object is found.
+ * Called for each async event. (recv snmp input, recv external/private answer)
+ * 
+ * @param request_id identifies requests from 0 to (SNMP_CONCURRENT_REQUESTS-1)
+ */
+void
+snmp_msg_event_loop(u8_t request_id)
+{
+  struct snmp_msg_pstat *msg_ps;
+
+  if (request_id < SNMP_CONCURRENT_REQUESTS)
+  {
+    msg_ps = &msg_input_list[request_id];
+    /* iterate over input varbind list and change msg_ps->state */
+    while (msg_ps->state == SNMP_MSG_DEMUX)
+    {
+      snmp_msg_event_service(request_id, msg_ps);
+    }
   }
 }
 #endif
@@ -388,9 +574,11 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
           chain to glue them when these are divided over two or more pbuf's. */
         err_ret = snmp_pdu_dec_varbindlist(p, varbind_ofs, &varbind_ofs, msg_ps);
         if ((err_ret == ERR_OK) && (msg_ps->invb.count > 0))
-        {          
+        {
+#if !TODO_SNMP_MSG_EVENT
           struct mib_node *mn;
           struct obj_def object_def;
+#endif
 
           /* we've decoded the incoming message, release input msg now */
           pbuf_free(p);
@@ -405,12 +593,10 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv varbind cnt=%"U16_F"\n",(u16_t)msg_ps->invb.count));
 
 #if TODO_SNMP_MSG_EVENT
-          /* handle input events (and demux as much as possible in one go) */
-          while (msg_ps->state == SNMP_MSG_DEMUX)
-          {
-            /** iterate over invb and change msg_ps->state */
-            snmp_msg_event(req_idx);
-          }
+          /* handle input event and demux as much as possible in one go */
+            
+          snmp_msg_event_loop(req_idx);
+          
 #else
           if (msg_ps->rt == SNMP_ASN1_PDU_GET_REQ)
           { 
@@ -448,6 +634,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
               /* allocate output varbind */
               vb = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
+              LWIP_ASSERT("vb != NULL",vb != NULL);
               if (vb != NULL)
               {
                 vb->next = NULL;
@@ -462,20 +649,32 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
                 
                 vb->value_type = object_def.asn_type;
                 vb->value_len = object_def.v_len;
-                vb->value = mem_malloc(object_def.v_len);                
-                if (vb->value != NULL)
+                if (vb->value_len > 0)
                 {
-                  mn->get_value(&object_def, object_def.v_len, vb->value);
-                  snmp_varbind_tail_add(&msg_ps->outvb, vb);
+                  vb->value = mem_malloc(vb->value_len);
+                  LWIP_ASSERT("vb->value != NULL",vb->value != NULL);
+                  if (vb->value != NULL)
+                  {
+                    mn->get_value(&object_def, vb->value_len, vb->value);
+                    snmp_varbind_tail_add(&msg_ps->outvb, vb);
+                  }
+                  else
+                  {
+                    LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate variable space\n"));
+                    msg_ps->vb_ptr->ident = vb->ident;
+                    msg_ps->vb_ptr->ident_len = vb->ident_len;
+                    mem_free(vb);
+                  }
                 }
                 else
                 {
-                  LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate variable space"));
+                  vb->value = NULL;
+                  snmp_varbind_tail_add(&msg_ps->outvb, vb);
                 }
               }
               else
               {
-                 LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space"));
+                 LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space\n"));
               }
             }
             else
@@ -528,7 +727,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
               }
               else
               {
-                LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space"));
+                LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_recv couldn't allocate outvb space\n"));
               }
             }
             else
@@ -638,13 +837,13 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
           snmp_varbind_list_free(&msg_ps->invb);
           snmp_varbind_list_free(&msg_ps->outvb);
           msg_ps->state = SNMP_MSG_EMPTY;
-#endif /* disable */
+#endif /* TODO_SNMP_MSG_EVENT */
         }
         else
         {
           /* varbind-list decode failed, or varbind list empty (silly cmd for agent) */
           pbuf_free(p);
-          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_dec_varbindlist() failed"));
+          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_dec_varbindlist() failed\n"));
           msg_ps->error_status = SNMP_ES_GENERROR;
           msg_ps->error_index = 0;
           msg_ps->outvb.head = NULL;
@@ -659,7 +858,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
       {
         /* header check failed! */
         pbuf_free(p);
-        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_header_check() failed"));
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_header_check() failed\n"));
       }      
     }
     else
@@ -1076,6 +1275,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len)
   struct snmp_varbind *vb;
 
   vb = (struct snmp_varbind *)mem_malloc(sizeof(struct snmp_varbind));
+  LWIP_ASSERT("vb != NULL",vb != NULL);
   if (vb != NULL)
   {
     u8_t i;
@@ -1088,6 +1288,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len)
     {
       /* allocate array of s32_t for our object identifier */
       vb->ident = (s32_t*)mem_malloc(sizeof(s32_t) * i);
+      LWIP_ASSERT("vb->ident != NULL",vb->ident != NULL);
       if (vb->ident == NULL)
       {
         mem_free(vb);
@@ -1110,6 +1311,7 @@ snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len)
     {
       /* allocate raw bytes for our object value */
       vb->value = mem_malloc(len);
+      LWIP_ASSERT("vb->value != NULL",vb->value != NULL);
       if (vb->value == NULL)
       {
         if (vb->ident != NULL)
