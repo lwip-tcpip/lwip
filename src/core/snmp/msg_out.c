@@ -193,6 +193,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
     udp_disconnect(m_stat->pcb);
 
     pbuf_free(p);
+    LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_snd_response() done\n"));
     return err;
   }
   else
