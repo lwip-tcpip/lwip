@@ -596,8 +596,11 @@ snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u8_t raw_len, u8_t *raw)
           msg_ptr++;
         }
       }
-      /* copy last octet */
-      *msg_ptr = *raw;
+      if (raw_len > 0)
+      {
+        /* copy last or single octet */
+        *msg_ptr = *raw;
+      }
       return ERR_OK;
     }
     p = p->next;
