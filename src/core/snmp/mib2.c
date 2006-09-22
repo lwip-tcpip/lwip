@@ -2073,7 +2073,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_ptr = ident;
     
     id = ident[0];
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def system.%"U16_F".0",(u16_t)id));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def system.%"U16_F".0\n",(u16_t)id));
     switch (id)
     {
       case 1: /* sysDescr */
@@ -2119,14 +2119,14 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -2260,7 +2260,7 @@ interfaces_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("interfaces_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("interfaces_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -2305,7 +2305,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_ptr = ident;
     
     id = ident[0];
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ifentry.%"U16_F".",(u16_t)id));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ifentry.%"U16_F"\n",(u16_t)id));
     switch (id)
     {
       case 1: /* ifIndex */
@@ -2378,14 +2378,14 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = ifspecific.len * sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -2574,14 +2574,14 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = 4;
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     }
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -2648,7 +2648,7 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_ptr = ident;
     
     id = ident[0];
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ip.%"U16_F".0",(u16_t)id));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ip.%"U16_F".0\n",(u16_t)id));
     switch (id)
     {
       case 1: /* ipForwarding */
@@ -2687,14 +2687,14 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -2918,14 +2918,14 @@ ip_addrentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     }
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3053,14 +3053,14 @@ ip_rteentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = iprouteinfo.len * sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     }
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3253,14 +3253,14 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = 4;
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     }
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3335,7 +3335,7 @@ icmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("icmp_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("icmp_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3447,7 +3447,7 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_ptr = ident;
     
     id = ident[0];
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0",(u16_t)id));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0\n",(u16_t)id));
 
     switch (id)
     {
@@ -3481,14 +3481,14 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(u32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3581,7 +3581,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_ptr = ident;
     
     id = ident[0];
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0",(u16_t)id));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0\n",(u16_t)id));
 
     switch (id)
     {
@@ -3606,14 +3606,14 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3656,7 +3656,7 @@ udp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("udp_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("udp_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3713,14 +3713,14 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     }
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
@@ -3822,14 +3822,14 @@ snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->v_len = sizeof(s32_t);
         break;
       default:
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_object_def: no such object"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
     };
   }
   else
   {
-    LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_object_def: no scalar"));
+    LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_object_def: no scalar\n"));
     od->instance = MIB_OBJECT_NONE;
   }
 }
