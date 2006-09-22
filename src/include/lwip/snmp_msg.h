@@ -283,8 +283,10 @@ void snmp_varbind_list_free(struct snmp_varbind_root *root);
 void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);
 struct snmp_varbind* snmp_varbind_tail_remove(struct snmp_varbind_root *root);
 
-/** Handles internal/external events. */
+/** Handle a single internal or external event. */
 void snmp_msg_event(u8_t request_id);
+/** Handle as many events as possible in one go. */
+void snmp_msg_event_loop(u8_t request_id);
 err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
 err_t snmp_send_trap(s8_t generic_trap, s32_t specific_trap);
 void snmp_coldstart_trap(void);
