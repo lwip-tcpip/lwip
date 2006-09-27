@@ -586,7 +586,12 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_VALUE)
   {
-    /** @todo use set_value_a() ?? */
+    struct mib_external_node *en;
+
+    /** set_value_a() @todo: use reply value?? */
+    en = msg_ps->ext_mib_node;
+    en->set_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
+
     msg_ps->state = SNMP_MSG_INTERNAL_SET_VALUE;
     msg_ps->vb_idx += 1;
   }  
