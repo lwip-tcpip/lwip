@@ -38,6 +38,8 @@
 #include "lwip/snmp_structs.h"
 #include "lwip/mem.h"
 
+#define TODO_GETNEXT_MIB_NODE_EX 0
+
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};
 
@@ -675,11 +677,11 @@ empty_table(struct mib_node *node)
 struct mib_node *
 snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
 {
-  u8_t node_type, climb_tree;
+  u8_t node_type, ext_level, climb_tree;
 
-  /* reset stack */
+  ext_level = 0;
+  /* reset node stack */
   node_stack_cnt = 0;
-
   while (node != NULL)
   {
     climb_tree = 0;
@@ -744,9 +746,17 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             }
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F"\n",(void*)cur_node.r_ptr,cur_node.r_id));
             push_node(&cur_node);
+            if (an->objid[i] == *ident)
+            {
+              ident_len--;
+              ident++;
+            }
+            else
+            {
+              /* an->objid[i] < *ident */
+              ident_len = 0;
+            }
             /* follow next child pointer */
-            ident_len--;
-            ident++;
             node = an->nptr[i];
           }
         }
@@ -847,9 +857,17 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             }
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F"\n",(void*)cur_node.r_ptr,cur_node.r_id));
             push_node(&cur_node);
+            if (ln->objid == *ident)
+            {
+              ident_len--;
+              ident++;
+            }
+            else
+            {
+              /* ln->objid < *ident */
+              ident_len = 0;
+            }
             /* follow next child pointer */
-            ident_len--;
-            ident++;
             node = ln->nptr;
           }
 
@@ -893,6 +911,36 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         }
       }
     }
+#if TODO_GETNEXT_MIB_NODE_EX
+    else if(node_type == MIB_NODE_EX)
+    {
+      struct mib_external_node *en;
+
+      /* external node (addressing and access via functions) */
+      en = (struct mib_external_node *)node;
+      if (ident_len > 0)
+      {
+        u16_t i, len;
+        
+        i = 0;
+        len = en->level_length(en->addr_inf,ext_level);
+        while ((i < len) && (en->ident_cmp(en->addr_inf,ext_level,i,*ident) < 0))
+        {
+          i++;
+        }
+        if (i < len)
+        {
+        }
+        else
+        {
+        }      
+      }
+      else
+      {
+        /* ident_len == 0, complete with leftmost '.thing' */
+      }
+    }
+#endif
     else if(node_type == MIB_NODE_SC)
     {
       mib_scalar_node *sn;

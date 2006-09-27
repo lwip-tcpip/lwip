@@ -207,7 +207,7 @@ struct mib_external_node
   void (*get_object_def_q)(void* addr_inf, u8_t rid, u8_t ident_len, s32_t *ident);
   void (*get_value_q)(u8_t rid, struct obj_def *od);
   void (*set_test_q)(u8_t rid, struct obj_def *od);
-  void (*set_value_q)(u8_t rid, struct obj_def *od);
+  void (*set_value_q)(u8_t rid, struct obj_def *od, u16_t len, void *value);
   /** async Answers */
   void (*get_object_def_a)(u8_t rid, u8_t ident_len, s32_t *ident, struct obj_def *od);
   void (*get_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
