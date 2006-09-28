@@ -490,19 +490,20 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
       while (ident_len > 0)
       {
         s32_t sub_id;
-        u8_t shift;
+        u8_t shift, tail;
         
         ident_len--;
         sub_id = *ident;
-       
+        tail = 0;       
         shift = 28;
         while(shift > 0)
         {
           u8_t code;
           
           code = sub_id >> shift;
-          if (code != 0)
+          if ((code != 0) || (tail != 0))
           {
+            tail = 1;
             *msg_ptr = code | 0x80;
             ofs += 1;
             if (ofs >= plen)
