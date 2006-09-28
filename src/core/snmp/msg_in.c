@@ -220,6 +220,8 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       }
       else
       {
+        /* get_value_a() called to close external transaction */
+        en->get_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
         /* vb->value_len == 0, empty value (e.g. empty string) */
         vb->value = NULL;
         snmp_varbind_tail_add(&msg_ps->outvb, vb);
