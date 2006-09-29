@@ -218,7 +218,7 @@ snmp_mib_lrn_free(struct mib_list_rootnode *lrn)
  * @param objid is the object sub identifier
  * @param insn points to a pointer to the inserted node
  *   used for constructing the tree.
- * @return -1 if failed, 1 if success.
+ * @return -1 if failed, 1 if inserted, 2 if present.
  */
 s8_t
 snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **insn)
@@ -228,7 +228,7 @@ snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_
 
   LWIP_ASSERT("rn != NULL",rn != NULL);
   
-  /* -1 = malloc failure, 0 = not inserted, 1 = inserted (or was present) */
+  /* -1 = malloc failure, 0 = not inserted, 1 = inserted, 2 = was present */
   insert = 0;
   if (rn->head == NULL)
   {
@@ -259,7 +259,7 @@ snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_
         /* node is already there */
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("node already there objid==%"S32_F"\n",objid));        
         *insn = n;
-        insert = 1;
+        insert = 2;
       }
       else if (n->objid < objid)
       {
@@ -621,7 +621,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
       else
       {
         /* search failed, short object identifier (nosuchname) */
-        LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, short object identifier\n"));
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed, invalid object identifier length\n"));
         return NULL;
       }
     }
