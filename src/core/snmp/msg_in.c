@@ -160,7 +160,6 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     /* translate answer into a known lifeform */
     en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
-
     if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
     {
       msg_ps->state = SNMP_MSG_EXTERNAL_GET_VALUE;
@@ -168,6 +167,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
+      en->get_object_def_pc(request_id, np.ident_len, np.ident);
       /* search failed, object id points to unknown object (nosuchname) */
       snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
     }
@@ -211,6 +211,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         }
         else
         {
+          en->get_value_pc(request_id, &msg_ps->ext_object_def);
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no variable space\n"));
           msg_ps->vb_ptr->ident = vb->ident;
           msg_ps->vb_ptr->ident_len = vb->ident_len;
@@ -220,9 +221,8 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       }
       else
       {
-        /* get_value_a() called to close external transaction */
-        en->get_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
         /* vb->value_len == 0, empty value (e.g. empty string) */
+        en->get_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
         vb->value = NULL;
         snmp_varbind_tail_add(&msg_ps->outvb, vb);
         /* search again (if vb_idx < msg_ps->invb.count) */
@@ -232,6 +232,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
+      en->get_value_pc(request_id, &msg_ps->ext_object_def);
       LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no outvb space\n"));
       snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
     }
@@ -383,7 +384,6 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     /* translate answer into a known lifeform */
     en->get_object_def_a(request_id, 1, &msg_ps->ext_oid.id[msg_ps->ext_oid.len - 1], &msg_ps->ext_object_def);
-
     if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
     {
       msg_ps->state = SNMP_MSG_EXTERNAL_GET_VALUE;
@@ -391,6 +391,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
+      en->get_object_def_pc(request_id, 1, &msg_ps->ext_oid.id[msg_ps->ext_oid.len - 1]);
       /* search failed, object id points to unknown object (nosuchname) */
       snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
     }
@@ -415,6 +416,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
+      en->get_value_pc(request_id, &msg_ps->ext_object_def);
       LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_getnext_event: couldn't allocate outvb space\n"));
       snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
     } 
@@ -527,7 +529,6 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     /* translate answer into a known lifeform */
     en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
-
     if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
     {
       msg_ps->state = SNMP_MSG_EXTERNAL_SET_TEST;
@@ -535,6 +536,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
+      en->get_object_def_pc(request_id, np.ident_len, np.ident);
       /* search failed, object id points to unknown object (nosuchname) */
       snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
     }
@@ -551,16 +553,17 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     if ((msg_ps->ext_object_def.access == MIB_OBJECT_READ_WRITE) &&
         (msg_ps->ext_object_def.asn_type == msg_ps->vb_ptr->value_type) &&
         (en->set_test_a(request_id,&msg_ps->ext_object_def,
-                         msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+                        msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
     {
       msg_ps->state = SNMP_MSG_SEARCH_OBJ;  
       msg_ps->vb_idx += 1;
     }
     else
     {
+      en->set_test_pc(request_id,&msg_ps->ext_object_def);
       /* bad value */
       snmp_error_response(msg_ps,SNMP_ES_BADVALUE);
-    }  
+    }
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF_S)
   {
@@ -573,7 +576,6 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     /* translate answer into a known lifeform */
     en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
-
     if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
     {
       msg_ps->state = SNMP_MSG_EXTERNAL_SET_VALUE;
@@ -582,9 +584,10 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     }
     else
     {
-      /* search failed, object id points to unknown object (nosuchname) */
-      snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
-    } 
+      en->get_object_def_pc(request_id, np.ident_len, np.ident);
+      /* set_value failed, object has disappeared for some odd reason?? */
+      snmp_error_response(msg_ps,SNMP_ES_GENERROR);
+    }
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_VALUE)
   {
@@ -594,6 +597,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     en = msg_ps->ext_mib_node;
     en->set_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
 
+    /** @todo use set_value_pc() if toobig */
     msg_ps->state = SNMP_MSG_INTERNAL_SET_VALUE;
     msg_ps->vb_idx += 1;
   }  
