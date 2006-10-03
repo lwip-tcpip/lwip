@@ -328,6 +328,10 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* { empty or recyclable entry found } */
   LWIP_ASSERT("i < ARP_TABLE_SIZE", i < ARP_TABLE_SIZE);
 
+  if (arp_table[i].state != ETHARP_STATE_EMPTY)
+  {
+    snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
+  }
   /* recycle entry (no-op for an already empty entry) */
   arp_table[i].state = ETHARP_STATE_EMPTY;
 
