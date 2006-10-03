@@ -437,7 +437,11 @@ snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
   }
   LWIP_DEBUGF(SNMP_MIB_DEBUG,("free list objid==%"S32_F"\n",n->objid));
   snmp_mib_ln_free(n);    
-
+  if (rn->count == 0)
+  {
+    rn->head = NULL;
+    rn->tail = NULL;
+  }
   return next;
 }
 
@@ -930,14 +934,88 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         }
         if (i < len)
         {
+          /* add identifier to oidret */
+          en->get_objid(en->addr_inf,ext_level,i,&oidret->id[oidret->len]);
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("en->objid[%"U16_F"]==%"S32_F" *ident==%"S32_F"\n",i,oidret->id[oidret->len],*ident));          
+          (oidret->len)++;
+        
+          if ((ext_level + 1) == en->tree_levels)
+          {
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("leaf node\n"));
+            /* leaf node */
+            if ((i + 1) < len)
+            {
+              (oidret->len)--;
+              en->get_objid(en->addr_inf,ext_level,i + 1,&oidret->id[oidret->len]);
+              (oidret->len)++;              
+            }
+            else
+            {
+              (oidret->len)--;
+              climb_tree = 1;
+            }
+          }
+          else
+          {
+            u8_t j;
+            struct nse cur_node;
+
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
+            /* non-leaf, store right child ptr and id */
+            j = i + 1;
+            while (j < len)
+            {
+              j++;
+            }
+            if (j < len)
+            {
+              /* right node is the current external node (@todo save j and level) */
+              cur_node.r_ptr = node;
+              en->get_objid(en->addr_inf,ext_level,j,&cur_node.r_id);
+            }
+            else
+            {
+              cur_node.r_ptr = NULL;
+            }
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand, push_node() node=%p id=%"S32_F"\n",(void*)cur_node.r_ptr,cur_node.r_id));
+            push_node(&cur_node);
+            if (en->ident_cmp(en->addr_inf,ext_level,i,*ident) == 0)
+            {
+              ident_len--;
+              ident++;
+            }
+            else
+            {
+              /* external id < *ident */
+              ident_len = 0;
+            }
+            /* proceed to child */
+            ext_level++;
+          }
         }
         else
         {
+          /* i == len (en->level_len()) */
+          climb_tree = 1;
         }      
       }
       else
       {
         /* ident_len == 0, complete with leftmost '.thing' */
+        en->get_objid(en->addr_inf,ext_level,0,&oidret->id[oidret->len]);
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("left en->objid==%"S32_F"\n",oidret->id[oidret->len]));
+        (oidret->len)++;
+        if ((ext_level + 1) == en->tree_levels)
+        {
+          /* leaf node */
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("(ext_level + 1) == en->tree_levels\n"));
+          return (struct mib_node*)en;
+        }
+        else
+        {
+          /* no leaf, proceed to child */
+          ext_level++;
+        }
       }
     }
 #endif
