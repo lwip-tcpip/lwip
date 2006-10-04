@@ -550,19 +550,27 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     en = msg_ps->ext_mib_node;
     np = msg_ps->ext_name_ptr;
 
-    if ((msg_ps->ext_object_def.access == MIB_OBJECT_READ_WRITE) &&
-        (msg_ps->ext_object_def.asn_type == msg_ps->vb_ptr->value_type) &&
-        (en->set_test_a(request_id,&msg_ps->ext_object_def,
-                        msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+    if (msg_ps->ext_object_def.access == MIB_OBJECT_READ_WRITE)
     {
-      msg_ps->state = SNMP_MSG_SEARCH_OBJ;  
-      msg_ps->vb_idx += 1;
+       if ((msg_ps->ext_object_def.asn_type == msg_ps->vb_ptr->value_type) &&
+           (en->set_test_a(request_id,&msg_ps->ext_object_def,
+                           msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+      {
+        msg_ps->state = SNMP_MSG_SEARCH_OBJ;  
+        msg_ps->vb_idx += 1;
+      }
+      else
+      {
+        en->set_test_pc(request_id,&msg_ps->ext_object_def);
+        /* bad value */
+        snmp_error_response(msg_ps,SNMP_ES_BADVALUE);
+      }
     }
     else
     {
       en->set_test_pc(request_id,&msg_ps->ext_object_def);
-      /* bad value */
-      snmp_error_response(msg_ps,SNMP_ES_BADVALUE);
+      /* object not available for set */
+      snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
     }
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF_S)
@@ -661,17 +669,24 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         {
           msg_ps->state = SNMP_MSG_INTERNAL_SET_TEST;
 
-          if ((object_def.access == MIB_OBJECT_READ_WRITE) &&
-              (object_def.asn_type == msg_ps->vb_ptr->value_type) &&
-              (mn->set_test(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+          if (object_def.access == MIB_OBJECT_READ_WRITE)
           {
-            msg_ps->state = SNMP_MSG_SEARCH_OBJ;  
-            msg_ps->vb_idx += 1;
+            if ((object_def.asn_type == msg_ps->vb_ptr->value_type) &&
+                (mn->set_test(&object_def,msg_ps->vb_ptr->value_len,msg_ps->vb_ptr->value) != 0))
+            {
+              msg_ps->state = SNMP_MSG_SEARCH_OBJ;  
+              msg_ps->vb_idx += 1;
+            }
+            else
+            {
+              /* bad value */
+              snmp_error_response(msg_ps,SNMP_ES_BADVALUE);
+            }
           }
           else
           {
-            /* bad value */
-            snmp_error_response(msg_ps,SNMP_ES_BADVALUE);
+            /* object not available for set */
+            snmp_error_response(msg_ps,SNMP_ES_NOSUCHNAME);
           }
         }
       }
@@ -831,16 +846,18 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
 
       /* check total length, version, community, pdu type */
       err_ret = snmp_pdu_header_check(p, payload_ofs, payload_len, &varbind_ofs, msg_ps);
-      if ((msg_ps->rt == SNMP_ASN1_PDU_GET_REQ) ||
-          (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ) ||
-          (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ))
+      if (((msg_ps->rt == SNMP_ASN1_PDU_GET_REQ) ||
+           (msg_ps->rt == SNMP_ASN1_PDU_GET_NEXT_REQ) ||
+           (msg_ps->rt == SNMP_ASN1_PDU_SET_REQ)) &&
+          ((msg_ps->error_status == SNMP_ES_NOERROR) &&
+           (msg_ps->error_index == 0)) )
       {
-        /* Only accept requests. (be robust) */
+        /* Only accept requests and requests without error (be robust) */
         err_ret = err_ret;
       }
       else
       {
-        /* Reject response and trap headers as input! */
+        /* Reject response and trap headers or error requests as input! */
         err_ret = ERR_ARG;
       }
       if (err_ret == ERR_OK)
@@ -869,22 +886,17 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
         }
         else
         {
-          /* varbind-list decode failed, or varbind list empty (silly cmd for agent) */
+          /* varbind-list decode failed, or varbind list empty. 
+             drop request silently, do not return error!
+             (errors are only returned for a specific varbind failure) */
           pbuf_free(p);
           LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_dec_varbindlist() failed\n"));
-          msg_ps->error_status = SNMP_ES_GENERROR;
-          msg_ps->error_index = 0;
-          msg_ps->outvb.head = NULL;
-          msg_ps->outvb.tail = NULL;
-          msg_ps->outvb.count = 0;
-          msg_ps->outvb.seqlen = 0;
-          msg_ps->outvb.seqlenlen = 1;
-          snmp_send_response(msg_ps);
         }
       }
       else
       {
-        /* header check failed! */
+        /* header check failed
+           drop request silently, do not return error! */
         pbuf_free(p);
         LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_header_check() failed\n"));
       }      
@@ -918,11 +930,12 @@ static err_t
 snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat)
 {
   err_t derr;
-  u16_t len;
+  u16_t len, ofs_base;
   u8_t  len_octets;
   u8_t  type;
   s32_t version;
 
+  ofs_base = ofs;
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) ||
@@ -1022,11 +1035,17 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   }
   if (derr != ERR_OK)
   {
-    /* unsupported input PDU for this agent */
+    /* unsupported input PDU for this agent (no parse error) */
     return ERR_ARG;
   }
   m_stat->rt = type & 0x1F;
   ofs += (1 + len_octets);
+  if (len != (pdu_len - (ofs - ofs_base)))
+  {
+    /* decoded PDU length does not equal actual payload length */
+    snmp_inc_snmpinasnparseerrs();
+    return ERR_ARG;
+  }
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if ((derr != ERR_OK) || (type != (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG)))
@@ -1051,8 +1070,8 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinasnparseerrs();
     return ERR_ARG;
   }
-  /* usually noError (0) for incoming messages but log errors
-     for mib-2 completeness and for debug purposes */
+  /* must be noError (0) for incoming requests.
+     log errors for mib-2 completeness and for debug purposes */
   derr = snmp_asn1_dec_s32t(p, ofs + 1 + len_octets, len, &m_stat->error_status);
   if (derr != ERR_OK)
   {
@@ -1087,7 +1106,15 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinasnparseerrs();
     return ERR_ARG;
   }
-  /* skip 'error-index', usually 0 for incoming requests */
+  /* must be 0 for incoming requests.
+     decode anyway to catch bad integers (and dirty tricks) */
+  derr = snmp_asn1_dec_s32t(p, ofs + 1 + len_octets, len, &m_stat->error_index);
+  if (derr != ERR_OK)
+  {
+    /* can't decode */
+    snmp_inc_snmpinasnparseerrs();
+    return ERR_ARG;
+  }
   ofs += (1 + len_octets + len);
   *ofs_ret = ofs;
   return ERR_OK;
@@ -1125,7 +1152,8 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
     snmp_asn1_dec_type(p, ofs, &type);
     derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
     if ((derr != ERR_OK) ||
-        (type != (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ)))
+        (type != (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ)) ||
+        (len <= 0) || (len > vb_len))
     {
       snmp_inc_snmpinasnparseerrs();
       /* free varbinds (if available) */
