@@ -27,6 +27,11 @@ HISTORY
 
   ++ New features:
 
+  2006-08-18 Christiaan Simons
+  * tcp_{in,out}.c: added SNMP counters.
+  * ipv4/ip.c: added SNMP counters.
+  * ipv4/ip_frag.c: added SNMP counters.
+
   2006-08-08 Christiaan Simons
   * etharp.{c,h}: added etharp_find_addr() to read
     (stable) ethernet/IP address pair from ARP table
@@ -35,8 +40,6 @@ HISTORY
   * mib_structs.c: added
   * include/lwip/snmp_structs.h: added
   * netif.{c,h}, netif/ethernetif.c: added SNMP statistics to netif struct
-  * mib2.c: changed, inserted object tree
-  * msg_{in,out}.c: changed, added minimalistic GET functionality (needs work)
 
   2006-07-06 Christiaan Simons
   * snmp/asn1_{enc,dec}.c added
