@@ -64,7 +64,7 @@ static const u16_t memp_sizes[MEMP_MAX] = {
   MEM_ALIGN_SIZE(sizeof(struct netconn)),
   MEM_ALIGN_SIZE(sizeof(struct api_msg)),
   MEM_ALIGN_SIZE(sizeof(struct tcpip_msg)),
-  MEM_ALIGN_SIZE(sizeof(struct sys_timeout))
+  MEM_ALIGN_SIZE(sizeof(struct sys_timeo))
 };
 
 static const u16_t memp_num[MEMP_MAX] = {
@@ -95,7 +95,7 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
   MEMP_TYPE_SIZE(MEMP_NUM_API_MSG, struct api_msg) +
   MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct tcpip_msg) +
-  MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeout)];
+  MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 
 #if !SYS_LIGHTWEIGHT_PROT
 static sys_sem_t mutex;

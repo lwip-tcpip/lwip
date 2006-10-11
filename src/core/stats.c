@@ -84,10 +84,10 @@ void
 stats_display_mem(struct stats_mem *mem, char *name)
 {
   LWIP_PLATFORM_DIAG(("\n MEM %s\n\t", name));
-  LWIP_PLATFORM_DIAG(("avail: %"S16_F"\n\t", mem->avail)); 
-  LWIP_PLATFORM_DIAG(("used: %"S16_F"\n\t", mem->used)); 
-  LWIP_PLATFORM_DIAG(("max: %"S16_F"\n\t", mem->max)); 
-  LWIP_PLATFORM_DIAG(("err: %"S16_F"\n", mem->err));
+  LWIP_PLATFORM_DIAG(("avail: %"MEM_SIZE_F"\n\t", mem->avail)); 
+  LWIP_PLATFORM_DIAG(("used: %"MEM_SIZE_F"\n\t", mem->used)); 
+  LWIP_PLATFORM_DIAG(("max: %"MEM_SIZE_F"\n\t", mem->max)); 
+  LWIP_PLATFORM_DIAG(("err: %"MEM_SIZE_F"\n", mem->err));
   
 }
 

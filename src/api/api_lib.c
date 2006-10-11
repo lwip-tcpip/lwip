@@ -489,7 +489,7 @@ netconn_accept(struct netconn *conn)
     return NULL;
   }
   
-  sys_mbox_fetch(conn->acceptmbox, (void **)&newconn);
+  sys_mbox_fetch(conn->acceptmbox, (void *)&newconn);
   /* Register event with callback */
   if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
@@ -532,7 +532,7 @@ netconn_recv(struct netconn *conn)
       return NULL;
     }
     
-    sys_mbox_fetch(conn->recvmbox, (void **)&p);
+    sys_mbox_fetch(conn->recvmbox, (void *)&p);
 
     if (p != NULL)
     {
@@ -577,7 +577,7 @@ netconn_recv(struct netconn *conn)
     sys_mbox_fetch(conn->mbox, NULL);
     memp_free(MEMP_API_MSG, msg);
   } else {
-    sys_mbox_fetch(conn->recvmbox, (void **)&buf);
+    sys_mbox_fetch(conn->recvmbox, (void *)&buf);
   conn->recv_avail -= buf->p->tot_len;
     /* Register event with callback */
     if (conn->callback)

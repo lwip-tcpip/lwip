@@ -43,7 +43,7 @@
 
 #define IP_PROTO_ICMP 58
 #define IP_PROTO_UDP 17
-#define IP_PROTO_UDPLITE 170
+#define IP_PROTO_UDPLITE 136
 #define IP_PROTO_TCP 6
 
 /* This is passed as the destination address to ip_output_if (not

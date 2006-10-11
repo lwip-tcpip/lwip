@@ -304,7 +304,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     IP_STATS_INC(ip.opterr);
     IP_STATS_INC(ip.drop);
     /* unsupported protocol feature */
-    snmp_inc_ipunknownprotos();
+    snmp_inc_ipinunknownprotos();
     return ERR_OK;
 #endif /* IP_REASSEMBLY */
   }
@@ -316,7 +316,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     IP_STATS_INC(ip.opterr);
     IP_STATS_INC(ip.drop);
     /* unsupported protocol feature */
-    snmp_inc_ipunknownprotos();
+    snmp_inc_ipinunknownprotos();
     return ERR_OK;
   }
 #endif /* IP_OPTIONS == 0 */

@@ -50,7 +50,7 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 {
   u32_t time;
   struct sys_timeouts *timeouts;
-  struct sys_timeout *tmptimeout;
+  struct sys_timeo *tmptimeout;
   sys_timeout_handler h;
   void *arg;
 
@@ -102,7 +102,7 @@ sys_sem_wait(sys_sem_t sem)
 {
   u32_t time;
   struct sys_timeouts *timeouts;
-  struct sys_timeout *tmptimeout;
+  struct sys_timeo *tmptimeout;
   sys_timeout_handler h;
   void *arg;
 
@@ -157,7 +157,7 @@ void
 sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
   struct sys_timeouts *timeouts;
-  struct sys_timeout *timeout, *t;
+  struct sys_timeo *timeout, *t;
 
   timeout = memp_malloc(MEMP_SYS_TIMEOUT);
   if (timeout == NULL) {
@@ -208,7 +208,7 @@ void
 sys_untimeout(sys_timeout_handler h, void *arg)
 {
     struct sys_timeouts *timeouts;
-    struct sys_timeout *prev_t, *t;
+    struct sys_timeo *prev_t, *t;
 
     timeouts = sys_arch_timeouts();
 

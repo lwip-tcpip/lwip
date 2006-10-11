@@ -43,7 +43,7 @@
    definitions of the sys_ functions. */
 typedef u8_t sys_sem_t;
 typedef u8_t sys_mbox_t;
-struct sys_timeout {u8_t dummy;};
+struct sys_timeo {u8_t dummy;};
 
 #define sys_init()
 #define sys_timeout(m,h,a)
@@ -68,15 +68,15 @@ struct sys_timeout {u8_t dummy;};
 
 typedef void (* sys_timeout_handler)(void *arg);
 
-struct sys_timeout {
-  struct sys_timeout *next;
+struct sys_timeo {
+  struct sys_timeo *next;
   u32_t time;
   sys_timeout_handler h;
   void *arg;
 };
 
 struct sys_timeouts {
-  struct sys_timeout *next;
+  struct sys_timeo *next;
 };
 
 /* sys_init() must be called before anthing else. */

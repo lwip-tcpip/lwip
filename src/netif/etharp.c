@@ -43,7 +43,7 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-
+#include <string.h>
 #include "lwip/opt.h"
 #include "lwip/inet.h"
 #include "netif/etharp.h"
@@ -366,7 +366,8 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
 static err_t
 update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
-  s8_t i, k;
+  s8_t i;
+  u8_t k;
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 3, ("update_arp_entry()\n"));
   LWIP_ASSERT("netif->hwaddr_len != 0", netif->hwaddr_len != 0);
   LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",

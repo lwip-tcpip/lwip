@@ -56,6 +56,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2006-10-11 Christiaan Simons
+  * api_lib.c etharp.c, ip.c, memp.c, stats.c, sys.{c,h} tcp.h:
+    Partially accepted patch #5449 for ANSI C compatibility / build fixes.
+  * ipv4/lwip/ip.h ipv6/lwip/ip.h: Corrected UDP-Lite protocol
+    identifier from 170 to 136 (bug #17574).
+
   2006-10-10 Christiaan Simons
   * api_msg.c: Fixed Nagle algorithm as reported by Bob Grice.
 
