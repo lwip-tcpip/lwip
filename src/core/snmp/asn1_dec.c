@@ -366,12 +366,14 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
           if (sign)
           {
             *lsb_ptr &= *msg_ptr;
+            *value <<= 8;
+            *lsb_ptr |= 255;
           }
           else
           {
             *lsb_ptr |= *msg_ptr;
+            *value <<= 8;
           }
-          *value <<= 8;
           ofs += 1;
           if (ofs >= plen)
           {
