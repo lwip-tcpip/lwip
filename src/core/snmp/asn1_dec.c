@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Abstract Syntax Notation One (ISO 8824, 8825) decoding
+ * Abstract Syntax Notation One (ISO 8824, 8825) decoding
  *
  * @todo not optimised (yet), favor correctness over speed, favor speed over size
  */
@@ -333,6 +333,7 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
 {
   u16_t plen, base;
   u8_t *msg_ptr;
+  u8_t *lsb_ptr = (u8_t*)value;
   u8_t sign;
 
   plen = 0;
@@ -364,11 +365,11 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
           len--;
           if (sign)
           {
-            *value &= *msg_ptr;
+            *lsb_ptr &= *msg_ptr;
           }
           else
           {
-            *value |= *msg_ptr;
+            *lsb_ptr |= *msg_ptr;
           }
           *value <<= 8;
           ofs += 1;
@@ -388,11 +389,11 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
         }
         if (sign)
         {
-          *value &= *msg_ptr;
+          *lsb_ptr &= *msg_ptr;
         }
         else
         {
-          *value |= *msg_ptr;
+          *lsb_ptr |= *msg_ptr;
         }
         return ERR_OK;
       }
