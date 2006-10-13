@@ -1,9 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] SNMP input message processing (RFC1157).
- *
- * EXPERIMENTAL code, this is not how the agent should respond.
- * This is for test purposes only, DO NOT USE THIS CODE IN REAL WORLD!!
+ * SNMP input message processing (RFC1157).
  */
 
 /*

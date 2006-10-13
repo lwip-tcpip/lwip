@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] MIB tree access/construction functions.
+ * MIB tree access/construction functions.
  */
 
 /*

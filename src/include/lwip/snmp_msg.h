@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] SNMP Agent message handling structures.
+ * SNMP Agent message handling structures.
  */
 
 /*
@@ -203,9 +203,6 @@ struct snmp_trap_header_lengths
 #define SNMP_COMMUNITY_STR_LEN 64
 struct snmp_msg_pstat
 {
-#if 0
-  struct snmp_msg_pstat *next;
-#endif
   /* lwIP local port (161) binding */
   struct udp_pcb *pcb;
   /* source IP address */
@@ -241,17 +238,10 @@ struct snmp_msg_pstat
   struct snmp_varbind_root outvb;
   /* output response lengths used in ASN encoding */
   struct snmp_resp_header_lengths rhl;
-#if SNMP_PRIVATE_MIB
-  /* private MIB event info */
-  struct private_msg pm;
-#endif
 };
 
 struct snmp_msg_trap
 {
-#if 0
-  struct snmp_msg_trap *next;
-#endif
   /* lwIP local port (161) binding */
   struct udp_pcb *pcb;
   /* destination IP address in network order */

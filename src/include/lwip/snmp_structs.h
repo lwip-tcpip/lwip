@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Generic MIB tree structures.
+ * Generic MIB tree structures.
  *
  * @todo namespace prefixes
  */

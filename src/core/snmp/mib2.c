@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Management Information Base II (RFC1213) objects and functions.
+ * Management Information Base II (RFC1213) objects and functions.
  *
  * @note the object identifiers for this MIB-2 and private MIB tree
  * must be kept in sorted ascending order. This to ensure correct getnext operation.
@@ -2586,10 +2586,6 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   }
 }
 
-/**
- * @todo the etharp_find_addr could be a lot smarter
- *  if our arp index tree provided pointers or index to the requested item
- */
 static void
 atentry_get_value(struct obj_def *od, u16_t len, void *value)
 {

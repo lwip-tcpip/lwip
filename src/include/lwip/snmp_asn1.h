@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Abstract Syntax Notation One (ISO 8824, 8825) codec.
+ * Abstract Syntax Notation One (ISO 8824, 8825) codec.
  */
  
 /*

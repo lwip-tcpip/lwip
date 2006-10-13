@@ -1,19 +1,23 @@
-SNMPv1 agent for lwIP [preliminairy]
+SNMPv1 agent for lwIP
 
 Author: Christiaan Simons
 
 This is a brief introduction how to use and configure the SNMP agent.
 Note the agent uses the raw-API UDP interface so you may also want to
-read rawapi.txt to gain a better understanding of the SNMP messages handling.
+read rawapi.txt to gain a better understanding of the SNMP message handling.
 
-0 Agent capabilities
+0 Agent Capabilities
 ====================
 
 SNMPv1 per RFC1157
   This is an old(er) standard but is still widely supported.
   For SNMPv2c and v3 have a greater complexity and need many
   more lines of code. IMHO this breaks the idea of "lightweight IP".
-  Note the S in SNMP stands for "Simple" and is actually a bad joke.
+
+  Note the S in SNMP stands for "Simple". Note that "Simple" is
+  relative. SNMP is simple compared to the complex ISO network
+  management protocols CMIP (Common Management Information Protocol)
+  and CMOT (CMip Over Tcp).
 
 MIB II per RFC1213
   The standard lwIP stack management information base.
@@ -47,7 +51,7 @@ Large SNMP message support
   PBUF_POOL_SIZE and IP_REASS_BUFSIZE are set to match your
   local requirement.
 
-1 Building the agent
+1 Building the Agent
 ====================
 
 First of all you'll need to add the following define
@@ -61,7 +65,7 @@ and some snmp headers in lwip/src/include/lwip to your makefile.
 Note you'll might need to adapt you network driver to update
 the mib2 variables for your interface.
 
-2 Running the agent
+2 Running the Agent
 ===================
 
 The following function calls must be made in your program to
@@ -121,11 +125,14 @@ Note the object identifiers for thes MIB-2 and your private MIB
 tree must be kept in sorted ascending (lexicographical) order.
 This to ensure correct getnext operation.
 
+An example for a private MIB is part of the "minimal Unix" project:
+contrib/ports/unix/proj/minimal/lwip_prvmib.c
+
 The next chapter gives a more detailed description of the
 MIB-2 tree and the optional private MIB.
 
-4 Agent internals
-=================
+4 The Gory Details
+==================
 
 4.0 Object identifiers and the MIB tree.
 
@@ -161,3 +168,5 @@ The index part is handled by functions which in
 turn use dynamically allocated index trees from RAM.
 These trees are updated by e.g. the etharp code
 when new entries are made or removed form the ARP cache.
+
+/** @todo more gory details */

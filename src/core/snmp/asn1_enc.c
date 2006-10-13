@@ -1,6 +1,6 @@
 /**
  * @file
- * [EXPERIMENTAL] Abstract Syntax Notation One (ISO 8824, 8825) encoding
+ * Abstract Syntax Notation One (ISO 8824, 8825) encoding
  *
  * @todo not optimised (yet), favor correctness over speed, favor speed over size
  */
@@ -207,9 +207,6 @@ snmp_asn1_enc_type(struct pbuf *p, u16_t ofs, u8_t type)
  * @param ofs points to the offset within the pbuf chain
  * @param length is the host order length to be encoded
  * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
- *
- * @todo also add octets_used instead of compares??
- * @todo encode "type" in this function as well??
  */
 err_t
 snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length)
