@@ -139,7 +139,7 @@ PACK_STRUCT_END
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)
 #define IPH_OFFSET_SET(hdr, off) (hdr)->_offset = (off)
-#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl_proto = (htons(IPH_PROTO(hdr) | ((ttl) << 8)))
+#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl_proto = (htons(IPH_PROTO(hdr) | ((u16_t)(ttl) << 8)))
 #define IPH_PROTO_SET(hdr, proto) (hdr)->_ttl_proto = (htons((proto) | (IPH_TTL(hdr) << 8)))
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
