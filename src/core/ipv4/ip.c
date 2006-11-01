@@ -375,6 +375,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
  * interface is filled in as source address.
+ *
+ * @note ip_id: RFC791 "some host may be able to simply use
+ *  unique identifiers independent of destination"
  */
 
 err_t
@@ -383,7 +386,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
              u8_t proto, struct netif *netif)
 {
   struct ip_hdr *iphdr;
-  u16_t ip_id = 0;
+  static u16_t ip_id = 0;
 
   snmp_inc_ipoutrequests();
 
