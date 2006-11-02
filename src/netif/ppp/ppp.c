@@ -1007,8 +1007,10 @@ int sifup(int pd)
     } else {
 		netif_remove(&pc->netif);
 		if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input)) {
-        		pc->if_up = 1;
-        		pc->errCode = PPPERR_NONE;
+        	
+        	netif_set_up(&pc->netif);
+        	pc->if_up = 1;
+        	pc->errCode = PPPERR_NONE;
 
 			PPPDEBUG((LOG_DEBUG, "sifup: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
 			if(pc->linkStatusCB)
@@ -1322,7 +1324,9 @@ static void pppInput(void *arg)
          * pass the result to IP.
          */
         if (vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) {
-            pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+            if (pppControl[pd].netif.input != NULL) {
+              pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+            }
 			return;
         }
 	/* Something's wrong so drop it. */
@@ -1340,7 +1344,9 @@ static void pppInput(void *arg)
          * the packet to IP.
          */
         if (vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) {
-            pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+            if (pppControl[pd].netif.input != NULL) {
+              pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+            }
 			return;
         }
 	/* Something's wrong so drop it. */
@@ -1354,7 +1360,9 @@ static void pppInput(void *arg)
 	break;
     case PPP_IP:            /* Internet Protocol */
         PPPDEBUG((LOG_INFO, "pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
-        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        if (pppControl[pd].netif.input != NULL) {
+          pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        }
 		return;
     default:
 	{
