@@ -49,7 +49,7 @@
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"
 
-/** 
+/**
  * IANA assigned enterprise ID for lwIP is 26381
  * @see http://www.iana.org/assignments/enterprise-numbers
  *
@@ -60,7 +60,7 @@
  *
  * If you need to create your own private MIB you'll need
  * to apply for your own enterprise ID with IANA:
- * http://www.iana.org/numbers.html 
+ * http://www.iana.org/numbers.html
  */
 #define SNMP_ENTERPRISE_ID 26381
 #define SNMP_SYSOBJID_LEN 7
@@ -144,7 +144,7 @@ const struct mib_array_node snmp = {
   MIB_NODE_AR,
   28,
   snmp_ids,
-  snmp_nodes 
+  snmp_nodes
 };
 
 /* dot3 and EtherLike MIB not planned. (transmission .1.3.6.1.2.1.10) */
@@ -517,7 +517,7 @@ struct mib_node* const atentry_nodes[3] = {
 };
 const struct mib_array_node atentry = {
   &noleafs_get_object_def,
-  &noleafs_get_value, 
+  &noleafs_get_value,
   &noleafs_set_test,
   &noleafs_set_value,
   MIB_NODE_AR,
@@ -664,7 +664,7 @@ const struct mib_array_node sys_tem = {
 #define MIB2_GROUPS 7
 #endif
 const s32_t mib2_ids[MIB2_GROUPS] =
-{ 
+{
   1,
   2,
   3,
@@ -844,7 +844,7 @@ static u32_t udpindatagrams = 0,
              udpnoports = 0,
              udpinerrors = 0,
              udpoutdatagrams = 0;
-/* mib-2.snmp counter(s) */             
+/* mib-2.snmp counter(s) */
 static u32_t snmpinpkts = 0,
              snmpoutpkts = 0,
              snmpinbadversions = 0,
@@ -1003,7 +1003,7 @@ void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen)
 
 void snmp_add_ifinoctets(struct netif *ni, u32_t value)
 {
-  ni->ifinoctets += value;  
+  ni->ifinoctets += value;
 }
 
 void snmp_inc_ifinucastpkts(struct netif *ni)
@@ -1023,7 +1023,7 @@ void snmp_inc_ifindiscards(struct netif *ni)
 
 void snmp_add_ifoutoctets(struct netif *ni, u32_t value)
 {
-  ni->ifoutoctets += value;  
+  ni->ifoutoctets += value;
 }
 
 void snmp_inc_ifoutucastpkts(struct netif *ni)
@@ -1044,7 +1044,7 @@ void snmp_inc_ifoutdiscards(struct netif *ni)
 void snmp_inc_iflist(void)
 {
   struct mib_list_node *if_node = NULL;
-  
+
   snmp_mib_node_insert(&iflist_root, iflist_root.count + 1, &if_node);
   /* enable getnext traversal on filled table */
   iftable.maxlength = 1;
@@ -1057,7 +1057,7 @@ void snmp_dec_iflist(void)
   if(iflist_root.count == 0) iftable.maxlength = 0;
 }
 
-/** 
+/**
  * Inserts ARP table indexes (.xIfIndex.xNetAddress)
  * into arp table index trees (both atTable and ipNetToMediaTable).
  */
@@ -1073,7 +1073,7 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
   snmp_netiftoifindex(ni, &arpidx[0]);
   hip.addr = ntohl(ip->addr);
   snmp_iptooid(&hip, &arpidx[1]);
-  
+
   for (tree = 0; tree < 2; tree++)
   {
     if (tree == 0)
@@ -1094,20 +1094,29 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
         {
           at_rn = snmp_mib_lrn_alloc();
           at_node->nptr = (struct mib_node*)at_rn;
-          if (level == 3)
+          if (at_rn != NULL)
           {
-            if (tree == 0)
+            if (level == 3)
             {
-              at_rn->get_object_def = atentry_get_object_def;
-              at_rn->get_value = atentry_get_value;
+              if (tree == 0)
+              {
+                at_rn->get_object_def = atentry_get_object_def;
+                at_rn->get_value = atentry_get_value;
+              }
+              else
+              {
+                at_rn->get_object_def = ip_ntomentry_get_object_def;
+                at_rn->get_value = ip_ntomentry_get_value;
+              }
+              at_rn->set_test = noleafs_set_test;
+              at_rn->set_value = noleafs_set_value;
             }
-            else
-            {
-              at_rn->get_object_def = ip_ntomentry_get_object_def;
-              at_rn->get_value = ip_ntomentry_get_value;
-            }
-            at_rn->set_test = noleafs_set_test;
-            at_rn->set_value = noleafs_set_value;
+          }
+          else
+          {
+            /* at_rn == NULL, malloc failure */
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_insert_arpidx_tree() insert failed, mem full"));
+            break;
           }
         }
         else
@@ -1122,7 +1131,7 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
   ipntomtable.maxlength = 1;
 }
 
-/** 
+/**
  * Removes ARP table indexes (.xIfIndex.xNetAddress)
  * from arp table index trees.
  */
@@ -1137,7 +1146,7 @@ void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
   snmp_netiftoifindex(ni, &arpidx[0]);
   hip.addr = ntohl(ip->addr);
   snmp_iptooid(&hip, &arpidx[1]);
- 
+
   for (tree = 0; tree < 2; tree++)
   {
     /* mark nodes for deletion */
@@ -1150,7 +1159,7 @@ void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
       at_rn = &ipntomtree_root;
     }
     level = 0;
-    del_cnt = 0;    
+    del_cnt = 0;
     while ((level < 5) && (at_rn != NULL))
     {
       fc = snmp_mib_node_find(at_rn, arpidx[level], &at_n);
@@ -1183,7 +1192,7 @@ void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
       at_rn = del_rn[del_cnt];
       at_n = del_n[del_cnt];
 
-      next = snmp_mib_node_delete(at_rn, at_n);    
+      next = snmp_mib_node_delete(at_rn, at_n);
       if (next != NULL)
       {
         LWIP_ASSERT("next_count == 0",next->count == 0);
@@ -1281,7 +1290,7 @@ void snmp_inc_iproutingdiscards(void)
   iproutingdiscards++;
 }
 
-/** 
+/**
  * Inserts ipAddrTable indexes (.ipAdEntAddr)
  * into index tree.
  */
@@ -1309,12 +1318,21 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
       {
         ipa_rn = snmp_mib_lrn_alloc();
         ipa_node->nptr = (struct mib_node*)ipa_rn;
-        if (level == 2)
+        if (ipa_rn != NULL)
         {
-          ipa_rn->get_object_def = ip_addrentry_get_object_def;
-          ipa_rn->get_value = ip_addrentry_get_value;
-          ipa_rn->set_test = noleafs_set_test;
-          ipa_rn->set_value = noleafs_set_value;
+          if (level == 2)
+          {
+            ipa_rn->get_object_def = ip_addrentry_get_object_def;
+            ipa_rn->get_value = ip_addrentry_get_value;
+            ipa_rn->set_test = noleafs_set_test;
+            ipa_rn->set_value = noleafs_set_value;
+          }
+        }
+        else
+        {
+          /* ipa_rn == NULL, malloc failure */
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_insert_ipaddridx_tree() insert failed, mem full"));
+          break;
         }
       }
       else
@@ -1328,7 +1346,7 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
   ipaddrtable.maxlength = 1;
 }
 
-/** 
+/**
  * Removes ipAddrTable indexes (.ipAdEntAddr)
  * from index tree.
  */
@@ -1343,7 +1361,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
   LWIP_ASSERT("ni != NULL", ni != NULL);
   ip.addr = ntohl(ni->ip_addr.addr);
   snmp_iptooid(&ip, &ipaddridx[0]);
- 
+
   /* mark nodes for deletion */
   level = 0;
   del_cnt = 0;
@@ -1376,11 +1394,11 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
   while (del_cnt > 0)
   {
     del_cnt--;
-   
+
     ipa_rn = del_rn[del_cnt];
     ipa_n = del_n[del_cnt];
 
-    next = snmp_mib_node_delete(ipa_rn, ipa_n);    
+    next = snmp_mib_node_delete(ipa_rn, ipa_n);
     if (next != NULL)
     {
       LWIP_ASSERT("next_count == 0",next->count == 0);
@@ -1391,7 +1409,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
   if (ipaddrtree_root.count == 0) ipaddrtable.maxlength = 0;
 }
 
-/** 
+/**
  * Inserts ipRouteTable indexes (.ipRouteDest)
  * into index tree.
  *
@@ -1439,12 +1457,21 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
         {
           iprte_rn = snmp_mib_lrn_alloc();
           iprte_node->nptr = (struct mib_node*)iprte_rn;
-          if (level == 2)
+          if (iprte_rn != NULL)
           {
-            iprte_rn->get_object_def = ip_rteentry_get_object_def;
-            iprte_rn->get_value = ip_rteentry_get_value;
-            iprte_rn->set_test = noleafs_set_test;
-            iprte_rn->set_value = noleafs_set_value;
+            if (level == 2)
+            {
+              iprte_rn->get_object_def = ip_rteentry_get_object_def;
+              iprte_rn->get_value = ip_rteentry_get_value;
+              iprte_rn->set_test = noleafs_set_test;
+              iprte_rn->set_value = noleafs_set_value;
+            }
+          }
+          else
+          {
+            /* iprte_rn == NULL, malloc failure */
+            LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_insert_iprteidx_tree() insert failed, mem full"));
+            break;
           }
         }
         else
@@ -1459,7 +1486,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
   iprtetable.maxlength = 1;
 }
 
-/** 
+/**
  * Removes ipRouteTable indexes (.ipRouteDest)
  * from index tree.
  *
@@ -1492,7 +1519,7 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
     s32_t iprteidx[4];
     u8_t fc, level, del_cnt;
 
-    snmp_iptooid(&dst, &iprteidx[0]);   
+    snmp_iptooid(&dst, &iprteidx[0]);
     /* mark nodes for deletion */
     level = 0;
     del_cnt = 0;
@@ -1525,11 +1552,11 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
     while (del_cnt > 0)
     {
       del_cnt--;
-     
+
       iprte_rn = del_rn[del_cnt];
       iprte_n = del_n[del_cnt];
 
-      next = snmp_mib_node_delete(iprte_rn, iprte_n);    
+      next = snmp_mib_node_delete(iprte_rn, iprte_n);
       if (next != NULL)
       {
         LWIP_ASSERT("next_count == 0",next->count == 0);
@@ -1583,7 +1610,7 @@ void snmp_inc_icmpinechos(void)
 }
 
 void snmp_inc_icmpinechoreps(void)
-{ 
+{
   icmpinechoreps++;
 }
 
@@ -1600,12 +1627,12 @@ void snmp_inc_icmpintimestampreps(void)
 void snmp_inc_icmpinaddrmasks(void)
 {
   icmpinaddrmasks++;
-} 
+}
 
 void snmp_inc_icmpinaddrmaskreps(void)
 {
   icmpinaddrmaskreps++;
-} 
+}
 
 void snmp_inc_icmpoutmsgs(void)
 {
@@ -1620,7 +1647,7 @@ void snmp_inc_icmpouterrors(void)
 void snmp_inc_icmpoutdestunreachs(void)
 {
   icmpoutdestunreachs++;
-} 
+}
 
 void snmp_inc_icmpouttimeexcds(void)
 {
@@ -1640,7 +1667,7 @@ void snmp_inc_icmpoutsrcquenchs(void)
 void snmp_inc_icmpoutredirects(void)
 {
   icmpoutredirects++;
-} 
+}
 
 void snmp_inc_icmpoutechos(void)
 {
@@ -1737,7 +1764,7 @@ void snmp_inc_udpoutdatagrams(void)
   udpoutdatagrams++;
 }
 
-/** 
+/**
  * Inserts udpTable indexes (.udpLocalAddress.udpLocalPort)
  * into index tree.
  */
@@ -1765,12 +1792,21 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
       {
         udp_rn = snmp_mib_lrn_alloc();
         udp_node->nptr = (struct mib_node*)udp_rn;
-        if (level == 3)
+        if (udp_rn != NULL)
         {
-          udp_rn->get_object_def = udpentry_get_object_def;
-          udp_rn->get_value = udpentry_get_value;
-          udp_rn->set_test = noleafs_set_test;
-          udp_rn->set_value = noleafs_set_value;
+          if (level == 3)
+          {
+            udp_rn->get_object_def = udpentry_get_object_def;
+            udp_rn->get_value = udpentry_get_value;
+            udp_rn->set_test = noleafs_set_test;
+            udp_rn->set_value = noleafs_set_value;
+          }
+        }
+        else
+        {
+          /* udp_rn == NULL, malloc failure */
+          LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_insert_udpidx_tree() insert failed, mem full"));
+          break;
         }
       }
       else
@@ -1782,7 +1818,7 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
   udptable.maxlength = 1;
 }
 
-/** 
+/**
  * Removes udpTable indexes (.udpLocalAddress.udpLocalPort)
  * from index tree.
  */
@@ -1798,13 +1834,13 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
   ip.addr = ntohl(pcb->local_ip.addr);
   snmp_iptooid(&ip, &udpidx[0]);
   udpidx[4] = pcb->local_port;
- 
+
   /* count PCBs for a given binding
      (e.g. when reusing ports or for temp output PCBs) */
   bindings = 0;
   pcb = udp_pcbs;
   while ((pcb != NULL))
-  {      
+  {
     if ((pcb->local_ip.addr == ip.addr) &&
         (pcb->local_port == udpidx[4]))
     {
@@ -1847,7 +1883,7 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
     while (del_cnt > 0)
     {
       del_cnt--;
-     
+
       udp_rn = del_rn[del_cnt];
       udp_n = del_n[del_cnt];
 
@@ -2068,10 +2104,10 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   ident_len += 1;
   ident -= 1;
   if (ident_len == 2)
-  { 
+  {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
-    
+
     id = ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def system.%"U16_F".0\n",(u16_t)id));
     switch (id)
@@ -2139,7 +2175,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
  * @param len return value space (in bytes)
  * @param value points to (varbind) space to copy value into.
  */
-static void                                                  
+static void
 system_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
@@ -2273,7 +2309,7 @@ interfaces_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
  * @param len return value space (in bytes)
  * @param value points to (varbind) space to copy value into.
  */
-static void                                                  
+static void
 interfaces_get_value(struct obj_def *od, u16_t len, void *value)
 {
   if (len){}
@@ -2303,7 +2339,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
-    
+
     id = ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ifentry.%"U16_F"\n",(u16_t)id));
     switch (id)
@@ -2334,7 +2370,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
       case 6: /* ifPhysAddress */
         {
           struct netif *netif;
-          
+
           snmp_ifindextonetif(ident[1], &netif);
           od->instance = MIB_OBJECT_TAB;
           od->access = MIB_OBJECT_READ_ONLY;
@@ -2398,7 +2434,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
  * @param len return value space (in bytes)
  * @param value points to (varbind) space to copy value into.
  */
-static void                                                  
+static void
 ifentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
@@ -2600,7 +2636,7 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
   ip.addr = htonl(ip.addr);
-    
+
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
     id = od->id_inst_ptr[0];
@@ -2639,10 +2675,10 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   ident_len += 1;
   ident -= 1;
   if (ident_len == 2)
-  { 
+  {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
-    
+
     id = ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ip.%"U16_F".0\n",(u16_t)id));
     switch (id)
@@ -2943,7 +2979,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
     netif = netif->next;
     ifidx++;
   }
-  
+
   if (netif != NULL)
   {
     id = od->id_inst_ptr[0];
@@ -2969,7 +3005,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 4: /* ipAdEntBcastAddr */
         {
-          s32_t *sint_ptr = value;      
+          s32_t *sint_ptr = value;
 
           /* lwIP oddity, there's no broadcast
             address in the netif we can rely on */
@@ -2978,7 +3014,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 5: /* ipAdEntReasmMaxSize */
         {
-          s32_t *sint_ptr = value;      
+          s32_t *sint_ptr = value;
 #if IP_REASSEMBLY
           *sint_ptr = (IP_HLEN + IP_REASS_BUFSIZE);
 #else
@@ -2992,7 +3028,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
   }
 }
 
-/** 
+/**
  * @note
  * lwIP IP routing is currently using the network addresses in netif_list.
  * if no suitable network IP is found in netif_list, the default_netif is used.
@@ -3082,12 +3118,12 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
   {
     /* not using ip_route(), need exact match! */
     netif = netif_list;
-    while ((netif != NULL) && 
+    while ((netif != NULL) &&
             !ip_addr_netcmp(&dest, &(netif->ip_addr), &(netif->netmask)) )
-    {      
+    {
       netif = netif->next;
     }
-  }    
+  }
   if (netif != NULL)
   {
     id = ident[0];
@@ -3116,7 +3152,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
           snmp_netiftoifindex(netif, sint_ptr);
         }
         break;
-      case 3: /* ipRouteMetric1 */         
+      case 3: /* ipRouteMetric1 */
         {
           s32_t *sint_ptr = value;
 
@@ -3275,7 +3311,7 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
   ip.addr = htonl(ip.addr);
-    
+
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
     id = od->id_inst_ptr[0];
@@ -3386,7 +3422,7 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
       *uint_ptr = icmpinaddrmaskreps;
       break;
     case 14: /* icmpOutMsgs */
-      *uint_ptr = icmpoutmsgs; 
+      *uint_ptr = icmpoutmsgs;
       break;
     case 15: /* icmpOutErrors */
       *uint_ptr = icmpouterrors;
@@ -3438,10 +3474,10 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   ident_len += 1;
   ident -= 1;
   if (ident_len == 2)
-  { 
+  {
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
-    
+
     id = ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0\n",(u16_t)id));
 
@@ -3535,7 +3571,7 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
         while (pcb != NULL)
         {
           if ((pcb->state == ESTABLISHED) ||
-              (pcb->state == CLOSE_WAIT)) 
+              (pcb->state == CLOSE_WAIT))
           {
             tcpcurrestab++;
           }
@@ -3575,7 +3611,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
-    
+
     id = ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0\n",(u16_t)id));
 
@@ -3688,7 +3724,7 @@ udpentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   /* return to object name, adding index depth (5) */
   ident_len += 5;
   ident -= 5;
-  
+
   if (ident_len == 6)
   {
     od->id_inst_len = ident_len;
@@ -3738,10 +3774,10 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
   while ((pcb != NULL) &&
          !((pcb->local_ip.addr == ip.addr) &&
            (pcb->local_port == port)))
-  {      
+  {
     pcb = pcb->next;
   }
-  
+
   if (pcb != NULL)
   {
     id = od->id_inst_ptr[0];
