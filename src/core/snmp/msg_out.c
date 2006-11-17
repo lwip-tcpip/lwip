@@ -12,7 +12,7 @@
  * The buffer requirement can be prohibitively large for big payloads
  * (>= 484) therefore we use the two encoding passes.
  */
- 
+
 /*
  * Copyright (c) 2006 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
@@ -146,11 +146,11 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
     u16_t ofs;
 
     LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_snd_response() p != NULL\n"));
-    
+
     /* pass 1, size error, encode packet ino the pbuf(s) */
     ofs = snmp_resp_header_enc(m_stat, p);
     if (m_stat->error_status == SNMP_ES_TOOBIG)
-    {      
+    {
       snmp_varbind_list_enc(&emptyvb, p, ofs);
     }
     else
@@ -250,7 +250,7 @@ snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
       }
       else
       {
-        /* generic (MIB-II) trap */    
+        /* generic (MIB-II) trap */
         snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
       }
       snmp_get_sysuptime(&trap_msg.ts);
@@ -264,7 +264,7 @@ snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
       if (p != NULL)
       {
         u16_t ofs;
-    
+
         /* pass 1, encode packet ino the pbuf(s) */
         ofs = snmp_trap_header_enc(&trap_msg, p);
         snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
@@ -291,7 +291,7 @@ snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
 
 void
 snmp_coldstart_trap(void)
-{  
+{
   trap_msg.outvb.head = NULL;
   trap_msg.outvb.tail = NULL;
   trap_msg.outvb.count = 0;
@@ -300,7 +300,7 @@ snmp_coldstart_trap(void)
 
 void
 snmp_authfail_trap(void)
-{  
+{
   u8_t enable;
   snmp_get_snmpenableauthentraps(&enable);
   if (enable == 1)
@@ -391,7 +391,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
   thl->aaddrlen = 4;
   snmp_asn1_enc_length_cnt(thl->aaddrlen, &thl->aaddrlenlen);
   tot_len += 1 + thl->aaddrlen + thl->aaddrlenlen;
-  
+
   snmp_asn1_enc_oid_cnt(m_trap->enterprise->len, &m_trap->enterprise->id[0], &thl->eidlen);
   snmp_asn1_enc_length_cnt(thl->eidlen, &thl->eidlenlen);
   tot_len += 1 + thl->eidlen + thl->eidlenlen;
@@ -441,7 +441,7 @@ snmp_varbind_list_sum(struct snmp_varbind_root *root)
         sint_ptr = vb->value;
         snmp_asn1_enc_s32t_cnt(*sint_ptr, &vb->vlen);
         break;
-      case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):        
+      case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS):
         uint_ptr = vb->value;
@@ -476,7 +476,7 @@ snmp_varbind_list_sum(struct snmp_varbind_root *root)
 
     vb = vb->prev;
   }
- 
+
   /* varbind-list seq */
   root->seqlen = tot_len;
   snmp_asn1_enc_length_cnt(root->seqlen, &root->seqlenlen);
@@ -538,7 +538,7 @@ snmp_resp_header_enc(struct snmp_msg_pstat *m_stat, struct pbuf *p)
   ofs += m_stat->rhl.erridxlenlen;
   snmp_asn1_enc_s32t(p, ofs, m_stat->rhl.erridxlen, m_stat->error_index);
   ofs += m_stat->rhl.erridxlen;
-   
+
   return ofs;
 }
 
@@ -655,7 +655,7 @@ snmp_varbind_list_enc(struct snmp_varbind_root *root, struct pbuf *p, u16_t ofs)
         sint_ptr = vb->value;
         snmp_asn1_enc_s32t(p, ofs, vb->vlen, *sint_ptr);
         break;
-      case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):        
+      case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS):
         uint_ptr = vb->value;

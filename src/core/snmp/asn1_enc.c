@@ -33,7 +33,7 @@
  *
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
- 
+
 #include "lwip/opt.h"
 
 #if LWIP_SNMP
@@ -142,7 +142,7 @@ snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
 {
   s32_t sub_id;
   u8_t cnt;
-  
+
   cnt = 0;
   if (ident_len > 1)
   {
@@ -188,7 +188,7 @@ snmp_asn1_enc_type(struct pbuf *p, u16_t ofs, u8_t type)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
       *msg_ptr = type;
@@ -220,7 +220,7 @@ snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
 
@@ -251,7 +251,7 @@ snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length)
       else
       {
         u8_t i;
-                
+
         /* length >= 0x100 && length <= 0xFFFF */
         *msg_ptr = 0x82;
         i = 2;
@@ -315,7 +315,7 @@ snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u8_t octets_needed, u32_t value)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
 
@@ -338,10 +338,10 @@ snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u8_t octets_needed, u32_t value)
           /* next octet in same pbuf */
           msg_ptr++;
         }
-      }      
+      }
       while (octets_needed > 1)
       {
-        octets_needed--;        
+        octets_needed--;
         *msg_ptr = value >> (octets_needed << 3);
         ofs += 1;
         if (ofs >= plen)
@@ -391,13 +391,13 @@ snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u8_t octets_needed, s32_t value)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
 
       while (octets_needed > 1)
       {
-        octets_needed--;        
+        octets_needed--;
         *msg_ptr = value >> (octets_needed << 3);
         ofs += 1;
         if (ofs >= plen)
@@ -445,15 +445,15 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
-      
+
       if (ident_len > 1)
       {
         if ((ident[0] == 1) && (ident[1] == 3))
         {
-          /* compressed (most common) prefix .iso.org */ 
+          /* compressed (most common) prefix .iso.org */
           *msg_ptr = 0x2b;
         }
         else
@@ -488,15 +488,15 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
       {
         s32_t sub_id;
         u8_t shift, tail;
-        
+
         ident_len--;
         sub_id = *ident;
-        tail = 0;       
+        tail = 0;
         shift = 28;
         while(shift > 0)
         {
           u8_t code;
-          
+
           code = sub_id >> shift;
           if ((code != 0) || (tail != 0))
           {
@@ -569,12 +569,12 @@ snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u8_t raw_len, u8_t *raw)
     base = plen;
     plen += p->len;
     if (ofs < plen)
-    {      
+    {
       msg_ptr = p->payload;
       msg_ptr += ofs - base;
 
       while (raw_len > 1)
-      {          
+      {
         /* copy raw_len - 1 octets */
         raw_len--;
         *msg_ptr = *raw;
