@@ -614,8 +614,8 @@ udp_remove(struct udp_pcb *pcb)
     for (pcb2 = udp_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
       /* find pcb in udp_pcbs list */
       if (pcb2->next != NULL && pcb2->next == pcb) {
-	/* remove pcb from list */
-	pcb2->next = pcb->next;
+        /* remove pcb from list */
+        pcb2->next = pcb->next;
       }
     }
   memp_free(MEMP_UDP_PCB, pcb);

@@ -157,7 +157,7 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 /*
  * User-settable options (used with setsockopt).
  */
-#define	TCP_NODELAY	   0x01	   /* don't delay send to coalesce packets */
+#define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
 #define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keepalive miliseconds */
 
 /* Keepalive values */
@@ -456,8 +456,8 @@ void tcp_timer_needed(void);
 
 /* The TCP PCB lists. */
 union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
-	struct tcp_pcb_listen *listen_pcbs; 
-	struct tcp_pcb *pcbs;
+  struct tcp_pcb_listen *listen_pcbs; 
+  struct tcp_pcb *pcbs;
 };
 extern union tcp_listen_pcbs_t tcp_listen_pcbs;
 extern struct tcp_pcb *tcp_active_pcbs;  /* List of all TCP PCBs that are in a

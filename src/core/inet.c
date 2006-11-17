@@ -58,7 +58,7 @@
 #ifndef LWIP_CHKSUM
 #define LWIP_CHKSUM lwip_standard_chksum
 
-#if 1	/* Version A */
+#if 1 /* Version A */
 /**
  * lwip checksum
  *
@@ -109,7 +109,7 @@ lwip_standard_chksum(void *dataptr, u16_t len)
 }
 #endif
 
-#if 0	/* Version B */
+#if 0 /* Version B */
 /*
  * Curt McDowell
  * Broadcom Corp.
@@ -161,7 +161,7 @@ lwip_standard_chksum(void *dataptr, int len)
 }
 #endif
 
-#if 0	/* Version C */
+#if 0 /* Version C */
 /**
  * An optimized checksum routine. Basically, it uses loop-unrolling on
  * the checksum loop, treating the head and tail bytes specially, whereas
@@ -339,8 +339,8 @@ inet_chksum_pbuf(struct pbuf *p)
 #define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#endif		
-		
+#endif    
+    
 /*
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
@@ -386,20 +386,20 @@ inet_aton(const char *cp, struct in_addr *addr)
     if (c == '0') {
       c = *++cp;
       if (c == 'x' || c == 'X') {
-	base = 16;
-	c = *++cp;
+        base = 16;
+        c = *++cp;
       } else
-	base = 8;
+        base = 8;
     }
     for (;;) {
       if (isdigit(c)) {
-	val = (val * base) + (int)(c - '0');
-	c = *++cp;
+        val = (val * base) + (int)(c - '0');
+        c = *++cp;
       } else if (base == 16 && isxdigit(c)) {
-	val = (val << 4) | (int)(c + 10 - (islower(c) ? 'a' : 'A'));
-	c = *++cp;
+        val = (val << 4) | (int)(c + 10 - (islower(c) ? 'a' : 'A'));
+        c = *++cp;
       } else
-	break;
+        break;
     }
     if (c == '.') {
       /*
@@ -409,7 +409,7 @@ inet_aton(const char *cp, struct in_addr *addr)
        *  a.b (with b treated as 24 bits)
        */
       if (pp >= parts + 3)
-	return (0);
+        return (0);
       *pp++ = val;
       c = *++cp;
     } else

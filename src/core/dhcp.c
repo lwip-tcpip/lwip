@@ -495,7 +495,7 @@ static void dhcp_handle_ack(struct netif *netif)
     dhcp->dns_count = dhcp_get_option_byte(&option_ptr[1]) / (u32_t)sizeof(struct ip_addr);
     /* limit to at most DHCP_MAX_DNS DNS servers */
     if (dhcp->dns_count > DHCP_MAX_DNS)
-	dhcp->dns_count = DHCP_MAX_DNS;
+      dhcp->dns_count = DHCP_MAX_DNS;
     for (n = 0; n < dhcp->dns_count; n++) {
       dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2 + n * 4]));
     }
@@ -539,18 +539,18 @@ err_t dhcp_start(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE | 3, ("dhcp_start(): restarting DHCP configuration\n"));
   }
-  	
-	/* clear data structure */
-	memset(dhcp, 0, sizeof(struct dhcp));
+    
+  /* clear data structure */
+  memset(dhcp, 0, sizeof(struct dhcp));
   /* allocate UDP PCB */
-	dhcp->pcb = udp_new();
-	if (dhcp->pcb == NULL) {
-	  LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
-	  mem_free((void *)dhcp);
-	  netif->dhcp = dhcp = NULL;
-	  return ERR_MEM;
-	}
-	LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
+  dhcp->pcb = udp_new();
+  if (dhcp->pcb == NULL) {
+    LWIP_DEBUGF(DHCP_DEBUG  | DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
+    mem_free((void *)dhcp);
+    netif->dhcp = dhcp = NULL;
+    return ERR_MEM;
+  }
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
   if (result != ERR_OK) {

@@ -112,8 +112,8 @@ memp_sanity(void)
     for (m = memp_tab[i]; m != NULL; m = m->next) {
       c = 1;
       for (n = memp_tab[i]; n != NULL; n = n->next) {
-	if (n == m && --c < 0) {
-	  return 0; /* LW was: abort(); */
+        if (n == m && --c < 0) {
+          return 0; /* LW was: abort(); */
         }
       }
     }

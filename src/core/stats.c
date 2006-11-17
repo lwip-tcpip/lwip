@@ -96,7 +96,7 @@ stats_display(void)
 {
   s16_t i;
   char * memp_names[] = {"PBUF", "RAW_PCB", "UDP_PCB", "TCP_PCB", "TCP_PCB_LISTEN",
-	  		"TCP_SEG", "NETBUF", "NETCONN", "API_MSG", "TCP_MSG", "TIMEOUT"};
+        "TCP_SEG", "NETBUF", "NETCONN", "API_MSG", "TCP_MSG", "TIMEOUT"};
   stats_display_proto(&lwip_stats.link, "LINK");
   stats_display_proto(&lwip_stats.ip_frag, "IP_FRAG");
   stats_display_proto(&lwip_stats.ip, "IP");
@@ -108,7 +108,7 @@ stats_display(void)
   for (i = 0; i < MEMP_MAX; i++) {
     stats_display_mem(&lwip_stats.memp[i], memp_names[i]);
   }
-	
+  
 }
 #endif /* LWIP_STATS_DISPLAY */
 #endif /* LWIP_STATS */

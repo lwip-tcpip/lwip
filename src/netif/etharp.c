@@ -280,7 +280,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* no empty entry found and not allowed to recycle? */
   if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
   {
-  	return (s8_t)ERR_MEM;
+    return (s8_t)ERR_MEM;
   }
   
   /* b) choose the least destructive entry to recycle:
@@ -815,12 +815,12 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       if (p != NULL) {
         /* queue packet ... */
         if (arp_table[i].p == NULL) {
-        	/* ... in the empty queue */
-        	pbuf_ref(p);
-        	arp_table[i].p = p;
+          /* ... in the empty queue */
+          pbuf_ref(p);
+          arp_table[i].p = p;
 #if 0 /* multi-packet-queueing disabled, see bug #11400 */
         } else {
-        	/* ... at tail of non-empty queue */
+          /* ... at tail of non-empty queue */
           pbuf_queue(arp_table[i].p, p);
 #endif
         }
