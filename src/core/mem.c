@@ -388,7 +388,6 @@ mem_malloc(mem_size_t size)
          (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
         LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
          (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
-        mem_dump("mem_malloc");
         return (u8_t *)mem + SIZEOF_STRUCT_MEM;
       }
     }
