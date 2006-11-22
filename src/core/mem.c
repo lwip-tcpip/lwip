@@ -4,11 +4,11 @@
  *
  */
 
-/* 
+/*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
- * Redistribution and use in source and binary forms, with or without modification, 
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
  *
  * 1. Redistributions of source code must retain the above copyright notice,
@@ -17,21 +17,21 @@
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
  * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission. 
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED 
- * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF 
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT 
- * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, 
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT 
- * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS 
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN 
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING 
- * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+ * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+ * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
  * This file is part of the lwIP TCP/IP stack.
- * 
+ *
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
@@ -60,7 +60,7 @@ struct mem {
 #else
 #error "unhandled MEM_ALIGNMENT size"
 #endif /* MEM_ALIGNMENT */
-}; 
+};
 
 static struct mem *ram_end;
 static u8_t ram[MEM_SIZE + sizeof(struct mem) + MEM_ALIGNMENT];
@@ -87,10 +87,10 @@ plug_holes(struct mem *mem)
   LWIP_ASSERT("plug_holes: mem >= ram", (u8_t *)mem >= ram);
   LWIP_ASSERT("plug_holes: mem < ram_end", (u8_t *)mem < (u8_t *)ram_end);
   LWIP_ASSERT("plug_holes: mem->used == 0", mem->used == 0);
-  
+
   /* plug hole forward */
   LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE", mem->next <= MEM_SIZE);
-  
+
   nmem = (struct mem *)&ram[mem->next];
   if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
     if (lfree == nmem) {
@@ -144,12 +144,12 @@ mem_free(void *rmem)
     LWIP_DEBUGF(MEM_DEBUG | DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
     return;
   }
-  
+
   sys_sem_wait(mem_sem);
 
   LWIP_ASSERT("mem_free: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
     (u8_t *)rmem < (u8_t *)ram_end);
-  
+
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     LWIP_DEBUGF(MEM_DEBUG | 3, ("mem_free: illegal memory\n"));
 #if MEM_STATS
@@ -161,16 +161,16 @@ mem_free(void *rmem)
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
 
   LWIP_ASSERT("mem_free: mem->used", mem->used);
-  
+
   mem->used = 0;
 
   if (mem < lfree) {
     lfree = mem;
   }
-  
+
 #if MEM_STATS
   lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram);
-  
+
 #endif /* MEM_STATS */
   plug_holes(mem);
   sys_sem_signal(mem_sem);
@@ -188,16 +188,16 @@ mem_realloc(void *rmem, mem_size_t newsize)
   if ((newsize % MEM_ALIGNMENT) != 0) {
    newsize += MEM_ALIGNMENT - ((newsize + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
   }
-  
+
   if (newsize > MEM_SIZE) {
     return NULL;
   }
-  
+
   sys_sem_wait(mem_sem);
-  
+
   LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
    (u8_t *)rmem < (u8_t *)ram_end);
-  
+
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     LWIP_DEBUGF(MEM_DEBUG | 3, ("mem_realloc: illegal memory\n"));
     return rmem;
@@ -210,7 +210,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
 #if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
 #endif /* MEM_STATS */
-  
+
   if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE < size) {
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
@@ -224,10 +224,15 @@ mem_realloc(void *rmem, mem_size_t newsize)
 
     plug_holes(mem2);
   }
-  sys_sem_signal(mem_sem);  
+  sys_sem_signal(mem_sem);
   return rmem;
 }
 
+#if 1
+/**
+ * Adam's mem_malloc(), suffers from bug #17922
+ * Set if to 0 for alternative mem_malloc().
+ */
 void *
 mem_malloc(mem_size_t size)
 {
@@ -243,11 +248,11 @@ mem_malloc(mem_size_t size)
   if ((size % MEM_ALIGNMENT) != 0) {
     size += MEM_ALIGNMENT - ((size + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
   }
-  
+
   if (size > MEM_SIZE) {
     return NULL;
   }
-  
+
   sys_sem_wait(mem_sem);
 
   for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE; ptr = ((struct mem *)&ram[ptr])->next) {
@@ -257,14 +262,14 @@ mem_malloc(mem_size_t size)
       ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
       mem2 = (struct mem *)&ram[ptr2];
 
-      mem2->prev = ptr;      
+      mem2->prev = ptr;
       mem2->next = mem->next;
-      mem->next = ptr2;      
+      mem->next = ptr2;
       if (mem2->next != MEM_SIZE) {
         ((struct mem *)&ram[mem2->next])->prev = ptr2;
       }
-      
-      mem2->used = 0;      
+
+      mem2->used = 0;
       mem->used = 1;
 #if MEM_STATS
       lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
@@ -273,7 +278,7 @@ mem_malloc(mem_size_t size)
         } */
       if (lwip_stats.mem.max < ptr2) {
         lwip_stats.mem.max = ptr2;
-      }      
+      }
 #endif /* MEM_STATS */
 
       if (mem == lfree) {
@@ -289,12 +294,111 @@ mem_malloc(mem_size_t size)
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
        (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
-    }    
+    }
   }
   LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
 #if MEM_STATS
   ++lwip_stats.mem.err;
-#endif /* MEM_STATS */  
+#endif /* MEM_STATS */
   sys_sem_signal(mem_sem);
   return NULL;
 }
+#else
+/**
+ * Adam's mem_malloc() plus changes made by Christiaan.
+ * Work in progress based on bug #17922 report by Tom Hennen.
+ *
+ * @note this passes the supplied testcase but we suspect more bugs.
+ *   Therefore we call for more brains, reviewers and testers!
+ */
+void *
+mem_malloc(mem_size_t size)
+{
+  mem_size_t ptr, ptr2;
+  struct mem *mem, *mem2;
+
+  if (size == 0) {
+    return NULL;
+  }
+
+  /* Expand the size of the allocated memory region so that we can
+     adjust for alignment. */
+  if ((size % MEM_ALIGNMENT) != 0) {
+    size += MEM_ALIGNMENT - ((size + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
+  }
+
+  if (size > MEM_SIZE) {
+    return NULL;
+  }
+
+  sys_sem_wait(mem_sem);
+
+  /* @todo is the change from MEM_SIZE to MEM_SIZE - size correct? */
+  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE - size; ptr = ((struct mem *)&ram[ptr])->next) {
+    mem = (struct mem *)&ram[ptr];
+
+    if (!mem->used) {
+
+      ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
+      if (mem->next - (ptr + SIZEOF_STRUCT_MEM) == size) {
+        /* exact fit, do not split, no mem2 creation */
+        mem->next = ptr2;
+        mem->used = 1;
+      }
+      else if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) > size) {
+        /* split large block, create empty remainder */
+        /* @todo do we need to ensure the remainder can
+           house a  minimal sized (aligned) unit? */
+        mem->next = ptr2;
+        mem->used = 1;
+        /* create mem2 struct */
+        mem2 = (struct mem *)&ram[ptr2];
+        mem2->used = 0;
+        mem2->next = mem->next;
+        mem2->prev = ptr;
+
+        if (mem2->next != MEM_SIZE) {
+          ((struct mem *)&ram[mem2->next])->prev = ptr2;
+        }
+
+      }
+      else
+      {
+        /* @todo: what if we have a near fit
+           (block > size && block < size + SIZEOF_STRUCT_MEM).
+           Round size up? Or do we need to continue to next block for "first fit"? */
+      }
+
+      if (mem->used) {
+#if MEM_STATS
+        lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
+        if (lwip_stats.mem.max < ptr2) {
+          lwip_stats.mem.max = ptr2;
+        }
+#endif /* MEM_STATS */
+        if (mem == lfree) {
+          /* Find next free block after mem */
+          while (lfree->used && lfree != ram_end) {
+            lfree = (struct mem *)&ram[lfree->next];
+          }
+          LWIP_ASSERT("mem_malloc: !lfree->used", !lfree->used);
+        }
+        sys_sem_signal(mem_sem);
+        LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
+         (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
+        LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
+         (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
+        mem_dump("mem_malloc");
+        return (u8_t *)mem + SIZEOF_STRUCT_MEM;
+      }
+    }
+  }
+  LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
+#if MEM_STATS
+  ++lwip_stats.mem.err;
+#endif /* MEM_STATS */
+  sys_sem_signal(mem_sem);
+  return NULL;
+}
+#endif
+
