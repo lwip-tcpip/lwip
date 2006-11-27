@@ -63,7 +63,8 @@ struct mem {
 };
 
 static struct mem *ram_end;
-static u8_t ram[MEM_SIZE + sizeof(struct mem) + MEM_ALIGNMENT];
+static u8_t *ram;
+static struct mem ram_heap[1 + ( (MEM_SIZE + sizeof(struct mem) - 1) / sizeof(struct mem))];
 
 #define MIN_SIZE 12
 #if 0 /* this one does not align correctly for some, resulting in crashes */
@@ -116,6 +117,7 @@ mem_init(void)
 {
   struct mem *mem;
 
+  ram = (u8_t*)ram_heap;
   memset(ram, 0, MEM_SIZE);
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE;
@@ -305,11 +307,7 @@ mem_malloc(mem_size_t size)
 }
 #else
 /**
- * Adam's mem_malloc() plus changes made by Christiaan.
- * Work in progress based on bug #17922 report by Tom Hennen.
- *
- * @note this passes the supplied testcase but we suspect more bugs.
- *   Therefore we call for more brains, reviewers and testers!
+ * Adam's mem_malloc() plus solution for bug #17922
  */
 void *
 mem_malloc(mem_size_t size)
@@ -333,22 +331,15 @@ mem_malloc(mem_size_t size)
 
   sys_sem_wait(mem_sem);
 
-  /* @todo is the change from MEM_SIZE to MEM_SIZE - size correct? */
   for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE - size; ptr = ((struct mem *)&ram[ptr])->next) {
     mem = (struct mem *)&ram[ptr];
 
     if (!mem->used) {
 
       ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
-      if (mem->next - (ptr + SIZEOF_STRUCT_MEM) == size) {
-        /* exact fit, do not split, no mem2 creation */
-        mem->next = ptr2;
-        mem->used = 1;
-      }
-      else if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) > size) {
+
+      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) > size) {
         /* split large block, create empty remainder */
-        /* @todo do we need to ensure the remainder can
-           house a  minimal sized (aligned) unit? */
         mem->next = ptr2;
         mem->used = 1;
         /* create mem2 struct */
@@ -360,13 +351,17 @@ mem_malloc(mem_size_t size)
         if (mem2->next != MEM_SIZE) {
           ((struct mem *)&ram[mem2->next])->prev = ptr2;
         }
-
       }
-      else
-      {
-        /* @todo: what if we have a near fit
-           (block > size && block < size + SIZEOF_STRUCT_MEM).
-           Round size up? Or do we need to continue to next block for "first fit"? */
+      else if (mem->next - (ptr + SIZEOF_STRUCT_MEM) > size) {
+        /* near fit, no split, no mem2 creation,
+           round up to mem->next */
+        ptr2 = mem->next;
+        mem->used = 1;
+      }
+      else if (mem->next - (ptr + SIZEOF_STRUCT_MEM) == size) {
+        /* exact fit, do not split, no mem2 creation */
+        mem->next = ptr2;
+        mem->used = 1;
       }
 
       if (mem->used) {
