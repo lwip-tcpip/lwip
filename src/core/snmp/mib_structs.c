@@ -1083,6 +1083,8 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
 
       /* find right child ptr */
       child.r_ptr = NULL;
+      child.r_id = 0;
+      child.r_nl = 0;
       while ((node_stack_cnt > 0) && (child.r_ptr == NULL))
       {
         pop_node(&child);

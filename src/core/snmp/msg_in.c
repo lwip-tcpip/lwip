@@ -825,7 +825,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
       err_t err_ret;
       u16_t payload_len;
       u16_t payload_ofs;
-      u16_t varbind_ofs;
+      u16_t varbind_ofs = 0;
 
       /* accepting request */
       snmp_inc_snmpinpkts();
