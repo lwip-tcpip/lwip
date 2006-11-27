@@ -209,6 +209,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
  * Sends an generic or enterprise specific trap message.
  *
  * @param generic_trap is the trap code
+ * @param eoid points to enterprise object identifier
  * @param specific_trap used for enterprise traps when generic_trap == 6
  * @return ERR_OK when success, ERR_MEM if we're out of memory
  *
@@ -220,7 +221,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
  * (sysObjectID) for specific traps.
  */
 err_t
-snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
+snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
 {
   struct snmp_trap_dst *td;
   struct netif *dst_if;
@@ -246,7 +247,7 @@ snmp_send_trap(s8_t generic_trap, s32_t specific_trap)
       if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
       {
         /* enterprise-Specific trap */
-        snmp_get_sysobjid_ptr(&trap_msg.enterprise);
+        trap_msg.enterprise = eoid;
       }
       else
       {
@@ -295,7 +296,7 @@ snmp_coldstart_trap(void)
   trap_msg.outvb.head = NULL;
   trap_msg.outvb.tail = NULL;
   trap_msg.outvb.count = 0;
-  snmp_send_trap(SNMP_GENTRAP_COLDSTART, 0);
+  snmp_send_trap(SNMP_GENTRAP_COLDSTART, NULL, 0);
 }
 
 void
@@ -308,7 +309,7 @@ snmp_authfail_trap(void)
     trap_msg.outvb.head = NULL;
     trap_msg.outvb.tail = NULL;
     trap_msg.outvb.count = 0;
-    snmp_send_trap(SNMP_GENTRAP_AUTHFAIL, 0);
+    snmp_send_trap(SNMP_GENTRAP_AUTHFAIL, NULL, 0);
   }
 }
 
