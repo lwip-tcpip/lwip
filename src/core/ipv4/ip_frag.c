@@ -298,8 +298,7 @@ nullreturn:
   return NULL;
 }
 
-#define MAX_MTU 1500
-static u8_t buf[MEM_ALIGN_SIZE(MAX_MTU)];
+static u8_t buf[MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU)];
 
 /**
  * Fragment an IP datagram if too large for the netif.

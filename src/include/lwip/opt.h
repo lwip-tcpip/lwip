@@ -216,6 +216,21 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_FRAG                         1
 #endif
 
+/* IP reassemly default age in seconds */
+#ifndef IP_REASS_MAXAGE
+#define IP_REASS_MAXAGE 3
+#endif
+
+/* IP reassembly buffer size (minus IP header) */
+#ifndef IP_REASS_BUFSIZE
+#define IP_REASS_BUFSIZE 5760
+#endif
+
+/* Assumed max MTU on any interface for IP frag buffer */
+#ifndef IP_FRAG_MAX_MTU
+#define IP_FRAG_MAX_MTU 1500
+#endif
+
 /** Global default value for Time To Live used by transport layers. */
 #ifndef IP_DEFAULT_TTL
 #define IP_DEFAULT_TTL                  255

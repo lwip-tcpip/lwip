@@ -27,6 +27,13 @@ HISTORY
 
   ++ New features:
 
+  2006-10-26 Christiaan Simons (accepted patch by Jonathan Larmour)
+  * src/core/ipv4/ip_frag.c: rename MAX_MTU to IP_FRAG_MAX_MTU and move define
+    to include/lwip/opt.h.
+  * include/ipv4/lwip/ip_frag.h: Remove unused IP_REASS_INTERVAL.
+    Move IP_REASS_MAXAGE and IP_REASS_BUFSIZE to include/lwip/opt.h.
+  * include/lwip/opt.h: Add above new options.
+
   2006-08-18 Christiaan Simons
   * tcp_{in,out}.c: added SNMP counters.
   * ipv4/ip.c: added SNMP counters.
