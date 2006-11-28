@@ -63,8 +63,14 @@ struct mem {
 };
 
 static struct mem *ram_end;
+#if 1
+/* Adam original */
+static u8_t ram[MEM_SIZE + sizeof(struct mem) + MEM_ALIGNMENT];
+#else
+/* Christiaan alignment fix */
 static u8_t *ram;
 static struct mem ram_heap[1 + ( (MEM_SIZE + sizeof(struct mem) - 1) / sizeof(struct mem))];
+#endif
 
 #define MIN_SIZE 12
 #if 0 /* this one does not align correctly for some, resulting in crashes */
@@ -117,7 +123,12 @@ mem_init(void)
 {
   struct mem *mem;
 
+#if 1
+  /* Adam original */
+#else
+  /* Christiaan alignment fix */
   ram = (u8_t*)ram_heap;
+#endif
   memset(ram, 0, MEM_SIZE);
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE;
@@ -338,7 +349,7 @@ mem_malloc(mem_size_t size)
 
       ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
 
-      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) > size) {
+      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) >= size) {
         /* split large block, create empty remainder */
         mem->next = ptr2;
         mem->used = 1;
