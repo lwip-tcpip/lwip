@@ -63,6 +63,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2006-11-28 Christiaan Simons
+  * netif.c: In netif_add() fixed missing clear of ip_addr, netmask, gw and flags.
+
   2006-10-11 Christiaan Simons
   * api_lib.c etharp.c, ip.c, memp.c, stats.c, sys.{c,h} tcp.h:
     Partially accepted patch #5449 for ANSI C compatibility / build fixes.
