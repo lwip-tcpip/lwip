@@ -310,8 +310,12 @@ void dhcp_fine_tmr()
   while (netif != NULL) {
     /* only act on DHCP configured interfaces */
     if (netif->dhcp != NULL) {
-      /* timer is active (non zero), and is about to trigger now */
-      if (netif->dhcp->request_timeout-- == 1) {
+      /* timer is active (non zero), and is about to trigger now */      
+      if (netif->dhcp->request_timeout > 1) {
+        netif->dhcp->request_timeout--;
+      }
+      else if (netif->dhcp->request_timeout == 1) {
+        netif->dhcp->request_timeout--;
         /* { netif->dhcp->request_timeout == 0 } */
         LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_fine_tmr(): request timeout\n"));
         /* this clients' request timeout triggered */

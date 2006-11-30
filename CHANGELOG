@@ -62,6 +62,9 @@ HISTORY
     optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
 
   ++ Bug fixes:
+  
+  2006-11-30 Christiaan Simons
+  * dhcp.c: Fixed false triggers of request_timeout.
 
   2006-11-28 Christiaan Simons
   * netif.c: In netif_add() fixed missing clear of ip_addr, netmask, gw and flags.
