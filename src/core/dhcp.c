@@ -1191,7 +1191,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   }
   /* match transaction ID against what we expected */
   if (ntohl(reply_msg->xid) != dhcp->xid) {
-    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("transaction id mismatch\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("transaction id mismatch reply_msg->xid(%"X32_F")!=dhcp->xid(%"X32_F")\n",ntohl(reply_msg->xid),dhcp->xid));
     pbuf_free(p);
     dhcp->p = NULL;
     return;
@@ -1270,6 +1270,7 @@ static err_t dhcp_create_request(struct netif *netif)
   }
   /* give unique transaction identifier to this request */
   dhcp->xid = xid++;
+  LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 2, ("transaction id xid++(%"X32_F") dhcp->xid(%"U32_F")\n",xid,dhcp->xid));
 
   dhcp->msg_out = (struct dhcp_msg *)dhcp->p_out->payload;
 
