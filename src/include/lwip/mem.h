@@ -43,12 +43,19 @@ typedef u16_t mem_size_t;
 #define MEM_SIZE_F U16_F
 #endif /* MEM_SIZE > 64000 */
 
-
+#if MEM_LIBC_MALLOC
+/* aliases for C library malloc() */
+#define mem_init()
+#define mem_free(x) free(x)
+#define mem_malloc(x) malloc(x)
+#define mem_realloc(x, size) realloc(x,size)
+#else
+/* lwIP alternative malloc */
 void mem_init(void);
-
 void *mem_malloc(mem_size_t size);
 void mem_free(void *mem);
 void *mem_realloc(void *mem, mem_size_t size);
+#endif
 
 #ifndef MEM_ALIGN_SIZE
 #define MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))

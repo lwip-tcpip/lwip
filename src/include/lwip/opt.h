@@ -53,6 +53,10 @@
 #define NO_SYS                          0
 #endif
 /* ---------- Memory options ---------- */
+#ifndef MEM_LIBC_MALLOC
+#define MEM_LIBC_MALLOC                 0
+#endif
+
 /* MEM_ALIGNMENT: should be set to the alignment of the CPU for which
    lwIP is compiled. 4 byte alignment -> define MEM_ALIGNMENT to 4, 2
    byte alignment -> define MEM_ALIGNMENT to 2. */
