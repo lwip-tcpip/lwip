@@ -47,6 +47,9 @@
 
 #include "lwip/stats.h"
 
+#if (MEM_LIBC_MALLOC == 0)
+/* lwIP replacement for your libc malloc() */
+
 struct mem {
   mem_size_t next, prev;
 #if MEM_ALIGNMENT == 1
@@ -406,4 +409,6 @@ mem_malloc(mem_size_t size)
   return NULL;
 }
 #endif
+
+#endif /* MEM_LIBC_MALLOC == 0 */
 
