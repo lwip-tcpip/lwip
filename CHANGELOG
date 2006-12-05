@@ -27,6 +27,15 @@ HISTORY
 
   ++ New features:
 
+  ++ Bug fixes:
+
+(STABLE-1.2.0)
+
+  2006-12-05 Leon Woestenberg
+  * CHANGELOG: Mention STABLE-1.2.0 release.
+
+  ++ New features:
+
   2006-12-01 Christiaan Simons
   * mem.h, opt.h: Added MEM_LIBC_MALLOC option.
     Note this is a workaround. Currently I have no other options left.
