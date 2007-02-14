@@ -180,7 +180,7 @@ enum NPmode {
 
 
 #define GETSHORT(s, cp) { \
-    (s) = *(cp); (cp)++; (s) << 8; \
+    (s) = *(cp); (cp)++; (s) <<= 8; \
     (s) |= *(cp); (cp)++; \
 }
 #define PUTSHORT(s, cp) { \
@@ -189,7 +189,7 @@ enum NPmode {
 }
 
 #define GETLONG(l, cp) { \
-    (l) = *(cp); (cp)++; (l) << 8; \
+    (l) = *(cp); (cp)++; (l) <<= 8; \
     (l) |= *(cp); (cp)++; (l) <<= 8; \
     (l) |= *(cp); (cp)++; (l) <<= 8; \
     (l) |= *(cp); (cp)++; \
