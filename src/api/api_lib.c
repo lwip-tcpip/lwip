@@ -150,7 +150,8 @@ void
 netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
 {
   struct pbuf *p;
-  u16_t i, left;
+  u16_t left;
+  u16_t buf_copy_len;
 
   left = 0;
 
@@ -158,18 +159,20 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
     return;
   }
   
-  /* This implementation is bad. It should use bcopy
-     instead. */
-  for(p = buf->p; left < len && p != NULL; p = p->next) {
+  /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
+  for(p = buf->p; len != 0 && p != NULL; p = p->next) {
     if (offset != 0 && offset >= p->len) {
+      /* don't copy from this buffer -> on to the next */
       offset -= p->len;
-    } else {    
-      for(i = offset; i < p->len; ++i) {
-  ((u8_t *)dataptr)[left] = ((u8_t *)p->payload)[i];
-  if (++left >= len) {
-    return;
-  }
-      }
+    } else {
+      /* copy from this buffer. maybe only partially. */
+      buf_copy_len = p->len - offset;
+      if (buf_copy_len > len)
+          buf_copy_len = len;
+      /* copy the necessary parts of the buffer */
+      memcpy(&((char*)dataptr)[left], &((char*)p->payload)[offset], buf_copy_len);
+      left += buf_copy_len;
+      len -= buf_copy_len;
       offset = 0;
     }
   }

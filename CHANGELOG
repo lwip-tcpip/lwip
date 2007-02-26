@@ -27,6 +27,9 @@ HISTORY
 
   ++ New features:
 
+  2007-02-26 Jonathan Larmour (based on patch from Simon Goldschmidt)
+  * api_lib.c: Use memcpy in netbuf_copy_partial.
+
   ++ Bug fixes:
 
 (STABLE-1.2.0)
