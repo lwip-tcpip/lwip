@@ -106,6 +106,13 @@ static int err_to_errno_table[11] = {
 } while (0)
 
 
+void
+lwip_socket_init(void)
+{
+  socksem   = sys_sem_new(1);
+  selectsem = sys_sem_new(1);
+}
+
 static struct lwip_socket *
 get_socket(int s)
 {
@@ -132,9 +139,6 @@ static int
 alloc_socket(struct netconn *newconn)
 {
   int i;
-
-  if (!socksem)
-      socksem = sys_sem_new(1);
 
   /* Protect socket array */
   sys_sem_wait(socksem);
@@ -252,8 +256,6 @@ lwip_close(int s)
   struct lwip_socket *sock;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_close(%d)\n", s));
-  if (!socksem)
-      socksem = sys_sem_new(1);
 
   /* We cannot allow multiple closes of the same socket. */
   sys_sem_wait(socksem);
@@ -675,8 +677,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb.sem_signalled = 0;
 
     /* Protect ourselves searching through the list */
-    if (!selectsem)
-        selectsem = sys_sem_new(1);
     sys_sem_wait(selectsem);
 
     if (readset)
@@ -830,9 +830,6 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     }
     else
         return;
-
-    if (!selectsem)
-        selectsem = sys_sem_new(1);
 
     sys_sem_wait(selectsem);
     /* Set event as required */

@@ -28,6 +28,12 @@ HISTORY
   ++ New features:
 
   2007-02-26 Jonathan Larmour (based on patch from Simon Goldschmidt)
+  * sockets.h, sockets.c: Move socket initialization to new
+    lwip_socket_init() function.
+    NOTE: this changes the API with ports. Ports will have to be
+    updated to call lwip_socket_init() now.
+
+  2007-02-26 Jonathan Larmour (based on patch from Simon Goldschmidt)
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
