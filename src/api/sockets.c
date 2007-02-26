@@ -118,7 +118,7 @@ get_socket(int s)
 {
   struct lwip_socket *sock;
 
-  if ((s < 0) || (s > NUM_SOCKETS)) {
+  if ((s < 0) || (s >= NUM_SOCKETS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s));
     set_errno(EBADF);
     return NULL;
