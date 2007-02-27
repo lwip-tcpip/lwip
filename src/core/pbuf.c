@@ -102,6 +102,9 @@ pbuf_init(void)
 
   pbuf_pool = (struct pbuf *)MEM_ALIGN(pbuf_pool_memory);
 
+  LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
+              (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
+
 #if PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
 #endif /* PBUF_STATS */
