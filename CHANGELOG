@@ -27,6 +27,10 @@ HISTORY
 
   ++ New features:
 
+  2007-02-28 Kieran Mansley (based on patch from Simon Goldschmidt)
+  * api_lib.c, tcpip.c, memp.c, memp.h: make API msg structs allocated
+    on the stack and remove the API msg type from memp
+
   2007-02-26 Jonathan Larmour (based on patch from Simon Goldschmidt)
   * sockets.h, sockets.c: Move socket initialization to new
     lwip_socket_init() function.

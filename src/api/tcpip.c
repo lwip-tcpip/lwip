@@ -176,7 +176,6 @@ tcpip_apimsg(struct api_msg *apimsg)
   struct tcpip_msg *msg;
   msg = memp_malloc(MEMP_TCPIP_MSG);
   if (msg == NULL) {
-    memp_free(MEMP_API_MSG, apimsg);
     return;
   }
   msg->type = TCPIP_MSG_API;

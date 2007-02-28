@@ -62,7 +62,6 @@ static const u16_t memp_sizes[MEMP_MAX] = {
   MEM_ALIGN_SIZE(sizeof(struct tcp_seg)),
   MEM_ALIGN_SIZE(sizeof(struct netbuf)),
   MEM_ALIGN_SIZE(sizeof(struct netconn)),
-  MEM_ALIGN_SIZE(sizeof(struct api_msg)),
   MEM_ALIGN_SIZE(sizeof(struct tcpip_msg)),
   MEM_ALIGN_SIZE(sizeof(struct sys_timeo))
 };
@@ -76,7 +75,6 @@ static const u16_t memp_num[MEMP_MAX] = {
   MEMP_NUM_TCP_SEG,
   MEMP_NUM_NETBUF,
   MEMP_NUM_NETCONN,
-  MEMP_NUM_API_MSG,
   MEMP_NUM_TCPIP_MSG,
   MEMP_NUM_SYS_TIMEOUT
 };
@@ -93,7 +91,6 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_TCP_SEG, struct tcp_seg) +
   MEMP_TYPE_SIZE(MEMP_NUM_NETBUF, struct netbuf) +
   MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
-  MEMP_TYPE_SIZE(MEMP_NUM_API_MSG, struct api_msg) +
   MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct tcpip_msg) +
   MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 
