@@ -733,8 +733,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         if (timeout == 0)
             /* Wait forever */
             msectimeout = 0;
-        else
+        else {
             msectimeout =  ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
+            if(msectimeout == 0)
+                msectimeout = 1;
+        }
 
         i = sys_sem_wait_timeout(select_cb.sem, msectimeout);
 
