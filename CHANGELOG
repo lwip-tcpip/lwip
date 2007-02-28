@@ -39,6 +39,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-02-28 Kieran Mansley 
+  * pbuf.c: Fix BUG#17645 - ensure pbuf payload pointer is not moved
+    outside the region of the pbuf by pbuf_header()
+
+  2007-02-28 Kieran Mansley 
   * sockets.c: Fix BUG#19161 - ensure milliseconds timeout is non-zero
     when supplied timeout is also non-zero 
 

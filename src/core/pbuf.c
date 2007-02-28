@@ -469,10 +469,25 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
 {
   u16_t flags;
   void *payload;
+  u16_t increment_magnitude;
 
   LWIP_ASSERT("p != NULL", p != NULL);
   if ((header_size_increment == 0) || (p == NULL)) return 0;
  
+  if (header_size_increment < 0){
+    increment_magnitude = -header_size_increment;
+    /* Check that we aren't going to move off the end of the pbuf */
+    LWIP_ASSERT("increment_magnitude <= p->len", increment_magnitude <= p->len);
+  } else {
+    increment_magnitude = header_size_increment;
+    /* Check that we've got the correct type of pbuf to work with */
+    LWIP_ASSERT("p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL", 
+                p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL);
+    /* Check that we aren't going to move off the beginning of the pbuf */
+    LWIP_ASSERT("p->payload - increment_magnitude >= p + sizeof(struct pbuf)",
+                (u8_t *)p->payload - increment_magnitude >= (u8_t *)p + sizeof(struct pbuf));
+  }
+
   flags = p->flags;
   /* remember current payload pointer */
   payload = p->payload;
@@ -494,7 +509,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
   /* pbuf types refering to external payloads? */
   } else if (flags == PBUF_FLAG_REF || flags == PBUF_FLAG_ROM) {
     /* hide a header in the payload? */
-    if ((header_size_increment < 0) && (header_size_increment - p->len <= 0)) {
+    if ((header_size_increment < 0) && (increment_magnitude <= p->len)) {
       /* increase payload pointer */
       p->payload = (u8_t *)p->payload - header_size_increment;
     } else {
