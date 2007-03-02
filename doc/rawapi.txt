@@ -328,7 +328,7 @@ Call these functions in the order of appearance:
 - etharp_init()
 
   Initializes the ARP table and queue.
-  Note: you must call etharp_tmr at a 10 second regular interval
+  Note: you must call etharp_tmr at a ARP_TMR_INTERVAL (5 seconds) regular interval
   after this initialization.
 
 - ip_init()
