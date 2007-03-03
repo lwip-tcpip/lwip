@@ -64,12 +64,10 @@
 /* exported in udp.h (was static) */
 struct udp_pcb *udp_pcbs = NULL;
 
-static struct udp_pcb *pcb_cache = NULL;
-
 void
 udp_init(void)
 {
-  udp_pcbs = pcb_cache = NULL;
+  udp_pcbs = NULL;
 }
 
 /**

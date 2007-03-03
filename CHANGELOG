@@ -42,12 +42,15 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-03 Frédéric Bernon
+  * udp.c: remove obsolete line "static struct udp_pcb *pcb_cache = NULL;"
+    Its is static, and never used in udp.c except udp_init().
+
   2007-03-02 Simon Goldschmidt
   * tcpip.c: Moved call to ip_init(), udp_init() and tcp_init() from
     tcpip_thread() to tcpip_init(). This way, raw API connections can be
     initialized before tcpip_thread is running (e.g. before OS is started)
 
-=======
   2007-03-02 Frédéric Bernon
   * rawapi.txt: Fix documentation mismatch with etharp.h about etharp_tmr's call interval.
 
