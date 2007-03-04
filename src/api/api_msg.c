@@ -76,6 +76,8 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   struct netbuf *buf;
   struct netconn *conn;
 
+  pcb = pcb; // Remove warning
+
   conn = arg;
   
   if (conn == NULL) {
@@ -110,6 +112,8 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   struct netconn *conn;
   u16_t len;
   
+  pcb = pcb; // Remove warning
+  
   conn = arg;
 
   if (conn == NULL) {
@@ -140,7 +144,10 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
   struct netconn *conn;
 
+  pcb = pcb; // Remove warning
+  
   conn = arg;
+
   if (conn != NULL &&
      (conn->state == NETCONN_WRITE || conn->state == NETCONN_CLOSE) &&
      conn->sem != SYS_SEM_NULL) {
@@ -154,7 +161,10 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
   struct netconn *conn;
 
+  pcb = pcb; // Remove warning
+  
   conn = arg;
+
   if (conn != NULL && conn->sem != SYS_SEM_NULL) {
     sys_sem_signal(conn->sem);
   }
@@ -455,6 +465,8 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
   struct netconn *conn;
 
+  pcb = pcb; // Remove warning
+  
   conn = arg;
 
   if (conn == NULL) {
