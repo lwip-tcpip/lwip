@@ -113,6 +113,15 @@ PACK_STRUCT_END
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
 
+#if ARP_QUEUEING
+/** struct for queueing outgoing packets for unknown address
+  * defined here to be accessed by memp.h
+  */
+struct etharp_q_entry {
+  struct etharp_q_entry *next;
+  struct pbuf *p;
+};
+#endif
 
 void etharp_init(void);
 void etharp_tmr(void);

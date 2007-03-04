@@ -107,6 +107,12 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef MEMP_NUM_TCP_SEG
 #define MEMP_NUM_TCP_SEG                16
 #endif
+/* MEMP_NUM_ARP_QUEUE: the number of simulateously queued outgoing
+   packets (pbufs) that are waiting for an ARP request (to resolve
+   their destination address) to finish. */
+#ifndef MEMP_NUM_ARP_QUEUE
+#define MEMP_NUM_ARP_QUEUE              30
+#endif
 /* MEMP_NUM_SYS_TIMEOUT: the number of simulateously active
    timeouts. */
 #ifndef MEMP_NUM_SYS_TIMEOUT

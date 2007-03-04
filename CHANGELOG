@@ -42,6 +42,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-04 Simon Goldschmidt
+  * etharp.c, etharp.h, memp.c, memp.h, opt.h: Fix BUG#11400 - don't corrupt
+    existing pbuf chain when enqueuing multiple pbufs to a pending ARP request
+
   2007-03-03 Frédéric Bernon
   * udp.c: remove obsolete line "static struct udp_pcb *pcb_cache = NULL;"
     Its is static, and never used in udp.c except udp_init().

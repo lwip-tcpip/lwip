@@ -93,7 +93,7 @@ struct etharp_entry {
   /** 
    * Pointer to queue of pending outgoing packets on this ARP entry.
    */
-   struct pbuf *p;
+  struct etharp_q_entry *q;
 #endif
   struct ip_addr ipaddr;
   struct eth_addr ethaddr;
@@ -123,12 +123,28 @@ etharp_init(void)
   for(i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
-    arp_table[i].p = NULL;
+    arp_table[i].q = NULL;
 #endif
     arp_table[i].ctime = 0;
     arp_table[i].netif = NULL;
   }
 }
+
+#if ARP_QUEUEING
+/** Free a complete queue of etharp entrys */
+static void free_etharp_q(struct etharp_q_entry *q)
+{
+  struct etharp_q_entry *r;
+  LWIP_ASSERT("q != NULL", q != NULL);
+  LWIP_ASSERT("q->p != NULL", q->p != NULL);
+  while(q) {
+    r = q;
+    q = q->next;
+    pbuf_free(r->p);
+    memp_free(MEMP_ARP_QUEUE, r);
+  }
+}
+#endif
 
 /**
  * Clears expired entries in the ARP table.
@@ -158,7 +174,7 @@ etharp_tmr(void)
         LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %"U16_F".\n", (u16_t)i));
         arp_table[i].state = ETHARP_STATE_EXPIRED;
 #if ARP_QUEUEING
-      } else if (arp_table[i].p != NULL) {
+      } else if (arp_table[i].q != NULL) {
         /* resend an ARP query here */
 #endif
       }
@@ -169,11 +185,11 @@ etharp_tmr(void)
       snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
 #if ARP_QUEUEING
       /* and empty packet queue */
-      if (arp_table[i].p != NULL) {
+      if (arp_table[i].q != NULL) {
         /* remove all queued packets */
-        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing entry %"U16_F", packet queue %p.\n", (u16_t)i, (void *)(arp_table[i].p)));
-        pbuf_free(arp_table[i].p);
-        arp_table[i].p = NULL;
+        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: freeing entry %"U16_F", packet queue %p.\n", (u16_t)i, (void *)(arp_table[i].q)));
+        free_etharp_q(arp_table[i].q);
+        arp_table[i].q = NULL;
       }
 #endif
       /* recycle entry for re-use */      
@@ -247,7 +263,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
         return i;
 #if ARP_QUEUEING
       /* pending with queued packets? */
-      } else if (arp_table[i].p != NULL) {
+      } else if (arp_table[i].q != NULL) {
         if (arp_table[i].ctime >= age_queue) {
           old_queue = i;
           age_queue = arp_table[i].ctime;
@@ -304,7 +320,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest stable entry %"U16_F"\n", (u16_t)i));
 #if ARP_QUEUEING
     /* no queued packets should exist on stable entries */
-    LWIP_ASSERT("arp_table[i].p == NULL", arp_table[i].p == NULL);
+    LWIP_ASSERT("arp_table[i].q == NULL", arp_table[i].q == NULL);
 #endif
   /* 3) found recyclable pending entry without queued packets? */
   } else if (old_pending < ARP_TABLE_SIZE) {
@@ -316,9 +332,9 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   } else if (old_queue < ARP_TABLE_SIZE) {
     /* recycle oldest pending */
     i = old_queue;
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest pending entry %"U16_F", freeing packet queue %p\n", (u16_t)i, (void *)(arp_table[i].p)));
-    pbuf_free(arp_table[i].p);
-    arp_table[i].p = NULL;
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("find_entry: selecting oldest pending entry %"U16_F", freeing packet queue %p\n", (u16_t)i, (void *)(arp_table[i].q)));
+    free_etharp_q(arp_table[i].q);
+    arp_table[i].q = NULL;
 #endif
     /* no empty or recyclable entries found */
   } else {
@@ -405,14 +421,19 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   arp_table[i].ctime = 0;
 /* this is where we will send out queued packets! */
 #if ARP_QUEUEING
-  while (arp_table[i].p != NULL) {
-    /* get the first packet on the queue */
-    struct pbuf *p = arp_table[i].p;
+  while (arp_table[i].q != NULL) {
+    struct pbuf *p;
+    struct eth_hdr *ethhdr;
+    /* remember remainder of queue */
+    struct etharp_q_entry *q = arp_table[i].q;
+    /* pop first item off the queue */
+    arp_table[i].q = q->next;
+    /* get the packet pointer */
+    p = q->p;
+    /* now queue entry can be freed */
+    memp_free(MEMP_ARP_QUEUE, q);
     /* Ethernet header */
-    struct eth_hdr *ethhdr = p->payload;
-    /* remember (and reference) remainder of queue */
-    /* note: this will also terminate the p pbuf chain */
-    arp_table[i].p = pbuf_dequeue(p);
+    ethhdr = p->payload;
     /* fill-in Ethernet header */
     k = netif->hwaddr_len;
     while(k > 0) {
@@ -810,19 +831,29 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       /* copy any PBUF_REF referenced payloads into PBUF_RAM */
       /* (the caller of lwIP assumes the referenced payload can be
        * freed after it returns from the lwIP call that brought us here) */
+      /* @todo: if q->type == PBUF_REF, do we have a memory leak (since we call pbuf_ref(p) later)? */
       p = pbuf_take(q);
       /* packet could be taken over? */
       if (p != NULL) {
         /* queue packet ... */
-        if (arp_table[i].p == NULL) {
-          /* ... in the empty queue */
-          pbuf_ref(p);
-          arp_table[i].p = p;
-#if 0 /* multi-packet-queueing disabled, see bug #11400 */
+        struct etharp_q_entry *newEntry;
+        /* allocate a new arp queue entry */
+        newEntry = memp_malloc(MEMP_ARP_QUEUE);
+        LWIP_ASSERT("newEntry != NULL", newEntry != NULL);
+        newEntry->next = 0;
+        newEntry->p = p;
+        pbuf_ref(p);
+        if(arp_table[i].q != NULL) {
+          /* queue was already existent, append the new entry to the end */
+          struct etharp_q_entry *r;
+          r = arp_table[i].q;
+          while(r->next != NULL) {
+            r = r->next;
+          }
+          r->next = newEntry;
         } else {
-          /* ... at tail of non-empty queue */
-          pbuf_queue(arp_table[i].p, p);
-#endif
+          /* queue did not exist, first item in queue */
+          arp_table[i].q = newEntry;
         }
         LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
         result = ERR_OK;

@@ -45,6 +45,10 @@
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 
+#if ARP_QUEUEING
+#include "netif/etharp.h"
+#endif
+
 struct memp {
   struct memp *next;
 };
@@ -63,6 +67,9 @@ static const u16_t memp_sizes[MEMP_MAX] = {
   MEM_ALIGN_SIZE(sizeof(struct netbuf)),
   MEM_ALIGN_SIZE(sizeof(struct netconn)),
   MEM_ALIGN_SIZE(sizeof(struct tcpip_msg)),
+#if ARP_QUEUEING
+  MEM_ALIGN_SIZE(sizeof(struct etharp_q_entry)),
+#endif
   MEM_ALIGN_SIZE(sizeof(struct sys_timeo))
 };
 
@@ -76,6 +83,9 @@ static const u16_t memp_num[MEMP_MAX] = {
   MEMP_NUM_NETBUF,
   MEMP_NUM_NETCONN,
   MEMP_NUM_TCPIP_MSG,
+#if ARP_QUEUEING
+  MEMP_NUM_ARP_QUEUE,
+#endif
   MEMP_NUM_SYS_TIMEOUT
 };
 
@@ -92,6 +102,9 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_NETBUF, struct netbuf) +
   MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
   MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct tcpip_msg) +
+#if ARP_QUEUEING
+  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct etharp_q_entry) +
+#endif
   MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 
 #if !SYS_LIGHTWEIGHT_PROT

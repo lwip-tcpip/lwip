@@ -46,7 +46,9 @@ typedef enum {
   MEMP_NETBUF,
   MEMP_NETCONN,
   MEMP_TCPIP_MSG,
-
+#if ARP_QUEUEING
+  MEMP_ARP_QUEUE,
+#endif
   MEMP_SYS_TIMEOUT,
   
   MEMP_MAX
