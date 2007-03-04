@@ -42,6 +42,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-04 Simon Goldschmidt (based on patch from Dmitry Potapov)
+  * pbuf.c: Fix BUG#19168 - pbuf_free can cause deadlock (if
+    SYS_LIGHTWEIGHT_PROT=1 & freeing PBUF_RAM when mem_sem is not available)
+    Also fixed cast warning in pbuf_alloc()
+
   2007-03-04 Simon Goldschmidt
   * etharp.c, etharp.h, memp.c, memp.h, opt.h: Fix BUG#11400 - don't corrupt
     existing pbuf chain when enqueuing multiple pbufs to a pending ARP request

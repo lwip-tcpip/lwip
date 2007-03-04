@@ -216,7 +216,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
 {
   struct pbuf *p, *q, *r;
   u16_t offset;
-  s32_t rem_len; /* remaining length */
+  u16_t rem_len; /* remaining length */
   LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%"U16_F")\n", length));
 
   /* determine header offset */
@@ -270,6 +270,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* remember first pbuf for linkage in next iteration */
     r = p;
     /* remaining length to be allocated */
+    LWIP_ASSERT("length >= p->len", length >= p->len);
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
@@ -296,7 +297,10 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
       /* calculate remaining length to be allocated */
-      rem_len -= q->len;
+      if(q->len < rem_len)
+        rem_len -= q->len;
+      else
+        rem_len = 0;
       /* remember this pbuf for linkage in next iteration */
       r = q;
     }
@@ -567,7 +571,6 @@ pbuf_free(struct pbuf *p)
   u16_t flags;
   struct pbuf *q;
   u8_t count;
-  SYS_ARCH_DECL_PROTECT(old_level);
 
   LWIP_ASSERT("p != NULL", p != NULL);
   /* if assertions are disabled, proceed with debug output */
@@ -584,19 +587,22 @@ pbuf_free(struct pbuf *p)
     p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_POOL);
 
   count = 0;
-  /* Since decrementing ref cannot be guaranteed to be a single machine operation
-   * we must protect it. Also, the later test of ref must be protected.
-   */
-  SYS_ARCH_PROTECT(old_level);
   /* de-allocate all consecutive pbufs from the head of the chain that
    * obtain a zero reference count after decrementing*/
   while (p != NULL) {
+    u16_t ref;
+    SYS_ARCH_DECL_PROTECT(old_level);
+    /* Since decrementing ref cannot be guaranteed to be a single machine operation
+     * we must protect it. Also, the later test of ref must be protected.
+     */
+    SYS_ARCH_PROTECT(old_level);
     /* all pbufs in a chain are referenced at least once */
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
     /* decrease reference count (number of pointers to pbuf) */
-    p->ref--;
+    ref = p->ref--;
+    SYS_ARCH_UNPROTECT(old_level);
     /* this pbuf is no longer referenced to? */
-    if (p->ref == 0) {
+    if (ref == 0) {
       /* remember next pbuf in chain for next iteration */
       q = p->next;
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: deallocating %p\n", (void *)p));
@@ -619,12 +625,11 @@ pbuf_free(struct pbuf *p)
     /* p->ref > 0, this pbuf is still referenced to */
     /* (and so the remaining pbufs in chain as well) */
     } else {
-      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: %p has ref %"U16_F", ending here.\n", (void *)p, (u16_t)p->ref));
+      LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: %p has ref %"U16_F", ending here.\n", (void *)p, ref));
       /* stop walking through the chain */
       p = NULL;
     }
   }
-  SYS_ARCH_UNPROTECT(old_level);
   PERF_STOP("pbuf_free");
   /* return number of de-allocated pbufs */
   return count;
