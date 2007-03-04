@@ -41,7 +41,11 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
-
+  
+  2007-03-04 Frédéric Bernon
+  * api_lib.c: Fix "[patch #5764] api_lib.c cleanup: after patch #5687" (from Dmitry Potapov).
+    The api_msg struct stay on the stack (not moved to netconn struct).
+  
   2007-03-04 Simon Goldschmidt (based on patch from Dmitry Potapov)
   * pbuf.c: Fix BUG#19168 - pbuf_free can cause deadlock (if
     SYS_LIGHTWEIGHT_PROT=1 & freeing PBUF_RAM when mem_sem is not available)
@@ -53,7 +57,7 @@ HISTORY
 
   2007-03-03 Frédéric Bernon
   * udp.c: remove obsolete line "static struct udp_pcb *pcb_cache = NULL;"
-    Its is static, and never used in udp.c except udp_init().
+    It is static, and never used in udp.c except udp_init().
 
   2007-03-02 Simon Goldschmidt
   * tcpip.c: Moved call to ip_init(), udp_init() and tcp_init() from

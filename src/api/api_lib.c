@@ -33,6 +33,7 @@
 /* This is the part of the API that is linked with
    the application */
 
+#include <string.h>
 #include "lwip/opt.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
@@ -201,8 +202,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
   struct netconn *conn;
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
 
   conn = memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
@@ -229,10 +229,10 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
   conn->callback = callback;
   conn->recv_avail = 0;
 
-  msg->type = API_MSG_NEWCONN;
-  msg->msg.msg.bc.port = proto; /* misusing the port field */
-  msg->msg.conn = conn;
-  api_msg_post(msg);  
+  msg.type = API_MSG_NEWCONN;
+  msg.msg.msg.bc.port = proto; /* misusing the port field */
+  msg.msg.conn = conn;
+  api_msg_post(&msg);  
   sys_mbox_fetch(conn->mbox, NULL);
 
   if ( conn->err != ERR_OK ) {
@@ -261,17 +261,16 @@ netconn *netconn_new_with_callback(enum netconn_type t,
 err_t
 netconn_delete(struct netconn *conn)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
   void *mem;
   
   if (conn == NULL) {
     return ERR_OK;
   }
   
-  msg->type = API_MSG_DELCONN;
-  msg->msg.conn = conn;
-  api_msg_post(msg);  
+  msg.type = API_MSG_DELCONN;
+  msg.msg.conn = conn;
+  api_msg_post(&msg);  
   sys_mbox_fetch(conn->mbox, NULL);
 
   /* Drain the recvmbox. */
@@ -369,8 +368,7 @@ err_t
 netconn_bind(struct netconn *conn, struct ip_addr *addr,
       u16_t port)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
 
   if (conn == NULL) {
     return ERR_VAL;
@@ -383,11 +381,11 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr,
     }
   }
   
-  msg->type = API_MSG_BIND;
-  msg->msg.conn = conn;
-  msg->msg.msg.bc.ipaddr = addr;
-  msg->msg.msg.bc.port = port;
-  api_msg_post(msg);
+  msg.type = API_MSG_BIND;
+  msg.msg.conn = conn;
+  msg.msg.msg.bc.ipaddr = addr;
+  msg.msg.msg.bc.port = port;
+  api_msg_post(&msg);
   sys_mbox_fetch(conn->mbox, NULL);
   return conn->err;
 }
@@ -397,8 +395,7 @@ err_t
 netconn_connect(struct netconn *conn, struct ip_addr *addr,
        u16_t port)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
   
   if (conn == NULL) {
     return ERR_VAL;
@@ -411,11 +408,11 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr,
     }
   }
   
-  msg->type = API_MSG_CONNECT;
-  msg->msg.conn = conn;  
-  msg->msg.msg.bc.ipaddr = addr;
-  msg->msg.msg.bc.port = port;
-  api_msg_post(msg);
+  msg.type = API_MSG_CONNECT;
+  msg.msg.conn = conn;  
+  msg.msg.msg.bc.ipaddr = addr;
+  msg.msg.msg.bc.port = port;
+  api_msg_post(&msg);
   sys_mbox_fetch(conn->mbox, NULL);
   return conn->err;
 }
@@ -423,16 +420,15 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr,
 err_t
 netconn_disconnect(struct netconn *conn)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
   
   if (conn == NULL) {
     return ERR_VAL;
   }
 
-  msg->type = API_MSG_DISCONNECT;
-  msg->msg.conn = conn;  
-  api_msg_post(msg);
+  msg.type = API_MSG_DISCONNECT;
+  msg.msg.conn = conn;  
+  api_msg_post(&msg);
   sys_mbox_fetch(conn->mbox, NULL);
   return conn->err;
 
@@ -441,8 +437,7 @@ netconn_disconnect(struct netconn *conn)
 err_t
 netconn_listen(struct netconn *conn)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
 
   if (conn == NULL) {
     return ERR_VAL;
@@ -455,9 +450,9 @@ netconn_listen(struct netconn *conn)
     }
   }
   
-  msg->type = API_MSG_LISTEN;
-  msg->msg.conn = conn;
-  api_msg_post(msg);
+  msg.type = API_MSG_LISTEN;
+  msg.msg.conn = conn;
+  api_msg_post(&msg);
   sys_mbox_fetch(conn->mbox, NULL);
   return conn->err;
 }
@@ -482,9 +477,8 @@ netconn_accept(struct netconn *conn)
 struct netbuf *
 netconn_recv(struct netconn *conn)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
-  struct netbuf *buf;
+  struct api_msg msg;
+  struct netbuf *buf = NULL;
   struct pbuf *p;
   u16_t len;
     
@@ -544,14 +538,14 @@ netconn_recv(struct netconn *conn)
     buf->fromaddr = NULL;
 
     /* Let the stack know that we have taken the data. */
-    msg->type = API_MSG_RECV;
-    msg->msg.conn = conn;
+    msg.type = API_MSG_RECV;
+    msg.msg.conn = conn;
     if (buf != NULL) {
-      msg->msg.msg.len = buf->p->tot_len;
+      msg.msg.msg.len = buf->p->tot_len;
     } else {
-      msg->msg.msg.len = 1;
+      msg.msg.msg.len = 1;
     }
-    api_msg_post(msg);
+    api_msg_post(&msg);
 
     sys_mbox_fetch(conn->mbox, NULL);
   } else {
@@ -574,8 +568,7 @@ netconn_recv(struct netconn *conn)
 err_t
 netconn_send(struct netconn *conn, struct netbuf *buf)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
 
   if (conn == NULL) {
     return ERR_VAL;
@@ -586,10 +579,10 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   }
 
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
-  msg->type = API_MSG_SEND;
-  msg->msg.conn = conn;
-  msg->msg.msg.p = buf->p;
-  api_msg_post(msg);
+  msg.type = API_MSG_SEND;
+  msg.msg.conn = conn;
+  msg.msg.msg.p = buf->p;
+  api_msg_post(&msg);
 
   sys_mbox_fetch(conn->mbox, NULL);
   return conn->err;
@@ -598,8 +591,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 err_t
 netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
   u16_t len;
   
   if (conn == NULL) {
@@ -610,14 +602,14 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
     return conn->err;
   }
 
-  msg->type = API_MSG_WRITE;
-  msg->msg.conn = conn;
+  msg.type = API_MSG_WRITE;
+  msg.msg.conn = conn;
         
 
   conn->state = NETCONN_WRITE;
   while (conn->err == ERR_OK && size > 0) {
-    msg->msg.msg.w.dataptr = dataptr;
-    msg->msg.msg.w.copy = copy;
+    msg.msg.msg.w.dataptr = dataptr;
+    msg.msg.msg.w.copy = copy;
     
     if (conn->type == NETCONN_TCP) {
       if (tcp_sndbuf(conn->pcb.tcp) == 0) {
@@ -638,9 +630,9 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
     }
     
     LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
-    msg->msg.msg.w.len = len;
-    api_msg_post(msg);
-    sys_mbox_fetch(conn->mbox, NULL);    
+    msg.msg.msg.w.len = len;
+    api_msg_post(&msg);
+    sys_mbox_fetch(conn->mbox, NULL);
     if (conn->err == ERR_OK) {
       dataptr = (void *)((u8_t *)dataptr + len);
       size -= len;
@@ -660,8 +652,7 @@ netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
 err_t
 netconn_close(struct netconn *conn)
 {
-  struct api_msg _msg;
-  struct api_msg *msg = &_msg;
+  struct api_msg msg;
 
   if (conn == NULL) {
     return ERR_VAL;
@@ -669,9 +660,9 @@ netconn_close(struct netconn *conn)
 
   conn->state = NETCONN_CLOSE;
  again:
-  msg->type = API_MSG_CLOSE;
-  msg->msg.conn = conn;
-  api_msg_post(msg);
+  msg.type = API_MSG_CLOSE;
+  msg.msg.conn = conn;
+  api_msg_post(&msg);
   sys_mbox_fetch(conn->mbox, NULL);
   if (conn->err == ERR_MEM &&
      conn->sem != SYS_SEM_NULL) {
