@@ -34,6 +34,8 @@
 #ifndef __LWIP_SOCKETS_H__
 #define __LWIP_SOCKETS_H__
 #include "lwip/ip_addr.h"
+#include "opt.h"
+#include "tcp.h"
 
 struct sockaddr_in {
   u8_t sin_len;
@@ -61,30 +63,30 @@ struct sockaddr {
 /*
  * Option flags per-socket.
  */
-#define  SO_DEBUG  0x0001    /* turn on debugging info recording */
-#define  SO_ACCEPTCONN  0x0002    /* socket has had listen() */
-#define  SO_REUSEADDR  0x0004    /* allow local address reuse */
-#define  SO_KEEPALIVE  0x0008    /* keep connections alive */
-#define  SO_DONTROUTE  0x0010    /* just use interface addresses */
-#define  SO_BROADCAST  0x0020    /* permit sending of broadcast msgs */
-#define  SO_USELOOPBACK  0x0040    /* bypass hardware when possible */
-#define  SO_LINGER  0x0080    /* linger on close if data present */
-#define  SO_OOBINLINE  0x0100    /* leave received OOB data in line */
-#define	 SO_REUSEPORT	0x0200		/* allow local address & port reuse */
+#define  SO_DEBUG       0x0001 /* turn on debugging info recording */
+#define  SO_ACCEPTCONN  0x0002 /* socket has had listen() */
+#define  SO_REUSEADDR   0x0004 /* allow local address reuse */
+#define  SO_KEEPALIVE   0x0008 /* keep connections alive */
+#define  SO_DONTROUTE   0x0010 /* just use interface addresses */
+#define  SO_BROADCAST   0x0020 /* permit sending of broadcast msgs */
+#define  SO_USELOOPBACK 0x0040 /* bypass hardware when possible */
+#define  SO_LINGER      0x0080 /* linger on close if data present */
+#define  SO_OOBINLINE   0x0100 /* leave received OOB data in line */
+#define  SO_REUSEPORT   0x0200 /* allow local address & port reuse */
 
 #define SO_DONTLINGER   (int)(~SO_LINGER)
 
 /*
  * Additional options, not kept in so_options.
  */
-#define SO_SNDBUF  0x1001    /* send buffer size */
-#define SO_RCVBUF  0x1002    /* receive buffer size */
+#define SO_SNDBUF    0x1001    /* send buffer size */
+#define SO_RCVBUF    0x1002    /* receive buffer size */
 #define SO_SNDLOWAT  0x1003    /* send low-water mark */
 #define SO_RCVLOWAT  0x1004    /* receive low-water mark */
 #define SO_SNDTIMEO  0x1005    /* send timeout */
 #define SO_RCVTIMEO  0x1006    /* receive timeout */
-#define  SO_ERROR  0x1007    /* get error status and clear */
-#define  SO_TYPE    0x1008    /* get socket type */
+#define SO_ERROR     0x1007    /* get error status and clear */
+#define SO_TYPE      0x1008    /* get socket type */
 
 
 
@@ -223,6 +225,7 @@ struct linger {
 #endif
 
 void lwip_socket_init(void);
+
 int lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 int lwip_bind(int s, struct sockaddr *name, socklen_t namelen);
 int lwip_shutdown(int s, int how);
@@ -250,7 +253,7 @@ int lwip_ioctl(int s, long cmd, void *argp);
 #define accept(a,b,c)         lwip_accept(a,b,c)
 #define bind(a,b,c)           lwip_bind(a,b,c)
 #define shutdown(a,b)         lwip_shutdown(a,b)
-#define close(s)              lwip_close(s)
+#define closesocket(s)        lwip_close(s)
 #define connect(a,b,c)        lwip_connect(a,b,c)
 #define getsockname(a,b,c)    lwip_getsockname(a,b,c)
 #define getpeername(a,b,c)    lwip_getpeername(a,b,c)
@@ -258,14 +261,19 @@ int lwip_ioctl(int s, long cmd, void *argp);
 #define getsockopt(a,b,c,d,e) lwip_getsockopt(a,b,c,d,e)
 #define listen(a,b)           lwip_listen(a,b)
 #define recv(a,b,c,d)         lwip_recv(a,b,c,d)
-#define read(a,b,c)           lwip_read(a,b,c)
 #define recvfrom(a,b,c,d,e,f) lwip_recvfrom(a,b,c,d,e,f)
 #define send(a,b,c,d)         lwip_send(a,b,c,d)
 #define sendto(a,b,c,d,e,f)   lwip_sendto(a,b,c,d,e,f)
 #define socket(a,b,c)         lwip_socket(a,b,c)
-#define write(a,b,c)          lwip_write(a,b,c)
 #define select(a,b,c,d,e)     lwip_select(a,b,c,d,e)
 #define ioctlsocket(a,b,c)    lwip_ioctl(a,b,c)
+
+#if LWIP_POSIX_SOCKETS_IO_NAMES
+#define read(a,b,c)           lwip_read(a,b,c)
+#define write(a,b,c)          lwip_write(a,b,c)
+#define close(s)              lwip_close(s)
+#endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
+
 #endif /* LWIP_COMPAT_SOCKETS */
 
 #endif /* __LWIP_SOCKETS_H__ */

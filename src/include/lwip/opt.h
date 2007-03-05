@@ -187,6 +187,19 @@ a lot of data that needs to be copied, this should be set high. */
 #define ARP_QUEUEING                    1
 #endif
 
+/* If enabled, incoming IP packets cause the ARP table to be updated
+ * with the source MAC and IP addresses supplied in the packet. You may
+ * want to disable this if you do not trust LAN peers to have the
+ * correct addresses, or as a limited approach to attempt to handle
+ * spoofing. If disabled, lwIP will need to make a new ARP request if
+ * the peer is not already in the ARP table, adding a little latency.
+ */
+
+#ifndef ETHARP_TRUST_IP_MAC
+#define ETHARP_TRUST_IP_MAC             1
+#endif
+
+
 /* This option is deprecated */
 #ifdef ETHARP_QUEUE_FIRST
 #error ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h.
@@ -316,14 +329,15 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_WND                         2048
 #endif 
 
+/* Maximum number of retransmissions of data segments. */
 #ifndef TCP_MAXRTX
 #define TCP_MAXRTX                      12
 #endif
 
+/* Maximum number of retransmissions of SYN segments. */
 #ifndef TCP_SYNMAXRTX
 #define TCP_SYNMAXRTX                   6
 #endif
-
 
 /* Controls if TCP should queue segments that arrive out of
    order. Define to 0 if your device is low on memory. */
@@ -347,11 +361,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_SND_QUEUELEN                4 * TCP_SND_BUF/TCP_MSS
 #endif
 
-
-/* Maximum number of retransmissions of data segments. */
-
-/* Maximum number of retransmissions of SYN segments. */
-
 /* TCP writable space (bytes). This must be less than or equal
    to TCP_SND_BUF. It is the amount of space which must be
    available in the tcp snd_buf for select to return writable */
@@ -372,11 +381,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_CALLBACK_API               0
 #endif 
 
-#ifndef LWIP_COMPAT_SOCKETS
-#define LWIP_COMPAT_SOCKETS             1
-#endif
-
-
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO               1
 #endif
@@ -395,8 +399,23 @@ a lot of data that needs to be copied, this should be set high. */
 
 
 /* ---------- Socket Options ---------- */
+/* Enable BSD-style sockets functions names */
+#ifndef LWIP_COMPAT_SOCKETS
+#define LWIP_COMPAT_SOCKETS             1
+#endif
+
+/* Enable POSIX-style sockets functions names 
+   Disable it if you use a POSIX operating system using same names (read, write & close) */
+#ifndef LWIP_POSIX_SOCKETS_IO_NAMES
+#define LWIP_POSIX_SOCKETS_IO_NAMES     1
+#endif
+
 /* Enable SO_REUSEADDR and SO_REUSEPORT options */ 
-#ifdef SO_REUSE
+#ifndef SO_REUSE
+#define SO_REUSE                        0
+#endif
+
+#if SO_REUSE
 /* I removed the lot since this was an ugly hack. It broke the raw-API.
    It also came with many ugly goto's, Christiaan Simons. */
 #error "SO_REUSE currently unavailable, this was a hack"
