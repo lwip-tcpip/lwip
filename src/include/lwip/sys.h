@@ -53,7 +53,7 @@ struct sys_timeo {u8_t dummy;};
 #define sys_sem_wait(s)
 #define sys_sem_free(s)
 #define sys_mbox_new() 0
-#define sys_mbox_fetch(m,d)
+#define sys_mbox_fetch(m,d,t)
 #define sys_mbox_post(m,d)
 #define sys_mbox_free(m)
 
@@ -116,7 +116,7 @@ sys_mbox_t sys_mbox_new(void);
 void sys_mbox_post(sys_mbox_t mbox, void *msg);
 u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 void sys_mbox_free(sys_mbox_t mbox);
-void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
+void sys_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 
 
 /* Thread functions. */

@@ -87,7 +87,7 @@ struct sockaddr {
 #define SO_RCVTIMEO  0x1006    /* receive timeout */
 #define SO_ERROR     0x1007    /* get error status and clear */
 #define SO_TYPE      0x1008    /* get socket type */
-
+#define SO_CONTIMEO  0x1009    /* connect timeout */
 
 
 /*

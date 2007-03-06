@@ -22,6 +22,10 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+  
+  2007-03-06 Frédéric Bernon
+  * api.h, api_lib.c, sockets.h, sockets.c, tcpip.c, sys.h, sys.c, err.h: 
+    Implement SO_RCVTIMEO on UDP sockets/netconn.
 
   2007-02-28 Kieran Mansley (based on patch from Simon Goldschmidt)
   * api_lib.c, tcpip.c, memp.c, memp.h: make API msg structs allocated
