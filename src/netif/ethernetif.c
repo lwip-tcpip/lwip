@@ -168,7 +168,7 @@ low_level_input(struct netif *netif)
     acknowledge that packet has been read();
 
 #if ETH_PAD_SIZE
-    pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
+    pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
 
 #if LINK_STATS
@@ -229,13 +229,7 @@ ethernetif_input(struct netif *netif)
   if (p == NULL) return;
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
-
-#if LINK_STATS
-  lwip_stats.link.recv++;
-#endif /* LINK_STATS */
-
-  ethhdr = p->payload;
-    
+  
   switch (htons(ethhdr->type)) {
 
 #if ETHARP_TCPIP_ETHINPUT

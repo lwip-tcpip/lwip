@@ -37,8 +37,6 @@
  * 
  */
 
-#if (IP_FRAG || IP_REASSEMBLY)
-
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -47,6 +45,8 @@
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
+
+#if (IP_FRAG || IP_REASSEMBLY)
 
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
 static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];

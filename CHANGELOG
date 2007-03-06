@@ -41,6 +41,10 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
+  
+  2007-03-06 Frédéric Bernon, Dmitry Potapov
+  * tcpip.c, ip_frag.c, ethernetif.c: Fix some build problems, and a redundancy
+    call to "lwip_stats.link.recv++;" in low_level_input() & ethernetif_input().
 
   2007-03-06 Simon Goldschmidt
   * ip_frag.c, ip_frag.h: Reduce code size: don't include code in those files

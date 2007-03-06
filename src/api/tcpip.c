@@ -110,11 +110,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
-
-#if LINK_STATS
-  lwip_stats.link.recv++;
-#endif /* LINK_STATS */
-    
+  
   switch (htons(ethhdr->type)) {
     /* IP packet? */
     case ETHTYPE_IP:
