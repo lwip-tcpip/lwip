@@ -42,14 +42,21 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-06 Simon Goldschmidt (based on patch from Dmitry Potapov)
+  * err.h, err.c: fixed compiler warning "initialization dircards qualifiers
+    from pointer target type"
+  
   2007-03-05 Frédéric Bernon
-  * opt.h, sockets.h: add new configuration options (LWIP_POSIX_SOCKETS_IO_NAMES, ETHARP_TRUST_IP_MAC, review SO_REUSE)
+  * opt.h, sockets.h: add new configuration options (LWIP_POSIX_SOCKETS_IO_NAMES,
+    ETHARP_TRUST_IP_MAC, review SO_REUSE)
   
   2007-03-04 Frédéric Bernon
-  * api_msg.c: Remove some compiler warnings : parameter "pcb" was never referenced.
+  * api_msg.c: Remove some compiler warnings : parameter "pcb" was never
+    referenced.
 
   2007-03-04 Frédéric Bernon
-  * api_lib.c: Fix "[patch #5764] api_lib.c cleanup: after patch #5687" (from Dmitry Potapov).
+  * api_lib.c: Fix "[patch #5764] api_lib.c cleanup: after patch #5687" (from
+    Dmitry Potapov).
     The api_msg struct stay on the stack (not moved to netconn struct).
   
   2007-03-04 Simon Goldschmidt (based on patch from Dmitry Potapov)
@@ -71,7 +78,8 @@ HISTORY
     initialized before tcpip_thread is running (e.g. before OS is started)
 
   2007-03-02 Frédéric Bernon
-  * rawapi.txt: Fix documentation mismatch with etharp.h about etharp_tmr's call interval.
+  * rawapi.txt: Fix documentation mismatch with etharp.h about etharp_tmr's call
+    interval.
 
   2007-02-28 Kieran Mansley 
   * pbuf.c: Fix BUG#17645 - ensure pbuf payload pointer is not moved

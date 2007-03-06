@@ -34,7 +34,7 @@
 
 #ifdef LWIP_DEBUG
 
-static char *err_strerr[] = {"Ok.",
+static const char *err_strerr[] = {"Ok.",
            "Out of memory error.",
            "Buffer error.",
            "Connection aborted.",
@@ -48,7 +48,7 @@ static char *err_strerr[] = {"Ok.",
 };
 
 
-char *
+const char *
 lwip_strerr(err_t err)
 {
   return err_strerr[-err];
