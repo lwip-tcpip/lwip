@@ -199,6 +199,16 @@ a lot of data that needs to be copied, this should be set high. */
 #define ETHARP_TRUST_IP_MAC             1
 #endif
 
+/* If enabled, allow to do ARP processing for incoming packets inside network driver, before process packets using the tcpip_input. */
+#ifndef ETHARP_TCPIP_INPUT
+#define ETHARP_TCPIP_INPUT              1
+#endif
+
+/* If enabled, allow to do ARP processing for incoming packets inside tcpip_thread, using the tcpip_ethinput (and not tcpip_input).
+   The aim is to protect ARP layer against concurrent access. Older ports have to be update to use tcpip_ethinput. */
+#ifndef ETHARP_TCPIP_ETHINPUT
+#define ETHARP_TCPIP_ETHINPUT           1
+#endif
 
 /* This option is deprecated */
 #ifdef ETHARP_QUEUE_FIRST
@@ -241,17 +251,17 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* IP reassemly default age in seconds */
 #ifndef IP_REASS_MAXAGE
-#define IP_REASS_MAXAGE 3
+#define IP_REASS_MAXAGE                 3
 #endif
 
 /* IP reassembly buffer size (minus IP header) */
 #ifndef IP_REASS_BUFSIZE
-#define IP_REASS_BUFSIZE 5760
+#define IP_REASS_BUFSIZE                5760
 #endif
 
 /* Assumed max MTU on any interface for IP frag buffer */
 #ifndef IP_FRAG_MAX_MTU
-#define IP_FRAG_MAX_MTU 1500
+#define IP_FRAG_MAX_MTU                 1500
 #endif
 
 /** Global default value for Time To Live used by transport layers. */
@@ -262,7 +272,7 @@ a lot of data that needs to be copied, this should be set high. */
 /* ---------- ICMP options ---------- */
 
 #ifndef ICMP_TTL
-#define ICMP_TTL                        (IP_DEFAULT_TTL)
+#define ICMP_TTL                       (IP_DEFAULT_TTL)
 #endif
 
 /* ---------- RAW options ---------- */
@@ -419,7 +429,7 @@ a lot of data that needs to be copied, this should be set high. */
 /* I removed the lot since this was an ugly hack. It broke the raw-API.
    It also came with many ugly goto's, Christiaan Simons. */
 #error "SO_REUSE currently unavailable, this was a hack"
-#endif                                                                        
+#endif
 
 
 /* ---------- Statistics options ---------- */
@@ -430,67 +440,67 @@ a lot of data that needs to be copied, this should be set high. */
 #if LWIP_STATS
 
 #ifndef LWIP_STATS_DISPLAY
-#define LWIP_STATS_DISPLAY 0
+#define LWIP_STATS_DISPLAY              0
 #endif
 
 #ifndef LINK_STATS
-#define LINK_STATS  1
+#define LINK_STATS                      1
 #endif
 
 #ifndef IP_STATS
-#define IP_STATS    1
+#define IP_STATS                        1
 #endif
 
 #ifndef IPFRAG_STATS
-#define IPFRAG_STATS    1
+#define IPFRAG_STATS                    1
 #endif
 
 #ifndef ICMP_STATS
-#define ICMP_STATS  1
+#define ICMP_STATS                      1
 #endif
 
 #ifndef UDP_STATS
-#define UDP_STATS   1
+#define UDP_STATS                       1
 #endif
 
 #ifndef TCP_STATS
-#define TCP_STATS   1
+#define TCP_STATS                       1
 #endif
 
 #ifndef MEM_STATS
-#define MEM_STATS   1
+#define MEM_STATS                       1
 #endif
 
 #ifndef MEMP_STATS
-#define MEMP_STATS  1
+#define MEMP_STATS                      1
 #endif
 
 #ifndef PBUF_STATS
-#define PBUF_STATS  1
+#define PBUF_STATS                      1
 #endif
 
 #ifndef SYS_STATS
-#define SYS_STATS   1
+#define SYS_STATS                       1
 #endif
 
 #ifndef RAW_STATS
-#define RAW_STATS   0
+#define RAW_STATS                       0
 #endif
 
 #else
 
-#define LINK_STATS  0
-#define IP_STATS    0
-#define IPFRAG_STATS    0
-#define ICMP_STATS  0
-#define UDP_STATS   0
-#define TCP_STATS   0
-#define MEM_STATS   0
-#define MEMP_STATS  0
-#define PBUF_STATS  0
-#define SYS_STATS   0
-#define RAW_STATS   0
-#define LWIP_STATS_DISPLAY  0
+#define LINK_STATS                      0
+#define IP_STATS                        0
+#define IPFRAG_STATS                    0
+#define ICMP_STATS                      0
+#define UDP_STATS                       0
+#define TCP_STATS                       0
+#define MEM_STATS                       0
+#define MEMP_STATS                      0
+#define PBUF_STATS                      0
+#define SYS_STATS                       0
+#define RAW_STATS                       0
+#define LWIP_STATS_DISPLAY              0
 
 #endif /* LWIP_STATS */
 

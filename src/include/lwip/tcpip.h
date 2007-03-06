@@ -37,14 +37,24 @@
 
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
 void tcpip_apimsg(struct api_msg *apimsg);
+#if ETHARP_TCPIP_INPUT
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
+#endif /* ETHARP_TCPIP_INPUT */
+#if ETHARP_TCPIP_ETHINPUT
+err_t tcpip_ethinput(struct pbuf *p, struct netif *inp);
+#endif /* ETHARP_TCPIP_ETHINPUT */
 err_t tcpip_callback(void (*f)(void *ctx), void *ctx);
 
 void tcpip_tcp_timer_needed(void);
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
+#if ETHARP_TCPIP_INPUT  
   TCPIP_MSG_INPUT,
+#endif /* ETHARP_TCPIP_INPUT */
+#if ETHARP_TCPIP_ETHINPUT
+  TCPIP_MSG_ETHINPUT,
+#endif /* ETHARP_TCPIP_ETHINPUT */
   TCPIP_MSG_CALLBACK
 };
 

@@ -5,10 +5,6 @@ FUTURE
     problems with exoteric (/DSP) architectures showing these problems.
     We still have to fix some of these issues neatly.
 
-  * TODO: the ARP layer is not protected against concurrent access. If
-    you run from a multitasking OS, serialize access to ARP (called from
-    your network device driver and from a timeout thread.)
-
   * TODO: the PPP code is broken in a few ways. There are namespace
     collisions on BSD systems and many assumptions on word-length
     (sizeof(int)). In ppp.c an assumption is made on the availability of
@@ -41,6 +37,14 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
+
+  2007-03-06 Frédéric Bernon, Simon Goldschmidt
+  * opt.h, ip_frag.h, tcpip.h, tcpip.c, ethernetif.c: add new configuration
+    option named ETHARP_TCPIP_ETHINPUT, which enable the new tcpip_ethinput.
+    Allow to do ARP processing for incoming packets inside tcpip_thread
+    (protecting ARP layer against concurrent access). You can also disable
+    old code using tcp_input with new define ETHARP_TCPIP_INPUT set to 0.
+    Older ports have to use tcpip_ethinput.
   
   2007-03-06 Simon Goldschmidt (based on patch from Dmitry Potapov)
   * err.h, err.c: fixed compiler warning "initialization dircards qualifiers

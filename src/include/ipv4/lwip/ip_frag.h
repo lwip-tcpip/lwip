@@ -39,6 +39,9 @@
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 
+/* The IP timer interval in milliseconds. */
+#define IP_TMR_INTERVAL 1000
+
 void ip_frag_init(void);
 void ip_reass_tmr(void);
 struct pbuf * ip_reass(struct pbuf *p);

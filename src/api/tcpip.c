@@ -37,6 +37,8 @@
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 
+#include "netif/etharp.h"
+
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/udp.h"
@@ -61,7 +63,7 @@ tcpip_tcp_timer(void *arg)
   /* timer still needed? */
   if (tcp_active_pcbs || tcp_tw_pcbs) {
     /* restart timer */
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout( TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   } else {
     /* disable timer */
     tcpip_tcp_timer_active = 0;
@@ -76,7 +78,7 @@ tcp_timer_needed(void)
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
     /* enable and start timer */
     tcpip_tcp_timer_active = 1;
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout( TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
 #endif /* !NO_SYS */
@@ -88,9 +90,56 @@ ip_timer(void *data)
 {
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: ip_reass_tmr()\n"));
   ip_reass_tmr();
-  sys_timeout(1000, ip_timer, NULL);
+  sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
 }
 #endif
+
+static void
+arp_timer(void *arg)
+{
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: etharp_tmr()\n"));
+  etharp_tmr();
+  sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+}
+
+#if ETHARP_TCPIP_ETHINPUT
+static void
+ethernet_input(struct pbuf *p, struct netif *netif)
+{
+  struct eth_hdr* ethhdr;
+
+  /* points to packet payload, which starts with an Ethernet header */
+  ethhdr = p->payload;
+
+#if LINK_STATS
+  lwip_stats.link.recv++;
+#endif /* LINK_STATS */
+    
+  switch (htons(ethhdr->type)) {
+    /* IP packet? */
+    case ETHTYPE_IP:
+      #if ETHARP_TRUST_IP_MAC
+      /* update ARP table */
+      etharp_ip_input( netif, p);
+      #endif
+      /* skip Ethernet header */
+      pbuf_header(p, -sizeof(struct eth_hdr));
+      /* pass to IP layer */
+      ip_input(p, netif);
+      break;
+      
+    case ETHTYPE_ARP:
+      /* pass p to ARP module  */
+      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
+      break;
+
+    default:
+      pbuf_free(p);
+      p = NULL;
+      break;
+  }
+}
+#endif /* ETHARP_TCPIP_ETHINPUT */
 
 static void
 tcpip_thread(void *arg)
@@ -98,8 +147,10 @@ tcpip_thread(void *arg)
   struct tcpip_msg *msg;
 
 #if IP_REASSEMBLY
-  sys_timeout(1000, ip_timer, NULL);
+  sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
 #endif
+  sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
@@ -111,10 +162,21 @@ tcpip_thread(void *arg)
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       api_msg_input(msg->msg.apimsg);
       break;
+
+#if ETHARP_TCPIP_INPUT      
     case TCPIP_MSG_INPUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
       ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       break;
+#endif /* ETHARP_TCPIP_INPUT */
+
+#if ETHARP_TCPIP_ETHINPUT
+    case TCPIP_MSG_ETHINPUT:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Ethernet packet %p\n", (void *)msg));
+      ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
+      break;
+#endif /* ETHARP_TCPIP_ETHINPUT */
+
     case TCPIP_MSG_CALLBACK:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
       msg->msg.cb.f(msg->msg.cb.ctx);
@@ -126,6 +188,7 @@ tcpip_thread(void *arg)
   }
 }
 
+#if ETHARP_TCPIP_INPUT
 err_t
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
@@ -143,6 +206,27 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   sys_mbox_post(mbox, msg);
   return ERR_OK;
 }
+#endif /* ETHARP_TCPIP_INPUT */
+
+#if ETHARP_TCPIP_ETHINPUT
+err_t
+tcpip_ethinput(struct pbuf *p, struct netif *inp)
+{
+  struct tcpip_msg *msg;
+
+  msg = memp_malloc(MEMP_TCPIP_MSG);
+  if (msg == NULL) {
+    pbuf_free(p);    
+    return ERR_MEM;  
+  }
+  
+  msg->type = TCPIP_MSG_ETHINPUT;
+  msg->msg.inp.p = p;
+  msg->msg.inp.netif = inp;
+  sys_mbox_post(mbox, msg);
+  return ERR_OK;
+}
+#endif /* ETHARP_TCPIP_ETHINPUT */
 
 err_t
 tcpip_callback(void (*f)(void *ctx), void *ctx)

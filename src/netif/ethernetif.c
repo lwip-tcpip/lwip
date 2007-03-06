@@ -237,36 +237,44 @@ ethernetif_input(struct netif *netif)
   ethhdr = p->payload;
     
   switch (htons(ethhdr->type)) {
+
+#if ETHARP_TCPIP_ETHINPUT
+  /* IP or ARP packet? */
+  case ETHTYPE_IP:
+  case ETHTYPE_ARP:
+    /* full packet send to tcpip_thread to process */
+    pnetif->input( p, pnetif);
+    break;                 
+    
+#else /* ETHARP_TCPIP_ETHINPUT */ 
+#if ETHARP_TCPIP_INPUT
+
   /* IP packet? */
   case ETHTYPE_IP:
-#if 0
-/* CSi disabled ARP table update on ingress IP packets.
-   This seems to work but needs thorough testing. */
+#if ETHARP_TRUST_IP_MAC
     /* update ARP table */
     etharp_ip_input(netif, p);
-#endif
+#endif /* ETHARP_TRUST_IP_MAC */ 
     /* skip Ethernet header */
     pbuf_header(p, -sizeof(struct eth_hdr));
     /* pass to network layer */
     netif->input(p, netif);
     break;
       
-    case ETHTYPE_ARP:
-      /* pass p to ARP module  */
-      etharp_arp_input(netif, ethernetif->ethaddr, p);
-      break;
-    default:
-      pbuf_free(p);
-      p = NULL;
-      break;
-  }
-}
+  /* ARP packet? */
+  case ETHTYPE_ARP:
+    /* pass p to ARP module  */
+    etharp_arp_input(netif, ethernetif->ethaddr, p);
+    break;
+    
+#endif /* ETHARP_TCPIP_INPUT */
+#endif /* ETHARP_TCPIP_ETHINPUT */
 
-static void
-arp_timer(void *arg)
-{
-  etharp_tmr();
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
+  default:
+    pbuf_free(p);
+    p = NULL;
+    break;
+  }
 }
 
 /*
@@ -316,10 +324,6 @@ ethernetif_init(struct netif *netif)
   ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
   
   low_level_init(netif);
-
-  etharp_init();
-
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
 
   return ERR_OK;
 }
