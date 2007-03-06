@@ -33,13 +33,13 @@
 #ifndef __LWIP_IP_FRAG_H__
 #define __LWIP_IP_FRAG_H__
 
-#if (IP_FRAG || IP_REASSEMBLY)
-
 #include "lwip/opt.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
+
+#if (IP_FRAG || IP_REASSEMBLY)
 
 /* The IP timer interval in milliseconds. */
 #define IP_TMR_INTERVAL 1000
