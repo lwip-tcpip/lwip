@@ -37,6 +37,8 @@
  * 
  */
 
+#if (IP_FRAG || IP_REASSEMBLY)
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -386,3 +388,5 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   snmp_inc_ipfragoks();
   return ERR_OK;
 }
+
+#endif /* IP_FRAG || IP_REASSEMBLY */

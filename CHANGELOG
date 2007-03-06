@@ -38,6 +38,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-06 Simon Goldschmidt
+  * ip_frag.c, ip_frag.h: Reduce code size: don't include code in those files
+    if IP_FRAG == 0 and IP_REASSEMBLY == 0
+
   2007-03-06 Frédéric Bernon, Simon Goldschmidt
   * opt.h, ip_frag.h, tcpip.h, tcpip.c, ethernetif.c: add new configuration
     option named ETHARP_TCPIP_ETHINPUT, which enable the new tcpip_ethinput.
