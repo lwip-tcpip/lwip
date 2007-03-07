@@ -216,7 +216,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
 {
   struct pbuf *p, *q, *r;
   u16_t offset;
-  u16_t rem_len; /* remaining length */
+  s32_t rem_len; /* remaining length */
   LWIP_DEBUGF(PBUF_DEBUG | DBG_TRACE | 3, ("pbuf_alloc(length=%"U16_F")\n", length));
 
   /* determine header offset */
@@ -270,7 +270,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* remember first pbuf for linkage in next iteration */
     r = p;
     /* remaining length to be allocated */
-    LWIP_ASSERT("length >= p->len", length >= p->len);
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
@@ -297,10 +296,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
       /* calculate remaining length to be allocated */
-      if(q->len < rem_len)
-        rem_len -= q->len;
-      else
-        rem_len = 0;
+      rem_len -= q->len;
       /* remember this pbuf for linkage in next iteration */
       r = q;
     }
