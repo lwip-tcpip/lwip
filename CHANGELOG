@@ -24,6 +24,10 @@ HISTORY
   ++ New features:
   
   2007-03-08 Frédéric Bernon
+  * tcp.h: Keepalive values can be configured at compile time, but don't change
+    this unless you know what you're doing (default are RFC1122 compliant).
+
+  2007-03-08 Frédéric Bernon
   * sockets.c, api.h, api_lib.c, tcpip.c, sys.h, sys.c, err.c, opt.h:
     Implement LWIP_SO_RCVTIMEO configuration option to enable/disable SO_RCVTIMEO
     on UDP sockets/netconn.

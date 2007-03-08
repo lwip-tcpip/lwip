@@ -133,18 +133,15 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 #define TCP_HLEN 20
 
 #ifndef TCP_TMR_INTERVAL
-#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in
-                                       milliseconds. */
+#define TCP_TMR_INTERVAL       250  /* The TCP timer interval in milliseconds. */
 #endif /* TCP_TMR_INTERVAL */
 
 #ifndef TCP_FAST_INTERVAL
-#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in
-                                       milliseconds */
+#define TCP_FAST_INTERVAL      TCP_TMR_INTERVAL /* the fine grained timeout in milliseconds */
 #endif /* TCP_FAST_INTERVAL */
 
 #ifndef TCP_SLOW_INTERVAL
-#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in
-                                       milliseconds */
+#define TCP_SLOW_INTERVAL      (2*TCP_TMR_INTERVAL)  /* the coarse grained timeout in milliseconds */
 #endif /* TCP_SLOW_INTERVAL */
 
 #define TCP_FIN_WAIT_TIMEOUT 20000 /* milliseconds */
@@ -160,12 +157,20 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 #define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
 #define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keepalive miliseconds */
 
-/* Keepalive values */
+/* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
+#ifndef  TCP_KEEPDEFAULT
 #define  TCP_KEEPDEFAULT   7200000                       /* KEEPALIVE timer in miliseconds */
-#define  TCP_KEEPINTVL     75000                         /* Time between KEEPALIVE probes in miliseconds */
-#define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
-#define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
+#endif
 
+#ifndef  TCP_KEEPINTVL
+#define  TCP_KEEPINTVL     75000                         /* Time between KEEPALIVE probes in miliseconds */
+#endif
+
+#ifndef  TCP_KEEPCNT
+#define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
+#endif
+
+#define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
