@@ -45,6 +45,10 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-06 Simon Goldschmidt
+  * tcpip.c: Initialize dhcp timers in tcpip_thread (if LWIP_DHCP) to protect
+    the stack from concurrent access.
+
   2007-03-06 Frédéric Bernon, Dmitry Potapov
   * tcpip.c, ip_frag.c, ethernetif.c: Fix some build problems, and a redundancy
     call to "lwip_stats.link.recv++;" in low_level_input() & ethernetif_input().

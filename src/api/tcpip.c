@@ -102,6 +102,24 @@ arp_timer(void *arg)
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
 }
 
+#if LWIP_DHCP
+static void
+dhcp_timer_coarse(void *arg)
+{
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_coarse_tmr()\n"));
+  dhcp_coarse_tmr();
+  sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
+}
+
+static void
+dhcp_timer_fine(void *arg)
+{
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_fine_tmr()\n"));
+  dhcp_fine_tmr();
+  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
+}
+#endif
+
 #if ETHARP_TCPIP_ETHINPUT
 static void
 ethernet_input(struct pbuf *p, struct netif *netif)
@@ -146,6 +164,10 @@ tcpip_thread(void *arg)
   sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
 #endif
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+#if LWIP_DHCP
+  sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
+  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
+#endif
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
