@@ -44,8 +44,16 @@
 #include "private_mib.h"
 #endif
 
+/* The listen port of the SNMP agent. Clients have to make their requests to
+   this port. Most standard clients won't work if you change this! */
+#ifndef SNMP_IN_PORT
 #define SNMP_IN_PORT 161
+#endif
+/* The remote port the SNMP agent sends traps to. Most standard trap sinks won't
+   work if you change this! */
+#ifndef SNMP_TRAP_PORT
 #define SNMP_TRAP_PORT 162
+#endif
 
 #define SNMP_ES_NOERROR 0
 #define SNMP_ES_TOOBIG 1

@@ -23,6 +23,9 @@ HISTORY
 
   ++ New features:
   
+  2007-03-08 Simon Goldschmidt
+  * snmp_msg.h, msg_in.c: SNMP UDP ports can be configured at compile time.
+
   2007-03-06 Frédéric Bernon
   * api.h, api_lib.c, sockets.h, sockets.c, tcpip.c, sys.h, sys.c, err.h: 
     Implement SO_RCVTIMEO on UDP sockets/netconn.

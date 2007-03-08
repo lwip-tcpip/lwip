@@ -807,7 +807,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
   udphdr = p->payload;
 
   /* check if datagram is really directed at us (including broadcast requests) */
-  if ((pcb == snmp1_pcb) && (ntohs(udphdr->dest) == 161))
+  if ((pcb == snmp1_pcb) && (ntohs(udphdr->dest) == SNMP_IN_PORT))
   {
     struct snmp_msg_pstat *msg_ps;
     u8_t req_idx;
