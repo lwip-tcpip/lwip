@@ -174,7 +174,7 @@ tcpip_thread(void *arg)
   }
 
   while (1) {                          /* MAIN Loop */
-    sys_mbox_fetch(mbox, (void *)&msg, 0);
+    sys_mbox_fetch(mbox, (void *)&msg);
     switch (msg->type) {
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));

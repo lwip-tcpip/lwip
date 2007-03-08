@@ -420,6 +420,11 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_POSIX_SOCKETS_IO_NAMES     1
 #endif
 
+/* Enable SO_RCVTIMEO processing (only for UDP sockets) */
+#ifndef LWIP_SO_RCVTIMEO
+#define LWIP_SO_RCVTIMEO                0
+#endif
+
 /* Enable SO_REUSEADDR and SO_REUSEPORT options */ 
 #ifndef SO_REUSE
 #define SO_REUSE                        0

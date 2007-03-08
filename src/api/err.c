@@ -34,17 +34,21 @@
 
 #ifdef LWIP_DEBUG
 
-static const char *err_strerr[] = {"Ok.",
-           "Out of memory error.",
-           "Buffer error.",
-           "Connection aborted.",
-           "Connection reset.",
-           "Connection closed.",
-           "Not connected.",
-           "Illegal value.",
-           "Illegal argument.",
-           "Routing problem.",
-           "Address in use."
+static const char *err_strerr[] = {
+           "Ok.",                    /* ERR_OK       0  */
+           "Out of memory error.",   /* ERR_MEM     -1  */
+           "Buffer error.",          /* ERR_BUF     -2  */
+           "Connection aborted.",    /* ERR_ABRT    -3  */
+           "Connection reset.",      /* ERR_RST     -4  */
+           "Connection closed.",     /* ERR_CLSD    -5  */
+           "Not connected.",         /* ERR_CONN    -6  */
+           "Illegal value.",         /* ERR_VAL     -7  */
+           "Illegal argument.",      /* ERR_ARG     -8  */
+           "Routing problem.",       /* ERR_RTE     -9  */
+           "Address in use.",        /* ERR_USE     -10 */
+           "Low-level netif error.", /* ERR_IF      -11 */
+           "Already connected.",     /* ERR_ISCONN  -12 */
+           "Timeout."                /* ERR_TIMEOUT -13 */
 };
 
 

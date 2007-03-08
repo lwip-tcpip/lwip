@@ -996,8 +996,11 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       /* UNIMPL case SO_DONTROUTE: */
       case SO_ERROR:
       case SO_KEEPALIVE:
+      /* UNIMPL case SO_CONTIMEO: */
       /* UNIMPL case SO_SNDTIMEO: */
+#if LWIP_SO_RCVTIMEO      
       case SO_RCVTIMEO:
+#endif /* LWIP_SO_RCVTIMEO */
       /* UNIMPL case SO_OOBINLINE: */
       /* UNIMPL case SO_RCVBUF: */
       /* UNIMPL case SO_SNDBUF: */
@@ -1124,9 +1127,11 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n", s, *(int *)optval));
       break;
 
+#if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
       *(int *)optval = sock->conn->recv_timeout;
       break;
+#endif /* LWIP_SO_RCVTIMEO */
     }  /* switch */
     break;
 
@@ -1191,8 +1196,11 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     /* UNIMPL case SO_DEBUG: */
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
+    /* UNIMPL case case SO_CONTIMEO: */
     /* UNIMPL case case SO_SNDTIMEO: */
+#if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
+#endif /* LWIP_SO_RCVTIMEO */
     /* UNIMPL case SO_OOBINLINE: */
     /* UNIMPL case SO_RCVBUF: */
     /* UNIMPL case SO_SNDBUF: */
@@ -1292,9 +1300,11 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n", s, optname, (*(int*)optval?"on":"off")));
       break;
+#if LWIP_SO_RCVTIMEO      
     case SO_RCVTIMEO:
       sock->conn->recv_timeout = ( *(int*)optval );
       break;
+#endif /* LWIP_SO_RCVTIMEO */
     }  /* switch */
     break;
 

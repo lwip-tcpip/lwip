@@ -23,6 +23,11 @@ HISTORY
 
   ++ New features:
   
+  2007-03-08 Frédéric Bernon
+  * sockets.c, api.h, api_lib.c, tcpip.c, sys.h, sys.c, err.c, opt.h:
+    Implement LWIP_SO_RCVTIMEO configuration option to enable/disable SO_RCVTIMEO
+    on UDP sockets/netconn.
+  
   2007-03-08 Simon Goldschmidt
   * snmp_msg.h, msg_in.c: SNMP UDP ports can be configured at compile time.
 
