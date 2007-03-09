@@ -103,7 +103,7 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
   MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct tcpip_msg) +
 #if ARP_QUEUEING
-  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct etharp_q_entry) +
+  MEMP_TYPE_SIZE(MEMP_NUM_ARP_QUEUE, struct etharp_q_entry) +
 #endif
   MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 

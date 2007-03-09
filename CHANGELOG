@@ -54,6 +54,10 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-09 Simon Goldschmidt
+  * memp.c: Fixed bug #11400: New etharp queueing introduced bug: memp_memory
+    was allocated too small.
+
   2007-03-06 Simon Goldschmidt
   * tcpip.c: Initialize dhcp timers in tcpip_thread (if LWIP_DHCP) to protect
     the stack from concurrent access.
