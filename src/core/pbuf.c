@@ -102,6 +102,8 @@ pbuf_init(void)
 
   pbuf_pool = (struct pbuf *)MEM_ALIGN(pbuf_pool_memory);
 
+  LWIP_ASSERT("pbuf_init: sizeof(struct pbuf) must be a multiple of MEM_ALIGNMENT",
+              (sizeof(struct pbuf) % MEM_ALIGNMENT) == 0);
   LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
               (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
 
@@ -261,7 +263,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
-    p->len = length > PBUF_POOL_BUFSIZE - offset? PBUF_POOL_BUFSIZE - offset: length;
+    p->len = length > PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset)? PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset): length;
     /* set reference count (needed here in case we fail) */
     p->ref = 1;
 

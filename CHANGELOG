@@ -67,6 +67,10 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-11 Simon Goldschmidt
+  * pbuf.c: checked in patch #5796: pbuf_alloc: len field claculation caused
+    memory corruption.
+
   2007-03-11 Simon Goldschmidt (based on patch from Dmitry Potapov)
   * api_lib.c, sockets.c, api.h, api_msg.h, sockets.h: Fixed bug #19251
     (missing `const' qualifier in socket functions), to get more compatible to
