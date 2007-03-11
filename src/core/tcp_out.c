@@ -683,7 +683,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
                            ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
                            ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
 
-   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F"  pcb->keep_cnt %"U16_F"\n", tcp_ticks, pcb->tmr, pcb->keep_cnt));
+   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F"  pcb->keep_cnt_sent %"U16_F"\n", tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
    
    p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
 

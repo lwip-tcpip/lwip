@@ -476,7 +476,7 @@ tcp_process(struct tcp_pcb *pcb)
 
   /* Update the PCB (in)activity timer. */
   pcb->tmr = tcp_ticks;
-  pcb->keep_cnt = 0;
+  pcb->keep_cnt_sent = 0;
 
   /* Do different things depending on the TCP state. */
   switch (pcb->state) {
@@ -825,7 +825,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->sv += m;
       pcb->rto = (pcb->sa >> 3) + pcb->sv;
 
-      LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: RTO %"U16_F" (%"U16_F" miliseconds)\n",
+      LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: RTO %"U16_F" (%"U16_F" milliseconds)\n",
                                   pcb->rto, pcb->rto * TCP_SLOW_INTERVAL));
 
       pcb->rttest = 0;

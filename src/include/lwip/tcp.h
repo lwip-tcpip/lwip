@@ -155,22 +155,26 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
  * User-settable options (used with setsockopt).
  */
 #define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
-#define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keepalive miliseconds */
+#define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keep_idle milliseconds */
+
+#define TCP_KEEPIDLE   0x03    /* set pcb->keep_idle  - Same as TCP_KEEPALIVE, but use seconds for get/setsockopt*/
+#define TCP_KEEPINTVL  0x04    /* set pcb->keep_intvl - Use seconds for get/setsockopt */
+#define TCP_KEEPCNT    0x05    /* set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
-#ifndef  TCP_KEEPDEFAULT
-#define  TCP_KEEPDEFAULT   7200000                       /* KEEPALIVE timer in miliseconds */
+#ifndef  TCP_KEEPIDLE_DEFAULT
+#define  TCP_KEEPIDLE_DEFAULT     7200000                                      /* Default KEEPALIVE timer in milliseconds */
 #endif
 
-#ifndef  TCP_KEEPINTVL
-#define  TCP_KEEPINTVL     75000                         /* Time between KEEPALIVE probes in miliseconds */
+#ifndef  TCP_KEEPINTVL_DEFAULT
+#define  TCP_KEEPINTVL_DEFAULT    75000                                        /* Default Time between KEEPALIVE probes in milliseconds */
 #endif
 
-#ifndef  TCP_KEEPCNT
-#define  TCP_KEEPCNT       9                             /* Counter for KEEPALIVE probes */
+#ifndef  TCP_KEEPCNT_DEFAULT
+#define  TCP_KEEPCNT_DEFAULT      9                                            /* Default Counter for KEEPALIVE probes */
 #endif
 
-#define  TCP_MAXIDLE       TCP_KEEPCNT * TCP_KEEPINTVL   /* Maximum KEEPALIVE probe time */
+#define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -311,10 +315,14 @@ struct tcp_pcb {
 #endif /* LWIP_CALLBACK_API */
 
   /* idle time before KEEPALIVE is sent */
-  u32_t keepalive;
+  u32_t keep_idle;
+#if LWIP_TCP_KEEPALIVE
+  u32_t keep_intvl;
+  u32_t keep_cnt;
+#endif /* LWIP_TCP_KEEPALIVE */
   
   /* KEEPALIVE counter */
-  u8_t keep_cnt;
+  u8_t keep_cnt_sent;
 };
 
 struct tcp_pcb_listen {  

@@ -537,16 +537,24 @@ tcp_slowtmr(void)
 
    /* Check if KEEPALIVE should be sent */
    if((pcb->so_options & SOF_KEEPALIVE) && ((pcb->state == ESTABLISHED) || (pcb->state == CLOSE_WAIT))) {
-      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keepalive + TCP_MAXIDLE) / TCP_SLOW_INTERVAL)  {
+#if LWIP_TCP_KEEPALIVE
+      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + (pcb->keep_cnt*pcb->keep_intvl)) / TCP_SLOW_INTERVAL)  {
+#else      
+      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + TCP_MAXIDLE                    ) / TCP_SLOW_INTERVAL)  {
+#endif /* LWIP_TCP_KEEPALIVE */
          LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
                                  ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
                                  ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
 
          tcp_abort(pcb);
       }
-      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keepalive + pcb->keep_cnt * TCP_KEEPINTVL) / TCP_SLOW_INTERVAL) {
+#if LWIP_TCP_KEEPALIVE
+      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + pcb->keep_cnt_sent * pcb->keep_intvl)       / TCP_SLOW_INTERVAL) {
+#else
+      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEPINTVL_DEFAULT) / TCP_SLOW_INTERVAL) {
+#endif /* LWIP_TCP_KEEPALIVE */
          tcp_keepalive(pcb);
-         pcb->keep_cnt++;
+         pcb->keep_cnt_sent++;
       }
    }
 
@@ -853,8 +861,14 @@ tcp_alloc(u8_t prio)
 #endif /* LWIP_CALLBACK_API */  
     
     /* Init KEEPALIVE timer */
-    pcb->keepalive = TCP_KEEPDEFAULT;
-    pcb->keep_cnt = 0;
+    pcb->keep_idle  = TCP_KEEPIDLE_DEFAULT;
+    
+#if LWIP_TCP_KEEPALIVE
+    pcb->keep_intvl = TCP_KEEPINTVL_DEFAULT;
+    pcb->keep_cnt   = TCP_KEEPCNT_DEFAULT;
+#endif /* LWIP_TCP_KEEPALIVE */
+
+    pcb->keep_cnt_sent = 0;
   }
   return pcb;
 }

@@ -22,6 +22,12 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2007-03-11 Frédéric Bernon
+  * tcp.h, tcp.c, sockets.c, tcp_out.c, tcp_in.c, opt.h: Keepalive values can
+    be configured at run time with LWIP_TCP_KEEPALIVE, but don't change this
+    unless you know what you're doing (default are RFC1122 compliant). Note
+    that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set in seconds.
   
   2007-03-08 Frédéric Bernon
   * tcp.h: Keepalive values can be configured at compile time, but don't change
