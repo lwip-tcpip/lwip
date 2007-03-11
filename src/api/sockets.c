@@ -176,10 +176,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   newconn = netconn_accept(sock->conn);
 
@@ -228,10 +226,10 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
   err_t err;
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
+
+  LWIP_ASSERT("lwip_bind: invalid address", (namelen == sizeof(struct sockaddr_in)) && ((((struct sockaddr_in *)name)->sin_family) == AF_INET));
 
   local_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
   local_port = ((struct sockaddr_in *)name)->sin_port;
@@ -266,7 +264,6 @@ lwip_close(int s)
   sock = get_socket(s);
   if (!sock) {
       sys_sem_signal(socksem);
-      set_errno(EBADF);
       return -1;
   }
 
@@ -274,11 +271,11 @@ lwip_close(int s)
   if (sock->lastdata) {
     netbuf_delete(sock->lastdata);
   }
-  sock->lastdata = NULL;
+  sock->lastdata   = NULL;
   sock->lastoffset = 0;
-  sock->conn = NULL;
-  sys_sem_signal(socksem);
+  sock->conn       = NULL;
   sock_set_errno(sock, 0);
+  sys_sem_signal(socksem);
   return 0;
 }
 
@@ -289,10 +286,10 @@ lwip_connect(int s, struct sockaddr *name, socklen_t namelen)
   err_t err;
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
+
+  LWIP_ASSERT("lwip_connect: invalid address", (namelen == sizeof(struct sockaddr_in)) && ((((struct sockaddr_in *)name)->sin_family) == AF_INET));
 
   if (((struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
@@ -330,10 +327,8 @@ lwip_listen(int s, int backlog)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   err = netconn_listen(sock->conn);
 
@@ -360,10 +355,8 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %d, 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   /* Check if there is data left from the last recv operation. */
   if (sock->lastdata) {
@@ -475,10 +468,8 @@ lwip_send(int s, void *data, int size, unsigned int flags)
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d, data=%p, size=%d, flags=0x%x)\n", s, data, size, flags));
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   switch (netconn_type(sock->conn)) {
   case NETCONN_RAW:
@@ -532,10 +523,10 @@ lwip_sendto(int s, void *data, int size, unsigned int flags,
   int err,connected;
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
+
+  LWIP_ASSERT("lwip_sendto: invalid address", (tolen == sizeof(struct sockaddr_in)) && ((((struct sockaddr_in *)to)->sin_family) == AF_INET));
 
   /* get the peer if currently connected */
   connected = (netconn_peer(sock->conn, &addr, &port) == ERR_OK);
@@ -907,10 +898,8 @@ int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
   struct ip_addr naddr;
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
@@ -941,10 +930,8 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
   struct ip_addr *naddr;
 
   sock = get_socket(s);
-  if (!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
@@ -973,10 +960,8 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
   int err = 0;
   struct lwip_socket *sock = get_socket(s);
 
-  if(!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   if( NULL == optval || NULL == optlen ) {
     sock_set_errno( sock, EFAULT );
@@ -1195,10 +1180,8 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
   struct lwip_socket *sock = get_socket(s);
   int err = 0;
 
-  if(!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   if( NULL == optval ) {
     sock_set_errno( sock, EFAULT );
@@ -1391,10 +1374,8 @@ int lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_socket *sock = get_socket(s);
 
-  if(!sock) {
-    set_errno(EBADF);
+  if (!sock)
     return -1;
-  }
 
   switch (cmd) {
   case FIONREAD:
