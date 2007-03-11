@@ -71,6 +71,13 @@ enum netconn_evt {
   NETCONN_EVT_SENDMINUS
 };
 
+#if LWIP_IGMP
+enum netconn_igmp {
+  NETCONN_JOIN,
+  NETCONN_LEAVE
+};
+#endif /* LWIP_IGMP */
+
 struct netbuf {
   struct pbuf *p, *ptr;
   struct ip_addr *fromaddr;
@@ -154,6 +161,13 @@ err_t             netconn_write   (struct netconn *conn,
            const void *dataptr, u16_t size,
            u8_t copy);
 err_t             netconn_close   (struct netconn *conn);
+
+#if LWIP_IGMP
+err_t             netconn_join_leave_group (struct netconn *conn,
+                                            struct ip_addr *multiaddr,
+                                            struct ip_addr *interface,
+                                            u16_t join_or_leave);
+#endif /* LWIP_IGMP */
 
 err_t             netconn_err     (struct netconn *conn);
 

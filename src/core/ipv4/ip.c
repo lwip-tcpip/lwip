@@ -59,6 +59,9 @@
 #  include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
 
+#if LWIP_IGMP
+#  include "lwip/igmp.h"
+#endif /* LWIP_IGMP */
 
 /**
  * Initializes the IP layer.
@@ -227,28 +230,44 @@ ip_input(struct pbuf *p, struct netif *inp) {
   pbuf_realloc(p, ntohs(IPH_LEN(iphdr)));
 
   /* match packet against an interface, i.e. is this packet for us? */
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
-
-    LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
-      iphdr->dest.addr, netif->ip_addr.addr,
-      iphdr->dest.addr & netif->netmask.addr,
-      netif->ip_addr.addr & netif->netmask.addr,
-      iphdr->dest.addr & ~(netif->netmask.addr)));
-
-    /* interface is up and configured? */
-    if ((netif_is_up(netif)) && (!ip_addr_isany(&(netif->ip_addr))))
-    {
-      /* unicast to this interface address? */
-      if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
-         /* or broadcast on this interface network address? */
-         ip_addr_isbroadcast(&(iphdr->dest), netif)) {
-        LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
-          netif->name[0], netif->name[1]));
-        /* break out of for loop */
-        break;
+#if LWIP_IGMP
+  if (ip_addr_ismulticast(&(iphdr->dest)))
+   { if (lookfor_group( inp, &(iphdr->dest)))
+      { netif = inp;
       }
-    }
-  }
+     else
+      { netif = NULL;
+      } 
+   }
+  else
+   {
+#endif
+   for (netif = netif_list; netif != NULL; netif = netif->next) {
+
+     LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
+       iphdr->dest.addr, netif->ip_addr.addr,
+       iphdr->dest.addr & netif->netmask.addr,
+       netif->ip_addr.addr & netif->netmask.addr,
+       iphdr->dest.addr & ~(netif->netmask.addr)));
+
+     /* interface is up and configured? */
+     if ((netif_is_up(netif)) && (!ip_addr_isany(&(netif->ip_addr))))
+     {
+       /* unicast to this interface address? */
+       if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
+          /* or broadcast on this interface network address? */
+          ip_addr_isbroadcast(&(iphdr->dest), netif)) {
+         LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
+           netif->name[0], netif->name[1]));
+         /* break out of for loop */
+         break;
+       }
+     }
+   }
+ #if LWIP_IGMP
+ }
+ #endif
+ 
 #if LWIP_DHCP
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
    * using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
@@ -310,7 +329,13 @@ ip_input(struct pbuf *p, struct netif *inp) {
   }
 
 #if IP_OPTIONS == 0 /* no support for IP options in the IP header? */
+
+#if LWIP_IGMP
+  /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
+  if((iphdrlen > IP_HLEN &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
+#else
   if (iphdrlen > IP_HLEN) {
+#endif
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);
     IP_STATS_INC(ip.opterr);
@@ -349,6 +374,11 @@ ip_input(struct pbuf *p, struct netif *inp) {
     snmp_inc_ipindelivers();
     icmp_input(p, inp);
     break;
+#if LWIP_IGMP
+  case IP_PROTO_IGMP:
+    igmp_input(p,inp,&(iphdr->dest));
+    break;
+#endif
   default:
     /* send ICMP destination protocol unreachable unless is was a broadcast */
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&

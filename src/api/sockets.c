@@ -39,7 +39,7 @@
 #include "lwip/api.h"
 #include "lwip/arch.h"
 #include "lwip/sys.h"
-
+#include "lwip/igmp.h"
 #include "lwip/sockets.h"
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
@@ -1237,6 +1237,21 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
         err = EINVAL;
       }
         break;
+    #if LWIP_IGMP
+    case IP_MULTICAST_TTL:
+     { if(( optlen != sizeof(char) ) && ( optlen != sizeof(int) )) //NOTE, some BSD implementation use "int", some others "char"
+        { err = EINVAL;
+        }
+       break;
+     }
+    case IP_ADD_MEMBERSHIP:
+    case IP_DROP_MEMBERSHIP:
+      { if( optlen < sizeof(struct ip_mreq) )
+         { err = EINVAL;
+         }
+        break;
+      }
+    #endif /* LWIP_IGMP */
       default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n", s, optname));
       err = ENOPROTOOPT;
@@ -1328,6 +1343,27 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
       sock->conn->pcb.tcp->tos = (u8_t)(*(int*)optval);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TOS, ..)-> %u\n", s, sock->conn->pcb.tcp->tos));
       break;
+    #if LWIP_IGMP
+    case IP_MULTICAST_TTL:
+     { if (optlen==sizeof(int))  sock->conn->pcb.tcp->ttl = (u8_t)(*(int*) optval);
+       if (optlen==sizeof(u8_t)) sock->conn->pcb.tcp->ttl = (u8_t)(*(u8_t*)optval);
+       break;
+     }
+    case IP_ADD_MEMBERSHIP:
+    case IP_DROP_MEMBERSHIP:
+     { /* If this is a TCP or a RAW socket, ignore these options. */
+       if ((sock->conn->type == NETCONN_TCP) || (sock->conn->type == NETCONN_RAW))
+        { err = EAFNOSUPPORT;
+        }
+       else
+        { struct ip_mreq *imr = (struct ip_mreq *)optval;
+          if (netconn_join_leave_group( sock->conn, (struct ip_addr *)&(imr->imr_multiaddr.s_addr), (struct ip_addr *)&(imr->imr_interface.s_addr), ((optname==IP_ADD_MEMBERSHIP)?NETCONN_JOIN:NETCONN_LEAVE)) < 0)
+           { err = EADDRNOTAVAIL;
+           }
+        }
+       break;
+     }
+    #endif /* LWIP_IGMP */
     }  /* switch */
     break;
 

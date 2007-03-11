@@ -59,7 +59,11 @@ enum api_msg_type {
   API_MSG_WRITE,
 
   API_MSG_CLOSE,
-  
+
+#if LWIP_IGMP
+  API_MSG_JOIN_LEAVE,
+#endif /* LWIP_IGMP */
+ 
   API_MSG_MAX
 };
 

@@ -36,6 +36,7 @@
 #include "lwip/memp.h"
 #include "lwip/sys.h"
 #include "lwip/tcpip.h"
+#include "lwip/igmp.h"
 
 #if LWIP_RAW
 static u8_t
@@ -788,6 +789,41 @@ do_close(struct api_msg_msg *msg)
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
+ 
+#if LWIP_IGMP
+static void
+do_join_leave_group(struct api_msg_msg *msg)
+{
+  err_t err = ERR_OK;
+  
+  if (msg->conn->pcb.tcp != NULL) {
+    switch (msg->conn->type) {
+#if LWIP_RAW
+    case NETCONN_RAW:
+      break;
+#endif
+#if LWIP_UDP
+    case NETCONN_UDPLITE:
+    case NETCONN_UDPNOCHKSUM:
+    case NETCONN_UDP:
+      switch(msg->msg.bc.port){
+        case NETCONN_JOIN:  err = igmp_joingroup (netif_default, ((struct ip_addr**)(msg->msg.bc.ipaddr))[0]); break;
+        case NETCONN_LEAVE: err = igmp_leavegroup(netif_default, ((struct ip_addr**)(msg->msg.bc.ipaddr))[0]); break;
+      }
+      break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
+    case NETCONN_TCP:
+        break;
+#endif
+    default:      
+      break;
+    }
+  }
+  msg->conn->err = err;      
+  sys_mbox_post(msg->conn->mbox, NULL);
+}
+#endif /* LWIP_IGMP */
 
 typedef void (* api_msg_decode)(struct api_msg_msg *msg);
 static api_msg_decode decode[API_MSG_MAX] = {
@@ -801,7 +837,10 @@ static api_msg_decode decode[API_MSG_MAX] = {
   do_send,
   do_recv,
   do_write,
-  do_close
+  do_close,
+#if LWIP_IGMP
+  do_join_leave_group
+#endif /* LWIP_IGMP */
   };
 void
 api_msg_input(struct api_msg *msg)

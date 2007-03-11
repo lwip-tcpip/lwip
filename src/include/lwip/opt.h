@@ -52,6 +52,7 @@
 #ifndef NO_SYS
 #define NO_SYS                          0
 #endif
+
 /* ---------- Memory options ---------- */
 #ifndef MEM_LIBC_MALLOC
 #define MEM_LIBC_MALLOC                 0
@@ -162,10 +163,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define PBUF_LINK_HLEN                  14
 #endif
 
-
-
 /* ---------- ARP options ---------- */
-
 /** Number of active hardware address, IP address pairs cached */
 #ifndef ARP_TABLE_SIZE
 #define ARP_TABLE_SIZE                  10
@@ -270,13 +268,11 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- ICMP options ---------- */
-
 #ifndef ICMP_TTL
 #define ICMP_TTL                       (IP_DEFAULT_TTL)
 #endif
 
-/* ---------- RAW options ---------- */
-
+/* ---------- RAW options ----------- */
 #ifndef LWIP_RAW
 #define LWIP_RAW                        1
 #endif
@@ -286,7 +282,6 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- DHCP options ---------- */
-
 #ifndef LWIP_DHCP
 #define LWIP_DHCP                       0
 #endif
@@ -315,6 +310,11 @@ a lot of data that needs to be copied, this should be set high. */
 
 #ifndef SNMP_PRIVATE_MIB
 #define SNMP_PRIVATE_MIB                0
+#endif
+
+/* ---------- IGMP options ---------- */
+#ifndef LWIP_IGMP
+#define LWIP_IGMP                       0
 #endif
 
 /* ---------- UDP options ---------- */
@@ -516,7 +516,6 @@ a lot of data that needs to be copied, this should be set high. */
 #endif /* LWIP_STATS */
 
 /* ---------- PPP options ---------- */
-
 #ifndef PPP_SUPPORT
 #define PPP_SUPPORT                     0      /* Set for PPP */
 #endif
@@ -763,6 +762,4 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #endif /* __LWIP_OPT_H__ */
-
-
 

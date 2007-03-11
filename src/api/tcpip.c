@@ -45,6 +45,7 @@
 #include "lwip/tcp.h"
 
 #include "lwip/tcpip.h"
+#include "lwip/igmp.h"
 
 static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg;
@@ -167,6 +168,9 @@ tcpip_thread(void *arg)
 #if LWIP_DHCP
   sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
   sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
+#endif
+#if LWIP_IGMP
+  igmp_init();
 #endif
 
   if (tcpip_init_done != NULL) {

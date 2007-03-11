@@ -682,6 +682,37 @@ netconn_close(struct netconn *conn)
   return conn->err;
 }
 
+#if LWIP_IGMP
+err_t
+netconn_join_leave_group (struct netconn *conn,
+                          struct ip_addr *multiaddr,
+                          struct ip_addr *interface,
+                          u16_t join_or_leave)
+{
+  struct api_msg msg;
+  struct ip_addr *ipaddr[2];
+
+  if (conn == NULL) {
+    return ERR_VAL;
+  }
+
+  if (conn->err != ERR_OK) {
+    return conn->err;
+  }
+
+  msg.type = API_MSG_JOIN_LEAVE;
+  msg.msg.conn = conn;
+  ipaddr[0] = multiaddr;
+  ipaddr[1] = interface;
+  msg.msg.msg.bc.ipaddr = (struct ip_addr *)ipaddr;
+  msg.msg.msg.bc.port = join_or_leave;
+  api_msg_post(&msg);
+  
+  sys_mbox_fetch(conn->mbox, NULL);
+  return conn->err;
+}
+#endif /* LWIP_IGMP */
+
 err_t
 netconn_err(struct netconn *conn)
 {

@@ -123,9 +123,25 @@ struct linger {
 /*
  * Options for level IPPROTO_IP
  */
-#define IP_TOS       1
-#define IP_TTL       2
+#define IP_TOS             1
+#define IP_TTL             2
 
+
+#ifdef LWIP_IGMP
+/*
+ * Options and types for UDP multicast traffic handling
+ */
+#define IP_ADD_MEMBERSHIP  3
+#define IP_DROP_MEMBERSHIP 4
+#define IP_MULTICAST_TTL   5
+#define IP_MULTICAST_IF    6
+#define IP_MULTICAST_LOOP  7
+
+typedef struct ip_mreq {
+    struct in_addr imr_multiaddr; /* IP multicast address of group */
+    struct in_addr imr_interface; /* local IP address of interface */
+} ip_mreq;
+#endif /* LWIP_IGMP */
 
 #define IPTOS_TOS_MASK          0x1E
 #define IPTOS_TOS(tos)          ((tos) & IPTOS_TOS_MASK)

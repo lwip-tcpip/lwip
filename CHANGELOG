@@ -23,6 +23,13 @@ HISTORY
 
   ++ New features:
 
+  2007-03-11 Frédéric Bernon, Mace Gael, Steve Reynolds
+  * sockets.h, sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c, igmp.h, igmp.c,
+    ip.c, netif.h, tcpip.c, opt.h:
+    New configuration option LWIP_IGMP to enable IGMP processing. Based on only one 
+    filter per all network interfaces. Declare a new function in netif to enable to
+    control the MAC filter (to reduce lwIP traffic processing).
+
   2007-03-11 Frédéric Bernon
   * tcp.h, tcp.c, sockets.c, tcp_out.c, tcp_in.c, opt.h: Keepalive values can
     be configured at run time with LWIP_TCP_KEEPALIVE, but don't change this
