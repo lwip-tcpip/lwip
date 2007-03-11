@@ -60,12 +60,17 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-11 Simon Goldschmidt (based on patch from Dmitry Potapov)
+  * api_lib.c, sockets.c, api.h, api_msg.h, sockets.h: Fixed bug #19251
+    (missing `const' qualifier in socket functions), to get more compatible to
+    standard POSIX sockets.
+
   2007-03-11 Frédéric Bernon (based on patch from Dmitry Potapov)
   * sockets.c: Add asserts inside bind, connect and sendto to check input
     parameters. Remove excessive set_errno() calls after get_socket(), because
     errno is set inside of get_socket(). Move last sock_set_errno() inside
     lwip_close.
-  
+
   2007-03-09 Simon Goldschmidt
   * memp.c: Fixed bug #11400: New etharp queueing introduced bug: memp_memory
     was allocated too small.

@@ -92,13 +92,13 @@ netbuf_free(struct netbuf *buf)
 }
 
 void
-netbuf_ref(struct netbuf *buf, void *dataptr, u16_t size)
+netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 {
   if (buf->p != NULL) {
     pbuf_free(buf->p);
   }
   buf->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
-  buf->p->payload = dataptr;
+  buf->p->payload = (void*)dataptr;
   buf->p->len = buf->p->tot_len = size;
   buf->ptr = buf->p;
 }
@@ -598,7 +598,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 }
 
 err_t
-netconn_write(struct netconn *conn, void *dataptr, u16_t size, u8_t copy)
+netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
 {
   struct api_msg msg;
   u16_t len;

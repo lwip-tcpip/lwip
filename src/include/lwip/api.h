@@ -105,7 +105,7 @@ void              netbuf_delete   (struct netbuf *buf);
 void *            netbuf_alloc    (struct netbuf *buf, u16_t size);
 void              netbuf_free     (struct netbuf *buf);
 void              netbuf_ref      (struct netbuf *buf,
-           void *dataptr, u16_t size);
+           const void *dataptr, u16_t size);
 void              netbuf_chain    (struct netbuf *head,
            struct netbuf *tail);
 
@@ -151,7 +151,7 @@ struct netbuf *   netconn_recv    (struct netconn *conn);
 err_t             netconn_send    (struct netconn *conn,
            struct netbuf *buf);
 err_t             netconn_write   (struct netconn *conn,
-           void *dataptr, u16_t size,
+           const void *dataptr, u16_t size,
            u8_t copy);
 err_t             netconn_close   (struct netconn *conn);
 

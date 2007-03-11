@@ -73,7 +73,7 @@ struct api_msg_msg {
       u16_t port;
     } bc;
     struct {
-      void *dataptr;
+      const void *dataptr;
       u16_t len;
       u8_t copy;
     } w;    
