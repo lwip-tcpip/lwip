@@ -36,7 +36,7 @@
 #include "lwip/pbuf.h"
 
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
-void tcpip_apimsg(struct api_msg *apimsg);
+err_t tcpip_apimsg(struct api_msg *apimsg);
 #if ETHARP_TCPIP_INPUT
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
 #endif /* ETHARP_TCPIP_INPUT */

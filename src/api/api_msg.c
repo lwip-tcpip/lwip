@@ -848,10 +848,10 @@ api_msg_input(struct api_msg *msg)
   decode[msg->type](&(msg->msg));
 }
 
-void
+err_t
 api_msg_post(struct api_msg *msg)
 {
-  tcpip_apimsg(msg);
+  return tcpip_apimsg(msg);
 }
 
 

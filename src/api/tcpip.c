@@ -267,17 +267,18 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
   return ERR_OK;
 }
 
-void
+err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
   struct tcpip_msg *msg;
   msg = memp_malloc(MEMP_TCPIP_MSG);
   if (msg == NULL) {
-    return;
+    return ERR_MEM;
   }
   msg->type = TCPIP_MSG_API;
   msg->msg.apimsg = apimsg;
   sys_mbox_post(mbox, msg);
+  return ERR_OK;
 }
 
 void

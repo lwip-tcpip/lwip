@@ -91,8 +91,8 @@ struct api_msg {
   struct api_msg_msg msg;
 };
 
-void api_msg_input(struct api_msg *msg);
-void api_msg_post(struct api_msg *msg);
+void  api_msg_input(struct api_msg *msg);
+err_t api_msg_post(struct api_msg *msg);
 
 #endif /* __LWIP_API_MSG_H__ */
 

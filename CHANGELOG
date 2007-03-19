@@ -68,6 +68,10 @@ HISTORY
   ++ Bug fixes:
   
   2007-03-19 Frédéric Bernon
+  * api_msg.h, api_msg.c, tcpip.h, tcpip.c: Add return types to tcpip_apimsg()
+    and api_msg_post().
+  
+  2007-03-19 Frédéric Bernon
   * Remove unimplemented "memp_realloc" function from memp.h.
   
   2007-03-11 Simon Goldschmidt
