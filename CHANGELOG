@@ -67,6 +67,9 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-19 Frédéric Bernon
+  * Remove unimplemented "memp_realloc" function from memp.h.
+  
   2007-03-11 Simon Goldschmidt
   * pbuf.c: checked in patch #5796: pbuf_alloc: len field claculation caused
     memory corruption.

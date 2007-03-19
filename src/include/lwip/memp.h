@@ -54,11 +54,10 @@ typedef enum {
   MEMP_MAX
 } memp_t;
 
-void memp_init(void);
+void  memp_init(void);
 
 void *memp_malloc(memp_t type);
-void *memp_realloc(memp_t fromtype, memp_t totype, void *mem);
-void memp_free(memp_t type, void *mem);
+void  memp_free(memp_t type, void *mem);
 
 #endif /* __LWIP_MEMP_H__  */
     
