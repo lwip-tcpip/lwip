@@ -66,7 +66,11 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
-  
+
+  2007-03-20 Kieran Mansley
+  * udp.c: Only try and use pbuf_header() to make space for headers if
+    not a ROM or REF pbuf.
+
   2007-03-19 Frédéric Bernon
   * api_msg.h, api_msg.c, tcpip.h, tcpip.c: Add return types to tcpip_apimsg()
     and api_msg_post().

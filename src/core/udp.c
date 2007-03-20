@@ -319,7 +319,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   }
 
   /* not enough space to add an UDP header to first pbuf in given p chain? */
-  if (pbuf_header(p, UDP_HLEN)) {
+  if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF || pbuf_header(p, UDP_HLEN)) {
     /* allocate header in a seperate new pbuf */
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */
