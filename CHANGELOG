@@ -66,6 +66,11 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
+  
+  2007-03-20 Frédéric Bernon
+  * tcpip.c: Initialize tcpip's mbox, and verify if initialized in tcpip_input,
+    tcpip_ethinput, tcpip_callback, tcpip_apimsg, to fix a init problem with 
+    network interfaces. Also fix a compiler warning.
 
   2007-03-20 Kieran Mansley
   * udp.c: Only try and use pbuf_header() to make space for headers if

@@ -48,8 +48,8 @@
 #include "lwip/igmp.h"
 
 static void (* tcpip_init_done)(void *arg) = NULL;
-static void *tcpip_init_done_arg;
-static sys_mbox_t mbox;
+static void *tcpip_init_done_arg           = NULL;
+static sys_mbox_t mbox                     = SYS_MBOX_NULL;
 
 #if LWIP_TCP
 static int tcpip_tcp_timer_active = 0;
@@ -138,7 +138,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_ip_input( netif, p);
       #endif
       /* skip Ethernet header */
-      pbuf_header(p, -sizeof(struct eth_hdr));
+      pbuf_header(p, (s16_t)(-sizeof(struct eth_hdr)));
       /* pass to IP layer */
       ip_input(p, netif);
       break;
@@ -216,17 +216,20 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 {
   struct tcpip_msg *msg;
 
-  msg = memp_malloc(MEMP_TCPIP_MSG);
-  if (msg == NULL) {
-    pbuf_free(p);
-    return ERR_MEM;
-  }
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG);
+    if (msg == NULL) {
+      pbuf_free(p);
+      return ERR_MEM;
+    }
 
-  msg->type = TCPIP_MSG_INPUT;
-  msg->msg.inp.p = p;
-  msg->msg.inp.netif = inp;
-  sys_mbox_post(mbox, msg);
-  return ERR_OK;
+    msg->type = TCPIP_MSG_INPUT;
+    msg->msg.inp.p = p;
+    msg->msg.inp.netif = inp;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
+  }
+  return ERR_VAL;
 }
 #endif /* ETHARP_TCPIP_INPUT */
 
@@ -236,17 +239,20 @@ tcpip_ethinput(struct pbuf *p, struct netif *inp)
 {
   struct tcpip_msg *msg;
 
-  msg = memp_malloc(MEMP_TCPIP_MSG);
-  if (msg == NULL) {
-    pbuf_free(p);    
-    return ERR_MEM;  
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG);
+    if (msg == NULL) {
+      pbuf_free(p);    
+      return ERR_MEM;  
+    }
+    
+    msg->type = TCPIP_MSG_ETHINPUT;
+    msg->msg.inp.p = p;
+    msg->msg.inp.netif = inp;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
   }
-  
-  msg->type = TCPIP_MSG_ETHINPUT;
-  msg->msg.inp.p = p;
-  msg->msg.inp.netif = inp;
-  sys_mbox_post(mbox, msg);
-  return ERR_OK;
+  return ERR_VAL;
 }
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
@@ -255,30 +261,37 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
 {
   struct tcpip_msg *msg;
 
-  msg = memp_malloc(MEMP_TCPIP_MSG);
-  if (msg == NULL) {
-    return ERR_MEM;
-  }
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG);
+    if (msg == NULL) {
+      return ERR_MEM;
+    }
 
-  msg->type = TCPIP_MSG_CALLBACK;
-  msg->msg.cb.f = f;
-  msg->msg.cb.ctx = ctx;
-  sys_mbox_post(mbox, msg);
-  return ERR_OK;
+    msg->type = TCPIP_MSG_CALLBACK;
+    msg->msg.cb.f = f;
+    msg->msg.cb.ctx = ctx;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
+  }
+  return ERR_VAL;
 }
 
 err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
   struct tcpip_msg *msg;
-  msg = memp_malloc(MEMP_TCPIP_MSG);
-  if (msg == NULL) {
-    return ERR_MEM;
+  
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG);
+    if (msg == NULL) {
+      return ERR_MEM;
+    }
+    msg->type = TCPIP_MSG_API;
+    msg->msg.apimsg = apimsg;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
   }
-  msg->type = TCPIP_MSG_API;
-  msg->msg.apimsg = apimsg;
-  sys_mbox_post(mbox, msg);
-  return ERR_OK;
+  return ERR_VAL;
 }
 
 void
@@ -297,7 +310,4 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   mbox = sys_mbox_new();
   sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
-
-
-
 
