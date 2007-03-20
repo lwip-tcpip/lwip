@@ -35,6 +35,7 @@
 
 #include "lwip/opt.h"
 
+// If you change this enum, think to update memp_names in stats_display (stats.c)
 typedef enum {
   MEMP_PBUF,
   MEMP_RAW_PCB,

@@ -68,6 +68,10 @@ HISTORY
   ++ Bug fixes:
   
   2007-03-20 Frédéric Bernon
+  * memp.h, stats.c: Fix stats_display function where memp_names table wasn't
+    synchronized with memp.h.
+  
+  2007-03-20 Frédéric Bernon
   * tcpip.c: Initialize tcpip's mbox, and verify if initialized in tcpip_input,
     tcpip_ethinput, tcpip_callback, tcpip_apimsg, to fix a init problem with 
     network interfaces. Also fix a compiler warning.

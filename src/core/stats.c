@@ -95,8 +95,22 @@ void
 stats_display(void)
 {
   s16_t i;
-  char * memp_names[] = {"PBUF", "RAW_PCB", "UDP_PCB", "TCP_PCB", "TCP_PCB_LISTEN",
-        "TCP_SEG", "NETBUF", "NETCONN", "API_MSG", "TCP_MSG", "TIMEOUT"};
+  char * memp_names[] = {
+    "PBUF",
+    "RAW_PCB",
+    "UDP_PCB",
+    "TCP_PCB",
+    "TCP_PCB_LISTEN",
+    "TCP_SEG",
+    "NETBUF",
+    "NETCONN",
+    "TCPIP_MSG",
+    #if ARP_QUEUEING
+    "ARP_QUEUE",
+    #endif
+    "SYS_TIMEOUT"
+  };
+
   stats_display_proto(&lwip_stats.link, "LINK");
   stats_display_proto(&lwip_stats.ip_frag, "IP_FRAG");
   stats_display_proto(&lwip_stats.ip, "IP");
