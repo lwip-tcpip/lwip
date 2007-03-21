@@ -312,7 +312,12 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* fit within max seg size */
     useg->len + queue->len <= pcb->mss) {
     /* Remove TCP header from first segment of our to-be-queued list */
-    pbuf_header(queue->p, -TCP_HLEN);
+    if(pbuf_header(queue->p, -TCP_HLEN)) {
+      /* Can we cope with this failing?  Just assert for now */
+      LWIP_ASSERT("pbuf_header failed\n", 0);
+      TCP_STATS_INC(tcp.err);
+      goto memerr;
+    }
     pbuf_cat(useg->p, queue->p);
     useg->len += queue->len;
     useg->next = queue->next;

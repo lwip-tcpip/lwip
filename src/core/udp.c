@@ -96,7 +96,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
 
-  if (p->tot_len < (IPH_HL(iphdr) * 4 + UDP_HLEN)) {
+  if (p->tot_len < (IPH_HL(iphdr) * 4 + UDP_HLEN) || pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4))) {
     /* drop short packets */
     LWIP_DEBUGF(UDP_DEBUG,
                 ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
@@ -106,8 +106,6 @@ udp_input(struct pbuf *p, struct netif *inp)
     pbuf_free(p);
     goto end;
   }
-
-  pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4));
 
   udphdr = (struct udp_hdr *)p->payload;
 
@@ -205,7 +203,14 @@ udp_input(struct pbuf *p, struct netif *inp)
       }
 #endif
     }
-    pbuf_header(p, -UDP_HLEN);
+    if(pbuf_header(p, -UDP_HLEN)) {
+      /* Can we cope with this failing? Just assert for now */
+      LWIP_ASSERT("pbuf_header failed\n", 0);
+      UDP_STATS_INC(udp.drop);
+      snmp_inc_udpinerrors();
+      pbuf_free(p);
+      goto end;
+    }
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
       /* callback */
@@ -319,7 +324,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   }
 
   /* not enough space to add an UDP header to first pbuf in given p chain? */
-  if (p->flags == PBUF_FLAG_ROM || p->flags == PBUF_FLAG_REF || pbuf_header(p, UDP_HLEN)) {
+  if (pbuf_header(p, UDP_HLEN)) {
     /* allocate header in a seperate new pbuf */
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */

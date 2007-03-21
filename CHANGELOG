@@ -66,7 +66,12 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
-  
+  2007-03-21 Kieran Mansley
+  * Fix all uses of pbuf_header to check the return value.  In some
+    cases just assert if it fails as I'm not sure how to fix them, but
+    this is no worse than before when they would carry on regardless
+    of the failure.
+
   2007-03-21 Kieran Mansley
   * sockets.c, igmp.c, igmp.h, memp.h: Fix C++ style comments and
     comment out missing header include in icmp.c

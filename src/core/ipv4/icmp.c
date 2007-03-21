@@ -111,12 +111,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* increase number of echo replies attempted to send */
     snmp_inc_icmpoutechoreps();
 
-    pbuf_header(p, hlen);
-    ip_output_if(p, &(iphdr->src), IP_HDRINCL,
-     IPH_TTL(iphdr), 0, IP_PROTO_ICMP, inp);
+    if(pbuf_header(p, hlen))
+      LWIP_ASSERT("Can't move over header in packet", 0);
+    else
+      ip_output_if(p, &(iphdr->src), IP_HDRINCL,
+                   IPH_TTL(iphdr), 0, IP_PROTO_ICMP, inp);
     break;
   default:
-  LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", (s16_t)type, (s16_t)code));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", (s16_t)type, (s16_t)code));
     ICMP_STATS_INC(icmp.proterr);
     ICMP_STATS_INC(icmp.drop);
   }

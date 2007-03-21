@@ -371,13 +371,19 @@ u_int vj_compress_tcp(
 	if (!comp->compressSlot || comp->last_xmit != cs->cs_id) {
 		comp->last_xmit = cs->cs_id;
 		hlen -= deltaS + 4;
-		pbuf_header(pb, -hlen);
+		if(pbuf_header(pb, -hlen)){
+                  /* Can we cope with this failing?  Just assert for now */
+                  LWIP_ASSERT("pbuf_header failed\n", 0);
+                }
 		cp = (u_char *)pb->payload;
 		*cp++ = changes | NEW_C;
 		*cp++ = cs->cs_id;
 	} else {
 		hlen -= deltaS + 3;
-		pbuf_header(pb, -hlen);
+                if(pbuf_header(pb, -hlen)) {
+                  /* Can we cope with this failing?  Just assert for now */
+                  LWIP_ASSERT("pbuf_header failed\n", 0);
+                }
 		cp = (u_char *)pb->payload;
 		*cp++ = changes;
 	}
@@ -573,8 +579,13 @@ int vj_uncompress_tcp(
 	cs->cs_ip.ip_sum = (u_short)(~tmp);
 	
 	/* Remove the compressed header and prepend the uncompressed header. */
-	pbuf_header(n0, -vjlen);
-
+	if(pbuf_header(n0, -vjlen)) {
+          /* Can we cope with this failing?  Just assert for now */
+          LWIP_ASSERT("pbuf_header failed\n", 0);
+          goto bad;
+        }
+        
+        
 	if(MEM_ALIGN(n0->payload) != n0->payload) {
 		struct pbuf *np, *q;
 		u8_t *bufptr;
@@ -586,7 +597,11 @@ int vj_uncompress_tcp(
 			goto bad;
 		}
 
-		pbuf_header(np, -cs->cs_hlen);
+		if(pbuf_header(np, -cs->cs_hlen)) {
+                  /* Can we cope with this failing?  Just assert for now */
+                  LWIP_ASSERT("pbuf_header failed\n", 0);
+                  goto bad;
+                }
 
 		bufptr = n0->payload;
 		for(q = np; q != NULL; q = q->next) {

@@ -482,12 +482,15 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     LWIP_ASSERT("increment_magnitude <= p->len", increment_magnitude <= p->len);
   } else {
     increment_magnitude = header_size_increment;
+#if 0 /* Can't assert these as some callers speculatively call
+         pbuf_header() to see if it's OK.  Will return 1 below instead. */
     /* Check that we've got the correct type of pbuf to work with */
     LWIP_ASSERT("p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL", 
                 p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL);
     /* Check that we aren't going to move off the beginning of the pbuf */
     LWIP_ASSERT("p->payload - increment_magnitude >= p + sizeof(struct pbuf)",
                 (u8_t *)p->payload - increment_magnitude >= (u8_t *)p + sizeof(struct pbuf));
+#endif
   }
 
   flags = p->flags;
@@ -519,6 +522,11 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
        * bail out unsuccesfully */
       return 1;
     }
+  }
+  else {
+    /* Unknown type */
+    LWIP_ASSERT("bad pbuf flag type", 0);
+    return 1;
   }
   /* modify pbuf length fields */
   p->len += header_size_increment;

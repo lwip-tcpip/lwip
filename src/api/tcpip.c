@@ -138,9 +138,14 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_ip_input( netif, p);
       #endif
       /* skip Ethernet header */
-      pbuf_header(p, (s16_t)(-sizeof(struct eth_hdr)));
-      /* pass to IP layer */
-      ip_input(p, netif);
+      if(pbuf_header(p, (s16_t)(-sizeof(struct eth_hdr)))) {
+        LWIP_ASSERT("Can't move over header in packet", 0);
+        pbuf_free(p);
+        p = NULL;
+      }
+      else
+        /* pass to IP layer */
+        ip_input(p, netif);
       break;
       
     case ETHTYPE_ARP:

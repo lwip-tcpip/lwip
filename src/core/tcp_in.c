@@ -149,7 +149,14 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
   hdrlen = TCPH_HDRLEN(tcphdr);
-  pbuf_header(p, -(hdrlen * 4));
+  if(pbuf_header(p, -(hdrlen * 4))){
+    /* drop short packets */
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
+    TCP_STATS_INC(tcp.lenerr);
+    TCP_STATS_INC(tcp.drop);
+    pbuf_free(p);
+    return;
+  }
 
   /* Convert fields in TCP header to host byte order. */
   tcphdr->src = ntohs(tcphdr->src);
@@ -900,9 +907,13 @@ tcp_receive(struct tcp_pcb *pcb)
           p->len = 0;
           p = p->next;
         }
-        pbuf_header(p, -off);
+        if(pbuf_header(p, -off))
+          /* Do we need to cope with this failing?  Assert for now */
+          LWIP_ASSERT("pbuf_header failed", 0);
       } else {
-        pbuf_header(inseg.p, -off);
+        if(pbuf_header(inseg.p, -off))
+          /* Do we need to cope with this failing?  Assert for now */
+          LWIP_ASSERT("pbuf_header failed", 0);
       }
       /* KJM following line changed to use p->payload rather than inseg->p->payload
          to fix bug #9076 */

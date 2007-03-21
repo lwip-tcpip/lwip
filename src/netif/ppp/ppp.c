@@ -1293,10 +1293,14 @@ static void pppInput(void *arg)
     u16_t protocol;
     int pd;
 
-	pd = ((struct pppInputHeader *)nb->payload)->unit;
-	protocol = ((struct pppInputHeader *)nb->payload)->proto;
-
-    pbuf_header(nb, -(int)sizeof(struct pppInputHeader));
+    pd = ((struct pppInputHeader *)nb->payload)->unit;
+    protocol = ((struct pppInputHeader *)nb->payload)->proto;
+    
+    if(pbuf_header(nb, -(int)sizeof(struct pppInputHeader))) {
+      /* Can we cope with this failing?  Just assert for now */
+      LWIP_ASSERT("pbuf_header failed\n", 0);
+      return;
+    }
 
 #if LINK_STATS
     lwip_stats.link.recv++;
@@ -1383,7 +1387,11 @@ static void pppInput(void *arg)
 
 		/* No handler for this protocol so reject the packet. */
 		PPPDEBUG((LOG_INFO, "pppInput[%d]: rejecting unsupported proto 0x%04X len=%d\n", pd, protocol, nb->len));
-		pbuf_header(nb, sizeof(protocol));
+                if (pbuf_header(nb, sizeof(protocol))) {
+                  /* Can we cope with this failing?  Just assert for now */
+                  LWIP_ASSERT("pbuf_header failed\n", 0);
+                  goto drop;
+                }
 #if BYTE_ORDER == LITTLE_ENDIAN
 		protocol = htons(protocol);
 		memcpy(nb->payload, &protocol, sizeof(protocol));

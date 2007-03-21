@@ -220,8 +220,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
   LWIP_DEBUGF("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len);*/
 #endif /* IP_DEBUG */
 
-
-  pbuf_header(p, -IP_HLEN);
+  if(pbuf_header(p, -IP_HLEN)) {
+    LWIP_ASSERT("Can't move over header in packet", 0);
+    return;
+  }
 
   switch (iphdr->nexthdr) {
   case IP_PROTO_UDP:
@@ -266,7 +268,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   PERF_START;
 
-  printf("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len);
+  LWIP_DEBUGF(IP_DEBUG, ("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len));
   if (pbuf_header(p, IP_HLEN)) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
 #ifdef IP_STATS
@@ -275,13 +277,13 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     return ERR_BUF;
   }
-  printf("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len);
+  LWIP_DEBUGF(IP_DEBUG, ("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len));
 
   iphdr = p->payload;
 
 
   if (dest != IP_HDRINCL) {
-    printf("!IP_HDRLINCL\n");
+    LWIP_DEBUGF(IP_DEBUG, ("!IP_HDRLINCL\n"));
     iphdr->hoplim = ttl;
     iphdr->nexthdr = proto;
     iphdr->len = htons(p->tot_len - IP_HLEN);
