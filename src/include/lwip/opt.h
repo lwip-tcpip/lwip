@@ -153,7 +153,8 @@ a lot of data that needs to be copied, this should be set high. */
 /* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
 
 #ifndef PBUF_POOL_BUFSIZE
-#define PBUF_POOL_BUFSIZE               128
+/* TCP_MSS + 40 for IP and TCP headers */
+#define PBUF_POOL_BUFSIZE               (128+40) 
 #endif
 
 /* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
