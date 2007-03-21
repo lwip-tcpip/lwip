@@ -211,7 +211,10 @@ tcpip_thread(void *arg)
     default:
       break;
     }
-    memp_free(MEMP_TCPIP_MSG, msg);
+    
+    if (msg->type!=TCPIP_MSG_API) {
+      memp_free(MEMP_TCPIP_MSG, msg);
+    }
   }
 }
 
@@ -284,16 +287,13 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
 err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
-  struct tcpip_msg *msg;
+  struct tcpip_msg msg;
   
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG);
-    if (msg == NULL) {
-      return ERR_MEM;
-    }
-    msg->type = TCPIP_MSG_API;
-    msg->msg.apimsg = apimsg;
-    sys_mbox_post(mbox, msg);
+    msg.type = TCPIP_MSG_API;
+    msg.msg.apimsg = apimsg;
+    sys_mbox_post(mbox, &msg);
+    sys_mbox_fetch(apimsg->msg.conn->mbox, NULL);
     return ERR_OK;
   }
   return ERR_VAL;

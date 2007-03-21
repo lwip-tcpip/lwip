@@ -70,6 +70,14 @@ HISTORY
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
   ++ Bug fixes:
+
+  2007-03-21 Frédéric Bernon
+  * api_lib.c, api_msg.c, tcpip.c: integrate sys_mbox_fetch(conn->mbox, NULL) calls from
+    api_lib.c to tcpip.c's tcpip_apimsg(). Now, use a local variable and not a
+    dynamic one from memp to send tcpip_msg to tcpip_thread in a synchrone call.
+    Free tcpip_msg from tcpip_apimsg is not done in tcpip_thread. This give a
+    faster and more reliable communication between api_lib and tcpip.
+
   2007-03-21 Frédéric Bernon
   * opt.h: Add LWIP_NETIF_CALLBACK (to avoid compiler warning) and set it to 0.
 
