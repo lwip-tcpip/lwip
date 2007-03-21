@@ -38,7 +38,7 @@
 /* IGMP support available? */
 #if defined(LWIP_IGMP) && (LWIP_IGMP > 0)
 
-// Some routers are not happy with ROUTER ALERT make it defineable, 1 to enable
+/* Some routers are not happy with ROUTER ALERT make it defineable, 1 to enable */
 #define USE_ROUTER_ALERT 0
 
 /*

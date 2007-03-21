@@ -67,6 +67,10 @@ HISTORY
 
   ++ Bug fixes:
   
+  2007-03-21 Kieran Mansley
+  * sockets.c, igmp.c, igmp.h, memp.h: Fix C++ style comments and
+    comment out missing header include in icmp.c
+
   2007-03-20 Frédéric Bernon
   * memp.h, stats.c: Fix stats_display function where memp_names table wasn't
     synchronized with memp.h.

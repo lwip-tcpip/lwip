@@ -77,7 +77,7 @@ Steve Reynolds
 #include "lwip/igmp.h"
 
 #include "arch/perf.h"
-#include "arch/PNX_if.h"
+/*#include "arch/PNX_if.h"*/
 
 #include "string.h"
 

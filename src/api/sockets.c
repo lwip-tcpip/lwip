@@ -1239,9 +1239,10 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
         break;
     #if LWIP_IGMP
     case IP_MULTICAST_TTL:
-     { if(( optlen != sizeof(char) ) && ( optlen != sizeof(int) )) //NOTE, some BSD implementation use "int", some others "char"
-        { err = EINVAL;
-        }
+     { 
+       /* NOTE, some BSD implementation use "int", some others "char" */
+       if(( optlen != sizeof(char) ) && ( optlen != sizeof(int) )) 
+         err = EINVAL;
        break;
      }
     case IP_ADD_MEMBERSHIP:
