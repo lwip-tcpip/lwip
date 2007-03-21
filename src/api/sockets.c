@@ -94,7 +94,7 @@ static int err_to_errno_table[] = {
   (sizeof(err_to_errno_table)/sizeof(err_to_errno_table[0]))
 
 #define err_to_errno(err) \
-  (-(err) >= 0 && -(err) < ERR_TO_ERRNO_TABLE_SIZE ? \
+  ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
     err_to_errno_table[-(err)] : EIO)
 
 #ifdef ERRNO

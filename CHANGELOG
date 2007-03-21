@@ -71,6 +71,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-21 Simon Goldschmidt
+  * sockets.c: fixed bug #5067 (essentialy a signed/unsigned warning fixed
+    by casting to unsigned).
+
   2007-03-21 Frédéric Bernon
   * api_lib.c, api_msg.c, tcpip.c: integrate sys_mbox_fetch(conn->mbox, NULL) calls from
     api_lib.c to tcpip.c's tcpip_apimsg(). Now, use a local variable and not a
