@@ -64,19 +64,19 @@ struct igmpmsg {
 #define IGMP_V2_MEMB_REPORT 0x16 /* Ver. 2 membership report */
 #define IGMP_LEAVE_GROUP    0x17 /* Leave-group message      */
 
-// Timer
-#define IGMP_TICK           100 // Milliseconds
+/* Timer */
+#define IGMP_TICK           100 /* Milliseconds */
 
-// MAC Filter Actions
+/* MAC Filter Actions */
 #define IGMP_DEL_MAC_FILTER 0
 #define IGMP_ADD_MAC_FILTER 1
 
-// Group  membership states
+/* Group  membership states */
 #define NON_MEMBER          0
 #define DELAYING_MEMBER     1
 #define IDLE_MEMBER         2 
 
-// Put this is another place when integrated
+/* Put this is another place when integrated */
 #define IP_PROTO_IGMP       2
 #define IGMP_TTL            1
 #define ROUTER_ALERTLEN     4
@@ -97,7 +97,7 @@ struct igmp_group {
   struct igmp_group *next;
   struct netif *interface;
   struct ip_addr group_address;
-  u8_t last_reporter_flag;   // signifies we were the last person to report
+  u8_t last_reporter_flag; /* signifies we were the last person to report */
   u8_t group_state;
   u16_t timer;
 };
@@ -118,7 +118,7 @@ struct igmp_stats{
 };
 
 
-// Prototypes
+/*  Prototypes */
 void   igmp_init(void);
 
 struct igmp_group *lookfor_group(struct netif *ifp, struct ip_addr *addr);
