@@ -79,6 +79,10 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* netif not under DHCP control by default */
   netif->dhcp = NULL;
 #endif
+#if LWIP_NETIF_CALLBACK
+  netif->status_callback = NULL;
+#endif /* LWIP_NETIF_CALLBACK */
+
   /* remember netif specific state information data */
   netif->state = state;
   netif->num = netifnum++;
@@ -287,10 +291,17 @@ netif_set_default(struct netif *netif)
  */ 
 void netif_set_up(struct netif *netif)
 {
-  netif->flags |= NETIF_FLAG_UP;
+  if ( !(netif->flags & NETIF_FLAG_UP )) {
+    netif->flags |= NETIF_FLAG_UP;
+    
 #if LWIP_SNMP
-  snmp_get_sysuptime(&netif->ts);
+    snmp_get_sysuptime(&netif->ts);
 #endif
+#if LWIP_NETIF_CALLBACK
+    if ( netif->status_callback )
+      (netif->status_callback)( netif );
+#endif /* LWIP_NETIF_CALLBACK */
+  }
 }
 
 /**
@@ -311,10 +322,18 @@ u8_t netif_is_up(struct netif *netif)
  */ 
 void netif_set_down(struct netif *netif)
 {
-  netif->flags &= ~NETIF_FLAG_UP;
+  if ( netif->flags & NETIF_FLAG_UP )
+    {
+      netif->flags &= ~NETIF_FLAG_UP;
 #if LWIP_SNMP
-  snmp_get_sysuptime(&netif->ts);
+      snmp_get_sysuptime(&netif->ts);
 #endif
+      
+#if LWIP_NETIF_CALLBACK
+      if ( netif->status_callback )
+        (netif->status_callback)( netif );
+#endif /* LWIP_NETIF_CALLBACK */
+    }
 }
 
 void
@@ -322,4 +341,16 @@ netif_init(void)
 {
   netif_list = netif_default = NULL;
 }
+
+
+#if LWIP_NETIF_CALLBACK
+/**
+ * Set callback to be called when interface is brought up/down
+ */
+void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif ))
+{
+    if ( netif )
+        netif->status_callback = status_callback;
+}
+#endif /* LWIP_NETIF_CALLBACK */
 

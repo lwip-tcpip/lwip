@@ -23,6 +23,10 @@ HISTORY
 
   ++ New features:
 
+  2007-03-21 Kieran Mansley
+  * netif.c, netif.h: Apply patch#4197 with some changes (originator: rireland@hmgsl.com). 
+    Provides callback on netif up/down state change.
+
   2007-03-11 Frédéric Bernon, Mace Gael, Steve Reynolds
   * sockets.h, sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c, igmp.h, igmp.c,
     ip.c, netif.h, tcpip.c, opt.h:
