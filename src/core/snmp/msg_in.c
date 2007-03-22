@@ -121,7 +121,7 @@ snmp_ok_response(struct snmp_msg_pstat *msg_ps)
   if (err_ret == ERR_MEM)
   {
     /* serious memory problem, can't return tooBig */
-#if LWIP_STATS
+#if PBUF_STATS
     LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event pbufs.used = %"U16_F"\n",lwip_stats.pbuf.used));
 #endif
   }

@@ -40,20 +40,32 @@
 
 #if LWIP_STATS
 
+#ifndef LWIP_STATS_LARGE
+#define LWIP_STATS_LARGE 0
+#endif
+
+#if LWIP_STATS_LARGE
+#define STAT_COUNTER     u32_t
+#define STAT_COUNTER_F   U32_F
+#else
+#define STAT_COUNTER     u16_t
+#define STAT_COUNTER_F   U16_F
+#endif 
+
 struct stats_proto {
-  u16_t xmit;    /* Transmitted packets. */
-  u16_t rexmit;  /* Retransmitted packets. */
-  u16_t recv;    /* Received packets. */
-  u16_t fw;      /* Forwarded packets. */
-  u16_t drop;    /* Dropped packets. */
-  u16_t chkerr;  /* Checksum error. */
-  u16_t lenerr;  /* Invalid length error. */
-  u16_t memerr;  /* Out of memory error. */
-  u16_t rterr;   /* Routing error. */
-  u16_t proterr; /* Protocol error. */
-  u16_t opterr;  /* Error in options. */
-  u16_t err;     /* Misc error. */
-  u16_t cachehit;
+  STAT_COUNTER xmit;    /* Transmitted packets. */
+  STAT_COUNTER rexmit;  /* Retransmitted packets. */
+  STAT_COUNTER recv;    /* Received packets. */
+  STAT_COUNTER fw;      /* Forwarded packets. */
+  STAT_COUNTER drop;    /* Dropped packets. */
+  STAT_COUNTER chkerr;  /* Checksum error. */
+  STAT_COUNTER lenerr;  /* Invalid length error. */
+  STAT_COUNTER memerr;  /* Out of memory error. */
+  STAT_COUNTER rterr;   /* Routing error. */
+  STAT_COUNTER proterr; /* Protocol error. */
+  STAT_COUNTER opterr;  /* Error in options. */
+  STAT_COUNTER err;     /* Misc error. */
+  STAT_COUNTER cachehit;
 };
 
 struct stats_mem {
@@ -64,19 +76,19 @@ struct stats_mem {
 };
 
 struct stats_pbuf {
-  u16_t avail;
-  u16_t used;
-  u16_t max;  
-  u16_t err;
+  STAT_COUNTER avail;
+  STAT_COUNTER used;
+  STAT_COUNTER max;  
+  STAT_COUNTER err;
 
-  u16_t alloc_locked;
-  u16_t refresh_locked;
+  STAT_COUNTER alloc_locked;
+  STAT_COUNTER refresh_locked;
 };
 
 struct stats_syselem {
-  u16_t used;
-  u16_t max;
-  u16_t err;
+  STAT_COUNTER used;
+  STAT_COUNTER max;
+  STAT_COUNTER err;
 };
 
 struct stats_sys {
@@ -85,20 +97,39 @@ struct stats_sys {
 };
 
 struct stats_ {
+#if LINK_STATS
   struct stats_proto link;
+#endif
+#if IPFRAG_STATS
   struct stats_proto ip_frag;
+#endif
+#if IP_STATS
   struct stats_proto ip;
+#endif
+#if ICMP_STATS
   struct stats_proto icmp;
+#endif
+#if UDP_STATS
   struct stats_proto udp;
+#endif
+#if TCP_STATS
   struct stats_proto tcp;
+#endif
+#if PBUF_STATS
   struct stats_pbuf pbuf;
+#endif
+#if MEM_STATS
   struct stats_mem mem;
+#endif
+#if MEMP_STATS
   struct stats_mem memp[MEMP_MAX];
+#endif
+#if SYS_STATS
   struct stats_sys sys;
+#endif
 };
 
 extern struct stats_ lwip_stats;
-
 
 void stats_init(void);
 
@@ -149,10 +180,6 @@ void stats_init(void);
 void stats_display(void);
 #else
 #define stats_display()
-#endif
+#endif /* LWIP_STATS_DISPLAY */
 
 #endif /* __LWIP_STATS_H__ */
-
-
-
-

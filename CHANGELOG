@@ -23,6 +23,13 @@ HISTORY
 
   ++ New features:
 
+  2007-03-22 Frédéric Bernon
+  * stats.h, stats.c, msg_in.c: Stats counters can be change to u32_t if necessary with the
+    new option LWIP_STATS_LARGE. If you need this option, define LWIP_STATS_LARGE to 1 in
+    your lwipopts.h. More, unused counters are not defined in the stats structs, and not 
+    display by stats_display(). Note that some options (SYS_STATS and RAW_STATS) are defined
+    but never used. Fix msg_in.c with the correct #if test for a stat display.
+
   2007-03-21 Kieran Mansley
   * netif.c, netif.h: Apply patch#4197 with some changes (originator: rireland@hmgsl.com). 
     Provides callback on netif up/down state change.
