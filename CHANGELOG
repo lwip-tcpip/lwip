@@ -72,6 +72,9 @@ HISTORY
   ++ Bug fixes:
 
   2007-03-22 Frédéric Bernon
+  * api_msg.h, api_msg.c: Remove obsolete API_MSG_ACCEPT and do_accept (never used).
+
+  2007-03-22 Frédéric Bernon
   * api_lib.c: somes resources couldn't be freed if there was errors during
     netconn_new_with_proto_and_callback.
 

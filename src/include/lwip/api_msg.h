@@ -52,7 +52,6 @@ enum api_msg_type {
   API_MSG_DISCONNECT,
 
   API_MSG_LISTEN,
-  API_MSG_ACCEPT,
 
   API_MSG_SEND,
   API_MSG_RECV,

@@ -636,31 +636,6 @@ do_listen(struct api_msg_msg *msg)
 }
 
 static void
-do_accept(struct api_msg_msg *msg)
-{
-  if (msg->conn->pcb.tcp != NULL) {
-    switch (msg->conn->type) {
-#if LWIP_RAW
-    case NETCONN_RAW:
-      LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: accept RAW: cannot accept for RAW.\n"));
-      break;
-#endif
-#if LWIP_UDP
-    case NETCONN_UDPLITE:
-      /* FALLTHROUGH */
-    case NETCONN_UDPNOCHKSUM:
-      /* FALLTHROUGH */
-    case NETCONN_UDP:    
-      LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: accept UDP: cannot accept for UDP.\n"));
-      break;
-#endif /* LWIP_UDP */
-    case NETCONN_TCP:
-      break;
-    }
-  }
-}
-
-static void
 do_send(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp != NULL) {
@@ -829,7 +804,6 @@ static api_msg_decode decode[API_MSG_MAX] = {
   do_connect,
   do_disconnect,
   do_listen,
-  do_accept,
   do_send,
   do_recv,
   do_write,
