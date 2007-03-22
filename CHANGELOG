@@ -71,6 +71,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-22 Frédéric Bernon
+  * ethernetif.c: update netif->input calls to check return value. In older ports,
+    it's a good idea to upgrade them, even if before, there could be another problem
+    (access to an uninitialized mailbox).
+
   2007-03-21 Simon Goldschmidt
   * sockets.c: fixed bug #5067 (essentialy a signed/unsigned warning fixed
     by casting to unsigned).

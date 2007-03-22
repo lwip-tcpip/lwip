@@ -237,7 +237,11 @@ ethernetif_input(struct netif *netif)
   case ETHTYPE_IP:
   case ETHTYPE_ARP:
     /* full packet send to tcpip_thread to process */
-    pnetif->input( p, pnetif);
+    if (netif->input(p, netif)!=ERR_OK)
+     { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: IP input error\n"));
+       pbuf_free(p);
+       p = NULL;
+     }
     break;                 
     
 #else /* ETHARP_TCPIP_ETHINPUT */ 
@@ -252,7 +256,11 @@ ethernetif_input(struct netif *netif)
     /* skip Ethernet header */
     pbuf_header(p, -sizeof(struct eth_hdr));
     /* pass to network layer */
-    netif->input(p, netif);
+    if (netif->input(p, netif)!=ERR_OK)
+     { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: IP input error\n"));
+       pbuf_free(p);
+       p = NULL;
+     }
     break;
       
   /* ARP packet? */
