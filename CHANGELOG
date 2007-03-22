@@ -72,6 +72,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-03-22 Frédéric Bernon
+  * api_lib.c: somes resources couldn't be freed if there was errors during
+    netconn_new_with_proto_and_callback.
+
+  2007-03-22 Frédéric Bernon
   * ethernetif.c: update netif->input calls to check return value. In older ports,
     it's a good idea to upgrade them, even if before, there could be another problem
     (access to an uninitialized mailbox).

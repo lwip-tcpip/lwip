@@ -221,6 +221,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
   conn->acceptmbox = SYS_MBOX_NULL;
   conn->sem = sys_sem_new(0);
   if (conn->sem == SYS_SEM_NULL) {
+    sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
@@ -238,6 +239,8 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
   api_msg_post(&msg);  
 
   if ( conn->err != ERR_OK ) {
+    sys_sem_free(conn->sem);
+    sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
