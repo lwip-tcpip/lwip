@@ -216,7 +216,7 @@ static err_t dhcp_select(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
-  u32_t msecs;
+  u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_select(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
   /* create and initialize the DHCP message header */
@@ -623,7 +623,8 @@ void dhcp_inform(struct netif *netif)
 
   if (dhcp != NULL)
   {
-    if (dhcp->pcb != NULL) udp_remove(dhcp->pcb);
+    if (dhcp->pcb != NULL)
+      udp_remove(dhcp->pcb);
     dhcp->pcb = NULL;
     mem_free((void *)dhcp);
     netif->dhcp = NULL;
@@ -765,6 +766,7 @@ static err_t dhcp_discover(struct netif *netif)
  */
 static void dhcp_bind(struct netif *netif)
 {
+  u32_t timeout;
   struct dhcp *dhcp = netif->dhcp;
   struct ip_addr sn_mask, gw_addr;
   LWIP_ASSERT("dhcp_bind: netif != NULL", netif != NULL);
@@ -775,15 +777,23 @@ static void dhcp_bind(struct netif *netif)
   if (dhcp->offered_t1_renew != 0xffffffffUL) {
     /* set renewal period timer */
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_bind(): t1 renewal timer %"U32_F" secs\n", dhcp->offered_t1_renew));
-    dhcp->t1_timeout = (dhcp->offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
-    if (dhcp->t1_timeout == 0) dhcp->t1_timeout = 1;
+    timeout = (dhcp->offered_t1_renew + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
+    if(timeout > 0xffff)
+      timeout = 0xffff;
+    dhcp->t1_timeout = (u16_t)timeout;
+    if (dhcp->t1_timeout == 0)
+      dhcp->t1_timeout = 1;
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_bind(): set request timeout %"U32_F" msecs\n", dhcp->offered_t1_renew*1000));
   }
   /* set renewal period timer */
   if (dhcp->offered_t2_rebind != 0xffffffffUL) {
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE, ("dhcp_bind(): t2 rebind timer %"U32_F" secs\n", dhcp->offered_t2_rebind));
-    dhcp->t2_timeout = (dhcp->offered_t2_rebind + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
-    if (dhcp->t2_timeout == 0) dhcp->t2_timeout = 1;
+    timeout = (dhcp->offered_t2_rebind + DHCP_COARSE_TIMER_SECS / 2) / DHCP_COARSE_TIMER_SECS;
+    if(timeout > 0xffff)
+      timeout = 0xffff;
+    dhcp->t2_timeout = (u16_t)timeout;
+    if (dhcp->t2_timeout == 0)
+      dhcp->t2_timeout = 1;
     LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | DBG_STATE, ("dhcp_bind(): set request timeout %"U32_F" msecs\n", dhcp->offered_t2_rebind*1000));
   }
   /* copy offered network mask */
@@ -794,9 +804,12 @@ static void dhcp_bind(struct netif *netif)
   if (sn_mask.addr == 0) {
     /* choose a safe subnet mask given the network class */
     u8_t first_octet = ip4_addr1(&sn_mask);
-    if (first_octet <= 127) sn_mask.addr = htonl(0xff000000);
-    else if (first_octet >= 192) sn_mask.addr = htonl(0xffffff00);
-    else sn_mask.addr = htonl(0xffff0000);
+    if (first_octet <= 127)
+      sn_mask.addr = htonl(0xff000000);
+    else if (first_octet >= 192)
+      sn_mask.addr = htonl(0xffffff00);
+    else
+      sn_mask.addr = htonl(0xffff0000);
   }
 
   ip_addr_set(&gw_addr, &dhcp->offered_gw_addr);
