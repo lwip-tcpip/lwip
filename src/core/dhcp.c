@@ -1035,7 +1035,7 @@ static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state)
  */
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
 {
-  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = option_type;
   dhcp->msg_out->options[dhcp->options_out_len++] = option_len;
 }
@@ -1050,17 +1050,17 @@ static void dhcp_option_byte(struct dhcp *dhcp, u8_t value)
 }
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value)
 {
-  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN);
-  dhcp->msg_out->options[dhcp->options_out_len++] = (value & 0xff00U) >> 8;
-  dhcp->msg_out->options[dhcp->options_out_len++] =  value & 0x00ffU;
+  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U <= DHCP_OPTIONS_LEN);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0xff00U) >> 8);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t) (value & 0x00ffU);
 }
 static void dhcp_option_long(struct dhcp *dhcp, u32_t value)
 {
-  LWIP_ASSERT("dhcp_option_long: dhcp->options_out_len + 4 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 4 <= DHCP_OPTIONS_LEN);
-  dhcp->msg_out->options[dhcp->options_out_len++] = (value & 0xff000000UL) >> 24;
-  dhcp->msg_out->options[dhcp->options_out_len++] = (value & 0x00ff0000UL) >> 16;
-  dhcp->msg_out->options[dhcp->options_out_len++] = (value & 0x0000ff00UL) >> 8;
-  dhcp->msg_out->options[dhcp->options_out_len++] = (value & 0x000000ffUL);
+  LWIP_ASSERT("dhcp_option_long: dhcp->options_out_len + 4 <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 4U <= DHCP_OPTIONS_LEN);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0xff000000UL) >> 24);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0x00ff0000UL) >> 16);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0x0000ff00UL) >> 8);
+  dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0x000000ffUL));
 }
 
 /**
@@ -1296,7 +1296,8 @@ static err_t dhcp_create_request(struct netif *netif)
   dhcp->msg_out->cookie = htonl(0x63825363UL);
   dhcp->options_out_len = 0;
   /* fill options field with an incrementing array (for debugging purposes) */
-  for (i = 0; i < DHCP_OPTIONS_LEN; i++) dhcp->msg_out->options[i] = i;
+  for (i = 0; i < DHCP_OPTIONS_LEN; i++)
+    dhcp->msg_out->options[i] = (u8_t)i; /* for debugging only, no matter if truncated */
   return ERR_OK;
 }
 
