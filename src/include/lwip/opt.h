@@ -165,6 +165,10 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 /* ---------- ARP options ---------- */
+#ifndef LWIP_ARP
+#define LWIP_ARP                        1
+#endif
+
 /** Number of active hardware address, IP address pairs cached */
 #ifndef ARP_TABLE_SIZE
 #define ARP_TABLE_SIZE                  10

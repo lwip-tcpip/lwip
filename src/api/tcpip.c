@@ -93,8 +93,9 @@ ip_timer(void *data)
   ip_reass_tmr();
   sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
 }
-#endif
+#endif /* IP_REASSEMBLY */
 
+#if LWIP_ARP
 static void
 arp_timer(void *arg)
 {
@@ -102,6 +103,7 @@ arp_timer(void *arg)
   etharp_tmr();
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
 }
+#endif /* LWIP_ARP */
 
 #if LWIP_DHCP
 static void
@@ -119,7 +121,7 @@ dhcp_timer_fine(void *arg)
   dhcp_fine_tmr();
   sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
 }
-#endif
+#endif /* LWIP_DHCP */
 
 #if ETHARP_TCPIP_ETHINPUT
 static void
@@ -168,15 +170,17 @@ tcpip_thread(void *arg)
 
 #if IP_REASSEMBLY
   sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
-#endif
+#endif /* IP_REASSEMBLY */
+#if LWIP_ARP
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+#endif /* LWIP_ARP */
 #if LWIP_DHCP
   sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
   sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-#endif
+#endif /* LWIP_DHCP */
 #if LWIP_IGMP
   igmp_init();
-#endif
+#endif /* LWIP_IGMP */
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
@@ -302,13 +306,16 @@ tcpip_apimsg(struct api_msg *apimsg)
 void
 tcpip_init(void (* initfunc)(void *), void *arg)
 {
+#if LWIP_ARP
+  etharp_init();
+#endif /*LWIP_ARP */
   ip_init();
 #if LWIP_UDP
   udp_init();
-#endif
+#endif /* LWIP_UDP */
 #if LWIP_TCP
   tcp_init();
-#endif
+#endif /* LWIP_TCP */
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;

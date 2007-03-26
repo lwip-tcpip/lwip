@@ -23,6 +23,12 @@ HISTORY
 
   ++ New features:
 
+  2007-03-26 Frédéric Bernon, Jonathan Larmour  
+  * opt.h, tcpip.c: New configuration option LWIP_ARP allow to disable ARP init at build
+    time if you only use PPP or SLIP. The default is enable. Note we don't have to call 
+    etharp_init in your port's initilization sequence if you use tcpip.c, because this call
+    is done in tcpip_init function.
+
   2007-03-22 Frédéric Bernon
   * stats.h, stats.c, msg_in.c: Stats counters can be change to u32_t if necessary with the
     new option LWIP_STATS_LARGE. If you need this option, define LWIP_STATS_LARGE to 1 in
