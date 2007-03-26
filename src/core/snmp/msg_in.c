@@ -805,6 +805,7 @@ snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, 
   /* peek in the UDP header (goto IP payload) */
   if(pbuf_header(p, UDP_HLEN)){
     LWIP_ASSERT("Can't move to UDP header", 0);
+    pbuf_free(p);
     return;
   }
   udphdr = p->payload;
