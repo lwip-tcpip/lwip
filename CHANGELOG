@@ -78,6 +78,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-26 Frédéric Bernon (based on patch from Dmitry Potapov)
+  * api_lib.c: patch for netconn_write(), fixes a possible race condition which cause
+    to send some garbage. It is not a definitive solution, but the patch does solve
+    the problem for most cases.
+
   2007-03-22 Frédéric Bernon
   * api_msg.h, api_msg.c: Remove obsolete API_MSG_ACCEPT and do_accept (never used).
 
