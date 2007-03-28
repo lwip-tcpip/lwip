@@ -143,26 +143,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_NUM_TCPIP_MSG              8
 #endif
 
-/* ---------- Pbuf options ---------- */
-/* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
-
-#ifndef PBUF_POOL_SIZE
-#define PBUF_POOL_SIZE                  16
-#endif
-
-/* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
-
-#ifndef PBUF_POOL_BUFSIZE
-/* TCP_MSS + 40 for IP and TCP headers */
-#define PBUF_POOL_BUFSIZE               (128+40) 
-#endif
-
-/* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
-   link level header. Defaults to 14 for Ethernet. */
-
-#ifndef PBUF_LINK_HLEN
-#define PBUF_LINK_HLEN                  14
-#endif
 
 /* ---------- ARP options ---------- */
 #ifndef LWIP_ARP
@@ -381,6 +361,29 @@ a lot of data that needs to be copied, this should be set high. */
    available in the tcp snd_buf for select to return writable */
 #ifndef TCP_SNDLOWAT
 #define TCP_SNDLOWAT                    TCP_SND_BUF/2
+#endif
+
+
+/* ---------- Pbuf options ---------- */
+/* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
+
+#ifndef PBUF_POOL_SIZE
+#define PBUF_POOL_SIZE                  16
+#endif
+
+/* PBUF_LINK_HLEN: the number of bytes that should be allocated for a
+   link level header. Defaults to 14 for Ethernet. */
+
+#ifndef PBUF_LINK_HLEN
+#define PBUF_LINK_HLEN                  14
+#endif
+
+/* PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. */
+
+#ifndef PBUF_POOL_BUFSIZE
+/* Default designed to accomodate single full size TCP frame in one PBUF */
+/* TCP_MSS + 40 for IP and TCP headers + physical layer headers */
+#define PBUF_POOL_BUFSIZE               (TCP_MSS+40+PBUF_LINK_HLEN) 
 #endif
 
 

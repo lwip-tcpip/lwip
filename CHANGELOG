@@ -95,7 +95,12 @@ HISTORY
   2007-02-26 Jonathan Larmour (based on patch from Simon Goldschmidt)
   * api_lib.c: Use memcpy in netbuf_copy_partial.
 
+
   ++ Bug fixes:
+
+  2007-03-28 Kieran Mansley
+  * opt.h Change default PBUF_POOL_BUFSIZE (again) to accomodate default MSS +
+    IP and TCP headers *and* physical link headers
 
   2007-03-26 Frédéric Bernon (based on patch from Dmitry Potapov)
   * api_lib.c: patch for netconn_write(), fixes a possible race condition which cause
