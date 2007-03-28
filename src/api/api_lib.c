@@ -91,16 +91,21 @@ netbuf_free(struct netbuf *buf)
   buf->p = buf->ptr = NULL;
 }
 
-void
+err_t
 netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 {
   if (buf->p != NULL) {
     pbuf_free(buf->p);
   }
   buf->p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+  if (buf->p == NULL) {
+    buf->ptr = NULL;
+    return ERR_MEM;
+  }
   buf->p->payload = (void*)dataptr;
   buf->p->len = buf->p->tot_len = size;
   buf->ptr = buf->p;
+  return ERR_OK;
 }
 
 void
@@ -275,7 +280,7 @@ netconn_delete(struct netconn *conn)
   
   msg.type = API_MSG_DELCONN;
   msg.msg.conn = conn;
-  api_msg_post(&msg);  
+  api_msg_post(&msg);
 
   /* Drain the recvmbox. */
   if (conn->recvmbox != SYS_MBOX_NULL) {
@@ -320,8 +325,7 @@ netconn_type(struct netconn *conn)
 }
 
 err_t
-netconn_peer(struct netconn *conn, struct ip_addr *addr,
-       u16_t *port)
+netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 {
   switch (conn->type) {
   case NETCONN_RAW:
@@ -347,8 +351,7 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr,
 }
 
 err_t
-netconn_addr(struct netconn *conn, struct ip_addr **addr,
-       u16_t *port)
+netconn_addr(struct netconn *conn, struct ip_addr **addr, u16_t *port)
 {
   switch (conn->type) {
   case NETCONN_RAW:
@@ -370,8 +373,7 @@ netconn_addr(struct netconn *conn, struct ip_addr **addr,
 }
 
 err_t
-netconn_bind(struct netconn *conn, struct ip_addr *addr,
-      u16_t port)
+netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
 
@@ -396,8 +398,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr,
 
 
 err_t
-netconn_connect(struct netconn *conn, struct ip_addr *addr,
-       u16_t port)
+netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
   
@@ -445,8 +446,7 @@ netconn_listen(struct netconn *conn)
   }
 
   if (conn->acceptmbox == SYS_MBOX_NULL) {
-    conn->acceptmbox = sys_mbox_new();
-    if (conn->acceptmbox == SYS_MBOX_NULL) {
+    if ((conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
       return ERR_MEM;
     }
   }
@@ -657,8 +657,7 @@ netconn_close(struct netconn *conn)
   msg.type = API_MSG_CLOSE;
   msg.msg.conn = conn;
   api_msg_post(&msg);
-  if (conn->err == ERR_MEM &&
-     conn->sem != SYS_SEM_NULL) {
+  if (conn->err == ERR_MEM && conn->sem != SYS_SEM_NULL) {
     sys_sem_wait(conn->sem);
     goto again;
   }

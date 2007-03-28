@@ -29,7 +29,7 @@ HISTORY
     string, point on one of your's ethernetif field, or alloc a string you will free yourself).
     It will be used by DHCP to register a client hostname, but can also be use when you call
     snmp_set_sysname.
-    
+
   2007-03-28 Frédéric Bernon
   * netif.h, netif.c: A new NETIF_FLAG_ETHARP flag is defined in netif.h, to allow to 
     initialize a network interface's flag with. It tell this interface is an ethernet
@@ -97,6 +97,10 @@ HISTORY
 
 
   ++ Bug fixes:
+
+  2007-03-28 Frédéric Bernon
+  * api.h, api_lib.c, sockets.c: netbuf_ref doesn't check its internal pbuf_alloc call
+    result and can cause a crash. lwip_send now check netbuf_ref result.
 
   2007-03-28 Simon Goldschmidt
   * sockets.c Remove "#include <errno.h>" from sockets.c to avoid multiple
