@@ -383,6 +383,13 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCP_SNDLOWAT                    TCP_SND_BUF/2
 #endif
 
+
+/* ---- Network Interfaces options ---- */
+/* 1 if you want to use DHCP_OPTION_HOSTNAME with netif's hostname field */
+#ifndef LWIP_NETIF_HOSTNAME
+#define LWIP_NETIF_HOSTNAME             0
+#endif
+
 /* Support network interface callbacks */
 #ifndef LWIP_NETIF_CALLBACK
 #define LWIP_NETIF_CALLBACK             0
@@ -401,6 +408,8 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_CALLBACK_API               0
 #endif 
 
+
+/* ---------- Thread options ---------- */
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO               1
 #endif
@@ -418,7 +427,7 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 
-/* ---------- Socket Options ---------- */
+/* ---------- Socket options ---------- */
 /* Enable BSD-style sockets functions names */
 #ifndef LWIP_COMPAT_SOCKETS
 #define LWIP_COMPAT_SOCKETS             1

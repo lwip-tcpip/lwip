@@ -217,6 +217,10 @@ static err_t dhcp_select(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+#if LWIP_NETIF_HOSTNAME
+  const char *p;
+#endif /* LWIP_NETIF_HOSTNAME */
+
   LWIP_DEBUGF(DHCP_DEBUG | DBG_TRACE | 3, ("dhcp_select(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
 
   /* create and initialize the DHCP message header */
@@ -241,6 +245,16 @@ static err_t dhcp_select(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_OPTION_ROUTER);
     dhcp_option_byte(dhcp, DHCP_OPTION_BROADCAST);
     dhcp_option_byte(dhcp, DHCP_OPTION_DNS_SERVER);
+
+#if LWIP_NETIF_HOSTNAME
+    p = ( const char *)netif->hostname;
+    if (p!=NULL) {
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      while(*p) {
+        dhcp_option_byte(dhcp, *p++);
+      }
+    }
+#endif /* LWIP_NETIF_HOSTNAME */
 
     dhcp_option_trailer(dhcp);
     /* shrink the pbuf to the actual content length */

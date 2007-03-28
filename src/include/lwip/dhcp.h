@@ -210,6 +210,7 @@ void dhcp_fine_tmr(void);
 
 #define DHCP_OPTION_T1 58 /* T1 renewal time */
 #define DHCP_OPTION_T2 59 /* T2 rebinding time */
+#define DHCP_OPTION_US 60
 #define DHCP_OPTION_CLIENT_ID 61
 #define DHCP_OPTION_TFTP_SERVERNAME 66
 #define DHCP_OPTION_BOOTFILE 67

@@ -24,6 +24,13 @@ HISTORY
   ++ New features:
 
   2007-03-28 Frédéric Bernon
+  * opt.h, netif.h, dhcp.h, dhcp.c: New configuration option LWIP_NETIF_HOSTNAME allow to
+    define a hostname in netif struct (this is just a pointer, so, you can use a hardcoded
+    string, point on one of your's ethernetif field, or alloc a string you will free yourself).
+    It will be used by DHCP to register a client hostname, but can also be use when you call
+    snmp_set_sysname.
+    
+  2007-03-28 Frédéric Bernon
   * netif.h, netif.c: A new NETIF_FLAG_ETHARP flag is defined in netif.h, to allow to 
     initialize a network interface's flag with. It tell this interface is an ethernet
     device, and we can use ARP with it to do a "gratuitous ARP" (RFC 3220 "IP Mobility

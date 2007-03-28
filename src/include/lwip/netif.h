@@ -104,6 +104,10 @@ struct netif {
   /** the DHCP client state information for this netif */
   struct dhcp *dhcp;
 #endif /* LWIP_DHCP */
+#if LWIP_NETIF_HOSTNAME
+  /* the hostname for this netif, NULL is a valid value */
+  char*  hostname;
+#endif /* LWIP_NETIF_HOSTNAME */
   /** number of bytes used in hwaddr */
   u8_t hwaddr_len;
   /** link level hardware address of this interface */
