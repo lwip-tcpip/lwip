@@ -186,7 +186,6 @@ err_tcp(void *arg, err_t err)
 
   conn->pcb.tcp = NULL;
 
-  
   conn->err = err;
   if (conn->recvmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
@@ -224,7 +223,6 @@ setup_tcp(struct netconn *conn)
 static err_t
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
-  sys_mbox_t mbox;
   struct netconn *newconn;
   struct netconn *conn;
   
@@ -234,7 +232,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 #endif /* TCP_DEBUG */
 #endif /* API_MSG_DEBUG */
   conn = (struct netconn *)arg;
-  mbox = conn->acceptmbox;
   newconn = memp_malloc(MEMP_NETCONN);
   if (newconn == NULL) {
     return ERR_MEM;
@@ -252,8 +249,8 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   }
   newconn->sem = sys_sem_new(0);
   if (newconn->sem == SYS_SEM_NULL) {
-    sys_mbox_free(newconn->recvmbox);
     sys_mbox_free(newconn->mbox);
+    sys_mbox_free(newconn->recvmbox);
     memp_free(MEMP_NETCONN, newconn);
     return ERR_MEM;
   }
@@ -272,8 +269,11 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->callback = conn->callback;
   newconn->socket = -1;
   newconn->recv_avail = 0;
+#if LWIP_SO_RCVTIMEO
+  newconn->recv_timeout = 0;
+#endif /* LWIP_SO_RCVTIMEO */  
   
-  sys_mbox_post(mbox, newconn);
+  sys_mbox_post( conn->acceptmbox, newconn);
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
@@ -338,8 +338,7 @@ do_newconn(struct api_msg_msg *msg)
       break;
 #endif
    }
-   
-  
+
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
@@ -618,8 +617,7 @@ do_listen(struct api_msg_msg *msg)
         msg->conn->err = ERR_MEM;
       } else {
         if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
-          msg->conn->acceptmbox = sys_mbox_new();
-          if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
+          if ((msg->conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
             msg->conn->err = ERR_MEM;
             break;
           }
@@ -748,8 +746,7 @@ do_close(struct api_msg_msg *msg)
     case NETCONN_TCP:
       if (msg->conn->pcb.tcp->state == LISTEN) {
         err = tcp_close(msg->conn->pcb.tcp);
-      }
-      else if (msg->conn->pcb.tcp->state == CLOSE_WAIT) {
+      } else if (msg->conn->pcb.tcp->state == CLOSE_WAIT) {
         err = tcp_output(msg->conn->pcb.tcp);
       }
       msg->conn->err = err;

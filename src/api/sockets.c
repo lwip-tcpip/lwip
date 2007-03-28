@@ -53,14 +53,13 @@ struct lwip_socket {
   int err;
 };
 
-struct lwip_select_cb
-{
-    struct lwip_select_cb *next;
-    fd_set *readset;
-    fd_set *writeset;
-    fd_set *exceptset;
-    int sem_signalled;
-    sys_sem_t sem;
+struct lwip_select_cb {
+  struct lwip_select_cb *next;
+  fd_set *readset;
+  fd_set *writeset;
+  fd_set *exceptset;
+  int sem_signalled;
+  sys_sem_t sem;
 };
 
 static struct lwip_socket sockets[NUM_SOCKETS];
@@ -197,8 +196,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newsock = alloc_socket(newconn);
   if (newsock == -1) {
     netconn_delete(newconn);
-  sock_set_errno(sock, ENOBUFS);
-  return -1;
+    sock_set_errno(sock, ENOBUFS);
+    return -1;
   }
   newconn->callback = event_callback;
   sock = get_socket(newsock);
@@ -305,7 +304,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u)\n", ntohs(remote_port)));
 
     err = netconn_connect(sock->conn, &remote_addr, ntohs(remote_port));
-   }
+  }
 
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d) failed, err=%d\n", s, err));
@@ -359,37 +358,36 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
   /* Check if there is data left from the last recv operation. */
   if (sock->lastdata) {
-     buf = sock->lastdata;
-   } else { 
-     /* If this is non-blocking call, then check first */
-    if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && !sock->rcvevent)
-      {
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): returning EWOULDBLOCK\n", s));
-        sock_set_errno(sock, EWOULDBLOCK);
-        return -1;
-      }
+    buf = sock->lastdata;
+  } else { 
+    /* If this is non-blocking call, then check first */
+    if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && !sock->rcvevent) {
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): returning EWOULDBLOCK\n", s));
+      sock_set_errno(sock, EWOULDBLOCK);
+      return -1;
+    }
      
-     /* No data was left from the previous operation, so we try to get
-     some from the network. */
-     buf = netconn_recv(sock->conn);
-     
-     if (!buf) {
-        /* We should really do some error checking here. */
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));        
-        sock_set_errno(sock, (sock->conn->type==NETCONN_UDP)?ETIMEDOUT:0);
-        return 0;
-      }
-   }
+    /* No data was left from the previous operation, so we try to get
+    some from the network. */
+    buf = netconn_recv(sock->conn);
+    
+    if (!buf) {
+      /* We should really do some error checking here. */
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
+      sock_set_errno(sock, (sock->conn->type==NETCONN_UDP)?ETIMEDOUT:0);
+      return 0;
+    }
+  }
 
   buflen = netbuf_len(buf);
 
   buflen -= sock->lastoffset;
   
   if (len > buflen) {
-     copylen = buflen;
-   } else {
-     copylen = len;
-   }
+    copylen = buflen;
+  } else {
+    copylen = len;
+  }
   
   /* copy the contents of the received buffer into
   the supplied memory pointer mem */
@@ -439,7 +437,6 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     sock->lastoffset = 0;
     netbuf_delete(buf);
   }
-
 
   sock_set_errno(sock, 0);
   return copylen;
@@ -545,7 +542,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   if (connected)
     netconn_connect(sock->conn, &addr, port);
   else
-  netconn_disconnect(sock->conn);
+    netconn_disconnect(sock->conn);
   return err;
 }
 
@@ -585,8 +582,8 @@ lwip_socket(int domain, int type, int protocol)
 
   if (i == -1) {
     netconn_delete(conn);
-  set_errno(ENOBUFS);
-  return -1;
+    set_errno(ENOBUFS);
+    return -1;
   }
   conn->socket = i;
   LWIP_DEBUGF(SOCKETS_DEBUG, ("%d\n", i));
@@ -998,7 +995,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
         if( *optlen < sizeof(int) ) {
           err = EINVAL;
         }
-          break;
+        break;
 
       default:
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n", s, optname));
@@ -1030,7 +1027,7 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
       if( *optlen < sizeof(int) ) {
         err = EINVAL;
         break;
-    }
+      }
       
       /* If this is no TCP socket, ignore any options. */
       if ( sock->conn->type != NETCONN_TCP ) return 0;
@@ -1062,7 +1059,6 @@ int lwip_getsockopt (int s, int level, int optname, void *optval, socklen_t *opt
     sock_set_errno(sock, err);
     return -1;
   }
-   
 
 
   /* Now do the actual option processing */
@@ -1234,7 +1230,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
       if( optlen < sizeof(int) ) {
         err = EINVAL;
       }
-        break;
+      break;
     #if LWIP_IGMP
     case IP_MULTICAST_TTL:
      { 
@@ -1245,15 +1241,15 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
      }
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:
-      { if( optlen < sizeof(struct ip_mreq) )
-         { err = EINVAL;
-         }
+      { if( optlen < sizeof(struct ip_mreq) ) {
+          err = EINVAL;
+        }
         break;
       }
     #endif /* LWIP_IGMP */
       default:
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n", s, optname));
-      err = ENOPROTOOPT;
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, UNIMPL: optname=0x%x, ..)\n", s, optname));
+        err = ENOPROTOOPT;
     }  /* switch */
     break;
 
@@ -1261,7 +1257,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
   case IPPROTO_TCP:
     if( optlen < sizeof(int) ) {
       err = EINVAL;
-        break;
+      break;
     }
 
     /* If this is no TCP socket, ignore any options. */
@@ -1283,7 +1279,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     }  /* switch */
     break;
 
-/* UNDEFINED LEVEL */      
+/* UNDEFINED LEVEL */
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n", s, level, optname));
     err = ENOPROTOOPT;
@@ -1294,7 +1290,6 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
     sock_set_errno(sock, err);
     return -1;
   }
-
 
 
   /* Now do the actual option processing */
