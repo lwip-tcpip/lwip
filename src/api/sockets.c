@@ -33,7 +33,6 @@
  */
 
 #include <string.h>
-#include <errno.h>
 
 #include "lwip/opt.h"
 #include "lwip/api.h"

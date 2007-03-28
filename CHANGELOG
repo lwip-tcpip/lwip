@@ -98,6 +98,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-03-28 Simon Goldschmidt
+  * sockets.c Remove "#include <errno.h>" from sockets.c to avoid multiple
+    definition of macros (in errno.h and lwip/arch.h) if LWIP_PROVIDE_ERRNO is
+    defined. This is the way it should have been already (looking at
+    doc/sys_arch.txt)
+
   2007-03-28 Kieran Mansley
   * opt.h Change default PBUF_POOL_BUFSIZE (again) to accomodate default MSS +
     IP and TCP headers *and* physical link headers
