@@ -44,6 +44,11 @@
 #include "lwip/tcp.h"
 #include "lwip/snmp.h"
 
+#if LWIP_ARP
+#include "netif/etharp.h"
+#endif /* LWIP_ARP */
+
+
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
 
@@ -219,14 +224,6 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
   snmp_insert_ipaddridx_tree(netif);
   snmp_insert_iprteidx_tree(0,netif);
 
-#if 0 /* only allowed for Ethernet interfaces TODO: how can we check? */
-  /** For Ethernet network interfaces, we would like to send a
-   *  "gratuitous ARP"; this is an ARP packet sent by a node in order
-   *  to spontaneously cause other nodes to update an entry in their
-   *  ARP cache. From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
-   */ 
-  etharp_query(netif, ipaddr, NULL);
-#endif
   LWIP_DEBUGF(NETIF_DEBUG | DBG_TRACE | DBG_STATE | 3, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1(&netif->ip_addr),
@@ -296,11 +293,24 @@ void netif_set_up(struct netif *netif)
     
 #if LWIP_SNMP
     snmp_get_sysuptime(&netif->ts);
-#endif
+#endif /* LWIP_SNMP */
+
 #if LWIP_NETIF_CALLBACK
     if ( netif->status_callback )
       (netif->status_callback)( netif );
 #endif /* LWIP_NETIF_CALLBACK */
+
+#if LWIP_ARP
+    /** For Ethernet network interfaces, we would like to send a
+     *  "gratuitous ARP"; this is an ARP packet sent by a node in order
+     *  to spontaneously cause other nodes to update an entry in their
+     *  ARP cache. From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
+     */ 
+    if ((netif->flags & NETIF_FLAG_ETHARP) == 0) {
+      etharp_query(netif, &(netif->ip_addr), NULL);
+    }
+#endif /* LWIP_ARP */
+    
   }
 }
 

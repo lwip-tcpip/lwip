@@ -64,6 +64,8 @@
 /** if set, the interface has an active link
  *  (set by the network interface driver) */
 #define NETIF_FLAG_LINK_UP 0x10U
+/** if set, the netif is an device using ARP */
+#define NETIF_FLAG_ETHARP 0x20U
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -101,7 +103,7 @@ struct netif {
 #if LWIP_DHCP
   /** the DHCP client state information for this netif */
   struct dhcp *dhcp;
-#endif
+#endif /* LWIP_DHCP */
   /** number of bytes used in hwaddr */
   u8_t hwaddr_len;
   /** link level hardware address of this interface */
@@ -130,11 +132,11 @@ struct netif {
   u32_t ifoutucastpkts;
   u32_t ifoutnucastpkts;
   u32_t ifoutdiscards;
-#endif
+#endif /* LWIP_SNMP */
 #if LWIP_IGMP
   /* This function could be called to add or delete a entry in the multicast filter table of the ethernet MAC.*/
   err_t (*igmp_mac_filter)( struct netif *netif, struct ip_addr *group, u8_t action);
-#endif
+#endif /* LWIP_IGMP */
 };
 
 /** The list of network interfaces. */

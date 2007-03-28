@@ -23,6 +23,12 @@ HISTORY
 
   ++ New features:
 
+  2007-03-28 Frédéric Bernon
+  * netif.h, netif.c: A new NETIF_FLAG_ETHARP flag is defined in netif.h, to allow to 
+    initialize a network interface's flag with. It tell this interface is an ethernet
+    device, and we can use ARP with it to do a "gratuitous ARP" (RFC 3220 "IP Mobility
+    Support for IPv4" section 4.6) when interface is "up" with netif_set_up().
+
   2007-03-26 Frédéric Bernon, Jonathan Larmour  
   * opt.h, tcpip.c: New configuration option LWIP_ARP allow to disable ARP init at build
     time if you only use PPP or SLIP. The default is enable. Note we don't have to call 
