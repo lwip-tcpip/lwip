@@ -301,6 +301,11 @@ ethernetif_init(struct netif *netif)
   	return ERR_MEM;
   }
 
+#if LWIP_NETIF_HOSTNAME
+  /* Initialize interface hostname */
+  netif->hostname = "lwip";
+#endif /* LWIP_NETIF_HOSTNAME */
+
 #if LWIP_SNMP
   /* ifType ethernetCsmacd(6) @see RFC1213 */
   netif->link_type = 6;
@@ -315,7 +320,7 @@ ethernetif_init(struct netif *netif)
   netif->ifoutucastpkts = 0;
   netif->ifoutnucastpkts = 0;
   netif->ifoutdiscards = 0;
-#endif
+#endif  /* LWIP_SNMP */
   
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;
