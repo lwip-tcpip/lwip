@@ -99,6 +99,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-03-30 Frédéric Bernon
+  * api_msg.c: add a "pcb_new" helper function to avoid redundant code, and to add
+    missing  pcb allocations checking (in do_bind, and for each raw_new). Fix style.
+
+  2007-03-30 Frédéric Bernon
   * most of files: prefix all debug.h define with "LWIP_" to avoid any conflict with
     others environment defines (these were too "generic").
   

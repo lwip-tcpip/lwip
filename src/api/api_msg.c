@@ -68,7 +68,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
   return 0; /* do not eat the packet */
 }
-#endif
+#endif /* LWIP_RAW*/
+
 #if LWIP_UDP
 static void
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
@@ -105,6 +106,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   }
 }
 #endif /* LWIP_UDP */
+
 #if LWIP_TCP
 
 static err_t
@@ -271,24 +273,16 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->recv_avail = 0;
 #if LWIP_SO_RCVTIMEO
   newconn->recv_timeout = 0;
-#endif /* LWIP_SO_RCVTIMEO */  
+#endif /* LWIP_SO_RCVTIMEO */
   
   sys_mbox_post( conn->acceptmbox, newconn);
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
 
-static void
-do_newconn(struct api_msg_msg *msg)
+static err_t
+pcb_new(struct api_msg_msg *msg)
 {
-   if(msg->conn->pcb.tcp != NULL) {
-   /* This "new" connection already has a PCB allocated. */
-   /* Is this an error condition? Should it be deleted? 
-      We currently just are happy and return. */
-     sys_mbox_post(msg->conn->mbox, NULL);
-     return;
-   }
-
    msg->conn->err = ERR_OK;
 
    /* Allocate a PCB for this connection */
@@ -296,9 +290,13 @@ do_newconn(struct api_msg_msg *msg)
 #if LWIP_RAW
    case NETCONN_RAW:
       msg->conn->pcb.raw = raw_new(msg->msg.bc.port); /* misusing the port field */
+      if(msg->conn->pcb.raw == NULL) {
+        msg->conn->err = ERR_MEM;
+        break;
+      }
       raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
-     break;
-#endif
+      break;
+#endif /* LWIP_RAW */
 #if LWIP_UDP
    case NETCONN_UDPLITE:
       msg->conn->pcb.udp = udp_new();
@@ -336,12 +334,24 @@ do_newconn(struct api_msg_msg *msg)
       }
       setup_tcp(msg->conn);
       break;
-#endif
+#endif /* LWIP_TCP */
    }
-
-  sys_mbox_post(msg->conn->mbox, NULL);
+  
+  return msg->conn->err;
 }
 
+static void
+do_newconn(struct api_msg_msg *msg)
+{
+   if(msg->conn->pcb.tcp == NULL) {
+     pcb_new(msg);
+   }
+   /* Else? This "new" connection already has a PCB allocated. */
+   /* Is this an error condition? Should it be deleted? */
+   /* We currently just are happy and return. */
+
+   sys_mbox_post(msg->conn->mbox, NULL);
+}
 
 static void
 do_delconn(struct api_msg_msg *msg)
@@ -352,7 +362,7 @@ do_delconn(struct api_msg_msg *msg)
     case NETCONN_RAW:
       raw_remove(msg->conn->pcb.raw);
       break;
-#endif
+#endif /* LWIP_RAW */
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -363,23 +373,23 @@ do_delconn(struct api_msg_msg *msg)
       udp_remove(msg->conn->pcb.udp);
       break;
 #endif /* LWIP_UDP */
-#if LWIP_TCP      
+#if LWIP_TCP
     case NETCONN_TCP:
       if (msg->conn->pcb.tcp->state == LISTEN) {
         tcp_arg(msg->conn->pcb.tcp, NULL);
-        tcp_accept(msg->conn->pcb.tcp, NULL);  
+        tcp_accept(msg->conn->pcb.tcp, NULL);
         tcp_close(msg->conn->pcb.tcp);
       } else {
         tcp_arg(msg->conn->pcb.tcp, NULL);
         tcp_sent(msg->conn->pcb.tcp, NULL);
-        tcp_recv(msg->conn->pcb.tcp, NULL);  
+        tcp_recv(msg->conn->pcb.tcp, NULL);
         tcp_poll(msg->conn->pcb.tcp, NULL, 0);
         tcp_err(msg->conn->pcb.tcp, NULL);
         if (tcp_close(msg->conn->pcb.tcp) != ERR_OK) {
           tcp_abort(msg->conn->pcb.tcp);
         }
       }
-#endif
+#endif /* LWIP_TCP */
     default:
     break;
     }
@@ -399,64 +409,37 @@ static void
 do_bind(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
+    pcb_new(msg);
+  }
+
+  if (msg->conn->pcb.tcp != NULL) {
     switch (msg->conn->type) {
 #if LWIP_RAW
     case NETCONN_RAW:
-      msg->conn->pcb.raw = raw_new(msg->msg.bc.port); /* misusing the port field as protocol */
-      raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
+      msg->conn->err = raw_bind(msg->conn->pcb.raw,msg->msg.bc.ipaddr);
       break;
-#endif
+#endif /* LWIP_RAW */
 #if LWIP_UDP
     case NETCONN_UDPLITE:
-      msg->conn->pcb.udp = udp_new();
-      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
-      break;
+      /* FALLTHROUGH */
     case NETCONN_UDPNOCHKSUM:
-      msg->conn->pcb.udp = udp_new();
-      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
-      break;
+      /* FALLTHROUGH */
     case NETCONN_UDP:
-      msg->conn->pcb.udp = udp_new();
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
+      msg->conn->err = udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
       break;
-#endif /* LWIP_UDP */
-#if LWIP_TCP      
-    case NETCONN_TCP:
-      msg->conn->pcb.tcp = tcp_new();
-      setup_tcp(msg->conn);
-#endif /* LWIP_TCP */
-    default:  
-    break;
-    }
-  }
-  switch (msg->conn->type) {
-#if LWIP_RAW
-  case NETCONN_RAW:
-    msg->conn->err = raw_bind(msg->conn->pcb.raw,msg->msg.bc.ipaddr);
-    break;
-#endif
-#if LWIP_UDP
-  case NETCONN_UDPLITE:
-    /* FALLTHROUGH */
-  case NETCONN_UDPNOCHKSUM:
-    /* FALLTHROUGH */
-  case NETCONN_UDP:
-    msg->conn->err = udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
-    break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
-  case NETCONN_TCP:
-    msg->conn->err = tcp_bind(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+    case NETCONN_TCP:
+      msg->conn->err = tcp_bind(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port);
 #endif /* LWIP_TCP */
-  default:
-    break;
+    default:
+      break;
+    }
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
-#if LWIP_TCP
 
+#if LWIP_TCP
 static err_t
 do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
@@ -477,70 +460,25 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   sys_mbox_post(conn->mbox, NULL);
   return ERR_OK;
 }
-#endif  
+#endif /* LWIP_TCP */
 
 static void
 do_connect(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
-    switch (msg->conn->type) {
-#if LWIP_RAW
-    case NETCONN_RAW:
-      msg->conn->pcb.raw = raw_new(msg->msg.bc.port); /* misusing the port field as protocol */
-      raw_recv(msg->conn->pcb.raw, recv_raw, msg->conn);
-      break;
-#endif
-#if LWIP_UDP
-    case NETCONN_UDPLITE:
-      msg->conn->pcb.udp = udp_new();
-      if (msg->conn->pcb.udp == NULL) {
-        msg->conn->err = ERR_MEM;
-        sys_mbox_post(msg->conn->mbox, NULL);
-        return;
-      }
-      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
-      break;
-    case NETCONN_UDPNOCHKSUM:
-      msg->conn->pcb.udp = udp_new();
-      if (msg->conn->pcb.udp == NULL) {
-        msg->conn->err = ERR_MEM;
-        sys_mbox_post(msg->conn->mbox, NULL);
-        return;
-      }
-      udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
-      break;
-    case NETCONN_UDP:
-      msg->conn->pcb.udp = udp_new();
-      if (msg->conn->pcb.udp == NULL) {
-        msg->conn->err = ERR_MEM;
-        sys_mbox_post(msg->conn->mbox, NULL);
-        return;
-      }
-      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
-      break;
-#endif /* LWIP_UDP */
-#if LWIP_TCP
-    case NETCONN_TCP:
-      msg->conn->pcb.tcp = tcp_new();
-      if (msg->conn->pcb.tcp == NULL) {
-        msg->conn->err = ERR_MEM;
-        sys_mbox_post(msg->conn->mbox, NULL);
-        return;
-      }
-#endif
-    default:
-      break;
+    if (pcb_new(msg)!=ERR_OK) {
+      sys_mbox_post(msg->conn->mbox, NULL);
+      return;
     }
   }
+
   switch (msg->conn->type) {
 #if LWIP_RAW
   case NETCONN_RAW:
     raw_connect(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
     sys_mbox_post(msg->conn->mbox, NULL);
     break;
-#endif
+#endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDPLITE:
     /* FALLTHROUGH */
@@ -550,15 +488,15 @@ do_connect(struct api_msg_msg *msg)
     udp_connect(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
     sys_mbox_post(msg->conn->mbox, NULL);
     break;
-#endif 
-#if LWIP_TCP      
+#endif /* LWIP_UDP */
+#if LWIP_TCP
   case NETCONN_TCP:
-    /*    tcp_arg(msg->conn->pcb.tcp, msg->conn);*/
+    /*tcp_arg(msg->conn->pcb.tcp, msg->conn);*/
     setup_tcp(msg->conn);
     tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
     do_connected);
     /*tcp_output(msg->conn->pcb.tcp);*/
-#endif
+#endif /* LWIP_TCP */
 
   default:
     break;
@@ -568,13 +506,12 @@ do_connect(struct api_msg_msg *msg)
 static void
 do_disconnect(struct api_msg_msg *msg)
 {
-
   switch (msg->conn->type) {
 #if LWIP_RAW
   case NETCONN_RAW:
     /* Do nothing as connecting is only a helper for upper lwip layers */
     break;
-#endif
+#endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDPLITE:
     /* FALLTHROUGH */
@@ -583,7 +520,7 @@ do_disconnect(struct api_msg_msg *msg)
   case NETCONN_UDP:
     udp_disconnect(msg->conn->pcb.udp);
     break;
-#endif 
+#endif /* LWIP_UDP */
   case NETCONN_TCP:
     break;
   }
@@ -600,7 +537,7 @@ do_listen(struct api_msg_msg *msg)
     case NETCONN_RAW:
       LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: listen RAW: cannot listen for RAW.\n"));
       break;
-#endif
+#endif /* LWIP_RAW */
 #if LWIP_UDP
     case NETCONN_UDPLITE:
       /* FALLTHROUGH */
@@ -610,7 +547,7 @@ do_listen(struct api_msg_msg *msg)
       LWIP_DEBUGF(API_MSG_DEBUG, ("api_msg: listen UDP: cannot listen for UDP.\n"));
       break;
 #endif /* LWIP_UDP */
-#if LWIP_TCP      
+#if LWIP_TCP
     case NETCONN_TCP:
       msg->conn->pcb.tcp = tcp_listen(msg->conn->pcb.tcp);
       if (msg->conn->pcb.tcp == NULL) {
@@ -625,7 +562,7 @@ do_listen(struct api_msg_msg *msg)
         tcp_arg(msg->conn->pcb.tcp, msg->conn);
         tcp_accept(msg->conn->pcb.tcp, accept_function);
       }
-#endif
+#endif /* LWIP_TCP */
     default:
       break;
     }
@@ -822,6 +759,4 @@ api_msg_post(struct api_msg *msg)
 {
   return tcpip_apimsg(msg);
 }
-
-
 
