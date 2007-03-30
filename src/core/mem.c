@@ -157,7 +157,7 @@ mem_free(void *rmem)
   struct mem *mem;
 
   if (rmem == NULL) {
-    LWIP_DEBUGF(MEM_DEBUG | DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
     return;
   }
 

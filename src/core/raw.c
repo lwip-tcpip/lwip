@@ -202,7 +202,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
   struct ip_addr *src_ip;
   struct pbuf *q; /* q will be sent down the stack */
   
-  LWIP_DEBUGF(RAW_DEBUG | DBG_TRACE | 3, ("raw_sendto\n"));
+  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | 3, ("raw_sendto\n"));
   
   /* not enough space to add an IP header to first pbuf in given p chain? */
   if (pbuf_header(p, IP_HLEN)) {
@@ -210,7 +210,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
     q = pbuf_alloc(PBUF_IP, 0, PBUF_RAM);
     /* new header pbuf could not be allocated? */
     if (q == NULL) {
-      LWIP_DEBUGF(RAW_DEBUG | DBG_TRACE | 2, ("raw_sendto: could not allocate header\n"));
+      LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | 2, ("raw_sendto: could not allocate header\n"));
       return ERR_MEM;
     }
     /* chain header q in front of given pbuf p */
@@ -311,7 +311,7 @@ struct raw_pcb *
 raw_new(u16_t proto) {
   struct raw_pcb *pcb;
 
-  LWIP_DEBUGF(RAW_DEBUG | DBG_TRACE | 3, ("raw_new\n"));
+  LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE | 3, ("raw_new\n"));
 
   pcb = memp_malloc(MEMP_RAW_PCB);
   /* could allocate RAW PCB? */

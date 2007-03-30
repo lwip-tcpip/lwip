@@ -656,131 +656,131 @@ a lot of data that needs to be copied, this should be set high. */
 #endif
 
 #ifndef ETHARP_DEBUG
-#define ETHARP_DEBUG                    DBG_OFF
+#define ETHARP_DEBUG                    LWIP_DBG_OFF
 #endif
 
 #ifndef NETIF_DEBUG
-#define NETIF_DEBUG                     DBG_OFF
+#define NETIF_DEBUG                     LWIP_DBG_OFF
 #endif
 
 #ifndef PBUF_DEBUG
-#define PBUF_DEBUG                      DBG_OFF
+#define PBUF_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef API_LIB_DEBUG
-#define API_LIB_DEBUG                   DBG_OFF
+#define API_LIB_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef API_MSG_DEBUG
-#define API_MSG_DEBUG                   DBG_OFF
+#define API_MSG_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef SOCKETS_DEBUG
-#define SOCKETS_DEBUG                   DBG_OFF
+#define SOCKETS_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef ICMP_DEBUG
-#define ICMP_DEBUG                      DBG_OFF
+#define ICMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef INET_DEBUG
-#define INET_DEBUG                      DBG_OFF
+#define INET_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef IP_DEBUG
-#define IP_DEBUG                        DBG_OFF
+#define IP_DEBUG                        LWIP_DBG_OFF
 #endif
 
 #ifndef IP_REASS_DEBUG
-#define IP_REASS_DEBUG                  DBG_OFF
+#define IP_REASS_DEBUG                  LWIP_DBG_OFF
 #endif
 
 #ifndef RAW_DEBUG
-#define RAW_DEBUG                       DBG_OFF
+#define RAW_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef MEM_DEBUG
-#define MEM_DEBUG                       DBG_OFF
+#define MEM_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef MEMP_DEBUG
-#define MEMP_DEBUG                      DBG_OFF
+#define MEMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef SYS_DEBUG
-#define SYS_DEBUG                       DBG_OFF
+#define SYS_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_DEBUG
-#define TCP_DEBUG                       DBG_OFF
+#define TCP_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_INPUT_DEBUG
-#define TCP_INPUT_DEBUG                 DBG_OFF
+#define TCP_INPUT_DEBUG                 LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_FR_DEBUG
-#define TCP_FR_DEBUG                    DBG_OFF
+#define TCP_FR_DEBUG                    LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_RTO_DEBUG
-#define TCP_RTO_DEBUG                   DBG_OFF
+#define TCP_RTO_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_REXMIT_DEBUG
-#define TCP_REXMIT_DEBUG                DBG_OFF
+#define TCP_REXMIT_DEBUG                LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_CWND_DEBUG
-#define TCP_CWND_DEBUG                  DBG_OFF
+#define TCP_CWND_DEBUG                  LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_WND_DEBUG
-#define TCP_WND_DEBUG                   DBG_OFF
+#define TCP_WND_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_OUTPUT_DEBUG
-#define TCP_OUTPUT_DEBUG                DBG_OFF
+#define TCP_OUTPUT_DEBUG                LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_RST_DEBUG
-#define TCP_RST_DEBUG                   DBG_OFF
+#define TCP_RST_DEBUG                   LWIP_DBG_OFF
 #endif
 
 #ifndef TCP_QLEN_DEBUG
-#define TCP_QLEN_DEBUG                  DBG_OFF
+#define TCP_QLEN_DEBUG                  LWIP_DBG_OFF
 #endif
 
 #ifndef UDP_DEBUG
-#define UDP_DEBUG                       DBG_OFF
+#define UDP_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef TCPIP_DEBUG
-#define TCPIP_DEBUG                     DBG_OFF
+#define TCPIP_DEBUG                     LWIP_DBG_OFF
 #endif
 
 #ifndef PPP_DEBUG 
-#define PPP_DEBUG                       DBG_OFF
+#define PPP_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #ifndef SLIP_DEBUG 
-#define SLIP_DEBUG                      DBG_OFF
+#define SLIP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef DHCP_DEBUG 
-#define DHCP_DEBUG                      DBG_OFF
+#define DHCP_DEBUG                      LWIP_DBG_OFF
 #endif
 
 #ifndef SNMP_MSG_DEBUG 
-#define SNMP_MSG_DEBUG                  DBG_OFF
+#define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
 #endif
 
 #ifndef SNMP_MIB_DEBUG 
-#define SNMP_MIB_DEBUG                  DBG_OFF
+#define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 
 #ifndef DBG_MIN_LEVEL
-#define DBG_MIN_LEVEL                   DBG_LEVEL_OFF
+#define DBG_MIN_LEVEL                   LWIP_DBG_LEVEL_OFF
 #endif
 
 #endif /* __LWIP_OPT_H__ */

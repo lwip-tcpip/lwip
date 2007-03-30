@@ -276,10 +276,10 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if (netif == NULL) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
-      LWIP_DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
         ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
-        LWIP_DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
+        LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
       }
     }
@@ -288,7 +288,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* packet not for us? */
   if (netif == NULL) {
     /* packet not for us, route or discard */
-    LWIP_DEBUGF(IP_DEBUG | DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
+    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: packet not for us.\n"));
 #if IP_FORWARD
     /* non-broadcast packet? */
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp)) {

@@ -166,7 +166,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   /* Check checksum if this is a match or if it was directed at us. */
   if (pcb != NULL || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) {
-    LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: calculating checksum\n"));
+    LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
 #ifdef IPv6
     if (iphdr->nexthdr == IP_PROTO_UDPLITE) {
 #else
@@ -217,7 +217,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (pcb->recv != NULL)
         pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
     } else {
-      LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE, ("udp_input: not for us.\n"));
+      LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: not for us.\n"));
 
       /* No match was found, send ICMP destination port unreachable unless
          destination address was broadcast/multicast. */
@@ -303,14 +303,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
 
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_send\n"));
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 3, ("udp_send\n"));
 
   /* if the PCB is not yet bound to a port, bind it here */
   if (pcb->local_port == 0) {
-    LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: not yet bound to a port, binding now\n"));
+    LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 2, ("udp_send: not yet bound to a port, binding now\n"));
     err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
     if (err != ERR_OK) {
-      LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: forced port bind failed\n"));
+      LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 2, ("udp_send: forced port bind failed\n"));
       return err;
     }
   }
@@ -329,7 +329,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     q = pbuf_alloc(PBUF_IP, UDP_HLEN, PBUF_RAM);
     /* new header pbuf could not be allocated? */
     if (q == NULL) {
-      LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 2, ("udp_send: could not allocate header\n"));
+      LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 2, ("udp_send: could not allocate header\n"));
       return ERR_MEM;
     }
     /* chain header q in front of given pbuf p */
@@ -433,9 +433,9 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   struct udp_pcb *ipcb;
   u8_t rebind;
 
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, ("udp_bind(ipaddr = "));
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 3, ("udp_bind(ipaddr = "));
   ip_addr_debug_print(UDP_DEBUG, ipaddr);
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | 3, (", port = %"U16_F")\n", port));
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 3, (", port = %"U16_F")\n", port));
 
   rebind = 0;
   /* Check for double bind and rebind of the same pcb */
@@ -499,7 +499,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->next = udp_pcbs;
     udp_pcbs = pcb;
   }
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE,
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_bind: bound to %"U16_F".%"U16_F".%"U16_F".%"U16_F", port %"U16_F"\n",
                (u16_t)(ntohl(pcb->local_ip.addr) >> 24 & 0xff),
                (u16_t)(ntohl(pcb->local_ip.addr) >> 16 & 0xff),
@@ -553,7 +553,7 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->local_ip.addr = 0;
   }
 #endif
-  LWIP_DEBUGF(UDP_DEBUG | DBG_TRACE | DBG_STATE,
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_connect: connected to %"U16_F".%"U16_F".%"U16_F".%"U16_F",port %"U16_F"\n",
                (u16_t)(ntohl(pcb->remote_ip.addr) >> 24 & 0xff),
                (u16_t)(ntohl(pcb->remote_ip.addr) >> 16 & 0xff),

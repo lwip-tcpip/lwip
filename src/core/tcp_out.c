@@ -93,7 +93,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
     }
     return ERR_OK;
   } else {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | DBG_STATE | 3, ("tcp_write() called in invalid state\n"));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_STATE | 3, ("tcp_write() called in invalid state\n"));
     return ERR_CONN;
   }
 }
@@ -282,7 +282,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
        segments such as SYN|ACK. */
       memcpy(seg->dataptr, optdata, optlen);
     }
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | DBG_TRACE, ("tcp_enqueue: queueing %"U32_F":%"U32_F" (0x%"X16_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE, ("tcp_enqueue: queueing %"U32_F":%"U32_F" (0x%"X16_F")\n",
       ntohl(seg->tcphdr->seqno),
       ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg),
       (u16_t)flags));
@@ -322,7 +322,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     useg->len += queue->len;
     useg->next = queue->next;
 
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | DBG_TRACE | DBG_STATE, ("tcp_enqueue: chaining segments, new len %"U16_F"\n", useg->len));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("tcp_enqueue: chaining segments, new len %"U16_F"\n", useg->len));
     if (seg == queue) {
       seg = NULL;
     }
@@ -371,7 +371,7 @@ memerr:
     LWIP_ASSERT("tcp_enqueue: valid queue length", pcb->unacked != NULL ||
       pcb->unsent != NULL);
   }
-  LWIP_DEBUGF(TCP_QLEN_DEBUG | DBG_STATE, ("tcp_enqueue: %"S16_F" (with mem err)\n", pcb->snd_queuelen));
+  LWIP_DEBUGF(TCP_QLEN_DEBUG | LWIP_DBG_STATE, ("tcp_enqueue: %"S16_F" (with mem err)\n", pcb->snd_queuelen));
   return ERR_MEM;
 }
 
