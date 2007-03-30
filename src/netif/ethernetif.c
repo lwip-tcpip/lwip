@@ -78,8 +78,9 @@ low_level_init(struct netif *netif)
   /* maximum transfer unit */
   netif->mtu = 1500;
   
-  /* broadcast capability */
-  netif->flags = NETIF_FLAG_BROADCAST;
+  /* device capabilities */
+  /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
+  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
  
   /* Do whatever else is needed to initialize interface. */  
 }
