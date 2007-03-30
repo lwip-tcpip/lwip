@@ -99,13 +99,17 @@ HISTORY
   ++ Bug fixes:
 
   2007-03-30 Frédéric Bernon
+  * ip.c: if IP_REASSEMBLY is set to 1, don't set the IP_DF ("Don't fragment") flag
+    in the IP header in IP output packets.
+
+  2007-03-30 Frédéric Bernon
   * api_msg.c: add a "pcb_new" helper function to avoid redundant code, and to add
     missing  pcb allocations checking (in do_bind, and for each raw_new). Fix style.
 
   2007-03-30 Frédéric Bernon
   * most of files: prefix all debug.h define with "LWIP_" to avoid any conflict with
     others environment defines (these were too "generic").
-  
+
   2007-03-28 Frédéric Bernon
   * api.h, api_lib.c, sockets.c: netbuf_ref doesn't check its internal pbuf_alloc call
     result and can cause a crash. lwip_send now check netbuf_ref result.

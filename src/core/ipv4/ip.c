@@ -438,7 +438,11 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, tos);
     IPH_LEN_SET(iphdr, htons(p->tot_len));
+#if IP_REASSEMBLY
+    IPH_OFFSET_SET(iphdr, 0);
+#else
     IPH_OFFSET_SET(iphdr, htons(IP_DF));
+#endif /* IP_REASSEMBLY */
     IPH_ID_SET(iphdr, htons(ip_id));
     ++ip_id;
 
@@ -538,9 +542,3 @@ ip_debug_print(struct pbuf *p)
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */
-
-
-
-
-
-
