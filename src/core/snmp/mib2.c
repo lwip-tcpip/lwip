@@ -486,7 +486,7 @@ struct mib_node* const ip_nodes[23] = {
   (struct mib_node* const)&iprtetable, (struct mib_node* const)&ipntomtable,
   (struct mib_node* const)&ip_scalar
 };
-const struct mib_array_node ip = {
+const struct mib_array_node g_ip = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -541,7 +541,7 @@ const struct mib_array_node attable = {
 
 /* at .1.3.6.1.2.1.3 */
 s32_t at_id = 1;
-struct mib_node* at_node = (struct mib_node* const)&attable;
+struct mib_node* g_at_node = (struct mib_node* const)&attable;
 struct mib_ram_array_node at = {
   &noleafs_get_object_def,
   &noleafs_get_value,
@@ -550,7 +550,7 @@ struct mib_ram_array_node at = {
   MIB_NODE_RA,
   0,
   &at_id,
-  &at_node
+  &g_at_node
 };
 
 /** index root node for ifTable */
@@ -680,7 +680,7 @@ struct mib_node* const mib2_nodes[MIB2_GROUPS] = {
   (struct mib_node* const)&sys_tem,
   (struct mib_node* const)&interfaces,
   (struct mib_node* const)&at,
-  (struct mib_node* const)&ip,
+  (struct mib_node* const)&g_ip,
   (struct mib_node* const)&icmp,
 #if LWIP_TCP
   (struct mib_node* const)&tcp,
@@ -914,12 +914,12 @@ void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
  * @param str if non-NULL then copy str pointer
  * @param strlen points to string length, excluding zero terminator
  */
-void snmp_set_sysdesr(u8_t *str, u8_t *strlen)
+void snmp_set_sysdesr(u8_t *str, u8_t *len)
 {
   if (str != NULL)
   {
     sysdescr_ptr = str;
-    sysdescr_len_ptr = strlen;
+    sysdescr_len_ptr = len;
   }
 }
 

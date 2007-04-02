@@ -369,12 +369,12 @@ snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_no
   }
   else
   {
-    struct mib_list_rootnode *rn;
+    struct mib_list_rootnode *r;
 
     if (n->nptr->node_type == MIB_NODE_LR)
     {
-      rn = (struct mib_list_rootnode *)n->nptr;
-      if (rn->count > 1)
+      r = (struct mib_list_rootnode *)n->nptr;
+      if (r->count > 1)
       {
         /* can't delete node */
         fc = 2;
