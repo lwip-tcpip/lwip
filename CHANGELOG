@@ -98,9 +98,9 @@ HISTORY
 
   ++ Bug fixes:
 
-  2007-03-30 Frédéric Bernon
-  * ip.c: if IP_REASSEMBLY is set to 1, don't set the IP_DF ("Don't fragment") flag
-    in the IP header in IP output packets.
+  2007-04-03 Frédéric Bernon
+  * ip.c: Don't set the IP_DF ("Don't fragment") flag in the IP header in IP output
+    packets. See patch #5834.
 
   2007-03-30 Frédéric Bernon
   * api_msg.c: add a "pcb_new" helper function to avoid redundant code, and to add
