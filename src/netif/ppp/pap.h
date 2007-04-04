@@ -53,6 +53,8 @@
 #ifndef PAP_H
 #define PAP_H
 
+#if PAP_SUPPORT > 0
+
 /*************************
 *** PUBLIC DEFINITIONS ***
 *************************/
@@ -125,5 +127,6 @@ void upap_authpeer (int);
 
 extern struct protent pap_protent;
 
-#endif /* PAP_H */
+#endif /* PAP_SUPPORT */
 
+#endif /* PAP_H */
