@@ -24,7 +24,9 @@ HISTORY
   ++ New features:
 
   2007-04-04 Simon Goldschmidt
-  * arch.h, dhcp.c, :
+  * arch.h, api_msg.c, dhcp.c, msg_in.c, sockets.c: Introduced #define LWIP_UNUSED_ARG(x)
+    use this for and architecture-independent form to tell the compiler you intentionally
+    are not using this variable. Can be overriden in cc.h.
 
   2007-03-28 Frédéric Bernon
   * opt.h, netif.h, dhcp.h, dhcp.c: New configuration option LWIP_NETIF_HOSTNAME allow to
