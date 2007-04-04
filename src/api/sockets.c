@@ -323,6 +323,9 @@ lwip_listen(int s, int backlog)
   struct lwip_socket *sock;
   err_t err;
 
+  /* This does no harm. If debugging is off, backlog is unused. */
+  LWIP_UNUSED_ARG(backlog);
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
   sock = get_socket(s);
   if (!sock)

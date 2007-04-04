@@ -47,7 +47,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   struct netconn *conn;
 
   conn = arg;
-  if (!conn) return 0;
+  if (!conn)
+    return 0;
 
   if (conn->recvmbox != SYS_MBOX_NULL) {
     if (!(buf = memp_malloc(MEMP_NETBUF))) {
@@ -78,7 +79,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   struct netbuf *buf;
   struct netconn *conn;
 
-  pcb = pcb; /* Remove warning */
+  LWIP_UNUSED_ARG(pcb);
 
   conn = arg;
   
@@ -115,7 +116,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   struct netconn *conn;
   u16_t len;
   
-  pcb = pcb; /* Remove warning */
+  LWIP_UNUSED_ARG(pcb);
   
   conn = arg;
 
@@ -147,7 +148,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
   struct netconn *conn;
 
-  pcb = pcb; /* Remove warning */
+  LWIP_UNUSED_ARG(pcb);
   
   conn = arg;
 
@@ -164,7 +165,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
   struct netconn *conn;
 
-  pcb = pcb; /* Remove warning */
+  LWIP_UNUSED_ARG(pcb);
   
   conn = arg;
 
@@ -445,7 +446,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
   struct netconn *conn;
 
-  pcb = pcb; /* Remove warning */
+  LWIP_UNUSED_ARG(pcb);
   
   conn = arg;
 

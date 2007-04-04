@@ -23,6 +23,9 @@ HISTORY
 
   ++ New features:
 
+  2007-04-04 Simon Goldschmidt
+  * arch.h, dhcp.c, :
+
   2007-03-28 Frédéric Bernon
   * opt.h, netif.h, dhcp.h, dhcp.c: New configuration option LWIP_NETIF_HOSTNAME allow to
     define a hostname in netif struct (this is just a pointer, so, you can use a hardcoded

@@ -1197,7 +1197,9 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("pbuf->len = %"U16_F"\n", p->len));
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("pbuf->tot_len = %"U16_F"\n", p->tot_len));
   /* prevent warnings about unused arguments */
-  (void)pcb; (void)addr; (void)port;
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(port);
   dhcp->p = p;
   /* TODO: check packet length before reading them */
   if (reply_msg->op != DHCP_BOOTREPLY) {
