@@ -576,7 +576,7 @@ static void
 do_send(struct api_msg_msg *msg)
 {
 
-  if (msg->conn->err!=ERR_OK) {
+  if (msg->conn->err==ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (msg->conn->type) {
 #if LWIP_RAW
@@ -620,7 +620,7 @@ do_write(struct api_msg_msg *msg)
 #if LWIP_TCP  
   err_t err;
 #endif  
-  if (msg->conn->err!=ERR_OK) {
+  if (msg->conn->err==ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (msg->conn->type) {
 #if LWIP_RAW
@@ -708,7 +708,7 @@ do_join_leave_group(struct api_msg_msg *msg)
 {
   err_t err = ERR_OK;
   
-  if (msg->conn->err!=ERR_OK) {
+  if (msg->conn->err==ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (msg->conn->type) {
 #if LWIP_RAW
