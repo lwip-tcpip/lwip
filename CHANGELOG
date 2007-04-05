@@ -23,6 +23,9 @@ HISTORY
 
   ++ New features:
 
+  2007-04-05 Frédéric Bernon
+  * sockets.c: remplace ENOBUFS errors on alloc_socket by ENFILE to be more BSD compliant.
+
   2007-04-04 Simon Goldschmidt
   * arch.h, api_msg.c, dhcp.c, msg_in.c, sockets.c: Introduced #define LWIP_UNUSED_ARG(x)
     use this for and architecture-independent form to tell the compiler you intentionally

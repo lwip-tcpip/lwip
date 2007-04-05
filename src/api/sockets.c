@@ -196,7 +196,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newsock = alloc_socket(newconn);
   if (newsock == -1) {
     netconn_delete(newconn);
-    sock_set_errno(sock, ENOBUFS);
+    sock_set_errno(sock, ENFILE);
     return -1;
   }
   newconn->callback = event_callback;
@@ -585,7 +585,7 @@ lwip_socket(int domain, int type, int protocol)
 
   if (i == -1) {
     netconn_delete(conn);
-    set_errno(ENOBUFS);
+    set_errno(ENFILE);
     return -1;
   }
   conn->socket = i;
