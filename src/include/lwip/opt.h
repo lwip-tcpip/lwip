@@ -393,6 +393,11 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_NETIF_HOSTNAME             0
 #endif
 
+/* Support network interface API */
+#ifndef LWIP_NETIF_API
+#define LWIP_NETIF_API                  0
+#endif
+
 /* Support network interface callbacks */
 #ifndef LWIP_NETIF_CALLBACK
 #define LWIP_NETIF_CALLBACK             0

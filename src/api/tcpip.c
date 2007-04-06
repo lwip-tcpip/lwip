@@ -198,6 +198,7 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_INPUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
       ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+      memp_free(MEMP_TCPIP_MSG, msg);
       break;
 #endif /* ETHARP_TCPIP_INPUT */
 
@@ -205,19 +206,24 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_ETHINPUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Ethernet packet %p\n", (void *)msg));
       ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
+      memp_free(MEMP_TCPIP_MSG, msg);
       break;
 #endif /* ETHARP_TCPIP_ETHINPUT */
+
+#if LWIP_NETIF_API
+    case TCPIP_MSG_NETIFAPI:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Netif API message %p\n", (void *)msg));
+      netifapi_msg_input(msg->msg.netifapimsg);
+      break;
+#endif /* LWIP_NETIF_API */
 
     case TCPIP_MSG_CALLBACK:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
       msg->msg.cb.f(msg->msg.cb.ctx);
+      memp_free(MEMP_TCPIP_MSG, msg);
       break;
     default:
       break;
-    }
-    
-    if (msg->type!=TCPIP_MSG_API) {
-      memp_free(MEMP_TCPIP_MSG, msg);
     }
   }
 }
@@ -302,6 +308,29 @@ tcpip_apimsg(struct api_msg *apimsg)
   }
   return ERR_VAL;
 }
+
+#if LWIP_NETIF_API
+err_t tcpip_netifapi(struct netifapi_msg* netifapimsg)
+{
+  struct tcpip_msg msg;
+  
+  if (mbox != SYS_MBOX_NULL) {
+    netifapimsg->sem = sys_sem_new(0);      
+    if (netifapimsg->sem == SYS_SEM_NULL) {
+      netifapimsg->err = ERR_MEM;
+      return netifapimsg->err;
+    }  
+      
+    msg.type = TCPIP_MSG_NETIFAPI;
+    msg.msg.netifapimsg = netifapimsg;
+    sys_mbox_post(mbox, &msg);
+    sys_sem_wait(netifapimsg->sem);
+    sys_sem_free(netifapimsg->sem);    
+    return netifapimsg->err;
+  }
+  return ERR_VAL;
+}
+#endif /* LWIP_NETIF_API */
 
 void
 tcpip_init(void (* initfunc)(void *), void *arg)

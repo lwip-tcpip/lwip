@@ -1,7 +1,4 @@
 /*
- * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
- * All rights reserved. 
- * 
  * Redistribution and use in source and binary forms, with or without modification, 
  * are permitted provided that the following conditions are met:
  *
@@ -26,61 +23,65 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  * 
- * Author: Adam Dunkels <adam@sics.se>
- *
  */
-#ifndef __LWIP_TCPIP_H__
-#define __LWIP_TCPIP_H__
+ 
+#ifndef __LWIP_NETIFAPI_H__
+#define __LWIP_NETIFAPI_H__
 
-#include "lwip/api_msg.h"
-#include "lwip/netifapi.h"
-#include "lwip/pbuf.h"
+#include "lwip/opt.h"
+#include "lwip/sys.h"
+#include "lwip/netif.h"
+#include "lwip/dhcp.h"
 
-void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
-err_t tcpip_apimsg(struct api_msg *apimsg);
-#if ETHARP_TCPIP_INPUT
-err_t tcpip_input(struct pbuf *p, struct netif *inp);
-#endif /* ETHARP_TCPIP_INPUT */
-#if ETHARP_TCPIP_ETHINPUT
-err_t tcpip_ethinput(struct pbuf *p, struct netif *inp);
-#endif /* ETHARP_TCPIP_ETHINPUT */
 #if LWIP_NETIF_API
-err_t tcpip_netifapi(struct netifapi_msg* netifapimsg);
-#endif /* LWIP_NETIF_API */
-err_t tcpip_callback(void (*f)(void *ctx), void *ctx);
 
-enum tcpip_msg_type {
-  TCPIP_MSG_API,
-#if ETHARP_TCPIP_INPUT  
-  TCPIP_MSG_INPUT,
-#endif /* ETHARP_TCPIP_INPUT */
-#if ETHARP_TCPIP_ETHINPUT
-  TCPIP_MSG_ETHINPUT,
-#endif /* ETHARP_TCPIP_ETHINPUT */
-#if LWIP_NETIF_API
-  TCPIP_MSG_NETIFAPI,
-#endif /* LWIP_NETIF_API */
-  TCPIP_MSG_CALLBACK
+enum netifapi_msg_type {
+  NETIFAPI_MSG_NETIF_ADD,
+  NETIFAPI_MSG_NETIF_REMOVE,
+#if LWIP_DHCP  
+  NETIFAPI_MSG_DHCP_START,
+  NETIFAPI_MSG_DHCP_STOP
+#endif /* LWIP_DHCP */
 };
 
-struct tcpip_msg {
-  enum tcpip_msg_type type;
-  sys_sem_t *sem;
+struct netifapi_msg {
+  enum netifapi_msg_type type;
+  sys_sem_t sem;
+  err_t err;
+  struct netif *netif;
   union {
-    struct api_msg *apimsg;
-#if LWIP_NETIF_API
-    struct netifapi_msg *netifapimsg;
-#endif /* LWIP_NETIF_API */
     struct {
-      struct pbuf *p;
-      struct netif *netif;
-    } inp;
-    struct {
-      void (*f)(void *ctx);
-      void *ctx;
-    } cb;
+      struct ip_addr *ipaddr;
+      struct ip_addr *netmask;
+      struct ip_addr *gw;
+      void *state;
+      err_t (* init)(struct netif *netif);
+      err_t (* input)(struct pbuf *p, struct netif *netif);
+    } add;
   } msg;
 };
 
 
-#endif /* __LWIP_TCPIP_H__ */
+/* API for application */
+err_t netifapi_netif_add   ( struct netif *netif,
+                             struct ip_addr *ipaddr,
+                             struct ip_addr *netmask,
+                             struct ip_addr *gw,
+                             void *state,
+                             err_t (* init)(struct netif *netif),
+                             err_t (* input)(struct pbuf *p, struct netif *netif) );
+
+err_t netifapi_netif_remove( struct netif *netif);
+
+err_t netifapi_dhcp_start  ( struct netif *netif);
+
+err_t netifapi_dhcp_stop   ( struct netif *netif);
+
+
+/* API for tcpip_thread */
+void  netifapi_msg_input(struct netifapi_msg *msg);
+err_t netifapi_msg_post (struct netifapi_msg *msg);
+
+#endif /* LWIP_NETIF_API */
+
+#endif /* __LWIP_NETIFAPI_H__ */

@@ -23,6 +23,11 @@ HISTORY
 
   ++ New features:
 
+  2007-04-06 Frédéric Bernon, Simon Goldschmidt
+  * opt.h, tcpip.h, tcpip.c, netifapi.h, netifapi.c: New configuration option LWIP_NETIF_API
+    allow to use thread-safe functions to add/remove netif in list, and to start/stop dhcp
+    clients, using new functions from netifapi.h. Disable as default (no port change to do).
+
   2007-04-05 Frédéric Bernon
   * sockets.c: remplace ENOBUFS errors on alloc_socket by ENFILE to be more BSD compliant.
 
