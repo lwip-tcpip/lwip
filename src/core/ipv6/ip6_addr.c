@@ -30,6 +30,7 @@
  *
  */
 
+#include "lwip/opt.h"
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 
@@ -70,21 +71,3 @@ ip_addr_isany(struct ip_addr *addr)
   if (addr == NULL) return 1;
   return((addr->addr[0] | addr->addr[1] | addr->addr[2] | addr->addr[3]) == 0);
 }
-
-
-/*#if IP_DEBUG*/
-void
-ip_addr_debug_print(struct ip_addr *addr)
-{
-  printf("%"X32_F":%"X32_F":%"X32_F":%"X32_F":%"X32_F":%"X32_F":%"X32_F":%"X32_F",
-         ntohl(addr->addr[0]) >> 16 & 0xffff,
-         ntohl(addr->addr[0]) & 0xffff,
-         ntohl(addr->addr[1]) >> 16 & 0xffff,
-         ntohl(addr->addr[1]) & 0xffff,
-         ntohl(addr->addr[2]) >> 16 & 0xffff,
-         ntohl(addr->addr[2]) & 0xffff,
-         ntohl(addr->addr[3]) >> 16 & 0xffff,
-         ntohl(addr->addr[3]) & 0xffff);
-}
-/*#endif*/ /* IP_DEBUG */
-

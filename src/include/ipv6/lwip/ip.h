@@ -54,6 +54,19 @@
 #endif /* IP_HDRINCL */
 #define IP_HDRINCL  NULL
 
+/* This is the common part of all PCB types. It needs to be at the
+   beginning of a PCB type definition. It is located here so that
+   changes to this common part are made in one location instead of
+   having to change all PCB structs. */
+#define IP_PCB struct ip_addr local_ip; \
+  struct ip_addr remote_ip; \
+   /* Socket options */  \
+  u16_t so_options;      \
+   /* Type Of Service */ \
+  u8_t tos;              \
+  /* Time To Live */     \
+  u8_t ttl
+
 
 /* The IPv6 header. */
 struct ip_hdr {
