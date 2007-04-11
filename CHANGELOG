@@ -25,7 +25,9 @@ HISTORY
 
   2007-04-11 Jonathan Larmour
   * sys.h, api_lib.c: Provide new sys_mbox_tryfetch function. Require ports to provide new
-    sys_arch_mbox_tryfetch function to get a message if one is there.
+    sys_arch_mbox_tryfetch function to get a message if one is there, otherwise return
+    with SYS_MBOX_EMPTY. sys_arch_mbox_tryfetch can be implemented as a function-like macro
+    by the port in sys_arch.h if desired.
 
   2007-04-06 Frédéric Bernon, Simon Goldschmidt
   * opt.h, tcpip.h, tcpip.c, netifapi.h, netifapi.c: New configuration option LWIP_NETIF_API
