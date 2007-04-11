@@ -740,216 +740,6 @@ pbuf_chain(struct pbuf *h, struct pbuf *t)
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_FRESH | 2, ("pbuf_chain: %p references %p\n", (void *)h, (void *)t));
 }
 
-/* For packet queueing. Note that queued packets MUST be dequeued first
- * using pbuf_dequeue() before calling other pbuf_() functions. */
-#if ARP_QUEUEING
-/**
- * Add a packet to the end of a queue.
- *
- * @param q pointer to first packet on the queue
- * @param n packet to be queued
- *
- * Both packets MUST be given, and must be different.
- */
-void
-pbuf_queue(struct pbuf *p, struct pbuf *n)
-{
-#if PBUF_DEBUG /* remember head of queue */
-  struct pbuf *q = p;
-#endif
-  /* programmer stupidity checks */
-  LWIP_ASSERT("p == NULL in pbuf_queue: this indicates a programmer error\n", p != NULL);
-  LWIP_ASSERT("n == NULL in pbuf_queue: this indicates a programmer error\n", n != NULL);
-  LWIP_ASSERT("p == n in pbuf_queue: this indicates a programmer error\n", p != n);
-  if ((p == NULL) || (n == NULL) || (p == n)){
-    LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_HALT | 3, ("pbuf_queue: programmer argument error\n"));
-    return;
-  }
-
-  /* iterate through all packets on queue */
-  while (p->next != NULL) {
-/* be very picky about pbuf chain correctness */
-#if PBUF_DEBUG
-    /* iterate through all pbufs in packet */
-    while (p->tot_len != p->len) {
-      /* make sure invariant condition holds */
-      LWIP_ASSERT("p->len < p->tot_len", p->len < p->tot_len);
-      /* make sure each packet is complete */
-      LWIP_ASSERT("p->next != NULL", p->next != NULL);
-      p = p->next;
-      /* { p->tot_len == p->len => p is last pbuf of a packet } */
-    }
-    /* { p is last pbuf of a packet } */
-    /* proceed to next packet on queue */
-#endif
-    /* proceed to next pbuf */
-    if (p->next != NULL) p = p->next;
-  }
-  /* { p->tot_len == p->len and p->next == NULL } ==>
-   * { p is last pbuf of last packet on queue } */
-  /* chain last pbuf of queue with n */
-  p->next = n;
-  /* n is now referenced to by the (packet p in the) queue */
-  pbuf_ref(n);
-#if PBUF_DEBUG
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_FRESH | 2,
-    ("pbuf_queue: newly queued packet %p sits after packet %p in queue %p\n",
-    (void *)n, (void *)p, (void *)q));
-#endif
-}
-
-/**
- * Remove a packet from the head of a queue.
- *
- * The caller MUST reference the remainder of the queue (as returned). The
- * caller MUST NOT call pbuf_ref() as it implicitly takes over the reference
- * from p.
- * 
- * @param p pointer to first packet on the queue which will be dequeued.
- * @return first packet on the remaining queue (NULL if no further packets).
- *
- */
-struct pbuf *
-pbuf_dequeue(struct pbuf *p)
-{
-  struct pbuf *q;
-  LWIP_ASSERT("p != NULL", p != NULL);
-
-  /* iterate through all pbufs in packet p */
-  while (p->tot_len != p->len) {
-    /* make sure invariant condition holds */
-    LWIP_ASSERT("p->len < p->tot_len", p->len < p->tot_len);
-    /* make sure each packet is complete */
-    LWIP_ASSERT("p->next != NULL", p->next != NULL);
-    p = p->next;
-  }
-  /* { p->tot_len == p->len } => p is the last pbuf of the first packet */
-  /* remember next packet on queue in q */
-  q = p->next;
-  /* dequeue packet p from queue */
-  p->next = NULL;
-  /* any next packet on queue? */
-  if (q != NULL) {
-    /* although q is no longer referenced by p, it MUST be referenced by
-     * the caller, who is maintaining this packet queue. So, we do not call
-     * pbuf_free(q) here, resulting in an implicit pbuf_ref(q) for the caller. */
-    LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_FRESH | 2, ("pbuf_dequeue: first remaining packet on queue is %p\n", (void *)q));
-  } else {
-    LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_FRESH | 2, ("pbuf_dequeue: no further packets on queue\n"));
-  }
-  return q;
-}
-#endif
-
-/**
- *
- * Create PBUF_POOL (or PBUF_RAM) copies of PBUF_REF pbufs.
- *
- * Used to queue packets on behalf of the lwIP stack, such as
- * ARP based queueing.
- *
- * Go through a pbuf chain and replace any PBUF_REF buffers
- * with PBUF_POOL (or PBUF_RAM) pbufs, each taking a copy of
- * the referenced data.
- *
- * @note You MUST explicitly use p = pbuf_take(p);
- * The pbuf you give as argument, may have been replaced
- * by a (differently located) copy through pbuf_take()!
- *
- * @note Any replaced pbufs will be freed through pbuf_free().
- * This may deallocate them if they become no longer referenced.
- *
- * @param p Head of pbuf chain to process
- *
- * @return Pointer to head of pbuf chain
- */
-struct pbuf *
-pbuf_take(struct pbuf *p)
-{
-  struct pbuf *q , *prev, *head;
-  LWIP_ASSERT("pbuf_take: p != NULL\n", p != NULL);
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_take(%p)\n", (void*)p));
-
-  prev = NULL;
-  head = p;
-  /* iterate through pbuf chain */
-  do
-  {
-    /* pbuf is of type PBUF_REF? */
-    if (p->flags == PBUF_FLAG_REF) {
-      LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_take: encountered PBUF_REF %p\n", (void *)p));
-      /* allocate a pbuf (w/ payload) fully in RAM */
-      /* PBUF_POOL buffers are faster if we can use them */
-      if (p->len <= PBUF_POOL_BUFSIZE) {
-        q = pbuf_alloc(PBUF_RAW, p->len, PBUF_POOL);
-        if (q == NULL) {
-          LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_POOL\n"));
-        }
-      } else {
-        /* no replacement pbuf yet */
-        q = NULL;
-        LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 2, ("pbuf_take: PBUF_POOL too small to replace PBUF_REF\n"));
-      }
-      /* no (large enough) PBUF_POOL was available? retry with PBUF_RAM */
-      if (q == NULL) {
-        q = pbuf_alloc(PBUF_RAW, p->len, PBUF_RAM);
-        if (q == NULL) {
-          LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 2, ("pbuf_take: Could not allocate PBUF_RAM\n"));
-        }
-      }
-      /* replacement pbuf could be allocated? */
-      if (q != NULL)
-      {
-        /* copy p to q */
-        /* copy successor */
-        q->next = p->next;
-        /* remove linkage from original pbuf */
-        p->next = NULL;
-        /* remove linkage to original pbuf */
-        if (prev != NULL) {
-          /* prev->next == p at this point */
-          LWIP_ASSERT("prev->next == p", prev->next == p);
-          /* break chain and insert new pbuf instead */
-          prev->next = q;
-        /* prev == NULL, so we replaced the head pbuf of the chain */
-        } else {
-          head = q;
-        }
-        /* copy pbuf payload */
-        memcpy(q->payload, p->payload, p->len);
-        q->tot_len = p->tot_len;
-        q->len = p->len;
-        /* in case p was the first pbuf, it is no longer refered to by
-         * our caller, as the caller MUST do p = pbuf_take(p);
-         * in case p was not the first pbuf, it is no longer refered to
-         * by prev. we can safely free the pbuf here.
-         * (note that we have set p->next to NULL already so that
-         * we will not free the rest of the chain by accident.)
-         */
-        pbuf_free(p);
-        /* do not copy ref, since someone else might be using the old buffer */
-        LWIP_DEBUGF(PBUF_DEBUG, ("pbuf_take: replaced PBUF_REF %p with %p\n", (void *)p, (void *)q));
-        p = q;
-      } else {
-        /* deallocate chain */
-        pbuf_free(head);
-        LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_take: failed to allocate replacement pbuf for %p\n", (void *)p));
-        return NULL;
-      }
-    /* p->flags != PBUF_FLAG_REF */
-    } else {
-      LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_take: skipping pbuf not of type PBUF_REF\n"));
-    }
-    /* remember this pbuf */
-    prev = p;
-    /* proceed to next pbuf in original chain */
-    p = p->next;
-  } while (p);
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_take: end of chain reached.\n"));
-
-  return head;
-}
-
 /**
  * Dechains the first pbuf from its succeeding pbufs in the chain.
  *
@@ -988,3 +778,56 @@ pbuf_dechain(struct pbuf *p)
   LWIP_ASSERT("p->tot_len == p->len", p->tot_len == p->len);
   return (tail_gone > 0? NULL: q);
 }
+
+#if ARP_QUEUEING
+/**
+ *
+ * Create PBUF_RAM copies of pbufs.
+ *
+ * Used to queue packets on behalf of the lwIP stack, such as
+ * ARP based queueing.
+ *
+ * @note You MUST explicitly use p = pbuf_take(p);
+ *
+ * @note Only one packet is copied, no packet queue!
+ *
+ * @param p Head of pbuf chain to process
+ *
+ * @return Pointer to head of pbuf chain
+ */
+struct pbuf *
+pbuf_copy(struct pbuf *p)
+{
+  u16_t copied=0;
+  struct pbuf *p_copy;
+  LWIP_ASSERT("pbuf_copy: p != NULL\n", p != NULL);
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_copy(%p)\n", (void*)p));
+
+  /* allocate one pbuf to hold the complete packet */
+  p_copy = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+  if(p_copy == NULL) {
+    /* out of memory */
+    return NULL;
+  }
+
+  /* iterate through pbuf chain */
+  do
+  {
+    /* copy one part of the original chain */
+    memcpy((char*)p_copy->payload + copied, p->payload, p->len);
+    copied += p->len;
+    LWIP_DEBUGF(PBUF_DEBUG, ("pbuf_copy: copied pbuf %p\n", (void *)p));
+
+    if(p->len == p->tot_len) {
+      /* don't copy more than one packet! */
+      LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
+                  p->next == NULL);
+    }
+    /* proceed to next pbuf in original chain */
+    p = p->next;
+  } while (p);
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));
+
+  return p_copy;
+}
+#endif /* ARP_QUEUEING */

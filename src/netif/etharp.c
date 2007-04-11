@@ -756,6 +756,8 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * @param q If non-NULL, a pbuf that must be delivered to the IP address.
  * q is not freed by this function.
  *
+ * @note q must only be ONE packet, not a packet queue!
+ *
  * @return
  * - ERR_BUF Could not make room for Ethernet header.
  * - ERR_MEM Hardware address unknown, and no more ARP entries available
@@ -828,21 +830,38 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
     } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
 #if ARP_QUEUEING /* queue the given q packet */
       struct pbuf *p;
-      /* copy any PBUF_REF referenced payloads into PBUF_RAM */
-      /* (the caller of lwIP assumes the referenced payload can be
-       * freed after it returns from the lwIP call that brought us here) */
-      /* @todo: if q->type == PBUF_REF, do we have a memory leak (since we call pbuf_ref(p) later)? */
-      p = pbuf_take(q);
+      int copy_needed = 0;
+      /* IF q includes a PBUF_REF, PBUF_POOL or PBUF_RAM, we have no choice but
+       * to copy the whole queue into a new PBUF_RAM (see bug #11400) 
+       * PBUF_ROMs can be left as they are, since ROM must not get changed. */
+      p = q;
+      while(p) {
+        if(p->len == p->tot_len) {
+          LWIP_ASSERT("no packet queues allowed!", p->next == 0);
+        }
+        if(p->flags != PBUF_FLAG_ROM) {
+          copy_needed = 1;
+          break;
+        }
+        p = p->next;
+      }
+      if(copy_needed) {
+        /* copy the whole packet into new pbufs */
+        p = pbuf_copy(q);
+      } else {
+        /* referencing the old pbuf is enough */
+        p = q;
+        pbuf_ref(p);
+     }
       /* packet could be taken over? */
       if (p != NULL) {
         /* queue packet ... */
-        struct etharp_q_entry *newEntry;
+        struct etharp_q_entry *new_entry;
         /* allocate a new arp queue entry */
-        newEntry = memp_malloc(MEMP_ARP_QUEUE);
-        LWIP_ASSERT("newEntry != NULL", newEntry != NULL);
-        newEntry->next = 0;
-        newEntry->p = p;
-        pbuf_ref(p);
+        new_entry = memp_malloc(MEMP_ARP_QUEUE);
+        LWIP_ASSERT("newEntry != NULL", new_entry != NULL);
+        new_entry->next = 0;
+        new_entry->p = p;
         if(arp_table[i].q != NULL) {
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
@@ -850,10 +869,10 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
           while(r->next != NULL) {
             r = r->next;
           }
-          r->next = newEntry;
+          r->next = new_entry;
         } else {
           /* queue did not exist, first item in queue */
-          arp_table[i].q = newEntry;
+          arp_table[i].q = new_entry;
         }
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
         result = ERR_OK;

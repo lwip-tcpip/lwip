@@ -117,6 +117,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-04-11 Simon Goldschmidt
+  * etharp.c, pbuf.c, pbuf.h: 3rd fix for bug #11400 (arp-queuing): More pbufs than
+    previously thought need to be copied (everything but PBUF_ROM!). Cleaned up
+    pbuf.c: removed functions no needed any more (by etharp).
+
   2007-04-11 Kieran Mansley
   * inet.c, ip_addr.h, sockets.h, sys.h, tcp.h: Apply patch #5745: Fix
     "Constant is long" warnings with 16bit compilers.  Contributed by
