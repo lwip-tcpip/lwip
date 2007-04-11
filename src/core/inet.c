@@ -434,7 +434,7 @@ inet_aton(const char *cp, struct in_addr *addr)
     break;
 
   case 2:             /* a.b -- 8.24 bits */
-    if (val > 0xffffff)
+    if (val > 0xffffffUL)
       return (0);
     val |= parts[0] << 24;
     break;
@@ -524,8 +524,8 @@ htonl(u32_t n)
 {
   return ((n & 0xff) << 24) |
     ((n & 0xff00) << 8) |
-    ((n & 0xff0000) >> 8) |
-    ((n & 0xff000000) >> 24);
+    ((n & 0xff0000UL) >> 8) |
+    ((n & 0xff000000UL) >> 24);
 }
 
 u32_t

@@ -149,7 +149,7 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
 #define TCP_OOSEQ_TIMEOUT        6U /* x RTO */
 
-#define TCP_MSL 60000  /* The maximum segment lifetime in microseconds */
+#define TCP_MSL 60000U /* The maximum segment lifetime in microseconds */
 
 /*
  * User-settable options (used with setsockopt).
@@ -163,15 +163,15 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
 #ifndef  TCP_KEEPIDLE_DEFAULT
-#define  TCP_KEEPIDLE_DEFAULT     7200000                                      /* Default KEEPALIVE timer in milliseconds */
+#define  TCP_KEEPIDLE_DEFAULT     7200000UL /* Default KEEPALIVE timer in milliseconds */
 #endif
 
 #ifndef  TCP_KEEPINTVL_DEFAULT
-#define  TCP_KEEPINTVL_DEFAULT    75000                                        /* Default Time between KEEPALIVE probes in milliseconds */
+#define  TCP_KEEPINTVL_DEFAULT    75000UL   /* Default Time between KEEPALIVE probes in milliseconds */
 #endif
 
 #ifndef  TCP_KEEPCNT_DEFAULT
-#define  TCP_KEEPCNT_DEFAULT      9                                            /* Default Counter for KEEPALIVE probes */
+#define  TCP_KEEPCNT_DEFAULT      9U        /* Default Counter for KEEPALIVE probes */
 #endif
 
 #define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */

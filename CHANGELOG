@@ -111,6 +111,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-04-11 Kieran Mansley
+  * inet.c, ip_addr.h, sockets.h, sys.h, tcp.h: Apply patch #5745: Fix
+    "Constant is long" warnings with 16bit compilers.  Contributed by
+    avatar@mmlab.cse.yzu.edu.tw
+
   2007-04-05 Frédéric Bernon, Jonathan Larmour
   * api_msg.c: Fix bug #16830: "err_tcp() posts to connection mailbox when no pend on
     the mailbox is active". Now, the post is only done during a connect, and do_send,
