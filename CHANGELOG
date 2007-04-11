@@ -23,6 +23,10 @@ HISTORY
 
   ++ New features:
 
+  2007-04-11 Jonathan Larmour
+  * sys.h, api_lib.c: Provide new sys_mbox_tryfetch function. Require ports to provide new
+    sys_arch_mbox_tryfetch function to get a message if one is there.
+
   2007-04-06 Frédéric Bernon, Simon Goldschmidt
   * opt.h, tcpip.h, tcpip.c, netifapi.h, netifapi.c: New configuration option LWIP_NETIF_API
     allow to use thread-safe functions to add/remove netif in list, and to start/stop dhcp

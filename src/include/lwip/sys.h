@@ -67,6 +67,11 @@ struct sys_timeo {u8_t dummy;};
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
 #define SYS_ARCH_TIMEOUT 0xffffffffUL
 
+/* sys_mbox_tryfetch returns SYS_MBOX_EMPTY if appropriate.
+ * For now we use the same magic value, but we allow this to change in future.
+ */
+#define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
+
 typedef void (* sys_timeout_handler)(void *arg);
 
 struct sys_timeo {
@@ -116,6 +121,11 @@ u32_t sys_jiffies(void); /* since power up. */
 sys_mbox_t sys_mbox_new(void);
 void sys_mbox_post(sys_mbox_t mbox, void *msg);
 u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
+#ifndef sys_arch_mbox_tryfetch /* Allow port to override with a macro */
+u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg);
+#endif
+/* For now, we map straight to sys_arch implementation. */
+#define sys_mbox_tryfetch(mbox, msg) sys_arch_mbox_tryfetch(mbox, msg)
 void sys_mbox_free(sys_mbox_t mbox);
 #if LWIP_SO_RCVTIMEO
 void sys_mbox_fetch_timeout(sys_mbox_t mbox, void **msg, u32_t timeout);
