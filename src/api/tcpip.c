@@ -57,7 +57,7 @@ static int tcpip_tcp_timer_active = 0;
 static void
 tcpip_tcp_timer(void *arg)
 {
-  (void)arg;
+  LWIP_UNUSED_ARG(arg);
 
   /* call TCP timer handler */
   tcp_tmr();

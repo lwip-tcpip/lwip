@@ -747,7 +747,7 @@ static void check_idle(void *arg)
     struct ppp_idle idle;
     u_short itime;
     
-	(void)arg;
+    LWIP_UNUSED_ARG(arg);
     if (!get_idle_time(0, &idle))
         return;
     itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
@@ -765,7 +765,7 @@ static void check_idle(void *arg)
  */
 static void connect_time_expired(void *arg)
 {
-	(void)arg;
+    LWIP_UNUSED_ARG(arg);
 
     AUTHDEBUG((LOG_INFO, "Connect time expired\n"));
     lcp_close(0, "Connect time expired");   /* Close connection */
@@ -804,7 +804,7 @@ static void logout(void)
  */
 static int null_login(int unit)
 {
-	(void)unit;
+    LWIP_UNUSED_ARG(unit);
     /* XXX Fail until we decide that we want to support logins. */
     return 0;
 }
@@ -850,9 +850,9 @@ static int have_pap_secret(void)
  */
 static int have_chap_secret(char *client, char *server, u32_t remote)
 {
-	(void)client;
-	(void)server;
-	(void)remote;
+    LWIP_UNUSED_ARG(client);
+    LWIP_UNUSED_ARG(server);
+    LWIP_UNUSED_ARG(remote);
     /* XXX Fail until we set up our passwords. */
     return 0;
 }

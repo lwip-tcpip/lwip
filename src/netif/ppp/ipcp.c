@@ -1321,10 +1321,10 @@ static int ipcp_printpkt(
 	void *arg
 )
 {
-	(void)p;
-	(void)plen;
-	(void)printer;
-	(void)arg;
+	LWIP_UNUSED_ARG(p);
+	LWIP_UNUSED_ARG(plen);
+	LWIP_UNUSED_ARG(printer);
+	LWIP_UNUSED_ARG(arg);
 	return 0;
 }
 

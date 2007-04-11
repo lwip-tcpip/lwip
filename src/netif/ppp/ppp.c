@@ -546,7 +546,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
     struct pbuf *headMB = NULL, *tailMB = NULL, *p;
     u_char c;
 
-    (void)ipaddr;
+    LWIP_UNUSED_ARG(ipaddr);
 
     /* Validate parameters. */
     /* We let any protocol value go through - it can't hurt us
@@ -865,9 +865,9 @@ void ppp_recv_config(
     PPPControl *pc = &pppControl[unit];
     int i;
     
-	(void)accomp;
-	(void)pcomp;
-	(void)mru;
+    LWIP_UNUSED_ARG(accomp);
+    LWIP_UNUSED_ARG(pcomp);
+    LWIP_UNUSED_ARG(mru);
 
     /* Load the ACCM bits for the 32 control codes. */
     for (i = 0; i < 32 / 8; i++)
@@ -920,8 +920,8 @@ int ccp_fatal_error(int unit)
 int get_idle_time(int u, struct ppp_idle *ip)
 {   
     /* XXX */
-	(void)u;
-	(void)ip;
+    LWIP_UNUSED_ARG(u);
+    LWIP_UNUSED_ARG(ip);
 
     return 0;
 }
@@ -1029,9 +1029,9 @@ int sifup(int pd)
  */
 int sifnpmode(int u, int proto, enum NPmode mode)
 {
-	(void)u;
-	(void)proto;
-	(void)mode;
+    LWIP_UNUSED_ARG(u);
+    LWIP_UNUSED_ARG(proto);
+    LWIP_UNUSED_ARG(mode);
     return 0;
 }
 
@@ -1097,17 +1097,17 @@ int cifaddr(
     PPPControl *pc = &pppControl[pd];
     int st = 1;
     
-	(void)o;
-	(void)h;
+    LWIP_UNUSED_ARG(o);
+    LWIP_UNUSED_ARG(h);
     if (pd < 0 || pd >= NUM_PPP || !pc->openFlag) {
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		IP4_ADDR(&pc->addrs.our_ipaddr, 0,0,0,0);
-		IP4_ADDR(&pc->addrs.his_ipaddr, 0,0,0,0);
-		IP4_ADDR(&pc->addrs.netmask, 255,255,255,0);
-		IP4_ADDR(&pc->addrs.dns1, 0,0,0,0);
-		IP4_ADDR(&pc->addrs.dns2, 0,0,0,0);
+    IP4_ADDR(&pc->addrs.our_ipaddr, 0,0,0,0);
+    IP4_ADDR(&pc->addrs.his_ipaddr, 0,0,0,0);
+    IP4_ADDR(&pc->addrs.netmask, 255,255,255,0);
+    IP4_ADDR(&pc->addrs.dns1, 0,0,0,0);
+    IP4_ADDR(&pc->addrs.dns2, 0,0,0,0);
     }
     return st;
 }
@@ -1120,13 +1120,13 @@ int sifdefaultroute(int pd, u32_t l, u32_t g)
     PPPControl *pc = &pppControl[pd];
     int st = 1;
     
-	(void)l;
-	(void)g;
+    LWIP_UNUSED_ARG(l);
+    LWIP_UNUSED_ARG(g);
     if (pd < 0 || pd >= NUM_PPP || !pc->openFlag) {
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		netif_set_default(&pc->netif);
+    netif_set_default(&pc->netif);
     }
 
     /* TODO: check how PPP handled the netMask, previously not set by ipSetDefault */
@@ -1142,13 +1142,13 @@ int cifdefaultroute(int pd, u32_t l, u32_t g)
     PPPControl *pc = &pppControl[pd];
     int st = 1;
     
-	(void)l;
-	(void)g;
+    LWIP_UNUSED_ARG(l);
+    LWIP_UNUSED_ARG(g);
     if (pd < 0 || pd >= NUM_PPP || !pc->openFlag) {
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		netif_set_default(NULL);
+    netif_set_default(NULL);
     }
 
     return st;
@@ -1157,8 +1157,8 @@ int cifdefaultroute(int pd, u32_t l, u32_t g)
 void
 pppMainWakeup(int pd)
 {
-	PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d\n", pd));
-	sio_read_abort(pppControl[pd].fd);
+    PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d\n", pd));
+    sio_read_abort(pppControl[pd].fd);
 }
 
 /* these callbacks are necessary because lcp_* functions
@@ -1172,7 +1172,7 @@ pppStartCB(void *arg)
 {
     int pd = (int)arg;
 
-	PPPDEBUG((LOG_DEBUG, "pppStartCB: unit %d\n", pd));
+    PPPDEBUG((LOG_DEBUG, "pppStartCB: unit %d\n", pd));
     lcp_lowerup(pd);
     lcp_open(pd);      /* Start protocol */
 }

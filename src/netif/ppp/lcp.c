@@ -457,7 +457,7 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len)
  */
 static void lcp_protrej(int unit)
 {
-	(void)unit;
+	LWIP_UNUSED_ARG(unit);
 	/*
 	* Can't reject LCP!
 	*/
@@ -1908,7 +1908,7 @@ static void lcp_received_echo_reply (fsm *f, int id, u_char *inp, int len)
 {
 	u32_t magic;
 	
-	(void)id;
+	LWIP_UNUSED_ARG(id);
 
 	/* Check the magic number - don't count replies from ourselves. */
 	if (len < 4) {

@@ -283,9 +283,9 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 static err_t
 tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 {
-  (void)arg;
-  (void)pcb;
-  (void)err;
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(err);
 
   return ERR_ABRT;
 }
