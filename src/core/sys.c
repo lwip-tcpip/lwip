@@ -81,16 +81,13 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg)
       if ((timeout) && (timeout<timeouts->next->time)) {        
       /* If time == SYS_ARCH_TIMEOUT, and we have wait "fetch's timeout" and not "timer's timeout",
          The timeout variable is the number of milliseconds we have waited for the message. */
-        if (timeout < timeouts->next->time) {
-          timeouts->next->time -= timeout;
-        } else {
-          timeouts->next->time = 0;
-        }
+        timeouts->next->time -= timeout;
       } else {
       /* The timeouts->next->time variable is the number of milliseconds we have waited for the message.  */
         if (timeouts->next->time < timeout) {
           timeout -= timeouts->next->time;
         } else {
+          /* either timeout == 0, or timeout must == timeouts->next->time */
           if (timeout) timeout = SYS_ARCH_TIMEOUT;
         }
 #endif /* LWIP_SO_RCVTIMEO */
