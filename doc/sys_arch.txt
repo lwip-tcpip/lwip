@@ -103,7 +103,7 @@ The following functions must be implemented by the sys_arch:
 
   This is similar to sys_arch_mbox_fetch, however if a message is not
   present in the mailbox, it immediately returns with the code
-  SYS_MBOX_EMPTY.
+  SYS_MBOX_EMPTY. On success 0 is returned.
 
   To allow for efficient implementations, this can be defined as a
   function-like macro in sys_arch.h instead of a normal function. For
