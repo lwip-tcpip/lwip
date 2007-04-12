@@ -115,7 +115,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     else
       ip_output_if(p, &(iphdr->src), IP_HDRINCL,
-                   IPH_TTL(iphdr), 0, IP_PROTO_ICMP, inp);
+                   ICMP_TTL, 0, IP_PROTO_ICMP, inp);
     break;
   default:
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", (s16_t)type, (s16_t)code));

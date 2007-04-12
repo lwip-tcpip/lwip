@@ -117,6 +117,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-04-12 Jonathan Larmour
+  * icmp.c: Reset IP header TTL in ICMP ECHO responses (bug #19580).
+
   2007-04-11 Simon Goldschmidt
   * etharp.c, pbuf.c, pbuf.h: 3rd fix for bug #11400 (arp-queuing): More pbufs than
     previously thought need to be copied (everything but PBUF_ROM!). Cleaned up
