@@ -253,7 +253,7 @@ struct tcp_pcb {
   u8_t polltmr, pollinterval;
   
   /* Retransmission timer. */
-  u16_t rtime;
+  s16_t rtime;
   
   u16_t mss;   /* maximum segment size */
   
@@ -262,7 +262,7 @@ struct tcp_pcb {
   u32_t rtseq;  /* sequence number being timed */
   s16_t sa, sv; /* @todo document this */
 
-  u16_t rto;    /* retransmission time-out */
+  s16_t rto;    /* retransmission time-out */
   u8_t nrtx;    /* number of retransmissions */
 
   /* fast retransmit/recovery */

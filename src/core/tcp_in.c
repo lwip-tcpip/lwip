@@ -282,12 +282,12 @@ tcp_input(struct pbuf *p, struct netif *inp)
         TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_RST);
         tcp_pcb_remove(&tcp_active_pcbs, pcb);
         memp_free(MEMP_TCP_PCB, pcb);
-            } else if (recv_flags & TF_CLOSED) {
+      } else if (recv_flags & TF_CLOSED) {
         /* The connection has been closed and we will deallocate the
            PCB. */
         tcp_pcb_remove(&tcp_active_pcbs, pcb);
         memp_free(MEMP_TCP_PCB, pcb);
-            } else {
+      } else {
         err = ERR_OK;
         /* If the application has registered a "sent" function to be
            called when new send buffer space is available, we call it
@@ -504,6 +504,14 @@ tcp_process(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"U16_F"\n", (u16_t)pcb->snd_queuelen));
       rseg = pcb->unacked;
       pcb->unacked = rseg->next;
+
+      /* If there's nothing left to acknowledge, stop the retransmit
+         timer, otherwise reset it to start again */
+      if(pcb->unacked == NULL)
+        pcb->rtime = -1;
+      else
+        pcb->rtime = 0;
+
       tcp_seg_free(rseg);
 
       /* Parse any options in the SYNACK. */
@@ -700,10 +708,7 @@ tcp_receive(struct tcp_pcb *pcb)
         LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %"U32_F" %"U32_F"\n",
                                    pcb->snd_wl1 + pcb->snd_wnd, right_wnd_edge));
       }
-    } else
-      /*if (TCP_SEQ_LT(pcb->lastack, ackno) &&
-        TCP_SEQ_LEQ(ackno, pcb->snd_max)) { */
-      if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_max)){
+    } else if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_max)){
       /* We come here when the ACK acknowledges new data. */
       
       /* Reset the "IN Fast Retransmit" flag, since we are no longer
@@ -775,6 +780,14 @@ tcp_receive(struct tcp_pcb *pcb)
                       pcb->unsent != NULL);
         }
       }
+
+      /* If there's nothing left to acknowledge, stop the retransmit
+         timer, otherwise reset it to start again */
+      if(pcb->unacked == NULL)
+        pcb->rtime = -1;
+      else
+        pcb->rtime = 0;
+
       pcb->polltmr = 0;
     }
 

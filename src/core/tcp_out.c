@@ -551,7 +551,9 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     ip_addr_set(&(pcb->local_ip), &(netif->ip_addr));
   }
 
-  pcb->rtime = 0;
+  /* Set retransmission timer running if it is not currently enabled */
+  if(pcb->rtime == -1)
+    pcb->rtime = 0;
 
   if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;
@@ -674,7 +676,6 @@ tcp_rexmit(struct tcp_pcb *pcb)
   /* Do the actual retransmission. */
   snmp_inc_tcpretranssegs();
   tcp_output(pcb);
-
 }
 
 

@@ -500,18 +500,24 @@ tcp_slowtmr(void)
       ++pcb_remove;
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
-      ++pcb->rtime;
-      if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
+      /* Increase the retransmission timer if it is running */
+      if(pcb->rtime >= 0)
+        ++pcb->rtime;
 
+      if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
         /* Time for a retransmission. */
-        LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"U16_F" pcb->rto %"U16_F"\n",
-          pcb->rtime, pcb->rto));
+        LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F" pcb->rto %"S16_F"\n",
+                                    pcb->rtime, pcb->rto));
 
         /* Double retransmission time-out unless we are trying to
          * connect to somebody (i.e., we are in SYN_SENT). */
         if (pcb->state != SYN_SENT) {
           pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
         }
+
+        /* Reset the retransmission timer. */
+        pcb->rtime = 0;
+
         /* Reduce congestion window and ssthresh. */
         eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
         pcb->ssthresh = eff_wnd >> 1;
@@ -520,11 +526,11 @@ tcp_slowtmr(void)
         }
         pcb->cwnd = pcb->mss;
         LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"U16_F" ssthresh %"U16_F"\n",
-                                pcb->cwnd, pcb->ssthresh));
+                                     pcb->cwnd, pcb->ssthresh));
  
         /* The following needs to be called AFTER cwnd is set to one mss - STJ */
         tcp_rexmit_rto(pcb);
-     }
+      }
     }
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
     if (pcb->state == FIN_WAIT_2) {
@@ -844,7 +850,7 @@ tcp_alloc(u8_t prio)
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sa = 0;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;
-    pcb->rtime = 0;
+    pcb->rtime = -1;
     pcb->cwnd = 1;
     iss = tcp_next_iss();
     pcb->snd_wl2 = iss;
@@ -993,7 +999,11 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if (pcb->ooseq != NULL) {    
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
-    
+
+    /* Stop the retransmission timer as it will expect data on unacked
+       queue if it fires */
+    pcb->rtime = -1;
+
     tcp_segs_free(pcb->ooseq);
     pcb->ooseq = NULL;
 #endif /* TCP_QUEUE_OOSEQ */
