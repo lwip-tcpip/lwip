@@ -656,8 +656,8 @@ a lot of data that needs to be copied, this should be set high. */
 
 /* Debugging options all default to off */
 
-#ifndef DBG_TYPES_ON
-#define DBG_TYPES_ON                    0
+#ifndef LWIP_DBG_TYPES_ON
+#define LWIP_DBG_TYPES_ON               0
 #endif
 
 #ifndef ETHARP_DEBUG
@@ -784,8 +784,8 @@ a lot of data that needs to be copied, this should be set high. */
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 
-#ifndef DBG_MIN_LEVEL
-#define DBG_MIN_LEVEL                   LWIP_DBG_LEVEL_OFF
+#ifndef LWIP_DBG_MIN_LEVEL
+#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_OFF
 #endif
 
 #endif /* __LWIP_OPT_H__ */
