@@ -388,7 +388,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
  * @note If the pbuf is ROM/REF, only the ->tot_len and ->len fields are adjusted.
  * @note May not be called on a packet queue.
  *
- * @bug Cannot grow the size of a pbuf (chain) (yet).
+ * @note Despite its name, pbuf_realloc cannot grow the size of a pbuf (chain).
  */
 void
 pbuf_realloc(struct pbuf *p, u16_t new_len)
