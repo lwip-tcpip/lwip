@@ -395,7 +395,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 {
   struct pbuf *q;
   u16_t rem_len; /* remaining length */
-  s16_t grow;
+  s32_t grow;
 
   LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
               p->flags == PBUF_FLAG_ROM ||
