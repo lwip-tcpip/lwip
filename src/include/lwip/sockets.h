@@ -213,7 +213,8 @@ typedef struct ip_mreq {
 
 #ifndef FD_SET
   #undef  FD_SETSIZE
-  #define FD_SETSIZE    16
+  /* Make FD_SETSIZE match NUM_SOCKETS in socket.c */
+  #define FD_SETSIZE    MEMP_NUM_NETCONN
   #define FD_SET(n, p)  ((p)->fd_bits[(n)/8] |=  (1 << ((n) & 7)))
   #define FD_CLR(n, p)  ((p)->fd_bits[(n)/8] &= ~(1 << ((n) & 7)))
   #define FD_ISSET(n,p) ((p)->fd_bits[(n)/8] &   (1 << ((n) & 7)))

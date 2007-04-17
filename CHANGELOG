@@ -119,7 +119,9 @@ HISTORY
 
   2007-04-17 Jonathan Larmour
   * pbuf.c: Use s32_t in pbuf_realloc(), as an s16_t can't reliably hold
-  the difference between two u16_t's.
+    the difference between two u16_t's.
+  * sockets.h: FD_SETSIZE needs to match number of sockets, which is
+    MEMP_NUM_NETCONN in sockets.c right now.
 
   2007-04-12 Jonathan Larmour
   * icmp.c: Reset IP header TTL in ICMP ECHO responses (bug #19580).
