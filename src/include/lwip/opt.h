@@ -408,6 +408,17 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_HAVE_LOOPIF                0
 #endif
 
+/* This switches between directly calling netif->input() (=1 for multithreading
+ * environments like tcpip.c) or putting the packets on a list and calling
+ * loopif_poll() in the main application loop (=0 for polling / NO_SYS
+ * environments).
+ * Setting this is needed to avoid reentering non-reentrant functions like
+ * tcp_input().
+ */
+#ifndef LWIP_LOOPIF_MULTITHREADING
+#define LWIP_LOOPIF_MULTITHREADING      1
+#endif
+
 #ifndef LWIP_EVENT_API
 #define LWIP_EVENT_API                  0
 #define LWIP_CALLBACK_API               1

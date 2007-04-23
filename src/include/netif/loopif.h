@@ -34,6 +34,10 @@
 
 #include "lwip/netif.h"
 
+#if !LWIP_LOOPIF_MULTITHREADING
+void loopif_poll(struct netif *netif);
+#endif
+
 err_t loopif_init(struct netif *netif);
 
 #endif /* __NETIF_LOOPIF_H__ */

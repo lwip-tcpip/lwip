@@ -117,6 +117,15 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-04-23 Simon Goldschmidt
+  * loopif.c, loopif.h, opt.h, src/netif/FILES: fix bug #2595: "loopif results
+    in NULL reference for incoming TCP packets". Loopif has to be configured
+    (using LWIP_LOOPIF_MULTITHREADING) to directly call netif->input()
+    (multithreading environments, e.g. netif->input() = tcpip_input()) or
+    putting packets on a list that is fed to the stack by calling loopif_poll()
+    (single-thread / NO_SYS / polling environment where e.g.
+    netif->input() = ip_input).
+
   2007-04-17 Jonathan Larmour
   * pbuf.c: Use s32_t in pbuf_realloc(), as an s16_t can't reliably hold
     the difference between two u16_t's.

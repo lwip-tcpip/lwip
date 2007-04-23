@@ -15,10 +15,8 @@ ethernetif.c
           network device drivers. It uses the etharp.c ARP code.
 
 loopif.c
-          An example network interface that shows how a "loopback"
-          interface would work. This is not really intended for actual
-          use, but as a very basic example of how initialization and
-          output functions work.
+          A "loopback" network interface driver. It requires configuration
+          through the define LWIP_LOOPIF_MULTITHREADING (see opt.h).
 
 slipif.c
           A generic implementation of the SLIP (Serial Line IP)

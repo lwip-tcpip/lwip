@@ -36,75 +36,121 @@
 #include "netif/loopif.h"
 #include "lwip/mem.h"
 
-#if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)
-#include "netif/tcpdump.h"
-#endif /* LWIP_DEBUG && LWIP_TCPDUMP */
+#if !LWIP_LOOPIF_MULTITHREADING
 
-#include "lwip/tcp.h"
-#include "lwip/ip.h"
+#include "lwip/sys.h"
 
-static void
-loopif_input( void * arg )
+/* helper struct for the linked list of pbufs */
+struct loopif_private {
+  struct pbuf *first;
+  struct pbuf *last;
+};
+
+/* Call loopif_poll() in the main loop of your application. This is to prevent
+ * reentering non-reentrant functions like tcp_input(). Packets passed to
+ * loopif_output() are put on a list that is passed to netif->input() by
+ * loopif_poll().
+ */
+void
+loopif_poll(struct netif *netif)
 {
-	struct netif *netif = (struct netif *)( ((void **)arg)[ 0 ] );
-	struct pbuf *r = (struct pbuf *)( ((void **)arg)[ 1 ] );
+  SYS_ARCH_DECL_PROTECT(lev);
+  struct pbuf *in = NULL;
+  struct loopif_private *priv = (struct loopif_private*)netif->state;
 
-	mem_free( arg );
-	netif -> input( r, netif );
+  do {
+    /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
+    SYS_ARCH_PROTECT(lev);
+    in = priv->first;
+    if(priv->first) {
+      if(priv->first == priv->last) {
+        /* this was the last pbuf in the list */
+        priv->first = priv->last = NULL;
+      } else {
+        /* pop the pbuf off the list */
+        priv->first = priv->first->next;
+        LWIP_ASSERT("should not be null since first != last!", priv->first != NULL);
+      }
+    }
+    SYS_ARCH_UNPROTECT(lev);
+  
+    if(in != NULL) {
+      if(in->next != NULL) {
+        in->next = NULL;
+        LWIP_ASSERT("packet must not consist of multiple pbufs!", in->len == in->tot_len);
+      }
+      netif->input(in, netif);
+    }
+  /* go on while there is a packet on the list */
+  } while(in != NULL);
 }
+#endif /* LWIP_LOOPIF_MULTITHREADING */
 
 static err_t
 loopif_output(struct netif *netif, struct pbuf *p,
        struct ip_addr *ipaddr)
 {
+#if !LWIP_LOOPIF_MULTITHREADING
+  SYS_ARCH_DECL_PROTECT(lev);
+  struct loopif_private *priv;
+#endif /* LWIP_LOOPIF_MULTITHREADING */
   struct pbuf *q, *r;
   u8_t *ptr;
-  void **arg;
 
-#if defined(LWIP_DEBUG) && defined(LWIP_TCPDUMP)
-  tcpdump(p);
-#endif /* LWIP_DEBUG && LWIP_TCPDUMP */
-  
+  LWIP_UNUSED_ARG(ipaddr);
+
+  /* Allocate a new pbuf */
   r = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if (r != NULL) {
-    ptr = r->payload;
-    
-    for(q = p; q != NULL; q = q->next) {
-      memcpy(ptr, q->payload, q->len);
-      ptr += q->len;
-    }
-
-    arg = mem_malloc( sizeof( void *[2]));
-	if( NULL == arg ) {
-		return ERR_MEM;
-	}
-	
-	arg[0] = netif;
-	arg[1] = r;
-	/**
-	 * workaround (patch #1779) to try to prevent bug #2595:
-	 * When connecting to "localhost" with the loopif interface,
-	 * tcp_output doesn't get the opportunity to finnish sending the
-	 * segment before tcp_process gets it, resulting in tcp_process
-	 * referencing pcb->unacked-> which still is NULL.
-	 * 
-	 * TODO: Is there still a race condition here? Leon
-	 */
-	sys_timeout( 1, loopif_input, arg );
-	
-    return ERR_OK;    
+  if (r == NULL) {
+    return ERR_MEM;
   }
-  return ERR_MEM;
+
+  /* Copy the whole pbuf queue p into the single pbuf r */
+  ptr = r->payload;
+  for(q = p; q != NULL; q = q->next) {
+    memcpy(ptr, q->payload, q->len);
+    ptr += q->len;
+  }
+
+#if LWIP_LOOPIF_MULTITHREADING
+  /* Multithreading environment, netif->input() is supposed to put the packet
+     into a mailbox, so we can safely call it here without risking to re-enter
+     functions that are not reentrant (TCP!!!) */
+  netif->input(r, netif);
+#else /* LWIP_LOOPIF_MULTITHREADING */
+  /* Raw API without threads: put the packet on a linked list which gets emptied
+     through calling loopif_poll(). */
+  priv = (struct loopif_private*)netif->state;
+
+  SYS_ARCH_PROTECT(lev);
+  if(priv->first != NULL) {
+    LWIP_ASSERT("if first!=NULL, last must also be != NULL", priv->last != NULL);
+    priv->last->next = r;
+    priv->last = r;
+  } else {
+    priv->first = priv->last = r;
+  }
+  SYS_ARCH_UNPROTECT(lev);
+#endif /* LWIP_LOOPIF_MULTITHREADING */
+
+  return ERR_OK;    
 }
 
 err_t
 loopif_init(struct netif *netif)
 {
+#if !LWIP_LOOPIF_MULTITHREADING
+  struct loopif_private *priv;
+
+  priv = (struct loopif_private*)mem_malloc(sizeof(struct loopif_private));
+  if(priv == NULL) 
+    return ERR_MEM;
+  priv->first = priv->last = NULL;
+  netif->state = priv;
+#endif /* LWIP_LOOPIF_MULTITHREADING */
+
   netif->name[0] = 'l';
   netif->name[1] = 'o';
-#if 0 /** TODO: I think this should be enabled, or not? Leon */
-  netif->input = loopif_input;
-#endif
   netif->output = loopif_output;
   return ERR_OK;
 }
