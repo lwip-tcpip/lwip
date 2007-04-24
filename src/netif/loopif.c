@@ -34,11 +34,14 @@
 #if LWIP_HAVE_LOOPIF
 
 #include "netif/loopif.h"
-#include "lwip/mem.h"
+#include "lwip/pbuf.h"
+
+#include <string.h>
 
 #if !LWIP_LOOPIF_MULTITHREADING
 
 #include "lwip/sys.h"
+#include "lwip/mem.h"
 
 /* helper struct for the linked list of pbufs */
 struct loopif_private {
@@ -106,6 +109,9 @@ loopif_output(struct netif *netif, struct pbuf *p,
   }
 
   /* Copy the whole pbuf queue p into the single pbuf r */
+  /* @todo: - extend this so that r can be a pbuf list also
+   *        - could use pbuf_copy() for that!
+   */
   ptr = r->payload;
   for(q = p; q != NULL; q = q->next) {
     memcpy(ptr, q->payload, q->len);
