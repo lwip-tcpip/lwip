@@ -87,8 +87,9 @@ tcp_timer_needed(void)
 
 #if IP_REASSEMBLY
 static void
-ip_timer(void *data)
+ip_timer(void *arg)
 {
+  LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: ip_reass_tmr()\n"));
   ip_reass_tmr();
   sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
@@ -99,6 +100,7 @@ ip_timer(void *data)
 static void
 arp_timer(void *arg)
 {
+  LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: etharp_tmr()\n"));
   etharp_tmr();
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
@@ -109,6 +111,7 @@ arp_timer(void *arg)
 static void
 dhcp_timer_coarse(void *arg)
 {
+  LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_coarse_tmr()\n"));
   dhcp_coarse_tmr();
   sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
@@ -117,6 +120,7 @@ dhcp_timer_coarse(void *arg)
 static void
 dhcp_timer_fine(void *arg)
 {
+  LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_fine_tmr()\n"));
   dhcp_fine_tmr();
   sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
@@ -167,6 +171,7 @@ static void
 tcpip_thread(void *arg)
 {
   struct tcpip_msg *msg;
+  LWIP_UNUSED_ARG(arg);
 
 #if IP_REASSEMBLY
   sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);

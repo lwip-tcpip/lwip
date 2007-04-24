@@ -90,6 +90,8 @@ raw_input(struct pbuf *p, struct netif *inp)
   s16_t proto;
   u8_t eaten = 0;
 
+  LWIP_UNUSED_ARG(inp);
+
   iphdr = p->payload;
   proto = IPH_PROTO(iphdr);
 
