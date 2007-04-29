@@ -63,8 +63,14 @@
 
 #ifndef LWIP_NOASSERT
 #  define LWIP_ASSERT(x,y) do { if(!(y)) LWIP_PLATFORM_ASSERT(x); } while(0)
+#  ifdef LWIP_DEBUG
+#    define LWIP_DEBUG_ASSERT(x,y) LWIP_ASSERT(x,y)
+#  else
+#    define LWIP_DEBUG_ASSERT(x,y)
+#  endif
 #else
 #  define LWIP_ASSERT(x,y) 
+#  define LWIP_DEBUG_ASSERT(x,y)
 #endif
 
 #ifdef LWIP_DEBUG
