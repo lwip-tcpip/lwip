@@ -35,14 +35,15 @@
 #ifndef __NETIF_ETHARP_H__
 #define __NETIF_ETHARP_H__
 
-#ifndef ETH_PAD_SIZE
-#define ETH_PAD_SIZE 0
-#endif
-
+#include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/ip.h"
+
+#ifndef ETH_PAD_SIZE
+#define ETH_PAD_SIZE 0
+#endif
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
