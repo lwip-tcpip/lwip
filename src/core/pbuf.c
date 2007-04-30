@@ -290,9 +290,10 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       /* make previous pbuf point to this pbuf */
       r->next = q;
       /* set total length of this pbuf and next in chain */
-      q->tot_len = rem_len;
+      LWIP_DEBUG_ASSERT("rem_len < max_u16_t",rem_len < 0xffff);
+      q->tot_len = (u16_t)rem_len;
       /* this pbuf length is pool size, unless smaller sized tail */
-      q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: rem_len;
+      q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: (u16_t)rem_len;
       q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
@@ -420,7 +421,8 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
     /* decrease remaining length by pbuf length */
     rem_len -= q->len;
     /* decrease total length indicator */
-    q->tot_len += grow;
+    LWIP_DEBUG_ASSERT("grow < max_u16_t",grow < 0xffff);
+    q->tot_len += (u16_t)grow;
     /* proceed to next pbuf in chain */
     q = q->next;
   }
