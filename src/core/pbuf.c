@@ -14,9 +14,8 @@
  * This is called a "packet queue".
  * 
  * So, a packet queue consists of one or more pbuf chains, each of
- * which consist of one or more pbufs. Currently, queues are only
- * supported in a limited section of lwIP, this is the etharp queueing
- * code. Outside of this section no packet queues are supported yet.
+ * which consist of one or more pbufs. CURRENTLY, PACKET QUEUES ARE
+ * NOT SUPPORTED!!! Use helper structs to queue multiple packets.
  * 
  * The differences between a pbuf chain and a packet queue are very
  * precise but subtle. 
@@ -75,15 +74,32 @@
 
 static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf))];
 
-#if !SYS_LIGHTWEIGHT_PROT
-static volatile u8_t pbuf_pool_free_lock, pbuf_pool_alloc_lock;
-static sys_sem_t pbuf_pool_free_sem;
-#endif
-
 static struct pbuf *pbuf_pool = NULL;
+
+/* Forward declaration */
+static void pbuf_pool_init(void);
 
 /**
  * Initializes the pbuf module.
+ *
+ * Do some checks an initialize the pbuf pool.
+ *
+ */
+void
+pbuf_init(void)
+{
+  LWIP_ASSERT("pbuf_init: sizeof(struct pbuf) must be a multiple of MEM_ALIGNMENT",
+              (sizeof(struct pbuf) % MEM_ALIGNMENT) == 0);
+  printf("PBUF_POOL_BUFSIZE = %d\n", PBUF_POOL_BUFSIZE);
+  printf("MEM_ALIGNMENT = %d\n", MEM_ALIGNMENT);
+  LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
+              (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
+
+  pbuf_pool_init();
+}
+
+/**
+ * Initializes the pbuf pool.
  *
  * A large part of memory is allocated for holding the pool of pbufs.
  * The size of the individual pbufs in the pool is given by the size
@@ -94,8 +110,8 @@ static struct pbuf *pbuf_pool = NULL;
  * the pool.
  *
  */
-void
-pbuf_init(void)
+static void
+pbuf_pool_init(void)
 {
   struct pbuf *p, *q = NULL;
   u16_t i;
@@ -126,12 +142,6 @@ pbuf_init(void)
   /* The ->next pointer of last pbuf is NULL to indicate that there
      are no more pbufs in the pool */
   q->next = NULL;
-
-#if !SYS_LIGHTWEIGHT_PROT
-  pbuf_pool_alloc_lock = 0;
-  pbuf_pool_free_lock = 0;
-  pbuf_pool_free_sem = sys_sem_new(1);
-#endif
 }
 
 /**
@@ -140,49 +150,55 @@ pbuf_init(void)
 static struct pbuf *
 pbuf_pool_alloc(void)
 {
-  struct pbuf *p = NULL;
+  struct pbuf *p;
 
   SYS_ARCH_DECL_PROTECT(old_level);
   SYS_ARCH_PROTECT(old_level);
 
-#if !SYS_LIGHTWEIGHT_PROT
-  /* Next, check the actual pbuf pool, but if the pool is locked, we
-     pretend to be out of buffers and return NULL. */
-  if (pbuf_pool_free_lock) {
+  p = pbuf_pool;
+  if (p) {
+    pbuf_pool = p->next;
 #if PBUF_STATS
-    ++lwip_stats.pbuf.alloc_locked;
-#endif /* PBUF_STATS */
-    return NULL;
-  }
-  pbuf_pool_alloc_lock = 1;
-  if (!pbuf_pool_free_lock) {
-#endif /* SYS_LIGHTWEIGHT_PROT */
-    p = pbuf_pool;
-    if (p) {
-      pbuf_pool = p->next;
-    }
-#if !SYS_LIGHTWEIGHT_PROT
-#if PBUF_STATS
-  } else {
-    ++lwip_stats.pbuf.alloc_locked;
-#endif /* PBUF_STATS */
-  }
-  pbuf_pool_alloc_lock = 0;
-#endif /* SYS_LIGHTWEIGHT_PROT */
-
-#if PBUF_STATS
-  if (p != NULL) {
     ++lwip_stats.pbuf.used;
     if (lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
       lwip_stats.pbuf.max = lwip_stats.pbuf.used;
     }
-  }
 #endif /* PBUF_STATS */
+  } else {
+    LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_pool_alloc: Out of pbufs in pool.\n"));
+#if PBUF_STATS
+    ++lwip_stats.pbuf.err;
+#endif /* PBUF_STATS */
+  }
 
   SYS_ARCH_UNPROTECT(old_level);
   return p;
 }
 
+/**
+ * @internal only called from pbuf_free()
+ *
+ * Implemented as static function to make it easy to change pbuf_pool
+ * implementation.
+ */
+static void
+pbuf_pool_free(struct pbuf *p)
+{
+  SYS_ARCH_DECL_PROTECT(old_level);
+  
+  LWIP_DEBUG_ASSERT("p->ref == 0", p->ref == 0);
+
+  p->len = p->tot_len = PBUF_POOL_BUFSIZE;
+  p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
+  /* put p at the front of the pool */
+  SYS_ARCH_PROTECT(old_level);
+  p->next = pbuf_pool;
+  pbuf_pool = p;
+#if PBUF_STATS
+  --lwip_stats.pbuf.used;
+#endif
+  SYS_ARCH_UNPROTECT(old_level);
+}
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
@@ -249,9 +265,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p = pbuf_pool_alloc();
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
-#if PBUF_STATS
-      ++lwip_stats.pbuf.err;
-#endif /* PBUF_STATS */
       return NULL;
     }
     p->next = NULL;
@@ -277,10 +290,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     while (rem_len > 0) {
       q = pbuf_pool_alloc();
       if (q == NULL) {
-       LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_alloc: Out of pbufs in pool.\n"));
-#if PBUF_STATS
-        ++lwip_stats.pbuf.err;
-#endif /* PBUF_STATS */
         /* free chain so far allocated */
         pbuf_free(p);
         /* bail out unsuccesfully */
@@ -348,33 +357,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   return p;
 }
 
-
-#if PBUF_STATS
-#define DEC_PBUF_STATS do { --lwip_stats.pbuf.used; } while (0)
-#else /* PBUF_STATS */
-#define DEC_PBUF_STATS
-#endif /* PBUF_STATS */
-
-#define PBUF_POOL_FAST_FREE(p)  do {                                    \
-                                  p->next = pbuf_pool;                  \
-                                  pbuf_pool = p;                        \
-                                  DEC_PBUF_STATS;                       \
-                                } while (0)
-
-#if SYS_LIGHTWEIGHT_PROT
-#define PBUF_POOL_FREE(p)  do {                                         \
-                                SYS_ARCH_DECL_PROTECT(old_level);       \
-                                SYS_ARCH_PROTECT(old_level);            \
-                                PBUF_POOL_FAST_FREE(p);                 \
-                                SYS_ARCH_UNPROTECT(old_level);          \
-                               } while (0)
-#else /* SYS_LIGHTWEIGHT_PROT */
-#define PBUF_POOL_FREE(p)  do {                                         \
-                             sys_sem_wait(pbuf_pool_free_sem);          \
-                             PBUF_POOL_FAST_FREE(p);                    \
-                             sys_sem_signal(pbuf_pool_free_sem);        \
-                           } while (0)
-#endif /* SYS_LIGHTWEIGHT_PROT */
 
 /**
  * Shrink a pbuf chain to a desired length.
@@ -601,8 +583,8 @@ pbuf_free(struct pbuf *p)
     u16_t ref;
     SYS_ARCH_DECL_PROTECT(old_level);
     /* Since decrementing ref cannot be guaranteed to be a single machine operation
-     * we must protect it. Also, the later test of ref must be protected.
-     */
+     * we must protect it. We put the new ref into a local variable to prevent
+     * further protection. */
     SYS_ARCH_PROTECT(old_level);
     /* all pbufs in a chain are referenced at least once */
     LWIP_ASSERT("pbuf_free: p->ref > 0", p->ref > 0);
@@ -617,9 +599,7 @@ pbuf_free(struct pbuf *p)
       flags = p->flags;
       /* is this a pbuf from the pool? */
       if (flags == PBUF_FLAG_POOL) {
-        p->len = p->tot_len = PBUF_POOL_BUFSIZE;
-        p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
-        PBUF_POOL_FREE(p);
+        pbuf_pool_free(p);
       /* is this a ROM or RAM referencing pbuf? */
       } else if (flags == PBUF_FLAG_ROM || flags == PBUF_FLAG_REF) {
         memp_free(MEMP_PBUF, p);
