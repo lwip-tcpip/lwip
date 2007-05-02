@@ -90,8 +90,6 @@ pbuf_init(void)
 {
   LWIP_ASSERT("pbuf_init: sizeof(struct pbuf) must be a multiple of MEM_ALIGNMENT",
               (sizeof(struct pbuf) % MEM_ALIGNMENT) == 0);
-  printf("PBUF_POOL_BUFSIZE = %d\n", PBUF_POOL_BUFSIZE);
-  printf("MEM_ALIGNMENT = %d\n", MEM_ALIGNMENT);
   LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
               (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
 
