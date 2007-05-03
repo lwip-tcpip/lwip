@@ -117,6 +117,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-03 "maq"
+  * sockets.c: Fix ioctl FIONREAD when some data remains from last recv.
+    (patch #3574).
+
   2007-04-23 Simon Goldschmidt
   * loopif.c, loopif.h, opt.h, src/netif/FILES: fix bug #2595: "loopif results
     in NULL reference for incoming TCP packets". Loopif has to be configured

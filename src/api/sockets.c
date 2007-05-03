@@ -1406,6 +1406,7 @@ int lwip_setsockopt (int s, int level, int optname, const void *optval, socklen_
 int lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_socket *sock = get_socket(s);
+  u16_t buflen = 0;
 
   if (!sock)
     return -1;
@@ -1419,7 +1420,15 @@ int lwip_ioctl(int s, long cmd, void *argp)
 
     *((u16_t*)argp) = sock->conn->recv_avail;
 
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %u\n", s, argp, *((u16_t*)argp)));
+	/* Check if there is data left from the last recv operation. /maq 041215 */
+    if (sock->lastdata) {
+      buflen = netbuf_len(sock->lastdata);
+      buflen -= sock->lastoffset;
+
+	  *((u16_t*)argp) += buflen;
+	}
+
+	LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %u\n", s, argp, *((u16_t*)argp)));
     sock_set_errno(sock, 0);
     return 0;
 
