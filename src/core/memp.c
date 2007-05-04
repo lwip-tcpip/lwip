@@ -165,7 +165,6 @@ void *
 memp_malloc(memp_t type)
 {
   struct memp *memp;
-  void *mem;
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_DECL_PROTECT(old_level);
 #endif
@@ -189,7 +188,6 @@ memp_malloc(memp_t type)
       lwip_stats.memp[type].max = lwip_stats.memp[type].used;
     }
 #endif /* MEMP_STATS */
-    mem = (u8_t *)memp + MEMP_SIZE;
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
   } else {
@@ -197,7 +195,6 @@ memp_malloc(memp_t type)
 #if MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */
-    mem = NULL;
   }
 
 #if SYS_LIGHTWEIGHT_PROT
@@ -206,7 +203,7 @@ memp_malloc(memp_t type)
   sys_sem_signal(mutex);
 #endif /* SYS_LIGHTWEIGHT_PROT */  
 
-  return mem;
+  return (void*)memp;
 }
 
 void
@@ -220,8 +217,10 @@ memp_free(memp_t type, void *mem)
   if (mem == NULL) {
     return;
   }
+  LWIP_ASSERT("memp_free: mem properly aligned",
+                ((mem_ptr_t)mem % MEM_ALIGNMENT) == 0);
 
-  memp = (struct memp *)((u8_t *)mem - MEMP_SIZE);
+  memp = (struct memp *)mem;
 
 #if SYS_LIGHTWEIGHT_PROT
   SYS_ARCH_PROTECT(old_level);

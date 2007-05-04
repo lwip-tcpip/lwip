@@ -125,6 +125,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-04 Simon Goldschmidt
+  * memp.c: checked in patch #5913: in memp_malloc() we can return memp as mem
+    to save a little RAM (next pointer of memp is not used while not in pool).
+
   2007-05-03 "maq"
   * sockets.c: Fix ioctl FIONREAD when some data remains from last recv.
     (patch #3574).
