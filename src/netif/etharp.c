@@ -104,6 +104,7 @@ struct etharp_entry {
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
+static u8_t etharp_cached_entry = 0;
 
 /**
  * Try hard to create a new entry - we want the IP address to appear in
@@ -232,6 +233,19 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   u8_t age_queue = 0;
 #endif
 
+  /* First, test if the last call to this function asked for the
+   * same address. If so, we're really fast! */
+  if (ipaddr) {
+    /* ipaddr to search for was given */
+    if (arp_table[etharp_cached_entry].state == ETHARP_STATE_STABLE) {
+      /* the cached entry is stable */
+      if (ip_addr_cmp(ipaddr, &arp_table[etharp_cached_entry].ipaddr)) {
+        /* cached entry was the right one! */
+        return etharp_cached_entry;
+      }
+    }
+  }
+
   /**
    * a) do a search through the cache, remember candidates
    * b) select candidate entry
@@ -260,6 +274,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: found matching pending entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
+        etharp_cached_entry = i;
         return i;
 #if ARP_QUEUEING
       /* pending with queued packets? */
@@ -283,6 +298,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: found matching stable entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
+        etharp_cached_entry = i;
         return i;
       /* remember entry with oldest stable entry in oldest, its age in maxtime */
       } else if (arp_table[i].ctime >= age_stable) {
@@ -357,6 +373,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
   }
   arp_table[i].ctime = 0;
+  etharp_cached_entry = i;
   return (err_t)i;
 }
 

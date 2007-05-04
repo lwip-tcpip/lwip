@@ -23,6 +23,10 @@ HISTORY
 
   ++ New features:
 
+  2007-05-04 Simon Goldschmidt (Atte Kojo)
+  * etharp.c: Introduced fast one-entry-cache to speed up ARP lookup when sending
+    multiple packets to the same host.
+
   2007-05-04 Frédéric Bernon, Jonathan Larmour
   * sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c: Fix bug #19162 "lwip_sento: a possible
     to corrupt remote addr/port connection state". Reduce problems "not enought memory" with
