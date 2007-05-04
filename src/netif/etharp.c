@@ -864,7 +864,11 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       }
       if(copy_needed) {
         /* copy the whole packet into new pbufs */
-        p = pbuf_copy(q);
+        p = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+        if (pbuf_copy(p, q) != ERR_OK) {
+          pbuf_free(p);
+          p = NULL;
+        }
       } else {
         /* referencing the old pbuf is enough */
         p = q;

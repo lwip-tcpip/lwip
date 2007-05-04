@@ -130,6 +130,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-05-04 Simon Goldschmidt
+  * pbuf.c, pbuf.h, etharp.c: Further update to ARP queueing: Changed pbuf_copy()
+    implementation so that it can be reused (don't allocate the target
+    pbuf inside pbuf_copy()).
+
+  2007-05-04 Simon Goldschmidt
   * memp.c: checked in patch #5913: in memp_malloc() we can return memp as mem
     to save a little RAM (next pointer of memp is not used while not in pool).
 

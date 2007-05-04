@@ -775,39 +775,73 @@ pbuf_dechain(struct pbuf *p)
  *
  * @return Pointer to head of pbuf chain
  */
-struct pbuf *
-pbuf_copy(struct pbuf *p)
+err_t
+pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 {
-  u16_t copied=0;
-  struct pbuf *p_copy;
-  LWIP_ASSERT("pbuf_copy: p != NULL\n", p != NULL);
-  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_copy(%p)\n", (void*)p));
+  u16_t offset_to=0, offset_from=0, len;
+#ifdef LWIP_DEBUG  
+  u16_t copied=0, shouldbe;
+#endif
 
-  /* allocate one pbuf to hold the complete packet */
-  p_copy = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if(p_copy == NULL) {
-    /* out of memory */
-    return NULL;
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_copy(%p, %p)\n", p_to, p_from));
+
+  /* is the target big enough to hold the source? */
+  if ((p_to == NULL) || (p_from == NULL) || (p_to->tot_len < p_from->tot_len)) {
+    LWIP_ASSERT("pbuf_copy: p_to != NULL\n", p_to != NULL);
+    LWIP_ASSERT("pbuf_copy: p_from != NULL\n", p_from != NULL);
+    LWIP_ASSERT("pbuf_copy: p_to->tot_len >= p_from->tot_len\n", p_to->tot_len >= p_from->tot_len);
+    return ERR_ARG;
   }
+#ifdef LWIP_DEBUG  
+  shouldbe = p_from->tot_len;
+#endif
 
   /* iterate through pbuf chain */
   do
   {
+    LWIP_ASSERT("p_to != NULL", p_to != NULL);
     /* copy one part of the original chain */
-    memcpy((char*)p_copy->payload + copied, p->payload, p->len);
-    copied += p->len;
-    LWIP_DEBUGF(PBUF_DEBUG, ("pbuf_copy: copied pbuf %p\n", (void *)p));
+    if ((p_to->len - offset_to) >= (p_from->len - offset_from)) {
+      /* complete current p_from fits into current p_to */
+      len = p_from->len - offset_from;
+    } else {
+      /* current p_from does not fit into current p_to */
+      len = p_to->len - offset_to;
+    }
+    memcpy((u8_t*)p_to->payload + offset_to, (u8_t*)p_from->payload + offset_from, len);
+#ifdef LWIP_DEBUG  
+    copied += len;
+#endif
+    offset_to += len;
+    offset_from += len;
+    LWIP_ASSERT("offset_to <= p_to->len", offset_to <= p_to->len);
+    if (offset_to == p_to->len) {
+      /* on to next p_to (if any) */
+      offset_to = 0;
+      p_to = p_to->next;
+    }
+    LWIP_ASSERT("offset_from <= p_from->len", offset_to <= p_from->len);
+    if (offset_from >= p_from->len) {
+      /* on to next p_from (if any) */
+      offset_from = 0;
+      p_from = p_from->next;
+    }
 
-    if(p->len == p->tot_len) {
+    if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
       LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
-                  p->next == NULL);
+                  p_from->next == NULL);
     }
-    /* proceed to next pbuf in original chain */
-    p = p->next;
-  } while (p);
+    if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
+      /* don't copy more than one packet! */
+      LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
+                  p_to->next == NULL);
+    }
+  } while (p_from);
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));
-
-  return p_copy;
+#ifdef LWIP_DEBUG  
+  LWIP_ASSERT("shouldbe == copied", shouldbe == copied);
+#endif
+  return ERR_OK;
 }
 #endif /* ARP_QUEUEING */
