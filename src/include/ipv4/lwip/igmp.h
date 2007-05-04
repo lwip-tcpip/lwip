@@ -131,7 +131,7 @@ err_t  igmp_joingroup( struct netif* ifp, struct ip_addr *groupaddr);
 
 err_t  igmp_leavegroup( struct netif* ifp, struct ip_addr *groupaddr);
 
-void   igmp_tick();
+void   igmp_tick(void *arg);
 
 void   igmp_timeout( struct igmp_group *group);
 
