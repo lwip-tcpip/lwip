@@ -181,6 +181,6 @@ u8_t netif_is_up(struct netif *netif);
  * Set callback to be called when interface is brought up/down
  */
 void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif ));
-#endif	/* LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_CALLBACK */
 
 #endif /* __LWIP_NETIF_H__ */

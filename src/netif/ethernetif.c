@@ -103,7 +103,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   initiate transfer();
   
 #if ETH_PAD_SIZE
-  pbuf_header(p, -ETH_PAD_SIZE);			/* drop the padding word */
+  pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
   for(q = p; q != NULL; q = q->next) {
@@ -116,7 +116,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   signal that packet should be sent();
 
 #if ETH_PAD_SIZE
-  pbuf_header(p, ETH_PAD_SIZE);			/* reclaim the padding word */
+  pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
   
 #if LINK_STATS
@@ -146,7 +146,7 @@ low_level_input(struct netif *netif)
   len = ;
 
 #if ETH_PAD_SIZE
-  len += ETH_PAD_SIZE;						/* allow room for Ethernet padding */
+  len += ETH_PAD_SIZE; /* allow room for Ethernet padding */
 #endif
 
   /* We allocate a pbuf chain of pbufs from the pool. */
@@ -155,7 +155,7 @@ low_level_input(struct netif *netif)
   if (p != NULL) {
 
 #if ETH_PAD_SIZE
-    pbuf_header(p, -ETH_PAD_SIZE);			/* drop the padding word */
+    pbuf_header(p, -ETH_PAD_SIZE); /* drop the padding word */
 #endif
 
     /* We iterate over the pbuf chain until we have read the entire
@@ -296,10 +296,9 @@ ethernetif_init(struct netif *netif)
     
   ethernetif = mem_malloc(sizeof(struct ethernetif));
   
-  if (ethernetif == NULL)
-  {
-  	LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
-  	return ERR_MEM;
+  if (ethernetif == NULL) {
+    LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_init: out of memory\n"));
+    return ERR_MEM;
   }
 
 #if LWIP_NETIF_HOSTNAME
