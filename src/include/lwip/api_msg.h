@@ -70,7 +70,8 @@ struct api_msg_msg {
   struct netconn *conn;
   enum netconn_type conntype;
   union {
-    struct pbuf *p;   
+    struct pbuf *p;
+    struct netbuf *b;
     struct  {
       struct ip_addr *ipaddr;
       u16_t port;

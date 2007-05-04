@@ -57,8 +57,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     pbuf_ref(p);
     buf->p = p;
     buf->ptr = p;
-    buf->fromaddr = addr;
-    buf->fromport = pcb->protocol;
+    buf->addr = addr;
+    buf->port = pcb->protocol;
 
     conn->recv_avail += p->tot_len;
     /* Register event with callback */
@@ -95,8 +95,8 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     } else {
       buf->p = p;
       buf->ptr = p;
-      buf->fromaddr = addr;
-      buf->fromport = port;
+      buf->addr = addr;
+      buf->port = port;
     }
 
     conn->recv_avail += p->tot_len;
@@ -581,7 +581,11 @@ do_send(struct api_msg_msg *msg)
       switch (msg->conn->type) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        raw_send(msg->conn->pcb.raw, msg->msg.p);
+        if (msg->msg.b->addr==NULL) {
+          raw_send(msg->conn->pcb.raw, msg->msg.b->p);
+        } else {
+          raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, msg->msg.b->addr);
+        }
         break;
 #endif
 #if LWIP_UDP
@@ -590,7 +594,11 @@ do_send(struct api_msg_msg *msg)
       case NETCONN_UDPNOCHKSUM:
         /* FALLTHROUGH */
       case NETCONN_UDP:
-        udp_send(msg->conn->pcb.udp, msg->msg.p);
+        if (msg->msg.b->addr==NULL) {
+          udp_send(msg->conn->pcb.udp, msg->msg.b->p);
+        } else {
+          udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, msg->msg.b->addr, msg->msg.b->port);
+        }
         break;
 #endif /* LWIP_UDP */
       case NETCONN_TCP:

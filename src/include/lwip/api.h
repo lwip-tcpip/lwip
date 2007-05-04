@@ -80,8 +80,8 @@ enum netconn_igmp {
 
 struct netbuf {
   struct pbuf *p, *ptr;
-  struct ip_addr *fromaddr;
-  u16_t fromport;
+  struct ip_addr *addr;
+  u16_t port;
 };
 
 struct netconn {
@@ -121,12 +121,13 @@ err_t             netbuf_data     (struct netbuf *buf,
 s8_t              netbuf_next     (struct netbuf *buf);
 void              netbuf_first    (struct netbuf *buf);
 
-void              netbuf_copy     (struct netbuf *buf,
-           void *dataptr, u16_t len);
 void              netbuf_copy_partial(struct netbuf *buf, void *dataptr, 
               u16_t len, u16_t offset);
-struct ip_addr *  netbuf_fromaddr (struct netbuf *buf);
-u16_t             netbuf_fromport (struct netbuf *buf);
+
+#define netbuf_copy(buf,dataptr,len) netbuf_copy_partial(buf, dataptr, len, 0)              
+#define netbuf_len(buf)              ((buf)->p->tot_len)
+#define netbuf_fromaddr(buf)         ((buf)->addr)
+#define netbuf_fromport(buf)         ((buf)->port)
 
 /* Network connection functions: */
 struct netconn *  netconn_new     (enum netconn_type type);
@@ -154,6 +155,8 @@ err_t             netconn_disconnect (struct netconn *conn);
 err_t             netconn_listen  (struct netconn *conn);
 struct netconn *  netconn_accept  (struct netconn *conn);
 struct netbuf *   netconn_recv    (struct netconn *conn);
+err_t             netconn_sendto  (struct netconn *conn,
+           struct netbuf *buf, struct ip_addr *addr, u16_t port);
 err_t             netconn_send    (struct netconn *conn,
            struct netbuf *buf);
 err_t             netconn_write   (struct netconn *conn,

@@ -49,6 +49,7 @@ netbuf *netbuf_new(void)
   if (buf != NULL) {
     buf->p = NULL;
     buf->ptr = NULL;
+    buf->addr = NULL;
     return buf;
   } else {
     return NULL;
@@ -116,12 +117,6 @@ netbuf_chain(struct netbuf *head, struct netbuf *tail)
   memp_free(MEMP_NETBUF, tail);
 }
 
-u16_t
-netbuf_len(struct netbuf *buf)
-{
-  return buf->p->tot_len;
-}
-
 err_t
 netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
 {
@@ -184,24 +179,6 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
   }
 }
 
-void
-netbuf_copy(struct netbuf *buf, void *dataptr, u16_t len)
-{
-  netbuf_copy_partial(buf, dataptr, len, 0);
-}
-
-struct ip_addr *
-netbuf_fromaddr(struct netbuf *buf)
-{
-  return buf->fromaddr;
-}
-
-u16_t
-netbuf_fromport(struct netbuf *buf)
-{
-  return buf->fromport;
-}
-
 struct
 netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
@@ -253,7 +230,6 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
   return conn;
 }
 
-
 struct
 netconn *netconn_new(enum netconn_type t)
 {
@@ -266,7 +242,6 @@ netconn *netconn_new_with_callback(enum netconn_type t,
 {
   return netconn_new_with_proto_and_callback(t,0,callback);
 }
-
 
 err_t
 netconn_delete(struct netconn *conn)
@@ -485,10 +460,12 @@ netconn_recv(struct netconn *conn)
   if (conn == NULL) {
     return NULL;
   }
-  
+
   if (conn->recvmbox == SYS_MBOX_NULL) {
-    conn->err = ERR_CONN;
-    return NULL;
+    if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+      conn->err = ERR_CONN;
+      return NULL;
+    }
   }
 
   if (conn->err != ERR_OK) {
@@ -533,8 +510,8 @@ netconn_recv(struct netconn *conn)
 
     buf->p = p;
     buf->ptr = p;
-    buf->fromport = 0;
-    buf->fromaddr = NULL;
+    buf->port = 0;
+    buf->addr = NULL;
 
     /* Let the stack know that we have taken the data. */
     msg.type = API_MSG_RECV;
@@ -565,6 +542,16 @@ netconn_recv(struct netconn *conn)
 }
 
 err_t
+netconn_sendto(struct netconn *conn, struct netbuf *buf, struct ip_addr *addr, u16_t port)
+{ if (buf!=NULL) {
+    buf->addr = addr;
+    buf->port = port;
+    return netconn_send( conn, buf);
+  }
+  return ERR_VAL;
+} 
+
+err_t
 netconn_send(struct netconn *conn, struct netbuf *buf)
 {
   struct api_msg msg;
@@ -580,7 +567,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
   msg.type = API_MSG_SEND;
   msg.msg.conn = conn;
-  msg.msg.msg.p = buf->p;
+  msg.msg.msg.b = buf;
   api_msg_post(&msg);
   return conn->err;
 }

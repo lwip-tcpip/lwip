@@ -23,6 +23,14 @@ HISTORY
 
   ++ New features:
 
+  2007-05-04 Frédéric Bernon, Jonathan Larmour
+  * sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c: Fix bug #19162 "lwip_sento: a possible
+    to corrupt remote addr/port connection state". Reduce problems "not enought memory" with
+    netbuf (if we receive lot of datagrams). Improve lwip_sendto (only one exchange between
+    sockets api and api_msg which run in tcpip_thread context). Add netconn_sento function.
+    Warning, if you directly access to "fromaddr" & "fromport" field from netbuf struct,
+    these fields are now renamed "addr" & "port".
+
   2007-04-11 Jonathan Larmour
   * sys.h, api_lib.c: Provide new sys_mbox_tryfetch function. Require ports to provide new
     sys_arch_mbox_tryfetch function to get a message if one is there, otherwise return
@@ -503,9 +511,9 @@ HISTORY
 
   2004-10-16 Kieran Mansley <kjm25@cam.ac.uk>
   * tcp.c: Add code to tcp_recved() to send an ACK (window update) immediately,
-	even if one is already pending, if the rcv_wnd is above a threshold
-	(currently TCP_WND/2). This avoids waiting for a timer to expire to send a
-	delayed ACK in order to open the window if the stack is only receiving data.
+    even if one is already pending, if the rcv_wnd is above a threshold
+    (currently TCP_WND/2). This avoids waiting for a timer to expire to send a
+    delayed ACK in order to open the window if the stack is only receiving data.
 
   2004-09-12 Kieran Mansley <kjm25@cam.ac.uk>
   * tcp*.*: Retransmit time-out handling improvement by Sam Jansen.
