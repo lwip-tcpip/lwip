@@ -129,6 +129,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-07 Simon Goldschmidt
+  * mem.c: Another attempt to fix bug #17922.
+
   2007-05-04 Simon Goldschmidt
   * pbuf.c, pbuf.h, etharp.c: Further update to ARP queueing: Changed pbuf_copy()
     implementation so that it can be reused (don't allocate the target
