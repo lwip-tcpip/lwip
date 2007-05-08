@@ -126,7 +126,7 @@ mem_init(void)
 {
   struct mem *mem;
 
-  LWIP_ASSERT("Sanity check alignment", (SIZEOF_STRUCT_MEM % (MEM_ALIGNMENT-1)) == 0);
+  LWIP_ASSERT("Sanity check alignment", (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
 #if 0
   /* Adam original */
@@ -162,7 +162,7 @@ mem_free(void *rmem)
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
     return;
   }
-  LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)rmem) % (MEM_ALIGNMENT-1)) == 0);
+  LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT-1)) == 0);
 
   sys_sem_wait(mem_sem);
 
@@ -422,7 +422,7 @@ mem_malloc(mem_size_t size)
        (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
        (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
-      LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)mem) % (MEM_ALIGNMENT-1)) == 0);
+      LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)mem) & (MEM_ALIGNMENT-1)) == 0);
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
     }
   }
