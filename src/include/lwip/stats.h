@@ -80,9 +80,6 @@ struct stats_pbuf {
   STAT_COUNTER used;
   STAT_COUNTER max;  
   STAT_COUNTER err;
-
-  STAT_COUNTER alloc_locked;
-  STAT_COUNTER refresh_locked;
 };
 
 struct stats_syselem {

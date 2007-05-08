@@ -76,8 +76,6 @@ stats_display_pbuf(struct stats_pbuf *pbuf)
   LWIP_PLATFORM_DIAG(("used: %"STAT_COUNTER_F"\n\t", pbuf->used)); 
   LWIP_PLATFORM_DIAG(("max: %"STAT_COUNTER_F"\n\t", pbuf->max)); 
   LWIP_PLATFORM_DIAG(("err: %"STAT_COUNTER_F"\n\t", pbuf->err)); 
-  LWIP_PLATFORM_DIAG(("alloc_locked: %"STAT_COUNTER_F"\n\t", pbuf->alloc_locked)); 
-  LWIP_PLATFORM_DIAG(("refresh_locked: %"STAT_COUNTER_F"\n", pbuf->refresh_locked));  
 }
 
 void
