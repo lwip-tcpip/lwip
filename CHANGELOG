@@ -23,6 +23,11 @@ HISTORY
 
   ++ New features:
 
+  2007-05-08 Simon Goldschmidt
+  * mem.h: If MEM_LIBC_MALLOC==1, allow the defines (e.g. mem_malloc() -> malloc())
+    to be overriden in case the C-library malloc implementation is not protected
+    against concurrent access.
+
   2007-05-04 Simon Goldschmidt (Atte Kojo)
   * etharp.c: Introduced fast one-entry-cache to speed up ARP lookup when sending
     multiple packets to the same host.

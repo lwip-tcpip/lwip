@@ -46,16 +46,25 @@ typedef u16_t mem_size_t;
 #if MEM_LIBC_MALLOC
 /* aliases for C library malloc() */
 #define mem_init()
+/* in case C library malloc() needs extra protection,
+ * allow these defines to be overridden.
+ */
+#ifndef mem_free
 #define mem_free(x) free(x)
+#endif
+#ifndef mem_malloc
 #define mem_malloc(x) malloc(x)
+#endif
+#ifndef mem_realloc
 #define mem_realloc(x, size) realloc(x,size)
-#else
+#endif
+#else /* MEM_LIBC_MALLOC */
 /* lwIP alternative malloc */
 void mem_init(void);
 void *mem_malloc(mem_size_t size);
 void mem_free(void *mem);
 void *mem_realloc(void *mem, mem_size_t size);
-#endif
+#endif /* MEM_LIBC_MALLOC */
 
 #ifndef MEM_ALIGN_SIZE
 #define MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
