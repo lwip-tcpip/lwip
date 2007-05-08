@@ -195,6 +195,10 @@ mem_free(void *rmem)
   sys_sem_signal(mem_sem);
 }
 
+/* In contrast to its name, mem_realloc can only shrink memory, not expand it.
+ * Since the only use (for now) is in pbuf_realloc (which also can only shrink),
+ * this shouldn't be a problem!
+ */
 void *
 mem_realloc(void *rmem, mem_size_t newsize)
 {
@@ -226,6 +230,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   ptr = (u8_t *)mem - ram;
 
   size = mem->next - ptr - SIZEOF_STRUCT_MEM;
+  LWIP_ASSERT("mem_realloc can only shrink memory", newsize <= size);
 #if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
 #endif /* MEM_STATS */
