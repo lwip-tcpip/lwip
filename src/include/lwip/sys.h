@@ -36,6 +36,9 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #if NO_SYS
 
@@ -194,5 +197,9 @@ void sys_arch_unprotect(sys_prot_t pval);
 #endif /* SYS_LIGHTWEIGHT_PROT */
 
 #endif /* SYS_ARCH_PROTECT */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_SYS_H__ */

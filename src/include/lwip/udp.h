@@ -38,6 +38,10 @@
 #include "lwip/inet.h"
 #include "lwip/ip.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define UDP_HLEN 8
 
 struct udp_hdr {
@@ -101,6 +105,9 @@ void udp_debug_print(struct udp_hdr *udphdr);
 #else
 #define udp_debug_print(udphdr)
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __LWIP_UDP_H__ */
-
-

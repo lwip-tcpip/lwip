@@ -34,6 +34,10 @@
 
 #include "lwip/arch.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IP_ADDR_ANY 0
 
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -85,5 +89,9 @@ u8_t ip_addr_isany(struct ip_addr *addr);
          ntohl(ipaddr->addr[2]) & 0xffff, \
          (ntohl(ipaddr->addr[3]) >> 16) & 0xffff, \
          ntohl(ipaddr->addr[3]) & 0xffff));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_IP_ADDR_H__ */

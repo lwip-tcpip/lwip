@@ -39,6 +39,10 @@
 
 #include "lwip/netif.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ICMP6_DUR  1
 #define ICMP6_TE   3
 #define ICMP6_ECHO 128    /* echo */
@@ -85,6 +89,10 @@ struct icmp_te_hdr {
   u16_t chksum;
   u32_t unused;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_ICMP_H__ */
     

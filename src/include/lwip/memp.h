@@ -35,6 +35,10 @@
 
 #include "lwip/opt.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* If you change this enum, think to update memp_names in stats_display (stats.c) */
 typedef enum {
   MEMP_PBUF,
@@ -60,5 +64,8 @@ void  memp_init(void);
 void *memp_malloc(memp_t type);
 void  memp_free(memp_t type, void *mem);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __LWIP_MEMP_H__  */
-    

@@ -34,6 +34,10 @@
 
 #include "lwip/arch.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -156,5 +160,9 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip4_addr2(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff)
 #define ip4_addr3(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff)
 #define ip4_addr4(ipaddr) ((u16_t)(ntohl((ipaddr)->addr)) & 0xff)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_IP_ADDR_H__ */

@@ -8,6 +8,10 @@
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** period (in seconds) of the application calling dhcp_coarse_tmr() */
 #define DHCP_COARSE_TIMER_SECS 60 
 /** period (in milliseconds) of the application calling dhcp_fine_tmr() */
@@ -220,5 +224,9 @@ void dhcp_fine_tmr(void);
 #define DHCP_OVERLOAD_FILE 1
 #define DHCP_OVERLOAD_SNAME  2
 #define DHCP_OVERLOAD_SNAME_FILE 3
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /*__LWIP_DHCP_H__*/

@@ -41,6 +41,10 @@
 #include "lwip/netif.h"
 #include "lwip/ip.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef ETH_PAD_SIZE
 #define ETH_PAD_SIZE 0
 #endif
@@ -135,5 +139,9 @@ err_t etharp_output(struct netif *netif, struct ip_addr *ipaddr,
          struct pbuf *q);
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __NETIF_ARP_H__ */

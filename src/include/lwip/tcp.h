@@ -42,6 +42,10 @@
 
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct tcp_pcb;
 
 /* Functions for interfacing with TCP: */
@@ -538,7 +542,9 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             npcb->next = NULL; \
                             } while(0)
 #endif /* LWIP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __LWIP_TCP_H__ */
-
-
-

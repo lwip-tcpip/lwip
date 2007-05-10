@@ -22,7 +22,14 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
-  2007-05-08 Simon Goldschmidt
+  2007-05-10 Simon Goldschmidt
+  * *.h (except netif/ppp/*.h): Included patch #5448: include '#ifdef __cplusplus
+    \ extern "C" {' in all header files. Now you can write your application using
+    the lwIP stack in C++ and simply #include the core files. Note I have left
+    out the netif/ppp/*h header files for now, since I don't know which files are
+    included by applications and which are for internal use only.
+
+  2007-05-09 Simon Goldschmidt
   * opt.h, *.c/*.h: Included patch #5920: Create define to override C-library
     memcpy. 2 Defines are created: MEMCPY() for normal memcpy, SMEMCPY() for
     situations where some compilers might inline the copy and save a function

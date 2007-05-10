@@ -36,6 +36,10 @@
 
 #include "arch/cc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef s8_t err_t;
 
 /* Definitions for error constants. */
@@ -69,4 +73,9 @@ extern const char *lwip_strerr(err_t err);
 #else
 #define lwip_strerr(x) ""
 #endif /* LWIP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __LWIP_ERR_H__ */

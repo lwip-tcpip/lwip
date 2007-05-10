@@ -39,6 +39,10 @@
 
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IP_HLEN 40
 
 #define IP_PROTO_ICMP 58
@@ -103,6 +107,10 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #endif /* IP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_IP_H__ */
 

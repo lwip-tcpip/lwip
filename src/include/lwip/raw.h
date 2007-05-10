@@ -38,6 +38,10 @@
 #include "lwip/inet.h"
 #include "lwip/ip.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct raw_pcb {
 /* Common members of all PCB types */
   IP_PCB;
@@ -70,5 +74,8 @@ err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 u8_t              raw_input      (struct pbuf *p, struct netif *inp);
 void             raw_init       (void);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_RAW_H__ */

@@ -36,6 +36,10 @@
 #include "lwip/netifapi.h"
 #include "lwip/pbuf.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #if ETHARP_TCPIP_INPUT
@@ -82,5 +86,8 @@ struct tcpip_msg {
   } msg;
 };
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_TCPIP_H__ */

@@ -36,6 +36,10 @@
 #include "arch/cc.h"
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PBUF_TRANSPORT_HLEN 20
 #define PBUF_IP_HLEN        20
 
@@ -108,6 +112,10 @@ void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_dechain(struct pbuf *p);
 #if ARP_QUEUEING
 err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __LWIP_PBUF_H__ */

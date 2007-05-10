@@ -38,6 +38,10 @@
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if LWIP_STATS
 
 #ifndef LWIP_STATS_LARGE
@@ -178,5 +182,9 @@ void stats_display(void);
 #else
 #define stats_display()
 #endif /* LWIP_STATS_DISPLAY */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_STATS_H__ */

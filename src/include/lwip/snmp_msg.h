@@ -44,6 +44,10 @@
 #include "private_mib.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* The listen port of the SNMP agent. Clients have to make their requests to
    this port. Most standard clients won't work if you change this! */
 #ifndef SNMP_IN_PORT
@@ -296,5 +300,9 @@ err_t snmp_send_response(struct snmp_msg_pstat *m_stat);
 err_t snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap);
 void snmp_coldstart_trap(void);
 void snmp_authfail_trap(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

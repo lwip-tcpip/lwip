@@ -47,6 +47,10 @@
 #include "private_mib.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* MIB object instance */
 #define MIB_OBJECT_NONE 0 
 #define MIB_OBJECT_SCALAR 1
@@ -248,6 +252,10 @@ struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *
 struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_SNMP */
 #endif

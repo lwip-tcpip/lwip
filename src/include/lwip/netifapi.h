@@ -35,6 +35,10 @@
 
 #if LWIP_NETIF_API
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum netifapi_msg_type {
   NETIFAPI_MSG_NETIF_ADD,
   NETIFAPI_MSG_NETIF_REMOVE,
@@ -81,6 +85,10 @@ err_t netifapi_dhcp_stop   ( struct netif *netif);
 /* API for tcpip_thread */
 void  netifapi_msg_input(struct netifapi_msg *msg);
 err_t netifapi_msg_post (struct netifapi_msg *msg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_NETIF_API */
 

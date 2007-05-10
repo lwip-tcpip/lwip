@@ -44,6 +44,10 @@
 #  include "lwip/dhcp.h"
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** must be the maximum of all used hardware address lengths
     across all types of interfaces in use */
 #define NETIF_MAX_HWADDR_LEN 6U
@@ -182,5 +186,9 @@ u8_t netif_is_up(struct netif *netif);
  */
 void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif ));
 #endif /* LWIP_NETIF_CALLBACK */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_NETIF_H__ */

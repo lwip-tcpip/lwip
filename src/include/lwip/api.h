@@ -44,6 +44,10 @@
 
 #include "lwip/err.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NETCONN_NOCOPY 0x00
 #define NETCONN_COPY   0x01
 
@@ -173,6 +177,8 @@ err_t             netconn_join_leave_group (struct netconn *conn,
 
 err_t             netconn_err     (struct netconn *conn);
 
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __LWIP_API_H__ */
-
-

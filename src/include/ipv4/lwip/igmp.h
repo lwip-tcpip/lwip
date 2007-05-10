@@ -38,6 +38,10 @@
 /* IGMP support available? */
 #if defined(LWIP_IGMP) && (LWIP_IGMP > 0)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Some routers are not happy with ROUTER ALERT make it defineable, 1 to enable */
 #define USE_ROUTER_ALERT 0
 
@@ -142,6 +146,10 @@ void   igmp_stop_timer( struct igmp_group *group);
 err_t  igmp_ip_output_if( struct pbuf *p, struct ip_addr *src, struct ip_addr *dest, u8_t ttl, u8_t proto, struct netif *netif);
 
 void   igmp_send( struct igmp_group *group, u8_t type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LWIP_IGMP */
 

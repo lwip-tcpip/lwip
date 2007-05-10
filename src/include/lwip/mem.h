@@ -35,6 +35,10 @@
 #include "lwip/opt.h"
 #include "lwip/arch.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if MEM_SIZE > 64000l
 typedef u32_t mem_size_t;
 #define MEM_SIZE_F U32_F
@@ -74,5 +78,8 @@ void *mem_realloc(void *mem, mem_size_t size);
 #define MEM_ALIGN(addr) ((void *)(((mem_ptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(mem_ptr_t)(MEM_ALIGNMENT-1)))
 #endif
 
-#endif /* __LWIP_MEM_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* __LWIP_MEM_H__ */

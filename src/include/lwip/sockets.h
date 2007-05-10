@@ -33,9 +33,14 @@
 
 #ifndef __LWIP_SOCKETS_H__
 #define __LWIP_SOCKETS_H__
+
 #include "lwip/ip_addr.h"
 #include "opt.h"
 #include "tcp.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct sockaddr_in {
   u8_t sin_len;
@@ -293,5 +298,8 @@ int lwip_ioctl(int s, long cmd, void *argp);
 
 #endif /* LWIP_COMPAT_SOCKETS */
 
-#endif /* __LWIP_SOCKETS_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* __LWIP_SOCKETS_H__ */

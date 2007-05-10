@@ -37,6 +37,10 @@
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* SNMP support available? */
 #if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
 
@@ -308,6 +312,10 @@ void snmp_get_snmpenableauthentraps(u8_t *value);
 #define snmp_set_snmpenableauthentraps(value)
 #define snmp_get_snmpenableauthentraps(value)
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __LWIP_SNMP_H__ */

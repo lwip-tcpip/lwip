@@ -42,6 +42,10 @@
 
 #include "arch/cc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef PACK_STRUCT_BEGIN
 #define PACK_STRUCT_BEGIN
 #endif /* PACK_STRUCT_BEGIN */
@@ -216,5 +220,9 @@ extern int errno;
 #endif
 
 #endif /* LWIP_PROVIDE_ERRNO */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_ARCH_H__ */

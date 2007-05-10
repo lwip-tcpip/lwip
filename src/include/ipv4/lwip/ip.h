@@ -41,6 +41,10 @@
 #include "lwip/err.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void ip_init(void);
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
@@ -148,6 +152,10 @@ void ip_debug_print(struct pbuf *p);
 #else
 #define ip_debug_print(p)
 #endif /* IP_DEBUG */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_IP_H__ */
 

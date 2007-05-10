@@ -38,6 +38,10 @@
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 u16_t inet_chksum(void *dataptr, u16_t len);
 #if 0 /* optimized routine */
 u16_t inet_chksum4(u8_t *dataptr, u16_t len);
@@ -80,19 +84,23 @@ char *inet_ntoa(struct in_addr addr); /* returns ptr to static buffer; not reent
 #define ntohs lwip_ntohs
 #define htonl lwip_htonl
 #define ntohl lwip_ntohl
-#endif
+#endif /* LWIP_PREFIX_BYTEORDER_FUNCS */
 #if LWIP_PLATFORM_BYTESWAP
 #define htons(x) LWIP_PLATFORM_HTONS(x)
 #define ntohs(x) LWIP_PLATFORM_HTONS(x)
 #define htonl(x) LWIP_PLATFORM_HTONL(x)
 #define ntohl(x) LWIP_PLATFORM_HTONL(x)
-#else
+#else /* LWIP_PLATFORM_BYTESWAP */
 u16_t htons(u16_t x);
 u16_t ntohs(u16_t x);
 u32_t htonl(u32_t x);
 u32_t ntohl(u32_t x);
-#endif
+#endif /* LWIP_PLATFORM_BYTESWAP */
 
+#endif /* BYTE_ORDER == BIG_ENDIAN */
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __LWIP_INET_H__ */

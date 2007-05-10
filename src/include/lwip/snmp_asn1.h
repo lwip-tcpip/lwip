@@ -41,6 +41,10 @@
 #include "lwip/pbuf.h"
 #include "lwip/snmp.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SNMP_ASN1_UNIV   (!0x80 | !0x40)
 #define SNMP_ASN1_APPLIC (!0x80 |  0x40)
 #define SNMP_ASN1_CONTXT ( 0x80 | !0x40)
@@ -86,5 +90,9 @@ err_t snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u8_t octets_needed, u32_t va
 err_t snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u8_t octets_needed, s32_t value);
 err_t snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident);
 err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u8_t raw_len, u8_t *raw);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

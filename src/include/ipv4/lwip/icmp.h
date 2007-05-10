@@ -40,6 +40,10 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ICMP_ER 0      /* echo reply */
 #define ICMP_DUR 3     /* destination unreachable */
 #define ICMP_SQ 4      /* source quench */
@@ -107,6 +111,10 @@ PACK_STRUCT_END
 
 #define ICMPH_TYPE_SET(hdr, type) ((hdr)->_type_code = htons(ICMPH_CODE(hdr) | ((type) << 8)))
 #define ICMPH_CODE_SET(hdr, code) ((hdr)->_type_code = htons((code) | (ICMPH_TYPE(hdr) << 8)))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_ICMP_H__ */
     

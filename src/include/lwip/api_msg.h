@@ -43,6 +43,10 @@
 
 #include "lwip/api.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum api_msg_type {
   API_MSG_NEWCONN,
   API_MSG_DELCONN,
@@ -94,5 +98,8 @@ struct api_msg {
 void  api_msg_input(struct api_msg *msg);
 err_t api_msg_post(struct api_msg *msg);
 
-#endif /* __LWIP_API_MSG_H__ */
+#ifdef __cplusplus
+}
+#endif
 
+#endif /* __LWIP_API_MSG_H__ */
