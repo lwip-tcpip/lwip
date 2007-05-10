@@ -130,7 +130,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   idur->type = (u8_t)ICMP6_DUR;
   idur->icode = (u8_t)t;
 
-  memcpy((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   idur->chksum = 0;
@@ -162,7 +162,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   tehdr->icode = (u8_t)t;
 
   /* copy fields from original packet */
-  memcpy((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
 
   /* calculate checksum */
   tehdr->chksum = 0;

@@ -127,7 +127,7 @@ void avGenRand(char *buf, u32_t bufLen)
         MD5Update(&md5, (u_char *)&randCount, sizeof(randCount));
         MD5Final(tmp, &md5);
         randCount++;
-        memcpy(buf, tmp, n);
+        MEMCPY(buf, tmp, n);
         buf += n;
         bufLen -= n;
     }

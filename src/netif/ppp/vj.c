@@ -605,7 +605,7 @@ int vj_uncompress_tcp(
 
 		bufptr = n0->payload;
 		for(q = np; q != NULL; q = q->next) {
-			memcpy(q->payload, bufptr, q->len);
+			MEMCPY(q->payload, bufptr, q->len);
 			bufptr += q->len;
 		}
 
@@ -631,7 +631,7 @@ int vj_uncompress_tcp(
 		n0 = np;
 	}
 	LWIP_ASSERT("n0->len >= cs->cs_hlen", n0->len >= cs->cs_hlen);
-	memcpy(n0->payload, &cs->cs_ip, cs->cs_hlen);
+	MEMCPY(n0->payload, &cs->cs_ip, cs->cs_hlen);
 
 	*nb = n0;
 

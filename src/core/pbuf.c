@@ -808,7 +808,7 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       /* current p_from does not fit into current p_to */
       len = p_to->len - offset_to;
     }
-    memcpy((u8_t*)p_to->payload + offset_to, (u8_t*)p_from->payload + offset_from, len);
+    MEMCPY((u8_t*)p_to->payload + offset_to, (u8_t*)p_from->payload + offset_from, len);
 #ifdef LWIP_DEBUG  
     copied += len;
 #endif

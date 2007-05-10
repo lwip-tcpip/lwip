@@ -22,6 +22,11 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+  2007-05-08 Simon Goldschmidt
+  * opt.h, *.c/*.h: Included patch #5920: Create define to override C-library
+    memcpy. 2 Defines are created: MEMCPY() for normal memcpy, SMEMCPY() for
+    situations where some compilers might inline the copy and save a function
+    call. Also replaced all calls to memcpy() with calls to (S)MEMCPY().
 
   2007-05-08 Simon Goldschmidt
   * mem.h: If MEM_LIBC_MALLOC==1, allow the defines (e.g. mem_malloc() -> malloc())

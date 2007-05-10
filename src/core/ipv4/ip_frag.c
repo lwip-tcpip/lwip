@@ -74,7 +74,7 @@ copy_from_pbuf(struct pbuf *p, u16_t * offset,
   p->len -= *offset;
   while (len) {
     l = len < p->len ? len : p->len;
-    memcpy(buffer, p->payload, l);
+    MEMCPY(buffer, p->payload, l);
     buffer += l;
     len -= l;
     if (len)
@@ -141,7 +141,7 @@ ip_reass(struct pbuf *p)
      buffer. The timer is updated with the maximum age. */
   if (ip_reasstmr == 0) {
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass: new packet\n"));
-    memcpy(iphdr, fraghdr, IP_HLEN);
+    SMEMCPY(iphdr, fraghdr, IP_HLEN);
     ip_reasstmr = IP_REASS_MAXAGE;
     ip_reassflags = 0;
     /* Clear the bitmap. */
@@ -277,7 +277,7 @@ ip_reass(struct pbuf *p)
            ("ip_reass: memcpy from %p (%"S16_F") to %p, %"S16_F" bytes\n",
             (void *)&ip_reassbuf[i], i, q->payload,
             q->len > ip_reasslen - i ? ip_reasslen - i : q->len));
-          memcpy(q->payload, &ip_reassbuf[i],
+          MEMCPY(q->payload, &ip_reassbuf[i],
             q->len > ip_reasslen - i ? ip_reasslen - i : q->len);
           i += q->len;
         }
@@ -333,7 +333,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 
   /* Copy the IP header in it */
   iphdr = rambuf->payload;
-  memcpy(iphdr, p->payload, IP_HLEN);
+  SMEMCPY(iphdr, p->payload, IP_HLEN);
 
   /* Save original offset */
   tmp = ntohs(IPH_OFFSET(iphdr));

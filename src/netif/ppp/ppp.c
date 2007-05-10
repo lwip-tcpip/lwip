@@ -840,7 +840,7 @@ void ppp_send_config(
  */
 void ppp_set_xaccm(int unit, ext_accm *accm)
 {
-    memcpy(pppControl[unit].outACCM, accm, sizeof(ext_accm));
+    SMEMCPY(pppControl[unit].outACCM, accm, sizeof(ext_accm));
     PPPDEBUG((LOG_INFO, "ppp_set_xaccm[%d]: outACCM=%X %X %X %X\n",
                 unit,
                 pppControl[unit].outACCM[0],
@@ -1075,11 +1075,11 @@ int sifaddr(
         st = 0;
         PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
     } else {
-		memcpy(&pc->addrs.our_ipaddr, &o, sizeof(o));
-		memcpy(&pc->addrs.his_ipaddr, &h, sizeof(h));
-		memcpy(&pc->addrs.netmask, &m, sizeof(m));
-		memcpy(&pc->addrs.dns1, &ns1, sizeof(ns1));
-		memcpy(&pc->addrs.dns2, &ns2, sizeof(ns2));
+		SMEMCPY(&pc->addrs.our_ipaddr, &o, sizeof(o));
+		SMEMCPY(&pc->addrs.his_ipaddr, &h, sizeof(h));
+		SMEMCPY(&pc->addrs.netmask, &m, sizeof(m));
+		SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
+		SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
     }
     return st;
 }
@@ -1269,7 +1269,7 @@ static struct pbuf *pppSingleBuf(struct pbuf *p)
 	}
 
 	for(b = p, pl = q->payload; b != NULL; b = b->next) {
-		memcpy(pl, b->payload, b->len);
+		MEMCPY(pl, b->payload, b->len);
 		pl += b->len;
 	}
 
@@ -1394,7 +1394,7 @@ static void pppInput(void *arg)
                 }
 #if BYTE_ORDER == LITTLE_ENDIAN
 		protocol = htons(protocol);
-		memcpy(nb->payload, &protocol, sizeof(protocol));
+		SMEMCPY(nb->payload, &protocol, sizeof(protocol));
 #endif
 		lcp_sprotrej(pd, nb->payload, nb->len);
 	}

@@ -191,7 +191,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (*addrlen > sizeof(sin))
       *addrlen = sizeof(sin);
 
-  memcpy(addr, &sin, *addrlen);
+  SMEMCPY(addr, &sin, *addrlen);
 
   newsock = alloc_socket(newconn);
   if (newsock == -1) {
@@ -412,7 +412,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     if (*fromlen > sizeof(sin))
       *fromlen = sizeof(sin);
 
-    memcpy(from, &sin, *fromlen);
+    SMEMCPY(from, &sin, *fromlen);
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
@@ -890,7 +890,7 @@ int lwip_getpeername (int s, struct sockaddr *name, socklen_t *namelen)
   if (*namelen > sizeof(sin))
       *namelen = sizeof(sin);
 
-  memcpy(name, &sin, *namelen);
+  SMEMCPY(name, &sin, *namelen);
   sock_set_errno(sock, 0);
   return 0;
 }
@@ -922,7 +922,7 @@ int lwip_getsockname (int s, struct sockaddr *name, socklen_t *namelen)
   if (*namelen > sizeof(sin))
       *namelen = sizeof(sin);
 
-  memcpy(name, &sin, *namelen);
+  SMEMCPY(name, &sin, *namelen);
   sock_set_errno(sock, 0);
   return 0;
 }

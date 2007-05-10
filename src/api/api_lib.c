@@ -171,7 +171,7 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
       if (buf_copy_len > len)
           buf_copy_len = len;
       /* copy the necessary parts of the buffer */
-      memcpy(&((char*)dataptr)[left], &((char*)p->payload)[offset], buf_copy_len);
+      MEMCPY(&((char*)dataptr)[left], &((char*)p->payload)[offset], buf_copy_len);
       left += buf_copy_len;
       len -= buf_copy_len;
       offset = 0;
