@@ -195,6 +195,7 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 
   timeout = memp_malloc(MEMP_SYS_TIMEOUT);
   if (timeout == NULL) {
+    LWIP_ASSERT("sys_timeout: timeout != NULL", timeout != NULL);
     return;
   }
   timeout->next = NULL;
@@ -208,6 +209,8 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
     (void *)timeout, msecs, (void *)h, (void *)arg));
 
   LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
+  if (timeouts == NULL)
+    return;
 
   if (timeouts->next == NULL) {
     timeouts->next = timeout;
@@ -246,6 +249,9 @@ sys_untimeout(sys_timeout_handler h, void *arg)
 
     timeouts = sys_arch_timeouts();
 
+    LWIP_ASSERT("sys_untimeout: timeouts != NULL", timeouts != NULL);
+    if (timeouts == NULL)
+        return;
     if (timeouts->next == NULL)
         return;
 
