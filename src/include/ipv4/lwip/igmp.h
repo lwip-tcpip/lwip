@@ -35,6 +35,8 @@
 #ifndef IGMPH
 #define IGMPH
 
+#include "lwip/opt.h"
+
 /* IGMP support available? */
 #if defined(LWIP_IGMP) && (LWIP_IGMP > 0)
 
