@@ -60,13 +60,16 @@ struct mem {
 };
 
 /* All allocated blocks will be MIN_SIZE bytes big, at least! */
-#define MIN_SIZE             MEM_ALIGN_SIZE(12)
+#ifndef MIN_SIZE
+#define MIN_SIZE             12
+#endif /* MIN_SIZE */
+#define MIN_SIZE_ALIGNED     MEM_ALIGN_SIZE(MIN_SIZE)
 #define SIZEOF_STRUCT_MEM    MEM_ALIGN_SIZE(sizeof(struct mem))
 #define MEM_SIZE_ALIGNED     MEM_ALIGN_SIZE(MEM_SIZE)
 
 static struct mem *ram_end;
 /* the heap. we need one struct mem at the end and some room for alignment */
-static u8_t ram_heap[MEM_SIZE_ALIGNED + SIZEOF_STRUCT_MEM + MEM_ALIGNMENT];
+static u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
 static u8_t *ram; /* for alignment, ram is now a pointer instead of an array */
 static struct mem *lfree; /* pointer to the lowest free block */
 static sys_sem_t mem_sem; /* concurrent access protection */
