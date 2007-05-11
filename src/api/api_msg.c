@@ -342,7 +342,7 @@ pcb_new(struct api_msg_msg *msg)
   return msg->conn->err;
 }
 
-static void
+void
 do_newconn(struct api_msg_msg *msg)
 {
    if(msg->conn->pcb.tcp == NULL) {
@@ -355,7 +355,7 @@ do_newconn(struct api_msg_msg *msg)
    sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-static void
+void
 do_delconn(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp != NULL) {
@@ -407,7 +407,7 @@ do_delconn(struct api_msg_msg *msg)
   }
 }
 
-static void
+void
 do_bind(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
@@ -465,7 +465,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 #endif /* LWIP_TCP */
 
-static void
+void
 do_connect(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
@@ -505,7 +505,7 @@ do_connect(struct api_msg_msg *msg)
   }
 }
 
-static void
+void
 do_disconnect(struct api_msg_msg *msg)
 {
   switch (msg->conn->type) {
@@ -530,7 +530,7 @@ do_disconnect(struct api_msg_msg *msg)
 }
 
 
-static void
+void
 do_listen(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp != NULL) {
@@ -572,7 +572,7 @@ do_listen(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-static void
+void
 do_send(struct api_msg_msg *msg)
 {
 
@@ -609,7 +609,7 @@ do_send(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-static void
+void
 do_recv(struct api_msg_msg *msg)
 {
 #if LWIP_TCP
@@ -622,7 +622,7 @@ do_recv(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-static void
+void
 do_write(struct api_msg_msg *msg)
 {
 #if LWIP_TCP  
@@ -673,7 +673,7 @@ do_write(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-static void
+void
 do_close(struct api_msg_msg *msg)
 {
   err_t err;
@@ -711,7 +711,7 @@ do_close(struct api_msg_msg *msg)
 }
  
 #if LWIP_IGMP
-static void
+void
 do_join_leave_group(struct api_msg_msg *msg)
 {
   err_t err = ERR_OK;
@@ -746,34 +746,3 @@ do_join_leave_group(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 #endif /* LWIP_IGMP */
-
-typedef void (* api_msg_decode)(struct api_msg_msg *msg);
-static api_msg_decode decode[API_MSG_MAX] = {
-  do_newconn,
-  do_delconn,
-  do_bind,
-  do_connect,
-  do_disconnect,
-  do_listen,
-  do_send,
-  do_recv,
-  do_write,
-  do_close,
-#if LWIP_IGMP
-  do_join_leave_group
-#endif /* LWIP_IGMP */
-};
-
-void
-api_msg_input(struct api_msg *msg)
-{ struct api_msg_msg msg_copy;
-  msg_copy=msg->msg;
-  decode[msg->type](&msg_copy);
-}
-
-err_t
-api_msg_post(struct api_msg *msg)
-{
-  return tcpip_apimsg(msg);
-}
-

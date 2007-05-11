@@ -84,7 +84,6 @@ err_t netifapi_dhcp_stop   ( struct netif *netif);
 
 /* API for tcpip_thread */
 void  netifapi_msg_input(struct netifapi_msg *msg);
-err_t netifapi_msg_post (struct netifapi_msg *msg);
 
 #ifdef __cplusplus
 }

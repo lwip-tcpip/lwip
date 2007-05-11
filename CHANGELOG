@@ -22,6 +22,13 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2007-05-11 Frédéric Bernon
+  * sockets.c, api_lib.c, api_msg.h, api_msg.c, netifapi.h, netifapi.c, tcpip.c:
+   Include a function pointer instead of a table index in the message to reduce
+   footprint. Disable some part of lwip_send and lwip_sendto if some options are
+   not set (LWIP_TCP, LWIP_UDP, LWIP_RAW).
+
   2007-05-10 Simon Goldschmidt
   * *.h (except netif/ppp/*.h): Included patch #5448: include '#ifdef __cplusplus
     \ extern "C" {' in all header files. Now you can write your application using

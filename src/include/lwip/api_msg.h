@@ -47,29 +47,6 @@
 extern "C" {
 #endif
 
-enum api_msg_type {
-  API_MSG_NEWCONN,
-  API_MSG_DELCONN,
-  
-  API_MSG_BIND,
-  API_MSG_CONNECT,
-  API_MSG_DISCONNECT,
-
-  API_MSG_LISTEN,
-
-  API_MSG_SEND,
-  API_MSG_RECV,
-  API_MSG_WRITE,
-
-  API_MSG_CLOSE,
-
-#if LWIP_IGMP
-  API_MSG_JOIN_LEAVE,
-#endif /* LWIP_IGMP */
- 
-  API_MSG_MAX
-};
-
 struct api_msg_msg {
   struct netconn *conn;
   enum netconn_type conntype;
@@ -91,12 +68,23 @@ struct api_msg_msg {
 };
 
 struct api_msg {
-  enum api_msg_type type;
+  void (* function)(struct api_msg_msg *msg);
   struct api_msg_msg msg;
 };
 
-void  api_msg_input(struct api_msg *msg);
-err_t api_msg_post(struct api_msg *msg);
+void do_newconn         ( struct api_msg_msg *msg);
+void do_delconn         ( struct api_msg_msg *msg);
+void do_bind            ( struct api_msg_msg *msg);
+void do_connect         ( struct api_msg_msg *msg);
+void do_disconnect      ( struct api_msg_msg *msg);
+void do_listen          ( struct api_msg_msg *msg);
+void do_send            ( struct api_msg_msg *msg);
+void do_recv            ( struct api_msg_msg *msg);
+void do_write           ( struct api_msg_msg *msg);
+void do_close           ( struct api_msg_msg *msg);
+#if LWIP_IGMP
+void do_join_leave_group( struct api_msg_msg *msg);
+#endif /* LWIP_IGMP */
 
 #ifdef __cplusplus
 }

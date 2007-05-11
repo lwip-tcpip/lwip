@@ -196,7 +196,7 @@ tcpip_thread(void *arg)
     switch (msg->type) {
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
-      api_msg_input(msg->msg.apimsg);
+      msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
 
 #if ETHARP_TCPIP_INPUT      
