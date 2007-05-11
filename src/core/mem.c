@@ -50,44 +50,38 @@
 #if (MEM_LIBC_MALLOC == 0)
 /* lwIP replacement for your libc malloc() */
 
+/* This does not have to be aligned since for getting its size,
+ * we only use the macro SIZEOF_STRUCT_MEM, which automatically alignes.
+ */
 struct mem {
-  mem_size_t next, prev;
-#if MEM_ALIGNMENT == 1
+  mem_size_t next;
+  mem_size_t prev;
   u8_t used;
-#elif MEM_ALIGNMENT == 2
-  u16_t used;
-#elif MEM_ALIGNMENT == 4
-  u32_t used;
-#elif MEM_ALIGNMENT == 8
-  u64_t used;
-#else
-#error "unhandled MEM_ALIGNMENT size"
-#endif /* MEM_ALIGNMENT */
 };
 
+/* All allocated blocks will be MIN_SIZE bytes big, at least! */
+#define MIN_SIZE             MEM_ALIGN_SIZE(12)
+#define SIZEOF_STRUCT_MEM    MEM_ALIGN_SIZE(sizeof(struct mem))
+#define MEM_SIZE_ALIGNED     MEM_ALIGN_SIZE(MEM_SIZE)
+
 static struct mem *ram_end;
-#if 0
-/* Adam original */
-static u8_t ram[MEM_SIZE + (2*sizeof(struct mem) + MEM_ALIGNMENT)];
-#else
-/* Christiaan alignment fix */
-static u8_t *ram;
-static struct mem ram_heap[1 + ( (MEM_SIZE + sizeof(struct mem) - 1) / sizeof(struct mem))];
-#endif
+/* the heap. we need one struct mem at the end and some room for alignment */
+static u8_t ram_heap[MEM_SIZE_ALIGNED + SIZEOF_STRUCT_MEM + MEM_ALIGNMENT];
+static u8_t *ram; /* for alignment, ram is now a pointer instead of an array */
+static struct mem *lfree; /* pointer to the lowest free block */
+static sys_sem_t mem_sem; /* concurrent access protection */
 
-#define MIN_SIZE 12
-#if 1 /* this one does not align correctly for some, resulting in crashes */
-#define SIZEOF_STRUCT_MEM (unsigned int)MEM_ALIGN_SIZE(sizeof(struct mem))
-#else
-#define SIZEOF_STRUCT_MEM (sizeof(struct mem) + \
-                          (((sizeof(struct mem) % MEM_ALIGNMENT) == 0)? 0 : \
-                          (4 - (sizeof(struct mem) % MEM_ALIGNMENT))))
-#endif
-
-static struct mem *lfree;   /* pointer to the lowest free block */
-
-static sys_sem_t mem_sem;
-
+/*
+ * "Plug holes" by combining adjacent empty struct mems.
+ * After this function is through, there should not exist
+ * one empty struct mem pointing to another empty struct mem.
+ *
+ * @param mem this points to a struct mem which just has been freed
+ * @internal this function is only called by mem_free() and mem_realloc()
+ *
+ * This assumes access to the heap is protected by the calling function
+ * already.
+ */
 static void
 plug_holes(struct mem *mem)
 {
@@ -99,10 +93,11 @@ plug_holes(struct mem *mem)
   LWIP_ASSERT("plug_holes: mem->used == 0", mem->used == 0);
 
   /* plug hole forward */
-  LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE", mem->next <= MEM_SIZE);
+  LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE_ALIGNED", mem->next <= MEM_SIZE_ALIGNED);
 
   nmem = (struct mem *)&ram[mem->next];
   if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
+  	/* if mem->next is unused and not end of ram, combine mem and mem->next */
     if (lfree == nmem) {
       lfree = mem;
     }
@@ -113,6 +108,7 @@ plug_holes(struct mem *mem)
   /* plug hole backward */
   pmem = (struct mem *)&ram[mem->prev];
   if (pmem != mem && pmem->used == 0) {
+  	/* if mem->prev is unused, combine mem and mem->prev */
     if (lfree == mem) {
       lfree = pmem;
     }
@@ -121,38 +117,45 @@ plug_holes(struct mem *mem)
   }
 }
 
+/*
+ * Zero the heap and initialize start, end and lowest-free
+ */
 void
 mem_init(void)
 {
   struct mem *mem;
 
-  LWIP_ASSERT("Sanity check alignment", (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
+  LWIP_ASSERT("Sanity check alignment",
+    (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
-#if 0
-  /* Adam original */
-#else
-  /* Christiaan alignment fix */
-  ram = (u8_t*)ram_heap;
-#endif
-  memset(ram, 0, MEM_SIZE);
+  /* align the heap */
+  ram = MEM_ALIGN(ram_heap);
+  memset(ram, 0, MEM_SIZE_ALIGNED);
+  /* initialize the start of the heap */
   mem = (struct mem *)ram;
-  mem->next = MEM_SIZE;
+  mem->next = MEM_SIZE_ALIGNED;
   mem->prev = 0;
   mem->used = 0;
-  ram_end = (struct mem *)&ram[MEM_SIZE];
+  /* initialize the end of the heap */
+  ram_end = (struct mem *)&ram[MEM_SIZE_ALIGNED];
   ram_end->used = 1;
-  ram_end->next = MEM_SIZE;
-  ram_end->prev = MEM_SIZE;
+  ram_end->next = MEM_SIZE_ALIGNED;
+  ram_end->prev = MEM_SIZE_ALIGNED;
 
   mem_sem = sys_sem_new(1);
 
+  /* initialize the lowest-free pointer to the start of the heap */
   lfree = (struct mem *)ram;
 
 #if MEM_STATS
-  lwip_stats.mem.avail = MEM_SIZE;
+  lwip_stats.mem.avail = MEM_SIZE_ALIGNED;
 #endif /* MEM_STATS */
 }
 
+/* Put a struct mem back on the heap
+ * @param rmem is the data portion of a struct mem as returned by a previous
+ *             call to mem_malloc()
+ */
 void
 mem_free(void *rmem)
 {
@@ -162,8 +165,9 @@ mem_free(void *rmem)
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
     return;
   }
-  LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT-1)) == 0);
+  LWIP_ASSERT("mem_free: sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT-1)) == 0);
 
+  /* protect the heap from concurrent access */
   sys_sem_wait(mem_sem);
 
   LWIP_ASSERT("mem_free: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
@@ -177,20 +181,23 @@ mem_free(void *rmem)
     sys_sem_signal(mem_sem);
     return;
   }
+  /* Get the corresponding struct mem ... */
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
-
+  /* ... which has to be in a used state ... */
   LWIP_ASSERT("mem_free: mem->used", mem->used);
-
+  /* ... and is now unused. */
   mem->used = 0;
 
   if (mem < lfree) {
+    /* the newly freed struct is now the lowest */
     lfree = mem;
   }
 
 #if MEM_STATS
   lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram);
-
 #endif /* MEM_STATS */
+
+  /* finally, see if prev or next are free also */
   plug_holes(mem);
   sys_sem_signal(mem_sem);
 }
@@ -208,15 +215,16 @@ mem_realloc(void *rmem, mem_size_t newsize)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  if ((newsize % MEM_ALIGNMENT) != 0) {
-   newsize += MEM_ALIGNMENT - ((newsize + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
-  }
+  newsize = MEM_ALIGN_SIZE(newsize);
 
-  if (newsize > MEM_SIZE) {
+  if (newsize > MEM_SIZE_ALIGNED) {
     return NULL;
   }
 
-  sys_sem_wait(mem_sem);
+  if(newsize < MIN_SIZE) {
+    /* every data block must be at least MIN_SIZE long */
+    newsize = MIN_SIZE;
+  }
 
   LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
    (u8_t *)rmem < (u8_t *)ram_end);
@@ -225,29 +233,60 @@ mem_realloc(void *rmem, mem_size_t newsize)
     LWIP_DEBUGF(MEM_DEBUG | 3, ("mem_realloc: illegal memory\n"));
     return rmem;
   }
+  /* Get the corresponding struct mem ... */
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
-
+  /* ... and its offset pointer */
   ptr = (u8_t *)mem - ram;
 
   size = mem->next - ptr - SIZEOF_STRUCT_MEM;
   LWIP_ASSERT("mem_realloc can only shrink memory", newsize <= size);
+  if (newsize > size) {
+    /* not supported */
+    return NULL;
+  }
+  if (newsize == size) {
+    /* No change in size, simply return */
+    return rmem;
+  }
+
+  /* protect the heap from concurrent access */
+  sys_sem_wait(mem_sem);
+
 #if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
 #endif /* MEM_STATS */
 
-  if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE < size) {
+  mem2 = (struct mem *)&ram[mem->next];
+  if(mem2->used == 0) {
+    /* The next struct is unused, we can simply move it at little */
+    mem_size_t next;
+    /* remember the old next pointer */
+    next = mem2->next;
+    ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
+    mem2 = (struct mem *)&ram[ptr2];
+    mem2->used = 0;
+    mem2->next = next;
+    mem2->prev = ptr;
+    mem->next = ptr2;
+    if (mem2->next != MEM_SIZE_ALIGNED) {
+      ((struct mem *)&ram[mem2->next])->prev = ptr2;
+    }
+  } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE < size) {
+    /* There's room for another struct mem with at least MIN_SIZE of data. */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
     mem2->used = 0;
     mem2->next = mem->next;
     mem2->prev = ptr;
     mem->next = ptr2;
-    if (mem2->next != MEM_SIZE) {
+    if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
-
-    plug_holes(mem2);
+    /* mem->next is used, so no need to plug holes! */
   }
+  /* else {
+    the remaining space stays unused since it is too small
+  } */
   sys_sem_signal(mem_sem);
   return rmem;
 }
@@ -273,13 +312,13 @@ mem_malloc(mem_size_t size)
     size += MEM_ALIGNMENT - ((size + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
   }
 
-  if (size > MEM_SIZE) {
+  if (size > MEM_SIZE_ALIGNED) {
     return NULL;
   }
 
   sys_sem_wait(mem_sem);
 
-  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE; ptr = ((struct mem *)&ram[ptr])->next) {
+  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE_ALIGNED; ptr = ((struct mem *)&ram[ptr])->next) {
     mem = (struct mem *)&ram[ptr];
     if (!mem->used &&
        mem->next - (ptr + SIZEOF_STRUCT_MEM) >= size + SIZEOF_STRUCT_MEM) {
@@ -289,7 +328,7 @@ mem_malloc(mem_size_t size)
       mem2->prev = ptr;
       mem2->next = mem->next;
       mem->next = ptr2;
-      if (mem2->next != MEM_SIZE) {
+      if (mem2->next != MEM_SIZE_ALIGNED) {
         ((struct mem *)&ram[mem2->next])->prev = ptr2;
       }
 
@@ -330,6 +369,11 @@ mem_malloc(mem_size_t size)
 #else
 /**
  * Adam's mem_malloc() plus solution for bug #17922
+ *
+ * Allocate a block of memory with a minimum of 'size' bytes.
+ * @param size is the minimum size of the requested block in bytes.
+ *
+ * Note that the returned value will always be aligned.
  */
 void *
 mem_malloc(mem_size_t size)
@@ -343,28 +387,36 @@ mem_malloc(mem_size_t size)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  if ((size % MEM_ALIGNMENT) != 0) {
-    size += MEM_ALIGNMENT - ((size + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
+  size = MEM_ALIGN_SIZE(size);
+
+  if(size < MIN_SIZE) {
+    /* every data block must be at least MIN_SIZE long */
+    size = MIN_SIZE;
   }
 
-  if (size > MEM_SIZE) {
+  if (size > MEM_SIZE_ALIGNED) {
     return NULL;
   }
 
+  /* protect the heap from concurrent access */
   sys_sem_wait(mem_sem);
 
-  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE - size; ptr = ((struct mem *)&ram[ptr])->next) {
+  /* Scan through the heap searching for a free block that is big enough,
+   * beginning with the lowest free block.
+   */
+  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE_ALIGNED - size;
+       ptr = ((struct mem *)&ram[ptr])->next) {
     mem = (struct mem *)&ram[ptr];
 
     if ((!mem->used) &&
         (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) {
       /* mem is not used and at least perfect fit is possible */
 
-      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) > size) {
+      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM) + MIN_SIZE) >= size) {
         /* split large block, create empty remainder,
-           remainder must be large enough to contain data: if
+           remainder must be large enough to contain MIN_SIZE data: if
            mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) == size,
-           struct mem will fit in but no data between mem2 and mem2->next
+           struct mem would fit in but no data between mem2 and mem2->next
          */
         ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
         /* create mem2 struct */
@@ -372,35 +424,18 @@ mem_malloc(mem_size_t size)
         mem2->used = 0;
         mem2->next = mem->next;
         mem2->prev = ptr;
+        /* and insert it between mem and mem->next */
         mem->next = ptr2;
         mem->used = 1;
 
-        if (mem2->next != MEM_SIZE) {
+        if (mem2->next != MEM_SIZE_ALIGNED) {
           ((struct mem *)&ram[mem2->next])->prev = ptr2;
         }
-      } else if (mem->next - (ptr + SIZEOF_STRUCT_MEM) > size) {
-        /* near fit: do not split but move mem->next directly behind mem */
-        mem2 = (struct mem *)&ram[mem->next];
-        if (mem2->used) {
-          /* can't move mem2, splitting not possible
-             -> memory between mem and mem2 will be 'lost' */
-          mem->used = 1;
-        } else {
-          mem_size_t next2;
-          /* remember the next pointer */
-          next2 = mem2->next;
-          ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
-          /* create mem2 struct */
-          mem2 = (struct mem *)&ram[ptr2];
-          mem2->used = 0;
-          /* insert the old next pointer */
-          mem2->next = next2;
-          mem2->prev = ptr;
-          mem->next = ptr2;
-          mem->used = 1;
-        }
       } else {
-        /* exact fit: do not split, no mem2 creation */
+        /* near fit or excact fit: do not split, no mem2 creation
+         * also can't move mem->next directly behind mem, since mem->next
+         * will always be used at this point!
+         */
         mem->used = 1;
       }
 
@@ -411,7 +446,7 @@ mem_malloc(mem_size_t size)
       }
 #endif /* MEM_STATS */
       if (mem == lfree) {
-        /* Find next free block after mem */
+        /* Find next free block after mem and update lowest free pointer */
         while (lfree->used && lfree != ram_end) {
           lfree = (struct mem *)&ram[lfree->next];
         }
@@ -422,7 +457,9 @@ mem_malloc(mem_size_t size)
        (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
        (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
-      LWIP_ASSERT("Sanity check alignment", (((mem_ptr_t)mem) & (MEM_ALIGNMENT-1)) == 0);
+      LWIP_ASSERT("mem_malloc: sanity check alignment",
+        (((mem_ptr_t)mem) & (MEM_ALIGNMENT-1)) == 0);
+
       return (u8_t *)mem + SIZEOF_STRUCT_MEM;
     }
   }
