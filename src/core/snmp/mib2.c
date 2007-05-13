@@ -94,8 +94,10 @@ static void icmp_get_value(struct obj_def *od, u16_t len, void *value);
 #if LWIP_TCP
 static void tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void tcp_get_value(struct obj_def *od, u16_t len, void *value);
+#ifdef THIS_SEEMS_UNUSED
 static void tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value);
+#endif
 #endif
 static void udp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void udp_get_value(struct obj_def *od, u16_t len, void *value);
@@ -3597,7 +3599,7 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
       break;
   }
 }
-
+#ifdef THIS_SEEMS_UNUSED
 static void
 tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 {
@@ -3667,6 +3669,7 @@ tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   /** @todo find matching PCB */
 }
+#endif /* if 0 */
 #endif
 
 static void
