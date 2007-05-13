@@ -74,12 +74,14 @@
 
 #define SIZEOF_STRUCT_PBUF   MEM_ALIGN_SIZE(sizeof(struct pbuf))
 
+#if !PBUF_POOL_USES_MEMP
 static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE) + SIZEOF_STRUCT_PBUF];
 
 static struct pbuf *pbuf_pool = NULL;
 
 /* Forward declaration */
 static void pbuf_pool_init(void);
+#endif /* PBUF_POOL_USES_MEMP */
 
 /**
  * Initializes the pbuf module.
@@ -93,9 +95,12 @@ pbuf_init(void)
   LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
               (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
 
+#if !PBUF_POOL_USES_MEMP
   pbuf_pool_init();
+#endif /* PBUF_POOL_USES_MEMP */
 }
 
+#if !PBUF_POOL_USES_MEMP
 /**
  * Initializes the pbuf pool.
  *
@@ -192,6 +197,10 @@ pbuf_pool_free(struct pbuf *p)
 #endif
   SYS_ARCH_UNPROTECT(old_level);
 }
+#else /* PBUF_POOL_USES_MEMP */
+#define pbuf_pool_alloc() memp_malloc(MEMP_PBUF_POOL)
+#define pbuf_pool_free(p) memp_free(MEMP_PBUF_POOL, p)
+#endif /* PBUF_POOL_USES_MEMP */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
@@ -260,6 +269,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     if (p == NULL) {
       return NULL;
     }
+    p->flags = PBUF_FLAG_POOL;
     p->next = NULL;
 
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
@@ -288,6 +298,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
         /* bail out unsuccesfully */
         return NULL;
       }
+      q->flags = PBUF_FLAG_POOL;
       q->next = NULL;
       /* make previous pbuf point to this pbuf */
       r->next = q;
