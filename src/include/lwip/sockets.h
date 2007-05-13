@@ -35,8 +35,7 @@
 #define __LWIP_SOCKETS_H__
 
 #include "lwip/ip_addr.h"
-#include "opt.h"
-#include "tcp.h"
+#include "lwip/opt.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,8 +130,18 @@ struct linger {
 #define IP_TOS             1
 #define IP_TTL             2
 
+#if LWIP_TCP
+/*
+ * Options for level IPPROTO_TCP
+ */
+#define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
+#define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keep_idle milliseconds */
+#define TCP_KEEPIDLE   0x03    /* set pcb->keep_idle  - Same as TCP_KEEPALIVE, but use seconds for get/setsockopt*/
+#define TCP_KEEPINTVL  0x04    /* set pcb->keep_intvl - Use seconds for get/setsockopt */
+#define TCP_KEEPCNT    0x05    /* set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
+#endif /* LWIP_TCP */
 
-#ifdef LWIP_IGMP
+#if LWIP_IGMP
 /*
  * Options and types for UDP multicast traffic handling
  */

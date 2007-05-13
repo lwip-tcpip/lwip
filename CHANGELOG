@@ -153,6 +153,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-13 Simon Goldschmidt
+  * tcp.h, sockets.h, sockets.c: Fixed bug from patch #5865 by moving the defines
+    for socket options (lwip_set/-getsockopt) used with level IPPROTO_TCP from
+    tcp.h to sockets.h.
+
   2007-05-07 Simon Goldschmidt
   * mem.c: Another attempt to fix bug #17922.
 

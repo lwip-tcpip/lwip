@@ -32,6 +32,8 @@
  *
  */
 
+#include "lwip/sockets.h"
+
 #include <string.h>
 
 #include "lwip/opt.h"
@@ -39,7 +41,8 @@
 #include "lwip/arch.h"
 #include "lwip/sys.h"
 #include "lwip/igmp.h"
-#include "lwip/sockets.h"
+#include "lwip/inet.h"
+#include "lwip/tcp.h"
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
