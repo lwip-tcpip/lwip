@@ -65,8 +65,6 @@ struct sys_timeo {u8_t dummy;};
 
 #else /* NO_SYS */
 
-#include "arch/sys_arch.h"
-
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
 #define SYS_ARCH_TIMEOUT 0xffffffffUL
 
@@ -74,6 +72,8 @@ struct sys_timeo {u8_t dummy;};
  * For now we use the same magic value, but we allow this to change in future.
  */
 #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
+
+#include "arch/sys_arch.h"
 
 typedef void (* sys_timeout_handler)(void *arg);
 
