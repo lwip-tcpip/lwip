@@ -72,7 +72,9 @@
 #include "lwip/sys.h"
 #include "arch/perf.h"
 
-static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE + sizeof(struct pbuf))];
+#define SIZEOF_STRUCT_PBUF   MEM_ALIGN_SIZE(sizeof(struct pbuf))
+
+static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE) + SIZEOF_STRUCT_PBUF];
 
 static struct pbuf *pbuf_pool = NULL;
 
@@ -88,8 +90,6 @@ static void pbuf_pool_init(void);
 void
 pbuf_init(void)
 {
-  LWIP_ASSERT("pbuf_init: sizeof(struct pbuf) must be a multiple of MEM_ALIGNMENT",
-              (sizeof(struct pbuf) % MEM_ALIGNMENT) == 0);
   LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
               (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
 
@@ -116,11 +116,6 @@ pbuf_pool_init(void)
 
   pbuf_pool = (struct pbuf *)MEM_ALIGN(pbuf_pool_memory);
 
-  LWIP_ASSERT("pbuf_init: sizeof(struct pbuf) must be a multiple of MEM_ALIGNMENT",
-              (sizeof(struct pbuf) % MEM_ALIGNMENT) == 0);
-  LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
-              (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
-
 #if PBUF_STATS
   lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
 #endif /* PBUF_STATS */
@@ -129,9 +124,9 @@ pbuf_pool_init(void)
   p = pbuf_pool;
 
   for(i = 0; i < PBUF_POOL_SIZE; ++i) {
-    p->next = (struct pbuf *)((u8_t *)p + PBUF_POOL_BUFSIZE + sizeof(struct pbuf));
+    p->next = (struct pbuf *)((u8_t *)p + PBUF_POOL_BUFSIZE + SIZEOF_STRUCT_PBUF);
     p->len = p->tot_len = PBUF_POOL_BUFSIZE;
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + sizeof(struct pbuf)));
+    p->payload = MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF));
     p->flags = PBUF_FLAG_POOL;
     q = p;
     p = p->next;
@@ -187,7 +182,7 @@ pbuf_pool_free(struct pbuf *p)
   LWIP_DEBUG_ASSERT("p->ref == 0", p->ref == 0);
 
   p->len = p->tot_len = PBUF_POOL_BUFSIZE;
-  p->payload = (void *)((u8_t *)p + sizeof(struct pbuf));
+  p->payload = (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF);
   /* put p at the front of the pool */
   SYS_ARCH_PROTECT(old_level);
   p->next = pbuf_pool;
@@ -268,7 +263,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->next = NULL;
 
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + (sizeof(struct pbuf) + offset)));
+    p->payload = MEM_ALIGN((void *)((u8_t *)p + (SIZEOF_STRUCT_PBUF + offset)));
     LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
             ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     /* the total length of the pbuf chain is the requested size */
@@ -301,7 +296,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       q->tot_len = (u16_t)rem_len;
       /* this pbuf length is pool size, unless smaller sized tail */
       q->len = rem_len > PBUF_POOL_BUFSIZE? PBUF_POOL_BUFSIZE: (u16_t)rem_len;
-      q->payload = (void *)((u8_t *)q + sizeof(struct pbuf));
+      q->payload = (void *)((u8_t *)q + SIZEOF_STRUCT_PBUF);
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
       q->ref = 1;
@@ -316,12 +311,12 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     break;
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
-    p = mem_malloc(MEM_ALIGN_SIZE(sizeof(struct pbuf) + offset) + MEM_ALIGN_SIZE(length));
+    p = mem_malloc(MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF + offset) + MEM_ALIGN_SIZE(length));
     if (p == NULL) {
       return NULL;
     }
     /* Set up internal structure of the pbuf. */
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + sizeof(struct pbuf) + offset));
+    p->payload = MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset));
     p->len = p->tot_len = length;
     p->next = NULL;
     p->flags = PBUF_FLAG_RAM;
@@ -470,8 +465,8 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     LWIP_ASSERT("p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL", 
                 p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL);
     /* Check that we aren't going to move off the beginning of the pbuf */
-    LWIP_ASSERT("p->payload - increment_magnitude >= p + sizeof(struct pbuf)",
-                (u8_t *)p->payload - increment_magnitude >= (u8_t *)p + sizeof(struct pbuf));
+    LWIP_ASSERT("p->payload - increment_magnitude >= p + SIZEOF_STRUCT_PBUF",
+                (u8_t *)p->payload - increment_magnitude >= (u8_t *)p + SIZEOF_STRUCT_PBUF);
 #endif
   }
 
@@ -484,7 +479,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     /* set new payload pointer */
     p->payload = (u8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
-    if ((u8_t *)p->payload < (u8_t *)p + sizeof(struct pbuf)) {
+    if ((u8_t *)p->payload < (u8_t *)p + SIZEOF_STRUCT_PBUF) {
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_header: failed as %p < %p (not enough space for new header size)\n",
         (void *)p->payload,
         (void *)(p + 1)));\
