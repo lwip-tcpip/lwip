@@ -70,9 +70,7 @@ static const u16_t memp_sizes[MEMP_MAX] = {
 #if ARP_QUEUEING
   MEM_ALIGN_SIZE(sizeof(struct etharp_q_entry)),
 #endif
-#if PBUF_POOL_USES_MEMP
   MEM_ALIGN_SIZE(sizeof(struct pbuf)) + MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE),
-#endif
   MEM_ALIGN_SIZE(sizeof(struct sys_timeo))
 };
 
@@ -89,9 +87,7 @@ static const u16_t memp_num[MEMP_MAX] = {
 #if ARP_QUEUEING
   MEMP_NUM_ARP_QUEUE,
 #endif
-#if PBUF_POOL_USES_MEMP
   PBUF_POOL_SIZE,
-#endif
   MEMP_NUM_SYS_TIMEOUT
 };
 
@@ -111,10 +107,8 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
 #if ARP_QUEUEING
   MEMP_TYPE_SIZE(MEMP_NUM_ARP_QUEUE, struct etharp_q_entry) +
 #endif
-#if PBUF_POOL_USES_MEMP
   MEMP_TYPE_SIZE(PBUF_POOL_SIZE, struct pbuf) +
-  PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE) +
-#endif
+                 PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE) +
   MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 
 #if !SYS_LIGHTWEIGHT_PROT

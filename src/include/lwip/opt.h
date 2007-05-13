@@ -377,13 +377,6 @@ a lot of data that needs to be copied, this should be set high. */
 
 
 /* ---------- Pbuf options ---------- */
-/* PBUF_POOL_USES_MEMP: if set to 1, PBUF_POOL pbufs are allocated using an
-   additional memp type, which saves some code since a dedicated pbuf pool
-   is not used any more */
-#ifndef PBUF_POOL_USES_MEMP
-#define PBUF_POOL_USES_MEMP             0
-#endif
-
 /* PBUF_POOL_SIZE: the number of buffers in the pbuf pool. */
 #ifndef PBUF_POOL_SIZE
 #define PBUF_POOL_SIZE                  16

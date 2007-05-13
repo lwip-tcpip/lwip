@@ -74,15 +74,6 @@
 
 #define SIZEOF_STRUCT_PBUF   MEM_ALIGN_SIZE(sizeof(struct pbuf))
 
-#if !PBUF_POOL_USES_MEMP
-static u8_t pbuf_pool_memory[MEM_ALIGNMENT - 1 + PBUF_POOL_SIZE * MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE) + SIZEOF_STRUCT_PBUF];
-
-static struct pbuf *pbuf_pool = NULL;
-
-/* Forward declaration */
-static void pbuf_pool_init(void);
-#endif /* PBUF_POOL_USES_MEMP */
-
 /**
  * Initializes the pbuf module.
  *
@@ -94,113 +85,7 @@ pbuf_init(void)
 {
   LWIP_ASSERT("pbuf_init: PBUF_POOL_BUFSIZE not aligned",
               (PBUF_POOL_BUFSIZE % MEM_ALIGNMENT) == 0);
-
-#if !PBUF_POOL_USES_MEMP
-  pbuf_pool_init();
-#endif /* PBUF_POOL_USES_MEMP */
 }
-
-#if !PBUF_POOL_USES_MEMP
-/**
- * Initializes the pbuf pool.
- *
- * A large part of memory is allocated for holding the pool of pbufs.
- * The size of the individual pbufs in the pool is given by the size
- * parameter, and the number of pbufs in the pool by the num parameter.
- *
- * After the memory has been allocated, the pbufs are set up. The
- * ->next pointer in each pbuf is set up to point to the next pbuf in
- * the pool.
- *
- */
-static void
-pbuf_pool_init(void)
-{
-  struct pbuf *p, *q = NULL;
-  u16_t i;
-
-  pbuf_pool = (struct pbuf *)MEM_ALIGN(pbuf_pool_memory);
-
-#if PBUF_STATS
-  lwip_stats.pbuf.avail = PBUF_POOL_SIZE;
-#endif /* PBUF_STATS */
-
-  /* Set up ->next pointers to link the pbufs of the pool together */
-  p = pbuf_pool;
-
-  for(i = 0; i < PBUF_POOL_SIZE; ++i) {
-    p->next = (struct pbuf *)((u8_t *)p + PBUF_POOL_BUFSIZE + SIZEOF_STRUCT_PBUF);
-    p->len = p->tot_len = PBUF_POOL_BUFSIZE;
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF));
-    p->flags = PBUF_FLAG_POOL;
-    q = p;
-    p = p->next;
-  }
-
-  /* The ->next pointer of last pbuf is NULL to indicate that there
-     are no more pbufs in the pool */
-  q->next = NULL;
-}
-
-/**
- * @internal only called from pbuf_alloc()
- */
-static struct pbuf *
-pbuf_pool_alloc(void)
-{
-  struct pbuf *p;
-
-  SYS_ARCH_DECL_PROTECT(old_level);
-  SYS_ARCH_PROTECT(old_level);
-
-  p = pbuf_pool;
-  if (p) {
-    pbuf_pool = p->next;
-#if PBUF_STATS
-    ++lwip_stats.pbuf.used;
-    if (lwip_stats.pbuf.used > lwip_stats.pbuf.max) {
-      lwip_stats.pbuf.max = lwip_stats.pbuf.used;
-    }
-#endif /* PBUF_STATS */
-  } else {
-    LWIP_DEBUGF(PBUF_DEBUG | 2, ("pbuf_pool_alloc: Out of pbufs in pool.\n"));
-#if PBUF_STATS
-    ++lwip_stats.pbuf.err;
-#endif /* PBUF_STATS */
-  }
-
-  SYS_ARCH_UNPROTECT(old_level);
-  return p;
-}
-
-/**
- * @internal only called from pbuf_free()
- *
- * Implemented as static function to make it easy to change pbuf_pool
- * implementation.
- */
-static void
-pbuf_pool_free(struct pbuf *p)
-{
-  SYS_ARCH_DECL_PROTECT(old_level);
-  
-  LWIP_DEBUG_ASSERT("p->ref == 0", p->ref == 0);
-
-  p->len = p->tot_len = PBUF_POOL_BUFSIZE;
-  p->payload = (void *)((u8_t *)p + SIZEOF_STRUCT_PBUF);
-  /* put p at the front of the pool */
-  SYS_ARCH_PROTECT(old_level);
-  p->next = pbuf_pool;
-  pbuf_pool = p;
-#if PBUF_STATS
-  --lwip_stats.pbuf.used;
-#endif
-  SYS_ARCH_UNPROTECT(old_level);
-}
-#else /* PBUF_POOL_USES_MEMP */
-#define pbuf_pool_alloc() memp_malloc(MEMP_PBUF_POOL)
-#define pbuf_pool_free(p) memp_free(MEMP_PBUF_POOL, p)
-#endif /* PBUF_POOL_USES_MEMP */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
@@ -264,7 +149,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   switch (flag) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-    p = pbuf_pool_alloc();
+    p = memp_malloc(MEMP_PBUF_POOL);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
       return NULL;
@@ -291,7 +176,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      q = pbuf_pool_alloc();
+      q = memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
         /* free chain so far allocated */
         pbuf_free(p);
@@ -603,7 +488,7 @@ pbuf_free(struct pbuf *p)
       flags = p->flags;
       /* is this a pbuf from the pool? */
       if (flags == PBUF_FLAG_POOL) {
-        pbuf_pool_free(p);
+        memp_free(MEMP_PBUF_POOL, p);
       /* is this a ROM or RAM referencing pbuf? */
       } else if (flags == PBUF_FLAG_ROM || flags == PBUF_FLAG_REF) {
         memp_free(MEMP_PBUF, p);

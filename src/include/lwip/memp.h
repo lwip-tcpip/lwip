@@ -54,9 +54,7 @@ typedef enum {
 #if ARP_QUEUEING
   MEMP_ARP_QUEUE,
 #endif
-#if PBUF_POOL_USES_MEMP
   MEMP_PBUF_POOL,
-#endif
   MEMP_SYS_TIMEOUT,
 
   MEMP_MAX

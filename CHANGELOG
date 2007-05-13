@@ -24,9 +24,9 @@ HISTORY
   ++ New features:
 
   2007-05-10 Simon Goldschmidt
-  * opt.h, memp.h, memp.c, pbuf.c (see task #6831): Included new option
-    PBUF_POOL_USES_MEMP to use a memp pool for PBUF_POOL pbufs instead of the
-    old pool implementation in pbuf.c to remove redundant code.
+  * opt.h, memp.h, memp.c, pbuf.c (see task #6831): use a new memp pool for
+    PBUF_POOL pbufs instead of the old pool implementation in pbuf.c to reduce
+    code size.
 
   2007-05-11 Frédéric Bernon
   * sockets.c, api_lib.c, api_msg.h, api_msg.c, netifapi.h, netifapi.c, tcpip.c:
