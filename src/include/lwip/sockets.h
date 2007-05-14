@@ -34,8 +34,9 @@
 #ifndef __LWIP_SOCKETS_H__
 #define __LWIP_SOCKETS_H__
 
-#include "lwip/ip_addr.h"
 #include "lwip/opt.h"
+#include "lwip/ip_addr.h"
+#include "lwip/inet.h"
 
 #ifdef __cplusplus
 extern "C" {
