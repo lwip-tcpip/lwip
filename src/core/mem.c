@@ -132,8 +132,8 @@ mem_init(void)
     (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
   /* align the heap */
+  memset(ram_heap, 0, sizeof(ram_heap));
   ram = MEM_ALIGN(ram_heap);
-  memset(ram, 0, MEM_SIZE_ALIGNED);
   /* initialize the start of the heap */
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE_ALIGNED;
@@ -224,9 +224,9 @@ mem_realloc(void *rmem, mem_size_t newsize)
     return NULL;
   }
 
-  if(newsize < MIN_SIZE) {
-    /* every data block must be at least MIN_SIZE long */
-    newsize = MIN_SIZE;
+  if(newsize < MIN_SIZE_ALIGNED) {
+    /* every data block must be at least MIN_SIZE_ALIGNED long */
+    newsize = MIN_SIZE_ALIGNED;
   }
 
   LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
@@ -274,8 +274,8 @@ mem_realloc(void *rmem, mem_size_t newsize)
     if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
-  } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE < size) {
-    /* There's room for another struct mem with at least MIN_SIZE of data. */
+  } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED < size) {
+    /* There's room for another struct mem with at least MIN_SIZE_ALIGNED of data. */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
     mem2->used = 0;
@@ -392,9 +392,9 @@ mem_malloc(mem_size_t size)
      adjust for alignment. */
   size = MEM_ALIGN_SIZE(size);
 
-  if(size < MIN_SIZE) {
-    /* every data block must be at least MIN_SIZE long */
-    size = MIN_SIZE;
+  if(size < MIN_SIZE_ALIGNED) {
+    /* every data block must be at least MIN_SIZE_ALIGNED long */
+    size = MIN_SIZE_ALIGNED;
   }
 
   if (size > MEM_SIZE_ALIGNED) {
@@ -415,9 +415,9 @@ mem_malloc(mem_size_t size)
         (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) {
       /* mem is not used and at least perfect fit is possible */
 
-      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM) + MIN_SIZE) >= size) {
+      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM) + MIN_SIZE_ALIGNED) >= size) {
         /* split large block, create empty remainder,
-           remainder must be large enough to contain MIN_SIZE data: if
+           remainder must be large enough to contain MIN_SIZE_ALIGNED data: if
            mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) == size,
            struct mem would fit in but no data between mem2 and mem2->next
          */
