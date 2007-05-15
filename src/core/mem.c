@@ -100,7 +100,7 @@ plug_holes(struct mem *mem)
 
   nmem = (struct mem *)&ram[mem->next];
   if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
-  	/* if mem->next is unused and not end of ram, combine mem and mem->next */
+    /* if mem->next is unused and not end of ram, combine mem and mem->next */
     if (lfree == nmem) {
       lfree = mem;
     }
@@ -111,7 +111,7 @@ plug_holes(struct mem *mem)
   /* plug hole backward */
   pmem = (struct mem *)&ram[mem->prev];
   if (pmem != mem && pmem->used == 0) {
-  	/* if mem->prev is unused, combine mem and mem->prev */
+    /* if mem->prev is unused, combine mem and mem->prev */
     if (lfree == mem) {
       lfree = pmem;
     }
