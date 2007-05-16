@@ -158,6 +158,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-16 Simon Goldschmidt
+  * mem.c, memp.c: Removed semaphores from memp, changed sys_sem_wait calls
+    into sys_arch_sem_wait calls to prevent timers from running while waiting
+    for the heap. This fixes bug #19167.
+
   2007-05-13 Simon Goldschmidt
   * tcp.h, sockets.h, sockets.c: Fixed bug from patch #5865 by moving the defines
     for socket options (lwip_set/-getsockopt) used with level IPPROTO_TCP from

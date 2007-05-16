@@ -171,7 +171,7 @@ mem_free(void *rmem)
   LWIP_ASSERT("mem_free: sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT-1)) == 0);
 
   /* protect the heap from concurrent access */
-  sys_sem_wait(mem_sem);
+  sys_arch_sem_wait(mem_sem, 0);
 
   LWIP_ASSERT("mem_free: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
     (u8_t *)rmem < (u8_t *)ram_end);
@@ -253,7 +253,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   }
 
   /* protect the heap from concurrent access */
-  sys_sem_wait(mem_sem);
+  sys_arch_sem_wait(mem_sem, 0);
 
 #if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
@@ -319,7 +319,7 @@ mem_malloc(mem_size_t size)
     return NULL;
   }
 
-  sys_sem_wait(mem_sem);
+  sys_arch_sem_wait(mem_sem, 0);
 
   for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE_ALIGNED; ptr = ((struct mem *)&ram[ptr])->next) {
     mem = (struct mem *)&ram[ptr];
@@ -402,7 +402,7 @@ mem_malloc(mem_size_t size)
   }
 
   /* protect the heap from concurrent access */
-  sys_sem_wait(mem_sem);
+  sys_arch_sem_wait(mem_sem, 0);
 
   /* Scan through the heap searching for a free block that is big enough,
    * beginning with the lowest free block.
