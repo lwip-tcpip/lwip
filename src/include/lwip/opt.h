@@ -533,10 +533,6 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEMP_STATS                      1
 #endif
 
-#ifndef PBUF_STATS
-#define PBUF_STATS                      1
-#endif
-
 #ifndef SYS_STATS
 #define SYS_STATS                       1
 #endif
