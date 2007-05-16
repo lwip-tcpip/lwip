@@ -61,6 +61,11 @@ loopif_poll(struct netif *netif)
   struct pbuf *in = NULL;
   struct loopif_private *priv = (struct loopif_private*)netif->state;
 
+  LWIP_ASSERT("priv != NULL", priv != NULL);
+  if(priv == NULL) {
+  	return;
+  }
+
   do {
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
     SYS_ARCH_PROTECT(lev);
@@ -82,10 +87,13 @@ loopif_poll(struct netif *netif)
         in->next = NULL;
         LWIP_ASSERT("packet must not consist of multiple pbufs!", in->len == in->tot_len);
       }
-      netif->input(in, netif);
+      if(netif->input(in, netif) != ERR_OK) {
+      	pbuf_free(in);
+      	in = NULL;
+      }
     }
   /* go on while there is a packet on the list */
-  } while(in != NULL);
+  } while(priv->first != NULL);
 }
 #endif /* LWIP_LOOPIF_MULTITHREADING */
 
@@ -122,7 +130,10 @@ loopif_output(struct netif *netif, struct pbuf *p,
   /* Multithreading environment, netif->input() is supposed to put the packet
      into a mailbox, so we can safely call it here without risking to re-enter
      functions that are not reentrant (TCP!!!) */
-  netif->input(r, netif);
+  if(netif->input(r, netif) != ERR_OK) {
+  	pbuf_free(r);
+  	r = NULL;
+  }
 #else /* LWIP_LOOPIF_MULTITHREADING */
   /* Raw API without threads: put the packet on a linked list which gets emptied
      through calling loopif_poll(). */

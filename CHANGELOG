@@ -159,6 +159,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-05-16 Simon Goldschmidt
+  * loopif.c, slipif.c: Fix bug #19729: free pbuf if netif->input() returns
+    != ERR_OK.
+
+  2007-05-16 Simon Goldschmidt
   * api_msg.c, udp.c: If a udp_pcb has a local_ip set, check if it is the same
     as the one of the netif used for sending to prevent sending from old
     addresses after a netif address gets changed (partly fixes bug #3168).
