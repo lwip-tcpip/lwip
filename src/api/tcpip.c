@@ -127,6 +127,17 @@ dhcp_timer_fine(void *arg)
 }
 #endif /* LWIP_DHCP */
 
+#if LWIP_IGMP
+static void
+igmp_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: igmp_tmr()\n"));
+  igmp_tmr();
+  sys_timeout( IGMP_TMR_INTERVAL, igmp_timer, NULL);
+}
+#endif /* LWIP_IGMP */
+
 #if ETHARP_TCPIP_ETHINPUT
 static void
 ethernet_input(struct pbuf *p, struct netif *netif)
@@ -180,16 +191,18 @@ tcpip_thread(void *arg)
   sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
 #endif /* LWIP_ARP */
 #if LWIP_DHCP
-  sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
-  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
+  sys_timeout( DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
+  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
 #endif /* LWIP_DHCP */
-#if LWIP_IGMP
-  igmp_init();
-#endif /* LWIP_IGMP */
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
+
+#if LWIP_IGMP
+  igmp_init();
+  sys_timeout( IGMP_TMR_INTERVAL, igmp_timer, NULL);
+#endif /* LWIP_IGMP */
 
   while (1) {                          /* MAIN Loop */
     sys_mbox_fetch(mbox, (void *)&msg);

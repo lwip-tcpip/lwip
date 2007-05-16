@@ -121,10 +121,6 @@ void igmp_init(void)
          }
       }
    }
-
-  /* Start the 10 millisecond tick */
-  /* we can optimise this to only run when timers are active later on */
-  sys_timeout( IGMP_TICK, igmp_tick, NULL);
 }
 
 /*-----------------------------------------------------------------------------
@@ -356,12 +352,10 @@ err_t igmp_leavegroup( struct netif *ifp, struct ip_addr *groupaddr)
 }
 
 /*-----------------------------------------------------------------------------
- * igmp_tick
+ * igmp_tmr
  *----------------------------------------------------------------------------*/
-void igmp_tick(void *arg)
+void igmp_tmr()
 { struct igmp_group *group = GroupList;
-
-  arg = arg;
 
   while (group)
    { if (group->timer != 0)
@@ -372,10 +366,6 @@ void igmp_tick(void *arg)
       }
      group = group->next;
    }
-
-  /* 100 millisecond tick handler */
-  /* go down the list of all groups here and check for timeouts */
-  sys_timeout (IGMP_TICK, igmp_tick, NULL);
 }
 
 /*-----------------------------------------------------------------------------

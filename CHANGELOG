@@ -158,6 +158,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-16 Frédéric Bernon
+  * tcpip.c, igmp.h, igmp.c: Fixed bug "#19800 : IGMP: igmp_tick() will not work
+    with NO_SYS=1". Note that igmp_init is always in tcpip_thread (and not in 
+    tcpip_init) because we have to be sure that network interfaces are already
+    added (mac filter is updated only in igmp_init for the moment).
+
   2007-05-16 Simon Goldschmidt
   * mem.c, memp.c: Removed semaphores from memp, changed sys_sem_wait calls
     into sys_arch_sem_wait calls to prevent timers from running while waiting

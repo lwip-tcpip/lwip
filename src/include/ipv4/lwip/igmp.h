@@ -71,7 +71,7 @@ struct igmpmsg {
 #define IGMP_LEAVE_GROUP    0x17 /* Leave-group message      */
 
 /* Timer */
-#define IGMP_TICK           100 /* Milliseconds */
+#define IGMP_TMR_INTERVAL   100 /* Milliseconds */
 
 /* MAC Filter Actions */
 #define IGMP_DEL_MAC_FILTER 0
@@ -137,7 +137,7 @@ err_t  igmp_joingroup( struct netif* ifp, struct ip_addr *groupaddr);
 
 err_t  igmp_leavegroup( struct netif* ifp, struct ip_addr *groupaddr);
 
-void   igmp_tick(void *arg);
+void   igmp_tmr();
 
 void   igmp_timeout( struct igmp_group *group);
 
