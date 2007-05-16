@@ -79,13 +79,6 @@ struct stats_mem {
   mem_size_t err;
 };
 
-struct stats_pbuf {
-  STAT_COUNTER avail;
-  STAT_COUNTER used;
-  STAT_COUNTER max;  
-  STAT_COUNTER err;
-};
-
 struct stats_syselem {
   STAT_COUNTER used;
   STAT_COUNTER max;
@@ -115,9 +108,6 @@ struct stats_ {
 #endif
 #if TCP_STATS
   struct stats_proto tcp;
-#endif
-#if PBUF_STATS
-  struct stats_pbuf pbuf;
 #endif
 #if MEM_STATS
   struct stats_mem mem;

@@ -69,16 +69,6 @@ stats_display_proto(struct stats_proto *proto, char *name)
 }
 
 void
-stats_display_pbuf(struct stats_pbuf *pbuf)
-{
-  LWIP_PLATFORM_DIAG(("\nPBUF\n\t"));
-  LWIP_PLATFORM_DIAG(("avail: %"STAT_COUNTER_F"\n\t", pbuf->avail)); 
-  LWIP_PLATFORM_DIAG(("used: %"STAT_COUNTER_F"\n\t", pbuf->used)); 
-  LWIP_PLATFORM_DIAG(("max: %"STAT_COUNTER_F"\n\t", pbuf->max)); 
-  LWIP_PLATFORM_DIAG(("err: %"STAT_COUNTER_F"\n\t", pbuf->err)); 
-}
-
-void
 stats_display_mem(struct stats_mem *mem, char *name)
 {
   LWIP_PLATFORM_DIAG(("\n MEM %s\n\t", name));
@@ -95,7 +85,7 @@ stats_display(void)
 #if MEMP_STATS
   s16_t i;
   char * memp_names[] = {
-    "PBUF",
+    "PBUF_REF/ROM",
     "RAW_PCB",
     "UDP_PCB",
     "TCP_PCB",
@@ -107,6 +97,7 @@ stats_display(void)
     #if ARP_QUEUEING
     "ARP_QUEUE",
     #endif
+    "PBUF_POOL",
     "SYS_TIMEOUT"
   };
 #endif
@@ -127,9 +118,6 @@ stats_display(void)
 #endif
 #if TCP_STATS
   stats_display_proto(&lwip_stats.tcp, "TCP");
-#endif
-#if PBUF_STATS
-  stats_display_pbuf(&lwip_stats.pbuf);
 #endif
 #if MEM_STATS
   stats_display_mem(&lwip_stats.mem, "HEAP");
