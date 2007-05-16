@@ -582,9 +582,9 @@ do_send(struct api_msg_msg *msg)
 #if LWIP_RAW
       case NETCONN_RAW:
         if (msg->msg.b->addr==NULL) {
-          raw_send(msg->conn->pcb.raw, msg->msg.b->p);
+          msg->conn->err = raw_send(msg->conn->pcb.raw, msg->msg.b->p);
         } else {
-          raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, msg->msg.b->addr);
+          msg->conn->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, msg->msg.b->addr);
         }
         break;
 #endif
@@ -595,9 +595,9 @@ do_send(struct api_msg_msg *msg)
         /* FALLTHROUGH */
       case NETCONN_UDP:
         if (msg->msg.b->addr==NULL) {
-          udp_send(msg->conn->pcb.udp, msg->msg.b->p);
+          msg->conn->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
-          udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, msg->msg.b->addr, msg->msg.b->port);
+          msg->conn->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, msg->msg.b->addr, msg->msg.b->port);
         }
         break;
 #endif /* LWIP_UDP */

@@ -355,6 +355,16 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* use outgoing network interface IP address as source address */
     src_ip = &(netif->ip_addr);
   } else {
+    /* check if UDP PCB local IP address is correct */
+    if (!ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
+      if (q != p) {
+        /* free the header pbuf */
+        pbuf_free(q);
+        q = NULL;
+        /* p is still referenced by the caller, and will live on */
+      }
+      return ERR_VAL;
+    }
     /* use UDP PCB local IP address as source address */
     src_ip = &(pcb->local_ip);
   }

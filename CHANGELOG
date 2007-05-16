@@ -158,6 +158,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-16 Simon Goldschmidt
+  * api_msg.c, udp.c: If a udp_pcb has a local_ip set, check if it is the same
+    as the one of the netif used for sending to prevent sending from old
+    addresses after a netif address gets changed (partly fixes bug #3168).
+
   2007-05-16 Frédéric Bernon
   * tcpip.c, igmp.h, igmp.c: Fixed bug "#19800 : IGMP: igmp_tick() will not work
     with NO_SYS=1". Note that igmp_init is always in tcpip_thread (and not in 
