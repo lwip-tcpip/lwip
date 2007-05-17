@@ -184,7 +184,7 @@ slipif_loop(void *nf)
     p = slipif_input(netif);
     if(netif->input(p, netif) != ERR_OK) {
       pbuf_free(p);
-    	p = NULL;
+      p = NULL;
     }
   }
 }
