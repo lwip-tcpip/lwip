@@ -48,6 +48,9 @@
 extern "C" {
 #endif
 
+/* Throughout this file, IP addresses are expected to be in
+ * the same byte order as in IP_PCB. */
+
 /** must be the maximum of all used hardware address lengths
     across all types of interfaces in use */
 #define NETIF_MAX_HWADDR_LEN 6U
@@ -175,7 +178,7 @@ struct netif *netif_find(char *name);
 void netif_set_default(struct netif *netif);
 
 void netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr);
-void netif_set_netmask(struct netif *netif, struct ip_addr *netmast);
+void netif_set_netmask(struct netif *netif, struct ip_addr *netmask);
 void netif_set_gw(struct netif *netif, struct ip_addr *gw);
 void netif_set_up(struct netif *netif);
 void netif_set_down(struct netif *netif);

@@ -48,6 +48,10 @@
 extern "C" {
 #endif
 
+/* Throughout this file, IP addresses and port numbers are expected to be in
+ * the same byte order as in the corresponding pcb.
+ */
+
 #define NETCONN_NOCOPY 0x00
 #define NETCONN_COPY   0x01
 

@@ -47,6 +47,9 @@
 extern "C" {
 #endif
 
+/* IP addresses and port numbers are expected to be in
+ * the same byte order as in the corresponding pcb.
+ */
 struct api_msg_msg {
   struct netconn *conn;
   enum netconn_type conntype;
