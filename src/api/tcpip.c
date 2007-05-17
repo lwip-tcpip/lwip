@@ -150,10 +150,10 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   switch (htons(ethhdr->type)) {
     /* IP packet? */
     case ETHTYPE_IP:
-      #if ETHARP_TRUST_IP_MAC
+#if ETHARP_TRUST_IP_MAC
       /* update ARP table */
       etharp_ip_input( netif, p);
-      #endif
+#endif
       /* skip Ethernet header */
       if(pbuf_header(p, -(s16_t)sizeof(struct eth_hdr))) {
         LWIP_ASSERT("Can't move over header in packet", 0);
@@ -255,7 +255,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   if (mbox != SYS_MBOX_NULL) {
     msg = memp_malloc(MEMP_TCPIP_MSG);
     if (msg == NULL) {
-      pbuf_free(p);
       return ERR_MEM;
     }
 
@@ -278,8 +277,7 @@ tcpip_ethinput(struct pbuf *p, struct netif *inp)
   if (mbox != SYS_MBOX_NULL) {
     msg = memp_malloc(MEMP_TCPIP_MSG);
     if (msg == NULL) {
-      pbuf_free(p);    
-      return ERR_MEM;  
+      return ERR_MEM;
     }
     
     msg->type = TCPIP_MSG_ETHINPUT;
