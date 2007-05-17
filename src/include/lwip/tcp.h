@@ -170,6 +170,9 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
 #define  TCP_MAXIDLE              TCP_KEEPCNT_DEFAULT * TCP_KEEPINTVL_DEFAULT  /* Maximum KEEPALIVE probe time */
 
+/* Fields are (of course) in network byte order.
+ * Some fields are converted to host byte order in tcp_input().
+ */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -226,6 +229,7 @@ struct tcp_pcb {
   u8_t prio;
   void *callback_arg;
 
+  /* ports are in host byte order */
   u16_t local_port;
   u16_t remote_port;
   
@@ -238,6 +242,8 @@ struct tcp_pcb {
 #define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
 #define TF_NODELAY   (u8_t)0x40U   /* Disable Nagle algorithm */
 
+  /* the rest of the fields are in host byte order
+     as we have to do some math with them */
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */

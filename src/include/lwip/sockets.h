@@ -42,6 +42,7 @@
 extern "C" {
 #endif
 
+/* members are in network byte order */
 struct sockaddr_in {
   u8_t sin_len;
   u8_t sin_family;

@@ -44,6 +44,7 @@ extern "C" {
 
 #define UDP_HLEN 8
 
+/* Fields are (of course) in network byte order. */
 struct udp_hdr {
   PACK_STRUCT_FIELD(u16_t src);
   PACK_STRUCT_FIELD(u16_t dest);  /* src/dest UDP ports */
@@ -64,10 +65,13 @@ struct udp_pcb {
   struct udp_pcb *next;
 
   u8_t flags;
+  /* ports are in host byte order */
   u16_t local_port, remote_port;
   
+  /* used for UDP_LITE only */
   u16_t chksum_len;
   
+  /* addr and port are in same byte order as in the pcb */
   void (* recv)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr, u16_t port);
   void *recv_arg;  

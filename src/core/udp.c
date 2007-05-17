@@ -249,6 +249,8 @@ end:
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  *
+ * dst_ip & dst_port are expected to be in the same byte order as in the pcb.
+ *
  * If the PCB already has a remote address association, it will
  * be restored after the data is sent.
  * 
@@ -430,6 +432,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
  * bind to all local interfaces.
  * @param port local UDP port to bind with.
  *
+ * ipaddr & port are expected to be in the same byte order as in the pcb.
+ *
  * @return lwIP error code.
  * - ERR_OK. Successful. No error occured.
  * - ERR_USE. The specified ipaddr and port are already bound to by
@@ -527,6 +531,8 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
  * @param port remote UDP port to connect with.
  *
  * @return lwIP error code
+ *
+ * ipaddr & port are expected to be in the same byte order as in the pcb.
  *
  * @see udp_disconnect()
  */

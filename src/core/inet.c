@@ -241,6 +241,7 @@ lwip_standard_chksum(void *dataptr, int len)
 /* inet_chksum_pseudo:
  *
  * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ * IP addresses are expected to be in network byte order.
  */
 
 u16_t
