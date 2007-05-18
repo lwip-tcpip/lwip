@@ -38,6 +38,8 @@
 #include "lwip/tcpip.h"
 #include "lwip/igmp.h"
 
+#if !NO_SYS
+
 #if LWIP_RAW
 static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
@@ -746,3 +748,5 @@ do_join_leave_group(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 #endif /* LWIP_IGMP */
+
+#endif /* !NO_SYS */

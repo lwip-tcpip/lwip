@@ -44,6 +44,8 @@
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
 
+#if !NO_SYS
+
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
 struct lwip_socket {
@@ -1432,3 +1434,4 @@ int lwip_ioctl(int s, long cmd, void *argp)
   }
 }
 
+#endif /* !NO_SYS */

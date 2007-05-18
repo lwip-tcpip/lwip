@@ -40,6 +40,7 @@
 #include "lwip/tcpip.h"
 #include "lwip/memp.h"
 
+#if !NO_SYS
 
 struct
 netbuf *netbuf_new(void)
@@ -689,3 +690,4 @@ netconn_err(struct netconn *conn)
   return conn->err;
 }
 
+#endif /* !NO_SYS */

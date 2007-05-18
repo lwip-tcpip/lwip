@@ -47,6 +47,8 @@
 #include "lwip/tcpip.h"
 #include "lwip/igmp.h"
 
+#if !NO_SYS
+
 static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg           = NULL;
 static sys_mbox_t mbox                     = SYS_MBOX_NULL;
@@ -368,3 +370,4 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
 
+#endif /* !NO_SYS */
