@@ -176,7 +176,7 @@ memp_sanity(void)
 #endif /* MEMP_SANITY_CHECK*/
 #if MEMP_OVERFLOW_CHECK
 static void
-memp_overflow_check_single(struct memp *p, u16_t memp_size)
+memp_overflow_check_element(struct memp *p, u16_t memp_size)
 {
   u16_t k;
   u8_t *m;
@@ -198,7 +198,7 @@ memp_overflow_check_single(struct memp *p, u16_t memp_size)
 #endif
 }
 static void
-memp_overflow_check(void)
+memp_overflow_check_all(void)
 {
   u16_t i, j;
   struct memp *p;
@@ -207,7 +207,7 @@ memp_overflow_check(void)
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
-      memp_overflow_check_single(p, memp_sizes[i]);
+      memp_overflow_check_element(p, memp_sizes[i]);
       p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i]);
     }
   }
@@ -263,7 +263,7 @@ memp_init(void)
 #if MEMP_OVERFLOW_CHECK
   memp_overflow_init();
   /* check everything a first time to see if it worked */
-  memp_overflow_check();
+  memp_overflow_check_all();
 #endif /* MEMP_OVERFLOW_CHECK */
 }
 
@@ -281,7 +281,7 @@ memp_malloc(memp_t type)
 
   SYS_ARCH_PROTECT(old_level);
 #if MEMP_OVERFLOW_CHECK >= 2
-  memp_overflow_check();
+  memp_overflow_check_all();
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 
   memp = memp_tab[type];
@@ -330,9 +330,9 @@ memp_free(memp_t type, void *mem)
   SYS_ARCH_PROTECT(old_level);
 #if MEMP_OVERFLOW_CHECK
 #if MEMP_OVERFLOW_CHECK >= 2
-  memp_overflow_check();
+  memp_overflow_check_all();
 #else
-  memp_overflow_check_single(memp, memp_sizes[type]);
+  memp_overflow_check_element(memp, memp_sizes[type]);
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 #endif /* MEMP_OVERFLOW_CHECK */
 
