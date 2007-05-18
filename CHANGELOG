@@ -23,6 +23,14 @@ HISTORY
 
   ++ New features:
 
+  2007-05-18 Simon Goldschmidt
+  * opt.h, memp.h, memp.c: Added option MEMP_OVERFLOW_CHECK to check for memp
+    elements to overflow. This is achieved by adding some bytes before and after
+    each pool element (increasing their size, of course), filling them with a
+    prominent value and checking them on freeing the element.
+    Set it to 2 to also check every element in every pool each time memp_malloc()
+    or memp_free() is called (slower but more helpful).
+
   2007-05-10 Simon Goldschmidt
   * opt.h, memp.h, memp.c, pbuf.c (see task #6831): use a new memp pool for
     PBUF_POOL pbufs instead of the old pool implementation in pbuf.c to reduce
@@ -157,6 +165,10 @@ HISTORY
 
 
   ++ Bug fixes:
+
+  2007-05-18 Simon Goldschmidt
+  * memp.c: addition to patch #5913: smaller pointer was returned but
+    memp_memory was the same size -> did not save memory.
 
   2007-05-16 Simon Goldschmidt
   * loopif.c, slipif.c: Fix bug #19729: free pbuf if netif->input() returns

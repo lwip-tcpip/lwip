@@ -84,8 +84,18 @@ a lot of data that needs to be copied, this should be set high. */
 #define MEM_SIZE                        1600
 #endif
 
+/* MEMP_OVERFLOW_CHECK: memp overflow protection
+ * reserves a configurable amount of bytes before and after each memp
+ * element in every pool and fills it with a prominent default value.
+ * MEMP_OVERFLOW_CHECK = 1 checks each element when it is freed
+ * MEMP_OVERFLOW_CHECK >= 2 checks each element in every pool every time
+ * memp_malloc() or memp_free() is called (useful but slow!) */
+#ifndef MEMP_OVERFLOW_CHECK
+#define MEMP_OVERFLOW_CHECK             0
+#endif
+
 #ifndef MEMP_SANITY_CHECK
-#define MEMP_SANITY_CHECK       0
+#define MEMP_SANITY_CHECK               0
 #endif
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
