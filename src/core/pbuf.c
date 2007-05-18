@@ -166,7 +166,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /* set the length of the first pbuf in the chain */
     p->len = length > PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset)? PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset): length;
     LWIP_ASSERT("check p->payload + p->len does not overflow pbuf",
-                ((u8_t*)p->payload + p->len <
+                ((u8_t*)p->payload + p->len <=
                  (u8_t*)p + SIZEOF_STRUCT_PBUF + PBUF_POOL_BUFSIZE));
     /* set reference count (needed here in case we fail) */
     p->ref = 1;
@@ -199,7 +199,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
       LWIP_ASSERT("check p->payload + p->len does not overflow pbuf",
-                  ((u8_t*)p->payload + p->len <
+                  ((u8_t*)p->payload + p->len <=
                    (u8_t*)p + SIZEOF_STRUCT_PBUF + PBUF_POOL_BUFSIZE));
       q->ref = 1;
       /* calculate remaining length to be allocated */
