@@ -54,6 +54,8 @@ struct sys_timeo {u8_t dummy;};
 #define sys_sem_new(c) c
 #define sys_sem_signal(s)
 #define sys_sem_wait(s)
+#define sys_sem_wait_timeout(s,t)
+#define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
 #define sys_mbox_new() 0
 #define sys_mbox_fetch_timeout(m,d,t)
