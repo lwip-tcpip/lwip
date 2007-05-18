@@ -66,16 +66,28 @@ static struct memp *memp_tab[MEMP_MAX];
 /* If MEMP_OVERFLOW_CHECK is >= 2, on every call to memp_malloc or memp_free,
  * every single element in each pool is checked!
  * This is VERY SLOW but also very helpful. */
+/* MEMP_SANITY_REGION_BEFORE and MEMP_SANITY_REGION_AFTER can be overridden in
+ * lwipopts.h to change the amount reserved for checking. */
 #ifndef MEMP_SANITY_REGION_BEFORE
-#define MEMP_SANITY_REGION_BEFORE  MEM_ALIGN_SIZE(16)
+#define MEMP_SANITY_REGION_BEFORE  16
+#endif /* MEMP_SANITY_REGION_BEFORE*/
+#if MEMP_SANITY_REGION_BEFORE > 0
+#define MEMP_SANITY_REGION_BEFORE_ALIGNED    MEM_ALIGN_SIZE(MEMP_SANITY_REGION_BEFORE)
+#else
+#define MEMP_SANITY_REGION_BEFORE_ALIGNED    0
 #endif /* MEMP_SANITY_REGION_BEFORE*/
 #ifndef MEMP_SANITY_REGION_AFTER
-#define MEMP_SANITY_REGION_AFTER   MEM_ALIGN_SIZE(16)
+#define MEMP_SANITY_REGION_AFTER   16
+#endif /* MEMP_SANITY_REGION_AFTER*/
+#if MEMP_SANITY_REGION_AFTER > 0
+#define MEMP_SANITY_REGION_AFTER_ALIGNED     MEM_ALIGN_SIZE(MEMP_SANITY_REGION_AFTER)
+#else
+#define MEMP_SANITY_REGION_AFTER_ALIGNED     0
 #endif /* MEMP_SANITY_REGION_AFTER*/
 
 /* MEMP_SIZE: save space for struct memp and for sanity check */
-#define MEMP_SIZE          (MEM_ALIGN_SIZE(sizeof(struct memp)) + MEMP_SANITY_REGION_BEFORE)
-#define MEMP_ALIGN_SIZE(x) (MEM_ALIGN_SIZE(x) + MEMP_SANITY_REGION_AFTER)
+#define MEMP_SIZE          (MEM_ALIGN_SIZE(sizeof(struct memp)) + MEMP_SANITY_REGION_BEFORE_ALIGNED)
+#define MEMP_ALIGN_SIZE(x) (MEM_ALIGN_SIZE(x) + MEMP_SANITY_REGION_AFTER_ALIGNED)
 
 #else /* MEMP_OVERFLOW_CHECK */
 
@@ -168,17 +180,17 @@ memp_overflow_check_single(struct memp *p, u16_t memp_size)
 {
   u16_t k;
   u8_t *m;
-#if MEMP_SANITY_REGION_BEFORE > 0
-  m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE;
-  for (k = 0; k < MEMP_SANITY_REGION_BEFORE; k++) {
+#if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
+  m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
+  for (k = 0; k < MEMP_SANITY_REGION_BEFORE_ALIGNED; k++) {
     if (m[k] != 0xcd) {
       LWIP_ASSERT("detected memp underflow!", 0);
     }
   }
 #endif
-#if MEMP_SANITY_REGION_AFTER > 0
-  m = (u8_t*)p + MEMP_SIZE + memp_size - MEMP_SANITY_REGION_AFTER;
-  for (k = 0; k < MEMP_SANITY_REGION_AFTER; k++) {
+#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
+  m = (u8_t*)p + MEMP_SIZE + memp_size - MEMP_SANITY_REGION_AFTER_ALIGNED;
+  for (k = 0; k < MEMP_SANITY_REGION_AFTER_ALIGNED; k++) {
     if (m[k] != 0xcd) {
       LWIP_ASSERT("detected memp overflow!", 0);
     }
@@ -211,13 +223,13 @@ memp_overflow_init(void)
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
-#if MEMP_SANITY_REGION_BEFORE > 0
-      m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE;
-      memset(m, 0xcd, MEMP_SANITY_REGION_BEFORE);
+#if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
+      m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
+      memset(m, 0xcd, MEMP_SANITY_REGION_BEFORE_ALIGNED);
 #endif
-#if MEMP_SANITY_REGION_AFTER > 0
-      m = (u8_t*)p + MEMP_SIZE + memp_sizes[i] - MEMP_SANITY_REGION_AFTER;
-      memset(m, 0xcd, MEMP_SANITY_REGION_AFTER);
+#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
+      m = (u8_t*)p + MEMP_SIZE + memp_sizes[i] - MEMP_SANITY_REGION_AFTER_ALIGNED;
+      memset(m, 0xcd, MEMP_SANITY_REGION_AFTER_ALIGNED);
 #endif
       p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i]);
     }
