@@ -475,6 +475,7 @@ netconn_recv(struct netconn *conn)
   }
 
   if (conn->type == NETCONN_TCP) {
+#if LWIP_TCP
     if (conn->pcb.tcp->state == LISTEN) {
       conn->err = ERR_CONN;
       return NULL;
@@ -524,7 +525,9 @@ netconn_recv(struct netconn *conn)
       msg.msg.msg.len = 1;
     }
     tcpip_apimsg(&msg);
+#endif /* LWIP_TCP */
   } else {
+#if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
     sys_mbox_fetch_timeout(conn->recvmbox, (void *)&buf, conn->recv_timeout);
 #else
@@ -536,6 +539,7 @@ netconn_recv(struct netconn *conn)
        if (conn->callback)
            (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
      }
+#endif /* (LWIP_UDP || LWIP_RAW) */
   }
     
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));

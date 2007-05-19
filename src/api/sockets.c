@@ -437,7 +437,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   /* If this is a TCP socket, check if there is data left in the
      buffer. If so, it should be saved in the sock structure for next
      time around. */
-  if (netconn_type(sock->conn) == NETCONN_TCP && buflen - copylen > 0) {
+  if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
     sock->lastdata = buf;
     sock->lastoffset += copylen;
   } else {
@@ -480,7 +480,7 @@ lwip_send(int s, const void *data, int size, unsigned int flags)
 #else
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
-#endif  
+#endif /* (LWIP_UDP || LWIP_RAW) */
 
   err = netconn_write( sock->conn, data, size, NETCONN_COPY);
 
