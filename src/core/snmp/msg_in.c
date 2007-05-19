@@ -538,11 +538,9 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_TEST)
   {
     struct mib_external_node *en;
-    struct snmp_name_ptr np;
 
     /* set_test() answer*/
     en = msg_ps->ext_mib_node;
-    np = msg_ps->ext_name_ptr;
 
     if (msg_ps->ext_object_def.access == MIB_OBJECT_READ_WRITE)
     {
