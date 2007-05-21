@@ -514,6 +514,10 @@ do_disconnect(struct api_msg_msg *msg)
     udp_disconnect(msg->conn->pcb.udp);
     break;
 #endif /* LWIP_UDP */
+  case NETCONN_TCP:
+  case NETCONN_RAW:
+    /* nothing to do */
+    break;
   }
   sys_mbox_post(msg->conn->mbox, NULL);
 }
@@ -573,6 +577,9 @@ do_send(struct api_msg_msg *msg)
         }
         break;
 #endif /* LWIP_UDP */
+      case NETCONN_TCP:
+        /* nothing to do */
+        break;
       }
     }
   }
