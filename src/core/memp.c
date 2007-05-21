@@ -30,10 +30,10 @@
  *
  */
 
+#include <string.h>
+
 #include "lwip/opt.h"
-
 #include "lwip/memp.h"
-
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 #include "lwip/raw.h"
@@ -41,7 +41,6 @@
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
 #include "lwip/tcpip.h"
-
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 
