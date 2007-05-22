@@ -10,10 +10,6 @@ FUTURE
     (sizeof(int)). In ppp.c an assumption is made on the availability of
     a thread subsystem. Either PPP needs to be moved to contrib/ports/???
     or rearranged to be more generic.
-    
-  * TODO: review the the sequential netconn and socket API (lwip/src/api)
-    for bugs and performance issues. Frequent system calls (e.g. sys_mbox_fetch)
-    slooow things down considerably. 
 
 HISTORY
 
@@ -169,6 +165,12 @@ HISTORY
   2007-05-22 Simon Goldschmidt
   * tcp.c: Fixed bug #1895 (tcp_bind not correct) by introducing a list of
     bound but unconnected (and non-listening) tcp_pcbs.
+
+  2007-05-22 Frédéric Bernon
+  * sys.h, sys.c, api_lib.c, tcpip.c: remove sys_mbox_fetch_timeout() (was only
+    used for LWIP_SO_RCVTIMEO option) and use sys_arch_mbox_fetch() instead of
+    sys_mbox_fetch() in api files. Now, users SHOULD NOT use internal lwIP features
+    like "sys_timeout" in their application threads.
 
   2007-05-22 Frédéric Bernon
   * api.h, api_lib.c, api_msg.h, api_msg.c: change the struct api_msg_msg to see

@@ -443,7 +443,7 @@ netconn_accept(struct netconn *conn)
     return NULL;
   }
   
-  sys_mbox_fetch(conn->acceptmbox, (void *)&newconn);
+  sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
   /* Register event with callback */
   if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
@@ -488,7 +488,7 @@ netconn_recv(struct netconn *conn)
       return NULL;
     }
     
-    sys_mbox_fetch(conn->recvmbox, (void *)&p);
+    sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, 0);
 
     if (p != NULL)
     {
@@ -529,9 +529,9 @@ netconn_recv(struct netconn *conn)
   } else {
 #if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
-    sys_mbox_fetch_timeout(conn->recvmbox, (void *)&buf, conn->recv_timeout);
+    sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, conn->recv_timeout);
 #else
-    sys_mbox_fetch(conn->recvmbox, (void *)&buf);
+    sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
     if (buf!=NULL)
      { conn->recv_avail -= buf->p->tot_len;

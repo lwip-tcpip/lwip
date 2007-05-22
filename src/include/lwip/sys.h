@@ -58,7 +58,6 @@ struct sys_timeo {u8_t dummy;};
 #define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
 #define sys_mbox_new() 0
-#define sys_mbox_fetch_timeout(m,d,t)
 #define sys_mbox_fetch(m,d)
 #define sys_mbox_post(m,d)
 #define sys_mbox_free(m)
@@ -132,12 +131,7 @@ u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg);
 /* For now, we map straight to sys_arch implementation. */
 #define sys_mbox_tryfetch(mbox, msg) sys_arch_mbox_tryfetch(mbox, msg)
 void sys_mbox_free(sys_mbox_t mbox);
-#if LWIP_SO_RCVTIMEO
-void sys_mbox_fetch_timeout(sys_mbox_t mbox, void **msg, u32_t timeout);
-#define sys_mbox_fetch(m,d) sys_mbox_fetch_timeout(m,d,0)
-#else
 void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
-#endif /* LWIP_SO_RCVTIMEO */
 
 /* Thread functions. */
 sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio);

@@ -321,7 +321,7 @@ tcpip_apimsg(struct api_msg *apimsg)
     msg.type = TCPIP_MSG_API;
     msg.msg.apimsg = apimsg;
     sys_mbox_post(mbox, &msg);
-    sys_mbox_fetch(apimsg->msg.conn->mbox, NULL);
+    sys_arch_mbox_fetch(apimsg->msg.conn->mbox, NULL, 0);
     return ERR_OK;
   }
   return ERR_VAL;
@@ -333,17 +333,17 @@ err_t tcpip_netifapi(struct netifapi_msg* netifapimsg)
   struct tcpip_msg msg;
   
   if (mbox != SYS_MBOX_NULL) {
-    netifapimsg->sem = sys_sem_new(0);      
+    netifapimsg->sem = sys_sem_new(0);
     if (netifapimsg->sem == SYS_SEM_NULL) {
       netifapimsg->err = ERR_MEM;
       return netifapimsg->err;
-    }  
-      
+    }
+    
     msg.type = TCPIP_MSG_NETIFAPI;
     msg.msg.netifapimsg = netifapimsg;
     sys_mbox_post(mbox, &msg);
     sys_sem_wait(netifapimsg->sem);
-    sys_sem_free(netifapimsg->sem);    
+    sys_sem_free(netifapimsg->sem);
     return netifapimsg->err;
   }
   return ERR_VAL;
