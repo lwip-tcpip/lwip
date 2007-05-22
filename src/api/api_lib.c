@@ -490,17 +490,16 @@ netconn_recv(struct netconn *conn)
     
     sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, 0);
 
-    if (p != NULL)
-    {
-        len = p->tot_len;
-        conn->recv_avail -= len;
+    if (p != NULL) {
+      len = p->tot_len;
+      conn->recv_avail -= len;
+    } else {
+      len = 0;
     }
-    else
-        len = 0;
     
     /* Register event with callback */
-      if (conn->callback)
-        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
+    if (conn->callback)
+      (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
 
     /* If we are closed, we indicate that we no longer wish to receive
        data by setting conn->recvmbox to SYS_MBOX_NULL. */
@@ -529,16 +528,18 @@ netconn_recv(struct netconn *conn)
   } else {
 #if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
-    sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, conn->recv_timeout);
+    if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+      buf = NULL;
+    }
 #else
     sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
-    if (buf!=NULL)
-     { conn->recv_avail -= buf->p->tot_len;
-       /* Register event with callback */
-       if (conn->callback)
-           (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
-     }
+    if (buf!=NULL) {
+      conn->recv_avail -= buf->p->tot_len;
+      /* Register event with callback */
+      if (conn->callback)
+        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
+    }
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
     
