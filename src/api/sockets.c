@@ -477,13 +477,14 @@ lwip_send(int s, const void *data, int size, unsigned int flags)
   if (!sock)
     return -1;
 
-  if (sock->conn->type!=NETCONN_TCP)
+  if (sock->conn->type!=NETCONN_TCP) {
 #if (LWIP_UDP || LWIP_RAW)
     return lwip_sendto(s, data, size, flags, NULL, 0);
 #else
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
 #endif /* (LWIP_UDP || LWIP_RAW) */
+  }
 
   err = netconn_write(sock->conn, data, size, NETCONN_COPY);
 
@@ -506,13 +507,14 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   if (!sock)
     return -1;
 
-  if (sock->conn->type==NETCONN_TCP)
+  if (sock->conn->type==NETCONN_TCP) {
 #if LWIP_TCP
     return lwip_send(s, data, size, flags);
 #else
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
 #endif /* LWIP_TCP */
+  }
 
   LWIP_ASSERT("lwip_sendto: invalid address", (((to==NULL) && (tolen==0)) ||
                                         ((tolen == sizeof(struct sockaddr_in)) &&
