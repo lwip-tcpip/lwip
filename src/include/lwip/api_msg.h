@@ -67,6 +67,7 @@ struct api_msg_msg {
     } w;    
     sys_mbox_t mbox;
     u16_t len;
+    u8_t raw_proto;
   } msg;
 };
 

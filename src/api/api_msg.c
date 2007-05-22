@@ -293,7 +293,7 @@ pcb_new(struct api_msg_msg *msg)
    switch(msg->conn->type) {
 #if LWIP_RAW
    case NETCONN_RAW:
-      msg->conn->pcb.raw = raw_new(msg->msg.bc.port); /* misusing the port field */
+      msg->conn->pcb.raw = raw_new(msg->msg.raw_proto);
       if(msg->conn->pcb.raw == NULL) {
         msg->conn->err = ERR_MEM;
         break;
@@ -667,7 +667,7 @@ do_join_leave_group(struct api_msg_msg *msg)
       case NETCONN_UDPLITE:
       case NETCONN_UDPNOCHKSUM:
       case NETCONN_UDP:
-        switch(msg->msg.bc.port){
+        switch(msg->msg.bc.port){ /* misusing the port field */
           case NETCONN_JOIN:  msg->conn->err = igmp_joingroup (netif_default, ((struct ip_addr**)(msg->msg.bc.ipaddr))[0]); break;
           case NETCONN_LEAVE: msg->conn->err = igmp_leavegroup(netif_default, ((struct ip_addr**)(msg->msg.bc.ipaddr))[0]); break;
         }

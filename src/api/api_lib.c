@@ -182,7 +182,7 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
 }
 
 struct
-netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
+netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
   struct netconn *conn;
@@ -218,7 +218,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u16_t proto,
 #endif /* LWIP_SO_RCVTIMEO */
 
   msg.function = do_newconn;
-  msg.msg.msg.bc.port = proto; /* misusing the port field */
+  msg.msg.msg.raw_proto = proto;
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);  
 
@@ -682,7 +682,7 @@ netconn_join_leave_group (struct netconn *conn,
   msg.function = do_join_leave_group;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = (struct ip_addr *)ipaddr;
-  msg.msg.msg.bc.port = join_or_leave;
+  msg.msg.msg.bc.port = join_or_leave; /* misusing the port field */
   tcpip_apimsg(&msg);
   return conn->err;
 }

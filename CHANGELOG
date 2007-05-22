@@ -166,6 +166,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-22 Simon Goldschmidt
+  * api_lib.c, api_msg.c, raw.c, api.h, api_msg.h, raw.h: Included patch #5938:
+    changed raw_pcb.protocol from u16_t to u8_t since for IPv4 and IPv6, proto
+    is only 8 bits wide. This affects the api, as there, the protocol was
+    u16_t, too.
+
   2007-05-18 Simon Goldschmidt
   * memp.c: addition to patch #5913: smaller pointer was returned but
     memp_memory was the same size -> did not save memory.
