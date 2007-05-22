@@ -59,6 +59,8 @@ const u8_t tcp_backoff[13] =
 
 /* The TCP PCB lists. */
 
+/** List of all TCP PCBs bound but not yet (connected || listening) */
+struct tcp_pcb *tcp_bound_pcbs;  
 /** List of all TCP PCBs in LISTEN state */
 union tcp_listen_pcbs_t tcp_listen_pcbs;
 /** List of all TCP PCBs that are in a state in which
@@ -79,6 +81,7 @@ void
 tcp_init(void)
 {
   /* Clear globals. */
+  tcp_bound_pcbs = NULL;
   tcp_listen_pcbs.listen_pcbs = NULL;
   tcp_active_pcbs = NULL;
   tcp_tw_pcbs = NULL;
@@ -131,6 +134,7 @@ tcp_close(struct tcp_pcb *pcb)
      * is erroneous, but this should never happen as the pcb has in those cases
      * been freed, and so any remaining handles are bogus. */
     err = ERR_OK;
+    tcp_pcb_remove(&tcp_bound_pcbs, pcb);
     memp_free(MEMP_TCP_PCB, pcb);
     pcb = NULL;
     break;
@@ -255,9 +259,9 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
-        ip_addr_isany(ipaddr) ||
-        ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-          return ERR_USE;
+          ip_addr_isany(ipaddr) ||
+          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        return ERR_USE;
       }
     }
   }
@@ -265,9 +269,18 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
-   ip_addr_isany(ipaddr) ||
-   ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-  return ERR_USE;
+          ip_addr_isany(ipaddr) ||
+          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        return ERR_USE;
+      }
+    }
+  }
+  for(cpcb = tcp_bound_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+    if (cpcb->local_port == port) {
+      if (ip_addr_isany(&(cpcb->local_ip)) ||
+          ip_addr_isany(ipaddr) ||
+          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        return ERR_USE;
       }
     }
   }
@@ -276,6 +289,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     pcb->local_ip = *ipaddr;
   }
   pcb->local_port = port;
+  TCP_REG(&tcp_bound_pcbs, pcb);
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_bind: bind to port %"U16_F"\n", port));
   return ERR_OK;
 }
@@ -319,6 +333,7 @@ tcp_listen(struct tcp_pcb *pcb)
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
   ip_addr_set(&lpcb->local_ip, &pcb->local_ip);
+  tcp_pcb_remove(&tcp_bound_pcbs, pcb);
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
@@ -443,7 +458,8 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->state = SYN_SENT;
 #if LWIP_CALLBACK_API  
   pcb->connected = connected;
-#endif /* LWIP_CALLBACK_API */  
+#endif /* LWIP_CALLBACK_API */
+  tcp_pcb_remove(&tcp_bound_pcbs, pcb);
   TCP_REG(&tcp_active_pcbs, pcb);
 
   snmp_inc_tcpactiveopens();

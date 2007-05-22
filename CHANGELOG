@@ -166,6 +166,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-22 Simon Goldschmidt
+  * tcp.c: Fixed bug #1895 (tcp_bind not correct) by introducing a list of
+    bound but unconnected (and non-listening) tcp_pcbs.
+
   2007-05-22 Frédéric Bernon
   * api.h, api_lib.c, api_msg.h, api_msg.c: change the struct api_msg_msg to see
     which parameters are used by which do_xxx function, and to avoid "misusing"
