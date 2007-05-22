@@ -522,7 +522,6 @@ do_disconnect(struct api_msg_msg *msg)
   sys_mbox_post(msg->conn->mbox, NULL);
 }
 
-
 void
 do_listen(struct api_msg_msg *msg)
 {
@@ -604,7 +603,7 @@ do_recv(struct api_msg_msg *msg)
 void
 do_write(struct api_msg_msg *msg)
 {
-#if LWIP_TCP  
+#if LWIP_TCP
   err_t err;
 #endif /* LWIP_TCP */
   if (msg->conn->err == ERR_OK) {
@@ -655,7 +654,7 @@ do_close(struct api_msg_msg *msg)
 #endif /* LWIP_TCP */
   sys_mbox_post(msg->conn->mbox, NULL);
 }
- 
+
 #if LWIP_IGMP
 void
 do_join_leave_group(struct api_msg_msg *msg)

@@ -59,15 +59,14 @@ struct api_msg_msg {
     struct  {
       struct ip_addr *ipaddr;
       u16_t port;
-    } bc;
+    } bc; /* do_newconn, do_bind, do_connect, do_join_leave_group*/
     struct {
       const void *dataptr;
       u16_t len;
       u8_t copy;
-    } w;    
-    sys_mbox_t mbox;
-    u16_t len;
-    u8_t raw_proto;
+    } w; /* do_write */
+    u16_t len; /* do_recv */
+    u8_t raw_proto; /* do_newconn */
   } msg;
 };
 
