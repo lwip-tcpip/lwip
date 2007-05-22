@@ -33,6 +33,7 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  * Author: Adam Dunkels <adam@sics.se>
+ *         Simon Goldschmidt
  *
  */
 
@@ -59,7 +60,9 @@ struct mem {
   u8_t used;
 };
 
-/* All allocated blocks will be MIN_SIZE bytes big, at least! */
+/* All allocated blocks will be MIN_SIZE bytes big, at least!
+ * MIN_SIZE can be overridden to suit your needs. Smaller values save space,
+ * larger values could prevent too small blocks to fragment the RAM too much. */
 #ifndef MIN_SIZE
 #define MIN_SIZE             12
 #endif /* MIN_SIZE */
@@ -220,13 +223,13 @@ mem_realloc(void *rmem, mem_size_t newsize)
      adjust for alignment. */
   newsize = MEM_ALIGN_SIZE(newsize);
 
-  if (newsize > MEM_SIZE_ALIGNED) {
-    return NULL;
-  }
-
   if(newsize < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */
     newsize = MIN_SIZE_ALIGNED;
+  }
+
+  if (newsize > MEM_SIZE_ALIGNED) {
+    return NULL;
   }
 
   LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
@@ -265,17 +268,31 @@ mem_realloc(void *rmem, mem_size_t newsize)
     mem_size_t next;
     /* remember the old next pointer */
     next = mem2->next;
+    /* create new struct mem which is moved directly after the shrinked mem */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
     mem2->used = 0;
+    /* restore the next pointer */
     mem2->next = next;
+    /* link it back to mem */
     mem2->prev = ptr;
+    /* link mem to it */
     mem->next = ptr2;
+    /* last thing to restore linked list: as we have moved mem2,
+     * let 'mem2->next->prev' point to mem2 again. but only if mem2->next is not
+     * the end of the heap */
     if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
-  } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED < size) {
-    /* There's room for another struct mem with at least MIN_SIZE_ALIGNED of data. */
+    /* no need to plug holes, we've already done that */
+  } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED <= size) {
+    /* Next struct is used but there's room for another struct mem with
+     * at least MIN_SIZE_ALIGNED of data.
+     * Old size ('size') must be big enough to contain at least 'newsize' plus a struct mem
+     * ('SIZEOF_STRUCT_MEM') with some data ('MIN_SIZE_ALIGNED').
+     * @todo we could leave out MIN_SIZE_ALIGNED. We would create an empty
+     *       region that couldn't hold data, but when mem->next gets freed,
+     *       the 2 regions would be combined, resulting in more free memory */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
     mem2->used = 0;
@@ -285,91 +302,18 @@ mem_realloc(void *rmem, mem_size_t newsize)
     if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
-    /* mem->next is used, so no need to plug holes! */
+    /* the original mem->next is used, so no need to plug holes! */
   }
   /* else {
-    the remaining space stays unused since it is too small
+    next struct mem is used but size between mem and mem2 is not big enough
+    to create another struct mem
+    -> don't do anyhting. 
+    -> the remaining space stays unused since it is too small
   } */
   sys_sem_signal(mem_sem);
   return rmem;
 }
 
-#if 0
-/**
- * Adam's mem_malloc(), suffers from bug #17922
- * Set if to 0 for alternative mem_malloc().
- */
-void *
-mem_malloc(mem_size_t size)
-{
-  mem_size_t ptr, ptr2;
-  struct mem *mem, *mem2;
-
-  if (size == 0) {
-    return NULL;
-  }
-
-  /* Expand the size of the allocated memory region so that we can
-     adjust for alignment. */
-  if ((size % MEM_ALIGNMENT) != 0) {
-    size += MEM_ALIGNMENT - ((size + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT);
-  }
-
-  if (size > MEM_SIZE_ALIGNED) {
-    return NULL;
-  }
-
-  sys_arch_sem_wait(mem_sem, 0);
-
-  for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE_ALIGNED; ptr = ((struct mem *)&ram[ptr])->next) {
-    mem = (struct mem *)&ram[ptr];
-    if (!mem->used &&
-       mem->next - (ptr + SIZEOF_STRUCT_MEM) >= size + SIZEOF_STRUCT_MEM) {
-      ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
-      mem2 = (struct mem *)&ram[ptr2];
-
-      mem2->prev = ptr;
-      mem2->next = mem->next;
-      mem->next = ptr2;
-      if (mem2->next != MEM_SIZE_ALIGNED) {
-        ((struct mem *)&ram[mem2->next])->prev = ptr2;
-      }
-
-      mem2->used = 0;
-      mem->used = 1;
-#if MEM_STATS
-      lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
-      /*      if (lwip_stats.mem.max < lwip_stats.mem.used) {
-        lwip_stats.mem.max = lwip_stats.mem.used;
-        } */
-      if (lwip_stats.mem.max < ptr2) {
-        lwip_stats.mem.max = ptr2;
-      }
-#endif /* MEM_STATS */
-
-      if (mem == lfree) {
-        /* Find next free block after mem */
-        while (lfree->used && lfree != ram_end) {
-          lfree = (struct mem *)&ram[lfree->next];
-        }
-        LWIP_ASSERT("mem_malloc: !lfree->used", !lfree->used);
-      }
-      sys_sem_signal(mem_sem);
-      LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
-       (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
-      LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
-       (unsigned long)((u8_t *)mem + SIZEOF_STRUCT_MEM) % MEM_ALIGNMENT == 0);
-      return (u8_t *)mem + SIZEOF_STRUCT_MEM;
-    }
-  }
-  LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
-#if MEM_STATS
-  ++lwip_stats.mem.err;
-#endif /* MEM_STATS */
-  sys_sem_signal(mem_sem);
-  return NULL;
-}
-#else
 /**
  * Adam's mem_malloc() plus solution for bug #17922
  *
@@ -413,13 +357,19 @@ mem_malloc(mem_size_t size)
 
     if ((!mem->used) &&
         (mem->next - (ptr + SIZEOF_STRUCT_MEM)) >= size) {
-      /* mem is not used and at least perfect fit is possible */
+      /* mem is not used and at least perfect fit is possible:
+       * mem->next - (ptr + SIZEOF_STRUCT_MEM) gives us the 'user data size' of mem */
 
-      if (mem->next - (ptr + (2*SIZEOF_STRUCT_MEM) + MIN_SIZE_ALIGNED) >= size) {
-        /* split large block, create empty remainder,
-           remainder must be large enough to contain MIN_SIZE_ALIGNED data: if
-           mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) == size,
-           struct mem would fit in but no data between mem2 and mem2->next
+      if (mem->next - (ptr + SIZEOF_STRUCT_MEM) >= (size + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED)) {
+        /* (in addition to the above, we test if another struct mem (SIZEOF_STRUCT_MEM) containing
+         * at least MIN_SIZE_ALIGNED of data also fits in the 'user data space' of 'mem')
+         * -> split large block, create empty remainder,
+         * remainder must be large enough to contain MIN_SIZE_ALIGNED data: if
+         * mem->next - (ptr + (2*SIZEOF_STRUCT_MEM)) == size,
+         * struct mem would fit in but no data between mem2 and mem2->next
+         * @todo we could leave out MIN_SIZE_ALIGNED. We would create an empty
+         *       region that couldn't hold data, but when mem->next gets freed,
+         *       the 2 regions would be combined, resulting in more free memory
          */
         ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
         /* create mem2 struct */
@@ -435,7 +385,10 @@ mem_malloc(mem_size_t size)
           ((struct mem *)&ram[mem2->next])->prev = ptr2;
         }
       } else {
-        /* near fit or excact fit: do not split, no mem2 creation
+        /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
+         * be used at this point: if not we have 2 unused structs in a row, plug_holes should have
+         * take care of this).
+         * -> near fit or excact fit: do not split, no mem2 creation
          * also can't move mem->next directly behind mem, since mem->next
          * will always be used at this point!
          */
@@ -473,7 +426,6 @@ mem_malloc(mem_size_t size)
   sys_sem_signal(mem_sem);
   return NULL;
 }
-#endif
 
 #endif /* MEM_LIBC_MALLOC == 0 */
 
