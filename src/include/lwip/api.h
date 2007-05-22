@@ -176,7 +176,7 @@ err_t             netconn_close   (struct netconn *conn);
 err_t             netconn_join_leave_group (struct netconn *conn,
                                             struct ip_addr *multiaddr,
                                             struct ip_addr *interface,
-                                            u16_t join_or_leave);
+                                            enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
 
 err_t             netconn_err     (struct netconn *conn);

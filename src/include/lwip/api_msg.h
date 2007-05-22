@@ -54,19 +54,29 @@ struct api_msg_msg {
   struct netconn *conn;
   enum netconn_type conntype;
   union {
-    struct pbuf *p;
-    struct netbuf *b;
-    struct  {
+    struct netbuf *b; /* do_send */
+    struct {
+      u8_t proto;
+    } n; /* do_newconn */
+    struct {
       struct ip_addr *ipaddr;
       u16_t port;
-    } bc; /* do_newconn, do_bind, do_connect, do_join_leave_group*/
+    } bc; /* do_bind, do_connect */
     struct {
       const void *dataptr;
       u16_t len;
       u8_t copy;
     } w; /* do_write */
-    u16_t len; /* do_recv */
-    u8_t raw_proto; /* do_newconn */
+    struct {
+      u16_t len;
+    } r; /* do_recv */
+#if LWIP_IGMP
+    struct {
+      struct ip_addr *multiaddr;
+      struct ip_addr *interface;
+      enum netconn_igmp join_or_leave;
+    } jl; /* do_join_leave_group */
+#endif /* LWIP_IGMP */
   } msg;
 };
 

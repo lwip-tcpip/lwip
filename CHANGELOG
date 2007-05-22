@@ -166,6 +166,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-22 Frédéric Bernon
+  * api.h, api_lib.c, api_msg.h, api_msg.c: change the struct api_msg_msg to see
+    which parameters are used by which do_xxx function, and to avoid "misusing"
+    parameters (patch #5938).
+
   2007-05-22 Simon Goldschmidt
   * api_lib.c, api_msg.c, raw.c, api.h, api_msg.h, raw.h: Included patch #5938:
     changed raw_pcb.protocol from u16_t to u8_t since for IPv4 and IPv6, proto

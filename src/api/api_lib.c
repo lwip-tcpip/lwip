@@ -218,9 +218,9 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
 #endif /* LWIP_SO_RCVTIMEO */
 
   msg.function = do_newconn;
-  msg.msg.msg.raw_proto = proto;
+  msg.msg.msg.n.proto = proto;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);  
+  tcpip_apimsg(&msg);
 
   if ( conn->err != ERR_OK ) {
     sys_sem_free(conn->sem);
@@ -520,9 +520,9 @@ netconn_recv(struct netconn *conn)
     msg.function = do_recv;
     msg.msg.conn = conn;
     if (buf != NULL) {
-      msg.msg.msg.len = buf->p->tot_len;
+      msg.msg.msg.r.len = buf->p->tot_len;
     } else {
-      msg.msg.msg.len = 1;
+      msg.msg.msg.r.len = 1;
     }
     tcpip_apimsg(&msg);
 #endif /* LWIP_TCP */
@@ -663,10 +663,9 @@ err_t
 netconn_join_leave_group (struct netconn *conn,
                           struct ip_addr *multiaddr,
                           struct ip_addr *interface,
-                          u16_t join_or_leave)
+                          enum netconn_igmp join_or_leave)
 {
   struct api_msg msg;
-  struct ip_addr *ipaddr[2];
 
   if (conn == NULL) {
     return ERR_VAL;
@@ -676,13 +675,11 @@ netconn_join_leave_group (struct netconn *conn,
     return conn->err;
   }
 
-  ipaddr[0] = multiaddr;
-  ipaddr[1] = interface;
-
   msg.function = do_join_leave_group;
   msg.msg.conn = conn;
-  msg.msg.msg.bc.ipaddr = (struct ip_addr *)ipaddr;
-  msg.msg.msg.bc.port = join_or_leave; /* misusing the port field */
+  msg.msg.msg.jl.multiaddr = multiaddr;
+  msg.msg.msg.jl.interface = interface;
+  msg.msg.msg.jl.join_or_leave = join_or_leave;
   tcpip_apimsg(&msg);
   return conn->err;
 }
