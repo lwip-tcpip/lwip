@@ -52,7 +52,6 @@ extern "C" {
  */
 struct api_msg_msg {
   struct netconn *conn;
-  enum netconn_type conntype;
   union {
     struct netbuf *b; /* do_send */
     struct {
