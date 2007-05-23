@@ -167,6 +167,12 @@ HISTORY
   ++ Bug fixes:
 
   2007-05-23 Frédéric Bernon
+  * api_lib.c, sockets.c: Fixed bug #5958 for netconn_listen (acceptmbox only
+    allocated by do_listen if success) and netconn_accept errors handling. In
+    most of api_lib functions, we replace some errors checkings like "if (conn==NULL)"
+    by ASSERT, except for netconn_delete.
+
+  2007-05-23 Frédéric Bernon
   * api_lib.c: Fixed bug #5957 "Safe-thread problem inside netconn_recv" to return
     an error code if it's impossible to fetch a pbuf on a TCP connection (and not
     directly close the recvmbox).

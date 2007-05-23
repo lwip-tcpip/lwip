@@ -183,6 +183,11 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
 
   newconn = netconn_accept(sock->conn);
+  if (!newconn) {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) failed, err=%d\n", s, sock->conn->err));
+    sock_set_errno(sock, err_to_errno(sock->conn->err));
+    return -1;
+  }
 
   /* get the IP address and port of the remote host */
   netconn_peer(newconn, &naddr, &port);

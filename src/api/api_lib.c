@@ -250,11 +250,12 @@ netconn_delete(struct netconn *conn)
 {
   struct api_msg msg;
   void *mem;
-  
+
+  /* No ASSERT here because possible to get a (conn == NULL) if we got an accept error */
   if (conn == NULL) {
     return ERR_OK;
   }
-  
+
   msg.function = do_delconn;
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);
@@ -349,9 +350,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
 
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_bind: invalid conn", (conn != NULL));
 
   if (conn->type != NETCONN_TCP &&
      conn->recvmbox == SYS_MBOX_NULL) {
@@ -374,9 +373,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
   
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_connect: invalid conn", (conn != NULL));
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -397,9 +394,7 @@ netconn_disconnect(struct netconn *conn)
 {
   struct api_msg msg;
   
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_disconnect: invalid conn", (conn != NULL));
 
   msg.function = do_disconnect;
   msg.msg.conn = conn;
@@ -413,16 +408,8 @@ netconn_listen(struct netconn *conn)
 {
   struct api_msg msg;
 
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_listen: invalid conn", (conn != NULL));
 
-  if (conn->acceptmbox == SYS_MBOX_NULL) {
-    if ((conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-      return ERR_MEM;
-    }
-  }
-  
   msg.function = do_listen;
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);
@@ -434,9 +421,8 @@ netconn_accept(struct netconn *conn)
 {
   struct netconn *newconn;
 
-  if (conn == NULL) {
-    return NULL;
-  }
+  LWIP_ASSERT("netconn_accept: invalid conn", (conn != NULL));
+  LWIP_ASSERT("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL));
 
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
   /* Register event with callback */
@@ -454,9 +440,7 @@ netconn_recv(struct netconn *conn)
   struct pbuf *p;
   u16_t len;
   
-  if (conn == NULL) {
-    return NULL;
-  }
+  LWIP_ASSERT("netconn_recv: invalid conn", (conn != NULL));
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -556,9 +540,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 {
   struct api_msg msg;
 
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_send: invalid conn", (conn != NULL));
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -578,9 +560,7 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
   struct api_msg msg;
   u16_t len, sndbuf;
   
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_write: invalid conn", (conn != NULL));
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -635,9 +615,7 @@ netconn_close(struct netconn *conn)
 {
   struct api_msg msg;
 
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_close: invalid conn", (conn != NULL));
 
   conn->state = NETCONN_CLOSE;
  again:
@@ -661,9 +639,7 @@ netconn_join_leave_group (struct netconn *conn,
 {
   struct api_msg msg;
 
-  if (conn == NULL) {
-    return ERR_VAL;
-  }
+  LWIP_ASSERT("netconn_join_leave_group: invalid conn", (conn != NULL));
 
   if (conn->err != ERR_OK) {
     return conn->err;
