@@ -1081,7 +1081,7 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
       break;
 
     case SO_TYPE:
-      switch (sock->conn->type) {
+      switch (NETCONNTYPE_GROUP(sock->conn->type)) {
       case NETCONN_RAW:
         *(int*)optval = SOCK_RAW;
         break;
@@ -1089,8 +1089,6 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
         *(int*)optval = SOCK_STREAM;
         break;
       case NETCONN_UDP:
-      case NETCONN_UDPLITE:
-      case NETCONN_UDPNOCHKSUM:
         *(int*)optval = SOCK_DGRAM;
         break;
       default: /* unrecognized socket type */

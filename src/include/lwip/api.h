@@ -55,12 +55,19 @@ extern "C" {
 #define NETCONN_NOCOPY 0x00
 #define NETCONN_COPY   0x01
 
+/* Helpers to process several netconn_types by the same code */
+#define NETCONNTYPE_GROUP(t)    (t&0xF0)
+#define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
+
 enum netconn_type {
-  NETCONN_TCP,
-  NETCONN_UDP,
-  NETCONN_UDPLITE,
-  NETCONN_UDPNOCHKSUM,
-  NETCONN_RAW
+  /* NETCONN_TCP Group */
+  NETCONN_TCP        = 0x10,
+  /* NETCONN_UDP Group */
+  NETCONN_UDP        = 0x20,
+  NETCONN_UDPLITE    = 0x21,
+  NETCONN_UDPNOCHKSUM= 0x22,
+  /* NETCONN_RAW Group */
+  NETCONN_RAW        = 0x40
 };
 
 enum netconn_state {

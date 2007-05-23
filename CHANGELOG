@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-05-23 Frédéric Bernon
+  * api.h, api_lib.c, api_msg.c, sockets.c: group the different NETCONN_UDPxxx
+    code in only one part...
+
   2007-05-18 Simon Goldschmidt
   * opt.h, memp.h, memp.c: Added option MEMP_OVERFLOW_CHECK to check for memp
     elements to overflow. This is achieved by adding some bytes before and after

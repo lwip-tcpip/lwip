@@ -272,7 +272,6 @@ netconn_delete(struct netconn *conn)
     sys_mbox_free(conn->recvmbox);
     conn->recvmbox = SYS_MBOX_NULL;
   }
- 
 
   /* Drain the acceptmbox. */
   if (conn->acceptmbox != SYS_MBOX_NULL) {
@@ -304,12 +303,10 @@ netconn_type(struct netconn *conn)
 err_t
 netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 {
-  switch (conn->type) {
+  switch (NETCONNTYPE_GROUP(conn->type)) {
   case NETCONN_RAW:
     /* return an error as connecting is only a helper for upper layers */
     return ERR_CONN;
-  case NETCONN_UDPLITE:
-  case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
     if (conn->pcb.udp == NULL ||
   ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0))
@@ -330,13 +327,11 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 err_t
 netconn_addr(struct netconn *conn, struct ip_addr **addr, u16_t *port)
 {
-  switch (conn->type) {
+  switch (NETCONNTYPE_GROUP(conn->type)) {
   case NETCONN_RAW:
     *addr = &(conn->pcb.raw->local_ip);
     *port = conn->pcb.raw->protocol;
     break;
-  case NETCONN_UDPLITE:
-  case NETCONN_UDPNOCHKSUM:
   case NETCONN_UDP:
     *addr = &(conn->pcb.udp->local_ip);
     *port = conn->pcb.udp->local_port;
@@ -390,7 +385,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
   }
   
   msg.function = do_connect;
-  msg.msg.conn = conn;  
+  msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
   msg.msg.msg.bc.port = port;
   tcpip_apimsg(&msg);
@@ -407,7 +402,7 @@ netconn_disconnect(struct netconn *conn)
   }
 
   msg.function = do_disconnect;
-  msg.msg.conn = conn;  
+  msg.msg.conn = conn;
   tcpip_apimsg(&msg);
   return conn->err;
 
@@ -438,11 +433,11 @@ struct netconn *
 netconn_accept(struct netconn *conn)
 {
   struct netconn *newconn;
-  
+
   if (conn == NULL) {
     return NULL;
   }
-  
+
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
   /* Register event with callback */
   if (conn->callback)
