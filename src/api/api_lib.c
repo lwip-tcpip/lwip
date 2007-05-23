@@ -352,8 +352,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 
   LWIP_ASSERT("netconn_bind: invalid conn", (conn != NULL));
 
-  if (conn->type != NETCONN_TCP &&
-     conn->recvmbox == SYS_MBOX_NULL) {
+  if (conn->type != NETCONN_TCP && conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
       return ERR_MEM;
     }
@@ -424,10 +423,17 @@ netconn_accept(struct netconn *conn)
   LWIP_ASSERT("netconn_accept: invalid conn", (conn != NULL));
   LWIP_ASSERT("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL));
 
+  #if LWIP_SO_RCVTIMEO
+  if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    newconn = NULL;
+  }
+  #else
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
+  #endif /* LWIP_SO_RCVTIMEO*/ 
+
   /* Register event with callback */
   if (conn->callback)
-      (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
+    (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
   
   return newconn;
 }
@@ -467,7 +473,13 @@ netconn_recv(struct netconn *conn)
       return NULL;
     }
     
+#if LWIP_SO_RCVTIMEO
+    if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+      p = NULL;
+    }
+#else
     sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, 0);
+#endif /* LWIP_SO_RCVTIMEO*/
 
     if (p != NULL) {
       len = p->tot_len;

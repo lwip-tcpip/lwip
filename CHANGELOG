@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2007-05-23 Frédéric Bernon
+  * api_lib.c, sockets.c: Implement SO_RCVTIMEO for accept and recv on TCP
+    connections, such present in patch #5959.
+
+  2007-05-23 Frédéric Bernon
   * api.h, api_lib.c, api_msg.c, sockets.c: group the different NETCONN_UDPxxx
     code in only one part...
 
