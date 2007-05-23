@@ -496,12 +496,10 @@ netconn_recv(struct netconn *conn)
     if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
 
-    /* If we are closed, we indicate that we no longer wish to receive
-       data by setting conn->recvmbox to SYS_MBOX_NULL. */
+    /* If we are closed, we indicate that we no longer wish to use the socket */
     if (p == NULL) {
       memp_free(MEMP_NETBUF, buf);
-      sys_mbox_free(conn->recvmbox);
-      conn->recvmbox = SYS_MBOX_NULL;
+      conn->err = ERR_CLSD;
       return NULL;
     }
 

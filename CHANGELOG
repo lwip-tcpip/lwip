@@ -166,6 +166,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-23 Frédéric Bernon
+  * api_lib.c: Fixed bug #5957 "Safe-thread problem inside netconn_recv" to return
+    an error code if it's impossible to fetch a pbuf on a TCP connection (and not
+    directly close the recvmbox).
+
   2007-05-22 Simon Goldschmidt
   * tcp.c: Fixed bug #1895 (tcp_bind not correct) by introducing a list of
     bound but unconnected (and non-listening) tcp_pcbs.
