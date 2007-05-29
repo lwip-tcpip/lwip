@@ -134,7 +134,7 @@ tcp_close(struct tcp_pcb *pcb)
      * is erroneous, but this should never happen as the pcb has in those cases
      * been freed, and so any remaining handles are bogus. */
     err = ERR_OK;
-    tcp_pcb_remove(&tcp_bound_pcbs, pcb);
+    TCP_RMV(&tcp_bound_pcbs, pcb);
     memp_free(MEMP_TCP_PCB, pcb);
     pcb = NULL;
     break;
@@ -333,7 +333,7 @@ tcp_listen(struct tcp_pcb *pcb)
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
   ip_addr_set(&lpcb->local_ip, &pcb->local_ip);
-  tcp_pcb_remove(&tcp_bound_pcbs, pcb);
+  TCP_RMV(&tcp_bound_pcbs, pcb);
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
@@ -459,7 +459,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
 #if LWIP_CALLBACK_API  
   pcb->connected = connected;
 #endif /* LWIP_CALLBACK_API */
-  tcp_pcb_remove(&tcp_bound_pcbs, pcb);
+  TCP_RMV(&tcp_bound_pcbs, pcb);
   TCP_REG(&tcp_active_pcbs, pcb);
 
   snmp_inc_tcpactiveopens();
