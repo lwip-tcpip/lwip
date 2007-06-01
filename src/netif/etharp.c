@@ -110,6 +110,7 @@ static u8_t etharp_cached_entry = 0;
  * Try hard to create a new entry - we want the IP address to appear in
  * the cache (even if this means removing an active entry or so). */
 #define ETHARP_TRY_HARD 1
+#define ETHARP_FIND_ONLY  2
 
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
@@ -310,7 +311,9 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* { we have no match } => try to create a new entry */
    
   /* no empty entry found and not allowed to recycle? */
-  if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
+  if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0)
+      /* or don't create new entry, only search? */
+      || ((flags & ETHARP_FIND_ONLY) != 0))
   {
     return (s8_t)ERR_MEM;
   }
@@ -417,7 +420,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   /* find or create ARP entry */
   i = find_entry(ipaddr, flags);
   /* bail out if no entry could be found */
-  if (i < 0) return (err_t)i;
+  if (i < 0)
+    return (err_t)i;
   
   /* mark it stable */
   arp_table[i].state = ETHARP_STATE_STABLE;
@@ -486,18 +490,11 @@ etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
 {
   s8_t i;
 
-  i = 0;
-  while (i < ARP_TABLE_SIZE)
-  {
-    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
-        (arp_table[i].netif == netif) && 
-        ip_addr_cmp(ipaddr, &arp_table[i].ipaddr) )
-    {
+  i = find_entry(ipaddr, ETHARP_FIND_ONLY);
+  if((i >= 0) && arp_table[i].state == ETHARP_STATE_STABLE) {
       *eth_ret = &arp_table[i].ethaddr;
       *ip_ret = &arp_table[i].ipaddr;
       return i;
-    }
-    i++;
   }
   return -1;
 }
@@ -806,7 +803,8 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   if (i < 0)
   {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not create ARP entry\n"));
-    if (q) LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: packet dropped\n"));
+    if (q)
+      LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: packet dropped\n"));
     return (err_t)i;
   }
 
