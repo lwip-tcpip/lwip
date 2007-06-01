@@ -43,6 +43,7 @@
 #include "lwip/igmp.h"
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
+#include "lwip/tcpip.h"
 
 #if !NO_SYS
 
@@ -67,14 +68,26 @@ struct lwip_select_cb {
   sys_sem_t sem;
 };
 
+/* This struct is used to pass data to the set/getsockopt_internal
+ * functions running in tcpip_thread context (only a void* is allowed) */
+struct lwip_setgetsockopt_data {
+  struct lwip_socket *sock;
+  int s;
+  int level;
+  int optname;
+  void *optval;
+  socklen_t *optlen;
+};
+
 static struct lwip_socket sockets[NUM_SOCKETS];
 static struct lwip_select_cb *select_cb_list = 0;
 
 static sys_sem_t socksem = 0;
 static sys_sem_t selectsem = 0;
 
-static void
-event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
+static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
+static void lwip_getsockopt_internal(void *arg);
+static void lwip_setsockopt_internal(void *arg);
 
 static int err_to_errno_table[] = {
   0,             /* ERR_OK       0      No error, everything OK. */
@@ -949,6 +962,7 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
 {
   int err = ERR_OK;
   struct lwip_socket *sock = get_socket(s);
+  struct lwip_setgetsockopt_data data;
 
   if (!sock)
     return -1;
@@ -1061,6 +1075,36 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
   }
 
   /* Now do the actual option processing */
+  data.sock = sock;
+  data.level = level;
+  data.optname = optname;
+  data.optval = optval;
+  data.optlen = optlen;
+  tcpip_callback(lwip_getsockopt_internal, &data);
+  sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+
+  sock_set_errno(sock, err);
+  return err ? -1 : 0;
+}
+
+
+static void lwip_getsockopt_internal(void *arg)
+{
+  struct lwip_socket *sock;
+  int s, level, optname;
+  void *optval;
+  socklen_t *optlen;
+  struct lwip_setgetsockopt_data *data;
+
+  LWIP_ASSERT("arg != NULL", arg != NULL);
+
+  data = (struct lwip_setgetsockopt_data*)arg;
+  sock = data->sock;
+  s = data->s;
+  level = data->level;
+  optname = data->optname;
+  optval = data->optval;
+  optlen = data->optlen;
 
   switch (level) {
    
@@ -1172,15 +1216,14 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
     }  /* switch (optname) */
     break;
   } /* switch (level) */
-
-  sock_set_errno(sock, err);
-  return err ? -1 : 0;
+  sys_mbox_post(sock->conn->mbox, NULL);
 }
 
 int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
   struct lwip_socket *sock = get_socket(s);
   int err = ERR_OK;
+  struct lwip_setgetsockopt_data data;
 
   if (!sock)
     return -1;
@@ -1302,6 +1345,36 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
 
 
   /* Now do the actual option processing */
+  data.sock = sock;
+  data.level = level;
+  data.optname = optname;
+  data.optval = (void*)optval;
+  data.optlen = &optlen;
+  tcpip_callback(lwip_getsockopt_internal, &data);
+  sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+
+  sock_set_errno(sock, err);
+  return err ? -1 : 0;
+}
+
+static void lwip_setsockopt_internal(void *arg)
+{
+  struct lwip_socket *sock;
+  int s, level, optname;
+  const void *optval;
+  socklen_t optlen;
+  struct lwip_setgetsockopt_data *data;
+
+  LWIP_ASSERT("arg != NULL", arg != NULL);
+
+  data = (struct lwip_setgetsockopt_data*)arg;
+  sock = data->sock;
+  s = data->s;
+  level = data->level;
+  optname = data->optname;
+  optval = data->optval;
+  optlen = *(data->optlen);
+
 
   switch (level) {
 
@@ -1363,9 +1436,13 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
         err = EAFNOSUPPORT;
       } else {
         struct ip_mreq *imr = (struct ip_mreq *)optval;
-        if (netconn_join_leave_group(sock->conn, (struct ip_addr *)&(imr->imr_multiaddr.s_addr),
-                                     (struct ip_addr *)&(imr->imr_interface.s_addr),
-                                     ((optname==IP_ADD_MEMBERSHIP)?NETCONN_JOIN:NETCONN_LEAVE)) < 0) {
+        err_t err;
+        if(optname == IP_ADD_MEMBERSHIP){
+          err = igmp_joingroup(netif_default, imr);
+        } else {
+          err = igmp_leavegroup(netif_default, imr->imr_multiaddr.s_addr);
+        }
+        if(err < 0) {
           err = EADDRNOTAVAIL;
         }
       }
@@ -1413,9 +1490,7 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
     }  /* switch (optname) */
     break;
   }  /* switch (level) */
-
-  sock_set_errno(sock, err);
-  return err ? -1 : 0;
+  sys_mbox_post(sock->conn->mbox, NULL);
 }
 
 int lwip_ioctl(int s, long cmd, void *argp)

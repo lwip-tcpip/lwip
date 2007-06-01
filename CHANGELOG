@@ -170,6 +170,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-05-22 Simon Goldschmidt
+  * sockets.c: Checked in patch #5914: Moved sockopt processing into tcpip_thread.
+
   2007-05-23 Frédéric Bernon
   * api_lib.c, sockets.c: Fixed bug #5958 for netconn_listen (acceptmbox only
     allocated by do_listen if success) and netconn_accept errors handling. In
