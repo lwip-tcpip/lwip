@@ -66,7 +66,6 @@
 /**
  * Initializes the IP layer.
  */
-
 void
 ip_init(void)
 {
@@ -80,8 +79,10 @@ ip_init(void)
  * searches the list of network interfaces linearly. A match is found
  * if the masked IP address of the network interface equals the masked
  * IP address given to the function.
+ *
+ * @param dest the destination IP address for which to find the route
+ * @return the netif on which to send to reach dest
  */
-
 struct netif *
 ip_route(struct ip_addr *dest)
 {
@@ -98,14 +99,18 @@ ip_route(struct ip_addr *dest)
   /* no matching netif found, use default netif */
   return netif_default;
 }
-#if IP_FORWARD
 
+#if IP_FORWARD
 /**
  * Forwards an IP packet. It finds an appropriate route for the
  * packet, decrements the TTL value of the packet, adjusts the
  * checksum and outputs the packet on the appropriate interface.
+ *
+ * @param p the packet to forward (p->payload points to IP header)
+ * @param iphdr the IP header of the input packet
+ * @param inp the netif on which this packet was received
+ * @return the netif on which the packet was sent (NULL if it wasn't sent)
  */
-
 static struct netif *
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
@@ -170,10 +175,11 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
  *
  * Finally, the packet is sent to the upper layer protocol input function.
  * 
- * 
- * 
+ * @param p the received IP packet (p->payload points to IP header)
+ * @param inp the netif on which this packet was received
+ * @return ERR_OK if the packet was processed (could return ERR_* if it wasn't
+ *         processed, but currently always returns ERR_OK)
  */
-
 err_t
 ip_input(struct pbuf *p, struct netif *inp) {
   struct ip_hdr *iphdr;
@@ -405,11 +411,25 @@ ip_input(struct pbuf *p, struct netif *inp) {
  * the IP header and calculates the IP header checksum. If the source
  * IP address is NULL, the IP address of the outgoing network
  * interface is filled in as source address.
+ * If the destination IP address is IP_HDRINCL, p is assumed to already
+ * include an IP header and p->payload points to it instead of the data.
+ *
+ * @param p the packet to send (p->payload points to the data, e.g. next
+            protocol header; if dest == IP_HDRINCL, p already includes an IP
+            header and p->payload points to that IP header)
+ * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ *         IP  address of the netif used to send is used as source address)
+ * @param ttl the TTL value to be set in the IP header
+ * @param tos the TOS value to be set in the IP header
+ * @param proto the PROTOCOL to be set in the IP header
+ * @param netif the netif on which to send this packet
+ * @return ERR_OK if the packet was sent OK
+ *         ERR_BUF if p doesn't have enough space for IP/LINK headers
+ *         returns errors returned by netif->output
  *
  * @note ip_id: RFC791 "some host may be able to simply use
  *  unique identifiers independent of destination"
  */
-
 err_t
 ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
              u8_t ttl, u8_t tos,
@@ -420,7 +440,9 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   snmp_inc_ipoutrequests();
 
+  /* Should the IP header be generated or is it already included in p? */
   if (dest != IP_HDRINCL) {
+    /* generate IP header */
     if (pbuf_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
 
@@ -453,6 +475,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 #endif
   } else {
+    /* IP header already included in p */
     iphdr = p->payload;
     dest = &(iphdr->dest);
   }
@@ -476,8 +499,12 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 /**
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
+ *
+ * See ip_ouptut_if for parameter declaration.
+ *
+ * @return ERR_RTE if no route is found
+ *         see ip_output_if() for more return values
  */
-
 err_t
 ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
           u8_t ttl, u8_t tos, u8_t proto)
@@ -496,6 +523,9 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 }
 
 #if IP_DEBUG
+/* Print an IP header by using LWIP_DEBUGF
+ * @param p an IP packet, p->payload pointing to the IP header
+ */
 void
 ip_debug_print(struct pbuf *p)
 {
