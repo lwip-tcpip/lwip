@@ -43,6 +43,15 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
+/**
+ * Processes ICMP input packets, called from ip_input().
+ *
+ * Currently only processes icmp echo requests and sends
+ * out the echo response.
+ *
+ * @param p the icmp echo request packet, p->payload pointing to the ip header
+ * @param inp the netif on which this packet was received
+ */
 void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
@@ -152,7 +161,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
                    ICMP_TTL, 0, IP_PROTO_ICMP, inp);
     break;
   default:
-    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", (s16_t)type, (s16_t)code));
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", 
+                (s16_t)type, (s16_t)code));
     ICMP_STATS_INC(icmp.proterr);
     ICMP_STATS_INC(icmp.drop);
   }
@@ -170,6 +180,15 @@ memerr:
   return;
 }
 
+/**
+ * Send an icmp 'destination unreachable' packet, called from ip_input() if
+ * the transport layer protocol is unknown and from udp_input() if the local
+ * port is not bound.
+ *
+ * @param p the input packet for which the 'unreachable' should be sent,
+ *          p->payload pointing to the IP header
+ * @param t type of the 'unreachable' packet
+ */
 void
 icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 {
@@ -197,12 +216,18 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpoutdestunreachs();
 
-  ip_output(q, NULL, &(iphdr->src),
-      ICMP_TTL, 0, IP_PROTO_ICMP);
+  ip_output(q, NULL, &(iphdr->src), ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 
 #if IP_FORWARD
+/**
+ * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
+ *
+ * @param p the input packet for which the 'time exceeded' should be sent,
+ *          p->payload pointing to the IP header
+ * @param t type of the 'time exceeded' packet
+ */
 void
 icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 {
@@ -234,16 +259,8 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpouttimeexcds();
-  ip_output(q, NULL, &(iphdr->src),
-      ICMP_TTL, 0, IP_PROTO_ICMP);
+  ip_output(q, NULL, &(iphdr->src), ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 
 #endif /* IP_FORWARD */
-
-
-
-
-
-
-
