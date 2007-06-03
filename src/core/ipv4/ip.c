@@ -69,8 +69,8 @@
 void
 ip_init(void)
 {
-#if IP_FRAG
-  ip_frag_init();
+#if IP_REASSEMBLY
+  ip_reass_init();
 #endif
 }
 

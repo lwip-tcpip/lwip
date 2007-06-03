@@ -264,8 +264,18 @@ a lot of data that needs to be copied, this should be set high. */
 #define IP_REASS_BUFSIZE                5760
 #endif
 
+/* Use a static MTU-sized buffer for IP fragmentation.
+
+    * Otherwise pbufs are allocated and reference the original
+    * packet data to be fragmented.
+
+*/
+#ifndef IP_FRAG_USES_STATIC_BUF
+#define IP_FRAG_USES_STATIC_BUF         1
+#endif
+
 /* Assumed max MTU on any interface for IP frag buffer */
-#ifndef IP_FRAG_MAX_MTU
+#if IP_FRAG_USES_STATIC_BUF && !defined(IP_FRAG_MAX_MTU)
 #define IP_FRAG_MAX_MTU                 1500
 #endif
 

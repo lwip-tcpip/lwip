@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-05-18 Simon Goldschmidt
+  * opt.h, ip_frag.c, ip_frag.h, ip.c: Added option IP_FRAG_USES_STATIC_BUF
+    (defaulting to off for now) that can be set to 0 to send fragmented
+    packets by passing PBUF_REFs down the stack.
+
   2007-05-23 Frédéric Bernon
   * api_lib.c: Implement SO_RCVTIMEO for accept and recv on TCP
     connections, such present in patch #5959.

@@ -46,8 +46,7 @@
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
 
-#if (IP_FRAG || IP_REASSEMBLY)
-
+#if IP_REASSEMBLY
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];
 static u8_t ip_reassbitmap[IP_REASS_BUFSIZE / (8 * 8) + 1];
 static const u8_t bitmap_bits[8] = { 0xff, 0x7f, 0x3f, 0x1f,
@@ -58,7 +57,9 @@ static u8_t ip_reassflags;
 #define IP_REASS_FLAG_LASTFRAG 0x01
 
 static u8_t ip_reasstmr;
+#endif /* IP_REASSEMBLY */
 
+#if IP_REASSEMBLY || IP_FRAG_USES_STATIC_BUF
 /*
  * Copy len bytes from offset in pbuf to buffer 
  *
@@ -84,13 +85,14 @@ copy_from_pbuf(struct pbuf *p, u16_t * offset,
   }
   return p;
 }
+#endif /* IP_REASSEMBLY || IP_FRAG_USES_STATIC_BUF */
 
-
+#if IP_REASSEMBLY
 /**
- * Initializes IP reassembly and fragmentation states.
+ * Initializes IP reassembly states.
  */
 void
-ip_frag_init(void)
+ip_reass_init(void)
 {
   ip_reasstmr = 0;
   ip_reassflags = 0;
@@ -299,30 +301,54 @@ nullreturn:
   pbuf_free(p);
   return NULL;
 }
+#endif /* IP_REASSEMBLY */
 
+#if IP_FRAG
+#if IP_FRAG_USES_STATIC_BUF
 static u8_t buf[MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU)];
+#endif /* IP_FRAG_USES_STATIC_BUF */
 
 /**
  * Fragment an IP datagram if too large for the netif.
  *
  * Chop the datagram in MTU sized chunks and send them in order
- * by using a fixed size static memory buffer (PBUF_ROM)
+ * by using a fixed size static memory buffer (PBUF_REF) or
+ * point PBUF_REFs into p (depending on IP_FRAG_USES_STATIC_BUF).
+ *
+ * @param p ip packet to send
+ * @param netif the netif on which to send
+ * @param dest destination ip address to which to send
+ *
+ * @return ERR_OK if sent successfully, err_t otherwise
  */
 err_t 
 ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 {
   struct pbuf *rambuf;
+#if IP_FRAG_USES_STATIC_BUF
   struct pbuf *header;
+#else
+  struct pbuf *newpbuf;
+  struct ip_hdr *original_iphdr;
+#endif
   struct ip_hdr *iphdr;
-  u16_t nfb = 0;
+  u16_t nfb;
   u16_t left, cop;
   u16_t mtu = netif->mtu;
   u16_t ofo, omf;
   u16_t last;
   u16_t poff = IP_HLEN;
   u16_t tmp;
+#if !IP_FRAG_USES_STATIC_BUF
+  u16_t newpbuflen, left_to_copy;
+#endif
 
   /* Get a RAM based MTU sized pbuf */
+#if IP_FRAG_USES_STATIC_BUF
+  /* When using a static buffer, we use a PBUF_REF, which we will
+   * use to reference the packet (without link header).
+   * Layer and length is irrelevant.
+   */
   rambuf = pbuf_alloc(PBUF_LINK, 0, PBUF_REF);
   if (rambuf == NULL) {
     LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc(PBUF_LINK, 0, PBUF_REF) failed\n"));
@@ -334,6 +360,10 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   /* Copy the IP header in it */
   iphdr = rambuf->payload;
   SMEMCPY(iphdr, p->payload, IP_HLEN);
+#else /* IP_FRAG_USES_STATIC_BUF */
+  original_iphdr = p->payload;
+  iphdr = original_iphdr;
+#endif /* IP_FRAG_USES_STATIC_BUF */
 
   /* Save original offset */
   tmp = ntohs(IPH_OFFSET(iphdr));
@@ -342,29 +372,75 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
 
   left = p->tot_len - IP_HLEN;
 
+  nfb = (mtu - IP_HLEN) / 8;
+
   while (left) {
     last = (left <= mtu - IP_HLEN);
 
     /* Set new offset and MF flag */
-    ofo += nfb;
     tmp = omf | (IP_OFFMASK & (ofo));
     if (!last)
       tmp = tmp | IP_MF;
-    IPH_OFFSET_SET(iphdr, htons(tmp));
 
     /* Fill this fragment */
-    nfb = (mtu - IP_HLEN) / 8;
     cop = last ? left : nfb * 8;
 
+#if IP_FRAG_USES_STATIC_BUF
     p = copy_from_pbuf(p, &poff, (u8_t *) iphdr + IP_HLEN, cop);
+#else /* IP_FRAG_USES_STATIC_BUF */
+    /* When not using a static buffer, create a chain of pbufs.
+     * The first will be a PBUF_RAM holding the link and IP header.
+     * The rest will be PBUF_REFs mirroring the pbuf chain to be fragged,
+     * but limited to the size of an mtu.
+     */
+    rambuf = pbuf_alloc(PBUF_LINK, IP_HLEN, PBUF_RAM);
+    if (rambuf == NULL) {
+      return ERR_MEM;
+    }
+    SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
+    iphdr = rambuf->payload;
+
+    /* Can just adjust p directly for needed offset. */
+    p->payload = (u8_t *)p->payload + poff;
+    p->len -= poff;
+
+    left_to_copy = cop;
+    while (left_to_copy) {
+      newpbuflen = (left_to_copy < p->len) ? left_to_copy : p->len;
+      /* Is this pbuf already empty? */
+      if (!newpbuflen) {
+        p = p->next;
+        continue;
+      }
+      newpbuf = pbuf_alloc(PBUF_RAW, 0, PBUF_REF);
+      if (newpbuf == NULL) {
+        pbuf_free(rambuf);
+        return ERR_MEM;
+      }
+      /* Mirror this pbuf, although we might not need all of it. */
+      newpbuf->payload = p->payload;
+      newpbuf->len = newpbuf->tot_len = newpbuflen;
+      /* Add it to end of rambuf's chain, but using pbuf_cat, not pbuf_chain
+       * so that it is removed when pbuf_dechain is later called on rambuf.
+       */
+      pbuf_cat(rambuf, newpbuf);
+      left_to_copy -= newpbuflen;
+      if (left_to_copy)
+        p = p->next;
+    }
+    poff = newpbuflen;
+#endif /* IP_FRAG_USES_STATIC_BUF */
 
     /* Correct header */
+    IPH_OFFSET_SET(iphdr, htons(tmp));
     IPH_LEN_SET(iphdr, htons(cop + IP_HLEN));
     IPH_CHKSUM_SET(iphdr, 0);
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 
+#if IP_FRAG_USES_STATIC_BUF
     if (last)
       pbuf_realloc(rambuf, left + IP_HLEN);
+
     /* This part is ugly: we alloc a RAM based pbuf for 
      * the link level header for each chunk and then 
      * free it.A PBUF_ROM style pbuf for which pbuf_header
@@ -382,11 +458,29 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
       pbuf_free(rambuf);      
       return ERR_MEM;    
     }
+#else /* IP_FRAG_USES_STATIC_BUF */
+    /* No need for separate header pbuf - we allowed room for it in rambuf
+     * when allocated.
+     */
+    netif->output(netif, rambuf, dest);
+    IPFRAG_STATS_INC(ip_frag.xmit);
+
+    /* Unfortunately we can't reuse rambuf - the hardware may still be
+     * using the buffer. Instead we free it (and the ensuing chain) and
+     * recreate it next time round the loop. If we're lucky the hardware
+     * will have already sent the packet, the free will really free, and
+     * there will be zero memory penalty.
+     */
+    
+    pbuf_free(rambuf);
+#endif /* IP_FRAG_USES_STATIC_BUF */
     left -= cop;
+    ofo += nfb;
   }
+#if IP_FRAG_USES_STATIC_BUF
   pbuf_free(rambuf);
+#endif /* IP_FRAG_USES_STATIC_BUF */
   snmp_inc_ipfragoks();
   return ERR_OK;
 }
-
-#endif /* IP_FRAG || IP_REASSEMBLY */
+#endif /* IP_FRAG */

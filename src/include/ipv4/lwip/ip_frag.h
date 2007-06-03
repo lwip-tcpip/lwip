@@ -39,24 +39,25 @@
 #include "lwip/netif.h"
 #include "lwip/ip_addr.h"
 
-#if (IP_FRAG || IP_REASSEMBLY)
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* The IP timer interval in milliseconds. */
+#if IP_REASSEMBLY
+/* The IP reassembly timer interval in milliseconds. */
 #define IP_TMR_INTERVAL 1000
 
-void ip_frag_init(void);
+void ip_reass_init(void);
 void ip_reass_tmr(void);
 struct pbuf * ip_reass(struct pbuf *p);
+#endif /* IP_REASSEMBLY */
+
+#if IP_FRAG
 err_t ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest);
+#endif /* IP_FRAG */
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* IP_FRAG || IP_REASSEMBLY */
 
 #endif /* __LWIP_IP_FRAG_H__ */
