@@ -214,8 +214,14 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
       /* callback */
-      if (pcb->recv != NULL)
+      if (pcb->recv != NULL) {
+        /* now the recv function is responsible for freeing p */
         pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
+      } else {
+        /* no recv function registered? then we have to free the pbuf! */
+        pbuf_free(p);
+        goto end;
+      }
     } else {
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: not for us.\n"));
 
@@ -226,7 +232,8 @@ udp_input(struct pbuf *p, struct netif *inp)
           !ip_addr_ismulticast(&iphdr->dest)) {
 
         /* restore pbuf pointer */
-        p->payload = iphdr;
+        pbuf_header(p, (IPH_HL(iphdr) * 4));
+        LWIP_ASSERT("p->payload == iphdr", (p->payload == iphdr));
         icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
       UDP_STATS_INC(udp.proterr);

@@ -171,6 +171,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-06-03 Simon Goldschmidt
+  * udp.c: udp_input(): Input pbuf was not freed if pcb had no recv function
+    registered, p->payload was modified without modifying p->len if sending
+    icmp_dest_unreach() (had no negative effect but was definitively wrong).
+
+  2007-06-03 Simon Goldschmidt
   * icmp.c: Corrected bug #19937: For responding to an icmp echo request, icmp
     re-used the input pbuf even if that didn't have enough space to include the
     link headers. Now the space is tested and a new pbuf is allocated for the
