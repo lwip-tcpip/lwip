@@ -170,7 +170,13 @@ HISTORY
 
   ++ Bug fixes:
 
-  2007-05-22 Simon Goldschmidt
+  2007-06-03 Simon Goldschmidt
+  * icmp.c: Corrected bug #19937: For responding to an icmp echo request, icmp
+    re-used the input pbuf even if that didn't have enough space to include the
+    link headers. Now the space is tested and a new pbuf is allocated for the
+    echo response packet if the echo request pbuf isn't big enough.
+
+  2007-06-01 Simon Goldschmidt
   * sockets.c: Checked in patch #5914: Moved sockopt processing into tcpip_thread.
 
   2007-05-23 Frédéric Bernon
