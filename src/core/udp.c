@@ -64,6 +64,9 @@
 /* exported in udp.h (was static) */
 struct udp_pcb *udp_pcbs = NULL;
 
+/**
+ * Initialize the UDP module
+ */
 void
 udp_init(void)
 {
@@ -74,10 +77,12 @@ udp_init(void)
  * Process an incoming UDP datagram.
  *
  * Given an incoming UDP datagram (as a chain of pbufs) this function
- * finds a corresponding UDP PCB and
+ * finds a corresponding UDP PCB and hands over the pbuf to the pcbs
+ * recv function. If no pcb is found or the datagram is incorrect, the
+ * pbuf is freed.
  *
- * @param pbuf pbuf to be demultiplexed to a UDP PCB.
- * @param netif network interface on which the datagram was received.
+ * @param p pbuf to be demultiplexed to a UDP PCB.
+ * @param inp network interface on which the datagram was received.
  *
  */
 void
@@ -96,6 +101,8 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   iphdr = p->payload;
 
+  /* Check minimum length (IP header + UDP header)
+   * and move payload pointer to UDP header */
   if (p->tot_len < (IPH_HL(iphdr) * 4 + UDP_HLEN) || pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4))) {
     /* drop short packets */
     LWIP_DEBUGF(UDP_DEBUG,
@@ -111,6 +118,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 
+  /* convert src and dest ports to host byte order */
   src = ntohs(udphdr->src);
   dest = ntohs(udphdr->dest);
 
@@ -127,7 +135,10 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   local_match = 0;
   uncon_pcb = NULL;
-  /* Iterate through the UDP pcb list for a matching pcb */
+  /* Iterate through the UDP pcb list for a matching pcb.
+   * 'Perfect match' pcbs (connected to the remote port & ip address) are
+   * preferred. If no perfect match is found, the first unconnected pcb that
+   * matches the local port and ip address gets the datagram. */
   for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
     /* print the PCB local and remote address */
     LWIP_DEBUGF(UDP_DEBUG,
@@ -227,11 +238,9 @@ udp_input(struct pbuf *p, struct netif *inp)
 
       /* No match was found, send ICMP destination port unreachable unless
          destination address was broadcast/multicast. */
-
       if (!ip_addr_isbroadcast(&iphdr->dest, inp) &&
           !ip_addr_ismulticast(&iphdr->dest)) {
-
-        /* restore pbuf pointer */
+        /* move payload pointer back to ip header */
         pbuf_header(p, (IPH_HL(iphdr) * 4));
         LWIP_ASSERT("p->payload == iphdr", (p->payload == iphdr));
         icmp_dest_unreach(p, ICMP_DUR_PORT);
@@ -252,7 +261,7 @@ end:
  * Send data to a specified address using UDP.
  *
  * @param pcb UDP PCB used to send the data.
- * @param pbuf chain of pbuf's to be sent.
+ * @param p chain of pbuf's to be sent.
  * @param dst_ip Destination IP address.
  * @param dst_port Destination UDP port.
  *
@@ -261,10 +270,7 @@ end:
  * If the PCB already has a remote address association, it will
  * be restored after the data is sent.
  * 
- * @return lwIP error code.
- * - ERR_OK. Successful. No error occured.
- * - ERR_MEM. Out of memory.
- * - ERR_RTE. Could not find route to destination address.
+ * @return lwIP error code (@see udp_send for possible error codes)
  *
  * @see udp_disconnect() udp_send()
  */
@@ -294,12 +300,17 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
  * Send data using UDP.
  *
  * @param pcb UDP PCB used to send the data.
- * @param pbuf chain of pbuf's to be sent.
+ * @param p chain of pbuf's to be sent.
+ *
+ * The datagram will be sent to the current remote_ip & remote_port
+ * stored in pcb. If the pcb is not bound to a port, it will
+ * automatically be bound to a random port.
  *
  * @return lwIP error code.
  * - ERR_OK. Successful. No error occured.
  * - ERR_MEM. Out of memory.
  * - ERR_RTE. Could not find route to destination address.
+ * - More errors could be returned by lower protocol layers.
  *
  * @see udp_disconnect() udp_sendto()
  */
@@ -346,8 +357,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* first pbuf q points to header pbuf */
     LWIP_DEBUGF(UDP_DEBUG,
                 ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));
-    /* adding a header within p succeeded */
   } else {
+    /* adding space for header within p succeeded */
     /* first pbuf q equals given pbuf */
     q = p;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
@@ -364,12 +375,13 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* use outgoing network interface IP address as source address */
     src_ip = &(netif->ip_addr);
   } else {
-    /* check if UDP PCB local IP address is correct */
+    /* check if UDP PCB local IP address is correct
+     * this could be an old address if netif->ip_addr has changed */
     if (!ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
+      /* local_ip doesn't match, drop the packet */
       if (q != p) {
         /* free the header pbuf */
         pbuf_free(q);
-        q = NULL;
         /* p is still referenced by the caller, and will live on */
       }
       return ERR_VAL;
@@ -437,7 +449,9 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
  * @param pcb UDP PCB to be bound with a local address ipaddr and port.
  * @param ipaddr local IP address to bind with. Use IP_ADDR_ANY to
  * bind to all local interfaces.
- * @param port local UDP port to bind with.
+ * @param port local UDP port to bind with. Use 0 to automatically bind
+ * to a random port between UDP_LOCAL_PORT_RANGE_START and
+ * UDP_LOCAL_PORT_RANGE_END.
  *
  * ipaddr & port are expected to be in the same byte order as in the pcb.
  *
@@ -501,9 +515,12 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     ipcb = udp_pcbs;
     while ((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
       if (ipcb->local_port == port) {
+        /* port is already used by another udp_pcb */
         port++;
+        /* restart scanning all udp pcbs */
         ipcb = udp_pcbs;
       } else
+        /* go on with next udp pcb */
         ipcb = ipcb->next;
     }
     if (ipcb != NULL) {
@@ -540,6 +557,8 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
  * @return lwIP error code
  *
  * ipaddr & port are expected to be in the same byte order as in the pcb.
+ *
+ * The udp pcb is bound to a random local port if not already bound.
  *
  * @see udp_disconnect()
  */
@@ -596,6 +615,11 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   return ERR_OK;
 }
 
+/**
+ * Disconnect a UDP PCB
+ *
+ * @param pcb the udp pcb to disconnect.
+ */
 void
 udp_disconnect(struct udp_pcb *pcb)
 {
@@ -606,6 +630,15 @@ udp_disconnect(struct udp_pcb *pcb)
   pcb->flags &= ~UDP_FLAGS_CONNECTED;
 }
 
+/**
+ * Set a receive callback for a UDP PCB
+ *
+ * This callback will be called when receiving a datagram for the pcb.
+ *
+ * @param pcb the pcb for wich to set the recv callback
+ * @param recv function pointer of the callback function
+ * @param arg additional argument to pass to the callback function
+ */
 void
 udp_recv(struct udp_pcb *pcb,
          void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p,
@@ -662,6 +695,9 @@ udp_new(void)
   pcb = memp_malloc(MEMP_UDP_PCB);
   /* could allocate UDP PCB? */
   if (pcb != NULL) {
+    /* UDP Lite: by initializing to all zeroes, chksum_len is set to 0
+     * which means checksum is generated over the whole datagram per default
+     * (recommended as default by RFC 3828). */
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
     pcb->ttl = UDP_TTL;
@@ -670,6 +706,11 @@ udp_new(void)
 }
 
 #if UDP_DEBUG
+/**
+ * Print UDP header information for debug purposes.
+ *
+ * @param udphdr pointer to the udp header in memory.
+ */
 void
 udp_debug_print(struct udp_hdr *udphdr)
 {
