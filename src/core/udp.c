@@ -178,11 +178,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   /* Check checksum if this is a match or if it was directed at us. */
   if (pcb != NULL || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
-#ifdef IPv6
-    if (iphdr->nexthdr == IP_PROTO_UDPLITE) {
-#else
     if (IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {
-#endif /* IPv4 */
       /* Do the UDP Lite checksum */
 #if CHECKSUM_CHECK_UDP
       if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),

@@ -88,6 +88,8 @@ struct ip_hdr {
   struct ip_addr src, dest;          /* source and destination IP addresses */
 };
 
+#define IPH_PROTO(hdr) (iphdr->nexthdr)
+
 void ip_init(void);
 
 #include "lwip/netif.h"
