@@ -656,7 +656,6 @@ pbuf_dechain(struct pbuf *p)
   return (tail_gone > 0? NULL: q);
 }
 
-#if ARP_QUEUEING
 /**
  *
  * Create PBUF_RAM copies of pbufs.
@@ -741,4 +740,3 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 #endif
   return ERR_OK;
 }
-#endif /* ARP_QUEUEING */
