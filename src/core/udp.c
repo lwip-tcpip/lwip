@@ -378,6 +378,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       if (q != p) {
         /* free the header pbuf */
         pbuf_free(q);
+        q = NULL;
         /* p is still referenced by the caller, and will live on */
       }
       return ERR_VAL;
