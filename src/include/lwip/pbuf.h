@@ -110,9 +110,7 @@ u8_t pbuf_clen(struct pbuf *p);
 void pbuf_cat(struct pbuf *h, struct pbuf *t);
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_dechain(struct pbuf *p);
-#if ARP_QUEUEING
 err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
-#endif
 
 #ifdef __cplusplus
 }
