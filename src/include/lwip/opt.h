@@ -723,6 +723,10 @@ a lot of data that needs to be copied, this should be set high. */
 #define ICMP_DEBUG                      LWIP_DBG_OFF
 #endif
 
+#ifndef IGMP_DEBUG
+#define IGMP_DEBUG                      LWIP_DBG_OFF
+#endif
+
 #ifndef INET_DEBUG
 #define INET_DEBUG                      LWIP_DBG_OFF
 #endif
