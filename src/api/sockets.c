@@ -1350,7 +1350,7 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
   data.optname = optname;
   data.optval = (void*)optval;
   data.optlen = &optlen;
-  tcpip_callback(lwip_getsockopt_internal, &data);
+  tcpip_callback(lwip_setsockopt_internal, &data);
   sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
 
   sock_set_errno(sock, err);
