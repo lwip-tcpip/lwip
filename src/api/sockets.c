@@ -77,6 +77,7 @@ struct lwip_setgetsockopt_data {
   int optname;
   void *optval;
   socklen_t *optlen;
+  err_t err;
 };
 
 static struct lwip_socket sockets[NUM_SOCKETS];
@@ -1080,8 +1081,11 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
   data.optname = optname;
   data.optval = optval;
   data.optlen = optlen;
+  data.err = err;
   tcpip_callback(lwip_getsockopt_internal, &data);
   sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+  /* maybe lwip_getsockopt_internal has changed err */
+  err = data.err;
 
   sock_set_errno(sock, err);
   return err ? -1 : 0;
@@ -1293,6 +1297,9 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
       if (optlen < sizeof(struct ip_mreq)) {
         err = EINVAL;
       }
+      if ((sock->conn->type == NETCONN_TCP) || (sock->conn->type == NETCONN_RAW)) {
+        err = EAFNOSUPPORT;
+      }
       break;
 #endif /* LWIP_IGMP */
       default:
@@ -1350,8 +1357,11 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
   data.optname = optname;
   data.optval = (void*)optval;
   data.optlen = &optlen;
+  data.err = err;
   tcpip_callback(lwip_setsockopt_internal, &data);
   sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+  /* maybe lwip_setsockopt_internal has changed err */
+  err = data.err;
 
   sock_set_errno(sock, err);
   return err ? -1 : 0;
@@ -1431,19 +1441,16 @@ static void lwip_setsockopt_internal(void *arg)
       break;
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:
-      /* If this is a TCP or a RAW socket, ignore these options. */
-      if ((sock->conn->type == NETCONN_TCP) || (sock->conn->type == NETCONN_RAW)) {
-        err = EAFNOSUPPORT;
-      } else {
+      {
+        /* If this is a TCP or a RAW socket, ignore these options. */
         struct ip_mreq *imr = (struct ip_mreq *)optval;
-        err_t err;
         if(optname == IP_ADD_MEMBERSHIP){
-          err = igmp_joingroup(netif_default, imr);
+          data->err = igmp_joingroup(netif_default, (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
         } else {
-          err = igmp_leavegroup(netif_default, imr->imr_multiaddr.s_addr);
+          data->err = igmp_leavegroup(netif_default, (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
         }
-        if(err < 0) {
-          err = EADDRNOTAVAIL;
+        if(data->err != ERR_OK) {
+          data->err = EADDRNOTAVAIL;
         }
       }
       break;
