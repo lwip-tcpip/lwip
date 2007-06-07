@@ -59,6 +59,9 @@
 /** The list of RAW PCBs */
 static struct raw_pcb *raw_pcbs = NULL;
 
+/**
+ * Initialize this modul
+ */
 void
 raw_init(void)
 {
@@ -230,9 +233,6 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
   
   if ((netif = ip_route(ipaddr)) == NULL) {
     LWIP_DEBUGF(RAW_DEBUG | 1, ("raw_sendto: No route to 0x%"X32_F"\n", ipaddr->addr));
-#if RAW_STATS
-    /*    ++lwip_stats.raw.rterr;*/
-#endif /* RAW_STATS */
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {
       pbuf_free(q);
@@ -289,11 +289,13 @@ raw_remove(struct raw_pcb *pcb)
     /* make list start at 2nd pcb */
     raw_pcbs = raw_pcbs->next;
     /* pcb not 1st in list */
-  } else for(pcb2 = raw_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
-    /* find pcb in raw_pcbs list */
-    if (pcb2->next != NULL && pcb2->next == pcb) {
-      /* remove pcb from list */
-      pcb2->next = pcb->next;
+  } else {
+    for(pcb2 = raw_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
+      /* find pcb in raw_pcbs list */
+      if (pcb2->next != NULL && pcb2->next == pcb) {
+        /* remove pcb from list */
+        pcb2->next = pcb->next;
+      }
     }
   }
   memp_free(MEMP_RAW_PCB, pcb);
