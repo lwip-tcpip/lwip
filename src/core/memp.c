@@ -154,6 +154,9 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
 
 #if MEMP_SANITY_CHECK
+/**
+ * Check that memp-lists don't form a circle
+ */
 static int
 memp_sanity(void)
 {
@@ -174,6 +177,13 @@ memp_sanity(void)
 }
 #endif /* MEMP_SANITY_CHECK*/
 #if MEMP_OVERFLOW_CHECK
+/**
+ * Check if a memp element was victim of an overflow
+ * (e.g. the restricted area after it has been altered)
+ *
+ * @param p the memp element to check
+ * @param memp_size the element size of the pool p comes from
+ */
 static void
 memp_overflow_check_element(struct memp *p, u16_t memp_size)
 {
@@ -196,6 +206,11 @@ memp_overflow_check_element(struct memp *p, u16_t memp_size)
   }
 #endif
 }
+/**
+ * Do an overflow check for all elements in every pool.
+ *
+ * @see memp_overflow_check_element for a description of the check
+ */
 static void
 memp_overflow_check_all(void)
 {
@@ -211,6 +226,9 @@ memp_overflow_check_all(void)
     }
   }
 }
+/**
+ * Initialize the restricted areas of all memp elements in every pool.
+ */
 static void
 memp_overflow_init(void)
 {
@@ -236,6 +254,9 @@ memp_overflow_init(void)
 }
 #endif /* MEMP_OVERFLOW_CHECK */
 
+/**
+ * Initialize this module.
+ */
 void
 memp_init(void)
 {
@@ -251,8 +272,10 @@ memp_init(void)
 #endif /* MEMP_STATS */
 
   memp = MEM_ALIGN(memp_memory);
+  /* for every pool: */
   for (i = 0; i < MEMP_MAX; ++i) {
     memp_tab[i] = NULL;
+    /* create a linked list of memp elements */
     for (j = 0; j < memp_num[i]; ++j) {
       memp->next = memp_tab[i];
       memp_tab[i] = memp;
@@ -266,6 +289,11 @@ memp_init(void)
 #endif /* MEMP_OVERFLOW_CHECK */
 }
 
+/**
+ * Get an element from a specific pool.
+ *
+ * @param type the pool to get an element from
+ */
 void *
 #if MEMP_OVERFLOW_CHECK
 memp_malloc_fn(memp_t type, const char* file, const int line)
@@ -312,6 +340,12 @@ memp_malloc(memp_t type)
   return (void*)((u8_t*)memp + MEMP_SIZE);
 }
 
+/**
+ * Put an element back into its pool.
+ *
+ * @param type the pool where to put mem
+ * @param mem the memp element to free
+ */
 void
 memp_free(memp_t type, void *mem)
 {
