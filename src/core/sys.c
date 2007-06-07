@@ -37,13 +37,23 @@
 
 #if (NO_SYS == 0)
 
+/**
+ * Struct used for sys_sem_wait_timeout() to tell wether the time
+ * has run out or the semaphore has really become available.
+ */
 struct sswt_cb
 {
-    s16_t timeflag;
-    sys_sem_t *psem;
+  s16_t timeflag;
+  sys_sem_t *psem;
 };
 
-
+/**
+ * Wait (forever) for a message to arrive in an mbox.
+ * While waiting, timeouts (for this thread) are processed.
+ *
+ * @param mbox the mbox to fetch the message from
+ * @param msg the place to store the message
+ */
 void
 sys_mbox_fetch(sys_mbox_t mbox, void **msg)
 {
@@ -94,6 +104,12 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
   }
 }
 
+/**
+ * Wait (forever) for a semaphore to become available.
+ * While waiting, timeouts (for this thread) are processed.
+ *
+ * @param sem semaphore to wait for
+ */
 void
 sys_sem_wait(sys_sem_t sem)
 {
@@ -130,7 +146,6 @@ sys_sem_wait(sys_sem_t sem)
         h(arg);
       }
 
-
       /* We try again to fetch a message from the mbox. */
       goto again;
     } else {
@@ -143,10 +158,20 @@ sys_sem_wait(sys_sem_t sem)
         timeouts->next->time = 0;
       }
     }
-
   }
 }
 
+/**
+ * Create a one-shot timer (aka timeout). Timeouts are processed in the
+ * following cases:
+ * - while waiting for a message using sys_mbox_fetch()
+ * - while waiting for a semaphore using sys_sem_wait() or sys_sem_wait_timeout()
+ * - while sleeping using the inbuilt sys_msleep()
+ *
+ * @param msecs time in milliseconds after that the timer should expire
+ * @param h callback function to call when msecs have elapsed
+ * @param arg argument to pass to the callback function
+ */
 void
 sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
@@ -194,92 +219,101 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
       }
     }
   }
-
 }
 
-/* Go through timeout list (for this task only) and remove the first matching entry,
-   even though the timeout has not triggered yet.
+/**
+ * Go through timeout list (for this task only) and remove the first matching
+ * entry, even though the timeout has not triggered yet.
+ *
+ * @note This function only works as expected if there is only one timeout
+ * calling 'h' in the list of timeouts.
+ *
+ * @param h callback function that would be called by the timeout
+ * @param arg callback argument that would be passed to h
 */
-
 void
 sys_untimeout(sys_timeout_handler h, void *arg)
 {
-    struct sys_timeouts *timeouts;
-    struct sys_timeo *prev_t, *t;
+  struct sys_timeouts *timeouts;
+  struct sys_timeo *prev_t, *t;
 
-    timeouts = sys_arch_timeouts();
+  timeouts = sys_arch_timeouts();
 
-    LWIP_ASSERT("sys_untimeout: timeouts != NULL", timeouts != NULL);
-    if (timeouts == NULL)
-        return;
-    if (timeouts->next == NULL)
-        return;
-
-    for (t = timeouts->next, prev_t = NULL; t != NULL; prev_t = t, t = t->next)
-    {
-        if ((t->h == h) && (t->arg == arg))
-        {
-            /* We have a match */
-            /* Unlink from previous in list */
-            if (prev_t == NULL)
-                timeouts->next = t->next;
-            else
-                prev_t->next = t->next;
-            /* If not the last one, add time of this one back to next */
-            if (t->next != NULL)
-                t->next->time += t->time;
-            memp_free(MEMP_SYS_TIMEOUT, t);
-            return;
-        }
-    }
+  LWIP_ASSERT("sys_untimeout: timeouts != NULL", timeouts != NULL);
+  if (timeouts == NULL)
     return;
+  if (timeouts->next == NULL)
+    return;
+
+  for (t = timeouts->next, prev_t = NULL; t != NULL; prev_t = t, t = t->next) {
+    if ((t->h == h) && (t->arg == arg)) {
+      /* We have a match */
+      /* Unlink from previous in list */
+      if (prev_t == NULL)
+        timeouts->next = t->next;
+      else
+        prev_t->next = t->next;
+      /* If not the last one, add time of this one back to next */
+      if (t->next != NULL)
+        t->next->time += t->time;
+      memp_free(MEMP_SYS_TIMEOUT, t);
+      return;
+    }
+  }
+  return;
 }
 
-
-
-
-
+/**
+ * Timeout handler function for sys_sem_wait_timeout()
+ *
+ * @param arg struct sswt_cb* used to signal a semaphore and end waiting.
+ */
 static void
 sswt_handler(void *arg)
 {
-    struct sswt_cb *sswt_cb = (struct sswt_cb *) arg;
+  struct sswt_cb *sswt_cb = (struct sswt_cb *) arg;
 
-    /* Timeout. Set flag to TRUE and signal semaphore */
-    sswt_cb->timeflag = 1;
-    sys_sem_signal(*(sswt_cb->psem));
+  /* Timeout. Set flag to TRUE and signal semaphore */
+  sswt_cb->timeflag = 1;
+  sys_sem_signal(*(sswt_cb->psem));
 }
 
-/* Wait for a semaphore with timeout (specified in ms) */
-/* timeout = 0: wait forever */
-/* Returns 0 on timeout. 1 otherwise */
-
+/**
+ * Wait for a semaphore with timeout (specified in ms)
+ *
+ * @param timeout timeout in ms (0: wait forever)
+ * @return 0 on timeout, 1 otherwise
+ */
 int
 sys_sem_wait_timeout(sys_sem_t sem, u32_t timeout)
 {
-    struct sswt_cb sswt_cb;
+  struct sswt_cb sswt_cb;
 
-    sswt_cb.psem = &sem;
-    sswt_cb.timeflag = 0;
+  sswt_cb.psem = &sem;
+  sswt_cb.timeflag = 0;
 
-    /* If timeout is zero, then just wait forever */
-    if (timeout > 0)
-        /* Create a timer and pass it the address of our flag */
-        sys_timeout(timeout, sswt_handler, &sswt_cb);
-    sys_sem_wait(sem);
-    /* Was it a timeout? */
-    if (sswt_cb.timeflag)
-    {
-        /* timeout */
-        return 0;
-    } else {
-        /* Not a timeout. Remove timeout entry */
-        sys_untimeout(sswt_handler, &sswt_cb);
-        return 1;
-    }
-
+  /* If timeout is zero, then just wait forever */
+  if (timeout > 0) {
+    /* Create a timer and pass it the address of our flag */
+    sys_timeout(timeout, sswt_handler, &sswt_cb);
+  }
+  sys_sem_wait(sem);
+  /* Was it a timeout? */
+  if (sswt_cb.timeflag) {
+    /* timeout */
+    return 0;
+  } else {
+    /* Not a timeout. Remove timeout entry */
+    sys_untimeout(sswt_handler, &sswt_cb);
+    return 1;
+  }
 }
 
-
+/**
+ * Sleep for some ms. Timeouts are processed while sleeping.
+ *
+ * @param ms number of milliseconds to sleep
+ */
 void
 sys_msleep(u32_t ms)
 {
