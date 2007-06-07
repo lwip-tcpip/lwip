@@ -493,7 +493,7 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_TCP_KEEPALIVE              0
 #endif
 
-/* Enable SO_RCVTIMEO processing (only for UDP sockets) */
+/* Enable SO_RCVTIMEO processing */
 #ifndef LWIP_SO_RCVTIMEO
 #define LWIP_SO_RCVTIMEO                0
 #endif
