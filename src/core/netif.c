@@ -53,6 +53,15 @@ struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
 
 /**
+ * Initialize this module
+ */
+void
+netif_init(void)
+{
+  netif_list = netif_default = NULL;
+}
+
+/**
  * Add a network interface to the list of lwIP netifs.
  *
  * @param netif a pre-allocated netif structure
@@ -116,8 +125,17 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   return netif;
 }
 
+/**
+ * Change IP address configuration for a network interface (including netmask
+ * and default gateway).
+ *
+ * @param netif the network interface to change
+ * @param ipaddr the new IP address
+ * @param netmask the new netmask
+ * @param gw the new default gateway
+ */
 void
-netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
+netif_set_addr(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
     struct ip_addr *gw)
 {
   netif_set_ipaddr(netif, ipaddr);
@@ -125,6 +143,11 @@ netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netma
   netif_set_gw(netif, gw);
 }
 
+/**
+ * Remove a network interface from the list of lwIP netifs.
+ *
+ * @param netif the network interface to remove
+ */
 void netif_remove(struct netif * netif)
 {
   if ( netif == NULL ) return;
@@ -156,6 +179,12 @@ void netif_remove(struct netif * netif)
   LWIP_DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
 }
 
+/**
+ * Find a network interface by searching for its name
+ *
+ * @param name the name of the netif (like netif->name) plus concatenated number
+ * in ascii representation (e.g. 'en0')
+ */
 struct netif *
 netif_find(char *name)
 {
@@ -180,6 +209,15 @@ netif_find(char *name)
   return NULL;
 }
 
+/**
+ * Change the IP address of a network interface
+ *
+ * @param netif the network interface to change
+ * @param ipaddr the new IP address
+ *
+ * @note call netif_set_addr() if you also want to change netmask and
+ * default gateway
+ */
 void
 netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 {
@@ -232,6 +270,14 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
     ip4_addr4(&netif->ip_addr)));
 }
 
+/**
+ * Change the default gateway for a network interface
+ *
+ * @param netif the network interface to change
+ * @param gw the new default gateway
+ *
+ * @note call netif_set_addr() if you also want to change ip address and netmask
+ */
 void
 netif_set_gw(struct netif *netif, struct ip_addr *gw)
 {
@@ -244,6 +290,15 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
     ip4_addr4(&netif->gw)));
 }
 
+/**
+ * Change the netmask of a network interface
+ *
+ * @param netif the network interface to change
+ * @param netmask the new netmask
+ *
+ * @note call netif_set_addr() if you also want to change ip address and
+ * default gateway
+ */
 void
 netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 {
@@ -259,6 +314,12 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
     ip4_addr4(&netif->netmask)));
 }
 
+/**
+ * Set a network interface as the default network interface
+ * (used to output all packets for which no specific route is found)
+ *
+ * @param netif the default network interface
+ */
 void
 netif_set_default(struct netif *netif)
 {
@@ -346,13 +407,6 @@ void netif_set_down(struct netif *netif)
     }
 }
 
-void
-netif_init(void)
-{
-  netif_list = netif_default = NULL;
-}
-
-
 #if LWIP_NETIF_CALLBACK
 /**
  * Set callback to be called when interface is brought up/down
@@ -363,4 +417,3 @@ void netif_set_status_callback( struct netif *netif, void (* status_callback)(st
         netif->status_callback = status_callback;
 }
 #endif /* LWIP_NETIF_CALLBACK */
-
