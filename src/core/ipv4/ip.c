@@ -419,6 +419,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
             header and p->payload points to that IP header)
  * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
  *         IP  address of the netif used to send is used as source address)
+ * @param dest the destination IP address to send the packet to
  * @param ttl the TTL value to be set in the IP header
  * @param tos the TOS value to be set in the IP header
  * @param proto the PROTOCOL to be set in the IP header
