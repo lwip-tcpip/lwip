@@ -669,7 +669,9 @@ pbuf_dechain(struct pbuf *p)
  *
  * @param p Head of pbuf chain to process
  *
- * @return Pointer to head of pbuf chain
+ * @return ERR_OK if pbuf was copied
+ *         ERR_ARG if one of the pbufs is NULL or p_to is not big
+ *                 enough to hold p_from
  */
 err_t
 pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
@@ -727,11 +729,13 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       /* don't copy more than one packet! */
       LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
                   p_from->next == NULL);
+      return ERR_VAL;
     }
     if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
       LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
                   p_to->next == NULL);
+      return ERR_VAL;
     }
   } while (p_from);
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));
