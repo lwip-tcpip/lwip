@@ -59,7 +59,7 @@ static u8_t ip_reassflags;
 static u8_t ip_reasstmr;
 #endif /* IP_REASSEMBLY */
 
-#if IP_REASSEMBLY || IP_FRAG_USES_STATIC_BUF
+#if IP_REASSEMBLY || (IP_FRAG && IP_FRAG_USES_STATIC_BUF)
 /*
  * Copy len bytes from offset in pbuf to buffer 
  *
