@@ -517,10 +517,12 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
        struct sockaddr *to, socklen_t tolen)
 {
   struct lwip_socket *sock;
-  struct netbuf buf;
   struct ip_addr remote_addr;
-  u16_t remote_port;
   int err;
+#if !LWIP_TCPIP_CORE_LOCKING
+  struct netbuf buf;
+  u16_t remote_port;
+#endif
 
   sock = get_socket(s);
   if (!sock)
