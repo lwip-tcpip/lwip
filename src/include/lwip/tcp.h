@@ -219,18 +219,25 @@ enum tcp_state {
   TIME_WAIT   = 10
 };
 
+/**
+ * members common to struct tcp_pcb and struct tcp_listen_pcb
+ */
+#define TCP_PCB_COMMON \
+  struct tcp_pcb *next; /* for the linked list */ \
+  enum tcp_state state; /* TCP state */ \
+  u8_t prio; \
+  void *callback_arg; \
+  /* ports are in host byte order */ \
+  u16_t local_port
+
 /* the TCP protocol control block */
 struct tcp_pcb {
 /** common PCB members */
   IP_PCB;
 /** protocol specific PCB members */
-  struct tcp_pcb *next; /* for the linked list */
-  enum tcp_state state; /* TCP state */
-  u8_t prio;
-  void *callback_arg;
+  TCP_PCB_COMMON;
 
   /* ports are in host byte order */
-  u16_t local_port;
   u16_t remote_port;
   
   u8_t flags;
@@ -328,20 +335,8 @@ struct tcp_pcb {
 struct tcp_pcb_listen {  
 /* Common members of all PCB types */
   IP_PCB;
-
 /* Protocol specific PCB members */
-  struct tcp_pcb_listen *next;   /* for the linked list */
-  
-  /* Even if state is obviously LISTEN this is here for
-   * field compatibility with tpc_pcb to which it is cast sometimes
-   * Until a cleaner solution emerges this is here.FIXME
-   */ 
-  enum tcp_state state;   /* TCP state */
-
-  u8_t prio;
-  void *callback_arg;
-  
-  u16_t local_port; 
+  TCP_PCB_COMMON;
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
