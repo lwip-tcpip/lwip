@@ -32,15 +32,22 @@
 
 #if LWIP_NETIF_API
 
+/**
+ * Call netif_add() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note for params @see netif_add()
+ */
 err_t
-netifapi_netif_add( struct netif *netif,
-                    struct ip_addr *ipaddr,
-                    struct ip_addr *netmask,
-                    struct ip_addr *gw,
-                    void *state,
-                    err_t (* init)(struct netif *netif),
-                    err_t (* input)(struct pbuf *p, struct netif *netif) )
-{ struct netifapi_msg msg;
+netifapi_netif_add(struct netif *netif,
+                   struct ip_addr *ipaddr,
+                   struct ip_addr *netmask,
+                   struct ip_addr *gw,
+                   void *state,
+                   err_t (* init)(struct netif *netif),
+                   err_t (* input)(struct pbuf *p, struct netif *netif))
+{
+  struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_NETIF_ADD;
   msg.netif = netif;  
   msg.msg.add.ipaddr  = ipaddr;
@@ -53,36 +60,65 @@ netifapi_netif_add( struct netif *netif,
   return msg.err;
 }
 
+/**
+ * Call netif_remove() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note for params @see netif_remove()
+ */
 err_t
-netifapi_netif_remove( struct netif *netif)
-{ struct netifapi_msg msg;
+netifapi_netif_remove(struct netif *netif)
+{
+  struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_NETIF_REMOVE;
   msg.netif = netif;  
   tcpip_apimsg(&msg);
   return msg.err;
 }
 
+/**
+ * Call dhcp_start() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note for params @see dhcp_start()
+ */
 err_t
-netifapi_dhcp_start( struct netif *netif)
-{ struct netifapi_msg msg;
+netifapi_dhcp_start(struct netif *netif)
+{
+  struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_DHCP_START;
   msg.netif = netif;  
   tcpip_apimsg(&msg);
   return msg.err;
 }
 
+/**
+ * Call dhcp_stop() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note for params @see dhcp_stop()
+ */
 err_t
-netifapi_dhcp_stop( struct netif *netif)
-{ struct netifapi_msg msg;
+netifapi_dhcp_stop(struct netif *netif)
+{
+  struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_DHCP_STOP;
   msg.netif = netif;  
   tcpip_apimsg(&msg);
   return msg.err;
 }
 
+/**
+ * This function processes the messages posted to the tcpip_thread
+ * by the above functions.
+ *
+ * It is responsible for doing the actual work inside the thread context
+ * of tcpip_thread.
+ */
 void
-netifapi_msg_input( struct netifapi_msg *msg)
-{ msg->err = ERR_OK;
+netifapi_msg_input(struct netifapi_msg *msg)
+{
+  msg->err = ERR_OK;
   switch (msg->type) {
     case NETIFAPI_MSG_NETIF_ADD: {
       if (!netif_add( msg->netif,
