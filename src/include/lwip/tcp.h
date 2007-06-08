@@ -222,8 +222,8 @@ enum tcp_state {
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
  */
-#define TCP_PCB_COMMON \
-  struct tcp_pcb *next; /* for the linked list */ \
+#define TCP_PCB_COMMON(type) \
+  type *next; /* for the linked list */ \
   enum tcp_state state; /* TCP state */ \
   u8_t prio; \
   void *callback_arg; \
@@ -235,7 +235,7 @@ struct tcp_pcb {
 /** common PCB members */
   IP_PCB;
 /** protocol specific PCB members */
-  TCP_PCB_COMMON;
+  TCP_PCB_COMMON(struct tcp_pcb);
 
   /* ports are in host byte order */
   u16_t remote_port;
@@ -336,7 +336,7 @@ struct tcp_pcb_listen {
 /* Common members of all PCB types */
   IP_PCB;
 /* Protocol specific PCB members */
-  TCP_PCB_COMMON;
+  TCP_PCB_COMMON(struct tcp_pcb_listen);
 
 #if LWIP_CALLBACK_API
   /* Function to call when a listener has been connected. */
