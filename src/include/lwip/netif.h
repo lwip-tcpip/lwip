@@ -150,6 +150,26 @@ struct netif {
 #endif /* LWIP_IGMP */
 };
 
+#if LWIP_SNMP
+#define NETIF_INIT_SNMP(type, speed) \
+  /* ifType ethernetCsmacd(6) @see RFC1213 */ \
+  netif->link_type = type;    \
+  /* your link speed here */  \
+  netif->link_speed = speed;  \
+  netif->ts = 0;              \
+  netif->ifinoctets = 0;      \
+  netif->ifinucastpkts = 0;   \
+  netif->ifinnucastpkts = 0;  \
+  netif->ifindiscards = 0;    \
+  netif->ifoutoctets = 0;     \
+  netif->ifoutucastpkts = 0;  \
+  netif->ifoutnucastpkts = 0; \
+  netif->ifoutdiscards = 0
+#else /* LWIP_SNMP */
+#define NETIF_INIT_SNMP(type, speed)
+#endif /* LWIP_SNMP */
+
+
 /** The list of network interfaces. */
 extern struct netif *netif_list;
 /** The default network interface. */

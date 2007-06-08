@@ -253,6 +253,13 @@ slipif_init(struct netif *netif)
     return ERR_IF;
   }
 
+  /* initialize the snmp variables and counters inside the struct netif
+   * ifType: we're using propPointToPointSerial(22) @see RFC1213
+   * ifSpeed: no assumption can be made without knowing more about the
+   * serial line!
+   */
+  NETIF_INIT_SNMP(22, 0);
+
   /* Create a thread to poll the serial line. */
   sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);
   return ERR_OK;

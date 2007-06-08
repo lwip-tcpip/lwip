@@ -341,22 +341,9 @@ ethernetif_init(struct netif *netif)
   netif->hostname = "lwip";
 #endif /* LWIP_NETIF_HOSTNAME */
 
-#if LWIP_SNMP
   /* initialize the snmp variables and counters inside the struct netif */
   /* ifType ethernetCsmacd(6) @see RFC1213 */
-  netif->link_type = 6;
-  /* your link speed here */
-  netif->link_speed = ;
-  netif->ts = 0;
-  netif->ifinoctets = 0;
-  netif->ifinucastpkts = 0;
-  netif->ifinnucastpkts = 0;
-  netif->ifindiscards = 0;
-  netif->ifoutoctets = 0;
-  netif->ifoutucastpkts = 0;
-  netif->ifoutnucastpkts = 0;
-  netif->ifoutdiscards = 0;
-#endif  /* LWIP_SNMP */
+  NETIF_INIT_SNMP(6, ???);
 
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;

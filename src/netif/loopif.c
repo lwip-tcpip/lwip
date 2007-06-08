@@ -196,6 +196,12 @@ loopif_init(struct netif *netif)
   netif->state = priv;
 #endif /* LWIP_LOOPIF_MULTITHREADING */
 
+  /* initialize the snmp variables and counters inside the struct netif
+   * ifType: softwareLoopback(24) @see RFC1213
+   * ifSpeed: no assumption can be made!
+   */
+  NETIF_INIT_SNMP(24, 0);
+
   netif->name[0] = 'l';
   netif->name[1] = 'o';
   netif->output = loopif_output;
