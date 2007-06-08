@@ -64,10 +64,16 @@ static u8_t ip_reasstmr;
  * Copy len bytes from offset in pbuf to buffer 
  *
  * helper used by both ip_reass and ip_frag
+ *
+ * @param p pbuf chain to copy from
+ * @param offset offset in bytes into the pbuf chain which should be skipped
+ *        before starting to copy
+ * @param buffer destination to copy the data
+ * @param len number of bytes to copy (starting from offset)
+ * @return pointer to one pbuf in the chain p from which copied last
  */
 static struct pbuf *
-copy_from_pbuf(struct pbuf *p, u16_t * offset,
-           u8_t * buffer, u16_t len)
+copy_from_pbuf(struct pbuf *p, u16_t *offset, u8_t *buffer, u16_t len)
 {
   u16_t l;
 
