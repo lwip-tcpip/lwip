@@ -125,8 +125,8 @@ loopif_output(struct netif *netif, struct pbuf *p,
   SYS_ARCH_DECL_PROTECT(lev);
   struct loopif_private *priv;
 #endif /* LWIP_LOOPIF_MULTITHREADING */
-  struct pbuf *q, *r;
-  u8_t *ptr;
+  struct pbuf *r;
+  err_t err;
 
   LWIP_UNUSED_ARG(ipaddr);
 
@@ -137,13 +137,10 @@ loopif_output(struct netif *netif, struct pbuf *p,
   }
 
   /* Copy the whole pbuf queue p into the single pbuf r */
-  /* @todo: - extend this so that r can be a pbuf list also
-   *        - could use pbuf_copy() for that!
-   */
-  ptr = r->payload;
-  for(q = p; q != NULL; q = q->next) {
-    MEMCPY(ptr, q->payload, q->len);
-    ptr += q->len;
+  if ((err = pbuf_copy(r, p)) != ERR_OK) {
+    pbuf_free(r);
+    r = NULL;
+    return err;
   }
 
 #if LWIP_LOOPIF_MULTITHREADING
