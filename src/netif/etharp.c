@@ -83,9 +83,7 @@
 enum etharp_state {
   ETHARP_STATE_EMPTY,
   ETHARP_STATE_PENDING,
-  ETHARP_STATE_STABLE,
-  /** @internal transitional state used in etharp_tmr() for convenience*/
-  ETHARP_STATE_EXPIRED
+  ETHARP_STATE_STABLE
 };
 
 struct etharp_entry {
@@ -148,6 +146,7 @@ free_etharp_q(struct etharp_q_entry *q)
   while(q) {
     r = q;
     q = q->next;
+    LWIP_ASSERT("r->p != NULL", (r->p != NULL));
     pbuf_free(r->p);
     memp_free(MEMP_ARP_QUEUE, r);
   }
@@ -169,26 +168,13 @@ etharp_tmr(void)
   /* remove expired entries from the ARP table */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].ctime++;
-    /* stable entry? */
-    if ((arp_table[i].state == ETHARP_STATE_STABLE) &&
-         /* entry has become old? */
+    if (((arp_table[i].state == ETHARP_STATE_STABLE) ||
+         (arp_table[i].state == ETHARP_STATE_PENDING))  &&
         (arp_table[i].ctime >= ARP_MAXAGE)) {
-      LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired stable entry %"U16_F".\n", (u16_t)i));
-      arp_table[i].state = ETHARP_STATE_EXPIRED;
-    /* pending entry? */
-    } else if (arp_table[i].state == ETHARP_STATE_PENDING) {
-      /* entry unresolved/pending for too long? */
-      if (arp_table[i].ctime >= ARP_MAXPENDING) {
-        LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired pending entry %"U16_F".\n", (u16_t)i));
-        arp_table[i].state = ETHARP_STATE_EXPIRED;
-#if ARP_QUEUEING
-      } else if (arp_table[i].q != NULL) {
-        /* resend an ARP query here */
-#endif
-      }
-    }
-    /* clean up entries that have just been expired */
-    if (arp_table[i].state == ETHARP_STATE_EXPIRED) {
+         /* pending or stable entry has become old! */
+      LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired %s entry %"U16_F".\n",
+           arp_table[i].state == ETHARP_STATE_STABLE ? "stable" : "pending", (u16_t)i));
+      /* clean up entries that have just been expired */
       /* remove from SNMP ARP index tree */
       snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
 #if ARP_QUEUEING
@@ -203,6 +189,12 @@ etharp_tmr(void)
       /* recycle entry for re-use */      
       arp_table[i].state = ETHARP_STATE_EMPTY;
     }
+#if ARP_QUEUEING
+    /* still pending entry? (not expired) */
+    if (arp_table[i].state == ETHARP_STATE_PENDING) {
+        /* resend an ARP query here? */
+    }
+#endif
   }
 }
 
