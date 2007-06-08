@@ -65,8 +65,6 @@ static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 
 /* Forward declarations. */
 static void  ethernetif_input(struct netif *netif);
-static err_t ethernetif_output(struct netif *netif, struct pbuf *p,
-             struct ip_addr *ipaddr);
 
 /**
  * In this function, the hardware should be initialized.
@@ -207,25 +205,6 @@ low_level_input(struct netif *netif)
 }
 
 /**
- * This function is called by the TCP/IP stack when an IP packet
- * should be sent. It calls the function called low_level_output() to
- * do the actual transmission of the packet.
- *
- * @param netif the lwip network interface structure for this ethernetif
- * @param p the (IP) packet to send
- * @param ipaddr the ip address to send the packet to
- * @return ERR_OK if the packet has been sent
- *         an err_t on failure
- */
-static err_t
-ethernetif_output(struct netif *netif, struct pbuf *p,
-      struct ip_addr *ipaddr)
-{
-  /* resolve hardware address, then send (or queue) packet */
-  return etharp_output(netif, p, ipaddr);
-}
-
-/**
  * This function should be called when a packet is ready to be read
  * from the interface. It uses the function low_level_input() that
  * should handle the actual reception of bytes from the network
@@ -348,7 +327,11 @@ ethernetif_init(struct netif *netif)
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;
   netif->name[1] = IFNAME1;
-  netif->output = ethernetif_output;
+  /* We directly use etharp_output() here to save a function call.
+   * You can instead declare your own function an call etharp_output()
+   * from it if you have to do some checks before sending (e.g. if link
+   * is available...) */
+  netif->output = etharp_output;
   netif->linkoutput = low_level_output;
   
   ethernetif->ethaddr = (struct eth_addr *)&(netif->hwaddr[0]);
