@@ -81,14 +81,15 @@ static void tcp_parseopt(struct tcp_pcb *pcb);
 static err_t tcp_listen_input(struct tcp_pcb_listen *pcb);
 static err_t tcp_timewait_input(struct tcp_pcb *pcb);
 
-/* tcp_input:
- *
+/**
  * The initial input processing of TCP. It verifies the TCP header, demultiplexes
  * the segment between the PCBs and passes it on to tcp_process(), which implements
  * the TCP finite state machine. This function is called by the IP layer (in
  * ip_input()).
+ *
+ * @param p received TCP segment to process (p->payload pointing to the IP header)
+ * @param inp network interface on which this segment was received
  */
-
 void
 tcp_input(struct pbuf *p, struct netif *inp)
 {
@@ -345,12 +346,18 @@ tcp_input(struct pbuf *p, struct netif *inp)
   PERF_STOP("tcp_input");
 }
 
-/* tcp_listen_input():
- *
+/**
  * Called by tcp_input() when a segment arrives for a listening
- * connection.
+ * connection (from tcp_input()).
+ *
+ * @param pcb the tcp_pcb_listen for which a segment arrived
+ * @return ERR_OK if the segment was processed
+ *         another err_t on error
+ *
+ * @note the return value is not (yet?) used in tcp_input()
+ * @note the segment which arrived is saved in global variables, therefore only the pcb
+ *       involved is passed as a parameter to this function
  */
-
 static err_t
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
@@ -414,12 +421,15 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
   return ERR_OK;
 }
 
-/* tcp_timewait_input():
- *
+/**
  * Called by tcp_input() when a segment arrives for a connection in
  * TIME_WAIT.
+ *
+ * @param pcb the tcp_pcb for which a segment arrived
+ *
+ * @note the segment which arrived is saved in global variables, therefore only the pcb
+ *       involved is passed as a parameter to this function
  */
-
 static err_t
 tcp_timewait_input(struct tcp_pcb *pcb)
 {
@@ -432,14 +442,17 @@ tcp_timewait_input(struct tcp_pcb *pcb)
   return tcp_output(pcb);
 }
 
-/* tcp_process
- *
+/**
  * Implements the TCP state machine. Called by tcp_input. In some
  * states tcp_receive() is called to receive data. The tcp_seg
  * argument will be freed by the caller (tcp_input()) unless the
  * recv_data pointer in the pcb is set.
+ *
+ * @param pcb the tcp_pcb for which a segment arrived
+ *
+ * @note the segment which arrived is saved in global variables, therefore only the pcb
+ *       involved is passed as a parameter to this function
  */
-
 static err_t
 tcp_process(struct tcp_pcb *pcb)
 {
@@ -624,8 +637,7 @@ tcp_process(struct tcp_pcb *pcb)
   return ERR_OK;
 }
 
-/* tcp_receive:
- *
+/**
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
  * data, and if so frees the memory of the buffered data. Next, is places the
  * segment on any of the receive queues (pcb->recved or pcb->ooseq). If the segment
@@ -635,9 +647,10 @@ tcp_process(struct tcp_pcb *pcb)
  * If the incoming segment constitutes an ACK for a segment that was used for RTT
  * estimation, the RTT is estimated here as well.
  *
- * @return 1 if 
+ * Called from tcp_process().
+ *
+ * @return 1 if the incoming segment is the next in sequence, 0 if not
  */
-
 static u8_t
 tcp_receive(struct tcp_pcb *pcb)
 {
@@ -891,7 +904,7 @@ tcp_receive(struct tcp_pcb *pcb)
          we do not want to discard the full contents of the pbuf up to
          the new starting point of the data since we have to keep the
          TCP header which is present in the first pbuf in the chain.
-         
+
          What is done is really quite a nasty hack: the first pbuf in
          the pbuf chain is pointed to by inseg.p. Since we need to be
          able to deallocate the whole pbuf, we cannot change this
@@ -901,11 +914,11 @@ tcp_receive(struct tcp_pcb *pcb)
          inseg.data pointer to point to the right place. This way, the
          ->p pointer will still point to the first pbuf, but the
          ->p->payload pointer will point to data in another pbuf.
-         
+
          After we are done with adjusting the pbuf pointers we must
          adjust the ->data pointer in the seg and the segment
          length.*/
-      
+
       off = pcb->rcv_nxt - seqno;
       p = inseg.p;
       LWIP_ASSERT("inseg.p != NULL", inseg.p);
@@ -938,7 +951,7 @@ tcp_receive(struct tcp_pcb *pcb)
       if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
         /* the whole segment is < rcv_nxt */
         /* must be a duplicate of a packet that has already been correctly handled */
-        
+
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_receive: duplicate seqno %"U32_F"\n", seqno));
         tcp_ack_now(pcb);
       }
@@ -1180,14 +1193,14 @@ tcp_receive(struct tcp_pcb *pcb)
   return accepted_inseq;
 }
 
-/*
- * tcp_parseopt:
- *
+/**
  * Parses the options contained in the incoming segment. (Code taken
  * from uIP with only small changes.)
  *
+ * Called from tcp_listen_input() and tcp_process().
+ *
+ * @param pcb the tcp_pcb for which a segment arrived
  */
-
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
@@ -1203,7 +1216,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
       opt = opts[c];
       if (opt == 0x00) {
         /* End of options. */
-  break;
+        break;
       } else if (opt == 0x01) {
         ++c;
         /* NOP option. */
@@ -1216,7 +1229,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
         /* And we are done processing options. */
         break;
       } else {
-  if (opts[c + 1] == 0) {
+        if (opts[c + 1] == 0) {
           /* If the length field is zero, the options are malformed
              and we don't process them further. */
           break;
@@ -1229,5 +1242,3 @@ tcp_parseopt(struct tcp_pcb *pcb)
   }
 }
 #endif /* LWIP_TCP */
-
-

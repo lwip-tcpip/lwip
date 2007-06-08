@@ -58,6 +58,13 @@
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
+/**
+ * Called by tcp_close() to send a segment including flags but not data.
+ *
+ * @param pcb the tcp_pcb over which to send a segment
+ * @param flags the flags to set in the segment header
+ * @return ERR_OK if sent, another err_t otherwise
+ */
 err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 {
@@ -73,23 +80,27 @@ tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
  * To prompt the system to send data now, call tcp_output() after
  * calling tcp_write().
  * 
- * @arg pcb Protocol control block of the TCP connection to enqueue data for. 
+ * @param pcb Protocol control block of the TCP connection to enqueue data for.
+ * @param data pointer to the data to send
+ * @param len length (in bytes) of the data to send
+ * @param copy 1 if data must be copied, 0 if data is non-volatile and can be
+ * referenced.
+ * @return ERR_OK if enqueued, another err_t on error
  * 
  * @see tcp_write()
  */
-
 err_t
-tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
+tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t copy)
 {
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, arg=%p, len=%"U16_F", copy=%"U16_F")\n", (void *)pcb,
-    arg, len, (u16_t)copy));
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, data=%p, len=%"U16_F", copy=%"U16_F")\n", (void *)pcb,
+    data, len, (u16_t)copy));
   /* connection is in valid state for data transmission? */
   if (pcb->state == ESTABLISHED ||
      pcb->state == CLOSE_WAIT ||
      pcb->state == SYN_SENT ||
      pcb->state == SYN_RCVD) {
     if (len > 0) {
-      return tcp_enqueue(pcb, (void *)arg, len, 0, copy, NULL, 0);
+      return tcp_enqueue(pcb, (void *)data, len, 0, copy, NULL, 0);
     }
     return ERR_OK;
   } else {
@@ -100,17 +111,17 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t copy)
 
 /**
  * Enqueue either data or TCP options (but not both) for tranmission
- * 
- * 
- * 
- * @arg pcb Protocol control block for the TCP connection to enqueue data for.
- * @arg arg Pointer to the data to be enqueued for sending.
- * @arg len Data length in bytes
- * @arg flags
- * @arg copy 1 if data must be copied, 0 if data is non-volatile and can be
+ *
+ * Called by tcp_connect(), tcp_listen_input(), tcp_send_ctrl() and tcp_write().
+ *
+ * @param pcb Protocol control block for the TCP connection to enqueue data for.
+ * @param arg Pointer to the data to be enqueued for sending.
+ * @param len Data length in bytes
+ * @param flags tcp header flags to set in the outgoing segment
+ * @param copy 1 if data must be copied, 0 if data is non-volatile and can be
  * referenced.
- * @arg optdata
- * @arg optlen
+ * @param optdata
+ * @param optlen
  */
 err_t
 tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
@@ -375,7 +386,13 @@ memerr:
   return ERR_MEM;
 }
 
-/* find out what we can send and send it */
+/**
+ * Find out what we can send and send it
+ *
+ * @param pcb Protocol control block for the TCP connection to send data
+ * @return ERR_OK if data has been sent or nothing to send
+ *         another err_t on error
+ */
 err_t
 tcp_output(struct tcp_pcb *pcb)
 {
@@ -518,7 +535,10 @@ tcp_output(struct tcp_pcb *pcb)
 }
 
 /**
- * Actually send a TCP segment over IP
+ * Called by tcp_output() to actually send a TCP segment over IP.
+ *
+ * @param seg the tcp_seg to send
+ * @param pcb the tcp_pcb for the TCP connection used to send the segment
  */
 static void
 tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
@@ -585,6 +605,26 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
       IP_PROTO_TCP);
 }
 
+/**
+ * Send a TCP RESET packet (empty segment with RST flag set) either to
+ * abort a connection or to show that there is no matching local connection
+ * for a received segment.
+ *
+ * Called by tcp_abort() (to abort a local connection), tcp_input() (if no
+ * matching local pcb was found), tcp_listen_input() (if incoming segment
+ * has ACK flag set) and tcp_process() (received segment in the wrong state)
+ *
+ * Since a RST segment is in most cases not sent for an active connection,
+ * tcp_rst() has a number of arguments that are taken from a tcp_pcb for
+ * most other segment output functions.
+ *
+ * @param seqno the sequence number to use for the outgoing segment
+ * @param ackno the acknowledge number to use for the outgoing segment
+ * @param local_ip the local IP address to send the segment from
+ * @param remote_ip the remote IP address to send the segment to
+ * @param local_port the local TCP port to send the segment from
+ * @param remote_port the remote TCP port to send the segment to
+ */
 void
 tcp_rst(u32_t seqno, u32_t ackno,
   struct ip_addr *local_ip, struct ip_addr *remote_ip,
@@ -621,7 +661,13 @@ tcp_rst(u32_t seqno, u32_t ackno,
   LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_rst: seqno %"U32_F" ackno %"U32_F".\n", seqno, ackno));
 }
 
-/* requeue all unacked segments for retransmission */
+/**
+ * Requeue all unacked segments for retransmission
+ *
+ * Called by tcp_slowtmr() for slow retransmission.
+ *
+ * @param pcb the tcp_pcb for which to re-enqueue all unacked segments
+ */
 void
 tcp_rexmit_rto(struct tcp_pcb *pcb)
 {
@@ -651,6 +697,13 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
   tcp_output(pcb);
 }
 
+/**
+ * Requeue the first unacked segment for retransmission
+ *
+ * Called by tcp_receive() for fast retramsmit.
+ *
+ * @param pcb the tcp_pcb for which to retransmit the first unacked segment
+ */
 void
 tcp_rexmit(struct tcp_pcb *pcb)
 {
@@ -678,7 +731,14 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 }
 
-
+/**
+ * Send keepalive packets to keep a connection active although
+ * no data is sent over it.
+ *
+ * Called by tcp_slowtmr()
+ *
+ * @param pcb the tcp_pcb for which to send a keepalive packet
+ */
 void
 tcp_keepalive(struct tcp_pcb *pcb)
 {
@@ -722,12 +782,3 @@ tcp_keepalive(struct tcp_pcb *pcb)
 }
 
 #endif /* LWIP_TCP */
-
-
-
-
-
-
-
-
-
