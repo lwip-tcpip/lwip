@@ -114,6 +114,7 @@ static u8_t etharp_cached_entry = 0;
 
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+
 /**
  * Initializes ARP module.
  */
@@ -133,8 +134,13 @@ etharp_init(void)
 }
 
 #if ARP_QUEUEING
-/** Free a complete queue of etharp entrys */
-static void free_etharp_q(struct etharp_q_entry *q)
+/**
+ * Free a complete queue of etharp entries
+ *
+ * @param q a qeueue of etharp_q_entry's to free
+ */
+static void
+free_etharp_q(struct etharp_q_entry *q)
 {
   struct etharp_q_entry *r;
   LWIP_ASSERT("q != NULL", q != NULL);
@@ -222,7 +228,8 @@ etharp_tmr(void)
  * @return The ARP entry index that matched or is created, ERR_MEM if no
  * entry is found or could be recycled.
  */
-static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
+static s8_t
+find_entry(struct ip_addr *ipaddr, u8_t flags)
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
@@ -313,8 +320,7 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* no empty entry found and not allowed to recycle? */
   if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0)
       /* or don't create new entry, only search? */
-      || ((flags & ETHARP_FIND_ONLY) != 0))
-  {
+      || ((flags & ETHARP_FIND_ONLY) != 0)) {
     return (s8_t)ERR_MEM;
   }
   
@@ -781,7 +787,8 @@ etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
  * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
  */
-err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
+err_t
+etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
 {
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_MEM;
@@ -911,7 +918,16 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   return result;
 }
 
-err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr)
+/**
+ * Send an ARP request packet asking for ipaddr.
+ *
+ * @param netif the lwip network interface on which to send the request
+ * @param ipaddr the IP address for which to ask
+ * @return ERR_OK if the request has been sent
+ *         any other err_t on failure
+ */
+err_t
+etharp_request(struct netif *netif, struct ip_addr *ipaddr)
 {
   struct pbuf *p;
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;

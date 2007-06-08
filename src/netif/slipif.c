@@ -54,7 +54,12 @@
 /**
  * Send a pbuf doing the necessary SLIP encapsulation
  *
- * Uses the serial layer's sio_send() 
+ * Uses the serial layer's sio_send()
+ *
+ * @param netif the lwip network interface structure for this slipif
+ * @param p the pbuf chaing packet to send
+ * @param ipaddr the ip address to send the packet to (not used for slipif)
+ * @return always returns ERR_OK since the serial layer does not provide return values
  */
 err_t
 slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
@@ -62,6 +67,12 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
   struct pbuf *q;
   u16_t i;
   u8_t c;
+
+  LWIP_ASSERT("netif != NULL", (netif != NULL));
+  LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
+  LWIP_ASSERT("p != NULL", (p != NULL));
+
+  LWIP_UNUSED_ARG(ipaddr);
 
   /* Send pbuf out on the serial I/O device. */
   sio_send(SLIP_END, netif->state);
@@ -85,23 +96,28 @@ slipif_output(struct netif *netif, struct pbuf *p, struct ip_addr *ipaddr)
     }
   }
   sio_send(SLIP_END, netif->state);
-  return 0;
+  return ERR_OK;
 }
 
 /**
  * Handle the incoming SLIP stream character by character
  *
  * Poll the serial layer by calling sio_recv()
- * 
+ *
+ * @param netif the lwip network interface structure for this slipif
  * @return The IP packet when SLIP_END is received 
  */
 static struct pbuf *
 slipif_input(struct netif *netif)
 {
   u8_t c;
+  /* q is the whole pbuf chain for a packet, p is the current pbuf in the chain */
   struct pbuf *p, *q;
   u16_t recved;
   u16_t i;
+
+  LWIP_ASSERT("netif != NULL", (netif != NULL));
+  LWIP_ASSERT("netif->state != NULL", (netif->state != NULL));
 
   q = p = NULL;
   recved = i = 0;
@@ -113,6 +129,7 @@ slipif_input(struct netif *netif)
     case SLIP_END:
       if (recved > 0) {
         /* Received whole packet. */
+        /* Trim the pbuf to the size of the received packet. */
         pbuf_realloc(q, recved);
         
         LINK_STATS_INC(link.recv);
@@ -135,36 +152,47 @@ slipif_input(struct netif *netif)
       /* FALLTHROUGH */
 
     default:
+      /* byte received, packet not yet completely received */
       if (p == NULL) {
+        /* allocate a new pbuf */
         LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: alloc\n"));
         p = pbuf_alloc(PBUF_LINK, PBUF_POOL_BUFSIZE, PBUF_POOL);
 
         if (p == NULL) {
           LINK_STATS_INC(link.drop);
           LWIP_DEBUGF(SLIP_DEBUG, ("slipif_input: no new pbuf! (DROP)\n"));
+          /* don't process any further since we got no pbuf to receive to */
+          break;
         }
 
         if (q != NULL) {
+          /* 'chain' the pbuf to the existing chain */
           pbuf_cat(q, p);
         } else {
+          /* p is the first pbuf in the chain */
           q = p;
         }
       }
-      if (p != NULL && recved < MAX_SIZE) {
+      /* this automatically drops bytes if > MAX_SIZE */
+      if ((p != NULL) && (recved <= MAX_SIZE)) {
         ((u8_t *)p->payload)[i] = c;
         recved++;
         i++;
         if (i >= p->len) {
+          /* on to the next pbuf */
           i = 0;
-          if (p->next != NULL && p->next->len > 0)
+          if (p->next != NULL && p->next->len > 0) {
+            /* p is a chain, on to the next in the chain */
             p = p->next;
-          else
+          } else {
+            /* p is a signle pbuf, set it to NULL so next time a new
+             * pbuf is allocated */
             p = NULL;
+          }
         }
       }
       break;
     }
-
   }
   return NULL;
 }
@@ -173,6 +201,8 @@ slipif_input(struct netif *netif)
  * The SLIP input thread.
  *
  * Feed the IP layer with incoming packets
+ *
+ * @param nf the lwip network interface structure for this slipif
  */
 static void
 slipif_loop(void *nf)
@@ -182,9 +212,11 @@ slipif_loop(void *nf)
 
   while (1) {
     p = slipif_input(netif);
-    if(netif->input(p, netif) != ERR_OK) {
-      pbuf_free(p);
-      p = NULL;
+    if (p != NULL) {
+      if (netif->input(p, netif) != ERR_OK) {
+        pbuf_free(p);
+        p = NULL;
+      }
     }
   }
 }
@@ -194,6 +226,13 @@ slipif_loop(void *nf)
  *
  * Call the arch specific sio_open and remember
  * the opened device in the state field of the netif.
+ *
+ * @param nf the lwip network interface structure for this slipif
+ * @return ERR_OK if serial line could be opened,
+ *         ERR_IF is serial line couldn't be opened
+ *
+ * @note netif->num must contain the number of the serial port to open
+ *       (0 by default)
  */
 err_t
 slipif_init(struct netif *netif)
@@ -204,13 +243,17 @@ slipif_init(struct netif *netif)
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
-  netif->mtu = 1500;
+  netif->mtu = MAX_SIZE;
   netif->flags = NETIF_FLAG_POINTTOPOINT;
 
+  /* Try to open the serial port (netif->num contains the port number). */
   netif->state = sio_open(netif->num);
-  if (!netif->state)
+  if (!netif->state) {
+    /* Opening the serial port failed. */
     return ERR_IF;
+  }
 
+  /* Create a thread to poll the serial line. */
   sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);
   return ERR_OK;
 }

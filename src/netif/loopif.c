@@ -49,10 +49,13 @@ struct loopif_private {
   struct pbuf *last;
 };
 
-/* Call loopif_poll() in the main loop of your application. This is to prevent
+/**
+ * Call loopif_poll() in the main loop of your application. This is to prevent
  * reentering non-reentrant functions like tcp_input(). Packets passed to
  * loopif_output() are put on a list that is passed to netif->input() by
  * loopif_poll().
+ *
+ * @param netif the lwip network interface structure for this loopif
  */
 void
 loopif_poll(struct netif *netif)
@@ -84,19 +87,36 @@ loopif_poll(struct netif *netif)
   
     if(in != NULL) {
       if(in->next != NULL) {
+        /* De-queue the pbuf from its successors on the 'priv' list. */
         in->next = NULL;
+        /* This is built on the assumption that PBUF_RAM pbufs are in one piece! */
         LWIP_ASSERT("packet must not consist of multiple pbufs!", in->len == in->tot_len);
       }
       if(netif->input(in, netif) != ERR_OK) {
         pbuf_free(in);
-        in = NULL;
       }
+      /* Don't reference the packet any more! */
+      in = NULL;
     }
   /* go on while there is a packet on the list */
   } while(priv->first != NULL);
 }
 #endif /* LWIP_LOOPIF_MULTITHREADING */
 
+/**
+ * Send an IP packet over the loopback interface.
+ * The pbuf is simply copied and handed back to netif->input.
+ * In multithreaded mode, this is done directly since netif->input must put
+ * the packet on a queue.
+ * In callback mode, the packet is put on an internal queue and is fed to
+ * netif->input by loopif_poll().
+ *
+ * @param netif the lwip network interface structure for this loopif
+ * @param p the (IP) packet to 'send'
+ * @param ipaddr the ip address to send the packet to (not used for loopif)
+ * @return ERR_OK if the packet has been sent
+ *         ERR_MEM if the pbuf used to copy the packet couldn't be allocated
+ */
 static err_t
 loopif_output(struct netif *netif, struct pbuf *p,
        struct ip_addr *ipaddr)
@@ -139,6 +159,9 @@ loopif_output(struct netif *netif, struct pbuf *p,
      through calling loopif_poll(). */
   priv = (struct loopif_private*)netif->state;
 
+  /* This is built on the assumption that PBUF_RAM pbufs are in one piece! */
+  LWIP_ASSERT("packet must not consist of multiple pbufs!", r->len == r->tot_len);
+
   SYS_ARCH_PROTECT(lev);
   if(priv->first != NULL) {
     LWIP_ASSERT("if first!=NULL, last must also be != NULL", priv->last != NULL);
@@ -153,6 +176,13 @@ loopif_output(struct netif *netif, struct pbuf *p,
   return ERR_OK;    
 }
 
+/**
+ * Initialize a lwip network interface structure for a loopback interface
+ *
+ * @param netif the lwip network interface structure for this loopif
+ * @return ERR_OK if the loopif is initialized
+ *         ERR_MEM if private data couldn't be allocated
+ */
 err_t
 loopif_init(struct netif *netif)
 {
@@ -173,10 +203,3 @@ loopif_init(struct netif *netif)
 }
 
 #endif /* LWIP_HAVE_LOOPIF */
-
-
-
-
-
-
-
