@@ -119,6 +119,10 @@ lwip_standard_chksum(void *dataptr, u16_t len)
  * unaligned buffer.
  * Works for len up to and including 0x20000.
  * by Curt McDowell, Broadcom Corp. 12/08/2005
+ *
+ * @param dataptr points to start of data to be summed at any boundary
+ * @param len length of data to be summed
+ * @return host order (!) lwip checksum (non-inverted Internet sum) 
  */
 
 static u16_t
@@ -169,6 +173,7 @@ lwip_standard_chksum(void *dataptr, int len)
  *
  * @arg start of buffer to be checksummed. May be an odd byte address.
  * @len number of bytes in the buffer to be checksummed.
+ * @return host order (!) lwip checksum (non-inverted Internet sum) 
  * 
  * by Curt McDowell, Broadcom Corp. December 8th, 2005
  */
@@ -242,8 +247,14 @@ lwip_standard_chksum(void *dataptr, int len)
  *
  * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
  * IP addresses are expected to be in network byte order.
+ *
+ * @param p chain of pbufs over that a checksum should be calculated (ip data part)
+ * @param src source ip address (used for checksum of pseudo header)
+ * @param dst destination ip address (used for checksum of pseudo header)
+ * @param proto ip protocol (used for checksum of pseudo header)
+ * @param proto_len length of the ip data part (used for checksum of pseudo header)
+ * @return checksum (as u16_t) to be saved directly in the protocol header
  */
-
 u16_t
 inet_chksum_pseudo(struct pbuf *p,
        struct ip_addr *src, struct ip_addr *dest,
@@ -292,6 +303,10 @@ inet_chksum_pseudo(struct pbuf *p,
  *
  * Calculates the Internet checksum over a portion of memory. Used primarily for IP
  * and ICMP.
+ *
+ * @param dataptr start of the buffer to calculate the checksum (no alignment needed)
+ * @param len length of the buffer to calculate the checksum
+ * @return checksum (as u16_t) to be saved directly in the protocol header
  */
 
 u16_t
@@ -306,6 +321,13 @@ inet_chksum(void *dataptr, u16_t len)
   return (u16_t)~(acc & 0xffff);
 }
 
+/**
+ * Calculate a checksum over a chain of pbufs (without pseudo-header, much like
+ * inet_chksum only pbufs are used).
+ *
+ * @param p pbuf chain over that the checksum should be calculated
+ * @return checksum (as u16_t) to be saved directly in the protocol header
+ */
 u16_t
 inet_chksum_pbuf(struct pbuf *p)
 {
@@ -342,11 +364,13 @@ inet_chksum_pbuf(struct pbuf *p)
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
 #endif    
     
-/*
+/**
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
+ *
+ * @param cp IP address in ascii represenation (e.g. "127.0.0.1")
+ * @return ip address in network order
  */
-
 u32_t
 inet_addr(const char *cp)
 {
@@ -358,12 +382,16 @@ inet_addr(const char *cp)
   return (INADDR_NONE);
 }
 
-/*
+/**
  * Check whether "cp" is a valid ascii representation
  * of an Internet address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.
  * This replaces inet_addr, the return value from which
  * cannot distinguish between failure and a local broadcast address.
+ *
+ * @param cp IP address in ascii represenation (e.g. "127.0.0.1")
+ * @param addr pointer to which to save the ip address in network order
+ * @return 1 if cp could be converted to addr, 0 on failure
  */
 int
 inet_aton(const char *cp, struct in_addr *addr)
@@ -457,8 +485,13 @@ inet_aton(const char *cp, struct in_addr *addr)
   return (1);
 }
 
-/* Convert numeric IP address into decimal dotted ASCII representation.
+/**
+ * Convert numeric IP address into decimal dotted ASCII representation.
  * returns ptr to static buffer; not reentrant!
+ *
+ * @paran addr ip address in network order to convert
+ * @return pointer to a global static (!) buffer that holds the ASCII
+ *         represenation of addr
  */
 char *
 inet_ntoa(struct in_addr addr)
@@ -490,7 +523,7 @@ inet_ntoa(struct in_addr addr)
   return str;
 }
 
-/*
+/**
  * These are reference implementations of the byte swapping functions.
  * Again with the aim of being simple, correct and fully portable.
  * Byte swapping is the second thing you would want to optimize. You will
@@ -508,18 +541,36 @@ inet_ntoa(struct in_addr addr)
 #endif
 #if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
 
+/**
+ * Convert an u16_t from host- to network byte order.
+ *
+ * @param n u16_t in host byte order
+ * @return n in network byte order
+ */
 u16_t
 htons(u16_t n)
 {
   return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
 }
 
+/**
+ * Convert an u16_t from network- to host byte order.
+ *
+ * @param n u16_t in network byte order
+ * @return n in host byte order
+ */
 u16_t
 ntohs(u16_t n)
 {
   return htons(n);
 }
 
+/**
+ * Convert an u32_t from host- to network byte order.
+ *
+ * @param n u32_t in host byte order
+ * @return n in network byte order
+ */
 u32_t
 htonl(u32_t n)
 {
@@ -529,6 +580,12 @@ htonl(u32_t n)
     ((n & 0xff000000UL) >> 24);
 }
 
+/**
+ * Convert an u32_t from network- to host byte order.
+ *
+ * @param n u32_t in network byte order
+ * @return n in host byte order
+ */
 u32_t
 ntohl(u32_t n)
 {
