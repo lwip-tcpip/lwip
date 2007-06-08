@@ -679,7 +679,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * or the return type of either etharp_query() or netif->linkoutput().
  */
 err_t
-etharp_output(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
+etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
 {
   struct eth_addr *dest, *srcaddr, mcastaddr;
   struct eth_hdr *ethhdr;

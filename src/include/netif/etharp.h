@@ -135,8 +135,7 @@ s8_t etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
 void etharp_ip_input(struct netif *netif, struct pbuf *p);
 void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
          struct pbuf *p);
-err_t etharp_output(struct netif *netif, struct ip_addr *ipaddr,
-         struct pbuf *q);
+err_t etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr);
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
 

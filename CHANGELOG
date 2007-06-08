@@ -19,7 +19,12 @@ HISTORY
 
   ++ New features:
 
-  2007-05-18 Simon Goldschmidt
+  2007-06-09 Simon Goldschmidt
+  * etharp.h, etharp.c, ethernetif.c: Modified order of parameters for
+    etharp_output() to match netif->output so etharp_output() can be used
+    directly as netif->output to save one function call.
+
+  2007-06-08 Simon Goldschmidt
   * netif.h, ethernetif.c, slipif.c, loopif.c: Added define
     NETIF_INIT_SNMP(netif, type, speed) to initialize per-netif snmp variables,
     added initialization of those to ethernetif, slipif and loopif.
