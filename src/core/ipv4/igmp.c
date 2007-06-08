@@ -254,7 +254,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
       igmp->igmp_maxresp = 10;
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %d got an all hosts query with time== 0 - this is V1 and not implemented - treat as v2\n", __LINE__));
     }
-      
+
     igmpstats.igmp_group_query_rxed++;
     groupref = group_list;
     while (groupref) {
@@ -288,7 +288,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
       if ((IGMP_MEMB_QUERY == igmp->igmp_msgtype) && !(ip_addr_cmp (dest, &allsystems)) &&
           (group->group_address.addr != 0)) {
         LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %x got a  query to a specific group with the group address as destination \n", __LINE__));
-   
+
         igmpstats.igmp_unicast_query++; /* This is the unicast query */
         if ((IDLE_MEMBER == group->group_state) || ((DELAYING_MEMBER == group->group_state) &&
             (igmp->igmp_maxresp > group->timer))) {
@@ -298,13 +298,13 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
       } else {
         if (IGMP_V2_MEMB_REPORT == igmp->igmp_msgtype) {
           LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %x got an IGMP_V2_MEMB_REPORT \n", __LINE__));
-   
+
           igmpstats.report_rxed++;
           if (DELAYING_MEMBER == group->group_state) {
-           /* This is on a specific group we have already looked up */
-           group->timer = 0; /* stopped */
-           group->group_state = IDLE_MEMBER;
-           group->last_reporter_flag = 0;
+            /* This is on a specific group we have already looked up */
+            group->timer = 0; /* stopped */
+            group->group_state = IDLE_MEMBER;
+            group->last_reporter_flag = 0;
           }
         } else {
           LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input, Line %x unexpected msg %x in state %x on group %x  at interface %x\n", __LINE__, (int) igmp->igmp_msgtype, (int) group->group_state, (int) &group, (int) group->interface));
