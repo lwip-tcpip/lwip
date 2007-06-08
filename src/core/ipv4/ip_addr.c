@@ -41,14 +41,13 @@
 const struct ip_addr ip_addr_any = { IP_ADDR_ANY_VALUE };
 const struct ip_addr ip_addr_broadcast = { IP_ADDR_BROADCAST_VALUE };
 
-/* Determine if an address is a broadcast address on a network interface 
+/**
+ * Determine if an address is a broadcast address on a network interface 
  * 
  * @param addr address to be checked
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
- *
  */
-
 u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
 {
   u32_t addr2test;
