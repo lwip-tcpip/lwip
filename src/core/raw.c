@@ -60,7 +60,7 @@
 static struct raw_pcb *raw_pcbs = NULL;
 
 /**
- * Initialize this modul
+ * Initialize this module
  */
 void
 raw_init(void)
