@@ -113,6 +113,16 @@ tcp_tmr(void)
 /**
  * Closes the connection held by the PCB.
  *
+ * Listening pcbs are freed and may not be referenced any more.
+ * Connection pcbs are freed if not yet connected and may not be referenced
+ * any more. If a connection is established (at least SYN received or in
+ * a closing state), the connection is closed, and put in a closing state.
+ * The pcb is then automatically freed in tcp_slowtmr(). It is therefore
+ * unsafe to reference it.
+ *
+ * @param pcb the tcp_pcb to close
+ * @return ERR_OK if connection has been closed
+ *         another err_t if closing failed and pcb is not freed
  */
 err_t
 tcp_close(struct tcp_pcb *pcb)
@@ -190,6 +200,7 @@ tcp_close(struct tcp_pcb *pcb)
  * the local protocol control block. This is done when a connection is
  * killed because of shortage of memory.
  *
+ * @param pcb the tcp_pcb to abort
  */
 void
 tcp_abort(struct tcp_pcb *pcb)
@@ -244,8 +255,14 @@ tcp_abort(struct tcp_pcb *pcb)
  * IP address is not given (i.e., ipaddr == NULL), the IP address of
  * the outgoing network interface is used instead.
  *
+ * @param pcb the tcp_pcb to bind (no check is done whether this pcb is
+ *        already bound!)
+ * @param ipaddr the local ip address to bind to (use IP_ADDR_ANY to bind
+ *        to any local address
+ * @param port the local port to bind to
+ * @return ERR_USE if the port is already in use
+ *         ERR_OK if bound
  */
-
 err_t
 tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
@@ -294,6 +311,9 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   return ERR_OK;
 }
 #if LWIP_CALLBACK_API
+/**
+ * Default accept callback if no accept callback is specified by the user.
+ */
 static err_t
 tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
 {
@@ -311,6 +331,12 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * is reallocated in order to consume less memory. Setting the
  * connection to LISTEN is an irreversible process.
  *
+ * @param pcb the original tcp_pcb
+ * @return tcp_pcb used for listening, consumes less memory.
+ *
+ * @note The original tcp_pcb is freed. This function therefore has to be
+ *       called like this:
+ *             tpcb = tcp_listen(tpcb);
  */
 struct tcp_pcb *
 tcp_listen(struct tcp_pcb *pcb)
@@ -347,6 +373,8 @@ tcp_listen(struct tcp_pcb *pcb)
  * processed the data. The purpose is to advertise a larger window
  * when the data has been processed.
  *
+ * @param pcb the tcp_pcb for which data is read
+ * @param len the amount of bytes that have been read by the application
  */
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
@@ -388,6 +416,8 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 /**
  * A nastly hack featuring 'goto' statements that allocates a
  * new TCP local port.
+ *
+ * @return a new (free) local TCP port number
  */
 static u16_t
 tcp_new_port(void)
@@ -426,6 +456,13 @@ tcp_new_port(void)
  * Connects to another host. The function given as the "connected"
  * argument will be called when the connection has been established.
  *
+ * @param pcb the tcp_pcb used to establish the connection
+ * @param ipaddr the remote ip address to connect to
+ * @param port the remote tcp port to connect to
+ * @param connected callback function to call when connected (or on error)
+ * @return ERR_VAL if invalid arguments are given
+ *         ERR_OK if connect request has been sent
+ *         other err_t values if connect request couldn't be sent
  */
 err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
@@ -481,6 +518,8 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
  * Called every 500 ms and implements the retransmission timer and the timer that
  * removes PCBs that have been in TIME-WAIT for enough time. It also increments
  * various timers such as the inactivity timer in each PCB.
+ *
+ * Automatically called from tcp_tmr().
  */
 void
 tcp_slowtmr(void)
@@ -685,6 +724,8 @@ tcp_slowtmr(void)
 
 /**
  * Is called every TCP_FAST_INTERVAL (250 ms) and sends delayed ACKs.
+ *
+ * Automatically called from tcp_tmr().
  */
 void
 tcp_fasttmr(void)
@@ -704,6 +745,8 @@ tcp_fasttmr(void)
 /**
  * Deallocates a list of TCP segments (tcp_seg structures).
  *
+ * @param seg tcp_seg list of TCP segments to free
+ * @return the number of pbufs that were deallocated
  */
 u8_t
 tcp_segs_free(struct tcp_seg *seg)
@@ -719,8 +762,10 @@ tcp_segs_free(struct tcp_seg *seg)
 }
 
 /**
- * Frees a TCP segment.
+ * Frees a TCP segment (tcp_seg structure).
  *
+ * @param seg single tcp_seg to free
+ * @return the number of pbufs that were deallocated
  */
 u8_t
 tcp_seg_free(struct tcp_seg *seg)
@@ -742,6 +787,8 @@ tcp_seg_free(struct tcp_seg *seg)
 /**
  * Sets the priority of a connection.
  *
+ * @param pcb the tcp_pcb to manipulate
+ * @param prio new priority
  */
 void
 tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
@@ -752,7 +799,10 @@ tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 
 /**
  * Returns a copy of the given TCP segment.
+ * The pbuf and data are not copied, only the pointers
  *
+ * @param seg the old tcp_seg
+ * @return a copy of seg
  */ 
 struct tcp_seg *
 tcp_seg_copy(struct tcp_seg *seg)
@@ -770,6 +820,10 @@ tcp_seg_copy(struct tcp_seg *seg)
 #endif
 
 #if LWIP_CALLBACK_API
+/**
+ * Default receive callback that is called if the user didn't register
+ * a recv callback for the pcb.
+ */
 static err_t
 tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
@@ -783,6 +837,11 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 }
 #endif /* LWIP_CALLBACK_API */
 
+/**
+ * Kills the oldest active connection that has lower priority than prio.
+ *
+ * @param prio minimum priority
+ */
 static void
 tcp_kill_prio(u8_t prio)
 {
@@ -793,8 +852,7 @@ tcp_kill_prio(u8_t prio)
 
   mprio = TCP_PRIO_MAX;
   
-  /* We kill the oldest active connection that has lower priority than
-     prio. */
+  /* We kill the oldest active connection that has lower priority than prio. */
   inactivity = 0;
   inactive = NULL;
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
@@ -813,7 +871,10 @@ tcp_kill_prio(u8_t prio)
   }      
 }
 
-
+/**
+ * Kills the oldest connection that is in TIME_WAIT state.
+ * Called from tcp_alloc() if no more connections are available.
+ */
 static void
 tcp_kill_timewait(void)
 {
@@ -822,6 +883,7 @@ tcp_kill_timewait(void)
 
   inactivity = 0;
   inactive = NULL;
+  /* Go through the list of TIME_WAIT pcbs and get the oldest pcb. */
   for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
     if ((u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
       inactivity = tcp_ticks - pcb->tmr;
@@ -835,8 +897,12 @@ tcp_kill_timewait(void)
   }      
 }
 
-
-
+/**
+ * Allocate a new tcp_pcb structure.
+ *
+ * @param prio priority for the new pcb
+ * @return a new tcp_pcb that initially is in state CLOSED
+ */
 struct tcp_pcb *
 tcp_alloc(u8_t prio)
 {
@@ -848,9 +914,12 @@ tcp_alloc(u8_t prio)
     /* Try killing oldest connection in TIME-WAIT. */
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing off oldest TIME-WAIT connection\n"));
     tcp_kill_timewait();
+    /* Try to allocate a tcp_pcb again. */
     pcb = memp_malloc(MEMP_TCP_PCB);
     if (pcb == NULL) {
-      tcp_kill_prio(prio);    
+      /* Try killing active connections with lower priority than the new one. */
+      tcp_kill_prio(prio);
+      /* Try to allocate a tcp_pcb again. */
       pcb = memp_malloc(MEMP_TCP_PCB);
     }
   }
@@ -898,26 +967,28 @@ tcp_alloc(u8_t prio)
 /**
  * Creates a new TCP protocol control block but doesn't place it on
  * any of the TCP PCB lists.
+ * The pcb is not put on any list until binding using tcp_bind().
  *
  * @internal: Maybe there should be a idle TCP PCB list where these
- * PCBs are put on. We can then implement port reservation using
- * tcp_bind(). Currently, we lack this (BSD socket type of) feature.
+ * PCBs are put on. Port reservation using tcp_bind() is implemented but
+ * allocated pcbs that are not bound can't be killed automatically if wanting
+ * to allocate a pcb with higher prio (@see tcp_kill_prio())
+ *
+ * @return a new tcp_pcb that initially is in state CLOSED
  */
-
 struct tcp_pcb *
 tcp_new(void)
 {
   return tcp_alloc(TCP_PRIO_NORMAL);
 }
 
-/*
- * tcp_arg():
- *
+/**
  * Used to specify the argument that should be passed callback
  * functions.
  *
+ * @param pcb tcp_pcb to set the callback argument
+ * @param arg void pointer argument to pass to callback functions
  */ 
-
 void
 tcp_arg(struct tcp_pcb *pcb, void *arg)
 {  
@@ -929,6 +1000,8 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
  * Used to specify the function that should be called when a TCP
  * connection receives data.
  *
+ * @param pcb tcp_pcb to set the recv callback
+ * @param recv callback function to call for this pcb when data is received
  */ 
 void
 tcp_recv(struct tcp_pcb *pcb,
@@ -941,8 +1014,9 @@ tcp_recv(struct tcp_pcb *pcb,
  * Used to specify the function that should be called when TCP data
  * has been successfully delivered to the remote host.
  *
+ * @param pcb tcp_pcb to set the sent callback
+ * @param recv callback function to call for this pcb when data is successfully sent
  */ 
-
 void
 tcp_sent(struct tcp_pcb *pcb,
    err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
@@ -954,6 +1028,9 @@ tcp_sent(struct tcp_pcb *pcb,
  * Used to specify the function that should be called when a fatal error
  * has occured on the connection.
  *
+ * @param pcb tcp_pcb to set the err callback
+ * @param recv callback function to call for this pcb when a fatal error
+ *        has occured on the connection
  */ 
 void
 tcp_err(struct tcp_pcb *pcb,
@@ -966,6 +1043,9 @@ tcp_err(struct tcp_pcb *pcb,
  * Used for specifying the function that should be called when a
  * LISTENing connection has been connected to another host.
  *
+ * @param pcb tcp_pcb to set the accept callback
+ * @param recv callback function to call for this pcb when LISTENing
+ *        connection has been connected to another host
  */ 
 void
 tcp_accept(struct tcp_pcb *pcb,
@@ -995,6 +1075,7 @@ tcp_poll(struct tcp_pcb *pcb,
 /**
  * Purges a TCP PCB. Removes any buffered data and frees the buffer memory.
  *
+ * @param pcb tcp_pcb to purge. The pcb itself is not deallocated!
  */
 void
 tcp_pcb_purge(struct tcp_pcb *pcb)
@@ -1032,6 +1113,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 /**
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
+ * @param pcb tcp_pcb to purge. The pcb itself is also deallocated!
  */
 void
 tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
@@ -1055,6 +1137,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
 /**
  * Calculates a new initial sequence number for new connections.
  *
+ * @return u32_t pseudo random sequence number
  */
 u32_t
 tcp_next_iss(void)
@@ -1066,6 +1149,11 @@ tcp_next_iss(void)
 }
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
+/**
+ * Print a tcp header for debugging purposes.
+ *
+ * @param tcphdr pointer to a struct tcp_hdr
+ */
 void
 tcp_debug_print(struct tcp_hdr *tcphdr)
 {
@@ -1097,6 +1185,11 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
 
+/**
+ * Print a tcp state for debugging purposes.
+ *
+ * @param s enum tcp_state to print
+ */
 void
 tcp_debug_print_state(enum tcp_state s)
 {
@@ -1138,6 +1231,11 @@ tcp_debug_print_state(enum tcp_state s)
   }
 }
 
+/**
+ * Print tcp flags for debugging purposes.
+ *
+ * @param flags tcp flags, all active flags are printed
+ */
 void
 tcp_debug_print_flags(u8_t flags)
 {
@@ -1167,6 +1265,9 @@ tcp_debug_print_flags(u8_t flags)
   }
 }
 
+/**
+ * Print all tcp_pcbs in every list for debugging purposes.
+ */
 void
 tcp_debug_print_pcbs(void)
 {
@@ -1194,6 +1295,9 @@ tcp_debug_print_pcbs(void)
   }    
 }
 
+/**
+ * Check state consistency of the tcp_pcb lists.
+ */
 s16_t
 tcp_pcbs_sane(void)
 {
