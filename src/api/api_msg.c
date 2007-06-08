@@ -340,7 +340,7 @@ do_newconn(struct api_msg_msg *msg)
    /* Is this an error condition? Should it be deleted? */
    /* We currently just are happy and return. */
 
-   sys_mbox_post(msg->conn->mbox, NULL);
+   TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -388,7 +388,7 @@ do_delconn(struct api_msg_msg *msg)
   }
 
   if (msg->conn->mbox != SYS_MBOX_NULL) {
-    sys_mbox_post(msg->conn->mbox, NULL);
+    TCPIP_APIMSG_ACK(msg);
   }
 }
 
@@ -422,7 +422,7 @@ do_bind(struct api_msg_msg *msg)
       }
     }
   }
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 #if LWIP_TCP
@@ -493,7 +493,7 @@ do_disconnect(struct api_msg_msg *msg)
     udp_disconnect(msg->conn->pcb.udp);
   }
 #endif /* LWIP_UDP */
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -521,7 +521,7 @@ do_listen(struct api_msg_msg *msg)
     }
   }
 #endif /* LWIP_TCP */
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -553,7 +553,7 @@ do_send(struct api_msg_msg *msg)
       }
     }
   }
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -568,7 +568,7 @@ do_recv(struct api_msg_msg *msg)
     }
   }
 #endif /* LWIP_TCP */
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -606,7 +606,7 @@ do_write(struct api_msg_msg *msg)
       }
     }
   }
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 void
@@ -623,7 +623,7 @@ do_close(struct api_msg_msg *msg)
     }
   }
 #endif /* LWIP_TCP */
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 #if LWIP_IGMP
@@ -647,7 +647,7 @@ do_join_leave_group(struct api_msg_msg *msg)
       }
     }
   }
-  sys_mbox_post(msg->conn->mbox, NULL);
+  TCPIP_APIMSG_ACK(msg);
 }
 #endif /* LWIP_IGMP */
 

@@ -539,6 +539,26 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
                                         ((tolen == sizeof(struct sockaddr_in)) &&
                                         ((((struct sockaddr_in *)to)->sin_family) == AF_INET))));
 
+#if LWIP_TCPIP_CORE_LOCKING
+  { struct pbuf* p;
+  
+    p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
+    if (p == NULL) {
+      err = ERR_MEM;
+    } else {
+      p->payload = (void*)data;
+      p->len = p->tot_len = size;
+      
+      remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
+      
+      LOCK_TCPIP_CORE();
+      err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((struct sockaddr_in *)to)->sin_port));
+      UNLOCK_TCPIP_CORE();
+      
+      pbuf_free(p);
+    }
+  }
+#else
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
   if (to) {
@@ -568,7 +588,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   if (buf.p != NULL) {
     pbuf_free(buf.p);
   }
-  
+#endif /* LWIP_TCPIP_CORE_LOCKING */
   sock_set_errno(sock, err_to_errno(err));
   return (err==ERR_OK?size:-1);
 }

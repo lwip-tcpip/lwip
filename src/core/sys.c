@@ -34,6 +34,7 @@
 #include "lwip/opt.h"
 #include "lwip/def.h"
 #include "lwip/memp.h"
+#include "lwip/tcpip.h"
 
 #if (NO_SYS == 0)
 
@@ -67,10 +68,14 @@ sys_mbox_fetch(sys_mbox_t mbox, void **msg)
   timeouts = sys_arch_timeouts();
 
   if (!timeouts || !timeouts->next) {
+    UNLOCK_TCPIP_CORE();
     time = sys_arch_mbox_fetch(mbox, msg, 0);
+    LOCK_TCPIP_CORE();
   } else {
     if (timeouts->next->time > 0) {
+      UNLOCK_TCPIP_CORE();
       time = sys_arch_mbox_fetch(mbox, msg, timeouts->next->time);
+      LOCK_TCPIP_CORE();
     } else {
       time = SYS_ARCH_TIMEOUT;
     }

@@ -220,7 +220,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   msg.function = do_newconn;
   msg.msg.msg.n.proto = proto;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
 
   if ( conn->err != ERR_OK ) {
     sys_sem_free(conn->sem);
@@ -258,7 +258,7 @@ netconn_delete(struct netconn *conn)
 
   msg.function = do_delconn;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
 
   /* Drain the recvmbox. */
   if (conn->recvmbox != SYS_MBOX_NULL) {
@@ -362,7 +362,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
   msg.msg.msg.bc.port = port;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return conn->err;
 }
 
@@ -384,6 +384,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
   msg.msg.msg.bc.port = port;
+  /* This is the only function which need to not block tcpip_thread */
   tcpip_apimsg(&msg);
   return conn->err;
 }
@@ -397,7 +398,7 @@ netconn_disconnect(struct netconn *conn)
 
   msg.function = do_disconnect;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return conn->err;
 
 }
@@ -411,7 +412,7 @@ netconn_listen(struct netconn *conn)
 
   msg.function = do_listen;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return conn->err;
 }
 
@@ -512,7 +513,7 @@ netconn_recv(struct netconn *conn)
     } else {
       msg.msg.msg.r.len = 1;
     }
-    tcpip_apimsg(&msg);
+    TCPIP_APIMSG(&msg);
 #endif /* LWIP_TCP */
   } else {
 #if (LWIP_UDP || LWIP_RAW)
@@ -562,7 +563,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   msg.function = do_send;
   msg.msg.conn = conn;
   msg.msg.msg.b = buf;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return conn->err;
 }
 
@@ -605,7 +606,7 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
     
     LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
     msg.msg.msg.w.len = len;
-    tcpip_apimsg(&msg);
+    TCPIP_APIMSG(&msg);
     if (conn->err == ERR_OK) {
       dataptr = (void *)((u8_t *)dataptr + len);
       size -= len;
@@ -633,7 +634,7 @@ netconn_close(struct netconn *conn)
  again:
   msg.function = do_close;
   msg.msg.conn = conn;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   if (conn->err == ERR_MEM && conn->sem != SYS_SEM_NULL) {
     sys_sem_wait(conn->sem);
     goto again;
@@ -662,7 +663,7 @@ netconn_join_leave_group (struct netconn *conn,
   msg.msg.msg.jl.multiaddr = multiaddr;
   msg.msg.msg.jl.interface = interface;
   msg.msg.msg.jl.join_or_leave = join_or_leave;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return conn->err;
 }
 #endif /* LWIP_IGMP */

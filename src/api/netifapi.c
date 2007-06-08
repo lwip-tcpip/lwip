@@ -56,7 +56,7 @@ netifapi_netif_add(struct netif *netif,
   msg.msg.add.state   = state;
   msg.msg.add.init    = init;
   msg.msg.add.input   = input;
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return msg.err;
 }
 
@@ -72,7 +72,7 @@ netifapi_netif_remove(struct netif *netif)
   struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_NETIF_REMOVE;
   msg.netif = netif;  
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return msg.err;
 }
 
@@ -88,7 +88,7 @@ netifapi_dhcp_start(struct netif *netif)
   struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_DHCP_START;
   msg.netif = netif;  
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return msg.err;
 }
 
@@ -104,7 +104,7 @@ netifapi_dhcp_stop(struct netif *netif)
   struct netifapi_msg msg;
   msg.type  = NETIFAPI_MSG_DHCP_STOP;
   msg.netif = netif;  
-  tcpip_apimsg(&msg);
+  TCPIP_APIMSG(&msg);
   return msg.err;
 }
 

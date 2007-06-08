@@ -474,6 +474,11 @@ a lot of data that needs to be copied, this should be set high. */
 #define DEFAULT_THREAD_PRIO             1
 #endif
 
+/* ---------- Sequential layer options  */
+/* EXPERIMENTAL, Don't use it if you're not an active lwIP project member */
+#ifndef LWIP_TCPIP_CORE_LOCKING
+#define LWIP_TCPIP_CORE_LOCKING         0
+#endif
 
 /* ---------- Socket options ---------- */
 /* Enable BSD-style sockets functions names */

@@ -53,6 +53,11 @@ static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg           = NULL;
 static sys_mbox_t mbox                     = SYS_MBOX_NULL;
 
+#if LWIP_TCPIP_CORE_LOCKING
+/** The global semaphore to lock the stack. */
+sys_sem_t lock_tcpip_core = 0;
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
 #if LWIP_TCP
 static int tcpip_tcp_timer_active = 0;
 
@@ -206,6 +211,7 @@ tcpip_thread(void *arg)
   sys_timeout( IGMP_TMR_INTERVAL, igmp_timer, NULL);
 #endif /* LWIP_IGMP */
 
+  LOCK_TCPIP_CORE();
   while (1) {                          /* MAIN Loop */
     sys_mbox_fetch(mbox, (void *)&msg);
     switch (msg->type) {
@@ -327,6 +333,18 @@ tcpip_apimsg(struct api_msg *apimsg)
   return ERR_VAL;
 }
 
+#if LWIP_TCPIP_CORE_LOCKING
+err_t
+tcpip_apimsg_lock(struct api_msg *apimsg)
+{
+  LOCK_TCPIP_CORE();
+  apimsg->function(&(apimsg->msg));
+  UNLOCK_TCPIP_CORE();
+  return ERR_OK;
+
+}
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
 #if LWIP_NETIF_API
 err_t tcpip_netifapi(struct netifapi_msg* netifapimsg)
 {
@@ -367,6 +385,10 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
   mbox = sys_mbox_new();
+#if LWIP_TCPIP_CORE_LOCKING
+  lock_tcpip_core = sys_sem_new(1);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+
   sys_thread_new(tcpip_thread, NULL, TCPIP_THREAD_PRIO);
 }
 
