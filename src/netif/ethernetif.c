@@ -343,7 +343,7 @@ ethernetif_init(struct netif *netif)
 
   /* initialize the snmp variables and counters inside the struct netif */
   /* ifType ethernetCsmacd(6) @see RFC1213 */
-  NETIF_INIT_SNMP(6, ???);
+  NETIF_INIT_SNMP(netif, 6, ???);
 
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;

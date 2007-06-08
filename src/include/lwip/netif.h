@@ -151,7 +151,7 @@ struct netif {
 };
 
 #if LWIP_SNMP
-#define NETIF_INIT_SNMP(type, speed) \
+#define NETIF_INIT_SNMP(netif, type, speed) \
   /* ifType ethernetCsmacd(6) @see RFC1213 */ \
   netif->link_type = type;    \
   /* your link speed here */  \
@@ -166,7 +166,7 @@ struct netif {
   netif->ifoutnucastpkts = 0; \
   netif->ifoutdiscards = 0
 #else /* LWIP_SNMP */
-#define NETIF_INIT_SNMP(type, speed)
+#define NETIF_INIT_SNMP(netif, type, speed)
 #endif /* LWIP_SNMP */
 
 

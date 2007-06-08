@@ -258,7 +258,7 @@ slipif_init(struct netif *netif)
    * ifSpeed: no assumption can be made without knowing more about the
    * serial line!
    */
-  NETIF_INIT_SNMP(22, 0);
+  NETIF_INIT_SNMP(netif, 22, 0);
 
   /* Create a thread to poll the serial line. */
   sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);

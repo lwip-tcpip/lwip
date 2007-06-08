@@ -21,8 +21,8 @@ HISTORY
 
   2007-05-18 Simon Goldschmidt
   * netif.h, ethernetif.c, slipif.c, loopif.c: Added define
-    NETIF_INIT_SNMP(type, speed) to initialize per-netif snmp variables, added
-    initialization of those to slipif and loopif.
+    NETIF_INIT_SNMP(netif, type, speed) to initialize per-netif snmp variables,
+    added initialization of those to ethernetif, slipif and loopif.
 
   2007-05-18 Simon Goldschmidt
   * opt.h, ip_frag.c, ip_frag.h, ip.c: Added option IP_FRAG_USES_STATIC_BUF
