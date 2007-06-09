@@ -333,7 +333,12 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
 {
   u16_t plen, base;
   u8_t *msg_ptr;
+#if BYTE_ORDER == LITTLE_ENDIAN
   u8_t *lsb_ptr = (u8_t*)value;
+#endif
+#if BYTE_ORDER == BIG_ENDIAN
+  u8_t *lsb_ptr = (u8_t*)value + sizeof(s32_t) - 1;
+#endif
   u8_t sign;
 
   plen = 0;
