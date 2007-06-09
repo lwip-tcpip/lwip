@@ -538,6 +538,10 @@ err_t dhcp_start(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result = ERR_OK;
 
+#if LWIP_DHCP_AUTOIP_COOP
+  autoip_init();
+#endif /* LWIP_DHCP_AUTOIP_COOP */
+
   LWIP_ASSERT("netif != NULL", netif != NULL);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
   netif->flags &= ~NETIF_FLAG_DHCP;
@@ -766,6 +770,13 @@ static err_t dhcp_discover(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_discover: could not allocate DHCP request\n"));
   }
   dhcp->tries++;
+#if LWIP_DHCP_AUTOIP_COOP
+  /* that means we waited 57 seconds */
+  if(dhcp->tries >= 9 && dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_OFF) {
+    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_ON;
+    autoip_start(netif);
+  }
+#endif /* LWIP_DHCP_AUTOIP_COOP */
   msecs = dhcp->tries < 4 ? (dhcp->tries + 1) * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover(): set request timeout %"U16_F" msecs\n", msecs));

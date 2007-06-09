@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-06-09 Dominik Spies (integrated by Frédéric Bernon)
+  * autoip.h, autoip.c, dhcp.h, dhcp.c, netif.h, netif.c, etharp.h, etharp.c, opt.h:
+    AutoIP implementation available for IPv4, with new options LWIP_AUTOIP and
+    LWIP_DHCP_AUTOIP_COOP if you want to cooperate with DHCP. Some tips to adapt
+    (see TODO mark in the source code).
+
   2007-06-09 Simon Goldschmidt
   * etharp.h, etharp.c, ethernetif.c: Modified order of parameters for
     etharp_output() to match netif->output so etharp_output() can be used

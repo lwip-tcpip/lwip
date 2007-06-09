@@ -118,6 +118,10 @@ PACK_STRUCT_END
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
 
+/** ARP message types */
+#define ARP_REQUEST 1
+#define ARP_REPLY   2
+
 #if ARP_QUEUEING
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h
@@ -138,6 +142,12 @@ void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
 err_t etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr);
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
+
+#if LWIP_AUTOIP
+err_t etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *ethdst_addr, struct eth_addr *hwsrc_addr, struct ip_addr *ipsrc_addr,  struct eth_addr *hwdst_addr, struct ip_addr *ipdst_addr, unsigned short int OpCode);
+#endif /* LWIP_AUTOIP */
+
+#define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, 6) == 0)
 
 #ifdef __cplusplus
 }

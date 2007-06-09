@@ -54,7 +54,11 @@
 /* ARP needs to inform DHCP of any ARP replies? */
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
 #  include "lwip/dhcp.h"
-#endif
+#endif /* LWIP_DHCP && DHCP_DOES_ARP_CHECK */
+/* ARP needs to inform AUTOIP of any ARP replies? */
+#if (LWIP_AUTOIP)
+#  include "lwip/autoip.h"
+#endif /* LWIP_AUTOIP */
 
 /** the time an ARP entry stays valid after its last update,
  * (240 * 5) seconds = 20 minutes.
@@ -69,10 +73,6 @@
 #define ARP_MAXPENDING 2
 
 #define HWTYPE_ETHERNET 1
-
-/** ARP message types */
-#define ARP_REQUEST 1
-#define ARP_REPLY 2
 
 #define ARPH_HWLEN(hdr) (ntohs((hdr)->_hwlen_protolen) >> 8)
 #define ARPH_PROTOLEN(hdr) (ntohs((hdr)->_hwlen_protolen) & 0xff)
@@ -568,7 +568,15 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   }
 
   hdr = p->payload;
- 
+
+#if LWIP_AUTOIP
+  /* We have to check if a host already has configured our random
+   * created link local address and continously check if there is
+   * a host with this IP-address so we can detect collisions
+   * */
+  autoip_arp_reply(netif, hdr);
+#endif /* LWIP_AUTOIP */
+
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing (not using structure copy which breaks strict-aliasing rules). */
   SMEMCPY(&sipaddr, &hdr->sipaddr, sizeof(sipaddr));
@@ -910,6 +918,92 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   return result;
 }
 
+#if LWIP_AUTOIP
+/**
+ * Send an ARP request packet asking for ipaddr.
+ *
+ * @param netif the lwip network interface on which to send the request
+ * @param ipaddr the IP address for which to ask
+ * @return ERR_OK if the request has been sent
+ *         any other err_t on failure
+ */
+err_t
+etharp_request(struct netif *netif, struct ip_addr *ipaddr)
+{
+  struct eth_addr eth_addr_bc, eth_addr_zero;
+  u8_t k = netif->hwaddr_len;
+  while(k > 0) {
+    k--;
+    eth_addr_bc.addr[k]    = 0xFF;
+    eth_addr_zero.addr[k]  = 0x00;
+  }
+
+  LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_request: sending ARP request.\n"));
+  return etharp_raw( netif,
+                     (struct eth_addr *)netif->hwaddr,
+                     &eth_addr_bc,
+                     (struct eth_addr *)netif->hwaddr,
+                     &netif->ip_addr,
+                     &eth_addr_zero,
+                     ipaddr,
+                     ARP_REQUEST
+                   );
+}
+
+err_t
+etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *ethdst_addr, struct eth_addr *hwsrc_addr, struct ip_addr *ipsrc_addr,  struct eth_addr *hwdst_addr, struct ip_addr *ipdst_addr, unsigned short int OpCode)
+{
+  struct pbuf *p;
+  err_t result = ERR_OK;
+  u8_t k; /* ARP entry index */
+
+  /* allocate a pbuf for the outgoing ARP request packet */
+  p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
+  /* could allocate a pbuf for an ARP request? */
+  if(p != NULL) {
+    struct etharp_hdr *hdr = p->payload;
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
+    hdr->opcode = htons(OpCode);
+    k = netif->hwaddr_len;
+
+    /* Write the ARP MAC-Addresses */
+    while(k > 0) {
+      k--;
+      hdr->shwaddr.addr[k] = hwsrc_addr->addr[k];
+      hdr->dhwaddr.addr[k] = hwdst_addr->addr[k];
+    }
+    hdr->sipaddr = *(struct ip_addr2 *)ipsrc_addr;
+    hdr->dipaddr = *(struct ip_addr2 *)ipdst_addr;
+
+    hdr->hwtype = htons(HWTYPE_ETHERNET);
+    ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
+
+    hdr->proto = htons(ETHTYPE_IP);
+    ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
+    k = netif->hwaddr_len;
+
+    /* Write the Ethernet MAC-Addresses */
+    while(k > 0) {
+      k--;
+      hdr->ethhdr.dest.addr[k] = ethdst_addr->addr[k];
+      hdr->ethhdr.src.addr[k]  = ethsrc_addr->addr[k];
+    }
+
+    hdr->ethhdr.type = htons(ETHTYPE_ARP);
+    /* send ARP query */
+    result = netif->linkoutput(netif, p);
+    /* free ARP query packet */
+    pbuf_free(p);
+    p = NULL;
+    /* could not allocate pbuf for ARP request */
+  } else {
+    result = ERR_MEM;
+    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_raw: could not allocate pbuf for ARP request.\n"));
+  }
+
+  return result;
+}
+#else
 /**
  * Send an ARP request packet asking for ipaddr.
  *
@@ -969,3 +1063,4 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
   }
   return result;
 }
+#endif /* LWIP_AUTOIP */

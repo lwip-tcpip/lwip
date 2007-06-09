@@ -43,6 +43,9 @@
 #if LWIP_DHCP
 #  include "lwip/dhcp.h"
 #endif
+#if LWIP_AUTOIP
+#  include "lwip/autoip.h"
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -111,6 +114,10 @@ struct netif {
   /** the DHCP client state information for this netif */
   struct dhcp *dhcp;
 #endif /* LWIP_DHCP */
+#if LWIP_AUTOIP
+  /** the AutoIP client state information for this netif */
+  struct autoip *autoip;
+#endif
 #if LWIP_NETIF_HOSTNAME
   /* the hostname for this netif, NULL is a valid value */
   char*  hostname;

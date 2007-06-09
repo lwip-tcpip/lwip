@@ -309,6 +309,15 @@ a lot of data that needs to be copied, this should be set high. */
 #define DHCP_DOES_ARP_CHECK             1
 #endif
 
+/* ---------- AUTOIP options -------- */
+#ifndef LWIP_AUTOIP
+#define LWIP_AUTOIP                     0
+#endif
+
+#ifndef LWIP_DHCP_AUTOIP_COOP
+#define LWIP_DHCP_AUTOIP_COOP           0
+#endif
+
 /* ---------- SNMP options ---------- */
 /** @note UDP must be available for SNMP transport */
 #ifndef LWIP_SNMP
@@ -803,23 +812,27 @@ a lot of data that needs to be copied, this should be set high. */
 #define TCPIP_DEBUG                     LWIP_DBG_OFF
 #endif
 
-#ifndef PPP_DEBUG 
+#ifndef PPP_DEBUG
 #define PPP_DEBUG                       LWIP_DBG_OFF
 #endif
 
-#ifndef SLIP_DEBUG 
+#ifndef SLIP_DEBUG
 #define SLIP_DEBUG                      LWIP_DBG_OFF
 #endif
 
-#ifndef DHCP_DEBUG 
+#ifndef DHCP_DEBUG
 #define DHCP_DEBUG                      LWIP_DBG_OFF
 #endif
 
-#ifndef SNMP_MSG_DEBUG 
+#ifndef AUTOIP_DEBUG
+#define AUTOIP_DEBUG                    LWIP_DBG_OFF
+#endif
+
+#ifndef SNMP_MSG_DEBUG
 #define SNMP_MSG_DEBUG                  LWIP_DBG_OFF
 #endif
 
-#ifndef SNMP_MIB_DEBUG 
+#ifndef SNMP_MIB_DEBUG
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
 #endif
 

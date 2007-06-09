@@ -92,7 +92,11 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
   netif->dhcp = NULL;
-#endif
+#endif /* LWIP_DHCP */
+#if LWIP_AUTOIP
+  /* netif not under AutoIP control by default */
+  netif->autoip = NULL;
+#endif /* LWIP_AUTOIP */
 #if LWIP_NETIF_CALLBACK
   netif->status_callback = NULL;
 #endif /* LWIP_NETIF_CALLBACK */

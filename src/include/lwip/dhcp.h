@@ -57,6 +57,9 @@ struct dhcp
 /** Patch #1308
  *  TODO: See dhcp.c "TODO"s
  */
+#if LWIP_DHCP_AUTOIP_COOP
+  u8_t autoip_coop_state;
+#endif
 #if 0
   struct ip_addr offered_si_addr;
   u8_t *boot_file_name;
@@ -165,6 +168,10 @@ void dhcp_fine_tmr(void);
 /** not yet implemented #define DHCP_RELEASING 11 */
 #define DHCP_BACKING_OFF 12
 #define DHCP_OFF 13
+
+/** AUTOIP cooperatation flags */
+#define DHCP_AUTOIP_COOP_STATE_OFF 0
+#define DHCP_AUTOIP_COOP_STATE_ON 1
  
 #define DHCP_BOOTREQUEST 1
 #define DHCP_BOOTREPLY 2
