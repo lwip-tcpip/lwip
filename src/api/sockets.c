@@ -542,6 +542,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
                                         ((((struct sockaddr_in *)to)->sin_family) == AF_INET))));
 
 #if LWIP_TCPIP_CORE_LOCKING
+  /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field, no RAW send/sendto...) */
   { struct pbuf* p;
   
     p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
