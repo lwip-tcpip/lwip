@@ -310,7 +310,7 @@ pcb_new(struct api_msg_msg *msg)
      }
 #if LWIP_UDPLITE
      if (msg->conn->type==NETCONN_UDPLITE)     udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
-#endif
+#endif /* LWIP_UDPLITE */
      if (msg->conn->type==NETCONN_UDPNOCHKSUM) udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
      break;
