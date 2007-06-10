@@ -365,7 +365,9 @@ ip_input(struct pbuf *p, struct netif *inp) {
   switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
   case IP_PROTO_UDP:
+#if LWIP_UDPLITE
   case IP_PROTO_UDPLITE:
+#endif
     snmp_inc_ipindelivers();
     udp_input(p, inp);
     break;

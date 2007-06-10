@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-06-10 Simon Goldschmidt
+  * udp.h, opt.h, api_msg.c, ip.c, udp.c: Included switch LWIP_UDPLITE (enabled
+    by default) to switch off UDP-Lite support if not needed (reduces udp.c code
+    size)
+
   2007-06-09 Dominik Spies (integrated by Frédéric Bernon)
   * autoip.h, autoip.c, dhcp.h, dhcp.c, netif.h, netif.c, etharp.h, etharp.c, opt.h:
     AutoIP implementation available for IPv4, with new options LWIP_AUTOIP and

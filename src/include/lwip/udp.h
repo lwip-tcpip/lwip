@@ -68,9 +68,11 @@ struct udp_pcb {
   /* ports are in host byte order */
   u16_t local_port, remote_port;
   
+#if LWIP_UDPLITE
   /* used for UDP_LITE only */
   u16_t chksum_len;
-  
+#endif /* LWIP_UDPLITE */
+
   /* addr and port are in same byte order as in the pcb */
   void (* recv)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr, u16_t port);

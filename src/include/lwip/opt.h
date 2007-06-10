@@ -348,6 +348,11 @@ a lot of data that needs to be copied, this should be set high. */
 #define LWIP_UDP                        1
 #endif
 
+/* Enable the UDP-Lite protocol (only makes sense if LWIP_UDP=1) */
+#ifndef LWIP_UDPLITE
+#define LWIP_UDPLITE                    1
+#endif
+
 #ifndef UDP_TTL
 #define UDP_TTL                         (IP_DEFAULT_TTL)
 #endif
