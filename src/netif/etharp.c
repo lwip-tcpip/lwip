@@ -310,7 +310,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
   /* { we have no match } => try to create a new entry */
    
   /* no empty entry found and not allowed to recycle? */
-  if ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0)
+  if (((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
       /* or don't create new entry, only search? */
       || ((flags & ETHARP_FIND_ONLY) != 0)) {
     return (s8_t)ERR_MEM;
