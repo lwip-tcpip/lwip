@@ -610,7 +610,8 @@ lwip_socket(int domain, int type, int protocol)
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
   case SOCK_DGRAM:
-    conn = netconn_new_with_callback(NETCONN_UDP, event_callback);
+    conn = netconn_new_with_callback( (protocol == IPPROTO_UDPLITE) ?
+                 NETCONN_UDPLITE : NETCONN_UDP, event_callback);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_DGRAM, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
@@ -1057,6 +1058,7 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
     }  /* switch (optname) */
     break;
          
+#if LWIP_TCP
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     if (*optlen < sizeof(int)) {
@@ -1082,9 +1084,33 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
       err = ENOPROTOOPT;
-    }  /* switch (optname */
+    }  /* switch (optname) */
     break;
+#endif /* LWIP_TCP */
+#if LWIP_UDP && LWIP_UDPLITE
+/* Level: IPPROTO_UDPLITE */
+  case IPPROTO_UDPLITE:
+    if (*optlen < sizeof(int)) {
+      err = EINVAL;
+      break;
+    }
+    
+    /* If this is no UDP lite socket, ignore any options. */
+    if (sock->conn->type != NETCONN_UDPLITE)
+      return 0;
 
+    switch (optname) {
+    case UDPLITE_SEND_CSCOV:
+    case UDPLITE_RECV_CSCOV:
+      break;
+       
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_UDPLITE, UNIMPL: optname=0x%x, ..)\n",
+                                  s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_UDP && LWIP_UDPLITE*/
 /* UNDEFINED LEVEL */
   default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n",
@@ -1208,6 +1234,7 @@ static void lwip_getsockopt_internal(void *arg)
     }  /* switch (optname) */
     break;
 
+#if LWIP_TCP
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     switch (optname) {
@@ -1242,6 +1269,24 @@ static void lwip_getsockopt_internal(void *arg)
 
     }  /* switch (optname) */
     break;
+#endif /* LWIP_TCP */
+#if LWIP_UDP && LWIP_UDPLITE
+  /* Level: IPPROTO_UDPLITE */
+  case IPPROTO_UDPLITE:
+    switch (optname) {
+    case UDPLITE_SEND_CSCOV:
+      *(int*)optval = sock->conn->pcb.udp->chksum_len_tx;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_UDPLITE, UDPLITE_SEND_CSCOV) = %d\n",
+                  s, (*(int*)optval)) );
+      break;
+    case UDPLITE_RECV_CSCOV:
+      *(int*)optval = sock->conn->pcb.udp->chksum_len_rx;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) = %d\n",
+                  s, (*(int*)optval)) );
+      break;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_UDP */
   } /* switch (level) */
   sys_mbox_post(sock->conn->mbox, NULL);
 }
@@ -1332,6 +1377,7 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
     }  /* switch (optname) */
     break;
 
+#if LWIP_TCP
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     if (optlen < sizeof(int)) {
@@ -1359,7 +1405,31 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
       err = ENOPROTOOPT;
     }  /* switch (optname) */
     break;
+#endif /* LWIP_TCP */
+#if LWIP_UDP && LWIP_UDPLITE
+/* Level: IPPROTO_UDPLITE */
+  case IPPROTO_UDPLITE:
+    if (optlen < sizeof(int)) {
+      err = EINVAL;
+      break;
+    }
 
+    /* If this is no UDP lite socket, ignore any options. */
+    if (sock->conn->type != NETCONN_UDPLITE)
+      return 0;
+
+    switch (optname) {
+    case UDPLITE_SEND_CSCOV:
+    case UDPLITE_RECV_CSCOV:
+      break;
+
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UNIMPL: optname=0x%x, ..)\n",
+                  s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_UDP && LWIP_UDPLITE */
 /* UNDEFINED LEVEL */
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, level=0x%x, UNIMPL: optname=0x%x, ..)\n",
@@ -1481,6 +1551,7 @@ static void lwip_setsockopt_internal(void *arg)
     }  /* switch (optname) */
     break;
 
+#if LWIP_TCP
 /* Level: IPPROTO_TCP */
   case IPPROTO_TCP:
     switch (optname) {
@@ -1519,6 +1590,34 @@ static void lwip_setsockopt_internal(void *arg)
 
     }  /* switch (optname) */
     break;
+#endif /* LWIP_TCP*/
+#if LWIP_UDP && LWIP_UDPLITE
+  /* Level: IPPROTO_UDPLITE */
+  case IPPROTO_UDPLITE:
+    switch (optname) {
+    case UDPLITE_SEND_CSCOV:
+      if ((*(int*)optval != 0) && (*(int*)optval < 8)) {
+        /* don't allow illegal values! */
+        sock->conn->pcb.udp->chksum_len_tx = 8;
+      } else {
+        sock->conn->pcb.udp->chksum_len_tx = *(int*)optval;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_SEND_CSCOV) -> %lu\n",
+                  s, (*(int*)optval)) );
+      break;
+    case UDPLITE_RECV_CSCOV:
+      if ((*(int*)optval != 0) && (*(int*)optval < 8)) {
+        /* don't allow illegal values! */
+        sock->conn->pcb.udp->chksum_len_rx = 8;
+      } else {
+        sock->conn->pcb.udp->chksum_len_rx = *(int*)optval;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) -> %lu\n",
+                  s, (*(int*)optval)) );
+      break;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_UDP */
   }  /* switch (level) */
   sys_mbox_post(sock->conn->mbox, NULL);
 }

@@ -70,7 +70,7 @@ struct udp_pcb {
   
 #if LWIP_UDPLITE
   /* used for UDP_LITE only */
-  u16_t chksum_len;
+  u16_t chksum_len_rx, chksum_len_tx;
 #endif /* LWIP_UDPLITE */
 
   /* addr and port are in same byte order as in the pcb */

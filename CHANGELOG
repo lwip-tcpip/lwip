@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2007-06-11 Simon Goldschmidt
+  * sockets.c, sockets.h: Added UDP lite support for sockets
+
   2007-06-10 Simon Goldschmidt
   * udp.h, opt.h, api_msg.c, ip.c, udp.c: Included switch LWIP_UDPLITE (enabled
     by default) to switch off UDP-Lite support if not needed (reduces udp.c code
