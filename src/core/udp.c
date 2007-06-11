@@ -182,9 +182,25 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {
       /* Do the UDP Lite checksum */
 #if CHECKSUM_CHECK_UDP
+      u16_t chklen = ntohs(udphdr->len);
+      if (chklen < sizeof(struct udp_hdr)) {
+        if (chklen == 0) {
+          /* For UDP-Lite, checksum length of 0 means checksum
+             over the complete packet (See RFC 3828 chap. 3.1) */
+          chklen = p->tot_len;
+        } else {
+          /* At least the UDP-Lite header must be covered by the
+             checksum! (Again, see RFC 3828 chap. 3.1) */
+          UDP_STATS_INC(udp.chkerr);
+          UDP_STATS_INC(udp.drop);
+          snmp_inc_udpinerrors();
+          pbuf_free(p);
+          goto end;
+        }
+      }
       if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
                              (struct ip_addr *)&(iphdr->dest),
-                             IP_PROTO_UDPLITE, ntohs(udphdr->len)) != 0) {
+                             IP_PROTO_UDPLITE, chklen) != 0) {
         LWIP_DEBUGF(UDP_DEBUG | 2,
                     ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
         UDP_STATS_INC(udp.chkerr);
@@ -395,9 +411,23 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #if LWIP_UDPLITE
   /* UDP Lite protocol? */
   if (pcb->flags & UDP_FLAGS_UDPLITE) {
+    u16_t chklen;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %"U16_F"\n", q->tot_len));
     /* set UDP message length in UDP header */
-    udphdr->len = htons(pcb->chksum_len);
+    chklen = pcb->chksum_len;
+    if (chklen < sizeof(struct udp_hdr)) {
+      if (chklen != 0) {
+        LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE pcb->chksum_len is illegal: %"U16_F"\n", chklen));
+      }
+      /* For UDP-Lite, checksum length of 0 means checksum
+         over the complete packet. (See RFC 3828 chap. 3.1)
+         At least the UDP-Lite header must be covered by the
+         checksum, therefore, if chksum_len has an illegal
+         value, we generate the checksum over the complete
+         packet to be safe. */
+      chklen = p->tot_len;
+    }
+    udphdr->len = htons(chklen);
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
     udphdr->chksum = inet_chksum_pseudo(q, src_ip, &(pcb->remote_ip),
@@ -405,8 +435,6 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000)
       udphdr->chksum = 0xffff;
-#else /* CHECKSUM_CHECK_UDP */
-    udphdr->chksum = 0x0000;
 #endif /* CHECKSUM_CHECK_UDP */
     /* output to IP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDPLITE,)\n"));
@@ -423,8 +451,6 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
-#else /* CHECKSUM_CHECK_UDP */
-    udphdr->chksum = 0x0000;
 #endif /* CHECKSUM_CHECK_UDP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));

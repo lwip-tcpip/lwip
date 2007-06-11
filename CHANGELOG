@@ -196,6 +196,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-11 Simon Goldschmidt
+  * udp.c: UDP Lite: corrected the use of chksum_len (based on RFC3828: if it's 0,
+    create checksum over the complete packet. On RX, if it's < 8 (and not 0),
+    discard the packet. Also removed the duplicate 'udphdr->chksum = 0' for both
+    UDP & UDP Lite.
+
   2007-06-11 Srinivas Gollakota & Oleg Tyshev
   * tcp_out.c: Fix for bug #20075 : "A problem with keep-alive timer and TCP flags"
     where TCP flags wasn't initialized in tcp_keepalive.
