@@ -87,11 +87,11 @@ Steve Reynolds
  * Globales
  *----------------------------------------------------------------------------*/
 
-struct igmp_group* group_list;
-struct igmp_stats  igmpstats;
+static struct igmp_group* igmp_group_list;
+static struct igmp_stats  igmpstats;
 
-struct ip_addr     allsystems;
-struct ip_addr     allrouters;
+static struct ip_addr     allsystems;
+static struct ip_addr     allrouters;
 
 /**
  * Initialize this module
@@ -110,7 +110,7 @@ igmp_init(void)
   IP4_ADDR(&allsystems, 224, 0, 0, 1);
   IP4_ADDR(&allrouters, 224, 0, 0, 2);
 
-  group_list = NULL;  
+  igmp_group_list = NULL;
   memset(&igmpstats, 0, sizeof(igmpstats));
 
   for (netif = netif_list; netif != NULL; netif = netif->next) {
@@ -129,7 +129,7 @@ igmp_init(void)
 }
 
 /**
- * Search for a group in the global group_list
+ * Search for a group in the global igmp_group_list
  *
  * @param ifp the network interfacefor which to look
  * @param addr the group ip address to search
@@ -139,7 +139,7 @@ igmp_init(void)
 struct igmp_group *
 lookfor_group(struct netif *ifp, struct ip_addr *addr)
 {
-  struct igmp_group *group = group_list;
+  struct igmp_group *group = igmp_group_list;
 
   while (group) {
     if ((group->interface == ifp) && (ip_addr_cmp(&(group->group_address), addr))) {
@@ -165,7 +165,7 @@ lookfor_group(struct netif *ifp, struct ip_addr *addr)
 struct igmp_group *
 lookup_group(struct netif *ifp, struct ip_addr *addr)
 {
-  struct igmp_group *group = group_list;
+  struct igmp_group *group = igmp_group_list;
   
   /* Search if the group already exists */
   group = lookfor_group(ifp, addr);
@@ -182,9 +182,9 @@ lookup_group(struct netif *ifp, struct ip_addr *addr)
     group->timer              = 0; /* Not running */
     group->group_state        = NON_MEMBER;
     group->last_reporter_flag = 0;
-    group->next               = group_list;
+    group->next               = igmp_group_list;
 
-    group_list = group;
+    igmp_group_list = group;
      
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %d  allocated a new group with address %x on if %x \n", __LINE__, (int) addr, (int) ifp));
   } else {
@@ -256,7 +256,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
     }
 
     igmpstats.igmp_group_query_rxed++;
-    groupref = group_list;
+    groupref = igmp_group_list;
     while (groupref) {
       if ((groupref->interface == inp) &&
           (!(ip_addr_cmp(&(groupref->group_address), &allsystems)))) {
@@ -403,7 +403,7 @@ igmp_leavegroup(struct netif *ifp, struct ip_addr *groupaddr)
 void
 igmp_tmr()
 {
-  struct igmp_group *group = group_list;
+  struct igmp_group *group = igmp_group_list;
 
   while (group) {
     if (group->timer != 0) {
