@@ -41,6 +41,36 @@
  * <kontakt@dspies.de>
  */
 
+/*******************************************************************************
+ * USAGE:
+ * 
+ * define LWIP_AUTOIP 1
+ * call autoip_fine_tmr() all AUTOIP_FINE_TIMER_MSECS msces,
+ * that should be defined in autoip.h.
+ * I recommend a value of 100. The value must divide 1000 with a remainder almost 0.
+ * Possible values are 1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
+ * 
+ * 
+ * Without DHCP:
+ * call autoip_init() and autoip_start() after netif_add().
+ * 
+ * 
+ * With DHCP:
+ * Configure your DHCP Client
+ * define LWIP_DHCP_AUTOIP_COOP 1 in lwipopts.h
+ * 
+ *******************************************************************************
+ * 
+ * TODO:
+ * 
+ * Solve compiler warnings:
+ * 
+ * warning: 'struct etharp_hdr' declared inside parameter list lwip/include/ipv4/lwip autoip.h line 92
+ * warning: its scope is only this definition or declaration, which is probably not what you want lwip/include/ipv4/lwip autoip.h line 92
+ * warning: passing argument 2 of 'apipa_arp_reply' from incompatible pointer type lwip/netif etharp.c line 543
+ * 
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include "lwip/mem.h"
