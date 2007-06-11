@@ -763,10 +763,11 @@ tcp_keepalive(struct tcp_pcb *pcb)
    tcphdr->dest = htons(pcb->remote_port);
    tcphdr->seqno = htonl(pcb->snd_nxt - 1);
    tcphdr->ackno = htonl(pcb->rcv_nxt);
+   TCPH_FLAGS_SET(tcphdr, 0);
    tcphdr->wnd = htons(pcb->rcv_wnd);
    tcphdr->urgp = 0;
    TCPH_HDRLEN_SET(tcphdr, 5);
-   
+
    tcphdr->chksum = 0;
 #if CHECKSUM_GEN_TCP
    tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip, IP_PROTO_TCP, p->tot_len);

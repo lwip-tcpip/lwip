@@ -196,6 +196,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-11 Srinivas Gollakota & Oleg Tyshev
+  * tcp_out.c: Fix for bug #20075 : "A problem with keep-alive timer and TCP flags"
+    where TCP flags wasn't initialized in tcp_keepalive.
+
   2007-06-03 Simon Goldschmidt
   * udp.c: udp_input(): Input pbuf was not freed if pcb had no recv function
     registered, p->payload was modified without modifying p->len if sending
