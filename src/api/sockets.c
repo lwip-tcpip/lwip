@@ -1204,6 +1204,9 @@ static void lwip_getsockopt_internal(void *arg)
       break;
 
     case SO_ERROR:
+      if (sock->err == 0) {
+        sock_set_errno(sock, err_to_errno(sock->conn->err));
+      } 
       *(int *)optval = sock->err;
       sock->err = 0;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
