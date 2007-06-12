@@ -414,7 +414,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     u16_t chklen;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %"U16_F"\n", q->tot_len));
     /* set UDP message length in UDP header */
-    chklen = pcb->chksum_len_tx;
+    chklen = pcb->chksum_len_rx;
     if (chklen < sizeof(struct udp_hdr)) {
       if (chklen != 0) {
         LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE pcb->chksum_len is illegal: %"U16_F"\n", chklen));
