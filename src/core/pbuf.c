@@ -72,7 +72,7 @@
 #include "lwip/sys.h"
 #include "arch/perf.h"
 
-#define SIZEOF_STRUCT_PBUF   MEM_ALIGN_SIZE(sizeof(struct pbuf))
+#define SIZEOF_STRUCT_PBUF   LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf))
 
 /**
  * Initializes the pbuf module.
@@ -158,13 +158,13 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->next = NULL;
 
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + (SIZEOF_STRUCT_PBUF + offset)));
+    p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p + (SIZEOF_STRUCT_PBUF + offset)));
     LWIP_ASSERT("pbuf_alloc: pbuf p->payload properly aligned",
             ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
-    p->len = length > PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset)? PBUF_POOL_BUFSIZE - MEM_ALIGN_SIZE(offset): length;
+    p->len = length > PBUF_POOL_BUFSIZE - LWIP_MEM_ALIGN_SIZE(offset)? PBUF_POOL_BUFSIZE - LWIP_MEM_ALIGN_SIZE(offset): length;
     LWIP_ASSERT("check p->payload + p->len does not overflow pbuf",
                 ((u8_t*)p->payload + p->len <=
                  (u8_t*)p + SIZEOF_STRUCT_PBUF + PBUF_POOL_BUFSIZE));
@@ -213,12 +213,12 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     break;
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
-    p = mem_malloc(MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF + offset) + MEM_ALIGN_SIZE(length));
+    p = mem_malloc(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF + offset) + LWIP_MEM_ALIGN_SIZE(length));
     if (p == NULL) {
       return NULL;
     }
     /* Set up internal structure of the pbuf. */
-    p->payload = MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset));
+    p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset));
     p->len = p->tot_len = length;
     p->next = NULL;
     p->flags = PBUF_FLAG_RAM;

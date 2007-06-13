@@ -586,7 +586,7 @@ int vj_uncompress_tcp(
         }
         
         
-	if(MEM_ALIGN(n0->payload) != n0->payload) {
+	if(LWIP_MEM_ALIGN(n0->payload) != n0->payload) {
 		struct pbuf *np, *q;
 		u8_t *bufptr;
 

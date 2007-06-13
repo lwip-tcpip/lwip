@@ -311,7 +311,7 @@ nullreturn:
 
 #if IP_FRAG
 #if IP_FRAG_USES_STATIC_BUF
-static u8_t buf[MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU)];
+static u8_t buf[LWIP_MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU)];
 #endif /* IP_FRAG_USES_STATIC_BUF */
 
 /**
@@ -361,7 +361,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
     return ERR_MEM;
   }
   rambuf->tot_len = rambuf->len = mtu;
-  rambuf->payload = MEM_ALIGN((void *)buf);
+  rambuf->payload = LWIP_MEM_ALIGN((void *)buf);
 
   /* Copy the IP header in it */
   iphdr = rambuf->payload;

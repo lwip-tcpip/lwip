@@ -66,9 +66,9 @@ struct mem {
 #ifndef MIN_SIZE
 #define MIN_SIZE             12
 #endif /* MIN_SIZE */
-#define MIN_SIZE_ALIGNED     MEM_ALIGN_SIZE(MIN_SIZE)
-#define SIZEOF_STRUCT_MEM    MEM_ALIGN_SIZE(sizeof(struct mem))
-#define MEM_SIZE_ALIGNED     MEM_ALIGN_SIZE(MEM_SIZE)
+#define MIN_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MIN_SIZE)
+#define SIZEOF_STRUCT_MEM    LWIP_MEM_ALIGN_SIZE(sizeof(struct mem))
+#define MEM_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MEM_SIZE)
 
 static struct mem *ram_end;
 /* the heap. we need one struct mem at the end and some room for alignment */
@@ -136,7 +136,7 @@ mem_init(void)
 
   /* align the heap */
   memset(ram_heap, 0, sizeof(ram_heap));
-  ram = MEM_ALIGN(ram_heap);
+  ram = LWIP_MEM_ALIGN(ram_heap);
   /* initialize the start of the heap */
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE_ALIGNED;
@@ -221,7 +221,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  newsize = MEM_ALIGN_SIZE(newsize);
+  newsize = LWIP_MEM_ALIGN_SIZE(newsize);
 
   if(newsize < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */
@@ -334,7 +334,7 @@ mem_malloc(mem_size_t size)
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
-  size = MEM_ALIGN_SIZE(size);
+  size = LWIP_MEM_ALIGN_SIZE(size);
 
   if(size < MIN_SIZE_ALIGNED) {
     /* every data block must be at least MIN_SIZE_ALIGNED long */

@@ -71,7 +71,7 @@ static struct memp *memp_tab[MEMP_MAX];
 #define MEMP_SANITY_REGION_BEFORE  16
 #endif /* MEMP_SANITY_REGION_BEFORE*/
 #if MEMP_SANITY_REGION_BEFORE > 0
-#define MEMP_SANITY_REGION_BEFORE_ALIGNED    MEM_ALIGN_SIZE(MEMP_SANITY_REGION_BEFORE)
+#define MEMP_SANITY_REGION_BEFORE_ALIGNED    LWIP_MEM_ALIGN_SIZE(MEMP_SANITY_REGION_BEFORE)
 #else
 #define MEMP_SANITY_REGION_BEFORE_ALIGNED    0
 #endif /* MEMP_SANITY_REGION_BEFORE*/
@@ -79,14 +79,14 @@ static struct memp *memp_tab[MEMP_MAX];
 #define MEMP_SANITY_REGION_AFTER   16
 #endif /* MEMP_SANITY_REGION_AFTER*/
 #if MEMP_SANITY_REGION_AFTER > 0
-#define MEMP_SANITY_REGION_AFTER_ALIGNED     MEM_ALIGN_SIZE(MEMP_SANITY_REGION_AFTER)
+#define MEMP_SANITY_REGION_AFTER_ALIGNED     LWIP_MEM_ALIGN_SIZE(MEMP_SANITY_REGION_AFTER)
 #else
 #define MEMP_SANITY_REGION_AFTER_ALIGNED     0
 #endif /* MEMP_SANITY_REGION_AFTER*/
 
 /* MEMP_SIZE: save space for struct memp and for sanity check */
-#define MEMP_SIZE          (MEM_ALIGN_SIZE(sizeof(struct memp)) + MEMP_SANITY_REGION_BEFORE_ALIGNED)
-#define MEMP_ALIGN_SIZE(x) (MEM_ALIGN_SIZE(x) + MEMP_SANITY_REGION_AFTER_ALIGNED)
+#define MEMP_SIZE          (LWIP_MEM_ALIGN_SIZE(sizeof(struct memp)) + MEMP_SANITY_REGION_BEFORE_ALIGNED)
+#define MEMP_ALIGN_SIZE(x) (LWIP_MEM_ALIGN_SIZE(x) + MEMP_SANITY_REGION_AFTER_ALIGNED)
 
 #else /* MEMP_OVERFLOW_CHECK */
 
@@ -95,7 +95,7 @@ static struct memp *memp_tab[MEMP_MAX];
  * can save a little space and set MEMP_SIZE to 0.
  */
 #define MEMP_SIZE           0
-#define MEMP_ALIGN_SIZE(x) (MEM_ALIGN_SIZE(x))
+#define MEMP_ALIGN_SIZE(x) (LWIP_MEM_ALIGN_SIZE(x))
 
 #endif /* MEMP_OVERFLOW_CHECK */
 
@@ -217,7 +217,7 @@ memp_overflow_check_all(void)
   u16_t i, j;
   struct memp *p;
 
-  p = MEM_ALIGN(memp_memory);
+  p = LWIP_MEM_ALIGN(memp_memory);
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
@@ -236,7 +236,7 @@ memp_overflow_init(void)
   struct memp *p;
   u8_t *m;
 
-  p = MEM_ALIGN(memp_memory);
+  p = LWIP_MEM_ALIGN(memp_memory);
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
@@ -271,7 +271,7 @@ memp_init(void)
   }
 #endif /* MEMP_STATS */
 
-  memp = MEM_ALIGN(memp_memory);
+  memp = LWIP_MEM_ALIGN(memp_memory);
   /* for every pool: */
   for (i = 0; i < MEMP_MAX; ++i) {
     memp_tab[i] = NULL;

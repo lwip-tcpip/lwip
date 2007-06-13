@@ -67,18 +67,18 @@ typedef u16_t mem_size_t;
 #endif
 #else /* MEM_LIBC_MALLOC */
 /* lwIP alternative malloc */
-void mem_init(void);
+void  mem_init(void);
 void *mem_malloc(mem_size_t size);
-void mem_free(void *mem);
+void  mem_free(void *mem);
 void *mem_realloc(void *mem, mem_size_t size);
 #endif /* MEM_LIBC_MALLOC */
 
-#ifndef MEM_ALIGN_SIZE
-#define MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
+#ifndef LWIP_MEM_ALIGN_SIZE
+#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
 #endif
 
-#ifndef MEM_ALIGN
-#define MEM_ALIGN(addr) ((void *)(((mem_ptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(mem_ptr_t)(MEM_ALIGNMENT-1)))
+#ifndef LWIP_MEM_ALIGN
+#define LWIP_MEM_ALIGN(addr) ((void *)(((mem_ptr_t)(addr) + MEM_ALIGNMENT - 1) & ~(mem_ptr_t)(MEM_ALIGNMENT-1)))
 #endif
 
 #ifdef __cplusplus

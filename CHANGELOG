@@ -199,6 +199,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-13 Frédéric Bernon, Matthias Weisser
+  * opt.h, mem.h, mem.c, memp.c, pbuf.c, ip_frag.c, vj.c: Fix bug #20162. Rename
+    MEM_ALIGN in LWIP_MEM_ALIGN and MEM_ALIGN_SIZE in LWIP_MEM_ALIGN_SIZE to avoid
+    some macro names collision with some OS macros.
+
   2007-06-11 Simon Goldschmidt
   * udp.c: UDP Lite: corrected the use of chksum_len (based on RFC3828: if it's 0,
     create checksum over the complete packet. On RX, if it's < 8 (and not 0),

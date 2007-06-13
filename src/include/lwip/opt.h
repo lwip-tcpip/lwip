@@ -426,7 +426,7 @@ a lot of data that needs to be copied, this should be set high. */
 #ifndef PBUF_POOL_BUFSIZE
 /* Default designed to accomodate single full size TCP frame in one PBUF */
 /* TCP_MSS + 40 for IP and TCP headers + physical layer headers */
-#define PBUF_POOL_BUFSIZE               MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_HLEN) 
+#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_HLEN) 
 #endif
 
 
