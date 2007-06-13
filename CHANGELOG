@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-06-13 Frédéric Bernon, Simon Goldschmidt
+  * debug.h, api_msg.c: change LWIP_ERROR to use it to check errors like invalid
+    pointers or parameters, and let the possibility to redefined it in cc.h. Use
+    this macro to check "conn" parameter in api_msg.c functions.
+
   2007-06-11 Simon Goldschmidt
   * sockets.c, sockets.h: Added UDP lite support for sockets
 

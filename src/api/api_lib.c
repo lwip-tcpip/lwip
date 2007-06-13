@@ -350,7 +350,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
 
-  LWIP_ASSERT("netconn_bind: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_bind: invalid conn", (conn == NULL), return ERR_ARG;);
 
   if (conn->type != NETCONN_TCP && conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -372,7 +372,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
   
-  LWIP_ASSERT("netconn_connect: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_connect: invalid conn", (conn == NULL), return ERR_ARG;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -394,7 +394,7 @@ netconn_disconnect(struct netconn *conn)
 {
   struct api_msg msg;
   
-  LWIP_ASSERT("netconn_disconnect: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_disconnect: invalid conn", (conn == NULL), return ERR_ARG;);
 
   msg.function = do_disconnect;
   msg.msg.conn = conn;
@@ -408,7 +408,7 @@ netconn_listen(struct netconn *conn)
 {
   struct api_msg msg;
 
-  LWIP_ASSERT("netconn_listen: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_listen: invalid conn", (conn == NULL), return ERR_ARG;);
 
   msg.function = do_listen;
   msg.msg.conn = conn;
@@ -421,8 +421,8 @@ netconn_accept(struct netconn *conn)
 {
   struct netconn *newconn;
 
-  LWIP_ASSERT("netconn_accept: invalid conn", (conn != NULL));
-  LWIP_ASSERT("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL));
+  LWIP_ERROR("netconn_accept: invalid conn",       (conn == NULL),                      return NULL;);
+  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox == SYS_MBOX_NULL), return NULL;);
 
   #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
@@ -447,7 +447,7 @@ netconn_recv(struct netconn *conn)
   struct pbuf *p;
   u16_t len;
   
-  LWIP_ASSERT("netconn_recv: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_recv: invalid conn",  (conn == NULL), return NULL;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -532,7 +532,7 @@ netconn_recv(struct netconn *conn)
     }
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
-    
+
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));
 
   return buf;
@@ -553,7 +553,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 {
   struct api_msg msg;
 
-  LWIP_ASSERT("netconn_send: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_send: invalid conn",  (conn == NULL), return ERR_ARG;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -573,7 +573,7 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
   struct api_msg msg;
   u16_t len, sndbuf;
   
-  LWIP_ASSERT("netconn_write: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_write: invalid conn",  (conn == NULL), return ERR_ARG;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -603,7 +603,7 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
     } else {
       len = size;
     }
-    
+
     LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
     msg.msg.msg.w.len = len;
     TCPIP_APIMSG(&msg);
@@ -619,7 +619,7 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
   }
  ret:
   conn->state = NETCONN_NONE;
-  
+
   return conn->err;
 }
 
@@ -628,7 +628,8 @@ netconn_close(struct netconn *conn)
 {
   struct api_msg msg;
 
-  LWIP_ASSERT("netconn_close: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_close: invalid conn",  (conn == NULL), return ERR_ARG;);
+
 
   conn->state = NETCONN_CLOSE;
  again:
@@ -652,7 +653,7 @@ netconn_join_leave_group (struct netconn *conn,
 {
   struct api_msg msg;
 
-  LWIP_ASSERT("netconn_join_leave_group: invalid conn", (conn != NULL));
+  LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn == NULL), return ERR_ARG;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
