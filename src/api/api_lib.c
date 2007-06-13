@@ -322,7 +322,7 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
     *port = conn->pcb.tcp->remote_port;
     break;
   }
-  return (conn->err = ERR_OK);
+  return ERR_OK;
 }
 
 err_t
@@ -342,7 +342,7 @@ netconn_addr(struct netconn *conn, struct ip_addr **addr, u16_t *port)
     *port = conn->pcb.tcp->local_port;
     break;
   }
-  return (conn->err = ERR_OK);
+  return ERR_OK;
 }
 
 err_t

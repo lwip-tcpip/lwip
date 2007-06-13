@@ -204,6 +204,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-13 Frédéric Bernon, Simon Goldschmidt
+  * api_lib.c: change return expression in netconn_addr and netconn_peer, because
+    conn->err was reset to ERR_OK without any reasons (and error was lost)...
+
   2007-06-13 Frédéric Bernon, Matthias Weisser
   * opt.h, mem.h, mem.c, memp.c, pbuf.c, ip_frag.c, vj.c: Fix bug #20162. Rename
     MEM_ALIGN in LWIP_MEM_ALIGN and MEM_ALIGN_SIZE in LWIP_MEM_ALIGN_SIZE to avoid
