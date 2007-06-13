@@ -204,6 +204,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-13 Simon Goldschmidt
+  * api_msg.c: pcb_new sets conn->err if protocol is not implemented
+    -> netconn_new_..() does not allocate a new connection for unsupported
+    protocols.
+
   2007-06-13 Frédéric Bernon, Simon Goldschmidt
   * api_lib.c: change return expression in netconn_addr and netconn_peer, because
     conn->err was reset to ERR_OK without any reasons (and error was lost)...

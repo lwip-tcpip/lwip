@@ -326,6 +326,8 @@ pcb_new(struct api_msg_msg *msg)
      break;
 #endif /* LWIP_TCP */
    default:
+     /* Unsupported netconn type, e.g. protocol disabled */
+     msg->conn->err = ERR_VAL;
      break;
    }
 
