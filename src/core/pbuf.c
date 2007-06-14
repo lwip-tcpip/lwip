@@ -718,7 +718,7 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       offset_to = 0;
       p_to = p_to->next;
     }
-    LWIP_ASSERT("offset_from <= p_from->len", offset_to <= p_from->len);
+    LWIP_ASSERT("offset_from <= p_from->len", offset_from <= p_from->len);
     if (offset_from >= p_from->len) {
       /* on to next p_from (if any) */
       offset_from = 0;
@@ -729,15 +729,15 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       /* don't copy more than one packet! */
       if (p_from->next != NULL) {
         LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
-                  p_from->next == NULL);
+                    p_from->next == NULL);
         return ERR_VAL;
       }
     }
     if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
-      if (p_from->next != NULL) {
+      if (p_to->next != NULL) {
         LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
-                  p_to->next == NULL);
+                    p_to->next == NULL);
         return ERR_VAL;
       }
     }
