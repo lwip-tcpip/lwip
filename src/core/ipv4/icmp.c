@@ -114,7 +114,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       }
       /* copy the whole packet including ip header */
       if (pbuf_copy(r, p) != ERR_OK) {
-        LWIP_ASSERT("cmp_input: copying to new pbuf failed\n", 0);
+        LWIP_ASSERT("icmp_input: copying to new pbuf failed\n", 0);
         goto memerr;
       }
       iphdr = r->payload;
