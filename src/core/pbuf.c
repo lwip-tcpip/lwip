@@ -727,15 +727,19 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 
     if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
+      if (p_from->next != NULL) {
+        LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
                   p_from->next == NULL);
-      return ERR_VAL;
+        return ERR_VAL;
+      }
     }
     if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
+      if (p_from->next != NULL) {
+        LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
                   p_to->next == NULL);
-      return ERR_VAL;
+        return ERR_VAL;
+      }
     }
   } while (p_from);
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));
