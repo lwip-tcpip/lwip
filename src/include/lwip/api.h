@@ -60,6 +60,7 @@ extern "C" {
 #define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
 
 enum netconn_type {
+  NETCONN_INVALID    = 0,
   /* NETCONN_TCP Group */
   NETCONN_TCP        = 0x10,
   /* NETCONN_UDP Group */
@@ -145,10 +146,8 @@ void              netbuf_copy_partial(struct netbuf *buf, void *dataptr,
 #define netbuf_fromport(buf)         ((buf)->port)
 
 /* Network connection functions: */
-struct netconn *  netconn_new     (enum netconn_type type);
-struct
-netconn *netconn_new_with_callback(enum netconn_type t,
-                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
+#define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)
+#define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct
 netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
@@ -186,7 +185,7 @@ err_t             netconn_join_leave_group (struct netconn *conn,
                                             enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
 
-err_t             netconn_err     (struct netconn *conn);
+#define netconn_err(conn)         ((conn)->err)
 
 #ifdef __cplusplus
 }
