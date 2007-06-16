@@ -73,9 +73,20 @@ struct udp_pcb {
   u16_t chksum_len_rx, chksum_len_tx;
 #endif /* LWIP_UDPLITE */
 
-  /* addr and port are in same byte order as in the pcb */
+  /* receive callback function
+   * addr and port are in same byte order as in the pcb
+   * The callback is responsible for freeing the pbuf
+   * if it's not used any more.
+   *
+   * @param arg user supplied argument (udp_pcb.recv_arg)
+   * @param pcb the udp_pcb which received data
+   * @param p the packet buffer that was received
+   * @param addr the remote IP address from which the packet was received
+   * @param port the remote port from which the packet was received
+   */
   void (* recv)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr, u16_t port);
+  /* user-supplied argument for the recv callback */
   void *recv_arg;  
 };
 /* udp_pcbs export for exernal reference (e.g. SNMP agent) */

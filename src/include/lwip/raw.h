@@ -50,8 +50,19 @@ struct raw_pcb {
 
   u8_t protocol;
 
+  /* receive callback function
+   * @param arg user supplied argument (raw_pcb.recv_arg)
+   * @param pcb the raw_pcb which received data
+   * @param p the packet buffer that was received
+   * @param addr the remote IP address from which the packet was received
+   * @return 1 if the packet was 'eaten' (aka. deleted),
+   *         0 if the packet lives on
+   * If returning 1, the callback is responsible for freeing the pbuf
+   * if it's not used any more.
+   */
   u8_t (* recv)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr);
+  /* user-supplied argument for the recv callback */
   void *recv_arg;
 };
 

@@ -302,22 +302,57 @@ struct tcp_pcb {
 #endif /* TCP_QUEUE_OOSEQ */
 
 #if LWIP_CALLBACK_API
-  /* Function to be called when more send buffer space is available. */
+  /* Function to be called when more send buffer space is available.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb the tcp_pcb which has send buffer space available
+   * @param space the amount of bytes available
+   * @return ERR_OK: try to send some data by calling tcp_output
+   */
   err_t (* sent)(void *arg, struct tcp_pcb *pcb, u16_t space);
   
-  /* Function to be called when (in-sequence) data has arrived. */
+  /* Function to be called when (in-sequence) data has arrived.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb the tcp_pcb for which data has arrived
+   * @param p the packet buffer which arrived
+   * @param err an error argument (TODO: that is current always ERR_OK?)
+   * @return ERR_OK: try to send some data by calling tcp_output
+   */
   err_t (* recv)(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err);
 
-  /* Function to be called when a connection has been set up. */
+  /* Function to be called when a connection has been set up.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb the tcp_pcb that now is connected
+   * @param err an error argument (TODO: that is current always ERR_OK?)
+   * @return value is currently ignored
+   */
   err_t (* connected)(void *arg, struct tcp_pcb *pcb, err_t err);
 
-  /* Function to call when a listener has been connected. */
+  /* Function to call when a listener has been connected.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb a new tcp_pcb that now is connected
+   * @param err an error argument (TODO: that is current always ERR_OK?)
+   * @return ERR_OK: accept the new connection,
+   *                 any other err_t abortsthe new connection
+   */
   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
 
-  /* Function which is called periodically. */
+  /* Function which is called periodically.
+   * The period can be adjusted in multiples of the TCP slow timer interval
+   * by changing tcp_pcb.polltmr.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb the tcp_pcb to poll for
+   * @return ERR_OK: try to send some data by calling tcp_output
+   */
   err_t (* poll)(void *arg, struct tcp_pcb *pcb);
 
-  /* Function to be called whenever a fatal error occurs. */
+  /* Function to be called whenever a fatal error occurs.
+   * There is no pcb parameter since most of the times, the pcb is
+   * already deallocated (or there is no pcb) when this function is called.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param err an indication why the error callback is called:
+   *            ERR_ABRT: aborted through tcp_abort or by a TCP timer
+   *            ERR_RST: the connection was reset by the remote host
+   */
   void (* errf)(void *arg, err_t err);
 #endif /* LWIP_CALLBACK_API */
 
