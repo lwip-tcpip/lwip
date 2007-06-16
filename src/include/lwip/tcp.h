@@ -374,7 +374,13 @@ struct tcp_pcb_listen {
   TCP_PCB_COMMON(struct tcp_pcb_listen);
 
 #if LWIP_CALLBACK_API
-  /* Function to call when a listener has been connected. */
+  /* Function to call when a listener has been connected.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb a new tcp_pcb that now is connected
+   * @param err an error argument (TODO: that is current always ERR_OK?)
+   * @return ERR_OK: accept the new connection,
+   *                 any other err_t abortsthe new connection
+   */
   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
 #endif /* LWIP_CALLBACK_API */
 };
