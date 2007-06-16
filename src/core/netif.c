@@ -251,7 +251,8 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
     }
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       /* PCB bound to current local interface address? */
-      if (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr))) {
+      if ((!(ip_addr_isany(&(lpcb->local_ip)))) &&
+          (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr)))) {
         /* The PCB is listening to the old ipaddr and
          * is set to listen to the new one instead */
         ip_addr_set(&(lpcb->local_ip), ipaddr);

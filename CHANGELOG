@@ -205,6 +205,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-06-13 Simon Goldschmidt
+  * netif.c: Fixed bug #20180 (TCP pcbs listening on IP_ADDR_ANY could get
+    changed in netif_set_ipaddr if previous netif->ip_addr.addr was 0.
+
+  2007-06-13 Simon Goldschmidt
   * api_msg.c: pcb_new sets conn->err if protocol is not implemented
     -> netconn_new_..() does not allocate a new connection for unsupported
     protocols.
