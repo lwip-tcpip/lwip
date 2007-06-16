@@ -938,7 +938,7 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
     eth_addr_zero.addr[k]  = 0x00;
   }
 
-  LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_request: sending ARP request.\n"));
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
   return etharp_raw( netif,
                      (struct eth_addr *)netif->hwaddr,
                      &eth_addr_bc,
@@ -962,7 +962,7 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
   /* could allocate a pbuf for an ARP request? */
   if(p != NULL) {
     struct etharp_hdr *hdr = p->payload;
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
     hdr->opcode = htons(OpCode);
     k = netif->hwaddr_len;
 
@@ -998,7 +998,7 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
     /* could not allocate pbuf for ARP request */
   } else {
     result = ERR_MEM;
-    LWIP_DEBUGF(ETHARP_DEBUG | DBG_TRACE | 2, ("etharp_raw: could not allocate pbuf for ARP request.\n"));
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 2, ("etharp_raw: could not allocate pbuf for ARP request.\n"));
   }
 
   return result;
