@@ -1015,7 +1015,7 @@ tcp_recv(struct tcp_pcb *pcb,
  * has been successfully delivered to the remote host.
  *
  * @param pcb tcp_pcb to set the sent callback
- * @param recv callback function to call for this pcb when data is successfully sent
+ * @param sent callback function to call for this pcb when data is successfully sent
  */ 
 void
 tcp_sent(struct tcp_pcb *pcb,
@@ -1029,7 +1029,7 @@ tcp_sent(struct tcp_pcb *pcb,
  * has occured on the connection.
  *
  * @param pcb tcp_pcb to set the err callback
- * @param recv callback function to call for this pcb when a fatal error
+ * @param errf callback function to call for this pcb when a fatal error
  *        has occured on the connection
  */ 
 void
@@ -1044,7 +1044,7 @@ tcp_err(struct tcp_pcb *pcb,
  * LISTENing connection has been connected to another host.
  *
  * @param pcb tcp_pcb to set the accept callback
- * @param recv callback function to call for this pcb when LISTENing
+ * @param accept callback function to call for this pcb when LISTENing
  *        connection has been connected to another host
  */ 
 void
