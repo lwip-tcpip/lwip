@@ -333,7 +333,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   msg.msg.conn = conn;
   TCPIP_APIMSG(&msg);
 
-  if ( conn->err != ERR_OK ) {
+  if (conn->err != ERR_OK) {
     sys_sem_free(conn->sem);
     sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
