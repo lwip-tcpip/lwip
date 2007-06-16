@@ -41,6 +41,13 @@
 #if !NO_SYS
 
 #if LWIP_RAW
+/**
+ * Receive callback function for RAW netconns.
+ * Doesn't 'eat' the packet, only references it and sends it to
+ * conn->recvmbox
+ *
+ * @see raw.h (struct raw_pcb.recv) for parameters and return value
+ */
 static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr)
@@ -74,6 +81,12 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 #endif /* LWIP_RAW*/
 
 #if LWIP_UDP
+/**
+ * Receive callback function for UDP netconns.
+ * Posts the packet to conn->recvmbox or deletes it on memory error.
+ *
+ * @see udp.h (struct udp_pcb.recv) for parameters
+ */
 static void
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
    struct ip_addr *addr, u16_t port)
@@ -112,7 +125,12 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 #endif /* LWIP_UDP */
 
 #if LWIP_TCP
-
+/**
+ * Receive callback function for TCP netconns.
+ * Posts the packet to conn->recvmbox or deletes it on memory error.
+ *
+ * @see tcp.h (struct tcp_pcb.recv) for parameters and return value
+ */
 static err_t
 recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 {
@@ -144,7 +162,17 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   return ERR_OK;
 }
 
-
+/**
+ * Poll callback function for TCP netconns.
+ * Wakes up an application thread that waits for a connection to close
+ * or data to be sent. The application thread then takes the
+ * appropriate action to go on.
+ *
+ * Signals the conn->sem.
+ * netconn_close waits for conn->sem if closing failed.
+ *
+ * @see tcp.h (struct tcp_pcb.poll) for parameters and return value
+ */
 static err_t
 poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
@@ -162,6 +190,13 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
   return ERR_OK;
 }
 
+/**
+ * Sent callback function for TCP netconns.
+ * Signals the conn->sem and calls conn->callback.
+ * netconn_write waits for conn->sem if send buffer is low.
+ *
+ * @see tcp.h (struct tcp_pcb.sent) for parameters and return value
+ */
 static err_t
 sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
@@ -182,6 +217,13 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   return ERR_OK;
 }
 
+/**
+ * Error callback function for TCP netconns.
+ * Signals conn->sem, posts to all conn mboxes and calls conn->callback.
+ * The application thread has then to decide what to do.
+ *
+ * @see tcp.h (struct tcp_pcb.err) for parameters
+ */
 static void
 err_tcp(void *arg, err_t err)
 {
@@ -213,6 +255,12 @@ err_tcp(void *arg, err_t err)
   }
 }
 
+/**
+ * Setup a tcp_pcb with the correct callback function pointers
+ * and their arguments.
+ *
+ * @param conn the TCP netconn to setup
+ */
 static void
 setup_tcp(struct netconn *conn)
 {
@@ -226,6 +274,12 @@ setup_tcp(struct netconn *conn)
   tcp_err(pcb, err_tcp);
 }
 
+/**
+ * Accept callback function for TCP netconns.
+ * Allocates a new netconn and posts that to conn->acceptmbox.
+ *
+ * @see tcp.h (struct tcp_pcb_listen.accept) for parameters and return value
+ */
 static err_t
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
@@ -238,6 +292,10 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 #endif /* TCP_DEBUG */
 #endif /* API_MSG_DEBUG */
   conn = (struct netconn *)arg;
+
+  LWIP_ERROR("accept_function: invalid conn->acceptmbox",
+             conn->acceptmbox != SYS_MBOX_NULL, return ERR_VAL;);
+
   newconn = memp_malloc(MEMP_NETCONN);
   if (newconn == NULL) {
     return ERR_MEM;
@@ -279,11 +337,18 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->recv_timeout = 0;
 #endif /* LWIP_SO_RCVTIMEO */
 
-  sys_mbox_post( conn->acceptmbox, newconn);
+  sys_mbox_post(conn->acceptmbox, newconn);
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
 
+/**
+ * Create a new pcb of a specific type.
+ * Called from do_newconn().
+ *
+ * @param msg the api_msg_msg describing the connection type
+ * @return msg->conn->err, but the return value is currently ignored
+ */
 static err_t
 pcb_new(struct api_msg_msg *msg)
 {
@@ -334,6 +399,12 @@ pcb_new(struct api_msg_msg *msg)
   return msg->conn->err;
 }
 
+/**
+ * Create a new pcb of a specific type inside a netconn.
+ * Called from netconn_new_with_proto_and_callback.
+ *
+ * @param msg the api_msg_msg describing the connection type
+ */
 void
 do_newconn(struct api_msg_msg *msg)
 {
@@ -347,6 +418,12 @@ do_newconn(struct api_msg_msg *msg)
    TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Delete the pcb inside a netconn.
+ * Called from netconn_delete.
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_delconn(struct api_msg_msg *msg)
 {
@@ -396,19 +473,22 @@ do_delconn(struct api_msg_msg *msg)
   }
 }
 
+/**
+ * Bind a pcb contained in a netconn
+ * Called from netconn_bind.
+ *
+ * @param msg the api_msg_msg pointing to the connection and containing
+ *            the IP address and port to bind to
+ */
 void
 do_bind(struct api_msg_msg *msg)
 {
   if (msg->conn->err == ERR_OK) {
-    if (msg->conn->pcb.tcp == NULL) {
-      pcb_new(msg);
-    }
-
     if (msg->conn->pcb.tcp != NULL) {
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        msg->conn->err = raw_bind(msg->conn->pcb.raw,msg->msg.bc.ipaddr);
+        msg->conn->err = raw_bind(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
         break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
@@ -424,12 +504,21 @@ do_bind(struct api_msg_msg *msg)
       default:
         break;
       }
+    } else {
+      /* msg->conn->pcb is NULL */
+      msg->conn->err = ERR_VAL;
     }
   }
   TCPIP_APIMSG_ACK(msg);
 }
 
 #if LWIP_TCP
+/**
+ * TCP callback function if a connection (opened by tcp_connect/do_connect) has
+ * been established (or reset by the remote host).
+ *
+ * @see tcp.h (struct tcp_pcb.connected) for parameters and return values
+ */
 static err_t
 do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 {
@@ -453,14 +542,19 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 }
 #endif /* LWIP_TCP */
 
+/**
+ * Connect a pcb contained inside a netconn
+ * Called from netconn_connect.
+ *
+ * @param msg the api_msg_msg pointing to the connection and containing
+ *            the IP address and port to connect to
+ */
 void
 do_connect(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
-    if (pcb_new(msg)!=ERR_OK) {
-      sys_mbox_post(msg->conn->mbox, NULL);
-      return;
-    }
+    sys_mbox_post(msg->conn->mbox, NULL);
+    return;
   }
 
   switch (NETCONNTYPE_GROUP(msg->conn->type)) {
@@ -489,6 +583,13 @@ do_connect(struct api_msg_msg *msg)
   }
 }
 
+/**
+ * Connect a pcb contained inside a netconn
+ * Only used for UDP netconns.
+ * Called from netconn_disconnect.
+ *
+ * @param msg the api_msg_msg pointing to the connection to disconnect
+ */
 void
 do_disconnect(struct api_msg_msg *msg)
 {
@@ -500,6 +601,12 @@ do_disconnect(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Set a TCP pcb contained in a netconn into listen mode
+ * Called from netconn_listen.
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_listen(struct api_msg_msg *msg)
 {
@@ -528,6 +635,12 @@ do_listen(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Send some data on a RAW or UDP pcb contained in a netconn
+ * Called from netconn_send
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_send(struct api_msg_msg *msg)
 {
@@ -560,6 +673,12 @@ do_send(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Recv some data from a RAW or UDP pcb contained in a netconn
+ * Called from netconn_recv
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_recv(struct api_msg_msg *msg)
 {
@@ -575,6 +694,12 @@ do_recv(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Send some data on a TCP pcb contained in a netconn
+ * Called from netconn_write
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_write(struct api_msg_msg *msg)
 {
@@ -613,6 +738,12 @@ do_write(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+/**
+ * Close a TCP pcb contained in a netconn
+ * Called from netconn_close
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_close(struct api_msg_msg *msg)
 {
@@ -631,6 +762,12 @@ do_close(struct api_msg_msg *msg)
 }
 
 #if LWIP_IGMP
+/**
+ * Join multicast groups for UDP netconns.
+ * Called from netconn_join_leave_group
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
 void
 do_join_leave_group(struct api_msg_msg *msg)
 { 
