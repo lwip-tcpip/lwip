@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-06-17 Simon Goldschmidt
+  * sockets.c, sockets.h: Implemented socket options SO_NO_CHECK for UDP sockets
+    to disable UDP checksum generation on transmit.
+
   2007-06-13 Frédéric Bernon, Simon Goldschmidt
   * debug.h, api_msg.c: change LWIP_ERROR to use it to check errors like invalid
     pointers or parameters, and let the possibility to redefined it in cc.h. Use

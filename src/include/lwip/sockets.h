@@ -94,6 +94,7 @@ struct sockaddr {
 #define SO_ERROR     0x1007    /* get error status and clear */
 #define SO_TYPE      0x1008    /* get socket type */
 #define SO_CONTIMEO  0x1009    /* connect timeout */
+#define SO_NO_CHECK  0x100a    /* don't create UDP checksum */
 
 
 /*
@@ -150,7 +151,7 @@ struct linger {
  */
 #define UDPLITE_SEND_CSCOV 0x01 /* sender checksum coverage */
 #define UDPLITE_RECV_CSCOV 0x02 /* minimal receiver checksum coverage */
-#endif
+#endif /* LWIP_UDP && LWIP_UDPLITE*/
 
 
 #if LWIP_IGMP
