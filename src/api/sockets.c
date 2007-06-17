@@ -1034,6 +1034,17 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
       }
       break;
 
+    case SO_NO_CHECK:
+      if (*optlen < sizeof(int)) {
+        err = EINVAL;
+      }
+      if ((sock->conn->type != NETCONN_UDP) ||
+          ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
+        /* this flag is only available for UDP, not for UDP lite */
+        err = EAFNOSUPPORT;
+      }
+      break;
+
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
@@ -1221,6 +1232,9 @@ static void lwip_getsockopt_internal(void *arg)
       *(int *)optval = sock->conn->recv_timeout;
       break;
 #endif /* LWIP_SO_RCVTIMEO */
+    case SO_NO_CHECK:
+      *(int*)optval = (udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_NOCHKSUM) ? 1 : 0;
+      break;
     }  /* switch (optname) */
     break;
 
@@ -1346,7 +1360,7 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
         err = EINVAL;
       }
       if ((sock->conn->type != NETCONN_UDP) ||
-          ((sock->conn->pcb.udp->flags & UDP_FLAGS_UDPLITE) == 1)) {
+          ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
         err = EAFNOSUPPORT;
       }
