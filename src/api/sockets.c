@@ -251,8 +251,9 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
   if (!sock)
     return -1;
 
-  LWIP_ASSERT("lwip_bind: invalid address", (namelen == sizeof(struct sockaddr_in)) &&
-                                ((((struct sockaddr_in *)name)->sin_family) == AF_INET));
+  LWIP_ERROR("lwip_bind: invalid address", ((namelen != sizeof(struct sockaddr_in)) ||
+             ((((struct sockaddr_in *)name)->sin_family) != AF_INET)),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
   local_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
   local_port = ((struct sockaddr_in *)name)->sin_port;
@@ -312,8 +313,9 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
   if (!sock)
     return -1;
 
-  LWIP_ASSERT("lwip_connect: invalid address", (namelen == sizeof(struct sockaddr_in)) &&
-                                   ((((struct sockaddr_in *)name)->sin_family) == AF_INET));
+  LWIP_ERROR("lwip_connect: invalid address", ((namelen != sizeof(struct sockaddr_in)) &&
+             ((((struct sockaddr_in *)name)->sin_family) != AF_INET)),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
   if (((struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
@@ -537,9 +539,10 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
 #endif /* LWIP_TCP */
   }
 
-  LWIP_ASSERT("lwip_sendto: invalid address", (((to==NULL) && (tolen==0)) ||
-                                        ((tolen == sizeof(struct sockaddr_in)) &&
-                                        ((((struct sockaddr_in *)to)->sin_family) == AF_INET))));
+  LWIP_ERROR("lwip_sendto: invalid address", (((to != NULL) || (tolen != 0)) &&
+             ((tolen != sizeof(struct sockaddr_in)) ||
+             ((((struct sockaddr_in *)to)->sin_family) != AF_INET))),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
 #if LWIP_TCPIP_CORE_LOCKING
   /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field, no RAW send/sendto...) */
