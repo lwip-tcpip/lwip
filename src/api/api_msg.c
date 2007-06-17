@@ -294,7 +294,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   conn = (struct netconn *)arg;
 
   LWIP_ERROR("accept_function: invalid conn->acceptmbox",
-             conn->acceptmbox != SYS_MBOX_NULL, return ERR_VAL;);
+             conn->acceptmbox == SYS_MBOX_NULL, return ERR_VAL;);
 
   newconn = memp_malloc(MEMP_NETCONN);
   if (newconn == NULL) {
