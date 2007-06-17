@@ -64,10 +64,7 @@ loopif_poll(struct netif *netif)
   struct pbuf *in = NULL;
   struct loopif_private *priv = (struct loopif_private*)netif->state;
 
-  LWIP_ASSERT("priv != NULL", priv != NULL);
-  if(priv == NULL) {
-    return;
-  }
+  LWIP_ERROR("priv == NULL", (priv == NULL), return;);
 
   do {
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
@@ -161,7 +158,7 @@ loopif_output(struct netif *netif, struct pbuf *p,
 
   SYS_ARCH_PROTECT(lev);
   if(priv->first != NULL) {
-    LWIP_ASSERT("if first!=NULL, last must also be != NULL", priv->last != NULL);
+    LWIP_ASSERT("if first != NULL, last must also be != NULL", priv->last != NULL);
     priv->last->next = r;
     priv->last = r;
   } else {

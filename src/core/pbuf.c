@@ -194,7 +194,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
       /* make previous pbuf point to this pbuf */
       r->next = q;
       /* set total length of this pbuf and next in chain */
-      LWIP_ASSERT("rem_len < max_u16_t",rem_len < 0xffff);
+      LWIP_ASSERT("rem_len < max_u16_t", rem_len < 0xffff);
       q->tot_len = (u16_t)rem_len;
       /* this pbuf length is pool size, unless smaller sized tail */
       q->len = (rem_len > PBUF_POOL_BUFSIZE_ALIGNED) ? PBUF_POOL_BUFSIZE_ALIGNED : (u16_t)rem_len;
@@ -302,7 +302,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
     /* decrease remaining length by pbuf length */
     rem_len -= q->len;
     /* decrease total length indicator */
-    LWIP_ASSERT("grow < max_u16_t",grow < 0xffff);
+    LWIP_ASSERT("grow < max_u16_t", grow < 0xffff);
     q->tot_len += (u16_t)grow;
     /* proceed to next pbuf in chain */
     q = q->next;
@@ -357,15 +357,17 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
   u16_t increment_magnitude;
 
   LWIP_ASSERT("p != NULL", p != NULL);
-  if ((header_size_increment == 0) || (p == NULL)) return 0;
+  if ((header_size_increment == 0) || (p == NULL))
+    return 0;
  
-  if (header_size_increment < 0){
-    increment_magnitude = -header_size_increment;
+  increment_magnitude = header_size_increment;
+  if (increment_magnitude < 0){
+    increment_magnitude = -increment_magnitude;
     /* Check that we aren't going to move off the end of the pbuf */
-    LWIP_ASSERT("increment_magnitude <= p->len", increment_magnitude <= p->len);
+    LWIP_ERROR("increment_magnitude > p->len", (increment_magnitude > p->len), return 1;);
   } else {
-    increment_magnitude = header_size_increment;
-#if 0 /* Can't assert these as some callers speculatively call
+#if 0
+    /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
     /* Check that we've got the correct type of pbuf to work with */
     LWIP_ASSERT("p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL", 
@@ -415,7 +417,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
   p->len += header_size_increment;
   p->tot_len += header_size_increment;
 
-  LWIP_DEBUGF( PBUF_DEBUG, ("pbuf_header: old %p new %p (%"S16_F")\n",
+  LWIP_DEBUGF(PBUF_DEBUG, ("pbuf_header: old %p new %p (%"S16_F")\n",
     (void *)payload, (void *)p->payload, header_size_increment));
 
   return 0;
@@ -461,9 +463,9 @@ pbuf_free(struct pbuf *p)
   struct pbuf *q;
   u8_t count;
 
-  LWIP_ASSERT("p != NULL", p != NULL);
-  /* if assertions are disabled, proceed with debug output */
   if (p == NULL) {
+    LWIP_ASSERT("p != NULL", p != NULL);
+    /* if assertions are disabled, proceed with debug output */
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 2, ("pbuf_free(p == NULL) was called.\n"));
     return 0;
   }
@@ -575,9 +577,8 @@ pbuf_cat(struct pbuf *h, struct pbuf *t)
 {
   struct pbuf *p;
 
-  LWIP_ASSERT("h != NULL (programmer violates API)", h != NULL);
-  LWIP_ASSERT("t != NULL (programmer violates API)", t != NULL);
-  if ((h == NULL) || (t == NULL)) return;
+  LWIP_ERROR("(h == NULL) || (t == NULL) (programmer violates API)",
+             ((h == NULL) || (t == NULL)), return;);
 
   /* proceed to last pbuf of chain */
   for (p = h; p->next != NULL; p = p->next) {
@@ -688,12 +689,8 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_copy(%p, %p)\n", p_to, p_from));
 
   /* is the target big enough to hold the source? */
-  if ((p_to == NULL) || (p_from == NULL) || (p_to->tot_len < p_from->tot_len)) {
-    LWIP_ASSERT("pbuf_copy: p_to != NULL\n", p_to != NULL);
-    LWIP_ASSERT("pbuf_copy: p_from != NULL\n", p_from != NULL);
-    LWIP_ASSERT("pbuf_copy: p_to->tot_len >= p_from->tot_len\n", p_to->tot_len >= p_from->tot_len);
-    return ERR_ARG;
-  }
+  LWIP_ERROR("pbuf_copy: target not big enough to hold source", ((p_to == NULL) ||
+             (p_from == NULL) || (p_to->tot_len < p_from->tot_len)), return ERR_ARG;);
 #ifdef LWIP_DEBUG  
   shouldbe = p_from->tot_len;
 #endif
@@ -731,19 +728,13 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 
     if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
-      if (p_from->next != NULL) {
-        LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
-                    p_from->next == NULL);
-        return ERR_VAL;
-      }
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+                 (p_from->next != NULL), return ERR_VAL;);
     }
     if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
-      if (p_to->next != NULL) {
-        LWIP_ASSERT("pbuf_copy() does not allow packet queues!\n",
-                    p_to->next == NULL);
-        return ERR_VAL;
-      }
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+                  (p_to->next != NULL), return ERR_VAL;);
     }
   } while (p_from);
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));

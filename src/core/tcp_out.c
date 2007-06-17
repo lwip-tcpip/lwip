@@ -137,10 +137,10 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%"U16_F", flags=%"X16_F", copy=%"U16_F")\n",
     (void *)pcb, arg, len, (u16_t)flags, (u16_t)copy));
-  LWIP_ASSERT("tcp_enqueue: len == 0 || optlen == 0 (programmer violates API)",
-      len == 0 || optlen == 0);
-  LWIP_ASSERT("tcp_enqueue: arg == NULL || optdata == NULL (programmer violates API)",
-      arg == NULL || optdata == NULL);
+  LWIP_ERROR("tcp_enqueue: len != 0 && optlen != 0 (programmer violates API)",
+      (len != 0 && optlen != 0), return ERR_ARG;);
+  LWIP_ERROR("tcp_enqueue: arg != NULL && optdata != NULL (programmer violates API)",
+      (arg != NULL && optdata != NULL), return ERR_ARG;);
   /* fail on too much data */
   if (len > pcb->snd_buf) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%"U16_F" > snd_buf=%"U16_F")\n", len, pcb->snd_buf));

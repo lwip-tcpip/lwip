@@ -198,9 +198,10 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p\n",
     (void *)timeout, msecs, (void *)h, (void *)arg));
 
-  LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
-  if (timeouts == NULL)
+  if (timeouts == NULL) {
+    LWIP_ASSERT("sys_timeout: timeouts != NULL", timeouts != NULL);
     return;
+  }
 
   if (timeouts->next == NULL) {
     timeouts->next = timeout;
@@ -244,11 +245,13 @@ sys_untimeout(sys_timeout_handler h, void *arg)
 
   timeouts = sys_arch_timeouts();
 
-  LWIP_ASSERT("sys_untimeout: timeouts != NULL", timeouts != NULL);
-  if (timeouts == NULL)
+  if (timeouts == NULL) {
+    LWIP_ASSERT("sys_untimeout: timeouts != NULL", timeouts != NULL);
     return;
-  if (timeouts->next == NULL)
+  }
+  if (timeouts->next == NULL) {
     return;
+  }
 
   for (t = timeouts->next, prev_t = NULL; t != NULL; prev_t = t, t = t->next) {
     if ((t->h == h) && (t->arg == arg)) {

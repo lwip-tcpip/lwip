@@ -654,7 +654,7 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
-  LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
+        LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */
@@ -705,7 +705,7 @@ tcp_slowtmr(void)
       tcp_pcb_purge(pcb);      
       /* Remove PCB from tcp_tw_pcbs list. */
       if (prev != NULL) {
-  LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
+        LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);
         prev->next = pcb->next;
       } else {
         /* This PCB was the first. */

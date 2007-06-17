@@ -403,7 +403,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   s8_t i;
   u8_t k;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 3, ("update_arp_entry()\n"));
-  LWIP_ASSERT("netif->hwaddr_len != 0", netif->hwaddr_len != 0);
+  LWIP_ASSERT("netif->hwaddr_len == 6", netif->hwaddr_len == 6);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
                                         ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr), 
                                         ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
@@ -516,7 +516,7 @@ void
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct ethip_hdr *hdr;
-  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ERROR("netif == NULL", (netif == NULL), return;);
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
@@ -558,7 +558,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   u8_t i;
   u8_t for_us;
 
-  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ERROR("netif == NULL", (netif == NULL), return;);
   
   /* drop short ARP packets */
   if (p->tot_len < sizeof(struct etharp_hdr)) {
@@ -858,8 +858,8 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
        * PBUF_ROMs can be left as they are, since ROM must not get changed. */
       p = q;
       while(p) {
+        LWIP_ASSERT("no packet queues allowed!", (p->len == p->tot_len) || (p->next == 0));
         if(p->len == p->tot_len) {
-          LWIP_ASSERT("no packet queues allowed!", p->next == 0);
         }
         if(p->flags != PBUF_FLAG_ROM) {
           copy_needed = 1;

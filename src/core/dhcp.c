@@ -1356,7 +1356,9 @@ static void dhcp_delete_request(struct netif *netif)
   LWIP_ERROR("dhcp_create_request: dhcp == NULL", (dhcp == NULL), return;);
   LWIP_ASSERT("dhcp_free_msg: dhcp->p_out != NULL", dhcp->p_out != NULL);
   LWIP_ASSERT("dhcp_free_msg: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
-  pbuf_free(dhcp->p_out);
+  if (dhcp->p_out != NULL) {
+    pbuf_free(dhcp->p_out);
+  }
   dhcp->p_out = NULL;
   dhcp->msg_out = NULL;
 }
