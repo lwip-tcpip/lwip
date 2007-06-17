@@ -701,11 +701,17 @@ tcp_receive(struct tcp_pcb *pcb)
             /*pcb->ssthresh = LWIP_MAX((pcb->snd_max -
                                       pcb->lastack) / 2,
                                       2 * pcb->mss);*/
-            /* Set ssthresh to half of the minimum of the currenct cwnd and the advertised window */
+            /* Set ssthresh to half of the minimum of the current cwnd and the advertised window */
             if (pcb->cwnd > pcb->snd_wnd)
               pcb->ssthresh = pcb->snd_wnd / 2;
             else
               pcb->ssthresh = pcb->cwnd / 2;
+
+            /* The minimum value for ssthresh should be 2 MSS */
+            if (pcb->ssthresh < 2*pcb->mss) {
+              LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: The minimum value for ssthresh %"U16_F" should be min 2 mss %"U16_F"...\n", pcb->ssthresh, 2*pcb->mss));
+              pcb->ssthresh = 2*pcb->mss;
+            }
 
             pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
             pcb->flags |= TF_INFR;
