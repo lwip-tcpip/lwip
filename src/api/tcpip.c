@@ -49,6 +49,7 @@
 
 #if !NO_SYS
 
+/* global variables */
 static void (* tcpip_init_done)(void *arg) = NULL;
 static void *tcpip_init_done_arg           = NULL;
 static sys_mbox_t mbox                     = SYS_MBOX_NULL;
@@ -59,8 +60,14 @@ sys_sem_t lock_tcpip_core = 0;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if LWIP_TCP
+/* global variable that shows if the tcp timer is currently scheduled or not */
 static int tcpip_tcp_timer_active = 0;
 
+/**
+ * Timer callback function that calls tcp_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
 tcpip_tcp_timer(void *arg)
 {
@@ -71,7 +78,7 @@ tcpip_tcp_timer(void *arg)
   /* timer still needed? */
   if (tcp_active_pcbs || tcp_tw_pcbs) {
     /* restart timer */
-    sys_timeout( TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   } else {
     /* disable timer */
     tcpip_tcp_timer_active = 0;
@@ -79,6 +86,11 @@ tcpip_tcp_timer(void *arg)
 }
 
 #if !NO_SYS
+/**
+ * Called from TCP_REG when registering a new PCB:
+ * the reason is to have the TCP timer only running when
+ * there are active (or time-wait) PCBs.
+ */
 void
 tcp_timer_needed(void)
 {
@@ -86,35 +98,50 @@ tcp_timer_needed(void)
   if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
     /* enable and start timer */
     tcpip_tcp_timer_active = 1;
-    sys_timeout( TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
+    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
 #endif /* !NO_SYS */
 #endif /* LWIP_TCP */
 
 #if IP_REASSEMBLY
+/**
+ * Timer callback function that calls ip_reass_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
-ip_timer(void *arg)
+ip_reass_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: ip_reass_tmr()\n"));
   ip_reass_tmr();
-  sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
+  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
 }
 #endif /* IP_REASSEMBLY */
 
 #if LWIP_ARP
+/**
+ * Timer callback function that calls etharp_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
 arp_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: etharp_tmr()\n"));
   etharp_tmr();
-  sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
 }
 #endif /* LWIP_ARP */
 
 #if LWIP_DHCP
+/**
+ * Timer callback function that calls dhcp_coarse_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
 dhcp_timer_coarse(void *arg)
 {
@@ -124,6 +151,11 @@ dhcp_timer_coarse(void *arg)
   sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
 }
 
+/**
+ * Timer callback function that calls dhcp_fine_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
 dhcp_timer_fine(void *arg)
 {
@@ -135,17 +167,30 @@ dhcp_timer_fine(void *arg)
 #endif /* LWIP_DHCP */
 
 #if LWIP_IGMP
+/**
+ * Timer callback function that calls igmp_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
 static void
 igmp_timer(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
   LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: igmp_tmr()\n"));
   igmp_tmr();
-  sys_timeout( IGMP_TMR_INTERVAL, igmp_timer, NULL);
+  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
 }
 #endif /* LWIP_IGMP */
 
 #if ETHARP_TCPIP_ETHINPUT
+/**
+ * Process received ethernet frames. Using this function instead of directly
+ * calling ip_input and passing ARP frames through etharp in ethernetif_input,
+ * the ARP cache is protected from concurrent access.
+ *
+ * @param p the recevied packet, p->payload pointing to the ethernet header
+ * @param netif the network interface on which the packet was received
+ */
 static void
 ethernet_input(struct pbuf *p, struct netif *netif)
 {
@@ -185,6 +230,16 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 }
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
+/**
+ * The main lwIP thread. This thread has exclusive access to lwIP core functions
+ * (unless access to them is not locked). Other threads communicate with this
+ * thread using message boxes.
+ *
+ * It also starts all the timers to make sure they are running in the right
+ * thread context.
+ *
+ * @param arg unused argument
+ */
 static void
 tcpip_thread(void *arg)
 {
@@ -192,14 +247,14 @@ tcpip_thread(void *arg)
   LWIP_UNUSED_ARG(arg);
 
 #if IP_REASSEMBLY
-  sys_timeout( IP_TMR_INTERVAL, ip_timer, NULL);
+  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
 #endif /* IP_REASSEMBLY */
 #if LWIP_ARP
-  sys_timeout( ARP_TMR_INTERVAL, arp_timer, NULL);
+  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
 #endif /* LWIP_ARP */
 #if LWIP_DHCP
-  sys_timeout( DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
-  sys_timeout( DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
+  sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
+  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
 #endif /* LWIP_DHCP */
 
   if (tcpip_init_done != NULL) {
@@ -208,7 +263,7 @@ tcpip_thread(void *arg)
 
 #if LWIP_IGMP
   igmp_init();
-  sys_timeout( IGMP_TMR_INTERVAL, igmp_timer, NULL);
+  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
 #endif /* LWIP_IGMP */
 
   LOCK_TCPIP_CORE();
@@ -255,6 +310,12 @@ tcpip_thread(void *arg)
 }
 
 #if ETHARP_TCPIP_INPUT
+/**
+ * Pass a received IP packet to tcpip_thread for input processing
+ *
+ * @param p the recevied packet, p->payload pointing to the IP header
+ * @param netif the network interface on which the packet was received
+ */
 err_t
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
@@ -277,6 +338,12 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #endif /* ETHARP_TCPIP_INPUT */
 
 #if ETHARP_TCPIP_ETHINPUT
+/**
+ * Pass a received IP packet to tcpip_thread for input processing
+ *
+ * @param p the recevied packet, p->payload pointing to the ethernet header
+ * @param netif the network interface on which the packet was received
+ */
 err_t
 tcpip_ethinput(struct pbuf *p, struct netif *inp)
 {
@@ -298,6 +365,16 @@ tcpip_ethinput(struct pbuf *p, struct netif *inp)
 }
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
+/**
+ * Call a specific function in the thread context of
+ * tcpip_thread for easy access synchronization.
+ * A function called in that way may access lwIP core code
+ * without fearing concurrent access.
+ *
+ * @param f the function to call
+ * @param ctx parameter passed to f
+ * @return ERR_OK if the function was called, another err_t if not
+ */
 err_t
 tcpip_callback(void (*f)(void *ctx), void *ctx)
 {
@@ -318,6 +395,14 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
   return ERR_VAL;
 }
 
+/**
+ * Call the lower part of a netconn_* function
+ * This function is then running in the thread context
+ * of tcpip_thread and has exclusive access to lwIP core code.
+ *
+ * @param apimsg a struct containing the function to call and its parameters
+ * @return ERR_OK if the function was called, another err_t if not
+ */
 err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
@@ -334,6 +419,14 @@ tcpip_apimsg(struct api_msg *apimsg)
 }
 
 #if LWIP_TCPIP_CORE_LOCKING
+/**
+ * Call the lower part of a netconn_* function
+ * This function ihas exclusive access to lwIP core code by locking it
+ * before the function is called.
+ *
+ * @param apimsg a struct containing the function to call and its parameters
+ * @return ERR_OK (only for compatibility fo tcpip_apimsg())
+ */
 err_t
 tcpip_apimsg_lock(struct api_msg *apimsg)
 {
@@ -346,7 +439,15 @@ tcpip_apimsg_lock(struct api_msg *apimsg)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if LWIP_NETIF_API
-err_t tcpip_netifapi(struct netifapi_msg* netifapimsg)
+/**
+ * Much like tcpip_apimsg, but calls the lower part of a netifapi_*
+ * function.
+ *
+ * @param netifapimsg a struct containing the function to call and its parameters
+ * @return error code given back by the function that was called
+ */
+err_t
+tcpip_netifapi(struct netifapi_msg* netifapimsg)
 {
   struct tcpip_msg msg;
   
@@ -368,6 +469,15 @@ err_t tcpip_netifapi(struct netifapi_msg* netifapimsg)
 }
 #endif /* LWIP_NETIF_API */
 
+/**
+ * Initialize this module:
+ * - initialize ARP, IP, UDP and TCP
+ * - start the tcpip_thread
+ *
+ * @param initfunc a function to call when tcpip_thread is running and
+ *        finished initializing
+ * @param arg argument to pass to initfunc
+ */
 void
 tcpip_init(void (* initfunc)(void *), void *arg)
 {
