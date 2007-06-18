@@ -41,10 +41,10 @@
 #include "lwip/inet.h"
 #include "lwip/pbuf.h"
 #if LWIP_DHCP
-#  include "lwip/dhcp.h"
+struct dhcp;
 #endif
 #if LWIP_AUTOIP
-#  include "lwip/autoip.h"
+struct autoip;
 #endif
 
 #ifdef __cplusplus

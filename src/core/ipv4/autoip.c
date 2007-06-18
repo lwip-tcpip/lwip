@@ -50,25 +50,13 @@
  * I recommend a value of 100. The value must divide 1000 with a remainder almost 0.
  * Possible values are 1000, 500, 333, 250, 200, 166, 142, 125, 111, 100 ....
  * 
- * 
  * Without DHCP:
  * call autoip_init() and autoip_start() after netif_add().
- * 
  * 
  * With DHCP:
  * Configure your DHCP Client
  * define LWIP_DHCP_AUTOIP_COOP 1 in lwipopts.h
- * 
- *******************************************************************************
- * 
- * TODO:
- * 
- * Solve compiler warnings:
- * 
- * warning: 'struct etharp_hdr' declared inside parameter list lwip/include/ipv4/lwip autoip.h line 92
- * warning: its scope is only this definition or declaration, which is probably not what you want lwip/include/ipv4/lwip autoip.h line 92
- * warning: passing argument 2 of 'apipa_arp_reply' from incompatible pointer type lwip/netif etharp.c line 543
- * 
+ *
  */
 
 #include <stdlib.h>
@@ -80,7 +68,7 @@
 #include "lwip/autoip.h"
 #include "netif/etharp.h"
 
-#if LWIP_AUTOIP /* don't build if not configured for use in lwipopt.h */
+#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
 
 /* static functions */
 static void autoip_handle_arp_conflict(struct netif *netif);
@@ -96,7 +84,7 @@ static err_t autoip_bind(struct netif *netif);
 
 /**
  * Initialize this module
- * seed random with MAC-Address for creating pseudo-ramdom linc-local address
+ * seed random with MAC-Address for creating pseudo-ramdom link-local address
  */
 void
 autoip_init(void)
