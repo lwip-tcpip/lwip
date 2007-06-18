@@ -1639,7 +1639,7 @@ static void lwip_setsockopt_internal(void *arg)
       } else {
         sock->conn->pcb.udp->chksum_len_tx = *(int*)optval;
       }
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_SEND_CSCOV) -> %lu\n",
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_SEND_CSCOV) -> %d\n",
                   s, (*(int*)optval)) );
       break;
     case UDPLITE_RECV_CSCOV:
@@ -1649,7 +1649,7 @@ static void lwip_setsockopt_internal(void *arg)
       } else {
         sock->conn->pcb.udp->chksum_len_rx = *(int*)optval;
       }
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) -> %lu\n",
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) -> %d\n",
                   s, (*(int*)optval)) );
       break;
     }  /* switch (optname) */
