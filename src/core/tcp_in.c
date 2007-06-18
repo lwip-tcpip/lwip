@@ -939,13 +939,15 @@ tcp_receive(struct tcp_pcb *pcb)
           p->len = 0;
           p = p->next;
         }
-        if(pbuf_header(p, -off))
+        if(pbuf_header(p, -off)) {
           /* Do we need to cope with this failing?  Assert for now */
           LWIP_ASSERT("pbuf_header failed", 0);
+        }
       } else {
-        if(pbuf_header(inseg.p, -off))
+        if(pbuf_header(inseg.p, -off)) {
           /* Do we need to cope with this failing?  Assert for now */
           LWIP_ASSERT("pbuf_header failed", 0);
+        }
       }
       /* KJM following line changed to use p->payload rather than inseg->p->payload
          to fix bug #9076 */
