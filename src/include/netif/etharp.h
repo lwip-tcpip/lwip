@@ -46,7 +46,11 @@ extern "C" {
 #endif
 
 #ifndef ETH_PAD_SIZE
-#define ETH_PAD_SIZE 0
+#define ETH_PAD_SIZE          0
+#endif
+
+#ifndef ETHARP_HWADDR_LEN
+#define ETHARP_HWADDR_LEN     6
 #endif
 
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -54,7 +58,7 @@ extern "C" {
 #endif
 PACK_STRUCT_BEGIN
 struct eth_addr {
-  PACK_STRUCT_FIELD(u8_t addr[6]);
+  PACK_STRUCT_FIELD(u8_t addr[ETHARP_HWADDR_LEN]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -150,7 +154,7 @@ err_t etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_a
                  unsigned short int opcode);
 #endif /* LWIP_AUTOIP */
 
-#define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, 6) == 0)
+#define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETHARP_HWADDR_LEN) == 0)
 
 #ifdef __cplusplus
 }

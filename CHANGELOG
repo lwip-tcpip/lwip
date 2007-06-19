@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-06-18 Simon Goldschmidt
+  * etharp.c, etharp.h: Changed etharp to use a defined hardware address length
+    of 6 to avoid loading netif->hwaddr_len every time (since this file is only
+    used for ethernet and struct eth_addr already had a defined length of 6).
+
   2007-06-17 Simon Goldschmidt
   * sockets.c, sockets.h: Implemented socket options SO_NO_CHECK for UDP sockets
     to disable UDP checksum generation on transmit.

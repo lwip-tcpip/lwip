@@ -121,7 +121,7 @@ etharp_init(void)
 {
   u8_t i;
   /* clear ARP entries */
-  for(i = 0; i < ARP_TABLE_SIZE; ++i) {
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
     arp_table[i].q = NULL;
@@ -143,7 +143,7 @@ free_etharp_q(struct etharp_q_entry *q)
   struct etharp_q_entry *r;
   LWIP_ASSERT("q != NULL", q != NULL);
   LWIP_ASSERT("q->p != NULL", q->p != NULL);
-  while(q) {
+  while (q) {
     r = q;
     q = q->next;
     LWIP_ASSERT("r->p != NULL", (r->p != NULL));
@@ -403,7 +403,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   s8_t i;
   u8_t k;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 3, ("update_arp_entry()\n"));
-  LWIP_ASSERT("netif->hwaddr_len == 6", netif->hwaddr_len == 6);
+  LWIP_ASSERT("netif->hwaddr_len == ETHARP_HWADDR_LEN", netif->hwaddr_len == ETHARP_HWADDR_LEN);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
                                         ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr), 
                                         ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
@@ -431,15 +431,15 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
-  k = netif->hwaddr_len;
+  k = ETHARP_HWADDR_LEN;
   while (k > 0) {
     k--;
     arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
   }
   /* reset time stamp */
   arp_table[i].ctime = 0;
-/* this is where we will send out queued packets! */
 #if ARP_QUEUEING
+  /* this is where we will send out queued packets! */
   while (arp_table[i].q != NULL) {
     struct pbuf *p;
     struct eth_hdr *ethhdr;
@@ -454,7 +454,7 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     /* Ethernet header */
     ethhdr = p->payload;
     /* fill-in Ethernet header */
-    k = netif->hwaddr_len;
+    k = ETHARP_HWADDR_LEN;
     while(k > 0) {
       k--;
       ethhdr->dest.addr[k] = ethaddr->addr[k];
@@ -620,7 +620,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       hdr->dipaddr = hdr->sipaddr;
       hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
 
-      i = netif->hwaddr_len;
+      LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+                  (netif->hwaddr_len == ETHARP_HWADDR_LEN));
+      i = ETHARP_HWADDR_LEN;
       while(i > 0) {
         i--;
         hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
@@ -743,7 +745,9 @@ etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
   /* obtain source Ethernet address of the given interface */
   srcaddr = (struct eth_addr *)netif->hwaddr;
   ethhdr = q->payload;
-  i = netif->hwaddr_len;
+  LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+              (netif->hwaddr_len == ETHARP_HWADDR_LEN));
+  i = ETHARP_HWADDR_LEN;
   while(i > 0) {
     i--;
     ethhdr->dest.addr[i] = dest->addr[i];
@@ -807,8 +811,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   i = find_entry(ipaddr, ETHARP_TRY_HARD);
 
   /* could not find or create entry? */
-  if (i < 0)
-  {
+  if (i < 0) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not create ARP entry\n"));
     if (q)
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: packet dropped\n"));
@@ -838,7 +841,9 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
       /* we have a valid IP->Ethernet address mapping,
        * fill in the Ethernet header for the outgoing packet */
       struct eth_hdr *ethhdr = q->payload;
-      k = netif->hwaddr_len;
+      LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+                  (netif->hwaddr_len == ETHARP_HWADDR_LEN));
+      k = ETHARP_HWADDR_LEN;
       while(k > 0) {
         k--;
         ethhdr->dest.addr[k] = arp_table[i].ethaddr.addr[k];
@@ -857,10 +862,8 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
        * to copy the whole queue into a new PBUF_RAM (see bug #11400) 
        * PBUF_ROMs can be left as they are, since ROM must not get changed. */
       p = q;
-      while(p) {
+      while (p) {
         LWIP_ASSERT("no packet queues allowed!", (p->len == p->tot_len) || (p->next == 0));
-        if(p->len == p->tot_len) {
-        }
         if(p->flags != PBUF_FLAG_ROM) {
           copy_needed = 1;
           break;
@@ -894,7 +897,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
           r = arp_table[i].q;
-          while(r->next != NULL) {
+          while (r->next != NULL) {
             r = r->next;
           }
           r->next = new_entry;
@@ -931,7 +934,10 @@ err_t
 etharp_request(struct netif *netif, struct ip_addr *ipaddr)
 {
   struct eth_addr eth_addr_bc, eth_addr_zero;
-  u8_t k = netif->hwaddr_len;
+  u8_t k = ETHARP_HWADDR_LEN;
+
+  LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+              (netif->hwaddr_len == ETHARP_HWADDR_LEN));
   while(k > 0) {
     k--;
     eth_addr_bc.addr[k]    = 0xFF;
@@ -960,11 +966,13 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
   /* allocate a pbuf for the outgoing ARP request packet */
   p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
-  if(p != NULL) {
+  if (p != NULL) {
     struct etharp_hdr *hdr = p->payload;
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
     hdr->opcode = htons(OpCode);
-    k = netif->hwaddr_len;
+    k = ETHARP_HWADDR_LEN;
+    LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+                (netif->hwaddr_len == ETHARP_HWADDR_LEN));
 
     /* Write the ARP MAC-Addresses */
     while(k > 0) {
@@ -980,7 +988,7 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
 
     hdr->proto = htons(ETHTYPE_IP);
     ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    k = netif->hwaddr_len;
+    k = ETHARP_HWADDR_LEN;
 
     /* Write the Ethernet MAC-Addresses */
     while(k > 0) {
@@ -1027,7 +1035,9 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
     struct etharp_hdr *hdr = p->payload;
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
     hdr->opcode = htons(ARP_REQUEST);
-    k = netif->hwaddr_len;
+    LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
+                (netif->hwaddr_len == ETHARP_HWADDR_LEN));
+    k = ETHARP_HWADDR_LEN;
     while(k > 0) {
       k--;
       hdr->shwaddr.addr[k] = srcaddr->addr[k];
@@ -1043,7 +1053,7 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
 
     hdr->proto = htons(ETHTYPE_IP);
     ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    k = netif->hwaddr_len;
+    k = ETHARP_HWADDR_LEN;
     while(k > 0) {
       k--;
       /* broadcast to all network interfaces on the local network */
