@@ -539,10 +539,6 @@ err_t dhcp_start(struct netif *netif)
   struct dhcp *dhcp;
   err_t result = ERR_OK;
 
-#if LWIP_DHCP_AUTOIP_COOP
-  autoip_init();
-#endif /* LWIP_DHCP_AUTOIP_COOP */
-
   LWIP_ERROR("netif == NULL", (netif == NULL), return ERR_ARG;);
   dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));

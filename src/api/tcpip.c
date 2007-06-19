@@ -166,6 +166,22 @@ dhcp_timer_fine(void *arg)
 }
 #endif /* LWIP_DHCP */
 
+#if LWIP_AUTOIP
+/**
+ * Timer callback function that calls autoip_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+static void
+autoip_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: autoip_tmr()\n"));
+  autoip_tmr();
+  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
+}
+#endif /* LWIP_AUTOIP */
+
 #if LWIP_IGMP
 /**
  * Timer callback function that calls igmp_tmr() and reschedules itself.
@@ -256,6 +272,9 @@ tcpip_thread(void *arg)
   sys_timeout(DHCP_COARSE_TIMER_SECS*1000, dhcp_timer_coarse, NULL);
   sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
 #endif /* LWIP_DHCP */
+#if LWIP_AUTOIP
+  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
+#endif /* LWIP_AUTOIP */
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
@@ -483,7 +502,10 @@ tcpip_init(void (* initfunc)(void *), void *arg)
 {
 #if LWIP_ARP
   etharp_init();
-#endif /*LWIP_ARP */
+#endif /* LWIP_ARP */
+#if LWIP_AUTOIP
+  autoip_init();
+#endif /* LWIP_AUTOIP */
   ip_init();
 #if LWIP_UDP
   udp_init();

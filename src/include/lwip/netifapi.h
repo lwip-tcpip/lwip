@@ -32,6 +32,7 @@
 #include "lwip/sys.h"
 #include "lwip/netif.h"
 #include "lwip/dhcp.h"
+#include "lwip/autoip.h"
 
 #if LWIP_NETIF_API
 
