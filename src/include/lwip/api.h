@@ -118,6 +118,19 @@ struct netconn {
   int recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
   u16_t recv_avail;
+  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
+      this temporarily stores the message. */
+  struct api_msg_msg *write_msg;
+  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
+      this temporarily stores how much is already sent. */
+  u16_t write_offset;
+#if LWIP_TCPIP_CORE_LOCKING
+  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
+      this temporarily stores whether to wake up the original application task
+      if data couldn't be sent in the first try. */
+  u8_t write_delayed;
+#endif
+
   void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
 };
 

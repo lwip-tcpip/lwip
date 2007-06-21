@@ -778,9 +778,9 @@ err_t
 netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
 {
   struct api_msg msg;
-  u16_t len, sndbuf;
-  
+
   LWIP_ERROR("netconn_write: invalid conn",  (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_write: invalid conn->type",  (conn->type != NETCONN_TCP), return ERR_VAL;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -788,44 +788,13 @@ netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
 
   msg.function = do_write;
   msg.msg.conn = conn;
-
-  conn->state = NETCONN_WRITE;
-  while (conn->err == ERR_OK && size > 0) {
-    msg.msg.msg.w.dataptr = dataptr;
-    msg.msg.msg.w.copy = copy;
-    
-    if (conn->type == NETCONN_TCP) {
-      while ((sndbuf = tcp_sndbuf(conn->pcb.tcp)) == 0) {
-        sys_sem_wait(conn->sem);
-        if (conn->err != ERR_OK) {
-          goto ret;
-        }
-      }
-      if (size > sndbuf) {
-        /* We cannot send more than one send buffer's worth of data at a time. */
-        len = sndbuf;
-      } else {
-        len = size;
-      }
-    } else {
-      len = size;
-    }
-
-    LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_write: writing %d bytes (%d)\n", len, copy));
-    msg.msg.msg.w.len = len;
-    TCPIP_APIMSG(&msg);
-    if (conn->err == ERR_OK) {
-      dataptr = (void *)((u8_t *)dataptr + len);
-      size -= len;
-    } else if (conn->err == ERR_MEM) {
-      conn->err = ERR_OK;
-      sys_sem_wait(conn->sem);
-    } else {
-      goto ret;
-    }
-  }
- ret:
-  conn->state = NETCONN_NONE;
+  msg.msg.msg.w.dataptr = dataptr;
+  msg.msg.msg.w.copy = copy;
+  msg.msg.msg.w.len = size;
+  /* For locking the core: this _can_ be delayed on low memory/low send buffer,
+     but if it is, this is done inside api_msg.c:do_write(), so we can use the
+     non-blocking version here. */
+  TCPIP_APIMSG(&msg);
 
   return conn->err;
 }

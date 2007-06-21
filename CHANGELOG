@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-06-21 Simon Goldschmidt
+  * api.h, api_lib.c, api_msg.c: Fixed bug #20021: Moved sendbuf-processing in
+    netconn_write from api_lib.c to api_msg.c to also prevent multiple context-
+    changes on low memory or empty send-buffer.
+
   2007-06-18 Simon Goldschmidt
   * etharp.c, etharp.h: Changed etharp to use a defined hardware address length
     of 6 to avoid loading netif->hwaddr_len every time (since this file is only

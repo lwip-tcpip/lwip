@@ -40,6 +40,11 @@
 
 #if !NO_SYS
 
+/* forward declarations */
+#if LWIP_TCP
+static err_t do_writemore(struct netconn *conn);
+#endif
+
 #if LWIP_RAW
 /**
  * Receive callback function for RAW netconns.
@@ -176,17 +181,17 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 static err_t
 poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
-  struct netconn *conn;
+  struct netconn *conn = arg;
 
   LWIP_UNUSED_ARG(pcb);
+  LWIP_ASSERT("conn != NULL", (conn != NULL));
 
-  conn = arg;
-
-  if (conn != NULL &&
-     (conn->state == NETCONN_WRITE || conn->state == NETCONN_CLOSE) &&
-     conn->sem != SYS_SEM_NULL) {
+  if (conn->state == NETCONN_WRITE) {
+    do_writemore(conn);
+  } else if ((conn->state == NETCONN_CLOSE) && (conn->sem != SYS_SEM_NULL)) {
     sys_sem_signal(conn->sem);
   }
+
   return ERR_OK;
 }
 
@@ -200,13 +205,14 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 static err_t
 sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
-  struct netconn *conn;
+  struct netconn *conn = arg;
 
   LWIP_UNUSED_ARG(pcb);
+  LWIP_ASSERT("conn != NULL", (conn != NULL));
 
-  conn = arg;
-
-  if (conn != NULL && conn->sem != SYS_SEM_NULL) {
+  if (conn->state == NETCONN_WRITE) {
+    do_writemore(conn);
+  } else if ((conn->state == NETCONN_CLOSE) && (conn->sem != SYS_SEM_NULL)) {
     sys_sem_signal(conn->sem);
   }
 
@@ -230,6 +236,7 @@ err_tcp(void *arg, err_t err)
   struct netconn *conn;
 
   conn = arg;
+  LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   conn->pcb.tcp = NULL;
 
@@ -250,9 +257,17 @@ err_tcp(void *arg, err_t err)
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->acceptmbox, NULL);
   }
-  if (conn->sem != SYS_SEM_NULL) {
-    sys_sem_signal(conn->sem);
-  }
+  if (conn->state == NETCONN_WRITE) {
+    /* calling do_writemore is not necessary
+       since the pcb has already been deleted! */
+    conn->state = NETCONN_NONE;
+    /* wake up the waiting task */
+    sys_mbox_post(conn->mbox, NULL);
+  } else
+    if ((conn->sem != SYS_SEM_NULL) &&
+      (conn->state == NETCONN_CLOSE)) {
+      sys_sem_signal(conn->sem);
+    }
 }
 
 /**
@@ -575,7 +590,7 @@ do_connect(struct api_msg_msg *msg)
     msg->conn->state = NETCONN_CONNECT;
     setup_tcp(msg->conn);
     msg->conn->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
-    do_connected);
+                                 do_connected);
     break;
 #endif /* LWIP_TCP */
   default:
@@ -694,6 +709,94 @@ do_recv(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 
+#if LWIP_TCP
+/**
+ * See if more data needs to be written from a previous call to netconn_write.
+ * Called initially from do_write. If the first call can't send all data
+ * (because of low memory or empty send-buffer), this function is called again
+ * from sent_tcp() or poll_tcp() to send more data. If all data is sent, the
+ * blocking application thread (waiting in netconn_write) is released.
+ *
+ * @param conn netconn (that is currently in state NETCONN_WRITE) to process
+ * @return ERR_OK
+ *         ERR_MEM if LWIP_TCPIP_CORE_LOCKING=1 and sending hasn't yet finished
+ */
+err_t
+do_writemore(struct netconn *conn)
+{
+  err_t err;
+  void *dataptr;
+  u16_t len, available;
+  u8_t write_finished = 0;
+
+  LWIP_ASSERT("conn->state != NETCONN_WRITE", (conn->state != NETCONN_WRITE));
+
+  dataptr = (u8_t*)conn->write_msg->msg.w.dataptr + conn->write_offset;
+  len = conn->write_msg->msg.w.len - conn->write_offset;
+  available = tcp_sndbuf(conn->pcb.tcp);
+  if (available < len) {
+    /* don't try to write more than sendbuf */
+    len = available;
+#if LWIP_TCPIP_CORE_LOCKING
+    conn->write_delayed = 1;
+#endif
+  }
+
+  err = tcp_write(conn->pcb.tcp, dataptr, len, conn->write_msg->msg.w.copy);
+  LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->write_msg->msg.w.len));
+  if (err == ERR_OK) {
+    conn->write_offset += len;
+    if (conn->write_offset == conn->write_msg->msg.w.len) {
+      /* everything was written */
+      write_finished = 1;
+      conn->write_msg = NULL;
+      conn->write_offset = 0;
+    }
+    /* This is the Nagle algorithm: inhibit the sending of new TCP
+       segments when new outgoing data arrives from the user if any
+       previously transmitted data on the connection remains
+       unacknowledged. */
+    if ((conn->pcb.tcp->unacked == NULL ||
+        (conn->pcb.tcp->flags & TF_NODELAY) || 
+        (conn->pcb.tcp->snd_queuelen) > 1)) {
+      err = tcp_output(conn->pcb.tcp);
+    }
+    conn->err = err;
+    if ((conn->callback) && (err == ERR_OK) &&
+        (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT)) {
+      (*conn->callback)(conn, NETCONN_EVT_SENDMINUS, len);
+    }
+  } else if (err == ERR_MEM) {
+#if LWIP_TCPIP_CORE_LOCKING
+    conn->write_delayed = 1;
+#endif
+  } else {
+    /* if ERR_MEM, we wait for sent_tcp or poll_tcp to be called */
+    conn->err = err;
+    /* since we've had an error (except temporary running out of memory,
+       we don't try writing any more */
+    write_finished = 1;
+  }
+
+  if (write_finished) {
+    /* everything was written: set back connection state
+       and back to application task */
+    conn->state = NETCONN_NONE;
+#if LWIP_TCPIP_CORE_LOCKING
+    if (conn->write_delayed != 0)
+#endif
+    {
+      sys_mbox_post(conn->mbox, NULL);
+    }
+  }
+#if LWIP_TCPIP_CORE_LOCKING
+  else
+    return ERR_MEM;
+#endif
+  return ERR_OK;
+}
+#endif /* LWIP_TCP */
+
 /**
  * Send some data on a TCP pcb contained in a netconn
  * Called from netconn_write
@@ -703,36 +806,32 @@ do_recv(struct api_msg_msg *msg)
 void
 do_write(struct api_msg_msg *msg)
 {
-#if LWIP_TCP
-  err_t err;
-#endif /* LWIP_TCP */
   if (msg->conn->err == ERR_OK) {
-    if (msg->conn->pcb.tcp != NULL) {
-      if (msg->conn->type == NETCONN_TCP) {
+    if ((msg->conn->pcb.tcp != NULL) && (msg->conn->type == NETCONN_TCP)) {
 #if LWIP_TCP
-        err = tcp_write(msg->conn->pcb.tcp, msg->msg.w.dataptr,
-                        msg->msg.w.len, msg->msg.w.copy);
-        /* This is the Nagle algorithm: inhibit the sending of new TCP
-           segments when new outgoing data arrives from the user if any
-           previously transmitted data on the connection remains
-           unacknowledged. */
-        if(err == ERR_OK && (msg->conn->pcb.tcp->unacked == NULL ||
-          (msg->conn->pcb.tcp->flags & TF_NODELAY) || 
-          (msg->conn->pcb.tcp->snd_queuelen) > 1)) {
-            err = tcp_output(msg->conn->pcb.tcp);
-        }
-        msg->conn->err = err;
-        if (msg->conn->callback)
-          if (err == ERR_OK) {
-            if (tcp_sndbuf(msg->conn->pcb.tcp) <= TCP_SNDLOWAT)
-              (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDMINUS, msg->msg.w.len);
-          }
+      msg->conn->state = NETCONN_WRITE;
+      /* set all the variables used by do_writemore */
+      msg->conn->write_msg = msg;
+      msg->conn->write_offset = 0;
+#if LWIP_TCPIP_CORE_LOCKING
+      msg->conn->write_delayed = 0;
+      while (do_writemore(msg->conn) != ERR_OK) {
+        LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
+        UNLOCK_TCPIP_CORE();
+        sys_arch_mbox_fetch(msg->conn->mbox, NULL, 0);
+        LOCK_TCPIP_CORE();
+        LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
+      }
+#else
+      do_writemore(msg->conn);
+#endif
+      /* for both cases: if do_writemore was called, don't ACK the APIMSG! */
+      return;
 #endif /* LWIP_TCP */
 #if (LWIP_UDP || LWIP_RAW)
-      } else {
-        msg->conn->err = ERR_VAL;
+    } else {
+      msg->conn->err = ERR_VAL;
 #endif /* (LWIP_UDP || LWIP_RAW) */
-      }
     }
   }
   TCPIP_APIMSG_ACK(msg);
