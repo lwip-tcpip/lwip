@@ -539,6 +539,8 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
 #endif /* LWIP_TCP */
   }
 
+  LWIP_ASSERT("lwip_sendto: size must fit in u16_t",
+              ((size >= 0) && (size <= 0xffff)));
   LWIP_ERROR("lwip_sendto: invalid address", (((to != NULL) || (tolen != 0)) &&
              ((tolen != sizeof(struct sockaddr_in)) ||
              ((((struct sockaddr_in *)to)->sin_family) != AF_INET))),
