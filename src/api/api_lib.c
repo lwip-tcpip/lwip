@@ -775,7 +775,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t
-netconn_write(struct netconn *conn, const void *dataptr, u16_t size, u8_t copy)
+netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t copy)
 {
   struct api_msg msg;
 

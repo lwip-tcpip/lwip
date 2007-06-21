@@ -123,7 +123,7 @@ struct netconn {
   struct api_msg_msg *write_msg;
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores how much is already sent. */
-  u16_t write_offset;
+  int write_offset;
 #if LWIP_TCPIP_CORE_LOCKING
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores whether to wake up the original application task
@@ -187,7 +187,7 @@ err_t             netconn_sendto  (struct netconn *conn,
 err_t             netconn_send    (struct netconn *conn,
            struct netbuf *buf);
 err_t             netconn_write   (struct netconn *conn,
-           const void *dataptr, u16_t size,
+           const void *dataptr, int size,
            u8_t copy);
 err_t             netconn_close   (struct netconn *conn);
 

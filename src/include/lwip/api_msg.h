@@ -63,7 +63,7 @@ struct api_msg_msg {
     } bc; /* do_bind, do_connect */
     struct {
       const void *dataptr;
-      u16_t len;
+      int len;
       u8_t copy;
     } w; /* do_write */
     struct {

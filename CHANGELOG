@@ -20,6 +20,12 @@ HISTORY
   ++ New features:
 
   2007-06-21 Simon Goldschmidt
+  * api_lib.c, api_msg.c, api.h, api_msg.h: Converted the length argument of
+    netconn_write (and therefore also api_msg_msg.msg.w.len) from u16_t into
+    int to be able to send a bigger buffer than 64K with one time (mainly
+    used from lwip_send).
+
+  2007-06-21 Simon Goldschmidt
   * tcp.h, api_msg.c: Moved the nagle algorithm from netconn_write/do_write
     into a define (tcp_output_nagle) in tcp.h to provide it to raw api users, too.
 
