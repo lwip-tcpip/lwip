@@ -729,7 +729,7 @@ do_writemore(struct netconn *conn)
   u16_t len, available;
   u8_t write_finished = 0;
 
-  LWIP_ASSERT("conn->state != NETCONN_WRITE", (conn->state != NETCONN_WRITE));
+  LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
 
   dataptr = (u8_t*)conn->write_msg->msg.w.dataptr + conn->write_offset;
   len = conn->write_msg->msg.w.len - conn->write_offset;
@@ -807,12 +807,12 @@ do_write(struct api_msg_msg *msg)
       msg->conn->write_offset = 0;
 #if LWIP_TCPIP_CORE_LOCKING
       msg->conn->write_delayed = 0;
-      while (do_writemore(msg->conn) != ERR_OK) {
+      if (do_writemore(msg->conn) != ERR_OK) {
         LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
         UNLOCK_TCPIP_CORE();
         sys_arch_mbox_fetch(msg->conn->mbox, NULL, 0);
         LOCK_TCPIP_CORE();
-        LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
+        LWIP_ASSERT("state!", msg->conn->state == NETCONN_NONE);
       }
 #else
       do_writemore(msg->conn);
