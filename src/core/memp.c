@@ -99,7 +99,10 @@ static struct memp *memp_tab[MEMP_MAX];
 
 #endif /* MEMP_OVERFLOW_CHECK */
 
-static const u16_t memp_sizes[MEMP_MAX] = {
+#if !MEM_USE_POOLS
+static
+#endif
+const u16_t memp_sizes[MEMP_MAX] = {
   MEMP_ALIGN_SIZE(sizeof(struct pbuf)),
   MEMP_ALIGN_SIZE(sizeof(struct raw_pcb)),
   MEMP_ALIGN_SIZE(sizeof(struct udp_pcb)),
@@ -113,7 +116,13 @@ static const u16_t memp_sizes[MEMP_MAX] = {
   MEMP_ALIGN_SIZE(sizeof(struct etharp_q_entry)),
 #endif
   MEMP_ALIGN_SIZE(sizeof(struct pbuf)) + MEMP_ALIGN_SIZE(PBUF_POOL_BUFSIZE),
-  MEMP_ALIGN_SIZE(sizeof(struct sys_timeo))
+  MEMP_ALIGN_SIZE(sizeof(struct sys_timeo)),
+#if MEM_USE_POOLS
+  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_1),
+  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_2),
+  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_3),
+  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_4),
+#endif
 };
 
 static const u16_t memp_num[MEMP_MAX] = {
@@ -130,7 +139,13 @@ static const u16_t memp_num[MEMP_MAX] = {
   MEMP_NUM_ARP_QUEUE,
 #endif
   PBUF_POOL_SIZE,
-  MEMP_NUM_SYS_TIMEOUT
+  MEMP_NUM_SYS_TIMEOUT,
+#if MEM_USE_POOLS
+  MEM_POOL_NUM_1,
+  MEM_POOL_NUM_2,
+  MEM_POOL_NUM_3,
+  MEM_POOL_NUM_4,
+#endif
 };
 
 #define MEMP_TYPE_SIZE(qty, type) \
@@ -150,8 +165,15 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_ARP_QUEUE, struct etharp_q_entry) +
 #endif
   MEMP_TYPE_SIZE(PBUF_POOL_SIZE, struct pbuf) +
-                 PBUF_POOL_SIZE * MEMP_ALIGN_SIZE(PBUF_POOL_BUFSIZE) +
-  MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)];
+                 ((PBUF_POOL_SIZE) * MEMP_ALIGN_SIZE(PBUF_POOL_BUFSIZE)) +
+  MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)
+#if MEM_USE_POOLS
+  + ((MEM_POOL_NUM_1) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_1))
+  + ((MEM_POOL_NUM_2) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_2))
+  + ((MEM_POOL_NUM_3) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_3))
+  + ((MEM_POOL_NUM_4) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_4))
+#endif
+];
 
 #if MEMP_SANITY_CHECK
 /**

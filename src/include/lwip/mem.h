@@ -66,11 +66,21 @@ typedef u16_t mem_size_t;
 #define mem_realloc(x, size) realloc(x,size)
 #endif
 #else /* MEM_LIBC_MALLOC */
+#if MEM_USE_POOLS
+/** The pool implementation of the heap currently uses 4 pools */
+#define MEM_POOL_COUNT   4
+/** mem_init is not used when using pools instead of a heap */
+#define mem_init()
+/** mem_realloc is not used when using pools instead of a heap:
+    we can't free part of a pool element and don't want to copy the rest */
+#define mem_realloc(mem, size) (mem)
+#else /* MEM_USE_POOLS */
 /* lwIP alternative malloc */
 void  mem_init(void);
+void *mem_realloc(void *mem, mem_size_t size);
+#endif /* MEM_USE_POOLS */
 void *mem_malloc(mem_size_t size);
 void  mem_free(void *mem);
-void *mem_realloc(void *mem, mem_size_t size);
 #endif /* MEM_LIBC_MALLOC */
 
 #ifndef LWIP_MEM_ALIGN_SIZE

@@ -56,6 +56,12 @@ typedef enum {
 #endif
   MEMP_PBUF_POOL,
   MEMP_SYS_TIMEOUT,
+#if MEM_USE_POOLS
+  MEMP_MEM_POOL_1,
+  MEMP_MEM_POOL_2,
+  MEMP_MEM_POOL_3,
+  MEMP_MEM_POOL_4,
+#endif
 
   MEMP_MAX
 } memp_t;
@@ -69,6 +75,10 @@ void *memp_malloc_fn(memp_t type, const char* file, const int line);
 void *memp_malloc(memp_t type);
 #endif
 void  memp_free(memp_t type, void *mem);
+
+#if MEM_USE_POOLS
+extern const u16_t memp_sizes[MEMP_MAX];
+#endif
 
 #ifdef __cplusplus
 }

@@ -48,7 +48,79 @@
 
 #include "lwip/stats.h"
 
-#if (MEM_LIBC_MALLOC == 0)
+#if !MEM_LIBC_MALLOC
+#if MEM_USE_POOLS
+/* lwIP head implemented with different sized pools */
+
+/**
+ * This structure is used to save the pool one element came from.
+ */
+struct mem_helper
+{
+   memp_t poolnr;
+};
+
+/**
+ * Allocate memory: determine the smallest pool that is big enough
+ * to contain an element of 'size' and get an element from that pool.
+ *
+ * @param size the size in bytes of the memory needed
+ * @return a pointer to the allocated memory or NULL if the pool is empty
+ */
+void *
+mem_malloc(mem_size_t size)
+{
+  struct mem_helper *element;
+  int poolnr = -1;
+
+  for (poolnr = MEMP_MEM_POOL_1; poolnr < (MEMP_MEM_POOL_1 + MEM_POOL_COUNT); poolnr++) {
+    if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
+      break;
+    }
+  }
+  if (poolnr == -1) {
+    LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
+    return NULL;
+  }
+  element = (struct mem_helper*)memp_malloc(poolnr);
+  if (element == NULL) {
+    /* No need to DEBUGF or ASSERT: This error is already
+       taken care of in memp.c */
+    /** @todo: we could try a bigger pool if this one is empty! */
+    return NULL;
+  }
+
+  element->poolnr = poolnr;
+  element++;
+
+  return element;
+}
+
+/**
+ * Free memory previously allocated by mem_malloc. Loads the pool number
+ * and calls memp_free with that pool number to put the element back into
+ * its pool
+ *
+ * @param rmem the memory element to free
+ */
+void
+mem_free(void *rmem)
+{
+  struct mem_helper *hmem = (struct mem_helper*)rmem;
+
+  LWIP_ASSERT("rmem != NULL", (rmem != NULL));
+  LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == MEM_ALIGN(rmem)));
+
+  hmem--;
+
+  LWIP_ASSERT("hmem != NULL", (hmem != NULL));
+  LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == MEM_ALIGN(hmem)));
+  LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
+
+  memp_free(hmem->poolnr, hmem);
+}
+
+#else /* MEM_USE_POOLS */
 /* lwIP replacement for your libc malloc() */
 
 /* This does not have to be aligned since for getting its size,
@@ -427,5 +499,5 @@ mem_malloc(mem_size_t size)
   return NULL;
 }
 
-#endif /* MEM_LIBC_MALLOC == 0 */
-
+#endif /* MEM_USE_POOLS */
+#endif /* !MEM_LIBC_MALLOC */
