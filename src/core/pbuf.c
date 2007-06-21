@@ -96,6 +96,8 @@ pbuf_init(void)
  * layer at which the pbuf is allocated and the requested size
  * (from the size parameter).
  *
+ * @param l flag to define header size
+ * @param length size of the pbuf's payload
  * @param flag this parameter decides how and where the pbuf
  * should be allocated as follows:
  *
@@ -338,7 +340,8 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
  *
  * The ->payload, ->tot_len and ->len fields are adjusted.
  *
- * @param hdr_size_inc Number of bytes to increment header size which
+ * @param p pbuf to change the header size.
+ * @param header_size_increment Number of bytes to increment header size which
  * increases the size of the pbuf. New space is on the front.
  * (Using a negative value decreases the header size.)
  * If hdr_size_inc is 0, this function does nothing and returns succesful.
@@ -435,7 +438,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
  * decrementing. So, when all reference counts are one, the whole
  * chain is free'd.
  *
- * @param pbuf The pbuf (chain) to be dereferenced.
+ * @param p The pbuf (chain) to be dereferenced.
  *
  * @return the number of pbufs that were de-allocated
  * from the head of the chain.
@@ -672,7 +675,8 @@ pbuf_dechain(struct pbuf *p)
  *
  * @note Only one packet is copied, no packet queue!
  *
- * @param p Head of pbuf chain to process
+ * @param p_to pbuf source of the copy
+ * @param p_from pbuf destination of the copy
  *
  * @return ERR_OK if pbuf was copied
  *         ERR_ARG if one of the pbufs is NULL or p_to is not big

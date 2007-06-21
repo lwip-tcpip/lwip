@@ -506,7 +506,7 @@ etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
  * packet p is passed to the IP layer.
  *
  * @param netif The lwIP network interface on which the IP packet pbuf arrived.
- * @param pbuf The IP packet that arrived on netif.
+ * @param p The IP packet that arrived on netif.
  *
  * @return NULL
  *
@@ -542,8 +542,8 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
  * is freed by this function.
  *
  * @param netif The lwIP network interface on which the ARP packet pbuf arrived.
- * @param pbuf The ARP packet that arrived on netif. Is freed by this function.
  * @param ethaddr Ethernet address of netif.
+ * @param p The ARP packet that arrived on netif. Is freed by this function.
  *
  * @return NULL
  *
@@ -681,8 +681,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * the gateway is used.
  *
  * @param netif The lwIP network interface which the IP packet will be sent on.
+ * @param q The pbuf(s) containing the IP packet to be sent.
  * @param ipaddr The IP address of the packet destination.
- * @param pbuf The pbuf(s) containing the IP packet to be sent.
  *
  * @return
  * - ERR_RTE No route to destination (no gateway to external networks),
