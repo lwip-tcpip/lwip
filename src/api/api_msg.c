@@ -752,15 +752,7 @@ do_writemore(struct netconn *conn)
       conn->write_msg = NULL;
       conn->write_offset = 0;
     }
-    /* This is the Nagle algorithm: inhibit the sending of new TCP
-       segments when new outgoing data arrives from the user if any
-       previously transmitted data on the connection remains
-       unacknowledged. */
-    if ((conn->pcb.tcp->unacked == NULL ||
-        (conn->pcb.tcp->flags & TF_NODELAY) || 
-        (conn->pcb.tcp->snd_queuelen) > 1)) {
-      err = tcp_output(conn->pcb.tcp);
-    }
+    err = tcp_output_nagle(conn->pcb.tcp);
     conn->err = err;
     if ((conn->callback) && (err == ERR_OK) &&
         (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT)) {

@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2007-06-21 Simon Goldschmidt
+  * tcp.h, api_msg.c: Moved the nagle algorithm from netconn_write/do_write
+    into a define (tcp_output_nagle) in tcp.h to provide it to raw api users, too.
+
+  2007-06-21 Simon Goldschmidt
   * api.h, api_lib.c, api_msg.c: Fixed bug #20021: Moved sendbuf-processing in
     netconn_write from api_lib.c to api_msg.c to also prevent multiple context-
     changes on low memory or empty send-buffer.

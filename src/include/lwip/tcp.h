@@ -111,6 +111,17 @@ err_t            tcp_output  (struct tcp_pcb *pcb);
 void             tcp_rexmit  (struct tcp_pcb *pcb);
 void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
+/**
+ * This is the Nagle algorithm: inhibit the sending of new TCP
+ * segments when new outgoing data arrives from the user if any
+ * previously transmitted data on the connection remains
+ * unacknowledged.
+ */
+#define tcp_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
+                                 ((tpcb)->flags & TF_NODELAY) || \
+                                 ((tpcb)->snd_queuelen > 1)) ? \
+                                tcp_output(tpcb) : ERR_OK)
+
 
 
 #define TCP_SEQ_LT(a,b)     ((s32_t)((a)-(b)) < 0)
