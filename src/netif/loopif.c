@@ -64,7 +64,7 @@ loopif_poll(struct netif *netif)
   struct pbuf *in = NULL;
   struct loopif_private *priv = (struct loopif_private*)netif->state;
 
-  LWIP_ERROR("priv == NULL", (priv == NULL), return;);
+  LWIP_ERROR("priv != NULL", (priv != NULL), return;);
 
   do {
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */

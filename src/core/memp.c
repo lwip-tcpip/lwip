@@ -326,7 +326,7 @@ memp_malloc(memp_t type)
   struct memp *memp;
   SYS_ARCH_DECL_PROTECT(old_level);
  
-  LWIP_ERROR("memp_malloc: type >= MEMP_MAX", (type >= MEMP_MAX), return NULL;);
+  LWIP_ERROR("memp_malloc: type < MEMP_MAX", (type < MEMP_MAX), return NULL;);
 
   SYS_ARCH_PROTECT(old_level);
 #if MEMP_OVERFLOW_CHECK >= 2

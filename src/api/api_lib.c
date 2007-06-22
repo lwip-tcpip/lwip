@@ -98,7 +98,7 @@ netbuf_delete(struct netbuf *buf)
 void *
 netbuf_alloc(struct netbuf *buf, u16_t size)
 {
-  LWIP_ERROR("netbuf_alloc: invalid buf", (buf == NULL), return NULL;);
+  LWIP_ERROR("netbuf_alloc: invalid buf", (buf != NULL), return NULL;);
 
   /* Deallocate any previously allocated memory. */
   if (buf->p != NULL) {
@@ -120,7 +120,7 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
 void
 netbuf_free(struct netbuf *buf)
 {
-  LWIP_ERROR("netbuf_free: invalid buf", (buf == NULL), return;);
+  LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return;);
   if (buf->p != NULL) {
     pbuf_free(buf->p);
   }
@@ -139,7 +139,7 @@ netbuf_free(struct netbuf *buf)
 err_t
 netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 {
-  LWIP_ERROR("netbuf_ref: invalid buf", (buf == NULL), return ERR_ARG;);
+  LWIP_ERROR("netbuf_ref: invalid buf", (buf != NULL), return ERR_ARG;);
   if (buf->p != NULL) {
     pbuf_free(buf->p);
   }
@@ -163,8 +163,8 @@ netbuf_ref(struct netbuf *buf, const void *dataptr, u16_t size)
 void
 netbuf_chain(struct netbuf *head, struct netbuf *tail)
 {
-  LWIP_ERROR("netbuf_ref: invalid head", (head == NULL), return;);
-  LWIP_ERROR("netbuf_chain: invalid tail", (tail == NULL), return;);
+  LWIP_ERROR("netbuf_ref: invalid head", (head != NULL), return;);
+  LWIP_ERROR("netbuf_chain: invalid tail", (tail != NULL), return;);
   pbuf_chain(head->p, tail->p);
   head->ptr = head->p;
   memp_free(MEMP_NETBUF, tail);
@@ -182,9 +182,9 @@ netbuf_chain(struct netbuf *head, struct netbuf *tail)
 err_t
 netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
 {
-  LWIP_ERROR("netbuf_data: invalid buf", (buf == NULL), return ERR_ARG;);
-  LWIP_ERROR("netbuf_data: invalid dataptr", (dataptr == NULL), return ERR_ARG;);
-  LWIP_ERROR("netbuf_data: invalid len", (len == NULL), return ERR_ARG;);
+  LWIP_ERROR("netbuf_data: invalid buf", (buf != NULL), return ERR_ARG;);
+  LWIP_ERROR("netbuf_data: invalid dataptr", (dataptr != NULL), return ERR_ARG;);
+  LWIP_ERROR("netbuf_data: invalid len", (len != NULL), return ERR_ARG;);
 
   if (buf->ptr == NULL) {
     return ERR_BUF;
@@ -207,7 +207,7 @@ netbuf_data(struct netbuf *buf, void **dataptr, u16_t *len)
 s8_t
 netbuf_next(struct netbuf *buf)
 {
-  LWIP_ERROR("netbuf_free: invalid buf", (buf == NULL), return -1;);
+  LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return -1;);
   if (buf->ptr->next == NULL) {
     return -1;
   }
@@ -228,7 +228,7 @@ netbuf_next(struct netbuf *buf)
 void
 netbuf_first(struct netbuf *buf)
 {
-  LWIP_ERROR("netbuf_free: invalid buf", (buf == NULL), return;);
+  LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return;);
   buf->ptr = buf->p;
 }
 
@@ -248,8 +248,8 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
   u16_t left;
   u16_t buf_copy_len;
 
-  LWIP_ERROR("netbuf_copy_partial: invalid buf", (buf == NULL), return;);
-  LWIP_ERROR("netbuf_copy_partial: invalid dataptr", (dataptr == NULL), return;);
+  LWIP_ERROR("netbuf_copy_partial: invalid buf", (buf != NULL), return;);
+  LWIP_ERROR("netbuf_copy_partial: invalid dataptr", (dataptr != NULL), return;);
 
   left = 0;
 
@@ -410,7 +410,7 @@ netconn_delete(struct netconn *conn)
 enum netconn_type
 netconn_type(struct netconn *conn)
 {
-  LWIP_ERROR("netconn_type: invalid conn", (conn == NULL), return NETCONN_INVALID;);
+  LWIP_ERROR("netconn_type: invalid conn", (conn != NULL), return NETCONN_INVALID;);
   return conn->type;
 }
 
@@ -429,7 +429,7 @@ netconn_type(struct netconn *conn)
 err_t
 netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 {
-  LWIP_ERROR("netconn_peer: invalid conn", (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_peer: invalid conn", (conn != NULL), return ERR_ARG;);
   switch (NETCONNTYPE_GROUP(conn->type)) {
   case NETCONN_RAW:
     /* return an error as connecting is only a helper for upper layers */
@@ -463,9 +463,9 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 err_t
 netconn_addr(struct netconn *conn, struct ip_addr **addr, u16_t *port)
 {
-  LWIP_ERROR("netconn_addr: invalid conn", (conn == NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_addr: invalid addr", (addr == NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_addr: invalid port", (port == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_addr: invalid conn", (conn != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_addr: invalid addr", (addr != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_addr: invalid port", (port != NULL), return ERR_ARG;);
   switch (NETCONNTYPE_GROUP(conn->type)) {
   case NETCONN_RAW:
     *addr = &(conn->pcb.raw->local_ip);
@@ -498,7 +498,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_bind: invalid conn", (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_bind: invalid conn", (conn != NULL), return ERR_ARG;);
 
   if (conn->type != NETCONN_TCP && conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -527,7 +527,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
   
-  LWIP_ERROR("netconn_connect: invalid conn", (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -555,7 +555,7 @@ netconn_disconnect(struct netconn *conn)
 {
   struct api_msg msg;
   
-  LWIP_ERROR("netconn_disconnect: invalid conn", (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_disconnect: invalid conn", (conn != NULL), return ERR_ARG;);
 
   msg.function = do_disconnect;
   msg.msg.conn = conn;
@@ -576,7 +576,7 @@ netconn_listen(struct netconn *conn)
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_listen: invalid conn", (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_listen: invalid conn", (conn != NULL), return ERR_ARG;);
 
   msg.function = do_listen;
   msg.msg.conn = conn;
@@ -595,8 +595,8 @@ netconn_accept(struct netconn *conn)
 {
   struct netconn *newconn;
 
-  LWIP_ERROR("netconn_accept: invalid conn",       (conn == NULL),                      return NULL;);
-  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox == SYS_MBOX_NULL), return NULL;);
+  LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return NULL;);
+  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return NULL;);
 
   #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
@@ -627,7 +627,7 @@ netconn_recv(struct netconn *conn)
   struct pbuf *p;
   u16_t len;
   
-  LWIP_ERROR("netconn_recv: invalid conn",  (conn == NULL), return NULL;);
+  LWIP_ERROR("netconn_recv: invalid conn",  (conn != NULL), return NULL;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
@@ -751,7 +751,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_send: invalid conn",  (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_send: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -779,8 +779,8 @@ netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t copy)
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_write: invalid conn",  (conn == NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_write: invalid conn->type",  (conn->type != NETCONN_TCP), return ERR_VAL;);
+  LWIP_ERROR("netconn_write: invalid conn",  (conn != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_write: invalid conn->type",  (conn->type == NETCONN_TCP), return ERR_VAL;);
 
   if (conn->err != ERR_OK) {
     return conn->err;
@@ -810,7 +810,7 @@ netconn_close(struct netconn *conn)
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_close: invalid conn",  (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_close: invalid conn",  (conn != NULL), return ERR_ARG;);
 
 
   conn->state = NETCONN_CLOSE;
@@ -845,7 +845,7 @@ netconn_join_leave_group(struct netconn *conn,
 {
   struct api_msg msg;
 
-  LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn == NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   if (conn->err != ERR_OK) {
     return conn->err;

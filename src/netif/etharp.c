@@ -516,7 +516,7 @@ void
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct ethip_hdr *hdr;
-  LWIP_ERROR("netif == NULL", (netif == NULL), return;);
+  LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   hdr = p->payload;
@@ -558,7 +558,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   u8_t i;
   u8_t for_us;
 
-  LWIP_ERROR("netif == NULL", (netif == NULL), return;);
+  LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   
   /* drop short ARP packets */
   if (p->tot_len < sizeof(struct etharp_hdr)) {
