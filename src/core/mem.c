@@ -109,12 +109,12 @@ mem_free(void *rmem)
   struct mem_helper *hmem = (struct mem_helper*)rmem;
 
   LWIP_ASSERT("rmem != NULL", (rmem != NULL));
-  LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == MEM_ALIGN(rmem)));
+  LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
   hmem--;
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));
-  LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == MEM_ALIGN(hmem)));
+  LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
   LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
 
   memp_free(hmem->poolnr, hmem);
