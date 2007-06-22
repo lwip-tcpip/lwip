@@ -71,14 +71,14 @@ void *
 mem_malloc(mem_size_t size)
 {
   struct mem_helper *element;
-  int poolnr = -1;
+  int poolnr;
 
   for (poolnr = MEMP_MEM_POOL_1; poolnr < (MEMP_MEM_POOL_1 + MEM_POOL_COUNT); poolnr++) {
     if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
       break;
     }
   }
-  if (poolnr == -1) {
+  if (poolnr == MEMP_MAX) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
     return NULL;
   }
