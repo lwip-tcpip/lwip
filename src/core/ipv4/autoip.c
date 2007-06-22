@@ -81,8 +81,8 @@
 /* static functions */
 static void autoip_handle_arp_conflict(struct netif *netif);
 
-/* creates random LL IP-Address */
-static void autoip_create_rand_addr(struct ip_addr *RandomIPAddr);
+/* creates random LL IP-Address for a network interface */
+static void autoip_create_rand_addr(struct netif *netif, struct ip_addr *RandomIPAddr);
 
 /* sends an ARP announce */
 static err_t autoip_arp_announce(struct netif *netif);
@@ -92,33 +92,11 @@ static err_t autoip_bind(struct netif *netif);
 
 /**
  * Initialize this module
- * seed random with MAC-Address for creating pseudo-ramdom link-local address
  */
 void
 autoip_init(void)
 {
-  struct netif *netif = netif_list;
-
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_init()\n"));
-
-  /* loop through netif's */
-  while (netif != NULL) {
-    /* if we find a ETHARP interface... */
-    if (netif->flags & NETIF_FLAG_ETHARP) {
-      /* seed random with MAC-Address */
-      srand( (netif->hwaddr[2] << 24) |
-             (netif->hwaddr[3] << 16) |
-             (netif->hwaddr[4] <<  8) |
-             (netif->hwaddr[5] <<  0));
-      return;
-    }
-
-    /* proceed to next network interface */
-    netif = netif->next;
-  }
-
-  /* we don't have found any ETHARP interface, initialize seed random with a magic number */
-  srand(0xCA39B718 /* Any magic value */);
 }
 
 /**
@@ -154,17 +132,23 @@ autoip_handle_arp_conflict(struct netif *netif)
 /**
  * Create an IP-Address out of range 169.254.1.0 to 169.254.254.255
  *
+ * @param netif network interface on which create the IP-Address
  * @param RandomIPAddr ip address to initialize
  */
 static void
-autoip_create_rand_addr(struct ip_addr *RandomIPAddr)
+autoip_create_rand_addr(struct netif *netif, struct ip_addr *RandomIPAddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
    * We have 254 * 256 possibilities
    */
-
-  RandomIPAddr->addr = htonl((u32_t)(rand()  % (0xA9FEFEFF + 1 - 0xA9FE0100) + 0xA9FE0100));
+  
+  RandomIPAddr->addr = (0xA9FE0100 + ((u32_t)(((u8_t)(netif->hwaddr[4])) | ((u32_t)((u8_t)(netif->hwaddr[5]))) << 8)) + netif->autoip->tried_llipaddr);
+  if (RandomIPAddr->addr>0xA9FEFEFF) RandomIPAddr->addr = (0xA9FE0100 + (RandomIPAddr->addr-0xA9FEFEFF));
+  if (RandomIPAddr->addr<0xA9FE0100) RandomIPAddr->addr = (0xA9FEFEFF - (0xA9FE0100-RandomIPAddr->addr));
+  RandomIPAddr->addr = htonl(RandomIPAddr->addr);
+  
+  LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 1, ("autoip_create_rand_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n", (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(RandomIPAddr->addr)));
 }
 
 /**
@@ -205,7 +189,8 @@ autoip_bind(struct netif *netif)
 {
   struct autoip *autoip = netif->autoip;
   struct ip_addr sn_mask, gw_addr;
-  LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_bind(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
+
+  LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_bind(netif=%p) %c%c%"U16_F" 0x%08"X32_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num, autoip->llipaddr));
 
   IP4_ADDR(&sn_mask, 255, 255, 0, 0);
   IP4_ADDR(&gw_addr, 0, 0, 0, 0);
@@ -263,7 +248,7 @@ autoip_start(struct netif *netif)
     autoip->lastconflict = 0;
   }
 
-  autoip_create_rand_addr(&(autoip->llipaddr));
+  autoip_create_rand_addr(netif, &(autoip->llipaddr));
   autoip->tried_llipaddr++;
   autoip->state = AUTOIP_STATE_PROBING;
   autoip->sent_num = 0;
@@ -315,7 +300,7 @@ autoip_tmr()
         netif->autoip->lastconflict--;
       }
 
-      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_tmr() AutoIP-State: %d\n", netif->autoip->state));
+      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_tmr() AutoIP-State: %"U16_F", ttw=%"U16_F"\n", (u16_t)(netif->autoip->state), netif->autoip->ttw));
 
       switch(netif->autoip->state) {
         case AUTOIP_STATE_PROBING:
