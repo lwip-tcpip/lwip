@@ -72,11 +72,6 @@
 #include "lwip/sys.h"
 #include "arch/perf.h"
 
-
-#define PBUF_MEM_USES_PBUF_POOL       1
-#define PBUF_POOL_RX_LOW_WATER_MARK   25
-static u32_t pbuf_pool_count = PBUF_POOL_SIZE;
-
 #define SIZEOF_STRUCT_PBUF        LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf))
 /* Since the pool is created in memp, PBUF_POOL_BUFSIZE will be automatically
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
@@ -131,9 +126,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   struct pbuf *p, *q, *r;
   u16_t offset;
   s32_t rem_len; /* remaining length */
-#if PBUF_MEM_USES_PBUF_POOL
-  unsigned int is_mem = 0;
-#endif
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc(length=%"U16_F")\n", length));
 
   /* determine header offset */
@@ -159,23 +151,13 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   }
 
   switch (flag) {
-  case PBUF_RAM:
-    is_mem = 1;
-    /* fall through */
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-    if(is_mem && (pbuf_pool_count <= PBUF_POOL_RX_LOW_WATER_MARK)) {
-      p = NULL;
-    } else {
-      p = memp_malloc(MEMP_PBUF_POOL);
-    }
+    p = memp_malloc(MEMP_PBUF_POOL);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
       return NULL;
     }
-#if PBUF_MEM_USES_PBUF_POOL
-    pbuf_pool_count--;
-#endif
     p->flags = PBUF_FLAG_POOL;
     p->next = NULL;
 
@@ -202,20 +184,13 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      if(is_mem && (pbuf_pool_count <= PBUF_POOL_RX_LOW_WATER_MARK)) {
-        q = NULL;
-      } else {
-        q = memp_malloc(MEMP_PBUF_POOL);
-      }
+      q = memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
         /* free chain so far allocated */
         pbuf_free(p);
         /* bail out unsuccesfully */
         return NULL;
       }
-#if PBUF_MEM_USES_PBUF_POOL
-      pbuf_pool_count--;
-#endif
       q->flags = PBUF_FLAG_POOL;
       q->next = NULL;
       /* make previous pbuf point to this pbuf */
@@ -241,7 +216,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     /*r->next = NULL;*/
 
     break;
-#if !PBUF_MEM_USES_PBUF_POOL
   case PBUF_RAM:
     /* If pbuf is to be allocated in RAM, allocate memory for it. */
     p = mem_malloc(LWIP_MEM_ALIGN_SIZE(SIZEOF_STRUCT_PBUF + offset) + LWIP_MEM_ALIGN_SIZE(length));
@@ -257,7 +231,6 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
            ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
     break;
-#endif /* !PBUF_MEM_USES_PBUF_POOL */
   /* pbuf references existing (non-volatile static constant) ROM payload? */
   case PBUF_ROM:
   /* pbuf references existing (externally allocated) RAM payload? */
@@ -531,9 +504,6 @@ pbuf_free(struct pbuf *p)
       /* is this a pbuf from the pool? */
       if (flags == PBUF_FLAG_POOL) {
         memp_free(MEMP_PBUF_POOL, p);
-#if PBUF_MEM_USES_PBUF_POOL
-        pbuf_pool_count++;
-#endif
       /* is this a ROM or RAM referencing pbuf? */
       } else if (flags == PBUF_FLAG_ROM || flags == PBUF_FLAG_REF) {
         memp_free(MEMP_PBUF, p);
