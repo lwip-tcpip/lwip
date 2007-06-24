@@ -61,14 +61,16 @@
 #endif /* LWIP_AUTOIP */
 
 /** the time an ARP entry stays valid after its last update,
- * (240 * 5) seconds = 20 minutes.
+ *  for ARP_TMR_INTERVAL = 5000, this is
+ *  (240 * 5) seconds = 20 minutes.
  */
 #define ARP_MAXAGE 240
 /** the time an ARP entry stays pending after first request,
- * (2 * 5) seconds = 10 seconds.
+ *  for ARP_TMR_INTERVAL = 5000, this is
+ *  (2 * 5) seconds = 10 seconds.
  * 
- * @internal Keep this number at least 2, otherwise it might
- * run out instantly if the timeout occurs directly after a request.
+ *  @internal Keep this number at least 2, otherwise it might
+ *  run out instantly if the timeout occurs directly after a request.
  */
 #define ARP_MAXPENDING 2
 
@@ -122,6 +124,8 @@ etharp_init(void)
   u8_t i;
   /* clear ARP entries */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+    /* use memset to be safe (intialize all future variables to 0) */
+    memset(&arp_table[i], 0, sizeof(struct etharp_entry));
     arp_table[i].state = ETHARP_STATE_EMPTY;
 #if ARP_QUEUEING
     arp_table[i].q = NULL;
@@ -168,9 +172,10 @@ etharp_tmr(void)
   /* remove expired entries from the ARP table */
   for (i = 0; i < ARP_TABLE_SIZE; ++i) {
     arp_table[i].ctime++;
-    if (((arp_table[i].state == ETHARP_STATE_STABLE) ||
-         (arp_table[i].state == ETHARP_STATE_PENDING))  &&
-        (arp_table[i].ctime >= ARP_MAXAGE)) {
+    if (((arp_table[i].state == ETHARP_STATE_STABLE) &&
+         (arp_table[i].ctime >= ARP_MAXAGE)) ||
+        ((arp_table[i].state == ETHARP_STATE_PENDING)  &&
+         (arp_table[i].ctime >= ARP_MAXPENDING))) {
          /* pending or stable entry has become old! */
       LWIP_DEBUGF(ETHARP_DEBUG, ("etharp_timer: expired %s entry %"U16_F".\n",
            arp_table[i].state == ETHARP_STATE_STABLE ? "stable" : "pending", (u16_t)i));
@@ -560,8 +565,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   
-  /* drop short ARP packets */
-  if (p->tot_len < sizeof(struct etharp_hdr)) {
+  /* drop short ARP packets: we have to check for p->len instead of p->tot_len here
+     since a struct etharp_hdr is pointed to p->payload, so it musn't be chained! */
+  if (p->len < sizeof(struct etharp_hdr)) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 1, ("etharp_arp_input: packet dropped, too short (%"S16_F"/%"S16_F")\n", p->tot_len, (s16_t)sizeof(struct etharp_hdr)));
     pbuf_free(p);
     return;
