@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2007-06-21 Simon Goldschmidt
+  * etharp.h, etharp.c: Combined etharp_request with etharp_raw for both
+    LWIP_AUTOIP =0 and =1 to remove redundant code.
+
+  2007-06-21 Simon Goldschmidt
   * mem.c, memp.c, mem.h, memp.h, opt.h: task #6863: Introduced the option
     MEM_USE_POOLS to use 4 pools with different sized elements instead of a
     heap. This both prevents memory fragmentation and gives a higher speed

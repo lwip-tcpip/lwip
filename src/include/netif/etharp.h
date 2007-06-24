@@ -148,10 +148,11 @@ err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
 
 #if LWIP_AUTOIP
-err_t etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *ethdst_addr,
-                 struct eth_addr *hwsrc_addr, struct ip_addr *ipsrc_addr,
-                 struct eth_addr *hwdst_addr, struct ip_addr *ipdst_addr,
-                 unsigned short int opcode);
+err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
+                 const struct eth_addr *ethdst_addr,
+                 const struct eth_addr *hwsrc_addr, const struct ip_addr *ipsrc_addr,
+                 const struct eth_addr *hwdst_addr, const struct ip_addr *ipdst_addr,
+                 const u16_t opcode);
 #endif /* LWIP_AUTOIP */
 
 #define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETHARP_HWADDR_LEN) == 0)

@@ -216,51 +216,46 @@
 #define ARP_TABLE_SIZE                  10
 #endif
 
-/**
- * If enabled, outgoing packets are queued during hardware address
+/** If enabled, outgoing packets are queued during hardware address
  * resolution.
- *
- * This feature has not stabilized yet. Single-packet queueing is
- * believed to be stable, multi-packet queueing is believed to
- * clash with the TCP segment queueing.
- * 
- * As multi-packet-queueing is currently disabled, enabling this
- * _should_ work, but we need your testing feedback on lwip-users.
- *
  */
 #ifndef ARP_QUEUEING
 #define ARP_QUEUEING                    1
 #endif
 
-/* If enabled, incoming IP packets cause the ARP table to be updated
+/** If enabled, incoming IP packets cause the ARP table to be updated
  * with the source MAC and IP addresses supplied in the packet. You may
  * want to disable this if you do not trust LAN peers to have the
  * correct addresses, or as a limited approach to attempt to handle
  * spoofing. If disabled, lwIP will need to make a new ARP request if
  * the peer is not already in the ARP table, adding a little latency.
  */
-
 #ifndef ETHARP_TRUST_IP_MAC
 #define ETHARP_TRUST_IP_MAC             1
 #endif
 
-/* If enabled, allow to do ARP processing for incoming packets inside network driver, before process packets using the tcpip_input. */
+/** If enabled, allow to do ARP processing for incoming packets inside network
+ * driver, before process packets using the tcpip_input.
+ */
 #ifndef ETHARP_TCPIP_INPUT
 #define ETHARP_TCPIP_INPUT              1
 #endif
 
-/* If enabled, allow to do ARP processing for incoming packets inside tcpip_thread, using the tcpip_ethinput (and not tcpip_input).
-   The aim is to protect ARP layer against concurrent access. Older ports have to be update to use tcpip_ethinput. */
+/** If enabled, allow to do ARP processing for incoming packets inside tcpip_thread,
+ * using the tcpip_ethinput (and not tcpip_input).
+ * The aim is to protect ARP layer against concurrent access. Older ports have
+ * to be update to use tcpip_ethinput.
+ */
 #ifndef ETHARP_TCPIP_ETHINPUT
 #define ETHARP_TCPIP_ETHINPUT           1
 #endif
 
-/* This option is deprecated */
+/** This option is deprecated */
 #ifdef ETHARP_QUEUE_FIRST
 #error ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h.
 #endif
 
-/* This option is removed to comply with the ARP standard */
+/** This option is removed to comply with the ARP standard */
 #ifdef ETHARP_ALWAYS_INSERT
 #error ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h.
 #endif

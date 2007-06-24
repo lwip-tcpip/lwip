@@ -103,6 +103,7 @@ struct etharp_entry {
 };
 
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
+static const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 static u8_t etharp_cached_entry = 0;
 
@@ -927,43 +928,29 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   return result;
 }
 
-#if LWIP_AUTOIP
 /**
- * Send an ARP request packet asking for ipaddr.
+ * Send a raw ARP packet (opcode and all addresses can be modified)
  *
- * @param netif the lwip network interface on which to send the request
- * @param ipaddr the IP address for which to ask
- * @return ERR_OK if the request has been sent
+ * @param netif the lwip network interface on which to send the ARP packet
+ * @param ethsrc_addr the source MAC address for the ethernet header
+ * @param ethdst_addr the destination MAC address for the ethernet header
+ * @param hwsrc_addr the source MAC address for the ARP protocol header
+ * @param ipsrc_addr the source IP address for the ARP protocol header
+ * @param hwdst_addr the destination MAC address for the ARP protocol header
+ * @param ipdst_addr the destination IP address for the ARP protocol header
+ * @param opcode the type of the ARP packet
+ * @return ERR_OK if the ARP packet has been sent
  *         any other err_t on failure
  */
+#if !LWIP_AUTOIP
+static
+#endif /* LWIP_AUTOIP */
 err_t
-etharp_request(struct netif *netif, struct ip_addr *ipaddr)
-{
-  struct eth_addr eth_addr_bc, eth_addr_zero;
-  u8_t k = ETHARP_HWADDR_LEN;
-
-  LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
-              (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-  while(k > 0) {
-    k--;
-    eth_addr_bc.addr[k]    = 0xFF;
-    eth_addr_zero.addr[k]  = 0x00;
-  }
-
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
-  return etharp_raw( netif,
-                     (struct eth_addr *)netif->hwaddr,
-                     &eth_addr_bc,
-                     (struct eth_addr *)netif->hwaddr,
-                     &netif->ip_addr,
-                     &eth_addr_zero,
-                     ipaddr,
-                     ARP_REQUEST
-                   );
-}
-
-err_t
-etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *ethdst_addr, struct eth_addr *hwsrc_addr, struct ip_addr *ipsrc_addr,  struct eth_addr *hwdst_addr, struct ip_addr *ipdst_addr, unsigned short int OpCode)
+etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
+           const struct eth_addr *ethdst_addr,
+           const struct eth_addr *hwsrc_addr, const struct ip_addr *ipsrc_addr,
+           const struct eth_addr *hwdst_addr, const struct ip_addr *ipdst_addr,
+           const u16_t opcode)
 {
   struct pbuf *p;
   err_t result = ERR_OK;
@@ -975,11 +962,10 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
   if (p != NULL) {
     struct etharp_hdr *hdr = p->payload;
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
-    hdr->opcode = htons(OpCode);
-    k = ETHARP_HWADDR_LEN;
+    hdr->opcode = htons(opcode);
     LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                 (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-
+    k = ETHARP_HWADDR_LEN;
     /* Write the ARP MAC-Addresses */
     while(k > 0) {
       k--;
@@ -1017,7 +1003,7 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
 
   return result;
 }
-#else
+
 /**
  * Send an ARP request packet asking for ipaddr.
  *
@@ -1029,54 +1015,15 @@ etharp_raw(struct netif *netif, struct eth_addr *ethsrc_addr, struct eth_addr *e
 err_t
 etharp_request(struct netif *netif, struct ip_addr *ipaddr)
 {
-  struct pbuf *p;
-  struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
-  err_t result = ERR_OK;
-  u8_t k; /* ARP entry index */
-
-  /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
-  /* could allocate a pbuf for an ARP request? */
-  if (p != NULL) {
-    struct etharp_hdr *hdr = p->payload;
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
-    hdr->opcode = htons(ARP_REQUEST);
-    LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
-                (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-    k = ETHARP_HWADDR_LEN;
-    while(k > 0) {
-      k--;
-      hdr->shwaddr.addr[k] = srcaddr->addr[k];
-      /* the hardware address is what we ask for, in
-       * a request it is a don't-care value, we use zeroes */
-      hdr->dhwaddr.addr[k] = 0x00;
-    }
-    hdr->dipaddr = *(struct ip_addr2 *)ipaddr;
-    hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
-
-    hdr->hwtype = htons(HWTYPE_ETHERNET);
-    ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
-
-    hdr->proto = htons(ETHTYPE_IP);
-    ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-    k = ETHARP_HWADDR_LEN;
-    while(k > 0) {
-      k--;
-      /* broadcast to all network interfaces on the local network */
-      hdr->ethhdr.dest.addr[k] = 0xff;
-      hdr->ethhdr.src.addr[k] = srcaddr->addr[k];
-    }
-    hdr->ethhdr.type = htons(ETHTYPE_ARP);
-    /* send ARP query */
-    result = netif->linkoutput(netif, p);
-    /* free ARP query packet */
-    pbuf_free(p);
-    p = NULL;
-  /* could not allocate pbuf for ARP request */
-  } else {
-    result = ERR_MEM;
-    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 2, ("etharp_request: could not allocate pbuf for ARP request.\n"));
-  }
-  return result;
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
+  return etharp_raw( netif,
+                     (struct eth_addr *)netif->hwaddr,
+                     &ethbroadcast,
+                     (struct eth_addr *)netif->hwaddr,
+                     &netif->ip_addr,
+                     &ethzero,
+                     ipaddr,
+                     ARP_REQUEST
+                   );
 }
-#endif /* LWIP_AUTOIP */
+
