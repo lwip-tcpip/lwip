@@ -140,6 +140,7 @@ udp_input(struct pbuf *p, struct netif *inp)
    * preferred. If no perfect match is found, the first unconnected pcb that
    * matches the local port and ip address gets the datagram. */
   for (pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+    local_match = 0;
     /* print the PCB local and remote address */
     LWIP_DEBUGF(UDP_DEBUG,
                 ("pcb (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F") --- "

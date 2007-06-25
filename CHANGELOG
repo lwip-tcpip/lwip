@@ -238,6 +238,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-25 Simon Goldschmidt
+  * udp.c: Fixed bug #20220: UDP PCB search in udp_input(): a non-local match
+    could get udp input packets if the remote side matched.
+
   2007-06-13 Simon Goldschmidt
   * netif.c: Fixed bug #20180 (TCP pcbs listening on IP_ADDR_ANY could get
     changed in netif_set_ipaddr if previous netif->ip_addr.addr was 0.
