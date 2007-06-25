@@ -239,6 +239,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-06-25 Simon Goldschmidt
+  * udp.c: Fixed bug #20253: icmp_dest_unreach was called with a wrong p->payload
+    for udp packets with no matching pcb.
+
+  2007-06-25 Simon Goldschmidt
   * udp.c: Fixed bug #20220: UDP PCB search in udp_input(): a non-local match
     could get udp input packets if the remote side matched.
 

@@ -257,7 +257,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (!ip_addr_isbroadcast(&iphdr->dest, inp) &&
           !ip_addr_ismulticast(&iphdr->dest)) {
         /* move payload pointer back to ip header */
-        pbuf_header(p, (IPH_HL(iphdr) * 4));
+        pbuf_header(p, (IPH_HL(iphdr) * 4) + UDP_HLEN);
         LWIP_ASSERT("p->payload == iphdr", (p->payload == iphdr));
         icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
