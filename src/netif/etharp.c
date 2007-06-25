@@ -598,6 +598,19 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   hdr = p->payload;
 
+  /* RFC 826 "Packet Reception": */
+  if ((hdr->hwtype != htons(HWTYPE_ETHERNET)) ||
+      (ARPH_HWLEN(hdr) != ETHARP_HWADDR_LEN) ||
+      (hdr->proto != htons(ETHTYPE_IP)) ||
+      (ARPH_PROTOLEN(hdr) != sizeof(struct ip_addr)) ||
+      (hdr->ethhdr.type != htons(ETHTYPE_ARP)))  {
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 1,
+      ("etharp_arp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
+      hdr->hwtype, ARPH_HWLEN(hdr), hdr->proto, ARPH_PROTOLEN(hdr), hdr->ethhdr.type));
+    pbuf_free(p);
+    return;
+  }
+
 #if LWIP_AUTOIP
   /* We have to check if a host already has configured our random
    * created link local address and continously check if there is
@@ -657,18 +670,14 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       while(i > 0) {
         i--;
         hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
+        hdr->ethhdr.dest.addr[i] = hdr->shwaddr.addr[i];
         hdr->shwaddr.addr[i] = ethaddr->addr[i];
-        hdr->ethhdr.dest.addr[i] = hdr->dhwaddr.addr[i];
         hdr->ethhdr.src.addr[i] = ethaddr->addr[i];
       }
 
-      hdr->hwtype = htons(HWTYPE_ETHERNET);
-      ARPH_HWLEN_SET(hdr, netif->hwaddr_len);
+      /* hwtype, hwaddr_len, proto, protolen and the type in the ethernet header
+         are already correct, we tested that before */
 
-      hdr->proto = htons(ETHTYPE_IP);
-      ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
-
-      hdr->ethhdr.type = htons(ETHTYPE_ARP);
       /* return ARP reply */
       netif->linkoutput(netif, p);
     /* we are not configured? */
