@@ -90,7 +90,7 @@ static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len
 static void lwip_getsockopt_internal(void *arg);
 static void lwip_setsockopt_internal(void *arg);
 
-static int err_to_errno_table[] = {
+static const int err_to_errno_table[] = {
   0,             /* ERR_OK       0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM     -1      Out of memory error.     */
   ENOBUFS,       /* ERR_BUF     -2      Buffer error.            */
