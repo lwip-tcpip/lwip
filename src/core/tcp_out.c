@@ -130,8 +130,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 {
   struct pbuf *p;
   struct tcp_seg *seg, *useg, *queue;
-  u32_t left, seqno;
-  u16_t seglen;
+  u32_t seqno;
+  u16_t left, seglen;
   void *ptr;
   u8_t queuelen;
 
