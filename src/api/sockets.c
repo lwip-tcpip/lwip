@@ -547,7 +547,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
 #if LWIP_TCPIP_CORE_LOCKING
-  /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field, no RAW send/sendto...) */
+  /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field...) */
   { struct pbuf* p;
   
     p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
@@ -560,7 +560,11 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
       remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
       
       LOCK_TCPIP_CORE();
-      err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((struct sockaddr_in *)to)->sin_port));
+      if (sock->conn->type==NETCONN_RAW) {
+        err = sock->conn->err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
+      } else {
+        err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((struct sockaddr_in *)to)->sin_port));
+      }
       UNLOCK_TCPIP_CORE();
       
       pbuf_free(p);
