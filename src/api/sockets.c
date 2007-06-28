@@ -683,8 +683,8 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
         nready++;
       }
-      }
-      if (FD_ISSET(i, writeset)) {
+    }
+    if (FD_ISSET(i, writeset)) {
       /* See if netconn of this socket is ready for write */
       p_sock = get_socket(i);
       if (p_sock && p_sock->sendevent) {
