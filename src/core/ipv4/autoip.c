@@ -78,6 +78,11 @@
 #error LWIP_ARP is need for LWIP_AUTOIP. Set it from your lwipopts.h.
 #endif /* !LWIP_ARP */
 
+/* pseudo random macro based on netif informations. You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
+#ifndef LWIP_AUTOIP_RAND
+#define LWIP_AUTOIP_RAND(netif) ( (((u32_t)((netif->hwaddr[5]) & 0xff) << 24) | ((u32_t)((netif->hwaddr[3]) & 0xff) << 16) | ((u32_t)((netif->hwaddr[2]) & 0xff) << 8) | ((u32_t)((netif->hwaddr[4]) & 0xff))) + (netif->autoip?netif->autoip->tried_llipaddr:0))
+#endif /* LWIP_AUTOIP_RAND */
+
 /* static functions */
 static void autoip_handle_arp_conflict(struct netif *netif);
 
@@ -257,7 +262,7 @@ autoip_start(struct netif *netif)
    * choosen out of 0 to PROBE_WAIT seconds.
    * compliant to RFC 3927 Section 2.2.1
    */
-  autoip->ttw = (rand() % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND));
+  autoip->ttw = (LWIP_AUTOIP_RAND(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND));
 
   /*
    * if we tried more then MAX_CONFLICTS we must limit our rate for
@@ -316,7 +321,7 @@ autoip_tmr()
               LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_tmr() PROBING Sent Probe\n"));
               netif->autoip->sent_num++;
               /* calculate time to wait to next probe */
-              netif->autoip->ttw = (rand() % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND) ) + PROBE_MIN * AUTOIP_TICKS_PER_SECOND;
+              netif->autoip->ttw = (LWIP_AUTOIP_RAND(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND) ) + PROBE_MIN * AUTOIP_TICKS_PER_SECOND;
             }
           }
           break;

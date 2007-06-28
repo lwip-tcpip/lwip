@@ -239,6 +239,12 @@ HISTORY
   ++ Bug fixes:
 
   2007-06-28 Frédéric Bernon
+  * autoip.c: replace most of rand() calls by a macro LWIP_AUTOIP_RAND which compute
+    a "pseudo-random" value based on netif's MAC and some autoip fields. It's always
+    possible to define this macro in your own lwipopts.h to always use C library's
+    rand(). Note that autoip_create_rand_addr doesn't use this macro.
+
+  2007-06-28 Frédéric Bernon
   * netifapi.h, netifapi.c, tcpip.h, tcpip.c: Update code to handle the option
     LWIP_TCPIP_CORE_LOCKING, and do some changes to be coherent with last modifications
     in api_lib/api_msg (use pointers and not type with table, etc...) 
