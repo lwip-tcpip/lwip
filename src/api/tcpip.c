@@ -313,7 +313,7 @@ tcpip_thread(void *arg)
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Netif API message %p\n", (void *)msg));
-      netifapi_msg_input(msg->msg.netifapimsg);
+      msg->msg.netifapimsg->function(&(msg->msg.netifapimsg->msg));
       break;
 #endif /* LWIP_NETIF_API */
 
@@ -440,7 +440,7 @@ tcpip_apimsg(struct api_msg *apimsg)
 #if LWIP_TCPIP_CORE_LOCKING
 /**
  * Call the lower part of a netconn_* function
- * This function ihas exclusive access to lwIP core code by locking it
+ * This function has exclusive access to lwIP core code by locking it
  * before the function is called.
  *
  * @param apimsg a struct containing the function to call and its parameters
@@ -458,6 +458,7 @@ tcpip_apimsg_lock(struct api_msg *apimsg)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if LWIP_NETIF_API
+#if !LWIP_TCPIP_CORE_LOCKING
 /**
  * Much like tcpip_apimsg, but calls the lower part of a netifapi_*
  * function.
@@ -471,21 +472,39 @@ tcpip_netifapi(struct netifapi_msg* netifapimsg)
   struct tcpip_msg msg;
   
   if (mbox != SYS_MBOX_NULL) {
-    netifapimsg->sem = sys_sem_new(0);
-    if (netifapimsg->sem == SYS_SEM_NULL) {
-      netifapimsg->err = ERR_MEM;
-      return netifapimsg->err;
+    netifapimsg->msg.sem = sys_sem_new(0);
+    if (netifapimsg->msg.sem == SYS_SEM_NULL) {
+      netifapimsg->msg.err = ERR_MEM;
+      return netifapimsg->msg.err;
     }
     
     msg.type = TCPIP_MSG_NETIFAPI;
     msg.msg.netifapimsg = netifapimsg;
     sys_mbox_post(mbox, &msg);
-    sys_sem_wait(netifapimsg->sem);
-    sys_sem_free(netifapimsg->sem);
-    return netifapimsg->err;
+    sys_sem_wait(netifapimsg->msg.sem);
+    sys_sem_free(netifapimsg->msg.sem);
+    return netifapimsg->msg.err;
   }
   return ERR_VAL;
 }
+#else /* !LWIP_TCPIP_CORE_LOCKING */
+/**
+ * Call the lower part of a netifapi_* function
+ * This function has exclusive access to lwIP core code by locking it
+ * before the function is called.
+ *
+ * @param netifapimsg a struct containing the function to call and its parameters
+ * @return ERR_OK (only for compatibility fo tcpip_netifapi())
+ */
+err_t
+tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
+{
+  LOCK_TCPIP_CORE();  
+  netifapimsg->function(&(netifapimsg->msg));
+  UNLOCK_TCPIP_CORE();
+  return netifapimsg->msg.err;
+}
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_NETIF_API */
 
 /**

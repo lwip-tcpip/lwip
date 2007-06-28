@@ -43,15 +43,19 @@ extern "C" {
 #if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
 extern sys_sem_t lock_tcpip_core;
-#define LOCK_TCPIP_CORE()   sys_sem_wait(lock_tcpip_core)
-#define UNLOCK_TCPIP_CORE() sys_sem_signal(lock_tcpip_core)
-#define TCPIP_APIMSG(m)     tcpip_apimsg_lock(m)
+#define LOCK_TCPIP_CORE()     sys_sem_wait(lock_tcpip_core)
+#define UNLOCK_TCPIP_CORE()   sys_sem_signal(lock_tcpip_core)
+#define TCPIP_APIMSG(m)       tcpip_apimsg_lock(m)
 #define TCPIP_APIMSG_ACK(m)
+#define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
+#define TCPIP_NETIFAPI_ACK(m)
 #else
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
-#define TCPIP_APIMSG(m)     tcpip_apimsg(m)
-#define TCPIP_APIMSG_ACK(m) sys_mbox_post(m->conn->mbox, NULL)
+#define TCPIP_APIMSG(m)       tcpip_apimsg(m)
+#define TCPIP_APIMSG_ACK(m)   sys_mbox_post(m->conn->mbox, NULL)
+#define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
+#define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
@@ -59,15 +63,22 @@ err_t tcpip_apimsg(struct api_msg *apimsg);
 #if LWIP_TCPIP_CORE_LOCKING
 err_t tcpip_apimsg_lock(struct api_msg *apimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
+
 #if ETHARP_TCPIP_INPUT
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
 #endif /* ETHARP_TCPIP_INPUT */
+
 #if ETHARP_TCPIP_ETHINPUT
 err_t tcpip_ethinput(struct pbuf *p, struct netif *inp);
 #endif /* ETHARP_TCPIP_ETHINPUT */
+
 #if LWIP_NETIF_API
-err_t tcpip_netifapi(struct netifapi_msg* netifapimsg);
+err_t tcpip_netifapi(struct netifapi_msg *netifapimsg);
+#if LWIP_TCPIP_CORE_LOCKING
+err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_NETIF_API */
+
 err_t tcpip_callback(void (*f)(void *ctx), void *ctx);
 
 enum tcpip_msg_type {

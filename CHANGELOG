@@ -238,6 +238,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-28 Frédéric Bernon
+  * netifapi.h, netifapi.c, tcpip.h, tcpip.c: Update code to handle the option
+    LWIP_TCPIP_CORE_LOCKING, and do some changes to be coherent with last modifications
+    in api_lib/api_msg (use pointers and not type with table, etc...) 
+
   2007-06-26 Simon Goldschmidt
   * udp.h: Fixed bug #20259: struct udp_hdr was lacking the packin defines.
 
