@@ -119,7 +119,7 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
  */
 #define tcp_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
                                  ((tpcb)->flags & TF_NODELAY) || \
-                                 ((tpcb)->snd_queuelen > 1)) ? \
+                                 (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
                                 tcp_output(tpcb) : ERR_OK)
 
 

@@ -238,6 +238,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-06-28 Simon Goldschmidt
+  * tcp.h: Fixed bug #20287: Fixed nagle algorithm (sending was done too early if
+    a segment contained chained pbufs)
+
   2007-06-28 Frédéric Bernon
   * autoip.c: replace most of rand() calls by a macro LWIP_AUTOIP_RAND which compute
     a "pseudo-random" value based on netif's MAC and some autoip fields. It's always
