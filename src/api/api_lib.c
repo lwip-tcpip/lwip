@@ -256,7 +256,7 @@ netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
   if(buf == NULL || dataptr == NULL) {
     return;
   }
-  
+
   /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
   for(p = buf->p; len != 0 && p != NULL; p = p->next) {
     if ((offset != 0) && (offset >= p->len)) {
@@ -303,7 +303,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   if (conn == NULL) {
     return NULL;
   }
-  
+
   conn->err = ERR_OK;
   conn->type = t;
   conn->pcb.tcp = NULL;
@@ -505,7 +505,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
       return ERR_MEM;
     }
   }
-  
+
   msg.function = do_bind;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
@@ -526,7 +526,7 @@ err_t
 netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
 {
   struct api_msg msg;
-  
+
   LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
@@ -534,7 +534,7 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
       return ERR_MEM;
     }
   }
-  
+
   msg.function = do_connect;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
@@ -554,7 +554,7 @@ err_t
 netconn_disconnect(struct netconn *conn)
 {
   struct api_msg msg;
-  
+
   LWIP_ERROR("netconn_disconnect: invalid conn", (conn != NULL), return ERR_ARG;);
 
   msg.function = do_disconnect;
@@ -604,12 +604,12 @@ netconn_accept(struct netconn *conn)
   }
   #else
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
-  #endif /* LWIP_SO_RCVTIMEO*/ 
+  #endif /* LWIP_SO_RCVTIMEO*/
 
   /* Register event with callback */
   if (conn->callback)
     (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
-  
+
   return newconn;
 }
 
@@ -626,7 +626,7 @@ netconn_recv(struct netconn *conn)
   struct netbuf *buf = NULL;
   struct pbuf *p;
   u16_t len;
-  
+
   LWIP_ERROR("netconn_recv: invalid conn",  (conn != NULL), return NULL;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
@@ -653,7 +653,7 @@ netconn_recv(struct netconn *conn)
       conn->err = ERR_MEM;
       return NULL;
     }
-    
+
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       p = NULL;
@@ -668,7 +668,7 @@ netconn_recv(struct netconn *conn)
     } else {
       len = 0;
     }
-    
+
     /* Register event with callback */
     if (conn->callback)
       (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
@@ -737,7 +737,7 @@ netconn_sendto(struct netconn *conn, struct netbuf *buf, struct ip_addr *addr, u
     return netconn_send(conn, buf);
   }
   return ERR_VAL;
-} 
+}
 
 /**
  * Send data over a UDP or RAW netconn (that is already connected).
@@ -811,7 +811,6 @@ netconn_close(struct netconn *conn)
   struct api_msg msg;
 
   LWIP_ERROR("netconn_close: invalid conn",  (conn != NULL), return ERR_ARG;);
-
 
   conn->state = NETCONN_CLOSE;
  again:
