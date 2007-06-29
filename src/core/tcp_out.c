@@ -158,7 +158,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   /* If total number of pbufs on the unsent/unacked queues exceeds the
    * configured maximum, return an error */
   queuelen = pcb->snd_queuelen;
-  if (queuelen >= TCP_SND_QUEUELEN) {
+  /* check for configured max queuelen and possible overflow of u8_t */
+  if ((queuelen >= TCP_SND_QUEUELEN) || (queuelen > 253)) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %"U16_F" (max %"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
@@ -261,7 +262,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum. */
-    if (queuelen > TCP_SND_QUEUELEN) {
+    /* check for configured max queuelen and possible overflow of u8_t */
+    if ((queuelen > TCP_SND_QUEUELEN) || (queuelen > 253)) {
       LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %"U16_F" (%"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
       goto memerr;
     }

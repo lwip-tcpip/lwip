@@ -239,6 +239,9 @@ HISTORY
   ++ Bug fixes:
 
   2007-06-28 Simon Goldschmidt
+  * tcp_out.c: Added check to prevent tcp_pcb->snd_queuelen from overflowing.
+
+  2007-06-28 Simon Goldschmidt
   * tcp.h: Fixed bug #20287: Fixed nagle algorithm (sending was done too early if
     a segment contained chained pbufs)
 
