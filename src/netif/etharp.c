@@ -600,9 +600,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != htons(HWTYPE_ETHERNET)) ||
-      (ARPH_HWLEN(hdr) != ETHARP_HWADDR_LEN) ||
+      (hdr->_hwlen_protolen != htons((ETHARP_HWADDR_LEN << 8) | sizeof(struct ip_addr))) ||
       (hdr->proto != htons(ETHTYPE_IP)) ||
-      (ARPH_PROTOLEN(hdr) != sizeof(struct ip_addr)) ||
       (hdr->ethhdr.type != htons(ETHTYPE_ARP)))  {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 1,
       ("etharp_arp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
@@ -1000,10 +999,9 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr->dipaddr = *(struct ip_addr2 *)ipdst_addr;
 
   hdr->hwtype = htons(HWTYPE_ETHERNET);
-  ARPH_HWLEN_SET(hdr, ETHARP_HWADDR_LEN);
-
   hdr->proto = htons(ETHTYPE_IP);
-  ARPH_PROTOLEN_SET(hdr, sizeof(struct ip_addr));
+  /* set hwlen and protolen together */
+  hdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(struct ip_addr));
 
   hdr->ethhdr.type = htons(ETHTYPE_ARP);
   /* send ARP query */
