@@ -381,7 +381,6 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   struct ip_addr     *addr;
   u16_t               port;
 
-
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %d, 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
   if (!sock)
@@ -397,11 +396,11 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
       sock_set_errno(sock, EWOULDBLOCK);
       return -1;
     }
-     
+
     /* No data was left from the previous operation, so we try to get
     some from the network. */
-    buf = netconn_recv(sock->conn);
-    
+    sock->lastdata = buf = netconn_recv(sock->conn);
+
     if (!buf) {
       /* We should really do some error checking here. */
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
@@ -413,13 +412,13 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   buflen = netbuf_len(buf);
 
   buflen -= sock->lastoffset;
-  
+
   if (len > buflen) {
     copylen = buflen;
   } else {
     copylen = len;
   }
-  
+
   /* copy the contents of the received buffer into
   the supplied memory pointer mem */
   netbuf_copy_partial(buf, mem, copylen, sock->lastoffset);
@@ -454,19 +453,21 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
 #endif
-
   }
 
-  /* If this is a TCP socket, check if there is data left in the
-     buffer. If so, it should be saved in the sock structure for next
-     time around. */
-  if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
-    sock->lastdata = buf;
-    sock->lastoffset += copylen;
-  } else {
-    sock->lastdata = NULL;
-    sock->lastoffset = 0;
-    netbuf_delete(buf);
+  /* If we don't peek the incoming message... */
+  if ((flags & MSG_PEEK)==0) {
+    /* If this is a TCP socket, check if there is data left in the
+       buffer. If so, it should be saved in the sock structure for next
+       time around. */
+    if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
+      sock->lastdata = buf;
+      sock->lastoffset += copylen;
+    } else {
+      sock->lastdata = NULL;
+      sock->lastoffset = 0;
+      netbuf_delete(buf);
+    }
   }
 
   sock_set_errno(sock, 0);

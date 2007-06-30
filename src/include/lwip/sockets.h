@@ -121,11 +121,14 @@ struct linger {
 #define IPPROTO_UDP     17
 #define IPPROTO_UDPLITE 136
 
-#define INADDR_ANY      0
+#define INADDR_ANY       0
 #define INADDR_BROADCAST 0xffffffff
 
 /* Flags we can use with send and recv. */
-#define MSG_DONTWAIT    0x40            /* Nonblocking i/o for this operation only */
+#define MSG_PEEK       0x01    /* Peeks at an incoming message */
+#define MSG_WAITALL    0x02    /* Requests that the function block until the full amount of data requested can be returned */
+#define MSG_OOB        0x04    /* Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific */
+#define MSG_DONTWAIT   0x08    /* Nonblocking i/o for this operation only */
 
 
 /*
@@ -140,7 +143,7 @@ struct linger {
  */
 #define TCP_NODELAY    0x01    /* don't delay send to coalesce packets */
 #define TCP_KEEPALIVE  0x02    /* send KEEPALIVE probes when idle for pcb->keep_idle milliseconds */
-#define TCP_KEEPIDLE   0x03    /* set pcb->keep_idle  - Same as TCP_KEEPALIVE, but use seconds for get/setsockopt*/
+#define TCP_KEEPIDLE   0x03    /* set pcb->keep_idle  - Same as TCP_KEEPALIVE, but use seconds for get/setsockopt */
 #define TCP_KEEPINTVL  0x04    /* set pcb->keep_intvl - Use seconds for get/setsockopt */
 #define TCP_KEEPCNT    0x05    /* set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
 #endif /* LWIP_TCP */

@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2007-06-30 Frédéric Bernon
+  * sockets.h, sockets.c: Implement MSG_PEEK flag for recv/recvfrom functions.
+
   2007-06-21 Simon Goldschmidt
   * etharp.h, etharp.c: Combined etharp_request with etharp_raw for both
     LWIP_AUTOIP =0 and =1 to remove redundant code.
