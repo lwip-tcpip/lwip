@@ -882,7 +882,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
        * PBUF_ROMs can be left as they are, since ROM must not get changed. */
       p = q;
       while (p) {
-        LWIP_ASSERT("no packet queues allowed!", (p->len == p->tot_len) || (p->next == 0));
+        LWIP_ASSERT("no packet queues allowed!", (p->len != p->tot_len) || (p->next == 0));
         if(p->flags != PBUF_FLAG_ROM) {
           copy_needed = 1;
           break;
