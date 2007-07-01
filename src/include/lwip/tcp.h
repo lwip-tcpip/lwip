@@ -118,8 +118,8 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
  * unacknowledged.
  */
 #define tcp_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
-                                 ((tpcb)->flags & TF_NODELAY) || \
-                                 (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
+                            ((tpcb)->flags & TF_NODELAY) || \
+                            (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
                                 tcp_output(tpcb) : ERR_OK)
 
 
@@ -302,7 +302,8 @@ struct tcp_pcb {
   u16_t acked;
   
   u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
-  u8_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
+#define TCP_SNDQUEUELEN_OVERFLOW (0xffff-3)
+  u16_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
   
   
   /* These are ordered by sequence number: */

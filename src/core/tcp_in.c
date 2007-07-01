@@ -513,6 +513,7 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;
       pcb->cwnd = pcb->mss;
+      LWIP_ASSERT("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
       --pcb->snd_queuelen;
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"U16_F"\n", (u16_t)pcb->snd_queuelen));
       rseg = pcb->unacked;
@@ -790,6 +791,7 @@ tcp_receive(struct tcp_pcb *pcb)
         pcb->unacked = pcb->unacked->next;
 
         LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"U16_F" ... ", (u16_t)pcb->snd_queuelen));
+        LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
         pcb->snd_queuelen -= pbuf_clen(next->p);
         tcp_seg_free(next);
 
@@ -828,6 +830,7 @@ tcp_receive(struct tcp_pcb *pcb)
       next = pcb->unsent;
       pcb->unsent = pcb->unsent->next;
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"U16_F" ... ", (u16_t)pcb->snd_queuelen));
+      LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
       pcb->snd_queuelen -= pbuf_clen(next->p);
       tcp_seg_free(next);
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("%"U16_F" (after freeing unsent)\n", (u16_t)pcb->snd_queuelen));
