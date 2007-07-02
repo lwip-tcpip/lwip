@@ -676,7 +676,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wl1 = seqno;
       pcb->snd_wl2 = ackno;
-      LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"U32_F"\n", pcb->snd_wnd));
+      LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"U16_F"\n", pcb->snd_wnd));
 #if TCP_WND_DEBUG
     } else {
       if (pcb->snd_wnd != tcphdr->wnd) {
@@ -745,8 +745,8 @@ tcp_receive(struct tcp_pcb *pcb)
       /* Reset the retransmission time-out. */
       pcb->rto = (pcb->sa >> 3) + pcb->sv;
 
-      /* Update the send buffer space. */
-      pcb->acked = ackno - pcb->lastack;
+      /* Update the send buffer space. Diff between the two can never exceed 64K? */
+      pcb->acked = (u16_t)(ackno - pcb->lastack);
 
       pcb->snd_buf += pcb->acked;
 
@@ -852,7 +852,9 @@ tcp_receive(struct tcp_pcb *pcb)
        incoming segment acknowledges the segment we use to take a
        round-trip time measurement. */
     if (pcb->rttest && TCP_SEQ_LT(pcb->rtseq, ackno)) {
-      m = tcp_ticks - pcb->rttest;
+      /* diff between this shouldn't exceed 32K since this are tcp timer ticks
+         and a round-trip shouldn't be that long... */
+      m = (s16_t)(tcp_ticks - pcb->rttest);
 
       LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_receive: experienced rtt %"U16_F" ticks (%"U16_F" msec).\n",
                                   m, m * TCP_SLOW_INTERVAL));
@@ -931,8 +933,10 @@ tcp_receive(struct tcp_pcb *pcb)
       off = pcb->rcv_nxt - seqno;
       p = inseg.p;
       LWIP_ASSERT("inseg.p != NULL", inseg.p);
+      LWIP_ASSERT("insane offset!", (off < 0x7fff));
       if (inseg.p->len < off) {
-        new_tot_len = inseg.p->tot_len - off;
+        LWIP_ASSERT("pbuf too short!", (((s32_t)inseg.p->tot_len) >= off));
+        new_tot_len = (u16_t)(inseg.p->tot_len - off);
         while (p->len < off) {
           off -= p->len;
           /* KJM following line changed (with addition of new_tot_len var)
@@ -942,12 +946,12 @@ tcp_receive(struct tcp_pcb *pcb)
           p->len = 0;
           p = p->next;
         }
-        if(pbuf_header(p, -off)) {
+        if(pbuf_header(p, (s16_t)-off)) {
           /* Do we need to cope with this failing?  Assert for now */
           LWIP_ASSERT("pbuf_header failed", 0);
         }
       } else {
-        if(pbuf_header(inseg.p, -off)) {
+        if(pbuf_header(inseg.p, (s16_t)-off)) {
           /* Do we need to cope with this failing?  Assert for now */
           LWIP_ASSERT("pbuf_header failed", 0);
         }
@@ -955,7 +959,7 @@ tcp_receive(struct tcp_pcb *pcb)
       /* KJM following line changed to use p->payload rather than inseg->p->payload
          to fix bug #9076 */
       inseg.dataptr = p->payload;
-      inseg.len -= pcb->rcv_nxt - seqno;
+      inseg.len -= (u16_t)(pcb->rcv_nxt - seqno);
       inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
     }
     else {
@@ -984,7 +988,7 @@ tcp_receive(struct tcp_pcb *pcb)
             TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
           /* We have to trim the second edge of the incoming
              segment. */
-          inseg.len = pcb->ooseq->tcphdr->seqno - seqno;
+          inseg.len = (u16_t)(pcb->ooseq->tcphdr->seqno - seqno);
           pbuf_realloc(inseg.p, inseg.len);
         }
 #endif /* TCP_QUEUE_OOSEQ */
@@ -1126,7 +1130,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
                   if (TCP_SEQ_GT(seqno + inseg.len, next->tcphdr->seqno)) {
                     /* We need to trim the incoming segment. */
-                    inseg.len = next->tcphdr->seqno - seqno;
+                    inseg.len = (u16_t)(next->tcphdr->seqno - seqno);
                     pbuf_realloc(inseg.p, inseg.len);
                   }
                   cseg = tcp_seg_copy(&inseg);
@@ -1147,7 +1151,7 @@ tcp_receive(struct tcp_pcb *pcb)
                    needed. */
                 if (TCP_SEQ_GT(seqno + inseg.len, next->tcphdr->seqno)) {
                   /* We need to trim the incoming segment. */
-                  inseg.len = next->tcphdr->seqno - seqno;
+                  inseg.len = (u16_t)(next->tcphdr->seqno - seqno);
                   pbuf_realloc(inseg.p, inseg.len);
                 }
 
@@ -1157,7 +1161,7 @@ tcp_receive(struct tcp_pcb *pcb)
                   prev->next = cseg;
                   if (TCP_SEQ_GT(prev->tcphdr->seqno + prev->len, seqno)) {
                     /* We need to trim the prev segment. */
-                    prev->len = seqno - prev->tcphdr->seqno;
+                    prev->len = (u16_t)(seqno - prev->tcphdr->seqno);
                     pbuf_realloc(prev->p, prev->len);
                   }
                 }
@@ -1172,7 +1176,7 @@ tcp_receive(struct tcp_pcb *pcb)
                 if (next->next != NULL) {
                   if (TCP_SEQ_GT(next->tcphdr->seqno + next->len, seqno)) {
                     /* We need to trim the last segment. */
-                    next->len = seqno - next->tcphdr->seqno;
+                    next->len = (u16_t)(seqno - next->tcphdr->seqno);
                     pbuf_realloc(next->p, next->len);
                   }
                 }

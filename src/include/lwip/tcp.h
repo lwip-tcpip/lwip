@@ -292,10 +292,10 @@ struct tcp_pcb {
   u16_t ssthresh;
 
   /* sender variables */
-  u32_t snd_nxt,       /* next seqno to be sent */
-    snd_max,       /* Highest seqno sent. */
-    snd_wnd,       /* sender window */
-    snd_wl1, snd_wl2, /* Sequence and acknowledgement numbers of last
+  u32_t snd_nxt,   /* next seqno to be sent */
+    snd_max;       /* Highest seqno sent. */
+  u16_t snd_wnd;   /* sender window */
+  u32_t snd_wl1, snd_wl2, /* Sequence and acknowledgement numbers of last
        window update. */
     snd_lbb;       /* Sequence number of next byte to be buffered. */
 
@@ -586,6 +586,12 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             npcb->next = NULL; \
                             } while(0)
 #endif /* LWIP_DEBUG */
+
+/* finally, check some defines */
+#if TCP_WND > 0xffff
+#error TCP_WND must fit in an u16_t
+#endif
+
 
 #ifdef __cplusplus
 }

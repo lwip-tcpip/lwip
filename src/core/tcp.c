@@ -525,7 +525,7 @@ void
 tcp_slowtmr(void)
 {
   struct tcp_pcb *pcb, *pcb2, *prev;
-  u32_t eff_wnd;
+  u16_t eff_wnd;
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   err_t err;
 
@@ -575,7 +575,7 @@ tcp_slowtmr(void)
 
         /* Reduce congestion window and ssthresh. */
         eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
-        pcb->ssthresh = (u16_t)(eff_wnd >> 1);
+        pcb->ssthresh = eff_wnd >> 1;
         if (pcb->ssthresh < pcb->mss) {
           pcb->ssthresh = pcb->mss * 2;
         }
