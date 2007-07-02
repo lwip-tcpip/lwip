@@ -262,7 +262,7 @@ autoip_start(struct netif *netif)
    * choosen out of 0 to PROBE_WAIT seconds.
    * compliant to RFC 3927 Section 2.2.1
    */
-  autoip->ttw = (LWIP_AUTOIP_RAND(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND));
+  autoip->ttw = (u16_t)(LWIP_AUTOIP_RAND(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND));
 
   /*
    * if we tried more then MAX_CONFLICTS we must limit our rate for
@@ -321,7 +321,7 @@ autoip_tmr()
               LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_tmr() PROBING Sent Probe\n"));
               netif->autoip->sent_num++;
               /* calculate time to wait to next probe */
-              netif->autoip->ttw = (LWIP_AUTOIP_RAND(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND) ) + PROBE_MIN * AUTOIP_TICKS_PER_SECOND;
+              netif->autoip->ttw = (u16_t)((LWIP_AUTOIP_RAND(netif) % ((PROBE_MAX - PROBE_MIN) * AUTOIP_TICKS_PER_SECOND) ) + PROBE_MIN * AUTOIP_TICKS_PER_SECOND);
             }
           }
           break;
