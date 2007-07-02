@@ -439,7 +439,13 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #endif /* CHECKSUM_CHECK_UDP */
     /* output to IP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDPLITE,)\n"));
+#if LWIP_NETIF_HWADDRHINT
+    netif->addr_hint = &(pcb->addr_hint);
+#endif /* LWIP_NETIF_HWADDRHINT*/
     err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
+#if LWIP_NETIF_HWADDRHINT
+    netif->addr_hint = NULL;
+#endif /* LWIP_NETIF_HWADDRHINT*/
   } else
 #endif /* LWIP_UDPLITE */
   {      /* UDP */
@@ -456,7 +462,13 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
+#if LWIP_NETIF_HWADDRHINT
+    netif->addr_hint = &(pcb->addr_hint);
+#endif /* LWIP_NETIF_HWADDRHINT*/
     err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
+#if LWIP_NETIF_HWADDRHINT
+    netif->addr_hint = NULL;
+#endif /* LWIP_NETIF_HWADDRHINT*/
   }
   /* TODO: must this be increased even if error occured? */
   snmp_inc_udpoutdatagrams();

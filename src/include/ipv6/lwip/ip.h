@@ -69,7 +69,9 @@ extern "C" {
    /* Type Of Service */ \
   u8_t tos;              \
   /* Time To Live */     \
-  u8_t ttl
+  u8_t ttl;              \
+  /* link layer address resolution hint */ \
+  u8_t addr_hint
 
 
 /* The IPv6 header. */

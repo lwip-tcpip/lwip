@@ -241,7 +241,13 @@ HISTORY
 
   ++ Bug fixes:
 
-  2007-06-28 Simon Goldschmidt
+  2007-07-02 Simon Goldschmidt
+  * ipv4/ip.h, ipv6/ip.h, opt.h, netif.h, etharp.h, ipv4/ip.c, netif.c, raw.c,
+    tcp_out.c, udp.c, etharp.c: Added option LWIP_NETIF_HWADDRHINT (default=off)
+    to cache ARP table indices with each pcb instead of single-entry cache for
+    the complete stack.
+
+  2007-07-02 Simon Goldschmidt
   * tcp.h, tcp.c, tcp_in.c, tcp_out.c: Added some ASSERTS and casts to prevent
     warnings when assigning to smaller types.
 

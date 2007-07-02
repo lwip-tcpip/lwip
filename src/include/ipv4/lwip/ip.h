@@ -83,7 +83,9 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
    /* Type Of Service */ \
   u8_t tos;              \
   /* Time To Live */     \
-  u8_t ttl
+  u8_t ttl;              \
+  /* link layer address resolution hint */ \
+  u8_t addr_hint
 
 /*
  * Option flags per-socket. These are the same like SO_XXX.

@@ -248,7 +248,13 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
     src_ip = &(pcb->local_ip);
   }
 
+#if LWIP_NETIF_HWADDRHINT
+  netif->addr_hint = &(pcb->addr_hint);
+#endif /* LWIP_NETIF_HWADDRHINT*/
   err = ip_output_if (q, src_ip, ipaddr, pcb->ttl, pcb->tos, pcb->protocol, netif);
+#if LWIP_NETIF_HWADDRHINT
+  netif->addr_hint = NULL;
+#endif /* LWIP_NETIF_HWADDRHINT*/
 
   /* did we chain a header earlier? */
   if (q != p) {

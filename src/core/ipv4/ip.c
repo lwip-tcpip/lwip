@@ -96,6 +96,11 @@ ip_route(struct ip_addr *dest)
       return netif;
     }
   }
+  if (netif_default == NULL) {
+    LWIP_DEBUGF(IP_DEBUG | 2, ("ip_route: No route to 0x%"X32_F"\n", dest->addr));
+    IP_STATS_INC(ip.rterr);
+    snmp_inc_ipoutnoroutes();
+  }
   /* no matching netif found, use default netif */
   return netif_default;
 }
@@ -515,10 +520,6 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
 
   if ((netif = ip_route(dest)) == NULL) {
-    LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
-
-    IP_STATS_INC(ip.rterr);
-    snmp_inc_ipoutnoroutes();
     return ERR_RTE;
   }
 

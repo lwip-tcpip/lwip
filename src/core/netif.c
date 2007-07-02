@@ -105,6 +105,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif->state = state;
   netif->num = netifnum++;
   netif->input = input;
+#if LWIP_NETIF_HWADDRHINT
+  netif->addr_hint = NULL;
+#endif /* LWIP_NETIF_HWADDRHINT*/
 
   netif_set_addr(netif, ipaddr, netmask, gw);
 

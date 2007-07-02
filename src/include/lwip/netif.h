@@ -155,6 +155,9 @@ struct netif {
   /* This function could be called to add or delete a entry in the multicast filter table of the ethernet MAC.*/
   err_t (*igmp_mac_filter)( struct netif *netif, struct ip_addr *group, u8_t action);
 #endif /* LWIP_IGMP */
+#if LWIP_NETIF_HWADDRHINT
+  u8_t *addr_hint;
+#endif /* LWIP_NETIF_HWADDRHINT */
 };
 
 #if LWIP_SNMP

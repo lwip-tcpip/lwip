@@ -481,6 +481,15 @@
 #define LWIP_NETIF_CALLBACK             0
 #endif
 
+/** Cache link-layer-address hints (e.g. table indices) in struct netif.
+ TCP and UDP can make use of this to prevent scanning the ARP table
+ for every sent packet. While this is faster for big ARP tables or many
+ concurrent connections, it might be contra-productive if having a tiny
+ ARP table only or there never are concurrent connections. */
+#ifndef LWIP_NETIF_HWADDRHINT
+#define LWIP_NETIF_HWADDRHINT           0
+#endif
+
 /* Support loop interface (127.0.0.1) */
 #ifndef LWIP_HAVE_LOOPIF
 #define LWIP_HAVE_LOOPIF                0

@@ -105,7 +105,9 @@ struct etharp_entry {
 static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 static const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
+#if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry = 0;
+#endif
 
 /**
  * Try hard to create a new entry - we want the IP address to appear in
@@ -113,7 +115,14 @@ static u8_t etharp_cached_entry = 0;
 #define ETHARP_TRY_HARD 1
 #define ETHARP_FIND_ONLY  2
 
+#if LWIP_NETIF_HWADDRHINT
+#define NETIF_SET_HINT(netif, hint)  (((netif) != NULL) && ((netif)->addr_hint != NULL)) ? \
+                                      *((netif)->addr_hint) = (hint) : LWIP_UNUSED_ARG(hint) ;
+static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags, struct netif *netif);
+#else /* LWIP_NETIF_HWADDRHINT */
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
+#endif /* LWIP_NETIF_HWADDRHINT */
+
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 
 /**
@@ -231,7 +240,11 @@ etharp_tmr(void)
  * entry is found or could be recycled.
  */
 static s8_t
+#if LWIP_NETIF_HWADDRHINT
+find_entry(struct ip_addr *ipaddr, u8_t flags, struct netif *netif)
+#else /* LWIP_NETIF_HWADDRHINT */
 find_entry(struct ip_addr *ipaddr, u8_t flags)
+#endif /* LWIP_NETIF_HWADDRHINT */
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
@@ -247,6 +260,19 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
    * same address. If so, we're really fast! */
   if (ipaddr) {
     /* ipaddr to search for was given */
+#if LWIP_NETIF_HWADDRHINT
+    if ((netif != NULL) && (netif->addr_hint != NULL)) {
+      /* per-pcb cached entry was given */
+      u8_t per_pcb_cache = *(netif->addr_hint);
+      if ((per_pcb_cache < ARP_TABLE_SIZE) && arp_table[per_pcb_cache].state == ETHARP_STATE_STABLE) {
+        /* the per-pcb-cached entry is stable */
+        if (ip_addr_cmp(ipaddr, &arp_table[per_pcb_cache].ipaddr)) {
+          /* per-pcb cached entry was the right one! */
+          return per_pcb_cache;
+        }
+      }
+    }
+#else /* #if LWIP_NETIF_HWADDRHINT */
     if (arp_table[etharp_cached_entry].state == ETHARP_STATE_STABLE) {
       /* the cached entry is stable */
       if (ip_addr_cmp(ipaddr, &arp_table[etharp_cached_entry].ipaddr)) {
@@ -254,6 +280,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
         return etharp_cached_entry;
       }
     }
+#endif /* #if LWIP_NETIF_HWADDRHINT */
   }
 
   /**
@@ -284,7 +311,11 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: found matching pending entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
+#if LWIP_NETIF_HWADDRHINT
+        NETIF_SET_HINT(netif, i);
+#else /* #if LWIP_NETIF_HWADDRHINT */
         etharp_cached_entry = i;
+#endif /* #if LWIP_NETIF_HWADDRHINT */
         return i;
 #if ARP_QUEUEING
       /* pending with queued packets? */
@@ -308,7 +339,11 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: found matching stable entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
+#if LWIP_NETIF_HWADDRHINT
+        NETIF_SET_HINT(netif, i);
+#else /* #if LWIP_NETIF_HWADDRHINT */
         etharp_cached_entry = i;
+#endif /* #if LWIP_NETIF_HWADDRHINT */
         return i;
       /* remember entry with oldest stable entry in oldest, its age in maxtime */
       } else if (arp_table[i].ctime >= age_stable) {
@@ -384,7 +419,11 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
     ip_addr_set(&arp_table[i].ipaddr, ipaddr);
   }
   arp_table[i].ctime = 0;
+#if LWIP_NETIF_HWADDRHINT
+  NETIF_SET_HINT(netif, i);
+#else /* #if LWIP_NETIF_HWADDRHINT */
   etharp_cached_entry = i;
+#endif /* #if LWIP_NETIF_HWADDRHINT */
   return (err_t)i;
 }
 
@@ -456,7 +495,11 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
     return ERR_ARG;
   }
   /* find or create ARP entry */
+#if LWIP_NETIF_HWADDRHINT
+  i = find_entry(ipaddr, flags, netif);
+#else /* LWIP_NETIF_HWADDRHINT */
   i = find_entry(ipaddr, flags);
+#endif /* LWIP_NETIF_HWADDRHINT */
   /* bail out if no entry could be found */
   if (i < 0)
     return (err_t)i;
@@ -516,7 +559,11 @@ etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
 {
   s8_t i;
 
+#if LWIP_NETIF_HWADDRHINT
+  i = find_entry(ipaddr, ETHARP_FIND_ONLY, NULL);
+#else /* LWIP_NETIF_HWADDRHINT */
   i = find_entry(ipaddr, ETHARP_FIND_ONLY);
+#endif /* LWIP_NETIF_HWADDRHINT */
   if((i >= 0) && arp_table[i].state == ETHARP_STATE_STABLE) {
       *eth_ret = &arp_table[i].ethaddr;
       *ip_ret = &arp_table[i].ipaddr;
@@ -833,7 +880,11 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   }
 
   /* find entry in ARP cache, ask to create entry if queueing packet */
+#if LWIP_NETIF_HWADDRHINT
+  i = find_entry(ipaddr, ETHARP_TRY_HARD, netif);
+#else /* LWIP_NETIF_HWADDRHINT */
   i = find_entry(ipaddr, ETHARP_TRY_HARD);
+#endif /* LWIP_NETIF_HWADDRHINT */
 
   /* could not find or create entry? */
   if (i < 0) {
