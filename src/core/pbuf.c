@@ -153,7 +153,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
   switch (flag) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-    p = memp_malloc(MEMP_PBUF_POOL);
+      p = memp_malloc(MEMP_PBUF_POOL);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
       return NULL;
@@ -184,7 +184,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      q = memp_malloc(MEMP_PBUF_POOL);
+        q = memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
         /* free chain so far allocated */
         pbuf_free(p);

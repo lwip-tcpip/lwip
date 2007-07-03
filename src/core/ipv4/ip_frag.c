@@ -403,6 +403,8 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
     if (rambuf == NULL) {
       return ERR_MEM;
     }
+    LWIP_ASSERT("this needs a pbuf in one piece!",
+                (p->len >= (IP_HLEN)));
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
     iphdr = rambuf->payload;
 

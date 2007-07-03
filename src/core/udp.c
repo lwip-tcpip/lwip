@@ -379,6 +379,8 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     q = p;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: added header in given pbuf %p\n", (void *)p));
   }
+  LWIP_ASSERT("check that first pbuf can hold struct udp_hdr",
+              (q->len >= sizeof(struct udp_hdr)));
   /* q now represents the packet to be sent */
   udphdr = q->payload;
   udphdr->src = htons(pcb->local_port);

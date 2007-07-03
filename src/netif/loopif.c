@@ -61,7 +61,7 @@ void
 loopif_poll(struct netif *netif)
 {
   SYS_ARCH_DECL_PROTECT(lev);
-  struct pbuf *in = NULL;
+  struct pbuf *in, *in_end;
   struct loopif_private *priv = (struct loopif_private*)netif->state;
 
   LWIP_ERROR("priv != NULL", (priv != NULL), return;);
@@ -70,30 +70,35 @@ loopif_poll(struct netif *netif)
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
     SYS_ARCH_PROTECT(lev);
     in = priv->first;
-    if(priv->first) {
-      if(priv->first == priv->last) {
+    if(in) {
+      in_end = in;
+      while(in_end->len != in_end->tot_len) {
+        LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
+        in_end = in_end->next;
+      }
+      /* 'in_end' now points to the last pbuf from 'in' */
+      if(in_end == priv->last) {
         /* this was the last pbuf in the list */
         priv->first = priv->last = NULL;
       } else {
         /* pop the pbuf off the list */
-        priv->first = priv->first->next;
+        priv->first = in_end->next;
         LWIP_ASSERT("should not be null since first != last!", priv->first != NULL);
       }
     }
     SYS_ARCH_UNPROTECT(lev);
   
     if(in != NULL) {
-      if(in->next != NULL) {
+      if(in_end->next != NULL) {
         /* De-queue the pbuf from its successors on the 'priv' list. */
-        in->next = NULL;
-        /* This is built on the assumption that PBUF_RAM pbufs are in one piece! */
-        LWIP_ASSERT("packet must not consist of multiple pbufs!", in->len == in->tot_len);
+        in_end->next = NULL;
       }
       if(netif->input(in, netif) != ERR_OK) {
         pbuf_free(in);
       }
       /* Don't reference the packet any more! */
       in = NULL;
+      in_end = NULL;
     }
   /* go on while there is a packet on the list */
   } while(priv->first != NULL);
@@ -121,6 +126,7 @@ loopif_output(struct netif *netif, struct pbuf *p,
 #if !LWIP_LOOPIF_MULTITHREADING
   SYS_ARCH_DECL_PROTECT(lev);
   struct loopif_private *priv;
+  struct pbuf *last;
 #endif /* LWIP_LOOPIF_MULTITHREADING */
   struct pbuf *r;
   err_t err;
@@ -153,16 +159,16 @@ loopif_output(struct netif *netif, struct pbuf *p,
      through calling loopif_poll(). */
   priv = (struct loopif_private*)netif->state;
 
-  /* This is built on the assumption that PBUF_RAM pbufs are in one piece! */
-  LWIP_ASSERT("packet must not consist of multiple pbufs!", r->len == r->tot_len);
-
+  /* let last point to the last pbuf in chain r */
+  for (last = r; last->next != NULL; last = last->next);
   SYS_ARCH_PROTECT(lev);
   if(priv->first != NULL) {
     LWIP_ASSERT("if first != NULL, last must also be != NULL", priv->last != NULL);
     priv->last->next = r;
-    priv->last = r;
+    priv->last = last;
   } else {
-    priv->first = priv->last = r;
+    priv->first = r;
+    priv->last = last;
   }
   SYS_ARCH_UNPROTECT(lev);
 #endif /* LWIP_LOOPIF_MULTITHREADING */

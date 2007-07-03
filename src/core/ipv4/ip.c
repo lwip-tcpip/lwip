@@ -460,6 +460,8 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     }
 
     iphdr = p->payload;
+    LWIP_ASSERT("check that first pbuf can hold struct ip_hdr",
+               (p->len >= sizeof(struct ip_hdr)));
 
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);

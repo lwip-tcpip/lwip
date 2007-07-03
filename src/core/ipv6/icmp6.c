@@ -121,8 +121,16 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   struct ip_hdr *iphdr;
   struct icmp_dur_hdr *idur;
 
+  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
   /* ICMP header + IP header + 8 bytes of data */
+  if (q == NULL) {
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
+    pbuf_free(p);
+    return;
+  }
+  LWIP_ASSERT("check that first pbuf can hold icmp message",
+             (q->len >= (8 + IP_HLEN + 8)));
 
   iphdr = p->payload;
 
@@ -153,7 +161,16 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded\n"));
 
+  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
   q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
+  /* ICMP header + IP header + 8 bytes of data */
+  if (q == NULL) {
+    LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
+    pbuf_free(p);
+    return;
+  }
+  LWIP_ASSERT("check that first pbuf can hold icmp message",
+             (q->len >= (8 + IP_HLEN + 8)));
 
   iphdr = p->payload;
 

@@ -108,6 +108,8 @@ netbuf_alloc(struct netbuf *buf, u16_t size)
   if (buf->p == NULL) {
      return NULL;
   }
+  LWIP_ASSERT("check that first pbuf can hold size",
+             (buf->p->len >= size));
   buf->ptr = buf->p;
   return buf->p->payload;
 }

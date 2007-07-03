@@ -214,6 +214,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
         goto memerr;
       }
+      LWIP_ASSERT("check that first pbuf can hold optlen",
+                  (seg->p->len >= optlen));
       ++queuelen;
       seg->dataptr = seg->p->payload;
     }
@@ -223,6 +225,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %"U16_F"\n", seglen));
         goto memerr;
       }
+      LWIP_ASSERT("check that first pbuf can hold the complete seglen",
+                  (seg->p->len >= seglen));
       ++queuelen;
       if (arg != NULL) {
         MEMCPY(seg->p->payload, ptr, seglen);
@@ -664,6 +668,8 @@ tcp_rst(u32_t seqno, u32_t ackno,
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_rst: could not allocate memory for pbuf\n"));
       return;
   }
+  LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
+              (p->len >= sizeof(struct tcp_hdr)));
 
   tcphdr = p->payload;
   tcphdr->src = htons(local_port);
@@ -784,6 +790,8 @@ tcp_keepalive(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: could not allocate memory for pbuf\n"));
       return;
    }
+  LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
+              (p->len >= sizeof(struct tcp_hdr)));
 
    tcphdr = p->payload;
    tcphdr->src = htons(pcb->local_port);

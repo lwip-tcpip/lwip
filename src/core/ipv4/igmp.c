@@ -562,6 +562,8 @@ igmp_send(struct igmp_group *group, u8_t type)
   
   if (p) {
     igmp = p->payload;
+    LWIP_ASSERT("check that first pbuf can hold struct igmpmsg",
+               (p->len >= sizeof(struct igmpmsg)));
     ip_addr_set(&src, &((group->interface)->ip_addr));
      
     if (IGMP_V2_MEMB_REPORT == type) {

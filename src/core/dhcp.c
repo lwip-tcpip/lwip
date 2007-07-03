@@ -1312,6 +1312,9 @@ static err_t dhcp_create_request(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_create_request(): could not allocate pbuf\n"));
     return ERR_MEM;
   }
+  LWIP_ASSERT("check that first pbuf can hold struct dhcp_msg",
+           (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
+
   /* give unique transaction identifier to this request */
   dhcp->xid = xid++;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("transaction id xid++(%"X32_F") dhcp->xid(%"U32_F")\n",xid,dhcp->xid));
