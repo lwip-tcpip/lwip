@@ -112,7 +112,6 @@ struct netconn {
   sys_mbox_t mbox;
   sys_mbox_t recvmbox;
   sys_mbox_t acceptmbox;
-  sys_sem_t sem;
   int socket;
 #if LWIP_SO_RCVTIMEO
   int recv_timeout;

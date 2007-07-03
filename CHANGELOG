@@ -241,6 +241,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-07-03 Simon Goldschmidt
+  * api.h, api_lib.c, api_msg.c: Final fix for bug #20021 and some other problems
+    when closing tcp netconns: removed conn->sem, less context switches when
+    closing, both netconn_close and netconn_delete should safely close tcp
+    connections.
+
   2007-07-02 Simon Goldschmidt
   * ipv4/ip.h, ipv6/ip.h, opt.h, netif.h, etharp.h, ipv4/ip.c, netif.c, raw.c,
     tcp_out.c, udp.c, etharp.c: Added option LWIP_NETIF_HWADDRHINT (default=off)

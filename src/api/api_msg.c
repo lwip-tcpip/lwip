@@ -43,6 +43,7 @@
 /* forward declarations */
 #if LWIP_TCP
 static err_t do_writemore(struct netconn *conn);
+static void do_close_internal(struct netconn *conn);
 #endif
 
 #if LWIP_RAW
@@ -188,8 +189,8 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 
   if (conn->state == NETCONN_WRITE) {
     do_writemore(conn);
-  } else if ((conn->state == NETCONN_CLOSE) && (conn->sem != SYS_SEM_NULL)) {
-    sys_sem_signal(conn->sem);
+  } else if (conn->state == NETCONN_CLOSE) {
+    do_close_internal(conn);
   }
 
   return ERR_OK;
@@ -212,8 +213,8 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 
   if (conn->state == NETCONN_WRITE) {
     do_writemore(conn);
-  } else if ((conn->state == NETCONN_CLOSE) && (conn->sem != SYS_SEM_NULL)) {
-    sys_sem_signal(conn->sem);
+  } else if (conn->state == NETCONN_CLOSE) {
+    do_close_internal(conn);
   }
 
   if (conn && conn->callback)
@@ -257,17 +258,13 @@ err_tcp(void *arg, err_t err)
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->acceptmbox, NULL);
   }
-  if (conn->state == NETCONN_WRITE) {
-    /* calling do_writemore is not necessary
+  if ((conn->state == NETCONN_WRITE) || (conn->state == NETCONN_CLOSE)) {
+    /* calling do_writemore/do_close_internal is not necessary
        since the pcb has already been deleted! */
     conn->state = NETCONN_NONE;
     /* wake up the waiting task */
     sys_mbox_post(conn->mbox, NULL);
-  } else
-    if ((conn->sem != SYS_SEM_NULL) &&
-      (conn->state == NETCONN_CLOSE)) {
-      sys_sem_signal(conn->sem);
-    }
+  }
 }
 
 /**
@@ -322,13 +319,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   }
   newconn->mbox = sys_mbox_new();
   if (newconn->mbox == SYS_MBOX_NULL) {
-    sys_mbox_free(newconn->recvmbox);
-    memp_free(MEMP_NETCONN, newconn);
-    return ERR_MEM;
-  }
-  newconn->sem = sys_sem_new(0);
-  if (newconn->sem == SYS_SEM_NULL) {
-    sys_mbox_free(newconn->mbox);
     sys_mbox_free(newconn->recvmbox);
     memp_free(MEMP_NETCONN, newconn);
     return ERR_MEM;
@@ -433,6 +423,60 @@ do_newconn(struct api_msg_msg *msg)
    TCPIP_APIMSG_ACK(msg);
 }
 
+static void
+do_close_internal(struct netconn *conn)
+{
+  LWIP_ASSERT("invalid conn", (conn != NULL));
+  LWIP_ASSERT("this is for tcp netconns only", (conn->type == NETCONN_TCP));
+  LWIP_ASSERT("conn must be in state NETCONN_CLOSE", (conn->state == NETCONN_CLOSE));
+  LWIP_ASSERT("pcb already closed", (conn->pcb.tcp != NULL));
+
+  if (conn->pcb.tcp->state == LISTEN) {
+    tcp_arg(conn->pcb.tcp, NULL);
+    tcp_accept(conn->pcb.tcp, NULL);
+    /* for state==LISTEN, tcp_close can't fail */
+    tcp_close(conn->pcb.tcp);
+    conn->state = NETCONN_NONE;
+    conn->pcb.tcp = NULL;
+    conn->err = ERR_OK;
+    sys_mbox_post(conn->mbox, NULL);
+  } else {
+    err_t err;
+    enum tcp_state old_state = conn->pcb.tcp->state;
+    if ((old_state == SYN_RCVD) || (old_state == ESTABLISHED) ||
+      (old_state == CLOSE_WAIT)) {
+      tcp_arg(conn->pcb.tcp, NULL);
+      tcp_sent(conn->pcb.tcp, NULL);
+      tcp_recv(conn->pcb.tcp, NULL);
+      tcp_poll(conn->pcb.tcp, NULL, 0);
+      tcp_err(conn->pcb.tcp, NULL);
+      err = tcp_close(conn->pcb.tcp);
+      switch (err) {
+        default:
+          /* any other error: abort! */
+          tcp_abort(conn->pcb.tcp);
+          /* fall through */
+        case (ERR_OK):
+          /* ERR_OK: fall through */
+        case (ERR_BUF):
+          /* ERR_BUF: tcp_output failed,
+             will be called again by internal tcp timers */
+          conn->state = NETCONN_NONE;
+          conn->pcb.tcp = NULL;
+          conn->err = err;
+          /* wake up the application task */
+          sys_mbox_post(conn->mbox, NULL);
+          break;
+        case (ERR_MEM):
+          /* ERR_MEM: error sending FIN?
+             try again in sent_tcp or poll_tcp */
+          /* stay in state NETCONN_CLOSE */
+          break;
+      }
+    }
+  }
+}
+
 /**
  * Delete the pcb inside a netconn.
  * Called from netconn_delete.
@@ -457,20 +501,8 @@ do_delconn(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case NETCONN_TCP:
-      if (msg->conn->pcb.tcp->state == LISTEN) {
-        tcp_arg(msg->conn->pcb.tcp, NULL);
-        tcp_accept(msg->conn->pcb.tcp, NULL);
-        tcp_close(msg->conn->pcb.tcp);
-      } else {
-        tcp_arg(msg->conn->pcb.tcp, NULL);
-        tcp_sent(msg->conn->pcb.tcp, NULL);
-        tcp_recv(msg->conn->pcb.tcp, NULL);
-        tcp_poll(msg->conn->pcb.tcp, NULL, 0);
-        tcp_err(msg->conn->pcb.tcp, NULL);
-        if (tcp_close(msg->conn->pcb.tcp) != ERR_OK) {
-          tcp_abort(msg->conn->pcb.tcp);
-        }
-      }
+      msg->conn->state = NETCONN_CLOSE;
+      do_close_internal(msg->conn);
       break;
 #endif /* LWIP_TCP */
     default:
@@ -483,7 +515,14 @@ do_delconn(struct api_msg_msg *msg)
       (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDPLUS, 0);
   }
 
-  if (msg->conn->mbox != SYS_MBOX_NULL) {
+  if ((msg->conn->mbox != SYS_MBOX_NULL)
+#if LWIP_TCP
+     /* for tcp netconns, do_close_internal ACKs the message */
+     && (NETCONNTYPE_GROUP(msg->conn->type) != NETCONN_TCP))
+#else
+    )
+#endif
+  {
     TCPIP_APIMSG_ACK(msg);
   }
 }
@@ -846,17 +885,16 @@ void
 do_close(struct api_msg_msg *msg)
 {
 #if LWIP_TCP
-  if (msg->conn->pcb.tcp != NULL) {
-    if (msg->conn->type == NETCONN_TCP) {
-      if (msg->conn->pcb.tcp->state == LISTEN) {
-        msg->conn->err = tcp_close(msg->conn->pcb.tcp);
-      } else if (msg->conn->pcb.tcp->state == CLOSE_WAIT) {
-        msg->conn->err = tcp_output(msg->conn->pcb.tcp);
-      }
-    }
-  }
+  if ((msg->conn->pcb.tcp != NULL) && (msg->conn->type == NETCONN_TCP)) {
+      msg->conn->state = NETCONN_CLOSE;
+      do_close_internal(msg->conn);
+      /* for tcp netconns, do_close_internal ACKs the message */
+  } else
 #endif /* LWIP_TCP */
-  TCPIP_APIMSG_ACK(msg);
+  {
+    msg->conn->err = ERR_VAL;
+    TCPIP_APIMSG_ACK(msg);
+  }
 }
 
 #if LWIP_IGMP

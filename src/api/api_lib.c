@@ -314,12 +314,6 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   }
   conn->recvmbox = SYS_MBOX_NULL;
   conn->acceptmbox = SYS_MBOX_NULL;
-  conn->sem = sys_sem_new(0);
-  if (conn->sem == SYS_SEM_NULL) {
-    sys_mbox_free(conn->mbox);
-    memp_free(MEMP_NETCONN, conn);
-    return NULL;
-  }
   conn->state        = NETCONN_NONE;
   conn->socket       = 0;
   conn->callback     = callback;
@@ -334,7 +328,6 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   TCPIP_APIMSG(&msg);
 
   if (conn->err != ERR_OK) {
-    sys_sem_free(conn->sem);
     sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
@@ -364,7 +357,7 @@ netconn_delete(struct netconn *conn)
 
   msg.function = do_delconn;
   msg.msg.conn = conn;
-  TCPIP_APIMSG(&msg);
+  tcpip_apimsg(&msg);
 
   /* Drain the recvmbox. */
   if (conn->recvmbox != SYS_MBOX_NULL) {
@@ -391,11 +384,6 @@ netconn_delete(struct netconn *conn)
 
   sys_mbox_free(conn->mbox);
   conn->mbox = SYS_MBOX_NULL;
-
-  if (conn->sem != SYS_SEM_NULL) {
-    sys_sem_free(conn->sem);
-    /* conn->sem = SYS_SEM_NULL; */
-  }
 
   memp_free(MEMP_NETCONN, conn);
   return ERR_OK;
@@ -812,16 +800,9 @@ netconn_close(struct netconn *conn)
 
   LWIP_ERROR("netconn_close: invalid conn",  (conn != NULL), return ERR_ARG;);
 
-  conn->state = NETCONN_CLOSE;
- again:
   msg.function = do_close;
   msg.msg.conn = conn;
-  TCPIP_APIMSG(&msg);
-  if (conn->err == ERR_MEM && conn->sem != SYS_SEM_NULL) {
-    sys_sem_wait(conn->sem);
-    goto again;
-  }
-  conn->state = NETCONN_NONE;
+  tcpip_apimsg(&msg);
   return conn->err;
 }
 
