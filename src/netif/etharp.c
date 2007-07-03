@@ -1028,8 +1028,8 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 2, ("etharp_raw: could not allocate pbuf for ARP request.\n"));
     return ERR_MEM;
   }
-    LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
-                (p->len >= sizeof(struct etharp_hdr)));
+  LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
+              (p->len >= sizeof(struct etharp_hdr)));
 
   hdr = p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));

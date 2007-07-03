@@ -184,7 +184,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-        q = memp_malloc(MEMP_PBUF_POOL);
+      q = memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
         /* free chain so far allocated */
         pbuf_free(p);
