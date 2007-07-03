@@ -464,6 +464,13 @@ do_close_internal(struct netconn *conn)
           conn->state = NETCONN_NONE;
           conn->pcb.tcp = NULL;
           conn->err = err;
+          /* Trigger select() in socket layer */
+          if (conn->callback) {
+              /* this should send something else so the errorfd is set,
+                 not the read and write fd! */
+              (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
+              (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, 0);
+          }
           /* wake up the application task */
           sys_mbox_post(conn->mbox, NULL);
           break;
@@ -503,26 +510,26 @@ do_delconn(struct api_msg_msg *msg)
     case NETCONN_TCP:
       msg->conn->state = NETCONN_CLOSE;
       do_close_internal(msg->conn);
+      /* conn->callback is called inside do_close_internal, before releasing
+         the application thread, so we can return at this point! */
+      return;
       break;
 #endif /* LWIP_TCP */
     default:
       break;
     }
   }
+  /* tcp netconns don't come here! */
+
   /* Trigger select() in socket layer */
   if (msg->conn->callback) {
+      /* this send should something else so the errorfd is set,
+         not the read and write fd! */
       (*msg->conn->callback)(msg->conn, NETCONN_EVT_RCVPLUS, 0);
       (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDPLUS, 0);
   }
 
-  if ((msg->conn->mbox != SYS_MBOX_NULL)
-#if LWIP_TCP
-     /* for tcp netconns, do_close_internal ACKs the message */
-     && (NETCONNTYPE_GROUP(msg->conn->type) != NETCONN_TCP))
-#else
-    )
-#endif
-  {
+  if (msg->conn->mbox != SYS_MBOX_NULL) {
     TCPIP_APIMSG_ACK(msg);
   }
 }
