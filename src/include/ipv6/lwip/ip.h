@@ -45,10 +45,10 @@ extern "C" {
 
 #define IP_HLEN 40
 
-#define IP_PROTO_ICMP 58
-#define IP_PROTO_UDP 17
+#define IP_PROTO_ICMP    58
+#define IP_PROTO_UDP     17
 #define IP_PROTO_UDPLITE 136
-#define IP_PROTO_TCP 6
+#define IP_PROTO_TCP     6
 
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed
@@ -57,6 +57,12 @@ extern "C" {
 #undef IP_HDRINCL
 #endif /* IP_HDRINCL */
 #define IP_HDRINCL  NULL
+
+#if LWIP_NETIF_HWADDRHINT
+#define IP_PCB_ADDRHINT ;u8_t addr_hint
+#else
+#define IP_PCB_ADDRHINT
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 /* This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
@@ -70,10 +76,8 @@ extern "C" {
   u8_t tos;              \
   /* Time To Live */     \
   u8_t ttl;              \
-#if LWIP_NETIF_HWADDRHINT
   /* link layer address resolution hint */ \
-  u8_t addr_hint
-#endif /* LWIP_NETIF_HWADDRHINT */
+  IP_PCB_ADDRHINT
 
 
 /* The IPv6 header. */

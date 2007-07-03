@@ -56,10 +56,10 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
 #define IP_HLEN 20
 
-#define IP_PROTO_ICMP 1
-#define IP_PROTO_UDP 17
+#define IP_PROTO_ICMP    1
+#define IP_PROTO_UDP     17
 #define IP_PROTO_UDPLITE 136
-#define IP_PROTO_TCP 6
+#define IP_PROTO_TCP     6
 
 /* This is passed as the destination address to ip_output_if (not
    to ip_output), meaning that an IP header already is constructed
@@ -69,6 +69,11 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 #endif /* IP_HDRINCL */
 #define IP_HDRINCL  NULL
 
+#if LWIP_NETIF_HWADDRHINT
+#define IP_PCB_ADDRHINT ;u8_t addr_hint
+#else
+#define IP_PCB_ADDRHINT
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 /* This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
@@ -83,27 +88,24 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
    /* Type Of Service */ \
   u8_t tos;              \
   /* Time To Live */     \
-  u8_t ttl;              \
-#if LWIP_NETIF_HWADDRHINT
+  u8_t ttl               \
   /* link layer address resolution hint */ \
-  u8_t addr_hint
-#endif /* LWIP_NETIF_HWADDRHINT */
+  IP_PCB_ADDRHINT
 
 
 /*
  * Option flags per-socket. These are the same like SO_XXX.
  */
-#define SOF_DEBUG     (u16_t)0x0001U    /* turn on debugging info recording */
+#define SOF_DEBUG       (u16_t)0x0001U    /* turn on debugging info recording */
 #define SOF_ACCEPTCONN  (u16_t)0x0002U    /* socket has had listen() */
-#define SOF_REUSEADDR (u16_t)0x0004U    /* allow local address reuse */
-#define SOF_KEEPALIVE (u16_t)0x0008U    /* keep connections alive */
-#define SOF_DONTROUTE (u16_t)0x0010U    /* just use interface addresses */
-#define SOF_BROADCAST (u16_t)0x0020U    /* permit sending of broadcast msgs */
+#define SOF_REUSEADDR   (u16_t)0x0004U    /* allow local address reuse */
+#define SOF_KEEPALIVE   (u16_t)0x0008U    /* keep connections alive */
+#define SOF_DONTROUTE   (u16_t)0x0010U    /* just use interface addresses */
+#define SOF_BROADCAST   (u16_t)0x0020U    /* permit sending of broadcast msgs */
 #define SOF_USELOOPBACK (u16_t)0x0040U    /* bypass hardware when possible */
 #define SOF_LINGER      (u16_t)0x0080U    /* linger on close if data present */
-#define SOF_OOBINLINE (u16_t)0x0100U    /* leave received OOB data in line */
-#define SOF_REUSEPORT (u16_t)0x0200U    /* allow local address & port reuse */
-
+#define SOF_OOBINLINE   (u16_t)0x0100U    /* leave received OOB data in line */
+#define SOF_REUSEPORT   (u16_t)0x0200U    /* allow local address & port reuse */
 
 
 #ifdef PACK_STRUCT_USE_INCLUDES

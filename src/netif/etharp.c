@@ -116,8 +116,8 @@ static u8_t etharp_cached_entry = 0;
 #define ETHARP_FIND_ONLY  2
 
 #if LWIP_NETIF_HWADDRHINT
-#define NETIF_SET_HINT(netif, hint)  (((netif) != NULL) && ((netif)->addr_hint != NULL)) ? \
-                                      *((netif)->addr_hint) = (hint) : LWIP_UNUSED_ARG(hint) ;
+#define NETIF_SET_HINT(netif, hint)  if (((netif) != NULL) && ((netif)->addr_hint != NULL))  \
+                                      *((netif)->addr_hint) = (hint);
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags, struct netif *netif);
 #else /* LWIP_NETIF_HWADDRHINT */
 static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
