@@ -84,8 +84,11 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   u8_t tos;              \
   /* Time To Live */     \
   u8_t ttl;              \
+#if LWIP_NETIF_HWADDRHINT
   /* link layer address resolution hint */ \
   u8_t addr_hint
+#endif /* LWIP_NETIF_HWADDRHINT */
+
 
 /*
  * Option flags per-socket. These are the same like SO_XXX.

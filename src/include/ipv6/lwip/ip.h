@@ -70,8 +70,10 @@ extern "C" {
   u8_t tos;              \
   /* Time To Live */     \
   u8_t ttl;              \
+#if LWIP_NETIF_HWADDRHINT
   /* link layer address resolution hint */ \
   u8_t addr_hint
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 
 /* The IPv6 header. */
