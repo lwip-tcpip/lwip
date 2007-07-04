@@ -282,16 +282,14 @@ lwip_close(int s)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_close(%d)\n", s));
 
-  /* We cannot allow multiple closes of the same socket. */
-  sys_sem_wait(socksem);
-
   sock = get_socket(s);
   if (!sock) {
-    sys_sem_signal(socksem);
     return -1;
   }
 
   netconn_delete(sock->conn);
+
+  sys_sem_wait(socksem);
   if (sock->lastdata) {
     netbuf_delete(sock->lastdata);
   }
