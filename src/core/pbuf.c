@@ -686,18 +686,12 @@ err_t
 pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 {
   u16_t offset_to=0, offset_from=0, len;
-#ifdef LWIP_DEBUG  
-  u16_t copied=0, shouldbe;
-#endif
 
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_copy(%p, %p)\n", p_to, p_from));
 
   /* is the target big enough to hold the source? */
   LWIP_ERROR("pbuf_copy: target not big enough to hold source", ((p_to != NULL) &&
              (p_from != NULL) && (p_to->tot_len >= p_from->tot_len)), return ERR_ARG;);
-#ifdef LWIP_DEBUG  
-  shouldbe = p_from->tot_len;
-#endif
 
   /* iterate through pbuf chain */
   do
@@ -712,9 +706,6 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
       len = p_to->len - offset_to;
     }
     MEMCPY((u8_t*)p_to->payload + offset_to, (u8_t*)p_from->payload + offset_from, len);
-#ifdef LWIP_DEBUG  
-    copied += len;
-#endif
     offset_to += len;
     offset_from += len;
     LWIP_ASSERT("offset_to <= p_to->len", offset_to <= p_to->len);
@@ -742,8 +733,5 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
     }
   } while (p_from);
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 1, ("pbuf_copy: end of chain reached.\n"));
-#ifdef LWIP_DEBUG  
-  LWIP_ASSERT("shouldbe == copied", shouldbe == copied);
-#endif
   return ERR_OK;
 }
