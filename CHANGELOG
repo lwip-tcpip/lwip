@@ -242,6 +242,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-07-13 Frédéric Bernon
+  * api_msg.c: Fix bug #20318: api_msg "recv" callbacks don't call pbuf_free in
+    all error cases.
+
+  2007-07-13 Frédéric Bernon
   * api_msg.c: Fix bug #20315: possible memory leak problem if tcp_listen failed,
     because current code doesn't follow rawapi.txt documentation.
 

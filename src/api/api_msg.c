@@ -62,10 +62,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   struct netconn *conn;
 
   conn = arg;
-  if (!conn)
-    return 0;
 
-  if (conn->recvmbox != SYS_MBOX_NULL) {
+  if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
     if (!(buf = memp_malloc(MEMP_NETBUF))) {
       return 0;
     }
@@ -104,29 +102,27 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   conn = arg;
 
-  if (conn == NULL) {
+  if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
     pbuf_free(p);
     return;
   }
 
-  if (conn->recvmbox != SYS_MBOX_NULL) {
-    buf = memp_malloc(MEMP_NETBUF);
-    if (buf == NULL) {
-      pbuf_free(p);
-      return;
-    } else {
-      buf->p = p;
-      buf->ptr = p;
-      buf->addr = addr;
-      buf->port = port;
-    }
-
-    conn->recv_avail += p->tot_len;
-    /* Register event with callback */
-    if (conn->callback)
-      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-    sys_mbox_post(conn->recvmbox, buf);
+  buf = memp_malloc(MEMP_NETBUF);
+  if (buf == NULL) {
+    pbuf_free(p);
+    return;
+  } else {
+    buf->p = p;
+    buf->ptr = p;
+    buf->addr = addr;
+    buf->port = port;
   }
+
+  conn->recv_avail += p->tot_len;
+  /* Register event with callback */
+  if (conn->callback)
+    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
+  sys_mbox_post(conn->recvmbox, buf);
 }
 #endif /* LWIP_UDP */
 
@@ -147,24 +143,23 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 
   conn = arg;
 
-  if (conn == NULL) {
+  if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
     pbuf_free(p);
     return ERR_VAL;
   }
 
-  if (conn->recvmbox != SYS_MBOX_NULL) {
-    conn->err = err;
-    if (p != NULL) {
-      len = p->tot_len;
-      conn->recv_avail += len;
-    } else {
-      len = 0;
-    }
-    /* Register event with callback */
-    if (conn->callback)
-      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
-    sys_mbox_post(conn->recvmbox, p);
-  }  
+  conn->err = err;
+  if (p != NULL) {
+    len = p->tot_len;
+    conn->recv_avail += len;
+  } else {
+    len = 0;
+  }
+  /* Register event with callback */
+  if (conn->callback)
+    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
+  sys_mbox_post(conn->recvmbox, p);
+
   return ERR_OK;
 }
 
