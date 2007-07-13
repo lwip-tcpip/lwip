@@ -1113,6 +1113,15 @@ tcp_receive(struct tcp_pcb *pcb)
                     pcb->ooseq = cseg;
                   }
                 }
+                tcp_seg_free(next);
+                if (cseg->next != NULL) {
+                  next = cseg->next;
+                  if (TCP_SEQ_GT(seqno + cseg.len, next->tcphdr->seqno)) {
+                    /* We need to trim the incoming segment. */
+                    cseg.len = next->tcphdr->seqno - seqno;
+                    pbuf_realloc(cseg.p, cseg.len);
+                  }
+                }
                 break;
               } else {
                 /* Either the lenghts are the same or the incoming

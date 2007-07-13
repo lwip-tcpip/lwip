@@ -241,6 +241,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-07-13 Kieran Mansley
+  * src/core/tcp_in.c Apply patch#5741 from Oleg Tyshev to fix bug in
+    out of sequence processing of received packets
+
   2007-07-03 Simon Goldschmidt
   * nearly-all-files: Added assertions where PBUF_RAM pbufs are used and an
     assumption is made that this pbuf is in one piece (i.e. not chained). These
@@ -428,6 +432,10 @@ HISTORY
 
   2007-04-12 Jonathan Larmour
   * icmp.c: Reset IP header TTL in ICMP ECHO responses (bug #19580).
+
+  2007-04-12 Kieran Mansley
+  * tcp.c, tcp_in.c, tcp_out.c, tcp.h: Modify way the retransmission
+    timer is reset to fix bug#19434, with help from Oleg Tyshev.
 
   2007-04-11 Simon Goldschmidt
   * etharp.c, pbuf.c, pbuf.h: 3rd fix for bug #11400 (arp-queuing): More pbufs than
