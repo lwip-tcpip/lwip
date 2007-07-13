@@ -513,7 +513,6 @@ do_delconn(struct api_msg_msg *msg)
       /* conn->callback is called inside do_close_internal, before releasing
          the application thread, so we can return at this point! */
       return;
-      break;
 #endif /* LWIP_TCP */
     default:
       break;
@@ -675,8 +674,8 @@ do_listen(struct api_msg_msg *msg)
   if (msg->conn->err == ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
-        msg->conn->pcb.tcp = tcp_listen(msg->conn->pcb.tcp);
-        if (msg->conn->pcb.tcp == NULL) {
+        struct tcp_pcb* lpcb = tcp_listen(msg->conn->pcb.tcp);
+        if (lpcb == NULL) {
           msg->conn->err = ERR_MEM;
         } else {
           if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
@@ -685,6 +684,7 @@ do_listen(struct api_msg_msg *msg)
             }
           }
           if (msg->conn->err == ERR_OK) {
+            msg->conn->pcb.tcp = lpcb;
             tcp_arg(msg->conn->pcb.tcp, msg->conn);
             tcp_accept(msg->conn->pcb.tcp, accept_function);
           }
