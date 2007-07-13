@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-07-13 Jared Grubb (integrated by Frédéric Bernon)
+  * opt.h, netif.h, netif.c, ethernetif.c: Add new configuration option to add
+    a link callback in the netif struct, and functions to handle it. Be carefull
+    for port maintainers to add the NETIF_FLAG_LINK_UP flag (like in ethernetif.c)
+    if you want to be sure to be compatible with future changes...
+
   2007-06-30 Frédéric Bernon
   * sockets.h, sockets.c: Implement MSG_PEEK flag for recv/recvfrom functions.
 

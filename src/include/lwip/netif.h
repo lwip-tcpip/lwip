@@ -64,18 +64,18 @@ extern "C" {
  * a software flag used to control whether this network
  * interface is enabled and processes traffic.
  */
-#define NETIF_FLAG_UP 0x1U
+#define NETIF_FLAG_UP           0x01U
 /** if set, the netif has broadcast capability */
-#define NETIF_FLAG_BROADCAST 0x2U
+#define NETIF_FLAG_BROADCAST    0x02U
 /** if set, the netif is one end of a point-to-point connection */
-#define NETIF_FLAG_POINTTOPOINT 0x4U
+#define NETIF_FLAG_POINTTOPOINT 0x04U
 /** if set, the interface is configured using DHCP */
-#define NETIF_FLAG_DHCP 0x08U
+#define NETIF_FLAG_DHCP         0x08U
 /** if set, the interface has an active link
  *  (set by the network interface driver) */
-#define NETIF_FLAG_LINK_UP 0x10U
+#define NETIF_FLAG_LINK_UP      0x10U
 /** if set, the netif is an device using ARP */
-#define NETIF_FLAG_ETHARP 0x20U
+#define NETIF_FLAG_ETHARP       0x20U
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -106,7 +106,12 @@ struct netif {
   /** This function is called when the netif state is set to up or down
    */
   void (* status_callback)(struct netif *netif);
-#endif /* end, LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_CALLBACK */
+#if LWIP_NETIF_LINK_CALLBACK
+  /** This function is called when the netif link is set to up or down
+   */
+  void (* link_callback)(struct netif *netif);
+#endif /* LWIP_NETIF_LINK_CALLBACK */
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
   void *state;
@@ -217,8 +222,17 @@ u8_t netif_is_up(struct netif *netif);
 /*
  * Set callback to be called when interface is brought up/down
  */
-void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif ));
+void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif));
 #endif /* LWIP_NETIF_CALLBACK */
+
+#if LWIP_NETIF_LINK_CALLBACK
+/*
+ * Set callback to be called when link is brought up/down
+ */
+void netif_set_link_callback( struct netif *netif, void (* link_callback)(struct netif *netif));
+void netif_set_link_down( struct netif *netif);
+void netif_set_link_up( struct netif *netif);
+#endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #ifdef __cplusplus
 }

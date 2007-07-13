@@ -476,9 +476,14 @@
 #define LWIP_NETIF_API                  0
 #endif
 
-/* Support network interface callbacks */
+/* Support network interface status callback */
 #ifndef LWIP_NETIF_CALLBACK
 #define LWIP_NETIF_CALLBACK             0
+#endif
+
+/* Support network interface link callback */
+#ifndef LWIP_NETIF_LINK_CALLBACK
+#define LWIP_NETIF_LINK_CALLBACK        0
 #endif
 
 /** Cache link-layer-address hints (e.g. table indices) in struct netif.

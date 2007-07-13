@@ -48,6 +48,17 @@
 #include "netif/etharp.h"
 #endif /* LWIP_ARP */
 
+#if LWIP_NETIF_CALLBACK
+#define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
+#else
+#define NETIF_STATUS_CALLBACK(n) { /* NOP */ }
+#endif /* LWIP_NETIF_LINK_CALLBACK */ 
+
+#if LWIP_NETIF_LINK_CALLBACK
+#define NETIF_LINK_CALLBACK(n) { if (n->link_callback) (n->link_callback)(n); }
+#else
+#define NETIF_LINK_CALLBACK(n) { /* NOP */ }
+#endif /* LWIP_NETIF_LINK_CALLBACK */ 
 
 struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
@@ -100,6 +111,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if LWIP_NETIF_CALLBACK
   netif->status_callback = NULL;
 #endif /* LWIP_NETIF_CALLBACK */
+#if LWIP_NETIF_LINK_CALLBACK
+  netif->link_callback = NULL;
+#endif /* LWIP_NETIF_LINK_CALLBACK */
 
   /* remember netif specific state information data */
   netif->state = state;
@@ -364,10 +378,8 @@ void netif_set_up(struct netif *netif)
     snmp_get_sysuptime(&netif->ts);
 #endif /* LWIP_SNMP */
 
-#if LWIP_NETIF_CALLBACK
-    if ( netif->status_callback )
-      (netif->status_callback)( netif );
-#endif /* LWIP_NETIF_CALLBACK */
+    NETIF_LINK_CALLBACK(netif);
+    NETIF_STATUS_CALLBACK(netif);
 
 #if LWIP_ARP
     /** For Ethernet network interfaces, we would like to send a
@@ -408,10 +420,8 @@ void netif_set_down(struct netif *netif)
       snmp_get_sysuptime(&netif->ts);
 #endif
       
-#if LWIP_NETIF_CALLBACK
-      if ( netif->status_callback )
-        (netif->status_callback)( netif );
-#endif /* LWIP_NETIF_CALLBACK */
+      NETIF_LINK_CALLBACK(netif);
+      NETIF_STATUS_CALLBACK(netif);
     }
 }
 
@@ -425,3 +435,40 @@ void netif_set_status_callback( struct netif *netif, void (* status_callback)(st
         netif->status_callback = status_callback;
 }
 #endif /* LWIP_NETIF_CALLBACK */
+
+#if LWIP_NETIF_LINK_CALLBACK
+/**
+ * Set callback to be called when link is brought up/down
+ */
+void netif_set_link_callback( struct netif *netif, void (* link_callback)(struct netif *netif ))
+{
+    if ( netif )
+        netif->link_callback = link_callback;
+}
+/**
+ * Called by a driver when its link goes down
+ */
+void netif_set_link_down( struct netif *netif )
+{
+  netif->flags &= ~NETIF_FLAG_LINK_UP;
+}
+
+/**
+ * Called by a driver when its link goes up
+ */
+void netif_set_link_up( struct netif *netif )
+{
+  netif->flags |= NETIF_FLAG_LINK_UP;
+
+#if LWIP_ARP
+  /** For Ethernet network interfaces, we would like to send a
+   *  "gratuitous ARP"; this is an ARP packet sent by a node in order
+   *  to spontaneously cause other nodes to update an entry in their
+   *  ARP cache. From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
+   */ 
+  if (netif->flags & NETIF_FLAG_ETHARP) {
+    etharp_query(netif, &(netif->ip_addr), NULL);
+  }
+#endif /* LWIP_ARP */
+}
+#endif /* LWIP_NETIF_LINK_CALLBACK */

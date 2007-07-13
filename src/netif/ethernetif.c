@@ -91,7 +91,7 @@ low_level_init(struct netif *netif)
   
   /* device capabilities */
   /* don't set NETIF_FLAG_ETHARP if this device is not an ethernet one */
-  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP;
+  netif->flags = NETIF_FLAG_BROADCAST | NETIF_FLAG_ETHARP | NETIF_FLAG_LINK_UP;
  
   /* Do whatever else is needed to initialize interface. */  
 }
@@ -241,7 +241,7 @@ ethernetif_input(struct netif *netif)
        pbuf_free(p);
        p = NULL;
      }
-    break;                 
+    break;
     
 #else /* ETHARP_TCPIP_ETHINPUT */ 
 #if ETHARP_TCPIP_INPUT
