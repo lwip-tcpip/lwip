@@ -278,6 +278,8 @@ memp_overflow_init(void)
 
 /**
  * Initialize this module.
+ * 
+ * Carves out memp_memory into linked lists for each pool-type.
  */
 void
 memp_init(void)
@@ -359,7 +361,8 @@ memp_malloc(memp_t type)
 
   SYS_ARCH_UNPROTECT(old_level);
 
-  return (void*)((u8_t*)memp + MEMP_SIZE);
+  /* (bug fix #20478): dont return NULL+MEMP_SIZE! */
+  return (memp ? (void*)((u8_t*)memp + MEMP_SIZE) : NULL );
 }
 
 /**
