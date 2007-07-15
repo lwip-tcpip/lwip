@@ -339,8 +339,8 @@ memp_malloc(memp_t type)
   
   if (memp != NULL) {    
     memp_tab[type] = memp->next;    
-    memp->next = NULL;
 #if MEMP_OVERFLOW_CHECK
+    memp->next = NULL;
     memp->file = file;
     memp->line = line;
 #endif /* MEMP_OVERFLOW_CHECK */
@@ -352,6 +352,7 @@ memp_malloc(memp_t type)
 #endif /* MEMP_STATS */
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
+    memp = (struct memp*)((u8_t*)memp + MEMP_SIZE);
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %"S16_F"\n", type));
 #if MEMP_STATS
@@ -361,8 +362,7 @@ memp_malloc(memp_t type)
 
   SYS_ARCH_UNPROTECT(old_level);
 
-  /* (bug fix #20478): dont return NULL+MEMP_SIZE! */
-  return (memp ? (void*)((u8_t*)memp + MEMP_SIZE) : NULL );
+  return memp;
 }
 
 /**
