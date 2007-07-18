@@ -94,11 +94,17 @@ stats_display(void)
     "NETBUF",
     "NETCONN",
     "TCPIP_MSG",
-    #if ARP_QUEUEING
+#if ARP_QUEUEING
     "ARP_QUEUE",
-    #endif
+#endif
     "PBUF_POOL",
-    "SYS_TIMEOUT"
+    "SYS_TIMEOUT",
+#if MEM_USE_POOLS
+    "MEMP_MEM_POOL_1",
+    "MEMP_MEM_POOL_2",
+    "MEMP_MEM_POOL_3",
+    "MEMP_MEM_POOL_4",
+#endif
   };
 #endif
 #if LINK_STATS
