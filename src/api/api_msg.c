@@ -524,7 +524,7 @@ do_delconn(struct api_msg_msg *msg)
   }
 
   if (msg->conn->mbox != SYS_MBOX_NULL) {
-    TCPIP_APIMSG_ACK(msg);
+    sys_mbox_post(msg->conn->mbox, NULL);
   }
 }
 
