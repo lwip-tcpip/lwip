@@ -247,6 +247,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-07-24 Simon Goldschmidt
+  * api_msg.c, tcp.c: Fix bug #20480: Check the pcb passed to tcp_listen() for the
+    correct state (must be CLOSED).
+
   2007-07-13 Thomas Taranowski (commited by Jared Grubb)
   * memp.c: Fix bug #20478: memp_malloc returned NULL+MEMP_SIZE on failed
     allocation. It now returns NULL.

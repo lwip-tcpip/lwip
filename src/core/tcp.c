@@ -343,6 +343,8 @@ tcp_listen(struct tcp_pcb *pcb)
 {
   struct tcp_pcb_listen *lpcb;
 
+  LWIP_ERROR("pcb not already connected", pcb->state == CLOSED, return NULL);
+
   /* already listening? */
   if (pcb->state == LISTEN) {
     return pcb;

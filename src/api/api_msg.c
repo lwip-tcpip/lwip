@@ -669,20 +669,24 @@ do_listen(struct api_msg_msg *msg)
   if (msg->conn->err == ERR_OK) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
-        struct tcp_pcb* lpcb = tcp_listen(msg->conn->pcb.tcp);
-        if (lpcb == NULL) {
-          msg->conn->err = ERR_MEM;
-        } else {
-          if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
-            if ((msg->conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-              msg->conn->err = ERR_MEM;
+        if (msg->conn->pcb.tcp->state == CLOSED) {
+          struct tcp_pcb* lpcb = tcp_listen(msg->conn->pcb.tcp);
+          if (lpcb == NULL) {
+            msg->conn->err = ERR_MEM;
+          } else {
+            if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
+              if ((msg->conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+                msg->conn->err = ERR_MEM;
+              }
+            }
+            if (msg->conn->err == ERR_OK) {
+              msg->conn->pcb.tcp = lpcb;
+              tcp_arg(msg->conn->pcb.tcp, msg->conn);
+              tcp_accept(msg->conn->pcb.tcp, accept_function);
             }
           }
-          if (msg->conn->err == ERR_OK) {
-            msg->conn->pcb.tcp = lpcb;
-            tcp_arg(msg->conn->pcb.tcp, msg->conn);
-            tcp_accept(msg->conn->pcb.tcp, accept_function);
-          }
+        } else {
+          msg->conn->err = ERR_CONN;
         }
       }
     }
