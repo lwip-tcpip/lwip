@@ -235,50 +235,6 @@ netbuf_first(struct netbuf *buf)
 }
 
 /**
- * Copy (part of) the contents of a packet buffer contained in a netbuf
- * to an application supplied buffer.
- *
- * @param buf the netbuf from which to copy data
- * @param dataptr the application supplied buffer
- * @param len length of data to copy (dataptr must be big enough)
- * @param offset offset into the packet buffer from where to begin copying len bytes
- */
-void
-netbuf_copy_partial(struct netbuf *buf, void *dataptr, u16_t len, u16_t offset)
-{
-  struct pbuf *p;
-  u16_t left;
-  u16_t buf_copy_len;
-
-  LWIP_ERROR("netbuf_copy_partial: invalid buf", (buf != NULL), return;);
-  LWIP_ERROR("netbuf_copy_partial: invalid dataptr", (dataptr != NULL), return;);
-
-  left = 0;
-
-  if(buf == NULL || dataptr == NULL) {
-    return;
-  }
-
-  /* Note some systems use byte copy if dataptr or one of the pbuf payload pointers are unaligned. */
-  for(p = buf->p; len != 0 && p != NULL; p = p->next) {
-    if ((offset != 0) && (offset >= p->len)) {
-      /* don't copy from this buffer -> on to the next */
-      offset -= p->len;
-    } else {
-      /* copy from this buffer. maybe only partially. */
-      buf_copy_len = p->len - offset;
-      if (buf_copy_len > len)
-          buf_copy_len = len;
-      /* copy the necessary parts of the buffer */
-      MEMCPY(&((char*)dataptr)[left], &((char*)p->payload)[offset], buf_copy_len);
-      left += buf_copy_len;
-      len -= buf_copy_len;
-      offset = 0;
-    }
-  }
-}
-
-/**
  **********************************
  * Netconn functions
  **********************************

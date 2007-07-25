@@ -59,40 +59,6 @@ static u8_t ip_reassflags;
 static u8_t ip_reasstmr;
 #endif /* IP_REASSEMBLY */
 
-#if IP_REASSEMBLY || (IP_FRAG && IP_FRAG_USES_STATIC_BUF)
-/*
- * Copy len bytes from offset in pbuf to buffer 
- *
- * helper used by both ip_reass and ip_frag
- *
- * @param p pbuf chain to copy from
- * @param offset offset in bytes into the pbuf chain which should be skipped
- *        before starting to copy
- * @param buffer destination to copy the data
- * @param len number of bytes to copy (starting from offset)
- * @return pointer to one pbuf in the chain p from which copied last
- */
-static struct pbuf *
-copy_from_pbuf(struct pbuf *p, u16_t *offset, u8_t *buffer, u16_t len)
-{
-  u16_t l;
-
-  p->payload = (u8_t *)p->payload + *offset;
-  p->len -= *offset;
-  while (len) {
-    l = len < p->len ? len : p->len;
-    MEMCPY(buffer, p->payload, l);
-    buffer += l;
-    len -= l;
-    if (len)
-      p = p->next;
-    else
-      *offset = l;
-  }
-  return p;
-}
-#endif /* IP_REASSEMBLY || IP_FRAG_USES_STATIC_BUF */
-
 #if IP_REASSEMBLY
 /**
  * Initializes IP reassembly states.
@@ -187,7 +153,7 @@ ip_reass(struct pbuf *p)
      ("ip_reass: copying with offset %"S16_F" into %"S16_F":%"S16_F"\n", offset,
       IP_HLEN + offset, IP_HLEN + offset + len));
     i = IPH_HL(fraghdr) * 4;
-    copy_from_pbuf(p, &i, &ip_reassbuf[IP_HLEN + offset], len);
+    pbuf_copy_partial(p, &ip_reassbuf[IP_HLEN + offset], len, i);
 
     /* Update the bitmap. */
     if (offset / (8 * 8) == (offset + len) / (8 * 8)) {
@@ -392,7 +358,7 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
     cop = last ? left : nfb * 8;
 
 #if IP_FRAG_USES_STATIC_BUF
-    p = copy_from_pbuf(p, &poff, (u8_t *) iphdr + IP_HLEN, cop);
+    poff += pbuf_copy_partial(p, (u8_t*)iphdr + IP_HLEN, cop, poff);
 #else /* IP_FRAG_USES_STATIC_BUF */
     /* When not using a static buffer, create a chain of pbufs.
      * The first will be a PBUF_RAM holding the link and IP header.

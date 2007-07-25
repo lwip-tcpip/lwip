@@ -111,6 +111,7 @@ void pbuf_cat(struct pbuf *h, struct pbuf *t);
 void pbuf_chain(struct pbuf *h, struct pbuf *t);
 struct pbuf *pbuf_dechain(struct pbuf *p);
 err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
+u16_t pbuf_copy_partial(struct pbuf *p, void *dataptr, u16_t len, u16_t offset);
 
 #ifdef __cplusplus
 }

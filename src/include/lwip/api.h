@@ -149,9 +149,9 @@ err_t             netbuf_data     (struct netbuf *buf,
 s8_t              netbuf_next     (struct netbuf *buf);
 void              netbuf_first    (struct netbuf *buf);
 
-void              netbuf_copy_partial(struct netbuf *buf, void *dataptr, 
-              u16_t len, u16_t offset);
 
+#define netbuf_copy_partial(buf, dataptr, len, offset) \
+  pbuf_copy_partial((buf)->p, (dataptr), (len), (offset))
 #define netbuf_copy(buf,dataptr,len) netbuf_copy_partial(buf, dataptr, len, 0)
 #define netbuf_len(buf)              ((buf)->p->tot_len)
 #define netbuf_fromaddr(buf)         ((buf)->addr)

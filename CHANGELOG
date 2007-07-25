@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2007-07-25 Simon Goldschmidt
+  * api_lib.c, ip_frag.c, pbuf.c, api.h, pbuf.h: Introduced pbuf_copy_partial,
+    making netbuf_copy_partial use this function.
+
+  2007-07-25 Simon Goldschmidt
   * tcp_in.c: Fix bug #20506: Slow start / initial congestion window starts with
     2 * mss (instead of 1 * mss previously) to comply with some newer RFCs and
     other stacks.
@@ -251,6 +255,10 @@ HISTORY
 
 
   ++ Bug fixes:
+
+  2007-07-25 Simon Goldschmidt
+  * ip_frag.c: Fixed bug #20429: use the new pbuf_copy_partial instead of the old
+    copy_from_pbuf, which illegally modified the given pbuf.
 
   2007-07-25 Simon Goldschmidt
   * tcp_out.c: tcp_enqueue: pcb->snd_queuelen didn't work for chaine PBUF_RAMs:
