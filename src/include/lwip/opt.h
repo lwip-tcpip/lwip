@@ -149,7 +149,6 @@
 #ifndef MEMP_NUM_RAW_PCB
 #define MEMP_NUM_RAW_PCB                4
 #endif
-
 /* MEMP_NUM_UDP_PCB: the number of UDP protocol control blocks. One
    per active UDP "connection". */
 #ifndef MEMP_NUM_UDP_PCB
@@ -182,8 +181,9 @@
 #define MEMP_NUM_SYS_TIMEOUT            3
 #endif
 
-/* The following four are used only with the sequential API and can be
+/* The following three are used only with the sequential API and can be
    set to 0 if the application only will use the raw API. */
+
 /* MEMP_NUM_NETBUF: the number of struct netbufs. */
 #ifndef MEMP_NUM_NETBUF
 #define MEMP_NUM_NETBUF                 2
@@ -192,19 +192,12 @@
 #ifndef MEMP_NUM_NETCONN
 #define MEMP_NUM_NETCONN                4
 #endif
-/* MEMP_NUM_APIMSG: the number of struct api_msg, used for
-   communication between the TCP/IP stack and the sequential
-   programs. */
-#ifndef MEMP_NUM_API_MSG
-#define MEMP_NUM_API_MSG                8
-#endif
 /* MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which is used
    for sequential API communication and incoming packets. Used in
    src/api/tcpip.c. */
 #ifndef MEMP_NUM_TCPIP_MSG
 #define MEMP_NUM_TCPIP_MSG              8
 #endif
-
 
 /* ---------- ARP options ---------- */
 #ifndef LWIP_ARP
