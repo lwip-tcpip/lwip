@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-07-25 Simon Goldschmidt
+  * tcp_in.c: Fix bug #20506: Slow start / initial congestion window starts with
+    2 * mss (instead of 1 * mss previously) to comply with some newer RFCs and
+    other stacks.
+
   2007-07-13 Jared Grubb (integrated by Frédéric Bernon)
   * opt.h, netif.h, netif.c, ethernetif.c: Add new configuration option to add
     a link callback in the netif struct, and functions to handle it. Be carefull

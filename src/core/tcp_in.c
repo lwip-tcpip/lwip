@@ -512,7 +512,7 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;
-      pcb->cwnd = pcb->mss;
+      pcb->cwnd = ((pcb->cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
       LWIP_ASSERT("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
       --pcb->snd_queuelen;
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"U16_F"\n", (u16_t)pcb->snd_queuelen));
@@ -548,6 +548,7 @@ tcp_process(struct tcp_pcb *pcb)
        !(flags & TCP_RST)) {
       /* expected ACK number? */
       if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {
+        u16_t old_cwnd;
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
@@ -561,10 +562,11 @@ tcp_process(struct tcp_pcb *pcb)
           tcp_abort(pcb);
           return ERR_ABRT;
         }
+        old_cwnd = pcb->cwnd;
         /* If there was any data contained within this ACK,
          * we'd better pass it on to the application as well. */
         tcp_receive(pcb);
-        pcb->cwnd = pcb->mss;
+        pcb->cwnd = ((old_cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
       }
       /* incorrect ACK number */
       else {
