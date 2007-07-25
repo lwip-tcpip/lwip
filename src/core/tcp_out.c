@@ -216,7 +216,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       }
       LWIP_ASSERT("check that first pbuf can hold optlen",
                   (seg->p->len >= optlen));
-      ++queuelen;
+      queuelen += pbuf_clen(seg->p);
       seg->dataptr = seg->p->payload;
     }
     /* copy from volatile memory? */
@@ -227,7 +227,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       }
       LWIP_ASSERT("check that first pbuf can hold the complete seglen",
                   (seg->p->len >= seglen));
-      ++queuelen;
+      queuelen += pbuf_clen(seg->p);
       if (arg != NULL) {
         MEMCPY(seg->p->payload, ptr, seglen);
       }
@@ -257,7 +257,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: could not allocate memory for header pbuf\n"));
         goto memerr;
       }
-      ++queuelen;
+      queuelen += pbuf_clen(seg->p);
 
       /* Concatenate the headers and data pbufs together. */
       pbuf_cat(seg->p/*header*/, p/*data*/);

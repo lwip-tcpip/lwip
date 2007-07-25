@@ -252,6 +252,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-07-25 Simon Goldschmidt
+  * tcp_out.c: tcp_enqueue: pcb->snd_queuelen didn't work for chaine PBUF_RAMs:
+    changed snd_queuelen++ to snd_queuelen += pbuf_clen(p).
+
   2007-07-24 Simon Goldschmidt
   * api_msg.c, tcp.c: Fix bug #20480: Check the pcb passed to tcp_listen() for the
     correct state (must be CLOSED).
