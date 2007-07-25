@@ -190,7 +190,11 @@ tcp_close(struct tcp_pcb *pcb)
   }
 
   if (pcb != NULL && err == ERR_OK) {
-    err = tcp_output(pcb);
+    /* @todo: to ensure all has been sent when tcp_close returns, we have to
+       make sure tcp_output doesn't fail.
+       For now (and as long as we don't need this (no LINGER)), it's enough
+       to let the TCP timers deal with this. */
+    tcp_output(pcb);
   }
   return err;
 }

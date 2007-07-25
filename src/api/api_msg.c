@@ -207,14 +207,17 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   if (conn->state == NETCONN_WRITE) {
+    LWIP_ASSERT("conn->pcb.tcp != NULL", conn->pcb.tcp != NULL);
     do_writemore(conn);
   } else if (conn->state == NETCONN_CLOSE) {
     do_close_internal(conn);
   }
 
-  if (conn && conn->callback)
-    if (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT)
+  if (conn && conn->callback) {
+    if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT)) {
       (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, len);
+    }
+  }
   
   return ERR_OK;
 }
@@ -421,62 +424,39 @@ do_newconn(struct api_msg_msg *msg)
 static void
 do_close_internal(struct netconn *conn)
 {
+  err_t err;
+
   LWIP_ASSERT("invalid conn", (conn != NULL));
   LWIP_ASSERT("this is for tcp netconns only", (conn->type == NETCONN_TCP));
   LWIP_ASSERT("conn must be in state NETCONN_CLOSE", (conn->state == NETCONN_CLOSE));
   LWIP_ASSERT("pcb already closed", (conn->pcb.tcp != NULL));
 
+  /* Set back some callback pointers */
   if (conn->pcb.tcp->state == LISTEN) {
     tcp_arg(conn->pcb.tcp, NULL);
     tcp_accept(conn->pcb.tcp, NULL);
-    /* for state==LISTEN, tcp_close can't fail */
-    tcp_close(conn->pcb.tcp);
+  } else {
+    tcp_recv(conn->pcb.tcp, NULL);
+  }
+  /* Try to close the connection */
+  err = tcp_close(conn->pcb.tcp);
+  if (err == ERR_OK) {
+    /* Closing succeeded */
     conn->state = NETCONN_NONE;
     conn->pcb.tcp = NULL;
-    conn->err = ERR_OK;
-    sys_mbox_post(conn->mbox, NULL);
-  } else {
-    err_t err;
-    enum tcp_state old_state = conn->pcb.tcp->state;
-    if ((old_state == SYN_RCVD) || (old_state == ESTABLISHED) ||
-      (old_state == CLOSE_WAIT)) {
-      tcp_arg(conn->pcb.tcp, NULL);
-      tcp_sent(conn->pcb.tcp, NULL);
-      tcp_recv(conn->pcb.tcp, NULL);
-      tcp_poll(conn->pcb.tcp, NULL, 0);
-      tcp_err(conn->pcb.tcp, NULL);
-      err = tcp_close(conn->pcb.tcp);
-      switch (err) {
-        default:
-          /* any other error: abort! */
-          tcp_abort(conn->pcb.tcp);
-          /* fall through */
-        case (ERR_OK):
-          /* ERR_OK: fall through */
-        case (ERR_BUF):
-          /* ERR_BUF: tcp_output failed,
-             will be called again by internal tcp timers */
-          conn->state = NETCONN_NONE;
-          conn->pcb.tcp = NULL;
-          conn->err = err;
-          /* Trigger select() in socket layer */
-          if (conn->callback) {
-              /* this should send something else so the errorfd is set,
-                 not the read and write fd! */
-              (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-              (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, 0);
-          }
-          /* wake up the application task */
-          sys_mbox_post(conn->mbox, NULL);
-          break;
-        case (ERR_MEM):
-          /* ERR_MEM: error sending FIN?
-             try again in sent_tcp or poll_tcp */
-          /* stay in state NETCONN_CLOSE */
-          break;
-      }
+    conn->err = err;
+    /* Trigger select() in socket layer */
+    if (conn->callback) {
+        /* this should send something else so the errorfd is set,
+           not the read and write fd! */
+        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
+        (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, 0);
     }
+    /* wake up the application task */
+    sys_mbox_post(conn->mbox, NULL);
   }
+  /* If closing didn't succeed, we get called again either
+     from poll_tcp or from sent_tcp */
 }
 
 /**

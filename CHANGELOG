@@ -257,6 +257,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-07-25 Simon Goldschmidt
+  * api_msg.c, tcp.c: Another fix for bug #20021: by not returning an error if
+    tcp_output fails in tcp_close, the code in do_close_internal gets simpler
+    (tcp_output is called again later from tcp timers).
+
+  2007-07-25 Simon Goldschmidt
   * ip_frag.c: Fixed bug #20429: use the new pbuf_copy_partial instead of the old
     copy_from_pbuf, which illegally modified the given pbuf.
 
