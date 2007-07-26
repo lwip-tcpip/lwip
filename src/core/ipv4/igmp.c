@@ -209,21 +209,20 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
   struct igmp_group* group;
   struct igmp_group* groupref;
 
-  iphdr = p->payload;  
-  igmp  = (struct igmpmsg *)(((u8_t *)p->payload)+((u32_t)(IPH_HL(iphdr) * 4)));
-
-  LWIP_DEBUGF(IGMP_DEBUG, ("igmp message to address %l \n", (long)dest->addr));
-
-  if (p->len < IGMP_MINLEN) {
-    /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */
+  /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */    
+  iphdr = p->payload;
+  if (pbuf_header(p, -(IPH_HL(iphdr) * 4)) || (p->len < IGMP_MINLEN)) {
     pbuf_free(p);
     igmpstats.igmp_length_err++;
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %x igmp length error\n", __LINE__));
     return;
   }
 
+  LWIP_DEBUGF(IGMP_DEBUG, ("igmp message to address %l \n", (long)dest->addr));
+
   /* Now calculate and check the checksum */
-  if (inet_chksum(igmp, IGMP_MINLEN /*p->len*/)) {
+  igmp = (struct igmpmsg *)p->payload;
+  if (inet_chksum(igmp, p->len)) {
     pbuf_free(p);
     igmpstats.igmp_checksum_err++;
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp.c,Line %d igmp checksum error\n", __LINE__));

@@ -256,6 +256,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-07-26 Frédéric Bernon (and "thedoctor")
+  * igmp.c: Fix bug #20595 to accept IGMPv3 "Query" messages.
+
   2007-07-25 Simon Goldschmidt
   * api_msg.c, tcp.c: Another fix for bug #20021: by not returning an error if
     tcp_output fails in tcp_close, the code in do_close_internal gets simpler
