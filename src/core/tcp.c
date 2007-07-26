@@ -190,10 +190,13 @@ tcp_close(struct tcp_pcb *pcb)
   }
 
   if (pcb != NULL && err == ERR_OK) {
-    /* @todo: to ensure all has been sent when tcp_close returns, we have to
-       make sure tcp_output doesn't fail.
-       For now (and as long as we don't need this (no LINGER)), it's enough
-       to let the TCP timers deal with this. */
+    /* To ensure all data has been sent when tcp_close returns, we have
+       to make sure tcp_output doesn't fail.
+       Since we don't really have to ensure all data has been sent when tcp_close
+       returns (unsent data is sent from tcp timer functions, also), we don't care
+       for the return value of tcp_output for now. */
+    /* @todo: When implementing SO_LINGER, this must be changed somehow:
+       If SOF_LINGER is set, the data should be sent when tcp_close returns. */
     tcp_output(pcb);
   }
   return err;
@@ -1320,13 +1323,3 @@ tcp_pcbs_sane(void)
 }
 #endif /* TCP_DEBUG */
 #endif /* LWIP_TCP */
-
-
-
-
-
-
-
-
-
-
