@@ -78,18 +78,6 @@
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
 
 /**
- * Initializes the pbuf module.
- *
- * Do some checks an initialize the pbuf pool.
- *
- */
-void
-pbuf_init(void)
-{
-  /* nothing to do here */
-}
-
-/**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
  *
  * The actual memory allocated for the pbuf is determined by the
