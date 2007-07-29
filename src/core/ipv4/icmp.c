@@ -56,7 +56,9 @@ void
 icmp_input(struct pbuf *p, struct netif *inp)
 {
   u8_t type;
+#ifdef LWIP_DEBUG
   u8_t code;
+#endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
@@ -74,7 +76,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
   }
 
   type = *((u8_t *)p->payload);
+#ifdef LWIP_DEBUG
   code = *(((u8_t *)p->payload)+1);
+#endif /* LWIP_DEBUG */
   switch (type) {
   case ICMP_ECHO:
     /* broadcast or multicast destination address? */
