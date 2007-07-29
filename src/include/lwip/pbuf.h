@@ -99,7 +99,7 @@ struct pbuf {
 };
 
 /* Initializes the pbuf module. This call is empty for now, but may not be in future. */
-#define pbuf_init() do { } while (0)
+#define pbuf_init()
 
 struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
 void pbuf_realloc(struct pbuf *p, u16_t size); 
