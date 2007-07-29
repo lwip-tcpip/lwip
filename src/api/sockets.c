@@ -1163,20 +1163,23 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
 static void lwip_getsockopt_internal(void *arg)
 {
   struct lwip_socket *sock;
-  int s, level, optname;
+#ifdef LWIP_DEBUG
+  int s;
+#endif /* LWIP_DEBUG */
+  int level, optname;
   void *optval;
-  socklen_t *optlen;
   struct lwip_setgetsockopt_data *data;
 
   LWIP_ASSERT("arg != NULL", arg != NULL);
 
   data = (struct lwip_setgetsockopt_data*)arg;
   sock = data->sock;
+#ifdef LWIP_DEBUG
   s = data->s;
+#endif /* LWIP_DEBUG */
   level = data->level;
   optname = data->optname;
   optval = data->optval;
-  optlen = data->optlen;
 
   switch (level) {
    
@@ -1498,7 +1501,10 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
 static void lwip_setsockopt_internal(void *arg)
 {
   struct lwip_socket *sock;
-  int s, level, optname;
+#ifdef LWIP_DEBUG
+  int s;
+#endif /* LWIP_DEBUG */
+  int level, optname;
   const void *optval;
   socklen_t optlen;
   struct lwip_setgetsockopt_data *data;
@@ -1507,7 +1513,9 @@ static void lwip_setsockopt_internal(void *arg)
 
   data = (struct lwip_setgetsockopt_data*)arg;
   sock = data->sock;
+#ifdef LWIP_DEBUG
   s = data->s;
+#endif /* LWIP_DEBUG */
   level = data->level;
   optname = data->optname;
   optval = data->optval;
