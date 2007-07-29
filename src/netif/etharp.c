@@ -559,6 +559,8 @@ etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
 {
   s8_t i;
 
+  LWIP_UNUSED_ARG(netif);
+
 #if LWIP_NETIF_HWADDRHINT
   i = find_entry(ipaddr, ETHARP_FIND_ONLY, NULL);
 #else /* LWIP_NETIF_HWADDRHINT */

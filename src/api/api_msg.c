@@ -421,6 +421,7 @@ do_newconn(struct api_msg_msg *msg)
    TCPIP_APIMSG_ACK(msg);
 }
 
+#if LWIP_TCP
 static void
 do_close_internal(struct netconn *conn)
 {
@@ -458,6 +459,7 @@ do_close_internal(struct netconn *conn)
   /* If closing didn't succeed, we get called again either
      from poll_tcp or from sent_tcp */
 }
+#endif /* LWIP_TCP */
 
 /**
  * Delete the pcb inside a netconn.
