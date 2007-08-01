@@ -610,10 +610,12 @@ lwip_socket(int domain, int type, int protocol)
   struct netconn *conn;
   int i;
 
+  LWIP_UNUSED_ARG(domain);
+  
   /* create a netconn */
   switch (type) {
   case SOCK_RAW:
-    conn = netconn_new_with_proto_and_callback(NETCONN_RAW, protocol, event_callback);
+    conn = netconn_new_with_proto_and_callback(NETCONN_RAW, (u8_t)protocol, event_callback);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_RAW, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
     break;
@@ -851,6 +853,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   int s;
   struct lwip_socket *sock;
   struct lwip_select_cb *scb;
+  
+  LWIP_UNUSED_ARG(len);
 
   /* Get socket */
   if (conn) {
@@ -923,6 +927,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 
 int lwip_shutdown(int s, int how)
 {
+  LWIP_UNUSED_ARG(how);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_shutdown(%d, how=%d)\n", s, how));
   return lwip_close(s); /* XXX temporary hack until proper implementation */
 }
@@ -993,7 +998,7 @@ int lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 
 int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
-  int err = ERR_OK;
+  err_t err = ERR_OK;
   struct lwip_socket *sock = get_socket(s);
   struct lwip_setgetsockopt_data data;
 
