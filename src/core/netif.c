@@ -445,12 +445,14 @@ void netif_set_link_callback( struct netif *netif, void (* link_callback)(struct
     if ( netif )
         netif->link_callback = link_callback;
 }
+
 /**
  * Called by a driver when its link goes down
  */
 void netif_set_link_down( struct netif *netif )
 {
   netif->flags &= ~NETIF_FLAG_LINK_UP;
+  NETIF_LINK_CALLBACK(netif);
 }
 
 /**
@@ -470,5 +472,7 @@ void netif_set_link_up( struct netif *netif )
     etharp_query(netif, &(netif->ip_addr), NULL);
   }
 #endif /* LWIP_ARP */
+
+  NETIF_LINK_CALLBACK(netif);
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
