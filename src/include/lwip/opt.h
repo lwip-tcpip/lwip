@@ -598,6 +598,10 @@
 #define ICMP_STATS                      1
 #endif
 
+#ifndef IGMP_STATS
+#define IGMP_STATS                      1
+#endif
+
 #ifndef UDP_STATS
 #define UDP_STATS                       1
 #endif
@@ -624,6 +628,7 @@
 #define IP_STATS                        0
 #define IPFRAG_STATS                    0
 #define ICMP_STATS                      0
+#define IGMP_STATS                      0
 #define UDP_STATS                       0
 #define TCP_STATS                       0
 #define MEM_STATS                       0

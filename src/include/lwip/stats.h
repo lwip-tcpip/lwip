@@ -57,25 +57,37 @@ extern "C" {
 #endif 
 
 struct stats_proto {
-  STAT_COUNTER xmit;    /* Transmitted packets. */
-  STAT_COUNTER rexmit;  /* Retransmitted packets. */
-  STAT_COUNTER recv;    /* Received packets. */
-  STAT_COUNTER fw;      /* Forwarded packets. */
-  STAT_COUNTER drop;    /* Dropped packets. */
-  STAT_COUNTER chkerr;  /* Checksum error. */
-  STAT_COUNTER lenerr;  /* Invalid length error. */
-  STAT_COUNTER memerr;  /* Out of memory error. */
-  STAT_COUNTER rterr;   /* Routing error. */
-  STAT_COUNTER proterr; /* Protocol error. */
-  STAT_COUNTER opterr;  /* Error in options. */
-  STAT_COUNTER err;     /* Misc error. */
+  STAT_COUNTER xmit;             /* Transmitted packets. */
+  STAT_COUNTER rexmit;           /* Retransmitted packets. */
+  STAT_COUNTER recv;             /* Received packets. */
+  STAT_COUNTER fw;               /* Forwarded packets. */
+  STAT_COUNTER drop;             /* Dropped packets. */
+  STAT_COUNTER chkerr;           /* Checksum error. */
+  STAT_COUNTER lenerr;           /* Invalid length error. */
+  STAT_COUNTER memerr;           /* Out of memory error. */
+  STAT_COUNTER rterr;            /* Routing error. */
+  STAT_COUNTER proterr;          /* Protocol error. */
+  STAT_COUNTER opterr;           /* Error in options. */
+  STAT_COUNTER err;              /* Misc error. */
   STAT_COUNTER cachehit;
+};
+
+struct stats_igmp {
+  STAT_COUNTER lenerr;           /* Invalid length error. */
+  STAT_COUNTER chkerr;           /* Checksum error. */
+  STAT_COUNTER v1_rxed;          /* */
+  STAT_COUNTER join_sent;        /* */
+  STAT_COUNTER leave_sent;       /* */
+  STAT_COUNTER unicast_query;    /* */
+  STAT_COUNTER report_sent;      /* */
+  STAT_COUNTER report_rxed;      /* */
+  STAT_COUNTER group_query_rxed; /* */
 };
 
 struct stats_mem {
   mem_size_t avail;
   mem_size_t used;
-  mem_size_t max;  
+  mem_size_t max;
   mem_size_t err;
 };
 
@@ -102,6 +114,9 @@ struct stats_ {
 #endif
 #if ICMP_STATS
   struct stats_proto icmp;
+#endif
+#if IGMP_STATS
+  struct stats_igmp igmp;
 #endif
 #if UDP_STATS
   struct stats_proto udp;
@@ -146,6 +161,12 @@ void stats_init(void);
 #define ICMP_STATS_INC(x) STATS_INC(x)
 #else
 #define ICMP_STATS_INC(x)
+#endif
+
+#if IGMP_STATS
+#define IGMP_STATS_INC(x) STATS_INC(x)
+#else
+#define IGMP_STATS_INC(x)
 #endif
 
 #if IP_STATS

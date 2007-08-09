@@ -69,9 +69,24 @@ stats_display_proto(struct stats_proto *proto, char *name)
 }
 
 void
+stats_display_igmp(struct stats_igmp *igmp)
+{
+  LWIP_PLATFORM_DIAG(("\nIGMP\n\t"));
+  LWIP_PLATFORM_DIAG(("lenerr: %"STAT_COUNTER_F"\n\t", igmp->lenerr)); 
+  LWIP_PLATFORM_DIAG(("chkerr: %"STAT_COUNTER_F"\n\t", igmp->chkerr)); 
+  LWIP_PLATFORM_DIAG(("v1_rxed: %"STAT_COUNTER_F"\n\t", igmp->v1_rxed)); 
+  LWIP_PLATFORM_DIAG(("join_sent: %"STAT_COUNTER_F"\n\t", igmp->join_sent)); 
+  LWIP_PLATFORM_DIAG(("leave_sent: %"STAT_COUNTER_F"\n\t", igmp->leave_sent)); 
+  LWIP_PLATFORM_DIAG(("unicast_query: %"STAT_COUNTER_F"\n\t", igmp->unicast_query)); 
+  LWIP_PLATFORM_DIAG(("report_sent: %"STAT_COUNTER_F"\n\t", igmp->report_sent)); 
+  LWIP_PLATFORM_DIAG(("report_rxed: %"STAT_COUNTER_F"\n\t", igmp->report_rxed)); 
+  LWIP_PLATFORM_DIAG(("group_query_rxed: %"STAT_COUNTER_F"\n", igmp->group_query_rxed));
+}
+
+void
 stats_display_mem(struct stats_mem *mem, char *name)
 {
-  LWIP_PLATFORM_DIAG(("\n MEM %s\n\t", name));
+  LWIP_PLATFORM_DIAG(("\nMEM %s\n\t", name));
   LWIP_PLATFORM_DIAG(("avail: %"MEM_SIZE_F"\n\t", mem->avail)); 
   LWIP_PLATFORM_DIAG(("used: %"MEM_SIZE_F"\n\t", mem->used)); 
   LWIP_PLATFORM_DIAG(("max: %"MEM_SIZE_F"\n\t", mem->max)); 
@@ -118,6 +133,9 @@ stats_display(void)
 #endif
 #if ICMP_STATS
   stats_display_proto(&lwip_stats.icmp, "ICMP");
+#endif
+#if IGMP_STATS
+  stats_display_igmp(&lwip_stats.igmp);
 #endif
 #if UDP_STATS
   stats_display_proto(&lwip_stats.udp, "UDP");

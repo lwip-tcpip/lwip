@@ -45,17 +45,9 @@ extern "C" {
 #endif
 
 /* Some routers are not happy with ROUTER ALERT make it defineable, 1 to enable */
-#define USE_ROUTER_ALERT 0
-
-/*
- * IGMP packet format.
- */
-struct igmpmsg {
- u8_t  igmp_msgtype;
- u8_t  igmp_maxresp;
- u16_t igmp_checksum;
- struct ip_addr igmp_group_address;
-};
+#ifndef USE_ROUTER_ALERT
+#define USE_ROUTER_ALERT    0
+#endif
 
 /* 
  * IGMP constants
@@ -85,6 +77,16 @@ struct igmpmsg {
 #define DELAYING_MEMBER     1
 #define IDLE_MEMBER         2 
 
+/*
+ * IGMP packet format.
+ */
+struct igmpmsg {
+ u8_t  igmp_msgtype;
+ u8_t  igmp_maxresp;
+ u16_t igmp_checksum;
+ struct ip_addr igmp_group_address;
+};
+
 /* 
  * now a group structure - there is
  * a list of groups for each interface
@@ -104,21 +106,6 @@ struct igmp_group {
   u8_t last_reporter_flag; /* signifies we were the last person to report */
   u8_t group_state;
   u16_t timer;
-};
-
-
-
-struct igmp_stats{
-
-  u32_t igmp_length_err;
-  u32_t igmp_checksum_err;
-  u32_t igmp_v1_rxed;
-  u32_t igmp_joins;
-  u32_t igmp_leave_sent;
-  u32_t igmp_unicast_query;
-  u32_t report_sent;
-  u32_t igmp_group_query_rxed;
-  u32_t report_rxed;
 };
 
 
