@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Dynamic pool memory manager
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -317,6 +323,8 @@ memp_init(void)
  * Get an element from a specific pool.
  *
  * @param type the pool to get an element from
+ * @param file file name calling this function
+ * @param line number of line where this function is called
  */
 void *
 #if MEMP_OVERFLOW_CHECK

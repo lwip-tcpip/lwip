@@ -110,7 +110,7 @@ snmp_ifindextonetif(s32_t ifindex, struct netif **netif)
 /**
  * Conversion from lwIP netif to ifIndex
  * @param netif points to a netif struct
- * @param ifindex points to s32_t object sub-identifier
+ * @param ifidx points to s32_t object sub-identifier
  */
 void
 snmp_netiftoifindex(struct netif *netif, s32_t *ifidx)

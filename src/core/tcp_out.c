@@ -1,6 +1,5 @@
 /**
  * @file
- *
  * Transmission Control Protocol, outgoing traffic
  *
  * The output functions of TCP.

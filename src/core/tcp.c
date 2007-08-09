@@ -1,6 +1,5 @@
 /**
  * @file
- *
  * Transmission Control Protocol for IP
  *
  * This file contains common functions for the TCP implementation, such as functinos
@@ -1122,6 +1121,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
 /**
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
+ * @param pcblist PCB list to purge.
  * @param pcb tcp_pcb to purge. The pcb itself is also deallocated!
  */
 void

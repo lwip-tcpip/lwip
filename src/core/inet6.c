@@ -1,3 +1,10 @@
+/**
+ * @file
+ * Functions common to all TCP/IPv6 modules, such as the Internet checksum and the
+ * byte order functions.
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -30,21 +37,10 @@
  *
  */
 
-
-/* inet6.c
- *
- * Functions common to all TCP/IP modules, such as the Internet checksum and the
- * byte order functions.
- *
- */
-
-
 #include "lwip/opt.h"
 
 #include "lwip/def.h"
 #include "lwip/inet.h"
-
-
 
 /* chksum:
  *

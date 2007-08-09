@@ -1,3 +1,9 @@
+/**
+ * @file
+ * Sequential API External module
+ *
+ */
+ 
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -671,7 +677,7 @@ netconn_recv(struct netconn *conn)
  * @param conn the netconn over which to send data
  * @param buf a netbuf containing the data to send
  * @param addr the remote IP address to which to send the data
- * @param addr the remote port to which to send the data
+ * @param port the remote port to which to send the data
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t

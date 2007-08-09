@@ -3,6 +3,7 @@
  * User Datagram Protocol module
  *
  */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -684,7 +685,7 @@ udp_disconnect(struct udp_pcb *pcb)
  *
  * @param pcb the pcb for wich to set the recv callback
  * @param recv function pointer of the callback function
- * @param arg additional argument to pass to the callback function
+ * @param recv_arg additional argument to pass to the callback function
  */
 void
 udp_recv(struct udp_pcb *pcb,

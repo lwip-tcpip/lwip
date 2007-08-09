@@ -1,5 +1,5 @@
-/** @file
- *
+/**
+ * @file
  * Dynamic memory manager
  *
  */

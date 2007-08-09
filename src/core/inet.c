@@ -1,3 +1,10 @@
+/**
+ * @file
+ * Functions common to all TCP/IPv4 modules, such as the Internet checksum and the
+ * byte order functions.
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -29,15 +36,6 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-
-
-/* inet.c
- *
- * Functions common to all TCP/IP modules, such as the Internet checksum and the
- * byte order functions.
- *
- */
-
 
 #include "lwip/opt.h"
 
@@ -489,7 +487,7 @@ inet_aton(const char *cp, struct in_addr *addr)
  * Convert numeric IP address into decimal dotted ASCII representation.
  * returns ptr to static buffer; not reentrant!
  *
- * @paran addr ip address in network order to convert
+ * @param addr ip address in network order to convert
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         represenation of addr
  */

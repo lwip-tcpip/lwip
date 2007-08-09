@@ -1,3 +1,9 @@
+/**
+ * @file
+ * This is the IPv4 address tools implementation.
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 

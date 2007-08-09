@@ -1,3 +1,9 @@
+/**
+ * @file
+ * SLIP Interface
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -227,7 +233,7 @@ slipif_loop(void *nf)
  * Call the arch specific sio_open and remember
  * the opened device in the state field of the netif.
  *
- * @param nf the lwip network interface structure for this slipif
+ * @param netif the lwip network interface structure for this slipif
  * @return ERR_OK if serial line could be opened,
  *         ERR_IF is serial line couldn't be opened
  *

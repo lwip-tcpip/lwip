@@ -914,7 +914,7 @@ void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
  * Initializes sysDescr pointers.
  *
  * @param str if non-NULL then copy str pointer
- * @param strlen points to string length, excluding zero terminator
+ * @param len points to string length, excluding zero terminator
  */
 void snmp_set_sysdesr(u8_t *str, u8_t *len)
 {
@@ -958,8 +958,8 @@ void snmp_get_sysuptime(u32_t *value)
  * Initializes sysContact pointers,
  * e.g. ptrs to non-volatile memory external to lwIP.
  *
- * @param str if non-NULL then copy str pointer
- * @param strlen points to string length, excluding zero terminator
+ * @param ocstr if non-NULL then copy str pointer
+ * @param ocstrlen points to string length, excluding zero terminator
  */
 void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen)
 {
@@ -974,8 +974,8 @@ void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen)
  * Initializes sysName pointers,
  * e.g. ptrs to non-volatile memory external to lwIP.
  *
- * @param str if non-NULL then copy str pointer
- * @param strlen points to string length, excluding zero terminator
+ * @param ocstr if non-NULL then copy str pointer
+ * @param ocstrlen points to string length, excluding zero terminator
  */
 void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen)
 {
@@ -990,8 +990,8 @@ void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen)
  * Initializes sysLocation pointers,
  * e.g. ptrs to non-volatile memory external to lwIP.
  *
- * @param str if non-NULL then copy str pointer
- * @param strlen points to string length, excluding zero terminator
+ * @param ocstr if non-NULL then copy str pointer
+ * @param ocstrlen points to string length, excluding zero terminator
  */
 void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen)
 {
@@ -1416,7 +1416,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
  * into index tree.
  *
  * @param dflt non-zero for the default rte, zero for network rte
- * @param netif points to network interface for this rte
+ * @param ni points to network interface for this rte
  *
  * @todo record sysuptime for _this_ route when it is installed
  *   (needed for ipRouteAge) in the netif.
@@ -1493,7 +1493,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
  * from index tree.
  *
  * @param dflt non-zero for the default rte, zero for network rte
- * @param netif points to network interface for this rte or NULL
+ * @param ni points to network interface for this rte or NULL
  *   for default route to be removed.
  */
 void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)

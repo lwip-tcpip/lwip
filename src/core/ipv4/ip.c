@@ -1,10 +1,11 @@
-/* @file
- *
- * This is the IP layer implementation for incoming and outgoing IP traffic.
+/**
+ * @file
+ * This is the IPv4 layer implementation for incoming and outgoing IP traffic.
  * 
  * @see ip_frag.c
  *
  */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.

@@ -1,11 +1,11 @@
 /**
  * @file
- * 
  * Implementation of raw protocol PCBs for low-level handling of
  * different types of protocols besides (or overriding) those
  * already available in lwIP.
  *
  */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -76,9 +76,9 @@ raw_init(void)
  * finds a corresponding RAW PCB and calls the corresponding receive
  * callback function.
  *
- * @param pbuf pbuf to be demultiplexed to a RAW PCB.
- * @param netif network interface on which the datagram was received.
- * @Return - 1 if the packet has been eaten by a RAW PCB receive
+ * @param p pbuf to be demultiplexed to a RAW PCB.
+ * @param inp network interface on which the datagram was received.
+ * @return - 1 if the packet has been eaten by a RAW PCB receive
  *           callback function. The caller MAY NOT not reference the
  *           packet any longer, and MAY NOT call pbuf_free().
  * @return - 0 if packet is not eaten (pbuf is still referenced by the
@@ -269,7 +269,6 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
  *
  * @param pcb the raw pcb which to send
  * @param p the IP payload to send
- * @param ipaddr the destination address of the IP packet
  *
  */
 err_t

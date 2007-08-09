@@ -1,7 +1,7 @@
 /**
  * @file
- *
  * IGMP - Internet Group Management Protocol
+ *
  */
 
 /*
@@ -577,7 +577,7 @@ igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 /**
  * Send an igmp packet to a specific group.
  *
- * @param the group to which to send the packet
+ * @param group the group to which to send the packet
  * @param type the type of igmp packet to send
  */
 void

@@ -1,3 +1,9 @@
+/**
+ * @file
+ * lwIP Operating System abstraction
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
@@ -289,6 +295,7 @@ sswt_handler(void *arg)
 /**
  * Wait for a semaphore with timeout (specified in ms)
  *
+ * @param sem semaphore to wait
  * @param timeout timeout in ms (0: wait forever)
  * @return 0 on timeout, 1 otherwise
  */

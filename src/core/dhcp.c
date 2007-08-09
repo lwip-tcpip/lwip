@@ -1,7 +1,7 @@
 /**
  * @file
- *
  * Dynamic Host Configuration Protocol client
+ *
  */
 
 /*
@@ -90,7 +90,7 @@
  *  with this value (easy to match with a packet analyzer) */
 static u32_t xid = 0xABCD0000;
 
-/** DHCP client state machine functions */
+/* DHCP client state machine functions */
 static void dhcp_handle_ack(struct netif *netif);
 static void dhcp_handle_nak(struct netif *netif);
 static void dhcp_handle_offer(struct netif *netif);
@@ -103,7 +103,7 @@ static err_t dhcp_decline(struct netif *netif);
 static err_t dhcp_rebind(struct netif *netif);
 static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state);
 
-/** receive, unfold, parse and free incoming messages */
+/* receive, unfold, parse and free incoming messages */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static err_t dhcp_unfold_reply(struct dhcp *dhcp);
 static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type);
@@ -114,23 +114,23 @@ static u16_t dhcp_get_option_short(u8_t *ptr);
 static u32_t dhcp_get_option_long(u8_t *ptr);
 static void dhcp_free_reply(struct dhcp *dhcp);
 
-/** set the DHCP timers */
+/* set the DHCP timers */
 static void dhcp_timeout(struct netif *netif);
 static void dhcp_t1_timeout(struct netif *netif);
 static void dhcp_t2_timeout(struct netif *netif);
 
-/** build outgoing messages */
-/** create a DHCP request, fill in common headers */
+/* build outgoing messages */
+/* create a DHCP request, fill in common headers */
 static err_t dhcp_create_request(struct netif *netif);
-/** free a DHCP request */
+/* free a DHCP request */
 static void dhcp_delete_request(struct netif *netif);
-/** add a DHCP option (type, then length in bytes) */
+/* add a DHCP option (type, then length in bytes) */
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len);
-/** add option values */
+/* add option values */
 static void dhcp_option_byte(struct dhcp *dhcp, u8_t value);
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value);
 static void dhcp_option_long(struct dhcp *dhcp, u32_t value);
-/** always add the DHCP options trailer to end and pad */
+/* always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(struct dhcp *dhcp);
 
 /**

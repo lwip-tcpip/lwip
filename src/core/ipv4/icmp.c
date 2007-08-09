@@ -1,3 +1,9 @@
+/**
+ * @file
+ * ICMP - Internet Control Message Protocol
+ *
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved.
