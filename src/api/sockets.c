@@ -611,7 +611,7 @@ lwip_socket(int domain, int type, int protocol)
   int i;
 
   LWIP_UNUSED_ARG(domain);
-  
+
   /* create a netconn */
   switch (type) {
   case SOCK_RAW:
@@ -853,7 +853,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   int s;
   struct lwip_socket *sock;
   struct lwip_select_cb *scb;
-  
+
   LWIP_UNUSED_ARG(len);
 
   /* Get socket */
