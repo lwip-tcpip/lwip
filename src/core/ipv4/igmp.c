@@ -220,7 +220,7 @@ void
 igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
 {
   struct ip_hdr *    iphdr;
-  struct igmpmsg*    igmp;
+  struct igmp_msg*   igmp;
   struct igmp_group* group;
   struct igmp_group* groupref;
 
@@ -236,7 +236,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: message to address %l \n", (long)dest->addr));
 
   /* Now calculate and check the checksum */
-  igmp = (struct igmpmsg *)p->payload;
+  igmp = (struct igmp_msg *)p->payload;
   if (inet_chksum(igmp, p->len)) {
     pbuf_free(p);
     IGMP_STATS_INC(igmp.chkerr);
@@ -583,18 +583,18 @@ igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 void
 igmp_send(struct igmp_group *group, u8_t type)
 {
-  struct pbuf*    p    = NULL;
-  struct igmpmsg* igmp = NULL;
-  struct ip_addr  src  = {0};
-  struct ip_addr* dest = NULL;
+  struct pbuf*     p    = NULL;
+  struct igmp_msg* igmp = NULL;
+  struct ip_addr   src  = {0};
+  struct ip_addr*  dest = NULL;
 
   /* IP header + IGMP header */
   p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);
   
   if (p) {
     igmp = p->payload;
-    LWIP_ASSERT("igmp_send: check that first pbuf can hold struct igmpmsg",
-               (p->len >= sizeof(struct igmpmsg)));
+    LWIP_ASSERT("igmp_send: check that first pbuf can hold struct igmp_msg",
+               (p->len >= sizeof(struct igmp_msg)));
     ip_addr_set(&src, &((group->interface)->ip_addr));
      
     if (type == IGMP_V2_MEMB_REPORT) {

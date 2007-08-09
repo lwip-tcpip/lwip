@@ -44,11 +44,6 @@
 extern "C" {
 #endif
 
-/* Some routers are not happy with ROUTER ALERT make it defineable, 1 to enable */
-#ifndef USE_ROUTER_ALERT
-#define USE_ROUTER_ALERT    0
-#endif
-
 /* 
  * IGMP constants
  */
@@ -58,14 +53,14 @@ extern "C" {
 #define ROUTER_ALERTLEN     4
 
 /*
- * Message types, including version number.
+ * IGMP message types, including version number.
  */
 #define IGMP_MEMB_QUERY     0x11 /* Membership query         */
 #define IGMP_V1_MEMB_REPORT 0x12 /* Ver. 1 membership report */
 #define IGMP_V2_MEMB_REPORT 0x16 /* Ver. 2 membership report */
 #define IGMP_LEAVE_GROUP    0x17 /* Leave-group message      */
 
-/* Timer */
+/* IGMP timer */
 #define IGMP_TMR_INTERVAL   100 /* Milliseconds */
 
 /* MAC Filter Actions */
@@ -80,7 +75,7 @@ extern "C" {
 /*
  * IGMP packet format.
  */
-struct igmpmsg {
+struct igmp_msg {
  u8_t  igmp_msgtype;
  u8_t  igmp_maxresp;
  u16_t igmp_checksum;
