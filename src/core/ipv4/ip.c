@@ -243,7 +243,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* match packet against an interface, i.e. is this packet for us? */
 #if LWIP_IGMP
   if (ip_addr_ismulticast(&(iphdr->dest)))
-   { if (lookfor_group( inp, &(iphdr->dest)))
+   { if (igmp_lookfor_group( inp, &(iphdr->dest)))
       { netif = inp;
       }
      else
@@ -252,7 +252,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
    }
   else
    {
-#endif
+#endif /* LWIP_IGMP */
    for (netif = netif_list; netif != NULL; netif = netif->next) {
 
      LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
@@ -277,7 +277,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
    }
  #if LWIP_IGMP
  }
- #endif
+ #endif /* LWIP_IGMP */
  
 #if LWIP_DHCP
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
@@ -346,7 +346,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   if((iphdrlen > IP_HLEN &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
 #else
   if (iphdrlen > IP_HLEN) {
-#endif
+#endif /* LWIP_IGMP */
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
     pbuf_free(p);
     IP_STATS_INC(ip.opterr);
@@ -391,7 +391,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   case IP_PROTO_IGMP:
     igmp_input(p,inp,&(iphdr->dest));
     break;
-#endif
+#endif /* LWIP_IGMP */
   default:
     /* send ICMP destination protocol unreachable unless is was a broadcast */
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&

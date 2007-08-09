@@ -32,8 +32,8 @@
  * source code.
 */
 
-#ifndef IGMPH
-#define IGMPH
+#ifndef __LWIP_IGMP_H__
+#define __LWIP_IGMP_H__
 
 #include "lwip/opt.h"
 
@@ -57,10 +57,13 @@ struct igmpmsg {
  struct ip_addr igmp_group_address;
 };
 
-#define MCAST224            224
-#define ALLROUTERS_GROUP    224,0,0,2
-
+/* 
+ * IGMP constants
+ */
+#define IP_PROTO_IGMP       2
+#define IGMP_TTL            1
 #define IGMP_MINLEN         8
+#define ROUTER_ALERTLEN     4
 
 /*
  * Message types, including version number.
@@ -81,11 +84,6 @@ struct igmpmsg {
 #define NON_MEMBER          0
 #define DELAYING_MEMBER     1
 #define IDLE_MEMBER         2 
-
-/* Put this is another place when integrated */
-#define IP_PROTO_IGMP       2
-#define IGMP_TTL            1
-#define ROUTER_ALERTLEN     4
 
 /* 
  * now a group structure - there is
@@ -127,9 +125,9 @@ struct igmp_stats{
 /*  Prototypes */
 void   igmp_init(void);
 
-struct igmp_group *lookfor_group(struct netif *ifp, struct ip_addr *addr);
+struct igmp_group *igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr);
 
-struct igmp_group *lookup_group(struct netif *ifp, struct ip_addr *addr);
+struct igmp_group *igmp_lookup_group(struct netif *ifp, struct ip_addr *addr);
 
 void   igmp_input( struct pbuf *p, struct netif *inp, struct ip_addr *dest);
 
@@ -137,7 +135,7 @@ err_t  igmp_joingroup( struct netif* ifp, struct ip_addr *groupaddr);
 
 err_t  igmp_leavegroup( struct netif* ifp, struct ip_addr *groupaddr);
 
-void   igmp_tmr();
+void   igmp_tmr(void);
 
 void   igmp_timeout( struct igmp_group *group);
 
@@ -155,4 +153,4 @@ void   igmp_send( struct igmp_group *group, u8_t type);
 
 #endif /* LWIP_IGMP */
 
-#endif /* IGMPH */
+#endif /* __LWIP_IGMP_H__ */

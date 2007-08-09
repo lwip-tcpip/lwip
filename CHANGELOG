@@ -256,6 +256,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-08-09 Frédéric Bernon, Bill Florac
+  * igmp.h, igmp.c, ip.c: Fix minor changes from bug #20503 : IGMP Improvement.
+    This is mainly on using lookup/lookfor, and some coding styles...
+
   2007-07-26 Frédéric Bernon (and "thedoctor")
   * igmp.c: Fix bug #20595 to accept IGMPv3 "Query" messages.
 
