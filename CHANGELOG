@@ -257,6 +257,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-08-09 Frédéric Bernon, Bill Florac
+  * udp.c: Fix for bug #20503 : IGMP Improvement. Enable to receive a multicast
+    packet on a udp pcb binded on an netif's IP address, and not on "any".
+
+  2007-08-09 Frédéric Bernon, Bill Florac
   * igmp.h, igmp.c, ip.c: Fix minor changes from bug #20503 : IGMP Improvement.
     This is mainly on using lookup/lookfor, and some coding styles...
 
