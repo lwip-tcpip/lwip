@@ -115,6 +115,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
     TCP_STATS_INC(tcp.drop);
+    snmp_inc_tcpinerrs();
     pbuf_free(p);
     return;
   }
@@ -122,6 +123,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&(iphdr->dest), inp) ||
       ip_addr_ismulticast(&(iphdr->dest))) {
+    TCP_STATS_INC(tcp.proterr);
+    TCP_STATS_INC(tcp.drop);
     snmp_inc_tcpinerrs();
     pbuf_free(p);
     return;
@@ -154,6 +157,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
     TCP_STATS_INC(tcp.lenerr);
     TCP_STATS_INC(tcp.drop);
+    snmp_inc_tcpinerrs();
     pbuf_free(p);
     return;
   }
