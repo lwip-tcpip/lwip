@@ -70,7 +70,8 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   conn = arg;
 
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
-    if (!(buf = memp_malloc(MEMP_NETBUF))) {
+    buf = memp_malloc(MEMP_NETBUF);
+    if (!buf) {
       return 0;
     }
     pbuf_ref(p);
@@ -331,6 +332,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->type = NETCONN_TCP;
   newconn->pcb.tcp = newpcb;
   setup_tcp(newconn);
+  newconn->state = NETCONN_NONE;
   newconn->acceptmbox = SYS_MBOX_NULL;
   newconn->err = err;
   /* Register event with callback */
