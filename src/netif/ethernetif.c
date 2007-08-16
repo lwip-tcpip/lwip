@@ -68,8 +68,6 @@ struct ethernetif {
   /* Add whatever per-interface state that is needed here. */
 };
 
-static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-
 /* Forward declarations. */
 static void  ethernetif_input(struct netif *netif);
 
