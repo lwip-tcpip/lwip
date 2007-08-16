@@ -44,6 +44,7 @@
 #include "lwip/pbuf.h"
 
 #include "netif/etharp.h"
+#include "netif/ppp_oe.h"
 
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
@@ -243,6 +244,15 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       /* pass p to ARP module  */
       etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
       break;
+
+#if PPPOE_SUPPORT > 0
+	case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
+	  pppoe_disc_input(netif, p);
+	  break;
+	case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
+	  pppoe_data_input(netif, p);
+	  break;
+#endif
 
     default:
       pbuf_free(p);
