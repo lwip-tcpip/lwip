@@ -387,15 +387,18 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 {
   struct lwip_socket *sock;
   struct netbuf      *buf;
-  u16_t               buflen, copylen;
+  u16_t               buflen, copylen, off = 0;
   struct ip_addr     *addr;
   u16_t               port;
+  u8_t                done = 0;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %d, 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
   if (!sock)
     return -1;
 
+ while ( !done ) {
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: top while sock->lastdata=%p\n", sock->lastdata));
   /* Check if there is data left from the last recv operation. */
   if (sock->lastdata) {
     buf = sock->lastdata;
@@ -410,6 +413,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     /* No data was left from the previous operation, so we try to get
     some from the network. */
     sock->lastdata = buf = netconn_recv(sock->conn);
+	LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv netbuf=%p\n", buf));
 
     if (!buf) {
       /* We should really do some error checking here. */
@@ -420,6 +424,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   }
 
   buflen = netbuf_len(buf);
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: buflen=%d len=%d off=%d sock->lastoffset=%d\n", buflen, len, off, sock->lastoffset));
 
   buflen -= sock->lastoffset;
 
@@ -431,7 +436,36 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
   /* copy the contents of the received buffer into
   the supplied memory pointer mem */
-  netbuf_copy_partial(buf, mem, copylen, sock->lastoffset);
+  netbuf_copy_partial(buf, (u8_t*)mem + off, copylen - off, sock->lastoffset);
+
+  off += copylen;
+
+  if (netconn_type(sock->conn) == NETCONN_TCP) {
+    len -= copylen;
+    if ( (len <= 0) || (buf->p->flgs & PBUF_FLAG_PUSH) )
+      done = 1;
+  }
+  else
+    done = 1;
+
+  /* If we don't peek the incoming message... */
+  if ((flags & MSG_PEEK)==0) {
+    /* If this is a TCP socket, check if there is data left in the
+       buffer. If so, it should be saved in the sock structure for next
+       time around. */
+    if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
+      sock->lastdata = buf;
+      sock->lastoffset += copylen;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: lastdata now netbuf=%p\n", buf));
+    } else {
+      sock->lastdata = NULL;
+      sock->lastoffset = 0;
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: deleting netbuf=%p\n", buf));
+      netbuf_delete(buf);
+    }
+  } else
+    done = 1;
+  } /* while ( !done ) */
 
   /* Check to see from where the data was.*/
   if (from && fromlen) {
@@ -453,7 +487,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
+    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
   } else {
 #if SOCKETS_DEBUG
     addr = netbuf_fromaddr(buf);
@@ -461,27 +495,12 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, copylen));
+    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
 #endif
   }
 
-  /* If we don't peek the incoming message... */
-  if ((flags & MSG_PEEK)==0) {
-    /* If this is a TCP socket, check if there is data left in the
-       buffer. If so, it should be saved in the sock structure for next
-       time around. */
-    if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
-      sock->lastdata = buf;
-      sock->lastoffset += copylen;
-    } else {
-      sock->lastdata = NULL;
-      sock->lastoffset = 0;
-      netbuf_delete(buf);
-    }
-  }
-
   sock_set_errno(sock, 0);
-  return copylen;
+  return off;
 }
 
 int

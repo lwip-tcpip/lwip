@@ -146,7 +146,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     if (p == NULL) {
       return NULL;
     }
-    p->flags = PBUF_FLAG_POOL;
+    p->type = PBUF_TYPE_POOL;
+    p->flgs = 0;
     p->next = NULL;
 
     /* make the payload pointer point 'offset' bytes into pbuf data memory */
@@ -179,7 +180,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
         /* bail out unsuccesfully */
         return NULL;
       }
-      q->flags = PBUF_FLAG_POOL;
+      q->type = PBUF_TYPE_POOL;
+      q->flgs = 0;
       q->next = NULL;
       /* make previous pbuf point to this pbuf */
       r->next = q;
@@ -214,7 +216,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->payload = LWIP_MEM_ALIGN((void *)((u8_t *)p + SIZEOF_STRUCT_PBUF + offset));
     p->len = p->tot_len = length;
     p->next = NULL;
-    p->flags = PBUF_FLAG_RAM;
+    p->type = PBUF_TYPE_RAM;
+    p->flgs = 0;
 
     LWIP_ASSERT("pbuf_alloc: pbuf->payload properly aligned",
            ((mem_ptr_t)p->payload % MEM_ALIGNMENT) == 0);
@@ -234,7 +237,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_flag flag)
     p->payload = NULL;
     p->len = p->tot_len = length;
     p->next = NULL;
-    p->flags = ((flag == PBUF_ROM) ? PBUF_FLAG_ROM : PBUF_FLAG_REF);
+    p->type = ((flag == PBUF_ROM) ? PBUF_TYPE_ROM : PBUF_TYPE_REF);
+    p->flgs = 0;
     break;
   default:
     LWIP_ASSERT("pbuf_alloc: erroneous flag", 0);
@@ -269,10 +273,10 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   u16_t rem_len; /* remaining length */
   s32_t grow;
 
-  LWIP_ASSERT("pbuf_realloc: sane p->flags", p->flags == PBUF_FLAG_POOL ||
-              p->flags == PBUF_FLAG_ROM ||
-              p->flags == PBUF_FLAG_RAM ||
-              p->flags == PBUF_FLAG_REF);
+  LWIP_ASSERT("pbuf_realloc: sane p->type", p->type == PBUF_TYPE_POOL ||
+              p->type == PBUF_TYPE_ROM ||
+              p->type == PBUF_TYPE_RAM ||
+              p->type == PBUF_TYPE_REF);
 
   /* desired length larger than current length? */
   if (new_len >= p->tot_len) {
@@ -302,7 +306,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if ((q->flags == PBUF_FLAG_RAM) && (rem_len != q->len)) {
+  if ((q->type == PBUF_TYPE_RAM) && (rem_len != q->len)) {
     /* reallocate and adjust the length of the pbuf that will be split */
     mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
   }
@@ -343,7 +347,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 u8_t
 pbuf_header(struct pbuf *p, s16_t header_size_increment)
 {
-  u16_t flags;
+  u16_t type;
   void *payload;
   u16_t increment_magnitude;
 
@@ -361,20 +365,20 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     /* Can't assert these as some callers speculatively call
          pbuf_header() to see if it's OK.  Will return 1 below instead. */
     /* Check that we've got the correct type of pbuf to work with */
-    LWIP_ASSERT("p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL", 
-                p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_POOL);
+    LWIP_ASSERT("p->type == PBUF_TYPE_RAM || p->type == PBUF_TYPE_POOL", 
+                p->type == PBUF_TYPE_RAM || p->type == PBUF_TYPE_POOL);
     /* Check that we aren't going to move off the beginning of the pbuf */
     LWIP_ASSERT("p->payload - increment_magnitude >= p + SIZEOF_STRUCT_PBUF",
                 (u8_t *)p->payload - increment_magnitude >= (u8_t *)p + SIZEOF_STRUCT_PBUF);
 #endif
   }
 
-  flags = p->flags;
+  type = p->type;
   /* remember current payload pointer */
   payload = p->payload;
 
   /* pbuf types containing payloads? */
-  if (flags == PBUF_FLAG_RAM || flags == PBUF_FLAG_POOL) {
+  if (type == PBUF_TYPE_RAM || type == PBUF_TYPE_POOL) {
     /* set new payload pointer */
     p->payload = (u8_t *)p->payload - header_size_increment;
     /* boundary check fails? */
@@ -388,7 +392,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
       return 1;
     }
   /* pbuf types refering to external payloads? */
-  } else if (flags == PBUF_FLAG_REF || flags == PBUF_FLAG_ROM) {
+  } else if (type == PBUF_TYPE_REF || type == PBUF_TYPE_ROM) {
     /* hide a header in the payload? */
     if ((header_size_increment < 0) && (increment_magnitude <= p->len)) {
       /* increase payload pointer */
@@ -450,7 +454,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
 u8_t
 pbuf_free(struct pbuf *p)
 {
-  u16_t flags;
+  u16_t type;
   struct pbuf *q;
   u8_t count;
 
@@ -464,9 +468,9 @@ pbuf_free(struct pbuf *p)
 
   PERF_START;
 
-  LWIP_ASSERT("pbuf_free: sane flags",
-    p->flags == PBUF_FLAG_RAM || p->flags == PBUF_FLAG_ROM ||
-    p->flags == PBUF_FLAG_REF || p->flags == PBUF_FLAG_POOL);
+  LWIP_ASSERT("pbuf_free: sane type",
+    p->type == PBUF_TYPE_RAM || p->type == PBUF_TYPE_ROM ||
+    p->type == PBUF_TYPE_REF || p->type == PBUF_TYPE_POOL);
 
   count = 0;
   /* de-allocate all consecutive pbufs from the head of the chain that
@@ -488,14 +492,14 @@ pbuf_free(struct pbuf *p)
       /* remember next pbuf in chain for next iteration */
       q = p->next;
       LWIP_DEBUGF( PBUF_DEBUG | 2, ("pbuf_free: deallocating %p\n", (void *)p));
-      flags = p->flags;
+      type = p->type;
       /* is this a pbuf from the pool? */
-      if (flags == PBUF_FLAG_POOL) {
+      if (type == PBUF_TYPE_POOL) {
         memp_free(MEMP_PBUF_POOL, p);
       /* is this a ROM or RAM referencing pbuf? */
-      } else if (flags == PBUF_FLAG_ROM || flags == PBUF_FLAG_REF) {
+      } else if (type == PBUF_TYPE_ROM || type == PBUF_TYPE_REF) {
         memp_free(MEMP_PBUF, p);
-      /* flags == PBUF_FLAG_RAM */
+      /* type == PBUF_TYPE_RAM */
       } else {
         mem_free(p);
       }

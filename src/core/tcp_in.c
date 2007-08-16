@@ -301,6 +301,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
       
         if (recv_data != NULL) {
+          if(flags & TCP_PSH)
+			recv_data->flgs |= PBUF_FLAG_PUSH;
           /* Notify application that data has been received. */
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
         }

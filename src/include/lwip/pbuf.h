@@ -59,11 +59,13 @@ typedef enum {
 
 /* Definitions for the pbuf flag field. These are NOT the flags that
  * are passed to pbuf_alloc(). */
-#define PBUF_FLAG_RAM   0x00U    /* Flags that pbuf data is stored in RAM */
-#define PBUF_FLAG_ROM   0x01U    /* Flags that pbuf data is stored in ROM */
-#define PBUF_FLAG_POOL  0x02U    /* Flags that the pbuf comes from the pbuf pool */
-#define PBUF_FLAG_REF   0x04U    /* Flags thet the pbuf payload refers to RAM */
+#define PBUF_TYPE_RAM   0x00U    /* pbuf data is stored in RAM */
+#define PBUF_TYPE_ROM   0x01U    /* pbuf data is stored in ROM */
+#define PBUF_TYPE_POOL  0x02U    /* pbuf comes from the pbuf pool */
+#define PBUF_TYPE_REF   0x04U    /* pbuf payload refers to RAM */
 
+/** indicates this packet's data should be immediately passed to the application */
+#define PBUF_FLAG_PUSH 0x40U
 /** indicates this packet was broadcast on the link */
 #define PBUF_FLAG_LINK_BROADCAST 0x80U
 
@@ -86,8 +88,11 @@ struct pbuf {
   /** length of this buffer */
   u16_t len;  
 
-  /** flags telling the type of pbuf, see PBUF_FLAG_ */
-  u16_t flags;
+  /** type of pbuf, see PBUF_TYPE_ */
+  u8_t type;
+
+  /** misc flags */
+  u8_t flgs;
   
   /**
    * the reference count always equals the number of pointers
