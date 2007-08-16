@@ -310,21 +310,13 @@ tcpip_thread(void *arg)
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
 
-#if ETHARP_TCPIP_INPUT      
+#if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
     case TCPIP_MSG_INPUT:
-      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: IP packet %p\n", (void *)msg));
-      ip_input(msg->msg.inp.p, msg->msg.inp.netif);
-      memp_free(MEMP_TCPIP_MSG, msg);
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
+	  msg->msg.inp.f(msg->msg.inp.p, msg->msg.inp.netif);
+	  memp_free(MEMP_TCPIP_MSG_INPUT, msg);
       break;
-#endif /* ETHARP_TCPIP_INPUT */
-
-#if ETHARP_TCPIP_ETHINPUT
-    case TCPIP_MSG_ETHINPUT:
-      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: Ethernet packet %p\n", (void *)msg));
-      ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
-      memp_free(MEMP_TCPIP_MSG, msg);
-      break;
-#endif /* ETHARP_TCPIP_ETHINPUT */
+#endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -345,6 +337,7 @@ tcpip_thread(void *arg)
 		  sys_timeout (msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
 	  else
 		  sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
+      memp_free(MEMP_TCPIP_MSG, msg);
 	  break;
     default:
       break;
@@ -365,12 +358,34 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG);
+    msg = memp_malloc(MEMP_TCPIP_MSG_INPUT);
     if (msg == NULL) {
       return ERR_MEM;
     }
 
     msg->type = TCPIP_MSG_INPUT;
+	msg->msg.inp.f = ip_input;
+	msg->msg.inp.p = p;
+	msg->msg.inp.netif = inp;
+	sys_mbox_post(mbox, msg);
+	return ERR_OK;
+  }
+  return ERR_VAL;
+}
+
+err_t
+tcpip_input_callback(struct pbuf *p, struct netif *inp, err_t (*f)(struct pbuf *, struct netif *))
+{
+  struct tcpip_msg *msg;
+  
+  if (mbox != SYS_MBOX_NULL) {
+	msg = memp_malloc(MEMP_TCPIP_MSG_INPUT);
+	if (msg == NULL) {
+		return ERR_MEM;  
+	}
+
+	msg->type = TCPIP_MSG_INPUT;
+	msg->msg.inp.f = f;
     msg->msg.inp.p = p;
     msg->msg.inp.netif = inp;
     sys_mbox_post(mbox, msg);
@@ -390,21 +405,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 err_t
 tcpip_ethinput(struct pbuf *p, struct netif *inp)
 {
-  struct tcpip_msg *msg;
-
-  if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG);
-    if (msg == NULL) {
-      return ERR_MEM;
-    }
-    
-    msg->type = TCPIP_MSG_ETHINPUT;
-    msg->msg.inp.p = p;
-    msg->msg.inp.netif = inp;
-    sys_mbox_post(mbox, msg);
-    return ERR_OK;
-  }
-  return ERR_VAL;
+  return tcpip_input_callback(p, inp, ethernet_input);
 }
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
