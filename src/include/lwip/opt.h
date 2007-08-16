@@ -193,10 +193,14 @@
 #define MEMP_NUM_NETCONN                4
 #endif
 /* MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which is used
-   for sequential API communication and incoming packets. Used in
-   src/api/tcpip.c. */
+   for callback/timeout API communication. Used in src/api/tcpip.c. */
 #ifndef MEMP_NUM_TCPIP_MSG
 #define MEMP_NUM_TCPIP_MSG              8
+#endif
+/* MEMP_NUM_TCPIPMSG_INPUT: the number of struct tcpip_msg, which is used
+   for incoming packets. Used in src/api/tcpip.c. */
+#ifndef MEMP_NUM_TCPIP_MSG_INPUT
+#define MEMP_NUM_TCPIP_MSG_INPUT         MEMP_NUM_TCPIP_MSG
 #endif
 
 /* ---------- ARP options ---------- */
