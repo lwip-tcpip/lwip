@@ -102,8 +102,8 @@ struct etharp_entry {
   struct netif *netif;
 };
 
-static const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-static const struct eth_addr ethzero = {{0,0,0,0,0,0}};
+const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
+const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 #if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry = 0;

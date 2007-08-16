@@ -61,6 +61,12 @@
 #include "lcp.h"
 #include "pppdebug.h"
 
+#if PPPOE_SUPPORT
+#include "ppp_oe.h"
+#else
+#define PPPOE_MAXMTU PPP_MAXMRU
+#endif
+
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/

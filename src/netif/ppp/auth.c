@@ -195,7 +195,7 @@ void link_terminated(int unit)
         logout();
     lcp_phase[unit] = PHASE_DEAD;
     AUTHDEBUG((LOG_NOTICE, "Connection terminated.\n"));
-	pppMainWakeup(unit);
+	pppLinkTerminated(unit);
 }
 
 /*
@@ -223,7 +223,7 @@ void link_down(int unit)
     num_np_up = 0;
     if (lcp_phase[unit] != PHASE_DEAD)
         lcp_phase[unit] = PHASE_TERMINATE;
-	pppMainWakeup(unit);
+	pppLinkDown(unit);
 }
 
 /*

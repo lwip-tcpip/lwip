@@ -121,6 +121,8 @@ PACK_STRUCT_END
 
 #define ETHTYPE_ARP 0x0806
 #define ETHTYPE_IP  0x0800
+#define ETHTYPE_PPPOEDISC 0x8863  /* PPP Over Ethernet Discovery Stage */
+#define ETHTYPE_PPPOE     0x8864  /* PPP Over Ethernet Session Stage */
 
 /** ARP message types (opcodes) */
 #define ARP_REQUEST 1
@@ -161,6 +163,8 @@ err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 #if ARP_TABLE_SIZE > 0x7f
 #error ARP_TABLE_SIZE must fit in an s8_t
 #endif
+
+extern const struct eth_addr ethbroadcast, ethzero;
 
 #ifdef __cplusplus
 }

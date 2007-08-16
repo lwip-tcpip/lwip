@@ -101,8 +101,10 @@ static void ChapLowerUp (int);
 static void ChapLowerDown (int);
 static void ChapInput (int, u_char *, int);
 static void ChapProtocolReject (int);
+#if 0
 static int  ChapPrintPkt (u_char *, int,
 			      void (*) (void *, char *, ...), void *);
+#endif
 
 static void ChapChallengeTimeout (void *);
 static void ChapResponseTimeout (void *);
@@ -142,15 +144,6 @@ struct protent chap_protent = {
     NULL,
     NULL
 #endif
-};
-
-
-
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
-static char *ChapCodenames[] = {
-	"Challenge", "Response", "Success", "Failure"
 };
 
 
@@ -808,6 +801,10 @@ static void ChapSendResponse(chap_state *cstate)
 	++cstate->resp_transmits;
 }
 
+#if 0
+static char *ChapCodenames[] = {
+	"Challenge", "Response", "Success", "Failure"
+};
 /*
  * ChapPrintPkt - print the contents of a CHAP packet.
  */
@@ -866,7 +863,8 @@ static int ChapPrintPkt(
 	
 	return len + CHAP_HEADERLEN;
 }
-
 #endif
+
+#endif /* CHAP_SUPPORT > 0 */
 
 #endif /* PPP_SUPPORT */

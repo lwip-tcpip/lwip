@@ -98,6 +98,9 @@
 #if VJ_SUPPORT > 0
 #include "vj.h"
 #endif
+#if PPPOE_SUPPORT > 0
+#include "ppp_oe.h"
+#endif
 
 #include "pppdebug.h"
 
@@ -134,24 +137,29 @@ typedef enum {
  */
 typedef struct PPPControl_s {
     char openFlag;                      /* True when in use. */
-    char oldFrame;                      /* Old framing character for fd. */
+#if PPPOE_SUPPORT
+    struct netif *ethif;
+    struct pppoe_softc *pppoe_sc;
+#endif
+    int  if_up;                         /* True when the interface is up. */
+    int  errCode;                       /* Code indicating why interface is down. */
+#if PPPOS_SUPPORT
     sio_fd_t fd;                    /* File device ID of port. */
     int  kill_link;                     /* Shut the link down. */
     int  sig_hup;                       /* Carrier lost. */
-    int  if_up;                         /* True when the interface is up. */
-    int  errCode;                       /* Code indicating why interface is down. */
     struct pbuf *inHead, *inTail;       /* The input packet. */
     PPPDevStates inState;               /* The input process state. */
     char inEscaped;                     /* Escape next character. */
     u16_t inProtocol;                   /* The input protocol code. */
     u16_t inFCS;                        /* Input Frame Check Sequence value. */
+#endif
     int  mtu;                           /* Peer's mru */
     int  pcomp;                         /* Does peer accept protocol compression? */
     int  accomp;                        /* Does peer accept addr/ctl compression? */
     u_long lastXMit;                    /* Time of last transmission. */
     ext_accm inACCM;                    /* Async-Ctl-Char-Map for input. */
     ext_accm outACCM;                   /* Async-Ctl-Char-Map for output. */
-#if VJ_SUPPORT > 0
+#if PPPOS_SUPPORT && VJ_SUPPORT > 0
     int  vjEnabled;                     /* Flag indicating VJ compression enabled. */
     struct vjcompress vjComp;           /* Van Jabobsen compression header. */
 #endif
@@ -180,9 +188,11 @@ struct npioctl {
 /***********************************/
 /*** LOCAL FUNCTION DECLARATIONS ***/
 /***********************************/
+#if PPPOS_SUPPORT
 static void pppMain(void *pd);
 static void pppDrop(PPPControl *pc);
 static void pppInProc(int pd, u_char *s, int l);
+#endif
 
 
 /******************************/
@@ -220,13 +230,14 @@ struct protent *ppp_protocols[] = {
  * Buffers for outgoing packets.  This must be accessed only from the appropriate
  * PPP task so that it doesn't need to be protected to avoid collisions.
  */
-u_char outpacket_buf[NUM_PPP][PPP_MRU+PPP_HDRLEN];  
+u_char *outpacket_buf[NUM_PPP];  
 
 
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
 
+#if PPPOS_SUPPORT
 /*
  * FCS lookup table as calculated by genfcstab.
  */
@@ -279,6 +290,86 @@ static u_char pppACCMMask[] = {
 };
 
 
+void
+pppMainWakeup(int pd)
+{
+	PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d\n", pd));
+	sio_read_abort(pppControl[pd].fd);
+}
+#endif /* PPPOS_SUPPORT */
+
+void
+pppLinkTerminated(int pd)
+{
+    PPPControl *pc = &pppControl[pd];
+
+    PPPDEBUG((LOG_DEBUG, "pppLinkTerminated: unit %d\n", pd));
+
+#if PPPOE_SUPPORT
+    if(pc->ethif) {
+	    pppoe_disconnect(pc->pppoe_sc);
+    } else
+#endif /* PPPOE_SUPPORT */
+    {
+#if PPPOS_SUPPORT
+	    pppMainWakeup(pd);
+#endif /* PPPOS_SUPPORT */
+    }
+}
+
+void
+pppLinkDown(int pd)
+{
+    PPPControl *pc = &pppControl[pd];
+
+    PPPDEBUG((LOG_DEBUG, "pppLinkDown: unit %d\n", pd));
+
+#if PPPOE_SUPPORT
+    if(pc->ethif) {
+	    pppoe_disconnect(pc->pppoe_sc);
+    } else
+#endif /* PPPOE_SUPPORT */
+    {
+#if PPPOS_SUPPORT
+	    pppMainWakeup(pd);
+#endif /* PPPOS_SUPPORT */
+    }
+}
+
+/* these callbacks are necessary because lcp_* functions
+   must be called in the same context as pppInput(),
+   namely the tcpip_thread(), essentially because
+   they manipulate timeouts which are thread-private
+*/
+
+static void
+pppStartCB(void *arg)
+{
+    int pd = (int)arg;
+
+    PPPDEBUG((LOG_DEBUG, "pppStartCB: unit %d\n", pd));
+    lcp_lowerup(pd);
+    lcp_open(pd);      /* Start protocol */
+}
+
+static void
+pppStopCB(void *arg)
+{
+    int pd = (int)arg;
+
+    PPPDEBUG((LOG_DEBUG, "pppStopCB: unit %d\n", pd));
+    lcp_close(pd, "User request");
+}
+
+static void
+pppHupCB(void *arg)
+{
+    int pd = (int)arg;
+
+    PPPDEBUG((LOG_DEBUG, "pppHupCB: unit %d\n", pd));
+    lcp_lowerdown(pd);
+    link_terminated(pd);
+}
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
@@ -286,7 +377,8 @@ static u_char pppACCMMask[] = {
 
 struct ppp_settings ppp_settings;
 
-void pppInit(void)
+err_t
+pppInit(void)
 {
     struct protent *protp;
     int i, j;
@@ -302,6 +394,10 @@ void pppInit(void)
 
 		subnetMask = htonl(0xffffff00);
     
+		outpacket_buf[i] = mem_malloc(PPP_MRU+PPP_HDRLEN);
+		if(!outpacket_buf[i])
+			return ERR_MEM;
+
         /*
          * Initialize to the standard option set.
          */
@@ -313,6 +409,12 @@ void pppInit(void)
     /* Clear the statistics. */
     memset(&lwip_stats.link, 0, sizeof(lwip_stats.link));
 #endif
+
+#if PPPOE_SUPPORT > 0
+    pppoe_init();
+#endif
+
+	return ERR_OK;
 }
 
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
@@ -374,6 +476,7 @@ void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 	ppp_settings.passwd[0] = '\0';
 }
 
+#if PPPOS_SUPPORT
 /* Open a new PPP connection using the given I/O device.
  * This initializes the PPP control block but does not
  * attempt to negotiate the LCP session.  If this port
@@ -381,7 +484,7 @@ void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
  * established before calling this.
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. */
-int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
+int pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
 {
     PPPControl *pc;
     int pd;
@@ -401,6 +504,7 @@ int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg)
         lcp_init(pd);
         pc = &pppControl[pd];
         pc->fd = fd;
+        pc->ethif= NULL;
         pc->kill_link = 0;
         pc->sig_hup = 0;
         pc->if_up = 0;
@@ -444,6 +548,99 @@ int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg)
     }
     return pd;
 }
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
+static void pppOverEthernetLinkStatusCB(int pd, int up);
+
+void pppOverEthernetClose(int pd)
+{
+	PPPControl* pc = &pppControl[pd];
+
+	// *TJL* There's no lcp_deinit
+	lcp_close(pd, NULL);
+
+	pppoe_destroy(&pc->netif);
+}
+
+int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
+{
+    PPPControl *pc;
+    int pd;
+
+    /* Find a free PPP session descriptor. Critical region? */
+    for (pd = 0; pd < NUM_PPP && pppControl[pd].openFlag != 0; pd++);
+    if (pd >= NUM_PPP)
+	pd = PPPERR_OPEN;
+    else
+	pppControl[pd].openFlag = !0;
+
+    /* Launch a deamon thread. */
+    if (pd >= 0) {
+
+	pppControl[pd].openFlag = 1;
+
+	lcp_init(pd);
+	
+	lcp_wantoptions[pd].mru = PPPOE_MAXMTU;
+	lcp_wantoptions[pd].neg_asyncmap = 0;
+	lcp_wantoptions[pd].neg_pcompression = 0;
+	lcp_wantoptions[pd].neg_accompression = 0;
+
+	lcp_allowoptions[pd].mru = PPPOE_MAXMTU;
+	lcp_allowoptions[pd].neg_asyncmap = 0;
+	lcp_allowoptions[pd].neg_pcompression = 0;
+	lcp_allowoptions[pd].neg_accompression = 0;
+
+	pc = &pppControl[pd];
+	pc->if_up = 0;
+	pc->errCode = 0;
+	pc->lastXMit = 0;
+#if PPPOS_SUPPORT
+	pc->kill_link = 0;
+	pc->sig_hup = 0;
+	pc->inState = PDIDLE;
+	pc->inHead = NULL;
+	pc->inTail = NULL;
+	pc->inEscaped = 0;
+#if VJ_SUPPORT > 0
+	pc->vjEnabled = 0;
+#endif
+#endif /* PPPOS_SUPPORT */
+	pc->ethif= ethif;
+
+
+	memset(pc->inACCM, 0, sizeof(ext_accm));
+	memset(pc->outACCM, 0, sizeof(ext_accm));
+
+	pc->linkStatusCB = linkStatusCB;
+	pc->linkStatusCtx = linkStatusCtx;
+
+	if(pppoe_create(ethif, pd, pppOverEthernetLinkStatusCB, &pc->pppoe_sc) != ERR_OK) {
+		pc->openFlag = 0;
+		return PPPERR_OPEN;
+	}
+
+	pppoe_connect(pc->pppoe_sc);
+
+	if(!linkStatusCB) {
+	    while(pd >= 0 && !pc->if_up) {
+		sys_msleep(500);
+		if (lcp_phase[pd] == PHASE_DEAD) {
+		    pppClose(pd);
+		    if (pc->errCode)
+			pd = pc->errCode;
+		    else
+			pd = PPPERR_CONNECT;
+		}
+	    }
+	}
+
+    }
+    return pd;
+}
+#endif /* PPPOE_SUPPORT */
+
 
 /* Close a PPP connection and release the descriptor. 
  * Any outstanding packets in the queues are dropped.
@@ -454,8 +651,20 @@ int pppClose(int pd)
     int st = 0;
 
     /* Disconnect */
+#if PPPOE_SUPPORT
+    if(pc->ethif) {
+	    PPPDEBUG((LOG_DEBUG, "pppClose: unit %d kill_link -> pppStopCB\n", pd));
+	    pc->errCode = PPPERR_USER;
+	    /* This will leave us at PHASE_DEAD. */
+	    tcpip_callback(pppStopCB, (void*)pd);
+    } else
+#endif /* PPPOE_SUPPORT */
+    {
+#if PPPOS_SUPPORT
     pc->kill_link = !0;
     pppMainWakeup(pd);
+#endif /* PPPOS_SUPPORT */
+    }
     
     if(!pc->linkStatusCB) {
 	    while(st >= 0 && lcp_phase[pd] != PHASE_DEAD) {
@@ -471,10 +680,21 @@ void pppSigHUP(int pd)
 {
     PPPControl *pc = &pppControl[pd];
 
+#if PPPOE_SUPPORT
+    if(pc->ethif) {
+	    PPPDEBUG((LOG_DEBUG, "pppSigHUP: unit %d sig_hup -> pppHupCB\n", pd));
+	    tcpip_callback(pppHupCB, (void*)pd);
+    } else
+#endif /* PPPOE_SUPPORT */
+    {
+#if PPPOS_SUPPORT
     pc->sig_hup = 1;
     pppMainWakeup(pd);
+#endif /* PPPOS_SUPPORT */
+    }
 }
 
+#if PPPOS_SUPPORT
 static void nPut(PPPControl *pc, struct pbuf *nb)
 {
 	struct pbuf *b;
@@ -535,6 +755,50 @@ static struct pbuf *pppAppend(u_char c, struct pbuf *nb, ext_accm *outACCM)
         
     return tb;
 }
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
+static err_t
+pppifOutputOverEthernet(int pd, struct pbuf *p)
+{
+    PPPControl *pc = &pppControl[pd];
+    struct pbuf *pb;
+    u_short protocol = PPP_IP;
+    int i=0;
+
+    pb = pbuf_alloc(PBUF_LINK, pppoe_hdrlen + sizeof(protocol), PBUF_RAM);
+    if(!pb) {
+#if LINK_STATS
+	    lwip_stats.link.memerr++;
+	    lwip_stats.link.proterr++;
+#endif /* LINK_STATS */
+	    return ERR_MEM;
+    }
+
+    pbuf_header(pb, -pppoe_hdrlen);
+
+    pc->lastXMit = sys_jiffies();
+
+    if (!pc->pcomp || protocol > 0xFF) {
+	*((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
+    }
+    *((u_char*)pb->payload + i) = protocol & 0xFF;
+
+    pbuf_chain(pb, p);
+
+    if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
+#if LINK_STATS
+	    lwip_stats.link.err++;
+#endif /* LINK_STATS */
+	    return PPPERR_DEVICE;
+    }
+
+#if LINK_STATS
+    lwip_stats.link.xmit++;
+#endif /* LINK_STATS */
+    return ERR_OK;
+}
+#endif /* PPPOE_SUPPORT */
 
 /* Send a packet on the given connection. */
 static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *ipaddr)
@@ -542,9 +806,11 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
     int pd = (int)netif->state;
     u_short protocol = PPP_IP;
     PPPControl *pc = &pppControl[pd];
+#if PPPOS_SUPPORT
     u_int fcsOut = PPP_INITFCS;
     struct pbuf *headMB = NULL, *tailMB = NULL, *p;
     u_char c;
+#endif /* PPPOS_SUPPORT */
 
     LWIP_UNUSED_ARG(ipaddr);
 
@@ -571,6 +837,13 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
 		return ERR_RTE;
 	}
 
+#if PPPOE_SUPPORT
+	if(pc->ethif) {
+		return pppifOutputOverEthernet(pd, pb);
+	}
+#endif /* PPPOE_SUPPORT */
+
+#if PPPOS_SUPPORT
     /* Grab an output buffer. */
 	headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
     if (headMB == NULL) {
@@ -675,6 +948,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *i
     PPPDEBUG((LOG_INFO, "pppifOutput[%d]: proto=0x%04X\n", pd, protocol));
 
     nPut(pc, headMB);
+#endif /* PPPOS_SUPPORT */
 
     return ERR_OK;
 }
@@ -708,12 +982,14 @@ int  pppIOCtl(int pd, int cmd, void *arg)
             else
                 st = PPPERR_PARAM;
             break;
+#if PPPOS_SUPPORT
         case PPPCTLG_FD:
             if (arg) 
                 *(sio_fd_t *)arg = pc->fd;
             else
                 st = PPPERR_PARAM;
             break;
+#endif /* PPPOS_SUPPORT */
         default:
             st = PPPERR_PARAM;
             break;
@@ -740,6 +1016,45 @@ u_int pppMTU(int pd)
     return st;
 }
 
+#if PPPOE_SUPPORT
+int pppWriteOverEthernet(int pd, const u_char *s, int n)
+{
+    PPPControl *pc = &pppControl[pd];
+	struct pbuf *pb;
+
+	/* skip address & flags */
+	s += 2;
+	n -= 2;
+
+	pb = pbuf_alloc(PBUF_LINK, pppoe_hdrlen + n, PBUF_RAM);
+	if(!pb) {
+#if LINK_STATS
+		lwip_stats.link.memerr++;
+		lwip_stats.link.proterr++;
+#endif /* LINK_STATS */
+		return PPPERR_ALLOC;
+	}
+
+	pbuf_header(pb, -pppoe_hdrlen);
+
+    pc->lastXMit = sys_jiffies();
+
+	SMEMCPY(pb->payload, s, n);
+
+	if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
+#if LINK_STATS
+		lwip_stats.link.err++;
+#endif /* LINK_STATS */
+		return PPPERR_DEVICE;
+	}
+
+#if LINK_STATS
+	lwip_stats.link.xmit++;
+#endif /* LINK_STATS */
+    return PPPERR_NONE;
+}
+#endif /* PPPOE_SUPPORT */
+
 /*
  * Write n characters to a ppp link.
  *  RETURN: >= 0 Number of characters written
@@ -748,9 +1063,19 @@ u_int pppMTU(int pd)
 int pppWrite(int pd, const u_char *s, int n)
 {
     PPPControl *pc = &pppControl[pd];
+#if PPPOS_SUPPORT
     u_char c;
-    u_int fcsOut = PPP_INITFCS;
-    struct pbuf *headMB = NULL, *tailMB;
+    u_int fcsOut;
+    struct pbuf *headMB, *tailMB;
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
+	if(pc->ethif) {
+		return pppWriteOverEthernet(pd, s, n);
+	}
+#endif /* PPPOE_SUPPORT */
+
+#if PPPOS_SUPPORT
 	headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
     if (headMB == NULL) {
 #if LINK_STATS
@@ -768,6 +1093,7 @@ int pppWrite(int pd, const u_char *s, int n)
         tailMB = pppAppend(PPP_FLAG, tailMB, NULL);
     pc->lastXMit = sys_jiffies();
      
+	fcsOut = PPP_INITFCS;
     /* Load output buffer. */
     while (n-- > 0) {
         c = *s++;
@@ -803,6 +1129,7 @@ int pppWrite(int pd, const u_char *s, int n)
     PPPDEBUG((LOG_INFO, "pppWrite[%d]: len=%d\n", pd, headMB->len));
 /*     "pppWrite[%d]: %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
     nPut(pc, headMB);
+#endif /* PPPOS_SUPPORT */
 
     return PPPERR_NONE;
 }
@@ -967,7 +1294,7 @@ int sifvjcomp(
     int maxcid
 )
 {
-#if VJ_SUPPORT > 0
+#if PPPOS_SUPPORT > 0 && VJ_SUPPORT > 0
     PPPControl *pc = &pppControl[pd];
     
     pc->vjEnabled = vjcomp;
@@ -1009,6 +1336,8 @@ int sifup(int pd)
 		if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input)) {
         	
         	netif_set_up(&pc->netif);
+			/* ugly workaround for storing a reference to the ppp related info*/
+			pc->netif.dhcp = (struct dhcp *) &pc->addrs;
         	pc->if_up = 1;
         	pc->errCode = PPPERR_NONE;
 
@@ -1154,50 +1483,11 @@ int cifdefaultroute(int pd, u32_t l, u32_t g)
     return st;
 }
 
-void
-pppMainWakeup(int pd)
-{
-    PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d\n", pd));
-    sio_read_abort(pppControl[pd].fd);
-}
-
-/* these callbacks are necessary because lcp_* functions
-   must be called in the same context as pppInput(),
-   namely the tcpip_thread(), essentially because
-   they manipulate timeouts which are thread-private
-*/
-
-static void
-pppStartCB(void *arg)
-{
-    int pd = (int)arg;
-
-    PPPDEBUG((LOG_DEBUG, "pppStartCB: unit %d\n", pd));
-    lcp_lowerup(pd);
-    lcp_open(pd);      /* Start protocol */
-}
-
-static void
-pppStopCB(void *arg)
-{
-    int pd = (int)arg;
-
-	PPPDEBUG((LOG_DEBUG, "pppStopCB: unit %d\n", pd));
-    lcp_close(pd, "User request");
-}
-
-static void
-pppHupCB(void *arg)
-{
-    int pd = (int)arg;
-
-	PPPDEBUG((LOG_DEBUG, "pppHupCB: unit %d\n", pd));
-    lcp_lowerdown(pd);
-    link_terminated(pd);
-}
 /**********************************/
 /*** LOCAL FUNCTION DEFINITIONS ***/
 /**********************************/
+
+#if PPPOS_SUPPORT
 /* The main PPP process function.  This implements the state machine according
  * to section 4 of RFC 1661: The Point-To-Point Protocol. */
 static void pppMain(void *arg)
@@ -1243,6 +1533,7 @@ static void pppMain(void *arg)
         }
     }
 	PPPDEBUG((LOG_INFO, "pppMain: unit %d: PHASE_DEAD\n", pd));
+	pppDrop(pc);	// bug fix #17726
     pbuf_free(p);
 
 out:
@@ -1252,8 +1543,44 @@ out:
 
     pc->openFlag = 0;
 }
+#endif /* PPPOS_SUPPORT */
 
-static struct pbuf *pppSingleBuf(struct pbuf *p)
+#if PPPOE_SUPPORT
+
+void pppOverEthernetInitFailed(void* arg)
+{
+	PPPControl* pc;
+	int pd = (int)arg;
+
+	pppHupCB(arg);
+	pppStopCB(arg);
+
+	pc = &pppControl[pd];
+	pppoe_destroy(&pc->netif);
+	pc->openFlag = 0;
+
+	if(pc->linkStatusCB)
+	{
+		pc->linkStatusCB(pc->linkStatusCtx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
+	}
+}
+
+static void
+pppOverEthernetLinkStatusCB(int pd, int up)
+{
+	if(up) {
+		PPPDEBUG((LOG_INFO, "pppMain: unit %d: Connecting\n", pd));
+		tcpip_callback(pppStartCB, (void*)pd);
+	} else {
+    PPPControl* pc;
+    pc = &pppControl[pd];
+
+		tcpip_callback(pppOverEthernetInitFailed, (void*)pd);
+	}
+}
+#endif /* PPPOE_SUPPORT */
+
+struct pbuf *pppSingleBuf(struct pbuf *p)
 {
 	struct pbuf *q, *b;
 	u_char *pl;
@@ -1412,6 +1739,7 @@ out:
 }
 
 
+#if PPPOS_SUPPORT
 /*
  * Drop the input packet.
  */
@@ -1635,5 +1963,47 @@ static void pppInProc(int pd, u_char *s, int l)
     }
 	avRandomize();
 }
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
+void pppInProcOverEthernet(int pd, struct pbuf *pb)
+{
+    struct pppInputHeader *pih;
+    u16_t inProtocol;
+
+    if(pb->len < sizeof(inProtocol)) {
+	    PPPDEBUG((LOG_ERR, "pppInProcOverEthernet: too small for protocol field\n"));
+	    goto drop;
+    }
+
+    inProtocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
+
+    /* make room for pppInputHeader - should not fail */
+    if (pbuf_header(pb, sizeof(*pih) - sizeof(inProtocol)) != 0) {
+	    PPPDEBUG((LOG_ERR, "pppInProcOverEthernet: could not allocate room for header\n"));
+	    goto drop;
+    }
+
+    pih = pb->payload;
+
+    pih->unit = pd;
+    pih->proto = inProtocol;
+
+    /* Dispatch the packet thereby consuming it. */
+    if(tcpip_callback(pppInput, pb) != ERR_OK) {
+	    PPPDEBUG((LOG_ERR, "pppInProcOverEthernet[%d]: tcpip_callback() failed, dropping packet\n", pd));
+	    goto drop;
+    }
+
+    return;
+
+drop:
+#if LINK_STATS
+	    lwip_stats.link.drop++;
+#endif
+	    pbuf_free(pb);
+	    return;
+}
+#endif /* PPPOE_SUPPORT */
 
 #endif /* PPP_SUPPORT */

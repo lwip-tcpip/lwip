@@ -329,7 +329,7 @@ struct ppp_addrs {
 *** PUBLIC DATA STRUCTURES ***
 *****************************/
 /* Buffers for outgoing packets. */
-extern u_char outpacket_buf[NUM_PPP][PPP_MRU+PPP_HDRLEN];
+extern u_char *outpacket_buf[NUM_PPP];
 
 extern struct ppp_settings ppp_settings;
 
@@ -341,7 +341,7 @@ extern struct protent *ppp_protocols[];/* Table of pointers to supported protoco
 ***********************/
 
 /* Initialize the PPP subsystem. */
-void pppInit(void);
+err_t pppInit(void);
 
 /* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
@@ -372,13 +372,18 @@ enum pppAuthType {
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
 
 /*
- * Open a new PPP connection using the given I/O device.
+ * Open a new PPP connection using the given serial I/O device.
  * This initializes the PPP control block but does not
  * attempt to negotiate the LCP session.
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure. 
  */
-int pppOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
+int pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
+
+/*
+ * Open a new PPP Over Ethernet (PPPOE) connection.
+ */
+int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
 
 /*
  * Close a PPP connection and release the descriptor. 
@@ -409,6 +414,14 @@ u_int pppMTU(int pd);
  *		 	 -1 Failed to write to device
  */
 int pppWrite(int pd, const u_char *s, int n);
+
+void pppInProcOverEthernet(int pd, struct pbuf *pb);
+
+struct pbuf *pppSingleBuf(struct pbuf *p);
+
+void pppLinkTerminated(int pd);
+
+void pppLinkDown(int pd);
 
 void pppMainWakeup(int pd);
 

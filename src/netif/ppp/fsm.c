@@ -655,7 +655,7 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len)
 	if (id != f->reqid || f->seen_ack)	/* Expected id? */
 		return;				/* Nope, toss... */
 	proc = (code == CONFNAK)? f->callbacks->nakci: f->callbacks->rejci;
-	if (!proc || !(ret = proc(f, inp, len))) {
+	if (!proc || !((ret = proc(f, inp, len)))) {
 		/* Nak/reject is bad - ignore it */
 		FSMDEBUG((LOG_INFO, "%s: received bad %s (length %d)\n",
 					PROTO_NAME(f), (code==CONFNAK? "Nak": "reject"), len));

@@ -643,9 +643,19 @@
 #define PPP_SUPPORT                     0      /* Set for PPP */
 #endif
 
+#ifndef PPPOE_SUPPORT
+#define PPPOE_SUPPORT                   0      /* Set for PPP Over Ethernet */
+#endif
+
+#ifndef PPPOS_SUPPORT
+#define PPPOS_SUPPORT                   PPP_SUPPORT      /* Set for PPP Over Serial */
+#endif
+
 #if PPP_SUPPORT 
 
+#ifndef NUM_PPP
 #define NUM_PPP                         1      /* Max PPP sessions. */
+#endif
 
 
 
@@ -657,9 +667,15 @@
 #define CHAP_SUPPORT                    0      /* Set for CHAP. */
 #endif
 
+#ifndef MSCHAP_SUPPORT
 #define MSCHAP_SUPPORT                  0      /* Set for MSCHAP (NOT FUNCTIONAL!) */
+#endif
+#ifndef CBCP_SUPPORT
 #define CBCP_SUPPORT                    0      /* Set for CBCP (NOT FUNCTIONAL!) */
+#endif
+#ifndef CCP_SUPPORT
 #define CCP_SUPPORT                     0      /* Set for CCP (NOT FUNCTIONAL!) */
+#endif
 
 #ifndef VJ_SUPPORT
 #define VJ_SUPPORT                      0      /* Set for VJ header compression. */
@@ -673,30 +689,48 @@
 /*
  * Timeouts.
  */
+#ifndef FSM_DEFTIMEOUT
 #define FSM_DEFTIMEOUT                  6       /* Timeout time in seconds */
+#endif
+#ifndef FSM_DEFMAXTERMREQS
 #define FSM_DEFMAXTERMREQS              2       /* Maximum Terminate-Request transmissions */
+#endif
+#ifndef FSM_DEFMAXCONFREQS
 #define FSM_DEFMAXCONFREQS              10      /* Maximum Configure-Request transmissions */
+#endif
+#ifndef FSM_DEFMAXNAKLOOPS
 #define FSM_DEFMAXNAKLOOPS              5       /* Maximum number of nak loops */
+#endif
 
+#ifndef UPAP_DEFTIMEOUT
 #define UPAP_DEFTIMEOUT                 6       /* Timeout (seconds) for retransmitting req */
+#endif
+#ifndef UPAP_DEFREQTIME
 #define UPAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
+#endif
 
+#ifndef CHAP_DEFTIMEOUT
 #define CHAP_DEFTIMEOUT                 6       /* Timeout time in seconds */
+#endif
+#ifndef CHAP_DEFTRANSMITS
 #define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
+#endif
 
 
 /* Interval in seconds between keepalive echo requests, 0 to disable. */
-#if 1
+#ifndef LCP_ECHOINTERVAL
 #define LCP_ECHOINTERVAL                0
-#else
-#define LCP_ECHOINTERVAL                10
 #endif
 
 /* Number of unanswered echo requests before failure. */
+#ifndef LCP_MAXECHOFAILS
 #define LCP_MAXECHOFAILS                3
+#endif
 
 /* Max Xmit idle time (in jiffies) before resend flag char. */
+#ifndef PPP_MAXIDLEFLAG
 #define PPP_MAXIDLEFLAG                 100
+#endif
 
 /*
  * Packet sizes
@@ -707,6 +741,8 @@
  *    of living in lcp.h)
  */
 #define PPP_MTU                         1500     /* Default MTU (size of Info field) */
+#endif
+#ifndef PPP_MAXMTU
 #if 0
 #define PPP_MAXMTU  65535 - (PPP_HDRLEN + PPP_FCSLEN)
 #else
@@ -715,7 +751,9 @@
 #define PPP_MINMTU                      64
 #define PPP_MRU                         1500     /* default MRU = max length of info field */
 #define PPP_MAXMRU                      1500     /* Largest MRU we allow */
+#ifndef PPP_DEFMRU
 #define PPP_DEFMRU                      296             /* Try for this */
+#endif
 #define PPP_MINMRU                      128             /* No MRUs below this */
 
 

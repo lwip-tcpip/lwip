@@ -51,6 +51,7 @@
 #include <lwip/stats.h>
 
 #include "netif/etharp.h"
+#include "netif/ppp_oe.h"
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'
@@ -288,6 +289,15 @@ ethernetif_input(struct netif *netif)
     
 #endif /* ETHARP_TCPIP_INPUT */
 #endif /* ETHARP_TCPIP_ETHINPUT */
+
+#if PPPOE_SUPPORT > 0
+  case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
+	pppoe_disc_input(netif, p);
+	break;
+  case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
+	pppoe_data_input(netif, p);
+	break;
+#endif
 
   default:
     pbuf_free(p);

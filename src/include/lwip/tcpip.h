@@ -80,6 +80,8 @@ err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
 #endif /* LWIP_NETIF_API */
 
 err_t tcpip_callback(void (*f)(void *ctx), void *ctx);
+err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
+#define tcpip_untimeout(h, arg) tcpip_timeout(0xffffffff, h, arg)
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
@@ -92,7 +94,8 @@ enum tcpip_msg_type {
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
-  TCPIP_MSG_CALLBACK
+  TCPIP_MSG_CALLBACK,
+  TCPIP_MSG_TIMEOUT
 };
 
 struct tcpip_msg {
@@ -106,11 +109,17 @@ struct tcpip_msg {
     struct {
       struct pbuf *p;
       struct netif *netif;
+      err_t (*f)(struct pbuf *, struct netif *);
     } inp;
     struct {
       void (*f)(void *ctx);
       void *ctx;
     } cb;
+    struct {
+      u32_t msecs;
+      sys_timeout_handler h;
+      void *arg;
+    } tmo;
   } msg;
 };
 
