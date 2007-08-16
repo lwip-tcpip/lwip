@@ -111,7 +111,7 @@ static void
 autoip_handle_arp_conflict(struct netif *netif)
 {
   /* Somehow detect if we are defending or retreating */
-  unsigned char defend = 1; // tbd
+  unsigned char defend = 1; /* tbd */
 
   if(defend) {
     if(netif->autoip->lastconflict > 0) {
