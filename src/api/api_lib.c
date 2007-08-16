@@ -325,6 +325,8 @@ netconn_delete(struct netconn *conn)
 
   /* Drain the recvmbox. */
   if (conn->recvmbox != SYS_MBOX_NULL) {
+	/* send message in order to unblock a potentially waiting recv. */
+	sys_mbox_post( conn->recvmbox, NULL );
     while (sys_mbox_tryfetch(conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
       if (conn->type == NETCONN_TCP) {
         if(mem != NULL)
