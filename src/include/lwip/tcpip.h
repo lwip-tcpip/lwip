@@ -86,12 +86,9 @@ err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
-#if ETHARP_TCPIP_INPUT  
+#if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
   TCPIP_MSG_INPUT,
-#endif /* ETHARP_TCPIP_INPUT */
-#if ETHARP_TCPIP_ETHINPUT
-  TCPIP_MSG_ETHINPUT,
-#endif /* ETHARP_TCPIP_ETHINPUT */
+#endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
