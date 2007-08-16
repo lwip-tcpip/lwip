@@ -557,7 +557,7 @@ void pppOverEthernetClose(int pd)
 {
 	PPPControl* pc = &pppControl[pd];
 
-	// *TJL* There's no lcp_deinit
+	/* *TJL* There's no lcp_deinit */
 	lcp_close(pd, NULL);
 
 	pppoe_destroy(&pc->netif);
@@ -1533,7 +1533,7 @@ static void pppMain(void *arg)
         }
     }
 	PPPDEBUG((LOG_INFO, "pppMain: unit %d: PHASE_DEAD\n", pd));
-	pppDrop(pc);	// bug fix #17726
+	pppDrop(pc);	/* bug fix #17726 */
     pbuf_free(p);
 
 out:
