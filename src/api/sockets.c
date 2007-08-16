@@ -299,9 +299,9 @@ lwip_close(int s)
     return -1;
   }
 
+  sys_sem_wait(socksem);
   netconn_delete(sock->conn);
 
-  sys_sem_wait(socksem);
   if (sock->lastdata) {
     netbuf_delete(sock->lastdata);
   }
