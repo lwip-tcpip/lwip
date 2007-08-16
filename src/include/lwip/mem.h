@@ -62,6 +62,9 @@ typedef u16_t mem_size_t;
 #ifndef mem_malloc
 #define mem_malloc(x) malloc(x)
 #endif
+#ifndef mem_calloc
+#define mem_calloc(x, y) calloc(x, y)
+#endif
 #ifndef mem_realloc
 #define mem_realloc(x, size) realloc(x,size)
 #endif
@@ -81,6 +84,7 @@ void *mem_realloc(void *mem, mem_size_t size);
 #endif /* MEM_USE_POOLS */
 void *mem_malloc(mem_size_t size);
 void  mem_free(void *mem);
+void *mem_calloc(size_t count, size_t size);
 #endif /* MEM_LIBC_MALLOC */
 
 #ifndef LWIP_MEM_ALIGN_SIZE

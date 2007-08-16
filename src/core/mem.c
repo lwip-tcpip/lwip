@@ -500,4 +500,15 @@ mem_malloc(mem_size_t size)
 }
 
 #endif /* MEM_USE_POOLS */
+
+void *mem_calloc(size_t count, size_t size)
+{
+    void *p;
+
+    p = mem_malloc(count * size);
+    if(p) {
+        memset(p, 0, count * size);
+    }
+    return p;
+}
 #endif /* !MEM_LIBC_MALLOC */
