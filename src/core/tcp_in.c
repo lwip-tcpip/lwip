@@ -568,14 +568,20 @@ tcp_process(struct tcp_pcb *pcb)
         old_cwnd = pcb->cwnd;
         /* If there was any data contained within this ACK,
          * we'd better pass it on to the application as well. */
-        tcp_receive(pcb);
+        accepted_inseq = tcp_receive(pcb);
+
         pcb->cwnd = ((old_cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
+
+        if ((flags & TCP_FIN) && accepted_inseq) {
+          tcp_ack_now(pcb);
+          pcb->state = CLOSE_WAIT;
+        }
       }
       /* incorrect ACK number */
       else {
         /* send RST */
         tcp_rst(ackno, seqno + tcplen, &(iphdr->dest), &(iphdr->src),
-          tcphdr->dest, tcphdr->src);
+                tcphdr->dest, tcphdr->src);
       }
     }
     break;
