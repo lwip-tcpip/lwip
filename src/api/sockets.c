@@ -196,6 +196,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   u16_t port;
   int newsock;
   struct sockaddr_in sin;
+  err_t err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
   sock = get_socket(s);
@@ -210,7 +211,12 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   }
 
   /* get the IP address and port of the remote host */
-  netconn_peer(newconn, &naddr, &port);
+  err = netconn_peer(newconn, &naddr, &port);
+  if (err != ERR_OK) {
+    netconn_delete(newconn);
+    sock_set_errno(sock, err_to_errno(err));
+    return -1;
+  }
 
   memset(&sin, 0, sizeof(sin));
   sin.sin_len = sizeof(sin);
