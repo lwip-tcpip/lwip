@@ -214,7 +214,7 @@ igmp_timer(void *arg)
  * @param p the recevied packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
  */
-static void
+static err_t
 ethernet_input(struct pbuf *p, struct netif *netif)
 {
   struct eth_hdr* ethhdr;
@@ -259,6 +259,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       p = NULL;
       break;
   }
+
+  return ERR_OK; /* return value ignored */
 }
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
