@@ -71,9 +71,9 @@ void *
 mem_malloc(mem_size_t size)
 {
   struct mem_helper *element;
-  int poolnr;
+  memp_t poolnr;
 
-  for (poolnr = MEMP_MEM_POOL_1; poolnr < (MEMP_MEM_POOL_1 + MEM_POOL_COUNT); poolnr++) {
+  for (poolnr = MEMP_POOL_START; poolnr <= MEMP_POOL_END; poolnr++) {
     if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
       break;
     }

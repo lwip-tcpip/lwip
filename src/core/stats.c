@@ -106,26 +106,8 @@ stats_display(void)
 #if MEMP_STATS
   s16_t i;
   char * memp_names[] = {
-    "PBUF_REF/ROM",
-    "RAW_PCB",
-    "UDP_PCB",
-    "TCP_PCB",
-    "TCP_PCB_LISTEN",
-    "TCP_SEG",
-    "NETBUF",
-    "NETCONN",
-    "TCPIP_MSG",
-#if ARP_QUEUEING
-    "ARP_QUEUE",
-#endif
-    "PBUF_POOL",
-    "SYS_TIMEOUT",
-#if MEM_USE_POOLS
-    "MEMP_MEM_POOL_1",
-    "MEMP_MEM_POOL_2",
-    "MEMP_MEM_POOL_3",
-    "MEMP_MEM_POOL_4",
-#endif
+#define LWIP_MEMPOOL(name,num,size,desc) desc,
+#include "lwip/memp.def"
   };
 #endif
 #if LINK_STATS

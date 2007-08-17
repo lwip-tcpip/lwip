@@ -109,79 +109,18 @@ static struct memp *memp_tab[MEMP_MAX];
 static
 #endif
 const u16_t memp_sizes[MEMP_MAX] = {
-  MEMP_ALIGN_SIZE(sizeof(struct pbuf)),
-  MEMP_ALIGN_SIZE(sizeof(struct raw_pcb)),
-  MEMP_ALIGN_SIZE(sizeof(struct udp_pcb)),
-  MEMP_ALIGN_SIZE(sizeof(struct tcp_pcb)),
-  MEMP_ALIGN_SIZE(sizeof(struct tcp_pcb_listen)),
-  MEMP_ALIGN_SIZE(sizeof(struct tcp_seg)),
-  MEMP_ALIGN_SIZE(sizeof(struct netbuf)),
-  MEMP_ALIGN_SIZE(sizeof(struct netconn)),
-  MEMP_ALIGN_SIZE(sizeof(struct tcpip_msg)),
-  MEMP_ALIGN_SIZE(sizeof(struct tcpip_msg)),
-#if ARP_QUEUEING
-  MEMP_ALIGN_SIZE(sizeof(struct etharp_q_entry)),
-#endif
-  MEMP_ALIGN_SIZE(sizeof(struct pbuf)) + MEMP_ALIGN_SIZE(PBUF_POOL_BUFSIZE),
-  MEMP_ALIGN_SIZE(sizeof(struct sys_timeo)),
-#if MEM_USE_POOLS
-  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_1),
-  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_2),
-  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_3),
-  MEMP_ALIGN_SIZE(MEM_POOL_SIZE_4),
-#endif
+#define LWIP_MEMPOOL(name,num,size,desc)  MEMP_ALIGN_SIZE(size),
+#include "lwip/memp_std.h"
 };
 
 static const u16_t memp_num[MEMP_MAX] = {
-  MEMP_NUM_PBUF,
-  MEMP_NUM_RAW_PCB,
-  MEMP_NUM_UDP_PCB,
-  MEMP_NUM_TCP_PCB,
-  MEMP_NUM_TCP_PCB_LISTEN,
-  MEMP_NUM_TCP_SEG,
-  MEMP_NUM_NETBUF,
-  MEMP_NUM_NETCONN,
-  MEMP_NUM_TCPIP_MSG_API,
-  MEMP_NUM_TCPIP_MSG_INPKT,
-#if ARP_QUEUEING
-  MEMP_NUM_ARP_QUEUE,
-#endif
-  PBUF_POOL_SIZE,
-  MEMP_NUM_SYS_TIMEOUT,
-#if MEM_USE_POOLS
-  MEM_POOL_NUM_1,
-  MEM_POOL_NUM_2,
-  MEM_POOL_NUM_3,
-  MEM_POOL_NUM_4,
-#endif
+#define LWIP_MEMPOOL(name,num,size,desc)  (num),
+#include "lwip/memp_std.h"
 };
 
-#define MEMP_TYPE_SIZE(qty, type) \
-  ((qty) * (MEMP_SIZE + MEMP_ALIGN_SIZE(sizeof(type))))
-
-static u8_t memp_memory[MEM_ALIGNMENT - 1 + 
-  MEMP_TYPE_SIZE(MEMP_NUM_PBUF, struct pbuf) +
-  MEMP_TYPE_SIZE(MEMP_NUM_RAW_PCB, struct raw_pcb) +
-  MEMP_TYPE_SIZE(MEMP_NUM_UDP_PCB, struct udp_pcb) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCP_PCB, struct tcp_pcb) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCP_PCB_LISTEN, struct tcp_pcb_listen) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCP_SEG, struct tcp_seg) +
-  MEMP_TYPE_SIZE(MEMP_NUM_NETBUF, struct netbuf) +
-  MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG_API, struct tcpip_msg) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG_INPKT, struct tcpip_msg) +
-#if ARP_QUEUEING
-  MEMP_TYPE_SIZE(MEMP_NUM_ARP_QUEUE, struct etharp_q_entry) +
-#endif
-  MEMP_TYPE_SIZE(PBUF_POOL_SIZE, struct pbuf) +
-                 ((PBUF_POOL_SIZE) * MEMP_ALIGN_SIZE(PBUF_POOL_BUFSIZE)) +
-  MEMP_TYPE_SIZE(MEMP_NUM_SYS_TIMEOUT, struct sys_timeo)
-#if MEM_USE_POOLS
-  + ((MEM_POOL_NUM_1) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_1))
-  + ((MEM_POOL_NUM_2) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_2))
-  + ((MEM_POOL_NUM_3) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_3))
-  + ((MEM_POOL_NUM_4) * MEMP_ALIGN_SIZE(MEM_POOL_SIZE_4))
-#endif
+static u8_t memp_memory[MEM_ALIGNMENT - 1 
+#define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
+#include "lwip/memp_std.h"
 ];
 
 #if MEMP_SANITY_CHECK
