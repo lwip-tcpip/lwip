@@ -315,8 +315,8 @@ tcpip_thread(void *arg)
 #if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-	  msg->msg.inp.f(msg->msg.inp.p, msg->msg.inp.netif);
-	  memp_free(MEMP_TCPIP_MSG_INPKT, msg);
+      msg->msg.inp.f(msg->msg.inp.p, msg->msg.inp.netif);
+      memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 #endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
 
@@ -332,15 +332,15 @@ tcpip_thread(void *arg)
       msg->msg.cb.f(msg->msg.cb.ctx);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
-	case TCPIP_MSG_TIMEOUT:
-	  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
+    case TCPIP_MSG_TIMEOUT:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
 
-	  if(msg->msg.tmo.msecs != 0xffffffff)
-		  sys_timeout (msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
-	  else
-		  sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
+      if(msg->msg.tmo.msecs != 0xffffffff)
+        sys_timeout (msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
+      else
+        sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
-	  break;
+      break;
     default:
       break;
     }
@@ -366,11 +366,11 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     }
 
     msg->type = TCPIP_MSG_INPKT;
-	msg->msg.inp.f = ip_input;
-	msg->msg.inp.p = p;
-	msg->msg.inp.netif = inp;
-	sys_mbox_post(mbox, msg);
-	return ERR_OK;
+    msg->msg.inp.f = ip_input;
+    msg->msg.inp.p = p;
+    msg->msg.inp.netif = inp;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
   }
   return ERR_VAL;
 }
@@ -379,15 +379,15 @@ err_t
 tcpip_input_callback(struct pbuf *p, struct netif *inp, err_t (*f)(struct pbuf *, struct netif *))
 {
   struct tcpip_msg *msg;
-  
-  if (mbox != SYS_MBOX_NULL) {
-	msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
-	if (msg == NULL) {
-		return ERR_MEM;  
-	}
 
-	msg->type = TCPIP_MSG_INPKT;
-	msg->msg.inp.f = f;
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
+    if (msg == NULL) {
+      return ERR_MEM;  
+    }
+
+    msg->type = TCPIP_MSG_INPKT;
+    msg->msg.inp.f = f;
     msg->msg.inp.p = p;
     msg->msg.inp.netif = inp;
     sys_mbox_post(mbox, msg);
@@ -570,16 +570,19 @@ tcpip_init(void (* initfunc)(void *), void *arg)
 #if LWIP_ARP
   etharp_init();
 #endif /* LWIP_ARP */
-#if LWIP_AUTOIP
-  autoip_init();
-#endif /* LWIP_AUTOIP */
   ip_init();
+#if LWIP_RAW
+  raw_init();
+#endif /* LWIP_RAW */
 #if LWIP_UDP
   udp_init();
 #endif /* LWIP_UDP */
 #if LWIP_TCP
   tcp_init();
 #endif /* LWIP_TCP */
+#if LWIP_AUTOIP
+  autoip_init();
+#endif /* LWIP_AUTOIP */
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
