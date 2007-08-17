@@ -141,8 +141,8 @@ static const u16_t memp_num[MEMP_MAX] = {
   MEMP_NUM_TCP_SEG,
   MEMP_NUM_NETBUF,
   MEMP_NUM_NETCONN,
-  MEMP_NUM_TCPIP_MSG,
-  MEMP_NUM_TCPIP_MSG_INPUT,
+  MEMP_NUM_TCPIP_MSG_API,
+  MEMP_NUM_TCPIP_MSG_INPKT,
 #if ARP_QUEUEING
   MEMP_NUM_ARP_QUEUE,
 #endif
@@ -168,8 +168,8 @@ static u8_t memp_memory[MEM_ALIGNMENT - 1 +
   MEMP_TYPE_SIZE(MEMP_NUM_TCP_SEG, struct tcp_seg) +
   MEMP_TYPE_SIZE(MEMP_NUM_NETBUF, struct netbuf) +
   MEMP_TYPE_SIZE(MEMP_NUM_NETCONN, struct netconn) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG, struct tcpip_msg) +
-  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG_INPUT, struct tcpip_msg) +
+  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG_API, struct tcpip_msg) +
+  MEMP_TYPE_SIZE(MEMP_NUM_TCPIP_MSG_INPKT, struct tcpip_msg) +
 #if ARP_QUEUEING
   MEMP_TYPE_SIZE(MEMP_NUM_ARP_QUEUE, struct etharp_q_entry) +
 #endif

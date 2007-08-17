@@ -192,15 +192,22 @@
 #ifndef MEMP_NUM_NETCONN
 #define MEMP_NUM_NETCONN                4
 #endif
-/* MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which is used
-   for callback/timeout API communication. Used in src/api/tcpip.c. */
-#ifndef MEMP_NUM_TCPIP_MSG
-#define MEMP_NUM_TCPIP_MSG              8
+
+/* For temporary compatibility with older lwipopts.h */
+#if defined(MEMP_NUM_TCPIP_MSG) && !defined(MEMP_NUM_TCPIP_MSG_API) && !defined(MEMP_NUM_TCPIP_MSG_INPKT)
+#define MEMP_NUM_TCPIP_MSG_API          (MEMP_NUM_TCPIP_MSG / 2)
+#define MEMP_NUM_TCPIP_MSG_INPKT        (MEMP_NUM_TCPIP_MSG)
 #endif
-/* MEMP_NUM_TCPIPMSG_INPUT: the number of struct tcpip_msg, which is used
+
+/* MEMP_NUM_TCPIP_MSG_API: the number of struct tcpip_msg, which is used
+   for callback/timeout API communication. Used in src/api/tcpip.c. */
+#ifndef MEMP_NUM_TCPIP_MSG_API
+#define MEMP_NUM_TCPIP_MSG_API          4
+#endif
+/* MEMP_NUM_TCPIP_MSG_INPKT: the number of struct tcpip_msg, which is used
    for incoming packets. Used in src/api/tcpip.c. */
-#ifndef MEMP_NUM_TCPIP_MSG_INPUT
-#define MEMP_NUM_TCPIP_MSG_INPUT         MEMP_NUM_TCPIP_MSG
+#ifndef MEMP_NUM_TCPIP_MSG_INPKT
+#define MEMP_NUM_TCPIP_MSG_INPKT        8
 #endif
 
 /* ---------- ARP options ---------- */

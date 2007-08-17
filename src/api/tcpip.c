@@ -313,10 +313,10 @@ tcpip_thread(void *arg)
       break;
 
 #if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
-    case TCPIP_MSG_INPUT:
+    case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
 	  msg->msg.inp.f(msg->msg.inp.p, msg->msg.inp.netif);
-	  memp_free(MEMP_TCPIP_MSG_INPUT, msg);
+	  memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 #endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
 
@@ -330,7 +330,7 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_CALLBACK:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
       msg->msg.cb.f(msg->msg.cb.ctx);
-      memp_free(MEMP_TCPIP_MSG, msg);
+      memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
 	case TCPIP_MSG_TIMEOUT:
 	  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
@@ -339,7 +339,7 @@ tcpip_thread(void *arg)
 		  sys_timeout (msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
 	  else
 		  sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
-      memp_free(MEMP_TCPIP_MSG, msg);
+      memp_free(MEMP_TCPIP_MSG_API, msg);
 	  break;
     default:
       break;
@@ -360,12 +360,12 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_INPUT);
+    msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
     if (msg == NULL) {
       return ERR_MEM;
     }
 
-    msg->type = TCPIP_MSG_INPUT;
+    msg->type = TCPIP_MSG_INPKT;
 	msg->msg.inp.f = ip_input;
 	msg->msg.inp.p = p;
 	msg->msg.inp.netif = inp;
@@ -381,12 +381,12 @@ tcpip_input_callback(struct pbuf *p, struct netif *inp, err_t (*f)(struct pbuf *
   struct tcpip_msg *msg;
   
   if (mbox != SYS_MBOX_NULL) {
-	msg = memp_malloc(MEMP_TCPIP_MSG_INPUT);
+	msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
 	if (msg == NULL) {
 		return ERR_MEM;  
 	}
 
-	msg->type = TCPIP_MSG_INPUT;
+	msg->type = TCPIP_MSG_INPKT;
 	msg->msg.inp.f = f;
     msg->msg.inp.p = p;
     msg->msg.inp.netif = inp;
@@ -427,7 +427,7 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG);
+    msg = memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
     }
@@ -447,7 +447,7 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   struct tcpip_msg *msg;
    
   if (mbox != SYS_MBOX_NULL) {
-	msg = memp_malloc(MEMP_TCPIP_MSG);
+	msg = memp_malloc(MEMP_TCPIP_MSG_API);
 	if (msg == NULL) {
 		return ERR_MEM;  
 	}      
