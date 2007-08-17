@@ -71,7 +71,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
     buf = memp_malloc(MEMP_NETBUF);
-    if (!buf) {
+    if (buf == NULL) {
       return 0;
     }
     pbuf_ref(p);

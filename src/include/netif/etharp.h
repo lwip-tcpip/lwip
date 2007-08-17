@@ -119,8 +119,8 @@ PACK_STRUCT_END
 /** 5 seconds period */
 #define ARP_TMR_INTERVAL 5000
 
-#define ETHTYPE_ARP 0x0806
-#define ETHTYPE_IP  0x0800
+#define ETHTYPE_ARP       0x0806
+#define ETHTYPE_IP        0x0800
 #define ETHTYPE_PPPOEDISC 0x8863  /* PPP Over Ethernet Discovery Stage */
 #define ETHTYPE_PPPOE     0x8864  /* PPP Over Ethernet Session Stage */
 

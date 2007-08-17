@@ -83,8 +83,8 @@ void  mem_init(void);
 void *mem_realloc(void *mem, mem_size_t size);
 #endif /* MEM_USE_POOLS */
 void *mem_malloc(mem_size_t size);
-void  mem_free(void *mem);
 void *mem_calloc(size_t count, size_t size);
+void  mem_free(void *mem);
 #endif /* MEM_LIBC_MALLOC */
 
 #ifndef LWIP_MEM_ALIGN_SIZE

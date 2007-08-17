@@ -245,14 +245,14 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
       break;
 
-#if PPPOE_SUPPORT > 0
-	case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
-	  pppoe_disc_input(netif, p);
-	  break;
-	case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
-	  pppoe_data_input(netif, p);
-	  break;
-#endif
+#if PPPOE_SUPPORT
+    case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
+      pppoe_disc_input(netif, p);
+      break;
+    case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
+      pppoe_data_input(netif, p);
+      break;
+#endif /* PPPOE_SUPPORT */
 
     default:
       pbuf_free(p);

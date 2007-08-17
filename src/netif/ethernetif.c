@@ -288,14 +288,14 @@ ethernetif_input(struct netif *netif)
 #endif /* ETHARP_TCPIP_INPUT */
 #endif /* ETHARP_TCPIP_ETHINPUT */
 
-#if PPPOE_SUPPORT > 0
+#if PPPOE_SUPPORT
   case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
-	pppoe_disc_input(netif, p);
-	break;
+    pppoe_disc_input(netif, p);
+    break;
   case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
-	pppoe_data_input(netif, p);
-	break;
-#endif
+    pppoe_data_input(netif, p);
+    break;
+#endif /* PPPOE_SUPPORT */
 
   default:
     pbuf_free(p);
