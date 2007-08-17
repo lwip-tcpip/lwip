@@ -436,13 +436,13 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
   /* copy the contents of the received buffer into
   the supplied memory pointer mem */
-  netbuf_copy_partial(buf, (u8_t*)mem + off, copylen - off, sock->lastoffset);
+  netbuf_copy_partial(buf, (u8_t*)mem + off, copylen, sock->lastoffset);
 
   off += copylen;
 
   if (netconn_type(sock->conn) == NETCONN_TCP) {
     len -= copylen;
-    if ( (len <= 0) || (buf->p->flgs & PBUF_FLAG_PUSH) )
+    if ( (len <= 0) || (buf->p->flgs & PBUF_FLAG_PUSH) || !sock->rcvevent)
       done = 1;
   }
   else
