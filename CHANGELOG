@@ -18,6 +18,11 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+  2007-08-17 Jared Grubb
+  * memp_std.h, memp.h, memp.c, mem.c, stats.c: (Task #7136) Centralize mempool 
+    settings into new memp_std.h and optional user file lwippools.h. This adds
+    more dynamic mempools, and allows the user to create an arbitrary number of
+    mempools for mem_malloc.
 
   2007-07-25 Simon Goldschmidt
   * api_lib.c, ip_frag.c, pbuf.c, api.h, pbuf.h: Introduced pbuf_copy_partial,
