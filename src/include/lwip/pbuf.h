@@ -60,8 +60,6 @@ typedef enum {
 
 /** indicates this packet's data should be immediately passed to the application */
 #define PBUF_FLAG_PUSH 0x01U
-/** indicates this packet was broadcast on the link */
-#define PBUF_FLAG_LINK_BROADCAST 0x02U
 
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
