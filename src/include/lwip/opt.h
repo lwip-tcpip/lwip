@@ -745,11 +745,8 @@
  *    of living in lcp.h)
  */
 #define PPP_MTU                         1500     /* Default MTU (size of Info field) */
-#endif
 #ifndef PPP_MAXMTU
-#if 0
-#define PPP_MAXMTU  65535 - (PPP_HDRLEN + PPP_FCSLEN)
-#else
+/* #define PPP_MAXMTU  65535 - (PPP_HDRLEN + PPP_FCSLEN) */
 #define PPP_MAXMTU                      1500 /* Largest MTU we allow */
 #endif
 #define PPP_MINMTU                      64
