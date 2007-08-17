@@ -181,7 +181,7 @@
 #define MEMP_NUM_SYS_TIMEOUT            3
 #endif
 
-/* The following three are used only with the sequential API and can be
+/* The following are used only with the sequential API and can be
    set to 0 if the application only will use the raw API. */
 
 /* MEMP_NUM_NETBUF: the number of struct netbufs. */
