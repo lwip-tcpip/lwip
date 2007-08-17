@@ -1624,9 +1624,8 @@ static void pppInput(void *arg)
     protocol = ((struct pppInputHeader *)nb->payload)->proto;
     
     if(pbuf_header(nb, -(int)sizeof(struct pppInputHeader))) {
-      /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
-      return;
+	  goto drop;
     }
 
 #if LINK_STATS
@@ -1638,13 +1637,13 @@ static void pppInput(void *arg)
      * Until we get past the authentication phase, toss all packets
      * except LCP, LQR and authentication packets.
      */
-    if((lcp_phase[pd] <= PHASE_AUTHENTICATE) && (protocol != PPP_LCP)) {
-	    if(!((protocol == PPP_LQR) || (protocol == PPP_PAP) || (protocol == PPP_CHAP)) ||
-			(lcp_phase[pd] != PHASE_AUTHENTICATE)) {
-		PPPDEBUG((LOG_INFO, "pppInput: discarding proto 0x%04X in phase %d\n", protocol, lcp_phase[pd]));
-		goto drop;
-	    }
-    }
+	if((lcp_phase[pd] <= PHASE_AUTHENTICATE) && (protocol != PPP_LCP)) {
+		if(!((protocol == PPP_LQR) || (protocol == PPP_PAP) || (protocol == PPP_CHAP)) ||
+				(lcp_phase[pd] != PHASE_AUTHENTICATE)) {
+			PPPDEBUG((LOG_INFO, "pppInput: discarding proto 0x%04X in phase %d\n", protocol, lcp_phase[pd]));
+			goto drop;
+		}
+	}
 
     switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
@@ -1654,19 +1653,17 @@ static void pppInput(void *arg)
          * Clip off the VJ header and prepend the rebuilt TCP/IP header and
          * pass the result to IP.
          */
-        if (vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) {
-            if (pppControl[pd].netif.input != NULL) {
+        if ((vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) && (pppControl[pd].netif.input)) {
               pppControl[pd].netif.input(nb, &pppControl[pd].netif);
-            }
-			return;
+			  return;
         }
-	/* Something's wrong so drop it. */
-	PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ compressed\n", pd));
+		/* Something's wrong so drop it. */
+		PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ compressed\n", pd));
 #else
         /* No handler for this protocol so drop the packet. */
         PPPDEBUG((LOG_INFO, "pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
 #endif /* VJ_SUPPORT > 0 */
-	break;
+		break;
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
 #if VJ_SUPPORT > 0
         PPPDEBUG((LOG_INFO, "pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
@@ -1674,27 +1671,26 @@ static void pppInput(void *arg)
          * Process the TCP/IP header for VJ header compression and then pass
          * the packet to IP.
          */
-        if (vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) {
-            if (pppControl[pd].netif.input != NULL) {
-              pppControl[pd].netif.input(nb, &pppControl[pd].netif);
-            }
+        if ((vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) && pppControl[pd].netif.input) {
+			pppControl[pd].netif.input(nb, &pppControl[pd].netif);
 			return;
         }
-	/* Something's wrong so drop it. */
-	PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ uncompressed\n", pd));
+		/* Something's wrong so drop it. */
+		PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ uncompressed\n", pd));
 #else
         /* No handler for this protocol so drop the packet. */
         PPPDEBUG((LOG_INFO,
                     "pppInput[%d]: drop VJ UnComp in %d:.*H\n", 
                     pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
 #endif /* VJ_SUPPORT > 0 */
-	break;
+		break;
     case PPP_IP:            /* Internet Protocol */
         PPPDEBUG((LOG_INFO, "pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
-        if (pppControl[pd].netif.input != NULL) {
-          pppControl[pd].netif.input(nb, &pppControl[pd].netif);
-        }
-		return;
+        if (pppControl[pd].netif.input) {
+			pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+			return;
+		}
+		break;
     default:
 	{
 		struct protent *protp;
@@ -1714,11 +1710,10 @@ static void pppInput(void *arg)
 
 		/* No handler for this protocol so reject the packet. */
 		PPPDEBUG((LOG_INFO, "pppInput[%d]: rejecting unsupported proto 0x%04X len=%d\n", pd, protocol, nb->len));
-                if (pbuf_header(nb, sizeof(protocol))) {
-                  /* Can we cope with this failing?  Just assert for now */
-                  LWIP_ASSERT("pbuf_header failed\n", 0);
-                  goto drop;
-                }
+		if (pbuf_header(nb, sizeof(protocol))) {
+			LWIP_ASSERT("pbuf_header failed\n", 0);
+			goto drop;
+		}
 #if BYTE_ORDER == LITTLE_ENDIAN
 		protocol = htons(protocol);
 		SMEMCPY(nb->payload, &protocol, sizeof(protocol));

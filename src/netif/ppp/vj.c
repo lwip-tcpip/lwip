@@ -593,7 +593,6 @@ int vj_uncompress_tcp(
 		np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
 		if(!np) {
 			PPPDEBUG((LOG_WARNING, "vj_uncompress_tcp: realign failed\n"));
-			*nb = NULL;
 			goto bad;
 		}
 
@@ -624,7 +623,6 @@ int vj_uncompress_tcp(
 		np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
 		if(!np) {
 			PPPDEBUG((LOG_WARNING, "vj_uncompress_tcp: prepend failed\n"));
-			*nb = NULL;
 			goto bad;
 		}
 		pbuf_cat(np, n0);
