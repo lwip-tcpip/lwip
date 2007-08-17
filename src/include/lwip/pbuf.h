@@ -51,23 +51,17 @@ typedef enum {
 } pbuf_layer;
 
 typedef enum {
-  PBUF_RAM,
-  PBUF_ROM,
-  PBUF_REF,
-  PBUF_POOL
-} pbuf_flag;
+  PBUF_RAM, /* pbuf data is stored in RAM */
+  PBUF_ROM, /* pbuf data is stored in ROM */
+  PBUF_REF, /* pbuf comes from the pbuf pool */
+  PBUF_POOL /* pbuf payload refers to RAM */
+} pbuf_type;
 
-/* Definitions for the pbuf flag field. These are NOT the flags that
- * are passed to pbuf_alloc(). */
-#define PBUF_TYPE_RAM   0x00U    /* pbuf data is stored in RAM */
-#define PBUF_TYPE_ROM   0x01U    /* pbuf data is stored in ROM */
-#define PBUF_TYPE_POOL  0x02U    /* pbuf comes from the pbuf pool */
-#define PBUF_TYPE_REF   0x04U    /* pbuf payload refers to RAM */
 
 /** indicates this packet's data should be immediately passed to the application */
-#define PBUF_FLAG_PUSH 0x40U
+#define PBUF_FLAG_PUSH 0x01U
 /** indicates this packet was broadcast on the link */
-#define PBUF_FLAG_LINK_BROADCAST 0x80U
+#define PBUF_FLAG_LINK_BROADCAST 0x02U
 
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
@@ -88,12 +82,12 @@ struct pbuf {
   /** length of this buffer */
   u16_t len;  
 
-  /** type of pbuf, see PBUF_TYPE_ */
-  u8_t type;
+  /** pbuf_type as u8_t instead of enum to save space */
+  u8_t /*pbuf_type*/ type;
 
   /** misc flags */
   u8_t flgs;
-  
+
   /**
    * the reference count always equals the number of pointers
    * that refer to this pbuf. This can be pointers from an application,
@@ -106,7 +100,7 @@ struct pbuf {
 /* Initializes the pbuf module. This call is empty for now, but may not be in future. */
 #define pbuf_init()
 
-struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_flag flag);
+struct pbuf *pbuf_alloc(pbuf_layer l, u16_t size, pbuf_type type);
 void pbuf_realloc(struct pbuf *p, u16_t size); 
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
 void pbuf_ref(struct pbuf *p);
