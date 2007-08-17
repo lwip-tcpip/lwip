@@ -413,7 +413,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     /* No data was left from the previous operation, so we try to get
     some from the network. */
     sock->lastdata = buf = netconn_recv(sock->conn);
-	LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv netbuf=%p\n", buf));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv netbuf=%p\n", buf));
 
     if (!buf) {
       /* We should really do some error checking here. */
