@@ -86,38 +86,6 @@
 #define MEM_USE_POOLS                   0
 #endif
 
-#if MEM_USE_POOLS
-/* The element sizes of the 4 pools.
-   The sizes must be increasing, e.g. the elements in pool 2 must be
-   bigger than the elements in pool 1 and so on. If this is not the case,
-   mem_malloc will not work correctly. */
-#ifndef MEM_POOL_SIZE_1
-#error You must have at least one pool if MEM_USE_POOLS is set to 1!
-#endif
-#ifndef MEM_POOL_SIZE_2
-#define MEM_POOL_SIZE_2                 0
-#endif
-#ifndef MEM_POOL_SIZE_3
-#define MEM_POOL_SIZE_3                 0
-#endif
-#ifndef MEM_POOL_SIZE_4
-#define MEM_POOL_SIZE_4                 0
-#endif
-/* The element count of the 4 pools */
-#ifndef MEM_POOL_NUM_1
-#error You must have at least one pool if MEM_USE_POOLS is set to 1!
-#endif
-#ifndef MEM_POOL_NUM_2
-#define MEM_POOL_NUM_2                  0
-#endif
-#ifndef MEM_POOL_NUM_3
-#define MEM_POOL_NUM_3                  0
-#endif
-#ifndef MEM_POOL_NUM_4
-#define MEM_POOL_NUM_4                  0
-#endif
-#endif
-
 /* MEM_SIZE: the size of the heap memory. If the application will send
    a lot of data that needs to be copied, this should be set high. */
 #ifndef MEM_SIZE
@@ -136,6 +104,13 @@
 
 #ifndef MEMP_SANITY_CHECK
 #define MEMP_SANITY_CHECK               0
+#endif
+
+/* MEMP_USE_CUSTOM_POOLS: whether to include a user file lwippools.h
+   that defines additional pools beyond the "standard" ones required
+   by lwIP. */
+#ifndef MEMP_USE_CUSTOM_POOLS
+#define MEMP_USE_CUSTOM_POOLS           0
 #endif
 
 /* MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
