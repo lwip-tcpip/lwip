@@ -180,7 +180,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
         return NULL;
       }
       q->type = type;
-      q->flgs = 0;
+      q->flags = 0;
       q->next = NULL;
       /* make previous pbuf point to this pbuf */
       r->next = q;
@@ -243,8 +243,8 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
   }
   /* set reference count */
   p->ref = 1;
-  /* set flgs */
-  p->flgs = 0;
+  /* set flags */
+  p->flags = 0;
   LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc(length=%"U16_F") == %p\n", length, (void *)p));
   return p;
 }

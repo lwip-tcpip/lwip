@@ -84,7 +84,7 @@ struct pbuf {
   u8_t /*pbuf_type*/ type;
 
   /** misc flags */
-  u8_t flgs;
+  u8_t flags;
 
   /**
    * the reference count always equals the number of pointers
