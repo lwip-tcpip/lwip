@@ -107,7 +107,7 @@ stats_display(void)
   s16_t i;
   char * memp_names[] = {
 #define LWIP_MEMPOOL(name,num,size,desc) desc,
-#include "lwip/memp.def"
+#include "lwip/memp_std.h"
   };
 #endif
 #if LINK_STATS
