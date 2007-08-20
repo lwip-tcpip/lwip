@@ -240,7 +240,7 @@
 #endif
 
 /**
- * MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which are used
+ * MEMP_NUM_TCPIP_MSG_API: the number of struct tcpip_msg, which are used
  * for callback/timeout API communication. 
  * (only needed if you use tcpip.c)
  */
@@ -249,7 +249,7 @@
 #endif
 
 /**
- * MEMP_NUM_TCPIPMSG: the number of struct tcpip_msg, which are used
+ * MEMP_NUM_TCPIP_MSG_INPKT: the number of struct tcpip_msg, which are used
  * for incoming packets. 
  * (only needed if you use tcpip.c)
  */
