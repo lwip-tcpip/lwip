@@ -264,6 +264,13 @@
 #endif
 
 /**
+ * MEMP_NUM_TCPIP_MSG is deprecated
+ */
+#ifdef MEMP_NUM_TCPIP_MSG
+#error MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h.
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE
@@ -1439,4 +1446,3 @@
 #endif
 
 #endif /* __LWIP_OPT_H__ */
-
