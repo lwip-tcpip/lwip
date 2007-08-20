@@ -30,32 +30,32 @@
  *     creates a pool name MEMP_pool_name. description is used in stats.c
  */
 #if LWIP_RAW
-LWIP_MEMPOOL(RAW_PCB,        MEMP_NUM_RAW_PCB,  sizeof(struct raw_pcb), "RAW_PCB")
-#endif
+LWIP_MEMPOOL(RAW_PCB,        MEMP_NUM_RAW_PCB,         sizeof(struct raw_pcb),        "RAW_PCB")
+#endif /* LWIP_RAW */
 
 #if LWIP_UDP
-LWIP_MEMPOOL(UDP_PCB,        MEMP_NUM_UDP_PCB,  sizeof(struct udp_pcb), "UDP_PCB")
-#endif
+LWIP_MEMPOOL(UDP_PCB,        MEMP_NUM_UDP_PCB,         sizeof(struct udp_pcb),        "UDP_PCB")
+#endif /* LWIP_UDP */
 
 #if LWIP_TCP
-LWIP_MEMPOOL(TCP_PCB,        MEMP_NUM_TCP_PCB,  sizeof(struct tcp_pcb), "TCP_PCB")
+LWIP_MEMPOOL(TCP_PCB,        MEMP_NUM_TCP_PCB,         sizeof(struct tcp_pcb),        "TCP_PCB")
 LWIP_MEMPOOL(TCP_PCB_LISTEN, MEMP_NUM_TCP_PCB_LISTEN,  sizeof(struct tcp_pcb_listen), "TCP_PCB_LISTEN")
-LWIP_MEMPOOL(TCP_SEG,        MEMP_NUM_TCP_SEG,  sizeof(struct tcp_seg), "TCP_SEG")
-#endif
+LWIP_MEMPOOL(TCP_SEG,        MEMP_NUM_TCP_SEG,         sizeof(struct tcp_seg),        "TCP_SEG")
+#endif /* LWIP_TCP */
 
-LWIP_MEMPOOL(NETBUF,         MEMP_NUM_NETBUF,  sizeof(struct netbuf), "NETBUF")
-LWIP_MEMPOOL(NETCONN,        MEMP_NUM_NETCONN, sizeof(struct netconn), "NETCONN")
+LWIP_MEMPOOL(NETBUF,         MEMP_NUM_NETBUF,          sizeof(struct netbuf),         "NETBUF")
+LWIP_MEMPOOL(NETCONN,        MEMP_NUM_NETCONN,         sizeof(struct netconn),        "NETCONN")
 
-LWIP_MEMPOOL(TCPIP_MSG_API,  MEMP_NUM_TCPIP_MSG, sizeof(struct tcpip_msg), "TCPIP_MSG_API")
-LWIP_MEMPOOL(TCPIP_MSG_INPKT,MEMP_NUM_TCPIP_MSG, sizeof(struct tcpip_msg), "TCPIP_MSG_INPKT")
+LWIP_MEMPOOL(TCPIP_MSG_API,  MEMP_NUM_TCPIP_MSG_API,   sizeof(struct tcpip_msg),      "TCPIP_MSG_API")
+LWIP_MEMPOOL(TCPIP_MSG_INPKT,MEMP_NUM_TCPIP_MSG_INPKT, sizeof(struct tcpip_msg),      "TCPIP_MSG_INPKT")
 
 #if ARP_QUEUEING
-LWIP_MEMPOOL(ARP_QUEUE,      MEMP_NUM_ARP_QUEUE, sizeof(struct etharp_q_entry), "ARP_QUEUE")
-#endif
+LWIP_MEMPOOL(ARP_QUEUE,      MEMP_NUM_ARP_QUEUE,       sizeof(struct etharp_q_entry), "ARP_QUEUE")
+#endif /* ARP_QUEUEING */
 
 #if NO_SYS==0
-LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,  sizeof(struct sys_timeo), "SYS_TIMEOUT")
-#endif
+LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,     sizeof(struct sys_timeo),      "SYS_TIMEOUT")
+#endif /* NO_SYS==0 */
 
 
 /*
@@ -66,8 +66,8 @@ LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,  sizeof(struct sys_timeo), "S
  *     This allocates enough space for the pbuf struct and a payload.
  *     (Example: pbuf_payload_size=0 allocates only size for the struct)
  */
-LWIP_PBUF_MEMPOOL(PBUF,      MEMP_NUM_PBUF, 0, "PBUF_REF/ROM")
-LWIP_PBUF_MEMPOOL(PBUF_POOL, PBUF_POOL_SIZE, PBUF_POOL_BUFSIZE, "PBUF_POOL")
+LWIP_PBUF_MEMPOOL(PBUF,      MEMP_NUM_PBUF,            0,                             "PBUF_REF/ROM")
+LWIP_PBUF_MEMPOOL(PBUF_POOL, PBUF_POOL_SIZE,           PBUF_POOL_BUFSIZE,             "PBUF_POOL")
 
 
 /*
@@ -76,7 +76,7 @@ LWIP_PBUF_MEMPOOL(PBUF_POOL, PBUF_POOL_SIZE, PBUF_POOL_BUFSIZE, "PBUF_POOL")
  */
 #if MEMP_USE_CUSTOM_POOLS
 #include "lwippools.h"
-#endif
+#endif /* MEMP_USE_CUSTOM_POOLS */
 
 /*
  * REQUIRED CLEANUP: Clear up so we don't get "multiply defined" error later
