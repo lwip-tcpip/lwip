@@ -1,3 +1,9 @@
+/**
+ * @file
+ *
+ * lwIP Options Configuration
+ */
+
 /*
  * Copyright (c) 2001-2004 Swedish Institute of Computer Science.
  * All rights reserved. 
@@ -40,7 +46,7 @@
 #include "lwip/debug.h"
 
 /*
-   ----------------------------------------------- 
+   -----------------------------------------------
    ---------- Platform specific locking ----------
    -----------------------------------------------
 */
@@ -79,7 +85,7 @@
 #endif
 
 /*
-   ------------------------------------ 
+   ------------------------------------
    ---------- Memory options ----------
    ------------------------------------
 */
@@ -151,7 +157,7 @@
 
 
 /*
-   ------------------------------------------------ 
+   ------------------------------------------------
    ---------- Internal Memory Pool Sizes ----------
    ------------------------------------------------
 */
@@ -265,7 +271,7 @@
 #endif
 
 /*
-   --------------------------------- 
+   ---------------------------------
    ---------- ARP options ----------
    ---------------------------------
 */
@@ -339,7 +345,7 @@
 #endif
 
 /*
-   -------------------------------- 
+   --------------------------------
    ---------- IP options ----------
    --------------------------------
 */
@@ -418,7 +424,7 @@
 #endif
 
 /*
-   ---------------------------------- 
+   ----------------------------------
    ---------- ICMP options ----------
    ----------------------------------
 */
@@ -430,7 +436,7 @@
 #endif
 
 /*
-   --------------------------------- 
+   ---------------------------------
    ---------- RAW options ----------
    ---------------------------------
 */
@@ -449,7 +455,7 @@
 #endif
 
 /*
-   ---------------------------------- 
+   ----------------------------------
    ---------- DHCP options ----------
    ----------------------------------
 */
@@ -468,7 +474,7 @@
 #endif
 
 /*
-   ------------------------------------ 
+   ------------------------------------
    ---------- AUTOIP options ----------
    ------------------------------------
 */
@@ -488,7 +494,7 @@
 #endif
 
 /*
-   ---------------------------------- 
+   ----------------------------------
    ---------- SNMP options ----------
    ----------------------------------
 */
@@ -524,7 +530,7 @@
 #endif
 
 /*
-   ---------------------------------- 
+   ----------------------------------
    ---------- IGMP options ----------
    ----------------------------------
 */
@@ -536,7 +542,7 @@
 #endif
 
 /*
-   --------------------------------- 
+   ---------------------------------
    ---------- UDP options ----------
    ---------------------------------
 */
@@ -562,7 +568,7 @@
 #endif
 
 /*
-   --------------------------------- 
+   ---------------------------------
    ---------- TCP options ----------
    ---------------------------------
 */
@@ -657,20 +663,10 @@
 #endif
 
 /*
-   ---------------------------------- 
+   ----------------------------------
    ---------- Pbuf options ----------
    ----------------------------------
 */
-/**
- * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
- * designed to accomodate single full size TCP frame in one pbuf, including
- * TCP_MSS, IP header, and link header.
-*
- */
-#ifndef PBUF_POOL_BUFSIZE
-#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_HLEN) 
-#endif
-
 /**
  * PBUF_LINK_HLEN: the number of bytes that should be allocated for a
  * link level header. The default is 14, the standard value for
@@ -680,8 +676,18 @@
 #define PBUF_LINK_HLEN                  14
 #endif
 
+/**
+ * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
+ * designed to accomodate single full size TCP frame in one pbuf, including
+ * TCP_MSS, IP header, and link header.
+*
+ */
+#ifndef PBUF_POOL_BUFSIZE
+#define PBUF_POOL_BUFSIZE               LWIP_MEM_ALIGN_SIZE(TCP_MSS+40+PBUF_LINK_HLEN)
+#endif
+
 /*
-   ------------------------------------------------ 
+   ------------------------------------------------
    ---------- Network Interfaces options ----------
    ------------------------------------------------
 */
@@ -728,7 +734,7 @@
 #endif
 
 /*
-   ------------------------------------ 
+   ------------------------------------
    ---------- LOOPIF options ----------
    ------------------------------------
 */
@@ -756,7 +762,7 @@
 #endif
 
 /*
-   ------------------------------------ 
+   ------------------------------------
    ---------- Thread options ----------
    ------------------------------------
 */
@@ -797,7 +803,7 @@
 #endif
 
 /*
-   ---------------------------------------------- 
+   ----------------------------------------------
    ---------- Sequential layer options ----------
    ----------------------------------------------
 */
@@ -810,7 +816,7 @@
 #endif
 
 /*
-   ------------------------------------ 
+   ------------------------------------
    ---------- Socket options ----------
    ------------------------------------
 */
@@ -861,7 +867,7 @@
 #endif
 
 /*
-   ---------------------------------------- 
+   ----------------------------------------
    ---------- Statistics options ----------
    ----------------------------------------
 */
@@ -971,7 +977,7 @@
 #endif /* LWIP_STATS */
 
 /*
-   --------------------------------- 
+   ---------------------------------
    ---------- PPP options ----------
    ---------------------------------
 */
@@ -982,12 +988,28 @@
 #define PPP_SUPPORT                     0
 #endif
 
-#if PPP_SUPPORT 
+/**
+ * PPPOE_SUPPORT==1: Enable PPP Over Ethernet
+ */
+#ifndef PPPOE_SUPPORT
+#define PPPOE_SUPPORT                   0
+#endif
+
+/**
+ * PPPOS_SUPPORT==1: Enable PPP Over Serial
+ */
+#ifndef PPPOS_SUPPORT
+#define PPPOS_SUPPORT                   PPP_SUPPORT
+#endif
+
+#if PPP_SUPPORT
 
 /**
  * NUM_PPP: Max PPP sessions.
  */
+#ifndef NUM_PPP
 #define NUM_PPP                         1
+#endif
 
 /**
  * PAP_SUPPORT==1: Support PAP.
@@ -1006,17 +1028,23 @@
 /**
  * MSCHAP_SUPPORT==1: Support MSCHAP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
+#ifndef MSCHAP_SUPPORT
 #define MSCHAP_SUPPORT                  0
+#endif
 
 /**
  * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
+#ifndef CBCP_SUPPORT
 #define CBCP_SUPPORT                    0
+#endif
 
 /**
  * CCP_SUPPORT==1: Support CCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
+#ifndef CCP_SUPPORT
 #define CCP_SUPPORT                     0
+#endif
 
 /**
  * VJ_SUPPORT==1: Support VJ header compression.
@@ -1033,19 +1061,39 @@
 #endif
 
 /*
- * Timeouts.
+ * Timeouts
  */
+#ifndef FSM_DEFTIMEOUT
 #define FSM_DEFTIMEOUT                  6       /* Timeout time in seconds */
+#endif
+
+#ifndef FSM_DEFMAXTERMREQS
 #define FSM_DEFMAXTERMREQS              2       /* Maximum Terminate-Request transmissions */
+#endif
+
+#ifndef FSM_DEFMAXCONFREQS
 #define FSM_DEFMAXCONFREQS              10      /* Maximum Configure-Request transmissions */
+#endif
+
+#ifndef FSM_DEFMAXNAKLOOPS
 #define FSM_DEFMAXNAKLOOPS              5       /* Maximum number of nak loops */
+#endif
 
+#ifndef UPAP_DEFTIMEOUT
 #define UPAP_DEFTIMEOUT                 6       /* Timeout (seconds) for retransmitting req */
+#endif
+
+#ifndef UPAP_DEFREQTIME
 #define UPAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
+#endif
 
+#ifndef CHAP_DEFTIMEOUT
 #define CHAP_DEFTIMEOUT                 6       /* Timeout time in seconds */
-#define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
+#endif
 
+#ifndef CHAP_DEFTRANSMITS
+#define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
+#endif
 
 /* Interval in seconds between keepalive echo requests, 0 to disable. */
 #ifndef LCP_ECHOINTERVAL
@@ -1053,10 +1101,14 @@
 #endif
 
 /* Number of unanswered echo requests before failure. */
+#ifndef LCP_MAXECHOFAILS
 #define LCP_MAXECHOFAILS                3
+#endif
 
 /* Max Xmit idle time (in jiffies) before resend flag char. */
+#ifndef PPP_MAXIDLEFLAG
 #define PPP_MAXIDLEFLAG                 100
+#endif
 
 /*
  * Packet sizes
@@ -1086,7 +1138,7 @@
 #endif /* PPP_SUPPORT */
 
 /*
-   -------------------------------------- 
+   --------------------------------------
    ---------- Checksum options ----------
    --------------------------------------
 */
@@ -1133,7 +1185,7 @@
 #endif
 
 /*
-   --------------------------------------- 
+   ---------------------------------------
    ---------- Debugging options ----------
    ---------------------------------------
 */
