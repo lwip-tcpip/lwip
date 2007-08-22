@@ -693,11 +693,11 @@
 #endif
 
 /**
- * LWIP_NETIF_CALLBACK==1: Support a callback function whenever an interface
+ * LWIP_NETIF_STATUS_CALLBACK==1: Support a callback function whenever an interface
  * changes its up/down status (i.e., due to DHCP IP acquistion)
  */
-#ifndef LWIP_NETIF_CALLBACK
-#define LWIP_NETIF_CALLBACK             0
+#ifndef LWIP_NETIF_STATUS_CALLBACK
+#define LWIP_NETIF_STATUS_CALLBACK      0
 #endif
 
 /**

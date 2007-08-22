@@ -48,11 +48,11 @@
 #include "netif/etharp.h"
 #endif /* LWIP_ARP */
 
-#if LWIP_NETIF_CALLBACK
+#if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
 #else
 #define NETIF_STATUS_CALLBACK(n) { /* NOP */ }
-#endif /* LWIP_NETIF_LINK_CALLBACK */ 
+#endif /* LWIP_NETIF_STATUS_CALLBACK */ 
 
 #if LWIP_NETIF_LINK_CALLBACK
 #define NETIF_LINK_CALLBACK(n) { if (n->link_callback) (n->link_callback)(n); }
@@ -108,9 +108,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   /* netif not under AutoIP control by default */
   netif->autoip = NULL;
 #endif /* LWIP_AUTOIP */
-#if LWIP_NETIF_CALLBACK
+#if LWIP_NETIF_STATUS_CALLBACK
   netif->status_callback = NULL;
-#endif /* LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
 #if LWIP_NETIF_LINK_CALLBACK
   netif->link_callback = NULL;
 #endif /* LWIP_NETIF_LINK_CALLBACK */
@@ -425,7 +425,7 @@ void netif_set_down(struct netif *netif)
     }
 }
 
-#if LWIP_NETIF_CALLBACK
+#if LWIP_NETIF_STATUS_CALLBACK
 /**
  * Set callback to be called when interface is brought up/down
  */
@@ -434,7 +434,7 @@ void netif_set_status_callback( struct netif *netif, void (* status_callback)(st
     if ( netif )
         netif->status_callback = status_callback;
 }
-#endif /* LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
 
 #if LWIP_NETIF_LINK_CALLBACK
 /**

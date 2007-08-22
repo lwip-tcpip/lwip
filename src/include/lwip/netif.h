@@ -102,11 +102,11 @@ struct netif {
    *  to send a packet on the interface. This function outputs
    *  the pbuf as-is on the link medium. */
   err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
-#if LWIP_NETIF_CALLBACK
+#if LWIP_NETIF_STATUS_CALLBACK
   /** This function is called when the netif state is set to up or down
    */
   void (* status_callback)(struct netif *netif);
-#endif /* LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
 #if LWIP_NETIF_LINK_CALLBACK
   /** This function is called when the netif link is set to up or down
    */
@@ -218,12 +218,12 @@ void netif_set_gw(struct netif *netif, struct ip_addr *gw);
 void netif_set_up(struct netif *netif);
 void netif_set_down(struct netif *netif);
 u8_t netif_is_up(struct netif *netif);
-#if LWIP_NETIF_CALLBACK
+#if LWIP_NETIF_STATUS_CALLBACK
 /*
  * Set callback to be called when interface is brought up/down
  */
 void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif));
-#endif /* LWIP_NETIF_CALLBACK */
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
 
 #if LWIP_NETIF_LINK_CALLBACK
 /*
