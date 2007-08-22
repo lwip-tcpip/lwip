@@ -226,20 +226,20 @@ ethernetif_input(struct netif *netif)
   struct pbuf *p;
 
   ethernetif = netif->state;
-  
+
   /* move received packet into a new pbuf */
   p = low_level_input(netif);
   /* no packet could be read, silently ignore this */
   if (p == NULL) return;
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = p->payload;
-  
-  switch (htons(ethhdr->type)) {
 
+  switch (htons(ethhdr->type)) {
   /* IP or ARP packet? */
   case ETHTYPE_IP:
   case ETHTYPE_ARP:
 #if PPPOE_SUPPORT
+  /* PPPoE packet? */
   case ETHTYPE_PPPOEDISC:
   case ETHTYPE_PPPOE:
 #endif /* PPPOE_SUPPORT */
