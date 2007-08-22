@@ -442,7 +442,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
   if (netconn_type(sock->conn) == NETCONN_TCP) {
     len -= copylen;
-    if ( (len <= 0) || (buf->p->flgs & PBUF_FLAG_PUSH) || !sock->rcvevent)
+    if ( (len <= 0) || (buf->p->flags & PBUF_FLAG_PUSH) || !sock->rcvevent)
       done = 1;
   }
   else
