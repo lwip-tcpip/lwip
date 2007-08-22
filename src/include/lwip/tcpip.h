@@ -64,14 +64,9 @@ err_t tcpip_apimsg(struct api_msg *apimsg);
 err_t tcpip_apimsg_lock(struct api_msg *apimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-#if ETHARP_TCPIP_INPUT
+#if LWIP_ARP
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
-err_t tcpip_input_callback(struct pbuf *p, struct netif *inp, err_t (*f)(struct pbuf *, struct netif *));
-#endif /* ETHARP_TCPIP_INPUT */
-
-#if ETHARP_TCPIP_ETHINPUT
-err_t tcpip_ethinput(struct pbuf *p, struct netif *inp);
-#endif /* ETHARP_TCPIP_ETHINPUT */
+#endif /* LWIP_ARP */
 
 #if LWIP_NETIF_API
 err_t tcpip_netifapi(struct netifapi_msg *netifapimsg);
@@ -86,9 +81,9 @@ err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 
 enum tcpip_msg_type {
   TCPIP_MSG_API,
-#if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
+#if LWIP_ARP
   TCPIP_MSG_INPKT,
-#endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
+#endif /* LWIP_ARP */
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
@@ -104,11 +99,12 @@ struct tcpip_msg {
 #if LWIP_NETIF_API
     struct netifapi_msg *netifapimsg;
 #endif /* LWIP_NETIF_API */
+#if LWIP_ARP
     struct {
       struct pbuf *p;
       struct netif *netif;
-      err_t (*f)(struct pbuf *, struct netif *);
     } inp;
+#endif /* LWIP_ARP */
     struct {
       void (*f)(void *ctx);
       void *ctx;

@@ -205,7 +205,7 @@ igmp_timer(void *arg)
 }
 #endif /* LWIP_IGMP */
 
-#if ETHARP_TCPIP_ETHINPUT
+#if LWIP_ARP
 /**
  * Process received ethernet frames. Using this function instead of directly
  * calling ip_input and passing ARP frames through etharp in ethernetif_input,
@@ -228,20 +228,20 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if ETHARP_TRUST_IP_MAC
       /* update ARP table */
       etharp_ip_input( netif, p);
-#endif
+#endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
       if(pbuf_header(p, -(s16_t)sizeof(struct eth_hdr))) {
         LWIP_ASSERT("Can't move over header in packet", 0);
         pbuf_free(p);
         p = NULL;
-      }
-      else
+      } else {
         /* pass to IP layer */
         ip_input(p, netif);
+      }
       break;
       
     case ETHTYPE_ARP:
-      /* pass p to ARP module  */
+      /* pass p to ARP module */
       etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
       break;
 
@@ -249,6 +249,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
     case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
       pppoe_disc_input(netif, p);
       break;
+
     case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
       pppoe_data_input(netif, p);
       break;
@@ -262,7 +263,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 
   return ERR_OK; /* return value ignored */
 }
-#endif /* ETHARP_TCPIP_ETHINPUT */
+#endif /* LWIP_ARP */
 
 /**
  * The main lwIP thread. This thread has exclusive access to lwIP core functions
@@ -312,13 +313,13 @@ tcpip_thread(void *arg)
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
 
-#if ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT
+#if LWIP_ARP
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-      msg->msg.inp.f(msg->msg.inp.p, msg->msg.inp.netif);
+      ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
-#endif /* ETHARP_TCPIP_INPUT || ETHARP_TCPIP_ETHINPUT */
+#endif /* LWIP_ARP */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -332,6 +333,7 @@ tcpip_thread(void *arg)
       msg->msg.cb.f(msg->msg.cb.ctx);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
+
     case TCPIP_MSG_TIMEOUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
 
@@ -341,17 +343,18 @@ tcpip_thread(void *arg)
         sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
+
     default:
       break;
     }
   }
 }
 
-#if ETHARP_TCPIP_INPUT
+#if LWIP_ARP
 /**
- * Pass a received IP packet to tcpip_thread for input processing
+ * Pass a received packet to tcpip_thread for input processing
  *
- * @param p the recevied packet, p->payload pointing to the IP header
+ * @param p the received packet, p->payload pointing to the Ethernet header
  * @param netif the network interface on which the packet was received
  */
 err_t
@@ -366,7 +369,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     }
 
     msg->type = TCPIP_MSG_INPKT;
-    msg->msg.inp.f = ip_input;
     msg->msg.inp.p = p;
     msg->msg.inp.netif = inp;
     sys_mbox_post(mbox, msg);
@@ -374,42 +376,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   }
   return ERR_VAL;
 }
-
-err_t
-tcpip_input_callback(struct pbuf *p, struct netif *inp, err_t (*f)(struct pbuf *, struct netif *))
-{
-  struct tcpip_msg *msg;
-
-  if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
-    if (msg == NULL) {
-      return ERR_MEM;  
-    }
-
-    msg->type = TCPIP_MSG_INPKT;
-    msg->msg.inp.f = f;
-    msg->msg.inp.p = p;
-    msg->msg.inp.netif = inp;
-    sys_mbox_post(mbox, msg);
-    return ERR_OK;
-  }
-  return ERR_VAL;
-}
-#endif /* ETHARP_TCPIP_INPUT */
-
-#if ETHARP_TCPIP_ETHINPUT
-/**
- * Pass a received IP packet to tcpip_thread for input processing
- *
- * @param p the recevied packet, p->payload pointing to the ethernet header
- * @param netif the network interface on which the packet was received
- */
-err_t
-tcpip_ethinput(struct pbuf *p, struct netif *inp)
-{
-  return tcpip_input_callback(p, inp, ethernet_input);
-}
-#endif /* ETHARP_TCPIP_ETHINPUT */
+#endif /* LWIP_ARP */
 
 /**
  * Call a specific function in the thread context of

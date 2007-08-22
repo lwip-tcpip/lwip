@@ -317,27 +317,6 @@
 #endif
 
 /**
- * ETHARP_TCPIP_INPUT==1: Driver can pass packets to tcpip_input after it
- * has processed any incoming ARP packets. Incoming IP packets are then
- * processed in tcpip_thread context. It is recommended that you use
- * ETHARP_TCPIP_ETHINPUT instead; see that option for explanation.
- * (only useful if you use tcpip.c)
- */
-#ifndef ETHARP_TCPIP_INPUT
-#define ETHARP_TCPIP_INPUT              1
-#endif
-
-/**
- * ETHARP_TCPIP_ETHINPUT==1: Driver passes *all* packets to tcpip_ethinput
- * (and not tcpip_input). IP and ARP packets will be both processed inside
- * tcpip_thread context. The aim is to protect ARP layer against concurrent
- * access. Older ports have to be updated to use tcpip_ethinput.
- */
-#ifndef ETHARP_TCPIP_ETHINPUT
-#define ETHARP_TCPIP_ETHINPUT           1
-#endif
-
-/**
  * ETHARP_QUEUE_FIRST is deprecated
  */
 #ifdef ETHARP_QUEUE_FIRST

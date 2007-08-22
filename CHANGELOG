@@ -18,6 +18,12 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2007-08-22 Frédéric Bernon
+  * tcpip.h, tcpip.c, ethernetif.c, opt.h: remove options ETHARP_TCPIP_INPUT &
+    ETHARP_TCPIP_ETHINPUT, now, only "ethinput" code is supported, even if the 
+    name is tcpip_input (we keep the name of 1.2.0 function).
+
   2007-08-17 Jared Grubb
   * memp_std.h, memp.h, memp.c, mem.c, stats.c: (Task #7136) Centralize mempool 
     settings into new memp_std.h and optional user file lwippools.h. This adds

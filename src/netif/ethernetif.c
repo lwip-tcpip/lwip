@@ -236,10 +236,13 @@ ethernetif_input(struct netif *netif)
   
   switch (htons(ethhdr->type)) {
 
-#if ETHARP_TCPIP_ETHINPUT
   /* IP or ARP packet? */
   case ETHTYPE_IP:
   case ETHTYPE_ARP:
+#if PPPOE_SUPPORT
+  case ETHTYPE_PPPOEDISC:
+  case ETHTYPE_PPPOE:
+#endif /* PPPOE_SUPPORT */
     /* full packet send to tcpip_thread to process */
     if (netif->input(p, netif)!=ERR_OK)
      { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
@@ -247,55 +250,6 @@ ethernetif_input(struct netif *netif)
        p = NULL;
      }
     break;
-    
-#else /* ETHARP_TCPIP_ETHINPUT */ 
-#if ETHARP_TCPIP_INPUT
-
-  /* IP packet? */
-  case ETHTYPE_IP:
-#if ETHARP_TRUST_IP_MAC
-    /* update ARP table */
-    /* In multithreaded environments, watch out if using etharp_ip_input()
-     * in another thread than the main tcpip_thread, since the ARP table
-     * is not locked from concurrent access!!!
-     * Use ETHARP_TCPIP_ETHINPUT=1 instead so ARP processing is done inside
-     * the thread context of tcpip_thread.
-     */
-    etharp_ip_input(netif, p);
-#endif /* ETHARP_TRUST_IP_MAC */ 
-    /* skip Ethernet header */
-    pbuf_header(p, -sizeof(struct eth_hdr));
-    /* pass to network layer */
-    if (netif->input(p, netif)!=ERR_OK)
-     { LWIP_DEBUGF(NETIF_DEBUG, ("ethernetif_input: IP input error\n"));
-       pbuf_free(p);
-       p = NULL;
-     }
-    break;
-      
-  /* ARP packet? */
-  case ETHTYPE_ARP:
-    /* pass p to ARP module  */
-    /* In multithreaded environments, watch out if using etharp_ip_input()
-     * in another thread than the main tcpip_thread, since the ARP table
-     * is not locked from concurrent access!!!
-     * Use ETHARP_TCPIP_ETHINPUT=1 instead so ARP processing is done inside
-     * the thread context of tcpip_thread.
-     */
-    etharp_arp_input(netif, ethernetif->ethaddr, p);
-    break;
-    
-#endif /* ETHARP_TCPIP_INPUT */
-#endif /* ETHARP_TCPIP_ETHINPUT */
-
-#if PPPOE_SUPPORT
-  case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
-    pppoe_disc_input(netif, p);
-    break;
-  case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
-    pppoe_data_input(netif, p);
-    break;
-#endif /* PPPOE_SUPPORT */
 
   default:
     pbuf_free(p);
