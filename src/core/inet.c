@@ -270,7 +270,7 @@ inet_chksum_pseudo(struct pbuf *p,
       (void *)q, (void *)q->next));
     acc += LWIP_CHKSUM(q->payload, q->len);
     /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
-    while (acc >> 16) {
+    while ((acc >> 16) != 0) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }
     if (q->len % 2 != 0) {
@@ -290,7 +290,7 @@ inet_chksum_pseudo(struct pbuf *p,
   acc += (u32_t)htons((u16_t)proto);
   acc += (u32_t)htons(proto_len);
 
-  while (acc >> 16) {
+  while ((acc >> 16) != 0) {
     acc = (acc & 0xffffUL) + (acc >> 16);
   }
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
