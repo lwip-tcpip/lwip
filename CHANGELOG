@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-0825 Frédéric Bernon (Artem Migaev's Patch)
+  * netif.h, netif.c: Integrate "patch #6163 : Function to check if link layer is up".
+    Add a netif_is_link_up() function if LWIP_NETIF_LINK_CALLBACK option is set.
+
   2007-08-22 Frédéric Bernon
   * netif.h, netif.c, opt.h: Rename LWIP_NETIF_CALLBACK in LWIP_NETIF_STATUS_CALLBACK
     to be coherent with new LWIP_NETIF_LINK_CALLBACK option before next release.

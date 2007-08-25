@@ -396,14 +396,6 @@ void netif_set_up(struct netif *netif)
 }
 
 /**
- * Ask if an interface is up
- */ 
-u8_t netif_is_up(struct netif *netif)
-{
-  return (netif->flags & NETIF_FLAG_UP)?1:0;
-}
-
-/**
  * Bring an interface down, disabling any traffic processing.
  *
  * @note: Enabling DHCP on a down interface will make it come
@@ -425,11 +417,19 @@ void netif_set_down(struct netif *netif)
     }
 }
 
+/**
+ * Ask if an interface is up
+ */ 
+u8_t netif_is_up(struct netif *netif)
+{
+  return (netif->flags & NETIF_FLAG_UP)?1:0;
+}
+
 #if LWIP_NETIF_STATUS_CALLBACK
 /**
  * Set callback to be called when interface is brought up/down
  */
-void netif_set_status_callback( struct netif *netif, void (* status_callback)(struct netif *netif ))
+void netif_set_status_callback(struct netif *netif, void (* status_callback)(struct netif *netif ))
 {
     if ( netif )
         netif->status_callback = status_callback;
@@ -438,27 +438,9 @@ void netif_set_status_callback( struct netif *netif, void (* status_callback)(st
 
 #if LWIP_NETIF_LINK_CALLBACK
 /**
- * Set callback to be called when link is brought up/down
- */
-void netif_set_link_callback( struct netif *netif, void (* link_callback)(struct netif *netif ))
-{
-    if ( netif )
-        netif->link_callback = link_callback;
-}
-
-/**
- * Called by a driver when its link goes down
- */
-void netif_set_link_down( struct netif *netif )
-{
-  netif->flags &= ~NETIF_FLAG_LINK_UP;
-  NETIF_LINK_CALLBACK(netif);
-}
-
-/**
  * Called by a driver when its link goes up
  */
-void netif_set_link_up( struct netif *netif )
+void netif_set_link_up(struct netif *netif )
 {
   netif->flags |= NETIF_FLAG_LINK_UP;
 
@@ -474,5 +456,31 @@ void netif_set_link_up( struct netif *netif )
 #endif /* LWIP_ARP */
 
   NETIF_LINK_CALLBACK(netif);
+}
+
+/**
+ * Called by a driver when its link goes down
+ */
+void netif_set_link_down(struct netif *netif )
+{
+  netif->flags &= ~NETIF_FLAG_LINK_UP;
+  NETIF_LINK_CALLBACK(netif);
+}
+
+/**
+ * Ask if a link is up
+ */ 
+u8_t netif_is_link_up(struct netif *netif)
+{
+  return (netif->flags & NETIF_FLAG_LINK_UP) ? 1 : 0;
+}
+
+/**
+ * Set callback to be called when link is brought up/down
+ */
+void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif ))
+{
+    if ( netif )
+        netif->link_callback = link_callback;
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
