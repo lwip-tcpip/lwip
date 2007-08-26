@@ -452,6 +452,12 @@ do_close_internal(struct netconn *conn)
   if (err == ERR_OK) {
     /* Closing succeeded */
     conn->state = NETCONN_NONE;
+    /* Set back some callback pointers as conn is going away */
+    tcp_err(conn->pcb.tcp, NULL);
+    tcp_poll(conn->pcb.tcp, NULL, 4);
+    tcp_sent(conn->pcb.tcp, NULL);
+    tcp_recv(conn->pcb.tcp, NULL);
+    tcp_arg(conn->pcb.tcp, NULL);
     conn->pcb.tcp = NULL;
     conn->err = err;
     /* Trigger select() in socket layer */
