@@ -152,7 +152,7 @@ lwip_standard_chksum(void *dataptr, int len)
   sum += t;
 
   /*  Fold 32-bit sum to 16 bits */
-  while (sum >> 16)
+  while ((sum >> 16) != 0)
     sum = (sum & 0xffff) + (sum >> 16);
 
   /* Swap if alignment was odd */
@@ -229,7 +229,7 @@ lwip_standard_chksum(void *dataptr, int len)
 
   sum += t;                     /* add end bytes */
 
-  while (sum >> 16)             /* combine halves */
+  while ((sum >> 16) != 0)      /* combine halves */
     sum = (sum >> 16) + (sum & 0xffff);
 
   if (odd)
@@ -313,7 +313,7 @@ inet_chksum(void *dataptr, u16_t len)
   u32_t acc;
 
   acc = LWIP_CHKSUM(dataptr, len);
-  while (acc >> 16) {
+  while ((acc >> 16) != 0) {
     acc = (acc & 0xffff) + (acc >> 16);
   }
   return (u16_t)~(acc & 0xffff);
@@ -337,7 +337,7 @@ inet_chksum_pbuf(struct pbuf *p)
   swapped = 0;
   for(q = p; q != NULL; q = q->next) {
     acc += LWIP_CHKSUM(q->payload, q->len);
-    while (acc >> 16) {
+    while ((acc >> 16) != 0) {
       acc = (acc & 0xffffUL) + (acc >> 16);
     }
     if (q->len % 2 != 0) {
