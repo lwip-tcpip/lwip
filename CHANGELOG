@@ -312,6 +312,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-08-27 Frédéric Bernon
+  * api.h, api_lib.c, api_msg.c: First fix for "bug #20900 : Potential crash error
+    problem with netconn_peer & netconn_addr". Introduce NETCONN_LISTEN netconn_state
+    and remove obsolete ones (NETCONN_RECV & NETCONN_ACCEPT).
+
   2007-08-24 Kieran Mansley
   * inet.c Modify (acc >> 16) test to ((acc >> 16) != 0) to help buggy
     compiler (Paradigm C++)

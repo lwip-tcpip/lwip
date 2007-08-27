@@ -594,7 +594,7 @@ netconn_recv(struct netconn *conn)
 
   if (conn->type == NETCONN_TCP) {
 #if LWIP_TCP
-    if (conn->pcb.tcp->state == LISTEN) {
+    if (conn->state == NETCONN_LISTEN) {
       conn->err = ERR_CONN;
       return NULL;
     }

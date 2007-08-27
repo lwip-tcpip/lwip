@@ -676,6 +676,7 @@ do_listen(struct api_msg_msg *msg)
               }
             }
             if (msg->conn->err == ERR_OK) {
+              msg->conn->state = NETCONN_LISTEN;
               msg->conn->pcb.tcp = lpcb;
               tcp_arg(msg->conn->pcb.tcp, msg->conn);
               tcp_accept(msg->conn->pcb.tcp, accept_function);

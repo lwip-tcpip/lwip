@@ -74,8 +74,7 @@ enum netconn_type {
 enum netconn_state {
   NETCONN_NONE,
   NETCONN_WRITE,
-  NETCONN_ACCEPT,
-  NETCONN_RECV,
+  NETCONN_LISTEN,
   NETCONN_CONNECT,
   NETCONN_CLOSE
 };
