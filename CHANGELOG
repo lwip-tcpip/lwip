@@ -19,7 +19,12 @@ HISTORY
 
   ++ New features:
 
-  2007-0825 Frédéric Bernon (Artem Migaev's Patch)
+  2007-08-26 Marc Boucher
+  * api_msg.c: do_close_internal(): Reset the callbacks and arg (conn) to NULL
+    since they can under certain circumstances be called with an invalid conn
+    pointer after the connection has been closed (and conn has been freed). 
+
+  2007-08-25 Frédéric Bernon (Artem Migaev's Patch)
   * netif.h, netif.c: Integrate "patch #6163 : Function to check if link layer is up".
     Add a netif_is_link_up() function if LWIP_NETIF_LINK_CALLBACK option is set.
 
@@ -37,6 +42,38 @@ HISTORY
     settings into new memp_std.h and optional user file lwippools.h. This adds
     more dynamic mempools, and allows the user to create an arbitrary number of
     mempools for mem_malloc.
+
+  2007-08-16 Marc Boucher
+  * api_msg.c: Initialize newconn->state to NETCONN_NONE in accept_function;
+    otherwise it was left to NETCONN_CLOSE and sent_tcp() could prematurely
+    close the connection.
+
+  2007-08-16 Marc Boucher
+  * sockets.c: lwip_accept(): check netconn_peer() error return.
+
+  2007-08-16 Marc Boucher
+  * mem.c, mem.h: Added mem_calloc().
+
+  2007-08-16 Marc Boucher
+  * tcpip.c, tcpip.h memp.c, memp.h: Added distinct memp (MEMP_TCPIP_MSG_INPKT)
+    for input packets to prevent floods from consuming all of MEMP_TCPIP_MSG
+    and starving other message types.
+    Renamed MEMP_TCPIP_MSG to MEMP_TCPIP_MSG_API
+
+  2007-08-16 Marc Boucher
+  * pbuf.c, pbuf.h, etharp.c, tcp_in.c, sockets.c: Split pbuf flags in pbuf
+    type and flgs (later renamed to flags).
+    Use enum pbuf_flag as pbuf_type.  Renumber PBUF_FLAG_*.
+    Improved lwip_recvfrom().  TCP push now propagated.
+
+  2007-08-16 Marc Boucher
+  * ethernetif.c, contrib/ports/various: ethbroadcast now a shared global
+    provided by etharp.
+
+  2007-08-16 Marc Boucher
+  * ppp_oe.c ppp_oe.h, auth.c chap.c fsm.c lcp.c ppp.c ppp.h,
+    etharp.c ethernetif.c, etharp.h, opt.h tcpip.h, tcpip.c:
+    Added PPPoE support and various PPP improvements.
 
   2007-07-25 Simon Goldschmidt
   * api_lib.c, ip_frag.c, pbuf.c, api.h, pbuf.h: Introduced pbuf_copy_partial,
