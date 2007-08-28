@@ -51,7 +51,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   struct ip_hdr *iphdr;
   struct ip_addr tmpaddr;
 
-#ifdef ICMP_STATS
+#if ICMP_STATS
   ++lwip_stats.icmp.recv;
 #endif /* ICMP_STATS */
 
@@ -67,7 +67,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
 
       pbuf_free(p);
-#ifdef ICMP_STATS
+#if ICMP_STATS
       ++lwip_stats.icmp.lenerr;
 #endif /* ICMP_STATS */
 
@@ -78,7 +78,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (inet_chksum_pbuf(p) != 0) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
 
-#ifdef ICMP_STATS
+#if ICMP_STATS
       ++lwip_stats.icmp.chkerr;
 #endif /* ICMP_STATS */
     /*      return;*/
@@ -95,7 +95,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       iecho->chksum += htons(ICMP6_ECHO << 8);
     }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo (%"X16_F")\n", inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest), IP_PROTO_ICMP, p->tot_len)));
-#ifdef ICMP_STATS
+#if ICMP_STATS
     ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
@@ -105,7 +105,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     break;
   default:
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" not supported.\n", (s16_t)type));
-#ifdef ICMP_STATS
+#if ICMP_STATS
     ++lwip_stats.icmp.proterr;
     ++lwip_stats.icmp.drop;
 #endif /* ICMP_STATS */
@@ -143,7 +143,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   /* calculate checksum */
   idur->chksum = 0;
   idur->chksum = inet_chksum(idur, q->len);
-#ifdef ICMP_STATS
+#if ICMP_STATS
   ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
 
@@ -184,7 +184,7 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   /* calculate checksum */
   tehdr->chksum = 0;
   tehdr->chksum = inet_chksum(tehdr, q->len);
-#ifdef ICMP_STATS
+#if ICMP_STATS
   ++lwip_stats.icmp.xmit;
 #endif /* ICMP_STATS */
   ip_output(q, NULL,

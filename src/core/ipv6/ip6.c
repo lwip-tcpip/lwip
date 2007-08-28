@@ -133,7 +133,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
 #endif /* IP_DEBUG */
   LWIP_DEBUGF(IP_DEBUG, ("\n"));
 
-#ifdef IP_STATS
+#if IP_STATS
   ++lwip_stats.ip.fw;
   ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
@@ -166,7 +166,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif /* IP_DEBUG */
 
 
-#ifdef IP_STATS
+#if IP_STATS
   ++lwip_stats.ip.recv;
 #endif /* IP_STATS */
 
@@ -180,7 +180,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ip_debug_print(p);
 #endif /* IP_DEBUG */
     pbuf_free(p);
-#ifdef IP_STATS
+#if IP_STATS
     ++lwip_stats.ip.err;
     ++lwip_stats.ip.drop;
 #endif /* IP_STATS */
@@ -204,7 +204,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   if (netif == NULL) {
     /* packet not for us, route or discard */
-#ifdef IP_FORWARD
+#if IP_FORWARD
     ip_forward(p, iphdr);
 #endif
     pbuf_free(p);
@@ -242,7 +242,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     LWIP_DEBUGF(IP_DEBUG, ("Unsupported transport protocol %"U16_F"\n",
           iphdr->nexthdr));
 
-#ifdef IP_STATS
+#if IP_STATS
     ++lwip_stats.ip.proterr;
     ++lwip_stats.ip.drop;
 #endif /* IP_STATS */
@@ -271,7 +271,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   LWIP_DEBUGF(IP_DEBUG, ("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len));
   if (pbuf_header(p, IP_HLEN)) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
-#ifdef IP_STATS
+#if IP_STATS
     ++lwip_stats.ip.err;
 #endif /* IP_STATS */
 
@@ -301,7 +301,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     dest = &(iphdr->dest);
   }
 
-#ifdef IP_STATS
+#if IP_STATS
   ++lwip_stats.ip.xmit;
 #endif /* IP_STATS */
 
@@ -327,7 +327,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
-#ifdef IP_STATS
+#if IP_STATS
     ++lwip_stats.ip.rterr;
 #endif /* IP_STATS */
     return ERR_RTE;
