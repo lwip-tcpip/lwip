@@ -46,13 +46,11 @@
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
-#include "lwip/ip.h"
 #include "lwip/ip_frag.h"
-#include "lwip/udp.h"
-#include "lwip/tcp.h"
+#include "lwip/igmp.h"
 
 #include "lwip/tcpip.h"
-#include "lwip/igmp.h"
+#include "lwip/init.h"
 
 #if !NO_SYS
 
@@ -529,32 +527,16 @@ tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
 
 /**
  * Initialize this module:
- * - initialize ARP, IP, UDP and TCP
+ * - initialize all sub modules
  * - start the tcpip_thread
  *
- * @param initfunc a function to call when tcpip_thread is running and
- *        finished initializing
+ * @param initfunc a function to call when tcpip_thread is running and finished initializing
  * @param arg argument to pass to initfunc
  */
 void
 tcpip_init(void (* initfunc)(void *), void *arg)
 {
-#if LWIP_ARP
-  etharp_init();
-#endif /* LWIP_ARP */
-  ip_init();
-#if LWIP_RAW
-  raw_init();
-#endif /* LWIP_RAW */
-#if LWIP_UDP
-  udp_init();
-#endif /* LWIP_UDP */
-#if LWIP_TCP
-  tcp_init();
-#endif /* LWIP_TCP */
-#if LWIP_AUTOIP
-  autoip_init();
-#endif /* LWIP_AUTOIP */
+  lwip_init();
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;

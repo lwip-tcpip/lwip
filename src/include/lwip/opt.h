@@ -801,11 +801,25 @@
 #define LWIP_TCPIP_CORE_LOCKING         0
 #endif
 
+/**
+ * LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
+ */
+#ifndef LWIP_NETCONN
+#define LWIP_NETCONN                    1
+#endif
+
 /*
    ------------------------------------
    ---------- Socket options ----------
    ------------------------------------
 */
+/**
+ * LWIP_SOCKET==1: Enable Socket API (require to use sockets.c)
+ */
+#ifndef LWIP_SOCKET
+#define LWIP_SOCKET                     1
+#endif
+
 /**
  * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names.
  * (only used if you use sockets.c)

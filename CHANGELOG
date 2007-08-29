@@ -19,6 +19,16 @@ HISTORY
 
   ++ New features:
 
+  2007-08-29 Frédéric Bernon
+  * Add init.h, init.c, Change opt.h, tcpip.c: Task  #7213 "Add a lwip_init function"
+    Add lwip_init function to regroup all modules initializations, and to provide
+    a place to add code for task #7142 "Sanity check user-configurable values".
+    Ports maintainers should remove direct initializations calls from their code,
+    and add init.c in their makefiles. Note that lwip_init() function is called
+    inside tcpip_init, but can also be used by raw api users since all calls are
+    disabled when matching options are disabled. Also note that their is new options
+    in opt.h, you should configure in your lwipopts.h (they are enabled per default).
+
   2007-08-26 Marc Boucher
   * api_msg.c: do_close_internal(): Reset the callbacks and arg (conn) to NULL
     since they can under certain circumstances be called with an invalid conn
