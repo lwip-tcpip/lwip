@@ -313,13 +313,17 @@ tcpip_thread(void *arg)
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
 
-#if LWIP_ARP
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-      ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
+#if LWIP_ARP
+      if (msg->msg.inp.netif->flags & NETIF_FLAG_ETHARP) {
+        ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
+      } else
+#endif /* LWIP_ARP */
+      { ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+      }
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
-#endif /* LWIP_ARP */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -354,7 +358,8 @@ tcpip_thread(void *arg)
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
- * @param p the received packet, p->payload pointing to the Ethernet header
+ * @param p the received packet, p->payload pointing to the Ethernet header or
+ *          to an IP header (if netif doesn't got NETIF_FLAG_ETHARP flag)
  * @param netif the network interface on which the packet was received
  */
 err_t
