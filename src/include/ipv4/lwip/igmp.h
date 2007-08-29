@@ -107,6 +107,8 @@ struct igmp_group {
 /*  Prototypes */
 void   igmp_init(void);
 
+err_t  igmp_start( struct netif *netif);
+
 struct igmp_group *igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr);
 
 struct igmp_group *igmp_lookup_group(struct netif *ifp, struct ip_addr *addr);

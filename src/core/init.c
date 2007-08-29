@@ -50,6 +50,7 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
+#include "lwip/igmp.h"
 #include "lwip/autoip.h"
 
 void
@@ -63,7 +64,7 @@ lwip_init(void)
   memp_init();
   pbuf_init();
   netif_init();
-#if LWIP_SOCKET /** @todo Add this option in opt.h, in a first time, add it in lwipopts.h */
+#if LWIP_SOCKET
   lwip_socket_init();
 #endif /* LWIP_SOCKET */
   ip_init();
@@ -82,4 +83,7 @@ lwip_init(void)
 #if LWIP_AUTOIP
   autoip_init();
 #endif /* LWIP_AUTOIP */
+#if LWIP_IGMP
+  igmp_init();
+#endif /* LWIP_IGMP */
 }

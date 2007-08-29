@@ -20,6 +20,11 @@ HISTORY
   ++ New features:
 
   2007-08-29 Frédéric Bernon
+  * igmp.h, igmp.c, tcpip.c, init.c, netif.c: change igmp_init and add igmp_start.
+    igmp_start is call inside netif_add. Now, igmp initialization is in the same
+    spirit than the others modules. Modify some IGMP debug traces.
+
+  2007-08-29 Frédéric Bernon
   * Add init.h, init.c, Change opt.h, tcpip.c: Task  #7213 "Add a lwip_init function"
     Add lwip_init function to regroup all modules initializations, and to provide
     a place to add code for task #7142 "Sanity check user-configurable values".

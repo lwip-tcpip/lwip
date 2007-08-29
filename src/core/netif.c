@@ -43,6 +43,7 @@
 #include "lwip/netif.h"
 #include "lwip/tcp.h"
 #include "lwip/snmp.h"
+#include "lwip/igmp.h"
 
 #if LWIP_ARP
 #include "netif/etharp.h"
@@ -134,6 +135,11 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif->next = netif_list;
   netif_list = netif;
   snmp_inc_iflist();
+
+#if LWIP_IGMP
+  /* start IGMP processing */
+  igmp_start( netif);
+#endif /* LWIP_IGMP */
 
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
     netif->name[0], netif->name[1]));

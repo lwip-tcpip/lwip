@@ -292,15 +292,13 @@ tcpip_thread(void *arg)
 #if LWIP_AUTOIP
   sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
 #endif /* LWIP_AUTOIP */
+#if LWIP_IGMP
+  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
+#endif /* LWIP_IGMP */
 
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
-
-#if LWIP_IGMP
-  igmp_init();
-  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-#endif /* LWIP_IGMP */
 
   LOCK_TCPIP_CORE();
   while (1) {                          /* MAIN Loop */

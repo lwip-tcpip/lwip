@@ -108,39 +108,45 @@ static struct ip_addr     allsystems;
 static struct ip_addr     allrouters;
 
 /**
- * Initialize this module
- *
- * Only network interfaces registered when this function is called
- * are igmp-enabled.
- *
- * This will enable igmp on all interface. In the current implementation it
- * is not possible to have igmp on one interface but not the other.
+ * Initialize the IGMP module
  */
 void
 igmp_init(void)
 {
-  struct igmp_group* group;
-  struct netif*      netif;
-
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_init: initializing\n"));
 
   IP4_ADDR(&allsystems, 224, 0, 0, 1);
   IP4_ADDR(&allrouters, 224, 0, 0, 2);
 
   igmp_group_list = NULL;
+}
 
-  for (netif = netif_list; netif != NULL; netif = netif->next) {
-    group = igmp_lookup_group(netif, &allsystems);
-      
-    if (group != NULL) {
-      group->group_state = IDLE_MEMBER;
+/**
+ * Start IGMP processing on interface
+ *
+ * @param netif network interface on which start IGMP processing
+ */
+err_t
+igmp_start(struct netif *netif)
+{
+  struct igmp_group* group;
 
-      /* Allow the igmp messages at the MAC level */
-      if (netif->igmp_mac_filter != NULL) {
-        netif->igmp_mac_filter(netif, &allsystems, IGMP_ADD_MAC_FILTER);
-      }
+  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_start: starting IGMP processing on if %x\n", (int) netif));
+
+  group = igmp_lookup_group(netif, &allsystems);
+
+  if (group != NULL) {
+    group->group_state = IDLE_MEMBER;
+
+    /* Allow the igmp messages at the MAC level */
+    if (netif->igmp_mac_filter != NULL) {
+      netif->igmp_mac_filter( netif, &allsystems, IGMP_ADD_MAC_FILTER);
     }
+
+    return ERR_OK;
   }
+
+  return ERR_MEM;
 }
 
 /**
@@ -200,10 +206,20 @@ igmp_lookup_group(struct netif *ifp, struct ip_addr *addr)
     group->next               = igmp_group_list;
 
     igmp_group_list = group;
-     
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_lookup_group: allocated a new group with address %x on if %x \n", (int) addr, (int) ifp));
+
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_lookup_group: allocated a new group with address %"U16_F".%"U16_F".%"U16_F".%"U16_F" on if %x \n",
+                            (u16_t)(ntohl(addr->addr) >> 24 & 0xff),
+                            (u16_t)(ntohl(addr->addr) >> 16 & 0xff),
+                            (u16_t)(ntohl(addr->addr) >> 8  & 0xff),
+                            (u16_t)(ntohl(addr->addr)       & 0xff),
+                            (int) ifp));
   } else {
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_lookup_group: impossible to allocated a new group with address %x on if %x \n", (int) addr, (int) ifp));
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_lookup_group: impossible to allocated a new group with address %"U16_F".%"U16_F".%"U16_F".%"U16_F" on if %x \n",
+                            (u16_t)(ntohl(addr->addr) >> 24 & 0xff),
+                            (u16_t)(ntohl(addr->addr) >> 16 & 0xff),
+                            (u16_t)(ntohl(addr->addr) >> 8  & 0xff),
+                            (u16_t)(ntohl(addr->addr)       & 0xff),
+                            (int) ifp));
   }
 
   return group;
@@ -233,7 +249,12 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
     return;
   }
 
-  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: message to address %l \n", (long)dest->addr));
+  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: message to address %"U16_F".%"U16_F".%"U16_F".%"U16_F" on if %x \n",
+                          (u16_t)(ntohl(dest->addr) >> 24 & 0xff),
+                          (u16_t)(ntohl(dest->addr) >> 16 & 0xff),
+                          (u16_t)(ntohl(dest->addr) >> 8  & 0xff),
+                          (u16_t)(ntohl(dest->addr)       & 0xff),
+                          (int) inp));
 
   /* Now calculate and check the checksum */
   igmp = (struct igmp_msg *)p->payload;
@@ -457,9 +478,13 @@ void
 igmp_timeout(struct igmp_group *group)
 {
   /* If the state is DELAYING_MEMBER then we send a report for this group */
-  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_timeout: got a timeout\n"));
-
   if (group->group_state == DELAYING_MEMBER) {
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_timeout: report membership for group with address %"U16_F".%"U16_F".%"U16_F".%"U16_F" on if %x \n",
+                            (u16_t)(ntohl(group->group_address.addr) >> 24 & 0xff),
+                            (u16_t)(ntohl(group->group_address.addr) >> 16 & 0xff),
+                            (u16_t)(ntohl(group->group_address.addr) >> 8  & 0xff),
+                            (u16_t)(ntohl(group->group_address.addr)       & 0xff),
+                            (int) group->interface));
     igmp_send(group, IGMP_V2_MEMB_REPORT);
   }
 }
