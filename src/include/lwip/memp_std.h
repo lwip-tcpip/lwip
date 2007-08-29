@@ -10,15 +10,15 @@
  * above, then will declare #2 & #3 to be just standard mempools.
  */
 #ifndef LWIP_MALLOC_MEMPOOL
-// This treats "malloc pools" just like any other pool
+/* This treats "malloc pools" just like any other pool */
 #define LWIP_MALLOC_MEMPOOL(num, size) LWIP_MEMPOOL(POOL_##size, num, size, "MALLOC_"#size)
 #define LWIP_MALLOC_MEMPOOL_START
 #define LWIP_MALLOC_MEMPOOL_END
 #endif /* LWIP_MALLOC_MEMPOOL */ 
 
 #ifndef LWIP_PBUF_MEMPOOL
-// This treats "pbuf pools" just like any other pool.
-// Allocates buffers for a pbuf struct AND a payload size
+/* This treats "pbuf pools" just like any other pool.
+ * Allocates buffers for a pbuf struct AND a payload size */
 #define LWIP_PBUF_MEMPOOL(name, num, payload, desc) LWIP_MEMPOOL(name, num, (MEMP_ALIGN_SIZE(sizeof(struct pbuf)) + MEMP_ALIGN_SIZE(payload)), desc)
 #endif /* LWIP_PBUF_MEMPOOL */
 
