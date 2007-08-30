@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-08-30 Frédéric Bernon
+  * Add netbuf.h, netbuf.c, Change api.h, api_lib.c: #7249 "Split netbuf functions
+    from api/api_lib". Now netbuf API is independant of netconn, and can be used
+    with other API (application based on raw API, or future "socket2" API). Ports
+    maintainers just have to add src/api/netbuf.c in their makefile/projects.
+
   2007-08-30 Frédéric Bernon, Jonathan Larmour
   * init.c: Add first version of lwip_sanity_check for task #7142 "Sanity check
     user-configurable values".
