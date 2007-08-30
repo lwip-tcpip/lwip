@@ -50,8 +50,8 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
-#include "lwip/igmp.h"
 #include "lwip/autoip.h"
+#include "lwip/igmp.h"
 
 
 /* Compile-time sanity checks for configuration errors.
@@ -72,6 +72,12 @@
 #if (!LWIP_UDP && LWIP_IGMP)
   #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
+#if (LWIP_ARP && ARP_QUEUEING && (MEMP_NUM_ARP_QUEUE<=0))
+  #error "If you want to use ARP Queueing, you have to define MEMP_NUM_ARP_QUEUE>=1 in your lwipopts.h"
+#endif
+#if (LWIP_RAW && (MEMP_NUM_RAW_PCB<=0))
+  #error "If you want to use RAW, you have to define MEMP_NUM_RAW_PCB>=1 in your lwipopts.h"
+#endif
 #if (LWIP_UDP && (MEMP_NUM_UDP_PCB<=0))
   #error "If you want to use UDP, you have to define MEMP_NUM_UDP_PCB>=1 in your lwipopts.h"
 #endif
@@ -88,10 +94,10 @@
   #error "If you want to use Socket API, you have to define LWIP_NETCONN=1 in your lwipopts.h"
 #endif
 #if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && DHCP_AUTOIP_COOP)
- #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
+  #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
 #endif
 #if (((!LWIP_DHCP) || (!LWIP_ARP)) && DHCP_DOES_ARP_CHECK)
- #error "If you want to use DHCP ARP checking, you have to define LWIP_DHCP=1 and LWIP_ARP=1 in your lwipopts.h"
+  #error "If you want to use DHCP ARP checking, you have to define LWIP_DHCP=1 and LWIP_ARP=1 in your lwipopts.h"
 #endif
 
 
