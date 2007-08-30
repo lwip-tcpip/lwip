@@ -340,10 +340,7 @@ igmp_joingroup(struct netif *ifp, struct ip_addr *groupaddr)
   struct igmp_group *group;
 
   /* make sure it is multicast address */
-  if (!ip_addr_ismulticast(groupaddr)) {
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: attempt to join non-multicast address\n"));
-    return ERR_VAL;
-  }
+  LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip_addr_ismulticast(groupaddr), return ERR_VAL;);
 
   /* find group or create a new one if not found */
   group = igmp_lookup_group(ifp, groupaddr);
@@ -390,6 +387,10 @@ igmp_leavegroup(struct netif *ifp, struct ip_addr *groupaddr)
 {
   struct igmp_group *group;
 
+  /* make sure it is multicast address */
+  LWIP_ERROR("igmp_leavegroup: attempt to leave non-multicast address", ip_addr_ismulticast(groupaddr), return ERR_VAL;);
+
+  /* find group */
   group = igmp_lookfor_group(ifp, groupaddr);
 
   if (group != NULL) {
