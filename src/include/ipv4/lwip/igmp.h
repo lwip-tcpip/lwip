@@ -47,30 +47,32 @@ extern "C" {
 /* 
  * IGMP constants
  */
-#define IP_PROTO_IGMP       2
-#define IGMP_TTL            1
-#define IGMP_MINLEN         8
-#define ROUTER_ALERTLEN     4
+#define IP_PROTO_IGMP                  2
+#define IGMP_TTL                       1
+#define IGMP_MINLEN                    8
+#define ROUTER_ALERTLEN                4
 
 /*
  * IGMP message types, including version number.
  */
-#define IGMP_MEMB_QUERY     0x11 /* Membership query         */
-#define IGMP_V1_MEMB_REPORT 0x12 /* Ver. 1 membership report */
-#define IGMP_V2_MEMB_REPORT 0x16 /* Ver. 2 membership report */
-#define IGMP_LEAVE_GROUP    0x17 /* Leave-group message      */
+#define IGMP_MEMB_QUERY                0x11 /* Membership query         */
+#define IGMP_V1_MEMB_REPORT            0x12 /* Ver. 1 membership report */
+#define IGMP_V2_MEMB_REPORT            0x16 /* Ver. 2 membership report */
+#define IGMP_LEAVE_GROUP               0x17 /* Leave-group message      */
 
 /* IGMP timer */
-#define IGMP_TMR_INTERVAL   100 /* Milliseconds */
+#define IGMP_TMR_INTERVAL              100 /* Milliseconds */
+#define IGMP_V1_DELAYING_MEMBER_TMR   (1000/IGMP_TMR_INTERVAL)
+#define IGMP_JOIN_DELAYING_MEMBER_TMR (500 /IGMP_TMR_INTERVAL)
 
 /* MAC Filter Actions */
-#define IGMP_DEL_MAC_FILTER 0
-#define IGMP_ADD_MAC_FILTER 1
+#define IGMP_DEL_MAC_FILTER            0
+#define IGMP_ADD_MAC_FILTER            1
 
 /* Group  membership states */
-#define NON_MEMBER          0
-#define DELAYING_MEMBER     1
-#define IDLE_MEMBER         2 
+#define NON_MEMBER                     0
+#define DELAYING_MEMBER                1
+#define IDLE_MEMBER                    2
 
 /*
  * IGMP packet format.
@@ -126,6 +128,8 @@ void   igmp_timeout( struct igmp_group *group);
 void   igmp_start_timer( struct igmp_group *group,u8_t max_time);
 
 void   igmp_stop_timer( struct igmp_group *group);
+
+void   igmp_delaying_member( struct igmp_group *group, u8_t maxresp);
 
 err_t  igmp_ip_output_if( struct pbuf *p, struct ip_addr *src, struct ip_addr *dest, u8_t ttl, u8_t proto, struct netif *netif);
 

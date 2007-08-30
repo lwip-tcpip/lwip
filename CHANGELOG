@@ -331,6 +331,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-08-30 Frédéric Bernon
+  * igmp.h, igmp.c: Some changes to remove some redundant code, add some traces, 
+    and fix some coding style.
+
   2007-08-28 Frédéric Bernon
   * tcpip.c: Fix TCPIP_MSG_INPKT processing: now, tcpip_input can be used for any
     kind of packets. These packets are considered like Ethernet packets (payload 
