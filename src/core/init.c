@@ -54,69 +54,70 @@
 #include "lwip/autoip.h"
 
 
+/* Compile-time sanity checks for configuration errors.
+ * These can be done independently of LWIP_DEBUG, without penalty.
+ */
+#if (!LWIP_ARP && ARP_QUEUEING)
+  #error "If you want to use ARP Queueing, you have to define LWIP_ARP=1 in your lwipopts.h"
+#endif
+#if (!LWIP_UDP && LWIP_UDPLITE)
+  #error "If you want to use UDP Lite, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (!LWIP_UDP && LWIP_SNMP)
+  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (!LWIP_UDP && LWIP_DHCP)
+  #error "If you want to use DHCP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (!LWIP_UDP && LWIP_IGMP)
+  #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (LWIP_UDP && (MEMP_NUM_UDP_PCB<=0))
+  #error "If you want to use UDP, you have to define MEMP_NUM_UDP_PCB>=1 in your lwipopts.h"
+#endif
+#if (LWIP_TCP && (MEMP_NUM_TCP_PCB<=0))
+  #error "If you want to use TCP, you have to define MEMP_NUM_TCP_PCB>=1 in your lwipopts.h"
+#endif
+#if ((LWIP_SOCKET || LWIP_NETCONN) && (NO_SYS==1))
+  #error "If you want to use Sequential API, you have to define NO_SYS=0 in your lwipopts.h"
+#endif
+#if ((LWIP_NETCONN || LWIP_SOCKET) && (MEMP_NUM_TCPIP_MSG_API<=0))
+  #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"
+#endif
+#if (!LWIP_NETCONN && LWIP_SOCKET)
+  #error "If you want to use Socket API, you have to define LWIP_NETCONN=1 in your lwipopts.h"
+#endif
+#if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && DHCP_AUTOIP_COOP)
+ #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
+#endif
+#if (((!LWIP_DHCP) || (!LWIP_ARP)) && DHCP_DOES_ARP_CHECK)
+ #error "If you want to use DHCP ARP checking, you have to define LWIP_DHCP=1 and LWIP_ARP=1 in your lwipopts.h"
+#endif
+
+
 #ifdef LWIP_DEBUG
 void
 lwip_sanity_check()
 {
   /* Warnings */
-  if (MEMP_NUM_NETBUF > (PBUF_POOL_SIZE+MEMP_NUM_PBUF))
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: MEMP_NUM_NETBUF should be less than the sum of PBUF_POOL_SIZE and MEMP_NUM_PBUF\n"));
 #if LWIP_NETCONN
   if (MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB))
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN\n"));
 #endif /* LWIP_NETCONN */
+#if LWIP_TCP
+  if (MEMP_NUM_TCP_SEG < TCP_SND_QUEUELEN)
+    LWIP_PLATFORM_DIAG(("MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN\n"));
   if (TCP_SND_QUEUELEN < (2 * (TCP_SND_BUF/TCP_MSS)))
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_QUEUELEN must be at least as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work\n"));
   if (TCP_SNDLOWAT > TCP_SND_BUF)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than or equal to TCP_SND_BUF.\n"));
-
-  /* Errors */
-  #if (!LWIP_ARP && ARP_QUEUEING)
-    #error "If you want to use ARP Queueing, you have to define LWIP_ARP=1 in your lwipopts.h"
-  #endif
-  #if (!LWIP_UDP && LWIP_UDPLITE)
-    #error "If you want to use UDP Lite, you have to define LWIP_UDP=1 in your lwipopts.h"
-  #endif
-  #if (!LWIP_UDP && LWIP_SNMP)
-    #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
-  #endif
-  #if (!LWIP_UDP && LWIP_DHCP)
-    #error "If you want to use DHCP, you have to define LWIP_UDP=1 in your lwipopts.h"
-  #endif
-  #if (!LWIP_UDP && LWIP_IGMP)
-    #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
-  #endif
-  #if (LWIP_UDP && (MEMP_NUM_UDP_PCB<=0))
-    #error "If you want to use UDP, you have to define MEMP_NUM_UDP_PCB>=1 in your lwipopts.h"
-  #endif
-  #if (LWIP_TCP && (MEMP_NUM_TCP_PCB<=0))
-    #error "If you want to use TCP, you have to define MEMP_NUM_TCP_PCB>=1 in your lwipopts.h"
-  #endif
-  #if ((LWIP_SOCKET || LWIP_NETCONN) && (NO_SYS==1))
-    #error "If you want to use Sequential API, you have to define NO_SYS=0 in your lwipopts.h"
-  #endif
-  #if ((LWIP_NETCONN || LWIP_SOCKET) && (MEMP_NUM_TCPIP_MSG_API<=0))
-    #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"
-  #endif
-  #if (!LWIP_NETCONN && LWIP_SOCKET)
-    #error "If you want to use Socket API, you have to define LWIP_NETCONN=1 in your lwipopts.h"
-  #endif
-  #if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && DHCP_AUTOIP_COOP)
-   #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
-  #endif
-  #if (((!LWIP_DHCP) || (!LWIP_ARP)) && DHCP_DOES_ARP_CHECK)
-   #error "If you want to use DHCP ARP checking, you have to define LWIP_DHCP=1 and LWIP_ARP=1 in your lwipopts.h"
-  #endif
+  if (TCP_WND > (PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE))
+      LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE\n"));
+  if (TCP_WND < TCP_MSS)
+      LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
+#endif /* LWIP_TCP */
 
 /** @todo integrate these checks (from task #7142 : Sanity check user-configurable values) :
-  if (MEMP_NUM_TCP_SEG < TCP_SND_QUEUELEN)
-    LWIP_PLATFORM_DIAG(("MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN\n"));
-- Ditto MEMP_NUM_ARP_QUEUE can be compared to the number of pbufs.
-- Ditto IP_FRAG_USES_STATIC_BUF
-- Ditto TCP_SND_QUEUELEN
-- TCP_WND versus PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE
-- TCP_MSS <= TCP_WND
-- We could consider ensuring that the number of pbufs exceed MEMP_NUM_NETBUF+MEMP_NUM_ARP_QUEUE+TCP_SND_QUEUELEN
 - Perhaps do range checking on some values? */
 }
 #else  /* LWIP_DEBUG */
