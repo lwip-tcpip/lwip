@@ -106,19 +106,16 @@ lwip_sanity_check()
 #endif /* LWIP_NETCONN */
 #if LWIP_TCP
   if (MEMP_NUM_TCP_SEG < TCP_SND_QUEUELEN)
-    LWIP_PLATFORM_DIAG(("MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN\n"));
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN\n"));
   if (TCP_SND_QUEUELEN < (2 * (TCP_SND_BUF/TCP_MSS)))
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_QUEUELEN must be at least as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work\n"));
   if (TCP_SNDLOWAT > TCP_SND_BUF)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than or equal to TCP_SND_BUF.\n"));
   if (TCP_WND > (PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE))
-      LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE\n"));
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE\n"));
   if (TCP_WND < TCP_MSS)
-      LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
 #endif /* LWIP_TCP */
-
-/** @todo integrate these checks (from task #7142 : Sanity check user-configurable values) :
-- Perhaps do range checking on some values? */
 }
 #else  /* LWIP_DEBUG */
 #define lwip_sanity_check()
