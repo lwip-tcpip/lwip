@@ -832,6 +832,13 @@
 #define LWIP_SO_RCVTIMEO                0
 #endif
 
+/**
+ * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!
+ */
+#ifndef SO_REUSE
+#define SO_REUSE                        0
+#endif
+
 /*
    ----------------------------------------
    ---------- Statistics options ----------
