@@ -264,13 +264,6 @@
 #endif
 
 /**
- * MEMP_NUM_TCPIP_MSG is deprecated
- */
-#ifdef MEMP_NUM_TCPIP_MSG
-#error MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h.
-#endif
-
-/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE
@@ -314,20 +307,6 @@
  */
 #ifndef ETHARP_TRUST_IP_MAC
 #define ETHARP_TRUST_IP_MAC             1
-#endif
-
-/**
- * ETHARP_QUEUE_FIRST is deprecated
- */
-#ifdef ETHARP_QUEUE_FIRST
-#error ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h.
-#endif
-
-/**
- * ETHARP_ALWAYS_INSERT is removed to comply with the ARP standard
- */
-#ifdef ETHARP_ALWAYS_INSERT
-#error ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h.
 #endif
 
 /*
@@ -851,19 +830,6 @@
  */
 #ifndef LWIP_SO_RCVTIMEO
 #define LWIP_SO_RCVTIMEO                0
-#endif
-
-/**
- * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!
- */
-#ifndef SO_REUSE
-#define SO_REUSE                        0
-#endif
-
-#if SO_REUSE
-/* I removed the lot since this was an ugly hack. It broke the raw-API.
-   It also came with many ugly goto's, Christiaan Simons. */
-#error "SO_REUSE currently unavailable, this was a hack"
 #endif
 
 /*
