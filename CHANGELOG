@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-08-30 Frédéric Bernon, Jonathan Larmour
+  * init.c: Add first version of lwip_sanity_check for task #7142 "Sanity check
+    user-configurable values".
+
   2007-08-29 Frédéric Bernon
   * igmp.h, igmp.c, tcpip.c, init.c, netif.c: change igmp_init and add igmp_start.
     igmp_start is call inside netif_add. Now, igmp initialization is in the same
