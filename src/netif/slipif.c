@@ -48,6 +48,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
+#include "lwip/snmp.h"
 #include "lwip/sio.h"
 
 #define SLIP_END     0300
@@ -260,11 +261,10 @@ slipif_init(struct netif *netif)
   }
 
   /* initialize the snmp variables and counters inside the struct netif
-   * ifType: we're using propPointToPointSerial(22) @see RFC1213
    * ifSpeed: no assumption can be made without knowing more about the
    * serial line!
    */
-  NETIF_INIT_SNMP(netif, 22, 0);
+  NETIF_INIT_SNMP(netif, snmp_ifType_slip, 0);
 
   /* Create a thread to poll the serial line. */
   sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);

@@ -41,6 +41,7 @@
 
 #include "netif/loopif.h"
 #include "lwip/pbuf.h"
+#include "lwip/snmp.h"
 
 #include <string.h>
 
@@ -203,10 +204,9 @@ loopif_init(struct netif *netif)
 #endif /* LWIP_LOOPIF_MULTITHREADING */
 
   /* initialize the snmp variables and counters inside the struct netif
-   * ifType: softwareLoopback(24) @see RFC1213
    * ifSpeed: no assumption can be made!
    */
-  NETIF_INIT_SNMP(netif, 24, 0);
+  NETIF_INIT_SNMP(netif, snmp_ifType_softwareLoopback, 0);
 
   netif->name[0] = 'l';
   netif->name[1] = 'o';

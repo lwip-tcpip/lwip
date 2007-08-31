@@ -49,7 +49,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include <lwip/stats.h>
-
+#include <lwip/snmp.h>
 #include "netif/etharp.h"
 #include "netif/ppp_oe.h"
 
@@ -289,8 +289,7 @@ ethernetif_init(struct netif *netif)
 #endif /* LWIP_NETIF_HOSTNAME */
 
   /* initialize the snmp variables and counters inside the struct netif */
-  /* ifType ethernetCsmacd(6) @see RFC1213 */
-  NETIF_INIT_SNMP(netif, 6, ???);
+  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, ???);
 
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;

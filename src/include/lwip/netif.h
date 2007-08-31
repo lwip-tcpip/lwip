@@ -140,7 +140,7 @@ struct netif {
   /** number of this interface */
   u8_t num;
 #if LWIP_SNMP
-  /** link type (ifType values per RFC1213) */
+  /** link type (from "snmp_ifType" enum from snmp.h) */
   u8_t link_type;
   /** (estimate) link speed */
   u32_t link_speed;
@@ -167,7 +167,7 @@ struct netif {
 
 #if LWIP_SNMP
 #define NETIF_INIT_SNMP(netif, type, speed) \
-  /* ifType ethernetCsmacd(6) @see RFC1213 */ \
+  /* use "snmp_ifType" enum from snmp.h for "type", snmp_ifType_ethernet_csmacd by example */ \
   netif->link_type = type;    \
   /* your link speed here */  \
   netif->link_speed = speed;  \
