@@ -84,7 +84,7 @@ low_level_init(struct netif *netif)
   struct ethernetif *ethernetif = netif->state;
   
   /* set MAC hardware address length */
-  netif->hwaddr_len = 6;
+  netif->hwaddr_len = ETHARP_HWADDR_LEN;
 
   /* set MAC hardware address */
   netif->hwaddr[0] = ;

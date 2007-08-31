@@ -362,7 +362,7 @@ Call these functions in the order of appearance:
   {
     u8_t i;
     
-    for(i = 0; i < 6; i++) netif->hwaddr[i] = some_eth_addr[i];
+    for(i = 0; i < ETHARP_HWADDR_LEN; i++) netif->hwaddr[i] = some_eth_addr[i];
     init_my_eth_device();
     return ERR_OK;
   }
