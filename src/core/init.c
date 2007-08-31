@@ -114,7 +114,7 @@
 #ifdef ETHARP_ALWAYS_INSERT
   #error ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h.
 #endif
-#ifdef SO_REUSE
+#if SO_REUSE
 /* I removed the lot since this was an ugly hack. It broke the raw-API.
    It also came with many ugly goto's, Christiaan Simons. */
   #error "SO_REUSE currently unavailable, this was a hack"
