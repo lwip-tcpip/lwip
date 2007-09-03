@@ -202,7 +202,7 @@ void netif_remove(struct netif * netif)
   /* this netif is default? */
   if (netif_default == netif)
     /* reset default netif */
-    netif_default = NULL;
+    netif_set_default(NULL);
   LWIP_DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
 }
 
