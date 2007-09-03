@@ -915,9 +915,9 @@ do_join_leave_group(struct api_msg_msg *msg)
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
 #if LWIP_UDP
         if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-          msg->conn->err = igmp_joingroup ( netif_default, msg->msg.jl.multiaddr);
+          msg->conn->err = igmp_joingroup ( msg->msg.jl.interface, msg->msg.jl.multiaddr);
         } else {
-          msg->conn->err = igmp_leavegroup( netif_default, msg->msg.jl.multiaddr);
+          msg->conn->err = igmp_leavegroup( msg->msg.jl.interface, msg->msg.jl.multiaddr);
         }
 #endif /* LWIP_UDP */
 #if (LWIP_TCP || LWIP_RAW)

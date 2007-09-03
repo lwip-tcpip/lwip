@@ -1626,9 +1626,9 @@ static void lwip_setsockopt_internal(void *arg)
         /* If this is a TCP or a RAW socket, ignore these options. */
         struct ip_mreq *imr = (struct ip_mreq *)optval;
         if(optname == IP_ADD_MEMBERSHIP){
-          data->err = igmp_joingroup(netif_default, (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
+          data->err = igmp_joingroup((struct ip_addr*)&(imr->imr_interface.s_addr), (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
         } else {
-          data->err = igmp_leavegroup(netif_default, (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
+          data->err = igmp_leavegroup((struct ip_addr*)&(imr->imr_interface.s_addr), (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
         }
         if(data->err != ERR_OK) {
           data->err = EADDRNOTAVAIL;

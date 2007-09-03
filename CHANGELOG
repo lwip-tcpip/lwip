@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+  2007-09-03 Frédéric Bernon
+  * igmp.h, igmp.c, sockets.c, api_msg.c: Changes for "#20503 IGMP Improvement".
+    Initialize igmp_mac_filter to NULL in netif_add (this field should be set in
+    the netif's "init" function). Use the "imr_interface" field (for socket layer)
+    and/or the "interface" field (for netconn layer), for join/leave operations.
+    The igmp_join/leavegroup first parameter change from a netif to an ipaddr.
+    This field could be a netif's ipaddr, or "any" (same meaning than ip_addr_isany).
+
   2007-08-30 Frédéric Bernon
   * Add netbuf.h, netbuf.c, Change api.h, api_lib.c: #7249 "Split netbuf functions
     from api/api_lib". Now netbuf API is independant of netconn, and can be used

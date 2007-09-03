@@ -115,6 +115,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if LWIP_NETIF_LINK_CALLBACK
   netif->link_callback = NULL;
 #endif /* LWIP_NETIF_LINK_CALLBACK */
+#if LWIP_IGMP
+  netif->igmp_mac_filter = NULL;
+#endif /* LWIP_IGMP */
 
   /* remember netif specific state information data */
   netif->state = state;

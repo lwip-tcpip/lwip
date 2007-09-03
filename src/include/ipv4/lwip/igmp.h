@@ -117,9 +117,9 @@ struct igmp_group *igmp_lookup_group(struct netif *ifp, struct ip_addr *addr);
 
 void   igmp_input( struct pbuf *p, struct netif *inp, struct ip_addr *dest);
 
-err_t  igmp_joingroup( struct netif* ifp, struct ip_addr *groupaddr);
+err_t  igmp_joingroup( struct ip_addr *ifaddr, struct ip_addr *groupaddr);
 
-err_t  igmp_leavegroup( struct netif* ifp, struct ip_addr *groupaddr);
+err_t  igmp_leavegroup( struct ip_addr *ifaddr, struct ip_addr *groupaddr);
 
 void   igmp_tmr(void);
 
