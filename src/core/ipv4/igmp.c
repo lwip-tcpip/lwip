@@ -339,6 +339,9 @@ igmp_joingroup(struct netif *ifp, struct ip_addr *groupaddr)
 {
   struct igmp_group *group;
 
+  /* make sure netif is valid */
+  LWIP_ERROR("igmp_joingroup: attempt to join on NULL netif", (ifp!=NULL), return ERR_VAL;);
+
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip_addr_ismulticast(groupaddr), return ERR_VAL;);
 
@@ -386,6 +389,9 @@ err_t
 igmp_leavegroup(struct netif *ifp, struct ip_addr *groupaddr)
 {
   struct igmp_group *group;
+
+  /* make sure netif is valid */
+  LWIP_ERROR("igmp_leavegroup: attempt to leave on NULL netif", (ifp!=NULL), return ERR_VAL;);
 
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_leavegroup: attempt to leave non-multicast address", ip_addr_ismulticast(groupaddr), return ERR_VAL;);
