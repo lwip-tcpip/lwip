@@ -58,7 +58,7 @@ struct sockaddr {
 };
 
 #ifndef socklen_t
-#  define socklen_t int
+#  define socklen_t u32_t
 #endif
 
 
