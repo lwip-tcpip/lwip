@@ -222,6 +222,16 @@
 #endif
 
 /**
+ * MEMP_NUM_IGMP_GROUP: The number of multicast groups whose network interfaces
+ * can be members et the same time (one per netif - allsystems group -, plus one
+ * per netif membership).
+ * (requires the LWIP_IGMP option)
+ */
+#ifndef MEMP_NUM_IGMP_GROUP
+#define MEMP_NUM_IGMP_GROUP             8
+#endif
+
+/**
  * MEMP_NUM_SYS_TIMEOUT: the number of simulateously active timeouts.
  * (requires NO_SYS==0)
  */

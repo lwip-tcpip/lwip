@@ -36,9 +36,9 @@
 #define __LWIP_IGMP_H__
 
 #include "lwip/opt.h"
+#include "lwip/inet.h"
 
-/* IGMP support available? */
-#if defined(LWIP_IGMP) && (LWIP_IGMP > 0)
+#if LWIP_IGMP /* don't build if not configured for use in lwipopts.h */
 
 #ifdef __cplusplus
 extern "C" {
@@ -70,17 +70,17 @@ extern "C" {
 #define IGMP_ADD_MAC_FILTER            1
 
 /* Group  membership states */
-#define NON_MEMBER                     0
-#define DELAYING_MEMBER                1
-#define IDLE_MEMBER                    2
+#define IGMP_GROUP_NON_MEMBER          0
+#define IGMP_GROUP_DELAYING_MEMBER     1
+#define IGMP_GROUP_IDLE_MEMBER         2
 
 /*
  * IGMP packet format.
  */
 struct igmp_msg {
- u8_t  igmp_msgtype;
- u8_t  igmp_maxresp;
- u16_t igmp_checksum;
+ u8_t           igmp_msgtype;
+ u8_t           igmp_maxresp;
+ u16_t          igmp_checksum;
  struct ip_addr igmp_group_address;
 };
 
@@ -98,11 +98,12 @@ struct igmp_msg {
 
 struct igmp_group {
   struct igmp_group *next;
-  struct netif *interface;
-  struct ip_addr group_address;
-  u8_t last_reporter_flag; /* signifies we were the last person to report */
-  u8_t group_state;
-  u16_t timer;
+  struct netif      *interface;
+  struct ip_addr     group_address;
+  u8_t               last_reporter_flag; /* signifies we were the last person to report */
+  u8_t               group_state;
+  u16_t              timer;
+  u8_t               use; /* counter of simultaneous uses */
 };
 
 
@@ -115,6 +116,8 @@ struct igmp_group *igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr);
 
 struct igmp_group *igmp_lookup_group(struct netif *ifp, struct ip_addr *addr);
 
+err_t  igmp_remove_group(struct igmp_group *group);
+
 void   igmp_input( struct pbuf *p, struct netif *inp, struct ip_addr *dest);
 
 err_t  igmp_joingroup( struct ip_addr *ifaddr, struct ip_addr *groupaddr);
@@ -125,7 +128,7 @@ void   igmp_tmr(void);
 
 void   igmp_timeout( struct igmp_group *group);
 
-void   igmp_start_timer( struct igmp_group *group,u8_t max_time);
+void   igmp_start_timer( struct igmp_group *group, u8_t max_time);
 
 void   igmp_stop_timer( struct igmp_group *group);
 

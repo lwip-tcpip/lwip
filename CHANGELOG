@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+  2007-09-04 Frédéric Bernon, Bill Florac
+  * igmp.h, igmp.c, memp_std.h, memp.c, init.c, opt.h: Replace mem_malloc call by
+    memp_malloc, and use a new MEMP_NUM_IGMP_GROUP option (see opt.h to define the
+    value). It will avoid potential fragmentation problems, use a counter to know
+    how many times a group is used on an netif, and free it when all applications
+    leave it. MEMP_NUM_IGMP_GROUP got 8 as default value (and init.c got a sanity
+    check if LWIP_IGMP!=0).
+
   2007-09-03 Frédéric Bernon
   * igmp.h, igmp.c, sockets.c, api_msg.c: Changes for "#20503 IGMP Improvement".
     Initialize igmp_mac_filter to NULL in netif_add (this field should be set in
