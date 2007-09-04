@@ -37,7 +37,7 @@
  */
 
 #include "lwip/opt.h"
-
+#include "lwip/init.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
 #include "lwip/mem.h"
@@ -121,8 +121,8 @@
 #endif
 
 #ifdef LWIP_DEBUG
-void
-lwip_sanity_check()
+static void
+lwip_sanity_check(void)
 {
   /* Warnings */
 #if LWIP_NETCONN
