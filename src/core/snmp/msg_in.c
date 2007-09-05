@@ -55,9 +55,6 @@ const s32_t snmp_version = 0;
 const char snmp_publiccommunity[7] = "public";
 
 /* statically allocated buffers for SNMP_CONCURRENT_REQUESTS */
-#if (SNMP_CONCURRENT_REQUESTS == 0)
-#error "need at least one snmp_msg_pstat"
-#endif
 struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
 /* UDP Protocol Control Block */
 struct udp_pcb *snmp1_pcb = NULL;

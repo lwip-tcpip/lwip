@@ -73,11 +73,6 @@
 
 #if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
 
-/* LWIP_ARP option should be configured in lwipopts.h */
-#if !LWIP_ARP
-#error LWIP_ARP is need for LWIP_AUTOIP. Set it from your lwipopts.h.
-#endif /* !LWIP_ARP */
-
 /* pseudo random macro based on netif informations. You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
 #ifndef LWIP_AUTOIP_RAND
 #define LWIP_AUTOIP_RAND(netif) ( (((u32_t)((netif->hwaddr[5]) & 0xff) << 24) | ((u32_t)((netif->hwaddr[3]) & 0xff) << 16) | ((u32_t)((netif->hwaddr[2]) & 0xff) << 8) | ((u32_t)((netif->hwaddr[4]) & 0xff))) + (netif->autoip?netif->autoip->tried_llipaddr:0))

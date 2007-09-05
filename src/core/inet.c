@@ -534,9 +534,6 @@ inet_ntoa(struct in_addr addr)
  * Note ntohs() and ntohl() are merely references to the htonx counterparts.
  */
 
-#ifndef BYTE_ORDER
-#error BYTE_ORDER is not defined
-#endif
 #if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
 
 /**

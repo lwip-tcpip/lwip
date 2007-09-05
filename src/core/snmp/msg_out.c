@@ -60,9 +60,6 @@ struct snmp_trap_dst
   /* set to 0 when disabled, >0 when enabled */
   u8_t enable;
 };
-#if (SNMP_TRAP_DESTINATIONS == 0)
-#error "need at least one trap destination"
-#endif
 struct snmp_trap_dst trap_dst[SNMP_TRAP_DESTINATIONS];
 
 /** TRAP message structure */

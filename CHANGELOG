@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-09-05 Frédéric Bernon
+  * inet.c, autoip.c, msg_in.c, msg_out.c, init.c: Move some build time checkings
+    inside init.c for task #7142 "Sanity check user-configurable values".
+
   2007-09-04 Frédéric Bernon, Bill Florac
   * igmp.h, igmp.c, memp_std.h, memp.c, init.c, opt.h: Replace mem_malloc call by
     memp_malloc, and use a new MEMP_NUM_IGMP_GROUP option (see opt.h to define the
