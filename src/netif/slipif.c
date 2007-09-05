@@ -267,6 +267,6 @@ slipif_init(struct netif *netif)
   NETIF_INIT_SNMP(netif, snmp_ifType_slip, 0);
 
   /* Create a thread to poll the serial line. */
-  sys_thread_new(slipif_loop, netif, SLIPIF_THREAD_PRIO);
+  sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop, netif, SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
   return ERR_OK;
 }

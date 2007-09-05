@@ -532,7 +532,7 @@ int pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, 
 	pc->linkStatusCB = linkStatusCB;
 	pc->linkStatusCtx = linkStatusCtx;
 
-	sys_thread_new(pppMain, (void*)pd, PPP_THREAD_PRIO);
+	sys_thread_new(PPP_THREAD_NAME, pppMain, (void*)pd, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
 	if(!linkStatusCB) {
 		while(pd >= 0 && !pc->if_up) {
 			sys_msleep(500);

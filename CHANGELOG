@@ -19,6 +19,15 @@ HISTORY
 
   ++ New features:
 
+  2007-09-05 Frédéric Bernon, Bill Florac
+  * opt.h, sys.h, tcpip.c, slipif.c, ppp.c, sys_arch.txt: Change parameters list
+    for sys_thread_new (see "task #7252 : Create sys_thread_new_ex()"). Two new
+    parameters have to be provided: a task name, and a task stack size. For this
+    one, since it's platform dependant, you could define the best one for you in
+    your lwipopts.h. For port maintainers, you can just add these new parameters
+    in your sys_arch.c file, and but it's not mandatory, use them in your OS
+    specific functions.
+
   2007-09-05 Frédéric Bernon
   * inet.c, autoip.c, msg_in.c, msg_out.c, init.c: Move some build time checkings
     inside init.c for task #7142 "Sanity check user-configurable values".

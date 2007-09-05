@@ -128,12 +128,13 @@ If threads are supported by the underlying operating system and if
 such functionality is needed in lwIP, the following function will have
 to be implemented as well:
 
-- sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio)
+- sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio)
 
-  Starts a new thread with priority "prio" that will begin its execution in the
-  function "thread()". The "arg" argument will be passed as an argument to the
-  thread() function. The id of the new thread is returned. Both the id and
-  the priority are system dependent.
+  Starts a new thread named "name" with priority "prio" that will begin its
+  execution in the function "thread()". The "arg" argument will be passed as an
+  argument to the thread() function. The stack size to used for this thread is
+  the "stacksize" parameter. The id of the new thread is returned. Both the id
+  and the priority are system dependent.
 
 - sys_prot_t sys_arch_protect(void)
 

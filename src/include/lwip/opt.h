@@ -742,36 +742,100 @@
    ------------------------------------
 */
 /**
+ * TCPIP_THREAD_NAME: The name assigned to the main tcpip thread.
+ */
+#ifndef TCPIP_THREAD_NAME
+#define TCPIP_THREAD_NAME              "tcpip_thread"
+#endif
+
+/**
+ * TCPIP_THREAD_STACKSIZE: The stack size used by the main tcpip thread.
+ * The stack size value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#ifndef TCPIP_THREAD_STACKSIZE
+#define TCPIP_THREAD_STACKSIZE          0
+#endif
+
+/**
  * TCPIP_THREAD_PRIO: The priority assigned to the main tcpip thread.
  * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when tcpip_thread is created.
+ * sys_thread_new() when the thread is created.
  */
 #ifndef TCPIP_THREAD_PRIO
 #define TCPIP_THREAD_PRIO               1
 #endif
 
 /**
+ * SLIPIF_THREAD_NAME: The name assigned to the slipif_loop thread.
+ */
+#ifndef SLIPIF_THREAD_NAME
+#define SLIPIF_THREAD_NAME             "slipif_loop"
+#endif
+
+/**
+ * SLIP_THREAD_STACKSIZE: The stack size used by the slipif_loop thread.
+ * The stack size value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#ifndef SLIPIF_THREAD_STACKSIZE
+#define SLIPIF_THREAD_STACKSIZE         0
+#endif
+
+/**
  * SLIPIF_THREAD_PRIO: The priority assigned to the slipif_loop thread.
  * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when slipif_loop is created.
+ * sys_thread_new() when the thread is created.
  */
 #ifndef SLIPIF_THREAD_PRIO
 #define SLIPIF_THREAD_PRIO              1
 #endif
 
 /**
+ * PPP_THREAD_NAME: The name assigned to the pppMain thread.
+ */
+#ifndef PPP_THREAD_NAME
+#define PPP_THREAD_NAME                "pppMain"
+#endif
+
+/**
+ * PPP_THREAD_STACKSIZE: The stack size used by the pppMain thread.
+ * The stack size value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#ifndef PPP_THREAD_STACKSIZE
+#define PPP_THREAD_STACKSIZE            0
+#endif
+
+/**
  * PPP_THREAD_PRIO: The priority assigned to the pppMain thread.
  * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when pppMain is created.
+ * sys_thread_new() when the thread is created.
  */
 #ifndef PPP_THREAD_PRIO
 #define PPP_THREAD_PRIO                 1
 #endif
 
 /**
- * DEFAULT_THREAD_PRIO: The priority assigned to the pppMain thread.
+ * DEFAULT_THREAD_NAME: The name assigned to any other lwIP thread.
+ */
+#ifndef DEFAULT_THREAD_NAME
+#define DEFAULT_THREAD_NAME            "lwIP"
+#endif
+
+/**
+ * DEFAULT_THREAD_STACKSIZE: The stack size used by any other lwIP thread.
+ * The stack size value itself is platform-dependent, but is passed to
+ * sys_thread_new() when the thread is created.
+ */
+#ifndef DEFAULT_THREAD_STACKSIZE
+#define DEFAULT_THREAD_STACKSIZE        0
+#endif
+
+/**
+ * DEFAULT_THREAD_PRIO: The priority assigned to any other lwIP thread.
  * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when pppMain is created.
+ * sys_thread_new() when the thread is created.
  */
 #ifndef DEFAULT_THREAD_PRIO
 #define DEFAULT_THREAD_PRIO             1

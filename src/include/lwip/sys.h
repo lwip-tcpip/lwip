@@ -62,7 +62,7 @@ struct sys_timeo {u8_t dummy;};
 #define sys_mbox_post(m,d)
 #define sys_mbox_free(m)
 
-#define sys_thread_new(t,a,p)
+#define sys_thread_new(n,t,a,s,p)
 
 #else /* NO_SYS */
 
@@ -134,7 +134,7 @@ void sys_mbox_free(sys_mbox_t mbox);
 void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 
 /* Thread functions. */
-sys_thread_t sys_thread_new(void (* thread)(void *arg), void *arg, int prio);
+sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio);
 
 /* The following functions are used only in Unix code, and
    can be omitted when porting the stack. */
