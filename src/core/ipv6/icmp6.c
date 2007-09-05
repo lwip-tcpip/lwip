@@ -42,6 +42,7 @@
 
 #include "lwip/stats.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
 
 void
 icmp_input(struct pbuf *p, struct netif *inp)
@@ -192,10 +193,4 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   pbuf_free(q);
 }
 
-
-
-
-
-
-
-
+#endif /* LWIP_ICMP */

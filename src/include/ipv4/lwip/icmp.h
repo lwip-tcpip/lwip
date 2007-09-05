@@ -40,6 +40,8 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -116,5 +118,6 @@ PACK_STRUCT_END
 }
 #endif
 
+#endif /* LWIP_ICMP */
+
 #endif /* __LWIP_ICMP_H__ */
-    

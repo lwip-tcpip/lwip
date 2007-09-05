@@ -144,10 +144,12 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   /* send ICMP if TTL == 0 */
   if (IPH_TTL(iphdr) == 0) {
     snmp_inc_ipinhdrerrors();
+#if LWIP_ICMP
     /* Don't send ICMP messages in response to ICMP messages */
     if (IPH_PROTO(iphdr) != IP_PROTO_ICMP) {
       icmp_time_exceeded(p, ICMP_TE_TTL);
     }
+#endif /* LWIP_ICMP */
     return (struct netif *)NULL;
   }
 
@@ -384,22 +386,26 @@ ip_input(struct pbuf *p, struct netif *inp) {
     tcp_input(p, inp);
     break;
 #endif /* LWIP_TCP */
+#if LWIP_ICMP
   case IP_PROTO_ICMP:
     snmp_inc_ipindelivers();
     icmp_input(p, inp);
     break;
+#endif /* LWIP_ICMP */
 #if LWIP_IGMP
   case IP_PROTO_IGMP:
     igmp_input(p,inp,&(iphdr->dest));
     break;
 #endif /* LWIP_IGMP */
   default:
+#if LWIP_ICMP
     /* send ICMP destination protocol unreachable unless is was a broadcast */
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&
         !ip_addr_ismulticast(&(iphdr->dest))) {
       p->payload = iphdr;
       icmp_dest_unreach(p, ICMP_DUR_PROTO);
     }
+#endif /* LWIP_ICMP */
     pbuf_free(p);
 
     LWIP_DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %"U16_F"\n", IPH_PROTO(iphdr)));

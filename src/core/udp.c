@@ -256,6 +256,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     } else {
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: not for us.\n"));
 
+#if LWIP_ICMP
       /* No match was found, send ICMP destination port unreachable unless
          destination address was broadcast/multicast. */
       if (!ip_addr_isbroadcast(&iphdr->dest, inp) &&
@@ -265,6 +266,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         LWIP_ASSERT("p->payload == iphdr", (p->payload == iphdr));
         icmp_dest_unreach(p, ICMP_DUR_PORT);
       }
+#endif /* LWIP_ICMP */
       UDP_STATS_INC(udp.proterr);
       UDP_STATS_INC(udp.drop);
       snmp_inc_udpnoports();

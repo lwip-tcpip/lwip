@@ -49,6 +49,8 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
 /**
  * Processes ICMP input packets, called from ip_input().
  *
@@ -298,3 +300,5 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 }
 
 #endif /* IP_FORWARD */
+
+#endif /* LWIP_ICMP */

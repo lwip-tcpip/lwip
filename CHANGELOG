@@ -19,6 +19,13 @@ HISTORY
 
   ++ New features:
 
+  2007-09-05 Frédéric Bernon
+  * udp.c, ipv4/icmp.c, ipv4/ip.c, ipv6/icmp.c, ipv6/ip6.c, ipv4/icmp.h,
+    ipv6/icmp.h, opt.h: Integrate "task #7272 : LWIP_ICMP option". The new option
+    LWIP_ICMP enable/disable ICMP module inside the IP stack (enable per default).
+    Be careful, disabling ICMP make your product non-compliant to RFC1122, but
+    help to reduce footprint, and to reduce "visibility" on the Internet.
+
   2007-09-05 Frédéric Bernon, Bill Florac
   * opt.h, sys.h, tcpip.c, slipif.c, ppp.c, sys_arch.txt: Change parameters list
     for sys_thread_new (see "task #7252 : Create sys_thread_new_ex()"). Two new
