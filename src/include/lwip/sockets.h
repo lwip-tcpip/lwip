@@ -80,7 +80,7 @@ struct sockaddr {
 #define  SO_OOBINLINE   0x0100 /* leave received OOB data in line */
 #define  SO_REUSEPORT   0x0200 /* allow local address & port reuse */
 
-#define SO_DONTLINGER   (int)(~SO_LINGER)
+#define SO_DONTLINGER   ((int)(~SO_LINGER))
 
 /*
  * Additional options, not kept in so_options.
