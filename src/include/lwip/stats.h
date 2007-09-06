@@ -33,7 +33,6 @@
 #define __LWIP_STATS_H__
 
 #include "lwip/opt.h"
-#include "arch/cc.h"
 
 #include "lwip/mem.h"
 #include "lwip/memp.h"

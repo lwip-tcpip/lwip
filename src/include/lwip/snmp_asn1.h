@@ -36,7 +36,6 @@
 #define __LWIP_SNMP_ASN1_H__
 
 #include "lwip/opt.h"
-#include "arch/cc.h"
 #include "lwip/err.h"
 #include "lwip/pbuf.h"
 #include "lwip/snmp.h"

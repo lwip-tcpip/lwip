@@ -35,8 +35,8 @@
 #include "lwip/opt.h"
 
 #if LWIP_SNMP
+
 #include <string.h>
-#include "arch/cc.h"
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"

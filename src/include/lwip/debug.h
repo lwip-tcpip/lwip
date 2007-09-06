@@ -32,7 +32,7 @@
 #ifndef __LWIP_DEBUG_H__
 #define __LWIP_DEBUG_H__
 
-#include "arch/cc.h"
+#include "lwip/arch.h"
 
 /** lower two bits indicate debug level
  * - 0 off

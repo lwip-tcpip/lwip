@@ -32,8 +32,6 @@
 #ifndef __LWIP_SYS_H__
 #define __LWIP_SYS_H__
 
-#include "arch/cc.h"
-
 #include "lwip/opt.h"
 
 #ifdef __cplusplus

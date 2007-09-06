@@ -36,7 +36,6 @@
 #define __LWIP_SNMP_MSG_H__
 
 #include "lwip/opt.h"
-#include "arch/cc.h"
 #include "lwip/snmp.h"
 #include "lwip/snmp_structs.h"
 

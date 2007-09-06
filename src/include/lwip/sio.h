@@ -32,7 +32,7 @@
  * It needs to be implemented by those platforms which need SLIP or PPP
  */
 
-#include "arch/cc.h"
+#include "lwip/arch.h"
 
 #ifdef __cplusplus
 extern "C" {

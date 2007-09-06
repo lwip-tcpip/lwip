@@ -34,8 +34,6 @@
 
 #include "lwip/opt.h"
 
-#include "arch/cc.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif

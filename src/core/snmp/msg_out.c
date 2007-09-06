@@ -45,7 +45,7 @@
 #include "lwip/opt.h"
 
 #if LWIP_SNMP
-#include "arch/cc.h"
+
 #include "lwip/udp.h"
 #include "lwip/netif.h"
 

@@ -33,7 +33,7 @@
 #ifndef __LWIP_PBUF_H__
 #define __LWIP_PBUF_H__
 
-#include "arch/cc.h"
+#include "lwip/arch.h"
 #include "lwip/err.h"
 
 #ifdef __cplusplus

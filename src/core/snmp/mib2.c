@@ -35,10 +35,10 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#include "arch/cc.h"
 #include "lwip/opt.h"
 
 #if LWIP_SNMP
+
 #include "lwip/snmp.h"
 #include "lwip/netif.h"
 #include "netif/etharp.h"
