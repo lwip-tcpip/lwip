@@ -35,7 +35,7 @@
  * 
  * Author: Adam Dunkels <adam@sics.se>
  *
- * $Revision: 1.10 $ $Date: 2007/09/07 12:31:50 $
+ * $Revision: 1.11 $ $Date: 2007/09/07 12:32:40 $
  */
 
 #include "lwip/opt.h"
@@ -162,4 +162,3 @@ inet_chksum_pbuf(struct pbuf *p)
   }
   return ~(acc & 0xffff);
 }
-
