@@ -98,6 +98,7 @@ struct netconn {
   enum netconn_type type;
   enum netconn_state state;
   union {
+    struct ip_pcb  *ip;
     struct tcp_pcb *tcp;
     struct udp_pcb *udp;
     struct raw_pcb *raw;

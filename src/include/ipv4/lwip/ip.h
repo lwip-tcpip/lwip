@@ -90,6 +90,10 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   /* link layer address resolution hint */ \
   IP_PCB_ADDRHINT
 
+struct ip_pcb {
+/* Common members of all PCB types */
+  IP_PCB;
+};
 
 /*
  * Option flags per-socket. These are the same like SO_XXX.

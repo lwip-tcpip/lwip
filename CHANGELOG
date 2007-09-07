@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-09-08 Frédéric Bernon
+  * sockets.c, ip.h, api.h, tcp.h: declare a "struct ip_pcb" which only contains
+    IP_PCB. Add in the netconn's "pcb" union a "struct ip_pcb *ip;" (no size change).
+    Use this new field to access to common pcb fields (ttl, tos, so_options, etc...).
+    Enable to access to these fields with LWIP_TCP=0.
+
   2007-09-05 Frédéric Bernon
   * udp.c, ipv4/icmp.c, ipv4/ip.c, ipv6/icmp.c, ipv6/ip6.c, ipv4/icmp.h,
     ipv6/icmp.h, opt.h: Integrate "task #7272 : LWIP_ICMP option". The new option

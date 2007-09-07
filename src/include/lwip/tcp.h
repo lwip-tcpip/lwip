@@ -34,7 +34,7 @@
 
 #include "lwip/opt.h"
 
-/*#if LWIP_TCP*/ /* don't build if not configured for use in lwipopts.h */
+#if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/sys.h"
 #include "lwip/mem.h"
@@ -592,6 +592,6 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 }
 #endif
 
-/*#endif*/ /* LWIP_TCP */
+#endif /* LWIP_TCP */
 
 #endif /* __LWIP_TCP_H__ */

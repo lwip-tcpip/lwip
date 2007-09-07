@@ -1238,7 +1238,7 @@ static void lwip_getsockopt_internal(void *arg)
     case SO_REUSEPORT:
 #endif /* SO_REUSE */
     /*case SO_USELOOPBACK: UNIMPL */
-      *(int*)optval = sock->conn->pcb.tcp->so_options & optname;
+      *(int*)optval = sock->conn->pcb.ip->so_options & optname;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, optname=0x%x, ..) = %s\n",
                                   s, optname, (*(int*)optval?"on":"off")));
       break;
@@ -1291,12 +1291,12 @@ static void lwip_getsockopt_internal(void *arg)
   case IPPROTO_IP:
     switch (optname) {
     case IP_TTL:
-      *(int*)optval = sock->conn->pcb.tcp->ttl;
+      *(int*)optval = sock->conn->pcb.ip->ttl;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_TTL) = %d\n",
                   s, *(int *)optval));
       break;
     case IP_TOS:
-      *(int*)optval = sock->conn->pcb.tcp->tos;
+      *(int*)optval = sock->conn->pcb.ip->tos;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_TOS) = %d\n",
                   s, *(int *)optval));
       break;
@@ -1583,9 +1583,9 @@ static void lwip_setsockopt_internal(void *arg)
 #endif /* SO_REUSE */
     /* UNIMPL case SO_USELOOPBACK: */
       if (*(int*)optval) {
-        sock->conn->pcb.tcp->so_options |= optname;
+        sock->conn->pcb.ip->so_options |= optname;
       } else {
-        sock->conn->pcb.tcp->so_options &= ~optname;
+        sock->conn->pcb.ip->so_options &= ~optname;
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n",
                   s, optname, (*(int*)optval?"on":"off")));
@@ -1611,14 +1611,14 @@ static void lwip_setsockopt_internal(void *arg)
   case IPPROTO_IP:
     switch (optname) {
     case IP_TTL:
-      sock->conn->pcb.tcp->ttl = (u8_t)(*(int*)optval);
+      sock->conn->pcb.ip->ttl = (u8_t)(*(int*)optval);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TTL, ..) -> %u\n",
-                  s, sock->conn->pcb.tcp->ttl));
+                  s, sock->conn->pcb.ip->ttl));
       break;
     case IP_TOS:
-      sock->conn->pcb.tcp->tos = (u8_t)(*(int*)optval);
+      sock->conn->pcb.ip->tos = (u8_t)(*(int*)optval);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IP, IP_TOS, ..)-> %u\n",
-                  s, sock->conn->pcb.tcp->tos));
+                  s, sock->conn->pcb.ip->tos));
       break;
 #if LWIP_IGMP
     case IP_MULTICAST_TTL:
