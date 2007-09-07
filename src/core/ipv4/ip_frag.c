@@ -37,14 +37,14 @@
  * 
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
+
+#include <string.h>
 
 #if IP_REASSEMBLY
 static u8_t ip_reassbuf[IP_HLEN + IP_REASS_BUFSIZE];

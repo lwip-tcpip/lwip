@@ -38,9 +38,9 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
+#if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/def.h"
 #include "lwip/memp.h"
@@ -48,13 +48,11 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/raw.h"
-
 #include "lwip/stats.h"
-
-#include "arch/perf.h"
 #include "lwip/snmp.h"
+#include "arch/perf.h"
 
-#if LWIP_RAW
+#include <string.h>
 
 /** The list of RAW PCBs */
 static struct raw_pcb *raw_pcbs = NULL;

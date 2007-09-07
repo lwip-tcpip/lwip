@@ -245,9 +245,9 @@ HISTORY
 
   2007-05-11 Frédéric Bernon
   * sockets.c, api_lib.c, api_msg.h, api_msg.c, netifapi.h, netifapi.c, tcpip.c:
-   Include a function pointer instead of a table index in the message to reduce
-   footprint. Disable some part of lwip_send and lwip_sendto if some options are
-   not set (LWIP_TCP, LWIP_UDP, LWIP_RAW).
+    Include a function pointer instead of a table index in the message to reduce
+    footprint. Disable some part of lwip_send and lwip_sendto if some options are
+    not set (LWIP_TCP, LWIP_UDP, LWIP_RAW).
 
   2007-05-10 Simon Goldschmidt
   * *.h (except netif/ppp/*.h): Included patch #5448: include '#ifdef __cplusplus
@@ -311,7 +311,7 @@ HISTORY
     device, and we can use ARP with it to do a "gratuitous ARP" (RFC 3220 "IP Mobility
     Support for IPv4" section 4.6) when interface is "up" with netif_set_up().
 
-  2007-03-26 Frédéric Bernon, Jonathan Larmour  
+  2007-03-26 Frédéric Bernon, Jonathan Larmour
   * opt.h, tcpip.c: New configuration option LWIP_ARP allow to disable ARP init at build
     time if you only use PPP or SLIP. The default is enable. Note we don't have to call 
     etharp_init in your port's initilization sequence if you use tcpip.c, because this call
@@ -340,7 +340,7 @@ HISTORY
     be configured at run time with LWIP_TCP_KEEPALIVE, but don't change this
     unless you know what you're doing (default are RFC1122 compliant). Note
     that TCP_KEEPIDLE and TCP_KEEPINTVL have to be set in seconds.
-  
+
   2007-03-08 Frédéric Bernon
   * tcp.h: Keepalive values can be configured at compile time, but don't change
     this unless you know what you're doing (default are RFC1122 compliant).
@@ -349,7 +349,7 @@ HISTORY
   * sockets.c, api.h, api_lib.c, tcpip.c, sys.h, sys.c, err.c, opt.h:
     Implement LWIP_SO_RCVTIMEO configuration option to enable/disable SO_RCVTIMEO
     on UDP sockets/netconn.
-  
+
   2007-03-08 Simon Goldschmidt
   * snmp_msg.h, msg_in.c: SNMP UDP ports can be configured at compile time.
 
@@ -730,7 +730,7 @@ HISTORY
   2007-03-20 Frédéric Bernon
   * memp.h, stats.c: Fix stats_display function where memp_names table wasn't
     synchronized with memp.h.
-  
+
   2007-03-20 Frédéric Bernon
   * tcpip.c: Initialize tcpip's mbox, and verify if initialized in tcpip_input,
     tcpip_ethinput, tcpip_callback, tcpip_apimsg, to fix a init problem with 
@@ -743,10 +743,10 @@ HISTORY
   2007-03-19 Frédéric Bernon
   * api_msg.h, api_msg.c, tcpip.h, tcpip.c: Add return types to tcpip_apimsg()
     and api_msg_post().
-  
+
   2007-03-19 Frédéric Bernon
   * Remove unimplemented "memp_realloc" function from memp.h.
-  
+
   2007-03-11 Simon Goldschmidt
   * pbuf.c: checked in patch #5796: pbuf_alloc: len field claculation caused
     memory corruption.
@@ -785,15 +785,15 @@ HISTORY
     (protecting ARP layer against concurrent access). You can also disable
     old code using tcp_input with new define ETHARP_TCPIP_INPUT set to 0.
     Older ports have to use tcpip_ethinput.
-  
+
   2007-03-06 Simon Goldschmidt (based on patch from Dmitry Potapov)
   * err.h, err.c: fixed compiler warning "initialization dircards qualifiers
     from pointer target type"
-  
+
   2007-03-05 Frédéric Bernon
   * opt.h, sockets.h: add new configuration options (LWIP_POSIX_SOCKETS_IO_NAMES,
     ETHARP_TRUST_IP_MAC, review SO_REUSE)
-  
+
   2007-03-04 Frédéric Bernon
   * api_msg.c: Remove some compiler warnings : parameter "pcb" was never
     referenced.
@@ -802,7 +802,7 @@ HISTORY
   * api_lib.c: Fix "[patch #5764] api_lib.c cleanup: after patch #5687" (from
     Dmitry Potapov).
     The api_msg struct stay on the stack (not moved to netconn struct).
-  
+
   2007-03-04 Simon Goldschmidt (based on patch from Dmitry Potapov)
   * pbuf.c: Fix BUG#19168 - pbuf_free can cause deadlock (if
     SYS_LIGHTWEIGHT_PROT=1 & freeing PBUF_RAM when mem_sem is not available)
@@ -859,7 +859,7 @@ HISTORY
   2006-08-08 Christiaan Simons
   * etharp.{c,h}: added etharp_find_addr() to read
     (stable) ethernet/IP address pair from ARP table
-  
+
   2006-07-14 Christiaan Simons
   * mib_structs.c: added
   * include/lwip/snmp_structs.h: added
@@ -871,7 +871,7 @@ HISTORY
   * snmp/msg_{in,out}.c added
   * include/lwip/snmp_asn1.h added
   * include/lwip/snmp_msg.h added
-  * doc/snmp_agent.txt added  
+  * doc/snmp_agent.txt added
 
   2006-03-29 Christiaan Simons
   * inet.c, inet.h: Added platform byteswap support.
@@ -879,7 +879,7 @@ HISTORY
     optional LWIP_PLATFORM_HTONS(), LWIP_PLATFORM_HTONL() macros.
 
   ++ Bug fixes:
-  
+
   2006-11-30 Christiaan Simons
   * dhcp.c: Fixed false triggers of request_timeout.
 
@@ -901,7 +901,7 @@ HISTORY
 
   2006-08-07 Christiaan Simons
   * api_msg.c: Flushing TCP output in do_close() (bug #15926).
-    
+
   2006-06-27 Christiaan Simons
   * api_msg.c: Applied patch for cold case (bug #11135).
     In accept_function() ensure newconn->callback is always initialized.
@@ -935,7 +935,7 @@ HISTORY
   2005-12-20  Leon Woestenberg <leon.woestenberg@gmx.net>
   * tcp.c: Remove PCBs which stay in LAST_ACK state too long. Patch
     submitted by Mitrani Hiroshi.
-    
+
   2005-12-15  Christiaan Simons
   * inet.c: Disabled the added summing routine to preserve code space.
 
@@ -951,7 +951,7 @@ HISTORY
   2005-11-25  Christiaan Simons
   * udp.c tcp.c: Removed SO_REUSE hack. Should reside in socket code only.
   * *.c: introduced cc.h LWIP_DEBUG formatters matching the u16_t, s16_t,
-    u32_t, s32_t typedefs. This solves most debug word-length assumes.  
+    u32_t, s32_t typedefs. This solves most debug word-length assumes.
 
   2005-07-17 Leon Woestenberg <leon.woestenberg@gmx.net>
   * inet.c: Fixed unaligned 16-bit access in the standard checksum
@@ -980,7 +980,7 @@ HISTORY
     ETHARP_MAX_PENDING now should be at least 2. This prevents
     the counter from reaching 0 right away (which would allow
     too little time for ARP responses to be received).
-    
+
   2004-11-25 Leon Woestenberg <leon.woestenberg@gmx.net>
   * dhcp.c: Decline messages were not multicast but unicast.
   * etharp.c: ETHARP_CREATE is renamed to ETHARP_TRY_HARD.
@@ -1038,7 +1038,7 @@ HISTORY
     of raw_recv() in raw.h and so avoid compiler error.
   * sockets.c: Added trivial (int) cast to keep compiler happier.
   * ip.c, netif.c Changed debug statements to use the tidier ip4_addrN() macros.
-  
+
 (STABLE-1_0_0)
 
   ++ Changes:
@@ -1078,7 +1078,7 @@ HISTORY
     is not queued, and gets lost. Fixed the case where the packets destination
     address is already known; we now always queue the packet and perform an ARP
     request.
-  
+
 (STABLE-0_7_0)
 
   ++ Bug fixes:

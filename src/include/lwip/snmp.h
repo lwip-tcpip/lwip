@@ -79,8 +79,7 @@ enum snmp_ifType {
   snmp_ifType_frame_relay
 };
 
-/* SNMP support available? */
-#if defined(LWIP_SNMP) && (LWIP_SNMP > 0)
+#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 /** fixed maximum length for object identifier type */
 #define LWIP_SNMP_OBJ_ID_LEN 32
@@ -350,7 +349,7 @@ void snmp_get_snmpenableauthentraps(u8_t *value);
 #define snmp_set_snmpenableauthentraps(value)
 #define snmp_get_snmpenableauthentraps(value)
 
-#endif
+#endif /* LWIP_SNMP */
 
 #ifdef __cplusplus
 }

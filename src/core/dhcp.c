@@ -67,23 +67,23 @@
  * to remove the DHCP client.
  *
  */
- 
-#include <string.h>
- 
+
+#include "lwip/opt.h"
+
+#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/inet.h"
-#include "netif/etharp.h"
-
 #include "lwip/sys.h"
-#include "lwip/opt.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
+#include "netif/etharp.h"
 
-#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
+#include <string.h>
 
 /** global transaction identifier, must be
  *  unique for each DHCP request. We simply increment, starting

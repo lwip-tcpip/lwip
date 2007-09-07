@@ -36,13 +36,14 @@
  *
  */
 
-#include "lwip/sys.h"
 #include "lwip/opt.h"
+
+#if (NO_SYS == 0) /* don't build if not configured for use in lwipopts.h */
+
+#include "lwip/sys.h"
 #include "lwip/def.h"
 #include "lwip/memp.h"
 #include "lwip/tcpip.h"
-
-#if (NO_SYS == 0)
 
 /**
  * Struct used for sys_sem_wait_timeout() to tell wether the time

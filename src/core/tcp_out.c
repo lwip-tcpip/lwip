@@ -38,10 +38,11 @@
  *
  */
 
-#include <string.h>
+#include "lwip/opt.h"
+
+#if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/def.h"
-#include "lwip/opt.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/sys.h"
@@ -52,7 +53,7 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
-#if LWIP_TCP
+#include <string.h>
 
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);

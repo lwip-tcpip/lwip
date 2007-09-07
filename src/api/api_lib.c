@@ -39,14 +39,16 @@
 /* This is the part of the API that is linked with
    the application */
 
-#include <string.h>
 #include "lwip/opt.h"
+
+#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
 #include "lwip/tcpip.h"
 #include "lwip/memp.h"
 
-#if !NO_SYS
+#include <string.h>
 
 /**
  * Create a new netconn (of a specific type) that has a callback function.
@@ -185,9 +187,12 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
 {
   LWIP_ERROR("netconn_peer: invalid conn", (conn != NULL), return ERR_ARG;);
   switch (NETCONNTYPE_GROUP(conn->type)) {
+#if LWIP_RAW
   case NETCONN_RAW:
     /* return an error as connecting is only a helper for upper layers */
     return ERR_CONN;
+#endif /* LWIP_RAW */
+#if LWIP_UDP
   case NETCONN_UDP:
     if (conn->pcb.udp == NULL ||
   ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0))
@@ -195,12 +200,15 @@ netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
     *addr = (conn->pcb.udp->remote_ip);
     *port = conn->pcb.udp->remote_port;
     break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
   case NETCONN_TCP:
     if (conn->pcb.tcp == NULL)
       return ERR_CONN;
     *addr = (conn->pcb.tcp->remote_ip);
     *port = conn->pcb.tcp->remote_port;
     break;
+#endif /* LWIP_TCP */
   }
   return ERR_OK;
 }
@@ -221,18 +229,24 @@ netconn_addr(struct netconn *conn, struct ip_addr **addr, u16_t *port)
   LWIP_ERROR("netconn_addr: invalid addr", (addr != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_addr: invalid port", (port != NULL), return ERR_ARG;);
   switch (NETCONNTYPE_GROUP(conn->type)) {
+#if LWIP_RAW
   case NETCONN_RAW:
     *addr = &(conn->pcb.raw->local_ip);
     *port = conn->pcb.raw->protocol;
     break;
+#endif /* LWIP_RAW */
+#if LWIP_UDP
   case NETCONN_UDP:
     *addr = &(conn->pcb.udp->local_ip);
     *port = conn->pcb.udp->local_port;
     break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
   case NETCONN_TCP:
     *addr = &(conn->pcb.tcp->local_ip);
     *port = conn->pcb.tcp->local_port;
     break;
+#endif /* LWIP_TCP */
   }
   return ERR_OK;
 }
@@ -607,4 +621,4 @@ netconn_join_leave_group(struct netconn *conn,
 }
 #endif /* LWIP_IGMP */
 
-#endif /* !NO_SYS */
+#endif /* LWIP_NETCONN */

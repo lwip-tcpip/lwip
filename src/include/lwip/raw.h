@@ -32,7 +32,9 @@
 #ifndef __LWIP_RAW_H__
 #define __LWIP_RAW_H__
 
-#include "lwip/arch.h"
+#include "lwip/opt.h"
+
+#if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
 #include "lwip/inet.h"
@@ -88,5 +90,7 @@ void             raw_init       (void);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_RAW */
 
 #endif /* __LWIP_RAW_H__ */

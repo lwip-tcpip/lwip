@@ -33,14 +33,14 @@
 #define __LWIP_API_MSG_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
-
 #include "lwip/ip.h"
-
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
-
 #include "lwip/api.h"
 
 #ifdef __cplusplus
@@ -101,5 +101,7 @@ void do_join_leave_group( struct api_msg_msg *msg);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_NETCONN */
 
 #endif /* __LWIP_API_MSG_H__ */

@@ -32,7 +32,9 @@
 #ifndef __LWIP_UDP_H__
 #define __LWIP_UDP_H__
 
-#include "lwip/arch.h"
+#include "lwip/opt.h"
+
+#if LWIP_UDP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
 #include "lwip/inet.h"
@@ -134,5 +136,7 @@ void udp_debug_print(struct udp_hdr *udphdr);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_UDP */
 
 #endif /* __LWIP_UDP_H__ */

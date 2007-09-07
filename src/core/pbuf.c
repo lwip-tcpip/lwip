@@ -61,9 +61,8 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
 #include "lwip/stats.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -71,6 +70,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "arch/perf.h"
+
+#include <string.h>
 
 #define SIZEOF_STRUCT_PBUF        LWIP_MEM_ALIGN_SIZE(sizeof(struct pbuf))
 /* Since the pool is created in memp, PBUF_POOL_BUFSIZE will be automatically

@@ -32,14 +32,12 @@
 #ifndef __LWIP_IP_H__
 #define __LWIP_IP_H__
 
-#include "lwip/arch.h"
+#include "lwip/opt.h"
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
-
 #include "lwip/err.h"
-
 
 #ifdef __cplusplus
 extern "C" {

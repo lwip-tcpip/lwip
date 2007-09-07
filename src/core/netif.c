@@ -44,10 +44,7 @@
 #include "lwip/tcp.h"
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
-
-#if LWIP_ARP
 #include "netif/etharp.h"
-#endif /* LWIP_ARP */
 
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }

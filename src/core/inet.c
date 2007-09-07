@@ -39,11 +39,8 @@
 
 #include "lwip/opt.h"
 
-#include "lwip/arch.h"
-
 #include "lwip/def.h"
 #include "lwip/inet.h"
-
 #include "lwip/sys.h"
 
 /* These are some reference implementations of the checksum algorithm, with the

@@ -39,7 +39,6 @@
  */
 
 #include "lwip/opt.h"
-
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/ip.h"
@@ -47,22 +46,14 @@
 #include "lwip/inet.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"
+#include "lwip/igmp.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
-
-#include "lwip/stats.h"
-
-#include "arch/perf.h"
-
 #include "lwip/snmp.h"
-#if LWIP_DHCP
-#  include "lwip/dhcp.h"
-#endif /* LWIP_DHCP */
-
-#if LWIP_IGMP
-#  include "lwip/igmp.h"
-#endif /* LWIP_IGMP */
+#include "lwip/dhcp.h"
+#include "lwip/stats.h"
+#include "arch/perf.h"
 
 /**
  * Initializes the IP layer.

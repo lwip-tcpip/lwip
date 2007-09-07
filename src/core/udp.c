@@ -43,9 +43,9 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
+#if LWIP_UDP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/def.h"
 #include "lwip/memp.h"
@@ -54,14 +54,13 @@
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 #include "lwip/icmp.h"
-
 #include "lwip/stats.h"
-
-#include "arch/perf.h"
 #include "lwip/snmp.h"
+#include "arch/perf.h"
+
+#include <string.h>
 
 /* The list of UDP PCBs */
-#if LWIP_UDP
 /* exported in udp.h (was static) */
 struct udp_pcb *udp_pcbs = NULL;
 

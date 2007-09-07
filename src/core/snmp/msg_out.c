@@ -44,11 +44,10 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_SNMP
+#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/udp.h"
 #include "lwip/netif.h"
-
 #include "lwip/snmp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"

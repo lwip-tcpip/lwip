@@ -34,19 +34,18 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_SNMP
+#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
-#include <string.h>
 #include "lwip/ip_addr.h"
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 #include "lwip/stats.h"
-
 #include "lwip/snmp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
 #include "lwip/snmp_structs.h"
 
+#include <string.h>
 
 /* public (non-static) constants */
 /** SNMP v1 == 0 */

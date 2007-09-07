@@ -94,4 +94,4 @@ err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u8_t raw_len, u8_t *raw);
 }
 #endif
 
-#endif
+#endif /* __LWIP_SNMP_ASN1_H__ */

@@ -37,14 +37,14 @@
  */
 
 #include "lwip/opt.h"
-#include "lwip/arch.h"
+
+#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/api_msg.h"
 #include "lwip/memp.h"
 #include "lwip/sys.h"
 #include "lwip/tcpip.h"
 #include "lwip/igmp.h"
-
-#if !NO_SYS
 
 /* forward declarations */
 #if LWIP_TCP
@@ -931,4 +931,4 @@ do_join_leave_group(struct api_msg_msg *msg)
 }
 #endif /* LWIP_IGMP */
 
-#endif /* !NO_SYS */
+#endif /* LWIP_NETCONN */

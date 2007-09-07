@@ -36,9 +36,8 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
@@ -50,10 +49,9 @@
 #include "lwip/tcpip.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
-
-#if ARP_QUEUEING
 #include "netif/etharp.h"
-#endif
+
+#include <string.h>
 
 struct memp {
   struct memp *next;

@@ -36,17 +36,16 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
 
-#include "lwip/def.h"
+#if LWIP_STATS /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/def.h"
 #include "lwip/stats.h"
 #include "lwip/mem.h"
 
+#include <string.h>
 
-#if LWIP_STATS
 struct stats_ lwip_stats;
 
 void
@@ -141,5 +140,6 @@ stats_display(void)
 #endif
 }
 #endif /* LWIP_STATS_DISPLAY */
+
 #endif /* LWIP_STATS */
 

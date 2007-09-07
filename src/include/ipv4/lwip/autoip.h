@@ -45,6 +45,9 @@
 #define __LWIP_AUTOIP_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 #include "netif/etharp.h"
@@ -96,5 +99,7 @@ void autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr);
 
 /** Has to be called in loop every AUTOIP_TMR_INTERVAL milliseconds */
 void autoip_tmr(void);
+
+#endif /* LWIP_AUTOIP */
 
 #endif /* __LWIP_AUTOIP_H__ */

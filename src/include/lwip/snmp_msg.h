@@ -304,4 +304,4 @@ void snmp_authfail_trap(void);
 }
 #endif
 
-#endif
+#endif /* __LWIP_SNMP_MSG_H__ */

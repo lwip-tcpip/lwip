@@ -34,7 +34,6 @@
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 
-
 u8_t
 ip_addr_netcmp(struct ip_addr *addr1, struct ip_addr *addr2,
                 struct ip_addr *mask)

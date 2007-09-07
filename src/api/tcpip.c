@@ -38,21 +38,17 @@
 
 #include "lwip/opt.h"
 
-#include "lwip/sys.h"
+#if !NO_SYS /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/sys.h"
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
-
-#include "netif/etharp.h"
-#include "netif/ppp_oe.h"
-
 #include "lwip/ip_frag.h"
 #include "lwip/igmp.h"
-
 #include "lwip/tcpip.h"
 #include "lwip/init.h"
-
-#if !NO_SYS
+#include "netif/etharp.h"
+#include "netif/ppp_oe.h"
 
 /* global variables */
 static void (* tcpip_init_done)(void *arg) = NULL;

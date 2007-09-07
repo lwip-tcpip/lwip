@@ -35,6 +35,9 @@
 #define __LWIP_SOCKETS_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 
@@ -326,5 +329,7 @@ int lwip_ioctl(int s, long cmd, void *argp);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_SOCKET */
 
 #endif /* __LWIP_SOCKETS_H__ */

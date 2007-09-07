@@ -37,6 +37,7 @@
  */
 
 #include "lwip/opt.h"
+
 #include "lwip/init.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
@@ -45,14 +46,13 @@
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 #include "lwip/sockets.h"
-#include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
-
+#include "netif/etharp.h"
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.

@@ -37,17 +37,17 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_SNMP
+#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/snmp.h"
 #include "lwip/netif.h"
-#include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
 #include "lwip/tcp.h"
 #include "lwip/udp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"
+#include "netif/etharp.h"
 
 /**
  * IANA assigned enterprise ID for lwIP is 26381

@@ -32,9 +32,8 @@
 #ifndef __LWIP_INET_H__
 #define __LWIP_INET_H__
 
-#include "lwip/arch.h"
-
 #include "lwip/opt.h"
+
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 

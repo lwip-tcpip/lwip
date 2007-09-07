@@ -36,6 +36,9 @@
 #define __NETIF_ETHARP_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
@@ -136,7 +139,7 @@ struct etharp_q_entry {
   struct etharp_q_entry *next;
   struct pbuf *p;
 };
-#endif
+#endif /* ARP_QUEUEING */
 
 void etharp_init(void);
 void etharp_tmr(void);
@@ -164,5 +167,7 @@ extern const struct eth_addr ethbroadcast, ethzero;
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_ARP */
 
 #endif /* __NETIF_ARP_H__ */

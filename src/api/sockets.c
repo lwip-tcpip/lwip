@@ -38,20 +38,19 @@
  *
  */
 
-#include "lwip/sockets.h"
-
-#include <string.h>
-
 #include "lwip/opt.h"
+
+#if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
+
+#include "lwip/sockets.h"
 #include "lwip/api.h"
-#include "lwip/arch.h"
 #include "lwip/sys.h"
 #include "lwip/igmp.h"
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
 #include "lwip/tcpip.h"
 
-#if !NO_SYS
+#include <string.h>
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
@@ -1081,11 +1080,13 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
       if (*optlen < sizeof(int)) {
         err = EINVAL;
       }
+#if LWIP_UDP
       if ((sock->conn->type != NETCONN_UDP) ||
           ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
         err = EAFNOSUPPORT;
       }
+#endif /* LWIP_UDP */
       break;
 
     default:
@@ -1278,9 +1279,11 @@ static void lwip_getsockopt_internal(void *arg)
       *(int *)optval = sock->conn->recv_timeout;
       break;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_UDP
     case SO_NO_CHECK:
       *(int*)optval = (udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_NOCHKSUM) ? 1 : 0;
       break;
+#endif /* LWIP_UDP*/
     }  /* switch (optname) */
     break;
 
@@ -1405,11 +1408,13 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
       if (optlen < sizeof(int)) {
         err = EINVAL;
       }
+#if LWIP_UDP
       if ((sock->conn->type != NETCONN_UDP) ||
           ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
         err = EAFNOSUPPORT;
       }
+#endif /* LWIP_UDP */
       break;
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, UNIMPL: optname=0x%x, ..)\n",
@@ -1585,11 +1590,12 @@ static void lwip_setsockopt_internal(void *arg)
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n",
                   s, optname, (*(int*)optval?"on":"off")));
       break;
-#if LWIP_SO_RCVTIMEO      
+#if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
       sock->conn->recv_timeout = ( *(int*)optval );
       break;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_UDP
     case SO_NO_CHECK:
       if (*(int*)optval) {
         udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) | UDP_FLAGS_NOCHKSUM);
@@ -1597,6 +1603,7 @@ static void lwip_setsockopt_internal(void *arg)
         udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) & ~UDP_FLAGS_NOCHKSUM);
       }
       break;
+#endif /* LWIP_UDP */
     }  /* switch (optname) */
     break;
 
@@ -1755,4 +1762,4 @@ int lwip_ioctl(int s, long cmd, void *argp)
   } /* switch (cmd) */
 }
 
-#endif /* !NO_SYS */
+#endif /* LWIP_SOCKET */

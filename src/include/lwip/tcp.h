@@ -32,14 +32,15 @@
 #ifndef __LWIP_TCP_H__
 #define __LWIP_TCP_H__
 
+#include "lwip/opt.h"
+
+/*#if LWIP_TCP*/ /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/sys.h"
 #include "lwip/mem.h"
-
 #include "lwip/pbuf.h"
-#include "lwip/opt.h"
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
-
 #include "lwip/err.h"
 
 #ifdef __cplusplus
@@ -590,5 +591,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
 #ifdef __cplusplus
 }
 #endif
+
+/*#endif*/ /* LWIP_TCP */
 
 #endif /* __LWIP_TCP_H__ */

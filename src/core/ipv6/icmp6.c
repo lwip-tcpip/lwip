@@ -35,14 +35,13 @@
 
 #include "lwip/opt.h"
 
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/icmp.h"
 #include "lwip/inet.h"
 #include "lwip/ip.h"
 #include "lwip/def.h"
-
 #include "lwip/stats.h"
-
-#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
 
 void
 icmp_input(struct pbuf *p, struct netif *inp)

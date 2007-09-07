@@ -62,8 +62,10 @@
  *
  */
 
-#include <stdlib.h>
-#include <string.h>
+#include "lwip/opt.h"
+
+#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/mem.h"
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
@@ -71,7 +73,8 @@
 #include "lwip/autoip.h"
 #include "netif/etharp.h"
 
-#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
+#include <stdlib.h>
+#include <string.h>
 
 /* pseudo random macro based on netif informations. You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
 #ifndef LWIP_AUTOIP_RAND

@@ -34,11 +34,10 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_SNMP
+#if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/snmp_structs.h"
 #include "lwip/mem.h"
-
-
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};
@@ -1182,4 +1181,3 @@ snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
 }
 
 #endif /* LWIP_SNMP */
-

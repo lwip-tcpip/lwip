@@ -43,22 +43,19 @@
  * This file is part of the lwIP TCP/IP stack.
  *
  */
-#include <string.h>
+ 
 #include "lwip/opt.h"
+
+#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/inet.h"
-#include "netif/etharp.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
-
-/* ARP needs to inform DHCP of any ARP replies? */
-#if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
-#  include "lwip/dhcp.h"
-#endif /* LWIP_DHCP && DHCP_DOES_ARP_CHECK */
-/* ARP needs to inform AUTOIP of any ARP replies? */
-#if (LWIP_AUTOIP)
-#  include "lwip/autoip.h"
-#endif /* LWIP_AUTOIP */
+#include "lwip/dhcp.h"
+#include "lwip/autoip.h"
+#include "netif/etharp.h"
+#include <string.h>
 
 /** the time an ARP entry stays valid after its last update,
  *  for ARP_TMR_INTERVAL = 5000, this is
@@ -1086,3 +1083,5 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
                     (struct eth_addr *)netif->hwaddr, &netif->ip_addr, &ethzero,
                     ipaddr, ARP_REQUEST);
 }
+
+#endif /* LWIP_ARP */

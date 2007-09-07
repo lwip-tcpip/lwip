@@ -36,10 +36,14 @@
  *
  */
 
-#include <string.h>
 #include "lwip/opt.h"
+
+#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/netbuf.h"
 #include "lwip/memp.h"
+
+#include <string.h>
 
 /**
  * Create (allocate) and initialize a new netbuf.
@@ -227,3 +231,5 @@ netbuf_first(struct netbuf *buf)
   LWIP_ERROR("netbuf_free: invalid buf", (buf != NULL), return;);
   buf->ptr = buf->p;
 }
+
+#endif /* LWIP_NETCONN */

@@ -33,16 +33,16 @@
 #define __LWIP_API_H__
 
 #include "lwip/opt.h"
+
+#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/pbuf.h"
 #include "lwip/netbuf.h"
 #include "lwip/sys.h"
-
 #include "lwip/ip.h"
-
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
-
 #include "lwip/err.h"
 
 #ifdef __cplusplus
@@ -122,7 +122,7 @@ struct netconn {
       this temporarily stores whether to wake up the original application task
       if data couldn't be sent in the first try. */
   u8_t write_delayed;
-#endif
+#endif /* LWIP_TCPIP_CORE_LOCKING */
 
   void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
 };
@@ -173,5 +173,7 @@ err_t             netconn_join_leave_group (struct netconn *conn,
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_NETCONN */
 
 #endif /* __LWIP_API_H__ */

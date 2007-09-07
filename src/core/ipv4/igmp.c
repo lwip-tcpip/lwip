@@ -77,6 +77,10 @@ Steve Reynolds
  * Includes
  *----------------------------------------------------------------------------*/
 
+#include "lwip/opt.h"
+
+#if LWIP_IGMP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/debug.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -89,11 +93,7 @@ Steve Reynolds
 #include "lwip/stats.h"
 #include "lwip/igmp.h"
 
-#include "arch/perf.h"
-
 #include "string.h"
-
-#if LWIP_IGMP /* don't build if not configured for use in lwipopts.h */
 
 /*-----------------------------------------------------------------------------
  * Globales

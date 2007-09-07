@@ -39,9 +39,10 @@
 /* Some ICMP messages should be passed to the transport protocols. This
    is not implemented. */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
+#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/icmp.h"
 #include "lwip/inet.h"
 #include "lwip/ip.h"
@@ -49,7 +50,7 @@
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
-#if LWIP_ICMP /* don't build if not configured for use in lwipopts.h */
+#include <string.h>
 
 /**
  * Processes ICMP input packets, called from ip_input().

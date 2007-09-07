@@ -40,16 +40,17 @@
  *
  */
 
-#include <string.h>
-
 #include "lwip/opt.h"
+
+#if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
 #include "lwip/snmp.h"
-
 #include "lwip/tcp.h"
-#if LWIP_TCP
+
+#include <string.h>
 
 /* Incremented every coarse grained timer shot (typically every 500 ms). */
 u32_t tcp_ticks;
@@ -1322,4 +1323,5 @@ tcp_pcbs_sane(void)
   return 1;
 }
 #endif /* TCP_DEBUG */
+
 #endif /* LWIP_TCP */

@@ -37,18 +37,17 @@
  *
  */
 
-#include <string.h>
-
-#include "lwip/arch.h"
 #include "lwip/opt.h"
+
+#if !MEM_LIBC_MALLOC /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/def.h"
 #include "lwip/mem.h"
-
 #include "lwip/sys.h"
-
 #include "lwip/stats.h"
 
-#if !MEM_LIBC_MALLOC
+#include <string.h>
+
 #if MEM_USE_POOLS
 /* lwIP head implemented with different sized pools */
 
@@ -511,4 +510,5 @@ void *mem_calloc(size_t count, size_t size)
   }
   return p;
 }
+
 #endif /* !MEM_LIBC_MALLOC */

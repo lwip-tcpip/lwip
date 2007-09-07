@@ -36,6 +36,7 @@
  *
  */
 
+#include "lwip/opt.h"
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 #include "lwip/netif.h"
