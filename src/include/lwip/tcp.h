@@ -587,12 +587,6 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             } while(0)
 #endif /* LWIP_DEBUG */
 
-/* finally, check some defines */
-#if TCP_WND > 0xffff
-#error TCP_WND must fit in an u16_t
-#endif
-
-
 #ifdef __cplusplus
 }
 #endif

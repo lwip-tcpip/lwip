@@ -159,11 +159,6 @@ err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
 #define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETHARP_HWADDR_LEN) == 0)
 
-/* finally, check some defines */
-#if ARP_TABLE_SIZE > 0x7f
-#error ARP_TABLE_SIZE must fit in an s8_t
-#endif
-
 extern const struct eth_addr ethbroadcast, ethzero;
 
 #ifdef __cplusplus

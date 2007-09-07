@@ -75,6 +75,9 @@
 #if (!LWIP_UDP && LWIP_IGMP)
   #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
+#if (LWIP_ARP && (ARP_TABLE_SIZE > 0x7f))
+  #error "If you want to use ARP, ARP_TABLE_SIZE must fit in an s8_t, so, you have to reduce it in your lwipopts.h"
+#endif
 #if (LWIP_ARP && ARP_QUEUEING && (MEMP_NUM_ARP_QUEUE<=0))
   #error "If you want to use ARP Queueing, you have to define MEMP_NUM_ARP_QUEUE>=1 in your lwipopts.h"
 #endif
@@ -86,6 +89,9 @@
 #endif
 #if (LWIP_TCP && (MEMP_NUM_TCP_PCB<=0))
   #error "If you want to use TCP, you have to define MEMP_NUM_TCP_PCB>=1 in your lwipopts.h"
+#endif
+#if (LWIP_TCP && (TCP_WND > 0xffff))
+  #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
 #endif
 #if (LWIP_IGMP && (MEMP_NUM_IGMP_GROUP<=1))
   #error "If you want to use IGMP, you have to define MEMP_NUM_IGMP_GROUP>1 in your lwipopts.h"
