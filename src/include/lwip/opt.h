@@ -1387,13 +1387,6 @@
 #endif
 
 /**
- * TCP_REXMIT_DEBUG: Unused.
- */
-#ifndef TCP_REXMIT_DEBUG
-#define TCP_REXMIT_DEBUG                LWIP_DBG_OFF
-#endif
-
-/**
  * TCP_CWND_DEBUG: Enable debugging for TCP congestion window.
  */
 #ifndef TCP_CWND_DEBUG

@@ -127,13 +127,22 @@
 /* Compile-time checks for deprecated options.
  */
 #ifdef MEMP_NUM_TCPIP_MSG
-  #error MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h.
+  #error "MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h."
+#endif
+#ifdef MEMP_NUM_API_MSG
+  #error "MEMP_NUM_API_MSG option is deprecated. Remove it from your lwipopts.h."
+#endif
+#ifdef TCP_REXMIT_DEBUG
+  #error "TCP_REXMIT_DEBUG option is deprecated. Remove it from your lwipopts.h."
+#endif
+#ifdef RAW_STATS
+  #error "RAW_STATS option is deprecated. Remove it from your lwipopts.h."
 #endif
 #ifdef ETHARP_QUEUE_FIRST
-  #error ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h.
+  #error "ETHARP_QUEUE_FIRST option is deprecated. Remove it from your lwipopts.h."
 #endif
 #ifdef ETHARP_ALWAYS_INSERT
-  #error ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h.
+  #error "ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h."
 #endif
 #if SO_REUSE
 /* I removed the lot since this was an ugly hack. It broke the raw-API.
