@@ -34,8 +34,8 @@
  * This file is part of the lwIP TCP/IP stack.
  * 
  * Author: Adam Dunkels <adam@sics.se>
- * $Author: fbernon $
- * $Date: 2007/09/07 09:23:51 $
+ *
+ * $Revision: 1.10 $ $Date: 2007/09/07 12:31:50 $
  */
 
 #include "lwip/opt.h"
