@@ -138,7 +138,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 
 #if LWIP_IGMP
   /* start IGMP processing */
-  igmp_start( netif);
+  if (netif->flags & NETIF_FLAG_IGMP) {
+    igmp_start( netif);
+  }
 #endif /* LWIP_IGMP */
 
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: added interface %c%c IP addr ",
@@ -178,6 +180,13 @@ netif_set_addr(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netm
 void netif_remove(struct netif * netif)
 {
   if ( netif == NULL ) return;
+
+#if LWIP_IGMP
+  /* stop IGMP processing */
+  if (netif->flags & NETIF_FLAG_IGMP) {
+    igmp_stop( netif);
+  }
+#endif /* LWIP_IGMP */
 
   snmp_delete_ipaddridx_tree(netif);
 
@@ -460,6 +469,13 @@ void netif_set_link_up(struct netif *netif )
     etharp_query(netif, &(netif->ip_addr), NULL);
   }
 #endif /* LWIP_ARP */
+
+#if LWIP_IGMP
+  /* resend IGMP memberships */
+  if (netif->flags & NETIF_FLAG_IGMP) {
+    igmp_report_groups( netif);
+  }
+#endif /* LWIP_IGMP */
 
   NETIF_LINK_CALLBACK(netif);
 }

@@ -237,7 +237,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
   /* match packet against an interface, i.e. is this packet for us? */
 #if LWIP_IGMP
   if (ip_addr_ismulticast(&(iphdr->dest)))
-   { if (igmp_lookfor_group( inp, &(iphdr->dest)))
+   { if ((inp->flags & NETIF_FLAG_IGMP) && (igmp_lookfor_group( inp, &(iphdr->dest))))
       { netif = inp;
       }
      else

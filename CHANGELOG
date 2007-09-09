@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+  2007-09-09 Frédéric Bernon, Bill Florac
+  * igmp.h, igmp.c, netif.h, netif.c, ip.c: To enable to have interfaces with IGMP,
+    and others without it, there is a new NETIF_FLAG_IGMP flag to set in netif->flags
+    if you want IGMP on an interface. igmp_stop() is now called inside netif_remove().
+    igmp_report_groups() is now called inside netif_set_link_up() (need to have
+    LWIP_NETIF_LINK_CALLBACK=1) to resend reports once the link is up (avoid to wait
+    the next query message to receive the matching multicast streams).
+
   2007-09-08 Frédéric Bernon
   * sockets.c, ip.h, api.h, tcp.h: declare a "struct ip_pcb" which only contains
     IP_PCB. Add in the netconn's "pcb" union a "struct ip_pcb *ip;" (no size change).

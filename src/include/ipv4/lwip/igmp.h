@@ -112,11 +112,15 @@ void   igmp_init(void);
 
 err_t  igmp_start( struct netif *netif);
 
-struct igmp_group *igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr);
+err_t  igmp_stop( struct netif *netif);
 
-struct igmp_group *igmp_lookup_group(struct netif *ifp, struct ip_addr *addr);
+void   igmp_report_groups( struct netif *netif);
 
-err_t  igmp_remove_group(struct igmp_group *group);
+struct igmp_group *igmp_lookfor_group( struct netif *ifp, struct ip_addr *addr);
+
+struct igmp_group *igmp_lookup_group( struct netif *ifp, struct ip_addr *addr);
+
+err_t  igmp_remove_group( struct igmp_group *group);
 
 void   igmp_input( struct pbuf *p, struct netif *inp, struct ip_addr *dest);
 

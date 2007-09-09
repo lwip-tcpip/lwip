@@ -76,6 +76,8 @@ extern "C" {
 #define NETIF_FLAG_LINK_UP      0x10U
 /** if set, the netif is an device using ARP */
 #define NETIF_FLAG_ETHARP       0x20U
+/** if set, the netif has IGMP capability */
+#define NETIF_FLAG_IGMP         0x40U
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization

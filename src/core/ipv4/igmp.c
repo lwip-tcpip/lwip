@@ -117,6 +117,27 @@ igmp_init(void)
   igmp_group_list = NULL;
 }
 
+#ifdef LWIP_DEBUG
+/**
+ * Dump global IGMP groups list
+ */
+void
+igmp_dump_group_list()
+{ 
+  struct igmp_group *group = igmp_group_list;
+
+  while (group != NULL) {
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_dump_group_list: [%"U32_F"] ", (u32_t)(group->group_state)));
+    ip_addr_debug_print(IGMP_DEBUG, &group->group_address);
+    LWIP_DEBUGF(IGMP_DEBUG, (" on if %x\n", (int) group->interface));
+    group = group->next;
+  }
+  LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
+}
+#else
+#define igmp_dump_group_list()
+#endif /* LWIP_DEBUG */
+
 /**
  * Start IGMP processing on interface
  *
@@ -150,6 +171,70 @@ igmp_start(struct netif *netif)
 }
 
 /**
+ * Stop IGMP processing on interface
+ *
+ * @param netif network interface on which stop IGMP processing
+ */
+err_t
+igmp_stop(struct netif *netif)
+{
+  struct igmp_group *group = igmp_group_list;
+  struct igmp_group *prev  = NULL;
+  struct igmp_group *next;
+
+  /* look for groups joined on this interface further down the list */
+  while (group != NULL) {
+    next = group->next;
+    /* is it a group joined on this interface? */
+    if (group->interface == netif) {
+      /* is it the first group of the list? */
+      if (group == igmp_group_list) {
+        igmp_group_list = next;
+      }
+      /* is there a "previous" group defined? */
+      if (prev != NULL) {
+        prev->next = next;
+      }
+      /* disable the group at the MAC level */
+      if (netif->igmp_mac_filter != NULL) {
+        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_stop: igmp_mac_filter(DEL "));
+        ip_addr_debug_print(IGMP_DEBUG, &group->group_address);
+        LWIP_DEBUGF(IGMP_DEBUG, (") on if %x\n", (int) netif));
+        netif->igmp_mac_filter(netif, &(group->group_address), IGMP_DEL_MAC_FILTER);
+      }
+      /* free group */
+      memp_free(MEMP_IGMP_GROUP, group);
+    } else {
+      /* change the "previous" */
+      prev = group;
+    }
+    /* move to "next" */
+    group = next;
+  }
+  return ERR_OK;
+}
+
+/**
+ * Report IGMP memberships for this interface
+ *
+ * @param netif network interface on which report IGMP memberships
+ */
+void
+igmp_report_groups( struct netif *netif)
+{
+  struct igmp_group *group = igmp_group_list;
+
+  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_report_groups: sending IGMP reports on if %x\n", (int) netif));
+
+  while (group != NULL) {
+    if (group->interface == netif) {
+      igmp_delaying_member( group, IGMP_JOIN_DELAYING_MEMBER_TMR);
+    }
+    group = group->next;
+  }
+}
+
+/**
  * Search for a group in the global igmp_group_list
  *
  * @param ifp the network interface for which to look
@@ -162,7 +247,7 @@ igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr)
 {
   struct igmp_group *group = igmp_group_list;
 
-  while (group) {
+  while (group != NULL) {
     if ((group->interface == ifp) && (ip_addr_cmp(&(group->group_address), addr))) {
       return group;
     }
@@ -224,14 +309,14 @@ igmp_lookup_group(struct netif *ifp, struct ip_addr *addr)
  */
 err_t
 igmp_remove_group(struct igmp_group *group)
-{ 
+{
   err_t err = ERR_OK;
 
   /* Is it the first group? */
   if (igmp_group_list == group) {
     igmp_group_list = group->next;
   } else {
-    /*  look for group further down the list */
+    /* look for group further down the list */
     struct igmp_group *tmpGroup;
     for (tmpGroup = igmp_group_list; tmpGroup != NULL; tmpGroup = tmpGroup->next) {
       if (tmpGroup->next == group) {
@@ -245,7 +330,7 @@ igmp_remove_group(struct igmp_group *group)
   }
   /* free group */
   memp_free(MEMP_IGMP_GROUP, group);
-        
+
   return err;
 }
 
@@ -386,7 +471,7 @@ igmp_joingroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
   netif = netif_list;
   while (netif != NULL) {
     /* Should we join this interface ? */
-    if ((ip_addr_isany(ifaddr) || ip_addr_cmp(&(netif->ip_addr), ifaddr))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip_addr_isany(ifaddr) || ip_addr_cmp(&(netif->ip_addr), ifaddr)))) {
       /* find group or create a new one if not found */
       group = igmp_lookup_group(netif, groupaddr);
 
@@ -456,7 +541,7 @@ igmp_leavegroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
   netif = netif_list;
   while (netif != NULL) {
     /* Should we leave this interface ? */
-    if ((ip_addr_isany(ifaddr) || ip_addr_cmp(&(netif->ip_addr), ifaddr))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip_addr_isany(ifaddr) || ip_addr_cmp(&(netif->ip_addr), ifaddr)))) {
       /* find group */
       group = igmp_lookfor_group(netif, groupaddr);
 
@@ -479,7 +564,7 @@ igmp_leavegroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
           if (netif->igmp_mac_filter != NULL) {
             LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: igmp_mac_filter(DEL "));
             ip_addr_debug_print(IGMP_DEBUG, groupaddr);
-            LWIP_DEBUGF(IGMP_DEBUG, (") on if %x\n", (int) netif));          
+            LWIP_DEBUGF(IGMP_DEBUG, (") on if %x\n", (int) netif));
             netif->igmp_mac_filter(netif, groupaddr, IGMP_DEL_MAC_FILTER);
           }
           
