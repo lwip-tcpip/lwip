@@ -44,6 +44,8 @@
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_frag.h"
+#include "lwip/autoip.h"
+#include "lwip/dhcp.h"
 #include "lwip/igmp.h"
 #include "lwip/tcpip.h"
 #include "lwip/init.h"
