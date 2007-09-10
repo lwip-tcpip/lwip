@@ -70,6 +70,10 @@
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
 #endif
 
+#ifndef SNMP_GET_SYSUPTIME
+#define SNMP_GET_SYSUPTIME(sysuptime)
+#endif
+
 static void system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void system_get_value(struct obj_def *od, u16_t len, void *value);
 static u8_t system_set_test(struct obj_def *od, u16_t len, void *value);
@@ -949,8 +953,14 @@ void snmp_inc_sysuptime(void)
   sysuptime++;
 }
 
+void snmp_add_sysuptime(u32_t value)
+{
+  sysuptime+=value;
+}
+
 void snmp_get_sysuptime(u32_t *value)
 {
+  SNMP_GET_SYSUPTIME(sysuptime);
   *value = sysuptime;
 }
 
@@ -2193,8 +2203,7 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
       break;
     case 3: /* sysUpTime */
       {
-        u32_t *uint_ptr = value;
-        *uint_ptr = sysuptime;
+        snmp_get_sysuptime(value);
       }
       break;
     case 4: /* sysContact */

@@ -19,6 +19,18 @@ HISTORY
 
   ++ New features:
 
+  2007-09-10 Frédéric Bernon
+  * snmp.h, mib2.c: enable to remove SNMP timer (which consumne several cycles
+    even when it's not necessary). snmp_agent.txt tell to call snmp_inc_sysuptime()
+    each 10ms (but, it's intrusive if you use sys_timeout feature). Now, you can
+    decide to call snmp_add_sysuptime(100) each 1000ms (which is bigger "step", but
+    call to a lower frequency). Or, you can decide to not call snmp_inc_sysuptime()
+    or snmp_add_sysuptime(), and to define the SNMP_GET_SYSUPTIME(sysuptime) macro.
+    This one is undefined by default in mib2.c. SNMP_GET_SYSUPTIME is called inside
+    snmp_get_sysuptime(u32_t *value), and enable to change "sysuptime" value only
+    when it's queried (any direct call to "sysuptime" is changed by a call to 
+    snmp_get_sysuptime).
+
   2007-09-09 Frédéric Bernon, Bill Florac
   * igmp.h, igmp.c, netif.h, netif.c, ip.c: To enable to have interfaces with IGMP,
     and others without it, there is a new NETIF_FLAG_IGMP flag to set in netif->flags

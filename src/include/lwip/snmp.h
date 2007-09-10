@@ -81,8 +81,12 @@ enum snmp_ifType {
 
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
+/** SNMP "sysuptime" Interval */
+#define SNMP_SYSUPTIME_INTERVAL 10
+
 /** fixed maximum length for object identifier type */
 #define LWIP_SNMP_OBJ_ID_LEN 32
+
 /** internal object identifier representation */
 struct snmp_obj_id
 {
@@ -95,6 +99,7 @@ void snmp_set_sysdesr(u8_t* str, u8_t* len);
 void snmp_set_sysobjid(struct snmp_obj_id *oid);
 void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);
+void snmp_add_sysuptime(u32_t value);
 void snmp_get_sysuptime(u32_t *value);
 void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen);
 void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen);
@@ -227,6 +232,7 @@ void snmp_get_snmpenableauthentraps(u8_t *value);
 #define snmp_set_sysobjid(oid);
 #define snmp_get_sysobjid_ptr(oid)
 #define snmp_inc_sysuptime()
+#define snmp_add_sysuptime(value)
 #define snmp_get_sysuptime(value)
 #define snmp_set_syscontact(ocstr, ocstrlen);
 #define snmp_set_sysname(ocstr, ocstrlen);
