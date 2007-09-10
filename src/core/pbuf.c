@@ -110,7 +110,7 @@
  * is the first pbuf of a pbuf chain.
  */
 struct pbuf *
-pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
+pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
 {
   struct pbuf *p, *q, *r;
   u16_t offset;
@@ -119,7 +119,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
 
   /* determine header offset */
   offset = 0;
-  switch (l) {
+  switch (layer) {
   case PBUF_TRANSPORT:
     /* add room for transport (often TCP) layer header */
     offset += PBUF_TRANSPORT_HLEN;
@@ -157,8 +157,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
     /* the total length of the pbuf chain is the requested size */
     p->tot_len = length;
     /* set the length of the first pbuf in the chain */
-    p->len = (length > PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset)) ?
-              PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset) : length;
+    p->len = LWIP_MIN(length, PBUF_POOL_BUFSIZE_ALIGNED - LWIP_MEM_ALIGN_SIZE(offset));
     LWIP_ASSERT("check p->payload + p->len does not overflow pbuf",
                 ((u8_t*)p->payload + p->len <=
                  (u8_t*)p + SIZEOF_STRUCT_PBUF + PBUF_POOL_BUFSIZE_ALIGNED));
@@ -189,7 +188,7 @@ pbuf_alloc(pbuf_layer l, u16_t length, pbuf_type type)
       LWIP_ASSERT("rem_len < max_u16_t", rem_len < 0xffff);
       q->tot_len = (u16_t)rem_len;
       /* this pbuf length is pool size, unless smaller sized tail */
-      q->len = (rem_len > PBUF_POOL_BUFSIZE_ALIGNED) ? PBUF_POOL_BUFSIZE_ALIGNED : (u16_t)rem_len;
+      q->len = LWIP_MIN((u16_t)rem_len, PBUF_POOL_BUFSIZE_ALIGNED);
       q->payload = (void *)((u8_t *)q + SIZEOF_STRUCT_PBUF);
       LWIP_ASSERT("pbuf_alloc: pbuf q->payload properly aligned",
               ((mem_ptr_t)q->payload % MEM_ALIGNMENT) == 0);
