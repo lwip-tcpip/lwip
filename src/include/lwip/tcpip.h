@@ -32,6 +32,10 @@
 #ifndef __LWIP_TCPIP_H__
 #define __LWIP_TCPIP_H__
 
+#include "lwip/opt.h"
+
+#if !NO_SYS /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/api_msg.h"
 #include "lwip/netifapi.h"
 #include "lwip/pbuf.h"
@@ -114,5 +118,7 @@ struct tcpip_msg {
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* !NO_SYS */
 
 #endif /* __LWIP_TCPIP_H__ */
