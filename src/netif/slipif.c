@@ -204,6 +204,7 @@ slipif_input(struct netif *netif)
   return NULL;
 }
 
+#if !NO_SYS
 /**
  * The SLIP input thread.
  *
@@ -227,6 +228,7 @@ slipif_loop(void *nf)
     }
   }
 }
+#endif /* !NO_SYS */
 
 /**
  * SLIP netif initialization
