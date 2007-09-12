@@ -44,6 +44,7 @@
 #include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_frag.h"
+#include "lwip/tcp.h"
 #include "lwip/autoip.h"
 #include "lwip/dhcp.h"
 #include "lwip/igmp.h"
@@ -302,10 +303,12 @@ tcpip_thread(void *arg)
   while (1) {                          /* MAIN Loop */
     sys_mbox_fetch(mbox, (void *)&msg);
     switch (msg->type) {
+#if LWIP_NETCONN
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
+#endif /* LWIP_NETCONN */
 
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
@@ -348,7 +351,6 @@ tcpip_thread(void *arg)
   }
 }
 
-#if LWIP_ARP
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -375,7 +377,6 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   }
   return ERR_VAL;
 }
-#endif /* LWIP_ARP */
 
 /**
  * Call a specific function in the thread context of
@@ -428,6 +429,7 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   return ERR_VAL;
 }
 
+#if LWIP_NETCONN
 /**
  * Call the lower part of a netconn_* function
  * This function is then running in the thread context
@@ -470,6 +472,7 @@ tcpip_apimsg_lock(struct api_msg *apimsg)
 
 }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
+#endif /* LWIP_NETCONN */
 
 #if LWIP_NETIF_API
 #if !LWIP_TCPIP_CORE_LOCKING

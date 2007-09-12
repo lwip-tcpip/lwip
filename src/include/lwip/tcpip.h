@@ -63,10 +63,13 @@ extern sys_sem_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
+
+#if LWIP_NETCONN
 err_t tcpip_apimsg(struct api_msg *apimsg);
 #if LWIP_TCPIP_CORE_LOCKING
 err_t tcpip_apimsg_lock(struct api_msg *apimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
+#endif /* LWIP_NETCONN */
 
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
 
@@ -82,7 +85,9 @@ err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 #define tcpip_untimeout(h, arg) tcpip_timeout(0xffffffff, h, arg)
 
 enum tcpip_msg_type {
+#if LWIP_NETCONN
   TCPIP_MSG_API,
+#endif /* LWIP_NETCONN */
   TCPIP_MSG_INPKT,
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
@@ -95,7 +100,9 @@ struct tcpip_msg {
   enum tcpip_msg_type type;
   sys_sem_t *sem;
   union {
+#if LWIP_NETCONN
     struct api_msg *apimsg;
+#endif /* LWIP_NETCONN */
 #if LWIP_NETIF_API
     struct netifapi_msg *netifapimsg;
 #endif /* LWIP_NETIF_API */
