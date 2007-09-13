@@ -53,45 +53,45 @@ struct tcp_pcb;
 
 /* Lower layer interface to TCP: */
 void             tcp_init    (void);  /* Must be called first to
-           initialize TCP. */
+                                         initialize TCP. */
 void             tcp_tmr     (void);  /* Must be called every
-           TCP_TMR_INTERVAL
-           ms. (Typically 250 ms). */
+                                         TCP_TMR_INTERVAL
+                                         ms. (Typically 250 ms). */
 /* Application program's interface: */
 struct tcp_pcb * tcp_new     (void);
 struct tcp_pcb * tcp_alloc   (u8_t prio);
 
 void             tcp_arg     (struct tcp_pcb *pcb, void *arg);
 void             tcp_accept  (struct tcp_pcb *pcb,
-            err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
+                              err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
                  err_t err));
 void             tcp_recv    (struct tcp_pcb *pcb,
-            err_t (* recv)(void *arg, struct tcp_pcb *tpcb,
-          struct pbuf *p, err_t err));
+                              err_t (* recv)(void *arg, struct tcp_pcb *tpcb,
+                              struct pbuf *p, err_t err));
 void             tcp_sent    (struct tcp_pcb *pcb,
-            err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
-               u16_t len));
+                              err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
+                              u16_t len));
 void             tcp_poll    (struct tcp_pcb *pcb,
-            err_t (* poll)(void *arg, struct tcp_pcb *tpcb),
-            u8_t interval);
+                              err_t (* poll)(void *arg, struct tcp_pcb *tpcb),
+                              u8_t interval);
 void             tcp_err     (struct tcp_pcb *pcb,
-            void (* err)(void *arg, err_t err));
+                              void (* err)(void *arg, err_t err));
 
 #define          tcp_mss(pcb)      ((pcb)->mss)
 #define          tcp_sndbuf(pcb)   ((pcb)->snd_buf)
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
-            u16_t port);
+                              u16_t port);
 err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
-            u16_t port, err_t (* connected)(void *arg,
-                    struct tcp_pcb *tpcb,
-                    err_t err));
+                              u16_t port, err_t (* connected)(void *arg,
+                              struct tcp_pcb *tpcb,
+                              err_t err));
 struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 err_t            tcp_write   (struct tcp_pcb *pcb, const void *dataptr, u16_t len,
-            u8_t copy);
+                              u8_t copy);
 
 void             tcp_setprio (struct tcp_pcb *pcb, u8_t prio);
 
@@ -297,7 +297,7 @@ struct tcp_pcb {
     snd_max;       /* Highest seqno sent. */
   u16_t snd_wnd;   /* sender window */
   u32_t snd_wl1, snd_wl2, /* Sequence and acknowledgement numbers of last
-       window update. */
+                             window update. */
     snd_lbb;       /* Sequence number of next byte to be buffered. */
 
   u16_t acked;
