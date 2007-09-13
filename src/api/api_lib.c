@@ -424,6 +424,7 @@ netconn_recv(struct netconn *conn)
 
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+      conn->err = ERR_TIMEOUT;
       p = NULL;
     }
 #else
@@ -444,7 +445,10 @@ netconn_recv(struct netconn *conn)
     /* If we are closed, we indicate that we no longer wish to use the socket */
     if (p == NULL) {
       memp_free(MEMP_NETBUF, buf);
-      conn->err = ERR_CLSD;
+      /* Avoid to lost any previous error code */
+      if (conn->err == ERR_OK) {
+        conn->err = ERR_CLSD;
+      }
       return NULL;
     }
 

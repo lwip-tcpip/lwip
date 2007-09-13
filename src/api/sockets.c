@@ -417,7 +417,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
       if (!buf) {
         /* We should really do some error checking here. */
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
-        sock_set_errno(sock, (sock->conn->type==NETCONN_UDP)?ETIMEDOUT:0);
+        sock_set_errno(sock, (((sock->conn->pcb.ip!=NULL) && (sock->conn->err==ERR_OK))?ETIMEDOUT:err_to_errno(sock->conn->err)));
         return 0;
       }
     }
