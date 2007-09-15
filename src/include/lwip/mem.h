@@ -65,7 +65,7 @@ typedef u16_t mem_size_t;
 #define mem_calloc(x, y) calloc(x, y)
 #endif
 #ifndef mem_realloc
-#define mem_realloc(x, size) realloc(x,size)
+#define mem_realloc(x, size) (x)
 #endif
 #else /* MEM_LIBC_MALLOC */
 #if MEM_USE_POOLS
