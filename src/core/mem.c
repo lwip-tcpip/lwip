@@ -455,6 +455,12 @@ mem_malloc(mem_size_t size)
         if (mem2->next != MEM_SIZE_ALIGNED) {
           ((struct mem *)&ram[mem2->next])->prev = ptr2;
         }
+#if MEM_STATS
+        lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
+        if (lwip_stats.mem.max < lwip_stats.mem.used) {
+          lwip_stats.mem.max = lwip_stats.mem.used;
+        }
+#endif /* MEM_STATS */
       } else {
         /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
          * be used at this point: if not we have 2 unused structs in a row, plug_holes should have
@@ -464,14 +470,14 @@ mem_malloc(mem_size_t size)
          * will always be used at this point!
          */
         mem->used = 1;
+#if MEM_STATS
+        lwip_stats.mem.used += mem->next - ((u8_t *)mem - ram);
+        if (lwip_stats.mem.max < lwip_stats.mem.used) {
+          lwip_stats.mem.max = lwip_stats.mem.used;
+        }
+#endif /* MEM_STATS */
       }
 
-#if MEM_STATS
-      lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
-      if (lwip_stats.mem.max < lwip_stats.mem.used) {
-        lwip_stats.mem.max = lwip_stats.mem.used;
-      }
-#endif /* MEM_STATS */
       if (mem == lfree) {
         /* Find next free block after mem and update lowest free pointer */
         while (lfree->used && lfree != ram_end) {
