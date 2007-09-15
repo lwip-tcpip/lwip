@@ -355,8 +355,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       return err;
     }
   }
+
   /* find the outgoing network interface for this packet */
+#if LWIP_IGMP
+  netif = ip_route((ip_addr_ismulticast(&(pcb->remote_ip)))?(&(pcb->multicast_ip)):(&(pcb->remote_ip)));
+#else
   netif = ip_route(&(pcb->remote_ip));
+#endif /* LWIP_IGMP */
+
   /* no outgoing network interface could be found? */
   if (netif == NULL) {
     LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%"X32_F"\n", pcb->remote_ip.addr));

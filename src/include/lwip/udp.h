@@ -77,7 +77,12 @@ struct udp_pcb {
   u8_t flags;
   /* ports are in host byte order */
   u16_t local_port, remote_port;
-  
+
+#if LWIP_IGMP
+  /* outgoing network interface for multicast packets */
+  struct ip_addr multicast_ip;
+#endif /* LWIP_IGMP */
+
 #if LWIP_UDPLITE
   /* used for UDP_LITE only */
   u16_t chksum_len_rx, chksum_len_tx;

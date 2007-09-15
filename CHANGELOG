@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-09-15 Frédéric Bernon
+  * udp.h, udp.c, sockets.c: Changes for "#20503 IGMP Improvement". Add IP_MULTICAST_IF
+    option in socket API, and a new field "multicast_ip" in "struct udp_pcb" (for
+    netconn and raw API users), only if LWIP_IGMP=1. Add getsockopt processing for
+    IP_MULTICAST_TTL and IP_MULTICAST_IF.
+
   2007-09-10 Frédéric Bernon
   * snmp.h, mib2.c: enable to remove SNMP timer (which consumne several cycles
     even when it's not necessary). snmp_agent.txt tell to call snmp_inc_sysuptime()
