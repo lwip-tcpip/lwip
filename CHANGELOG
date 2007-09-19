@@ -408,6 +408,9 @@ HISTORY
   2007-09-19 Simon Goldschmidt
   * icmp.c: Fixed bug #21107 (didn't reset IP TTL in ICMP echo replies)
 
+  2007-09-15 Mike Kleshov
+  * mem.c: Fixed bug #21077 (inaccuracy in calculation of lwip_stat.mem.used)
+
   2007-09-06 Frédéric Bernon
   * several-files: replace some #include "arch/cc.h" by "lwip/arch.h", or simply remove
     it as long as "lwip/opt.h" is included before (this one include "lwip/debug.h" which
