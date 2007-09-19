@@ -405,6 +405,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-09-19 Simon Goldschmidt
+  * icmp.c: Fixed bug #21107 (didn't reset IP TTL in ICMP echo replies)
+
   2007-09-06 Frédéric Bernon
   * several-files: replace some #include "arch/cc.h" by "lwip/arch.h", or simply remove
     it as long as "lwip/opt.h" is included before (this one include "lwip/debug.h" which

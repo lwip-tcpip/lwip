@@ -163,6 +163,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
     } else {
       iecho->chksum += htons(ICMP_ECHO << 8);
     }
+
+    /* Set the correct TTL and recalculate the header checksum. */
+    IPH_TTL_SET(iphdr, ICMP_TTL);
+    IPH_CHKSUM_SET(iphdr, 0);
+#if CHECKSUM_GEN_IP
+    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+#endif /* CHECKSUM_GEN_IP */
+
     ICMP_STATS_INC(icmp.xmit);
     /* increase number of messages attempted to send */
     snmp_inc_icmpoutmsgs();
