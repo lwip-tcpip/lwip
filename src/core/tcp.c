@@ -279,6 +279,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
     port = tcp_new_port();
   }
   /* Check if the address already is in use. */
+  /* Check the listen pcbs. */
   for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
@@ -289,6 +290,7 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       }
     }
   }
+  /* Check the connected pcbs. */
   for(cpcb = tcp_active_pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
@@ -299,11 +301,21 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
       }
     }
   }
+  /* Check the bound, not yet connected pcbs. */
   for(cpcb = tcp_bound_pcbs; cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
           ip_addr_isany(ipaddr) ||
           ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+        return ERR_USE;
+      }
+    }
+  }
+  /* @todo: until SO_REUSEADDR is implemented (see task #6995 on savannah),
+   * we have to check the pcbs in TIME-WAIT state, also: */
+  for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+    if (cpcb->local_port == port) {
+      if (ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
         return ERR_USE;
       }
     }

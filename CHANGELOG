@@ -405,6 +405,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-09-20 Simon Goldschmidt
+  * tcp.c: Fixed bug #21080 (tcp_bind without check pcbs in TIME_WAIT state)
+    by checking  tcp_tw_pcbs also
+
   2007-09-19 Simon Goldschmidt
   * icmp.c: Fixed bug #21107 (didn't reset IP TTL in ICMP echo replies)
 
