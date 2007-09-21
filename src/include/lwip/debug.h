@@ -76,7 +76,18 @@
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least LWIP_DBG_LEVEL
  */
-#define LWIP_DEBUGF(debug,x) do { if (((debug) & LWIP_DBG_ON) && ((debug) & LWIP_DBG_TYPES_ON) && ((s16_t)((debug) & LWIP_DBG_MASK_LEVEL) >= LWIP_DBG_MIN_LEVEL)) { LWIP_PLATFORM_DIAG(x); if ((debug) & LWIP_DBG_HALT) while(1); } } while(0)
+#define LWIP_DEBUGF(debug,x) do { \
+                               if ( \
+                                   ((debug) & LWIP_DBG_ON) && \
+                                   ((debug) & LWIP_DBG_TYPES_ON) && \
+                                   ((s16_t)((debug) & LWIP_DBG_MASK_LEVEL) >= LWIP_DBG_MIN_LEVEL)) { \
+                                 LWIP_PLATFORM_DIAG(x); \
+                                 if ((debug) & LWIP_DBG_HALT) { \
+                                   while(1); \
+                                 } \
+                               } \
+                             } while(0)
+
 #else  /* LWIP_DEBUG */
 #define LWIP_DEBUGF(debug,x) 
 #endif /* LWIP_DEBUG */

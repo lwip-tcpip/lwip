@@ -117,6 +117,13 @@ static const u16_t memp_num[MEMP_MAX] = {
 #include "lwip/memp_std.h"
 };
 
+#ifdef LWIP_DEBUG
+static const char *memp_desc[MEMP_MAX] = {
+#define LWIP_MEMPOOL(name,num,size,desc)  (desc),
+#include "lwip/memp_std.h"
+};
+#endif /* LWIP_DEBUG */
+
 static u8_t memp_memory[MEM_ALIGNMENT - 1 
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
@@ -303,7 +310,7 @@ memp_malloc(memp_t type)
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
     memp = (struct memp*)((u8_t*)memp + MEMP_SIZE);
   } else {
-    LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %"S16_F"\n", type));
+    LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
 #if MEMP_STATS
     ++lwip_stats.memp[type].err;
 #endif /* MEMP_STATS */

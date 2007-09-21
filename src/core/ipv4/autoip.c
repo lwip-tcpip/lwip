@@ -193,7 +193,7 @@ autoip_bind(struct netif *netif)
   struct autoip *autoip = netif->autoip;
   struct ip_addr sn_mask, gw_addr;
 
-  LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_bind(netif=%p) %c%c%"U16_F" 0x%08"X32_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num, autoip->llipaddr));
+  LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3, ("autoip_bind(netif=%p) %c%c%"U16_F" 0x%08"X32_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num, autoip->llipaddr.addr));
 
   IP4_ADDR(&sn_mask, 255, 255, 0, 0);
   IP4_ADDR(&gw_addr, 0, 0, 0, 0);
