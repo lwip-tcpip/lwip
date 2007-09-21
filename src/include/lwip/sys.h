@@ -44,6 +44,7 @@ extern "C" {
    definitions of the sys_ functions. */
 typedef u8_t sys_sem_t;
 typedef u8_t sys_mbox_t;
+typedef u8_t sys_prot_t;
 struct sys_timeo {u8_t dummy;};
 
 #define sys_init()
