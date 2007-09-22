@@ -1245,11 +1245,20 @@
    ---------------------------------------
 */
 /**
+ * LWIP_DBG_MIN_LEVEL: After masking, the value of the debug is
+ * compared against this value. If it is smaller, then debugging
+ * messages are written.
+ */
+#ifndef LWIP_DBG_MIN_LEVEL
+#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_OFF
+#endif
+
+/**
  * LWIP_DBG_TYPES_ON: A mask that can be used to globally enable/disable
  * debug messages of certain types.
  */
 #ifndef LWIP_DBG_TYPES_ON
-#define LWIP_DBG_TYPES_ON               0
+#define LWIP_DBG_TYPES_ON               LWIP_DBG_ON
 #endif
 
 /**
@@ -1475,15 +1484,6 @@
  */
 #ifndef SNMP_MIB_DEBUG
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
-#endif
-
-/**
- * LWIP_DBG_MIN_LEVEL: After masking, the value of the debug is
- * compared against this value. If it is smaller, then debugging
- * messages are written.
- */
-#ifndef LWIP_DBG_MIN_LEVEL
-#define LWIP_DBG_MIN_LEVEL              LWIP_DBG_LEVEL_OFF
 #endif
 
 #endif /* __LWIP_OPT_H__ */
