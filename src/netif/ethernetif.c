@@ -288,7 +288,11 @@ ethernetif_init(struct netif *netif)
   netif->hostname = "lwip";
 #endif /* LWIP_NETIF_HOSTNAME */
 
-  /* initialize the snmp variables and counters inside the struct netif */
+  /*
+   * Initialize the snmp variables and counters inside the struct netif.
+   * The last argument should be replaced with your link speed, in units
+   * of bits per second.
+   */
   NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, ???);
 
   netif->state = ethernetif;

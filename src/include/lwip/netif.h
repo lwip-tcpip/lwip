@@ -171,7 +171,7 @@ struct netif {
 #define NETIF_INIT_SNMP(netif, type, speed) \
   /* use "snmp_ifType" enum from snmp.h for "type", snmp_ifType_ethernet_csmacd by example */ \
   netif->link_type = type;    \
-  /* your link speed here */  \
+  /* your link speed here (units: bits per second) */  \
   netif->link_speed = speed;  \
   netif->ts = 0;              \
   netif->ifinoctets = 0;      \
