@@ -39,6 +39,22 @@
 #include "lwip/tcpip.h"
 
 /**
+ * call the "do_function" in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ *
+ * @note use only for "do_netifapi" functions where there is only netif parameter.
+ */
+err_t
+netifapi_netif_common(struct netif *netif, void (* function)(struct netifapi_msg_msg *msg))
+{
+  struct netifapi_msg msg;
+  msg.function = function;
+  msg.msg.netif = netif;  
+  TCPIP_NETIFAPI(&msg);
+  return msg.msg.err;
+}
+
+/**
  * Call netif_add() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  *
@@ -67,57 +83,7 @@ netifapi_netif_add(struct netif *netif,
 }
 
 /**
- * Call netif_remove() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- *
- * @note for params @see netif_remove()
- */
-err_t
-netifapi_netif_remove(struct netif *netif)
-{
-  struct netifapi_msg msg;
-  msg.function = do_netifapi_netif_remove;
-  msg.msg.netif = netif;  
-  TCPIP_NETIFAPI(&msg);
-  return msg.msg.err;
-}
-
-#if LWIP_DHCP
-/**
- * Call dhcp_start() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- *
- * @note for params @see dhcp_start()
- */
-err_t
-netifapi_dhcp_start(struct netif *netif)
-{
-  struct netifapi_msg msg;
-  msg.function = do_netifapi_dhcp_start;
-  msg.msg.netif = netif;  
-  TCPIP_NETIFAPI(&msg);
-  return msg.msg.err;
-}
-
-/**
- * Call dhcp_stop() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- *
- * @note for params @see dhcp_stop()
- */
-err_t
-netifapi_dhcp_stop(struct netif *netif)
-{
-  struct netifapi_msg msg;
-  msg.function = do_netifapi_dhcp_stop;
-  msg.msg.netif = netif;  
-  TCPIP_NETIFAPI(&msg);
-  return msg.msg.err;
-}
-#endif /* LWIP_DHCP */
-
-/**
- * TODO
+ * @todo comment
  */
 void
 do_netifapi_netif_add( struct netifapi_msg_msg *msg)
@@ -136,7 +102,7 @@ do_netifapi_netif_add( struct netifapi_msg_msg *msg)
 }    
 
 /**
- * TODO
+ * @todo comment
  */
 void
 do_netifapi_netif_remove( struct netifapi_msg_msg *msg)
@@ -146,9 +112,31 @@ do_netifapi_netif_remove( struct netifapi_msg_msg *msg)
   TCPIP_NETIFAPI_ACK(msg);
 }
 
-#if LWIP_DHCP    
 /**
- * TODO
+ * @todo comment
+ */
+void
+do_netifapi_netif_set_up( struct netifapi_msg_msg *msg)
+{ 
+  msg->err = ERR_OK;  
+  netif_set_up(msg->netif);
+  TCPIP_NETIFAPI_ACK(msg);
+}
+
+/**
+ * @todo comment
+ */
+void
+do_netifapi_netif_set_down( struct netifapi_msg_msg *msg)
+{ 
+  msg->err = ERR_OK;  
+  netif_set_down(msg->netif);
+  TCPIP_NETIFAPI_ACK(msg);
+}
+
+#if LWIP_DHCP
+/**
+ * @todo comment
  */
 void
 do_netifapi_dhcp_start( struct netifapi_msg_msg *msg)
@@ -158,7 +146,7 @@ do_netifapi_dhcp_start( struct netifapi_msg_msg *msg)
 }
 
 /**
- * TODO
+ * @todo comment
  */
 void
 do_netifapi_dhcp_stop( struct netifapi_msg_msg *msg)
@@ -168,5 +156,27 @@ do_netifapi_dhcp_stop( struct netifapi_msg_msg *msg)
   TCPIP_NETIFAPI_ACK(msg);
 }
 #endif /* LWIP_DHCP */
+
+#if LWIP_AUTOIP
+/**
+ * @todo comment
+ */
+void
+do_netifapi_autoip_start( struct netifapi_msg_msg *msg)
+{ 
+  msg->err = autoip_start(msg->netif);
+  TCPIP_NETIFAPI_ACK(msg);
+}
+
+/**
+ * @todo comment
+ */
+void
+do_netifapi_autoip_stop( struct netifapi_msg_msg *msg)
+{ 
+  msg->err = autoip_stop(msg->netif);
+  TCPIP_NETIFAPI_ACK(msg);
+}
+#endif /* LWIP_AUTOIP */
 
 #endif /* LWIP_NETIF_API */

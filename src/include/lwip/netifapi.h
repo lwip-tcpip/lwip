@@ -44,7 +44,7 @@ extern "C" {
 struct netifapi_msg_msg {
 #if !LWIP_TCPIP_CORE_LOCKING
   sys_sem_t sem;
-#endif /* !LWIP_TCPIP_CORE_LOCKING */  
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
   err_t err;
   struct netif *netif;
   union {
@@ -66,29 +66,39 @@ struct netifapi_msg {
 
 
 /* API for application */
-err_t netifapi_netif_add   ( struct netif *netif,
-                             struct ip_addr *ipaddr,
-                             struct ip_addr *netmask,
-                             struct ip_addr *gw,
-                             void *state,
-                             err_t (* init)(struct netif *netif),
-                             err_t (* input)(struct pbuf *p, struct netif *netif) );
+err_t netifapi_netif_common    ( struct netif *netif, void (* function)(struct netifapi_msg_msg *msg));
 
-err_t netifapi_netif_remove( struct netif *netif);
+err_t netifapi_netif_add       ( struct netif *netif,
+                                 struct ip_addr *ipaddr,
+                                 struct ip_addr *netmask,
+                                 struct ip_addr *gw,
+                                 void *state,
+                                 err_t (* init)(struct netif *netif),
+                                 err_t (* input)(struct pbuf *p, struct netif *netif) );
 
-#if LWIP_DHCP
-err_t netifapi_dhcp_start    ( struct netif *netif);
-err_t netifapi_dhcp_stop     ( struct netif *netif);
-#endif /* LWIP_DHCP */
+#define netifapi_netif_remove(n)   netifapi_netif_common(n, do_netifapi_netif_remove)
+#define netifapi_netif_set_up(n)   netifapi_netif_common(n, do_netifapi_netif_set_up)
+#define netifapi_netif_set_down(n) netifapi_netif_common(n, do_netifapi_netif_set_down)
+#define netifapi_dhcp_start(n)     netifapi_netif_common(n, do_netifapi_dhcp_start)
+#define netifapi_dhcp_stop(n)      netifapi_netif_common(n, do_netifapi_dhcp_stop)
+#define netifapi_autoip_start(n)   netifapi_netif_common(n, do_netifapi_autoip_start)
+#define netifapi_autoip_stop(n)    netifapi_netif_common(n, do_netifapi_autoip_stop)
+
 
 /* API for tcpip_thread */
-void do_netifapi_netif_add   ( struct netifapi_msg_msg *msg);
-void do_netifapi_netif_remove( struct netifapi_msg_msg *msg);
-
+void do_netifapi_netif_add     ( struct netifapi_msg_msg *msg);
+void do_netifapi_netif_remove  ( struct netifapi_msg_msg *msg);
+void do_netifapi_netif_set_up  ( struct netifapi_msg_msg *msg);
+void do_netifapi_netif_set_down( struct netifapi_msg_msg *msg);
 #if LWIP_DHCP
-void do_netifapi_dhcp_start  ( struct netifapi_msg_msg *msg);
-void do_netifapi_dhcp_stop   ( struct netifapi_msg_msg *msg);
+void do_netifapi_dhcp_start    ( struct netifapi_msg_msg *msg);
+void do_netifapi_dhcp_stop     ( struct netifapi_msg_msg *msg);
 #endif /* LWIP_DHCP */
+#if LWIP_AUTOIP
+void do_netifapi_autoip_start  ( struct netifapi_msg_msg *msg);
+void do_netifapi_autoip_stop   ( struct netifapi_msg_msg *msg);
+#endif /* LWIP_AUTOIP */
+
 
 #ifdef __cplusplus
 }
