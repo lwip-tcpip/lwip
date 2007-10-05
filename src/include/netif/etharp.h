@@ -152,6 +152,8 @@ err_t etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
 err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
 err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
 
+err_t ethernet_input(struct pbuf *p, struct netif *netif);
+
 #if LWIP_AUTOIP
 err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
                  const struct eth_addr *ethdst_addr,

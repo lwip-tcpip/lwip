@@ -1084,4 +1084,63 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
                     ipaddr, ARP_REQUEST);
 }
 
+/**
+ * Process received ethernet frames. Using this function instead of directly
+ * calling ip_input and passing ARP frames through etharp in ethernetif_input,
+ * the ARP cache is protected from concurrent access.
+ *
+ * @param p the recevied packet, p->payload pointing to the ethernet header
+ * @param netif the network interface on which the packet was received
+ */
+err_t
+ethernet_input(struct pbuf *p, struct netif *netif)
+{
+  struct eth_hdr* ethhdr;
+
+  /* points to packet payload, which starts with an Ethernet header */
+  ethhdr = p->payload;
+  
+  switch (htons(ethhdr->type)) {
+    /* IP packet? */
+    case ETHTYPE_IP:
+#if ETHARP_TRUST_IP_MAC
+      /* update ARP table */
+      etharp_ip_input(netif, p);
+#endif /* ETHARP_TRUST_IP_MAC */
+      /* skip Ethernet header */
+      if(pbuf_header(p, -(s16_t)sizeof(struct eth_hdr))) {
+        LWIP_ASSERT("Can't move over header in packet", 0);
+        pbuf_free(p);
+        p = NULL;
+      } else {
+        /* pass to IP layer */
+        ip_input(p, netif);
+      }
+      break;
+      
+    case ETHTYPE_ARP:
+      /* pass p to ARP module */
+      etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
+      break;
+
+#if PPPOE_SUPPORT
+    case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
+      pppoe_disc_input(netif, p);
+      break;
+
+    case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
+      pppoe_data_input(netif, p);
+      break;
+#endif /* PPPOE_SUPPORT */
+
+    default:
+      pbuf_free(p);
+      p = NULL;
+      break;
+  }
+
+  /* This means the pbuf is freed or consumed,
+     so the caller doesn't have to free it again */
+  return ERR_OK;
+}
 #endif /* LWIP_ARP */

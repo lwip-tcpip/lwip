@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-10-05 Simon Goldschmidt
+  * tcpip.c, etharp.h, etharp.c: moved ethernet_input from tcpip.c to etharp.c so
+    all netifs (or ports) can use it.
+
   2007-10-05 Frédéric Bernon
   * netifapi.h, netifapi.c: add function netifapi_netif_set_default. Change the 
     common function to reduce a little bit the footprint (for all functions using
