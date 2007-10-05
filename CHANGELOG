@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-10-05 Frédéric Bernon
+  * netifapi.h, netifapi.c: add function netifapi_netif_set_default. Change the 
+    common function to reduce a little bit the footprint (for all functions using
+    only the "netif" parameter).
+
   2007-10-03 Frédéric Bernon
   * netifapi.h, netifapi.c: add functions netifapi_netif_set_up, netifapi_netif_set_down,
     netifapi_autoip_start and netifapi_autoip_stop. Use a common function to reduce

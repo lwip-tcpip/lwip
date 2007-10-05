@@ -39,19 +39,40 @@
 #include "lwip/tcpip.h"
 
 /**
- * call the "do_function" in a thread-safe way by running that function inside the
- * tcpip_thread context.
- *
- * @note use only for "do_netifapi" functions where there is only netif parameter.
+ * Call netif_add() inside the tcpip_thread context.
  */
-err_t
-netifapi_netif_common(struct netif *netif, void (* function)(struct netifapi_msg_msg *msg))
+void
+do_netifapi_netif_add( struct netifapi_msg_msg *msg)
 {
-  struct netifapi_msg msg;
-  msg.function = function;
-  msg.msg.netif = netif;  
-  TCPIP_NETIFAPI(&msg);
-  return msg.msg.err;
+  if (!netif_add( msg->netif,
+                  msg->msg.add.ipaddr,
+                  msg->msg.add.netmask,
+                  msg->msg.add.gw,
+                  msg->msg.add.state,
+                  msg->msg.add.init,
+                  msg->msg.add.input)) {
+    msg->err = ERR_IF;
+  } else {
+    msg->err = ERR_OK;
+  }
+  TCPIP_NETIFAPI_ACK(msg);
+}
+
+/**
+ * Call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) inside the
+ * tcpip_thread context.
+ */
+void
+do_netifapi_netif_common( struct netifapi_msg_msg *msg)
+{
+  if (msg->msg.common.errtfunc!=NULL) {
+    msg->err =
+    msg->msg.common.errtfunc(msg->netif);
+  } else {
+    msg->err = ERR_OK;
+    msg->msg.common.voidfunc(msg->netif);
+  }
+  TCPIP_NETIFAPI_ACK(msg);
 }
 
 /**
@@ -70,8 +91,8 @@ netifapi_netif_add(struct netif *netif,
                    err_t (* input)(struct pbuf *p, struct netif *netif))
 {
   struct netifapi_msg msg;
-  msg.function = do_netifapi_netif_add;  
-  msg.msg.netif = netif;  
+  msg.function = do_netifapi_netif_add;
+  msg.msg.netif = netif;
   msg.msg.msg.add.ipaddr  = ipaddr;
   msg.msg.msg.add.netmask = netmask;
   msg.msg.msg.add.gw      = gw;
@@ -83,100 +104,23 @@ netifapi_netif_add(struct netif *netif,
 }
 
 /**
- * @todo comment
+ * call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) in a thread-safe
+ * way by running that function inside the tcpip_thread context.
+ *
+ * @note use only for functions where there is only "netif" parameter.
  */
-void
-do_netifapi_netif_add( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = ERR_OK;
-  if (!netif_add( msg->netif,
-                  msg->msg.add.ipaddr,
-                  msg->msg.add.netmask,
-                  msg->msg.add.gw,
-                  msg->msg.add.state,
-                  msg->msg.add.init,
-                  msg->msg.add.input)) {
-    msg->err = ERR_IF;
-  }
-  TCPIP_NETIFAPI_ACK(msg);
-}    
-
-/**
- * @todo comment
- */
-void
-do_netifapi_netif_remove( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = ERR_OK;  
-  netif_remove(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
+err_t
+netifapi_netif_common( struct netif *netif,
+                       void  (* voidfunc)(struct netif *netif),
+                       err_t (* errtfunc)(struct netif *netif) )
+{
+  struct netifapi_msg msg;
+  msg.function = do_netifapi_netif_common;
+  msg.msg.netif = netif;
+  msg.msg.msg.common.voidfunc = voidfunc;
+  msg.msg.msg.common.errtfunc = errtfunc;
+  TCPIP_NETIFAPI(&msg);
+  return msg.msg.err;
 }
-
-/**
- * @todo comment
- */
-void
-do_netifapi_netif_set_up( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = ERR_OK;  
-  netif_set_up(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-
-/**
- * @todo comment
- */
-void
-do_netifapi_netif_set_down( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = ERR_OK;  
-  netif_set_down(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-
-#if LWIP_DHCP
-/**
- * @todo comment
- */
-void
-do_netifapi_dhcp_start( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = dhcp_start(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-
-/**
- * @todo comment
- */
-void
-do_netifapi_dhcp_stop( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = ERR_OK;
-  dhcp_stop(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-#endif /* LWIP_DHCP */
-
-#if LWIP_AUTOIP
-/**
- * @todo comment
- */
-void
-do_netifapi_autoip_start( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = autoip_start(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-
-/**
- * @todo comment
- */
-void
-do_netifapi_autoip_stop( struct netifapi_msg_msg *msg)
-{ 
-  msg->err = autoip_stop(msg->netif);
-  TCPIP_NETIFAPI_ACK(msg);
-}
-#endif /* LWIP_AUTOIP */
 
 #endif /* LWIP_NETIF_API */
