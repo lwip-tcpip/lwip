@@ -3027,7 +3027,12 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           s32_t *sint_ptr = value;
 #if IP_REASSEMBLY
-          *sint_ptr = (IP_HLEN + IP_REASS_BUFSIZE);
+          /* @todo The theoretical maximum is IP_REASS_MAX_PBUFS * size of the pbufs,
+           * but only if receiving one fragmented packet at a time.
+           * The current solution is to calculate for 2 simultaneous packets...
+           */
+          *sint_ptr = (IP_HLEN + ((IP_REASS_MAX_PBUFS/2) *
+            (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - IP_HLEN)));
 #else
           /** @todo returning MTU would be a bad thing and
              returning a wild guess like '576' isn't good either */

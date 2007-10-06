@@ -162,9 +162,9 @@
    ------------------------------------------------
 */
 /**
- * MEMP_NUM_PBUF: the number of memp struct pbufs. If the application
- * sends a lot of data out of ROM (or other static memory), this
- * should be set high.
+ * MEMP_NUM_PBUF: the number of memp struct pbufs (used for PBUF_ROM and PBUF_REF).
+ * If the application sends a lot of data out of ROM (or other static memory),
+ * this should be set high.
  */
 #ifndef MEMP_NUM_PBUF
 #define MEMP_NUM_PBUF                   16
@@ -361,17 +361,22 @@
 #endif
 
 /**
- * IP_REASS_MAXAGE: IP reassemly default age in seconds.
+ * IP_REASS_MAXAGE: Maximum time (in multiples of IP_TMR_INTERVAL - so seconds, normally)
+ * a fragmented IP packet waits for all fragments to arrive. If not all fragments arrived
+ * in this time, the whole packet is discarded.
  */
 #ifndef IP_REASS_MAXAGE
 #define IP_REASS_MAXAGE                 3
 #endif
 
 /**
- * IP_REASS_BUFSIZE: IP reassembly buffer size (minus IP header).
+ * IP_REASS_MAX_PBUFS: Total maximum amount of pbufs waiting to be reassembled.
+ * Since the received pbufs are enqueued, be sure to configure
+ * PBUF_POOL_SIZE > IP_REASS_MAX_PBUFS so that the stack is still able to receive
+ * packets even if the maximum amount of fragments is enqueued for reassembly!
  */
-#ifndef IP_REASS_BUFSIZE
-#define IP_REASS_BUFSIZE                5760
+#ifndef IP_REASS_MAX_PBUFS
+#define IP_REASS_MAX_PBUFS              10
 #endif
 
 /**

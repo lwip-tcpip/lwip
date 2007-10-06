@@ -50,6 +50,7 @@
 #include "lwip/sys.h"
 #include "lwip/stats.h"
 #include "netif/etharp.h"
+#include "lwip/ip_frag.h"
 
 #include <string.h>
 
