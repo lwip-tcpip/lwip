@@ -129,6 +129,9 @@
 #if (LWIP_TCP && ((LWIP_EVENT_API && LWIP_CALLBACK_API) || (!LWIP_EVENT_API && !LWIP_CALLBACK_API)))
   #error "One and exactly one of LWIP_EVENT_API and LWIP_CALLBACK_API has to be enabled in lwipopts.h"
 #endif
+#if TCP_SND_QUEUELEN > 0xffff
+  #error TCP_SND_QUEUELEN must fit in an u16_t
+#endif
 /* There must be sufficient timeouts, taking into account requirements of the subsystems. */
 #if ((NO_SYS==0) && (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_PPP)))
   #error "MEMP_NUM_SYS_TIMEOUT is too low to accomodate all required timeouts"
