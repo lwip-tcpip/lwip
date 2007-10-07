@@ -957,14 +957,17 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   }
 }
 
-int lwip_shutdown(int s, int how)
+int
+lwip_shutdown(int s, int how)
 {
   LWIP_UNUSED_ARG(how);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_shutdown(%d, how=%d)\n", s, how));
   return lwip_close(s); /* XXX temporary hack until proper implementation */
 }
 
-int lwip_getpeername(int s, struct sockaddr *name, socklen_t *namelen)
+static int
+lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen,
+                 err_t (* netconn_addrfunc)(struct netconn *conn, struct ip_addr *addr, u16_t *port))
 {
   struct lwip_socket *sock;
   struct sockaddr_in sin;
@@ -978,10 +981,10 @@ int lwip_getpeername(int s, struct sockaddr *name, socklen_t *namelen)
   sin.sin_len = sizeof(sin);
   sin.sin_family = AF_INET;
 
-  /* get the IP address and port of the remote host */
-  netconn_peer(sock->conn, &naddr, &sin.sin_port);
+  /* get the IP address and port */
+  netconn_addrfunc(sock->conn, &naddr, &sin.sin_port);
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getpeername(%d, addr=", s));
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getaddrname(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
 
@@ -996,39 +999,20 @@ int lwip_getpeername(int s, struct sockaddr *name, socklen_t *namelen)
   return 0;
 }
 
-int lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
+int
+lwip_getpeername(int s, struct sockaddr *name, socklen_t *namelen)
 {
-  struct lwip_socket *sock;
-  struct sockaddr_in sin;
-  struct ip_addr *naddr;
-
-  sock = get_socket(s);
-  if (!sock)
-    return -1;
-
-  memset(&sin, 0, sizeof(sin));
-  sin.sin_len = sizeof(sin);
-  sin.sin_family = AF_INET;
-
-  /* get the IP address and port of the remote host */
-  netconn_addr(sock->conn, &naddr, &sin.sin_port);
-
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockname(%d, addr=", s));
-  ip_addr_debug_print(SOCKETS_DEBUG, naddr);
-  LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%d)\n", sin.sin_port));
-
-  sin.sin_port = htons(sin.sin_port);
-  sin.sin_addr.s_addr = naddr->addr;
-
-  if (*namelen > sizeof(sin))
-    *namelen = sizeof(sin);
-
-  SMEMCPY(name, &sin, *namelen);
-  sock_set_errno(sock, 0);
-  return 0;
+  return lwip_getaddrname(s, name, namelen, netconn_peer);
 }
 
-int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
+int
+lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
+{
+  return lwip_getaddrname(s, name, namelen, netconn_addr);
+}
+
+int
+lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
   err_t err = ERR_OK;
   struct lwip_socket *sock = get_socket(s);
@@ -1210,8 +1194,8 @@ int lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optl
   return err ? -1 : 0;
 }
 
-
-static void lwip_getsockopt_internal(void *arg)
+static void
+lwip_getsockopt_internal(void *arg)
 {
   struct lwip_socket *sock;
 #ifdef LWIP_DEBUG
@@ -1384,7 +1368,8 @@ static void lwip_getsockopt_internal(void *arg)
   sys_mbox_post(sock->conn->mbox, NULL);
 }
 
-int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
+int
+lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
   struct lwip_socket *sock = get_socket(s);
   int err = ERR_OK;
@@ -1576,7 +1561,8 @@ int lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t
   return err ? -1 : 0;
 }
 
-static void lwip_setsockopt_internal(void *arg)
+static void
+lwip_setsockopt_internal(void *arg)
 {
   struct lwip_socket *sock;
 #ifdef LWIP_DEBUG
@@ -1752,7 +1738,8 @@ static void lwip_setsockopt_internal(void *arg)
   sys_mbox_post(sock->conn->mbox, NULL);
 }
 
-int lwip_ioctl(int s, long cmd, void *argp)
+int
+lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_socket *sock = get_socket(s);
   u16_t buflen = 0;

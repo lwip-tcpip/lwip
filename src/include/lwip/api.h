@@ -141,7 +141,7 @@ err_t             netconn_peer    (struct netconn *conn,
            struct ip_addr *addr,
            u16_t *port);
 err_t             netconn_addr    (struct netconn *conn,
-           struct ip_addr **addr,
+           struct ip_addr *addr,
            u16_t *port);
 err_t             netconn_bind    (struct netconn *conn,
            struct ip_addr *addr,

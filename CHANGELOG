@@ -424,6 +424,16 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-10-07 Frédéric Bernon
+  * sockets.c, api.h, api_lib.c: First step to fix "bug #20900 : Potential
+    crash error problem with netconn_peer & netconn_addr". VERY IMPORTANT:
+    this change cause an API breakage for netconn_peer, since a parameter
+    type change. Any compiler should cause an error without any changes in
+    yours netconn_peer calls (so, it can't be a "silent change"). It also
+    reduce a little bit the footprint for socket layer (lwip_getpeername &
+    lwip_getsockname use now a common lwip_getaddrname function since 
+    netconn_peer & netconn_addr have the same parameters).
+
   2007-09-20 Simon Goldschmidt
   * tcp.c: Fixed bug #21080 (tcp_bind without check pcbs in TIME_WAIT state)
     by checking  tcp_tw_pcbs also
