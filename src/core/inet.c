@@ -294,6 +294,69 @@ inet_chksum_pseudo(struct pbuf *p,
   return (u16_t)~(acc & 0xffffUL);
 }
 
+/* inet_chksum_pseudo:
+ *
+ * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ * IP addresses are expected to be in network byte order.
+ *
+ * @param p chain of pbufs over that a checksum should be calculated (ip data part)
+ * @param src source ip address (used for checksum of pseudo header)
+ * @param dst destination ip address (used for checksum of pseudo header)
+ * @param proto ip protocol (used for checksum of pseudo header)
+ * @param proto_len length of the ip data part (used for checksum of pseudo header)
+ * @return checksum (as u16_t) to be saved directly in the protocol header
+ */
+u16_t
+inet_chksum_pseudo_partial(struct pbuf *p,
+       struct ip_addr *src, struct ip_addr *dest,
+       u8_t proto, u16_t proto_len, u16_t chksum_len)
+{
+  u32_t acc;
+  struct pbuf *q;
+  u8_t swapped;
+  u16_t chklen;
+
+  acc = 0;
+  swapped = 0;
+  /* iterate through all pbuf in chain */
+  for(q = p; (q != NULL) && (chksum_len > 0); q = q->next) {
+    LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): checksumming pbuf %p (has next %p) \n",
+      (void *)q, (void *)q->next));
+    chklen = q->len;
+    if (chklen > chksum_len) {
+      chklen = chksum_len;
+    }
+    acc += LWIP_CHKSUM(q->payload, chklen);
+    chksum_len -= chklen;
+    LWIP_ASSERT("delete me", chksum_len < 0x7fff);
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): unwrapped lwip_chksum()=%"X32_F" \n", acc));*/
+    while ((acc >> 16) != 0) {
+      acc = (acc & 0xffffUL) + (acc >> 16);
+    }
+    if (q->len % 2 != 0) {
+      swapped = 1 - swapped;
+      acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
+    }
+    /*LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): wrapped lwip_chksum()=%"X32_F" \n", acc));*/
+  }
+
+  if (swapped) {
+    acc = ((acc & 0xff) << 8) | ((acc & 0xff00UL) >> 8);
+  }
+  acc += (src->addr & 0xffffUL);
+  acc += ((src->addr >> 16) & 0xffffUL);
+  acc += (dest->addr & 0xffffUL);
+  acc += ((dest->addr >> 16) & 0xffffUL);
+  acc += (u32_t)htons((u16_t)proto);
+  acc += (u32_t)htons(proto_len);
+
+  while ((acc >> 16) != 0) {
+    acc = (acc & 0xffffUL) + (acc >> 16);
+  }
+  LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
+  return (u16_t)~(acc & 0xffffUL);
+}
+
 /* inet_chksum:
  *
  * Calculates the Internet checksum over a portion of memory. Used primarily for IP

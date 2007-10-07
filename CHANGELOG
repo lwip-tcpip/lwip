@@ -424,6 +424,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-10-07 Simon Goldschmidt
+  * udp.c, inet.c, inet.h: Fixed UDPLite SENDING: Checksum was always generated
+    too short and also was generated wrong if checksum coverage != tot_len.
+
   2007-10-07 Frédéric Bernon
   * sockets.c, api.h, api_lib.c: First step to fix "bug #20900 : Potential
     crash error problem with netconn_peer & netconn_addr". VERY IMPORTANT:

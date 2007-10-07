@@ -39,8 +39,11 @@
 
 /* udp.c
  *
- * The code for the User Datagram Protocol UDP.
+ * The code for the User Datagram Protocol UDP & UDPLite (RFC 3828).
  *
+ */
+
+/* @todo Check the use of '(struct udp_pcb).chksum_len_rx'!
  */
 
 #include "lwip/opt.h"
@@ -425,11 +428,11 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #if LWIP_UDPLITE
   /* UDP Lite protocol? */
   if (pcb->flags & UDP_FLAGS_UDPLITE) {
-    u16_t chklen;
+    u16_t chklen, chklen_hdr;
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE packet length %"U16_F"\n", q->tot_len));
     /* set UDP message length in UDP header */
-    chklen = pcb->chksum_len_rx;
-    if (chklen < sizeof(struct udp_hdr)) {
+    chklen_hdr = chklen = pcb->chksum_len_tx;
+    if ((chklen < sizeof(struct udp_hdr)) || (chklen > q->tot_len)) {
       if (chklen != 0) {
         LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP LITE pcb->chksum_len is illegal: %"U16_F"\n", chklen));
       }
@@ -439,13 +442,14 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
          checksum, therefore, if chksum_len has an illegal
          value, we generate the checksum over the complete
          packet to be safe. */
-      chklen = p->tot_len;
+      chklen_hdr = 0;
+      chklen = q->tot_len;
     }
-    udphdr->len = htons(chklen);
+    udphdr->len = htons(chklen_hdr);
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
-    udphdr->chksum = inet_chksum_pseudo(q, src_ip, &(pcb->remote_ip),
-                                        IP_PROTO_UDP, chklen);
+    udphdr->chksum = inet_chksum_pseudo_partial(q, src_ip, &(pcb->remote_ip),
+                                        IP_PROTO_UDPLITE, q->tot_len, chklen);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000)
       udphdr->chksum = 0xffff;
