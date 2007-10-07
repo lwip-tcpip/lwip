@@ -427,7 +427,7 @@ HISTORY
   2007-10-07 Frédéric Bernon
   * sockets.c, api.h, api_lib.c: First step to fix "bug #20900 : Potential
     crash error problem with netconn_peer & netconn_addr". VERY IMPORTANT:
-    this change cause an API breakage for netconn_peer, since a parameter
+    this change cause an API breakage for netconn_addr, since a parameter
     type change. Any compiler should cause an error without any changes in
     yours netconn_peer calls (so, it can't be a "silent change"). It also
     reduce a little bit the footprint for socket layer (lwip_getpeername &
