@@ -70,12 +70,15 @@ static u16_t ip_reass_pbufcount;
  * The IP reassembly code currently has the following limitations:
  * - IP header options are not supported
  * - fragments must not overlap (e.g. due to different routes),
- *   currently, overlapping fragments will produce undefined results!
+ *   currently, overlapping or duplicate fragments are thrown away
+ *   if IP_REASS_CHECK_OVERLAP=1 (the default)!
  *
- * @todo: throw away overlapping fragments!
  * @todo: work with IP header options
- * @todo: check what happens if the same fragment arrives twice or overlapping fragments arrive!
  */
+
+#ifndef IP_REASS_CHECK_OVERLAP
+#define IP_REASS_CHECK_OVERLAP 1
+#endif /* IP_REASS_CHECK_OVERLAP */
 
 /* function prototypes */
 static void dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev);
@@ -86,9 +89,6 @@ static void dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev);
 void
 ip_reass_init(void)
 {
-  LWIP_ASSERT("sizeof(struct ip_reass_helper) <= IP_HLEN",
-    sizeof(struct ip_reass_helper) <= IP_HLEN);
-  LWIP_ASSERT("ip_reass_pbufcount!=0",ip_reass_pbufcount==0);
 }
 
 /**
@@ -146,7 +146,8 @@ ip_reass_tmr(void)
  * @return A pointer to the queue location into which the fragment was enqueued
  */
 static struct ip_reassdata*
-enqueue_new_packet(struct ip_hdr *fraghdr) {
+enqueue_new_packet(struct ip_hdr *fraghdr)
+{
   struct ip_reassdata* ipr;
   /* No matching previous fragment found, allocate a new reassdata struct */
   ipr = memp_malloc(MEMP_REASSDATA);
@@ -172,7 +173,8 @@ enqueue_new_packet(struct ip_hdr *fraghdr) {
  * @param ipr points to the queue entry to dequeue
  */
 static void
-dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev) {
+dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev)
+{
   
   /* dequeue the reass struct  */
   if (reasspackets == ipr) {
@@ -198,7 +200,8 @@ dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev) {
  * @return 0 if invalid, >0 otherwise
  */
 static int
-chain_frag_into_packet(struct ip_reassdata *ipr, struct pbuf *new_p) {
+chain_frag_into_packet_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p)
+{
   struct ip_reass_helper *iprh, *iprh_tmp, *iprh_prev=NULL;
   struct pbuf *q;
   u16_t offset,len;
@@ -212,6 +215,9 @@ chain_frag_into_packet(struct ip_reassdata *ipr, struct pbuf *new_p) {
 
   /* overwrite the fragment's ip header from the pbuf with our helper struct,
    * and setup the embedded helper structure. */
+  /* make sure the struct ip_reass_helper fits into the IP header */
+  LWIP_ASSERT("sizeof(struct ip_reass_helper) <= IP_HLEN",
+              sizeof(struct ip_reass_helper) <= IP_HLEN);
   iprh = (struct ip_reass_helper*)new_p->payload;
   iprh->next_pbuf = NULL;
   iprh->start = offset;
@@ -226,20 +232,26 @@ chain_frag_into_packet(struct ip_reassdata *ipr, struct pbuf *new_p) {
       iprh->next_pbuf = q;
       if (iprh_prev != NULL) {
         /* not the fragment with the lowest offset */
+#if IP_REASS_CHECK_OVERLAP
+        if ((iprh->start < iprh_prev->end) || (iprh->end > iprh_tmp->start)) {
+          /* fragment overlaps with previous or following, throw away */
+          goto freepbuf;
+        }
+#endif /* IP_REASS_CHECK_OVERLAP */
         iprh_prev->next_pbuf = new_p;
       } else {
         /* fragment with the lowest offset */
         ipr->p = new_p;
       }
       break;
+#if IP_REASS_CHECK_OVERLAP
+    } else if((iprh->start == iprh_tmp->start) || (iprh->start < iprh_tmp->end)) {
+      /* received the same packet twice, or overlap: no need to keep the new packet */
+      goto freepbuf;
+#endif /* IP_REASS_CHECK_OVERLAP */
     } else {
-      /* Check if the fragments received so far have not wholes. */
-      if (iprh_prev == NULL) {
-        if (iprh_tmp->start != 0) {
-          /* the first fragment doesn't start at 0 */
-          valid = 0;
-        }
-      } else {
+      /* Check if the fragments received so far have no wholes. */
+      if (iprh_prev != NULL) {
         if (iprh_prev->end != iprh_tmp->start) {
           /* There is a fragment missing between the current
            * and the previous fragment */
@@ -256,15 +268,24 @@ chain_frag_into_packet(struct ip_reassdata *ipr, struct pbuf *new_p) {
     if (iprh_prev != NULL) {
       /* this is (for now), the fragment with the highest offset:
        * chain it to the last fragment */
+#if IP_REASS_CHECK_OVERLAP
+      LWIP_ASSERT("check fragments don't overlap", iprh_prev->end <= iprh->start);
+#endif /* IP_REASS_CHECK_OVERLAP */
       iprh_prev->next_pbuf = new_p;
       if (iprh_prev->end != iprh->start) {
         valid = 0;
       }
     } else {
+#if IP_REASS_CHECK_OVERLAP
+      LWIP_ASSERT("no previous fragment, this must be the first fragment!",
+        ipr->p == NULL);
+#endif /* IP_REASS_CHECK_OVERLAP */
       /* this is the first fragment we ever received for this ip packet */
       ipr->p = new_p;
     }
   }
+
+  /* At this point, the validation part begins: */
   /* If we already received the last fragment */
   if ((ipr->flags & IP_REASS_FLAG_LASTFRAG) != 0) {
     /* and had no wholes so far */
@@ -306,6 +327,12 @@ chain_frag_into_packet(struct ip_reassdata *ipr, struct pbuf *new_p) {
   }
   /* If we come here, not all fragments were received, yet! */
   return 0; /* not yet valid! */
+#if IP_REASS_CHECK_OVERLAP
+freepbuf:
+  ip_reass_pbufcount -= pbuf_clen(new_p);
+  pbuf_free(new_p);
+  return 0;
+#endif /* IP_REASS_CHECK_OVERLAP */
 }
 
 /**
@@ -391,7 +418,7 @@ ip_reass(struct pbuf *p)
   }
   /* find the right place to insert this pbuf */
   /* @todo: trim pbufs if fragments are overlapping */
-  if (chain_frag_into_packet(ipr, p)) {
+  if (chain_frag_into_packet_and_validate(ipr, p)) {
     /* the totally last fragment (flag more fragments = 0) was received at least
      * once AND all fragments are received */
     ipr->packet_len += IP_HLEN;
