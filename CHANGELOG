@@ -424,6 +424,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-10-08 Simon Goldschmidt
+  * mem.c: lfree was not updated in mem_realloc!
+
   2007-10-07 Simon Goldschmidt
   * udp.c, inet.c, inet.h: Fixed UDPLite SENDING: Checksum was always generated
     too short and also was generated wrong if checksum coverage != tot_len.

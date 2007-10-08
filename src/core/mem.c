@@ -341,6 +341,9 @@ mem_realloc(void *rmem, mem_size_t newsize)
     next = mem2->next;
     /* create new struct mem which is moved directly after the shrinked mem */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
+    if (lfree == mem2) {
+      lfree = (struct mem *)&ram[ptr2];
+    }
     mem2 = (struct mem *)&ram[ptr2];
     mem2->used = 0;
     /* restore the next pointer */
@@ -366,6 +369,9 @@ mem_realloc(void *rmem, mem_size_t newsize)
      *       the 2 regions would be combined, resulting in more free memory */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     mem2 = (struct mem *)&ram[ptr2];
+    if (mem2 < lfree) {
+      lfree = mem2;
+    }
     mem2->used = 0;
     mem2->next = mem->next;
     mem2->prev = ptr;
