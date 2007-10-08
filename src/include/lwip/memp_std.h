@@ -45,7 +45,7 @@ LWIP_MEMPOOL(TCP_SEG,        MEMP_NUM_TCP_SEG,         sizeof(struct tcp_seg),  
 
 #if IP_REASSEMBLY
 LWIP_MEMPOOL(REASSDATA,      MEMP_NUM_REASSDATA,       sizeof(struct ip_reassdata),   "REASSDATA")
-#endif
+#endif /* IP_REASSEMBLY */
 
 #if LWIP_NETCONN
 LWIP_MEMPOOL(NETBUF,         MEMP_NUM_NETBUF,          sizeof(struct netbuf),         "NETBUF")

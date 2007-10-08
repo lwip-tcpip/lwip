@@ -212,6 +212,13 @@
 #endif
 
 /**
+ * MEMP_NUM_REASSDATA: ...@todo to define to a best value
+ */
+#ifndef MEMP_NUM_REASSDATA
+#define MEMP_NUM_REASSDATA              8
+#endif
+
+/**
  * MEMP_NUM_ARP_QUEUE: the number of simulateously queued outgoing
  * packets (pbufs) that are waiting for an ARP request (to resolve
  * their destination address) to finish.
