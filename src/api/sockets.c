@@ -396,7 +396,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   if (!sock)
     return -1;
 
-  while ( !done ) {
+  do {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: top while sock->lastdata=%p\n", sock->lastdata));
     /* Check if there is data left from the last recv operation. */
     if (sock->lastdata) {
@@ -466,7 +466,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     } else {
       done = 1;
     }
-  } /* while ( !done ) */
+  } while (!done);
 
   /* Check to see from where the data was.*/
   if (from && fromlen) {
