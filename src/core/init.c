@@ -94,7 +94,10 @@
   #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
 #endif
 #if (LWIP_TCP && (TCP_SND_QUEUELEN > 0xffff))
-  #error If you want to use TCP, TCP_SND_QUEUELEN must fit in an u16_t", so, you have to reduce it in your lwipopts.h"
+  #error If you want to use TCP, TCP_SND_QUEUELEN must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
+#endif
+#if (LWIP_TCP && ((TCP_MAXRTX > 12) || (TCP_SYNMAXRTX > 12)))
+  #error If you want to use TCP, TCP_MAXRTX and TCP_SYNMAXRTX must less or equal to 12 (due to tcp_backoff table), so, you have to reduce them in your lwipopts.h"
 #endif
 #if (LWIP_IGMP && (MEMP_NUM_IGMP_GROUP<=1))
   #error "If you want to use IGMP, you have to define MEMP_NUM_IGMP_GROUP>1 in your lwipopts.h"
