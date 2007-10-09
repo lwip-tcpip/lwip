@@ -304,7 +304,7 @@ chain_frag_into_packet_and_validate(struct ip_reassdata *ipr, struct pbuf *new_p
             valid = 0;
             break;
           }
-          iprh_prev = iprh_tmp;
+          iprh_prev = iprh;
           q = iprh->next_pbuf;
         }
         /* if still valid, all fragments are received
