@@ -205,9 +205,9 @@ udp_input(struct pbuf *p, struct netif *inp)
           goto end;
         }
       }
-      if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
+      if (inet_chksum_pseudo_partial(p, (struct ip_addr *)&(iphdr->src),
                              (struct ip_addr *)&(iphdr->dest),
-                             IP_PROTO_UDPLITE, chklen) != 0) {
+                             IP_PROTO_UDPLITE, p->tot_len, chklen) != 0) {
         LWIP_DEBUGF(UDP_DEBUG | 2,
                     ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
         UDP_STATS_INC(udp.chkerr);
