@@ -375,13 +375,13 @@ netconn_accept(struct netconn *conn)
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return NULL;);
   LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return NULL;);
 
-  #if LWIP_SO_RCVTIMEO
+#if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
     newconn = NULL;
   }
-  #else
+#else
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
-  #endif /* LWIP_SO_RCVTIMEO*/
+#endif /* LWIP_SO_RCVTIMEO*/
 
   /* Register event with callback */
   if (conn->callback)
