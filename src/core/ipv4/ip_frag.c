@@ -74,6 +74,8 @@ static u16_t ip_reass_pbufcount;
  *   if IP_REASS_CHECK_OVERLAP=1 (the default)!
  *
  * @todo: work with IP header options
+ * @todo: free the oldest entry when the MEMP_REASSDATA pool is empty or
+ *        the IP_REASS_MAX_PBUFS limit is reached
  */
 
 #ifndef IP_REASS_CHECK_OVERLAP
