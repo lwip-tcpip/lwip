@@ -58,8 +58,8 @@
 #define NETIF_LINK_CALLBACK(n) { /* NOP */ }
 #endif /* LWIP_NETIF_LINK_CALLBACK */ 
 
-struct netif *netif_list = NULL;
-struct netif *netif_default = NULL;
+struct netif *netif_list;
+struct netif *netif_default;
 
 /**
  * Add a network interface to the list of lwIP netifs.
