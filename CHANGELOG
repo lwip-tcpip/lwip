@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-10-08 Simon Goldschmidt
+  * many files: Changed initialization: many init functions are not needed any
+    more since we now rely on the compiler initializing global and static
+    variables to zero!
+
   2007-10-06 Simon Goldschmidt
   * ip_frag.c, memp.c, mib2.c, ip_frag.h, memp_std.h, opt.h: Changed IP_REASSEMBLY
     to enqueue the received pbufs so that multiple packets can be reassembled

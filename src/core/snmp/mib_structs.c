@@ -53,7 +53,7 @@ struct nse
   /** right child next level */
   u8_t r_nl;
 };
-static u8_t node_stack_cnt = 0;
+static u8_t node_stack_cnt;
 static struct nse node_stack[NODE_STACK_SIZE];
 
 /**

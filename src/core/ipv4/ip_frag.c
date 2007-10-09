@@ -86,14 +86,6 @@ static u16_t ip_reass_pbufcount;
 static void dequeue_packet(struct ip_reassdata *ipr, struct ip_reassdata *prev);
 
 /**
- * Initializes IP reassembly states.
- */
-void
-ip_reass_init(void)
-{
-}
-
-/**
  * Reassembly timer base function
  * for both NO_SYS == 0 and 1 (!).
  *

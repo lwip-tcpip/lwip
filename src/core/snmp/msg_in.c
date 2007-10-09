@@ -56,7 +56,7 @@ const char snmp_publiccommunity[7] = "public";
 /* statically allocated buffers for SNMP_CONCURRENT_REQUESTS */
 struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
 /* UDP Protocol Control Block */
-struct udp_pcb *snmp1_pcb = NULL;
+struct udp_pcb *snmp1_pcb;
 
 static void snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static err_t snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat);

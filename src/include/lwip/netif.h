@@ -192,8 +192,7 @@ extern struct netif *netif_list;
 /** The default network interface. */
 extern struct netif *netif_default;
 
-/* netif_init() must be called first. */
-void netif_init(void);
+#define netif_init() /* Compatibility define, not init needed. */
 
 struct netif *netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
       struct ip_addr *gw,

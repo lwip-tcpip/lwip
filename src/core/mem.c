@@ -206,7 +206,6 @@ mem_init(void)
     (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
   /* align the heap */
-  memset(ram_heap, 0, sizeof(ram_heap));
   ram = LWIP_MEM_ALIGN(ram_heap);
   /* initialize the start of the heap */
   mem = (struct mem *)ram;

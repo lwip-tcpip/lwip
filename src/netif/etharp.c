@@ -103,7 +103,7 @@ const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 #if !LWIP_NETIF_HWADDRHINT
-static u8_t etharp_cached_entry = 0;
+static u8_t etharp_cached_entry;
 #endif
 
 /**
@@ -122,29 +122,15 @@ static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
 
 static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 
-/**
- * Initializes ARP module.
- */
-void
-etharp_init(void)
-{
-  u8_t i;
 
-  LWIP_ASSERT("ARP_TABLE_SIZE < 0x80 (due to s8_t limitation)",
-              (ARP_TABLE_SIZE < 0x80));
-
-  /* clear ARP entries */
-  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
-    /* use memset to be safe (intialize all future variables to 0) */
-    memset(&arp_table[i], 0, sizeof(struct etharp_entry));
-    arp_table[i].state = ETHARP_STATE_EMPTY;
-#if ARP_QUEUEING
-    arp_table[i].q = NULL;
+/* Some checks, instead of etharp_init(): */
+#if ETHARP_STATE_EMPTY != 0
+#error ETHARP_STATE_EMPTY must be 0 to ensure correct initialization value!
 #endif
-    arp_table[i].ctime = 0;
-    arp_table[i].netif = NULL;
-  }
-}
+#if (LWIP_ARP && (ARP_TABLE_SIZE > 0x7f))
+  #error "If you want to use ARP, ARP_TABLE_SIZE must fit in an s8_t, so, you have to reduce it in your lwipopts.h"
+#endif
+
 
 #if ARP_QUEUEING
 /**

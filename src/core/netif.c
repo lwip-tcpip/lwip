@@ -62,15 +62,6 @@ struct netif *netif_list = NULL;
 struct netif *netif_default = NULL;
 
 /**
- * Initialize this module
- */
-void
-netif_init(void)
-{
-  netif_list = netif_default = NULL;
-}
-
-/**
  * Add a network interface to the list of lwIP netifs.
  *
  * @param netif a pre-allocated netif structure

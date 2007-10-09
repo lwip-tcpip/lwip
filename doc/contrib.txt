@@ -21,7 +21,8 @@ features of Savannah help us not lose users' input.
 6. one space and no newline before opening curly braces of a block.
 7. closing curly brace on a single line.
 8. spaces surrounding assignment and comparisons.
-9. use current source code style as further reference.
+9. don't initialize static and/or global variables to zero, the compiler takes care of that.
+10. use current source code style as further reference.
 
 2.2 Source code documentation style:
 

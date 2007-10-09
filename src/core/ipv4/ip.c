@@ -56,17 +56,6 @@
 #include "arch/perf.h"
 
 /**
- * Initializes the IP layer.
- */
-void
-ip_init(void)
-{
-#if IP_REASSEMBLY
-  ip_reass_init();
-#endif
-}
-
-/**
  * Finds the appropriate network interface for a given IP address. It
  * searches the list of network interfaces linearly. A match is found
  * if the masked IP address of the network interface equals the masked

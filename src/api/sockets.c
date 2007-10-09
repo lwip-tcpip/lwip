@@ -86,10 +86,10 @@ struct lwip_setgetsockopt_data {
 };
 
 static struct lwip_socket sockets[NUM_SOCKETS];
-static struct lwip_select_cb *select_cb_list = 0;
+static struct lwip_select_cb *select_cb_list;
 
-static sys_sem_t socksem = 0;
-static sys_sem_t selectsem = 0;
+static sys_sem_t socksem;
+static sys_sem_t selectsem;
 
 static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
 static void lwip_getsockopt_internal(void *arg);

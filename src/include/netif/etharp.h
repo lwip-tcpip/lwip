@@ -141,7 +141,7 @@ struct etharp_q_entry {
 };
 #endif /* ARP_QUEUEING */
 
-void etharp_init(void);
+#define etharp_init() /* Compatibility define, not init needed. */
 void etharp_tmr(void);
 s8_t etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
          struct eth_addr **eth_ret, struct ip_addr **ip_ret);

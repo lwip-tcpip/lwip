@@ -113,8 +113,6 @@ igmp_init(void)
 
   IP4_ADDR(&allsystems, 224, 0, 0, 1);
   IP4_ADDR(&allrouters, 224, 0, 0, 2);
-
-  igmp_group_list = NULL;
 }
 
 #ifdef LWIP_DEBUG

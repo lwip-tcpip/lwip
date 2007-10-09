@@ -55,16 +55,7 @@
 #include <string.h>
 
 /** The list of RAW PCBs */
-static struct raw_pcb *raw_pcbs = NULL;
-
-/**
- * Initialize this module
- */
-void
-raw_init(void)
-{
-  raw_pcbs = NULL;
-}
+static struct raw_pcb *raw_pcbs;
 
 /**
  * Determine if in incoming IP packet is covered by a RAW PCB

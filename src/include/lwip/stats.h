@@ -136,7 +136,7 @@ struct stats_ {
 
 extern struct stats_ lwip_stats;
 
-void stats_init(void);
+#define stats_init() /* Compatibility define, not init needed. */
 
 #define STATS_INC(x) ++lwip_stats.x
 #else

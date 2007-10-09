@@ -52,8 +52,7 @@ struct tcp_pcb;
 /* Functions for interfacing with TCP: */
 
 /* Lower layer interface to TCP: */
-void             tcp_init    (void);  /* Must be called first to
-                                         initialize TCP. */
+#define tcp_init() /* Compatibility define, not init needed. */
 void             tcp_tmr     (void);  /* Must be called every
                                          TCP_TMR_INTERVAL
                                          ms. (Typically 250 ms). */

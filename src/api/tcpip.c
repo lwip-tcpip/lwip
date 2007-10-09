@@ -54,18 +54,18 @@
 #include "netif/ppp_oe.h"
 
 /* global variables */
-static void (* tcpip_init_done)(void *arg) = NULL;
-static void *tcpip_init_done_arg           = NULL;
-static sys_mbox_t mbox                     = SYS_MBOX_NULL;
+static void (* tcpip_init_done)(void *arg);
+static void *tcpip_init_done_arg;
+static sys_mbox_t mbox = SYS_MBOX_NULL;
 
 #if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
-sys_sem_t lock_tcpip_core = 0;
+sys_sem_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 #if LWIP_TCP
 /* global variable that shows if the tcp timer is currently scheduled or not */
-static int tcpip_tcp_timer_active = 0;
+static int tcpip_tcp_timer_active;
 
 /**
  * Timer callback function that calls tcp_tmr() and reschedules itself.

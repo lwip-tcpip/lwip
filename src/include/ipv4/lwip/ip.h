@@ -43,7 +43,7 @@
 extern "C" {
 #endif
 
-void ip_init(void);
+#define ip_init() /* Compatibility define, not init needed. */
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
 err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,

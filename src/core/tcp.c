@@ -75,25 +75,6 @@ static u8_t tcp_timer;
 static u16_t tcp_new_port(void);
 
 /**
- * Initializes the TCP layer.
- */
-void
-tcp_init(void)
-{
-  /* Clear globals. */
-  tcp_bound_pcbs = NULL;
-  tcp_listen_pcbs.listen_pcbs = NULL;
-  tcp_active_pcbs = NULL;
-  tcp_tw_pcbs = NULL;
-  tcp_tmp_pcb = NULL;
-  
-  /* initialize timer */
-  tcp_ticks = 0;
-  tcp_timer = 0;
-  
-}
-
-/**
  * Called periodically to dispatch TCP timers.
  *
  */

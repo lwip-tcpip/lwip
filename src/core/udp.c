@@ -65,16 +65,7 @@
 
 /* The list of UDP PCBs */
 /* exported in udp.h (was static) */
-struct udp_pcb *udp_pcbs = NULL;
-
-/**
- * Initialize the UDP module
- */
-void
-udp_init(void)
-{
-  udp_pcbs = NULL;
-}
+struct udp_pcb *udp_pcbs;
 
 /**
  * Process an incoming UDP datagram.
