@@ -1570,7 +1570,6 @@ lwip_setsockopt_internal(void *arg)
 #endif /* LWIP_DEBUG */
   int level, optname;
   const void *optval;
-  socklen_t optlen;
   struct lwip_setgetsockopt_data *data;
 
   LWIP_ASSERT("arg != NULL", arg != NULL);
@@ -1583,8 +1582,6 @@ lwip_setsockopt_internal(void *arg)
   level = data->level;
   optname = data->optname;
   optval = data->optval;
-  optlen = *(data->optlen);
-
 
   switch (level) {
 
