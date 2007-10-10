@@ -98,13 +98,13 @@ Exactly every 10 msec the SNMP uptime timestamp must be updated with
 snmp_inc_sysuptime(). You should call this from a timer interrupt
 or a timer signal handler depending on your runtime environment.
 
-A alternative way it to update the SNMP uptime timestamp is to do a call like
+An alternative way to update the SNMP uptime timestamp is to do a call like
 snmp_add_sysuptime(100) each 1000ms (which is bigger "step", but call to
 a lower frequency). Another one is to not call snmp_inc_sysuptime() or
 snmp_add_sysuptime(), and to define the SNMP_GET_SYSUPTIME(sysuptime) macro.
 This one is undefined by default in mib2.c. SNMP_GET_SYSUPTIME is called inside
 snmp_get_sysuptime(u32_t *value), and enable to change "sysuptime" value only
-when it's queried (any direct call to "sysuptime" is changed by a call to 
+when it's queried (any function which need "sysuptime" have to call
 snmp_get_sysuptime).
 
 
