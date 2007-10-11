@@ -139,6 +139,9 @@
 #if ((NO_SYS==0) && (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_PPP)))
   #error "MEMP_NUM_SYS_TIMEOUT is too low to accomodate all required timeouts"
 #endif
+#if (MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS)
+  #error "MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS doesn't make sense since each struct ip_reassdata must hold 2 pbufs at least!"
+#endif
 
 /* Compile-time checks for deprecated options.
  */
