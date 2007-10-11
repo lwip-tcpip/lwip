@@ -212,10 +212,11 @@
 #endif
 
 /**
- * MEMP_NUM_REASSDATA: ...@todo to define to a best value
+ * MEMP_NUM_REASSDATA: the number of simultaneously IP packets queued for
+ * reassembly (whole packets, not fragments!)
  */
 #ifndef MEMP_NUM_REASSDATA
-#define MEMP_NUM_REASSDATA              8
+#define MEMP_NUM_REASSDATA              5
 #endif
 
 /**
