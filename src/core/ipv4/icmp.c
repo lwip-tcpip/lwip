@@ -255,7 +255,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   pbuf_free(q);
 }
 
-#if IP_FORWARD
+#if IP_FORWARD || IP_REASSEMBLY
 /**
  * Send a 'time exceeded' packet, called from ip_forward() if TTL is 0.
  *

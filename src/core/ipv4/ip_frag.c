@@ -33,6 +33,7 @@
  * This file is part of the lwIP TCP/IP stack.
  * 
  * Author: Jani Monoses <jani@iv.ro> 
+ *         Simon Goldschmidt
  * original reassembly code by Adam Dunkels <adam@sics.se>
  * 
  */
@@ -43,6 +44,9 @@
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
+#if LWIP_ICMP
+#include "lwip/icmp.h"
+#endif /* LWIP_ICMP */
 
 #include <string.h>
 
@@ -77,8 +81,6 @@
 /** This is a helper struct which holds the starting
  * offset and the ending offset of this fragment to
  * easily chain the fragments.
- * It must be datagram because the memory of the ip header
- * of fragments is misused for holding this data.
  */
 struct ip_reass_helper {
   struct pbuf *next_pbuf;
@@ -97,6 +99,7 @@ static u16_t ip_reass_pbufcount;
 
 /* function prototypes */
 static void ip_reass_dequeue_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev);
+static int ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev);
 
 /**
  * Reassembly timer base function
@@ -108,7 +111,6 @@ void
 ip_reass_tmr(void)
 {
   struct ip_reassdata *r, *prev = NULL;
-  struct ip_reass_helper *iprh;
 
   r = reassdatagrams;
   while (r != NULL) {
@@ -120,31 +122,73 @@ ip_reass_tmr(void)
       prev = r;
       r = r->next;
     } else {
-       /* reassembly timed out */
-      struct pbuf *p;
-      struct ip_reassdata *del;
-
+      /* reassembly timed out */
+      struct ip_reassdata *tmp;
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out"));
-
-      snmp_inc_ipreasmfails();
-
-      /* First, free all received pbufs.  The individual pbufs need to be released 
-         separately as they have not yet been chained */
-      p = r->p;
-      while (p != NULL) {
-        struct pbuf *pcur;
-        iprh = (struct ip_reass_helper *)p->payload;
-        pcur = p;
-        p = iprh->next_pbuf;
-        pbuf_free(pcur);    
-        ip_reass_pbufcount--;
-      }
-      /* Then, unchain the struct ip_reassdata from the list and free it. */
-      del = r;
+      tmp = r;
+      /* get the next pointer before freeing */
       r = r->next;
-      ip_reass_dequeue_datagram(del, prev);
+      /* free the helper struct and all enqueued pbufs */
+      ip_reass_free_complete_datagram(tmp, prev);
      }
    }
+}
+
+/**
+ * Free a datagram (struct ip_reassdata) and all its pbufs.
+ * Updates the total count of enqueued pbufs (ip_reass_pbufcount),
+ * SNMP counters and sends an ICMP time exceeded packet.
+ *
+ * @param ipr datagram to free
+ * @param prev the previous datagram in the linked list
+ * @return the number of pbufs freed
+ */
+static int
+ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
+{
+  int pbufs_freed = 0;
+  struct pbuf *p;
+  struct ip_reass_helper *iprh;
+
+  LWIP_ASSERT("prev != ipr", prev != ipr);
+  if (prev != NULL) {
+    LWIP_ASSERT("prev->next == ipr", prev->next == ipr);
+  }
+
+  snmp_inc_ipreasmfails();
+#if LWIP_ICMP
+  iprh = (struct ip_reass_helper *)ipr->p->payload;
+  if (iprh->start == 0) {
+    /* The first fragment was received, send ICMP time exceeded. */
+    /* First, de-queue the first pbuf from r->p. */
+    p = ipr->p;
+    ipr->p = iprh->next_pbuf;
+    /* Then, copy the original header into it. */
+    SMEMCPY(p->payload, &ipr->iphdr, IP_HLEN);
+    icmp_time_exceeded(p, ICMP_TE_FRAG);
+    pbufs_freed += pbuf_clen(p);
+    pbuf_free(p);
+  }
+#endif /* LWIP_ICMP */
+
+  /* First, free all received pbufs.  The individual pbufs need to be released 
+     separately as they have not yet been chained */
+  p = ipr->p;
+  while (p != NULL) {
+    struct pbuf *pcur;
+    iprh = (struct ip_reass_helper *)p->payload;
+    pcur = p;
+    /* get the next pointer before freeing */
+    p = iprh->next_pbuf;
+    pbufs_freed += pbuf_clen(pcur);
+    pbuf_free(pcur);    
+  }
+  /* Then, unchain the struct ip_reassdata from the list and free it. */
+  ip_reass_dequeue_datagram(ipr, prev);
+  LWIP_ASSERT("ip_reass_pbufcount >= clen", ip_reass_pbufcount >= pbufs_freed);
+  ip_reass_pbufcount -= pbufs_freed;
+
+  return pbufs_freed;
 }
 
 #if IP_REASS_FREE_OLDEST
@@ -191,26 +235,7 @@ ip_reass_remove_oldest_datagram(struct ip_hdr *fraghdr, int pbufs_needed)
       r = r->next;
     }
     if (oldest != NULL) {
-      struct ip_reass_helper *iprh;
-      struct pbuf *p = oldest->p;
-
-      LWIP_ASSERT("prev != oldest", prev != oldest);
-      if (prev != NULL) {
-        LWIP_ASSERT("prev->next == oldest", prev->next == oldest);
-      }
-
-      /* Free all pbufs from all fragments enqueued for this datagram. */
-      pbufs_freed_current = 0;
-      while (p != NULL) {
-        pbufs_freed_current += pbuf_clen(p);
-        iprh = (struct ip_reass_helper*)p->payload;
-        p = iprh->next_pbuf;
-      }
-      /* Free the helper struct. */
-      ip_reass_dequeue_datagram(oldest, prev);
-      LWIP_ASSERT("ip_reass_pbufcount >= pbufs_freed_current", ip_reass_pbufcount >= pbufs_freed_current);
-      /* Update the pbuf counter. */
-      ip_reass_pbufcount -= pbufs_freed_current;
+      pbufs_freed_current = ip_reass_free_complete_datagram(oldest, prev);
       pbufs_freed += pbufs_freed_current;
     }
   } while ((pbufs_freed < pbufs_needed) && (other_datagrams > 1));
@@ -331,9 +356,12 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
         ipr->p = new_p;
       }
       break;
+    } else if(iprh->start == iprh_tmp->start) {
+      /* received the same datagram twice: no need to keep the datagram */
+      goto freepbuf;
 #if IP_REASS_CHECK_OVERLAP
-    } else if((iprh->start == iprh_tmp->start) || (iprh->start < iprh_tmp->end)) {
-      /* received the same datagram twice, or overlap: no need to keep the new datagram */
+    } else if(iprh->start < iprh_tmp->end) {
+      /* overlap: no need to keep the new datagram */
       goto freepbuf;
 #endif /* IP_REASS_CHECK_OVERLAP */
     } else {
@@ -463,8 +491,9 @@ ip_reass(struct pbuf *p)
     {
       /* No datagram could be freed and still too many pbufs enqueued */
       LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: Overflow condition: pbufct=%d, clen=%d, MAX=%d",
-        ip_reass_pbufcount,clen,IP_REASS_MAX_PBUFS));
+        ip_reass_pbufcount, clen, IP_REASS_MAX_PBUFS));
       IPFRAG_STATS_INC(ip_frag.memerr);
+      /* @todo: send ICMP time exceeded here? */
       /* drop this pbuf */
       goto nullreturn;
     }
@@ -491,6 +520,15 @@ ip_reass(struct pbuf *p)
     /* Bail if unable to enqueue */
     if(ipr == NULL) {
       goto nullreturn;
+    }
+  } else {
+    if (((ntohs(IPH_OFFSET(fraghdr)) & IP_OFFMASK) == 0) && 
+      ((ntohs(IPH_OFFSET(&ipr->iphdr)) & IP_OFFMASK) != 0)) {
+      /* ipr->iphdr is not the header from the first fragment, but fraghdr is
+       * -> copy fraghdr into ipr->iphdr since we want to have the header
+       * of the first fragment (for ICMP time exceeded and later, for copying
+       * all options, if supported)*/
+      SMEMCPY(&ipr->iphdr, fraghdr, IP_HLEN);
     }
   }
   /* Track the current number of pbufs current 'in-flight', in order to limit 
