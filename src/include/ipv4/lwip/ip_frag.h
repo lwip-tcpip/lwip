@@ -55,7 +55,7 @@ struct ip_reassdata {
   struct ip_reassdata *next;
   struct pbuf *p;
   struct ip_hdr iphdr;
-  u16_t packet_len;
+  u16_t datagram_len;
   u8_t flags;
   u8_t timer;
 };
