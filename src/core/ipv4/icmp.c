@@ -229,7 +229,6 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   /* ICMP header + IP header + 8 bytes of data */
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
-    pbuf_free(p);
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
@@ -276,7 +275,6 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   /* ICMP header + IP header + 8 bytes of data */
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
-    pbuf_free(p);
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
