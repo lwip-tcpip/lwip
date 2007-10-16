@@ -44,9 +44,7 @@
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
 #include "lwip/stats.h"
-#if LWIP_ICMP
 #include "lwip/icmp.h"
-#endif /* LWIP_ICMP */
 
 #include <string.h>
 
