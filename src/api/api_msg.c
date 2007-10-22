@@ -82,8 +82,9 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
     conn->recv_avail += p->tot_len;
     /* Register event with callback */
-    if (conn->callback)
+    if (conn->callback) {
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
+    }
     sys_mbox_post(conn->recvmbox, buf);
   }
 
@@ -127,8 +128,9 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   conn->recv_avail += p->tot_len;
   /* Register event with callback */
-  if (conn->callback)
+  if (conn->callback) {
     (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
+  }
   sys_mbox_post(conn->recvmbox, buf);
 }
 #endif /* LWIP_UDP */
@@ -163,8 +165,9 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     len = 0;
   }
   /* Register event with callback */
-  if (conn->callback)
+  if (conn->callback) {
     (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
+  }
   sys_mbox_post(conn->recvmbox, p);
 
   return ERR_OK;
@@ -249,8 +252,9 @@ err_tcp(void *arg, err_t err)
   conn->err = err;
   if (conn->recvmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
-    if (conn->callback)
+    if (conn->callback) {
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
+    }
     sys_mbox_post(conn->recvmbox, NULL);
   }
   if (conn->mbox != SYS_MBOX_NULL && conn->state == NETCONN_CONNECT) {
@@ -259,8 +263,9 @@ err_tcp(void *arg, err_t err)
   }
   if (conn->acceptmbox != SYS_MBOX_NULL) {
      /* Register event with callback */
-    if (conn->callback)
+    if (conn->callback) {
       (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
+    }
     sys_mbox_post(conn->acceptmbox, NULL);
   }
   if ((conn->state == NETCONN_WRITE) || (conn->state == NETCONN_CLOSE)) {
@@ -385,9 +390,13 @@ pcb_new(struct api_msg_msg *msg)
        break;
      }
 #if LWIP_UDPLITE
-     if (msg->conn->type==NETCONN_UDPLITE)     udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
+     if (msg->conn->type==NETCONN_UDPLITE) {
+       udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_UDPLITE);
+     }
 #endif /* LWIP_UDPLITE */
-     if (msg->conn->type==NETCONN_UDPNOCHKSUM) udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
+     if (msg->conn->type==NETCONN_UDPNOCHKSUM) {
+       udp_setflags(msg->conn->pcb.udp, UDP_FLAGS_NOCHKSUM);
+     }
      udp_recv(msg->conn->pcb.udp, recv_udp, msg->conn);
      break;
 #endif /* LWIP_UDP */
@@ -459,7 +468,7 @@ do_close_internal(struct netconn *conn)
     tcp_recv(conn->pcb.tcp, NULL);
     tcp_arg(conn->pcb.tcp, NULL);
     conn->pcb.tcp = NULL;
-    conn->err = err;
+    conn->err = ERR_OK;
     /* Trigger select() in socket layer */
     if (conn->callback) {
         /* this should send something else so the errorfd is set,
@@ -627,6 +636,8 @@ do_connect(struct api_msg_msg *msg)
     setup_tcp(msg->conn);
     msg->conn->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
                                  do_connected);
+    /* sys_mbox_post() is called from do_connected (or err_tcp()),
+     * when the connection is established! */
     break;
 #endif /* LWIP_TCP */
   default:
@@ -915,9 +926,9 @@ do_join_leave_group(struct api_msg_msg *msg)
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
 #if LWIP_UDP
         if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-          msg->conn->err = igmp_joingroup ( msg->msg.jl.interface, msg->msg.jl.multiaddr);
+          msg->conn->err = igmp_joingroup(msg->msg.jl.interface, msg->msg.jl.multiaddr);
         } else {
-          msg->conn->err = igmp_leavegroup( msg->msg.jl.interface, msg->msg.jl.multiaddr);
+          msg->conn->err = igmp_leavegroup(msg->msg.jl.interface, msg->msg.jl.multiaddr);
         }
 #endif /* LWIP_UDP */
 #if (LWIP_TCP || LWIP_RAW)
