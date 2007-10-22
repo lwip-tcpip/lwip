@@ -96,6 +96,7 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   TCPIP_APIMSG(&msg);
 
   if (conn->err != ERR_OK) {
+    LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
     sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
@@ -448,13 +449,14 @@ netconn_recv(struct netconn *conn)
     }
 
     /* Register event with callback */
-    if (conn->callback)
+    if (conn->callback) {
       (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
+    }
 
     /* If we are closed, we indicate that we no longer wish to use the socket */
     if (p == NULL) {
       memp_free(MEMP_NETBUF, buf);
-      /* Avoid to lost any previous error code */
+      /* Avoid to loose any previous error code */
       if (conn->err == ERR_OK) {
         conn->err = ERR_CLSD;
       }
@@ -534,10 +536,6 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 
   LWIP_ERROR("netconn_send: invalid conn",  (conn != NULL), return ERR_ARG;);
 
-  if (conn->err != ERR_OK) {
-    return conn->err;
-  }
-
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
   msg.function = do_send;
   msg.msg.conn = conn;
@@ -562,10 +560,6 @@ netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t copy)
 
   LWIP_ERROR("netconn_write: invalid conn",  (conn != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_write: invalid conn->type",  (conn->type == NETCONN_TCP), return ERR_VAL;);
-
-  if (conn->err != ERR_OK) {
-    return conn->err;
-  }
 
   msg.function = do_write;
   msg.msg.conn = conn;
@@ -619,10 +613,6 @@ netconn_join_leave_group(struct netconn *conn,
   struct api_msg msg;
 
   LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn != NULL), return ERR_ARG;);
-
-  if (conn->err != ERR_OK) {
-    return conn->err;
-  }
 
   msg.function = do_join_leave_group;
   msg.msg.conn = conn;
