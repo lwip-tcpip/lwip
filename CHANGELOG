@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-10-24 Frédéric Bernon
+  * api.h, api_lib.c, api_msg.c: Add macro API_EVENT in the same spirit than 
+    TCP_EVENT_xxx macros to get a code more readable. It could also help to remove
+    some code (like we have talk in "patch #5919 : Create compile switch to remove
+    select code"), but it could be done later.
+
   2007-10-08 Simon Goldschmidt
   * many files: Changed initialization: many init functions are not needed any
     more since we now rely on the compiler initializing global and static

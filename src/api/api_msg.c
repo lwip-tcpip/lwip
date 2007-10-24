@@ -82,9 +82,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
     conn->recv_avail += p->tot_len;
     /* Register event with callback */
-    if (conn->callback) {
-      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-    }
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
     sys_mbox_post(conn->recvmbox, buf);
   }
 
@@ -128,9 +126,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   conn->recv_avail += p->tot_len;
   /* Register event with callback */
-  if (conn->callback) {
-    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-  }
+  API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
   sys_mbox_post(conn->recvmbox, buf);
 }
 #endif /* LWIP_UDP */
@@ -165,9 +161,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     len = 0;
   }
   /* Register event with callback */
-  if (conn->callback) {
-    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, len);
-  }
+  API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
   sys_mbox_post(conn->recvmbox, p);
 
   return ERR_OK;
@@ -203,7 +197,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 
 /**
  * Sent callback function for TCP netconns.
- * Signals the conn->sem and calls conn->callback.
+ * Signals the conn->sem and calls API_EVENT.
  * netconn_write waits for conn->sem if send buffer is low.
  *
  * @see tcp.h (struct tcp_pcb.sent) for parameters and return value
@@ -223,9 +217,9 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
     do_close_internal(conn);
   }
 
-  if (conn && conn->callback) {
+  if (conn) {
     if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT)) {
-      (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, len);
+      API_EVENT(conn, NETCONN_EVT_SENDPLUS, len);
     }
   }
   
@@ -234,7 +228,7 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 
 /**
  * Error callback function for TCP netconns.
- * Signals conn->sem, posts to all conn mboxes and calls conn->callback.
+ * Signals conn->sem, posts to all conn mboxes and calls API_EVENT.
  * The application thread has then to decide what to do.
  *
  * @see tcp.h (struct tcp_pcb.err) for parameters
@@ -252,9 +246,7 @@ err_tcp(void *arg, err_t err)
   conn->err = err;
   if (conn->recvmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
-    if (conn->callback) {
-      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-    }
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->recvmbox, NULL);
   }
   if (conn->mbox != SYS_MBOX_NULL && conn->state == NETCONN_CONNECT) {
@@ -262,10 +254,8 @@ err_tcp(void *arg, err_t err)
     sys_mbox_post(conn->mbox, NULL);
   }
   if (conn->acceptmbox != SYS_MBOX_NULL) {
-     /* Register event with callback */
-    if (conn->callback) {
-      (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-    }
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->acceptmbox, NULL);
   }
   if ((conn->state == NETCONN_WRITE) || (conn->state == NETCONN_CLOSE)) {
@@ -341,9 +331,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->acceptmbox = SYS_MBOX_NULL;
   newconn->err = err;
   /* Register event with callback */
-  if (conn->callback) {
-    (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-  }
+  API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
   /* We have to set the callback here even though
    * the new socket is unknown. Mark the socket as -1. */
   newconn->callback = conn->callback;
@@ -469,13 +457,10 @@ do_close_internal(struct netconn *conn)
     tcp_arg(conn->pcb.tcp, NULL);
     conn->pcb.tcp = NULL;
     conn->err = ERR_OK;
-    /* Trigger select() in socket layer */
-    if (conn->callback) {
-        /* this should send something else so the errorfd is set,
-           not the read and write fd! */
-        (*conn->callback)(conn, NETCONN_EVT_RCVPLUS, 0);
-        (*conn->callback)(conn, NETCONN_EVT_SENDPLUS, 0);
-    }
+    /* Trigger select() in socket layer. This send should something else so the
+       errorfd is set, not the read and write fd! */
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
+    API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
     /* wake up the application task */
     sys_mbox_post(conn->mbox, NULL);
   }
@@ -510,7 +495,7 @@ do_delconn(struct api_msg_msg *msg)
     case NETCONN_TCP:
       msg->conn->state = NETCONN_CLOSE;
       do_close_internal(msg->conn);
-      /* conn->callback is called inside do_close_internal, before releasing
+      /* API_EVENT is called inside do_close_internal, before releasing
          the application thread, so we can return at this point! */
       return;
 #endif /* LWIP_TCP */
@@ -520,13 +505,10 @@ do_delconn(struct api_msg_msg *msg)
   }
   /* tcp netconns don't come here! */
 
-  /* Trigger select() in socket layer */
-  if (msg->conn->callback) {
-      /* this send should something else so the errorfd is set,
-         not the read and write fd! */
-      (*msg->conn->callback)(msg->conn, NETCONN_EVT_RCVPLUS, 0);
-      (*msg->conn->callback)(msg->conn, NETCONN_EVT_SENDPLUS, 0);
-  }
+  /* Trigger select() in socket layer. This send should something else so the
+     errorfd is set, not the read and write fd! */
+  API_EVENT(msg->conn, NETCONN_EVT_RCVPLUS, 0);
+  API_EVENT(msg->conn, NETCONN_EVT_SENDPLUS, 0);
 
   if (msg->conn->mbox != SYS_MBOX_NULL) {
     sys_mbox_post(msg->conn->mbox, NULL);
@@ -814,9 +796,8 @@ do_writemore(struct netconn *conn)
     }
     err = tcp_output_nagle(conn->pcb.tcp);
     conn->err = err;
-    if ((conn->callback) && (err == ERR_OK) &&
-        (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT)) {
-      (*conn->callback)(conn, NETCONN_EVT_SENDMINUS, len);
+    if ((err == ERR_OK) && (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT)) {
+      API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
     }
   } else if (err == ERR_MEM) {
 #if LWIP_TCPIP_CORE_LOCKING

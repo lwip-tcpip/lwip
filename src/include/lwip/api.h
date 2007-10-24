@@ -53,6 +53,7 @@ extern "C" {
  * the same byte order as in the corresponding pcb.
  */
 
+/* Flags for netconn_write */
 #define NETCONN_NOCOPY 0x00
 #define NETCONN_COPY   0x01
 
@@ -128,6 +129,10 @@ struct netconn {
   void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
 };
 
+/* Register an Network connection event */
+#define API_EVENT(c,e,l) if (c->callback) {         \
+                           (*c->callback)(c, e, l); \
+                         }
 
 /* Network connection functions: */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)

@@ -385,8 +385,7 @@ netconn_accept(struct netconn *conn)
 #endif /* LWIP_SO_RCVTIMEO*/
 
   /* Register event with callback */
-  if (conn->callback)
-    (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, 0);
+  API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
   return newconn;
 }
@@ -449,14 +448,12 @@ netconn_recv(struct netconn *conn)
     }
 
     /* Register event with callback */
-    if (conn->callback) {
-      (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, len);
-    }
+    API_EVENT(conn, NETCONN_EVT_RCVMINUS, len);
 
     /* If we are closed, we indicate that we no longer wish to use the socket */
     if (p == NULL) {
       memp_free(MEMP_NETBUF, buf);
-      /* Avoid to loose any previous error code */
+      /* Avoid to lose any previous error code */
       if (conn->err == ERR_OK) {
         conn->err = ERR_CLSD;
       }
@@ -490,8 +487,7 @@ netconn_recv(struct netconn *conn)
     if (buf!=NULL) {
       conn->recv_avail -= buf->p->tot_len;
       /* Register event with callback */
-      if (conn->callback)
-        (*conn->callback)(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
+      API_EVENT(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
     }
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
