@@ -1075,7 +1075,8 @@ tcp_poll(struct tcp_pcb *pcb,
 }
 
 /**
- * Purges a TCP PCB. Removes any buffered data and frees the buffer memory.
+ * Purges a TCP PCB. Removes any buffered data and frees the buffer memory
+ * (pcb->ooseq, pcb->unsent and pcb->unacked are freed).
  *
  * @param pcb tcp_pcb to purge. The pcb itself is not deallocated!
  */

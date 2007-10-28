@@ -1235,6 +1235,7 @@ tcp_receive(struct tcp_pcb *pcb)
  * from uIP with only small changes.)
  *
  * Called from tcp_listen_input() and tcp_process().
+ * Currently, only the MSS option is supported!
  *
  * @param pcb the tcp_pcb for which a segment arrived
  */
