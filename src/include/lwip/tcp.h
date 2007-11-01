@@ -90,6 +90,7 @@ struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 
+/* Flags for "apiflags" parameter in tcp_write and tcp_enqueue */
 #define TCP_WRITE_FLAG_COPY 0x01
 #define TCP_WRITE_FLAG_MORE 0x02
 
