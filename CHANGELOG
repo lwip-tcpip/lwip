@@ -436,6 +436,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-10-09 Simon Goldschmidt
+  * tcp_in.c: Fixed bug #21181: On active open, the initial congestion window was
+    calculated based on the configured TCP_MSS, not on the MSS option received
+    with SYN+ACK.
+
+  2007-10-09 Simon Goldschmidt
   * udp.c, inet.c, inet.h: Fixed UDPLite: send: Checksum was always generated too
     short and also was generated wrong if checksum coverage != tot_len;
     receive: checksum was calculated wrong if checksum coverage != tot_len

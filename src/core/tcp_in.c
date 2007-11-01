@@ -517,6 +517,11 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;
+
+      /* Parse any options in the SYNACK before using pcb->mss since that
+       * can be changed by the received options! */
+      tcp_parseopt(pcb);
+
       pcb->cwnd = ((pcb->cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
       LWIP_ASSERT("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
       --pcb->snd_queuelen;
@@ -532,9 +537,6 @@ tcp_process(struct tcp_pcb *pcb)
         pcb->rtime = 0;
 
       tcp_seg_free(rseg);
-
-      /* Parse any options in the SYNACK. */
-      tcp_parseopt(pcb);
 
       /* Call the user specified function to call when sucessfully
        * connected. */
