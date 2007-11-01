@@ -89,8 +89,12 @@ err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
 struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
+
+#define TCP_WRITE_FLAG_COPY 0x01
+#define TCP_WRITE_FLAG_MORE 0x02
+
 err_t            tcp_write   (struct tcp_pcb *pcb, const void *dataptr, u16_t len,
-                              u8_t copy);
+                              u8_t apiflags);
 
 void             tcp_setprio (struct tcp_pcb *pcb, u8_t prio);
 
@@ -483,7 +487,7 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 
 err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);
 err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
-    u8_t flags, u8_t copy,
+    u8_t flags, u8_t apiflags,
                 u8_t *optdata, u8_t optlen);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);

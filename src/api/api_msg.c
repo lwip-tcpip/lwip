@@ -784,7 +784,7 @@ do_writemore(struct netconn *conn)
 #endif
   }
 
-  err = tcp_write(conn->pcb.tcp, dataptr, len, conn->write_msg->msg.w.copy);
+  err = tcp_write(conn->pcb.tcp, dataptr, len, conn->write_msg->msg.w.apiflags);
   LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->write_msg->msg.w.len));
   if (err == ERR_OK) {
     conn->write_offset += len;

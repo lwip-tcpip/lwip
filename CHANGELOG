@@ -19,6 +19,13 @@ HISTORY
 
   ++ New features:
 
+  2007-11-01 Frédéric Bernon, Marc Chaland
+  * sockets.h, sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c, tcp.h, tcp_out.c:
+    Integrate "patch #6250 : MSG_MORE flag for send". MSG_MORE is used at socket api
+    layer, NETCONN_MORE at netconn api layer, and TCP_WRITE_FLAG_MORE at raw api
+    layer. This option enable to delayed TCP PUSH flag on multiple "write" calls.
+    Note that previous "copy" parameter for "write" APIs is now called "apiflags".
+
   2007-10-24 Frédéric Bernon
   * api.h, api_lib.c, api_msg.c: Add macro API_EVENT in the same spirit than 
     TCP_EVENT_xxx macros to get a code more readable. It could also help to remove

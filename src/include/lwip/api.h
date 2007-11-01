@@ -54,8 +54,10 @@ extern "C" {
  */
 
 /* Flags for netconn_write */
-#define NETCONN_NOCOPY 0x00
-#define NETCONN_COPY   0x01
+#define NETCONN_NOFLAG 0x00
+#define NETCONN_NOCOPY 0x00 /* Only for source code compatibility */
+#define NETCONN_COPY   TCP_WRITE_FLAG_COPY
+#define NETCONN_MORE   TCP_WRITE_FLAG_MORE
 
 /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)    (t&0xF0)
@@ -164,7 +166,7 @@ err_t             netconn_send    (struct netconn *conn,
            struct netbuf *buf);
 err_t             netconn_write   (struct netconn *conn,
            const void *dataptr, int size,
-           u8_t copy);
+           u8_t apiflags);
 err_t             netconn_close   (struct netconn *conn);
 
 #if LWIP_IGMP

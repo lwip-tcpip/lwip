@@ -64,7 +64,7 @@ struct api_msg_msg {
     struct {
       const void *dataptr;
       int len;
-      u8_t copy;
+      u8_t apiflags;
     } w; /* do_write */
     struct {
       u16_t len;

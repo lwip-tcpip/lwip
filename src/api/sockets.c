@@ -538,7 +538,7 @@ lwip_send(int s, const void *data, int size, unsigned int flags)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
 
-  err = netconn_write(sock->conn, data, size, NETCONN_COPY);
+  err = netconn_write(sock->conn, data, size, NETCONN_COPY | ((flags & MSG_MORE)?NETCONN_MORE:0));
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) err=%d size=%d\n", s, err, size));
   sock_set_errno(sock, err_to_errno(err));

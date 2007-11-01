@@ -132,6 +132,7 @@ struct linger {
 #define MSG_WAITALL    0x02    /* Requests that the function block until the full amount of data requested can be returned */
 #define MSG_OOB        0x04    /* Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific */
 #define MSG_DONTWAIT   0x08    /* Nonblocking i/o for this operation only */
+#define MSG_MORE       0x10    /* Sender will send more */
 
 
 /*

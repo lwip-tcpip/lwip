@@ -546,11 +546,13 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
  * @param conn the TCP netconn over which to send data
  * @param dataptr pointer to the application buffer that contains the data to send
  * @param size size of the application data to send
- * @param copy flag: 1 = copy the data, 0 = data is non-volatile, can be sent by reference
+ * @param apiflags combination of following flags :
+ * - NETCONN_COPY (0x01) data will be copied into memory belonging to the stack
+ * - NETCONN_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t
-netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t copy)
+netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t apiflags)
 {
   struct api_msg msg;
 
@@ -560,7 +562,7 @@ netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t copy)
   msg.function = do_write;
   msg.msg.conn = conn;
   msg.msg.msg.w.dataptr = dataptr;
-  msg.msg.msg.w.copy = copy;
+  msg.msg.msg.w.apiflags = apiflags;
   msg.msg.msg.w.len = size;
   /* For locking the core: this _can_ be delayed on low memory/low send buffer,
      but if it is, this is done inside api_msg.c:do_write(), so we can use the

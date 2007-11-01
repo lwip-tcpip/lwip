@@ -83,24 +83,25 @@ tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
  * @param pcb Protocol control block of the TCP connection to enqueue data for.
  * @param data pointer to the data to send
  * @param len length (in bytes) of the data to send
- * @param copy 1 if data must be copied, 0 if data is non-volatile and can be
- * referenced.
+ * @param apiflags combination of following flags :
+ * - TCP_WRITE_FLAG_COPY (0x01) data will be copied into memory belonging to the stack
+ * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent,
  * @return ERR_OK if enqueued, another err_t on error
  * 
  * @see tcp_write()
  */
 err_t
-tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t copy)
+tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t apiflags)
 {
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, data=%p, len=%"U16_F", copy=%"U16_F")\n", (void *)pcb,
-    data, len, (u16_t)copy));
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, data=%p, len=%"U16_F", apiflags=%"U16_F")\n", (void *)pcb,
+    data, len, (u16_t)apiflags));
   /* connection is in valid state for data transmission? */
   if (pcb->state == ESTABLISHED ||
      pcb->state == CLOSE_WAIT ||
      pcb->state == SYN_SENT ||
      pcb->state == SYN_RCVD) {
     if (len > 0) {
-      return tcp_enqueue(pcb, (void *)data, len, 0, copy, NULL, 0);
+      return tcp_enqueue(pcb, (void *)data, len, 0, apiflags, NULL, 0);
     }
     return ERR_OK;
   } else {
@@ -118,14 +119,15 @@ tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t copy)
  * @param arg Pointer to the data to be enqueued for sending.
  * @param len Data length in bytes
  * @param flags tcp header flags to set in the outgoing segment
- * @param copy 1 if data must be copied, 0 if data is non-volatile and can be
- * referenced.
+ * @param apiflags combination of following flags :
+ * - TCP_WRITE_FLAG_COPY (0x01) data will be copied into memory belonging to the stack
+ * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent,
  * @param optdata
  * @param optlen
  */
 err_t
 tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
-  u8_t flags, u8_t copy,
+  u8_t flags, u8_t apiflags,
   u8_t *optdata, u8_t optlen)
 {
   struct pbuf *p;
@@ -135,8 +137,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   void *ptr;
   u16_t queuelen;
 
-  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%"U16_F", flags=%"X16_F", copy=%"U16_F")\n",
-    (void *)pcb, arg, len, (u16_t)flags, (u16_t)copy));
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_enqueue(pcb=%p, arg=%p, len=%"U16_F", flags=%"X16_F", apiflags=%"U16_F")\n",
+    (void *)pcb, arg, len, (u16_t)flags, (u16_t)apiflags));
   LWIP_ERROR("tcp_enqueue: len == 0 || optlen == 0 (programmer violates API)",
       ((len == 0) || (optlen == 0)), return ERR_ARG;);
   LWIP_ERROR("tcp_enqueue: arg == NULL || optdata == NULL (programmer violates API)",
@@ -220,7 +222,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       seg->dataptr = seg->p->payload;
     }
     /* copy from volatile memory? */
-    else if (copy) {
+    else if (apiflags & TCP_WRITE_FLAG_COPY) {
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_RAM)) == NULL) {
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue : could not allocate memory for pbuf copy size %"U16_F"\n", seglen));
         goto memerr;
@@ -372,7 +374,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   /* Set the PSH flag in the last segment that we enqueued, but only
   if the segment has data (indicated by seglen > 0). */
-  if (seg != NULL && seglen > 0 && seg->tcphdr != NULL) {
+  if (seg != NULL && seglen > 0 && seg->tcphdr != NULL && ((apiflags & TCP_WRITE_FLAG_MORE)==0)) {
     TCPH_SET_FLAG(seg->tcphdr, TCP_PSH);
   }
 
