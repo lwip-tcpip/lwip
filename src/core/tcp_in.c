@@ -519,6 +519,10 @@ tcp_process(struct tcp_pcb *pcb)
        * can be changed by the received options! */
       tcp_parseopt(pcb);
 
+      /* Set ssthresh again after changing pcb->mss (already set in tcp_connect
+       * but for the default value of pcb->mss) */
+      pcb->ssthresh = pcb->mss * 10;
+
       pcb->cwnd = ((pcb->cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
       LWIP_ASSERT("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
       --pcb->snd_queuelen;

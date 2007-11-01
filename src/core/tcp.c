@@ -492,7 +492,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->rcv_wnd = TCP_WND;
   pcb->snd_wnd = TCP_WND;
   /* The send MSS is updated when an MSS option is received. */
-  pcb->mss = TCP_MSS;
+  pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
   pcb->state = SYN_SENT;
@@ -932,7 +932,7 @@ tcp_alloc(u8_t prio)
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
     /* The send MSS is updated when an MSS option is received. */
-    pcb->mss = TCP_MSS;
+    pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sa = 0;
     pcb->sv = 3000 / TCP_SLOW_INTERVAL;

@@ -436,6 +436,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-11-01 Simon Goldschmidt
+  * tcp.c, tcp_in.c: Fixed bug #21494: The send mss (pcb->mss) is set to 536 (or
+    TCP_MSS if that is smaller) as long as no MSS option is received from the
+    remote host.
+
+  2007-11-01 Simon Goldschmidt
   * tcp.h, tcp.c, tcp_in.c: Fixed bug #21491: The MSS option sent (with SYN)
     is now based on TCP_MSS instead of pcb->mss (on passive open now effectively
     sending our configured TCP_MSS instead of the one received).
