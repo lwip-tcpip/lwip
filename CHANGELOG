@@ -435,7 +435,12 @@ HISTORY
 
   ++ Bug fixes:
 
-  2007-10-09 Simon Goldschmidt
+  2007-11-01 Simon Goldschmidt
+  * tcp.h, tcp.c, tcp_in.c: Fixed bug #21491: The MSS option sent (with SYN)
+    is now based on TCP_MSS instead of pcb->mss (on passive open now effectively
+    sending our configured TCP_MSS instead of the one received).
+
+  2007-11-01 Simon Goldschmidt
   * tcp_in.c: Fixed bug #21181: On active open, the initial congestion window was
     calculated based on the configured TCP_MSS, not on the MSS option received
     with SYN+ACK.

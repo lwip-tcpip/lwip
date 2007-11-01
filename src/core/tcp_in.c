@@ -415,10 +415,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     snmp_inc_tcppassiveopens();
 
     /* Build an MSS option. */
-    optdata = htonl(((u32_t)2 << 24) |
-        ((u32_t)4 << 16) |
-        (((u32_t)npcb->mss / 256) << 8) |
-        (npcb->mss & 255));
+    optdata = TCP_BUILD_MSS_OPTION();
     /* Send a SYN|ACK together with the MSS option. */
     tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, (u8_t *)&optdata, 4);
     return tcp_output(npcb);

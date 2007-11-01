@@ -122,7 +122,11 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
                             (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
                                 tcp_output(tpcb) : ERR_OK)
 
-
+/** This returns a TCP header option for MSS in an u32_t */
+#define TCP_BUILD_MSS_OPTION()  htonl(((u32_t)2 << 24) | \
+                                ((u32_t)4 << 16) | \
+                                (((u32_t)TCP_MSS / 256) << 8) | \
+                                (TCP_MSS & 255))
 
 #define TCP_SEQ_LT(a,b)     ((s32_t)((a)-(b)) < 0)
 #define TCP_SEQ_LEQ(a,b)    ((s32_t)((a)-(b)) <= 0)

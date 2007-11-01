@@ -491,6 +491,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->snd_lbb = iss - 1;
   pcb->rcv_wnd = TCP_WND;
   pcb->snd_wnd = TCP_WND;
+  /* The send MSS is updated when an MSS option is received. */
   pcb->mss = TCP_MSS;
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
@@ -504,10 +505,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   snmp_inc_tcpactiveopens();
   
   /* Build an MSS option */
-  optdata = htonl(((u32_t)2 << 24) | 
-      ((u32_t)4 << 16) | 
-      (((u32_t)pcb->mss / 256) << 8) |
-      (pcb->mss & 255));
+  optdata = TCP_BUILD_MSS_OPTION();
 
   ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, (u8_t *)&optdata, 4);
   if (ret == ERR_OK) { 
@@ -933,6 +931,7 @@ tcp_alloc(u8_t prio)
     pcb->rcv_wnd = TCP_WND;
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
+    /* The send MSS is updated when an MSS option is received. */
     pcb->mss = TCP_MSS;
     pcb->rto = 3000 / TCP_SLOW_INTERVAL;
     pcb->sa = 0;
