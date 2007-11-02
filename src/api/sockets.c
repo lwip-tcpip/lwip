@@ -1041,11 +1041,13 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     case SO_KEEPALIVE:
     /* UNIMPL case SO_CONTIMEO: */
     /* UNIMPL case SO_SNDTIMEO: */
-#if LWIP_SO_RCVTIMEO      
+#if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+    case SO_RCVBUF:
+#endif /* LWIP_SO_RCVBUF */
     /* UNIMPL case SO_OOBINLINE: */
-    /* UNIMPL case SO_RCVBUF: */
     /* UNIMPL case SO_SNDBUF: */
     /* UNIMPL case SO_RCVLOWAT: */
     /* UNIMPL case SO_SNDLOWAT: */
@@ -1275,6 +1277,11 @@ lwip_getsockopt_internal(void *arg)
       *(int *)optval = sock->conn->recv_timeout;
       break;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+    case SO_RCVBUF:
+      *(int *)optval = sock->conn->recv_bufsize;
+      break;
+#endif /* LWIP_SO_RCVBUF */
 #if LWIP_UDP
     case SO_NO_CHECK:
       *(int*)optval = (udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_NOCHKSUM) ? 1 : 0;
@@ -1399,8 +1406,10 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+    case SO_RCVBUF:
+#endif /* LWIP_SO_RCVBUF */
     /* UNIMPL case SO_OOBINLINE: */
-    /* UNIMPL case SO_RCVBUF: */
     /* UNIMPL case SO_SNDBUF: */
     /* UNIMPL case SO_RCVLOWAT: */
     /* UNIMPL case SO_SNDLOWAT: */
@@ -1613,6 +1622,11 @@ lwip_setsockopt_internal(void *arg)
       sock->conn->recv_timeout = ( *(int*)optval );
       break;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+    case SO_RCVBUF:
+      sock->conn->recv_bufsize = ( *(int*)optval );
+      break;
+#endif /* LWIP_SO_RCVBUF */
 #if LWIP_UDP
     case SO_NO_CHECK:
       if (*(int*)optval) {

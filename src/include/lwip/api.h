@@ -114,6 +114,9 @@ struct netconn {
 #if LWIP_SO_RCVTIMEO
   int recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+  int recv_bufsize;
+#endif /* LWIP_SO_RCVBUF */
   u16_t recv_avail;
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores the message. */
@@ -176,7 +179,8 @@ err_t             netconn_join_leave_group (struct netconn *conn,
                                             enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
 
-#define netconn_err(conn)         ((conn)->err)
+#define netconn_err(conn)          ((conn)->err)
+#define netconn_recv_bufsize(conn) ((conn)->recv_bufsize)
 
 #ifdef __cplusplus
 }

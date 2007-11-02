@@ -69,7 +69,12 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
   conn = arg;
 
+#if LWIP_SO_RCVBUF
+  if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL) &&
+      (((int)(conn->recv_avail) + (int)(p->tot_len)) <= conn->recv_bufsize)) {
+#else  /* LWIP_SO_RCVBUF */
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
+#endif /* LWIP_SO_RCVBUF */
     buf = memp_malloc(MEMP_NETBUF);
     if (buf == NULL) {
       return 0;
@@ -108,7 +113,12 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 
   conn = arg;
 
+#if LWIP_SO_RCVBUF
+  if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL) ||
+      (((int)(conn->recv_avail) + (int)(p->tot_len)) > conn->recv_bufsize)) {
+#else  /* LWIP_SO_RCVBUF */
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
+#endif /* LWIP_SO_RCVBUF */
     pbuf_free(p);
     return;
   }
@@ -340,6 +350,9 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 #if LWIP_SO_RCVTIMEO
   newconn->recv_timeout = 0;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+  newconn->recv_bufsize = INT_MAX;
+#endif /* LWIP_SO_RCVBUF */
 
   sys_mbox_post(conn->acceptmbox, newconn);
   return ERR_OK;

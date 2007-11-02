@@ -928,6 +928,13 @@
 #endif
 
 /**
+ * LWIP_SO_RCVBUF==1: Enable SO_RCVBUF processing.
+ */
+#ifndef LWIP_SO_RCVBUF
+#define LWIP_SO_RCVBUF                  0
+#endif
+
+/**
  * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!
  */
 #ifndef SO_REUSE

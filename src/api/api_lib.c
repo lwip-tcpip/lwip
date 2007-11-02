@@ -89,6 +89,9 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
 #if LWIP_SO_RCVTIMEO
   conn->recv_timeout = 0;
 #endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+  conn->recv_bufsize = INT_MAX;
+#endif /* LWIP_SO_RCVBUF */
 
   msg.function = do_newconn;
   msg.msg.msg.n.proto = proto;

@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+  2007-11-03 Frédéric Bernon
+  * api.h, api_lib.c, api_msg.c, sockets.c, opt.h: add SO_RCVBUF option for UDP &
+    RAW netconn. You need to set LWIP_SO_RCVBUF=1 in your lwipopts.h (it's disabled
+    by default). Netconn API users can use the netconn_recv_bufsize macro to access
+    it. This is a first release which have to be improve for TCP. Note it used the
+    netconn::recv_avail which need to be more "thread-safe" (note there is already
+    the problem for FIONREAD with lwip_ioctl/ioctlsocket).
+
   2007-11-01 Frédéric Bernon, Marc Chaland
   * sockets.h, sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c, tcp.h, tcp_out.c:
     Integrate "patch #6250 : MSG_MORE flag for send". MSG_MORE is used at socket api
