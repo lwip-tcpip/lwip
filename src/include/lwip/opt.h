@@ -525,6 +525,15 @@
 #define SNMP_PRIVATE_MIB                0
 #endif
 
+/**
+ * Only allow SNMP write actions that are 'safe' (e.g. disabeling netifs is not
+ * a safe action and disabled when SNMP_SAFE_REQUESTS = 1).
+ * Unsafe requests are disabled by default!
+ */
+#ifndef SNMP_SAFE_REQUESTS
+#define SNMP_SAFE_REQUESTS              1
+#endif
+
 /*
    ----------------------------------
    ---------- IGMP options ----------

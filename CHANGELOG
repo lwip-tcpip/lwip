@@ -20,6 +20,11 @@ HISTORY
   ++ New features:
 
   2007-11-06 Simon Goldschmidt
+  * opt.h, mib2.c: Patch #6215: added ifAdminStatus write support (if explicitly
+    enabled by defining SNMP_SAFE_REQUESTS to 0); added code to check link status
+    for ifOperStatus if LWIP_NETIF_LINK_CALLBACK is defined.
+
+  2007-11-06 Simon Goldschmidt
   * api.h, api_msg.h and dependent files: Task #7410: Removed the need to include
     core header files in api.h (ip/tcp/udp/raw.h) to hide the internal
     implementation from netconn api applications.

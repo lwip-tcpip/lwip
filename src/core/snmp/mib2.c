@@ -82,6 +82,10 @@ static void interfaces_get_object_def(u8_t ident_len, s32_t *ident, struct obj_d
 static void interfaces_get_value(struct obj_def *od, u16_t len, void *value);
 static void ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void ifentry_get_value(struct obj_def *od, u16_t len, void *value);
+#if !SNMP_SAFE_REQUESTS
+static u8_t ifentry_set_test (struct obj_def *od, u16_t len, void *value);
+static void ifentry_set_value (struct obj_def *od, u16_t len, void *value);
+#endif /* SNMP_SAFE_REQUESTS */
 static void atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
 static void atentry_get_value(struct obj_def *od, u16_t len, void *value);
 static void ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
@@ -563,8 +567,13 @@ struct mib_ram_array_node at = {
 struct mib_list_rootnode iflist_root = {
   &ifentry_get_object_def,
   &ifentry_get_value,
+#if SNMP_SAFE_REQUESTS
   &noleafs_set_test,
   &noleafs_set_value,
+#else /* SNMP_SAFE_REQUESTS */
+  &ifentry_set_test,
+  &ifentry_set_value,
+#endif /* SNMP_SAFE_REQUESTS */
   MIB_NODE_LR,
   0,
   NULL,
@@ -2486,6 +2495,27 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       ocstrncpy(value,netif->hwaddr,len);
       break;
     case 7: /* ifAdminStatus */
+#if LWIP_NETIF_LINK_CALLBACK
+      {
+        s32_t *sint_ptr = value;
+        if (netif_is_up(netif))
+        {
+          if (netif_is_link_up(netif))
+          {
+            *sint_ptr = 1; // up
+          }
+          else
+          {
+            *sint_ptr = 7; // lowerLayerDown
+          }
+        }
+        else
+        {
+          *sint_ptr = 2; // down
+        }
+      }
+      break;
+#endif
     case 8: /* ifOperStatus */
       {
         s32_t *sint_ptr = value;
@@ -2580,6 +2610,56 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       break;
   };
 }
+
+#if !SNMP_SAFE_REQUESTS
+static u8_t
+ifentry_set_test (struct obj_def *od, u16_t len, void *value)
+{
+  struct netif *netif;
+  u8_t id, set_ok;
+
+  set_ok = 0;
+  snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
+  id = od->id_inst_ptr[0];
+  switch (id)
+  {
+    case 7: /* ifAdminStatus */
+      {
+        s32_t *sint_ptr = value;
+        if (*sint_ptr == 1 || *sint_ptr == 2)
+          set_ok = 1;
+      }
+      break;
+  }
+  return set_ok;
+}
+
+static void
+ifentry_set_value (struct obj_def *od, u16_t len, void *value)
+{
+  struct netif *netif;
+  u8_t id;
+
+  snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
+  id = od->id_inst_ptr[0];
+  switch (id)
+  {
+    case 7: /* ifAdminStatus */
+      {
+        s32_t *sint_ptr = value;
+        if (*sint_ptr == 1)
+        {
+          netif_set_up(netif);
+        }
+        else if (*sint_ptr == 2)
+        {
+          netif_set_down(netif);
+         }
+      }
+      break;
+  }
+}
+#endif /* SNMP_SAFE_REQUESTS */
 
 /**
  * Returns atentry object definitions.
