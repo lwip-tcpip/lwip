@@ -36,13 +36,9 @@
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/pbuf.h"
 #include "lwip/netbuf.h"
 #include "lwip/sys.h"
-#include "lwip/ip.h"
-#include "lwip/raw.h"
-#include "lwip/udp.h"
-#include "lwip/tcp.h"
+#include "lwip/ip_addr.h"
 #include "lwip/err.h"
 
 #ifdef __cplusplus
@@ -56,8 +52,8 @@ extern "C" {
 /* Flags for netconn_write */
 #define NETCONN_NOFLAG 0x00
 #define NETCONN_NOCOPY 0x00 /* Only for source code compatibility */
-#define NETCONN_COPY   TCP_WRITE_FLAG_COPY
-#define NETCONN_MORE   TCP_WRITE_FLAG_MORE
+#define NETCONN_COPY   0x01
+#define NETCONN_MORE   0x02
 
 /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)    (t&0xF0)
@@ -96,6 +92,11 @@ enum netconn_igmp {
   NETCONN_LEAVE
 };
 #endif /* LWIP_IGMP */
+
+struct ip_pcb;
+struct tcp_pcb;
+struct udp_pcb;
+struct raw_pcb;
 
 struct netconn {
   enum netconn_type type;

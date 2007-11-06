@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2007-11-06 Simon Goldschmidt
+  * api.h, api_msg.h and dependent files: Task #7410: Removed the need to include
+    core header files in api.h (ip/tcp/udp/raw.h) to hide the internal
+    implementation from netconn api applications.
+
   2007-11-03 Frédéric Bernon
   * api.h, api_lib.c, api_msg.c, sockets.c, opt.h: add SO_RCVBUF option for UDP &
     RAW netconn. You need to set LWIP_SO_RCVBUF=1 in your lwipopts.h (it's disabled

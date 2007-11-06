@@ -48,6 +48,7 @@
 #include "lwip/igmp.h"
 #include "lwip/inet.h"
 #include "lwip/tcp.h"
+#include "lwip/udp.h"
 #include "lwip/tcpip.h"
 
 #include <string.h>

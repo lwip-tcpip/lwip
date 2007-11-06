@@ -39,6 +39,7 @@
 #include "lwip/api_msg.h"
 #include "lwip/netifapi.h"
 #include "lwip/pbuf.h"
+#include "lwip/api.h"
 
 #ifdef __cplusplus
 extern "C" {
