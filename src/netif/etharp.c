@@ -945,23 +945,29 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
         struct etharp_q_entry *new_entry;
         /* allocate a new arp queue entry */
         new_entry = memp_malloc(MEMP_ARP_QUEUE);
-        LWIP_ASSERT("newEntry != NULL", new_entry != NULL);
-        new_entry->next = 0;
-        new_entry->p = p;
-        if(arp_table[i].q != NULL) {
-          /* queue was already existent, append the new entry to the end */
-          struct etharp_q_entry *r;
-          r = arp_table[i].q;
-          while (r->next != NULL) {
-            r = r->next;
+        if (new_entry != NULL) {
+          new_entry->next = 0;
+          new_entry->p = p;
+          if(arp_table[i].q != NULL) {
+            /* queue was already existent, append the new entry to the end */
+            struct etharp_q_entry *r;
+            r = arp_table[i].q;
+            while (r->next != NULL) {
+              r = r->next;
+            }
+            r->next = new_entry;
+          } else {
+            /* queue did not exist, first item in queue */
+            arp_table[i].q = new_entry;
           }
-          r->next = new_entry;
+          LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
+          result = ERR_OK;
         } else {
-          /* queue did not exist, first item in queue */
-          arp_table[i].q = new_entry;
+          /* the pool MEMP_ARP_QUEUE is empty */
+          pbuf_free(p);
+          LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
+          /* { result == ERR_MEM } through initialization */
         }
-        LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
-        result = ERR_OK;
       } else {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
         /* { result == ERR_MEM } through initialization */

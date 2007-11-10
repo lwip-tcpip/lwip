@@ -460,6 +460,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-10 Simon Goldschmidt
+  * etharp.c: Fixed bug: assert fired when MEMP_ARP_QUEUE was empty (which can
+    happen any time). Now the packet simply isn't enqueued when out of memory.
+
   2007-11-01 Simon Goldschmidt
   * tcp.c, tcp_in.c: Fixed bug #21494: The send mss (pcb->mss) is set to 536 (or
     TCP_MSS if that is smaller) as long as no MSS option is received from the
