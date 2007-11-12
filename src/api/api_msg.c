@@ -889,6 +889,54 @@ do_write(struct api_msg_msg *msg)
 }
 
 /**
+ * Return a connection's local or remote address
+ * Called from netconn_getaddr
+ *
+ * @param msg the api_msg_msg pointing to the connection
+ */
+void
+do_getaddr(struct api_msg_msg *msg)
+{
+  if (msg->conn->pcb.ip != NULL) {
+    *(msg->msg.ad.ipaddr) = (msg->msg.ad.local?msg->conn->pcb.ip->local_ip:msg->conn->pcb.ip->remote_ip);
+    
+    switch (NETCONNTYPE_GROUP(msg->conn->type)) {
+#if LWIP_RAW
+    case NETCONN_RAW:
+      if (msg->msg.ad.local) {
+        *(msg->msg.ad.port) = msg->conn->pcb.raw->protocol;
+      } else {
+        /* return an error as connecting is only a helper for upper layers */
+        msg->conn->err = ERR_CONN;
+      }
+      break;
+#endif /* LWIP_RAW */
+#if LWIP_UDP
+    case NETCONN_UDP:
+      if (msg->msg.ad.local) {
+        *(msg->msg.ad.port) = msg->conn->pcb.udp->local_port;
+      } else {
+        if ((msg->conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0) {
+          msg->conn->err = ERR_CONN;
+        } else {
+          *(msg->msg.ad.port) = msg->conn->pcb.udp->remote_port;
+        }
+      }
+      break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
+    case NETCONN_TCP:
+      *(msg->msg.ad.port) = (msg->msg.ad.local?msg->conn->pcb.tcp->local_port:msg->conn->pcb.tcp->remote_port);
+      break;
+#endif /* LWIP_TCP */
+    }
+  } else {
+    msg->conn->err =ERR_CONN;
+  }
+  TCPIP_APIMSG_ACK(msg);
+}
+
+/**
  * Close a TCP pcb contained in a netconn
  * Called from netconn_close
  *
@@ -942,3 +990,4 @@ do_join_leave_group(struct api_msg_msg *msg)
 #endif /* LWIP_IGMP */
 
 #endif /* LWIP_NETCONN */
+

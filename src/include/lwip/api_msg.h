@@ -59,6 +59,11 @@ struct api_msg_msg {
       u16_t port;
     } bc; /* do_bind, do_connect */
     struct {
+      struct ip_addr *ipaddr;
+      u16_t *port;
+      u8_t local;
+    } ad; /* do_getaddr */
+    struct {
       const void *dataptr;
       int len;
       u8_t apiflags;
@@ -90,6 +95,7 @@ void do_listen          ( struct api_msg_msg *msg);
 void do_send            ( struct api_msg_msg *msg);
 void do_recv            ( struct api_msg_msg *msg);
 void do_write           ( struct api_msg_msg *msg);
+void do_getaddr         ( struct api_msg_msg *msg);
 void do_close           ( struct api_msg_msg *msg);
 #if LWIP_IGMP
 void do_join_leave_group( struct api_msg_msg *msg);

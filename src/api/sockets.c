@@ -967,8 +967,7 @@ lwip_shutdown(int s, int how)
 }
 
 static int
-lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen,
-                 err_t (* netconn_addrfunc)(struct netconn *conn, struct ip_addr *addr, u16_t *port))
+lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
   struct lwip_socket *sock;
   struct sockaddr_in sin;
@@ -983,7 +982,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen,
   sin.sin_family = AF_INET;
 
   /* get the IP address and port */
-  netconn_addrfunc(sock->conn, &naddr, &sin.sin_port);
+  netconn_getaddr(sock->conn, &naddr, &sin.sin_port, local);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getaddrname(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
@@ -1003,13 +1002,13 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen,
 int
 lwip_getpeername(int s, struct sockaddr *name, socklen_t *namelen)
 {
-  return lwip_getaddrname(s, name, namelen, netconn_peer);
+  return lwip_getaddrname(s, name, namelen, 0);
 }
 
 int
 lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 {
-  return lwip_getaddrname(s, name, namelen, netconn_addr);
+  return lwip_getaddrname(s, name, namelen, 1);
 }
 
 int

@@ -148,29 +148,31 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                    void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
 err_t             netconn_delete  (struct netconn *conn);
 enum netconn_type netconn_type    (struct netconn *conn);
-err_t             netconn_peer    (struct netconn *conn,
-           struct ip_addr *addr,
-           u16_t *port);
-err_t             netconn_addr    (struct netconn *conn,
-           struct ip_addr *addr,
-           u16_t *port);
+
+err_t             netconn_getaddr (struct netconn *conn,
+                                   struct ip_addr *addr,
+                                   u16_t *port,
+                                   u8_t local);
+#define netconn_peer(c,i,p) netconn_getaddr(c,i,p,0)
+#define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
+
 err_t             netconn_bind    (struct netconn *conn,
-           struct ip_addr *addr,
-           u16_t port);
+                                   struct ip_addr *addr,
+                                   u16_t port);
 err_t             netconn_connect (struct netconn *conn,
-           struct ip_addr *addr,
-           u16_t port);
+                                   struct ip_addr *addr,
+                                   u16_t port);
 err_t             netconn_disconnect (struct netconn *conn);
 err_t             netconn_listen  (struct netconn *conn);
 struct netconn *  netconn_accept  (struct netconn *conn);
 struct netbuf *   netconn_recv    (struct netconn *conn);
 err_t             netconn_sendto  (struct netconn *conn,
-           struct netbuf *buf, struct ip_addr *addr, u16_t port);
+                                   struct netbuf *buf, struct ip_addr *addr, u16_t port);
 err_t             netconn_send    (struct netconn *conn,
-           struct netbuf *buf);
+                                   struct netbuf *buf);
 err_t             netconn_write   (struct netconn *conn,
-           const void *dataptr, int size,
-           u8_t apiflags);
+                                   const void *dataptr, int size,
+                                   u8_t apiflags);
 err_t             netconn_close   (struct netconn *conn);
 
 #if LWIP_IGMP

@@ -460,6 +460,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-12 Frédéric Bernon
+  * sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c: Fixed bug #20900. Now, most
+    of the netconn_peer and netconn_addr processing is done inside tcpip_thread
+    context in do_getaddr.
+
   2007-11-10 Simon Goldschmidt
   * etharp.c: Fixed bug: assert fired when MEMP_ARP_QUEUE was empty (which can
     happen any time). Now the packet simply isn't enqueued when out of memory.

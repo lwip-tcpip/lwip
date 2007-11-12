@@ -179,93 +179,32 @@ netconn_type(struct netconn *conn)
 }
 
 /**
- * Get the current perr a netconn is connected to.
- * This might only be temporary for UDP netconns,
- * doesn't work for RAW netconns and returns garbage
- * if called for a TCP listen netconn.
- *
- * @param conn the netconn to query
- * @param addr a pointer to which to save the remote IP address
- * @param port a pointer to which to save the remote port
- * @return ERR_CONN for invalid connections
- *         ERR_OK if the information was retrieved
- */
-err_t
-netconn_peer(struct netconn *conn, struct ip_addr *addr, u16_t *port)
-{
-  LWIP_ERROR("netconn_peer: invalid conn", (conn != NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_peer: invalid addr", (addr != NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_peer: invalid port", (port != NULL), return ERR_ARG;);
-
-  /* Not a good safe-thread protection, will be improved */
-  if (conn->pcb.ip == NULL)
-    return ERR_CONN;
-
-  *addr = conn->pcb.ip->remote_ip;
-
-  switch (NETCONNTYPE_GROUP(conn->type)) {
-#if LWIP_RAW
-  case NETCONN_RAW:
-    /* return an error as connecting is only a helper for upper layers */
-    return ERR_CONN;
-#endif /* LWIP_RAW */
-#if LWIP_UDP
-  case NETCONN_UDP:
-    if ((conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0)
-      return ERR_CONN;
-    *port = conn->pcb.udp->remote_port;
-    break;
-#endif /* LWIP_UDP */
-#if LWIP_TCP
-  case NETCONN_TCP:
-    *port = conn->pcb.tcp->remote_port;
-    break;
-#endif /* LWIP_TCP */
-  }
-  return ERR_OK;
-}
-
-/**
- * Get the local IP address and port of a netconn.
+ * Get the local or remote IP address and port of a netconn.
  * For RAW netconns, this returns the protocol instead of a port!
  *
  * @param conn the netconn to query
- * @param addr a pointer to which to save the local IP address
- * @param port a pointer to which to save the local port (or protocol for RAW)
+ * @param addr a pointer to which to save the IP address
+ * @param port a pointer to which to save the port (or protocol for RAW)
  * @return ERR_CONN for invalid connections
  *         ERR_OK if the information was retrieved
  */
 err_t
-netconn_addr(struct netconn *conn, struct ip_addr *addr, u16_t *port)
+netconn_getaddr(struct netconn *conn, struct ip_addr *addr, u16_t *port, u8_t local)
 {
-  LWIP_ERROR("netconn_addr: invalid conn", (conn != NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_addr: invalid addr", (addr != NULL), return ERR_ARG;);
-  LWIP_ERROR("netconn_addr: invalid port", (port != NULL), return ERR_ARG;);
+  struct api_msg msg;
 
-  /* Not a good safe-thread protection, will be improved */
-  if (conn->pcb.ip == NULL)
-    return ERR_CONN;
+  LWIP_ERROR("netconn_getaddr: invalid conn", (conn != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_getaddr: invalid addr", (addr != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_getaddr: invalid port", (port != NULL), return ERR_ARG;);
 
-  *addr = conn->pcb.ip->local_ip;
+  msg.function = do_getaddr;
+  msg.msg.conn = conn;
+  msg.msg.msg.ad.ipaddr = addr;
+  msg.msg.msg.ad.port = port;
+  msg.msg.msg.ad.local = local;
+  TCPIP_APIMSG(&msg);
 
-  switch (NETCONNTYPE_GROUP(conn->type)) {
-#if LWIP_RAW
-  case NETCONN_RAW:
-    *port = conn->pcb.raw->protocol;
-    break;
-#endif /* LWIP_RAW */
-#if LWIP_UDP
-  case NETCONN_UDP:
-    *port = conn->pcb.udp->local_port;
-    break;
-#endif /* LWIP_UDP */
-#if LWIP_TCP
-  case NETCONN_TCP:
-    *port = conn->pcb.tcp->local_port;
-    break;
-#endif /* LWIP_TCP */
-  }
-  return ERR_OK;
+  return conn->err;
 }
 
 /**
@@ -346,7 +285,6 @@ netconn_disconnect(struct netconn *conn)
   msg.msg.conn = conn;
   TCPIP_APIMSG(&msg);
   return conn->err;
-
 }
 
 /**
@@ -575,7 +513,6 @@ netconn_write(struct netconn *conn, const void *dataptr, int size, u8_t apiflags
      but if it is, this is done inside api_msg.c:do_write(), so we can use the
      non-blocking version here. */
   TCPIP_APIMSG(&msg);
-
   return conn->err;
 }
 
