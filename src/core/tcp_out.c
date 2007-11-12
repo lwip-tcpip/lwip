@@ -69,7 +69,7 @@ err_t
 tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags)
 {
   /* no data, no length, flags, copy=1, no optdata, no optdatalen */
-  return tcp_enqueue(pcb, NULL, 0, flags, 1, NULL, 0);
+  return tcp_enqueue(pcb, NULL, 0, flags, TCP_WRITE_FLAG_COPY, NULL, 0);
 }
 
 /**
@@ -551,7 +551,7 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
-  return ERR_OK;
+ return ERR_OK;
 }
 
 /**
