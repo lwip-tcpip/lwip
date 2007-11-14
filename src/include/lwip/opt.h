@@ -547,6 +547,19 @@
 #endif
 
 /*
+   ----------------------------------
+   ---------- DNS options -----------
+   ----------------------------------
+*/
+/**
+ * LWIP_DNS==1: Turn on DNS module. UDP must be available for DNS
+ * transport.
+ */
+#ifndef LWIP_DNS
+#define LWIP_DNS                        0
+#endif
+
+/*
    ---------------------------------
    ---------- UDP options ----------
    ---------------------------------
@@ -1513,6 +1526,13 @@
  */
 #ifndef SNMP_MIB_DEBUG
 #define SNMP_MIB_DEBUG                  LWIP_DBG_OFF
+#endif
+
+/**
+ * DNS_DEBUG: Enable debugging for DNS.
+ */
+#ifndef DNS_DEBUG
+#define DNS_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #endif /* __LWIP_OPT_H__ */

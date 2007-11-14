@@ -52,6 +52,7 @@
 #include "lwip/tcp.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
+#include "lwip/dns.h"
 #include "netif/etharp.h"
 
 /* Compile-time sanity checks for configuration errors.
@@ -74,6 +75,9 @@
 #endif
 #if (!LWIP_UDP && LWIP_IGMP)
   #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
+#if (!LWIP_UDP && LWIP_DNS)
+  #error "If you want to use DNS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (LWIP_ARP && (ARP_TABLE_SIZE > 0x7f))
   #error "If you want to use ARP, ARP_TABLE_SIZE must fit in an s8_t, so, you have to reduce it in your lwipopts.h"
@@ -136,7 +140,7 @@
   #error "One and exactly one of LWIP_EVENT_API and LWIP_CALLBACK_API has to be enabled in lwipopts.h"
 #endif
 /* There must be sufficient timeouts, taking into account requirements of the subsystems. */
-#if ((NO_SYS==0) && (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_PPP)))
+#if ((NO_SYS==0) && (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + LWIP_PPP)))
   #error "MEMP_NUM_SYS_TIMEOUT is too low to accomodate all required timeouts"
 #endif
 #if (IP_REASSEMBLY && (MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS))
@@ -233,4 +237,7 @@ lwip_init(void)
 #if LWIP_IGMP
   igmp_init();
 #endif /* LWIP_IGMP */
+#if LWIP_DNS
+  dns_init();
+#endif /* LWIP_DNS */
 }

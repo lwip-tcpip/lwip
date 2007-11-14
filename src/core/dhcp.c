@@ -81,6 +81,7 @@
 #include "lwip/sys.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
+#include "lwip/dns.h"
 #include "netif/etharp.h"
 
 #include <string.h>
@@ -517,6 +518,9 @@ static void dhcp_handle_ack(struct netif *netif)
       dhcp->dns_count = DHCP_MAX_DNS;
     for (n = 0; n < dhcp->dns_count; n++) {
       dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2 + n * 4]));
+#if LWIP_DNS
+      dns_setserver( n, (struct ip_addr *)(&(dhcp->offered_dns_addr[n].addr)));
+#endif /* LWIP_DNS */
     }
   }
 }

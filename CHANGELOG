@@ -19,6 +19,15 @@ HISTORY
 
   ++ New features:
 
+  2007-11-15 Jim Pettinato, Frédéric Bernon
+  * opt.h, init.c, tcpip.c, dhcp.c, dns.h, dns.c: add DNS client for simple name
+    requests with RAW api interface. Initialization is done in lwip_init() with
+    build time options. DNS timer is added in tcpip_thread context. DHCP can set
+    DNS server ip addresses when options are received. You need to set LWIP_DNS=1
+    in your lwipopts.h file (LWIP_DNS=0 in opt.h). DNS_DEBUG can be set to get
+    some traces with LWIP_DEBUGF. Sanity check have been added. There is a "todo"
+    list with points to improve.
+
   2007-11-06 Simon Goldschmidt
   * opt.h, mib2.c: Patch #6215: added ifAdminStatus write support (if explicitly
     enabled by defining SNMP_SAFE_REQUESTS to 0); added code to check link status
