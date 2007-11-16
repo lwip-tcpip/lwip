@@ -96,6 +96,13 @@ static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len
 static void lwip_getsockopt_internal(void *arg);
 static void lwip_setsockopt_internal(void *arg);
 
+#if LWIP_DNS
+static struct hostent s_hostent;
+static char *s_aliases;
+static struct ip_addr s_hostent_addr;
+static struct ip_addr *s_phostent_addr;
+#endif /* LWIP_DNS */
+
 static const int err_to_errno_table[] = {
   0,             /* ERR_OK       0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM     -1      Out of memory error.     */
@@ -1794,5 +1801,40 @@ lwip_ioctl(int s, long cmd, void *argp)
     return -1;
   } /* switch (cmd) */
 }
+
+#if LWIP_DNS
+static void
+lwip_fill_hostent(struct hostent *he, char *name, struct ip_addr **addr, char **aliases)
+{
+  he->h_name = name;
+  he->h_aliases = aliases;
+  he->h_addrtype = AF_INET;
+  he->h_length = sizeof(struct ip_addr);
+  he->h_addr_list = (char**)addr;
+}
+
+
+struct hostent*
+gethostbyname(const char *name)
+{
+  err_t err;
+  struct ip_addr addr;
+
+  err = netconn_gethostbyname(name, &addr);
+  if (err != ERR_OK) {
+    return NULL;
+  }
+
+  s_hostent_addr = addr;
+  s_phostent_addr = &s_hostent_addr;
+  s_hostent.h_name = (char*)name;
+  s_hostent.h_aliases = &s_aliases;
+  s_hostent.h_addrtype = AF_INET;
+  s_hostent.h_length = sizeof(struct ip_addr);
+  s_hostent.h_addr_list = (char**)&s_phostent_addr;
+
+  return &s_hostent;
+}
+#endif /* LWIP_DNS*/
 
 #endif /* LWIP_SOCKET */

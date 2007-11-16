@@ -20,8 +20,9 @@ HISTORY
   ++ New features:
 
   2007-11-16 Simon Goldschmidt
-  * api.h, api_msg.h, api_lib.c, api_msg.c: Added sequential dns resolver
-    function for netconn api (netconn_gethostbyname).  
+  * api.h, api_msg.h, api_lib.c, api_msg.c, socket.h, socket.c: Added sequential
+    dns resolver function for netconn api (netconn_gethostbyname) and socket api
+    (gethostbyname).
 
   2007-11-15 Jim Pettinato, Frédéric Bernon
   * opt.h, init.c, tcpip.c, dhcp.c, dns.h, dns.c: add DNS client for simple name

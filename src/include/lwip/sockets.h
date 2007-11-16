@@ -60,6 +60,19 @@ struct sockaddr {
   char sa_data[14];
 };
 
+#if LWIP_DNS
+struct hostent {
+    char  *h_name;      /* Official name of the host. */
+    char **h_aliases;   /* A pointer to an array of pointers to alternative host names,
+                           terminated by a null pointer. */
+    int    h_addrtype;  /* Address type. */
+    int    h_length;    /* The length, in bytes, of the address. */
+    char **h_addr_list; /* A pointer to an array of pointers to network addresses (in
+                           network byte order) for the host, terminated by a null pointer. */
+#define h_addr h_addr_list[0] /* for backward compatibility */
+};
+#endif /* LWIP_DNS */
+
 #ifndef socklen_t
 #  define socklen_t u32_t
 #endif
@@ -299,6 +312,10 @@ int lwip_write(int s, const void *dataptr, int size);
 int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                 struct timeval *timeout);
 int lwip_ioctl(int s, long cmd, void *argp);
+
+#if LWIP_DNS
+struct hostent *gethostbyname(const char *name);
+#endif /* LWIP_DNS */
 
 #if LWIP_COMPAT_SOCKETS
 #define accept(a,b,c)         lwip_accept(a,b,c)
