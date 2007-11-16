@@ -20,6 +20,12 @@ HISTORY
   ++ New features:
 
   2007-11-16 Simon Goldschmidt
+  * new files: ipv4/inet.c, ipv4/inet_chksum.c, ipv6/inet6.c
+    removed files: core/inet.c, core/inet6.c
+    Moved inet files into ipv4/ipv6 directory; splitted inet.c/inet.h into
+    inet and chksum part; changed includes in all lwIP files as appropriate
+
+  2007-11-16 Simon Goldschmidt
   * api.h, api_msg.h, api_lib.c, api_msg.c, socket.h, socket.c: Added sequential
     dns resolver function for netconn api (netconn_gethostbyname) and socket api
     (gethostbyname).

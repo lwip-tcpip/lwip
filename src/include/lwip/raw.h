@@ -39,6 +39,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/inet.h"
 #include "lwip/ip.h"
+#include "lwip/ip_addr.h"
 
 #ifdef __cplusplus
 extern "C" {

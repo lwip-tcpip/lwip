@@ -50,12 +50,13 @@
 
 #if LWIP_UDP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/udp.h"
 #include "lwip/def.h"
 #include "lwip/memp.h"
 #include "lwip/inet.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
-#include "lwip/udp.h"
 #include "lwip/icmp.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"

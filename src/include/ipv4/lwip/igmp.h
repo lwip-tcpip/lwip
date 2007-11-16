@@ -36,7 +36,9 @@
 #define __LWIP_IGMP_H__
 
 #include "lwip/opt.h"
-#include "lwip/inet.h"
+#include "lwip/ip_addr.h"
+#include "lwip/netif.h"
+#include "lwip/pbuf.h"
 
 #if LWIP_IGMP /* don't build if not configured for use in lwipopts.h */
 

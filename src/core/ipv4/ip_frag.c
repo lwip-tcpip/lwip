@@ -39,8 +39,10 @@
  */
 
 #include "lwip/opt.h"
-#include "lwip/ip.h"
 #include "lwip/ip_frag.h"
+#include "lwip/ip.h"
+#include "lwip/inet.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
 #include "lwip/stats.h"

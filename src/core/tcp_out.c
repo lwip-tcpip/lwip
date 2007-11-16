@@ -42,6 +42,7 @@
 
 #if LWIP_TCP /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/tcp.h"
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
@@ -49,7 +50,7 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/inet.h"
-#include "lwip/tcp.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 
