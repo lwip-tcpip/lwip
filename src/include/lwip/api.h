@@ -181,6 +181,9 @@ err_t             netconn_join_leave_group (struct netconn *conn,
                                             struct ip_addr *interface,
                                             enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
+#if LWIP_DNS
+err_t             netconn_gethostbyname(const char *name, struct ip_addr *addr);
+#endif /* LWIP_DNS */
 
 #define netconn_err(conn)          ((conn)->err)
 #define netconn_recv_bufsize(conn) ((conn)->recv_bufsize)

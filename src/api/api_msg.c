@@ -50,6 +50,7 @@
 #include "lwip/memp.h"
 #include "lwip/tcpip.h"
 #include "lwip/igmp.h"
+#include "lwip/dns.h"
 
 /* forward declarations */
 #if LWIP_TCP
@@ -988,6 +989,59 @@ do_join_leave_group(struct api_msg_msg *msg)
   TCPIP_APIMSG_ACK(msg);
 }
 #endif /* LWIP_IGMP */
+
+#if LWIP_DNS
+/**
+ * Callback function that is called when DNS name is resolved
+ * (or on timeout).
+ */
+static void
+do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
+{
+  struct dns_api_msg *msg = (struct dns_api_msg*)arg;
+
+  LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
+
+  if (ipaddr == NULL) {
+    /* timeout or memory error */
+    *msg->err = ERR_VAL;
+  } else {
+    /* address was resolved */
+    *msg->err = ERR_OK;
+    *msg->addr = *ipaddr;
+  }
+  /* wake up the application task waiting in netconn_gethostbyname */
+  sys_sem_signal(msg->sem);
+}
+
+/**
+ * Execute a DNS query
+ * Called from netconn_gethostbyname
+ *
+ * @param msg the dns_api_msg pointing to the query
+ */
+void
+do_gethostbyname(void *arg)
+{
+  DNS_RESULT res;
+  struct dns_api_msg *msg = (struct dns_api_msg*)arg;
+
+  res = dns_gethostbyname(msg->name, msg->addr, do_dns_found, msg);
+  if (res != DNS_QUERY_QUEUED) {
+    /* If not queued, return to app thread directly */
+    if (res == DNS_QUERY_INVALID) {
+      /* some error occurred */
+      *msg->err = ERR_ARG;
+    } else if (res == DNS_COMPLETE) {
+      /* name was already in octet notation or cached */
+      *msg->err = ERR_OK;
+    }
+    /* on error or immediate success, wake up the application
+     * task waiting in netconn_gethostbyname */
+    sys_sem_signal(msg->sem);
+  }
+}
+#endif /* LWIP_DNS */
 
 #endif /* LWIP_NETCONN */
 

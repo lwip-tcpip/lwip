@@ -566,4 +566,40 @@ netconn_join_leave_group(struct netconn *conn,
 }
 #endif /* LWIP_IGMP */
 
+#if LWIP_DNS
+/**
+ * Execute a DNS query, only one IP address is returned
+ *
+ * @param name a string representation of the DNS host name to query
+ * @param addr a preallocated struct ip_addr where to store the resolved IP address
+ * @return an error returned by the dns module, ERR_OK if resolving succeeded
+ */
+err_t
+netconn_gethostbyname(const char *name, struct ip_addr *addr)
+{
+  struct dns_api_msg msg;
+  err_t err;
+  sys_sem_t sem;
+
+  LWIP_ERROR("netconn_gethostbyname: invalid name", (name != NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_gethostbyname: invalid addr", (addr != NULL), return ERR_ARG;);
+
+  sem = sys_sem_new(0);
+  if (sem == SYS_SEM_NULL) {
+    return ERR_MEM;
+  }
+
+  msg.name = name;
+  msg.addr = addr;
+  msg.err = &err;
+  msg.sem = sem;
+
+  tcpip_callback(do_gethostbyname, &msg);
+  sys_sem_wait(sem);
+  sys_sem_free(sem);
+
+  return err;
+}
+#endif /* LWIP_DNS*/
+
 #endif /* LWIP_NETCONN */

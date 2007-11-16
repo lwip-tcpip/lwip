@@ -37,6 +37,8 @@
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/ip_addr.h"
+#include "lwip/err.h"
+#include "lwip/sys.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -86,6 +88,15 @@ struct api_msg {
   struct api_msg_msg msg;
 };
 
+#if LWIP_DNS
+struct dns_api_msg {
+  const char *name;
+  struct ip_addr *addr;
+  sys_sem_t sem;
+  err_t *err;
+};
+#endif /* LWIP_DNS */
+
 void do_newconn         ( struct api_msg_msg *msg);
 void do_delconn         ( struct api_msg_msg *msg);
 void do_bind            ( struct api_msg_msg *msg);
@@ -100,6 +111,10 @@ void do_close           ( struct api_msg_msg *msg);
 #if LWIP_IGMP
 void do_join_leave_group( struct api_msg_msg *msg);
 #endif /* LWIP_IGMP */
+
+#if LWIP_DNS
+void do_gethostbyname(void *arg);
+#endif /* LWIP_DNS */
 
 #ifdef __cplusplus
 }
