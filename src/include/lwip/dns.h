@@ -63,11 +63,11 @@ void dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
 u32_t dns_getserver(u8_t numdns);
 
 /* returns IP for host 'name' only if already in table */
-u32_t dns_lookup(char *name);
+u32_t dns_lookup(const char *name);
 
 /* resolove a host 'name' in ip address */
-DNS_RESULT dns_gethostbyname(char *hostName, struct ip_addr *addr, 
-                             void (*found)(char *name, struct ip_addr *ipaddr, void *arg),
+DNS_RESULT dns_gethostbyname(const char *hostName, struct ip_addr *addr, 
+                             void (*found)(const char *name, struct ip_addr *ipaddr, void *arg),
                              void *arg);
 
 /* dns_gethostbyname() - Returns immediately with one of DNS_RESULT return codes

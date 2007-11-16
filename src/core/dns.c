@@ -209,7 +209,7 @@ struct dns_table_entry {
   u8_t err;
   char name[DNS_MAX_NAME_LENGTH];
   struct ip_addr ipaddr;
-  void (* found)(char *name, struct ip_addr *ipaddr, void *arg); /* pointer to callback on DNS query done */
+  void (* found)(const char *name, struct ip_addr *ipaddr, void *arg); /* pointer to callback on DNS query done */
   void *arg;
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -322,7 +322,7 @@ dns_tmr(void)
  * hostnames.
  */
 u32_t
-dns_lookup(char *name)
+dns_lookup(const char *name)
 {
   u8_t i;
 
@@ -364,11 +364,12 @@ dns_parse_name(unsigned char *query)
  * dns_send
  */
 static err_t
-dns_send( char* name, u8_t id)
+dns_send(const char* name, u8_t id)
 { 
   struct dns_hdr *hdr;
   struct pbuf *p;
-  char *query, *nptr, *pHostname;
+  char *query, *nptr;
+  const char *pHostname;
   u8_t n;
 
   LWIP_DEBUGF(DNS_DEBUG, ("dns_send: \"%s\": request\n", name));
@@ -560,7 +561,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
  * param name - The hostname that is to be queried.
  */
 static void
-dns_query(char *name, void (*found)(char *name, struct ip_addr *addr, void *arg), void *arg)
+dns_query(const char *name, void (*found)(const char *name, struct ip_addr *addr, void *arg), void *arg)
 {
   u8_t i;
   u8_t lseq, lseqi;
@@ -603,8 +604,8 @@ dns_query(char *name, void (*found)(char *name, struct ip_addr *addr, void *arg)
 /**
  * NON-BLOCKING callback version for use with raw API
  */
-DNS_RESULT dns_gethostbyname(char *hostname, struct ip_addr *addr, 
-                             void (*found)(char *name, struct ip_addr *ipaddr, void *arg),
+DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr, 
+                             void (*found)(const char *name, struct ip_addr *ipaddr, void *arg),
                              void *arg
                              )
 {
