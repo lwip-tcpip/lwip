@@ -59,16 +59,16 @@
  * must be implemented by the module that uses the resolver).
  */
 
-/** @todo: define good default values (rfc compliance) */
-/** @todo: secondary server support */
-/** @todo: compressed answer support */
-/** @todo: improve answer parsing, more checkings... */
-/** @todo: possible alignment problems to access to dns_answer fields? */
-
 /*-----------------------------------------------------------------------------
  * RFC 1035 - Domain names - implementation and specification
  * RFC 2181 - Clarifications to the DNS Specification
  *----------------------------------------------------------------------------*/
+
+/** @todo: define good default values (rfc compliance) */
+/** @todo: secondary server support */
+/** @todo: pbuf chain not yet supported */
+/** @todo: improve answer parsing, more checkings... */
+/** @todo: possible alignment problems to access to dns_answer fields? */
 
 /*-----------------------------------------------------------------------------
  * Includes
@@ -350,11 +350,17 @@ dns_parse_name(unsigned char *query)
 
   do {
     n = *query++;
-    
-    while(n > 0) {
-      ++query;
-      --n;
-    };
+    /** @see RFC 1035 - 4.1.4. Message compression */
+    if ((n & 0xc0)==0xc0) {
+      /* Compressed name */
+      break;
+    } else {
+      /* Not compressed name */
+      while(n > 0) {
+        ++query;
+        --n;
+      };
+    }
   } while(*query != 0);
 
   return query + 1;
@@ -489,6 +495,8 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
   LWIP_ASSERT("dns_recv: pbuf chain not yet supported", (p->next==NULL));
   
   hdr = (struct dns_hdr *)p->payload;
+  
+  /** @todo: check RFC1035 - 7.3. Processing responses */
 
   /* The ID in the DNS header should be our entry into the name table. */
   i = htons(hdr->id);
@@ -499,8 +507,13 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
     pEntry->ttl   = DNS_TTL_ENTRY;
     pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
 
+    /* We only care about the question(s) and the answers. The authrr
+       and the extrarr are simply discarded. */
+    nquestions = htons(hdr->numquestions);
+    nanswers   = htons(hdr->numanswers);
+
     /* Check for error. If so, call callback to inform. */
-    if(pEntry->err != 0) {
+    if ((pEntry->err != 0) || (nquestions != 1)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
       /* call specified callback function if provided */
       if (pEntry->found)
@@ -511,25 +524,13 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
       return;
     }
 
-    /* We only care about the question(s) and the answers. The authrr
-       and the extrarr are simply discarded. */
-    nquestions = htons(hdr->numquestions);
-    nanswers   = htons(hdr->numanswers);
-
     /* Skip the name in the "question" part. This should really be checked
        agains the name in the question, to be sure that they match. */
     pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + 4/*type(2)+class(2)*/;
 
     while(nanswers > 0) {
-      /* The first byte in the answer resource record determines if it
-         is a compressed record or a normal one. */
-      if(*pHostname & 0xc0) {
-        /* Compressed name. */
-        pHostname +=2;
-      } else {
-        /* Not compressed name. */
-        pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
-      }
+      /* skip answer resource record's host name */
+      pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
       /* TODO: isn't it any problem to access to dns_answer fields since pHostname's length can be unaligned? */
       ans = (struct dns_answer *)pHostname;
