@@ -522,6 +522,9 @@ static void dhcp_handle_ack(struct netif *netif)
       dns_setserver( n, (struct ip_addr *)(&(dhcp->offered_dns_addr[n].addr)));
 #endif /* LWIP_DNS */
     }
+#if LWIP_DNS
+    dns_setserver( n, &ip_addr_any);
+#endif /* LWIP_DNS */
   }
 }
 

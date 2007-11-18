@@ -40,7 +40,12 @@
 
 /** DNS timer period */
 #ifndef DNS_TMR_INTERVAL
-#define DNS_TMR_INTERVAL 1000
+#define DNS_TMR_INTERVAL          1000
+#endif
+
+/** The maximum of DNS servers */
+#ifndef DNS_MAX_SERVERS
+#define DNS_MAX_SERVERS           2
 #endif
 
 /** DNS message max. size */
@@ -89,10 +94,7 @@ void  dns_tmr(void);
 void dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
 
 /* returns configured DNS server IP address */
-u32_t dns_getserver(u8_t numdns);
-
-/* returns IP for host 'name' only if already in table */
-u32_t dns_lookup(const char *name);
+struct ip_addr dns_getserver(u8_t numdns);
 
 /* resolves a host 'name' in ip address */
 DNS_RESULT dns_gethostbyname(const char *hostName, struct ip_addr *addr, 

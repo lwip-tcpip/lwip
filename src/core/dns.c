@@ -65,7 +65,6 @@
  *----------------------------------------------------------------------------*/
 
 /** @todo: define good default values (rfc compliance) */
-/** @todo: secondary server support */
 /** @todo: pbuf chain not yet supported */
 /** @todo: improve answer parsing, more checkings... */
 
@@ -104,7 +103,7 @@
 
 /* The maximum number of retries when asking for a name, before "timeout". */
 #ifndef DNS_MAX_RETRIES
-#define DNS_MAX_RETRIES           8
+#define DNS_MAX_RETRIES           4
 #endif 
 
 /* DNS entry time to live (in DNS_TMR_INTERVAL ticks) */
@@ -191,6 +190,7 @@ PACK_STRUCT_BEGIN
 /** DNS table entry */
 struct dns_table_entry {
   u8_t state;
+  u8_t numdns;
   u8_t tmr;
   u8_t retries;
   u8_t ttl;
@@ -218,6 +218,7 @@ static void dns_check_entries(void);
 static struct udp_pcb        *dns_pcb;
 static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static u8_t                   dns_seqno;
+static struct ip_addr         dns_servers[DNS_MAX_SERVERS];
 
 /**
  * Initialize the resolver and configure which DNS server to use for queries.
@@ -249,7 +250,7 @@ dns_init()
       udp_recv(dns_pcb, dns_recv, NULL);
       
       /* initialize default DNS primary server */
-      dns_setserver(0, &dnsserver);
+        dns_setserver(0, &dnsserver);
     }
   }
   return ERR_OK;
@@ -264,9 +265,8 @@ dns_init()
 void
 dns_setserver(u8_t numdns, struct ip_addr *dnsserver)
 {
-  LWIP_UNUSED_ARG(numdns);
-  if ((dns_pcb != NULL) && (dnsserver != NULL) && (dnsserver->addr !=0 )) {
-    udp_connect( dns_pcb, dnsserver, DNS_SERVER_PORT);
+  if ((numdns<DNS_MAX_SERVERS) && (dns_pcb != NULL) && (dnsserver != NULL) && (dnsserver->addr !=0 )) {
+    dns_servers[numdns] = (*dnsserver);
   }
 }
 
@@ -276,11 +276,10 @@ dns_setserver(u8_t numdns, struct ip_addr *dnsserver)
  * the currently configured DNS server or NULL if no DNS server has
  * been configured.
  */
-u32_t
+struct ip_addr
 dns_getserver(u8_t numdns)
 {
-  LWIP_UNUSED_ARG(numdns);
-  return ((dns_pcb != NULL)?dns_pcb->remote_ip.addr:0);
+  return (((numdns<DNS_MAX_SERVERS) && (dns_pcb != NULL))?dns_servers[numdns]:(*IP_ADDR_ANY));
 }
 
 /**
@@ -356,7 +355,7 @@ dns_parse_name(unsigned char *query)
  * dns_send
  */
 static err_t
-dns_send(const char* name, u8_t id)
+dns_send(u8_t numdns, const char* name, u8_t id)
 { 
   struct dns_hdr *hdr;
   struct dns_query *qry;
@@ -365,7 +364,7 @@ dns_send(const char* name, u8_t id)
   const char *pHostname;
   u8_t n;
 
-  LWIP_DEBUGF(DNS_DEBUG, ("dns_send: \"%s\": request\n", name));
+  LWIP_DEBUGF(DNS_DEBUG, ("dns_send: dns_servers[%"U16_F"] \"%s\": request\n", (u16_t)(numdns), name));
 
   /* if here, we have either a new query or a retry on a previous query to process */
   p = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dns_hdr)+DNS_MAX_NAME_LENGTH+sizeof(struct dns_query), PBUF_RAM);
@@ -403,7 +402,7 @@ dns_send(const char* name, u8_t id)
     pbuf_realloc(p, (query+sizeof(struct dns_query))-((char*)(p->payload)));
 
     /* send dns packet */
-    udp_send(dns_pcb, p);
+    udp_sendto(dns_pcb, p, dns_servers+numdns, DNS_SERVER_PORT);
 
     /* free pbuf */
     pbuf_free(p);
@@ -433,14 +432,22 @@ dns_check_entries(void)
         if (pEntry->state == DNS_STATE_ASKING) {
           if (--pEntry->tmr == 0) {
             if (++pEntry->retries == DNS_MAX_RETRIES) {
-              LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entries: \"%s\": timeout\n", pEntry->name));
-              /* call specified callback function if provided */
-              if (pEntry->found)
-                (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
-              /* flush this entry */
-              pEntry->state   = DNS_STATE_UNUSED;
-              pEntry->found   = NULL;
-              continue;
+              if ((pEntry->numdns+1<DNS_MAX_SERVERS) && (dns_servers[pEntry->numdns+1].addr!=0)) {
+                /* change of server */
+                pEntry->numdns++;
+                pEntry->tmr     = 1;
+                pEntry->retries = 0;
+                continue;
+              } else {
+                LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entries: \"%s\": timeout\n", pEntry->name));
+                /* call specified callback function if provided */
+                if (pEntry->found)
+                  (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
+                /* flush this entry */
+                pEntry->state   = DNS_STATE_UNUSED;
+                pEntry->found   = NULL;
+                continue;
+              }
             }
             /* wait longer for the next retry */
             pEntry->tmr = pEntry->retries;
@@ -450,11 +457,12 @@ dns_check_entries(void)
           }
         } else {
           pEntry->state   = DNS_STATE_ASKING;
+          pEntry->numdns  = 0;
           pEntry->tmr     = 1;
           pEntry->retries = 0;
         }
         /* send DNS packet for this entry */
-        dns_send(pEntry->name, i);
+        dns_send(pEntry->numdns, pEntry->name, i);
         break;
       }
 
@@ -485,65 +493,85 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
   struct dns_table_entry *pEntry;
   u8_t nquestions, nanswers;
 
-  LWIP_ASSERT("dns_recv: pbuf chain not yet supported", (p->next==NULL));
-  
-  hdr = (struct dns_hdr *)p->payload;
-  
+  /* is the dns message in a pbuf chain ? */
+  if (p->next != NULL) {
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf chain not yet supported\n"));
+    pbuf_free(p);
+    return;
+  }
+
+  /* is the dns message big enought ? */
+  if (p->tot_len < (sizeof(struct dns_hdr)+sizeof(struct dns_query)+sizeof(struct dns_answer))) {
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
+    pbuf_free(p);
+    return;
+  }
+
   /** @todo: check RFC1035 - 7.3. Processing responses */
 
   /* The ID in the DNS header should be our entry into the name table. */
+  hdr = (struct dns_hdr *)p->payload;
   i = htons(hdr->id);
-  pEntry = &dns_table[i];
-  if( (i < DNS_TABLE_SIZE) && (pEntry->state == DNS_STATE_ASKING) ) {
-    /* This entry is now completed. */
-    pEntry->state = DNS_STATE_DONE;
-    pEntry->ttl   = DNS_TTL_ENTRY;
-    pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
+  if(i < DNS_TABLE_SIZE) {
+    pEntry = &dns_table[i];
+    if(pEntry->state == DNS_STATE_ASKING) {
+      /* This entry is now completed. */
+      pEntry->state = DNS_STATE_DONE;
+      pEntry->ttl   = DNS_TTL_ENTRY;
+      pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
 
-    /* We only care about the question(s) and the answers. The authrr
-       and the extrarr are simply discarded. */
-    nquestions = htons(hdr->numquestions);
-    nanswers   = htons(hdr->numanswers);
+      /* We only care about the question(s) and the answers. The authrr
+         and the extrarr are simply discarded. */
+      nquestions = htons(hdr->numquestions);
+      nanswers   = htons(hdr->numanswers);
 
-    /* Check for error. If so, call callback to inform. */
-    if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
-      LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
-      /* call specified callback function if provided */
-      if (pEntry->found)
-        (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
-      /* flush this entry */
-      pEntry->state   = DNS_STATE_UNUSED;
-      pEntry->found   = NULL;
-      return;
-    }
-
-    /* Skip the name in the "question" part. This should really be checked
-       agains the name in the question, to be sure that they match. */
-    pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
-
-    while(nanswers > 0) {
-      /* skip answer resource record's host name */
-      pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
-
-      /* Check for IP address type and Internet class. Others are discarded. */
-      ans = (struct dns_answer *)pHostname;
-      if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
-        /* read the IP address after answer resource record's header */
-        pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
-        LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
-        ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
-        LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+      /* Check for error. If so, call callback to inform. */
+      if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
+        LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
         /* call specified callback function if provided */
         if (pEntry->found)
-          (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
+          (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
+        /* flush this entry */
+        pEntry->state   = DNS_STATE_UNUSED;
+        pEntry->found   = NULL;
+        /* free pbuf */
+        pbuf_free(p);
         return;
-      } else {
-        pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
       }
-      --nanswers;
+
+      /* Skip the name in the "question" part. This should really be checked
+         agains the name in the question, to be sure that they match. */
+      pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
+
+      while(nanswers > 0) {
+        /* skip answer resource record's host name */
+        pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
+
+        /* Check for IP address type and Internet class. Others are discarded. */
+        ans = (struct dns_answer *)pHostname;
+        if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
+          /* read the IP address after answer resource record's header */
+          pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
+          ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
+          LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+          /* call specified callback function if provided */
+          if (pEntry->found)
+            (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
+          /* free pbuf */
+          pbuf_free(p);
+          return;
+        } else {
+          pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
+        }
+        --nanswers;
+      }
+      LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", pEntry->name));
     }
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", pEntry->name));
   }
+
+  /* free pbuf */
+  pbuf_free(p);
 }
 
 /**
@@ -584,11 +612,11 @@ dns_query(const char *name, void (*found)(const char *name, struct ip_addr *addr
   }
 
   /* fill the entry */
-  strcpy(pEntry->name, name);
-  pEntry->found = found;
-  pEntry->arg   = arg;
-  pEntry->state = DNS_STATE_NEW;
-  pEntry->seqno = dns_seqno++;
+  pEntry->state  = DNS_STATE_NEW;
+  pEntry->seqno  = dns_seqno++;
+  pEntry->found  = found;
+  pEntry->arg    = arg;
+  strcpy( pEntry->name, name);
 }
 
 /**
