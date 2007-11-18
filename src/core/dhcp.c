@@ -523,7 +523,7 @@ static void dhcp_handle_ack(struct netif *netif)
 #endif /* LWIP_DNS */
     }
 #if LWIP_DNS
-    dns_setserver( n, &ip_addr_any);
+    dns_setserver( n, (struct ip_addr *)(&ip_addr_any));
 #endif /* LWIP_DNS */
   }
 }

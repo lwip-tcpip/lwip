@@ -65,7 +65,6 @@
  *----------------------------------------------------------------------------*/
 
 /** @todo: define good default values (rfc compliance) */
-/** @todo: pbuf chain not yet supported */
 /** @todo: improve answer parsing, more checkings... */
 
 /*-----------------------------------------------------------------------------
@@ -216,9 +215,10 @@ static void dns_check_entries(void);
 
 /* DNS variables */
 static struct udp_pcb        *dns_pcb;
-static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static u8_t                   dns_seqno;
+static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static struct ip_addr         dns_servers[DNS_MAX_SERVERS];
+static u8_t                   dns_payload[DNS_MSG_SIZE];
 
 /**
  * Initialize the resolver and configure which DNS server to use for queries.
@@ -493,9 +493,9 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
   struct dns_table_entry *pEntry;
   u8_t nquestions, nanswers;
 
-  /* is the dns message in a pbuf chain ? */
-  if (p->next != NULL) {
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf chain not yet supported\n"));
+  /* is the dns message too big ? */
+  if (p->tot_len > DNS_MSG_SIZE) {
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too big\n"));
     pbuf_free(p);
     return;
   }
@@ -508,68 +508,70 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
   }
 
   /** @todo: check RFC1035 - 7.3. Processing responses */
+ 
+  /* copy dns payload inside static buffer for processing */ 
+  if (pbuf_copy_partial(p, dns_payload, p->tot_len, 0) == p->tot_len) {
+    /* The ID in the DNS header should be our entry into the name table. */
+    hdr = (struct dns_hdr *)dns_payload;
+    i = htons(hdr->id);
+    if(i < DNS_TABLE_SIZE) {
+      pEntry = &dns_table[i];
+      if(pEntry->state == DNS_STATE_ASKING) {
+        /* This entry is now completed. */
+        pEntry->state = DNS_STATE_DONE;
+        pEntry->ttl   = DNS_TTL_ENTRY;
+        pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
 
-  /* The ID in the DNS header should be our entry into the name table. */
-  hdr = (struct dns_hdr *)p->payload;
-  i = htons(hdr->id);
-  if(i < DNS_TABLE_SIZE) {
-    pEntry = &dns_table[i];
-    if(pEntry->state == DNS_STATE_ASKING) {
-      /* This entry is now completed. */
-      pEntry->state = DNS_STATE_DONE;
-      pEntry->ttl   = DNS_TTL_ENTRY;
-      pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
+        /* We only care about the question(s) and the answers. The authrr
+           and the extrarr are simply discarded. */
+        nquestions = htons(hdr->numquestions);
+        nanswers   = htons(hdr->numanswers);
 
-      /* We only care about the question(s) and the answers. The authrr
-         and the extrarr are simply discarded. */
-      nquestions = htons(hdr->numquestions);
-      nanswers   = htons(hdr->numanswers);
-
-      /* Check for error. If so, call callback to inform. */
-      if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
-        LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
-        /* call specified callback function if provided */
-        if (pEntry->found)
-          (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
-        /* flush this entry */
-        pEntry->state   = DNS_STATE_UNUSED;
-        pEntry->found   = NULL;
-        /* free pbuf */
-        pbuf_free(p);
-        return;
-      }
-
-      /* Skip the name in the "question" part. This should really be checked
-         agains the name in the question, to be sure that they match. */
-      pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
-
-      while(nanswers > 0) {
-        /* skip answer resource record's host name */
-        pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
-
-        /* Check for IP address type and Internet class. Others are discarded. */
-        ans = (struct dns_answer *)pHostname;
-        if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
-          /* read the IP address after answer resource record's header */
-          pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
-          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
-          ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
-          LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+        /* Check for error. If so, call callback to inform. */
+        if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
           /* call specified callback function if provided */
           if (pEntry->found)
-            (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
+            (*pEntry->found)(pEntry->name, NULL, pEntry->arg);
+          /* flush this entry */
+          pEntry->state   = DNS_STATE_UNUSED;
+          pEntry->found   = NULL;
           /* free pbuf */
           pbuf_free(p);
           return;
-        } else {
-          pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
         }
-        --nanswers;
+
+        /* Skip the name in the "question" part. This should really be checked
+           agains the name in the question, to be sure that they match. */
+        pHostname = (char *) dns_parse_name((unsigned char *)dns_payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
+
+        while(nanswers > 0) {
+          /* skip answer resource record's host name */
+          pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
+
+          /* Check for IP address type and Internet class. Others are discarded. */
+          ans = (struct dns_answer *)pHostname;
+          if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
+            /* read the IP address after answer resource record's header */
+            pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
+            LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
+            ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
+            LWIP_DEBUGF(DNS_DEBUG, ("\n"));
+            /* call specified callback function if provided */
+            if (pEntry->found)
+              (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
+            /* free pbuf */
+            pbuf_free(p);
+            return;
+          } else {
+            pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
+          }
+          --nanswers;
+        }
+        LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", pEntry->name));
       }
-      LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", pEntry->name));
     }
   }
-
   /* free pbuf */
   pbuf_free(p);
 }

@@ -194,10 +194,6 @@ lwip_sanity_check(void)
   if (TCP_WND < TCP_MSS)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
 #endif /* LWIP_TCP */
-#if LWIP_DNS
-  if (PBUF_POOL_BUFSIZE<(PBUF_LINK_HLEN+PBUF_IP_HLEN+PBUF_TRANSPORT_HLEN+DNS_MSG_SIZE))
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: UDP messages for DNS could need until 512 bytes\n"));
-#endif /* LWIP_DNS */
 }
 #else  /* LWIP_DEBUG */
 #define lwip_sanity_check()
