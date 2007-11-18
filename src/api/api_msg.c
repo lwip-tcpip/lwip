@@ -1029,13 +1029,13 @@ do_gethostbyname(void *arg)
   res = dns_gethostbyname(msg->name, msg->addr, do_dns_found, msg);
   if (res != DNS_QUERY_QUEUED) {
     /* If not queued, return to app thread directly */
-    if (res == DNS_QUERY_INVALID) {
-      /* some error occurred */
-      *msg->err = ERR_ARG;
-    } else if (res == DNS_COMPLETE) {
+    if (res == DNS_COMPLETE) {
       /* name was already in octet notation or cached */
       *msg->err = ERR_OK;
-    }
+    } else {
+      /* some error occurred */
+      *msg->err = ERR_ARG;
+    };
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
     sys_sem_signal(msg->sem);

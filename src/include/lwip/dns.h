@@ -43,6 +43,9 @@
 #define DNS_TMR_INTERVAL 1000
 #endif
 
+/** DNS message max. size */
+#define DNS_MSG_SIZE     512
+
 /* enumerated list of possible result values returned by dns_gethostname() */
 typedef enum dns_result {
   DNS_QUERY_INVALID,

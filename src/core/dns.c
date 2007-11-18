@@ -400,13 +400,13 @@ dns_send(const char* name, u8_t id)
 
     memcpy( query, dns_endquery, sizeof(dns_endquery));
 
-    // resize pbuf to the exact dns query
+    /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (query+sizeof(dns_endquery))-((char*)(p->payload)));
 
-    // send dns packet
+    /* send dns packet */
     udp_send(dns_pcb, p);
 
-    // free pbuf
+    /* free pbuf */
     pbuf_free(p);
 
     return ERR_OK;
@@ -485,6 +485,8 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
   struct dns_hdr *hdr;
   struct dns_table_entry *pEntry;
   u8_t nquestions, nanswers;
+
+  LWIP_ASSERT("dns_recv: pbuf chain not yet supported", (p->next==NULL));
   
   hdr = (struct dns_hdr *)p->payload;
 
@@ -514,7 +516,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
     nquestions = htons(hdr->numquestions);
     nanswers   = htons(hdr->numanswers);
 
-    /* Skip the name in the question. XXX: This should really be checked
+    /* Skip the name in the "question" part. This should really be checked
        agains the name in the question, to be sure that they match. */
     pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + 4/*type(2)+class(2)*/;
 
@@ -524,7 +526,6 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
       if(*pHostname & 0xc0) {
         /* Compressed name. */
         pHostname +=2;
-        /* printf("Compressed anwser\n");*/
       } else {
         /* Not compressed name. */
         pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
@@ -532,9 +533,6 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
 
       /* TODO: isn't it any problem to access to dns_answer fields since pHostname's length can be unaligned? */
       ans = (struct dns_answer *)pHostname;
-      /* printf("Answer: type %x, class %x, ttl %x, length %x\n",
-         htons(ans->type), htons(ans->class), (htons(ans->ttl[0])
-           << 16) | htons(ans->ttl[1]), htons(ans->len));*/
 
       /* Check for IP address type and Internet class. Others are discarded. */
       if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == 4/*IPv4 address*/) ) {
@@ -548,7 +546,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
           (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
         return;
       } else {
-        pHostname = pHostname + 10 + htons(ans->len);
+        pHostname = pHostname + 10 /*type(2)+class(2)+ttl(4)+len(2)*/ + htons(ans->len);
       }
       --nanswers;
     }

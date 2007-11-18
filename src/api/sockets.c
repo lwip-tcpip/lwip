@@ -1813,18 +1813,20 @@ lwip_fill_hostent(struct hostent *he, char *name, struct ip_addr **addr, char **
   he->h_addr_list = (char**)addr;
 }
 
-
 struct hostent*
-gethostbyname(const char *name)
+lwip_gethostbyname(const char *name)
 {
   err_t err;
   struct ip_addr addr;
 
+  /* query host IP address */
   err = netconn_gethostbyname(name, &addr);
   if (err != ERR_OK) {
+    LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
     return NULL;
   }
 
+  /* fill hostent */
   s_hostent_addr = addr;
   s_phostent_addr = &s_hostent_addr;
   s_hostent.h_name = (char*)name;
@@ -1832,6 +1834,29 @@ gethostbyname(const char *name)
   s_hostent.h_addrtype = AF_INET;
   s_hostent.h_length = sizeof(struct ip_addr);
   s_hostent.h_addr_list = (char**)&s_phostent_addr;
+
+#if DNS_DEBUG
+  /* dump hostent */
+  LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_name           == %s\n",      s_hostent.h_name));
+  LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases        == 0x%08lX\n",(u32_t)(s_hostent.h_aliases)));
+  if (s_hostent.h_aliases != NULL) {
+    u8_t idx;
+    for ( idx=0; s_hostent.h_aliases[idx]; idx++) {
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == 0x%08lX\n", idx, s_hostent.h_aliases[idx]));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %s\n",      idx, s_hostent.h_aliases[idx]));
+    }
+  }
+  LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addrtype       == %lu\n",    (u32_t)(s_hostent.h_addrtype)));
+  LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_length         == %lu\n",    (u32_t)(s_hostent.h_length)));
+  LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list      == 0x%08lX\n", s_hostent.h_addr_list));
+  if (s_hostent.h_addr_list != NULL) {
+    u8_t idx;
+    for ( idx=0; s_hostent.h_addr_list[idx]; idx++) {
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == 0x%08lX\n", idx, s_hostent.h_addr_list[idx]));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n",      idx, inet_ntoa(*((struct in_addr*)(s_hostent.h_addr_list[idx])))));
+    }
+  }
+#endif /* DNS_DEBUG */
 
   return &s_hostent;
 }
