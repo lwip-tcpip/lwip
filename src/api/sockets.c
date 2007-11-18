@@ -86,6 +86,14 @@ struct lwip_setgetsockopt_data {
   err_t err;
 };
 
+#if LWIP_DNS
+struct gethostbyname_r_helper {
+  struct ip_addr *addrs;
+  struct ip_addr addr;
+  char *aliases;
+};
+#endif /* LWIP_DNS */
+
 static struct lwip_socket sockets[NUM_SOCKETS];
 static struct lwip_select_cb *select_cb_list;
 
@@ -1859,6 +1867,62 @@ lwip_gethostbyname(const char *name)
 #endif /* DNS_DEBUG */
 
   return &s_hostent;
+}
+
+int
+lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
+                size_t buflen, struct hostent **result, int *h_errnop)
+{
+  err_t err;
+  struct gethostbyname_r_helper *h;
+  char *hostname;
+  size_t namelen;
+
+  if (result == NULL) {
+    /* not all arguments given */
+    return EINVAL;
+  }
+  /* first thing to do: set *result to nothing */
+  *result = NULL;
+  if ((name == NULL) || (ret == NULL) || (buf == 0)) {
+    /* not all arguments given */
+    return EINVAL;
+  }
+
+  namelen = strlen(name);
+  if (buflen < (sizeof(struct gethostbyname_r_helper) + namelen + 1 + (MEM_ALIGNMENT - 1))) {
+    /* buf can't hold the data needed + a copy of name */
+    return ERANGE;
+  }
+
+  h = (struct gethostbyname_r_helper*)LWIP_MEM_ALIGN(buf);
+  hostname = ((char*)h) + sizeof(struct gethostbyname_r_helper);
+
+  /* query host IP address */
+  err = netconn_gethostbyname(name, &(h->addr));
+  if (err != ERR_OK) {
+    LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
+    return ENSRNOTFOUND;
+  }
+
+  /* copy the hostname into buf */
+  memcpy(hostname, name, namelen);
+  hostname[namelen] = 0;
+
+  /* fill hostent */
+  h->addrs = &(h->addr);
+  h->aliases = NULL;
+  ret->h_name = (char*)hostname;
+  ret->h_aliases = &(h->aliases);
+  ret->h_addrtype = AF_INET;
+  ret->h_length = sizeof(struct ip_addr);
+  ret->h_addr_list = (char**)&(h->addrs);
+
+  /* set result != NULL */
+  *result = ret;
+
+  /* return success */
+  return 0;
 }
 #endif /* LWIP_DNS*/
 

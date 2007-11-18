@@ -315,6 +315,8 @@ int lwip_ioctl(int s, long cmd, void *argp);
 
 #if LWIP_DNS
 struct hostent *lwip_gethostbyname(const char *name);
+int lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
+                size_t buflen, struct hostent **result, int *h_errnop);
 #endif /* LWIP_DNS */
 
 #if LWIP_COMPAT_SOCKETS
@@ -336,6 +338,7 @@ struct hostent *lwip_gethostbyname(const char *name);
 #define select(a,b,c,d,e)     lwip_select(a,b,c,d,e)
 #define ioctlsocket(a,b,c)    lwip_ioctl(a,b,c)
 #define gethostbyname(a)      lwip_gethostbyname(a)
+#define gethostbyname_r(a,b,c,d,e,f) lwip_gethostbyname_r(a,b,c,d,e,f)
 
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 #define read(a,b,c)           lwip_read(a,b,c)
