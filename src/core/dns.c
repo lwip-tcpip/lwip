@@ -106,11 +106,6 @@
 #define DNS_MAX_RETRIES           4
 #endif 
 
-/* DNS entry time to live (in DNS_TMR_INTERVAL ticks) */
-#ifndef DNS_TTL_ENTRY
-#define DNS_TTL_ENTRY             60
-#endif
-
 /* DNS protocol flags */
 #define DNS_FLAG1_RESPONSE        0x80
 #define DNS_FLAG1_OPCODE_STATUS   0x10
@@ -189,13 +184,13 @@ PACK_STRUCT_END
 PACK_STRUCT_BEGIN
 /** DNS table entry */
 struct dns_table_entry {
-  u8_t state;
-  u8_t numdns;
-  u8_t tmr;
-  u8_t retries;
-  u8_t ttl;
-  u8_t seqno;
-  u8_t err;
+  u8_t  state;
+  u8_t  numdns;
+  u8_t  tmr;
+  u8_t  retries;
+  u8_t  seqno;
+  u8_t  err;
+  u32_t ttl;
   char name[DNS_MAX_NAME_LENGTH];
   struct ip_addr ipaddr;
   void (* found)(const char *name, struct ip_addr *ipaddr, void *arg); /* pointer to callback on DNS query done */
@@ -518,7 +513,6 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
       if(pEntry->state == DNS_STATE_ASKING) {
         /* This entry is now completed. */
         pEntry->state = DNS_STATE_DONE;
-        pEntry->ttl   = DNS_TTL_ENTRY;
         pEntry->err   = hdr->flags2 & DNS_FLAG2_ERR_MASK;
 
         /* We only care about the question(s) and the answers. The authrr
@@ -527,7 +521,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
         nanswers   = htons(hdr->numanswers);
 
         /* Check for error. If so, call callback to inform. */
-        if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
+        if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) || (pEntry->err != 0) || (nquestions != 1)) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
           /* call specified callback function if provided */
           if (pEntry->found)
@@ -551,6 +545,11 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
           /* Check for IP address type and Internet class. Others are discarded. */
           ans = (struct dns_answer *)pHostname;
           if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
+            /* read the answer resource record's TTL, and maximize it if needed */
+            pEntry->ttl = ntohl(ans->ttl);
+            if (pEntry->ttl > DNS_MAX_TTL) {
+              pEntry->ttl = DNS_MAX_TTL;
+            }
             /* read the IP address after answer resource record's header */
             pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
