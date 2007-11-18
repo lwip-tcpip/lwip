@@ -44,7 +44,32 @@
 #endif
 
 /** DNS message max. size */
-#define DNS_MSG_SIZE     512
+#define DNS_MSG_SIZE              512
+
+/** DNS field TYPE used for "Resource Records" */
+#define DNS_RRTYPE_A              1     /* a host address */
+#define DNS_RRTYPE_NS             2     /* an authoritative name server */
+#define DNS_RRTYPE_MD             3     /* a mail destination (Obsolete - use MX) */
+#define DNS_RRTYPE_MF             4     /* a mail forwarder (Obsolete - use MX) */
+#define DNS_RRTYPE_CNAME          5     /* the canonical name for an alias */
+#define DNS_RRTYPE_SOA            6     /* marks the start of a zone of authority */
+#define DNS_RRTYPE_MB             7     /* a mailbox domain name (EXPERIMENTAL) */
+#define DNS_RRTYPE_MG             8     /* a mail group member (EXPERIMENTAL) */
+#define DNS_RRTYPE_MR             9     /* a mail rename domain name (EXPERIMENTAL) */
+#define DNS_RRTYPE_NULL           10    /* a null RR (EXPERIMENTAL) */
+#define DNS_RRTYPE_WKS            11    /* a well known service description */
+#define DNS_RRTYPE_PTR            12    /* a domain name pointer */
+#define DNS_RRTYPE_HINFO          13    /* host information */
+#define DNS_RRTYPE_MINFO          14    /* mailbox or mail list information */
+#define DNS_RRTYPE_MX             15    /* mail exchange */
+#define DNS_RRTYPE_TXT            16    /* text strings */
+
+/** DNS field CLASS used for "Resource Records" */
+#define DNS_RRCLASS_IN            1     /* the Internet */
+#define DNS_RRCLASS_CS            2     /* the CSNET class (Obsolete - used only for examples in some obsolete RFCs) */
+#define DNS_RRCLASS_CH            3     /* the CHAOS class */
+#define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
+#define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
 /* enumerated list of possible result values returned by dns_gethostname() */
 typedef enum dns_result {
@@ -52,6 +77,7 @@ typedef enum dns_result {
   DNS_QUERY_QUEUED,
   DNS_COMPLETE
 }DNS_RESULT;
+
 
 /* initializes the resolver */
 err_t dns_init(void);
@@ -68,7 +94,7 @@ u32_t dns_getserver(u8_t numdns);
 /* returns IP for host 'name' only if already in table */
 u32_t dns_lookup(const char *name);
 
-/* resolove a host 'name' in ip address */
+/* resolves a host 'name' in ip address */
 DNS_RESULT dns_gethostbyname(const char *hostName, struct ip_addr *addr, 
                              void (*found)(const char *name, struct ip_addr *ipaddr, void *arg),
                              void *arg);

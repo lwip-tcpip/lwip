@@ -68,7 +68,6 @@
 /** @todo: secondary server support */
 /** @todo: pbuf chain not yet supported */
 /** @todo: improve answer parsing, more checkings... */
-/** @todo: possible alignment problems to access to dns_answer fields? */
 
 /*-----------------------------------------------------------------------------
  * Includes
@@ -132,31 +131,6 @@
 #define DNS_STATE_ASKING          2
 #define DNS_STATE_DONE            3
 
-/* DNS field TYPE used for "Resource Records" */
-#define DNS_RRTYPE_A              1     /* a host address */
-#define DNS_RRTYPE_NS             2     /* an authoritative name server */
-#define DNS_RRTYPE_MD             3     /* a mail destination (Obsolete - use MX) */
-#define DNS_RRTYPE_MF             4     /* a mail forwarder (Obsolete - use MX) */
-#define DNS_RRTYPE_CNAME          5     /* the canonical name for an alias */
-#define DNS_RRTYPE_SOA            6     /* marks the start of a zone of authority */
-#define DNS_RRTYPE_MB             7     /* a mailbox domain name (EXPERIMENTAL) */
-#define DNS_RRTYPE_MG             8     /* a mail group member (EXPERIMENTAL) */
-#define DNS_RRTYPE_MR             9     /* a mail rename domain name (EXPERIMENTAL) */
-#define DNS_RRTYPE_NULL           10    /* a null RR (EXPERIMENTAL) */
-#define DNS_RRTYPE_WKS            11    /* a well known service description */
-#define DNS_RRTYPE_PTR            12    /* a domain name pointer */
-#define DNS_RRTYPE_HINFO          13    /* host information */
-#define DNS_RRTYPE_MINFO          14    /* mailbox or mail list information */
-#define DNS_RRTYPE_MX             15    /* mail exchange */
-#define DNS_RRTYPE_TXT            16    /* text strings */
-
-/* DNS field CLASS used for "Resource Records" */
-#define DNS_RRCLASS_IN            1     /* the Internet */
-#define DNS_RRCLASS_CS            2     /* the CSNET class (Obsolete - used only for examples in some obsolete RFCs) */
-#define DNS_RRCLASS_CH            3     /* the CHAOS class */
-#define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
-#define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
-
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -180,6 +154,22 @@ PACK_STRUCT_END
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
+/** DNS query message structure */
+struct dns_query {
+  /* DNS query record starts with either a domain name or a pointer
+     to a name already present somewhere in the packet. */
+  u16_t type;
+  u16_t class;
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
 /** DNS answer message structure */
 struct dns_answer {
   /* DNS answer record starts with either a domain name or a pointer
@@ -188,7 +178,6 @@ struct dns_answer {
   u16_t class;
   u32_t ttl;
   u16_t len;
-  struct ip_addr ipaddr;
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -229,9 +218,6 @@ static void dns_check_entries(void);
 static struct udp_pcb        *dns_pcb;
 static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static u8_t                   dns_seqno;
-
-/* DNS request termination sequence: zero(1)+type(2)+class(2) */
-static unsigned char dns_endquery[] = {0,0,1,0,1};
 
 /**
  * Initialize the resolver and configure which DNS server to use for queries.
@@ -373,6 +359,7 @@ static err_t
 dns_send(const char* name, u8_t id)
 { 
   struct dns_hdr *hdr;
+  struct dns_query *qry;
   struct pbuf *p;
   char *query, *nptr;
   const char *pHostname;
@@ -381,8 +368,9 @@ dns_send(const char* name, u8_t id)
   LWIP_DEBUGF(DNS_DEBUG, ("dns_send: \"%s\": request\n", name));
 
   /* if here, we have either a new query or a retry on a previous query to process */
-  p = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dns_hdr)+DNS_MAX_NAME_LENGTH+sizeof(dns_endquery), PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dns_hdr)+DNS_MAX_NAME_LENGTH+sizeof(struct dns_query), PBUF_RAM);
   if (p) {
+    /* fill dns header */
     hdr = (struct dns_hdr *)p->payload;
     memset(hdr, 0, sizeof(struct dns_hdr));
     hdr->id = htons(id);
@@ -391,6 +379,7 @@ dns_send(const char* name, u8_t id)
     query = (char *)hdr + sizeof(struct dns_hdr);
     pHostname = name;
     --pHostname;
+
     /* convert hostname into suitable query format. */
     do {
       ++pHostname;
@@ -403,11 +392,15 @@ dns_send(const char* name, u8_t id)
       }
       *nptr = n;
     } while(*pHostname != 0);
+    *query++='\0';
 
-    memcpy( query, dns_endquery, sizeof(dns_endquery));
+    /* fill dns query */
+    qry = (struct dns_query *)query;
+    qry->type  = htons(DNS_RRTYPE_A);
+    qry->class = htons(DNS_RRCLASS_IN);
 
     /* resize pbuf to the exact dns query */
-    pbuf_realloc(p, (query+sizeof(dns_endquery))-((char*)(p->payload)));
+    pbuf_realloc(p, (query+sizeof(struct dns_query))-((char*)(p->payload)));
 
     /* send dns packet */
     udp_send(dns_pcb, p);
@@ -487,8 +480,8 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
 {
   u8_t i;
   char *pHostname;
-  struct dns_answer *ans;
   struct dns_hdr *hdr;
+  struct dns_answer *ans;
   struct dns_table_entry *pEntry;
   u8_t nquestions, nanswers;
 
@@ -513,7 +506,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
     nanswers   = htons(hdr->numanswers);
 
     /* Check for error. If so, call callback to inform. */
-    if ((pEntry->err != 0) || (nquestions != 1)) {
+    if (((hdr->flags1 & DNS_FLAG1_RESPONSE)==0) ||(pEntry->err != 0) || (nquestions != 1)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in flags\n", pEntry->name));
       /* call specified callback function if provided */
       if (pEntry->found)
@@ -526,19 +519,17 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
 
     /* Skip the name in the "question" part. This should really be checked
        agains the name in the question, to be sure that they match. */
-    pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + 4/*type(2)+class(2)*/;
+    pHostname = (char *) dns_parse_name((unsigned char *)p->payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
 
     while(nanswers > 0) {
       /* skip answer resource record's host name */
       pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
-      /* TODO: isn't it any problem to access to dns_answer fields since pHostname's length can be unaligned? */
-      ans = (struct dns_answer *)pHostname;
-
       /* Check for IP address type and Internet class. Others are discarded. */
-      if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == 4/*IPv4 address*/) ) {
-        /* TODO: we should really check that this IP address is the one we want. */
-        pEntry->ipaddr =  ans->ipaddr;
+      ans = (struct dns_answer *)pHostname;
+      if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
+        /* read the IP address after answer resource record's header */
+        pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
         LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
         ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
         LWIP_DEBUGF(DNS_DEBUG, ("\n"));
@@ -547,7 +538,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
           (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
         return;
       } else {
-        pHostname = pHostname + 10 /*type(2)+class(2)+ttl(4)+len(2)*/ + htons(ans->len);
+        pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
       }
       --nanswers;
     }
