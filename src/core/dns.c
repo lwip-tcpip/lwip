@@ -66,6 +66,7 @@
 
 /** @todo: define good default values (rfc compliance) */
 /** @todo: improve answer parsing, more checkings... */
+/** @todo: check RFC1035 - 7.3. Processing responses */
 
 /*-----------------------------------------------------------------------------
  * Includes
@@ -248,9 +249,9 @@ dns_init()
       /* initialize DNS client */
       udp_bind(dns_pcb, IP_ADDR_ANY, 0);
       udp_recv(dns_pcb, dns_recv, NULL);
-      
+
       /* initialize default DNS primary server */
-        dns_setserver(0, &dnsserver);
+      dns_setserver(0, &dnsserver);
     }
   }
   return ERR_OK;
@@ -356,7 +357,7 @@ dns_parse_name(unsigned char *query)
  */
 static err_t
 dns_send(u8_t numdns, const char* name, u8_t id)
-{ 
+{
   struct dns_hdr *hdr;
   struct dns_query *qry;
   struct pbuf *p;
@@ -507,8 +508,6 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
     return;
   }
 
-  /** @todo: check RFC1035 - 7.3. Processing responses */
- 
   /* copy dns payload inside static buffer for processing */ 
   if (pbuf_copy_partial(p, dns_payload, p->tot_len, 0) == p->tot_len) {
     /* The ID in the DNS header should be our entry into the name table. */
