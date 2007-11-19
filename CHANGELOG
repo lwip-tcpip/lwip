@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-11-19 Frédéric Bernon
+  * api_msg.c, dns.h, dns.c: Implement DNS_DOES_NAME_CHECK option (check if name
+    received match the name query), implement DNS_USES_STATIC_BUF (the place where
+    copy dns payload to parse the response), return an error if there is no place
+    for a new query, and fix some minor problems.
+
   2007-11-16 Simon Goldschmidt
   * new files: ipv4/inet.c, ipv4/inet_chksum.c, ipv6/inet6.c
     removed files: core/inet.c, core/inet6.c

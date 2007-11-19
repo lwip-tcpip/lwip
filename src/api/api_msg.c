@@ -1032,6 +1032,9 @@ do_gethostbyname(void *arg)
     if (res == DNS_COMPLETE) {
       /* name was already in octet notation or cached */
       *msg->err = ERR_OK;
+    } else if (res == DNS_ERR_MEM) {
+      /* memory allocation error */
+      *msg->err = ERR_MEM;
     } else {
       /* some error occurred */
       *msg->err = ERR_ARG;

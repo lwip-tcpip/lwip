@@ -81,6 +81,7 @@
 
 /* enumerated list of possible result values returned by dns_gethostname() */
 typedef enum dns_result {
+  DNS_ERR_MEM,
   DNS_QUERY_INVALID,
   DNS_QUERY_QUEUED,
   DNS_COMPLETE
