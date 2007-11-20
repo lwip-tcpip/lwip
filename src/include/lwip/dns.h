@@ -99,15 +99,20 @@ typedef enum dns_result {
  * @param name pointer to the name that was looked up.
  * @param ipaddr pointer to a struct ip_addr containing the IP address of the hostname,
  *        or NULL if the name could not be found (or on any other error).
- * @param a user-specified callback argument passed to dns_gethostbyname
+ * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, struct ip_addr *ipaddr, void *arg);
+typedef void (*dns_found_callback)(const char *name, struct ip_addr *ipaddr, void *callback_arg);
 
-void dns_init(void);
-void dns_tmr(void);
-void dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
+
+void           dns_init(void);
+
+void           dns_tmr(void);
+
+void           dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
+
 struct ip_addr dns_getserver(u8_t numdns);
-DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr,
+
+DNS_RESULT     dns_gethostbyname(const char *hostname, struct ip_addr *addr,
                              dns_found_callback found, void *callback_arg);
 
 #endif /* LWIP_DNS */

@@ -290,7 +290,7 @@ dns_getserver(u8_t numdns)
 
 /**
  * The DNS resolver client timer - handle retries and timeouts and should
- * be called every DNS_TMR_INTERVAL miliseconds (every second by default).
+ * be called every DNS_TMR_INTERVAL milliseconds (every second by default).
  */
 void
 dns_tmr(void)
@@ -677,18 +677,15 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
           --nanswers;
         }
         LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": error in response\n", pEntry->name));
+        /* call callback to indicate error, clean up memory and return */
+        goto responseerr;
       }
     }
   }
-memerr2:
-#if (DNS_USES_STATIC_BUF == 2)
-  /* free dns buffer */
-  mem_free(dns_payload);
-#endif /* (DNS_USES_STATIC_BUF == 2) */
-memerr1:
-  /* free pbuf */
-  pbuf_free(p);
-  return;
+
+  /* deallocate memory and return */
+  goto memerr2;
+
 responseerr:
   /* ERROR: call specified callback function with NULL as name to indicate an error */
   if (pEntry->found) {
@@ -697,8 +694,17 @@ responseerr:
   /* flush this entry */
   pEntry->state = DNS_STATE_UNUSED;
   pEntry->found = NULL;
-  /* deallocate memory and return */
-  goto memerr2;
+
+memerr2:
+#if (DNS_USES_STATIC_BUF == 2)
+  /* free dns buffer */
+  mem_free(dns_payload);
+#endif /* (DNS_USES_STATIC_BUF == 2) */
+
+memerr1:
+  /* free pbuf */
+  pbuf_free(p);
+  return;
 }
 
 /**
@@ -706,11 +712,11 @@ responseerr:
  *
  * @param name the hostname that is to be queried
  * @param found a callback founction to be called on success, failure or timeout
- * @param arg argument to pass to the callback function
+ * @param callback_arg argument to pass to the callback function
  * @return a DNS_RESULT (@see DNS_RESULT, @see enum dns_result)
  */
 static DNS_RESULT
-dns_enqueue(const char *name, void (*found)(const char *name, struct ip_addr *addr, void *arg), void *arg)
+dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
 {
   u8_t i;
   u8_t lseq, lseqi;
@@ -753,7 +759,7 @@ dns_enqueue(const char *name, void (*found)(const char *name, struct ip_addr *ad
   pEntry->state = DNS_STATE_NEW;
   pEntry->seqno = dns_seqno++;
   pEntry->found = found;
-  pEntry->arg   = arg;
+  pEntry->arg   = callback_arg;
   strcpy(pEntry->name, name);
 
   /* force to send query without waiting timer */
@@ -778,15 +784,16 @@ dns_enqueue(const char *name, void (*found)(const char *name, struct ip_addr *ad
  *             cached in the dns_table (only valid if DNS_COMPLETE is returned!)
  * @param found a callback founction to be called on success, failure or timeout (only if
  *              DNS_QUERY_QUEUED is returned!)
- * @param arg argument to pass to the callback function
+ * @param callback_arg argument to pass to the callback function
  * @return a DNS_RESULT (@see DNS_RESULT, @see enum dns_result)
  */
-DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr,  dns_found_callback found,
+DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback found,
                              void *callback_arg)
 {
   /* not initialized or no valid server yet, or invalid addr pointer
    * or invalid hostname or invalid hostname length */
-  if ((dns_pcb == NULL) || (addr == NULL) || (!hostname) || (!hostname[0]) ||
+  if ((dns_pcb == NULL) || (addr == NULL) ||
+      (!hostname) || (!hostname[0]) ||
       (strlen(hostname) >= DNS_MAX_NAME_LENGTH)) {
     return DNS_QUERY_INVALID;
   }
