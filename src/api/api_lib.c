@@ -572,7 +572,10 @@ netconn_join_leave_group(struct netconn *conn,
  *
  * @param name a string representation of the DNS host name to query
  * @param addr a preallocated struct ip_addr where to store the resolved IP address
- * @return an error returned by the dns module, ERR_OK if resolving succeeded
+ * @return ERR_OK: resolving succeeded
+ *         ERR_MEM: memory error, try again later
+ *         ERR_ARG: dns client not initialized or invalid hostname
+ *         ERR_VAL: dns server response was invalid
  */
 err_t
 netconn_gethostbyname(const char *name, struct ip_addr *addr)
