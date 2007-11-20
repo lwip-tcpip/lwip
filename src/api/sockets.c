@@ -1831,6 +1831,17 @@ lwip_gethostbyname(const char *name)
   err = netconn_gethostbyname(name, &addr);
   if (err != ERR_OK) {
     LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
+    switch(err) {
+      case ERR_MEM:
+        set_errno(ENOMEM);
+        break;
+      case ERR_ARG:
+        set_errno(EINVAL);
+        break;
+      /* case ERR_VAL: */
+      default:
+        set_errno(ENSRNOTFOUND);
+    }
     return NULL;
   }
 
@@ -1902,7 +1913,15 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   err = netconn_gethostbyname(name, &(h->addr));
   if (err != ERR_OK) {
     LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
-    return ENSRNOTFOUND;
+    switch(err) {
+      case ERR_MEM:
+        return ENOMEM;
+      case ERR_ARG:
+        return EINVAL;
+      /* case ERR_VAL: */
+      default:
+        return ENSRNOTFOUND;
+    }
   }
 
   /* copy the hostname into buf */
