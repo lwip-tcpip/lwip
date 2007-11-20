@@ -79,46 +79,36 @@
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
-/* enumerated list of possible result values returned by dns_gethostname() */
+/** enumerated list of possible result values returned by dns_gethostname() */
 typedef enum dns_result {
+  /** dns_table is filled with queries, try again later */
   DNS_ERR_MEM,
+  /** invalid hostname, hostname too long,
+   * invalid arguments or dns module not initialized */
   DNS_QUERY_INVALID,
+  /** the hostname was enqueued for query,
+   * found callback will be called when resolved */
   DNS_QUERY_QUEUED,
+  /** the hostname was found in the cache and was directly returned,
+   * found callback will not be called */
   DNS_COMPLETE
-}DNS_RESULT;
+} DNS_RESULT;
 
-
-/* initializes the resolver */
-err_t dns_init(void);
-
-/* handles requests, retries and timeouts - call every DNS_TMR_INTERVAL tick */
-void  dns_tmr(void);
-
-/* initializes DNS server IP address */
-void dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
-
-/* returns configured DNS server IP address */
-struct ip_addr dns_getserver(u8_t numdns);
-
-/* resolves a host 'name' in ip address */
-DNS_RESULT dns_gethostbyname(const char *hostName, struct ip_addr *addr, 
-                             void (*found)(const char *name, struct ip_addr *ipaddr, void *arg),
-                             void *arg);
-
-/* dns_gethostbyname() - Returns immediately with one of DNS_RESULT return codes
- *                       Return value will be DNS_COMPLETE if hostName is a valid
- *                       IP address string or the host name is already in the local
- *                       names table. Returns DNS_REQUEST_QUEUED and queues a
- *                       request to be sent to the DNS server for resolution if no
- *                       errors are present.
- */
-
-/* dns_found_func() - Callback which is invoked when a hostname is found.
- * This function should be implemented by the application using the DNS resolver.
- *  param 'name'   - pointer to the name that was looked up.
- *  param 'ipaddr' - pointer to a struct ip_addr containing the IP address of the
- *                   hostname, or NULL if the name could not be found.
+/** Callback which is invoked when a hostname is found.
+ * A function of this type must be implemented by the application using the DNS resolver.
+ * @param name pointer to the name that was looked up.
+ * @param ipaddr pointer to a struct ip_addr containing the IP address of the hostname,
+ *        or NULL if the name could not be found (or on any other error).
+ * @param a user-specified callback argument passed to dns_gethostbyname
 */
+typedef void (*dns_found_callback)(const char *name, struct ip_addr *ipaddr, void *arg);
+
+void dns_init(void);
+void dns_tmr(void);
+void dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
+struct ip_addr dns_getserver(u8_t numdns);
+DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr,
+                             dns_found_callback found, void *callback_arg);
 
 #endif /* LWIP_DNS */
 
