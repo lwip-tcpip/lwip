@@ -122,10 +122,12 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
  * previously transmitted data on the connection remains
  * unacknowledged.
  */
-#define tcp_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
+#define tcp_do_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
                             ((tpcb)->flags & TF_NODELAY) || \
                             (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
-                                tcp_output(tpcb) : ERR_OK)
+                                1 : 0)
+#define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
+
 
 /** This returns a TCP header option for MSS in an u32_t */
 #define TCP_BUILD_MSS_OPTION()  htonl(((u32_t)2 << 24) | \
@@ -239,6 +241,12 @@ enum tcp_state {
   TIME_WAIT   = 10
 };
 
+/** Flags used on input processing, not on pcb->flags
+*/
+#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
+#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
+#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
+
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
  */
@@ -261,13 +269,12 @@ struct tcp_pcb {
   u16_t remote_port;
   
   u8_t flags;
-#define TF_ACK_DELAY (u8_t)0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW   (u8_t)0x02U   /* Immediate ACK. */
-#define TF_INFR      (u8_t)0x04U   /* In fast recovery. */
-#define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
-#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
-#define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
-#define TF_NODELAY   (u8_t)0x40U   /* Disable Nagle algorithm */
+#define TF_ACK_DELAY   (u8_t)0x01U   /* Delayed ACK. */
+#define TF_ACK_NOW     (u8_t)0x02U   /* Immediate ACK. */
+#define TF_INFR        (u8_t)0x04U   /* In fast recovery. */
+#define TF_FIN         (u8_t)0x20U   /* Connection was closed locally (FIN segment enqueued). */
+#define TF_NODELAY     (u8_t)0x40U   /* Disable Nagle algorithm */
+#define TF_NAGLEMEMERR (u8_t)0x80U /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */

@@ -147,6 +147,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   /* fail on too much data */
   if (len > pcb->snd_buf) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%"U16_F" > snd_buf=%"U16_F")\n", len, pcb->snd_buf));
+    pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
   }
   left = len;
@@ -165,6 +166,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   if ((queuelen >= TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %"U16_F" (max %"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
+    pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
   }
   if (queuelen != 0) {
@@ -361,6 +363,9 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   if ((flags & TCP_SYN) || (flags & TCP_FIN)) {
     ++len;
   }
+  if (flags & TCP_FIN) {
+    pcb->flags |= TF_FIN;
+  }
   pcb->snd_lbb += len;
 
   pcb->snd_buf -= len;
@@ -381,6 +386,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   return ERR_OK;
 memerr:
+  pcb->flags |= TF_NAGLEMEMERR;
   TCP_STATS_INC(tcp.memerr);
 
   if (queue != NULL) {
@@ -503,6 +509,18 @@ tcp_output(struct tcp_pcb *pcb)
   /* data available and window allows it to be sent? */
   while (seg != NULL &&
   ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
+    LWIP_ASSERT("RST not expected here!", (TCPH_FLAGS(seg->tcphdr) & TCP_RST) == 0);
+    /* Stop sending if the nagle algorithm would prevent it
+     * Don't stop:
+     * - if tcp_enqueue had a memory error before (prevent delayed ACK timeout) or
+     * - if FIN was already enqueued for this PCB (SYN is always alone in a segment -
+     *   either seg->next != NULL or pcb->unacked == NULL;
+     *   RST is no sent using tcp_enqueue/tcp_output.
+     */
+    if((tcp_do_output_nagle(pcb) == 0) &&
+      ((pcb->flags & (TF_NAGLEMEMERR | TF_FIN)) == 0)){
+      break;
+    }
 #if TCP_CWND_DEBUG
     LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"U16_F", cwnd %"U16_F", wnd %"U32_F", effwnd %"U32_F", seq %"U32_F", ack %"U32_F", i %"S16_F"\n",
                             pcb->snd_wnd, pcb->cwnd, wnd,
@@ -552,6 +570,7 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
+ pcb->flags &= ~TF_NAGLEMEMERR;
  return ERR_OK;
 }
 

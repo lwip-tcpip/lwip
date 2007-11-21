@@ -819,6 +819,9 @@ do_writemore(struct netconn *conn)
       API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
     }
   } else if (err == ERR_MEM) {
+    /* tcp_enqueue returned ERR_MEM, try tcp_output anyway */
+    err = tcp_output(conn->pcb.tcp);
+
 #if LWIP_TCPIP_CORE_LOCKING
     conn->write_delayed = 1;
 #endif

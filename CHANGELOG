@@ -486,6 +486,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-21 Simon Goldschmidt
+  * tcp.h, tcp_out.c, api_msg.c: Fixed bug #20287: tcp_output_nagle sends too early
+    Fixed the nagle algorithm; nagle now also works for all raw API applications
+    and has to be explicitly disabled with 'tcp_pcb->flags |= TF_NODELAY'
+
   2007-11-12 Frédéric Bernon
   * sockets.c, api.h, api_lib.c, api_msg.h, api_msg.c: Fixed bug #20900. Now, most
     of the netconn_peer and netconn_addr processing is done inside tcpip_thread
