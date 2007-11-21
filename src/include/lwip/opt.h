@@ -636,10 +636,26 @@
 /**
  * TCP_MSS: TCP Maximum segment size. (default is 128, a *very*
  * conservative default.)
+ * For the receive side, this MSS is advertised to the remote side
+ * when opening a connection. For the transmit size, this MSS sets
+ * an upper limit on the MSS advertised by the remote host.
  */
 #ifndef TCP_MSS
 #define TCP_MSS                         128
 #endif
+
+/**
+ * LWIP_CALCULATE_EFF_SEND_MSS: "The maximum size of a segment that TCP really
+ * sends, the 'effective send MSS,' MUST be the smaller of the send MSS (which
+ * reflects the available reassembly buffer size at the remote host) and the
+ * largest size permitted by the IP layer" (RFC 1122)
+ * Setting this to 1 enables code that checks TCP_MSS against the MTU of the
+ * netif used for a connection and limits the MSS it would be too big otherwise.
+ */
+#ifndef LWIP_CALCULATE_EFF_SEND_MSS
+#define LWIP_CALCULATE_EFF_SEND_MSS     1
+#endif
+
 
 /**
  * TCP_SND_BUF: TCP sender buffer space (bytes). 

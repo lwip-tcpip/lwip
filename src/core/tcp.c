@@ -493,6 +493,9 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->snd_wnd = TCP_WND;
   /* The send MSS is updated when an MSS option is received. */
   pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
+#if LWIP_CALCULATE_EFF_SEND_MSS
+  pcb->mss = tcp_eff_send_mss(pcb->mss, ipaddr);
+#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
   pcb->state = SYN_SENT;
@@ -1150,6 +1153,30 @@ tcp_next_iss(void)
   iss += tcp_ticks;       /* XXX */
   return iss;
 }
+
+#if LWIP_CALCULATE_EFF_SEND_MSS
+/**
+ * Calcluates the effective send mss that can be used for a specific IP address
+ * by using ip_route to determin the netif used to send to the address and
+ * calculating the minimum of TCP_MSS and that netif's mtu (if set).
+ */
+u16_t
+tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr)
+{
+  u16_t mss_s;
+  struct netif *outif;
+
+  outif = ip_route(addr);
+  if ((outif != NULL) && (outif->mtu != 0)) {
+    mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
+    /* RFC 1122, chap 4.2.2.6:
+     * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
+     * but we only send options with SYN and that is never filled with data! */
+    sendmss = LWIP_MIN(sendmss, mss_s);
+  }
+  return sendmss;
+}
+#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 /**
