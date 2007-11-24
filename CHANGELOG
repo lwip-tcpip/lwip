@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-11-24 Simon Goldschmidt
+  * netdb.h, netdb.c, sockets.h/.c: Moved lwip_gethostbyname from sockets.c
+    to the new file netdb.c; included lwip_getaddrinfo.
+
   2007-11-21 Simon Goldschmidt
   * tcp.h, opt.h, tcp.c, tcp_in.c: implemented calculating the effective send-mss
     based on the MTU of the netif used to send. Enabled by default. Disable by

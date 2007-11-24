@@ -60,19 +60,6 @@ struct sockaddr {
   char sa_data[14];
 };
 
-#if LWIP_DNS
-struct hostent {
-    char  *h_name;      /* Official name of the host. */
-    char **h_aliases;   /* A pointer to an array of pointers to alternative host names,
-                           terminated by a null pointer. */
-    int    h_addrtype;  /* Address type. */
-    int    h_length;    /* The length, in bytes, of the address. */
-    char **h_addr_list; /* A pointer to an array of pointers to network addresses (in
-                           network byte order) for the host, terminated by a null pointer. */
-#define h_addr h_addr_list[0] /* for backward compatibility */
-};
-#endif /* LWIP_DNS */
-
 #ifndef socklen_t
 #  define socklen_t u32_t
 #endif
@@ -313,12 +300,6 @@ int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptse
                 struct timeval *timeout);
 int lwip_ioctl(int s, long cmd, void *argp);
 
-#if LWIP_DNS
-struct hostent *lwip_gethostbyname(const char *name);
-int lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
-                size_t buflen, struct hostent **result, int *h_errnop);
-#endif /* LWIP_DNS */
-
 #if LWIP_COMPAT_SOCKETS
 #define accept(a,b,c)         lwip_accept(a,b,c)
 #define bind(a,b,c)           lwip_bind(a,b,c)
@@ -337,8 +318,6 @@ int lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
 #define socket(a,b,c)         lwip_socket(a,b,c)
 #define select(a,b,c,d,e)     lwip_select(a,b,c,d,e)
 #define ioctlsocket(a,b,c)    lwip_ioctl(a,b,c)
-#define gethostbyname(a)      lwip_gethostbyname(a)
-#define gethostbyname_r(a,b,c,d,e,f) lwip_gethostbyname_r(a,b,c,d,e,f)
 
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 #define read(a,b,c)           lwip_read(a,b,c)
