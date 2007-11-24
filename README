@@ -65,6 +65,16 @@ lwIP are at the official lwIP home page:
 Self documentation of the source code is regularly extracted from the
 current CVS sources and is available from this web page:
   http://www.nongnu.org/lwip/
+[Unfortunately, this page is currently outdated!]
+
+There is now a constantly growin wiki about lwIP at
+  http://lwip.scribblewiki.com/
+
+Also, there are mailing lists you can subscribe at
+  http://savannah.nongnu.org/mail/?group=lwip
+plus searchable archives:
+  http://lists.nongnu.org/archive/html/lwip-users/
+  http://lists.nongnu.org/archive/html/lwip-devel/
 
 Reading Adam's papers, the files in docs/, browsing the source code
 documentation and browsing the mailing list archives is a good way to
