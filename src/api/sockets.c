@@ -55,47 +55,74 @@
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
+/** Contains all internal pointers and states used for a socket */
 struct lwip_socket {
+  /** sockets currently are built on netconns, each socket has one netconn */
   struct netconn *conn;
+  /** data that was left from the previous read */
   struct netbuf *lastdata;
+  /** offset in the data that was left from the previous read */
   u16_t lastoffset;
+  /** number of times data was received, set by event_callback(),
+      tested by the receive and select functions */
   u16_t rcvevent;
+  /** number of times data was received, set by event_callback(),
+      tested by select */
   u16_t sendevent;
-  u16_t  flags;
+  /** socket flags (currently, only used for O_NONBLOCK) */
+  u16_t flags;
+  /** last error that occurred on this socket */
   int err;
 };
 
+/** Description for a task waiting in select */
 struct lwip_select_cb {
+  /** Pointer to the next waiting task */
   struct lwip_select_cb *next;
+  /** readset passed to select */
   fd_set *readset;
+  /** writeset passed to select */
   fd_set *writeset;
+  /** unimplemented: exceptset passed to select */
   fd_set *exceptset;
+  /** don't signal the same semaphore twice: set to 1 when signalled */
   int sem_signalled;
+  /** semaphore to wake up a task waiting for select */
   sys_sem_t sem;
 };
 
-/* This struct is used to pass data to the set/getsockopt_internal
+/** This struct is used to pass data to the set/getsockopt_internal
  * functions running in tcpip_thread context (only a void* is allowed) */
 struct lwip_setgetsockopt_data {
+  /** socket struct for which to change options */
   struct lwip_socket *sock;
+  /** socket index for which to change options */
   int s;
+  /** level of the option to process */
   int level;
+  /** name of the option to process */
   int optname;
+  /** set: value to set the option to
+    * get: value of the option is stored here */
   void *optval;
+  /** size of *optval */
   socklen_t *optlen;
+  /** if an error occures, it is temporarily stored here */
   err_t err;
 };
 
+/** The global array of available sockets */
 static struct lwip_socket sockets[NUM_SOCKETS];
+/** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 
+/** Semaphore protecting the sockets array */
 static sys_sem_t socksem;
+/** Semaphore protecting select_cb_list */
 static sys_sem_t selectsem;
 
-static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
-static void lwip_getsockopt_internal(void *arg);
-static void lwip_setsockopt_internal(void *arg);
-
+/** Table to quickly map an lwIP error (err_t) to a socket error
+  * by using -err as an index */
 static const int err_to_errno_table[] = {
   0,             /* ERR_OK       0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM     -1      Out of memory error.     */
@@ -131,7 +158,15 @@ static const int err_to_errno_table[] = {
   set_errno(sk->err); \
 } while (0)
 
+/* Forward delcaration of some functions */
+static void event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len);
+static void lwip_getsockopt_internal(void *arg);
+static void lwip_setsockopt_internal(void *arg);
 
+/**
+ * Initialize this module. This function has to be called before any other
+ * functions in this module!
+ */
 void
 lwip_socket_init(void)
 {
@@ -139,6 +174,12 @@ lwip_socket_init(void)
   selectsem = sys_sem_new(1);
 }
 
+/**
+ * Map a externally used socket index to the internal socket representation.
+ *
+ * @param s externally used socket index
+ * @return struct lwip_socket for the socket or NULL if not found
+ */
 static struct lwip_socket *
 get_socket(int s)
 {
@@ -161,10 +202,21 @@ get_socket(int s)
   return sock;
 }
 
+/**
+ * Allocate a new socket for a given netconn.
+ *
+ * @param newconn the netconn for which to allocate a socket
+ * @return the index of the new socket; -1 on error
+ */
 static int
-alloc_socket(struct netconn *newconn)
+alloc_socket(struct netconn *newconn, struct lwip_socket **sock)
 {
   int i;
+  struct lwip_socket *unused;
+  if (sock == NULL) {
+    sock = &unused;
+  }
+  *sock = NULL;
 
   /* Protect socket array */
   sys_sem_wait(socksem);
@@ -180,12 +232,19 @@ alloc_socket(struct netconn *newconn)
       sockets[i].flags      = 0;
       sockets[i].err        = 0;
       sys_sem_signal(socksem);
+      *sock = &sockets[i];
       return i;
     }
   }
   sys_sem_signal(socksem);
   return -1;
 }
+
+/* Below this, the well-known socket functions are implemented.
+ * Use google.com or opengroup.org to get a good description :-)
+ *
+ * Exceptions are documented!
+ */
 
 int
 lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
@@ -229,14 +288,15 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
   SMEMCPY(addr, &sin, *addrlen);
 
-  newsock = alloc_socket(newconn);
+  newsock = alloc_socket(newconn, &sock);
   if (newsock == -1) {
     netconn_delete(newconn);
     sock_set_errno(sock, ENFILE);
     return -1;
   }
   newconn->callback = event_callback;
-  sock = get_socket(newsock);
+  LWIP_ASSERT("invalid socket pointer", sock != NULL);
+  LWIP_ASSERT("socket pointer doesn't match the array", &sockets[newsock] == sock);
 
   sys_sem_wait(socksem);
   sock->rcvevent += -1 - newconn->socket;
@@ -355,6 +415,14 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
   return 0;
 }
 
+/**
+ * Set a socket into listen mode.
+ * The socket may not have been used for another connection previously.
+ *
+ * @param s the socket to set to listening mode
+ * @param backlog (ATTENTION: this is not implemented, yet!)
+ * @return 0 on success, non-zero on failure
+ */
 int
 lwip_listen(int s, int backlog)
 {
@@ -676,7 +744,7 @@ lwip_socket(int domain, int type, int protocol)
     return -1;
   }
 
-  i = alloc_socket(conn);
+  i = alloc_socket(conn, NULL);
 
   if (i == -1) {
     netconn_delete(conn);
@@ -695,6 +763,21 @@ lwip_write(int s, const void *data, int size)
   return lwip_send(s, data, size, 0);
 }
 
+/**
+ * Go through the readset and writeset lists and see which socket of the sockets
+ * set in the sets has events. On return, readset, writeset and exceptset have
+ * the sockets enabled that had events.
+ *
+ * exceptset is not used for now!!!
+ *
+ * @param maxfdp1 the highest socket index in the sets
+ * @param readset in: set of sockets to check for read events;
+ *                out: set of sockets that had read events
+ * @param writeset in: set of sockets to check for write events;
+ *                 out: set of sockets that had write events
+ * @param exceptset not yet implemented
+ * @return number of sockets that had events (read+write)
+ */
 static int
 lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
 {
@@ -735,6 +818,10 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
   return nready;
 }
 
+
+/**
+ * Processing exceptset is not yet implemented.
+ */
 int
 lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                struct timeval *timeout)
@@ -880,6 +967,10 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   return nready;
 }
 
+/**
+ * Callback registered in the netconn layer for each socket-netconn.
+ * Processes recvevent (data available) and wakes up tasks waiting for select.
+ */
 static void
 event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 {
@@ -958,6 +1049,10 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   }
 }
 
+/**
+ * Unimplemented: Close one end of a full-duplex connection.
+ * Currently, the full connection is closed.
+ */
 int
 lwip_shutdown(int s, int how)
 {

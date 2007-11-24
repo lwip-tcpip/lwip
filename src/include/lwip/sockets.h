@@ -64,39 +64,39 @@ struct sockaddr {
 #  define socklen_t u32_t
 #endif
 
-
+/* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1
 #define SOCK_DGRAM      2
 #define SOCK_RAW        3
 
 /*
- * Option flags per-socket.
+ * Option flags per-socket. These must match the SOF_ flags in ip.h!
  */
-#define  SO_DEBUG       0x0001 /* turn on debugging info recording */
+#define  SO_DEBUG       0x0001 /* Unimplemented: turn on debugging info recording */
 #define  SO_ACCEPTCONN  0x0002 /* socket has had listen() */
-#define  SO_REUSEADDR   0x0004 /* allow local address reuse */
+#define  SO_REUSEADDR   0x0004 /* Unimplemented: allow local address reuse */
 #define  SO_KEEPALIVE   0x0008 /* keep connections alive */
-#define  SO_DONTROUTE   0x0010 /* just use interface addresses */
-#define  SO_BROADCAST   0x0020 /* permit sending of broadcast msgs */
-#define  SO_USELOOPBACK 0x0040 /* bypass hardware when possible */
+#define  SO_DONTROUTE   0x0010 /* Unimplemented: just use interface addresses */
+#define  SO_BROADCAST   0x0020 /* Unimplemented: permit sending of broadcast msgs */
+#define  SO_USELOOPBACK 0x0040 /* Unimplemented: bypass hardware when possible */
 #define  SO_LINGER      0x0080 /* linger on close if data present */
-#define  SO_OOBINLINE   0x0100 /* leave received OOB data in line */
-#define  SO_REUSEPORT   0x0200 /* allow local address & port reuse */
+#define  SO_OOBINLINE   0x0100 /* Unimplemented: leave received OOB data in line */
+#define  SO_REUSEPORT   0x0200 /* Unimplemented: allow local address & port reuse */
 
 #define SO_DONTLINGER   ((int)(~SO_LINGER))
 
 /*
  * Additional options, not kept in so_options.
  */
-#define SO_SNDBUF    0x1001    /* send buffer size */
+#define SO_SNDBUF    0x1001    /* Unimplemented: send buffer size */
 #define SO_RCVBUF    0x1002    /* receive buffer size */
-#define SO_SNDLOWAT  0x1003    /* send low-water mark */
-#define SO_RCVLOWAT  0x1004    /* receive low-water mark */
-#define SO_SNDTIMEO  0x1005    /* send timeout */
+#define SO_SNDLOWAT  0x1003    /* Unimplemented: send low-water mark */
+#define SO_RCVLOWAT  0x1004    /* Unimplemented: receive low-water mark */
+#define SO_SNDTIMEO  0x1005    /* Unimplemented: send timeout */
 #define SO_RCVTIMEO  0x1006    /* receive timeout */
 #define SO_ERROR     0x1007    /* get error status and clear */
 #define SO_TYPE      0x1008    /* get socket type */
-#define SO_CONTIMEO  0x1009    /* connect timeout */
+#define SO_CONTIMEO  0x1009    /* Unimplemented: connect timeout */
 #define SO_NO_CHECK  0x100a    /* don't create UDP checksum */
 
 
@@ -129,8 +129,8 @@ struct linger {
 
 /* Flags we can use with send and recv. */
 #define MSG_PEEK       0x01    /* Peeks at an incoming message */
-#define MSG_WAITALL    0x02    /* Requests that the function block until the full amount of data requested can be returned */
-#define MSG_OOB        0x04    /* Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific */
+#define MSG_WAITALL    0x02    /* Unimplemented: Requests that the function block until the full amount of data requested can be returned */
+#define MSG_OOB        0x04    /* Unimplemented: Requests out-of-band data. The significance and semantics of out-of-band data are protocol-specific */
 #define MSG_DONTWAIT   0x08    /* Nonblocking i/o for this operation only */
 #define MSG_MORE       0x10    /* Sender will send more */
 
@@ -177,6 +177,7 @@ typedef struct ip_mreq {
 } ip_mreq;
 #endif /* LWIP_IGMP */
 
+/* Unimplemented for now... */
 #define IPTOS_TOS_MASK          0x1E
 #define IPTOS_TOS(tos)          ((tos) & IPTOS_TOS_MASK)
 #define IPTOS_LOWDELAY          0x10
@@ -186,7 +187,7 @@ typedef struct ip_mreq {
 #define IPTOS_MINCOST           IPTOS_LOWCOST
 
 /*
- * Definitions for IP precedence (also in ip_tos) (hopefully unused)
+ * Definitions for IP precedence (also in ip_tos) (Unimplemented)
  */
 #define IPTOS_PREC_MASK                 0xe0
 #define IPTOS_PREC(tos)                ((tos) & IPTOS_PREC_MASK)
@@ -202,7 +203,7 @@ typedef struct ip_mreq {
 
 /*
  * Commands for ioctlsocket(),  taken from the BSD file fcntl.h.
- *
+ * lwip_ioctl only supports FIONREAD and FIONBIO, for now
  *
  * Ioctl's have the command encoded in the lower word,
  * and the size of any in or out parameters in the upper
@@ -223,7 +224,7 @@ typedef struct ip_mreq {
 #define _IOR(x,y,t)     (IOC_OUT|(((long)sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
 
 #define _IOW(x,y,t)     (IOC_IN|(((long)sizeof(t)&IOCPARM_MASK)<<16)|((x)<<8)|(y))
-#endif
+#endif /* !defined(FIONREAD) || !defined(FIONBIO) */
 
 #ifndef FIONREAD
 #define FIONREAD    _IOR('f', 127, unsigned long) /* get # bytes to read */
@@ -232,7 +233,7 @@ typedef struct ip_mreq {
 #define FIONBIO     _IOW('f', 126, unsigned long) /* set/clear non-blocking i/o */
 #endif
 
-/* Socket I/O Controls */
+/* Socket I/O Controls: unimplemented */
 #ifndef SIOCSHIWAT
 #define SIOCSHIWAT  _IOW('s',  0, unsigned long)  /* set high watermark */
 #define SIOCGHIWAT  _IOR('s',  1, unsigned long)  /* get high watermark */
@@ -241,10 +242,12 @@ typedef struct ip_mreq {
 #define SIOCATMARK  _IOR('s',  7, unsigned long)  /* at oob mark? */
 #endif
 
+/* Socket flags: */
 #ifndef O_NONBLOCK
 #define O_NONBLOCK    04000U
 #endif
 
+/* FD_SET used for lwip_select */
 #ifndef FD_SET
   #undef  FD_SETSIZE
   /* Make FD_SETSIZE match NUM_SOCKETS in socket.c */
@@ -271,9 +274,9 @@ typedef struct ip_mreq {
     long    tv_sec;         /* seconds */
     long    tv_usec;        /* and microseconds */
   };
-#endif
+#endif /* LWIP_TIMEVAL_PRIVATE */
 
-#endif
+#endif /* FD_SET */
 
 void lwip_socket_init(void);
 
