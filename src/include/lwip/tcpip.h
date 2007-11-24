@@ -40,6 +40,7 @@
 #include "lwip/netifapi.h"
 #include "lwip/pbuf.h"
 #include "lwip/api.h"
+#include "lwip/sys.h"
 
 #ifdef __cplusplus
 extern "C" {
