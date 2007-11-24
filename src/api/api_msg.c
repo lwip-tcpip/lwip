@@ -377,6 +377,8 @@ pcb_new(struct api_msg_msg *msg)
 {
    msg->conn->err = ERR_OK;
 
+   LWIP_ASSERT("pcb_new: pcb already allocated", msg->conn->pcb.tcp == NULL);
+
    /* Allocate a PCB for this connection */
    switch(NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
@@ -775,7 +777,7 @@ do_recv(struct api_msg_msg *msg)
  * @return ERR_OK
  *         ERR_MEM if LWIP_TCPIP_CORE_LOCKING=1 and sending hasn't yet finished
  */
-err_t
+static err_t
 do_writemore(struct netconn *conn)
 {
   err_t err;
@@ -996,7 +998,8 @@ do_join_leave_group(struct api_msg_msg *msg)
 #if LWIP_DNS
 /**
  * Callback function that is called when DNS name is resolved
- * (or on timeout).
+ * (or on timeout). A waiting application thread is waked up by
+ * signaling the semaphore.
  */
 static void
 do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)

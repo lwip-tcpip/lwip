@@ -93,29 +93,45 @@ enum netconn_igmp {
 };
 #endif /* LWIP_IGMP */
 
+/* forward-declare some structs to avoid to include their headers */
 struct ip_pcb;
 struct tcp_pcb;
 struct udp_pcb;
 struct raw_pcb;
 
+/** A netconn descriptor */
 struct netconn {
+  /** type of the netconn (TCP, UDP or RAW) */
   enum netconn_type type;
+  /** current state of the netconn */
   enum netconn_state state;
+  /** the lwIP internal protocol control block */
   union {
     struct ip_pcb  *ip;
     struct tcp_pcb *tcp;
     struct udp_pcb *udp;
     struct raw_pcb *raw;
   } pcb;
+  /** the last error this netconn had */
   err_t err;
+  /** mbox that is used mutex-like to synchroneously execute functions
+      in the core context */
   sys_mbox_t mbox;
+  /** mbox where received packets are stored until they are fetched
+      by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;
+  /** mbox where new connections are stored until processed
+      by the application thread */
   sys_mbox_t acceptmbox;
+  /** only used for socket layer */
   int socket;
 #if LWIP_SO_RCVTIMEO
+  /** timeout to wait for new data to be received
+      (or connections to arrive for listening netconns) */
   int recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
+  /** maximum amount of bytes queued in recvmbox */
   int recv_bufsize;
 #endif /* LWIP_SO_RCVBUF */
   u16_t recv_avail;
@@ -131,7 +147,7 @@ struct netconn {
       if data couldn't be sent in the first try. */
   u8_t write_delayed;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
-
+  /** A callback function that is informed about events for this netconn */
   void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
 };
 
