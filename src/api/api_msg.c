@@ -1024,7 +1024,7 @@ do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
  * Execute a DNS query
  * Called from netconn_gethostbyname
  *
- * @param msg the dns_api_msg pointing to the query
+ * @param arg the dns_api_msg pointing to the query
  */
 void
 do_gethostbyname(void *arg)

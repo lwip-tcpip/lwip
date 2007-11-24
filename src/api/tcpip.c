@@ -316,7 +316,7 @@ tcpip_thread(void *arg)
  *
  * @param p the received packet, p->payload pointing to the Ethernet header or
  *          to an IP header (if netif doesn't got NETIF_FLAG_ETHARP flag)
- * @param netif the network interface on which the packet was received
+ * @param inp the network interface on which the packet was received
  */
 err_t
 tcpip_input(struct pbuf *p, struct netif *inp)

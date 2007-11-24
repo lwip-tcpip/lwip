@@ -85,9 +85,9 @@
  * layer at which the pbuf is allocated and the requested size
  * (from the size parameter).
  *
- * @param l flag to define header size
+ * @param layer flag to define header size
  * @param length size of the pbuf's payload
- * @param flag this parameter decides how and where the pbuf
+ * @param type this parameter decides how and where the pbuf
  * should be allocated as follows:
  *
  * - PBUF_RAM: buffer memory for pbuf is allocated as one large

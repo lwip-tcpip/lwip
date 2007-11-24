@@ -779,7 +779,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
  * - DNS_REQUEST_QUEUED and queues a request to be sent to the DNS server
  *   for resolution if no errors are present.
  *
- * @param name the hostname that is to be queried
+ * @param hostname the hostname that is to be queried
  * @param addr pointer to a struct ip_addr where to store the address if it is already
  *             cached in the dns_table (only valid if DNS_COMPLETE is returned!)
  * @param found a callback founction to be called on success, failure or timeout (only if

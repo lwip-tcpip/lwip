@@ -185,6 +185,7 @@ netconn_type(struct netconn *conn)
  * @param conn the netconn to query
  * @param addr a pointer to which to save the IP address
  * @param port a pointer to which to save the port (or protocol for RAW)
+ * @param local 1 to get the local IP address, 0 to get the remote one
  * @return ERR_CONN for invalid connections
  *         ERR_OK if the information was retrieved
  */
