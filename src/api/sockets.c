@@ -296,11 +296,11 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   sock_set_errno(sock, 0);
 
   sys_sem_wait(socksem);
-  /* @todo: This piece of code effectively does nothing: newconn->socket is set to -1 on
-     correct program flow, nsock->rcvevent is 0 before and after this line.
-     Unless there's a specific reason for this code, it should be deleted!
-     
-     This code came in with rev. 1.8 of the file (committed by davidhaas, maybe he knows more) */
+  /* See event_callback: If data comes in right away after an accept, even
+   * though the server task might not have created a new socket yet.
+   * In that case, newconn->socket is counted down (newconn->socket--),
+   * so nsock->rcvevent is >= 1 here!
+   */
   nsock->rcvevent += -1 - newconn->socket;
   newconn->socket = newsock;
   sys_sem_signal(socksem);
