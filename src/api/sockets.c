@@ -989,16 +989,24 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
        * Just count down (or up) if that's the case and we
        * will use the data later. Note that only receive events
        * can happen before the new socket is set up. */
-      if (evt == NETCONN_EVT_RCVPLUS)
-        conn->socket--;
-      return;
+      sys_sem_wait(socksem);
+      if (conn->socket < 0) {
+        if (evt == NETCONN_EVT_RCVPLUS) {
+          conn->socket--;
+        }
+        sys_sem_signal(socksem);
+        return;
+      }
+      sys_sem_signal(socksem);
     }
 
     sock = get_socket(s);
-    if (!sock)
+    if (!sock) {
       return;
-  } else
+    }
+  } else {
     return;
+  }
 
   sys_sem_wait(selectsem);
   /* Set event as required */
@@ -1014,6 +1022,9 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       break;
     case NETCONN_EVT_SENDMINUS:
       sock->sendevent = 0;
+      break;
+    default:
+      LWIP_ASSERT("unknown event", 0);
       break;
   }
   sys_sem_signal(selectsem);
