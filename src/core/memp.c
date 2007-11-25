@@ -2,6 +2,8 @@
  * @file
  * Dynamic pool memory manager
  *
+ * lwIP has dedicated pools for many structures (netconn, protocol control blocks,
+ * packet buffers, ...). All these pools are managed here.
  */
 
 /*
@@ -62,8 +64,6 @@ struct memp {
 #endif /* MEMP_OVERFLOW_CHECK */
 };
 
-static struct memp *memp_tab[MEMP_MAX];
-
 #if MEMP_OVERFLOW_CHECK
 /* if MEMP_OVERFLOW_CHECK is turned on, we reserve some bytes at the beginning
  * and at the end of each element, initialize them as 0xcd and check
@@ -105,6 +105,11 @@ static struct memp *memp_tab[MEMP_MAX];
 
 #endif /* MEMP_OVERFLOW_CHECK */
 
+/** This array holds the first free element of each pool.
+ *  Elements form a linked list. */
+static struct memp *memp_tab[MEMP_MAX];
+
+/** This array holds the element sizes of each pool. */
 #if !MEM_USE_POOLS
 static
 #endif
@@ -113,11 +118,13 @@ const u16_t memp_sizes[MEMP_MAX] = {
 #include "lwip/memp_std.h"
 };
 
+/** This array holds the number of elements in each pool. */
 static const u16_t memp_num[MEMP_MAX] = {
 #define LWIP_MEMPOOL(name,num,size,desc)  (num),
 #include "lwip/memp_std.h"
 };
 
+/** This array holds a textual description of each pool. */
 #ifdef LWIP_DEBUG
 static const char *memp_desc[MEMP_MAX] = {
 #define LWIP_MEMPOOL(name,num,size,desc)  (desc),
@@ -125,6 +132,7 @@ static const char *memp_desc[MEMP_MAX] = {
 };
 #endif /* LWIP_DEBUG */
 
+/** This is the actual memory used by the pools. */
 static u8_t memp_memory[MEM_ALIGNMENT - 1 
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
@@ -183,6 +191,7 @@ memp_overflow_check_element(struct memp *p, u16_t memp_size)
   }
 #endif
 }
+
 /**
  * Do an overflow check for all elements in every pool.
  *
@@ -203,6 +212,7 @@ memp_overflow_check_all(void)
     }
   }
 }
+
 /**
  * Initialize the restricted areas of all memp elements in every pool.
  */
@@ -272,14 +282,18 @@ memp_init(void)
  * Get an element from a specific pool.
  *
  * @param type the pool to get an element from
+ *
+ * the debug version has two more parameters:
  * @param file file name calling this function
  * @param line number of line where this function is called
+ *
+ * @return a pointer to the allocated memory or a NULL pointer on error
  */
 void *
-#if MEMP_OVERFLOW_CHECK
-memp_malloc_fn(memp_t type, const char* file, const int line)
-#else
+#if !MEMP_OVERFLOW_CHECK
 memp_malloc(memp_t type)
+#else
+memp_malloc_fn(memp_t type, const char* file, const int line)
 #endif
 {
   struct memp *memp;
