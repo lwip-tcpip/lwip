@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-11-25 Simon Goldschmidt
+  * dhcp.c: dhcp_unfold_reply() uses pbuf_copy_partial instead of its own copy
+    algorithm.
+
   2007-11-24 Simon Goldschmidt
   * netdb.h, netdb.c, sockets.h/.c: Moved lwip_gethostbyname from sockets.c
     to the new file netdb.c; included lwip_getaddrinfo.

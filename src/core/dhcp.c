@@ -1079,7 +1079,7 @@ static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state)
  */
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
 {
-  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option: dhcp->options_out_len + 2 + option_len <= DHCP_OPTIONS_LEN", dhcp->options_out_len + 2U + option_len <= DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = option_type;
   dhcp->msg_out->options[dhcp->options_out_len++] = option_len;
 }
@@ -1089,7 +1089,7 @@ static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len)
  */
 static void dhcp_option_byte(struct dhcp *dhcp, u8_t value)
 {
-  LWIP_ASSERT("dhcp_option_short: dhcp->options_out_len < DHCP_OPTIONS_LEN", dhcp->options_out_len < DHCP_OPTIONS_LEN);
+  LWIP_ASSERT("dhcp_option_byte: dhcp->options_out_len < DHCP_OPTIONS_LEN", dhcp->options_out_len < DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = value;
 }
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value)
@@ -1119,12 +1119,8 @@ static void dhcp_option_long(struct dhcp *dhcp, u32_t value)
  */
 static err_t dhcp_unfold_reply(struct dhcp *dhcp)
 {
-  struct pbuf *p;
-  u8_t *ptr;
-  u16_t i;
-  u16_t j = 0;
+  u16_t ret;
   LWIP_ERROR("dhcp != NULL", (dhcp != NULL), return ERR_ARG;);
-  p = dhcp->p;
   LWIP_ERROR("dhcp->p != NULL", (dhcp->p != NULL), return ERR_VAL;);
   /* free any left-overs from previous unfolds */
   dhcp_free_reply(dhcp);
@@ -1148,33 +1144,18 @@ static err_t dhcp_unfold_reply(struct dhcp *dhcp)
     return ERR_MEM;
   }
 
-  ptr = (u8_t *)dhcp->msg_in;
-  /* proceed through struct dhcp_msg */
-  for (i = 0; i < sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN; i++)
-  {
-    *ptr++ = ((u8_t *)p->payload)[j++];
-    /* reached end of pbuf? */
-    if (j == p->len)
-    {
-      /* proceed to next pbuf in chain */
-      p = p->next;
-      j = 0;
-    }
-  }
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes into dhcp->msg_in[]\n", i));
+  /** copy the DHCP message without options */
+  ret = pbuf_copy_partial(dhcp->p, dhcp->msg_in, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN, 0);
+  LWIP_ASSERT("ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN", ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
+  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes into dhcp->msg_in[]\n",
+     sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN));
+
   if (dhcp->options_in != NULL) {
-    ptr = (u8_t *)dhcp->options_in;
-    /* proceed through options */
-    for (i = 0; i < dhcp->options_in_len; i++) {
-      *ptr++ = ((u8_t *)p->payload)[j++];
-      /* reached end of pbuf? */
-      if (j == p->len) {
-        /* proceed to next pbuf in chain */
-        p = p->next;
-        j = 0;
-      }
-    }
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes to dhcp->options_in[]\n", i));
+    /** copy the DHCP options */
+    ret = pbuf_copy_partial(dhcp->p, dhcp->options_in, dhcp->options_in_len, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
+    LWIP_ASSERT("ret == dhcp->options_in_len", ret == dhcp->options_in_len);
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes to dhcp->options_in[]\n",
+      dhcp->options_in_len));
   }
   return ERR_OK;
 }
@@ -1319,7 +1300,7 @@ static err_t dhcp_create_request(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_create_request(): could not allocate pbuf\n"));
     return ERR_MEM;
   }
-  LWIP_ASSERT("check that first pbuf can hold struct dhcp_msg",
+  LWIP_ASSERT("dhcp_create_request: check that first pbuf can hold struct dhcp_msg",
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
   /* give unique transaction identifier to this request */
@@ -1358,11 +1339,11 @@ static err_t dhcp_create_request(struct netif *netif)
 static void dhcp_delete_request(struct netif *netif)
 {
   struct dhcp *dhcp;
-  LWIP_ERROR("dhcp_create_request: netif != NULL", (netif != NULL), return;);
+  LWIP_ERROR("dhcp_delete_request: netif != NULL", (netif != NULL), return;);
   dhcp = netif->dhcp;
-  LWIP_ERROR("dhcp_create_request: dhcp != NULL", (dhcp != NULL), return;);
-  LWIP_ASSERT("dhcp_free_msg: dhcp->p_out != NULL", dhcp->p_out != NULL);
-  LWIP_ASSERT("dhcp_free_msg: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
+  LWIP_ERROR("dhcp_delete_request: dhcp != NULL", (dhcp != NULL), return;);
+  LWIP_ASSERT("dhcp_delete_request: dhcp->p_out != NULL", dhcp->p_out != NULL);
+  LWIP_ASSERT("dhcp_delete_request: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
   if (dhcp->p_out != NULL) {
     pbuf_free(dhcp->p_out);
   }
@@ -1379,7 +1360,7 @@ static void dhcp_delete_request(struct netif *netif)
 
 static void dhcp_option_trailer(struct dhcp *dhcp)
 {
-  LWIP_ERROR("dhcp_create_request: dhcp != NULL", (dhcp != NULL), return;);
+  LWIP_ERROR("dhcp_option_trailer: dhcp != NULL", (dhcp != NULL), return;);
   LWIP_ASSERT("dhcp_option_trailer: dhcp->msg_out != NULL\n", dhcp->msg_out != NULL);
   LWIP_ASSERT("dhcp_option_trailer: dhcp->options_out_len < DHCP_OPTIONS_LEN\n", dhcp->options_out_len < DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = DHCP_OPTION_END;
