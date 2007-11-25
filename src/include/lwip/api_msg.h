@@ -39,12 +39,11 @@
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
+#include "lwip/igmp.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-enum netconn_igmp;
 
 /* IP addresses and port numbers are expected to be in
  * the same byte order as in the corresponding pcb.

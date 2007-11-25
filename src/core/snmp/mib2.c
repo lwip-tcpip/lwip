@@ -2502,16 +2502,16 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           if (netif_is_link_up(netif))
           {
-            *sint_ptr = 1; // up
+            *sint_ptr = 1; /* up */
           }
           else
           {
-            *sint_ptr = 7; // lowerLayerDown
+            *sint_ptr = 7; /* lowerLayerDown */
           }
         }
         else
         {
-          *sint_ptr = 2; // down
+          *sint_ptr = 2; /* down */
         }
       }
       break;
