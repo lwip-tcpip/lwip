@@ -292,8 +292,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newconn->callback = event_callback;
   nsock = &sockets[newsock];
   LWIP_ASSERT("invalid socket pointer", nsock != NULL);
-  /* set error OK in the listening socket */
-  sock_set_errno(sock, 0);
 
   sys_sem_wait(socksem);
   /* See event_callback: If data comes in right away after an accept, even
@@ -309,8 +307,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", port));
 
-  /* set error OK in the new connection socket */
-  sock_set_errno(nsock, 0);
+  sock_set_errno(sock, 0);
   return newsock;
 }
 
