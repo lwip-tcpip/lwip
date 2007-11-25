@@ -256,6 +256,8 @@ tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 {
   struct tcp_pcb *cpcb;
 
+  LWIP_ERROR("tcp_connect: can only bind in state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
+
   if (port == 0) {
     port = tcp_new_port();
   }
@@ -343,7 +345,7 @@ tcp_listen(struct tcp_pcb *pcb)
 {
   struct tcp_pcb_listen *lpcb;
 
-  LWIP_ERROR("pcb not already connected", pcb->state == CLOSED, return NULL);
+  LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, return NULL);
 
   /* already listening? */
   if (pcb->state == LISTEN) {
@@ -473,6 +475,8 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   u32_t optdata;
   err_t ret;
   u32_t iss;
+
+  LWIP_ERROR("tcp_connect: can only connected from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
   if (ipaddr != NULL) {
