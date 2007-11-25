@@ -209,14 +209,9 @@ get_socket(int s)
  * @return the index of the new socket; -1 on error
  */
 static int
-alloc_socket(struct netconn *newconn, struct lwip_socket **sock)
+alloc_socket(struct netconn *newconn)
 {
   int i;
-  struct lwip_socket *unused;
-  if (sock == NULL) {
-    sock = &unused;
-  }
-  *sock = NULL;
 
   /* Protect socket array */
   sys_sem_wait(socksem);
@@ -232,7 +227,6 @@ alloc_socket(struct netconn *newconn, struct lwip_socket **sock)
       sockets[i].flags      = 0;
       sockets[i].err        = 0;
       sys_sem_signal(socksem);
-      *sock = &sockets[i];
       return i;
     }
   }
@@ -249,7 +243,7 @@ alloc_socket(struct netconn *newconn, struct lwip_socket **sock)
 int
 lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-  struct lwip_socket *sock;
+  struct lwip_socket *sock, *nsock;
   struct netconn *newconn;
   struct ip_addr naddr;
   u16_t port;
@@ -288,18 +282,26 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 
   SMEMCPY(addr, &sin, *addrlen);
 
-  newsock = alloc_socket(newconn, &sock);
+  newsock = alloc_socket(newconn);
   if (newsock == -1) {
     netconn_delete(newconn);
     sock_set_errno(sock, ENFILE);
     return -1;
   }
+  LWIP_ASSERT("invalid socket index", (newsock >= 0) && (newsock < NUM_SOCKETS));
   newconn->callback = event_callback;
-  LWIP_ASSERT("invalid socket pointer", sock != NULL);
-  LWIP_ASSERT("socket pointer doesn't match the array", &sockets[newsock] == sock);
+  nsock = &sockets[newsock];
+  LWIP_ASSERT("invalid socket pointer", nsock != NULL);
+  /* set error OK in the listening socket */
+  sock_set_errno(sock, 0);
 
   sys_sem_wait(socksem);
-  sock->rcvevent += -1 - newconn->socket;
+  /* @todo: This piece of code effectively does nothing: newconn->socket is set to -1 on
+     correct program flow, nsock->rcvevent is 0 before and after this line.
+     Unless there's a specific reason for this code, it should be deleted!
+     
+     This code came in with rev. 1.8 of the file (committed by davidhaas, maybe he knows more) */
+  nsock->rcvevent += -1 - newconn->socket;
   newconn->socket = newsock;
   sys_sem_signal(socksem);
 
@@ -307,7 +309,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", port));
 
-  sock_set_errno(sock, 0);
+  /* set error OK in the new connection socket */
+  sock_set_errno(nsock, 0);
   return newsock;
 }
 
@@ -744,7 +747,7 @@ lwip_socket(int domain, int type, int protocol)
     return -1;
   }
 
-  i = alloc_socket(conn, NULL);
+  i = alloc_socket(conn);
 
   if (i == -1) {
     netconn_delete(conn);
