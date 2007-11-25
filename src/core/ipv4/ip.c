@@ -498,7 +498,15 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
  * Simple interface to ip_output_if. It finds the outgoing network
  * interface and calls upon ip_output_if to do the actual work.
  *
- * See ip_ouptut_if for parameter declaration.
+ * @param p the packet to send (p->payload points to the data, e.g. next
+            protocol header; if dest == IP_HDRINCL, p already includes an IP
+            header and p->payload points to that IP header)
+ * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ *         IP  address of the netif used to send is used as source address)
+ * @param dest the destination IP address to send the packet to
+ * @param ttl the TTL value to be set in the IP header
+ * @param tos the TOS value to be set in the IP header
+ * @param proto the PROTOCOL to be set in the IP header
  *
  * @return ERR_RTE if no route is found
  *         see ip_output_if() for more return values

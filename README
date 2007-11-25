@@ -12,16 +12,21 @@ around 40 kilobytes of code ROM.
 
 FEATURES
 
- * IP (Internet Protocol) including packet forwarding over multiple
-   network interfaces
- * ICMP (Internet Control Message Protocol) for network maintenance
-   and debugging
- * UDP (User Datagram Protocol) including experimental UDP-lite
-   extensions
- * TCP (Transmission Control Protocol) with congestion control, RTT
-   estimation and fast recovery/fast retransmit
- * Specialized API for enhanced performance
- * Optional Berkeley socket API
+  * IP (Internet Protocol) including packet forwarding over multiple network
+    interfaces
+  * ICMP (Internet Control Message Protocol) for network maintenance and debugging
+  * IGMP (Internet Group Management Protocol) for multicast traffic management
+  * UDP (User Datagram Protocol) including experimental UDP-lite extensions
+  * TCP (Transmission Control Protocol) with congestion control, RTT estimation
+    and fast recovery/fast retransmit
+  * Specialized raw/native API for enhanced performance
+  * Optional Berkeley-like socket API
+  * DNS (Domain names resolver)
+  * SNMP (Simple Network Management Protocol)
+  * DHCP (Dynamic Host Configuration Protocol)
+  * AUTOIP (for IPv4, conform with RFC 3927)
+  * PPP (Point-to-Point Protocol)
+  * ARP (Address Resolution Protocol) for Ethernet
 
 LICENSE
 
@@ -65,7 +70,6 @@ lwIP are at the official lwIP home page:
 Self documentation of the source code is regularly extracted from the
 current CVS sources and is available from this web page:
   http://www.nongnu.org/lwip/
-[Unfortunately, this page is currently outdated!]
 
 There is now a constantly growin wiki about lwIP at
   http://lwip.scribblewiki.com/
@@ -81,4 +85,5 @@ documentation and browsing the mailing list archives is a good way to
 become familiar with the design of lwIP.
 
 Adam Dunkels <adam@sics.se>
-Leon Woestenberg <leon.woestenberg@gmx.net>		    
+Leon Woestenberg <leon.woestenberg@gmx.net>
+
