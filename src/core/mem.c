@@ -73,6 +73,8 @@ mem_malloc(mem_size_t size)
   memp_t poolnr;
 
   for (poolnr = MEMP_POOL_START; poolnr <= MEMP_POOL_END; poolnr++) {
+    /* is this pool big enough to hold an element of the required size
+       plus a struct mem_helper that saves the pool this element came from? */
     if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
       break;
     }
@@ -89,7 +91,9 @@ mem_malloc(mem_size_t size)
     return NULL;
   }
 
+  /* save the pool number this element came from */
   element->poolnr = poolnr;
+  /* and return a pointer to the memory directly after the struct mem_helper */
   element++;
 
   return element;
@@ -110,45 +114,57 @@ mem_free(void *rmem)
   LWIP_ASSERT("rmem != NULL", (rmem != NULL));
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
+  /* get the original struct mem_helper */
   hmem--;
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));
   LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
   LWIP_ASSERT("hmem->poolnr < MEMP_MAX", (hmem->poolnr < MEMP_MAX));
 
+  /* and put it in the pool we saved earlier */
   memp_free(hmem->poolnr, hmem);
 }
 
 #else /* MEM_USE_POOLS */
 /* lwIP replacement for your libc malloc() */
 
-/* This does not have to be aligned since for getting its size,
+/**
+ * The heap is made up as a list of structs of this type.
+ * This does not have to be aligned since for getting its size,
  * we only use the macro SIZEOF_STRUCT_MEM, which automatically alignes.
  */
 struct mem {
+  /** index (-> ram[next]) of the next struct */
   mem_size_t next;
+  /** index (-> ram[next]) of the next struct */
   mem_size_t prev;
+  /** 1: this area is used; 0: this area is unused */
   u8_t used;
 };
 
-/* All allocated blocks will be MIN_SIZE bytes big, at least!
+/** All allocated blocks will be MIN_SIZE bytes big, at least!
  * MIN_SIZE can be overridden to suit your needs. Smaller values save space,
  * larger values could prevent too small blocks to fragment the RAM too much. */
 #ifndef MIN_SIZE
 #define MIN_SIZE             12
 #endif /* MIN_SIZE */
+/* some alignment macros: we define them here for better source code layout */
 #define MIN_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MIN_SIZE)
 #define SIZEOF_STRUCT_MEM    LWIP_MEM_ALIGN_SIZE(sizeof(struct mem))
 #define MEM_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MEM_SIZE)
 
-static struct mem *ram_end;
-/* the heap. we need one struct mem at the end and some room for alignment */
+/** the heap. we need one struct mem at the end and some room for alignment */
 static u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
-static u8_t *ram; /* for alignment, ram is now a pointer instead of an array */
-static struct mem *lfree; /* pointer to the lowest free block */
-static sys_sem_t mem_sem; /* concurrent access protection */
+/** pointer to the heap (ram_heap): for alignment, ram is now a pointer instead of an array */
+static u8_t *ram;
+/** the last entry, always unused! */
+static struct mem *ram_end;
+/** pointer to the lowest free block, this is used for faster search */
+static struct mem *lfree;
+/** concurrent access protection */
+static sys_sem_t mem_sem;
 
-/*
+/**
  * "Plug holes" by combining adjacent empty struct mems.
  * After this function is through, there should not exist
  * one empty struct mem pointing to another empty struct mem.
@@ -194,7 +210,7 @@ plug_holes(struct mem *mem)
   }
 }
 
-/*
+/**
  * Zero the heap and initialize start, end and lowest-free
  */
 void
@@ -228,7 +244,9 @@ mem_init(void)
 #endif /* MEM_STATS */
 }
 
-/* Put a struct mem back on the heap
+/**
+ * Put a struct mem back on the heap
+ *
  * @param rmem is the data portion of a struct mem as returned by a previous
  *             call to mem_malloc()
  */
@@ -278,9 +296,15 @@ mem_free(void *rmem)
   sys_sem_signal(mem_sem);
 }
 
-/* In contrast to its name, mem_realloc can only shrink memory, not expand it.
+/**
+ * In contrast to its name, mem_realloc can only shrink memory, not expand it.
  * Since the only use (for now) is in pbuf_realloc (which also can only shrink),
  * this shouldn't be a problem!
+ *
+ * @param rmem pointer to memory allocated by mem_malloc the is to be shrinked
+ * @param newsize required size after shrinking (needs to be smaller than or
+ *                equal to the previous size)
+ * @return for compatibility reasons: is always == rmem, at the moment
  */
 void *
 mem_realloc(void *rmem, mem_size_t newsize)
@@ -392,11 +416,12 @@ mem_realloc(void *rmem, mem_size_t newsize)
 
 /**
  * Adam's mem_malloc() plus solution for bug #17922
- *
  * Allocate a block of memory with a minimum of 'size' bytes.
- * @param size is the minimum size of the requested block in bytes.
  *
- * Note that the returned value will always be aligned.
+ * @param size is the minimum size of the requested block in bytes.
+ * @return pointer to allocated memory or NULL if no free memory was found.
+ *
+ * Note that the returned value will always be aligned (as defined by MEM_ALIGNMENT).
  */
 void *
 mem_malloc(mem_size_t size)
@@ -510,13 +535,24 @@ mem_malloc(mem_size_t size)
 }
 
 #endif /* MEM_USE_POOLS */
-
+/**
+ * Contiguously allocates enough space for count objects that are size bytes
+ * of memory each and returns a pointer to the allocated memory.
+ *
+ * The allocated memory is filled with bytes of value zero.
+ *
+ * @param count number of objects to allocate
+ * @param size size of the objects to allocate
+ * @return pointer to allocated memory / NULL pointer if there is an error
+ */
 void *mem_calloc(size_t count, size_t size)
 {
   void *p;
 
+  /* allocate 'count' objects of size 'size' */
   p = mem_malloc(count * size);
-  if(p) {
+  if (p) {
+    /* zero the memory */
     memset(p, 0, count * size);
   }
   return p;
