@@ -87,7 +87,8 @@ netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   conn->recvmbox = SYS_MBOX_NULL;
   conn->acceptmbox = SYS_MBOX_NULL;
   conn->state        = NETCONN_NONE;
-  conn->socket       = 0;
+  /* initialize socket to -1 since 0 is a valid socket */
+  conn->socket       = -1;
   conn->callback     = callback;
   conn->recv_avail   = 0;
 #if LWIP_SO_RCVTIMEO
