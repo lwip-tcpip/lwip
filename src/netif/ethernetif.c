@@ -44,6 +44,9 @@
  */
 
 #include "lwip/opt.h"
+
+#if 0 /* don't build, this is only a skeleton, see previous comment */
+
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
@@ -312,3 +315,5 @@ ethernetif_init(struct netif *netif)
 
   return ERR_OK;
 }
+
+#endif /* 0 */
