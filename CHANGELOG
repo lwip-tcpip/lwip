@@ -499,6 +499,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-26 Simon Goldschmidt
+  * tcp_in.c: Fixed bug #21582: pcb->acked accounting can be wrong when ACKs
+    arrive out-of-order
+
   2007-11-21 Simon Goldschmidt
   * tcp.h, tcp_out.c, api_msg.c: Fixed bug #20287: tcp_output_nagle sends too early
     Fixed the nagle algorithm; nagle now also works for all raw API applications

@@ -833,6 +833,9 @@ tcp_receive(struct tcp_pcb *pcb)
         pcb->rtime = 0;
 
       pcb->polltmr = 0;
+    } else {
+      /* Fix bug bug #21582: out of sequence ACK, didn't really ack anything */
+      pcb->acked = 0;
     }
 
     /* We go through the ->unsent list to see if any of the segments
