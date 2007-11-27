@@ -47,7 +47,7 @@ typedef s8_t err_t;
 #define ERR_BUF     -2    /* Buffer error.            */
 #define ERR_RTE     -3    /* Routing problem.         */
 
-#define ERR_IS_FATAL(e) ((e) < ERR_TIMEOUT)
+#define ERR_IS_FATAL(e) ((e) < ERR_RTE)
 
 #define ERR_ABRT    -4    /* Connection aborted.      */
 #define ERR_RST     -5    /* Connection reset.        */
