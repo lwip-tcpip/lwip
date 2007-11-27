@@ -2692,7 +2692,7 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->instance = MIB_OBJECT_TAB;
         od->access = MIB_OBJECT_READ_WRITE;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
-        od->v_len = sizeof(struct eth_addr);
+        od->v_len = 6; /** @todo try to use netif::hwaddr_len */
         break;
       case 3: /* atNetAddress */
         od->instance = MIB_OBJECT_TAB;
@@ -2716,9 +2716,11 @@ atentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 atentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
+#if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
   struct ip_addr* ipaddr_ret;
+#endif /* LWIP_ARP */
   struct ip_addr ip;
   struct netif *netif;
 
@@ -2728,6 +2730,7 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
   ip.addr = htonl(ip.addr);
 
+#if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
     id = od->id_inst_ptr[0];
@@ -2755,6 +2758,7 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
     }
   }
+#endif /* LWIP_ARP */
 }
 
 static void
@@ -3372,7 +3376,7 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->instance = MIB_OBJECT_TAB;
         od->access = MIB_OBJECT_READ_WRITE;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
-        od->v_len = sizeof(struct eth_addr);
+        od->v_len = 6; /** @todo try to use netif::hwaddr_len */
         break;
       case 3: /* ipNetToMediaNetAddress */
         od->instance = MIB_OBJECT_TAB;
@@ -3396,9 +3400,11 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
+#if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
   struct ip_addr* ipaddr_ret;
+#endif /* LWIP_ARP */
   struct ip_addr ip;
   struct netif *netif;
 
@@ -3408,6 +3414,7 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
   ip.addr = htonl(ip.addr);
 
+#if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
     id = od->id_inst_ptr[0];
@@ -3442,6 +3449,7 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
     }
   }
+#endif /* LWIP_ARP */
 }
 
 static void
