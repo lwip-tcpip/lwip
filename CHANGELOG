@@ -499,6 +499,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-27 Simon Goldschmidt
+  * udp.h, udp.c, dhcp.c: Implemented new function udp_sendto_if which takes the
+    netif to send as an argument (to be able to send on netifs that are down).
+
   2007-11-26 Simon Goldschmidt
   * tcp_in.c: Fixed bug #21582: pcb->acked accounting can be wrong when ACKs
     arrive out-of-order

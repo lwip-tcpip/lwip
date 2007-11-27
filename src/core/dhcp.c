@@ -269,10 +269,8 @@ dhcp_select(struct netif *netif)
 
     /* TODO: we really should bind to a specific local interface here
        but we cannot specify an unconfigured netif as it is addressless */
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     /* send broadcast to any DHCP server */
-    udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
-    udp_send(dhcp->pcb, dhcp->p_out);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     /* reconnect to any (or to server here?!) */
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
@@ -589,6 +587,11 @@ dhcp_start(struct netif *netif)
     netif->dhcp = dhcp = NULL;
     return ERR_MEM;
   }
+  /* set up local and remote port for the pcb */
+  udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
+  udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+  /* set up the recv callback and argument */
+  udp_recv(dhcp->pcb, dhcp_recv, netif);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
@@ -613,7 +616,7 @@ dhcp_start(struct netif *netif)
 void
 dhcp_inform(struct netif *netif)
 {
-  struct dhcp *dhcp;
+  struct dhcp *dhcp, *old_dhcp = netif->dhcp;
   err_t result = ERR_OK;
   dhcp = mem_malloc(sizeof(struct dhcp));
   if (dhcp == NULL) {
@@ -649,7 +652,7 @@ dhcp_inform(struct netif *netif)
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
-    udp_send(dhcp->pcb, dhcp->p_out);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
   } else {
@@ -662,7 +665,7 @@ dhcp_inform(struct netif *netif)
     }
     dhcp->pcb = NULL;
     mem_free((void *)dhcp);
-    netif->dhcp = NULL;
+    netif->dhcp = old_dhcp;
   }
 }
 
@@ -723,11 +726,10 @@ dhcp_decline(struct netif *netif)
     /* resize pbuf to reflect true size of options */
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     /* @todo: should we really connect here? we are performing sendto() */
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     /* per section 4.4.4, broadcast DECLINE messages */
-    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
   } else {
@@ -776,12 +778,9 @@ dhcp_discover(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: realloc()ing\n"));
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    /* set receive callback function with netif as user data */
-    udp_recv(dhcp->pcb, dhcp_recv, netif);
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
-    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover: SELECTING\n"));
@@ -924,9 +923,8 @@ dhcp_renew(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
-    udp_send(dhcp->pcb, dhcp->p_out);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_renew: RENEWING\n"));
@@ -977,11 +975,9 @@ dhcp_rebind(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    /* set remote IP association to any DHCP server */
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     /* broadcast to server */
-    udp_sendto(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
+    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind: REBINDING\n"));
   } else {
@@ -1026,9 +1022,8 @@ dhcp_release(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
-    udp_send(dhcp->pcb, dhcp->p_out);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_OFF\n"));
   } else {

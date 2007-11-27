@@ -274,45 +274,6 @@ end:
 }
 
 /**
- * Send data to a specified address using UDP.
- *
- * @param pcb UDP PCB used to send the data.
- * @param p chain of pbuf's to be sent.
- * @param dst_ip Destination IP address.
- * @param dst_port Destination UDP port.
- *
- * dst_ip & dst_port are expected to be in the same byte order as in the pcb.
- *
- * If the PCB already has a remote address association, it will
- * be restored after the data is sent.
- * 
- * @return lwIP error code (@see udp_send for possible error codes)
- *
- * @see udp_disconnect() udp_send()
- */
-err_t
-udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
-  struct ip_addr *dst_ip, u16_t dst_port)
-{
-  err_t err;
-  /* temporary space for current PCB remote address */
-  struct ip_addr pcb_remote_ip;
-  u16_t pcb_remote_port;
-  /* remember current remote peer address of PCB */
-  pcb_remote_ip.addr = pcb->remote_ip.addr;
-  pcb_remote_port = pcb->remote_port;
-  /* copy packet destination address to PCB remote peer address */
-  pcb->remote_ip.addr = dst_ip->addr;
-  pcb->remote_port = dst_port;
-  /* send to the packet destination address */
-  err = udp_send(pcb, p);
-  /* restore PCB remote peer address */
-  pcb->remote_ip.addr = pcb_remote_ip.addr;
-  pcb->remote_port = pcb_remote_port;
-  return err;
-}
-
-/**
  * Send data using UDP.
  *
  * @param pcb UDP PCB used to send the data.
@@ -333,13 +294,78 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
 err_t
 udp_send(struct udp_pcb *pcb, struct pbuf *p)
 {
-  struct udp_hdr *udphdr;
+  /* send to the packet using remote ip and port stored in the pcb */
+  return udp_sendto(pcb, p, &pcb->remote_ip, pcb->remote_port);
+}
+
+/**
+ * Send data to a specified address using UDP.
+ *
+ * @param pcb UDP PCB used to send the data.
+ * @param p chain of pbuf's to be sent.
+ * @param dst_ip Destination IP address.
+ * @param dst_port Destination UDP port.
+ *
+ * dst_ip & dst_port are expected to be in the same byte order as in the pcb.
+ *
+ * If the PCB already has a remote address association, it will
+ * be restored after the data is sent.
+ * 
+ * @return lwIP error code (@see udp_send for possible error codes)
+ *
+ * @see udp_disconnect() udp_send()
+ */
+err_t
+udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
+  struct ip_addr *dst_ip, u16_t dst_port)
+{
   struct netif *netif;
+
+  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 3, ("udp_send\n"));
+
+  /* find the outgoing network interface for this packet */
+#if LWIP_IGMP
+  netif = ip_route((ip_addr_ismulticast(dst_ip))?(&(pcb->multicast_ip)):(dst_ip));
+#else
+  netif = ip_route(dst_ip);
+#endif /* LWIP_IGMP */
+
+  /* no outgoing network interface could be found? */
+  if (netif == NULL) {
+    LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%"X32_F"\n", dst_ip->addr));
+    UDP_STATS_INC(udp.rterr);
+    return ERR_RTE;
+  }
+  return udp_sendto_if(pcb, p, dst_ip, dst_port, netif);
+}
+
+/**
+ * Send data to a specified address using UDP.
+ * The netif used for sending can be specified.
+ *
+ * This function exists mainly for DHCP, to be able to send UDP packets
+ * on a netif that is still down.
+ *
+ * @param pcb UDP PCB used to send the data.
+ * @param p chain of pbuf's to be sent.
+ * @param dst_ip Destination IP address.
+ * @param dst_port Destination UDP port.
+ * @param netif the netif used for sending.
+ *
+ * dst_ip & dst_port are expected to be in the same byte order as in the pcb.
+ *
+ * @return lwIP error code (@see udp_send for possible error codes)
+ *
+ * @see udp_disconnect() udp_send()
+ */
+err_t
+udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
+  struct ip_addr *dst_ip, u16_t dst_port, struct netif *netif)
+{
+  struct udp_hdr *udphdr;
   struct ip_addr *src_ip;
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
-
-  LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 3, ("udp_send\n"));
 
   /* if the PCB is not yet bound to a port, bind it here */
   if (pcb->local_port == 0) {
@@ -349,20 +375,6 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | 2, ("udp_send: forced port bind failed\n"));
       return err;
     }
-  }
-
-  /* find the outgoing network interface for this packet */
-#if LWIP_IGMP
-  netif = ip_route((ip_addr_ismulticast(&(pcb->remote_ip)))?(&(pcb->multicast_ip)):(&(pcb->remote_ip)));
-#else
-  netif = ip_route(&(pcb->remote_ip));
-#endif /* LWIP_IGMP */
-
-  /* no outgoing network interface could be found? */
-  if (netif == NULL) {
-    LWIP_DEBUGF(UDP_DEBUG | 1, ("udp_send: No route to 0x%"X32_F"\n", pcb->remote_ip.addr));
-    UDP_STATS_INC(udp.rterr);
-    return ERR_RTE;
   }
 
   /* not enough space to add an UDP header to first pbuf in given p chain? */
@@ -390,7 +402,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   /* q now represents the packet to be sent */
   udphdr = q->payload;
   udphdr->src = htons(pcb->local_port);
-  udphdr->dest = htons(pcb->remote_port);
+  udphdr->dest = htons(dst_port);
   /* in UDP, 0 checksum means 'no checksum' */
   udphdr->chksum = 0x0000; 
 
@@ -440,7 +452,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     udphdr->len = htons(chklen_hdr);
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
-    udphdr->chksum = inet_chksum_pseudo_partial(q, src_ip, &(pcb->remote_ip),
+    udphdr->chksum = inet_chksum_pseudo_partial(q, src_ip, dst_ip,
                                         IP_PROTO_UDPLITE, q->tot_len, chklen);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000)
@@ -451,7 +463,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = &(pcb->addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT*/
-    err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
+    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/
@@ -463,7 +475,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
     if ((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
-      udphdr->chksum = inet_chksum_pseudo(q, src_ip, &pcb->remote_ip, IP_PROTO_UDP, q->tot_len);
+      udphdr->chksum = inet_chksum_pseudo(q, src_ip, dst_ip, IP_PROTO_UDP, q->tot_len);
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
       if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
     }
@@ -474,7 +486,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = &(pcb->addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT*/
-    err = ip_output_if(q, src_ip, &pcb->remote_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
+    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/
