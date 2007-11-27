@@ -127,13 +127,13 @@ static const int err_to_errno_table[] = {
   0,             /* ERR_OK       0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM     -1      Out of memory error.     */
   ENOBUFS,       /* ERR_BUF     -2      Buffer error.            */
-  ECONNABORTED,  /* ERR_ABRT    -3      Connection aborted.      */
-  ECONNRESET,    /* ERR_RST     -4      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD    -5      Connection closed.       */
-  ENOTCONN,      /* ERR_CONN    -6      Not connected.           */
-  EINVAL,        /* ERR_VAL     -7      Illegal value.           */
-  EIO,           /* ERR_ARG     -8      Illegal argument.        */
-  EHOSTUNREACH,  /* ERR_RTE     -9      Routing problem.         */
+  EHOSTUNREACH,  /* ERR_RTE     -3      Routing problem.         */
+  ECONNABORTED,  /* ERR_ABRT    -4      Connection aborted.      */
+  ECONNRESET,    /* ERR_RST     -5      Connection reset.        */
+  ESHUTDOWN,     /* ERR_CLSD    -6      Connection closed.       */
+  ENOTCONN,      /* ERR_CONN    -7      Not connected.           */
+  EINVAL,        /* ERR_VAL     -8      Illegal value.           */
+  EIO,           /* ERR_ARG     -9      Illegal argument.        */
   EADDRINUSE,    /* ERR_USE     -10     Address in use.          */
   -1,            /* ERR_IF      -11     Low-level netif error    */
   -1,            /* ERR_ISCONN  -12     Already connected.       */

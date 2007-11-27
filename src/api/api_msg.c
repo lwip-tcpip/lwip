@@ -546,7 +546,7 @@ do_delconn(struct api_msg_msg *msg)
 void
 do_bind(struct api_msg_msg *msg)
 {
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
@@ -596,7 +596,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   }
 
   conn->err = err;
-  if (conn->type == NETCONN_TCP && err == ERR_OK) {
+  if ((conn->type == NETCONN_TCP) && (err == ERR_OK)) {
     setup_tcp(conn);
   }
   conn->state = NETCONN_NONE;
@@ -676,7 +676,7 @@ void
 do_listen(struct api_msg_msg *msg)
 {
 #if LWIP_TCP
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
         if (msg->conn->pcb.tcp->state == CLOSED) {
@@ -715,7 +715,7 @@ do_listen(struct api_msg_msg *msg)
 void
 do_send(struct api_msg_msg *msg)
 {
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
@@ -754,7 +754,7 @@ void
 do_recv(struct api_msg_msg *msg)
 {
 #if LWIP_TCP
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
         tcp_recved(msg->conn->pcb.tcp, msg->msg.r.len);
@@ -828,10 +828,9 @@ do_writemore(struct netconn *conn)
     conn->write_delayed = 1;
 #endif
   } else {
-    /* if ERR_MEM, we wait for sent_tcp or poll_tcp to be called */
+    /* if ERR_MEM, we wait for sent_tcp or poll_tcp to be called
+       on other errors we don't try writing any more */
     conn->err = err;
-    /* since we've had an error (except temporary running out of memory,
-       we don't try writing any more */
     write_finished = 1;
   }
 
@@ -863,7 +862,7 @@ do_writemore(struct netconn *conn)
 void
 do_write(struct api_msg_msg *msg)
 {
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if ((msg->conn->pcb.tcp != NULL) && (msg->conn->type == NETCONN_TCP)) {
 #if LWIP_TCP
       msg->conn->state = NETCONN_WRITE;
@@ -937,7 +936,7 @@ do_getaddr(struct api_msg_msg *msg)
 #endif /* LWIP_TCP */
     }
   } else {
-    msg->conn->err =ERR_CONN;
+    msg->conn->err = ERR_CONN;
   }
   TCPIP_APIMSG_ACK(msg);
 }
@@ -974,7 +973,7 @@ do_close(struct api_msg_msg *msg)
 void
 do_join_leave_group(struct api_msg_msg *msg)
 { 
-  if (msg->conn->err == ERR_OK) {
+  if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
 #if LWIP_UDP

@@ -355,18 +355,21 @@ netconn_recv(struct netconn *conn)
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
     if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+      /* @todo: should calling netconn_recv on a TCP listen conn be fatal?? */
+      /* TCP listen conn don't have a recvmbox! */
       conn->err = ERR_CONN;
       return NULL;
     }
   }
 
-  if (conn->err != ERR_OK) {
+  if (ERR_IS_FATAL(conn->err)) {
     return NULL;
   }
 
   if (conn->type == NETCONN_TCP) {
 #if LWIP_TCP
     if (conn->state == NETCONN_LISTEN) {
+      /* @todo: should calling netconn_recv on a TCP listen conn be fatal?? */
       conn->err = ERR_CONN;
       return NULL;
     }

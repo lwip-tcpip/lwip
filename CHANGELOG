@@ -500,6 +500,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-11-27 Simon Goldschmidt
+  * err.h, api_lib.c, api_msg.c, sockets.c: Changed error handling: ERR_MEM, ERR_BUF
+    and ERR_RTE are seen as non-fatal, all other errors are fatal. netconns and
+    sockets block most operations once they have seen a fatal error.
+
+  2007-11-27 Simon Goldschmidt
   * udp.h, udp.c, dhcp.c: Implemented new function udp_sendto_if which takes the
     netif to send as an argument (to be able to send on netifs that are down).
 
