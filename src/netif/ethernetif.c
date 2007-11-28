@@ -145,9 +145,7 @@ low_level_output(struct netif *netif, struct pbuf *p)
   pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
   
-#if LINK_STATS
-  lwip_stats.link.xmit++;
-#endif /* LINK_STATS */      
+  LINK_STATS_INC(link.xmit);
 
   return ERR_OK;
 }
@@ -198,15 +196,11 @@ low_level_input(struct netif *netif)
     pbuf_header(p, ETH_PAD_SIZE); /* reclaim the padding word */
 #endif
 
-#if LINK_STATS
-    lwip_stats.link.recv++;
-#endif /* LINK_STATS */      
+    LINK_STATS_INC(link.recv);
   } else {
     drop packet();
-#if LINK_STATS
-    lwip_stats.link.memerr++;
-    lwip_stats.link.drop++;
-#endif /* LINK_STATS */      
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
   }
 
   return p;  
