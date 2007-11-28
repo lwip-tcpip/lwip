@@ -73,15 +73,18 @@ ip_route(struct ip_addr *dest)
   /* iterate through netifs */
   for(netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
-    if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
-      /* return netif on which to forward IP packet */
-      return netif;
+    if (netif_is_up(netif)) {
+      if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
+        /* return netif on which to forward IP packet */
+        return netif;
+      }
     }
   }
-  if (netif_default == NULL) {
+  if ((netif_default == NULL) || (!netif_is_up(netif_default))) {
     LWIP_DEBUGF(IP_DEBUG | 2, ("ip_route: No route to 0x%"X32_F"\n", dest->addr));
     IP_STATS_INC(ip.rterr);
     snmp_inc_ipoutnoroutes();
+    return NULL;
   }
   /* no matching netif found, use default netif */
   return netif_default;

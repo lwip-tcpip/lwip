@@ -500,6 +500,10 @@ HISTORY
   ++ Bug fixes:
 
   2007-11-27 Simon Goldschmidt
+  * ip.c: fixed bug #21643 (udp_send/raw_send don't fail if netif is down) by
+    letting ip_route only use netifs that are up.
+
+  2007-11-27 Simon Goldschmidt
   * err.h, api_lib.c, api_msg.c, sockets.c: Changed error handling: ERR_MEM, ERR_BUF
     and ERR_RTE are seen as non-fatal, all other errors are fatal. netconns and
     sockets block most operations once they have seen a fatal error.
