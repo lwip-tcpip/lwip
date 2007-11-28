@@ -135,10 +135,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr)
 #endif /* IP_DEBUG */
   LWIP_DEBUGF(IP_DEBUG, ("\n"));
 
-#if IP_STATS
-  ++lwip_stats.ip.fw;
-  ++lwip_stats.ip.xmit;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.fw);
+  IP_STATS_INC(ip.xmit);
 
   PERF_STOP("ip_forward");
 
@@ -168,9 +166,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
 #endif /* IP_DEBUG */
 
 
-#if IP_STATS
-  ++lwip_stats.ip.recv;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.recv);
 
   /* identify the IP header */
   iphdr = p->payload;
@@ -182,10 +178,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     ip_debug_print(p);
 #endif /* IP_DEBUG */
     pbuf_free(p);
-#if IP_STATS
-    ++lwip_stats.ip.err;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.err);
+    IP_STATS_INC(ip.drop);
     return;
   }
 
@@ -248,11 +242,8 @@ ip_input(struct pbuf *p, struct netif *inp) {
     LWIP_DEBUGF(IP_DEBUG, ("Unsupported transport protocol %"U16_F"\n",
           iphdr->nexthdr));
 
-#if IP_STATS
-    ++lwip_stats.ip.proterr;
-    ++lwip_stats.ip.drop;
-#endif /* IP_STATS */
-
+    IP_STATS_INC(ip.proterr);
+    IP_STATS_INC(ip.drop);
   }
   PERF_STOP("ip_input");
 }
@@ -277,9 +268,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   LWIP_DEBUGF(IP_DEBUG, ("len %"U16_F" tot_len %"U16_F"\n", p->len, p->tot_len));
   if (pbuf_header(p, IP_HLEN)) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: not enough room for IP header in pbuf\n"));
-#if IP_STATS
-    ++lwip_stats.ip.err;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.err);
 
     return ERR_BUF;
   }
@@ -307,9 +296,7 @@ ip_output_if (struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
     dest = &(iphdr->dest);
   }
 
-#if IP_STATS
-  ++lwip_stats.ip.xmit;
-#endif /* IP_STATS */
+  IP_STATS_INC(ip.xmit);
 
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c (len %"U16_F")\n", netif->name[0], netif->name[1], p->tot_len));
 #if IP_DEBUG
@@ -333,9 +320,7 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
-#if IP_STATS
-    ++lwip_stats.ip.rterr;
-#endif /* IP_STATS */
+    IP_STATS_INC(ip.rterr);
     return ERR_RTE;
   }
 
