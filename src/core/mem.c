@@ -72,7 +72,7 @@ mem_malloc(mem_size_t size)
   struct mem_helper *element;
   memp_t poolnr;
 
-  for (poolnr = MEMP_POOL_START; poolnr <= MEMP_POOL_END; poolnr++) {
+  for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr++) {
     /* is this pool big enough to hold an element of the required size
        plus a struct mem_helper that saves the pool this element came from? */
     if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
