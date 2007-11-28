@@ -79,7 +79,7 @@ mem_malloc(mem_size_t size)
       break;
     }
   }
-  if (poolnr == MEMP_MAX) {
+  if (poolnr > MEMP_POOL_LAST) {
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
     return NULL;
   }
