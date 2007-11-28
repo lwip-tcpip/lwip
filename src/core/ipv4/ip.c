@@ -173,7 +173,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
  *         processed, but currently always returns ERR_OK)
  */
 err_t
-ip_input(struct pbuf *p, struct netif *inp) {
+ip_input(struct pbuf *p, struct netif *inp)
+{
   struct ip_hdr *iphdr;
   struct netif *netif;
   u16_t iphdrlen;
@@ -229,43 +230,37 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
   /* match packet against an interface, i.e. is this packet for us? */
 #if LWIP_IGMP
-  if (ip_addr_ismulticast(&(iphdr->dest)))
-   { if ((inp->flags & NETIF_FLAG_IGMP) && (igmp_lookfor_group( inp, &(iphdr->dest))))
-      { netif = inp;
-      }
-     else
-      { netif = NULL;
-      } 
-   }
-  else
-   {
+  if (ip_addr_ismulticast(&(iphdr->dest))) {
+    if ((inp->flags & NETIF_FLAG_IGMP) && (igmp_lookfor_group(inp, &(iphdr->dest)))) {
+      netif = inp;
+    } else {
+      netif = NULL;
+    }
+  } else
 #endif /* LWIP_IGMP */
-   for (netif = netif_list; netif != NULL; netif = netif->next) {
+  {
+    for (netif = netif_list; netif != NULL; netif = netif->next) {
+      LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
+          iphdr->dest.addr, netif->ip_addr.addr,
+          iphdr->dest.addr & netif->netmask.addr,
+          netif->ip_addr.addr & netif->netmask.addr,
+          iphdr->dest.addr & ~(netif->netmask.addr)));
 
-     LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
-       iphdr->dest.addr, netif->ip_addr.addr,
-       iphdr->dest.addr & netif->netmask.addr,
-       netif->ip_addr.addr & netif->netmask.addr,
-       iphdr->dest.addr & ~(netif->netmask.addr)));
+      /* interface is up and configured? */
+      if ((netif_is_up(netif)) && (!ip_addr_isany(&(netif->ip_addr)))) {
+        /* unicast to this interface address? */
+        if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
+            /* or broadcast on this interface network address? */
+            ip_addr_isbroadcast(&(iphdr->dest), netif)) {
+          LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
+              netif->name[0], netif->name[1]));
+          /* break out of for loop */
+          break;
+        }
+      }
+    }
+  }
 
-     /* interface is up and configured? */
-     if ((netif_is_up(netif)) && (!ip_addr_isany(&(netif->ip_addr))))
-     {
-       /* unicast to this interface address? */
-       if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
-          /* or broadcast on this interface network address? */
-          ip_addr_isbroadcast(&(iphdr->dest), netif)) {
-         LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
-           netif->name[0], netif->name[1]));
-         /* break out of for loop */
-         break;
-       }
-     }
-   }
- #if LWIP_IGMP
- }
- #endif /* LWIP_IGMP */
- 
 #if LWIP_DHCP
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
    * using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
@@ -292,8 +287,7 @@ ip_input(struct pbuf *p, struct netif *inp) {
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp)) {
       /* try to forward IP packet on (other) interfaces */
       ip_forward(p, iphdr, inp);
-    }
-    else
+    } else
 #endif /* IP_FORWARD */
     {
       snmp_inc_ipinaddrerrors();
@@ -351,56 +345,56 @@ ip_input(struct pbuf *p, struct netif *inp) {
 
 #if LWIP_RAW
   /* raw input did not eat the packet? */
-  if (raw_input(p, inp) == 0) {
+  if (raw_input(p, inp) == 0)
 #endif /* LWIP_RAW */
+  {
 
-  switch (IPH_PROTO(iphdr)) {
+    switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
-  case IP_PROTO_UDP:
+    case IP_PROTO_UDP:
 #if LWIP_UDPLITE
-  case IP_PROTO_UDPLITE:
+    case IP_PROTO_UDPLITE:
 #endif /* LWIP_UDPLITE */
-    snmp_inc_ipindelivers();
-    udp_input(p, inp);
-    break;
+      snmp_inc_ipindelivers();
+      udp_input(p, inp);
+      break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
-  case IP_PROTO_TCP:
-    snmp_inc_ipindelivers();
-    tcp_input(p, inp);
-    break;
+    case IP_PROTO_TCP:
+      snmp_inc_ipindelivers();
+      tcp_input(p, inp);
+      break;
 #endif /* LWIP_TCP */
 #if LWIP_ICMP
-  case IP_PROTO_ICMP:
-    snmp_inc_ipindelivers();
-    icmp_input(p, inp);
-    break;
+    case IP_PROTO_ICMP:
+      snmp_inc_ipindelivers();
+      icmp_input(p, inp);
+      break;
 #endif /* LWIP_ICMP */
 #if LWIP_IGMP
-  case IP_PROTO_IGMP:
-    igmp_input(p,inp,&(iphdr->dest));
-    break;
+    case IP_PROTO_IGMP:
+      igmp_input(p,inp,&(iphdr->dest));
+      break;
 #endif /* LWIP_IGMP */
-  default:
+    default:
 #if LWIP_ICMP
-    /* send ICMP destination protocol unreachable unless is was a broadcast */
-    if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&
-        !ip_addr_ismulticast(&(iphdr->dest))) {
-      p->payload = iphdr;
-      icmp_dest_unreach(p, ICMP_DUR_PROTO);
-    }
+      /* send ICMP destination protocol unreachable unless is was a broadcast */
+      if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&
+          !ip_addr_ismulticast(&(iphdr->dest))) {
+        p->payload = iphdr;
+        icmp_dest_unreach(p, ICMP_DUR_PROTO);
+      }
 #endif /* LWIP_ICMP */
-    pbuf_free(p);
+      pbuf_free(p);
 
-    LWIP_DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %"U16_F"\n", IPH_PROTO(iphdr)));
+      LWIP_DEBUGF(IP_DEBUG | 2, ("Unsupported transport protocol %"U16_F"\n", IPH_PROTO(iphdr)));
 
-    IP_STATS_INC(ip.proterr);
-    IP_STATS_INC(ip.drop);
-    snmp_inc_ipinunknownprotos();
+      IP_STATS_INC(ip.proterr);
+      IP_STATS_INC(ip.drop);
+      snmp_inc_ipinunknownprotos();
+    }
   }
-#if LWIP_RAW
-  } /* LWIP_RAW */
-#endif
+
   return ERR_OK;
 }
 
