@@ -1008,6 +1008,13 @@
 #endif
 
 /**
+ * ETHARP_STATS==1: Enable etharp stats.
+ */
+#ifndef ETHARP_STATS
+#define ETHARP_STATS                    (LWIP_ARP)
+#endif
+
+/**
  * IP_STATS==1: Enable IP stats.
  */
 #ifndef IP_STATS

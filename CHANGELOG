@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2007-11-28 Simon Goldschmidt
+  * etharp.c, stats.c, stats.h, opt.h: Introduced ETHARP_STATS
+
   2007-11-25 Simon Goldschmidt
   * dhcp.c: dhcp_unfold_reply() uses pbuf_copy_partial instead of its own copy
     algorithm.

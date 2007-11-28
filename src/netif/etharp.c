@@ -251,6 +251,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
         /* the per-pcb-cached entry is stable */
         if (ip_addr_cmp(ipaddr, &arp_table[per_pcb_cache].ipaddr)) {
           /* per-pcb cached entry was the right one! */
+          ETHARP_STATS_INC(etharp.cachehit);
           return per_pcb_cache;
         }
       }
@@ -260,6 +261,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
       /* the cached entry is stable */
       if (ip_addr_cmp(ipaddr, &arp_table[etharp_cached_entry].ipaddr)) {
         /* cached entry was the right one! */
+        ETHARP_STATS_INC(etharp.cachehit);
         return etharp_cached_entry;
       }
     }
@@ -624,6 +626,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
      since a struct etharp_hdr is pointed to p->payload, so it musn't be chained! */
   if (p->len < sizeof(struct etharp_hdr)) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 1, ("etharp_arp_input: packet dropped, too short (%"S16_F"/%"S16_F")\n", p->tot_len, (s16_t)sizeof(struct etharp_hdr)));
+    ETHARP_STATS_INC(etharp.lenerr);
+    ETHARP_STATS_INC(etharp.drop);
     pbuf_free(p);
     return;
   }
@@ -638,15 +642,17 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 1,
       ("etharp_arp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
       hdr->hwtype, ARPH_HWLEN(hdr), hdr->proto, ARPH_PROTOLEN(hdr), hdr->ethhdr.type));
+    ETHARP_STATS_INC(etharp.proterr);
+    ETHARP_STATS_INC(etharp.drop);
     pbuf_free(p);
     return;
   }
+  ETHARP_STATS_INC(etharp.recv);
 
 #if LWIP_AUTOIP
   /* We have to check if a host already has configured our random
    * created link local address and continously check if there is
-   * a host with this IP-address so we can detect collisions
-   * */
+   * a host with this IP-address so we can detect collisions */
   autoip_arp_reply(netif, hdr);
 #endif /* LWIP_AUTOIP */
 
@@ -728,13 +734,13 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     /* DHCP wants to know about ARP replies from any host with an
      * IP address also offered to us by the DHCP server. We do not
      * want to take a duplicate IP address on a single network.
-     * @todo How should we handle redundant (fail-over) interfaces?
-     * */
+     * @todo How should we handle redundant (fail-over) interfaces? */
     dhcp_arp_reply(netif, &sipaddr);
 #endif
     break;
   default:
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: ARP unknown opcode type %"S16_F"\n", htons(hdr->opcode)));
+    ETHARP_STATS_INC(etharp.err);
     break;
   }
   /* free ARP packet */
@@ -742,7 +748,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 }
 
 /**
- * Resolve and fill-in Ethernet address header for outgoing packet.
+ * Resolve and fill-in Ethernet address header for outgoing IP packet.
  *
  * For IP multicast and broadcast, corresponding Ethernet addresses
  * are selected and the packet is transmitted on the link.
@@ -874,8 +880,10 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
   /* could not find or create entry? */
   if (i < 0) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not create ARP entry\n"));
-    if (q)
+    if (q) {
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: packet dropped\n"));
+      ETHARP_STATS_INC(etharp.memerr);
+    }
     return (err_t)i;
   }
 
@@ -969,6 +977,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
           /* { result == ERR_MEM } through initialization */
         }
       } else {
+        ETHARP_STATS_INC(etharp.memerr);
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
         /* { result == ERR_MEM } through initialization */
       }
@@ -1017,6 +1026,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | 2, ("etharp_raw: could not allocate pbuf for ARP request.\n"));
+    ETHARP_STATS_INC(etharp.memerr);
     return ERR_MEM;
   }
   LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
@@ -1050,6 +1060,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr->ethhdr.type = htons(ETHTYPE_ARP);
   /* send ARP query */
   result = netif->linkoutput(netif, p);
+  ETHARP_STATS_INC(etharp.xmit);
   /* free ARP query packet */
   pbuf_free(p);
   p = NULL;

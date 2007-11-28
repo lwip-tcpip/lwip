@@ -105,6 +105,9 @@ struct stats_ {
 #if LINK_STATS
   struct stats_proto link;
 #endif
+#if ETHARP_STATS
+  struct stats_proto etharp;
+#endif
 #if IPFRAG_STATS
   struct stats_proto ip_frag;
 #endif
@@ -178,6 +181,12 @@ extern struct stats_ lwip_stats;
 #define IPFRAG_STATS_INC(x) STATS_INC(x)
 #else
 #define IPFRAG_STATS_INC(x)
+#endif
+
+#if ETHARP_STATS
+#define ETHARP_STATS_INC(x) STATS_INC(x)
+#else
+#define ETHARP_STATS_INC(x)
 #endif
 
 #if LINK_STATS

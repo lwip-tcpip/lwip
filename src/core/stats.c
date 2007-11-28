@@ -91,7 +91,6 @@ stats_display_mem(struct stats_mem *mem, char *name)
   LWIP_PLATFORM_DIAG(("used: %"MEM_SIZE_F"\n\t", mem->used)); 
   LWIP_PLATFORM_DIAG(("max: %"MEM_SIZE_F"\n\t", mem->max)); 
   LWIP_PLATFORM_DIAG(("err: %"MEM_SIZE_F"\n", mem->err));
-  
 }
 
 void
@@ -106,6 +105,9 @@ stats_display(void)
 #endif
 #if LINK_STATS
   stats_display_proto(&lwip_stats.link, "LINK");
+#endif
+#if ETHARP_STATS
+  stats_display_proto(&lwip_stats.etharp, "ETHARP");
 #endif
 #if IPFRAG_STATS
   stats_display_proto(&lwip_stats.ip_frag, "IP_FRAG");
