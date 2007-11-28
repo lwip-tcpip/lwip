@@ -69,8 +69,6 @@ typedef u16_t mem_size_t;
 #endif
 #else /* MEM_LIBC_MALLOC */
 #if MEM_USE_POOLS
-/** The pool implementation of the heap currently uses 4 pools */
-#define MEM_POOL_COUNT   4
 /** mem_init is not used when using pools instead of a heap */
 #define mem_init()
 /** mem_realloc is not used when using pools instead of a heap:
