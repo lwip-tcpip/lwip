@@ -31,15 +31,18 @@
 *   Extracted from avos.
 *****************************************************************************/
 
-#include "ppp.h"
-#if PPP_SUPPORT > 0
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "md5.h"
 #include "randm.h"
 
+#include "ppp.h"
 #include "pppdebug.h"
 
 
-#if MD5_SUPPORT>0   /* this module depends on MD5 */
+#if MD5_SUPPORT /* this module depends on MD5 */
 #define RANDPOOLSZ 16   /* Bytes stored in the pool of randomness. */
 
 /*****************************/
@@ -235,8 +238,6 @@ u32_t avRandom()
     return ((((u32_t)rand() << 16) + rand()) + avRandomSeed);
 }
 
-
-
 #endif /* MD5_SUPPORT */
-#endif /* PPP_SUPPORT */
 
+#endif /* PPP_SUPPORT */

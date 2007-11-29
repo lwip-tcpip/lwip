@@ -90,5 +90,4 @@ int  auth_ip_addr (int, u32_t);
 /* check if IP address is unreasonable */
 int  bad_ip_adrs (u32_t);
 
-
 #endif /* AUTH_H */

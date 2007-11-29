@@ -50,16 +50,21 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
  
-#include <string.h>
- 
+
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
-#if PPP_SUPPORT > 0
+#include "pppdebug.h"
+
 #include "fsm.h"
 #include "chap.h"
 #include "magic.h"
 #include "auth.h"
 #include "lcp.h"
-#include "pppdebug.h"
+
+#include <string.h>
 
 #if PPPOE_SUPPORT
 #include "ppp_oe.h"
@@ -159,8 +164,8 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_nakci,			/* NAK our Configuration Information */
     lcp_rejci,			/* Reject our Configuration Information */
     lcp_reqci,			/* Request peer's Configuration Information */
-    lcp_up,				/* Called when fsm reaches OPENED state */
-    lcp_down,			/* Called when fsm leaves OPENED state */
+    lcp_up,				/* Called when fsm reaches LS_OPENED state */
+    lcp_down,			/* Called when fsm leaves LS_OPENED state */
     lcp_starting,		/* Called when we want the lower layer up */
     lcp_finished,		/* Called when we want the lower layer down */
     NULL,				/* Called when Protocol-Reject received */
@@ -291,14 +296,14 @@ void lcp_close(int unit, char *reason)
 	
 	if (lcp_phase[unit] != PHASE_DEAD)
 		lcp_phase[unit] = PHASE_TERMINATE;
-	if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
+	if (f->state == LS_STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
 		/*
 		 * This action is not strictly according to the FSM in RFC1548,
 		 * but it does mean that the program terminates if you do an
 		 * lcp_close() in passive/silent mode when a connection hasn't
 		 * been established.
 		 */
-		f->state = CLOSED;
+		f->state = LS_CLOSED;
 		lcp_finished(f);
 	}
 	else
@@ -353,7 +358,7 @@ void lcp_sprotrej(int unit, u_char *p, int len)
 {
 	/*
 	* Send back the protocol and the information field of the
-	* rejected packet.  We only get here if LCP is in the OPENED state.
+	* rejected packet.  We only get here if LCP is in the LS_OPENED state.
 	*/
 
 	fsm_sdata(&lcp_fsm[unit], PROTREJ, ++lcp_fsm[unit].id,
@@ -389,7 +394,7 @@ static int lcp_extcode(fsm *f, int code, u_char id, u_char *inp, int len)
 		break;
 	
 	case ECHOREQ:
-		if (f->state != OPENED)
+		if (f->state != LS_OPENED)
 			break;
 		LCPDEBUG((LOG_INFO, "lcp: Echo-Request, Rcvd id %d\n", id));
 		magp = inp;
@@ -436,9 +441,9 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len)
 	
 	/*
 	* Protocol-Reject packets received in any state other than the LCP
-	* OPENED state SHOULD be silently discarded.
+	* LS_OPENED state SHOULD be silently discarded.
 	*/
-	if( f->state != OPENED ){
+	if( f->state != LS_OPENED ){
 		LCPDEBUG((LOG_INFO, "Protocol-Reject discarded: LCP in state %d\n",
 				f->state));
 		return;
@@ -714,7 +719,7 @@ bad:
 /*
  * lcp_nakci - Peer has sent a NAK for some of our CIs.
  * This should not modify any state if the Nak is bad
- * or if LCP is in the OPENED state.
+ * or if LCP is in the LS_OPENED state.
  *
  * Returns:
  *	0 - Nak was bad.
@@ -995,7 +1000,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len)
 	/*
 	* OK, the Nak is good.  Now we can update state.
 	*/
-	if (f->state != OPENED) {
+	if (f->state != LS_OPENED) {
 		if (looped_back) {
 			if (++try.numloops >= lcp_loopbackfail) {
 				LCPDEBUG((LOG_NOTICE, "Serial line is looped back.\n"));
@@ -1018,7 +1023,7 @@ bad:
 /*
  * lcp_rejci - Peer has Rejected some of our CIs.
  * This should not modify any state if the Reject is bad
- * or if LCP is in the OPENED state.
+ * or if LCP is in the LS_OPENED state.
  *
  * Returns:
  *	0 - Reject was bad.
@@ -1143,7 +1148,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len)
 	/*
 	* Now we can update state.
 	*/
-	if (f->state != OPENED)
+	if (f->state != LS_OPENED)
 		*go = try;
 	return 1;
 	
@@ -1871,7 +1876,7 @@ static int lcp_printpkt(
 
 static void LcpLinkFailure (fsm *f)
 {
-	if (f->state == OPENED) {
+	if (f->state == LS_OPENED) {
 		LCPDEBUG((LOG_INFO, "No response to %d echo-requests\n", lcp_echos_pending));
 		LCPDEBUG((LOG_NOTICE, "Serial link appears to be disconnected.\n"));
 		lcp_close(f->unit, "Peer not responding");
@@ -1954,7 +1959,7 @@ static void LcpSendEchoRequest (fsm *f)
 	/*
 	* Make and send the echo request frame.
 	*/
-	if (f->state == OPENED) {
+	if (f->state == LS_OPENED) {
 		lcp_magic = lcp_gotoptions[f->unit].magicnumber;
 		pktp = pkt;
 		PUTLONG(lcp_magic, pktp);

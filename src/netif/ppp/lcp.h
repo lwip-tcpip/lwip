@@ -48,12 +48,11 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: lcp.h,v 1.1 2003/05/27 14:37:56 jani Exp $
+ * $Id: lcp.h,v 1.2 2007/11/29 22:19:57 fbernon Exp $
  */
 
 #ifndef LCP_H
 #define LCP_H
-
 
 /*************************
 *** PUBLIC DEFINITIONS ***
@@ -166,4 +165,3 @@ extern struct protent lcp_protent;
 #define DEFLOOPBACKFAIL	10
 
 #endif /* LCP_H */
-

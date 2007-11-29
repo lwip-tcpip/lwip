@@ -28,13 +28,18 @@
  * for a 16 bit processor.
  */
 
-#include <string.h>
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "ppp.h"
-#include "vj.h"
 #include "pppdebug.h"
 
-#if VJ_SUPPORT > 0
+#include "vj.h"
+
+#include <string.h>
+
+#if VJ_SUPPORT
 
 #if LINK_STATS
 #define INCR(counter) ++comp->stats.counter
@@ -579,7 +584,7 @@ int vj_uncompress_tcp(
 	cs->cs_ip.ip_sum = (u_short)(~tmp);
 	
 	/* Remove the compressed header and prepend the uncompressed header. */
-	if(pbuf_header(n0, -vjlen)) {
+	if(pbuf_header(n0, -((s16_t)(vjlen)))) {
           /* Can we cope with this failing?  Just assert for now */
           LWIP_ASSERT("pbuf_header failed\n", 0);
           goto bad;
@@ -641,6 +646,6 @@ bad:
 	return (-1);
 }
 
-#endif
+#endif /* VJ_SUPPORT */
 
-
+#endif /* PPP_SUPPORT */

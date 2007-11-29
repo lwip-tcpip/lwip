@@ -49,23 +49,42 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-
 /*
  * TODO:
  * Randomize fsm id on link/init.
  * Deal with variable outgoing MTU.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
-#if PPP_SUPPORT > 0
-#include "fsm.h"
 #include "pppdebug.h"
+
+#include "fsm.h"
 
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/
 /*************************/
 
+#if PPP_DEBUG
+
+static const char *ppperr_strerr[] = {
+           "LS_INITIAL",  /* LS_INITIAL  0 */
+           "LS_STARTING", /* LS_STARTING 1 */
+           "LS_CLOSED",   /* LS_CLOSED   2 */
+           "LS_STOPPED",  /* LS_STOPPED  3 */
+           "LS_CLOSING",  /* LS_CLOSING  4 */
+           "LS_STOPPING", /* LS_STOPPING 5 */
+           "LS_REQSENT",  /* LS_REQSENT  6 */
+           "LS_ACKRCVD",  /* LS_ACKRCVD  7 */
+           "LS_ACKSENT",  /* LS_ACKSENT  8 */
+           "LS_OPENED"    /* LS_OPENED   9 */
+};
+
+#endif /* PPP_DEBUG */
 
 /************************/
 /*** LOCAL DATA TYPES ***/
@@ -109,7 +128,7 @@ int peer_mru[NUM_PPP];
  */
 void fsm_init(fsm *f)
 {
-	f->state = INITIAL;
+	f->state = LS_INITIAL;
 	f->flags = 0;
 	f->id = 0;				/* XXX Start with random id? */
 	f->timeouttime = FSM_DEFTIMEOUT;
@@ -128,27 +147,27 @@ void fsm_lowerup(fsm *f)
 	int oldState = f->state;
 
 	switch( f->state ){
-	case INITIAL:
-		f->state = CLOSED;
+	case LS_INITIAL:
+		f->state = LS_CLOSED;
 		break;
 	
-	case STARTING:
+	case LS_STARTING:
 		if( f->flags & OPT_SILENT )
-			f->state = STOPPED;
+			f->state = LS_STOPPED;
 		else {
 			/* Send an initial configure-request */
 			fsm_sconfreq(f, 0);
-			f->state = REQSENT;
+			f->state = LS_REQSENT;
 		}
 	break;
 	
 	default:
-		FSMDEBUG((LOG_INFO, "%s: Up event in state %d!\n",
-				PROTO_NAME(f), f->state));
+		FSMDEBUG((LOG_INFO, "%s: Up event in state %d (%s)!\n",
+				PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	}
 	
-	FSMDEBUG((LOG_INFO, "%s: lowerup state %d -> %d\n",
-			PROTO_NAME(f), oldState, f->state));
+	FSMDEBUG((LOG_INFO, "%s: lowerup state %d (%s) -> %d (%s)\n",
+			PROTO_NAME(f), oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
 
 
@@ -162,42 +181,42 @@ void fsm_lowerdown(fsm *f)
 	int oldState = f->state;
 	
 	switch( f->state ){
-	case CLOSED:
-		f->state = INITIAL;
+	case LS_CLOSED:
+		f->state = LS_INITIAL;
 		break;
 	
-	case STOPPED:
-		f->state = STARTING;
+	case LS_STOPPED:
+		f->state = LS_STARTING;
 		if( f->callbacks->starting )
 			(*f->callbacks->starting)(f);
 		break;
 	
-	case CLOSING:
-		f->state = INITIAL;
+	case LS_CLOSING:
+		f->state = LS_INITIAL;
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		break;
 	
-	case STOPPING:
-	case REQSENT:
-	case ACKRCVD:
-	case ACKSENT:
-		f->state = STARTING;
+	case LS_STOPPING:
+	case LS_REQSENT:
+	case LS_ACKRCVD:
+	case LS_ACKSENT:
+		f->state = LS_STARTING;
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		if( f->callbacks->down )
 			(*f->callbacks->down)(f);
-		f->state = STARTING;
+		f->state = LS_STARTING;
 		break;
 	
 	default:
-		FSMDEBUG((LOG_INFO, "%s: Down event in state %d!\n",
-				PROTO_NAME(f), f->state));
+		FSMDEBUG((LOG_INFO, "%s: Down event in state %d (%s)!\n",
+				PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	}
 	
-	FSMDEBUG((LOG_INFO, "%s: lowerdown state %d -> %d\n",
-			PROTO_NAME(f), oldState, f->state));
+	FSMDEBUG((LOG_INFO, "%s: lowerdown state %d (%s) -> %d (%s)\n",
+			PROTO_NAME(f), oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
 
 
@@ -209,27 +228,27 @@ void fsm_open(fsm *f)
 	int oldState = f->state;
 	
 	switch( f->state ){
-		case INITIAL:
-			f->state = STARTING;
+		case LS_INITIAL:
+			f->state = LS_STARTING;
 			if( f->callbacks->starting )
 				(*f->callbacks->starting)(f);
 			break;
 		
-		case CLOSED:
+		case LS_CLOSED:
 		if( f->flags & OPT_SILENT )
-			f->state = STOPPED;
+			f->state = LS_STOPPED;
 		else {
 			/* Send an initial configure-request */
 			fsm_sconfreq(f, 0);
-			f->state = REQSENT;
+			f->state = LS_REQSENT;
 		}
 		break;
 	
-	case CLOSING:
-		f->state = STOPPING;
+	case LS_CLOSING:
+		f->state = LS_STOPPING;
 		/* fall through */
-	case STOPPED:
-	case OPENED:
+	case LS_STOPPED:
+	case LS_OPENED:
 		if( f->flags & OPT_RESTART ){
 			fsm_lowerdown(f);
 			fsm_lowerup(f);
@@ -237,8 +256,8 @@ void fsm_open(fsm *f)
 		break;
 	}
 	
-	FSMDEBUG((LOG_INFO, "%s: open state %d -> %d\n",
-			PROTO_NAME(f), oldState, f->state));
+	FSMDEBUG((LOG_INFO, "%s: open state %d (%s) -> %d (%s)\n",
+			PROTO_NAME(f), oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
 
 
@@ -246,7 +265,7 @@ void fsm_open(fsm *f)
  * fsm_close - Start closing connection.
  *
  * Cancel timeouts and either initiate close or possibly go directly to
- * the CLOSED state.
+ * the LS_CLOSED state.
  */
 void fsm_close(fsm *f, char *reason)
 {
@@ -255,21 +274,21 @@ void fsm_close(fsm *f, char *reason)
 	f->term_reason = reason;
 	f->term_reason_len = (reason == NULL? 0: strlen(reason));
 	switch( f->state ){
-	case STARTING:
-		f->state = INITIAL;
+	case LS_STARTING:
+		f->state = LS_INITIAL;
 		break;
-	case STOPPED:
-		f->state = CLOSED;
+	case LS_STOPPED:
+		f->state = LS_CLOSED;
 		break;
-	case STOPPING:
-		f->state = CLOSING;
+	case LS_STOPPING:
+		f->state = LS_CLOSING;
 		break;
 	
-	case REQSENT:
-	case ACKRCVD:
-	case ACKSENT:
-	case OPENED:
-		if( f->state != OPENED )
+	case LS_REQSENT:
+	case LS_ACKRCVD:
+	case LS_ACKSENT:
+	case LS_OPENED:
+		if( f->state != LS_OPENED )
 			UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		else if( f->callbacks->down )
 			(*f->callbacks->down)(f);	/* Inform upper layers we're down */
@@ -281,12 +300,12 @@ void fsm_close(fsm *f, char *reason)
 		TIMEOUT(fsm_timeout, f, f->timeouttime);
 		--f->retransmits;
 		
-		f->state = CLOSING;
+		f->state = LS_CLOSING;
 		break;
 	}
 	
-	FSMDEBUG((LOG_INFO, "%s: close reason=%s state %d -> %d\n",
-			PROTO_NAME(f), reason, oldState, f->state));
+	FSMDEBUG((LOG_INFO, "%s: close reason=%s state %d (%s) -> %d (%s)\n",
+			PROTO_NAME(f), reason, oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
 
 
@@ -356,9 +375,9 @@ void fsm_input(fsm *f, u_char *inpacket, int l)
 	}
 	len -= HEADERLEN;		/* subtract header length */
 	
-	if( f->state == INITIAL || f->state == STARTING ){
-		FSMDEBUG((LOG_INFO, "fsm_input(%x): Rcvd packet in state %d.\n",
-				f->protocol, f->state));
+	if( f->state == LS_INITIAL || f->state == LS_STARTING ){
+		FSMDEBUG((LOG_INFO, "fsm_input(%x): Rcvd packet in state %d (%s).\n",
+				f->protocol, f->state, ppperr_strerr[f->state]));
 		return;
 	}
 	FSMDEBUG((LOG_INFO, "fsm_input(%s):%d,%d,%d\n", PROTO_NAME(f), code, id, l));
@@ -408,28 +427,28 @@ void fsm_input(fsm *f, u_char *inpacket, int l)
 void fsm_protreject(fsm *f)
 {
 	switch( f->state ){
-	case CLOSING:
+	case LS_CLOSING:
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		/* fall through */
-	case CLOSED:
-		f->state = CLOSED;
+	case LS_CLOSED:
+		f->state = LS_CLOSED;
 		if( f->callbacks->finished )
 			(*f->callbacks->finished)(f);
 		break;
 	
-	case STOPPING:
-	case REQSENT:
-	case ACKRCVD:
-	case ACKSENT:
+	case LS_STOPPING:
+	case LS_REQSENT:
+	case LS_ACKRCVD:
+	case LS_ACKSENT:
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		/* fall through */
-	case STOPPED:
-		f->state = STOPPED;
+	case LS_STOPPED:
+		f->state = LS_STOPPED;
 		if( f->callbacks->finished )
 			(*f->callbacks->finished)(f);
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		if( f->callbacks->down )
 			(*f->callbacks->down)(f);
 		
@@ -440,12 +459,12 @@ void fsm_protreject(fsm *f)
 		TIMEOUT(fsm_timeout, f, f->timeouttime);
 		--f->retransmits;
 		
-		f->state = STOPPING;
+		f->state = LS_STOPPING;
 		break;
 	
 	default:
-		FSMDEBUG((LOG_INFO, "%s: Protocol-reject event in state %d!\n",
-					PROTO_NAME(f), f->state));
+		FSMDEBUG((LOG_INFO, "%s: Protocol-reject event in state %d (%s)!\n",
+					PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	}
 }
 
@@ -465,20 +484,20 @@ static void fsm_timeout(void *arg)
     fsm *f = (fsm *) arg;
 
     switch (f->state) {
-    case CLOSING:
-    case STOPPING:
+    case LS_CLOSING:
+    case LS_STOPPING:
 		if( f->retransmits <= 0 ){
-		    FSMDEBUG((LOG_WARNING, "%s: timeout sending Terminate-Request state=%d\n",
-					   PROTO_NAME(f), f->state));
+		    FSMDEBUG((LOG_WARNING, "%s: timeout sending Terminate-Request state=%d (%s)\n",
+					   PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 		    /*
 		     * We've waited for an ack long enough.  Peer probably heard us.
 		     */
-		    f->state = (f->state == CLOSING)? CLOSED: STOPPED;
+		    f->state = (f->state == LS_CLOSING)? LS_CLOSED: LS_STOPPED;
 		    if( f->callbacks->finished )
 			(*f->callbacks->finished)(f);
 		} else {
-		    FSMDEBUG((LOG_WARNING, "%s: timeout resending Terminate-Requests state=%d\n",
-					   PROTO_NAME(f), f->state));
+		    FSMDEBUG((LOG_WARNING, "%s: timeout resending Terminate-Requests state=%d (%s)\n",
+					   PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 		    /* Send Terminate-Request */
 		    fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 			      (u_char *) f->term_reason, f->term_reason_len);
@@ -487,31 +506,31 @@ static void fsm_timeout(void *arg)
 		}
 		break;
 
-    case REQSENT:
-    case ACKRCVD:
-    case ACKSENT:
+    case LS_REQSENT:
+    case LS_ACKRCVD:
+    case LS_ACKSENT:
 		if (f->retransmits <= 0) {
-		    FSMDEBUG((LOG_WARNING, "%s: timeout sending Config-Requests state=%d\n",
-			   PROTO_NAME(f), f->state));
-		    f->state = STOPPED;
+		    FSMDEBUG((LOG_WARNING, "%s: timeout sending Config-Requests state=%d (%s)\n",
+			   PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+		    f->state = LS_STOPPED;
 		    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 				(*f->callbacks->finished)(f);
 	
 		} else {
-		    FSMDEBUG((LOG_WARNING, "%s: timeout resending Config-Request state=%d\n",
-			   PROTO_NAME(f), f->state));
+		    FSMDEBUG((LOG_WARNING, "%s: timeout resending Config-Request state=%d (%s)\n",
+			   PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 		    /* Retransmit the configure-request */
 		    if (f->callbacks->retransmit)
 				(*f->callbacks->retransmit)(f);
 		    fsm_sconfreq(f, 1);		/* Re-send Configure-Request */
-		    if( f->state == ACKRCVD )
-				f->state = REQSENT;
+		    if( f->state == LS_ACKRCVD )
+				f->state = LS_REQSENT;
 		}
 		break;
 
     default:
-		FSMDEBUG((LOG_INFO, "%s: Timeout event in state %d!\n",
-				  PROTO_NAME(f), f->state));
+		FSMDEBUG((LOG_INFO, "%s: Timeout event in state %d (%s)!\n",
+				  PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	    }
 }
 
@@ -523,28 +542,28 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len)
 {
 	int code, reject_if_disagree;
 	
-	FSMDEBUG((LOG_INFO, "fsm_rconfreq(%s): Rcvd id %d state=%d\n", 
-				PROTO_NAME(f), id, f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rconfreq(%s): Rcvd id %d state=%d (%s)\n", 
+				PROTO_NAME(f), id, f->state, ppperr_strerr[f->state]));
 	switch( f->state ){
-	case CLOSED:
+	case LS_CLOSED:
 		/* Go away, we're closed */
 		fsm_sdata(f, TERMACK, id, NULL, 0);
 		return;
-	case CLOSING:
-	case STOPPING:
+	case LS_CLOSING:
+	case LS_STOPPING:
 		return;
 	
-	case OPENED:
+	case LS_OPENED:
 		/* Go down and restart negotiation */
 		if( f->callbacks->down )
 			(*f->callbacks->down)(f);	/* Inform upper layers */
 		fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
 		break;
 	
-	case STOPPED:
+	case LS_STOPPED:
 		/* Negotiation started by our peer */
 		fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-		f->state = REQSENT;
+		f->state = LS_REQSENT;
 		break;
 	}
 	
@@ -565,20 +584,20 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len)
 	fsm_sdata(f, (u_char)code, id, inp, len);
 	
 	if (code == CONFACK) {
-		if (f->state == ACKRCVD) {
+		if (f->state == LS_ACKRCVD) {
 			UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
-			f->state = OPENED;
+			f->state = LS_OPENED;
 			if (f->callbacks->up)
 				(*f->callbacks->up)(f);	/* Inform upper layers */
 		} 
 		else
-			f->state = ACKSENT;
+			f->state = LS_ACKSENT;
 		f->nakloops = 0;
 	} 
 	else {
 		/* we sent CONFACK or CONFREJ */
-		if (f->state != ACKRCVD)
-			f->state = REQSENT;
+		if (f->state != LS_ACKRCVD)
+			f->state = LS_REQSENT;
 		if( code == CONFNAK )
 			++f->nakloops;
 	}
@@ -590,8 +609,8 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len)
  */
 static void fsm_rconfack(fsm *f, int id, u_char *inp, int len)
 {
-	FSMDEBUG((LOG_INFO, "fsm_rconfack(%s): Rcvd id %d state=%d\n",
-				PROTO_NAME(f), id, f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rconfack(%s): Rcvd id %d state=%d (%s)\n",
+				PROTO_NAME(f), id, f->state, ppperr_strerr[f->state]));
 	
 	if (id != f->reqid || f->seen_ack)		/* Expected id? */
 		return;					/* Nope, toss... */
@@ -605,37 +624,37 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len)
 	f->seen_ack = 1;
 	
 	switch (f->state) {
-	case CLOSED:
-	case STOPPED:
+	case LS_CLOSED:
+	case LS_STOPPED:
 		fsm_sdata(f, TERMACK, (u_char)id, NULL, 0);
 		break;
 	
-	case REQSENT:
-		f->state = ACKRCVD;
+	case LS_REQSENT:
+		f->state = LS_ACKRCVD;
 		f->retransmits = f->maxconfreqtransmits;
 		break;
 	
-	case ACKRCVD:
+	case LS_ACKRCVD:
 		/* Huh? an extra valid Ack? oh well... */
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		fsm_sconfreq(f, 0);
-		f->state = REQSENT;
+		f->state = LS_REQSENT;
 		break;
 	
-	case ACKSENT:
+	case LS_ACKSENT:
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
-		f->state = OPENED;
+		f->state = LS_OPENED;
 		f->retransmits = f->maxconfreqtransmits;
 		if (f->callbacks->up)
 			(*f->callbacks->up)(f);	/* Inform upper layers */
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		/* Go down and restart negotiation */
 		if (f->callbacks->down)
 			(*f->callbacks->down)(f);	/* Inform upper layers */
 		fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-		f->state = REQSENT;
+		f->state = LS_REQSENT;
 		break;
 	}
 }
@@ -649,8 +668,8 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len)
 	int (*proc) (fsm *, u_char *, int);
 	int ret;
 	
-	FSMDEBUG((LOG_INFO, "fsm_rconfnakrej(%s): Rcvd id %d state=%d\n",
-				PROTO_NAME(f), id, f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rconfnakrej(%s): Rcvd id %d state=%d (%s)\n",
+				PROTO_NAME(f), id, f->state, ppperr_strerr[f->state]));
 	
 	if (id != f->reqid || f->seen_ack)	/* Expected id? */
 		return;				/* Nope, toss... */
@@ -664,34 +683,34 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len)
 	f->seen_ack = 1;
 	
 	switch (f->state) {
-	case CLOSED:
-	case STOPPED:
+	case LS_CLOSED:
+	case LS_STOPPED:
 		fsm_sdata(f, TERMACK, (u_char)id, NULL, 0);
 		break;
 	
-	case REQSENT:
-	case ACKSENT:
+	case LS_REQSENT:
+	case LS_ACKSENT:
 		/* They didn't agree to what we wanted - try another request */
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		if (ret < 0)
-			f->state = STOPPED;		/* kludge for stopping CCP */
+			f->state = LS_STOPPED;		/* kludge for stopping CCP */
 		else
 			fsm_sconfreq(f, 0);		/* Send Configure-Request */
 		break;
 	
-	case ACKRCVD:
+	case LS_ACKRCVD:
 		/* Got a Nak/reject when we had already had an Ack?? oh well... */
 		UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 		fsm_sconfreq(f, 0);
-		f->state = REQSENT;
+		f->state = LS_REQSENT;
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		/* Go down and restart negotiation */
 		if (f->callbacks->down)
 			(*f->callbacks->down)(f);	/* Inform upper layers */
 		fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-		f->state = REQSENT;
+		f->state = LS_REQSENT;
 		break;
 	}
 }
@@ -702,16 +721,16 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len)
  */
 static void fsm_rtermreq(fsm *f, int id, u_char *p, int len)
 {
-	FSMDEBUG((LOG_INFO, "fsm_rtermreq(%s): Rcvd id %d state=%d\n",
-				PROTO_NAME(f), id, f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rtermreq(%s): Rcvd id %d state=%d (%s)\n",
+				PROTO_NAME(f), id, f->state, ppperr_strerr[f->state]));
 	
 	switch (f->state) {
-	case ACKRCVD:
-	case ACKSENT:
-		f->state = REQSENT;		/* Start over but keep trying */
+	case LS_ACKRCVD:
+	case LS_ACKSENT:
+		f->state = LS_REQSENT;		/* Start over but keep trying */
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		if (len > 0) {
 			FSMDEBUG((LOG_INFO, "%s terminated by peer (%x)\n", PROTO_NAME(f), p));
 		} else {
@@ -720,7 +739,7 @@ static void fsm_rtermreq(fsm *f, int id, u_char *p, int len)
 		if (f->callbacks->down)
 			(*f->callbacks->down)(f);	/* Inform upper layers */
 		f->retransmits = 0;
-		f->state = STOPPING;
+		f->state = LS_STOPPING;
 		TIMEOUT(fsm_timeout, f, f->timeouttime);
 		break;
 	}
@@ -734,28 +753,28 @@ static void fsm_rtermreq(fsm *f, int id, u_char *p, int len)
  */
 static void fsm_rtermack(fsm *f)
 {
-	FSMDEBUG((LOG_INFO, "fsm_rtermack(%s): state=%d\n", 
-				PROTO_NAME(f), f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rtermack(%s): state=%d (%s)\n", 
+				PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	
 	switch (f->state) {
-	case CLOSING:
+	case LS_CLOSING:
 		UNTIMEOUT(fsm_timeout, f);
-		f->state = CLOSED;
+		f->state = LS_CLOSED;
 		if( f->callbacks->finished )
 			(*f->callbacks->finished)(f);
 		break;
-	case STOPPING:
+	case LS_STOPPING:
 		UNTIMEOUT(fsm_timeout, f);
-		f->state = STOPPED;
+		f->state = LS_STOPPED;
 		if( f->callbacks->finished )
 			(*f->callbacks->finished)(f);
 		break;
 	
-	case ACKRCVD:
-		f->state = REQSENT;
+	case LS_ACKRCVD:
+		f->state = LS_REQSENT;
 		break;
 	
-	case OPENED:
+	case LS_OPENED:
 		if (f->callbacks->down)
 			(*f->callbacks->down)(f);	/* Inform upper layers */
 		fsm_sconfreq(f, 0);
@@ -771,8 +790,8 @@ static void fsm_rcoderej(fsm *f, u_char *inp, int len)
 {
 	u_char code, id;
 	
-	FSMDEBUG((LOG_INFO, "fsm_rcoderej(%s): state=%d\n", 
-				PROTO_NAME(f), f->state));
+	FSMDEBUG((LOG_INFO, "fsm_rcoderej(%s): state=%d (%s)\n", 
+				PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
 	
 	if (len < HEADERLEN) {
 		FSMDEBUG((LOG_INFO, "fsm_rcoderej: Rcvd short Code-Reject packet!\n"));
@@ -783,8 +802,8 @@ static void fsm_rcoderej(fsm *f, u_char *inp, int len)
 	FSMDEBUG((LOG_WARNING, "%s: Rcvd Code-Reject for code %d, id %d\n",
 				PROTO_NAME(f), code, id));
 	
-	if( f->state == ACKRCVD )
-		f->state = REQSENT;
+	if( f->state == LS_ACKRCVD )
+		f->state = LS_REQSENT;
 }
 
 
@@ -796,7 +815,7 @@ static void fsm_sconfreq(fsm *f, int retransmit)
 	u_char *outp;
 	int cilen;
 	
-	if( f->state != REQSENT && f->state != ACKRCVD && f->state != ACKSENT ){
+	if( f->state != LS_REQSENT && f->state != LS_ACKRCVD && f->state != LS_ACKSENT ){
 		/* Not currently negotiating - reset options */
 		if( f->callbacks->resetci )
 			(*f->callbacks->resetci)(f);

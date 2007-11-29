@@ -59,7 +59,7 @@ typedef enum {
  */
 void ppp_trace(int level, const char *format,...);
 
-#if PPP_DEBUG > 0
+#if PPP_DEBUG
 
 #define AUTHDEBUG(a) ppp_trace a
 #define IPCPDEBUG(a) ppp_trace a
@@ -71,7 +71,7 @@ void ppp_trace(int level, const char *format,...);
 
 #define TRACELCP 1
 
-#else
+#else /* PPP_DEBUG */
 
 #define AUTHDEBUG(a)
 #define IPCPDEBUG(a)
@@ -84,6 +84,6 @@ void ppp_trace(int level, const char *format,...);
 
 #define TRACELCP 0
 
-#endif
+#endif /* PPP_DEBUG */
 
 #endif /* PPPDEBUG_H */

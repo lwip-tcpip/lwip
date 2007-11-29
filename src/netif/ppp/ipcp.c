@@ -49,16 +49,19 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-#include <string.h>
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "ppp.h"
-#if PPP_SUPPORT > 0
+#include "pppdebug.h"
+
 #include "auth.h"
 #include "fsm.h"
 #include "vj.h"
 #include "ipcp.h"
-#include "pppdebug.h"
 
+#include <string.h>
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/
@@ -164,8 +167,8 @@ static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
     ipcp_nakci,			/* NAK our Configuration Information */
     ipcp_rejci,			/* Reject our Configuration Information */
     ipcp_reqci,			/* Request peer's Configuration Information */
-    ipcp_up,			/* Called when fsm reaches OPENED state */
-    ipcp_down,			/* Called when fsm leaves OPENED state */
+    ipcp_up,			/* Called when fsm reaches LS_OPENED state */
+    ipcp_down,			/* Called when fsm leaves LS_OPENED state */
     NULL,				/* Called when we want the lower layer up */
     ipcp_finished,		/* Called when we want the lower layer down */
     NULL,				/* Called when Protocol-Reject received */
@@ -213,11 +216,11 @@ static void ipcp_init(int unit)
 	
 	wo->neg_addr = 1;
 	wo->ouraddr = 0;
-#if VJ_SUPPORT > 0
+#if VJ_SUPPORT
 	wo->neg_vj = 1;
-#else
+#else  /* VJ_SUPPORT */
 	wo->neg_vj = 0;
-#endif
+#endif /* VJ_SUPPORT */
 	wo->vj_protocol = IPCP_VJ_COMP;
 	wo->maxslotindex = MAX_SLOTS - 1;
 	wo->cflag = 0;
@@ -225,11 +228,11 @@ static void ipcp_init(int unit)
 	wo->default_route = 1;
 	
 	ao->neg_addr = 1;
-#if VJ_SUPPORT > 0
+#if VJ_SUPPORT
 	ao->neg_vj = 1;
-#else
+#else  /* VJ_SUPPORT */
 	ao->neg_vj = 0;
-#endif
+#endif /* VJ_SUPPORT */
 	ao->maxslotindex = MAX_SLOTS - 1;
 	ao->cflag = 1;
 	
@@ -533,7 +536,7 @@ bad:
 /*
  * ipcp_nakci - Peer has sent a NAK for some of our CIs.
  * This should not modify any state if the Nak is bad
- * or if IPCP is in the OPENED state.
+ * or if IPCP is in the LS_OPENED state.
  *
  * Returns:
  *	0 - Nak was bad.
@@ -716,7 +719,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len)
 	/*
 	 * OK, the Nak is good.  Now we can update state.
 	 */
-	if (f->state != OPENED)
+	if (f->state != LS_OPENED)
 		*go = try;
 	
 	return 1;
@@ -823,7 +826,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len)
 	/*
 	 * Now we can update state.
 	 */
-	if (f->state != OPENED)
+	if (f->state != LS_OPENED)
 		*go = try;
 	return 1;
 	

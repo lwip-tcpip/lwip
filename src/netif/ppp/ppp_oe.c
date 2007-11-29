@@ -68,18 +68,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <string.h>
-#include <stdio.h>
- 
+#include "lwip/opt.h"
+
+#if PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
+#include "ppp_oe.h"
 #include "pppdebug.h"
 
 #include "netif/etharp.h"
-#include "queue.h"
-#include "ppp_oe.h"
 #include "lwip/sys.h"
 
-#if PPPOE_SUPPORT > 0
+#include "queue.h"
+
+#include <string.h>
+#include <stdio.h>
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define	PPPOE_ADD_16(PTR, VAL)			\
@@ -1089,4 +1092,5 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 	sc->sc_session = 0;
 }
 
-#endif /* PPPOE_SUPPORT > 0 */
+#endif /* PPPOE_SUPPORT */
+

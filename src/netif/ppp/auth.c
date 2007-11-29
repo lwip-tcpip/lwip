@@ -64,8 +64,13 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
-#if PPP_SUPPORT > 0
+#include "pppdebug.h"
+
 #include "fsm.h"
 #include "lcp.h"
 #include "pap.h"
@@ -73,12 +78,9 @@
 #include "auth.h"
 #include "ipcp.h"
 
-#if CBCP_SUPPORT > 0
+#if CBCP_SUPPORT
 #include "cbcp.h"
-#endif
-
-#include "pppdebug.h"
-
+#endif /* CBCP_SUPPORT */
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/
@@ -122,13 +124,13 @@ static int  get_pap_passwd (int, char *, char *);
 static int  have_pap_secret (void);
 static int  have_chap_secret (char *, char *, u32_t);
 static int  ip_addr_check (u32_t, struct wordlist *);
-#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT > 0 */
+#if 0 /* PAP_SUPPORT || CHAP_SUPPORT */
 static void set_allowed_addrs(int unit, struct wordlist *addrs);
 static void free_wordlist (struct wordlist *);
-#endif
-#if CBCP_SUPPORT > 0
+#endif /* 0 */ /* PAP_SUPPORT || CHAP_SUPPORT */
+#if CBCP_SUPPORT
 static void callback_phase (int);
-#endif
+#endif /* CBCP_SUPPORT */
 
 
 /******************************/
@@ -139,10 +141,10 @@ static void callback_phase (int);
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if PAP_SUPPORT || CHAP_SUPPORT
 /* The name by which the peer authenticated itself to us. */
 static char peer_authname[MAXNAMELEN];
-#endif
+#endif /* PAP_SUPPORT || CHAP_SUPPORT */
 
 /* Records which authentication operations haven't completed yet. */
 static int auth_pending[NUM_PPP];
@@ -162,10 +164,10 @@ static int num_np_open;
 /* Number of network protocols which have come up. */
 static int num_np_up;
 
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if PAP_SUPPORT || CHAP_SUPPORT
 /* Set if we got the contents of passwd[] from the pap-secrets file. */
 static int passwd_from_file;
-#endif
+#endif /* PAP_SUPPORT || CHAP_SUPPORT */
 
 
 
@@ -237,9 +239,9 @@ void link_established(int unit)
     struct protent *protp;
     lcp_options *wo = &lcp_wantoptions[unit];
     lcp_options *go = &lcp_gotoptions[unit];
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if PAP_SUPPORT || CHAP_SUPPORT
     lcp_options *ho = &lcp_hisoptions[unit];
-#endif
+#endif /* PAP_SUPPORT || CHAP_SUPPORT */
     
     AUTHDEBUG((LOG_INFO, "link_established: %d\n", unit));
     /*
@@ -265,31 +267,31 @@ void link_established(int unit)
     
     lcp_phase[unit] = PHASE_AUTHENTICATE;
     auth = 0;
-#if CHAP_SUPPORT > 0
+#if CHAP_SUPPORT
     if (go->neg_chap) {
         ChapAuthPeer(unit, ppp_settings.our_name, go->chap_mdtype);
         auth |= CHAP_PEER;
     } 
-#endif
-#if PAP_SUPPORT > 0 && CHAP_SUPPORT > 0
+#endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT && CHAP_SUPPORT
     else
-#endif
-#if PAP_SUPPORT > 0
+#endif /* PAP_SUPPORT && CHAP_SUPPORT */
+#if PAP_SUPPORT
     if (go->neg_upap) {
         upap_authpeer(unit);
         auth |= PAP_PEER;
     }
-#endif
-#if CHAP_SUPPORT > 0
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
     if (ho->neg_chap) {
         ChapAuthWithPeer(unit, ppp_settings.user, ho->chap_mdtype);
         auth |= CHAP_WITHPEER;
     }
-#endif
-#if PAP_SUPPORT > 0 && CHAP_SUPPORT > 0
+#endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT && CHAP_SUPPORT
     else
-#endif
-#if PAP_SUPPORT > 0
+#endif /* PAP_SUPPORT && CHAP_SUPPORT */
+#if PAP_SUPPORT
     if (ho->neg_upap) {
         if (ppp_settings.passwd[0] == 0) {
             passwd_from_file = 1;
@@ -299,7 +301,7 @@ void link_established(int unit)
         upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
         auth |= PAP_WITHPEER;
     }
-#endif
+#endif /* PAP_SUPPORT */
     auth_pending[unit] = auth;
     
     if (!auth)
@@ -320,7 +322,7 @@ void auth_peer_fail(int unit, u16_t protocol)
 }
 
 
-#if PAP_SUPPORT > 0 || CHAP_SUPPORT > 0
+#if PAP_SUPPORT || CHAP_SUPPORT
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
@@ -412,7 +414,7 @@ void auth_withpeer_success(int unit, u16_t protocol)
     if ((auth_pending[unit] &= ~pbit) == 0)
         network_phase(unit);
 }
-#endif
+#endif /* PAP_SUPPORT || CHAP_SUPPORT */
 
 
 /*
@@ -487,8 +489,7 @@ void auth_reset(int unit)
     }
 }
 
-
-#if PAP_SUPPORT > 0
+#if PAP_SUPPORT
 /*
  * check_passwd - Check the user name and passwd against the PAP secrets
  * file.  If requested, also check against the system password database,
@@ -564,7 +565,7 @@ int check_passwd(
     return ret;
 #endif
 }
-#endif
+#endif /* PAP_SUPPORT */
 
 
 /*
@@ -589,7 +590,7 @@ int bad_ip_adrs(u32_t addr)
 }
 
 
-#if CHAP_SUPPORT > 0
+#if CHAP_SUPPORT
 /*
  * get_secret - open the CHAP secret file and return the secret
  * for authenticating the given client on the given server.
@@ -650,7 +651,7 @@ int get_secret(
     return 1;
 #endif
 }
-#endif
+#endif /* CHAP_SUPPORT */
 
 
 #if 0 /* UNUSED */
@@ -713,7 +714,7 @@ static void network_phase(int unit)
         did_authup = 1;
     }
     
-#if CBCP_SUPPORT > 0
+#if CBCP_SUPPORT
     /*
      * If we negotiated callback, do it now.
      */
@@ -722,7 +723,7 @@ static void network_phase(int unit)
         (*cbcp_protent.open)(unit);
         return;
     }
-#endif
+#endif /* CBCP_SUPPORT */
     
     lcp_phase[unit] = PHASE_NETWORK;
     for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i)
@@ -858,7 +859,7 @@ static int have_chap_secret(char *client, char *server, u32_t remote)
 }
 
 
-#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT > 0 */
+#if 0 /* PAP_SUPPORT || CHAP_SUPPORT */
 /*
  * set_allowed_addrs() - set the list of allowed addresses.
  */
@@ -892,7 +893,7 @@ static void set_allowed_addrs(int unit, struct wordlist *addrs)
     }
 #endif
 }
-#endif
+#endif /* 0 */ /* PAP_SUPPORT || CHAP_SUPPORT */
 
 static int ip_addr_check(u32_t addr, struct wordlist *addrs)
 {
@@ -908,7 +909,7 @@ static int ip_addr_check(u32_t addr, struct wordlist *addrs)
     return 1;
 }
 
-#if 0 /* PAP_SUPPORT > 0 || CHAP_SUPPORT */
+#if 0 /* PAP_SUPPORT || CHAP_SUPPORT */
 /*
  * free_wordlist - release memory allocated for a wordlist.
  */
@@ -922,6 +923,6 @@ static void free_wordlist(struct wordlist *wp)
         wp = next;
     }
 }
-#endif
+#endif  /* 0 */ /* PAP_SUPPORT || CHAP_SUPPORT */
 
 #endif /* PPP_SUPPORT */

@@ -3,7 +3,6 @@
 
 #include "lwip/tcp.h"
 
-
 /*
  * Structure of an internet header, naked of options.
  *

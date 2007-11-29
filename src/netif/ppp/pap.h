@@ -49,11 +49,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-
 #ifndef PAP_H
 #define PAP_H
 
-#if PAP_SUPPORT > 0
+#if PAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*************************
 *** PUBLIC DEFINITIONS ***

@@ -36,7 +36,9 @@
 
 #include "lwip/opt.h"
 
-#if PPP_SUPPORT > 0
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
+#include "lwip/def.h"
 #include "lwip/sio.h"
 #include "lwip/api.h"
 #include "lwip/sockets.h"
@@ -210,9 +212,9 @@ enum NPmode {
 #define BZERO(s, n)         memset(s, 0, n)
 #if PPP_DEBUG
 #define PRINTMSG(m, l)  { m[l] = '\0'; ppp_trace(LOG_INFO, "Remote message: %s\n", m); }
-#else
+#else  /* PPP_DEBUG */
 #define PRINTMSG(m, l)
-#endif
+#endif /* PPP_DEBUG */
 
 /*
  * MAKEHEADER - Add PPP Header fields to a packet.
@@ -380,6 +382,8 @@ void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
  */
 int pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx);
 
+/* for source code compatibility */
+#define pppOpen(fd,cb,ls) pppOverSerialOpen(fd,cb,ls)
 /*
  * Open a new PPP Over Ethernet (PPPOE) connection.
  */

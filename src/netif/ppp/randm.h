@@ -58,9 +58,9 @@ void avChurnRand(char *randData, u32_t randLen);
  */
 #if MD5_SUPPORT
 #define avRandomize()	avChurnRand(NULL, 0)
-#else
+#else  /* MD5_SUPPORT */
 void avRandomize(void);
-#endif
+#endif /* MD5_SUPPORT */
 
 /*
  * Use the random pool to generate random data.  This degrades to pseudo

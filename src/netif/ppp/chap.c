@@ -66,18 +66,21 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
+#if CHAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
-#if PPP_SUPPORT > 0
+#include "pppdebug.h"
+
 #include "magic.h"
-
-#if CHAP_SUPPORT > 0
-
 #include "randm.h"
 #include "auth.h"
 #include "md5.h"
 #include "chap.h"
 #include "chpms.h"
-#include "pppdebug.h"
 
 
 /*************************/
@@ -865,6 +868,6 @@ static int ChapPrintPkt(
 }
 #endif
 
-#endif /* CHAP_SUPPORT > 0 */
+#endif /* CHAP_SUPPORT */
 
 #endif /* PPP_SUPPORT */

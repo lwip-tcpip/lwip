@@ -62,7 +62,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.h,v 1.1 2003/05/27 14:37:56 jani Exp $
+ * $Id: chap.h,v 1.2 2007/11/29 22:19:57 fbernon Exp $
  */
 
 #ifndef CHAP_H
@@ -164,4 +164,3 @@ void ChapAuthWithPeer (int, char *, int);
 void ChapAuthPeer (int, char *, int);
 
 #endif /* CHAP_H */
-

@@ -66,10 +66,14 @@
 
 #define USE_CRYPT
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
+#if MSCHAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "ppp.h"
-
-#if MSCHAP_SUPPORT > 0
+#include "pppdebug.h"
 
 #include "md4.h"
 #ifndef USE_CRYPT
@@ -77,7 +81,6 @@
 #endif
 #include "chap.h"
 #include "chpms.h"
-#include "pppdebug.h"
 
 
 /*************************/
@@ -396,3 +399,4 @@ static ChapMS_LANMan(
 
 #endif /* MSCHAP_SUPPORT */
 
+#endif /* PPP_SUPPORT */

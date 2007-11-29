@@ -49,13 +49,17 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
+#if PAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #include "ppp.h"
-#include "auth.h"
-#include "pap.h"
 #include "pppdebug.h"
 
-
-#if PAP_SUPPORT > 0
+#include "auth.h"
+#include "pap.h"
 
 /***********************************/
 /*** LOCAL FUNCTION DECLARATIONS ***/
@@ -602,7 +606,8 @@ static int upap_printpkt(
 	LWIP_UNUSED_ARG(arg);
 	return 0;
 }
-#endif
+#endif /* 0 */
 
 #endif /* PAP_SUPPORT */
 
+#endif /* PPP_SUPPORT */

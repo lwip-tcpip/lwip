@@ -31,11 +31,16 @@
  ***********************************************************************
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
+#if CHAP_SUPPORT || MD5_SUPPORT
+
 #include "ppp.h"
-#include "md5.h"
 #include "pppdebug.h"
 
-#if CHAP_SUPPORT > 0 || MD5_SUPPORT > 0
+#include "md5.h"
 
 /*
  ***********************************************************************
@@ -302,5 +307,6 @@ static void Transform (u32_t *buf, u32_t *in)
   buf[3] += d;
 }
 
-#endif
+#endif /* CHAP_SUPPORT || MD5_SUPPORT */
 
+#endif /* PPP_SUPPORT */
