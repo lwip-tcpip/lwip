@@ -64,52 +64,28 @@
  * @return a newly allocated struct netconn or
  *         NULL on memory error
  */
-struct
-netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
-                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
+struct netconn*
+netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
+          void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
   struct netconn *conn;
   struct api_msg msg;
 
-  conn = memp_malloc(MEMP_NETCONN);
-  if (conn == NULL) {
-    return NULL;
+  conn = netconn_alloc_with_proto_and_callback(t, proto, callback);
+  if (conn != NULL ) {
+    msg.function = do_newconn;
+    msg.msg.msg.n.proto = proto;
+    msg.msg.conn = conn;
+    TCPIP_APIMSG(&msg);
+
+    if (conn->err != ERR_OK) {
+      LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
+      sys_mbox_free(conn->mbox);
+      sys_mbox_free(conn->recvmbox);
+      memp_free(MEMP_NETCONN, conn);
+      return NULL;
+    }
   }
-
-  conn->err = ERR_OK;
-  conn->type = t;
-  conn->pcb.tcp = NULL;
-
-  if ((conn->mbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-    memp_free(MEMP_NETCONN, conn);
-    return NULL;
-  }
-  conn->recvmbox = SYS_MBOX_NULL;
-  conn->acceptmbox = SYS_MBOX_NULL;
-  conn->state        = NETCONN_NONE;
-  /* initialize socket to -1 since 0 is a valid socket */
-  conn->socket       = -1;
-  conn->callback     = callback;
-  conn->recv_avail   = 0;
-#if LWIP_SO_RCVTIMEO
-  conn->recv_timeout = 0;
-#endif /* LWIP_SO_RCVTIMEO */
-#if LWIP_SO_RCVBUF
-  conn->recv_bufsize = INT_MAX;
-#endif /* LWIP_SO_RCVBUF */
-
-  msg.function = do_newconn;
-  msg.msg.msg.n.proto = proto;
-  msg.msg.conn = conn;
-  TCPIP_APIMSG(&msg);
-
-  if (conn->err != ERR_OK) {
-    LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
-    sys_mbox_free(conn->mbox);
-    memp_free(MEMP_NETCONN, conn);
-    return NULL;
-  }
-
   return conn;
 }
 

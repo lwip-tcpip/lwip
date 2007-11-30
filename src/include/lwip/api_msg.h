@@ -142,6 +142,10 @@ void do_join_leave_group( struct api_msg_msg *msg);
 void do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
 
+struct netconn* netconn_alloc_with_proto_and_callback(
+  enum netconn_type t, u8_t proto,
+  void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
+
 #ifdef __cplusplus
 }
 #endif

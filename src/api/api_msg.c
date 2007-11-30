@@ -115,9 +115,11 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   struct netbuf *buf;
   struct netconn *conn;
 
-  LWIP_UNUSED_ARG(pcb);
-
+  LWIP_UNUSED_ARG(pcb); /* only used for asserts... */
+  LWIP_ASSERT("recv_udp must have a pcb argument", pcb != NULL);
+  LWIP_ASSERT("recv_udp must have an argument", arg != NULL);
   conn = arg;
+  LWIP_ASSERT("recv_udp: recv for wrong pcb!", conn->pcb.udp == pcb);
 
 #if LWIP_SO_RCVBUF
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL) ||
@@ -161,8 +163,10 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   u16_t len;
 
   LWIP_UNUSED_ARG(pcb);
-
+  LWIP_ASSERT("recv_tcp must have a pcb argument", pcb != NULL);
+  LWIP_ASSERT("recv_tcp must have an argument", arg != NULL);
   conn = arg;
+  LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
     pbuf_free(p);
@@ -324,41 +328,17 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   LWIP_ERROR("accept_function: invalid conn->acceptmbox",
              conn->acceptmbox != SYS_MBOX_NULL, return ERR_VAL;);
 
-  newconn = memp_malloc(MEMP_NETCONN);
+  /* We have to set the callback here even though
+   * the new socket is unknown. conn->socket is marked as -1. */
+  newconn = netconn_alloc_with_proto_and_callback(conn->type, 0, conn->callback);
   if (newconn == NULL) {
     return ERR_MEM;
   }
-  newconn->recvmbox = sys_mbox_new();
-  if (newconn->recvmbox == SYS_MBOX_NULL) {
-    memp_free(MEMP_NETCONN, newconn);
-    return ERR_MEM;
-  }
-  newconn->mbox = sys_mbox_new();
-  if (newconn->mbox == SYS_MBOX_NULL) {
-    sys_mbox_free(newconn->recvmbox);
-    memp_free(MEMP_NETCONN, newconn);
-    return ERR_MEM;
-  }
-  /* Allocations were OK, setup the PCB etc */
-  newconn->type = NETCONN_TCP;
   newconn->pcb.tcp = newpcb;
   setup_tcp(newconn);
-  newconn->state = NETCONN_NONE;
-  newconn->acceptmbox = SYS_MBOX_NULL;
   newconn->err = err;
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-  /* We have to set the callback here even though
-   * the new socket is unknown. Mark the socket as -1. */
-  newconn->callback = conn->callback;
-  newconn->socket = -1;
-  newconn->recv_avail = 0;
-#if LWIP_SO_RCVTIMEO
-  newconn->recv_timeout = 0;
-#endif /* LWIP_SO_RCVTIMEO */
-#if LWIP_SO_RCVBUF
-  newconn->recv_bufsize = INT_MAX;
-#endif /* LWIP_SO_RCVBUF */
 
   sys_mbox_post(conn->acceptmbox, newconn);
   return ERR_OK;
@@ -445,6 +425,55 @@ do_newconn(struct api_msg_msg *msg)
    /* We currently just are happy and return. */
 
    TCPIP_APIMSG_ACK(msg);
+}
+
+/**
+ * Create a new netconn (of a specific type) that has a callback function.
+ * The corresponding pcb is NOT created!
+ *
+ * @param t the type of 'connection' to create (@see enum netconn_type)
+ * @param proto the IP protocol for RAW IP pcbs
+ * @param callback a function to call on status changes (RX available, TX'ed)
+ * @return a newly allocated struct netconn or
+ *         NULL on memory error
+ */
+struct netconn*
+netconn_alloc_with_proto_and_callback(enum netconn_type t, u8_t proto,
+          void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
+{
+  struct netconn *conn;
+
+  conn = memp_malloc(MEMP_NETCONN);
+  if (conn == NULL) {
+    return NULL;
+  }
+
+  conn->err = ERR_OK;
+  conn->type = t;
+  conn->pcb.tcp = NULL;
+
+  if ((conn->mbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+    memp_free(MEMP_NETCONN, conn);
+    return NULL;
+  }
+  if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+    sys_mbox_free(conn->mbox);
+    memp_free(MEMP_NETCONN, conn);
+    return NULL;
+  }
+  conn->acceptmbox = SYS_MBOX_NULL;
+  conn->state        = NETCONN_NONE;
+  /* initialize socket to -1 since 0 is a valid socket */
+  conn->socket       = -1;
+  conn->callback     = callback;
+  conn->recv_avail   = 0;
+#if LWIP_SO_RCVTIMEO
+  conn->recv_timeout = 0;
+#endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+  conn->recv_bufsize = INT_MAX;
+#endif /* LWIP_SO_RCVBUF */
+  return conn;
 }
 
 #if LWIP_TCP
