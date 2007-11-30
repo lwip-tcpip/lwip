@@ -85,7 +85,7 @@ void
 udp_input(struct pbuf *p, struct netif *inp)
 {
   struct udp_hdr *udphdr;
-  struct udp_pcb *pcb;
+  struct udp_pcb *pcb, *prev;
   struct udp_pcb *uncon_pcb;
   struct ip_hdr *iphdr;
   u16_t src, dest;
@@ -149,6 +149,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   } else
 #endif /* LWIP_DHCP */
   {
+    prev = NULL;
     local_match = 0;
     uncon_pcb = NULL;
     /* Iterate through the UDP pcb list for a matching pcb.
@@ -187,8 +188,18 @@ udp_input(struct pbuf *p, struct netif *inp)
           (ip_addr_isany(&pcb->remote_ip) ||
            ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)))) {
         /* the first fully matching PCB */
+        if (prev != NULL) {
+          /* move the pcb to the front of udp_pcbs so that is
+             found faster next time */
+          prev->next = pcb->next;
+          pcb->next = udp_pcbs;
+          udp_pcbs = pcb;
+        } else {
+          UDP_STATS_INC(udp.cachehit);
+        }
         break;
       }
+      prev = pcb;
     }
     /* no fully matching pcb found? then look for an unconnected pcb */
     if (pcb == NULL) {

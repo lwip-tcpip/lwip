@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-11-30 Simon Goldschmidt
+  * udp.c, raw.c: task #7497: Sort lists (pcb, netif, ...) for faster access
+    UDP: move a (connected) pcb selected for input to the front of the list of
+    pcbs so that it is found faster next time. Same for RAW pcbs that have eaten
+    a packet.
+
   2007-11-28 Simon Goldschmidt
   * etharp.c, stats.c, stats.h, opt.h: Introduced ETHARP_STATS
 

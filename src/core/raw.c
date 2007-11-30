@@ -77,7 +77,7 @@ static struct raw_pcb *raw_pcbs;
 u8_t
 raw_input(struct pbuf *p, struct netif *inp)
 {
-  struct raw_pcb *pcb;
+  struct raw_pcb *pcb, *prev;
   struct ip_hdr *iphdr;
   s16_t proto;
   u8_t eaten = 0;
@@ -87,6 +87,7 @@ raw_input(struct pbuf *p, struct netif *inp)
   iphdr = p->payload;
   proto = IPH_PROTO(iphdr);
 
+  prev = NULL;
   pcb = raw_pcbs;
   /* loop through all raw pcbs until the packet is eaten by one */
   /* this allows multiple pcbs to match against the packet by design */
@@ -100,11 +101,19 @@ raw_input(struct pbuf *p, struct netif *inp)
           /* receive function ate the packet */
           p = NULL;
           eaten = 1;
+          if (prev != NULL) {
+          /* move the pcb to the front of raw_pcbs so that is
+             found faster next time */
+            prev->next = pcb->next;
+            pcb->next = raw_pcbs;
+            raw_pcbs = pcb;
+          }
         }
       }
       /* no receive callback function was set for this raw PCB */
       /* drop the packet */
     }
+    prev = pcb;
     pcb = pcb->next;
   }
   return eaten;
