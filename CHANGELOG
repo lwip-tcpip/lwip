@@ -502,6 +502,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-11-30 Simon Goldschmidt
+  * udp.c: first attempt to fix bug #21655 (DHCP doesn't work reliably with multiple
+    netifs): if LWIP_DHCP is enabled, UDP packets to DHCP_CLIENT_PORT are passed
+    to netif->dhcp->pcb only (if that exists) and not to any other pcb for the same
+    port (only solution to let UDP pcbs 'bind' to a netif instead of an IP address)
+
   2007-11-27 Simon Goldschmidt
   * ip.c: fixed bug #21643 (udp_send/raw_send don't fail if netif is down) by
     letting ip_route only use netifs that are up.
