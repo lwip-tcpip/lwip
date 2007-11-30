@@ -102,7 +102,7 @@
 #include "vj.h"
 #endif /* VJ_SUPPORT */
 #if PPPOE_SUPPORT
-#include "ppp_oe.h"
+#include "netif/ppp_oe.h"
 #endif /* PPPOE_SUPPORT */
 
 #include <string.h>

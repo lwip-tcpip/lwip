@@ -55,6 +55,11 @@
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "netif/etharp.h"
+
+#if PPPOE_SUPPORT
+#include "netif/ppp_oe.h"
+#endif /* PPPOE_SUPPORT */
+
 #include <string.h>
 
 /** the time an ARP entry stays valid after its last update,

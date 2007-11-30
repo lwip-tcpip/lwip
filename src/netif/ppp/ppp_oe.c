@@ -73,11 +73,12 @@
 #if PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "ppp.h"
-#include "ppp_oe.h"
 #include "pppdebug.h"
 
-#include "netif/etharp.h"
 #include "lwip/sys.h"
+
+#include "netif/ppp_oe.h"
+#include "netif/etharp.h"
 
 #include "queue.h"
 

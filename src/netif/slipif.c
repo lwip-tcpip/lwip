@@ -51,10 +51,10 @@
 #include "lwip/snmp.h"
 #include "lwip/sio.h"
 
-#define SLIP_END     0300
-#define SLIP_ESC     0333
-#define SLIP_ESC_END 0334
-#define SLIP_ESC_ESC 0335
+#define SLIP_END     0300 /* 0xC0 */
+#define SLIP_ESC     0333 /* 0xDB */
+#define SLIP_ESC_END 0334 /* 0xDC */
+#define SLIP_ESC_ESC 0335 /* 0xDD */
 
 #define MAX_SIZE     1500
 
@@ -180,6 +180,7 @@ slipif_input(struct netif *netif)
           q = p;
         }
       }
+
       /* this automatically drops bytes if > MAX_SIZE */
       if ((p != NULL) && (recved <= MAX_SIZE)) {
         ((u8_t *)p->payload)[i] = c;
@@ -192,7 +193,7 @@ slipif_input(struct netif *netif)
             /* p is a chain, on to the next in the chain */
             p = p->next;
           } else {
-            /* p is a signle pbuf, set it to NULL so next time a new
+            /* p is a single pbuf, set it to NULL so next time a new
              * pbuf is allocated */
             p = NULL;
           }
