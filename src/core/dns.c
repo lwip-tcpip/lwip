@@ -232,7 +232,10 @@ static u8_t                   dns_payload[DNS_MSG_SIZE];
 void
 dns_init()
 {
-  struct ip_addr dnsserver = {DNS_SERVER_ADDRESS};
+  struct ip_addr dnsserver;
+  
+  /* initialize default DNS server address */
+  dnsserver.addr = DNS_SERVER_ADDRESS;
 
   LWIP_DEBUGF(DNS_DEBUG, ("dns_init: initializing\n"));
 
