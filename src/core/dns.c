@@ -464,6 +464,8 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (query + sizeof(struct dns_query)) - ((char*)(p->payload)));
 
+    /* connect to the server for faster receiving */
+    udp_connect(dns_pcb, &dns_servers[numdns], DNS_SERVER_PORT);
     /* send dns packet */
     err = udp_sendto(dns_pcb, p, &dns_servers[numdns], DNS_SERVER_PORT);
 
