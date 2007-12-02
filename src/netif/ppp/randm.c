@@ -63,9 +63,10 @@ static long randCount = 0;      /* Pseudo-random incrementer */
  *  real-time clock.  We'll accumulate more randomness as soon
  *  as things start happening.
  */
-void avRandomInit()
+void
+avRandomInit()
 {
-    avChurnRand(NULL, 0);
+  avChurnRand(NULL, 0);
 }
 
 /*
@@ -78,26 +79,26 @@ void avRandomInit()
  *
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  */
-void avChurnRand(char *randData, u32_t randLen)
+void
+avChurnRand(char *randData, u32_t randLen)
 {
-    MD5_CTX md5;
+  MD5_CTX md5;
 
-/*  ppp_trace(LOG_INFO, "churnRand: %u@%P\n", randLen, randData); */
-    MD5Init(&md5);
-    MD5Update(&md5, (u_char *)randPool, sizeof(randPool));
-    if (randData)
-        MD5Update(&md5, (u_char *)randData, randLen);
-    else {
-        struct {
-            /* INCLUDE fields for any system sources of randomness */
-            char foobar;
-        } sysData;
+  /* ppp_trace(LOG_INFO, "churnRand: %u@%P\n", randLen, randData); */
+  MD5Init(&md5);
+  MD5Update(&md5, (u_char *)randPool, sizeof(randPool));
+  if (randData) {
+    MD5Update(&md5, (u_char *)randData, randLen);
+  } else {
+    struct {
+      /* INCLUDE fields for any system sources of randomness */
+      char foobar;
+    } sysData;
 
-        /* Load sysData fields here. */
-        ;
-        MD5Update(&md5, (u_char *)&sysData, sizeof(sysData));
-    }
-    MD5Final((u_char *)randPool, &md5);
+    /* Load sysData fields here. */
+    MD5Update(&md5, (u_char *)&sysData, sizeof(sysData));
+  }
+  MD5Final((u_char *)randPool, &md5);
 /*  ppp_trace(LOG_INFO, "churnRand: -> 0\n"); */
 }
 
@@ -117,39 +118,40 @@ void avChurnRand(char *randData, u32_t randLen)
  *  randCount each time?  Probably there is a weakness but I wish that
  *  it was documented.
  */
-void avGenRand(char *buf, u32_t bufLen)
+void
+avGenRand(char *buf, u32_t bufLen)
 {
-    MD5_CTX md5;
-    u_char tmp[16];
-    u32_t n;
+  MD5_CTX md5;
+  u_char tmp[16];
+  u32_t n;
 
-    while (bufLen > 0) {
-        n = LWIP_MIN(bufLen, RANDPOOLSZ);
-        MD5Init(&md5);
-        MD5Update(&md5, (u_char *)randPool, sizeof(randPool));
-        MD5Update(&md5, (u_char *)&randCount, sizeof(randCount));
-        MD5Final(tmp, &md5);
-        randCount++;
-        MEMCPY(buf, tmp, n);
-        buf += n;
-        bufLen -= n;
-    }
+  while (bufLen > 0) {
+    n = LWIP_MIN(bufLen, RANDPOOLSZ);
+    MD5Init(&md5);
+    MD5Update(&md5, (u_char *)randPool, sizeof(randPool));
+    MD5Update(&md5, (u_char *)&randCount, sizeof(randCount));
+    MD5Final(tmp, &md5);
+    randCount++;
+    MEMCPY(buf, tmp, n);
+    buf += n;
+    bufLen -= n;
+  }
 }
 
 /*
  * Return a new random number.
  */
-u32_t avRandom()
+u32_t
+avRandom()
 {
-    u32_t newRand;
+  u32_t newRand;
 
-    avGenRand((char *)&newRand, sizeof(newRand));
+  avGenRand((char *)&newRand, sizeof(newRand));
 
-    return newRand;
+  return newRand;
 }
 
 #else /* MD5_SUPPORT */
-
 
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
@@ -175,31 +177,32 @@ static u32_t avRandomSeed = 0;      /* Seed used for random number generation. *
  * operational.  Thus we call it again on the first random
  * event.
  */
-void avRandomInit()
+void
+avRandomInit()
 {
 #if 0
-    /* Get a pointer into the last 4 bytes of clockBuf. */
-    u32_t *lptr1 = (u32_t *)((char *)&clockBuf[3]);
+  /* Get a pointer into the last 4 bytes of clockBuf. */
+  u32_t *lptr1 = (u32_t *)((char *)&clockBuf[3]);
 
-    /*
-     * Initialize our seed using the real-time clock, the idle
-     * counter, the millisecond timer, and the hardware timer
-     * tick counter.  The real-time clock and the hardware
-     * tick counter are the best sources of randomness but
-     * since the tick counter is only 16 bit (and truncated
-     * at that), the idle counter and millisecond timer
-     * (which may be small values) are added to help
-     * randomize the lower 16 bits of the seed.
-     */
-    readClk();
-    avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
-             + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
+  /*
+   * Initialize our seed using the real-time clock, the idle
+   * counter, the millisecond timer, and the hardware timer
+   * tick counter.  The real-time clock and the hardware
+   * tick counter are the best sources of randomness but
+   * since the tick counter is only 16 bit (and truncated
+   * at that), the idle counter and millisecond timer
+   * (which may be small values) are added to help
+   * randomize the lower 16 bits of the seed.
+   */
+  readClk();
+  avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
+           + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
 #else
-    avRandomSeed += sys_jiffies(); /* XXX */
+  avRandomSeed += sys_jiffies(); /* XXX */
 #endif
-        
-    /* Initialize the Borland random number generator. */
-    srand((unsigned)avRandomSeed);
+
+  /* Initialize the Borland random number generator. */
+  srand((unsigned)avRandomSeed);
 }
 
 /*
@@ -209,19 +212,20 @@ void avRandomInit()
  * value but we use the previous value to randomize the other 16
  * bits.
  */
-void avRandomize(void)
+void
+avRandomize(void)
 {
-    static u32_t last_jiffies;
+  static u32_t last_jiffies;
 
-    if (!avRandomized) {
-        avRandomized = !0;
-        avRandomInit();
-        /* The initialization function also updates the seed. */
-    } else {
-/*        avRandomSeed += (avRandomSeed << 16) + TM1; */
-    	avRandomSeed += (sys_jiffies() - last_jiffies); /* XXX */
-    }
-    last_jiffies = sys_jiffies();
+  if (!avRandomized) {
+    avRandomized = !0;
+    avRandomInit();
+    /* The initialization function also updates the seed. */
+  } else {
+    /* avRandomSeed += (avRandomSeed << 16) + TM1; */
+    avRandomSeed += (sys_jiffies() - last_jiffies); /* XXX */
+  }
+  last_jiffies = sys_jiffies();
 }
 
 /*
@@ -233,9 +237,10 @@ void avRandomize(void)
  * operator or network events in which case it will be pseudo random
  * seeded by the real time clock.
  */
-u32_t avRandom()
+u32_t
+avRandom()
 {
-    return ((((u32_t)rand() << 16) + rand()) + avRandomSeed);
+  return ((((u32_t)rand() << 16) + rand()) + avRandomSeed);
 }
 
 #endif /* MD5_SUPPORT */
