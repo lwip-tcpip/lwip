@@ -80,6 +80,9 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
 
     if (conn->err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
+      LWIP_ASSERT("conn has no mbox", conn->mbox != SYS_MBOX_NULL);
+      LWIP_ASSERT("conn has no recvmbox", conn->recvmbox != SYS_MBOX_NULL);
+      LWIP_ASSERT("conn->acceptmbox shouldn't exist", conn->acceptmbox != SYS_MBOX_NULL);
       sys_mbox_free(conn->mbox);
       sys_mbox_free(conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
@@ -116,8 +119,9 @@ netconn_delete(struct netconn *conn)
   if (conn->recvmbox != SYS_MBOX_NULL) {
     while (sys_mbox_tryfetch(conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
       if (conn->type == NETCONN_TCP) {
-        if(mem != NULL)
+        if(mem != NULL) {
           pbuf_free((struct pbuf *)mem);
+        }
       } else {
         netbuf_delete((struct netbuf *)mem);
       }
@@ -202,12 +206,6 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
 
   LWIP_ERROR("netconn_bind: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  if (conn->type != NETCONN_TCP && conn->recvmbox == SYS_MBOX_NULL) {
-    if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-      return ERR_MEM;
-    }
-  }
-
   msg.function = do_bind;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
@@ -230,12 +228,6 @@ netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
   struct api_msg msg;
 
   LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
-
-  if (conn->recvmbox == SYS_MBOX_NULL) {
-    if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-      return ERR_MEM;
-    }
-  }
 
   msg.function = do_connect;
   msg.msg.conn = conn;
@@ -330,12 +322,10 @@ netconn_recv(struct netconn *conn)
   LWIP_ERROR("netconn_recv: invalid conn",  (conn != NULL), return NULL;);
 
   if (conn->recvmbox == SYS_MBOX_NULL) {
-    if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
-      /* @todo: should calling netconn_recv on a TCP listen conn be fatal?? */
-      /* TCP listen conn don't have a recvmbox! */
-      conn->err = ERR_CONN;
-      return NULL;
-    }
+    /* @todo: should calling netconn_recv on a TCP listen conn be fatal (ERR_CONN)?? */
+    /* TCP listen conns don't have a recvmbox! */
+    conn->err = ERR_CONN;
+    return NULL;
   }
 
   if (ERR_IS_FATAL(conn->err)) {

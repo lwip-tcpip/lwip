@@ -508,6 +508,13 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-12-02 Simon Goldschmidt
+  * api_msg.c, api_lib.c: fix bug #21656 (recvmbox problem in netconn API): always
+    allocate a recvmbox in netconn_new_with_proto_and_callback. For a tcp-listen
+    netconn, this recvmbox is later freed and a new mbox is allocated for acceptmbox.
+    This is a fix for thread-safety and allocates all items needed for a netconn
+    when the netconn is created.
+
   2007-11-30 Simon Goldschmidt
   * udp.c: first attempt to fix bug #21655 (DHCP doesn't work reliably with multiple
     netifs): if LWIP_DHCP is enabled, UDP packets to DHCP_CLIENT_PORT are passed

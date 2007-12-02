@@ -713,6 +713,12 @@ do_listen(struct api_msg_msg *msg)
           if (lpcb == NULL) {
             msg->conn->err = ERR_MEM;
           } else {
+            /* delete the recvmbox and allocate the acceptmbox */
+            if (msg->conn->recvmbox != SYS_MBOX_NULL) {
+              /* @todo: should we drain the recvmbox here? */
+              sys_mbox_free(msg->conn->recvmbox);
+              msg->conn->recvmbox = NULL;
+            }
             if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
               if ((msg->conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
                 msg->conn->err = ERR_MEM;
