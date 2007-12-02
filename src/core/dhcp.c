@@ -1225,33 +1225,25 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   /* TODO: check packet length before reading them */
   if (reply_msg->op != DHCP_BOOTREPLY) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 1, ("not a DHCP reply message, but type %"U16_F"\n", (u16_t)reply_msg->op));
-    pbuf_free(p);
-    dhcp->p = NULL;
-    return;
+    goto free_pbuf_and_return;
   }
   /* iterate through hardware address and match against DHCP message */
   for (i = 0; i < netif->hwaddr_len; i++) {
     if (netif->hwaddr[i] != reply_msg->chaddr[i]) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("netif->hwaddr[%"U16_F"]==%02"X16_F" != reply_msg->chaddr[%"U16_F"]==%02"X16_F"\n",
         (u16_t)i, (u16_t)netif->hwaddr[i], (u16_t)i, (u16_t)reply_msg->chaddr[i]));
-      pbuf_free(p);
-      dhcp->p = NULL;
-      return;
+      goto free_pbuf_and_return;
     }
   }
   /* match transaction ID against what we expected */
   if (ntohl(reply_msg->xid) != dhcp->xid) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("transaction id mismatch reply_msg->xid(%"X32_F")!=dhcp->xid(%"X32_F")\n",ntohl(reply_msg->xid),dhcp->xid));
-    pbuf_free(p);
-    dhcp->p = NULL;
-    return;
+    goto free_pbuf_and_return;
   }
   /* option fields could be unfold? */
   if (dhcp_unfold_reply(dhcp) != ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("problem unfolding DHCP message - too short on memory?\n"));
-    pbuf_free(p);
-    dhcp->p = NULL;
-    return;
+    goto free_pbuf_and_return;
   }
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("searching DHCP_OPTION_MESSAGE_TYPE\n"));
@@ -1259,9 +1251,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   options_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_MESSAGE_TYPE);
   if (options_ptr == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 1, ("DHCP_OPTION_MESSAGE_TYPE option not found\n"));
-    pbuf_free(p);
-    dhcp->p = NULL;
-    return;
+    goto free_pbuf_and_return;
   }
 
   /* read DHCP message type */
@@ -1302,6 +1292,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     /* remember offered lease */
     dhcp_handle_offer(netif);
   }
+free_pbuf_and_return:
   pbuf_free(p);
   dhcp->p = NULL;
 }
