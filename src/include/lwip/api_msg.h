@@ -40,6 +40,7 @@
 #include "lwip/err.h"
 #include "lwip/sys.h"
 #include "lwip/igmp.h"
+#include "lwip/api.h"
 
 #ifdef __cplusplus
 extern "C" {
