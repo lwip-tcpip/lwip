@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-*	Original based on BSD code.
+* Original based on BSD code.
 *****************************************************************************/
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
@@ -48,7 +48,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.2 2007/11/29 22:19:57 fbernon Exp $
+ * $Id: fsm.h,v 1.3 2007/12/02 23:24:59 fbernon Exp $
  */
 
 #ifndef FSM_H
@@ -60,41 +60,40 @@
 /*
  * LCP Packet header = Code, id, length.
  */
-#define HEADERLEN	(sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
+#define HEADERLEN (sizeof (u_char) + sizeof (u_char) + sizeof (u_short))
 
 
 /*
  *  CP (LCP, IPCP, etc.) codes.
  */
-#define CONFREQ		1		/* Configuration Request */
-#define CONFACK		2		/* Configuration Ack */
-#define CONFNAK		3		/* Configuration Nak */
-#define CONFREJ		4		/* Configuration Reject */
-#define TERMREQ		5		/* Termination Request */
-#define TERMACK		6		/* Termination Ack */
-#define CODEREJ		7		/* Code Reject */
+#define CONFREQ     1 /* Configuration Request */
+#define CONFACK     2 /* Configuration Ack */
+#define CONFNAK     3 /* Configuration Nak */
+#define CONFREJ     4 /* Configuration Reject */
+#define TERMREQ     5 /* Termination Request */
+#define TERMACK     6 /* Termination Ack */
+#define CODEREJ     7 /* Code Reject */
 
 /*
  * Link states.
  */
-#define LS_INITIAL		0		/* Down, hasn't been opened */
-#define LS_STARTING 	1		/* Down, been opened */
-#define LS_CLOSED		2		/* Up, hasn't been opened */
-#define LS_STOPPED		3		/* Open, waiting for down event */
-#define LS_CLOSING		4		/* Terminating the connection, not open */
-#define LS_STOPPING 	5		/* Terminating, but open */
-#define LS_REQSENT		6		/* We've sent a Config Request */
-#define LS_ACKRCVD		7		/* We've received a Config Ack */
-#define LS_ACKSENT		8		/* We've sent a Config Ack */
-#define LS_OPENED		9		/* Connection available */
-
+#define LS_INITIAL  0 /* Down, hasn't been opened */
+#define LS_STARTING 1 /* Down, been opened */
+#define LS_CLOSED   2 /* Up, hasn't been opened */
+#define LS_STOPPED  3 /* Open, waiting for down event */
+#define LS_CLOSING  4 /* Terminating the connection, not open */
+#define LS_STOPPING 5 /* Terminating, but open */
+#define LS_REQSENT  6 /* We've sent a Config Request */
+#define LS_ACKRCVD  7 /* We've received a Config Ack */
+#define LS_ACKSENT  8 /* We've sent a Config Ack */
+#define LS_OPENED   9 /* Connection available */
 
 /*
  * Flags - indicate options controlling FSM operation
  */
-#define OPT_PASSIVE	1		/* Don't die if we don't get a response */
-#define OPT_RESTART	2		/* Treat 2nd OPEN as DOWN, UP */
-#define OPT_SILENT	4		/* Wait for peer to speak first */
+#define OPT_PASSIVE 1 /* Don't die if we don't get a response */
+#define OPT_RESTART 2 /* Treat 2nd OPEN as DOWN, UP */
+#define OPT_SILENT  4 /* Wait for peer to speak first */
 
 
 /*****************************************************************************
@@ -104,55 +103,41 @@
  * Each FSM is described by an fsm structure and fsm callbacks.
  */
 typedef struct fsm {
-    int unit;				/* Interface unit number */
-    u_short protocol;		/* Data Link Layer Protocol field value */
-    int state;				/* State */
-    int flags;				/* Contains option bits */
-    u_char id;				/* Current id */
-    u_char reqid;			/* Current request id */
-    u_char seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
-    int timeouttime;		/* Timeout time in milliseconds */
-    int maxconfreqtransmits;/* Maximum Configure-Request transmissions */
-    int retransmits;		/* Number of retransmissions left */
-    int maxtermtransmits;	/* Maximum Terminate-Request transmissions */
-    int nakloops;			/* Number of nak loops since last ack */
-    int maxnakloops;		/* Maximum number of nak loops tolerated */
-    struct fsm_callbacks* callbacks;/* Callback routines */
-    char* term_reason;		/* Reason for closing protocol */
-    int term_reason_len;	/* Length of term_reason */
+  int unit;                        /* Interface unit number */
+  u_short protocol;                /* Data Link Layer Protocol field value */
+  int state;                       /* State */
+  int flags;                       /* Contains option bits */
+  u_char id;                       /* Current id */
+  u_char reqid;                    /* Current request id */
+  u_char seen_ack;                 /* Have received valid Ack/Nak/Rej to Req */
+  int timeouttime;                 /* Timeout time in milliseconds */
+  int maxconfreqtransmits;         /* Maximum Configure-Request transmissions */
+  int retransmits;                 /* Number of retransmissions left */
+  int maxtermtransmits;            /* Maximum Terminate-Request transmissions */
+  int nakloops;                    /* Number of nak loops since last ack */
+  int maxnakloops;                 /* Maximum number of nak loops tolerated */
+  struct fsm_callbacks* callbacks; /* Callback routines */
+  char* term_reason;               /* Reason for closing protocol */
+  int term_reason_len;             /* Length of term_reason */
 } fsm;
 
 
 typedef struct fsm_callbacks {
-    void (*resetci)			/* Reset our Configuration Information */
-		(fsm*);
-    int  (*cilen)			/* Length of our Configuration Information */
-		(fsm*);
-    void (*addci) 			/* Add our Configuration Information */
-		(fsm*, u_char*, int*);
-    int  (*ackci)			/* ACK our Configuration Information */
-		(fsm*, u_char*, int);
-    int  (*nakci)			/* NAK our Configuration Information */
-		(fsm*, u_char*, int);
-    int  (*rejci)			/* Reject our Configuration Information */
-		(fsm*, u_char*, int);
-    int  (*reqci)			/* Request peer's Configuration Information */
-		(fsm*, u_char*, int*, int);
-    void (*up)				/* Called when fsm reaches LS_OPENED state */
-		(fsm*);
-    void (*down)			/* Called when fsm leaves LS_OPENED state */
-		(fsm*);
-    void (*starting)		/* Called when we want the lower layer */
-		(fsm*);
-    void (*finished)		/* Called when we don't want the lower layer */
-		(fsm*);
-    void (*protreject)		/* Called when Protocol-Reject received */
-		(int);
-    void (*retransmit)		/* Retransmission is necessary */
-		(fsm*);
-    int  (*extcode)			/* Called when unknown code received */
-		(fsm*, int, u_char, u_char*, int);
-    char *proto_name;		/* String name for protocol (for messages) */
+  void (*resetci)(fsm*);                            /* Reset our Configuration Information */
+  int  (*cilen)(fsm*);                              /* Length of our Configuration Information */
+  void (*addci)(fsm*, u_char*, int*);               /* Add our Configuration Information */
+  int  (*ackci)(fsm*, u_char*, int);                /* ACK our Configuration Information */
+  int  (*nakci)(fsm*, u_char*, int);                /* NAK our Configuration Information */
+  int  (*rejci)(fsm*, u_char*, int);                /* Reject our Configuration Information */
+  int  (*reqci)(fsm*, u_char*, int*, int);          /* Request peer's Configuration Information */
+  void (*up)(fsm*);                                 /* Called when fsm reaches LS_OPENED state */
+  void (*down)(fsm*);                               /* Called when fsm leaves LS_OPENED state */
+  void (*starting)(fsm*);                           /* Called when we want the lower layer */
+  void (*finished)(fsm*);                           /* Called when we don't want the lower layer */
+  void (*protreject)(int);                          /* Called when Protocol-Reject received */
+  void (*retransmit)(fsm*);                         /* Retransmission is necessary */
+  int  (*extcode)(fsm*, int, u_char, u_char*, int); /* Called when unknown code received */
+  char *proto_name;                                 /* String name for protocol (for messages) */
 } fsm_callbacks;
 
 
@@ -162,7 +147,7 @@ typedef struct fsm_callbacks {
 /*
  * Variables
  */
-extern int peer_mru[];		/* currently negotiated peer MRU (per unit) */
+extern int peer_mru[]; /* currently negotiated peer MRU (per unit) */
 
 
 /*****************************************************************************
