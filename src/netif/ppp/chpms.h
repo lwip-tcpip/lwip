@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 98-01-30 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-*	Original built from BSD network code.
+* Original built from BSD network code.
 ******************************************************************************/
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
@@ -51,13 +51,13 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chpms.h,v 1.3 2004/02/07 00:30:03 likewise Exp $
+ * $Id: chpms.h,v 1.4 2007/12/02 22:56:19 fbernon Exp $
  */
 
 #ifndef CHPMS_H
 #define CHPMS_H
 
-#define MAX_NT_PASSWORD	256	/* Maximum number of (Unicode) chars in an NT password */
+#define MAX_NT_PASSWORD 256 /* Maximum number of (Unicode) chars in an NT password */
 
 void ChapMS (chap_state *, char *, int, char *, int);
 
