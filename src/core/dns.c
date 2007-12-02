@@ -803,6 +803,13 @@ DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_fou
     return DNS_QUERY_INVALID;
   }
 
+#if LWIP_HAVE_LOOPIF
+  if (strcmp(hostname,"localhost")==0) {
+    addr->addr = INADDR_LOOPBACK;
+    return DNS_COMPLETE;
+  }
+#endif /* LWIP_HAVE_LOOPIF */
+
   /* host name already in octet notation? set ip addr and return COMPLETE
    * already have this address cached? */
   if (((addr->addr = inet_addr(hostname)) != INADDR_NONE) ||
