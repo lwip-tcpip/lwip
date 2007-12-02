@@ -509,6 +509,11 @@ HISTORY
   ++ Bug fixes:
 
   2007-12-02 Simon Goldschmidt
+  * sockets.h: fix bug #21654: exclude definition of struct timeval from #ifndef FD_SET
+    If including <sys/time.h> for system-struct timeval, LWIP_TIMEVAL_PRIVATE now
+    has to be set to 0 in lwipopts.h
+
+  2007-12-02 Simon Goldschmidt
   * api_msg.c, api_lib.c: fix bug #21656 (recvmbox problem in netconn API): always
     allocate a recvmbox in netconn_new_with_proto_and_callback. For a tcp-listen
     netconn, this recvmbox is later freed and a new mbox is allocated for acceptmbox.

@@ -261,22 +261,20 @@ typedef struct ip_mreq {
           unsigned char fd_bits [(FD_SETSIZE+7)/8];
         } fd_set;
 
-/* 
- * only define this in sockets.c so it does not interfere
- * with other projects namespaces where timeval is present
- */ 
+#endif /* FD_SET */
+
+/** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
+ * by your system, set this to 0 and include <sys/time.h> in cc.h */ 
 #ifndef LWIP_TIMEVAL_PRIVATE
 #define LWIP_TIMEVAL_PRIVATE 1
 #endif
 
 #if LWIP_TIMEVAL_PRIVATE
-  struct timeval {
-    long    tv_sec;         /* seconds */
-    long    tv_usec;        /* and microseconds */
-  };
+struct timeval {
+  long    tv_sec;         /* seconds */
+  long    tv_usec;        /* and microseconds */
+};
 #endif /* LWIP_TIMEVAL_PRIVATE */
-
-#endif /* FD_SET */
 
 void lwip_socket_init(void);
 
