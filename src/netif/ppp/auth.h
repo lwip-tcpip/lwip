@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-04 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-*	Original derived from BSD pppd.h.
+* Original derived from BSD pppd.h.
 *****************************************************************************/
 /*
  * pppd.h - PPP daemon global declarations.
@@ -56,14 +56,30 @@
 /***********************
 *** PUBLIC FUNCTIONS ***
 ***********************/
-void link_required (int);		/* we are starting to use the link */
-void link_terminated (int);	/* we are finished with the link */
-void link_down (int);			/* the LCP layer has left the Opened state */
-void link_established (int);	/* the link is up; authenticate now */
-void np_up (int, u16_t);			/* a network protocol has come up */
-void np_down (int, u16_t);		/* a network protocol has gone down */
-void np_finished (int, u16_t);	/* a network protocol no longer needs link */
-void auth_peer_fail (int, u16_t);/* peer failed to authenticate itself */
+
+/* we are starting to use the link */
+void link_required (int);
+
+/* we are finished with the link */
+void link_terminated (int);
+
+/* the LCP layer has left the Opened state */
+void link_down (int);
+
+/* the link is up; authenticate now */
+void link_established (int);
+
+/* a network protocol has come up */
+void np_up (int, u16_t);
+
+/* a network protocol has gone down */
+void np_down (int, u16_t);
+
+/* a network protocol no longer needs link */
+void np_finished (int, u16_t);
+
+/* peer failed to authenticate itself */
+void auth_peer_fail (int, u16_t);
 
 /* peer successfully authenticated itself */
 void auth_peer_success (int, u16_t, char *, int);
@@ -76,7 +92,9 @@ void auth_withpeer_success (int, u16_t);
 
 /* check authentication options supplied */
 void auth_check_options (void);
-void auth_reset (int);			/* check what secrets we have */
+
+/* check what secrets we have */
+void auth_reset (int);
 
 /* Check peer-supplied username/password */
 int  check_passwd (int, char *, int, char *, int, char **, int *);

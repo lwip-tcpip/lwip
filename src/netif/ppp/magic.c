@@ -53,7 +53,6 @@
 #include "randm.h"
 #include "magic.h"
 
-
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
@@ -65,7 +64,7 @@
  */
 void magicInit()
 {
-	return;
+  return;
 }
 
 /*
@@ -73,7 +72,5 @@ void magicInit()
  */
 u32_t magic()
 {
-    return avRandom();
+  return avRandom();
 }
-
-
