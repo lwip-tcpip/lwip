@@ -239,7 +239,12 @@ ip_input(struct pbuf *p, struct netif *inp)
   } else
 #endif /* LWIP_IGMP */
   {
-    for (netif = netif_list; netif != NULL; netif = netif->next) {
+    /* start trying with inp. if that's not acceptable, start walking the
+       list of configured netifs.
+       'first' is used as a boolean to mark whether we started walking the list */
+    int first = 1;
+    netif = inp;
+    do {
       LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
           iphdr->dest.addr, netif->ip_addr.addr,
           iphdr->dest.addr & netif->netmask.addr,
@@ -258,7 +263,16 @@ ip_input(struct pbuf *p, struct netif *inp)
           break;
         }
       }
-    }
+      if (first) {
+        first = 0;
+        netif = netif_list;
+      } else {
+        netif = netif->next;
+      }
+      if (netif == inp) {
+        netif = netif->next;
+      }
+    } while(netif != NULL);
   }
 
 #if LWIP_DHCP

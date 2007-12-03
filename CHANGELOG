@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-12-03 Simon Goldschmidt
+  * ip.c: ip_input: check if a packet is for inp first before checking all other
+    netifs on netif_list (speeds up packet receiving in most cases)
+
   2007-11-30 Simon Goldschmidt
   * udp.c, raw.c: task #7497: Sort lists (pcb, netif, ...) for faster access
     UDP: move a (connected) pcb selected for input to the front of the list of
