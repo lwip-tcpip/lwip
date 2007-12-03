@@ -357,7 +357,7 @@ auth_peer_success(int unit, u16_t protocol, char *name, int namelen)
    */
   if (namelen > sizeof(peer_authname) - 1) {
     namelen = sizeof(peer_authname) - 1;
-   }
+  }
   BCOPY(name, peer_authname, namelen);
   peer_authname[namelen] = 0;
   

@@ -153,7 +153,7 @@ callback function.
 
 - void tcp_sent(struct tcp_pcb *pcb,
                 err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
-		               u16_t len))
+                u16_t len))
 
   Specifies the callback function that should be called when data has
   successfully been received (i.e., acknowledged) by the remote
@@ -227,7 +227,7 @@ connection are when there is a shortage of memory. The callback
 function to be called is set using the tcp_err() function.
 
 - void tcp_err(struct tcp_pcb *pcb, void (* err)(void *arg,
-	       err_t err))
+       err_t err))
 
   The error callback function does not get the pcb passed to it as a
   parameter since the pcb may already have been deallocated.
