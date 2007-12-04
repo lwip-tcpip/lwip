@@ -512,6 +512,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-12-04 Simon Goldschmidt
+  * tcp.c, tcp_in.c: fix bug #21699 (segment leak in ooseq processing when last
+    data packet was lost): add assert that all segment lists are empty in
+    tcp_pcb_remove before setting pcb to CLOSED state; don't directly set CLOSED
+    state from LAST_ACK in tcp_process
+
   2007-12-02 Simon Goldschmidt
   * sockets.h: fix bug #21654: exclude definition of struct timeval from #ifndef FD_SET
     If including <sys/time.h> for system-struct timeval, LWIP_TIMEVAL_PRIVATE now
