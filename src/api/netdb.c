@@ -54,11 +54,18 @@ struct gethostbyname_r_helper {
 int h_errno;
 #endif /* LWIP_DNS_API_DECLARE_H_ERRNO */
 
-/* static buffer variables for lwip_gethostbyname() */
-static struct hostent s_hostent;
-static char *s_aliases;
-static struct ip_addr s_hostent_addr;
-static struct ip_addr *s_phostent_addr;
+/** define "hostent" variables storage: 0 if we use a static (but unprotected)
+ * set of variables for lwip_gethostbyname, 1 if we use a local storage */
+#ifndef LWIP_DNS_API_HOSTENT_STORAGE
+#define LWIP_DNS_API_HOSTENT_STORAGE 0
+#endif
+
+/** define "hostent" variables storage */
+#if LWIP_DNS_API_HOSTENT_STORAGE
+#define HOSTENT_STORAGE
+#else
+#define HOSTENT_STORAGE static
+#endif /* LWIP_DNS_API_STATIC_HOSTENT */
 
 /**
  * Returns an entry containing addresses of address family AF_INET
@@ -74,6 +81,12 @@ lwip_gethostbyname(const char *name)
 {
   err_t err;
   struct ip_addr addr;
+
+  /* buffer variables for lwip_gethostbyname() */
+  HOSTENT_STORAGE struct hostent s_hostent;
+  HOSTENT_STORAGE char *s_aliases;
+  HOSTENT_STORAGE struct ip_addr s_hostent_addr;
+  HOSTENT_STORAGE struct ip_addr *s_phostent_addr;
 
   /* query host IP address */
   err = netconn_gethostbyname(name, &addr);
@@ -115,7 +128,12 @@ lwip_gethostbyname(const char *name)
   }
 #endif /* DNS_DEBUG */
 
+#if LWIP_DNS_API_HOSTENT_STORAGE
+  /* this function should return the "per-thread" hostent after copy from s_hostent */
+  return sys_thread_hostent(&s_hostent);
+#else
   return &s_hostent;
+#endif /* LWIP_DNS_API_HOSTENT_STORAGE */
 }
 
 /**

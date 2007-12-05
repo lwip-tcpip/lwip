@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-12-05 Frédéric Bernon
+  * netdb.c: add a LWIP_DNS_API_HOSTENT_STORAGE option to decide to use a static
+    set of variables (=0) or a local one (=1). In this last case, your port should
+    provide a function "struct hostent* sys_thread_hostent( struct hostent* h)"
+    which have to do a copy of "h" and return a pointer ont the "per-thread" copy.
+
   2007-12-03 Simon Goldschmidt
   * ip.c: ip_input: check if a packet is for inp first before checking all other
     netifs on netif_list (speeds up packet receiving in most cases)
