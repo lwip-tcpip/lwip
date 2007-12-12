@@ -559,6 +559,32 @@
 #define LWIP_DNS                        0
 #endif
 
+/** DNS maximum number of entries to maintain locally. */
+#ifndef DNS_TABLE_SIZE
+#define DNS_TABLE_SIZE                  4
+#endif
+
+/** DNS maximum host name length supported in the name table. */
+#ifndef DNS_MAX_NAME_LENGTH
+#define DNS_MAX_NAME_LENGTH             256
+#endif
+
+/** The maximum of DNS servers */
+#ifndef DNS_MAX_SERVERS
+#define DNS_MAX_SERVERS                 2
+#endif
+
+/** DNS do a name checking between the query and the response. */
+#ifndef DNS_DOES_NAME_CHECK
+#define DNS_DOES_NAME_CHECK             1
+#endif
+
+/** DNS use a local buffer if DNS_USES_STATIC_BUF=0, a static one if
+    DNS_USES_STATIC_BUF=1, or a dynamic one if DNS_USES_STATIC_BUF=2. */
+#ifndef DNS_USES_STATIC_BUF
+#define DNS_USES_STATIC_BUF             1
+#endif
+
 /*
    ---------------------------------
    ---------- UDP options ----------

@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-12-12 Frédéric Bernon
+  * dns.h, dns.c, opt.h: move DNS options to the "right" place. Most visibles
+    are the one which have ram usage.
+
   2007-12-05 Frédéric Bernon
   * netdb.c: add a LWIP_DNS_API_HOSTENT_STORAGE option to decide to use a static
     set of variables (=0) or a local one (=1). In this last case, your port should

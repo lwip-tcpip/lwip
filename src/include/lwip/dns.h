@@ -38,21 +38,8 @@
 
 #if LWIP_DNS /* don't build if not configured for use in lwipopts.h */
 
-/** The maximum of DNS servers */
-#ifndef DNS_MAX_SERVERS
-#define DNS_MAX_SERVERS           2
-#endif
-
-/** DNS resource record max. TTL (one week as default) */
-#ifndef DNS_MAX_TTL
-#define DNS_MAX_TTL               604800
-#endif
-
 /** DNS timer period */
 #define DNS_TMR_INTERVAL          1000
-
-/** DNS message max. size */
-#define DNS_MSG_SIZE              512
 
 /** DNS field TYPE used for "Resource Records" */
 #define DNS_RRTYPE_A              1     /* a host address */

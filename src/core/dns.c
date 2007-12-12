@@ -92,31 +92,18 @@
 #define DNS_SERVER_PORT           53
 #endif
 
-/* DNS maximum number of entries to maintain locally. */
-#ifndef DNS_TABLE_SIZE
-#define DNS_TABLE_SIZE            4
-#endif
-
-/** DNS maximum host name length supported in the name table. */
-#ifndef DNS_MAX_NAME_LENGTH
-#define DNS_MAX_NAME_LENGTH       256
-#endif
-
 /** DNS maximum number of retries when asking for a name, before "timeout". */
 #ifndef DNS_MAX_RETRIES
 #define DNS_MAX_RETRIES           4
 #endif
 
-/** DNS do a name checking between the query and the response. */
-#ifndef DNS_DOES_NAME_CHECK
-#define DNS_DOES_NAME_CHECK       1
+/** DNS resource record max. TTL (one week as default) */
+#ifndef DNS_MAX_TTL
+#define DNS_MAX_TTL               604800
 #endif
 
-/** DNS use a local buffer if DNS_USES_STATIC_BUF=0, a static one if
-    DNS_USES_STATIC_BUF=1, or a dynamic one if DNS_USES_STATIC_BUF=2. */
-#ifndef DNS_USES_STATIC_BUF
-#define DNS_USES_STATIC_BUF       1
-#endif
+/** DNS message max. size */
+#define DNS_MSG_SIZE              512
 
 /* DNS protocol flags */
 #define DNS_FLAG1_RESPONSE        0x80
