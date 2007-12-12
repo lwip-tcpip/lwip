@@ -102,9 +102,6 @@
 #define DNS_MAX_TTL               604800
 #endif
 
-/** DNS message max. size */
-#define DNS_MSG_SIZE              512
-
 /* DNS protocol flags */
 #define DNS_FLAG1_RESPONSE        0x80
 #define DNS_FLAG1_OPCODE_STATUS   0x10
