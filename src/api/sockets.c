@@ -124,20 +124,21 @@ static sys_sem_t selectsem;
 /** Table to quickly map an lwIP error (err_t) to a socket error
   * by using -err as an index */
 static const int err_to_errno_table[] = {
-  0,             /* ERR_OK       0      No error, everything OK. */
-  ENOMEM,        /* ERR_MEM     -1      Out of memory error.     */
-  ENOBUFS,       /* ERR_BUF     -2      Buffer error.            */
-  EHOSTUNREACH,  /* ERR_RTE     -3      Routing problem.         */
-  ECONNABORTED,  /* ERR_ABRT    -4      Connection aborted.      */
-  ECONNRESET,    /* ERR_RST     -5      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD    -6      Connection closed.       */
-  ENOTCONN,      /* ERR_CONN    -7      Not connected.           */
-  EINVAL,        /* ERR_VAL     -8      Illegal value.           */
-  EIO,           /* ERR_ARG     -9      Illegal argument.        */
-  EADDRINUSE,    /* ERR_USE     -10     Address in use.          */
-  -1,            /* ERR_IF      -11     Low-level netif error    */
-  -1,            /* ERR_ISCONN  -12     Already connected.       */
-  ETIMEDOUT      /* ERR_TIMEOUT -13     Timeout                  */
+  0,             /* ERR_OK          0      No error, everything OK. */
+  ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
+  ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
+  EHOSTUNREACH,  /* ERR_RTE        -3      Routing problem.         */
+  ECONNABORTED,  /* ERR_ABRT       -4      Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -5      Connection reset.        */
+  ESHUTDOWN,     /* ERR_CLSD       -6      Connection closed.       */
+  ENOTCONN,      /* ERR_CONN       -7      Not connected.           */
+  EINVAL,        /* ERR_VAL        -8      Illegal value.           */
+  EIO,           /* ERR_ARG        -9      Illegal argument.        */
+  EADDRINUSE,    /* ERR_USE        -10     Address in use.          */
+  -1,            /* ERR_IF         -11     Low-level netif error    */
+  -1,            /* ERR_ISCONN     -12     Already connected.       */
+  ETIMEDOUT,     /* ERR_TIMEOUT    -13     Timeout                  */
+  EINPROGRESS    /* ERR_INPROGRESS -14     Operation in progress    */
 };
 
 #define ERR_TO_ERRNO_TABLE_SIZE \

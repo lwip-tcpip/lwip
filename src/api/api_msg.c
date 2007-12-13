@@ -1063,22 +1063,10 @@ do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
 void
 do_gethostbyname(void *arg)
 {
-  DNS_RESULT res;
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
-  res = dns_gethostbyname(msg->name, msg->addr, do_dns_found, msg);
-  if (res != DNS_QUERY_QUEUED) {
-    /* If not queued, return to app thread directly */
-    if (res == DNS_COMPLETE) {
-      /* name was already in octet notation or cached */
-      *msg->err = ERR_OK;
-    } else if (res == DNS_ERR_MEM) {
-      /* memory allocation error */
-      *msg->err = ERR_MEM;
-    } else {
-      /* some error occurred */
-      *msg->err = ERR_ARG;
-    };
+  *msg->err = dns_gethostbyname(msg->name, msg->addr, do_dns_found, msg);
+  if (*msg->err != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
     sys_sem_signal(msg->sem);

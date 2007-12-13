@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-12-13 Frédéric Bernon
+  * api_msg.c, err.h, err.c, sockets.c, dns.c, dns.h: replace "enum dns_result"
+    by err_t type. Add a new err_t code "ERR_INPROGRESS".
+
   2007-12-12 Frédéric Bernon
   * dns.h, dns.c, opt.h: move DNS options to the "right" place. Most visibles
     are the one which have ram usage.

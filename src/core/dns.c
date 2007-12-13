@@ -51,7 +51,7 @@
  * checks for an IP address string first and converts it if it is valid.
  * gethostbyname() then does a dns_lookup() to see if the name is 
  * already in the table. If so, the IP is returned. If not, a query is 
- * issued and the function returns with a DNS_QUERY_QUEUED status. The app
+ * issued and the function returns with a ERR_INPROGRESS status. The app
  * using the dns client must then go into a waiting state.
  *
  * Once a hostname has been resolved (or found to be non-existent),
@@ -702,9 +702,9 @@ memerr1:
  * @param name the hostname that is to be queried
  * @param found a callback founction to be called on success, failure or timeout
  * @param callback_arg argument to pass to the callback function
- * @return a DNS_RESULT (@see DNS_RESULT, @see enum dns_result)
+ * @return @return a err_t return code.
  */
-static DNS_RESULT
+static err_t
 dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
 {
   u8_t i;
@@ -733,7 +733,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
     if ((lseqi >= DNS_TABLE_SIZE) || (dns_table[lseqi].state != DNS_STATE_DONE)) {
       /* no entry can't be used now, table is full */
       LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS entries table is full\n", name));
-      return DNS_ERR_MEM;
+      return ERR_MEM;
     } else {
       /* use the oldest completed one */
       i = lseqi;
@@ -755,50 +755,51 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
   dns_check_entry(i);
 
   /* dns query is enqueued */
-  return DNS_QUERY_QUEUED;
+  return ERR_INPROGRESS;
 }
 
 /**
  * Resolve a hostname (string) into an IP address.
  * NON-BLOCKING callback version for use with raw API!!!
  *
- * Returns immediately with one of DNS_RESULT return codes:
- * - DNS_COMPLETE if hostname is a valid IP address string or the host
+ * Returns immediately with one of err_t return codes:
+ * - ERR_OK if hostname is a valid IP address string or the host
  *   name is already in the local names table.
- * - DNS_REQUEST_QUEUED and queues a request to be sent to the DNS server
+ * - ERR_INPROGRESS enqueue a request to be sent to the DNS server
  *   for resolution if no errors are present.
  *
  * @param hostname the hostname that is to be queried
  * @param addr pointer to a struct ip_addr where to store the address if it is already
- *             cached in the dns_table (only valid if DNS_COMPLETE is returned!)
- * @param found a callback founction to be called on success, failure or timeout (only if
- *              DNS_QUERY_QUEUED is returned!)
+ *             cached in the dns_table (only valid if ERR_OK is returned!)
+ * @param found a callback function to be called on success, failure or timeout (only if
+ *              ERR_INPROGRESS is returned!)
  * @param callback_arg argument to pass to the callback function
- * @return a DNS_RESULT (@see DNS_RESULT, @see enum dns_result)
+ * @return a err_t return code.
  */
-DNS_RESULT dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback found,
-                             void *callback_arg)
+err_t
+dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback found,
+                  void *callback_arg)
 {
   /* not initialized or no valid server yet, or invalid addr pointer
    * or invalid hostname or invalid hostname length */
   if ((dns_pcb == NULL) || (addr == NULL) ||
       (!hostname) || (!hostname[0]) ||
       (strlen(hostname) >= DNS_MAX_NAME_LENGTH)) {
-    return DNS_QUERY_INVALID;
+    return ERR_VAL;
   }
 
 #if LWIP_HAVE_LOOPIF
   if (strcmp(hostname,"localhost")==0) {
     addr->addr = INADDR_LOOPBACK;
-    return DNS_COMPLETE;
+    return ERR_OK;
   }
 #endif /* LWIP_HAVE_LOOPIF */
 
-  /* host name already in octet notation? set ip addr and return COMPLETE
+  /* host name already in octet notation? set ip addr and return ERR_OK
    * already have this address cached? */
   if (((addr->addr = inet_addr(hostname)) != INADDR_NONE) ||
       ((addr->addr = dns_lookup(hostname)) != 0)) {
-    return DNS_COMPLETE;
+    return ERR_OK;
   }
 
   /* queue query with specified callback */

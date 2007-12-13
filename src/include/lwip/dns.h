@@ -66,21 +66,6 @@
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
-/** enumerated list of possible result values returned by dns_gethostname() */
-typedef enum dns_result {
-  /** dns_table is filled with queries, try again later */
-  DNS_ERR_MEM,
-  /** invalid hostname, hostname too long,
-   * invalid arguments or dns module not initialized */
-  DNS_QUERY_INVALID,
-  /** the hostname was enqueued for query,
-   * found callback will be called when resolved */
-  DNS_QUERY_QUEUED,
-  /** the hostname was found in the cache and was directly returned,
-   * found callback will not be called */
-  DNS_COMPLETE
-} DNS_RESULT;
-
 /** Callback which is invoked when a hostname is found.
  * A function of this type must be implemented by the application using the DNS resolver.
  * @param name pointer to the name that was looked up.
@@ -99,8 +84,8 @@ void           dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
 
 struct ip_addr dns_getserver(u8_t numdns);
 
-DNS_RESULT     dns_gethostbyname(const char *hostname, struct ip_addr *addr,
-                             dns_found_callback found, void *callback_arg);
+err_t          dns_gethostbyname(const char *hostname, struct ip_addr *addr,
+                                 dns_found_callback found, void *callback_arg);
 
 #endif /* LWIP_DNS */
 
