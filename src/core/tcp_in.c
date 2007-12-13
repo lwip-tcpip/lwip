@@ -1011,11 +1011,24 @@ tcp_receive(struct tcp_pcb *pcb)
            and pass the data to the application. */
 #if TCP_QUEUE_OOSEQ
         if (pcb->ooseq != NULL &&
-            TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
-          /* We have to trim the second edge of the incoming
-             segment. */
-          inseg.len = (u16_t)(pcb->ooseq->tcphdr->seqno - seqno);
-          pbuf_realloc(inseg.p, inseg.len);
+                TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
+          if (TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
+            pcb->ooseq = pcb->ooseq;
+          }
+          if (pcb->ooseq->len > 0) {
+            /* We have to trim the second edge of the incoming
+               segment. */
+            inseg.len = (u16_t)(pcb->ooseq->tcphdr->seqno - seqno);
+            pbuf_realloc(inseg.p, inseg.len);
+          } else {
+            /* does the ooseq segment contain only flags that are in inseg also? */
+            if ((TCPH_FLAGS(inseg.tcphdr) & (TCP_FIN|TCP_SYN)) ==
+                (TCPH_FLAGS(pcb->ooseq->tcphdr) & (TCP_FIN|TCP_SYN))) {
+              struct tcp_seg *old_ooseq = pcb->ooseq;
+              pcb->ooseq = pcb->ooseq->next;
+              memp_free(MEMP_TCP_SEG, old_ooseq);
+            }
+          }
         }
 #endif /* TCP_QUEUE_OOSEQ */
 
