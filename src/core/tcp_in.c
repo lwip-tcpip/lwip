@@ -1012,9 +1012,6 @@ tcp_receive(struct tcp_pcb *pcb)
 #if TCP_QUEUE_OOSEQ
         if (pcb->ooseq != NULL &&
                 TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
-          if (TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + inseg.len)) {
-            pcb->ooseq = pcb->ooseq;
-          }
           if (pcb->ooseq->len > 0) {
             /* We have to trim the second edge of the incoming
                segment. */
