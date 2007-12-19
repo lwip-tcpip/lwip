@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-03 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original built from BSD network code.
+*   Original built from BSD network code.
 ******************************************************************************/
 /*
  * chap.h - Challenge Handshake Authentication Protocol definitions.
@@ -62,7 +62,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.h,v 1.3 2007/12/02 22:56:19 fbernon Exp $
+ * $Id: chap.h,v 1.4 2007/12/19 20:47:22 fbernon Exp $
  */
 
 #ifndef CHAP_H

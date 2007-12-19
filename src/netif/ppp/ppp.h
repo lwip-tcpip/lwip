@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-* Original derived from BSD codes.
+*   Original derived from BSD codes.
 *****************************************************************************/
 
 #ifndef PPP_H

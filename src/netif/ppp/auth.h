@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-04 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original derived from BSD pppd.h.
+*   Original derived from BSD pppd.h.
 *****************************************************************************/
 /*
  * pppd.h - PPP daemon global declarations.

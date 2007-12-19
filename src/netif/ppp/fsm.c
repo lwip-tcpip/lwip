@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-01 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original based on BSD fsm.c.
+*   Original based on BSD fsm.c.
 *****************************************************************************/
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.

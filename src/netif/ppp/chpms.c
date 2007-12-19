@@ -29,7 +29,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-08 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original based on BSD chap_ms.c.
+*   Original based on BSD chap_ms.c.
 *****************************************************************************/
 /*
  * chap_ms.c - Microsoft MS-CHAP compatible implementation.

@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 98-05-29 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-* Extracted from avos.
+*   Extracted from avos.
 *****************************************************************************/
 
 #ifndef RANDM_H

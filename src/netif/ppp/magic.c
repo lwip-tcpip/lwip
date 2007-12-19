@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-12-04 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original based on BSD magic.c.
+*   Original based on BSD magic.c.
 *****************************************************************************/
 /*
  * magic.c - PPP Magic Number routines.

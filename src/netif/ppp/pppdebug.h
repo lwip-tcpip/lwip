@@ -29,7 +29,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 98-07-29 Guy Lancaster <lancasterg@acm.org>, Global Election Systems Inc.
-* Original.
+*   Original.
 *
 *****************************************************************************
 */

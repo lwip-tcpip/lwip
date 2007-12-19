@@ -28,7 +28,7 @@
 * 03-01-01 Marc Boucher <marc@mbsi.ca>
 *   Ported to lwIP.
 * 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
-* Original based on BSD code.
+*   Original based on BSD code.
 *****************************************************************************/
 /*
  * fsm.h - {Link, IP} Control Protocol Finite State Machine definitions.
@@ -48,7 +48,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: fsm.h,v 1.3 2007/12/02 23:24:59 fbernon Exp $
+ * $Id: fsm.h,v 1.4 2007/12/19 20:47:23 fbernon Exp $
  */
 
 #ifndef FSM_H
