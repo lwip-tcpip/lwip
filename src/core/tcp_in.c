@@ -539,8 +539,10 @@ tcp_process(struct tcp_pcb *pcb)
          timer, otherwise reset it to start again */
       if(pcb->unacked == NULL)
         pcb->rtime = -1;
-      else
+      else {
         pcb->rtime = 0;
+        pcb->nrtx = 0;
+      }
 
       tcp_seg_free(rseg);
 

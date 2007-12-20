@@ -526,6 +526,9 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-12-20 Kieran Mansley (based on patch from Oleg Tyshev)
+  * tcp_in.c: fix bug# 21535 (nrtx not reset correctly in SYN_SENT stat)e
+
   2007-12-20 Kieran Mansley (based on patch from Per-Henrik Lundbolm)
   * tcp.c, tcp_in.c, tcp_out.c, tcp.h: fix bug #20199 (better handling
     of silly window avoidance and prevent lwIP from shrinking the window)
