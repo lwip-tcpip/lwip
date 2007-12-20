@@ -385,9 +385,14 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   if ((u32_t)pcb->rcv_wnd + len > TCP_WND) {
     pcb->rcv_wnd = TCP_WND;
+    pcb->rcv_ann_wnd = TCP_WND;
   } else {
     pcb->rcv_wnd += len;
+    if (pcb->rcv_wnd >= pcb->mss) {
+      pcb->rcv_ann_wnd = pcb->rcv_wnd;
+    }
   }
+
   if (!(pcb->flags & TF_ACK_DELAY) &&
      !(pcb->flags & TF_ACK_NOW)) {
     /*
@@ -494,6 +499,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->lastack = iss - 1;
   pcb->snd_lbb = iss - 1;
   pcb->rcv_wnd = TCP_WND;
+  pcb->rcv_ann_wnd = TCP_WND;
   pcb->snd_wnd = TCP_WND;
   /* The send MSS is updated when an MSS option is received. */
   pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
@@ -936,6 +942,7 @@ tcp_alloc(u8_t prio)
     pcb->snd_buf = TCP_SND_BUF;
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
+    pcb->rcv_ann_wnd = TCP_WND;
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
     /* The send MSS is updated when an MSS option is received. */

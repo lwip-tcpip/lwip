@@ -281,7 +281,8 @@ struct tcp_pcb {
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window */
-  
+  u16_t rcv_ann_wnd; /* announced receive window */
+
   /* Timers */
   u32_t tmr;
   u8_t polltmr, pollinterval;

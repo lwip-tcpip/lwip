@@ -460,7 +460,7 @@ tcp_output(struct tcp_pcb *pcb)
     tcphdr->seqno = htonl(pcb->snd_nxt);
     tcphdr->ackno = htonl(pcb->rcv_nxt);
     TCPH_FLAGS_SET(tcphdr, TCP_ACK);
-    tcphdr->wnd = htons(pcb->rcv_wnd);
+    tcphdr->wnd = htons(pcb->rcv_ann_wnd);
     tcphdr->urgp = 0;
     TCPH_HDRLEN_SET(tcphdr, 5);
 
@@ -593,13 +593,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
    wnd fields remain. */
   seg->tcphdr->ackno = htonl(pcb->rcv_nxt);
 
-  /* silly window avoidance */
-  if (pcb->rcv_wnd < pcb->mss) {
-    seg->tcphdr->wnd = 0;
-  } else {
-    /* advertise our receive window size in this TCP segment */
-    seg->tcphdr->wnd = htons(pcb->rcv_wnd);
-  }
+  /* advertise our receive window size in this TCP segment */
+  seg->tcphdr->wnd = htons(pcb->rcv_ann_wnd);
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
@@ -815,15 +810,15 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-   tcphdr = p->payload;
-   tcphdr->src = htons(pcb->local_port);
-   tcphdr->dest = htons(pcb->remote_port);
-   tcphdr->seqno = htonl(pcb->snd_nxt - 1);
-   tcphdr->ackno = htonl(pcb->rcv_nxt);
-   TCPH_FLAGS_SET(tcphdr, 0);
-   tcphdr->wnd = htons(pcb->rcv_wnd);
-   tcphdr->urgp = 0;
-   TCPH_HDRLEN_SET(tcphdr, 5);
+  tcphdr = p->payload;
+  tcphdr->src = htons(pcb->local_port);
+  tcphdr->dest = htons(pcb->remote_port);
+  tcphdr->seqno = htonl(pcb->snd_nxt - 1);
+  tcphdr->ackno = htonl(pcb->rcv_nxt);
+  TCPH_FLAGS_SET(tcphdr, 0);
+  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+  tcphdr->urgp = 0;
+  TCPH_HDRLEN_SET(tcphdr, 5);
 
    tcphdr->chksum = 0;
 #if CHECKSUM_GEN_TCP

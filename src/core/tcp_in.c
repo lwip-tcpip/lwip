@@ -477,10 +477,8 @@ tcp_process(struct tcp_pcb *pcb)
         acceptable = 1;
       }
     } else {
-      /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
-          TCP_SEQ_LEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {
-      */
-      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
+      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
+                          pcb->rcv_nxt+pcb->rcv_ann_wnd)) {
         acceptable = 1;
       }
     }
@@ -549,7 +547,7 @@ tcp_process(struct tcp_pcb *pcb)
       /* Call the user specified function to call when sucessfully
        * connected. */
       TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
-      tcp_ack(pcb);
+      tcp_ack_now(pcb);
     }
     /* received ACK? possibly a half-open connection */
     else if (flags & TCP_ACK) {
@@ -1001,9 +999,8 @@ tcp_receive(struct tcp_pcb *pcb)
     /* The sequence number must be within the window (above rcv_nxt
        and below rcv_nxt + rcv_wnd) in order to be further
        processed. */
-    /*if (TCP_SEQ_GEQ(seqno, pcb->rcv_nxt) &&
-      TCP_SEQ_LT(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
-    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd - 1)){
+    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
+                        pcb->rcv_nxt + pcb->rcv_ann_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
         accepted_inseq = 1; 
         /* The incoming segment is the next in sequence. We check if
@@ -1045,6 +1042,12 @@ tcp_receive(struct tcp_pcb *pcb)
           pcb->rcv_wnd -= tcplen;
         }
 
+        if (pcb->rcv_ann_wnd < tcplen) {
+          pcb->rcv_ann_wnd = 0;
+        } else {
+          pcb->rcv_ann_wnd -= tcplen;
+        }
+
         /* If there is data in the segment, we make preparations to
            pass this up to the application. The ->recv_data variable
            is used for holding the pbuf that goes to the
@@ -1081,6 +1084,12 @@ tcp_receive(struct tcp_pcb *pcb)
           } else {
             pcb->rcv_wnd -= TCP_TCPLEN(cseg);
           }
+          if (pcb->rcv_ann_wnd < TCP_TCPLEN(cseg)) {
+            pcb->rcv_ann_wnd = 0;
+          } else {
+            pcb->rcv_ann_wnd -= TCP_TCPLEN(cseg);
+          }
+
           if (cseg->p->tot_len > 0) {
             /* Chain this pbuf onto the pbuf that we will pass to
                the application. */
@@ -1235,9 +1244,8 @@ tcp_receive(struct tcp_pcb *pcb)
 
       }
     } else {
-      /*if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
-        TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
-      if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd-1)){
+      if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
+                          pcb->rcv_nxt + pcb->rcv_ann_wnd-1)){
         tcp_ack_now(pcb);
       }
     }
