@@ -603,42 +603,52 @@ tcp_slowtmr(void)
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
     if (pcb->state == FIN_WAIT_2) {
       if ((u32_t)(tcp_ticks - pcb->tmr) >
-        TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
+          TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
       }
     }
 
-   /* Check if KEEPALIVE should be sent */
-   if((pcb->so_options & SOF_KEEPALIVE) && ((pcb->state == ESTABLISHED) || (pcb->state == CLOSE_WAIT))) {
+    /* Check if KEEPALIVE should be sent */
+    if((pcb->so_options & SOF_KEEPALIVE) && 
+       ((pcb->state == ESTABLISHED) || 
+        (pcb->state == CLOSE_WAIT))) {
 #if LWIP_TCP_KEEPALIVE
-      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + (pcb->keep_cnt*pcb->keep_intvl)) / TCP_SLOW_INTERVAL)  {
+      if((u32_t)(tcp_ticks - pcb->tmr) > 
+         (pcb->keep_idle + (pcb->keep_cnt*pcb->keep_intvl))
+         / TCP_SLOW_INTERVAL)
 #else      
-      if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + TCP_MAXIDLE                    ) / TCP_SLOW_INTERVAL)  {
+      if((u32_t)(tcp_ticks - pcb->tmr) > 
+         (pcb->keep_idle + TCP_MAXIDLE) / TCP_SLOW_INTERVAL)
 #endif /* LWIP_TCP_KEEPALIVE */
-         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
-                                 ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-                                 ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
-
-         tcp_abort(pcb);
+      {
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
+                                ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+                                ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+        
+        tcp_abort(pcb);
       }
 #if LWIP_TCP_KEEPALIVE
-      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + pcb->keep_cnt_sent * pcb->keep_intvl)       / TCP_SLOW_INTERVAL) {
+      else if((u32_t)(tcp_ticks - pcb->tmr) > 
+              (pcb->keep_idle + pcb->keep_cnt_sent * pcb->keep_intvl)
+              / TCP_SLOW_INTERVAL)
 #else
-      else if((u32_t)(tcp_ticks - pcb->tmr) > (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEPINTVL_DEFAULT) / TCP_SLOW_INTERVAL) {
+      else if((u32_t)(tcp_ticks - pcb->tmr) > 
+              (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEPINTVL_DEFAULT) 
+              / TCP_SLOW_INTERVAL)
 #endif /* LWIP_TCP_KEEPALIVE */
-         tcp_keepalive(pcb);
-         pcb->keep_cnt_sent++;
+      {
+        tcp_keepalive(pcb);
+        pcb->keep_cnt_sent++;
       }
-   }
+    }
 
     /* If this PCB has queued out of sequence data, but has been
        inactive for too long, will drop the data (it will eventually
        be retransmitted). */
 #if TCP_QUEUE_OOSEQ    
     if (pcb->ooseq != NULL &&
-       (u32_t)tcp_ticks - pcb->tmr >=
-       pcb->rto * TCP_OOSEQ_TIMEOUT) {
+        (u32_t)tcp_ticks - pcb->tmr >= pcb->rto * TCP_OOSEQ_TIMEOUT) {
       tcp_segs_free(pcb->ooseq);
       pcb->ooseq = NULL;
       LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: dropping OOSEQ queued data\n"));
@@ -648,7 +658,7 @@ tcp_slowtmr(void)
     /* Check if this PCB has stayed too long in SYN-RCVD */
     if (pcb->state == SYN_RCVD) {
       if ((u32_t)(tcp_ticks - pcb->tmr) >
-        TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
+          TCP_SYN_RCVD_TIMEOUT / TCP_SLOW_INTERVAL) {
         ++pcb_remove;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in SYN-RCVD\n"));
       }

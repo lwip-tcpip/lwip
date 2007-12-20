@@ -792,21 +792,23 @@ tcp_rexmit(struct tcp_pcb *pcb)
 void
 tcp_keepalive(struct tcp_pcb *pcb)
 {
-   struct pbuf *p;
-   struct tcp_hdr *tcphdr;
+  struct pbuf *p;
+  struct tcp_hdr *tcphdr;
 
-   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
-                           ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-                           ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+                          ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
+                          ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
 
-   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F"  pcb->keep_cnt_sent %"U16_F"\n", tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n", 
+                          tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
    
-   p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
-
-   if(p == NULL) {
-      LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: could not allocate memory for pbuf\n"));
-      return;
-   }
+  p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
+   
+  if(p == NULL) {
+    LWIP_DEBUGF(TCP_DEBUG, 
+                ("tcp_keepalive: could not allocate memory for pbuf\n"));
+    return;
+  }
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
@@ -820,31 +822,33 @@ tcp_keepalive(struct tcp_pcb *pcb)
   tcphdr->urgp = 0;
   TCPH_HDRLEN_SET(tcphdr, 5);
 
-   tcphdr->chksum = 0;
+  tcphdr->chksum = 0;
 #if CHECKSUM_GEN_TCP
-   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip, IP_PROTO_TCP, p->tot_len);
+  tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
+                                      IP_PROTO_TCP, p->tot_len);
 #endif
   TCP_STATS_INC(tcp.xmit);
 
-   /* Send output to IP */
+  /* Send output to IP */
 #if LWIP_NETIF_HWADDRHINT
-    {
-      struct netif *netif;
-      netif = ip_route(&pcb->remote_ip);
-      if(netif != NULL){
-        netif->addr_hint = &(pcb->addr_hint);
-        ip_output_if(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
-                     0, IP_PROTO_TCP, netif);
-        netif->addr_hint = NULL;
-      }
+  {
+    struct netif *netif;
+    netif = ip_route(&pcb->remote_ip);
+    if(netif != NULL){
+      netif->addr_hint = &(pcb->addr_hint);
+      ip_output_if(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
+                   0, IP_PROTO_TCP, netif);
+      netif->addr_hint = NULL;
     }
+  }
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
 
   pbuf_free(p);
 
-  LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_keepalive: seqno %"U32_F" ackno %"U32_F".\n", pcb->snd_nxt - 1, pcb->rcv_nxt));
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: seqno %"U32_F" ackno %"U32_F".\n",
+                          pcb->snd_nxt - 1, pcb->rcv_nxt));
 }
 
 #endif /* LWIP_TCP */
