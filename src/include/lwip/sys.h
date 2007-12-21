@@ -193,6 +193,48 @@ void sys_arch_unprotect(sys_prot_t pval);
 
 #endif /* SYS_ARCH_PROTECT */
 
+/*
+ * Macros to set/get and increase/decrease variables in a thread-safe way.
+ * Use these for accessing variable that are used from more than one thread.
+ */
+
+#ifndef SYS_ARCH_INC
+#define SYS_ARCH_INC(var, val) do { \
+                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                SYS_ARCH_PROTECT(old_level); \
+                                var += val; \
+                                SYS_ARCH_UNPROTECT(old_level); \
+                              } while(0)
+#endif /* SYS_ARCH_INC */
+
+#ifndef SYS_ARCH_DEC
+#define SYS_ARCH_DEC(var, val) do { \
+                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                SYS_ARCH_PROTECT(old_level); \
+                                var -= val; \
+                                SYS_ARCH_UNPROTECT(old_level); \
+                              } while(0)
+#endif /* SYS_ARCH_DEC */
+
+#ifndef SYS_ARCH_GET
+#define SYS_ARCH_GET(var, ret) do { \
+                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                SYS_ARCH_PROTECT(old_level); \
+                                ret = var; \
+                                SYS_ARCH_UNPROTECT(old_level); \
+                              } while(0)
+#endif /* SYS_ARCH_GET */
+
+#ifndef SYS_ARCH_SET
+#define SYS_ARCH_SET(var, val) do { \
+                                SYS_ARCH_DECL_PROTECT(old_level); \
+                                SYS_ARCH_PROTECT(old_level); \
+                                var = val; \
+                                SYS_ARCH_UNPROTECT(old_level); \
+                              } while(0)
+#endif /* SYS_ARCH_SET */
+
+
 #ifdef __cplusplus
 }
 #endif

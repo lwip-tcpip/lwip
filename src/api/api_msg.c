@@ -72,12 +72,16 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 {
   struct netbuf *buf;
   struct netconn *conn;
+#if LWIP_SO_RCVBUF
+  int recv_avail;
+#endif /* LWIP_SO_RCVBUF */
 
   conn = arg;
 
 #if LWIP_SO_RCVBUF
+  SYS_ARCH_GET(conn->recv_avail, recv_avail);
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL) &&
-      (((int)(conn->recv_avail) + (int)(p->tot_len)) <= conn->recv_bufsize)) {
+      ((recv_avail + (int)(p->tot_len)) <= conn->recv_bufsize)) {
 #else  /* LWIP_SO_RCVBUF */
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
 #endif /* LWIP_SO_RCVBUF */
@@ -91,7 +95,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     buf->addr = addr;
     buf->port = pcb->protocol;
 
-    conn->recv_avail += p->tot_len;
+    SYS_ARCH_INC(conn->recv_avail, p->tot_len);
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
     sys_mbox_post(conn->recvmbox, buf);
@@ -114,6 +118,9 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 {
   struct netbuf *buf;
   struct netconn *conn;
+#if LWIP_SO_RCVBUF
+  int recv_avail;
+#endif /* LWIP_SO_RCVBUF */
 
   LWIP_UNUSED_ARG(pcb); /* only used for asserts... */
   LWIP_ASSERT("recv_udp must have a pcb argument", pcb != NULL);
@@ -122,8 +129,9 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   LWIP_ASSERT("recv_udp: recv for wrong pcb!", conn->pcb.udp == pcb);
 
 #if LWIP_SO_RCVBUF
+  SYS_ARCH_GET(conn->recv_avail, recv_avail);
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL) ||
-      (((int)(conn->recv_avail) + (int)(p->tot_len)) > conn->recv_bufsize)) {
+      ((recv_avail + (int)(p->tot_len)) > conn->recv_bufsize)) {
 #else  /* LWIP_SO_RCVBUF */
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
 #endif /* LWIP_SO_RCVBUF */
@@ -142,7 +150,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     buf->port = port;
   }
 
-  conn->recv_avail += p->tot_len;
+  SYS_ARCH_INC(conn->recv_avail, p->tot_len);
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
   sys_mbox_post(conn->recvmbox, buf);
@@ -176,7 +184,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   conn->err = err;
   if (p != NULL) {
     len = p->tot_len;
-    conn->recv_avail += len;
+    SYS_ARCH_INC(conn->recv_avail, len);
   } else {
     len = 0;
   }

@@ -526,8 +526,13 @@ HISTORY
 
   ++ Bug fixes:
 
+  2007-12-21 Simon Goldschmidt
+  * sys.h, api_lib.c, api_msg.c, sockets.c: fix bug #21698: "netconn->recv_avail
+    is not protected" by using new macros for interlocked access to modify/test
+    netconn->recv_avail.
+
   2007-12-20 Kieran Mansley (based on patch from Oleg Tyshev)
-  * tcp_in.c: fix bug# 21535 (nrtx not reset correctly in SYN_SENT stat)e
+  * tcp_in.c: fix bug# 21535 (nrtx not reset correctly in SYN_SENT state)
 
   2007-12-20 Kieran Mansley (based on patch from Per-Henrik Lundbolm)
   * tcp.c, tcp_in.c, tcp_out.c, tcp.h: fix bug #20199 (better handling

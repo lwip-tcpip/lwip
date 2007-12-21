@@ -1872,7 +1872,7 @@ lwip_ioctl(int s, long cmd, void *argp)
       return -1;
     }
 
-    *((u16_t*)argp) = sock->conn->recv_avail;
+    SYS_ARCH_GET(sock->conn->recv_avail, *((u16_t*)argp));
 
     /* Check if there is data left from the last recv operation. /maq 041215 */
     if (sock->lastdata) {
