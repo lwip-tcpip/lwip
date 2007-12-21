@@ -179,7 +179,8 @@ err_t             netconn_connect (struct netconn *conn,
                                    struct ip_addr *addr,
                                    u16_t port);
 err_t             netconn_disconnect (struct netconn *conn);
-err_t             netconn_listen  (struct netconn *conn);
+err_t             netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
+#define netconn_listen(conn) netconn_listen_with_backlog(conn, LWIP_DEFAULT_LISTEN_BACKLOG);
 struct netconn *  netconn_accept  (struct netconn *conn);
 struct netbuf *   netconn_recv    (struct netconn *conn);
 err_t             netconn_sendto  (struct netconn *conn,

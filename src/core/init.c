@@ -152,6 +152,10 @@
 #if (MEM_USE_POOLS && !MEMP_USE_CUSTOM_POOLS)
   #error "MEM_USE_POOLS requires custom pools (MEMP_USE_CUSTOM_POOLS) to be enabled in your lwipopts.h"
 #endif
+#if (LWIP_DEFAULT_LISTEN_BACKLOG < 0) || (LWIP_DEFAULT_LISTEN_BACKLOG > 255)
+  #error "LWIP_DEFAULT_LISTEN_BACKLOG must fit into an u8_t"
+#endif
+
 
 /* Compile-time checks for deprecated options.
  */

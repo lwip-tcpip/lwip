@@ -735,6 +735,9 @@ do_listen(struct api_msg_msg *msg)
             if (msg->conn->err == ERR_OK) {
               msg->conn->state = NETCONN_LISTEN;
               msg->conn->pcb.tcp = lpcb;
+#if LWIP_LISTEN_BACKLOG
+              tcp_backlog(lpcb, msg->msg.lb.backlog);
+#endif /* LWIP_LISTEN_BACKLOG */
               tcp_arg(msg->conn->pcb.tcp, msg->conn);
               tcp_accept(msg->conn->pcb.tcp, accept_function);
             }
@@ -800,7 +803,14 @@ do_recv(struct api_msg_msg *msg)
   if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
-        tcp_recved(msg->conn->pcb.tcp, msg->msg.r.len);
+#if LWIP_LISTEN_BACKLOG
+        if (msg->conn->pcb.tcp->state == LISTEN) {
+          tcp_accepted(msg->conn->pcb.tcp);
+        } else
+#endif /* LWIP_LISTEN_BACKLOG */
+        {
+          tcp_recved(msg->conn->pcb.tcp, msg->msg.r.len);
+        }
       }
     }
   }

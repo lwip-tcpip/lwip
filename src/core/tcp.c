@@ -368,6 +368,10 @@ tcp_listen(struct tcp_pcb *pcb)
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
 #endif /* LWIP_CALLBACK_API */
+#if LWIP_LISTEN_BACKLOG
+  lpcb->accepts_pending = 0;
+  lpcb->backlog = LWIP_DEFAULT_LISTEN_BACKLOG;
+#endif /* LWIP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.listen_pcbs, lpcb);
   return (struct tcp_pcb *)lpcb;
 }

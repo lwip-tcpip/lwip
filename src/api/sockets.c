@@ -430,15 +430,15 @@ lwip_listen(int s, int backlog)
   struct lwip_socket *sock;
   err_t err;
 
-  /* This does no harm. If debugging is off, backlog is unused. */
-  LWIP_UNUSED_ARG(backlog);
-
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
+  LWIP_ASSERT("backlog must be between 0 and 255", backlog > 0);
+  LWIP_ASSERT("backlog must be between 0 and 255", backlog <= 0xff);
+
   sock = get_socket(s);
   if (!sock)
     return -1;
 
-  err = netconn_listen(sock->conn);
+  err = netconn_listen_with_backlog(sock->conn, backlog);
 
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d) failed, err=%d\n", s, err));

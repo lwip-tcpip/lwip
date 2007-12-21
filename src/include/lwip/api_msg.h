@@ -93,6 +93,11 @@ struct api_msg_msg {
       enum netconn_igmp join_or_leave;
     } jl;
 #endif /* LWIP_IGMP */
+#if LWIP_LISTEN_BACKLOG
+    struct {
+      u8_t backlog;
+    } lb;
+#endif /* LWIP_LISTEN_BACKLOG */
   } msg;
 };
 

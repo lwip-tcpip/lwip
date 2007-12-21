@@ -728,6 +728,23 @@
 #define LWIP_CALLBACK_API               0
 #endif
 
+/**
+ * LWIP_LISTEN_BACKLOG: Enable the backlog option for tcp listen pcb.
+ */
+#ifndef LWIP_LISTEN_BACKLOG
+#define LWIP_LISTEN_BACKLOG             1
+#endif
+
+/**
+ * The maximum allowed backlog for TCP listen netconns.
+ * This backlog is used unless another is explicitly specified.
+ * 0xff is the maximum (u8_t).
+ */
+#ifndef LWIP_DEFAULT_LISTEN_BACKLOG
+#define LWIP_DEFAULT_LISTEN_BACKLOG     0xff
+#endif
+
+
 /*
    ----------------------------------
    ---------- Pbuf options ----------

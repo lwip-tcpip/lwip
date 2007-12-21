@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2007-12-21 Frédéric Bernon, Simon Goldschmidt, Jonathan Larmour
+  * tcp.h, opt.h, api.h, api_msg.h, tcp.c, tcp_in.c, api_lib.c, api_msg.c,
+    sockets.c, init.c: task #7252: Implement TCP listen backlog: Warning: raw API
+    applications have to call 'tcp_accepted(pcb)' in their accept callback to
+    keep accepting new connections.
+
   2007-12-13 Frédéric Bernon
   * api_msg.c, err.h, err.c, sockets.c, dns.c, dns.h: replace "enum dns_result"
     by err_t type. Add a new err_t code "ERR_INPROGRESS".

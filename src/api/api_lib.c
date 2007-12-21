@@ -261,16 +261,23 @@ netconn_disconnect(struct netconn *conn)
  * Set a TCP netconn into listen mode
  *
  * @param conn the tcp netconn to set to listen mode
+ * @param backlog the listen backlog (0 = max), only used if LWIP_LISTEN_BACKLOG==1
  * @return ERR_OK if the netconn was set to listen (UDP and RAW netconns
  *         don't return any error (yet?))
  */
 err_t
-netconn_listen(struct netconn *conn)
+netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 {
   struct api_msg msg;
 
+  /* This does no harm. If LWIP_LISTEN_BACKLOG is off, backlog is unused. */
+  LWIP_UNUSED_ARG(backlog);
+
   LWIP_ERROR("netconn_listen: invalid conn", (conn != NULL), return ERR_ARG;);
 
+#if LWIP_LISTEN_BACKLOG
+  msg.msg.msg.lb.backlog = backlog;
+#endif /* LWIP_LISTEN_BACKLOG */
   msg.function = do_listen;
   msg.msg.conn = conn;
   TCPIP_APIMSG(&msg);
@@ -292,15 +299,26 @@ netconn_accept(struct netconn *conn)
   LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return NULL;);
 
 #if LWIP_SO_RCVTIMEO
-  if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+  if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
     newconn = NULL;
-  }
+  } else
 #else
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
+  {
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
-  /* Register event with callback */
-  API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
+#if LWIP_LISTEN_BACKLOG
+    if (newconn != NULL) {
+      /* Let the stack know that we have accepted the connection. */
+      struct api_msg msg;
+      msg.function = do_recv;
+      msg.msg.conn = conn;
+      TCPIP_APIMSG(&msg);
+    }
+#endif /* LWIP_LISTEN_BACKLOG */
+  }
 
   return newconn;
 }
