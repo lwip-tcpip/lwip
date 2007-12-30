@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2007-12-31 Frédéric Bernon, Tom Evans
+  * ip.c: Fix bug #21846 "LwIP doesn't appear to perform any IP Source Address
+    Filtering" reported by Tom Evans.
+
   2007-12-21 Frédéric Bernon, Simon Goldschmidt, Jonathan Larmour
   * tcp.h, opt.h, api.h, api_msg.h, tcp.c, tcp_in.c, api_lib.c, api_msg.c,
     sockets.c, init.c: task #7252: Implement TCP listen backlog: Warning: raw API

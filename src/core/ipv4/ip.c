@@ -178,6 +178,9 @@ ip_input(struct pbuf *p, struct netif *inp)
   struct ip_hdr *iphdr;
   struct netif *netif;
   u16_t iphdrlen;
+#if LWIP_DHCP
+  int   ipsrcchecking=1;
+#endif /* LWIP_DHCP */
 
   IP_STATS_INC(ip.recv);
   snmp_inc_ipinreceives();
@@ -193,6 +196,7 @@ ip_input(struct pbuf *p, struct netif *inp)
     snmp_inc_ipinhdrerrors();
     return ERR_OK;
   }
+
   /* obtain IP header length in number of 32-bit words */
   iphdrlen = IPH_HL(iphdr);
   /* calculate IP header length in bytes */
@@ -288,10 +292,29 @@ ip_input(struct pbuf *p, struct netif *inp)
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
+        ipsrcchecking = 0;
       }
     }
   }
 #endif /* LWIP_DHCP */
+
+  /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
+#if LWIP_DHCP
+  if (ipsrcchecking)
+#endif /* LWIP_DHCP */
+  {  if ((ip_addr_isbroadcast(&(iphdr->src), inp)) ||
+         (ip_addr_ismulticast(&(iphdr->src)))) {
+      /* packet source is not valid */
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: packet source is not valid.\n"));
+      /* free (drop) packet pbufs */
+      pbuf_free(p);
+      IP_STATS_INC(ip.drop);
+      snmp_inc_ipinaddrerrors();
+      snmp_inc_ipindiscards();
+      return ERR_OK;
+    }
+  }
+
   /* packet not for us? */
   if (netif == NULL) {
     /* packet not for us, route or discard */
