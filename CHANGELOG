@@ -18,6 +18,8 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+  2007-12-31 Kieran Mansley (based on patch from Per-Henrik Lundbolm)
+  * tcp.c, tcp_in.c, tcp_out.c, tcp.h: Add TCP persist timer
 
   2007-12-31 Frédéric Bernon, Luca Ceresoli
   * autoip.c, etharp.c: ip_addr.h: Integrate patch #6348: "Broadcast ARP packets

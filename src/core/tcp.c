@@ -56,6 +56,8 @@
 u32_t tcp_ticks;
 const u8_t tcp_backoff[13] =
     { 1, 2, 3, 4, 5, 6, 7, 7, 7, 7, 7, 7, 7};
+ /* Times per slowtmr hits */
+const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 
 /* The TCP PCB lists. */
 
@@ -572,36 +574,52 @@ tcp_slowtmr(void)
       ++pcb_remove;
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: max DATA retries reached\n"));
     } else {
-      /* Increase the retransmission timer if it is running */
-      if(pcb->rtime >= 0)
-        ++pcb->rtime;
-
-      if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
-        /* Time for a retransmission. */
-        LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F" pcb->rto %"S16_F"\n",
-                                    pcb->rtime, pcb->rto));
-
-        /* Double retransmission time-out unless we are trying to
-         * connect to somebody (i.e., we are in SYN_SENT). */
-        if (pcb->state != SYN_SENT) {
-          pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
+      if (pcb->persist_backoff > 0) {
+        /* If snd_wnd is zero, use persist timer to send 1 byte probes
+         * instead of using the standard retransmission mechanism. */
+        pcb->persist_cnt++;
+        if (pcb->persist_cnt >= tcp_persist_backoff[pcb->persist_backoff-1]) {
+          pcb->persist_cnt = 0;
+          if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
+            pcb->persist_backoff++;
+          }
+          tcp_zero_window_probe(pcb);
         }
+      } else {
+        /* Increase the retransmission timer if it is running */
+        if(pcb->rtime >= 0)
+          ++pcb->rtime;
 
-        /* Reset the retransmission timer. */
-        pcb->rtime = 0;
+        if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
+          /* Time for a retransmission. */
+          LWIP_DEBUGF(TCP_RTO_DEBUG, ("tcp_slowtmr: rtime %"S16_F
+                                      " pcb->rto %"S16_F"\n",
+                                      pcb->rtime, pcb->rto));
 
-        /* Reduce congestion window and ssthresh. */
-        eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
-        pcb->ssthresh = eff_wnd >> 1;
-        if (pcb->ssthresh < pcb->mss) {
-          pcb->ssthresh = pcb->mss * 2;
-        }
-        pcb->cwnd = pcb->mss;
-        LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"U16_F" ssthresh %"U16_F"\n",
-                                     pcb->cwnd, pcb->ssthresh));
+          /* Double retransmission time-out unless we are trying to
+           * connect to somebody (i.e., we are in SYN_SENT). */
+          if (pcb->state != SYN_SENT) {
+            pcb->rto = ((pcb->sa >> 3) + pcb->sv) << tcp_backoff[pcb->nrtx];
+          }
+
+          /* Reset the retransmission timer. */
+          pcb->rtime = 0;
+
+          /* Reduce congestion window and ssthresh. */
+          eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
+          pcb->ssthresh = eff_wnd >> 1;
+          if (pcb->ssthresh < pcb->mss) {
+            pcb->ssthresh = pcb->mss * 2;
+          }
+          pcb->cwnd = pcb->mss;
+          LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"U16_F
+                                       " ssthresh %"U16_F"\n",
+                                       pcb->cwnd, pcb->ssthresh));
  
-        /* The following needs to be called AFTER cwnd is set to one mss - STJ */
-        tcp_rexmit_rto(pcb);
+          /* The following needs to be called AFTER cwnd is set to one
+             mss - STJ */
+          tcp_rexmit_rto(pcb);
+        }
       }
     }
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */

@@ -707,6 +707,9 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wl1 = seqno;
       pcb->snd_wl2 = ackno;
+      if (pcb->snd_wnd > 0 && pcb->persist_backoff > 0) {
+          pcb->persist_backoff = 0;
+      }
       LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"U16_F"\n", pcb->snd_wnd));
 #if TCP_WND_DEBUG
     } else {

@@ -397,6 +397,11 @@ struct tcp_pcb {
   u32_t keep_cnt;
 #endif /* LWIP_TCP_KEEPALIVE */
   
+  /* Persist timer counter */
+  u32_t persist_cnt;
+  /* Persist timer back-off */
+  u8_t persist_backoff;
+
   /* KEEPALIVE counter */
   u8_t keep_cnt_sent;
 };
@@ -517,6 +522,7 @@ void tcp_rst(u32_t seqno, u32_t ackno,
 u32_t tcp_next_iss(void);
 
 void tcp_keepalive(struct tcp_pcb *pcb);
+void tcp_zero_window_probe(struct tcp_pcb *pcb);
 
 #if LWIP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr);
