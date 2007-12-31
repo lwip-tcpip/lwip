@@ -19,7 +19,13 @@ HISTORY
 
   ++ New features:
 
-  2007-12-31 Frédéric Bernon, Tom Evans
+  2007-12-31 Frédéric Bernon, Luca Ceresoli
+  * autoip.c, etharp.c: ip_addr.h: Integrate patch #6348: "Broadcast ARP packets
+    in autoip". The change in etharp_raw could be removed, since all calls to
+    etharp_raw use ethbroadcast for the "ethdst_addr" parameter. But it could be
+    wrong in the future.
+
+  2007-12-30 Frédéric Bernon, Tom Evans
   * ip.c: Fix bug #21846 "LwIP doesn't appear to perform any IP Source Address
     Filtering" reported by Tom Evans.
 

@@ -624,6 +624,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   struct ip_addr sipaddr, dipaddr;
   u8_t i;
   u8_t for_us;
+#if LWIP_AUTOIP
+  u8_t * ethdst_hwaddr;
+#endif /* LWIP_AUTOIP */
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   
@@ -709,10 +712,20 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));
       i = ETHARP_HWADDR_LEN;
+#if LWIP_AUTOIP
+      /* If we are using Link-Local, ARP packets must be broadcast on the
+       * link layer. (See RFC3927 Section 2.5) */
+      ethdst_hwaddr = ((netif->autoip != NULL) && (netif->autoip->state != AUTOIP_STATE_OFF)) ? (u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
+#endif /* LWIP_AUTOIP */
+
       while(i > 0) {
         i--;
         hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
+#if LWIP_AUTOIP
+        hdr->ethhdr.dest.addr[i] = ethdst_hwaddr[i];
+#else  /* LWIP_AUTOIP */
         hdr->ethhdr.dest.addr[i] = hdr->shwaddr.addr[i];
+#endif /* LWIP_AUTOIP */
         hdr->shwaddr.addr[i] = ethaddr->addr[i];
         hdr->ethhdr.src.addr[i] = ethaddr->addr[i];
       }
@@ -1025,6 +1038,9 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   err_t result = ERR_OK;
   u8_t k; /* ARP entry index */
   struct etharp_hdr *hdr;
+#if LWIP_AUTOIP
+  u8_t * ethdst_hwaddr;
+#endif /* LWIP_AUTOIP */
 
   /* allocate a pbuf for the outgoing ARP request packet */
   p = pbuf_alloc(PBUF_LINK, sizeof(struct etharp_hdr), PBUF_RAM);
@@ -1044,6 +1060,11 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
   k = ETHARP_HWADDR_LEN;
+#if LWIP_AUTOIP
+  /* If we are using Link-Local, ARP packets must be broadcast on the
+   * link layer. (See RFC3927 Section 2.5) */
+  ethdst_hwaddr = ((netif->autoip != NULL) && (netif->autoip->state != AUTOIP_STATE_OFF)) ? (u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
+#endif /* LWIP_AUTOIP */
   /* Write MAC-Addresses (combined loop for both headers) */
   while(k > 0) {
     k--;
@@ -1051,7 +1072,11 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
     hdr->shwaddr.addr[k] = hwsrc_addr->addr[k];
     hdr->dhwaddr.addr[k] = hwdst_addr->addr[k];
     /* Write the Ethernet MAC-Addresses */
+#if LWIP_AUTOIP
+    hdr->ethhdr.dest.addr[k] = ethdst_hwaddr[k];
+#else  /* LWIP_AUTOIP */
     hdr->ethhdr.dest.addr[k] = ethdst_addr->addr[k];
+#endif /* LWIP_AUTOIP */
     hdr->ethhdr.src.addr[k]  = ethsrc_addr->addr[k];
   }
   hdr->sipaddr = *(struct ip_addr2 *)ipsrc_addr;

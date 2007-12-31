@@ -178,17 +178,8 @@ autoip_create_rand_addr(struct netif *netif, struct ip_addr *RandomIPAddr)
 static err_t
 autoip_arp_announce(struct netif *netif)
 {
-  struct eth_addr eth_addr_bc, eth_addr_zero;
-  u8_t k = netif->hwaddr_len;
-
-  while(k > 0) {
-    k--;
-    eth_addr_bc.addr[k]    = 0xFF;
-    eth_addr_zero.addr[k]  = 0x00;
-  }
-
-  return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &eth_addr_bc,
-    (struct eth_addr *)netif->hwaddr, &netif->autoip->llipaddr, &eth_addr_zero,
+  return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
+    (struct eth_addr *)netif->hwaddr, &netif->autoip->llipaddr, &ethzero,
     &netif->autoip->llipaddr, ARP_REQUEST);
 }
 
@@ -319,7 +310,7 @@ autoip_tmr()
         netif->autoip->lastconflict--;
       }
 
-      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3,
+      LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
         ("autoip_tmr() AutoIP-State: %"U16_F", ttw=%"U16_F"\n",
         (u16_t)(netif->autoip->state), netif->autoip->ttw));
 

@@ -147,6 +147,8 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
 
+#define ip_addr_islinklocal(addr1) (((addr1)->addr & ntohl(0xffff0000UL)) == ntohl(0xa9fe0000UL))
+
 #define ip_addr_debug_print(debug, ipaddr) \
         LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F, \
                 ipaddr ? (u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff : 0, \
