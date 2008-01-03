@@ -1522,13 +1522,13 @@ pppMain(void *arg)
   tcpip_callback(pppStartCB, arg);
   while (lcp_phase[pd] != PHASE_DEAD) {
     if (pc->kill_link) {
-      PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d kill_link -> pppStopCB\n", pd));
+      PPPDEBUG((LOG_DEBUG, "pppMain: unit %d kill_link -> pppStopCB\n", pd));
       pc->errCode = PPPERR_USER;
       /* This will leave us at PHASE_DEAD. */
       tcpip_callback(pppStopCB, arg);
       pc->kill_link = 0;
     } else if (pc->sig_hup) {
-      PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d sig_hup -> pppHupCB\n", pd));
+      PPPDEBUG((LOG_DEBUG, "pppMain: unit %d sig_hup -> pppHupCB\n", pd));
       pc->sig_hup = 0;
       tcpip_callback(pppHupCB, arg);
     } else {
@@ -1536,7 +1536,7 @@ pppMain(void *arg)
       if(c > 0) {
         pppInProc(pd, p->payload, c);
       } else {
-        PPPDEBUG((LOG_DEBUG, "pppMainWakeup: unit %d sio_read len=%d returned %d\n", pd, p->len, c));
+        PPPDEBUG((LOG_DEBUG, "pppMain: unit %d sio_read len=%d returned %d\n", pd, p->len, c));
         sys_msleep(1); /* give other tasks a chance to run */
       }
     }
