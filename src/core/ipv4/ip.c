@@ -179,7 +179,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   struct netif *netif;
   u16_t iphdrlen;
 #if LWIP_DHCP
-  int   ipsrcchecking=1;
+  int check_ip_src=1;
 #endif /* LWIP_DHCP */
 
   IP_STATS_INC(ip.recv);
@@ -292,7 +292,7 @@ ip_input(struct pbuf *p, struct netif *inp)
       if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
-        ipsrcchecking = 0;
+        check_ip_src = 0;
       }
     }
   }
@@ -300,7 +300,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
 #if LWIP_DHCP
-  if (ipsrcchecking)
+  if (check_ip_src)
 #endif /* LWIP_DHCP */
   {  if ((ip_addr_isbroadcast(&(iphdr->src), inp)) ||
          (ip_addr_ismulticast(&(iphdr->src)))) {
