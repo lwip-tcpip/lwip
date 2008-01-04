@@ -563,7 +563,7 @@ dns_check_entries(void)
  * @params see udp.h
  */
 static void
-dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
   u8_t i;
   char *pHostname;
@@ -577,6 +577,11 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
 #if (DNS_USES_STATIC_BUF == 2)
   u8_t* dns_payload;
 #endif /* (DNS_USES_STATIC_BUF == 2) */
+
+  LWIP_UNUSED_ARG(arg);
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(port);
 
   /* is the dns message too big ? */
   if (p->tot_len > DNS_MSG_SIZE) {
@@ -627,7 +632,7 @@ dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16
 
 #if DNS_DOES_NAME_CHECK
         /* Check if the name in the "question" part match with the name in the entry. */
-        if (dns_compare_name(pEntry->name, (unsigned char *)dns_payload + sizeof(struct dns_hdr)) != 0) {
+        if (dns_compare_name((unsigned char *)(pEntry->name), (unsigned char *)dns_payload + sizeof(struct dns_hdr)) != 0) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", pEntry->name));
           /* call callback to indicate error, clean up memory and return */
           goto responseerr;
@@ -709,7 +714,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
 {
   u8_t i;
   u8_t lseq, lseqi;
-  struct dns_table_entry *pEntry;
+  struct dns_table_entry *pEntry = NULL;
 
   /* search an unused entry, or the oldest one */
   lseq = lseqi = 0;

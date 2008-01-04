@@ -12,7 +12,7 @@
  * MEM_USE_CUSTOM_POOLS to 1 and create a file "lwippools.h" that includes a list
  * of pools like the this (more pools can be added between _START and _END):
  *
- * /* Define three pools with sizes 256, 512, and 1512 bytes
+ * Define three pools with sizes 256, 512, and 1512 bytes
  * LWIP_MALLOC_MEMPOOL_START
  * LWIP_MALLOC_MEMPOOL(20, 256)
  * LWIP_MALLOC_MEMPOOL(10, 512)

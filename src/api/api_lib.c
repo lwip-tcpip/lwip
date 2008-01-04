@@ -71,7 +71,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
   struct netconn *conn;
   struct api_msg msg;
 
-  conn = netconn_alloc_with_proto_and_callback(t, proto, callback);
+  conn = netconn_alloc(t, callback);
   if (conn != NULL ) {
     msg.function = do_newconn;
     msg.msg.msg.n.proto = proto;

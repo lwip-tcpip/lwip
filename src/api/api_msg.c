@@ -338,7 +338,7 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 
   /* We have to set the callback here even though
    * the new socket is unknown. conn->socket is marked as -1. */
-  newconn = netconn_alloc_with_proto_and_callback(conn->type, 0, conn->callback);
+  newconn = netconn_alloc(conn->type, conn->callback);
   if (newconn == NULL) {
     return ERR_MEM;
   }
@@ -446,7 +446,7 @@ do_newconn(struct api_msg_msg *msg)
  *         NULL on memory error
  */
 struct netconn*
-netconn_alloc_with_proto_and_callback(enum netconn_type t, u8_t proto,
+netconn_alloc(enum netconn_type t,
           void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
 {
   struct netconn *conn;
@@ -469,7 +469,7 @@ netconn_alloc_with_proto_and_callback(enum netconn_type t, u8_t proto,
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
-  conn->acceptmbox = SYS_MBOX_NULL;
+  conn->acceptmbox   = SYS_MBOX_NULL;
   conn->state        = NETCONN_NONE;
   /* initialize socket to -1 since 0 is a valid socket */
   conn->socket       = -1;

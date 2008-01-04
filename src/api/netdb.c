@@ -269,7 +269,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   err_t err;
   struct ip_addr addr;
   struct addrinfo *ai;
-  struct sockaddr_in *sa;
+  struct sockaddr_in *sa = NULL;
   int port_nr = 0;
 
   if (res == NULL) {

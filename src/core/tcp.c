@@ -347,6 +347,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb_listen *lpcb;
 
+  LWIP_UNUSED_ARG(backlog);
   LWIP_ERROR("tcp_listen: pcb already connected", pcb->state == CLOSED, return NULL);
 
   /* already listening? */
