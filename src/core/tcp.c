@@ -343,7 +343,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  *             tpcb = tcp_listen(tpcb);
  */
 struct tcp_pcb *
-tcp_listen(struct tcp_pcb *pcb)
+tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb_listen *lpcb;
 
@@ -370,10 +370,10 @@ tcp_listen(struct tcp_pcb *pcb)
 #if LWIP_CALLBACK_API
   lpcb->accept = tcp_accept_null;
 #endif /* LWIP_CALLBACK_API */
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
   lpcb->accepts_pending = 0;
-  lpcb->backlog = LWIP_DEFAULT_LISTEN_BACKLOG;
-#endif /* LWIP_LISTEN_BACKLOG */
+  lpcb->backlog = (backlog ? backlog : 1);
+#endif /* TCP_LISTEN_BACKLOG */
   TCP_REG(&tcp_listen_pcbs.listen_pcbs, lpcb);
   return (struct tcp_pcb *)lpcb;
 }

@@ -95,6 +95,19 @@ incoming connections or be explicitly connected to another host.
   listening connection. If so, the memory associated with the pcb
   passed as an argument to tcp_listen() will not be deallocated.
 
+- struct tcp_pcb *tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
+
+  Same as tcp_listen, but limits the number of outstanding connections
+  in the listen queue to the value specified by the backlog argument.
+  To use it, your need to set TCP_LISTEN_BACKLOG=1 in your lwipopts.h.
+
+- void tcp_accepted(struct tcp_pcb *pcb)
+
+  Inform lwIP that an incoming connection has been accepted. This would
+  usually be called from the accept callback. This allows lwIP to perform
+  housekeeping tasks, such as allowing further incoming connections to be
+  queued in the listen backlog.
+
 - void tcp_accept(struct tcp_pcb *pcb,
                   err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
                                    err_t err))

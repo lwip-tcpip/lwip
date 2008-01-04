@@ -18,6 +18,13 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2008-01-04 Frédéric Bernon, Simon Goldschmidt, Jonathan Larmour
+  * rawapi.txt, api.h, api_lib.c, api_msg.h, api_msg.c, sockets.c, tcp.h, tcp.c,
+    tcp_in.c, init.c, opt.h: rename backlog options with TCP_ prefix, limit the
+    "backlog" parameter in an u8_t, 0 is interpreted as "smallest queue", add
+    documentation in the rawapi.txt file.
+
   2007-12-31 Kieran Mansley (based on patch from Per-Henrik Lundbolm)
   * tcp.c, tcp_in.c, tcp_out.c, tcp.h: Add TCP persist timer
 

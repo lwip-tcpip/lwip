@@ -717,13 +717,17 @@ do_listen(struct api_msg_msg *msg)
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
         if (msg->conn->pcb.tcp->state == CLOSED) {
+#if TCP_LISTEN_BACKLOG
+          struct tcp_pcb* lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+#else  /* TCP_LISTEN_BACKLOG */
           struct tcp_pcb* lpcb = tcp_listen(msg->conn->pcb.tcp);
+#endif /* TCP_LISTEN_BACKLOG */
           if (lpcb == NULL) {
             msg->conn->err = ERR_MEM;
           } else {
             /* delete the recvmbox and allocate the acceptmbox */
             if (msg->conn->recvmbox != SYS_MBOX_NULL) {
-              /* @todo: should we drain the recvmbox here? */
+              /** @todo: should we drain the recvmbox here? */
               sys_mbox_free(msg->conn->recvmbox);
               msg->conn->recvmbox = NULL;
             }
@@ -735,9 +739,6 @@ do_listen(struct api_msg_msg *msg)
             if (msg->conn->err == ERR_OK) {
               msg->conn->state = NETCONN_LISTEN;
               msg->conn->pcb.tcp = lpcb;
-#if LWIP_LISTEN_BACKLOG
-              tcp_backlog(lpcb, msg->msg.lb.backlog);
-#endif /* LWIP_LISTEN_BACKLOG */
               tcp_arg(msg->conn->pcb.tcp, msg->conn);
               tcp_accept(msg->conn->pcb.tcp, accept_function);
             }
@@ -803,11 +804,11 @@ do_recv(struct api_msg_msg *msg)
   if (!ERR_IS_FATAL(msg->conn->err)) {
     if (msg->conn->pcb.tcp != NULL) {
       if (msg->conn->type == NETCONN_TCP) {
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
         if (msg->conn->pcb.tcp->state == LISTEN) {
           tcp_accepted(msg->conn->pcb.tcp);
         } else
-#endif /* LWIP_LISTEN_BACKLOG */
+#endif /* TCP_LISTEN_BACKLOG */
         {
           tcp_recved(msg->conn->pcb.tcp, msg->msg.r.len);
         }

@@ -714,6 +714,22 @@
 #endif
 
 /**
+ * TCP_LISTEN_BACKLOG: Enable the backlog option for tcp listen pcb.
+ */
+#ifndef TCP_LISTEN_BACKLOG
+#define TCP_LISTEN_BACKLOG              0
+#endif
+
+/**
+ * The maximum allowed backlog for TCP listen netconns.
+ * This backlog is used unless another is explicitly specified.
+ * 0xff is the maximum (u8_t).
+ */
+#ifndef TCP_DEFAULT_LISTEN_BACKLOG
+#define TCP_DEFAULT_LISTEN_BACKLOG      0xff
+#endif
+
+/**
  * LWIP_EVENT_API and LWIP_CALLBACK_API: Only one of these should be set to 1.
  *     LWIP_EVENT_API==1: The user defines lwip_tcp_event() to receive all
  *         events (accept, sent, etc) that happen in the system.
@@ -726,22 +742,6 @@
 #else 
 #define LWIP_EVENT_API                  1
 #define LWIP_CALLBACK_API               0
-#endif
-
-/**
- * LWIP_LISTEN_BACKLOG: Enable the backlog option for tcp listen pcb.
- */
-#ifndef LWIP_LISTEN_BACKLOG
-#define LWIP_LISTEN_BACKLOG             1
-#endif
-
-/**
- * The maximum allowed backlog for TCP listen netconns.
- * This backlog is used unless another is explicitly specified.
- * 0xff is the maximum (u8_t).
- */
-#ifndef LWIP_DEFAULT_LISTEN_BACKLOG
-#define LWIP_DEFAULT_LISTEN_BACKLOG     0xff
 #endif
 
 

@@ -381,11 +381,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       tcphdr->dest, tcphdr->src);
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
     if (pcb->accepts_pending >= pcb->backlog) {
       return ERR_ABRT;
     }
-#endif /* LWIP_LISTEN_BACKLOG */
+#endif /* TCP_LISTEN_BACKLOG */
     npcb = tcp_alloc(pcb->prio);
     /* If a new PCB could not be created (probably due to lack of memory),
        we don't do anything, but rely on the sender will retransmit the
@@ -395,9 +395,9 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       TCP_STATS_INC(tcp.memerr);
       return ERR_MEM;
     }
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
     pcb->accepts_pending++;
-#endif /* LWIP_LISTEN_BACKLOG */
+#endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
     ip_addr_set(&(npcb->local_ip), &(iphdr->dest));
     npcb->local_port = pcb->local_port;

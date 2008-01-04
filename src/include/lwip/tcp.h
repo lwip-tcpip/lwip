@@ -79,10 +79,11 @@ void             tcp_err     (struct tcp_pcb *pcb,
 #define          tcp_mss(pcb)      ((pcb)->mss)
 #define          tcp_sndbuf(pcb)   ((pcb)->snd_buf)
 
-#if LWIP_LISTEN_BACKLOG
-#define          tcp_accepted(pcb)       (((struct tcp_pcb_listen *)(pcb))->accepts_pending--)
-#define          tcp_backlog(pcb, bklog) (((struct tcp_pcb_listen *)(pcb))->backlog = bklog)
-#endif /* LWIP_LISTEN_BACKLOG */
+#if TCP_LISTEN_BACKLOG
+#define          tcp_accepted(pcb) (((struct tcp_pcb_listen *)(pcb))->accepts_pending--)
+#else  /* TCP_LISTEN_BACKLOG */
+#define          tcp_accepted(pcb)
+#endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
@@ -91,7 +92,10 @@ err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
                               u16_t port, err_t (* connected)(void *arg,
                               struct tcp_pcb *tpcb,
                               err_t err));
-struct tcp_pcb * tcp_listen  (struct tcp_pcb *pcb);
+
+struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
+#define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
+
 void             tcp_abort   (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 
@@ -422,10 +426,10 @@ struct tcp_pcb_listen {
    */
   err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
 #endif /* LWIP_CALLBACK_API */
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
   u8_t backlog;
   u8_t accepts_pending;
-#endif /* LWIP_LISTEN_BACKLOG */
+#endif /* TCP_LISTEN_BACKLOG */
 };
 
 #if LWIP_EVENT_API

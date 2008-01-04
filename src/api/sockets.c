@@ -421,7 +421,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
  * The socket may not have been used for another connection previously.
  *
  * @param s the socket to set to listening mode
- * @param backlog (ATTENTION: this is not implemented, yet!)
+ * @param backlog (ATTENTION: need TCP_LISTEN_BACKLOG=1)
  * @return 0 on success, non-zero on failure
  */
 int
@@ -431,12 +431,18 @@ lwip_listen(int s, int backlog)
   err_t err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
-  LWIP_ASSERT("backlog must be between 0 and 255", backlog > 0);
-  LWIP_ASSERT("backlog must be between 0 and 255", backlog <= 0xff);
 
   sock = get_socket(s);
   if (!sock)
     return -1;
+
+  /* limit the "backlog" parameter to fit in an u8_t */
+  if (backlog < 0) {
+    backlog = 0;
+  }
+  if (backlog > 0xff) {
+    backlog = 0xff;
+  }
 
   err = netconn_listen_with_backlog(sock->conn, backlog);
 

@@ -261,7 +261,7 @@ netconn_disconnect(struct netconn *conn)
  * Set a TCP netconn into listen mode
  *
  * @param conn the tcp netconn to set to listen mode
- * @param backlog the listen backlog (0 = max), only used if LWIP_LISTEN_BACKLOG==1
+ * @param backlog the listen backlog, only used if TCP_LISTEN_BACKLOG==1
  * @return ERR_OK if the netconn was set to listen (UDP and RAW netconns
  *         don't return any error (yet?))
  */
@@ -270,16 +270,16 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 {
   struct api_msg msg;
 
-  /* This does no harm. If LWIP_LISTEN_BACKLOG is off, backlog is unused. */
+  /* This does no harm. If TCP_LISTEN_BACKLOG is off, backlog is unused. */
   LWIP_UNUSED_ARG(backlog);
 
   LWIP_ERROR("netconn_listen: invalid conn", (conn != NULL), return ERR_ARG;);
 
-#if LWIP_LISTEN_BACKLOG
-  msg.msg.msg.lb.backlog = backlog;
-#endif /* LWIP_LISTEN_BACKLOG */
   msg.function = do_listen;
   msg.msg.conn = conn;
+#if TCP_LISTEN_BACKLOG
+  msg.msg.msg.lb.backlog = backlog;
+#endif /* TCP_LISTEN_BACKLOG */
   TCPIP_APIMSG(&msg);
   return conn->err;
 }
@@ -309,7 +309,7 @@ netconn_accept(struct netconn *conn)
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
-#if LWIP_LISTEN_BACKLOG
+#if TCP_LISTEN_BACKLOG
     if (newconn != NULL) {
       /* Let the stack know that we have accepted the connection. */
       struct api_msg msg;
@@ -317,7 +317,7 @@ netconn_accept(struct netconn *conn)
       msg.msg.conn = conn;
       TCPIP_APIMSG(&msg);
     }
-#endif /* LWIP_LISTEN_BACKLOG */
+#endif /* TCP_LISTEN_BACKLOG */
   }
 
   return newconn;
