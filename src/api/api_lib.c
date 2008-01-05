@@ -65,8 +65,7 @@
  *         NULL on memory error
  */
 struct netconn*
-netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
-          void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
+netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_callback callback)
 {
   struct netconn *conn;
   struct api_msg msg;

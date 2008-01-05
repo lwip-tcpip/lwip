@@ -332,7 +332,10 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     msg->type = TCPIP_MSG_INPKT;
     msg->msg.inp.p = p;
     msg->msg.inp.netif = inp;
-    sys_mbox_post(mbox, msg);
+    if (sys_mbox_trypost(mbox, msg) != ERR_OK) {
+      memp_free(MEMP_TCPIP_MSG_INPKT, msg);
+      return ERR_MEM;
+    }
     return ERR_OK;
   }
   return ERR_VAL;
@@ -499,7 +502,7 @@ tcpip_init(void (* initfunc)(void *), void *arg)
 
   tcpip_init_done = initfunc;
   tcpip_init_done_arg = arg;
-  mbox = sys_mbox_new();
+  mbox = sys_mbox_new(TCPIP_MBOX_SIZE);
 #if LWIP_TCPIP_CORE_LOCKING
   lock_tcpip_core = sys_sem_new(1);
 #endif /* LWIP_TCPIP_CORE_LOCKING */

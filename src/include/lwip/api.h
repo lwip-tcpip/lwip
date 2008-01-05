@@ -98,6 +98,10 @@ struct ip_pcb;
 struct tcp_pcb;
 struct udp_pcb;
 struct raw_pcb;
+struct netconn;
+
+/** A callback prototype to inform about events for a netconn */
+typedef void (* netconn_callback)(struct netconn *, enum netconn_evt, u16_t len);
 
 /** A netconn descriptor */
 struct netconn {
@@ -148,7 +152,7 @@ struct netconn {
   u8_t write_delayed;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
   /** A callback function that is informed about events for this netconn */
-  void (* callback)(struct netconn *, enum netconn_evt, u16_t len);
+  netconn_callback callback;
 };
 
 /* Register an Network connection event */
@@ -161,7 +165,7 @@ struct netconn {
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
 struct
 netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
-                                   void (*callback)(struct netconn *, enum netconn_evt, u16_t len));
+                                   netconn_callback callback);
 err_t             netconn_delete  (struct netconn *conn);
 enum netconn_type netconn_type    (struct netconn *conn);
 

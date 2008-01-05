@@ -56,9 +56,11 @@ struct sys_timeo {u8_t dummy;};
 #define sys_sem_wait_timeout(s,t)
 #define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
-#define sys_mbox_new() 0
+#define sys_mbox_new(s) 0
 #define sys_mbox_fetch(m,d)
+#define sys_mbox_tryfetch(m,d)
 #define sys_mbox_post(m,d)
+#define sys_mbox_trypost(m,d)
 #define sys_mbox_free(m)
 
 #define sys_thread_new(n,t,a,s,p)
@@ -73,6 +75,7 @@ struct sys_timeo {u8_t dummy;};
  */
 #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
 
+#include "lwip/err.h"
 #include "arch/sys_arch.h"
 
 typedef void (* sys_timeout_handler)(void *arg);
@@ -121,8 +124,9 @@ u32_t sys_jiffies(void); /* since power up. */
 #endif
 
 /* Mailbox functions. */
-sys_mbox_t sys_mbox_new(void);
+sys_mbox_t sys_mbox_new(int size);
 void sys_mbox_post(sys_mbox_t mbox, void *msg);
+err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg);
 u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
 #ifndef sys_arch_mbox_tryfetch /* Allow port to override with a macro */
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg);

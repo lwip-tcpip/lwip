@@ -98,7 +98,9 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     SYS_ARCH_INC(conn->recv_avail, p->tot_len);
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-    sys_mbox_post(conn->recvmbox, buf);
+    if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
+      netbuf_delete(buf);
+    }
   }
 
   return 0; /* do not eat the packet */
@@ -153,7 +155,10 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   SYS_ARCH_INC(conn->recv_avail, p->tot_len);
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-  sys_mbox_post(conn->recvmbox, buf);
+  if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
+    netbuf_delete(buf);
+    return;
+  }
 }
 #endif /* LWIP_UDP */
 
@@ -348,7 +353,11 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
 
-  sys_mbox_post(conn->acceptmbox, newconn);
+  if (sys_mbox_trypost(conn->acceptmbox, newconn) != ERR_OK) {
+    /** @todo call here a "netconn_free" */
+    LWIP_ASSERT("accept_function: not yet implemented!", 0);
+    return ERR_MEM;
+  }
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
@@ -446,8 +455,7 @@ do_newconn(struct api_msg_msg *msg)
  *         NULL on memory error
  */
 struct netconn*
-netconn_alloc(enum netconn_type t,
-          void (*callback)(struct netconn *, enum netconn_evt, u16_t len))
+netconn_alloc(enum netconn_type t, netconn_callback callback)
 {
   struct netconn *conn;
 
@@ -460,11 +468,11 @@ netconn_alloc(enum netconn_type t,
   conn->type = t;
   conn->pcb.tcp = NULL;
 
-  if ((conn->mbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+  if ((conn->mbox = sys_mbox_new(1)) == SYS_MBOX_NULL) {
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
-  if ((conn->recvmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+  if ((conn->recvmbox = sys_mbox_new(DEFAULT_RECVMBOX_SIZE)) == SYS_MBOX_NULL) {
     sys_mbox_free(conn->mbox);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
@@ -732,7 +740,7 @@ do_listen(struct api_msg_msg *msg)
               msg->conn->recvmbox = NULL;
             }
             if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
-              if ((msg->conn->acceptmbox = sys_mbox_new()) == SYS_MBOX_NULL) {
+              if ((msg->conn->acceptmbox = sys_mbox_new(DEFAULT_ACCEPTMBOX_SIZE)) == SYS_MBOX_NULL) {
                 msg->conn->err = ERR_MEM;
               }
             }

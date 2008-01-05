@@ -19,6 +19,19 @@ HISTORY
 
   ++ New features:
 
+  2008-01-05 Frédéric Bernon
+  * sys_arch.txt, api.h, api_lib.c, api_msg.h, api_msg.c, tcpip.c, sys.h, opt.h:
+    Introduce changes for task #7490 "Add return value to sys_mbox_post" with some
+    modifications in the sys_mbox api: sys_mbox_new take a "size" parameters which
+    indicate the number of pointers query by the mailbox. There is three defines
+    in opt.h to indicate sizes for tcpip::mbox, netconn::recvmbox, and for the 
+    netconn::acceptmbox. Port maintainers, you can decide to just add this new 
+    parameter in your implementation, but to ignore it to keep the previous behavior.
+    The new sys_mbox_trypost function return a value to know if the mailbox is
+    full or if the message is posted. Take a look to sys_arch.txt for more details.
+    This new function is used in tcpip_input (so, can be called in an interrupt
+    context since the function is not blocking), and in recv_udp and recv_raw.
+
   2008-01-04 Frédéric Bernon, Simon Goldschmidt, Jonathan Larmour
   * rawapi.txt, api.h, api_lib.c, api_msg.h, api_msg.c, sockets.c, tcp.h, tcp.c,
     tcp_in.c, init.c, opt.h: rename backlog options with TCP_ prefix, limit the

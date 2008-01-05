@@ -69,9 +69,12 @@ The following functions must be implemented by the sys_arch:
   Notice that lwIP implements a function with a similar name,
   sys_sem_wait(), that uses the sys_arch_sem_wait() function.
 
-- sys_mbox_t sys_mbox_new(void)
+- sys_mbox_t sys_mbox_new(int size)
 
-  Creates an empty mailbox.
+  Creates an empty mailbox for maximum "size" elements. Elements stored
+  in mailboxes are pointers. You have to define macros "_MBOX_SIZE"
+  in your lwipopts.h, or ignore this parameter in your implementation
+  and use a default size.
 
 - void sys_mbox_free(sys_mbox_t mbox)
 
@@ -81,7 +84,13 @@ The following functions must be implemented by the sys_arch:
 
 - void sys_mbox_post(sys_mbox_t mbox, void *msg)
 
-  Posts the "msg" to the mailbox.
+  Posts the "msg" to the mailbox. This function have to block until
+  the "msg" is really posted.
+
+- err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg)
+
+  Try to post the "msg" to the mailbox. Returns ERR_MEM if this one
+  is full, else, ERR_OK if the "msg" is posted.
 
 - u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout)
 

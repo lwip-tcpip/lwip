@@ -875,6 +875,15 @@
 #endif
 
 /**
+ * TCPIP_MBOX_SIZE: The mailbox size for the tcpip thread messages
+ * The queue size value itself is platform-dependent, but is passed to
+ * sys_mbox_new() when tcpip_init is called.
+ */
+#ifndef TCPIP_MBOX_SIZE
+#define TCPIP_MBOX_SIZE                 0
+#endif
+
+/**
  * SLIPIF_THREAD_NAME: The name assigned to the slipif_loop thread.
  */
 #ifndef SLIPIF_THREAD_NAME
@@ -947,6 +956,24 @@
  */
 #ifndef DEFAULT_THREAD_PRIO
 #define DEFAULT_THREAD_PRIO             1
+#endif
+
+/**
+ * DEFAULT_RECVMBOX_SIZE: The mailbox size for the incoming packets.
+ * The queue size value itself is platform-dependent, but is passed to
+ * sys_mbox_new() when the recvmbox is created.
+ */
+#ifndef DEFAULT_RECVMBOX_SIZE
+#define DEFAULT_RECVMBOX_SIZE           0
+#endif
+
+/**
+ * DEFAULT_ACCEPTMBOX_SIZE: The mailbox size for the incoming connections.
+ * The queue size value itself is platform-dependent, but is passed to
+ * sys_mbox_new() when the acceptmbox is created.
+ */
+#ifndef DEFAULT_ACCEPTMBOX_SIZE
+#define DEFAULT_ACCEPTMBOX_SIZE         0
 #endif
 
 /*
