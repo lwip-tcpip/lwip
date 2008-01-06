@@ -141,7 +141,8 @@ static void dhcp_option_trailer(struct dhcp *dhcp);
  * NAK means the client asked for something non-sensible, for
  * example when it tries to renew a lease obtained on another network.
  *
- * We back-off and will end up restarting a fresh DHCP negotiation later.
+ * We clear any existing set IP address and restart DHCP negotiation
+ * afresh (as per RFC2131 3.2.3).
  *
  * @param netif the netif under DHCP control
  */
@@ -149,12 +150,18 @@ static void
 dhcp_handle_nak(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
-  u16_t msecs = 10 * 1000;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n", 
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
-  dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_handle_nak(): set request timeout %"U16_F" msecs\n", msecs));
+  /* Set the interface down since the address must no longer be used, as per RFC2131 */
+  netif_set_down(netif);
+  /* remove IP address from interface */
+  netif_set_ipaddr(netif, IP_ADDR_ANY);
+  netif_set_gw(netif, IP_ADDR_ANY);
+  netif_set_netmask(netif, IP_ADDR_ANY); 
+  /* Change to a defined state */
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
+  /* We can immediately restart discovery */
+  dhcp_discover();
 }
 
 /**
