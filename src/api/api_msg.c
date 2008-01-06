@@ -354,8 +354,10 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
 
   if (sys_mbox_trypost(conn->acceptmbox, newconn) != ERR_OK) {
-    /** @todo call here a "netconn_free" */
-    LWIP_ASSERT("accept_function: not yet implemented!", 0);
+    /* When returning != ERR_OK, the connection is aborted in tcp_process(),
+       so do nothing here! */
+    newconn->pcb.tcp = NULL;
+    netconn_free(newconn);
     return ERR_MEM;
   }
   return ERR_OK;
@@ -492,7 +494,56 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   return conn;
 }
 
+/**
+ * Delete a netconn and all its resources.
+ * The pcb is NOT freed (since we might not be in the right thread context do this).
+ *
+ * @param conn the netconn to free
+ */
+void
+netconn_free(struct netconn *conn)
+{
+  void *mem;
+  LWIP_ASSERT("PCB must be deallocated outside this function", conn->pcb.tcp == NULL);
+
+  /* Drain the recvmbox. */
+  if (conn->recvmbox != SYS_MBOX_NULL) {
+    while (sys_mbox_tryfetch(conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
+      if (conn->type == NETCONN_TCP) {
+        if(mem != NULL) {
+          pbuf_free((struct pbuf *)mem);
+        }
+      } else {
+        netbuf_delete((struct netbuf *)mem);
+      }
+    }
+    sys_mbox_free(conn->recvmbox);
+    conn->recvmbox = SYS_MBOX_NULL;
+  }
+
+  /* Drain the acceptmbox. */
+  if (conn->acceptmbox != SYS_MBOX_NULL) {
+    while (sys_mbox_tryfetch(conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
+      netconn_delete((struct netconn *)mem);
+    }
+    sys_mbox_free(conn->acceptmbox);
+    conn->acceptmbox = SYS_MBOX_NULL;
+  }
+
+  sys_mbox_free(conn->mbox);
+  conn->mbox = SYS_MBOX_NULL;
+
+  memp_free(MEMP_NETCONN, conn);
+}
+
 #if LWIP_TCP
+/**
+ * Internal helper function to close a TCP netconn: since this sometimes
+ * doesn't work at the first attempt, this function is called from multiple
+ * places.
+ *
+ * @param conn the TCP netconn to close
+ */
 static void
 do_close_internal(struct netconn *conn)
 {

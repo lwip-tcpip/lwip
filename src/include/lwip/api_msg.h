@@ -149,6 +149,7 @@ void do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
 
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
+void netconn_free(struct netconn *conn);
 
 #ifdef __cplusplus
 }

@@ -103,7 +103,6 @@ err_t
 netconn_delete(struct netconn *conn)
 {
   struct api_msg msg;
-  void *mem;
 
   /* No ASSERT here because possible to get a (conn == NULL) if we got an accept error */
   if (conn == NULL) {
@@ -114,34 +113,9 @@ netconn_delete(struct netconn *conn)
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);
 
-  /* Drain the recvmbox. */
-  if (conn->recvmbox != SYS_MBOX_NULL) {
-    while (sys_mbox_tryfetch(conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
-      if (conn->type == NETCONN_TCP) {
-        if(mem != NULL) {
-          pbuf_free((struct pbuf *)mem);
-        }
-      } else {
-        netbuf_delete((struct netbuf *)mem);
-      }
-    }
-    sys_mbox_free(conn->recvmbox);
-    conn->recvmbox = SYS_MBOX_NULL;
-  }
+  conn->pcb.tcp = NULL;
+  netconn_free(conn);
 
-  /* Drain the acceptmbox. */
-  if (conn->acceptmbox != SYS_MBOX_NULL) {
-    while (sys_mbox_tryfetch(conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      netconn_delete((struct netconn *)mem);
-    }
-    sys_mbox_free(conn->acceptmbox);
-    conn->acceptmbox = SYS_MBOX_NULL;
-  }
-
-  sys_mbox_free(conn->mbox);
-  conn->mbox = SYS_MBOX_NULL;
-
-  memp_free(MEMP_NETCONN, conn);
   return ERR_OK;
 }
 
