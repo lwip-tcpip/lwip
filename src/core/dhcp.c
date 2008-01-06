@@ -161,7 +161,7 @@ dhcp_handle_nak(struct netif *netif)
   /* Change to a defined state */
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
   /* We can immediately restart discovery */
-  dhcp_discover();
+  dhcp_discover(netif);
 }
 
 /**
