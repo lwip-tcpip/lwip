@@ -357,7 +357,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 #endif /* IP_REASSEMBLY */
   }
 
-#if IP_OPTIONS == 0 /* no support for IP options in the IP header? */
+#if IP_OPTIONS_ALLOWED == 0 /* no support for IP options in the IP header? */
 
 #if LWIP_IGMP
   /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
@@ -365,7 +365,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 #else
   if (iphdrlen > IP_HLEN) {
 #endif /* LWIP_IGMP */
-    LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS == 0).\n"));
+    LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS_ALLOWED == 0).\n"));
     pbuf_free(p);
     IP_STATS_INC(ip.opterr);
     IP_STATS_INC(ip.drop);
@@ -373,7 +373,7 @@ ip_input(struct pbuf *p, struct netif *inp)
     snmp_inc_ipinunknownprotos();
     return ERR_OK;
   }
-#endif /* IP_OPTIONS == 0 */
+#endif /* IP_OPTIONS_ALLOWED == 0 */
 
   /* send to upper layers */
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: \n"));

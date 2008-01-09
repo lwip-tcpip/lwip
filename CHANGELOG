@@ -564,6 +564,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-01-09 Jonathan Larmour
+  * opt.h, ip.c: Rename IP_OPTIONS define to IP_OPTIONS_ALLOWED to avoid
+  conflict with Linux system headers.
+
   2008-01-06 Jonathan Larmour
   * dhcp.c: fix bug #19927: "DHCP NACK problem" by clearing any existing set IP
   address entirely on receiving a DHCPNAK, and restarting discovery.

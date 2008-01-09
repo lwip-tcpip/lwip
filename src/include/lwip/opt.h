@@ -342,12 +342,12 @@
 #endif
 
 /**
- * IP_OPTIONS: Defines the behavior for IP options.
- *      IP_OPTIONS==0: All packets with IP options are dropped.
- *      IP_OPTIONS==1: IP options are allowed (but not parsed).
+ * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
+ *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.
+ *      IP_OPTIONS_ALLOWED==1: IP options are allowed (but not parsed).
  */
-#ifndef IP_OPTIONS
-#define IP_OPTIONS                      1
+#ifndef IP_OPTIONS_ALLOWED
+#define IP_OPTIONS_ALLOWED              1
 #endif
 
 /**
