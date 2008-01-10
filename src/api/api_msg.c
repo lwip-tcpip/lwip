@@ -282,9 +282,9 @@ err_tcp(void *arg, err_t err)
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
     sys_mbox_post(conn->recvmbox, NULL);
   }
-  if (conn->mbox != SYS_MBOX_NULL && conn->state == NETCONN_CONNECT) {
+  if (conn->sem != SYS_SEM_NULL && conn->state == NETCONN_CONNECT) {
     conn->state = NETCONN_NONE;
-    sys_mbox_post(conn->mbox, NULL);
+    sys_sem_signal(conn->sem);
   }
   if (conn->acceptmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
@@ -296,7 +296,7 @@ err_tcp(void *arg, err_t err)
        since the pcb has already been deleted! */
     conn->state = NETCONN_NONE;
     /* wake up the waiting task */
-    sys_mbox_post(conn->mbox, NULL);
+    sys_sem_signal(conn->sem);
   }
 }
 
@@ -470,12 +470,12 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->type = t;
   conn->pcb.tcp = NULL;
 
-  if ((conn->mbox = sys_mbox_new(1)) == SYS_MBOX_NULL) {
+  if ((conn->sem = sys_sem_new(0)) == SYS_SEM_NULL) {
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
   if ((conn->recvmbox = sys_mbox_new(DEFAULT_RECVMBOX_SIZE)) == SYS_MBOX_NULL) {
-    sys_mbox_free(conn->mbox);
+    sys_sem_free(conn->sem);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
@@ -530,8 +530,8 @@ netconn_free(struct netconn *conn)
     conn->acceptmbox = SYS_MBOX_NULL;
   }
 
-  sys_mbox_free(conn->mbox);
-  conn->mbox = SYS_MBOX_NULL;
+  sys_sem_free(conn->sem);
+  conn->sem = SYS_SEM_NULL;
 
   memp_free(MEMP_NETCONN, conn);
 }
@@ -579,7 +579,7 @@ do_close_internal(struct netconn *conn)
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
     API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
     /* wake up the application task */
-    sys_mbox_post(conn->mbox, NULL);
+    sys_sem_signal(conn->sem);
   }
   /* If closing didn't succeed, we get called again either
      from poll_tcp or from sent_tcp */
@@ -627,8 +627,8 @@ do_delconn(struct api_msg_msg *msg)
   API_EVENT(msg->conn, NETCONN_EVT_RCVPLUS, 0);
   API_EVENT(msg->conn, NETCONN_EVT_SENDPLUS, 0);
 
-  if (msg->conn->mbox != SYS_MBOX_NULL) {
-    sys_mbox_post(msg->conn->mbox, NULL);
+  if (msg->conn->sem != SYS_SEM_NULL) {
+    sys_sem_signal(msg->conn->sem);
   }
 }
 
@@ -696,7 +696,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
     setup_tcp(conn);
   }
   conn->state = NETCONN_NONE;
-  sys_mbox_post(conn->mbox, NULL);
+  sys_sem_signal(conn->sem);
   return ERR_OK;
 }
 #endif /* LWIP_TCP */
@@ -712,7 +712,7 @@ void
 do_connect(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
-    sys_mbox_post(msg->conn->mbox, NULL);
+    sys_sem_signal(msg->conn->sem);
     return;
   }
 
@@ -720,13 +720,13 @@ do_connect(struct api_msg_msg *msg)
 #if LWIP_RAW
   case NETCONN_RAW:
     msg->conn->err = raw_connect(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
-    sys_mbox_post(msg->conn->mbox, NULL);
+    sys_sem_signal(msg->conn->sem);
     break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
   case NETCONN_UDP:
     msg->conn->err = udp_connect(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
-    sys_mbox_post(msg->conn->mbox, NULL);
+    sys_sem_signal(msg->conn->sem);
     break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
@@ -735,7 +735,7 @@ do_connect(struct api_msg_msg *msg)
     setup_tcp(msg->conn);
     msg->conn->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
                                  do_connected);
-    /* sys_mbox_post() is called from do_connected (or err_tcp()),
+    /* sys_sem_signal() is called from do_connected (or err_tcp()),
      * when the connection is established! */
     break;
 #endif /* LWIP_TCP */
@@ -955,7 +955,7 @@ do_writemore(struct netconn *conn)
     if (conn->write_delayed != 0)
 #endif
     {
-      sys_mbox_post(conn->mbox, NULL);
+      sys_sem_signal(conn->sem);
     }
   }
 #if LWIP_TCPIP_CORE_LOCKING
@@ -987,7 +987,7 @@ do_write(struct api_msg_msg *msg)
       if (do_writemore(msg->conn) != ERR_OK) {
         LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
         UNLOCK_TCPIP_CORE();
-        sys_arch_mbox_fetch(msg->conn->mbox, NULL, 0);
+        sys_arch_sem_wait(msg->conn->sem, 0);
         LOCK_TCPIP_CORE();
         LWIP_ASSERT("state!", msg->conn->state == NETCONN_NONE);
       }

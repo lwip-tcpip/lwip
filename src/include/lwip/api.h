@@ -118,9 +118,8 @@ struct netconn {
   } pcb;
   /** the last error this netconn had */
   err_t err;
-  /** mbox that is used mutex-like to synchroneously execute functions
-      in the core context */
-  sys_mbox_t mbox;
+  /** sem that is used to synchroneously execute functions in the core context */
+  sys_sem_t sem;
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;

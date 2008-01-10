@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2008-01-10 Frédéric Bernon
+  * tcpip.h, tcpip.c, api.h, api_lib.c, api_msg.c, sockets.c: replace the field
+    netconn::mbox (sys_mbox_t) per netconn::sem (sys_sem_t) for the task #7490
+    "Add return value to sys_mbox_post".
+
   2008-01-05 Frédéric Bernon
   * sys_arch.txt, api.h, api_lib.c, api_msg.h, api_msg.c, tcpip.c, sys.h, opt.h:
     Introduce changes for task #7490 "Add return value to sys_mbox_post" with some
@@ -566,11 +571,11 @@ HISTORY
 
   2008-01-09 Jonathan Larmour
   * opt.h, ip.c: Rename IP_OPTIONS define to IP_OPTIONS_ALLOWED to avoid
-  conflict with Linux system headers.
+    conflict with Linux system headers.
 
   2008-01-06 Jonathan Larmour
   * dhcp.c: fix bug #19927: "DHCP NACK problem" by clearing any existing set IP
-  address entirely on receiving a DHCPNAK, and restarting discovery.
+    address entirely on receiving a DHCPNAK, and restarting discovery.
 
   2007-12-21 Simon Goldschmidt
   * sys.h, api_lib.c, api_msg.c, sockets.c: fix bug #21698: "netconn->recv_avail

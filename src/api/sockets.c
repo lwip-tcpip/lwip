@@ -1301,7 +1301,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   data.optlen = optlen;
   data.err = err;
   tcpip_callback(lwip_getsockopt_internal, &data);
-  sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+  sys_arch_sem_wait(sock->conn->sem, 0);
   /* maybe lwip_getsockopt_internal has changed err */
   err = data.err;
 
@@ -1485,7 +1485,7 @@ lwip_getsockopt_internal(void *arg)
     break;
 #endif /* LWIP_UDP */
   } /* switch (level) */
-  sys_mbox_post(sock->conn->mbox, NULL);
+  sys_sem_signal(sock->conn->sem);
 }
 
 int
@@ -1675,7 +1675,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   data.optlen = &optlen;
   data.err = err;
   tcpip_callback(lwip_setsockopt_internal, &data);
-  sys_arch_mbox_fetch(sock->conn->mbox, NULL, 0);
+  sys_arch_sem_wait(sock->conn->sem, 0);
   /* maybe lwip_setsockopt_internal has changed err */
   err = data.err;
 
@@ -1859,7 +1859,7 @@ lwip_setsockopt_internal(void *arg)
     break;
 #endif /* LWIP_UDP */
   }  /* switch (level) */
-  sys_mbox_post(sock->conn->mbox, NULL);
+  sys_sem_signal(sock->conn->sem);
 }
 
 int
