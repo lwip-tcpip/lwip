@@ -20,6 +20,11 @@ HISTORY
   ++ New features:
 
   2008-01-10 Frédéric Bernon
+  * tcpip.h, tcpip.c: add tcpip_callback_with_block function for the task #7490
+    "Add return value to sys_mbox_post". tcpip_callback is always defined as
+    "blocking" ("block" parameter = 1).
+
+  2008-01-10 Frédéric Bernon
   * tcpip.h, tcpip.c, api.h, api_lib.c, api_msg.c, sockets.c: replace the field
     netconn::mbox (sys_mbox_t) per netconn::sem (sys_sem_t) for the task #7490
     "Add return value to sys_mbox_post".

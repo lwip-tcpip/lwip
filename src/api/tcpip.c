@@ -349,10 +349,11 @@ tcpip_input(struct pbuf *p, struct netif *inp)
  *
  * @param f the function to call
  * @param ctx parameter passed to f
+ * @param block 1 to block until the request is posted, 0 to non-blocking mode
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
-tcpip_callback(void (*f)(void *ctx), void *ctx)
+tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block)
 {
   struct tcpip_msg *msg;
 
@@ -365,7 +366,14 @@ tcpip_callback(void (*f)(void *ctx), void *ctx)
     msg->type = TCPIP_MSG_CALLBACK;
     msg->msg.cb.f = f;
     msg->msg.cb.ctx = ctx;
-    sys_mbox_post(mbox, msg);
+    if (block) {
+      sys_mbox_post(mbox, msg);
+    } else {
+      if (sys_mbox_trypost(mbox, msg) != ERR_OK) {
+        memp_free(MEMP_TCPIP_MSG_API, msg);
+        return ERR_MEM;
+      }
+    }
     return ERR_OK;
   }
   return ERR_VAL;
