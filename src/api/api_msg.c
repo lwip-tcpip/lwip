@@ -460,6 +460,7 @@ struct netconn*
 netconn_alloc(enum netconn_type t, netconn_callback callback)
 {
   struct netconn *conn;
+  int size;
 
   conn = memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
@@ -470,15 +471,42 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->type = t;
   conn->pcb.tcp = NULL;
 
+#if (DEFAULT_RAW_RECVMBOX_SIZE == DEFAULT_UDP_RECVMBOX_SIZE) && \
+    (DEFAULT_RAW_RECVMBOX_SIZE == DEFAULT_TCP_RECVMBOX_SIZE)
+  size = DEFAULT_RAW_RECVMBOX_SIZE;
+#else
+  switch(NETCONNTYPE_GROUP(t)) {
+#if LWIP_RAW
+  case NETCONN_RAW:
+    size = DEFAULT_RAW_RECVMBOX_SIZE;
+    break;
+#endif /* LWIP_RAW */
+#if LWIP_UDP
+  case NETCONN_UDP:
+    size = DEFAULT_UDP_RECVMBOX_SIZE;
+    break;
+#endif /* LWIP_UDP */
+#if LWIP_TCP
+  case NETCONN_TCP:
+    size = DEFAULT_TCP_RECVMBOX_SIZE;
+    break;
+#endif /* LWIP_TCP */
+  default:
+    LWIP_ASSERT("netconn_alloc: undefined netconn_type", 0);
+    break;
+  }
+#endif
+
   if ((conn->sem = sys_sem_new(0)) == SYS_SEM_NULL) {
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
-  if ((conn->recvmbox = sys_mbox_new(DEFAULT_RECVMBOX_SIZE)) == SYS_MBOX_NULL) {
+  if ((conn->recvmbox = sys_mbox_new(size)) == SYS_MBOX_NULL) {
     sys_sem_free(conn->sem);
     memp_free(MEMP_NETCONN, conn);
     return NULL;
   }
+
   conn->acceptmbox   = SYS_MBOX_NULL;
   conn->state        = NETCONN_NONE;
   /* initialize socket to -1 since 0 is a valid socket */

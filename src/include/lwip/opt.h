@@ -958,12 +958,30 @@
 #endif
 
 /**
- * DEFAULT_RECVMBOX_SIZE: The mailbox size for the incoming packets.
- * The queue size value itself is platform-dependent, but is passed to
- * sys_mbox_new() when the recvmbox is created.
+ * DEFAULT_RAW_RECVMBOX_SIZE: The mailbox size for the incoming packets on a
+ * NETCONN_RAW. The queue size value itself is platform-dependent, but is passed
+ * to sys_mbox_new() when the recvmbox is created.
  */
-#ifndef DEFAULT_RECVMBOX_SIZE
-#define DEFAULT_RECVMBOX_SIZE           0
+#ifndef DEFAULT_RAW_RECVMBOX_SIZE
+#define DEFAULT_RAW_RECVMBOX_SIZE       0
+#endif
+
+/**
+ * DEFAULT_UDP_RECVMBOX_SIZE: The mailbox size for the incoming packets on a
+ * NETCONN_UDP. The queue size value itself is platform-dependent, but is passed
+ * to sys_mbox_new() when the recvmbox is created.
+ */
+#ifndef DEFAULT_UDP_RECVMBOX_SIZE
+#define DEFAULT_UDP_RECVMBOX_SIZE       0
+#endif
+
+/**
+ * DEFAULT_TCP_RECVMBOX_SIZE: The mailbox size for the incoming packets on a
+ * NETCONN_TCP. The queue size value itself is platform-dependent, but is passed
+ * to sys_mbox_new() when the recvmbox is created.
+ */
+#ifndef DEFAULT_TCP_RECVMBOX_SIZE
+#define DEFAULT_TCP_RECVMBOX_SIZE       0
 #endif
 
 /**

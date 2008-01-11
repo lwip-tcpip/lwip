@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2008-01-12 Frédéric Bernon
+  * api_msg.c, opt.h: replace DEFAULT_RECVMBOX_SIZE per DEFAULT_TCP_RECVMBOX_SIZE,
+    DEFAULT_UDP_RECVMBOX_SIZE and DEFAULT_RAW_RECVMBOX_SIZE (to optimize queues
+    sizes), like suggested for the task #7490 "Add return value to sys_mbox_post".
+
   2008-01-10 Frédéric Bernon
   * tcpip.h, tcpip.c: add tcpip_callback_with_block function for the task #7490
     "Add return value to sys_mbox_post". tcpip_callback is always defined as
