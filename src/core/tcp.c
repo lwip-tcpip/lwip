@@ -336,6 +336,7 @@ tcp_accept_null(void *arg, struct tcp_pcb *pcb, err_t err)
  * connection to LISTEN is an irreversible process.
  *
  * @param pcb the original tcp_pcb
+ * @param backlog the incoming connections queue limit
  * @return tcp_pcb used for listening, consumes less memory.
  *
  * @note The original tcp_pcb is freed. This function therefore has to be
