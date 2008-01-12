@@ -418,7 +418,7 @@ tcpip_apimsg(struct api_msg *apimsg)
     msg.type = TCPIP_MSG_API;
     msg.msg.apimsg = apimsg;
     sys_mbox_post(mbox, &msg);
-    sys_arch_sem_wait(apimsg->msg.conn->sem, 0);
+    sys_arch_sem_wait(apimsg->msg.conn->op_completed, 0);
     return ERR_OK;
   }
   return ERR_VAL;

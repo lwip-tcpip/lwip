@@ -20,6 +20,11 @@ HISTORY
   ++ New features:
 
   2008-01-12 Frédéric Bernon
+  * tcpip.h, tcpip.c, api.h, api_lib.c, api_msg.c, sockets.c: replace the field
+    netconn::sem per netconn::op_completed like suggested for the task #7490
+    "Add return value to sys_mbox_post".
+
+  2008-01-12 Frédéric Bernon
   * api_msg.c, opt.h: replace DEFAULT_RECVMBOX_SIZE per DEFAULT_TCP_RECVMBOX_SIZE,
     DEFAULT_UDP_RECVMBOX_SIZE and DEFAULT_RAW_RECVMBOX_SIZE (to optimize queues
     sizes), like suggested for the task #7490 "Add return value to sys_mbox_post".

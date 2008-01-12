@@ -119,7 +119,7 @@ struct netconn {
   /** the last error this netconn had */
   err_t err;
   /** sem that is used to synchroneously execute functions in the core context */
-  sys_sem_t sem;
+  sys_sem_t op_completed;
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;

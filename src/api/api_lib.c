@@ -79,10 +79,10 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 
     if (conn->err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
-      LWIP_ASSERT("conn has no sem", conn->sem != SYS_SEM_NULL);
+      LWIP_ASSERT("conn has no op_completed", conn->op_completed != SYS_SEM_NULL);
       LWIP_ASSERT("conn has no recvmbox", conn->recvmbox != SYS_MBOX_NULL);
       LWIP_ASSERT("conn->acceptmbox shouldn't exist", conn->acceptmbox == SYS_MBOX_NULL);
-      sys_sem_free(conn->sem);
+      sys_sem_free(conn->op_completed);
       sys_mbox_free(conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
       return NULL;
