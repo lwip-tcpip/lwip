@@ -177,7 +177,8 @@ ip_input(struct pbuf *p, struct netif *inp)
 {
   struct ip_hdr *iphdr;
   struct netif *netif;
-  u16_t iphdrlen;
+  u16_t iphdr_hlen;
+  u16_t iphdr_len;
 #if LWIP_DHCP
   int check_ip_src=1;
 #endif /* LWIP_DHCP */
@@ -198,14 +199,21 @@ ip_input(struct pbuf *p, struct netif *inp)
   }
 
   /* obtain IP header length in number of 32-bit words */
-  iphdrlen = IPH_HL(iphdr);
+  iphdr_hlen = IPH_HL(iphdr);
   /* calculate IP header length in bytes */
-  iphdrlen *= 4;
+  iphdr_hlen *= 4;
+  /* obtain ip length in bytes */
+  iphdr_len = ntohs(IPH_LEN(iphdr));
 
-  /* header length exceeds first pbuf length? */
-  if (iphdrlen > p->len) {
-    LWIP_DEBUGF(IP_DEBUG | 2, ("IP header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet droppped.\n",
-      iphdrlen, p->len));
+  /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
+  if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len)) {
+    if (iphdr_hlen > p->len)
+    LWIP_DEBUGF(IP_DEBUG | 2, ("IP header (len %"U16_F") does not fit in first pbuf (len %"U16_F"), IP packet dropped.\n",
+                               iphdr_hlen, p->len));
+    if (iphdr_len > p->tot_len)
+    LWIP_DEBUGF(IP_DEBUG | 2, ("IP (len %"U16_F") is longer than pbuf (len %"U16_F"), "
+                               "IP packet dropped.\n",
+                               iphdr_len, p->tot_len));
     /* free (drop) packet pbufs */
     pbuf_free(p);
     IP_STATS_INC(ip.lenerr);
@@ -216,9 +224,9 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* verify checksum */
 #if CHECKSUM_CHECK_IP
-  if (inet_chksum(iphdr, iphdrlen) != 0) {
+  if (inet_chksum(iphdr, iphdr_hlen) != 0) {
 
-    LWIP_DEBUGF(IP_DEBUG | 2, ("Checksum (0x%"X16_F") failed, IP packet dropped.\n", inet_chksum(iphdr, iphdrlen)));
+    LWIP_DEBUGF(IP_DEBUG | 2, ("Checksum (0x%"X16_F") failed, IP packet dropped.\n", inet_chksum(iphdr, iphdr_hlen)));
     ip_debug_print(p);
     pbuf_free(p);
     IP_STATS_INC(ip.chkerr);
@@ -230,7 +238,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* Trim pbuf. This should have been done at the netif layer,
    * but we'll do it anyway just to be sure that its done. */
-  pbuf_realloc(p, ntohs(IPH_LEN(iphdr)));
+  pbuf_realloc(p, iphdr_len);
 
   /* match packet against an interface, i.e. is this packet for us? */
 #if LWIP_IGMP
@@ -288,8 +296,8 @@ ip_input(struct pbuf *p, struct netif *inp)
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
-        ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest)));
-      if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdrlen))->dest) == DHCP_CLIENT_PORT) {
+        ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen))->dest)));
+      if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen))->dest) == DHCP_CLIENT_PORT) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE | 1, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
         check_ip_src = 0;
@@ -361,9 +369,9 @@ ip_input(struct pbuf *p, struct netif *inp)
 
 #if LWIP_IGMP
   /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
-  if((iphdrlen > IP_HLEN &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
+  if((iphdr_hlen > IP_HLEN &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
 #else
-  if (iphdrlen > IP_HLEN) {
+  if (iphdr_hlen > IP_HLEN) {
 #endif /* LWIP_IGMP */
     LWIP_DEBUGF(IP_DEBUG | 2, ("IP packet dropped since there were IP options (while IP_OPTIONS_ALLOWED == 0).\n"));
     pbuf_free(p);
