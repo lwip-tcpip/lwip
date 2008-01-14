@@ -165,7 +165,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 #if LWIP_TCP
 /**
  * Receive callback function for TCP netconns.
- * Posts the packet to conn->recvmbox or deletes it on memory error.
+ * Posts the packet to conn->recvmbox, but doesn't delete it on errors.
  *
  * @see tcp.h (struct tcp_pcb.recv) for parameters and return value
  */
@@ -182,7 +182,6 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
   if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
-    pbuf_free(p);
     return ERR_VAL;
   }
 
@@ -195,7 +194,9 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   }
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
-  sys_mbox_post(conn->recvmbox, p);
+  if (sys_mbox_trypost(conn->recvmbox, p) != ERR_OK) {
+    return ERR_MEM;
+  }
 
   return ERR_OK;
 }

@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2008-01-14 Frédéric Bernon
+  * rawapi.txt, api_msg.c, tcp.c, tcp_in.c, tcp.h: changes for task #7675 "Enable
+    to refuse data on a TCP_EVENT_RECV call". Important, behavior changes for the
+    tcp_recv callback (see rawapi.txt).
+
   2008-01-14 Frédéric Bernon, Marc Chaland
   * ip.c: Integrate patch #6369" ip_input : checking before realloc".
   

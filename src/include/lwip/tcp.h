@@ -339,6 +339,8 @@ struct tcp_pcb {
   struct tcp_seg *ooseq;    /* Received out of sequence segments. */
 #endif /* TCP_QUEUE_OOSEQ */
 
+  struct pbuf *refused_data; /* Data previously received but not yet taken by upper layer */
+
 #if LWIP_CALLBACK_API
   /* Function to be called when more send buffer space is available.
    * @param arg user-supplied argument (tcp_pcb.callback_arg)
@@ -471,6 +473,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
 #define TCP_EVENT_RECV(pcb,p,err,ret) \
                         if((pcb)->recv != NULL) \
                         { ret = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); } else { \
+                          ret = ERR_OK; \
                           if (p) pbuf_free(p); }
 #define TCP_EVENT_CONNECTED(pcb,err,ret) \
                         if((pcb)->connected != NULL) \

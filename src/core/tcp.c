@@ -770,7 +770,8 @@ tcp_slowtmr(void)
 }
 
 /**
- * Is called every TCP_FAST_INTERVAL (250 ms) and sends delayed ACKs.
+ * Is called every TCP_FAST_INTERVAL (250 ms) and process data previously
+ * "refused" by upper layer (application) and sends delayed ACKs.
  *
  * Automatically called from tcp_tmr().
  */
@@ -779,8 +780,19 @@ tcp_fasttmr(void)
 {
   struct tcp_pcb *pcb;
 
-  /* send delayed ACKs */  
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+    /* If there is data which was previously "refused" by upper layer */
+    if (pcb->refused_data != NULL) {
+      /* Notify again application with data previously received. */
+      err_t err;
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_fasttmr: notify kept packet\n"));
+      TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
+      if (err == ERR_OK) {
+        pcb->refused_data = NULL;
+      }
+    }
+
+    /* send delayed ACKs */  
     if (pcb->flags & TF_ACK_DELAY) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
@@ -1135,15 +1147,20 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
      pcb->state != LISTEN) {
 
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge\n"));
-    
-    if (pcb->unsent != NULL) {    
+
+    if (pcb->refused_data != NULL) {
+      LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->refused_data\n"));
+      pbuf_free(pcb->refused_data);
+      pcb->refused_data = NULL;
+    }
+    if (pcb->unsent != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: not all data sent\n"));
     }
-    if (pcb->unacked != NULL) {    
+    if (pcb->unacked != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->unacked\n"));
     }
 #if TCP_QUEUE_OOSEQ /* LW */
-    if (pcb->ooseq != NULL) {    
+    if (pcb->ooseq != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
 

@@ -272,6 +272,23 @@ tcp_input(struct pbuf *p, struct netif *inp)
     recv_data = NULL;
     recv_flags = 0;
 
+    /* If there is data which was previously "refused" by upper layer */
+    if (pcb->refused_data != NULL) {
+      /* Notify again application with data previously received. */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
+      TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
+      if (err == ERR_OK) {
+        pcb->refused_data = NULL;
+      } else {
+        /* drop incoming packets, because pcb is "full" */
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+        TCP_STATS_INC(tcp.drop);
+        snmp_inc_tcpinerrs();
+        pbuf_free(p);
+        return;
+      }
+    }
+
     tcp_input_pcb = pcb;
     err = tcp_process(pcb);
     tcp_input_pcb = NULL;
@@ -304,15 +321,23 @@ tcp_input(struct pbuf *p, struct netif *inp)
           if(flags & TCP_PSH) {
             recv_data->flags |= PBUF_FLAG_PUSH;
           }
+
           /* Notify application that data has been received. */
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
+
+          /* If the upper layer can't receive this data, store it */
+          if (err != ERR_OK) {
+            pcb->refused_data = recv_data;
+            LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: keep incoming packet, because pcb is \"full\"\n"));
+          }
         }
-      
+
         /* If a FIN segment was received, we call the callback
            function with a NULL buffer to indicate EOF. */
         if (recv_flags & TF_GOT_FIN) {
           TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
         }
+
         /* If there were no errors, we try to send something out. */
         if (err == ERR_OK) {
           tcp_output(pcb);
