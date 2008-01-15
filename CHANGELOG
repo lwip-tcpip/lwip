@@ -592,6 +592,12 @@ HISTORY
 
   ++ Bug fixes:
 
+
+  2008-01-15 Kieran Mansley
+  * tcp_out.c: BUG20511.  Modify persist timer to start when we are
+    prevented from sending by a small send window, not just a zero
+    send window.
+
   2008-01-09 Jonathan Larmour
   * opt.h, ip.c: Rename IP_OPTIONS define to IP_OPTIONS_ALLOWED to avoid
     conflict with Linux system headers.

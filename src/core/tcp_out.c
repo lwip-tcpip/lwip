@@ -510,11 +510,7 @@ tcp_output(struct tcp_pcb *pcb)
                  ntohl(seg->tcphdr->seqno), pcb->lastack));
   }
 #endif /* TCP_CWND_DEBUG */
-  if (seg != NULL && pcb->snd_wnd == 0 && pcb->persist_backoff == 0) {
-    /* prepare for persist timer */
-    pcb->persist_cnt = 0;
-    pcb->persist_backoff = 1;
-  }  /* data available and window allows it to be sent? */
+  /* data available and window allows it to be sent? */
   while (seg != NULL &&
          ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len <= wnd) {
     LWIP_ASSERT("RST not expected here!", 
@@ -579,8 +575,16 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
- pcb->flags &= ~TF_NAGLEMEMERR;
- return ERR_OK;
+
+  if (seg != NULL && pcb->persist_backoff == 0 && 
+      ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > pcb->snd_wnd) {
+    /* prepare for persist timer */
+    pcb->persist_cnt = 0;
+    pcb->persist_backoff = 1;
+  }
+
+  pcb->flags &= ~TF_NAGLEMEMERR;
+  return ERR_OK;
 }
 
 /**
