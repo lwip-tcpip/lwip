@@ -625,7 +625,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   u8_t i;
   u8_t for_us;
 #if LWIP_AUTOIP
-  u8_t * ethdst_hwaddr;
+  const u8_t * ethdst_hwaddr;
 #endif /* LWIP_AUTOIP */
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
@@ -1039,7 +1039,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   u8_t k; /* ARP entry index */
   struct etharp_hdr *hdr;
 #if LWIP_AUTOIP
-  u8_t * ethdst_hwaddr;
+  const u8_t * ethdst_hwaddr;
 #endif /* LWIP_AUTOIP */
 
   /* allocate a pbuf for the outgoing ARP request packet */
