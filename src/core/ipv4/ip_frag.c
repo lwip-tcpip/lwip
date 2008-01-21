@@ -124,7 +124,7 @@ ip_reass_tmr(void)
     } else {
       /* reassembly timed out */
       struct ip_reassdata *tmp;
-      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out"));
+      LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_reass_tmr: timer timed out\n"));
       tmp = r;
       /* get the next pointer before freeing */
       r = r->next;
@@ -264,7 +264,7 @@ ip_reass_enqueue_new_datagram(struct ip_hdr *fraghdr, int clen)
 #endif /* IP_REASS_FREE_OLDEST */
     {
       IPFRAG_STATS_INC(ip_frag.memerr);
-      LWIP_DEBUGF(IP_REASS_DEBUG,("Failed to alloc reassdata struct"));
+      LWIP_DEBUGF(IP_REASS_DEBUG,("Failed to alloc reassdata struct\n"));
       return NULL;
     }
   }
@@ -473,7 +473,7 @@ ip_reass(struct pbuf *p)
   fraghdr = (struct ip_hdr*)p->payload;
 
   if ((IPH_HL(fraghdr) * 4) != IP_HLEN) {
-    LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: IP options currently not supported!"));
+    LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: IP options currently not supported!\n"));
     IPFRAG_STATS_INC(ip_frag.err);
     goto nullreturn;
   }
@@ -490,7 +490,7 @@ ip_reass(struct pbuf *p)
 #endif /* IP_REASS_FREE_OLDEST */
     {
       /* No datagram could be freed and still too many pbufs enqueued */
-      LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: Overflow condition: pbufct=%d, clen=%d, MAX=%d",
+      LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: Overflow condition: pbufct=%d, clen=%d, MAX=%d\n",
         ip_reass_pbufcount, clen, IP_REASS_MAX_PBUFS));
       IPFRAG_STATS_INC(ip_frag.memerr);
       /* @todo: send ICMP time exceeded here? */
@@ -586,11 +586,11 @@ ip_reass(struct pbuf *p)
     return p;
   }
   /* the datagram is not (yet?) reassembled completely */
-  LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass_pbufcount: %d out", ip_reass_pbufcount));
+  LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass_pbufcount: %d out\n", ip_reass_pbufcount));
   return NULL;
 
 nullreturn:
-  LWIP_DEBUGF(IP_REASS_DEBUG,("nullreturn"));
+  LWIP_DEBUGF(IP_REASS_DEBUG,("ip_reass: nullreturn\n"));
   IPFRAG_STATS_INC(ip_frag.drop);
   pbuf_free(p);
   return NULL;
