@@ -1185,6 +1185,7 @@ dhcp_unfold_reply(struct dhcp *dhcp)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes to dhcp->options_in[]\n",
       dhcp->options_in_len));
   }
+  LWIP_UNUSED_ARG(ret);
   return ERR_OK;
 }
 
