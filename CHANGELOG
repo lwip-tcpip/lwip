@@ -123,7 +123,7 @@ HISTORY
   2007-11-21 Simon Goldschmidt
   * tcp.h, opt.h, tcp.c, tcp_in.c: implemented calculating the effective send-mss
     based on the MTU of the netif used to send. Enabled by default. Disable by
-    setting LWIP_CALCULATE_EFF_SEND_MSS to 0. This fixes bug #21535.
+    setting LWIP_CALCULATE_EFF_SEND_MSS to 0. This fixes bug #21492.
 
   2007-11-19 Frédéric Bernon
   * api_msg.c, dns.h, dns.c: Implement DNS_DOES_NAME_CHECK option (check if name

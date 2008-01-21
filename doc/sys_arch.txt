@@ -129,7 +129,7 @@ The following functions must be implemented by the sys_arch:
   pointer to a linked list of timeouts. This function is called by
   the lwIP timeout scheduler and must not return a NULL value. 
 
-  In a single threadd sys_arch implementation, this function will
+  In a single thread sys_arch implementation, this function will
   simply return a pointer to a global sys_timeouts variable stored in
   the sys_arch module.
   
