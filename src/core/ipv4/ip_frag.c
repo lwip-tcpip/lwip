@@ -634,7 +634,8 @@ ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
   u16_t poff = IP_HLEN;
   u16_t tmp;
 #if !IP_FRAG_USES_STATIC_BUF
-  u16_t newpbuflen, left_to_copy;
+  u16_t newpbuflen = 0;
+  u16_t left_to_copy;
 #endif
 
   /* Get a RAM based MTU sized pbuf */
