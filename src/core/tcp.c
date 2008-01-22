@@ -511,9 +511,9 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->snd_wnd = TCP_WND;
   /* The send MSS is updated when an MSS option is received. */
   pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
-#if LWIP_CALCULATE_EFF_SEND_MSS
+#if TCP_CALCULATE_EFF_SEND_MSS
   pcb->mss = tcp_eff_send_mss(pcb->mss, ipaddr);
-#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
+#endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
   pcb->state = SYN_SENT;
@@ -1225,7 +1225,7 @@ tcp_next_iss(void)
   return iss;
 }
 
-#if LWIP_CALCULATE_EFF_SEND_MSS
+#if TCP_CALCULATE_EFF_SEND_MSS
 /**
  * Calcluates the effective send mss that can be used for a specific IP address
  * by using ip_route to determin the netif used to send to the address and
@@ -1247,7 +1247,7 @@ tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr)
   }
   return sendmss;
 }
-#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
+#endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 /**

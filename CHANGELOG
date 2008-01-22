@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2008-01-22 Frédéric Bernon
+  * tcp.c, tcp_in.c, tcp.h, opt.h: Rename LWIP_CALCULATE_EFF_SEND_MSS in 
+    TCP_CALCULATE_EFF_SEND_MSS to have coherent TCP options names.
+
   2008-01-14 Frédéric Bernon
   * rawapi.txt, api_msg.c, tcp.c, tcp_in.c, tcp.h: changes for task #7675 "Enable
     to refuse data on a TCP_EVENT_RECV call". Important, behavior changes for the

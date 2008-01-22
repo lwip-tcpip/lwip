@@ -531,9 +531,9 @@ u32_t tcp_next_iss(void);
 void tcp_keepalive(struct tcp_pcb *pcb);
 void tcp_zero_window_probe(struct tcp_pcb *pcb);
 
-#if LWIP_CALCULATE_EFF_SEND_MSS
+#if TCP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr);
-#endif /* LWIP_CALCULATE_EFF_SEND_MSS*/
+#endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 extern struct tcp_pcb *tcp_input_pcb;
 extern u32_t tcp_ticks;

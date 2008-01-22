@@ -445,9 +445,9 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
     /* Parse any options in the SYN. */
     tcp_parseopt(npcb);
-#if LWIP_CALCULATE_EFF_SEND_MSS
+#if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip));
-#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
+#endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
     snmp_inc_tcppassiveopens();
 
@@ -553,9 +553,9 @@ tcp_process(struct tcp_pcb *pcb)
       /* Parse any options in the SYNACK before using pcb->mss since that
        * can be changed by the received options! */
       tcp_parseopt(pcb);
-#if LWIP_CALCULATE_EFF_SEND_MSS
+#if TCP_CALCULATE_EFF_SEND_MSS
       pcb->mss = tcp_eff_send_mss(pcb->mss, &(pcb->remote_ip));
-#endif /* LWIP_CALCULATE_EFF_SEND_MSS */
+#endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
       /* Set ssthresh again after changing pcb->mss (already set in tcp_connect
        * but for the default value of pcb->mss) */
