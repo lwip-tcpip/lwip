@@ -403,7 +403,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
 {
   err_t err;
   struct dns_hdr *hdr;
-  struct dns_query *qry;
+  struct dns_query qry;
   struct pbuf *p;
   char *query, *nptr;
   const char *pHostname;
@@ -444,9 +444,9 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     *query++='\0';
 
     /* fill dns query */
-    qry = (struct dns_query *)query;
-    qry->type  = htons(DNS_RRTYPE_A);
-    qry->class = htons(DNS_RRCLASS_IN);
+    qry.type  = htons(DNS_RRTYPE_A);
+    qry.class = htons(DNS_RRCLASS_IN);
+    memcpy( query, &qry, sizeof(struct dns_query));
 
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (query + sizeof(struct dns_query)) - ((char*)(p->payload)));
@@ -568,7 +568,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
   u8_t i;
   char *pHostname;
   struct dns_hdr *hdr;
-  struct dns_answer *ans;
+  struct dns_answer ans;
   struct dns_table_entry *pEntry;
   u8_t nquestions, nanswers;
 #if (DNS_USES_STATIC_BUF == 0)
@@ -647,15 +647,15 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
           /* Check for IP address type and Internet class. Others are discarded. */
-          ans = (struct dns_answer *)pHostname;
-          if((ntohs(ans->type) == DNS_RRTYPE_A) && (ntohs(ans->class) == DNS_RRCLASS_IN) && (ntohs(ans->len) == sizeof(struct ip_addr)) ) {
+          memcpy(&ans, pHostname, sizeof(struct dns_answer));
+          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(struct ip_addr)) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
-            pEntry->ttl = ntohl(ans->ttl);
+            pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {
               pEntry->ttl = DNS_MAX_TTL;
             }
             /* read the IP address after answer resource record's header */
-            pEntry->ipaddr =  (*((struct ip_addr*)(ans+1)));
+            memcpy( &(pEntry->ipaddr), (pHostname+sizeof(struct dns_answer)), sizeof(struct ip_addr));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
@@ -666,7 +666,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
             /* deallocate memory and return */
             goto memerr2;
           } else {
-            pHostname = pHostname + sizeof(struct dns_answer) + htons(ans->len);
+            pHostname = pHostname + sizeof(struct dns_answer) + htons(ans.len);
           }
           --nanswers;
         }

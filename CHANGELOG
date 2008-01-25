@@ -596,6 +596,8 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-01-25 Cui hengbin (integrated by Frédéric Bernon)
+  * dns.c: Fix bug #22108 "DNS problem" caused by unaligned structures.
 
   2008-01-15 Kieran Mansley
   * tcp_out.c: BUG20511.  Modify persist timer to start when we are
