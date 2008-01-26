@@ -446,7 +446,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     /* fill dns query */
     qry.type  = htons(DNS_RRTYPE_A);
     qry.class = htons(DNS_RRCLASS_IN);
-    memcpy( query, &qry, sizeof(struct dns_query));
+    MEMCPY( query, &qry, sizeof(struct dns_query));
 
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (query + sizeof(struct dns_query)) - ((char*)(p->payload)));
@@ -647,7 +647,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
           /* Check for IP address type and Internet class. Others are discarded. */
-          memcpy(&ans, pHostname, sizeof(struct dns_answer));
+          MEMCPY(&ans, pHostname, sizeof(struct dns_answer));
           if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(struct ip_addr)) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
@@ -655,7 +655,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
               pEntry->ttl = DNS_MAX_TTL;
             }
             /* read the IP address after answer resource record's header */
-            memcpy( &(pEntry->ipaddr), (pHostname+sizeof(struct dns_answer)), sizeof(struct ip_addr));
+            MEMCPY( &(pEntry->ipaddr), (pHostname+sizeof(struct dns_answer)), sizeof(struct ip_addr));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));

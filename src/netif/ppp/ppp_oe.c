@@ -258,7 +258,7 @@ pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), 
   memset(sc, 0, sizeof(struct pppoe_softc));
 
   /* changed to real address later */
-  memcpy(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
 
   sc->sc_pd = pd;
   sc->sc_linkStatusCB = linkStatusCB;
@@ -345,7 +345,7 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
   if (len != sizeof sc) {
     return NULL;
   }
-  memcpy(&t, token, len);
+  MEMCPY(&t, token, len);
 
   LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
     if (sc == t) {
@@ -445,7 +445,7 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
   len = 0;
   sc = NULL;
   while (off + sizeof(pt) <= pb->len) {
-    memcpy(&pt, (u8_t*)pb->payload + off, sizeof(pt));
+    MEMCPY(&pt, (u8_t*)pb->payload + off, sizeof(pt));
     tag = ntohs(pt.tag);
     len = ntohs(pt.len);
     if (off + sizeof(pt) + len > pb->len) {
@@ -548,9 +548,9 @@ breakbreak:;
           goto done;
         }
         sc->sc_hunique_len = hunique_len;
-        memcpy(sc->sc_hunique, hunique, hunique_len);
+        MEMCPY(sc->sc_hunique, hunique, hunique_len);
       }
-      memcpy(&sc->sc_dest, eh->ether_shost, sizeof sc->sc_dest);
+      MEMCPY(&sc->sc_dest, eh->ether_shost, sizeof sc->sc_dest);
       sc->sc_state = PPPOE_STATE_PADO_SENT;
       pppoe_send_pado(sc);
       break;
@@ -586,7 +586,7 @@ breakbreak:;
           goto done;
         }
         sc->sc_hunique_len = hunique_len;
-        memcpy(sc->sc_hunique, hunique, hunique_len);
+        MEMCPY(sc->sc_hunique, hunique, hunique_len);
       }
       pppoe_send_pads(sc);
       sc->sc_state = PPPOE_STATE_SESSION;
@@ -617,9 +617,9 @@ breakbreak:;
           goto done;
         }
         sc->sc_ac_cookie_len = ac_cookie_len;
-        memcpy(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
+        MEMCPY(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
       }
-      memcpy(&sc->sc_dest, ethhdr->src.addr, sizeof(sc->sc_dest.addr));
+      MEMCPY(&sc->sc_dest, ethhdr->src.addr, sizeof(sc->sc_dest.addr));
       tcpip_untimeout(pppoe_timeout, sc);
       sc->sc_padr_retried = 0;
       sc->sc_state = PPPOE_STATE_PADR_SENT;
@@ -682,7 +682,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
 #endif
 
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
-  memcpy(shost, ((struct eth_hdr *)pb->payload)->src.addr, sizeof(shost));
+  MEMCPY(shost, ((struct eth_hdr *)pb->payload)->src.addr, sizeof(shost));
 #endif
   if (pbuf_header(pb, -(int)sizeof(struct eth_hdr)) != 0) {
     /* bail out */
@@ -762,8 +762,8 @@ pppoe_output(struct pppoe_softc *sc, struct pbuf *pb)
   ethhdr = (struct eth_hdr *)pb->payload;
   etype = sc->sc_state == PPPOE_STATE_SESSION ? ETHTYPE_PPPOE : ETHTYPE_PPPOEDISC;
   ethhdr->type = htons(etype);
-  memcpy(ethhdr->dest.addr, sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
-  memcpy(ethhdr->src.addr, ((struct eth_addr *)sc->sc_ethif->hwaddr)->addr, sizeof(ethhdr->src.addr));
+  MEMCPY(ethhdr->dest.addr, sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
+  MEMCPY(ethhdr->src.addr, ((struct eth_addr *)sc->sc_ethif->hwaddr)->addr, sizeof(ethhdr->src.addr));
 
   PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F" (%x) state=%d, session=0x%x output -> %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F", len=%d\n",
       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, etype,
@@ -812,7 +812,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
   if (sc->sc_service_name != NULL) {
     PPPOE_ADD_16(p, l1);
-    memcpy(p, sc->sc_service_name, l1);
+    MEMCPY(p, sc->sc_service_name, l1);
     p += l1;
   } else {
     PPPOE_ADD_16(p, 0);
@@ -820,12 +820,12 @@ pppoe_send_padi(struct pppoe_softc *sc)
   if (sc->sc_concentrator_name != NULL) {
     PPPOE_ADD_16(p, PPPOE_TAG_ACNAME);
     PPPOE_ADD_16(p, l2);
-    memcpy(p, sc->sc_concentrator_name, l2);
+    MEMCPY(p, sc->sc_concentrator_name, l2);
     p += l2;
   }
   PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
   PPPOE_ADD_16(p, sizeof(sc));
-  memcpy(p, &sc, sizeof sc);
+  MEMCPY(p, &sc, sizeof sc);
 
   /* send pkt */
   return pppoe_output(sc, pb);
@@ -877,7 +877,7 @@ pppoe_timeout(void *arg)
     case PPPOE_STATE_PADR_SENT:
       sc->sc_padr_retried++;
       if (sc->sc_padr_retried >= PPPOE_DISC_MAXPADR) {
-        memcpy(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+        MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
         sc->sc_state = PPPOE_STATE_PADI_SENT;
         sc->sc_padr_retried = 0;
         if ((err = pppoe_send_padi(sc)) != 0) {
@@ -955,7 +955,7 @@ pppoe_do_disconnect(struct pppoe_softc *sc)
 
   /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
-  memcpy(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   if (sc->sc_ac_cookie) {
     mem_free(sc->sc_ac_cookie);
     sc->sc_ac_cookie = NULL;
@@ -985,7 +985,7 @@ pppoe_abort_connect(struct pppoe_softc *sc)
   sc->sc_linkStatusCB(sc->sc_pd, 0); /* notify upper layers */
 
   /* clear connection state */
-  memcpy(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   sc->sc_state = PPPOE_STATE_INITIAL;
 }
 
@@ -1018,7 +1018,7 @@ pppoe_send_padr(struct pppoe_softc *sc)
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
   if (sc->sc_service_name != NULL) {
     PPPOE_ADD_16(p, l1);
-    memcpy(p, sc->sc_service_name, l1);
+    MEMCPY(p, sc->sc_service_name, l1);
     p += l1;
   } else {
     PPPOE_ADD_16(p, 0);
@@ -1026,12 +1026,12 @@ pppoe_send_padr(struct pppoe_softc *sc)
   if (sc->sc_ac_cookie_len > 0) {
     PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
     PPPOE_ADD_16(p, sc->sc_ac_cookie_len);
-    memcpy(p, sc->sc_ac_cookie, sc->sc_ac_cookie_len);
+    MEMCPY(p, sc->sc_ac_cookie, sc->sc_ac_cookie_len);
     p += sc->sc_ac_cookie_len;
   }
   PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
   PPPOE_ADD_16(p, sizeof(sc));
-  memcpy(p, &sc, sizeof sc);
+  MEMCPY(p, &sc, sizeof sc);
 
   return pppoe_output(sc, pb);
 }
@@ -1052,8 +1052,8 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
 
   ethhdr = (struct eth_hdr *)pb->payload;
   ethhdr->type = htons(ETHTYPE_PPPOEDISC);
-  memcpy(ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
-  memcpy(ethhdr->src.addr, ((struct eth_addr *)outgoing_if->hwaddr)->addr, sizeof(ethhdr->src.addr));
+  MEMCPY(ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
+  MEMCPY(ethhdr->src.addr, ((struct eth_addr *)outgoing_if->hwaddr)->addr, sizeof(ethhdr->src.addr));
 
   p = (u8_t*)(ethhdr + 1);
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);
@@ -1091,11 +1091,11 @@ pppoe_send_pado(struct pppoe_softc *sc)
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADO, 0, len);
   PPPOE_ADD_16(p, PPPOE_TAG_ACCOOKIE);
   PPPOE_ADD_16(p, sizeof(sc));
-  memcpy(p, &sc, sizeof(sc));
+  MEMCPY(p, &sc, sizeof(sc));
   p += sizeof(sc);
   PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
   PPPOE_ADD_16(p, sc->sc_hunique_len);
-  memcpy(p, sc->sc_hunique, sc->sc_hunique_len);
+  MEMCPY(p, sc->sc_hunique, sc->sc_hunique_len);
   return pppoe_output(sc, pb);
 }
 
@@ -1128,14 +1128,14 @@ pppoe_send_pads(struct pppoe_softc *sc)
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
   if (sc->sc_service_name != NULL) {
     PPPOE_ADD_16(p, l1);
-    memcpy(p, sc->sc_service_name, l1);
+    MEMCPY(p, sc->sc_service_name, l1);
     p += l1;
   } else {
     PPPOE_ADD_16(p, 0);
   }
   PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
   PPPOE_ADD_16(p, sc->sc_hunique_len);
-  memcpy(p, sc->sc_hunique, sc->sc_hunique_len);
+  MEMCPY(p, sc->sc_hunique, sc->sc_hunique_len);
   return pppoe_output(sc, pb);
 }
 #endif
@@ -1212,7 +1212,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_linkStatusCB(sc->sc_pd, 0);
 
   /* clean up softc */
-  memcpy(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   if (sc->sc_ac_cookie) {
     mem_free(sc->sc_ac_cookie);
     sc->sc_ac_cookie = NULL;

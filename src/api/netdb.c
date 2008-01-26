@@ -199,7 +199,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   }
 
   /* copy the hostname into buf */
-  memcpy(hostname, name, namelen);
+  MEMCPY(hostname, name, namelen);
   hostname[namelen] = 0;
 
   /* fill hostent */
@@ -330,7 +330,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     if (ai->ai_canonname == NULL) {
       goto memerr;
     }
-    memcpy(ai->ai_canonname, nodename, namelen);
+    MEMCPY(ai->ai_canonname, nodename, namelen);
     ai->ai_canonname[namelen] = 0;
   }
   ai->ai_addrlen = sizeof(struct sockaddr_in);
