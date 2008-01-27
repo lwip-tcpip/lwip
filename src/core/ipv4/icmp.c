@@ -53,6 +53,9 @@
 
 #include <string.h>
 
+/* The amount of data from the original packet to return in a dest-unreachable */
+#define ICMP_DEST_UNREACH_DATASIZE 8
+
 /**
  * Processes ICMP input packets, called from ip_input().
  *
@@ -225,15 +228,15 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   struct ip_hdr *iphdr;
   struct icmp_dur_hdr *idur;
 
-  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
-  q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
   /* ICMP header + IP header + 8 bytes of data */
+  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_dur_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
+                 PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_dest_unreach: failed to allocate pbuf for ICMP packet.\n"));
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
-             (q->len >= (8 + IP_HLEN + 8)));
+             (q->len >= (sizeof(struct icmp_dur_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
 
   iphdr = p->payload;
 
@@ -241,7 +244,8 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
   ICMPH_TYPE_SET(idur, ICMP_DUR);
   ICMPH_CODE_SET(idur, t);
 
-  SMEMCPY((u8_t *)q->payload + 8, p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_dur_hdr), p->payload,
+          IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
 
   /* calculate checksum */
   idur->chksum = 0;
@@ -271,15 +275,15 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   struct ip_hdr *iphdr;
   struct icmp_te_hdr *tehdr;
 
-  /* @todo: can this be PBUF_LINK instead of PBUF_IP? */
-  q = pbuf_alloc(PBUF_IP, 8 + IP_HLEN + 8, PBUF_RAM);
   /* ICMP header + IP header + 8 bytes of data */
+  q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_dur_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
+                 PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
-             (q->len >= (8 + IP_HLEN + 8)));
+             (q->len >= (sizeof(struct icmp_dur_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
 
   iphdr = p->payload;
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
@@ -293,7 +297,8 @@ icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
   ICMPH_CODE_SET(tehdr, t);
 
   /* copy fields from original packet */
-  SMEMCPY((u8_t *)q->payload + 8, (u8_t *)p->payload, IP_HLEN + 8);
+  SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_dur_hdr), (u8_t *)p->payload,
+          IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
 
   /* calculate checksum */
   tehdr->chksum = 0;
