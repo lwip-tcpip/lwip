@@ -58,7 +58,8 @@ The following functions must be implemented by the sys_arch:
   Blocks the thread while waiting for the semaphore to be
   signaled. If the "timeout" argument is non-zero, the thread should
   only be blocked for the specified time (measured in
-  milliseconds).
+  milliseconds). If the "timeout" argument is zero, the thread should be
+  blocked until the semaphore is signalled.
 
   If the timeout argument is non-zero, the return value is the number of
   milliseconds spent waiting for the semaphore to be signaled. If the
@@ -96,7 +97,8 @@ The following functions must be implemented by the sys_arch:
 
   Blocks the thread until a message arrives in the mailbox, but does
   not block the thread longer than "timeout" milliseconds (similar to
-  the sys_arch_sem_wait() function). The "msg" argument is a result
+  the sys_arch_sem_wait() function). If "timeout" is 0, the thread should
+  be blocked until a message arrives. The "msg" argument is a result
   parameter that is set by the function (i.e., by doing "*msg =
   ptr"). The "msg" parameter maybe NULL to indicate that the message
   should be dropped.
