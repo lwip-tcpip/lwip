@@ -184,7 +184,9 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 
 #define TCP_OOSEQ_TIMEOUT        6U /* x RTO */
 
-#define TCP_MSL 60000U /* The maximum segment lifetime in microseconds */
+#ifndef TCP_MSL
+#define TCP_MSL 60000U /* The maximum segment lifetime in milliseconds */
+#endif
 
 /* Keepalive values, compliant with RFC 1122. Don't change this unless you know what you're doing */
 #ifndef  TCP_KEEPIDLE_DEFAULT
