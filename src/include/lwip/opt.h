@@ -1034,9 +1034,9 @@
 #endif
 
 /**
- * LWIP_COMPAT_SOCKETS==1: Enable POSIX-style sockets functions names. Disable
- * this option if you use a POSIX operating system that uses the same names
- * (read, write & close). (only used if you use sockets.c)
+ * LWIP_POSIX_SOCKETS_IO_NAMES==1: Enable POSIX-style sockets functions names.
+ * Disable this option if you use a POSIX operating system that uses the same
+ * names (read, write & close). (only used if you use sockets.c)
  */
 #ifndef LWIP_POSIX_SOCKETS_IO_NAMES
 #define LWIP_POSIX_SOCKETS_IO_NAMES     1
