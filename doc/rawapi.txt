@@ -383,7 +383,9 @@ Call these functions in the order of appearance:
     return ERR_OK;
   }
   
-  The input function pointer must point to the lwip ip_input().
+  For ethernet drivers, the input function pointer must point to the lwip
+  function ethernet_input() declared in "netif/etharp.h". Other drivers
+  must use ip_input() declared in "lwip/ip.h".
   
 - netif_set_default(struct netif *netif)
 
