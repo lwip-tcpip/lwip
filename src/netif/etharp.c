@@ -348,6 +348,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
   if (((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
       /* or don't create new entry, only search? */
       || ((flags & ETHARP_FIND_ONLY) != 0)) {
+    LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: no empty entry found and not allowed to recycle\n"));
     return (s8_t)ERR_MEM;
   }
   
