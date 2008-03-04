@@ -599,6 +599,7 @@ HISTORY
   2008-03-04 Jonathan Larmour
   * mem.c, stats.c, mem.h: apply patch #6414 to avoid compiler errors
   and/or warnings on some systems where mem_size_t and size_t differ.
+  * pbuf.c, ppp.c: Fix warnings on some systems with mem_malloc.
 
   2008-03-04 Kieran Mansley (contributions by others) 
   * Numerous small compiler error/warning fixes from contributions to

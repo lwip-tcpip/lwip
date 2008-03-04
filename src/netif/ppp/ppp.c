@@ -400,7 +400,7 @@ pppInit(void)
 
     subnetMask = htonl(0xffffff00);
 
-    outpacket_buf[i] = mem_malloc(PPP_MRU+PPP_HDRLEN);
+    outpacket_buf[i] = (u_char *)mem_malloc(PPP_MRU+PPP_HDRLEN);
     if(!outpacket_buf[i]) {
       return ERR_MEM;
     }
