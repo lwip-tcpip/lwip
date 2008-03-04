@@ -49,6 +49,10 @@
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT
+
 #include "ppp.h"
 #include "randm.h"
 #include "magic.h"
@@ -74,3 +78,5 @@ u32_t magic()
 {
   return avRandom();
 }
+
+#endif /* PPP_SUPPORT */

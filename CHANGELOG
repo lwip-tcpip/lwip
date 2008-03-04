@@ -596,6 +596,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-03-04 Kieran Mansley (contributions by others) 
+  * Numerous small compiler error/warning fixes from contributions to
+    mailing list after 1.3.0 release candidate made.
+
   2008-01-25 Cui hengbin (integrated by Frédéric Bernon)
   * dns.c: Fix bug #22108 "DNS problem" caused by unaligned structures.
 

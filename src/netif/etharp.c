@@ -85,7 +85,7 @@
 #define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = htons((len) | (ARPH_HWLEN(hdr) << 8))
 
 enum etharp_state {
-  ETHARP_STATE_EMPTY,
+  ETHARP_STATE_EMPTY = 0,
   ETHARP_STATE_PENDING,
   ETHARP_STATE_STABLE
 };
@@ -129,9 +129,6 @@ static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struc
 
 
 /* Some checks, instead of etharp_init(): */
-#if ETHARP_STATE_EMPTY != 0
-#error ETHARP_STATE_EMPTY must be 0 to ensure correct initialization value!
-#endif
 #if (LWIP_ARP && (ARP_TABLE_SIZE > 0x7f))
   #error "If you want to use ARP, ARP_TABLE_SIZE must fit in an s8_t, so, you have to reduce it in your lwipopts.h"
 #endif

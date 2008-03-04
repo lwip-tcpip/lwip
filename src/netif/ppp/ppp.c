@@ -83,6 +83,8 @@
 
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
+#include "lwip/ip.h" /* for ip_input() */
+
 #include "ppp.h"
 #include "pppdebug.h"
 

@@ -36,6 +36,8 @@
  *
  */
 
+#include <string.h>
+
 #include "lwip/opt.h"
 
 #include "lwip/inet_chksum.h"
