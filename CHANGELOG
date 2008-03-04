@@ -596,6 +596,10 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-03-04 Jonathan Larmour
+  * mem.c, stats.c, mem.h: apply patch #6414 to avoid compiler errors
+  and/or warnings on some systems where mem_size_t and size_t differ.
+
   2008-03-04 Kieran Mansley (contributions by others) 
   * Numerous small compiler error/warning fixes from contributions to
     mailing list after 1.3.0 release candidate made.

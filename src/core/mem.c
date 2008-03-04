@@ -561,7 +561,7 @@ mem_malloc(mem_size_t size)
  * @param size size of the objects to allocate
  * @return pointer to allocated memory / NULL pointer if there is an error
  */
-void *mem_calloc(size_t count, size_t size)
+void *mem_calloc(mem_size_t count, mem_size_t size)
 {
   void *p;
 
