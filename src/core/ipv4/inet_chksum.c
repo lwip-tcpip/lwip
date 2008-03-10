@@ -46,14 +46,26 @@
 /* These are some reference implementations of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
  * first thing you would want to optimize for your platform. If you create
- * your own version, link it in and in your sys_arch.h put:
+ * your own version, link it in and in your cc.h put:
  * 
  * #define LWIP_CHKSUM <your_checksum_routine> 
-*/
-#ifndef LWIP_CHKSUM
-#define LWIP_CHKSUM lwip_standard_chksum
+ *
+ * Or you can select from the implementations below by defining
+ * LWIP_CHKSUM_ALGORITHM to 1, 2 or 3.
+ */
 
-#if 1 /* Version A */
+#ifndef LWIP_CHKSUM
+# define LWIP_CHKSUM lwip_standard_chksum
+# ifndef LWIP_CHKSUM_ALGORITHM
+#  define LWIP_CHKSUM_ALGORITHM 1
+# endif
+#endif
+/* If none set: */
+#ifndef LWIP_CHKSUM_ALGORITHM
+# define LWIP_CHKSUM_ALGORITHM 0
+#endif
+
+#if (LWIP_CHKSUM_ALGORITHM == 1) /* Version #1 */
 /**
  * lwip checksum
  *
@@ -104,7 +116,7 @@ lwip_standard_chksum(void *dataptr, u16_t len)
 }
 #endif
 
-#if 0 /* Version B */
+#if (LWIP_CHKSUM_ALGORITHM == 2) /* Alternative version #2 */
 /*
  * Curt McDowell
  * Broadcom Corp.
@@ -160,7 +172,7 @@ lwip_standard_chksum(void *dataptr, int len)
 }
 #endif
 
-#if 0 /* Version C */
+#if (LWIP_CHKSUM_ALGORITHM == 3) /* Alternative version #3 */
 /**
  * An optimized checksum routine. Basically, it uses loop-unrolling on
  * the checksum loop, treating the head and tail bytes specially, whereas
@@ -235,8 +247,6 @@ lwip_standard_chksum(void *dataptr, int len)
   return sum;
 }
 #endif
-
-#endif /* LWIP_CHKSUM */
 
 /* inet_chksum_pseudo:
  *

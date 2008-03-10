@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2008-03-10 Jonathan Larmour
+  * inet_chksum.c: Allow choice of one of the sample algorithms to be
+    made from lwipopts.h. Fix comment on how to override LWIP_CHKSUM.
+
   2008-01-22 Frédéric Bernon
   * tcp.c, tcp_in.c, tcp.h, opt.h: Rename LWIP_CALCULATE_EFF_SEND_MSS in 
     TCP_CALCULATE_EFF_SEND_MSS to have coherent TCP options names.
