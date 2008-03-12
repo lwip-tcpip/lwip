@@ -600,6 +600,12 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-03-12 Frédéric Bernon, Jonathan Larmour
+  * api_msg.c, contrib/apps/ping.c: Fix bug #22530 "api_msg.c's
+    recv_raw() does not consume data", and the ping sample (with
+    LWIP_SOCKET=1, the code did the wrong supposition that lwip_recvfrom
+    returned the IP payload, without the IP header).
+
   2008-03-04 Jonathan Larmour
   * mem.c, stats.c, mem.h: apply patch #6414 to avoid compiler errors
   and/or warnings on some systems where mem_size_t and size_t differ.

@@ -70,6 +70,7 @@ static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     struct ip_addr *addr)
 {
+  struct pbuf *q;
   struct netbuf *buf;
   struct netconn *conn;
 #if LWIP_SO_RCVBUF
@@ -85,21 +86,33 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 #else  /* LWIP_SO_RCVBUF */
   if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
 #endif /* LWIP_SO_RCVBUF */
-    buf = memp_malloc(MEMP_NETBUF);
-    if (buf == NULL) {
-      return 0;
+    /* copy the whole packet into new pbufs */
+    q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+    if(q != NULL) {
+      if (pbuf_copy(q, p) != ERR_OK) {
+        pbuf_free(q);
+        q = NULL;
+      }
     }
-    pbuf_ref(p);
-    buf->p = p;
-    buf->ptr = p;
-    buf->addr = addr;
-    buf->port = pcb->protocol;
 
-    SYS_ARCH_INC(conn->recv_avail, p->tot_len);
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
-    if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
-      netbuf_delete(buf);
+    if(q != NULL) {
+      buf = memp_malloc(MEMP_NETBUF);
+      if (buf == NULL) {
+        pbuf_free(q);
+        return 0;
+      }
+
+      buf->p = q;
+      buf->ptr = q;
+      buf->addr = addr;
+      buf->port = pcb->protocol;
+
+      SYS_ARCH_INC(conn->recv_avail, q->tot_len);
+      /* Register event with callback */
+      API_EVENT(conn, NETCONN_EVT_RCVPLUS, q->tot_len);
+      if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
+        netbuf_delete(buf);
+      }
     }
   }
 
@@ -1182,4 +1195,3 @@ do_gethostbyname(void *arg)
 #endif /* LWIP_DNS */
 
 #endif /* LWIP_NETCONN */
-
