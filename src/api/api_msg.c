@@ -104,7 +104,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
       buf->p = q;
       buf->ptr = q;
-      buf->addr = addr;
+      buf->addr = &(((struct ip_hdr*)(q->payload))->src);
       buf->port = pcb->protocol;
 
       SYS_ARCH_INC(conn->recv_avail, q->tot_len);
