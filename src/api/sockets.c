@@ -549,8 +549,13 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
   if (from && fromlen) {
     struct sockaddr_in sin;
 
-    addr = netbuf_fromaddr(buf);
-    port = netbuf_fromport(buf);
+    if (netconn_type(sock->conn) == NETCONN_TCP) {
+      addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+      netconn_getaddr(sock->conn, addr, &port, 0);
+    } else {
+      addr = netbuf_fromaddr(buf);
+      port = netbuf_fromport(buf);
+    }
 
     memset(&sin, 0, sizeof(sin));
     sin.sin_len = sizeof(sin);
@@ -568,13 +573,20 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
   } else {
 #if SOCKETS_DEBUG
-    addr = netbuf_fromaddr(buf);
-    port = netbuf_fromport(buf);
+    struct sockaddr_in sin;
+
+    if (netconn_type(sock->conn) == NETCONN_TCP) {
+      addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+      netconn_getaddr(sock->conn, addr, &port, 0);
+    } else {
+      addr = netbuf_fromaddr(buf);
+      port = netbuf_fromport(buf);
+    }
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
-#endif
+#endif /*  SOCKETS_DEBUG */
   }
 
   sock_set_errno(sock, 0);

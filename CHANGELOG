@@ -600,6 +600,13 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-03-13 Frédéric Bernon
+  * sockets.c: Fix bug #22435 "lwip_recvfrom with TCP break;". Using
+    (lwip_)recvfrom with valid "from" and "fromlen" parameters, on a
+    TCP connection caused a crash. Note that using (lwip_)recvfrom
+    like this is a bit slow and that using (lwip)getpeername is the
+    good lwip way to do it (so, using recv is faster on tcp sockets).
+
   2008-03-12 Frédéric Bernon, Jonathan Larmour
   * api_msg.c, contrib/apps/ping.c: Fix bug #22530 "api_msg.c's
     recv_raw() does not consume data", and the ping sample (with
