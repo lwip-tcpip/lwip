@@ -77,6 +77,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   int recv_avail;
 #endif /* LWIP_SO_RCVBUF */
 
+  LWIP_UNUSED_ARG(addr);
   conn = arg;
 
 #if LWIP_SO_RCVBUF
