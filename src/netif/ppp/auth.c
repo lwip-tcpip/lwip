@@ -178,6 +178,8 @@ static int passwd_from_file;
 void
 link_required(int unit)
 {
+  LWIP_UNUSED_ARG(unit);
+
   AUTHDEBUG((LOG_INFO, "link_required: %d\n", unit));
 }
 
@@ -322,6 +324,8 @@ link_established(int unit)
 void
 auth_peer_fail(int unit, u16_t protocol)
 {
+  LWIP_UNUSED_ARG(protocol);
+
   AUTHDEBUG((LOG_INFO, "auth_peer_fail: %d proto=%X\n", unit, protocol));
   /*
    * Authentication failure: take the link down
@@ -378,6 +382,8 @@ auth_withpeer_fail(int unit, u16_t protocol)
 {
   int errCode = PPPERR_AUTHFAIL;
   
+  LWIP_UNUSED_ARG(protocol);
+
   AUTHDEBUG((LOG_INFO, "auth_withpeer_fail: %d proto=%X\n", unit, protocol));
   if (passwd_from_file) {
     BZERO(ppp_settings.passwd, MAXSECRETLEN);
@@ -437,6 +443,9 @@ auth_withpeer_success(int unit, u16_t protocol)
 void
 np_up(int unit, u16_t proto)
 {
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(proto);
+
   AUTHDEBUG((LOG_INFO, "np_up: %d proto=%X\n", unit, proto));
   if (num_np_up == 0) {
     AUTHDEBUG((LOG_INFO, "np_up: maxconnect=%d idle_time_limit=%d\n",ppp_settings.maxconnect,ppp_settings.idle_time_limit));
@@ -464,6 +473,9 @@ np_up(int unit, u16_t proto)
 void
 np_down(int unit, u16_t proto)
 {
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(proto);
+
   AUTHDEBUG((LOG_INFO, "np_down: %d proto=%X\n", unit, proto));
   if (--num_np_up == 0 && ppp_settings.idle_time_limit > 0) {
     UNTIMEOUT(check_idle, NULL);
@@ -476,6 +488,9 @@ np_down(int unit, u16_t proto)
 void
 np_finished(int unit, u16_t proto)
 {
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(proto);
+
   AUTHDEBUG((LOG_INFO, "np_finished: %d proto=%X\n", unit, proto));
   if (--num_np_open <= 0) {
     /* no further use for the link: shut up shop. */
@@ -526,6 +541,12 @@ int
 check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, char **msg, int *msglen)
 {
 #if 1
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(auser);
+  LWIP_UNUSED_ARG(userlen);
+  LWIP_UNUSED_ARG(apasswd);
+  LWIP_UNUSED_ARG(passwdlen);
+  LWIP_UNUSED_ARG(msglen);
   *msg = (char *) 0;
   return UPAP_AUTHACK;     /* XXX Assume all entries OK. */
 #else
@@ -620,6 +641,10 @@ int get_secret( int unit, char *client, char *server, char *secret, int *secret_
 #if 1
   int len;
   struct wordlist *addrs;
+
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(server);
+  LWIP_UNUSED_ARG(save_addrs);
 
   addrs = NULL;
 
@@ -846,6 +871,7 @@ null_login(int unit)
 static int
 get_pap_passwd(int unit, char *user, char *passwd)
 {
+  LWIP_UNUSED_ARG(unit);
 /* normally we would reject PAP if no password is provided,
    but this causes problems with some providers (like CHT in Taiwan)
    who incorrectly request PAP and expect a bogus/empty password, so

@@ -590,6 +590,9 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
   PPPControl *pc;
   int pd;
 
+  LWIP_UNUSED_ARG(service_name);
+  LWIP_UNUSED_ARG(concentrator_name);
+
   /* Find a free PPP session descriptor. Critical region? */
   for (pd = 0; pd < NUM_PPP && pppControl[pd].openFlag != 0; pd++);
   if (pd >= NUM_PPP) {

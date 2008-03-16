@@ -1201,6 +1201,8 @@ pppoe_ifattach_hook(void *arg, struct pbuf **mp, struct netif *ifp, int dir)
 static void
 pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 {
+  LWIP_UNUSED_ARG(message);
+
   /* stop timer */
   tcpip_untimeout(pppoe_timeout, sc);
   PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": session 0x%x terminated, %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, sc->sc_session, message));

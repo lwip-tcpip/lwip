@@ -466,6 +466,8 @@ upap_rauthack(upap_state *u, u_char *inp, int id, int len)
   u_char msglen;
   char *msg;
 
+  LWIP_UNUSED_ARG(id);
+
   UPAPDEBUG((LOG_INFO, "pap_rauthack: Rcvd id %d s=%d\n", id, u->us_clientstate));
 
   if (u->us_clientstate != UPAPCS_AUTHREQ) { /* XXX */
@@ -502,6 +504,8 @@ upap_rauthnak(upap_state *u, u_char *inp, int id, int len)
 {
   u_char msglen;
   char *msg;
+
+  LWIP_UNUSED_ARG(id);
 
   UPAPDEBUG((LOG_INFO, "pap_rauthnak: Rcvd id %d s=%d\n", id, u->us_clientstate));
 

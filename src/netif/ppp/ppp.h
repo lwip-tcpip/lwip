@@ -187,7 +187,7 @@ enum NPmode {
 }
 #define PUTSHORT(s, cp) { \
     *(cp)++ = (u_char) ((s) >> 8); \
-    *(cp)++ = (u_char) (s); \
+    *(cp)++ = (u_char) (s & 0xff); \
 }
 
 #define GETLONG(l, cp) { \

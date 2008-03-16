@@ -638,6 +638,9 @@ ChapReceiveResponse(chap_state *cstate, u_char *inp, int id, int len)
 static void
 ChapReceiveSuccess(chap_state *cstate, u_char *inp, u_char id, int len)
 {
+  LWIP_UNUSED_ARG(id);
+  LWIP_UNUSED_ARG(inp);
+
   CHAPDEBUG((LOG_INFO, "ChapReceiveSuccess: Rcvd id %d.\n", id));
 
   if (cstate->clientstate == CHAPCS_OPEN) {
@@ -672,6 +675,9 @@ ChapReceiveSuccess(chap_state *cstate, u_char *inp, u_char id, int len)
 static void
 ChapReceiveFailure(chap_state *cstate, u_char *inp, u_char id, int len)
 {
+  LWIP_UNUSED_ARG(id);
+  LWIP_UNUSED_ARG(inp);
+
   CHAPDEBUG((LOG_INFO, "ChapReceiveFailure: Rcvd id %d.\n", id));
 
   if (cstate->clientstate != CHAPCS_RESPONSE) {

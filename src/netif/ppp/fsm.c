@@ -148,6 +148,8 @@ fsm_lowerup(fsm *f)
 {
   int oldState = f->state;
 
+  LWIP_UNUSED_ARG(oldState);
+
   switch( f->state ) {
     case LS_INITIAL:
       f->state = LS_CLOSED;
@@ -182,6 +184,8 @@ void
 fsm_lowerdown(fsm *f)
 {
   int oldState = f->state;
+
+  LWIP_UNUSED_ARG(oldState);
 
   switch( f->state ) {
     case LS_CLOSED:
@@ -233,6 +237,8 @@ fsm_open(fsm *f)
 {
   int oldState = f->state;
 
+  LWIP_UNUSED_ARG(oldState);
+
   switch( f->state ) {
     case LS_INITIAL:
       f->state = LS_STARTING;
@@ -278,6 +284,8 @@ void
 fsm_close(fsm *f, char *reason)
 {
   int oldState = f->state;
+
+  LWIP_UNUSED_ARG(oldState);
 
   f->term_reason = reason;
   f->term_reason_len = (reason == NULL? 0: strlen(reason));
@@ -747,6 +755,8 @@ fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len)
 static void
 fsm_rtermreq(fsm *f, int id, u_char *p, int len)
 {
+  LWIP_UNUSED_ARG(p);
+
   FSMDEBUG((LOG_INFO, "fsm_rtermreq(%s): Rcvd id %d state=%d (%s)\n",
         PROTO_NAME(f), id, f->state, ppperr_strerr[f->state]));
 
