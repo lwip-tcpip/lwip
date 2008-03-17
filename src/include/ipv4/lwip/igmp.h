@@ -52,6 +52,7 @@ extern "C" {
 #define IP_PROTO_IGMP                  2
 #define IGMP_TTL                       1
 #define IGMP_MINLEN                    8
+#define ROUTER_ALERT                   0x9404
 #define ROUTER_ALERTLEN                4
 
 /*
@@ -79,12 +80,20 @@ extern "C" {
 /*
  * IGMP packet format.
  */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
 struct igmp_msg {
- u8_t           igmp_msgtype;
- u8_t           igmp_maxresp;
- u16_t          igmp_checksum;
- struct ip_addr igmp_group_address;
-};
+ PACK_STRUCT_FIELD(u8_t           igmp_msgtype);
+ PACK_STRUCT_FIELD(u8_t           igmp_maxresp);
+ PACK_STRUCT_FIELD(u16_t          igmp_checksum);
+ PACK_STRUCT_FIELD(struct ip_addr igmp_group_address);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 /* 
  * now a group structure - there is

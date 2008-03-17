@@ -600,6 +600,11 @@ HISTORY
 
   ++ Bug fixes:
 
+  2008-03-17 Frédéric Bernon, Ed Kerekes
+  * igmp.h, igmp.c: Fix bug #22613 "IGMP iphdr problem" (could have
+    some problems to fill the IP header on some targets, use now the
+    ip.h macros to do it).
+
   2008-03-13 Frédéric Bernon
   * sockets.c: Fix bug #22435 "lwip_recvfrom with TCP break;". Using
     (lwip_)recvfrom with valid "from" and "fromlen" parameters, on a

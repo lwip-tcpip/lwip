@@ -350,7 +350,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
 
   /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */    
   iphdr = p->payload;
-  if (pbuf_header(p, -(IPH_HL(iphdr) * 4)) || (p->len < IGMP_MINLEN)) {
+  if (pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4)) || (p->len < IGMP_MINLEN)) {
     pbuf_free(p);
     IGMP_STATS_INC(igmp.lenerr);
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: length error\n"));
@@ -707,8 +707,8 @@ igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   /* This is the "router alert" option */
   ra    = p->payload;
-  ra[0] = htons (0x9404);
-  ra[1] = 0x0000;
+  ra[0] = htons (ROUTER_ALERT);
+  ra[1] = 0x0000; /* Router shall examine packet */
 
   /* now the normal ip header */
   if (pbuf_header(p, IP_HLEN)) {
@@ -717,23 +717,20 @@ igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   }
 
   iphdr = p->payload;
+
+  /* Should the IP header be generated or is it already included in p? */
   if (dest != IP_HDRINCL) {
-    iphdr->_ttl_proto = (proto<<8);
-    iphdr->_ttl_proto |= ttl;
+    /** @todo should be shared with ip.c - ip_output_if */
+    IPH_TTL_SET(iphdr, ttl);
+    IPH_PROTO_SET(iphdr, proto);
 
-    /*  iphdr->dest = dest->addr; */
     ip_addr_set(&(iphdr->dest), dest);
-#ifdef HAVE_BITFIELDS
-    iphdr->_v_hl_tos |= ((IP_HLEN+ ROUTER_ALERTLEN)/4)<<16;
-    iphdr->_v_hl_tos |= 4<<24;
-#else
-    iphdr->_v_hl_tos = (4 << 4) | ((IP_HLEN + ROUTER_ALERTLEN)/ 4 & 0xf);
-#endif /* HAVE_BITFIELDS */
 
-    iphdr->_v_hl_tos |= 0;
-    iphdr->_len       = htons(p->tot_len);
-    iphdr->_offset    = htons(0);
-    iphdr->_id        = htons(ip_id++);
+    IPH_VHLTOS_SET(iphdr, 4, ((IP_HLEN + ROUTER_ALERTLEN) / 4), 0/*tos*/);
+    IPH_LEN_SET(iphdr, htons(p->tot_len));
+    IPH_OFFSET_SET(iphdr, 0);
+    IPH_ID_SET(iphdr, htons(ip_id));
+    ++ip_id;
 
     if (ip_addr_isany(src)) {
       ip_addr_set(&(iphdr->src), &(netif->ip_addr));
@@ -741,8 +738,10 @@ igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
       ip_addr_set(&(iphdr->src), src);
     }
 
-    iphdr->_chksum = 0;
-    iphdr->_chksum = inet_chksum(iphdr, IP_HLEN + ROUTER_ALERTLEN);
+    IPH_CHKSUM_SET(iphdr, 0);
+#if CHECKSUM_GEN_IP
+    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, (IP_HLEN + ROUTER_ALERTLEN)));
+#endif
   } else {
     dest = &(iphdr->dest);
   }
@@ -770,7 +769,7 @@ igmp_send(struct igmp_group *group, u8_t type)
   struct ip_addr   src  = {0};
   struct ip_addr*  dest = NULL;
 
-  /* IP header + IGMP header */
+  /* IP header + "router alert" option + IGMP header */
   p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);
   
   if (p) {
