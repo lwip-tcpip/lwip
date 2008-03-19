@@ -977,6 +977,10 @@ do_writemore(struct netconn *conn)
       API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
     }
   } else if (err == ERR_MEM) {
+    /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
+       we do NOT return to the application thread, since ERR_MEM is
+       only a temporary error! */
+
     /* tcp_enqueue returned ERR_MEM, try tcp_output anyway */
     err = tcp_output(conn->pcb.tcp);
 
@@ -984,8 +988,8 @@ do_writemore(struct netconn *conn)
     conn->write_delayed = 1;
 #endif
   } else {
-    /* if ERR_MEM, we wait for sent_tcp or poll_tcp to be called
-       on other errors we don't try writing any more */
+    /* On errors != ERR_MEM, we don't try writing any more but return
+       the error to the application thread. */
     conn->err = err;
     write_finished = 1;
   }
