@@ -831,7 +831,7 @@ do_listen(struct api_msg_msg *msg)
             if (msg->conn->recvmbox != SYS_MBOX_NULL) {
               /** @todo: should we drain the recvmbox here? */
               sys_mbox_free(msg->conn->recvmbox);
-              msg->conn->recvmbox = NULL;
+              msg->conn->recvmbox = SYS_MBOX_NULL;
             }
             if (msg->conn->acceptmbox == SYS_MBOX_NULL) {
               if ((msg->conn->acceptmbox = sys_mbox_new(DEFAULT_ACCEPTMBOX_SIZE)) == SYS_MBOX_NULL) {
