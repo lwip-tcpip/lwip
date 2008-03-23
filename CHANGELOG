@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+
+  ++ Bugfixes:
+
+
+(STABLE-1.3.0)
+
+  ++ New features:
+
   2008-03-10 Jonathan Larmour
   * inet_chksum.c: Allow choice of one of the sample algorithms to be
     made from lwipopts.h. Fix comment on how to override LWIP_CHKSUM.
