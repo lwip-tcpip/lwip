@@ -22,6 +22,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-03-26 Simon Goldschmidt
+  * tcp_in.c, tcp.c: fixed bug #22249: division by zero could occur if a remote
+    host sent a zero mss as TCP option.
+
 
 (STABLE-1.3.0)
 

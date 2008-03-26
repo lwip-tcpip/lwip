@@ -1331,7 +1331,8 @@ tcp_parseopt(struct tcp_pcb *pcb)
         opts[c + 1] == 0x04) {
         /* An MSS option with the right option length. */
         mss = (opts[c + 2] << 8) | opts[c + 3];
-        pcb->mss = mss > TCP_MSS? TCP_MSS: mss;
+        /* Limit the mss to the configured TCP_MSS and prevent division by zero */
+        pcb->mss = ((mss > TCP_MSS) || (mss == 0)) ? TCP_MSS : mss;
 
         /* And we are done processing options. */
         break;
