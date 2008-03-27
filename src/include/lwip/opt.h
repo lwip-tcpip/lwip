@@ -155,6 +155,23 @@
 #define MEMP_USE_CUSTOM_POOLS           0
 #endif
 
+/**
+ * This is for NO_SYS=0 only; in NO_SYS=1 configurations, the heap may not be accessed
+ * from interrupt level!
+ *
+ * If you want to free PBUF_RAM pbufs (or call mem_free()) from interrupt context,
+ * the heap cannot be protected by a semaphore. Setting this to 1 will disable
+ * interrupts while walking the heap.
+ *
+ * *** USE THIS WITH CARE: Setting this to 1 can disable interrupts for a long time! ***
+ *
+ * If you don't want that, call
+ * - tcpip_callback_nonblocking(pbuf_free_int, p);
+ * - tcpip_callback_nonblocking(mem_free, m);
+ */
+#ifndef LWIP_USE_HEAP_FROM_INTERRUPT
+#define LWIP_USE_HEAP_FROM_INTERRUPT    0
+#endif
 
 /*
    ------------------------------------------------

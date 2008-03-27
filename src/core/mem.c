@@ -177,8 +177,28 @@ static u8_t *ram;
 static struct mem *ram_end;
 /** pointer to the lowest free block, this is used for faster search */
 static struct mem *lfree;
+
+
+#if LWIP_USE_HEAP_FROM_INTERRUPT
+
+/* Protect the heap by disabeling interrupts */
+#define LWIP_MEM_DECL_PROTECT() SYS_ARCH_DECL_PROTECT(lev)
+#define LWIP_MEM_PROTECT()      SYS_ARCH_PROTECT(lev)
+#define LWIP_MEM_UNPROTECT()    SYS_ARCH_UNPROTECT(lev)
+
+#else /* LWIP_USE_HEAP_FROM_INTERRUPT */
+
+/* Protect the heap using a semaphore */
+
 /** concurrent access protection */
 static sys_sem_t mem_sem;
+
+#define LWIP_MEM_DECL_PROTECT()
+#define LWIP_MEM_PROTECT()    sys_arch_sem_wait(mem_sem, 0)
+#define LWIP_MEM_UNPROTECT()  sys_sem_signal(mem_sem)
+
+#endif /* LWIP_USE_HEAP_FROM_INTERRUPT */
+
 
 /**
  * "Plug holes" by combining adjacent empty struct mems.
@@ -250,7 +270,9 @@ mem_init(void)
   ram_end->next = MEM_SIZE_ALIGNED;
   ram_end->prev = MEM_SIZE_ALIGNED;
 
+#if !LWIP_USE_HEAP_FROM_INTERRUPT
   mem_sem = sys_sem_new(1);
+#endif /* LWIP_USE_HEAP_FROM_INTERRUPT */
 
   /* initialize the lowest-free pointer to the start of the heap */
   lfree = (struct mem *)ram;
@@ -270,6 +292,7 @@ void
 mem_free(void *rmem)
 {
   struct mem *mem;
+  LWIP_MEM_DECL_PROTECT();
 
   if (rmem == NULL) {
     LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_TRACE | 2, ("mem_free(p == NULL) was called.\n"));
@@ -278,7 +301,7 @@ mem_free(void *rmem)
   LWIP_ASSERT("mem_free: sanity check alignment", (((mem_ptr_t)rmem) & (MEM_ALIGNMENT-1)) == 0);
 
   /* protect the heap from concurrent access */
-  sys_arch_sem_wait(mem_sem, 0);
+  LWIP_MEM_PROTECT();
 
   LWIP_ASSERT("mem_free: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
     (u8_t *)rmem < (u8_t *)ram_end);
@@ -288,7 +311,7 @@ mem_free(void *rmem)
 #if MEM_STATS
     ++lwip_stats.mem.err;
 #endif /* MEM_STATS */
-    sys_sem_signal(mem_sem);
+    LWIP_MEM_UNPROTECT();
     return;
   }
   /* Get the corresponding struct mem ... */
@@ -309,7 +332,7 @@ mem_free(void *rmem)
 
   /* finally, see if prev or next are free also */
   plug_holes(mem);
-  sys_sem_signal(mem_sem);
+  LWIP_MEM_UNPROTECT();
 }
 
 /**
@@ -328,6 +351,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   mem_size_t size;
   mem_size_t ptr, ptr2;
   struct mem *mem, *mem2;
+  LWIP_MEM_DECL_PROTECT();
 
   /* Expand the size of the allocated memory region so that we can
      adjust for alignment. */
@@ -366,7 +390,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   }
 
   /* protect the heap from concurrent access */
-  sys_arch_sem_wait(mem_sem, 0);
+  LWIP_MEM_PROTECT();
 
 #if MEM_STATS
   lwip_stats.mem.used -= (size - newsize);
@@ -426,7 +450,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
     -> don't do anyhting. 
     -> the remaining space stays unused since it is too small
   } */
-  sys_sem_signal(mem_sem);
+  LWIP_MEM_UNPROTECT();
   return rmem;
 }
 
@@ -444,6 +468,7 @@ mem_malloc(mem_size_t size)
 {
   mem_size_t ptr, ptr2;
   struct mem *mem, *mem2;
+  LWIP_MEM_DECL_PROTECT();
 
   if (size == 0) {
     return NULL;
@@ -463,7 +488,7 @@ mem_malloc(mem_size_t size)
   }
 
   /* protect the heap from concurrent access */
-  sys_arch_sem_wait(mem_sem, 0);
+  LWIP_MEM_PROTECT();
 
   /* Scan through the heap searching for a free block that is big enough,
    * beginning with the lowest free block.
@@ -531,7 +556,7 @@ mem_malloc(mem_size_t size)
         }
         LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
       }
-      sys_sem_signal(mem_sem);
+      LWIP_MEM_UNPROTECT();
       LWIP_ASSERT("mem_malloc: allocated memory not above ram_end.",
        (mem_ptr_t)mem + SIZEOF_STRUCT_MEM + size <= (mem_ptr_t)ram_end);
       LWIP_ASSERT("mem_malloc: allocated memory properly aligned.",
@@ -546,7 +571,7 @@ mem_malloc(mem_size_t size)
 #if MEM_STATS
   ++lwip_stats.mem.err;
 #endif /* MEM_STATS */
-  sys_sem_signal(mem_sem);
+  LWIP_MEM_UNPROTECT();
   return NULL;
 }
 

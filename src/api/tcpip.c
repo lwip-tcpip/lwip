@@ -518,4 +518,17 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   sys_thread_new(TCPIP_THREAD_NAME, tcpip_thread, NULL, TCPIP_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
 }
 
+
+/**
+ * A simple wrapper function that allows you to free a pbuf using one of the
+ * tcpip_callback functions.
+ *
+ * @param p The pbuf (chain) to be dereferenced.
+ */
+void
+pbuf_free_int(struct pbuf *p)
+{
+  pbuf_free(p);
+}
+
 #endif /* !NO_SYS */
