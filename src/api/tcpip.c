@@ -518,17 +518,42 @@ tcpip_init(void (* initfunc)(void *), void *arg)
   sys_thread_new(TCPIP_THREAD_NAME, tcpip_thread, NULL, TCPIP_THREAD_STACKSIZE, TCPIP_THREAD_PRIO);
 }
 
-
 /**
- * A simple wrapper function that allows you to free a pbuf using one of the
- * tcpip_callback functions.
+ * Simple callback function used with tcpip_callback to free a pbuf
+ * (pbuf_free has a wrong signature for tcpip_callback)
  *
  * @param p The pbuf (chain) to be dereferenced.
  */
-void
-pbuf_free_int(struct pbuf *p)
+static void
+pub_free_int(void *p)
 {
-  pbuf_free(p);
+  struct pbuf *q = p;
+  pbuf_free(q);
+}
+
+/**
+ * A simple wrapper function that allows you to free a pbuf from interrupt context.
+ *
+ * @param p The pbuf (chain) to be dereferenced.
+ * @return ERR_OK if callback could be enqueued, an err_t if not
+ */
+err_t
+pbuf_free_callback(struct pbuf *p)
+{
+  return tcpip_callback_with_block(pub_free_int, p, 0);
+}
+
+/**
+ * A simple wrapper function that allows you to free heap memory from
+ * interrupt context.
+ *
+ * @param m the heap memory to free
+ * @return ERR_OK if callback could be enqueued, an err_t if not
+ */
+err_t
+mem_free_callback(void *m)
+{
+  return tcpip_callback_with_block(mem_free, m, 0);
 }
 
 #endif /* !NO_SYS */

@@ -166,8 +166,8 @@
  * *** USE THIS WITH CARE: Setting this to 1 can disable interrupts for a long time! ***
  *
  * If you don't want that, call
- * - tcpip_callback_nonblocking(pbuf_free_int, p);
- * - tcpip_callback_nonblocking(mem_free, m);
+ * - pbuf_free_callback(p);
+ * - mem_free_callback(m);
  */
 #ifndef LWIP_USE_HEAP_FROM_INTERRUPT
 #define LWIP_USE_HEAP_FROM_INTERRUPT    0

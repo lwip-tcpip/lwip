@@ -25,9 +25,8 @@ HISTORY
   2008-03-27 Simon Goldschmidt
   * mem.c, tcpip.c, tcpip.h, opt.h: fixed bug #21433 (Calling mem_free/pbuf_free
     from interrupt context isn't safe): set LWIP_USE_HEAP_FROM_INTERRUPT to 1
-    in lwipopts.h or use tcpip_callback_nonblocking(pbuf_free_int, p)/
-    tcpip_callback_nonblocking(mem_free, m) to free pbufs or heap memory from
-    interrupt context
+    in lwipopts.h or use pbuf_free_callback(p)/mem_free_callback(m) to free pbufs
+    or heap memory from interrupt context
 
   2008-03-26 Simon Goldschmidt
   * tcp_in.c, tcp.c: fixed bug #22249: division by zero could occur if a remote

@@ -84,9 +84,9 @@ err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
 
 err_t tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block);
 #define tcpip_callback(f, ctx)              tcpip_callback_with_block(f, ctx, 1)
-#define tcpip_callback_nonblocking(f, ctx)  tcpip_callback_with_block(f, ctx, 0)
 
-void pbuf_free_int(struct pbuf *p);
+err_t pbuf_free_callback(struct pbuf *p);
+err_t mem_free_callback(void *m);
 
 err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
 #define tcpip_untimeout(h, arg) tcpip_timeout(0xffffffff, h, arg)
