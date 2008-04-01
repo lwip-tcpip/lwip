@@ -667,8 +667,8 @@ pbuf_dechain(struct pbuf *p)
  *
  * @note Only one packet is copied, no packet queue!
  *
- * @param p_to pbuf source of the copy
- * @param p_from pbuf destination of the copy
+ * @param p_to pbuf destination of the copy
+ * @param p_from pbuf source of the copy
  *
  * @return ERR_OK if pbuf was copied
  *         ERR_ARG if one of the pbufs is NULL or p_to is not big

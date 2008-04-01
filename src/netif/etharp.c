@@ -353,7 +353,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
    * 1) empty entry
    * 2) oldest stable entry
    * 3) oldest pending entry without queued packets
-   * 4) oldest pending entry without queued packets
+   * 4) oldest pending entry with queued packets
    * 
    * { ETHARP_TRY_HARD is set at this point }
    */ 
