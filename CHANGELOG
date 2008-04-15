@@ -22,6 +22,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-04-15 Simon Goldschmidt
+  * dhcp.c: fixed bug #22804: dhcp_stop doesn't clear NETIF_FLAG_DHCP
+    (flag now cleared)
+
   2008-03-27 Simon Goldschmidt
   * mem.c, tcpip.c, tcpip.h, opt.h: fixed bug #21433 (Calling mem_free/pbuf_free
     from interrupt context isn't safe): set LWIP_USE_HEAP_FROM_INTERRUPT to 1
