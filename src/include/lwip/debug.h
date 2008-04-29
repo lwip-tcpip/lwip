@@ -66,7 +66,7 @@
 #define LWIP_ASSERT(x,y) 
 #endif /* LWIP_NOASSERT */
 
-/** print "m" message only if "e" is true, and execute "h" expression */
+/** if "e" isn't true, then print "m" message and execute "h" expression */
 #ifndef LWIP_ERROR
 #define LWIP_ERROR(m,e,h) do { if (!(e)) { LWIP_PLATFORM_ASSERT(m); h;}} while(0)
 #endif /* LWIP_ERROR */
