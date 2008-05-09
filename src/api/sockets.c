@@ -128,17 +128,17 @@ static const int err_to_errno_table[] = {
   0,             /* ERR_OK          0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
   ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
-  EHOSTUNREACH,  /* ERR_RTE        -3      Routing problem.         */
-  ECONNABORTED,  /* ERR_ABRT       -4      Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -5      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD       -6      Connection closed.       */
-  ENOTCONN,      /* ERR_CONN       -7      Not connected.           */
-  EINVAL,        /* ERR_VAL        -8      Illegal value.           */
-  EIO,           /* ERR_ARG        -9      Illegal argument.        */
-  EADDRINUSE,    /* ERR_USE        -10     Address in use.          */
-  -1,            /* ERR_IF         -11     Low-level netif error    */
-  -1,            /* ERR_ISCONN     -12     Already connected.       */
-  ETIMEDOUT,     /* ERR_TIMEOUT    -13     Timeout                  */
+  ETIMEDOUT,     /* ERR_TIMEOUT    -3      Timeout                  */
+  EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
+  ECONNABORTED,  /* ERR_ABRT       -5      Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -6      Connection reset.        */
+  ESHUTDOWN,     /* ERR_CLSD       -7      Connection closed.       */
+  ENOTCONN,      /* ERR_CONN       -8      Not connected.           */
+  EINVAL,        /* ERR_VAL        -9      Illegal value.           */
+  EIO,           /* ERR_ARG        -10     Illegal argument.        */
+  EADDRINUSE,    /* ERR_USE        -11     Address in use.          */
+  -1,            /* ERR_IF         -12     Low-level netif error    */
+  -1,            /* ERR_ISCONN     -13     Already connected.       */
   EINPROGRESS    /* ERR_INPROGRESS -14     Operation in progress    */
 };
 

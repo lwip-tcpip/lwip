@@ -22,6 +22,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-05-09 Jonathan Larmour
+  * err.h, err.c, sockets.c: Fix bug #23119: Reorder timeout error code to
+    stop it being treated as a fatal error.
+
   2008-04-15 Simon Goldschmidt
   * dhcp.c: fixed bug #22804: dhcp_stop doesn't clear NETIF_FLAG_DHCP
     (flag now cleared)
