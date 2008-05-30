@@ -50,16 +50,16 @@ typedef size_t mem_size_t;
  * allow these defines to be overridden.
  */
 #ifndef mem_free
-#define mem_free(x) free(x)
+#define mem_free free
 #endif
 #ifndef mem_malloc
-#define mem_malloc(x) malloc(x)
+#define mem_malloc malloc
 #endif
 #ifndef mem_calloc
-#define mem_calloc(x, y) calloc(x, y)
+#define mem_calloc calloc
 #endif
 #ifndef mem_realloc
-#define mem_realloc(x, size) (x)
+#define mem_realloc realloc
 #endif
 #else /* MEM_LIBC_MALLOC */
 

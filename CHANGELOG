@@ -22,6 +22,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-05-30 Kieran Mansley
+  * mem.h: Fix BUG#23254.  Change macro definition of mem_* to allow
+    passing as function pointers when MEM_LIBC_MALLOC is defined.
+
   2008-05-09 Jonathan Larmour
   * err.h, err.c, sockets.c: Fix bug #23119: Reorder timeout error code to
     stop it being treated as a fatal error.
