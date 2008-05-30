@@ -511,7 +511,7 @@ tcp_process(struct tcp_pcb *pcb)
       }
     } else {
       if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
-                          pcb->rcv_nxt+pcb->rcv_ann_wnd)) {
+                          pcb->rcv_nxt+pcb->rcv_wnd)) {
         acceptable = 1;
       }
     }
@@ -1038,7 +1038,7 @@ tcp_receive(struct tcp_pcb *pcb)
        and below rcv_nxt + rcv_wnd) in order to be further
        processed. */
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
-                        pcb->rcv_nxt + pcb->rcv_ann_wnd - 1)){
+                        pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
         accepted_inseq = 1; 
         /* The incoming segment is the next in sequence. We check if
@@ -1282,10 +1282,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
       }
     } else {
-      if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
-                          pcb->rcv_nxt + pcb->rcv_ann_wnd-1)){
-        tcp_ack_now(pcb);
-      }
+      tcp_ack_now(pcb);
     }
   } else {
     /* Segments with length 0 is taken care of here. Segments that

@@ -21,6 +21,10 @@ HISTORY
 
 
   ++ Bugfixes:
+  2008-05-30 Kieran Mansley
+  * tcp_in.c Remove redundant "if" statement, and use real rcv_wnd
+    rather than rcv_ann_wnd when deciding if packets are in-window.
+    Contributed by <arasmussen@consultant.datasys.swri.edu>
 
   2008-05-30 Kieran Mansley
   * mem.h: Fix BUG#23254.  Change macro definition of mem_* to allow
