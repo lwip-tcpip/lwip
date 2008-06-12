@@ -39,8 +39,8 @@
 extern "C" {
 #endif
 
-#if !LWIP_LOOPIF_MULTITHREADING
-void loopif_poll(struct netif *netif);
+#if !LWIP_NETIF_LOOPBACK_MULTITHREADING
+#define loopif_poll(netif) netif_poll()
 #endif
 
 err_t loopif_init(struct netif *netif);

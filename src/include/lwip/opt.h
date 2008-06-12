@@ -832,6 +832,31 @@
 #define LWIP_NETIF_HWADDRHINT           0
 #endif
 
+/**
+ * LWIP_NETIF_LOOPBACK==1: Support sending packets with a destination IP
+ * address equal to the netif IP address, looping them back up the stack.
+ */
+#ifndef LWIP_NETIF_LOOPBACK
+#define LWIP_NETIF_LOOPBACK             0
+#endif
+
+/**
+ * LWIP_NETIF_LOOPBACK_MULTITHREADING: Indicates whether threading is enabled in
+ * the system, as netifs must change how they behave depending on this setting
+ * for the LWIP_NETIF_LOOPBACK option to work.
+ * Setting this is needed to avoid reentering non-reentrant functions like
+ * tcp_input().
+ *    LWIP_NETIF_LOOPBACK_MULTITHREADING==1: Indicates that the user is using a
+ *       multithreaded environment like tcpip.c. In this case, netif->input()
+ *       is called directly.
+ *    LWIP_NETIF_LOOPBACK_MULTITHREADING==0: Indicates a polling (or NO_SYS) setup.
+ *       The packets are put on a list and netif_poll() must be called in
+ *       the main application loop.
+ */
+#ifndef LWIP_NETIF_LOOPBACK_MULTITHREADING
+#define LWIP_NETIF_LOOPBACK_MULTITHREADING    (!NO_SYS)
+#endif
+
 /*
    ------------------------------------
    ---------- LOOPIF options ----------
@@ -842,22 +867,6 @@
  */
 #ifndef LWIP_HAVE_LOOPIF
 #define LWIP_HAVE_LOOPIF                0
-#endif
-
-/**
- * LWIP_LOOPIF_MULTITHREADING: Indicates whether threading is enabled in
- * the system, as LOOPIF must change how it behaves depending on this setting.
- * Setting this is needed to avoid reentering non-reentrant functions like
- * tcp_input().
- *    LWIP_LOOPIF_MULTITHREADING==1: Indicates that the user is using a
- *       multithreaded environment like tcpip.c. In this case, netif->input()
- *       is called directly.
- *    LWIP_LOOPIF_MULTITHREADING==0: Indicates a polling (or NO_SYS) setup.
- *       The packets are put on a list and loopif_poll() must be called in
- *       the main application loop.
- */
-#ifndef LWIP_LOOPIF_MULTITHREADING
-#define LWIP_LOOPIF_MULTITHREADING      1
 #endif
 
 /*

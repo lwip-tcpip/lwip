@@ -53,6 +53,11 @@ HISTORY
 
   ++ New features:
 
+  2008-03-10 Simon Goldschmidt (patch by Luca Ceresoli)
+  * netif.c, loopif.c, ip.c, netif.h, loopif.h, opt.h: Checked in slightly
+    modified version of patch # 6370: Moved loopif code to netif.c so that
+    loopback traffic is supported on all netifs (all local IPs).
+
   2008-03-10 Jonathan Larmour
   * inet_chksum.c: Allow choice of one of the sample algorithms to be
     made from lwipopts.h. Fix comment on how to override LWIP_CHKSUM.
