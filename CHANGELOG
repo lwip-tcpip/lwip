@@ -19,7 +19,7 @@ HISTORY
 
   ++ New features:
 
-  2008-06-12 Simon Goldschmidt (patch by Luca Ceresoli)
+  2008-06-17 Simon Goldschmidt (patch by Luca Ceresoli)
   * netif.c, loopif.c, ip.c, netif.h, loopif.h, opt.h: Checked in slightly
     modified version of patch # 6370: Moved loopif code to netif.c so that
     loopback traffic is supported on all netifs (all local IPs).
@@ -27,6 +27,10 @@ HISTORY
 
 
   ++ Bugfixes:
+  2008-06-17 Simon Goldschmidt
+  * inet_chksum.c: Checked in some ideas of patch #6460 (loop optimizations)
+    and created defines for swapping bytes and folding u32 to u16.
+
   2008-05-30 Kieran Mansley
   * tcp_in.c Remove redundant "if" statement, and use real rcv_wnd
     rather than rcv_ann_wnd when deciding if packets are in-window.
