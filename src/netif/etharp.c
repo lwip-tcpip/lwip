@@ -1165,6 +1165,8 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #endif /* PPPOE_SUPPORT */
 
     default:
+      ETHARP_STATS_INC(etharp.proterr);
+      ETHARP_STATS_INC(etharp.drop);
       pbuf_free(p);
       p = NULL;
       break;
