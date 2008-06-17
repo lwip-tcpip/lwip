@@ -47,6 +47,8 @@
 #include "netif/etharp.h"
 #if ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING
 #include "lwip/sys.h"
+#else /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#include "lwip/tcpip.h"
 #endif /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
 #if LWIP_NETIF_STATUS_CALLBACK
@@ -109,10 +111,10 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if LWIP_IGMP
   netif->igmp_mac_filter = NULL;
 #endif /* LWIP_IGMP */
-#if ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING
+#if ENABLE_LOOPBACK
   netif->loop_first = NULL;
   netif->loop_last = NULL;
-#endif /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#endif /* ENABLE_LOOPBACK */
 
   /* remember netif specific state information data */
   netif->state = state;
@@ -121,6 +123,10 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 #if LWIP_NETIF_HWADDRHINT
   netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/
+#if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
+  netif->loop_cnt_max = LWIP_LOOPBACK_MAX_PBUFS;
+  netif->loop_cnt_current = 0;
+#endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
 
   netif_set_addr(netif, ipaddr, netmask, gw);
 
@@ -500,8 +506,9 @@ u8_t netif_is_link_up(struct netif *netif)
  */
 void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif ))
 {
-    if ( netif )
-        netif->link_callback = link_callback;
+  if (netif) {
+    netif->link_callback = link_callback;
+  }
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
@@ -526,10 +533,11 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 {
   struct pbuf *r;
   err_t err;
-#if !LWIP_NETIF_LOOPBACK_MULTITHREADING
   struct pbuf *last;
+#if LWIP_LOOPBACK_MAX_PBUFS
+  u8_t clen = 0;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
   SYS_ARCH_DECL_PROTECT(lev);
-#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
   LWIP_UNUSED_ARG(ipaddr);
 
   /* Allocate a new pbuf */
@@ -537,6 +545,17 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   if (r == NULL) {
     return ERR_MEM;
   }
+#if LWIP_LOOPBACK_MAX_PBUFS
+  clen = pbuf_clen(r);
+  /* check for overflow or too many pbuf on queue */
+  if(((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
+    ((netif->loop_cnt_current + clen) > netif->loop_cnt_max)) {
+      pbuf_free(r);
+      r = NULL;
+      return ERR_MEM;
+  }
+  netif->loop_cnt_current += clen;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
 
   /* Copy the whole pbuf queue p into the single pbuf r */
   if ((err = pbuf_copy(r, p)) != ERR_OK) {
@@ -545,21 +564,12 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
     return err;
   }
 
-#if LWIP_NETIF_LOOPBACK_MULTITHREADING
-  /* Multithreading environment, netif->input() is supposed to put the packet
-     into a mailbox, so we can safely call it here without risking to re-enter
-     functions that are not reentrant (TCP!!!) */
-  LWIP_ASSERT(netif->input != ip_input, "Don't use ip_input as netif->input with LWIP_NETIF_LOOPBACK_MULTITHREADING = 1!");
-  if(netif->input(r, netif) != ERR_OK) {
-    pbuf_free(r);
-    r = NULL;
-  }
-#else /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
-  /* Raw API without threads: put the packet on a linked list which gets emptied
-     through calling netif_poll(). */
+  /* Put the packet on a linked list which gets emptied through calling
+     netif_poll(). */
 
   /* let last point to the last pbuf in chain r */
   for (last = r; last->next != NULL; last = last->next);
+
   SYS_ARCH_PROTECT(lev);
   if(netif->loop_first != NULL) {
     LWIP_ASSERT("if first != NULL, last must also be != NULL", netif->loop_last != NULL);
@@ -570,25 +580,13 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
     netif->loop_last = last;
   }
   SYS_ARCH_UNPROTECT(lev);
+
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
+  /* For multithreading environment, schedule a call to netif_poll */
+  tcpip_callback(netif_poll, netif);
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
   return ERR_OK;
-}
-
-#if !LWIP_NETIF_LOOPBACK_MULTITHREADING
-/**
- * Calls netif_poll() for every netif on the netif_list.
- */
-void
-netif_poll_all(void)
-{
-  struct netif *netif = netif_list;
-  /* loop through netifs */
-  while (netif != NULL) {
-    netif_poll(netif);
-    /* proceed to next network interface */
-    netif = netif->next;
-  }
 }
 
 /**
@@ -609,6 +607,13 @@ netif_poll(struct netif *netif)
     in = netif->loop_first;
     if(in != NULL) {
       struct pbuf *in_end = in;
+#if LWIP_LOOPBACK_MAX_PBUFS
+      u8_t clen = pbuf_clen(in);
+      /* adjust the number of pbufs on queue */
+      LWIP_ASSERT("netif->loop_cnt_current underflow",
+        ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
+      netif->loop_cnt_current -= clen;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
       while(in_end->len != in_end->tot_len) {
         LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
         in_end = in_end->next;
@@ -628,7 +633,8 @@ netif_poll(struct netif *netif)
     SYS_ARCH_UNPROTECT(lev);
 
     if(in != NULL) {
-      if(netif->input(in, netif) != ERR_OK) {
+      /* loopback packets are always IP packets! */
+      if(ip_input(in, netif) != ERR_OK) {
         pbuf_free(in);
       }
       /* Don't reference the packet any more! */
@@ -636,6 +642,22 @@ netif_poll(struct netif *netif)
     }
   /* go on while there is a packet on the list */
   } while(netif->loop_first != NULL);
+}
+
+#if !LWIP_NETIF_LOOPBACK_MULTITHREADING
+/**
+ * Calls netif_poll() for every netif on the netif_list.
+ */
+void
+netif_poll_all(void)
+{
+  struct netif *netif = netif_list;
+  /* loop through netifs */
+  while (netif != NULL) {
+    netif_poll(netif);
+    /* proceed to next network interface */
+    netif = netif->next;
+  }
 }
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */

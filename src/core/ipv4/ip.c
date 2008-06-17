@@ -531,14 +531,14 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], netif->num));
   ip_debug_print(p);
 
-#if (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF) && !LWIP_NETIF_LOOPBACK_MULTITHREADING
+#if (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF)
   if (ip_addr_cmp(dest, &netif->ip_addr)) {
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
 
     return netif_loop_output(netif, p, dest);
   } else
-#endif /* (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF) && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#endif /* (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF) */
   {
     LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
 

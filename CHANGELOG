@@ -23,6 +23,7 @@ HISTORY
   * netif.c, loopif.c, ip.c, netif.h, loopif.h, opt.h: Checked in slightly
     modified version of patch # 6370: Moved loopif code to netif.c so that
     loopback traffic is supported on all netifs (all local IPs).
+    Added option to limit loopback packets for each netifs.
 
 
   ++ Bugfixes:

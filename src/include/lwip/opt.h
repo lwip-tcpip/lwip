@@ -841,6 +841,14 @@
 #endif
 
 /**
+ * LWIP_LOOPBACK_MAX_PBUFS: Maximum number of pbufs on queue for loopback
+ * sending for each netif (0 = disabled)
+ */
+#ifndef LWIP_LOOPBACK_MAX_PBUFS
+#define LWIP_LOOPBACK_MAX_PBUFS         0
+#endif
+
+/**
  * LWIP_NETIF_LOOPBACK_MULTITHREADING: Indicates whether threading is enabled in
  * the system, as netifs must change how they behave depending on this setting
  * for the LWIP_NETIF_LOOPBACK option to work.
