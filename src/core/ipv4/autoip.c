@@ -395,8 +395,8 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
     /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
      * structure packing (not using structure copy which breaks strict-aliasing rules).
      */
-    MEMCPY(&sipaddr, &hdr->sipaddr, sizeof(sipaddr));
-    MEMCPY(&dipaddr, &hdr->dipaddr, sizeof(dipaddr));
+    SMEMCPY(&sipaddr, &hdr->sipaddr, sizeof(sipaddr));
+    SMEMCPY(&dipaddr, &hdr->dipaddr, sizeof(dipaddr));
       
     if ((netif->autoip->state == AUTOIP_STATE_PROBING) ||
         ((netif->autoip->state == AUTOIP_STATE_ANNOUNCING) &&
