@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2008-06-17 Simon Goldschmidt
+  * slipif.c: patch #6480: Added a configuration option for slipif for symmetry
+    to loopif
+
   2008-06-17 Simon Goldschmidt (patch by Luca Ceresoli)
   * netif.c, loopif.c, ip.c, netif.h, loopif.h, opt.h: Checked in slightly
     modified version of patch # 6370: Moved loopif code to netif.c so that
