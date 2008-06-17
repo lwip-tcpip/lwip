@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2008-06-17 Simon Goldschmidt
+  * err.h: patch #6459: Made err_t overridable to use a more efficient type
+    (define LWIP_ERR_T in cc.h)
+
+  2008-06-17 Simon Goldschmidt
   * slipif.c: patch #6480: Added a configuration option for slipif for symmetry
     to loopif
 
