@@ -45,11 +45,12 @@
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
 #include "netif/etharp.h"
-#if ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING
+#if ENABLE_LOOPBACK
 #include "lwip/sys.h"
-#else /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#if LWIP_NETIF_LOOPBACK_MULTITHREADING
 #include "lwip/tcpip.h"
-#endif /* ENABLE_LOOPBACK && !LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
+#endif /* ENABLE_LOOPBACK */
 
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
@@ -124,7 +125,6 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
-  netif->loop_cnt_max = LWIP_LOOPBACK_MAX_PBUFS;
   netif->loop_cnt_current = 0;
 #endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
 
@@ -549,7 +549,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   clen = pbuf_clen(r);
   /* check for overflow or too many pbuf on queue */
   if(((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
-    ((netif->loop_cnt_current + clen) > netif->loop_cnt_max)) {
+    ((netif->loop_cnt_current + clen) > LWIP_LOOPBACK_MAX_PBUFS)) {
       pbuf_free(r);
       r = NULL;
       return ERR_MEM;

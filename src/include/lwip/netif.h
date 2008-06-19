@@ -172,7 +172,6 @@ struct netif {
   struct pbuf *loop_first;
   struct pbuf *loop_last;
 #if LWIP_LOOPBACK_MAX_PBUFS
-  u16_t loop_cnt_max;
   u16_t loop_cnt_current;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
 #endif /* ENABLE_LOOPBACK */
