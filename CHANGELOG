@@ -35,6 +35,11 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2008-06-24 Jonathan Larmour
+  * tcp_in.c: Fix for bug #23693 as suggested by Art R. Ensure cseg is unused
+    if tcp_seg_copy fails.
+
   2008-06-17 Simon Goldschmidt
   * inet_chksum.c: Checked in some ideas of patch #6460 (loop optimizations)
     and created defines for swapping bytes and folding u32 to u16.

@@ -1195,14 +1195,14 @@ tcp_receive(struct tcp_pcb *pcb)
                   } else {
                     pcb->ooseq = cseg;
                   }
-                }
-                tcp_seg_free(next);
-                if (cseg->next != NULL) {
-                  next = cseg->next;
-                  if (TCP_SEQ_GT(seqno + cseg->len, next->tcphdr->seqno)) {
-                    /* We need to trim the incoming segment. */
-                    cseg->len = (u16_t)(next->tcphdr->seqno - seqno);
-                    pbuf_realloc(cseg->p, cseg->len);
+                  tcp_seg_free(next);
+                  if (cseg->next != NULL) {
+                    next = cseg->next;
+                    if (TCP_SEQ_GT(seqno + cseg->len, next->tcphdr->seqno)) {
+                      /* We need to trim the incoming segment. */
+                      cseg->len = (u16_t)(next->tcphdr->seqno - seqno);
+                      pbuf_realloc(cseg->p, cseg->len);
+                    }
                   }
                 }
                 break;
