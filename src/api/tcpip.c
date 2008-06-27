@@ -525,7 +525,7 @@ tcpip_init(void (* initfunc)(void *), void *arg)
  * @param p The pbuf (chain) to be dereferenced.
  */
 static void
-pub_free_int(void *p)
+pbuf_free_int(void *p)
 {
   struct pbuf *q = p;
   pbuf_free(q);
@@ -540,7 +540,7 @@ pub_free_int(void *p)
 err_t
 pbuf_free_callback(struct pbuf *p)
 {
-  return tcpip_callback_with_block(pub_free_int, p, 0);
+  return tcpip_callback_with_block(pbuf_free_int, p, 0);
 }
 
 /**

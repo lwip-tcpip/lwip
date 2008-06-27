@@ -85,6 +85,7 @@ err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
 err_t tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block);
 #define tcpip_callback(f, ctx)              tcpip_callback_with_block(f, ctx, 1)
 
+/* free pbufs or heap memory from another context without blocking */
 err_t pbuf_free_callback(struct pbuf *p);
 err_t mem_free_callback(void *m);
 
