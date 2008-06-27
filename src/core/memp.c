@@ -252,13 +252,12 @@ memp_init(void)
   struct memp *memp;
   u16_t i, j;
 
-#if MEMP_STATS
   for (i = 0; i < MEMP_MAX; ++i) {
-    lwip_stats.memp[i].used = lwip_stats.memp[i].max =
-      lwip_stats.memp[i].err = 0;
-    lwip_stats.memp[i].avail = memp_num[i];
+    MEMP_STATS_AVAIL(used, i, 0);
+    MEMP_STATS_AVAIL(max, i, 0);
+    MEMP_STATS_AVAIL(err, i, 0);
+    MEMP_STATS_AVAIL(avail, i, memp_num[i]);
   }
-#endif /* MEMP_STATS */
 
   memp = LWIP_MEM_ALIGN(memp_memory);
   /* for every pool: */
@@ -315,20 +314,13 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
     memp->file = file;
     memp->line = line;
 #endif /* MEMP_OVERFLOW_CHECK */
-#if MEMP_STATS
-    ++lwip_stats.memp[type].used;
-    if (lwip_stats.memp[type].used > lwip_stats.memp[type].max) {
-      lwip_stats.memp[type].max = lwip_stats.memp[type].used;
-    }
-#endif /* MEMP_STATS */
+    MEMP_STATS_INC_USED(used, type);
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
     memp = (struct memp*)((u8_t*)memp + MEMP_SIZE);
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | 2, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
-#if MEMP_STATS
-    ++lwip_stats.memp[type].err;
-#endif /* MEMP_STATS */
+    MEMP_STATS_INC(err, type);
   }
 
   SYS_ARCH_UNPROTECT(old_level);
@@ -365,9 +357,7 @@ memp_free(memp_t type, void *mem)
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 #endif /* MEMP_OVERFLOW_CHECK */
 
-#if MEMP_STATS
-  lwip_stats.memp[type].used--; 
-#endif /* MEMP_STATS */
+  MEMP_STATS_DEC(used, type); 
   
   memp->next = memp_tab[type]; 
   memp_tab[type] = memp;

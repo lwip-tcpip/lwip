@@ -277,9 +277,7 @@ mem_init(void)
   /* initialize the lowest-free pointer to the start of the heap */
   lfree = (struct mem *)ram;
 
-#if MEM_STATS
-  lwip_stats.mem.avail = MEM_SIZE_ALIGNED;
-#endif /* MEM_STATS */
+  MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
 }
 
 /**
@@ -308,9 +306,7 @@ mem_free(void *rmem)
 
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     LWIP_DEBUGF(MEM_DEBUG | 3, ("mem_free: illegal memory\n"));
-#if MEM_STATS
-    ++lwip_stats.mem.err;
-#endif /* MEM_STATS */
+    MEM_STATS_INC(err);
     LWIP_MEM_UNPROTECT();
     return;
   }
@@ -326,9 +322,7 @@ mem_free(void *rmem)
     lfree = mem;
   }
 
-#if MEM_STATS
-  lwip_stats.mem.used -= mem->next - ((u8_t *)mem - ram);
-#endif /* MEM_STATS */
+  MEM_STATS_DEC_USED(used, mem->next - ((u8_t *)mem - ram));
 
   /* finally, see if prev or next are free also */
   plug_holes(mem);
@@ -392,9 +386,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   /* protect the heap from concurrent access */
   LWIP_MEM_PROTECT();
 
-#if MEM_STATS
-  lwip_stats.mem.used -= (size - newsize);
-#endif /* MEM_STATS */
+  MEM_STATS_DEC_USED(used, (size - newsize));
 
   mem2 = (struct mem *)&ram[mem->next];
   if(mem2->used == 0) {
@@ -526,12 +518,7 @@ mem_malloc(mem_size_t size)
         if (mem2->next != MEM_SIZE_ALIGNED) {
           ((struct mem *)&ram[mem2->next])->prev = ptr2;
         }
-#if MEM_STATS
-        lwip_stats.mem.used += (size + SIZEOF_STRUCT_MEM);
-        if (lwip_stats.mem.max < lwip_stats.mem.used) {
-          lwip_stats.mem.max = lwip_stats.mem.used;
-        }
-#endif /* MEM_STATS */
+        MEM_STATS_INC_USED(used, (size + SIZEOF_STRUCT_MEM));
       } else {
         /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
          * be used at this point: if not we have 2 unused structs in a row, plug_holes should have
@@ -541,12 +528,7 @@ mem_malloc(mem_size_t size)
          * will always be used at this point!
          */
         mem->used = 1;
-#if MEM_STATS
-        lwip_stats.mem.used += mem->next - ((u8_t *)mem - ram);
-        if (lwip_stats.mem.max < lwip_stats.mem.used) {
-          lwip_stats.mem.max = lwip_stats.mem.used;
-        }
-#endif /* MEM_STATS */
+        MEM_STATS_INC_USED(used, mem->next - ((u8_t *)mem - ram));
       }
 
       if (mem == lfree) {
@@ -568,9 +550,7 @@ mem_malloc(mem_size_t size)
     }
   }
   LWIP_DEBUGF(MEM_DEBUG | 2, ("mem_malloc: could not allocate %"S16_F" bytes\n", (s16_t)size));
-#if MEM_STATS
-  ++lwip_stats.mem.err;
-#endif /* MEM_STATS */
+  MEM_STATS_INC(err);
   LWIP_MEM_UNPROTECT();
   return NULL;
 }

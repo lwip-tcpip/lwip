@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2008-06-27 Simon Goldschmidt
+  * stats.h/.c, some other files: patch #6483: stats module improvement:
+    Added defines to display each module's statistic individually, added stats
+    defines for MEM, MEMP and SYS modules, removed (unused) rexmit counter.
+
   2008-06-17 Simon Goldschmidt
   * err.h: patch #6459: Made err_t overridable to use a more efficient type
     (define LWIP_ERR_T in cc.h)
