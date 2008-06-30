@@ -19,6 +19,12 @@ HISTORY
 
   ++ New features:
 
+  2008-06-30 Simon Goldschmidt
+  * mem.c, opt.h, stats.h: fixed bug #21433: Calling mem_free/pbuf_free from
+    interrupt context isn't safe: LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT allows
+    mem_free to run between mem_malloc iterations. Added illegal counter for
+    mem stats.
+
   2008-06-27 Simon Goldschmidt
   * stats.h/.c, some other files: patch #6483: stats module improvement:
     Added defines to display each module's statistic individually, added stats

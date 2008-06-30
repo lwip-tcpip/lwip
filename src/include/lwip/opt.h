@@ -156,21 +156,25 @@
 #endif
 
 /**
- * This is for NO_SYS=0 only; in NO_SYS=1 configurations, the heap may not be accessed
- * from interrupt level!
+ * Set this to 1 if you want to free PBUF_RAM pbufs (or call mem_free()) from
+ * interrupt context (or another context that doesn't allow waiting for a
+ * semaphore).
+ * If set to 1, mem_malloc will be protected by a semaphore and SYS_ARCH_PROTECT,
+ * while mem_free will only use SYS_ARCH_PROTECT. mem_malloc SYS_ARCH_UNPROTECTs
+ * with each loop so that mem_free can run.
  *
- * If you want to free PBUF_RAM pbufs (or call mem_free()) from interrupt context,
- * the heap cannot be protected by a semaphore. Setting this to 1 will disable
- * interrupts while walking the heap.
+ * ATTENTION: As you can see from the above description, this leads to dis-/
+ * enabling interrupts often, which can be slow! Also, on low memory, mem_malloc
+ * can need longer.
  *
- * *** USE THIS WITH CARE: Setting this to 1 can disable interrupts for a long time! ***
- *
- * If you don't want that, call
+ * If you don't want that, at least for NO_SYS=0, you can still use the following
+ * functions to enqueue a deallocation call which then runs in the tcpip_thread
+ * context:
  * - pbuf_free_callback(p);
  * - mem_free_callback(m);
  */
-#ifndef LWIP_USE_HEAP_FROM_INTERRUPT
-#define LWIP_USE_HEAP_FROM_INTERRUPT    0
+#ifndef LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
+#define LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT 0
 #endif
 
 /*

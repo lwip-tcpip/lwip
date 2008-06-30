@@ -86,7 +86,8 @@ struct stats_mem {
   mem_size_t avail;
   mem_size_t used;
   mem_size_t max;
-  mem_size_t err;
+  STAT_COUNTER err;
+  STAT_COUNTER illegal;
 };
 
 struct stats_syselem {
