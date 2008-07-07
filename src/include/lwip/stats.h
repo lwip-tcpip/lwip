@@ -271,7 +271,7 @@ void stats_display_sys(struct stats_sys *sys);
 #define stats_display_proto(proto, name)
 #define stats_display_igmp(igmp)
 #define stats_display_mem(mem, name)
-#define stats_display_memp(mem, int index)
+#define stats_display_memp(mem, index)
 #define stats_display_sys(sys)
 #endif /* LWIP_STATS_DISPLAY */
 
