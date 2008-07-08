@@ -154,6 +154,7 @@ extern struct stats_ lwip_stats;
 #define TCP_STATS_DISPLAY() stats_display_proto(&lwip_stats.tcp, "TCP")
 #else
 #define TCP_STATS_INC(x)
+#define TCP_STATS_DISPLAY()
 #endif
 
 #if UDP_STATS
@@ -223,10 +224,10 @@ extern struct stats_ lwip_stats;
 #define MEM_STATS_DEC_USED(x, y) lwip_stats.mem.x -= y
 #define MEM_STATS_DISPLAY() stats_display_mem(&lwip_stats.mem, "HEAP")
 #else
-#define MEM_STATS_AVAIL(x)
+#define MEM_STATS_AVAIL(x, y)
 #define MEM_STATS_INC(x)
-#define MEM_STATS_INC_USED(x)
-#define MEM_STATS_DEC_USED(x)
+#define MEM_STATS_INC_USED(x, y)
+#define MEM_STATS_DEC_USED(x, y)
 #define MEM_STATS_DISPLAY()
 #endif
 
@@ -241,11 +242,11 @@ extern struct stats_ lwip_stats;
                                  } while(0)
 #define MEMP_STATS_DISPLAY(i) stats_display_memp(&lwip_stats.memp[i], i)
 #else
-#define MEMP_STATS_AVAIL(x)
-#define MEMP_STATS_INC(x)
-#define MEMP_STATS_DEC(x)
-#define MEMP_STATS_INC_USED(x)
-#define MEMP_STATS_DISPLAY()
+#define MEMP_STATS_AVAIL(x, i, y)
+#define MEMP_STATS_INC(x, i)
+#define MEMP_STATS_DEC(x, i)
+#define MEMP_STATS_INC_USED(x, i)
+#define MEMP_STATS_DISPLAY(i)
 #endif
 
 #if SYS_STATS

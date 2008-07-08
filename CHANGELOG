@@ -47,6 +47,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-07-08 Frédéric Bernon
+  * stats.h: Fix some build bugs introduced with patch #6483 (missing some parameters
+    in macros, mainly if MEM_STATS=0 and MEMP_STATS=0).
+
   2008-06-24 Jonathan Larmour
   * tcp_in.c: Fix for bug #23693 as suggested by Art R. Ensure cseg is unused
     if tcp_seg_copy fails.
