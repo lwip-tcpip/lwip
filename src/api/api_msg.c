@@ -598,11 +598,17 @@ do_close_internal(struct netconn *conn)
   LWIP_ASSERT("pcb already closed", (conn->pcb.tcp != NULL));
 
   /* Set back some callback pointers */
+  tcp_arg(conn->pcb.tcp, NULL);
   if (conn->pcb.tcp->state == LISTEN) {
-    tcp_arg(conn->pcb.tcp, NULL);
     tcp_accept(conn->pcb.tcp, NULL);
   } else {
     tcp_recv(conn->pcb.tcp, NULL);
+    tcp_connect(conn->pcb.tcp, NULL);
+    tcp_accept(conn->pcb.tcp, NULL);
+    /* some callbacks have to be reset if tcp_close is not successful */
+    tcp_sent(conn->pcb.tcp, NULL);
+    tcp_poll(conn->pcb.tcp, NULL, 4);
+    tcp_err(conn->pcb.tcp, NULL);
   }
   /* Try to close the connection */
   err = tcp_close(conn->pcb.tcp);
@@ -610,11 +616,6 @@ do_close_internal(struct netconn *conn)
     /* Closing succeeded */
     conn->state = NETCONN_NONE;
     /* Set back some callback pointers as conn is going away */
-    tcp_err(conn->pcb.tcp, NULL);
-    tcp_poll(conn->pcb.tcp, NULL, 4);
-    tcp_sent(conn->pcb.tcp, NULL);
-    tcp_recv(conn->pcb.tcp, NULL);
-    tcp_arg(conn->pcb.tcp, NULL);
     conn->pcb.tcp = NULL;
     conn->err = ERR_OK;
     /* Trigger select() in socket layer. This send should something else so the
@@ -623,6 +624,14 @@ do_close_internal(struct netconn *conn)
     API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
     /* wake up the application task */
     sys_sem_signal(conn->op_completed);
+  } else {
+    /* Closing failed, restore some of the callbacks */
+    /* Closing of listen pcb will never fail! */
+    LWIP_ASSERT("Closing a listen pcb may not fail!", (conn->pcb.tcp->state != LISTEN));
+    tcp_sent(conn->pcb.tcp, sent_tcp);
+    tcp_poll(conn->pcb.tcp, poll_tcp, 4);
+    tcp_err(conn->pcb.tcp, err_tcp);
+    tcp_arg(conn->pcb.tcp, conn);
   }
   /* If closing didn't succeed, we get called again either
      from poll_tcp or from sent_tcp */

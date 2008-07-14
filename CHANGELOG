@@ -47,6 +47,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-08-14 Simon Goldschmidt
+  * api_msg.c: fixed bug #23847: do_close_internal references freed memory (when
+    tcp_close returns != ERR_OK)
+
   2008-07-08 Frédéric Bernon
   * stats.h: Fix some build bugs introduced with patch #6483 (missing some parameters
     in macros, mainly if MEM_STATS=0 and MEMP_STATS=0).
