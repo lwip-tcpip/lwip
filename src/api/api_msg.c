@@ -603,7 +603,6 @@ do_close_internal(struct netconn *conn)
     tcp_accept(conn->pcb.tcp, NULL);
   } else {
     tcp_recv(conn->pcb.tcp, NULL);
-    tcp_connect(conn->pcb.tcp, NULL);
     tcp_accept(conn->pcb.tcp, NULL);
     /* some callbacks have to be reset if tcp_close is not successful */
     tcp_sent(conn->pcb.tcp, NULL);
