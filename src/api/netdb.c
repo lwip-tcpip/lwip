@@ -326,7 +326,8 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   if (nodename != NULL) {
     /* copy nodename to canonname if specified */
     size_t namelen = strlen(nodename);
-    ai->ai_canonname = mem_malloc(namelen + 1);
+    LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
+    ai->ai_canonname = mem_malloc((mem_size_t)(namelen + 1));
     if (ai->ai_canonname == NULL) {
       goto memerr;
     }
