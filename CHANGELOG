@@ -47,6 +47,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-08-26 Simon Goldschmidt
+  * inet.h, ip_addr.h: fixed bug #24132: Cross-dependency between ip_addr.h and
+    inet.h -> moved declaration of struct in_addr from ip_addr.h to inet.h
+
   2008-08-14 Simon Goldschmidt
   * api_msg.c: fixed bug #23847: do_close_internal references freed memory (when
     tcp_close returns != ERR_OK)

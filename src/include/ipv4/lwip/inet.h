@@ -40,6 +40,11 @@
 extern "C" {
 #endif
 
+/* For compatibility with BSD code */
+struct in_addr {
+  u32_t s_addr;
+};
+
 u32_t inet_addr(const char *cp);
 int inet_aton(const char *cp, struct in_addr *addr);
 char *inet_ntoa(struct in_addr addr); /* returns ptr to static buffer; not reentrant! */
