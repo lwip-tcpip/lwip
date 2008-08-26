@@ -1145,7 +1145,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
     derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
     if ((derr != ERR_OK) ||
         (type != (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ)) ||
-        (len <= 0) || (len > vb_len))
+        (len == 0) || (len > vb_len))
     {
       snmp_inc_snmpinasnparseerrs();
       /* free varbinds (if available) */
