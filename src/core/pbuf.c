@@ -272,6 +272,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   u16_t rem_len; /* remaining length */
   s32_t grow;
 
+  LWIP_ASSERT("pbuf_realloc: p != NULL", p != NULL);
   LWIP_ASSERT("pbuf_realloc: sane p->type", p->type == PBUF_POOL ||
               p->type == PBUF_ROM ||
               p->type == PBUF_RAM ||
@@ -299,6 +300,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
     q->tot_len += (u16_t)grow;
     /* proceed to next pbuf in chain */
     q = q->next;
+    LWIP_ASSERT("pbuf_realloc: q != NULL", q != NULL);
   }
   /* we have now reached the new last pbuf (in q) */
   /* rem_len == desired length for pbuf q */
