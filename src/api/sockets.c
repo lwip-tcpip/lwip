@@ -273,16 +273,22 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
 
-  memset(&sin, 0, sizeof(sin));
-  sin.sin_len = sizeof(sin);
-  sin.sin_family = AF_INET;
-  sin.sin_port = htons(port);
-  sin.sin_addr.s_addr = naddr.addr;
+  /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
+   * not be NULL if addr is valid.
+   */
+  if (NULL != addr) {
+      LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
+      memset(&sin, 0, sizeof(sin));
+      sin.sin_len = sizeof(sin);
+      sin.sin_family = AF_INET;
+      sin.sin_port = htons(port);
+      sin.sin_addr.s_addr = naddr.addr;
 
-  if (*addrlen > sizeof(sin))
-    *addrlen = sizeof(sin);
+      if (*addrlen > sizeof(sin))
+          *addrlen = sizeof(sin);
 
-  SMEMCPY(addr, &sin, *addrlen);
+      SMEMCPY(addr, &sin, *addrlen);
+  }
 
   newsock = alloc_socket(newconn);
   if (newsock == -1) {

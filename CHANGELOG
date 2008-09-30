@@ -48,6 +48,10 @@ HISTORY
   ++ Bugfixes:
 
   2008-09-30 Jonathan Larmour
+  * sockets.c (lwip_accept): check addr isn't NULL. If it's valid, do an
+  assertion check that addrlen isn't NULL.
+
+  2008-09-30 Jonathan Larmour
   * tcp.c: Fix bug #24227, wrong error message in tcp_bind.
 
   2008-08-26 Simon Goldschmidt
