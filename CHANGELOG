@@ -47,6 +47,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-09-30 Jonathan Larmour
+  * tcp.c: Fix bug #24227, wrong error message in tcp_bind.
+
   2008-08-26 Simon Goldschmidt
   * inet.h, ip_addr.h: fixed bug #24132: Cross-dependency between ip_addr.h and
     inet.h -> moved declaration of struct in_addr from ip_addr.h to inet.h
