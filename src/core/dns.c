@@ -139,6 +139,7 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+#define SIZEOF_DNS_HDR 12
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -155,6 +156,7 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+#define SIZEOF_DNS_QUERY 4
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -173,6 +175,7 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+#define SIZEOF_DNS_ANSWER 10
 
 /** DNS table entry */
 struct dns_table_entry {
@@ -415,17 +418,17 @@ dns_send(u8_t numdns, const char* name, u8_t id)
   LWIP_ASSERT("dns server has no IP address set", dns_servers[numdns].addr != 0);
 
   /* if here, we have either a new query or a retry on a previous query to process */
-  p = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dns_hdr) + DNS_MAX_NAME_LENGTH +
-                 sizeof(struct dns_query), PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, SIZEOF_DNS_HDR + DNS_MAX_NAME_LENGTH +
+                 SIZEOF_DNS_QUERY, PBUF_RAM);
   if (p != NULL) {
     LWIP_ASSERT("pbuf must be in one piece", p->next == NULL);
     /* fill dns header */
     hdr = (struct dns_hdr*)p->payload;
-    memset(hdr, 0, sizeof(struct dns_hdr));
+    memset(hdr, 0, SIZEOF_DNS_HDR);
     hdr->id = htons(id);
     hdr->flags1 = DNS_FLAG1_RD;
     hdr->numquestions = htons(1);
-    query = (char*)hdr + sizeof(struct dns_hdr);
+    query = (char*)hdr + SIZEOF_DNS_HDR;
     pHostname = name;
     --pHostname;
 
@@ -446,10 +449,10 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     /* fill dns query */
     qry.type  = htons(DNS_RRTYPE_A);
     qry.class = htons(DNS_RRCLASS_IN);
-    MEMCPY( query, &qry, sizeof(struct dns_query));
+    MEMCPY( query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
-    pbuf_realloc(p, (query + sizeof(struct dns_query)) - ((char*)(p->payload)));
+    pbuf_realloc(p, (query + SIZEOF_DNS_QUERY) - ((char*)(p->payload)));
 
     /* connect to the server for faster receiving */
     udp_connect(dns_pcb, &dns_servers[numdns], DNS_SERVER_PORT);
@@ -591,7 +594,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
   }
 
   /* is the dns message big enough ? */
-  if (p->tot_len < (sizeof(struct dns_hdr) + sizeof(struct dns_query) + sizeof(struct dns_answer))) {
+  if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY + SIZEOF_DNS_ANSWER)) {
     LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
     /* free pbuf and return */
     goto memerr1;
@@ -632,7 +635,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
 
 #if DNS_DOES_NAME_CHECK
         /* Check if the name in the "question" part match with the name in the entry. */
-        if (dns_compare_name((unsigned char *)(pEntry->name), (unsigned char *)dns_payload + sizeof(struct dns_hdr)) != 0) {
+        if (dns_compare_name((unsigned char *)(pEntry->name), (unsigned char *)dns_payload + SIZEOF_DNS_HDR) != 0) {
           LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response not match to query\n", pEntry->name));
           /* call callback to indicate error, clean up memory and return */
           goto responseerr;
@@ -640,14 +643,14 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
 #endif /* DNS_DOES_NAME_CHECK */
 
         /* Skip the name in the "question" part */
-        pHostname = (char *) dns_parse_name((unsigned char *)dns_payload + sizeof(struct dns_hdr)) + sizeof(struct dns_query);
+        pHostname = (char *) dns_parse_name((unsigned char *)dns_payload + SIZEOF_DNS_HDR) + SIZEOF_DNS_QUERY;
 
         while(nanswers > 0) {
           /* skip answer resource record's host name */
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
           /* Check for IP address type and Internet class. Others are discarded. */
-          MEMCPY(&ans, pHostname, sizeof(struct dns_answer));
+          MEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
           if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(struct ip_addr)) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
@@ -655,7 +658,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
               pEntry->ttl = DNS_MAX_TTL;
             }
             /* read the IP address after answer resource record's header */
-            MEMCPY( &(pEntry->ipaddr), (pHostname+sizeof(struct dns_answer)), sizeof(struct ip_addr));
+            MEMCPY( &(pEntry->ipaddr), (pHostname+SIZEOF_DNS_ANSWER), sizeof(struct ip_addr));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
@@ -666,7 +669,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
             /* deallocate memory and return */
             goto memerr2;
           } else {
-            pHostname = pHostname + sizeof(struct dns_answer) + htons(ans.len);
+            pHostname = pHostname + SIZEOF_DNS_ANSWER + htons(ans.len);
           }
           --nanswers;
         }

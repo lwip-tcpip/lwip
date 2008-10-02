@@ -47,6 +47,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-10-02 Jonathan Larmour
+  * dns.c: Hard-code structure sizes, to avoid issues on some compilers where
+  padding is included.
+
   2008-09-30 Jonathan Larmour
   * sockets.c (lwip_accept): check addr isn't NULL. If it's valid, do an
   assertion check that addrlen isn't NULL.
