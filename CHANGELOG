@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2008-10-02 Jonathan Larmour and Rishi Khan
+  * sockets.c (lwip_accept): Return EWOULDBLOCK if would block on non-blocking
+  socket.
+
   2008-06-30 Simon Goldschmidt
   * mem.c, opt.h, stats.h: fixed bug #21433: Calling mem_free/pbuf_free from
     interrupt context isn't safe: LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT allows

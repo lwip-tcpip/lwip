@@ -258,6 +258,12 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (!sock)
     return -1;
 
+  if ((sock->flags & O_NONBLOCK) && !sock->rcvevent) {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
+    sock_set_errno(sock, EWOULDBLOCK);
+    return -1;
+  }
+
   newconn = netconn_accept(sock->conn);
   if (!newconn) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) failed, err=%d\n", s, sock->conn->err));
