@@ -705,7 +705,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       hdr->opcode = htons(ARP_REPLY);
 
       hdr->dipaddr = hdr->sipaddr;
-      hdr->sipaddr = *(struct ip_addr2 *)&netif->ip_addr;
+      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(hdr->sipaddr));
 
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));

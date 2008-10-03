@@ -51,6 +51,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-10-03 David Woodhouse, Jonathan Larmour
+  * etharp.c (etharp_arp_input): Fix type aliasing problem copying ip address.
+
   2008-10-02 Jonathan Larmour
   * dns.c: Hard-code structure sizes, to avoid issues on some compilers where
   padding is included.
