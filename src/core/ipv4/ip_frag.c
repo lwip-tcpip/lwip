@@ -81,12 +81,21 @@
 /** This is a helper struct which holds the starting
  * offset and the ending offset of this fragment to
  * easily chain the fragments.
+ * It has to be packed since it has to fit inside the IP header.
  */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
 struct ip_reass_helper {
-  struct pbuf *next_pbuf;
-  u16_t start;
-  u16_t end;
-};
+  PACK_STRUCT_FIELD(struct pbuf *next_pbuf);
+  PACK_STRUCT_FIELD(u16_t start);
+  PACK_STRUCT_FIELD(u16_t end);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 #define IP_ADDRESSES_AND_ID_MATCH(iphdrA, iphdrB)  \
   (ip_addr_cmp(&(iphdrA)->src, &(iphdrB)->src) && \
