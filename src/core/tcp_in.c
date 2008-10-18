@@ -1308,7 +1308,7 @@ tcp_receive(struct tcp_pcb *pcb)
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
-  u8_t c;
+  u16_t c;
   u8_t *opts, opt;
   u16_t mss;
 

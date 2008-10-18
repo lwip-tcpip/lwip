@@ -51,6 +51,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-10-18 Simon Goldschmidt
+  * tcp_in.c: fixed bug ##24596: Vulnerability on faulty TCP options length
+    in tcp_parseopt
+
   2008-10-15 Simon Goldschmidt
   * ip_frag.c: fixed bug #24517: IP reassembly crashes on unaligned IP headers
     by packing the struct ip_reass_helper.
