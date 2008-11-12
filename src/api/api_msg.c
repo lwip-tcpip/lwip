@@ -902,7 +902,7 @@ do_send(struct api_msg_msg *msg)
 }
 
 /**
- * Recv some data from a RAW or UDP pcb contained in a netconn
+ * Indicate data has been received from a TCP pcb contained in a netconn
  * Called from netconn_recv
  *
  * @param msg the api_msg_msg pointing to the connection
