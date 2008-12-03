@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2008-12-03 Simon Goldschmidt (base on patch from Luca Cereoli)
+  * autoip.c: checked in (slightly modified) patch #6683: Customizable AUTOIP
+    "seed" address. This should reduce AUTOIP conflicts if
+    LWIP_AUTOIP_CREATE_SEED_ADDR is overridden.
+
   2008-10-02 Jonathan Larmour and Rishi Khan
   * sockets.c (lwip_accept): Return EWOULDBLOCK if would block on non-blocking
   socket.

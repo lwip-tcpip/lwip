@@ -76,7 +76,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* Pseudo random macro based on netif informations.
+// 169.254.1.0
+#define AUTOIP_RANGE_START 0xA9FE0100
+// 169.254.254.255
+#define AUTOIP_RANGE_END   0xA9FEFEFF
+
+/** Pseudo random macro based on netif informations.
  * You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
 #ifndef LWIP_AUTOIP_RAND
 #define LWIP_AUTOIP_RAND(netif) ( (((u32_t)((netif->hwaddr[5]) & 0xff) << 24) | \
@@ -86,11 +91,21 @@
                                    (netif->autoip?netif->autoip->tried_llipaddr:0))
 #endif /* LWIP_AUTOIP_RAND */
 
+/**
+ * Macro that generates the initial IP address to be tried by AUTOIP.
+ * If you want to override this, define it to something else in lwipopts.h.
+ */
+#ifndef LWIP_AUTOIP_CREATE_SEED_ADDR
+#define LWIP_AUTOIP_CREATE_SEED_ADDR(netif) \
+  (AUTOIP_RANGE_START + ((u32_t)(((u8_t)(netif->hwaddr[4])) | \
+                 ((u32_t)((u8_t)(netif->hwaddr[5]))) << 8)))
+#endif /* LWIP_AUTOIP_CREATE_SEED_ADDR */
+
 /* static functions */
 static void autoip_handle_arp_conflict(struct netif *netif);
 
 /* creates random LL IP-Address for a network interface */
-static void autoip_create_rand_addr(struct netif *netif, struct ip_addr *RandomIPAddr);
+static void autoip_create_addr(struct netif *netif, struct ip_addr *RandomIPAddr);
 
 /* sends an ARP announce */
 static err_t autoip_arp_announce(struct netif *netif);
@@ -144,30 +159,38 @@ autoip_handle_arp_conflict(struct netif *netif)
  * Create an IP-Address out of range 169.254.1.0 to 169.254.254.255
  *
  * @param netif network interface on which create the IP-Address
- * @param RandomIPAddr ip address to initialize
+ * @param IPAddr ip address to initialize
  */
 static void
-autoip_create_rand_addr(struct netif *netif, struct ip_addr *RandomIPAddr)
+autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
    * We have 254 * 256 possibilities
    */
-  
-  RandomIPAddr->addr = (0xA9FE0100 + ((u32_t)(((u8_t)(netif->hwaddr[4])) |
-    ((u32_t)((u8_t)(netif->hwaddr[5]))) << 8)) + netif->autoip->tried_llipaddr);
 
-  if (RandomIPAddr->addr>0xA9FEFEFF) {
-    RandomIPAddr->addr = (0xA9FE0100 + (RandomIPAddr->addr-0xA9FEFEFF));
+  u16_t seed = LWIP_AUTOIP_CREATE_SEED_ADDR(netif);
+  /* seed must be between .1.0 and .254.255 */
+  if(seed < 0x0100) {
+    seed += 0x0100;
   }
-  if (RandomIPAddr->addr<0xA9FE0100) {
-    RandomIPAddr->addr = (0xA9FEFEFF - (0xA9FE0100-RandomIPAddr->addr));
+  if(seed > 0xFEFF) {
+    see -= 0x0100;
   }
-  RandomIPAddr->addr = htonl(RandomIPAddr->addr);
+  
+  IPAddr->addr = (AUTOIP_RANGE_START + seed + netif->autoip->tried_llipaddr);
+
+  if (IPAddr->addr > AUTOIP_RANGE_END) {
+    IPAddr->addr = (AUTOIP_RANGE_START + (IPAddr->addr - AUTOIP_RANGE_END));
+  }
+  if (IPAddr->addr < AUTOIP_RANGE_START) {
+    IPAddr->addr = (AUTOIP_RANGE_END - (AUTOIP_RANGE_START - IPAddr->addr));
+  }
+  IPAddr->addr = htonl(IPAddr->addr);
   
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 1,
-    ("autoip_create_rand_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
-    (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(RandomIPAddr->addr)));
+    ("autoip_create_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
+    (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(IPAddr->addr)));
 }
 
 /**
@@ -258,7 +281,7 @@ autoip_start(struct netif *netif)
     autoip->lastconflict = 0;
   }
 
-  autoip_create_rand_addr(netif, &(autoip->llipaddr));
+  autoip_create_addr(netif, &(autoip->llipaddr));
   autoip->tried_llipaddr++;
   autoip->state = AUTOIP_STATE_PROBING;
   autoip->sent_num = 0;
