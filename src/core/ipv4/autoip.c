@@ -104,8 +104,8 @@
 /* static functions */
 static void autoip_handle_arp_conflict(struct netif *netif);
 
-/* creates random LL IP-Address for a network interface */
-static void autoip_create_addr(struct netif *netif, struct ip_addr *RandomIPAddr);
+/* creates a pseudo random LL IP-Address for a network interface */
+static void autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr);
 
 /* sends an ARP announce */
 static err_t autoip_arp_announce(struct netif *netif);
@@ -170,12 +170,9 @@ autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
    */
 
   u16_t seed = LWIP_AUTOIP_CREATE_SEED_ADDR(netif);
-  /* seed must be between .1.0 and .254.255 */
-  if(seed < 0x0100) {
-    seed += 0x0100;
-  }
-  if(seed > 0xFEFF) {
-    see -= 0x0100;
+  /* seed must be between 0 and 0xFDFF since it is added to 169.254.1.0 */
+  if(seed > 0xFDFF) {
+    see -= 0x0200;
   }
   
   IPAddr->addr = (AUTOIP_RANGE_START + seed + netif->autoip->tried_llipaddr);
