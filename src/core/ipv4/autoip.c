@@ -76,10 +76,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-// 169.254.1.0
-#define AUTOIP_RANGE_START 0xA9FE0100
-// 169.254.254.255
-#define AUTOIP_RANGE_END   0xA9FEFEFF
+/* 169.254.0.0 */
+#define AUTOIP_NET         0xA9FE0000
+/* 169.254.1.0 */
+#define AUTOIP_RANGE_START AUTOIP_NET | 0x0100
+/* 169.254.254.255 */
+#define AUTOIP_RANGE_END   AUTOIP_NET | 0xFEFF
+
 
 /** Pseudo random macro based on netif informations.
  * You could use "rand()" from the C Library if you define LWIP_AUTOIP_RAND in lwipopts.h */
@@ -166,24 +169,22 @@ autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
-   * We have 254 * 256 possibilities
-   */
+   * We have 254 * 256 possibilities */
 
-  u16_t seed = LWIP_AUTOIP_CREATE_SEED_ADDR(netif);
-  /* seed must be between 0 and 0xFDFF since it is added to 169.254.1.0 */
-  if(seed > 0xFDFF) {
-    see -= 0x0200;
-  }
-  
-  IPAddr->addr = (AUTOIP_RANGE_START + seed + netif->autoip->tried_llipaddr);
+  u32_t addr = ntohl(LWIP_AUTOIP_CREATE_SEED_ADDR(netif));
+  addr += netif->autoip->tried_llipaddr;
+  addr = AUTOIP_NET | (addr & 0xffff);
+  /* Now, 169.254.0.0 <= addr <= 169.254.255.255 */ 
 
-  if (IPAddr->addr > AUTOIP_RANGE_END) {
-    IPAddr->addr = (AUTOIP_RANGE_START + (IPAddr->addr - AUTOIP_RANGE_END));
+  if (addr < AUTOIP_RANGE_START) {
+    addr += AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
   }
-  if (IPAddr->addr < AUTOIP_RANGE_START) {
-    IPAddr->addr = (AUTOIP_RANGE_END - (AUTOIP_RANGE_START - IPAddr->addr));
+  if (addr > AUTOIP_RANGE_END) {
+    addr -= AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
   }
-  IPAddr->addr = htonl(IPAddr->addr);
+  LWIP_ASSERT("AUTOIP address not in range", (addr >= AUTOIP_RANGE_START) &&
+	(addr <= AUTOIP_RANGE_END));
+  IPAddr->addr = htonl(addr);
   
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 1,
     ("autoip_create_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
