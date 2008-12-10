@@ -26,7 +26,7 @@ HISTORY
 
   2008-10-02 Jonathan Larmour and Rishi Khan
   * sockets.c (lwip_accept): Return EWOULDBLOCK if would block on non-blocking
-  socket.
+    socket.
 
   2008-06-30 Simon Goldschmidt
   * mem.c, opt.h, stats.h: fixed bug #21433: Calling mem_free/pbuf_free from
@@ -56,6 +56,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-12-10 Tamas Somogyi, Frédéric Bernon
+  * sockets.c: fixed bug #25051: lwip_recvfrom problem with udp: fromaddr and
+    port uses deleted netbuf.
+
   2008-10-18 Simon Goldschmidt
   * tcp_in.c: fixed bug ##24596: Vulnerability on faulty TCP options length
     in tcp_parseopt
@@ -69,11 +73,11 @@ HISTORY
 
   2008-10-02 Jonathan Larmour
   * dns.c: Hard-code structure sizes, to avoid issues on some compilers where
-  padding is included.
+    padding is included.
 
   2008-09-30 Jonathan Larmour
   * sockets.c (lwip_accept): check addr isn't NULL. If it's valid, do an
-  assertion check that addrlen isn't NULL.
+    assertion check that addrlen isn't NULL.
 
   2008-09-30 Jonathan Larmour
   * tcp.c: Fix bug #24227, wrong error message in tcp_bind.

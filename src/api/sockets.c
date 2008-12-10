@@ -530,11 +530,58 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 
     if (netconn_type(sock->conn) == NETCONN_TCP) {
       len -= copylen;
-      if ( (len <= 0) || (buf->p->flags & PBUF_FLAG_PUSH) || !sock->rcvevent) {
+      if ( (len <= 0) || (buf->p->flags & PBUF_FLAG_PUSH) || !sock->rcvevent || ((flags & MSG_PEEK)!=0)) {
         done = 1;
       }
     } else {
       done = 1;
+    }
+
+    /* Check to see from where the data was.*/
+    if (done) {
+      if (from && fromlen) {
+        struct sockaddr_in sin;
+
+        if (netconn_type(sock->conn) == NETCONN_TCP) {
+          addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+          netconn_getaddr(sock->conn, addr, &port, 0);
+        } else {
+          addr = netbuf_fromaddr(buf);
+          port = netbuf_fromport(buf);
+        }
+
+        memset(&sin, 0, sizeof(sin));
+        sin.sin_len = sizeof(sin);
+        sin.sin_family = AF_INET;
+        sin.sin_port = htons(port);
+        sin.sin_addr.s_addr = addr->addr;
+
+        if (*fromlen > sizeof(sin)) {
+          *fromlen = sizeof(sin);
+        }
+
+        SMEMCPY(from, &sin, *fromlen);
+
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
+        ip_addr_debug_print(SOCKETS_DEBUG, addr);
+        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
+      } else {
+  #if SOCKETS_DEBUG
+        struct sockaddr_in sin;
+
+        if (netconn_type(sock->conn) == NETCONN_TCP) {
+          addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+          netconn_getaddr(sock->conn, addr, &port, 0);
+        } else {
+          addr = netbuf_fromaddr(buf);
+          port = netbuf_fromport(buf);
+        }
+
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
+        ip_addr_debug_print(SOCKETS_DEBUG, addr);
+        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
+  #endif /*  SOCKETS_DEBUG */
+      }
     }
 
     /* If we don't peek the incoming message... */
@@ -542,7 +589,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
       /* If this is a TCP socket, check if there is data left in the
          buffer. If so, it should be saved in the sock structure for next
          time around. */
-      if ((sock->conn->type == NETCONN_TCP) && (buflen - copylen > 0)) {
+      if ((netconn_type(sock->conn) == NETCONN_TCP) && (buflen - copylen > 0)) {
         sock->lastdata = buf;
         sock->lastoffset += copylen;
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: lastdata now netbuf=%p\n", (void*)buf));
@@ -552,54 +599,8 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: deleting netbuf=%p\n", (void*)buf));
         netbuf_delete(buf);
       }
-    } else {
-      done = 1;
     }
   } while (!done);
-
-  /* Check to see from where the data was.*/
-  if (from && fromlen) {
-    struct sockaddr_in sin;
-
-    if (netconn_type(sock->conn) == NETCONN_TCP) {
-      addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
-      netconn_getaddr(sock->conn, addr, &port, 0);
-    } else {
-      addr = netbuf_fromaddr(buf);
-      port = netbuf_fromport(buf);
-    }
-
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_len = sizeof(sin);
-    sin.sin_family = AF_INET;
-    sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = addr->addr;
-
-    if (*fromlen > sizeof(sin))
-      *fromlen = sizeof(sin);
-
-    SMEMCPY(from, &sin, *fromlen);
-
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
-    ip_addr_debug_print(SOCKETS_DEBUG, addr);
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
-  } else {
-#if SOCKETS_DEBUG
-    struct sockaddr_in sin;
-
-    if (netconn_type(sock->conn) == NETCONN_TCP) {
-      addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
-      netconn_getaddr(sock->conn, addr, &port, 0);
-    } else {
-      addr = netbuf_fromaddr(buf);
-      port = netbuf_fromport(buf);
-    }
-
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
-    ip_addr_debug_print(SOCKETS_DEBUG, addr);
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u len=%u\n", port, off));
-#endif /*  SOCKETS_DEBUG */
-  }
 
   sock_set_errno(sock, 0);
   return off;
