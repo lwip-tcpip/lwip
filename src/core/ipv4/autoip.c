@@ -79,9 +79,9 @@
 /* 169.254.0.0 */
 #define AUTOIP_NET         0xA9FE0000
 /* 169.254.1.0 */
-#define AUTOIP_RANGE_START AUTOIP_NET | 0x0100
+#define AUTOIP_RANGE_START (AUTOIP_NET | 0x0100)
 /* 169.254.254.255 */
-#define AUTOIP_RANGE_END   AUTOIP_NET | 0xFEFF
+#define AUTOIP_RANGE_END   (AUTOIP_NET | 0xFEFF)
 
 
 /** Pseudo random macro based on netif informations.
