@@ -635,9 +635,9 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   }
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_bind: bound to %"U16_F".%"U16_F".%"U16_F".%"U16_F", port %"U16_F"\n",
-               (u16_t)(ntohl(pcb->local_ip.addr) >> 24 & 0xff),
-               (u16_t)(ntohl(pcb->local_ip.addr) >> 16 & 0xff),
-               (u16_t)(ntohl(pcb->local_ip.addr) >> 8 & 0xff),
+               (u16_t)((ntohl(pcb->local_ip.addr) >> 24) & 0xff),
+               (u16_t)((ntohl(pcb->local_ip.addr) >> 16) & 0xff),
+               (u16_t)((ntohl(pcb->local_ip.addr) >> 8) & 0xff),
                (u16_t)(ntohl(pcb->local_ip.addr) & 0xff), pcb->local_port));
   return ERR_OK;
 }
@@ -693,9 +693,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #endif
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_connect: connected to %"U16_F".%"U16_F".%"U16_F".%"U16_F",port %"U16_F"\n",
-               (u16_t)(ntohl(pcb->remote_ip.addr) >> 24 & 0xff),
-               (u16_t)(ntohl(pcb->remote_ip.addr) >> 16 & 0xff),
-               (u16_t)(ntohl(pcb->remote_ip.addr) >> 8 & 0xff),
+               (u16_t)((ntohl(pcb->remote_ip.addr) >> 24) & 0xff),
+               (u16_t)((ntohl(pcb->remote_ip.addr) >> 16) & 0xff),
+               (u16_t)((ntohl(pcb->remote_ip.addr) >> 8) & 0xff),
                (u16_t)(ntohl(pcb->remote_ip.addr) & 0xff), pcb->remote_port));
 
   /* Insert UDP PCB into the list of active UDP PCBs. */

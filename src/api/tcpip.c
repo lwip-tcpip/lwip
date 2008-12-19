@@ -297,11 +297,12 @@ tcpip_thread(void *arg)
 
     case TCPIP_MSG_TIMEOUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
-
-      if(msg->msg.tmo.msecs != 0xffffffff)
-        sys_timeout (msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
-      else
-        sys_untimeout (msg->msg.tmo.h, msg->msg.tmo.arg);
+      sys_timeout(msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
+      memp_free(MEMP_TCPIP_MSG_API, msg);
+      break;
+    case TCPIP_MSG_UNTIMEOUT:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: UNTIMEOUT %p\n", (void *)msg));
+      sys_untimeout(msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
 
@@ -379,6 +380,14 @@ tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block)
   return ERR_VAL;
 }
 
+/**
+ * call sys_timeout in tcpip_thread
+ *
+ * @param msec time in miliseconds for timeout
+ * @param h function to be called on timeout
+ * @param arg argument to pass to timeout function h
+ * @return ERR_MEM on memory error, ERR_OK otherwise
+ */
 err_t
 tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
@@ -391,6 +400,35 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
     }
 
     msg->type = TCPIP_MSG_TIMEOUT;
+    msg->msg.tmo.msecs = msecs;
+    msg->msg.tmo.h = h;
+    msg->msg.tmo.arg = arg;
+    sys_mbox_post(mbox, msg);
+    return ERR_OK;
+  }
+  return ERR_VAL;
+}
+
+/**
+ * call sys_untimeout in tcpip_thread
+ *
+ * @param msec time in miliseconds for timeout
+ * @param h function to be called on timeout
+ * @param arg argument to pass to timeout function h
+ * @return ERR_MEM on memory error, ERR_OK otherwise
+ */
+err_t
+tcpip_untimeout(u32_t msecs, sys_timeout_handler h, void *arg)
+{
+  struct tcpip_msg *msg;
+
+  if (mbox != SYS_MBOX_NULL) {
+    msg = memp_malloc(MEMP_TCPIP_MSG_API);
+    if (msg == NULL) {
+      return ERR_MEM;
+    }
+
+    msg->type = TCPIP_MSG_UNTIMEOUT;
     msg->msg.tmo.msecs = msecs;
     msg->msg.tmo.h = h;
     msg->msg.tmo.arg = arg;

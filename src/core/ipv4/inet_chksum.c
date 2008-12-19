@@ -107,7 +107,7 @@ lwip_standard_chksum(void *dataptr, u16_t len)
   }
   /* add deferred carry bits */
   acc = (acc >> 16) + (acc & 0x0000ffffUL);
-  if ((acc & 0xffff0000) != 0) {
+  if ((acc & 0xffff0000UL) != 0) {
     acc = (acc >> 16) + (acc & 0x0000ffffUL);
   }
   /* This maybe a little confusing: reorder sum using htons()

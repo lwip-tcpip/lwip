@@ -1316,7 +1316,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
 
   /* Parse the TCP MSS option, if present. */
   if(TCPH_HDRLEN(tcphdr) > 0x5) {
-    for(c = 0; c < (TCPH_HDRLEN(tcphdr) - 5) << 2 ;) {
+    for(c = 0; c < ((TCPH_HDRLEN(tcphdr) - 5) << 2) ;) {
       opt = opts[c];
       if (opt == 0x00) {
         /* End of options. */

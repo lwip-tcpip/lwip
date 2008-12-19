@@ -952,7 +952,7 @@ do_writemore(struct netconn *conn)
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
 
   dataptr = (u8_t*)conn->write_msg->msg.w.dataptr + conn->write_offset;
-  if ((conn->write_msg->msg.w.len - conn->write_offset > 0xffff)) { /* max_u16_t */
+  if ((conn->write_msg->msg.w.len - conn->write_offset > (int)0xffff)) { /* max_u16_t */
     len = 0xffff;
 #if LWIP_TCPIP_CORE_LOCKING
     conn->write_delayed = 1;

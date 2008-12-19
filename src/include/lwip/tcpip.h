@@ -90,7 +90,7 @@ err_t pbuf_free_callback(struct pbuf *p);
 err_t mem_free_callback(void *m);
 
 err_t tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg);
-#define tcpip_untimeout(h, arg) tcpip_timeout(0xffffffff, h, arg)
+err_t tcpip_untimeout(u32_t msecs, sys_timeout_handler h, void *arg);
 
 enum tcpip_msg_type {
 #if LWIP_NETCONN
@@ -101,7 +101,8 @@ enum tcpip_msg_type {
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
   TCPIP_MSG_CALLBACK,
-  TCPIP_MSG_TIMEOUT
+  TCPIP_MSG_TIMEOUT,
+  TCPIP_MSG_UNTIMEOUT
 };
 
 struct tcpip_msg {

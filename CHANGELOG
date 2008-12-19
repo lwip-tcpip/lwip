@@ -56,6 +56,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2008-12-19 Simon Goldschmidt
+  * many files: patch #6699: fixed some warnings on platform where sizeof(int) == 2 
+
   2008-12-10 Tamas Somogyi, Frédéric Bernon
   * sockets.c: fixed bug #25051: lwip_recvfrom problem with udp: fromaddr and
     port uses deleted netbuf.
