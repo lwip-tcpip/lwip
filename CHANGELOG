@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2009-01-28 Jonathan Larmour (suggested by Bill Bauerbach)
+  * ipv4/inet_chksum.c, ipv4/lwip/inet_chksum.h: inet_chksum_pseudo_partial()
+  is only used by UDPLITE at present, so conditionalise it.
+
   2008-12-03 Simon Goldschmidt (base on patch from Luca Ceresoli)
   * autoip.c: checked in (slightly modified) patch #6683: Customizable AUTOIP
     "seed" address. This should reduce AUTOIP conflicts if

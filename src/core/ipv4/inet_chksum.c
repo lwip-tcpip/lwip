@@ -327,6 +327,8 @@ inet_chksum_pseudo(struct pbuf *p,
  * @param proto_len length of the ip data part (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
+/* Currently only used by UDPLITE, although this could change in the future. */
+#if LWIP_UDPLITE
 u16_t
 inet_chksum_pseudo_partial(struct pbuf *p,
        struct ip_addr *src, struct ip_addr *dest,
@@ -377,6 +379,7 @@ inet_chksum_pseudo_partial(struct pbuf *p,
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (u16_t)~(acc & 0xffffUL);
 }
+#endif /* LWIP_UDPLITE */
 
 /* inet_chksum:
  *
