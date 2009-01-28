@@ -56,6 +56,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-01-28 Jonathan Larmour
+  * pbuf.c: reclaim pbufs from TCP out-of-sequence segments if we run
+    out of pool pbufs.
+
   2008-12-19 Simon Goldschmidt
   * many files: patch #6699: fixed some warnings on platform where sizeof(int) == 2 
 

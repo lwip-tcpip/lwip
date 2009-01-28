@@ -70,6 +70,9 @@
 #include "lwip/pbuf.h"
 #include "lwip/sys.h"
 #include "arch/perf.h"
+#if TCP_QUEUE_OOSEQ
+#include "lwip/tcp.h"
+#endif
 
 #include <string.h>
 
@@ -77,6 +80,42 @@
 /* Since the pool is created in memp, PBUF_POOL_BUFSIZE will be automatically
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
+
+#if TCP_QUEUE_OOSEQ
+#define ALLOC_POOL_PBUF(p) do { (p) = alloc_pool_pbuf(); } while (0)
+#else
+#define ALLOC_POOL_PBUF(p) do { (p) = memp_malloc(MEMP_PBUF_POOL); } while (0)
+#endif
+
+
+#if TCP_QUEUE_OOSEQ
+/**
+ * Attempt to reclaim some memory from queued out-of-sequence TCP segments
+ * if we run out of pool pbufs. It's better to give priority to new packets
+ * if we're running out.
+ *
+ * @return the allocated pbuf.
+ */
+static struct pbuf *
+alloc_pool_pbuf(void)
+{
+  struct tcp_pcb *pcb;
+  struct pbuf *p;
+
+retry:
+  p = memp_malloc(MEMP_PBUF_POOL);
+  if (NULL == p) {
+    for (pcb=tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
+      if (NULL != pcb->ooseq) {
+        tcp_segs_free(pcb->ooseq);
+        pcb->ooseq = NULL;
+        goto retry;
+      }
+    }
+  }
+  return p;
+}
+#endif /* TCP_QUEUE_OOSEQ */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
@@ -142,7 +181,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (type) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-      p = memp_malloc(MEMP_PBUF_POOL);
+    ALLOC_POOL_PBUF(p);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE | 3, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
       return NULL;
@@ -172,7 +211,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      q = memp_malloc(MEMP_PBUF_POOL);
+      ALLOC_POOL_PBUF(q);
       if (q == NULL) {
         /* free chain so far allocated */
         pbuf_free(p);
