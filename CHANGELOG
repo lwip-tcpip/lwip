@@ -60,6 +60,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-02-10 Simon Goldschmidt
+  * tcp.c: fixed bug #25467: Listen backlog is not reset on timeout in SYN_RCVD:
+    Accepts_pending is decrease on a corresponding listen pcb when a connection
+    in state SYN_RCVD is close.
+
   2009-01-28 Jonathan Larmour
   * pbuf.c: reclaim pbufs from TCP out-of-sequence segments if we run
     out of pool pbufs.
