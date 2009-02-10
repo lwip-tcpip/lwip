@@ -77,9 +77,6 @@ extern const struct ip_addr ip_addr_broadcast;
 #define IP_ADDR_ANY         ((struct ip_addr *)&ip_addr_any)
 #define IP_ADDR_BROADCAST   ((struct ip_addr *)&ip_addr_broadcast)
 
-#define INADDR_NONE         ((u32_t)0xffffffffUL)  /* 255.255.255.255 */
-#define INADDR_LOOPBACK     ((u32_t)0x7f000001UL)  /* 127.0.0.1 */
-
 /* Definitions of the bits in an Internet address integer.
 
    On subnets, host and network parts are found according to

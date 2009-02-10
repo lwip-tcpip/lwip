@@ -124,9 +124,6 @@ struct linger {
 #define IPPROTO_UDP     17
 #define IPPROTO_UDPLITE 136
 
-#define INADDR_ANY       0
-#define INADDR_BROADCAST 0xffffffff
-
 /* Flags we can use with send and recv. */
 #define MSG_PEEK       0x01    /* Peeks at an incoming message */
 #define MSG_WAITALL    0x02    /* Unimplemented: Requests that the function block until the full amount of data requested can be returned */
