@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2009-02-11 Simon Goldschmidt (suggested by Gottfried Spitaler)
+  * opt.h, memp.h/.c: added MEMP_MEM_MALLOC to use mem_malloc/mem_free instead
+  of the pool allocator (can save code size with MEM_LIBC_MALLOC if libc-malloc
+  is otherwise used)
+
   2009-01-28 Jonathan Larmour (suggested by Bill Bauerbach)
   * ipv4/inet_chksum.c, ipv4/lwip/inet_chksum.h: inet_chksum_pseudo_partial()
   is only used by UDPLITE at present, so conditionalise it.

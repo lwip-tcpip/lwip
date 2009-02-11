@@ -99,6 +99,15 @@
 #endif
 
 /**
+* MEMP_MEM_MALLOC==1: Use mem_malloc/mem_free instead of the lwip pool allocator.
+* Especially useful with MEM_LIBC_MALLOC but handle with care regarding execution
+* speed and usage from interrupts!
+*/
+#ifndef MEMP_MEM_MALLOC
+#define MEMP_MEM_MALLOC                 0
+#endif
+
+/**
  * MEM_ALIGNMENT: should be set to the alignment of the CPU
  *    4 byte alignment -> #define MEM_ALIGNMENT 4
  *    2 byte alignment -> #define MEM_ALIGNMENT 2
@@ -1120,7 +1129,7 @@
  */
 #ifndef RECV_BUFSIZE_DEFAULT
 #define RECV_BUFSIZE_DEFAULT            INT_MAX
-#endif /* RECV_BUFSIZE_DEFAULT */
+#endif
 
 /**
  * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!

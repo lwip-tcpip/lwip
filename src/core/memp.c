@@ -56,6 +56,8 @@
 
 #include <string.h>
 
+#if !MEMP_MEM_MALLOC /* don't build if not configured for use in lwipopts.h */
+
 struct memp {
   struct memp *next;
 #if MEMP_OVERFLOW_CHECK
@@ -109,14 +111,22 @@ struct memp {
  *  Elements form a linked list. */
 static struct memp *memp_tab[MEMP_MAX];
 
+#else /* MEMP_MEM_MALLOC */
+
+#define MEMP_ALIGN_SIZE(x) (LWIP_MEM_ALIGN_SIZE(x))
+
+#endif /* MEMP_MEM_MALLOC */
+
 /** This array holds the element sizes of each pool. */
-#if !MEM_USE_POOLS
+#if !MEM_USE_POOLS && !MEMP_MEM_MALLOC
 static
 #endif
 const u16_t memp_sizes[MEMP_MAX] = {
 #define LWIP_MEMPOOL(name,num,size,desc)  MEMP_ALIGN_SIZE(size),
 #include "lwip/memp_std.h"
 };
+
+#if !MEMP_MEM_MALLOC /* don't build if not configured for use in lwipopts.h */
 
 /** This array holds the number of elements in each pool. */
 static const u16_t memp_num[MEMP_MAX] = {
@@ -368,3 +378,5 @@ memp_free(memp_t type, void *mem)
 
   SYS_ARCH_UNPROTECT(old_level);
 }
+
+#endif /* MEMP_MEM_MALLOC */
