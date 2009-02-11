@@ -60,6 +60,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-02-11 Simon Goldschmidt
+  * opt.h, api_msg.c: added configurable default valud for netconn->recv_bufsize:
+    RECV_BUFSIZE_DEFAULT (fixes bug #23726: pbuf pool exhaustion on slow recv())
+
   2009-02-10 Simon Goldschmidt
   * tcp.c: fixed bug #25467: Listen backlog is not reset on timeout in SYN_RCVD:
     Accepts_pending is decrease on a corresponding listen pcb when a connection

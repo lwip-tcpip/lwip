@@ -1116,6 +1116,13 @@
 #endif
 
 /**
+ * If LWIP_SO_RCVBUF is used, this is the default value for recv_bufsize.
+ */
+#ifndef RECV_BUFSIZE_DEFAULT
+#define RECV_BUFSIZE_DEFAULT            INT_MAX
+#endif /* RECV_BUFSIZE_DEFAULT */
+
+/**
  * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!
  */
 #ifndef SO_REUSE
