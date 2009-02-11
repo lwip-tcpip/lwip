@@ -586,6 +586,12 @@ dhcp_start(struct netif *netif)
   /* already has DHCP client attached */
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 3, ("dhcp_start(): restarting DHCP configuration\n"));
+    if (dhcp->pcb != NULL) {
+      udp_remove(dhcp->pcb);
+    }
+    if (dhcp->p != NULL) {
+      pbuf_free(dhcp->p);
+    }
   }
     
   /* clear data structure */
@@ -671,14 +677,12 @@ dhcp_inform(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform: could not allocate DHCP request\n"));
   }
 
-  if (dhcp != NULL) {
-    if (dhcp->pcb != NULL) {
-      udp_remove(dhcp->pcb);
-    }
-    dhcp->pcb = NULL;
-    mem_free((void *)dhcp);
-    netif->dhcp = old_dhcp;
+  if (dhcp->pcb != NULL) {
+    udp_remove(dhcp->pcb);
   }
+  dhcp->pcb = NULL;
+  mem_free((void *)dhcp);
+  netif->dhcp = old_dhcp;
 }
 
 #if DHCP_DOES_ARP_CHECK

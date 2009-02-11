@@ -61,6 +61,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-02-11 Simon Goldschmidt
+  * dhcp.c: fixed bug #24480 (releasing old udp_pdb and pbuf in dhcp_start)
+
+  2009-02-11 Simon Goldschmidt
   * opt.h, api_msg.c: added configurable default valud for netconn->recv_bufsize:
     RECV_BUFSIZE_DEFAULT (fixes bug #23726: pbuf pool exhaustion on slow recv())
 
