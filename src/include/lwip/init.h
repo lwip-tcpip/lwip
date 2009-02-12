@@ -38,6 +38,23 @@
 extern "C" {
 #endif
 
+/** X.x.x: Major version of the stack */
+#define LWIP_VERSION_MAJOR      1
+/** x.X.x: Minor version of the stack */
+#define LWIP_VERSION_MINOR      3
+/** x.x.X: Revision of the stack */
+#define LWIP_VERSION_REVISION   1
+/** For release candidates, this is set to 0..255
+  * For official releases, this is set to 255 (i.e. LWIP_RC_RELEASE) */
+#define LWIP_VERSION_RC         0
+
+/** LWIP_VERSION_RC is set to LWIP_RC_RELEASE for official releases */
+#define LWIP_RC_RELEASE    255
+
+/** Provides the version of the stack */
+#define LWIP_VERSION   (LWIP_VERSION_MAJOR << 24   | LWIP_VERSION_MINOR << 16 |
+                        LWIP_VERSION_REVISION << 8 | LWIP_VERSION_RC)
+
 /* Modules initialization */
 void lwip_init(void);
 

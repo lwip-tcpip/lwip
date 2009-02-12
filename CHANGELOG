@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2009-02-12 Simon Goldschmidt
+  * init.h: Added LWIP_VERSION to get the current version of the stack
+
   2009-02-11 Simon Goldschmidt (suggested by Gottfried Spitaler)
   * opt.h, memp.h/.c: added MEMP_MEM_MALLOC to use mem_malloc/mem_free instead
   of the pool allocator (can save code size with MEM_LIBC_MALLOC if libc-malloc
