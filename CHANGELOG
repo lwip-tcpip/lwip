@@ -65,6 +65,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-02-1" Simon Goldschmidt
+  * dhcp.c: fixed bug #25345 (DHCPDECLINE is sent with "Maximum message size"
+    option)
+
   2009-02-11 Simon Goldschmidt
   * dhcp.c: fixed bug #24480 (releasing old udp_pdb and pbuf in dhcp_start)
 
