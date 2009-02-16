@@ -59,7 +59,7 @@ extern "C" {
 #define LWIP_VERSION_IS_RC          ((LWIP_VERSION_RC != LWIP_RC_RELEASE) && (LWIP_VERSION_RC != LWIP_RC_DEVELOPMENT))
 
 /** Provides the version of the stack */
-#define LWIP_VERSION   (LWIP_VERSION_MAJOR << 24   | LWIP_VERSION_MINOR << 16 |
+#define LWIP_VERSION   (LWIP_VERSION_MAJOR << 24   | LWIP_VERSION_MINOR << 16 | \
                         LWIP_VERSION_REVISION << 8 | LWIP_VERSION_RC)
 
 /* Modules initialization */
