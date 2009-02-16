@@ -68,7 +68,11 @@ HISTORY
 
   ++ Bugfixes:
 
-  2009-02-1" Simon Goldschmidt
+  2009-02-16 Simon Goldschmidt
+  * tcp.h, tcp.c: fixed bug #24440: TCP connection close problem on 64-bit host
+    by moving accept callback function pointer to TCP_PCB_COMMON
+
+  2009-02-12 Simon Goldschmidt
   * dhcp.c: fixed bug #25345 (DHCPDECLINE is sent with "Maximum message size"
     option)
 

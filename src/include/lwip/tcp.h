@@ -258,6 +258,20 @@ enum tcp_state {
 #define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
 #define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
 
+
+#if LWIP_CALLBACK_API
+  /* Function to call when a listener has been connected.
+   * @param arg user-supplied argument (tcp_pcb.callback_arg)
+   * @param pcb a new tcp_pcb that now is connected
+   * @param err an error argument (TODO: that is current always ERR_OK?)
+   * @return ERR_OK: accept the new connection,
+   *                 any other err_t abortsthe new connection
+   */
+#define DEF_ACCEPT_CALLBACK  err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err)
+#else /* LWIP_CALLBACK_API */
+#define DEF_ACCEPT_CALLBACK
+#endif /* LWIP_CALLBACK_API */
+
 /**
  * members common to struct tcp_pcb and struct tcp_listen_pcb
  */
@@ -267,7 +281,10 @@ enum tcp_state {
   u8_t prio; \
   void *callback_arg; \
   /* ports are in host byte order */ \
-  u16_t local_port
+  u16_t local_port; \
+  /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
+  DEF_ACCEPT_CALLBACK
+
 
 /* the TCP protocol control block */
 struct tcp_pcb {
@@ -369,15 +386,6 @@ struct tcp_pcb {
    */
   err_t (* connected)(void *arg, struct tcp_pcb *pcb, err_t err);
 
-  /* Function to call when a listener has been connected.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb a new tcp_pcb that now is connected
-   * @param err an error argument (TODO: that is current always ERR_OK?)
-   * @return ERR_OK: accept the new connection,
-   *                 any other err_t abortsthe new connection
-   */
-  err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
-
   /* Function which is called periodically.
    * The period can be adjusted in multiples of the TCP slow timer interval
    * by changing tcp_pcb.polltmr.
@@ -420,16 +428,6 @@ struct tcp_pcb_listen {
 /* Protocol specific PCB members */
   TCP_PCB_COMMON(struct tcp_pcb_listen);
 
-#if LWIP_CALLBACK_API
-  /* Function to call when a listener has been connected.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb a new tcp_pcb that now is connected
-   * @param err an error argument (TODO: that is current always ERR_OK?)
-   * @return ERR_OK: accept the new connection,
-   *                 any other err_t abortsthe new connection
-   */
-  err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err);
-#endif /* LWIP_CALLBACK_API */
 #if TCP_LISTEN_BACKLOG
   u8_t backlog;
   u8_t accepts_pending;
