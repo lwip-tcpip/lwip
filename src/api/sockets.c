@@ -326,7 +326,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 }
 
 int
-lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
+lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
 {
   struct lwip_socket *sock;
   struct ip_addr local_addr;
@@ -338,11 +338,11 @@ lwip_bind(int s, struct sockaddr *name, socklen_t namelen)
     return -1;
 
   LWIP_ERROR("lwip_bind: invalid address", ((namelen == sizeof(struct sockaddr_in)) &&
-             ((((struct sockaddr_in *)name)->sin_family) == AF_INET)),
+             ((((const struct sockaddr_in *)name)->sin_family) == AF_INET)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
-  local_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
-  local_port = ((struct sockaddr_in *)name)->sin_port;
+  local_addr.addr = ((const struct sockaddr_in *)name)->sin_addr.s_addr;
+  local_port = ((const struct sockaddr_in *)name)->sin_port;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &local_addr);
@@ -398,18 +398,18 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     return -1;
 
   LWIP_ERROR("lwip_connect: invalid address", ((namelen == sizeof(struct sockaddr_in)) &&
-             ((((struct sockaddr_in *)name)->sin_family) == AF_INET)),
+             ((((const struct sockaddr_in *)name)->sin_family) == AF_INET)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
-  if (((struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
+  if (((const struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
     err = netconn_disconnect(sock->conn);
   } else {
     struct ip_addr remote_addr;
     u16_t remote_port;
 
-    remote_addr.addr = ((struct sockaddr_in *)name)->sin_addr.s_addr;
-    remote_port = ((struct sockaddr_in *)name)->sin_port;
+    remote_addr.addr = ((const struct sockaddr_in *)name)->sin_addr.s_addr;
+    remote_port = ((const struct sockaddr_in *)name)->sin_port;
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
@@ -470,7 +470,7 @@ lwip_listen(int s, int backlog)
 }
 
 int
-lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
+lwip_recvfrom(int s, void *mem, size_t len, int flags,
         struct sockaddr *from, socklen_t *fromlen)
 {
   struct lwip_socket *sock;
@@ -519,7 +519,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     if (len > buflen) {
       copylen = buflen;
     } else {
-      copylen = len;
+      copylen = (u16_t)len;
     }
 
     /* copy the contents of the received buffer into
@@ -529,6 +529,7 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
     off += copylen;
 
     if (netconn_type(sock->conn) == NETCONN_TCP) {
+      LWIP_ASSERT("invalid copylen, len would underflow", len >= copylen);
       len -= copylen;
       if ( (len <= 0) || (buf->p->flags & PBUF_FLAG_PUSH) || !sock->rcvevent || ((flags & MSG_PEEK)!=0)) {
         done = 1;
@@ -607,19 +608,19 @@ lwip_recvfrom(int s, void *mem, int len, unsigned int flags,
 }
 
 int
-lwip_read(int s, void *mem, int len)
+lwip_read(int s, void *mem, size_t len)
 {
   return lwip_recvfrom(s, mem, len, 0, NULL, NULL);
 }
 
 int
-lwip_recv(int s, void *mem, int len, unsigned int flags)
+lwip_recv(int s, void *mem, size_t len, int flags)
 {
   return lwip_recvfrom(s, mem, len, flags, NULL, NULL);
 }
 
 int
-lwip_send(int s, const void *data, int size, unsigned int flags)
+lwip_send(int s, const void *data, size_t size, int flags)
 {
   struct lwip_socket *sock;
   err_t err;
@@ -631,7 +632,7 @@ lwip_send(int s, const void *data, int size, unsigned int flags)
   if (!sock)
     return -1;
 
-  if (sock->conn->type!=NETCONN_TCP) {
+  if (sock->conn->type != NETCONN_TCP) {
 #if (LWIP_UDP || LWIP_RAW)
     return lwip_sendto(s, data, size, flags, NULL, 0);
 #else
@@ -644,16 +645,17 @@ lwip_send(int s, const void *data, int size, unsigned int flags)
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) err=%d size=%d\n", s, err, size));
   sock_set_errno(sock, err_to_errno(err));
-  return (err==ERR_OK?size:-1);
+  return (err == ERR_OK ? (int)size : -1);
 }
 
 int
-lwip_sendto(int s, const void *data, int size, unsigned int flags,
-       struct sockaddr *to, socklen_t tolen)
+lwip_sendto(int s, const void *data, size_t size, int flags,
+       const struct sockaddr *to, socklen_t tolen)
 {
   struct lwip_socket *sock;
   struct ip_addr remote_addr;
   int err;
+  u16_t short_size;
 #if !LWIP_TCPIP_CORE_LOCKING
   struct netbuf buf;
   u16_t remote_port;
@@ -663,7 +665,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   if (!sock)
     return -1;
 
-  if (sock->conn->type==NETCONN_TCP) {
+  if (sock->conn->type == NETCONN_TCP) {
 #if LWIP_TCP
     return lwip_send(s, data, size, flags);
 #else
@@ -672,11 +674,11 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
 #endif /* LWIP_TCP */
   }
 
-  LWIP_ASSERT("lwip_sendto: size must fit in u16_t",
-              ((size >= 0) && (size <= 0xffff)));
+  LWIP_ASSERT("lwip_sendto: size must fit in u16_t", size <= 0xffff);
+  short_size = (u16_t)size;
   LWIP_ERROR("lwip_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
              ((tolen == sizeof(struct sockaddr_in)) &&
-             ((((struct sockaddr_in *)to)->sin_family) == AF_INET))),
+             ((((const struct sockaddr_in *)to)->sin_family) == AF_INET))),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
 #if LWIP_TCPIP_CORE_LOCKING
@@ -688,15 +690,15 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
       err = ERR_MEM;
     } else {
       p->payload = (void*)data;
-      p->len = p->tot_len = size;
+      p->len = p->tot_len = short_size;
       
-      remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
+      remote_addr.addr = ((const struct sockaddr_in *)to)->sin_addr.s_addr;
       
       LOCK_TCPIP_CORE();
       if (sock->conn->type==NETCONN_RAW) {
         err = sock->conn->err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
       } else {
-        err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((struct sockaddr_in *)to)->sin_port));
+        err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((const struct sockaddr_in *)to)->sin_port));
       }
       UNLOCK_TCPIP_CORE();
       
@@ -707,8 +709,8 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
   if (to) {
-    remote_addr.addr = ((struct sockaddr_in *)to)->sin_addr.s_addr;
-    remote_port      = ntohs(((struct sockaddr_in *)to)->sin_port);
+    remote_addr.addr = ((const struct sockaddr_in *)to)->sin_addr.s_addr;
+    remote_port      = ntohs(((const struct sockaddr_in *)to)->sin_port);
     buf.addr         = &remote_addr;
     buf.port         = remote_port;
   } else {
@@ -718,13 +720,13 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
     buf.port         = 0;
   }
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, size=%d, flags=0x%x to=",
-              s, data, size, flags));
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, short_size=%d, flags=0x%x to=",
+              s, data, short_size, flags));
   ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%u\n", remote_port));
     
   /* make the buffer point to the data that should be sent */
-  if ((err = netbuf_ref(&buf, data, size)) == ERR_OK) {
+  if ((err = netbuf_ref(&buf, data, short_size)) == ERR_OK) {
     /* send the data */
     err = netconn_send(sock->conn, &buf);
   }
@@ -735,7 +737,7 @@ lwip_sendto(int s, const void *data, int size, unsigned int flags,
   }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
   sock_set_errno(sock, err_to_errno(err));
-  return (err==ERR_OK?size:-1);
+  return (err == ERR_OK ? short_size : -1);
 }
 
 int
@@ -791,7 +793,7 @@ lwip_socket(int domain, int type, int protocol)
 }
 
 int
-lwip_write(int s, const void *data, int size)
+lwip_write(int s, const void *data, size_t size)
 {
   return lwip_send(s, data, size, 0);
 }

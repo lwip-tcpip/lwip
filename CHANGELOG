@@ -69,6 +69,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-02-16 Simon Goldschmidt
+  * sockets.h/.c, api_*.h/.c: fixed arguments of socket functions to match the standard;
+    converted size argument of netconn_write to 'size_t'
+
+  2009-02-16 Simon Goldschmidt
   * tcp.h, tcp.c: fixed bug #24440: TCP connection close problem on 64-bit host
     by moving accept callback function pointer to TCP_PCB_COMMON
 

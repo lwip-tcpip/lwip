@@ -78,7 +78,7 @@ struct api_msg_msg {
     /** used for do_write */
     struct {
       const void *dataptr;
-      int len;
+      size_t len;
       u8_t apiflags;
     } w;
     /** used ofr do_recv */

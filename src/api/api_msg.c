@@ -948,17 +948,19 @@ do_writemore(struct netconn *conn)
   void *dataptr;
   u16_t len, available;
   u8_t write_finished = 0;
+  size_t diff;
 
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
 
   dataptr = (u8_t*)conn->write_msg->msg.w.dataptr + conn->write_offset;
-  if (conn->write_msg->msg.w.len - conn->write_offset > 0xffff) { /* max_u16_t */
+  diff = conn->write_msg->msg.w.len - conn->write_offset;
+  if (diff > 0xffffUL) { /* max_u16_t */
     len = 0xffff;
 #if LWIP_TCPIP_CORE_LOCKING
     conn->write_delayed = 1;
 #endif
   } else {
-    len = conn->write_msg->msg.w.len - conn->write_offset;
+    len = (u16_t)diff;
   }
   available = tcp_sndbuf(conn->pcb.tcp);
   if (available < len) {
@@ -1035,6 +1037,8 @@ do_write(struct api_msg_msg *msg)
 #if LWIP_TCP
       msg->conn->state = NETCONN_WRITE;
       /* set all the variables used by do_writemore */
+      LWIP_ASSERT("already writing", msg->conn->write_msg == NULL &&
+        msg->conn->write_offset == 0);
       msg->conn->write_msg = msg;
       msg->conn->write_offset = 0;
 #if LWIP_TCPIP_CORE_LOCKING
