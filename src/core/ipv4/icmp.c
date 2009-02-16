@@ -94,13 +94,30 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_DEBUG */
   switch (type) {
   case ICMP_ECHO:
-    /* broadcast or multicast destination address? */
-    if (ip_addr_isbroadcast(&iphdr->dest, inp) || ip_addr_ismulticast(&iphdr->dest)) {
-      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
-      ICMP_STATS_INC(icmp.err);
-      pbuf_free(p);
-      return;
+#if !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
+    {
+      int accepted = 1;
+#if !LWIP_MULTICAST_PING
+      /* multicast destination address? */
+      if (ip_addr_ismulticast(&iphdr->dest)) {
+        accepted = 0;
+      }
+#endif /* LWIP_MULTICAST_PING */
+#if !LWIP_BROADCAST_PING
+      /* broadcast destination address? */
+      if (ip_addr_isbroadcast(&iphdr->dest, inp)) {
+        accepted = 0;
+      }
+#endif /* LWIP_BROADCAST_PING */
+      /* broadcast or multicast destination address not acceptd? */
+      if (!accepted) {
+        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
+        ICMP_STATS_INC(icmp.err);
+        pbuf_free(p);
+        return;
+      }
     }
+#endif /* !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));

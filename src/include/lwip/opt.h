@@ -461,6 +461,20 @@
 #define ICMP_TTL                       (IP_DEFAULT_TTL)
 #endif
 
+/**
+ * LWIP_BROADCAST_PING==1: respond to broadcast pings (default is unicast only)
+ */
+#ifndef LWIP_BROADCAST_PING
+#define LWIP_BROADCAST_PING             0
+#endif
+
+/**
+ * LWIP_MULTICAST_PING==1: respond to multicast pings (default is unicast only)
+ */
+#ifndef LWIP_MULTICAST_PING
+#define LWIP_MULTICAST_PING             0
+#endif
+
 /*
    ---------------------------------
    ---------- RAW options ----------
