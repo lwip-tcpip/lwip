@@ -72,6 +72,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-02-18 Simon Goldschmidt (Jonathan Larmour and Bill Auerbach)
+  * ip_frag.c: patch #6528: the buffer used for IP_FRAG_USES_STATIC_BUF could be
+    too small depending on MEM_ALIGNMENT
+
   2009-02-16 Simon Goldschmidt
   * sockets.h/.c, api_*.h/.c: fixed arguments of socket functions to match the standard;
     converted size argument of netconn_write to 'size_t'
