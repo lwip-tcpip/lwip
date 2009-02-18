@@ -142,7 +142,7 @@ sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, i
 /* The following functions are used only in Unix code, and
    can be omitted when porting the stack. */
 /* Returns the current time in microseconds. */
-unsigned long sys_now(void);
+u32_t sys_now(void);
 
 #endif /* NO_SYS */
 
