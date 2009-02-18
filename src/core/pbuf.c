@@ -200,6 +200,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     LWIP_ASSERT("check p->payload + p->len does not overflow pbuf",
                 ((u8_t*)p->payload + p->len <=
                  (u8_t*)p + SIZEOF_STRUCT_PBUF + PBUF_POOL_BUFSIZE_ALIGNED));
+    LWIP_ASSERT("PBUF_POOL_BUFSIZE must be bigger than MEM_ALIGNMENT", p->len != 0);
     /* set reference count (needed here in case we fail) */
     p->ref = 1;
 
