@@ -439,7 +439,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
 
   LWIP_ERROR("netconn_send: invalid conn",  (conn != NULL), return ERR_ARG;);
 
-  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %d bytes\n", buf->p->tot_len));
+  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %"U16_F" bytes\n", buf->p->tot_len));
   msg.function = do_send;
   msg.msg.conn = conn;
   msg.msg.msg.b = buf;

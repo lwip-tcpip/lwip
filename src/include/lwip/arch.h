@@ -42,6 +42,11 @@
 
 #include "arch/cc.h"
 
+/** Temporary: define format string for size_t if not defined in cc.h */
+#ifndef SZT_F
+#define SZT_F U32_F
+#endif /* SZT_F */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
