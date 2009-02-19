@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2009-02-18 Simon Goldschmidt
+  * cc.h: Added printf formatter for size_t: SZT_F
+
   2009-02-16 Simon Goldschmidt (patch by Rishi Khan)
   * icmp.c, opt.h: patch #6539: (configurable) response to broadcast- and multicast
     pings
