@@ -480,7 +480,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   u16_t               port;
   u8_t                done = 0;
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %#p, %"SZT_F", 0x%x, ..)\n", s, mem, len, flags));
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %"SZT_F", 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
   if (!sock)
     return -1;
