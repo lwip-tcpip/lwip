@@ -186,14 +186,15 @@ tcp_close(struct tcp_pcb *pcb)
 }
 
 /**
- * Aborts a connection by sending a RST to the remote host and deletes
- * the local protocol control block. This is done when a connection is
- * killed because of shortage of memory.
+ * Abandons a connection and optionally sends a RST to the remote
+ * host.  Deletes the local protocol control block. This is done when
+ * a connection is killed because of shortage of memory.
  *
  * @param pcb the tcp_pcb to abort
+ * @param reset boolean to indicate whether a reset should be sent
  */
 void
-tcp_abort(struct tcp_pcb *pcb)
+tcp_abandon(struct tcp_pcb *pcb, int reset)
 {
   u32_t seqno, ackno;
   u16_t remote_port, local_port;
@@ -235,8 +236,10 @@ tcp_abort(struct tcp_pcb *pcb)
 #endif /* TCP_QUEUE_OOSEQ */
     memp_free(MEMP_TCP_PCB, pcb);
     TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
-    LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abort: sending RST\n"));
-    tcp_rst(seqno, ackno, &local_ip, &remote_ip, local_port, remote_port);
+    if (reset) {
+      LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
+      tcp_rst(seqno, ackno, &local_ip, &remote_ip, local_port, remote_port);
+    }
   }
 }
 

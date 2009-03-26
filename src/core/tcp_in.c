@@ -394,6 +394,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
   u32_t optdata;
+  err_t rc;
 
   /* In the LISTEN state, we check for incoming SYN segments,
      creates a new PCB, and responds with a SYN|ACK. */
@@ -454,7 +455,11 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* Build an MSS option. */
     optdata = TCP_BUILD_MSS_OPTION();
     /* Send a SYN|ACK together with the MSS option. */
-    tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, (u8_t *)&optdata, 4);
+    rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, (u8_t *)&optdata, 4);
+    if (rc != ERR_OK) {
+      tcp_abandon(npcb, 0);
+      return rc;
+    }
     return tcp_output(npcb);
   }
   return ERR_OK;

@@ -76,7 +76,11 @@ HISTORY
   ++ Bugfixes:
 
   2009-03-26 Kieran Mansley
-  * tcp_out.c: set TCP_ACK flag on keepalive and zero window probes
+  * tcp.c, tcp_in.c, tcp.h: add tcp_abandon() to cope with dropping
+    connections where no reset required (bug #25622)
+
+  * tcp_out.c: set TCP_ACK flag on keepalive and zero window probes 
+    (bug #20779)
 
   2009-02-18 Simon Goldschmidt (Jonathan Larmour and Bill Auerbach)
   * ip_frag.c: patch #6528: the buffer used for IP_FRAG_USES_STATIC_BUF could be

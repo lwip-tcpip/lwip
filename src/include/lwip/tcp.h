@@ -96,7 +96,8 @@ err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
 struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
 #define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
 
-void             tcp_abort   (struct tcp_pcb *pcb);
+void             tcp_abandon (struct tcp_pcb *pcb, int reset);
+#define          tcp_abort(pcb) tcp_abandon((pcb), 1)
 err_t            tcp_close   (struct tcp_pcb *pcb);
 
 /* Flags for "apiflags" parameter in tcp_write and tcp_enqueue */
