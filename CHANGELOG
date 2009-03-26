@@ -75,6 +75,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-03-26 Kieran Mansley
+  * tcp_out.c: set TCP_ACK flag on keepalive and zero window probes
+
   2009-02-18 Simon Goldschmidt (Jonathan Larmour and Bill Auerbach)
   * ip_frag.c: patch #6528: the buffer used for IP_FRAG_USES_STATIC_BUF could be
     too small depending on MEM_ALIGNMENT

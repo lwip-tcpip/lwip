@@ -830,8 +830,8 @@ tcp_keepalive(struct tcp_pcb *pcb)
   tcphdr->dest = htons(pcb->remote_port);
   tcphdr->seqno = htonl(pcb->snd_nxt - 1);
   tcphdr->ackno = htonl(pcb->rcv_nxt);
-  TCPH_FLAGS_SET(tcphdr, 0);
-  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
+  tcphdr->wnd = htons(pcb->rcv_ann_wnd + 1);
   tcphdr->urgp = 0;
   TCPH_HDRLEN_SET(tcphdr, 5);
 
@@ -913,8 +913,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   tcphdr->dest = htons(pcb->remote_port);
   tcphdr->seqno = seg->tcphdr->seqno;
   tcphdr->ackno = htonl(pcb->rcv_nxt);
-  TCPH_FLAGS_SET(tcphdr, 0);
-  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
+  tcphdr->wnd = htons(pcb->rcv_ann_wnd + 1);
   tcphdr->urgp = 0;
   TCPH_HDRLEN_SET(tcphdr, 5);
 
