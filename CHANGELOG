@@ -75,6 +75,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-03-27 Kieran Mansley
+  * tcp_out.c set window correctly on probes (correcting change made
+    yesterday)
+
   2009-03-26 Kieran Mansley
   * tcp.c, tcp_in.c, tcp.h: add tcp_abandon() to cope with dropping
     connections where no reset required (bug #25622)
