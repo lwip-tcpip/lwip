@@ -774,6 +774,13 @@
 #endif
 
 /**
+ * LWIP_TCP_TIMESTAMPS==1: support the TCP timestamp option.
+ */
+#ifndef LWIP_TCP_TIMESTAMPS
+#define LWIP_TCP_TIMESTAMPS             0
+#endif
+
+/**
  * LWIP_EVENT_API and LWIP_CALLBACK_API: Only one of these should be set to 1.
  *     LWIP_EVENT_API==1: The user defines lwip_tcp_event() to receive all
  *         events (accept, sent, etc) that happen in the system.

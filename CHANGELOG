@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2009-03-31 Kieran Mansley
+  * tcp.c, tcp_out.c, tcp_in.c, sys.h, tcp.h, opts.h: add support for
+    TCP timestamp options, off by default.  Rework tcp_enqueue() to
+    take option flags rather than specified option data
+
   2009-02-18 Simon Goldschmidt
   * cc.h: Added printf formatter for size_t: SZT_F
 

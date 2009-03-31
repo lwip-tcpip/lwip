@@ -393,7 +393,6 @@ static err_t
 tcp_listen_input(struct tcp_pcb_listen *pcb)
 {
   struct tcp_pcb *npcb;
-  u32_t optdata;
   err_t rc;
 
   /* In the LISTEN state, we check for incoming SYN segments,
@@ -452,10 +451,14 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 
     snmp_inc_tcppassiveopens();
 
-    /* Build an MSS option. */
-    optdata = TCP_BUILD_MSS_OPTION();
     /* Send a SYN|ACK together with the MSS option. */
-    rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, (u8_t *)&optdata, 4);
+#if LWIP_TCP_TIMESTAMPS
+    if (npcb->flags & TF_TIMESTAMP)
+      rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, 
+                       TF_SEG_OPTS_MSS | TF_SEG_OPTS_TS);
+    else
+#endif
+      rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, TF_SEG_OPTS_MSS);
     if (rc != ERR_OK) {
       tcp_abandon(npcb, 0);
       return rc;
@@ -546,6 +549,8 @@ tcp_process(struct tcp_pcb *pcb)
   pcb->tmr = tcp_ticks;
   pcb->keep_cnt_sent = 0;
 
+  tcp_parseopt(pcb);
+
   /* Do different things depending on the TCP state. */
   switch (pcb->state) {
   case SYN_SENT:
@@ -561,9 +566,6 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
       pcb->state = ESTABLISHED;
 
-      /* Parse any options in the SYNACK before using pcb->mss since that
-       * can be changed by the received options! */
-      tcp_parseopt(pcb);
 #if TCP_CALCULATE_EFF_SEND_MSS
       pcb->mss = tcp_eff_send_mss(pcb->mss, &(pcb->remote_ip));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
@@ -1310,8 +1312,7 @@ tcp_receive(struct tcp_pcb *pcb)
 }
 
 /**
- * Parses the options contained in the incoming segment. (Code taken
- * from uIP with only small changes.)
+ * Parses the options contained in the incoming segment. 
  *
  * Called from tcp_listen_input() and tcp_process().
  * Currently, only the MSS option is supported!
@@ -1321,36 +1322,72 @@ tcp_receive(struct tcp_pcb *pcb)
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
-  u16_t c;
-  u8_t *opts, opt;
+  u16_t c, max_c;
   u16_t mss;
+  u8_t *opts, opt;
+#if LWIP_TCP_TIMESTAMPS
+  u32_t tsval;
+#endif
 
   opts = (u8_t *)tcphdr + TCP_HLEN;
 
   /* Parse the TCP MSS option, if present. */
   if(TCPH_HDRLEN(tcphdr) > 0x5) {
-    for(c = 0; c < ((TCPH_HDRLEN(tcphdr) - 5) << 2) ;) {
+    max_c = (TCPH_HDRLEN(tcphdr) - 5) << 2;
+    for (c = 0; c < max_c; ) {
       opt = opts[c];
-      if (opt == 0x00) {
+      switch (opt) {
+      case 0x00:
         /* End of options. */
-        break;
-      } else if (opt == 0x01) {
-        ++c;
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: EOL\n"));
+        return;
+      case 0x01:
         /* NOP option. */
-      } else if (opt == 0x02 &&
-        opts[c + 1] == 0x04) {
+        ++c;
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: NOP\n"));
+        break;
+      case 0x02:
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: MSS\n"));
+        if (opts[c + 1] != 0x04 || c + 0x04 > max_c) {
+          /* Bad length */
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
+          return;
+        }
         /* An MSS option with the right option length. */
         mss = (opts[c + 2] << 8) | opts[c + 3];
         /* Limit the mss to the configured TCP_MSS and prevent division by zero */
         pcb->mss = ((mss > TCP_MSS) || (mss == 0)) ? TCP_MSS : mss;
-
-        /* And we are done processing options. */
+        /* Advance to next option */
+        c += 0x04;
         break;
-      } else {
+#if LWIP_TCP_TIMESTAMPS
+      case 0x08:
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: TS\n"));
+        if (opts[c + 1] != 0x0A || c + 0x0A > max_c) {
+          /* Bad length */
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
+          return;
+        }
+        /* TCP timestamp option with valid length */
+        tsval = (opts[c+2]) | (opts[c+3] << 8) | 
+          (opts[c+4] << 16) | (opts[c+5] << 24);
+        if (flags & TCP_SYN) {
+          pcb->ts_recent = ntohl(tsval);
+          pcb->flags |= TF_TIMESTAMP;
+        } else if (TCP_SEQ_BETWEEN(pcb->ts_lastacksent, seqno, seqno+tcplen)) {
+          pcb->ts_recent = ntohl(tsval);
+        }
+        /* Advance to next option */
+        c += 0x0A;
+        break;
+#endif
+      default:
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: other\n"));
         if (opts[c + 1] == 0) {
+          LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           /* If the length field is zero, the options are malformed
              and we don't process them further. */
-          break;
+          return;
         }
         /* All other options have a length field, so that we easily
            can skip past them. */

@@ -139,8 +139,6 @@ void sys_mbox_fetch(sys_mbox_t mbox, void **msg);
 /* Thread functions. */
 sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio);
 
-/* The following functions are used only in Unix code, and
-   can be omitted when porting the stack. */
 /* Returns the current time in microseconds. */
 u32_t sys_now(void);
 

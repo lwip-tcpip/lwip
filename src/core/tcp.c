@@ -488,7 +488,6 @@ err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
       err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
 {
-  u32_t optdata;
   err_t ret;
   u32_t iss;
 
@@ -529,10 +528,11 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
 
   snmp_inc_tcpactiveopens();
   
-  /* Build an MSS option */
-  optdata = TCP_BUILD_MSS_OPTION();
-
-  ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, (u8_t *)&optdata, 4);
+  ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, TF_SEG_OPTS_MSS
+#if LWIP_TCP_TIMESTAMPS
+                    | TF_SEG_OPTS_TS
+#endif
+                    );
   if (ret == ERR_OK) { 
     tcp_output(pcb);
   }
@@ -1268,7 +1268,9 @@ tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr)
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
-     * but we only send options with SYN and that is never filled with data! */
+     * We correct for TCP options in tcp_enqueue(), and don't support
+     * IP options
+     */
     sendmss = LWIP_MIN(sendmss, mss_s);
   }
   return sendmss;

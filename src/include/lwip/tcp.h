@@ -139,12 +139,6 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 #define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
 
 
-/** This returns a TCP header option for MSS in an u32_t */
-#define TCP_BUILD_MSS_OPTION()  htonl(((u32_t)2 << 24) | \
-                                ((u32_t)4 << 16) | \
-                                (((u32_t)TCP_MSS / 256) << 8) | \
-                                (TCP_MSS & 255))
-
 #define TCP_SEQ_LT(a,b)     ((s32_t)((a)-(b)) < 0)
 #define TCP_SEQ_LEQ(a,b)    ((s32_t)((a)-(b)) <= 0)
 #define TCP_SEQ_GT(a,b)     ((s32_t)((a)-(b)) > 0)
@@ -298,12 +292,13 @@ struct tcp_pcb {
   u16_t remote_port;
   
   u8_t flags;
-#define TF_ACK_DELAY   (u8_t)0x01U   /* Delayed ACK. */
-#define TF_ACK_NOW     (u8_t)0x02U   /* Immediate ACK. */
-#define TF_INFR        (u8_t)0x04U   /* In fast recovery. */
-#define TF_FIN         (u8_t)0x20U   /* Connection was closed locally (FIN segment enqueued). */
-#define TF_NODELAY     (u8_t)0x40U   /* Disable Nagle algorithm */
-#define TF_NAGLEMEMERR (u8_t)0x80U /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+#define TF_ACK_DELAY   ((u8_t)0x01U)   /* Delayed ACK. */
+#define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
+#define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */
+#define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */
+#define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */
+#define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
+#define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
@@ -407,6 +402,11 @@ struct tcp_pcb {
   void (* errf)(void *arg, err_t err);
 #endif /* LWIP_CALLBACK_API */
 
+#if LWIP_TCP_TIMESTAMPS
+  u32_t ts_lastacksent;
+  u32_t ts_recent;
+#endif /* LWIP_TCP_TIMESTAMPS */
+
   /* idle time before KEEPALIVE is sent */
   u32_t keep_idle;
 #if LWIP_TCP_KEEPALIVE
@@ -493,8 +493,21 @@ struct tcp_seg {
   struct pbuf *p;          /* buffer containing data + TCP header */
   void *dataptr;           /* pointer to the TCP data in the pbuf */
   u16_t len;               /* the TCP length of this segment */
+  u8_t  flags;
+#define TF_SEG_OPTS_MSS   (u8_t)0x01U   /* Include MSS option. */
+#define TF_SEG_OPTS_TS    (u8_t)0x02U   /* Include timestamp option. */
   struct tcp_hdr *tcphdr;  /* the TCP header */
 };
+
+#define LWIP_TCP_OPT_LENGTH(flags)              \
+  (flags & TF_SEG_OPTS_MSS ? 4  : 0) +          \
+  (flags & TF_SEG_OPTS_TS  ? 12 : 0)
+
+/** This returns a TCP header option for MSS in an u32_t */
+#define TCP_BUILD_MSS_OPTION(x) (x) = htonl(((u32_t)2 << 24) |          \
+                                            ((u32_t)4 << 16) |          \
+                                            (((u32_t)TCP_MSS / 256) << 8) | \
+                                            (TCP_MSS & 255))
 
 /* Internal functions and global variables: */
 struct tcp_pcb *tcp_pcb_copy(struct tcp_pcb *pcb);
@@ -518,8 +531,7 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 
 err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);
 err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
-    u8_t flags, u8_t apiflags,
-                u8_t *optdata, u8_t optlen);
+                  u8_t flags, u8_t apiflags, u8_t optflags);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
