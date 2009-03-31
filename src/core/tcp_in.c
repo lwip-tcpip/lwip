@@ -536,6 +536,12 @@ tcp_process(struct tcp_pcb *pcb)
     }
   }
 
+  if ((flags & TCP_SYN) && (pcb->state != SYN_SENT && pcb->state != SYN_RCVD)) { 
+    /* Cope with new connection attempt after remote end crashed */
+    tcp_ack_now(pcb);
+    return ERR_OK;
+  }
+  
   /* Update the PCB (in)activity timer. */
   pcb->tmr = tcp_ticks;
   pcb->keep_cnt_sent = 0;
@@ -597,8 +603,7 @@ tcp_process(struct tcp_pcb *pcb)
     }
     break;
   case SYN_RCVD:
-    if (flags & TCP_ACK &&
-       !(flags & TCP_RST)) {
+    if (flags & TCP_ACK) {
       /* expected ACK number? */
       if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {
         u16_t old_cwnd;
@@ -633,6 +638,9 @@ tcp_process(struct tcp_pcb *pcb)
         tcp_rst(ackno, seqno + tcplen, &(iphdr->dest), &(iphdr->src),
                 tcphdr->dest, tcphdr->src);
       }
+    } else if ((flags & TCP_SYN) && (seqno == pcb->rcv_nxt - 1)) {
+      /* Looks like another copy of the SYN - retransmit our SYN-ACK */
+      tcp_rexmit(pcb);
     }
     break;
   case CLOSE_WAIT:
