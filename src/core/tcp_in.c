@@ -430,6 +430,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;
     npcb->rcv_nxt = seqno + 1;
+    npcb->rcv_ann_right_edge = npcb->rcv_nxt;
     npcb->snd_wnd = tcphdr->wnd;
     npcb->ssthresh = npcb->snd_wnd;
     npcb->snd_wl1 = seqno - 1;/* initialise to seqno-1 to force window update */
@@ -561,6 +562,7 @@ tcp_process(struct tcp_pcb *pcb)
         && ackno == ntohl(pcb->unacked->tcphdr->seqno) + 1) {
       pcb->snd_buf++;
       pcb->rcv_nxt = seqno + 1;
+      pcb->rcv_ann_right_edge = pcb->rcv_nxt;
       pcb->lastack = ackno;
       pcb->snd_wnd = tcphdr->wnd;
       pcb->snd_wl1 = seqno - 1; /* initialise to seqno - 1 to force window update */
@@ -1095,11 +1097,7 @@ tcp_receive(struct tcp_pcb *pcb)
           pcb->rcv_wnd -= tcplen;
         }
 
-        if (pcb->rcv_ann_wnd < tcplen) {
-          pcb->rcv_ann_wnd = 0;
-        } else {
-          pcb->rcv_ann_wnd -= tcplen;
-        }
+        tcp_update_rcv_ann_wnd(pcb);
 
         /* If there is data in the segment, we make preparations to
            pass this up to the application. The ->recv_data variable
@@ -1137,11 +1135,8 @@ tcp_receive(struct tcp_pcb *pcb)
           } else {
             pcb->rcv_wnd -= TCP_TCPLEN(cseg);
           }
-          if (pcb->rcv_ann_wnd < TCP_TCPLEN(cseg)) {
-            pcb->rcv_ann_wnd = 0;
-          } else {
-            pcb->rcv_ann_wnd -= TCP_TCPLEN(cseg);
-          }
+
+          tcp_update_rcv_ann_wnd(pcb);
 
           if (cseg->p->tot_len > 0) {
             /* Chain this pbuf onto the pbuf that we will pass to

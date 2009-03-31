@@ -125,6 +125,7 @@ void             tcp_input   (struct pbuf *p, struct netif *inp);
 err_t            tcp_output  (struct tcp_pcb *pcb);
 void             tcp_rexmit  (struct tcp_pcb *pcb);
 void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
+u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
 
 /**
  * This is the Nagle algorithm: inhibit the sending of new TCP
@@ -304,8 +305,9 @@ struct tcp_pcb {
      as we have to do some math with them */
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
-  u16_t rcv_wnd;   /* receiver window */
-  u16_t rcv_ann_wnd; /* announced receive window */
+  u16_t rcv_wnd;   /* receiver window available */
+  u16_t rcv_ann_wnd; /* receiver window to announce */
+  u32_t rcv_ann_right_edge; /* announced right edge of window */
 
   /* Timers */
   u32_t tmr;

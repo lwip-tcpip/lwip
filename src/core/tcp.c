@@ -383,6 +383,33 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   return (struct tcp_pcb *)lpcb;
 }
 
+/** 
+ * Update the state that tracks the available window space to advertise.
+ *
+ * Returns how much extra window would be advertised if we sent an
+ * update now.
+ */
+u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
+{
+  u32_t new_right_edge = pcb->rcv_nxt + pcb->rcv_wnd;
+
+  if (TCP_SEQ_GEQ(new_right_edge, pcb->rcv_ann_right_edge + pcb->mss)) {
+    /* we can advertise more window */
+    pcb->rcv_ann_wnd = pcb->rcv_wnd;
+    return new_right_edge - pcb->rcv_ann_right_edge;
+  } else {
+    if (TCP_SEQ_GT(pcb->rcv_nxt, pcb->rcv_ann_right_edge)) {
+      /* Can happen due to other end sending out of advertised window,
+       * but within actual available (but not yet advertised) window */
+      pcb->rcv_ann_wnd = 0;
+    } else {
+      /* keep the right edge of window constant */
+      pcb->rcv_ann_wnd = pcb->rcv_ann_right_edge - pcb->rcv_nxt;
+    }
+    return 0;
+  }
+}
+
 /**
  * This function should be called by the application when it has
  * processed the data. The purpose is to advertise a larger window
@@ -394,40 +421,20 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
-  if ((u32_t)pcb->rcv_wnd + len > TCP_WND) {
-    pcb->rcv_wnd = TCP_WND;
-    pcb->rcv_ann_wnd = TCP_WND;
-  } else {
-    pcb->rcv_wnd += len;
-    if (pcb->rcv_wnd >= pcb->mss) {
-      pcb->rcv_ann_wnd = pcb->rcv_wnd;
-    }
-  }
+  int wnd_inflation;
 
-  if (!(pcb->flags & TF_ACK_DELAY) &&
-     !(pcb->flags & TF_ACK_NOW)) {
-    /*
-     * We send an ACK here (if one is not already pending, hence
-     * the above tests) as tcp_recved() implies that the application
-     * has processed some data, and so we can open the receiver's
-     * window to allow more to be transmitted.  This could result in
-     * two ACKs being sent for each received packet in some limited cases
-     * (where the application is only receiving data, and is slow to
-     * process it) but it is necessary to guarantee that the sender can
-     * continue to transmit.
-     */
-    tcp_ack(pcb);
-  } 
-  else if (pcb->flags & TF_ACK_DELAY && pcb->rcv_wnd >= TCP_WND/2) {
-    /* If we can send a window update such that there is a full
-     * segment available in the window, do so now.  This is sort of
-     * nagle-like in its goals, and tries to hit a compromise between
-     * sending acks each time the window is updated, and only sending
-     * window updates when a timer expires.  The "threshold" used
-     * above (currently TCP_WND/2) can be tuned to be more or less
-     * aggressive  */
+  pcb->rcv_wnd += len;
+  if (pcb->rcv_wnd > TCP_WND)
+    pcb->rcv_wnd = TCP_WND;
+
+  wnd_inflation = tcp_update_rcv_ann_wnd(pcb);
+
+  /* If the change in the right edge of window is significant (default
+   * watermark is TCP_WND/2), then send an explicit update now.
+   * Otherwise wait for a packet to be sent in the normal course of
+   * events (or more window to be available later) */
+  if (wnd_inflation >= TCP_WND_UPDATE_THRESHOLD) 
     tcp_ack_now(pcb);
-  }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
          len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
@@ -510,6 +517,7 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
   pcb->snd_lbb = iss - 1;
   pcb->rcv_wnd = TCP_WND;
   pcb->rcv_ann_wnd = TCP_WND;
+  pcb->rcv_ann_right_edge = pcb->rcv_nxt;
   pcb->snd_wnd = TCP_WND;
   /* As initial send MSS, we use TCP_MSS but limit it to 536.
      The send MSS is updated when an MSS option is received. */

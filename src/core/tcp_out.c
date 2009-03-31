@@ -59,6 +59,26 @@
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
+static struct tcp_hdr *
+tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, int optlen)
+{
+  struct tcp_hdr *tcphdr = p->payload;
+  tcphdr->src = htons(pcb->local_port);
+  tcphdr->dest = htons(pcb->remote_port);
+  tcphdr->seqno = htonl(pcb->snd_nxt);
+  tcphdr->ackno = htonl(pcb->rcv_nxt);
+  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
+  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+  tcphdr->urgp = 0;
+  TCPH_HDRLEN_SET(tcphdr, (5 + optlen / 4));
+  tcphdr->chksum = 0;
+
+  /* If we're sending a packet, update the announced right window edge */
+  pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
+
+  return tcphdr;
+}
+
 /**
  * Called by tcp_close() to send a segment including flags but not data.
  *
@@ -466,15 +486,7 @@ tcp_output(struct tcp_pcb *pcb)
     /* remove ACK flags from the PCB, as we send an empty ACK now */
     pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
 
-    tcphdr = p->payload;
-    tcphdr->src = htons(pcb->local_port);
-    tcphdr->dest = htons(pcb->remote_port);
-    tcphdr->seqno = htonl(pcb->snd_nxt);
-    tcphdr->ackno = htonl(pcb->rcv_nxt);
-    TCPH_FLAGS_SET(tcphdr, TCP_ACK);
-    tcphdr->wnd = htons(pcb->rcv_ann_wnd);
-    tcphdr->urgp = 0;
-    TCPH_HDRLEN_SET(tcphdr, (5 + optlen / 4));
+    tcphdr = tcp_output_set_header(pcb, p, optlen);
 
     /* NB. MSS option is only sent on SYNs, so ignore it here */
 #if LWIP_TCP_TIMESTAMPS
@@ -484,7 +496,6 @@ tcp_output(struct tcp_pcb *pcb)
       tcp_build_timestamp_option(pcb, (u32_t *)(tcphdr + 1));
 #endif 
 
-    tcphdr->chksum = 0;
 #if CHECKSUM_GEN_TCP
     tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
           IP_PROTO_TCP, p->tot_len);
@@ -629,6 +640,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* advertise our receive window size in this TCP segment */
   seg->tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+
+  pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
 
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
@@ -862,17 +875,10 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-  tcphdr = p->payload;
-  tcphdr->src = htons(pcb->local_port);
-  tcphdr->dest = htons(pcb->remote_port);
-  tcphdr->seqno = htonl(pcb->snd_nxt - 1);
-  tcphdr->ackno = htonl(pcb->rcv_nxt);
-  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
-  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
-  tcphdr->urgp = 0;
-  TCPH_HDRLEN_SET(tcphdr, 5);
+  tcphdr = tcp_output_set_header(pcb, p, 0);
 
-  tcphdr->chksum = 0;
+  tcphdr->seqno = htonl(pcb->snd_nxt - 1);
+
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
                                       IP_PROTO_TCP, p->tot_len);
@@ -945,20 +951,13 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-  tcphdr = p->payload;
-  tcphdr->src = htons(pcb->local_port);
-  tcphdr->dest = htons(pcb->remote_port);
+  tcphdr = tcp_output_set_header(pcb, p, 0);
+
   tcphdr->seqno = seg->tcphdr->seqno;
-  tcphdr->ackno = htonl(pcb->rcv_nxt);
-  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
-  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
-  tcphdr->urgp = 0;
-  TCPH_HDRLEN_SET(tcphdr, 5);
 
   /* Copy in one byte from the head of the unacked queue */
   *((char *)p->payload + sizeof(struct tcp_hdr)) = *(char *)seg->dataptr;
 
-  tcphdr->chksum = 0;
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
                                       IP_PROTO_TCP, p->tot_len);

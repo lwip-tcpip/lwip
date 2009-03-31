@@ -81,6 +81,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-03-31 Kieran Mansley
+  * tcp.c, tcp_in.c, tcp_out.c, tcp.h, opt.h: Rework the way window
+    updates are calculated and sent (BUG20515)
+
   * tcp_in.c: cope with SYN packets received during established states,
     and retransmission of initial SYN.
 

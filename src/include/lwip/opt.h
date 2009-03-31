@@ -681,7 +681,8 @@
 #endif
 
 /**
- * TCP_WND: The size of a TCP window.
+ * TCP_WND: The size of a TCP window.  This must be at least 
+ * (2 * TCP_MSS) for things to work well
  */
 #ifndef TCP_WND
 #define TCP_WND                         2048
@@ -778,6 +779,14 @@
  */
 #ifndef LWIP_TCP_TIMESTAMPS
 #define LWIP_TCP_TIMESTAMPS             0
+#endif
+
+/**
+ * TCP_WND_UPDATE_THRESHOLD: difference in window to trigger an
+ * explicit window update
+ */
+#ifndef TCP_WND_UPDATE_THRESHOLD
+#define TCP_WND_UPDATE_THRESHOLD   (TCP_WND / 4)
 #endif
 
 /**
