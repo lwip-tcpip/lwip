@@ -75,6 +75,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-03-31 Kieran Mansley
+  * tcp_out.c: set push bit correctly when tcp segments are merged
+
   2009-03-27 Kieran Mansley
   * tcp_out.c set window correctly on probes (correcting change made
     yesterday)

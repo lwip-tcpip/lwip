@@ -345,7 +345,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("tcp_enqueue: chaining segments, new len %"U16_F"\n", useg->len));
     if (seg == queue) {
-      seg = NULL;
+      seg = useg;
+      seglen = useg->len;
     }
     memp_free(MEMP_TCP_SEG, queue);
   }
