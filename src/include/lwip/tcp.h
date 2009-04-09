@@ -467,26 +467,48 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
 #define TCP_EVENT_ERR(errf,arg,err)  lwip_tcp_event((arg), NULL, \
                 LWIP_EVENT_ERR, NULL, 0, (err))
 #else /* LWIP_EVENT_API */
-#define TCP_EVENT_ACCEPT(pcb,err,ret)     \
-                        if((pcb)->accept != NULL) \
-                        (ret = (pcb)->accept((pcb)->callback_arg,(pcb),(err)))
-#define TCP_EVENT_SENT(pcb,space,ret) \
-                        if((pcb)->sent != NULL) \
-                        (ret = (pcb)->sent((pcb)->callback_arg,(pcb),(space)))
-#define TCP_EVENT_RECV(pcb,p,err,ret) \
-                        if((pcb)->recv != NULL) \
-                        { ret = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); } else { \
-                          ret = ERR_OK; \
-                          if (p) pbuf_free(p); }
-#define TCP_EVENT_CONNECTED(pcb,err,ret) \
-                        if((pcb)->connected != NULL) \
-                        (ret = (pcb)->connected((pcb)->callback_arg,(pcb),(err)))
-#define TCP_EVENT_POLL(pcb,ret) \
-                        if((pcb)->poll != NULL) \
-                        (ret = (pcb)->poll((pcb)->callback_arg,(pcb)))
-#define TCP_EVENT_ERR(errf,arg,err) \
-                        if((errf) != NULL) \
-                        (errf)((arg),(err))
+
+#define TCP_EVENT_ACCEPT(pcb,err,ret)                          \
+  do {                                                         \
+    if((pcb)->accept != NULL)                                  \
+      (ret) = (pcb)->accept((pcb)->callback_arg,(pcb),(err));  \
+  } while (0)
+
+#define TCP_EVENT_SENT(pcb,space,ret)                          \
+  do {                                                         \
+    if((pcb)->sent != NULL)                                    \
+      (ret) = (pcb)->sent((pcb)->callback_arg,(pcb),(space));  \
+  } while (0)
+
+#define TCP_EVENT_RECV(pcb,p,err,ret)                           \
+  do {                                                          \
+    if((pcb)->recv != NULL) {                                   \
+      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); \
+    } else {                                                    \
+      (ret) = ERR_OK;                                           \
+      if (p != NULL)                                            \
+        pbuf_free(p);                                           \
+    }                                                           \
+  } while (0)
+
+#define TCP_EVENT_CONNECTED(pcb,err,ret)                         \
+  do {                                                           \
+    if((pcb)->connected != NULL)                                 \
+      (ret) = (pcb)->connected((pcb)->callback_arg,(pcb),(err)); \
+  } while (0)
+
+#define TCP_EVENT_POLL(pcb,ret)                                \
+  do {                                                         \
+    if((pcb)->poll != NULL)                                    \
+      (ret) = (pcb)->poll((pcb)->callback_arg,(pcb));          \
+  } while (0)
+
+#define TCP_EVENT_ERR(errf,arg,err)                            \
+  do {                                                         \
+    if((errf) != NULL)                                         \
+      (errf)((arg),(err));                                     \
+  } while (0)
+
 #endif /* LWIP_EVENT_API */
 
 /* This structure represents a TCP segment on the unsent and unacked queues */
@@ -520,16 +542,23 @@ u8_t tcp_segs_free(struct tcp_seg *seg);
 u8_t tcp_seg_free(struct tcp_seg *seg);
 struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 
-#define tcp_ack(pcb)     if((pcb)->flags & TF_ACK_DELAY) { \
-                            (pcb)->flags &= ~TF_ACK_DELAY; \
-                            (pcb)->flags |= TF_ACK_NOW; \
-                            tcp_output(pcb); \
-                         } else { \
-                            (pcb)->flags |= TF_ACK_DELAY; \
-                         }
+#define tcp_ack(pcb)                               \
+  do {                                             \
+    if((pcb)->flags & TF_ACK_DELAY) {              \
+      (pcb)->flags &= ~TF_ACK_DELAY;               \
+      (pcb)->flags |= TF_ACK_NOW;                  \
+      tcp_output(pcb);                             \
+    }                                              \
+    else {                                         \
+      (pcb)->flags |= TF_ACK_DELAY;                \
+    }                                              \
+  } while (0)
 
-#define tcp_ack_now(pcb) (pcb)->flags |= TF_ACK_NOW; \
-                         tcp_output(pcb)
+#define tcp_ack_now(pcb)                           \
+  do {                                             \
+    (pcb)->flags |= TF_ACK_NOW;                    \
+    tcp_output(pcb);                               \
+  } while (0)
 
 err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);
 err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
@@ -627,22 +656,32 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             } while(0)
 
 #else /* LWIP_DEBUG */
-#define TCP_REG(pcbs, npcb) do { \
-                            npcb->next = *pcbs; \
-                            *(pcbs) = npcb; \
-              tcp_timer_needed(); \
-                            } while(0)
-#define TCP_RMV(pcbs, npcb) do { \
-                            if(*(pcbs) == npcb) { \
-                               (*(pcbs)) = (*pcbs)->next; \
-                            } else for(tcp_tmp_pcb = *pcbs; tcp_tmp_pcb != NULL; tcp_tmp_pcb = tcp_tmp_pcb->next) { \
-                               if(tcp_tmp_pcb->next != NULL && tcp_tmp_pcb->next == npcb) { \
-                                  tcp_tmp_pcb->next = npcb->next; \
-                                  break; \
-                               } \
-                            } \
-                            npcb->next = NULL; \
-                            } while(0)
+
+#define TCP_REG(pcbs, npcb)                        \
+  do {                                             \
+    npcb->next = *pcbs;                            \
+    *(pcbs) = npcb;                                \
+    tcp_timer_needed();                            \
+  } while (0)
+
+#define TCP_RMV(pcbs, npcb)                        \
+  do {                                             \
+    if(*(pcbs) == npcb) {                          \
+      (*(pcbs)) = (*pcbs)->next;                   \
+    }                                              \
+    else {                                         \
+      for(tcp_tmp_pcb = *pcbs;                                         \
+          tcp_tmp_pcb != NULL;                                         \
+          tcp_tmp_pcb = tcp_tmp_pcb->next) {                           \
+        if(tcp_tmp_pcb->next != NULL && tcp_tmp_pcb->next == npcb) {   \
+          tcp_tmp_pcb->next = npcb->next;          \
+          break;                                   \
+        }                                          \
+      }                                            \
+    }                                              \
+    npcb->next = NULL;                             \
+  } while(0)
+
 #endif /* LWIP_DEBUG */
 
 #ifdef __cplusplus
