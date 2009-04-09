@@ -79,6 +79,9 @@ HISTORY
 
 
   ++ Bugfixes:
+  2009-04-09 Kieran Mansley (patch from Luca Ceresoli <lucaceresoli>)
+  * init.c, opt.h: Patch#6774 TCP_QUEUE_OOSEQ breaks compilation when
+    LWIP_TCP==0
 
   2009-04-09 Kieran Mansley (patch from Roy Lee <roylee17>)
   * tcp.h: Patch#6802 Add do-while-clauses to those function like

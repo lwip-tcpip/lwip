@@ -158,6 +158,9 @@
 #if (PBUF_POOL_BUFSIZE <= MEM_ALIGNMENT)
   #error "PBUF_POOL_BUFSIZE must be grater than MEM_ALIGNMENT or the offset may take the full first pbuf"
 #endif
+#if (TCP_QUEUE_OOSEQ && !LWIP_TCP)
+  #error "TCP_QUEUE_OOSEQ requires LWIP_TCP"
+#endif
 
 
 /* Compile-time checks for deprecated options.
