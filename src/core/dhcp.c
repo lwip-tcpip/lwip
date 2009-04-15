@@ -86,15 +86,19 @@
 
 #include <string.h>
 
+/** Default for DHCP_GLOBAL_XID is 0xABCD0000
+ * This can be changed by defining DHCP_GLOBAL_XID and DHCP_GLOBAL_XID_HEADER, e.g.
+ *  #define DHCP_GLOBAL_XID_HEADER "stdlib.h"
+ *  #define DHCP_GLOBAL_XID rand()
+ */
+#ifdef DHCP_GLOBAL_XID_HEADER
+#include DHCP_GLOBAL_XID_HEADER /* include optional starting XID generation prototypes */
+#endif
+
 /** DHCP_OPTION_MAX_MSG_SIZE is set to the MTU
  * MTU is checked to be big enough in dhcp_start */
 #define DHCP_MAX_MSG_LEN(netif)        (netif->mtu)
 #define DHCP_MAX_MSG_LEN_MIN_REQUIRED  576
-
-/** global transaction identifier, must be
- *  unique for each DHCP request. We simply increment, starting
- *  with this value (easy to match with a packet analyzer) */
-static u32_t xid = 0xABCD0000;
 
 /* DHCP client state machine functions */
 static void dhcp_handle_ack(struct netif *netif);
@@ -1358,6 +1362,20 @@ dhcp_create_request(struct netif *netif)
 {
   struct dhcp *dhcp;
   u16_t i;
+#ifndef DHCP_GLOBAL_XID
+  /** default global transaction identifier starting value (easy to match
+   *  with a packet analyser). We simply increment for each new request.
+   *  Predefine DHCP_GLOBAL_XID to a better value or a function call to generate one
+   *  at runtime, any supporting function prototypes can be defined in DHCP_GLOBAL_XID_HEADER */
+  static u32_t xid = 0xABCD0000;
+#else
+  static u32_t xid;
+  static u8_t xid_initialised = 0;
+  if (!xid_initialised) {
+    xid = DHCP_GLOBAL_XID;
+    xid_initialised = !xid_initialised;
+  }
+#endif
   LWIP_ERROR("dhcp_create_request: netif != NULL", (netif != NULL), return ERR_ARG;);
   dhcp = netif->dhcp;
   LWIP_ERROR("dhcp_create_request: dhcp != NULL", (dhcp != NULL), return ERR_VAL;);

@@ -20,18 +20,7 @@ HISTORY
   ++ New features:
 
   2009-04-15 Simon Goldschmidt
-  * dhcp.c: patch #6764: DHCP rebind and renew did not send hostnam option;
-    Converted constant OPTION_MAX_MSG_SIZE to netif->mtu, check if netif->mtu
-    is big enough in dhcp_start
-
-  2009-04-15 Simon Goldschmidt
-  * netbuf.c: bug #26027: netbuf_chain resulted in pbuf memory leak
-
-  2009-04-15 Simon Goldschmidt
-  * sockets.c, ppp.c: bug #25763: corrected 4 occurrences of SMEMCPY to MEMCPY
-
-  2009-04-15 Simon Goldschmidt
-  * sockets.c: bug #26121: set_errno can be overridden
+  * dhcp.c: patch #6763: Global DHCP XID can be redefined to something more unique
 
   2009-03-31 Kieran Mansley
   * tcp.c, tcp_out.c, tcp_in.c, sys.h, tcp.h, opts.h: add support for
@@ -93,6 +82,21 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2009-04-15 Simon Goldschmidt
+  * dhcp.c: patch #6764: DHCP rebind and renew did not send hostnam option;
+    Converted constant OPTION_MAX_MSG_SIZE to netif->mtu, check if netif->mtu
+    is big enough in dhcp_start
+
+  2009-04-15 Simon Goldschmidt
+  * netbuf.c: bug #26027: netbuf_chain resulted in pbuf memory leak
+
+  2009-04-15 Simon Goldschmidt
+  * sockets.c, ppp.c: bug #25763: corrected 4 occurrences of SMEMCPY to MEMCPY
+
+  2009-04-15 Simon Goldschmidt
+  * sockets.c: bug #26121: set_errno can be overridden
+
   2009-04-09 Kieran Mansley (patch from Luca Ceresoli <lucaceresoli>)
   * init.c, opt.h: Patch#6774 TCP_QUEUE_OOSEQ breaks compilation when
     LWIP_TCP==0
