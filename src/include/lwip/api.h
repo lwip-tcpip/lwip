@@ -168,7 +168,8 @@ struct
 netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                    netconn_callback callback);
 err_t             netconn_delete  (struct netconn *conn);
-enum netconn_type netconn_type    (struct netconn *conn);
+/** Get the type of a netconn (as enum netconn_type). */
+#define netconn_type(conn) (conn->type)
 
 err_t             netconn_getaddr (struct netconn *conn,
                                    struct ip_addr *addr,

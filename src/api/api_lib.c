@@ -120,19 +120,6 @@ netconn_delete(struct netconn *conn)
 }
 
 /**
- * Get the type of a netconn (as enum netconn_type).
- *
- * @param conn the netconn of which to get the type
- * @return the netconn_type of conn
- */
-enum netconn_type
-netconn_type(struct netconn *conn)
-{
-  LWIP_ERROR("netconn_type: invalid conn", (conn != NULL), return NETCONN_INVALID;);
-  return conn->type;
-}
-
-/**
  * Get the local or remote IP address and port of a netconn.
  * For RAW netconns, this returns the protocol instead of a port!
  *
