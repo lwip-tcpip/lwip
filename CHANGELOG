@@ -84,6 +84,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-04-15 Simon Goldschmidt
+  * sockets.c: tried to fix bug #23559: lwip_recvfrom problem with tcp
+
+  2009-04-15 Simon Goldschmidt
   * dhcp.c: task #9192: mem_free of dhcp->options_in and dhcp->msg_in
 
   2009-04-15 Simon Goldschmidt

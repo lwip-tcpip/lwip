@@ -495,6 +495,11 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     } else {
       /* If this is non-blocking call, then check first */
       if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && !sock->rcvevent) {
+        if (off > 0) {
+          /* already received data, return that */
+          sock_set_errno(sock, 0);
+          return off;
+        }
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): returning EWOULDBLOCK\n", s));
         sock_set_errno(sock, EWOULDBLOCK);
         return -1;
@@ -506,6 +511,11 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv netbuf=%p\n", (void*)buf));
 
       if (!buf) {
+        if (off > 0) {
+          /* already received data, return that */
+          sock_set_errno(sock, 0);
+          return off;
+        }
         /* We should really do some error checking here. */
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
         sock_set_errno(sock, (((sock->conn->pcb.ip != NULL) && (sock->conn->err == ERR_OK))
