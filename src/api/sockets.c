@@ -150,7 +150,9 @@ static const int err_to_errno_table[] = {
     err_to_errno_table[-(err)] : EIO)
 
 #ifdef ERRNO
+#ifndef set_errno
 #define set_errno(err) errno = (err)
+#endif
 #else
 #define set_errno(err)
 #endif
