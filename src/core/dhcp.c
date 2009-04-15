@@ -86,6 +86,11 @@
 
 #include <string.h>
 
+/** DHCP_OPTION_MAX_MSG_SIZE is set to the MTU
+ * MTU is checked to be big enough in dhcp_start */
+#define DHCP_MAX_MSG_LEN(netif)        (netif->mtu)
+#define DHCP_MAX_MSG_LEN_MIN_REQUIRED  576
+
 /** global transaction identifier, must be
  *  unique for each DHCP request. We simply increment, starting
  *  with this value (easy to match with a packet analyzer) */
@@ -247,7 +252,7 @@ dhcp_select(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_REQUEST);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
     /* MUST request the offered IP address */
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
@@ -264,7 +269,7 @@ dhcp_select(struct netif *netif)
 
 #if LWIP_NETIF_HOSTNAME
     p = (const char*)netif->hostname;
-    if (p!=NULL) {
+    if (p != NULL) {
       dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
       while (*p) {
         dhcp_option_byte(dhcp, *p++);
@@ -572,6 +577,12 @@ dhcp_start(struct netif *netif)
      it is set when we succeeded starting. */
   netif->flags &= ~NETIF_FLAG_DHCP;
 
+  /* check MTU of the netif */
+  if (netif->mtu < DHCP_MAX_MSG_LEN_MIN_REQUIRED) {
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): Cannot use this netif with DHCP: MTU is too small\n"));
+    return ERR_MEM;
+  }
+
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
@@ -660,8 +671,7 @@ dhcp_inform(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_INFORM);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    /* TODO: use netif->mtu ?! */
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
     dhcp_option_trailer(dhcp);
 
@@ -778,7 +788,7 @@ dhcp_discover(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_DISCOVER);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
     dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, 4/*num options*/);
     dhcp_option_byte(dhcp, DHCP_OPTION_SUBNET_MASK);
@@ -908,6 +918,9 @@ dhcp_renew(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+#if LWIP_NETIF_HOSTNAME
+  const char *p;
+#endif /* LWIP_NETIF_HOSTNAME */
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_renew()\n"));
   dhcp_set_state(dhcp, DHCP_RENEWING);
 
@@ -919,8 +932,17 @@ dhcp_renew(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_REQUEST);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    /* TODO: use netif->mtu in some way */
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
+
+#if LWIP_NETIF_HOSTNAME
+    p = (const char*)netif->hostname;
+    if (p != NULL) {
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      while (*p) {
+        dhcp_option_byte(dhcp, *p++);
+      }
+    }
+#endif /* LWIP_NETIF_HOSTNAME */
 
 #if 0
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
@@ -963,6 +985,9 @@ dhcp_rebind(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+#if LWIP_NETIF_HOSTNAME
+  const char *p;
+#endif /* LWIP_NETIF_HOSTNAME */
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind()\n"));
   dhcp_set_state(dhcp, DHCP_REBINDING);
 
@@ -974,7 +999,17 @@ dhcp_rebind(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_REQUEST);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
-    dhcp_option_short(dhcp, 576);
+    dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
+
+#if LWIP_NETIF_HOSTNAME
+    p = (const char*)netif->hostname;
+    if (p != NULL) {
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      while (*p) {
+        dhcp_option_byte(dhcp, *p++);
+      }
+    }
+#endif /* LWIP_NETIF_HOSTNAME */
 
 #if 0
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);

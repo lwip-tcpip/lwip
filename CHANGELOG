@@ -20,6 +20,11 @@ HISTORY
   ++ New features:
 
   2009-04-15 Simon Goldschmidt
+  * dhcp.c: patch #6764: DHCP rebind and renew did not send hostnam option;
+    Converted constant OPTION_MAX_MSG_SIZE to netif->mtu, check if netif->mtu
+    is big enough in dhcp_start
+
+  2009-04-15 Simon Goldschmidt
   * netbuf.c: bug #26027: netbuf_chain resulted in pbuf memory leak
 
   2009-04-15 Simon Goldschmidt
