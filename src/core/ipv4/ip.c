@@ -570,11 +570,53 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
 
   if ((netif = ip_route(dest)) == NULL) {
+    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
+    IP_STATS_INC(ip.rterr);
     return ERR_RTE;
   }
 
   return ip_output_if(p, src, dest, ttl, tos, proto, netif);
 }
+
+#if LWIP_NETIF_HWADDRHINT
+/** Like ip_output, but takes and addr_hint pointer that is passed on to netif->addr_hint
+ *  before calling ip_output_if.
+ *
+ * @param p the packet to send (p->payload points to the data, e.g. next
+            protocol header; if dest == IP_HDRINCL, p already includes an IP
+            header and p->payload points to that IP header)
+ * @param src the source IP address to send from (if src == IP_ADDR_ANY, the
+ *         IP  address of the netif used to send is used as source address)
+ * @param dest the destination IP address to send the packet to
+ * @param ttl the TTL value to be set in the IP header
+ * @param tos the TOS value to be set in the IP header
+ * @param proto the PROTOCOL to be set in the IP header
+ * @param addr_hint address hint pointer set to netif->addr_hint before
+ *        calling ip_output_if()
+ *
+ * @return ERR_RTE if no route is found
+ *         see ip_output_if() for more return values
+ */
+err_t
+ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+          u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint)
+{
+  struct netif *netif;
+  err_t err;
+
+  if ((netif = ip_route(dest)) == NULL) {
+    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
+    IP_STATS_INC(ip.rterr);
+    return ERR_RTE;
+  }
+
+  netif->addr_hint = addr_hint;
+  err = ip_output_if(p, src, dest, ttl, tos, proto, netif);
+  netif->addr_hint = NULL;
+
+  return err;
+}
+#endif /* LWIP_NETIF_HWADDRHINT*/
 
 #if IP_DEBUG
 /* Print an IP header by using LWIP_DEBUGF

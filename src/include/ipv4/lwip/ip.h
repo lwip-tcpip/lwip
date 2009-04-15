@@ -47,10 +47,14 @@ extern "C" {
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
 err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-    u8_t ttl, u8_t tos, u8_t proto);
+       u8_t ttl, u8_t tos, u8_t proto);
 err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
        u8_t ttl, u8_t tos, u8_t proto,
        struct netif *netif);
+#if LWIP_NETIF_HWADDRHINT
+err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 #define IP_HLEN 20
 

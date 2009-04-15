@@ -496,7 +496,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = &(pcb->addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT*/
-    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);    
+    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDPLITE, netif);
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/
@@ -519,7 +519,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = &(pcb->addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT*/
-    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);    
+    err = ip_output_if(q, src_ip, dst_ip, pcb->ttl, pcb->tos, IP_PROTO_UDP, netif);
 #if LWIP_NETIF_HWADDRHINT
     netif->addr_hint = NULL;
 #endif /* LWIP_NETIF_HWADDRHINT*/

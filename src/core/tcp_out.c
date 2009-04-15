@@ -501,16 +501,8 @@ tcp_output(struct tcp_pcb *pcb)
           IP_PROTO_TCP, p->tot_len);
 #endif
 #if LWIP_NETIF_HWADDRHINT
-    {
-      struct netif *netif;
-      netif = ip_route(&pcb->remote_ip);
-      if(netif != NULL){
-        netif->addr_hint = &(pcb->addr_hint);
-        ip_output_if(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
-                     pcb->tos, IP_PROTO_TCP, netif);
-        netif->addr_hint = NULL;
-      }
-    }
+    ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+        IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
     ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
         IP_PROTO_TCP);
@@ -700,16 +692,8 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
 #if LWIP_NETIF_HWADDRHINT
-  {
-    struct netif *netif;
-    netif = ip_route(&pcb->remote_ip);
-    if(netif != NULL){
-      netif->addr_hint = &(pcb->addr_hint);
-      ip_output_if(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
-                   pcb->tos, IP_PROTO_TCP, netif);
-      netif->addr_hint = NULL;
-    }
-  }
+  ip_output_hinted(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+      IP_PROTO_TCP, &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(seg->p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
@@ -887,16 +871,8 @@ tcp_keepalive(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #if LWIP_NETIF_HWADDRHINT
-  {
-    struct netif *netif;
-    netif = ip_route(&pcb->remote_ip);
-    if(netif != NULL){
-      netif->addr_hint = &(pcb->addr_hint);
-      ip_output_if(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
-                   0, IP_PROTO_TCP, netif);
-      netif->addr_hint = NULL;
-    }
-  }
+  ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
+    &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
@@ -966,16 +942,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #if LWIP_NETIF_HWADDRHINT
-  {
-    struct netif *netif;
-    netif = ip_route(&pcb->remote_ip);
-    if(netif != NULL){
-      netif->addr_hint = &(pcb->addr_hint);
-      ip_output_if(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl,
-                   0, IP_PROTO_TCP, netif);
-      netif->addr_hint = NULL;
-    }
-  }
+  ip_output_hinted(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP,
+    &(pcb->addr_hint));
 #else /* LWIP_NETIF_HWADDRHINT*/
   ip_output(p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/

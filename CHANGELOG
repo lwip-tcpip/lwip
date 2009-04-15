@@ -84,6 +84,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-04-15 Simon Goldschmidt
+  * ip.c, ip6.c, tcp_out.c, ip.h: patch #6808: Add a utility function
+    ip_hinted_output() (for smaller code mainly)
+
+  2009-04-15 Simon Goldschmidt
   * inet.c: patch #6765: Supporting new line characters in inet_aton()
 
   2009-04-15 Simon Goldschmidt
