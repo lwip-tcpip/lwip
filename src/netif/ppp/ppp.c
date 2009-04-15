@@ -1056,7 +1056,7 @@ pppWriteOverEthernet(int pd, const u_char *s, int n)
 
   pc->lastXMit = sys_jiffies();
 
-  SMEMCPY(pb->payload, s, n);
+  MEMCPY(pb->payload, s, n);
 
   if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
     LINK_STATS_INC(link.err);

@@ -20,6 +20,9 @@ HISTORY
   ++ New features:
 
   2009-04-15 Simon Goldschmidt
+  * sockets.c, ppp.c: bug #25763: corrected 4 occurrences of SMEMCPY to MEMCPY
+
+  2009-04-15 Simon Goldschmidt
   * sockets.c: bug #26121: set_errno can be overridden
 
   2009-03-31 Kieran Mansley

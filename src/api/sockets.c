@@ -285,17 +285,17 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * not be NULL if addr is valid.
    */
   if (NULL != addr) {
-      LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
-      memset(&sin, 0, sizeof(sin));
-      sin.sin_len = sizeof(sin);
-      sin.sin_family = AF_INET;
-      sin.sin_port = htons(port);
-      sin.sin_addr.s_addr = naddr.addr;
+    LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_len = sizeof(sin);
+    sin.sin_family = AF_INET;
+    sin.sin_port = htons(port);
+    sin.sin_addr.s_addr = naddr.addr;
 
-      if (*addrlen > sizeof(sin))
-          *addrlen = sizeof(sin);
+    if (*addrlen > sizeof(sin))
+      *addrlen = sizeof(sin);
 
-      SMEMCPY(addr, &sin, *addrlen);
+    MEMCPY(addr, &sin, *addrlen);
   }
 
   newsock = alloc_socket(newconn);
@@ -565,7 +565,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
           *fromlen = sizeof(sin);
         }
 
-        SMEMCPY(from, &sin, *fromlen);
+        MEMCPY(from, &sin, *fromlen);
 
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         ip_addr_debug_print(SOCKETS_DEBUG, addr);
@@ -1140,7 +1140,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   if (*namelen > sizeof(sin))
     *namelen = sizeof(sin);
 
-  SMEMCPY(name, &sin, *namelen);
+  MEMCPY(name, &sin, *namelen);
   sock_set_errno(sock, 0);
   return 0;
 }
