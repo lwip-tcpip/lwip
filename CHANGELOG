@@ -20,6 +20,9 @@ HISTORY
   ++ New features:
 
   2009-04-15 Simon Goldschmidt
+  * netbuf.c: bug #26027: netbuf_chain resulted in pbuf memory leak
+
+  2009-04-15 Simon Goldschmidt
   * sockets.c, ppp.c: bug #25763: corrected 4 occurrences of SMEMCPY to MEMCPY
 
   2009-04-15 Simon Goldschmidt
