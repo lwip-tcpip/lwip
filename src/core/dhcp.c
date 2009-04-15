@@ -1348,6 +1348,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     dhcp_handle_offer(netif);
   }
 free_pbuf_and_return:
+  dhcp_free_reply(dhcp);
   pbuf_free(p);
   dhcp->p = NULL;
 }

@@ -84,6 +84,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-04-15 Simon Goldschmidt
+  * dhcp.c: task #9192: mem_free of dhcp->options_in and dhcp->msg_in
+
+  2009-04-15 Simon Goldschmidt
   * ip.c, ip6.c, tcp_out.c, ip.h: patch #6808: Add a utility function
     ip_hinted_output() (for smaller code mainly)
 
