@@ -980,6 +980,8 @@ do_writemore(struct netconn *conn)
       write_finished = 1;
       conn->write_msg = NULL;
       conn->write_offset = 0;
+      /* API_EVENT might call tcp_tmr, so reset conn->state now */
+      conn->state = NETCONN_NONE;
     }
     err = tcp_output_nagle(conn->pcb.tcp);
     conn->err = err;

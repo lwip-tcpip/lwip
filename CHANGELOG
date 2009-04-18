@@ -83,6 +83,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-18 Simon Goldschmidt
+  * api_msg.c: fixed bug #25695: Segmentation fault in do_writemore()
+
   2009-04-15 Simon Goldschmidt
   * sockets.c: tried to fix bug #23559: lwip_recvfrom problem with tcp
 
