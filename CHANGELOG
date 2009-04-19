@@ -83,6 +83,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-19 Simon Goldschmidt
+  * tcp_out.c: Fixed bug #25094: "Zero-length pbuf" (options are now allocated
+    in the header pbuf, not the data pbuf)
+
   2009-04-18 Simon Goldschmidt
   * api_msg.c: fixed bug #25695: Segmentation fault in do_writemore()
 

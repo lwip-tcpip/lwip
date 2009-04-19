@@ -148,8 +148,7 @@ tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t apiflags)
  * @param apiflags combination of following flags :
  * - TCP_WRITE_FLAG_COPY (0x01) data will be copied into memory belonging to the stack
  * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent,
- * @param optdata
- * @param optlen
+ * @param optflags options to include in segment later on (see definition of struct tcp_seg)
  */
 err_t
 tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
@@ -257,35 +256,37 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     }
     /* do not copy data */
     else {
-      /* First, allocate a pbuf for holding the data.
-       * since the referenced data is available at least until it is sent out on the
-       * link (as it has to be ACKed by the remote party) we can safely use PBUF_ROM
-       * instead of PBUF_REF here.
-       */
-      if ((p = pbuf_alloc(PBUF_RAW, seglen, PBUF_ROM)) == NULL) {
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
-                    ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));
-        goto memerr;
-      }
-      ++queuelen;
-      /* reference the non-volatile payload data */
-      p->payload = ptr;
-      seg->dataptr = ptr;
-
-      /* Second, allocate a pbuf for the headers. */
+      /* First, allocate a pbuf for the headers. */
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
-        /* If allocation fails, we have to deallocate the data pbuf as
-         * well. */
-        pbuf_free(p);
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
                     ("tcp_enqueue: could not allocate memory for header pbuf\n"));
         goto memerr;
       }
       queuelen += pbuf_clen(seg->p);
 
-      /* Concatenate the headers and data pbufs together. */
-      pbuf_cat(seg->p/*header*/, p/*data*/);
-      p = NULL;
+      /* Second, allocate a pbuf for holding the data.
+       * since the referenced data is available at least until it is sent out on the
+       * link (as it has to be ACKed by the remote party) we can safely use PBUF_ROM
+       * instead of PBUF_REF here.
+       */
+      if (left > 0) {
+        if ((p = pbuf_alloc(PBUF_RAW, seglen, PBUF_ROM)) == NULL) {
+          /* If allocation fails, we have to deallocate the header pbuf as well. */
+          pbuf_free(seg->p);
+          seg->p = NULL;
+          LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
+                      ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));
+          goto memerr;
+        }
+        ++queuelen;
+        /* reference the non-volatile payload data */
+        p->payload = ptr;
+        seg->dataptr = ptr;
+
+        /* Concatenate the headers and data pbufs together. */
+        pbuf_cat(seg->p/*header*/, p/*data*/);
+        p = NULL;
+      }
     }
 
     /* Now that there are more segments queued, we check again if the
@@ -351,6 +352,13 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       TCP_STATS_INC(tcp.err);
       goto memerr;
     }
+    if (queue->p->len == 0) {
+      /* free the first (header-only) pbuf if it is now empty (contained only headers) */
+      struct pbuf *old_q = queue->p;
+      queue->p = queue->p->next;
+      pbuf_free(old_q);
+    }
+    LWIP_ASSERT("zero-length pbuf", (queue->p != NULL) && (queue->p->len > 0));
     pbuf_cat(useg->p, queue->p);
     useg->len += queue->len;
     useg->next = queue->next;
@@ -415,8 +423,13 @@ memerr:
 
 
 #if LWIP_TCP_TIMESTAMPS
-static inline void tcp_build_timestamp_option(struct tcp_pcb *pcb,
-                                              u32_t *opts)
+/* Build a timestamp option (12 bytes long) at the specified options pointer)
+ *
+ * @param pcb tcp_pcb
+ * @param opts option pointer where to store the timestamp option
+ */
+static void
+tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 {
   /* Pad with two NOP options to make everything nicely aligned */
   opts[0] = htonl(0x0101080A);
