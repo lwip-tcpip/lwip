@@ -84,6 +84,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-04-19 Simon Goldschmidt
+  * tcp_out.c: Fixed bug #26236: "TCP options (timestamp) don't work with
+    no-copy-tcpwrite": deallocate option data, only concat segments with same flags
+
+  2009-04-19 Simon Goldschmidt
   * tcp_out.c: Fixed bug #25094: "Zero-length pbuf" (options are now allocated
     in the header pbuf, not the data pbuf)
 

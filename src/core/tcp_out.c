@@ -344,9 +344,11 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     !(TCPH_FLAGS(useg->tcphdr) & (TCP_SYN | TCP_FIN)) &&
     !(flags & (TCP_SYN | TCP_FIN)) &&
     /* fit within max seg size */
-    useg->len + queue->len <= pcb->mss) {
+    (useg->len + queue->len <= pcb->mss) &&
+    /* only concatenate segments with the same options */
+    (useg->flags == queue->flags)) {
     /* Remove TCP header from first segment of our to-be-queued list */
-    if(pbuf_header(queue->p, -TCP_HLEN)) {
+    if(pbuf_header(queue->p, -(TCP_HLEN + optlen))) {
       /* Can we cope with this failing?  Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
       TCP_STATS_INC(tcp.err);
