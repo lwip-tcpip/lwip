@@ -453,13 +453,12 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     snmp_inc_tcppassiveopens();
 
     /* Send a SYN|ACK together with the MSS option. */
+    rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, TF_SEG_OPTS_MSS
 #if LWIP_TCP_TIMESTAMPS
-    if (npcb->flags & TF_TIMESTAMP)
-      rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, 
-                       TF_SEG_OPTS_MSS | TF_SEG_OPTS_TS);
-    else
+      /* and maybe include the TIMESTAMP option */
+     | (npcb->flags & TF_TIMESTAMP ? TF_SEG_OPTS_TS : 0)
 #endif
-      rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, TF_SEG_OPTS_MSS);
+      );
     if (rc != ERR_OK) {
       tcp_abandon(npcb, 0);
       return rc;
