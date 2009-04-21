@@ -193,6 +193,27 @@ struct dns_table_entry {
   void *arg;
 };
 
+#ifdef DNS_LOCAL_HOSTLIST
+/** struct used for local host-list */
+struct local_hostlist_entry {
+  /** static hostname */
+  const char *name;
+  /** static host address in network byteorder */
+  u32_t addr;
+  struct local_hostlist_entry *next;
+};
+
+#if !DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+static struct local_hostlist_entry local_hostlist_static[] = DNS_LOCAL_HOSTLIST_INIT;
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+
+/** Local host-list. For hostnames in this list, no
+ *  external name resolution is performed */
+static struct local_hostlist_entry *local_hostlist;
+
+static void dns_init_local();
+#endif /* DNS_LOCAL_HOSTLIST */
+
 
 /* forward declarations */
 static void dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
@@ -244,6 +265,9 @@ dns_init()
       dns_setserver(0, &dnsserver);
     }
   }
+#if DNS_LOCAL_HOSTLIST
+  dns_init_local();
+#endif
 }
 
 /**
@@ -291,6 +315,129 @@ dns_tmr(void)
   }
 }
 
+#if DNS_LOCAL_HOSTLIST
+static void
+dns_init_local()
+{
+#ifdef DNS_LOCAL_HOSTLIST_INIT
+  int i;
+  struct local_hostlist_entry *entry;
+#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+  /* Dynamic: copy entries from DNS_LOCAL_HOSTLIST_INIT to list */
+  struct local_hostlist_entry local_hostlist_init[] = DNS_LOCAL_HOSTLIST_INIT;
+  for (i = 0; i < sizeof(local_hostlist_init) / sizeof(struct local_hostlist_entry); i++) {
+    entry = mem_malloc(sizeof(struct local_hostlist_entry));
+    LWIP_ASSERT("mem-error in dns_init_local", entry != NULL);
+    if (entry != NULL) {
+      struct local_hostlist_entry *init_entry = &local_hostlist_init[i];
+      entry->name = init_entry->name;
+      entry->addr = init_entry->addr;
+      entry->next = local_hostlist;
+      local_hostlist = entry;
+    }
+  }
+#else /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+  /* Static: only adjust the 'next' pointers */
+  entry = NULL;
+  local_hostlist = local_hostlist_static;
+  for (i = sizeof(local_hostlist_static) / sizeof(struct local_hostlist_entry) - 1; i >= 0; i--) {
+    local_hostlist_static[i].next = entry;
+    entry = &local_hostlist_static[i];
+  }
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+#endif /* DNS_LOCAL_HOSTLIST_INIT */
+}
+
+static u32_t
+dns_lookup_static(const char *name)
+{
+  struct local_hostlist_entry *entry = local_hostlist;
+  while(entry != NULL) {
+    if(strcmp(entry->name, name) == 0) {
+      return htons(entry->addr);
+    }
+    entry = entry->next;
+  }
+  return INADDR_NONE;
+}
+
+#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+/** Remove all entries from the local host-list for a specific hostname
+ *
+ * @param hostname hostname for which entries shall be removed from the local
+ *                 host-list
+ * @return the number of removed entries
+ */
+int
+dns_local_removehostname(const char *hostname)
+{
+  int removed = 0;
+  struct local_hostlist_entry *entry = local_hostlist;
+  struct local_hostlist_entry *last_entry = NULL;
+  while (entry != NULL) {
+    if (!strcmp(entry->name, hostname)) {
+      if (last_entry != NULL) {
+        last_entry->next = entry->next;
+      } else {
+        local_hostlist = entry->next;
+      }
+      mem_free(entry);
+      removed++;
+    }
+    last_entry = entry;
+    entry = entry->next;
+  }
+  return removed;
+}
+
+/** Remove all entries from the local host-list for a specific address
+ *
+ * @param addr address for which entries shall be removed from the local
+ *                 host-list
+ * @return the number of removed entries
+ */
+int
+dns_local_removehostaddr(const struct ip_addr *addr)
+{
+  int removed = 0;
+  struct local_hostlist_entry *entry = local_hostlist;
+  struct local_hostlist_entry *last_entry = NULL;
+  while (entry != NULL) {
+    if (entry->addr == addr->addr) {
+      struct local_hostlist_entry *removed_entry = entry;
+      if (last_entry != NULL) {
+        last_entry->next = entry->next;
+      } else {
+        local_hostlist = entry->next;
+      }
+      entry = entry->next;
+      mem_free(removed_entry);
+      removed++;
+    } else {
+      last_entry = entry;
+      entry = entry->next;
+    }
+  }
+  return removed;
+}
+
+err_t
+dns_local_addhost(const char *hostname, const struct ip_addr *addr)
+{
+  struct local_hostlist_entry *entry;
+  entry = mem_malloc(sizeof(struct local_hostlist_entry));
+  if (entry == NULL) {
+    return ERR_MEM;
+  }
+  entry->name = hostname;
+  entry->addr = addr->addr;
+  entry->next = local_hostlist;
+  local_hostlist = entry;
+  return ERR_OK;
+}
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC*/
+#endif /* DNS_LOCAL_HOSTLIST */
+
 /**
  * Look up a hostname in the array of known hostnames.
  *
@@ -301,13 +448,20 @@ dns_tmr(void)
  *
  * @param name the hostname to look up
  * @return the hostname's IP address, as u32_t (instead of struct ip_addr to
- *         better check for failure: != 0) or 0 if the hostname was not found
- *         in the cached dns_table.
+ *         better check for failure: != INADDR_NONE) or INADDR_NONE if the hostname
+ *         was not found in the cached dns_table.
  */
 static u32_t
 dns_lookup(const char *name)
 {
   u8_t i;
+  u32_t addr;
+
+#if DNS_LOCAL_HOSTLIST
+  if ((addr = dns_lookup_static(name)) != INADDR_NONE) {
+    return addr;
+  }
+#endif /* DNS_LOCAL_HOSTLIST */
 
   /* Walk through name list, return entry if found. If not, return NULL. */
   for (i = 0; i < DNS_TABLE_SIZE; ++i) {
@@ -806,7 +960,7 @@ dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback
   /* host name already in octet notation? set ip addr and return ERR_OK
    * already have this address cached? */
   if (((addr->addr = inet_addr(hostname)) != INADDR_NONE) ||
-      ((addr->addr = dns_lookup(hostname)) != 0)) {
+      ((addr->addr = dns_lookup(hostname)) != INADDR_NONE)) {
     return ERR_OK;
   }
 

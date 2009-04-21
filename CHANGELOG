@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2009-04-21 Simon Goldschmidt
+  * dns.c, init.c, dns.h, opt.h: task #7507, patch #6786: DNS supports static
+    hosts table. New configuration options DNS_LOCAL_HOSTLIST and
+    DNS_LOCAL_HOSTLIST_IS_DYNAMIC.
+
   2009-04-15 Simon Goldschmidt
   * dhcp.c: patch #6763: Global DHCP XID can be redefined to something more unique
 

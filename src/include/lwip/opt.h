@@ -148,7 +148,7 @@
 /**
  * MEM_USE_POOLS==1: Use an alternative to malloc() by allocating from a set
  * of memory pools of various sizes. When mem_malloc is called, an element of
- * the smallest pool that can provide the lenght needed is returned.
+ * the smallest pool that can provide the length needed is returned.
  */
 #ifndef MEM_USE_POOLS
 #define MEM_USE_POOLS                   0
@@ -634,6 +634,22 @@
 #ifndef DNS_MSG_SIZE
 #define DNS_MSG_SIZE                    512
 #endif
+
+/** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
+ *  you have to define
+ *    #define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
+ *  (an array of structs name/address, where address is an u32_t in network
+ *  byte order).
+ */
+#ifndef DNS_LOCAL_HOSTLIST
+#define DNS_LOCAL_HOSTLIST              0
+#endif /* DNS_LOCAL_HOSTLIST */
+
+/** If this is turned on, the local host-list can be dynamically changed
+ *  at runtime. */
+#ifndef DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+#define DNS_LOCAL_HOSTLIST_IS_DYNAMIC   0
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 
 /*
    ---------------------------------
