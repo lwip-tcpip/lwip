@@ -128,8 +128,9 @@ incoming connections or be explicitly connected to another host.
   function specified as the fourth argument (the "connected" argument)
   when the connection is established. If the connection could not be
   properly established, either because the other host refused the
-  connection or because the other host didn't answer, the "connected"
-  function will be called with an the "err" argument set accordingly.
+  connection or because the other host didn't answer, the "err"
+  callback function of this pcb (registered with tcp_err, see below)
+  will be called.
 
   The tcp_connect() function can return ERR_MEM if no memory is
   available for enqueueing the SYN segment. If the SYN indeed was
