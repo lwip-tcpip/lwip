@@ -156,7 +156,7 @@
   #error "MEM_USE_POOLS requires custom pools (MEMP_USE_CUSTOM_POOLS) to be enabled in your lwipopts.h"
 #endif
 #if (PBUF_POOL_BUFSIZE <= MEM_ALIGNMENT)
-  #error "PBUF_POOL_BUFSIZE must be grater than MEM_ALIGNMENT or the offset may take the full first pbuf"
+  #error "PBUF_POOL_BUFSIZE must be greater than MEM_ALIGNMENT or the offset may take the full first pbuf"
 #endif
 #if (TCP_QUEUE_OOSEQ && !LWIP_TCP)
   #error "TCP_QUEUE_OOSEQ requires LWIP_TCP"
