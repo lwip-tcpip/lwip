@@ -161,7 +161,7 @@
 #if (TCP_QUEUE_OOSEQ && !LWIP_TCP)
   #error "TCP_QUEUE_OOSEQ requires LWIP_TCP"
 #endif
-#if (DNS_LOCAL_HOSTLIST && !(defined(DNS_LOCAL_HOSTLIST_INIT)))
+#if (DNS_LOCAL_HOSTLIST && !DNS_LOCAL_HOSTLIST_IS_DYNAMIC && !(defined(DNS_LOCAL_HOSTLIST_INIT)))
   #error "you have to define define DNS_LOCAL_HOSTLIST_INIT {{'host1', 0x123}, {'host2', 0x234}} to initialize DNS_LOCAL_HOSTLIST"
 #endif
 

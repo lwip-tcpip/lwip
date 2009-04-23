@@ -193,7 +193,7 @@ struct dns_table_entry {
   void *arg;
 };
 
-#ifdef DNS_LOCAL_HOSTLIST
+#if DNS_LOCAL_HOSTLIST
 /** struct used for local host-list */
 struct local_hostlist_entry {
   /** static hostname */
@@ -455,9 +455,9 @@ static u32_t
 dns_lookup(const char *name)
 {
   u8_t i;
+#if DNS_LOCAL_HOSTLIST
   u32_t addr;
 
-#if DNS_LOCAL_HOSTLIST
   if ((addr = dns_lookup_static(name)) != INADDR_NONE) {
     return addr;
   }
@@ -474,7 +474,7 @@ dns_lookup(const char *name)
     }
   }
 
-  return 0;
+  return INADDR_NONE;
 }
 
 #if DNS_DOES_NAME_CHECK
