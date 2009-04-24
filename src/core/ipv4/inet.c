@@ -134,7 +134,7 @@ inet_aton(const char *cp, struct in_addr *addr)
   /*
    * Check for trailing characters.
    */
-  if (c != '\0' && !isprint(c) && !isspace(c))
+  if (c != '\0' && !isspace(c))
     return (0);
   /*
    * Concoct the address according to

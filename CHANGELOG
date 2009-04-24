@@ -88,6 +88,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-24 Simon Goldschmidt, Frédéric Bernon
+  * inet.c: patch #6765: Fix a small problem with the last changes (incorrect
+    behavior, with with ip address string not ended by a '\0', a space or a
+    end of line)
+
   2009-04-19 Simon Goldschmidt
   * rawapi.txt: Fixed bug #26069: Corrected documentation: if tcp_connect fails,
     pcb->err is called, not pcb->connected (with an error code).
