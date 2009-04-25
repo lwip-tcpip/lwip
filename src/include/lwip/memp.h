@@ -89,6 +89,14 @@ extern const u16_t memp_sizes[MEMP_MAX];
 
 #else /* MEMP_MEM_MALLOC */
 
+#if MEM_USE_POOLS
+/** This structure is used to save the pool one element came from. */
+struct memp_malloc_helper
+{
+   memp_t poolnr;
+};
+#endif /* MEM_USE_POOLS */
+
 void  memp_init(void);
 
 #if MEMP_OVERFLOW_CHECK

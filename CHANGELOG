@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2009-04-25 Simon Goldschmidt
+  * mem.c, opt.h: Added option MEM_USE_POOLS_TRY_BIGGER_POOL to try the next
+    bigger malloc pool if one is empty (only usable with MEM_USE_POOLS).
+
   2009-04-21 Simon Goldschmidt
   * dns.c, init.c, dns.h, opt.h: task #7507, patch #6786: DNS supports static
     hosts table. New configuration options DNS_LOCAL_HOSTLIST and
@@ -87,6 +91,11 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2009-04-25 Simon Goldschmidt
+  * memp.c, mem.c, memp.h, mem_std.h: bug #26213 "Problem with memory allocation
+    when debugging": memp_sizes contained the wrong sizes (including sanity
+    regions); memp pools for MEM_USE_POOLS were too small
 
   2009-04-24 Simon Goldschmidt, Frédéric Bernon
   * inet.c: patch #6765: Fix a small problem with the last changes (incorrect

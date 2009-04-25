@@ -122,7 +122,7 @@ static struct memp *memp_tab[MEMP_MAX];
 static
 #endif
 const u16_t memp_sizes[MEMP_MAX] = {
-#define LWIP_MEMPOOL(name,num,size,desc)  MEMP_ALIGN_SIZE(size),
+#define LWIP_MEMPOOL(name,num,size,desc)  LWIP_MEM_ALIGN_SIZE(size),
 #include "lwip/memp_std.h"
 };
 
@@ -193,7 +193,7 @@ memp_overflow_check_element(struct memp *p, u16_t memp_size)
   }
 #endif
 #if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
-  m = (u8_t*)p + MEMP_SIZE + memp_size - MEMP_SANITY_REGION_AFTER_ALIGNED;
+  m = (u8_t*)p + MEMP_SIZE + memp_size;
   for (k = 0; k < MEMP_SANITY_REGION_AFTER_ALIGNED; k++) {
     if (m[k] != 0xcd) {
       LWIP_ASSERT("detected memp overflow!", 0);
@@ -218,7 +218,7 @@ memp_overflow_check_all(void)
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
       memp_overflow_check_element(p, memp_sizes[i]);
-      p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i]);
+      p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
     }
   }
 }
@@ -242,10 +242,10 @@ memp_overflow_init(void)
       memset(m, 0xcd, MEMP_SANITY_REGION_BEFORE_ALIGNED);
 #endif
 #if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
-      m = (u8_t*)p + MEMP_SIZE + memp_sizes[i] - MEMP_SANITY_REGION_AFTER_ALIGNED;
+      m = (u8_t*)p + MEMP_SIZE + memp_sizes[i];
       memset(m, 0xcd, MEMP_SANITY_REGION_AFTER_ALIGNED);
 #endif
-      p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i]);
+      p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
     }
   }
 }
@@ -277,7 +277,11 @@ memp_init(void)
     for (j = 0; j < memp_num[i]; ++j) {
       memp->next = memp_tab[i];
       memp_tab[i] = memp;
-      memp = (struct memp *)((u8_t *)memp + MEMP_SIZE + memp_sizes[i]);
+      memp = (struct memp *)((u8_t *)memp + MEMP_SIZE + memp_sizes[i]
+#if MEMP_OVERFLOW_CHECK
+        + MEMP_SANITY_REGION_AFTER_ALIGNED
+#endif
+      );
     }
   }
 #if MEMP_OVERFLOW_CHECK
@@ -317,8 +321,8 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
 
   memp = memp_tab[type];
   
-  if (memp != NULL) {    
-    memp_tab[type] = memp->next;    
+  if (memp != NULL) {
+    memp_tab[type] = memp->next;
 #if MEMP_OVERFLOW_CHECK
     memp->next = NULL;
     memp->file = file;

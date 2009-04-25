@@ -68,14 +68,6 @@
 /* lwIP head implemented with different sized pools */
 
 /**
- * This structure is used to save the pool one element came from.
- */
-struct mem_helper
-{
-   memp_t poolnr;
-};
-
-/**
  * Allocate memory: determine the smallest pool that is big enough
  * to contain an element of 'size' and get an element from that pool.
  *
@@ -85,13 +77,17 @@ struct mem_helper
 void *
 mem_malloc(mem_size_t size)
 {
-  struct mem_helper *element;
+  struct memp_malloc_helper *element;
   memp_t poolnr;
+  mem_size_t required_size = size + sizeof(struct memp_malloc_helper);
 
   for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr++) {
+#if MEM_USE_POOLS_TRY_BIGGER_POOL
+again:
+#endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
     /* is this pool big enough to hold an element of the required size
-       plus a struct mem_helper that saves the pool this element came from? */
-    if ((size + sizeof(struct mem_helper)) <= memp_sizes[poolnr]) {
+       plus a struct memp_malloc_helper that saves the pool this element came from? */
+    if (required_size <= memp_sizes[poolnr]) {
       break;
     }
   }
@@ -99,17 +95,23 @@ mem_malloc(mem_size_t size)
     LWIP_ASSERT("mem_malloc(): no pool is that big!", 0);
     return NULL;
   }
-  element = (struct mem_helper*)memp_malloc(poolnr);
+  element = (struct memp_malloc_helper*)memp_malloc(poolnr);
   if (element == NULL) {
     /* No need to DEBUGF or ASSERT: This error is already
        taken care of in memp.c */
-    /** @todo: we could try a bigger pool if this one is empty! */
+#if MEM_USE_POOLS_TRY_BIGGER_POOL
+    /** Try a bigger pool if this one is empty! */
+    if (poolnr < MEMP_POOL_LAST) {
+      poolnr++;
+      goto again;
+    }
+#endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
     return NULL;
   }
 
   /* save the pool number this element came from */
   element->poolnr = poolnr;
-  /* and return a pointer to the memory directly after the struct mem_helper */
+  /* and return a pointer to the memory directly after the struct memp_malloc_helper */
   element++;
 
   return element;
@@ -125,12 +127,12 @@ mem_malloc(mem_size_t size)
 void
 mem_free(void *rmem)
 {
-  struct mem_helper *hmem = (struct mem_helper*)rmem;
+  struct memp_malloc_helper *hmem = (struct memp_malloc_helper*)rmem;
 
   LWIP_ASSERT("rmem != NULL", (rmem != NULL));
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
-  /* get the original struct mem_helper */
+  /* get the original struct memp_malloc_helper */
   hmem--;
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));

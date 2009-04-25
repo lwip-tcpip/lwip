@@ -149,9 +149,18 @@
  * MEM_USE_POOLS==1: Use an alternative to malloc() by allocating from a set
  * of memory pools of various sizes. When mem_malloc is called, an element of
  * the smallest pool that can provide the length needed is returned.
+ * To use this, MEMP_USE_CUSTOM_POOLS also has to be enabled.
  */
 #ifndef MEM_USE_POOLS
 #define MEM_USE_POOLS                   0
+#endif
+
+/**
+ * MEM_USE_POOLS_TRY_BIGGER_POOL==1: if one malloc-pool is empty, try the next
+ * bigger pool - WARNING: THIS MIGHT WASTE MEMORY but it can make a system more
+ * reliable. */
+#ifndef MEM_USE_POOLS_TRY_BIGGER_POOL
+#define MEM_USE_POOLS_TRY_BIGGER_POOL   0
 #endif
 
 /**
