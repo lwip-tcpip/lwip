@@ -595,12 +595,17 @@ tcp_output(struct tcp_pcb *pcb)
       /* unacked list is not empty? */
       } else {
         /* In the case of fast retransmit, the packet should not go to the tail
-         * of the unacked queue, but rather at the head. We need to check for
+         * of the unacked queue, but rather somewhere before it. We need to check for
          * this case. -STJ Jul 27, 2004 */
         if (TCP_SEQ_LT(ntohl(seg->tcphdr->seqno), ntohl(useg->tcphdr->seqno))){
-          /* add segment to head of unacked list */
-          seg->next = pcb->unacked;
-          pcb->unacked = seg;
+          /* add segment to before tail of unacked list, keeping the list sorted */
+          struct tcp_seg **cur_seg = &(pcb->unacked);
+          while (*cur_seg &&
+            TCP_SEQ_LT(ntohl((*cur_seg)->tcphdr->seqno), ntohl(seg->tcphdr->seqno))) {
+              cur_seg = &((*cur_seg)->next );
+          }
+          seg->next = (*cur_seg);
+          (*cur_seg) = seg;
         } else {
           /* add segment to tail of unacked list */
           useg->next = seg;
@@ -820,16 +825,24 @@ void
 tcp_rexmit(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg;
+  struct tcp_seg **cur_seg;
 
   if (pcb->unacked == NULL) {
     return;
   }
 
   /* Move the first unacked segment to the unsent queue */
-  seg = pcb->unacked->next;
-  pcb->unacked->next = pcb->unsent;
-  pcb->unsent = pcb->unacked;
-  pcb->unacked = seg;
+  /* Keep the unsent queue sorted. */
+  seg = pcb->unacked;
+  pcb->unacked = seg->next;
+
+  cur_seg = &(pcb->unsent);
+  while (*cur_seg &&
+    TCP_SEQ_LT(ntohl((*cur_seg)->tcphdr->seqno), ntohl(seg->tcphdr->seqno))) {
+      cur_seg = &((*cur_seg)->next );
+  }
+  seg->next = *cur_seg;
+  *cur_seg = seg;
 
   pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
 

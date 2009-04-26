@@ -92,6 +92,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-25 Simon Goldschmidt, Oleg Tyshev
+  * tcp_out.c: bug #24212: Deadlocked tcp_retransmit due to exceeded pcb->cwnd
+    Fixed by sorting the unsent and unacked queues (segments are inserted at the
+    right place in tcp_output and tcp_rexmit).
+
   2009-04-25 Simon Goldschmidt
   * memp.c, mem.c, memp.h, mem_std.h: bug #26213 "Problem with memory allocation
     when debugging": memp_sizes contained the wrong sizes (including sanity
