@@ -358,6 +358,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       /* free the first (header-only) pbuf if it is now empty (contained only headers) */
       struct pbuf *old_q = queue->p;
       queue->p = queue->p->next;
+      old_q->next = NULL;
+      queuelen--;
       pbuf_free(old_q);
     }
     LWIP_ASSERT("zero-length pbuf", (queue->p != NULL) && (queue->p->len > 0));
@@ -476,8 +478,8 @@ tcp_output(struct tcp_pcb *pcb)
   useg = pcb->unacked;
   if (useg != NULL) {
     for (; useg->next != NULL; useg = useg->next);
-  }                                                                             
-   
+  }
+
   /* If the TF_ACK_NOW flag is set and no data will be sent (either
    * because the ->unsent queue is empty or because the window does
    * not allow it), construct an empty ACK segment and send it.
