@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2009-04-27 Simon Goldschmidt
+  * sys.h: Made SYS_LIGHTWEIGHT_PROT and sys_now() work with NO_SYS=1
+
   2009-04-25 Simon Goldschmidt
   * mem.c, opt.h: Added option MEM_USE_POOLS_TRY_BIGGER_POOL to try the next
     bigger malloc pool if one is empty (only usable with MEM_USE_POOLS).
