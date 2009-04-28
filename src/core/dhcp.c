@@ -817,8 +817,7 @@ dhcp_discover(struct netif *netif)
   }
   dhcp->tries++;
 #if LWIP_DHCP_AUTOIP_COOP
-  /* that means we waited 57 seconds */
-  if(dhcp->tries >= 9 && dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_OFF) {
+  if(dhcp->tries >= LWIP_DHCP_AUTOIP_COOP_TRIES && dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_OFF) {
     dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_ON;
     autoip_start(netif);
   }
@@ -898,6 +897,13 @@ dhcp_bind(struct netif *netif)
     /* use first host address on network as gateway */
     gw_addr.addr |= htonl(0x00000001);
   }
+
+#if LWIP_DHCP_AUTOIP_COOP
+  if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+    autoip_stop(netif);
+    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+  }
+#endif /* LWIP_DHCP_AUTOIP_COOP */
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_bind(): IP: 0x%08"X32_F"\n", dhcp->offered_ip_addr.addr));
   netif_set_ipaddr(netif, &dhcp->offered_ip_addr);
@@ -1405,7 +1411,10 @@ dhcp_create_request(struct netif *netif)
   dhcp->msg_out->xid = htonl(dhcp->xid);
   dhcp->msg_out->secs = 0;
   dhcp->msg_out->flags = 0;
-  dhcp->msg_out->ciaddr.addr = netif->ip_addr.addr;
+  dhcp->msg_out->ciaddr.addr = 0;
+  if (dhcp->state==DHCP_BOUND || dhcp->state==DHCP_RENEWING || dhcp->state==DHCP_REBINDING) {
+    dhcp->msg_out->ciaddr.addr = netif->ip_addr.addr;
+  }
   dhcp->msg_out->yiaddr.addr = 0;
   dhcp->msg_out->siaddr.addr = 0;
   dhcp->msg_out->giaddr.addr = 0;

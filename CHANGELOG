@@ -95,6 +95,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-28 Simon Goldschmidt, Jakob Stoklund Olesen
+  * dhcp.c: patch #6721: Some small fixes to DHCP and DHCP/AUTOIP cooperation
+
   2009-04-25 Simon Goldschmidt, Oleg Tyshev
   * tcp_out.c: bug #24212: Deadlocked tcp_retransmit due to exceeded pcb->cwnd
     Fixed by sorting the unsent and unacked queues (segments are inserted at the
