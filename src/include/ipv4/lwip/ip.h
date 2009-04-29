@@ -107,7 +107,7 @@ struct ip_pcb {
 #define SOF_REUSEADDR   (u16_t)0x0004U    /* allow local address reuse */
 #define SOF_KEEPALIVE   (u16_t)0x0008U    /* keep connections alive */
 #define SOF_DONTROUTE   (u16_t)0x0010U    /* just use interface addresses */
-#define SOF_BROADCAST   (u16_t)0x0020U    /* permit sending of broadcast msgs */
+#define SOF_BROADCAST   (u16_t)0x0020U    /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
 #define SOF_USELOOPBACK (u16_t)0x0040U    /* bypass hardware when possible */
 #define SOF_LINGER      (u16_t)0x0080U    /* linger on close if data present */
 #define SOF_OOBINLINE   (u16_t)0x0100U    /* leave received OOB data in line */

@@ -450,6 +450,23 @@
 #define IP_DEFAULT_TTL                  255
 #endif
 
+/**
+ * IP_SOF_BROADCAST=1: Use the SOF_BROADCAST field to enable broadcast
+ * filter per pcb on udp and raw send operations. To enable broadcast filter
+ * on recv operations, you also have to set IP_SOF_BROADCAST_RECV=1.
+ */
+#ifndef IP_SOF_BROADCAST
+#define IP_SOF_BROADCAST                0
+#endif
+
+/**
+ * IP_SOF_BROADCAST_RECV (requires IP_SOF_BROADCAST=1) enable the broadcast
+ * filter on recv operations.
+ */
+#ifndef IP_SOF_BROADCAST_RECV
+#define IP_SOF_BROADCAST_RECV           0
+#endif
+
 /*
    ----------------------------------
    ---------- ICMP options ----------

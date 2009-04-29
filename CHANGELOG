@@ -95,6 +95,14 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-04-29 Frédéric Bernon
+  * raw.c, udp.c, init.c, opt.h, ip.h, sockets.h: bug #26309: Implement the
+    SO(F)_BROADCAST filter for all API layers. Avoid the unindented reception
+    of broadcast packets even when this option wasn't set. Port maintainers
+    which want to enable this filter have to set IP_SOF_BROADCAST=1 in opt.h.
+    If you want this option also filter broadcast on recv operations, you also
+    have to set IP_SOF_BROADCAST_RECV=1 in opt.h.
+
   2009-04-28 Simon Goldschmidt, Jakob Stoklund Olesen
   * dhcp.c: patch #6721: Some small fixes to DHCP and DHCP/AUTOIP cooperation
 

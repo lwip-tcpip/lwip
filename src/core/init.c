@@ -61,6 +61,9 @@
 #ifndef BYTE_ORDER
   #error "BYTE_ORDER is not defined, you have to define it in your cc.h"
 #endif
+#if (!IP_SOF_BROADCAST && IP_SOF_BROADCAST_RECV)
+  #error "If you want to use broadcast filter per pcb on recv operations, you have to define IP_SOF_BROADCAST=1 in your lwipopts.h"
+#endif
 #if (!LWIP_ARP && ARP_QUEUEING)
   #error "If you want to use ARP Queueing, you have to define LWIP_ARP=1 in your lwipopts.h"
 #endif

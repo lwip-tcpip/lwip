@@ -77,7 +77,7 @@ struct sockaddr {
 #define  SO_REUSEADDR   0x0004 /* Unimplemented: allow local address reuse */
 #define  SO_KEEPALIVE   0x0008 /* keep connections alive */
 #define  SO_DONTROUTE   0x0010 /* Unimplemented: just use interface addresses */
-#define  SO_BROADCAST   0x0020 /* Unimplemented: permit sending of broadcast msgs */
+#define  SO_BROADCAST   0x0020 /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
 #define  SO_USELOOPBACK 0x0040 /* Unimplemented: bypass hardware when possible */
 #define  SO_LINGER      0x0080 /* linger on close if data present */
 #define  SO_OOBINLINE   0x0100 /* Unimplemented: leave received OOB data in line */
