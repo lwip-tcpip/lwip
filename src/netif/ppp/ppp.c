@@ -1339,10 +1339,6 @@ sifup(int pd)
     netif_remove(&pc->netif);
     if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input)) {
       netif_set_up(&pc->netif);
-#if LWIP_DHCP
-      /* ugly workaround for storing a reference to the ppp related info*/
-      pc->netif.dhcp = (struct dhcp *) &pc->addrs;
-#endif /* LWIP_DHCP */
       pc->if_up = 1;
       pc->errCode = PPPERR_NONE;
 

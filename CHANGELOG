@@ -95,6 +95,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-01 Simon Goldschmidt
+  * ppp.c: bug #24228: Memory corruption with PPP and DHCP
+
   2009-04-29 Frédéric Bernon
   * raw.c, udp.c, init.c, opt.h, ip.h, sockets.h: bug #26309: Implement the
     SO(F)_BROADCAST filter for all API layers. Avoid the unindented reception
