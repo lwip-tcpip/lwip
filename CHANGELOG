@@ -96,6 +96,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-05-01 Simon Goldschmidt
+  * pap.c: bug #21680: PPP upap_rauthnak() drops legal NAK packets
+
+  2009-05-01 Simon Goldschmidt
   * ppp.c: bug #24228: Memory corruption with PPP and DHCP
 
   2009-04-29 Frédéric Bernon
