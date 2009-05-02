@@ -110,7 +110,8 @@ HISTORY
     have to set IP_SOF_BROADCAST_RECV=1 in opt.h.
 
   2009-04-28 Simon Goldschmidt, Jakob Stoklund Olesen
-  * dhcp.c: patch #6721: Some small fixes to DHCP and DHCP/AUTOIP cooperation
+  * dhcp.c: patch #6721, bugs #25575, #25576: Some small fixes to DHCP and
+    DHCP/AUTOIP cooperation
 
   2009-04-25 Simon Goldschmidt, Oleg Tyshev
   * tcp_out.c: bug #24212: Deadlocked tcp_retransmit due to exceeded pcb->cwnd

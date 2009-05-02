@@ -1118,6 +1118,13 @@ dhcp_stop(struct netif *netif)
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_stop()\n"));
   /* netif is DHCP configured? */
   if (dhcp != NULL) {
+#if LWIP_DHCP_AUTOIP_COOP
+  if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+    autoip_stop(netif);
+    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+  }
+#endif /* LWIP_DHCP_AUTOIP_COOP */
+
     if (dhcp->pcb != NULL) {
       udp_remove(dhcp->pcb);
       dhcp->pcb = NULL;
