@@ -589,9 +589,10 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   {
     struct mib_external_node *en;
 
-    /** set_value_a() @todo: use reply value?? */
+    /** set_value_a() */
     en = msg_ps->ext_mib_node;
-    en->set_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
+    en->set_value_a(request_id, &msg_ps->ext_object_def,
+      msg_ps->vb_ptr->value_len, msg_ps->vb_ptr->value);
 
     /** @todo use set_value_pc() if toobig */
     msg_ps->state = SNMP_MSG_INTERNAL_SET_VALUE;

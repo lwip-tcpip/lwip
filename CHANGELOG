@@ -95,6 +95,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-02 Simon Goldschmidt
+  * msg_in.c: fixed bug #25636: SNMPSET value is ignored for integer fields
+
   2009-05-01 Simon Goldschmidt
   * pap.c: bug #21680: PPP upap_rauthnak() drops legal NAK packets
 
