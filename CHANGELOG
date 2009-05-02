@@ -96,6 +96,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-05-02 Simon Goldschmidt
+  * tcpip.h, tcpip.c: fixed tcpip_untimeout (does not need the time, broken after
+    1.3.0 in CVS only) - fixes compilation of ppp_oe.c
+
+  2009-05-02 Simon Goldschmidt
   * msg_in.c: fixed bug #25636: SNMPSET value is ignored for integer fields
 
   2009-05-01 Simon Goldschmidt

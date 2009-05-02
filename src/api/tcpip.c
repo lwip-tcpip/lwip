@@ -418,7 +418,7 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
  * @return ERR_MEM on memory error, ERR_OK otherwise
  */
 err_t
-tcpip_untimeout(u32_t msecs, sys_timeout_handler h, void *arg)
+tcpip_untimeout(sys_timeout_handler h, void *arg)
 {
   struct tcpip_msg *msg;
 
@@ -429,7 +429,6 @@ tcpip_untimeout(u32_t msecs, sys_timeout_handler h, void *arg)
     }
 
     msg->type = TCPIP_MSG_UNTIMEOUT;
-    msg->msg.tmo.msecs = msecs;
     msg->msg.tmo.h = h;
     msg->msg.tmo.arg = arg;
     sys_mbox_post(mbox, msg);
