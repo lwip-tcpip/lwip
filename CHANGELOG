@@ -95,6 +95,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-03 Simon Goldschmidt
+  * tcp.h: bug #26349: Nagle algorithm doesn't send although segment is full
+    (and unsent->next == NULL)
+
   2009-05-02 Simon Goldschmidt
   * tcpip.h, tcpip.c: fixed tcpip_untimeout (does not need the time, broken after
     1.3.0 in CVS only) - fixes compilation of ppp_oe.c

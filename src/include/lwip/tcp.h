@@ -128,15 +128,18 @@ void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
 
 /**
- * This is the Nagle algorithm: inhibit the sending of new TCP
- * segments when new outgoing data arrives from the user if any
- * previously transmitted data on the connection remains
- * unacknowledged.
+ * This is the Nagle algorithm: try to combine user data to send as few TCP
+ * segments as possible. Only send if
+ * - no previously transmitted data on the connection remains unacknowledged or
+ * - the TF_NODELAY flag is set (nagle algorithm turned off for this pcb) or
+ * - the only unsent segment is at least pcb->mss bytes long (or there is more
+ *   than one unsent segment - with lwIP, this can happen although unsent->len < mss)
  */
 #define tcp_do_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
                             ((tpcb)->flags & TF_NODELAY) || \
-                            (((tpcb)->unsent != NULL) && ((tpcb)->unsent->next != NULL))) ? \
-                                1 : 0)
+                            (((tpcb)->unsent != NULL) && (((tpcb)->unsent->next != NULL) || \
+                              ((tpcb)->unsent->len >= (tpcb)->mss))) \
+                            ) ? 1 : 0)
 #define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
 
 
