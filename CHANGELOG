@@ -96,7 +96,7 @@ HISTORY
   ++ Bugfixes:
 
   2009-05-04 Frédéric Bernon
-  * dhcp.c, netbios.c: Changes if IF_SOF_BROADCAST is enabled.
+  * dhcp.c, netbios.c: Changes if IP_SOF_BROADCAST is enabled.
 
   2009-05-03 Simon Goldschmidt
   * tcp.h: bug #26349: Nagle algorithm doesn't send although segment is full
