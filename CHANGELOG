@@ -95,6 +95,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-04 Simon Goldschmidt
+  * init.c: snmp was not initialized in lwip_init()
+
   2009-05-04 Frédéric Bernon
   * dhcp.c, netbios.c: Changes if IP_SOF_BROADCAST is enabled.
 

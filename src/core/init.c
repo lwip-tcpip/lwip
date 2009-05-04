@@ -50,6 +50,7 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcp.h"
+#include "lwip/snmp_msg.h"
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
@@ -253,6 +254,9 @@ lwip_init(void)
 #if LWIP_TCP
   tcp_init();
 #endif /* LWIP_TCP */
+#if LWIP_SNMP
+  snmp_init();
+#endif /* LWIP_SNMP */
 #if LWIP_AUTOIP
   autoip_init();
 #endif /* LWIP_AUTOIP */
