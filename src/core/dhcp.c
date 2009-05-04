@@ -619,6 +619,9 @@ dhcp_start(struct netif *netif)
     netif->dhcp = dhcp = NULL;
     return ERR_MEM;
   }
+#if IP_SOF_BROADCAST
+  dhcp->pcb->so_options|=SOF_BROADCAST;
+#endif /* IP_SOF_BROADCAST */
   /* set up local and remote port for the pcb */
   udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
   udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
@@ -681,6 +684,9 @@ dhcp_inform(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
+#if IP_SOF_BROADCAST
+    dhcp->pcb->so_options|=SOF_BROADCAST;
+#endif /* IP_SOF_BROADCAST */
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
