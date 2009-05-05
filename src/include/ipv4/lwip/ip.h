@@ -55,6 +55,8 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
        u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT */
+struct netif *ip_current_netif();
+const struct ip_hdr *ip_current_header();
 
 #define IP_HLEN 20
 
