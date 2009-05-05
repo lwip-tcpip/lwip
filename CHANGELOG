@@ -95,6 +95,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-05 Simon Goldschmidt
+  * sockets.c: bug #26405: Prematurely released semaphore causes lwip_select()
+    to crash
+
   2009-05-04 Simon Goldschmidt
   * init.c: snmp was not initialized in lwip_init()
 
