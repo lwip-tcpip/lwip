@@ -64,7 +64,14 @@
 #endif
 
 /** Like the name says... */
+#if LWIP_PLATFORM_BYTESWAP && (BYTE_ORDER == LITTLE_ENDIAN)
+/* little endian and PLATFORM_BYTESWAP defined */
+#define SWAP_BYTES_IN_WORD(w) LWIP_PLATFORM_HTONS(x)
+#else
+/* can't use htons on big endian (or PLATFORM_BYTESWAP not defined)... */
 #define SWAP_BYTES_IN_WORD(w) ((w & 0xff) << 8) | ((w & 0xff00) >> 8)
+#endif
+
 /** Split an u32_t in two u16_ts and add them up */
 #define FOLD_U32T(u)          ((u >> 16) + (u & 0x0000ffffUL))
 

@@ -99,6 +99,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-05-06 Simon Goldschmidt
+  * inet_chksum.c: On little endian architectures, use LWIP_PLATFORM_HTONS (if
+    defined) for SWAP_BYTES_IN_WORD to speed up checksumming.
+
   2009-05-05 Simon Goldschmidt
   * sockets.c: bug #26405: Prematurely released semaphore causes lwip_select()
     to crash
