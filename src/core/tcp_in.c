@@ -169,8 +169,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
   ackno = tcphdr->ackno = ntohl(tcphdr->ackno);
   tcphdr->wnd = ntohs(tcphdr->wnd);
 
-  flags = TCPH_FLAGS(tcphdr) & TCP_FLAGS;
-  tcplen = p->tot_len + ((flags & TCP_FIN || flags & TCP_SYN)? 1: 0);
+  flags = TCPH_FLAGS(tcphdr);
+  tcplen = p->tot_len + ((flags & (TCP_FIN | TCP_SYN)) ? 1 : 0);
 
   /* Demultiplex an incoming segment. First, we check if it is destined
      for an active connection. */
