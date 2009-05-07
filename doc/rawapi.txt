@@ -35,6 +35,7 @@ communicate with this main thread through message passing.
       other threads or an ISR is very limited! Only functions
       from these API header files are thread-safe:
       - api.h
+      - netbuf.h
       - netdb.h
       - netifapi.h
       - sockets.h
