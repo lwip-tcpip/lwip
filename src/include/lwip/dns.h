@@ -88,8 +88,7 @@ err_t          dns_gethostbyname(const char *hostname, struct ip_addr *addr,
                                  dns_found_callback found, void *callback_arg);
 
 #if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
-int            dns_local_removehostname(const char *hostname);
-int            dns_local_removehostaddr(const struct ip_addr *addr);
+int            dns_local_removehost(const char *hostname, const struct ip_addr *addr);
 err_t          dns_local_addhost(const char *hostname, const struct ip_addr *addr);
 #endif /* DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 

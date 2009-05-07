@@ -677,6 +677,10 @@
  *    #define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
  *  (an array of structs name/address, where address is an u32_t in network
  *  byte order).
+ *
+ *  Instead, you can also use an external function:
+ *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern u32_t my_lookup_function(const char *name)
+ *  that returns the IP address or INADDR_NONE if not found.
  */
 #ifndef DNS_LOCAL_HOSTLIST
 #define DNS_LOCAL_HOSTLIST              0
