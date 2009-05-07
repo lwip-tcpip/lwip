@@ -35,14 +35,22 @@ communicate with this main thread through message passing.
       other threads or an ISR is very limited! Only functions
       from these API header files are thread-safe:
       - api.h
-      - sockets.h
+      - netdb.h
       - netifapi.h
+      - sockets.h
       - sys.h
+
+      Additionaly, memory (de-)allocation functions may be
+      called from multiple threads (not ISR!) with NO_SYS=0
+      since they are protected by SYS_LIGHTWEIGHT_PROT and/or
+      semaphores.
 
       Only since 1.3.0, if SYS_LIGHTWEIGHT_PROT is set to 1
       and LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT is set to 1,
       pbuf_free() may also be called from another thread or
-      an ISR!
+      an ISR (since only then, mem_free - for PBUF_RAM - may
+      be called from an ISR: otherwise, the HEAP is only
+      protected by semaphores).
       
 
 ** The remainder of this document discusses the "raw" API. **
