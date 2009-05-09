@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2009-05-09 Simon Goldschmidt
+  * icmp.h, icmp.c: Shrinked ICMP code, added option to NOT check icoming
+    ECHO pbuf for size (just use it): LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
+
   2009-05-05 Simon Goldschmidt, Jakob Stoklund Olesen
   * ip.h, ip.c: Added ip_current_netif() & ip_current_header() to receive
     extended info about the currently received packet.
