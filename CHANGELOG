@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2009-05-10 Simon Goldschmidt
+  * opt.h, sockets.c, pbuf.c, netbuf.h, pbuf.h: task #7013: Added option
+    LWIP_NETIF_TX_SINGLE_PBUF to try to create transmit packets from only
+    one pbuf to help MACs that don't support scatter-gather DMA.
+
   2009-05-09 Simon Goldschmidt
   * icmp.h, icmp.c: Shrinked ICMP code, added option to NOT check icoming
     ECHO pbuf for size (just use it): LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN

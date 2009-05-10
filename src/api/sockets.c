@@ -668,7 +668,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 {
   struct lwip_socket *sock;
   struct ip_addr remote_addr;
-  int err;
+  err_t err;
   u16_t short_size;
 #if !LWIP_TCPIP_CORE_LOCKING
   struct netbuf buf;
@@ -738,17 +738,25 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
               s, data, short_size, flags));
   ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", remote_port));
-    
+
   /* make the buffer point to the data that should be sent */
-  if ((err = netbuf_ref(&buf, data, short_size)) == ERR_OK) {
+#if LWIP_NETIF_TX_SINGLE_PBUF
+  /* Allocate a new netbuf and copy the data into it. */
+  if (netbuf_alloc(&buf, short_size) == NULL) {
+    err = ERR_MEM;
+  } else {
+    err = netbuf_take(&buf, data, short_size);
+  }
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
+  err = netbuf_ref(&buf, data, short_size);
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+  if (err == ERR_OK) {
     /* send the data */
     err = netconn_send(sock->conn, &buf);
   }
 
   /* deallocated the buffer */
-  if (buf.p != NULL) {
-    pbuf_free(buf.p);
-  }
+  netbuf_free(&buf);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
   sock_set_errno(sock, err_to_errno(err));
   return (err == ERR_OK ? short_size : -1);
