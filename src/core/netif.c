@@ -401,13 +401,9 @@ void netif_set_up(struct netif *netif)
     NETIF_STATUS_CALLBACK(netif);
 
 #if LWIP_ARP
-    /** For Ethernet network interfaces, we would like to send a
-     *  "gratuitous ARP"; this is an ARP packet sent by a node in order
-     *  to spontaneously cause other nodes to update an entry in their
-     *  ARP cache. From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
-     */ 
+    /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
     if (netif->flags & NETIF_FLAG_ETHARP) {
-      etharp_query(netif, &(netif->ip_addr), NULL);
+      etharp_gratuitous(netif);
     }
 #endif /* LWIP_ARP */
     
@@ -464,14 +460,10 @@ void netif_set_link_up(struct netif *netif )
   netif->flags |= NETIF_FLAG_LINK_UP;
 
 #if LWIP_ARP
-  /** For Ethernet network interfaces, we would like to send a
-   *  "gratuitous ARP"; this is an ARP packet sent by a node in order
-   *  to spontaneously cause other nodes to update an entry in their
-   *  ARP cache. From RFC 3220 "IP Mobility Support for IPv4" section 4.6.
-   */ 
-  if (netif->flags & NETIF_FLAG_ETHARP) {
-    etharp_query(netif, &(netif->ip_addr), NULL);
-  }
+    /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
+    if (netif->flags & NETIF_FLAG_ETHARP) {
+      etharp_gratuitous(netif);
+    }
 #endif /* LWIP_ARP */
 
 #if LWIP_IGMP

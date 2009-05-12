@@ -110,6 +110,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-05-12 Simon Goldschmidt
+  * etharp.h, etharp.c, netif.c: fixed bug #26507: "Gratuitous ARP depends on
+    arp_table / uses etharp_query" by adding etharp_gratuitous()
+
+  2009-05-12 Simon Goldschmidt
   * ip.h, ip.c, igmp.c: bug #26487: Added ip_output_if_opt that can add IP options
     to the IP header (used by igmp_ip_output_if)
 
