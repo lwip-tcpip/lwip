@@ -667,7 +667,8 @@ igmp_stop_timer(struct igmp_group *group)
 void
 igmp_delaying_member( struct igmp_group *group, u8_t maxresp)
 {
-  if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) || ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) && (maxresp > group->timer))) {
+  if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) ||
+    ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) && (maxresp > group->timer))) {
     igmp_start_timer(group, (maxresp)/2);
     group->group_state = IGMP_GROUP_DELAYING_MEMBER;
   }
@@ -696,64 +697,11 @@ err_t
 igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
                   u8_t ttl, u8_t proto, struct netif *netif)
 {
-  static u16_t    ip_id = 0;
-  struct ip_hdr * iphdr = NULL;
-  u16_t *         ra    = NULL;
-
-  /* First write in the "router alert" */
-  if (pbuf_header(p, ROUTER_ALERTLEN)) {
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_ip_output_if: not enough room for IP header in pbuf\n"));
-    return ERR_BUF;
-  }
-
   /* This is the "router alert" option */
-  ra    = p->payload;
+  u16_t ra[2];
   ra[0] = htons (ROUTER_ALERT);
   ra[1] = 0x0000; /* Router shall examine packet */
-
-  /* now the normal ip header */
-  if (pbuf_header(p, IP_HLEN)) {
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_ip_output_if: not enough room for IP header in pbuf\n"));
-    return ERR_BUF;
-  }
-
-  iphdr = p->payload;
-
-  /* Should the IP header be generated or is it already included in p? */
-  if (dest != IP_HDRINCL) {
-    /** @todo should be shared with ip.c - ip_output_if */
-    IPH_TTL_SET(iphdr, ttl);
-    IPH_PROTO_SET(iphdr, proto);
-
-    ip_addr_set(&(iphdr->dest), dest);
-
-    IPH_VHLTOS_SET(iphdr, 4, ((IP_HLEN + ROUTER_ALERTLEN) / 4), 0/*tos*/);
-    IPH_LEN_SET(iphdr, htons(p->tot_len));
-    IPH_OFFSET_SET(iphdr, 0);
-    IPH_ID_SET(iphdr, htons(ip_id));
-    ++ip_id;
-
-    if (ip_addr_isany(src)) {
-      ip_addr_set(&(iphdr->src), &(netif->ip_addr));
-    } else {
-      ip_addr_set(&(iphdr->src), src);
-    }
-
-    IPH_CHKSUM_SET(iphdr, 0);
-#if CHECKSUM_GEN_IP
-    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, (IP_HLEN + ROUTER_ALERTLEN)));
-#endif
-  } else {
-    dest = &(iphdr->dest);
-  }
-
-#if IP_DEBUG
-  ip_debug_print(p);
-#endif
-
-  LWIP_DEBUGF(IGMP_DEBUG, ("igmp_ip_output_if: sending to if %p\n", netif));
-
-  return netif->output(netif, p, dest);
+  return ip_output_if_opt(p, src, dest, ttl, 0, proto, netif, ra, ROUTER_ALERTLEN);
 }
 
 /**
@@ -797,10 +745,10 @@ igmp_send(struct igmp_group *group, u8_t type)
       igmp->igmp_checksum = 0;
       igmp->igmp_checksum = inet_chksum( igmp, IGMP_MINLEN);
 
-      igmp_ip_output_if( p, &src, dest, IGMP_TTL, IP_PROTO_IGMP, group->interface);
+      igmp_ip_output_if(p, &src, dest, IGMP_TTL, IP_PROTO_IGMP, group->interface);
     }
 
-    pbuf_free (p);
+    pbuf_free(p);
   } else {
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp_send: not enough memory for igmp_send\n"));
   }

@@ -43,6 +43,9 @@
 extern "C" {
 #endif
 
+/** Currently, the function ip_output_if_opt() is only used with IGMP */
+#define IP_OPTIONS_SEND   LWIP_IGMP
+
 #define ip_init() /* Compatibility define, not init needed. */
 struct netif *ip_route(struct ip_addr *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
@@ -55,6 +58,11 @@ err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
        u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT */
+#if IP_OPTIONS_SEND
+err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       u16_t optlen);
+#endif /* IP_OPTIONS_SEND */
 struct netif *ip_current_netif();
 const struct ip_hdr *ip_current_header();
 

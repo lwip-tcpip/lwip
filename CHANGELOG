@@ -47,7 +47,7 @@ HISTORY
 
   2009-04-15 Simon Goldschmidt
   * dhcp.c: patch #6763: Global DHCP XID can be redefined to something more unique
-²
+
   2009-03-31 Kieran Mansley
   * tcp.c, tcp_out.c, tcp_in.c, sys.h, tcp.h, opts.h: add support for
     TCP timestamp options, off by default.  Rework tcp_enqueue() to
@@ -108,6 +108,10 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2009-05-12 Simon Goldschmidt
+  * ip.h, ip.c, igmp.c: bug #26487: Added ip_output_if_opt that can add IP options
+    to the IP header (used by igmp_ip_output_if)
 
   2009-05-06 Simon Goldschmidt
   * inet_chksum.c: On little endian architectures, use LWIP_PLATFORM_HTONS (if

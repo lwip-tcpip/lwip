@@ -518,6 +518,21 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
              u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
+#if IP_OPTIONS_SEND
+  return ip_output_if_opt(p, src, dest, ttl, tos, proto, netif, NULL, 0);
+}
+
+/**
+ * Same as ip_output_if() but with the possibility to include IP options:
+ *
+ * @ param ip_options pointer to the IP options, copied into the IP header
+ * @ param optlen length of ip_options
+ */
+err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       u16_t optlen)
+{
+#endif /* IP_OPTIONS_SEND */
   struct ip_hdr *iphdr;
   static u16_t ip_id = 0;
 
@@ -525,6 +540,27 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
   /* Should the IP header be generated or is it already included in p? */
   if (dest != IP_HDRINCL) {
+    u16_t ip_hlen = IP_HLEN;
+#if IP_OPTIONS_SEND
+    u16_t optlen_aligned = 0;
+    if (optlen != 0) {
+      /* round up to a multiple of 4 */
+      optlen_aligned = ((optlen + 3) & ~3);
+      ip_hlen += optlen_aligned;
+      /* First write in the IP options */
+      if (pbuf_header(p, optlen_aligned)) {
+        LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output_if_opt: not enough room for IP options in pbuf\n"));
+        IP_STATS_INC(ip.err);
+        snmp_inc_ipoutdiscards();
+        return ERR_BUF;
+      }
+      MEMCPY(p->payload, ip_options, optlen);
+      if (optlen < optlen_aligned) {
+        /* zero the remaining bytes */
+        memset(((char*)p->payload) + optlen, 0, optlen_aligned - optlen);
+      }
+    }
+#endif /* IP_OPTIONS_SEND */
     /* generate IP header */
     if (pbuf_header(p, IP_HLEN)) {
       LWIP_DEBUGF(IP_DEBUG | 2, ("ip_output: not enough room for IP header in pbuf\n"));
@@ -543,7 +579,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     ip_addr_set(&(iphdr->dest), dest);
 
-    IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, tos);
+    IPH_VHLTOS_SET(iphdr, 4, ip_hlen / 4, tos);
     IPH_LEN_SET(iphdr, htons(p->tot_len));
     IPH_OFFSET_SET(iphdr, 0);
     IPH_ID_SET(iphdr, htons(ip_id));
@@ -557,7 +593,7 @@ ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
 
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
-    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, ip_hlen));
 #endif
   } else {
     /* IP header already included in p */
