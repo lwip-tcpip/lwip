@@ -38,6 +38,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
+#include "lwip/netif.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,26 +46,6 @@ extern "C" {
 
 /** Currently, the function ip_output_if_opt() is only used with IGMP */
 #define IP_OPTIONS_SEND   LWIP_IGMP
-
-#define ip_init() /* Compatibility define, not init needed. */
-struct netif *ip_route(struct ip_addr *dest);
-err_t ip_input(struct pbuf *p, struct netif *inp);
-err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-       u8_t ttl, u8_t tos, u8_t proto);
-err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-       u8_t ttl, u8_t tos, u8_t proto,
-       struct netif *netif);
-#if LWIP_NETIF_HWADDRHINT
-err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-       u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
-#endif /* LWIP_NETIF_HWADDRHINT */
-#if IP_OPTIONS_SEND
-err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
-       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
-       u16_t optlen);
-#endif /* IP_OPTIONS_SEND */
-struct netif *ip_current_netif();
-const struct ip_hdr *ip_current_header();
 
 #define IP_HLEN 20
 
@@ -172,6 +153,25 @@ PACK_STRUCT_END
 #define IPH_PROTO_SET(hdr, proto) (hdr)->_ttl_proto = (htons((proto) | (IPH_TTL(hdr) << 8)))
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
+#define ip_init() /* Compatibility define, not init needed. */
+struct netif *ip_route(struct ip_addr *dest);
+err_t ip_input(struct pbuf *p, struct netif *inp);
+err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto);
+err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto,
+       struct netif *netif);
+#if LWIP_NETIF_HWADDRHINT
+err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
+#endif /* LWIP_NETIF_HWADDRHINT */
+#if IP_OPTIONS_SEND
+err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       u16_t optlen);
+#endif /* IP_OPTIONS_SEND */
+struct netif *ip_current_netif();
+const struct ip_hdr *ip_current_header();
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #else
