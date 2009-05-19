@@ -170,8 +170,8 @@ err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */
-struct netif *ip_current_netif();
-const struct ip_hdr *ip_current_header();
+struct netif *ip_current_netif(void);
+const struct ip_hdr *ip_current_header(void);
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #else
