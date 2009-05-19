@@ -76,7 +76,7 @@ static const struct ip_hdr *current_header;
  * @param pcb Pointer to the pcb receiving a packet.
  */
 struct netif *
-ip_current_netif()
+ip_current_netif(void)
 {
   return current_netif;
 }
@@ -90,7 +90,7 @@ ip_current_netif()
  * @param pcb Pointer to the pcb receiving a packet.
  */
 const struct ip_hdr *
-ip_current_header()
+ip_current_header(void)
 {
   return current_header;
 }
