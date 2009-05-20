@@ -127,13 +127,13 @@
 PACK_STRUCT_BEGIN
 /** DNS message header */
 struct dns_hdr {
-  u16_t id;
-  u8_t flags1;
-  u8_t flags2;
-  u16_t numquestions;
-  u16_t numanswers;
-  u16_t numauthrr;
-  u16_t numextrarr;
+  PACK_STRUCT_FIELD(u16_t id);
+  PACK_STRUCT_FIELD(u8_t flags1);
+  PACK_STRUCT_FIELD(u8_t flags2);
+  PACK_STRUCT_FIELD(u16_t numquestions);
+  PACK_STRUCT_FIELD(u16_t numanswers);
+  PACK_STRUCT_FIELD(u16_t numauthrr);
+  PACK_STRUCT_FIELD(u16_t numextrarr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -149,8 +149,8 @@ PACK_STRUCT_BEGIN
 struct dns_query {
   /* DNS query record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
-  u16_t type;
-  u16_t class;
+  PACK_STRUCT_FIELD(u16_t type);
+  PACK_STRUCT_FIELD(u16_t class);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -166,10 +166,10 @@ PACK_STRUCT_BEGIN
 struct dns_answer {
   /* DNS answer record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
-  u16_t type;
-  u16_t class;
-  u32_t ttl;
-  u16_t len;
+  PACK_STRUCT_FIELD(u16_t type);
+  PACK_STRUCT_FIELD(u16_t class);
+  PACK_STRUCT_FIELD(u32_t ttl);
+  PACK_STRUCT_FIELD(u16_t len);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
