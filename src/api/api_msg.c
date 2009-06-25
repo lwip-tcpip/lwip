@@ -528,6 +528,13 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->socket       = -1;
   conn->callback     = callback;
   conn->recv_avail   = 0;
+#if LWIP_TCP
+  conn->write_msg    = NULL;
+  conn->write_offset = 0;
+# if LWIP_TCPIP_CORE_LOCKING
+  conn->write_delayed = 0;
+# endif /* LWIP_TCPIP_CORE_LOCKING */
+#endif /* LWIP_TCP */
 #if LWIP_SO_RCVTIMEO
   conn->recv_timeout = 0;
 #endif /* LWIP_SO_RCVTIMEO */
