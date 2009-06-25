@@ -338,12 +338,11 @@ struct tcp_pcb {
   u16_t ssthresh;
 
   /* sender variables */
-  u32_t snd_nxt,   /* next seqno to be sent */
-    snd_max;       /* Highest seqno sent. */
+  u32_t snd_nxt;   /* next new seqno to be sent */
   u16_t snd_wnd;   /* sender window */
-  u32_t snd_wl1, snd_wl2, /* Sequence and acknowledgement numbers of last
+  u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
                              window update. */
-    snd_lbb;       /* Sequence number of next byte to be buffered. */
+  u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
 
   u16_t acked;
   

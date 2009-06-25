@@ -1014,7 +1014,6 @@ tcp_alloc(u8_t prio)
     iss = tcp_next_iss();
     pcb->snd_wl2 = iss;
     pcb->snd_nxt = iss;
-    pcb->snd_max = iss;
     pcb->lastack = iss;
     pcb->snd_lbb = iss;   
     pcb->tmr = tcp_ticks;

@@ -60,12 +60,13 @@
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
 static struct tcp_hdr *
-tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, int optlen)
+tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, int optlen,
+                      u32_t seqno_be /* already in network byte order */)
 {
   struct tcp_hdr *tcphdr = p->payload;
   tcphdr->src = htons(pcb->local_port);
   tcphdr->dest = htons(pcb->remote_port);
-  tcphdr->seqno = htonl(pcb->snd_nxt);
+  tcphdr->seqno = seqno_be;
   tcphdr->ackno = htonl(pcb->rcv_nxt);
   TCPH_FLAGS_SET(tcphdr, TCP_ACK);
   tcphdr->wnd = htons(pcb->rcv_ann_wnd);
@@ -456,7 +457,7 @@ tcp_output(struct tcp_pcb *pcb)
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct tcp_seg *seg, *useg;
-  u32_t wnd;
+  u32_t wnd, snd_nxt;
 #if TCP_CWND_DEBUG
   s16_t i = 0;
 #endif /* TCP_CWND_DEBUG */
@@ -503,7 +504,7 @@ tcp_output(struct tcp_pcb *pcb)
     /* remove ACK flags from the PCB, as we send an empty ACK now */
     pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
 
-    tcphdr = tcp_output_set_header(pcb, p, optlen);
+    tcphdr = tcp_output_set_header(pcb, p, optlen, htonl(pcb->snd_nxt));
 
     /* NB. MSS option is only sent on SYNs, so ignore it here */
 #if LWIP_TCP_TIMESTAMPS
@@ -583,9 +584,9 @@ tcp_output(struct tcp_pcb *pcb)
     }
 
     tcp_output_segment(seg, pcb);
-    pcb->snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
-    if (TCP_SEQ_LT(pcb->snd_max, pcb->snd_nxt)) {
-      pcb->snd_max = pcb->snd_nxt;
+    snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
+    if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
+      pcb->snd_nxt = snd_nxt;
     }
     /* put segment on unacknowledged list if length > 0 */
     if (TCP_TCPLEN(seg) > 0) {
@@ -805,7 +806,6 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
   /* unacked queue is now empty */
   pcb->unacked = NULL;
 
-  pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
   /* increment number of retransmissions */
   ++pcb->nrtx;
 
@@ -845,8 +845,6 @@ tcp_rexmit(struct tcp_pcb *pcb)
   }
   seg->next = *cur_seg;
   *cur_seg = seg;
-
-  pcb->snd_nxt = ntohl(pcb->unsent->tcphdr->seqno);
 
   ++pcb->nrtx;
 
@@ -889,9 +887,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-  tcphdr = tcp_output_set_header(pcb, p, 0);
-
-  tcphdr->seqno = htonl(pcb->snd_nxt - 1);
+  tcphdr = tcp_output_set_header(pcb, p, 0, htonl(pcb->snd_nxt - 1));
 
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
@@ -957,9 +953,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-  tcphdr = tcp_output_set_header(pcb, p, 0);
-
-  tcphdr->seqno = seg->tcphdr->seqno;
+  tcphdr = tcp_output_set_header(pcb, p, 0, seg->tcphdr->seqno);
 
   /* Copy in one byte from the head of the unacked queue */
   *((char *)p->payload + sizeof(struct tcp_hdr)) = *(char *)seg->dataptr;
