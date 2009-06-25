@@ -108,6 +108,17 @@ HISTORY
 
 
   ++ Bugfixes:
+  2009-06-25 Kieran Mansley
+  * api_msg.c api.h: BUG26722: initialise netconn write variables 
+    in netconn_alloc
+
+  2009-06-25 Kieran Mansley
+  * tcp.h: BUG26879: set ret value in TCP_EVENT macros when function is not set
+
+  2009-06-25 Kieran Mansley
+  * tcp.c, tcp_in.c, tcp_out.c, tcp.h: BUG26301 and BUG26267: correct
+    simultaneous close behaviour, and make snd_nxt have the same meaning 
+    as in the RFCs.
 
   2009-05-12 Simon Goldschmidt
   * etharp.h, etharp.c, netif.c: fixed bug #26507: "Gratuitous ARP depends on
