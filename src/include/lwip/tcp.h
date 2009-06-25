@@ -474,12 +474,14 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
   do {                                                         \
     if((pcb)->accept != NULL)                                  \
       (ret) = (pcb)->accept((pcb)->callback_arg,(pcb),(err));  \
+    else (ret) = ERR_OK;                                       \
   } while (0)
 
 #define TCP_EVENT_SENT(pcb,space,ret)                          \
   do {                                                         \
     if((pcb)->sent != NULL)                                    \
       (ret) = (pcb)->sent((pcb)->callback_arg,(pcb),(space));  \
+    else (ret) = ERR_OK;                                       \
   } while (0)
 
 #define TCP_EVENT_RECV(pcb,p,err,ret)                           \
@@ -497,12 +499,14 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
   do {                                                           \
     if((pcb)->connected != NULL)                                 \
       (ret) = (pcb)->connected((pcb)->callback_arg,(pcb),(err)); \
+    else (ret) = ERR_OK;                                         \
   } while (0)
 
 #define TCP_EVENT_POLL(pcb,ret)                                \
   do {                                                         \
     if((pcb)->poll != NULL)                                    \
       (ret) = (pcb)->poll((pcb)->callback_arg,(pcb));          \
+    else (ret) = ERR_OK;                                       \
   } while (0)
 
 #define TCP_EVENT_ERR(errf,arg,err)                            \
