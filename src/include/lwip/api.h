@@ -137,7 +137,7 @@ struct netconn {
   /** maximum amount of bytes queued in recvmbox */
   int recv_bufsize;
 #endif /* LWIP_SO_RCVBUF */
-  u16_t recv_avail;
+  s16_t recv_avail;
 #if LWIP_TCP
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores the message. */

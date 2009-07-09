@@ -66,7 +66,7 @@ struct lwip_socket {
   u16_t lastoffset;
   /** number of times data was received, set by event_callback(),
       tested by the receive and select functions */
-  u16_t rcvevent;
+  s16_t rcvevent;
   /** number of times data was received, set by event_callback(),
       tested by select */
   u16_t sendevent;
@@ -260,7 +260,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (!sock)
     return -1;
 
-  if ((sock->flags & O_NONBLOCK) && !sock->rcvevent) {
+  if ((sock->flags & O_NONBLOCK) && (sock->rcvevent <= 0)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
     sock_set_errno(sock, EWOULDBLOCK);
     return -1;
@@ -494,7 +494,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       buf = sock->lastdata;
     } else {
       /* If this is non-blocking call, then check first */
-      if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && !sock->rcvevent) {
+      if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && 
+          (sock->rcvevent <= 0)) {
         if (off > 0) {
           /* already received data, return that */
           sock_set_errno(sock, 0);
@@ -545,7 +546,10 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     if (netconn_type(sock->conn) == NETCONN_TCP) {
       LWIP_ASSERT("invalid copylen, len would underflow", len >= copylen);
       len -= copylen;
-      if ( (len <= 0) || (buf->p->flags & PBUF_FLAG_PUSH) || !sock->rcvevent || ((flags & MSG_PEEK)!=0)) {
+      if ( (len <= 0) || 
+           (buf->p->flags & PBUF_FLAG_PUSH) || 
+           (sock->rcvevent <= 0) || 
+           ((flags & MSG_PEEK)!=0)) {
         done = 1;
       }
     } else {
@@ -852,7 +856,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
     if (FD_ISSET(i, readset)) {
       /* See if netconn of this socket is ready for read */
       p_sock = get_socket(i);
-      if (p_sock && (p_sock->lastdata || p_sock->rcvevent)) {
+      if (p_sock && (p_sock->lastdata || (p_sock->rcvevent > 0))) {
         FD_SET(i, &lreadset);
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
         nready++;
@@ -1100,7 +1104,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       if (scb->sem_signalled == 0) {
         /* Test this select call for our socket */
         if (scb->readset && FD_ISSET(s, scb->readset))
-          if (sock->rcvevent)
+          if (sock->rcvevent > 0)
             break;
         if (scb->writeset && FD_ISSET(s, scb->writeset))
           if (sock->sendevent)
@@ -1918,6 +1922,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_socket *sock = get_socket(s);
   u16_t buflen = 0;
+  s16_t recv_avail;
 
   if (!sock)
     return -1;
@@ -1929,7 +1934,10 @@ lwip_ioctl(int s, long cmd, void *argp)
       return -1;
     }
 
-    SYS_ARCH_GET(sock->conn->recv_avail, *((u16_t*)argp));
+    SYS_ARCH_GET(sock->conn->recv_avail, recv_avail);
+    if (recv_avail < 0)
+      recv_avail = 0;
+    *((u16_t*)argp) = (u16_t)recv_avail;
 
     /* Check if there is data left from the last recv operation. /maq 041215 */
     if (sock->lastdata) {

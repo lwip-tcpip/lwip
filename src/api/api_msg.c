@@ -108,11 +108,13 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
       buf->addr = &(((struct ip_hdr*)(q->payload))->src);
       buf->port = pcb->protocol;
 
-      SYS_ARCH_INC(conn->recv_avail, q->tot_len);
-      /* Register event with callback */
-      API_EVENT(conn, NETCONN_EVT_RCVPLUS, q->tot_len);
       if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
         netbuf_delete(buf);
+        return 0;
+      } else {
+        SYS_ARCH_INC(conn->recv_avail, q->tot_len);
+        /* Register event with callback */
+        API_EVENT(conn, NETCONN_EVT_RCVPLUS, q->tot_len);
       }
     }
   }
@@ -166,12 +168,13 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     buf->port = port;
   }
 
-  SYS_ARCH_INC(conn->recv_avail, p->tot_len);
-  /* Register event with callback */
-  API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
   if (sys_mbox_trypost(conn->recvmbox, buf) != ERR_OK) {
     netbuf_delete(buf);
     return;
+  } else {
+    SYS_ARCH_INC(conn->recv_avail, p->tot_len);
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, p->tot_len);
   }
 }
 #endif /* LWIP_UDP */
@@ -206,10 +209,12 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   } else {
     len = 0;
   }
-  /* Register event with callback */
-  API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
+
   if (sys_mbox_trypost(conn->recvmbox, p) != ERR_OK) {
     return ERR_MEM;
+  } else {
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
   }
 
   return ERR_OK;
@@ -365,8 +370,6 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   newconn->pcb.tcp = newpcb;
   setup_tcp(newconn);
   newconn->err = err;
-  /* Register event with callback */
-  API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
 
   if (sys_mbox_trypost(conn->acceptmbox, newconn) != ERR_OK) {
     /* When returning != ERR_OK, the connection is aborted in tcp_process(),
@@ -374,7 +377,11 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     newconn->pcb.tcp = NULL;
     netconn_free(newconn);
     return ERR_MEM;
+  } else {
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
   }
+
   return ERR_OK;
 }
 #endif /* LWIP_TCP */

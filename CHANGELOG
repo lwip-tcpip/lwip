@@ -108,6 +108,11 @@ HISTORY
 
 
   ++ Bugfixes:
+  2009-07-09 Kieran Mansley
+  * api_msg.c, sockets.c, api.h: BUG23240 use signed counters for
+    recv_avail and don't increment counters until message successfully
+    sent to mbox
+
   2009-06-25 Kieran Mansley
   * api_msg.c api.h: BUG26722: initialise netconn write variables 
     in netconn_alloc
