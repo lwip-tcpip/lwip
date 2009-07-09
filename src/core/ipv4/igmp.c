@@ -668,7 +668,7 @@ void
 igmp_delaying_member( struct igmp_group *group, u8_t maxresp)
 {
   if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) ||
-    ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) && (maxresp > group->timer))) {
+     ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) && (maxresp > group->timer))) {
     igmp_start_timer(group, (maxresp)/2);
     group->group_state = IGMP_GROUP_DELAYING_MEMBER;
   }
