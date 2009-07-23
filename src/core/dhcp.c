@@ -192,6 +192,7 @@ dhcp_check(struct netif *netif)
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_check(netif=%p) %c%c\n", (void *)netif, (s16_t)netif->name[0],
     (s16_t)netif->name[1]));
+  dhcp_set_state(dhcp, DHCP_CHECKING);
   /* create an ARP query for the offered IP address, expecting that no host
      responds, as the IP address should not be in use. */
   result = etharp_query(netif, &dhcp->offered_ip_addr, NULL);
@@ -202,7 +203,6 @@ dhcp_check(struct netif *netif)
   msecs = 500;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_check(): set request timeout %"U16_F" msecs\n", msecs));
-  dhcp_set_state(dhcp, DHCP_CHECKING);
 }
 
 /**
@@ -248,6 +248,7 @@ dhcp_select(struct netif *netif)
 #endif /* LWIP_NETIF_HOSTNAME */
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_select(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
+  dhcp_set_state(dhcp, DHCP_REQUESTING);
 
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
@@ -293,7 +294,6 @@ dhcp_select(struct netif *netif)
     udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_select: REQUESTING\n"));
-    dhcp_set_state(dhcp, DHCP_REQUESTING);
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_select: could not allocate DHCP request\n"));
   }
@@ -790,6 +790,7 @@ dhcp_discover(struct netif *netif)
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 3, ("dhcp_discover()\n"));
   ip_addr_set(&dhcp->offered_ip_addr, IP_ADDR_ANY);
+  dhcp_set_state(dhcp, DHCP_SELECTING);
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
   if (result == ERR_OK) {
@@ -817,7 +818,6 @@ dhcp_discover(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover: SELECTING\n"));
-    dhcp_set_state(dhcp, DHCP_SELECTING);
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_discover: could not allocate DHCP request\n"));
   }
@@ -1409,9 +1409,12 @@ dhcp_create_request(struct netif *netif)
   LWIP_ASSERT("dhcp_create_request: check that first pbuf can hold struct dhcp_msg",
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
-  /* give unique transaction identifier to this request */
-  dhcp->xid = xid++;
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("transaction id xid++(%"X32_F") dhcp->xid(%"U32_F")\n",xid,dhcp->xid));
+  /* reuse transaction identifier in retransmissions */
+  if (dhcp->tries==0)
+      xid++;
+  dhcp->xid = xid;
+  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2,
+              ("transaction id xid(%"X32_F")\n", xid));
 
   dhcp->msg_out = (struct dhcp_msg *)dhcp->p_out->payload;
 
