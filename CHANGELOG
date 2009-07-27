@@ -19,6 +19,13 @@ HISTORY
 
   ++ New features:
 
+  ++ Bugfixes:
+
+
+(STABLE-1.3.1)
+
+  ++ New features:
+
   2009-05-10 Simon Goldschmidt
   * opt.h, sockets.c, pbuf.c, netbuf.h, pbuf.h: task #7013: Added option
     LWIP_NETIF_TX_SINGLE_PBUF to try to create transmit packets from only
@@ -108,6 +115,10 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2009-07-27 Kieran Mansley
+  * api.h api_msg.h netdb.h sockets.h: add missing #include directives
+
   2009-07-09 Kieran Mansley
   * api_msg.c, sockets.c, api.h: BUG23240 use signed counters for
     recv_avail and don't increment counters until message successfully

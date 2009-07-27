@@ -38,6 +38,8 @@
 
 #if LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
 
+#include <stddef.h> /* for size_t */
+
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
 

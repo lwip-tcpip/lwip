@@ -36,6 +36,8 @@
 
 #if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
 
+#include <stddef.h> /* for size_t */
+
 #include "lwip/ip_addr.h"
 #include "lwip/err.h"
 #include "lwip/sys.h"
