@@ -144,11 +144,15 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip_addr_islinklocal(addr1) (((addr1)->addr & ntohl(0xffff0000UL)) == ntohl(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
-        LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F, \
-                ipaddr ? (u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff : 0, \
-                ipaddr ? (u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff : 0, \
-                ipaddr ? (u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff : 0, \
-                ipaddr ? (u16_t)ntohl((ipaddr)->addr) & 0xff : 0))
+  LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F,              \
+                      ipaddr != NULL ?                                  \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff : 0,  \
+                      ipaddr != NULL ?                                  \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff : 0,  \
+                      ipaddr != NULL ?                                  \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff : 0,   \
+                      ipaddr != NULL ?                                  \
+                      (u16_t)ntohl((ipaddr)->addr) & 0xff : 0))
 
 /* These are cast to u16_t, with the intent that they are often arguments
  * to printf using the U16_F format from cc.h. */
