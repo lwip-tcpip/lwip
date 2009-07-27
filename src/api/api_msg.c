@@ -52,6 +52,8 @@
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
 
+#include <string.h>
+
 /* forward declarations */
 #if LWIP_TCP
 static err_t do_writemore(struct netconn *conn);
