@@ -116,6 +116,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-07-28 Simon Goldschmidt
+  * mem.h: Fixed bug #27105: "realloc() cannot replace mem_realloc()"s
+
   2009-07-27 Kieran Mansley
   * api.h api_msg.h netdb.h sockets.h: add missing #include directives
 

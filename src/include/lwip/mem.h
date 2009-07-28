@@ -59,7 +59,11 @@ typedef size_t mem_size_t;
 #define mem_calloc calloc
 #endif
 #ifndef mem_realloc
-#define mem_realloc realloc
+static void *mem_realloc(void *mem, mem_size_t size)
+{
+  LWIP_UNUSED_ARG(size);
+  return mem;
+}
 #endif
 #else /* MEM_LIBC_MALLOC */
 
