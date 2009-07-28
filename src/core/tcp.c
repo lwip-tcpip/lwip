@@ -1399,6 +1399,7 @@ tcp_debug_print_flags(u8_t flags)
   if (flags & TCP_CWR) {
     LWIP_DEBUGF(TCP_DEBUG, ("CWR "));
   }
+  LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 }
 
 /**
