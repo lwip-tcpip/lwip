@@ -41,6 +41,8 @@
 #include "lwip/inet_chksum.h"
 #include "lwip/inet.h"
 
+#include <stddef.h>
+
 /* These are some reference implementations of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
  * first thing you would want to optimize for your platform. If you create
