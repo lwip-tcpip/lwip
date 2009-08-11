@@ -42,6 +42,9 @@
 #include "lwip/ip_addr.h"
 #include "lwip/api.h"
 
+#include <string.h>
+#include <stdlib.h>
+
 /** helper struct for gethostbyname_r to access the char* buffer */
 struct gethostbyname_r_helper {
   struct ip_addr *addrs;

@@ -56,6 +56,8 @@
 #include "lwip/stats.h"
 #include "arch/perf.h"
 
+#include <string.h>
+
 /**
  * The interface that provided the packet for the current callback
  * invocation.
