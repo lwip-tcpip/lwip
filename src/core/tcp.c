@@ -49,6 +49,7 @@
 #include "lwip/memp.h"
 #include "lwip/snmp.h"
 #include "lwip/tcp.h"
+#include "lwip/debug.h"
 
 #include <string.h>
 
@@ -422,6 +423,9 @@ void
 tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   int wnd_inflation;
+
+  LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
+              len <= 0xffff - pcb->rcv_wnd );
 
   pcb->rcv_wnd += len;
   if (pcb->rcv_wnd > TCP_WND)

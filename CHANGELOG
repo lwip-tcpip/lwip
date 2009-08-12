@@ -115,6 +115,9 @@ HISTORY
 
 
   ++ Bugfixes:
+  2009-08-12 Kieran Mansley
+  * tcp_in.c, tcp.c: Fix bug #27209: handle trimming of segments when
+    out of window or out of order properly
 
   2009-08-12 Kieran Mansley
   * tcp_in.c: Fix bug #27199: use snd_wl2 instead of snd_wl1
