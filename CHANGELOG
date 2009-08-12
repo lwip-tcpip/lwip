@@ -116,6 +116,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-08-12 Kieran Mansley
+  * tcp_in.c: Fix bug #27199: use snd_wl2 instead of snd_wl1
+
   2009-07-28 Simon Goldschmidt
   * mem.h: Fixed bug #27105: "realloc() cannot replace mem_realloc()"s
 

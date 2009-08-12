@@ -738,7 +738,7 @@ tcp_receive(struct tcp_pcb *pcb)
   u8_t accepted_inseq = 0;
 
   if (flags & TCP_ACK) {
-    right_wnd_edge = pcb->snd_wnd + pcb->snd_wl1;
+    right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;
 
     /* Update window. */
     if (TCP_SEQ_LT(pcb->snd_wl1, seqno) ||
@@ -765,7 +765,7 @@ tcp_receive(struct tcp_pcb *pcb)
     if (pcb->lastack == ackno) {
       pcb->acked = 0;
 
-      if (pcb->snd_wl1 + pcb->snd_wnd == right_wnd_edge){
+      if (pcb->snd_wl2 + pcb->snd_wnd == right_wnd_edge){
         ++pcb->dupacks;
         if (pcb->dupacks >= 3 && pcb->unacked != NULL) {
           if (!(pcb->flags & TF_INFR)) {
@@ -802,7 +802,7 @@ tcp_receive(struct tcp_pcb *pcb)
         }
       } else {
         LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %"U32_F" %"U32_F"\n",
-                                   pcb->snd_wl1 + pcb->snd_wnd, right_wnd_edge));
+                                   pcb->snd_wl2 + pcb->snd_wnd, right_wnd_edge));
       }
     } else if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)){
       /* We come here when the ACK acknowledges new data. */
