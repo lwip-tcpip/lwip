@@ -26,6 +26,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-08-23 Simon Goldschmidt
+  * ppp.c: bug #27266: wait-state debug message in pppMain occurs every ms
+
+  2009-08-23 Simon Goldschmidt
   * udp.c: bug #27252: Address pointer invalid after freeing pbuf in UDP
     receive callback
 

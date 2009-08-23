@@ -1537,8 +1537,8 @@ pppMain(void *arg)
       if(c > 0) {
         pppInProc(pd, p->payload, c);
       } else {
-        PPPDEBUG((LOG_DEBUG, "pppMain: unit %d sio_read len=%d returned %d\n", pd, p->len, c));
-        sys_msleep(1); /* give other tasks a chance to run */
+        /* nothing received, give other tasks a chance to run */
+        sys_msleep(1);
       }
     }
   }
