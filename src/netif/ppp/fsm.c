@@ -64,6 +64,8 @@
 
 #include "fsm.h"
 
+#include <string.h>
+
 
 /*************************/
 /*** LOCAL DEFINITIONS ***/

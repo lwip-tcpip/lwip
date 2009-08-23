@@ -61,6 +61,8 @@
 #include "auth.h"
 #include "pap.h"
 
+#include <string.h>
+
 /***********************************/
 /*** LOCAL FUNCTION DECLARATIONS ***/
 /***********************************/
