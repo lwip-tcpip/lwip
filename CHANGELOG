@@ -26,6 +26,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-08-23 Simon Goldschmidt
+  * netdb.c, dns.c: bug #26657: DNS, if host name is "localhost", result
+    is error.
+
+  2009-08-23 Simon Goldschmidt
   * opt.h, init.c: bug #26649: TCP fails when TCP_MSS > TCP_SND_BUF
     Fixed wrong parenthesis, added check in init.c
 

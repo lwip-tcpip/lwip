@@ -300,7 +300,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     }
   } else {
     /* service location specified, use loopback address */
-    addr.addr = INADDR_LOOPBACK;
+    addr.addr = htonl(INADDR_LOOPBACK);
   }
 
   ai = mem_malloc(sizeof(struct addrinfo));
