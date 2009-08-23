@@ -53,6 +53,20 @@
 
 #include <string.h>
 
+const char *tcp_state_str[] = {
+  "CLOSED",      
+  "LISTEN",      
+  "SYN_SENT",    
+  "SYN_RCVD",    
+  "ESTABLISHED", 
+  "FIN_WAIT_1",  
+  "FIN_WAIT_2",  
+  "CLOSE_WAIT",  
+  "CLOSING",     
+  "LAST_ACK",    
+  "TIME_WAIT"   
+};
+
 /* Incremented every coarse grained timer shot (typically every 500 ms). */
 u32_t tcp_ticks;
 const u8_t tcp_backoff[13] =
@@ -1325,6 +1339,12 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
 }
 
+const char*
+tcp_debug_state_str(enum tcp_state s)
+{
+  return tcp_state_str[s];
+}
+
 /**
  * Print a tcp state for debugging purposes.
  *
@@ -1333,42 +1353,7 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
 void
 tcp_debug_print_state(enum tcp_state s)
 {
-  LWIP_DEBUGF(TCP_DEBUG, ("State: "));
-  switch (s) {
-  case CLOSED:
-    LWIP_DEBUGF(TCP_DEBUG, ("CLOSED\n"));
-    break;
- case LISTEN:
-   LWIP_DEBUGF(TCP_DEBUG, ("LISTEN\n"));
-   break;
-  case SYN_SENT:
-    LWIP_DEBUGF(TCP_DEBUG, ("SYN_SENT\n"));
-    break;
-  case SYN_RCVD:
-    LWIP_DEBUGF(TCP_DEBUG, ("SYN_RCVD\n"));
-    break;
-  case ESTABLISHED:
-    LWIP_DEBUGF(TCP_DEBUG, ("ESTABLISHED\n"));
-    break;
-  case FIN_WAIT_1:
-    LWIP_DEBUGF(TCP_DEBUG, ("FIN_WAIT_1\n"));
-    break;
-  case FIN_WAIT_2:
-    LWIP_DEBUGF(TCP_DEBUG, ("FIN_WAIT_2\n"));
-    break;
-  case CLOSE_WAIT:
-    LWIP_DEBUGF(TCP_DEBUG, ("CLOSE_WAIT\n"));
-    break;
-  case CLOSING:
-    LWIP_DEBUGF(TCP_DEBUG, ("CLOSING\n"));
-    break;
-  case LAST_ACK:
-    LWIP_DEBUGF(TCP_DEBUG, ("LAST_ACK\n"));
-    break;
-  case TIME_WAIT:
-    LWIP_DEBUGF(TCP_DEBUG, ("TIME_WAIT\n"));
-   break;
-  }
+  LWIP_DEBUGF(TCP_DEBUG, ("State: %s\n", tcp_state_str[s]));
 }
 
 /**

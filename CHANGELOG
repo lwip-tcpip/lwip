@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2009-09-23 Simon Goldschmidt
+  * tcp.h/.c: Added function tcp_debug_state_str() to convert a tcp state
+    to a human-readable string.
+
   ++ Bugfixes:
 
 
