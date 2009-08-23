@@ -26,6 +26,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-08-23 Simon Goldschmidt
+  * ppp.c: bug #27078: Possible memory leak in pppInit()
+
+  2009-08-23 Simon Goldschmidt
   * netdb.c, dns.c: bug #26657: DNS, if host name is "localhost", result
     is error.
 

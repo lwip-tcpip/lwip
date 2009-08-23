@@ -395,13 +395,17 @@ pppInit(void)
 
   magicInit();
 
+  subnetMask = htonl(0xffffff00);
+
   for (i = 0; i < NUM_PPP; i++) {
     pppControl[i].openFlag = 0;
 
-    subnetMask = htonl(0xffffff00);
-
     outpacket_buf[i] = (u_char *)mem_malloc(PPP_MRU+PPP_HDRLEN);
-    if(!outpacket_buf[i]) {
+    if (!outpacket_buf[i]) {
+      for (j = 0; j < i; j++) {
+        /* deallocate all preceding buffers */
+        mem_free(outpacket_buf[j]);
+      }
       return ERR_MEM;
     }
 
