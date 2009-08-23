@@ -803,7 +803,7 @@
  * as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work.
  */
 #ifndef TCP_SND_QUEUELEN
-#define TCP_SND_QUEUELEN                (4 * (TCP_SND_BUF/TCP_MSS))
+#define TCP_SND_QUEUELEN                (4 * (TCP_SND_BUF)/(TCP_MSS))
 #endif
 
 /**
@@ -812,7 +812,7 @@
  * TCP snd_buf for select to return writable.
  */
 #ifndef TCP_SNDLOWAT
-#define TCP_SNDLOWAT                    (TCP_SND_BUF/2)
+#define TCP_SNDLOWAT                    ((TCP_SND_BUF)/2)
 #endif
 
 /**
