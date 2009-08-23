@@ -281,8 +281,10 @@ udp_input(struct pbuf *p, struct netif *inp)
       snmp_inc_udpindatagrams();
       /* callback */
       if (pcb->recv != NULL) {
+        /* copy the source address to make it independent of the pbuf */
+        struct ip_addr src_addr = iphdr->src;
         /* now the recv function is responsible for freeing p */
-        pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src), src);
+        pcb->recv(pcb->recv_arg, pcb, p, &src_addr, src);
       } else {
         /* no recv function registered? then we have to free the pbuf! */
         pbuf_free(p);
