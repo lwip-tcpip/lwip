@@ -110,11 +110,17 @@ static void autoip_handle_arp_conflict(struct netif *netif);
 /* creates a pseudo random LL IP-Address for a network interface */
 static void autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr);
 
+/* sends an ARP probe */
+static err_t autoip_arp_probe(struct netif *netif);
+
 /* sends an ARP announce */
 static err_t autoip_arp_announce(struct netif *netif);
 
 /* configure interface for use with current LL IP-Address */
 static err_t autoip_bind(struct netif *netif);
+
+/* start sending probes for llipaddr */
+static void autoip_start_probing(struct netif *netif);
 
 /**
  * Initialize this module
@@ -189,6 +195,19 @@ autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 1,
     ("autoip_create_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
     (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(IPAddr->addr)));
+}
+
+/**
+ * Sends an ARP probe from a network interface
+ *
+ * @param netif network interface used to send the probe
+ */
+static err_t
+autoip_arp_probe(struct netif *netif)
+{
+  return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
+    (struct eth_addr *)netif->hwaddr, IP_ADDR_ANY, &ethzero,
+    &netif->autoip->llipaddr, ARP_REQUEST);
 }
 
 /**
@@ -281,6 +300,16 @@ autoip_start(struct netif *netif)
 
   autoip_create_addr(netif, &(autoip->llipaddr));
   autoip->tried_llipaddr++;
+  autoip_start_probing(netif);
+
+  return result;
+}
+
+static void
+autoip_start_probing(struct netif *netif)
+{
+  struct autoip *autoip = netif->autoip;
+
   autoip->state = AUTOIP_STATE_PROBING;
   autoip->sent_num = 0;
 
@@ -295,12 +324,24 @@ autoip_start(struct netif *netif)
    * accquiring and probing address
    * compliant to RFC 3927 Section 2.2.1
    */
-
   if(autoip->tried_llipaddr > MAX_CONFLICTS) {
     autoip->ttw = RATE_LIMIT_INTERVAL * AUTOIP_TICKS_PER_SECOND;
   }
+}
 
-  return result;
+/**
+ * Handle a possible change in the network configuration.
+ *
+ * If there is an AutoIP address configured, take the interface down
+ * and begin probing with the same address.
+ */
+void
+autoip_network_changed(struct netif *netif)
+{
+  if (netif->autoip && netif->autoip->state != AUTOIP_STATE_OFF) {
+    netif_set_down(netif);
+    autoip_start_probing(netif);
+  }
 }
 
 /**
@@ -340,12 +381,12 @@ autoip_tmr()
           if(netif->autoip->ttw > 0) {
             netif->autoip->ttw--;
           } else {
-            if(netif->autoip->sent_num == PROBE_NUM) {
+            if(netif->autoip->sent_num >= PROBE_NUM) {
               netif->autoip->state = AUTOIP_STATE_ANNOUNCING;
               netif->autoip->sent_num = 0;
               netif->autoip->ttw = ANNOUNCE_WAIT * AUTOIP_TICKS_PER_SECOND;
             } else {
-              etharp_request(netif, &(netif->autoip->llipaddr));
+              autoip_arp_probe(netif);
               LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3,
                 ("autoip_tmr() PROBING Sent Probe\n"));
               netif->autoip->sent_num++;
@@ -363,21 +404,24 @@ autoip_tmr()
           } else {
             if(netif->autoip->sent_num == 0) {
              /* We are here the first time, so we waited ANNOUNCE_WAIT seconds
-              * Now we can bind to an IP address and use it
+              * Now we can bind to an IP address and use it.
+              *
+              * autoip_bind calls netif_set_up. This triggers a gratuitous ARP
+              * which counts as an announcement.
               */
               autoip_bind(netif);
-            }
-
-            if(netif->autoip->sent_num == ANNOUNCE_NUM) {
-              netif->autoip->state = AUTOIP_STATE_BOUND;
-              netif->autoip->sent_num = 0;
-              netif->autoip->ttw = 0;
             } else {
               autoip_arp_announce(netif);
               LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | 3,
                 ("autoip_tmr() ANNOUNCING Sent Announce\n"));
-              netif->autoip->sent_num++;
-              netif->autoip->ttw = ANNOUNCE_INTERVAL * AUTOIP_TICKS_PER_SECOND;
+            }
+            netif->autoip->ttw = ANNOUNCE_INTERVAL * AUTOIP_TICKS_PER_SECOND;
+            netif->autoip->sent_num++;
+
+            if(netif->autoip->sent_num >= ANNOUNCE_NUM) {
+                netif->autoip->state = AUTOIP_STATE_BOUND;
+                netif->autoip->sent_num = 0;
+                netif->autoip->ttw = 0;
             }
           }
           break;

@@ -52,6 +52,10 @@
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 
+#if LWIP_AUTOIP
+#include "lwip/autoip.h"
+#endif /* LWIP_AUTOIP */
+
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
 #else
@@ -459,6 +463,13 @@ void netif_set_link_up(struct netif *netif )
 {
   netif->flags |= NETIF_FLAG_LINK_UP;
 
+#if LWIP_AUTOIP
+  if (netif->autoip) {
+    autoip_network_changed(netif);
+  }
+#endif /* LWIP_AUTOIP */
+
+  if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_ARP
   /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
   if (netif->flags & NETIF_FLAG_ETHARP) {
@@ -467,12 +478,12 @@ void netif_set_link_up(struct netif *netif )
 #endif /* LWIP_ARP */
 
 #if LWIP_IGMP
-  /* resend IGMP memberships */
-  if (netif->flags & NETIF_FLAG_IGMP) {
-    igmp_report_groups( netif);
-  }
+    /* resend IGMP memberships */
+    if (netif->flags & NETIF_FLAG_IGMP) {
+      igmp_report_groups( netif);
+    }
 #endif /* LWIP_IGMP */
-
+  }
   NETIF_LINK_CALLBACK(netif);
 }
 

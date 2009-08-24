@@ -100,6 +100,9 @@ void autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr);
 /** Has to be called in loop every AUTOIP_TMR_INTERVAL milliseconds */
 void autoip_tmr(void);
 
+/** Handle a possible change in the network configuration */
+void autoip_network_changed(struct netif *netif);
+
 #endif /* LWIP_AUTOIP */
 
 #endif /* __LWIP_AUTOIP_H__ */
