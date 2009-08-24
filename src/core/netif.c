@@ -55,6 +55,9 @@
 #if LWIP_AUTOIP
 #include "lwip/autoip.h"
 #endif /* LWIP_AUTOIP */
+#if LWIP_DHCP
+#include "lwip/dhcp.h"
+#endif /* LWIP_DHCP */
 
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
@@ -410,7 +413,13 @@ void netif_set_up(struct netif *netif)
       etharp_gratuitous(netif);
     }
 #endif /* LWIP_ARP */
-    
+
+#if LWIP_IGMP
+    /* resend IGMP memberships */
+    if (netif->flags & NETIF_FLAG_IGMP) {
+      igmp_report_groups( netif);
+    }
+#endif /* LWIP_IGMP */
   }
 }
 
@@ -462,6 +471,12 @@ void netif_set_status_callback(struct netif *netif, void (* status_callback)(str
 void netif_set_link_up(struct netif *netif )
 {
   netif->flags |= NETIF_FLAG_LINK_UP;
+
+#if LWIP_DHCP
+  if (netif->dhcp) {
+    dhcp_network_changed(netif);
+  }
+#endif /* LWIP_DHCP */
 
 #if LWIP_AUTOIP
   if (netif->autoip) {
