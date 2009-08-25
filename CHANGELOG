@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2009-08-25 Simon Goldschmidt
+  * opt.h, etharp.h/.c: task #9033: Support IEEE 802.1q tagged frame (VLAN),
+    New configuration options ETHARP_SUPPORT_VLAN and ETHARP_VLAN_CHECK.
+
+  2009-08-25 Simon Goldschmidt
   * ip_addr.h, netdb.c: patch #6900: added define ip_ntoa(struct ip_addr*)
 
   2009-08-23 Simon Goldschmidt
