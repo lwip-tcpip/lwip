@@ -116,7 +116,7 @@ lwip_gethostbyname(const char *name)
     u8_t idx;
     for ( idx=0; s_hostent.h_aliases[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %p\n", idx, s_hostent.h_aliases[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %s\n",      idx, s_hostent.h_aliases[idx]));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %s\n", idx, s_hostent.h_aliases[idx]));
     }
   }
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addrtype       == %d\n", s_hostent.h_addrtype));
@@ -126,7 +126,7 @@ lwip_gethostbyname(const char *name)
     u8_t idx;
     for ( idx=0; s_hostent.h_addr_list[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, inet_ntoa(*((struct in_addr*)(s_hostent.h_addr_list[idx])))));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ip_ntoa(s_hostent.h_addr_list[idx])));
     }
   }
 #endif /* DNS_DEBUG */
