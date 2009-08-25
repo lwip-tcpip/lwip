@@ -109,9 +109,9 @@ static void dhcp_handle_offer(struct netif *netif);
 
 static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
-static void dhcp_check(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
 #if DHCP_DOES_ARP_CHECK
+static void dhcp_check(struct netif *netif);
 static err_t dhcp_decline(struct netif *netif);
 #endif /* DHCP_DOES_ARP_CHECK */
 static err_t dhcp_rebind(struct netif *netif);
@@ -178,6 +178,7 @@ dhcp_handle_nak(struct netif *netif)
   dhcp_discover(netif);
 }
 
+#if DHCP_DOES_ARP_CHECK
 /**
  * Checks if the offered IP address is already in use.
  *
@@ -207,6 +208,7 @@ dhcp_check(struct netif *netif)
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_check(): set request timeout %"U16_F" msecs\n", msecs));
 }
+#endif /* DHCP_DOES_ARP_CHECK */
 
 /**
  * Remember the configuration offered by a DHCP server.
@@ -396,6 +398,7 @@ dhcp_timeout(struct netif *netif)
       dhcp_release(netif);
       dhcp_discover(netif);
     }
+#if DHCP_DOES_ARP_CHECK
   /* received no ARP reply for the offered address (which is good) */
   } else if (dhcp->state == DHCP_CHECKING) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_timeout(): CHECKING, ARP request timed out\n"));
@@ -407,6 +410,7 @@ dhcp_timeout(struct netif *netif)
       /* bind the interface to the offered address */
       dhcp_bind(netif);
     }
+#endif /* DHCP_DOES_ARP_CHECK */
   }
   /* did not get response to renew request? */
   else if (dhcp->state == DHCP_RENEWING) {

@@ -32,6 +32,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-08-25 Simon Goldschmidt
+  * dhcp.c: fixed invalid dependency to etharp_query if DHCP_DOES_ARP_CHECK==0
+
   2009-08-23 Simon Goldschmidt
   * ppp.c: bug #27078: Possible memory leak in pppInit()
 
