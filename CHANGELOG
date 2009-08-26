@@ -26,6 +26,10 @@ HISTORY
   2009-08-25 Simon Goldschmidt
   * ip_addr.h, netdb.c: patch #6900: added define ip_ntoa(struct ip_addr*)
 
+  2009-08-24 Jakob Stoklund Olesen
+  * autoip.c, dhcp.c, netif.c: patch #6725: Teach AutoIP and DHCP to respond
+    to netif_set_link_up().
+
   2009-08-23 Simon Goldschmidt
   * tcp.h/.c: Added function tcp_debug_state_str() to convert a tcp state
     to a human-readable string.
