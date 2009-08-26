@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2009-08-26 Simon Goldschmidt/Simon Kallweit
+  * slipif.c/.h: bug #26397: SLIP polling support
+
   2009-08-25 Simon Goldschmidt
   * opt.h, etharp.h/.c: task #9033: Support IEEE 802.1q tagged frame (VLAN),
     New configuration options ETHARP_SUPPORT_VLAN and ETHARP_VLAN_CHECK.
