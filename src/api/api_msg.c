@@ -807,6 +807,8 @@ do_connect(struct api_msg_msg *msg)
     break;
 #endif /* LWIP_TCP */
   default:
+    LWIP_ERROR("Invalid netconn type", 0, do{ msg->conn->err = ERR_VAL;
+      sys_sem_signal(msg->conn->op_completed); }while(0));
     break;
   }
 }
