@@ -603,30 +603,27 @@ err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest
     dest = &(iphdr->dest);
   }
 
-#if IP_FRAG
-  /* don't fragment if interface has mtu set to 0 [loopif] */
-  if (netif->mtu && (p->tot_len > netif->mtu))
-    return ip_frag(p,netif,dest);
-#endif
-
   IP_STATS_INC(ip.xmit);
 
   LWIP_DEBUGF(IP_DEBUG, ("ip_output_if: %c%c%"U16_F"\n", netif->name[0], netif->name[1], netif->num));
   ip_debug_print(p);
 
-#if (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF)
+#if ENABLE_LOOPBACK
   if (ip_addr_cmp(dest, &netif->ip_addr)) {
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
-
     return netif_loop_output(netif, p, dest);
-  } else
-#endif /* (LWIP_NETIF_LOOPBACK || LWIP_HAVE_LOOPIF) */
-  {
-    LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
-
-    return netif->output(netif, p, dest);
   }
+#endif /* ENABLE_LOOPBACK */
+#if IP_FRAG
+  /* don't fragment if interface has mtu set to 0 [loopif] */
+  if (netif->mtu && (p->tot_len > netif->mtu)) {
+    return ip_frag(p,netif,dest);
+  }
+#endif
+
+  LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
+  return netif->output(netif, p, dest);
 }
 
 /**
