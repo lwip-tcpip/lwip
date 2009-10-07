@@ -62,40 +62,12 @@
  * The interface that provided the packet for the current callback
  * invocation.
  */
-static struct netif *current_netif;
+struct netif *current_netif;
 
 /**
  * Header of the input packet currently being processed.
  */
-static const struct ip_hdr *current_header;
-
-/**
- * Get the interface that received the current packet.
- *
- * This function must only be called from a receive callback (udp_recv,
- * raw_recv, tcp_accept). It will return NULL otherwise.
- *
- * @param pcb Pointer to the pcb receiving a packet.
- */
-struct netif *
-ip_current_netif(void)
-{
-  return current_netif;
-}
-
-/**
- * Get the IP header of the current packet.
- *
- * This function must only be called from a receive callback (udp_recv,
- * raw_recv, tcp_accept). It will return NULL otherwise.
- *
- * @param pcb Pointer to the pcb receiving a packet.
- */
-const struct ip_hdr *
-ip_current_header(void)
-{
-  return current_header;
-}
+const struct ip_hdr *current_header;
 
 /**
  * Finds the appropriate network interface for a given IP address. It
