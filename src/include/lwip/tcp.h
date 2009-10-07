@@ -651,7 +651,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
                             if(*pcbs == npcb) { \
                                *pcbs = (*pcbs)->next; \
                             } else for(tcp_tmp_pcb = *pcbs; tcp_tmp_pcb != NULL; tcp_tmp_pcb = tcp_tmp_pcb->next) { \
-                               if(tcp_tmp_pcb->next != NULL && tcp_tmp_pcb->next == npcb) { \
+                               if(tcp_tmp_pcb->next == npcb) { \
                                   tcp_tmp_pcb->next = npcb->next; \
                                   break; \
                                } \
@@ -679,7 +679,7 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
       for(tcp_tmp_pcb = *pcbs;                                         \
           tcp_tmp_pcb != NULL;                                         \
           tcp_tmp_pcb = tcp_tmp_pcb->next) {                           \
-        if(tcp_tmp_pcb->next != NULL && tcp_tmp_pcb->next == npcb) {   \
+        if(tcp_tmp_pcb->next == npcb) {   \
           tcp_tmp_pcb->next = npcb->next;          \
           break;                                   \
         }                                          \
