@@ -1302,6 +1302,12 @@ tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr)
 }
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
+const char*
+tcp_debug_state_str(enum tcp_state s)
+{
+  return tcp_state_str[s];
+}
+
 #if TCP_DEBUG || TCP_INPUT_DEBUG || TCP_OUTPUT_DEBUG
 /**
  * Print a tcp header for debugging purposes.
@@ -1337,12 +1343,6 @@ tcp_debug_print(struct tcp_hdr *tcphdr)
   LWIP_DEBUGF(TCP_DEBUG, ("|    0x%04"X16_F"     |     %5"U16_F"     | (chksum, urgp)\n",
          ntohs(tcphdr->chksum), ntohs(tcphdr->urgp)));
   LWIP_DEBUGF(TCP_DEBUG, ("+-------------------------------+\n"));
-}
-
-const char*
-tcp_debug_state_str(enum tcp_state s)
-{
-  return tcp_state_str[s];
 }
 
 /**
