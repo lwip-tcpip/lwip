@@ -728,6 +728,13 @@
 #define UDP_TTL                         (IP_DEFAULT_TTL)
 #endif
 
+/**
+ * LWIP_NETBUF_RECVINFO==1: append destination addr and port to every netbuf.
+ */
+#ifndef LWIP_NETBUF_RECVINFO
+#define LWIP_NETBUF_RECVINFO            0
+#endif
+
 /*
    ---------------------------------
    ---------- TCP options ----------
