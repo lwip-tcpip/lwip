@@ -45,7 +45,7 @@
 
 #include "lwip/opt.h"
 
-#if 1 /* don't build, this is only a skeleton, see previous comment */
+#if 0 /* don't build, this is only a skeleton, see previous comment */
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
