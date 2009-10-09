@@ -45,7 +45,7 @@
 
 #include "lwip/opt.h"
 
-#if 0 /* don't build, this is only a skeleton, see previous comment */
+#if 1 /* don't build, this is only a skeleton, see previous comment */
 
 #include "lwip/def.h"
 #include "lwip/mem.h"
@@ -187,7 +187,12 @@ low_level_input(struct netif *netif)
     for(q = p; q != NULL; q = q->next) {
       /* Read enough bytes to fill this pbuf in the chain. The
        * available data in the pbuf is given by the q->len
-       * variable. */
+       * variable.
+       * This does not necessarily have to be a memcpy, you can also preallocate
+       * pbufs for a DMA-enabled MAC and after receiving truncate it to the
+       * actually received size. In this case, ensure the tot_len member of the
+       * pbuf is the sum of the chained pbuf len members.
+       */
       read data into(q->payload, q->len);
     }
     acknowledge that packet has been read();
