@@ -43,6 +43,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-09 Simon Goldschmidt
+  * opt.h: Fixed default values of some stats to only be enabled if used
+    Fixes bug #27338: sys_stats is defined when NO_SYS = 1
+
   2009-08-30 Simon Goldschmidt
   * ip.c: Fixed bug bug #27345: "ip_frag() does not use the LWIP_NETIF_LOOPBACK
     function" by checking for loopback before calling ip_frag

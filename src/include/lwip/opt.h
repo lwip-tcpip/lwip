@@ -1339,21 +1339,21 @@
  * MEM_STATS==1: Enable mem.c stats.
  */
 #ifndef MEM_STATS
-#define MEM_STATS                       1
+#define MEM_STATS                       ((MEM_LIBC_MALLOC == 0) && (MEM_USE_POOLS == 0))
 #endif
 
 /**
  * MEMP_STATS==1: Enable memp.c pool stats.
  */
 #ifndef MEMP_STATS
-#define MEMP_STATS                      1
+#define MEMP_STATS                      (MEMP_MEM_MALLOC == 0)
 #endif
 
 /**
  * SYS_STATS==1: Enable system stats (sem and mbox counts, etc).
  */
 #ifndef SYS_STATS
-#define SYS_STATS                       1
+#define SYS_STATS                       (NO_SYS == 0)
 #endif
 
 #else
