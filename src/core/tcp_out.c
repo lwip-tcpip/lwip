@@ -347,7 +347,9 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* fit within max seg size */
     (useg->len + queue->len <= pcb->mss) &&
     /* only concatenate segments with the same options */
-    (useg->flags == queue->flags)) {
+    (useg->flags == queue->flags) &&
+    /* segments are consecutive */
+    (ntohl(useg->tcphdr->seqno) + useg->len == ntohl(queue->tcphdr->seqno)) ) {
     /* Remove TCP header from first segment of our to-be-queued list */
     if(pbuf_header(queue->p, -(TCP_HLEN + optlen))) {
       /* Can we cope with this failing?  Just assert for now */

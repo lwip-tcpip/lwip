@@ -43,6 +43,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-11 Simon Goldschmidt (Jörg Kesten)
+  * tcp_out.c: Fixed bug #27504: tcp_enqueue wrongly concatenates segments
+    which are not consecutive when retransmitting unacked segments
+
   2009-10-09 Simon Goldschmidt
   * opt.h: Fixed default values of some stats to only be enabled if used
     Fixes bug #27338: sys_stats is defined when NO_SYS = 1
