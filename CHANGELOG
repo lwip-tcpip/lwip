@@ -44,6 +44,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-10-15: Simon Goldschmidt
+  * api_msg.c: Fixed bug #27709: conn->err race condition on netconn_recv()
+    timeout
+
+  2009-10-15: Simon Goldschmidt
   * autoip.c: Fixed bug #27704: autoip starts with wrong address
     LWIP_AUTOIP_CREATE_SEED_ADDR() returned address in host byte order instead
     of network byte order
