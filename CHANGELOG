@@ -43,6 +43,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-15: Simon Goldschmidt (Oleg Tyshev)
+  * tcp_in.c: Fixed bug #27329: dupacks by unidirectional data transmit
+
   2009-10-15: Simon Goldschmidt
   * api_msg.c: Fixed bug #27709: conn->err race condition on netconn_recv()
     timeout

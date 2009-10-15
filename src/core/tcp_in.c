@@ -766,39 +766,43 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->acked = 0;
 
       if (pcb->snd_wl2 + pcb->snd_wnd == right_wnd_edge){
-        ++pcb->dupacks;
-        if (pcb->dupacks >= 3 && pcb->unacked != NULL) {
-          if (!(pcb->flags & TF_INFR)) {
-            /* This is fast retransmit. Retransmit the first unacked segment. */
-            LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupacks %"U16_F" (%"U32_F"), fast retransmit %"U32_F"\n",
-                                       (u16_t)pcb->dupacks, pcb->lastack,
-                                       ntohl(pcb->unacked->tcphdr->seqno)));
-            tcp_rexmit(pcb);
-            /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
-            /*pcb->ssthresh = LWIP_MAX((pcb->snd_max -
-                                      pcb->lastack) / 2,
-                                      2 * pcb->mss);*/
-            /* Set ssthresh to half of the minimum of the current cwnd and the advertised window */
-            if (pcb->cwnd > pcb->snd_wnd)
-              pcb->ssthresh = pcb->snd_wnd / 2;
-            else
-              pcb->ssthresh = pcb->cwnd / 2;
+        if (pcb->unacked != NULL) {
+          ++pcb->dupacks;
+          if (pcb->dupacks >= 3) {
+            if (!(pcb->flags & TF_INFR)) {
+              /* This is fast retransmit. Retransmit the first unacked segment. */
+              LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupacks %"U16_F" (%"U32_F"), fast retransmit %"U32_F"\n",
+                                         (u16_t)pcb->dupacks, pcb->lastack,
+                                         ntohl(pcb->unacked->tcphdr->seqno)));
+              tcp_rexmit(pcb);
+              /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
+              /*pcb->ssthresh = LWIP_MAX((pcb->snd_max -
+                                        pcb->lastack) / 2,
+                                        2 * pcb->mss);*/
+              /* Set ssthresh to half of the minimum of the current cwnd and the advertised window */
+              if (pcb->cwnd > pcb->snd_wnd)
+                pcb->ssthresh = pcb->snd_wnd / 2;
+              else
+                pcb->ssthresh = pcb->cwnd / 2;
 
-            /* The minimum value for ssthresh should be 2 MSS */
-            if (pcb->ssthresh < 2*pcb->mss) {
-              LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: The minimum value for ssthresh %"U16_F" should be min 2 mss %"U16_F"...\n", pcb->ssthresh, 2*pcb->mss));
-              pcb->ssthresh = 2*pcb->mss;
-            }
+              /* The minimum value for ssthresh should be 2 MSS */
+              if (pcb->ssthresh < 2*pcb->mss) {
+                LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: The minimum value for ssthresh %"U16_F" should be min 2 mss %"U16_F"...\n", pcb->ssthresh, 2*pcb->mss));
+                pcb->ssthresh = 2*pcb->mss;
+              }
 
-            pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
-            pcb->flags |= TF_INFR;
-          } else {
-            /* Inflate the congestion window, but not if it means that
-               the value overflows. */
-            if ((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-              pcb->cwnd += pcb->mss;
+              pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
+              pcb->flags |= TF_INFR;
+            } else {
+              /* Inflate the congestion window, but not if it means that
+                 the value overflows. */
+              if ((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
+                pcb->cwnd += pcb->mss;
+              }
             }
           }
+        } else {
+          pcb->dupacks = 0;
         }
       } else {
         LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %"U32_F" %"U32_F"\n",
