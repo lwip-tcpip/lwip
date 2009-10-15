@@ -100,7 +100,7 @@
  */
 #ifndef LWIP_AUTOIP_CREATE_SEED_ADDR
 #define LWIP_AUTOIP_CREATE_SEED_ADDR(netif) \
-  (AUTOIP_RANGE_START + ((u32_t)(((u8_t)(netif->hwaddr[4])) | \
+  htonl(AUTOIP_RANGE_START + ((u32_t)(((u8_t)(netif->hwaddr[4])) | \
                  ((u32_t)((u8_t)(netif->hwaddr[5]))) << 8)))
 #endif /* LWIP_AUTOIP_CREATE_SEED_ADDR */
 
@@ -108,7 +108,7 @@
 static void autoip_handle_arp_conflict(struct netif *netif);
 
 /* creates a pseudo random LL IP-Address for a network interface */
-static void autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr);
+static void autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr);
 
 /* sends an ARP probe */
 static err_t autoip_arp_probe(struct netif *netif);
@@ -171,7 +171,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * @param IPAddr ip address to initialize
  */
 static void
-autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
+autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
@@ -189,12 +189,12 @@ autoip_create_addr(struct netif *netif, struct ip_addr *IPAddr)
     addr -= AUTOIP_RANGE_END - AUTOIP_RANGE_START + 1;
   }
   LWIP_ASSERT("AUTOIP address not in range", (addr >= AUTOIP_RANGE_START) &&
-	(addr <= AUTOIP_RANGE_END));
-  IPAddr->addr = htonl(addr);
+    (addr <= AUTOIP_RANGE_END));
+  ipaddr->addr = htonl(addr);
   
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | 1,
     ("autoip_create_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
-    (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(IPAddr->addr)));
+    (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(ipaddr->addr)));
 }
 
 /**
