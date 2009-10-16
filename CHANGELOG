@@ -44,6 +44,9 @@ HISTORY
   ++ Bugfixes:
 
   2009-10-16: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #27315: zero window probe and FIN
+
+  2009-10-16: Simon Goldschmidt
   * ip.c: Fixed bug #27390: Source IP check in ip_input() causes it to drop
     valid DHCP packets -> allow 0.0.0.0 as source address when LWIP_DHCP is
     enabled

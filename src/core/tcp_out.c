@@ -926,6 +926,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct tcp_seg *seg;
+  u16_t len;
+  u8_t is_fin;
 
   LWIP_DEBUGF(TCP_DEBUG, 
               ("tcp_zero_window_probe: sending ZERO WINDOW probe to %"
@@ -946,8 +948,10 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   if(seg == NULL)
     return;
 
-  p = pbuf_alloc(PBUF_IP, TCP_HLEN + 1, PBUF_RAM);
-   
+  is_fin = (TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0;
+  len = is_fin ? TCP_HLEN : TCP_HLEN + 1;
+
+  p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: no memory for pbuf\n"));
     return;
@@ -957,8 +961,13 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
   tcphdr = tcp_output_set_header(pcb, p, 0, seg->tcphdr->seqno);
 
-  /* Copy in one byte from the head of the unacked queue */
-  *((char *)p->payload + sizeof(struct tcp_hdr)) = *(char *)seg->dataptr;
+  if (is_fin) {
+    /* FIN segment, no data */
+    TCPH_FLAGS_SET(tcphdr, TCP_ACK | TCP_FIN);
+  } else {
+    /* Data segment, copy in one byte from the head of the unacked queue */
+    *((char *)p->payload + sizeof(struct tcp_hdr)) = *(char *)seg->dataptr;
+  }
 
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
