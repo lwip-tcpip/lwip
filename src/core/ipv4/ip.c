@@ -321,7 +321,8 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
 #if LWIP_DHCP
-  if (check_ip_src)
+  /* DHCP servers need 0.0.0.0 to be allowed as source port (RFC 1.1.2.2: 3.2.1.3/a) */
+  if (check_ip_src && (iphdr->src.addr != 0))
 #endif /* LWIP_DHCP */
   {  if ((ip_addr_isbroadcast(&(iphdr->src), inp)) ||
          (ip_addr_ismulticast(&(iphdr->src)))) {

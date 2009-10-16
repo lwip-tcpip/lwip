@@ -43,6 +43,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-16: Simon Goldschmidt
+  * ip.c: Fixed bug #27390: Source IP check in ip_input() causes it to drop
+    valid DHCP packets -> allow 0.0.0.0 as source address when LWIP_DHCP is
+    enabled
+
   2009-10-15: Simon Goldschmidt (Oleg Tyshev)
   * tcp_in.c: Fixed bug #27329: dupacks by unidirectional data transmit
 
