@@ -680,6 +680,7 @@ dhcp_inform(struct netif *netif)
   if (dhcp->pcb == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform(): could not obtain pcb"));
     mem_free((void *)dhcp);
+    netif->dhcp = old_dhcp;
     return;
   }
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): created new udp pcb\n"));
