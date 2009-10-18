@@ -96,6 +96,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   struct tcp_pcb_listen *lpcb;
   u8_t hdrlen;
   err_t err;
+  u8_t old_state;
 
   PERF_START;
 
@@ -288,7 +289,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         return;
       }
     }
-
+    old_state = pcb->state;
     tcp_input_pcb = pcb;
     err = tcp_process(pcb);
     tcp_input_pcb = NULL;
@@ -314,7 +315,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
            called when new send buffer space is available, we call it
            now. */
         if (pcb->acked > 0) {
-          TCP_EVENT_SENT(pcb, pcb->acked, err);
+          /* Prevent ACK for SYN or FIN to generate a sent event */
+          if ((pcb->acked != 1) || ((old_state != SYN_RCVD) &&
+               (pcb->state != FIN_WAIT_2) && (pcb->state != TIME_WAIT))) {
+            TCP_EVENT_SENT(pcb, pcb->acked, err);
+          }
         }
       
         if (recv_data != NULL) {
