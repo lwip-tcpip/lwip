@@ -1318,14 +1318,18 @@ dhcp_unfold_reply(struct dhcp *dhcp)
     dhcp->options_in = mem_malloc(dhcp->options_in_len);
     if (dhcp->options_in == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->options\n"));
+      dhcp->options_in_len = 0;
       return ERR_MEM;
     }
   }
   dhcp->msg_in = mem_malloc(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
   if (dhcp->msg_in == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n"));
-    mem_free((void *)dhcp->options_in);
-    dhcp->options_in = NULL;
+    if (dhcp->options_in != NULL) {
+      mem_free((void *)dhcp->options_in);
+      dhcp->options_in = NULL;
+      dhcp->options_in_len = 0;
+    }
     return ERR_MEM;
   }
 
