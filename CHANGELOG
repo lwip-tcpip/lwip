@@ -44,6 +44,11 @@ HISTORY
   ++ Bugfixes:
 
   2009-10-19: Simon Goldschmidt
+  * dhcp.c/.h: Minor code simplification (don't store received pbuf, change
+    conditional code to assert where applicable), check pbuf length before
+    testing for valid reply
+
+  2009-10-19: Simon Goldschmidt
   * dhcp.c: Removed most calls to udp_connect since they aren't necessary
     when using udp_sendto_if() - always stay connected to IP_ADDR_ANY.
 

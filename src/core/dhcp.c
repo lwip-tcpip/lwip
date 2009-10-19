@@ -99,6 +99,8 @@
  * MTU is checked to be big enough in dhcp_start */
 #define DHCP_MAX_MSG_LEN(netif)        (netif->mtu)
 #define DHCP_MAX_MSG_LEN_MIN_REQUIRED  576
+/** Minimum length for reply before packet is parsed */
+#define DHCP_MIN_REPLY_LEN             44
 
 #define REBOOT_TRIES 2
 
@@ -120,7 +122,7 @@ static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state);
 
 /* receive, unfold, parse and free incoming messages */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
-static err_t dhcp_unfold_reply(struct dhcp *dhcp);
+static err_t dhcp_unfold_reply(struct dhcp *dhcp, struct pbuf *p);
 static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type);
 static u8_t dhcp_get_option_byte(u8_t *ptr);
 #if 0
@@ -613,9 +615,9 @@ dhcp_start(struct netif *netif)
     if (dhcp->pcb != NULL) {
       udp_remove(dhcp->pcb);
     }
-    if (dhcp->p != NULL) {
-      pbuf_free(dhcp->p);
-    }
+    LWIP_ASSERT("pbuf p_out wasn't freed", dhcp->p_out == NULL);
+    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
+      dhcp->options_in == NULL && dhcp->options_in_len == 0);
   }
     
   /* clear data structure */
@@ -661,14 +663,13 @@ dhcp_start(struct netif *netif)
 void
 dhcp_inform(struct netif *netif)
 {
-  struct dhcp *dhcp, *old_dhcp = netif->dhcp;
+  struct dhcp *dhcp, *old_dhcp;
   err_t result = ERR_OK;
   dhcp = mem_malloc(sizeof(struct dhcp));
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform(): could not allocate dhcp\n"));
     return;
   }
-  netif->dhcp = dhcp;
   memset(dhcp, 0, sizeof(struct dhcp));
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): allocated dhcp\n"));
@@ -676,9 +677,10 @@ dhcp_inform(struct netif *netif)
   if (dhcp->pcb == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform(): could not obtain pcb"));
     mem_free((void *)dhcp);
-    netif->dhcp = old_dhcp;
     return;
   }
+  old_dhcp = netif->dhcp;
+  netif->dhcp = dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): created new udp pcb\n"));
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
@@ -705,9 +707,7 @@ dhcp_inform(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform: could not allocate DHCP request\n"));
   }
 
-  if (dhcp->pcb != NULL) {
-    udp_remove(dhcp->pcb);
-  }
+  udp_remove(dhcp->pcb);
   dhcp->pcb = NULL;
   mem_free((void *)dhcp);
   netif->dhcp = old_dhcp;
@@ -1213,12 +1213,8 @@ dhcp_stop(struct netif *netif)
       udp_remove(dhcp->pcb);
       dhcp->pcb = NULL;
     }
-    if (dhcp->p != NULL) {
-      pbuf_free(dhcp->p);
-      dhcp->p = NULL;
-    }
-    /* free unfolded reply */
-    dhcp_free_reply(dhcp);
+    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
+      dhcp->options_in == NULL && dhcp->options_in_len == 0);
     mem_free((void *)dhcp);
     netif->dhcp = NULL;
   }
@@ -1292,16 +1288,15 @@ dhcp_option_long(struct dhcp *dhcp, u32_t value)
  *
  */
 static err_t
-dhcp_unfold_reply(struct dhcp *dhcp)
+dhcp_unfold_reply(struct dhcp *dhcp, struct pbuf *p)
 {
   u16_t ret;
   LWIP_ERROR("dhcp != NULL", (dhcp != NULL), return ERR_ARG;);
-  LWIP_ERROR("dhcp->p != NULL", (dhcp->p != NULL), return ERR_VAL;);
   /* free any left-overs from previous unfolds */
   dhcp_free_reply(dhcp);
   /* options present? */
-  if (dhcp->p->tot_len > (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN)) {
-    dhcp->options_in_len = dhcp->p->tot_len - (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
+  if (p->tot_len > (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN)) {
+    dhcp->options_in_len = p->tot_len - (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
     dhcp->options_in = mem_malloc(dhcp->options_in_len);
     if (dhcp->options_in == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->options\n"));
@@ -1313,7 +1308,7 @@ dhcp_unfold_reply(struct dhcp *dhcp)
   if (dhcp->msg_in == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n"));
     if (dhcp->options_in != NULL) {
-      mem_free((void *)dhcp->options_in);
+      mem_free(dhcp->options_in);
       dhcp->options_in = NULL;
       dhcp->options_in_len = 0;
     }
@@ -1321,14 +1316,14 @@ dhcp_unfold_reply(struct dhcp *dhcp)
   }
 
   /** copy the DHCP message without options */
-  ret = pbuf_copy_partial(dhcp->p, dhcp->msg_in, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN, 0);
+  ret = pbuf_copy_partial(p, dhcp->msg_in, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN, 0);
   LWIP_ASSERT("ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN", ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes into dhcp->msg_in[]\n",
      sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN));
 
   if (dhcp->options_in != NULL) {
     /** copy the DHCP options */
-    ret = pbuf_copy_partial(dhcp->p, dhcp->options_in, dhcp->options_in_len, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
+    ret = pbuf_copy_partial(p, dhcp->options_in, dhcp->options_in_len, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
     LWIP_ASSERT("ret == dhcp->options_in_len", ret == dhcp->options_in_len);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes to dhcp->options_in[]\n",
       dhcp->options_in_len));
@@ -1340,7 +1335,6 @@ dhcp_unfold_reply(struct dhcp *dhcp)
 /**
  * Free the incoming DHCP message including contiguous copy of
  * its DHCP options.
- *
  */
 static void dhcp_free_reply(struct dhcp *dhcp)
 {
@@ -1349,13 +1343,12 @@ static void dhcp_free_reply(struct dhcp *dhcp)
     dhcp->msg_in = NULL;
   }
   if (dhcp->options_in) {
-    mem_free((void *)dhcp->options_in);
+    mem_free(dhcp->options_in);
     dhcp->options_in = NULL;
     dhcp->options_in_len = 0;
   }
   LWIP_DEBUGF(DHCP_DEBUG, ("dhcp_free_reply(): free'd\n"));
 }
-
 
 /**
  * If an incoming DHCP message is in response to us, then trigger the state machine
@@ -1377,8 +1370,15 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(addr);
   LWIP_UNUSED_ARG(port);
-  dhcp->p = p;
-  /* TODO: check packet length before reading them */
+
+  LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
+    dhcp->options_in == NULL && dhcp->options_in_len == 0);
+
+  if (p->len < DHCP_MIN_REPLY_LEN) {
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 1, ("DHCP reply message too short\n"));
+    goto free_pbuf_and_return;
+  }
+
   if (reply_msg->op != DHCP_BOOTREPLY) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 1, ("not a DHCP reply message, but type %"U16_F"\n", (u16_t)reply_msg->op));
     goto free_pbuf_and_return;
@@ -1397,7 +1397,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     goto free_pbuf_and_return;
   }
   /* option fields could be unfold? */
-  if (dhcp_unfold_reply(dhcp) != ERR_OK) {
+  if (dhcp_unfold_reply(dhcp, p) != ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("problem unfolding DHCP message - too short on memory?\n"));
     goto free_pbuf_and_return;
   }
@@ -1451,7 +1451,6 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
 free_pbuf_and_return:
   dhcp_free_reply(dhcp);
   pbuf_free(p);
-  dhcp->p = NULL;
 }
 
 /**

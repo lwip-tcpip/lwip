@@ -32,12 +32,10 @@ struct dhcp
   u32_t xid;
   /** our connection to the DHCP server */ 
   struct udp_pcb *pcb;
-  /** (first) pbuf of incoming msg */
-  struct pbuf *p;
   /** incoming msg */
   struct dhcp_msg *msg_in;
   /** incoming msg options */
-  struct dhcp_msg *options_in; 
+  void *options_in; 
   /** ingoing msg options length */
   u16_t options_in_len;
 
