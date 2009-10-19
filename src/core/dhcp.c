@@ -291,12 +291,8 @@ dhcp_select(struct netif *netif)
     /* shrink the pbuf to the actual content length */
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    /* TODO: we really should bind to a specific local interface here
-       but we cannot specify an unconfigured netif as it is addressless */
     /* send broadcast to any DHCP server */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    /* reconnect to any (or to server here?!) */
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_select: REQUESTING\n"));
   } else {
@@ -702,10 +698,8 @@ dhcp_inform(struct netif *netif)
     dhcp->pcb->so_options|=SOF_BROADCAST;
 #endif /* IP_SOF_BROADCAST */
     udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
-    udp_connect(dhcp->pcb, IP_ADDR_BROADCAST, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     dhcp_delete_request(netif);
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform: could not allocate DHCP request\n"));
@@ -803,8 +797,6 @@ dhcp_decline(struct netif *netif)
     /* resize pbuf to reflect true size of options */
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    /* @todo: should we really connect here? we are performing sendto() */
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     /* per section 4.4.4, broadcast DECLINE messages */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
@@ -856,7 +848,6 @@ dhcp_discover(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: realloc()ing\n"));
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
@@ -1018,7 +1009,6 @@ dhcp_renew(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
 
@@ -1084,7 +1074,6 @@ dhcp_rebind(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* broadcast to server */
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind: REBINDING\n"));
@@ -1130,7 +1119,6 @@ dhcp_reboot(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     /* broadcast to server */
-    udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot: REBOOTING\n"));
@@ -1177,7 +1165,6 @@ dhcp_release(struct netif *netif)
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_connect(dhcp->pcb, &dhcp->server_ip_addr, DHCP_SERVER_PORT);
     udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_request(netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_OFF\n"));

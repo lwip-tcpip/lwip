@@ -43,6 +43,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-19: Simon Goldschmidt
+  * dhcp.c: Removed most calls to udp_connect since they aren't necessary
+    when using udp_sendto_if() - always stay connected to IP_ADDR_ANY.
+
   2009-10-18: Simon Goldschmidt
   * tcp_in.c: Fixed bug #27215: TCP sent() callback gives leadin and
     trailing 1 byte len (SYN/FIN)
