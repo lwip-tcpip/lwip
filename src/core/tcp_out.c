@@ -948,7 +948,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   if(seg == NULL)
     return;
 
-  is_fin = (TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0;
+  is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
   len = is_fin ? TCP_HLEN : TCP_HLEN + 1;
 
   p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
