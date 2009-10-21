@@ -43,6 +43,13 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-21: Simon Goldschmidt
+  * tcp_in.c: Fixed bug #27215: TCP sent() callback gives leading and
+    trailing 1 byte len (SYN/FIN)
+
+  2009-10-21: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #27315: zero window probe and FIN
+
   2009-10-19: Simon Goldschmidt
   * dhcp.c/.h: Minor code simplification (don't store received pbuf, change
     conditional code to assert where applicable), check pbuf length before
@@ -51,13 +58,6 @@ HISTORY
   2009-10-19: Simon Goldschmidt
   * dhcp.c: Removed most calls to udp_connect since they aren't necessary
     when using udp_sendto_if() - always stay connected to IP_ADDR_ANY.
-
-  2009-10-18: Simon Goldschmidt
-  * tcp_in.c: Fixed bug #27215: TCP sent() callback gives leadin and
-    trailing 1 byte len (SYN/FIN)
-
-  2009-10-16: Simon Goldschmidt
-  * tcp_out.c: Fixed bug #27315: zero window probe and FIN
 
   2009-10-16: Simon Goldschmidt
   * ip.c: Fixed bug #27390: Source IP check in ip_input() causes it to drop
