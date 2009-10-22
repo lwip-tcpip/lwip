@@ -480,13 +480,13 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 static err_t
 tcp_timewait_input(struct tcp_pcb *pcb)
 {
-  if (TCP_SEQ_GT(seqno + tcplen, pcb->rcv_nxt)) {
-    pcb->rcv_nxt = seqno + tcplen;
+  u16_t flags = TCPH_FLAGS(tcphdr);
+  /* RFC 1337: in TIME_WAIT, ignore RST and ACK FINs + any 'acceptable' segments */
+  if (((flags & TCP_RST) == 0) && ((flags & TCP_FIN) || (tcplen > 0)))  {
+    pcb->flags |= TF_ACK_NOW;
+    return tcp_output(pcb);
   }
-  if (tcplen > 0) {
-    tcp_ack_now(pcb);
-  }
-  return tcp_output(pcb);
+  return ERR_OK;
 }
 
 /**
