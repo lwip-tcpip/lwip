@@ -43,11 +43,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-25: Simon Goldschmidt
+  * tcp_in.c: Fixed bug #26251: RST process in TIME_WAIT TCP state
+
   2009-10-23: Simon Goldschmidt (David Empson)
   * tcp.c: Fixed bug #27783: Silly window avoidance for small window sizes
-
-  2009-10-22: Simon Goldschmidt
-  * tcp_in.c: Fixed bug #26251: RST process in TIME_WAIT TCP state
 
   2009-10-21: Simon Goldschmidt
   * tcp_in.c: Fixed bug #27215: TCP sent() callback gives leading and
