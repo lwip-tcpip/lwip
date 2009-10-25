@@ -44,6 +44,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-10-25: Simon Goldschmidt
+  * tcp.h: bug-fix in the TCP_EVENT_RECV macro (has to call tcp_recved if
+    pcb->recv is NULL to keep rcv_wnd correct)
+
+  2009-10-25: Simon Goldschmidt
   * tcp_in.c: Fixed bug #26251: RST process in TIME_WAIT TCP state
 
   2009-10-23: Simon Goldschmidt (David Empson)

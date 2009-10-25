@@ -489,8 +489,10 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
       (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); \
     } else {                                                    \
       (ret) = ERR_OK;                                           \
-      if (p != NULL)                                            \
+      if (p != NULL) {                                          \
+        tcp_recved((pcb), ((struct pbuf*)(p))->tot_len);        \
         pbuf_free(p);                                           \
+      }                                                         \
     }                                                           \
   } while (0)
 
