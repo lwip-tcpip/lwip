@@ -676,8 +676,7 @@ dhcp_inform(struct netif *netif)
   dhcp->pcb = udp_new();
   if (dhcp->pcb == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | 2, ("dhcp_inform(): could not obtain pcb"));
-    mem_free((void *)dhcp);
-    return;
+    goto free_dhcp_and_return;
   }
   old_dhcp = netif->dhcp;
   netif->dhcp = dhcp;
@@ -709,8 +708,9 @@ dhcp_inform(struct netif *netif)
 
   udp_remove(dhcp->pcb);
   dhcp->pcb = NULL;
-  mem_free((void *)dhcp);
   netif->dhcp = old_dhcp;
+free_dhcp_and_return:
+  mem_free((void *)dhcp);
 }
 
 /** Handle a possible change in the network configuration.
