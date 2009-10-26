@@ -24,10 +24,6 @@ extern "C" {
 
 struct dhcp
 {
-  /** current DHCP state machine state */
-  u8_t state;
-  /** retries of current request */
-  u8_t tries;
   /** transaction identifier of last sent request */ 
   u32_t xid;
   /** our connection to the DHCP server */ 
@@ -38,6 +34,10 @@ struct dhcp
   void *options_in; 
   /** ingoing msg options length */
   u16_t options_in_len;
+  /** current DHCP state machine state */
+  u8_t state;
+  /** retries of current request */
+  u8_t tries;
 
   struct pbuf *p_out; /* pbuf of outcoming msg */
   struct dhcp_msg *msg_out; /* outgoing msg */
