@@ -234,12 +234,6 @@ lwip_freeaddrinfo(struct addrinfo *ai)
   struct addrinfo *next;
 
   while (ai != NULL) {
-    if (ai->ai_addr != NULL) {
-      mem_free(ai->ai_addr);
-    }
-    if (ai->ai_canonname != NULL) {
-      mem_free(ai->ai_canonname);
-    }
     next = ai->ai_next;
     mem_free(ai);
     ai = next;
@@ -274,6 +268,8 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   struct addrinfo *ai;
   struct sockaddr_in *sa = NULL;
   int port_nr = 0;
+  size_t total_size;
+  size_t namelen = 0;
 
   if (res == NULL) {
     return EAI_FAIL;
@@ -303,16 +299,18 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     addr.addr = htonl(INADDR_LOOPBACK);
   }
 
-  ai = mem_malloc(sizeof(struct addrinfo));
+  total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
+  if (nodename != NULL) {
+    namelen = strlen(nodename);
+    LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
+    total_size += namelen + 1;
+  }
+  ai = mem_malloc(total_size);
   if (ai == NULL) {
     goto memerr;
   }
-  memset(ai, 0, sizeof(struct addrinfo));
-  sa = mem_malloc(sizeof(struct sockaddr_in));
-  if (sa == NULL) {
-    goto memerr;
-  }
-  memset(sa, 0, sizeof(struct sockaddr_in));
+  memset(ai, 0, total_size);
+  sa = (struct sockaddr_in*)((u8_t*)ai + sizeof(struct addrinfo));
   /* set up sockaddr */
   sa->sin_addr.s_addr = addr.addr;
   sa->sin_family = AF_INET;
@@ -328,12 +326,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   }
   if (nodename != NULL) {
     /* copy nodename to canonname if specified */
-    size_t namelen = strlen(nodename);
-    LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
-    ai->ai_canonname = mem_malloc((mem_size_t)(namelen + 1));
-    if (ai->ai_canonname == NULL) {
-      goto memerr;
-    }
+    ai->ai_canonname = ((char*)ai + sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
     MEMCPY(ai->ai_canonname, nodename, namelen);
     ai->ai_canonname[namelen] = 0;
   }
@@ -346,9 +339,6 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 memerr:
   if (ai != NULL) {
     mem_free(ai);
-  }
-  if (sa != NULL) {
-    mem_free(sa);
   }
   return EAI_MEMORY;
 }
