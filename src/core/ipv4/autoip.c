@@ -168,7 +168,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * Create an IP-Address out of range 169.254.1.0 to 169.254.254.255
  *
  * @param netif network interface on which create the IP-Address
- * @param IPAddr ip address to initialize
+ * @param ipaddr ip address to initialize
  */
 static void
 autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr)
