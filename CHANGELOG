@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2009-10-27 Simon Goldschmidt/Stephan Lesage
+  * netifapi.c/.h: Added netifapi_netif_set_addr()
+
   2009-10-07 Simon Goldschmidt/Fabian Koch
   * api_msg.c, netbuf.c/.h, opt.h: patch #6888: Patch for UDP Netbufs to
     support dest-addr and dest-port (optional: LWIP_NETBUF_RECVINFO)
