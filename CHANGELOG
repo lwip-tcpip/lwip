@@ -46,6 +46,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-27: Kieran Mansley
+  * tcp_in.c: fix BUG#27445: grow cwnd with every duplicate ACK
+
   2009-10-25: Simon Goldschmidt
   * tcp.h: bug-fix in the TCP_EVENT_RECV macro (has to call tcp_recved if
     pcb->recv is NULL to keep rcv_wnd correct)
