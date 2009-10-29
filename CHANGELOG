@@ -45,6 +45,7 @@ HISTORY
     to a human-readable string.
 
   ++ Bugfixes:
+
   2009-10-28: Kieran Mansley
   * tcp_in.c, tcp_out.c, tcp.h: re-work the fast retransmission code
     to follow algorithm from TCP/IP Illustrated
@@ -87,7 +88,7 @@ HISTORY
   * tcp_in.c: Fixed bug #27329: dupacks by unidirectional data transmit
 
   2009-10-15: Simon Goldschmidt
-  * api_msg.c: Fixed bug #27709: conn->err race condition on netconn_recv()
+  * api_lib.c: Fixed bug #27709: conn->err race condition on netconn_recv()
     timeout
 
   2009-10-15: Simon Goldschmidt
