@@ -45,6 +45,9 @@ HISTORY
     to a human-readable string.
 
   ++ Bugfixes:
+  2009-10-28: Kieran Mansley
+  * tcp_in.c, tcp_out.c, tcp.h: re-work the fast retransmission code
+    to follow algorithm from TCP/IP Illustrated
 
   2009-10-27: Kieran Mansley
   * tcp_in.c: fix BUG#27445: grow cwnd with every duplicate ACK

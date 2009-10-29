@@ -763,6 +763,7 @@ tcp_receive(struct tcp_pcb *pcb)
   u32_t right_wnd_edge;
   u16_t new_tot_len;
   u8_t accepted_inseq = 0;
+  int found_dupack = 0;
 
   if (flags & TCP_ACK) {
     right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;
@@ -789,55 +790,62 @@ tcp_receive(struct tcp_pcb *pcb)
 #endif /* TCP_WND_DEBUG */
     }
 
-    if (pcb->lastack == ackno) {
+    /* (From Stevens TCP/IP Illustrated Vol II, p970.) Its only a
+     * duplicate ack if:
+     * 1) It doesn't ACK new data 
+     * 2) length of received packet is zero (i.e. no payload) 
+     * 3) the advertised window hasn't changed 
+     * 4) There is outstanding unacknowledged data (retransmission timer running)
+     * 5) The ACK is == biggest ACK sequence number so far seen (snd_una)
+     * 
+     * If it passes all five, should process as a dupack: 
+     * a) dupacks < 3: do nothing 
+     * b) dupacks == 3: fast retransmit 
+     * c) dupacks > 3: increase cwnd 
+     * 
+     * If it only passes 1-3, should reset dupack counter (and add to
+     * stats, which we don't do in lwIP)
+     *
+     * If it only passes 1, should reset dupack counter
+     *
+     */
+
+    /* Clause 1 */
+    if (TCP_SEQ_LEQ(ackno, pcb->lastack)) {
       pcb->acked = 0;
-
-      if (pcb->snd_wl2 + pcb->snd_wnd == right_wnd_edge){
-        ++pcb->dupacks;
-
-        if (pcb->dupacks >= 3) {
-          if (!(pcb->flags & TF_INFR) && pcb->unacked != NULL) {
-            /* This is fast retransmit. Retransmit the first unacked segment. */
-            LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupacks %"U16_F" (%"U32_F"), fast retransmit %"U32_F"\n",
-                                       (u16_t)pcb->dupacks, pcb->lastack,
-                                       ntohl(pcb->unacked->tcphdr->seqno)));
-            tcp_rexmit(pcb);
-            /* Set ssthresh to max (FlightSize / 2, 2*SMSS) */
-            /*pcb->ssthresh = LWIP_MAX((pcb->snd_max -
-              pcb->lastack) / 2,
-              2 * pcb->mss);*/
-            /* Set ssthresh to half of the minimum of the current cwnd and the advertised window */
-            if (pcb->cwnd > pcb->snd_wnd)
-              pcb->ssthresh = pcb->snd_wnd / 2;
-            else
-              pcb->ssthresh = pcb->cwnd / 2;
-            
-            /* The minimum value for ssthresh should be 2 MSS */
-            if (pcb->ssthresh < 2*pcb->mss) {
-              LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: The minimum value for ssthresh %"U16_F" should be min 2 mss %"U16_F"...\n", pcb->ssthresh, 2*pcb->mss));
-              pcb->ssthresh = 2*pcb->mss;
-            }
-            
-            pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
-            pcb->flags |= TF_INFR;
-          } else {
-            /* Inflate the congestion window, but not if it means that
-               the value overflows. */
-            if ((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
-              pcb->cwnd += pcb->mss;
+      /* Clause 2 */
+      if (tcplen == 0) {
+        /* Clause 3 */
+        if (pcb->snd_wl2 + pcb->snd_wnd == right_wnd_edge){
+          /* Clause 4 */
+          if (pcb->rtime >= 0) {
+            /* Clause 5 */
+            if (pcb->lastack == ackno) {
+              found_dupack = 1;
+              if (pcb->dupacks + 1 > pcb->dupacks)
+                ++pcb->dupacks;
+              if (pcb->dupacks > 3) {
+                /* Inflate the congestion window, but not if it means that
+                   the value overflows. */
+                if ((u16_t)(pcb->cwnd + pcb->mss) > pcb->cwnd) {
+                  pcb->cwnd += pcb->mss;
+                }
+              } else if (pcb->dupacks == 3) {
+                /* Do fast retransmit */
+                tcp_rexmit_fast(pcb);
+              }
             }
           }
         }
-
-        if (pcb->unacked == NULL && pcb->unsent == NULL)
-          pcb->dupacks = 0;
-      } else {
-        LWIP_DEBUGF(TCP_FR_DEBUG, ("tcp_receive: dupack averted %"U32_F" %"U32_F"\n",
-                                   pcb->snd_wl2 + pcb->snd_wnd, right_wnd_edge));
+      }
+      /* If Clause (1) or more is true, but not a duplicate ack, reset
+       * count of consecutive duplicate acks */
+      if (!found_dupack) {
+        pcb->dupacks = 0;
       }
     } else if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)){
       /* We come here when the ACK acknowledges new data. */
-      
+
       /* Reset the "IN Fast Retransmit" flag, since we are no longer
          in fast retransmit. Also reset the congestion window to the
          slow start threshold. */

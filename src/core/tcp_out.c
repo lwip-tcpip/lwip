@@ -858,6 +858,46 @@ tcp_rexmit(struct tcp_pcb *pcb)
   tcp_output(pcb);
 }
 
+
+/**
+ * Handle retransmission after three dupacks received
+ *
+ * @param pcb the tcp_pcb for which to retransmit the first unacked segment
+ */
+void 
+tcp_rexmit_fast(struct tcp_pcb *pcb)
+{
+  if (pcb->unacked != NULL && !(pcb->flags & TF_INFR)) {
+    /* This is fast retransmit. Retransmit the first unacked segment. */
+    LWIP_DEBUGF(TCP_FR_DEBUG, 
+                ("tcp_receive: dupacks %"U16_F" (%"U32_F
+                 "), fast retransmit %"U32_F"\n",
+                 (u16_t)pcb->dupacks, pcb->lastack,
+                 ntohl(pcb->unacked->tcphdr->seqno)));
+    tcp_rexmit(pcb);
+
+    /* Set ssthresh to half of the minimum of the current
+     * cwnd and the advertised window */
+    if (pcb->cwnd > pcb->snd_wnd)
+      pcb->ssthresh = pcb->snd_wnd / 2;
+    else
+      pcb->ssthresh = pcb->cwnd / 2;
+    
+    /* The minimum value for ssthresh should be 2 MSS */
+    if (pcb->ssthresh < 2*pcb->mss) {
+      LWIP_DEBUGF(TCP_FR_DEBUG, 
+                  ("tcp_receive: The minimum value for ssthresh %"U16_F
+                   " should be min 2 mss %"U16_F"...\n",
+                   pcb->ssthresh, 2*pcb->mss));
+      pcb->ssthresh = 2*pcb->mss;
+    }
+    
+    pcb->cwnd = pcb->ssthresh + 3 * pcb->mss;
+    pcb->flags |= TF_INFR;
+  } 
+}
+
+
 /**
  * Send keepalive packets to keep a connection active although
  * no data is sent over it.
