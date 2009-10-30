@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-10-30: Simon Goldschmidt
+  * opt.h: Increased default value for TCP_MSS to 536, updated default
+    value for TCP_WND to 4*TCP_MSS to keep delayed ACK working.
+
   2009-10-28: Kieran Mansley
   * tcp_in.c, tcp_out.c, tcp.h: re-work the fast retransmission code
     to follow algorithm from TCP/IP Illustrated

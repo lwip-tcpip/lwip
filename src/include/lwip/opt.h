@@ -759,7 +759,7 @@
  * (2 * TCP_MSS) for things to work well
  */
 #ifndef TCP_WND
-#define TCP_WND                         2048
+#define TCP_WND                         (4 * TCP_MSS)
 #endif 
 
 /**
@@ -785,14 +785,14 @@
 #endif
 
 /**
- * TCP_MSS: TCP Maximum segment size. (default is 128, a *very*
- * conservative default.)
+ * TCP_MSS: TCP Maximum segment size. (default is 536, a conservative default,
+ * you might want to increase this.)
  * For the receive side, this MSS is advertised to the remote side
  * when opening a connection. For the transmit size, this MSS sets
  * an upper limit on the MSS advertised by the remote host.
  */
 #ifndef TCP_MSS
-#define TCP_MSS                         128
+#define TCP_MSS                         536
 #endif
 
 /**
