@@ -1232,7 +1232,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
  * Purges the PCB and removes it from a PCB list. Any delayed ACKs are sent first.
  *
  * @param pcblist PCB list to purge.
- * @param pcb tcp_pcb to purge. The pcb itself is also deallocated!
+ * @param pcb tcp_pcb to purge. The pcb itself is NOT deallocated!
  */
 void
 tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
