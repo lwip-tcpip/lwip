@@ -342,6 +342,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
           tcp_output(pcb);
         }
       }
+#if TCP_INPUT_DEBUG
+#if TCP_DEBUG
+      tcp_debug_print_state(pcb->state);
+#endif /* TCP_DEBUG */
+#endif /* TCP_INPUT_DEBUG */
     }
 
 
@@ -351,12 +356,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
       pbuf_free(inseg.p);
       inseg.p = NULL;
     }
-#if TCP_INPUT_DEBUG
-#if TCP_DEBUG
-    tcp_debug_print_state(pcb->state);
-#endif /* TCP_DEBUG */
-#endif /* TCP_INPUT_DEBUG */
-      
   } else {
 
     /* If no matching PCB was found, send a TCP RST (reset) to the
