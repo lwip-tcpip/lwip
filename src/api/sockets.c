@@ -1059,6 +1059,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
         sys_sem_signal(socksem);
         return;
       }
+      s = conn->socket;
       sys_sem_signal(socksem);
     }
 

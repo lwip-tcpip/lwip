@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-11-20: Simon Goldschmidt (patch by Albert Bartel)
+  * sockets.c: Fixed bug #28062: Data received directly after accepting
+    does not wake up select
+
   2009-11-11: Simon Goldschmidt
   * netdb.h: Fixed bug #27994: incorrect define for freeaddrinfo(addrinfo)
 
