@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-11-22: Simon Goldschmidt (suggested by Bill Auerbach)
+  * tcp.c: tcp_alloc: prevent increasing stats.err for MEMP_TCP_PCB when
+    reusing time-wait pcb
+
   2009-11-20: Simon Goldschmidt (patch by Albert Bartel)
   * sockets.c: Fixed bug #28062: Data received directly after accepting
     does not wake up select

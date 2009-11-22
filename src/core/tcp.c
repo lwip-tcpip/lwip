@@ -50,6 +50,7 @@
 #include "lwip/snmp.h"
 #include "lwip/tcp.h"
 #include "lwip/debug.h"
+#include "lwip/stats.h"
 
 #include <string.h>
 
@@ -1015,9 +1016,18 @@ tcp_alloc(u8_t prio)
     pcb = memp_malloc(MEMP_TCP_PCB);
     if (pcb == NULL) {
       /* Try killing active connections with lower priority than the new one. */
+      LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing connection with prio lower than %d\n", prio));
       tcp_kill_prio(prio);
       /* Try to allocate a tcp_pcb again. */
       pcb = memp_malloc(MEMP_TCP_PCB);
+      if (pcb != NULL) {
+        /* adjust err stats: memp_malloc failed twice before */
+        MEMP_STATS_DEC(err, MEMP_TCP_PCB);
+      }
+    }
+    if (pcb != NULL) {
+      /* adjust err stats: timewait PCB was freed above */
+      MEMP_STATS_DEC(err, MEMP_TCP_PCB);
     }
   }
   if (pcb != NULL) {
