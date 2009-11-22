@@ -341,12 +341,12 @@ tcp_input(struct pbuf *p, struct netif *inp)
         if (err == ERR_OK) {
           tcp_output(pcb);
         }
-      }
 #if TCP_INPUT_DEBUG
 #if TCP_DEBUG
-      tcp_debug_print_state(pcb->state);
+        tcp_debug_print_state(pcb->state);
 #endif /* TCP_DEBUG */
 #endif /* TCP_INPUT_DEBUG */
+      }
     }
 
 
