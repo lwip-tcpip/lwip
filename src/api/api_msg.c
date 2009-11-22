@@ -1160,7 +1160,7 @@ do_close(struct api_msg_msg *msg)
 #endif /* LWIP_TCP */
   {
     msg->conn->err = ERR_VAL;
-    TCPIP_APIMSG_ACK(msg);
+    sys_sem_signal(msg->conn->op_completed);
   }
 }
 
