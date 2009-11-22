@@ -489,11 +489,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
     if((pcb)->recv != NULL) {                                   \
       (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); \
     } else {                                                    \
-      (ret) = ERR_OK;                                           \
-      if (p != NULL) {                                          \
-        tcp_recved((pcb), ((struct pbuf*)(p))->tot_len);        \
-        pbuf_free(p);                                           \
-      }                                                         \
+      (ret) = tcp_recv_null(NULL, (pcb), (p), (err));           \
     }                                                           \
   } while (0)
 
@@ -586,6 +582,10 @@ void tcp_zero_window_probe(struct tcp_pcb *pcb);
 #if TCP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
+
+#if LWIP_CALLBACK_API
+err_t tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err);
+#endif /* LWIP_CALLBACK_API */
 
 extern struct tcp_pcb *tcp_input_pcb;
 extern u32_t tcp_ticks;
