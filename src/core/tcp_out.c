@@ -132,7 +132,7 @@ tcp_write(struct tcp_pcb *pcb, const void *data, u16_t len, u8_t apiflags)
     }
     return ERR_OK;
   } else {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_STATE | 3, ("tcp_write() called in invalid state\n"));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_STATE | LWIP_DBG_LEVEL_SEVERE, ("tcp_write() called in invalid state\n"));
     return ERR_CONN;
   }
 }
@@ -174,7 +174,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
   /* fail on too much data */
   if (len > pcb->snd_buf) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too much data (len=%"U16_F" > snd_buf=%"U16_F")\n", len, pcb->snd_buf));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_WARNING,
+      ("tcp_enqueue: too much data (len=%"U16_F" > snd_buf=%"U16_F")\n", len, pcb->snd_buf));
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
   }
@@ -194,7 +195,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   queuelen = pcb->snd_queuelen;
   /* check for configured max queuelen and possible overflow */
   if ((queuelen >= TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_enqueue: too long queue %"U16_F" (max %"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_WARNING,
+      ("tcp_enqueue: too long queue %"U16_F" (max %"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
@@ -218,7 +220,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Allocate memory for tcp_seg, and fill in fields. */
     seg = memp_malloc(MEMP_TCP_SEG);
     if (seg == NULL) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, 
                   ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
       goto memerr;
     }
@@ -243,7 +245,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
      * ROM or other static memory, and need not be copied.  */
     if (apiflags & TCP_WRITE_FLAG_COPY) {
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, seglen + optlen, PBUF_RAM)) == NULL) {
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
+        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, 
                     ("tcp_enqueue : could not allocate memory for pbuf copy size %"U16_F"\n", seglen));
         goto memerr;
       }
@@ -259,7 +261,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     else {
       /* First, allocate a pbuf for the headers. */
       if ((seg->p = pbuf_alloc(PBUF_TRANSPORT, optlen, PBUF_RAM)) == NULL) {
-        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
+        LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, 
                     ("tcp_enqueue: could not allocate memory for header pbuf\n"));
         goto memerr;
       }
@@ -275,7 +277,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
           /* If allocation fails, we have to deallocate the header pbuf as well. */
           pbuf_free(seg->p);
           seg->p = NULL;
-          LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, 
+          LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, 
                       ("tcp_enqueue: could not allocate memory for zero-copy pbuf\n"));
           goto memerr;
         }
@@ -293,7 +295,8 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     /* Now that there are more segments queued, we check again if the
     length of the queue exceeds the configured maximum or overflows. */
     if ((queuelen > TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: queue too long %"U16_F" (%"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+        ("tcp_enqueue: queue too long %"U16_F" (%"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
       goto memerr;
     }
 
@@ -301,7 +304,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
 
     /* build TCP header */
     if (pbuf_header(seg->p, TCP_HLEN)) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("tcp_enqueue: no room for TCP header in pbuf.\n"));
       TCP_STATS_INC(tcp.err);
       goto memerr;
     }
