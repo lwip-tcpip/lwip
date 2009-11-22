@@ -47,7 +47,7 @@ HISTORY
   ++ Bugfixes:
 
   2009-11-22: Simon Goldschmidt
-  * tcp_in.c: Fixed bug #27905: FIN isn't combined with data on unsent
+  * tcp_out.c: Fixed bug #27905: FIN isn't combined with data on unsent
 
   2009-11-22: Simon Goldschmidt (suggested by Bill Auerbach)
   * tcp.c: tcp_alloc: prevent increasing stats.err for MEMP_TCP_PCB when
