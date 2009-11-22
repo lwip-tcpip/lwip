@@ -578,6 +578,7 @@ tcp_slowtmr(void)
   struct tcp_pcb *pcb, *pcb2, *prev;
   u16_t eff_wnd;
   u8_t pcb_remove;      /* flag if a PCB should be removed */
+  u8_t pcb_reset;       /* flag if a RST should be sent when removing */
   err_t err;
 
   err = ERR_OK;
@@ -597,6 +598,7 @@ tcp_slowtmr(void)
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT\n", pcb->state != TIME_WAIT);
 
     pcb_remove = 0;
+    pcb_reset = 0;
 
     if (pcb->state == SYN_SENT && pcb->nrtx == TCP_SYNMAXRTX) {
       ++pcb_remove;
@@ -680,7 +682,8 @@ tcp_slowtmr(void)
                                 ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
                                 ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
         
-        tcp_abort(pcb);
+        ++pcb_remove;
+        ++pcb_reset;
       }
 #if LWIP_TCP_KEEPALIVE
       else if((u32_t)(tcp_ticks - pcb->tmr) > 
@@ -740,6 +743,10 @@ tcp_slowtmr(void)
       }
 
       TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_ABRT);
+      if (pcb_reset) {
+        tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+          pcb->local_port, pcb->remote_port);
+      }
 
       pcb2 = pcb->next;
       memp_free(MEMP_TCP_PCB, pcb);
