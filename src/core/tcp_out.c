@@ -346,7 +346,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
   if (useg != NULL &&
     TCP_TCPLEN(useg) != 0 &&
     !(TCPH_FLAGS(useg->tcphdr) & (TCP_SYN | TCP_FIN)) &&
-    !(flags & (TCP_SYN | TCP_FIN)) &&
+    (!(flags & (TCP_SYN | TCP_FIN)) || (flags == TCP_FIN)) &&
     /* fit within max seg size */
     (useg->len + queue->len <= pcb->mss) &&
     /* only concatenate segments with the same options */
@@ -368,10 +368,16 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       queuelen--;
       pbuf_free(old_q);
     }
-    LWIP_ASSERT("zero-length pbuf", (queue->p != NULL) && (queue->p->len > 0));
-    pbuf_cat(useg->p, queue->p);
-    useg->len += queue->len;
-    useg->next = queue->next;
+    if (flags & TCP_FIN) {
+      /* the new segment contains only FIN, no data -> put the FIN into the last segment */
+      LWIP_ASSERT("FIN enqueued together with data", queue->p == NULL && queue->len == 0);
+      TCPH_SET_FLAG(useg->tcphdr, TCP_FIN);
+    } else {
+      LWIP_ASSERT("zero-length pbuf", (queue->p != NULL) && (queue->p->len > 0));
+      pbuf_cat(useg->p, queue->p);
+      useg->len += queue->len;
+      useg->next = queue->next;
+    }
 
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("tcp_enqueue: chaining segments, new len %"U16_F"\n", useg->len));
     if (seg == queue) {
