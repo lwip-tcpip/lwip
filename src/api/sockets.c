@@ -1492,7 +1492,7 @@ lwip_getsockopt_internal(void *arg)
   case IPPROTO_TCP:
     switch (optname) {
     case TCP_NODELAY:
-      *(int*)optval = tcp_nagle_enabled(sock->conn->pcb.tcp);
+      *(int*)optval = tcp_nagle_disabled(sock->conn->pcb.tcp);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_TCP, TCP_NODELAY) = %s\n",
                   s, (*(int*)optval)?"on":"off") );
       break;
@@ -1853,9 +1853,9 @@ lwip_setsockopt_internal(void *arg)
     switch (optname) {
     case TCP_NODELAY:
       if (*(int*)optval) {
-        tcp_nagle_enable(sock->conn->pcb.tcp);
-      } else {
         tcp_nagle_disable(sock->conn->pcb.tcp);
+      } else {
+        tcp_nagle_enable(sock->conn->pcb.tcp);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_TCP, TCP_NODELAY) -> %s\n",
                   s, (*(int *)optval)?"on":"off") );
