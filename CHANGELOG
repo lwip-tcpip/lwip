@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-11-26: Simon Goldschmidt
+  * tcp.h, sockets.c: Fixed bug #28099: API required to disable Nagle
+    algorithm at PCB level
+
   2009-11-22: Simon Goldschmidt
   * tcp_out.c: Fixed bug #27905: FIN isn't combined with data on unsent
 

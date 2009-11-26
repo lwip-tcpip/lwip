@@ -78,6 +78,9 @@ void             tcp_err     (struct tcp_pcb *pcb,
 
 #define          tcp_mss(pcb)      ((pcb)->mss)
 #define          tcp_sndbuf(pcb)   ((pcb)->snd_buf)
+#define          tcp_nagle_enable(pcb)  ((pcb)->flags |= TF_NODELAY)
+#define          tcp_nagle_disable(pcb) ((pcb)->flags &= ~TF_NODELAY)
+#define          tcp_nagle_enabled(pcb) (((pcb)->flags & TF_NODELAY) != 0)
 
 #if TCP_LISTEN_BACKLOG
 #define          tcp_accepted(pcb) (((struct tcp_pcb_listen *)(pcb))->accepts_pending--)
@@ -137,7 +140,7 @@ u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
  *   than one unsent segment - with lwIP, this can happen although unsent->len < mss)
  */
 #define tcp_do_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
-                            ((tpcb)->flags & TF_NODELAY) || \
+                            (tcp_nagle_enabled(tpcb)) || \
                             (((tpcb)->unsent != NULL) && (((tpcb)->unsent->next != NULL) || \
                               ((tpcb)->unsent->len >= (tpcb)->mss))) \
                             ) ? 1 : 0)
