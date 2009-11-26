@@ -864,7 +864,8 @@ tcp_rexmit(struct tcp_pcb *pcb)
 
   /* Do the actual retransmission. */
   snmp_inc_tcpretranssegs();
-  tcp_output(pcb);
+  /* No need to call tcp_output: we are always called from tcp_input()
+     and thus tcp_output directly returns. */
 }
 
 
