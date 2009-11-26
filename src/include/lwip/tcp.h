@@ -138,9 +138,10 @@ u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
  * - the TF_NODELAY flag is set (nagle algorithm turned off for this pcb) or
  * - the only unsent segment is at least pcb->mss bytes long (or there is more
  *   than one unsent segment - with lwIP, this can happen although unsent->len < mss)
+ * - or if we are in fast-retransmit (TF_INFR)
  */
 #define tcp_do_output_nagle(tpcb) ((((tpcb)->unacked == NULL) || \
-                            ((tpcb)->flags & TF_NODELAY) || \
+                            ((tpcb)->flags & (TF_NODELAY | TF_INFR)) || \
                             (((tpcb)->unsent != NULL) && (((tpcb)->unsent->next != NULL) || \
                               ((tpcb)->unsent->len >= (tpcb)->mss))) \
                             ) ? 1 : 0)

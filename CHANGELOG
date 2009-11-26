@@ -47,6 +47,10 @@ HISTORY
   ++ Bugfixes:
 
   2009-11-26: Simon Goldschmidt
+  * tcp.h: Fixed bug #28098: Nagle can prevent fast retransmit from sending
+    segment
+
+  2009-11-26: Simon Goldschmidt
   * tcp.h, sockets.c: Fixed bug #28099: API required to disable Nagle
     algorithm at PCB level
 
