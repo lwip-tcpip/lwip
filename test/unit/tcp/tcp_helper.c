@@ -33,6 +33,8 @@ tcp_remove_all(void)
   tcp_remove(tcp_tw_pcbs);
   fail_unless(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
   fail_unless(lwip_stats.memp[MEMP_TCP_PCB_LISTEN].used == 0);
+  fail_unless(lwip_stats.memp[MEMP_TCP_SEG].used == 0);
+  fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
 }
 
 /** Create a TCP segment usable for passing to tcp_input
@@ -56,8 +58,9 @@ tcp_create_segment(struct ip_addr* src_ip, struct ip_addr* dst_ip,
   struct pbuf* p;
   struct ip_hdr* iphdr;
   struct tcp_hdr* tcphdr;
+  u16_t pbuf_len = sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len;
 
-  p = pbuf_alloc(PBUF_RAW, sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len, PBUF_RAM);
+  p = pbuf_alloc(PBUF_RAW, pbuf_len, PBUF_POOL);
   EXPECT_RETNULL(p != NULL);
   EXPECT_RETNULL(p->next == NULL);
 
