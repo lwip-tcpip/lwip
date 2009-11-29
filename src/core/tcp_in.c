@@ -74,7 +74,7 @@ struct tcp_pcb *tcp_input_pcb;
 
 /* Forward declarations. */
 static err_t tcp_process(struct tcp_pcb *pcb);
-static u8_t tcp_receive(struct tcp_pcb *pcb);
+static void tcp_receive(struct tcp_pcb *pcb);
 static void tcp_parseopt(struct tcp_pcb *pcb);
 
 static err_t tcp_listen_input(struct tcp_pcb_listen *pcb);
@@ -780,10 +780,8 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
  * estimation, the RTT is estimated here as well.
  *
  * Called from tcp_process().
- *
- * @return 1 if the incoming segment is the next in sequence, 0 if not
  */
-static u8_t
+static void
 tcp_receive(struct tcp_pcb *pcb)
 {
   struct tcp_seg *next;
@@ -795,7 +793,6 @@ tcp_receive(struct tcp_pcb *pcb)
   s16_t m;
   u32_t right_wnd_edge;
   u16_t new_tot_len;
-  u8_t accepted_inseq = 0;
   int found_dupack = 0;
 
   if (flags & TCP_ACK) {
@@ -1132,7 +1129,6 @@ tcp_receive(struct tcp_pcb *pcb)
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
                         pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
-        accepted_inseq = 1; 
         /* The incoming segment is the next in sequence. We check if
            we have to trim the end of the segment and update rcv_nxt
            and pass the data to the application. */
@@ -1380,6 +1376,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
       }
     } else {
+      /* The incoming segment is not withing the window. */
       tcp_ack_now(pcb);
     }
   } else {
@@ -1391,7 +1388,6 @@ tcp_receive(struct tcp_pcb *pcb)
       tcp_ack_now(pcb);
     }
   }
-  return accepted_inseq;
 }
 
 /**
