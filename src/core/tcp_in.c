@@ -735,6 +735,40 @@ tcp_process(struct tcp_pcb *pcb)
   return ERR_OK;
 }
 
+#if TCP_QUEUE_OOSEQ
+/**
+ * Insert segment into the list (segments covered with new one will be deleted)
+ *
+ * Called from tcp_receive()
+ */
+static void
+tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
+{
+  if (TCPH_FLAGS(cseg->tcphdr) & TCP_FIN) {
+    /* received segment overlaps all following segments */
+    tcp_segs_free(next);
+    next = NULL;
+  }
+  else {
+    /* delete some following segments */
+    while (next &&
+           TCP_SEQ_GT((seqno + cseg->len),
+                      (next->tcphdr->seqno + next->len))) {
+      struct tcp_seg *old_seg = next;
+      next = next->next;
+      tcp_seg_free(old_seg);
+    }
+    if (next &&
+        TCP_SEQ_GT(seqno + cseg->len, next->tcphdr->seqno)) {
+      /* We need to trim the incoming segment. */
+      cseg->len = (u16_t)(next->tcphdr->seqno - seqno);
+      pbuf_realloc(cseg->p, cseg->len);
+    }
+  }
+  cseg->next = next;
+}
+#endif
+
 /**
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
  * data, and if so frees the memory of the buffered data. Next, is places the
@@ -1135,7 +1169,7 @@ tcp_receive(struct tcp_pcb *pcb)
             while (pcb->ooseq != NULL) {
               struct tcp_seg *old_ooseq = pcb->ooseq;
               pcb->ooseq = pcb->ooseq->next;
-              memp_free(MEMP_TCP_SEG, old_ooseq);
+              tcp_seg_free(old_ooseq);
             }               
           } else if (TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + tcplen)) {
             if (pcb->ooseq->len > 0) {
@@ -1157,7 +1191,7 @@ tcp_receive(struct tcp_pcb *pcb)
                   (TCPH_FLAGS(pcb->ooseq->tcphdr) & (TCP_FIN|TCP_SYN))) {
                 struct tcp_seg *old_ooseq = pcb->ooseq;
                 pcb->ooseq = pcb->ooseq->next;
-                memp_free(MEMP_TCP_SEG, old_ooseq);
+                tcp_seg_free(old_ooseq);
               }
             }
           }
@@ -1227,7 +1261,6 @@ tcp_receive(struct tcp_pcb *pcb)
             } 
           }
 
-
           pcb->ooseq = cseg->next;
           tcp_seg_free(cseg);
         }
@@ -1266,25 +1299,16 @@ tcp_receive(struct tcp_pcb *pcb)
                  discard. */
               if (inseg.len > next->len) {
                 /* The incoming segment is larger than the old
-                   segment. We replace the old segment with the new
+                   segment. We replace some segments with the new
                    one. */
                 cseg = tcp_seg_copy(&inseg);
                 if (cseg != NULL) {
-                  cseg->next = next->next;
                   if (prev != NULL) {
                     prev->next = cseg;
                   } else {
                     pcb->ooseq = cseg;
                   }
-                  tcp_seg_free(next);
-                  if (cseg->next != NULL) {
-                    next = cseg->next;
-                    if (TCP_SEQ_GT(seqno + cseg->len, next->tcphdr->seqno)) {
-                      /* We need to trim the incoming segment. */
-                      cseg->len = (u16_t)(next->tcphdr->seqno - seqno);
-                      pbuf_realloc(cseg->p, cseg->len);
-                    }
-                  }
+                  tcp_oos_insert_segment(cseg, next);
                 }
                 break;
               } else {
@@ -1300,51 +1324,44 @@ tcp_receive(struct tcp_pcb *pcb)
                      than the sequence number of the first segment on the
                      queue. We put the incoming segment first on the
                      queue. */
-
-                  if (TCP_SEQ_GT(seqno + inseg.len, next->tcphdr->seqno)) {
-                    /* We need to trim the incoming segment. */
-                    inseg.len = (u16_t)(next->tcphdr->seqno - seqno);
-                    pbuf_realloc(inseg.p, inseg.len);
-                  }
                   cseg = tcp_seg_copy(&inseg);
                   if (cseg != NULL) {
-                    cseg->next = next;
                     pcb->ooseq = cseg;
+                    tcp_oos_insert_segment(cseg, next);
                   }
                   break;
                 }
-              } else 
+              } else {
                 /*if (TCP_SEQ_LT(prev->tcphdr->seqno, seqno) &&
                   TCP_SEQ_LT(seqno, next->tcphdr->seqno)) {*/
-                if(TCP_SEQ_BETWEEN(seqno, prev->tcphdr->seqno+1, next->tcphdr->seqno-1)){
-                /* The sequence number of the incoming segment is in
-                   between the sequence numbers of the previous and
-                   the next segment on ->ooseq. We trim and insert the
-                   incoming segment and trim the previous segment, if
-                   needed. */
-                if (TCP_SEQ_GT(seqno + inseg.len, next->tcphdr->seqno)) {
-                  /* We need to trim the incoming segment. */
-                  inseg.len = (u16_t)(next->tcphdr->seqno - seqno);
-                  pbuf_realloc(inseg.p, inseg.len);
-                }
-
-                cseg = tcp_seg_copy(&inseg);
-                if (cseg != NULL) {
-                  cseg->next = next;
-                  prev->next = cseg;
-                  if (TCP_SEQ_GT(prev->tcphdr->seqno + prev->len, seqno)) {
-                    /* We need to trim the prev segment. */
-                    prev->len = (u16_t)(seqno - prev->tcphdr->seqno);
-                    pbuf_realloc(prev->p, prev->len);
+                if (TCP_SEQ_BETWEEN(seqno, prev->tcphdr->seqno+1, next->tcphdr->seqno-1)) {
+                  /* The sequence number of the incoming segment is in
+                     between the sequence numbers of the previous and
+                     the next segment on ->ooseq. We trim trim the previous
+                     segment, delete next segments that included in received segment
+                     and trim received, if needed. */
+                  cseg = tcp_seg_copy(&inseg);
+                  if (cseg != NULL) {
+                    if (TCP_SEQ_GT(prev->tcphdr->seqno + prev->len, seqno)) {
+                      /* We need to trim the prev segment. */
+                      prev->len = (u16_t)(seqno - prev->tcphdr->seqno);
+                      pbuf_realloc(prev->p, prev->len);
+                    }
+                    prev->next = cseg;
+                    tcp_oos_insert_segment(cseg, next);
                   }
+                  break;
                 }
-                break;
               }
               /* If the "next" segment is the last segment on the
                  ooseq queue, we add the incoming segment to the end
                  of the list. */
               if (next->next == NULL &&
                   TCP_SEQ_GT(seqno, next->tcphdr->seqno)) {
+                if (TCPH_FLAGS(next->tcphdr) & TCP_FIN) {
+                  /* segment "next" already contains all data */
+                  break;
+                }
                 next->next = tcp_seg_copy(&inseg);
                 if (next->next != NULL) {
                   if (TCP_SEQ_GT(next->tcphdr->seqno + next->len, seqno)) {
