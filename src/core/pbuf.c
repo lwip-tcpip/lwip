@@ -81,41 +81,71 @@
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
 
-#if TCP_QUEUE_OOSEQ
-#define ALLOC_POOL_PBUF(p) do { (p) = alloc_pool_pbuf(); } while (0)
-#else
-#define ALLOC_POOL_PBUF(p) do { (p) = memp_malloc(MEMP_PBUF_POOL); } while (0)
-#endif
+#if !TCP_QUEUE_OOSEQ || NO_SYS
+#define PBUF_POOL_IS_EMPTY()
+#else /* !TCP_QUEUE_OOSEQ || NO_SYS */
+/** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
+#ifndef PBUF_POOL_FREE_OOSEQ
+#define PBUF_POOL_FREE_OOSEQ 1
+#endif /* PBUF_POOL_FREE_OOSEQ */
 
-
-#if TCP_QUEUE_OOSEQ
+#if PBUF_POOL_FREE_OOSEQ
+#include "lwip/tcpip.h"
+#define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
+static u8_t pbuf_free_ooseq_queued;
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
  * if we run out of pool pbufs. It's better to give priority to new packets
  * if we're running out.
  *
- * @return the allocated pbuf.
+ * This must be done in the correct thread context therefore this function
+ * can only be used with NO_SYS=0 and through tcpip_callback.
  */
-static struct pbuf *
-alloc_pool_pbuf(void)
+static void
+pbuf_free_ooseq(void* arg)
 {
-  struct tcp_pcb *pcb;
-  struct pbuf *p;
+  struct tcp_pcb* pcb;
+  SYS_ARCH_DECL_PROTECT(old_level);
+  LWIP_UNUSED_ARG(arg);
 
-retry:
-  p = memp_malloc(MEMP_PBUF_POOL);
-  if (NULL == p) {
-    for (pcb=tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
-      if (NULL != pcb->ooseq) {
-        tcp_segs_free(pcb->ooseq);
-        pcb->ooseq = NULL;
-        goto retry;
-      }
+  SYS_ARCH_PROTECT(old_level);
+  pbuf_free_ooseq_queued = 0;
+  SYS_ARCH_UNPROTECT(old_level);
+
+  for (pcb = tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
+    if (NULL != pcb->ooseq) {
+      /** Free the ooseq pbufs of one PCB only */
+      LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free_ooseq: freeing out-of-sequence pbufs\n"));
+      tcp_segs_free(pcb->ooseq);
+      pcb->ooseq = NULL;
+      return;
     }
   }
-  return p;
 }
-#endif /* TCP_QUEUE_OOSEQ */
+
+/** Queue a call to pbuf_free_ooseq if not already queued. */
+static void
+pbuf_pool_is_empty(void)
+{
+  u8_t queued;
+  SYS_ARCH_DECL_PROTECT(old_level);
+
+  SYS_ARCH_PROTECT(old_level);
+  queued = pbuf_free_ooseq_queued;
+  pbuf_free_ooseq_queued = 1;
+  SYS_ARCH_UNPROTECT(old_level);
+
+  if(!queued) {
+    /* queue a call to pbuf_free_ooseq if not already queued */
+    if(tcpip_callback_with_block(pbuf_free_ooseq, NULL, 0) != ERR_OK) {
+      SYS_ARCH_PROTECT(old_level);
+      pbuf_free_ooseq_queued = 0;
+      SYS_ARCH_UNPROTECT(old_level);
+    }
+  }
+}
+#endif /* PBUF_POOL_FREE_OOSEQ */
+#endif /* !TCP_QUEUE_OOSEQ || NO_SYS */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
@@ -181,9 +211,10 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (type) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-    ALLOC_POOL_PBUF(p);
+    p = memp_malloc(MEMP_PBUF_POOL);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
+      PBUF_POOL_IS_EMPTY();
       return NULL;
     }
     p->type = type;
@@ -213,8 +244,9 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      ALLOC_POOL_PBUF(q);
+      q = memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
+        PBUF_POOL_IS_EMPTY();
         /* free chain so far allocated */
         pbuf_free(p);
         /* bail out unsuccesfully */

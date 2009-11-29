@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-11-29: Simon Goldschmidt
+  * pbuf.c: Fixed bug #28064: pbuf_alloc(PBUF_POOL) is not thread-safe by
+    queueing a call into tcpip_thread to free ooseq-bufs if the pool is empty
+
   2009-11-26: Simon Goldschmidt
   * tcp.h: Fixed bug #28098: Nagle can prevent fast retransmit from sending
     segment
