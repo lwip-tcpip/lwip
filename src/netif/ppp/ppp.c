@@ -306,13 +306,11 @@ pppMainWakeup(int pd)
 void
 pppLinkTerminated(int pd)
 {
-  PPPControl *pc = &pppControl[pd];
-
   PPPDEBUG((LOG_DEBUG, "pppLinkTerminated: unit %d\n", pd));
 
 #if PPPOE_SUPPORT
-  if(pc->ethif) {
-    pppoe_disconnect(pc->pppoe_sc);
+  if(pppControl[pd].ethif) {
+    pppoe_disconnect(pppControl[pd].pppoe_sc);
   } else
 #endif /* PPPOE_SUPPORT */
   {
@@ -325,13 +323,11 @@ pppLinkTerminated(int pd)
 void
 pppLinkDown(int pd)
 {
-  PPPControl *pc = &pppControl[pd];
-
   PPPDEBUG((LOG_DEBUG, "pppLinkDown: unit %d\n", pd));
 
 #if PPPOE_SUPPORT
-  if(pc->ethif) {
-    pppoe_disconnect(pc->pppoe_sc);
+  if(pppControl[pd].ethif) {
+    pppoe_disconnect(pppControl[pd].pppoe_sc);
   } else
 #endif /* PPPOE_SUPPORT */
   {
@@ -828,9 +824,9 @@ static err_t
 pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *ipaddr)
 {
   int pd = (int)netif->state;
-  u_short protocol = PPP_IP;
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
+  u_short protocol = PPP_IP;
   u_int fcsOut = PPP_INITFCS;
   struct pbuf *headMB = NULL, *tailMB = NULL, *p;
   u_char c;
@@ -843,7 +839,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *ipaddr)
    * and the peer will just drop it if it's not accepting it. */
   if (pd < 0 || pd >= NUM_PPP || !pc->openFlag || !pb) {
     PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: bad parms prot=%d pb=%p\n",
-              pd, protocol, pb));
+              pd, PPP_IP, pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
     return ERR_ARG;
@@ -1298,7 +1294,7 @@ GetMask(u32_t addr)
  * sifvjcomp - config tcp header compression
  */
 int
-sifvjcomp( int pd, int vjcomp, int cidcomp, int maxcid)
+sifvjcomp(int pd, int vjcomp, int cidcomp, int maxcid)
 {
 #if PPPOS_SUPPORT && VJ_SUPPORT
   PPPControl *pc = &pppControl[pd];
@@ -1308,6 +1304,11 @@ sifvjcomp( int pd, int vjcomp, int cidcomp, int maxcid)
   pc->vjComp.maxSlotIndex = maxcid;
   PPPDEBUG((LOG_INFO, "sifvjcomp: VJ compress enable=%d slot=%d max slot=%d\n",
             vjcomp, cidcomp, maxcid));
+#else /* PPPOS_SUPPORT && VJ_SUPPORT */
+  LWIP_UNUSED_ARG(pd);
+  LWIP_UNUSED_ARG(vjcomp);
+  LWIP_UNUSED_ARG(cidcomp);
+  LWIP_UNUSED_ARG(maxcid);
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
   return 0;
@@ -1662,7 +1663,7 @@ pppInput(void *arg)
 
   switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-#if VJ_SUPPORT
+#if PPPOS_SUPPRORT && VJ_SUPPORT
       PPPDEBUG((LOG_INFO, "pppInput[%d]: vj_comp in pbuf len=%d\n", pd, nb->len));
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
@@ -1674,14 +1675,14 @@ pppInput(void *arg)
       }
       /* Something's wrong so drop it. */
       PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ compressed\n", pd));
-#else  /* VJ_SUPPORT */
+#else  /* PPPOS_SUPPRORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG((LOG_INFO, "pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
-#endif /* VJ_SUPPORT */
+#endif /* PPPOS_SUPPRORT && VJ_SUPPORT */
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-#if VJ_SUPPORT
+#if PPPOS_SUPPRORT && VJ_SUPPORT
       PPPDEBUG((LOG_INFO, "pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
       /*
        * Process the TCP/IP header for VJ header compression and then pass
@@ -1693,12 +1694,12 @@ pppInput(void *arg)
       }
       /* Something's wrong so drop it. */
       PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ uncompressed\n", pd));
-#else  /* VJ_SUPPORT */
+#else  /* PPPOS_SUPPRORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG((LOG_INFO,
                "pppInput[%d]: drop VJ UnComp in %d:.*H\n", 
                 pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
-#endif /* VJ_SUPPORT */
+#endif /* PPPOS_SUPPRORT && VJ_SUPPORT */
       break;
 
     case PPP_IP:            /* Internet Protocol */
