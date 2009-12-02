@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-02: Simon Goldschmidt
+  * tcp_in.c: Fixed bug #27904: TCP sends too many ACKs: delay resetting
+    tcp_input_pcb until after calling the pcb's callbacks
+
   2009-11-29: Simon Goldschmidt
   * tcp_in.c: Fixed bug #28054: Two segments with FIN flag on the out-of-
     sequence queue, also fixed PBUF_POOL leak in the out-of-sequence code

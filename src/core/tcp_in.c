@@ -290,7 +290,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
     }
     tcp_input_pcb = pcb;
     err = tcp_process(pcb);
-    tcp_input_pcb = NULL;
     /* A return value of ERR_ABRT means that tcp_abort() was called
        and that the pcb has been freed. If so, we don't do anything. */
     if (err != ERR_ABRT) {
@@ -337,10 +336,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
           TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
         }
 
-        /* If there were no errors, we try to send something out. */
-        if (err == ERR_OK) {
-          tcp_output(pcb);
-        }
+        tcp_input_pcb = NULL;
+        /* Try to send something out. */
+        tcp_output(pcb);
 #if TCP_INPUT_DEBUG
 #if TCP_DEBUG
         tcp_debug_print_state(pcb->state);
@@ -348,6 +346,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* TCP_INPUT_DEBUG */
       }
     }
+    tcp_input_pcb = NULL;
 
 
     /* give up our reference to inseg.p */
