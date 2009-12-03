@@ -169,7 +169,7 @@
   #error "you have to define define DNS_LOCAL_HOSTLIST_INIT {{'host1', 0x123}, {'host2', 0x234}} to initialize DNS_LOCAL_HOSTLIST"
 #endif
 #if PPP_SUPPORT && !PPPOS_SUPPORT & !PPPOE_SUPPORT
-  #error "PPP_SUPPORT needs wither PPPOS_SUPPORT or PPPOE_SUPPORT turned on"
+  #error "PPP_SUPPORT needs either PPPOS_SUPPORT or PPPOE_SUPPORT turned on"
 #endif
 
 

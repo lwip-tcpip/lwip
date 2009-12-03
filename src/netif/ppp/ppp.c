@@ -1663,7 +1663,7 @@ pppInput(void *arg)
 
   switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-#if PPPOS_SUPPRORT && VJ_SUPPORT
+#if PPPOS_SUPPORT && VJ_SUPPORT
       PPPDEBUG((LOG_INFO, "pppInput[%d]: vj_comp in pbuf len=%d\n", pd, nb->len));
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
@@ -1675,14 +1675,14 @@ pppInput(void *arg)
       }
       /* Something's wrong so drop it. */
       PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ compressed\n", pd));
-#else  /* PPPOS_SUPPRORT && VJ_SUPPORT */
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG((LOG_INFO, "pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
-#endif /* PPPOS_SUPPRORT && VJ_SUPPORT */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-#if PPPOS_SUPPRORT && VJ_SUPPORT
+#if PPPOS_SUPPORT && VJ_SUPPORT
       PPPDEBUG((LOG_INFO, "pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
       /*
        * Process the TCP/IP header for VJ header compression and then pass
@@ -1694,12 +1694,12 @@ pppInput(void *arg)
       }
       /* Something's wrong so drop it. */
       PPPDEBUG((LOG_WARNING, "pppInput[%d]: Dropping VJ uncompressed\n", pd));
-#else  /* PPPOS_SUPPRORT && VJ_SUPPORT */
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG((LOG_INFO,
                "pppInput[%d]: drop VJ UnComp in %d:.*H\n", 
                 pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
-#endif /* PPPOS_SUPPRORT && VJ_SUPPORT */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
     case PPP_IP:            /* Internet Protocol */
