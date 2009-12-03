@@ -454,6 +454,58 @@ tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 }
 #endif
 
+/** Send an ACK without data.
+ *
+ * @param pcb Protocol control block for the TCP connection to send the ACK
+ */
+err_t
+tcp_send_empty_ack(struct tcp_pcb *pcb)
+{
+  struct pbuf *p;
+  struct tcp_hdr *tcphdr;
+  u8_t optlen = 0;
+
+#if LWIP_TCP_TIMESTAMPS
+  if (pcb->flags & TF_TIMESTAMP) {
+    optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
+  }
+#endif
+  p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen, PBUF_RAM);
+  if (p == NULL) {
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
+    return ERR_BUF;
+  }
+  LWIP_DEBUGF(TCP_OUTPUT_DEBUG, 
+              ("tcp_output: sending ACK for %"U32_F"\n", pcb->rcv_nxt));
+  /* remove ACK flags from the PCB, as we send an empty ACK now */
+  pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+
+  tcphdr = tcp_output_set_header(pcb, p, optlen, htonl(pcb->snd_nxt));
+
+  /* NB. MSS option is only sent on SYNs, so ignore it here */
+#if LWIP_TCP_TIMESTAMPS
+  pcb->ts_lastacksent = pcb->rcv_nxt;
+
+  if (pcb->flags & TF_TIMESTAMP) {
+    tcp_build_timestamp_option(pcb, (u32_t *)(tcphdr + 1));
+  }
+#endif 
+
+#if CHECKSUM_GEN_TCP
+  tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
+        IP_PROTO_TCP, p->tot_len);
+#endif
+#if LWIP_NETIF_HWADDRHINT
+  ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+      IP_PROTO_TCP, &(pcb->addr_hint));
+#else /* LWIP_NETIF_HWADDRHINT*/
+  ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
+      IP_PROTO_TCP);
+#endif /* LWIP_NETIF_HWADDRHINT*/
+  pbuf_free(p);
+
+  return ERR_OK;
+}
 
 /**
  * Find out what we can send and send it
@@ -465,14 +517,11 @@ tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 err_t
 tcp_output(struct tcp_pcb *pcb)
 {
-  struct pbuf *p;
-  struct tcp_hdr *tcphdr;
   struct tcp_seg *seg, *useg;
   u32_t wnd, snd_nxt;
 #if TCP_CWND_DEBUG
   s16_t i = 0;
 #endif /* TCP_CWND_DEBUG */
-  u8_t optlen = 0;
 
   /* First, check if we are invoked by the TCP input processing
      code. If so, we do not output anything. Instead, we rely on the
@@ -486,12 +535,6 @@ tcp_output(struct tcp_pcb *pcb)
 
   seg = pcb->unsent;
 
-  /* useg should point to last segment on unacked queue */
-  useg = pcb->unacked;
-  if (useg != NULL) {
-    for (; useg->next != NULL; useg = useg->next);
-  }
-
   /* If the TF_ACK_NOW flag is set and no data will be sent (either
    * because the ->unsent queue is empty or because the window does
    * not allow it), construct an empty ACK segment and send it.
@@ -501,44 +544,13 @@ tcp_output(struct tcp_pcb *pcb)
   if (pcb->flags & TF_ACK_NOW &&
      (seg == NULL ||
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > wnd)) {
-#if LWIP_TCP_TIMESTAMPS
-    if (pcb->flags & TF_TIMESTAMP)
-      optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
-#endif
-    p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen, PBUF_RAM);
-    if (p == NULL) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
-      return ERR_BUF;
-    }
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG, 
-                ("tcp_output: sending ACK for %"U32_F"\n", pcb->rcv_nxt));
-    /* remove ACK flags from the PCB, as we send an empty ACK now */
-    pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+     return tcp_send_empty_ack(pcb);
+  }
 
-    tcphdr = tcp_output_set_header(pcb, p, optlen, htonl(pcb->snd_nxt));
-
-    /* NB. MSS option is only sent on SYNs, so ignore it here */
-#if LWIP_TCP_TIMESTAMPS
-    pcb->ts_lastacksent = pcb->rcv_nxt;
-
-    if (pcb->flags & TF_TIMESTAMP)
-      tcp_build_timestamp_option(pcb, (u32_t *)(tcphdr + 1));
-#endif 
-
-#if CHECKSUM_GEN_TCP
-    tcphdr->chksum = inet_chksum_pseudo(p, &(pcb->local_ip), &(pcb->remote_ip),
-          IP_PROTO_TCP, p->tot_len);
-#endif
-#if LWIP_NETIF_HWADDRHINT
-    ip_output_hinted(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
-        IP_PROTO_TCP, &(pcb->addr_hint));
-#else /* LWIP_NETIF_HWADDRHINT*/
-    ip_output(p, &(pcb->local_ip), &(pcb->remote_ip), pcb->ttl, pcb->tos,
-        IP_PROTO_TCP);
-#endif /* LWIP_NETIF_HWADDRHINT*/
-    pbuf_free(p);
-
-    return ERR_OK;
+  /* useg should point to last segment on unacked queue */
+  useg = pcb->unacked;
+  if (useg != NULL) {
+    for (; useg->next != NULL; useg = useg->next);
   }
 
 #if TCP_OUTPUT_DEBUG

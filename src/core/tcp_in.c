@@ -1267,7 +1267,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
       } else {
         /* We get here if the incoming segment is out-of-sequence. */
-        tcp_ack_now(pcb);
+        tcp_send_empty_ack(pcb);
 #if TCP_QUEUE_OOSEQ
         /* We queue the segment on the ->ooseq queue. */
         if (pcb->ooseq == NULL) {
@@ -1376,7 +1376,7 @@ tcp_receive(struct tcp_pcb *pcb)
       }
     } else {
       /* The incoming segment is not withing the window. */
-      tcp_ack_now(pcb);
+      tcp_send_empty_ack(pcb);
     }
   } else {
     /* Segments with length 0 is taken care of here. Segments that
