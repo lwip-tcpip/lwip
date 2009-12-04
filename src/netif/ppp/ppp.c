@@ -166,7 +166,7 @@ typedef struct PPPControl_s {
   ext_accm outACCM;             /* Async-Ctl-Char-Map for output. */
 #if PPPOS_SUPPORT && VJ_SUPPORT
   int  vjEnabled;               /* Flag indicating VJ compression enabled. */
-  struct vjcompress vjComp;     /* Van Jabobsen compression header. */
+  struct vjcompress vjComp;     /* Van Jacobson compression header. */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
   struct netif netif;
