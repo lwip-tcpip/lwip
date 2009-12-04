@@ -46,6 +46,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-04: Simon Goldschmidt (patch by Ioardan Neshev)
+  * pap.c: patch #6969: PPP: missing PAP authentication UNTIMEOUT
+
   2009-12-03: Simon Goldschmidt
   * tcp.h, tcp_in.c, tcp_out.c: Fixed bug #28106: dup ack for fast retransmit
     could have non-zero length
