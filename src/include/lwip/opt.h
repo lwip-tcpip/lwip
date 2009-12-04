@@ -1527,9 +1527,12 @@
 #endif
 #define PPP_MINMRU                      128             /* No MRUs below this */
 
-
+#ifndef MAXNAMELEN
 #define MAXNAMELEN                      256     /* max length of hostname or name for auth */
+#endif
+#ifndef MAXSECRETLEN
 #define MAXSECRETLEN                    256     /* max length of password or secret */
+#endif
 
 #endif /* PPP_SUPPORT */
 
