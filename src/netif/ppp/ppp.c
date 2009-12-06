@@ -235,7 +235,7 @@ struct protent *ppp_protocols[] = {
  * Buffers for outgoing packets.  This must be accessed only from the appropriate
  * PPP task so that it doesn't need to be protected to avoid collisions.
  */
-u_char *outpacket_buf[NUM_PPP];  
+u_char outpacket_buf[NUM_PPP][PPP_MRU+PPP_HDRLEN];
 
 
 /*****************************/
@@ -379,7 +379,7 @@ pppHupCB(void *arg)
 
 struct ppp_settings ppp_settings;
 
-err_t
+void
 pppInit(void)
 {
   struct protent *protp;
@@ -396,15 +396,6 @@ pppInit(void)
   for (i = 0; i < NUM_PPP; i++) {
     pppControl[i].openFlag = 0;
 
-    outpacket_buf[i] = (u_char *)mem_malloc(PPP_MRU+PPP_HDRLEN);
-    if (!outpacket_buf[i]) {
-      for (j = 0; j < i; j++) {
-        /* deallocate all preceding buffers */
-        mem_free(outpacket_buf[j]);
-      }
-      return ERR_MEM;
-    }
-
     /*
      * Initialize to the standard option set.
      */
@@ -416,8 +407,6 @@ pppInit(void)
 #if PPPOE_SUPPORT
   pppoe_init();
 #endif /* PPPOE_SUPPORT */
-
-  return ERR_OK;
 }
 
 void

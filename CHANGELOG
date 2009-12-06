@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-06: Simon Goldschmidt
+  * ppp.h/.c: Fixed bug #27079 (Yet another leak in PPP): outpacket_buf can
+    be statically allocated (like in ucip)
+
   2009-12-04: Simon Goldschmidt (patch by Ioardan Neshev)
   * pap.c: patch #6969: PPP: missing PAP authentication UNTIMEOUT
 
