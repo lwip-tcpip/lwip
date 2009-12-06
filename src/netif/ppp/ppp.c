@@ -584,7 +584,7 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
     pppControl[pd].openFlag = !0;
   }
 
-  /* Launch a deamon thread. */
+  /* PPP session descriptor found, start PPPoE */
   if (pd >= 0) {
 
     pppControl[pd].openFlag = 1;
@@ -1369,6 +1369,8 @@ sifdown(int pd)
     PPPDEBUG((LOG_WARNING, "sifdown[%d]: bad parms\n", pd));
   } else {
     pc->if_up = 0;
+    /* make sure the netif status callback is called */
+    netif_set_down(&pc->netif);
     netif_remove(&pc->netif);
     PPPDEBUG((LOG_DEBUG, "sifdown: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
     if(pc->linkStatusCB) {
