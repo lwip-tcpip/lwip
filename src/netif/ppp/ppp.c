@@ -413,12 +413,6 @@ pppInit(void)
     }
   }
 
-#if LINK_STATS
-  /** @todo already done in stats_init (in fact, zeroed at boot). So, remove it? */
-  /* Clear the statistics. */
-  memset(&lwip_stats.link, 0, sizeof(lwip_stats.link));
-#endif /* LINK_STATS */
-
 #if PPPOE_SUPPORT
   pppoe_init();
 #endif /* PPPOE_SUPPORT */
