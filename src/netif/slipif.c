@@ -39,7 +39,7 @@
 
 /* 
  * This is an arch independent SLIP netif. The specific serial hooks must be
- * provided by another file. They are sio_open, sio_recv and sio_send
+ * provided by another file. They are sio_open, sio_read/sio_tryread and sio_send
  */
 
 #include "netif/slipif.h"
@@ -151,7 +151,7 @@ slip_sio_read(sio_fd_t fd, u8_t* data, u32_t len, u8_t block)
 /**
  * Handle the incoming SLIP stream character by character
  *
- * Poll the serial layer by calling sio_recv()
+ * Poll the serial layer by calling sio_read() or sio_tryread().
  *
  * @param netif the lwip network interface structure for this slipif
  * @param block if 1, block until data is received; if 0, return when all data
