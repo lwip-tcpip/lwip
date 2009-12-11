@@ -109,7 +109,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
 {
   struct test_tcp_counters counters;
   struct tcp_pcb* pcb;
-  struct pbuf *p_8_9, *p_4_8, *p_4_10, *p_2_14, *pinseq;
+  struct pbuf *p_8_9, *p_4_8, *p_4_10, *p_2_14, *p_fin, *pinseq;
   char data[] = {
      1,  2,  3,  4,
      5,  6,  7,  8,
@@ -140,7 +140,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
   /* pinseq is sent as last segment! */
   pinseq = tcp_create_rx_segment(pcb, &data[0],  4, 0, 0, TCP_ACK);
   /* p1: 8 bytes before FIN */
-  /*     seqno: 8..15 */
+  /*     seqno: 8..16 */
   p_8_9  = tcp_create_rx_segment(pcb, &data[8],  8, 8, 0, TCP_ACK|TCP_FIN);
   /* p2: 4 bytes before p1, including the first 4 bytes of p1 (partly duplicate) */
   /*     seqno: 4..11 */
@@ -150,13 +150,16 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
   p_4_10 = tcp_create_rx_segment(pcb, &data[4], 10, 4, 0, TCP_ACK);
   /* p4: 14 bytes before FIN, includes data from p1 and p2, plus partly from pinseq */
   /*     seqno: 2..15 */
-  p_2_14 = tcp_create_rx_segment(pcb, &data[2], 14, 2, 0, TCP_ACK|TCP_FIN);
+  p_2_14 = tcp_create_rx_segment(pcb, &data[2], 14, 2, 0, TCP_ACK);
+  /* FIN, seqno 16 */
+  p_fin  = tcp_create_rx_segment(pcb,     NULL,  0,16, 0, TCP_ACK|TCP_FIN);
   EXPECT(pinseq != NULL);
   EXPECT(p_8_9 != NULL);
   EXPECT(p_4_8 != NULL);
   EXPECT(p_4_10 != NULL);
   EXPECT(p_2_14 != NULL);
-  if ((pinseq != NULL) && (p_8_9 != NULL) && (p_4_8 != NULL) && (p_4_10 != NULL) && (p_2_14 != NULL)) {
+  EXPECT(p_fin != NULL);
+  if ((pinseq != NULL) && (p_8_9 != NULL) && (p_4_8 != NULL) && (p_4_10 != NULL) && (p_2_14 != NULL) && (p_fin != NULL)) {
     /* pass the segment to tcp_input */
     tcp_input(p_8_9, &netif);
     /* check if counters are as expected */
@@ -205,9 +208,25 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT(counters.recved_bytes == 0);
     EXPECT(counters.err_calls == 0);
     /* check ooseq queue */
-    EXPECT_OOSEQ(tcp_oos_count(pcb) == 1);
+    EXPECT_OOSEQ(tcp_oos_count(pcb) == 2);
     EXPECT_OOSEQ(tcp_oos_seg_seqno(pcb, 0) == 2);
-    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 15); /* includes FIN */
+    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 6);
+    EXPECT_OOSEQ(tcp_oos_seg_seqno(pcb, 1) == 8);
+    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 9); /* includes FIN */
+
+    /* pass the segment to tcp_input */
+    tcp_input(p_fin, &netif);
+    /* check if counters are as expected */
+    EXPECT(counters.close_calls == 0);
+    EXPECT(counters.recv_calls == 0);
+    EXPECT(counters.recved_bytes == 0);
+    EXPECT(counters.err_calls == 0);
+    /* ooseq queue: unchanged */
+    EXPECT_OOSEQ(tcp_oos_count(pcb) == 2);
+    EXPECT_OOSEQ(tcp_oos_seg_seqno(pcb, 0) == 2);
+    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 6);
+    EXPECT_OOSEQ(tcp_oos_seg_seqno(pcb, 1) == 8);
+    EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 9); /* includes FIN */
 
     /* pass the segment to tcp_input */
     tcp_input(pinseq, &netif);
