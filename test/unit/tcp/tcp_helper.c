@@ -121,6 +121,8 @@ tcp_set_state(struct tcp_pcb* pcb, enum tcp_state state, struct ip_addr* local_i
     pcb->local_port = local_port;
     pcb->remote_ip.addr = remote_ip->addr;
     pcb->remote_port = remote_port;
+  } else {
+    fail();
   }
 }
 
