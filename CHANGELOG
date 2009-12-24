@@ -19,6 +19,14 @@ HISTORY
 
   ++ New features:
 
+
+  ++ Bugfixes:
+
+
+(STABLE-1.3.2)
+
+  ++ New features:
+
   2009-10-27 Simon Goldschmidt/Stephan Lesage
   * netifapi.c/.h: Added netifapi_netif_set_addr()
 
