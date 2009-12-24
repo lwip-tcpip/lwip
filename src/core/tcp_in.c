@@ -743,17 +743,24 @@ tcp_process(struct tcp_pcb *pcb)
 static void
 tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
 {
+  struct tcp_seg *old_seg;
+
   if (TCPH_FLAGS(cseg->tcphdr) & TCP_FIN) {
     /* received segment overlaps all following segments */
     tcp_segs_free(next);
     next = NULL;
   }
   else {
-    /* delete some following segments */
+    /* delete some following segments
+       oos queue may have segments with FIN flag */
     while (next &&
-           TCP_SEQ_GT((seqno + cseg->len),
+           TCP_SEQ_GEQ((seqno + cseg->len),
                       (next->tcphdr->seqno + next->len))) {
-      struct tcp_seg *old_seg = next;
+      /* cseg with FIN already processed */
+      if (TCPH_FLAGS(next->tcphdr) & TCP_FIN) {
+        TCPH_FLAGS_SET(cseg->tcphdr, TCPH_FLAGS(cseg->tcphdr) | TCP_FIN);
+      }
+      old_seg = next;
       next = next->next;
       tcp_seg_free(old_seg);
     }
@@ -1160,17 +1167,45 @@ tcp_receive(struct tcp_pcb *pcb)
                         ("tcp_receive: received in-order FIN, binning ooseq queue\n"));
             /* Received in-order FIN means anything that was received
              * out of order must now have been received in-order, so
-             * bin the ooseq queue */
+             * bin the ooseq queue
+             * rcv_nxt
+             * .    |--ooseq--|
+             * .==seg============|FIN
+             */
             while (pcb->ooseq != NULL) {
               struct tcp_seg *old_ooseq = pcb->ooseq;
               pcb->ooseq = pcb->ooseq->next;
               tcp_seg_free(old_ooseq);
             }               
-          } else if (TCP_SEQ_LEQ(pcb->ooseq->tcphdr->seqno, seqno + tcplen)) {
-            if (pcb->ooseq->len > 0) {
-              /* We have to trim the second edge of the incoming segment. */
-              LWIP_ASSERT("tcp_receive: trimmed segment would have zero length\n",
-                          TCP_SEQ_GT(pcb->ooseq->tcphdr->seqno, seqno));
+          } 
+          else {
+            struct tcp_seg* next = pcb->ooseq;
+            struct tcp_seg *old_seg;
+            /* rcv_nxt
+             * .    |--ooseq--|
+             * .==seg============|
+             */
+            while (next &&
+                   TCP_SEQ_GEQ(seqno + tcplen,
+                               next->tcphdr->seqno + next->len)) {
+              /* inseg doesn't have FIN (already processed) */
+              if (TCPH_FLAGS(next->tcphdr) & TCP_FIN &&
+                  (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) == 0) {
+                TCPH_FLAGS_SET(inseg.tcphdr, 
+                               TCPH_FLAGS(inseg.tcphdr) | TCP_FIN);
+                tcplen = TCP_TCPLEN(&inseg);
+              }
+              old_seg = next;
+              next = next->next;
+              tcp_seg_free(old_seg);
+            }
+            /* rcv_nxt
+             * .             |--ooseq--|
+             * .==seg============|
+             */
+            if (next &&
+                TCP_SEQ_GT(seqno + tcplen,
+                           next->tcphdr->seqno)) {
               /* FIN in inseg already handled by dropping whole ooseq queue */
               inseg.len = (u16_t)(pcb->ooseq->tcphdr->seqno - seqno);
               if (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) {
@@ -1180,15 +1215,8 @@ tcp_receive(struct tcp_pcb *pcb)
               tcplen = TCP_TCPLEN(&inseg);
               LWIP_ASSERT("tcp_receive: segment not trimmed correctly to ooseq queue\n",
                           (seqno + tcplen) == pcb->ooseq->tcphdr->seqno);
-            } else {
-              /* does the ooseq segment contain only flags that are in inseg also? */
-              if ((TCPH_FLAGS(inseg.tcphdr) & (TCP_FIN|TCP_SYN)) ==
-                  (TCPH_FLAGS(pcb->ooseq->tcphdr) & (TCP_FIN|TCP_SYN))) {
-                struct tcp_seg *old_ooseq = pcb->ooseq;
-                pcb->ooseq = pcb->ooseq->next;
-                tcp_seg_free(old_ooseq);
-              }
             }
+            pcb->ooseq = next;
           }
         }
 #endif /* TCP_QUEUE_OOSEQ */

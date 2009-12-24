@@ -46,6 +46,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-24: Kieran Mansley
+  * tcp_in.c Apply patches from Oleg Tyshev to improve OOS processing
+    (BUG#28241)
+
   2009-12-06: Simon Goldschmidt
   * ppp.h/.c: Fixed bug #27079 (Yet another leak in PPP): outpacket_buf can
     be statically allocated (like in ucip)
