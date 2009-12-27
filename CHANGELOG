@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2009-12-27: Simon Goldschmidt
+  * opt.h, etharp.h/.c, init.c, tcpip.c: Added an additional option
+    LWIP_ETHERNET to support ethernet without ARP (necessary for pure PPPoE)
+
 
   ++ Bugfixes:
 
