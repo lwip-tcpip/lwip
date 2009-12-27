@@ -22,6 +22,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-27: Simon Goldschmidt
+  * tcp_in.c: Another fix for bug #28241 (ooseq processing) and adapted
+    unit test
+
 
 (STABLE-1.3.2)
 
