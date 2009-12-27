@@ -37,7 +37,7 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
+#if LWIP_ARP || LWIP_ETHERNET /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
@@ -139,6 +139,8 @@ PACK_STRUCT_END
 #define ETHTYPE_PPPOEDISC 0x8863  /* PPP Over Ethernet Discovery Stage */
 #define ETHTYPE_PPPOE     0x8864  /* PPP Over Ethernet Session Stage */
 
+#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
+
 /** ARP message types (opcodes) */
 #define ARP_REQUEST 1
 #define ARP_REPLY   2
@@ -169,8 +171,6 @@ err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
  *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6. */
 #define etharp_gratuitous(netif) etharp_request((netif), &(netif)->ip_addr)
 
-err_t ethernet_input(struct pbuf *p, struct netif *netif);
-
 #if LWIP_AUTOIP
 err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
                  const struct eth_addr *ethdst_addr,
@@ -179,14 +179,18 @@ err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
                  const u16_t opcode);
 #endif /* LWIP_AUTOIP */
 
+#endif /* LWIP_ARP */
+
+err_t ethernet_input(struct pbuf *p, struct netif *netif);
+
 #define eth_addr_cmp(addr1, addr2) (memcmp((addr1)->addr, (addr2)->addr, ETHARP_HWADDR_LEN) == 0)
 
 extern const struct eth_addr ethbroadcast, ethzero;
 
+#endif /* LWIP_ARP || LWIP_ETHERNET */
+
 #ifdef __cplusplus
 }
 #endif
-
-#endif /* LWIP_ARP */
 
 #endif /* __NETIF_ARP_H__ */

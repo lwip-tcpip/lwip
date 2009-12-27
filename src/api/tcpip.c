@@ -272,11 +272,11 @@ tcpip_thread(void *arg)
 
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
-#if LWIP_ARP
+#if LWIP_ETHERNET
       if (msg->msg.inp.netif->flags & NETIF_FLAG_ETHARP) {
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
-#endif /* LWIP_ARP */
+#endif /* LWIP_ETHERNET */
       { ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       }
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);

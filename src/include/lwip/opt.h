@@ -376,6 +376,13 @@
 #define ETHARP_SUPPORT_VLAN             0
 #endif
 
+/** LWIP_ETHERNET==1: enable ethernet support for PPPoE even though ARP
+ * might be disabled
+ */
+#ifndef LWIP_ETHERNET
+#define LWIP_ETHERNET                   (LWIP_ARP || PPPOE_SUPPORT)
+#endif
+
 /*
    --------------------------------
    ---------- IP options ----------

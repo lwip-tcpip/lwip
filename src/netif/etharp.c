@@ -45,7 +45,7 @@
  
 #include "lwip/opt.h"
 
-#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
+#if LWIP_ARP || LWIP_ETHERNET
 
 #include "lwip/inet.h"
 #include "lwip/ip.h"
@@ -60,6 +60,11 @@
 #endif /* PPPOE_SUPPORT */
 
 #include <string.h>
+
+const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
+const struct eth_addr ethzero = {{0,0,0,0,0,0}};
+
+#if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 /** the time an ARP entry stays valid after its last update,
  *  for ARP_TMR_INTERVAL = 5000, this is
@@ -103,8 +108,6 @@ struct etharp_entry {
   struct netif *netif;
 };
 
-const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
-const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 #if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry;
@@ -1134,6 +1137,7 @@ etharp_request(struct netif *netif, struct ip_addr *ipaddr)
                     (struct eth_addr *)netif->hwaddr, &netif->ip_addr, &ethzero,
                     ipaddr, ARP_REQUEST);
 }
+#endif /* LWIP_ARP */
 
 /**
  * Process received ethernet frames. Using this function instead of directly
@@ -1175,6 +1179,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #endif /* ETHARP_SUPPORT_VLAN */
 
   switch (type) {
+#if LWIP_ARP
     /* IP packet? */
     case ETHTYPE_IP:
 #if ETHARP_TRUST_IP_MAC
@@ -1196,7 +1201,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       /* pass p to ARP module */
       etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
       break;
-
+#endif /* LWIP_ARP */
 #if PPPOE_SUPPORT
     case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
       pppoe_disc_input(netif, p);
@@ -1219,4 +1224,4 @@ ethernet_input(struct pbuf *p, struct netif *netif)
      so the caller doesn't have to free it again */
   return ERR_OK;
 }
-#endif /* LWIP_ARP */
+#endif /* LWIP_ARP || LWIP_ETHERNET */
