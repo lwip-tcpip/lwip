@@ -42,13 +42,8 @@
 
 #include "lwip/sys.h"
 #include "lwip/memp.h"
+#include "lwip/mem.h"
 #include "lwip/pbuf.h"
-#include "lwip/ip_frag.h"
-#include "lwip/tcp.h"
-#include "lwip/autoip.h"
-#include "lwip/dhcp.h"
-#include "lwip/igmp.h"
-#include "lwip/dns.h"
 #include "lwip/tcpip.h"
 #include "lwip/init.h"
 #include "netif/etharp.h"
@@ -64,160 +59,6 @@ static sys_mbox_t mbox = SYS_MBOX_NULL;
 sys_sem_t lock_tcpip_core;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-#if LWIP_TCP
-/* global variable that shows if the tcp timer is currently scheduled or not */
-static int tcpip_tcp_timer_active;
-
-/**
- * Timer callback function that calls tcp_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-tcpip_tcp_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-
-  /* call TCP timer handler */
-  tcp_tmr();
-  /* timer still needed? */
-  if (tcp_active_pcbs || tcp_tw_pcbs) {
-    /* restart timer */
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
-  } else {
-    /* disable timer */
-    tcpip_tcp_timer_active = 0;
-  }
-}
-
-#if !NO_SYS
-/**
- * Called from TCP_REG when registering a new PCB:
- * the reason is to have the TCP timer only running when
- * there are active (or time-wait) PCBs.
- */
-void
-tcp_timer_needed(void)
-{
-  /* timer is off but needed again? */
-  if (!tcpip_tcp_timer_active && (tcp_active_pcbs || tcp_tw_pcbs)) {
-    /* enable and start timer */
-    tcpip_tcp_timer_active = 1;
-    sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
-  }
-}
-#endif /* !NO_SYS */
-#endif /* LWIP_TCP */
-
-#if IP_REASSEMBLY
-/**
- * Timer callback function that calls ip_reass_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-ip_reass_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: ip_reass_tmr()\n"));
-  ip_reass_tmr();
-  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-}
-#endif /* IP_REASSEMBLY */
-
-#if LWIP_ARP
-/**
- * Timer callback function that calls etharp_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-arp_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: etharp_tmr()\n"));
-  etharp_tmr();
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-}
-#endif /* LWIP_ARP */
-
-#if LWIP_DHCP
-/**
- * Timer callback function that calls dhcp_coarse_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dhcp_timer_coarse(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_coarse_tmr()\n"));
-  dhcp_coarse_tmr();
-  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-}
-
-/**
- * Timer callback function that calls dhcp_fine_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dhcp_timer_fine(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dhcp_fine_tmr()\n"));
-  dhcp_fine_tmr();
-  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-}
-#endif /* LWIP_DHCP */
-
-#if LWIP_AUTOIP
-/**
- * Timer callback function that calls autoip_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-autoip_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: autoip_tmr()\n"));
-  autoip_tmr();
-  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-}
-#endif /* LWIP_AUTOIP */
-
-#if LWIP_IGMP
-/**
- * Timer callback function that calls igmp_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-igmp_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: igmp_tmr()\n"));
-  igmp_tmr();
-  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-}
-#endif /* LWIP_IGMP */
-
-#if LWIP_DNS
-/**
- * Timer callback function that calls dns_tmr() and reschedules itself.
- *
- * @param arg unused argument
- */
-static void
-dns_timer(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip: dns_tmr()\n"));
-  dns_tmr();
-  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-}
-#endif /* LWIP_DNS */
 
 /**
  * The main lwIP thread. This thread has exclusive access to lwIP core functions
@@ -235,33 +76,16 @@ tcpip_thread(void *arg)
   struct tcpip_msg *msg;
   LWIP_UNUSED_ARG(arg);
 
-#if IP_REASSEMBLY
-  sys_timeout(IP_TMR_INTERVAL, ip_reass_timer, NULL);
-#endif /* IP_REASSEMBLY */
-#if LWIP_ARP
-  sys_timeout(ARP_TMR_INTERVAL, arp_timer, NULL);
-#endif /* LWIP_ARP */
-#if LWIP_DHCP
-  sys_timeout(DHCP_COARSE_TIMER_MSECS, dhcp_timer_coarse, NULL);
-  sys_timeout(DHCP_FINE_TIMER_MSECS, dhcp_timer_fine, NULL);
-#endif /* LWIP_DHCP */
-#if LWIP_AUTOIP
-  sys_timeout(AUTOIP_TMR_INTERVAL, autoip_timer, NULL);
-#endif /* LWIP_AUTOIP */
-#if LWIP_IGMP
-  sys_timeout(IGMP_TMR_INTERVAL, igmp_timer, NULL);
-#endif /* LWIP_IGMP */
-#if LWIP_DNS
-  sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
-#endif /* LWIP_DNS */
-
   if (tcpip_init_done != NULL) {
     tcpip_init_done(tcpip_init_done_arg);
   }
 
   LOCK_TCPIP_CORE();
   while (1) {                          /* MAIN Loop */
-    sys_mbox_fetch(mbox, (void *)&msg);
+    UNLOCK_TCPIP_CORE();
+    /* wait for a message, timeouts are processed while waiting */
+    sys_timeouts_mbox_fetch(mbox, (void *)&msg);
+    LOCK_TCPIP_CORE();
     switch (msg->type) {
 #if LWIP_NETCONN
     case TCPIP_MSG_API:

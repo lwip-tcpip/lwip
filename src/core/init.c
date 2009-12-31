@@ -54,6 +54,7 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
+#include "lwip/timers.h"
 #include "netif/etharp.h"
 
 /* Compile-time sanity checks for configuration errors.
@@ -114,7 +115,7 @@
   #error "If you want to use IGMP, you have to define MEMP_NUM_IGMP_GROUP>1 in your lwipopts.h"
 #endif
 #if (PPP_SUPPORT && (NO_SYS==1))
-  #error "If you want to use PPP, you have to define NO_SYS=0 in your lwipopts.h"
+//  #error "If you want to use PPP, you have to define NO_SYS=0 in your lwipopts.h"
 #endif 
 #if (LWIP_NETIF_API && (NO_SYS==1))
   #error "If you want to use NETIF API, you have to define NO_SYS=0 in your lwipopts.h"
@@ -274,4 +275,6 @@ lwip_init(void)
 #if LWIP_DNS
   dns_init();
 #endif /* LWIP_DNS */
+
+  sys_timeouts_init();
 }

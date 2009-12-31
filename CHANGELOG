@@ -19,6 +19,13 @@ HISTORY
 
   ++ New features:
 
+  2009-12-31: Simon Goldschmidt
+  * tcpip.c, init.c, memp.c, sys.c, memp_std.h, sys.h, tcpip.h
+    added timers.c/.h: Separated timer implementation from semaphore/mbox
+    implementation, moved timer implementation to timers.c/.h, timers are
+    now only called from tcpip_thread or by explicitly checking them.
+    (TASK#7235)
+
   2009-12-27: Simon Goldschmidt
   * opt.h, etharp.h/.c, init.c, tcpip.c: Added an additional option
     LWIP_ETHERNET to support ethernet without ARP (necessary for pure PPPoE)
