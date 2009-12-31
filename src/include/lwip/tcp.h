@@ -85,7 +85,7 @@ void             tcp_err     (struct tcp_pcb *pcb,
 #if TCP_LISTEN_BACKLOG
 #define          tcp_accepted(pcb) (((struct tcp_pcb_listen *)(pcb))->accepts_pending--)
 #else  /* TCP_LISTEN_BACKLOG */
-#define          tcp_accepted(pcb)
+#define          tcp_accepted(pcb) LWIP_UNUSED_ARG(pcb);
 #endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
