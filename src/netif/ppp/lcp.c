@@ -72,25 +72,25 @@
 #define PPPOE_MAXMTU PPP_MAXMRU
 #endif
 
+/* options */
+LinkPhase lcp_phase[NUM_PPP];          /* Phase of link session (RFC 1661) */
+static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
+static u_int lcp_echo_fails         = LCP_MAXECHOFAILS; /* Tolerance to unanswered echo-requests */
 
-/*************************/
-/*** LOCAL DEFINITIONS ***/
-/*************************/
-/*
- * Length of each type of configuration option (in octets)
- */
-#define CILEN_VOID  2
-#define CILEN_CHAR  3
-#define CILEN_SHORT 4 /* CILEN_VOID + sizeof(short) */
-#define CILEN_CHAP  5 /* CILEN_VOID + sizeof(short) + 1 */
-#define CILEN_LONG  6 /* CILEN_VOID + sizeof(long) */
-#define CILEN_LQR   8 /* CILEN_VOID + sizeof(short) + sizeof(long) */
-#define CILEN_CBCP  3
+/* global vars */
+static fsm lcp_fsm[NUM_PPP];                            /* LCP fsm structure (global)*/
+lcp_options lcp_wantoptions[NUM_PPP];  /* Options that we want to request */
+lcp_options lcp_gotoptions[NUM_PPP];   /* Options that peer ack'd */
+lcp_options lcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
+lcp_options lcp_hisoptions[NUM_PPP];   /* Options that we ack'd */
+ext_accm xmit_accm[NUM_PPP];           /* extended transmit ACCM */
 
+static u32_t lcp_echos_pending      = 0;                /* Number of outstanding echo msgs */
+static u32_t lcp_echo_number        = 0;                /* ID number of next echo frame */
+static u32_t lcp_echo_timer_running = 0;                /* TRUE if a timer is running */
 
-/***********************************/
-/*** LOCAL FUNCTION DECLARATIONS ***/
-/***********************************/
+static u_char nak_buffer[PPP_MRU]; /* where we construct a nak packet */
+
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
@@ -106,12 +106,12 @@ static void lcp_down (fsm*);                      /* We're DOWN */
 static void lcp_starting (fsm*);                  /* We need lower layer up */
 static void lcp_finished (fsm*);                  /* We need lower layer down */
 static int  lcp_extcode (fsm*, int, u_char, u_char*, int);
-
 static void lcp_rprotrej (fsm*, u_char*, int);
 
 /*
  * routines to send LCP echos to peer
  */
+
 static void lcp_echo_lowerup (int);
 static void lcp_echo_lowerdown (int);
 static void LcpEchoTimeout (void*);
@@ -119,41 +119,6 @@ static void lcp_received_echo_reply (fsm*, int, u_char*, int);
 static void LcpSendEchoRequest (fsm*);
 static void LcpLinkFailure (fsm*);
 static void LcpEchoCheck (fsm*);
-
-/*
- * Protocol entry points.
- * Some of these are called directly.
- */
-static void lcp_input (int, u_char *, int);
-static void lcp_protrej (int);
-
-#define CODENAME(x) ((x) == CONFACK ? "ACK" : (x) == CONFNAK ? "NAK" : "REJ")
-
-
-/******************************/
-/*** PUBLIC DATA STRUCTURES ***/
-/******************************/
-/* global vars */
-LinkPhase lcp_phase[NUM_PPP];          /* Phase of link session (RFC 1661) */
-lcp_options lcp_wantoptions[NUM_PPP];  /* Options that we want to request */
-lcp_options lcp_gotoptions[NUM_PPP];   /* Options that peer ack'd */
-lcp_options lcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
-lcp_options lcp_hisoptions[NUM_PPP];   /* Options that we ack'd */
-ext_accm xmit_accm[NUM_PPP];           /* extended transmit ACCM */
-
-
-
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
-static fsm lcp_fsm[NUM_PPP];                            /* LCP fsm structure (global)*/
-static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
-static u_int lcp_echo_fails         = LCP_MAXECHOFAILS; /* Tolerance to unanswered echo-requests */
-static u32_t lcp_echos_pending      = 0;                /* Number of outstanding echo msgs */
-static u32_t lcp_echo_number        = 0;                /* ID number of next echo frame */
-static u32_t lcp_echo_timer_running = 0;                /* TRUE if a timer is running */
-
-static u_char nak_buffer[PPP_MRU]; /* where we construct a nak packet */
 
 static fsm_callbacks lcp_callbacks = { /* LCP callback routines */
   lcp_resetci,  /* Reset our Configuration Information */
@@ -173,6 +138,13 @@ static fsm_callbacks lcp_callbacks = { /* LCP callback routines */
   "LCP"         /* String name of protocol */
 };
 
+/*
+ * Protocol entry points.
+ * Some of these are called directly.
+ */
+static void lcp_input (int, u_char *, int);
+static void lcp_protrej (int);
+
 struct protent lcp_protent = {
     PPP_LCP,
     lcp_init,
@@ -182,26 +154,35 @@ struct protent lcp_protent = {
     lcp_lowerdown,
     lcp_open,
     lcp_close,
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
     lcp_printpkt,
     NULL,
-#endif
+#endif /* PPP_ADDITIONAL_CALLBACKS */
     1,
     "LCP",
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
     NULL,
     NULL,
     NULL
-#endif
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 };
 
 int lcp_loopbackfail = DEFLOOPBACKFAIL;
 
+/*
+ * Length of each type of configuration option (in octets)
+ */
+#define CILEN_VOID  2
+#define CILEN_CHAR  3
+#define CILEN_SHORT 4 /* CILEN_VOID + sizeof(short) */
+#define CILEN_CHAP  5 /* CILEN_VOID + sizeof(short) + 1 */
+#define CILEN_LONG  6 /* CILEN_VOID + sizeof(long) */
+#define CILEN_LQR   8 /* CILEN_VOID + sizeof(short) + sizeof(long) */
+#define CILEN_CBCP  3
+
+#define CODENAME(x) ((x) == CONFACK ? "ACK" : (x) == CONFNAK ? "NAK" : "REJ")
 
 
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
 /*
  * lcp_init - Initialize LCP.
  */
@@ -356,21 +337,6 @@ lcp_lowerdown(int unit)
   fsm_lowerdown(&lcp_fsm[unit]);
 }
 
-/*
- * lcp_sprotrej - Send a Protocol-Reject for some protocol.
- */
-void
-lcp_sprotrej(int unit, u_char *p, int len)
-{
-  /*
-   * Send back the protocol and the information field of the
-   * rejected packet.  We only get here if LCP is in the LS_OPENED state.
-   */
-
-  fsm_sdata(&lcp_fsm[unit], PROTREJ, ++lcp_fsm[unit].id, p, len);
-}
-
-
 
 /**********************************/
 /*** LOCAL FUNCTION DEFINITIONS ***/
@@ -480,6 +446,21 @@ lcp_protrej(int unit)
    */
   LCPDEBUG((LOG_WARNING, "lcp_protrej: Received Protocol-Reject for LCP!\n"));
   fsm_protreject(&lcp_fsm[unit]);
+}
+
+
+/*
+ * lcp_sprotrej - Send a Protocol-Reject for some protocol.
+ */
+void
+lcp_sprotrej(int unit, u_char *p, int len)
+{
+  /*
+   * Send back the protocol and the information field of the
+   * rejected packet.  We only get here if LCP is in the LS_OPENED state.
+   */
+
+  fsm_sdata(&lcp_fsm[unit], PROTREJ, ++lcp_fsm[unit].id, p, len);
 }
 
 
@@ -1382,7 +1363,7 @@ lcp_reqci(fsm *f,
           }
           GETCHAR(cichar, p);  /* get digest type*/
           if (cichar != CHAP_DIGEST_MD5
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
               && cichar != CHAP_MICROSOFT
 #endif
           ) {
@@ -1691,7 +1672,7 @@ lcp_finished(fsm *f)
 }
 
 
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
 /*
  * print_string - print a readable representation of a string using
  * printer.
@@ -1898,7 +1879,7 @@ lcp_printpkt( u_char *p, int plen, void (*printer) (void *, char *, ...), void *
 
   return (int)(p - pstart);
 }
-#endif
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 
 /*
  * Time to shut down the link because there is nothing out there.

@@ -1,3 +1,5 @@
+/** In contrast to pppd 2.3.1, DNS support has been added, proxy-ARP and
+    dial-on-demand has been stripped. */
 /*****************************************************************************
 * ipcp.c - Network PPP IP Control Protocol program file.
 *
@@ -63,25 +65,18 @@
 
 #include <string.h>
 
-/*************************/
-/*** LOCAL DEFINITIONS ***/
-/*************************/
 /* #define OLD_CI_ADDRS 1 */ /* Support deprecated address negotiation. */
 
-/*
- * Lengths of configuration options.
- */
-#define CILEN_VOID     2
-#define CILEN_COMPRESS 4  /* min length for compression protocol opt. */
-#define CILEN_VJ       6  /* length for RFC1332 Van-Jacobson opt. */
-#define CILEN_ADDR     6  /* new-style single address option */
-#define CILEN_ADDRS    10 /* old-style dual address option */
+/* global vars */
+ipcp_options ipcp_wantoptions[NUM_PPP];  /* Options that we want to request */
+ipcp_options ipcp_gotoptions[NUM_PPP];   /* Options that peer ack'd */
+ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
+ipcp_options ipcp_hisoptions[NUM_PPP];   /* Options that we ack'd */
 
+/* local vars */
+static int cis_received[NUM_PPP];      /* # Conf-Reqs received */
+static int default_route_set[NUM_PPP]; /* Have set up a default route */
 
-
-/***********************************/
-/*** LOCAL FUNCTION DECLARATIONS ***/
-/***********************************/
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
@@ -94,70 +89,14 @@ static int  ipcp_rejci (fsm *, u_char *, int);        /* Peer rej'd our CI */
 static int  ipcp_reqci (fsm *, u_char *, int *, int); /* Rcv CI */
 static void ipcp_up (fsm *);                          /* We're UP */
 static void ipcp_down (fsm *);                        /* We're DOWN */
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
 static void ipcp_script (fsm *, char *); /* Run an up/down script */
 #endif
 static void ipcp_finished (fsm *);                    /* Don't need lower layer */
 
-/*
- * Protocol entry points from main code.
- */
-static void ipcp_init (int);
-static void ipcp_open (int);
-static void ipcp_close (int, char *);
-static void ipcp_lowerup (int);
-static void ipcp_lowerdown (int);
-static void ipcp_input (int, u_char *, int);
-static void ipcp_protrej (int);
-
-static void ipcp_clear_addrs (int);
-
-#define CODENAME(x) ((x) == CONFACK ? "ACK" : \
-                     (x) == CONFNAK ? "NAK" : "REJ")
-
-
-
-/******************************/
-/*** PUBLIC DATA STRUCTURES ***/
-/******************************/
-/* global vars */
-ipcp_options ipcp_wantoptions[NUM_PPP];  /* Options that we want to request */
-ipcp_options ipcp_gotoptions[NUM_PPP];   /* Options that peer ack'd */
-ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
-ipcp_options ipcp_hisoptions[NUM_PPP];   /* Options that we ack'd */
 
 fsm ipcp_fsm[NUM_PPP]; /* IPCP fsm structure */
 
-struct protent ipcp_protent = {
-  PPP_IPCP,
-  ipcp_init,
-  ipcp_input,
-  ipcp_protrej,
-  ipcp_lowerup,
-  ipcp_lowerdown,
-  ipcp_open,
-  ipcp_close,
-#if 0
-  ipcp_printpkt,
-  NULL,
-#endif
-  1,
-  "IPCP",
-#if 0
-  ip_check_options,
-  NULL,
-  ip_active_pkt
-#endif
-};
-
-
-
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
-/* local vars */
-static int cis_received[NUM_PPP];      /* # Conf-Reqs received */
-static int default_route_set[NUM_PPP]; /* Have set up a default route */
 
 static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
   ipcp_resetci,  /* Reset our Configuration Information */
@@ -177,11 +116,55 @@ static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
   "IPCP"         /* String name of protocol */
 };
 
+/*
+ * Protocol entry points from main code.
+ */
+static void ipcp_init (int);
+static void ipcp_open (int);
+static void ipcp_close (int, char *);
+static void ipcp_lowerup (int);
+static void ipcp_lowerdown (int);
+static void ipcp_input (int, u_char *, int);
+static void ipcp_protrej (int);
 
 
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
+struct protent ipcp_protent = {
+  PPP_IPCP,
+  ipcp_init,
+  ipcp_input,
+  ipcp_protrej,
+  ipcp_lowerup,
+  ipcp_lowerdown,
+  ipcp_open,
+  ipcp_close,
+#if PPP_ADDITIONAL_CALLBACKS
+  ipcp_printpkt,
+  NULL,
+#endif /* PPP_ADDITIONAL_CALLBACKS */
+  1,
+  "IPCP",
+#if PPP_ADDITIONAL_CALLBACKS
+  ip_check_options,
+  NULL,
+  ip_active_pkt
+#endif /* PPP_ADDITIONAL_CALLBACKS */
+};
+
+static void ipcp_clear_addrs (int);
+
+/*
+ * Lengths of configuration options.
+ */
+#define CILEN_VOID     2
+#define CILEN_COMPRESS 4  /* min length for compression protocol opt. */
+#define CILEN_VJ       6  /* length for RFC1332 Van-Jacobson opt. */
+#define CILEN_ADDR     6  /* new-style single address option */
+#define CILEN_ADDRS    10 /* old-style dual address option */
+
+
+#define CODENAME(x) ((x) == CONFACK ? "ACK" : \
+                     (x) == CONFNAK ? "NAK" : "REJ")
+
 
 #define inet_ntoa(addr) ip_ntoa(((struct ip_addr*)&(addr)))
 
@@ -1361,7 +1344,7 @@ ipcp_finished(fsm *f)
   np_finished(f->unit, PPP_IP);
 }
 
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
 static int
 ipcp_printpkt(u_char *p, int plen, void (*printer) (void *, char *, ...), void *arg)
 {
@@ -1422,6 +1405,6 @@ ip_active_pkt(u_char *pkt, int len)
   }
   return 1;
 }
-#endif
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 
 #endif /* PPP_SUPPORT */

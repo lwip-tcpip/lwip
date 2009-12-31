@@ -33,6 +33,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2009-12-31: Simon Goldschmidt
+  * many ppp files: Reorganised PPP source code from ucip structure to pppd
+    structure to easily compare our code against the pppd code (around v2.3.1)
+
   2009-12-27: Simon Goldschmidt
   * tcp_in.c: Another fix for bug #28241 (ooseq processing) and adapted
     unit test

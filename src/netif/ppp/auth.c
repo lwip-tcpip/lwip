@@ -321,6 +321,51 @@ link_established(int unit)
 }
 
 /*
+ * Proceed to the network phase.
+ */
+static void
+network_phase(int unit)
+{
+  int i;
+  struct protent *protp;
+  lcp_options *go = &lcp_gotoptions[unit];
+  
+  /*
+   * If the peer had to authenticate, run the auth-up script now.
+   */
+  if ((go->neg_chap || go->neg_upap) && !did_authup) {
+    /* XXX Do setup for peer authentication. */
+    did_authup = 1;
+  }
+
+#if CBCP_SUPPORT
+  /*
+   * If we negotiated callback, do it now.
+   */
+  if (go->neg_cbcp) {
+    lcp_phase[unit] = PHASE_CALLBACK;
+    (*cbcp_protent.open)(unit);
+    return;
+  }
+#endif /* CBCP_SUPPORT */
+
+  lcp_phase[unit] = PHASE_NETWORK;
+  for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i) {
+    if (protp->protocol < 0xC000 && protp->enabled_flag && protp->open != NULL) {
+      (*protp->open)(unit);
+      if (protp->protocol != PPP_CCP) {
+        ++num_np_open;
+      }
+    }
+  }
+
+  if (num_np_open == 0) {
+    /* nothing to do */
+    lcp_close(0, "No network protocols running");
+  }
+}
+
+/*
  * The peer has failed to authenticate himself using `protocol'.
  */
 void
@@ -395,6 +440,8 @@ auth_withpeer_fail(int unit, u16_t protocol)
    * not necessarily the PPP connection.  It works here as long
    * as we are only supporting PPP interfaces.
    */
+  /* @todo: Remove pppIOCtl, it is not used anywhere else.
+           Instead, directly set errCode. */
   pppIOCtl(unit, PPPCTLS_ERRCODE, &errCode);
 
   /*
@@ -501,6 +548,85 @@ np_finished(int unit, u16_t proto)
 }
 
 /*
+ * check_idle - check whether the link has been idle for long
+ * enough that we can shut it down.
+ */
+static void
+check_idle(void *arg)
+{
+  struct ppp_idle idle;
+  u_short itime;
+  
+  LWIP_UNUSED_ARG(arg);
+  if (!get_idle_time(0, &idle)) {
+    return;
+  }
+  itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
+  if (itime >= ppp_settings.idle_time_limit) {
+    /* link is idle: shut it down. */
+    AUTHDEBUG((LOG_INFO, "Terminating connection due to lack of activity.\n"));
+    lcp_close(0, "Link inactive");
+  } else {
+    TIMEOUT(check_idle, NULL, ppp_settings.idle_time_limit - itime);
+  }
+}
+
+/*
+ * connect_time_expired - log a message and close the connection.
+ */
+static void
+connect_time_expired(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+
+  AUTHDEBUG((LOG_INFO, "Connect time expired\n"));
+  lcp_close(0, "Connect time expired");   /* Close connection */
+}
+
+#if 0 /* UNUSED */
+/*
+ * auth_check_options - called to check authentication options.
+ */
+void
+auth_check_options(void)
+{
+  lcp_options *wo = &lcp_wantoptions[0];
+  int can_auth;
+  ipcp_options *ipwo = &ipcp_wantoptions[0];
+  u32_t remote;
+
+  /* Default our_name to hostname, and user to our_name */
+  if (ppp_settings.our_name[0] == 0 || ppp_settings.usehostname) {
+      strcpy(ppp_settings.our_name, ppp_settings.hostname);
+  }
+
+  if (ppp_settings.user[0] == 0) {
+    strcpy(ppp_settings.user, ppp_settings.our_name);
+  }
+
+  /* If authentication is required, ask peer for CHAP or PAP. */
+  if (ppp_settings.auth_required && !wo->neg_chap && !wo->neg_upap) {
+    wo->neg_chap = 1;
+    wo->neg_upap = 1;
+  }
+  
+  /*
+   * Check whether we have appropriate secrets to use
+   * to authenticate the peer.
+   */
+  can_auth = wo->neg_upap && have_pap_secret();
+  if (!can_auth && wo->neg_chap) {
+    remote = ipwo->accept_remote? 0: ipwo->hisaddr;
+    can_auth = have_chap_secret(ppp_settings.remote_name, ppp_settings.our_name, remote);
+  }
+
+  if (ppp_settings.auth_required && !can_auth) {
+    ppp_panic("No auth secret");
+  }
+}
+#endif
+
+/*
  * auth_reset - called when LCP is starting negotiations to recheck
  * authentication options, i.e. whether we have appropriate secrets
  * to use for authenticating ourselves and/or the peer.
@@ -542,7 +668,7 @@ auth_reset(int unit)
 int
 check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, char **msg, int *msglen)
 {
-#if 1
+#if 1 /* XXX Assume all entries OK. */
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(auser);
   LWIP_UNUSED_ARG(userlen);
@@ -585,7 +711,10 @@ check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, 
       /*ppp_panic("Excess Bad Logins");*/
     }
     if (attempts > 3) {
-      sys_msleep((attempts - 3) * 5);
+      /* @todo: this was sleep(), i.e. seconds, not milliseconds
+       * I don't think we really need this in lwIP - we would block tcpip_thread!
+       */
+      /*sys_msleep((attempts - 3) * 5);*/
     }
     if (addrs != NULL) {
       free_wordlist(addrs);
@@ -606,30 +735,6 @@ check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, 
 #endif
 }
 #endif /* PAP_SUPPORT */
-
-
-/*
- * auth_ip_addr - check whether the peer is authorized to use
- * a given IP address.  Returns 1 if authorized, 0 otherwise.
- */
-int
-auth_ip_addr(int unit, u32_t addr)
-{
-  return ip_addr_check(addr, addresses[unit]);
-}
-
-/*
- * bad_ip_adrs - return 1 if the IP address is one we don't want
- * to use, such as an address in the loopback net or a multicast address.
- * addr is in network byte order.
- */
-int
-bad_ip_adrs(u32_t addr)
-{
-  addr = ntohl(addr);
-  return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
-      || IN_MULTICAST(addr) || IN_BADCLASS(addr);
-}
 
 
 #if CHAP_SUPPORT
@@ -696,135 +801,6 @@ int get_secret( int unit, char *client, char *server, char *secret, int *secret_
 }
 #endif /* CHAP_SUPPORT */
 
-
-#if 0 /* UNUSED */
-/*
- * auth_check_options - called to check authentication options.
- */
-void
-auth_check_options(void)
-{
-  lcp_options *wo = &lcp_wantoptions[0];
-  int can_auth;
-  ipcp_options *ipwo = &ipcp_wantoptions[0];
-  u32_t remote;
-
-  /* Default our_name to hostname, and user to our_name */
-  if (ppp_settings.our_name[0] == 0 || ppp_settings.usehostname) {
-      strcpy(ppp_settings.our_name, ppp_settings.hostname);
-  }
-
-  if (ppp_settings.user[0] == 0) {
-    strcpy(ppp_settings.user, ppp_settings.our_name);
-  }
-
-  /* If authentication is required, ask peer for CHAP or PAP. */
-  if (ppp_settings.auth_required && !wo->neg_chap && !wo->neg_upap) {
-    wo->neg_chap = 1;
-    wo->neg_upap = 1;
-  }
-  
-  /*
-   * Check whether we have appropriate secrets to use
-   * to authenticate the peer.
-   */
-  can_auth = wo->neg_upap && have_pap_secret();
-  if (!can_auth && wo->neg_chap) {
-    remote = ipwo->accept_remote? 0: ipwo->hisaddr;
-    can_auth = have_chap_secret(ppp_settings.remote_name, ppp_settings.our_name, remote);
-  }
-
-  if (ppp_settings.auth_required && !can_auth) {
-    ppp_panic("No auth secret");
-  }
-}
-#endif
-
-
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
-/*
- * Proceed to the network phase.
- */
-static void
-network_phase(int unit)
-{
-  int i;
-  struct protent *protp;
-  lcp_options *go = &lcp_gotoptions[unit];
-  
-  /*
-   * If the peer had to authenticate, run the auth-up script now.
-   */
-  if ((go->neg_chap || go->neg_upap) && !did_authup) {
-    /* XXX Do setup for peer authentication. */
-    did_authup = 1;
-  }
-
-#if CBCP_SUPPORT
-  /*
-   * If we negotiated callback, do it now.
-   */
-  if (go->neg_cbcp) {
-    lcp_phase[unit] = PHASE_CALLBACK;
-    (*cbcp_protent.open)(unit);
-    return;
-  }
-#endif /* CBCP_SUPPORT */
-
-  lcp_phase[unit] = PHASE_NETWORK;
-  for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i) {
-    if (protp->protocol < 0xC000 && protp->enabled_flag && protp->open != NULL) {
-      (*protp->open)(unit);
-      if (protp->protocol != PPP_CCP) {
-        ++num_np_open;
-      }
-    }
-  }
-
-  if (num_np_open == 0) {
-    /* nothing to do */
-    lcp_close(0, "No network protocols running");
-  }
-}
-
-/*
- * check_idle - check whether the link has been idle for long
- * enough that we can shut it down.
- */
-static void
-check_idle(void *arg)
-{
-  struct ppp_idle idle;
-  u_short itime;
-  
-  LWIP_UNUSED_ARG(arg);
-  if (!get_idle_time(0, &idle)) {
-    return;
-  }
-  itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
-  if (itime >= ppp_settings.idle_time_limit) {
-    /* link is idle: shut it down. */
-    AUTHDEBUG((LOG_INFO, "Terminating connection due to lack of activity.\n"));
-    lcp_close(0, "Link inactive");
-  } else {
-    TIMEOUT(check_idle, NULL, ppp_settings.idle_time_limit - itime);
-  }
-}
-
-/*
- * connect_time_expired - log a message and close the connection.
- */
-static void
-connect_time_expired(void *arg)
-{
-  LWIP_UNUSED_ARG(arg);
-
-  AUTHDEBUG((LOG_INFO, "Connect time expired\n"));
-  lcp_close(0, "Connect time expired");   /* Close connection */
-}
-
 #if 0
 /*
  * login - Check the user name and password against the system
@@ -878,6 +854,8 @@ get_pap_passwd(int unit, char *user, char *passwd)
    but this causes problems with some providers (like CHT in Taiwan)
    who incorrectly request PAP and expect a bogus/empty password, so
    always provide a default user/passwd of "none"/"none"
+
+   @todo: This should be configured by the user, instead of being hardcoded here!
 */
   if(user) {
     strcpy(user, "none");
@@ -954,6 +932,16 @@ set_allowed_addrs(int unit, struct wordlist *addrs)
 }
 #endif /* 0 */ /* PAP_SUPPORT || CHAP_SUPPORT */
 
+/*
+ * auth_ip_addr - check whether the peer is authorized to use
+ * a given IP address.  Returns 1 if authorized, 0 otherwise.
+ */
+int
+auth_ip_addr(int unit, u32_t addr)
+{
+  return ip_addr_check(addr, addresses[unit]);
+}
+
 static int
 ip_addr_check(u32_t addr, struct wordlist *addrs)
 {
@@ -968,6 +956,19 @@ ip_addr_check(u32_t addr, struct wordlist *addrs)
 
   /* XXX All other addresses allowed. */
   return 1;
+}
+
+/*
+ * bad_ip_adrs - return 1 if the IP address is one we don't want
+ * to use, such as an address in the loopback net or a multicast address.
+ * addr is in network byte order.
+ */
+int
+bad_ip_adrs(u32_t addr)
+{
+  addr = ntohl(addr);
+  return (addr >> IN_CLASSA_NSHIFT) == IN_LOOPBACKNET
+      || IN_MULTICAST(addr) || IN_BADCLASS(addr);
 }
 
 #if 0 /* PAP_SUPPORT || CHAP_SUPPORT */

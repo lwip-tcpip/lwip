@@ -66,13 +66,7 @@
 
 #include <string.h>
 
-
-/*************************/
-/*** LOCAL DEFINITIONS ***/
-/*************************/
-
 #if PPP_DEBUG
-
 static const char *ppperr_strerr[] = {
            "LS_INITIAL",  /* LS_INITIAL  0 */
            "LS_STARTING", /* LS_STARTING 1 */
@@ -85,17 +79,8 @@ static const char *ppperr_strerr[] = {
            "LS_ACKSENT",  /* LS_ACKSENT  8 */
            "LS_OPENED"    /* LS_OPENED   9 */
 };
-
 #endif /* PPP_DEBUG */
 
-/************************/
-/*** LOCAL DATA TYPES ***/
-/************************/
-
-
-/***********************************/
-/*** LOCAL FUNCTION DECLARATIONS ***/
-/***********************************/
 static void fsm_timeout (void *);
 static void fsm_rconfreq (fsm *, u_char, u_char *, int);
 static void fsm_rconfack (fsm *, int, u_char *, int);
@@ -107,21 +92,8 @@ static void fsm_sconfreq (fsm *, int);
 
 #define PROTO_NAME(f) ((f)->callbacks->proto_name)
 
-
-/******************************/
-/*** PUBLIC DATA STRUCTURES ***/
-/******************************/
-
-
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
 int peer_mru[NUM_PPP];
 
-
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
 
 /*
  * fsm_init - Initialize fsm.
@@ -328,32 +300,65 @@ fsm_close(fsm *f, char *reason)
 
 
 /*
- * fsm_sdata - Send some data.
- *
- * Used for all packets sent to our peer by this module.
+ * fsm_timeout - Timeout expired.
  */
-void
-fsm_sdata( fsm *f, u_char code, u_char id, u_char *data, int datalen)
+static void
+fsm_timeout(void *arg)
 {
-  u_char *outp;
-  int outlen;
+  fsm *f = (fsm *) arg;
 
-  /* Adjust length to be smaller than MTU */
-  outp = outpacket_buf[f->unit];
-  if (datalen > peer_mru[f->unit] - (int)HEADERLEN) {
-    datalen = peer_mru[f->unit] - HEADERLEN;
+  switch (f->state) {
+    case LS_CLOSING:
+    case LS_STOPPING:
+      if( f->retransmits <= 0 ) {
+        FSMDEBUG((LOG_WARNING, "%s: timeout sending Terminate-Request state=%d (%s)\n",
+             PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+        /*
+         * We've waited for an ack long enough.  Peer probably heard us.
+         */
+        f->state = (f->state == LS_CLOSING)? LS_CLOSED: LS_STOPPED;
+        if( f->callbacks->finished ) {
+          (*f->callbacks->finished)(f);
+        }
+      } else {
+        FSMDEBUG((LOG_WARNING, "%s: timeout resending Terminate-Requests state=%d (%s)\n",
+             PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+        /* Send Terminate-Request */
+        fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
+            (u_char *) f->term_reason, f->term_reason_len);
+        TIMEOUT(fsm_timeout, f, f->timeouttime);
+        --f->retransmits;
+      }
+      break;
+
+    case LS_REQSENT:
+    case LS_ACKRCVD:
+    case LS_ACKSENT:
+      if (f->retransmits <= 0) {
+        FSMDEBUG((LOG_WARNING, "%s: timeout sending Config-Requests state=%d (%s)\n",
+         PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+        f->state = LS_STOPPED;
+        if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished ) {
+          (*f->callbacks->finished)(f);
+        }
+      } else {
+        FSMDEBUG((LOG_WARNING, "%s: timeout resending Config-Request state=%d (%s)\n",
+         PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+        /* Retransmit the configure-request */
+        if (f->callbacks->retransmit) {
+          (*f->callbacks->retransmit)(f);
+        }
+        fsm_sconfreq(f, 1);    /* Re-send Configure-Request */
+        if( f->state == LS_ACKRCVD ) {
+          f->state = LS_REQSENT;
+        }
+      }
+      break;
+
+    default:
+      FSMDEBUG((LOG_INFO, "%s: UNHANDLED timeout event in state %d (%s)!\n",
+          PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
   }
-  if (datalen && data != outp + PPP_HDRLEN + HEADERLEN) {
-    BCOPY(data, outp + PPP_HDRLEN + HEADERLEN, datalen);
-  }
-  outlen = datalen + HEADERLEN;
-  MAKEHEADER(outp, f->protocol);
-  PUTCHAR(code, outp);
-  PUTCHAR(id, outp);
-  PUTSHORT(outlen, outp);
-  pppWrite(f->unit, outpacket_buf[f->unit], outlen + PPP_HDRLEN);
-  FSMDEBUG((LOG_INFO, "fsm_sdata(%s): Sent code %d,%d,%d.\n",
-        PROTO_NAME(f), code, id, outlen));
 }
 
 
@@ -432,129 +437,6 @@ fsm_input(fsm *f, u_char *inpacket, int l)
         fsm_sdata(f, CODEREJ, ++f->id, inpacket, len + HEADERLEN);
       }
       break;
-  }
-}
-
-
-/*
- * fsm_protreject - Peer doesn't speak this protocol.
- *
- * Treat this as a catastrophic error (RXJ-).
- */
-void
-fsm_protreject(fsm *f)
-{
-  switch( f->state ) {
-    case LS_CLOSING:
-      UNTIMEOUT(fsm_timeout, f);  /* Cancel timeout */
-      /* fall through */
-    case LS_CLOSED:
-      f->state = LS_CLOSED;
-      if( f->callbacks->finished ) {
-        (*f->callbacks->finished)(f);
-      }
-      break;
-
-    case LS_STOPPING:
-    case LS_REQSENT:
-    case LS_ACKRCVD:
-    case LS_ACKSENT:
-      UNTIMEOUT(fsm_timeout, f);  /* Cancel timeout */
-      /* fall through */
-    case LS_STOPPED:
-      f->state = LS_STOPPED;
-      if( f->callbacks->finished ) {
-        (*f->callbacks->finished)(f);
-      }
-      break;
-    
-    case LS_OPENED:
-      if( f->callbacks->down ) {
-        (*f->callbacks->down)(f);
-      }
-      /* Init restart counter, send Terminate-Request */
-      f->retransmits = f->maxtermtransmits;
-      fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-            (u_char *) f->term_reason, f->term_reason_len);
-      TIMEOUT(fsm_timeout, f, f->timeouttime);
-      --f->retransmits;
-      
-      f->state = LS_STOPPING;
-      break;
-    
-    default:
-      FSMDEBUG((LOG_INFO, "%s: Protocol-reject event in state %d (%s)!\n",
-            PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
-    }
-}
-
-
-
-
-
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
-
-/*
- * fsm_timeout - Timeout expired.
- */
-static void
-fsm_timeout(void *arg)
-{
-  fsm *f = (fsm *) arg;
-
-  switch (f->state) {
-    case LS_CLOSING:
-    case LS_STOPPING:
-      if( f->retransmits <= 0 ) {
-        FSMDEBUG((LOG_WARNING, "%s: timeout sending Terminate-Request state=%d (%s)\n",
-             PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
-        /*
-         * We've waited for an ack long enough.  Peer probably heard us.
-         */
-        f->state = (f->state == LS_CLOSING)? LS_CLOSED: LS_STOPPED;
-        if( f->callbacks->finished ) {
-          (*f->callbacks->finished)(f);
-        }
-      } else {
-        FSMDEBUG((LOG_WARNING, "%s: timeout resending Terminate-Requests state=%d (%s)\n",
-             PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
-        /* Send Terminate-Request */
-        fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-            (u_char *) f->term_reason, f->term_reason_len);
-        TIMEOUT(fsm_timeout, f, f->timeouttime);
-        --f->retransmits;
-      }
-      break;
-
-    case LS_REQSENT:
-    case LS_ACKRCVD:
-    case LS_ACKSENT:
-      if (f->retransmits <= 0) {
-        FSMDEBUG((LOG_WARNING, "%s: timeout sending Config-Requests state=%d (%s)\n",
-         PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
-        f->state = LS_STOPPED;
-        if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished ) {
-          (*f->callbacks->finished)(f);
-        }
-      } else {
-        FSMDEBUG((LOG_WARNING, "%s: timeout resending Config-Request state=%d (%s)\n",
-         PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
-        /* Retransmit the configure-request */
-        if (f->callbacks->retransmit) {
-          (*f->callbacks->retransmit)(f);
-        }
-        fsm_sconfreq(f, 1);    /* Re-send Configure-Request */
-        if( f->state == LS_ACKRCVD ) {
-          f->state = LS_REQSENT;
-        }
-      }
-      break;
-
-    default:
-      FSMDEBUG((LOG_INFO, "%s: UNHANDLED timeout event in state %d (%s)!\n",
-          PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
   }
 }
 
@@ -854,6 +736,59 @@ fsm_rcoderej(fsm *f, u_char *inp, int len)
 
 
 /*
+ * fsm_protreject - Peer doesn't speak this protocol.
+ *
+ * Treat this as a catastrophic error (RXJ-).
+ */
+void
+fsm_protreject(fsm *f)
+{
+  switch( f->state ) {
+    case LS_CLOSING:
+      UNTIMEOUT(fsm_timeout, f);  /* Cancel timeout */
+      /* fall through */
+    case LS_CLOSED:
+      f->state = LS_CLOSED;
+      if( f->callbacks->finished ) {
+        (*f->callbacks->finished)(f);
+      }
+      break;
+
+    case LS_STOPPING:
+    case LS_REQSENT:
+    case LS_ACKRCVD:
+    case LS_ACKSENT:
+      UNTIMEOUT(fsm_timeout, f);  /* Cancel timeout */
+      /* fall through */
+    case LS_STOPPED:
+      f->state = LS_STOPPED;
+      if( f->callbacks->finished ) {
+        (*f->callbacks->finished)(f);
+      }
+      break;
+    
+    case LS_OPENED:
+      if( f->callbacks->down ) {
+        (*f->callbacks->down)(f);
+      }
+      /* Init restart counter, send Terminate-Request */
+      f->retransmits = f->maxtermtransmits;
+      fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
+            (u_char *) f->term_reason, f->term_reason_len);
+      TIMEOUT(fsm_timeout, f, f->timeouttime);
+      --f->retransmits;
+      
+      f->state = LS_STOPPING;
+      break;
+    
+    default:
+      FSMDEBUG((LOG_INFO, "%s: Protocol-reject event in state %d (%s)!\n",
+            PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
+    }
+}
+
+
+/*
  * fsm_sconfreq - Send a Configure-Request.
  */
 static void
@@ -903,6 +838,35 @@ fsm_sconfreq(fsm *f, int retransmit)
   
   FSMDEBUG((LOG_INFO, "%s: sending Configure-Request, id %d\n",
         PROTO_NAME(f), f->reqid));
+}
+
+/*
+ * fsm_sdata - Send some data.
+ *
+ * Used for all packets sent to our peer by this module.
+ */
+void
+fsm_sdata( fsm *f, u_char code, u_char id, u_char *data, int datalen)
+{
+  u_char *outp;
+  int outlen;
+
+  /* Adjust length to be smaller than MTU */
+  outp = outpacket_buf[f->unit];
+  if (datalen > peer_mru[f->unit] - (int)HEADERLEN) {
+    datalen = peer_mru[f->unit] - HEADERLEN;
+  }
+  if (datalen && data != outp + PPP_HDRLEN + HEADERLEN) {
+    BCOPY(data, outp + PPP_HDRLEN + HEADERLEN, datalen);
+  }
+  outlen = datalen + HEADERLEN;
+  MAKEHEADER(outp, f->protocol);
+  PUTCHAR(code, outp);
+  PUTCHAR(id, outp);
+  PUTSHORT(outlen, outp);
+  pppWrite(f->unit, outpacket_buf[f->unit], outlen + PPP_HDRLEN);
+  FSMDEBUG((LOG_INFO, "fsm_sdata(%s): Sent code %d,%d,%d.\n",
+        PROTO_NAME(f), code, id, outlen));
 }
 
 #endif /* PPP_SUPPORT */

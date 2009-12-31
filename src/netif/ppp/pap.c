@@ -63,9 +63,6 @@
 
 #include <string.h>
 
-/***********************************/
-/*** LOCAL FUNCTION DECLARATIONS ***/
-/***********************************/
 /*
  * Protocol entry points.
  */
@@ -74,6 +71,30 @@ static void upap_lowerup   (int);
 static void upap_lowerdown (int);
 static void upap_input     (int, u_char *, int);
 static void upap_protrej   (int);
+
+struct protent pap_protent = {
+  PPP_PAP,
+  upap_init,
+  upap_input,
+  upap_protrej,
+  upap_lowerup,
+  upap_lowerdown,
+  NULL,
+  NULL,
+#if PPP_ADDITIONAL_CALLBACKS
+  upap_printpkt,
+  NULL,
+#endif /* PPP_ADDITIONAL_CALLBACKS */
+  1,
+  "PAP",
+#if PPP_ADDITIONAL_CALLBACKS
+  NULL,
+  NULL,
+  NULL
+#endif /* PPP_ADDITIONAL_CALLBACKS */
+};
+
+upap_state upap[NUM_PPP]; /* UPAP state; one for each unit */
 
 static void upap_timeout   (void *);
 static void upap_reqtimeout(void *);
@@ -84,53 +105,27 @@ static void upap_sauthreq  (upap_state *);
 static void upap_sresp     (upap_state *, u_char, u_char, char *, int);
 
 
-/******************************/
-/*** PUBLIC DATA STRUCTURES ***/
-/******************************/
-struct protent pap_protent = {
-  PPP_PAP,
-  upap_init,
-  upap_input,
-  upap_protrej,
-  upap_lowerup,
-  upap_lowerdown,
-  NULL,
-  NULL,
-#if 0
-  upap_printpkt,
-  NULL,
-#endif
-  1,
-  "PAP",
-#if 0
-  NULL,
-  NULL,
-  NULL
-#endif
-};
-
-upap_state upap[NUM_PPP]; /* UPAP state; one for each unit */
-
-
-
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
 /*
- *  Set the default login name and password for the pap sessions
+ * upap_init - Initialize a UPAP unit.
  */
-void
-upap_setloginpasswd(int unit, const char *luser, const char *lpassword)
+static void
+upap_init(int unit)
 {
   upap_state *u = &upap[unit];
-  
-  /* Save the username and password we're given */
-  u->us_user = luser;
-  u->us_userlen = strlen(luser);
-  u->us_passwd = lpassword;
-  u->us_passwdlen = strlen(lpassword);
-}
 
+  UPAPDEBUG((LOG_INFO, "upap_init: %d\n", unit));
+  u->us_unit         = unit;
+  u->us_user         = NULL;
+  u->us_userlen      = 0;
+  u->us_passwd       = NULL;
+  u->us_passwdlen    = 0;
+  u->us_clientstate  = UPAPCS_INITIAL;
+  u->us_serverstate  = UPAPSS_INITIAL;
+  u->us_id           = 0;
+  u->us_timeouttime  = UPAP_DEFTIMEOUT;
+  u->us_maxtransmits = 10;
+  u->us_reqtimeout   = UPAP_DEFREQTIME;
+}
 
 /*
  * upap_authwithpeer - Authenticate us with our peer (start client).
@@ -145,7 +140,11 @@ upap_authwithpeer(int unit, char *user, char *password)
   UPAPDEBUG((LOG_INFO, "upap_authwithpeer: %d user=%s password=%s s=%d\n",
              unit, user, password, u->us_clientstate));
 
-  upap_setloginpasswd(unit, user, password);
+  /* Save the username and password we're given */
+  u->us_user = user;
+  u->us_userlen = strlen(user);
+  u->us_passwd = password;
+  u->us_passwdlen = strlen(password);
 
   u->us_transmits = 0;
 
@@ -181,33 +180,6 @@ upap_authpeer(int unit)
   if (u->us_reqtimeout > 0) {
     TIMEOUT(upap_reqtimeout, u, u->us_reqtimeout);
   }
-}
-
-
-
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
-/*
- * upap_init - Initialize a UPAP unit.
- */
-static void
-upap_init(int unit)
-{
-  upap_state *u = &upap[unit];
-
-  UPAPDEBUG((LOG_INFO, "upap_init: %d\n", unit));
-  u->us_unit         = unit;
-  u->us_user         = NULL;
-  u->us_userlen      = 0;
-  u->us_passwd       = NULL;
-  u->us_passwdlen    = 0;
-  u->us_clientstate  = UPAPCS_INITIAL;
-  u->us_serverstate  = UPAPSS_INITIAL;
-  u->us_id           = 0;
-  u->us_timeouttime  = UPAP_DEFTIMEOUT;
-  u->us_maxtransmits = 10;
-  u->us_reqtimeout   = UPAP_DEFREQTIME;
 }
 
 /*
@@ -598,7 +570,7 @@ upap_sresp(upap_state *u, u_char code, u_char id, char *msg, int msglen)
   UPAPDEBUG((LOG_INFO, "pap_sresp: Sent code %d, id %d s=%d\n", code, id, u->us_clientstate));
 }
 
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
 /*
  * upap_printpkt - print the contents of a PAP packet.
  */
@@ -615,7 +587,7 @@ static int upap_printpkt(
   LWIP_UNUSED_ARG(arg);
   return 0;
 }
-#endif /* 0 */
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 
 #endif /* PAP_SUPPORT */
 
