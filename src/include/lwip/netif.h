@@ -248,10 +248,6 @@ u8_t netif_is_link_up(struct netif *netif);
 void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif));
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
-#ifdef __cplusplus
-}
-#endif
-
 #if ENABLE_LOOPBACK
 err_t netif_loop_output(struct netif *netif, struct pbuf *p, struct ip_addr *dest_ip);
 void netif_poll(struct netif *netif);
@@ -259,5 +255,9 @@ void netif_poll(struct netif *netif);
 void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __LWIP_NETIF_H__ */
