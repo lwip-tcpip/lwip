@@ -75,7 +75,7 @@
 #include "ppp.h"
 #include "pppdebug.h"
 
-#include "lwip/sys.h"
+#include "lwip/timers.h"
 
 #include "netif/ppp_oe.h"
 #include "netif/etharp.h"
@@ -286,7 +286,7 @@ pppoe_destroy(struct netif *ifp)
     return ERR_IF;
   }
 
-  tcpip_untimeout(pppoe_timeout, sc);
+  sys_untimeout(pppoe_timeout, sc);
   LIST_REMOVE(sc, sc_list);
 
   if (sc->sc_concentrator_name) {
@@ -373,10 +373,8 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
 }
 
 static void
-pppoe_linkstatus_up(void *arg)
+pppoe_linkstatus_up(struct pppoe_softc *sc)
 {
-  struct pppoe_softc *sc = (struct pppoe_softc*)arg;
-
   sc->sc_linkStatusCB(sc->sc_pd, 1);
 }
 
@@ -590,7 +588,7 @@ breakbreak:;
       }
       pppoe_send_pads(sc);
       sc->sc_state = PPPOE_STATE_SESSION;
-      tcpip_timeout (100, pppoe_linkstatus_up, sc); /* notify upper layers */
+      pppoe_linkstatus_up(sc); /* notify upper layers */
       break;
   #else
       /* ignore, we are no access concentrator */
@@ -620,23 +618,23 @@ breakbreak:;
         MEMCPY(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
       }
       MEMCPY(&sc->sc_dest, ethhdr->src.addr, sizeof(sc->sc_dest.addr));
-      tcpip_untimeout(pppoe_timeout, sc);
+      sys_untimeout(pppoe_timeout, sc);
       sc->sc_padr_retried = 0;
       sc->sc_state = PPPOE_STATE_PADR_SENT;
       if ((err = pppoe_send_padr(sc)) != 0) {
         PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
       }
-      tcpip_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
+      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
       break;
     case PPPOE_CODE_PADS:
       if (sc == NULL) {
         goto done;
       }
       sc->sc_session = session;
-      tcpip_untimeout(pppoe_timeout, sc);
+      sys_untimeout(pppoe_timeout, sc);
       PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": session 0x%x connected\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, session));
       sc->sc_state = PPPOE_STATE_SESSION;
-      tcpip_timeout (100, pppoe_linkstatus_up, sc); /* notify upper layers */
+      pppoe_linkstatus_up(sc); /* notify upper layers */
       break;
     case PPPOE_CODE_PADT:
       if (sc == NULL) {
@@ -871,7 +869,7 @@ pppoe_timeout(void *arg)
         sc->sc_padi_retried--;
         PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
       }
-      tcpip_timeout(retry_wait, pppoe_timeout, sc);
+      sys_timeout(retry_wait, pppoe_timeout, sc);
       break;
 
     case PPPOE_STATE_PADR_SENT:
@@ -883,14 +881,14 @@ pppoe_timeout(void *arg)
         if ((err = pppoe_send_padi(sc)) != 0) {
           PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
         }
-        tcpip_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), pppoe_timeout, sc);
+        sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), pppoe_timeout, sc);
         return;
       }
       if ((err = pppoe_send_padr(sc)) != 0) {
         sc->sc_padr_retried--;
         PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": failed to send PADR, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
       }
-      tcpip_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
+      sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
       break;
     case PPPOE_STATE_CLOSING:
       pppoe_do_disconnect(sc);
@@ -921,7 +919,7 @@ pppoe_connect(struct pppoe_softc *sc)
   sc->sc_padr_retried = 0;
   err = pppoe_send_padi(sc);
   PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
-  tcpip_timeout(PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
+  sys_timeout(PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
   return err;
 }
 
@@ -938,7 +936,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
    * function and defer disconnecting to the timeout handler.
    */
   sc->sc_state = PPPOE_STATE_CLOSING;
-  tcpip_timeout(20, pppoe_timeout, sc);
+  sys_timeout(20, pppoe_timeout, sc);
 }
 
 static int
@@ -1204,7 +1202,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   LWIP_UNUSED_ARG(message);
 
   /* stop timer */
-  tcpip_untimeout(pppoe_timeout, sc);
+  sys_untimeout(pppoe_timeout, sc);
   PPPDEBUG((LOG_DEBUG, "pppoe: %c%c%"U16_F": session 0x%x terminated, %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, sc->sc_session, message));
 
   /* fix our state */
