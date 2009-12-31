@@ -27,7 +27,6 @@ tcp_remove(struct tcp_pcb* pcb_list)
 void
 tcp_remove_all(void)
 {
-  //tcp_remove(tcp_bound_pcbs);
   tcp_remove(tcp_listen_pcbs.pcbs);
   tcp_remove(tcp_active_pcbs);
   tcp_remove(tcp_tw_pcbs);
