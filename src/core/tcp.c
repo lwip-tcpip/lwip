@@ -87,8 +87,10 @@ struct tcp_pcb *tcp_active_pcbs;
 /** List of all TCP PCBs in TIME-WAIT state */
 struct tcp_pcb *tcp_tw_pcbs;
 
+/** Only used for temporary storage. */
 struct tcp_pcb *tcp_tmp_pcb;
 
+/** Timer counter to handle calling slow-timer from tcp_tmr() */ 
 static u8_t tcp_timer;
 static u16_t tcp_new_port(void);
 
