@@ -46,6 +46,20 @@
 #include "lwip/mem.h"
 #include "lwip/tcpip.h"
 #include "lwip/netif.h"
+#include "lwip/sys.h"
+#include "lwip/timers.h"
+
+/** Some defines for code we skip compared to the original pppd.
+ *  These are just here to minimise the use of the ugly "#if 0". */
+#define PPP_ADDITIONAL_CALLBACKS  0
+
+/** Some error checks to test for unsupported code */
+#if CBCP_SUPPORT
+#error "CBCP is not supported in lwIP PPP"
+#endif
+#if CCP_SUPPORT
+#error "CCP is not supported in lwIP PPP"
+#endif
 
 /*
  * pppd.h - PPP daemon global declarations.
@@ -93,7 +107,7 @@
  * OR MODIFICATIONS.
  */
 
-#define TIMEOUT(f, a, t)    sys_untimeout((f), (a)), sys_timeout((t)*1000, (f), (a))
+#define TIMEOUT(f, a, t)    sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a))
 #define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
 
 
@@ -276,24 +290,24 @@ struct protent {
     void (*open) (int unit);
     /* Close the protocol */
     void (*close) (int unit, char *reason);
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
     /* Print a packet in readable form */
     int  (*printpkt) (u_char *pkt, int len,
               void (*printer) (void *, char *, ...),
               void *arg);
     /* Process a received data packet */
     void (*datainput) (int unit, u_char *pkt, int len);
-#endif
-    int  enabled_flag;      /* 0 iff protocol is disabled */
+#endif /* PPP_ADDITIONAL_CALLBACKS */
+    int  enabled_flag;      /* 0 if protocol is disabled */
     char *name;         /* Text name of protocol */
-#if 0
+#if PPP_ADDITIONAL_CALLBACKS
     /* Check requested options, assign defaults */
     void (*check_options) (u_long);
     /* Configure interface for demand-dial */
     int  (*demand_conf) (int unit);
     /* Say whether to bring up link for this pkt */
     int  (*active_pkt) (u_char *pkt, int len);
-#endif
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 };
 
 /*
@@ -429,7 +443,7 @@ void pppLinkTerminated(int pd);
 
 void pppLinkDown(int pd);
 
-void pppMainWakeup(int pd);
+void pppos_input(int pd, u_char* data, int len);
 
 /* Configure i/f transmit parameters */
 void ppp_send_config (int, int, u32_t, int, int);
