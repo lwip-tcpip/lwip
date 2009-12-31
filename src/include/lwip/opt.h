@@ -1091,14 +1091,14 @@
 #endif
 
 /**
- * PPP_THREAD_NAME: The name assigned to the pppMain thread.
+ * PPP_THREAD_NAME: The name assigned to the pppInputThread.
  */
 #ifndef PPP_THREAD_NAME
-#define PPP_THREAD_NAME                "pppMain"
+#define PPP_THREAD_NAME                "pppInputThread"
 #endif
 
 /**
- * PPP_THREAD_STACKSIZE: The stack size used by the pppMain thread.
+ * PPP_THREAD_STACKSIZE: The stack size used by the pppInputThread.
  * The stack size value itself is platform-dependent, but is passed to
  * sys_thread_new() when the thread is created.
  */
@@ -1107,7 +1107,7 @@
 #endif
 
 /**
- * PPP_THREAD_PRIO: The priority assigned to the pppMain thread.
+ * PPP_THREAD_PRIO: The priority assigned to the pppInputThread.
  * The priority value itself is platform-dependent, but is passed to
  * sys_thread_new() when the thread is created.
  */
