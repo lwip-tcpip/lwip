@@ -33,6 +33,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-06: Simon Goldschmidt
+  * netdb.h: Fixed bug #28496: missing include guards in netdb.h
+
   2009-12-31: Simon Goldschmidt
   * many ppp files: Reorganised PPP source code from ucip structure to pppd
     structure to easily compare our code against the pppd code (around v2.3.1)
