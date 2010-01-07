@@ -33,6 +33,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-07: Simon Goldschmidt
+  * timers.c, tcp.h: Call tcp_timer_needed() with NO_SYS==1, too
+
   2010-01-06: Simon Goldschmidt
   * netdb.h: Fixed bug #28496: missing include guards in netdb.h
 

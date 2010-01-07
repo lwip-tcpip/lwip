@@ -87,7 +87,6 @@ tcpip_tcp_timer(void *arg)
   }
 }
 
-#if !NO_SYS
 /**
  * Called from TCP_REG when registering a new PCB:
  * the reason is to have the TCP timer only running when
@@ -103,7 +102,6 @@ tcp_timer_needed(void)
     sys_timeout(TCP_TMR_INTERVAL, tcpip_tcp_timer, NULL);
   }
 }
-#endif /* !NO_SYS */
 #endif /* LWIP_TCP */
 
 #if IP_REASSEMBLY
