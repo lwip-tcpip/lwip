@@ -103,12 +103,24 @@ err_t
 netconn_delete(struct netconn *conn)
 {
   struct api_msg msg;
+  u32_t bytes_drained;
+  u16_t conns_drained;
 
   /* No ASSERT here because possible to get a (conn == NULL) if we got an accept error */
   if (conn == NULL) {
     return ERR_OK;
   }
 
+  netconn_drain(conn, &bytes_drained, &conns_drained);
+  LWIP_ASSERT("Connection had recv-bytes and unaccepted connections pending -> mixed",
+    bytes_drained == 0 || conns_drained == 0);
+
+  if (conns_drained != 0) {
+    msg.msg.msg.dc.drained = conns_drained | DELCONN_UNDRAINED_CONN;
+  } else {
+    LWIP_ASSERT("Too many bytes undrained", (bytes_drained & DELCONN_UNDRAINED_CONN) == 0);
+    msg.msg.msg.dc.drained = bytes_drained;
+  }
   msg.function = do_delconn;
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);

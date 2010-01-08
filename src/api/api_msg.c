@@ -209,8 +209,16 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   conn = arg;
   LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
-  if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
+  if (conn == NULL) {
     return ERR_VAL;
+  }
+  if (conn->recvmbox == SYS_MBOX_NULL) {
+    /* recvmbox already deleted */
+    if (p != NULL) {
+      tcp_recved(pcb, p->tot_len);
+      pbuf_free(p);
+    }
+    return ERR_OK;
   }
 
   conn->err = err;
@@ -369,8 +377,10 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 #endif /* API_MSG_DEBUG */
   conn = (struct netconn *)arg;
 
-  LWIP_ERROR("accept_function: invalid conn->acceptmbox",
-             conn->acceptmbox != SYS_MBOX_NULL, return ERR_VAL;);
+  if (conn->acceptmbox == SYS_MBOX_NULL) {
+    LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: acceptmbox already deleted\n"));
+    return ERR_VAL;
+  }
 
   /* We have to set the callback here even though
    * the new socket is unknown. conn->socket is marked as -1. */
@@ -386,6 +396,9 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
     /* When returning != ERR_OK, the connection is aborted in tcp_process(),
        so do nothing here! */
     newconn->pcb.tcp = NULL;
+    /* no need to call netconn_drain, since we know the state. */
+    sys_mbox_free(newconn->recvmbox);
+    newconn->recvmbox = SYS_MBOX_NULL;
     netconn_free(newconn);
     return ERR_MEM;
   } else {
@@ -571,37 +584,69 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 void
 netconn_free(struct netconn *conn)
 {
-  void *mem;
   LWIP_ASSERT("PCB must be deallocated outside this function", conn->pcb.tcp == NULL);
-
-  /* Drain the recvmbox. */
-  if (conn->recvmbox != SYS_MBOX_NULL) {
-    while (sys_mbox_tryfetch(conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
-      if (conn->type == NETCONN_TCP) {
-        if(mem != NULL) {
-          pbuf_free((struct pbuf *)mem);
-        }
-      } else {
-        netbuf_delete((struct netbuf *)mem);
-      }
-    }
-    sys_mbox_free(conn->recvmbox);
-    conn->recvmbox = SYS_MBOX_NULL;
-  }
-
-  /* Drain the acceptmbox. */
-  if (conn->acceptmbox != SYS_MBOX_NULL) {
-    while (sys_mbox_tryfetch(conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
-      netconn_delete((struct netconn *)mem);
-    }
-    sys_mbox_free(conn->acceptmbox);
-    conn->acceptmbox = SYS_MBOX_NULL;
-  }
+  LWIP_ASSERT("recvmbox must be deallocated before calling this function",
+    conn->recvmbox == SYS_MBOX_NULL);
+  LWIP_ASSERT("acceptmbox must be deallocated before calling this function",
+    conn->acceptmbox == SYS_MBOX_NULL);
 
   sys_sem_free(conn->op_completed);
   conn->op_completed = SYS_SEM_NULL;
 
   memp_free(MEMP_NETCONN, conn);
+}
+
+/**
+ * Delete rcvmbox and acceptmbox of a netconn and free the left-over data in
+ * these mboxes
+ *
+ * @param conn the netconn to free
+ * @bytes_drained bytes drained from recvmbox
+ * @accepts_drained pending connections drained from acceptmbox
+ */
+void
+netconn_drain(struct netconn *conn, u32_t *bytes_drained, u16_t *accepts_drained)
+{
+  void *mem;
+  struct pbuf *p;
+  sys_mbox_t mbox;
+  SYS_ARCH_DECL_PROTECT(lev);
+
+  *bytes_drained = 0;
+  *accepts_drained = 0;
+
+  /* Delete and drain the recvmbox. */
+  SYS_ARCH_PROTECT(lev);
+  mbox = conn->recvmbox;
+  conn->recvmbox = SYS_MBOX_NULL;
+  SYS_ARCH_UNPROTECT(lev);
+  if (mbox != SYS_MBOX_NULL) {
+    while (sys_mbox_tryfetch(mbox, &mem) != SYS_MBOX_EMPTY) {
+      if (conn->type == NETCONN_TCP) {
+        if(mem != NULL) {
+          p = (struct pbuf*)mem;
+          *bytes_drained += p->tot_len;
+          pbuf_free(p);
+        }
+      } else {
+        netbuf_delete((struct netbuf *)mem);
+      }
+    }
+    sys_mbox_free(mbox);
+  }
+
+  /* Delete and drain the acceptmbox. */
+  SYS_ARCH_PROTECT(lev);
+  mbox = conn->acceptmbox;
+  conn->acceptmbox = SYS_MBOX_NULL;
+  SYS_ARCH_UNPROTECT(lev);
+  if (mbox != SYS_MBOX_NULL) {
+    while (sys_mbox_tryfetch(mbox, &mem) != SYS_MBOX_EMPTY) {
+      *accepts_drained += 1;
+      netconn_delete((struct netconn *)mem);
+    }
+    sys_mbox_free(mbox);
+  }
 }
 
 #if LWIP_TCP
@@ -663,6 +708,38 @@ do_close_internal(struct netconn *conn)
 #endif /* LWIP_TCP */
 
 /**
+ * Informs the core of freed data or deleted netconns that were left in
+ * recvmbox/acceptmbox when netconn_delete() was called. Calls tcp_recved
+ * or tcp_accepted for these.
+ *
+ * @param pcb the TCP pcb that is being closed
+ * @param drained Number and type of data drained
+ */
+static void
+do_drained(struct tcp_pcb *pcb, u32_t drained)
+{
+  if (drained & DELCONN_UNDRAINED_CONN) {
+    /* acceptmbox was drained */
+    u16_t conns_left = (u16_t)drained;
+    while(conns_left != 0) {
+      tcp_accepted(pcb);
+      conns_left--;
+    }
+  } else {
+    /* recvmbox was drained */
+    u32_t bytes_left = drained;
+    while(bytes_left != 0) {
+      u16_t recved = 0xffff;
+      if (bytes_left < 0xffff) {
+        recved = (u16_t)bytes_left;
+      }
+      tcp_recved(pcb, recved);
+      bytes_left -= recved;
+    }
+  }
+}
+
+/**
  * Delete the pcb inside a netconn.
  * Called from netconn_delete.
  *
@@ -686,6 +763,9 @@ do_delconn(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case NETCONN_TCP:
+      if (msg->msg.dc.drained != 0) {
+        do_drained(msg->conn->pcb.tcp, msg->msg.dc.drained);
+      }
       msg->conn->state = NETCONN_CLOSE;
       do_close_internal(msg->conn);
       /* API_EVENT is called inside do_close_internal, before releasing
