@@ -33,6 +33,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-08: Simon Goldschmidt
+  * dns.c: Copy hostname for DNS_LOCAL_HOSTLIST_IS_DYNAMIC==1 since string
+    passed to dns_local_addhost() might be volatile
+
   2010-01-07: Simon Goldschmidt
   * timers.c, tcp.h: Call tcp_timer_needed() with NO_SYS==1, too
 
