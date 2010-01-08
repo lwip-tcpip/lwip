@@ -253,8 +253,13 @@ void sys_timeouts_init(void)
  * @param h callback function to call when msecs have elapsed
  * @param arg argument to pass to the callback function
  */
+#if LWIP_DEBUG_TIMERNAMES
+void
+sys_timeout_debug(u32_t msecs, sys_timeout_handler h, void *arg, const char* handler_name)
+#else /* LWIP_DEBUG_TIMERNAMES */
 void
 sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
+#endif /* LWIP_DEBUG_TIMERNAMES */
 {
   struct sys_timeo *timeout, *t;
 
@@ -267,9 +272,17 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   timeout->h = h;
   timeout->arg = arg;
   timeout->time = msecs;
+#if LWIP_DEBUG_TIMERNAMES
+  timeout->handler_name = handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
 
+#if LWIP_DEBUG_TIMERNAMES
+  LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p name=%s\n",
+    (void *)timeout, msecs, *(void**)&h, (void *)arg, handler_name));
+#else /* LWIP_DEBUG_TIMERNAMES */
   LWIP_DEBUGF(SYS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p\n",
     (void *)timeout, msecs, *(void**)&h, (void *)arg));
+#endif /* LWIP_DEBUG_TIMERNAMES */
 
   if (next_timeout == NULL) {
     next_timeout = timeout;
@@ -351,6 +364,9 @@ sys_check_timeouts(void)
   void *arg;
   int had_one;
   u32_t now;
+#if LWIP_DEBUG_TIMERNAMES
+  const char *handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
 
   now = sys_now();
   if (next_timeout) {
@@ -368,9 +384,16 @@ sys_check_timeouts(void)
         next_timeout = tmptimeout->next;
         h   = tmptimeout->h;
         arg = tmptimeout->arg;
+#if LWIP_DEBUG_TIMERNAMES
+        handler_name = tmptimeout->handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
         memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
         if (h != NULL) {
-          LWIP_DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", *(void**)&h, arg));
+#if LWIP_DEBUG_TIMERNAMES
+          LWIP_DEBUGF(SYS_DEBUG, ("sct calling h=%p(%p) (%s)\n", *(void**)&h, arg, handler_name));
+#else /* LWIP_DEBUG_TIMERNAMES */
+          LWIP_DEBUGF(SYS_DEBUG, ("sct calling h=%p(%p)\n", *(void**)&h, arg));
+#endif /* LWIP_DEBUG_TIMERNAMES */
           h(arg);
         }
       }
@@ -395,6 +418,9 @@ sys_timeouts_mbox_fetch(sys_mbox_t mbox, void **msg)
   struct sys_timeo *tmptimeout;
   sys_timeout_handler h;
   void *arg;
+#if LWIP_DEBUG_TIMERNAMES
+  const char *handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
 
  again:
   if (!next_timeout) {
@@ -414,9 +440,16 @@ sys_timeouts_mbox_fetch(sys_mbox_t mbox, void **msg)
       next_timeout = tmptimeout->next;
       h   = tmptimeout->h;
       arg = tmptimeout->arg;
+#if LWIP_DEBUG_TIMERNAMES
+      handler_name = tmptimeout->handler_name;
+#endif /* LWIP_DEBUG_TIMERNAMES */
       memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
       if (h != NULL) {
-        LWIP_DEBUGF(SYS_DEBUG, ("smf calling h=%p(%p)\n", *(void**)&h, arg));
+#if LWIP_DEBUG_TIMERNAMES
+        LWIP_DEBUGF(SYS_DEBUG, ("stmf calling h=%p(%p) (%s)\n", *(void**)&h, arg, handler_name));
+#else /* LWIP_DEBUG_TIMERNAMES */
+        LWIP_DEBUGF(SYS_DEBUG, ("stmf calling h=%p(%p)\n", *(void**)&h, arg));
+#endif /* LWIP_DEBUG_TIMERNAMES */
         /* For LWIP_TCPIP_CORE_LOCKING, lock the core before calling the
            timeout handler function. */
         LOCK_TCPIP_CORE();
