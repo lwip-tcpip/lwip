@@ -1726,7 +1726,7 @@ pppDrop(PPPControlRx *pc)
     pc->inTail = NULL;
   }
 #if VJ_SUPPORT
-  vj_uncompress_err(&pc->vjComp);
+  vj_uncompress_err(&pppControl[pc->pd].vjComp);
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
