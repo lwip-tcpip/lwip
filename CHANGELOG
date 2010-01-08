@@ -34,6 +34,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-01-08: Simon Goldschmidt
+  * sockets.c: Fixed bug #28519 (lwip_recvfrom bug with len > 65535)
+
+  2010-01-08: Simon Goldschmidt
   * dns.c: Copy hostname for DNS_LOCAL_HOSTLIST_IS_DYNAMIC==1 since string
     passed to dns_local_addhost() might be volatile
 

@@ -477,7 +477,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 {
   struct lwip_socket *sock;
   struct netbuf      *buf;
-  u16_t               buflen, copylen, off = 0;
+  u16_t               buflen, copylen;
+  int                 off = 0;
   struct ip_addr     *addr;
   u16_t               port;
   u8_t                done = 0;
@@ -526,7 +527,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     }
 
     buflen = netbuf_len(buf);
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: buflen=%"U16_F" len=%"SZT_F" off=%"U16_F" sock->lastoffset=%"U16_F"\n",
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: buflen=%"U16_F" len=%"SZT_F" off=%d sock->lastoffset=%"U16_F"\n",
       buflen, len, off, sock->lastoffset));
 
     buflen -= sock->lastoffset;
@@ -583,7 +584,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         ip_addr_debug_print(SOCKETS_DEBUG, addr);
-        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%"U16_F"\n", port, off));
+        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
       } else {
   #if SOCKETS_DEBUG
         struct sockaddr_in sin;
@@ -598,7 +599,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         ip_addr_debug_print(SOCKETS_DEBUG, addr);
-        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%"U16_F"\n", port, off));
+        LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
   #endif /*  SOCKETS_DEBUG */
       }
     }
