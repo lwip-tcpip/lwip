@@ -445,14 +445,6 @@ void netif_set_down(struct netif *netif)
     }
 }
 
-/**
- * Ask if an interface is up
- */ 
-u8_t netif_is_up(struct netif *netif)
-{
-  return (netif->flags & NETIF_FLAG_UP)?1:0;
-}
-
 #if LWIP_NETIF_STATUS_CALLBACK
 /**
  * Set callback to be called when interface is brought up/down
@@ -509,14 +501,6 @@ void netif_set_link_down(struct netif *netif )
 {
   netif->flags &= ~NETIF_FLAG_LINK_UP;
   NETIF_LINK_CALLBACK(netif);
-}
-
-/**
- * Ask if a link is up
- */ 
-u8_t netif_is_link_up(struct netif *netif)
-{
-  return (netif->flags & NETIF_FLAG_LINK_UP) ? 1 : 0;
 }
 
 /**

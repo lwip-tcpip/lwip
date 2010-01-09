@@ -162,7 +162,7 @@ struct netif {
 #endif /* LWIP_SNMP */
 #if LWIP_IGMP
   /* This function could be called to add or delete a entry in the multicast filter table of the ethernet MAC.*/
-  err_t (*igmp_mac_filter)( struct netif *netif, struct ip_addr *group, u8_t action);
+  err_t (*igmp_mac_filter)(struct netif *netif, struct ip_addr *group, u8_t action);
 #endif /* LWIP_IGMP */
 #if LWIP_NETIF_HWADDRHINT
   u8_t *addr_hint;
@@ -180,18 +180,18 @@ struct netif {
 #if LWIP_SNMP
 #define NETIF_INIT_SNMP(netif, type, speed) \
   /* use "snmp_ifType" enum from snmp.h for "type", snmp_ifType_ethernet_csmacd by example */ \
-  netif->link_type = type;    \
+  (netif)->link_type = (type);    \
   /* your link speed here (units: bits per second) */  \
-  netif->link_speed = speed;  \
-  netif->ts = 0;              \
-  netif->ifinoctets = 0;      \
-  netif->ifinucastpkts = 0;   \
-  netif->ifinnucastpkts = 0;  \
-  netif->ifindiscards = 0;    \
-  netif->ifoutoctets = 0;     \
-  netif->ifoutucastpkts = 0;  \
-  netif->ifoutnucastpkts = 0; \
-  netif->ifoutdiscards = 0
+  (netif)->link_speed = (speed);  \
+  (netif)->ts = 0;              \
+  (netif)->ifinoctets = 0;      \
+  (netif)->ifinucastpkts = 0;   \
+  (netif)->ifinnucastpkts = 0;  \
+  (netif)->ifindiscards = 0;    \
+  (netif)->ifoutoctets = 0;     \
+  (netif)->ifoutucastpkts = 0;  \
+  (netif)->ifoutnucastpkts = 0; \
+  (netif)->ifoutdiscards = 0
 #else /* LWIP_SNMP */
 #define NETIF_INIT_SNMP(netif, type, speed)
 #endif /* LWIP_SNMP */
@@ -202,7 +202,7 @@ extern struct netif *netif_list;
 /** The default network interface. */
 extern struct netif *netif_default;
 
-#define netif_init() /* Compatibility define, not init needed. */
+#define netif_init() /* Compatibility define, no init needed. */
 
 struct netif *netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
       struct ip_addr *gw,
@@ -212,7 +212,7 @@ struct netif *netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_a
 
 void
 netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
-    struct ip_addr *gw);
+      struct ip_addr *gw);
 void netif_remove(struct netif * netif);
 
 /* Returns a network interface given its name. The name is of the form
@@ -229,7 +229,8 @@ void netif_set_gw(struct netif *netif, struct ip_addr *gw);
 
 void netif_set_up(struct netif *netif);
 void netif_set_down(struct netif *netif);
-u8_t netif_is_up(struct netif *netif);
+/** Ask if an interface is up */
+#define netif_is_up(netif) (((netif)->flags & NETIF_FLAG_UP) ? (u8_t)1 : (u8_t)0)
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /*
@@ -241,10 +242,9 @@ void netif_set_status_callback(struct netif *netif, void (* status_callback)(str
 #if LWIP_NETIF_LINK_CALLBACK
 void netif_set_link_up(struct netif *netif);
 void netif_set_link_down(struct netif *netif);
-u8_t netif_is_link_up(struct netif *netif);
-/*
- * Set callback to be called when link is brought up/down
- */
+/** Ask if a link is up */ 
+#define netif_is_link_up(netif) (((netif)->flags & NETIF_FLAG_LINK_UP) ? (u8_t)1 : (u8_t)0)
+
 void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif));
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
