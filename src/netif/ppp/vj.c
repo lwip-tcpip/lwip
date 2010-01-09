@@ -47,14 +47,6 @@
 #define INCR(counter)
 #endif
 
-#if defined(NO_CHAR_BITFIELDS)
-#define getip_hl(base)  ((base).ip_hl_v&0xf)
-#define getth_off(base) (((base).th_x2_off&0xf0)>>4)
-#else
-#define getip_hl(base)  ((base).ip_hl)
-#define getth_off(base) ((base).th_off)
-#endif
-
 void
 vj_compress_init(struct vjcompress *comp)
 {
@@ -145,11 +137,11 @@ vj_compress_init(struct vjcompress *comp)
 u_int
 vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
 {
-  register struct ip *ip = (struct ip *)pb->payload;
+  register struct ip_hdr *ip = (struct ip_hdr *)pb->payload;
   register struct cstate *cs = comp->last_cs->cs_next;
-  register u_short hlen = getip_hl(*ip);
-  register struct tcphdr *oth;
-  register struct tcphdr *th;
+  register u_short hlen = IPH_HL(ip);
+  register struct tcp_hdr *oth;
+  register struct tcp_hdr *th;
   register u_short deltaS, deltaA;
   register u_long deltaL;
   register u_int changes = 0;
@@ -159,7 +151,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   /*  
    * Check that the packet is IP proto TCP.
    */
-  if (ip->ip_p != IPPROTO_TCP) {
+  if (IPH_PROTO(ip) != IPPROTO_TCP) {
     return (TYPE_IP);
   }
 
@@ -168,11 +160,11 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * `compressible' (i.e., ACK isn't set or some other control bit is
    * set).  
    */
-  if ((ip->ip_off & htons(0x3fff)) || pb->tot_len < 40) {
+  if ((IPH_OFFSET(ip) & htons(0x3fff)) || pb->tot_len < 40) {
     return (TYPE_IP);
   }
-  th = (struct tcphdr *)&((long *)ip)[hlen];
-  if ((th->th_flags & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
+  th = (struct tcp_hdr *)&((long *)ip)[hlen];
+  if ((TCPH_FLAGS(th) & (TCP_SYN|TCP_FIN|TCP_RST|TCP_ACK)) != TCP_ACK) {
     return (TYPE_IP);
   }
   /*
@@ -183,9 +175,9 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * again & we don't have to do any reordering if it's used.
    */
   INCR(vjs_packets);
-  if (ip->ip_src.s_addr != cs->cs_ip.ip_src.s_addr 
-      || ip->ip_dst.s_addr != cs->cs_ip.ip_dst.s_addr 
-      || *(long *)th != ((long *)&cs->cs_ip)[getip_hl(cs->cs_ip)]) {
+  if (ip->src.addr != cs->cs_ip.src.addr 
+      || ip->dest.addr != cs->cs_ip.dest.addr 
+      || *(long *)th != ((long *)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
     /*
      * Wasn't the first -- search for it.
      *
@@ -204,9 +196,9 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     do {
       lcs = cs; cs = cs->cs_next;
       INCR(vjs_searches);
-      if (ip->ip_src.s_addr == cs->cs_ip.ip_src.s_addr
-          && ip->ip_dst.s_addr == cs->cs_ip.ip_dst.s_addr
-          && *(long *)th == ((long *)&cs->cs_ip)[getip_hl(cs->cs_ip)]) {
+      if (ip->src.addr == cs->cs_ip.src.addr
+          && ip->dest.addr == cs->cs_ip.dest.addr
+          && *(long *)th == ((long *)&cs->cs_ip)[IPH_HL(&cs->cs_ip)]) {
         goto found;
       }
     } while (cs != lastcs);
@@ -221,7 +213,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
      */
     INCR(vjs_misses);
     comp->last_cs = lcs;
-    hlen += getth_off(*th);
+    hlen += TCPH_OFFSET(th);
     hlen <<= 2;
     /* Check that the IP/TCP headers are contained in the first buffer. */
     if (hlen > pb->len) {
@@ -242,9 +234,9 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     }
   }
 
-  oth = (struct tcphdr *)&((long *)&cs->cs_ip)[hlen];
+  oth = (struct tcp_hdr *)&((long *)&cs->cs_ip)[hlen];
   deltaS = hlen;
-  hlen += getth_off(*th);
+  hlen += TCPH_OFFSET(th);
   hlen <<= 2;
   /* Check that the IP/TCP headers are contained in the first buffer. */
   if (hlen > pb->len) {
@@ -266,9 +258,9 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   if (((u_short *)ip)[0] != ((u_short *)&cs->cs_ip)[0] 
       || ((u_short *)ip)[3] != ((u_short *)&cs->cs_ip)[3] 
       || ((u_short *)ip)[4] != ((u_short *)&cs->cs_ip)[4] 
-      || getth_off(*th) != getth_off(*oth) 
+      || TCPH_OFFSET(th) != TCPH_OFFSET(oth) 
       || (deltaS > 5 && BCMP(ip + 1, &cs->cs_ip + 1, (deltaS - 5) << 2)) 
-      || (getth_off(*th) > 5 && BCMP(th + 1, oth + 1, (getth_off(*th) - 5) << 2))) {
+      || (TCPH_OFFSET(th) > 5 && BCMP(th + 1, oth + 1, (TCPH_OFFSET(th) - 5) << 2))) {
     goto uncompressed;
   }
 
@@ -278,11 +270,11 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * ack, seq (the order minimizes the number of temporaries
    * needed in this section of code).
    */
-  if (th->th_flags & TCP_URG) {
-    deltaS = ntohs(th->th_urp);
+  if (TCPH_FLAGS(th) & TCP_URG) {
+    deltaS = ntohs(th->urgp);
     ENCODEZ(deltaS);
     changes |= NEW_U;
-  } else if (th->th_urp != oth->th_urp) {
+  } else if (th->urgp != oth->urgp) {
     /* argh! URG not set but urp changed -- a sensible
      * implementation should never do this but RFC793
      * doesn't prohibit the change so we have to deal
@@ -290,12 +282,12 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     goto uncompressed;
   }
 
-  if ((deltaS = (u_short)(ntohs(th->th_win) - ntohs(oth->th_win))) != 0) {
+  if ((deltaS = (u_short)(ntohs(th->wnd) - ntohs(oth->wnd))) != 0) {
     ENCODE(deltaS);
     changes |= NEW_W;
   }
 
-  if ((deltaL = ntohl(th->th_ack) - ntohl(oth->th_ack)) != 0) {
+  if ((deltaL = ntohl(th->ackno) - ntohl(oth->ackno)) != 0) {
     if (deltaL > 0xffff) {
       goto uncompressed;
     }
@@ -304,7 +296,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     changes |= NEW_A;
   }
 
-  if ((deltaL = ntohl(th->th_seq) - ntohl(oth->th_seq)) != 0) {
+  if ((deltaL = ntohl(th->seqno) - ntohl(oth->seqno)) != 0) {
     if (deltaL > 0xffff) {
       goto uncompressed;
     }
@@ -323,8 +315,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
      * retransmitted ack or window probe.  Send it uncompressed
      * in case the other side missed the compressed version.
      */
-    if (ip->ip_len != cs->cs_ip.ip_len &&
-      ntohs(cs->cs_ip.ip_len) == hlen) {
+    if (IPH_LEN(ip) != IPH_LEN(&cs->cs_ip) &&
+      ntohs(IPH_LEN(&cs->cs_ip)) == hlen) {
       break;
     }
 
@@ -339,7 +331,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     goto uncompressed;
 
   case NEW_S|NEW_A:
-    if (deltaS == deltaA && deltaS == ntohs(cs->cs_ip.ip_len) - hlen) {
+    if (deltaS == deltaA && deltaS == ntohs(IPH_LEN(&cs->cs_ip)) - hlen) {
       /* special case for echoed terminal traffic */
       changes = SPECIAL_I;
       cp = new_seq;
@@ -347,7 +339,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     break;
 
   case NEW_S:
-    if (deltaS == ntohs(cs->cs_ip.ip_len) - hlen) {
+    if (deltaS == ntohs(IPH_LEN(&cs->cs_ip)) - hlen) {
       /* special case for data xfer */
       changes = SPECIAL_D;
       cp = new_seq;
@@ -355,19 +347,19 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
     break;
   }
 
-  deltaS = (u_short)(ntohs(ip->ip_id) - ntohs(cs->cs_ip.ip_id));
+  deltaS = (u_short)(ntohs(IPH_ID(ip)) - ntohs(IPH_ID(&cs->cs_ip)));
   if (deltaS != 1) {
     ENCODEZ(deltaS);
     changes |= NEW_I;
   }
-  if (th->th_flags & TCP_PSH) {
+  if (TCPH_FLAGS(th) & TCP_PSH) {
     changes |= TCP_PUSH_BIT;
   }
   /*
    * Grab the cksum before we overwrite it below.  Then update our
    * state with this packet's header.
    */
-  deltaA = ntohs(th->th_sum);
+  deltaA = ntohs(th->chksum);
   BCOPY(ip, &cs->cs_ip, hlen);
 
   /*
@@ -412,7 +404,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    */
 uncompressed:
   BCOPY(ip, &cs->cs_ip, hlen);
-  ip->ip_p = cs->cs_id;
+  IPH_PROTO_SET(ip, cs->cs_id);
   comp->last_xmit = cs->cs_id;
   return (TYPE_UNCOMPRESSED_TCP);
 }
@@ -436,24 +428,24 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
 {
   register u_int hlen;
   register struct cstate *cs;
-  register struct ip *ip;
+  register struct ip_hdr *ip;
   
-  ip = (struct ip *)nb->payload;
-  hlen = getip_hl(*ip) << 2;
-  if (ip->ip_p >= MAX_SLOTS
-      || hlen + sizeof(struct tcphdr) > nb->len
-      || (hlen += getth_off(*((struct tcphdr *)&((char *)ip)[hlen])) << 2)
+  ip = (struct ip_hdr *)nb->payload;
+  hlen = IPH_HL(ip) << 2;
+  if (IPH_PROTO(ip) >= MAX_SLOTS
+      || hlen + sizeof(struct tcp_hdr) > nb->len
+      || (hlen += TCPH_OFFSET(((struct tcp_hdr *)&((char *)ip)[hlen])) << 2)
           > nb->len
       || hlen > MAX_HDR) {
     PPPDEBUG((LOG_INFO, "vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n", 
-          ip->ip_p, hlen, nb->len));
+      IPH_PROTO(ip), hlen, nb->len));
     comp->flags |= VJF_TOSS;
     INCR(vjs_errorin);
     return -1;
   }
-  cs = &comp->rstate[comp->last_recv = ip->ip_p];
+  cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
   comp->flags &=~ VJF_TOSS;
-  ip->ip_p = IPPROTO_TCP;
+  IPH_PROTO_SET(ip, IPPROTO_TCP);
   BCOPY(ip, &cs->cs_ip, hlen);
   cs->cs_hlen = hlen;
   INCR(vjs_uncompressedin);
@@ -472,7 +464,7 @@ int
 vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 {
   u_char *cp;
-  struct tcphdr *th;
+  struct tcp_hdr *th;
   struct cstate *cs;
   u_short *bp;
   struct pbuf *n0 = *nb;
@@ -507,57 +499,57 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     }
   }
   cs = &comp->rstate[comp->last_recv];
-  hlen = getip_hl(cs->cs_ip) << 2;
-  th = (struct tcphdr *)&((u_char *)&cs->cs_ip)[hlen];
-  th->th_sum = htons((*cp << 8) | cp[1]);
+  hlen = IPH_HL(&cs->cs_ip) << 2;
+  th = (struct tcp_hdr *)&((u_char *)&cs->cs_ip)[hlen];
+  th->chksum = htons((*cp << 8) | cp[1]);
   cp += 2;
   if (changes & TCP_PUSH_BIT) {
-    th->th_flags |= TCP_PSH;
+    TCPH_SET_FLAG(th, TCP_PSH);
   } else {
-    th->th_flags &=~ TCP_PSH;
+    TCPH_UNSET_FLAG(th, TCP_PSH);
   }
 
   switch (changes & SPECIALS_MASK) {
   case SPECIAL_I:
     {
-      register u32_t i = ntohs(cs->cs_ip.ip_len) - cs->cs_hlen;
+      register u32_t i = ntohs(IPH_LEN(&cs->cs_ip)) - cs->cs_hlen;
       /* some compilers can't nest inline assembler.. */
-      tmp = ntohl(th->th_ack) + i;
-      th->th_ack = htonl(tmp);
-      tmp = ntohl(th->th_seq) + i;
-      th->th_seq = htonl(tmp);
+      tmp = ntohl(th->ackno) + i;
+      th->ackno = htonl(tmp);
+      tmp = ntohl(th->seqno) + i;
+      th->seqno = htonl(tmp);
     }
     break;
 
   case SPECIAL_D:
     /* some compilers can't nest inline assembler.. */
-    tmp = ntohl(th->th_seq) + ntohs(cs->cs_ip.ip_len) - cs->cs_hlen;
-    th->th_seq = htonl(tmp);
+    tmp = ntohl(th->seqno) + ntohs(IPH_LEN(&cs->cs_ip)) - cs->cs_hlen;
+    th->seqno = htonl(tmp);
     break;
 
   default:
     if (changes & NEW_U) {
-      th->th_flags |= TCP_URG;
-      DECODEU(th->th_urp);
+      TCPH_SET_FLAG(th, TCP_URG);
+      DECODEU(th->urgp);
     } else {
-      th->th_flags &=~ TCP_URG;
+      TCPH_UNSET_FLAG(th, TCP_URG);
     }
     if (changes & NEW_W) {
-      DECODES(th->th_win);
+      DECODES(th->wnd);
     }
     if (changes & NEW_A) {
-      DECODEL(th->th_ack);
+      DECODEL(th->ackno);
     }
     if (changes & NEW_S) {
-      DECODEL(th->th_seq);
+      DECODEL(th->seqno);
     }
     break;
   }
   if (changes & NEW_I) {
-    DECODES(cs->cs_ip.ip_id);
+    DECODES(cs->cs_ip._id);
   } else {
-    cs->cs_ip.ip_id = ntohs(cs->cs_ip.ip_id) + 1;
-    cs->cs_ip.ip_id = htons(cs->cs_ip.ip_id);
+    IPH_ID_SET(&cs->cs_ip, ntohs(IPH_ID(&cs->cs_ip)) + 1);
+    IPH_ID_SET(&cs->cs_ip, htons(IPH_ID(&cs->cs_ip)));
   }
 
   /*
@@ -578,20 +570,20 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
   tmp = n0->tot_len - vjlen + cs->cs_hlen;
-  cs->cs_ip.ip_len = htons(tmp);
+  IPH_LEN_SET(&cs->cs_ip, htons(tmp));
 #else
-  cs->cs_ip.ip_len = htons(n0->tot_len - vjlen + cs->cs_hlen);
+  IPH_LEN_SET(&cs->cs_ip, htons(n0->tot_len - vjlen + cs->cs_hlen));
 #endif
 
   /* recompute the ip header checksum */
   bp = (u_short *) &cs->cs_ip;
-  cs->cs_ip.ip_sum = 0;
+  IPH_CHKSUM_SET(&cs->cs_ip, 0);
   for (tmp = 0; hlen > 0; hlen -= 2) {
     tmp += *bp++;
   }
   tmp = (tmp & 0xffff) + (tmp >> 16);
   tmp = (tmp & 0xffff) + (tmp >> 16);
-  cs->cs_ip.ip_sum = (u_short)(~tmp);
+  IPH_CHKSUM_SET(&cs->cs_ip,  (u_short)(~tmp));
   
   /* Remove the compressed header and prepend the uncompressed header. */
   if(pbuf_header(n0, -((s16_t)(vjlen)))) {
