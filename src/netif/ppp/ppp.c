@@ -340,7 +340,7 @@ static u_char pppACCMMask[] = {
 };
 
 /** Wake up the task blocked in reading from serial line (if any) */
-void
+static void
 pppRecvWakeup(int pd)
 {
   PPPDEBUG((LOG_DEBUG, "pppRecvWakeup: unit %d\n", pd));
@@ -366,7 +366,7 @@ pppLinkTerminated(int pd)
     pc = &pppControl[pd];
     pppDrop(&pc->rx); /* bug fix #17726 */
 
-      PPPDEBUG((LOG_DEBUG, "pppInputThread: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
+      PPPDEBUG((LOG_DEBUG, "pppLinkTerminated: unit %d: linkStatusCB=%lx errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
       if(pc->linkStatusCB) {
         pc->linkStatusCB(pc->linkStatusCtx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
       }
@@ -393,27 +393,24 @@ pppLinkDown(int pd)
   }
 }
 
-/* these callbacks are necessary because lcp_* functions
-   must be called in the same context as pppInput(),
-   namely the tcpip_thread(), essentially because
-   they manipulate timeouts which are thread-private
-*/
-
+/** Initiate LCP open request */
 static void
 pppStart(int pd)
 {
-  PPPDEBUG((LOG_DEBUG, "pppStartCB: unit %d\n", pd));
+  PPPDEBUG((LOG_DEBUG, "pppStart: unit %d\n", pd));
   lcp_lowerup(pd);
   lcp_open(pd); /* Start protocol */
 }
 
+/** LCP close request */
 static void
 pppStop(int pd)
 {
-  PPPDEBUG((LOG_DEBUG, "pppStopCB: unit %d\n", pd));
+  PPPDEBUG((LOG_DEBUG, "pppStop: unit %d\n", pd));
   lcp_close(pd, "User request");
 }
 
+/** Called when carrier/link is lost */
 static void
 pppHup(int pd)
 {
@@ -521,13 +518,15 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 }
 
 #if PPPOS_SUPPORT
-/* Open a new PPP connection using the given I/O device.
+/** Open a new PPP connection using the given I/O device.
  * This initializes the PPP control block but does not
  * attempt to negotiate the LCP session.  If this port
  * connects to a modem, the modem connection must be
  * established before calling this.
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure.
+ *
+ * pppOpen() is directly defined to this function.
  */
 int
 pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
