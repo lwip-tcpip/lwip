@@ -97,6 +97,8 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
 {
   static u8_t netifnum = 0;
 
+  LWIP_ASSERT("No init function given", init != NULL);
+
   /* reset new interface configuration state */
   netif->ip_addr.addr = 0;
   netif->netmask.addr = 0;
@@ -188,14 +190,17 @@ netif_set_addr(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netm
  *
  * @param netif the network interface to remove
  */
-void netif_remove(struct netif * netif)
+void
+netif_remove(struct netif *netif)
 {
-  if ( netif == NULL ) return;
+  if (netif == NULL) {
+    return;
+  }
 
 #if LWIP_IGMP
   /* stop IGMP processing */
   if (netif->flags & NETIF_FLAG_IGMP) {
-    igmp_stop( netif);
+    igmp_stop(netif);
   }
 #endif /* LWIP_IGMP */
 
@@ -204,25 +209,24 @@ void netif_remove(struct netif * netif)
   /*  is it the first netif? */
   if (netif_list == netif) {
     netif_list = netif->next;
-    snmp_dec_iflist();
-  }
-  else {
+  } else {
     /*  look for netif further down the list */
     struct netif * tmpNetif;
     for (tmpNetif = netif_list; tmpNetif != NULL; tmpNetif = tmpNetif->next) {
       if (tmpNetif->next == netif) {
         tmpNetif->next = netif->next;
-        snmp_dec_iflist();
         break;
       }
     }
     if (tmpNetif == NULL)
       return; /*  we didn't find any netif today */
   }
+  snmp_dec_iflist();
   /* this netif is default? */
-  if (netif_default == netif)
+  if (netif_default == netif) {
     /* reset default netif */
     netif_set_default(NULL);
+  }
   LWIP_DEBUGF( NETIF_DEBUG, ("netif_remove: removed netif\n") );
 }
 
@@ -275,8 +279,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
   struct tcp_pcb_listen *lpcb;
 
   /* address is actually being changed? */
-  if ((ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0)
-  {
+  if ((ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0) {
     /* extern struct tcp_pcb *tcp_active_pcbs; defined by tcp.h */
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
     pcb = tcp_active_pcbs;
@@ -371,13 +374,10 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
 void
 netif_set_default(struct netif *netif)
 {
-  if (netif == NULL)
-  {
+  if (netif == NULL) {
     /* remove default route */
     snmp_delete_iprteidx_tree(1, netif);
-  }
-  else
-  {
+  } else {
     /* install default route */
     snmp_insert_iprteidx_tree(1, netif);
   }
@@ -397,7 +397,7 @@ netif_set_default(struct netif *netif)
  */ 
 void netif_set_up(struct netif *netif)
 {
-  if ( !(netif->flags & NETIF_FLAG_UP )) {
+  if (!(netif->flags & NETIF_FLAG_UP)) {
     netif->flags |= NETIF_FLAG_UP;
     
 #if LWIP_SNMP
@@ -433,16 +433,15 @@ void netif_set_up(struct netif *netif)
  */ 
 void netif_set_down(struct netif *netif)
 {
-  if ( netif->flags & NETIF_FLAG_UP )
-    {
-      netif->flags &= ~NETIF_FLAG_UP;
+  if (netif->flags & NETIF_FLAG_UP) {
+    netif->flags &= ~NETIF_FLAG_UP;
 #if LWIP_SNMP
-      snmp_get_sysuptime(&netif->ts);
+    snmp_get_sysuptime(&netif->ts);
 #endif
-      
-      NETIF_LINK_CALLBACK(netif);
-      NETIF_STATUS_CALLBACK(netif);
-    }
+
+    NETIF_LINK_CALLBACK(netif);
+    NETIF_STATUS_CALLBACK(netif);
+  }
 }
 
 #if LWIP_NETIF_STATUS_CALLBACK
@@ -451,8 +450,9 @@ void netif_set_down(struct netif *netif)
  */
 void netif_set_status_callback(struct netif *netif, void (* status_callback)(struct netif *netif ))
 {
-    if ( netif )
-        netif->status_callback = status_callback;
+  if (netif) {
+    netif->status_callback = status_callback;
+  }
 }
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
@@ -478,10 +478,10 @@ void netif_set_link_up(struct netif *netif )
 
   if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_ARP
-  /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
-  if (netif->flags & NETIF_FLAG_ETHARP) {
-    etharp_gratuitous(netif);
-  }
+    /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
+    if (netif->flags & NETIF_FLAG_ETHARP) {
+      etharp_gratuitous(netif);
+    }
 #endif /* LWIP_ARP */
 
 #if LWIP_IGMP
@@ -551,10 +551,10 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   clen = pbuf_clen(r);
   /* check for overflow or too many pbuf on queue */
   if(((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
-    ((netif->loop_cnt_current + clen) > LWIP_LOOPBACK_MAX_PBUFS)) {
-      pbuf_free(r);
-      r = NULL;
-      return ERR_MEM;
+     ((netif->loop_cnt_current + clen) > LWIP_LOOPBACK_MAX_PBUFS)) {
+    pbuf_free(r);
+    r = NULL;
+    return ERR_MEM;
   }
   netif->loop_cnt_current += clen;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
@@ -607,7 +607,7 @@ netif_poll(struct netif *netif)
     /* Get a packet from the list. With SYS_LIGHTWEIGHT_PROT=1, this is protected */
     SYS_ARCH_PROTECT(lev);
     in = netif->loop_first;
-    if(in != NULL) {
+    if (in != NULL) {
       struct pbuf *in_end = in;
 #if LWIP_LOOPBACK_MAX_PBUFS
       u8_t clen = pbuf_clen(in);
@@ -616,12 +616,12 @@ netif_poll(struct netif *netif)
         ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
       netif->loop_cnt_current -= clen;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      while(in_end->len != in_end->tot_len) {
+      while (in_end->len != in_end->tot_len) {
         LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
         in_end = in_end->next;
       }
       /* 'in_end' now points to the last pbuf from 'in' */
-      if(in_end == netif->loop_last) {
+      if (in_end == netif->loop_last) {
         /* this was the last pbuf in the list */
         netif->loop_first = netif->loop_last = NULL;
       } else {
@@ -634,16 +634,16 @@ netif_poll(struct netif *netif)
     }
     SYS_ARCH_UNPROTECT(lev);
 
-    if(in != NULL) {
+    if (in != NULL) {
       /* loopback packets are always IP packets! */
-      if(ip_input(in, netif) != ERR_OK) {
+      if (ip_input(in, netif) != ERR_OK) {
         pbuf_free(in);
       }
       /* Don't reference the packet any more! */
       in = NULL;
     }
   /* go on while there is a packet on the list */
-  } while(netif->loop_first != NULL);
+  } while (netif->loop_first != NULL);
 }
 
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
