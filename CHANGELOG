@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-01-10: Simon Goldschmidt (Bill Auerbach)
+  * opt.h, memp.c: patch #6822 (Add option to place memory pools in
+    separate arrays)
+
   2010-01-10: Simon Goldschmidt
   * init.c, igmp.c: patch #6463 (IGMP - Adding Random Delay): added define
     LWIP_RAND() for lwip-wide randomization (to be defined in cc.h)

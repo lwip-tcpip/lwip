@@ -143,11 +143,32 @@ static const char *memp_desc[MEMP_MAX] = {
 };
 #endif /* LWIP_DEBUG */
 
-/** This is the actual memory used by the pools. */
+#if MEMP_SEPARATE_POOLS
+
+/** This creates each memory pool. These are named memp_memory_XXX (where XXX
+ * is the name of the pool defined in memp_std.h).
+ * To relocate a pool, declare it as extern in cc.h. Example for GCC:
+ *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_UDP_PCB[];
+ */
+#define LWIP_MEMPOOL(name,num,size,desc) u8_t memp_memory_ ## name \
+  ## [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))];   
+#include "lwip/memp_std.h"
+
+/** This array holds the base of each memory pool. */
+static u8_t *const memp_bases[] = { 
+#define LWIP_MEMPOOL(name,num,size,desc) memp_memory_ ## name,   
+#include "lwip/memp_std.h"
+};
+
+#else /* MEMP_SEPARATE_POOLS */
+
+/** This is the actual memory used by the pools (all pools in one big block). */
 static u8_t memp_memory[MEM_ALIGNMENT - 1 
 #define LWIP_MEMPOOL(name,num,size,desc) + ( (num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size) ) )
 #include "lwip/memp_std.h"
 ];
+
+#endif /* MEMP_SEPARATE_POOLS */
 
 #if MEMP_SANITY_CHECK
 /**
@@ -270,10 +291,15 @@ memp_init(void)
     MEMP_STATS_AVAIL(avail, i, memp_num[i]);
   }
 
+#if !MEMP_SEPARATE_POOLS
   memp = LWIP_MEM_ALIGN(memp_memory);
+#endif /* !MEMP_SEPARATE_POOLS */
   /* for every pool: */
   for (i = 0; i < MEMP_MAX; ++i) {
     memp_tab[i] = NULL;
+#if MEMP_SEPARATE_POOLS
+    memp = (struct memp*)memp_bases[i];
+#endif /* MEMP_SEPARATE_POOLS */
     /* create a linked list of memp elements */
     for (j = 0; j < memp_num[i]; ++j) {
       memp->next = memp_tab[i];
