@@ -37,6 +37,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-10: Simon Goldschmidt
+  * tcp.h/.c: bug #28127 (remove call to tcp_output() from tcp_ack(_now)())
+
   2010-01-08: Simon Goldschmidt
   * api_msg.h/.c, api_lib.c: Fixed bug #26672 (close connection when receive
     window = 0) by correctly draining recvmbox/acceptmbox

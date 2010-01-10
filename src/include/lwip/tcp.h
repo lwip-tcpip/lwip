@@ -556,7 +556,6 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
     if((pcb)->flags & TF_ACK_DELAY) {              \
       (pcb)->flags &= ~TF_ACK_DELAY;               \
       (pcb)->flags |= TF_ACK_NOW;                  \
-      tcp_output(pcb);                             \
     }                                              \
     else {                                         \
       (pcb)->flags |= TF_ACK_DELAY;                \
@@ -566,7 +565,6 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
 #define tcp_ack_now(pcb)                           \
   do {                                             \
     (pcb)->flags |= TF_ACK_NOW;                    \
-    tcp_output(pcb);                               \
   } while (0)
 
 err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);

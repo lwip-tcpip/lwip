@@ -454,8 +454,10 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
    * watermark is TCP_WND/2), then send an explicit update now.
    * Otherwise wait for a packet to be sent in the normal course of
    * events (or more window to be available later) */
-  if (wnd_inflation >= TCP_WND_UPDATE_THRESHOLD) 
+  if (wnd_inflation >= TCP_WND_UPDATE_THRESHOLD) {
     tcp_ack_now(pcb);
+    tcp_output(pcb);
+  }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: recveived %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
          len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
@@ -836,6 +838,7 @@ tcp_fasttmr(void)
     if (pcb->flags & TF_ACK_DELAY) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
+      tcp_output();
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
   }
