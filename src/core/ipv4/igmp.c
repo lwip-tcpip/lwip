@@ -641,10 +641,7 @@ igmp_timeout(struct igmp_group *group)
 void
 igmp_start_timer(struct igmp_group *group, u8_t max_time)
 {
-  /**
-   * @todo Important !! this should be random 0 -> max_time. Find out how to do this
-   */
-  group->timer = max_time;
+  group->timer = LWIP_RAND() % max_time;
 }
 
 /**

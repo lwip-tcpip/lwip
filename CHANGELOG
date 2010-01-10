@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-01-10: Simon Goldschmidt
+  * init.c, igmp.c: patch #6463 (IGMP - Adding Random Delay): added define
+    LWIP_RAND() for lwip-wide randomization (to be defined in cc.h)
+
   2009-12-31: Simon Goldschmidt
   * tcpip.c, init.c, memp.c, sys.c, memp_std.h, sys.h, tcpip.h
     added timers.c/.h: Separated timer implementation from semaphore/mbox
