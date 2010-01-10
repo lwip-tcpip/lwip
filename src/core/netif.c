@@ -203,6 +203,10 @@ netif_remove(struct netif *netif)
     igmp_stop(netif);
   }
 #endif /* LWIP_IGMP */
+  if (netif_is_up(netif)) {
+    /* set netif down before removing (call callback function) */
+    netif_set_down(netif);
+  }
 
   snmp_delete_ipaddridx_tree(netif);
 
