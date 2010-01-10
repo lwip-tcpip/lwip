@@ -45,8 +45,9 @@ extern "C" {
 #ifndef LWIP_DEBUG_TIMERNAMES
 #ifdef LWIP_DEBUG
 #define LWIP_DEBUG_TIMERNAMES SYS_DEBUG
-#else
+#else /* LWIP_DEBUG */
 #define LWIP_DEBUG_TIMERNAMES 0
+#endif /* LWIP_DEBUG*/
 #endif
 
 typedef void (* sys_timeout_handler)(void *arg);
