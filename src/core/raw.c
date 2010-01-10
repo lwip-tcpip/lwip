@@ -92,7 +92,9 @@ raw_input(struct pbuf *p, struct netif *inp)
   /* loop through all raw pcbs until the packet is eaten by one */
   /* this allows multiple pcbs to match against the packet by design */
   while ((eaten == 0) && (pcb != NULL)) {
-    if (pcb->protocol == proto) {
+    if ((pcb->protocol == proto) &&
+        (ip_addr_isany(&pcb->local_ip)) ||
+         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
       if ((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(&(iphdr->dest), inp))
