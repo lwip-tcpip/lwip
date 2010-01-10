@@ -145,18 +145,18 @@ static const char *memp_desc[MEMP_MAX] = {
 
 #if MEMP_SEPARATE_POOLS
 
-/** This creates each memory pool. These are named memp_memory_XXX (where XXX
- * is the name of the pool defined in memp_std.h).
+/** This creates each memory pool. These are named memp_memory_XXX_base (where
+ * XXX is the name of the pool defined in memp_std.h).
  * To relocate a pool, declare it as extern in cc.h. Example for GCC:
- *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_UDP_PCB[];
+ *   extern u8_t __attribute__((section(".onchip_mem"))) memp_memory_UDP_PCB_base[];
  */
-#define LWIP_MEMPOOL(name,num,size,desc) u8_t memp_memory_ ## name \
-  ## [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))];   
+#define LWIP_MEMPOOL(name,num,size,desc) u8_t memp_memory_ ## name ## _base \
+  [((num) * (MEMP_SIZE + MEMP_ALIGN_SIZE(size)))];   
 #include "lwip/memp_std.h"
 
 /** This array holds the base of each memory pool. */
 static u8_t *const memp_bases[] = { 
-#define LWIP_MEMPOOL(name,num,size,desc) memp_memory_ ## name,   
+#define LWIP_MEMPOOL(name,num,size,desc) memp_memory_ ## name ## _base,   
 #include "lwip/memp_std.h"
 };
 
