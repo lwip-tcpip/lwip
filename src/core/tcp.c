@@ -838,7 +838,7 @@ tcp_fasttmr(void)
     if (pcb->flags & TF_ACK_DELAY) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
-      tcp_output();
+      tcp_output(pcb);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
   }
