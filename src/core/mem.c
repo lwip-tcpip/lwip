@@ -154,7 +154,7 @@ mem_free(void *rmem)
 struct mem {
   /** index (-> ram[next]) of the next struct */
   mem_size_t next;
-  /** index (-> ram[next]) of the next struct */
+  /** index (-> ram[prev]) of the previous struct */
   mem_size_t prev;
   /** 1: this area is used; 0: this area is unused */
   u8_t used;
