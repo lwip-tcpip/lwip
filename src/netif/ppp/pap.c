@@ -452,18 +452,19 @@ upap_rauthack(upap_state *u, u_char *inp, int id, int len)
    * Parse message.
    */
   if (len < sizeof (u_char)) {
-    UPAPDEBUG((LOG_INFO, "pap_rauthack: rcvd short packet.\n"));
-    return;
+    UPAPDEBUG((LOG_INFO, "pap_rauthack: ignoring missing msg-length.\n"));
+  } else {
+    GETCHAR(msglen, inp);
+    if (msglen > 0) {
+      len -= sizeof (u_char);
+      if (len < msglen) {
+        UPAPDEBUG((LOG_INFO, "pap_rauthack: rcvd short packet.\n"));
+        return;
+      }
+      msg = (char *) inp;
+      PRINTMSG(msg, msglen);
+    }
   }
-  GETCHAR(msglen, inp);
-  len -= sizeof (u_char);
-  if (len < msglen) {
-    UPAPDEBUG((LOG_INFO, "pap_rauthack: rcvd short packet.\n"));
-    return;
-  }
-  msg = (char *) inp;
-  PRINTMSG(msg, msglen);
-
   UNTIMEOUT(upap_timeout, u);    /* Cancel timeout */
   u->us_clientstate = UPAPCS_OPEN;
 

@@ -41,6 +41,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-11: Simon Goldschmidt
+  * pap.c: Fixed bug #13315 (PPP PAP authentication can result in
+    erroneous callbacks) by copying the code from recent pppd
+
   2010-01-10: Simon Goldschmidt
   * raw.c: Fixed bug #28506 (raw_bind should filter received packets)
 
