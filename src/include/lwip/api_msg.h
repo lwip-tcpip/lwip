@@ -48,9 +48,6 @@
 extern "C" {
 #endif
 
-/* Used for do_delconn: MSB is set if there were undrained netconns in acceptmbox */
-#define DELCONN_UNDRAINED_CONN 0x80000000
-
 /* IP addresses and port numbers are expected to be in
  * the same byte order as in the corresponding pcb.
  */
@@ -103,10 +100,6 @@ struct api_msg_msg {
       u8_t backlog;
     } lb;
 #endif /* TCP_LISTEN_BACKLOG */
-    /** used for do_delconn */
-    struct {
-      u32_t drained;
-    } dc;
   } msg;
 };
 
@@ -158,7 +151,6 @@ void do_gethostbyname(void *arg);
 #endif /* LWIP_DNS */
 
 struct netconn* netconn_alloc(enum netconn_type t, netconn_callback callback);
-void netconn_drain(struct netconn *conn, u32_t *bytes_drained, u16_t *accepts_drained);
 void netconn_free(struct netconn *conn);
 
 #ifdef __cplusplus
