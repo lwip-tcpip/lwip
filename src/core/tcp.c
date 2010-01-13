@@ -1237,14 +1237,14 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if (pcb->ooseq != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
+    tcp_segs_free(pcb->ooseq);
+    pcb->ooseq = NULL;
+#endif /* TCP_QUEUE_OOSEQ */
 
     /* Stop the retransmission timer as it will expect data on unacked
        queue if it fires */
     pcb->rtime = -1;
 
-    tcp_segs_free(pcb->ooseq);
-    pcb->ooseq = NULL;
-#endif /* TCP_QUEUE_OOSEQ */
     tcp_segs_free(pcb->unsent);
     tcp_segs_free(pcb->unacked);
     pcb->unacked = pcb->unsent = NULL;
