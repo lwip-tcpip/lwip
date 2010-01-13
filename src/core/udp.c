@@ -505,8 +505,9 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
     udphdr->chksum = inet_chksum_pseudo_partial(q, src_ip, dst_ip,
                                         IP_PROTO_UDPLITE, q->tot_len, chklen);
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
-    if (udphdr->chksum == 0x0000)
+    if (udphdr->chksum == 0x0000) {
       udphdr->chksum = 0xffff;
+    }
 #endif /* CHECKSUM_CHECK_UDP */
     /* output to IP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDPLITE,)\n"));
@@ -527,7 +528,9 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
     if ((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
       udphdr->chksum = inet_chksum_pseudo(q, src_ip, dst_ip, IP_PROTO_UDP, q->tot_len);
       /* chksum zero must become 0xffff, as zero means 'no checksum' */
-      if (udphdr->chksum == 0x0000) udphdr->chksum = 0xffff;
+      if (udphdr->chksum == 0x0000) {
+        udphdr->chksum = 0xffff;
+      }
     }
 #endif /* CHECKSUM_CHECK_UDP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
@@ -602,7 +605,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
        combine with implementation of UDP PCB flags. Leon Woestenberg. */
 #ifdef LWIP_UDP_TODO
     /* port matches that of PCB in list? */
-    else
+    else {
       if ((ipcb->local_port == port) &&
           /* IP address matches, or one is IP_ADDR_ANY? */
           (ip_addr_isany(&(ipcb->local_ip)) ||
@@ -613,6 +616,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
                     ("udp_bind: local port %"U16_F" already bound by another pcb\n", port));
         return ERR_USE;
       }
+    }
 #endif
   }
 
@@ -632,9 +636,10 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
         port++;
         /* restart scanning all udp pcbs */
         ipcb = udp_pcbs;
-      } else
+      } else {
         /* go on with next udp pcb */
         ipcb = ipcb->next;
+      }
     }
     if (ipcb != NULL) {
       /* no more ports available in local range */
@@ -682,8 +687,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 
   if (pcb->local_port == 0) {
     err_t err = udp_bind(pcb, &pcb->local_ip, pcb->local_port);
-    if (err != ERR_OK)
+    if (err != ERR_OK) {
       return err;
+    }
   }
 
   ip_addr_set(&pcb->remote_ip, ipaddr);
@@ -782,7 +788,7 @@ udp_remove(struct udp_pcb *pcb)
     /* make list start at 2nd pcb */
     udp_pcbs = udp_pcbs->next;
     /* pcb not 1st in list */
-  } else
+  } else {
     for (pcb2 = udp_pcbs; pcb2 != NULL; pcb2 = pcb2->next) {
       /* find pcb in udp_pcbs list */
       if (pcb2->next != NULL && pcb2->next == pcb) {
@@ -790,6 +796,7 @@ udp_remove(struct udp_pcb *pcb)
         pcb2->next = pcb->next;
       }
     }
+  }
   memp_free(MEMP_UDP_PCB, pcb);
 }
 
