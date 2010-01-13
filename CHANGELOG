@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2010-01-13: Simon Goldschmidt
+  * mem.c: The heap now may be moved to user-defined memory by defining
+    LWIP_RAM_HEAP_POINTER as a void pointer to that memory's address
+    (patch #6966 and bug #26133)
+
   2010-01-10: Simon Goldschmidt (Bill Auerbach)
   * opt.h, memp.c: patch #6822 (Add option to place memory pools in
     separate arrays)

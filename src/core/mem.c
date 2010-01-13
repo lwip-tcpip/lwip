@@ -171,8 +171,16 @@ struct mem {
 #define SIZEOF_STRUCT_MEM    LWIP_MEM_ALIGN_SIZE(sizeof(struct mem))
 #define MEM_SIZE_ALIGNED     LWIP_MEM_ALIGN_SIZE(MEM_SIZE)
 
+/** If you want to relocate the heap to external memory, simply define
+ * LWIP_RAM_HEAP_POINTER as a void-pointer to that location.
+ * If so, make sure the memory at that location is big enough (see below on
+ * how that space is calculated). */
+#ifndef LWIP_RAM_HEAP_POINTER
 /** the heap. we need one struct mem at the end and some room for alignment */
-static u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
+u8_t ram_heap[MEM_SIZE_ALIGNED + (2*SIZEOF_STRUCT_MEM) + MEM_ALIGNMENT];
+#define LWIP_RAM_HEAP_POINTER ram_heap
+#endif /* LWIP_RAM_HEAP_POINTER */
+
 /** pointer to the heap (ram_heap): for alignment, ram is now a pointer instead of an array */
 static u8_t *ram;
 /** the last entry, always unused! */
@@ -267,7 +275,7 @@ mem_init(void)
     (SIZEOF_STRUCT_MEM & (MEM_ALIGNMENT-1)) == 0);
 
   /* align the heap */
-  ram = LWIP_MEM_ALIGN(ram_heap);
+  ram = LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);
   /* initialize the start of the heap */
   mem = (struct mem *)ram;
   mem->next = MEM_SIZE_ALIGNED;
