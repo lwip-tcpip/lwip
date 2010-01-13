@@ -773,7 +773,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
   }
   cseg->next = next;
 }
-#endif
+#endif /* TCP_QUEUE_OOSEQ */
 
 /**
  * Called by tcp_process. Checks if the given segment is an ACK for outstanding
@@ -793,7 +793,7 @@ tcp_receive(struct tcp_pcb *pcb)
   struct tcp_seg *next;
 #if TCP_QUEUE_OOSEQ
   struct tcp_seg *prev, *cseg;
-#endif
+#endif /* TCP_QUEUE_OOSEQ */
   struct pbuf *p;
   s32_t off;
   s16_t m;
@@ -1161,6 +1161,9 @@ tcp_receive(struct tcp_pcb *pcb)
                       (seqno + tcplen) == (pcb->rcv_nxt + pcb->rcv_wnd));
         }
 #if TCP_QUEUE_OOSEQ
+        /* Received in-sequence data, adjust ooseq data if:
+           - FIN has been received or
+           - inseq overlaps with ooseq */
         if (pcb->ooseq != NULL) {
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
             LWIP_DEBUGF(TCP_INPUT_DEBUG, 
@@ -1172,8 +1175,8 @@ tcp_receive(struct tcp_pcb *pcb)
               struct tcp_seg *old_ooseq = pcb->ooseq;
               pcb->ooseq = pcb->ooseq->next;
               tcp_seg_free(old_ooseq);
-            }               
-          } 
+            }
+          }
           else {
             next = pcb->ooseq;
             /* Remove all segments on ooseq that are covered by inseg already.
@@ -1243,7 +1246,7 @@ tcp_receive(struct tcp_pcb *pcb)
 
 #if TCP_QUEUE_OOSEQ
         /* We now check if we have segments on the ->ooseq queue that
-           is now in sequence. */
+           are now in sequence. */
         while (pcb->ooseq != NULL &&
                pcb->ooseq->tcphdr->seqno == pcb->rcv_nxt) {
 
