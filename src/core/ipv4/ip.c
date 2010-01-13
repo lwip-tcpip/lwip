@@ -553,8 +553,7 @@ err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest
     LWIP_ASSERT("check that first pbuf can hold struct ip_hdr",
                (p->len >= sizeof(struct ip_hdr)));
 
-    IPH_TTL_SET(iphdr, ttl);
-    IPH_PROTO_SET(iphdr, proto);
+    IPH_TTL_PROTO_SET(iphdr, ttl, proto);
 
     ip_addr_set(&(iphdr->dest), dest);
 
