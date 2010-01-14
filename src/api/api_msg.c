@@ -836,6 +836,8 @@ void
 do_connect(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.tcp == NULL) {
+    /* This may happen when calling netconn_connect() a second time */
+    msg->conn->err = ERR_CLSD;
     sys_sem_signal(msg->conn->op_completed);
     return;
   }
