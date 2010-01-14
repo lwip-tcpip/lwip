@@ -45,26 +45,31 @@
 extern "C" {
 #endif
 
+struct raw_pcb;
+
+/** Function prototype for raw pcb receive callback functions.
+ * @param arg user supplied argument (raw_pcb.recv_arg)
+ * @param pcb the raw_pcb which received data
+ * @param p the packet buffer that was received
+ * @param addr the remote IP address from which the packet was received
+ * @return 1 if the packet was 'eaten' (aka. deleted),
+ *         0 if the packet lives on
+ * If returning 1, the callback is responsible for freeing the pbuf
+ * if it's not used any more.
+ */
+typedef u8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
+    struct ip_addr *addr);
+
 struct raw_pcb {
-/* Common members of all PCB types */
+  /* Common members of all PCB types */
   IP_PCB;
 
   struct raw_pcb *next;
 
   u8_t protocol;
 
-  /* receive callback function
-   * @param arg user supplied argument (raw_pcb.recv_arg)
-   * @param pcb the raw_pcb which received data
-   * @param p the packet buffer that was received
-   * @param addr the remote IP address from which the packet was received
-   * @return 1 if the packet was 'eaten' (aka. deleted),
-   *         0 if the packet lives on
-   * If returning 1, the callback is responsible for freeing the pbuf
-   * if it's not used any more.
-   */
-  u8_t (* recv)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    struct ip_addr *addr);
+  /** receive callback function */
+  raw_recv_fn recv;
   /* user-supplied argument for the recv callback */
   void *recv_arg;
 };
@@ -76,11 +81,7 @@ void             raw_remove     (struct raw_pcb *pcb);
 err_t            raw_bind       (struct raw_pcb *pcb, struct ip_addr *ipaddr);
 err_t            raw_connect    (struct raw_pcb *pcb, struct ip_addr *ipaddr);
 
-void             raw_recv       (struct raw_pcb *pcb,
-                                 u8_t (* recv)(void *arg, struct raw_pcb *pcb,
-                                              struct pbuf *p,
-                                              struct ip_addr *addr),
-                                 void *recv_arg);
+void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
 err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 

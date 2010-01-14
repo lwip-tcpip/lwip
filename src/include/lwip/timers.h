@@ -50,6 +50,11 @@ extern "C" {
 #endif /* LWIP_DEBUG*/
 #endif
 
+/** Function prototype for a timeout callback function. Register such a function
+ * using sys_timeout().
+ *
+ * @param arg Additional argument to pass to the function - set up by sys_timeout()
+ */
 typedef void (* sys_timeout_handler)(void *arg);
 
 struct sys_timeo {

@@ -49,7 +49,6 @@
 #include "lwip/netif.h"
 #include "lwip/raw.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
 #include "arch/perf.h"
 
 #include <string.h>
@@ -182,10 +181,7 @@ raw_connect(struct raw_pcb *pcb, struct ip_addr *ipaddr)
  * available for others.
  */
 void
-raw_recv(struct raw_pcb *pcb,
-         u8_t (* recv)(void *arg, struct raw_pcb *upcb, struct pbuf *p,
-                      struct ip_addr *addr),
-         void *recv_arg)
+raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
 {
   /* remember recv() callback and user data */
   pcb->recv = recv;

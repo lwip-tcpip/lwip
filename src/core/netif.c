@@ -90,10 +90,7 @@ struct netif *netif_default;
  */
 struct netif *
 netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
-  struct ip_addr *gw,
-  void *state,
-  err_t (* init)(struct netif *netif),
-  err_t (* input)(struct pbuf *p, struct netif *netif))
+  struct ip_addr *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
   static u8_t netifnum = 0;
 
@@ -452,7 +449,7 @@ void netif_set_down(struct netif *netif)
 /**
  * Set callback to be called when interface is brought up/down
  */
-void netif_set_status_callback(struct netif *netif, void (* status_callback)(struct netif *netif ))
+void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
 {
   if (netif) {
     netif->status_callback = status_callback;
@@ -510,7 +507,7 @@ void netif_set_link_down(struct netif *netif )
 /**
  * Set callback to be called when link is brought up/down
  */
-void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif ))
+void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback)
 {
   if (netif) {
     netif->link_callback = link_callback;
@@ -589,7 +586,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
-  tcpip_callback((void (*)(void *))(netif_poll), netif);
+  tcpip_callback((tcpip_callback_fn)netif_poll, netif);
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
   return ERR_OK;

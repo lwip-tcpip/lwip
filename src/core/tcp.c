@@ -218,7 +218,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
   u16_t remote_port, local_port;
   struct ip_addr remote_ip, local_ip;
 #if LWIP_CALLBACK_API  
-  void (* errf)(void *arg, err_t err);
+  tcp_err_fn errf;
 #endif /* LWIP_CALLBACK_API */
   void *errf_arg;
 
@@ -516,7 +516,7 @@ tcp_new_port(void)
  */
 err_t
 tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
-      err_t (* connected)(void *arg, struct tcp_pcb *tpcb, err_t err))
+      tcp_connected_fn connected)
 {
   err_t ret;
   u32_t iss;
@@ -1118,8 +1118,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
  * @param recv callback function to call for this pcb when data is received
  */ 
 void
-tcp_recv(struct tcp_pcb *pcb,
-   err_t (* recv)(void *arg, struct tcp_pcb *tpcb, struct pbuf *p, err_t err))
+tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 {
   pcb->recv = recv;
 }
@@ -1132,8 +1131,7 @@ tcp_recv(struct tcp_pcb *pcb,
  * @param sent callback function to call for this pcb when data is successfully sent
  */ 
 void
-tcp_sent(struct tcp_pcb *pcb,
-   err_t (* sent)(void *arg, struct tcp_pcb *tpcb, u16_t len))
+tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
   pcb->sent = sent;
 }
@@ -1143,14 +1141,13 @@ tcp_sent(struct tcp_pcb *pcb,
  * has occured on the connection.
  *
  * @param pcb tcp_pcb to set the err callback
- * @param errf callback function to call for this pcb when a fatal error
+ * @param err callback function to call for this pcb when a fatal error
  *        has occured on the connection
  */ 
 void
-tcp_err(struct tcp_pcb *pcb,
-   void (* errf)(void *arg, err_t err))
+tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 {
-  pcb->errf = errf;
+  pcb->errf = err;
 }
 
 /**
@@ -1162,8 +1159,7 @@ tcp_err(struct tcp_pcb *pcb,
  *        connection has been connected to another host
  */ 
 void
-tcp_accept(struct tcp_pcb *pcb,
-     err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err))
+tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
   pcb->accept = accept;
 }
@@ -1177,8 +1173,7 @@ tcp_accept(struct tcp_pcb *pcb,
  *
  */ 
 void
-tcp_poll(struct tcp_pcb *pcb,
-   err_t (* poll)(void *arg, struct tcp_pcb *tpcb), u8_t interval)
+tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
 #if LWIP_CALLBACK_API
   pcb->poll = poll;

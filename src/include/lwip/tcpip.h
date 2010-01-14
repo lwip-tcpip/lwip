@@ -66,7 +66,12 @@ extern sys_sem_t lock_tcpip_core;
 #define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
-void tcpip_init(void (* tcpip_init_done)(void *), void *arg);
+/** Function prototype for the init_done function passed to tcpip_init */
+typedef void (*tcpip_init_done_fn)(void *arg);
+/** Function prototype for functions passed to tcpip_callback() */
+typedef void (*tcpip_callback_fn)(void *ctx);
+
+void tcpip_init(tcpip_init_done_fn tcpip_init_done, void *arg);
 
 #if LWIP_NETCONN
 err_t tcpip_apimsg(struct api_msg *apimsg);
@@ -84,7 +89,7 @@ err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_NETIF_API */
 
-err_t tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block);
+err_t tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block);
 #define tcpip_callback(f, ctx)              tcpip_callback_with_block(f, ctx, 1)
 
 /* free pbufs or heap memory from another context without blocking */
@@ -122,7 +127,7 @@ struct tcpip_msg {
       struct netif *netif;
     } inp;
     struct {
-      void (*f)(void *ctx);
+      tcpip_callback_fn function;
       void *ctx;
     } cb;
     struct {

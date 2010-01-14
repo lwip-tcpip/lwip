@@ -759,10 +759,7 @@ udp_disconnect(struct udp_pcb *pcb)
  * @param recv_arg additional argument to pass to the callback function
  */
 void
-udp_recv(struct udp_pcb *pcb,
-         void (* recv)(void *arg, struct udp_pcb *upcb, struct pbuf *p,
-                       struct ip_addr *addr, u16_t port),
-         void *recv_arg)
+udp_recv(struct udp_pcb *pcb, udp_recv_fn recv, void *recv_arg)
 {
   /* remember recv() callback and user data */
   pcb->recv = recv;

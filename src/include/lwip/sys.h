@@ -75,6 +75,9 @@ typedef u8_t sys_mbox_t;
 #include "lwip/err.h"
 #include "arch/sys_arch.h"
 
+/** Function prototype for thread functions */
+typedef void (*lwip_thread_fn)(void *arg);
+
 /* Semaphore functions. */
 sys_sem_t sys_sem_new(u8_t count);
 void sys_sem_signal(sys_sem_t sem);
@@ -103,7 +106,7 @@ void sys_mbox_free(sys_mbox_t mbox);
 #define sys_mbox_fetch(mbox, msg) sys_arch_mbox_fetch(mbox, msg, 0)
 
 /* Thread functions. */
-sys_thread_t sys_thread_new(char *name, void (* thread)(void *arg), void *arg, int stacksize, int prio);
+sys_thread_t sys_thread_new(char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio);
 
 #endif /* NO_SYS */
 

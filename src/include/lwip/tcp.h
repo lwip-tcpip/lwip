@@ -49,6 +49,71 @@ extern "C" {
 
 struct tcp_pcb;
 
+/** Function prototype for tcp accept callback functions. Called when a new
+ * connection can be accepted on a listening pcb.
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param newpcb The new connection pcb
+ * @param err An error code if there has been an error accepting
+ */
+typedef err_t (*tcp_accept_fn)(void *arg, struct tcp_pcb *newpcb, err_t err);
+
+/** Function prototype for tcp receive callback functions. Called when data has
+ * been received.
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param tpcb The connection pcb which received data
+ * @param p The received data (or NULL when the connection has been closed!)
+ * @param err An error code if there has been an error receiving
+ */
+typedef err_t (*tcp_recv_fn)(void *arg, struct tcp_pcb *tpcb,
+                             struct pbuf *p, err_t err);
+
+/** Function prototype for tcp sent callback functions. Called when sent data has
+ * been acknowledged by the remote side. Use it to free corresponding resources.
+ * This also means that the pcb has now space available to send new data.
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param tpcb The connection pcb for which data has been acknowledged
+ * @param len The amount of bytes acknowledged
+ * @return ERR_OK: try to send some data by calling tcp_output
+ */
+typedef err_t (*tcp_sent_fn)(void *arg, struct tcp_pcb *tpcb,
+                              u16_t len);
+
+/** Function prototype for tcp poll callback functions. Called periodically as
+ * specified by @see tcp_poll.
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param tpcb tcp pcb
+ * @return ERR_OK: try to send some data by calling tcp_output
+ */
+typedef err_t (*tcp_poll_fn)(void *arg, struct tcp_pcb *tpcb);
+
+/** Function prototype for tcp error callback functions. Called when the pcb
+ * receives a RST or is unexpectedly closed for any other reason.
+ *
+ * @note The corresponding pcb is already freed when this callback is called!
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param err Error code to indicate why the pcb has been closed
+ *            ERR_ABRT: aborted through tcp_abort or by a TCP timer
+ *            ERR_RST: the connection was reset by the remote host
+ */
+typedef void  (*tcp_err_fn)(void *arg, err_t err);
+
+/** Function prototype for tcp connected callback functions. Called when a pcb
+ * is connected to the remote side after initiating a connection attempt by
+ * calling tcp_connect().
+ *
+ * @param arg Additional argument to pass to the callback function (@see tcp_arg())
+ * @param tpcb The connection pcb which is connected
+ * @param err An unused error code, always ERR_OK currently ;-) TODO!
+ *
+ * @note When a connection attempt fails, the error callback is currently called!
+ */
+typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
+
 /* Functions for interfacing with TCP: */
 
 /* Lower layer interface to TCP: */
@@ -61,20 +126,11 @@ struct tcp_pcb * tcp_new     (void);
 struct tcp_pcb * tcp_alloc   (u8_t prio);
 
 void             tcp_arg     (struct tcp_pcb *pcb, void *arg);
-void             tcp_accept  (struct tcp_pcb *pcb,
-                              err_t (* accept)(void *arg, struct tcp_pcb *newpcb,
-                 err_t err));
-void             tcp_recv    (struct tcp_pcb *pcb,
-                              err_t (* recv)(void *arg, struct tcp_pcb *tpcb,
-                              struct pbuf *p, err_t err));
-void             tcp_sent    (struct tcp_pcb *pcb,
-                              err_t (* sent)(void *arg, struct tcp_pcb *tpcb,
-                              u16_t len));
-void             tcp_poll    (struct tcp_pcb *pcb,
-                              err_t (* poll)(void *arg, struct tcp_pcb *tpcb),
-                              u8_t interval);
-void             tcp_err     (struct tcp_pcb *pcb,
-                              void (* err)(void *arg, err_t err));
+void             tcp_accept  (struct tcp_pcb *pcb, tcp_accept_fn accept);
+void             tcp_recv    (struct tcp_pcb *pcb, tcp_recv_fn recv);
+void             tcp_sent    (struct tcp_pcb *pcb, tcp_sent_fn sent);
+void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval);
+void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 
 #define          tcp_mss(pcb)      ((pcb)->mss)
 #define          tcp_sndbuf(pcb)   ((pcb)->snd_buf)
@@ -92,9 +148,7 @@ void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
 err_t            tcp_bind    (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
                               u16_t port);
 err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
-                              u16_t port, err_t (* connected)(void *arg,
-                              struct tcp_pcb *tpcb,
-                              err_t err));
+                              u16_t port, tcp_connected_fn connected);
 
 struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
 #define          tcp_listen(pcb) tcp_listen_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
@@ -271,7 +325,7 @@ enum tcp_state {
    * @return ERR_OK: accept the new connection,
    *                 any other err_t abortsthe new connection
    */
-#define DEF_ACCEPT_CALLBACK  err_t (* accept)(void *arg, struct tcp_pcb *newpcb, err_t err)
+#define DEF_ACCEPT_CALLBACK  tcp_accept_fn accept
 #else /* LWIP_CALLBACK_API */
 #define DEF_ACCEPT_CALLBACK
 #endif /* LWIP_CALLBACK_API */
@@ -366,49 +420,16 @@ struct tcp_pcb {
   struct pbuf *refused_data; /* Data previously received but not yet taken by upper layer */
 
 #if LWIP_CALLBACK_API
-  /* Function to be called when more send buffer space is available.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb the tcp_pcb which has send buffer space available
-   * @param space the amount of bytes available
-   * @return ERR_OK: try to send some data by calling tcp_output
-   */
-  err_t (* sent)(void *arg, struct tcp_pcb *pcb, u16_t space);
-  
-  /* Function to be called when (in-sequence) data has arrived.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb the tcp_pcb for which data has arrived
-   * @param p the packet buffer which arrived
-   * @param err an error argument (TODO: that is current always ERR_OK?)
-   * @return ERR_OK: try to send some data by calling tcp_output
-   */
-  err_t (* recv)(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err);
-
-  /* Function to be called when a connection has been set up.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb the tcp_pcb that now is connected
-   * @param err an error argument (TODO: that is current always ERR_OK?)
-   * @return value is currently ignored
-   */
-  err_t (* connected)(void *arg, struct tcp_pcb *pcb, err_t err);
-
-  /* Function which is called periodically.
-   * The period can be adjusted in multiples of the TCP slow timer interval
-   * by changing tcp_pcb.polltmr.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param pcb the tcp_pcb to poll for
-   * @return ERR_OK: try to send some data by calling tcp_output
-   */
-  err_t (* poll)(void *arg, struct tcp_pcb *pcb);
-
-  /* Function to be called whenever a fatal error occurs.
-   * There is no pcb parameter since most of the times, the pcb is
-   * already deallocated (or there is no pcb) when this function is called.
-   * @param arg user-supplied argument (tcp_pcb.callback_arg)
-   * @param err an indication why the error callback is called:
-   *            ERR_ABRT: aborted through tcp_abort or by a TCP timer
-   *            ERR_RST: the connection was reset by the remote host
-   */
-  void (* errf)(void *arg, err_t err);
+  /* Function to be called when more send buffer space is available. */
+  tcp_sent_fn sent;
+  /* Function to be called when (in-sequence) data has arrived. */
+  tcp_recv_fn recv;
+  /* Function to be called when a connection has been set up. */
+  tcp_connected_fn connected;
+  /* Function which is called periodically. */
+  tcp_poll_fn poll;
+  /* Function to be called whenever a fatal error occurs. */
+  tcp_err_fn errf;
 #endif /* LWIP_CALLBACK_API */
 
 #if LWIP_TCP_TIMESTAMPS

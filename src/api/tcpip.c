@@ -50,7 +50,7 @@
 #include "netif/ppp_oe.h"
 
 /* global variables */
-static void (* tcpip_init_done)(void *arg);
+static tcpip_init_done_fn tcpip_init_done;
 static void *tcpip_init_done_arg;
 static sys_mbox_t mbox = SYS_MBOX_NULL;
 
@@ -115,7 +115,7 @@ tcpip_thread(void *arg)
 
     case TCPIP_MSG_CALLBACK:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: CALLBACK %p\n", (void *)msg));
-      msg->msg.cb.f(msg->msg.cb.ctx);
+      msg->msg.cb.function(msg->msg.cb.ctx);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
 
@@ -178,7 +178,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
  * @return ERR_OK if the function was called, another err_t if not
  */
 err_t
-tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block)
+tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
 {
   struct tcpip_msg *msg;
 
@@ -189,7 +189,7 @@ tcpip_callback_with_block(void (*f)(void *ctx), void *ctx, u8_t block)
     }
 
     msg->type = TCPIP_MSG_CALLBACK;
-    msg->msg.cb.f = f;
+    msg->msg.cb.function = function;
     msg->msg.cb.ctx = ctx;
     if (block) {
       sys_mbox_post(mbox, msg);
@@ -365,7 +365,7 @@ tcpip_netifapi_lock(struct netifapi_msg* netifapimsg)
  * @param arg argument to pass to initfunc
  */
 void
-tcpip_init(void (* initfunc)(void *), void *arg)
+tcpip_init(tcpip_init_done_fn initfunc, void *arg)
 {
   lwip_init();
 

@@ -81,10 +81,45 @@ extern "C" {
 /** if set, the netif has IGMP capability */
 #define NETIF_FLAG_IGMP         0x40U
 
+/** Function prototype for netif init functions. Set up flags and output/linkoutput
+ * callback functions in this function.
+ *
+ * @param netif The netif to initialize
+ */
+typedef err_t (*netif_init_fn)(struct netif *netif);
+/** Function prototype for netif->input functions. This function is saved as 'input'
+ * callback function in the netif struct. Call it when a packet has been received.
+ *
+ * @param p The received packet, copied into a pbuf
+ * @param inp The netif which received the packet
+ */
+typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
+/** Function prototype for netif->output functions. Called by lwIP when a packet
+ * shall be sent. For ethernet netif, set this to 'etharp_output' and set
+ * 'linkoutput'.
+ *
+ * @param netif The netif which shall send a packet
+ * @param p The packet to send (p->payload points to IP header)
+ * @param ipaddr The IP address to which the packet shall be sent
+ */
+typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
+       struct ip_addr *ipaddr);
+/** Function prototype for netif->linkoutput functions. Only used for ethernet
+ * netifs. This function is called by ARP when a packet shall be sent.
+ *
+ * @param netif The netif which shall send a packet
+ * @param p The packet to send (raw ethernet packet)
+ */
+typedef err_t (*netif_linkoutput_fn)(struct netif *netif, struct pbuf *p);
+/** Function prototype for netif status- or link-callback functions. */
+typedef void (*netif_status_callback_fn)(struct netif *netif);
+/** Function prototype for netif igmp_mac_filter functions */
+typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
+       struct ip_addr *group, u8_t action);
+
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
  *  function for the device driver: hwaddr_len, hwaddr[], mtu, flags */
-
 struct netif {
   /** pointer to next in linked list */
   struct netif *next;
@@ -96,25 +131,24 @@ struct netif {
 
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */
-  err_t (* input)(struct pbuf *p, struct netif *inp);
+  netif_input_fn input;
   /** This function is called by the IP module when it wants
    *  to send a packet on the interface. This function typically
    *  first resolves the hardware address, then sends the packet. */
-  err_t (* output)(struct netif *netif, struct pbuf *p,
-       struct ip_addr *ipaddr);
+  netif_output_fn output;
   /** This function is called by the ARP module when it wants
    *  to send a packet on the interface. This function outputs
    *  the pbuf as-is on the link medium. */
-  err_t (* linkoutput)(struct netif *netif, struct pbuf *p);
+  netif_linkoutput_fn linkoutput;
 #if LWIP_NETIF_STATUS_CALLBACK
   /** This function is called when the netif state is set to up or down
    */
-  void (* status_callback)(struct netif *netif);
+  netif_status_callback_fn status_callback;
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 #if LWIP_NETIF_LINK_CALLBACK
   /** This function is called when the netif link is set to up or down
    */
-  void (* link_callback)(struct netif *netif);
+  netif_status_callback_fn link_callback;
 #endif /* LWIP_NETIF_LINK_CALLBACK */
   /** This field can be set by the device driver and could point
    *  to state information for the device. */
@@ -161,8 +195,9 @@ struct netif {
   u32_t ifoutdiscards;
 #endif /* LWIP_SNMP */
 #if LWIP_IGMP
-  /* This function could be called to add or delete a entry in the multicast filter table of the ethernet MAC.*/
-  err_t (*igmp_mac_filter)(struct netif *netif, struct ip_addr *group, u8_t action);
+  /** This function could be called to add or delete a entry in the multicast
+      filter table of the ethernet MAC.*/
+  netif_igmp_mac_filter_fn igmp_mac_filter;
 #endif /* LWIP_IGMP */
 #if LWIP_NETIF_HWADDRHINT
   u8_t *addr_hint;
@@ -205,10 +240,7 @@ extern struct netif *netif_default;
 #define netif_init() /* Compatibility define, no init needed. */
 
 struct netif *netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
-      struct ip_addr *gw,
-      void *state,
-      err_t (* init)(struct netif *netif),
-      err_t (* input)(struct pbuf *p, struct netif *netif));
+      struct ip_addr *gw, void *state, netif_init_fn init, netif_input_fn input);
 
 void
 netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
@@ -236,7 +268,7 @@ void netif_set_down(struct netif *netif);
 /*
  * Set callback to be called when interface is brought up/down
  */
-void netif_set_status_callback(struct netif *netif, void (* status_callback)(struct netif *netif));
+void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
 #if LWIP_NETIF_LINK_CALLBACK
@@ -245,7 +277,7 @@ void netif_set_link_down(struct netif *netif);
 /** Ask if a link is up */ 
 #define netif_is_link_up(netif) (((netif)->flags & NETIF_FLAG_LINK_UP) ? (u8_t)1 : (u8_t)0)
 
-void netif_set_link_callback(struct netif *netif, void (* link_callback)(struct netif *netif));
+void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback);
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #if ENABLE_LOOPBACK
