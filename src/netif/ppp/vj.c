@@ -151,7 +151,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   /*  
    * Check that the packet is IP proto TCP.
    */
-  if (IPH_PROTO(ip) != IPPROTO_TCP) {
+  if (IPH_PROTO(ip) != IP_PROTO_TCP) {
     return (TYPE_IP);
   }
 
@@ -445,7 +445,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
   }
   cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
   comp->flags &=~ VJF_TOSS;
-  IPH_PROTO_SET(ip, IPPROTO_TCP);
+  IPH_PROTO_SET(ip, IP_PROTO_TCP);
   BCOPY(ip, &cs->cs_ip, hlen);
   cs->cs_hlen = hlen;
   INCR(vjs_uncompressedin);
