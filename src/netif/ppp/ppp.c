@@ -107,6 +107,9 @@
 #include "netif/ppp_oe.h"
 #endif /* PPPOE_SUPPORT */
 
+#include "lwip/tcpip.h"
+#include "lwip/api.h"
+
 #include <string.h>
 
 /*************************/
@@ -1950,5 +1953,35 @@ drop:
   return;
 }
 #endif /* PPPOE_SUPPORT */
+
+#if LWIP_NETIF_STATUS_CALLBACK
+/** Set the status callback of a PPP's netif
+ *
+ * @param pd The PPP descriptor returned by pppOpen()
+ * @param status_callback pointer to the status callback function
+ *
+ * @see netif_set_status_callback
+ */
+void
+ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback)
+{
+  netif_set_status_callback(&pppControl[pd].netif, status_callback); 
+}
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
+
+#if LWIP_NETIF_LINK_CALLBACK
+/** Set the link callback of a PPP's netif
+ *
+ * @param pd The PPP descriptor returned by pppOpen()
+ * @param link_callback pointer to the link callback function
+ *
+ * @see netif_set_link_callback
+ */
+void
+ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback)
+{
+  netif_set_link_callback(&pppControl[pd].netif, link_callback); 
+}
+#endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #endif /* PPP_SUPPORT */

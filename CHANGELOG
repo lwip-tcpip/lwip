@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-01-14: Simon Goldschmidt
+  * ppp.c/.h: Fixed bug #27856: PPP: Set netif link- and status-callback
+    by adding ppp_set_netif_statuscallback()/ppp_set_netif_linkcallback()
+
   2010-01-13: Simon Goldschmidt
   * mem.c: The heap now may be moved to user-defined memory by defining
     LWIP_RAM_HEAP_POINTER as a void pointer to that memory's address

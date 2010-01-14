@@ -40,11 +40,8 @@
 
 #include "lwip/def.h"
 #include "lwip/sio.h"
-#include "lwip/api.h"
-#include "lwip/sockets.h"
 #include "lwip/stats.h"
 #include "lwip/mem.h"
-#include "lwip/tcpip.h"
 #include "lwip/netif.h"
 #include "lwip/sys.h"
 #include "lwip/timers.h"
@@ -107,7 +104,7 @@
  * OR MODIFICATIONS.
  */
 
-#define TIMEOUT(f, a, t)    sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a))
+#define TIMEOUT(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
 #define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
 
 
@@ -473,6 +470,13 @@ int  cifdefaultroute (int, u32_t, u32_t);
 
 /* Get appropriate netmask for address */
 u32_t GetMask (u32_t); 
+
+#if LWIP_NETIF_STATUS_CALLBACK
+void ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback);
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
+#if LWIP_NETIF_LINK_CALLBACK
+void ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback);
+#endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #endif /* PPP_SUPPORT */
 
