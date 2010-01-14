@@ -619,7 +619,10 @@ netconn_drain(struct netconn *conn)
       if (conn->type == NETCONN_TCP) {
         if(mem != NULL) {
           p = (struct pbuf*)mem;
-          tcp_recved(conn->pcb.tcp, p->tot_len);
+          /* pcb might be set to NULL already by err_tcp() */
+          if (conn->pcb.tcp != NULL) {
+            tcp_recved(conn->pcb.tcp, p->tot_len);
+          }
           pbuf_free(p);
         }
       } else {
@@ -634,7 +637,11 @@ netconn_drain(struct netconn *conn)
   conn->acceptmbox = SYS_MBOX_NULL;
   if (mbox != SYS_MBOX_NULL) {
     while (sys_mbox_tryfetch(mbox, &mem) != SYS_MBOX_EMPTY) {
-      tcp_accepted(conn->pcb.tcp);
+      /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
+      /* pcb might be set to NULL already by err_tcp() */
+      if (conn->pcb.tcp != NULL) {
+        tcp_accepted(conn->pcb.tcp);
+      }
       netconn_delete((struct netconn *)mem);
     }
     sys_mbox_free(mbox);
