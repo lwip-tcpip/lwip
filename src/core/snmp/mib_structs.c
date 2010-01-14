@@ -38,6 +38,7 @@
 
 #include "lwip/snmp_structs.h"
 #include "lwip/mem.h"
+#include "lwip/netif.h"
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
 const s32_t prefix[4] = {1, 3, 6, 1};

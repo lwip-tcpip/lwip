@@ -38,6 +38,7 @@
 #include "lwip/opt.h"
 #include "lwip/snmp.h"
 #include "lwip/snmp_structs.h"
+#include "lwip/ip_addr.h"
 
 #if LWIP_SNMP
 

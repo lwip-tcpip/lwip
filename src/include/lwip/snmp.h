@@ -34,12 +34,14 @@
 #define __LWIP_SNMP_H__
 
 #include "lwip/opt.h"
-#include "lwip/netif.h"
-#include "lwip/udp.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+struct udp_pcb;
+struct netif;
+struct ip_addr;
 
 /**
  * @see RFC1213, "MIB-II, 6. Definitions"
