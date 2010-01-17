@@ -101,6 +101,7 @@ struct tcp_pcb;
 struct udp_pcb;
 struct raw_pcb;
 struct netconn;
+struct api_msg_msg;
 
 /** A callback prototype to inform about events for a netconn */
 typedef void (* netconn_callback)(struct netconn *, enum netconn_evt, u16_t len);
@@ -119,7 +120,7 @@ struct netconn {
     struct raw_pcb *raw;
   } pcb;
   /** the last error this netconn had */
-  err_t err;
+  err_t last_err;
   /** sem that is used to synchroneously execute functions in the core context */
   sys_sem_t op_completed;
   /** mbox where received packets are stored until they are fetched
@@ -142,8 +143,9 @@ struct netconn {
   s16_t recv_avail;
 #if LWIP_TCP
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
-      this temporarily stores the message. */
-  struct api_msg_msg *write_msg;
+      this temporarily stores the message.
+      Also used during connect and close. */
+  struct api_msg_msg *current_msg;
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores how much is already sent. */
   size_t write_offset;
@@ -158,10 +160,20 @@ struct netconn {
   netconn_callback callback;
 };
 
-/* Register an Network connection event */
+/** Register an Network connection event */
 #define API_EVENT(c,e,l) if (c->callback) {         \
                            (*c->callback)(c, e, l); \
                          }
+
+/** Set conn->last_err to err but don't overwrite fatal errors */
+#define NETCONN_SET_SAFE_ERR(conn, err) do { \
+  SYS_ARCH_DECL_PROTECT(lev); \
+  SYS_ARCH_PROTECT(lev); \
+  if (!ERR_IS_FATAL((conn)->last_err)) { \
+    (conn)->last_err = err; \
+  } \
+  SYS_ARCH_UNPROTECT(lev); \
+} while(0);
 
 /* Network connection functions: */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)

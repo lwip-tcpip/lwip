@@ -58,6 +58,8 @@ struct api_msg_msg {
   /** The netconn which to process - always needed: it includes the semaphore
       which is used to block the application thread until the function finished. */
   struct netconn *conn;
+  /** The return value of the function executed in tcpip_thread. */
+  err_t err;
   /** Depending on the executed function, one of these union members is used */
   union {
     /** used for do_send */

@@ -51,6 +51,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-01-17: Simon Goldschmidt
+  * api_lib.c, api_msg.c, (api_msg.h, api.h, sockets.c, tcpip.c):
+    task #10102: Netconn: clean up conn->err threading issues
+
+  2010-01-17: Simon Goldschmidt
   * api.h, api_lib.c, sockets.c: Changed netconn_recv() and netconn_accept()
     to return err_t (bugs #27709 and #28087)
 
