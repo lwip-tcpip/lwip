@@ -274,13 +274,17 @@ err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
   struct tcpip_msg msg;
+#ifdef LWIP_DEBUG
+  /* catch functions that don't set err */
+  apimsg->msg.err = ERR_VAL;
+#endif
   
   if (mbox != SYS_MBOX_NULL) {
     msg.type = TCPIP_MSG_API;
     msg.msg.apimsg = apimsg;
     sys_mbox_post(mbox, &msg);
     sys_arch_sem_wait(apimsg->msg.conn->op_completed, 0);
-    return ERR_OK;
+    return apimsg->msg.err;
   }
   return ERR_VAL;
 }
@@ -297,10 +301,15 @@ tcpip_apimsg(struct api_msg *apimsg)
 err_t
 tcpip_apimsg_lock(struct api_msg *apimsg)
 {
+#ifdef LWIP_DEBUG
+  /* catch functions that don't set err */
+  apimsg->msg.err = ERR_VAL;
+#endif
+
   LOCK_TCPIP_CORE();
   apimsg->function(&(apimsg->msg));
   UNLOCK_TCPIP_CORE();
-  return ERR_OK;
+  return apimsg->msg.err;
 
 }
 #endif /* LWIP_TCPIP_CORE_LOCKING */
