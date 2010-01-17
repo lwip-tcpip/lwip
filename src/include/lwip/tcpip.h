@@ -57,7 +57,7 @@ extern sys_sem_t lock_tcpip_core;
 #define TCPIP_APIMSG_ACK(m)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
 #define TCPIP_NETIFAPI_ACK(m)
-#else
+#else /* LWIP_TCPIP_CORE_LOCKING */
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
 #define TCPIP_APIMSG(m)       tcpip_apimsg(m)
