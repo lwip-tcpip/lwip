@@ -266,16 +266,19 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
 
-  newconn = netconn_accept(sock->conn);
-  if (!newconn) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) failed, err=%d\n", s, sock->conn->err));
-    sock_set_errno(sock, err_to_errno(sock->conn->err));
+  /* wait for a new connection */
+  err = netconn_accept(sock->conn, &newconn);
+  if (err != ERR_OK) {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_acept failed, err=%d\n", s, err));
+    sock_set_errno(sock, err_to_errno(err));
     return -1;
   }
+  LWIP_ASSERT("newconn != NULL", newconn != NULL);
 
   /* get the IP address and port of the remote host */
   err = netconn_peer(newconn, &naddr, &port);
   if (err != ERR_OK) {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_peer failed, err=%d\n", s, err));
     netconn_delete(newconn);
     sock_set_errno(sock, err_to_errno(err));
     return -1;
@@ -482,6 +485,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   struct ip_addr     *addr;
   u16_t               port;
   u8_t                done = 0;
+  err_t               err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d, %p, %"SZT_F", 0x%x, ..)\n", s, mem, len, flags));
   sock = get_socket(s);
@@ -508,22 +512,25 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       }
 
       /* No data was left from the previous operation, so we try to get
-      some from the network. */
-      sock->lastdata = buf = netconn_recv(sock->conn);
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv netbuf=%p\n", (void*)buf));
+         some from the network. */
+      err = netconn_recv(sock->conn, &buf);
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv err=%d, netbuf=%p\n",
+        err, (void*)buf));
 
-      if (!buf) {
+      if (err != ERR_OK) {
         if (off > 0) {
           /* already received data, return that */
           sock_set_errno(sock, 0);
           return off;
         }
         /* We should really do some error checking here. */
-        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL!\n", s));
-        sock_set_errno(sock, (((sock->conn->pcb.ip != NULL) && (sock->conn->err == ERR_OK))
-          ? ETIMEDOUT : err_to_errno(sock->conn->err)));
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL, error is \"%s\"!\n",
+          s, lwip_strerr(err)));
+        sock_set_errno(sock, err_to_errno(err));
         return 0;
       }
+      LWIP_ASSERT("buf != NULL", buf != NULL);
+      sock->lastdata = buf;
     }
 
     buflen = netbuf_len(buf);

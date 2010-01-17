@@ -248,88 +248,92 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
  * Accept a new connection on a TCP listening netconn.
  *
  * @param conn the TCP listen netconn
- * @return the newly accepted netconn or NULL on timeout
+ * @param new_conn pointer where the new connection is stored
+ * @return ERR_OK if a new connection has been received or an error
+ *                code otherwise
  */
-struct netconn *
-netconn_accept(struct netconn *conn)
+err_t
+netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
   struct netconn *newconn;
+#if TCP_LISTEN_BACKLOG
+  struct api_msg msg;
+#endif /* TCP_LISTEN_BACKLOG */
 
-  LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return NULL;);
-  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return NULL;);
+  LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
+  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_accept: invalid pointer",    (new_conn != NULL),                  return ERR_ARG;);
 
+  *new_conn = NULL;
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
-    newconn = NULL;
-  } else
+    return ERR_TIMEOUT;
+  }
 #else
   sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
-  {
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
+  /* Register event with callback */
+  API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
-#if TCP_LISTEN_BACKLOG
-    if (newconn != NULL) {
-      /* Let the stack know that we have accepted the connection. */
-      struct api_msg msg;
-      msg.function = do_recv;
-      msg.msg.conn = conn;
-      TCPIP_APIMSG(&msg);
-    }
-#endif /* TCP_LISTEN_BACKLOG */
+  if (newconn == NULL) {
+    /* connection has been closed */
+    return ERR_CLSD;
   }
+#if TCP_LISTEN_BACKLOG
+  /* Let the stack know that we have accepted the connection. */
+  msg.function = do_recv;
+  msg.msg.conn = conn;
+  TCPIP_APIMSG(&msg);
+#endif /* TCP_LISTEN_BACKLOG */
 
-  return newconn;
+  *new_conn = newconn;
+  return ERR_OK;
 }
 
 /**
  * Receive data (in form of a netbuf containing a packet buffer) from a netconn
  *
  * @param conn the netconn from which to receive data
- * @return a new netbuf containing received data or NULL on memory error or timeout
+ * @param new_buf pointer where a new netbuf is stored when received data
+ * @return ERR_OK if data has been received, an error code otherwise (timeout,
+ *                memory error or another error)
  */
-struct netbuf *
-netconn_recv(struct netconn *conn)
+err_t
+netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 {
   struct api_msg msg;
   struct netbuf *buf = NULL;
   struct pbuf *p;
   u16_t len;
 
-  LWIP_ERROR("netconn_recv: invalid conn",  (conn != NULL), return NULL;);
+  LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
+  LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
 
+  *new_buf = NULL;
   if (conn->recvmbox == SYS_MBOX_NULL) {
-    /* @todo: should calling netconn_recv on a TCP listen conn be fatal (ERR_CONN)?? */
     /* TCP listen conns don't have a recvmbox! */
-    conn->err = ERR_CONN;
-    return NULL;
+    return ERR_CONN;
   }
 
   if (ERR_IS_FATAL(conn->err)) {
-    return NULL;
+    return conn->err;
   }
 
   if (conn->type == NETCONN_TCP) {
 #if LWIP_TCP
-    if (conn->state == NETCONN_LISTEN) {
-      /* @todo: should calling netconn_recv on a TCP listen conn be fatal?? */
-      conn->err = ERR_CONN;
-      return NULL;
-    }
+    /* This is not a listening netconn, since recvmbox is set */
 
     buf = memp_malloc(MEMP_NETBUF);
-
     if (buf == NULL) {
       conn->err = ERR_MEM;
-      return NULL;
+      return ERR_MEM;
     }
 
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       memp_free(MEMP_NETBUF, buf);
       conn->err = ERR_TIMEOUT;
-      return NULL;
+      return ERR_TIMEOUT;
     }
 #else
     sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, 0);
@@ -339,6 +343,7 @@ netconn_recv(struct netconn *conn)
       len = p->tot_len;
       SYS_ARCH_DEC(conn->recv_avail, len);
     } else {
+      /* This means the connection has been closed */ 
       len = 0;
     }
 
@@ -352,7 +357,7 @@ netconn_recv(struct netconn *conn)
       if (conn->err == ERR_OK) {
         conn->err = ERR_CLSD;
       }
-      return NULL;
+      return ERR_CLSD;
     }
 
     buf->p = p;
@@ -361,6 +366,8 @@ netconn_recv(struct netconn *conn)
     buf->addr = NULL;
 
     /* Let the stack know that we have taken the data. */
+    /* TODO: Speedup: Don't block and wait for the answer here
+       (to prevent multiple thread-switches). */
     msg.function = do_recv;
     msg.msg.conn = conn;
     if (buf != NULL) {
@@ -374,22 +381,25 @@ netconn_recv(struct netconn *conn)
 #if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
     if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
-      buf = NULL;
+      conn->err = ERR_TIMEOUT;
+      return ERR_TIMEOUT;
     }
 #else
     sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
-    if (buf!=NULL) {
-      SYS_ARCH_DEC(conn->recv_avail, buf->p->tot_len);
-      /* Register event with callback */
-      API_EVENT(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
-    }
+    LWIP_ASSERT("buf != NULL", buf != NULL);
+
+    SYS_ARCH_DEC(conn->recv_avail, buf->p->tot_len);
+    /* Register event with callback */
+    API_EVENT(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
+  LWIP_ASSERT("buf != NULL", buf != NULL);
 
-  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p (err %d)\n", (void *)buf, conn->err));
+  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p\n", (void *)buf));
 
-  return buf;
+  *new_buf = buf;
+  return ERR_OK;
 }
 
 /**
