@@ -54,9 +54,6 @@
 
 #if PAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-/*************************
-*** PUBLIC DEFINITIONS ***
-*************************/
 /*
  * Packet header = Code, id, length.
  */
@@ -111,7 +108,6 @@ typedef struct upap_state {
 
 extern upap_state upap[];
 
-void upap_setloginpasswd(int unit, const char *luser, const char *lpassword);
 void upap_authwithpeer  (int, char *, char *);
 void upap_authpeer      (int);
 

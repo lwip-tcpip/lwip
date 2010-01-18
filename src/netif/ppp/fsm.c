@@ -143,7 +143,7 @@ fsm_lowerup(fsm *f)
       FSMDEBUG((LOG_INFO, "%s: Up event in state %d (%s)!\n",
           PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
   }
-  
+
   FSMDEBUG((LOG_INFO, "%s: lowerup state %d (%s) -> %d (%s)\n",
       PROTO_NAME(f), oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
@@ -247,6 +247,19 @@ fsm_open(fsm *f)
       PROTO_NAME(f), oldState, ppperr_strerr[oldState], f->state, ppperr_strerr[f->state]));
 }
 
+#if 0 /* backport pppd 2.4.4b1; */
+/*
+ * terminate_layer - Start process of shutting down the FSM
+ *
+ * Cancel any timeout running, notify upper layers we're done, and
+ * send a terminate-request message as configured.
+ */
+static void
+terminate_layer(fsm *f, int nextstate)
+{
+  /* @todo */
+}
+#endif
 
 /*
  * fsm_close - Start closing connection.
@@ -432,6 +445,7 @@ fsm_input(fsm *f, u_char *inpacket, int l)
       break;
     
     default:
+      FSMDEBUG((LOG_INFO, "fsm_input(%s): default: \n", PROTO_NAME(f)));
       if( !f->callbacks->extcode ||
           !(*f->callbacks->extcode)(f, code, id, inp, len) ) {
         fsm_sdata(f, CODEREJ, ++f->id, inpacket, len + HEADERLEN);
@@ -705,6 +719,9 @@ fsm_rtermack(fsm *f)
       }
       fsm_sconfreq(f, 0);
       break;
+    default:
+      FSMDEBUG((LOG_INFO, "fsm_rtermack(%s): UNHANDLED state=%d (%s)!!!\n", 
+                PROTO_NAME(f), f->state, ppperr_strerr[f->state]));
   }
 }
 
@@ -777,7 +794,7 @@ fsm_protreject(fsm *f)
             (u_char *) f->term_reason, f->term_reason_len);
       TIMEOUT(fsm_timeout, f, f->timeouttime);
       --f->retransmits;
-      
+
       f->state = LS_STOPPING;
       break;
     
@@ -839,6 +856,7 @@ fsm_sconfreq(fsm *f, int retransmit)
   FSMDEBUG((LOG_INFO, "%s: sending Configure-Request, id %d\n",
         PROTO_NAME(f), f->reqid));
 }
+
 
 /*
  * fsm_sdata - Send some data.

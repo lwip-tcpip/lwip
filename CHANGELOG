@@ -50,6 +50,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-18: Iordan Neshev/Simon Goldschmidt
+  * src/netif/ppp: reorganised PPP sourcecode to 2.3.11 including some
+    bugfix backports from 2.4.x.
+
   2010-01-18: Simon Goldschmidt
   * mem.c: Fixed bug #28679: mem_realloc calculates mem_stats wrong
 

@@ -72,6 +72,23 @@
 #define PPPOE_MAXMTU PPP_MAXMRU
 #endif
 
+#if 0 /* UNUSED */
+/*
+ * LCP-related command-line options.
+ */
+int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
+int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
+bool	lax_recv = 0;		/* accept control chars in asyncmap */
+
+static int setescape (char **);
+
+static option_t lcp_option_list[] = {
+    /* LCP options */
+    /* list stripped for simplicity */
+    {NULL}
+};
+#endif /* UNUSED */
+
 /* options */
 LinkPhase lcp_phase[NUM_PPP];          /* Phase of link session (RFC 1661) */
 static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
@@ -89,7 +106,8 @@ static u32_t lcp_echos_pending      = 0;                /* Number of outstanding
 static u32_t lcp_echo_number        = 0;                /* ID number of next echo frame */
 static u32_t lcp_echo_timer_running = 0;                /* TRUE if a timer is running */
 
-static u_char nak_buffer[PPP_MRU]; /* where we construct a nak packet */
+/* @todo: do we really need such a large buffer? The typical 1500 bytes seem too much. */
+static u_char nak_buffer[PPP_MRU]; /* where we construct a nak packet */ 
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -142,6 +160,7 @@ static fsm_callbacks lcp_callbacks = { /* LCP callback routines */
  * Protocol entry points.
  * Some of these are called directly.
  */
+
 static void lcp_input (int, u_char *, int);
 static void lcp_protrej (int);
 
@@ -180,8 +199,40 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 #define CILEN_LQR   8 /* CILEN_VOID + sizeof(short) + sizeof(long) */
 #define CILEN_CBCP  3
 
-#define CODENAME(x) ((x) == CONFACK ? "ACK" : (x) == CONFNAK ? "NAK" : "REJ")
+#define CODENAME(x)  ((x) == CONFACK ? "ACK" : (x) == CONFNAK ? "NAK" : "REJ")
 
+#if 0 /* UNUSED */
+/*
+ * setescape - add chars to the set we escape on transmission.
+ */
+static int
+setescape(argv)
+    char **argv;
+{
+    int n, ret;
+    char *p, *endp;
+
+    p = *argv;
+    ret = 1;
+    while (*p) {
+	n = strtol(p, &endp, 16);
+	if (p == endp) {
+	    option_error("escape parameter contains invalid hex number '%s'",
+			 p);
+	    return 0;
+	}
+	p = endp;
+	if (n < 0 || n == 0x5E || n > 0xFF) {
+	    option_error("can't escape character 0x%x", n);
+	    ret = 0;
+	} else
+	    xmit_accm[0][n >> 5] |= 1 << (n & 0x1F);
+	while (*p == ',' || *p == ' ')
+	    ++p;
+    }
+    return ret;
+}
+#endif /* UNUSED */
 
 /*
  * lcp_init - Initialize LCP.
@@ -196,9 +247,9 @@ lcp_init(int unit)
   f->unit      = unit;
   f->protocol  = PPP_LCP;
   f->callbacks = &lcp_callbacks;
-  
+
   fsm_init(f);
-  
+
   wo->passive           = 0;
   wo->silent            = 0;
   wo->restart           = 0;               /* Set to 1 in kernels or multi-line implementations */
@@ -214,7 +265,7 @@ lcp_init(int unit)
   wo->neg_accompression = 1;
   wo->neg_lqr           = 0;               /* no LQR implementation yet */
   wo->neg_cbcp          = 0;
-  
+
   ao->neg_mru           = 1;
   ao->mru               = PPP_MAXMRU;
   ao->neg_asyncmap      = 1;
@@ -291,7 +342,7 @@ lcp_close(int unit, char *reason)
     f->state = LS_CLOSED;
     lcp_finished(f);
   } else {
-    fsm_close(&lcp_fsm[unit], reason);
+    fsm_close(f, reason);
   }
 }
 
@@ -338,9 +389,6 @@ lcp_lowerdown(int unit)
 }
 
 
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
 /*
  * lcp_input - Input LCP packet.
  */
@@ -379,10 +427,10 @@ lcp_extcode(fsm *f, int code, u_char id, u_char *inp, int len)
     case ECHOREP:
       lcp_received_echo_reply(f, id, inp, len);
       break;
-    
+
     case DISCREQ:
       break;
-    
+
     default:
       return 0;
   }
@@ -481,7 +529,8 @@ lcp_resetci(fsm *f)
 /*
  * lcp_cilen - Return length of our CI.
  */
-static int lcp_cilen(fsm *f)
+static int
+lcp_cilen(fsm *f)
 {
   lcp_options *go = &lcp_gotoptions[f->unit];
 
@@ -1626,7 +1675,7 @@ lcp_up(fsm *f)
 
   lcp_echo_lowerup(f->unit); /* Enable echo messages */
 
-  link_established(f->unit);
+  link_established(f->unit); /* The link is up; authenticate now */
 }
 
 
@@ -1658,7 +1707,7 @@ lcp_down(fsm *f)
 static void
 lcp_starting(fsm *f)
 {
-  link_required(f->unit);
+  link_required(f->unit);	/* lwip: currently does nothing */
 }
 
 
@@ -1668,7 +1717,7 @@ lcp_starting(fsm *f)
 static void
 lcp_finished(fsm *f)
 {
-  link_terminated(f->unit);
+  link_terminated(f->unit); /* we are finished with the link */
 }
 
 
@@ -1943,7 +1992,7 @@ lcp_received_echo_reply (fsm *f, int id, u_char *inp, int len)
     LCPDEBUG((LOG_WARNING, "appear to have received our own echo-reply!\n"));
     return;
   }
-  
+
   /* Reset the number of outstanding echo frames */
   lcp_echos_pending = 0;
 }

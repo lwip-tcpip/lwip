@@ -328,6 +328,7 @@ ChapMS_NT( char *rchallenge,
     low_byte_first = (htons((unsigned short int)1) != 1);
   }
   if (low_byte_first == 0) {
+    /* @todo: arg type - u_long* or u_int* ? */
     MDreverse((unsigned int*)&md4Context);  /*  sfb 961105 */
   }
 

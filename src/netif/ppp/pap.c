@@ -63,6 +63,27 @@
 
 #include <string.h>
 
+#if 0 /* UNUSED */
+static bool hide_password = 1;
+
+/*
+ * Command-line options.
+ */
+static option_t pap_option_list[] = {
+    { "hide-password", o_bool, &hide_password,
+      "Don't output passwords to log", 1 },
+    { "show-password", o_bool, &hide_password,
+      "Show password string in debug log messages", 0 },
+    { "pap-restart", o_int, &upap[0].us_timeouttime,
+      "Set retransmit timeout for PAP" },
+    { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
+      "Set max number of transmissions for auth-reqs" },
+    { "pap-timeout", o_int, &upap[0].us_reqtimeout,
+      "Set time limit for peer PAP authentication" },
+    { NULL }
+};
+#endif
+
 /*
  * Protocol entry points.
  */
@@ -71,6 +92,9 @@ static void upap_lowerup   (int);
 static void upap_lowerdown (int);
 static void upap_input     (int, u_char *, int);
 static void upap_protrej   (int);
+#if PPP_ADDITIONAL_CALLBACKS
+static int  upap_printpkt (u_char *, int, void (*)(void *, char *, ...), void *);
+#endif /* PPP_ADDITIONAL_CALLBACKS */
 
 struct protent pap_protent = {
   PPP_PAP,
@@ -205,7 +229,7 @@ upap_timeout(void *arg)
     return;
   }
 
-  upap_sauthreq(u);    /* Send Authenticate-Request */
+  upap_sauthreq(u);    /* Send Authenticate-Request and set upap timeout*/
 }
 
 
@@ -236,12 +260,13 @@ upap_lowerup(int unit)
 {
   upap_state *u = &upap[unit];
 
-  UPAPDEBUG((LOG_INFO, "upap_lowerup: %d s=%d\n", unit, u->us_clientstate));
+  UPAPDEBUG((LOG_INFO, "upap_lowerup: init %d clientstate s=%d\n", unit, u->us_clientstate));
 
   if (u->us_clientstate == UPAPCS_INITIAL) {
     u->us_clientstate = UPAPCS_CLOSED;
   } else if (u->us_clientstate == UPAPCS_PENDING) {
     upap_sauthreq(u);  /* send an auth-request */
+    /* now client state is UPAPCS__AUTHREQ */
   }
 
   if (u->us_serverstate == UPAPSS_INITIAL) {
@@ -413,6 +438,7 @@ upap_rauthreq(upap_state *u, u_char *inp, int id, int len)
    * Check the username and password given.
    */
   retcode = check_passwd(u->us_unit, ruser, ruserlen, rpasswd, rpasswdlen, &msg, &msglen);
+  /* lwip: currently retcode is always UPAP_AUTHACK */
   BZERO(rpasswd, rpasswdlen);
 
   upap_sresp(u, retcode, id, msg, msglen);
@@ -473,7 +499,7 @@ upap_rauthack(upap_state *u, u_char *inp, int id, int len)
 
 
 /*
- * upap_rauthnak - Receive Authenticate-Nakk.
+ * upap_rauthnak - Receive Authenticate-Nak.
  */
 static void
 upap_rauthnak(upap_state *u, u_char *inp, int id, int len)
@@ -572,6 +598,10 @@ upap_sresp(upap_state *u, u_char code, u_char id, char *msg, int msglen)
 }
 
 #if PPP_ADDITIONAL_CALLBACKS
+static char *upap_codenames[] = {
+    "AuthReq", "AuthAck", "AuthNak"
+};
+
 /*
  * upap_printpkt - print the contents of a PAP packet.
  */
