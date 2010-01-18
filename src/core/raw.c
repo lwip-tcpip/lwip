@@ -330,7 +330,8 @@ raw_remove(struct raw_pcb *pcb)
  * @see raw_remove()
  */
 struct raw_pcb *
-raw_new(u8_t proto) {
+raw_new(u8_t proto)
+{
   struct raw_pcb *pcb;
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
