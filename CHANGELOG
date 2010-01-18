@@ -50,6 +50,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-18: Simon Goldschmidt
+  * mem.c: Fixed bug #28679: mem_realloc calculates mem_stats wrong
+
   2010-01-17: Simon Goldschmidt
   * api_lib.c, api_msg.c, (api_msg.h, api.h, sockets.c, tcpip.c):
     task #10102: "netconn: clean up conn->err threading issues" by adding

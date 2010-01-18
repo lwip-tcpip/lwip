@@ -414,8 +414,6 @@ mem_realloc(void *rmem, mem_size_t newsize)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
 
-  MEM_STATS_DEC_USED(used, (size - newsize));
-
   mem2 = (struct mem *)&ram[mem->next];
   if(mem2->used == 0) {
     /* The next struct is unused, we can simply move it at little */
@@ -441,6 +439,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
     if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
+    MEM_STATS_DEC_USED(used, (size - newsize));
     /* no need to plug holes, we've already done that */
   } else if (newsize + SIZEOF_STRUCT_MEM + MIN_SIZE_ALIGNED <= size) {
     /* Next struct is used but there's room for another struct mem with
@@ -462,6 +461,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
     if (mem2->next != MEM_SIZE_ALIGNED) {
       ((struct mem *)&ram[mem2->next])->prev = ptr2;
     }
+    MEM_STATS_DEC_USED(used, (size - newsize));
     /* the original mem->next is used, so no need to plug holes! */
   }
   /* else {
