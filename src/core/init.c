@@ -172,8 +172,8 @@
 #if !LWIP_ETHERNET && (LWIP_ARP || PPPOE_SUPPORT)
   #error "LWIP_ETHERNET needs to be turned on for LWIP_ARP or PPPOE_SUPPORT"
 #endif
-#ifndef LWIP_RAND
-  #error "LWIP_RAND() needs to be defined to a random-function returning an u32_t random value"
+#if LWIP_IGMP && !defined(LWIP_RAND)
+  #error "When using IGMP, LWIP_RAND() needs to be defined to a random-function returning an u32_t random value"
 #endif
 
 
