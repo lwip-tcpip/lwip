@@ -288,12 +288,12 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   }
 
 #if LWIP_SO_RCVTIMEO
-  if (sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+  if (sys_arch_mbox_fetch(conn->acceptmbox, (void **)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
     NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
     return ERR_TIMEOUT;
   }
 #else
-  sys_arch_mbox_fetch(conn->acceptmbox, (void *)&newconn, 0);
+  sys_arch_mbox_fetch(conn->acceptmbox, (void **)&newconn, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
@@ -356,13 +356,13 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     }
 
 #if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    if (sys_arch_mbox_fetch(conn->recvmbox, (void **)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       memp_free(MEMP_NETBUF, buf);
       NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
       return ERR_TIMEOUT;
     }
 #else
-    sys_arch_mbox_fetch(conn->recvmbox, (void *)&p, 0);
+    sys_arch_mbox_fetch(conn->recvmbox, (void **)&p, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
 
     if (p != NULL) {
@@ -405,12 +405,12 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   } else {
 #if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    if (sys_arch_mbox_fetch(conn->recvmbox, (void **)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
       return ERR_TIMEOUT;
     }
 #else
-    sys_arch_mbox_fetch(conn->recvmbox, (void *)&buf, 0);
+    sys_arch_mbox_fetch(conn->recvmbox, (void **)&buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
     LWIP_ASSERT("buf != NULL", buf != NULL);
 

@@ -84,7 +84,7 @@ tcpip_thread(void *arg)
   while (1) {                          /* MAIN Loop */
     UNLOCK_TCPIP_CORE();
     /* wait for a message, timeouts are processed while waiting */
-    sys_timeouts_mbox_fetch(mbox, (void *)&msg);
+    sys_timeouts_mbox_fetch(mbox, (void **)&msg);
     LOCK_TCPIP_CORE();
     switch (msg->type) {
 #if LWIP_NETCONN
