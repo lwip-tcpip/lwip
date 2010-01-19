@@ -312,14 +312,17 @@ err_tcp(void *arg, err_t err)
 {
   struct netconn *conn;
   enum netconn_state old_state;
+  SYS_ARCH_DECL_PROTECT(lev);
 
   conn = arg;
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   conn->pcb.tcp = NULL;
 
-  /* no protection since this is always fatal */
+  /* no check since this is always fatal */
+  SYS_ARCH_PROTECT(lev);
   conn->last_err = err;
+  SYS_ARCH_UNPROTECT(lev);
 
   /* API_EVENT might call tcp_tmr, so reset conn->state now */
   old_state = conn->state;
@@ -328,12 +331,14 @@ err_tcp(void *arg, err_t err)
   if (conn->recvmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-    sys_mbox_post(conn->recvmbox, NULL);
+    /* use trypot to preven deadlock */
+    sys_mbox_trypost(conn->recvmbox, NULL);
   }
   if (conn->acceptmbox != SYS_MBOX_NULL) {
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-    sys_mbox_post(conn->acceptmbox, NULL);
+    /* use trypot to preven deadlock */
+    sys_mbox_trypost(conn->acceptmbox, NULL);
   }
   if ((old_state == NETCONN_WRITE) || (old_state == NETCONN_CLOSE) ||
       (old_state == NETCONN_CONNECT)) {

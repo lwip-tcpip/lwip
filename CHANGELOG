@@ -50,6 +50,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-19: Simon Goldschmidt
+  * api_msg.c: Fixed bug #27316: netconn: Possible deadlock in err_tcp
+
   2010-01-18: Iordan Neshev/Simon Goldschmidt
   * src/netif/ppp: reorganised PPP sourcecode to 2.3.11 including some
     bugfix backports from 2.4.x.
