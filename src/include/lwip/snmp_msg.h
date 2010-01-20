@@ -39,6 +39,7 @@
 #include "lwip/snmp.h"
 #include "lwip/snmp_structs.h"
 #include "lwip/ip_addr.h"
+#include "lwip/err.h"
 
 #if LWIP_SNMP
 
