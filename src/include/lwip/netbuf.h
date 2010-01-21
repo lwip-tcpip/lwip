@@ -60,7 +60,6 @@ err_t             netbuf_ref      (struct netbuf *buf,
 void              netbuf_chain    (struct netbuf *head,
            struct netbuf *tail);
 
-u16_t             netbuf_len      (struct netbuf *buf);
 err_t             netbuf_data     (struct netbuf *buf,
            void **dataptr, u16_t *len);
 s8_t              netbuf_next     (struct netbuf *buf);
