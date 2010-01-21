@@ -78,12 +78,12 @@ const u8_t tcp_persist_backoff[7] = { 3, 6, 12, 24, 48, 96, 120 };
 /* The TCP PCB lists. */
 
 /** List of all TCP PCBs bound but not yet (connected || listening) */
-struct tcp_pcb *tcp_bound_pcbs;  
+struct tcp_pcb *tcp_bound_pcbs;
 /** List of all TCP PCBs in LISTEN state */
 union tcp_listen_pcbs_t tcp_listen_pcbs;
 /** List of all TCP PCBs that are in a state in which
  * they accept or send data. */
-struct tcp_pcb *tcp_active_pcbs;  
+struct tcp_pcb *tcp_active_pcbs;
 /** List of all TCP PCBs in TIME-WAIT state */
 struct tcp_pcb *tcp_tw_pcbs;
 
@@ -550,25 +550,26 @@ tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
-  pcb->state = SYN_SENT;
-#if LWIP_CALLBACK_API  
+#if LWIP_CALLBACK_API
   pcb->connected = connected;
 #endif /* LWIP_CALLBACK_API */
-  TCP_RMV(&tcp_bound_pcbs, pcb);
-  TCP_REG(&tcp_active_pcbs, pcb);
 
-  snmp_inc_tcpactiveopens();
-  
   ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, TF_SEG_OPTS_MSS
 #if LWIP_TCP_TIMESTAMPS
                     | TF_SEG_OPTS_TS
 #endif
                     );
-  if (ret == ERR_OK) { 
+  if (ret == ERR_OK) {
+    /* SYN segment was enqueued, changed the pcbs state now */
+    pcb->state = SYN_SENT;
+    TCP_RMV(&tcp_bound_pcbs, pcb);
+    TCP_REG(&tcp_active_pcbs, pcb);
+    snmp_inc_tcpactiveopens();
+
     tcp_output(pcb);
   }
   return ret;
-} 
+}
 
 /**
  * Called every 500 ms and implements the retransmission timer and the timer that
@@ -671,15 +672,15 @@ tcp_slowtmr(void)
     }
 
     /* Check if KEEPALIVE should be sent */
-    if((pcb->so_options & SOF_KEEPALIVE) && 
-       ((pcb->state == ESTABLISHED) || 
+    if((pcb->so_options & SOF_KEEPALIVE) &&
+       ((pcb->state == ESTABLISHED) ||
         (pcb->state == CLOSE_WAIT))) {
 #if LWIP_TCP_KEEPALIVE
-      if((u32_t)(tcp_ticks - pcb->tmr) > 
+      if((u32_t)(tcp_ticks - pcb->tmr) >
          (pcb->keep_idle + (pcb->keep_cnt*pcb->keep_intvl))
          / TCP_SLOW_INTERVAL)
 #else      
-      if((u32_t)(tcp_ticks - pcb->tmr) > 
+      if((u32_t)(tcp_ticks - pcb->tmr) >
          (pcb->keep_idle + TCP_MAXIDLE) / TCP_SLOW_INTERVAL)
 #endif /* LWIP_TCP_KEEPALIVE */
       {
@@ -708,7 +709,7 @@ tcp_slowtmr(void)
     /* If this PCB has queued out of sequence data, but has been
        inactive for too long, will drop the data (it will eventually
        be retransmitted). */
-#if TCP_QUEUE_OOSEQ    
+#if TCP_QUEUE_OOSEQ
     if (pcb->ooseq != NULL &&
         (u32_t)tcp_ticks - pcb->tmr >= pcb->rto * TCP_OOSEQ_TIMEOUT) {
       tcp_segs_free(pcb->ooseq);
@@ -736,7 +737,7 @@ tcp_slowtmr(void)
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
-      tcp_pcb_purge(pcb);      
+      tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
         LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_active_pcbs", pcb != tcp_active_pcbs);
@@ -791,7 +792,7 @@ tcp_slowtmr(void)
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
-      tcp_pcb_purge(pcb);      
+      tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_tw_pcbs list. */
       if (prev != NULL) {
         LWIP_ASSERT("tcp_slowtmr: middle tcp != tcp_tw_pcbs", pcb != tcp_tw_pcbs);

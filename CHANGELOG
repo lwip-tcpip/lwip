@@ -50,6 +50,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-21: Simon Goldschmidt
+  * tcp.c, api_msg.c: Fixed bug #28651 (tcp_connect: no callbacks called
+    if tcp_enqueue fails) both in raw- and netconn-API
+
   2010-01-19: Simon Goldschmidt
   * api_msg.c: Fixed bug #27316: netconn: Possible deadlock in err_tcp
 

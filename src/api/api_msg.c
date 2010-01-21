@@ -882,13 +882,18 @@ do_connect(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
   case NETCONN_TCP:
-    msg->conn->state = NETCONN_CONNECT;
-    msg->conn->current_msg = msg;
     setup_tcp(msg->conn);
     msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port,
                            do_connected);
     /* sys_sem_signal() is called from do_connected (or err_tcp()),
      * when the connection is established! */
+    if (msg->err == ERR_OK) {
+      msg->conn->state = NETCONN_CONNECT;
+      msg->conn->current_msg = msg;
+    } else {
+      /* tcp_connect failed, so do_connected will not be called: return now */
+      sys_sem_signal(msg->conn->op_completed);
+    }
     break;
 #endif /* LWIP_TCP */
   default:
