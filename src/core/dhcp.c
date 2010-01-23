@@ -282,7 +282,9 @@ dhcp_select(struct netif *netif)
 #if LWIP_NETIF_HOSTNAME
     p = (const char*)netif->hostname;
     if (p != NULL) {
-      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      u8_t namelen = (u8_t)strlen(p);
+      LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
       while (*p) {
         dhcp_option_byte(dhcp, *p++);
       }
@@ -990,7 +992,9 @@ dhcp_renew(struct netif *netif)
 #if LWIP_NETIF_HOSTNAME
     p = (const char*)netif->hostname;
     if (p != NULL) {
-      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      u8_t namelen = (u8_t)strlen(p);
+      LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
       while (*p) {
         dhcp_option_byte(dhcp, *p++);
       }
@@ -1056,7 +1060,9 @@ dhcp_rebind(struct netif *netif)
 #if LWIP_NETIF_HOSTNAME
     p = (const char*)netif->hostname;
     if (p != NULL) {
-      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, strlen(p));
+      u8_t namelen = (u8_t)strlen(p);
+      LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
       while (*p) {
         dhcp_option_byte(dhcp, *p++);
       }

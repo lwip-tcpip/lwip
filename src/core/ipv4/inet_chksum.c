@@ -181,7 +181,7 @@ lwip_standard_chksum(void *dataptr, int len)
     sum = SWAP_BYTES_IN_WORD(sum);
   }
 
-  return sum;
+  return (u16_t)sum;
 }
 #endif
 
@@ -263,7 +263,7 @@ lwip_standard_chksum(void *dataptr, int len)
     sum = SWAP_BYTES_IN_WORD(sum);
   }
 
-  return sum;
+  return (u16_t)sum;
 }
 #endif
 

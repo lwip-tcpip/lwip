@@ -60,7 +60,7 @@
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
 static struct tcp_hdr *
-tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, int optlen,
+tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, u16_t optlen,
                       u32_t seqno_be /* already in network byte order */)
 {
   struct tcp_hdr *tcphdr = p->payload;

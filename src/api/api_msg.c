@@ -1315,6 +1315,7 @@ do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
   LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
+  LWIP_UNUSED_ARG(name);
 
   if (ipaddr == NULL) {
     /* timeout or memory error */

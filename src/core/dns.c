@@ -625,7 +625,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     MEMCPY( query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
-    pbuf_realloc(p, (query + SIZEOF_DNS_QUERY) - ((char*)(p->payload)));
+    pbuf_realloc(p, (u16_t)((query + SIZEOF_DNS_QUERY) - ((char*)(p->payload))));
 
     /* connect to the server for faster receiving */
     udp_connect(dns_pcb, &dns_servers[numdns], DNS_SERVER_PORT);
@@ -741,12 +741,12 @@ dns_check_entries(void)
 static void
 dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
-  u8_t i;
+  u16_t i;
   char *pHostname;
   struct dns_hdr *hdr;
   struct dns_answer ans;
   struct dns_table_entry *pEntry;
-  u8_t nquestions, nanswers;
+  u16_t nquestions, nanswers;
 #if (DNS_USES_STATIC_BUF == 0)
   u8_t dns_payload[DNS_MSG_SIZE];
 #endif /* (DNS_USES_STATIC_BUF == 0) */

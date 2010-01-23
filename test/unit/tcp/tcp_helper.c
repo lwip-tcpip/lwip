@@ -57,7 +57,7 @@ tcp_create_segment(struct ip_addr* src_ip, struct ip_addr* dst_ip,
   struct pbuf* p;
   struct ip_hdr* iphdr;
   struct tcp_hdr* tcphdr;
-  u16_t pbuf_len = sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len;
+  u16_t pbuf_len = (u16_t)(sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len);
 
   p = pbuf_alloc(PBUF_RAW, pbuf_len, PBUF_POOL);
   EXPECT_RETNULL(p != NULL);
@@ -82,7 +82,7 @@ tcp_create_segment(struct ip_addr* src_ip, struct ip_addr* dst_ip,
   tcphdr->ackno = htonl(ackno);
   TCPH_HDRLEN_SET(tcphdr, sizeof(struct tcp_hdr)/4);
   TCPH_FLAGS_SET(tcphdr, headerflags);
-  tcphdr->wnd   = htonl(TCP_WND);
+  tcphdr->wnd   = htons(TCP_WND);
 
   /* copy data */
   memcpy((char*)tcphdr + sizeof(struct tcp_hdr), data, data_len);

@@ -234,10 +234,10 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
       /* lookup current source address for this dst */
       dst_if = ip_route(&td->dip);
       dst_ip.addr = ntohl(dst_if->ip_addr.addr);
-      trap_msg.sip_raw[0] = dst_ip.addr >> 24;
-      trap_msg.sip_raw[1] = dst_ip.addr >> 16;
-      trap_msg.sip_raw[2] = dst_ip.addr >> 8;
-      trap_msg.sip_raw[3] = dst_ip.addr;
+      trap_msg.sip_raw[0] = (u8_t)(dst_ip.addr >> 24);
+      trap_msg.sip_raw[1] = (u8_t)(dst_ip.addr >> 16);
+      trap_msg.sip_raw[2] = (u8_t)(dst_ip.addr >> 8);
+      trap_msg.sip_raw[3] = (u8_t)dst_ip.addr;
       trap_msg.gen_trap = generic_trap;
       trap_msg.spc_trap = specific_trap;
       if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)

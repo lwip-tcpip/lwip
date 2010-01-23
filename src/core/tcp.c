@@ -422,7 +422,9 @@ u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
       pcb->rcv_ann_wnd = 0;
     } else {
       /* keep the right edge of window constant */
-      pcb->rcv_ann_wnd = pcb->rcv_ann_right_edge - pcb->rcv_nxt;
+      u32_t new_rcv_ann_wnd = pcb->rcv_ann_right_edge - pcb->rcv_nxt;
+      LWIP_ASSERT("new_rcv_ann_wnd <= 0xffff", new_rcv_ann_wnd <= 0xffff);
+      pcb->rcv_ann_wnd = (u16_t)new_rcv_ann_wnd;
     }
     return 0;
   }

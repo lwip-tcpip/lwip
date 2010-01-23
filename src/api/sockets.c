@@ -318,7 +318,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * In that case, newconn->socket is counted down (newconn->socket--),
    * so nsock->rcvevent is >= 1 here!
    */
-  nsock->rcvevent += -1 - newconn->socket;
+  nsock->rcvevent += (s16_t)(-1 - newconn->socket);
   newconn->socket = newsock;
   sys_sem_signal(socksem);
 
@@ -455,14 +455,9 @@ lwip_listen(int s, int backlog)
     return -1;
 
   /* limit the "backlog" parameter to fit in an u8_t */
-  if (backlog < 0) {
-    backlog = 0;
-  }
-  if (backlog > 0xff) {
-    backlog = 0xff;
-  }
+  backlog = LWIP_MIN(LWIP_MAX(backlog, 0), 0xff);
 
-  err = netconn_listen_with_backlog(sock->conn, backlog);
+  err = netconn_listen_with_backlog(sock->conn, (u8_t)backlog);
 
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d) failed, err=%d\n", s, err));
@@ -1557,7 +1552,7 @@ int
 lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
   struct lwip_socket *sock = get_socket(s);
-  int err = ERR_OK;
+  err_t err = ERR_OK;
   struct lwip_setgetsockopt_data data;
 
   if (!sock)
@@ -1901,21 +1896,21 @@ lwip_setsockopt_internal(void *arg)
   case IPPROTO_UDPLITE:
     switch (optname) {
     case UDPLITE_SEND_CSCOV:
-      if ((*(int*)optval != 0) && (*(int*)optval < 8)) {
+      if ((*(int*)optval != 0) && ((*(int*)optval < 8)) || (*(int*)optval > 0xffff)) {
         /* don't allow illegal values! */
         sock->conn->pcb.udp->chksum_len_tx = 8;
       } else {
-        sock->conn->pcb.udp->chksum_len_tx = *(int*)optval;
+        sock->conn->pcb.udp->chksum_len_tx = (u16_t)*(int*)optval;
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_SEND_CSCOV) -> %d\n",
                   s, (*(int*)optval)) );
       break;
     case UDPLITE_RECV_CSCOV:
-      if ((*(int*)optval != 0) && (*(int*)optval < 8)) {
+      if ((*(int*)optval != 0) && ((*(int*)optval < 8)) || (*(int*)optval > 0xffff)) {
         /* don't allow illegal values! */
         sock->conn->pcb.udp->chksum_len_rx = 8;
       } else {
-        sock->conn->pcb.udp->chksum_len_rx = *(int*)optval;
+        sock->conn->pcb.udp->chksum_len_rx = (u16_t)*(int*)optval;
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) -> %d\n",
                   s, (*(int*)optval)) );

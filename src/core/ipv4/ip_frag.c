@@ -155,7 +155,8 @@ ip_reass_tmr(void)
 static int
 ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *prev)
 {
-  int pbufs_freed = 0;
+  u16_t pbufs_freed = 0;
+  u8_t clen;
   struct pbuf *p;
   struct ip_reass_helper *iprh;
 
@@ -175,7 +176,9 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     /* Then, copy the original header into it. */
     SMEMCPY(p->payload, &ipr->iphdr, IP_HLEN);
     icmp_time_exceeded(p, ICMP_TE_FRAG);
-    pbufs_freed += pbuf_clen(p);
+    clen = pbuf_clen(p);
+    LWIP_ASSERT("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
+    pbufs_freed += clen;
     pbuf_free(p);
   }
 #endif /* LWIP_ICMP */
@@ -189,8 +192,10 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     pcur = p;
     /* get the next pointer before freeing */
     p = iprh->next_pbuf;
-    pbufs_freed += pbuf_clen(pcur);
-    pbuf_free(pcur);    
+    clen = pbuf_clen(pcur);
+    LWIP_ASSERT("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
+    pbufs_freed += clen;
+    pbuf_free(pcur);
   }
   /* Then, unchain the struct ip_reassdata from the list and free it. */
   ip_reass_dequeue_datagram(ipr, prev);
