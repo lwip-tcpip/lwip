@@ -50,6 +50,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-23: Simon Goldschmidt
+  * sockets.c: Fixed bug #28716: select() returns 0 after waiting for less
+    than 1 ms
+
   2010-01-21: Simon Goldschmidt
   * tcp.c, api_msg.c: Fixed bug #28651 (tcp_connect: no callbacks called
     if tcp_enqueue fails) both in raw- and netconn-API

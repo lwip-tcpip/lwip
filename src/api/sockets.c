@@ -991,7 +991,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     sys_sem_signal(selectsem);
     
     sys_sem_free(select_cb.sem);
-    if (i == 0)  {
+    if (i == SYS_ARCH_TIMEOUT)  {
       /* Timeout */
       if (readset)
         FD_ZERO(readset);
