@@ -717,9 +717,9 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       
       LOCK_TCPIP_CORE();
       if (sock->conn->type==NETCONN_RAW) {
-        err = sock->conn->err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
+        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
       } else {
-        err = sock->conn->err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((const struct sockaddr_in *)to)->sin_port));
+        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((const struct sockaddr_in *)to)->sin_port));
       }
       UNLOCK_TCPIP_CORE();
       
