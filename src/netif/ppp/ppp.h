@@ -424,7 +424,7 @@ int  pppIOCtl(int pd, int cmd, void *arg);
 /*
  * Return the Maximum Transmission Unit for the given PPP connection.
  */
-u_int pppMTU(int pd);
+u_short pppMTU(int pd);
 
 /*
  * Write n characters to a ppp link.
@@ -443,7 +443,7 @@ void pppLinkDown(int pd);
 void pppos_input(int pd, u_char* data, int len);
 
 /* Configure i/f transmit parameters */
-void ppp_send_config (int, int, u32_t, int, int);
+void ppp_send_config (int, u16_t, u32_t, int, int);
 /* Set extended transmit ACCM */
 void ppp_set_xaccm (int, ext_accm *);
 /* Configure i/f receive parameters */
@@ -452,7 +452,7 @@ void ppp_recv_config (int, int, u32_t, int, int);
 int  get_idle_time (int, struct ppp_idle *);
 
 /* Configure VJ TCP header compression */
-int  sifvjcomp (int, int, int, int);
+int  sifvjcomp (int, int, u8_t, u8_t);
 /* Configure i/f down (for IP) */
 int  sifup (int);
 /* Set mode for handling packets for proto */

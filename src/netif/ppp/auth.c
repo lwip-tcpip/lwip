@@ -862,7 +862,7 @@ auth_reset(int unit)
  *  UPAP_AUTHACK: Authentication succeeded.
  * In either case, msg points to an appropriate message.
  */
-int
+u_char
 check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, char **msg, int *msglen)
 {
 #if 1 /* XXX Assume all entries OK. */
@@ -875,7 +875,7 @@ check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, 
   *msg = (char *) 0;
   return UPAP_AUTHACK;     /* XXX Assume all entries OK. */
 #else
-  int ret = 0;
+  u_char ret = 0;
   struct wordlist *addrs = NULL;
   char passwd[256], user[256];
   char secret[MAXWORDLEN];

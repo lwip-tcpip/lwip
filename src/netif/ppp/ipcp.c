@@ -907,7 +907,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
         p[1] > l) {      /*  CI length too big? */
       IPCPDEBUG((LOG_INFO, "ipcp_reqci: bad CI length!\n"));
       orc = CONFREJ;     /* Reject bad CI */
-      cilen = l;         /* Reject till end of packet */
+      cilen = (u_short)l;/* Reject till end of packet */
       l = 0;             /* Don't loop again */
       goto endswitch;
     }

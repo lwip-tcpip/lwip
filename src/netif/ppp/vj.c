@@ -50,7 +50,7 @@
 void
 vj_compress_init(struct vjcompress *comp)
 {
-  register u_int i;
+  register u_char i;
   register struct cstate *tstate = comp->tstate;
   
 #if MAX_SLOTS == 0
@@ -78,21 +78,21 @@ vj_compress_init(struct vjcompress *comp)
 #define ENCODE(n) { \
   if ((u_short)(n) >= 256) { \
     *cp++ = 0; \
-    cp[1] = (n); \
-    cp[0] = (n) >> 8; \
+    cp[1] = (u_char)(n); \
+    cp[0] = (u_char)((n) >> 8); \
     cp += 2; \
   } else { \
-    *cp++ = (n); \
+    *cp++ = (u_char)(n); \
   } \
 }
 #define ENCODEZ(n) { \
   if ((u_short)(n) >= 256 || (u_short)(n) == 0) { \
     *cp++ = 0; \
-    cp[1] = (n); \
-    cp[0] = (n) >> 8; \
+    cp[1] = (u_char)(n); \
+    cp[0] = (u_char)((n) >> 8); \
     cp += 2; \
   } else { \
-    *cp++ = (n); \
+    *cp++ = (u_char)(n); \
   } \
 }
 
@@ -380,7 +380,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
     cp = (u_char *)pb->payload;
-    *cp++ = changes | NEW_C;
+    *cp++ = (u_char)(changes | NEW_C);
     *cp++ = cs->cs_id;
   } else {
     hlen -= deltaS + 3;
@@ -389,10 +389,10 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       LWIP_ASSERT("pbuf_header failed\n", 0);
     }
     cp = (u_char *)pb->payload;
-    *cp++ = changes;
+    *cp++ = (u_char)changes;
   }
-  *cp++ = deltaA >> 8;
-  *cp++ = deltaA;
+  *cp++ = (u_char)(deltaA >> 8);
+  *cp++ = (u_char)deltaA;
   BCOPY(new_seq, cp, deltaS);
   INCR(vjs_compressed);
   return (TYPE_COMPRESSED_TCP);
@@ -447,7 +447,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
   comp->flags &=~ VJF_TOSS;
   IPH_PROTO_SET(ip, IP_PROTO_TCP);
   BCOPY(ip, &cs->cs_ip, hlen);
-  cs->cs_hlen = hlen;
+  cs->cs_hlen = (u_short)hlen;
   INCR(vjs_uncompressedin);
   return 0;
 }
@@ -570,7 +570,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 
 #if BYTE_ORDER == LITTLE_ENDIAN
   tmp = n0->tot_len - vjlen + cs->cs_hlen;
-  IPH_LEN_SET(&cs->cs_ip, htons(tmp));
+  IPH_LEN_SET(&cs->cs_ip, htons((u_short)tmp));
 #else
   IPH_LEN_SET(&cs->cs_ip, htons(n0->tot_len - vjlen + cs->cs_hlen));
 #endif

@@ -200,7 +200,7 @@ typedef struct PPPControl_s {
 #if PPPOS_SUPPORT
   sio_fd_t fd;                  /* File device ID of port. */
 #endif /* PPPOS_SUPPORT */
-  int  mtu;                     /* Peer's mru */
+  u16_t mtu;                    /* Peer's mru */
   int  pcomp;                   /* Does peer accept protocol compression? */
   int  accomp;                  /* Does peer accept addr/ctl compression? */
   u_long lastXMit;              /* Time of last transmission. */
@@ -764,14 +764,14 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
   u_short protocol = PPP_IP;
   int i=0;
 
-  pb = pbuf_alloc(PBUF_LINK, pppoe_hdrlen + sizeof(protocol), PBUF_RAM);
+  pb = pbuf_alloc(PBUF_LINK, PPPOE_HDRLEN + sizeof(protocol), PBUF_RAM);
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     return ERR_MEM;
   }
 
-  pbuf_header(pb, -pppoe_hdrlen);
+  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
 
   pc->lastXMit = sys_jiffies();
 
@@ -991,11 +991,11 @@ pppIOCtl(int pd, int cmd, void *arg)
 /*
  * Return the Maximum Transmission Unit for the given PPP connection.
  */
-u_int
+u_short
 pppMTU(int pd)
 {
   PPPControl *pc = &pppControl[pd];
-  u_int st;
+  u_short st;
 
   /* Validate parameters. */
   if (pd < 0 || pd >= NUM_PPP || !pc->openFlag) {
@@ -1018,14 +1018,15 @@ pppWriteOverEthernet(int pd, const u_char *s, int n)
   s += 2;
   n -= 2;
 
-  pb = pbuf_alloc(PBUF_LINK, pppoe_hdrlen + n, PBUF_RAM);
+  LWIP_ASSERT("PPPOE_HDRLEN + n <= 0xffff", PPPOE_HDRLEN + n <= 0xffff);
+  pb = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN + n), PBUF_RAM);
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     return PPPERR_ALLOC;
   }
 
-  pbuf_header(pb, -pppoe_hdrlen);
+  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
 
   pc->lastXMit = sys_jiffies();
 
@@ -1123,7 +1124,7 @@ pppWrite(int pd, const u_char *s, int n)
  * the ppp interface.
  */
 void
-ppp_send_config( int unit, int mtu, u32_t asyncmap, int pcomp, int accomp)
+ppp_send_config( int unit, u16_t mtu, u32_t asyncmap, int pcomp, int accomp)
 {
   PPPControl *pc = &pppControl[unit];
   int i;
@@ -1271,7 +1272,7 @@ GetMask(u32_t addr)
  * sifvjcomp - config tcp header compression
  */
 int
-sifvjcomp(int pd, int vjcomp, int cidcomp, int maxcid)
+sifvjcomp(int pd, int vjcomp, u8_t cidcomp, u8_t maxcid)
 {
 #if PPPOS_SUPPORT && VJ_SUPPORT
   PPPControl *pc = &pppControl[pd];

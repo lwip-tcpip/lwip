@@ -62,7 +62,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: chap.h,v 1.5 2009/12/31 17:08:08 goldsimon Exp $
+ * $Id: chap.h,v 1.6 2010/01/24 13:19:34 goldsimon Exp $
  */
 
 #ifndef CHAP_H
@@ -142,8 +142,8 @@ typedef struct chap_state {
 
 extern chap_state chap[];
 
-void ChapAuthWithPeer (int, char *, int);
-void ChapAuthPeer (int, char *, int);
+void ChapAuthWithPeer (int, char *, u_char);
+void ChapAuthPeer (int, char *, u_char);
 
 extern struct protent chap_protent;
 

@@ -122,7 +122,7 @@ upap_state upap[NUM_PPP]; /* UPAP state; one for each unit */
 
 static void upap_timeout   (void *);
 static void upap_reqtimeout(void *);
-static void upap_rauthreq  (upap_state *, u_char *, int, int);
+static void upap_rauthreq  (upap_state *, u_char *, u_char, int);
 static void upap_rauthack  (upap_state *, u_char *, int, int);
 static void upap_rauthnak  (upap_state *, u_char *, int, int);
 static void upap_sauthreq  (upap_state *);
@@ -385,11 +385,11 @@ upap_input(int unit, u_char *inpacket, int l)
  * upap_rauth - Receive Authenticate.
  */
 static void
-upap_rauthreq(upap_state *u, u_char *inp, int id, int len)
+upap_rauthreq(upap_state *u, u_char *inp, u_char id, int len)
 {
   u_char ruserlen, rpasswdlen;
   char *ruser, *rpasswd;
-  int retcode;
+  u_char retcode;
   char *msg;
   int msglen;
 

@@ -141,7 +141,7 @@ chap_state chap[NUM_PPP]; /* CHAP state; one for each unit */
 
 static void ChapChallengeTimeout (void *);
 static void ChapResponseTimeout (void *);
-static void ChapReceiveChallenge (chap_state *, u_char *, int, int);
+static void ChapReceiveChallenge (chap_state *, u_char *, u_char, int);
 static void ChapRechallenge (void *);
 static void ChapReceiveResponse (chap_state *, u_char *, int, int);
 static void ChapReceiveSuccess(chap_state *cstate, u_char *inp, u_char id, int len);
@@ -174,7 +174,7 @@ ChapInit(int unit)
  *
  */
 void
-ChapAuthWithPeer(int unit, char *our_name, int digest)
+ChapAuthWithPeer(int unit, char *our_name, u_char digest)
 {
   chap_state *cstate = &chap[unit];
 
@@ -201,7 +201,7 @@ ChapAuthWithPeer(int unit, char *our_name, int digest)
  * ChapAuthPeer - Authenticate our peer (start server).
  */
 void
-ChapAuthPeer(int unit, char *our_name, int digest)
+ChapAuthPeer(int unit, char *our_name, u_char digest)
 {
   chap_state *cstate = &chap[unit];
 
@@ -420,7 +420,7 @@ ChapInput(int unit, u_char *inpacket, int packet_len)
  * ChapReceiveChallenge - Receive Challenge and send Response.
  */
 static void
-ChapReceiveChallenge(chap_state *cstate, u_char *inp, int id, int len)
+ChapReceiveChallenge(chap_state *cstate, u_char *inp, u_char id, int len)
 {
   int rchallenge_len;
   u_char *rchallenge;
@@ -791,7 +791,8 @@ ChapGenChallenge(chap_state *cstate)
         ((((magic() >> 16) *
               (MAX_CHALLENGE_LENGTH - MIN_CHALLENGE_LENGTH)) >> 16)
            + MIN_CHALLENGE_LENGTH);
-  cstate->chal_len = chal_len;
+  LWIP_ASSERT("chal_len <= 0xff", chal_len <= 0xffff);
+  cstate->chal_len = (u_char)chal_len;
   cstate->chal_id = ++cstate->id;
   cstate->chal_transmits = 0;
 

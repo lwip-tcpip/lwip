@@ -1230,7 +1230,8 @@ lcp_reqci(fsm *f,
   lcp_options *ho = &lcp_hisoptions[f->unit];
   lcp_options *ao = &lcp_allowoptions[f->unit];
   u_char *cip, *next;         /* Pointer to current and next CIs */
-  int cilen, citype, cichar;  /* Parsed len, type, char value */
+  int cilen, citype;          /* Parsed len, type */
+  u_char cichar;              /* Parsed char value */
   u_short cishort;            /* Parsed short value */
   u32_t cilong;               /* Parse long value */
   int rc = CONFACK;           /* Final packet return code */
@@ -1416,7 +1417,7 @@ lcp_reqci(fsm *f,
               && cichar != CHAP_MICROSOFT
 #endif
           ) {
-            LCPDEBUG((LOG_WARNING, "lcp_reqci: Nak AUTHTYPE CHAP digest=%d\n", cichar));
+            LCPDEBUG((LOG_WARNING, "lcp_reqci: Nak AUTHTYPE CHAP digest=%d\n", (int)cichar));
             orc = CONFNAK;
             PUTCHAR(CI_AUTHTYPE, nakp);
             PUTCHAR(CILEN_CHAP, nakp);
@@ -1425,7 +1426,7 @@ lcp_reqci(fsm *f,
             break;
           }
 #if TRACELCP > 0
-          snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CHAP %X,%d", cishort, cichar);
+          snprintf(&traceBuf[traceNdx], sizeof(traceBuf), " CHAP %X,%d", cishort, (int)cichar);
           traceNdx = strlen(traceBuf);
 #endif
           ho->chap_mdtype = cichar; /* save md type */
