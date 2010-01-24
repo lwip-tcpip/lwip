@@ -731,8 +731,10 @@ const struct mib_array_node mgmt = {
 
 /* internet .1.3.6.1 */
 #if SNMP_PRIVATE_MIB
+/* When using a private MIB, you have to create a file 'private_mib.h' that contains
+ * a 'struct mib_array_node mib_private' which contains your MIB. */
 s32_t internet_ids[2] = { 2, 4 };
-struct mib_node* const internet_nodes[2] = { (struct mib_node* const)&mgmt, (struct mib_node* const)&private };
+struct mib_node* const internet_nodes[2] = { (struct mib_node* const)&mgmt, (struct mib_node* const)&mib_private };
 const struct mib_array_node internet = {
   &noleafs_get_object_def,
   &noleafs_get_value,

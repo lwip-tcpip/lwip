@@ -88,6 +88,15 @@ snmp_init(void)
     msg_ps++;
   }
   trap_msg.pcb = snmp1_pcb;
+
+#ifdef SNMP_PRIVATE_MIB_INIT
+  /* If defined, rhis must be a function-like define to initialize the
+   * private MIB after the stack has been initialized.
+   * The private MIB can also be initialized in tcpip_callback (or after
+   * the stack is initialized), this define is only for convenience. */
+  SNMP_PRIVATE_MIB_INIT();
+#endif /* SNMP_PRIVATE_MIB_INIT */
+
   /* The coldstart trap will only be output
      if our outgoing interface is up & configured  */
   snmp_coldstart_trap();

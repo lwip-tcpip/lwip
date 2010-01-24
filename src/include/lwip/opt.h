@@ -627,6 +627,8 @@
 
 /**
  * SNMP_PRIVATE_MIB: 
+ * When using a private MIB, you have to create a file 'private_mib.h' that contains
+ * a 'struct mib_array_node mib_private' which contains your MIB.
  */
 #ifndef SNMP_PRIVATE_MIB
 #define SNMP_PRIVATE_MIB                0
