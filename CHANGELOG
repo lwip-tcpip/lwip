@@ -50,6 +50,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-24: Simon Goldschmidt
+  * snmp: Renamed the private mib node from 'private' to 'mib_private' to
+    not use reserved C/C++ keywords
+
   2010-01-23: Simon Goldschmidt
   * sockets.c: Fixed bug #28716: select() returns 0 after waiting for less
     than 1 ms
