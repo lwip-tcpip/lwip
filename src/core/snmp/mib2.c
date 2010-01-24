@@ -898,11 +898,11 @@ static u32_t snmpinpkts = 0,
  * @param src points to source
  * @param n number of octets to copy.
  */
-void ocstrncpy(u8_t *dst, u8_t *src, u8_t n)
+static void ocstrncpy(u8_t *dst, u8_t *src, u16_t n)
 {
-  while (n > 0)
-  {
-    n--;
+  u16_t i = n;
+  while (i > 0) {
+    i--;
     *dst++ = *src++;
   }
 }
@@ -916,9 +916,9 @@ void ocstrncpy(u8_t *dst, u8_t *src, u8_t n)
  */
 void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
 {
-  while(n > 0)
-  {
-    n--;
+  u8_t i = n;
+  while(i > 0) {
+    i--;
     *dst++ = *src++;
   }
 }
@@ -2129,7 +2129,8 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def system.%"U16_F".0\n",(u16_t)id));
     switch (id)
     {
@@ -2201,7 +2202,8 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
 
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* sysDescr */
@@ -2240,7 +2242,8 @@ system_set_test(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(value);
   set_ok = 0;
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 4: /* sysContact */
@@ -2273,20 +2276,22 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
 
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid len", len <= 0xff);
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 4: /* sysContact */
       ocstrncpy(syscontact_ptr,value,len);
-      *syscontact_len_ptr = len;
+      *syscontact_len_ptr = (u8_t)len;
       break;
     case 5: /* sysName */
       ocstrncpy(sysname_ptr,value,len);
-      *sysname_len_ptr = len;
+      *sysname_len_ptr = (u8_t)len;
       break;
     case 6: /* sysLocation */
       ocstrncpy(syslocation_ptr,value,len);
-      *syslocation_len_ptr = len;
+      *syslocation_len_ptr = (u8_t)len;
       break;
   };
 }
@@ -2360,7 +2365,8 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ifentry.%"U16_F"\n",(u16_t)id));
     switch (id)
     {
@@ -2461,7 +2467,8 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* ifIndex */
@@ -2734,7 +2741,8 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
-    id = od->id_inst_ptr[0];
+    LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+    id = (u8_t)od->id_inst_ptr[0];
     switch (id)
     {
       case 1: /* atIfIndex */
@@ -2775,7 +2783,8 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def ip.%"U16_F".0\n",(u16_t)id));
     switch (id)
     {
@@ -2833,7 +2842,8 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* ipForwarding */
@@ -2988,7 +2998,8 @@ ip_set_test(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(len);
   set_ok = 0;
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* ipForwarding */
@@ -3027,7 +3038,8 @@ ip_addrentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     switch (id)
     {
       case 1: /* ipAdEntAddr */
@@ -3078,7 +3090,8 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   if (netif != NULL)
   {
-    id = od->id_inst_ptr[0];
+    LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+    id = (u8_t)od->id_inst_ptr[0];
     switch (id)
     {
       case 1: /* ipAdEntAddr */
@@ -3148,7 +3161,8 @@ ip_rteentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     switch (id)
     {
       case 1: /* ipRouteDest */
@@ -3227,7 +3241,8 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
   }
   if (netif != NULL)
   {
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     switch (id)
     {
       case 1: /* ipRouteDest */
@@ -3363,7 +3378,8 @@ ip_ntomentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     switch (id)
     {
       case 1: /* ipNetToMediaIfIndex */
@@ -3419,7 +3435,8 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
   {
-    id = od->id_inst_ptr[0];
+    LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+    id = (u8_t)od->id_inst_ptr[0];
     switch (id)
     {
       case 1: /* ipNetToMediaIfIndex */
@@ -3485,7 +3502,8 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* icmpInMsgs */
@@ -3584,7 +3602,8 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     LWIP_DEBUGF(SNMP_MIB_DEBUG,("get_object_def tcp.%"U16_F".0\n",(u16_t)id));
 
     switch (id)
@@ -3639,7 +3658,8 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* tcpRtoAlgorithm, vanj(4) */
@@ -3807,7 +3827,8 @@ udp_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 1: /* udpInDatagrams */
@@ -3875,7 +3896,8 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
   LWIP_UNUSED_ARG(len);
   snmp_oidtoip(&od->id_inst_ptr[1], &ip);
   ip.addr = htonl(ip.addr);
-  port = od->id_inst_ptr[5];
+  LWIP_ASSERT("invalid port", (od->id_inst_ptr[5] >= 0) && (od->id_inst_ptr[5] <= 0xffff));
+  port = (u16_t)od->id_inst_ptr[5];
 
   pcb = udp_pcbs;
   while ((pcb != NULL) &&
@@ -3887,7 +3909,8 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   if (pcb != NULL)
   {
-    id = od->id_inst_ptr[0];
+    LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+    id = (u8_t)od->id_inst_ptr[0];
     switch (id)
     {
       case 1: /* udpLocalAddress */
@@ -3919,7 +3942,8 @@ snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
     od->id_inst_len = ident_len;
     od->id_inst_ptr = ident;
 
-    id = ident[0];
+    LWIP_ASSERT("invalid id", (ident[0] >= 0) && (ident[0] <= 0xff));
+    id = (u8_t)ident[0];
     switch (id)
     {
       case 1: /* snmpInPkts */
@@ -3980,7 +4004,8 @@ snmp_get_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
       case 1: /* snmpInPkts */
@@ -4084,7 +4109,8 @@ snmp_set_test(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(len);
   set_ok = 0;
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   if (id == 30)
   {
     /* snmpEnableAuthenTraps */
@@ -4116,12 +4142,14 @@ snmp_set_value(struct obj_def *od, u16_t len, void *value)
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
-  id = od->id_inst_ptr[0];
+  LWIP_ASSERT("invalid id", (od->id_inst_ptr[0] >= 0) && (od->id_inst_ptr[0] <= 0xff));
+  id = (u8_t)od->id_inst_ptr[0];
   if (id == 30)
   {
     /* snmpEnableAuthenTraps */
-    s32_t *sint_ptr = value;
-    *snmpenableauthentraps_ptr = *sint_ptr;
+    /* @todo @fixme: which kind of pointer is 'value'? s32_t or u8_t??? */
+    u8_t *ptr = value;
+    *snmpenableauthentraps_ptr = *ptr;
   }
 }
 

@@ -95,7 +95,7 @@ void
 snmp_ifindextonetif(s32_t ifindex, struct netif **netif)
 {
   struct netif *nif = netif_list;
-  u16_t i, ifidx;
+  s32_t i, ifidx;
 
   ifidx = ifindex - 1;
   i = 0;
@@ -754,7 +754,8 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
-            j = i + 1;
+            LWIP_ASSERT("i < 0xff", i < 0xff);
+            j = (u8_t)i + 1;
             while ((j < an->maxlength) && (empty_table(an->nptr[j])))
             {
               j++;
@@ -996,7 +997,8 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
-            j = i + 1;
+            LWIP_ASSERT("i < 0xff", i < 0xff);
+            j = (u8_t)i + 1;
             if (j < len)
             {
               /* right node is the current external node */

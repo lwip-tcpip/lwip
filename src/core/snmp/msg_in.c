@@ -186,7 +186,8 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       msg_ps->vb_ptr->ident_len = 0;
 
       vb->value_type = msg_ps->ext_object_def.asn_type;
-      vb->value_len =  msg_ps->ext_object_def.v_len;
+      LWIP_ASSERT("invalid length", msg_ps->ext_object_def.v_len <= 0xff);
+      vb->value_len = (u8_t)msg_ps->ext_object_def.v_len;
       if (vb->value_len > 0)
       {
         vb->value = mem_malloc(vb->value_len);
@@ -298,7 +299,8 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
               msg_ps->vb_ptr->ident_len = 0;
 
               vb->value_type = object_def.asn_type;
-              vb->value_len = object_def.v_len;
+              LWIP_ASSERT("invalid length", object_def.v_len <= 0xff);
+              vb->value_len = (u8_t)object_def.v_len;
               if (vb->value_len > 0)
               {
                 vb->value = mem_malloc(vb->value_len);
@@ -394,9 +396,10 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     /* get_value() answer */
     en = msg_ps->ext_mib_node;
 
+    LWIP_ASSERT("invalid length", msg_ps->ext_object_def.v_len <= 0xff);
     vb = snmp_varbind_alloc(&msg_ps->ext_oid,
                             msg_ps->ext_object_def.asn_type,
-                            msg_ps->ext_object_def.v_len);
+                            (u8_t)msg_ps->ext_object_def.v_len);
     if (vb != NULL)
     {
       en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value_len, vb->value);
@@ -468,7 +471,8 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
         mn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
 
-        vb = snmp_varbind_alloc(&oid, object_def.asn_type, object_def.v_len);
+        LWIP_ASSERT("invalid length", object_def.v_len <= 0xff);
+        vb = snmp_varbind_alloc(&oid, object_def.asn_type, (u8_t)object_def.v_len);
         if (vb != NULL)
         {
           msg_ps->state = SNMP_MSG_INTERNAL_GET_VALUE;
@@ -978,7 +982,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   /* add zero terminator */
   len = ((len < (SNMP_COMMUNITY_STR_LEN))?(len):(SNMP_COMMUNITY_STR_LEN));
   m_stat->community[len] = 0;
-  m_stat->com_strlen = len;
+  m_stat->com_strlen = (u8_t)len;
   if (strncmp(snmp_publiccommunity, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
   {
     /** @todo: move this if we need to check more names */
@@ -1223,7 +1227,8 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_OPAQUE):
-        vb = snmp_varbind_alloc(&oid, type, len);
+        LWIP_ASSERT("invalid length", len <= 0xff);
+        vb = snmp_varbind_alloc(&oid, type, (u8_t)len);
         if (vb != NULL)
         {
           derr = snmp_asn1_dec_raw(p, ofs + 1 + len_octets, len, vb->value_len, vb->value);
