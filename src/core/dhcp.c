@@ -924,7 +924,7 @@ dhcp_bind(struct netif *netif)
   /* TODO: this is not a valid check. what if the network mask is 0? */
   if (sn_mask.addr == 0) {
     /* choose a safe subnet mask given the network class */
-    u8_t first_octet = ip4_addr1(&sn_mask);
+    u8_t first_octet = (u8_t)ip4_addr1(&sn_mask);
     if (first_octet <= 127) {
       sn_mask.addr = htonl(0xff000000);
     } else if (first_octet >= 192) {
