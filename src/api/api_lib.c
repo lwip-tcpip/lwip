@@ -349,7 +349,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 #if LWIP_TCP
     /* This is not a listening netconn, since recvmbox is set */
 
-    buf = memp_malloc(MEMP_NETBUF);
+    buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
     if (buf == NULL) {
       NETCONN_SET_SAFE_ERR(conn, ERR_MEM);
       return ERR_MEM;

@@ -83,7 +83,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 
   LWIP_UNUSED_ARG(inp);
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   proto = IPH_PROTO(iphdr);
 
   prev = NULL;
@@ -336,7 +336,7 @@ raw_new(u8_t proto)
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_new\n"));
 
-  pcb = memp_malloc(MEMP_RAW_PCB);
+  pcb = (struct raw_pcb *)memp_malloc(MEMP_RAW_PCB);
   /* could allocate RAW PCB? */
   if (pcb != NULL) {
     /* initialize PCB to all zeroes */

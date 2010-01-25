@@ -200,7 +200,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   snmp_inc_ipinreceives();
 
   /* identify the IP header */
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   if (IPH_V(iphdr) != 4) {
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IP packet dropped due to bad version number %"U16_F"\n", IPH_V(iphdr)));
     ip_debug_print(p);
@@ -549,7 +549,7 @@ err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest
       return ERR_BUF;
     }
 
-    iphdr = p->payload;
+    iphdr = (struct ip_hdr *)p->payload;
     LWIP_ASSERT("check that first pbuf can hold struct ip_hdr",
                (p->len >= sizeof(struct ip_hdr)));
 
@@ -575,7 +575,7 @@ err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest
 #endif
   } else {
     /* IP header already included in p */
-    iphdr = p->payload;
+    iphdr = (struct ip_hdr *)p->payload;
     dest = &(iphdr->dest);
   }
 

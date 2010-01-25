@@ -603,7 +603,7 @@ dhcp_start(struct netif *netif)
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
-    dhcp = mem_malloc(sizeof(struct dhcp));
+    dhcp = (struct dhcp *)mem_malloc(sizeof(struct dhcp));
     if (dhcp == NULL) {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): could not allocate dhcp\n"));
       return ERR_MEM;
@@ -667,7 +667,7 @@ dhcp_inform(struct netif *netif)
 {
   struct dhcp *dhcp, *old_dhcp;
   err_t result = ERR_OK;
-  dhcp = mem_malloc(sizeof(struct dhcp));
+  dhcp = (struct dhcp *)mem_malloc(sizeof(struct dhcp));
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_inform(): could not allocate dhcp\n"));
     return;
@@ -1313,7 +1313,7 @@ dhcp_unfold_reply(struct dhcp *dhcp, struct pbuf *p)
       return ERR_MEM;
     }
   }
-  dhcp->msg_in = mem_malloc(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
+  dhcp->msg_in = (struct dhcp_msg *)mem_malloc(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
   if (dhcp->msg_in == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n"));

@@ -376,7 +376,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   if (pcb->state == LISTEN) {
     return pcb;
   }
-  lpcb = memp_malloc(MEMP_TCP_PCB_LISTEN);
+  lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN);
   if (lpcb == NULL) {
     return NULL;
   }
@@ -914,7 +914,7 @@ tcp_seg_copy(struct tcp_seg *seg)
 {
   struct tcp_seg *cseg;
 
-  cseg = memp_malloc(MEMP_TCP_SEG);
+  cseg = (struct tcp_seg *)memp_malloc(MEMP_TCP_SEG);
   if (cseg == NULL) {
     return NULL;
   }
@@ -1015,19 +1015,19 @@ tcp_alloc(u8_t prio)
   struct tcp_pcb *pcb;
   u32_t iss;
   
-  pcb = memp_malloc(MEMP_TCP_PCB);
+  pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
   if (pcb == NULL) {
     /* Try killing oldest connection in TIME-WAIT. */
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing off oldest TIME-WAIT connection\n"));
     tcp_kill_timewait();
     /* Try to allocate a tcp_pcb again. */
-    pcb = memp_malloc(MEMP_TCP_PCB);
+    pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
     if (pcb == NULL) {
       /* Try killing active connections with lower priority than the new one. */
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_alloc: killing connection with prio lower than %d\n", prio));
       tcp_kill_prio(prio);
       /* Try to allocate a tcp_pcb again. */
-      pcb = memp_malloc(MEMP_TCP_PCB);
+      pcb = (struct tcp_pcb *)memp_malloc(MEMP_TCP_PCB);
       if (pcb != NULL) {
         /* adjust err stats: memp_malloc failed twice before */
         MEMP_STATS_DEC(err, MEMP_TCP_PCB);

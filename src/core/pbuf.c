@@ -211,7 +211,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (type) {
   case PBUF_POOL:
     /* allocate head of pbuf chain into p */
-    p = memp_malloc(MEMP_PBUF_POOL);
+    p = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL);
     LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloc: allocated pbuf %p\n", (void *)p));
     if (p == NULL) {
       PBUF_POOL_IS_EMPTY();
@@ -244,7 +244,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
     rem_len = length - p->len;
     /* any remaining pbufs to be allocated? */
     while (rem_len > 0) {
-      q = memp_malloc(MEMP_PBUF_POOL);
+      q = (struct pbuf *)memp_malloc(MEMP_PBUF_POOL);
       if (q == NULL) {
         PBUF_POOL_IS_EMPTY();
         /* free chain so far allocated */
@@ -298,7 +298,7 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   /* pbuf references existing (externally allocated) RAM payload? */
   case PBUF_REF:
     /* only allocate memory for the pbuf structure */
-    p = memp_malloc(MEMP_PBUF);
+    p = (struct pbuf *)memp_malloc(MEMP_PBUF);
     if (p == NULL) {
       LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                   ("pbuf_alloc: Could not allocate MEMP_PBUF for PBUF_%s.\n",
@@ -383,7 +383,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   /* (other types merely adjust their length fields */
   if ((q->type == PBUF_RAM) && (rem_len != q->len)) {
     /* reallocate and adjust the length of the pbuf that will be split */
-    q = mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
+    q = (struct pbuf *)mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
     LWIP_ASSERT("mem_realloc give q == NULL", q != NULL);
   }
   /* adjust length fields for new last pbuf */

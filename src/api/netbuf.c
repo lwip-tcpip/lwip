@@ -57,7 +57,7 @@ netbuf *netbuf_new(void)
 {
   struct netbuf *buf;
 
-  buf = memp_malloc(MEMP_NETBUF);
+  buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
   if (buf != NULL) {
     buf->p = NULL;
     buf->ptr = NULL;

@@ -63,7 +63,7 @@ static struct tcp_hdr *
 tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, u16_t optlen,
                       u32_t seqno_be /* already in network byte order */)
 {
-  struct tcp_hdr *tcphdr = p->payload;
+  struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
   tcphdr->src = htons(pcb->local_port);
   tcphdr->dest = htons(pcb->remote_port);
   tcphdr->seqno = seqno_be;
@@ -218,7 +218,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
     seglen = left > (pcb->mss - optlen) ? (pcb->mss - optlen) : left;
 
     /* Allocate memory for tcp_seg, and fill in fields. */
-    seg = memp_malloc(MEMP_TCP_SEG);
+    seg = (struct tcp_seg *)memp_malloc(MEMP_TCP_SEG);
     if (seg == NULL) {
       LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_LEVEL_SERIOUS, 
                   ("tcp_enqueue: could not allocate memory for tcp_seg\n"));
@@ -308,7 +308,7 @@ tcp_enqueue(struct tcp_pcb *pcb, void *arg, u16_t len,
       TCP_STATS_INC(tcp.err);
       goto memerr;
     }
-    seg->tcphdr = seg->p->payload;
+    seg->tcphdr = (struct tcp_hdr *)seg->p->payload;
     seg->tcphdr->src = htons(pcb->local_port);
     seg->tcphdr->dest = htons(pcb->remote_port);
     seg->tcphdr->seqno = htonl(seqno);
@@ -781,7 +781,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
               (p->len >= sizeof(struct tcp_hdr)));
 
-  tcphdr = p->payload;
+  tcphdr = (struct tcp_hdr *)p->payload;
   tcphdr->src = htons(local_port);
   tcphdr->dest = htons(remote_port);
   tcphdr->seqno = htonl(seqno);

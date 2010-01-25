@@ -90,7 +90,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   snmp_inc_icmpinmsgs();
 
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   hlen = IPH_HL(iphdr) * 4;
   if (pbuf_header(p, -hlen) || (p->tot_len < sizeof(u16_t)*2)) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
@@ -163,7 +163,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
         LWIP_ASSERT("icmp_input: copying to new pbuf failed\n", 0);
         goto memerr;
       }
-      iphdr = r->payload;
+      iphdr = (struct ip_hdr *)r->payload;
       /* switch r->payload back to icmp header */
       if (pbuf_header(r, -hlen)) {
         LWIP_ASSERT("icmp_input: restoring original p->payload failed\n", 0);
@@ -184,7 +184,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* At this point, all checks are OK. */
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
-    iecho = p->payload;
+    iecho = (struct icmp_echo_hdr *)p->payload;
     tmpaddr.addr = iphdr->src.addr;
     iphdr->src.addr = iphdr->dest.addr;
     iphdr->dest.addr = tmpaddr.addr;
@@ -299,14 +299,14 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   LWIP_ASSERT("check that first pbuf can hold icmp message",
              (q->len >= (sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE)));
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
   ip_addr_debug_print(ICMP_DEBUG, &(iphdr->src));
   LWIP_DEBUGF(ICMP_DEBUG, (" to "));
   ip_addr_debug_print(ICMP_DEBUG, &(iphdr->dest));
   LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
 
-  icmphdr = q->payload;
+  icmphdr = (struct icmp_echo_hdr *)q->payload;
   icmphdr->type = type;
   icmphdr->code = code;
   icmphdr->id = 0;

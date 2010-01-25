@@ -292,7 +292,7 @@ memp_init(void)
   }
 
 #if !MEMP_SEPARATE_POOLS
-  memp = LWIP_MEM_ALIGN(memp_memory);
+  memp = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
 #endif /* !MEMP_SEPARATE_POOLS */
   /* for every pool: */
   for (i = 0; i < MEMP_MAX; ++i) {

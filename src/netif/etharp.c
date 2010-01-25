@@ -430,7 +430,7 @@ find_entry(struct ip_addr *ipaddr, u8_t flags)
 static err_t
 etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
 {
-  struct eth_hdr *ethhdr = p->payload;
+  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
   u8_t k;
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
@@ -587,7 +587,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
-  ethhdr = p->payload;
+  ethhdr = (struct eth_hdr *)p->payload;
   iphdr = (struct ip_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
 #if ETHARP_SUPPORT_VLAN
   if (ethhdr->type == ETHTYPE_VLAN) {
@@ -651,7 +651,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     return;
   }
 
-  ethhdr = p->payload;
+  ethhdr = (struct eth_hdr *)p->payload;
   hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
 #if ETHARP_SUPPORT_VLAN
   if (ethhdr->type == ETHTYPE_VLAN) {
@@ -988,7 +988,7 @@ etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
         /* queue packet ... */
         struct etharp_q_entry *new_entry;
         /* allocate a new arp queue entry */
-        new_entry = memp_malloc(MEMP_ARP_QUEUE);
+        new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);
         if (new_entry != NULL) {
           new_entry->next = 0;
           new_entry->p = p;
@@ -1073,7 +1073,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
               (p->len >= SIZEOF_ETHARP_PACKET));
 
-  ethhdr = p->payload;
+  ethhdr = (struct eth_hdr *)p->payload;
   hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
   hdr->opcode = htons(opcode);
@@ -1154,7 +1154,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   u16_t type;
 
   /* points to packet payload, which starts with an Ethernet header */
-  ethhdr = p->payload;
+  ethhdr = (struct eth_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
     ("ethernet_input: dest:%02x:%02x:%02x:%02x:%02x:%02x, src:%02x:%02x:%02x:%02x:%02x:%02x, type:%2hx\n",
      (unsigned)ethhdr->dest.addr[0], (unsigned)ethhdr->dest.addr[1], (unsigned)ethhdr->dest.addr[2],

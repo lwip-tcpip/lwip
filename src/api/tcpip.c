@@ -149,7 +149,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_INPKT);
+    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
     if (msg == NULL) {
       return ERR_MEM;
     }
@@ -183,7 +183,7 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_API);
+    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
     }
@@ -218,7 +218,7 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_API);
+    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
     }
@@ -247,7 +247,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
   struct tcpip_msg *msg;
 
   if (mbox != SYS_MBOX_NULL) {
-    msg = memp_malloc(MEMP_TCPIP_MSG_API);
+    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
     }
@@ -397,7 +397,7 @@ tcpip_init(tcpip_init_done_fn initfunc, void *arg)
 static void
 pbuf_free_int(void *p)
 {
-  struct pbuf *q = p;
+  struct pbuf *q = (struct pbuf *)p;
   pbuf_free(q);
 }
 

@@ -80,7 +80,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 #endif /* LWIP_SO_RCVBUF */
 
   LWIP_UNUSED_ARG(addr);
-  conn = arg;
+  conn = (struct netconn *)arg;
 
 #if LWIP_SO_RCVBUF
   SYS_ARCH_GET(conn->recv_avail, recv_avail);
@@ -99,7 +99,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
     }
 
     if(q != NULL) {
-      buf = memp_malloc(MEMP_NETBUF);
+      buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
       if (buf == NULL) {
         pbuf_free(q);
         return 0;
@@ -145,7 +145,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   LWIP_UNUSED_ARG(pcb); /* only used for asserts... */
   LWIP_ASSERT("recv_udp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_udp must have an argument", arg != NULL);
-  conn = arg;
+  conn = (struct netconn *)arg;
   LWIP_ASSERT("recv_udp: recv for wrong pcb!", conn->pcb.udp == pcb);
 
 #if LWIP_SO_RCVBUF
@@ -159,7 +159,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     return;
   }
 
-  buf = memp_malloc(MEMP_NETBUF);
+  buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
   if (buf == NULL) {
     pbuf_free(p);
     return;
@@ -206,7 +206,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("recv_tcp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_tcp must have an argument", arg != NULL);
-  conn = arg;
+  conn = (struct netconn *)arg;
   LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
   if (conn == NULL) {
@@ -255,7 +255,7 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 static err_t
 poll_tcp(void *arg, struct tcp_pcb *pcb)
 {
-  struct netconn *conn = arg;
+  struct netconn *conn = (struct netconn *)arg;
 
   LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("conn != NULL", (conn != NULL));
@@ -279,7 +279,7 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
 static err_t
 sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
 {
-  struct netconn *conn = arg;
+  struct netconn *conn = (struct netconn *)arg;
 
   LWIP_UNUSED_ARG(pcb);
   LWIP_ASSERT("conn != NULL", (conn != NULL));
@@ -314,7 +314,7 @@ err_tcp(void *arg, err_t err)
   enum netconn_state old_state;
   SYS_ARCH_DECL_PROTECT(lev);
 
-  conn = arg;
+  conn = (struct netconn *)arg;
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   conn->pcb.tcp = NULL;
@@ -524,7 +524,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   struct netconn *conn;
   int size;
 
-  conn = memp_malloc(MEMP_NETCONN);
+  conn = (struct netconn *)memp_malloc(MEMP_NETCONN);
   if (conn == NULL) {
     return NULL;
   }
@@ -830,7 +830,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 
   LWIP_UNUSED_ARG(pcb);
 
-  conn = arg;
+  conn = (struct netconn *)arg;
 
   if (conn == NULL) {
     return ERR_VAL;

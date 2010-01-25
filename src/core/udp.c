@@ -96,7 +96,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   UDP_STATS_INC(udp.recv);
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
 
   /* Check minimum length (IP header + UDP header)
    * and move payload pointer to UDP header */
@@ -450,7 +450,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
   LWIP_ASSERT("check that first pbuf can hold struct udp_hdr",
               (q->len >= sizeof(struct udp_hdr)));
   /* q now represents the packet to be sent */
-  udphdr = q->payload;
+  udphdr = (struct udp_hdr *)q->payload;
   udphdr->src = htons(pcb->local_port);
   udphdr->dest = htons(dst_port);
   /* in UDP, 0 checksum means 'no checksum' */
@@ -809,7 +809,7 @@ struct udp_pcb *
 udp_new(void)
 {
   struct udp_pcb *pcb;
-  pcb = memp_malloc(MEMP_UDP_PCB);
+  pcb = (struct udp_pcb *)memp_malloc(MEMP_UDP_PCB);
   /* could allocate UDP PCB? */
   if (pcb != NULL) {
     /* UDP Lite: by initializing to all zeroes, chksum_len is set to 0

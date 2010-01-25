@@ -102,7 +102,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   TCP_STATS_INC(tcp.recv);
   snmp_inc_tcpinsegs();
 
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   tcphdr = (struct tcp_hdr *)((u8_t *)p->payload + IPH_HL(iphdr) * 4);
 
 #if TCP_INPUT_DEBUG
