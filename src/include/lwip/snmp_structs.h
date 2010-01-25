@@ -58,11 +58,15 @@ extern "C" {
 #define MIB_OBJECT_SCALAR 1
 #define MIB_OBJECT_TAB 2
 
+/* MIB access types */
+#define MIB_ACCESS_READ   1
+#define MIB_ACCESS_WRITE  2
+
 /* MIB object access */
-#define MIB_OBJECT_READ_ONLY 0
-#define MIB_OBJECT_READ_WRITE 1
-#define MIB_OBJECT_WRITE_ONLY 2
-#define MIB_OBJECT_NOT_ACCESSIBLE 3
+#define MIB_OBJECT_READ_ONLY      MIB_ACCESS_READ
+#define MIB_OBJECT_READ_WRITE     (MIB_ACCESS_READ | MIB_ACCESS_WRITE)
+#define MIB_OBJECT_WRITE_ONLY     MIB_ACCESS_WRITE
+#define MIB_OBJECT_NOT_ACCESSIBLE 0
 
 /** object definition returned by (get_object_def)() */
 struct obj_def

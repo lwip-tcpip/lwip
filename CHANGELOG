@@ -50,6 +50,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-25: Simon Goldschmidt
+  * snmp_structs.h, msg_in.c: Partly fixed bug #22070 (MIB_OBJECT_WRITE_ONLY
+    not implemented in SNMP): write-only or not-accessible are still
+    returned by getnext (though not by get)
+
   2010-01-24: Simon Goldschmidt
   * snmp: Renamed the private mib node from 'private' to 'mib_private' to
     not use reserved C/C++ keywords
