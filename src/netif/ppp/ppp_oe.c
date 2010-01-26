@@ -78,7 +78,6 @@
 #include "lwip/timers.h"
 
 #include "netif/ppp_oe.h"
-#include "netif/etharp.h"
 
 #include <string.h>
 #include <stdio.h>

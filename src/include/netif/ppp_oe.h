@@ -74,6 +74,8 @@
 
 #if PPPOE_SUPPORT > 0
 
+#include "netif/etharp.h"
+
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
