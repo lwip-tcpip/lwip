@@ -330,6 +330,39 @@
 #endif
 
 /**
+ * MEMP_NUM_SNMP_NODE: the number of leafs in the SNMP tree.
+ */
+#ifndef MEMP_NUM_SNMP_NODE
+#define MEMP_NUM_SNMP_NODE              50
+#endif
+
+/**
+ * MEMP_NUM_SNMP_ROOTNODE: the number of branches in the SNMP tree.
+ * Every branch has one leaf (MEMP_NUM_SNMP_NODE) at least!
+ */
+#ifndef MEMP_NUM_SNMP_ROOTNODE
+#define MEMP_NUM_SNMP_ROOTNODE          30
+#endif
+
+/**
+ * MEMP_NUM_SNMP_VARBIND: the number of concurrent requests (does not have to
+ * be changed normally) - 2 of these are used per request (1 for input,
+ * 1 for output)
+ */
+#ifndef MEMP_NUM_SNMP_VARBIND
+#define MEMP_NUM_SNMP_VARBIND           2
+#endif
+
+/**
+ * MEMP_NUM_SNMP_VALUE: the number of OID or values concurrently used
+ * (does not have to be changed normally) - 3 of these are used per request
+ * (1 for the value read and 2 for OIDs - input and output)
+ */
+#ifndef MEMP_NUM_SNMP_VALUE
+#define MEMP_NUM_SNMP_VALUE             3
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE
@@ -611,7 +644,8 @@
 
 /**
  * SNMP_CONCURRENT_REQUESTS: Number of concurrent requests the module will
- * allow. At least one request buffer is required. 
+ * allow. At least one request buffer is required.
+ * Does not have to be changed unless external MIBs answer request asynchronously
  */
 #ifndef SNMP_CONCURRENT_REQUESTS
 #define SNMP_CONCURRENT_REQUESTS        1
@@ -641,6 +675,31 @@
  */
 #ifndef SNMP_SAFE_REQUESTS
 #define SNMP_SAFE_REQUESTS              1
+#endif
+
+/**
+ * The maximum length of strings used. This affects the size of
+ * MEMP_SNMP_VALUE elements.
+ */
+#ifndef SNMP_MAX_OCTET_STRING_LEN
+#define SNMP_MAX_OCTET_STRING_LEN       127
+#endif
+
+/**
+ * The maximum depth of the SNMP tree.
+ * With private MIBs enabled, this depends on your MIB!
+ * This affects the size of MEMP_SNMP_VALUE elements.
+ */
+#ifndef SNMP_MAX_TREE_DEPTH
+#define SNMP_MAX_TREE_DEPTH             15
+#endif
+
+/**
+ * The size of the MEMP_SNMP_VALUE elements, normally calculated from
+ * SNMP_MAX_OCTET_STRING_LEN and SNMP_MAX_TREE_DEPTH.
+ */
+#ifndef SNMP_MAX_VALUE_SIZE
+#define SNMP_MAX_VALUE_SIZE             LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN)+1, sizeof(s32_t)*(SNMP_MAX_TREE_DEPTH))
 #endif
 
 /*

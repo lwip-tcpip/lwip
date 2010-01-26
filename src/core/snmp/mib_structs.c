@@ -37,7 +37,7 @@
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/snmp_structs.h"
-#include "lwip/mem.h"
+#include "lwip/memp.h"
 #include "lwip/netif.h"
 
 /** .iso.org.dod.internet address prefix, @see snmp_iso_*() */
@@ -169,7 +169,7 @@ snmp_mib_ln_alloc(s32_t id)
 {
   struct mib_list_node *ln;
 
-  ln = (struct mib_list_node *)mem_malloc(sizeof(struct mib_list_node));
+  ln = (struct mib_list_node *)memp_malloc(MEMP_SNMP_NODE);
   if (ln != NULL)
   {
     ln->prev = NULL;
@@ -183,7 +183,7 @@ snmp_mib_ln_alloc(s32_t id)
 void
 snmp_mib_ln_free(struct mib_list_node *ln)
 {
-  mem_free(ln);
+  memp_free(MEMP_SNMP_NODE, ln);
 }
 
 struct mib_list_rootnode *
@@ -191,7 +191,7 @@ snmp_mib_lrn_alloc(void)
 {
   struct mib_list_rootnode *lrn;
 
-  lrn = (struct mib_list_rootnode*)mem_malloc(sizeof(struct mib_list_rootnode));
+  lrn = (struct mib_list_rootnode*)memp_malloc(MEMP_SNMP_ROOTNODE);
   if (lrn != NULL)
   {
     lrn->get_object_def = noleafs_get_object_def;
@@ -210,7 +210,7 @@ snmp_mib_lrn_alloc(void)
 void
 snmp_mib_lrn_free(struct mib_list_rootnode *lrn)
 {
-  mem_free(lrn);
+  memp_free(MEMP_SNMP_ROOTNODE, lrn);
 }
 
 /**

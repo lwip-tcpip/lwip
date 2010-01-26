@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2010-01-26: Simon Goldschmidt
+  * snmp: Use memp pools for snmp instead of the heap; added 4 new pools.
+
   2010-01-14: Simon Goldschmidt
   * ppp.c/.h: Fixed bug #27856: PPP: Set netif link- and status-callback
     by adding ppp_set_netif_statuscallback()/ppp_set_netif_linkcallback()

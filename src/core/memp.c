@@ -54,6 +54,8 @@
 #include "lwip/stats.h"
 #include "netif/etharp.h"
 #include "lwip/ip_frag.h"
+#include "lwip/snmp_structs.h"
+#include "lwip/snmp_msg.h"
 
 #include <string.h>
 
