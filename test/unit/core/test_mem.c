@@ -6,8 +6,8 @@
 #if !LWIP_STATS || !MEM_STATS
 #error "This tests needs MEM-statistics enabled"
 #endif
-#if LWIP_SNMP || LWIP_DNS
-#error "This test needs SNMP and DNS turned off (as they malloc on init)"
+#if LWIP_DNS
+/*#error "This test needs DNS turned off (as it mallocs on init)"*/
 #endif
 
 /* Setups/teardown functions */
@@ -31,9 +31,13 @@ START_TEST(test_mem_one)
 #define SIZE1   16
 #define SIZE1_2 12
 #define SIZE2   16
-  void *p1, *p2, *p3, *p4, *p5;
+  void *p1, *p2;
   mem_size_t s1, s2;
   LWIP_UNUSED_ARG(_i);
+
+#if LWIP_DNS
+  fail("This test needs DNS turned off (as it mallocs on init)");
+#endif
 
   fail_unless(lwip_stats.mem.used == 0);
 
