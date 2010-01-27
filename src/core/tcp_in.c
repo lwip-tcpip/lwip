@@ -280,6 +280,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
       if (err == ERR_OK) {
         pcb->refused_data = NULL;
       } else {
+        /* if err == ERR_ABRT, 'pcb' is already deallocated */
         /* drop incoming packets, because pcb is "full" */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
         TCP_STATS_INC(tcp.drop);
@@ -313,8 +314,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
            now. */
         if (pcb->acked > 0) {
           TCP_EVENT_SENT(pcb, pcb->acked, err);
+          if (err == ERR_ABRT) {
+            goto aborted;
+          }
         }
-      
+
         if (recv_data != NULL) {
           if(flags & TCP_PSH) {
             recv_data->flags |= PBUF_FLAG_PUSH;
@@ -322,6 +326,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
           /* Notify application that data has been received. */
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
+          if (err == ERR_ABRT) {
+            goto aborted;
+          }
 
           /* If the upper layer can't receive this data, store it */
           if (err != ERR_OK) {
@@ -334,6 +341,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
            function with a NULL buffer to indicate EOF. */
         if (recv_flags & TF_GOT_FIN) {
           TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
+          if (err == ERR_ABRT) {
+            goto aborted;
+          }
         }
 
         tcp_input_pcb = NULL;
@@ -346,6 +356,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* TCP_INPUT_DEBUG */
       }
     }
+    /* Jump target if pcb has been aborted in a callback (by calling tcp_abort()).
+       Below this line, 'pcb' may not be dereferenced! */
+aborted:
     tcp_input_pcb = NULL;
 
 
@@ -616,6 +629,9 @@ tcp_process(struct tcp_pcb *pcb)
       /* Call the user specified function to call when sucessfully
        * connected. */
       TCP_EVENT_CONNECTED(pcb, ERR_OK, err);
+      if (err == ERR_ABRT) {
+        return ERR_ABRT;
+      }
       tcp_ack_now(pcb);
     }
     /* received ACK? possibly a half-open connection */
@@ -640,7 +656,10 @@ tcp_process(struct tcp_pcb *pcb)
         if (err != ERR_OK) {
           /* If the accept function returns with an error, we abort
            * the connection. */
-          tcp_abort(pcb);
+          /* Already aborted? */
+          if (err != ERR_ABRT) {
+            tcp_abort(pcb);
+          }
           return ERR_ABRT;
         }
         old_cwnd = pcb->cwnd;

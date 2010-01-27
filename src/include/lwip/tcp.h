@@ -54,7 +54,9 @@ struct tcp_pcb;
  *
  * @param arg Additional argument to pass to the callback function (@see tcp_arg())
  * @param newpcb The new connection pcb
- * @param err An error code if there has been an error accepting
+ * @param err An error code if there has been an error accepting.
+ *            Only return ERR_ABRT if you have called tcp_abort from within the
+ *            callback function!
  */
 typedef err_t (*tcp_accept_fn)(void *arg, struct tcp_pcb *newpcb, err_t err);
 
@@ -65,6 +67,8 @@ typedef err_t (*tcp_accept_fn)(void *arg, struct tcp_pcb *newpcb, err_t err);
  * @param tpcb The connection pcb which received data
  * @param p The received data (or NULL when the connection has been closed!)
  * @param err An error code if there has been an error receiving
+ *            Only return ERR_ABRT if you have called tcp_abort from within the
+ *            callback function!
  */
 typedef err_t (*tcp_recv_fn)(void *arg, struct tcp_pcb *tpcb,
                              struct pbuf *p, err_t err);
@@ -77,6 +81,8 @@ typedef err_t (*tcp_recv_fn)(void *arg, struct tcp_pcb *tpcb,
  * @param tpcb The connection pcb for which data has been acknowledged
  * @param len The amount of bytes acknowledged
  * @return ERR_OK: try to send some data by calling tcp_output
+ *            Only return ERR_ABRT if you have called tcp_abort from within the
+ *            callback function!
  */
 typedef err_t (*tcp_sent_fn)(void *arg, struct tcp_pcb *tpcb,
                               u16_t len);
@@ -87,6 +93,8 @@ typedef err_t (*tcp_sent_fn)(void *arg, struct tcp_pcb *tpcb,
  * @param arg Additional argument to pass to the callback function (@see tcp_arg())
  * @param tpcb tcp pcb
  * @return ERR_OK: try to send some data by calling tcp_output
+ *            Only return ERR_ABRT if you have called tcp_abort from within the
+ *            callback function!
  */
 typedef err_t (*tcp_poll_fn)(void *arg, struct tcp_pcb *tpcb);
 
@@ -109,6 +117,8 @@ typedef void  (*tcp_err_fn)(void *arg, err_t err);
  * @param arg Additional argument to pass to the callback function (@see tcp_arg())
  * @param tpcb The connection pcb which is connected
  * @param err An unused error code, always ERR_OK currently ;-) TODO!
+ *            Only return ERR_ABRT if you have called tcp_abort from within the
+ *            callback function!
  *
  * @note When a connection attempt fails, the error callback is currently called!
  */

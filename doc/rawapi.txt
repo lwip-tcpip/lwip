@@ -278,6 +278,11 @@ again when the connection has been idle for a while.
   Aborts the connection by sending a RST (reset) segment to the remote
   host. The pcb is deallocated. This function never fails.
 
+  ATTENTION: When calling this from one of the TCP callbacks, make
+  sure you always return ERR_ABRT (and never return ERR_ABRT otherwise
+  or you will risk accessing deallocated memory or memory leaks!
+
+
 If a connection is aborted because of an error, the application is
 alerted of this event by the err callback. Errors that might abort a
 connection are when there is a shortage of memory. The callback

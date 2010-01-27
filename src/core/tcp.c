@@ -760,20 +760,21 @@ tcp_slowtmr(void)
       memp_free(MEMP_TCP_PCB, pcb);
       pcb = pcb2;
     } else {
-
-      /* We check if we should poll the connection. */
-      ++pcb->polltmr;
-      if (pcb->polltmr >= pcb->pollinterval) {
-        pcb->polltmr = 0;
-        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
-        TCP_EVENT_POLL(pcb, err);
-        if (err == ERR_OK) {
-          tcp_output(pcb);
-        }
-      }
-      
+      /* get the 'next' element now and work with 'prev' below (in case of abort) */
       prev = pcb;
       pcb = pcb->next;
+
+      /* We check if we should poll the connection. */
+      ++prev->polltmr;
+      if (prev->polltmr >= prev->pollinterval) {
+        prev->polltmr = 0;
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
+        TCP_EVENT_POLL(prev, err);
+        /* if err == ERR_ABRT, 'prev' is already deallocated */
+        if (err == ERR_OK) {
+          tcp_output(prev);
+        }
+      }
     }
   }
 
@@ -823,9 +824,10 @@ tcp_slowtmr(void)
 void
 tcp_fasttmr(void)
 {
-  struct tcp_pcb *pcb;
+  struct tcp_pcb *pcb = tcp_active_pcbs;
 
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+  while(pcb != NULL) {
+    struct tcp_pcb *next = pcb->next;
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
       /* Notify again application with data previously received. */
@@ -834,16 +836,21 @@ tcp_fasttmr(void)
       TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
       if (err == ERR_OK) {
         pcb->refused_data = NULL;
+      } else if (err == ERR_ABRT) {
+        /* if err == ERR_ABRT, 'pcb' is already deallocated */
+        pcb = NULL;
       }
     }
 
     /* send delayed ACKs */  
-    if (pcb->flags & TF_ACK_DELAY) {
+    if (pcb && (pcb->flags & TF_ACK_DELAY)) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
       tcp_output(pcb);
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
+
+    pcb = next;
   }
 }
 

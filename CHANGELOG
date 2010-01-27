@@ -53,6 +53,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-27: Simon Goldschmidt
+  * tcp.h, tcp.c, tcp_in.c: Fixed bug #27871: Calling tcp_abort() in recv
+    callback can lead to accessing unallocated memory. As a consequence,
+    ERR_ABRT means the application has called tcp_abort()!
+
   2010-01-25: Simon Goldschmidt
   * snmp_structs.h, msg_in.c: Partly fixed bug #22070 (MIB_OBJECT_WRITE_ONLY
     not implemented in SNMP): write-only or not-accessible are still
