@@ -292,7 +292,10 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   }
 
   if (conn) {
-    if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT)) {
+    /* If the queued byte- or pbuf-count drops below the configured low-water limit,
+       let select mark this pcb as writable again. */
+    if ((conn->pcb.tcp != NULL) && (tcp_sndbuf(conn->pcb.tcp) > TCP_SNDLOWAT) &&
+      (tcp_sndqueuelen(conn->pcb.tcp) < TCP_SNDQUEUELOWAT)) {
       API_EVENT(conn, NETCONN_EVT_SENDPLUS, len);
     }
   }
@@ -1101,7 +1104,10 @@ do_writemore(struct netconn *conn)
       conn->state = NETCONN_NONE;
     }
     err = tcp_output_nagle(conn->pcb.tcp);
-    if ((err == ERR_OK) && (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT)) {
+    /* If the queued byte- or pbuf-count exceeds the configured low-water limit,
+       let select mark this pcb as non-writable. */
+    if ((err == ERR_OK) && (tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT) ||
+        (tcp_sndqueuelen(conn->pcb.tcp) >= TCP_SNDQUEUELOWAT)) {
       API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
     }
   } else if (err == ERR_MEM) {

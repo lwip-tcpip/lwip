@@ -901,12 +901,21 @@
 #endif
 
 /**
- * TCP_SNDLOWAT: TCP writable space (bytes). This must be less than or equal
- * to TCP_SND_BUF. It is the amount of space which must be available in the
- * TCP snd_buf for select to return writable.
+ * TCP_SNDLOWAT: TCP writable space (bytes). This must be less than
+ * TCP_SND_BUF. It is the amount of space which must be available in the
+ * TCP snd_buf for select to return writable (combined with TCP_SNDQUEUELOWAT).
  */
 #ifndef TCP_SNDLOWAT
 #define TCP_SNDLOWAT                    ((TCP_SND_BUF)/2)
+#endif
+
+/**
+ * TCP_SNDQUEUELOWAT: TCP writable bufs (pbuf count). This must be grater
+ * than TCP_SND_QUEUELEN. If the number of pbufs queued on a pcb drops below
+ * this number, select returns writable (combined with TCP_SNDLOWAT).
+ */
+#ifndef TCP_SNDQUEUELOWAT
+#define TCP_SNDQUEUELOWAT               ((TCP_SND_QUEUELEN)/2)
 #endif
 
 /**

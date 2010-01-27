@@ -219,8 +219,10 @@ lwip_sanity_check(void)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_BUF must be at least as much as (2 * TCP_MSS) for things to work smoothly\n"));
   if (TCP_SND_QUEUELEN < (2 * (TCP_SND_BUF/TCP_MSS)))
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_QUEUELEN must be at least as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work\n"));
-  if (TCP_SNDLOWAT > TCP_SND_BUF)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than or equal to TCP_SND_BUF.\n"));
+  if (TCP_SNDLOWAT >= TCP_SND_BUF)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than TCP_SND_BUF.\n"));
+  if (TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN.\n"));
   if (TCP_WND > (PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE))
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE\n"));
   if (TCP_WND < TCP_MSS)

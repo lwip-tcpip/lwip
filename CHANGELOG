@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-01-27: Simon Goldschmidt
+  * opt.h, tcp.h, init.c, api_msg.c: Added TCP_SNDQUEUELOWAT corresponding
+    to TCP_SNDLOWAT and added tcp_sndqueuelen() - this fixes bug #28605
+
   2010-01-26: Simon Goldschmidt
   * snmp: Use memp pools for snmp instead of the heap; added 4 new pools.
 
