@@ -435,13 +435,13 @@ snmp_varbind_list_sum(struct snmp_varbind_root *root)
     switch (vb->value_type)
     {
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG):
-        sint_ptr = vb->value;
+        sint_ptr = (s32_t*)vb->value;
         snmp_asn1_enc_s32t_cnt(*sint_ptr, &vb->vlen);
         break;
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS):
-        uint_ptr = vb->value;
+        uint_ptr = (u32_t*)vb->value;
         snmp_asn1_enc_u32t_cnt(*uint_ptr, &vb->vlen);
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR):
@@ -451,7 +451,7 @@ snmp_varbind_list_sum(struct snmp_varbind_root *root)
         vb->vlen = vb->value_len;
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID):
-        sint_ptr = vb->value;
+        sint_ptr = (s32_t*)vb->value;
         snmp_asn1_enc_oid_cnt(vb->value_len / sizeof(s32_t), sint_ptr, &vb->vlen);
         break;
       default:
@@ -649,25 +649,25 @@ snmp_varbind_list_enc(struct snmp_varbind_root *root, struct pbuf *p, u16_t ofs)
     switch (vb->value_type)
     {
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG):
-        sint_ptr = vb->value;
+        sint_ptr = (s32_t*)vb->value;
         snmp_asn1_enc_s32t(p, ofs, vb->vlen, *sint_ptr);
         break;
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS):
-        uint_ptr = vb->value;
+        uint_ptr = (u32_t*)vb->value;
         snmp_asn1_enc_u32t(p, ofs, vb->vlen, *uint_ptr);
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR):
       case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_OPAQUE):
-        raw_ptr = vb->value;
+        raw_ptr = (u8_t*)vb->value;
         snmp_asn1_enc_raw(p, ofs, vb->vlen, raw_ptr);
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_NUL):
         break;
       case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID):
-        sint_ptr = vb->value;
+        sint_ptr = (s32_t*)vb->value;
         snmp_asn1_enc_oid(p, ofs, vb->value_len / sizeof(s32_t), sint_ptr);
         break;
       default:

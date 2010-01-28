@@ -1519,23 +1519,23 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
  */
 void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
 {
-  u8_t delete = 0;
+  u8_t del = 0;
   struct ip_addr dst;
 
   if (dflt != 0)
   {
     /* the default route 0.0.0.0 */
     dst.addr = 0;
-    delete = 1;
+    del = 1;
   }
   else
   {
     /* route to the network address */
     dst.addr = ntohl(ni->ip_addr.addr & ni->netmask.addr);
     /* exclude 0.0.0.0 network (reserved for default rte) */
-    if (dst.addr != 0) delete = 1;
+    if (dst.addr != 0) del = 1;
   }
-  if (delete)
+  if (del)
   {
     struct mib_list_rootnode *iprte_rn, *next, *del_rn[4];
     struct mib_list_node *iprte_n, *del_n[4];
@@ -2209,28 +2209,28 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 1: /* sysDescr */
-      ocstrncpy(value,sysdescr_ptr, len);
+      ocstrncpy((u8_t*)value, sysdescr_ptr, len);
       break;
     case 2: /* sysObjectID */
       objectidncpy((s32_t*)value, (s32_t*)sysobjid.id, (u8_t)(len / sizeof(s32_t)));
       break;
     case 3: /* sysUpTime */
       {
-        snmp_get_sysuptime(value);
+        snmp_get_sysuptime((u32_t*)value);
       }
       break;
     case 4: /* sysContact */
-      ocstrncpy(value,syscontact_ptr,len);
+      ocstrncpy((u8_t*)value, syscontact_ptr, len);
       break;
     case 5: /* sysName */
-      ocstrncpy(value,sysname_ptr,len);
+      ocstrncpy((u8_t*)value, sysname_ptr, len);
       break;
     case 6: /* sysLocation */
-      ocstrncpy(value,syslocation_ptr,len);
+      ocstrncpy((u8_t*)value, syslocation_ptr, len);
       break;
     case 7: /* sysServices */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         *sint_ptr = sysservices;
       }
       break;
@@ -2284,15 +2284,15 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 4: /* sysContact */
-      ocstrncpy(syscontact_ptr,value,len);
+      ocstrncpy(syscontact_ptr, (u8_t*)value, len);
       *syscontact_len_ptr = (u8_t)len;
       break;
     case 5: /* sysName */
-      ocstrncpy(sysname_ptr,value,len);
+      ocstrncpy(sysname_ptr, (u8_t*)value, len);
       *sysname_len_ptr = (u8_t)len;
       break;
     case 6: /* sysLocation */
-      ocstrncpy(syslocation_ptr,value,len);
+      ocstrncpy(syslocation_ptr, (u8_t*)value, len);
       *syslocation_len_ptr = (u8_t)len;
       break;
   };
@@ -2342,7 +2342,7 @@ interfaces_get_value(struct obj_def *od, u16_t len, void *value)
   LWIP_UNUSED_ARG(len);
   if (od->id_inst_ptr[0] == 1)
   {
-    s32_t *sint_ptr = value;
+    s32_t *sint_ptr = (s32_t*)value;
     *sint_ptr = iflist_root.count;
   }
 }
@@ -2475,38 +2475,38 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
   {
     case 1: /* ifIndex */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         *sint_ptr = od->id_inst_ptr[1];
       }
       break;
     case 2: /* ifDescr */
-      ocstrncpy(value,(u8_t*)netif->name,len);
+      ocstrncpy((u8_t*)value, (u8_t*)netif->name, len);
       break;
     case 3: /* ifType */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         *sint_ptr = netif->link_type;
       }
       break;
     case 4: /* ifMtu */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         *sint_ptr = netif->mtu;
       }
       break;
     case 5: /* ifSpeed */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->link_speed;
       }
       break;
     case 6: /* ifPhysAddress */
-      ocstrncpy(value,netif->hwaddr,len);
+      ocstrncpy((u8_t*)value, netif->hwaddr, len);
       break;
     case 7: /* ifAdminStatus */
 #if LWIP_NETIF_LINK_CALLBACK
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         if (netif_is_up(netif))
         {
           if (netif_is_link_up(netif))
@@ -2527,7 +2527,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
 #endif
     case 8: /* ifOperStatus */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         if (netif_is_up(netif))
         {
           *sint_ptr = 1;
@@ -2540,31 +2540,31 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       break;
     case 9: /* ifLastChange */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ts;
       }
       break;
     case 10: /* ifInOctets */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifinoctets;
       }
       break;
     case 11: /* ifInUcastPkts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifinucastpkts;
       }
       break;
     case 12: /* ifInNUcastPkts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifinnucastpkts;
       }
       break;
     case 13: /* ifInDiscarts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifindiscards;
       }
       break;
@@ -2572,45 +2572,45 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
     case 15: /* ifInUnkownProtos */
       /** @todo add these counters! */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = 0;
       }
       break;
     case 16: /* ifOutOctets */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifoutoctets;
       }
       break;
     case 17: /* ifOutUcastPkts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifoutucastpkts;
       }
       break;
     case 18: /* ifOutNUcastPkts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifoutnucastpkts;
       }
       break;
     case 19: /* ifOutDiscarts */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = netif->ifoutdiscards;
       }
       break;
     case 20: /* ifOutErrors */
        /** @todo add this counter! */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = 0;
       }
       break;
     case 21: /* ifOutQLen */
       /** @todo figure out if this must be 0 (no queue) or 1? */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = 0;
       }
       break;
@@ -2626,6 +2626,7 @@ ifentry_set_test (struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
   u8_t id, set_ok;
+  LWIP_UNUSED_ARG(len);
 
   set_ok = 0;
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
@@ -2634,7 +2635,7 @@ ifentry_set_test (struct obj_def *od, u16_t len, void *value)
   {
     case 7: /* ifAdminStatus */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         if (*sint_ptr == 1 || *sint_ptr == 2)
           set_ok = 1;
       }
@@ -2648,6 +2649,7 @@ ifentry_set_value (struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
   u8_t id;
+  LWIP_UNUSED_ARG(len);
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   id = od->id_inst_ptr[0];
@@ -2655,7 +2657,7 @@ ifentry_set_value (struct obj_def *od, u16_t len, void *value)
   {
     case 7: /* ifAdminStatus */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         if (*sint_ptr == 1)
         {
           netif_set_up(netif);
@@ -2749,20 +2751,20 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* atIfIndex */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           *sint_ptr = od->id_inst_ptr[1];
         }
         break;
       case 2: /* atPhysAddress */
         {
-          struct eth_addr *dst = value;
+          struct eth_addr *dst = (struct eth_addr*)value;
 
           *dst = *ethaddr_ret;
         }
         break;
       case 3: /* atNetAddress */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
 
           *dst = *ipaddr_ret;
         }
@@ -2850,7 +2852,7 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
   {
     case 1: /* ipForwarding */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
 #if IP_FORWARD
         /* forwarding */
         *sint_ptr = 1;
@@ -2862,73 +2864,73 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
       break;
     case 2: /* ipDefaultTTL */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
         *sint_ptr = IP_DEFAULT_TTL;
       }
       break;
     case 3: /* ipInReceives */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipinreceives;
       }
       break;
     case 4: /* ipInHdrErrors */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipinhdrerrors;
       }
       break;
     case 5: /* ipInAddrErrors */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipinaddrerrors;
       }
       break;
     case 6: /* ipForwDatagrams */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipforwdatagrams;
       }
       break;
     case 7: /* ipInUnknownProtos */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipinunknownprotos;
       }
       break;
     case 8: /* ipInDiscards */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipindiscards;
       }
       break;
     case 9: /* ipInDelivers */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipindelivers;
       }
       break;
     case 10: /* ipOutRequests */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipoutrequests;
       }
       break;
     case 11: /* ipOutDiscards */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipoutdiscards;
       }
       break;
     case 12: /* ipOutNoRoutes */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipoutnoroutes;
       }
       break;
     case 13: /* ipReasmTimeout */
       {
-        s32_t *sint_ptr = value;
+        s32_t *sint_ptr = (s32_t*)value;
 #if IP_REASSEMBLY
         *sint_ptr = IP_REASS_MAXAGE;
 #else
@@ -2938,44 +2940,44 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
       break;
     case 14: /* ipReasmReqds */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipreasmreqds;
       }
       break;
     case 15: /* ipReasmOKs */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipreasmoks;
       }
       break;
     case 16: /* ipReasmFails */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipreasmfails;
       }
       break;
     case 17: /* ipFragOKs */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipfragoks;
       }
       break;
     case 18: /* ipFragFails */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipfragfails;
       }
       break;
     case 19: /* ipFragCreates */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = ipfragcreates;
       }
       break;
     case 23: /* ipRoutingDiscards */
       /** @todo can lwIP discard routes at all?? hardwire this to 0?? */
       {
-        u32_t *uint_ptr = value;
+        u32_t *uint_ptr = (u32_t*)value;
         *uint_ptr = iproutingdiscards;
       }
       break;
@@ -2996,7 +2998,7 @@ static u8_t
 ip_set_test(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id, set_ok;
-  s32_t *sint_ptr = value;
+  s32_t *sint_ptr = (s32_t*)value;
 
   LWIP_UNUSED_ARG(len);
   set_ok = 0;
@@ -3098,25 +3100,25 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* ipAdEntAddr */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
           *dst = netif->ip_addr;
         }
         break;
       case 2: /* ipAdEntIfIndex */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           *sint_ptr = ifidx + 1;
         }
         break;
       case 3: /* ipAdEntNetMask */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
           *dst = netif->netmask;
         }
         break;
       case 4: /* ipAdEntBcastAddr */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
 
           /* lwIP oddity, there's no broadcast
             address in the netif we can rely on */
@@ -3125,7 +3127,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 5: /* ipAdEntReasmMaxSize */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
 #if IP_REASSEMBLY
           /* @todo The theoretical maximum is IP_REASS_MAX_PBUFS * size of the pbufs,
            * but only if receiving one fragmented packet at a time.
@@ -3249,7 +3251,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* ipRouteDest */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
 
           if (dest.addr == 0)
           {
@@ -3265,14 +3267,14 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 2: /* ipRouteIfIndex */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
 
           snmp_netiftoifindex(netif, sint_ptr);
         }
         break;
       case 3: /* ipRouteMetric1 */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
 
           if (dest.addr == 0)
           {
@@ -3291,14 +3293,14 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
       case 6: /* ipRouteMetric4 */
       case 12: /* ipRouteMetric5 */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           /* not used */
           *sint_ptr = -1;
         }
         break;
       case 7: /* ipRouteNextHop */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
 
           if (dest.addr == 0)
           {
@@ -3314,7 +3316,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 8: /* ipRouteType */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
 
           if (dest.addr == 0)
           {
@@ -3330,14 +3332,14 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 9: /* ipRouteProto */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           /* locally defined routes */
           *sint_ptr = 2;
         }
         break;
       case 10: /* ipRouteAge */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           /** @todo (sysuptime - timestamp last change) / 100
               @see snmp_insert_iprteidx_tree() */
           *sint_ptr = 0;
@@ -3345,7 +3347,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 11: /* ipRouteMask */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
 
           if (dest.addr == 0)
           {
@@ -3443,27 +3445,27 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* ipNetToMediaIfIndex */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           *sint_ptr = od->id_inst_ptr[1];
         }
         break;
       case 2: /* ipNetToMediaPhysAddress */
         {
-          struct eth_addr *dst = value;
+          struct eth_addr *dst = (struct eth_addr*)value;
 
           *dst = *ethaddr_ret;
         }
         break;
       case 3: /* ipNetToMediaNetAddress */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
 
           *dst = *ipaddr_ret;
         }
         break;
       case 4: /* ipNetToMediaType */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           /* dynamic (?) */
           *sint_ptr = 3;
         }
@@ -3500,7 +3502,7 @@ icmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 icmp_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  u32_t *uint_ptr = value;
+  u32_t *uint_ptr = (u32_t*)value;
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
@@ -3655,8 +3657,8 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 tcp_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  u32_t *uint_ptr = value;
-  s32_t *sint_ptr = value;
+  u32_t *uint_ptr = (u32_t*)value;
+  s32_t *sint_ptr = (s32_t*)value;
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
@@ -3825,7 +3827,7 @@ udp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 udp_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  u32_t *uint_ptr = value;
+  u32_t *uint_ptr = (u32_t*)value;
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
@@ -3917,13 +3919,13 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* udpLocalAddress */
         {
-          struct ip_addr *dst = value;
+          struct ip_addr *dst = (struct ip_addr*)value;
           *dst = pcb->local_ip;
         }
         break;
       case 2: /* udpLocalPort */
         {
-          s32_t *sint_ptr = value;
+          s32_t *sint_ptr = (s32_t*)value;
           *sint_ptr = pcb->local_port;
         }
         break;
@@ -4002,7 +4004,7 @@ snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 snmp_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  u32_t *uint_ptr = value;
+  u32_t *uint_ptr = (u32_t*)value;
   u8_t id;
 
   LWIP_UNUSED_ARG(len);
@@ -4116,7 +4118,7 @@ snmp_set_test(struct obj_def *od, u16_t len, void *value)
   if (id == 30)
   {
     /* snmpEnableAuthenTraps */
-    s32_t *sint_ptr = value;
+    s32_t *sint_ptr = (s32_t*)value;
 
     if (snmpenableauthentraps_ptr != &snmpenableauthentraps_default)
     {
@@ -4150,7 +4152,7 @@ snmp_set_value(struct obj_def *od, u16_t len, void *value)
   {
     /* snmpEnableAuthenTraps */
     /* @todo @fixme: which kind of pointer is 'value'? s32_t or u8_t??? */
-    u8_t *ptr = value;
+    u8_t *ptr = (u8_t*)value;
     *snmpenableauthentraps_ptr = *ptr;
   }
 }

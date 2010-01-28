@@ -1175,7 +1175,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
         vb = snmp_varbind_alloc(&oid, type, sizeof(s32_t));
         if (vb != NULL)
         {
-          s32_t *vptr = vb->value;
+          s32_t *vptr = (s32_t*)vb->value;
 
           derr = snmp_asn1_dec_s32t(p, ofs + 1 + len_octets, len, vptr);
           snmp_varbind_tail_add(&m_stat->invb, vb);
@@ -1191,7 +1191,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
         vb = snmp_varbind_alloc(&oid, type, sizeof(u32_t));
         if (vb != NULL)
         {
-          u32_t *vptr = vb->value;
+          u32_t *vptr = (u32_t*)vb->value;
 
           derr = snmp_asn1_dec_u32t(p, ofs + 1 + len_octets, len, vptr);
           snmp_varbind_tail_add(&m_stat->invb, vb);
@@ -1207,7 +1207,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
         vb = snmp_varbind_alloc(&oid, type, (u8_t)len);
         if (vb != NULL)
         {
-          derr = snmp_asn1_dec_raw(p, ofs + 1 + len_octets, len, vb->value_len, vb->value);
+          derr = snmp_asn1_dec_raw(p, ofs + 1 + len_octets, len, vb->value_len, (u8_t*)vb->value);
           snmp_varbind_tail_add(&m_stat->invb, vb);
         }
         else
@@ -1235,7 +1235,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
           if (vb != NULL)
           {
             u8_t i = oid_value.len;
-            s32_t *vptr = vb->value;
+            s32_t *vptr = (s32_t*)vb->value;
 
             while(i > 0)
             {
@@ -1258,7 +1258,7 @@ snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_
           vb = snmp_varbind_alloc(&oid, type, 4);
           if (vb != NULL)
           {
-            derr = snmp_asn1_dec_raw(p, ofs + 1 + len_octets, len, vb->value_len, vb->value);
+            derr = snmp_asn1_dec_raw(p, ofs + 1 + len_octets, len, vb->value_len, (u8_t*)vb->value);
             snmp_varbind_tail_add(&m_stat->invb, vb);
           }
           else
