@@ -56,6 +56,8 @@ HISTORY
 
 
   ++ Bugfixes:
+  2010-01-28: Kieran Mansley
+  * tcp.c: Ensure ssthresh >= 2*MSS
 
   2010-01-27: Simon Goldschmidt
   * tcp.h, tcp.c, tcp_in.c: Fixed bug #27871: Calling tcp_abort() in recv

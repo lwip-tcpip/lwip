@@ -650,8 +650,8 @@ tcp_slowtmr(void)
           /* Reduce congestion window and ssthresh. */
           eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
           pcb->ssthresh = eff_wnd >> 1;
-          if (pcb->ssthresh < pcb->mss) {
-            pcb->ssthresh = pcb->mss * 2;
+          if (pcb->ssthresh < (pcb->mss << 1)) {
+            pcb->ssthresh = (pcb->mss << 1);
           }
           pcb->cwnd = pcb->mss;
           LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"U16_F
