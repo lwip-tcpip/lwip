@@ -206,7 +206,7 @@ err_t   netconn_close(struct netconn *conn);
 
 #if LWIP_IGMP
 err_t   netconn_join_leave_group(struct netconn *conn, struct ip_addr *multiaddr,
-                                 struct ip_addr *interface, enum netconn_igmp join_or_leave);
+                                 struct ip_addr *netif_addr, enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
 #if LWIP_DNS
 err_t   netconn_gethostbyname(const char *name, struct ip_addr *addr);

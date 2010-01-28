@@ -538,7 +538,7 @@ netconn_close(struct netconn *conn)
  *
  * @param conn the UDP netconn for which to change multicast addresses
  * @param multiaddr IP address of the multicast group to join or leave
- * @param interface the IP address of the network interface on which to send
+ * @param netif_addr the IP address of the network interface on which to send
  *                  the igmp message
  * @param join_or_leave flag whether to send a join- or leave-message
  * @return ERR_OK if the action was taken, any err_t on error
@@ -546,7 +546,7 @@ netconn_close(struct netconn *conn)
 err_t
 netconn_join_leave_group(struct netconn *conn,
                          struct ip_addr *multiaddr,
-                         struct ip_addr *interface,
+                         struct ip_addr *netif_addr,
                          enum netconn_igmp join_or_leave)
 {
   struct api_msg msg;
@@ -557,7 +557,7 @@ netconn_join_leave_group(struct netconn *conn,
   msg.function = do_join_leave_group;
   msg.msg.conn = conn;
   msg.msg.msg.jl.multiaddr = multiaddr;
-  msg.msg.msg.jl.interface = interface;
+  msg.msg.msg.jl.netif_addr = netif_addr;
   msg.msg.msg.jl.join_or_leave = join_or_leave;
   err = TCPIP_APIMSG(&msg);
 
