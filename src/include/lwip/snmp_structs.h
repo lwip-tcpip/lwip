@@ -115,9 +115,9 @@ struct mib_node
   /** sets object value, only to be called when set_test()  */
   void (*set_value)(struct obj_def *od, u16_t len, void *value);  
   /** One out of MIB_NODE_AR, MIB_NODE_LR or MIB_NODE_EX */
-  const u8_t node_type;
+  u8_t node_type;
   /* array or max list length */
-  const u16_t maxlength;
+  u16_t maxlength;
 };
 
 /** derived node for scalars .0 index */
@@ -128,13 +128,13 @@ typedef struct mib_node mib_scalar_node;
 struct mib_array_node
 {
   /* inherited "base class" members */
-  void (* const get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (* const get_value)(struct obj_def *od, u16_t len, void *value);
+  void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
+  void (*get_value)(struct obj_def *od, u16_t len, void *value);
   u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
   void (*set_value)(struct obj_def *od, u16_t len, void *value);
 
-  const u8_t node_type;
-  const u16_t maxlength;
+  u8_t node_type;
+  u16_t maxlength;
 
   /* aditional struct members */
   const s32_t *objid;
