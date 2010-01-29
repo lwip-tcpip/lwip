@@ -76,9 +76,9 @@
 /*
  * LCP-related command-line options.
  */
-int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
-int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
-bool	lax_recv = 0;		/* accept control chars in asyncmap */
+int lcp_echo_interval = 0;  /* Interval between LCP echo-requests */
+int lcp_echo_fails = 0;     /* Tolerance to unanswered echo-requests */
+bool  lax_recv = 0;         /* accept control chars in asyncmap */
 
 static int setescape (char **);
 
@@ -215,20 +215,19 @@ setescape(argv)
     p = *argv;
     ret = 1;
     while (*p) {
-	n = strtol(p, &endp, 16);
-	if (p == endp) {
-	    option_error("escape parameter contains invalid hex number '%s'",
-			 p);
-	    return 0;
-	}
-	p = endp;
-	if (n < 0 || n == 0x5E || n > 0xFF) {
-	    option_error("can't escape character 0x%x", n);
-	    ret = 0;
-	} else
-	    xmit_accm[0][n >> 5] |= 1 << (n & 0x1F);
-	while (*p == ',' || *p == ' ')
-	    ++p;
+      n = strtol(p, &endp, 16);
+      if (p == endp) {
+        option_error("escape parameter contains invalid hex number '%s'", p);
+        return 0;
+      }
+      p = endp;
+      if (n < 0 || n == 0x5E || n > 0xFF) {
+        option_error("can't escape character 0x%x", n);
+        ret = 0;
+      } else
+        xmit_accm[0][n >> 5] |= 1 << (n & 0x1F);
+      while (*p == ',' || *p == ' ')
+        ++p;
     }
     return ret;
 }
@@ -1708,7 +1707,7 @@ lcp_down(fsm *f)
 static void
 lcp_starting(fsm *f)
 {
-  link_required(f->unit);	/* lwip: currently does nothing */
+  link_required(f->unit); /* lwip: currently does nothing */
 }
 
 

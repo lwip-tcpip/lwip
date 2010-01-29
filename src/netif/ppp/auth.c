@@ -88,10 +88,10 @@
 
 #if 0 /* UNUSED */
 /* Bits in scan_authfile return value */
-#define NONWILD_SERVER	1
-#define NONWILD_CLIENT	2
+#define NONWILD_SERVER  1
+#define NONWILD_CLIENT  2
 
-#define ISWILD(word)	(word[0] == '*' && word[1] == 0)
+#define ISWILD(word)  (word[0] == '*' && word[1] == 0)
 #endif /* UNUSED */
 
 #if PAP_SUPPORT || CHAP_SUPPORT
@@ -143,8 +143,8 @@ int (*pap_check_hook) __P((void)) = NULL;
 
 /* Hook for a plugin to check the PAP user and password */
 int (*pap_auth_hook) __P((char *user, char *passwd, char **msgp,
-			  struct wordlist **paddrs,
-			  struct wordlist **popts)) = NULL;
+        struct wordlist **paddrs,
+        struct wordlist **popts)) = NULL;
 
 /* Hook for a plugin to know about the PAP user logout */
 void (*pap_logout_hook) __P((void)) = NULL;
@@ -169,15 +169,15 @@ static pid_t auth_script_pid = 0;
  * Option variables.
  * lwip: some of these are present in the ppp_settings structure
  */
-bool uselogin = 0;		/* Use /etc/passwd for checking PAP */
-bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
-bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
-bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
-bool usehostname = 0;		/* Use hostname for our_name */
-bool auth_required = 0;		/* Always require authentication from peer */
-bool allow_any_ip = 0;		/* Allow peer to use any IP address */
-bool explicit_remote = 0;	/* User specified explicit remote name */
-char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
+bool uselogin = 0;            /* Use /etc/passwd for checking PAP */
+bool cryptpap = 0;            /* Passwords in pap-secrets are encrypted */
+bool refuse_pap = 0;          /* Don't wanna auth. ourselves with PAP */
+bool refuse_chap = 0;         /* Don't wanna auth. ourselves with CHAP */
+bool usehostname = 0;         /* Use hostname for our_name */
+bool auth_required = 0;       /* Always require authentication from peer */
+bool allow_any_ip = 0;        /* Allow peer to use any IP address */
+bool explicit_remote = 0;     /* User specified explicit remote name */
+char remote_name[MAXNAMELEN]; /* Peer's name for authentication */
 
 #endif /* UNUSED */
 
@@ -214,8 +214,8 @@ static int  ip_addr_check (u32_t, struct wordlist *);
 
 #if 0 /* PAP_SUPPORT || CHAP_SUPPORT */
 static int  scan_authfile (FILE *, char *, char *, char *,
-			       struct wordlist **, struct wordlist **,
-			       char *);
+             struct wordlist **, struct wordlist **,
+             char *);
 static void free_wordlist (struct wordlist *);
 static void auth_script (char *);
 static void auth_script_done (void *);
@@ -296,26 +296,26 @@ setupapfile(char **argv)
     ufile = fopen(*argv, "r");
     seteuid(0);
     if (ufile == NULL) {
-	option_error("unable to open user login data file %s", *argv);
-	return 0;
+      option_error("unable to open user login data file %s", *argv);
+      return 0;
     }
     check_access(ufile, *argv);
 
     /* get username */
     if (fgets(user, MAXNAMELEN - 1, ufile) == NULL
-	|| fgets(passwd, MAXSECRETLEN - 1, ufile) == NULL){
-	option_error("unable to read user login data file %s", *argv);
-	return 0;
+        || fgets(passwd, MAXSECRETLEN - 1, ufile) == NULL){
+      option_error("unable to read user login data file %s", *argv);
+      return 0;
     }
     fclose(ufile);
 
     /* get rid of newlines */
     l = strlen(user);
     if (l > 0 && user[l-1] == '\n')
-	user[l-1] = 0;
+      user[l-1] = 0;
     l = strlen(passwd);
     if (l > 0 && passwd[l-1] == '\n')
-	passwd[l-1] = 0;
+      passwd[l-1] = 0;
 
     return (1);
 }
@@ -333,14 +333,14 @@ privgroup(char **argv)
 
     g = getgrnam(*argv);
     if (g == 0) {
-	option_error("group %s is unknown", *argv);
-	return 0;
+      option_error("group %s is unknown", *argv);
+      return 0;
     }
     for (i = 0; i < ngroups; ++i) {
-	if (groups[i] == g->gr_gid) {
-	    privileged = 1;
-	    break;
-	}
+      if (groups[i] == g->gr_gid) {
+        privileged = 1;
+        break;
+      }
     }
     return 1;
 }
@@ -360,7 +360,7 @@ set_noauth_addr(char **argv)
 
     wp = (struct wordlist *) malloc(sizeof(struct wordlist) + l + 1);
     if (wp == NULL)
-	novm("allow-ip argument");
+      novm("allow-ip argument");
     wp->word = (char *) (wp + 1);
     wp->next = noauth_addrs;
     BCOPY(addr, wp->word, l);
@@ -426,8 +426,8 @@ link_down(int unit)
       (*protp->close)(unit, "LCP down");
     }
   }
-  num_np_open = 0;	/* number of network protocols we have opened */
-  num_np_up = 0;	/* Number of network protocols which have come up */
+  num_np_open = 0;  /* number of network protocols we have opened */
+  num_np_up = 0;    /* Number of network protocols which have come up */
 
   if (lcp_phase[unit] != PHASE_DEAD) {
     lcp_phase[unit] = PHASE_TERMINATE;
@@ -1223,10 +1223,10 @@ static int
 some_ip_ok(struct wordlist *addrs)
 {
     for (; addrs != 0; addrs = addrs->next) {
-	if (addrs->word[0] == '-')
-	    break;
-	if (addrs->word[0] != '!')
-	    return 1;		/* some IP address is allowed */
+      if (addrs->word[0] == '-')
+        break;
+      if (addrs->word[0] != '!')
+        return 1; /* some IP address is allowed */
     }
     return 0;
 }
@@ -1240,10 +1240,10 @@ check_access(FILE *f, char *filename)
     struct stat sbuf;
 
     if (fstat(fileno(f), &sbuf) < 0) {
-	warn("cannot stat secret file %s: %m", filename);
+      warn("cannot stat secret file %s: %m", filename);
     } else if ((sbuf.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-	warn("Warning - secret file %s has world and/or group access",
-	     filename);
+      warn("Warning - secret file %s has world and/or group access",
+            filename);
     }
 }
 
@@ -1264,7 +1264,7 @@ static int
 scan_authfile(FILE *f, char *client, char *server, char *secret, struct wordlist **addrs, struct wordlist **opts, char *filename)
 {
   /* We do not (currently) need this in lwip  */
-  return 0;	/* dummy */
+  return 0; /* dummy */
 }
 /*
  * free_wordlist - release memory allocated for a wordlist.
@@ -1291,17 +1291,17 @@ auth_script_done(void *arg)
     auth_script_pid = 0;
     switch (auth_script_state) {
     case s_up:
-	if (auth_state == s_down) {
-	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN);
-	}
-	break;
+      if (auth_state == s_down) {
+        auth_script_state = s_down;
+        auth_script(_PATH_AUTHDOWN);
+      }
+      break;
     case s_down:
-	if (auth_state == s_up) {
-	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP);
-	}
-	break;
+      if (auth_state == s_up) {
+        auth_script_state = s_up;
+        auth_script(_PATH_AUTHUP);
+      }
+      break;
     }
 }
 
@@ -1319,10 +1319,10 @@ auth_script(char *script)
     char *argv[8];
 
     if ((pw = getpwuid(getuid())) != NULL && pw->pw_name != NULL)
-	user_name = pw->pw_name;
+      user_name = pw->pw_name;
     else {
-	slprintf(struid, sizeof(struid), "%d", getuid());
-	user_name = struid;
+      slprintf(struid, sizeof(struid), "%d", getuid());
+      user_name = struid;
     }
     slprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
 
