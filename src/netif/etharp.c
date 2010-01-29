@@ -47,7 +47,8 @@
 
 #if LWIP_ARP || LWIP_ETHERNET
 
-#include "lwip/inet.h"
+#include "lwip/ip_addr.h"
+#include "lwip/def.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"

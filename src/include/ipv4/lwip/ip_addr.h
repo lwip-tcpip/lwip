@@ -33,8 +33,7 @@
 #define __LWIP_IP_ADDR_H__
 
 #include "lwip/opt.h"
-
-#include "lwip/inet.h"
+#include "lwip/def.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -79,38 +78,47 @@ extern const struct ip_addr ip_addr_broadcast;
 #define IP_ADDR_ANY         ((struct ip_addr *)&ip_addr_any)
 #define IP_ADDR_BROADCAST   ((struct ip_addr *)&ip_addr_broadcast)
 
+/** 255.255.255.255 */
+#define IPADDR_NONE         ((u32_t)0xffffffffUL)
+/** 127.0.0.1 */
+#define IPADDR_LOOPBACK     ((u32_t)0x7f000001UL)
+/** 0.0.0.0 */
+#define IPADDR_ANY          ((u32_t)0x00000000UL)
+/** 255.255.255.255 */
+#define IPADDR_BROADCAST    ((u32_t)0xffffffffUL)
+
 /* Definitions of the bits in an Internet address integer.
 
    On subnets, host and network parts are found according to
    the subnet mask, not these masks.  */
+#define IP_CLASSA(a)        ((((u32_t)(a)) & 0x80000000UL) == 0)
+#define IP_CLASSA_NET       0xff000000
+#define IP_CLASSA_NSHIFT    24
+#define IP_CLASSA_HOST      (0xffffffff & ~IP_CLASSA_NET)
+#define IP_CLASSA_MAX       128
 
-#define IN_CLASSA(a)        ((((u32_t)(a)) & 0x80000000UL) == 0)
-#define IN_CLASSA_NET       0xff000000
-#define IN_CLASSA_NSHIFT    24
-#define IN_CLASSA_HOST      (0xffffffff & ~IN_CLASSA_NET)
-#define IN_CLASSA_MAX       128
+#define IP_CLASSB(a)        ((((u32_t)(a)) & 0xc0000000UL) == 0x80000000UL)
+#define IP_CLASSB_NET       0xffff0000
+#define IP_CLASSB_NSHIFT    16
+#define IP_CLASSB_HOST      (0xffffffff & ~IP_CLASSB_NET)
+#define IP_CLASSB_MAX       65536
 
-#define IN_CLASSB(a)        ((((u32_t)(a)) & 0xc0000000UL) == 0x80000000UL)
-#define IN_CLASSB_NET       0xffff0000
-#define IN_CLASSB_NSHIFT    16
-#define IN_CLASSB_HOST      (0xffffffff & ~IN_CLASSB_NET)
-#define IN_CLASSB_MAX       65536
+#define IP_CLASSC(a)        ((((u32_t)(a)) & 0xe0000000UL) == 0xc0000000UL)
+#define IP_CLASSC_NET       0xffffff00
+#define IP_CLASSC_NSHIFT    8
+#define IP_CLASSC_HOST      (0xffffffff & ~IP_CLASSC_NET)
 
-#define IN_CLASSC(a)        ((((u32_t)(a)) & 0xe0000000UL) == 0xc0000000UL)
-#define IN_CLASSC_NET       0xffffff00
-#define IN_CLASSC_NSHIFT    8
-#define IN_CLASSC_HOST      (0xffffffff & ~IN_CLASSC_NET)
+#define IP_CLASSD(a)        (((u32_t)(a) & 0xf0000000UL) == 0xe0000000UL)
+#define IP_CLASSD_NET       0xf0000000          /* These ones aren't really */
+#define IP_CLASSD_NSHIFT    28                  /*   net and host fields, but */
+#define IP_CLASSD_HOST      0x0fffffff          /*   routing needn't know. */
+#define IP_MULTICAST(a)     IP_CLASSD(a)
 
-#define IN_CLASSD(a)        (((u32_t)(a) & 0xf0000000UL) == 0xe0000000UL)
-#define IN_CLASSD_NET       0xf0000000          /* These ones aren't really */
-#define IN_CLASSD_NSHIFT    28                  /*   net and host fields, but */
-#define IN_CLASSD_HOST      0x0fffffff          /*   routing needn't know. */
-#define IN_MULTICAST(a)     IN_CLASSD(a)
+#define IP_EXPERIMENTAL(a)  (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
+#define IP_BADCLASS(a)      (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
 
-#define IN_EXPERIMENTAL(a)  (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
-#define IN_BADCLASS(a)      (((u32_t)(a) & 0xf0000000UL) == 0xf0000000UL)
+#define IP_LOOPBACKNET      127                 /* official! */
 
-#define IN_LOOPBACKNET      127                 /* official! */
 
 #define IP4_ADDR(ipaddr, a,b,c,d) \
         (ipaddr)->addr = htonl(((u32_t)((a) & 0xff) << 24) | \
@@ -161,10 +169,13 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip4_addr3(ipaddr) ((u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff)
 #define ip4_addr4(ipaddr) ((u16_t)(ntohl((ipaddr)->addr)) & 0xff)
 
-/**
- * Same as inet_ntoa() but takes a struct ip_addr*
- */
-#define ip_ntoa(addr)  ((addr != NULL) ? inet_ntoa(*((struct in_addr*)(addr))) : "NULL")
+/** For backwards compatibility */
+#define ip_ntoa(addr)  ipaddr_ntoa(addr)
+
+u32_t ipaddr_addr(const char *cp);
+int ipaddr_aton(const char *cp, struct ip_addr *addr);
+/** returns ptr to static buffer; not reentrant! */
+char *ipaddr_ntoa(struct ip_addr *addr);
 
 #ifdef __cplusplus
 }

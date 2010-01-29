@@ -1249,12 +1249,12 @@ GetMask(u32_t addr)
   u32_t mask, nmask;
 
   htonl(addr);
-  if (IN_CLASSA(addr)) { /* determine network mask for address class */
-    nmask = IN_CLASSA_NET;
-  } else if (IN_CLASSB(addr)) {
-    nmask = IN_CLASSB_NET;
+  if (IP_CLASSA(addr)) { /* determine network mask for address class */
+    nmask = IP_CLASSA_NET;
+  } else if (IP_CLASSB(addr)) {
+    nmask = IP_CLASSB_NET;
   } else { 
-    nmask = IN_CLASSC_NET;
+    nmask = IP_CLASSC_NET;
   }
 
   /* class D nets are disallowed by bad_ip_adrs */

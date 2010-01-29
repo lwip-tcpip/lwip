@@ -63,6 +63,8 @@
 #include "vj.h"
 #include "ipcp.h"
 
+#include "lwip/inet.h"
+
 #include <string.h>
 
 /* #define OLD_CI_ADDRS 1 */ /* Support deprecated address negotiation. */
@@ -165,8 +167,6 @@ static void ipcp_clear_addrs (int);
 #define CODENAME(x) ((x) == CONFACK ? "ACK" : \
                      (x) == CONFNAK ? "NAK" : "REJ")
 
-
-#define inet_ntoa(addr) ip_ntoa(((struct ip_addr*)&(addr)))
 
 /*
  * ipcp_init - Initialize IPCP.

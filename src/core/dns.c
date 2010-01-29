@@ -84,7 +84,7 @@
 
 /** DNS server IP address */
 #ifndef DNS_SERVER_ADDRESS
-#define DNS_SERVER_ADDRESS        inet_addr("208.67.222.222") /* resolver1.opendns.com */
+#define DNS_SERVER_ADDRESS        ipaddr_addr("208.67.222.222") /* resolver1.opendns.com */
 #endif
 
 /** DNS server port address */
@@ -361,7 +361,7 @@ dns_init_local()
  *
  * @param hostname Hostname to look for in the local host-list
  * @return The first IP address for the hostname in the local host-list or
- *         INADDR_NONE if not found.
+ *         IPADDR_NONE if not found.
  */
 static u32_t
 dns_lookup_local(const char *hostname)
@@ -382,7 +382,7 @@ dns_lookup_local(const char *hostname)
     }
   }
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
-  return INADDR_NONE;
+  return IPADDR_NONE;
 }
 
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
@@ -461,7 +461,7 @@ dns_local_addhost(const char *hostname, const struct ip_addr *addr)
  *
  * @param name the hostname to look up
  * @return the hostname's IP address, as u32_t (instead of struct ip_addr to
- *         better check for failure: != INADDR_NONE) or INADDR_NONE if the hostname
+ *         better check for failure: != IPADDR_NONE) or IPADDR_NONE if the hostname
  *         was not found in the cached dns_table.
  */
 static u32_t
@@ -472,12 +472,12 @@ dns_lookup(const char *name)
   u32_t addr;
 #endif /* DNS_LOCAL_HOSTLIST || defined(DNS_LOOKUP_LOCAL_EXTERN) */
 #if DNS_LOCAL_HOSTLIST
-  if ((addr = dns_lookup_local(name)) != INADDR_NONE) {
+  if ((addr = dns_lookup_local(name)) != IPADDR_NONE) {
     return addr;
   }
 #endif /* DNS_LOCAL_HOSTLIST */
 #ifdef DNS_LOOKUP_LOCAL_EXTERN
-  if((addr = DNS_LOOKUP_LOCAL_EXTERN(name)) != INADDR_NONE) {
+  if((addr = DNS_LOOKUP_LOCAL_EXTERN(name)) != IPADDR_NONE) {
     return addr;
   }
 #endif /* DNS_LOOKUP_LOCAL_EXTERN */
@@ -493,7 +493,7 @@ dns_lookup(const char *name)
     }
   }
 
-  return INADDR_NONE;
+  return IPADDR_NONE;
 }
 
 #if DNS_DOES_NAME_CHECK
@@ -971,15 +971,15 @@ dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback
 
 #if LWIP_HAVE_LOOPIF
   if (strcmp(hostname,"localhost")==0) {
-    addr->addr = htonl(INADDR_LOOPBACK);
+    addr->addr = htonl(IPADDR_LOOPBACK);
     return ERR_OK;
   }
 #endif /* LWIP_HAVE_LOOPIF */
 
   /* host name already in octet notation? set ip addr and return ERR_OK
    * already have this address cached? */
-  if (((addr->addr = inet_addr(hostname)) != INADDR_NONE) ||
-      ((addr->addr = dns_lookup(hostname)) != INADDR_NONE)) {
+  if (((addr->addr = ipaddr_addr(hostname)) != IPADDR_NONE) ||
+      ((addr->addr = dns_lookup(hostname)) != IPADDR_NONE)) {
     return ERR_OK;
   }
 

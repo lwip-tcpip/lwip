@@ -40,7 +40,7 @@
 
 #include "lwip/ip_addr.h"
 
-#include "lwip/inet.h"
+#include "lwip/def.h"
 #include "lwip/pbuf.h"
 #if LWIP_DHCP
 struct dhcp;

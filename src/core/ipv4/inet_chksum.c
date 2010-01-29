@@ -39,7 +39,7 @@
 #include "lwip/opt.h"
 
 #include "lwip/inet_chksum.h"
-#include "lwip/inet.h"
+#include "lwip/def.h"
 
 #include <stddef.h>
 

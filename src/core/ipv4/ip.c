@@ -43,7 +43,6 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/ip_frag.h"
-#include "lwip/inet.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"

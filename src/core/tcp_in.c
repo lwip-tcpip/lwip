@@ -51,7 +51,6 @@
 #include "lwip/netif.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
-#include "lwip/inet.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"

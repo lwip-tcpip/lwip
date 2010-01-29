@@ -82,6 +82,8 @@
 #include "cbcp.h"
 #endif /* CBCP_SUPPORT */
 
+#include "lwip/inet.h"
+
 #include <string.h>
 
 #if 0 /* UNUSED */

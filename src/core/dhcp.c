@@ -77,7 +77,7 @@
 #include "lwip/udp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
-#include "lwip/inet.h"
+#include "lwip/def.h"
 #include "lwip/sys.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"

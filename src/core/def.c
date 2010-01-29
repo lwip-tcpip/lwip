@@ -1,6 +1,6 @@
 /**
  * @file
- * Functions common to all TCP/IPv4 modules, such as the byte order functions.
+ * Common functions used throughout the stack.
  *
  */
 
@@ -32,11 +32,77 @@
  *
  * This file is part of the lwIP TCP/IP stack.
  *
- * Author: Adam Dunkels <adam@sics.se>
+ * Author: Simon Goldschmidt
  *
  */
 
 #include "lwip/opt.h"
+#include "lwip/def.h"
 
-#include "lwip/inet.h"
+/**
+ * These are reference implementations of the byte swapping functions.
+ * Again with the aim of being simple, correct and fully portable.
+ * Byte swapping is the second thing you would want to optimize. You will
+ * need to port it to your architecture and in your cc.h:
+ * 
+ * #define LWIP_PLATFORM_BYTESWAP 1
+ * #define LWIP_PLATFORM_HTONS(x) <your_htons>
+ * #define LWIP_PLATFORM_HTONL(x) <your_htonl>
+ *
+ * Note ntohs() and ntohl() are merely references to the htonx counterparts.
+ */
 
+#if (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN)
+
+/**
+ * Convert an u16_t from host- to network byte order.
+ *
+ * @param n u16_t in host byte order
+ * @return n in network byte order
+ */
+u16_t
+htons(u16_t n)
+{
+  return ((n & 0xff) << 8) | ((n & 0xff00) >> 8);
+}
+
+/**
+ * Convert an u16_t from network- to host byte order.
+ *
+ * @param n u16_t in network byte order
+ * @return n in host byte order
+ */
+u16_t
+ntohs(u16_t n)
+{
+  return htons(n);
+}
+
+/**
+ * Convert an u32_t from host- to network byte order.
+ *
+ * @param n u32_t in host byte order
+ * @return n in network byte order
+ */
+u32_t
+htonl(u32_t n)
+{
+  return ((n & 0xff) << 24) |
+    ((n & 0xff00) << 8) |
+    ((n & 0xff0000UL) >> 8) |
+    ((n & 0xff000000UL) >> 24);
+}
+
+/**
+ * Convert an u32_t from network- to host byte order.
+ *
+ * @param n u32_t in network byte order
+ * @return n in host byte order
+ */
+u32_t
+ntohl(u32_t n)
+{
+  return htonl(n);
+}
+
+#endif /* (LWIP_PLATFORM_BYTESWAP == 0) && (BYTE_ORDER == LITTLE_ENDIAN) */

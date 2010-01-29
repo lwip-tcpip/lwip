@@ -56,6 +56,14 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2010-01-29: Simon Goldschmidt
+  * ip_addr.h, inet.h, def.h, inet.c, def.c, more: Cleanly separate the
+    portability file inet.h and its contents from the stack: moved htonX-
+    functions to def.h (and the new def.c - they are not ipv4 dependent),
+    let inet.h depend on ip_addr.h and not the other way round.
+    This fixes bug #28732.
+
   2010-01-28: Kieran Mansley
   * tcp.c: Ensure ssthresh >= 2*MSS
 

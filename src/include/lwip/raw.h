@@ -37,7 +37,7 @@
 #if LWIP_RAW /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
-#include "lwip/inet.h"
+#include "lwip/def.h"
 #include "lwip/ip.h"
 #include "lwip/ip_addr.h"
 

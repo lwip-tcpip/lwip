@@ -296,7 +296,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     }
   } else {
     /* service location specified, use loopback address */
-    addr.addr = htonl(INADDR_LOOPBACK);
+    addr.addr = htonl(IPADDR_LOOPBACK);
   }
 
   total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);

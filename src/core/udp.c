@@ -53,7 +53,6 @@
 #include "lwip/udp.h"
 #include "lwip/def.h"
 #include "lwip/memp.h"
-#include "lwip/inet.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
