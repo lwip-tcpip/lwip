@@ -258,7 +258,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (!sock)
     return -1;
 
-  if ((sock->conn->non_blocking) && (sock->rcvevent <= 0)) {
+  if (netconn_is_nonblocking(sock->conn) && (sock->rcvevent <= 0)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
     sock_set_errno(sock, EWOULDBLOCK);
     return -1;
@@ -492,7 +492,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       buf = sock->lastdata;
     } else {
       /* If this is non-blocking call, then check first */
-      if (((flags & MSG_DONTWAIT) || (sock->conn->non_blocking)) && 
+      if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) && 
           (sock->rcvevent <= 0)) {
         if (off > 0) {
           /* already received data, return that */
@@ -1926,6 +1926,7 @@ lwip_ioctl(int s, long cmd, void *argp)
   struct lwip_socket *sock = get_socket(s);
   u16_t buflen = 0;
   s16_t recv_avail;
+  u8_t val;
 
   if (!sock)
     return -1;
@@ -1955,11 +1956,12 @@ lwip_ioctl(int s, long cmd, void *argp)
     return 0;
 
   case FIONBIO:
-    if (argp && *(u32_t*)argp)
-      sock->conn->non_blocking = 1;
-    else
-      sock->conn->non_blocking = 0;
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONBIO, %d)\n", s, sock->conn->non_blocking));
+    val = 0;
+    if (argp && *(u32_t*)argp) {
+      val = 1;
+    }
+    netconn_set_nonblocking(sock->conn, val);
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONBIO, %d)\n", s, val));
     sock_set_errno(sock, 0);
     return 0;
 

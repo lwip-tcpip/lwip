@@ -221,8 +221,13 @@ err_t   netconn_join_leave_group(struct netconn *conn, struct ip_addr *multiaddr
 err_t   netconn_gethostbyname(const char *name, struct ip_addr *addr);
 #endif /* LWIP_DNS */
 
-#define netconn_err(conn)          ((conn)->last_err)
-#define netconn_recv_bufsize(conn) ((conn)->recv_bufsize)
+#define netconn_err(conn)               ((conn)->last_err)
+#define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
+
+/** Set the blocking status of netconn calls (@todo: write/send is missing) */
+#define netconn_set_nonblocking(conn, val)  ((conn)->non_blocking = (val))
+/** Get the blocking status of netconn calls (@todo: write/send is missing) */
+#define netconn_is_nonblocking(conn)        ((conn)->non_blocking)
 
 #ifdef __cplusplus
 }
