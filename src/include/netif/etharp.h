@@ -72,6 +72,7 @@ PACK_STRUCT_END
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
+/** Ethernet header */
 struct eth_hdr {
 #if ETH_PAD_SIZE
   PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
@@ -93,6 +94,9 @@ PACK_STRUCT_END
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
+/** VLAN header inserted between ethernet header and payload
+ * if 'type' in ethernet header is ETHTYPE_VLAN.
+ * See IEEE802.Q */
 struct eth_vlan_hdr {
   PACK_STRUCT_FIELD(u16_t tpid);
   PACK_STRUCT_FIELD(u16_t prio_vid);
@@ -111,7 +115,7 @@ PACK_STRUCT_END
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-/** the ARP message */
+/** the ARP message, see RFC 826 ("Packet format") */
 struct etharp_hdr {
   PACK_STRUCT_FIELD(u16_t hwtype);
   PACK_STRUCT_FIELD(u16_t proto);
