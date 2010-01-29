@@ -330,7 +330,7 @@ err_tcp(void *arg, err_t err)
 
   conn->pcb.tcp = NULL;
 
-  /* no check since this is always fatal */
+  /* no check since this is always fatal! */
   SYS_ARCH_PROTECT(lev);
   conn->last_err = err;
   SYS_ARCH_UNPROTECT(lev);
@@ -339,18 +339,25 @@ err_tcp(void *arg, err_t err)
   old_state = conn->state;
   conn->state = NETCONN_NONE;
 
+  /* Notify the user layer about a connection error. Used to signal
+     select. */
+  API_EVENT(conn, NETCONN_EVT_ERROR, 0);
+  /* Try to release selects pending on 'read' or 'write', too.
+     They will get an error if they actually try to read or write. */
+  API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
+  API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
+
+  /* pass NULL-message to recvmbox to wake up pending recv */
   if (conn->recvmbox != SYS_MBOX_NULL) {
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-    /* use trypot to preven deadlock */
+    /* use trypost to prevent deadlock */
     sys_mbox_trypost(conn->recvmbox, NULL);
   }
+  /* pass NULL-message to acceptmbox to wake up pending accept */
   if (conn->acceptmbox != SYS_MBOX_NULL) {
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-    /* use trypot to preven deadlock */
+    /* use trypost to preven deadlock */
     sys_mbox_trypost(conn->acceptmbox, NULL);
   }
+
   if ((old_state == NETCONN_WRITE) || (old_state == NETCONN_CLOSE) ||
       (old_state == NETCONN_CONNECT)) {
     /* calling do_writemore/do_close_internal is not necessary
@@ -721,8 +728,9 @@ do_close_internal(struct netconn *conn)
     conn->state = NETCONN_NONE;
     /* Set back some callback pointers as conn is going away */
     conn->pcb.tcp = NULL;
-    /* @todo: this lets select make the socket readable and writable,
-       which is wrong! errfd instead? */
+    /* Trigger select() in socket layer. Make sure everybody notices activity
+       on the connection, error first! */
+    API_EVENT(conn, NETCONN_EVT_ERROR, 0);
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
     API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
     /* wake up the application task */

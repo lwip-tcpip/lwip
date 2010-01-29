@@ -70,6 +70,8 @@ struct lwip_socket {
   /** number of times data was ACKed (free send buffer), set by event_callback(),
       tested by select */
   u16_t sendevent;
+  /** error happened for this socket, set by event_callback(), tested by select */
+  u16_t errevent; 
   /** last error that occurred on this socket */
   int err;
 };
@@ -227,6 +229,7 @@ alloc_socket(struct netconn *newconn)
       sockets[i].rcvevent   = 0;
       /* TCP sendbuf is empty, but not connected yet, so not yet writable */
       sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? 0 : 1);
+      sockets[i].errevent   = 0;
       sockets[i].err        = 0;
       sys_sem_signal(socksem);
       return i;
@@ -872,10 +875,19 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
         nready++;
       }
     }
+    if (FD_ISSET(i, exceptset)) {
+      /* See if netconn of this socket had an error */
+      p_sock = get_socket(i);
+      if (p_sock && p_sock->errevent) {
+        FD_SET(i, &lexceptset);
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for exception\n", i));
+        nready++;
+      }
+    }
   }
   *readset = lreadset;
   *writeset = lwriteset;
-  FD_ZERO(exceptset);
+  *exceptset = lexceptset;
   
   return nready;
 }
@@ -1087,6 +1099,9 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     case NETCONN_EVT_SENDMINUS:
       sock->sendevent = 0;
       break;
+    case NETCONN_EVT_ERROR:
+      sock->errevent = 1;
+      break;
     default:
       LWIP_ASSERT("unknown event", 0);
       break;
@@ -1110,6 +1125,9 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
             break;
         if (scb->writeset && FD_ISSET(s, scb->writeset))
           if (sock->sendevent)
+            break;
+        if (scb->exceptset && FD_ISSET(s, scb->exceptset))
+          if (sock->errevent != 0)
             break;
       }
     }

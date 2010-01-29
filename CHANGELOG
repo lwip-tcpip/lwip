@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2010-01-29: Simon Goldschmidt (patch by Laura Garrett)
+  * api.h, api_msg.c, sockets.c: Added except set support in select
+    (patch #6860)
+
+  2010-01-29: Simon Goldschmidt (patch by Laura Garrett)
   * api.h, sockets.h, err.h, api_lib.c, api_msg.c, sockets.c, err.c:
     Add non-blocking support for connect (partly from patch #6860),
     plus many cleanups in socket & netconn API.
