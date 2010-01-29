@@ -111,7 +111,6 @@ netconn_delete(struct netconn *conn)
   msg.msg.conn = conn;
   tcpip_apimsg(&msg);
 
-  conn->pcb.tcp = NULL;
   netconn_free(conn);
 
   /* don't care for return value of do_delconn since it only calls void functions */
@@ -493,6 +492,9 @@ netconn_write(struct netconn *conn, const void *dataptr, size_t size, u8_t apifl
 
   LWIP_ERROR("netconn_write: invalid conn",  (conn != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_write: invalid conn->type",  (conn->type == NETCONN_TCP), return ERR_VAL;);
+  if (size == 0) {
+    return ERR_OK;
+  }
 
   msg.function = do_write;
   msg.msg.conn = conn;

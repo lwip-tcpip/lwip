@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2010-01-29: Simon Goldschmidt (patch by Laura Garrett)
+  * api.h, sockets.h, err.h, api_lib.c, api_msg.c, sockets.c, err.c:
+    Add non-blocking support for connect (partly from patch #6860),
+    plus many cleanups in socket & netconn API.
+
   2010-01-27: Simon Goldschmidt
   * opt.h, tcp.h, init.c, api_msg.c: Added TCP_SNDQUEUELOWAT corresponding
     to TCP_SNDLOWAT and added tcp_sndqueuelen() - this fixes bug #28605

@@ -61,6 +61,7 @@ extern "C" {
 #define NETCONNTYPE_GROUP(t)    (t&0xF0)
 #define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
 
+/** Protocol family and type of the netconn */
 enum netconn_type {
   NETCONN_INVALID    = 0,
   /* NETCONN_TCP Group */
@@ -73,6 +74,8 @@ enum netconn_type {
   NETCONN_RAW        = 0x40
 };
 
+/** Current state of the netconn. Non-TCP netconns are always
+ * in state NETCONN_NONE! */
 enum netconn_state {
   NETCONN_NONE,
   NETCONN_WRITE,
@@ -81,6 +84,7 @@ enum netconn_state {
   NETCONN_CLOSE
 };
 
+/** Use to inform the callback function about changes */
 enum netconn_evt {
   NETCONN_EVT_RCVPLUS,
   NETCONN_EVT_RCVMINUS,
@@ -89,6 +93,7 @@ enum netconn_evt {
 };
 
 #if LWIP_IGMP
+/** Used for netconn_join_leave_group() */
 enum netconn_igmp {
   NETCONN_JOIN,
   NETCONN_LEAVE
@@ -152,10 +157,14 @@ struct netconn {
 #if LWIP_TCPIP_CORE_LOCKING
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores whether to wake up the original application task
-      if data couldn't be sent in the first try. */
+      if data couldn't be sent in the first try. @todo: combine in 'flags' */
   u8_t write_delayed;
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_TCP */
+  /** Should this netconn avoid blocking? @todo: combine in 'flags' */
+  u8_t non_blocking;
+  /** Was the last connect action a non-blocking one? @todo: combine in 'flags' */
+  u8_t in_non_blocking_connect;
   /** A callback function that is informed about events for this netconn */
   netconn_callback callback;
 };

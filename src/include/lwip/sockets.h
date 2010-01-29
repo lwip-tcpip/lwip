@@ -262,10 +262,6 @@ typedef struct ip_mreq {
 #define SIOCATMARK  _IOR('s',  7, unsigned long)  /* at oob mark? */
 #endif
 
-/* Socket flags: */
-#ifndef O_NONBLOCK
-#define O_NONBLOCK    04000U
-#endif
 
 /* FD_SET used for lwip_select */
 #ifndef FD_SET

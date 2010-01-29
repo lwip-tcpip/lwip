@@ -54,24 +54,22 @@ typedef LWIP_ERR_T err_t;
 #define ERR_BUF        -2    /* Buffer error.            */
 #define ERR_TIMEOUT    -3    /* Timeout.                 */
 #define ERR_RTE        -4    /* Routing problem.         */
+#define ERR_INPROGRESS -5    /* Operation in progress    */
+#define ERR_VAL        -6    /* Illegal value.           */
 
-#define ERR_IS_FATAL(e) ((e) < ERR_RTE)
+#define ERR_IS_FATAL(e) ((e) < ERR_VAL)
 
-#define ERR_ABRT       -5    /* Connection aborted.      */
-#define ERR_RST        -6    /* Connection reset.        */
-#define ERR_CLSD       -7    /* Connection closed.       */
-#define ERR_CONN       -8    /* Not connected.           */
+#define ERR_ABRT       -7    /* Connection aborted.      */
+#define ERR_RST        -8    /* Connection reset.        */
+#define ERR_CLSD       -9    /* Connection closed.       */
+#define ERR_CONN       -10   /* Not connected.           */
 
-#define ERR_VAL        -9    /* Illegal value.           */
+#define ERR_ARG        -11   /* Illegal argument.        */
 
-#define ERR_ARG        -10   /* Illegal argument.        */
+#define ERR_USE        -12   /* Address in use.          */
 
-#define ERR_USE        -11   /* Address in use.          */
-
-#define ERR_IF         -12   /* Low-level netif error    */
-#define ERR_ISCONN     -13   /* Already connected.       */
-
-#define ERR_INPROGRESS -14   /* Operation in progress    */
+#define ERR_IF         -13   /* Low-level netif error    */
+#define ERR_ISCONN     -14   /* Already connected.       */
 
 
 #ifdef LWIP_DEBUG

@@ -67,11 +67,9 @@ struct lwip_socket {
   /** number of times data was received, set by event_callback(),
       tested by the receive and select functions */
   s16_t rcvevent;
-  /** number of times data was received, set by event_callback(),
+  /** number of times data was ACKed (free send buffer), set by event_callback(),
       tested by select */
   u16_t sendevent;
-  /** socket flags (currently, only used for O_NONBLOCK) */
-  u16_t flags;
   /** last error that occurred on this socket */
   int err;
 };
@@ -130,16 +128,16 @@ static const int err_to_errno_table[] = {
   ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
   ETIMEDOUT,     /* ERR_TIMEOUT    -3      Timeout                  */
   EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
-  ECONNABORTED,  /* ERR_ABRT       -5      Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -6      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD       -7      Connection closed.       */
-  ENOTCONN,      /* ERR_CONN       -8      Not connected.           */
-  EINVAL,        /* ERR_VAL        -9      Illegal value.           */
-  EIO,           /* ERR_ARG        -10     Illegal argument.        */
-  EADDRINUSE,    /* ERR_USE        -11     Address in use.          */
-  -1,            /* ERR_IF         -12     Low-level netif error    */
-  -1,            /* ERR_ISCONN     -13     Already connected.       */
-  EINPROGRESS    /* ERR_INPROGRESS -14     Operation in progress    */
+  EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
+  EINVAL,        /* ERR_VAL        -6      Illegal value.           */
+  ECONNABORTED,  /* ERR_ABRT       -7      Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -8      Connection reset.        */
+  ESHUTDOWN,     /* ERR_CLSD       -9      Connection closed.       */
+  ENOTCONN,      /* ERR_CONN       -10     Not connected.           */
+  EIO,           /* ERR_ARG        -11     Illegal argument.        */
+  EADDRINUSE,    /* ERR_USE        -12     Address in use.          */
+  -1,            /* ERR_IF         -13     Low-level netif error    */
+  -1,            /* ERR_ISCONN     -14     Already connected.       */
 };
 
 #define ERR_TO_ERRNO_TABLE_SIZE \
@@ -227,8 +225,8 @@ alloc_socket(struct netconn *newconn)
       sockets[i].lastdata   = NULL;
       sockets[i].lastoffset = 0;
       sockets[i].rcvevent   = 0;
-      sockets[i].sendevent  = 1; /* TCP send buf is empty */
-      sockets[i].flags      = 0;
+      /* TCP sendbuf is empty, but not connected yet, so not yet writable */
+      sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? 0 : 1);
       sockets[i].err        = 0;
       sys_sem_signal(socksem);
       return i;
@@ -260,7 +258,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   if (!sock)
     return -1;
 
-  if ((sock->flags & O_NONBLOCK) && (sock->rcvevent <= 0)) {
+  if ((sock->conn->non_blocking) && (sock->rcvevent <= 0)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): returning EWOULDBLOCK\n", s));
     sock_set_errno(sock, EWOULDBLOCK);
     return -1;
@@ -494,7 +492,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       buf = sock->lastdata;
     } else {
       /* If this is non-blocking call, then check first */
-      if (((flags & MSG_DONTWAIT) || (sock->flags & O_NONBLOCK)) && 
+      if (((flags & MSG_DONTWAIT) || (sock->conn->non_blocking)) && 
           (sock->rcvevent <= 0)) {
         if (off > 0) {
           /* already received data, return that */
@@ -1958,10 +1956,10 @@ lwip_ioctl(int s, long cmd, void *argp)
 
   case FIONBIO:
     if (argp && *(u32_t*)argp)
-      sock->flags |= O_NONBLOCK;
+      sock->conn->non_blocking = 1;
     else
-      sock->flags &= ~O_NONBLOCK;
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONBIO, %d)\n", s, !!(sock->flags & O_NONBLOCK)));
+      sock->conn->non_blocking = 0;
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONBIO, %d)\n", s, sock->conn->non_blocking));
     sock_set_errno(sock, 0);
     return 0;
 
