@@ -239,6 +239,29 @@ alloc_socket(struct netconn *newconn)
   return -1;
 }
 
+/** Free a socket. The socket's netbuf must have been
+ * delete before!
+ *
+ * @param sock the socket to free
+ */
+static void
+free_socket(struct lwip_socket *sock)
+{
+  struct netbuf *lastdata;
+
+  sys_sem_wait(socksem);
+  lastdata = sock->lastdata;
+  sock->lastdata   = NULL;
+  sock->lastoffset = 0;
+  sock->conn       = NULL;
+  sock_set_errno(sock, 0);
+  sys_sem_signal(socksem);
+
+  if (lastdata != NULL) {
+    netbuf_delete(lastdata);
+  }
+}
+
 /* Below this, the well-known socket functions are implemented.
  * Use google.com or opengroup.org to get a good description :-)
  *
@@ -381,15 +404,7 @@ lwip_close(int s)
 
   netconn_delete(sock->conn);
 
-  sys_sem_wait(socksem);
-  if (sock->lastdata) {
-    netbuf_delete(sock->lastdata);
-  }
-  sock->lastdata   = NULL;
-  sock->lastoffset = 0;
-  sock->conn       = NULL;
-  sock_set_errno(sock, 0);
-  sys_sem_signal(socksem);
+  free_socket(sock);
   return 0;
 }
 
@@ -440,7 +455,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
  * The socket may not have been used for another connection previously.
  *
  * @param s the socket to set to listening mode
- * @param backlog (ATTENTION: need TCP_LISTEN_BACKLOG=1)
+ * @param backlog (ATTENTION: needs TCP_LISTEN_BACKLOG=1)
  * @return 0 on success, non-zero on failure
  */
 int
@@ -1110,7 +1125,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 
   /* Now decide if anyone is waiting for this socket */
   /* NOTE: This code is written this way to protect the select link list
-     but to avoid a deadlock situation by releasing socksem before
+     but to avoid a deadlock situation by releasing selectsem before
      signalling for the select. This means we need to go through the list
      multiple times ONLY IF a select was actually waiting. We go through
      the list the number of waiting select calls + 1. This list is
