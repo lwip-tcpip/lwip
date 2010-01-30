@@ -143,7 +143,8 @@ struct netconn {
   int recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
-  /** maximum amount of bytes queued in recvmbox */
+  /** maximum amount of bytes queued in recvmbox
+      not used for TCP: adjust TCP_WND instead! */
   int recv_bufsize;
 #endif /* LWIP_SO_RCVBUF */
   s16_t recv_avail;
