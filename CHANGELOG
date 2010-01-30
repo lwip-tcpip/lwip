@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-01-30. simon Goldschmidt
+  * sockets.c: Use SYS_LIGHTWEIGHT_PROT instead of a semaphore to protect
+    the sockets array.
+
   2010-01-29: Simon Goldschmidt (patch by Laura Garrett)
   * api.h, api_msg.c, sockets.c: Added except set support in select
     (patch #6860)

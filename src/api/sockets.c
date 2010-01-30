@@ -117,8 +117,6 @@ static struct lwip_socket sockets[NUM_SOCKETS];
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 
-/** Semaphore protecting the sockets array */
-static sys_sem_t socksem;
 /** Semaphore protecting select_cb_list */
 static sys_sem_t selectsem;
 
@@ -174,7 +172,6 @@ static void lwip_setsockopt_internal(void *arg);
 void
 lwip_socket_init(void)
 {
-  socksem   = sys_sem_new(1);
   selectsem = sys_sem_new(1);
 }
 
@@ -216,12 +213,12 @@ static int
 alloc_socket(struct netconn *newconn)
 {
   int i;
-
-  /* Protect socket array */
-  sys_sem_wait(socksem);
+  SYS_ARCH_DECL_PROTECT(lev);
 
   /* allocate a new socket identifier */
   for (i = 0; i < NUM_SOCKETS; ++i) {
+    /* Protect socket array */
+    SYS_ARCH_PROTECT(lev);
     if (!sockets[i].conn) {
       sockets[i].conn       = newconn;
       sockets[i].lastdata   = NULL;
@@ -231,11 +228,11 @@ alloc_socket(struct netconn *newconn)
       sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? 0 : 1);
       sockets[i].errevent   = 0;
       sockets[i].err        = 0;
-      sys_sem_signal(socksem);
+      SYS_ARCH_UNPROTECT(lev);
       return i;
     }
+    SYS_ARCH_UNPROTECT(lev);
   }
-  sys_sem_signal(socksem);
   return -1;
 }
 
@@ -248,14 +245,16 @@ static void
 free_socket(struct lwip_socket *sock)
 {
   struct netbuf *lastdata;
+  SYS_ARCH_DECL_PROTECT(lev);
 
-  sys_sem_wait(socksem);
-  lastdata = sock->lastdata;
+  /* Protect socket array */
+  SYS_ARCH_PROTECT(lev);
+  lastdata         = sock->lastdata;
   sock->lastdata   = NULL;
   sock->lastoffset = 0;
   sock->conn       = NULL;
-  sock_set_errno(sock, 0);
-  sys_sem_signal(socksem);
+  sock->err        = 0;
+  SYS_ARCH_UNPROTECT(lev);
 
   if (lastdata != NULL) {
     netbuf_delete(lastdata);
@@ -278,6 +277,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   int newsock;
   struct sockaddr_in sin;
   err_t err;
+  SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d)...\n", s));
   sock = get_socket(s);
@@ -336,15 +336,15 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   nsock = &sockets[newsock];
   LWIP_ASSERT("invalid socket pointer", nsock != NULL);
 
-  sys_sem_wait(socksem);
   /* See event_callback: If data comes in right away after an accept, even
    * though the server task might not have created a new socket yet.
    * In that case, newconn->socket is counted down (newconn->socket--),
    * so nsock->rcvevent is >= 1 here!
    */
+  SYS_ARCH_PROTECT(lev);
   nsock->rcvevent += (s16_t)(-1 - newconn->socket);
   newconn->socket = newsock;
-  sys_sem_signal(socksem);
+  SYS_ARCH_UNPROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
   ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
@@ -405,6 +405,7 @@ lwip_close(int s)
   netconn_delete(sock->conn);
 
   free_socket(sock);
+  set_errno(0);
   return 0;
 }
 
@@ -1079,16 +1080,17 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
        * Just count down (or up) if that's the case and we
        * will use the data later. Note that only receive events
        * can happen before the new socket is set up. */
-      sys_sem_wait(socksem);
+      SYS_ARCH_DECL_PROTECT(lev);
+      SYS_ARCH_PROTECT(lev);
       if (conn->socket < 0) {
         if (evt == NETCONN_EVT_RCVPLUS) {
           conn->socket--;
         }
-        sys_sem_signal(socksem);
+        SYS_ARCH_UNPROTECT(lev);
         return;
       }
       s = conn->socket;
-      sys_sem_signal(socksem);
+      SYS_ARCH_UNPROTECT(lev);
     }
 
     sock = get_socket(s);
