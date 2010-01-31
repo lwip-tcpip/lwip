@@ -115,8 +115,7 @@
 #define DHCP_OPTION_IDX_T2          5
 #define DHCP_OPTION_IDX_SUBNET_MASK 6
 #define DHCP_OPTION_IDX_ROUTER      7
-#define DHCP_OPTION_IDX_BROADCAST   8
-#define DHCP_OPTION_IDX_DNS_SERVER	9
+#define DHCP_OPTION_IDX_DNS_SERVER	8
 #define DHCP_OPTION_IDX_MAX         (DHCP_OPTION_IDX_DNS_SERVER + DNS_MAX_SERVERS)
 
 /** Holds the decoded option values, only valid while in dhcp_recv.
@@ -501,7 +500,6 @@ dhcp_handle_ack(struct netif *netif)
   /* clear options we might not get from the ACK */
   dhcp->offered_sn_mask.addr = 0;
   dhcp->offered_gw_addr.addr = 0;
-  dhcp->offered_bc_addr.addr = 0;
 #if LWIP_DHCP_BOOTP_FILE
   dhcp->offered_si_addr.addr = 0;
 #endif /* LWIP_DHCP_BOOTP_FILE */
@@ -547,11 +545,6 @@ dhcp_handle_ack(struct netif *netif)
   /* gateway router */
   if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_ROUTER)) {
     dhcp->offered_gw_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_ROUTER));
-  }
-
-  /* broadcast address */
-  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_BROADCAST)) {
-    dhcp->offered_bc_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_BROADCAST));
   }
   
 #if LWIP_DNS
@@ -1160,8 +1153,9 @@ dhcp_release(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_OFF);
   /* clean old DHCP offer */
   dhcp->server_ip_addr.addr = 0;
-  dhcp->offered_ip_addr.addr = dhcp->offered_sn_mask.addr = 0;
-  dhcp->offered_gw_addr.addr = dhcp->offered_bc_addr.addr = 0;
+  dhcp->offered_ip_addr.addr = 0;
+  dhcp->offered_sn_mask.addr = 0;
+  dhcp->offered_gw_addr.addr = 0;
 #if LWIP_DHCP_BOOTP_FILE
   dhcp->offered_si_addr.addr = 0;
 #endif /* LWIP_DHCP_BOOTP_FILE */
@@ -1376,10 +1370,6 @@ again:
         decode_len = LWIP_MIN(len, 4 * DNS_MAX_SERVERS);
         LWIP_ASSERT("len >= decode_len", len >= decode_len);
         decode_idx = DHCP_OPTION_IDX_DNS_SERVER;
-        break;
-      case(DHCP_OPTION_BROADCAST):
-        LWIP_ASSERT("len == 4", len == 4);
-        decode_idx = DHCP_OPTION_IDX_BROADCAST;
         break;
       case(DHCP_OPTION_LEASE_TIME):
         LWIP_ASSERT("len == 4", len == 4);
