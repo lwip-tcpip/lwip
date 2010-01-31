@@ -19,7 +19,13 @@ HISTORY
 
   ++ New features:
 
-  2010-01-30. simon Goldschmidt
+  2010-01-31: Simon Goldschmidt
+  * dhcp.h, dhcp.c: Reworked the code that parses DHCP options: parse
+    them once instead of parsing for every option. This also removes
+    the need for mem_malloc from dhcp_recv and makes it possible to
+    correctly retrieve the BOOTP file.
+
+  2010-01-30: simon Goldschmidt
   * sockets.c: Use SYS_LIGHTWEIGHT_PROT instead of a semaphore to protect
     the sockets array.
 

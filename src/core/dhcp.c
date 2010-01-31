@@ -43,8 +43,6 @@
  * with RFC 2131 and RFC 2132.
  *
  * TODO:
- * - Proper parsing of DHCP messages exploiting file/sname field overloading.
- * - Add JavaDoc style documentation (API, internals).
  * - Support for interfaces other than Ethernet (SLIP, PPP, ...)
  *
  * Please coordinate changes and requests with Leon Woestenberg
@@ -104,16 +102,44 @@
 
 #define REBOOT_TRIES 2
 
-/* DHCP client state machine functions */
-static void dhcp_handle_ack(struct netif *netif);
-static void dhcp_handle_nak(struct netif *netif);
-static void dhcp_handle_offer(struct netif *netif);
+/** Option handling: options are parsed in dhcp_parse_reply
+ * and saved in an array where other functions can load them from.
+ * This might be moved into the struct dhcp (not necessarily since
+ * lwIP is single-threaded and the array is only used while in recv
+ * callback). */
+#define DHCP_OPTION_IDX_OVERLOAD    0
+#define DHCP_OPTION_IDX_MSG_TYPE    1
+#define DHCP_OPTION_IDX_SERVER_ID   2
+#define DHCP_OPTION_IDX_LEASE_TIME  3
+#define DHCP_OPTION_IDX_T1          4
+#define DHCP_OPTION_IDX_T2          5
+#define DHCP_OPTION_IDX_SUBNET_MASK 6
+#define DHCP_OPTION_IDX_ROUTER      7
+#define DHCP_OPTION_IDX_BROADCAST   8
+#define DHCP_OPTION_IDX_DNS_SERVER	9
+#define DHCP_OPTION_IDX_MAX         (DHCP_OPTION_IDX_DNS_SERVER + DNS_MAX_SERVERS)
 
+/** Holds the decoded option values, only valid while in dhcp_recv.
+    @todo: move this into struct dhcp? */
+u32_t dhcp_rx_options_val[DHCP_OPTION_IDX_MAX];
+/** Holds a flag which option was received and is contained in dhcp_rx_options_val,
+    only valid while in dhcp_recv.
+    @todo: move this into struct dhcp? */
+u8_t  dhcp_rx_options_given[DHCP_OPTION_IDX_MAX];
+
+#define dhcp_option_given(dhcp, idx)          (dhcp_rx_options_given[idx] != 0)
+#define dhcp_got_option(dhcp, idx)            (dhcp_rx_options_given[idx] = 1)
+#define dhcp_clear_option(dhcp, idx)          (dhcp_rx_options_given[idx] = 0)
+#define dhcp_clear_all_options(dhcp)          (memset(dhcp_rx_options_given, 0, sizeof(dhcp_rx_options_given)))
+#define dhcp_get_option_value(dhcp, idx)      (dhcp_rx_options_val[idx])
+#define dhcp_set_option_value(dhcp, idx, val) (dhcp_rx_options_val[idx] = (val))
+
+
+/* DHCP client state machine functions */
 static err_t dhcp_discover(struct netif *netif);
 static err_t dhcp_select(struct netif *netif);
 static void dhcp_bind(struct netif *netif);
 #if DHCP_DOES_ARP_CHECK
-static void dhcp_check(struct netif *netif);
 static err_t dhcp_decline(struct netif *netif);
 #endif /* DHCP_DOES_ARP_CHECK */
 static err_t dhcp_rebind(struct netif *netif);
@@ -122,14 +148,6 @@ static void dhcp_set_state(struct dhcp *dhcp, u8_t new_state);
 
 /* receive, unfold, parse and free incoming messages */
 static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
-static err_t dhcp_unfold_reply(struct dhcp *dhcp, struct pbuf *p);
-static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type);
-static u8_t dhcp_get_option_byte(u8_t *ptr);
-#if 0
-static u16_t dhcp_get_option_short(u8_t *ptr);
-#endif
-static u32_t dhcp_get_option_long(u8_t *ptr);
-static void dhcp_free_reply(struct dhcp *dhcp);
 
 /* set the DHCP timers */
 static void dhcp_timeout(struct netif *netif);
@@ -221,12 +239,11 @@ static void
 dhcp_handle_offer(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
-  /* obtain the server address */
-  u8_t *option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_SERVER_ID);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_offer(netif=%p) %c%c%"U16_F"\n",
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
-  if (option_ptr != NULL) {
-    dhcp->server_ip_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
+  /* obtain the server address */
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_SERVER_ID)) {
+    dhcp->server_ip_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_SERVER_ID));
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_handle_offer(): server 0x%08"X32_F"\n", dhcp->server_ip_addr.addr));
     /* remember offered address */
     ip_addr_set(&dhcp->offered_ip_addr, (struct ip_addr *)&dhcp->msg_in->yiaddr);
@@ -311,7 +328,6 @@ dhcp_select(struct netif *netif)
 
 /**
  * The DHCP timer that checks for lease renewal/rebind timeouts.
- *
  */
 void
 dhcp_coarse_tmr()
@@ -344,7 +360,6 @@ dhcp_coarse_tmr()
  *
  * A DHCP server is expected to respond within a short period of time.
  * This timer checks whether an outstanding DHCP request is timed out.
- * 
  */
 void
 dhcp_fine_tmr()
@@ -362,7 +377,7 @@ dhcp_fine_tmr()
         netif->dhcp->request_timeout--;
         /* { netif->dhcp->request_timeout == 0 } */
         LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_fine_tmr(): request timeout\n"));
-        /* this clients' request timeout triggered */
+        /* this client's request timeout triggered */
         dhcp_timeout(netif);
       }
     }
@@ -481,33 +496,34 @@ static void
 dhcp_handle_ack(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
-  u8_t *option_ptr;
+  u8_t n;
+
   /* clear options we might not get from the ACK */
   dhcp->offered_sn_mask.addr = 0;
   dhcp->offered_gw_addr.addr = 0;
   dhcp->offered_bc_addr.addr = 0;
+#if LWIP_DHCP_BOOTP_FILE
+  dhcp->offered_si_addr.addr = 0;
+#endif /* LWIP_DHCP_BOOTP_FILE */
 
   /* lease time given? */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_LEASE_TIME);
-  if (option_ptr != NULL) {
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_LEASE_TIME)) {
     /* remember offered lease time */
-    dhcp->offered_t0_lease = dhcp_get_option_long(option_ptr + 2);
+    dhcp->offered_t0_lease = dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_LEASE_TIME);
   }
   /* renewal period given? */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_T1);
-  if (option_ptr != NULL) {
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_T1)) {
     /* remember given renewal period */
-    dhcp->offered_t1_renew = dhcp_get_option_long(option_ptr + 2);
+    dhcp->offered_t1_renew = dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_T1);
   } else {
     /* calculate safe periods for renewal */
     dhcp->offered_t1_renew = dhcp->offered_t0_lease / 2;
   }
 
   /* renewal period given? */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_T2);
-  if (option_ptr != NULL) {
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_T2)) {
     /* remember given rebind period */
-    dhcp->offered_t2_rebind = dhcp_get_option_long(option_ptr + 2);
+    dhcp->offered_t2_rebind = dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_T2);
   } else {
     /* calculate safe periods for rebinding */
     dhcp->offered_t2_rebind = dhcp->offered_t0_lease;
@@ -516,57 +532,38 @@ dhcp_handle_ack(struct netif *netif)
   /* (y)our internet address */
   ip_addr_set(&dhcp->offered_ip_addr, &dhcp->msg_in->yiaddr);
 
-/**
- * Patch #1308
- * TODO: we must check if the file field is not overloaded by DHCP options!
- */
-#if 0
-  /* boot server address */
+#if LWIP_DHCP_BOOTP_FILE
+  /* copy boot server address,
+     boot file name copied in dhcp_parse_reply if not overloaded */
   ip_addr_set(&dhcp->offered_si_addr, &dhcp->msg_in->siaddr);
-  /* boot file name */
-  if (dhcp->msg_in->file[0]) {
-    dhcp->boot_file_name = mem_malloc(strlen(dhcp->msg_in->file) + 1);
-    strcpy(dhcp->boot_file_name, dhcp->msg_in->file);
-  }
-#endif
+#endif /* LWIP_DHCP_BOOTP_FILE */
 
-  /* subnet mask */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_SUBNET_MASK);
   /* subnet mask given? */
-  if (option_ptr != NULL) {
-    dhcp->offered_sn_mask.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_SUBNET_MASK)) {
+    /* remember given subnet mask */
+    dhcp->offered_sn_mask.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_SUBNET_MASK));
   }
 
   /* gateway router */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_ROUTER);
-  if (option_ptr != NULL) {
-    dhcp->offered_gw_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_ROUTER)) {
+    dhcp->offered_gw_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_ROUTER));
   }
 
   /* broadcast address */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_BROADCAST);
-  if (option_ptr != NULL) {
-    dhcp->offered_bc_addr.addr = htonl(dhcp_get_option_long(&option_ptr[2]));
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_BROADCAST)) {
+    dhcp->offered_bc_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_BROADCAST));
   }
   
+#if LWIP_DNS
   /* DNS servers */
-  option_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_DNS_SERVER);
-  if (option_ptr != NULL) {
-    u8_t n;
-    dhcp->dns_count = dhcp_get_option_byte(&option_ptr[1]) / (u32_t)sizeof(struct ip_addr);
-    /* limit to at most DHCP_MAX_DNS DNS servers */
-    if (dhcp->dns_count > DHCP_MAX_DNS)
-      dhcp->dns_count = DHCP_MAX_DNS;
-    for (n = 0; n < dhcp->dns_count; n++) {
-      dhcp->offered_dns_addr[n].addr = htonl(dhcp_get_option_long(&option_ptr[2 + n * 4]));
-#if LWIP_DNS
-      dns_setserver( n, (struct ip_addr *)(&(dhcp->offered_dns_addr[n].addr)));
-#endif /* LWIP_DNS */
-    }
-#if LWIP_DNS
-    dns_setserver( n, (struct ip_addr *)(&ip_addr_any));
-#endif /* LWIP_DNS */
+  n = 0;
+  while(dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n) && (n < DNS_MAX_SERVERS)) {
+    struct ip_addr dns_addr;
+    dns_addr.addr = htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n));
+    dns_setserver(n, &dns_addr);
+    n++;
   }
+#endif /* LWIP_DNS */
 }
 
 /**
@@ -594,6 +591,12 @@ dhcp_start(struct netif *netif)
      it is set when we succeeded starting. */
   netif->flags &= ~NETIF_FLAG_DHCP;
 
+  /* check hwtype of the netif */
+  if ((netif->flags & NETIF_FLAG_ETHARP) == 0) {
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): No ETHARP netif\n"));
+    return ERR_ARG;
+  }
+
   /* check MTU of the netif */
   if (netif->mtu < DHCP_MAX_MSG_LEN_MIN_REQUIRED) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): Cannot use this netif with DHCP: MTU is too small\n"));
@@ -618,8 +621,7 @@ dhcp_start(struct netif *netif)
       udp_remove(dhcp->pcb);
     }
     LWIP_ASSERT("pbuf p_out wasn't freed", dhcp->p_out == NULL);
-    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
-      dhcp->options_in == NULL && dhcp->options_in_len == 0);
+    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL );
   }
     
   /* clear data structure */
@@ -1160,8 +1162,10 @@ dhcp_release(struct netif *netif)
   dhcp->server_ip_addr.addr = 0;
   dhcp->offered_ip_addr.addr = dhcp->offered_sn_mask.addr = 0;
   dhcp->offered_gw_addr.addr = dhcp->offered_bc_addr.addr = 0;
+#if LWIP_DHCP_BOOTP_FILE
+  dhcp->offered_si_addr.addr = 0;
+#endif /* LWIP_DHCP_BOOTP_FILE */
   dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
-  dhcp->dns_count = 0;
   
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif);
@@ -1190,7 +1194,6 @@ dhcp_release(struct netif *netif)
   netif_set_gw(netif, IP_ADDR_ANY);
   netif_set_netmask(netif, IP_ADDR_ANY);
   
-  /* TODO: netif_down(netif); */
   return result;
 }
 
@@ -1221,8 +1224,7 @@ dhcp_stop(struct netif *netif)
       udp_remove(dhcp->pcb);
       dhcp->pcb = NULL;
     }
-    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
-      dhcp->options_in == NULL && dhcp->options_in_len == 0);
+    LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
     mem_free((void *)dhcp);
     netif->dhcp = NULL;
   }
@@ -1296,79 +1298,196 @@ dhcp_option_long(struct dhcp *dhcp, u32_t value)
  *
  */
 static err_t
-dhcp_unfold_reply(struct dhcp *dhcp, struct pbuf *p)
+dhcp_parse_reply(struct dhcp *dhcp, struct pbuf *p)
 {
-  u16_t ret;
-  LWIP_ERROR("dhcp != NULL", (dhcp != NULL), return ERR_ARG;);
-  /* free any left-overs from previous unfolds */
-  dhcp_free_reply(dhcp);
-  /* options present? */
-  if (p->tot_len > (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN)) {
-    dhcp->options_in_len = p->tot_len - (sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
-    dhcp->options_in = mem_malloc(dhcp->options_in_len);
-    if (dhcp->options_in == NULL) {
-      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-        ("dhcp_unfold_reply(): could not allocate dhcp->options\n"));
-      dhcp->options_in_len = 0;
-      return ERR_MEM;
+  u8_t *options;
+  u16_t offset;
+  u16_t offset_max;
+  u16_t options_idx;
+  u16_t options_idx_max;
+  struct pbuf *q;
+  u8_t file_overloaded = 0;
+
+  /* clear received options */
+  dhcp_clear_all_options(dhcp);
+  /* check that beginning of dhcp_msg (up to and including chaddr) is in first pbuf */
+  if (p->len < DHCP_SNAME_OFS) {
+    return ERR_BUF;
+  }
+  dhcp->msg_in = p->payload;
+#if LWIP_DHCP_BOOTP_FILE
+  /* clear boot file name */
+  dhcp->boot_file_name[0] = 0;
+#endif /* LWIP_DHCP_BOOTP_FILE */
+
+  /* parse options */
+
+  /* start with options field */
+  options_idx = DHCP_OPTIONS_OFS;
+  /* parse options to the end of the received packet */
+  options_idx_max = p->tot_len;
+again:
+  q = p;
+  while((q != NULL) && (options_idx >= q->len)) {
+    options_idx -= q->len;
+    options_idx_max -= q->len;
+    q = q->next;
+  }
+  if (q == NULL) {
+    return ERR_BUF;
+  }
+  offset = options_idx;
+  offset_max = options_idx_max;
+  options = (u8_t*)q->payload;
+  /* at least 1 byte to read and no end marker, then at least 3 bytes to read? */
+  while((q != NULL) && (options[offset] != DHCP_OPTION_END) && (offset < offset_max)) {
+    u8_t op = options[offset];
+    u8_t len;
+    u8_t decode_len = 0;
+    int decode_idx = -1;
+    u16_t val_offset = offset + 2;
+    /* len byte might be in the next pbuf */
+    if (offset + 1 < q->len) {
+      len = options[offset + 1];
+    } else {
+      len = (q->next != NULL ? ((u8_t*)q->next->payload)[0] : 0);
+    }
+    /* LWIP_DEBUGF(DHCP_DEBUG, ("msg_offset=%"U16_F", q->len=%"U16_F, msg_offset, q->len)); */
+    decode_len = len;
+    switch(op) {
+      case(DHCP_OPTION_PAD):
+        /* special option: no len encoded */
+        decode_len = len = 0;
+        /* will be increased below */
+        offset--;
+      case(DHCP_OPTION_SUBNET_MASK):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_SUBNET_MASK;
+        break;
+      case(DHCP_OPTION_ROUTER):
+        decode_len = 4; /* only copy the first given router */
+        LWIP_ASSERT("len >= decode_len", len >= decode_len);
+        decode_idx = DHCP_OPTION_IDX_ROUTER;
+        break;
+      case(DHCP_OPTION_DNS_SERVER):
+        /* special case: there might be more than one server */
+        LWIP_ASSERT("len % 4 == 0", len % 4 == 0);
+        /* limit number of DNS servers */
+        decode_len = LWIP_MIN(len, 4 * DNS_MAX_SERVERS);
+        LWIP_ASSERT("len >= decode_len", len >= decode_len);
+        decode_idx = DHCP_OPTION_IDX_DNS_SERVER;
+        break;
+      case(DHCP_OPTION_BROADCAST):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_BROADCAST;
+        break;
+      case(DHCP_OPTION_LEASE_TIME):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_LEASE_TIME;
+        break;
+      case(DHCP_OPTION_OVERLOAD):
+        LWIP_ASSERT("len == 1", len == 1);
+        decode_idx = DHCP_OPTION_IDX_OVERLOAD;
+        break;
+      case(DHCP_OPTION_MESSAGE_TYPE):
+        LWIP_ASSERT("len == 1", len == 1);
+        decode_idx = DHCP_OPTION_IDX_MSG_TYPE;
+        break;
+      case(DHCP_OPTION_SERVER_ID):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_SERVER_ID;
+        break;
+      case(DHCP_OPTION_T1):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_T1;
+        break;
+      case(DHCP_OPTION_T2):
+        LWIP_ASSERT("len == 4", len == 4);
+        decode_idx = DHCP_OPTION_IDX_T2;
+        break;
+      default:
+        LWIP_DEBUGF(DHCP_DEBUG, ("skipping option %"U16_F" in options\n", op));
+        break;
+    }
+    offset += len + 2;
+    if (decode_len > 0) {
+      u32_t value = 0;
+      u16_t copy_len;
+decode_next:
+      LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
+      LWIP_ASSERT("option already decoded", !dhcp_option_given(dhcp, decode_idx));
+      copy_len = LWIP_MIN(decode_len, 4);
+      pbuf_copy_partial(q, &value, copy_len, val_offset);
+      if (decode_len > 4) {
+        /* decode more than one u32_t */
+        LWIP_ASSERT("decode_len % 4 == 0", decode_len % 4 == 0);
+        dhcp_got_option(dhcp, decode_idx);
+        dhcp_set_option_value(dhcp, decode_idx, htonl(value));
+        decode_len -= 4;
+        decode_idx++;
+        goto decode_next;
+      } else if (decode_len == 4) {
+        value = ntohl(value);
+      } else {
+        LWIP_ASSERT("invalid decode_len", decode_len == 1);
+      }
+        dhcp_got_option(dhcp, decode_idx);
+        dhcp_set_option_value(dhcp, decode_idx, value);
+    }
+    if (offset >= q->len) {
+      offset -= q->len;
+      offset_max -= q->len;
+      q = q->next;
     }
   }
-  dhcp->msg_in = (struct dhcp_msg *)mem_malloc(sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
-  if (dhcp->msg_in == NULL) {
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("dhcp_unfold_reply(): could not allocate dhcp->msg_in\n"));
-    if (dhcp->options_in != NULL) {
-      mem_free(dhcp->options_in);
-      dhcp->options_in = NULL;
-      dhcp->options_in_len = 0;
+  /* is this an overloaded message? */
+  if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_OVERLOAD)) {
+    u32_t overload = dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_OVERLOAD);
+    dhcp_clear_option(dhcp, DHCP_OPTION_IDX_OVERLOAD);
+    if (overload == DHCP_OVERLOAD_FILE) {
+      file_overloaded = 1;
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded file field\n"));
+      options_idx = DHCP_FILE_OFS;
+      options_idx_max = DHCP_FILE_OFS + DHCP_FILE_LEN;
+      goto again;
+    } else if (overload == DHCP_OVERLOAD_SNAME) {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname field\n"));
+      options_idx = DHCP_SNAME_OFS;
+      options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN;
+      goto again;
+    } else if (overload == DHCP_OVERLOAD_SNAME_FILE) {
+      file_overloaded = 1;
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname and file field\n"));
+      options_idx = DHCP_SNAME_OFS;
+      options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN + DHCP_FILE_LEN;
+      goto again;
+    } else {
+      LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("invalid overload option: %d\n", (int)overload));
     }
-    return ERR_MEM;
   }
-
-  /** copy the DHCP message without options */
-  ret = pbuf_copy_partial(p, dhcp->msg_in, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN, 0);
-  LWIP_ASSERT("ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN", ret == sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
-  LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes into dhcp->msg_in[]\n",
-     sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN));
-
-  if (dhcp->options_in != NULL) {
-    /** copy the DHCP options */
-    ret = pbuf_copy_partial(p, dhcp->options_in, dhcp->options_in_len, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN);
-    LWIP_ASSERT("ret == dhcp->options_in_len", ret == dhcp->options_in_len);
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_unfold_reply(): copied %"U16_F" bytes to dhcp->options_in[]\n",
-      dhcp->options_in_len));
+#if LWIP_DHCP_BOOTP_FILE
+  if (!file_overloaded) {
+    /* only do this for ACK messages */
+    if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
+      (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
+    /* copy bootp file name, don't care for sname (server hostname) */
+    pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS);
+    /* make sure the string is really NULL-terminated */
+    dhcp->boot_file_name[DHCP_FILE_LEN-1] = 0;
   }
-  LWIP_UNUSED_ARG(ret);
+#endif /* LWIP_DHCP_BOOTP_FILE */
   return ERR_OK;
-}
-
-/**
- * Free the incoming DHCP message including contiguous copy of
- * its DHCP options.
- */
-static void dhcp_free_reply(struct dhcp *dhcp)
-{
-  if (dhcp->msg_in != NULL) {
-    mem_free((void *)dhcp->msg_in);
-    dhcp->msg_in = NULL;
-  }
-  if (dhcp->options_in) {
-    mem_free(dhcp->options_in);
-    dhcp->options_in = NULL;
-    dhcp->options_in_len = 0;
-  }
-  LWIP_DEBUGF(DHCP_DEBUG, ("dhcp_free_reply(): free'd\n"));
 }
 
 /**
  * If an incoming DHCP message is in response to us, then trigger the state machine
  */
-static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+static void
+dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
 {
   struct netif *netif = (struct netif *)arg;
   struct dhcp *dhcp = netif->dhcp;
   struct dhcp_msg *reply_msg = (struct dhcp_msg *)p->payload;
-  u8_t *options_ptr;
   u8_t msg_type;
   u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_recv(pbuf = %p) from DHCP server %"U16_F".%"U16_F".%"U16_F".%"U16_F" port %"U16_F"\n", (void*)p,
@@ -1381,11 +1500,10 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
   LWIP_UNUSED_ARG(addr);
   LWIP_UNUSED_ARG(port);
 
-  LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL &&
-    dhcp->options_in == NULL && dhcp->options_in_len == 0);
+  LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
 
   if (p->len < DHCP_MIN_REPLY_LEN) {
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("DHCP reply message too short\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("DHCP reply message or pbuf too short\n"));
     goto free_pbuf_and_return;
   }
 
@@ -1409,7 +1527,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     goto free_pbuf_and_return;
   }
   /* option fields could be unfold? */
-  if (dhcp_unfold_reply(dhcp, p) != ERR_OK) {
+  if (dhcp_parse_reply(dhcp, p) != ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("problem unfolding DHCP message - too short on memory?\n"));
     goto free_pbuf_and_return;
@@ -1417,14 +1535,13 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("searching DHCP_OPTION_MESSAGE_TYPE\n"));
   /* obtain pointer to DHCP message type */
-  options_ptr = dhcp_get_option_ptr(dhcp, DHCP_OPTION_MESSAGE_TYPE);
-  if (options_ptr == NULL) {
+  if (!dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE)) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("DHCP_OPTION_MESSAGE_TYPE option not found\n"));
     goto free_pbuf_and_return;
   }
 
   /* read DHCP message type */
-  msg_type = dhcp_get_option_byte(options_ptr + 2);
+  msg_type = (u8_t)dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE);
   /* message type is DHCP ACK? */
   if (msg_type == DHCP_ACK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("DHCP_ACK received\n"));
@@ -1462,7 +1579,7 @@ static void dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_
     dhcp_handle_offer(netif);
   }
 free_pbuf_and_return:
-  dhcp_free_reply(dhcp);
+  dhcp->msg_in = NULL;
   pbuf_free(p);
 }
 
@@ -1470,6 +1587,7 @@ free_pbuf_and_return:
  * Create a DHCP request, fill in common headers
  *
  * @param netif the netif under DHCP control
+ * @todo: pass struct dhcp as a parameter to prevent changing netif->dhcp from dhcp_inform
  */
 static err_t
 dhcp_create_request(struct netif *netif)
@@ -1505,8 +1623,9 @@ dhcp_create_request(struct netif *netif)
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
   /* reuse transaction identifier in retransmissions */
-  if (dhcp->tries==0)
+  if (dhcp->tries == 0) {
       xid++;
+  }
   dhcp->xid = xid;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE,
               ("transaction id xid(%"X32_F")\n", xid));
@@ -1516,8 +1635,7 @@ dhcp_create_request(struct netif *netif)
   dhcp->msg_out->op = DHCP_BOOTREQUEST;
   /* TODO: make link layer independent */
   dhcp->msg_out->htype = DHCP_HTYPE_ETH;
-  /* TODO: make link layer independent */
-  dhcp->msg_out->hlen = DHCP_HLEN_ETH;
+  dhcp->msg_out->hlen = netif->hwaddr_len;
   dhcp->msg_out->hops = 0;
   dhcp->msg_out->xid = htonl(dhcp->xid);
   dhcp->msg_out->secs = 0;
@@ -1539,7 +1657,7 @@ dhcp_create_request(struct netif *netif)
   for (i = 0; i < DHCP_FILE_LEN; i++) {
     dhcp->msg_out->file[i] = 0;
   }
-  dhcp->msg_out->cookie = htonl(0x63825363UL);
+  dhcp->msg_out->cookie = htonl(DHCP_MAGIC_COOKIE);
   dhcp->options_out_len = 0;
   /* fill options field with an incrementing array (for debugging purposes) */
   for (i = 0; i < DHCP_OPTIONS_LEN; i++) {
@@ -1591,138 +1709,6 @@ dhcp_option_trailer(struct dhcp *dhcp)
     /* add a fill/padding byte */
     dhcp->msg_out->options[dhcp->options_out_len++] = 0;
   }
-}
-
-/**
- * Find the offset of a DHCP option inside the DHCP message.
- *
- * @param dhcp DHCP client
- * @param option_type
- *
- * @return a byte offset into the UDP message where the option was found, or
- * zero if the given option was not found.
- */
-static u8_t *dhcp_get_option_ptr(struct dhcp *dhcp, u8_t option_type)
-{
-  u8_t overload = DHCP_OVERLOAD_NONE;
-
-  /* options available? */
-  if ((dhcp->options_in != NULL) && (dhcp->options_in_len > 0)) {
-    /* start with options field */
-    u8_t *options = (u8_t *)dhcp->options_in;
-    u16_t offset = 0;
-    /* at least 1 byte to read and no end marker, then at least 3 bytes to read? */
-    while ((offset < dhcp->options_in_len) && (options[offset] != DHCP_OPTION_END)) {
-      /* LWIP_DEBUGF(DHCP_DEBUG, ("msg_offset=%"U16_F", q->len=%"U16_F, msg_offset, q->len)); */
-      /* are the sname and/or file field overloaded with options? */
-      if (options[offset] == DHCP_OPTION_OVERLOAD) {
-        LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded message detected\n"));
-        /* skip option type and length */
-        offset += 2;
-        overload = options[offset++];
-      }
-      /* requested option found */
-      else if (options[offset] == option_type) {
-        LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("option found at offset %"U16_F" in options\n", offset));
-        return &options[offset];
-      /* skip option */
-      } else {
-         LWIP_DEBUGF(DHCP_DEBUG, ("skipping option %"U16_F" in options\n", options[offset]));
-        /* skip option type */
-        offset++;
-        /* skip option length, and then length bytes */
-        offset += 1 + options[offset];
-      }
-    }
-    /* is this an overloaded message? */
-    if (overload != DHCP_OVERLOAD_NONE) {
-      u16_t field_len;
-      if (overload == DHCP_OVERLOAD_FILE) {
-        LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded file field\n"));
-        options = (u8_t *)&dhcp->msg_in->file;
-        field_len = DHCP_FILE_LEN;
-      } else if (overload == DHCP_OVERLOAD_SNAME) {
-        LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname field\n"));
-        options = (u8_t *)&dhcp->msg_in->sname;
-        field_len = DHCP_SNAME_LEN;
-      /* TODO: check if else if () is necessary */
-      } else {
-        LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname and file field\n"));
-        options = (u8_t *)&dhcp->msg_in->sname;
-        field_len = DHCP_FILE_LEN + DHCP_SNAME_LEN;
-      }
-      offset = 0;
-
-      /* at least 1 byte to read and no end marker */
-      while ((offset < field_len) && (options[offset] != DHCP_OPTION_END)) {
-        if (options[offset] == option_type) {
-           LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("option found at offset=%"U16_F"\n", offset));
-          return &options[offset];
-        /* skip option */
-        } else {
-          LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("skipping option %"U16_F"\n", options[offset]));
-          /* skip option type */
-          offset++;
-          offset += 1 + options[offset];
-        }
-      }
-    }
-  }
-  return NULL;
-}
-
-/**
- * Return the byte of DHCP option data.
- *
- * @param client DHCP client.
- * @param ptr pointer obtained by dhcp_get_option_ptr().
- *
- * @return byte value at the given address.
- */
-static u8_t
-dhcp_get_option_byte(u8_t *ptr)
-{
-  LWIP_DEBUGF(DHCP_DEBUG, ("option byte value=%"U16_F"\n", (u16_t)(*ptr)));
-  return *ptr;
-}
-
-#if 0 /* currently unused */
-/**
- * Return the 16-bit value of DHCP option data.
- *
- * @param client DHCP client.
- * @param ptr pointer obtained by dhcp_get_option_ptr().
- *
- * @return byte value at the given address.
- */
-static u16_t
-dhcp_get_option_short(u8_t *ptr)
-{
-  u16_t value;
-  value = *ptr++ << 8;
-  value |= *ptr;
-  LWIP_DEBUGF(DHCP_DEBUG, ("option short value=%"U16_F"\n", value));
-  return value;
-}
-#endif
-
-/**
- * Return the 32-bit value of DHCP option data.
- *
- * @param client DHCP client.
- * @param ptr pointer obtained by dhcp_get_option_ptr().
- *
- * @return byte value at the given address.
- */
-static u32_t dhcp_get_option_long(u8_t *ptr)
-{
-  u32_t value;
-  value = (u32_t)(*ptr++) << 24;
-  value |= (u32_t)(*ptr++) << 16;
-  value |= (u32_t)(*ptr++) << 8;
-  value |= (u32_t)(*ptr++);
-  LWIP_DEBUGF(DHCP_DEBUG, ("option long value=%"U32_F"\n", value));
-  return value;
 }
 
 #endif /* LWIP_DHCP */
