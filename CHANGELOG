@@ -70,6 +70,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-01-31: Simon Goldschmidt
+  * netif.c: Don't call the link-callback from netif_set_up/down() since
+    this invalidly retriggers DHCP.
+
   2010-01-29: Simon Goldschmidt
   * ip_addr.h, inet.h, def.h, inet.c, def.c, more: Cleanly separate the
     portability file inet.h and its contents from the stack: moved htonX-

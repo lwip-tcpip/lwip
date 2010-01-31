@@ -405,7 +405,6 @@ void netif_set_up(struct netif *netif)
     snmp_get_sysuptime(&netif->ts);
 #endif /* LWIP_SNMP */
 
-    NETIF_LINK_CALLBACK(netif);
     NETIF_STATUS_CALLBACK(netif);
 
 #if LWIP_ARP
@@ -440,7 +439,6 @@ void netif_set_down(struct netif *netif)
     snmp_get_sysuptime(&netif->ts);
 #endif
 
-    NETIF_LINK_CALLBACK(netif);
     NETIF_STATUS_CALLBACK(netif);
   }
 }
