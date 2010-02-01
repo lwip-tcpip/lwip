@@ -56,6 +56,7 @@
 #include "lwip/ip_frag.h"
 #include "lwip/snmp_structs.h"
 #include "lwip/snmp_msg.h"
+#include "lwip/dns.h"
 
 #include <string.h>
 

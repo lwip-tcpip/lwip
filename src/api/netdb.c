@@ -39,8 +39,10 @@
 
 #include "lwip/err.h"
 #include "lwip/mem.h"
+#include "lwip/memp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/api.h"
+#include "lwip/dns.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -235,7 +237,7 @@ lwip_freeaddrinfo(struct addrinfo *ai)
 
   while (ai != NULL) {
     next = ai->ai_next;
-    mem_free(ai);
+    memp_free(MEMP_NETDB, ai);
     ai = next;
   }
 }
@@ -305,7 +307,10 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
     total_size += namelen + 1;
   }
-  ai = mem_malloc(total_size);
+  /* If this fails, please report to lwip-devel! :-) */
+  LWIP_ASSERT("total_size <= NETDB_ELEM_SIZE: please report this!",
+    total_size <= NETDB_ELEM_SIZE);
+  ai = memp_malloc(MEMP_NETDB);
   if (ai == NULL) {
     goto memerr;
   }
@@ -338,7 +343,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   return 0;
 memerr:
   if (ai != NULL) {
-    mem_free(ai);
+    memp_free(MEMP_NETDB, ai);
   }
   return EAI_MEMORY;
 }

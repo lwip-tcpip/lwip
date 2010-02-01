@@ -363,6 +363,14 @@
 #endif
 
 /**
+ * MEMP_NUM_NETDB: the number of concurrently running lwip_addrinfo() calls
+ * (before freeing the corresponding memory using lwip_freeaddrinfo()).
+ */
+#ifndef MEMP_NUM_NETDB
+#define MEMP_NUM_NETDB                  1
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE

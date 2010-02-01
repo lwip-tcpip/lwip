@@ -74,6 +74,9 @@ LWIP_MEMPOOL(SNMP_NODE,      MEMP_NUM_SNMP_NODE,       sizeof(struct mib_list_no
 LWIP_MEMPOOL(SNMP_VARBIND,   MEMP_NUM_SNMP_VARBIND,    sizeof(struct snmp_varbind),      "SNMP_VARBIND")
 LWIP_MEMPOOL(SNMP_VALUE,     MEMP_NUM_SNMP_VALUE,      SNMP_MAX_VALUE_SIZE,              "SNMP_VALUE")
 #endif /* LWIP_SNMP */
+#if LWIP_DNS && LWIP_SOCKET
+LWIP_MEMPOOL(NETDB,          MEMP_NUM_NETDB,           NETDB_ELEM_SIZE,               "NETDB")
+#endif /* LWIP_DNS && LWIP_SOCKET */
 
 /*
  * A list of pools of pbuf's used by LWIP.

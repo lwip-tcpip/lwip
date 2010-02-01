@@ -66,6 +66,13 @@
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
+/* The size used for the next line is rather a hack, but it prevents including socket.h in all files
+   that include memp.h, and that would possibly break portability (since socket.h defines some types
+   and constants possibly already define by the OS).
+   Calculation rule:
+   sizeof(struct addrinfo) + sizeof(struct sockaddr_in) + DNS_MAX_NAME_LENGTH + 1 byte zero-termination */
+#define NETDB_ELEM_SIZE           (32 + 16 + DNS_MAX_NAME_LENGTH + 1)
+
 /** Callback which is invoked when a hostname is found.
  * A function of this type must be implemented by the application using the DNS resolver.
  * @param name pointer to the name that was looked up.
@@ -75,15 +82,10 @@
 */
 typedef void (*dns_found_callback)(const char *name, struct ip_addr *ipaddr, void *callback_arg);
 
-
 void           dns_init(void);
-
 void           dns_tmr(void);
-
 void           dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
-
 struct ip_addr dns_getserver(u8_t numdns);
-
 err_t          dns_gethostbyname(const char *hostname, struct ip_addr *addr,
                                  dns_found_callback found, void *callback_arg);
 
