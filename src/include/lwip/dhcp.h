@@ -41,6 +41,7 @@ struct dhcp
 #if LWIP_DHCP_AUTOIP_COOP
   u8_t autoip_coop_state;
 #endif
+  u8_t subnet_mask_given;
 
   struct pbuf *p_out; /* pbuf of outcoming msg */
   struct dhcp_msg *msg_out; /* outgoing msg */
