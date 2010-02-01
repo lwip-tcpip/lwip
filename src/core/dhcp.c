@@ -625,12 +625,11 @@ dhcp_start(struct netif *netif)
     
   /* clear data structure */
   memset(dhcp, 0, sizeof(struct dhcp));
+  /* dhcp_set_state(&dhcp, DHCP_OFF); */
   /* allocate UDP PCB */
   dhcp->pcb = udp_new();
   if (dhcp->pcb == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG  | LWIP_DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
-    mem_free((void *)dhcp);
-    netif->dhcp = dhcp = NULL;
     return ERR_MEM;
   }
 #if IP_SOF_BROADCAST
@@ -672,7 +671,8 @@ dhcp_inform(struct netif *netif)
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
-  memset(&dhcp, 0, sizeof(dhcp));
+  memset(&dhcp, 0, sizeof(struct dhcp));
+  dhcp_set_state(&dhcp, DHCP_INFORM);
 
   if ((netif->dhcp != NULL) && (netif->dhcp->pcb != NULL)) {
     /* re-use existing pcb */
@@ -1214,10 +1214,10 @@ dhcp_stop(struct netif *netif)
   /* netif is DHCP configured? */
   if (dhcp != NULL) {
 #if LWIP_DHCP_AUTOIP_COOP
-  if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
-    autoip_stop(netif);
-    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
-  }
+    if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+      autoip_stop(netif);
+      dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+    }
 #endif /* LWIP_DHCP_AUTOIP_COOP */
 
     if (dhcp->pcb != NULL) {
@@ -1225,8 +1225,7 @@ dhcp_stop(struct netif *netif)
       dhcp->pcb = NULL;
     }
     LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL);
-    mem_free((void *)dhcp);
-    netif->dhcp = NULL;
+    dhcp_set_state(dhcp, DHCP_OFF);
   }
 }
 

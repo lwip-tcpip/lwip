@@ -152,6 +152,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_SERVER_PORT  67
 
 /** DHCP client states */
+#define DHCP_OFF          0
 #define DHCP_REQUESTING   1
 #define DHCP_INIT         2
 #define DHCP_REBOOTING    3
@@ -164,7 +165,6 @@ void dhcp_fine_tmr(void);
 #define DHCP_BOUND        10
 /** not yet implemented #define DHCP_RELEASING 11 */
 #define DHCP_BACKING_OFF  12
-#define DHCP_OFF          13
 
 /** AUTOIP cooperatation flags */
 #define DHCP_AUTOIP_COOP_STATE_OFF  0
