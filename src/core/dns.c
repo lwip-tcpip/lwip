@@ -342,7 +342,7 @@ dns_init_local()
     struct local_hostlist_entry *init_entry = &local_hostlist_init[i];
     LWIP_ASSERT("invalid host name (NULL)", init_entry->name != NULL);
     namelen = strlen(init_entry->name);
-    entry = mem_malloc(sizeof(struct local_hostlist_entry) + namelen + 1);
+    entry = mem_malloc((mem_size_t)(sizeof(struct local_hostlist_entry) + namelen + 1));
     LWIP_ASSERT("mem-error in dns_init_local", entry != NULL);
     if (entry != NULL) {
       entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
@@ -436,7 +436,7 @@ dns_local_addhost(const char *hostname, const struct ip_addr *addr)
   size_t namelen;
   LWIP_ASSERT("invalid host name (NULL)", hostname != NULL);
   namelen = strlen(hostname);
-  entry = mem_malloc(sizeof(struct local_hostlist_entry) + namelen + 1);
+  entry = mem_malloc((mem_size_t)(sizeof(struct local_hostlist_entry) + namelen + 1));
   if (entry == NULL) {
     return ERR_MEM;
   }

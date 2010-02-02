@@ -383,7 +383,7 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
   /* (other types merely adjust their length fields */
   if ((q->type == PBUF_RAM) && (rem_len != q->len)) {
     /* reallocate and adjust the length of the pbuf that will be split */
-    q = (struct pbuf *)mem_realloc(q, (u8_t *)q->payload - (u8_t *)q + rem_len);
+    q = (struct pbuf *)mem_realloc(q, (u16_t)((u8_t *)q->payload - (u8_t *)q) + rem_len);
     LWIP_ASSERT("mem_realloc give q == NULL", q != NULL);
   }
   /* adjust length fields for new last pbuf */

@@ -248,7 +248,7 @@ plug_holes(struct mem *mem)
       lfree = mem;
     }
     mem->next = nmem->next;
-    ((struct mem *)&ram[nmem->next])->prev = (u8_t *)mem - ram;
+    ((struct mem *)&ram[nmem->next])->prev = (mem_size_t)((u8_t *)mem - ram);
   }
 
   /* plug hole backward */
@@ -259,7 +259,7 @@ plug_holes(struct mem *mem)
       lfree = pmem;
     }
     pmem->next = mem->next;
-    ((struct mem *)&ram[mem->next])->prev = (u8_t *)pmem - ram;
+    ((struct mem *)&ram[mem->next])->prev = (mem_size_t)((u8_t *)pmem - ram);
   }
 }
 
@@ -339,7 +339,7 @@ mem_free(void *rmem)
     lfree = mem;
   }
 
-  MEM_STATS_DEC_USED(used, mem->next - ((u8_t *)mem - ram));
+  MEM_STATS_DEC_USED(used, mem->next - (mem_size_t)(((u8_t *)mem - ram)));
 
   /* finally, see if prev or next are free also */
   plug_holes(mem);
@@ -398,7 +398,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   /* Get the corresponding struct mem ... */
   mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... and its offset pointer */
-  ptr = (u8_t *)mem - ram;
+  ptr = (mem_size_t)((u8_t *)mem - ram);
 
   size = mem->next - ptr - SIZEOF_STRUCT_MEM;
   LWIP_ASSERT("mem_realloc can only shrink memory", newsize <= size);
@@ -525,7 +525,7 @@ mem_malloc(mem_size_t size)
     /* Scan through the heap searching for a free block that is big enough,
      * beginning with the lowest free block.
      */
-    for (ptr = (u8_t *)lfree - ram; ptr < MEM_SIZE_ALIGNED - size;
+    for (ptr = (mem_size_t)((u8_t *)lfree - ram); ptr < MEM_SIZE_ALIGNED - size;
          ptr = ((struct mem *)&ram[ptr])->next) {
       mem = (struct mem *)&ram[ptr];
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
@@ -578,7 +578,7 @@ mem_malloc(mem_size_t size)
            * will always be used at this point!
            */
           mem->used = 1;
-          MEM_STATS_INC_USED(used, mem->next - ((u8_t *)mem - ram));
+          MEM_STATS_INC_USED(used, mem->next - (mem_size_t)((u8_t *)mem - ram));
         }
 
         if (mem == lfree) {
