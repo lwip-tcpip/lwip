@@ -1304,7 +1304,8 @@ dhcp_parse_reply(struct dhcp *dhcp, struct pbuf *p)
   u16_t options_idx;
   u16_t options_idx_max;
   struct pbuf *q;
-  u8_t file_overloaded = 0;
+  int parse_file_as_options = 0;
+  int parse_sname_as_options = 0;
 
   /* clear received options */
   dhcp_clear_all_options(dhcp);
@@ -1353,11 +1354,13 @@ again:
     /* LWIP_DEBUGF(DHCP_DEBUG, ("msg_offset=%"U16_F", q->len=%"U16_F, msg_offset, q->len)); */
     decode_len = len;
     switch(op) {
+      /* case(DHCP_OPTION_END): handled above */
       case(DHCP_OPTION_PAD):
         /* special option: no len encoded */
         decode_len = len = 0;
         /* will be increased below */
         offset--;
+        break;
       case(DHCP_OPTION_SUBNET_MASK):
         LWIP_ASSERT("len == 4", len == 4);
         decode_idx = DHCP_OPTION_IDX_SUBNET_MASK;
@@ -1433,6 +1436,7 @@ decode_next:
       offset -= q->len;
       offset_max -= q->len;
       q = q->next;
+      options = (u8_t*)q->payload;
     }
   }
   /* is this an overloaded message? */
@@ -1440,38 +1444,42 @@ decode_next:
     u32_t overload = dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_OVERLOAD);
     dhcp_clear_option(dhcp, DHCP_OPTION_IDX_OVERLOAD);
     if (overload == DHCP_OVERLOAD_FILE) {
-      file_overloaded = 1;
+      parse_file_as_options = 1;
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded file field\n"));
-      options_idx = DHCP_FILE_OFS;
-      options_idx_max = DHCP_FILE_OFS + DHCP_FILE_LEN;
-      goto again;
     } else if (overload == DHCP_OVERLOAD_SNAME) {
+      parse_sname_as_options = 1;
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname field\n"));
-      options_idx = DHCP_SNAME_OFS;
-      options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN;
-      goto again;
     } else if (overload == DHCP_OVERLOAD_SNAME_FILE) {
-      file_overloaded = 1;
+      parse_sname_as_options = 1;
+      parse_file_as_options = 1;
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("overloaded sname and file field\n"));
-      /* @todo: parse file first and then sname (RFC 2131 ch. 4.1) */
-      options_idx = DHCP_SNAME_OFS;
-      options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN + DHCP_FILE_LEN;
-      goto again;
     } else {
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("invalid overload option: %d\n", (int)overload));
     }
-  }
 #if LWIP_DHCP_BOOTP_FILE
-  if (!file_overloaded) {
-    /* only do this for ACK messages */
-    if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
-      (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
-    /* copy bootp file name, don't care for sname (server hostname) */
-    pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS);
-    /* make sure the string is really NULL-terminated */
-    dhcp->boot_file_name[DHCP_FILE_LEN-1] = 0;
-  }
+    if (!parse_file_as_options) {
+      /* only do this for ACK messages */
+      if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_MSG_TYPE) &&
+        (dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_MSG_TYPE) == DHCP_ACK))
+      /* copy bootp file name, don't care for sname (server hostname) */
+      pbuf_copy_partial(p, dhcp->boot_file_name, DHCP_FILE_LEN-1, DHCP_FILE_OFS);
+      /* make sure the string is really NULL-terminated */
+      dhcp->boot_file_name[DHCP_FILE_LEN-1] = 0;
+    }
 #endif /* LWIP_DHCP_BOOTP_FILE */
+  }
+  if (parse_file_as_options) {
+    /* if both are overloaded, parse file first and then sname (RFC 2131 ch. 4.1) */
+    parse_file_as_options = 0;
+    options_idx = DHCP_FILE_OFS;
+    options_idx_max = DHCP_FILE_OFS + DHCP_FILE_LEN;
+    goto again;
+  } else if (parse_sname_as_options) {
+    parse_sname_as_options = 0;
+    options_idx = DHCP_SNAME_OFS;
+    options_idx_max = DHCP_SNAME_OFS + DHCP_SNAME_LEN;
+    goto again;
+  }
   return ERR_OK;
 }
 
