@@ -44,7 +44,7 @@ extern "C" {
 #endif
 PACK_STRUCT_BEGIN
 struct ip_addr {
-  PACK_STRUCT_FIELD(u32_t addre);
+  PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -122,31 +122,31 @@ extern const struct ip_addr ip_addr_broadcast;
 
 
 #define IP4_ADDR(ipaddr, a,b,c,d) \
-        (ipaddr)->addre = htonl(((u32_t)((a) & 0xff) << 24) | \
+        (ipaddr)->addr = htonl(((u32_t)((a) & 0xff) << 24) | \
                                ((u32_t)((b) & 0xff) << 16) | \
                                ((u32_t)((c) & 0xff) << 8) | \
                                 (u32_t)((d) & 0xff))
 
 /** Safely copy one IP address to another (src may be NULL) */
-#define ip_addr_set(dest, src) ((dest)->addre = \
+#define ip_addr_set(dest, src) ((dest)->addr = \
                                ((src) == NULL ? 0:\
-                               (src)->addre))
+                               (src)->addr))
 /** Set complete address to zero */
-#define ip_addr_set_zero(ipaddr) (ipaddr)->addre = IPADDR_ANY
+#define ip_addr_set_zero(ipaddr) (ipaddr)->addr = IPADDR_ANY
 /** Set address to loopback address */
-#define ip_addr_set_loopback(ipaddr) ((ipaddr)->addre = IPADDR_LOOPBACK)
+#define ip_addr_set_loopback(ipaddr) ((ipaddr)->addr = IPADDR_LOOPBACK)
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
-#define ip_addr_set_hton(dest, src) ((dest)->addre = \
+#define ip_addr_set_hton(dest, src) ((dest)->addr = \
                                ((src) == NULL ? 0:\
-                               htonl((src)->addre)))
+                               htonl((src)->addr)))
 /** IPv4 only: set the IP address given as an u32_t */
-#define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addre = (src_u32))
+#define ip4_addr_set_u32(dest_ipaddr, src_u32) ((dest_ipaddr)->addr = (src_u32))
 /** IPv4 only: get the IP address as an u32_t */
-#define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addre)
+#define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
 
 /** Get the network address by combining host address with netmask */
-#define ip_addr_get_network(target, host, netmask) ((target)->addre = ((host)->addre) & ((netmask)->addre))
+#define ip_addr_get_network(target, host, netmask) ((target)->addr = ((host)->addr) & ((netmask)->addr))
 
 /**
  * Determine if two address are on the same network.
@@ -156,36 +156,36 @@ extern const struct ip_addr ip_addr_broadcast;
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-#define ip_addr_netcmp(addr1, addr2, mask) (((addr1)->addre & \
-                                              (mask)->addre) == \
-                                             ((addr2)->addre & \
-                                              (mask)->addre))
-#define ip_addr_cmp(addr1, addr2) ((addr1)->addre == (addr2)->addre)
+#define ip_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
+                                              (mask)->addr) == \
+                                             ((addr2)->addr & \
+                                              (mask)->addr))
+#define ip_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
-#define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addre == 0)
+#define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == 0)
 
 u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 
-#define ip_addr_ismulticast(addr1) (((addr1)->addre & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
+#define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
 
-#define ip_addr_islinklocal(addr1) (((addr1)->addre & ntohl(0xffff0000UL)) == ntohl(0xa9fe0000UL))
+#define ip_addr_islinklocal(addr1) (((addr1)->addr & ntohl(0xffff0000UL)) == ntohl(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
   LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F,              \
                       ipaddr != NULL ?                                  \
-                      (u16_t)(ntohl((ipaddr)->addre) >> 24) & 0xff : 0,  \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 24) & 0xff : 0,  \
                       ipaddr != NULL ?                                  \
-                      (u16_t)(ntohl((ipaddr)->addre) >> 16) & 0xff : 0,  \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 16) & 0xff : 0,  \
                       ipaddr != NULL ?                                  \
-                      (u16_t)(ntohl((ipaddr)->addre) >> 8) & 0xff : 0,   \
+                      (u16_t)(ntohl((ipaddr)->addr) >> 8) & 0xff : 0,   \
                       ipaddr != NULL ?                                  \
-                      (u16_t)ntohl((ipaddr)->addre) & 0xff : 0))
+                      (u16_t)ntohl((ipaddr)->addr) & 0xff : 0))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr1(ipaddr) ((u8_t)(ntohl((ipaddr)->addre) >> 24) & 0xff)
-#define ip4_addr2(ipaddr) ((u8_t)(ntohl((ipaddr)->addre) >> 16) & 0xff)
-#define ip4_addr3(ipaddr) ((u8_t)(ntohl((ipaddr)->addre) >> 8) & 0xff)
-#define ip4_addr4(ipaddr) ((u8_t)(ntohl((ipaddr)->addre)) & 0xff)
+#define ip4_addr1(ipaddr) ((u8_t)(ntohl((ipaddr)->addr) >> 24) & 0xff)
+#define ip4_addr2(ipaddr) ((u8_t)(ntohl((ipaddr)->addr) >> 16) & 0xff)
+#define ip4_addr3(ipaddr) ((u8_t)(ntohl((ipaddr)->addr) >> 8) & 0xff)
+#define ip4_addr4(ipaddr) ((u8_t)(ntohl((ipaddr)->addr)) & 0xff)
 /* These are cast to u16_t, with the intent that they are often arguments
  * to printf using the U16_F format from cc.h. */
 #define ip4_addr1_16(ipaddr) ((u16_t)ip4_addr1(ipaddr))
@@ -197,9 +197,9 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 u32_t ipaddr_addr(const char *cp);
-int ipaddr_aton(const char *cp, struct ip_addr *addre);
+int ipaddr_aton(const char *cp, struct ip_addr *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ipaddr_ntoa(struct ip_addr *addre);
+char *ipaddr_ntoa(struct ip_addr *addr);
 
 #ifdef __cplusplus
 }
