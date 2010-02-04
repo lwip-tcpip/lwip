@@ -100,8 +100,8 @@ Steve Reynolds
  *----------------------------------------------------------------------------*/
 
 static struct igmp_group* igmp_group_list;
-static struct ip_addr     allsystems;
-static struct ip_addr     allrouters;
+static ip_addr_t     allsystems;
+static ip_addr_t     allrouters;
 
 /**
  * Initialize the IGMP module
@@ -241,7 +241,7 @@ igmp_report_groups( struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct igmp_group *
-igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr)
+igmp_lookfor_group(struct netif *ifp, ip_addr_t *addr)
 {
   struct igmp_group *group = igmp_group_list;
 
@@ -267,7 +267,7 @@ igmp_lookfor_group(struct netif *ifp, struct ip_addr *addr)
  *         NULL on memory error.
  */
 struct igmp_group *
-igmp_lookup_group(struct netif *ifp, struct ip_addr *addr)
+igmp_lookup_group(struct netif *ifp, ip_addr_t *addr)
 {
   struct igmp_group *group = igmp_group_list;
   
@@ -340,7 +340,7 @@ igmp_remove_group(struct igmp_group *group)
  * @param dest destination ip address of the igmp packet
  */
 void
-igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
+igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
 {
   struct ip_hdr *    iphdr;
   struct igmp_msg*   igmp;
@@ -456,7 +456,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
  * @return ERR_OK if group was joined on the netif(s), an err_t otherwise
  */
 err_t
-igmp_joingroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
+igmp_joingroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct igmp_group *group;
@@ -526,7 +526,7 @@ igmp_joingroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
  * @return ERR_OK if group was left on the netif(s), an err_t otherwise
  */
 err_t
-igmp_leavegroup(struct ip_addr *ifaddr, struct ip_addr *groupaddr)
+igmp_leavegroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct igmp_group *group;
@@ -690,7 +690,7 @@ igmp_delaying_member( struct igmp_group *group, u8_t maxresp)
  *         returns errors returned by netif->output
  */
 err_t
-igmp_ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
                   u8_t ttl, u8_t proto, struct netif *netif)
 {
   /* This is the "router alert" option */
@@ -711,8 +711,8 @@ igmp_send(struct igmp_group *group, u8_t type)
 {
   struct pbuf*     p    = NULL;
   struct igmp_msg* igmp = NULL;
-  struct ip_addr   src  = {0};
-  struct ip_addr*  dest = NULL;
+  ip_addr_t   src  = {0};
+  ip_addr_t*  dest = NULL;
 
   /* IP header + "router alert" option + IGMP header */
   p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);

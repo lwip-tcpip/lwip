@@ -89,8 +89,8 @@ struct netif *netif_default;
  * @return netif, or NULL if failed.
  */
 struct netif *
-netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
-  struct ip_addr *gw, void *state, netif_init_fn init, netif_input_fn input)
+netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
+  ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
   static u8_t netifnum = 0;
 
@@ -174,8 +174,8 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
  * @param gw the new default gateway
  */
 void
-netif_set_addr(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
-    struct ip_addr *gw)
+netif_set_addr(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
+    ip_addr_t *gw)
 {
   netif_set_ipaddr(netif, ipaddr);
   netif_set_netmask(netif, netmask);
@@ -271,7 +271,7 @@ netif_find(char *name)
  * default gateway
  */
 void
-netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
+netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
 {
   /* TODO: Handling of obsolete pcbs */
   /* See:  http://mail.gnu.org/archive/html/lwip-users/2003-03/msg00118.html */
@@ -331,7 +331,7 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
  * @note call netif_set_addr() if you also want to change ip address and netmask
  */
 void
-netif_set_gw(struct netif *netif, struct ip_addr *gw)
+netif_set_gw(struct netif *netif, ip_addr_t *gw)
 {
   ip_addr_set(&(netif->gw), gw);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -352,7 +352,7 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
  * default gateway
  */
 void
-netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
+netif_set_netmask(struct netif *netif, ip_addr_t *netmask)
 {
   snmp_delete_iprteidx_tree(0, netif);
   /* set new netmask to netif */
@@ -530,7 +530,7 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
  */
 err_t
 netif_loop_output(struct netif *netif, struct pbuf *p,
-       struct ip_addr *ipaddr)
+       ip_addr_t *ipaddr)
 {
   struct pbuf *r;
   err_t err;

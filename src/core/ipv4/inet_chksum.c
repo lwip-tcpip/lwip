@@ -281,7 +281,7 @@ lwip_standard_chksum(void *dataptr, int len)
  */
 u16_t
 inet_chksum_pseudo(struct pbuf *p,
-       struct ip_addr *src, struct ip_addr *dest,
+       ip_addr_t *src, ip_addr_t *dest,
        u8_t proto, u16_t proto_len)
 {
   u32_t acc;
@@ -343,7 +343,7 @@ inet_chksum_pseudo(struct pbuf *p,
 #if LWIP_UDPLITE
 u16_t
 inet_chksum_pseudo_partial(struct pbuf *p,
-       struct ip_addr *src, struct ip_addr *dest,
+       ip_addr_t *src, ip_addr_t *dest,
        u8_t proto, u16_t proto_len, u16_t chksum_len)
 {
   u32_t acc;

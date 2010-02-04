@@ -43,13 +43,15 @@ extern "C" {
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct ip_addr {
+struct _ip_addr {
   PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
+
+typedef struct _ip_addr ip_addr_t;
 
 /*
  * struct ipaddr2 is used in the definition of the ARP packet format in
@@ -70,14 +72,14 @@ PACK_STRUCT_END
 /* Forward declaration to not include netif.h */
 struct netif;
 
-extern const struct ip_addr ip_addr_any;
-extern const struct ip_addr ip_addr_broadcast;
+extern const ip_addr_t ip_addr_any;
+extern const ip_addr_t ip_addr_broadcast;
 
 /** IP_ADDR_ can be used as a fixed IP address
  *  for the wildcard and the broadcast address
  */
-#define IP_ADDR_ANY         ((struct ip_addr *)&ip_addr_any)
-#define IP_ADDR_BROADCAST   ((struct ip_addr *)&ip_addr_broadcast)
+#define IP_ADDR_ANY         ((ip_addr_t *)&ip_addr_any)
+#define IP_ADDR_BROADCAST   ((ip_addr_t *)&ip_addr_broadcast)
 
 /** 255.255.255.255 */
 #define IPADDR_NONE         ((u32_t)0xffffffffUL)
@@ -164,7 +166,7 @@ extern const struct ip_addr ip_addr_broadcast;
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == 0)
 
-u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
+u8_t ip_addr_isbroadcast(ip_addr_t *, struct netif *);
 
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
 
@@ -197,9 +199,9 @@ u8_t ip_addr_isbroadcast(struct ip_addr *, struct netif *);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 u32_t ipaddr_addr(const char *cp);
-int ipaddr_aton(const char *cp, struct ip_addr *addr);
+int ipaddr_aton(const char *cp, ip_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ipaddr_ntoa(struct ip_addr *addr);
+char *ipaddr_ntoa(ip_addr_t *addr);
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-02-04: Simon Goldschmidt
+  * nearly every file: Replaced struct ip_addr by typedef ip_addr_t to
+    make changing the actual implementation behind the typedef easier.
+
   2010-02-01: Simon Goldschmidt
   * opt.h, memp_std.h, dns.h, netdb.c, memp.c: Let netdb use a memp pool
     for allocating memory when getaddrinfo() is called.

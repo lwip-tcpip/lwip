@@ -66,7 +66,7 @@ struct pbuf * ip_reass(struct pbuf *p);
 #endif /* IP_REASSEMBLY */
 
 #if IP_FRAG
-err_t ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest);
+err_t ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest);
 #endif /* IP_FRAG */
 
 #ifdef __cplusplus

@@ -58,7 +58,7 @@ struct raw_pcb;
  * if it's not used any more.
  */
 typedef u8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    struct ip_addr *addr);
+    ip_addr_t *addr);
 
 struct raw_pcb {
   /* Common members of all PCB types */
@@ -78,11 +78,11 @@ struct raw_pcb {
    RAW code. */
 struct raw_pcb * raw_new        (u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
-err_t            raw_bind       (struct raw_pcb *pcb, struct ip_addr *ipaddr);
-err_t            raw_connect    (struct raw_pcb *pcb, struct ip_addr *ipaddr);
+err_t            raw_bind       (struct raw_pcb *pcb, ip_addr_t *ipaddr);
+err_t            raw_connect    (struct raw_pcb *pcb, ip_addr_t *ipaddr);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
-err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr);
+err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 /* The following functions are the lower layer interface to RAW. */

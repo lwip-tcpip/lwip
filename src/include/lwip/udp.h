@@ -84,7 +84,7 @@ struct udp_pcb;
  * @param port the remote port from which the packet was received
  */
 typedef void (*udp_recv_fn)(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-    struct ip_addr *addr, u16_t port);
+    ip_addr_t *addr, u16_t port);
 
 
 struct udp_pcb {
@@ -101,7 +101,7 @@ struct udp_pcb {
 
 #if LWIP_IGMP
   /** outgoing network interface for multicast packets */
-  struct ip_addr multicast_ip;
+  ip_addr_t multicast_ip;
 #endif /* LWIP_IGMP */
 
 #if LWIP_UDPLITE
@@ -121,18 +121,18 @@ extern struct udp_pcb *udp_pcbs;
    UDP code. */
 struct udp_pcb * udp_new        (void);
 void             udp_remove     (struct udp_pcb *pcb);
-err_t            udp_bind       (struct udp_pcb *pcb, struct ip_addr *ipaddr,
+err_t            udp_bind       (struct udp_pcb *pcb, ip_addr_t *ipaddr,
                                  u16_t port);
-err_t            udp_connect    (struct udp_pcb *pcb, struct ip_addr *ipaddr,
+err_t            udp_connect    (struct udp_pcb *pcb, ip_addr_t *ipaddr,
                                  u16_t port);
 void             udp_disconnect (struct udp_pcb *pcb);
 void             udp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
                                  void *recv_arg);
 err_t            udp_sendto_if  (struct udp_pcb *pcb, struct pbuf *p,
-                                 struct ip_addr *dst_ip, u16_t dst_port,
+                                 ip_addr_t *dst_ip, u16_t dst_port,
                                  struct netif *netif);
 err_t            udp_sendto     (struct udp_pcb *pcb, struct pbuf *p,
-                                 struct ip_addr *dst_ip, u16_t dst_port);
+                                 ip_addr_t *dst_ip, u16_t dst_port);
 err_t            udp_send       (struct udp_pcb *pcb, struct pbuf *p);
 
 #define          udp_flags(pcb) ((pcb)->flags)

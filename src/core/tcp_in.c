@@ -131,11 +131,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
 #if CHECKSUM_CHECK_TCP
   /* Verify TCP checksum. */
-  if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
-      (struct ip_addr *)&(iphdr->dest),
+  if (inet_chksum_pseudo(p, &iphdr->src, &iphdr->dest,
       IP_PROTO_TCP, p->tot_len) != 0) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
-        inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src), (struct ip_addr *)&(iphdr->dest),
+        inet_chksum_pseudo(p, &iphdr->src, &iphdr->dest,
       IP_PROTO_TCP, p->tot_len)));
 #if TCP_DEBUG
     tcp_debug_print(tcphdr);

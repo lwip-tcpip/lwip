@@ -767,7 +767,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
  */
 void
 tcp_rst(u32_t seqno, u32_t ackno,
-  struct ip_addr *local_ip, struct ip_addr *remote_ip,
+  ip_addr_t *local_ip, ip_addr_t *remote_ip,
   u16_t local_port, u16_t remote_port)
 {
   struct pbuf *p;

@@ -49,8 +49,8 @@
 
 /** helper struct for gethostbyname_r to access the char* buffer */
 struct gethostbyname_r_helper {
-  struct ip_addr *addrs;
-  struct ip_addr addr;
+  ip_addr_t *addrs;
+  ip_addr_t addr;
   char *aliases;
 };
 
@@ -85,13 +85,13 @@ struct hostent*
 lwip_gethostbyname(const char *name)
 {
   err_t err;
-  struct ip_addr addr;
+  ip_addr_t addr;
 
   /* buffer variables for lwip_gethostbyname() */
   HOSTENT_STORAGE struct hostent s_hostent;
   HOSTENT_STORAGE char *s_aliases;
-  HOSTENT_STORAGE struct ip_addr s_hostent_addr;
-  HOSTENT_STORAGE struct ip_addr *s_phostent_addr;
+  HOSTENT_STORAGE ip_addr_t s_hostent_addr;
+  HOSTENT_STORAGE ip_addr_t *s_phostent_addr;
 
   /* query host IP address */
   err = netconn_gethostbyname(name, &addr);
@@ -107,7 +107,7 @@ lwip_gethostbyname(const char *name)
   s_hostent.h_name = (char*)name;
   s_hostent.h_aliases = &s_aliases;
   s_hostent.h_addrtype = AF_INET;
-  s_hostent.h_length = sizeof(struct ip_addr);
+  s_hostent.h_length = sizeof(ip_addr_t);
   s_hostent.h_addr_list = (char**)&s_phostent_addr;
 
 #if DNS_DEBUG
@@ -128,7 +128,7 @@ lwip_gethostbyname(const char *name)
     u8_t idx;
     for ( idx=0; s_hostent.h_addr_list[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ip_ntoa((struct ip_addr*)s_hostent.h_addr_list[idx])));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ip_ntoa((ip_addr_t*)s_hostent.h_addr_list[idx])));
     }
   }
 #endif /* DNS_DEBUG */
@@ -213,7 +213,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   ret->h_name = (char*)hostname;
   ret->h_aliases = &(h->aliases);
   ret->h_addrtype = AF_INET;
-  ret->h_length = sizeof(struct ip_addr);
+  ret->h_length = sizeof(ip_addr_t);
   ret->h_addr_list = (char**)&(h->addrs);
 
   /* set result != NULL */
@@ -266,7 +266,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
        const struct addrinfo *hints, struct addrinfo **res)
 {
   err_t err;
-  struct ip_addr addr;
+  ip_addr_t addr;
   struct addrinfo *ai;
   struct sockaddr_in *sa = NULL;
   int port_nr = 0;

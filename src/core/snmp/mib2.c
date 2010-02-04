@@ -1084,7 +1084,7 @@ void snmp_dec_iflist(void)
  * Inserts ARP table indexes (.xIfIndex.xNetAddress)
  * into arp table index trees (both atTable and ipNetToMediaTable).
  */
-void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
+void snmp_insert_arpidx_tree(struct netif *ni, ip_addr_t *ip)
 {
   struct mib_list_rootnode *at_rn;
   struct mib_list_node *at_node;
@@ -1156,7 +1156,7 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
  * Removes ARP table indexes (.xIfIndex.xNetAddress)
  * from arp table index trees.
  */
-void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
+void snmp_delete_arpidx_tree(struct netif *ni, ip_addr_t *ip)
 {
   struct mib_list_rootnode *at_rn, *next, *del_rn[5];
   struct mib_list_node *at_n, *del_n[5];
@@ -1437,7 +1437,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
 void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
 {
   u8_t insert = 0;
-  struct ip_addr dst;
+  ip_addr_t dst;
 
   if (dflt != 0)
   {
@@ -1514,7 +1514,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
 void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
 {
   u8_t del = 0;
-  struct ip_addr dst;
+  ip_addr_t dst;
 
   if (dflt != 0)
   {
@@ -2723,9 +2723,9 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
-  struct ip_addr* ipaddr_ret;
+  ip_addr_t* ipaddr_ret;
 #endif /* LWIP_ARP */
-  struct ip_addr ip;
+  ip_addr_t ip;
   struct netif *netif;
 
   LWIP_UNUSED_ARG(len);
@@ -2756,7 +2756,7 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 3: /* atNetAddress */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
 
           *dst = *ipaddr_ret;
         }
@@ -3071,7 +3071,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
   u16_t ifidx;
-  struct ip_addr ip;
+  ip_addr_t ip;
   struct netif *netif = netif_list;
 
   LWIP_UNUSED_ARG(len);
@@ -3091,7 +3091,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* ipAdEntAddr */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
           *dst = netif->ip_addr;
         }
         break;
@@ -3103,7 +3103,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 3: /* ipAdEntNetMask */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
           *dst = netif->netmask;
         }
         break;
@@ -3211,7 +3211,7 @@ static void
 ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
-  struct ip_addr dest;
+  ip_addr_t dest;
   s32_t *ident;
   u8_t id;
 
@@ -3241,7 +3241,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* ipRouteDest */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
 
           if (ip_addr_isany(&dest))
           {
@@ -3290,7 +3290,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 7: /* ipRouteNextHop */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
 
           if (ip_addr_isany(&dest))
           {
@@ -3337,7 +3337,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 11: /* ipRouteMask */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
 
           if (ip_addr_isany(&dest))
           {
@@ -3414,9 +3414,9 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
-  struct ip_addr* ipaddr_ret;
+  ip_addr_t* ipaddr_ret;
 #endif /* LWIP_ARP */
-  struct ip_addr ip;
+  ip_addr_t ip;
   struct netif *netif;
 
   LWIP_UNUSED_ARG(len);
@@ -3447,7 +3447,7 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 3: /* ipNetToMediaNetAddress */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
 
           *dst = *ipaddr_ret;
         }
@@ -3772,7 +3772,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 static void
 tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
-  struct ip_addr lip, rip;
+  ip_addr_t lip, rip;
   u16_t lport, rport;
   s32_t *ident;
 
@@ -3881,7 +3881,7 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
   struct udp_pcb *pcb;
-  struct ip_addr ip;
+  ip_addr_t ip;
   u16_t port;
 
   LWIP_UNUSED_ARG(len);
@@ -3905,7 +3905,7 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* udpLocalAddress */
         {
-          struct ip_addr *dst = (struct ip_addr*)value;
+          ip_addr_t *dst = (ip_addr_t*)value;
           *dst = pcb->local_ip;
         }
         break;

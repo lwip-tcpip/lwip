@@ -94,8 +94,8 @@ struct in_addr {
 
 /* directly map this to the lwip internal functions */
 #define inet_addr(cp)         ipaddr_addr(cp)
-#define inet_aton(cp, addr)   ipaddr_aton(cp, (struct ip_addr*)addr)
-#define inet_ntoa(addr)       ipaddr_ntoa((struct ip_addr*)&(addr))
+#define inet_aton(cp, addr)   ipaddr_aton(cp, (ip_addr_t*)addr)
+#define inet_ntoa(addr)       ipaddr_ntoa((ip_addr_t*)&(addr))
 
 #ifdef __cplusplus
 }

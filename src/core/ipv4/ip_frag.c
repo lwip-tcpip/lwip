@@ -629,7 +629,7 @@ static u8_t buf[LWIP_MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU + MEM_ALIGNMENT - 1)];
  * @return ERR_OK if sent successfully, err_t otherwise
  */
 err_t 
-ip_frag(struct pbuf *p, struct netif *netif, struct ip_addr *dest)
+ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
 {
   struct pbuf *rambuf;
 #if IP_FRAG_USES_STATIC_BUF

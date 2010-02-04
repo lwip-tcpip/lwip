@@ -74,8 +74,8 @@ extern "C" {
    having to change all PCB structs. */
 #define IP_PCB \
   /* ip addresses in network byte order */ \
-  struct ip_addr local_ip; \
-  struct ip_addr remote_ip; \
+  ip_addr_t local_ip; \
+  ip_addr_t remote_ip; \
    /* Socket options */  \
   u16_t so_options;      \
    /* Type Of Service */ \
@@ -127,8 +127,8 @@ struct ip_hdr {
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);
   /* source and destination IP addresses */
-  PACK_STRUCT_FIELD(struct ip_addr src);
-  PACK_STRUCT_FIELD(struct ip_addr dest); 
+  PACK_STRUCT_FIELD(ip_addr_t src);
+  PACK_STRUCT_FIELD(ip_addr_t dest); 
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -160,19 +160,19 @@ extern struct netif *current_netif;
 extern const struct ip_hdr *current_header;
 
 #define ip_init() /* Compatibility define, not init needed. */
-struct netif *ip_route(struct ip_addr *dest);
+struct netif *ip_route(ip_addr_t *dest);
 err_t ip_input(struct pbuf *p, struct netif *inp);
-err_t ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+err_t ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto);
-err_t ip_output_if(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+err_t ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto,
        struct netif *netif);
 #if LWIP_NETIF_HWADDRHINT
-err_t ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+err_t ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT */
 #if IP_OPTIONS_SEND
-err_t ip_output_if_opt(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
+err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */

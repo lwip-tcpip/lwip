@@ -156,9 +156,9 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
-err_t            tcp_bind    (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
+err_t            tcp_bind    (struct tcp_pcb *pcb, ip_addr_t *ipaddr,
                               u16_t port);
-err_t            tcp_connect (struct tcp_pcb *pcb, struct ip_addr *ipaddr,
+err_t            tcp_connect (struct tcp_pcb *pcb, ip_addr_t *ipaddr,
                               u16_t port, tcp_connected_fn connected);
 
 struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
@@ -606,7 +606,7 @@ err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
 void tcp_rst(u32_t seqno, u32_t ackno,
-       struct ip_addr *local_ip, struct ip_addr *remote_ip,
+       ip_addr_t *local_ip, ip_addr_t *remote_ip,
        u16_t local_port, u16_t remote_port);
 
 u32_t tcp_next_iss(void);
@@ -615,7 +615,7 @@ void tcp_keepalive(struct tcp_pcb *pcb);
 void tcp_zero_window_probe(struct tcp_pcb *pcb);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-u16_t tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr);
+u16_t tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API

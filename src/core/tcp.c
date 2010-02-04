@@ -216,7 +216,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 {
   u32_t seqno, ackno;
   u16_t remote_port, local_port;
-  struct ip_addr remote_ip, local_ip;
+  ip_addr_t remote_ip, local_ip;
 #if LWIP_CALLBACK_API  
   tcp_err_fn errf;
 #endif /* LWIP_CALLBACK_API */
@@ -275,7 +275,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
  *         ERR_OK if bound
  */
 err_t
-tcp_bind(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
+tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   struct tcp_pcb *cpcb;
 
@@ -517,7 +517,7 @@ tcp_new_port(void)
  *         other err_t values if connect request couldn't be sent
  */
 err_t
-tcp_connect(struct tcp_pcb *pcb, struct ip_addr *ipaddr, u16_t port,
+tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
       tcp_connected_fn connected)
 {
   err_t ret;
@@ -1311,7 +1311,7 @@ tcp_next_iss(void)
  * calculating the minimum of TCP_MSS and that netif's mtu (if set).
  */
 u16_t
-tcp_eff_send_mss(u16_t sendmss, struct ip_addr *addr)
+tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
 {
   u16_t mss_s;
   struct netif *outif;

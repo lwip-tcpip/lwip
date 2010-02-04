@@ -42,10 +42,10 @@ extern "C" {
 
 struct netbuf {
   struct pbuf *p, *ptr;
-  struct ip_addr *addr;
+  ip_addr_t *addr;
   u16_t port;
 #if LWIP_NETBUF_RECVINFO
-  struct ip_addr *toaddr;
+  ip_addr_t *toaddr;
   u16_t toport;
 #endif /* LWIP_NETBUF_RECVINFO */
 };

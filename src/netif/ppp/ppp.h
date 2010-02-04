@@ -336,7 +336,7 @@ struct ppp_settings {
 };
 
 struct ppp_addrs {
-  struct ip_addr our_ipaddr, his_ipaddr, netmask, dns1, dns2;
+  ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
 
 /*****************************

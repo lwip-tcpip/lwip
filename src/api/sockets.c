@@ -272,7 +272,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
   struct lwip_socket *sock, *nsock;
   struct netconn *newconn;
-  struct ip_addr naddr;
+  ip_addr_t naddr;
   u16_t port;
   int newsock;
   struct sockaddr_in sin;
@@ -358,7 +358,7 @@ int
 lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
 {
   struct lwip_socket *sock;
-  struct ip_addr local_addr;
+  ip_addr_t local_addr;
   u16_t local_port;
   err_t err;
 
@@ -427,7 +427,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
     err = netconn_disconnect(sock->conn);
   } else {
-    struct ip_addr remote_addr;
+    ip_addr_t remote_addr;
     u16_t remote_port;
 
     inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)name)->sin_addr);
@@ -494,7 +494,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   struct netbuf      *buf;
   u16_t               buflen, copylen;
   int                 off = 0;
-  struct ip_addr     *addr;
+  ip_addr_t     *addr;
   u16_t               port;
   u8_t                done = 0;
   err_t               err;
@@ -578,11 +578,12 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
     /* Check to see from where the data was.*/
     if (done) {
+      ip_addr_t fromaddr;
       if (from && fromlen) {
         struct sockaddr_in sin;
 
         if (netconn_type(sock->conn) == NETCONN_TCP) {
-          addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+          addr = &fromaddr;
           netconn_getaddr(sock->conn, addr, &port, 0);
         } else {
           addr = netbuf_fromaddr(buf);
@@ -605,11 +606,9 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         ip_addr_debug_print(SOCKETS_DEBUG, addr);
         LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
       } else {
-  #if SOCKETS_DEBUG
-        struct sockaddr_in sin;
-
+#if SOCKETS_DEBUG
         if (netconn_type(sock->conn) == NETCONN_TCP) {
-          addr = (struct ip_addr*)&(sin.sin_addr.s_addr);
+          addr = &fromaddr;
           netconn_getaddr(sock->conn, addr, &port, 0);
         } else {
           addr = netbuf_fromaddr(buf);
@@ -619,7 +618,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         ip_addr_debug_print(SOCKETS_DEBUG, addr);
         LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
-  #endif /*  SOCKETS_DEBUG */
+#endif /*  SOCKETS_DEBUG */
       }
     }
 
@@ -691,7 +690,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
        const struct sockaddr *to, socklen_t tolen)
 {
   struct lwip_socket *sock;
-  struct ip_addr remote_addr;
+  ip_addr_t remote_addr;
   err_t err;
   u16_t short_size;
 #if !LWIP_TCPIP_CORE_LOCKING
@@ -1176,7 +1175,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
   struct lwip_socket *sock;
   struct sockaddr_in sin;
-  struct ip_addr naddr;
+  ip_addr_t naddr;
 
   sock = get_socket(s);
   if (!sock)
@@ -1870,10 +1869,14 @@ lwip_setsockopt_internal(void *arg)
       {
         /* If this is a TCP or a RAW socket, ignore these options. */
         struct ip_mreq *imr = (struct ip_mreq *)optval;
+        ip_addr_t if_addr;
+        ip_addr_t multi_addr;
+        inet_addr_to_ipaddr(&if_addr, &imr->imr_interface);
+        inet_addr_to_ipaddr(&multi_addr, &imr->imr_multiaddr);
         if(optname == IP_ADD_MEMBERSHIP){
-          data->err = igmp_joingroup((struct ip_addr*)&(imr->imr_interface.s_addr), (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
+          data->err = igmp_joingroup(&if_addr, &multi_addr);
         } else {
-          data->err = igmp_leavegroup((struct ip_addr*)&(imr->imr_interface.s_addr), (struct ip_addr*)&(imr->imr_multiaddr.s_addr));
+          data->err = igmp_leavegroup(&if_addr, &multi_addr);
         }
         if(data->err != ERR_OK) {
           data->err = EADDRNOTAVAIL;

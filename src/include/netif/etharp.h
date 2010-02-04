@@ -161,14 +161,14 @@ struct etharp_q_entry {
 
 #define etharp_init() /* Compatibility define, not init needed. */
 void etharp_tmr(void);
-s8_t etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
-         struct eth_addr **eth_ret, struct ip_addr **ip_ret);
+s8_t etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
+         struct eth_addr **eth_ret, ip_addr_t **ip_ret);
 void etharp_ip_input(struct netif *netif, struct pbuf *p);
 void etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr,
          struct pbuf *p);
-err_t etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr);
-err_t etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q);
-err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
+err_t etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr);
+err_t etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q);
+err_t etharp_request(struct netif *netif, ip_addr_t *ipaddr);
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
  *  this is an ARP packet sent by a node in order to spontaneously cause other
  *  nodes to update an entry in their ARP cache.
@@ -178,8 +178,8 @@ err_t etharp_request(struct netif *netif, struct ip_addr *ipaddr);
 #if LWIP_AUTOIP
 err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
                  const struct eth_addr *ethdst_addr,
-                 const struct eth_addr *hwsrc_addr, const struct ip_addr *ipsrc_addr,
-                 const struct eth_addr *hwdst_addr, const struct ip_addr *ipdst_addr,
+                 const struct eth_addr *hwsrc_addr, const ip_addr_t *ipsrc_addr,
+                 const struct eth_addr *hwdst_addr, const ip_addr_t *ipdst_addr,
                  const u16_t opcode);
 #endif /* LWIP_AUTOIP */
 

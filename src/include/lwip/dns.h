@@ -76,22 +76,22 @@
 /** Callback which is invoked when a hostname is found.
  * A function of this type must be implemented by the application using the DNS resolver.
  * @param name pointer to the name that was looked up.
- * @param ipaddr pointer to a struct ip_addr containing the IP address of the hostname,
+ * @param ipaddr pointer to an ip_addr_t containing the IP address of the hostname,
  *        or NULL if the name could not be found (or on any other error).
  * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, struct ip_addr *ipaddr, void *callback_arg);
+typedef void (*dns_found_callback)(const char *name, ip_addr_t *ipaddr, void *callback_arg);
 
 void           dns_init(void);
 void           dns_tmr(void);
-void           dns_setserver(u8_t numdns, struct ip_addr *dnsserver);
-struct ip_addr dns_getserver(u8_t numdns);
-err_t          dns_gethostbyname(const char *hostname, struct ip_addr *addr,
+void           dns_setserver(u8_t numdns, ip_addr_t *dnsserver);
+ip_addr_t      dns_getserver(u8_t numdns);
+err_t          dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                                  dns_found_callback found, void *callback_arg);
 
 #if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
-int            dns_local_removehost(const char *hostname, const struct ip_addr *addr);
-err_t          dns_local_addhost(const char *hostname, const struct ip_addr *addr);
+int            dns_local_removehost(const char *hostname, const ip_addr_t *addr);
+err_t          dns_local_addhost(const char *hostname, const ip_addr_t *addr);
 #endif /* DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 
 #endif /* LWIP_DNS */

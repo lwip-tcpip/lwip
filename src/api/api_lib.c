@@ -130,7 +130,7 @@ netconn_delete(struct netconn *conn)
  *         ERR_OK if the information was retrieved
  */
 err_t
-netconn_getaddr(struct netconn *conn, struct ip_addr *addr, u16_t *port, u8_t local)
+netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 {
   struct api_msg msg;
   err_t err;
@@ -161,7 +161,7 @@ netconn_getaddr(struct netconn *conn, struct ip_addr *addr, u16_t *port, u8_t lo
  * @return ERR_OK if bound, any other err_t on failure
  */
 err_t
-netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
+netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port)
 {
   struct api_msg msg;
   err_t err;
@@ -187,7 +187,7 @@ netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port)
  * @return ERR_OK if connected, return value of tcp_/udp_/raw_connect otherwise
  */
 err_t
-netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port)
+netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port)
 {
   struct api_msg msg;
   err_t err;
@@ -438,7 +438,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t
-netconn_sendto(struct netconn *conn, struct netbuf *buf, struct ip_addr *addr, u16_t port)
+netconn_sendto(struct netconn *conn, struct netbuf *buf, ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
     buf->addr = addr;
@@ -547,8 +547,8 @@ netconn_close(struct netconn *conn)
  */
 err_t
 netconn_join_leave_group(struct netconn *conn,
-                         struct ip_addr *multiaddr,
-                         struct ip_addr *netif_addr,
+                         ip_addr_t *multiaddr,
+                         ip_addr_t *netif_addr,
                          enum netconn_igmp join_or_leave)
 {
   struct api_msg msg;
@@ -573,14 +573,14 @@ netconn_join_leave_group(struct netconn *conn,
  * Execute a DNS query, only one IP address is returned
  *
  * @param name a string representation of the DNS host name to query
- * @param addr a preallocated struct ip_addr where to store the resolved IP address
+ * @param addr a preallocated ip_addr_t where to store the resolved IP address
  * @return ERR_OK: resolving succeeded
  *         ERR_MEM: memory error, try again later
  *         ERR_ARG: dns client not initialized or invalid hostname
  *         ERR_VAL: dns server response was invalid
  */
 err_t
-netconn_gethostbyname(const char *name, struct ip_addr *addr)
+netconn_gethostbyname(const char *name, ip_addr_t *addr)
 {
   struct dns_api_msg msg;
   err_t err;

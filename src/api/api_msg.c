@@ -70,7 +70,7 @@ static void do_close_internal(struct netconn *conn);
  */
 static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    struct ip_addr *addr)
+    ip_addr_t *addr)
 {
   struct pbuf *q;
   struct netbuf *buf;
@@ -136,7 +136,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  */
 static void
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-   struct ip_addr *addr, u16_t port)
+   ip_addr_t *addr, u16_t port)
 {
   struct netbuf *buf;
   struct netconn *conn;
@@ -176,7 +176,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
       const struct ip_hdr* iphdr = ip_current_header();
       /* get the UDP header - always in the first pbuf, ensured by udp_input */
       const struct udp_hdr* udphdr = (void*)(((char*)iphdr) + IPH_LEN(iphdr));
-      buf->toaddr = (struct ip_addr*)&iphdr->dest;
+      buf->toaddr = (ip_addr_t*)&iphdr->dest;
       buf->toport = udphdr->dest;
     }
 #endif /* LWIP_NETBUF_RECVINFO */
@@ -1387,7 +1387,7 @@ do_join_leave_group(struct api_msg_msg *msg)
  * signaling the semaphore.
  */
 static void
-do_dns_found(const char *name, struct ip_addr *ipaddr, void *arg)
+do_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 

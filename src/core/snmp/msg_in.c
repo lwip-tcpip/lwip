@@ -58,7 +58,7 @@ struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
 /* UDP Protocol Control Block */
 struct udp_pcb *snmp1_pcb;
 
-static void snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
+static void snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port);
 static err_t snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat);
 static err_t snmp_pdu_dec_varbindlist(struct pbuf *p, u16_t ofs, u16_t *ofs_ret, struct snmp_msg_pstat *m_stat);
 
@@ -806,7 +806,7 @@ snmp_msg_event(u8_t request_id)
 
 /* lwIP UDP receive callback function */
 static void
-snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+snmp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
 {
   struct snmp_msg_pstat *msg_ps;
   u8_t req_idx;

@@ -102,7 +102,7 @@ struct etharp_entry {
    */
   struct etharp_q_entry *q;
 #endif
-  struct ip_addr ipaddr;
+  ip_addr_t ipaddr;
   struct eth_addr ethaddr;
   enum etharp_state state;
   u8_t ctime;
@@ -123,12 +123,12 @@ static u8_t etharp_cached_entry;
 #if LWIP_NETIF_HWADDRHINT
 #define NETIF_SET_HINT(netif, hint)  if (((netif) != NULL) && ((netif)->addr_hint != NULL))  \
                                       *((netif)->addr_hint) = (hint);
-static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags, struct netif *netif);
+static s8_t find_entry(ip_addr_t *ipaddr, u8_t flags, struct netif *netif);
 #else /* LWIP_NETIF_HWADDRHINT */
-static s8_t find_entry(struct ip_addr *ipaddr, u8_t flags);
+static s8_t find_entry(ip_addr_t *ipaddr, u8_t flags);
 #endif /* LWIP_NETIF_HWADDRHINT */
 
-static err_t update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags);
+static err_t update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethaddr, u8_t flags);
 
 
 /* Some checks, instead of etharp_init(): */
@@ -229,9 +229,9 @@ etharp_tmr(void)
  */
 static s8_t
 #if LWIP_NETIF_HWADDRHINT
-find_entry(struct ip_addr *ipaddr, u8_t flags, struct netif *netif)
+find_entry(ip_addr_t *ipaddr, u8_t flags, struct netif *netif)
 #else /* LWIP_NETIF_HWADDRHINT */
-find_entry(struct ip_addr *ipaddr, u8_t flags)
+find_entry(ip_addr_t *ipaddr, u8_t flags)
 #endif /* LWIP_NETIF_HWADDRHINT */
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
@@ -468,7 +468,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct
  * @see pbuf_free()
  */
 static err_t
-update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *ethaddr, u8_t flags)
+update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i;
   u8_t k;
@@ -545,8 +545,8 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
  * @return table index if found, -1 otherwise
  */
 s8_t
-etharp_find_addr(struct netif *netif, struct ip_addr *ipaddr,
-         struct eth_addr **eth_ret, struct ip_addr **ip_ret)
+etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
+         struct eth_addr **eth_ret, ip_addr_t **ip_ret)
 {
   s8_t i;
 
@@ -631,7 +631,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   struct etharp_hdr *hdr;
   struct eth_hdr *ethhdr;
   /* these are aligned properly, whereas the ARP header fields might not be */
-  struct ip_addr sipaddr, dipaddr;
+  ip_addr_t sipaddr, dipaddr;
   u8_t i;
   u8_t for_us;
 #if LWIP_AUTOIP
@@ -662,7 +662,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != htons(HWTYPE_ETHERNET)) ||
-      (hdr->_hwlen_protolen != htons((ETHARP_HWADDR_LEN << 8) | sizeof(struct ip_addr))) ||
+      (hdr->_hwlen_protolen != htons((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t))) ||
       (hdr->proto != htons(ETHTYPE_IP)) ||
       (ethhdr->type != htons(ETHTYPE_ARP)))  {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
@@ -724,8 +724,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
          that would allocate a new pbuf. */
       hdr->opcode = htons(ARP_REPLY);
 
-      SMEMCPY(&hdr->dipaddr, &hdr->sipaddr, sizeof(struct ip_addr));
-      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(struct ip_addr));
+      SMEMCPY(&hdr->dipaddr, &hdr->sipaddr, sizeof(ip_addr_t));
+      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(ip_addr_t));
 
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));
@@ -802,7 +802,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
  * or the return type of either etharp_query() or etharp_send_ip().
  */
 err_t
-etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
+etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
 {
   struct eth_addr *dest, mcastaddr;
 
@@ -893,7 +893,7 @@ etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
  *
  */
 err_t
-etharp_query(struct netif *netif, struct ip_addr *ipaddr, struct pbuf *q)
+etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
 {
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_MEM;
@@ -1049,8 +1049,8 @@ static
 err_t
 etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
            const struct eth_addr *ethdst_addr,
-           const struct eth_addr *hwsrc_addr, const struct ip_addr *ipsrc_addr,
-           const struct eth_addr *hwdst_addr, const struct ip_addr *ipdst_addr,
+           const struct eth_addr *hwsrc_addr, const ip_addr_t *ipsrc_addr,
+           const struct eth_addr *hwdst_addr, const ip_addr_t *ipdst_addr,
            const u16_t opcode)
 {
   struct pbuf *p;
@@ -1103,13 +1103,13 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   }
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing. */ 
-  SMEMCPY(&hdr->sipaddr, ipsrc_addr, sizeof(struct ip_addr));
-  SMEMCPY(&hdr->dipaddr, ipdst_addr, sizeof(struct ip_addr));
+  SMEMCPY(&hdr->sipaddr, ipsrc_addr, sizeof(ip_addr_t));
+  SMEMCPY(&hdr->dipaddr, ipdst_addr, sizeof(ip_addr_t));
 
   hdr->hwtype = htons(HWTYPE_ETHERNET);
   hdr->proto = htons(ETHTYPE_IP);
   /* set hwlen and protolen together */
-  hdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(struct ip_addr));
+  hdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t));
 
   ethhdr->type = htons(ETHTYPE_ARP);
   /* send ARP query */
@@ -1133,7 +1133,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
  *         any other err_t on failure
  */
 err_t
-etharp_request(struct netif *netif, struct ip_addr *ipaddr)
+etharp_request(struct netif *netif, ip_addr_t *ipaddr)
 {
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_request: sending ARP request.\n"));
   return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,

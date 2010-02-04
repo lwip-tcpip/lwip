@@ -187,7 +187,7 @@ struct dns_table_entry {
   u8_t  err;
   u32_t ttl;
   char name[DNS_MAX_NAME_LENGTH];
-  struct ip_addr ipaddr;
+  ip_addr_t ipaddr;
   /* pointer to callback on DNS query done */
   dns_found_callback found;
   void *arg;
@@ -199,7 +199,7 @@ struct local_hostlist_entry {
   /** static hostname */
   const char *name;
   /** static host address in network byteorder */
-  struct ip_addr addr;
+  ip_addr_t addr;
   struct local_hostlist_entry *next;
 };
 
@@ -229,7 +229,7 @@ static void dns_init_local();
 
 
 /* forward declarations */
-static void dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
+static void dns_recv(void *s, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port);
 static void dns_check_entries(void);
 
 /*-----------------------------------------------------------------------------
@@ -240,7 +240,7 @@ static void dns_check_entries(void);
 static struct udp_pcb        *dns_pcb;
 static u8_t                   dns_seqno;
 static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
-static struct ip_addr         dns_servers[DNS_MAX_SERVERS];
+static ip_addr_t         dns_servers[DNS_MAX_SERVERS];
 
 #if (DNS_USES_STATIC_BUF == 1)
 static u8_t                   dns_payload[DNS_MSG_SIZE];
@@ -253,7 +253,7 @@ static u8_t                   dns_payload[DNS_MSG_SIZE];
 void
 dns_init()
 {
-  struct ip_addr dnsserver;
+  ip_addr_t dnsserver;
   
   /* initialize default DNS server address */
   DNS_SERVER_ADDRESS(&dnsserver);
@@ -290,7 +290,7 @@ dns_init()
  * @param dnsserver IP address of the DNS server to set
  */
 void
-dns_setserver(u8_t numdns, struct ip_addr *dnsserver)
+dns_setserver(u8_t numdns, ip_addr_t *dnsserver)
 {
   if ((numdns < DNS_MAX_SERVERS) && (dns_pcb != NULL) &&
       (dnsserver != NULL) && !ip_addr_isany(dnsserver)) {
@@ -305,7 +305,7 @@ dns_setserver(u8_t numdns, struct ip_addr *dnsserver)
  * @return IP address of the indexed DNS server or "ip_addr_any" if the DNS
  *         server has not been configured.
  */
-struct ip_addr
+ip_addr_t
 dns_getserver(u8_t numdns)
 {
   if (numdns < DNS_MAX_SERVERS) {
@@ -395,7 +395,7 @@ dns_lookup_local(const char *hostname)
  * @return the number of removed entries
  */
 int
-dns_local_removehost(const char *hostname, const struct ip_addr *addr)
+dns_local_removehost(const char *hostname, const ip_addr_t *addr)
 {
   int removed = 0;
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
@@ -430,7 +430,7 @@ dns_local_removehost(const char *hostname, const struct ip_addr *addr)
  * @return ERR_OK if succeeded or ERR_MEM on memory error
  */
 err_t
-dns_local_addhost(const char *hostname, const struct ip_addr *addr)
+dns_local_addhost(const char *hostname, const ip_addr_t *addr)
 {
   struct local_hostlist_entry *entry;
   size_t namelen;
@@ -460,7 +460,7 @@ dns_local_addhost(const char *hostname, const struct ip_addr *addr)
  * for a hostname.
  *
  * @param name the hostname to look up
- * @return the hostname's IP address, as u32_t (instead of struct ip_addr to
+ * @return the hostname's IP address, as u32_t (instead of ip_addr_t to
  *         better check for failure: != IPADDR_NONE) or IPADDR_NONE if the hostname
  *         was not found in the cached dns_table.
  */
@@ -739,7 +739,7 @@ dns_check_entries(void)
  * @params see udp.h
  */
 static void
-dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port)
+dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
 {
   u16_t i;
   char *pHostname;
@@ -824,14 +824,14 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u
 
           /* Check for IP address type and Internet class. Others are discarded. */
           MEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
-          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(struct ip_addr)) ) {
+          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(ip_addr_t)) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {
               pEntry->ttl = DNS_MAX_TTL;
             }
             /* read the IP address after answer resource record's header */
-            MEMCPY( &(pEntry->ipaddr), (pHostname+SIZEOF_DNS_ANSWER), sizeof(struct ip_addr));
+            MEMCPY( &(pEntry->ipaddr), (pHostname+SIZEOF_DNS_ANSWER), sizeof(ip_addr_t));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
@@ -950,7 +950,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
  *   for resolution if no errors are present.
  *
  * @param hostname the hostname that is to be queried
- * @param addr pointer to a struct ip_addr where to store the address if it is already
+ * @param addr pointer to a ip_addr_t where to store the address if it is already
  *             cached in the dns_table (only valid if ERR_OK is returned!)
  * @param found a callback function to be called on success, failure or timeout (only if
  *              ERR_INPROGRESS is returned!)
@@ -958,7 +958,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
  * @return a err_t return code.
  */
 err_t
-dns_gethostbyname(const char *hostname, struct ip_addr *addr, dns_found_callback found,
+dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback found,
                   void *callback_arg)
 {
   u32_t ipaddr;

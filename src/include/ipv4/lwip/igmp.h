@@ -88,7 +88,7 @@ struct igmp_msg {
  PACK_STRUCT_FIELD(u8_t           igmp_msgtype);
  PACK_STRUCT_FIELD(u8_t           igmp_maxresp);
  PACK_STRUCT_FIELD(u16_t          igmp_checksum);
- PACK_STRUCT_FIELD(struct ip_addr igmp_group_address);
+ PACK_STRUCT_FIELD(ip_addr_t      igmp_group_address);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -109,7 +109,7 @@ PACK_STRUCT_END
 struct igmp_group {
   struct igmp_group *next;
   struct netif      *netif;
-  struct ip_addr     group_address;
+  ip_addr_t          group_address;
   u8_t               last_reporter_flag; /* signifies we were the last person to report */
   u8_t               group_state;
   u16_t              timer;
@@ -122,18 +122,18 @@ void   igmp_init(void);
 err_t  igmp_start( struct netif *netif);
 err_t  igmp_stop( struct netif *netif);
 void   igmp_report_groups( struct netif *netif);
-struct igmp_group *igmp_lookfor_group( struct netif *ifp, struct ip_addr *addr);
-struct igmp_group *igmp_lookup_group( struct netif *ifp, struct ip_addr *addr);
+struct igmp_group *igmp_lookfor_group( struct netif *ifp, ip_addr_t *addr);
+struct igmp_group *igmp_lookup_group( struct netif *ifp, ip_addr_t *addr);
 err_t  igmp_remove_group( struct igmp_group *group);
-void   igmp_input( struct pbuf *p, struct netif *inp, struct ip_addr *dest);
-err_t  igmp_joingroup( struct ip_addr *ifaddr, struct ip_addr *groupaddr);
-err_t  igmp_leavegroup( struct ip_addr *ifaddr, struct ip_addr *groupaddr);
+void   igmp_input( struct pbuf *p, struct netif *inp, ip_addr_t *dest);
+err_t  igmp_joingroup( ip_addr_t *ifaddr, ip_addr_t *groupaddr);
+err_t  igmp_leavegroup( ip_addr_t *ifaddr, ip_addr_t *groupaddr);
 void   igmp_tmr(void);
 void   igmp_timeout( struct igmp_group *group);
 void   igmp_start_timer( struct igmp_group *group, u8_t max_time);
 void   igmp_stop_timer( struct igmp_group *group);
 void   igmp_delaying_member( struct igmp_group *group, u8_t maxresp);
-err_t  igmp_ip_output_if( struct pbuf *p, struct ip_addr *src, struct ip_addr *dest, u8_t ttl, u8_t proto, struct netif *netif);
+err_t  igmp_ip_output_if( struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, u8_t ttl, u8_t proto, struct netif *netif);
 void   igmp_send( struct igmp_group *group, u8_t type);
 
 #ifdef __cplusplus

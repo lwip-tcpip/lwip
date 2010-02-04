@@ -121,8 +121,8 @@ void snmp_inc_iflist(void);
 void snmp_dec_iflist(void);
 
 /* ARP (for atTable and ipNetToMediaTable) */
-void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip);
-void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip);
+void snmp_insert_arpidx_tree(struct netif *ni, ip_addr_t *ip);
+void snmp_delete_arpidx_tree(struct netif *ni, ip_addr_t *ip);
 
 /* IP */
 void snmp_inc_ipinreceives(void);

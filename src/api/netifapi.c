@@ -96,9 +96,9 @@ do_netifapi_netif_common(struct netifapi_msg_msg *msg)
  */
 err_t
 netifapi_netif_add(struct netif *netif,
-                   struct ip_addr *ipaddr,
-                   struct ip_addr *netmask,
-                   struct ip_addr *gw,
+                   ip_addr_t *ipaddr,
+                   ip_addr_t *netmask,
+                   ip_addr_t *gw,
                    void *state,
                    netif_init_fn init,
                    netif_input_fn input)
@@ -124,9 +124,9 @@ netifapi_netif_add(struct netif *netif,
  */
 err_t
 netifapi_netif_set_addr(struct netif *netif,
-                        struct ip_addr *ipaddr,
-                        struct ip_addr *netmask,
-                        struct ip_addr *gw)
+                        ip_addr_t *ipaddr,
+                        ip_addr_t *netmask,
+                        ip_addr_t *gw)
 {
   struct netifapi_msg msg;
   msg.function = do_netifapi_netif_set_addr;

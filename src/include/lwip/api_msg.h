@@ -70,12 +70,12 @@ struct api_msg_msg {
     } n;
     /** used for do_bind and do_connect */
     struct {
-      struct ip_addr *ipaddr;
+      ip_addr_t *ipaddr;
       u16_t port;
     } bc;
     /** used for do_getaddr */
     struct {
-      struct ip_addr *ipaddr;
+      ip_addr_t *ipaddr;
       u16_t *port;
       u8_t local;
     } ad;
@@ -92,8 +92,8 @@ struct api_msg_msg {
 #if LWIP_IGMP
     /** used for do_join_leave_group */
     struct {
-      struct ip_addr *multiaddr;
-      struct ip_addr *netif_addr;
+      ip_addr_t *multiaddr;
+      ip_addr_t *netif_addr;
       enum netconn_igmp join_or_leave;
     } jl;
 #endif /* LWIP_IGMP */
@@ -124,7 +124,7 @@ struct dns_api_msg {
   /** Hostname to query or dotted IP address string */
   const char *name;
   /** Rhe resolved address is stored here */
-  struct ip_addr *addr;
+  ip_addr_t *addr;
   /** This semaphore is posted when the name is resolved, the application thread
       should wait on it. */
   sys_sem_t sem;

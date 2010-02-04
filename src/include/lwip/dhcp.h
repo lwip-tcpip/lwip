@@ -49,10 +49,10 @@ struct dhcp
   u16_t request_timeout; /* #ticks with period DHCP_FINE_TIMER_SECS for request timeout */
   u16_t t1_timeout;  /* #ticks with period DHCP_COARSE_TIMER_SECS for renewal time */
   u16_t t2_timeout;  /* #ticks with period DHCP_COARSE_TIMER_SECS for rebind time */
-  struct ip_addr server_ip_addr; /* dhcp server address that offered this lease */
-  struct ip_addr offered_ip_addr;
-  struct ip_addr offered_sn_mask;
-  struct ip_addr offered_gw_addr;
+  ip_addr_t server_ip_addr; /* dhcp server address that offered this lease */
+  ip_addr_t offered_ip_addr;
+  ip_addr_t offered_sn_mask;
+  ip_addr_t offered_gw_addr;
  
   u32_t offered_t0_lease; /* lease period (in seconds) */
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
@@ -60,7 +60,7 @@ struct dhcp
   /* @todo: LWIP_DHCP_BOOTP_FILE configuration option?
      integrate with possible TFTP-client for booting? */
 #if LWIP_DHCP_BOOTP_FILE
-  struct ip_addr offered_si_addr;
+  ip_addr_t offered_si_addr;
   char boot_file_name[DHCP_FILE_LEN];
 #endif /* LWIP_DHCP_BOOTPFILE */
 };
@@ -80,10 +80,10 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u32_t xid);
   PACK_STRUCT_FIELD(u16_t secs);
   PACK_STRUCT_FIELD(u16_t flags);
-  PACK_STRUCT_FIELD(struct ip_addr ciaddr);
-  PACK_STRUCT_FIELD(struct ip_addr yiaddr);
-  PACK_STRUCT_FIELD(struct ip_addr siaddr);
-  PACK_STRUCT_FIELD(struct ip_addr giaddr);
+  PACK_STRUCT_FIELD(ip_addr_t ciaddr);
+  PACK_STRUCT_FIELD(ip_addr_t yiaddr);
+  PACK_STRUCT_FIELD(ip_addr_t siaddr);
+  PACK_STRUCT_FIELD(ip_addr_t giaddr);
   PACK_STRUCT_FIELD(u8_t chaddr[DHCP_CHADDR_LEN]);
   PACK_STRUCT_FIELD(u8_t sname[DHCP_SNAME_LEN]);
   PACK_STRUCT_FIELD(u8_t file[DHCP_FILE_LEN]);
@@ -120,7 +120,7 @@ void dhcp_network_changed(struct netif *netif);
 
 /** if enabled, check whether the offered IP address is not in use, using ARP */
 #if DHCP_DOES_ARP_CHECK
-void dhcp_arp_reply(struct netif *netif, struct ip_addr *addr);
+void dhcp_arp_reply(struct netif *netif, ip_addr_t *addr);
 #endif
 
 /** to be called every minute */

@@ -196,31 +196,31 @@ err_t   netconn_delete(struct netconn *conn);
 /** Get the type of a netconn (as enum netconn_type). */
 #define netconn_type(conn) (conn->type)
 
-err_t   netconn_getaddr(struct netconn *conn, struct ip_addr *addr,
+err_t   netconn_getaddr(struct netconn *conn, ip_addr_t *addr,
                         u16_t *port, u8_t local);
 #define netconn_peer(c,i,p) netconn_getaddr(c,i,p,0)
 #define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
 
-err_t   netconn_bind(struct netconn *conn, struct ip_addr *addr, u16_t port);
-err_t   netconn_connect(struct netconn *conn, struct ip_addr *addr, u16_t port);
+err_t   netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port);
+err_t   netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port);
 err_t   netconn_disconnect (struct netconn *conn);
 err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
 #define netconn_listen(conn) netconn_listen_with_backlog(conn, TCP_DEFAULT_LISTEN_BACKLOG)
 err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
 err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
 err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
-                       struct ip_addr *addr, u16_t port);
+                       ip_addr_t *addr, u16_t port);
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
 err_t   netconn_write(struct netconn *conn, const void *dataptr, size_t size,
                       u8_t apiflags);
 err_t   netconn_close(struct netconn *conn);
 
 #if LWIP_IGMP
-err_t   netconn_join_leave_group(struct netconn *conn, struct ip_addr *multiaddr,
-                                 struct ip_addr *netif_addr, enum netconn_igmp join_or_leave);
+err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
+                                 ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP */
 #if LWIP_DNS
-err_t   netconn_gethostbyname(const char *name, struct ip_addr *addr);
+err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_DNS */
 
 #define netconn_err(conn)               ((conn)->last_err)

@@ -240,8 +240,8 @@ void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
 u8_t noleafs_set_test(struct obj_def *od, u16_t len, void *value);
 void noleafs_set_value(struct obj_def *od, u16_t len, void *value);
 
-void snmp_oidtoip(s32_t *ident, struct ip_addr *ip);
-void snmp_iptooid(struct ip_addr *ip, s32_t *ident);
+void snmp_oidtoip(s32_t *ident, ip_addr_t *ip);
+void snmp_iptooid(ip_addr_t *ip, s32_t *ident);
 void snmp_ifindextonetif(s32_t ifindex, struct netif **netif);
 void snmp_netiftoifindex(struct netif *netif, s32_t *ifidx);
 

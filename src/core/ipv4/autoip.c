@@ -108,7 +108,7 @@
 static void autoip_handle_arp_conflict(struct netif *netif);
 
 /* creates a pseudo random LL IP-Address for a network interface */
-static void autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr);
+static void autoip_create_addr(struct netif *netif, ip_addr_t *ipaddr);
 
 /* sends an ARP probe */
 static err_t autoip_arp_probe(struct netif *netif);
@@ -171,7 +171,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * @param ipaddr ip address to initialize
  */
 static void
-autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr)
+autoip_create_addr(struct netif *netif, ip_addr_t *ipaddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
@@ -233,7 +233,7 @@ static err_t
 autoip_bind(struct netif *netif)
 {
   struct autoip *autoip = netif->autoip;
-  struct ip_addr sn_mask, gw_addr;
+  ip_addr_t sn_mask, gw_addr;
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
     ("autoip_bind(netif=%p) %c%c%"U16_F" %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -297,7 +297,7 @@ autoip_start(struct netif *netif)
     autoip->state = AUTOIP_STATE_OFF;
     autoip->ttw = 0;
     autoip->sent_num = 0;
-    memset(&autoip->llipaddr, 0, sizeof(struct ip_addr));
+    memset(&autoip->llipaddr, 0, sizeof(ip_addr_t));
     autoip->lastconflict = 0;
   }
 
@@ -451,7 +451,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
     * when probing  ip.dst == llipaddr && hw.src != netif->hwaddr
     * we have a conflict and must solve it
     */
-    struct ip_addr sipaddr, dipaddr;
+    ip_addr_t sipaddr, dipaddr;
     struct eth_addr netifaddr;
     netifaddr.addr[0] = netif->hwaddr[0];
     netifaddr.addr[1] = netif->hwaddr[1];

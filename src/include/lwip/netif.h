@@ -103,7 +103,7 @@ typedef err_t (*netif_input_fn)(struct pbuf *p, struct netif *inp);
  * @param ipaddr The IP address to which the packet shall be sent
  */
 typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
-       struct ip_addr *ipaddr);
+       ip_addr_t *ipaddr);
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
  * netifs. This function is called by ARP when a packet shall be sent.
  *
@@ -115,7 +115,7 @@ typedef err_t (*netif_linkoutput_fn)(struct netif *netif, struct pbuf *p);
 typedef void (*netif_status_callback_fn)(struct netif *netif);
 /** Function prototype for netif igmp_mac_filter functions */
 typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
-       struct ip_addr *group, u8_t action);
+       ip_addr_t *group, u8_t action);
 
 /** Generic data structure used for all lwIP network interfaces.
  *  The following fields should be filled in by the initialization
@@ -125,9 +125,9 @@ struct netif {
   struct netif *next;
 
   /** IP address configuration in network byte order */
-  struct ip_addr ip_addr;
-  struct ip_addr netmask;
-  struct ip_addr gw;
+  ip_addr_t ip_addr;
+  ip_addr_t netmask;
+  ip_addr_t gw;
 
   /** This function is called by the network device driver
    *  to pass a packet up the TCP/IP stack. */
@@ -239,12 +239,12 @@ extern struct netif *netif_default;
 
 #define netif_init() /* Compatibility define, no init needed. */
 
-struct netif *netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
-      struct ip_addr *gw, void *state, netif_init_fn init, netif_input_fn input);
+struct netif *netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
+      ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input);
 
 void
-netif_set_addr(struct netif *netif,struct ip_addr *ipaddr, struct ip_addr *netmask,
-      struct ip_addr *gw);
+netif_set_addr(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
+      ip_addr_t *gw);
 void netif_remove(struct netif * netif);
 
 /* Returns a network interface given its name. The name is of the form
@@ -255,9 +255,9 @@ struct netif *netif_find(char *name);
 
 void netif_set_default(struct netif *netif);
 
-void netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr);
-void netif_set_netmask(struct netif *netif, struct ip_addr *netmask);
-void netif_set_gw(struct netif *netif, struct ip_addr *gw);
+void netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr);
+void netif_set_netmask(struct netif *netif, ip_addr_t *netmask);
+void netif_set_gw(struct netif *netif, ip_addr_t *gw);
 
 void netif_set_up(struct netif *netif);
 void netif_set_down(struct netif *netif);
@@ -281,7 +281,7 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #if ENABLE_LOOPBACK
-err_t netif_loop_output(struct netif *netif, struct pbuf *p, struct ip_addr *dest_ip);
+err_t netif_loop_output(struct netif *netif, struct pbuf *p, ip_addr_t *dest_ip);
 void netif_poll(struct netif *netif);
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
 void netif_poll_all(void);

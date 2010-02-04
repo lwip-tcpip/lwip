@@ -55,7 +55,7 @@
 struct snmp_trap_dst
 {
   /* destination IP address in network order */
-  struct ip_addr dip;
+  ip_addr_t dip;
   /* set to 0 when disabled, >0 when enabled */
   u8_t enable;
 };
@@ -92,7 +92,7 @@ snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
  * @param dst IPv4 address in host order.
  */
 void
-snmp_trap_dst_ip_set(u8_t dst_idx, struct ip_addr *dst)
+snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst)
 {
   if (dst_idx < SNMP_TRAP_DESTINATIONS)
   {
@@ -221,7 +221,7 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
 {
   struct snmp_trap_dst *td;
   struct netif *dst_if;
-  struct ip_addr dst_ip;
+  ip_addr_t dst_ip;
   struct pbuf *p;
   u16_t i,tot_len;
 

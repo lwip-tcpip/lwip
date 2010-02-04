@@ -386,7 +386,7 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
   char devname[6];
   char *error;
   u8_t *ac_cookie;
-  size_t ac_cookie_len;
+  u16_t ac_cookie_len;
 #ifdef PPPOE_SERVER
   u8_t *hunique;
   size_t hunique_len;
@@ -549,9 +549,9 @@ breakbreak:;
       sc->sc_state = PPPOE_STATE_PADO_SENT;
       pppoe_send_pado(sc);
       break;
-  #endif /* PPPOE_SERVER */
+#endif /* PPPOE_SERVER */
     case PPPOE_CODE_PADR:
-  #ifdef PPPOE_SERVER
+#ifdef PPPOE_SERVER
       /*
        * get sc from ac_cookie if IFF_PASSIVE
        */
@@ -587,10 +587,10 @@ breakbreak:;
       sc->sc_state = PPPOE_STATE_SESSION;
       pppoe_linkstatus_up(sc); /* notify upper layers */
       break;
-  #else
+#else
       /* ignore, we are no access concentrator */
       goto done;
-  #endif /* PPPOE_SERVER */
+#endif /* PPPOE_SERVER */
     case PPPOE_CODE_PADO:
       if (sc == NULL) {
         /* be quiet if there is not a single pppoe instance */

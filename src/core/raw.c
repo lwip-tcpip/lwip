@@ -139,7 +139,7 @@ raw_input(struct pbuf *p, struct netif *inp)
  * @see raw_disconnect()
  */
 err_t
-raw_bind(struct raw_pcb *pcb, struct ip_addr *ipaddr)
+raw_bind(struct raw_pcb *pcb, ip_addr_t *ipaddr)
 {
   ip_addr_set(&pcb->local_ip, ipaddr);
   return ERR_OK;
@@ -159,7 +159,7 @@ raw_bind(struct raw_pcb *pcb, struct ip_addr *ipaddr)
  * @see raw_disconnect() and raw_sendto()
  */
 err_t
-raw_connect(struct raw_pcb *pcb, struct ip_addr *ipaddr)
+raw_connect(struct raw_pcb *pcb, ip_addr_t *ipaddr)
 {
   ip_addr_set(&pcb->remote_ip, ipaddr);
   return ERR_OK;
@@ -200,11 +200,11 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  *
  */
 err_t
-raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
+raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 {
   err_t err;
   struct netif *netif;
-  struct ip_addr *src_ip;
+  ip_addr_t *src_ip;
   struct pbuf *q; /* q will be sent down the stack */
   
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));

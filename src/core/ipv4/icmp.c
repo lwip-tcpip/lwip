@@ -82,7 +82,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
-  struct ip_addr tmpaddr;
+  ip_addr_t tmpaddr;
   s16_t hlen;
 
   ICMP_STATS_INC(icmp.recv);

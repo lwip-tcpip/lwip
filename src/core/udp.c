@@ -237,8 +237,7 @@ udp_input(struct pbuf *p, struct netif *inp)
           goto end;
         }
       }
-      if (inet_chksum_pseudo_partial(p, (struct ip_addr *)&(iphdr->src),
-                             (struct ip_addr *)&(iphdr->dest),
+      if (inet_chksum_pseudo_partial(p, &iphdr->src, &iphdr->dest,
                              IP_PROTO_UDPLITE, p->tot_len, chklen) != 0) {
        LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                    ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
@@ -254,8 +253,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     {
 #if CHECKSUM_CHECK_UDP
       if (udphdr->chksum != 0) {
-        if (inet_chksum_pseudo(p, (struct ip_addr *)&(iphdr->src),
-                               (struct ip_addr *)&(iphdr->dest),
+        if (inet_chksum_pseudo(p, &iphdr->src, &iphdr->dest,
                                IP_PROTO_UDP, p->tot_len) != 0) {
           LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                       ("udp_input: UDP datagram discarded due to failing checksum\n"));
@@ -357,7 +355,7 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
  */
 err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
-  struct ip_addr *dst_ip, u16_t dst_port)
+  ip_addr_t *dst_ip, u16_t dst_port)
 {
   struct netif *netif;
 
@@ -401,10 +399,10 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
  */
 err_t
 udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
-  struct ip_addr *dst_ip, u16_t dst_port, struct netif *netif)
+  ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif)
 {
   struct udp_hdr *udphdr;
-  struct ip_addr *src_ip;
+  ip_addr_t *src_ip;
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
 
@@ -579,7 +577,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
  * @see udp_disconnect()
  */
 err_t
-udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
+udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
@@ -680,7 +678,7 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
  * @see udp_disconnect()
  */
 err_t
-udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
+udp_connect(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 

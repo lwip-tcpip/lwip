@@ -794,7 +794,7 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
 
 /* Send a packet on the given connection. */
 static err_t
-pppifOutput(struct netif *netif, struct pbuf *pb, struct ip_addr *ipaddr)
+pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
 {
   int pd = (int)netif->state;
   PPPControl *pc = &pppControl[pd];

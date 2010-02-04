@@ -40,9 +40,9 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
-/* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in struct ip_addr.h */
-const struct ip_addr ip_addr_any = { IPADDR_ANY };
-const struct ip_addr ip_addr_broadcast = { IPADDR_BROADCAST };
+/* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
+const ip_addr_t ip_addr_any = { IPADDR_ANY };
+const ip_addr_t ip_addr_broadcast = { IPADDR_BROADCAST };
 
 /**
  * Determine if an address is a broadcast address on a network interface 
@@ -51,7 +51,7 @@ const struct ip_addr ip_addr_broadcast = { IPADDR_BROADCAST };
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  */
-u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
+u8_t ip_addr_isbroadcast(ip_addr_t *addr, struct netif *netif)
 {
   u32_t addr2test;
 
@@ -99,7 +99,7 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
 u32_t
 ipaddr_addr(const char *cp)
 {
-  struct ip_addr val;
+  ip_addr_t val;
 
   if (ipaddr_aton(cp, &val)) {
     return ip4_addr_get_u32(&val);
@@ -119,7 +119,7 @@ ipaddr_addr(const char *cp)
  * @return 1 if cp could be converted to addr, 0 on failure
  */
 int
-ipaddr_aton(const char *cp, struct ip_addr *addr)
+ipaddr_aton(const char *cp, ip_addr_t *addr)
 {
   u32_t val;
   u8_t base;
@@ -220,7 +220,7 @@ ipaddr_aton(const char *cp, struct ip_addr *addr)
  *         represenation of addr
  */
 char *
-ipaddr_ntoa(struct ip_addr *addr)
+ipaddr_ntoa(ip_addr_t *addr)
 {
   static char str[16];
   u32_t s_addr;
