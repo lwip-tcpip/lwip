@@ -35,6 +35,7 @@
 
 #include <stddef.h> /* for size_t */
 
+#include "lwip/inet.h"
 #include "lwip/sockets.h"
 
 /* some rarely used options */

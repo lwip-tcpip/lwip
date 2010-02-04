@@ -93,7 +93,8 @@ ip_route(struct ip_addr *dest)
     }
   }
   if ((netif_default == NULL) || (!netif_is_up(netif_default))) {
-    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to 0x%"X32_F"\n", dest->addr));
+    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);
     snmp_inc_ipoutnoroutes();
     return NULL;
@@ -117,13 +118,15 @@ static struct netif *
 ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 {
   struct netif *netif;
+  struct ip_addr dest;
 
   PERF_START;
+  dest = iphdr->dest;
   /* Find network interface where to forward this IP packet to. */
-  netif = ip_route((struct ip_addr *)&(iphdr->dest));
+  netif = ip_route(&dest);
   if (netif == NULL) {
-    LWIP_DEBUGF(IP_DEBUG, ("ip_forward: no forwarding route for 0x%"X32_F" found\n",
-                      iphdr->dest.addr));
+    LWIP_DEBUGF(IP_DEBUG, ("ip_forward: no forwarding route for %"U16_F".%"U16_F".%"U16_F".%"U16_F" found\n",
+      ip4_addr1_16(&dest), ip4_addr2_16(&dest), ip4_addr3_16(&dest), ip4_addr4_16(&dest)));
     snmp_inc_ipoutnoroutes();
     return (struct netif *)NULL;
   }
@@ -156,8 +159,8 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100));
   }
 
-  LWIP_DEBUGF(IP_DEBUG, ("ip_forward: forwarding packet to 0x%"X32_F"\n",
-                    iphdr->dest.addr));
+  LWIP_DEBUGF(IP_DEBUG, ("ip_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+    ip4_addr1_16(&dest), ip4_addr2_16(&dest), ip4_addr3_16(&dest), ip4_addr4_16(&dest)));
 
   IP_STATS_INC(ip.fw);
   IP_STATS_INC(ip.xmit);
@@ -165,7 +168,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 
   PERF_STOP("ip_forward");
   /* transmit pbuf on chosen interface */
-  netif->output(netif, p, (struct ip_addr *)&(iphdr->dest));
+  netif->output(netif, p, &dest);
   return netif;
 }
 #endif /* IP_FORWARD */
@@ -274,10 +277,10 @@ ip_input(struct pbuf *p, struct netif *inp)
     netif = inp;
     do {
       LWIP_DEBUGF(IP_DEBUG, ("ip_input: iphdr->dest 0x%"X32_F" netif->ip_addr 0x%"X32_F" (0x%"X32_F", 0x%"X32_F", 0x%"X32_F")\n",
-          iphdr->dest.addr, netif->ip_addr.addr,
-          iphdr->dest.addr & netif->netmask.addr,
-          netif->ip_addr.addr & netif->netmask.addr,
-          iphdr->dest.addr & ~(netif->netmask.addr)));
+          ip4_addr_get_u32(&iphdr->dest), ip4_addr_get_u32(&netif->ip_addr),
+          ip4_addr_get_u32(&iphdr->dest) & ip4_addr_get_u32(&netif->netmask),
+          ip4_addr_get_u32(&netif->ip_addr) & ip4_addr_get_u32(&netif->netmask),
+          ip4_addr_get_u32(&iphdr->dest) & ~ip4_addr_get_u32(&netif->netmask)));
 
       /* interface is up and configured? */
       if ((netif_is_up(netif)) && (!ip_addr_isany(&(netif->ip_addr)))) {
@@ -325,7 +328,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
 #if LWIP_DHCP
   /* DHCP servers need 0.0.0.0 to be allowed as source address (RFC 1.1.2.2: 3.2.1.3/a) */
-  if (check_ip_src && (iphdr->src.addr != 0))
+  if (check_ip_src && !ip_addr_isany(&iphdr->src))
 #endif /* LWIP_DHCP */
   {  if ((ip_addr_isbroadcast(&(iphdr->src), inp)) ||
          (ip_addr_ismulticast(&(iphdr->src)))) {
@@ -386,7 +389,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 
 #if LWIP_IGMP
   /* there is an extra "router alert" option in IGMP messages which we allow for but do not police */
-  if((iphdr_hlen > IP_HLEN &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
+  if((iphdr_hlen > IP_HLEN) &&  (IPH_PROTO(iphdr) != IP_PROTO_IGMP)) {
 #else
   if (iphdr_hlen > IP_HLEN) {
 #endif /* LWIP_IGMP */
@@ -625,7 +628,8 @@ ip_output(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   struct netif *netif;
 
   if ((netif = ip_route(dest)) == NULL) {
-    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
+    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);
     return ERR_RTE;
   }
@@ -660,7 +664,8 @@ ip_output_hinted(struct pbuf *p, struct ip_addr *src, struct ip_addr *dest,
   err_t err;
 
   if ((netif = ip_route(dest)) == NULL) {
-    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to 0x%"X32_F"\n", dest->addr));
+    LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);
     return ERR_RTE;
   }
@@ -706,16 +711,16 @@ ip_debug_print(struct pbuf *p)
                     ntohs(IPH_CHKSUM(iphdr))));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  | (src)\n",
-                    ip4_addr1(&iphdr->src),
-                    ip4_addr2(&iphdr->src),
-                    ip4_addr3(&iphdr->src),
-                    ip4_addr4(&iphdr->src)));
+                    ip4_addr1_16(&iphdr->src),
+                    ip4_addr2_16(&iphdr->src),
+                    ip4_addr3_16(&iphdr->src),
+                    ip4_addr4_16(&iphdr->src)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP_DEBUG, ("|  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  |  %3"U16_F"  | (dest)\n",
-                    ip4_addr1(&iphdr->dest),
-                    ip4_addr2(&iphdr->dest),
-                    ip4_addr3(&iphdr->dest),
-                    ip4_addr4(&iphdr->dest)));
+                    ip4_addr1_16(&iphdr->dest),
+                    ip4_addr2_16(&iphdr->dest),
+                    ip4_addr3_16(&iphdr->dest),
+                    ip4_addr4_16(&iphdr->dest)));
   LWIP_DEBUGF(IP_DEBUG, ("+-------------------------------+\n"));
 }
 #endif /* IP_DEBUG */

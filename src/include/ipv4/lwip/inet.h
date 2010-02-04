@@ -89,6 +89,9 @@ struct in_addr {
 
 #define IN_LOOPBACKNET      IP_LOOPBACKNET
 
+#define inet_addr_from_ipaddr(target_inaddr, source_ipaddr) ((target_inaddr)->s_addr = ip4_addr_get_u32(source_ipaddr))
+#define inet_addr_to_ipaddr(target_ipaddr, source_inaddr)   (ip4_addr_set_u32(target_ipaddr, (source_inaddr)->s_addr))
+
 /* directly map this to the lwip internal functions */
 #define inet_addr(cp)         ipaddr_addr(cp)
 #define inet_aton(cp, addr)   ipaddr_aton(cp, (struct ip_addr*)addr)

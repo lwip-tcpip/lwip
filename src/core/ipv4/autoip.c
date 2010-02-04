@@ -190,11 +190,12 @@ autoip_create_addr(struct netif *netif, struct ip_addr *ipaddr)
   }
   LWIP_ASSERT("AUTOIP address not in range", (addr >= AUTOIP_RANGE_START) &&
     (addr <= AUTOIP_RANGE_END));
-  ipaddr->addr = htonl(addr);
+  ip4_addr_set_u32(ipaddr, htonl(addr));
   
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
-    ("autoip_create_addr(): tried_llipaddr=%"U16_F", 0x%08"X32_F"\n",
-    (u16_t)(netif->autoip->tried_llipaddr), (u32_t)(ipaddr->addr)));
+    ("autoip_create_addr(): tried_llipaddr=%"U16_F", %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+    (u16_t)(netif->autoip->tried_llipaddr), ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr),
+    ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr)));
 }
 
 /**
@@ -235,8 +236,10 @@ autoip_bind(struct netif *netif)
   struct ip_addr sn_mask, gw_addr;
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
-    ("autoip_bind(netif=%p) %c%c%"U16_F" 0x%08"X32_F"\n",
-    (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num, autoip->llipaddr.addr));
+    ("autoip_bind(netif=%p) %c%c%"U16_F" %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+    (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num,
+    ip4_addr1_16(&autoip->llipaddr), ip4_addr2_16(&autoip->llipaddr),
+    ip4_addr3_16(&autoip->llipaddr), ip4_addr4_16(&autoip->llipaddr)));
 
   IP4_ADDR(&sn_mask, 255, 255, 0, 0);
   IP4_ADDR(&gw_addr, 0, 0, 0, 0);
@@ -269,9 +272,9 @@ autoip_start(struct netif *netif)
   /* Set IP-Address, Netmask and Gateway to 0 to make sure that
    * ARP Packets are formed correctly
    */
-  netif->ip_addr.addr = 0;
-  netif->netmask.addr = 0;
-  netif->gw.addr      = 0;
+  ip_addr_set_zero(&netif->ip_addr);
+  ip_addr_set_zero(&netif->netmask);
+  ip_addr_set_zero(&netif->gw);
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
     ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0],

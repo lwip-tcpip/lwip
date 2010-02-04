@@ -135,16 +135,7 @@ snmp_netiftoifindex(struct netif *netif, s32_t *ifidx)
 void
 snmp_oidtoip(s32_t *ident, struct ip_addr *ip)
 {
-  u32_t ipa;
-
-  ipa = ident[0];
-  ipa <<= 8;
-  ipa |= ident[1];
-  ipa <<= 8;
-  ipa |= ident[2];
-  ipa <<= 8;
-  ipa |= ident[3];
-  ip->addr = ipa;
+  IP4_ADDR(ip, ident[0], ident[1], ident[2], ident[3]);
 }
 
 /**
@@ -155,13 +146,10 @@ snmp_oidtoip(s32_t *ident, struct ip_addr *ip)
 void
 snmp_iptooid(struct ip_addr *ip, s32_t *ident)
 {
-  u32_t ipa;
-
-  ipa = ip->addr;
-  ident[0] = (ipa >> 24) & 0xff;
-  ident[1] = (ipa >> 16) & 0xff;
-  ident[2] = (ipa >> 8) & 0xff;
-  ident[3] = ipa & 0xff;
+  ident[0] = ip4_addr1(ip);
+  ident[1] = ip4_addr2(ip);
+  ident[2] = ip4_addr3(ip);
+  ident[3] = ip4_addr4(ip);
 }
 
 struct mib_list_node *

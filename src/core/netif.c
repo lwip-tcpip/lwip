@@ -97,9 +97,9 @@ netif_add(struct netif *netif, struct ip_addr *ipaddr, struct ip_addr *netmask,
   LWIP_ASSERT("No init function given", init != NULL);
 
   /* reset new interface configuration state */
-  netif->ip_addr.addr = 0;
-  netif->netmask.addr = 0;
-  netif->gw.addr = 0;
+  ip_addr_set_zero(&netif->ip_addr);
+  ip_addr_set_zero(&netif->netmask);
+  ip_addr_set_zero(&netif->gw);
   netif->flags = 0;
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
@@ -316,10 +316,10 @@ netif_set_ipaddr(struct netif *netif, struct ip_addr *ipaddr)
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1(&netif->ip_addr),
-    ip4_addr2(&netif->ip_addr),
-    ip4_addr3(&netif->ip_addr),
-    ip4_addr4(&netif->ip_addr)));
+    ip4_addr1_16(&netif->ip_addr),
+    ip4_addr2_16(&netif->ip_addr),
+    ip4_addr3_16(&netif->ip_addr),
+    ip4_addr4_16(&netif->ip_addr)));
 }
 
 /**
@@ -336,10 +336,10 @@ netif_set_gw(struct netif *netif, struct ip_addr *gw)
   ip_addr_set(&(netif->gw), gw);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1(&netif->gw),
-    ip4_addr2(&netif->gw),
-    ip4_addr3(&netif->gw),
-    ip4_addr4(&netif->gw)));
+    ip4_addr1_16(&netif->gw),
+    ip4_addr2_16(&netif->gw),
+    ip4_addr3_16(&netif->gw),
+    ip4_addr4_16(&netif->gw)));
 }
 
 /**
@@ -360,10 +360,10 @@ netif_set_netmask(struct netif *netif, struct ip_addr *netmask)
   snmp_insert_iprteidx_tree(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1(&netif->netmask),
-    ip4_addr2(&netif->netmask),
-    ip4_addr3(&netif->netmask),
-    ip4_addr4(&netif->netmask)));
+    ip4_addr1_16(&netif->netmask),
+    ip4_addr2_16(&netif->netmask),
+    ip4_addr3_16(&netif->netmask),
+    ip4_addr4_16(&netif->netmask)));
 }
 
 /**

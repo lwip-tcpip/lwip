@@ -127,10 +127,10 @@ udp_input(struct pbuf *p, struct netif *inp)
   LWIP_DEBUGF(UDP_DEBUG,
               ("udp (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F") <-- "
                "(%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F")\n",
-               ip4_addr1(&iphdr->dest), ip4_addr2(&iphdr->dest),
-               ip4_addr3(&iphdr->dest), ip4_addr4(&iphdr->dest), ntohs(udphdr->dest),
-               ip4_addr1(&iphdr->src), ip4_addr2(&iphdr->src),
-               ip4_addr3(&iphdr->src), ip4_addr4(&iphdr->src), ntohs(udphdr->src)));
+               ip4_addr1_16(&iphdr->dest), ip4_addr2_16(&iphdr->dest),
+               ip4_addr3_16(&iphdr->dest), ip4_addr4_16(&iphdr->dest), ntohs(udphdr->dest),
+               ip4_addr1_16(&iphdr->src), ip4_addr2_16(&iphdr->src),
+               ip4_addr3_16(&iphdr->src), ip4_addr4_16(&iphdr->src), ntohs(udphdr->src)));
 
 #if LWIP_DHCP
   pcb = NULL;
@@ -165,10 +165,10 @@ udp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(UDP_DEBUG,
                   ("pcb (%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F") --- "
                    "(%"U16_F".%"U16_F".%"U16_F".%"U16_F", %"U16_F")\n",
-                   ip4_addr1(&pcb->local_ip), ip4_addr2(&pcb->local_ip),
-                   ip4_addr3(&pcb->local_ip), ip4_addr4(&pcb->local_ip), pcb->local_port,
-                   ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-                   ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip), pcb->remote_port));
+                   ip4_addr1_16(&pcb->local_ip), ip4_addr2_16(&pcb->local_ip),
+                   ip4_addr3_16(&pcb->local_ip), ip4_addr4_16(&pcb->local_ip), pcb->local_port,
+                   ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
+                   ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip), pcb->remote_port));
 
       /* compare PCB local addr+port to UDP destination addr+port */
       if ((pcb->local_port == dest) &&
@@ -372,7 +372,8 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
 
   /* no outgoing network interface could be found? */
   if (netif == NULL) {
-    LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: No route to 0x%"X32_F"\n", dst_ip->addr));
+    LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(dst_ip), ip4_addr2_16(dst_ip), ip4_addr3_16(dst_ip), ip4_addr4_16(dst_ip)));
     UDP_STATS_INC(udp.rterr);
     return ERR_RTE;
   }
@@ -656,10 +657,9 @@ udp_bind(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
   }
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_bind: bound to %"U16_F".%"U16_F".%"U16_F".%"U16_F", port %"U16_F"\n",
-               (u16_t)((ntohl(pcb->local_ip.addr) >> 24) & 0xff),
-               (u16_t)((ntohl(pcb->local_ip.addr) >> 16) & 0xff),
-               (u16_t)((ntohl(pcb->local_ip.addr) >> 8) & 0xff),
-               (u16_t)(ntohl(pcb->local_ip.addr) & 0xff), pcb->local_port));
+               ip4_addr1_16(&pcb->local_ip), ip4_addr2_16(&pcb->local_ip),
+               ip4_addr3_16(&pcb->local_ip), ip4_addr4_16(&pcb->local_ip),
+               pcb->local_port));
   return ERR_OK;
 }
 /**
@@ -715,10 +715,9 @@ udp_connect(struct udp_pcb *pcb, struct ip_addr *ipaddr, u16_t port)
 #endif
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
               ("udp_connect: connected to %"U16_F".%"U16_F".%"U16_F".%"U16_F",port %"U16_F"\n",
-               (u16_t)((ntohl(pcb->remote_ip.addr) >> 24) & 0xff),
-               (u16_t)((ntohl(pcb->remote_ip.addr) >> 16) & 0xff),
-               (u16_t)((ntohl(pcb->remote_ip.addr) >> 8) & 0xff),
-               (u16_t)(ntohl(pcb->remote_ip.addr) & 0xff), pcb->remote_port));
+               ip4_addr1_16(&pcb->local_ip), ip4_addr2_16(&pcb->local_ip),
+               ip4_addr3_16(&pcb->local_ip), ip4_addr4_16(&pcb->local_ip),
+               pcb->local_port));
 
   /* Insert UDP PCB into the list of active UDP PCBs. */
   for (ipcb = udp_pcbs; ipcb != NULL; ipcb = ipcb->next) {

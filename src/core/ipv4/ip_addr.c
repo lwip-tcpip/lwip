@@ -40,12 +40,9 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
-#define IP_ADDR_ANY_VALUE 0x00000000UL
-#define IP_ADDR_BROADCAST_VALUE 0xffffffffUL
-
-/* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const struct ip_addr ip_addr_any = { IP_ADDR_ANY_VALUE };
-const struct ip_addr ip_addr_broadcast = { IP_ADDR_BROADCAST_VALUE };
+/* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in struct ip_addr.h */
+const struct ip_addr ip_addr_any = { IPADDR_ANY };
+const struct ip_addr ip_addr_broadcast = { IPADDR_BROADCAST };
 
 /**
  * Determine if an address is a broadcast address on a network interface 
@@ -58,10 +55,10 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
 {
   u32_t addr2test;
 
-  addr2test = addr->addr;
+  addr2test = ip4_addr_get_u32(addr);
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
-  if ((~addr2test == IP_ADDR_ANY_VALUE) ||
-      (addr2test == IP_ADDR_ANY_VALUE))
+  if ((~addr2test == IPADDR_ANY) ||
+      (addr2test == IPADDR_ANY))
     return 1;
   /* no broadcast support on this network interface? */
   else if ((netif->flags & NETIF_FLAG_BROADCAST) == 0)
@@ -69,13 +66,13 @@ u8_t ip_addr_isbroadcast(struct ip_addr *addr, struct netif *netif)
      * nor can we check against any broadcast addresses */
     return 0;
   /* address matches network interface address exactly? => no broadcast */
-  else if (addr2test == netif->ip_addr.addr)
+  else if (addr2test == ip4_addr_get_u32(&netif->ip_addr))
     return 0;
   /*  on the same (sub) network... */
   else if (ip_addr_netcmp(addr, &(netif->ip_addr), &(netif->netmask))
          /* ...and host identifier bits are all ones? =>... */
-          && ((addr2test & ~netif->netmask.addr) ==
-           (IP_ADDR_BROADCAST_VALUE & ~netif->netmask.addr)))
+          && ((addr2test & ~ip4_addr_get_u32(&netif->netmask)) ==
+           (IPADDR_BROADCAST & ~ip4_addr_get_u32(&netif->netmask))))
     /* => network broadcast address */
     return 1;
   else
@@ -105,7 +102,7 @@ ipaddr_addr(const char *cp)
   struct ip_addr val;
 
   if (ipaddr_aton(cp, &val)) {
-    return (val.addr);
+    return ip4_addr_get_u32(&val);
   }
   return (IPADDR_NONE);
 }
@@ -208,8 +205,9 @@ ipaddr_aton(const char *cp, struct ip_addr *addr)
     val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
     break;
   }
-  if (addr)
-    addr->addr = htonl(val);
+  if (addr) {
+    ip4_addr_set_u32(addr, htonl(val));
+  }
   return (1);
 }
 
@@ -225,13 +223,15 @@ char *
 ipaddr_ntoa(struct ip_addr *addr)
 {
   static char str[16];
-  u32_t s_addr = addr->addr;
+  u32_t s_addr;
   char inv[3];
   char *rp;
   u8_t *ap;
   u8_t rem;
   u8_t n;
   u8_t i;
+
+  s_addr = ip4_addr_get_u32(addr);
 
   rp = str;
   ap = (u8_t *)&s_addr;

@@ -39,9 +39,10 @@
 extern "C" {
 #endif
 
+#include "lwip/ip_addr.h"
+
 struct udp_pcb;
 struct netif;
-struct ip_addr;
 
 /**
  * @see RFC1213, "MIB-II, 6. Definitions"

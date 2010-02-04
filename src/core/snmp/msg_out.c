@@ -96,7 +96,7 @@ snmp_trap_dst_ip_set(u8_t dst_idx, struct ip_addr *dst)
 {
   if (dst_idx < SNMP_TRAP_DESTINATIONS)
   {
-    trap_dst[dst_idx].dip.addr = htonl(dst->addr);
+    ip_addr_set_hton(&trap_dst[dst_idx].dip, dst);
   }
 }
 
@@ -227,17 +227,18 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
 
   for (i=0, td = &trap_dst[0]; i<SNMP_TRAP_DESTINATIONS; i++, td++)
   {
-    if ((td->enable != 0) && (td->dip.addr != 0))
+    if ((td->enable != 0) && !ip_addr_isany(&td->dip))
     {
       /* network order trap destination */
-      trap_msg.dip.addr = td->dip.addr;
+      ip_addr_set(&trap_msg.dip, &td->dip);
       /* lookup current source address for this dst */
       dst_if = ip_route(&td->dip);
-      dst_ip.addr = ntohl(dst_if->ip_addr.addr);
-      trap_msg.sip_raw[0] = (u8_t)(dst_ip.addr >> 24);
-      trap_msg.sip_raw[1] = (u8_t)(dst_ip.addr >> 16);
-      trap_msg.sip_raw[2] = (u8_t)(dst_ip.addr >> 8);
-      trap_msg.sip_raw[3] = (u8_t)dst_ip.addr;
+      ip_addr_set(&dst_ip, &dst_if->ip_addr);
+      /* @todo: what about IPv6? */
+      trap_msg.sip_raw[0] = ip4_addr1(&dst_ip);
+      trap_msg.sip_raw[1] = ip4_addr2(&dst_ip);
+      trap_msg.sip_raw[2] = ip4_addr3(&dst_ip);
+      trap_msg.sip_raw[3] = ip4_addr4(&dst_ip);
       trap_msg.gen_trap = generic_trap;
       trap_msg.spc_trap = specific_trap;
       if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)

@@ -934,8 +934,8 @@ tcp_keepalive(struct tcp_pcb *pcb)
   struct tcp_hdr *tcphdr;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
-                          ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-                          ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+                          ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
+                          ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n", 
                           tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
@@ -993,8 +993,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, 
               ("tcp_zero_window_probe: sending ZERO WINDOW probe to %"
                U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
-               ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-               ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+               ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
+               ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
 
   LWIP_DEBUGF(TCP_DEBUG, 
               ("tcp_zero_window_probe: tcp_ticks %"U32_F

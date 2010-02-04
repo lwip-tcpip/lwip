@@ -285,6 +285,7 @@ inet_chksum_pseudo(struct pbuf *p,
        u8_t proto, u16_t proto_len)
 {
   u32_t acc;
+  u32_t addr;
   struct pbuf *q;
   u8_t swapped;
 
@@ -309,10 +310,12 @@ inet_chksum_pseudo(struct pbuf *p,
   if (swapped) {
     acc = SWAP_BYTES_IN_WORD(acc);
   }
-  acc += (src->addr & 0xffffUL);
-  acc += ((src->addr >> 16) & 0xffffUL);
-  acc += (dest->addr & 0xffffUL);
-  acc += ((dest->addr >> 16) & 0xffffUL);
+  addr = ip4_addr_get_u32(src);
+  acc += (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
+  addr = ip4_addr_get_u32(dest);
+  acc += (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
   acc += (u32_t)htons((u16_t)proto);
   acc += (u32_t)htons(proto_len);
 
@@ -344,6 +347,7 @@ inet_chksum_pseudo_partial(struct pbuf *p,
        u8_t proto, u16_t proto_len, u16_t chksum_len)
 {
   u32_t acc;
+  u32_t addr;
   struct pbuf *q;
   u8_t swapped;
   u16_t chklen;
@@ -374,10 +378,12 @@ inet_chksum_pseudo_partial(struct pbuf *p,
   if (swapped) {
     acc = SWAP_BYTES_IN_WORD(acc);
   }
-  acc += (src->addr & 0xffffUL);
-  acc += ((src->addr >> 16) & 0xffffUL);
-  acc += (dest->addr & 0xffffUL);
-  acc += ((dest->addr >> 16) & 0xffffUL);
+  addr = ip4_addr_get_u32(src);
+  acc += (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
+  addr = ip4_addr_get_u32(dest);
+  acc += (addr & 0xffffUL);
+  acc += ((addr >> 16) & 0xffffUL);
   acc += (u32_t)htons((u16_t)proto);
   acc += (u32_t)htons(proto_len);
 

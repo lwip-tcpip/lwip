@@ -1088,14 +1088,12 @@ void snmp_insert_arpidx_tree(struct netif *ni, struct ip_addr *ip)
 {
   struct mib_list_rootnode *at_rn;
   struct mib_list_node *at_node;
-  struct ip_addr hip;
   s32_t arpidx[5];
   u8_t level, tree;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
   snmp_netiftoifindex(ni, &arpidx[0]);
-  hip.addr = ntohl(ip->addr);
-  snmp_iptooid(&hip, &arpidx[1]);
+  snmp_iptooid(ip, &arpidx[1]);
 
   for (tree = 0; tree < 2; tree++)
   {
@@ -1162,13 +1160,11 @@ void snmp_delete_arpidx_tree(struct netif *ni, struct ip_addr *ip)
 {
   struct mib_list_rootnode *at_rn, *next, *del_rn[5];
   struct mib_list_node *at_n, *del_n[5];
-  struct ip_addr hip;
   s32_t arpidx[5];
   u8_t fc, tree, level, del_cnt;
 
   snmp_netiftoifindex(ni, &arpidx[0]);
-  hip.addr = ntohl(ip->addr);
-  snmp_iptooid(&hip, &arpidx[1]);
+  snmp_iptooid(ip, &arpidx[1]);
 
   for (tree = 0; tree < 2; tree++)
   {
@@ -1321,13 +1317,11 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
 {
   struct mib_list_rootnode *ipa_rn;
   struct mib_list_node *ipa_node;
-  struct ip_addr ip;
   s32_t ipaddridx[4];
   u8_t level;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
-  ip.addr = ntohl(ni->ip_addr.addr);
-  snmp_iptooid(&ip, &ipaddridx[0]);
+  snmp_iptooid(&ni->ip_addr, &ipaddridx[0]);
 
   level = 0;
   ipa_rn = &ipaddrtree_root;
@@ -1377,13 +1371,11 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
 {
   struct mib_list_rootnode *ipa_rn, *next, *del_rn[4];
   struct mib_list_node *ipa_n, *del_n[4];
-  struct ip_addr ip;
   s32_t ipaddridx[4];
   u8_t fc, level, del_cnt;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
-  ip.addr = ntohl(ni->ip_addr.addr);
-  snmp_iptooid(&ip, &ipaddridx[0]);
+  snmp_iptooid(&ni->ip_addr, &ipaddridx[0]);
 
   /* mark nodes for deletion */
   level = 0;
@@ -1450,15 +1442,17 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
   if (dflt != 0)
   {
     /* the default route 0.0.0.0 */
-    dst.addr = 0;
+    ip_addr_set(&dst, &ip_addr_any);
     insert = 1;
   }
   else
   {
     /* route to the network address */
-    dst.addr = ntohl(ni->ip_addr.addr & ni->netmask.addr);
+    ip_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
     /* exclude 0.0.0.0 network (reserved for default rte) */
-    if (dst.addr != 0) insert = 1;
+    if (!ip_addr_isany(&dst)) {
+      insert = 1;
+    }
   }
   if (insert)
   {
@@ -1525,15 +1519,17 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
   if (dflt != 0)
   {
     /* the default route 0.0.0.0 */
-    dst.addr = 0;
+    ip_addr_set(&dst, &ip_addr_any);
     del = 1;
   }
   else
   {
     /* route to the network address */
-    dst.addr = ntohl(ni->ip_addr.addr & ni->netmask.addr);
+    ip_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
     /* exclude 0.0.0.0 network (reserved for default rte) */
-    if (dst.addr != 0) del = 1;
+    if (!ip_addr_isany(&dst)) {
+      del = 1;
+    }
   }
   if (del)
   {
@@ -1795,13 +1791,11 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
 {
   struct mib_list_rootnode *udp_rn;
   struct mib_list_node *udp_node;
-  struct ip_addr ip;
   s32_t udpidx[5];
   u8_t level;
 
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  ip.addr = ntohl(pcb->local_ip.addr);
-  snmp_iptooid(&ip, &udpidx[0]);
+  snmp_iptooid(&pcb->local_ip, &udpidx[0]);
   udpidx[4] = pcb->local_port;
 
   udp_rn = &udp_root;
@@ -1847,29 +1841,28 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
  */
 void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
 {
+  struct udp_pcb *npcb;
   struct mib_list_rootnode *udp_rn, *next, *del_rn[5];
   struct mib_list_node *udp_n, *del_n[5];
-  struct ip_addr ip;
   s32_t udpidx[5];
   u8_t bindings, fc, level, del_cnt;
 
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  ip.addr = ntohl(pcb->local_ip.addr);
-  snmp_iptooid(&ip, &udpidx[0]);
+  snmp_iptooid(&pcb->local_ip, &udpidx[0]);
   udpidx[4] = pcb->local_port;
 
   /* count PCBs for a given binding
      (e.g. when reusing ports or for temp output PCBs) */
   bindings = 0;
-  pcb = udp_pcbs;
-  while ((pcb != NULL))
+  npcb = udp_pcbs;
+  while ((npcb != NULL))
   {
-    if ((pcb->local_ip.addr == ip.addr) &&
-        (pcb->local_port == udpidx[4]))
+    if (ip_addr_cmp(&npcb->local_ip, &pcb->local_ip) &&
+        (npcb->local_port == udpidx[4]))
     {
       bindings++;
     }
-    pcb = pcb->next;
+    npcb = npcb->next;
   }
   if (bindings == 1)
   {
@@ -2622,7 +2615,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
 
 #if !SNMP_SAFE_REQUESTS
 static u8_t
-ifentry_set_test (struct obj_def *od, u16_t len, void *value)
+ifentry_set_test(struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
   u8_t id, set_ok;
@@ -2630,7 +2623,7 @@ ifentry_set_test (struct obj_def *od, u16_t len, void *value)
 
   set_ok = 0;
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
-  id = od->id_inst_ptr[0];
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 7: /* ifAdminStatus */
@@ -2645,14 +2638,14 @@ ifentry_set_test (struct obj_def *od, u16_t len, void *value)
 }
 
 static void
-ifentry_set_value (struct obj_def *od, u16_t len, void *value)
+ifentry_set_value(struct obj_def *od, u16_t len, void *value)
 {
   struct netif *netif;
   u8_t id;
   LWIP_UNUSED_ARG(len);
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
-  id = od->id_inst_ptr[0];
+  id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
     case 7: /* ifAdminStatus */
@@ -2740,7 +2733,6 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
-  ip.addr = htonl(ip.addr);
 
 #if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
@@ -3084,7 +3076,6 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(len);
   snmp_oidtoip(&od->id_inst_ptr[1], &ip);
-  ip.addr = htonl(ip.addr);
   ifidx = 0;
   while ((netif != NULL) && !ip_addr_cmp(&ip, &netif->ip_addr))
   {
@@ -3122,7 +3113,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
 
           /* lwIP oddity, there's no broadcast
             address in the netif we can rely on */
-          *sint_ptr = ip_addr_broadcast.addr & 1;
+          *sint_ptr = IPADDR_BROADCAST & 1;
         }
         break;
       case 5: /* ipAdEntReasmMaxSize */
@@ -3226,9 +3217,8 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   ident = od->id_inst_ptr;
   snmp_oidtoip(&ident[1], &dest);
-  dest.addr = htonl(dest.addr);
 
-  if (dest.addr == 0)
+  if (ip_addr_isany(&dest))
   {
     /* ip_route() uses default netif for default route */
     netif = netif_default;
@@ -3253,15 +3243,15 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           struct ip_addr *dst = (struct ip_addr*)value;
 
-          if (dest.addr == 0)
+          if (ip_addr_isany(&dest))
           {
             /* default rte has 0.0.0.0 dest */
-            dst->addr = 0;
+            ip_addr_set_zero(dst);
           }
           else
           {
             /* netifs have netaddress dest */
-            dst->addr = netif->ip_addr.addr & netif->netmask.addr;
+            ip_addr_get_network(dst, &netif->ip_addr, &netif->netmask);
           }
         }
         break;
@@ -3276,7 +3266,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           s32_t *sint_ptr = (s32_t*)value;
 
-          if (dest.addr == 0)
+          if (ip_addr_isany(&dest))
           {
             /* default rte has metric 1 */
             *sint_ptr = 1;
@@ -3302,7 +3292,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           struct ip_addr *dst = (struct ip_addr*)value;
 
-          if (dest.addr == 0)
+          if (ip_addr_isany(&dest))
           {
             /* default rte: gateway */
             *dst = netif->gw;
@@ -3318,7 +3308,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           s32_t *sint_ptr = (s32_t*)value;
 
-          if (dest.addr == 0)
+          if (ip_addr_isany(&dest))
           {
             /* default rte is indirect */
             *sint_ptr = 4;
@@ -3349,10 +3339,10 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           struct ip_addr *dst = (struct ip_addr*)value;
 
-          if (dest.addr == 0)
+          if (ip_addr_isany(&dest))
           {
             /* default rte use 0.0.0.0 mask */
-            dst->addr = 0;
+            ip_addr_set_zero(dst);
           }
           else
           {
@@ -3434,7 +3424,6 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   snmp_ifindextonetif(od->id_inst_ptr[1], &netif);
   snmp_oidtoip(&od->id_inst_ptr[2], &ip);
-  ip.addr = htonl(ip.addr);
 
 #if LWIP_ARP /** @todo implement a netif_find_addr */
   if (etharp_find_addr(netif, &ip, &ethaddr_ret, &ipaddr_ret) > -1)
@@ -3789,10 +3778,8 @@ tcpconnentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   ident = od->id_inst_ptr;
   snmp_oidtoip(&ident[1], &lip);
-  lip.addr = htonl(lip.addr);
   lport = ident[5];
   snmp_oidtoip(&ident[6], &rip);
-  rip.addr = htonl(rip.addr);
   rport = ident[10];
 
   /** @todo find matching PCB */
@@ -3899,13 +3886,12 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(len);
   snmp_oidtoip(&od->id_inst_ptr[1], &ip);
-  ip.addr = htonl(ip.addr);
   LWIP_ASSERT("invalid port", (od->id_inst_ptr[5] >= 0) && (od->id_inst_ptr[5] <= 0xffff));
   port = (u16_t)od->id_inst_ptr[5];
 
   pcb = udp_pcbs;
   while ((pcb != NULL) &&
-         !((pcb->local_ip.addr == ip.addr) &&
+         !(ip_addr_cmp(&pcb->local_ip, &ip) &&
            (pcb->local_port == port)))
   {
     pcb = pcb->next;

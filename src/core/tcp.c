@@ -687,8 +687,8 @@ tcp_slowtmr(void)
 #endif /* LWIP_TCP_KEEPALIVE */
       {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
-                                ip4_addr1(&pcb->remote_ip), ip4_addr2(&pcb->remote_ip),
-                                ip4_addr3(&pcb->remote_ip), ip4_addr4(&pcb->remote_ip)));
+                                ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
+                                ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip)));
         
         ++pcb_remove;
         ++pcb_reset;

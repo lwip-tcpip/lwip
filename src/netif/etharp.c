@@ -475,9 +475,9 @@ update_arp_entry(struct netif *netif, struct ip_addr *ipaddr, struct eth_addr *e
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry()\n"));
   LWIP_ASSERT("netif->hwaddr_len == ETHARP_HWADDR_LEN", netif->hwaddr_len == ETHARP_HWADDR_LEN);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
-                                        ip4_addr1(ipaddr), ip4_addr2(ipaddr), ip4_addr3(ipaddr), ip4_addr4(ipaddr), 
-                                        ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
-                                        ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
+    ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
+    ethaddr->addr[0], ethaddr->addr[1], ethaddr->addr[2],
+    ethaddr->addr[3], ethaddr->addr[4], ethaddr->addr[5]));
   /* non-unicast address? */
   if (ip_addr_isany(ipaddr) ||
       ip_addr_isbroadcast(ipaddr, netif) ||
@@ -688,7 +688,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   SMEMCPY(&dipaddr, &hdr->dipaddr, sizeof(dipaddr));
 
   /* this interface is not configured? */
-  if (netif->ip_addr.addr == 0) {
+  if (ip_addr_isany(&netif->ip_addr)) {
     for_us = 0;
   } else {
     /* ARP packet directed to us? */
@@ -724,8 +724,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
          that would allocate a new pbuf. */
       hdr->opcode = htons(ARP_REPLY);
 
-      hdr->dipaddr = hdr->sipaddr;
-      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(hdr->sipaddr));
+      SMEMCPY(&hdr->dipaddr, &hdr->sipaddr, sizeof(struct ip_addr));
+      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(struct ip_addr));
 
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));
@@ -754,7 +754,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* return ARP reply */
       netif->linkoutput(netif, p);
     /* we are not configured? */
-    } else if (netif->ip_addr.addr == 0) {
+    } else if (ip_addr_isany(&netif->ip_addr)) {
       /* { for_us == 0 and netif->ip_addr.addr == 0 } */
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: we are unconfigured, ARP request ignored.\n"));
     /* request was not directed to us */
@@ -840,7 +840,7 @@ etharp_output(struct netif *netif, struct pbuf *q, struct ip_addr *ipaddr)
     /* outside local network? */
     if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
       /* interface has default gateway? */
-      if (netif->gw.addr != 0) {
+      if (!ip_addr_isany(&netif->gw)) {
         /* send to hardware address of default gateway IP address */
         ipaddr = &(netif->gw);
       /* no default gateway available */
@@ -1101,8 +1101,10 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 #endif /* LWIP_AUTOIP */
     ethhdr->src.addr[k]  = ethsrc_addr->addr[k];
   }
-  hdr->sipaddr = *(struct ip_addr2 *)ipsrc_addr;
-  hdr->dipaddr = *(struct ip_addr2 *)ipdst_addr;
+  /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
+   * structure packing. */ 
+  SMEMCPY(&hdr->sipaddr, ipsrc_addr, sizeof(struct ip_addr));
+  SMEMCPY(&hdr->dipaddr, ipdst_addr, sizeof(struct ip_addr));
 
   hdr->hwtype = htons(HWTYPE_ETHERNET);
   hdr->proto = htons(ETHTYPE_IP);

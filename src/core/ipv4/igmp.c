@@ -385,7 +385,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
   switch (igmp->igmp_msgtype) {
    case IGMP_MEMB_QUERY: {
      /* IGMP_MEMB_QUERY to the "all systems" address ? */
-     if ((ip_addr_cmp(dest, &allsystems)) && (igmp->igmp_group_address.addr == 0)) {
+     if ((ip_addr_cmp(dest, &allsystems)) && ip_addr_isany(&igmp->igmp_group_address)) {
        /* THIS IS THE GENERAL QUERY */
        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: General IGMP_MEMB_QUERY on \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
 
@@ -406,7 +406,7 @@ igmp_input(struct pbuf *p, struct netif *inp, struct ip_addr *dest)
        }
      } else {
        /* IGMP_MEMB_QUERY to a specific group ? */
-       if (group->group_address.addr != 0) {
+       if (!ip_addr_isany(&group->group_address) != 0) {
          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_MEMB_QUERY to a specific group "));
          ip_addr_debug_print(IGMP_DEBUG, &group->group_address);
          if (ip_addr_cmp (dest, &allsystems)) {

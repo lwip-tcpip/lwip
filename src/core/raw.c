@@ -232,7 +232,8 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
   }
 
   if ((netif = ip_route(ipaddr)) == NULL) {
-    LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to 0x%"X32_F"\n", ipaddr->addr));
+    LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr)));
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {
       pbuf_free(q);
@@ -242,7 +243,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, struct ip_addr *ipaddr)
 
 #if IP_SOF_BROADCAST
   /* broadcast filter? */
-  if ( ((pcb->so_options & SOF_BROADCAST) == 0) && ip_addr_isbroadcast(ipaddr, netif) ) {
+  if (((pcb->so_options & SOF_BROADCAST) == 0) && ip_addr_isbroadcast(ipaddr, netif)) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {

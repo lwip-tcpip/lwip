@@ -317,7 +317,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     sin.sin_len = sizeof(sin);
     sin.sin_family = AF_INET;
     sin.sin_port = htons(port);
-    sin.sin_addr.s_addr = naddr.addr;
+    inet_addr_from_ipaddr(&sin.sin_addr, &naddr);
 
     if (*addrlen > sizeof(sin))
       *addrlen = sizeof(sin);
@@ -370,7 +370,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
              ((((const struct sockaddr_in *)name)->sin_family) == AF_INET)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
-  local_addr.addr = ((const struct sockaddr_in *)name)->sin_addr.s_addr;
+  inet_addr_to_ipaddr(&local_addr, &((const struct sockaddr_in *)name)->sin_addr);
   local_port = ((const struct sockaddr_in *)name)->sin_port;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
@@ -430,7 +430,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     struct ip_addr remote_addr;
     u16_t remote_port;
 
-    remote_addr.addr = ((const struct sockaddr_in *)name)->sin_addr.s_addr;
+    inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)name)->sin_addr);
     remote_port = ((const struct sockaddr_in *)name)->sin_port;
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
@@ -593,7 +593,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         sin.sin_len = sizeof(sin);
         sin.sin_family = AF_INET;
         sin.sin_port = htons(port);
-        sin.sin_addr.s_addr = addr->addr;
+        inet_addr_from_ipaddr(&sin.sin_addr, addr);
 
         if (*fromlen > sizeof(sin)) {
           *fromlen = sizeof(sin);
@@ -730,7 +730,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       p->payload = (void*)data;
       p->len = p->tot_len = short_size;
       
-      remote_addr.addr = ((const struct sockaddr_in *)to)->sin_addr.s_addr;
+      inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)to)->sin_addr);
       
       LOCK_TCPIP_CORE();
       if (sock->conn->type==NETCONN_RAW) {
@@ -747,12 +747,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
   if (to) {
-    remote_addr.addr = ((const struct sockaddr_in *)to)->sin_addr.s_addr;
+    inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)to)->sin_addr);
     remote_port      = ntohs(((const struct sockaddr_in *)to)->sin_port);
     buf.addr         = &remote_addr;
     buf.port         = remote_port;
   } else {
-    remote_addr.addr = 0;
+    ip_addr_set_zero(&remote_addr);
     remote_port      = 0;
     buf.addr         = NULL;
     buf.port         = 0;
@@ -1194,7 +1194,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", sin.sin_port));
 
   sin.sin_port = htons(sin.sin_port);
-  sin.sin_addr.s_addr = naddr.addr;
+  inet_addr_from_ipaddr(&sin.sin_addr, &naddr);
 
   if (*namelen > sizeof(sin))
     *namelen = sizeof(sin);
@@ -1516,7 +1516,7 @@ lwip_getsockopt_internal(void *arg)
                   s, *(int *)optval));
       break;
     case IP_MULTICAST_IF:
-      ((struct in_addr*) optval)->s_addr = sock->conn->pcb.udp->multicast_ip.addr;
+      inet_addr_from_ipaddr((struct in_addr*)optval, &sock->conn->pcb.udp->multicast_ip);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_IF) = 0x%"X32_F"\n",
                   s, *(u32_t *)optval));
       break;
@@ -1863,7 +1863,7 @@ lwip_setsockopt_internal(void *arg)
       sock->conn->pcb.udp->ttl = (u8_t)(*(u8_t*)optval);
       break;
     case IP_MULTICAST_IF:
-      sock->conn->pcb.udp->multicast_ip.addr = ((struct in_addr*) optval)->s_addr;
+      inet_addr_to_ipaddr(&sock->conn->pcb.udp->multicast_ip, (struct in_addr*)optval);
       break;
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:
