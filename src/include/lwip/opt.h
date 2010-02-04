@@ -1805,6 +1805,13 @@
 #endif
 
 /**
+ * TIMERS_DEBUG: Enable debugging in timers.c.
+ */
+#ifndef TIMERS_DEBUG
+#define TIMERS_DEBUG                    LWIP_DBG_OFF
+#endif
+
+/**
  * TCP_DEBUG: Enable debugging for TCP.
  */
 #ifndef TCP_DEBUG
