@@ -796,7 +796,7 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
 static err_t
 pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
 {
-  int pd = (int)netif->state;
+  int pd = (int)(size_t)netif->state;
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
   u_short protocol = PPP_IP;
@@ -1301,7 +1301,7 @@ pppifNetifInit(struct netif *netif)
   netif->name[0] = 'p';
   netif->name[1] = 'p';
   netif->output = pppifOutput;
-  netif->mtu = pppMTU((int)netif->state);
+  netif->mtu = pppMTU((int)(size_t)netif->state);
   return ERR_OK;
 }
 
@@ -1320,7 +1320,7 @@ sifup(int pd)
     PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
   } else {
     netif_remove(&pc->netif);
-    if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)pd, pppifNetifInit, ip_input)) {
+    if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)(size_t)pd, pppifNetifInit, ip_input)) {
       netif_set_up(&pc->netif);
       pc->if_up = 1;
       pc->errCode = PPPERR_NONE;
