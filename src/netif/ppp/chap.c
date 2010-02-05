@@ -714,7 +714,7 @@ ChapSendChallenge(chap_state *cstate)
   int outlen;
   
   chal_len = cstate->chal_len;
-  name_len = strlen(cstate->chal_name);
+  name_len = (int)strlen(cstate->chal_name);
   outlen = CHAP_HEADERLEN + sizeof (u_char) + chal_len + name_len;
   outp = outpacket_buf[cstate->unit];
 
@@ -754,7 +754,7 @@ ChapSendStatus(chap_state *cstate, int code)
   } else {
     strcpy(msg, "I don't like you.  Go 'way.");
   }
-  msglen = strlen(msg);
+  msglen = (int)strlen(msg);
 
   outlen = CHAP_HEADERLEN + msglen;
   outp = outpacket_buf[cstate->unit];
@@ -814,7 +814,7 @@ ChapSendResponse(chap_state *cstate)
   int outlen, md_len, name_len;
 
   md_len = cstate->resp_length;
-  name_len = strlen(cstate->resp_name);
+  name_len = (int)strlen(cstate->resp_name);
   outlen = CHAP_HEADERLEN + sizeof (u_char) + md_len + name_len;
   outp = outpacket_buf[cstate->unit];
 

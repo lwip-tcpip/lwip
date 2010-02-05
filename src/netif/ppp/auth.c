@@ -1093,7 +1093,7 @@ get_secret(int unit, char *client, char *server, char *secret, int *secret_len, 
     return 0;
   }
 
-  len = strlen(ppp_settings.passwd);
+  len = (int)strlen(ppp_settings.passwd);
   if (len > MAXSECRETLEN) {
     AUTHDEBUG((LOG_ERR, "Secret for %s on %s is too long\n", client, server));
     len = MAXSECRETLEN;

@@ -787,11 +787,11 @@ pppoe_send_padi(struct pppoe_softc *sc)
   /* calculate length of frame (excluding ethernet header + pppoe header) */
   len = 2 + 2 + 2 + 2 + sizeof sc;  /* service name tag is required, host unique is send too */
   if (sc->sc_service_name != NULL) {
-    l1 = strlen(sc->sc_service_name);
+    l1 = (int)strlen(sc->sc_service_name);
     len += l1;
   }
   if (sc->sc_concentrator_name != NULL) {
-    l2 = strlen(sc->sc_concentrator_name);
+    l2 = (int)strlen(sc->sc_concentrator_name);
     len += 2 + 2 + l2;
   }
   LWIP_ASSERT("sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len <= 0xffff",

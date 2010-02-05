@@ -166,9 +166,9 @@ upap_authwithpeer(int unit, char *user, char *password)
 
   /* Save the username and password we're given */
   u->us_user = user;
-  u->us_userlen = strlen(user);
+  u->us_userlen = (int)strlen(user);
   u->us_passwd = password;
-  u->us_passwdlen = strlen(password);
+  u->us_passwdlen = (int)strlen(password);
 
   u->us_transmits = 0;
 
