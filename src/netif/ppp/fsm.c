@@ -275,7 +275,7 @@ fsm_close(fsm *f, char *reason)
   LWIP_UNUSED_ARG(oldState);
 
   f->term_reason = reason;
-  f->term_reason_len = (reason == NULL? 0: strlen(reason));
+  f->term_reason_len = (reason == NULL ? 0 : (int)strlen(reason));
   switch( f->state ) {
     case LS_STARTING:
       f->state = LS_INITIAL;
