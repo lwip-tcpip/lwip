@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2010-02-05: Simon Goldschmidt
+  * netif.h: Added function-like macros to get/set the hostname on a netif
+
   2010-02-04: Simon Goldschmidt
   * nearly every file: Replaced struct ip_addr by typedef ip_addr_t to
     make changing the actual implementation behind the typedef easier.
