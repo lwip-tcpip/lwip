@@ -71,15 +71,20 @@ struct stats_proto {
 };
 
 struct stats_igmp {
-  STAT_COUNTER lenerr;           /* Invalid length error. */
+  STAT_COUNTER xmit;             /* Transmitted packets. */
+  STAT_COUNTER recv;             /* Received packets. */
+  STAT_COUNTER drop;             /* Dropped packets. */
   STAT_COUNTER chkerr;           /* Checksum error. */
-  STAT_COUNTER v1_rxed;          /* */
-  STAT_COUNTER join_sent;        /* */
-  STAT_COUNTER leave_sent;       /* */
-  STAT_COUNTER unicast_query;    /* */
-  STAT_COUNTER report_sent;      /* */
-  STAT_COUNTER report_rxed;      /* */
-  STAT_COUNTER group_query_rxed; /* */
+  STAT_COUNTER lenerr;           /* Invalid length error. */
+  STAT_COUNTER memerr;           /* Out of memory error. */
+  STAT_COUNTER proterr;          /* Protocol error. */
+  STAT_COUNTER rx_v1;            /* Received v1 frames. */
+  STAT_COUNTER rx_group;         /* Received group-specific queries. */
+  STAT_COUNTER rx_general;       /* Received general queries. */
+  STAT_COUNTER rx_report;        /* Received reports. */
+  STAT_COUNTER tx_join;          /* Sent joins. */
+  STAT_COUNTER tx_leave;         /* Sent leaves. */
+  STAT_COUNTER tx_report;        /* Sent reports. */
 };
 
 struct stats_mem {

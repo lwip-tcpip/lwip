@@ -88,6 +88,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-02-08: Simon Goldschmidt (Stéphane Lesage)
+  * igmp.c, igmp.h, stats.c, stats.h: Improved IGMP stats
+    (patch from bug #28798)
+
+  2010-02-08: Simon Goldschmidt (Stéphane Lesage)
   * igmp.c: Fixed bug #28798 (Error in "Max Response Time" processing) and
     another bug when LWIP_RAND() returns zero.
 

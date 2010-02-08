@@ -72,15 +72,20 @@ void
 stats_display_igmp(struct stats_igmp *igmp)
 {
   LWIP_PLATFORM_DIAG(("\nIGMP\n\t"));
-  LWIP_PLATFORM_DIAG(("lenerr: %"STAT_COUNTER_F"\n\t", igmp->lenerr)); 
+  LWIP_PLATFORM_DIAG(("xmit: %"STAT_COUNTER_F"\n\t", igmp->xmit)); 
+  LWIP_PLATFORM_DIAG(("recv: %"STAT_COUNTER_F"\n\t", igmp->recv)); 
+  LWIP_PLATFORM_DIAG(("drop: %"STAT_COUNTER_F"\n\t", igmp->drop)); 
   LWIP_PLATFORM_DIAG(("chkerr: %"STAT_COUNTER_F"\n\t", igmp->chkerr)); 
-  LWIP_PLATFORM_DIAG(("v1_rxed: %"STAT_COUNTER_F"\n\t", igmp->v1_rxed)); 
-  LWIP_PLATFORM_DIAG(("join_sent: %"STAT_COUNTER_F"\n\t", igmp->join_sent)); 
-  LWIP_PLATFORM_DIAG(("leave_sent: %"STAT_COUNTER_F"\n\t", igmp->leave_sent)); 
-  LWIP_PLATFORM_DIAG(("unicast_query: %"STAT_COUNTER_F"\n\t", igmp->unicast_query)); 
-  LWIP_PLATFORM_DIAG(("report_sent: %"STAT_COUNTER_F"\n\t", igmp->report_sent)); 
-  LWIP_PLATFORM_DIAG(("report_rxed: %"STAT_COUNTER_F"\n\t", igmp->report_rxed)); 
-  LWIP_PLATFORM_DIAG(("group_query_rxed: %"STAT_COUNTER_F"\n", igmp->group_query_rxed));
+  LWIP_PLATFORM_DIAG(("lenerr: %"STAT_COUNTER_F"\n\t", igmp->lenerr)); 
+  LWIP_PLATFORM_DIAG(("memerr: %"STAT_COUNTER_F"\n\t", igmp->memerr)); 
+  LWIP_PLATFORM_DIAG(("proterr: %"STAT_COUNTER_F"\n\t", igmp->proterr)); 
+  LWIP_PLATFORM_DIAG(("rx_v1: %"STAT_COUNTER_F"\n\t", igmp->rx_v1)); 
+  LWIP_PLATFORM_DIAG(("rx_group: %"STAT_COUNTER_F"\n", igmp->rx_group));
+  LWIP_PLATFORM_DIAG(("rx_general: %"STAT_COUNTER_F"\n", igmp->rx_general));
+  LWIP_PLATFORM_DIAG(("rx_report: %"STAT_COUNTER_F"\n\t", igmp->rx_report)); 
+  LWIP_PLATFORM_DIAG(("tx_join: %"STAT_COUNTER_F"\n\t", igmp->tx_join)); 
+  LWIP_PLATFORM_DIAG(("tx_leave: %"STAT_COUNTER_F"\n\t", igmp->tx_leave)); 
+  LWIP_PLATFORM_DIAG(("tx_report: %"STAT_COUNTER_F"\n\t", igmp->tx_report)); 
 }
 #endif /* IGMP_STATS */
 
