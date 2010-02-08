@@ -971,16 +971,16 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
   }
 
 #if LWIP_HAVE_LOOPIF
-  if (strcmp(hostname,"localhost")==0) {
+  if (strcmp(hostname, "localhost")==0) {
     ip_addr_set_loopback(addr);
     return ERR_OK;
   }
 #endif /* LWIP_HAVE_LOOPIF */
 
-  /* host name already in octet notation? set ip addr and return ERR_OK
-   * already have this address cached? */
+  /* host name already in octet notation? set ip addr and return ERR_OK */
   ipaddr = ipaddr_addr(hostname);
   if (ipaddr == IPADDR_NONE) {
+    /* already have this address cached? */
     ipaddr = dns_lookup(hostname);
   }
   if (ipaddr != IPADDR_NONE) {
