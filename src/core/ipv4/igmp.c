@@ -95,10 +95,59 @@ Steve Reynolds
 
 #include "string.h"
 
+/* 
+ * IGMP constants
+ */
+#define IGMP_TTL                       1
+#define IGMP_MINLEN                    8
+#define ROUTER_ALERT                   0x9404
+#define ROUTER_ALERTLEN                4
+
+/*
+ * IGMP message types, including version number.
+ */
+#define IGMP_MEMB_QUERY                0x11 /* Membership query         */
+#define IGMP_V1_MEMB_REPORT            0x12 /* Ver. 1 membership report */
+#define IGMP_V2_MEMB_REPORT            0x16 /* Ver. 2 membership report */
+#define IGMP_LEAVE_GROUP               0x17 /* Leave-group message      */
+
+/* Group  membership states */
+#define IGMP_GROUP_NON_MEMBER          0
+#define IGMP_GROUP_DELAYING_MEMBER     1
+#define IGMP_GROUP_IDLE_MEMBER         2
+
+/**
+ * IGMP packet format.
+ */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct igmp_msg {
+ PACK_STRUCT_FIELD(u8_t           igmp_msgtype);
+ PACK_STRUCT_FIELD(u8_t           igmp_maxresp);
+ PACK_STRUCT_FIELD(u16_t          igmp_checksum);
+ PACK_STRUCT_FIELD(ip_addr_t      igmp_group_address);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+
+
+static err_t  igmp_remove_group(struct igmp_group *group);
+static void   igmp_timeout( struct igmp_group *group);
+static void   igmp_start_timer(struct igmp_group *group, u8_t max_time);
+static void   igmp_stop_timer(struct igmp_group *group);
+static void   igmp_delaying_member(struct igmp_group *group, u8_t maxresp);
+static err_t  igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, struct netif *netif);
+static void   igmp_send(struct igmp_group *group, u8_t type);
+
 
 static struct igmp_group* igmp_group_list;
 static ip_addr_t     allsystems;
 static ip_addr_t     allrouters;
+
 
 /**
  * Initialize the IGMP module
@@ -302,7 +351,7 @@ igmp_lookup_group(struct netif *ifp, ip_addr_t *addr)
  * @param group the group to remove from the global igmp_group_list
  * @return ERR_OK if group was removed from the list, an err_t otherwise
  */
-err_t
+static err_t
 igmp_remove_group(struct igmp_group *group)
 {
   err_t err = ERR_OK;
@@ -625,7 +674,7 @@ igmp_tmr(void)
  *
  * @param group an igmp_group for which a timeout is reached
  */
-void
+static void
 igmp_timeout(struct igmp_group *group)
 {
   /* If the state is IGMP_GROUP_DELAYING_MEMBER then we send a report for this group */
@@ -646,7 +695,7 @@ igmp_timeout(struct igmp_group *group)
  * @param max_time the time in multiples of IGMP_TMR_INTERVAL (decrease with
  *        every call to igmp_tmr())
  */
-void
+static void
 igmp_start_timer(struct igmp_group *group, u8_t max_time)
 {
   /* ensure the value is > 0 */
@@ -658,7 +707,7 @@ igmp_start_timer(struct igmp_group *group, u8_t max_time)
  *
  * @param group the igmp_group for which to stop the timer
  */
-void
+static void
 igmp_stop_timer(struct igmp_group *group)
 {
 	  group->timer = 0;
@@ -670,7 +719,7 @@ igmp_stop_timer(struct igmp_group *group)
  * @param group the igmp_group for which "delaying" membership report
  * @param maxresp query delay
  */
-void
+static void
 igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
 {
   u8_t maxresphalf = maxresp / 2;
@@ -704,16 +753,15 @@ igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
  *         ERR_BUF if p doesn't have enough space for IP/LINK headers
  *         returns errors returned by netif->output
  */
-err_t
-igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
-                  u8_t ttl, u8_t proto, struct netif *netif)
+static err_t
+igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, struct netif *netif)
 {
   /* This is the "router alert" option */
   u16_t ra[2];
   ra[0] = htons(ROUTER_ALERT);
   ra[1] = 0x0000; /* Router shall examine packet */
   IGMP_STATS_INC(igmp.xmit);
-  return ip_output_if_opt(p, src, dest, ttl, 0, proto, netif, ra, ROUTER_ALERTLEN);
+  return ip_output_if_opt(p, src, dest, IGMP_TTL, 0, IP_PROTO_IGMP, netif, ra, ROUTER_ALERTLEN);
 }
 
 /**
@@ -722,7 +770,7 @@ igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * @param group the group to which to send the packet
  * @param type the type of igmp packet to send
  */
-void
+static void
 igmp_send(struct igmp_group *group, u8_t type)
 {
   struct pbuf*     p    = NULL;
@@ -756,7 +804,7 @@ igmp_send(struct igmp_group *group, u8_t type)
       igmp->igmp_checksum = 0;
       igmp->igmp_checksum = inet_chksum(igmp, IGMP_MINLEN);
 
-      igmp_ip_output_if(p, &src, dest, IGMP_TTL, IP_PROTO_IGMP, group->netif);
+      igmp_ip_output_if(p, &src, dest, group->netif);
     }
 
     pbuf_free(p);

@@ -50,6 +50,7 @@ extern "C" {
 #define IP_HLEN 20
 
 #define IP_PROTO_ICMP    1
+#define IP_PROTO_IGMP    2
 #define IP_PROTO_UDP     17
 #define IP_PROTO_UDPLITE 136
 #define IP_PROTO_TCP     6

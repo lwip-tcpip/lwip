@@ -90,6 +90,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-08: Simon Goldschmidt
+  * igmp.c/.h, ip.h: Moved most defines from igmp.h to igmp.c for clarity
+    since they are not used anywhere else.
+
   2010-02-08: Simon Goldschmidt (Stéphane Lesage)
   * igmp.c, igmp.h, stats.c, stats.h: Improved IGMP stats
     (patch from bug #28798)
