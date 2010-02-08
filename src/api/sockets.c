@@ -207,10 +207,12 @@ get_socket(int s)
  * Allocate a new socket for a given netconn.
  *
  * @param newconn the netconn for which to allocate a socket
+ * @param accepted 1 if socket has been created by accept(),
+ *                 0 if socket has been created by socket()
  * @return the index of the new socket; -1 on error
  */
 static int
-alloc_socket(struct netconn *newconn)
+alloc_socket(struct netconn *newconn, int accepted)
 {
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
@@ -224,8 +226,9 @@ alloc_socket(struct netconn *newconn)
       sockets[i].lastdata   = NULL;
       sockets[i].lastoffset = 0;
       sockets[i].rcvevent   = 0;
-      /* TCP sendbuf is empty, but not connected yet, so not yet writable */
-      sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? 0 : 1);
+      /* TCP sendbuf is empty, but not connected yet, so not yet writable
+       * (unless it has been created by accept()). */
+      sockets[i].sendevent  = (newconn->type == NETCONN_TCP ? (accepted != 0) : 1);
       sockets[i].errevent   = 0;
       sockets[i].err        = 0;
       SYS_ARCH_UNPROTECT(lev);
@@ -325,7 +328,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     MEMCPY(addr, &sin, *addrlen);
   }
 
-  newsock = alloc_socket(newconn);
+  newsock = alloc_socket(newconn, 1);
   if (newsock == -1) {
     netconn_delete(newconn);
     sock_set_errno(sock, ENFILE);
@@ -824,7 +827,7 @@ lwip_socket(int domain, int type, int protocol)
     return -1;
   }
 
-  i = alloc_socket(conn);
+  i = alloc_socket(conn, 0);
 
   if (i == -1) {
     netconn_delete(conn);
