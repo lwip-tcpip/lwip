@@ -96,6 +96,7 @@ struct in_addr {
 #define inet_addr(cp)         ipaddr_addr(cp)
 #define inet_aton(cp, addr)   ipaddr_aton(cp, (ip_addr_t*)addr)
 #define inet_ntoa(addr)       ipaddr_ntoa((ip_addr_t*)&(addr))
+#define inet_ntoa_r(addr, buf, buflen) ipaddr_ntoa_r((ip_addr_t*)&(addr), buf, buflen)
 
 #ifdef __cplusplus
 }

@@ -20,7 +20,11 @@ HISTORY
   ++ New features:
 
   2010-02-08: Simon Goldschmidt
-  * netif.h: Added 
+  * inet.h, ip_addr.c/.h: Added reentrant versions of inet_ntoa/ipaddr_ntoa
+    inet_ntoa_r/ipaddr_ntoa_r
+
+  2010-02-08: Simon Goldschmidt
+  * netif.h: Added netif_s/get_igmp_mac_filter() macros
 
   2010-02-05: Simon Goldschmidt
   * netif.h: Added function-like macros to get/set the hostname on a netif

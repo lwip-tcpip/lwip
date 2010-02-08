@@ -204,6 +204,7 @@ u32_t ipaddr_addr(const char *cp);
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
 char *ipaddr_ntoa(ip_addr_t *addr);
+char *ipaddr_ntoa_r(ip_addr_t *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }
