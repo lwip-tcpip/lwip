@@ -44,7 +44,7 @@ extern "C" {
 #ifdef LWIP_ERR_T
 typedef LWIP_ERR_T err_t;
 #else /* LWIP_ERR_T */
- typedef s8_t err_t;
+typedef s8_t err_t;
 #endif /* LWIP_ERR_T*/
 
 /* Definitions for error constants. */
