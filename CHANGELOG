@@ -87,6 +87,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-08: Simon Goldschmidt (Stéphane Lesage)
+  * igmp.c: Fixed bug #28798 (Error in "Max Response Time" processing) and
+    another bug when LWIP_RAND() returns zero.
+
   2010-02-04: Simon Goldschmidt
   * nearly every file: Use macros defined in ip_addr.h (some of them new)
     to work with IP addresses (preparation for bug #27352 - Change ip_addr

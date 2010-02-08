@@ -159,7 +159,7 @@ igmp_start(struct netif *netif)
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp_start: igmp_mac_filter(ADD "));
       ip_addr_debug_print(IGMP_DEBUG, &allsystems);
       LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", netif));
-      netif->igmp_mac_filter( netif, &allsystems, IGMP_ADD_MAC_FILTER);
+      netif->igmp_mac_filter(netif, &allsystems, IGMP_ADD_MAC_FILTER);
     }
 
     return ERR_OK;
@@ -218,7 +218,7 @@ igmp_stop(struct netif *netif)
  * @param netif network interface on which report IGMP memberships
  */
 void
-igmp_report_groups( struct netif *netif)
+igmp_report_groups(struct netif *netif)
 {
   struct igmp_group *group = igmp_group_list;
 
@@ -226,7 +226,7 @@ igmp_report_groups( struct netif *netif)
 
   while (group != NULL) {
     if (group->netif == netif) {
-      igmp_delaying_member( group, IGMP_JOIN_DELAYING_MEMBER_TMR);
+      igmp_delaying_member(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
     }
     group = group->next;
   }
@@ -347,6 +347,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
   struct igmp_group* group;
   struct igmp_group* groupref;
 
+
   /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */    
   iphdr = p->payload;
   if (pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4)) || (p->len < IGMP_MINLEN)) {
@@ -400,7 +401,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
        while (groupref) {
          /* Do not send messages on the all systems group address! */
          if ((groupref->netif == inp) && (!(ip_addr_cmp(&(groupref->group_address), &allsystems)))) {
-           igmp_delaying_member( groupref, igmp->igmp_maxresp);
+           igmp_delaying_member(groupref, igmp->igmp_maxresp);
          }
          groupref = groupref->next;
        }
@@ -409,7 +410,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
        if (!ip_addr_isany(&group->group_address) != 0) {
          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_MEMB_QUERY to a specific group "));
          ip_addr_debug_print(IGMP_DEBUG, &group->group_address);
-         if (ip_addr_cmp (dest, &allsystems)) {
+         if (ip_addr_cmp(dest, &allsystems)) {
            LWIP_DEBUGF(IGMP_DEBUG, (" using \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
            /* we first need to re-lookfor the group since we used dest last time */
            group = igmp_lookfor_group(inp, &igmp->igmp_group_address);
@@ -419,7 +420,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
 
          if (group != NULL) {
            IGMP_STATS_INC(igmp.unicast_query);
-           igmp_delaying_member( group, igmp->igmp_maxresp);
+           igmp_delaying_member(group, igmp->igmp_maxresp);
          }
        }
      }
@@ -427,7 +428,6 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
    }
    case IGMP_V2_MEMB_REPORT: {
      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_V2_MEMB_REPORT\n"));
-
      IGMP_STATS_INC(igmp.report_rxed);
      if (group->group_state == IGMP_GROUP_DELAYING_MEMBER) {
        /* This is on a specific group we have already looked up */
@@ -601,8 +601,8 @@ igmp_tmr(void)
   struct igmp_group *group = igmp_group_list;
 
   while (group != NULL) {
-    if (group->timer != 0) {
-      group->timer -= 1;
+    if (group->timer > 0) {
+      group->timer--;
       if (group->timer == 0) {
         igmp_timeout(group);
       }
@@ -640,7 +640,8 @@ igmp_timeout(struct igmp_group *group)
 void
 igmp_start_timer(struct igmp_group *group, u8_t max_time)
 {
-  group->timer = LWIP_RAND() % max_time;
+  /* ensure the value is > 0 */
+  group->timer = (LWIP_RAND() % (max_time - 1)) + 1;
 }
 
 /**
@@ -661,11 +662,16 @@ igmp_stop_timer(struct igmp_group *group)
  * @param maxresp query delay
  */
 void
-igmp_delaying_member( struct igmp_group *group, u8_t maxresp)
+igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
 {
+  u8_t maxresphalf = maxresp / 2;
+  if (maxresphalf == 0) {
+    maxresphalf = 1;
+  }
   if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) ||
-     ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) && (maxresp > group->timer))) {
-    igmp_start_timer(group, (maxresp)/2);
+     ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) &&
+      ((group->timer == 0) || (maxresphalf < group->timer)))) {
+    igmp_start_timer(group, maxresphalf);
     group->group_state = IGMP_GROUP_DELAYING_MEMBER;
   }
 }
@@ -695,7 +701,7 @@ igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 {
   /* This is the "router alert" option */
   u16_t ra[2];
-  ra[0] = htons (ROUTER_ALERT);
+  ra[0] = htons(ROUTER_ALERT);
   ra[1] = 0x0000; /* Router shall examine packet */
   return ip_output_if_opt(p, src, dest, ttl, 0, proto, netif, ra, ROUTER_ALERTLEN);
 }
@@ -739,7 +745,7 @@ igmp_send(struct igmp_group *group, u8_t type)
       igmp->igmp_msgtype  = type;
       igmp->igmp_maxresp  = 0;
       igmp->igmp_checksum = 0;
-      igmp->igmp_checksum = inet_chksum( igmp, IGMP_MINLEN);
+      igmp->igmp_checksum = inet_chksum(igmp, IGMP_MINLEN);
 
       igmp_ip_output_if(p, &src, dest, IGMP_TTL, IP_PROTO_IGMP, group->netif);
     }
