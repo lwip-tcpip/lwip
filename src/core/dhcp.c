@@ -500,7 +500,9 @@ static void
 dhcp_handle_ack(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
+#if LWIP_DNS
   u8_t n;
+#endif /* LWIP_DNS */
 
   /* clear options we might not get from the ACK */
   ip_addr_set_zero(&dhcp->offered_sn_mask);
@@ -1319,7 +1321,7 @@ dhcp_parse_reply(struct dhcp *dhcp, struct pbuf *p)
   if (p->len < DHCP_SNAME_OFS) {
     return ERR_BUF;
   }
-  dhcp->msg_in = p->payload;
+  dhcp->msg_in = (struct dhcp_msg *)p->payload;
 #if LWIP_DHCP_BOOTP_FILE
   /* clear boot file name */
   dhcp->boot_file_name[0] = 0;
