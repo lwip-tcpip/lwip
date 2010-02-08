@@ -739,7 +739,7 @@ void
 udp_disconnect(struct udp_pcb *pcb)
 {
   /* reset remote address association */
-  ip_addr_set(&pcb->remote_ip, IP_ADDR_ANY);
+  ip_addr_set_any(&pcb->remote_ip);
   pcb->remote_port = 0;
   /* mark PCB as unconnected */
   pcb->flags &= ~UDP_FLAGS_CONNECTED;

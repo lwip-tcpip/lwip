@@ -836,7 +836,7 @@ dhcp_discover(struct netif *netif)
   err_t result = ERR_OK;
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover()\n"));
-  ip_addr_set(&dhcp->offered_ip_addr, IP_ADDR_ANY);
+  ip_addr_set_any(&dhcp->offered_ip_addr);
   dhcp_set_state(dhcp, DHCP_SELECTING);
   /* create and initialize the DHCP message header */
   result = dhcp_create_request(netif, dhcp);

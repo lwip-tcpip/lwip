@@ -134,9 +134,11 @@ extern const ip_addr_t ip_addr_broadcast;
                                ((src) == NULL ? 0:\
                                (src)->addr))
 /** Set complete address to zero */
-#define ip_addr_set_zero(ipaddr) (ipaddr)->addr = IPADDR_ANY
+#define ip_addr_set_zero(ipaddr)      ((ipaddr)->addr = 0)
+/** Set address to IPADDR_ANY (no need for htonl()) */
+#define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
 /** Set address to loopback address */
-#define ip_addr_set_loopback(ipaddr) ((ipaddr)->addr = htonl(IPADDR_LOOPBACK))
+#define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = htonl(IPADDR_LOOPBACK))
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
 #define ip_addr_set_hton(dest, src) ((dest)->addr = \

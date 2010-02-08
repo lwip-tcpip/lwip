@@ -1442,7 +1442,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
   if (dflt != 0)
   {
     /* the default route 0.0.0.0 */
-    ip_addr_set(&dst, &ip_addr_any);
+    ip_addr_set_any(&dst);
     insert = 1;
   }
   else
@@ -1519,7 +1519,7 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
   if (dflt != 0)
   {
     /* the default route 0.0.0.0 */
-    ip_addr_set(&dst, &ip_addr_any);
+    ip_addr_set_any(&dst);
     del = 1;
   }
   else
