@@ -135,6 +135,7 @@ PACK_STRUCT_END
 #endif
 
 
+static struct igmp_group *igmp_lookup_group(struct netif *ifp, ip_addr_t *addr);
 static err_t  igmp_remove_group(struct igmp_group *group);
 static void   igmp_timeout( struct igmp_group *group);
 static void   igmp_start_timer(struct igmp_group *group, u8_t max_time);
@@ -698,7 +699,11 @@ igmp_timeout(struct igmp_group *group)
 static void
 igmp_start_timer(struct igmp_group *group, u8_t max_time)
 {
-  /* ensure the value is > 0 */
+  /* ensure the input value is > 0 */
+  if (max_time == 0) {
+    max_time = 1;
+  }
+  /* ensure the random value is > 0 */
   group->timer = (LWIP_RAND() % (max_time - 1)) + 1;
 }
 
@@ -722,14 +727,10 @@ igmp_stop_timer(struct igmp_group *group)
 static void
 igmp_delaying_member(struct igmp_group *group, u8_t maxresp)
 {
-  u8_t maxresphalf = maxresp / 2;
-  if (maxresphalf == 0) {
-    maxresphalf = 1;
-  }
   if ((group->group_state == IGMP_GROUP_IDLE_MEMBER) ||
      ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) &&
-      ((group->timer == 0) || (maxresphalf < group->timer)))) {
-    igmp_start_timer(group, maxresphalf);
+      ((group->timer == 0) || (maxresp < group->timer)))) {
+    igmp_start_timer(group, maxresp);
     group->group_state = IGMP_GROUP_DELAYING_MEMBER;
   }
 }
