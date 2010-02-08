@@ -19,6 +19,9 @@ HISTORY
 
   ++ New features:
 
+  2010-02-08: Simon Goldschmidt
+  * netif.h: Added 
+
   2010-02-05: Simon Goldschmidt
   * netif.h: Added function-like macros to get/set the hostname on a netif
 

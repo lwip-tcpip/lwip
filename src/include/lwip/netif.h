@@ -285,6 +285,11 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #define netif_get_hostname(netif) (((netif) != NULL) ? ((netif)->hostname) : NULL)
 #endif /* LWIP_NETIF_HOSTNAME */
 
+#if LWIP_IGMP
+#define netif_set_igmp_mac_filter(netif, function) do { if((netif) != NULL) { (netif)->igmp_mac_filter = function; }}while(0)
+#define netif_get_igmp_mac_filter(netif) (((netif) != NULL) ? ((netif)->igmp_mac_filter) : NULL)
+#endif /* LWIP_IGMP */
+
 #if ENABLE_LOOPBACK
 err_t netif_loop_output(struct netif *netif, struct pbuf *p, ip_addr_t *dest_ip);
 void netif_poll(struct netif *netif);
