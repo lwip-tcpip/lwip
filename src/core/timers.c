@@ -402,6 +402,17 @@ sys_check_timeouts(void)
   }
 }
 
+/** Set back the timestamp of the last call to sys_check_timeouts()
+ * This is necessary if sys_check_timeouts() hasn't been called for a long
+ * time (e.g. while saving energy) to prevent all timer functions of that
+ * period being called.
+ */
+void
+sys_restart_timeouts(void)
+{
+  timeouts_last_time = sys_now();
+}
+
 #else /* NO_SYS */
 
 /**

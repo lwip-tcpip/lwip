@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-02-09: Simon Goldschmidt (Simon Kallweit)
+  * timers.c/.h: Added function sys_restart_timeouts() from patch #7085
+    (Restart system timeout handling)
+
   2010-02-09: Simon Goldschmidt
   * netif.c/.h, removed loopif.c/.h: task #10153 (Integrate loopif into
     netif.c) - loopif does not have to be created by the port any more,
