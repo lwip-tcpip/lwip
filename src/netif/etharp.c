@@ -692,7 +692,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
     for_us = 0;
   } else {
     /* ARP packet directed to us? */
-    for_us = ip_addr_cmp(&dipaddr, &(netif->ip_addr));
+    for_us = (u8_t)ip_addr_cmp(&dipaddr, &(netif->ip_addr));
   }
 
   /* ARP message directed to us? */
