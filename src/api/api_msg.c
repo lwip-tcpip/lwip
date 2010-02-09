@@ -54,6 +54,12 @@
 
 #include <string.h>
 
+#define SET_NONBLOCKING_CONNECT(conn, val)  do { if(val) { \
+  (conn)->flags |= NETCONN_FLAG_IN_NONBLOCKING_CONNECT; \
+} else { \
+  (conn)->flags &= ~ NETCONN_FLAG_IN_NONBLOCKING_CONNECT; }} while(0)
+#define IN_NONBLOCKING_CONNECT(conn) (((conn)->flags & NETCONN_FLAG_IN_NONBLOCKING_CONNECT) != 0)
+
 /* forward declarations */
 #if LWIP_TCP
 static err_t do_writemore(struct netconn *conn);
@@ -362,8 +368,8 @@ err_tcp(void *arg, err_t err)
       (old_state == NETCONN_CONNECT)) {
     /* calling do_writemore/do_close_internal is not necessary
        since the pcb has already been deleted! */
-    int was_nonblocking_connect = conn->in_non_blocking_connect;
-    conn->in_non_blocking_connect = 0;
+    int was_nonblocking_connect = IN_NONBLOCKING_CONNECT(conn);
+    SET_NONBLOCKING_CONNECT(conn, 0);
 
     if (!was_nonblocking_connect) {
       /* set error return code */
@@ -610,8 +616,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #if LWIP_SO_RCVBUF
   conn->recv_bufsize = RECV_BUFSIZE_DEFAULT;
 #endif /* LWIP_SO_RCVBUF */
-  conn->non_blocking = 0;
-  conn->in_non_blocking_connect = 0;
+  conn->flags = 0;
   return conn;
 }
 
@@ -871,7 +876,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
 
   LWIP_ASSERT("conn->state == NETCONN_CONNECT", conn->state == NETCONN_CONNECT);
   LWIP_ASSERT("(conn->current_msg != NULL) || conn->in_non_blocking_connect",
-    (conn->current_msg != NULL) || conn->in_non_blocking_connect);
+    (conn->current_msg != NULL) || IN_NONBLOCKING_CONNECT(conn));
 
   if (conn->current_msg != NULL) {
     conn->current_msg->err = err;
@@ -879,8 +884,8 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   if ((conn->type == NETCONN_TCP) && (err == ERR_OK)) {
     setup_tcp(conn);
   }
-  was_blocking = !conn->in_non_blocking_connect;
-  conn->in_non_blocking_connect = 0;
+  was_blocking = !IN_NONBLOCKING_CONNECT(conn);
+  SET_NONBLOCKING_CONNECT(conn, 0);
   conn->current_msg = NULL;
   conn->state = NETCONN_NONE;
   if (!was_blocking) {
@@ -935,9 +940,10 @@ do_connect(struct api_msg_msg *msg)
       msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr,
         msg->msg.bc.port, do_connected);
       if (msg->err == ERR_OK) {
+        u8_t non_blocking = netconn_is_nonblocking(msg->conn);
         msg->conn->state = NETCONN_CONNECT;
-        msg->conn->in_non_blocking_connect = msg->conn->non_blocking;
-        if (msg->conn->non_blocking) {
+        SET_NONBLOCKING_CONNECT(msg->conn, non_blocking);
+        if (non_blocking) {
           msg->err = ERR_INPROGRESS;
         } else {
           msg->conn->current_msg = msg;

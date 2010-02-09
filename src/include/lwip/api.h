@@ -57,6 +57,21 @@ extern "C" {
 #define NETCONN_COPY   0x01
 #define NETCONN_MORE   0x02
 
+/* Flags for struct netconn.flags (u8_t) */
+
+/** TCP: when data passed to netconn_write doesn't fit into the send buffer,
+    this temporarily stores whether to wake up the original application task
+    if data couldn't be sent in the first try. */
+#define NETCONN_FLAG_WRITE_DELAYED            0x01
+/** Should this netconn avoid blocking? */
+#define NETCONN_FLAG_NON_BLOCKING             0x02
+/** Was the last connect action a non-blocking one? */
+#define NETCONN_FLAG_IN_NONBLOCKING_CONNECT  0x04
+/** If this is set, a TCP netconn must call netconn_recved() to update
+    the TCP receive window (done automatically if not set). */
+#define NETCONN_FLAG_UPDATE_TCPWIN_MANUALLY   0x08
+
+
 /* Helpers to process several netconn_types by the same code */
 #define NETCONNTYPE_GROUP(t)    (t&0xF0)
 #define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
@@ -148,25 +163,16 @@ struct netconn {
   int recv_bufsize;
 #endif /* LWIP_SO_RCVBUF */
   s16_t recv_avail;
+  u8_t flags;
 #if LWIP_TCP
+  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
+      this temporarily stores how much is already sent. */
+  size_t write_offset;
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
       this temporarily stores the message.
       Also used during connect and close. */
   struct api_msg_msg *current_msg;
-  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
-      this temporarily stores how much is already sent. */
-  size_t write_offset;
-#if LWIP_TCPIP_CORE_LOCKING
-  /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
-      this temporarily stores whether to wake up the original application task
-      if data couldn't be sent in the first try. @todo: combine in 'flags' */
-  u8_t write_delayed;
-#endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_TCP */
-  /** Should this netconn avoid blocking? @todo: combine in 'flags' */
-  u8_t non_blocking;
-  /** Was the last connect action a non-blocking one? @todo: combine in 'flags' */
-  u8_t in_non_blocking_connect;
   /** A callback function that is informed about events for this netconn */
   netconn_callback callback;
 };
@@ -227,9 +233,12 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
 
 /** Set the blocking status of netconn calls (@todo: write/send is missing) */
-#define netconn_set_nonblocking(conn, val)  ((conn)->non_blocking = (val))
+#define netconn_set_nonblocking(conn, val)  do { if(val) { \
+  (conn)->flags |= NETCONN_FLAG_NON_BLOCKING; \
+} else { \
+  (conn)->flags &= ~ NETCONN_FLAG_NON_BLOCKING; }} while(0)
 /** Get the blocking status of netconn calls (@todo: write/send is missing) */
-#define netconn_is_nonblocking(conn)        ((conn)->non_blocking)
+#define netconn_is_nonblocking(conn)        (((conn)->flags & NETCONN_FLAG_NON_BLOCKING) != 0)
 
 #ifdef __cplusplus
 }
