@@ -103,6 +103,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-09: Simon Goldschmidt/Stephane Lesage
+  * sockets.c: Fixed bug #28853 (lwip_recvfrom() returns 0 on receive time-out
+    or any netconn_recv() error)
+
   2010-02-09: Simon Goldschmidt
   * ppp.c: task #10154 (PPP: Update snmp in/out counters for tx/rx packets)
 

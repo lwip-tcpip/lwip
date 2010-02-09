@@ -544,7 +544,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL, error is \"%s\"!\n",
           s, lwip_strerr(err)));
         sock_set_errno(sock, err_to_errno(err));
-        return 0;
+        return -1;
       }
       LWIP_ASSERT("buf != NULL", buf != NULL);
       sock->lastdata = buf;
