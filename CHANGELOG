@@ -99,6 +99,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-09: Simon Goldschmidt
+  * netif.c: For loopback packets, adjust the stats- and snmp-counters
+    for the loopback netif.
+
   2010-02-08: Simon Goldschmidt
   * igmp.c/.h, ip.h: Moved most defines from igmp.h to igmp.c for clarity
     since they are not used anywhere else.

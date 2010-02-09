@@ -45,6 +45,7 @@
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
 #include "netif/etharp.h"
+#include "lwip/stats.h"
 #if ENABLE_LOOPBACK
 #include "lwip/sys.h"
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
@@ -583,11 +584,21 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   u8_t clen = 0;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
   SYS_ARCH_DECL_PROTECT(lev);
+  /* If we have a loopif, SNMP counters are adjusted for it,
+   * if not they are adjusted for 'netif'. */
+#if LWIP_HAVE_LOOPIF
+  struct netif *stats_if = &loop_netif;
+#else /* LWIP_HAVE_LOOPIF */
+  struct netif *stats_if = netif;
+#endif /* LWIP_HAVE_LOOPIF */
   LWIP_UNUSED_ARG(ipaddr);
 
   /* Allocate a new pbuf */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
   if (r == NULL) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(stats_if);
     return ERR_MEM;
   }
 #if LWIP_LOOPBACK_MAX_PBUFS
@@ -596,7 +607,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   if(((netif->loop_cnt_current + clen) < netif->loop_cnt_current) ||
      ((netif->loop_cnt_current + clen) > LWIP_LOOPBACK_MAX_PBUFS)) {
     pbuf_free(r);
-    r = NULL;
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(stats_if);
     return ERR_MEM;
   }
   netif->loop_cnt_current += clen;
@@ -605,7 +618,9 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   /* Copy the whole pbuf queue p into the single pbuf r */
   if ((err = pbuf_copy(r, p)) != ERR_OK) {
     pbuf_free(r);
-    r = NULL;
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(stats_if);
     return err;
   }
 
@@ -626,6 +641,10 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   }
   SYS_ARCH_UNPROTECT(lev);
 
+  LINK_STATS_INC(link.xmit);
+  snmp_add_ifoutoctets(stats_if, p->tot_len);
+  snmp_inc_ifoutucastpkts(stats_if);
+
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
   tcpip_callback((tcpip_callback_fn)netif_poll, netif);
@@ -644,6 +663,13 @@ void
 netif_poll(struct netif *netif)
 {
   struct pbuf *in;
+  /* If we have a loopif, SNMP counters are adjusted for it,
+   * if not they are adjusted for 'netif'. */
+#if LWIP_HAVE_LOOPIF
+  struct netif *stats_if = &loop_netif;
+#else /* LWIP_HAVE_LOOPIF */
+  struct netif *stats_if = netif;
+#endif /* LWIP_HAVE_LOOPIF */
   SYS_ARCH_DECL_PROTECT(lev);
 
   do {
@@ -678,6 +704,9 @@ netif_poll(struct netif *netif)
     SYS_ARCH_UNPROTECT(lev);
 
     if (in != NULL) {
+      LINK_STATS_INC(link.recv);
+      snmp_add_ifinoctets(stats_if, in->tot_len);
+      snmp_inc_ifinucastpkts(stats_if);
       /* loopback packets are always IP packets! */
       if (ip_input(in, netif) != ERR_OK) {
         pbuf_free(in);
