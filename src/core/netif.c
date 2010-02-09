@@ -74,6 +74,50 @@
 struct netif *netif_list;
 struct netif *netif_default;
 
+#if LWIP_HAVE_LOOPIF
+static struct netif loop_netif;
+
+/**
+ * Initialize a lwip network interface structure for a loopback interface
+ *
+ * @param netif the lwip network interface structure for this loopif
+ * @return ERR_OK if the loopif is initialized
+ *         ERR_MEM if private data couldn't be allocated
+ */
+static err_t
+netif_loopif_init(struct netif *netif)
+{
+  /* initialize the snmp variables and counters inside the struct netif
+   * ifSpeed: no assumption can be made!
+   */
+  NETIF_INIT_SNMP(netif, snmp_ifType_softwareLoopback, 0);
+
+  netif->name[0] = 'l';
+  netif->name[1] = 'o';
+  netif->output = netif_loop_output;
+  return ERR_OK;
+}
+#endif /* LWIP_HAVE_LOOPIF */
+
+void
+netif_init(void)
+{
+#if LWIP_HAVE_LOOPIF
+  ip_addr_t loop_ipaddr, loop_netmask, loop_gw;
+  IP4_ADDR(&loop_gw, 127,0,0,1);
+  IP4_ADDR(&loop_ipaddr, 127,0,0,1);
+  IP4_ADDR(&loop_netmask, 255,0,0,0);
+
+#if NO_SYS
+  netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, ip_input);
+#else  /* NO_SYS */
+  netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, tcpip_input);
+#endif /* NO_SYS */
+  netif_set_up(&loop_netif);
+
+#endif /* LWIP_HAVE_LOOPIF */
+}
+
 /**
  * Add a network interface to the list of lwIP netifs.
  *
@@ -149,7 +193,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
 #if LWIP_IGMP
   /* start IGMP processing */
   if (netif->flags & NETIF_FLAG_IGMP) {
-    igmp_start( netif);
+    igmp_start(netif);
   }
 #endif /* LWIP_IGMP */
 

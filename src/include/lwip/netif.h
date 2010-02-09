@@ -237,7 +237,7 @@ extern struct netif *netif_list;
 /** The default network interface. */
 extern struct netif *netif_default;
 
-#define netif_init() /* Compatibility define, no init needed. */
+void netif_init(void);
 
 struct netif *netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
       ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input);

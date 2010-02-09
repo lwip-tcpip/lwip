@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2010-02-09: Simon Goldschmidt
+  * netif.c/.h, removed loopif.c/.h: task #10153 (Integrate loopif into
+    netif.c) - loopif does not have to be created by the port any more,
+    just define LWIP_HAVE_LOOPIF to 1.
+
   2010-02-08: Simon Goldschmidt
   * inet.h, ip_addr.c/.h: Added reentrant versions of inet_ntoa/ipaddr_ntoa
     inet_ntoa_r/ipaddr_ntoa_r
