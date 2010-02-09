@@ -69,7 +69,7 @@ extern "C" {
 #define NETCONN_FLAG_IN_NONBLOCKING_CONNECT  0x04
 /** If this is set, a TCP netconn must call netconn_recved() to update
     the TCP receive window (done automatically if not set). */
-#define NETCONN_FLAG_UPDATE_TCPWIN_MANUALLY   0x08
+#define NETCONN_FLAG_NO_AUTO_RECVED          0x08
 
 
 /* Helpers to process several netconn_types by the same code */
@@ -214,6 +214,7 @@ err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
 #define netconn_listen(conn) netconn_listen_with_backlog(conn, TCP_DEFAULT_LISTEN_BACKLOG)
 err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
 err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
+void    netconn_recved(struct netconn *conn, u32_t length);
 err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                        ip_addr_t *addr, u16_t port);
 err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
@@ -239,6 +240,27 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
   (conn)->flags &= ~ NETCONN_FLAG_NON_BLOCKING; }} while(0)
 /** Get the blocking status of netconn calls (@todo: write/send is missing) */
 #define netconn_is_nonblocking(conn)        (((conn)->flags & NETCONN_FLAG_NON_BLOCKING) != 0)
+
+/** TCP: Set the no-auto-recved status of netconn calls (see NETCONN_FLAG_NO_AUTO_RECVED) */
+#define netconn_set_noautorecved(conn, val)  do { if(val) { \
+  (conn)->flags |= NETCONN_FLAG_NO_AUTO_RECVED; \
+} else { \
+  (conn)->flags &= ~ NETCONN_FLAG_NO_AUTO_RECVED; }} while(0)
+/** TCP: Get the no-auto-recved status of netconn calls (see NETCONN_FLAG_NO_AUTO_RECVED) */
+#define netconn_get_noautorecved(conn)        (((conn)->flags & NETCONN_FLAG_NO_AUTO_RECVED) != 0)
+
+#if LWIP_SO_RCVTIMEO
+/** Set the receive timeout in miliseconds */
+#define netconn_set_recvtimeout(conn, timeout)      ((conn)->recv_timeout = (timeout))
+/** Get the receive timeout in miliseconds */
+#define netconn_get_recvtimeout(conn)               ((conn)->recv_timeout)
+#endif /* LWIP_SO_RCVTIMEO */
+#if LWIP_SO_RCVBUF
+/** Set the receive buffer in bytes */
+#define netconn_set_recvbufsize(conn, recvbufsize)  ((conn)->recv_bufsize = (recvbufsize))
+/** Get the receive buffer in bytes */
+#define netconn_get_recvbufsize(conn)               ((conn)->recv_bufsize)
+#endif /* LWIP_SO_RCVBUF*/
 
 #ifdef __cplusplus
 }

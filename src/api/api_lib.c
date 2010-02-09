@@ -388,18 +388,20 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     buf->port = 0;
     buf->addr = NULL;
 
-    /* Let the stack know that we have taken the data. */
-    /* TODO: Speedup: Don't block and wait for the answer here
-       (to prevent multiple thread-switches). */
-    msg.function = do_recv;
-    msg.msg.conn = conn;
-    if (buf != NULL) {
-      msg.msg.msg.r.len = buf->p->tot_len;
-    } else {
-      msg.msg.msg.r.len = 1;
+    if (!netconn_get_noautorecved(conn) || (buf == NULL)) {
+      /* Let the stack know that we have taken the data. */
+      /* TODO: Speedup: Don't block and wait for the answer here
+         (to prevent multiple thread-switches). */
+      msg.function = do_recv;
+      msg.msg.conn = conn;
+      if (buf != NULL) {
+        msg.msg.msg.r.len = buf->p->tot_len;
+      } else {
+        msg.msg.msg.r.len = 1;
+      }
+      /* don't care for the return value of do_recv */
+      TCPIP_APIMSG(&msg);
     }
-    /* don't care for the return value of do_recv */
-    TCPIP_APIMSG(&msg);
 #endif /* LWIP_TCP */
   } else {
 #if (LWIP_UDP || LWIP_RAW)
@@ -425,6 +427,33 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   *new_buf = buf;
   /* don't set conn->last_err: it's only ERR_OK, anyway */
   return ERR_OK;
+}
+
+/**
+ * TCP: update the receive window: by calling this, the application
+ * tells the stack that it has processed data and is able to accept
+ * new data.
+ * ATTENTION: use with care, this is mainly used for sockets!
+ * Can only be used when calling netconn_set_noautorecved(conn, 1) before.
+ *
+ * @param conn the netconn for which to update the receive window
+ * @param length amount of data processed (ATTENTION: this must be accurate!)
+ */
+void
+netconn_recved(struct netconn *conn, u32_t length)
+{
+  if ((conn != NULL) && (conn->type == NETCONN_TCP) &&
+      (netconn_get_noautorecved(conn))) {
+    struct api_msg msg;
+    /* Let the stack know that we have taken the data. */
+    /* TODO: Speedup: Don't block and wait for the answer here
+       (to prevent multiple thread-switches). */
+    msg.function = do_recv;
+    msg.msg.conn = conn;
+    msg.msg.msg.r.len = length;
+    /* don't care for the return value of do_recv */
+    TCPIP_APIMSG(&msg);
+  }
 }
 
 /**

@@ -304,6 +304,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     return -1;
   }
   LWIP_ASSERT("newconn != NULL", newconn != NULL);
+  /* Prevent automatic window updates, we do this on our own! */
+  netconn_set_noautorecved(newconn, 1);
 
   /* get the IP address and port of the remote host */
   err = netconn_peer(newconn, &naddr, &port);
@@ -519,6 +521,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       if (((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) && 
           (sock->rcvevent <= 0)) {
         if (off > 0) {
+          /* update receive window */
+          netconn_recved(sock->conn, (u32_t)off);
           /* already received data, return that */
           sock_set_errno(sock, 0);
           return off;
@@ -536,6 +540,8 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
 
       if (err != ERR_OK) {
         if (off > 0) {
+          /* update receive window */
+          netconn_recved(sock->conn, (u32_t)off);
           /* already received data, return that */
           sock_set_errno(sock, 0);
           return off;
@@ -649,6 +655,10 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     }
   } while (!done);
 
+  if (off > 0) {
+    /* update receive window */
+    netconn_recved(sock->conn, (u32_t)off);
+  }
   sock_set_errno(sock, 0);
   return off;
 }
@@ -819,6 +829,10 @@ lwip_socket(int domain, int type, int protocol)
     conn = netconn_new_with_callback(NETCONN_TCP, event_callback);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%s, SOCK_STREAM, %d) = ",
                                  domain == PF_INET ? "PF_INET" : "UNKNOWN", protocol));
+    if (conn != NULL) {
+      /* Prevent automatic window updates, we do this on our own! */
+      netconn_set_noautorecved(conn, 1);
+    }
     break;
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_socket(%d, %d/UNKNOWN, %d) = -1\n",
@@ -1488,12 +1502,12 @@ lwip_getsockopt_internal(void *arg)
 
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
-      *(int *)optval = sock->conn->recv_timeout;
+      *(int *)optval = netconn_get_recvtimeout(sock->conn);
       break;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
     case SO_RCVBUF:
-      *(int *)optval = sock->conn->recv_bufsize;
+      *(int *)optval = netconn_get_recvbufsize(sock->conn);
       break;
 #endif /* LWIP_SO_RCVBUF */
 #if LWIP_UDP
@@ -1833,12 +1847,12 @@ lwip_setsockopt_internal(void *arg)
       break;
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
-      sock->conn->recv_timeout = ( *(int*)optval );
+      netconn_set_recvtimeout(sock->conn, *(int*)optval);
       break;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
     case SO_RCVBUF:
-      sock->conn->recv_bufsize = ( *(int*)optval );
+      netconn_set_recvbufsize(sock->conn, *(int*)optval);
       break;
 #endif /* LWIP_SO_RCVBUF */
 #if LWIP_UDP

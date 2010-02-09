@@ -87,7 +87,7 @@ struct api_msg_msg {
     } w;
     /** used for do_recv */
     struct {
-      u16_t len;
+      u32_t len;
     } r;
 #if LWIP_IGMP
     /** used for do_join_leave_group */

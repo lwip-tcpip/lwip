@@ -1102,7 +1102,12 @@ do_recv(struct api_msg_msg *msg)
       } else
 #endif /* TCP_LISTEN_BACKLOG */
       {
-        tcp_recved(msg->conn->pcb.tcp, msg->msg.r.len);
+        u32_t remaining = msg->msg.r.len;
+        do {
+          u16_t recved = (remaining > 0xffff) ? 0xffff : (u16_t)remaining;
+          tcp_recved(msg->conn->pcb.tcp, recved);
+          remaining -= recved;
+        }while(remaining != 0);
       }
     }
   }
