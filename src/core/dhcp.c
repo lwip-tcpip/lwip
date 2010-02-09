@@ -1430,6 +1430,7 @@ decode_next:
         dhcp_got_option(dhcp, decode_idx);
         dhcp_set_option_value(dhcp, decode_idx, htonl(value));
         decode_len -= 4;
+        val_offset += 4;
         decode_idx++;
         goto decode_next;
       } else if (decode_len == 4) {
