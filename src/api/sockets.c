@@ -126,7 +126,7 @@ static const int err_to_errno_table[] = {
   0,             /* ERR_OK          0      No error, everything OK. */
   ENOMEM,        /* ERR_MEM        -1      Out of memory error.     */
   ENOBUFS,       /* ERR_BUF        -2      Buffer error.            */
-  ETIMEDOUT,     /* ERR_TIMEOUT    -3      Timeout                  */
+  EWOULDBLOCK,   /* ERR_TIMEOUT    -3      Timeout                  */
   EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
   EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
   EINVAL,        /* ERR_VAL        -6      Illegal value.           */
@@ -499,7 +499,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
   struct netbuf      *buf;
   u16_t               buflen, copylen;
   int                 off = 0;
-  ip_addr_t     *addr;
+  ip_addr_t          *addr;
   u16_t               port;
   u8_t                done = 0;
   err_t               err;
@@ -544,7 +544,11 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): buf == NULL, error is \"%s\"!\n",
           s, lwip_strerr(err)));
         sock_set_errno(sock, err_to_errno(err));
-        return -1;
+        if (err == ERR_CLSD) {
+          return 0;
+        } else {
+          return -1;
+        }
       }
       LWIP_ASSERT("buf != NULL", buf != NULL);
       sock->lastdata = buf;
@@ -628,7 +632,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     }
 
     /* If we don't peek the incoming message... */
-    if ((flags & MSG_PEEK)==0) {
+    if ((flags & MSG_PEEK) == 0) {
       /* If this is a TCP socket, check if there is data left in the
          buffer. If so, it should be saved in the sock structure for next
          time around. */
