@@ -583,7 +583,6 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 #if LWIP_LOOPBACK_MAX_PBUFS
   u8_t clen = 0;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
-  SYS_ARCH_DECL_PROTECT(lev);
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
 #if LWIP_HAVE_LOOPIF
@@ -591,6 +590,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 #else /* LWIP_HAVE_LOOPIF */
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
+  SYS_ARCH_DECL_PROTECT(lev);
   LWIP_UNUSED_ARG(ipaddr);
 
   /* Allocate a new pbuf */
