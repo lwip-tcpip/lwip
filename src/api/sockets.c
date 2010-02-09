@@ -1017,7 +1017,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         msectimeout = 1;
     }
     
-    i = sys_sem_wait_timeout(select_cb.sem, msectimeout);
+    i = sys_arch_sem_wait(select_cb.sem, msectimeout);
     
     /* Take us off the list */
     sys_sem_wait(selectsem);
