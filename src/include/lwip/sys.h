@@ -48,7 +48,6 @@ typedef u8_t sys_mbox_t;
 #define sys_sem_new(c) ((sys_sem_t)c)
 #define sys_sem_signal(s)
 #define sys_sem_wait(s)
-#define sys_sem_wait_timeout(s,t)
 #define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
 #define sys_mbox_new(s) 0
@@ -67,7 +66,7 @@ typedef u8_t sys_mbox_t;
 /** Return code for timeouts from sys_arch_mbox_fetch and sys_arch_sem_wait */
 #define SYS_ARCH_TIMEOUT 0xffffffffUL
 
-/* sys_mbox_tryfetch returns SYS_MBOX_EMPTY if appropriate.
+/** sys_mbox_tryfetch() returns SYS_MBOX_EMPTY if appropriate.
  * For now we use the same magic value, but we allow this to change in future.
  */
 #define SYS_MBOX_EMPTY SYS_ARCH_TIMEOUT 
@@ -78,14 +77,29 @@ typedef u8_t sys_mbox_t;
 /** Function prototype for thread functions */
 typedef void (*lwip_thread_fn)(void *arg);
 
-/* Semaphore functions. */
+/* Function prototypes for functions to be implemented by platform ports
+   (in sys_arch.c) */
+
+/* Semaphore functions: */
+
+/** Create a new semaphore
+ * @param count initial count of the semaphore
+ * @return a new semaphore */
 sys_sem_t sys_sem_new(u8_t count);
+/** Signals a semaphore
+ * @param sem the semaphore to signal */
 void sys_sem_signal(sys_sem_t sem);
-/** Wait for a semaphore for the specified timeout: 0=wait forever */
+/** Wait for a semaphore for the specified timeout
+ * @param sem the semaphore to wait for
+ * @param timeout timeout in miliseconds to wait (0 = wait forever)
+ * @return time (in miliseconds) waited for the semaphore
+ *         or SYS_ARCH_TIMEOUT on timeout */
 u32_t sys_arch_sem_wait(sys_sem_t sem, u32_t timeout);
+/** Delete a semaphore
+ * @param sem semaphore to delete */
 void sys_sem_free(sys_sem_t sem);
+/** Wait for a semaphore - forever/no timeout */
 #define sys_sem_wait(sem)                  sys_arch_sem_wait(sem, 0)
-#define sys_sem_wait_timeout(sem, timeout) sys_arch_sem_wait(sem, timeout)
 
 /* Time functions. */
 #ifndef sys_msleep
@@ -93,19 +107,52 @@ void sys_msleep(u32_t ms); /* only has a (close to) 1 jiffy resolution. */
 #endif
 
 /* Mailbox functions. */
+
+/** Create a new mbox of specified size
+ * @param size (miminum) number of messages in this mbox
+ * @return a new mbox */
 sys_mbox_t sys_mbox_new(int size);
+/** Post a message to an mbox - may not fail
+ * -> blocks if full, only used from tasks not from ISR
+ * @param mbox mbox to posts the message
+ * @param msg message to post (ATTENTION: can be NULL) */
 void sys_mbox_post(sys_mbox_t mbox, void *msg);
+/** Try to post a message to an mbox - may fail if full or ISR
+ * @param mbox mbox to posts the message
+ * @param msg message to post (ATTENTION: can be NULL) */
 err_t sys_mbox_trypost(sys_mbox_t mbox, void *msg);
+/** Wait for a new message to arrive in the mbox
+ * @param mbox mbox to get a message from
+ * @param msg pointer where the message is stored
+ * @param timeout maximum time (in miliseconds) to wait for a message
+ * @return time (in miliseconds) waited for a message, may be 0 if not waited
+           or SYS_ARCH_TIMEOUT on timeout
+ *         The returned time has to be accurate to prevent timer jitter! */
 u32_t sys_arch_mbox_fetch(sys_mbox_t mbox, void **msg, u32_t timeout);
-#ifndef sys_arch_mbox_tryfetch /* Allow port to override with a macro */
+/* Allow port to override with a macro, e.g. special timout for sys_arch_mbox_fetch() */
+#ifndef sys_arch_mbox_tryfetch
+/** Wait for a new message to arrive in the mbox
+ * @param mbox mbox to get a message from
+ * @param msg pointer where the message is stored
+ * @param timeout maximum time (in miliseconds) to wait for a message
+ * @return 0 (miliseconds) if a message has been received
+ *         or SYS_MBOX_EMPTY if the mailbox is empty */
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t mbox, void **msg);
 #endif
-/* For now, we map straight to sys_arch implementation. */
+/** For now, we map straight to sys_arch implementation. */
 #define sys_mbox_tryfetch(mbox, msg) sys_arch_mbox_tryfetch(mbox, msg)
+/** Delete an mbox
+ * @param mbox mbox to delete */
 void sys_mbox_free(sys_mbox_t mbox);
 #define sys_mbox_fetch(mbox, msg) sys_arch_mbox_fetch(mbox, msg, 0)
 
-/* Thread functions. */
+/** The only thread function:
+ * Creates a new thread
+ * @param name human-readable name for the thread (used for debugging purposes)
+ * @param thread thread-function
+ * @param arg parameter passed to 'thread'
+ * @param stacksize stack size in bytes for the new thread (may be ignored by ports)
+ * @param prio priority of the new thread (may be ignored by ports) */
 sys_thread_t sys_thread_new(char *name, lwip_thread_fn thread, void *arg, int stacksize, int prio);
 
 #endif /* NO_SYS */
@@ -114,10 +161,12 @@ sys_thread_t sys_thread_new(char *name, lwip_thread_fn thread, void *arg, int st
 void sys_init(void);
 
 #ifndef sys_jiffies
-u32_t sys_jiffies(void); /* since power up. */
+/** Ticks/jiffies since power up. */
+u32_t sys_jiffies(void);
 #endif
 
-/** Returns the current time in milliseconds. */
+/** Returns the current time in milliseconds,
+ * may be the same as sys_jiffies or at least based on it. */
 u32_t sys_now(void);
 
 /* Critical Region Protection */
