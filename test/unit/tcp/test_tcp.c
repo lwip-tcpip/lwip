@@ -50,7 +50,7 @@ START_TEST(test_tcp_recv_inseq)
   struct tcp_pcb* pcb;
   struct pbuf* p;
   char data[] = {1, 2, 3, 4};
-  struct ip_addr remote_ip, local_ip;
+  ip_addr_t remote_ip, local_ip;
   u16_t data_len;
   u16_t remote_port = 0x100, local_port = 0x101;
   struct netif netif;

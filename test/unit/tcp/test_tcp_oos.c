@@ -115,7 +115,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
      5,  6,  7,  8,
      9, 10, 11, 12,
     13, 14, 15, 16};
-  struct ip_addr remote_ip, local_ip;
+  ip_addr_t remote_ip, local_ip;
   u16_t data_len;
   u16_t remote_port = 0x100, local_port = 0x101;
   struct netif netif;
@@ -255,7 +255,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
      5,  6,  7,  8,
      9, 10, 11, 12,
     13, 14, 15, 16};
-  struct ip_addr remote_ip, local_ip;
+  ip_addr_t remote_ip, local_ip;
   u16_t data_len;
   u16_t remote_port = 0x100, local_port = 0x101;
   struct netif netif;
