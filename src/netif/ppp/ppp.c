@@ -109,6 +109,7 @@
 
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
+#include "lwip/snmp.h"
 
 #include <string.h>
 
@@ -709,10 +710,14 @@ nPut(PPPControl *pc, struct pbuf *nb)
                "PPP nPut: incomplete sio_write(%d,, %u) = %d\n", pc->fd, b->len, c));
       LINK_STATS_INC(link.err);
       pc->lastXMit = 0; /* prepend PPP_FLAG to next packet */
-      break;
+      snmp_inc_ifoutdiscards(&pc->netif);
+      pbuf_free(nb);
+      return;
     }
   }
 
+  snmp_add_ifoutoctets(&pc->netif, nb->tot_len);
+  snmp_inc_ifoutucastpkts(&pc->netif);
   pbuf_free(nb);
   LINK_STATS_INC(link.xmit);
 }
@@ -763,11 +768,14 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
   struct pbuf *pb;
   u_short protocol = PPP_IP;
   int i=0;
+  u16_t tot_len;
 
+  /* @todo: try to use pbuf_header() here! */
   pb = pbuf_alloc(PBUF_LINK, PPPOE_HDRLEN + sizeof(protocol), PBUF_RAM);
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return ERR_MEM;
   }
 
@@ -781,12 +789,16 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
   *((u_char*)pb->payload + i) = protocol & 0xFF;
 
   pbuf_chain(pb, p);
+  tot_len = pb->tot_len;
 
   if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
     LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_DEVICE;
   }
 
+  snmp_add_ifoutoctets(&pc->netif, tot_len);
+  snmp_inc_ifoutucastpkts(&pc->netif);
   LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
@@ -815,6 +827,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
               pd, PPP_IP, pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
     return ERR_ARG;
   }
 
@@ -823,6 +836,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
     PPPDEBUG((LOG_ERR, "pppifOutput[%d]: link not up\n", pd));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
     return ERR_RTE;
   }
 
@@ -839,6 +853,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
     PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: first alloc fail\n", pd));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
     return ERR_MEM;
   }
 
@@ -863,6 +878,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
         PPPDEBUG((LOG_WARNING, "pppifOutput[%d]: bad IP packet\n", pd));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
+        snmp_inc_ifoutdiscards(netif);
         pbuf_free(headMB);
         return ERR_VAL;
     }
@@ -925,6 +941,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
     pbuf_free(headMB);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
     return ERR_MEM;
   }
 
@@ -1023,6 +1040,7 @@ pppWriteOverEthernet(int pd, const u_char *s, int n)
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_ALLOC;
   }
 
@@ -1034,9 +1052,12 @@ pppWriteOverEthernet(int pd, const u_char *s, int n)
 
   if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
     LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_DEVICE;
   }
 
+  snmp_add_ifoutoctets(&pc->netif, (u16_t)n);
+  snmp_inc_ifoutucastpkts(&pc->netif);
   LINK_STATS_INC(link.xmit);
   return PPPERR_NONE;
 }
@@ -1068,6 +1089,7 @@ pppWrite(int pd, const u_char *s, int n)
   if (headMB == NULL) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_ALLOC;
   }
 
@@ -1108,6 +1130,7 @@ pppWrite(int pd, const u_char *s, int n)
     pbuf_free(headMB);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_ALLOC;
   }
 
@@ -1325,7 +1348,8 @@ sifup(int pd)
     PPPDEBUG((LOG_WARNING, "sifup[%d]: bad parms\n", pd));
   } else {
     netif_remove(&pc->netif);
-    if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask, &pc->addrs.his_ipaddr, (void *)(size_t)pd, pppifNetifInit, ip_input)) {
+    if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask,
+                  &pc->addrs.his_ipaddr, (void *)(size_t)pd, pppifNetifInit, ip_input)) {
       netif_set_up(&pc->netif);
       pc->if_up = 1;
       pc->errCode = PPPERR_NONE;
@@ -1590,6 +1614,8 @@ pppInput(void *arg)
   }
 
   LINK_STATS_INC(link.recv);
+  snmp_inc_ifinucastpkts(&pppControl[pd].netif);
+  snmp_add_ifinoctets(&pppControl[pd].netif, nb->tot_len);
 
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
@@ -1686,6 +1712,7 @@ pppInput(void *arg)
 
 drop:
   LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(&pppControl[pd].netif);
 
 out:
   pbuf_free(nb);
@@ -1716,6 +1743,7 @@ pppDrop(PPPControlRx *pc)
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(&pppControl[pc->pd].netif);
 }
 
 /** Pass received raw characters to PPPoS to be decoded. This function is
@@ -1801,6 +1829,7 @@ pppInProc(PPPControlRx *pc, u_char *s, int l)
             PPPDEBUG((LOG_ERR, "pppInProc[%d]: tcpip_callback() failed, dropping packet\n", pc->pd));
             pbuf_free(pc->inHead);
             LINK_STATS_INC(link.drop);
+            snmp_inc_ifindiscards(netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
           pppInput(pc->inHead);
@@ -1955,6 +1984,7 @@ pppInProcOverEthernet(int pd, struct pbuf *pb)
 
 drop:
   LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(&pppControl[pd].netif);
   pbuf_free(pb);
   return;
 }

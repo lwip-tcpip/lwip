@@ -104,6 +104,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-02-09: Simon Goldschmidt
+  * ppp.c: task #10154 (PPP: Update snmp in/out counters for tx/rx packets)
+
+  2010-02-09: Simon Goldschmidt
   * netif.c: For loopback packets, adjust the stats- and snmp-counters
     for the loopback netif.
 
