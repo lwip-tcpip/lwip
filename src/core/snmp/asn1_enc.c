@@ -564,8 +564,6 @@ snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, u8_t *raw)
   u16_t plen, base;
   u8_t *msg_ptr;
 
-  LWIP_ASSERT("raw_len <= 0xffff", raw_len <= 0xffff);
-
   plen = 0;
   while (p != NULL)
   {
