@@ -1160,7 +1160,7 @@ tcp_receive(struct tcp_pcb *pcb)
         if (tcplen > pcb->rcv_wnd) {
           LWIP_DEBUGF(TCP_INPUT_DEBUG, 
                       ("tcp_receive: other end overran receive window"
-                       "seqno %"U32_F" len %"U32_F" right edge %"U32_F"\n",
+                       "seqno %"U32_F" len %"U16_F" right edge %"U32_F"\n",
                        seqno, tcplen, pcb->rcv_nxt + pcb->rcv_wnd));
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
             /* Must remove the FIN from the header as we're trimming 
