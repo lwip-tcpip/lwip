@@ -1284,7 +1284,8 @@ void
 do_getaddr(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.ip != NULL) {
-    *(msg->msg.ad.ipaddr) = (msg->msg.ad.local?msg->conn->pcb.ip->local_ip:msg->conn->pcb.ip->remote_ip);
+    *(msg->msg.ad.ipaddr) = (msg->msg.ad.local ? msg->conn->pcb.ip->local_ip :
+                             msg->conn->pcb.ip->remote_ip);
 
     msg->err = ERR_OK;
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
