@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-02-12: Simon Goldschmidt/Jeff Barber
+  * tcp.c/h: patch #6865 (SO_REUSEADDR for TCP): if tcp_pcb.flags has
+    TF_REUSEADDR set, allow binding to endpoint in TIME_WAIT
+
   2010-02-12: Simon Goldschmidt
   * sys layer: task #10139 (Prefer statically allocated memory): converted
     mbox and semaphore functions to take pointers to sys_mbox_t/sys_sem_t;

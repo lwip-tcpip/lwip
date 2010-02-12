@@ -317,12 +317,16 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
       }
     }
   }
-  /* @todo: until SO_REUSEADDR is implemented (see task #6995 on savannah),
+  /* Unless the REUSEADDR flag is set,
    * we have to check the pcbs in TIME-WAIT state, also: */
-  for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
-    if (cpcb->local_port == port) {
-      if (ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-        return ERR_USE;
+  if ((pcb->flags & TF_REUSEADDR) == 0) {
+    for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+      if (cpcb->local_port == port) {
+        if (ip_addr_isany(&(cpcb->local_ip)) ||
+            ip_addr_isany(ipaddr) ||
+            ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+          return ERR_USE;
+        }
       }
     }
   }
