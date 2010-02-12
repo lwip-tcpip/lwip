@@ -598,8 +598,8 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
     }
 
     /* this code does not allow upper layer to share a UDP port for
-       listening to broadcast or multicast traffic (See SO_REUSE_ADDR and
-       SO_REUSE_PORT under *BSD). TODO: See where it fits instead, OR
+       listening to broadcast or multicast traffic (See SO_REUSEADDR and
+       SO_REUSEPORT under *BSD). TODO: See where it fits instead, OR
        combine with implementation of UDP PCB flags. Leon Woestenberg. */
 #ifdef LWIP_UDP_TODO
     /* port matches that of PCB in list? */
