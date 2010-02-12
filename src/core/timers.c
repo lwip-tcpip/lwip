@@ -423,7 +423,7 @@ sys_restart_timeouts(void)
  * @param msg the place to store the message
  */
 void
-sys_timeouts_mbox_fetch(sys_mbox_t mbox, void **msg)
+sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 {
   u32_t time_needed;
   struct sys_timeo *tmptimeout;

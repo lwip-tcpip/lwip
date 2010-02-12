@@ -118,7 +118,7 @@ static struct lwip_socket sockets[NUM_SOCKETS];
 static struct lwip_select_cb *select_cb_list;
 
 /** Semaphore protecting select_cb_list */
-static sys_sem_t selectsem;
+static sys_mutex_t select_lock;
 
 /** Table to quickly map an lwIP error (err_t) to a socket error
   * by using -err as an index */
@@ -172,7 +172,9 @@ static void lwip_setsockopt_internal(void *arg);
 void
 lwip_socket_init(void)
 {
-  selectsem = sys_sem_new(1);
+  if(sys_mutex_new(&select_lock) != ERR_OK) {
+    LWIP_ASSERT("failed to create select_lock", 0);
+  }
 }
 
 /**
@@ -944,6 +946,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   u32_t msectimeout;
   struct lwip_select_cb select_cb;
   struct lwip_select_cb *p_selcb;
+  err_t err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%ld tvusec=%ld)\n",
                   maxfdp1, (void *)readset, (void *) writeset, (void *) exceptset,
@@ -957,7 +960,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   select_cb.sem_signalled = 0;
 
   /* Protect ourselves searching through the list */
-  sys_sem_wait(selectsem);
+  sys_mutex_lock(&select_lock);
 
   if (readset)
     lreadset = *readset;
@@ -979,7 +982,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   /* If we don't have any current events, then suspend if we are supposed to */
   if (!nready) {
     if (timeout && timeout->tv_sec == 0 && timeout->tv_usec == 0) {
-      sys_sem_signal(selectsem);
+      sys_mutex_unlock(&select_lock);
       if (readset)
         FD_ZERO(readset);
       if (writeset)
@@ -998,14 +1001,20 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
      * list is only valid while we are in this function, so it's ok
      * to use local variables */
     
-    select_cb.sem = sys_sem_new(0);
+    err = sys_sem_new(&select_cb.sem, 0);
+    if (err != ERR_OK) {
+      /* failed to create semaphore */
+      sys_mutex_unlock(&select_lock);
+      set_errno(ENOMEM);
+      return -1;
+    }
     /* Note that we are still protected */
     /* Put this select_cb on top of list */
     select_cb.next = select_cb_list;
     select_cb_list = &select_cb;
     
     /* Now we can safely unprotect */
-    sys_sem_signal(selectsem);
+    sys_mutex_unlock(&select_lock);
     
     /* Now just wait to be woken */
     if (timeout == 0)
@@ -1017,23 +1026,24 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         msectimeout = 1;
     }
     
-    waitres = sys_arch_sem_wait(select_cb.sem, msectimeout);
+    waitres = sys_arch_sem_wait(&select_cb.sem, msectimeout);
     
     /* Take us off the list */
-    sys_sem_wait(selectsem);
-    if (select_cb_list == &select_cb)
+    sys_mutex_lock(&select_lock);
+    if (select_cb_list == &select_cb) {
       select_cb_list = select_cb.next;
-    else
+    } else {
       for (p_selcb = select_cb_list; p_selcb; p_selcb = p_selcb->next) {
         if (p_selcb->next == &select_cb) {
           p_selcb->next = select_cb.next;
           break;
         }
       }
+    }
     
-    sys_sem_signal(selectsem);
+    sys_mutex_unlock(&select_lock);
     
-    sys_sem_free(select_cb.sem);
+    sys_sem_free(&select_cb.sem);
     if (waitres == SYS_ARCH_TIMEOUT)  {
       /* Timeout */
       if (readset)
@@ -1064,8 +1074,9 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     
     /* See what's set */
     nready = lwip_selscan(maxfdp1, &lreadset, &lwriteset, &lexceptset);
-  } else
-    sys_sem_signal(selectsem);
+  } else {
+    sys_mutex_unlock(&select_lock);
+  }
   
   if (readset)
     *readset = lreadset;
@@ -1123,7 +1134,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     return;
   }
 
-  sys_sem_wait(selectsem);
+  sys_mutex_lock(&select_lock);
   /* Set event as required */
   switch (evt) {
     case NETCONN_EVT_RCVPLUS:
@@ -1145,17 +1156,17 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
       LWIP_ASSERT("unknown event", 0);
       break;
   }
-  sys_sem_signal(selectsem);
+  sys_mutex_unlock(&select_lock);
 
   /* Now decide if anyone is waiting for this socket */
   /* NOTE: This code is written this way to protect the select link list
-     but to avoid a deadlock situation by releasing selectsem before
+     but to avoid a deadlock situation by releasing select_lock before
      signalling for the select. This means we need to go through the list
      multiple times ONLY IF a select was actually waiting. We go through
      the list the number of waiting select calls + 1. This list is
      expected to be small. */
   while (1) {
-    sys_sem_wait(selectsem);
+    sys_mutex_lock(&select_lock);
     for (scb = select_cb_list; scb; scb = scb->next) {
       if (scb->sem_signalled == 0) {
         /* Test this select call for our socket */
@@ -1172,10 +1183,10 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     }
     if (scb) {
       scb->sem_signalled = 1;
-      sys_sem_signal(scb->sem);
-      sys_sem_signal(selectsem);
+      sys_sem_signal(&scb->sem);
+      sys_mutex_unlock(&select_lock);
     } else {
-      sys_sem_signal(selectsem);
+      sys_mutex_unlock(&select_lock);
       break;
     }
   }
@@ -1415,7 +1426,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   data.optlen = optlen;
   data.err = err;
   tcpip_callback(lwip_getsockopt_internal, &data);
-  sys_arch_sem_wait(sock->conn->op_completed, 0);
+  sys_arch_sem_wait(&sock->conn->op_completed, 0);
   /* maybe lwip_getsockopt_internal has changed err */
   err = data.err;
 
@@ -1600,7 +1611,7 @@ lwip_getsockopt_internal(void *arg)
     break;
 #endif /* LWIP_UDP */
   } /* switch (level) */
-  sys_sem_signal(sock->conn->op_completed);
+  sys_sem_signal(&sock->conn->op_completed);
 }
 
 int
@@ -1790,7 +1801,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   data.optlen = &optlen;
   data.err = err;
   tcpip_callback(lwip_setsockopt_internal, &data);
-  sys_arch_sem_wait(sock->conn->op_completed, 0);
+  sys_arch_sem_wait(&sock->conn->op_completed, 0);
   /* maybe lwip_setsockopt_internal has changed err */
   err = data.err;
 
@@ -1978,7 +1989,7 @@ lwip_setsockopt_internal(void *arg)
     break;
 #endif /* LWIP_UDP */
   }  /* switch (level) */
-  sys_sem_signal(sock->conn->op_completed);
+  sys_sem_signal(&sock->conn->op_completed);
 }
 
 int
@@ -2000,8 +2011,9 @@ lwip_ioctl(int s, long cmd, void *argp)
     }
 
     SYS_ARCH_GET(sock->conn->recv_avail, recv_avail);
-    if (recv_avail < 0)
+    if (recv_avail < 0) {
       recv_avail = 0;
+    }
     *((u16_t*)argp) = (u16_t)recv_avail;
 
     /* Check if there is data left from the last recv operation. /maq 041215 */

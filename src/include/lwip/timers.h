@@ -81,7 +81,7 @@ void sys_untimeout(sys_timeout_handler h, void *arg);
 void sys_check_timeouts(void);
 void sys_restart_timeouts(void);
 #else /* NO_SYS */
-void sys_timeouts_mbox_fetch(sys_mbox_t mbox, void **msg);
+void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 #endif /* NO_SYS */
 
 

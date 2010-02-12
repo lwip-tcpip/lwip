@@ -77,11 +77,11 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
     msg.msg.conn = conn;
     if (TCPIP_APIMSG(&msg) != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
-      LWIP_ASSERT("conn has no op_completed", conn->op_completed != SYS_SEM_NULL);
-      LWIP_ASSERT("conn has no recvmbox", conn->recvmbox != SYS_MBOX_NULL);
-      LWIP_ASSERT("conn->acceptmbox shouldn't exist", conn->acceptmbox == SYS_MBOX_NULL);
-      sys_sem_free(conn->op_completed);
-      sys_mbox_free(conn->recvmbox);
+      LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
+      LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
+      LWIP_ASSERT("conn->acceptmbox shouldn't exist", !sys_mbox_valid(&conn->acceptmbox));
+      sys_sem_free(&conn->op_completed);
+      sys_mbox_free(&conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
       return NULL;
     }
@@ -277,7 +277,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   LWIP_ERROR("netconn_accept: invalid pointer",    (new_conn != NULL),                  return ERR_ARG;);
   *new_conn = NULL;
   LWIP_ERROR("netconn_accept: invalid conn",       (conn != NULL),                      return ERR_ARG;);
-  LWIP_ERROR("netconn_accept: invalid acceptmbox", (conn->acceptmbox != SYS_MBOX_NULL), return ERR_ARG;);
+  LWIP_ERROR("netconn_accept: invalid acceptmbox", sys_mbox_valid(&conn->acceptmbox),   return ERR_ARG;);
 
   err = conn->last_err;
   if (ERR_IS_FATAL(err)) {
@@ -287,12 +287,12 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   }
 
 #if LWIP_SO_RCVTIMEO
-  if (sys_arch_mbox_fetch(conn->acceptmbox, (void **)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+  if (sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
     NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
     return ERR_TIMEOUT;
   }
 #else
-  sys_arch_mbox_fetch(conn->acceptmbox, (void **)&newconn, 0);
+  sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
@@ -335,12 +335,14 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
-  LWIP_ERROR("netconn_accept: invalid recvmbox", (conn->recvmbox != SYS_MBOX_NULL), return ERR_CONN;);
+  LWIP_ERROR("netconn_accept: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
   err = conn->last_err;
   if (ERR_IS_FATAL(err)) {
     /* don't recv on fatal errors: this might block the application task
        waiting on recvmbox forever! */
+    /* @todo: this does not allow us to fetch data that has been put into recvmbox
+       before the fatal error occurred - is that a problem? */
     return err;
   }
 
@@ -355,13 +357,13 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     }
 
 #if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(conn->recvmbox, (void **)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    if (sys_arch_mbox_fetch(&conn->recvmbox, (void **)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       memp_free(MEMP_NETBUF, buf);
       NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
       return ERR_TIMEOUT;
     }
 #else
-    sys_arch_mbox_fetch(conn->recvmbox, (void **)&p, 0);
+    sys_arch_mbox_fetch(&conn->recvmbox, (void **)&p, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
 
     if (p != NULL) {
@@ -406,12 +408,12 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   } else {
 #if (LWIP_UDP || LWIP_RAW)
 #if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(conn->recvmbox, (void **)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    if (sys_arch_mbox_fetch(&conn->recvmbox, (void **)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
       NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
       return ERR_TIMEOUT;
     }
 #else
-    sys_arch_mbox_fetch(conn->recvmbox, (void **)&buf, 0);
+    sys_arch_mbox_fetch(&conn->recvmbox, (void **)&buf, 0);
 #endif /* LWIP_SO_RCVTIMEO*/
     LWIP_ASSERT("buf != NULL", buf != NULL);
 

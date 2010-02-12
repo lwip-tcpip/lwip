@@ -50,9 +50,9 @@ extern "C" {
 
 #if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
-extern sys_sem_t lock_tcpip_core;
-#define LOCK_TCPIP_CORE()     sys_sem_wait(lock_tcpip_core)
-#define UNLOCK_TCPIP_CORE()   sys_sem_signal(lock_tcpip_core)
+extern sys_mutex_t lock_tcpip_core;
+#define LOCK_TCPIP_CORE()     sys_mutex_lock(&lock_tcpip_core)
+#define UNLOCK_TCPIP_CORE()   sys_mutex_unlock(&lock_tcpip_core)
 #define TCPIP_APIMSG(m)       tcpip_apimsg_lock(m)
 #define TCPIP_APIMSG_ACK(m)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
@@ -61,9 +61,9 @@ extern sys_sem_t lock_tcpip_core;
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
 #define TCPIP_APIMSG(m)       tcpip_apimsg(m)
-#define TCPIP_APIMSG_ACK(m)   sys_sem_signal(m->conn->op_completed)
+#define TCPIP_APIMSG_ACK(m)   sys_sem_signal(&m->conn->op_completed)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
-#define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(m->sem)
+#define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 /** Function prototype for the init_done function passed to tcpip_init */

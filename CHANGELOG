@@ -19,6 +19,13 @@ HISTORY
 
   ++ New features:
 
+  2010-02-12: Simon Goldschmidt
+  * sys layer: task #10139 (Prefer statically allocated memory): converted
+    mbox and semaphore functions to take pointers to sys_mbox_t/sys_sem_t;
+    converted sys_mbox_new/sys_sem_new to take pointers and return err_t;
+    task #7212: Add Mutex concept in sys_arch (define LWIP_COMPAT_MUTEX
+    to let sys.h use binary semaphores instead of mutexes - as before)
+
   2010-02-09: Simon Goldschmidt (Simon Kallweit)
   * timers.c/.h: Added function sys_restart_timeouts() from patch #7085
     (Restart system timeout handling)
