@@ -61,6 +61,7 @@
 #include "lwip/mem.h"
 #include "lwip/sys.h"
 #include "lwip/stats.h"
+#include "lwip/err.h"
 
 #include <string.h>
 
