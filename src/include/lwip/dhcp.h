@@ -105,6 +105,7 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
+void dhcp_set_struct(struct netif *netif, struct dhcp *dhcp);
 /** start DHCP configuration */
 err_t dhcp_start(struct netif *netif);
 /** enforce early lease renewal (not needed normally)*/

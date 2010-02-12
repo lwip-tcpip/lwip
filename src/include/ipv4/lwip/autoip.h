@@ -92,6 +92,9 @@ struct autoip
 /** Init srand, has to be called before entering mainloop */
 void autoip_init(void);
 
+/** Set a struct autoip allocated by the application to work with */
+void autoip_set_struct(struct netif *netif, struct autoip *autoip);
+
 /** Start AutoIP client */
 err_t autoip_start(struct netif *netif);
 

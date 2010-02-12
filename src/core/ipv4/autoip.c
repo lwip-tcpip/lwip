@@ -131,6 +131,25 @@ autoip_init(void)
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_init()\n"));
 }
 
+/** Set a statically allocated struct autoip to work with.
+ * Using this prevents autoip_start to allocate it using mem_malloc.
+ *
+ * @param netif the netif for which to set the struct autoip
+ * @param dhcp (uninitialised) dhcp struct allocated by the application
+ */
+void
+autoip_set_struct(struct netif *netif, struct autoip *autoip)
+{
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("autoip != NULL", autoip != NULL);
+  LWIP_ASSERT("netif already has a struct autoip set", netif->autoip == NULL);
+
+  /* clear data structure */
+  memset(autoip, 0, sizeof(struct autoip));
+  /* autoip->state = AUTOIP_STATE_OFF; */
+  netif->autoip = autoip;
+}
+
 /**
  * Handle a IP address conflict after an ARP conflict detection
  */

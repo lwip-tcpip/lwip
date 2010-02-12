@@ -569,6 +569,25 @@ dhcp_handle_ack(struct netif *netif)
 #endif /* LWIP_DNS */
 }
 
+/** Set a statically allocated struct dhcp to work with.
+ * Using this prevents dhcp_start to allocate it using mem_malloc.
+ *
+ * @param netif the netif for which to set the struct dhcp
+ * @param dhcp (uninitialised) dhcp struct allocated by the application
+ */
+void
+dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
+{
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+  LWIP_ASSERT("dhcp != NULL", dhcp != NULL);
+  LWIP_ASSERT("netif already has a struct dhcp set", netif->dhcp == NULL);
+
+  /* clear data structure */
+  memset(dhcp, 0, sizeof(struct dhcp));
+  /* dhcp_set_state(&dhcp, DHCP_OFF); */
+  netif->dhcp = dhcp;
+}
+
 /**
  * Start DHCP negotiation for a network interface.
  *
@@ -636,9 +655,7 @@ dhcp_start(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG  | LWIP_DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
     return ERR_MEM;
   }
-#if IP_SOF_BROADCAST
   dhcp->pcb->so_options |= SOF_BROADCAST;
-#endif /* IP_SOF_BROADCAST */
   /* set up local and remote port for the pcb */
   udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
   udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
@@ -688,9 +705,7 @@ dhcp_inform(struct netif *netif)
       return;
     }
     dhcp.pcb = pcb;
-#if IP_SOF_BROADCAST
     dhcp.pcb->so_options |= SOF_BROADCAST;
-#endif /* IP_SOF_BROADCAST */
     udp_bind(dhcp.pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): created new udp pcb\n"));
   }
@@ -821,7 +836,7 @@ dhcp_decline(struct netif *netif)
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_decline(): set request timeout %"U16_F" msecs\n", msecs));
   return result;
 }
-#endif
+#endif /* DHCP_DOES_ARP_CHECK */
 
 
 /**

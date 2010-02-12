@@ -19,6 +19,11 @@ HISTORY
 
   ++ New features:
 
+  2010-02-12: Simon Goldschmidt
+  * dhcp.c/.h, autoip.c/.h: task #10139 (Prefer statically allocated
+    memory): added autoip_set_struct() and dhcp_set_struct() to let autoip
+    and dhcp work with user-allocated structs instead of callin mem_malloc
+
   2010-02-12: Simon Goldschmidt/Jeff Barber
   * tcp.c/h: patch #6865 (SO_REUSEADDR for TCP): if pcb.so_options has
     SOF_REUSEADDR set, allow binding to endpoint in TIME_WAIT
