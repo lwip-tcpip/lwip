@@ -687,8 +687,9 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
 
     /* Set new offset and MF flag */
     tmp = omf | (IP_OFFMASK & (ofo));
-    if (!last)
+    if (!last) {
       tmp = tmp | IP_MF;
+    }
 
     /* Fill this fragment */
     cop = last ? left : nfb * 8;
@@ -735,8 +736,9 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
        */
       pbuf_cat(rambuf, newpbuf);
       left_to_copy -= newpbuflen;
-      if (left_to_copy)
+      if (left_to_copy) {
         p = p->next;
+      }
     }
     poff = newpbuflen;
 #endif /* IP_FRAG_USES_STATIC_BUF */
@@ -748,8 +750,9 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 
 #if IP_FRAG_USES_STATIC_BUF
-    if (last)
+    if (last) {
       pbuf_realloc(rambuf, left + IP_HLEN);
+    }
 
     /* This part is ugly: we alloc a RAM based pbuf for 
      * the link level header for each chunk and then 
