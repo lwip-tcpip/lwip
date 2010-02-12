@@ -66,10 +66,10 @@ extern "C" {
 /** Should this netconn avoid blocking? */
 #define NETCONN_FLAG_NON_BLOCKING             0x02
 /** Was the last connect action a non-blocking one? */
-#define NETCONN_FLAG_IN_NONBLOCKING_CONNECT  0x04
+#define NETCONN_FLAG_IN_NONBLOCKING_CONNECT   0x04
 /** If this is set, a TCP netconn must call netconn_recved() to update
     the TCP receive window (done automatically if not set). */
-#define NETCONN_FLAG_NO_AUTO_RECVED          0x08
+#define NETCONN_FLAG_NO_AUTO_RECVED           0x08
 
 
 /* Helpers to process several netconn_types by the same code */
