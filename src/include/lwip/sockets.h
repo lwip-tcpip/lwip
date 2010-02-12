@@ -262,6 +262,22 @@ typedef struct ip_mreq {
 #define SIOCATMARK  _IOR('s',  7, unsigned long)  /* at oob mark? */
 #endif
 
+/* commands for fnctl */
+#ifndef F_GETFL
+#define F_GETFL 3
+#endif
+#ifndef F_SETFL
+#define F_SETFL 4
+#endif
+
+/* File status flags and file access modes for fnctl,
+   these are bits in an int. */
+#ifndef O_NONBLOCK
+#define O_NONBLOCK  1 /* nonblocking I/O */
+#endif
+#ifndef O_NDELAY
+#define O_NDELAY    1 /* same as O_NONBLOCK, for compatibility */
+#endif
 
 /* FD_SET used for lwip_select */
 #ifndef FD_SET
@@ -316,6 +332,7 @@ int lwip_write(int s, const void *dataptr, size_t size);
 int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                 struct timeval *timeout);
 int lwip_ioctl(int s, long cmd, void *argp);
+int lwip_fcntl(int s, int cmd, int val);
 
 #if LWIP_COMPAT_SOCKETS
 #define accept(a,b,c)         lwip_accept(a,b,c)

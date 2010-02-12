@@ -2045,4 +2045,33 @@ lwip_ioctl(int s, long cmd, void *argp)
   } /* switch (cmd) */
 }
 
+/** A minimal implementation of fcntl.
+ * Currently only the commands F_GETFL and F_SETFL are implemented.
+ * Only the flag O_NONBLOCK is implemented.
+ */
+int
+lwip_fcntl(int s, int cmd, int val)
+{
+  struct lwip_socket *sock = get_socket(s);
+  int ret = -1;
+
+  if (!sock || !sock->conn) {
+    return -1;
+  }
+
+  switch (cmd) {
+  case F_GETFL:
+    ret = netconn_is_nonblocking(sock->conn) ? O_NONBLOCK : 0;
+    break;
+  case F_SETFL:
+    if ((val & ~O_NONBLOCK) == 0) {
+      /* only O_NONBLOCK, all other bits are zero */
+      netconn_set_nonblocking(sock->conn, val & O_NONBLOCK);
+      ret = 0;
+    }
+    break;
+  }
+  return ret;
+}
+
 #endif /* LWIP_SOCKET */

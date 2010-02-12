@@ -20,6 +20,10 @@ HISTORY
   ++ New features:
 
   2010-02-12: Simon Goldschmidt
+  * sockets.c/.h: Added a minimal version of posix fctl() to have a
+    standardised way to set O_NONBLOCK for nonblocking sockets.
+
+  2010-02-12: Simon Goldschmidt
   * dhcp.c/.h, autoip.c/.h: task #10139 (Prefer statically allocated
     memory): added autoip_set_struct() and dhcp_set_struct() to let autoip
     and dhcp work with user-allocated structs instead of callin mem_malloc
