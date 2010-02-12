@@ -119,6 +119,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-12: Simon Goldschmidt
+  * netif.c: netif_set_link_up/down: only do something if the link state
+    actually changes
+
   2010-02-12: Simon Goldschmidt/Stephane Lesage
   * api_msg.c: Fixed bug #28865 (Cannot close socket/netconn in non-blocking
     connect)

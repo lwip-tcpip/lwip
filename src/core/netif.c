@@ -506,36 +506,38 @@ void netif_set_status_callback(struct netif *netif, netif_status_callback_fn sta
  */
 void netif_set_link_up(struct netif *netif )
 {
-  netif->flags |= NETIF_FLAG_LINK_UP;
+  if (!(netif->flags & NETIF_FLAG_LINK_UP)) {
+    netif->flags |= NETIF_FLAG_LINK_UP;
 
 #if LWIP_DHCP
-  if (netif->dhcp) {
-    dhcp_network_changed(netif);
-  }
+    if (netif->dhcp) {
+      dhcp_network_changed(netif);
+    }
 #endif /* LWIP_DHCP */
 
 #if LWIP_AUTOIP
-  if (netif->autoip) {
-    autoip_network_changed(netif);
-  }
+    if (netif->autoip) {
+      autoip_network_changed(netif);
+    }
 #endif /* LWIP_AUTOIP */
 
-  if (netif->flags & NETIF_FLAG_UP) {
+    if (netif->flags & NETIF_FLAG_UP) {
 #if LWIP_ARP
-    /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
-    if (netif->flags & NETIF_FLAG_ETHARP) {
-      etharp_gratuitous(netif);
-    }
+      /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
+      if (netif->flags & NETIF_FLAG_ETHARP) {
+        etharp_gratuitous(netif);
+      }
 #endif /* LWIP_ARP */
 
 #if LWIP_IGMP
-    /* resend IGMP memberships */
-    if (netif->flags & NETIF_FLAG_IGMP) {
-      igmp_report_groups( netif);
-    }
+      /* resend IGMP memberships */
+      if (netif->flags & NETIF_FLAG_IGMP) {
+        igmp_report_groups( netif);
+      }
 #endif /* LWIP_IGMP */
+    }
+    NETIF_LINK_CALLBACK(netif);
   }
-  NETIF_LINK_CALLBACK(netif);
 }
 
 /**
@@ -543,8 +545,10 @@ void netif_set_link_up(struct netif *netif )
  */
 void netif_set_link_down(struct netif *netif )
 {
-  netif->flags &= ~NETIF_FLAG_LINK_UP;
-  NETIF_LINK_CALLBACK(netif);
+  if (netif->flags & NETIF_FLAG_LINK_UP) {
+    netif->flags &= ~NETIF_FLAG_LINK_UP;
+    NETIF_LINK_CALLBACK(netif);
+  }
 }
 
 /**
