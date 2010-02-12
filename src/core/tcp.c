@@ -319,7 +319,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
   /* Unless the REUSEADDR flag is set,
    * we have to check the pcbs in TIME-WAIT state, also: */
-  if ((pcb->flags & TF_REUSEADDR) == 0) {
+  if ((pcb->so_options & SOF_REUSEADDR) == 0) {
     for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
       if (cpcb->local_port == port) {
         if (ip_addr_isany(&(cpcb->local_ip)) ||

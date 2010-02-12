@@ -370,7 +370,6 @@ struct tcp_pcb {
 #define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
 #define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */
 #define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */
-#define TF_REUSEADDR   ((u8_t)0x10U)   /* Bind to endpoint in TIME_WAIT */
 #define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */
 #define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
 #define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
