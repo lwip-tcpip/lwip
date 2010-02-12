@@ -110,6 +110,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-12: Simon Goldschmidt/Stephane Lesage
+  * api_msg.c: Fixed bug #28865 (Cannot close socket/netconn in non-blocking
+    connect)
+
   2010-02-12: Simon Goldschmidt
   * mem.h: Fixed bug #28866 (mem_realloc function defined in mem.h)
 

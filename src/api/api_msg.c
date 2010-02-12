@@ -762,11 +762,15 @@ void
 do_delconn(struct api_msg_msg *msg)
 {
   /* @todo TCP: abort running write/connect? */
-  if ((msg->conn->state != NETCONN_NONE) && (msg->conn->state != NETCONN_LISTEN)) {
+ if ((msg->conn->state != NETCONN_NONE) &&
+     (msg->conn->state != NETCONN_LISTEN) &&
+     (msg->conn->state != NETCONN_CONNECT)) {
     /* this only happens for TCP netconns */
     LWIP_ASSERT("msg->conn->type == NETCONN_TCP", msg->conn->type == NETCONN_TCP);
     msg->err = ERR_INPROGRESS;
   } else {
+    LWIP_ASSERT("blocking connect in progress",
+      (msg->conn->state != NETCONN_CONNECT) || IN_NONBLOCKING_CONNECT(msg->conn));
     /* Drain and delete mboxes */
     netconn_drain(msg->conn);
 
