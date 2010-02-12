@@ -600,7 +600,9 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->acceptmbox   = SYS_MBOX_NULL;
   conn->state        = NETCONN_NONE;
   /* initialize socket to -1 since 0 is a valid socket */
+#if LWIP_SOCKET
   conn->socket       = -1;
+#endif /* LWIP_SOCKET */
   conn->callback     = callback;
   conn->recv_avail   = 0;
 #if LWIP_TCP

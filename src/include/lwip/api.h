@@ -151,7 +151,9 @@ struct netconn {
       by the application thread */
   sys_mbox_t acceptmbox;
   /** only used for socket layer */
+#if LWIP_SOCKET
   int socket;
+#endif /* LWIP_SOCKET */
 #if LWIP_SO_RCVTIMEO
   /** timeout to wait for new data to be received
       (or connections to arrive for listening netconns) */
@@ -162,7 +164,12 @@ struct netconn {
       not used for TCP: adjust TCP_WND instead! */
   int recv_bufsize;
 #endif /* LWIP_SO_RCVBUF */
+  /** number of bytes currently in recvmbox to be received,
+      tested against recv_bufsize to limit bytes on recvmbox
+      for UDP and RAW
+      @todo: should only be necessary with LWIP_SO_RCVBUF==1 */
   s16_t recv_avail;
+  /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
   u8_t flags;
 #if LWIP_TCP
   /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
