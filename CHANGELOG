@@ -103,11 +103,13 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-12: Simon Goldschmidt
+  * mem.h: Fixed bug #28866 (mem_realloc function defined in mem.h)
+
   2010-02-09: Simon Goldschmidt
   * api_lib.c, api_msg.c, sockets.c, api.h, api_msg.h: Fixed bug #22110
    (recv() makes receive window update for data that wasn't received by
     application)
-
 
   2010-02-09: Simon Goldschmidt/Stephane Lesage
   * sockets.c: Fixed bug #28853 (lwip_recvfrom() returns 0 on receive time-out
