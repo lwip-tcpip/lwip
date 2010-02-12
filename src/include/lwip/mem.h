@@ -58,6 +58,8 @@ typedef size_t mem_size_t;
 #ifndef mem_calloc
 #define mem_calloc calloc
 #endif
+/* ATTENTION: using realloc is currently not supported since the return value
+   is ignored, so don't define mem_realloc() to realloc()! */
 #ifndef mem_realloc
 #define mem_realloc(mem, size) (mem)
 #endif
