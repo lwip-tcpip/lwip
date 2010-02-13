@@ -120,12 +120,15 @@ void
 stats_display_sys(struct stats_sys *sys)
 {
   LWIP_PLATFORM_DIAG(("\nSYS\n\t"));
-  LWIP_PLATFORM_DIAG(("sem.used: %"U32_F"\n\t", (u32_t)sys->sem.used)); 
-  LWIP_PLATFORM_DIAG(("sem.max:  %"U32_F"\n\t", (u32_t)sys->sem.max)); 
-  LWIP_PLATFORM_DIAG(("sem.err:  %"U32_F"\n\t", (u32_t)sys->sem.err)); 
-  LWIP_PLATFORM_DIAG(("mbox.used: %"U32_F"\n\t", (u32_t)sys->mbox.used)); 
-  LWIP_PLATFORM_DIAG(("mbox.max:  %"U32_F"\n\t", (u32_t)sys->mbox.max)); 
-  LWIP_PLATFORM_DIAG(("mbox.err:  %"U32_F"\n\t", (u32_t)sys->mbox.err)); 
+  LWIP_PLATFORM_DIAG(("sem.used:  %"U32_F"\n\t", (u32_t)sys->sem.used)); 
+  LWIP_PLATFORM_DIAG(("sem.max:   %"U32_F"\n\t", (u32_t)sys->sem.max)); 
+  LWIP_PLATFORM_DIAG(("sem.err:   %"U32_F"\n\t", (u32_t)sys->sem.err)); 
+  LWIP_PLATFORM_DIAG(("mutex.used: %"U32_F"\n\t", (u32_t)sys->mutex.used)); 
+  LWIP_PLATFORM_DIAG(("mutex.max:  %"U32_F"\n\t", (u32_t)sys->mutex.max)); 
+  LWIP_PLATFORM_DIAG(("mutex.err:  %"U32_F"\n\t", (u32_t)sys->mutex.err)); 
+  LWIP_PLATFORM_DIAG(("mbox.used:  %"U32_F"\n\t", (u32_t)sys->mbox.used)); 
+  LWIP_PLATFORM_DIAG(("mbox.max:   %"U32_F"\n\t", (u32_t)sys->mbox.max)); 
+  LWIP_PLATFORM_DIAG(("mbox.err:   %"U32_F"\n\t", (u32_t)sys->mbox.err)); 
 }
 #endif /* SYS_STATS */
 

@@ -103,6 +103,7 @@ struct stats_syselem {
 
 struct stats_sys {
   struct stats_syselem sem;
+  struct stats_syselem mutex;
   struct stats_syselem mbox;
 };
 
@@ -144,14 +145,20 @@ struct stats_ {
 
 extern struct stats_ lwip_stats;
 
-#define stats_init() /* Compatibility define, not init needed. */
+#define stats_init() /* Compatibility define, no init needed. */
 
 #define STATS_INC(x) ++lwip_stats.x
 #define STATS_DEC(x) --lwip_stats.x
+#define STATS_INC_USED(x, y) do { lwip_stats.x.used += y; \
+                                if (lwip_stats.x.max < lwip_stats.x.used) { \
+                                    lwip_stats.x.max = lwip_stats.x.used; \
+                                } \
+                             } while(0)
 #else
 #define stats_init()
 #define STATS_INC(x)
 #define STATS_DEC(x)
+#define STATS_INC_USED(x)
 #endif /* LWIP_STATS */
 
 #if TCP_STATS
@@ -221,11 +228,7 @@ extern struct stats_ lwip_stats;
 #if MEM_STATS
 #define MEM_STATS_AVAIL(x, y) lwip_stats.mem.x = y
 #define MEM_STATS_INC(x) STATS_INC(mem.x)
-#define MEM_STATS_INC_USED(x, y) do { lwip_stats.mem.used += y; \
-                                    if (lwip_stats.mem.max < lwip_stats.mem.used) { \
-                                        lwip_stats.mem.max = lwip_stats.mem.used; \
-                                    } \
-                                 } while(0)
+#define MEM_STATS_INC_USED(x, y) STATS_INC_USED(mem, y)
 #define MEM_STATS_DEC_USED(x, y) lwip_stats.mem.x -= y
 #define MEM_STATS_DISPLAY() stats_display_mem(&lwip_stats.mem, "HEAP")
 #else
@@ -240,11 +243,7 @@ extern struct stats_ lwip_stats;
 #define MEMP_STATS_AVAIL(x, i, y) lwip_stats.memp[i].x = y
 #define MEMP_STATS_INC(x, i) STATS_INC(memp[i].x)
 #define MEMP_STATS_DEC(x, i) STATS_DEC(memp[i].x)
-#define MEMP_STATS_INC_USED(x, i) do { ++lwip_stats.memp[i].used; \
-                                    if (lwip_stats.memp[i].max < lwip_stats.memp[i].used) { \
-                                        lwip_stats.memp[i].max = lwip_stats.memp[i].used; \
-                                    } \
-                                 } while(0)
+#define MEMP_STATS_INC_USED(x, i) STATS_INC_USED(memp[i], 1)
 #define MEMP_STATS_DISPLAY(i) stats_display_memp(&lwip_stats.memp[i], i)
 #else
 #define MEMP_STATS_AVAIL(x, i, y)
@@ -257,10 +256,12 @@ extern struct stats_ lwip_stats;
 #if SYS_STATS
 #define SYS_STATS_INC(x) STATS_INC(sys.x)
 #define SYS_STATS_DEC(x) STATS_DEC(sys.x)
+#define SYS_STATS_INC_USED(x) STATS_INC_USED(sys.x, 1)
 #define SYS_STATS_DISPLAY() stats_display_sys(&lwip_stats.sys)
 #else
 #define SYS_STATS_INC(x)
 #define SYS_STATS_DEC(x)
+#define SYS_STATS_INC_USED(x)
 #define SYS_STATS_DISPLAY()
 #endif
 
