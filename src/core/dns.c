@@ -150,7 +150,7 @@ struct dns_query {
   /* DNS query record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
   PACK_STRUCT_FIELD(u16_t type);
-  PACK_STRUCT_FIELD(u16_t class);
+  PACK_STRUCT_FIELD(u16_t cls);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -167,7 +167,7 @@ struct dns_answer {
   /* DNS answer record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
   PACK_STRUCT_FIELD(u16_t type);
-  PACK_STRUCT_FIELD(u16_t class);
+  PACK_STRUCT_FIELD(u16_t cls);
   PACK_STRUCT_FIELD(u32_t ttl);
   PACK_STRUCT_FIELD(u16_t len);
 } PACK_STRUCT_STRUCT;
@@ -620,9 +620,9 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     *query++='\0';
 
     /* fill dns query */
-    qry.type  = htons(DNS_RRTYPE_A);
-    qry.class = htons(DNS_RRCLASS_IN);
-    MEMCPY( query, &qry, SIZEOF_DNS_QUERY);
+    qry.type = htons(DNS_RRTYPE_A);
+    qry.cls = htons(DNS_RRCLASS_IN);
+    MEMCPY(query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (u16_t)((query + SIZEOF_DNS_QUERY) - ((char*)(p->payload))));
@@ -824,7 +824,8 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
 
           /* Check for IP address type and Internet class. Others are discarded. */
           MEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
-          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.class) == DNS_RRCLASS_IN) && (ntohs(ans.len) == sizeof(ip_addr_t)) ) {
+          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.cls) == DNS_RRCLASS_IN) &&
+             (ntohs(ans.len) == sizeof(ip_addr_t)) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {
