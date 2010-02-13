@@ -620,19 +620,19 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   LWIP_ERROR("netconn_gethostbyname: invalid name", (name != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_gethostbyname: invalid addr", (addr != NULL), return ERR_ARG;);
 
-  sem = sys_sem_new(0);
-  if (sem == SYS_SEM_NULL) {
-    return ERR_MEM;
+  err = sys_sem_new(&sem, 0);
+  if (err != ERR_OK) {
+    return err;
   }
 
   msg.name = name;
   msg.addr = addr;
   msg.err = &err;
-  msg.sem = sem;
+  msg.sem = &sem;
 
   tcpip_callback(do_gethostbyname, &msg);
-  sys_sem_wait(sem);
-  sys_sem_free(sem);
+  sys_sem_wait(&sem);
+  sys_sem_free(&sem);
 
   return err;
 }
