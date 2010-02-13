@@ -81,19 +81,17 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
   struct pbuf *q;
   struct netbuf *buf;
   struct netconn *conn;
-#if LWIP_SO_RCVBUF
-  int recv_avail;
-#endif /* LWIP_SO_RCVBUF */
 
   LWIP_UNUSED_ARG(addr);
   conn = (struct netconn *)arg;
 
+  if ((conn != NULL) && sys_mbox_valid(&conn->recvmbox)) {
 #if LWIP_SO_RCVBUF
-  SYS_ARCH_GET(conn->recv_avail, recv_avail);
-  if ((conn != NULL) && sys_mbox_valid(&conn->recvmbox) &&
-      ((recv_avail + (int)(p->tot_len)) <= conn->recv_bufsize)) {
-#else  /* LWIP_SO_RCVBUF */
-  if ((conn != NULL) && (conn->recvmbox != SYS_MBOX_NULL)) {
+    int recv_avail;
+    SYS_ARCH_GET(conn->recv_avail, recv_avail);
+    if ((recv_avail + (int)(p->tot_len)) > conn->recv_bufsize) {
+      return 0;
+    }
 #endif /* LWIP_SO_RCVBUF */
     /* copy the whole packet into new pbufs */
     q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
@@ -162,7 +160,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   if ((conn == NULL) || !sys_mbox_valid(&conn->recvmbox) ||
       ((recv_avail + (int)(p->tot_len)) > conn->recv_bufsize)) {
 #else  /* LWIP_SO_RCVBUF */
-  if ((conn == NULL) || (conn->recvmbox == SYS_MBOX_NULL)) {
+  if ((conn == NULL) || !sys_mbox_valid(&conn->recvmbox)) {
 #endif /* LWIP_SO_RCVBUF */
     pbuf_free(p);
     return;
