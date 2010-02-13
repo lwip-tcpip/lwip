@@ -56,20 +56,21 @@ typedef s8_t err_t;
 #define ERR_RTE        -4    /* Routing problem.         */
 #define ERR_INPROGRESS -5    /* Operation in progress    */
 #define ERR_VAL        -6    /* Illegal value.           */
+#define ERR_WOULBLOCK  -7    /* Operation would block.   */
 
 #define ERR_IS_FATAL(e) ((e) < ERR_VAL)
 
-#define ERR_ABRT       -7    /* Connection aborted.      */
-#define ERR_RST        -8    /* Connection reset.        */
-#define ERR_CLSD       -9    /* Connection closed.       */
-#define ERR_CONN       -10   /* Not connected.           */
+#define ERR_ABRT       -8    /* Connection aborted.      */
+#define ERR_RST        -9    /* Connection reset.        */
+#define ERR_CLSD       -10   /* Connection closed.       */
+#define ERR_CONN       -11   /* Not connected.           */
 
-#define ERR_ARG        -11   /* Illegal argument.        */
+#define ERR_ARG        -12   /* Illegal argument.        */
 
-#define ERR_USE        -12   /* Address in use.          */
+#define ERR_USE        -13   /* Address in use.          */
 
-#define ERR_IF         -13   /* Low-level netif error    */
-#define ERR_ISCONN     -14   /* Already connected.       */
+#define ERR_IF         -14   /* Low-level netif error    */
+#define ERR_ISCONN     -15   /* Already connected.       */
 
 
 #ifdef LWIP_DEBUG

@@ -48,14 +48,15 @@ static const char *err_strerr[] = {
            "Routing problem.",       /* ERR_RTE        -4  */
            "Operation in progress.", /* ERR_INPROGRESS -5  */
            "Illegal value.",         /* ERR_VAL        -6  */
-           "Connection aborted.",    /* ERR_ABRT       -7  */
-           "Connection reset.",      /* ERR_RST        -8  */
-           "Connection closed.",     /* ERR_CLSD       -9  */
-           "Not connected.",         /* ERR_CONN       -10 */
-           "Illegal argument.",      /* ERR_ARG        -11 */
-           "Address in use.",        /* ERR_USE        -12 */
-           "Low-level netif error.", /* ERR_IF         -13 */
-           "Already connected.",     /* ERR_ISCONN     -14 */
+           "Operation would block.", /* ERR_WOULDBLOCK -7  */
+           "Connection aborted.",    /* ERR_ABRT       -8  */
+           "Connection reset.",      /* ERR_RST        -9  */
+           "Connection closed.",     /* ERR_CLSD       -10 */
+           "Not connected.",         /* ERR_CONN       -11 */
+           "Illegal argument.",      /* ERR_ARG        -12 */
+           "Address in use.",        /* ERR_USE        -13 */
+           "Low-level netif error.", /* ERR_IF         -14 */
+           "Already connected.",     /* ERR_ISCONN     -15 */
 };
 
 /**
