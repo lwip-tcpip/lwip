@@ -51,14 +51,14 @@ extern "C" {
  * the same byte order as in the corresponding pcb.
  */
 
-/* Flags for netconn_write */
-#define NETCONN_NOFLAG 0x00
-#define NETCONN_NOCOPY 0x00 /* Only for source code compatibility */
-#define NETCONN_COPY   0x01
-#define NETCONN_MORE   0x02
+/* Flags for netconn_write (u8_t) */
+#define NETCONN_NOFLAG    0x00
+#define NETCONN_NOCOPY    0x00 /* Only for source code compatibility */
+#define NETCONN_COPY      0x01
+#define NETCONN_MORE      0x02
+#define NETCONN_DONTBLOCK 0x04
 
 /* Flags for struct netconn.flags (u8_t) */
-
 /** TCP: when data passed to netconn_write doesn't fit into the send buffer,
     this temporarily stores whether to wake up the original application task
     if data couldn't be sent in the first try. */
@@ -70,6 +70,9 @@ extern "C" {
 /** If this is set, a TCP netconn must call netconn_recved() to update
     the TCP receive window (done automatically if not set). */
 #define NETCONN_FLAG_NO_AUTO_RECVED           0x08
+/** If a nonblocking write has been rejected before, poll_tcp needs to
+    check if the netconn is writable again */
+#define NETCONN_FLAG_CHECK_WRITESPACE         0x10
 
 
 /* Helpers to process several netconn_types by the same code */

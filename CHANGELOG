@@ -19,6 +19,10 @@ HISTORY
 
   ++ New features:
 
+  2010-02-13: Simon Goldschmidt
+  * api.h, api_lib.c, api_msg.c, sockets.c: task #7865 (implement non-
+    blocking send operation)
+
   2010-02-12: Simon Goldschmidt
   * sockets.c/.h: Added a minimal version of posix fctl() to have a
     standardised way to set O_NONBLOCK for nonblocking sockets.

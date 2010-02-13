@@ -527,6 +527,8 @@ netconn_write(struct netconn *conn, const void *dataptr, size_t size, u8_t apifl
     return ERR_OK;
   }
 
+  /* @todo: for non-blocking write, check if 'size' would ever fit into
+            snd_queue or snd_buf */
   msg.function = do_write;
   msg.msg.conn = conn;
   msg.msg.msg.w.dataptr = dataptr;
