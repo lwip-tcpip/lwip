@@ -1171,7 +1171,6 @@ do_writemore(struct netconn *conn)
        let select mark this pcb as non-writable. */
     API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
   }
-
   if (err == ERR_OK) {
     conn->write_offset += len;
     if (conn->write_offset == conn->current_msg->msg.w.len) {
@@ -1413,7 +1412,7 @@ do_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
     *msg->addr = *ipaddr;
   }
   /* wake up the application task waiting in netconn_gethostbyname */
-  sys_sem_signal(msg->sem);
+  sys_sem_signal(&msg->sem);
 }
 
 /**
@@ -1431,7 +1430,7 @@ do_gethostbyname(void *arg)
   if (*msg->err != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
-    sys_sem_signal(msg->sem);
+    sys_sem_signal(&msg->sem);
   }
 }
 #endif /* LWIP_DNS */
