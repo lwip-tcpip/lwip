@@ -99,7 +99,7 @@ typedef void (*lwip_thread_fn)(void *arg);
 #define sys_mutex_valid(mutex)        sys_sem_valid(mutex)
 #define sys_mutex_set_invalid(mutex)  sys_sem_set_invalid(mutex)
 
-#else /* LWIP_HAVE_MUTEX */
+#else /* LWIP_COMPAT_MUTEX */
 
 /** Create a new mutex
  * @param mutex pointer to the mutex to create
@@ -122,7 +122,7 @@ int sys_mutex_valid(sys_mutex_t *mutex);
 /** Set a mutex invalid so that sys_mutex_valid returns 0 */
 void sys_mutex_set_invalid(sys_mutex_t *mutex);
 #endif
-#endif /* LWIP_HAVE_MUTEX */
+#endif /* LWIP_COMPAT_MUTEX */
 
 /* Semaphore functions: */
 
