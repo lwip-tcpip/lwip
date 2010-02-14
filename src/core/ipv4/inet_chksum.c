@@ -148,7 +148,7 @@ lwip_standard_chksum(void *dataptr, int len)
   u8_t *pb = dataptr;
   u16_t *ps, t = 0;
   u32_t sum = 0;
-  int odd = ((u32_t)pb & 1);
+  int odd = ((mem_ptr_t)pb & 1);
 
   /* Get aligned to u16_t */
   if (odd && len > 0) {
@@ -165,7 +165,7 @@ lwip_standard_chksum(void *dataptr, int len)
 
   /* Consume left-over byte, if any */
   if (len > 0) {
-    ((u8_t *)&t)[0] = *(u8_t *)ps;;
+    ((u8_t *)&t)[0] = *(u8_t *)ps;
   }
 
   /* Add end bytes */
@@ -206,7 +206,7 @@ lwip_standard_chksum(void *dataptr, int len)
   u32_t *pl;
   u32_t sum = 0, tmp;
   /* starts at odd byte address? */
-  int odd = ((u32_t)pb & 1);
+  int odd = ((mem_ptr_t)pb & 1);
 
   if (odd && len > 0) {
     ((u8_t *)&t)[1] = *pb++;
@@ -215,7 +215,7 @@ lwip_standard_chksum(void *dataptr, int len)
 
   ps = (u16_t *)pb;
 
-  if (((u32_t)ps & 3) && len > 1) {
+  if (((mem_ptr_t)ps & 3) && len > 1) {
     sum += *ps++;
     len -= 2;
   }
