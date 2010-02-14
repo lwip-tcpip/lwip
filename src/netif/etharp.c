@@ -344,10 +344,10 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
   }
   /* { we have no match } => try to create a new entry */
    
-  /* no empty entry found and not allowed to recycle? */
-  if (((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))
-      /* or don't create new entry, only search? */
-      || ((flags & ETHARP_FIND_ONLY) != 0)) {
+  /* don't create new entry, only search? */
+  if (((flags & ETHARP_FIND_ONLY) != 0) ||
+      /* or no empty entry found and not allowed to recycle? */
+      ((empty == ARP_TABLE_SIZE) && ((flags & ETHARP_TRY_HARD) == 0))) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: no empty entry found and not allowed to recycle\n"));
     return (s8_t)ERR_MEM;
   }
@@ -565,6 +565,7 @@ etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
   return -1;
 }
 
+#if ETHARP_TRUST_IP_MAC
 /**
  * Updates the ARP table using the given IP packet.
  *
@@ -580,7 +581,7 @@ etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
  *
  * @see pbuf_free()
  */
-void
+static void
 etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct eth_hdr *ethhdr;
@@ -604,12 +605,12 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   }
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_ip_input: updating ETHARP table.\n"));
-  /* update ARP table */
+  /* update the source IP address in the cache, if present */
   /* @todo We could use ETHARP_TRY_HARD if we think we are going to talk
    * back soon (for example, if the destination IP address is ours. */
-  update_arp_entry(netif, &(iphdr->src), &(ethhdr->src), 0);
+  update_arp_entry(netif, &(iphdr->src), &(ethhdr->src), ETHARP_FIND_ONLY);
 }
-
+#endif /* ETHARP_TRUST_IP_MAC */
 
 /**
  * Responds to ARP requests to us. Upon ARP replies to us, add entry to cache  
@@ -626,7 +627,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
  *
  * @see pbuf_free()
  */
-void
+static void
 etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 {
   struct etharp_hdr *hdr;
@@ -704,7 +705,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   /* ARP message not directed to us? */
   } else {
     /* update the source IP address in the cache, if present */
-    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), 0);
+    update_arp_entry(netif, &sipaddr, &(hdr->shwaddr), ETHARP_FIND_ONLY);
   }
 
   /* now act on the message itself */

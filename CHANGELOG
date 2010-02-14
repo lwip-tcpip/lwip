@@ -132,6 +132,11 @@ HISTORY
   ++ Bugfixes:
 
   2010-02-14: Simon Goldschmidt
+  * etharp.c/.h: Fixed ARP input processing: only add a new entry if a
+    request was directed as us (RFC 826, Packet Reception), otherwise
+    only update existing entries; internalized some functions
+
+  2010-02-14: Simon Goldschmidt
   * netif.h, etharp.c, tcpip.c: Fixed bug #28183 (ARP and TCP/IP cannot be
     disabled on netif used for PPPoE) by adding a new netif flag
     (NETIF_FLAG_ETHERNET) that tells the stack the device is an ethernet
