@@ -132,6 +132,11 @@ HISTORY
   ++ Bugfixes:
 
   2010-02-14: Simon Goldschmidt
+  * netif.c: Fixed bug #28877 (Duplicate ARP gratuitous packet with
+    LWIP_NETIF_LINK_CALLBACK set on) by only sending if both link- and
+    admin-status of a netif are up
+
+  2010-02-14: Simon Goldschmidt
   * opt.h: Disable ETHARP_TRUST_IP_MAC by default since it slows down packet
     reception and is not really necessary
 
