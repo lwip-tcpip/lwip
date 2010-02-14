@@ -141,40 +141,26 @@ PACK_STRUCT_END
 #endif
 #define SIZEOF_DNS_HDR 12
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-/** DNS query message structure */
+/** DNS query message structure.
+    No packing needed: only used locally on the stack. */
 struct dns_query {
   /* DNS query record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
-  PACK_STRUCT_FIELD(u16_t type);
-  PACK_STRUCT_FIELD(u16_t cls);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+  u16_t type;
+  u16_t cls;
+};
 #define SIZEOF_DNS_QUERY 4
 
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-/** DNS answer message structure */
+/** DNS answer message structure.
+    No packing needed: only used locally on the stack. */
 struct dns_answer {
   /* DNS answer record starts with either a domain name or a pointer
      to a name already present somewhere in the packet. */
-  PACK_STRUCT_FIELD(u16_t type);
-  PACK_STRUCT_FIELD(u16_t cls);
-  PACK_STRUCT_FIELD(u32_t ttl);
-  PACK_STRUCT_FIELD(u16_t len);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
+  u16_t type;
+  u16_t cls;
+  u32_t ttl;
+  u16_t len;
+};
 #define SIZEOF_DNS_ANSWER 10
 
 /** DNS table entry */
@@ -579,7 +565,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
 {
   err_t err;
   struct dns_hdr *hdr;
-  struct dns_query *qry;
+  struct dns_query qry;
   struct pbuf *p;
   char *query, *nptr;
   const char *pHostname;
@@ -620,9 +606,9 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     *query++='\0';
 
     /* fill dns query */
-    qry = (struct dns_query *)query;
-    qry->type = htons(DNS_RRTYPE_A);
-    qry->cls = htons(DNS_RRCLASS_IN);
+    qry.type = htons(DNS_RRTYPE_A);
+    qry.cls = htons(DNS_RRCLASS_IN);
+    SMEMCPY(query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (u16_t)((query + SIZEOF_DNS_QUERY) - ((char*)(p->payload))));
@@ -744,7 +730,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
   u16_t i;
   char *pHostname;
   struct dns_hdr *hdr;
-  struct dns_answer *ans;
+  struct dns_answer ans;
   struct dns_table_entry *pEntry;
   u16_t nquestions, nanswers;
 #if (DNS_USES_STATIC_BUF == 0)
@@ -823,11 +809,11 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
           /* Check for IP address type and Internet class. Others are discarded. */
-          ans = (struct dns_answer *)pHostname;
-          if((ans->type == htons(DNS_RRTYPE_A)) && (ans->cls == htons(DNS_RRCLASS_IN)) &&
-             (ans->len == htons(sizeof(ip_addr_t))) ) {
+          SMEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
+          if((ans.type == htons(DNS_RRTYPE_A)) && (ans.cls == htons(DNS_RRCLASS_IN)) &&
+             (ans.len == htons(sizeof(ip_addr_t))) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
-            pEntry->ttl = ntohl(ans->ttl);
+            pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {
               pEntry->ttl = DNS_MAX_TTL;
             }
@@ -843,7 +829,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
             /* deallocate memory and return */
             goto memerr2;
           } else {
-            pHostname = pHostname + SIZEOF_DNS_ANSWER + htons(ans->len);
+            pHostname = pHostname + SIZEOF_DNS_ANSWER + htons(ans.len);
           }
           --nanswers;
         }
