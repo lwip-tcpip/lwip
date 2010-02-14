@@ -586,6 +586,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   struct eth_hdr *ethhdr;
   struct ip_hdr *iphdr;
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
+
   /* Only insert an entry if the source IP address of the
      incoming IP packet comes from a host on the local network. */
   ethhdr = (struct eth_hdr *)p->payload;
@@ -639,7 +640,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 #endif /* LWIP_AUTOIP */
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
-  
+
   /* drop short ARP packets: we have to check for p->len instead of p->tot_len here
      since a struct etharp_hdr is pointed to p->payload, so it musn't be chained! */
   if (p->len < SIZEOF_ETHARP_PACKET) {
@@ -1185,6 +1186,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_ARP
     /* IP packet? */
     case ETHTYPE_IP:
+      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+        goto free_and_return;
+      }
 #if ETHARP_TRUST_IP_MAC
       /* update ARP table */
       etharp_ip_input(netif, p);
@@ -1192,8 +1196,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       /* skip Ethernet header */
       if(pbuf_header(p, -(s16_t)SIZEOF_ETH_HDR)) {
         LWIP_ASSERT("Can't move over header in packet", 0);
-        pbuf_free(p);
-        p = NULL;
+        goto free_and_return;
       } else {
         /* pass to IP layer */
         ip_input(p, netif);
@@ -1201,6 +1204,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       break;
       
     case ETHTYPE_ARP:
+      if (!(netif->flags & NETIF_FLAG_ETHARP)) {
+        goto free_and_return;
+      }
       /* pass p to ARP module */
       etharp_arp_input(netif, (struct eth_addr*)(netif->hwaddr), p);
       break;
@@ -1218,13 +1224,15 @@ ethernet_input(struct pbuf *p, struct netif *netif)
     default:
       ETHARP_STATS_INC(etharp.proterr);
       ETHARP_STATS_INC(etharp.drop);
-      pbuf_free(p);
-      p = NULL;
-      break;
+      goto free_and_return;
   }
 
   /* This means the pbuf is freed or consumed,
      so the caller doesn't have to free it again */
+  return ERR_OK;
+
+free_and_return:
+  pbuf_free(p);
   return ERR_OK;
 }
 #endif /* LWIP_ARP || LWIP_ETHERNET */

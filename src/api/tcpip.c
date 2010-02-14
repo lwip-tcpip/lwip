@@ -97,7 +97,7 @@ tcpip_thread(void *arg)
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
 #if LWIP_ETHERNET
-      if (msg->msg.inp.netif->flags & NETIF_FLAG_ETHARP) {
+      if (msg->msg.inp.netif->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_ETHERNET */
@@ -140,7 +140,8 @@ tcpip_thread(void *arg)
  * Pass a received packet to tcpip_thread for input processing
  *
  * @param p the received packet, p->payload pointing to the Ethernet header or
- *          to an IP header (if netif doesn't got NETIF_FLAG_ETHARP flag)
+ *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
+ *          NETIF_FLAG_ETHERNET flags)
  * @param inp the network interface on which the packet was received
  */
 err_t

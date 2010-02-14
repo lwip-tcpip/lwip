@@ -87,9 +87,13 @@ extern "C" {
  * Set by the netif driver in its init function.
  * Used to check input packet types and use of DHCP. */
 #define NETIF_FLAG_ETHARP       0x20U
+/** If set, the netif is an ethernet device. It might not use
+ * ARP or TCP/IP if it is used for PPPoE only.
+ */
+#define NETIF_FLAG_ETHERNET     0x40U
 /** If set, the netif has IGMP capability.
  * Set by the netif driver in its init function. */
-#define NETIF_FLAG_IGMP         0x40U
+#define NETIF_FLAG_IGMP         0x80U
 
 /** Function prototype for netif init functions. Set up flags and output/linkoutput
  * callback functions in this function.

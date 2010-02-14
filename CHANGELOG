@@ -131,6 +131,13 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-14: Simon Goldschmidt
+  * netif.h, etharp.c, tcpip.c: Fixed bug #28183 (ARP and TCP/IP cannot be
+    disabled on netif used for PPPoE) by adding a new netif flag
+    (NETIF_FLAG_ETHERNET) that tells the stack the device is an ethernet
+    device but prevents usage of ARP (so that ethernet_input can be used
+    for PPPoE).
+
   2010-02-12: Simon Goldschmidt
   * netif.c: netif_set_link_up/down: only do something if the link state
     actually changes
