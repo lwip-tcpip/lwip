@@ -443,7 +443,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
   entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
   MEMCPY((char*)entry->name, hostname, namelen);
   ((char*)entry->name)[namelen] = 0;
-  ip_addr_set(&entry->addr, addr);
+  ip_addr_copy(&entry->addr, addr);
   entry->next = local_hostlist_dynamic;
   local_hostlist_dynamic = entry;
   return ERR_OK;
@@ -622,7 +622,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     /* fill dns query */
     qry.type = htons(DNS_RRTYPE_A);
     qry.cls = htons(DNS_RRCLASS_IN);
-    MEMCPY(query, &qry, SIZEOF_DNS_QUERY);
+    SMEMCPY(query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
     pbuf_realloc(p, (u16_t)((query + SIZEOF_DNS_QUERY) - ((char*)(p->payload))));
@@ -823,16 +823,16 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
           /* Check for IP address type and Internet class. Others are discarded. */
-          MEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
-          if((ntohs(ans.type) == DNS_RRTYPE_A) && (ntohs(ans.cls) == DNS_RRCLASS_IN) &&
-             (ntohs(ans.len) == sizeof(ip_addr_t)) ) {
+          SMEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
+          if((ans.type == htons(DNS_RRTYPE_A)) && (ans.cls == htons(DNS_RRCLASS_IN)) &&
+             (ans.len == htons(sizeof(ip_addr_t))) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {
               pEntry->ttl = DNS_MAX_TTL;
             }
             /* read the IP address after answer resource record's header */
-            MEMCPY( &(pEntry->ipaddr), (pHostname+SIZEOF_DNS_ANSWER), sizeof(ip_addr_t));
+            SMEMCPY(&(pEntry->ipaddr), (pHostname+SIZEOF_DNS_ANSWER), sizeof(ip_addr_t));
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", pEntry->name));
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
