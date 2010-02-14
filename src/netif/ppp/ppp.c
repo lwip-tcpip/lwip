@@ -1829,7 +1829,7 @@ pppInProc(PPPControlRx *pc, u_char *s, int l)
             PPPDEBUG((LOG_ERR, "pppInProc[%d]: tcpip_callback() failed, dropping packet\n", pc->pd));
             pbuf_free(pc->inHead);
             LINK_STATS_INC(link.drop);
-            snmp_inc_ifindiscards(netif);
+            snmp_inc_ifindiscards(&pppControl[pc->pd].netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
           pppInput(pc->inHead);
