@@ -776,7 +776,7 @@ igmp_send(struct igmp_group *group, u8_t type)
 {
   struct pbuf*     p    = NULL;
   struct igmp_msg* igmp = NULL;
-  ip_addr_t   src  = {0};
+  ip_addr_t   src  = *IP_ADDR_ANY;
   ip_addr_t*  dest = NULL;
 
   /* IP header + "router alert" option + IGMP header */
@@ -786,16 +786,16 @@ igmp_send(struct igmp_group *group, u8_t type)
     igmp = p->payload;
     LWIP_ASSERT("igmp_send: check that first pbuf can hold struct igmp_msg",
                (p->len >= sizeof(struct igmp_msg)));
-    ip_addr_set(&src, &((group->netif)->ip_addr));
+    ip_addr_copy(src, group->netif->ip_addr);
      
     if (type == IGMP_V2_MEMB_REPORT) {
       dest = &(group->group_address);
-      ip_addr_set(&(igmp->igmp_group_address), &(group->group_address));
+      ip_addr_copy(igmp->igmp_group_address, group->group_address);
       group->last_reporter_flag = 1; /* Remember we were the last to report */
     } else {
       if (type == IGMP_LEAVE_GROUP) {
         dest = &allrouters;
-        ip_addr_set(&(igmp->igmp_group_address), &(group->group_address));
+        ip_addr_copy(igmp->igmp_group_address, group->group_address);
       }
     }
 

@@ -407,7 +407,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
   /* IP address given? */
   if (ipaddr != NULL) {
     /* set IP address */
-    ip_addr_set(&arp_table[i].ipaddr, ipaddr);
+    ip_addr_copy(arp_table[i].ipaddr, *ipaddr);
   }
   arp_table[i].ctime = 0;
 #if LWIP_NETIF_HWADDRHINT

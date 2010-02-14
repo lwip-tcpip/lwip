@@ -433,9 +433,9 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     pcb->accepts_pending++;
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
-    ip_addr_set(&(npcb->local_ip), &(iphdr->dest));
+    ip_addr_copy(npcb->local_ip, iphdr->dest);
     npcb->local_port = pcb->local_port;
-    ip_addr_set(&(npcb->remote_ip), &(iphdr->src));
+    ip_addr_copy(npcb->remote_ip, iphdr->src);
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;
     npcb->rcv_nxt = seqno + 1;

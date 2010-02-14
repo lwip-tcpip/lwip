@@ -230,10 +230,10 @@ snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
     if ((td->enable != 0) && !ip_addr_isany(&td->dip))
     {
       /* network order trap destination */
-      ip_addr_set(&trap_msg.dip, &td->dip);
+      ip_addr_copy(trap_msg.dip, td->dip);
       /* lookup current source address for this dst */
       dst_if = ip_route(&td->dip);
-      ip_addr_set(&dst_ip, &dst_if->ip_addr);
+      ip_addr_copy(dst_ip, dst_if->ip_addr);
       /* @todo: what about IPv6? */
       trap_msg.sip_raw[0] = ip4_addr1(&dst_ip);
       trap_msg.sip_raw[1] = ip4_addr2(&dst_ip);

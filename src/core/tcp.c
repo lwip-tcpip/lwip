@@ -232,8 +232,8 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
   } else {
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
-    ip_addr_set(&local_ip, &(pcb->local_ip));
-    ip_addr_set(&remote_ip, &(pcb->remote_ip));
+    ip_addr_copy(local_ip, pcb->local_ip);
+    ip_addr_copy(remote_ip, pcb->remote_ip);
     local_port = pcb->local_port;
     remote_port = pcb->remote_port;
 #if LWIP_CALLBACK_API
@@ -391,7 +391,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->so_options |= SOF_ACCEPTCONN;
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
-  ip_addr_set(&lpcb->local_ip, &pcb->local_ip);
+  ip_addr_copy(lpcb->local_ip, pcb->local_ip);
   TCP_RMV(&tcp_bound_pcbs, pcb);
   memp_free(MEMP_TCP_PCB, pcb);
 #if LWIP_CALLBACK_API

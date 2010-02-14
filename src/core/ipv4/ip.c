@@ -558,7 +558,8 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
 
-    ip_addr_set(&(iphdr->dest), dest);
+    /* dest cannot be NULL here */
+    ip_addr_copy(iphdr->dest, *dest);
 
     IPH_VHLTOS_SET(iphdr, 4, ip_hlen / 4, tos);
     IPH_LEN_SET(iphdr, htons(p->tot_len));
@@ -567,9 +568,10 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     ++ip_id;
 
     if (ip_addr_isany(src)) {
-      ip_addr_set(&(iphdr->src), &(netif->ip_addr));
+      ip_addr_copy(iphdr->src, netif->ip_addr);
     } else {
-      ip_addr_set(&(iphdr->src), src);
+      /* src cannot be NULL here */
+      ip_addr_copy(iphdr->src, *src);
     }
 
     IPH_CHKSUM_SET(iphdr, 0);

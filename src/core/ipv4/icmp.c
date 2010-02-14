@@ -184,9 +184,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
-    ip_addr_set(&tmpaddr, &iphdr->src);
-    ip_addr_set(&iphdr->src, &iphdr->dest);
-    ip_addr_set(&iphdr->dest, &tmpaddr);
+    ip_addr_copy(tmpaddr, iphdr->src);
+    ip_addr_copy(iphdr->src, iphdr->dest);
+    ip_addr_copy(iphdr->dest, tmpaddr);
     ICMPH_TYPE_SET(iecho, ICMP_ER);
     /* adjust the checksum */
     if (iecho->chksum >= htons(0xffff - (ICMP_ECHO << 8))) {

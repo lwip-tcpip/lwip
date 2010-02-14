@@ -703,7 +703,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     if (netif == NULL) {
       return;
     }
-    ip_addr_set(&(pcb->local_ip), &(netif->ip_addr));
+    ip_addr_copy(pcb->local_ip, netif->ip_addr);
   }
 
   /* Set retransmission timer running if it is not currently enabled */

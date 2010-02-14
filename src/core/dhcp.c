@@ -246,7 +246,7 @@ dhcp_handle_offer(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_handle_offer(): server 0x%08"X32_F"\n",
       ip4_addr_get_u32(&dhcp->server_ip_addr)));
     /* remember offered address */
-    ip_addr_set(&dhcp->offered_ip_addr, &dhcp->msg_in->yiaddr);
+    ip_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_handle_offer(): offer for 0x%08"X32_F"\n",
       ip4_addr_get_u32(&dhcp->offered_ip_addr)));
 
@@ -535,12 +535,12 @@ dhcp_handle_ack(struct netif *netif)
   }
 
   /* (y)our internet address */
-  ip_addr_set(&dhcp->offered_ip_addr, &dhcp->msg_in->yiaddr);
+  ip_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
 
 #if LWIP_DHCP_BOOTP_FILE
   /* copy boot server address,
      boot file name copied in dhcp_parse_reply if not overloaded */
-  ip_addr_set(&dhcp->offered_si_addr, &dhcp->msg_in->siaddr);
+  ip_addr_copy(dhcp->offered_si_addr, dhcp->msg_in->siaddr);
 #endif /* LWIP_DHCP_BOOTP_FILE */
 
   /* subnet mask given? */
@@ -942,10 +942,10 @@ dhcp_bind(struct netif *netif)
 
   if (dhcp->subnet_mask_given) {
     /* copy offered network mask */
-    ip_addr_set(&sn_mask, &dhcp->offered_sn_mask);
+    ip_addr_copy(sn_mask, dhcp->offered_sn_mask);
   } else {
     /* subnet mask not given, choose a safe subnet mask given the network class */
-    u8_t first_octet = (u8_t)ip4_addr1_16(&dhcp->offered_ip_addr);
+    u8_t first_octet = ip4_addr1(&dhcp->offered_ip_addr);
     if (first_octet <= 127) {
       ip4_addr_set_u32(&sn_mask, htonl(0xff000000));
     } else if (first_octet >= 192) {
@@ -955,7 +955,7 @@ dhcp_bind(struct netif *netif)
     }
   }
 
-  ip_addr_set(&gw_addr, &dhcp->offered_gw_addr);
+  ip_addr_copy(gw_addr, dhcp->offered_gw_addr);
   /* gateway address not given? */
   if (ip_addr_isany(&gw_addr)) {
     /* copy network address */
@@ -1665,7 +1665,7 @@ dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
   dhcp->msg_out->flags = 0;
   ip_addr_set_zero(&dhcp->msg_out->ciaddr);
   if (dhcp->state==DHCP_BOUND || dhcp->state==DHCP_RENEWING || dhcp->state==DHCP_REBINDING) {
-    ip_addr_set(&dhcp->msg_out->ciaddr, &netif->ip_addr);
+    ip_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
   }
   ip_addr_set_zero(&dhcp->msg_out->yiaddr);
   ip_addr_set_zero(&dhcp->msg_out->siaddr);
