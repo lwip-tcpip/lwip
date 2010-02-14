@@ -123,8 +123,10 @@ struct ip_hdr {
 #define IP_DF 0x4000        /* dont fragment flag */
 #define IP_MF 0x2000        /* more fragments flag */
 #define IP_OFFMASK 0x1fff   /* mask for fragmenting bits */
-  /* time to live / protocol*/
-  PACK_STRUCT_FIELD(u16_t _ttl_proto);
+  /* time to live */
+  PACK_STRUCT_FIELD(u8_t _ttl);
+  /* protocol*/
+  PACK_STRUCT_FIELD(u8_t _proto);
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);
   /* source and destination IP addresses */
@@ -142,17 +144,16 @@ PACK_STRUCT_END
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
 #define IPH_OFFSET(hdr) ((hdr)->_offset)
-#define IPH_TTL(hdr) (ntohs((hdr)->_ttl_proto) >> 8)
-#define IPH_PROTO(hdr) (ntohs((hdr)->_ttl_proto) & 0xff)
+#define IPH_TTL(hdr) ((hdr)->_ttl)
+#define IPH_PROTO(hdr) ((hdr)->_proto)
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
 
 #define IPH_VHLTOS_SET(hdr, v, hl, tos) (hdr)->_v_hl_tos = (htons(((v) << 12) | ((hl) << 8) | (tos)))
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)
 #define IPH_OFFSET_SET(hdr, off) (hdr)->_offset = (off)
-#define IPH_TTL_PROTO_SET(hdr, ttl, proto) (hdr)->_ttl_proto = (htons((u8_t)(proto) | ((u16_t)(ttl) << 8)))
-#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl_proto = (htons(IPH_PROTO(hdr) | ((u16_t)(ttl) << 8)))
-#define IPH_PROTO_SET(hdr, proto) (hdr)->_ttl_proto = (htons((proto) | (IPH_TTL(hdr) << 8)))
+#define IPH_TTL_SET(hdr, ttl) (hdr)->_ttl = (u8_t)(ttl)
+#define IPH_PROTO_SET(hdr, proto) (hdr)->_proto = (u8_t)(proto)
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
 /** The interface that provided the packet for the current callback invocation. */
