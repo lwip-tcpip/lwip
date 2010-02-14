@@ -132,6 +132,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-02-14: Simon Goldschmidt
+  * opt.h: Disable ETHARP_TRUST_IP_MAC by default since it slows down packet
+    reception and is not really necessary
+
+  2010-02-14: Simon Goldschmidt
   * etharp.c/.h: Fixed ARP input processing: only add a new entry if a
     request was directed as us (RFC 826, Packet Reception), otherwise
     only update existing entries; internalized some functions
