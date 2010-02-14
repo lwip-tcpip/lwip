@@ -57,7 +57,7 @@
 #ifndef LWIP_CHKSUM
 # define LWIP_CHKSUM lwip_standard_chksum
 # ifndef LWIP_CHKSUM_ALGORITHM
-#  define LWIP_CHKSUM_ALGORITHM 1
+#  define LWIP_CHKSUM_ALGORITHM 2
 # endif
 #endif
 /* If none set: */
