@@ -61,15 +61,15 @@
 #endif /* LWIP_DHCP */
 
 #if LWIP_NETIF_STATUS_CALLBACK
-#define NETIF_STATUS_CALLBACK(n) { if (n->status_callback) (n->status_callback)(n); }
+#define NETIF_STATUS_CALLBACK(n) do{ if (n->status_callback) { (n->status_callback)(n); }}while(0)
 #else
-#define NETIF_STATUS_CALLBACK(n) { /* NOP */ }
+#define NETIF_STATUS_CALLBACK(n)
 #endif /* LWIP_NETIF_STATUS_CALLBACK */ 
 
 #if LWIP_NETIF_LINK_CALLBACK
-#define NETIF_LINK_CALLBACK(n) { if (n->link_callback) (n->link_callback)(n); }
+#define NETIF_LINK_CALLBACK(n) do{ if (n->link_callback) { (n->link_callback)(n); }}while(0)
 #else
-#define NETIF_LINK_CALLBACK(n) { /* NOP */ }
+#define NETIF_LINK_CALLBACK(n)
 #endif /* LWIP_NETIF_LINK_CALLBACK */ 
 
 struct netif *netif_list;
@@ -502,7 +502,6 @@ void netif_set_status_callback(struct netif *netif, netif_status_callback_fn sta
 }
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
-#if LWIP_NETIF_LINK_CALLBACK
 /**
  * Called by a driver when its link goes up
  */
@@ -553,6 +552,7 @@ void netif_set_link_down(struct netif *netif )
   }
 }
 
+#if LWIP_NETIF_LINK_CALLBACK
 /**
  * Set callback to be called when link is brought up/down
  */

@@ -131,6 +131,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-15: Simon Goldschmidt/Stephane Lesage
+  * netif.c/.h: Link status does not depend on LWIP_NETIF_LINK_CALLBACK
+    (fixes bug #28899)
+
   2010-02-14: Simon Goldschmidt
   * netif.c: Fixed bug #28877 (Duplicate ARP gratuitous packet with
     LWIP_NETIF_LINK_CALLBACK set on) by only sending if both link- and

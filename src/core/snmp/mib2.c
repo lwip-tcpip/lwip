@@ -2497,7 +2497,6 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       ocstrncpy((u8_t*)value, netif->hwaddr, len);
       break;
     case 7: /* ifAdminStatus */
-#if LWIP_NETIF_LINK_CALLBACK
       {
         s32_t *sint_ptr = (s32_t*)value;
         if (netif_is_up(netif))
@@ -2517,7 +2516,6 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
         }
       }
       break;
-#endif
     case 8: /* ifOperStatus */
       {
         s32_t *sint_ptr = (s32_t*)value;

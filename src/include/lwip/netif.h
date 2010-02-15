@@ -80,8 +80,7 @@ extern "C" {
  *  (set by the network interface driver).
  * Either set by the netif driver in its init function (if the link
  * is up at that time) or at a later point once the link comes up
- * (if link detection is supported by the hardware).
- * Only really used with LWIP_NETIF_LINK_CALLBACK. */
+ * (if link detection is supported by the hardware). */
 #define NETIF_FLAG_LINK_UP      0x10U
 /** If set, the netif is an ethernet device using ARP.
  * Set by the netif driver in its init function.
@@ -279,18 +278,15 @@ void netif_set_down(struct netif *netif);
 #define netif_is_up(netif) (((netif)->flags & NETIF_FLAG_UP) ? (u8_t)1 : (u8_t)0)
 
 #if LWIP_NETIF_STATUS_CALLBACK
-/*
- * Set callback to be called when interface is brought up/down
- */
 void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
-#if LWIP_NETIF_LINK_CALLBACK
 void netif_set_link_up(struct netif *netif);
 void netif_set_link_down(struct netif *netif);
 /** Ask if a link is up */ 
 #define netif_is_link_up(netif) (((netif)->flags & NETIF_FLAG_LINK_UP) ? (u8_t)1 : (u8_t)0)
 
+#if LWIP_NETIF_LINK_CALLBACK
 void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_callback);
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
