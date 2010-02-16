@@ -101,6 +101,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
   code = *(((u8_t *)p->payload)+1);
 #endif /* LWIP_DEBUG */
   switch (type) {
+  case ICMP_ER:
+    /* This is OK, echo reply might have been parsed by a raw PCB
+       (as obviously, an echo request has been sent, too). */
+    break; 
   case ICMP_ECHO:
 #if !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
     {
