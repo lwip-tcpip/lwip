@@ -101,7 +101,7 @@ struct etharp_entry {
    * Pointer to queue of pending outgoing packets on this ARP entry.
    */
   struct etharp_q_entry *q;
-#endif
+#endif /* ARP_QUEUEING */
   ip_addr_t ipaddr;
   struct eth_addr ethaddr;
   enum etharp_state state;
@@ -112,7 +112,7 @@ struct etharp_entry {
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
 #if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry;
-#endif
+#endif /* !LWIP_NETIF_HWADDRHINT */
 
 /**
  * Try hard to create a new entry - we want the IP address to appear in
@@ -157,7 +157,7 @@ free_etharp_q(struct etharp_q_entry *q)
     memp_free(MEMP_ARP_QUEUE, r);
   }
 }
-#endif
+#endif /* ARP_QUEUEING */
 
 /**
  * Clears expired entries in the ARP table.
@@ -192,7 +192,7 @@ etharp_tmr(void)
         free_etharp_q(arp_table[i].q);
         arp_table[i].q = NULL;
       }
-#endif
+#endif /* ARP_QUEUEING */
       /* recycle entry for re-use */      
       arp_table[i].state = ETHARP_STATE_EMPTY;
     }
@@ -201,7 +201,7 @@ etharp_tmr(void)
     if (arp_table[i].state == ETHARP_STATE_PENDING) {
         /* resend an ARP query here? */
     }
-#endif
+#endif /* ARP_QUEUEING */
   }
 }
 
@@ -242,7 +242,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
   s8_t old_queue = ARP_TABLE_SIZE;
   /* its age */
   u8_t age_queue = 0;
-#endif
+#endif /* ARP_QUEUEING */
 
   /* First, test if the last call to this function asked for the
    * same address. If so, we're really fast! */
@@ -314,7 +314,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
           old_queue = i;
           age_queue = arp_table[i].ctime;
         }
-#endif
+#endif /* ARP_QUEUEING */
       /* pending without queued packets? */
       } else {
         if (arp_table[i].ctime >= age_pending) {
@@ -374,7 +374,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
 #if ARP_QUEUEING
     /* no queued packets should exist on stable entries */
     LWIP_ASSERT("arp_table[i].q == NULL", arp_table[i].q == NULL);
-#endif
+#endif /* ARP_QUEUEING */
   /* 3) found recyclable pending entry without queued packets? */
   } else if (old_pending < ARP_TABLE_SIZE) {
     /* recycle oldest pending */
@@ -388,7 +388,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: selecting oldest pending entry %"U16_F", freeing packet queue %p\n", (u16_t)i, (void *)(arp_table[i].q)));
     free_etharp_q(arp_table[i].q);
     arp_table[i].q = NULL;
-#endif
+#endif /* ARP_QUEUEING */
     /* no empty or recyclable entries found */
   } else {
     return (s8_t)ERR_MEM;
@@ -529,7 +529,7 @@ update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethadd
     /* free the queued IP packet */
     pbuf_free(p);
   }
-#endif
+#endif /* ARP_QUEUEING */
   return ERR_OK;
 }
 
@@ -774,7 +774,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
      * want to take a duplicate IP address on a single network.
      * @todo How should we handle redundant (fail-over) interfaces? */
     dhcp_arp_reply(netif, &sipaddr);
-#endif
+#endif /* (LWIP_DHCP && DHCP_DOES_ARP_CHECK) */
     break;
   default:
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: ARP unknown opcode type %"S16_F"\n", htons(hdr->opcode)));
@@ -1020,11 +1020,11 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: could not queue a copy of PBUF_REF packet %p (out of memory)\n", (void *)q));
         /* { result == ERR_MEM } through initialization */
       }
-#else /* ARP_QUEUEING == 0 */
+#else /* ARP_QUEUEING */
       /* q && state == PENDING && ARP_QUEUEING == 0 => result = ERR_MEM */
       /* { result == ERR_MEM } through initialization */
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: Ethernet destination address unknown, queueing disabled, packet %p dropped\n", (void *)q));
-#endif
+#endif /* ARP_QUEUEING */
     }
   }
   return result;
