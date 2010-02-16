@@ -145,7 +145,7 @@ lwip_standard_chksum(void *dataptr, u16_t len)
 static u16_t
 lwip_standard_chksum(void *dataptr, int len)
 {
-  u8_t *pb = dataptr;
+  u8_t *pb = (u8_t *)dataptr;
   u16_t *ps, t = 0;
   u32_t sum = 0;
   int odd = ((mem_ptr_t)pb & 1);
@@ -201,7 +201,7 @@ lwip_standard_chksum(void *dataptr, int len)
 static u16_t
 lwip_standard_chksum(void *dataptr, int len)
 {
-  u8_t *pb = dataptr;
+  u8_t *pb = (u8_t *)dataptr;
   u16_t *ps, t = 0;
   u32_t *pl;
   u32_t sum = 0, tmp;
