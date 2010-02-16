@@ -862,42 +862,34 @@ tcp_fasttmr(void)
  * Deallocates a list of TCP segments (tcp_seg structures).
  *
  * @param seg tcp_seg list of TCP segments to free
- * @return the number of pbufs that were deallocated
  */
-u8_t
+void
 tcp_segs_free(struct tcp_seg *seg)
 {
-  u8_t count = 0;
-  struct tcp_seg *next;
   while (seg != NULL) {
-    next = seg->next;
-    count += tcp_seg_free(seg);
+    struct tcp_seg *next = seg->next;
+    tcp_seg_free(seg);
     seg = next;
   }
-  return count;
 }
 
 /**
  * Frees a TCP segment (tcp_seg structure).
  *
  * @param seg single tcp_seg to free
- * @return the number of pbufs that were deallocated
  */
-u8_t
+void
 tcp_seg_free(struct tcp_seg *seg)
 {
-  u8_t count = 0;
-  
   if (seg != NULL) {
     if (seg->p != NULL) {
-      count = pbuf_free(seg->p);
+      pbuf_free(seg->p);
 #if TCP_DEBUG
       seg->p = NULL;
 #endif /* TCP_DEBUG */
     }
     memp_free(MEMP_TCP_SEG, seg);
   }
-  return count;
 }
 
 /**
