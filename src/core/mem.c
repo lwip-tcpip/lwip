@@ -224,7 +224,7 @@ static volatile u8_t mem_free_count;
  * one empty struct mem pointing to another empty struct mem.
  *
  * @param mem this points to a struct mem which just has been freed
- * @internal this function is only called by mem_free() and mem_realloc()
+ * @internal this function is only called by mem_free() and mem_trim()
  *
  * This assumes access to the heap is protected by the calling function
  * already.
@@ -353,9 +353,7 @@ mem_free(void *rmem)
 }
 
 /**
- * In contrast to its name, mem_realloc can only shrink memory, not expand it.
- * Since the only use (for now) is in pbuf_realloc (which also can only shrink),
- * this shouldn't be a problem!
+ * Shrink memory returned by mem_malloc().
  *
  * @param rmem pointer to memory allocated by mem_malloc the is to be shrinked
  * @param newsize required size after shrinking (needs to be smaller than or
@@ -365,7 +363,7 @@ mem_free(void *rmem)
  *         or freed!
  */
 void *
-mem_realloc(void *rmem, mem_size_t newsize)
+mem_trim(void *rmem, mem_size_t newsize)
 {
   mem_size_t size;
   mem_size_t ptr, ptr2;
@@ -386,12 +384,12 @@ mem_realloc(void *rmem, mem_size_t newsize)
     return NULL;
   }
 
-  LWIP_ASSERT("mem_realloc: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
+  LWIP_ASSERT("mem_trim: legal memory", (u8_t *)rmem >= (u8_t *)ram &&
    (u8_t *)rmem < (u8_t *)ram_end);
 
   if ((u8_t *)rmem < (u8_t *)ram || (u8_t *)rmem >= (u8_t *)ram_end) {
     SYS_ARCH_DECL_PROTECT(lev);
-    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_realloc: illegal memory\n"));
+    LWIP_DEBUGF(MEM_DEBUG | LWIP_DBG_LEVEL_SEVERE, ("mem_trim: illegal memory\n"));
     /* protect mem stats from concurrent access */
     SYS_ARCH_PROTECT(lev);
     MEM_STATS_INC(illegal);
@@ -404,7 +402,7 @@ mem_realloc(void *rmem, mem_size_t newsize)
   ptr = (mem_size_t)((u8_t *)mem - ram);
 
   size = mem->next - ptr - SIZEOF_STRUCT_MEM;
-  LWIP_ASSERT("mem_realloc can only shrink memory", newsize <= size);
+  LWIP_ASSERT("mem_trim can only shrink memory", newsize <= size);
   if (newsize > size) {
     /* not supported */
     return NULL;

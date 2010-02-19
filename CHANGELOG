@@ -131,6 +131,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-19: Simon Goldschmidt
+  * mem.c/.h, pbuf.c: Renamed mem_realloc() to mem_trim() to prevent
+    confusion with realloc()
+
   2010-02-15: Simon Goldschmidt/Stephane Lesage
   * netif.c/.h: Link status does not depend on LWIP_NETIF_LINK_CALLBACK
     (fixes bug #28899)

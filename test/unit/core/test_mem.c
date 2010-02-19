@@ -25,7 +25,7 @@ mem_teardown(void)
 
 /* Test functions */
 
-/** Call mem_malloc, mem_free and mem_realloc and check stats */
+/** Call mem_malloc, mem_free and mem_trim and check stats */
 START_TEST(test_mem_one)
 {
 #define SIZE1   16
@@ -51,7 +51,7 @@ START_TEST(test_mem_one)
   fail_unless(lwip_stats.mem.used >= SIZE2 + s1);
   s2 = lwip_stats.mem.used;
 
-  mem_realloc(p1, SIZE1_2);
+  mem_trim(p1, SIZE1_2);
 
   mem_free(p2);
   fail_unless(lwip_stats.mem.used <= s2 - SIZE2);

@@ -58,10 +58,10 @@ typedef size_t mem_size_t;
 #ifndef mem_calloc
 #define mem_calloc calloc
 #endif
-/* ATTENTION: using realloc is currently not supported since the return value
-   is ignored, so don't define mem_realloc() to realloc()! */
-#ifndef mem_realloc
-#define mem_realloc(mem, size) (mem)
+/* Since there is no C library allocation function to shrink memory without
+   moving it, define this to nothing. */
+#ifndef mem_trim
+#define mem_trim(mem, size) (mem)
 #endif
 #else /* MEM_LIBC_MALLOC */
 
@@ -77,13 +77,13 @@ typedef u16_t mem_size_t;
 #if MEM_USE_POOLS
 /** mem_init is not used when using pools instead of a heap */
 #define mem_init()
-/** mem_realloc is not used when using pools instead of a heap:
+/** mem_trim is not used when using pools instead of a heap:
     we can't free part of a pool element and don't want to copy the rest */
-#define mem_realloc(mem, size) (mem)
+#define mem_trim(mem, size) (mem)
 #else /* MEM_USE_POOLS */
 /* lwIP alternative malloc */
 void  mem_init(void);
-void *mem_realloc(void *mem, mem_size_t size);
+void *mem_trim(void *mem, mem_size_t size);
 #endif /* MEM_USE_POOLS */
 void *mem_malloc(mem_size_t size);
 void *mem_calloc(mem_size_t count, mem_size_t size);
