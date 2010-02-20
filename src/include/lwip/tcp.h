@@ -336,7 +336,7 @@ enum tcp_state {
    * @return ERR_OK: accept the new connection,
    *                 any other err_t abortsthe new connection
    */
-#define DEF_ACCEPT_CALLBACK  tcp_accept_fn accept
+#define DEF_ACCEPT_CALLBACK  tcp_accept_fn accept;
 #else /* LWIP_CALLBACK_API */
 #define DEF_ACCEPT_CALLBACK
 #endif /* LWIP_CALLBACK_API */
@@ -349,10 +349,10 @@ enum tcp_state {
   enum tcp_state state; /* TCP state */ \
   u8_t prio; \
   void *callback_arg; \
-  /* ports are in host byte order */ \
-  u16_t local_port; \
   /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
-  DEF_ACCEPT_CALLBACK
+  DEF_ACCEPT_CALLBACK \
+  /* ports are in host byte order */ \
+  u16_t local_port
 
 
 /* the TCP protocol control block */
