@@ -197,7 +197,8 @@ tcp_close(struct tcp_pcb *pcb)
        returns (unsent data is sent from tcp timer functions, also), we don't care
        for the return value of tcp_output for now. */
     /* @todo: When implementing SO_LINGER, this must be changed somehow:
-       If SOF_LINGER is set, the data should be sent when tcp_close returns. */
+       If SOF_LINGER is set, the data should be sent and acked before close returns.
+       This can only be valid for sequential APIs, not for the raw API. */
     tcp_output(pcb);
   }
   return err;
@@ -451,13 +452,14 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
               len <= 0xffff - pcb->rcv_wnd );
 
   pcb->rcv_wnd += len;
-  if (pcb->rcv_wnd > TCP_WND)
+  if (pcb->rcv_wnd > TCP_WND) {
     pcb->rcv_wnd = TCP_WND;
+  }
 
   wnd_inflation = tcp_update_rcv_ann_wnd(pcb);
 
   /* If the change in the right edge of window is significant (default
-   * watermark is TCP_WND/2), then send an explicit update now.
+   * watermark is TCP_WND/4), then send an explicit update now.
    * Otherwise wait for a packet to be sent in the normal course of
    * events (or more window to be available later) */
   if (wnd_inflation >= TCP_WND_UPDATE_THRESHOLD) {
@@ -1043,7 +1045,7 @@ tcp_alloc(u8_t prio)
   }
   if (pcb != NULL) {
     memset(pcb, 0, sizeof(struct tcp_pcb));
-    pcb->prio = TCP_PRIO_NORMAL;
+    pcb->prio = prio;
     pcb->snd_buf = TCP_SND_BUF;
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
