@@ -167,6 +167,7 @@ struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
 void             tcp_abandon (struct tcp_pcb *pcb, int reset);
 #define          tcp_abort(pcb) tcp_abandon((pcb), 1)
 err_t            tcp_close   (struct tcp_pcb *pcb);
+err_t            tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx);
 
 /* Flags for "apiflags" parameter in tcp_write and tcp_enqueue */
 #define TCP_WRITE_FLAG_COPY 0x01
@@ -370,6 +371,7 @@ struct tcp_pcb {
 #define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
 #define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */
 #define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */
+#define TF_RXCLOSED    ((u8_t)0x10U)   /* rx closed by tcp_shutdown */
 #define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */
 #define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
 #define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
@@ -521,13 +523,13 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
     else (ret) = ERR_OK;                                       \
   } while (0)
 
-#define TCP_EVENT_RECV(pcb,p,err,ret)                           \
-  do {                                                          \
-    if((pcb)->recv != NULL) {                                   \
-      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err)); \
-    } else {                                                    \
-      (ret) = tcp_recv_null(NULL, (pcb), (p), (err));           \
-    }                                                           \
+#define TCP_EVENT_RECV(pcb,p,err,ret)                              \
+  do {                                                             \
+    if(((pcb)->recv != NULL) && (!((pcb)->flags & TF_RXCLOSED))) { \
+      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err));    \
+    } else {                                                       \
+      (ret) = tcp_recv_null(NULL, (pcb), (p), (err));              \
+    }                                                              \
   } while (0)
 
 #define TCP_EVENT_CONNECTED(pcb,err,ret)                         \

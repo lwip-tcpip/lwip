@@ -338,6 +338,11 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* If a FIN segment was received, we call the callback
            function with a NULL buffer to indicate EOF. */
         if (recv_flags & TF_GOT_FIN) {
+          /* correct rcv_wnd as the application won't call tcp_recved()
+             for the FIN's seqno */
+          if (pcb->rcv_wnd != TCP_WND) {
+            pcb->rcv_wnd++;
+          }
           TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
           if (err == ERR_ABRT) {
             goto aborted;
@@ -576,8 +581,10 @@ tcp_process(struct tcp_pcb *pcb)
     return ERR_OK;
   }
   
-  /* Update the PCB (in)activity timer. */
-  pcb->tmr = tcp_ticks;
+  if ((pcb->flags & TF_RXCLOSED) == 0) {
+    /* Update the PCB (in)activity timer unless rx is closed (see tcp_shutdown) */
+    pcb->tmr = tcp_ticks;
+  }
   pcb->keep_cnt_sent = 0;
 
   tcp_parseopt(pcb);
@@ -676,10 +683,8 @@ tcp_process(struct tcp_pcb *pcb)
           tcp_ack_now(pcb);
           pcb->state = CLOSE_WAIT;
         }
-      }
-      /* incorrect ACK number */
-      else {
-        /* send RST */
+      } else {
+        /* incorrect ACK number, send RST */
         tcp_rst(ackno, seqno + tcplen, &(iphdr->dest), &(iphdr->src),
                 tcphdr->dest, tcphdr->src);
       }

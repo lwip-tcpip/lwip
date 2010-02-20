@@ -1,7 +1,7 @@
 This file lists major changes between release versions that require
 ports or applications to be changed. Use it to update a port or an
 application written for an older version of lwIP to correctly work
-on a newer version.
+with newer versions.
 
 
 (CVS HEAD)
@@ -12,7 +12,12 @@ on a newer version.
 
   * Replaced struct ip_addr by typedef ip_addr_t.
 
-  * Raw API: when calling tcp_abort() from a raw API TCP callback function,
+  * Raw API: Changed the semantics of tcp_close() (since it was rather a
+    shutdown before): Now the application does *NOT* get any calls to the
+    recv callback after calling tcp_close() - this means that it also does
+    not get the NULL-pbuf which tells it the remote side has closed, too!
+
+  * Raw API: When calling tcp_abort() from a raw API TCP callback function,
     make sure you return ERR_ABRT to prevent accessing unallocated memory.
     (ERR_ABRT now means the applicaiton has called tcp_abort!)
 

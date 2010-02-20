@@ -112,7 +112,9 @@ tcp_tmr(void)
 }
 
 /**
- * Closes the connection held by the PCB.
+ * Closes the TX side of a connection held by the PCB.
+ * For tcp_close(), a RST is sent if the application didn't receive all data
+ * (tcp_recved() not called for all data passed to recv callback).
  *
  * Listening pcbs are freed and may not be referenced any more.
  * Connection pcbs are freed if not yet connected and may not be referenced
@@ -125,15 +127,19 @@ tcp_tmr(void)
  * @return ERR_OK if connection has been closed
  *         another err_t if closing failed and pcb is not freed
  */
-err_t
-tcp_close(struct tcp_pcb *pcb)
+static err_t
+tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 {
   err_t err;
 
-#if TCP_DEBUG
-  LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
-  tcp_debug_print_state(pcb->state);
-#endif /* TCP_DEBUG */
+  if (rst_on_unacked_data && (pcb->state != LISTEN)) {
+    if ((pcb->refused_data != NULL) ||  (pcb->rcv_wnd != TCP_WND)) {
+      /* Not all data received by application, send RST to tell the remote
+         side about this. */
+      tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
+        pcb->local_port, pcb->remote_port);
+    }
+  }
 
   switch (pcb->state) {
   case CLOSED:
@@ -202,6 +208,73 @@ tcp_close(struct tcp_pcb *pcb)
     tcp_output(pcb);
   }
   return err;
+}
+
+/**
+ * Closes the connection held by the PCB.
+ *
+ * Listening pcbs are freed and may not be referenced any more.
+ * Connection pcbs are freed if not yet connected and may not be referenced
+ * any more. If a connection is established (at least SYN received or in
+ * a closing state), the connection is closed, and put in a closing state.
+ * The pcb is then automatically freed in tcp_slowtmr(). It is therefore
+ * unsafe to reference it (unless an error is returned).
+ *
+ * @param pcb the tcp_pcb to close
+ * @return ERR_OK if connection has been closed
+ *         another err_t if closing failed and pcb is not freed
+ */
+err_t
+tcp_close(struct tcp_pcb *pcb)
+{
+#if TCP_DEBUG
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_close: closing in "));
+  tcp_debug_print_state(pcb->state);
+#endif /* TCP_DEBUG */
+
+  /* Set a flag not to receive any more data... */
+  pcb->flags |= TF_RXCLOSED;
+  /* ... and close */
+  return tcp_close_shutdown(pcb, 1);
+}
+
+/**
+ * Causes all or part of a full-duplex connection of this PCB to be shut down.
+ * This doesn't deallocate the PCB!
+ *
+ * @param pcb PCB to shutdown
+ * @param shut_rx shut down receive side if this is != 0
+ * @param shut_tx shut down send side if this is != 0
+ * @return ERR_OK if shutdown succeeded (or the PCB has already been shut down)
+ *         another err_t on error.
+ */
+err_t
+tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
+{
+  if (pcb->state == LISTEN) {
+    return ERR_CONN;
+  }
+  if (shut_rx) {
+    /* shut down the receive side: free buffered data... */
+    if (pcb->refused_data != NULL) {
+      pbuf_free(pcb->refused_data);
+      pcb->refused_data = NULL;
+    }
+    /* ... and set a flag not to receive any more data */
+    pcb->flags |= TF_RXCLOSED;
+  }
+  if (shut_tx) {
+    /* This can't happen twice since if it succeeds, the pcb's state is changed.
+       Only close in these states as the others directly deallocate the PCB */
+    switch (pcb->state) {
+  case SYN_RCVD:
+  case ESTABLISHED:
+  case CLOSE_WAIT:
+    return tcp_close_shutdown(pcb, 0);
+    }
+  }
+  /* @todo: return another err_t if not in correct state or already shut? */
+  return ERR_OK;
 }
 
 /**
