@@ -511,7 +511,7 @@ err_t lwip_tcp_event(void *arg, struct tcp_pcb *pcb,
   do {                                                         \
     if((pcb)->accept != NULL)                                  \
       (ret) = (pcb)->accept((pcb)->callback_arg,(pcb),(err));  \
-    else (ret) = ERR_OK;                                       \
+    else (ret) = ERR_ARG;                                      \
   } while (0)
 
 #define TCP_EVENT_SENT(pcb,space,ret)                          \
