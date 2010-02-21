@@ -227,10 +227,9 @@ static struct udp_pcb        *dns_pcb;
 static u8_t                   dns_seqno;
 static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
 static ip_addr_t              dns_servers[DNS_MAX_SERVERS];
-
-#if (DNS_USES_STATIC_BUF == 1)
-static u8_t                   dns_payload[DNS_MSG_SIZE];
-#endif /* (DNS_USES_STATIC_BUF == 1) */
+/** Contiguous buffer for processing responses */
+static u8_t                   dns_payload_buffer[LWIP_MEM_ALIGN_BUFFER(DNS_MSG_SIZE)];
+static u8_t*                  dns_payload;
 
 /**
  * Initialize the resolver: set up the UDP pcb and configure the default server
@@ -240,6 +239,8 @@ void
 dns_init()
 {
   ip_addr_t dnsserver;
+
+  dns_payload = LWIP_MEM_ALIGN(dns_payload_buffer);
   
   /* initialize default DNS server address */
   DNS_SERVER_ADDRESS(&dnsserver);
@@ -733,12 +734,6 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
   struct dns_answer ans;
   struct dns_table_entry *pEntry;
   u16_t nquestions, nanswers;
-#if (DNS_USES_STATIC_BUF == 0)
-  u8_t dns_payload[DNS_MSG_SIZE];
-#endif /* (DNS_USES_STATIC_BUF == 0) */
-#if (DNS_USES_STATIC_BUF == 2)
-  u8_t* dns_payload;
-#endif /* (DNS_USES_STATIC_BUF == 2) */
 
   LWIP_UNUSED_ARG(arg);
   LWIP_UNUSED_ARG(pcb);
@@ -749,24 +744,15 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
   if (p->tot_len > DNS_MSG_SIZE) {
     LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too big\n"));
     /* free pbuf and return */
-    goto memerr1;
+    goto memerr;
   }
 
   /* is the dns message big enough ? */
   if (p->tot_len < (SIZEOF_DNS_HDR + SIZEOF_DNS_QUERY + SIZEOF_DNS_ANSWER)) {
     LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: pbuf too small\n"));
     /* free pbuf and return */
-    goto memerr1;
+    goto memerr;
   }
-
-#if (DNS_USES_STATIC_BUF == 2)
-  dns_payload = mem_malloc(p->tot_len);
-  if (dns_payload == NULL) {
-    LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: mem_malloc error\n"));
-    /* free pbuf and return */
-    goto memerr1;
-  }
-#endif /* (DNS_USES_STATIC_BUF == 2) */
 
   /* copy dns payload inside static buffer for processing */ 
   if (pbuf_copy_partial(p, dns_payload, p->tot_len, 0) == p->tot_len) {
@@ -804,7 +790,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
         /* Skip the name in the "question" part */
         pHostname = (char *) dns_parse_name((unsigned char *)dns_payload + SIZEOF_DNS_HDR) + SIZEOF_DNS_QUERY;
 
-        while(nanswers > 0) {
+        while (nanswers > 0) {
           /* skip answer resource record's host name */
           pHostname = (char *) dns_parse_name((unsigned char *)pHostname);
 
@@ -827,7 +813,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
               (*pEntry->found)(pEntry->name, &pEntry->ipaddr, pEntry->arg);
             }
             /* deallocate memory and return */
-            goto memerr2;
+            goto memerr;
           } else {
             pHostname = pHostname + SIZEOF_DNS_ANSWER + htons(ans.len);
           }
@@ -841,7 +827,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
   }
 
   /* deallocate memory and return */
-  goto memerr2;
+  goto memerr;
 
 responseerr:
   /* ERROR: call specified callback function with NULL as name to indicate an error */
@@ -852,13 +838,7 @@ responseerr:
   pEntry->state = DNS_STATE_UNUSED;
   pEntry->found = NULL;
 
-memerr2:
-#if (DNS_USES_STATIC_BUF == 2)
-  /* free dns buffer */
-  mem_free(dns_payload);
-#endif /* (DNS_USES_STATIC_BUF == 2) */
-
-memerr1:
+memerr:
   /* free pbuf */
   pbuf_free(p);
   return;

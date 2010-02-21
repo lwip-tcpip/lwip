@@ -757,13 +757,6 @@
 #define DNS_DOES_NAME_CHECK             1
 #endif
 
-/** DNS use a local buffer if DNS_USES_STATIC_BUF=0, a static one if
-    DNS_USES_STATIC_BUF=1, or a dynamic one if DNS_USES_STATIC_BUF=2.
-    The buffer will be of size DNS_MSG_SIZE */
-#ifndef DNS_USES_STATIC_BUF
-#define DNS_USES_STATIC_BUF             1
-#endif
-
 /** DNS message max. size. Default value is RFC compliant. */
 #ifndef DNS_MSG_SIZE
 #define DNS_MSG_SIZE                    512

@@ -129,6 +129,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-02-21: Simon Goldschmidt
+  * opt.h, mem.h, dns.c: task #10140: Remove DNS_USES_STATIC_BUF (keep
+    the implementation of DNS_USES_STATIC_BUF==1)
+
   2010-02-20: Simon Goldschmidt
   * tcp.h, tcp.c, tcp_in.c, tcp_out.c: Task #10088: Correctly implement
     close() vs. shutdown(). Now the application does not get any more
