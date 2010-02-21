@@ -94,6 +94,7 @@ tcpip_thread(void *arg)
       break;
 #endif /* LWIP_NETCONN */
 
+#if LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
 #if LWIP_ETHERNET
@@ -101,10 +102,12 @@ tcpip_thread(void *arg)
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_ETHERNET */
-      { ip_input(msg->msg.inp.p, msg->msg.inp.netif);
+      {
+        ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       }
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
+#endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -131,6 +134,8 @@ tcpip_thread(void *arg)
       break;
 
     default:
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: invalid message: %d\n", msg->type));
+      LWIP_ASSERT("tcpip_thread: invalid message", 0);
       break;
     }
   }
@@ -147,6 +152,21 @@ tcpip_thread(void *arg)
 err_t
 tcpip_input(struct pbuf *p, struct netif *inp)
 {
+#if LWIP_TCPIP_CORE_LOCKING_INPUT
+  err_t ret;
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_input: PACKET %p/%p\n", (void *)p, (void *)inp));
+  LOCK_TCPIP_CORE();
+#if LWIP_ETHERNET
+  if (inp->flags & (NETIF_FLAG_ETHARP | NETIF_FLAG_ETHERNET)) {
+    ret = ethernet_input(p, inp);
+  } else
+#endif /* LWIP_ETHERNET */
+  {
+    ret = ip_input(p, inp);
+  }
+  UNLOCK_TCPIP_CORE();
+  return ret;
+#else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
   if (sys_mbox_valid(&mbox)) {
@@ -165,6 +185,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     return ERR_OK;
   }
   return ERR_VAL;
+#endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 }
 
 /**

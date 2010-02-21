@@ -1272,6 +1272,14 @@
 #endif
 
 /**
+ * LWIP_TCPIP_CORE_LOCKING_INPUT: (EXPERIMENTAL!)
+ * Don't use it if you're not an active lwIP project member
+ */
+#ifndef LWIP_TCPIP_CORE_LOCKING_INPUT
+#define LWIP_TCPIP_CORE_LOCKING_INPUT   0
+#endif
+
+/**
  * LWIP_NETCONN==1: Enable Netconn API (require to use api_lib.c)
  */
 #ifndef LWIP_NETCONN
