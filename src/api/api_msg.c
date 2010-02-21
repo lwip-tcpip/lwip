@@ -423,14 +423,9 @@ static err_t
 accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
 {
   struct netconn *newconn;
-  struct netconn *conn;
+  struct netconn *conn = (struct netconn *)arg;
 
-#if API_MSG_DEBUG
-#if TCP_DEBUG
-  tcp_debug_print_state(newpcb->state);
-#endif /* TCP_DEBUG */
-#endif /* API_MSG_DEBUG */
-  conn = (struct netconn *)arg;
+  LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: newpcb->tate: %s\n", tcp_debug_state_str(newpcb->state)));
 
   if (!sys_mbox_valid(&conn->acceptmbox)) {
     LWIP_DEBUGF(API_MSG_DEBUG, ("accept_function: acceptmbox already deleted\n"));
@@ -1207,7 +1202,7 @@ do_writemore(struct netconn *conn)
         write_finished = 1;
         conn->write_offset = 0;
       }
-      tcp_output_nagle(conn->pcb.tcp);
+      tcp_output(conn->pcb.tcp);
     } else if (err == ERR_MEM) {
       /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
          we do NOT return to the application thread, since ERR_MEM is
