@@ -88,6 +88,9 @@ struct stats_igmp {
 };
 
 struct stats_mem {
+#ifdef LWIP_DEBUG
+  const char *name;
+#endif /* LWIP_DEBUG */
   mem_size_t avail;
   mem_size_t used;
   mem_size_t max;
@@ -145,7 +148,7 @@ struct stats_ {
 
 extern struct stats_ lwip_stats;
 
-#define stats_init() /* Compatibility define, no init needed. */
+void stats_init();
 
 #define STATS_INC(x) ++lwip_stats.x
 #define STATS_DEC(x) --lwip_stats.x
