@@ -29,7 +29,10 @@ with newer versions.
 
   ++ Port changes
 
-  * Added 3 new files: def.c, timers.c, timers.h
+  * Added 4 new files: def.c, timers.c, timers.h, tcp_impl.h
+
+  * Moved stack-internal parts of tcp.h to tcp_impl.h, tcp.h now only contains
+    the actual application programmer's API
   
   * Separated timer implementation from sys.h/.c, moved to timers.h/.c
 

@@ -5,12 +5,6 @@ FUTURE
     problems with exoteric (/DSP) architectures showing these problems.
     We still have to fix some of these issues neatly.
 
-  * TODO: the PPP code is broken in a few ways. There are namespace
-    collisions on BSD systems and many assumptions on word-length
-    (sizeof(int)). In ppp.c an assumption is made on the availability of
-    a thread subsystem. Either PPP needs to be moved to contrib/ports/???
-    or rearranged to be more generic.
-
 HISTORY
 
 (CVS HEAD)
@@ -18,6 +12,10 @@ HISTORY
   * [Enter new changes just after this line - do not remove this line]
 
   ++ New features:
+
+  2010-02-21: Simon Goldschmidt
+  * tcp.h (and usages), added tcp_impl.h: Splitted API and internal
+    implementation of tcp to make API usage cleare to application programmers
 
   2010-02-14: Simon Goldschmidt/Stephane Lesage
   * ip_addr.h: Improved some defines working on ip addresses, added faster

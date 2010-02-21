@@ -49,6 +49,7 @@
 #include "lwip/memp.h"
 #include "lwip/snmp.h"
 #include "lwip/tcp.h"
+#include "lwip/tcp_impl.h"
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 
@@ -271,6 +272,9 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
   case ESTABLISHED:
   case CLOSE_WAIT:
     return tcp_close_shutdown(pcb, 0);
+  default:
+    /* don't shut down other states */
+    break;
     }
   }
   /* @todo: return another err_t if not in correct state or already shut? */
@@ -304,6 +308,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     tcp_pcb_remove(&tcp_tw_pcbs, pcb);
     memp_free(MEMP_TCP_PCB, pcb);
   } else {
+    /* @todo: pcb->state, LISTEN not allowed */
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
     ip_addr_copy(local_ip, pcb->local_ip);
@@ -333,6 +338,22 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       tcp_rst(seqno, ackno, &local_ip, &remote_ip, local_port, remote_port);
     }
   }
+}
+
+/**
+ * Aborts the connection by sending a RST (reset) segment to the remote
+ * host. The pcb is deallocated. This function never fails.
+ *
+ * ATTENTION: When calling this from one of the TCP callbacks, make
+ * sure you always return ERR_ABRT (and never return ERR_ABRT otherwise
+ * or you will risk accessing deallocated memory or memory leaks!
+ *
+ * @param pcb the tcp pcb to abort
+ */
+void
+tcp_abort(struct tcp_pcb *pcb)
+{
+  tcp_abandon(pcb, 1);
 }
 
 /**

@@ -44,7 +44,7 @@
 #include "lwip/pbuf.h"
 #include "lwip/udp.h"
 #include "lwip/raw.h"
-#include "lwip/tcp.h"
+#include "lwip/tcp_impl.h"
 #include "lwip/igmp.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"

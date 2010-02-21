@@ -1,6 +1,6 @@
 #include "test_tcp.h"
 
-#include "lwip/tcp.h"
+#include "lwip/tcp_impl.h"
 #include "lwip/stats.h"
 #include "tcp_helper.h"
 

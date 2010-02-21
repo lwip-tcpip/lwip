@@ -43,7 +43,7 @@
 #include "lwip/netif.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
-#include "lwip/tcp.h"
+#include "lwip/tcp_impl.h"
 #include "lwip/udp.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_structs.h"
