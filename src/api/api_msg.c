@@ -1208,7 +1208,7 @@ do_writemore(struct netconn *conn)
          we do NOT return to the application thread, since ERR_MEM is
          only a temporary error! */
 
-      /* tcp_enqueue returned ERR_MEM, try tcp_output anyway */
+      /* tcp_write returned ERR_MEM, try tcp_output anyway */
       tcp_output(conn->pcb.tcp);
 
   #if LWIP_TCPIP_CORE_LOCKING
