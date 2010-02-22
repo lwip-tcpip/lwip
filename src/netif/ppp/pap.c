@@ -218,6 +218,7 @@ upap_timeout(void *arg)
         u->us_unit, u->us_timeouttime, u->us_clientstate));
 
   if (u->us_clientstate != UPAPCS_AUTHREQ) {
+	UPAPDEBUG((LOG_INFO, "upap_timeout: not in AUTHREQ state!\n"));
     return;
   }
 
@@ -342,14 +343,14 @@ upap_input(int unit, u_char *inpacket, int l)
    * If packet too short, drop it.
    */
   inp = inpacket;
-  if (l < UPAP_HEADERLEN) {
+  if (l < (int)UPAP_HEADERLEN) {
     UPAPDEBUG((LOG_INFO, "pap_input: rcvd short header.\n"));
     return;
   }
   GETCHAR(code, inp);
   GETCHAR(id, inp);
   GETSHORT(len, inp);
-  if (len < UPAP_HEADERLEN) {
+  if (len < (int)UPAP_HEADERLEN) {
     UPAPDEBUG((LOG_INFO, "pap_input: rcvd illegal length.\n"));
     return;
   }
@@ -376,6 +377,7 @@ upap_input(int unit, u_char *inpacket, int l)
       break;
 
     default:        /* XXX Need code reject */
+      UPAPDEBUG((LOG_INFO, "pap_input: UNHANDLED default: code: %d, id: %d, len: %d.\n", code, id, len));
       break;
   }
 }
@@ -415,7 +417,7 @@ upap_rauthreq(upap_state *u, u_char *inp, u_char id, int len)
   /*
    * Parse user/passwd.
    */
-  if (len < sizeof (u_char)) {
+  if (len < (int)sizeof (u_char)) {
     UPAPDEBUG((LOG_INFO, "pap_rauth: rcvd short packet.\n"));
     return;
   }
@@ -471,13 +473,14 @@ upap_rauthack(upap_state *u, u_char *inp, int id, int len)
   UPAPDEBUG((LOG_INFO, "pap_rauthack: Rcvd id %d s=%d\n", id, u->us_clientstate));
 
   if (u->us_clientstate != UPAPCS_AUTHREQ) { /* XXX */
+    UPAPDEBUG((LOG_INFO, "pap_rauthack: us_clientstate != UPAPCS_AUTHREQ\n"));
     return;
   }
 
   /*
    * Parse message.
    */
-  if (len < sizeof (u_char)) {
+  if (len < (int)sizeof (u_char)) {
     UPAPDEBUG((LOG_INFO, "pap_rauthack: ignoring missing msg-length.\n"));
   } else {
     GETCHAR(msglen, inp);
@@ -519,7 +522,7 @@ upap_rauthnak(upap_state *u, u_char *inp, int id, int len)
    * Parse message.
    */
   if (len < sizeof (u_char)) {
-    UPAPDEBUG((LOG_INFO, "pap_rauthnak: rcvd short packet.\n"));
+    UPAPDEBUG((LOG_INFO, "pap_rauthnak: ignoring missing msg-length.\n"));
   } else {
     GETCHAR(msglen, inp);
     if(msglen > 0) {

@@ -242,7 +242,7 @@ lcp_init(int unit)
   fsm         *f  = &lcp_fsm[unit];
   lcp_options *wo = &lcp_wantoptions[unit];
   lcp_options *ao = &lcp_allowoptions[unit];
-  
+
   f->unit      = unit;
   f->protocol  = PPP_LCP;
   f->callbacks = &lcp_callbacks;
@@ -449,7 +449,7 @@ lcp_rprotrej(fsm *f, u_char *inp, int len)
   struct protent *protp;
   u_short prot;
 
-  if (len < sizeof (u_short)) {
+  if (len < (int)sizeof (u_short)) {
     LCPDEBUG((LOG_INFO, "lcp_rprotrej: Rcvd short Protocol-Reject packet!\n"));
     return;
   }

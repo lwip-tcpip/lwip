@@ -452,7 +452,7 @@ ChapReceiveChallenge(chap_state *cstate, u_char *inp, u_char id, int len)
   rchallenge = inp;
   INCPTR(rchallenge_len, inp);
 
-  if (len >= sizeof(rhostname)) {
+  if (len >= (int)sizeof(rhostname)) {
     len = sizeof(rhostname) - 1;
   }
   BCOPY(inp, rhostname, len);
@@ -571,7 +571,7 @@ ChapReceiveResponse(chap_state *cstate, u_char *inp, int id, int len)
 
   UNTIMEOUT(ChapChallengeTimeout, cstate);
   
-  if (len >= sizeof(rhostname)) {
+  if (len >= (int)sizeof(rhostname)) {
     len = sizeof(rhostname) - 1;
   }
   BCOPY(inp, rhostname, len);

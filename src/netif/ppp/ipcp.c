@@ -76,8 +76,9 @@ ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
 ipcp_options ipcp_hisoptions[NUM_PPP];   /* Options that we ack'd */
 
 /* local vars */
-static int cis_received[NUM_PPP];      /* # Conf-Reqs received */
 static int default_route_set[NUM_PPP]; /* Have set up a default route */
+static int cis_received[NUM_PPP];      /* # Conf-Reqs received */
+
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -525,7 +526,7 @@ ipcp_ackci(fsm *f, u_char *p, int len)
     goto bad;
   }
   return (1);
-  
+
 bad:
   IPCPDEBUG((LOG_INFO, "ipcp_ackci: received bad Ack!\n"));
   return (0);
