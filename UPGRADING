@@ -26,6 +26,9 @@ with newer versions.
   * Netconn API: Changed netconn_receive() and netconn_accept() to return
     err_t, not a pointer to new data/netconn.
 
+  * Socket API / LWIP_SO_RCVTIMEO: when accept() or recv() time out, they
+    now set errno to EWOULDBLOCK/EAGAIN, not ETIMEDOUT.
+
 
   ++ Port changes
 
