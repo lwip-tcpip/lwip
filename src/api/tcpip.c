@@ -94,7 +94,7 @@ tcpip_thread(void *arg)
       break;
 #endif /* LWIP_NETCONN */
 
-#if LWIP_TCPIP_CORE_LOCKING_INPUT
+#if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: PACKET %p\n", (void *)msg));
 #if LWIP_ETHERNET
