@@ -430,7 +430,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
   entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
   MEMCPY((char*)entry->name, hostname, namelen);
   ((char*)entry->name)[namelen] = 0;
-  ip_addr_copy(&entry->addr, addr);
+  ip_addr_copy(entry->addr, *addr);
   entry->next = local_hostlist_dynamic;
   local_hostlist_dynamic = entry;
   return ERR_OK;
