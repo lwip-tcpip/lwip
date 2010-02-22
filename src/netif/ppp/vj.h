@@ -1,7 +1,7 @@
 /*
  * Definitions for tcp compression routines.
  *
- * $Id: vj.h,v 1.6 2010/01/09 12:45:23 goldsimon Exp $
+ * $Id: vj.h,v 1.7 2010/02/22 17:52:09 goldsimon Exp $
  *
  * Copyright (c) 1989 Regents of the University of California.
  * All rights reserved.
@@ -26,7 +26,7 @@
 #define VJ_H
 
 #include "lwip/ip.h"
-#include "lwip/tcp.h"
+#include "lwip/tcp_impl.h"
 
 #define MAX_SLOTS 16 /* must be > 2 and < 256 */
 #define MAX_HDR   128
