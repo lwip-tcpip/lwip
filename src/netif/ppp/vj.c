@@ -240,7 +240,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   hlen <<= 2;
   /* Check that the IP/TCP headers are contained in the first buffer. */
   if (hlen > pb->len) {
-    PPPDEBUG((LOG_INFO, "vj_compress_tcp: header len %d spans buffers\n", hlen));
+    PPPDEBUG(LOG_INFO, ("vj_compress_tcp: header len %d spans buffers\n", hlen));
     return (TYPE_IP);
   }
 
@@ -437,7 +437,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
       || (hlen += TCPH_OFFSET(((struct tcp_hdr *)&((char *)ip)[hlen])) << 2)
           > nb->len
       || hlen > MAX_HDR) {
-    PPPDEBUG((LOG_INFO, "vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n", 
+    PPPDEBUG(LOG_INFO, ("vj_uncompress_uncomp: bad cid=%d, hlen=%d buflen=%d\n", 
       IPH_PROTO(ip), hlen, nb->len));
     comp->flags |= VJF_TOSS;
     INCR(vjs_errorin);
@@ -480,7 +480,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * If we have a good state index, clear the 'discard' flag. 
      */
     if (*cp >= MAX_SLOTS) {
-      PPPDEBUG((LOG_INFO, "vj_uncompress_tcp: bad cid=%d\n", *cp));
+      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: bad cid=%d\n", *cp));
       goto bad;
     }
 
@@ -493,7 +493,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * explicit state index, we have to toss the packet. 
      */
     if (comp->flags & VJF_TOSS) {
-      PPPDEBUG((LOG_INFO, "vj_uncompress_tcp: tossing\n"));
+      PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: tossing\n"));
       INCR(vjs_tossed);
       return (-1);
     }
@@ -563,7 +563,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
      * We must have dropped some characters (crc should detect
      * this but the old slip framing won't) 
      */
-    PPPDEBUG((LOG_INFO, "vj_uncompress_tcp: head buffer %d too short %d\n", 
+    PPPDEBUG(LOG_INFO, ("vj_uncompress_tcp: head buffer %d too short %d\n", 
           n0->len, vjlen));
     goto bad;
   }
@@ -598,7 +598,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
 
     np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
     if(!np) {
-      PPPDEBUG((LOG_WARNING, "vj_uncompress_tcp: realign failed\n"));
+      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
       goto bad;
     }
 
@@ -628,7 +628,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     LWIP_ASSERT("vj_uncompress_tcp: cs->cs_hlen <= PBUF_POOL_BUFSIZE", cs->cs_hlen <= PBUF_POOL_BUFSIZE);
     np = pbuf_alloc(PBUF_RAW, cs->cs_hlen, PBUF_POOL);
     if(!np) {
-      PPPDEBUG((LOG_WARNING, "vj_uncompress_tcp: prepend failed\n"));
+      PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: prepend failed\n"));
       goto bad;
     }
     pbuf_cat(np, n0);

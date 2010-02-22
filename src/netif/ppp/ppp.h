@@ -223,7 +223,7 @@ enum NPmode {
 #define BZERO(s, n)         memset(s, 0, n)
 
 #if PPP_DEBUG
-#define PRINTMSG(m, l)  { m[l] = '\0'; ppp_trace(LOG_INFO, "Remote message: %s\n", m); }
+#define PRINTMSG(m, l)  { m[l] = '\0'; LWIP_DEBUGF(LOG_INFO, ("Remote message: %s\n", m)); }
 #else  /* PPP_DEBUG */
 #define PRINTMSG(m, l)
 #endif /* PPP_DEBUG */

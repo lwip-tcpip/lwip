@@ -378,7 +378,7 @@ link_required(int unit)
 {
   LWIP_UNUSED_ARG(unit);
 
-  AUTHDEBUG((LOG_INFO, "link_required: %d\n", unit));
+  AUTHDEBUG(LOG_INFO, ("link_required: %d\n", unit));
 }
 
 /*
@@ -388,7 +388,7 @@ link_required(int unit)
 void
 link_terminated(int unit)
 {
-  AUTHDEBUG((LOG_INFO, "link_terminated: %d\n", unit));
+  AUTHDEBUG(LOG_INFO, ("link_terminated: %d\n", unit));
   if (lcp_phase[unit] == PHASE_DEAD) {
     return;
   }
@@ -396,7 +396,7 @@ link_terminated(int unit)
     plogout();
   }
   lcp_phase[unit] = PHASE_DEAD;
-  AUTHDEBUG((LOG_NOTICE, "Connection terminated.\n"));
+  AUTHDEBUG(LOG_NOTICE, ("Connection terminated.\n"));
   pppLinkTerminated(unit);
 }
 
@@ -409,7 +409,7 @@ link_down(int unit)
   int i;
   struct protent *protp;
 
-  AUTHDEBUG((LOG_INFO, "link_down: %d\n", unit));
+  AUTHDEBUG(LOG_INFO, ("link_down: %d\n", unit));
 
   if (did_authup) {
     /* XXX Do link down processing. */
@@ -451,7 +451,7 @@ link_established(int unit)
   lcp_options *ho = &lcp_hisoptions[unit];
 #endif /* PAP_SUPPORT || CHAP_SUPPORT */
 
-  AUTHDEBUG((LOG_INFO, "link_established: unit %d; Lowering up all protocols...\n", unit));
+  AUTHDEBUG(LOG_INFO, ("link_established: unit %d; Lowering up all protocols...\n", unit));
   /*
    * Tell higher-level protocols that LCP is up.
    */
@@ -467,7 +467,7 @@ link_established(int unit)
      * of "" and a password of "".  If that's not OK, boot it out.
      */
     if (!wo->neg_upap || !null_login(unit)) {
-      AUTHDEBUG((LOG_WARNING, "peer refused to authenticate\n"));
+      AUTHDEBUG(LOG_WARNING, ("peer refused to authenticate\n"));
       lcp_close(unit, "peer refused to authenticate");
       return;
     }
@@ -504,7 +504,7 @@ link_established(int unit)
     if (ppp_settings.passwd[0] == 0) {
       passwd_from_file = 1;
       if (!get_pap_passwd(unit, ppp_settings.user, ppp_settings.passwd)) {
-        AUTHDEBUG((LOG_ERR, "No secret found for PAP login\n"));
+        AUTHDEBUG(LOG_ERR, ("No secret found for PAP login\n"));
       }
     }
     upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
@@ -572,7 +572,7 @@ auth_peer_fail(int unit, u16_t protocol)
 {
   LWIP_UNUSED_ARG(protocol);
 
-  AUTHDEBUG((LOG_INFO, "auth_peer_fail: %d proto=%X\n", unit, protocol));
+  AUTHDEBUG(LOG_INFO, ("auth_peer_fail: %d proto=%X\n", unit, protocol));
   /*
    * Authentication failure: take the link down
    */
@@ -589,7 +589,7 @@ auth_peer_success(int unit, u16_t protocol, char *name, int namelen)
 {
   int pbit;
 
-  AUTHDEBUG((LOG_INFO, "auth_peer_success: %d proto=%X\n", unit, protocol));
+  AUTHDEBUG(LOG_INFO, ("auth_peer_success: %d proto=%X\n", unit, protocol));
   switch (protocol) {
     case PPP_CHAP:
       pbit = CHAP_PEER;
@@ -598,7 +598,7 @@ auth_peer_success(int unit, u16_t protocol, char *name, int namelen)
       pbit = PAP_PEER;
       break;
     default:
-      AUTHDEBUG((LOG_WARNING, "auth_peer_success: unknown protocol %x\n", protocol));
+      AUTHDEBUG(LOG_WARNING, ("auth_peer_success: unknown protocol %x\n", protocol));
       return;
   }
 
@@ -630,7 +630,7 @@ auth_withpeer_fail(int unit, u16_t protocol)
 
   LWIP_UNUSED_ARG(protocol);
 
-  AUTHDEBUG((LOG_INFO, "auth_withpeer_fail: %d proto=%X\n", unit, protocol));
+  AUTHDEBUG(LOG_INFO, ("auth_withpeer_fail: %d proto=%X\n", unit, protocol));
   if (passwd_from_file) {
     BZERO(ppp_settings.passwd, MAXSECRETLEN);
   }
@@ -658,7 +658,7 @@ auth_withpeer_success(int unit, u16_t protocol)
 {
   int pbit;
 
-  AUTHDEBUG((LOG_INFO, "auth_withpeer_success: %d proto=%X\n", unit, protocol));
+  AUTHDEBUG(LOG_INFO, ("auth_withpeer_success: %d proto=%X\n", unit, protocol));
   switch (protocol) {
     case PPP_CHAP:
       pbit = CHAP_WITHPEER;
@@ -670,7 +670,7 @@ auth_withpeer_success(int unit, u16_t protocol)
       pbit = PAP_WITHPEER;
       break;
     default:
-      AUTHDEBUG((LOG_WARNING, "auth_peer_success: unknown protocol %x\n", protocol));
+      AUTHDEBUG(LOG_WARNING, ("auth_peer_success: unknown protocol %x\n", protocol));
       pbit = 0;
   }
 
@@ -694,9 +694,9 @@ np_up(int unit, u16_t proto)
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(proto);
 
-  AUTHDEBUG((LOG_INFO, "np_up: %d proto=%X\n", unit, proto));
+  AUTHDEBUG(LOG_INFO, ("np_up: %d proto=%X\n", unit, proto));
   if (num_np_up == 0) {
-    AUTHDEBUG((LOG_INFO, "np_up: maxconnect=%d idle_time_limit=%d\n",ppp_settings.maxconnect,ppp_settings.idle_time_limit));
+    AUTHDEBUG(LOG_INFO, ("np_up: maxconnect=%d idle_time_limit=%d\n",ppp_settings.maxconnect,ppp_settings.idle_time_limit));
     /*
      * At this point we consider that the link has come up successfully.
      */
@@ -724,7 +724,7 @@ np_down(int unit, u16_t proto)
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(proto);
 
-  AUTHDEBUG((LOG_INFO, "np_down: %d proto=%X\n", unit, proto));
+  AUTHDEBUG(LOG_INFO, ("np_down: %d proto=%X\n", unit, proto));
   if (--num_np_up == 0 && ppp_settings.idle_time_limit > 0) {
     UNTIMEOUT(check_idle, NULL);
   }
@@ -739,7 +739,7 @@ np_finished(int unit, u16_t proto)
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(proto);
 
-  AUTHDEBUG((LOG_INFO, "np_finished: %d proto=%X\n", unit, proto));
+  AUTHDEBUG(LOG_INFO, ("np_finished: %d proto=%X\n", unit, proto));
   if (--num_np_open <= 0) {
     /* no further use for the link: shut up shop. */
     lcp_close(0, "No network protocols running");
@@ -763,7 +763,7 @@ check_idle(void *arg)
   itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
   if (itime >= ppp_settings.idle_time_limit) {
     /* link is idle: shut it down. */
-    AUTHDEBUG((LOG_INFO, "Terminating connection due to lack of activity.\n"));
+    AUTHDEBUG(LOG_INFO, ("Terminating connection due to lack of activity.\n"));
     lcp_close(0, "Link inactive");
   } else {
     TIMEOUT(check_idle, NULL, ppp_settings.idle_time_limit - itime);
@@ -778,7 +778,7 @@ connect_time_expired(void *arg)
 {
   LWIP_UNUSED_ARG(arg);
 
-  AUTHDEBUG((LOG_INFO, "Connect time expired\n"));
+  AUTHDEBUG(LOG_INFO, ("Connect time expired\n"));
   lcp_close(0, "Connect time expired");   /* Close connection */
 }
 
@@ -838,7 +838,7 @@ auth_reset(int unit)
   ipcp_options *ipwo = &ipcp_wantoptions[0];
   u32_t remote;
 
-  AUTHDEBUG((LOG_INFO, "auth_reset: %d\n", unit));
+  AUTHDEBUG(LOG_INFO, ("auth_reset: %d\n", unit));
   ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(unit, NULL, NULL));
   ao->neg_chap = !ppp_settings.refuse_chap && ppp_settings.passwd[0] != 0 /*have_chap_secret(ppp_settings.user, ppp_settings.remote_name, (u32_t)0)*/;
 
@@ -906,7 +906,7 @@ check_passwd( int unit, char *auser, int userlen, char *apasswd, int passwdlen, 
      * On 10'th, drop the connection.
      */
     if (attempts++ >= 10) {
-      AUTHDEBUG((LOG_WARNING, "%d LOGIN FAILURES BY %s\n", attempts, user));
+      AUTHDEBUG(LOG_WARNING, ("%d LOGIN FAILURES BY %s\n", attempts, user));
       /*ppp_panic("Excess Bad Logins");*/
     }
     if (attempts > 3) {
@@ -1095,7 +1095,7 @@ get_secret(int unit, char *client, char *server, char *secret, int *secret_len, 
 
   len = (int)strlen(ppp_settings.passwd);
   if (len > MAXSECRETLEN) {
-    AUTHDEBUG((LOG_ERR, "Secret for %s on %s is too long\n", client, server));
+    AUTHDEBUG(LOG_ERR, ("Secret for %s on %s is too long\n", client, server));
     len = MAXSECRETLEN;
   }
 
@@ -1122,7 +1122,7 @@ get_secret(int unit, char *client, char *server, char *secret, int *secret_len, 
 
   len = strlen(secbuf);
   if (len > MAXSECRETLEN) {
-    AUTHDEBUG((LOG_ERR, "Secret for %s on %s is too long\n", client, server));
+    AUTHDEBUG(LOG_ERR, ("Secret for %s on %s is too long\n", client, server));
     len = MAXSECRETLEN;
   }
 

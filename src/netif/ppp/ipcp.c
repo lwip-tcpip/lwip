@@ -528,7 +528,7 @@ ipcp_ackci(fsm *f, u_char *p, int len)
   return (1);
 
 bad:
-  IPCPDEBUG((LOG_INFO, "ipcp_ackci: received bad Ack!\n"));
+  IPCPDEBUG(LOG_INFO, ("ipcp_ackci: received bad Ack!\n"));
   return (0);
 }
 
@@ -612,12 +612,12 @@ ipcp_nakci(fsm *f, u_char *p, int len)
   NAKCIADDR((go->old_addrs? CI_ADDRS: CI_ADDR), neg_addr, go->old_addrs,
     if (go->accept_local && ciaddr1) { /* Do we know our address? */
       try.ouraddr = ciaddr1;
-      IPCPDEBUG((LOG_INFO, "local IP address %s\n",
+      IPCPDEBUG(LOG_INFO, ("local IP address %s\n",
            inet_ntoa(ciaddr1)));
     }
     if (go->accept_remote && ciaddr2) { /* Does he know his? */
       try.hisaddr = ciaddr2;
-      IPCPDEBUG((LOG_INFO, "remote IP address %s\n",
+      IPCPDEBUG(LOG_INFO, ("remote IP address %s\n",
            inet_ntoa(ciaddr2)));
     }
   );
@@ -655,12 +655,12 @@ ipcp_nakci(fsm *f, u_char *p, int len)
 
   NAKCIDNS(CI_MS_DNS1, req_dns1,
       try.dnsaddr[0] = cidnsaddr;
-        IPCPDEBUG((LOG_INFO, "primary DNS address %s\n", inet_ntoa(cidnsaddr)));
+        IPCPDEBUG(LOG_INFO, ("primary DNS address %s\n", inet_ntoa(cidnsaddr)));
       );
 
   NAKCIDNS(CI_MS_DNS2, req_dns2,
       try.dnsaddr[1] = cidnsaddr;
-        IPCPDEBUG((LOG_INFO, "secondary DNS address %s\n", inet_ntoa(cidnsaddr)));
+        IPCPDEBUG(LOG_INFO, ("secondary DNS address %s\n", inet_ntoa(cidnsaddr)));
       );
 
   /*
@@ -738,7 +738,7 @@ ipcp_nakci(fsm *f, u_char *p, int len)
   return 1;
 
 bad:
-  IPCPDEBUG((LOG_INFO, "ipcp_nakci: received bad Nak!\n"));
+  IPCPDEBUG(LOG_INFO, ("ipcp_nakci: received bad Nak!\n"));
   return 0;
 }
 
@@ -853,7 +853,7 @@ ipcp_rejci(fsm *f, u_char *p, int len)
   return 1;
 
 bad:
-  IPCPDEBUG((LOG_INFO, "ipcp_rejci: received bad Reject!\n"));
+  IPCPDEBUG(LOG_INFO, ("ipcp_rejci: received bad Reject!\n"));
   return 0;
 }
 
@@ -906,7 +906,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
     if (l < 2 ||         /* Not enough data for CI header or */
         p[1] < 2 ||      /*  CI length too small or */
         p[1] > l) {      /*  CI length too big? */
-      IPCPDEBUG((LOG_INFO, "ipcp_reqci: bad CI length!\n"));
+      IPCPDEBUG(LOG_INFO, ("ipcp_reqci: bad CI length!\n"));
       orc = CONFREJ;     /* Reject bad CI */
       cilen = (u_short)l;/* Reject till end of packet */
       l = 0;             /* Don't loop again */
@@ -920,7 +920,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
     switch (citype) {      /* Check CI type */
 #ifdef OLD_CI_ADDRS /* Need to save space... */
       case CI_ADDRS:
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: received ADDRS\n"));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: received ADDRS\n"));
         if (!ao->neg_addr ||
             cilen != CILEN_ADDRS) {  /* Check CI length */
           orc = CONFREJ;    /* Reject CI */
@@ -935,7 +935,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
          */
         GETLONG(tl, p);    /* Parse source address (his) */
         ciaddr1 = htonl(tl);
-        IPCPDEBUG((LOG_INFO, "his addr %s\n", inet_ntoa(ciaddr1)));
+        IPCPDEBUG(LOG_INFO, ("his addr %s\n", inet_ntoa(ciaddr1)));
         if (ciaddr1 != wo->hisaddr
             && (ciaddr1 == 0 || !wo->accept_remote)) {
           orc = CONFNAK;
@@ -959,7 +959,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
          */
         GETLONG(tl, p);    /* Parse desination address (ours) */
         ciaddr2 = htonl(tl);
-        IPCPDEBUG((LOG_INFO, "our addr %s\n", inet_ntoa(ciaddr2)));
+        IPCPDEBUG(LOG_INFO, ("our addr %s\n", inet_ntoa(ciaddr2)));
         if (ciaddr2 != wo->ouraddr) {
           if (ciaddr2 == 0 || !wo->accept_local) {
             orc = CONFNAK;
@@ -982,11 +982,11 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
 
       case CI_ADDR:
         if (!ao->neg_addr) {
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Reject ADDR not allowed\n"));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Reject ADDR not allowed\n"));
           orc = CONFREJ;        /* Reject CI */
           break;
         } else if (cilen != CILEN_ADDR) {  /* Check CI length */
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Reject ADDR bad len\n"));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Reject ADDR bad len\n"));
           orc = CONFREJ;        /* Reject CI */
           break;
         }
@@ -1007,12 +1007,12 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
             tl = ntohl(wo->hisaddr);
             PUTLONG(tl, p);
           }
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Nak ADDR %s\n", inet_ntoa(ciaddr1)));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Nak ADDR %s\n", inet_ntoa(ciaddr1)));
         } else if (ciaddr1 == 0 && wo->hisaddr == 0) {
           /*
            * Don't ACK an address of 0.0.0.0 - reject it instead.
            */
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Reject ADDR %s\n", inet_ntoa(ciaddr1)));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Reject ADDR %s\n", inet_ntoa(ciaddr1)));
           orc = CONFREJ;
           wo->req_addr = 0;  /* don't NAK with 0.0.0.0 later */
           break;
@@ -1020,7 +1020,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
 
         ho->neg_addr = 1;
         ho->hisaddr = ciaddr1;
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: ADDR %s\n", inet_ntoa(ciaddr1)));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: ADDR %s\n", inet_ntoa(ciaddr1)));
         break;
 
       case CI_MS_DNS1:
@@ -1031,27 +1031,27 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
         /* If we do not have a DNS address then we cannot send it */
         if (ao->dnsaddr[d] == 0 ||
             cilen != CILEN_ADDR) {  /* Check CI length */
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting DNS%d Request\n", d+1));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting DNS%d Request\n", d+1));
           orc = CONFREJ;        /* Reject CI */
           break;
         }
         GETLONG(tl, p);
         if (htonl(tl) != ao->dnsaddr[d]) {
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Naking DNS%d Request %d\n",
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Naking DNS%d Request %s\n",
                 d+1, inet_ntoa(tl)));
           DECPTR(sizeof(u32_t), p);
           tl = ntohl(ao->dnsaddr[d]);
           PUTLONG(tl, p);
           orc = CONFNAK;
         }
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: received DNS%d Request\n", d+1));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: received DNS%d Request\n", d+1));
         break;
 
       case CI_MS_WINS1:
       case CI_MS_WINS2:
         /* Microsoft primary or secondary WINS request */
         d = citype == CI_MS_WINS2;
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: received WINS%d Request\n", d+1));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: received WINS%d Request\n", d+1));
 
         /* If we do not have a DNS address then we cannot send it */
         if (ao->winsaddr[d] == 0 ||
@@ -1070,11 +1070,11 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
 
       case CI_COMPRESSTYPE:
         if (!ao->neg_vj) {
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting COMPRESSTYPE not allowed\n"));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting COMPRESSTYPE not allowed\n"));
           orc = CONFREJ;
           break;
         } else if (cilen != CILEN_VJ && cilen != CILEN_COMPRESS) {
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting COMPRESSTYPE len=%d\n", cilen));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting COMPRESSTYPE len=%d\n", cilen));
           orc = CONFREJ;
           break;
         }
@@ -1082,7 +1082,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
 
         if (!(cishort == IPCP_VJ_COMP ||
             (cishort == IPCP_VJ_COMP_OLD && cilen == CILEN_COMPRESS))) {
-          IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting COMPRESSTYPE %d\n", cishort));
+          IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting COMPRESSTYPE %d\n", cishort));
           orc = CONFREJ;
           break;
         }
@@ -1092,7 +1092,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
         if (cilen == CILEN_VJ) {
           GETCHAR(maxslotindex, p);
           if (maxslotindex > ao->maxslotindex) { 
-            IPCPDEBUG((LOG_INFO, "ipcp_reqci: Naking VJ max slot %d\n", maxslotindex));
+            IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Naking VJ max slot %d\n", maxslotindex));
             orc = CONFNAK;
             if (!reject_if_disagree) {
               DECPTR(1, p);
@@ -1101,7 +1101,7 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
           }
           GETCHAR(cflag, p);
           if (cflag && !ao->cflag) {
-            IPCPDEBUG((LOG_INFO, "ipcp_reqci: Naking VJ cflag %d\n", cflag));
+            IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Naking VJ cflag %d\n", cflag));
             orc = CONFNAK;
             if (!reject_if_disagree) {
               DECPTR(1, p);
@@ -1115,13 +1115,13 @@ ipcp_reqci(fsm *f, u_char *inp/* Requested CIs */,int *len/* Length of requested
           ho->maxslotindex = MAX_SLOTS - 1;
           ho->cflag = 1;
         }
-        IPCPDEBUG((LOG_INFO, 
+        IPCPDEBUG(LOG_INFO, (
               "ipcp_reqci: received COMPRESSTYPE p=%d old=%d maxslot=%d cflag=%d\n",
               ho->vj_protocol, ho->old_vj, ho->maxslotindex, ho->cflag));
         break;
 
       default:
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting unknown CI type %d\n", citype));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting unknown CI type %d\n", citype));
         orc = CONFREJ;
         break;
     }
@@ -1134,7 +1134,7 @@ endswitch:
 
     if (orc == CONFNAK) {    /* Nak this CI? */
       if (reject_if_disagree) {  /* Getting fed up with sending NAKs? */
-        IPCPDEBUG((LOG_INFO, "ipcp_reqci: Rejecting too many naks\n"));
+        IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Rejecting too many naks\n"));
         orc = CONFREJ;       /* Get tough if so */
       } else {
         if (rc == CONFREJ) { /* Rejecting prior CI? */
@@ -1171,7 +1171,7 @@ endswitch:
    */
   if (rc != CONFREJ && !ho->neg_addr &&
       wo->req_addr && !reject_if_disagree) {
-    IPCPDEBUG((LOG_INFO, "ipcp_reqci: Requesting peer address\n"));
+    IPCPDEBUG(LOG_INFO, ("ipcp_reqci: Requesting peer address\n"));
     if (rc == CONFACK) {
       rc = CONFNAK;
       ucp = inp;        /* reset pointer */
@@ -1184,7 +1184,7 @@ endswitch:
   }
 
   *len = (int)(ucp - inp);    /* Compute output length */
-  IPCPDEBUG((LOG_INFO, "ipcp_reqci: returning Configure-%s\n", CODENAME(rc)));
+  IPCPDEBUG(LOG_INFO, ("ipcp_reqci: returning Configure-%s\n", CODENAME(rc)));
   return (rc);      /* Return final code */
 }
 
@@ -1225,7 +1225,7 @@ ipcp_up(fsm *f)
   ipcp_options *wo = &ipcp_wantoptions[f->unit];
 
   np_up(f->unit, PPP_IP);
-  IPCPDEBUG((LOG_INFO, "ipcp: up\n"));
+  IPCPDEBUG(LOG_INFO, ("ipcp: up\n"));
 
   /*
    * We must have a non-zero IP address for both ends of the link.
@@ -1235,12 +1235,12 @@ ipcp_up(fsm *f)
   }
 
   if (ho->hisaddr == 0) {
-    IPCPDEBUG((LOG_ERR, "Could not determine remote IP address\n"));
+    IPCPDEBUG(LOG_ERR, ("Could not determine remote IP address\n"));
     ipcp_close(f->unit, "Could not determine remote IP address");
     return;
   }
   if (go->ouraddr == 0) {
-    IPCPDEBUG((LOG_ERR, "Could not determine local IP address\n"));
+    IPCPDEBUG(LOG_ERR, ("Could not determine local IP address\n"));
     ipcp_close(f->unit, "Could not determine local IP address");
     return;
   }
@@ -1253,7 +1253,7 @@ ipcp_up(fsm *f)
    * Check that the peer is allowed to use the IP address it wants.
    */
   if (!auth_ip_addr(f->unit, ho->hisaddr)) {
-    IPCPDEBUG((LOG_ERR, "Peer is not authorized to use remote address %s\n",
+    IPCPDEBUG(LOG_ERR, ("Peer is not authorized to use remote address %s\n",
         inet_ntoa(ho->hisaddr)));
     ipcp_close(f->unit, "Unauthorized remote IP address");
     return;
@@ -1268,14 +1268,14 @@ ipcp_up(fsm *f)
   mask = GetMask(go->ouraddr);
 
   if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask, go->dnsaddr[0], go->dnsaddr[1])) {
-    IPCPDEBUG((LOG_WARNING, "sifaddr failed\n"));
+    IPCPDEBUG(LOG_WARNING, ("sifaddr failed\n"));
     ipcp_close(f->unit, "Interface configuration failed");
     return;
   }
 
   /* bring the interface up for IP */
   if (!sifup(f->unit)) {
-    IPCPDEBUG((LOG_WARNING, "sifup failed\n"));
+    IPCPDEBUG(LOG_WARNING, ("sifup failed\n"));
     ipcp_close(f->unit, "Interface configuration failed");
     return;
   }
@@ -1289,13 +1289,13 @@ ipcp_up(fsm *f)
     }
   }
 
-  IPCPDEBUG((LOG_NOTICE, "local  IP address %s\n", inet_ntoa(go->ouraddr)));
-  IPCPDEBUG((LOG_NOTICE, "remote IP address %s\n", inet_ntoa(ho->hisaddr)));
+  IPCPDEBUG(LOG_NOTICE, ("local  IP address %s\n", inet_ntoa(go->ouraddr)));
+  IPCPDEBUG(LOG_NOTICE, ("remote IP address %s\n", inet_ntoa(ho->hisaddr)));
   if (go->dnsaddr[0]) {
-    IPCPDEBUG((LOG_NOTICE, "primary   DNS address %s\n", inet_ntoa(go->dnsaddr[0])));
+    IPCPDEBUG(LOG_NOTICE, ("primary   DNS address %s\n", inet_ntoa(go->dnsaddr[0])));
   }
   if (go->dnsaddr[1]) {
-    IPCPDEBUG((LOG_NOTICE, "secondary DNS address %s\n", inet_ntoa(go->dnsaddr[1])));
+    IPCPDEBUG(LOG_NOTICE, ("secondary DNS address %s\n", inet_ntoa(go->dnsaddr[1])));
   }
 }
 
@@ -1309,7 +1309,7 @@ ipcp_up(fsm *f)
 static void
 ipcp_down(fsm *f)
 {
-  IPCPDEBUG((LOG_INFO, "ipcp: down\n"));
+  IPCPDEBUG(LOG_INFO, ("ipcp: down\n"));
   np_down(f->unit, PPP_IP);
   sifvjcomp(f->unit, 0, 0, 0);
 
