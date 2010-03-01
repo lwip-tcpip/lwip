@@ -233,8 +233,10 @@ tcp_close(struct tcp_pcb *pcb)
   tcp_debug_print_state(pcb->state);
 #endif /* TCP_DEBUG */
 
-  /* Set a flag not to receive any more data... */
-  pcb->flags |= TF_RXCLOSED;
+  if (pcb->state != LISTEN) {
+    /* Set a flag not to receive any more data... */
+    pcb->flags |= TF_RXCLOSED;
+  }
   /* ... and close */
   return tcp_close_shutdown(pcb, 1);
 }
