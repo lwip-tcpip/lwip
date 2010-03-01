@@ -658,11 +658,13 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->connected = connected;
 #endif /* LWIP_CALLBACK_API */
 
+  /* Send a SYN together with the MSS option. */
   ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, TF_SEG_OPTS_MSS
 #if LWIP_TCP_TIMESTAMPS
-                    | TF_SEG_OPTS_TS
-#endif
-                    );
+      /* and maybe include the TIMESTAMP option */
+     | (pcb->flags & TF_TIMESTAMP ? TF_SEG_OPTS_TS : 0)
+#endif /* LWIP_TCP_TIMESTAMPS */
+     );
   if (ret == ERR_OK) {
     /* SYN segment was enqueued, changed the pcbs state now */
     pcb->state = SYN_SENT;
