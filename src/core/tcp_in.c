@@ -471,7 +471,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #if LWIP_TCP_TIMESTAMPS
       /* and maybe include the TIMESTAMP option */
      | (npcb->flags & TF_TIMESTAMP ? TF_SEG_OPTS_TS : 0)
-#endif
+#endif /* LWIP_TCP_TIMESTAMPS */
       );
     if (rc != ERR_OK) {
       tcp_abandon(npcb, 0);
