@@ -467,12 +467,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     snmp_inc_tcppassiveopens();
 
     /* Send a SYN|ACK together with the MSS option. */
-    rc = tcp_enqueue(npcb, NULL, 0, TCP_SYN | TCP_ACK, 0, TF_SEG_OPTS_MSS
-#if LWIP_TCP_TIMESTAMPS
-      /* and maybe include the TIMESTAMP option */
-     | (npcb->flags & TF_TIMESTAMP ? TF_SEG_OPTS_TS : 0)
-#endif /* LWIP_TCP_TIMESTAMPS */
-      );
+    rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);
     if (rc != ERR_OK) {
       tcp_abandon(npcb, 0);
       return rc;
@@ -780,7 +775,7 @@ tcp_oos_insert_segment(struct tcp_seg *cseg, struct tcp_seg *next)
                       (next->tcphdr->seqno + next->len))) {
       /* cseg with FIN already processed */
       if (TCPH_FLAGS(next->tcphdr) & TCP_FIN) {
-        TCPH_FLAGS_SET(cseg->tcphdr, TCPH_FLAGS(cseg->tcphdr) | TCP_FIN);
+        TCPH_SET_FLAG(cseg->tcphdr, TCP_FIN);
       }
       old_seg = next;
       next = next->next;
@@ -1209,8 +1204,7 @@ tcp_receive(struct tcp_pcb *pcb)
               /* inseg cannot have FIN here (already processed above) */
               if (TCPH_FLAGS(next->tcphdr) & TCP_FIN &&
                   (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) == 0) {
-                TCPH_FLAGS_SET(inseg.tcphdr, 
-                               TCPH_FLAGS(inseg.tcphdr) | TCP_FIN);
+                TCPH_SET_FLAG(inseg.tcphdr, TCP_FIN);
                 tcplen = TCP_TCPLEN(&inseg);
               }
               prev = next;

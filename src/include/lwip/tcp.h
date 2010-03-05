@@ -230,8 +230,12 @@ struct tcp_pcb {
   u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffff-3)
   u16_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
-  
-  
+
+#if TCP_OVERSIZE
+  /* Extra bytes available at the end of the last pbuf in unsent. */
+  u16_t unsent_oversize;
+#endif /* TCP_OVERSIZE */ 
+
   /* These are ordered by sequence number: */
   struct tcp_seg *unsent;   /* Unsent (queued) segments. */
   struct tcp_seg *unacked;  /* Sent but unacknowledged segments. */
@@ -342,7 +346,7 @@ void             tcp_abort (struct tcp_pcb *pcb);
 err_t            tcp_close   (struct tcp_pcb *pcb);
 err_t            tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx);
 
-/* Flags for "apiflags" parameter in tcp_write and tcp_enqueue */
+/* Flags for "apiflags" parameter in tcp_write */
 #define TCP_WRITE_FLAG_COPY 0x01
 #define TCP_WRITE_FLAG_MORE 0x02
 

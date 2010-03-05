@@ -170,21 +170,21 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     snmp_inc_tcpattemptfails();
     break;
   case SYN_RCVD:
-    err = tcp_send_ctrl(pcb, TCP_FIN);
+    err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
       snmp_inc_tcpattemptfails();
       pcb->state = FIN_WAIT_1;
     }
     break;
   case ESTABLISHED:
-    err = tcp_send_ctrl(pcb, TCP_FIN);
+    err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
       snmp_inc_tcpestabresets();
       pcb->state = FIN_WAIT_1;
     }
     break;
   case CLOSE_WAIT:
-    err = tcp_send_ctrl(pcb, TCP_FIN);
+    err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
       snmp_inc_tcpestabresets();
       pcb->state = LAST_ACK;
@@ -659,12 +659,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
 #endif /* LWIP_CALLBACK_API */
 
   /* Send a SYN together with the MSS option. */
-  ret = tcp_enqueue(pcb, NULL, 0, TCP_SYN, 0, TF_SEG_OPTS_MSS
-#if LWIP_TCP_TIMESTAMPS
-      /* and maybe include the TIMESTAMP option */
-     | (pcb->flags & TF_TIMESTAMP ? TF_SEG_OPTS_TS : 0)
-#endif /* LWIP_TCP_TIMESTAMPS */
-     );
+  ret = tcp_enqueue_flags(pcb, TCP_SYN);
   if (ret == ERR_OK) {
     /* SYN segment was enqueued, changed the pcbs state now */
     pcb->state = SYN_SENT;
@@ -1417,8 +1412,7 @@ tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr)
     mss_s = outif->mtu - IP_HLEN - TCP_HLEN;
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
-     * We correct for TCP options in tcp_enqueue(), and don't support
-     * IP options
+     * We correct for TCP options in tcp_write(), and don't support IP options.
      */
     sendmss = LWIP_MIN(sendmss, mss_s);
   }

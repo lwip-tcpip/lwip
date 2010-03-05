@@ -13,6 +13,14 @@ HISTORY
 
   ++ New features:
 
+  2010-03-05: Jakob Ole Stoklundsen / Simon Goldschmidt
+  * opt.h, tcp.h, tcp_impl.h, tcp.c, tcp_in.c, tcp_out.c: task #7040:
+    Work on tcp_enqueue: Don't waste memory when chaining segments,
+    added option TCP_OVERSIZE to prevent creating many small pbufs when
+    calling tcp_write with many small blocks of data. Instead, pbufs are
+    allocated larger than needed and the space is used for later calls to
+    tcp_write.
+
   2010-02-21: Simon Goldschmidt
   * stats.c/.h: Added const char* name to mem- and memp-stats for easier
     debugging.

@@ -177,6 +177,8 @@ PACK_STRUCT_END
 #define TCPH_OFFSET_SET(phdr, offset) (phdr)->_hdrlen_rsvd_flags = htons(((offset) << 8) | TCPH_FLAGS(phdr))
 #define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | TCPH_FLAGS(phdr))
 #define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & htons((u16_t)(~(u16_t)(TCP_FLAGS)))) | htons(flags))
+#define TCPH_HDRLEN_FLAGS_SET(phdr, len, flags) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | (flags))
+
 #define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | htons(flags))
 #define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (TCPH_FLAGS(phdr) & ~(flags)) )
 
@@ -384,9 +386,8 @@ struct tcp_seg *tcp_seg_copy(struct tcp_seg *seg);
     (pcb)->flags |= TF_ACK_NOW;                    \
   } while (0)
 
-err_t tcp_send_ctrl(struct tcp_pcb *pcb, u8_t flags);
-err_t tcp_enqueue(struct tcp_pcb *pcb, void *dataptr, u16_t len,
-                  u8_t flags, u8_t apiflags, u8_t optflags);
+err_t tcp_send_fin(struct tcp_pcb *pcb);
+err_t tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
