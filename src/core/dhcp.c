@@ -154,10 +154,10 @@ static void dhcp_t1_timeout(struct netif *netif);
 static void dhcp_t2_timeout(struct netif *netif);
 
 /* build outgoing messages */
-/* create a DHCP request, fill in common headers */
-static err_t dhcp_create_request(struct netif *netif, struct dhcp *dhcp);
+/* create a DHCP message, fill in common headers */
+static err_t dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type);
 /* free a DHCP request */
-static void dhcp_delete_request(struct dhcp *dhcp);
+static void dhcp_delete_msg(struct dhcp *dhcp);
 /* add a DHCP option (type, then length in bytes) */
 static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len);
 /* add option values */
@@ -279,11 +279,8 @@ dhcp_select(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_REQUESTING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
   if (result == ERR_OK) {
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_REQUEST);
-
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
@@ -318,7 +315,7 @@ dhcp_select(struct netif *netif)
 
     /* send broadcast to any DHCP server */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_select: REQUESTING\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("dhcp_select: could not allocate DHCP request\n"));
@@ -466,10 +463,14 @@ dhcp_t1_timeout(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_t1_timeout()\n"));
-  if ((dhcp->state == DHCP_REQUESTING) || (dhcp->state == DHCP_BOUND) || (dhcp->state == DHCP_RENEWING)) {
+  if ((dhcp->state == DHCP_REQUESTING) || (dhcp->state == DHCP_BOUND) ||
+      (dhcp->state == DHCP_RENEWING)) {
     /* just retry to renew - note that the rebind timer (t2) will
      * eventually time-out if renew tries fail. */
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_t1_timeout(): must renew\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
+                ("dhcp_t1_timeout(): must renew\n"));
+    /* This slightly different to RFC2131: DHCPREQUEST will be sent from state
+       DHCP_RENEWING, not DHCP_BOUND */
     dhcp_renew(netif);
   }
 }
@@ -484,9 +485,13 @@ dhcp_t2_timeout(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_t2_timeout()\n"));
-  if ((dhcp->state == DHCP_REQUESTING) || (dhcp->state == DHCP_BOUND) || (dhcp->state == DHCP_RENEWING)) {
+  if ((dhcp->state == DHCP_REQUESTING) || (dhcp->state == DHCP_BOUND) ||
+      (dhcp->state == DHCP_RENEWING)) {
     /* just retry to rebind */
-    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_t2_timeout(): must rebind\n"));
+    LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
+                ("dhcp_t2_timeout(): must rebind\n"));
+    /* This slightly different to RFC2131: DHCPREQUEST will be sent from state
+       DHCP_REBINDING, not DHCP_BOUND */
     dhcp_rebind(netif);
   }
 }
@@ -710,12 +715,8 @@ dhcp_inform(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): created new udp pcb\n"));
   }
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, &dhcp);
+  result = dhcp_create_msg(netif, &dhcp, DHCP_INFORM);
   if (result == ERR_OK) {
-
-    dhcp_option(&dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(&dhcp, DHCP_INFORM);
-
     dhcp_option(&dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(&dhcp, DHCP_MAX_MSG_LEN(netif));
 
@@ -725,7 +726,7 @@ dhcp_inform(struct netif *netif)
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_inform: INFORMING\n"));
     udp_sendto_if(pcb, dhcp.p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(&dhcp);
+    dhcp_delete_msg(&dhcp);
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_inform: could not allocate DHCP request\n"));
   }
@@ -810,11 +811,8 @@ dhcp_decline(struct netif *netif)
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_decline()\n"));
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_DECLINE);
   if (result == ERR_OK) {
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_DECLINE);
-
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&dhcp->offered_ip_addr)));
 
@@ -824,7 +822,7 @@ dhcp_decline(struct netif *netif)
 
     /* per section 4.4.4, broadcast DECLINE messages */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_decline: BACKING OFF\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -854,11 +852,9 @@ dhcp_discover(struct netif *netif)
   ip_addr_set_any(&dhcp->offered_ip_addr);
   dhcp_set_state(dhcp, DHCP_SELECTING);
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_DISCOVER);
   if (result == ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: making request\n"));
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_DISCOVER);
 
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
@@ -877,7 +873,7 @@ dhcp_discover(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: sendto(DISCOVER, IP_ADDR_BROADCAST, DHCP_SERVER_PORT)\n"));
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover: deleting()ing\n"));
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_discover: SELECTING\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_discover: could not allocate DHCP request\n"));
@@ -1004,12 +1000,8 @@ dhcp_renew(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_RENEWING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
   if (result == ERR_OK) {
-
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_REQUEST);
-
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
@@ -1040,7 +1032,7 @@ dhcp_renew(struct netif *netif)
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
 
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_renew: RENEWING\n"));
   } else {
@@ -1072,12 +1064,8 @@ dhcp_rebind(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_REBINDING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
   if (result == ERR_OK) {
-
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_REQUEST);
-
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
@@ -1107,7 +1095,7 @@ dhcp_rebind(struct netif *netif)
 
     /* broadcast to server */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind: REBINDING\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_rebind: could not allocate DHCP request\n"));
@@ -1134,12 +1122,8 @@ dhcp_reboot(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_REBOOTING);
 
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_REQUEST);
   if (result == ERR_OK) {
-
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_REQUEST);
-
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, 576);
 
@@ -1152,7 +1136,7 @@ dhcp_reboot(struct netif *netif)
 
     /* broadcast to server */
     udp_sendto_if(dhcp->pcb, dhcp->p_out, IP_ADDR_BROADCAST, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot: REBOOTING\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_reboot: could not allocate DHCP request\n"));
@@ -1191,17 +1175,14 @@ dhcp_release(struct netif *netif)
   dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
   
   /* create and initialize the DHCP message header */
-  result = dhcp_create_request(netif, dhcp);
+  result = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
   if (result == ERR_OK) {
-    dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
-    dhcp_option_byte(dhcp, DHCP_RELEASE);
-
     dhcp_option_trailer(dhcp);
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
     udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
-    dhcp_delete_request(dhcp);
+    dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_OFF\n"));
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
@@ -1611,9 +1592,11 @@ free_pbuf_and_return:
  * Create a DHCP request, fill in common headers
  *
  * @param netif the netif under DHCP control
+ * @param dhcp dhcp control struct
+ * @param message_type message type of the request
  */
 static err_t
-dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
+dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
 {
   u16_t i;
 #ifndef DHCP_GLOBAL_XID
@@ -1630,17 +1613,17 @@ dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
     xid_initialised = !xid_initialised;
   }
 #endif
-  LWIP_ERROR("dhcp_create_request: netif != NULL", (netif != NULL), return ERR_ARG;);
-  LWIP_ERROR("dhcp_create_request: dhcp != NULL", (dhcp != NULL), return ERR_VAL;);
-  LWIP_ASSERT("dhcp_create_request: dhcp->p_out == NULL", dhcp->p_out == NULL);
-  LWIP_ASSERT("dhcp_create_request: dhcp->msg_out == NULL", dhcp->msg_out == NULL);
+  LWIP_ERROR("dhcp_create_msg: netif != NULL", (netif != NULL), return ERR_ARG;);
+  LWIP_ERROR("dhcp_create_msg: dhcp != NULL", (dhcp != NULL), return ERR_VAL;);
+  LWIP_ASSERT("dhcp_create_msg: dhcp->p_out == NULL", dhcp->p_out == NULL);
+  LWIP_ASSERT("dhcp_create_msg: dhcp->msg_out == NULL", dhcp->msg_out == NULL);
   dhcp->p_out = pbuf_alloc(PBUF_TRANSPORT, sizeof(struct dhcp_msg), PBUF_RAM);
   if (dhcp->p_out == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
-      ("dhcp_create_request(): could not allocate pbuf\n"));
+      ("dhcp_create_msg(): could not allocate pbuf\n"));
     return ERR_MEM;
   }
-  LWIP_ASSERT("dhcp_create_request: check that first pbuf can hold struct dhcp_msg",
+  LWIP_ASSERT("dhcp_create_msg: check that first pbuf can hold struct dhcp_msg",
            (dhcp->p_out->len >= sizeof(struct dhcp_msg)));
 
   /* reuse transaction identifier in retransmissions */
@@ -1664,7 +1647,10 @@ dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
      before being fully configured! */
   dhcp->msg_out->flags = 0;
   ip_addr_set_zero(&dhcp->msg_out->ciaddr);
-  if (dhcp->state==DHCP_BOUND || dhcp->state==DHCP_RENEWING || dhcp->state==DHCP_REBINDING) {
+  /* set ciaddr to netif->ip_addr based on message_type and state */
+  if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) ||
+      ((message_type == DHCP_REQUEST) && /* DHCP_BOUND not used for sending! */
+       ((dhcp->state==DHCP_RENEWING) || dhcp->state==DHCP_REBINDING))) {
     ip_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
   }
   ip_addr_set_zero(&dhcp->msg_out->yiaddr);
@@ -1686,6 +1672,9 @@ dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
   for (i = 0; i < DHCP_OPTIONS_LEN; i++) {
     dhcp->msg_out->options[i] = (u8_t)i; /* for debugging only, no matter if truncated */
   }
+  /* Add option MESSAGE_TYPE */
+  dhcp_option(dhcp, DHCP_OPTION_MESSAGE_TYPE, DHCP_OPTION_MESSAGE_TYPE_LEN);
+  dhcp_option_byte(dhcp, message_type);
   return ERR_OK;
 }
 
@@ -1695,11 +1684,11 @@ dhcp_create_request(struct netif *netif, struct dhcp *dhcp)
  * @param dhcp the dhcp struct to free the request from
  */
 static void
-dhcp_delete_request(struct dhcp *dhcp)
+dhcp_delete_msg(struct dhcp *dhcp)
 {
-  LWIP_ERROR("dhcp_delete_request: dhcp != NULL", (dhcp != NULL), return;);
-  LWIP_ASSERT("dhcp_delete_request: dhcp->p_out != NULL", dhcp->p_out != NULL);
-  LWIP_ASSERT("dhcp_delete_request: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
+  LWIP_ERROR("dhcp_delete_msg: dhcp != NULL", (dhcp != NULL), return;);
+  LWIP_ASSERT("dhcp_delete_msg: dhcp->p_out != NULL", dhcp->p_out != NULL);
+  LWIP_ASSERT("dhcp_delete_msg: dhcp->msg_out != NULL", dhcp->msg_out != NULL);
   if (dhcp->p_out != NULL) {
     pbuf_free(dhcp->p_out);
   }
