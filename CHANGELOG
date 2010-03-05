@@ -141,6 +141,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-05: Simon Goldschmidt
+  * api_msg.c: Correctly set TCP_WRITE_FLAG_MORE when netconn_write is split
+    into multiple calls to tcp_write.    
+
   2010-02-21: Simon Goldschmidt
   * opt.h, mem.h, dns.c: task #10140: Remove DNS_USES_STATIC_BUF (keep
     the implementation of DNS_USES_STATIC_BUF==1)

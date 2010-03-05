@@ -1142,6 +1142,7 @@ do_writemore(struct netconn *conn)
   size_t diff;
   u8_t dontblock = netconn_is_nonblocking(conn) ||
        (conn->current_msg->msg.w.apiflags & NETCONN_DONTBLOCK);
+  u8_t apiflags = conn->current_msg->msg.w.apiflags;
 
   LWIP_ASSERT("conn != NULL", conn != NULL);
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
@@ -1157,6 +1158,7 @@ do_writemore(struct netconn *conn)
 #if LWIP_TCPIP_CORE_LOCKING
     conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
 #endif
+    apiflags |= TCP_WRITE_FLAG_MORE;
   } else {
     len = (u16_t)diff;
   }
@@ -1167,6 +1169,7 @@ do_writemore(struct netconn *conn)
 #if LWIP_TCPIP_CORE_LOCKING
     conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
 #endif
+    apiflags |= TCP_WRITE_FLAG_MORE;
   }
   if (dontblock && (len < conn->current_msg->msg.w.len)) {
     /* failed to send all data at once -> nonblocking write not possible */
@@ -1174,7 +1177,7 @@ do_writemore(struct netconn *conn)
   }
   if (err == ERR_OK) {
     LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->current_msg->msg.w.len));
-    err = tcp_write(conn->pcb.tcp, dataptr, len, conn->current_msg->msg.w.apiflags);
+    err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
   }
   if (dontblock && (err == ERR_MEM)) {
     /* nonblocking write failed */
