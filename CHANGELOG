@@ -148,6 +148,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-03-06: Simon Goldschmidt
+  * sockets.c: Fixed LWIP_NETIF_TX_SINGLE_PBUF for LWIP_TCPIP_CORE_LOCKING
+
+  2010-03-06: Simon Goldschmidt
   * ipv4/ip.c: Don't try to forward link-local addresses
 
   2010-03-06: Simon Goldschmidt

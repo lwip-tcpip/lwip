@@ -772,6 +772,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_TCP */
   }
 
+  /* @todo: split into multiple sendto's? */
   LWIP_ASSERT("lwip_sendto: size must fit in u16_t", size <= 0xffff);
   short_size = (u16_t)size;
   LWIP_ERROR("lwip_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
@@ -783,17 +784,20 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field...) */
   { struct pbuf* p;
   
-    p = pbuf_alloc(PBUF_TRANSPORT, 0, PBUF_REF);
-    if (p == NULL) {
-      err = ERR_MEM;
-    } else {
+#if LWIP_NETIF_TX_SINGLE_PBUF
+    p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_RAM);
+    if (p != NULL) {
+      MEMCPY(p->payload, data, size);
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
+    p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_REF);
+    if (p != NULL) {
       p->payload = (void*)data;
-      p->len = p->tot_len = short_size;
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
       
       inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)to)->sin_addr);
       
       LOCK_TCPIP_CORE();
-      if (sock->conn->type==NETCONN_RAW) {
+      if (sock->conn->type == NETCONN_RAW) {
         err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
       } else {
         err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((const struct sockaddr_in *)to)->sin_port));
@@ -801,6 +805,8 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       UNLOCK_TCPIP_CORE();
       
       pbuf_free(p);
+    } else {
+      err = ERR_MEM;
     }
   }
 #else
