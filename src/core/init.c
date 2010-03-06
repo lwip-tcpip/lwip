@@ -178,6 +178,9 @@
 #if LWIP_TCPIP_CORE_LOCKING_INPUT && !LWIP_TCPIP_CORE_LOCKING
   #error "When using LWIP_TCPIP_CORE_LOCKING_INPUT, LWIP_TCPIP_CORE_LOCKING must be enabled, too"
 #endif
+#if LWIP_TCP && LWIP_NETIF_TX_SINGLE_PBUF && (TCP_OVERSIZE < TCP_MSS)
+  #error "LWIP_NETIF_TX_SINGLE_PBUF needs TCP_OVERSIZE == TCP_MSS to create single-pbuf TCP packets"
+#endif
 
 
 /* Compile-time checks for deprecated options.
