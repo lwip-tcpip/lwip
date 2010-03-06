@@ -733,9 +733,10 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));
       i = ETHARP_HWADDR_LEN;
 #if LWIP_AUTOIP
-      /* If we are using Link-Local, ARP packets must be broadcast on the
-       * link layer. (See RFC3927 Section 2.5) */
-      ethdst_hwaddr = ((netif->autoip != NULL) && (netif->autoip->state != AUTOIP_STATE_OFF)) ? (u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
+      /* If we are using Link-Local, all ARP packets that contain a Link-Local
+       * 'sender IP address' MUST be sent using link-layer broadcast instead of
+       * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
+      ethdst_hwaddr = ip_addr_islinklocal(&netif->ip_addr) ? (u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
 #endif /* LWIP_AUTOIP */
 
       while(i > 0) {
@@ -1086,9 +1087,10 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
   k = ETHARP_HWADDR_LEN;
 #if LWIP_AUTOIP
-  /* If we are using Link-Local, ARP packets must be broadcast on the
-   * link layer. (See RFC3927 Section 2.5) */
-  ethdst_hwaddr = ((netif->autoip != NULL) && (netif->autoip->state != AUTOIP_STATE_OFF)) ? (u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
+  /* If we are using Link-Local, all ARP packets that contain a Link-Local
+   * 'sender IP address' MUST be sent using link-layer broadcast instead of
+   * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
+  ethdst_hwaddr = ip_addr_islinklocal(ipsrc_addr) ? (u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
 #endif /* LWIP_AUTOIP */
   /* Write MAC-Addresses (combined loop for both headers) */
   while(k > 0) {
