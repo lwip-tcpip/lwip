@@ -175,6 +175,9 @@
 #if LWIP_IGMP && !defined(LWIP_RAND)
   #error "When using IGMP, LWIP_RAND() needs to be defined to a random-function returning an u32_t random value"
 #endif
+#if LWIP_TCPIP_CORE_LOCKING_INPUT && !LWIP_TCPIP_CORE_LOCKING
+  #error "When using LWIP_TCPIP_CORE_LOCKING_INPUT, LWIP_TCPIP_CORE_LOCKING must be enabled, too"
+#endif
 
 
 /* Compile-time checks for deprecated options.
