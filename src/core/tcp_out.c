@@ -241,6 +241,11 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
   u16_t oversize_used = 0;
 #endif /* TCP_OVERSIZE */
 
+#if LWIP_NETIF_TX_SINGLE_PBUF
+  /* Always copy to try to create single pbufs for TX */
+  apiflags |= TCP_WRITE_FLAG_COPY;
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_write(pcb=%p, data=%p, len=%"U16_F", apiflags=%"U16_F")\n",
     (void *)pcb, arg, len, (u16_t)apiflags));
   /* connection is in invalid state for data transmission? */

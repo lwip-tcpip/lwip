@@ -14,6 +14,11 @@ HISTORY
   ++ New features:
 
   2010-03-06: Simon Goldschmidt
+  * tcp_out.c: task #7013 (Create option to have all packets delivered to
+    netif->output in one piece): Always copy to try to create single pbufs
+    in tcp_write.
+
+  2010-03-06: Simon Goldschmidt
   * api.h, api_lib.c, sockets.c: task #10167 (sockets: speed up TCP recv
     by not allocating a netbuf): added function netconn_recv_tcp_pbuf()
     for tcp netconns to receive pbufs, not netbufs; use that function
