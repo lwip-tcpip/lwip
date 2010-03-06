@@ -57,7 +57,7 @@
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
 /** Contains all internal pointers and states used for a socket */
-struct lwip_socket {
+struct lwip_sock {
   /** sockets currently are built on netconns, each socket has one netconn */
   struct netconn *conn;
   /** data that was left from the previous read */
@@ -96,7 +96,7 @@ struct lwip_select_cb {
  * functions running in tcpip_thread context (only a void* is allowed) */
 struct lwip_setgetsockopt_data {
   /** socket struct for which to change options */
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   /** socket index for which to change options */
   int s;
   /** level of the option to process */
@@ -113,7 +113,7 @@ struct lwip_setgetsockopt_data {
 };
 
 /** The global array of available sockets */
-static struct lwip_socket sockets[NUM_SOCKETS];
+static struct lwip_sock sockets[NUM_SOCKETS];
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
 
@@ -182,12 +182,12 @@ lwip_socket_init(void)
  * Map a externally used socket index to the internal socket representation.
  *
  * @param s externally used socket index
- * @return struct lwip_socket for the socket or NULL if not found
+ * @return struct lwip_sock for the socket or NULL if not found
  */
-static struct lwip_socket *
+static struct lwip_sock *
 get_socket(int s)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
 
   if ((s < 0) || (s >= NUM_SOCKETS)) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s));
@@ -250,7 +250,7 @@ alloc_socket(struct netconn *newconn, int accepted)
  * @param sock the socket to free
  */
 static void
-free_socket(struct lwip_socket *sock)
+free_socket(struct lwip_sock *sock)
 {
   struct netbuf *lastdata;
   SYS_ARCH_DECL_PROTECT(lev);
@@ -279,7 +279,7 @@ free_socket(struct lwip_socket *sock)
 int
 lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 {
-  struct lwip_socket *sock, *nsock;
+  struct lwip_sock *sock, *nsock;
   struct netconn *newconn;
   ip_addr_t naddr;
   u16_t port;
@@ -367,7 +367,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
 int
 lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   ip_addr_t local_addr;
   u16_t local_port;
   err_t err;
@@ -403,7 +403,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
 int
 lwip_close(int s)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_close(%d)\n", s));
 
@@ -422,7 +422,7 @@ lwip_close(int s)
 int
 lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   err_t err;
 
   sock = get_socket(s);
@@ -472,7 +472,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 int
 lwip_listen(int s, int backlog)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   err_t err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d, backlog=%d)\n", s, backlog));
@@ -500,7 +500,7 @@ int
 lwip_recvfrom(int s, void *mem, size_t len, int flags,
         struct sockaddr *from, socklen_t *fromlen)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   struct netbuf      *buf;
   u16_t               buflen, copylen;
   int                 off = 0;
@@ -681,7 +681,7 @@ lwip_recv(int s, void *mem, size_t len, int flags)
 int
 lwip_send(int s, const void *data, size_t size, int flags)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   err_t err;
   u8_t write_flags;
 
@@ -723,7 +723,7 @@ int
 lwip_sendto(int s, const void *data, size_t size, int flags,
        const struct sockaddr *to, socklen_t tolen)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   ip_addr_t remote_addr;
   err_t err;
   u16_t short_size;
@@ -901,7 +901,7 @@ lwip_selscan(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset)
 {
   int i, nready = 0;
   fd_set lreadset, lwriteset, lexceptset;
-  struct lwip_socket *p_sock;
+  struct lwip_sock *p_sock;
   
   FD_ZERO(&lreadset);
   FD_ZERO(&lwriteset);
@@ -1112,7 +1112,7 @@ static void
 event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 {
   int s;
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   struct lwip_select_cb *scb;
 
   LWIP_UNUSED_ARG(len);
@@ -1220,7 +1220,7 @@ lwip_shutdown(int s, int how)
 static int
 lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
   struct sockaddr_in sin;
   ip_addr_t naddr;
 
@@ -1266,7 +1266,7 @@ int
 lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
   err_t err = ERR_OK;
-  struct lwip_socket *sock = get_socket(s);
+  struct lwip_sock *sock = get_socket(s);
   struct lwip_setgetsockopt_data data;
 
   if (!sock)
@@ -1450,7 +1450,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 static void
 lwip_getsockopt_internal(void *arg)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
 #ifdef LWIP_DEBUG
   int s;
 #endif /* LWIP_DEBUG */
@@ -1630,7 +1630,7 @@ lwip_getsockopt_internal(void *arg)
 int
 lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
-  struct lwip_socket *sock = get_socket(s);
+  struct lwip_sock *sock = get_socket(s);
   err_t err = ERR_OK;
   struct lwip_setgetsockopt_data data;
 
@@ -1825,7 +1825,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 static void
 lwip_setsockopt_internal(void *arg)
 {
-  struct lwip_socket *sock;
+  struct lwip_sock *sock;
 #ifdef LWIP_DEBUG
   int s;
 #endif /* LWIP_DEBUG */
@@ -2008,7 +2008,7 @@ lwip_setsockopt_internal(void *arg)
 int
 lwip_ioctl(int s, long cmd, void *argp)
 {
-  struct lwip_socket *sock = get_socket(s);
+  struct lwip_sock *sock = get_socket(s);
   u16_t buflen = 0;
   s16_t recv_avail;
   u8_t val;
@@ -2065,7 +2065,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 int
 lwip_fcntl(int s, int cmd, int val)
 {
-  struct lwip_socket *sock = get_socket(s);
+  struct lwip_sock *sock = get_socket(s);
   int ret = -1;
 
   if (!sock || !sock->conn) {
