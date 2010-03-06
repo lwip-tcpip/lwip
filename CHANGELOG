@@ -141,6 +141,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-06: Simon Goldschmidt
+  * etharp.c: Fixed bug #29087: etharp: don't send packets for LinkLocal-
+    addresses to gw
+
   2010-03-05: Simon Goldschmidt
   * dhcp.c: Fixed bug #29072: Correctly set ciaddr based on message-type
     and state.

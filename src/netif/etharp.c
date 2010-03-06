@@ -840,7 +840,8 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   /* unicast destination IP address? */
   } else {
     /* outside local network? */
-    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask))) {
+    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
+        !ip_addr_islinklocal(ipaddr)) {
       /* interface has default gateway? */
       if (!ip_addr_isany(&netif->gw)) {
         /* send to hardware address of default gateway IP address */
