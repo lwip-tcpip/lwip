@@ -316,19 +316,19 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 }
 
 /**
- * Receive data (in form of a netbuf containing a packet buffer) from a netconn
+ * Receive data: actual implementation that doesn't care whether pbuf or netbuf
+ * is received
  *
  * @param conn the netconn from which to receive data
- * @param new_buf pointer where a new netbuf is stored when received data
+ * @param new_buf pointer where a new pbuf/netbuf is stored when received data
  * @return ERR_OK if data has been received, an error code otherwise (timeout,
  *                memory error or another error)
  */
-err_t
-netconn_recv(struct netconn *conn, struct netbuf **new_buf)
+static err_t
+netconn_recv_data(struct netconn *conn, void **new_buf)
 {
   struct api_msg msg;
-  struct netbuf *buf = NULL;
-  struct pbuf *p;
+  void *buf = NULL;
   u16_t len;
   err_t err;
 
@@ -346,8 +346,103 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     return err;
   }
 
+#if LWIP_SO_RCVTIMEO
+  if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
+    NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
+    return ERR_TIMEOUT;
+  }
+#else
+  sys_arch_mbox_fetch(&conn->recvmbox, &buf, 0);
+#endif /* LWIP_SO_RCVTIMEO*/
+
+#if LWIP_TCP
+  if (conn->type == NETCONN_TCP) {
+    if (!netconn_get_noautorecved(conn) || (buf == NULL)) {
+      /* Let the stack know that we have taken the data. */
+      /* TODO: Speedup: Don't block and wait for the answer here
+         (to prevent multiple thread-switches). */
+      msg.function = do_recv;
+      msg.msg.conn = conn;
+      if (buf != NULL) {
+        msg.msg.msg.r.len = ((struct pbuf *)buf)->tot_len;
+      } else {
+        msg.msg.msg.r.len = 1;
+      }
+      /* don't care for the return value of do_recv */
+      TCPIP_APIMSG(&msg);
+    }
+
+    /* If we are closed, we indicate that we no longer wish to use the socket */
+    if (buf == NULL) {
+      API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
+      /* Avoid to lose any previous error code */
+      NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
+      return ERR_CLSD;
+    }
+    len = ((struct pbuf *)buf)->tot_len;
+  }
+#endif /* LWIP_TCP */
+#if LWIP_TCP && (LWIP_UDP || LWIP_RAW)
+  else
+#endif /* LWIP_TCP && (LWIP_UDP || LWIP_RAW) */
+#if (LWIP_UDP || LWIP_RAW)
+  {
+    LWIP_ASSERT("buf != NULL", buf != NULL);
+    len = netbuf_len((struct netbuf *)buf);
+  }
+#endif /* (LWIP_UDP || LWIP_RAW) */
+
+  SYS_ARCH_DEC(conn->recv_avail, len);
+  /* Register event with callback */
+  API_EVENT(conn, NETCONN_EVT_RCVMINUS, len);
+
+  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv_data: received %p, len=%"U16_F"\n", buf, len));
+
+  *new_buf = buf;
+  /* don't set conn->last_err: it's only ERR_OK, anyway */
+  return ERR_OK;
+}
+
+/**
+ * Receive data (in form of a pbuf) from a TCP netconn
+ *
+ * @param conn the netconn from which to receive data
+ * @param new_buf pointer where a new pbuf is stored when received data
+ * @return ERR_OK if data has been received, an error code otherwise (timeout,
+ *                memory error or another error)
+ *         ERR_ARG if conn is not a TCP netconn
+ */
+err_t
+netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf)
+{
+  LWIP_ERROR("netconn_recv: invalid conn", (conn != NULL) &&
+             netconn_type(conn) == NETCONN_TCP, return ERR_ARG;);
+
+  return netconn_recv_data(conn, new_buf);
+}
+
+/**
+ * Receive data (in form of a netbuf containing a packet buffer) from a netconn
+ *
+ * @param conn the netconn from which to receive data
+ * @param new_buf pointer where a new netbuf is stored when received data
+ * @return ERR_OK if data has been received, an error code otherwise (timeout,
+ *                memory error or another error)
+ */
+err_t
+netconn_recv(struct netconn *conn, struct netbuf **new_buf)
+{
+  struct netbuf *buf = NULL;
+  err_t err;
+
+  LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
+  *new_buf = NULL;
+  LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
+  LWIP_ERROR("netconn_accept: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
+
   if (conn->type == NETCONN_TCP) {
 #if LWIP_TCP
+    struct pbuf *p = NULL;
     /* This is not a listening netconn, since recvmbox is set */
 
     buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
@@ -356,79 +451,26 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
       return ERR_MEM;
     }
 
-#if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(&conn->recvmbox, (void **)&p, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
+    err = netconn_recv_data(conn, &p);
+    if (err != ERR_OK) {
       memp_free(MEMP_NETBUF, buf);
-      NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
-      return ERR_TIMEOUT;
+      return err;
     }
-#else
-    sys_arch_mbox_fetch(&conn->recvmbox, (void **)&p, 0);
-#endif /* LWIP_SO_RCVTIMEO*/
-
-    if (p != NULL) {
-      len = p->tot_len;
-      SYS_ARCH_DEC(conn->recv_avail, len);
-    } else {
-      /* This means the connection has been closed */ 
-      len = 0;
-    }
-
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVMINUS, len);
-
-    /* If we are closed, we indicate that we no longer wish to use the socket */
-    if (p == NULL) {
-      memp_free(MEMP_NETBUF, buf);
-      /* Avoid to lose any previous error code */
-      NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
-      return ERR_CLSD;
-    }
+    LWIP_ASSERT("p != NULL", p != NULL);
 
     buf->p = p;
     buf->ptr = p;
     buf->port = 0;
     buf->addr = NULL;
-
-    if (!netconn_get_noautorecved(conn) || (buf == NULL)) {
-      /* Let the stack know that we have taken the data. */
-      /* TODO: Speedup: Don't block and wait for the answer here
-         (to prevent multiple thread-switches). */
-      msg.function = do_recv;
-      msg.msg.conn = conn;
-      if (buf != NULL) {
-        msg.msg.msg.r.len = buf->p->tot_len;
-      } else {
-        msg.msg.msg.r.len = 1;
-      }
-      /* don't care for the return value of do_recv */
-      TCPIP_APIMSG(&msg);
-    }
+    *new_buf = buf;
+    /* don't set conn->last_err: it's only ERR_OK, anyway */
+    return ERR_OK;
 #endif /* LWIP_TCP */
   } else {
 #if (LWIP_UDP || LWIP_RAW)
-#if LWIP_SO_RCVTIMEO
-    if (sys_arch_mbox_fetch(&conn->recvmbox, (void **)&buf, conn->recv_timeout)==SYS_ARCH_TIMEOUT) {
-      NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
-      return ERR_TIMEOUT;
-    }
-#else
-    sys_arch_mbox_fetch(&conn->recvmbox, (void **)&buf, 0);
-#endif /* LWIP_SO_RCVTIMEO*/
-    LWIP_ASSERT("buf != NULL", buf != NULL);
-
-    SYS_ARCH_DEC(conn->recv_avail, buf->p->tot_len);
-    /* Register event with callback */
-    API_EVENT(conn, NETCONN_EVT_RCVMINUS, buf->p->tot_len);
+    return netconn_recv_data(conn, new_buf);
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
-  LWIP_ASSERT("buf != NULL", buf != NULL);
-
-  LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_recv: received %p\n", (void *)buf));
-
-  *new_buf = buf;
-  /* don't set conn->last_err: it's only ERR_OK, anyway */
-  return ERR_OK;
 }
 
 /**

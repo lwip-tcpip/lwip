@@ -13,6 +13,12 @@ HISTORY
 
   ++ New features:
 
+  2010-03-06: Simon Goldschmidt
+  * api.h, api_lib.c, sockets.c: task #10167 (sockets: speed up TCP recv
+    by not allocating a netbuf): added function netconn_recv_tcp_pbuf()
+    for tcp netconns to receive pbufs, not netbufs; use that function
+    for tcp sockets.
+
   2010-03-05: Jakob Ole Stoklundsen / Simon Goldschmidt
   * opt.h, tcp.h, tcp_impl.h, tcp.c, tcp_in.c, tcp_out.c: task #7040:
     Work on tcp_enqueue: Don't waste memory when chaining segments,
