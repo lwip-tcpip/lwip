@@ -122,6 +122,15 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 
   PERF_START;
   dest = iphdr->dest;
+
+  /* RFC3927 2.7: do not forward link-local addresses */
+  if (ip_addr_islinklocal(&dest)) {
+    LWIP_DEBUGF(IP_DEBUG, ("ip_forward: not forwarding LLA %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
+      ip4_addr1_16(&dest), ip4_addr2_16(&dest), ip4_addr3_16(&dest), ip4_addr4_16(&dest)));
+    snmp_inc_ipoutnoroutes();
+    return (struct netif *)NULL;
+  }
+
   /* Find network interface where to forward this IP packet to. */
   netif = ip_route(&dest);
   if (netif == NULL) {

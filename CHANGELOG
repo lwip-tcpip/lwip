@@ -142,6 +142,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-03-06: Simon Goldschmidt
+  * ipv4/ip.c: Don't try to forward link-local addresses
+
+  2010-03-06: Simon Goldschmidt
   * etharp.c: Fixed bug #29087: etharp: don't send packets for LinkLocal-
     addresses to gw
 
