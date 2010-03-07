@@ -13,6 +13,12 @@ HISTORY
 
   ++ New features:
 
+  2010-03-07: Simon Goldschmidt
+  * sockets.c: bug #28775 (select/event_callback: only check select_cb_list
+    on change) plus use SYS_LIGHTWEIGHT_PROT to protect the select code.
+    This should speed up receiving data on sockets as the select code in
+    event_callback is only executed when select is waiting.
+
   2010-03-06: Simon Goldschmidt
   * tcp_out.c: task #7013 (Create option to have all packets delivered to
     netif->output in one piece): Always copy to try to create single pbufs
