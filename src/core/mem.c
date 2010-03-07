@@ -288,14 +288,14 @@ mem_init(void)
   ram_end->next = MEM_SIZE_ALIGNED;
   ram_end->prev = MEM_SIZE_ALIGNED;
 
-  if(sys_mutex_new(&mem_mutex) != ERR_OK) {
-    LWIP_ASSERT("failed to create mem_mutex", 0);
-  }
-
   /* initialize the lowest-free pointer to the start of the heap */
   lfree = (struct mem *)ram;
 
   MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
+
+  if(sys_mutex_new(&mem_mutex) != ERR_OK) {
+    LWIP_ASSERT("failed to create mem_mutex", 0);
+  }
 }
 
 /**
