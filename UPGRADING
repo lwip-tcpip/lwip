@@ -58,6 +58,8 @@ with newer versions.
   * Added define LWIP_RAND() for lwip-wide randomization (needs to be defined
     in cc.h, e.g. used by igmp)
 
+  * Added printf-formatter X8_F to printf u8_t as hex
+
 
 (STABLE-1.3.2)
 
