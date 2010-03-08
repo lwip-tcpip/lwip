@@ -641,11 +641,11 @@ breakbreak:;
       break;
     default:
       if(sc) {
-        printf("%c%c%"U16_F": unknown code (0x%04x) session = 0x%04x\n",
+        printf("%c%c%"U16_F": unknown code (0x%"X16_F") session = 0x%"X16_F"\n",
             sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num,
-            ph->code, session);
+            (u16_t)ph->code, session);
       } else {
-        printf("pppoe: unknown code (0x%04x) session = 0x%04x\n", ph->code, session);
+        printf("pppoe: unknown code (0x%"X16_F") session = 0x%"X16_F"\n", (u16_t)ph->code, session);
       }
       break;
   }

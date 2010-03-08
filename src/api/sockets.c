@@ -1033,10 +1033,10 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%ld tvusec=%ld)\n",
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
                   maxfdp1, (void *)readset, (void *) writeset, (void *) exceptset,
-                  timeout ? (long)timeout->tv_sec : (long)-1,
-                  timeout ? (long)timeout->tv_usec : (long)-1));
+                  timeout ? (s32_t)timeout->tv_sec : (s32_t)-1,
+                  timeout ? (s32_t)timeout->tv_usec : (s32_t)-1));
 
   /* Go through each socket in each list to count number of sockets which
      currently match */

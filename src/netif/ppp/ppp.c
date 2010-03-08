@@ -711,7 +711,7 @@ nPut(PPPControl *pc, struct pbuf *nb)
   for(b = nb; b != NULL; b = b->next) {
     if((c = sio_write(pc->fd, b->payload, b->len)) != b->len) {
       PPPDEBUG(LOG_WARNING,
-               ("PPP nPut: incomplete sio_write(fd:%d, len:%d, c: 0x%02x) c = %d\n", (size_t)pc->fd, b->len, c, c));
+               ("PPP nPut: incomplete sio_write(fd:%d, len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pc->fd, b->len, c, c));
       LINK_STATS_INC(link.err);
       pc->lastXMit = 0; /* prepend PPP_FLAG to next packet */
       snmp_inc_ifoutdiscards(&pc->netif);
@@ -950,7 +950,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
   }
 
   /* Send it. */
-  PPPDEBUG(LOG_INFO, ("pppifOutput[%d]: proto=0x%04X\n", pd, protocol));
+  PPPDEBUG(LOG_INFO, ("pppifOutput[%d]: proto=0x%"X16_F"\n", pd, protocol));
 
   nPut(pc, headMB);
 #endif /* PPPOS_SUPPORT */
@@ -1629,7 +1629,7 @@ pppInput(void *arg)
   if((lcp_phase[pd] <= PHASE_AUTHENTICATE) && (protocol != PPP_LCP)) {
     if(!((protocol == PPP_LQR) || (protocol == PPP_PAP) || (protocol == PPP_CHAP)) ||
         (lcp_phase[pd] != PHASE_AUTHENTICATE)) {
-      PPPDEBUG(LOG_INFO, ("pppInput: discarding proto 0x%04X in phase %d\n", protocol, lcp_phase[pd]));
+      PPPDEBUG(LOG_INFO, ("pppInput: discarding proto 0x%"X16_F" in phase %d\n", protocol, lcp_phase[pd]));
       goto drop;
     }
   }
@@ -1701,7 +1701,7 @@ pppInput(void *arg)
       }
 
       /* No handler for this protocol so reject the packet. */
-      PPPDEBUG(LOG_INFO, ("pppInput[%d]: rejecting unsupported proto 0x%04X len=%d\n", pd, protocol, nb->len));
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: rejecting unsupported proto 0x%"X16_F" len=%d\n", pd, protocol, nb->len));
       if (pbuf_header(nb, sizeof(protocol))) {
         LWIP_ASSERT("pbuf_header failed\n", 0);
         goto drop;
@@ -1806,7 +1806,7 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
         /* If the fcs is invalid, drop the packet. */
         } else if (pcrx->inFCS != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
-                   ("pppInProc[%d]: Dropping bad fcs 0x%04X proto=0x%04X\n", 
+                   ("pppInProc[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n", 
                     pcrx->pd, pcrx->inFCS, pcrx->inProtocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
