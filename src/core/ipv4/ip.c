@@ -52,6 +52,7 @@
 #include "lwip/tcp_impl.h"
 #include "lwip/snmp.h"
 #include "lwip/dhcp.h"
+#include "lwip/autoip.h"
 #include "lwip/stats.h"
 #include "arch/perf.h"
 
@@ -296,18 +297,23 @@ ip_input(struct pbuf *p, struct netif *inp)
         /* unicast to this interface address? */
         if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
             /* or broadcast on this interface network address? */
-            ip_addr_isbroadcast(&(iphdr->dest), netif)
-#if LWIP_AUTOIP
-            /* connections to link-local addresses must persist after changing
-               the netif's address (RFC3927 ch. 1.9) */
-            || ip_addr_islinklocal(&(iphdr->dest))
-#endif /* LWIP_AUTOIP */
-            ) {
+            ip_addr_isbroadcast(&(iphdr->dest), netif)) {
           LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
               netif->name[0], netif->name[1]));
           /* break out of for loop */
           break;
         }
+#if LWIP_AUTOIP
+        /* connections to link-local addresses must persist after changing
+           the netif's address (RFC3927 ch. 1.9) */
+        if ((netif->autoip != NULL) &&
+            ip_addr_cmp(&(iphdr->dest), &(netif->autoip->llipaddr))) {
+          LWIP_DEBUGF(IP_DEBUG, ("ip_input: LLA packet accepted on interface %c%c\n",
+              netif->name[0], netif->name[1]));
+          /* break out of for loop */
+          break;
+        }
+#endif /* LWIP_AUTOIP */
       }
       if (first) {
         first = 0;
