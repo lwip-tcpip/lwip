@@ -578,9 +578,9 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
       /* No data was left from the previous operation, so we try to get
          some from the network. */
       if (netconn_type(sock->conn) == NETCONN_TCP) {
-        err = netconn_recv_tcp_pbuf(sock->conn, &(struct pbuf *)buf);
+        err = netconn_recv_tcp_pbuf(sock->conn, (struct pbuf **)&buf);
       } else {
-        err = netconn_recv(sock->conn, &(struct netbuf *)buf);
+        err = netconn_recv(sock->conn, (struct netbuf **)&buf);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom: netconn_recv err=%d, netbuf=%p\n",
         err, buf));

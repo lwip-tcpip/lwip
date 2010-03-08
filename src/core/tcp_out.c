@@ -124,7 +124,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
   struct tcp_seg *seg;
   u8_t optlen = LWIP_TCP_OPT_LENGTH(optflags);
 
-  if ((seg = memp_malloc(MEMP_TCP_SEG)) == NULL) {
+  if ((seg = (struct tcp_seg *)memp_malloc(MEMP_TCP_SEG)) == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_create_segment: no memory.\n"));
     pbuf_free(p);
     return NULL;
@@ -142,7 +142,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
     tcp_seg_free(seg);
     return NULL;
   }
-  seg->tcphdr = seg->p->payload;
+  seg->tcphdr = (struct tcp_hdr *)seg->p->payload;
   seg->tcphdr->src = htons(pcb->local_port);
   seg->tcphdr->dest = htons(pcb->remote_port);
   seg->tcphdr->seqno = htonl(seqno);

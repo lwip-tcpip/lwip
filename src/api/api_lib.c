@@ -418,7 +418,7 @@ netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf)
   LWIP_ERROR("netconn_recv: invalid conn", (conn != NULL) &&
              netconn_type(conn) == NETCONN_TCP, return ERR_ARG;);
 
-  return netconn_recv_data(conn, new_buf);
+  return netconn_recv_data(conn, (void **)new_buf);
 }
 
 /**
@@ -451,7 +451,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
       return ERR_MEM;
     }
 
-    err = netconn_recv_data(conn, &p);
+    err = netconn_recv_data(conn, (void **)&p);
     if (err != ERR_OK) {
       memp_free(MEMP_NETBUF, buf);
       return err;
@@ -468,7 +468,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 #endif /* LWIP_TCP */
   } else {
 #if (LWIP_UDP || LWIP_RAW)
-    return netconn_recv_data(conn, new_buf);
+    return netconn_recv_data(conn, (void **)new_buf);
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
 }
