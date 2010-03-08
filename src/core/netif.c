@@ -331,7 +331,12 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
     pcb = tcp_active_pcbs;
     while (pcb != NULL) {
       /* PCB bound to current local interface address? */
-      if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))) {
+      if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))
+#if LWIP_AUTOIP
+        /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
+        && !ip_addr_islinklocal(&(pcb->local_ip))
+#endif /* LWIP_AUTOIP */
+        ) {
         /* this connection must be aborted */
         struct tcp_pcb *next = pcb->next;
         LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: aborting TCP pcb %p\n", (void *)pcb));

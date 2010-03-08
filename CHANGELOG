@@ -158,6 +158,12 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-08: Simon Goldschmidt
+  * netif.c, ipv4/ip.c: task #10241 (AutoIP: don't break existing connections
+    when assiging routable address): when checking incoming packets and
+    aborting existing connection on address change, filter out link-local
+    addresses.
+
   2010-03-06: Simon Goldschmidt
   * sockets.c: Fixed LWIP_NETIF_TX_SINGLE_PBUF for LWIP_TCPIP_CORE_LOCKING
 

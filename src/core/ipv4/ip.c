@@ -296,7 +296,13 @@ ip_input(struct pbuf *p, struct netif *inp)
         /* unicast to this interface address? */
         if (ip_addr_cmp(&(iphdr->dest), &(netif->ip_addr)) ||
             /* or broadcast on this interface network address? */
-            ip_addr_isbroadcast(&(iphdr->dest), netif)) {
+            ip_addr_isbroadcast(&(iphdr->dest), netif)
+#if LWIP_AUTOIP
+            /* connections to link-local addresses must persist after changing
+               the netif's address (RFC3927 ch. 1.9) */
+            || ip_addr_islinklocal(&(iphdr->dest))
+#endif /* LWIP_AUTOIP */
+            ) {
           LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
               netif->name[0], netif->name[1]));
           /* break out of for loop */
