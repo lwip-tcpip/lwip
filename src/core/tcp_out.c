@@ -58,34 +58,38 @@
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
-/** Create a tcphdr at p->payload, used for output functions other than the
- * default tcp_output -> tcp_output_segment (e.g. tcp_send_empty_ack, etc.)
+/** Allocate a pbuf and create a tcphdr at p->payload, used for output
+ * functions other than the default tcp_output -> tcp_output_segment
+ * (e.g. tcp_send_empty_ack, etc.)
  *
  * @param pcb tcp pcb for which to send a packet (used to initialize tcp_hdr)
- * @param p pbuf to send, p->payload will be the tcp_hdr
  * @param optlen length of header-options
  * @param seqno_be seqno in network byte order (big-endian)
- * @return pointer to the filled tcp_hdr
+ * @return pbuf with p->payload being the tcp_hdr
  */
-static struct tcp_hdr *
-tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, u16_t optlen,
+static struct pbuf *
+tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen,
                       u32_t seqno_be /* already in network byte order */)
 {
-  struct tcp_hdr *tcphdr = (struct tcp_hdr *)p->payload;
-  tcphdr->src = htons(pcb->local_port);
-  tcphdr->dest = htons(pcb->remote_port);
-  tcphdr->seqno = seqno_be;
-  tcphdr->ackno = htonl(pcb->rcv_nxt);
-  TCPH_FLAGS_SET(tcphdr, TCP_ACK);
-  tcphdr->wnd = htons(pcb->rcv_ann_wnd);
-  tcphdr->urgp = 0;
-  TCPH_HDRLEN_SET(tcphdr, (5 + optlen / 4));
-  tcphdr->chksum = 0;
+  struct tcp_hdr *tcphdr;
+  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen, PBUF_RAM);
+  if (p != NULL) {
+    LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
+                 (p->len >= TCP_HLEN + optlen));
+    tcphdr = (struct tcp_hdr *)p->payload;
+    tcphdr->src = htons(pcb->local_port);
+    tcphdr->dest = htons(pcb->remote_port);
+    tcphdr->seqno = seqno_be;
+    tcphdr->ackno = htonl(pcb->rcv_nxt);
+    TCPH_HDRLEN_FLAGS_SET(tcphdr, (5 + optlen / 4), TCP_ACK);
+    tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+    tcphdr->chksum = 0;
+    tcphdr->urgp = 0;
 
-  /* If we're sending a packet, update the announced right window edge */
-  pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
-
-  return tcphdr;
+    /* If we're sending a packet, update the announced right window edge */
+    pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
+  }
+  return p;
 }
 
 /**
@@ -711,17 +715,17 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
     optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
   }
 #endif
-  p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen, PBUF_RAM);
+
+  p = tcp_output_alloc_header(pcb, optlen, htonl(pcb->snd_nxt));
   if (p == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
     return ERR_BUF;
   }
+  tcphdr = (struct tcp_hdr *)p->payload;
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG, 
               ("tcp_output: sending ACK for %"U32_F"\n", pcb->rcv_nxt));
   /* remove ACK flags from the PCB, as we send an empty ACK now */
   pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
-
-  tcphdr = tcp_output_set_header(pcb, p, optlen, htonl(pcb->snd_nxt));
 
   /* NB. MSS option is only sent on SYNs, so ignore it here */
 #if LWIP_TCP_TIMESTAMPS
@@ -1028,12 +1032,11 @@ tcp_rst(u32_t seqno, u32_t ackno,
   tcphdr->dest = htons(remote_port);
   tcphdr->seqno = htonl(seqno);
   tcphdr->ackno = htonl(ackno);
-  TCPH_FLAGS_SET(tcphdr, TCP_RST | TCP_ACK);
+  TCPH_HDRLEN_FLAGS_SET(tcphdr, TCP_HLEN/4, TCP_RST | TCP_ACK);
   tcphdr->wnd = htons(TCP_WND);
-  tcphdr->urgp = 0;
-  TCPH_HDRLEN_SET(tcphdr, 5);
-
   tcphdr->chksum = 0;
+  tcphdr->urgp = 0;
+
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, local_ip, remote_ip,
               IP_PROTO_TCP, p->tot_len);
@@ -1184,17 +1187,13 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n", 
                           tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
    
-  p = pbuf_alloc(PBUF_IP, TCP_HLEN, PBUF_RAM);
-   
+  p = tcp_output_alloc_header(pcb, 0, htonl(pcb->snd_nxt - 1));
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, 
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
     return;
   }
-  LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
-              (p->len >= sizeof(struct tcp_hdr)));
-
-  tcphdr = tcp_output_set_header(pcb, p, 0, htonl(pcb->snd_nxt - 1));
+  tcphdr = (struct tcp_hdr *)p->payload;
 
 #if CHECKSUM_GEN_TCP
   tcphdr->chksum = inet_chksum_pseudo(p, &pcb->local_ip, &pcb->remote_ip,
@@ -1231,7 +1230,6 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct tcp_seg *seg;
-  u16_t len;
   u8_t is_fin;
 
   LWIP_DEBUGF(TCP_DEBUG, 
@@ -1255,18 +1253,13 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   }
 
   is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
-  /* @todo: is this correct? p->len should not depend on the FIN flag! */
-  len = is_fin ? TCP_HLEN : TCP_HLEN + 1;
 
-  p = pbuf_alloc(PBUF_IP, len, PBUF_RAM);
+  p = tcp_output_alloc_header(pcb, 0, seg->tcphdr->seqno);
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: no memory for pbuf\n"));
     return;
   }
-  LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
-              (p->len >= sizeof(struct tcp_hdr)));
-
-  tcphdr = tcp_output_set_header(pcb, p, 0, seg->tcphdr->seqno);
+  tcphdr = (struct tcp_hdr *)p->payload;
 
   if (is_fin) {
     /* FIN segment, no data */
