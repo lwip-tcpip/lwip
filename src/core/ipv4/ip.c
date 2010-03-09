@@ -538,6 +538,10 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   struct ip_hdr *iphdr;
   static u16_t ip_id = 0;
 
+  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
+     gets altered as the packet is passed down the stack */
+  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+
   snmp_inc_ipoutrequests();
 
   /* Should the IP header be generated or is it already included in p? */
@@ -651,6 +655,10 @@ ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 {
   struct netif *netif;
 
+  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
+     gets altered as the packet is passed down the stack */
+  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
@@ -686,6 +694,10 @@ ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 {
   struct netif *netif;
   err_t err;
+
+  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
+     gets altered as the packet is passed down the stack */
+  LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
