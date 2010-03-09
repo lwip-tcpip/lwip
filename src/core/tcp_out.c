@@ -58,6 +58,15 @@
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
+/** Create a tcphdr at p->payload, used for output functions other than the
+ * default tcp_output -> tcp_output_segment (e.g. tcp_send_empty_ack, etc.)
+ *
+ * @param pcb tcp pcb for which to send a packet (used to initialize tcp_hdr)
+ * @param p pbuf to send, p->payload will be the tcp_hdr
+ * @param optlen length of header-options
+ * @param seqno_be seqno in network byte order (big-endian)
+ * @return pointer to the filled tcp_hdr
+ */
 static struct tcp_hdr *
 tcp_output_set_header(struct tcp_pcb *pcb, struct pbuf *p, u16_t optlen,
                       u32_t seqno_be /* already in network byte order */)
@@ -855,7 +864,7 @@ tcp_output(struct tcp_pcb *pcb)
         /* In the case of fast retransmit, the packet should not go to the tail
          * of the unacked queue, but rather somewhere before it. We need to check for
          * this case. -STJ Jul 27, 2004 */
-        if (TCP_SEQ_LT(ntohl(seg->tcphdr->seqno), ntohl(useg->tcphdr->seqno))){
+        if (TCP_SEQ_LT(ntohl(seg->tcphdr->seqno), ntohl(useg->tcphdr->seqno))) {
           /* add segment to before tail of unacked list, keeping the list sorted */
           struct tcp_seg **cur_seg = &(pcb->unacked);
           while (*cur_seg &&
@@ -940,8 +949,9 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   }
 
   /* Set retransmission timer running if it is not currently enabled */
-  if(pcb->rtime == -1)
+  if(pcb->rtime == -1) {
     pcb->rtime = 0;
+  }
 
   if (pcb->rttest == 0) {
     pcb->rttest = tcp_ticks;
@@ -1132,10 +1142,11 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
 
     /* Set ssthresh to half of the minimum of the current
      * cwnd and the advertised window */
-    if (pcb->cwnd > pcb->snd_wnd)
+    if (pcb->cwnd > pcb->snd_wnd) {
       pcb->ssthresh = pcb->snd_wnd / 2;
-    else
+    } else {
       pcb->ssthresh = pcb->cwnd / 2;
+    }
     
     /* The minimum value for ssthresh should be 2 MSS */
     if (pcb->ssthresh < 2*pcb->mss) {
@@ -1236,11 +1247,12 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
   seg = pcb->unacked;
 
-  if(seg == NULL)
+  if(seg == NULL) {
     seg = pcb->unsent;
-
-  if(seg == NULL)
+  }
+  if(seg == NULL) {
     return;
+  }
 
   is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
   /* @todo: is this correct? p->len should not depend on the FIN flag! */
