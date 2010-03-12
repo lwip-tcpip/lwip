@@ -147,6 +147,9 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
   seg->p = p;
   seg->dataptr = p->payload;
   seg->len = p->tot_len - optlen;
+#if TCP_OVERSIZE_DBGCHECK
+  seg->oversize_left = 0;
+#endif /* TCP_OVERSIZE_DBGCHECK */
 
   /* build TCP header */
   if (pbuf_header(p, TCP_HLEN)) {
@@ -355,11 +358,16 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      * function.
      */
 #if TCP_OVERSIZE
+#if TCP_OVERSIZE_DBGCHECK
+    /* check that pcb->unsent_oversize matches last_unsent->unsent_oversize */
+    LWIP_ASSERT("unsent_oversize mismatch (pcb vs. last_unsent)",
+                pcb->unsent_oversize == last_unsent->oversize_left);
+#endif /* TCP_OVERSIZE_DBGCHECK */
     oversize = pcb->unsent_oversize;
     if (oversize > 0) {
+      LWIP_ASSERT("inconsistent oversize vs. space", oversize_used <= space);
       seg = last_unsent;
       oversize_used = oversize < len ? oversize : len;
-      LWIP_ASSERT("inconsistent oversize vs. space", oversize_used <= space);
       pos += oversize_used;
       oversize -= oversize_used;
       space -= oversize_used;
@@ -390,6 +398,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
                        seglen));
           goto memerr;
         }
+#if TCP_OVERSIZE_DBGCHECK
+        last_unsent->oversize_left = oversize;
+#endif /* TCP_OVERSIZE_DBGCHECK */
         MEMCPY(concat_p->payload, (u8_t*)arg + pos, seglen);
       } else {
         /* Data is not copied */
@@ -404,6 +415,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
       pos += seglen;
       queuelen += pbuf_clen(concat_p);
     }
+  } else {
+    LWIP_ASSERT("unsent_oversize mismatch (pcb->unsent is NULL)",
+                pcb->unsent_oversize == 0);
   }
 
   /*
@@ -435,6 +449,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
        * party) we can safely use PBUF_ROM instead of PBUF_REF here.
        */
       struct pbuf *p2;
+      LWIP_ASSERT("oversize == 0", oversize == 0);
       if ((p2 = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: could not allocate memory for zero-copy pbuf\n"));
         goto memerr;
@@ -461,12 +476,16 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      * overflows. */
     if ((queuelen > TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
       LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: queue too long %"U16_F" (%"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
+      pbuf_free(p);
       goto memerr;
     }
 
     if ((seg = tcp_create_segment(pcb, p, 0, pcb->snd_lbb + pos, optflags)) == NULL) {
       goto memerr;
     }
+#if TCP_OVERSIZE_DBGCHECK
+    seg->oversize_left = oversize;
+#endif /* TCP_OVERSIZE_DBGCHECK */
     /* Fix dataptr for the nocopy case */
     if ((apiflags & TCP_WRITE_FLAG_COPY) == 0) {
       seg->dataptr = (u8_t*)arg + pos;
@@ -511,6 +530,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
       }
     }
     last_unsent->len += oversize_used;
+#if TCP_OVERSIZE_DBGCHECK
+    last_unsent->oversize_left -= oversize_used;
+#endif /* TCP_OVERSIZE_DBGCHECK */
   }
   pcb->unsent_oversize = oversize;
 #endif /* TCP_OVERSIZE */
@@ -889,6 +911,12 @@ tcp_output(struct tcp_pcb *pcb)
     }
     seg = pcb->unsent;
   }
+#if TCP_OVERSIZE
+  if (pcb->unsent == NULL) {
+    /* last unsent has been removed, reset unsent_oversize */
+    pcb->unsent_oversize = 0;
+  }
+#endif /* TCP_OVERSIZE */
 
   if (seg != NULL && pcb->persist_backoff == 0 && 
       ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len > pcb->snd_wnd) {
