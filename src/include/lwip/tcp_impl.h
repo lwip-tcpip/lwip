@@ -259,7 +259,7 @@ PACK_STRUCT_END
 #define TCP_OVERSIZE_DBGCHECK 0
 #endif
 
-/* This structure represents a TCP segment on the unsent and unacked queues */
+/* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
   struct tcp_seg *next;    /* used when putting segements on a queue */
   struct pbuf *p;          /* buffer containing data + TCP header */
