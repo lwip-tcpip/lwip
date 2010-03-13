@@ -55,6 +55,7 @@
 
 #include <string.h>
 
+
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
@@ -342,13 +343,15 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
   /* Find the tail of the unsent queue. */
   if (pcb->unsent != NULL) {
     u16_t space;
+    u16_t unsent_optlen;
 
     /* @todo: this could be sped up by keeping last_unsent in the pcb */
     for (last_unsent = pcb->unsent; last_unsent->next != NULL;
          last_unsent = last_unsent->next);
 
     /* Usable space at the end of the last unsent segment */
-    space = pcb->mss - last_unsent->len;
+    unsent_optlen = LWIP_TCP_OPT_LENGTH(last_unsent->flags);
+    space = pcb->mss - (last_unsent->len + unsent_optlen);
 
     /*
      * Phase 1: Copy data directly into an oversized pbuf.
@@ -409,6 +412,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
                       ("tcp_write: could not allocate memory for zero-copy pbuf\n"));
           goto memerr;
         }
+        /* reference the non-volatile payload data */
         concat_p->payload = (u8_t*)arg + pos;
       }
 
@@ -416,8 +420,10 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
       queuelen += pbuf_clen(concat_p);
     }
   } else {
+#if TCP_OVERSIZE
     LWIP_ASSERT("unsent_oversize mismatch (pcb->unsent is NULL)",
                 pcb->unsent_oversize == 0);
+#endif /* TCP_OVERSIZE */
   }
 
   /*
@@ -449,7 +455,9 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
        * party) we can safely use PBUF_ROM instead of PBUF_REF here.
        */
       struct pbuf *p2;
+#if TCP_OVERSIZE
       LWIP_ASSERT("oversize == 0", oversize == 0);
+#endif /* TCP_OVERSIZE */
       if ((p2 = pbuf_alloc(PBUF_TRANSPORT, seglen, PBUF_ROM)) == NULL) {
         LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: could not allocate memory for zero-copy pbuf\n"));
         goto memerr;
