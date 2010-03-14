@@ -65,15 +65,16 @@ static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
  *
  * @param pcb tcp pcb for which to send a packet (used to initialize tcp_hdr)
  * @param optlen length of header-options
+ * @param datalen length of tcp data to reserve in pbuf
  * @param seqno_be seqno in network byte order (big-endian)
  * @return pbuf with p->payload being the tcp_hdr
  */
 static struct pbuf *
-tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen,
+tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
                       u32_t seqno_be /* already in network byte order */)
 {
   struct tcp_hdr *tcphdr;
-  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen, PBUF_RAM);
+  struct pbuf *p = pbuf_alloc(PBUF_IP, TCP_HLEN + optlen + datalen, PBUF_RAM);
   if (p != NULL) {
     LWIP_ASSERT("check that first pbuf can hold struct tcp_hdr",
                  (p->len >= TCP_HLEN + optlen));
@@ -746,7 +747,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   }
 #endif
 
-  p = tcp_output_alloc_header(pcb, optlen, htonl(pcb->snd_nxt));
+  p = tcp_output_alloc_header(pcb, optlen, 0, htonl(pcb->snd_nxt));
   if (p == NULL) {
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
     return ERR_BUF;
@@ -1223,7 +1224,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n", 
                           tcp_ticks, pcb->tmr, pcb->keep_cnt_sent));
    
-  p = tcp_output_alloc_header(pcb, 0, htonl(pcb->snd_nxt - 1));
+  p = tcp_output_alloc_header(pcb, 0, 0, htonl(pcb->snd_nxt - 1));
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, 
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
@@ -1266,6 +1267,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct tcp_seg *seg;
+  u16_t len;
   u8_t is_fin;
 
   LWIP_DEBUGF(TCP_DEBUG, 
@@ -1289,8 +1291,10 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   }
 
   is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
+  /* we want to send one seqno: either FIN or data (no options) */
+  len = is_fin ? 0 : 1;
 
-  p = tcp_output_alloc_header(pcb, 0, seg->tcphdr->seqno);
+  p = tcp_output_alloc_header(pcb, 0, len, seg->tcphdr->seqno);
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: no memory for pbuf\n"));
     return;
@@ -1302,7 +1306,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     TCPH_FLAGS_SET(tcphdr, TCP_ACK | TCP_FIN);
   } else {
     /* Data segment, copy in one byte from the head of the unacked queue */
-    *((char *)p->payload + sizeof(struct tcp_hdr)) = *(char *)seg->dataptr;
+    *((char *)p->payload + TCP_HLEN) = *(char *)seg->dataptr;
   }
 
 #if CHECKSUM_GEN_TCP
