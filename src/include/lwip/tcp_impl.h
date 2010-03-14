@@ -253,11 +253,15 @@ PACK_STRUCT_END
 
 #endif /* LWIP_EVENT_API */
 
+/** Enabled extra-check for TCP_OVERSIZE if LWIP_DEBUG is enabled */
 #if TCP_OVERSIZE && defined(LWIP_DEBUG)
 #define TCP_OVERSIZE_DBGCHECK 1
 #else
 #define TCP_OVERSIZE_DBGCHECK 0
 #endif
+
+/** Don't generate chceksum on copy if CHECKSUM_GEN_TCP is disabled */
+#define TCP_CHECKSUM_ON_COPY  (LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_TCP)
 
 /* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
@@ -270,9 +274,15 @@ struct tcp_seg {
                               pbuf in unsent (used for asserting vs.
                               tcp_pcb.unsent_oversized only) */
 #endif /* TCP_OVERSIZE_DBGCHECK */ 
+#if TCP_CHECKSUM_ON_COPY
+  u16_t chksum;
+  u8_t  chksum_swapped;
+#endif /* TCP_CHECKSUM_ON_COPY */
   u8_t  flags;
-#define TF_SEG_OPTS_MSS   (u8_t)0x01U   /* Include MSS option. */
-#define TF_SEG_OPTS_TS    (u8_t)0x02U   /* Include timestamp option. */
+#define TF_SEG_OPTS_MSS         (u8_t)0x01U /* Include MSS option. */
+#define TF_SEG_OPTS_TS          (u8_t)0x02U /* Include timestamp option. */
+#define TF_SEG_DATA_CHECKSUMMED (u8_t)0x04U /* ALL data (not the header) is
+                                               checksummed into 'chksum' */
   struct tcp_hdr *tcphdr;  /* the TCP header */
 };
 

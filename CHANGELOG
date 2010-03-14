@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-03-14: Simon Goldschmidt
+  * tcp_impl.h, tcp_out.c, inet_chksum.h/.c: task #6849: Calculate checksum
+    when creating TCP segments, not when (re-)transmitting them.
+
   2010-03-07: Simon Goldschmidt
   * sockets.c: bug #28775 (select/event_callback: only check select_cb_list
     on change) plus use SYS_LIGHTWEIGHT_PROT to protect the select code.
