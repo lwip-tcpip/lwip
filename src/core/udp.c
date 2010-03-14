@@ -506,7 +506,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
     if (udphdr->chksum == 0x0000) {
       udphdr->chksum = 0xffff;
     }
-#endif /* CHECKSUM_CHECK_UDP */
+#endif /* CHECKSUM_GEN_UDP */
     /* output to IP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDPLITE,)\n"));
 #if LWIP_NETIF_HWADDRHINT
@@ -530,7 +530,7 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
         udphdr->chksum = 0xffff;
       }
     }
-#endif /* CHECKSUM_CHECK_UDP */
+#endif /* CHECKSUM_GEN_UDP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,IP_PROTO_UDP,)\n"));
     /* output to IP */
