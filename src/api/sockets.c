@@ -399,18 +399,21 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
   ip_addr_t local_addr;
   u16_t local_port;
   err_t err;
+  const struct sockaddr_in *name_in;
 
   sock = get_socket(s);
   if (!sock) {
     return -1;
   }
 
+  /* check size, familiy and alignment of 'name' */
   LWIP_ERROR("lwip_bind: invalid address", ((namelen == sizeof(struct sockaddr_in)) &&
-             ((((const struct sockaddr_in *)name)->sin_family) == AF_INET)),
+             ((name->sa_family) == AF_INET) && ((((mem_ptr_t)name) % 4) == 0)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  name_in = (const struct sockaddr_in *)(void*)name;
 
-  inet_addr_to_ipaddr(&local_addr, &((const struct sockaddr_in *)name)->sin_addr);
-  local_port = ((const struct sockaddr_in *)name)->sin_port;
+  inet_addr_to_ipaddr(&local_addr, &name_in->sin_addr);
+  local_port = name_in->sin_port;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
   ip_addr_debug_print(SOCKETS_DEBUG, &local_addr);
@@ -460,25 +463,28 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 {
   struct lwip_sock *sock;
   err_t err;
+  const struct sockaddr_in *name_in;
 
   sock = get_socket(s);
   if (!sock) {
     return -1;
   }
 
+  /* check size, familiy and alignment of 'name' */
   LWIP_ERROR("lwip_connect: invalid address", ((namelen == sizeof(struct sockaddr_in)) &&
-             ((((const struct sockaddr_in *)name)->sin_family) == AF_INET)),
+             ((name->sa_family) == AF_INET) && ((((mem_ptr_t)name) % 4) == 0)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  name_in = (const struct sockaddr_in *)(void*)name;
 
-  if (((const struct sockaddr_in *)name)->sin_family == AF_UNSPEC) {
+  if (name_in->sin_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
     err = netconn_disconnect(sock->conn);
   } else {
     ip_addr_t remote_addr;
     u16_t remote_port;
 
-    inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)name)->sin_addr);
-    remote_port = ((const struct sockaddr_in *)name)->sin_port;
+    inet_addr_to_ipaddr(&remote_addr, &name_in->sin_addr);
+    remote_port = name_in->sin_port;
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
     ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
@@ -781,6 +787,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   ip_addr_t remote_addr;
   err_t err;
   u16_t short_size;
+  const struct sockaddr_in *to_in;
 #if !LWIP_TCPIP_CORE_LOCKING
   struct netbuf buf;
   u16_t remote_port;
@@ -805,8 +812,9 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   short_size = (u16_t)size;
   LWIP_ERROR("lwip_sendto: invalid address", (((to == NULL) && (tolen == 0)) ||
              ((tolen == sizeof(struct sockaddr_in)) &&
-             ((((const struct sockaddr_in *)to)->sin_family) == AF_INET))),
+             ((to->sa_family) == AF_INET) && ((((mem_ptr_t)to) % 4) == 0))),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  to_in = (const struct sockaddr_in *)(void*)to;
 
 #if LWIP_TCPIP_CORE_LOCKING
   /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field...) */
@@ -822,13 +830,13 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       p->payload = (void*)data;
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
       
-      inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)to)->sin_addr);
+      inet_addr_to_ipaddr(&remote_addr, &to_in->sin_addr);
       
       LOCK_TCPIP_CORE();
       if (sock->conn->type == NETCONN_RAW) {
         err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
       } else {
-        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(((const struct sockaddr_in *)to)->sin_port));
+        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(to_in->sin_port));
       }
       UNLOCK_TCPIP_CORE();
       
@@ -841,8 +849,8 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
   if (to) {
-    inet_addr_to_ipaddr(&remote_addr, &((const struct sockaddr_in *)to)->sin_addr);
-    remote_port      = ntohs(((const struct sockaddr_in *)to)->sin_port);
+    inet_addr_to_ipaddr(&remote_addr, &to_in->sin_addr);
+    remote_port      = ntohs(to_in->sin_port);
     buf.addr         = &remote_addr;
     buf.port         = remote_port;
   } else {
