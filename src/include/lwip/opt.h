@@ -444,7 +444,6 @@
 #define ETH_PAD_SIZE                    0
 #endif
 
-
 /*
    --------------------------------
    ---------- IP options ----------
@@ -1706,6 +1705,14 @@
  */
 #ifndef CHECKSUM_CHECK_TCP
 #define CHECKSUM_CHECK_TCP              1
+#endif
+
+/**
+ * LWIP_CHECKSUM_ON_COPY==1: Calculate checksum when copying data from
+ * application buffers to pbufs.
+ */
+#ifndef LWIP_CHECKSUM_ON_COPY
+#define LWIP_CHECKSUM_ON_COPY           0
 #endif
 
 /*

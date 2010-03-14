@@ -42,6 +42,7 @@
 #include "lwip/def.h"
 
 #include <stddef.h>
+#include <string.h>
 
 /* These are some reference implementations of the checksum algorithm, with the
  * aim of being simple, correct and fully portable. Checksumming is the
@@ -64,18 +65,6 @@
 #ifndef LWIP_CHKSUM_ALGORITHM
 # define LWIP_CHKSUM_ALGORITHM 0
 #endif
-
-/** Like the name says... */
-#if LWIP_PLATFORM_BYTESWAP && (BYTE_ORDER == LITTLE_ENDIAN)
-/* little endian and PLATFORM_BYTESWAP defined */
-#define SWAP_BYTES_IN_WORD(w) LWIP_PLATFORM_HTONS(w)
-#else
-/* can't use htons on big endian (or PLATFORM_BYTESWAP not defined)... */
-#define SWAP_BYTES_IN_WORD(w) ((w & 0xff) << 8) | ((w & 0xff00) >> 8)
-#endif
-
-/** Split an u32_t in two u16_ts and add them up */
-#define FOLD_U32T(u)          ((u >> 16) + (u & 0x0000ffffUL))
 
 #if (LWIP_CHKSUM_ALGORITHM == 1) /* Version #1 */
 /**
@@ -339,8 +328,6 @@ inet_chksum_pseudo(struct pbuf *p,
  * @param proto_len length of the ip data part (used for checksum of pseudo header)
  * @return checksum (as u16_t) to be saved directly in the protocol header
  */
-/* Currently only used by UDPLITE, although this could change in the future. */
-#if LWIP_UDPLITE
 u16_t
 inet_chksum_pseudo_partial(struct pbuf *p,
        ip_addr_t *src, ip_addr_t *dest,
@@ -394,7 +381,6 @@ inet_chksum_pseudo_partial(struct pbuf *p,
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
   return (u16_t)~(acc & 0xffffUL);
 }
-#endif /* LWIP_UDPLITE */
 
 /* inet_chksum:
  *
@@ -442,3 +428,23 @@ inet_chksum_pbuf(struct pbuf *p)
   }
   return (u16_t)~(acc & 0xffffUL);
 }
+
+/* These are some implementations for LWIP_CHKSUM_COPY, which copies data
+ * like MEMCPY but generates a checksum at the same time. Since this is a
+ * performance-sensitive function, you might want to create your own version
+ * in assembly targeted at your hardware by defining it in lwipopts.h:
+ *   #define LWIP_CHKSUM_COPY(dst, src, len) your_chksum_copy(dst, src, len)
+ */
+
+#if (LWIP_CHKSUM_COPY_ALGORITHM == 1) /* Version #1 */
+/** Safe but slow: first call MEMCPY, then call LWIP_CHKSUM.
+ * For architectures with big caches, data might still be in cache when
+ * generating the checksum after copying.
+ */
+u16_t
+lwip_chksum_copy(void *dst, const void *src, u16_t len)
+{
+  MEMCPY(dst, src, len);
+  return LWIP_CHKSUM(dst, len);
+}
+#endif /* (LWIP_CHKSUM_COPY_ALGORITHM == 1) */
