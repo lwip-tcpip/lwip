@@ -158,6 +158,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-14: Simon Goldschmidt
+  * opt.h, etharp.h: Fixed bug #29148 (Incorrect PBUF_POOL_BUFSIZE for ports
+    where ETH_PAD_SIZE > 0) by moving definition of ETH_PAD_SIZE to opt.h
+    and basing PBUF_LINK_HLEN on it.
+
   2010-03-08: Simon Goldschmidt
   * netif.c, ipv4/ip.c: task #10241 (AutoIP: don't break existing connections
     when assiging routable address): when checking incoming packets and

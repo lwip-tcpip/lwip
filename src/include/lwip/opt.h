@@ -435,6 +435,16 @@
 #define LWIP_ETHERNET                   (LWIP_ARP || PPPOE_SUPPORT)
 #endif
 
+/** ETH_PAD_SIZE: number of bytes added before the ethernet header to ensure
+ * alignment of payload after that header. Since the header is 14 bytes long,
+ * without this padding e.g. addresses in the IP header will not be aligned
+ * on a 32-bit boundary, so setting this to 2 can speed up 32-bit-platforms.
+ */
+#ifndef ETH_PAD_SIZE
+#define ETH_PAD_SIZE                    0
+#endif
+
+
 /*
    --------------------------------
    ---------- IP options ----------
@@ -997,7 +1007,7 @@
  * Ethernet.
  */
 #ifndef PBUF_LINK_HLEN
-#define PBUF_LINK_HLEN                  14
+#define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
 #endif
 
 /**

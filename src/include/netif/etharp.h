@@ -48,10 +48,6 @@
 extern "C" {
 #endif
 
-#ifndef ETH_PAD_SIZE
-#define ETH_PAD_SIZE          0
-#endif
-
 #ifndef ETHARP_HWADDR_LEN
 #define ETHARP_HWADDR_LEN     6
 #endif
