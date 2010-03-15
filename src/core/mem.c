@@ -242,25 +242,25 @@ plug_holes(struct mem *mem)
   /* plug hole forward */
   LWIP_ASSERT("plug_holes: mem->next <= MEM_SIZE_ALIGNED", mem->next <= MEM_SIZE_ALIGNED);
 
-  nmem = (struct mem *)&ram[mem->next];
+  nmem = (struct mem *)(void *)&ram[mem->next];
   if (mem != nmem && nmem->used == 0 && (u8_t *)nmem != (u8_t *)ram_end) {
     /* if mem->next is unused and not end of ram, combine mem and mem->next */
     if (lfree == nmem) {
       lfree = mem;
     }
     mem->next = nmem->next;
-    ((struct mem *)&ram[nmem->next])->prev = (mem_size_t)((u8_t *)mem - ram);
+    ((struct mem *)(void *)&ram[nmem->next])->prev = (mem_size_t)((u8_t *)mem - ram);
   }
 
   /* plug hole backward */
-  pmem = (struct mem *)&ram[mem->prev];
+  pmem = (struct mem *)(void *)&ram[mem->prev];
   if (pmem != mem && pmem->used == 0) {
     /* if mem->prev is unused, combine mem and mem->prev */
     if (lfree == mem) {
       lfree = pmem;
     }
     pmem->next = mem->next;
-    ((struct mem *)&ram[mem->next])->prev = (mem_size_t)((u8_t *)pmem - ram);
+    ((struct mem *)(void *)&ram[mem->next])->prev = (mem_size_t)((u8_t *)pmem - ram);
   }
 }
 
@@ -278,18 +278,18 @@ mem_init(void)
   /* align the heap */
   ram = (u8_t *)LWIP_MEM_ALIGN(LWIP_RAM_HEAP_POINTER);
   /* initialize the start of the heap */
-  mem = (struct mem *)ram;
+  mem = (struct mem *)(void *)ram;
   mem->next = MEM_SIZE_ALIGNED;
   mem->prev = 0;
   mem->used = 0;
   /* initialize the end of the heap */
-  ram_end = (struct mem *)&ram[MEM_SIZE_ALIGNED];
+  ram_end = (struct mem *)(void *)&ram[MEM_SIZE_ALIGNED];
   ram_end->used = 1;
   ram_end->next = MEM_SIZE_ALIGNED;
   ram_end->prev = MEM_SIZE_ALIGNED;
 
   /* initialize the lowest-free pointer to the start of the heap */
-  lfree = (struct mem *)ram;
+  lfree = (struct mem *)(void *)ram;
 
   MEM_STATS_AVAIL(avail, MEM_SIZE_ALIGNED);
 
@@ -331,7 +331,7 @@ mem_free(void *rmem)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
   /* Get the corresponding struct mem ... */
-  mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
+  mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... which has to be in a used state ... */
   LWIP_ASSERT("mem_free: mem->used", mem->used);
   /* ... and is now unused. */
@@ -397,7 +397,7 @@ mem_trim(void *rmem, mem_size_t newsize)
     return rmem;
   }
   /* Get the corresponding struct mem ... */
-  mem = (struct mem *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
+  mem = (struct mem *)(void *)((u8_t *)rmem - SIZEOF_STRUCT_MEM);
   /* ... and its offset pointer */
   ptr = (mem_size_t)((u8_t *)mem - ram);
 
@@ -415,7 +415,7 @@ mem_trim(void *rmem, mem_size_t newsize)
   /* protect the heap from concurrent access */
   LWIP_MEM_FREE_PROTECT();
 
-  mem2 = (struct mem *)&ram[mem->next];
+  mem2 = (struct mem *)(void *)&ram[mem->next];
   if(mem2->used == 0) {
     /* The next struct is unused, we can simply move it at little */
     mem_size_t next;
@@ -424,9 +424,9 @@ mem_trim(void *rmem, mem_size_t newsize)
     /* create new struct mem which is moved directly after the shrinked mem */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
     if (lfree == mem2) {
-      lfree = (struct mem *)&ram[ptr2];
+      lfree = (struct mem *)(void *)&ram[ptr2];
     }
-    mem2 = (struct mem *)&ram[ptr2];
+    mem2 = (struct mem *)(void *)&ram[ptr2];
     mem2->used = 0;
     /* restore the next pointer */
     mem2->next = next;
@@ -438,7 +438,7 @@ mem_trim(void *rmem, mem_size_t newsize)
      * let 'mem2->next->prev' point to mem2 again. but only if mem2->next is not
      * the end of the heap */
     if (mem2->next != MEM_SIZE_ALIGNED) {
-      ((struct mem *)&ram[mem2->next])->prev = ptr2;
+      ((struct mem *)(void *)&ram[mem2->next])->prev = ptr2;
     }
     MEM_STATS_DEC_USED(used, (size - newsize));
     /* no need to plug holes, we've already done that */
@@ -451,7 +451,7 @@ mem_trim(void *rmem, mem_size_t newsize)
      *       region that couldn't hold data, but when mem->next gets freed,
      *       the 2 regions would be combined, resulting in more free memory */
     ptr2 = ptr + SIZEOF_STRUCT_MEM + newsize;
-    mem2 = (struct mem *)&ram[ptr2];
+    mem2 = (struct mem *)(void *)&ram[ptr2];
     if (mem2 < lfree) {
       lfree = mem2;
     }
@@ -460,7 +460,7 @@ mem_trim(void *rmem, mem_size_t newsize)
     mem2->prev = ptr;
     mem->next = ptr2;
     if (mem2->next != MEM_SIZE_ALIGNED) {
-      ((struct mem *)&ram[mem2->next])->prev = ptr2;
+      ((struct mem *)(void *)&ram[mem2->next])->prev = ptr2;
     }
     MEM_STATS_DEC_USED(used, (size - newsize));
     /* the original mem->next is used, so no need to plug holes! */
@@ -527,8 +527,8 @@ mem_malloc(mem_size_t size)
      * beginning with the lowest free block.
      */
     for (ptr = (mem_size_t)((u8_t *)lfree - ram); ptr < MEM_SIZE_ALIGNED - size;
-         ptr = ((struct mem *)&ram[ptr])->next) {
-      mem = (struct mem *)&ram[ptr];
+         ptr = ((struct mem *)(void *)&ram[ptr])->next) {
+      mem = (struct mem *)(void *)&ram[ptr];
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
       mem_free_count = 0;
       LWIP_MEM_ALLOC_UNPROTECT();
@@ -558,7 +558,7 @@ mem_malloc(mem_size_t size)
            */
           ptr2 = ptr + SIZEOF_STRUCT_MEM + size;
           /* create mem2 struct */
-          mem2 = (struct mem *)&ram[ptr2];
+          mem2 = (struct mem *)(void *)&ram[ptr2];
           mem2->used = 0;
           mem2->next = mem->next;
           mem2->prev = ptr;
@@ -567,7 +567,7 @@ mem_malloc(mem_size_t size)
           mem->used = 1;
 
           if (mem2->next != MEM_SIZE_ALIGNED) {
-            ((struct mem *)&ram[mem2->next])->prev = ptr2;
+            ((struct mem *)(void *)&ram[mem2->next])->prev = ptr2;
           }
           MEM_STATS_INC_USED(used, (size + SIZEOF_STRUCT_MEM));
         } else {
@@ -588,7 +588,7 @@ mem_malloc(mem_size_t size)
             LWIP_MEM_ALLOC_UNPROTECT();
             /* prevent high interrupt latency... */
             LWIP_MEM_ALLOC_PROTECT();
-            lfree = (struct mem *)&ram[lfree->next];
+            lfree = (struct mem *)(void *)&ram[lfree->next];
           }
           LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
         }

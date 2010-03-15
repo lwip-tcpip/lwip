@@ -146,7 +146,7 @@ lwip_standard_chksum(void *dataptr, int len)
   }
 
   /* Add the bulk of the data */
-  ps = (u16_t *)pb;
+  ps = (u16_t *)(void *)pb;
   while (len > 1) {
     sum += *ps++;
     len -= 2;
