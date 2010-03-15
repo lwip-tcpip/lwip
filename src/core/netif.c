@@ -596,11 +596,13 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
+#if LWIP_SNMP
 #if LWIP_HAVE_LOOPIF
   struct netif *stats_if = &loop_netif;
 #else /* LWIP_HAVE_LOOPIF */
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
+#endif /* LWIP_SNMP */
   SYS_ARCH_DECL_PROTECT(lev);
   LWIP_UNUSED_ARG(ipaddr);
 
@@ -676,11 +678,13 @@ netif_poll(struct netif *netif)
   struct pbuf *in;
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
+#if LWIP_SNMP
 #if LWIP_HAVE_LOOPIF
   struct netif *stats_if = &loop_netif;
 #else /* LWIP_HAVE_LOOPIF */
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
+#endif /* LWIP_SNMP */
   SYS_ARCH_DECL_PROTECT(lev);
 
   do {
