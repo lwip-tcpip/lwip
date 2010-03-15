@@ -307,7 +307,7 @@ memp_init(void)
     for (j = 0; j < memp_num[i]; ++j) {
       memp->next = memp_tab[i];
       memp_tab[i] = memp;
-      memp = (struct memp *)((u8_t *)memp + MEMP_SIZE + memp_sizes[i]
+      memp = (struct memp *)(void *)((u8_t *)memp + MEMP_SIZE + memp_sizes[i]
 #if MEMP_OVERFLOW_CHECK
         + MEMP_SANITY_REGION_AFTER_ALIGNED
 #endif
@@ -361,7 +361,7 @@ memp_malloc_fn(memp_t type, const char* file, const int line)
     MEMP_STATS_INC_USED(used, type);
     LWIP_ASSERT("memp_malloc: memp properly aligned",
                 ((mem_ptr_t)memp % MEM_ALIGNMENT) == 0);
-    memp = (struct memp*)((u8_t*)memp + MEMP_SIZE);
+    memp = (struct memp*)(void *)((u8_t*)memp + MEMP_SIZE);
   } else {
     LWIP_DEBUGF(MEMP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("memp_malloc: out of memory in pool %s\n", memp_desc[type]));
     MEMP_STATS_INC(err, type);
@@ -390,7 +390,7 @@ memp_free(memp_t type, void *mem)
   LWIP_ASSERT("memp_free: mem properly aligned",
                 ((mem_ptr_t)mem % MEM_ALIGNMENT) == 0);
 
-  memp = (struct memp *)((u8_t*)mem - MEMP_SIZE);
+  memp = (struct memp *)(void *)((u8_t*)mem - MEMP_SIZE);
 
   SYS_ARCH_PROTECT(old_level);
 #if MEMP_OVERFLOW_CHECK
