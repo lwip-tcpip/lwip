@@ -310,7 +310,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   /* If this fails, please report to lwip-devel! :-) */
   LWIP_ASSERT("total_size <= NETDB_ELEM_SIZE: please report this!",
     total_size <= NETDB_ELEM_SIZE);
-  ai = memp_malloc(MEMP_NETDB);
+  ai = (struct addrinfo *)memp_malloc(MEMP_NETDB);
   if (ai == NULL) {
     goto memerr;
   }

@@ -240,7 +240,7 @@ dns_init()
 {
   ip_addr_t dnsserver;
 
-  dns_payload = LWIP_MEM_ALIGN(dns_payload_buffer);
+  dns_payload = (u8_t *)LWIP_MEM_ALIGN(dns_payload_buffer);
   
   /* initialize default DNS server address */
   DNS_SERVER_ADDRESS(&dnsserver);
@@ -858,6 +858,7 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
   u8_t i;
   u8_t lseq, lseqi;
   struct dns_table_entry *pEntry = NULL;
+  size_t namelen;
 
   /* search an unused entry, or the oldest one */
   lseq = lseqi = 0;
@@ -897,7 +898,9 @@ dns_enqueue(const char *name, dns_found_callback found, void *callback_arg)
   pEntry->seqno = dns_seqno++;
   pEntry->found = found;
   pEntry->arg   = callback_arg;
-  strcpy(pEntry->name, name);
+  namelen = LWIP_MIN(strlen(name), DNS_MAX_NAME_LENGTH-1);
+  MEMCPY(pEntry->name, name, namelen);
+  pEntry->name[namelen] = 0;
 
   /* force to send query without waiting timer */
   dns_check_entry(i);
