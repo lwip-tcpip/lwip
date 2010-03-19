@@ -162,6 +162,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-19: Simon Goldschmidt
+  * snmp_msg.c: Fixed bug #29256: SNMP Trap address was not correctly set
+
   2010-03-14: Simon Goldschmidt
   * opt.h, etharp.h: Fixed bug #29148 (Incorrect PBUF_POOL_BUFSIZE for ports
     where ETH_PAD_SIZE > 0) by moving definition of ETH_PAD_SIZE to opt.h
