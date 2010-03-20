@@ -261,9 +261,9 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #define netconn_get_noautorecved(conn)        (((conn)->flags & NETCONN_FLAG_NO_AUTO_RECVED) != 0)
 
 #if LWIP_SO_RCVTIMEO
-/** Set the receive timeout in miliseconds */
+/** Set the receive timeout in milliseconds */
 #define netconn_set_recvtimeout(conn, timeout)      ((conn)->recv_timeout = (timeout))
-/** Get the receive timeout in miliseconds */
+/** Get the receive timeout in milliseconds */
 #define netconn_get_recvtimeout(conn)               ((conn)->recv_timeout)
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF

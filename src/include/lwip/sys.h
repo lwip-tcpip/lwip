@@ -136,8 +136,8 @@ err_t sys_sem_new(sys_sem_t *sem, u8_t count);
 void sys_sem_signal(sys_sem_t *sem);
 /** Wait for a semaphore for the specified timeout
  * @param sem the semaphore to wait for
- * @param timeout timeout in miliseconds to wait (0 = wait forever)
- * @return time (in miliseconds) waited for the semaphore
+ * @param timeout timeout in milliseconds to wait (0 = wait forever)
+ * @return time (in milliseconds) waited for the semaphore
  *         or SYS_ARCH_TIMEOUT on timeout */
 u32_t sys_arch_sem_wait(sys_sem_t *sem, u32_t timeout);
 /** Delete a semaphore
@@ -178,8 +178,8 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
 /** Wait for a new message to arrive in the mbox
  * @param mbox mbox to get a message from
  * @param msg pointer where the message is stored
- * @param timeout maximum time (in miliseconds) to wait for a message
- * @return time (in miliseconds) waited for a message, may be 0 if not waited
+ * @param timeout maximum time (in milliseconds) to wait for a message
+ * @return time (in milliseconds) waited for a message, may be 0 if not waited
            or SYS_ARCH_TIMEOUT on timeout
  *         The returned time has to be accurate to prevent timer jitter! */
 u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout);
@@ -188,8 +188,8 @@ u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout);
 /** Wait for a new message to arrive in the mbox
  * @param mbox mbox to get a message from
  * @param msg pointer where the message is stored
- * @param timeout maximum time (in miliseconds) to wait for a message
- * @return 0 (miliseconds) if a message has been received
+ * @param timeout maximum time (in milliseconds) to wait for a message
+ * @return 0 (milliseconds) if a message has been received
  *         or SYS_MBOX_EMPTY if the mailbox is empty */
 u32_t sys_arch_mbox_tryfetch(sys_mbox_t *mbox, void **msg);
 #endif
