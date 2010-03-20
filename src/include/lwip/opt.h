@@ -444,6 +444,14 @@
 #define ETH_PAD_SIZE                    0
 #endif
 
+/** ETHARP_SUPPORT_STATIC_ENTRIES==1: enable code to support static ARP table
+ * entries (using etharp_add_static_entry/etharp_remove_static_entry).
+ */
+#ifndef ETHARP_SUPPORT_STATIC_ENTRIES
+#define ETHARP_SUPPORT_STATIC_ENTRIES   0
+#endif
+
+
 /*
    --------------------------------
    ---------- IP options ----------

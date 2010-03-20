@@ -168,6 +168,11 @@ err_t etharp_request(struct netif *netif, ip_addr_t *ipaddr);
  *  From RFC 3220 "IP Mobility Support for IPv4" section 4.6. */
 #define etharp_gratuitous(netif) etharp_request((netif), &(netif)->ip_addr)
 
+#if ETHARP_SUPPORT_STATIC_ENTRIES
+err_t etharp_add_static_entry(ip_addr_t *ipaddr, struct eth_addr *ethaddr);
+err_t etharp_remove_static_entry(ip_addr_t *ipaddr);
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
+
 #if LWIP_AUTOIP
 err_t etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
                  const struct eth_addr *ethdst_addr,

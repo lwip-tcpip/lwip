@@ -13,6 +13,9 @@ HISTORY
 
   ++ New features:
 
+  2010-03-20: Simon Goldschmidt
+  * opt.h, etharp.c/.h: Added support for static ARP table entries
+
   2010-03-14: Simon Goldschmidt
   * tcp_impl.h, tcp_out.c, inet_chksum.h/.c: task #6849: Calculate checksum
     when creating TCP segments, not when (re-)transmitting them.
