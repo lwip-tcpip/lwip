@@ -122,6 +122,7 @@ tcpip_thread(void *arg)
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
 
+#if LWIP_TCPIP_TIMEOUT
     case TCPIP_MSG_TIMEOUT:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: TIMEOUT %p\n", (void *)msg));
       sys_timeout(msg->msg.tmo.msecs, msg->msg.tmo.h, msg->msg.tmo.arg);
@@ -132,6 +133,7 @@ tcpip_thread(void *arg)
       sys_untimeout(msg->msg.tmo.h, msg->msg.tmo.arg);
       memp_free(MEMP_TCPIP_MSG_API, msg);
       break;
+#endif /* LWIP_TCPIP_TIMEOUT */
 
     default:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: invalid message: %d\n", msg->type));
@@ -226,6 +228,7 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
   return ERR_VAL;
 }
 
+#if LWIP_TCPIP_TIMEOUT
 /**
  * call sys_timeout in tcpip_thread
  *
@@ -282,6 +285,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
   }
   return ERR_VAL;
 }
+#endif /* LWIP_TCPIP_TIMEOUT */
 
 #if LWIP_NETCONN
 /**

@@ -1321,6 +1321,13 @@
 #define LWIP_NETCONN                    1
 #endif
 
+/** LWIP_TCPIP_TIMEOUT==1: Enable tcpip_timeout/tcpip_untimeout tod create
+ * timers running in tcpip_thread from another thread.
+ */
+#ifndef LWIP_TCPIP_TIMEOUT
+#define LWIP_TCPIP_TIMEOUT              1
+#endif
+
 /*
    ------------------------------------
    ---------- Socket options ----------

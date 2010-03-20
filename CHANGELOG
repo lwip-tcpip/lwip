@@ -14,6 +14,10 @@ HISTORY
   ++ New features:
 
   2010-03-20: Simon Goldschmidt
+  * opt.h, tcpip.c/.h: Added an option to disable tcpip_(un)timeout code
+    since the linker cannot do this automatically to save space.
+
+  2010-03-20: Simon Goldschmidt
   * opt.h, etharp.c/.h: Added support for static ARP table entries
 
   2010-03-14: Simon Goldschmidt
