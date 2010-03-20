@@ -135,7 +135,7 @@ static const int err_to_errno_table[] = {
   EHOSTUNREACH,  /* ERR_RTE        -4      Routing problem.         */
   EINPROGRESS,   /* ERR_INPROGRESS -5      Operation in progress    */
   EINVAL,        /* ERR_VAL        -6      Illegal value.           */
-  EWOULDBLOCK,   /* ERR_WOULBLOCK  -7      Operation would block.   */
+  EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
   ECONNABORTED,  /* ERR_ABRT       -8      Connection aborted.      */
   ECONNRESET,    /* ERR_RST        -9      Connection reset.        */
   ESHUTDOWN,     /* ERR_CLSD       -10     Connection closed.       */

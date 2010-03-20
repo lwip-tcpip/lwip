@@ -1182,7 +1182,7 @@ do_writemore(struct netconn *conn)
   if (dontblock && (err == ERR_MEM)) {
     /* nonblocking write failed */
     write_finished = 1;
-    err = ERR_WOULBLOCK;
+    err = ERR_WOULDBLOCK;
     /* let poll_tcp check writable space to mark the pcb
        writable again */
     conn->flags |= NETCONN_FLAG_CHECK_WRITESPACE;

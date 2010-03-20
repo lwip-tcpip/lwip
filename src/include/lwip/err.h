@@ -56,7 +56,7 @@ typedef s8_t err_t;
 #define ERR_RTE        -4    /* Routing problem.         */
 #define ERR_INPROGRESS -5    /* Operation in progress    */
 #define ERR_VAL        -6    /* Illegal value.           */
-#define ERR_WOULBLOCK  -7    /* Operation would block.   */
+#define ERR_WOULDBLOCK -7    /* Operation would block.   */
 
 #define ERR_IS_FATAL(e) ((e) < ERR_VAL)
 
