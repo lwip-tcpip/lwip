@@ -553,8 +553,9 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
  * @param dataptr pointer to the application buffer that contains the data to send
  * @param size size of the application data to send
  * @param apiflags combination of following flags :
- * - NETCONN_COPY (0x01) data will be copied into memory belonging to the stack
- * - NETCONN_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent
+ * - NETCONN_COPY: data will be copied into memory belonging to the stack
+ * - NETCONN_MORE: for TCP connection, PSH flag will be set on last segment sent
+ * - NETCONN_DONTBLOCK: only write the data if all dat can be written at once
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t
