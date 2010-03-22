@@ -484,6 +484,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->callback_arg = pcb->callback_arg;
   lpcb->local_port = pcb->local_port;
   lpcb->state = LISTEN;
+  lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
   lpcb->so_options |= SOF_ACCEPTCONN;
   lpcb->ttl = pcb->ttl;
@@ -1072,7 +1073,7 @@ tcp_kill_prio(u8_t prio)
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB %p (%"S32_F")\n",
            (void *)inactive, inactivity));
     tcp_abort(inactive);
-  }      
+  }
 }
 
 /**
@@ -1098,7 +1099,7 @@ tcp_kill_timewait(void)
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_kill_timewait: killing oldest TIME-WAIT PCB %p (%"S32_F")\n",
            (void *)inactive, inactivity));
     tcp_abort(inactive);
-  }      
+  }
 }
 
 /**

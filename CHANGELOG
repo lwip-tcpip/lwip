@@ -169,6 +169,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-22: Simon Goldschmidt
+  * tcp.c: tcp_listen() did not copy the pcb's prio.
+
   2010-03-19: Simon Goldschmidt
   * snmp_msg.c: Fixed bug #29256: SNMP Trap address was not correctly set
 
