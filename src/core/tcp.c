@@ -134,11 +134,26 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
   err_t err;
 
   if (rst_on_unacked_data && (pcb->state != LISTEN)) {
-    if ((pcb->refused_data != NULL) ||  (pcb->rcv_wnd != TCP_WND)) {
+    if ((pcb->refused_data != NULL) || (pcb->rcv_wnd != TCP_WND)) {
       /* Not all data received by application, send RST to tell the remote
          side about this. */
+      LWIP_ASSERT("pcb->flags & TF_RXCLOSED", pcb->flags & TF_RXCLOSED);
+
+      /* don't call tcp_abort here: we must not deallocate the pcb since
+         that might not be expected when calling tcp_close */
       tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
         pcb->local_port, pcb->remote_port);
+
+      tcp_pcb_purge(pcb);
+
+      /* TODO: to which state do we move now? */
+
+      /* move to TIME_WAIT since we close actively */
+      TCP_RMV(&tcp_active_pcbs, pcb);
+      pcb->state = TIME_WAIT;
+      TCP_REG(&tcp_tw_pcbs, pcb);
+
+      return ERR_OK;
     }
   }
 
@@ -158,7 +173,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     break;
   case LISTEN:
     err = ERR_OK;
-    tcp_pcb_remove((struct tcp_pcb **)&tcp_listen_pcbs.pcbs, pcb);
+    tcp_pcb_remove(&tcp_listen_pcbs.pcbs, pcb);
     memp_free(MEMP_TCP_PCB_LISTEN, pcb);
     pcb = NULL;
     break;
@@ -383,7 +398,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   }
   /* Check if the address already is in use. */
   /* Check the listen pcbs. */
-  for(cpcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs;
+  for(cpcb = tcp_listen_pcbs.pcbs;
       cpcb != NULL; cpcb = cpcb->next) {
     if (cpcb->local_port == port) {
       if (ip_addr_isany(&(cpcb->local_ip)) ||
@@ -499,7 +514,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->accepts_pending = 0;
   lpcb->backlog = (backlog ? backlog : 1);
 #endif /* TCP_LISTEN_BACKLOG */
-  TCP_REG(&tcp_listen_pcbs.listen_pcbs, lpcb);
+  TCP_REG(&tcp_listen_pcbs.pcbs, (struct tcp_pcb *)lpcb);
   return (struct tcp_pcb *)lpcb;
 }
 
