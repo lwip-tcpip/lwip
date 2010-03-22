@@ -82,7 +82,7 @@ mem_malloc(mem_size_t size)
   memp_t poolnr;
   mem_size_t required_size = size + sizeof(struct memp_malloc_helper);
 
-  for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr++) {
+  for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr = (memp_t)(poolnr + 1)) {
 #if MEM_USE_POOLS_TRY_BIGGER_POOL
 again:
 #endif /* MEM_USE_POOLS_TRY_BIGGER_POOL */
