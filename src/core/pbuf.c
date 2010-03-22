@@ -428,8 +428,9 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
   u16_t increment_magnitude;
 
   LWIP_ASSERT("p != NULL", p != NULL);
-  if ((header_size_increment == 0) || (p == NULL))
+  if ((header_size_increment == 0) || (p == NULL)) {
     return 0;
+  }
  
   if (header_size_increment < 0){
     increment_magnitude = -header_size_increment;
@@ -478,8 +479,7 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
        * bail out unsuccesfully */
       return 1;
     }
-  }
-  else {
+  } else {
     /* Unknown type */
     LWIP_ASSERT("bad pbuf type", 0);
     return 1;
