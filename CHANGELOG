@@ -169,6 +169,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-25: Simon Goldschmidt
+  * tcp_in.c, test_tcp_oos.c: Fixed bug #29080: Correctly handle remote side
+    overrunning our rcv_wnd in ooseq case.
+
   2010-03-22: Simon Goldschmidt
   * tcp.c: tcp_listen() did not copy the pcb's prio.
 
