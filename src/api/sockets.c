@@ -998,7 +998,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
     SYS_ARCH_UNPROTECT(lev);
     /* ... then examine it: */
     /* See if netconn of this socket is ready for read */
-    if (readset_in && FD_ISSET(i, readset_in) && (lastdata != NULL) || (rcvevent > 0)) {
+    if (readset_in && FD_ISSET(i, readset_in) && ((lastdata != NULL) || (rcvevent > 0))) {
       FD_SET(i, &lreadset);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
       nready++;

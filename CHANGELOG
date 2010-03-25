@@ -170,6 +170,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-03-25: Simon Goldschmidt
+  * sockets.c: Fixed bug #29332: lwip_select() processes readset incorrectly
+
+  2010-03-25: Simon Goldschmidt
   * tcp_in.c, test_tcp_oos.c: Fixed bug #29080: Correctly handle remote side
     overrunning our rcv_wnd in ooseq case.
 
