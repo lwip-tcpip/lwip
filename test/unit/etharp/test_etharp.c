@@ -131,7 +131,9 @@ etharp_teardown(void)
 
 START_TEST(test_etharp_table)
 {
+#if ETHARP_SUPPORT_STATIC_ENTRIES
   err_t err;
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   s8_t idx;
   ip_addr_t *unused_ipaddr;
   struct eth_addr *unused_ethaddr;
@@ -174,12 +176,14 @@ START_TEST(test_etharp_table)
       }
     }
     linkoutput_ctr = 0;
+#if ETHARP_SUPPORT_STATIC_ENTRIES
     /* create one static entry */
     err = etharp_add_static_entry(&adrs[ARP_TABLE_SIZE], &test_ethaddr3);
     fail_unless(err == ERR_OK);
     idx = etharp_find_addr(NULL, &adrs[ARP_TABLE_SIZE], &unused_ethaddr, &unused_ipaddr);
     fail_unless(idx == 0);
     fail_unless(linkoutput_ctr == 0);
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
     linkoutput_ctr = 0;
     /* fill ARP-table with dynamic entries */
@@ -208,6 +212,7 @@ START_TEST(test_etharp_table)
         etharp_tmr();
       }
     }
+#if ETHARP_SUPPORT_STATIC_ENTRIES
     /* create a second static entry */
     err = etharp_add_static_entry(&adrs[ARP_TABLE_SIZE+1], &test_ethaddr4);
     fail_unless(err == ERR_OK);
@@ -222,12 +227,14 @@ START_TEST(test_etharp_table)
     fail_unless(idx == 0);
     idx = etharp_find_addr(NULL, &adrs[ARP_TABLE_SIZE+1], &unused_ethaddr, &unused_ipaddr);
     fail_unless(idx == -1);
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
     /* check that static entries don't time out */
     etharp_remove_all();
     idx = etharp_find_addr(NULL, &adrs[ARP_TABLE_SIZE], &unused_ethaddr, &unused_ipaddr);
     fail_unless(idx == 0);
 
+#if ETHARP_SUPPORT_STATIC_ENTRIES
     /* remove the first static entry */
     err = etharp_remove_static_entry(&adrs[ARP_TABLE_SIZE]);
     fail_unless(err == ERR_OK);
@@ -235,6 +242,7 @@ START_TEST(test_etharp_table)
     fail_unless(idx == -1);
     idx = etharp_find_addr(NULL, &adrs[ARP_TABLE_SIZE+1], &unused_ethaddr, &unused_ipaddr);
     fail_unless(idx == -1);
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
     udp_remove(pcb);
   }
