@@ -393,7 +393,7 @@ ip_input(struct pbuf *p, struct netif *inp)
     if (p == NULL) {
       return ERR_OK;
     }
-    iphdr = p->payload;
+    iphdr = (struct ip_hdr *)p->payload;
 #else /* IP_REASSEMBLY == 0, no packet fragment reassembly code present */
     pbuf_free(p);
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("IP packet dropped since it was fragmented (0x%"X16_F") (while IP_REASSEMBLY == 0).\n",
@@ -721,7 +721,7 @@ ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 void
 ip_debug_print(struct pbuf *p)
 {
-  struct ip_hdr *iphdr = p->payload;
+  struct ip_hdr *iphdr = (struct ip_hdr *)p->payload;
   u8_t *payload;
 
   payload = (u8_t *)iphdr + IP_HLEN;

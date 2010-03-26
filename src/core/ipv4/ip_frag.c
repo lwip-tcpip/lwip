@@ -267,11 +267,11 @@ ip_reass_enqueue_new_datagram(struct ip_hdr *fraghdr, int clen)
 {
   struct ip_reassdata* ipr;
   /* No matching previous fragment found, allocate a new reassdata struct */
-  ipr = memp_malloc(MEMP_REASSDATA);
+  ipr = (struct ip_reassdata *)memp_malloc(MEMP_REASSDATA);
   if (ipr == NULL) {
 #if IP_REASS_FREE_OLDEST
     if (ip_reass_remove_oldest_datagram(fraghdr, clen) >= clen) {
-      ipr = memp_malloc(MEMP_REASSDATA);
+      ipr = (struct ip_reassdata *)memp_malloc(MEMP_REASSDATA);
     }
     if (ipr == NULL)
 #endif /* IP_REASS_FREE_OLDEST */
@@ -666,7 +666,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
   rambuf->payload = LWIP_MEM_ALIGN((void *)buf);
 
   /* Copy the IP header in it */
-  iphdr = rambuf->payload;
+  iphdr = (struct ip_hdr *)rambuf->payload;
   SMEMCPY(iphdr, p->payload, IP_HLEN);
 #else /* IP_FRAG_USES_STATIC_BUF */
   original_iphdr = p->payload;
