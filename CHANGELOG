@@ -170,6 +170,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-03-26: Simon Goldschmidt
+  * tcp_out.c: Make LWIP_NETIF_TX_SINGLE_PBUF work for TCP, too
+
+  2010-03-26: Simon Goldschmidt
   * various files: Fixed compiling with different options disabled (TCP/UDP),
     triggered by bug #29345; don't allocate acceptmbox if LWIP_TCP is disabled
 

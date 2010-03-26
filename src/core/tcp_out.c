@@ -221,6 +221,14 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
   struct pbuf *p;
   u16_t alloc = length;
 
+#if LWIP_NETIF_TX_SINGLE_PBUF
+  LWIP_UNUSED_ARG(max_length);
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(apiflags);
+  LWIP_UNUSED_ARG(first_seg);
+  /* always create MSS-sized pbufs */
+  alloc = TCP_MSS;
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
   if (length < max_length) {
     /* Should we allocate an oversized pbuf, or just the minimum
      * length required? If tcp_write is going to be called again
@@ -241,6 +249,7 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
       alloc = LWIP_MIN(max_length, LWIP_MEM_ALIGN_SIZE(length + TCP_OVERSIZE));
     }
   }
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
   p = pbuf_alloc(layer, alloc, PBUF_RAM);
   if (p == NULL) {
     return NULL;
