@@ -148,7 +148,7 @@ struct stats_ {
 
 extern struct stats_ lwip_stats;
 
-void stats_init();
+void stats_init(void);
 
 #define STATS_INC(x) ++lwip_stats.x
 #define STATS_DEC(x) --lwip_stats.x
@@ -157,7 +157,7 @@ void stats_init();
                                     lwip_stats.x.max = lwip_stats.x.used; \
                                 } \
                              } while(0)
-#else
+#else /* LWIP_STATS */
 #define stats_init()
 #define STATS_INC(x)
 #define STATS_DEC(x)
@@ -276,7 +276,7 @@ void stats_display_igmp(struct stats_igmp *igmp);
 void stats_display_mem(struct stats_mem *mem, char *name);
 void stats_display_memp(struct stats_mem *mem, int index);
 void stats_display_sys(struct stats_sys *sys);
-#else
+#else /* LWIP_STATS_DISPLAY */
 #define stats_display()
 #define stats_display_proto(proto, name)
 #define stats_display_igmp(igmp)

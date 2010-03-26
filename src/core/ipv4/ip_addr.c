@@ -163,8 +163,9 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
        *  a.b.c   (with c treated as 16 bits)
        *  a.b (with b treated as 24 bits)
        */
-      if (pp >= parts + 3)
+      if (pp >= parts + 3) {
         return (0);
+      }
       *pp++ = val;
       c = *++cp;
     } else
@@ -173,8 +174,9 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
   /*
    * Check for trailing characters.
    */
-  if (c != '\0' && !isspace(c))
+  if (c != '\0' && !isspace(c)) {
     return (0);
+  }
   /*
    * Concoct the address according to
    * the number of parts specified.
@@ -188,21 +190,27 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
     break;
 
   case 2:             /* a.b -- 8.24 bits */
-    if (val > 0xffffffUL)
+    if (val > 0xffffffUL) {
       return (0);
+    }
     val |= parts[0] << 24;
     break;
 
   case 3:             /* a.b.c -- 8.8.16 bits */
-    if (val > 0xffff)
+    if (val > 0xffff) {
       return (0);
+    }
     val |= (parts[0] << 24) | (parts[1] << 16);
     break;
 
   case 4:             /* a.b.c.d -- 8.8.8.8 bits */
-    if (val > 0xff)
+    if (val > 0xff) {
       return (0);
+    }
     val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);
+    break;
+  default:
+    LWIP_ASSERT("unhandled", 0);
     break;
   }
   if (addr) {

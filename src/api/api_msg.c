@@ -653,7 +653,7 @@ netconn_free(struct netconn *conn)
  * @bytes_drained bytes drained from recvmbox
  * @accepts_drained pending connections drained from acceptmbox
  */
-void
+static void
 netconn_drain(struct netconn *conn)
 {
   void *mem;
@@ -1343,6 +1343,9 @@ do_getaddr(struct api_msg_msg *msg)
       *(msg->msg.ad.port) = (msg->msg.ad.local?msg->conn->pcb.tcp->local_port:msg->conn->pcb.tcp->remote_port);
       break;
 #endif /* LWIP_TCP */
+    default:
+      LWIP_ASSERT("invalid netconn_type", 0);
+      break;
     }
   } else {
     msg->err = ERR_CONN;

@@ -1574,7 +1574,7 @@ lwip_getsockopt_internal(void *arg)
   optval = data->optval;
 
   switch (level) {
-   
+
 /* Level: SOL_SOCKET */
   case SOL_SOCKET:
     switch (optname) {
@@ -1643,6 +1643,9 @@ lwip_getsockopt_internal(void *arg)
       *(int*)optval = (udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_NOCHKSUM) ? 1 : 0;
       break;
 #endif /* LWIP_UDP*/
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 
@@ -1671,6 +1674,9 @@ lwip_getsockopt_internal(void *arg)
                   s, *(u32_t *)optval));
       break;
 #endif /* LWIP_IGMP */
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 
@@ -1706,7 +1712,9 @@ lwip_getsockopt_internal(void *arg)
                   s, *(int *)optval));
       break;
 #endif /* LWIP_TCP_KEEPALIVE */
-
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
@@ -1724,9 +1732,15 @@ lwip_getsockopt_internal(void *arg)
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) = %d\n",
                   s, (*(int*)optval)) );
       break;
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_UDP */
+  default:
+    LWIP_ASSERT("unhandled level", 0);
+    break;
   } /* switch (level) */
   sys_sem_signal(&sock->conn->op_completed);
 }
@@ -1993,6 +2007,9 @@ lwip_setsockopt_internal(void *arg)
       }
       break;
 #endif /* LWIP_UDP */
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 
@@ -2036,6 +2053,9 @@ lwip_setsockopt_internal(void *arg)
       }
       break;
 #endif /* LWIP_IGMP */
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 
@@ -2075,7 +2095,9 @@ lwip_setsockopt_internal(void *arg)
                   s, sock->conn->pcb.tcp->keep_cnt));
       break;
 #endif /* LWIP_TCP_KEEPALIVE */
-
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP*/
@@ -2103,9 +2125,15 @@ lwip_setsockopt_internal(void *arg)
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_UDPLITE, UDPLITE_RECV_CSCOV) -> %d\n",
                   s, (*(int*)optval)) );
       break;
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
     }  /* switch (optname) */
     break;
 #endif /* LWIP_UDP */
+  default:
+    LWIP_ASSERT("unhandled level", 0);
+    break;
   }  /* switch (level) */
   sys_sem_signal(&sock->conn->op_completed);
 }
@@ -2192,6 +2220,9 @@ lwip_fcntl(int s, int cmd, int val)
       netconn_set_nonblocking(sock->conn, val & O_NONBLOCK);
       ret = 0;
     }
+    break;
+  default:
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_fcntl(%d, UNIMPL: %d, %d)\n", s, cmd, val));
     break;
   }
   return ret;
