@@ -81,9 +81,9 @@
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
 
-#if !TCP_QUEUE_OOSEQ || NO_SYS
+#if !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS
 #define PBUF_POOL_IS_EMPTY()
-#else /* !TCP_QUEUE_OOSEQ || NO_SYS */
+#else /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS */
 /** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
 #ifndef PBUF_POOL_FREE_OOSEQ
 #define PBUF_POOL_FREE_OOSEQ 1
@@ -145,7 +145,7 @@ pbuf_pool_is_empty(void)
   }
 }
 #endif /* PBUF_POOL_FREE_OOSEQ */
-#endif /* !TCP_QUEUE_OOSEQ || NO_SYS */
+#endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).

@@ -169,6 +169,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-26: Simon Goldschmidt
+  * various files: Fixed compiling with different options disabled (TCP/UDP),
+    triggered by bug #29345; don't allocate acceptmbox if LWIP_TCP is disabled
+
   2010-03-25: Simon Goldschmidt
   * sockets.c: Fixed bug #29332: lwip_select() processes readset incorrectly
 

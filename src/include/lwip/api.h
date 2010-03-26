@@ -150,9 +150,11 @@ struct netconn {
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;
+#if LWIP_TCP
   /** mbox where new connections are stored until processed
       by the application thread */
   sys_mbox_t acceptmbox;
+#endif LWIP_TCP
   /** only used for socket layer */
 #if LWIP_SOCKET
   int socket;

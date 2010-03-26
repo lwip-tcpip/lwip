@@ -81,6 +81,9 @@
 #if (!LWIP_UDP && LWIP_IGMP)
   #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
+#if (!LWIP_UDP && LWIP_SNMP)
+  #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#endif
 #if (!LWIP_UDP && LWIP_DNS)
   #error "If you want to use DNS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif

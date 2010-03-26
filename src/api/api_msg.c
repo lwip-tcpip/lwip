@@ -602,7 +602,9 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
     return NULL;
   }
 
+#if LWIP_TCP
   sys_mbox_set_invalid(&conn->acceptmbox);
+#endif
   conn->state        = NETCONN_NONE;
 #if LWIP_SOCKET
   /* initialize socket to -1 since 0 is a valid socket */
@@ -636,8 +638,10 @@ netconn_free(struct netconn *conn)
   LWIP_ASSERT("PCB must be deallocated outside this function", conn->pcb.tcp == NULL);
   LWIP_ASSERT("recvmbox must be deallocated before calling this function",
     !sys_mbox_valid(&conn->recvmbox));
+#if LWIP_TCP
   LWIP_ASSERT("acceptmbox must be deallocated before calling this function",
     !sys_mbox_valid(&conn->acceptmbox));
+#endif /* LWIP_TCP */
 
   sys_sem_free(&conn->op_completed);
   sys_sem_set_invalid(&conn->op_completed);
@@ -657,13 +661,16 @@ static void
 netconn_drain(struct netconn *conn)
 {
   void *mem;
+#if LWIP_TCP
   struct pbuf *p;
+#endif /* LWIP_TCP */
 
   /* This runs in tcpip_thread, so we don't need to lock against rx packets */
 
   /* Delete and drain the recvmbox. */
   if (sys_mbox_valid(&conn->recvmbox)) {
     while (sys_mbox_tryfetch(&conn->recvmbox, &mem) != SYS_MBOX_EMPTY) {
+#if LWIP_TCP
       if (conn->type == NETCONN_TCP) {
         if(mem != NULL) {
           p = (struct pbuf*)mem;
@@ -673,7 +680,9 @@ netconn_drain(struct netconn *conn)
           }
           pbuf_free(p);
         }
-      } else {
+      } else
+#endif /* LWIP_TCP */
+      {
         netbuf_delete((struct netbuf *)mem);
       }
     }
@@ -682,6 +691,7 @@ netconn_drain(struct netconn *conn)
   }
 
   /* Delete and drain the acceptmbox. */
+#if LWIP_TCP
   if (sys_mbox_valid(&conn->acceptmbox)) {
     while (sys_mbox_tryfetch(&conn->acceptmbox, &mem) != SYS_MBOX_EMPTY) {
       /* Only tcp pcbs have an acceptmbox, so no need to check conn->type */
@@ -694,6 +704,7 @@ netconn_drain(struct netconn *conn)
     sys_mbox_free(&conn->acceptmbox);
     sys_mbox_set_invalid(&conn->acceptmbox);
   }
+#endif /* LWIP_TCP */
 }
 
 #if LWIP_TCP

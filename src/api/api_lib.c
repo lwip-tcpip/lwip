@@ -79,7 +79,9 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
       LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
+#if LWIP_TCP
       LWIP_ASSERT("conn->acceptmbox shouldn't exist", !sys_mbox_valid(&conn->acceptmbox));
+#endif /* LWIP_TCP */
       sys_sem_free(&conn->op_completed);
       sys_mbox_free(&conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
@@ -268,6 +270,7 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 err_t
 netconn_accept(struct netconn *conn, struct netconn **new_conn)
 {
+#if LWIP_TCP
   struct netconn *newconn;
   err_t err;
 #if TCP_LISTEN_BACKLOG
@@ -313,6 +316,11 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   *new_conn = newconn;
   /* don't set conn->last_err: it's only ERR_OK, anyway */
   return ERR_OK;
+#else /* LWIP_TCP */
+  LWIP_UNUSED_ARG(conn);
+  LWIP_UNUSED_ARG(new_conn);
+  return ERR_ARG;
+#endif /* LWIP_TCP */
 }
 
 /**
@@ -327,10 +335,12 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 static err_t
 netconn_recv_data(struct netconn *conn, void **new_buf)
 {
-  struct api_msg msg;
   void *buf = NULL;
   u16_t len;
   err_t err;
+#if LWIP_TCP
+  struct api_msg msg;
+#endif /* LWIP_TCP */
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
@@ -432,16 +442,18 @@ netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf)
 err_t
 netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 {
+#if LWIP_TCP
   struct netbuf *buf = NULL;
   err_t err;
+#endif /* LWIP_TCP */
 
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
   LWIP_ERROR("netconn_accept: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
-  if (conn->type == NETCONN_TCP) {
 #if LWIP_TCP
+  if (conn->type == NETCONN_TCP) {
     struct pbuf *p = NULL;
     /* This is not a listening netconn, since recvmbox is set */
 
@@ -465,8 +477,9 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     *new_buf = buf;
     /* don't set conn->last_err: it's only ERR_OK, anyway */
     return ERR_OK;
+  } else
 #endif /* LWIP_TCP */
-  } else {
+  {
 #if (LWIP_UDP || LWIP_RAW)
     return netconn_recv_data(conn, (void **)new_buf);
 #endif /* (LWIP_UDP || LWIP_RAW) */
