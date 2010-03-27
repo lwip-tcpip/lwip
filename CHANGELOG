@@ -13,6 +13,11 @@ HISTORY
 
   ++ New features:
 
+  2010-03-27: Simon Goldschmidt
+  * etharp.c: Speedup TX by moving code from find_entry to etharp_output/
+    etharp_query to prevent unnecessary function calls (inspired by
+    patch #7135).
+
   2010-03-20: Simon Goldschmidt
   * opt.h, tcpip.c/.h: Added an option to disable tcpip_(un)timeout code
     since the linker cannot do this automatically to save space.

@@ -113,6 +113,7 @@ struct etharp_entry {
 };
 
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
+
 #if !LWIP_NETIF_HWADDRHINT
 static u8_t etharp_cached_entry;
 #endif /* !LWIP_NETIF_HWADDRHINT */
@@ -126,12 +127,8 @@ static u8_t etharp_cached_entry;
 #if LWIP_NETIF_HWADDRHINT
 #define ETHARP_SET_HINT(netif, hint)  if (((netif) != NULL) && ((netif)->addr_hint != NULL))  \
                                       *((netif)->addr_hint) = (hint);
-static s8_t find_entry(ip_addr_t *ipaddr, u8_t flags, struct netif *netif);
-#define FIND_ENTRY(ipaddr, flags, netif) find_entry((ipaddr), (flags), (netif))
 #else /* LWIP_NETIF_HWADDRHINT */
 #define ETHARP_SET_HINT(netif, hint)  (etharp_cached_entry = (hint))
-static s8_t find_entry(ip_addr_t *ipaddr, u8_t flags);
-#define FIND_ENTRY(ipaddr, flags, netif) find_entry((ipaddr), (flags))
 #endif /* LWIP_NETIF_HWADDRHINT */
 
 static err_t update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethaddr, u8_t flags);
@@ -258,11 +255,7 @@ etharp_tmr(void)
  * entry is found or could be recycled.
  */
 static s8_t
-find_entry(ip_addr_t *ipaddr, u8_t flags
-#if LWIP_NETIF_HWADDRHINT
-           , struct netif *netif
-#endif /* LWIP_NETIF_HWADDRHINT */
-           )
+find_entry(ip_addr_t *ipaddr, u8_t flags)
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
@@ -273,35 +266,6 @@ find_entry(ip_addr_t *ipaddr, u8_t flags
   /* its age */
   u8_t age_queue = 0;
 #endif /* ARP_QUEUEING */
-
-  /* First, test if the last call to this function asked for the
-   * same address. If so, we're really fast! */
-  if (ipaddr) {
-    /* ipaddr to search for was given */
-#if LWIP_NETIF_HWADDRHINT
-    if ((netif != NULL) && (netif->addr_hint != NULL)) {
-      /* per-pcb cached entry was given */
-      u8_t per_pcb_cache = *(netif->addr_hint);
-      if ((per_pcb_cache < ARP_TABLE_SIZE) && arp_table[per_pcb_cache].state == ETHARP_STATE_STABLE) {
-        /* the per-pcb-cached entry is stable */
-        if (ip_addr_cmp(ipaddr, &arp_table[per_pcb_cache].ipaddr)) {
-          /* per-pcb cached entry was the right one! */
-          ETHARP_STATS_INC(etharp.cachehit);
-          return per_pcb_cache;
-        }
-      }
-    }
-#else /* #if LWIP_NETIF_HWADDRHINT */
-    if (arp_table[etharp_cached_entry].state == ETHARP_STATE_STABLE) {
-      /* the cached entry is stable */
-      if (ip_addr_cmp(ipaddr, &arp_table[etharp_cached_entry].ipaddr)) {
-        /* cached entry was the right one! */
-        ETHARP_STATS_INC(etharp.cachehit);
-        return etharp_cached_entry;
-      }
-    }
-#endif /* #if LWIP_NETIF_HWADDRHINT */
-  }
 
   /**
    * a) do a search through the cache, remember candidates
@@ -332,7 +296,6 @@ find_entry(ip_addr_t *ipaddr, u8_t flags
       if (ipaddr && ip_addr_cmp(ipaddr, &arp_table[i].ipaddr)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("find_entry: found matching entry %"U16_F"\n", (u16_t)i));
         /* found exact IP address match, simply bail out */
-        ETHARP_SET_HINT(netif, i);
         return i;
       }
       /* pending entry? */
@@ -438,7 +401,6 @@ find_entry(ip_addr_t *ipaddr, u8_t flags
 #if ETHARP_SUPPORT_STATIC_ENTRIES
   arp_table[i].static_entry = 0;
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
-  ETHARP_SET_HINT(netif, i);
   return (err_t)i;
 }
 
@@ -508,7 +470,7 @@ update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethadd
     return ERR_ARG;
   }
   /* find or create ARP entry */
-  i = FIND_ENTRY(ipaddr, flags, netif);
+  i = find_entry(ipaddr, flags);
   /* bail out if no entry could be found */
   if (i < 0) {
     return (err_t)i;
@@ -603,7 +565,7 @@ etharp_remove_static_entry(ip_addr_t *ipaddr)
     ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr)));
 
   /* find or create ARP entry */
-  i = FIND_ENTRY(ipaddr, ETHARP_FLAG_FIND_ONLY, NULL);
+  i = find_entry(ipaddr, ETHARP_FLAG_FIND_ONLY);
   /* bail out if no entry could be found */
   if (i < 0) {
     return (err_t)i;
@@ -642,7 +604,7 @@ etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
 
   LWIP_UNUSED_ARG(netif);
 
-  i = FIND_ENTRY(ipaddr, ETHARP_FLAG_FIND_ONLY, NULL);
+  i = find_entry(ipaddr, ETHARP_FLAG_FIND_ONLY);
   if((i >= 0) && arp_table[i].state == ETHARP_STATE_STABLE) {
       *eth_ret = &arp_table[i].ethaddr;
       *ip_ret = &arp_table[i].ipaddr;
@@ -936,6 +898,23 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
         return ERR_RTE;
       }
     }
+#if LWIP_NETIF_HWADDRHINT
+    if (netif->addr_hint != NULL) {
+      /* per-pcb cached entry was given */
+      u8_t etharp_cached_entry = *(netif->addr_hint);
+      if (etharp_cached_entry < ARP_TABLE_SIZE) {
+#endif /* LWIP_NETIF_HWADDRHINT */
+        if ((arp_table[etharp_cached_entry].state == ETHARP_STATE_STABLE) &&
+            (ip_addr_cmp(ipaddr, &arp_table[etharp_cached_entry].ipaddr))) {
+          /* the per-pcb-cached entry is stable and the right one! */
+          ETHARP_STATS_INC(etharp.cachehit);
+          return etharp_send_ip(netif, q, (struct eth_addr*)(netif->hwaddr),
+            &arp_table[etharp_cached_entry].ethaddr);
+        }
+#if LWIP_NETIF_HWADDRHINT
+      }
+    }
+#endif /* LWIP_NETIF_HWADDRHINT */
     /* queue on destination Ethernet address belonging to ipaddr */
     return etharp_query(netif, ipaddr, q);
   }
@@ -995,7 +974,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   }
 
   /* find entry in ARP cache, ask to create entry if queueing packet */
-  i = FIND_ENTRY(ipaddr, ETHARP_FLAG_TRY_HARD, netif);
+  i = find_entry(ipaddr, ETHARP_FLAG_TRY_HARD);
 
   /* could not find or create entry? */
   if (i < 0) {
@@ -1037,6 +1016,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   /* stable entry? */
   if (arp_table[i].state == ETHARP_STATE_STABLE) {
     /* we have a valid IP->Ethernet address mapping */
+    ETHARP_SET_HINT(netif, i);
     /* send the packet */
     result = etharp_send_ip(netif, q, srcaddr, &(arp_table[i].ethaddr));
   /* pending entry? (either just created or already pending */
