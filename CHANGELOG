@@ -169,6 +169,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-27: Luca Ceresoli
+  * mib2.c: patch #7130: remove meaningless const qualifiers
+
   2010-03-26: Simon Goldschmidt
   * tcp_out.c: Make LWIP_NETIF_TX_SINGLE_PBUF work for TCP, too
 
