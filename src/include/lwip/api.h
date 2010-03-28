@@ -154,7 +154,7 @@ struct netconn {
   /** mbox where new connections are stored until processed
       by the application thread */
   sys_mbox_t acceptmbox;
-#endif LWIP_TCP
+#endif /* LWIP_TCP */
   /** only used for socket layer */
 #if LWIP_SOCKET
   int socket;
