@@ -178,6 +178,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-03-28: Luca Ceresoli
+  * ip_addr.c/.h: patch #7143: Add a few missing const qualifiers
+
   2010-03-27: Luca Ceresoli
   * mib2.c: patch #7130: remove meaningless const qualifiers
 

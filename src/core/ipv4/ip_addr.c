@@ -51,7 +51,7 @@ const ip_addr_t ip_addr_broadcast = { IPADDR_BROADCAST };
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  */
-u8_t ip_addr_isbroadcast(ip_addr_t *addr, struct netif *netif)
+u8_t ip_addr_isbroadcast(const ip_addr_t *addr, const struct netif *netif)
 {
   u32_t addr2test;
 
@@ -228,7 +228,7 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
  *         represenation of addr
  */
 char *
-ipaddr_ntoa(ip_addr_t *addr)
+ipaddr_ntoa(const ip_addr_t *addr)
 {
   static char str[16];
   return ipaddr_ntoa_r(addr, str, 16);
@@ -243,7 +243,7 @@ ipaddr_ntoa(ip_addr_t *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char *ipaddr_ntoa_r(ip_addr_t *addr, char *buf, int buflen)
+char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen)
 {
   u32_t s_addr;
   char inv[3];

@@ -181,7 +181,7 @@ extern const ip_addr_t ip_addr_broadcast;
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
 
-u8_t ip_addr_isbroadcast(ip_addr_t *, struct netif *);
+u8_t ip_addr_isbroadcast(const ip_addr_t *, const struct netif *);
 
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
 
@@ -212,8 +212,8 @@ u8_t ip_addr_isbroadcast(ip_addr_t *, struct netif *);
 u32_t ipaddr_addr(const char *cp);
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ipaddr_ntoa(ip_addr_t *addr);
-char *ipaddr_ntoa_r(ip_addr_t *addr, char *buf, int buflen);
+char *ipaddr_ntoa(const ip_addr_t *addr);
+char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }
