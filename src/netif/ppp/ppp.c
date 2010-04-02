@@ -1669,8 +1669,8 @@ pppInput(void *arg)
       PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ uncompressed\n", pd));
 #else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
-      PPPDEBUG((LOG_INFO,
-               "pppInput[%d]: drop VJ UnComp in %d:.*H\n", 
+      PPPDEBUG(LOG_INFO,
+               ("pppInput[%d]: drop VJ UnComp in %d:.*H\n", 
                 pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
@@ -1893,9 +1893,9 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
           }
 #if 0
           else {
-            PPPDEBUG((LOG_WARNING,
-                     "pppInProc[%d]: Invalid control <%d>\n", pcrx->pd, curChar));
-                      pcrx->inState = PDSTART;
+            PPPDEBUG(LOG_WARNING,
+                     ("pppInProc[%d]: Invalid control <%d>\n", pcrx->pd, curChar));
+            pcrx->inState = PDSTART;
           }
 #endif
         case PDPROTOCOL1:               /* Process protocol field 1. */
