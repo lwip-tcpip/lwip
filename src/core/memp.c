@@ -197,15 +197,55 @@ memp_sanity(void)
 }
 #endif /* MEMP_SANITY_CHECK*/
 #if MEMP_OVERFLOW_CHECK
+#if defined(LWIP_DEBUG) && MEMP_STATS
+static const char * memp_overflow_names[] = {
+#define LWIP_MEMPOOL(name,num,size,desc) "/"desc,
+#include "lwip/memp_std.h"
+  };
+#endif
+
 /**
  * Check if a memp element was victim of an overflow
  * (e.g. the restricted area after it has been altered)
  *
  * @param p the memp element to check
- * @param memp_size the element size of the pool p comes from
+ * @param memp_type the pool p comes from
  */
 static void
-memp_overflow_check_element(struct memp *p, u16_t memp_size)
+memp_overflow_check_element_overflow(struct memp *p, u16_t memp_type)
+{
+  u16_t k;
+  u8_t *m;
+#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
+  m = (u8_t*)p + MEMP_SIZE + memp_sizes[memp_type];
+  for (k = 0; k < MEMP_SANITY_REGION_AFTER_ALIGNED; k++) {
+    if (m[k] != 0xcd) {
+      char errstr[128] = "detected memp overflow in pool ";
+      char digit[] = "0";
+      if(memp_type >= 10) {
+        digit[0] = '0' + (memp_type/10);
+        strcat(errstr, digit);
+      }
+      digit[0] = '0' + (memp_type%10);
+      strcat(errstr, digit);
+#if defined(LWIP_DEBUG) && MEMP_STATS
+      strcat(errstr, memp_overflow_names[memp_type]);
+#endif
+      LWIP_ASSERT(errstr, 0);
+    }
+  }
+#endif
+}
+
+/**
+ * Check if a memp element was victim of an underflow
+ * (e.g. the restricted area before it has been altered)
+ *
+ * @param p the memp element to check
+ * @param memp_type the pool p comes from
+ */
+static void
+memp_overflow_check_element_underflow(struct memp *p, u16_t memp_type)
 {
   u16_t k;
   u8_t *m;
@@ -213,15 +253,18 @@ memp_overflow_check_element(struct memp *p, u16_t memp_size)
   m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
   for (k = 0; k < MEMP_SANITY_REGION_BEFORE_ALIGNED; k++) {
     if (m[k] != 0xcd) {
-      LWIP_ASSERT("detected memp underflow!", 0);
-    }
-  }
+      char errstr[128] = "detected memp underflow in pool ";
+      char digit[] = "0";
+      if(memp_type >= 10) {
+        digit[0] = '0' + (memp_type/10);
+        strcat(errstr, digit);
+      }
+      digit[0] = '0' + (memp_type%10);
+      strcat(errstr, digit);
+#if defined(LWIP_DEBUG) && MEMP_STATS
+      strcat(errstr, memp_overflow_names[memp_type]);
 #endif
-#if MEMP_SANITY_REGION_AFTER_ALIGNED > 0
-  m = (u8_t*)p + MEMP_SIZE + memp_size;
-  for (k = 0; k < MEMP_SANITY_REGION_AFTER_ALIGNED; k++) {
-    if (m[k] != 0xcd) {
-      LWIP_ASSERT("detected memp overflow!", 0);
+      LWIP_ASSERT(errstr, 0);
     }
   }
 #endif
@@ -238,11 +281,19 @@ memp_overflow_check_all(void)
   u16_t i, j;
   struct memp *p;
 
-  p = LWIP_MEM_ALIGN(memp_memory);
+  p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
-      memp_overflow_check_element(p, memp_sizes[i]);
+      memp_overflow_check_element_overflow(p, i);
+      p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
+    }
+  }
+  p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
+  for (i = 0; i < MEMP_MAX; ++i) {
+    p = p;
+    for (j = 0; j < memp_num[i]; ++j) {
+      memp_overflow_check_element_underflow(p, i);
       p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
     }
   }
@@ -258,7 +309,7 @@ memp_overflow_init(void)
   struct memp *p;
   u8_t *m;
 
-  p = LWIP_MEM_ALIGN(memp_memory);
+  p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
   for (i = 0; i < MEMP_MAX; ++i) {
     p = p;
     for (j = 0; j < memp_num[i]; ++j) {
@@ -397,7 +448,8 @@ memp_free(memp_t type, void *mem)
 #if MEMP_OVERFLOW_CHECK >= 2
   memp_overflow_check_all();
 #else
-  memp_overflow_check_element(memp, memp_sizes[type]);
+  memp_overflow_check_element_overflow(memp, type);
+  memp_overflow_check_element_underflow(memp, type);
 #endif /* MEMP_OVERFLOW_CHECK >= 2 */
 #endif /* MEMP_OVERFLOW_CHECK */
 
