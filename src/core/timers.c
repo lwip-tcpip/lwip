@@ -467,6 +467,7 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
         h(arg);
         UNLOCK_TCPIP_CORE();
       }
+      LWIP_TCPIP_THREAD_ALIVE();
 
       /* We try again to fetch a message from the mbox. */
       goto again;

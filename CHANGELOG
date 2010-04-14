@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-04-14: Simon Goldschmidt
+  * tcpip.h/.c, timers.c: Added an overridable define to get informed when the
+    tcpip_thread processes messages or timeouts to implement a watchdog.
+
   2010-03-28: Simon Goldschmidt
   * ip_frag.c: create a new (contiguous) PBUF_RAM for every outgoing
     fragment if LWIP_NETIF_TX_SINGLE_PBUF==1

@@ -83,6 +83,7 @@ tcpip_thread(void *arg)
   LOCK_TCPIP_CORE();
   while (1) {                          /* MAIN Loop */
     UNLOCK_TCPIP_CORE();
+    LWIP_TCPIP_THREAD_ALIVE();
     /* wait for a message, timeouts are processed while waiting */
     sys_timeouts_mbox_fetch(&mbox, (void **)&msg);
     LOCK_TCPIP_CORE();

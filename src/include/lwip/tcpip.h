@@ -48,6 +48,12 @@
 extern "C" {
 #endif
 
+/** Define this to something that triggers a watchdog. This is called from
+ * tcpip_thread after processing a message. */
+#ifndef LWIP_TCPIP_THREAD_ALIVE
+#define LWIP_TCPIP_THREAD_ALIVE()
+#endif
+
 #if LWIP_TCPIP_CORE_LOCKING
 /** The global semaphore to lock the stack. */
 extern sys_mutex_t lock_tcpip_core;
