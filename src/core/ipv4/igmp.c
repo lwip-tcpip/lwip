@@ -715,7 +715,7 @@ igmp_start_timer(struct igmp_group *group, u8_t max_time)
 static void
 igmp_stop_timer(struct igmp_group *group)
 {
-	  group->timer = 0;
+  group->timer = 0;
 }
 
 /**
