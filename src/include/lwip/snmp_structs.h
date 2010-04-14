@@ -136,7 +136,7 @@ struct mib_array_node
   u8_t node_type;
   u16_t maxlength;
 
-  /* aditional struct members */
+  /* additional struct members */
   const s32_t *objid;
   struct mib_node* const *nptr;
 };
@@ -180,7 +180,7 @@ struct mib_list_rootnode
   u8_t node_type;
   u16_t maxlength;
 
-  /* aditional struct members */
+  /* additional struct members */
   struct mib_list_node *head;
   struct mib_list_node *tail;
   /* counts list nodes in list  */
@@ -200,8 +200,8 @@ struct mib_external_node
   u8_t node_type;
   u16_t maxlength;
 
-  /* aditional struct members */
-  /** points to an extenal (in memory) record of some sort of addressing
+  /* additional struct members */
+  /** points to an external (in memory) record of some sort of addressing
       information, passed to and interpreted by the funtions below */
   void* addr_inf;
   /** tree levels under this node */

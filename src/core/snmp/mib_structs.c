@@ -445,7 +445,7 @@ snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
  * @param node points to the root of the tree ('.internet')
  * @param ident_len the length of the supplied object identifier
  * @param ident points to the array of sub identifiers
- * @param np points to the found object instance (rerurn)
+ * @param np points to the found object instance (return)
  * @return pointer to the requested parent (!) node if success, NULL otherwise
  */
 struct mib_node *
