@@ -182,6 +182,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-04-21: Simon Goldschmidt
+  * api_msg.c: Fixed bug #29617 (sometime cause stall on delete listening
+    connection)
+
   2010-03-28: Luca Ceresoli
   * ip_addr.c/.h: patch #7143: Add a few missing const qualifiers
 
