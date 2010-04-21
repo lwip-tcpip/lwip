@@ -317,7 +317,9 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* LWIP_CALLBACK_API */
   void *errf_arg;
 
-  
+  /* pcb->state LISTEN not allowed here */
+  LWIP_ASSERT("don't call tcp_abort/tcp_abandon for listen-pcbs",
+    pcb->state != LISTEN);
   /* Figure out on which TCP PCB list we are, and remove us. If we
      are in an active state, call the receive function associated with
      the PCB with a NULL argument, and send an RST to the remote end. */
@@ -325,7 +327,6 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     tcp_pcb_remove(&tcp_tw_pcbs, pcb);
     memp_free(MEMP_TCP_PCB, pcb);
   } else {
-    /* @todo: pcb->state, LISTEN not allowed */
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
     ip_addr_copy(local_ip, pcb->local_ip);
