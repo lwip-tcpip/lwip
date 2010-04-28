@@ -13,6 +13,9 @@ HISTORY
 
   ++ New features:
 
+  2010-04-28: Patch by Bill Auerbach
+  * ip.c: Inline generating IP checksum to save a function call
+
   2010-04-14: Simon Goldschmidt
   * tcpip.h/.c, timers.c: Added an overridable define to get informed when the
     tcpip_thread processes messages or timeouts to implement a watchdog.

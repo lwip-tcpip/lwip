@@ -58,6 +58,17 @@
 
 #include <string.h>
 
+/** Set this to 0 in the rare case of wanting to call an extra function to
+ * generate the IP checksum (in contrast to calculating it on-the-fly). */
+#ifndef LWIP_INLINE_IP_CHKSUM
+#define LWIP_INLINE_IP_CHKSUM   1
+#endif
+#if LWIP_INLINE_IP_CHKSUM && CHECKSUM_GEN_IP
+#define CHECKSUM_GEN_IP_INLINE  1
+#else
+#define CHECKSUM_GEN_IP_INLINE  0
+#endif
+
 /**
  * The interface that provided the packet for the current callback
  * invocation.
@@ -537,6 +548,9 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #endif /* IP_OPTIONS_SEND */
   struct ip_hdr *iphdr;
   static u16_t ip_id = 0;
+#if CHECKSUM_GEN_IP_INLINE
+  u32_t chk_sum;
+#endif /* CHECKSUM_GEN_IP_INLINE */
 
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
@@ -582,14 +596,30 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum = (proto << 8) | ttl;
+#endif /* CHECKSUM_GEN_IP_INLINE */
 
     /* dest cannot be NULL here */
     ip_addr_copy(iphdr->dest, *dest);
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum += iphdr->dest.addr & 0xFFFF;
+    chk_sum += iphdr->dest.addr >> 16;
+#endif /* CHECKSUM_GEN_IP_INLINE */
 
     IPH_VHLTOS_SET(iphdr, 4, ip_hlen / 4, tos);
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum += iphdr->_v_hl_tos;
+#endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_LEN_SET(iphdr, htons(p->tot_len));
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum += iphdr->_len;
+#endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_OFFSET_SET(iphdr, 0);
     IPH_ID_SET(iphdr, htons(ip_id));
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum += iphdr->_id;
+#endif /* CHECKSUM_GEN_IP_INLINE */
     ++ip_id;
 
     if (ip_addr_isany(src)) {
@@ -599,10 +629,19 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
       ip_addr_copy(iphdr->src, *src);
     }
 
+#if CHECKSUM_GEN_IP_INLINE
+    chk_sum += iphdr->src.addr & 0xFFFF;
+    chk_sum += iphdr->src.addr >> 16;
+    chk_sum = (chk_sum >> 16) + (chk_sum & 0xFFFF);
+    chk_sum = (chk_sum >> 16) + chk_sum;
+    chk_sum = ~chk_sum;
+    iphdr->_chksum = chk_sum; /* network order */
+#else /* CHECKSUM_GEN_IP_INLINE */
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, ip_hlen));
 #endif
+#endif /* CHECKSUM_GEN_IP_INLINE */
   } else {
     /* IP header already included in p */
     iphdr = (struct ip_hdr *)p->payload;
