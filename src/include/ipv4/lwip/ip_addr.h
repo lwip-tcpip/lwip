@@ -140,6 +140,13 @@ extern const ip_addr_t ip_addr_broadcast;
                           (u32_t)((a) & 0xff)
 #endif
 
+/** MEMCPY-like copying of IP addresses where addresses are known to be
+ * 16-bit-aligned if the port is correctly configured (so a port could define
+ * this to copying 2 u16_t's) - no NULL-pointer-checking needed. */
+#ifndef IPADDR2_COPY
+#define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip_addr_t))
+#endif
+
 /** Copy IP address - faster than ip_addr_set: no NULL check */
 #define ip_addr_copy(dest, src) ((dest).addr = (src).addr)
 /** Safely copy one IP address to another (src may be NULL) */

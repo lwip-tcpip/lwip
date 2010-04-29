@@ -418,16 +418,11 @@ static err_t
 etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
 {
   struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
-  u8_t k;
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-  k = ETHARP_HWADDR_LEN;
-  while(k > 0) {
-    k--;
-    ethhdr->dest.addr[k] = dst->addr[k];
-    ethhdr->src.addr[k]  = src->addr[k];
-  }
+  ETHADDR32_COPY(&ethhdr->dest, dst);
+  ETHADDR16_COPY(&ethhdr->src, src);
   ethhdr->type = htons(ETHTYPE_IP);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
   /* send the packet */
@@ -456,7 +451,6 @@ static err_t
 update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethaddr, u8_t flags)
 {
   s8_t i;
-  u8_t k;
   LWIP_ASSERT("netif->hwaddr_len == ETHARP_HWADDR_LEN", netif->hwaddr_len == ETHARP_HWADDR_LEN);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: %"U16_F".%"U16_F".%"U16_F".%"U16_F" - %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F"\n",
     ip4_addr1_16(ipaddr), ip4_addr2_16(ipaddr), ip4_addr3_16(ipaddr), ip4_addr4_16(ipaddr),
@@ -495,11 +489,7 @@ update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethadd
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */
-  k = ETHARP_HWADDR_LEN;
-  while (k > 0) {
-    k--;
-    arp_table[i].ethaddr.addr[k] = ethaddr->addr[k];
-  }
+  ETHADDR32_COPY(&arp_table[i].ethaddr, ethaddr);
   /* reset time stamp */
   arp_table[i].ctime = 0;
 #if ARP_QUEUEING
@@ -682,7 +672,6 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   struct eth_hdr *ethhdr;
   /* these are aligned properly, whereas the ARP header fields might not be */
   ip_addr_t sipaddr, dipaddr;
-  u8_t i;
   u8_t for_us;
 #if LWIP_AUTOIP
   const u8_t * ethdst_hwaddr;
@@ -734,8 +723,8 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing (not using structure copy which breaks strict-aliasing rules). */
-  SMEMCPY(&sipaddr, &hdr->sipaddr, sizeof(sipaddr));
-  SMEMCPY(&dipaddr, &hdr->dipaddr, sizeof(dipaddr));
+  IPADDR2_COPY(&sipaddr, &hdr->sipaddr);
+  IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
   if (ip_addr_isany(&netif->ip_addr)) {
@@ -771,12 +760,11 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
          that would allocate a new pbuf. */
       hdr->opcode = htons(ARP_REPLY);
 
-      SMEMCPY(&hdr->dipaddr, &hdr->sipaddr, sizeof(ip_addr_t));
-      SMEMCPY(&hdr->sipaddr, &netif->ip_addr, sizeof(ip_addr_t));
+      IPADDR2_COPY(&hdr->dipaddr, &hdr->sipaddr);
+      IPADDR2_COPY(&hdr->sipaddr, &netif->ip_addr);
 
       LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
                   (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-      i = ETHARP_HWADDR_LEN;
 #if LWIP_AUTOIP
       /* If we are using Link-Local, all ARP packets that contain a Link-Local
        * 'sender IP address' MUST be sent using link-layer broadcast instead of
@@ -784,17 +772,14 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       ethdst_hwaddr = ip_addr_islinklocal(&netif->ip_addr) ? (u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
 #endif /* LWIP_AUTOIP */
 
-      while(i > 0) {
-        i--;
-        hdr->dhwaddr.addr[i] = hdr->shwaddr.addr[i];
+      ETHADDR16_COPY(&hdr->dhwaddr, &hdr->shwaddr);
 #if LWIP_AUTOIP
-        ethhdr->dest.addr[i] = ethdst_hwaddr[i];
+      ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
 #else  /* LWIP_AUTOIP */
-        ethhdr->dest.addr[i] = hdr->shwaddr.addr[i];
+      ETHADDR16_COPY(&ethhdr->dest, &hdr->shwaddr);
 #endif /* LWIP_AUTOIP */
-        hdr->shwaddr.addr[i] = ethaddr->addr[i];
-        ethhdr->src.addr[i] = ethaddr->addr[i];
-      }
+      ETHADDR16_COPY(&hdr->shwaddr, ethaddr);
+      ETHADDR16_COPY(&ethhdr->src, ethaddr);
 
       /* hwtype, hwaddr_len, proto, protolen and the type in the ethernet header
          are already correct, we tested that before */
@@ -1120,7 +1105,6 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 {
   struct pbuf *p;
   err_t result = ERR_OK;
-  u8_t k; /* ARP entry index */
   struct eth_hdr *ethhdr;
   struct etharp_hdr *hdr;
 #if LWIP_AUTOIP
@@ -1146,31 +1130,26 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
-  k = ETHARP_HWADDR_LEN;
 #if LWIP_AUTOIP
   /* If we are using Link-Local, all ARP packets that contain a Link-Local
    * 'sender IP address' MUST be sent using link-layer broadcast instead of
    * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
   ethdst_hwaddr = ip_addr_islinklocal(ipsrc_addr) ? (u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
 #endif /* LWIP_AUTOIP */
-  /* Write MAC-Addresses (combined loop for both headers) */
-  while(k > 0) {
-    k--;
-    /* Write the ARP MAC-Addresses */
-    hdr->shwaddr.addr[k] = hwsrc_addr->addr[k];
-    hdr->dhwaddr.addr[k] = hwdst_addr->addr[k];
-    /* Write the Ethernet MAC-Addresses */
+  /* Write the ARP MAC-Addresses */
+  ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
+  ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
+  /* Write the Ethernet MAC-Addresses */
 #if LWIP_AUTOIP
-    ethhdr->dest.addr[k] = ethdst_hwaddr[k];
+  ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
 #else  /* LWIP_AUTOIP */
-    ethhdr->dest.addr[k] = ethdst_addr->addr[k];
+  ETHADDR16_COPY(&ethhdr->dest, ethdst_addr);
 #endif /* LWIP_AUTOIP */
-    ethhdr->src.addr[k]  = ethsrc_addr->addr[k];
-  }
+  ETHADDR16_COPY(&ethhdr->src, ethsrc_addr);
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing. */ 
-  SMEMCPY(&hdr->sipaddr, ipsrc_addr, sizeof(ip_addr_t));
-  SMEMCPY(&hdr->dipaddr, ipdst_addr, sizeof(ip_addr_t));
+  IPADDR2_COPY(&hdr->sipaddr, ipsrc_addr);
+  IPADDR2_COPY(&hdr->dipaddr, ipdst_addr);
 
   hdr->hwtype = htons(HWTYPE_ETHERNET);
   hdr->proto = htons(ETHTYPE_IP);

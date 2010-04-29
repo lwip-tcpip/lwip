@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-04-29: Simon Goldschmidt
+  * ip_addr.h, etharp.h/.c, autoip.c: Create overridable macros for copying
+    2-byte-aligned IP addresses and MAC addresses
+
   2010-04-28: Patch by Bill Auerbach
   * ip.c: Inline generating IP checksum to save a function call
 
