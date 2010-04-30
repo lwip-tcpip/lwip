@@ -336,6 +336,19 @@ udp_send(struct udp_pcb *pcb, struct pbuf *p)
   return udp_sendto(pcb, p, &pcb->remote_ip, pcb->remote_port);
 }
 
+#if LWIP_CHECKSUM_ON_COPY
+/** Same as udp_send() but with checksum
+ */
+err_t
+udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
+                u8_t have_chksum, u16_t chksum)
+{
+  /* send to the packet using remote ip and port stored in the pcb */
+  return udp_sendto_chksum(pcb, p, &pcb->remote_ip, pcb->remote_port,
+    have_chksum, chksum);
+}
+#endif /* LWIP_CHECKSUM_ON_COPY */
+
 /**
  * Send data to a specified address using UDP.
  *
@@ -357,6 +370,16 @@ err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
   ip_addr_t *dst_ip, u16_t dst_port)
 {
+#if LWIP_CHECKSUM_ON_COPY
+  return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
+}
+
+/** Same as udp_sendto(), but with checksum */
+err_t
+udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+                  u16_t dst_port, u8_t have_chksum, u16_t chksum)
+{
+#endif /* LWIP_CHECKSUM_ON_COPY */
   struct netif *netif;
 
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_send\n"));
@@ -375,7 +398,11 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
     UDP_STATS_INC(udp.rterr);
     return ERR_RTE;
   }
+#if LWIP_CHECKSUM_ON_COPY
+  return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, have_chksum, chksum);
+#else /* LWIP_CHECKSUM_ON_COPY */
   return udp_sendto_if(pcb, p, dst_ip, dst_port, netif);
+#endif /* LWIP_CHECKSUM_ON_COPY */
 }
 
 /**
@@ -401,6 +428,17 @@ err_t
 udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
   ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif)
 {
+#if LWIP_CHECKSUM_ON_COPY
+  return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0);
+}
+
+/** Same as udp_sendto_if(), but with checksum */
+err_t
+udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+                     u16_t dst_port, struct netif *netif, u8_t have_chksum,
+                     u16_t chksum)
+{
+#endif /* LWIP_CHECKSUM_ON_COPY */
   struct udp_hdr *udphdr;
   ip_addr_t *src_ip;
   err_t err;
@@ -501,7 +539,18 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
     udphdr->chksum = inet_chksum_pseudo_partial(q, src_ip, dst_ip,
-                                        IP_PROTO_UDPLITE, q->tot_len, chklen);
+      IP_PROTO_UDPLITE, q->tot_len,
+#if !LWIP_CHECKSUM_ON_COPY
+      chklen);
+#else /* !LWIP_CHECKSUM_ON_COPY */
+      (have_chksum ? UDP_HLEN : chklen));
+    if (have_chksum) {
+      u32_t acc;
+      acc = udphdr->chksum + (u16_t)~(chksum);
+      udphdr->chksum = FOLD_U32T(acc);
+    }
+#endif /* !LWIP_CHECKSUM_ON_COPY */
+
     /* chksum zero must become 0xffff, as zero means 'no checksum' */
     if (udphdr->chksum == 0x0000) {
       udphdr->chksum = 0xffff;
@@ -524,11 +573,25 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
     if ((pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
-      udphdr->chksum = inet_chksum_pseudo(q, src_ip, dst_ip, IP_PROTO_UDP, q->tot_len);
-      /* chksum zero must become 0xffff, as zero means 'no checksum' */
-      if (udphdr->chksum == 0x0000) {
-        udphdr->chksum = 0xffff;
+      u16_t udpchksum;
+#if LWIP_CHECKSUM_ON_COPY
+      if (have_chksum) {
+        u32_t acc;
+        udpchksum = inet_chksum_pseudo_partial(q, src_ip, dst_ip, IP_PROTO_UDP,
+          q->tot_len, UDP_HLEN);
+        acc = udpchksum + (u16_t)~(chksum);
+        udpchksum = FOLD_U32T(acc);
+      } else
+#endif /* LWIP_CHECKSUM_ON_COPY */
+      {
+        udpchksum = inet_chksum_pseudo(q, src_ip, dst_ip, IP_PROTO_UDP, q->tot_len);
       }
+
+      /* chksum zero must become 0xffff, as zero means 'no checksum' */
+      if (udpchksum == 0x0000) {
+        udpchksum = 0xffff;
+      }
+      udphdr->chksum = udpchksum;
     }
 #endif /* CHECKSUM_GEN_UDP */
     LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));

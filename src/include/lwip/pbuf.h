@@ -111,6 +111,10 @@ err_t pbuf_copy(struct pbuf *p_to, struct pbuf *p_from);
 u16_t pbuf_copy_partial(struct pbuf *p, void *dataptr, u16_t len, u16_t offset);
 err_t pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len);
 struct pbuf *pbuf_coalesce(struct pbuf *p, pbuf_layer layer);
+#if LWIP_CHECKSUM_ON_COPY
+err_t pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
+                       u16_t len, u16_t *chksum);
+#endif /* LWIP_CHECKSUM_ON_COPY */
 
 #ifdef __cplusplus
 }

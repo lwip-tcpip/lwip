@@ -73,6 +73,9 @@
 #if TCP_QUEUE_OOSEQ
 #include "lwip/tcp_impl.h"
 #endif
+#if LWIP_CHECKSUM_ON_COPY
+#include "lwip/inet_chksum.h"
+#endif
 
 #include <string.h>
 
@@ -927,3 +930,44 @@ pbuf_coalesce(struct pbuf *p, pbuf_layer layer)
   pbuf_free(p);
   return q;
 }
+
+#if LWIP_CHECKSUM_ON_COPY
+/**
+ * Copies data into a single pbuf (*not* into a pbuf queue!) and updates
+ * the checksum while copying
+ *
+ * @param p the pbuf to copy data into
+ * @param start_offset offset of p->payload where to copy the data to
+ * @param dataptr data to copy into the pbuf
+ * @param len length of data to copy into the pbuf
+ * @param chksum pointer to the checksum which is updated
+ * @return ERR_OK if successful, another error if the data does not fit
+ *         within the (first) pbuf (no pbuf queues!)
+ */
+err_t
+pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
+                 u16_t len, u16_t *chksum)
+{
+  u32_t acc;
+  u16_t copy_chksum;
+  char *dst_ptr;
+  LWIP_ASSERT("p != NULL", p != NULL);
+  LWIP_ASSERT("dataptr != NULL", dataptr != NULL);
+  LWIP_ASSERT("chksum != NULL", chksum != NULL);
+  LWIP_ASSERT("len != 0", len != 0);
+
+  if ((start_offset >= p->len) || (start_offset + len > p->len)) {
+    return ERR_ARG;
+  }
+
+  dst_ptr = ((char*)p->payload) + start_offset;
+  copy_chksum = LWIP_CHKSUM_COPY(dst_ptr, dataptr, len);
+  if ((start_offset & 1) != 0) {
+    copy_chksum = SWAP_BYTES_IN_WORD(copy_chksum);
+  }
+  acc = *chksum;
+  acc += copy_chksum;
+  *chksum = FOLD_U32T(acc);
+  return ERR_OK;
+}
+#endif /* LWIP_CHECKSUM_ON_COPY */

@@ -13,6 +13,11 @@ HISTORY
 
   ++ New features:
 
+  2010-04-30: Simon Goldschmidt
+  * udp.h/.c, pbuf.h/.c: task #6849: added udp_send(_to/_if) functions that
+    take a precalculated checksum, added pbuf_fill_chksum() to copy data
+    into a pbuf and at the same time calculating the checksum for that data
+
   2010-04-29: Simon Goldschmidt
   * ip_addr.h, etharp.h/.c, autoip.c: Create overridable macros for copying
     2-byte-aligned IP addresses and MAC addresses
