@@ -180,8 +180,11 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
       const struct ip_hdr* iphdr = ip_current_header();
       /* get the UDP header - always in the first pbuf, ensured by udp_input */
       const struct udp_hdr* udphdr = (void*)(((char*)iphdr) + IPH_LEN(iphdr));
+#if LWIP_CHECKSUM_ON_COPY
+      buf->flags = NETBUF_FLAG_DESTADDR;
+#endif /* LWIP_CHECKSUM_ON_COPY */
       buf->toaddr = (ip_addr_t*)&iphdr->dest;
-      buf->toport = udphdr->dest;
+      buf->toport_chksum = udphdr->dest;
     }
 #endif /* LWIP_NETBUF_RECVINFO */
   }
@@ -1091,11 +1094,22 @@ do_send(struct api_msg_msg *msg)
 #endif
 #if LWIP_UDP
       case NETCONN_UDP:
+#if LWIP_CHECKSUM_ON_COPY
+        if (msg->msg.b->addr == NULL) {
+          msg->err = udp_send_chksum(msg->conn->pcb.udp, msg->msg.b->p,
+            msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
+        } else {
+          msg->err = udp_sendto_chksum(msg->conn->pcb.udp, msg->msg.b->p,
+            msg->msg.b->addr, msg->msg.b->port,
+            msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
+        }
+#else /* LWIP_CHECKSUM_ON_COPY */
         if (msg->msg.b->addr == NULL) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
           msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, msg->msg.b->addr, msg->msg.b->port);
         }
+#endif /* LWIP_CHECKSUM_ON_COPY */
         break;
 #endif /* LWIP_UDP */
       default:

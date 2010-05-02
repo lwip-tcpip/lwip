@@ -63,10 +63,15 @@ netbuf *netbuf_new(void)
     buf->ptr = NULL;
     buf->addr = NULL;
     buf->port = 0;
+#if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
+#if LWIP_CHECKSUM_ON_COPY
+    buf->flags = 0;
+#endif /* LWIP_CHECKSUM_ON_COPY */
+    buf->toport_chksum = 0;
 #if LWIP_NETBUF_RECVINFO
     buf->toaddr = NULL;
-    buf->toport = 0;
 #endif /* LWIP_NETBUF_RECVINFO */
+#endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
     return buf;
   } else {
     return NULL;

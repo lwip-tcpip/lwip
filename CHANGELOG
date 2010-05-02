@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-05-02: Simon Goldschmidt
+  * netbuf.h/.c, sockets.c, api_msg.c: use checksum-on-copy for sending
+    UDP data for LWIP_NETIF_TX_SINGLE_PBUF==1
+
   2010-04-30: Simon Goldschmidt
   * udp.h/.c, pbuf.h/.c: task #6849: added udp_send(_to/_if) functions that
     take a precalculated checksum, added pbuf_fill_chksum() to copy data

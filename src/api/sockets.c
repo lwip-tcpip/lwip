@@ -52,6 +52,9 @@
 #include "lwip/udp.h"
 #include "lwip/tcpip.h"
 #include "lwip/pbuf.h"
+#if LWIP_CHECKSUM_ON_COPY
+#include "lwip/inet_chksum.h"
+#endif
 
 #include <string.h>
 
@@ -823,6 +826,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #if LWIP_NETIF_TX_SINGLE_PBUF
     p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_RAM);
     if (p != NULL) {
+#if LWIP_CHECKSUM_ON_COPY
+      u16_t chksum = 0;
+      if (sock->conn->type != NETCONN_RAW) {
+        chksum = LWIP_CHKSUM_COPY(p->payload, data, short_size);
+      } else
+#endif /* LWIP_CHECKSUM_ON_COPY */
       MEMCPY(p->payload, data, size);
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
     p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_REF);
@@ -836,7 +845,13 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       if (sock->conn->type == NETCONN_RAW) {
         err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
       } else {
-        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p, &remote_addr, ntohs(to_in->sin_port));
+#if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
+        err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
+          &remote_addr, ntohs(to_in->sin_port), 1, chksum);
+#else /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
+        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
+          &remote_addr, ntohs(to_in->sin_port));
+#endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
       }
       UNLOCK_TCPIP_CORE();
       
@@ -848,16 +863,19 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #else
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
+#if LWIP_CHECKSUM_ON_COPY
+  buf.flags = 0;
+#endif /* LWIP_CHECKSUM_ON_COPY */
   if (to) {
     inet_addr_to_ipaddr(&remote_addr, &to_in->sin_addr);
-    remote_port      = ntohs(to_in->sin_port);
-    buf.addr         = &remote_addr;
-    buf.port         = remote_port;
+    remote_port           = ntohs(to_in->sin_port);
+    netbuf_fromaddr(&buf) = &remote_addr;
+    netbuf_fromport(&buf) = remote_port;
   } else {
     ip_addr_set_zero(&remote_addr);
-    remote_port      = 0;
-    buf.addr         = NULL;
-    buf.port         = 0;
+    remote_port           = 0;
+    netbuf_fromaddr(&buf) = NULL;
+    netbuf_fromport(&buf) = 0;
   }
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, short_size=%d"U16_F", flags=0x%x to=",
@@ -871,7 +889,16 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   if (netbuf_alloc(&buf, short_size) == NULL) {
     err = ERR_MEM;
   } else {
-    err = netbuf_take(&buf, data, short_size);
+#if LWIP_CHECKSUM_ON_COPY
+    if (sock->conn->type != NETCONN_RAW) {
+      u16_t chksum = LWIP_CHKSUM_COPY(buf.p->payload, data, short_size);
+      netbuf_set_chksum(&buf, chksum);
+      err = ERR_OK;
+    } else
+#endif /* LWIP_CHECKSUM_ON_COPY */
+    {
+      err = netbuf_take(&buf, data, short_size);
+    }
   }
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
   err = netbuf_ref(&buf, data, short_size);
