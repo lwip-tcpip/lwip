@@ -597,7 +597,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum = (proto << 8) | ttl;
+    chk_sum = LWIP_MAKE_U16(proto, ttl);
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
     /* dest cannot be NULL here */

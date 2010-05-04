@@ -47,6 +47,12 @@ extern "C" {
 #define NULL ((void *)0)
 #endif
 
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define LWIP_MAKE_U16(a, b) ((a << 8) | b)
+#else
+#define LWIP_MAKE_U16(a, b) ((b << 8) | a)
+#endif 
+
 #ifdef htons
 #undef htons
 #endif /* htons */
