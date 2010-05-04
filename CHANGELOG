@@ -198,6 +198,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-05-05: Simon Goldschmidt
+  * def.h, timers.c: Fixed bug #29769 (sys_check_timeouts: sys_now() may
+    overflow)
+
   2010-04-21: Simon Goldschmidt
   * api_msg.c: Fixed bug #29617 (sometime cause stall on delete listening
     connection)

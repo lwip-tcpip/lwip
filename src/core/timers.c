@@ -370,8 +370,8 @@ sys_check_timeouts(void)
 
   now = sys_now();
   if (next_timeout) {
-    /* @todo: wrap around? */
-    diff = now - timeouts_last_time;
+    /* this cares for wraparounds */
+    diff = LWIP_U32_DIFF(now, timeouts_last_time);
     do
     {
       had_one = 0;
