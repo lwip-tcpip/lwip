@@ -13,9 +13,6 @@ HISTORY
 
   ++ New features:
 
-  2010-05-05: Simon Goldschmidt (Christian Walter)
-  * ip_nat.h/.c, opt.h, ip.c, timers.c: task #7506: added NAT support
-
   2010-05-02: Simon Goldschmidt
   * netbuf.h/.c, sockets.c, api_msg.c: use checksum-on-copy for sending
     UDP data for LWIP_NETIF_TX_SINGLE_PBUF==1

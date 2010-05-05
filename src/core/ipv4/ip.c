@@ -43,7 +43,6 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/ip_frag.h"
-#include "lwip/ip_nat.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp.h"
@@ -378,30 +377,15 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* packet not for us? */
   if (netif == NULL) {
-#if IP_FORWARD || IP_NAT
-    u8_t taken = 0;
-#endif /* IP_FORWARD || IP_NAT */
     /* packet not for us, route or discard */
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: packet not for us.\n"));
-#if IP_FORWARD || IP_NAT
+#if IP_FORWARD
     /* non-broadcast packet? */
     if (!ip_addr_isbroadcast(&(iphdr->dest), inp)) {
-#if IP_NAT
-      /* check if we want to perform NAT with this packet. */
-      taken = ip_nat_out(p);
-      if (!taken)
-#endif /* IP_NAT */
-      {
-#if IP_FORWARD
-        /* try to forward IP packet on (other) interfaces */
-        if (ip_forward(p, iphdr, inp) != NULL) {
-          taken = 1;
-        }
+      /* try to forward IP packet on (other) interfaces */
+      ip_forward(p, iphdr, inp);
+    } else
 #endif /* IP_FORWARD */
-      }
-    }
-    if (!taken)
-#endif /* IP_FORWARD || IP_NAT */
     {
       snmp_inc_ipinaddrerrors();
       snmp_inc_ipindiscards();
@@ -459,12 +443,6 @@ ip_input(struct pbuf *p, struct netif *inp)
   current_netif = inp;
   current_header = iphdr;
 
-#if IP_NAT
-  if (!ip_addr_isbroadcast(&(iphdr->dest), inp) &&
-      (ip_nat_input(p) != 0)) {
-     LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet consumed by nat layer\n"));
-  } else
-#endif /* IP_NAT */
 #if LWIP_RAW
   /* raw input did not eat the packet? */
   if (raw_input(p, inp) == 0)
