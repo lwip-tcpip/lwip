@@ -43,7 +43,6 @@
  *    them.
  *
  *  - netif_remove must notify NAT code when a NAT'ed interface is removed
- *  - free NAT entries on remove?
  *  - allocate NAT entries from a new memp pool instead of the heap
  *  - let ttl be ticks, not seconds
  *
@@ -294,8 +293,8 @@ ip_nat_remove(const ip_nat_entry_t *remove_entry)
         LWIP_ASSERT("NULL != previous", NULL != previous);
         previous->next = next;
       }
-      /* @todo: free 'cur' or there will be a memory leak !?! */
-      /* ip_nat_free(cur); */
+      /* free 'cur' or there will be a memory leak */
+      ip_nat_free(cur);
       return;
     } else {
       previous = cur;
