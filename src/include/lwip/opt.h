@@ -466,6 +466,11 @@
 #define IP_FORWARD                      0
 #endif
 
+/** IP_NAT==1: Enables network address translation code */
+#ifndef IP_NAT
+#define IP_NAT                          0
+#endif
+
 /**
  * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
  *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.

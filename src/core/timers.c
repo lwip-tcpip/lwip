@@ -53,6 +53,7 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
+#include "lwip/ip_nat.h"
 
 
 /** The one and only timeout list */
@@ -214,6 +215,22 @@ dns_timer(void *arg)
 }
 #endif /* LWIP_DNS */
 
+#if IP_NAT
+/**
+ * Timer callback function that calls ip_nat_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+static void
+nat_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: nat_timer()\n"));
+  ip_nat_tmr();
+  sys_timeout(LWIP_NAT_TMR_INTERVAL_SEC, nat_timer, NULL);
+}
+#endif /* IP_NAT */
+
 /** Initialize this module */
 void sys_timeouts_init(void)
 {
@@ -236,6 +253,9 @@ void sys_timeouts_init(void)
 #if LWIP_DNS
   sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
 #endif /* LWIP_DNS */
+#if IP_NAT
+  sys_timeout(LWIP_NAT_TMR_INTERVAL_SEC, nat_timer, NULL);
+#endif /* IP_NAT */
 
 #if NO_SYS
   /* Initialise timestamp for sys_check_timeouts */
