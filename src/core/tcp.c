@@ -1015,8 +1015,8 @@ tcp_setprio(struct tcp_pcb *pcb, u8_t prio)
 {
   pcb->prio = prio;
 }
-#if TCP_QUEUE_OOSEQ
 
+#if TCP_QUEUE_OOSEQ
 /**
  * Returns a copy of the given TCP segment.
  * The pbuf and data are not copied, only the pointers
@@ -1037,7 +1037,7 @@ tcp_seg_copy(struct tcp_seg *seg)
   pbuf_ref(cseg->p);
   return cseg;
 }
-#endif
+#endif /* TCP_QUEUE_OOSEQ */
 
 #if LWIP_CALLBACK_API
 /**
@@ -1346,7 +1346,7 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
     if (pcb->unacked != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->unacked\n"));
     }
-#if TCP_QUEUE_OOSEQ /* LW */
+#if TCP_QUEUE_OOSEQ
     if (pcb->ooseq != NULL) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_pcb_purge: data left on ->ooseq\n"));
     }
