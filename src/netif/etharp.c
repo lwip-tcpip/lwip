@@ -1226,6 +1226,10 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   }
 #endif /* ETHARP_SUPPORT_VLAN */
 
+#if LWIP_ARP_FILTER_NETIF
+  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, type);
+#endif /* LWIP_ARP_FILTER_NETIF*/
+
   switch (type) {
 #if LWIP_ARP
     /* IP packet? */

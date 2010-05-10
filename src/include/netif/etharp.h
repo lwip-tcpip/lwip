@@ -157,6 +157,16 @@ PACK_STRUCT_END
 #define ARP_REQUEST 1
 #define ARP_REPLY   2
 
+/** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(pbuf, netif, type)
+ * to a filter function that returns the correct netif when using multiple
+ * netifs on one hardware interface where the netif's low-level receive
+ * routine cannot decide for the correct netif (e.g. when mapping multiple
+ * IP addresses to one hardware interface).
+ */
+#ifndef LWIP_ARP_FILTER_NETIF
+#define LWIP_ARP_FILTER_NETIF 0
+#endif
+
 #if ARP_QUEUEING
 /** struct for queueing outgoing packets for unknown address
   * defined here to be accessed by memp.h
