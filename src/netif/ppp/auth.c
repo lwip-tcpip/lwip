@@ -634,20 +634,14 @@ auth_withpeer_fail(int unit, u16_t protocol)
   if (passwd_from_file) {
     BZERO(ppp_settings.passwd, MAXSECRETLEN);
   }
-  /* 
-   * XXX Warning: the unit number indicates the interface which is
-   * not necessarily the PPP connection.  It works here as long
-   * as we are only supporting PPP interfaces.
-   */
-  /* @todo: Remove pppIOCtl, it is not used anywhere else.
-           Instead, directly set errCode. */
-  pppIOCtl(unit, PPPCTLS_ERRCODE, &errCode);
 
   /*
    * We've failed to authenticate ourselves to our peer.
    * He'll probably take the link down, and there's not much
    * we can do except wait for that.
    */
+  pppIOCtl(unit, PPPCTLS_ERRCODE, &errCode);
+  lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
 /*
