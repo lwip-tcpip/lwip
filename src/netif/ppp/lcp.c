@@ -2010,7 +2010,7 @@ LcpSendEchoRequest (fsm *f)
    * Detect the failure of the peer at this point.
    */
   if (lcp_echo_fails != 0) {
-    if (lcp_echos_pending++ >= lcp_echo_fails) {
+    if (lcp_echos_pending >= lcp_echo_fails) {
       LcpLinkFailure(f);
       lcp_echos_pending = 0;
     }
@@ -2024,6 +2024,7 @@ LcpSendEchoRequest (fsm *f)
     pktp = pkt;
     PUTLONG(lcp_magic, pktp);
     fsm_sdata(f, ECHOREQ, (u_char)(lcp_echo_number++ & 0xFF), pkt, (int)(pktp - pkt));
+    ++lcp_echos_pending;
   }
 }
 
