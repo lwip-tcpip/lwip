@@ -72,11 +72,11 @@ struct sockaddr {
 #define SOCK_RAW        3
 
 /*
- * Option flags per-socket. These must match the SOF_ flags in ip.h!
+ * Option flags per-socket. These must match the SOF_ flags in ip.h (checked in init.c)
  */
 #define  SO_DEBUG       0x0001 /* Unimplemented: turn on debugging info recording */
 #define  SO_ACCEPTCONN  0x0002 /* socket has had listen() */
-#define  SO_REUSEADDR   0x0004 /* Unimplemented: allow local address reuse */
+#define  SO_REUSEADDR   0x0004 /* Allow local address reuse */
 #define  SO_KEEPALIVE   0x0008 /* keep connections alive */
 #define  SO_DONTROUTE   0x0010 /* Unimplemented: just use interface addresses */
 #define  SO_BROADCAST   0x0020 /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */

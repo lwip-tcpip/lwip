@@ -206,11 +206,6 @@
 #ifdef ETHARP_ALWAYS_INSERT
   #error "ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h."
 #endif
-#if SO_REUSE
-/* I removed the lot since this was an ugly hack. It broke the raw-API.
-   It also came with many ugly goto's, Christiaan Simons. */
-  #error "SO_REUSE currently unavailable, this was a hack"
-#endif
 
 #ifdef LWIP_DEBUG
 static void
@@ -237,6 +232,29 @@ lwip_sanity_check(void)
   if (TCP_WND < TCP_MSS)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
 #endif /* LWIP_TCP */
+#if LWIP_SOCKET
+  /* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
+  if (SO_DEBUG != SOF_DEBUG)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_DEBUG != SOF_DEBUG\n"));
+  if (SO_ACCEPTCONN != SOF_ACCEPTCONN)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_ACCEPTCONN != SOF_ACCEPTCONN\n"));
+  if (SO_REUSEADDR != SOF_REUSEADDR)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_REUSEADDR != SOF_REUSEADDR\n"));
+  if (SO_KEEPALIVE != SOF_KEEPALIVE)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_KEEPALIVE != SOF_KEEPALIVE\n"));
+  if (SO_DONTROUTE != SOF_DONTROUTE)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_DONTROUTE != SOF_DONTROUTE\n"));
+  if (SO_BROADCAST != SOF_BROADCAST)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_BROADCAST != SOF_BROADCAST\n"));
+  /*if (SO_USELOOPBACK != SOF_USELOOPBACK)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_USELOOPBACK != SOF_USELOOPBACK\n"));*/
+  if (SO_LINGER != SOF_LINGER)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_LINGER != SOF_LINGER\n"));
+  if (SO_OOBINLINE != SOF_OOBINLINE)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_OOBINLINE != SOF_OOBINLINE\n"));
+  /*if (SO_REUSEPORT != SOF_REUSEPORT)
+    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_REUSEPORT != SOF_REUSEPORT\n"));*/
+#endif /* LWIP_SOCKET */
 }
 #else  /* LWIP_DEBUG */
 #define lwip_sanity_check()
