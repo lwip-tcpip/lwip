@@ -603,8 +603,8 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     /* dest cannot be NULL here */
     ip_addr_copy(iphdr->dest, *dest);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += iphdr->dest.addr & 0xFFFF;
-    chk_sum += iphdr->dest.addr >> 16;
+    chk_sum += ip4_addr_get_u32(&iphdr->dest) & 0xFFFF;
+    chk_sum += ip4_addr_get_u32(&iphdr->dest) >> 16;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
     IPH_VHLTOS_SET(iphdr, 4, ip_hlen / 4, tos);
@@ -630,8 +630,8 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     }
 
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += iphdr->src.addr & 0xFFFF;
-    chk_sum += iphdr->src.addr >> 16;
+    chk_sum += ip4_addr_get_u32(&iphdr->src) & 0xFFFF;
+    chk_sum += ip4_addr_get_u32(&iphdr->src) >> 16;
     chk_sum = (chk_sum >> 16) + (chk_sum & 0xFFFF);
     chk_sum = (chk_sum >> 16) + chk_sum;
     chk_sum = ~chk_sum;
