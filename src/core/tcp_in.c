@@ -453,7 +453,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->accept = pcb->accept;
 #endif /* LWIP_CALLBACK_API */
     /* inherit socket options */
-    npcb->so_options = pcb->so_options & (SOF_DEBUG|SOF_DONTROUTE|SOF_KEEPALIVE|SOF_OOBINLINE|SOF_LINGER);
+    npcb->so_options = pcb->so_options & SOF_INHERITED;
     /* Register the new PCB so that we can begin receiving segments
        for it. */
     TCP_REG(&tcp_active_pcbs, npcb);

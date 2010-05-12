@@ -100,10 +100,13 @@ struct ip_pcb {
 #define SOF_KEEPALIVE   (u16_t)0x0008U    /* keep connections alive */
 #define SOF_DONTROUTE   (u16_t)0x0010U    /* just use interface addresses */
 #define SOF_BROADCAST   (u16_t)0x0020U    /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
-#define SOF_USELOOPBACK (u16_t)0x0040U    /* bypass hardware when possible */
+/*#define SOF_USELOOPBACK (u16_t)0x0040U     Unimplemented: bypass hardware when possible */
 #define SOF_LINGER      (u16_t)0x0080U    /* linger on close if data present */
 #define SOF_OOBINLINE   (u16_t)0x0100U    /* leave received OOB data in line */
-#define SOF_REUSEPORT   (u16_t)0x0200U    /* allow local address & port reuse */
+/*#define SOF_REUSEPORT   (u16_t)0x0200U     Unimplemented: allow local address & port reuse */
+
+/* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
+#define SOF_INHERITED   (SOF_DEBUG|SOF_REUSEADDR|SOF_DONTROUTE|SOF_KEEPALIVE|SOF_OOBINLINE|SOF_LINGER)
 
 
 #ifdef PACK_STRUCT_USE_INCLUDES
