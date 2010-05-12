@@ -711,7 +711,7 @@ nPut(PPPControl *pc, struct pbuf *nb)
   for(b = nb; b != NULL; b = b->next) {
     if((c = sio_write(pc->fd, b->payload, b->len)) != b->len) {
       PPPDEBUG(LOG_WARNING,
-               ("PPP nPut: incomplete sio_write(fd:%d, len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pc->fd, b->len, c, c));
+               ("PPP nPut: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pc->fd, b->len, c, c));
       LINK_STATS_INC(link.err);
       pc->lastXMit = 0; /* prepend PPP_FLAG to next packet */
       snmp_inc_ifoutdiscards(&pc->netif);
