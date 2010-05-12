@@ -88,6 +88,12 @@ struct tcp_pcb *tcp_active_pcbs;
 /** List of all TCP PCBs in TIME-WAIT state */
 struct tcp_pcb *tcp_tw_pcbs;
 
+#define NUM_TCP_PCB_LISTS               4
+#define NUM_TCP_PCB_LISTS_NO_TIME_WAIT  3
+/** An array with all (non-temporary) PCB lists, mainly used for smaller code size */
+struct tcp_pcb **tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcbs,
+  &tcp_active_pcbs, &tcp_tw_pcbs};
+
 /** Only used for temporary storage. */
 struct tcp_pcb *tcp_tmp_pcb;
 
@@ -390,55 +396,46 @@ tcp_abort(struct tcp_pcb *pcb)
 err_t
 tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 {
+  int i;
+  int max_pcb_list = NUM_TCP_PCB_LISTS;
   struct tcp_pcb *cpcb;
 
   LWIP_ERROR("tcp_bind: can only bind in state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
+#if SO_REUSE
+  /* Unless the REUSEADDR flag is set,
+     we have to check the pcbs in TIME-WAIT state, also.
+     We do not dump TIME_WAIT pcb's; they can still be matched by incoming
+     packets using both local and remote IP addresses and ports to distinguish.
+   */
+#if SO_REUSE
+  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+    max_pcb_list = NUM_TCP_PCB_LISTS_NO_TIME_WAIT;
+  }
+#endif /* SO_REUSE */
+#endif /* SO_REUSE */
+
   if (port == 0) {
     port = tcp_new_port();
   }
-  /* Check if the address already is in use. */
-  /* Check the listen pcbs. */
-  for(cpcb = tcp_listen_pcbs.pcbs;
-      cpcb != NULL; cpcb = cpcb->next) {
-    if (cpcb->local_port == port) {
-      if (ip_addr_isany(&(cpcb->local_ip)) ||
-          ip_addr_isany(ipaddr) ||
-          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-        return ERR_USE;
-      }
-    }
-  }
-  /* Check the connected pcbs. */
-  for(cpcb = tcp_active_pcbs;
-      cpcb != NULL; cpcb = cpcb->next) {
-    if (cpcb->local_port == port) {
-      if (ip_addr_isany(&(cpcb->local_ip)) ||
-          ip_addr_isany(ipaddr) ||
-          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-        return ERR_USE;
-      }
-    }
-  }
-  /* Check the bound, not yet connected pcbs. */
-  for(cpcb = tcp_bound_pcbs; cpcb != NULL; cpcb = cpcb->next) {
-    if (cpcb->local_port == port) {
-      if (ip_addr_isany(&(cpcb->local_ip)) ||
-          ip_addr_isany(ipaddr) ||
-          ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-        return ERR_USE;
-      }
-    }
-  }
-  /* Unless the REUSEADDR flag is set,
-   * we have to check the pcbs in TIME-WAIT state, also: */
-  if ((pcb->so_options & SOF_REUSEADDR) == 0) {
-    for(cpcb = tcp_tw_pcbs; cpcb != NULL; cpcb = cpcb->next) {
+
+  /* Check if the address already is in use (on all lists) */
+  for (i = 0; i < max_pcb_list; i++) {
+    for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
       if (cpcb->local_port == port) {
-        if (ip_addr_isany(&(cpcb->local_ip)) ||
-            ip_addr_isany(ipaddr) ||
-            ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
-          return ERR_USE;
+#if SO_REUSE
+        /* Omit checking for the same port if both pcbs have REUSEADDR set.
+           For SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
+           tcp_connect. */
+        if (((pcb->so_options & SOF_REUSEADDR) == 0) ||
+          ((cpcb->so_options & SOF_REUSEADDR) == 0))
+#endif /* SO_REUSE */
+        {
+          if (ip_addr_isany(&(cpcb->local_ip)) ||
+              ip_addr_isany(ipaddr) ||
+              ip_addr_cmp(&(cpcb->local_ip), ipaddr)) {
+            return ERR_USE;
+          }
         }
       }
     }
@@ -593,6 +590,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 static u16_t
 tcp_new_port(void)
 {
+  int i;
   struct tcp_pcb *pcb;
 #ifndef TCP_LOCAL_PORT_RANGE_START
 #define TCP_LOCAL_PORT_RANGE_START 4096
@@ -604,20 +602,12 @@ tcp_new_port(void)
   if (++port > TCP_LOCAL_PORT_RANGE_END) {
     port = TCP_LOCAL_PORT_RANGE_START;
   }
-  
-  for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->local_port == port) {
-      goto again;
-    }
-  }
-  for(pcb = tcp_tw_pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->local_port == port) {
-      goto again;
-    }
-  }
-  for(pcb = (struct tcp_pcb *)tcp_listen_pcbs.pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->local_port == port) {
-      goto again;
+  /* Check all PCB lists. */
+  for (i = 1; i < NUM_TCP_PCB_LISTS; i++) {  
+    for(pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
+      if (pcb->local_port == port) {
+        goto again;
+      }
     }
   }
   return port;
@@ -651,9 +641,43 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     return ERR_VAL;
   }
   pcb->remote_port = port;
+
+  /* check if we have a route to the remote host */
+  if (ip_addr_isany(&(pcb->local_ip))) {
+    /* no local IP address set, yet. */
+    struct netif *netif = ip_route(&(pcb->remote_ip));
+    if (netif == NULL) {
+      /* Don't even try to send a SYN packet if we have not route
+         since that will fail. */
+      return ERR_RTE;
+    }
+    /* Use the netif's IP address as local address. */
+    ip_addr_copy(pcb->local_ip, netif->ip_addr);
+  }
+
   if (pcb->local_port == 0) {
     pcb->local_port = tcp_new_port();
   }
+#if SO_REUSE
+  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+    /* Since SOF_REUSEADDR allows reusing a local address, we have to make sure
+       now that the 5-tuple is unique. */
+    struct tcp_pcb *cpcb;
+    int i;
+    /* Don't check listen PCBs, check bound-, active- and TIME-WAIT PCBs. */
+    for (i = 1; i < NUM_TCP_PCB_LISTS; i++) {
+      for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
+        if ((cpcb->local_port == pcb->local_port) &&
+            (cpcb->remote_port == pcb->remote_port) &&
+            ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip) &&
+            ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip)) {
+          /* linux returns EISCONN here, but ERR_USE should be OK for us */
+          return ERR_USE;
+        }
+      }
+    }
+  }
+#endif /* SO_REUSE */
   iss = tcp_next_iss();
   pcb->rcv_nxt = 0;
   pcb->snd_nxt = iss;

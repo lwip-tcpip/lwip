@@ -660,13 +660,16 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
       rebind = 1;
     }
 
-    /* this code does not allow upper layer to share a UDP port for
-       listening to broadcast or multicast traffic (See SO_REUSEADDR and
-       SO_REUSEPORT under *BSD). TODO: See where it fits instead, OR
-       combine with implementation of UDP PCB flags. Leon Woestenberg. */
-#ifdef LWIP_UDP_TODO
-    /* port matches that of PCB in list? */
+    /* By default, we don't allow to bind to a port that any other udp
+       PCB is alread bound to, unless *all* PCBs with that port have tha
+       REUSEADDR flag set. */
+#if SO_REUSE
+    else if (((pcb->so_options & SOF_REUSEADDR) == 0) &&
+             ((ipcb->so_options & SOF_REUSEADDR) == 0)) {
+#else /* SO_REUSE */
+    /* port matches that of PCB in list and REUSEADDR not set -> reject */
     else {
+#endif /* SO_REUSE */
       if ((ipcb->local_port == port) &&
           /* IP address matches, or one is IP_ADDR_ANY? */
           (ip_addr_isany(&(ipcb->local_ip)) ||
@@ -678,7 +681,6 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
         return ERR_USE;
       }
     }
-#endif
   }
 
   ip_addr_set(&pcb->local_ip, ipaddr);
