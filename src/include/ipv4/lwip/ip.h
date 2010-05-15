@@ -78,7 +78,7 @@ extern "C" {
   ip_addr_t local_ip; \
   ip_addr_t remote_ip; \
    /* Socket options */  \
-  u16_t so_options;      \
+  u8_t so_options;      \
    /* Type Of Service */ \
   u8_t tos;              \
   /* Time To Live */     \
@@ -94,19 +94,19 @@ struct ip_pcb {
 /*
  * Option flags per-socket. These are the same like SO_XXX.
  */
-#define SOF_DEBUG       (u16_t)0x0001U    /* turn on debugging info recording */
-#define SOF_ACCEPTCONN  (u16_t)0x0002U    /* socket has had listen() */
-#define SOF_REUSEADDR   (u16_t)0x0004U    /* allow local address reuse */
-#define SOF_KEEPALIVE   (u16_t)0x0008U    /* keep connections alive */
-#define SOF_DONTROUTE   (u16_t)0x0010U    /* just use interface addresses */
-#define SOF_BROADCAST   (u16_t)0x0020U    /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
-/*#define SOF_USELOOPBACK (u16_t)0x0040U     Unimplemented: bypass hardware when possible */
-#define SOF_LINGER      (u16_t)0x0080U    /* linger on close if data present */
-#define SOF_OOBINLINE   (u16_t)0x0100U    /* leave received OOB data in line */
+/*#define SOF_DEBUG       (u8_t)0x01U     Unimplemented: turn on debugging info recording */
+#define SOF_ACCEPTCONN    (u8_t)0x02U  /* socket has had listen() */
+#define SOF_REUSEADDR     (u8_t)0x04U  /* allow local address reuse */
+#define SOF_KEEPALIVE     (u8_t)0x08U  /* keep connections alive */
+/*#define SOF_DONTROUTE   (u8_t)0x10U     Unimplemented: just use interface addresses */
+#define SOF_BROADCAST     (u8_t)0x20U  /* permit to send and to receive broadcast messages (see IP_SOF_BROADCAST option) */
+/*#define SOF_USELOOPBACK (u8_t)0x40U     Unimplemented: bypass hardware when possible */
+#define SOF_LINGER        (u8_t)0x80U  /* linger on close if data present */
+/*#define SOF_OOBINLINE   (u16_t)0x0100U     Unimplemented: leave received OOB data in line */
 /*#define SOF_REUSEPORT   (u16_t)0x0200U     Unimplemented: allow local address & port reuse */
 
 /* These flags are inherited (e.g. from a listen-pcb to a connection-pcb): */
-#define SOF_INHERITED   (SOF_DEBUG|SOF_REUSEADDR|SOF_DONTROUTE|SOF_KEEPALIVE|SOF_OOBINLINE|SOF_LINGER)
+#define SOF_INHERITED   (SOF_REUSEADDR|SOF_KEEPALIVE|SOF_LINGER/*|SOF_DEBUG|SOF_DONTROUTE|SOF_OOBINLINE*/)
 
 
 #ifdef PACK_STRUCT_USE_INCLUDES
