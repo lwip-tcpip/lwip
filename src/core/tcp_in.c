@@ -93,6 +93,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
 {
   struct tcp_pcb *pcb, *prev;
   struct tcp_pcb_listen *lpcb;
+#if SO_REUSE
+  struct tcp_pcb *lpcb_prev = NULL;
+  struct tcp_pcb_listen *lpcb_any = NULL;
+#endif /* SO_REUSE */
   u8_t hdrlen;
   err_t err;
 
@@ -218,30 +222,54 @@ tcp_input(struct pbuf *p, struct netif *inp)
       }
     }
 
-  /* Finally, if we still did not get a match, we check all PCBs that
-     are LISTENing for incoming connections. */
+    /* Finally, if we still did not get a match, we check all PCBs that
+       are LISTENing for incoming connections. */
     prev = NULL;
     for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
-      if ((ip_addr_isany(&(lpcb->local_ip)) ||
-        ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest))) &&
-        lpcb->local_port == tcphdr->dest) {
-        /* Move this PCB to the front of the list so that subsequent
-           lookups will be faster (we exploit locality in TCP segment
-           arrivals). */
-        if (prev != NULL) {
-          ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
-                /* our successor is the remainder of the listening list */
-          lpcb->next = tcp_listen_pcbs.listen_pcbs;
-                /* put this listening pcb at the head of the listening list */
-          tcp_listen_pcbs.listen_pcbs = lpcb;
+      if (lpcb->local_port == tcphdr->dest) {
+#if SO_REUSE
+        if (ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest))) {
+          /* found an exact match */
+          break;
+        } else if(ip_addr_isany(&(lpcb->local_ip))) {
+          /* found an ANY-match */
+          lpcb_any = lpcb;
+          lpcb_prev = prev;
         }
-      
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
-        tcp_listen_input(lpcb);
-        pbuf_free(p);
-        return;
+#else /* SO_REUSE */
+        if (ip_addr_cmp(&(lpcb->local_ip), &(iphdr->dest)) ||
+            ip_addr_isany(&(lpcb->local_ip))) {
+          /* found a match */
+          break;
+        }
+#endif /* SO_REUSE */
       }
       prev = (struct tcp_pcb *)lpcb;
+    }
+#if SO_REUSE
+    /* first try specific local IP */
+    if (lpcb == NULL) {
+      /* only pass to ANY if no specific local IP has been found */
+      lpcb = lpcb_any;
+      prev = lpcb_prev;
+    }
+#endif /* SO_REUSE */
+    if (lpcb != NULL) {
+      /* Move this PCB to the front of the list so that subsequent
+         lookups will be faster (we exploit locality in TCP segment
+         arrivals). */
+      if (prev != NULL) {
+        ((struct tcp_pcb_listen *)prev)->next = lpcb->next;
+              /* our successor is the remainder of the listening list */
+        lpcb->next = tcp_listen_pcbs.listen_pcbs;
+              /* put this listening pcb at the head of the listening list */
+        tcp_listen_pcbs.listen_pcbs = lpcb;
+      }
+    
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
+      tcp_listen_input(lpcb);
+      pbuf_free(p);
+      return;
     }
   }
 
