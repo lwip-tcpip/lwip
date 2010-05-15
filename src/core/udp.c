@@ -276,7 +276,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     }
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
-#if SO_REUSE_RXTOALL
+#if SO_REUSE && SO_REUSE_RXTOALL
       if ((broadcast || ip_addr_ismulticast(&iphdr->dest)) &&
           ((pcb->so_options & SOF_REUSEADDR) != 0)) {
         /* pass broadcast- or multicast packets to all multicast pcbs
@@ -317,7 +317,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         /* and move payload to UDP data again */
         pbuf_header(p, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
       }
-#endif /* SO_REUSE_RXTOALL */
+#endif /* SO_REUSE && SO_REUSE_RXTOALL */
       /* callback */
       if (pcb->recv != NULL) {
         /* now the recv function is responsible for freeing p */
