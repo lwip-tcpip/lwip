@@ -346,7 +346,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 
         if (recv_data != NULL) {
-          if(flags & TCP_PSH) {
+          if (pcb->flags & TF_RXCLOSED) {
+            /* received data although already closed -> abort (send RST) to
+               notify the remote host that not all data has been processed */
+            tcp_abort(pcb);
+            goto aborted;
+          }
+          if (flags & TCP_PSH) {
             recv_data->flags |= PBUF_FLAG_PUSH;
           }
 
@@ -371,7 +377,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           if (pcb->rcv_wnd != TCP_WND) {
             pcb->rcv_wnd++;
           }
-          TCP_EVENT_RECV(pcb, NULL, ERR_OK, err);
+          TCP_EVENT_CLOSED(pcb, err);
           if (err == ERR_ABRT) {
             goto aborted;
           }
@@ -391,7 +397,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
        Below this line, 'pcb' may not be dereferenced! */
 aborted:
     tcp_input_pcb = NULL;
-
+    recv_data = NULL;
 
     /* give up our reference to inseg.p */
     if (inseg.p != NULL)

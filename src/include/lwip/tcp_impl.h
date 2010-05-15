@@ -199,6 +199,8 @@ PACK_STRUCT_END
                    LWIP_EVENT_SENT, NULL, space, ERR_OK)
 #define TCP_EVENT_RECV(pcb,p,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
                 LWIP_EVENT_RECV, (p), 0, (err))
+#define TCP_EVENT_CLOSED(pcb,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
+                LWIP_EVENT_RECV, NULL, 0, ERR_OK)
 #define TCP_EVENT_CONNECTED(pcb,err,ret) ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
                 LWIP_EVENT_CONNECTED, NULL, 0, (err))
 #define TCP_EVENT_POLL(pcb,ret)       ret = lwip_tcp_event((pcb)->callback_arg, (pcb),\
@@ -222,13 +224,22 @@ PACK_STRUCT_END
     else (ret) = ERR_OK;                                       \
   } while (0)
 
-#define TCP_EVENT_RECV(pcb,p,err,ret)                              \
-  do {                                                             \
-    if(((pcb)->recv != NULL) && (!((pcb)->flags & TF_RXCLOSED))) { \
-      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err));    \
-    } else {                                                       \
-      (ret) = tcp_recv_null(NULL, (pcb), (p), (err));              \
-    }                                                              \
+#define TCP_EVENT_RECV(pcb,p,err,ret)                          \
+  do {                                                         \
+    if((pcb)->recv != NULL) {                                  \
+      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),(p),(err));\
+    } else {                                                   \
+      (ret) = tcp_recv_null(NULL, (pcb), (p), (err));          \
+    }                                                          \
+  } while (0)
+
+#define TCP_EVENT_CLOSED(pcb,ret)                                \
+  do {                                                           \
+    if(((pcb)->recv != NULL)) {                                  \
+      (ret) = (pcb)->recv((pcb)->callback_arg,(pcb),NULL,ERR_OK);\
+    } else {                                                     \
+      (ret) = ERR_OK;                                            \
+    }                                                            \
   } while (0)
 
 #define TCP_EVENT_CONNECTED(pcb,err,ret)                         \
