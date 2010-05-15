@@ -712,6 +712,8 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->ssthresh = pcb->mss * 10;
 #if LWIP_CALLBACK_API
   pcb->connected = connected;
+#else /* LWIP_CALLBACK_API */  
+  LWIP_UNUSED_ARG(connected);
 #endif /* LWIP_CALLBACK_API */
 
   /* Send a SYN together with the MSS option. */
@@ -1334,6 +1336,8 @@ tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
 #if LWIP_CALLBACK_API
   pcb->poll = poll;
+#else /* LWIP_CALLBACK_API */  
+  LWIP_UNUSED_ARG(poll);
 #endif /* LWIP_CALLBACK_API */  
   pcb->pollinterval = interval;
 }
