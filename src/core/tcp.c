@@ -490,6 +490,21 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   if (pcb->state == LISTEN) {
     return pcb;
   }
+#if SO_REUSE
+  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+    /* Since SOF_REUSEADDR allows reusing a local address before the pcb's usage
+       is declared (listen-/connection-pcb), we have to make sure now that
+       this port is only used once for every local IP. */
+    for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
+      if (lpcb->local_port == pcb->local_port) {
+        if (ip_addr_cmp(&lpcb->local_ip, &pcb->local_ip)) {
+          /* this address/port is already used */
+          return NULL;
+        }
+      }
+    }
+  }
+#endif /* SO_REUSE */
   lpcb = (struct tcp_pcb_listen *)memp_malloc(MEMP_TCP_PCB_LISTEN);
   if (lpcb == NULL) {
     return NULL;
@@ -647,7 +662,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     /* no local IP address set, yet. */
     struct netif *netif = ip_route(&(pcb->remote_ip));
     if (netif == NULL) {
-      /* Don't even try to send a SYN packet if we have not route
+      /* Don't even try to send a SYN packet if we have no route
          since that will fail. */
       return ERR_RTE;
     }
@@ -668,9 +683,9 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     for (i = 1; i < NUM_TCP_PCB_LISTS; i++) {
       for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
         if ((cpcb->local_port == pcb->local_port) &&
-            (cpcb->remote_port == pcb->remote_port) &&
+            (cpcb->remote_port == port) &&
             ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip) &&
-            ip_addr_cmp(&cpcb->local_ip, &pcb->local_ip)) {
+            ip_addr_cmp(&cpcb->remote_ip, ipaddr)) {
           /* linux returns EISCONN here, but ERR_USE should be OK for us */
           return ERR_USE;
         }
