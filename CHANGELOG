@@ -14,7 +14,9 @@ HISTORY
   ++ New features:
 
   2010-05-13: Simon Goldschmidt
-  * tcp.c, udp.c: task #6995: Implement SO_REUSEADDR (correctly)
+  * tcp.c, udp.c: task #6995: Implement SO_REUSEADDR (correctly), added
+    new option SO_REUSE_RXTOALL to pass received UDP broadcast/multicast
+    packets to more than one pcb.
 
   2010-05-02: Simon Goldschmidt
   * netbuf.h/.c, sockets.c, api_msg.c: use checksum-on-copy for sending

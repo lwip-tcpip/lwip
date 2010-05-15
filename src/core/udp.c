@@ -276,6 +276,48 @@ udp_input(struct pbuf *p, struct netif *inp)
     }
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
+#if SO_REUSE_RXTOALL
+      if ((broadcast || ip_addr_ismulticast(&iphdr->dest)) &&
+          ((pcb->so_options & SOF_REUSEADDR) != 0)) {
+        /* pass broadcast- or multicast packets to all multicast pcbs
+           if SOF_REUSEADDR is set on the first match */
+        struct udp_pcb *mpcb;
+        /* for that, move payload to IP header again */
+        pbuf_header(p, (s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+        for (mpcb = udp_pcbs; mpcb != NULL; mpcb = mpcb->next) {
+          if (mpcb != pcb) {
+            /* compare PCB local addr+port to UDP destination addr+port */
+            if ((mpcb->local_port == dest) &&
+                ((!broadcast && ip_addr_isany(&mpcb->local_ip)) ||
+                 ip_addr_cmp(&(mpcb->local_ip), &(iphdr->dest)) ||
+#if LWIP_IGMP
+                 ip_addr_ismulticast(&(iphdr->dest)) ||
+#endif /* LWIP_IGMP */
+#if IP_SOF_BROADCAST_RECV
+                 (broadcast && (mpcb->so_options & SOF_BROADCAST)))) {
+#else  /* IP_SOF_BROADCAST_RECV */
+                 (broadcast))) {
+#endif /* IP_SOF_BROADCAST_RECV */
+              /* pass a copy of the packet to all local matches */
+              if (mpcb->recv != NULL) {
+                struct pbuf *q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+                if (q != NULL) {
+                  err_t err = pbuf_copy(q, p);
+                  if (err == ERR_OK) {
+                    /* move payload to UDP data */
+                    struct ip_hdr *q_iphdr = (struct ip_hdr *)q->payload;
+                    pbuf_header(q, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+                    mpcb->recv(mpcb->recv_arg, mpcb, q, &q_iphdr->src, src);
+                  }
+                }
+              }
+            }
+          }
+        }
+        /* and move payload to UDP data again */
+        pbuf_header(p, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+      }
+#endif /* SO_REUSE_RXTOALL */
       /* callback */
       if (pcb->recv != NULL) {
         /* now the recv function is responsible for freeing p */

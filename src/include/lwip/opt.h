@@ -1388,10 +1388,19 @@
 #endif
 
 /**
- * SO_REUSE==1: Enable SO_REUSEADDR and SO_REUSEPORT options. DO NOT USE!
+ * SO_REUSE==1: Enable SO_REUSEADDR option.
  */
 #ifndef SO_REUSE
 #define SO_REUSE                        0
+#endif
+
+/**
+ * SO_REUSE_RXTOALL==1: Pass a copy of incoming broadcast/multicast packets
+ * to all local matches if SO_REUSEADDR is turned on.
+ * WARNING: Adds a memcpy for every packet if passing to more than one pcb!
+ */
+#ifndef SO_REUSE_RXTOALL
+#define SO_REUSE_RXTOALL                0
 #endif
 
 /*
