@@ -282,8 +282,7 @@ udp_input(struct pbuf *p, struct netif *inp)
         /* pass broadcast- or multicast packets to all multicast pcbs
            if SOF_REUSEADDR is set on the first match */
         struct udp_pcb *mpcb;
-        /* for that, move payload to IP header again */
-        pbuf_header(p, (s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+        u8_t p_header_changed = 0;
         for (mpcb = udp_pcbs; mpcb != NULL; mpcb = mpcb->next) {
           if (mpcb != pcb) {
             /* compare PCB local addr+port to UDP destination addr+port */
@@ -300,7 +299,13 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* IP_SOF_BROADCAST_RECV */
               /* pass a copy of the packet to all local matches */
               if (mpcb->recv != NULL) {
-                struct pbuf *q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+                struct pbuf *q;
+                /* for that, move payload to IP header again */
+                if (p_header_changed == 0) {
+                  pbuf_header(p, (s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+                  p_header_changed = 1;
+                }
+                q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
                 if (q != NULL) {
                   err_t err = pbuf_copy(q, p);
                   if (err == ERR_OK) {
@@ -314,8 +319,10 @@ udp_input(struct pbuf *p, struct netif *inp)
             }
           }
         }
-        /* and move payload to UDP data again */
-        pbuf_header(p, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+        if (p_header_changed) {
+          /* and move payload to UDP data again */
+          pbuf_header(p, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
+        }
       }
 #endif /* SO_REUSE && SO_REUSE_RXTOALL */
       /* callback */
