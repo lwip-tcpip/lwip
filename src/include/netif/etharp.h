@@ -115,7 +115,8 @@ PACK_STRUCT_BEGIN
 struct etharp_hdr {
   PACK_STRUCT_FIELD(u16_t hwtype);
   PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u16_t _hwlen_protolen);
+  PACK_STRUCT_FIELD(u8_t  hwlen);
+  PACK_STRUCT_FIELD(u8_t  protolen);
   PACK_STRUCT_FIELD(u16_t opcode);
   PACK_STRUCT_FIELD(struct eth_addr shwaddr);
   PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);

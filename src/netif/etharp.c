@@ -83,12 +83,6 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
 #define HWTYPE_ETHERNET 1
 
-#define ARPH_HWLEN(hdr) (ntohs((hdr)->_hwlen_protolen) >> 8)
-#define ARPH_PROTOLEN(hdr) (ntohs((hdr)->_hwlen_protolen) & 0xff)
-
-#define ARPH_HWLEN_SET(hdr, len) (hdr)->_hwlen_protolen = htons(ARPH_PROTOLEN(hdr) | ((len) << 8))
-#define ARPH_PROTOLEN_SET(hdr, len) (hdr)->_hwlen_protolen = htons((len) | (ARPH_HWLEN(hdr) << 8))
-
 enum etharp_state {
   ETHARP_STATE_EMPTY = 0,
   ETHARP_STATE_PENDING,
@@ -701,12 +695,13 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
   /* RFC 826 "Packet Reception": */
   if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||
-      (hdr->_hwlen_protolen != PP_HTONS((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t))) ||
+      (hdr->hwlen != ETHARP_HWADDR_LEN) ||
+      (hdr->protolen != sizeof(ip_addr_t)) ||
       (hdr->proto != PP_HTONS(ETHTYPE_IP)) ||
       (ethhdr->type != PP_HTONS(ETHTYPE_ARP)))  {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
       ("etharp_arp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
-      hdr->hwtype, ARPH_HWLEN(hdr), hdr->proto, ARPH_PROTOLEN(hdr), ethhdr->type));
+      hdr->hwtype, hdr->hwlen, hdr->proto, hdr->protolen, ethhdr->type));
     ETHARP_STATS_INC(etharp.proterr);
     ETHARP_STATS_INC(etharp.drop);
     pbuf_free(p);
@@ -1153,8 +1148,9 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
 
   hdr->hwtype = PP_HTONS(HWTYPE_ETHERNET);
   hdr->proto = PP_HTONS(ETHTYPE_IP);
-  /* set hwlen and protolen together */
-  hdr->_hwlen_protolen = PP_HTONS((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t));
+  /* set hwlen and protolen */
+  hdr->hwlen = ETHARP_HWADDR_LEN;
+  hdr->protolen = sizeof(ip_addr_t);
 
   ethhdr->type = PP_HTONS(ETHTYPE_ARP);
   /* send ARP query */
