@@ -188,6 +188,15 @@ struct {                                                                       \
 #define IFF_PASSIVE IFF_LINK0 /* wait passively for connection */
 #endif
 
+#ifndef PPPOE_ERRORSTRING_LEN
+#define PPPOE_ERRORSTRING_LEN     64
+#endif
+static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
+
+#ifndef PPPOE_MAX_AC_COOKIE_LEN
+#define PPPOE_MAX_AC_COOKIE_LEN   64
+#endif
+
 struct pppoe_softc {
   LIST_ENTRY(pppoe_softc) sc_list;
   struct netif *sc_ethif;      /* ethernet interface we are using */
@@ -198,9 +207,11 @@ struct pppoe_softc {
   struct eth_addr sc_dest;     /* hardware address of concentrator */
   u16_t sc_session;            /* PPPoE session id */
 
+#ifdef PPPOE_TODO
   char *sc_service_name;       /* if != NULL: requested name of service */
   char *sc_concentrator_name;  /* if != NULL: requested concentrator id */
-  u8_t *sc_ac_cookie;          /* content of AC cookie we must echo back */
+#endif /* PPPOE_TODO */
+  u8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
   size_t sc_ac_cookie_len;     /* length of cookie data */
 #ifdef PPPOE_SERVER
   u8_t *sc_hunique;            /* content of host unique we must echo back */
@@ -286,15 +297,14 @@ pppoe_destroy(struct netif *ifp)
   sys_untimeout(pppoe_timeout, sc);
   LIST_REMOVE(sc, sc_list);
 
+#ifdef PPPOE_TODO
   if (sc->sc_concentrator_name) {
     mem_free(sc->sc_concentrator_name);
   }
   if (sc->sc_service_name) {
     mem_free(sc->sc_service_name);
   }
-  if (sc->sc_ac_cookie) {
-    mem_free(sc->sc_ac_cookie);
-  }
+#endif /* PPPOE_TODO */
   mem_free(sc);
 
   return ERR_OK;
@@ -384,7 +394,6 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
   struct pppoe_softc *sc;
   const char *err_msg;
   char devname[6];
-  char *error;
   u8_t *ac_cookie;
   u16_t ac_cookie_len;
 #ifdef PPPOE_SERVER
@@ -487,17 +496,11 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
         break;
     }
     if (err_msg) {
-      error = NULL;
       if (errortag && len) {
-        error = mem_malloc(len+1);
-        if (error) {
-          strncpy(error, (char*)pb->payload + off + sizeof(pt), len);
-          error[len-1] = '\0';
-        }
-      }
-      if (error) {
-        printf("%s: %s: %s\n", devname, err_msg, error);
-        mem_free(error);
+        u16_t error_len = LWIP_MIN(len, sizeof(pppoe_error_tmp)-1);
+        strncpy(pppoe_error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
+        pppoe_error_tmp[error_len-1] = '\0';
+        printf("%s: %s: %s\n", devname, err_msg, pppoe_error_tmp);
       } else {
         printf("%s: %s\n", devname, err_msg);
       }
@@ -604,13 +607,6 @@ breakbreak:;
         goto done;
       }
       if (ac_cookie) {
-        if (sc->sc_ac_cookie) {
-          mem_free(sc->sc_ac_cookie);
-        }
-        sc->sc_ac_cookie = mem_malloc(ac_cookie_len);
-        if (sc->sc_ac_cookie == NULL) {
-          goto done;
-        }
         sc->sc_ac_cookie_len = ac_cookie_len;
         MEMCPY(sc->sc_ac_cookie, ac_cookie, ac_cookie_len);
       }
@@ -778,7 +774,10 @@ pppoe_send_padi(struct pppoe_softc *sc)
 {
   struct pbuf *pb;
   u8_t *p;
-  int len, l1 = 0, l2 = 0; /* XXX: gcc */
+  int len;
+#ifdef PPPOE_TODO
+  int l1 = 0, l2 = 0; /* XXX: gcc */
+#endif /* PPPOE_TODO */
 
   if (sc->sc_state >PPPOE_STATE_PADI_SENT) {
     PPPDEBUG(LOG_ERR, ("ERROR: pppoe_send_padi in state %d", sc->sc_state));
@@ -786,6 +785,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
 
   /* calculate length of frame (excluding ethernet header + pppoe header) */
   len = 2 + 2 + 2 + 2 + sizeof sc;  /* service name tag is required, host unique is send too */
+#ifdef PPPOE_TODO
   if (sc->sc_service_name != NULL) {
     l1 = (int)strlen(sc->sc_service_name);
     len += l1;
@@ -794,6 +794,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
     l2 = (int)strlen(sc->sc_concentrator_name);
     len += 2 + 2 + l2;
   }
+#endif /* PPPOE_TODO */
   LWIP_ASSERT("sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len <= 0xffff",
     sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len <= 0xffff);
 
@@ -808,19 +809,24 @@ pppoe_send_padi(struct pppoe_softc *sc)
   /* fill in pkt */
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADI, 0, (u16_t)len);
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
+#ifdef PPPOE_TODO
   if (sc->sc_service_name != NULL) {
     PPPOE_ADD_16(p, l1);
     MEMCPY(p, sc->sc_service_name, l1);
     p += l1;
-  } else {
+  } else
+#endif /* PPPOE_TODO */
+  {
     PPPOE_ADD_16(p, 0);
   }
+#ifdef PPPOE_TODO
   if (sc->sc_concentrator_name != NULL) {
     PPPOE_ADD_16(p, PPPOE_TAG_ACNAME);
     PPPOE_ADD_16(p, l2);
     MEMCPY(p, sc->sc_concentrator_name, l2);
     p += l2;
   }
+#endif /* PPPOE_TODO */
   PPPOE_ADD_16(p, PPPOE_TAG_HUNIQUE);
   PPPOE_ADD_16(p, sizeof(sc));
   MEMCPY(p, &sc, sizeof sc);
@@ -954,10 +960,6 @@ pppoe_do_disconnect(struct pppoe_softc *sc)
   /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-  if (sc->sc_ac_cookie) {
-    mem_free(sc->sc_ac_cookie);
-    sc->sc_ac_cookie = NULL;
-  }
   sc->sc_ac_cookie_len = 0;
 #ifdef PPPOE_SERVER
   if (sc->sc_hunique) {
@@ -993,17 +995,22 @@ pppoe_send_padr(struct pppoe_softc *sc)
 {
   struct pbuf *pb;
   u8_t *p;
-  size_t len, l1 = 0; /* XXX: gcc */
+  size_t len;
+#ifdef PPPOE_TODO
+  size_t l1 = 0; /* XXX: gcc */
+#endif /* PPPOE_TODO */
 
   if (sc->sc_state != PPPOE_STATE_PADR_SENT) {
     return ERR_CONN;
   }
 
   len = 2 + 2 + 2 + 2 + sizeof(sc);    /* service name, host unique */
+#ifdef PPPOE_TODO
   if (sc->sc_service_name != NULL) {    /* service name tag maybe empty */
     l1 = strlen(sc->sc_service_name);
     len += l1;
   }
+#endif /* PPPOE_TODO */
   if (sc->sc_ac_cookie_len > 0) {
     len += 2 + 2 + sc->sc_ac_cookie_len;  /* AC cookie */
   }
@@ -1017,11 +1024,14 @@ pppoe_send_padr(struct pppoe_softc *sc)
   p = (u8_t*)pb->payload + sizeof (struct eth_hdr);
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADR, 0, len);
   PPPOE_ADD_16(p, PPPOE_TAG_SNAME);
+#ifdef PPPOE_TODO
   if (sc->sc_service_name != NULL) {
     PPPOE_ADD_16(p, l1);
     MEMCPY(p, sc->sc_service_name, l1);
     p += l1;
-  } else {
+  } else
+#endif /* PPPOE_TODO */
+  {
     PPPOE_ADD_16(p, 0);
   }
   if (sc->sc_ac_cookie_len > 0) {
@@ -1219,10 +1229,6 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 
   /* clean up softc */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-  if (sc->sc_ac_cookie) {
-    mem_free(sc->sc_ac_cookie);
-    sc->sc_ac_cookie = NULL;
-  }
   sc->sc_ac_cookie_len = 0;
   sc->sc_session = 0;
 }
