@@ -89,6 +89,10 @@ extern "C" {
 #define lwip_ntohs(x) (x)
 #define lwip_htonl(x) (x)
 #define lwip_ntohl(x) (x)
+#define PP_HTONS(x) (x)
+#define PP_NTOHS(x) (x)
+#define PP_HTONL(x) (x)
+#define PP_NTOHL(x) (x)
 #else /* BYTE_ORDER != BIG_ENDIAN */
 #if LWIP_PLATFORM_BYTESWAP
 #define lwip_htons(x) LWIP_PLATFORM_HTONS(x)
@@ -101,6 +105,17 @@ u16_t lwip_ntohs(u16_t x);
 u32_t lwip_htonl(u32_t x);
 u32_t lwip_ntohl(u32_t x);
 #endif /* LWIP_PLATFORM_BYTESWAP */
+
+/* These macros should be calculated by the preprocessor and are used
+   with compile-time constants only (so that there is no little-endian
+   overhead at runtime). */
+#define PP_HTONS(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
+#define PP_NTOHS(x) PP_HTONS(x)
+#define PP_HTONL(x) ((((x) & 0xff) << 24) | \
+                     (((x) & 0xff00) << 8) | \
+                     (((x) & 0xff0000UL) >> 8) | \
+                     (((x) & 0xff000000UL) >> 24))
+#define PP_NTOHL(x) PP_HTONL(x)
 
 #endif /* BYTE_ORDER == BIG_ENDIAN */
 
