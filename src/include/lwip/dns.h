@@ -73,6 +73,23 @@
    sizeof(struct addrinfo) + sizeof(struct sockaddr_in) + DNS_MAX_NAME_LENGTH + 1 byte zero-termination */
 #define NETDB_ELEM_SIZE           (32 + 16 + DNS_MAX_NAME_LENGTH + 1)
 
+#if DNS_LOCAL_HOSTLIST
+/** struct used for local host-list */
+struct local_hostlist_entry {
+  /** static hostname */
+  const char *name;
+  /** static host address in network byteorder */
+  ip_addr_t addr;
+  struct local_hostlist_entry *next;
+};
+#if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
+#ifndef DNS_LOCAL_HOSTLIST_MAX_NAMELEN
+#define DNS_LOCAL_HOSTLIST_MAX_NAMELEN  DNS_MAX_NAME_LENGTH
+#endif
+#define LOCALHOSTLIST_ELEM_SIZE ((sizeof(struct local_hostlist_entry) + DNS_LOCAL_HOSTLIST_MAX_NAMELEN + 1))
+#endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
+#endif /* DNS_LOCAL_HOSTLIST */
+
 /** Callback which is invoked when a hostname is found.
  * A function of this type must be implemented by the application using the DNS resolver.
  * @param name pointer to the name that was looked up.

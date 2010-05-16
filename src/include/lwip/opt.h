@@ -371,6 +371,14 @@
 #endif
 
 /**
+ * MEMP_NUM_LOCALHOSTLIST: the number of host entries in the local host list
+ * if DNS_LOCAL_HOSTLIST_IS_DYNAMIC==1.
+ */
+#ifndef MEMP_NUM_LOCALHOSTLIST
+#define MEMP_NUM_LOCALHOSTLIST          1
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE

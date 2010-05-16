@@ -78,6 +78,7 @@
 
 #include "lwip/udp.h"
 #include "lwip/mem.h"
+#include "lwip/memp.h"
 #include "lwip/dns.h"
 
 #include <string.h>
@@ -180,14 +181,6 @@ struct dns_table_entry {
 };
 
 #if DNS_LOCAL_HOSTLIST
-/** struct used for local host-list */
-struct local_hostlist_entry {
-  /** static hostname */
-  const char *name;
-  /** static host address in network byteorder */
-  ip_addr_t addr;
-  struct local_hostlist_entry *next;
-};
 
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC
 /** Local host-list. For hostnames in this list, no
@@ -329,7 +322,8 @@ dns_init_local()
     struct local_hostlist_entry *init_entry = &local_hostlist_init[i];
     LWIP_ASSERT("invalid host name (NULL)", init_entry->name != NULL);
     namelen = strlen(init_entry->name);
-    entry = mem_malloc((mem_size_t)(sizeof(struct local_hostlist_entry) + namelen + 1));
+    LWIP_ASSERT("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN", namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
+    entry = (struct local_hostlist_entry *)memp_malloc(MEMP_LOCALHOSTLIST);
     LWIP_ASSERT("mem-error in dns_init_local", entry != NULL);
     if (entry != NULL) {
       entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
@@ -398,7 +392,7 @@ dns_local_removehost(const char *hostname, const ip_addr_t *addr)
       }
       free_entry = entry;
       entry = entry->next;
-      mem_free(free_entry);
+      memp_free(MEMP_LOCALHOSTLIST, free_entry);
       removed++;
     } else {
       last_entry = entry;
@@ -423,7 +417,8 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
   size_t namelen;
   LWIP_ASSERT("invalid host name (NULL)", hostname != NULL);
   namelen = strlen(hostname);
-  entry = mem_malloc((mem_size_t)(sizeof(struct local_hostlist_entry) + namelen + 1));
+  LWIP_ASSERT("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN", namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
+  entry = (struct local_hostlist_entry *)memp_malloc(MEMP_LOCALHOSTLIST);
   if (entry == NULL) {
     return ERR_MEM;
   }
