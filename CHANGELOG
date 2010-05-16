@@ -211,6 +211,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-05-16: Simon Goldschmidt
+  * def.h/.c: changed the semantics of LWIP_PREFIX_BYTEORDER_FUNCS to prevent
+    "symbol already defined" i.e. when linking to winsock
+
   2010-05-05: Simon Goldschmidt
   * def.h, timers.c: Fixed bug #29769 (sys_check_timeouts: sys_now() may
     overflow)
