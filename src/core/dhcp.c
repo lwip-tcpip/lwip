@@ -942,11 +942,11 @@ dhcp_bind(struct netif *netif)
     /* subnet mask not given, choose a safe subnet mask given the network class */
     u8_t first_octet = ip4_addr1(&dhcp->offered_ip_addr);
     if (first_octet <= 127) {
-      ip4_addr_set_u32(&sn_mask, htonl(0xff000000));
+      ip4_addr_set_u32(&sn_mask, PP_HTONL(0xff000000));
     } else if (first_octet >= 192) {
-      ip4_addr_set_u32(&sn_mask, htonl(0xffffff00));
+      ip4_addr_set_u32(&sn_mask, PP_HTONL(0xffffff00));
     } else {
-      ip4_addr_set_u32(&sn_mask, htonl(0xffff0000));
+      ip4_addr_set_u32(&sn_mask, PP_HTONL(0xffff0000));
     }
   }
 
@@ -956,7 +956,7 @@ dhcp_bind(struct netif *netif)
     /* copy network address */
     ip_addr_get_network(&gw_addr, &dhcp->offered_ip_addr, &sn_mask);
     /* use first host address on network as gateway */
-    ip4_addr_set_u32(&gw_addr, ip4_addr_get_u32(&gw_addr) | htonl(0x00000001));
+    ip4_addr_set_u32(&gw_addr, ip4_addr_get_u32(&gw_addr) | PP_HTONL(0x00000001));
   }
 
 #if LWIP_DHCP_AUTOIP_COOP
@@ -1663,7 +1663,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   for (i = 0; i < DHCP_FILE_LEN; i++) {
     dhcp->msg_out->file[i] = 0;
   }
-  dhcp->msg_out->cookie = htonl(DHCP_MAGIC_COOKIE);
+  dhcp->msg_out->cookie = PP_HTONL(DHCP_MAGIC_COOKIE);
   dhcp->options_out_len = 0;
   /* fill options field with an incrementing array (for debugging purposes) */
   for (i = 0; i < DHCP_OPTIONS_LEN; i++) {

@@ -158,7 +158,7 @@ extern const ip_addr_t ip_addr_broadcast;
 /** Set address to IPADDR_ANY (no need for htonl()) */
 #define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
 /** Set address to loopback address */
-#define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = htonl(IPADDR_LOOPBACK))
+#define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
 #define ip_addr_set_hton(dest, src) ((dest)->addr = \
@@ -190,9 +190,9 @@ extern const ip_addr_t ip_addr_broadcast;
 
 u8_t ip_addr_isbroadcast(const ip_addr_t *, const struct netif *);
 
-#define ip_addr_ismulticast(addr1) (((addr1)->addr & ntohl(0xf0000000UL)) == ntohl(0xe0000000UL))
+#define ip_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
 
-#define ip_addr_islinklocal(addr1) (((addr1)->addr & ntohl(0xffff0000UL)) == ntohl(0xa9fe0000UL))
+#define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
   LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F,             \

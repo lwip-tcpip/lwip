@@ -826,7 +826,7 @@ static void
 tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 {
   /* Pad with two NOP options to make everything nicely aligned */
-  opts[0] = htonl(0x0101080A);
+  opts[0] = PP_HTONL(0x0101080A);
   opts[1] = htonl(sys_now());
   opts[2] = htonl(pcb->ts_recent);
 }
@@ -1207,7 +1207,7 @@ tcp_rst(u32_t seqno, u32_t ackno,
   tcphdr->seqno = htonl(seqno);
   tcphdr->ackno = htonl(ackno);
   TCPH_HDRLEN_FLAGS_SET(tcphdr, TCP_HLEN/4, TCP_RST | TCP_ACK);
-  tcphdr->wnd = htons(TCP_WND);
+  tcphdr->wnd = PP_HTONS(TCP_WND);
   tcphdr->chksum = 0;
   tcphdr->urgp = 0;
 

@@ -759,7 +759,7 @@ igmp_ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest, struct netif 
 {
   /* This is the "router alert" option */
   u16_t ra[2];
-  ra[0] = htons(ROUTER_ALERT);
+  ra[0] = PP_HTONS(ROUTER_ALERT);
   ra[1] = 0x0000; /* Router shall examine packet */
   IGMP_STATS_INC(igmp.xmit);
   return ip_output_if_opt(p, src, dest, IGMP_TTL, 0, IP_PROTO_IGMP, netif, ra, ROUTER_ALERTLEN);

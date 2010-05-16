@@ -193,10 +193,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
     ip_addr_copy(iphdr->dest, tmpaddr);
     ICMPH_TYPE_SET(iecho, ICMP_ER);
     /* adjust the checksum */
-    if (iecho->chksum >= htons(0xffff - (ICMP_ECHO << 8))) {
-      iecho->chksum += htons(ICMP_ECHO << 8) + 1;
+    if (iecho->chksum >= PP_HTONS(0xffff - (ICMP_ECHO << 8))) {
+      iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
     } else {
-      iecho->chksum += htons(ICMP_ECHO << 8);
+      iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
     }
 
     /* Set the correct TTL and recalculate the header checksum. */

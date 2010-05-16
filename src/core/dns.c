@@ -582,7 +582,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     memset(hdr, 0, SIZEOF_DNS_HDR);
     hdr->id = htons(id);
     hdr->flags1 = DNS_FLAG1_RD;
-    hdr->numquestions = htons(1);
+    hdr->numquestions = PP_HTONS(1);
     query = (char*)hdr + SIZEOF_DNS_HDR;
     pHostname = name;
     --pHostname;
@@ -602,8 +602,8 @@ dns_send(u8_t numdns, const char* name, u8_t id)
     *query++='\0';
 
     /* fill dns query */
-    qry.type = htons(DNS_RRTYPE_A);
-    qry.cls = htons(DNS_RRCLASS_IN);
+    qry.type = PP_HTONS(DNS_RRTYPE_A);
+    qry.cls = PP_HTONS(DNS_RRCLASS_IN);
     SMEMCPY(query, &qry, SIZEOF_DNS_QUERY);
 
     /* resize pbuf to the exact dns query */
@@ -791,8 +791,8 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
 
           /* Check for IP address type and Internet class. Others are discarded. */
           SMEMCPY(&ans, pHostname, SIZEOF_DNS_ANSWER);
-          if((ans.type == htons(DNS_RRTYPE_A)) && (ans.cls == htons(DNS_RRCLASS_IN)) &&
-             (ans.len == htons(sizeof(ip_addr_t))) ) {
+          if((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) &&
+             (ans.len == PP_HTONS(sizeof(ip_addr_t))) ) {
             /* read the answer resource record's TTL, and maximize it if needed */
             pEntry->ttl = ntohl(ans.ttl);
             if (pEntry->ttl > DNS_MAX_TTL) {

@@ -423,7 +423,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
   ETHADDR32_COPY(&ethhdr->dest, dst);
   ETHADDR16_COPY(&ethhdr->src, src);
-  ethhdr->type = htons(ETHTYPE_IP);
+  ethhdr->type = PP_HTONS(ETHTYPE_IP);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
   /* send the packet */
   return netif->linkoutput(netif, p);
@@ -700,10 +700,10 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 #endif /* ETHARP_SUPPORT_VLAN */
 
   /* RFC 826 "Packet Reception": */
-  if ((hdr->hwtype != htons(HWTYPE_ETHERNET)) ||
-      (hdr->_hwlen_protolen != htons((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t))) ||
-      (hdr->proto != htons(ETHTYPE_IP)) ||
-      (ethhdr->type != htons(ETHTYPE_ARP)))  {
+  if ((hdr->hwtype != PP_HTONS(HWTYPE_ETHERNET)) ||
+      (hdr->_hwlen_protolen != PP_HTONS((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t))) ||
+      (hdr->proto != PP_HTONS(ETHTYPE_IP)) ||
+      (ethhdr->type != PP_HTONS(ETHTYPE_ARP)))  {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
       ("etharp_arp_input: packet dropped, wrong hw type, hwlen, proto, protolen or ethernet type (%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F"/%"U16_F")\n",
       hdr->hwtype, ARPH_HWLEN(hdr), hdr->proto, ARPH_PROTOLEN(hdr), ethhdr->type));
@@ -743,9 +743,9 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
                    for_us ? ETHARP_FLAG_TRY_HARD : ETHARP_FLAG_FIND_ONLY);
 
   /* now act on the message itself */
-  switch (htons(hdr->opcode)) {
+  switch (hdr->opcode) {
   /* ARP request? */
-  case ARP_REQUEST:
+  case PP_HTONS(ARP_REQUEST):
     /* ARP request. If it asked for our address, we send out a
      * reply. In any case, we time-stamp any existing ARP entry,
      * and possiby send out an IP packet that was queued on it. */
@@ -796,7 +796,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: ARP request was not for us.\n"));
     }
     break;
-  case ARP_REPLY:
+  case PP_HTONS(ARP_REPLY):
     /* ARP reply. We already updated the ARP cache earlier. */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: incoming ARP reply\n"));
 #if (LWIP_DHCP && DHCP_DOES_ARP_CHECK)
@@ -1151,12 +1151,12 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   IPADDR2_COPY(&hdr->sipaddr, ipsrc_addr);
   IPADDR2_COPY(&hdr->dipaddr, ipdst_addr);
 
-  hdr->hwtype = htons(HWTYPE_ETHERNET);
-  hdr->proto = htons(ETHTYPE_IP);
+  hdr->hwtype = PP_HTONS(HWTYPE_ETHERNET);
+  hdr->proto = PP_HTONS(ETHTYPE_IP);
   /* set hwlen and protolen together */
-  hdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t));
+  hdr->_hwlen_protolen = PP_HTONS((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t));
 
-  ethhdr->type = htons(ETHTYPE_ARP);
+  ethhdr->type = PP_HTONS(ETHTYPE_ARP);
   /* send ARP query */
   result = netif->linkoutput(netif, p);
   ETHARP_STATS_INC(etharp.xmit);
@@ -1211,9 +1211,9 @@ ethernet_input(struct pbuf *p, struct netif *netif)
      (unsigned)ethhdr->src.addr[3], (unsigned)ethhdr->src.addr[4], (unsigned)ethhdr->src.addr[5],
      (unsigned)htons(ethhdr->type)));
 
-  type = htons(ethhdr->type);
+  type = ethhdr->type;
 #if ETHARP_SUPPORT_VLAN
-  if (type == ETHTYPE_VLAN) {
+  if (type == PP_HTONS(ETHTYPE_VLAN)) {
     struct eth_vlan_hdr *vlan = (struct eth_vlan_hdr*)(((char*)ethhdr) + SIZEOF_ETH_HDR);
 #ifdef ETHARP_VLAN_CHECK /* if not, allow all VLANs */
     if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
@@ -1222,18 +1222,18 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       return ERR_OK;
     }
 #endif /* ETHARP_VLAN_CHECK */
-    type = htons(vlan->tpid);
+    type = vlan->tpid;
   }
 #endif /* ETHARP_SUPPORT_VLAN */
 
 #if LWIP_ARP_FILTER_NETIF
-  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, type);
+  netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, htons(type));
 #endif /* LWIP_ARP_FILTER_NETIF*/
 
   switch (type) {
 #if LWIP_ARP
     /* IP packet? */
-    case ETHTYPE_IP:
+    case PP_HTONS(ETHTYPE_IP):
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
@@ -1251,7 +1251,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       }
       break;
       
-    case ETHTYPE_ARP:
+    case PP_HTONS(ETHTYPE_ARP):
       if (!(netif->flags & NETIF_FLAG_ETHARP)) {
         goto free_and_return;
       }
@@ -1260,11 +1260,11 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       break;
 #endif /* LWIP_ARP */
 #if PPPOE_SUPPORT
-    case ETHTYPE_PPPOEDISC: /* PPP Over Ethernet Discovery Stage */
+    case PP_HTONS(ETHTYPE_PPPOEDISC): /* PPP Over Ethernet Discovery Stage */
       pppoe_disc_input(netif, p);
       break;
 
-    case ETHTYPE_PPPOE: /* PPP Over Ethernet Session Stage */
+    case PP_HTONS(ETHTYPE_PPPOE): /* PPP Over Ethernet Session Stage */
       pppoe_data_input(netif, p);
       break;
 #endif /* PPPOE_SUPPORT */

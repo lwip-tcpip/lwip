@@ -160,7 +160,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * `compressible' (i.e., ACK isn't set or some other control bit is
    * set).  
    */
-  if ((IPH_OFFSET(ip) & htons(0x3fff)) || pb->tot_len < 40) {
+  if ((IPH_OFFSET(ip) & PP_HTONS(0x3fff)) || pb->tot_len < 40) {
     return (TYPE_IP);
   }
   th = (struct tcp_hdr *)&((long *)ip)[hlen];

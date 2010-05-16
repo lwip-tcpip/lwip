@@ -174,10 +174,10 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   }
 
   /* Incrementally update the IP checksum. */
-  if (IPH_CHKSUM(iphdr) >= htons(0xffff - 0x100)) {
-    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100) + 1);
+  if (IPH_CHKSUM(iphdr) >= PP_HTONS(0xffff - 0x100)) {
+    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + PP_HTONS(0x100) + 1);
   } else {
-    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + htons(0x100));
+    IPH_CHKSUM_SET(iphdr, IPH_CHKSUM(iphdr) + PP_HTONS(0x100));
   }
 
   LWIP_DEBUGF(IP_DEBUG, ("ip_forward: forwarding packet to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -346,9 +346,10 @@ ip_input(struct pbuf *p, struct netif *inp)
   if (netif == NULL) {
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
+      struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
-        ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen))->dest)));
-      if (ntohs(((struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen))->dest) == DHCP_CLIENT_PORT) {
+        ntohs(udphdr->dest)));
+      if (udphdr->dest == PP_NTOHS(DHCP_CLIENT_PORT)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
         check_ip_src = 0;
@@ -394,10 +395,10 @@ ip_input(struct pbuf *p, struct netif *inp)
     return ERR_OK;
   }
   /* packet consists of multiple fragments? */
-  if ((IPH_OFFSET(iphdr) & htons(IP_OFFMASK | IP_MF)) != 0) {
+  if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
     LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip_reass()\n",
-      ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & htons(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
+      ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
     /* reassemble the packet*/
     p = ip_reass(p);
     /* packet not fully reassembled yet? */

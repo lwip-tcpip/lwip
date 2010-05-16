@@ -325,7 +325,7 @@ ChapMS_NT( char *rchallenge,
   MDupdate(&md4Context, unicodePassword, secret_len * 2 * 8);  /* Unicode is 2 bytes/char, *8 for bit count */
 
   if (low_byte_first == -1) {
-    low_byte_first = (htons((unsigned short int)1) != 1);
+    low_byte_first = (PP_HTONS((unsigned short int)1) != 1);
   }
   if (low_byte_first == 0) {
     /* @todo: arg type - u_long* or u_int* ? */

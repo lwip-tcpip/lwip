@@ -14,6 +14,10 @@ HISTORY
   ++ New features:
 
   2010-05-16: Simon Goldschmidt
+  * def.h: task #10391: Add preprocessor-macros for compile-time htonl
+    calculation (and use them throughout the stack where applicable)
+
+  2010-05-16: Simon Goldschmidt
   * opt.h, memp_std.h, memp.c, ppp_oe.h/.c: PPPoE now uses its own MEMP pool
     instead of the heap (moved struct pppoe_softc from ppp_oe.c to ppp_oe.h)
 

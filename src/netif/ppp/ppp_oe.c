@@ -958,7 +958,7 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
   ethhdr = (struct eth_hdr *)pb->payload;
-  ethhdr->type = htons(ETHTYPE_PPPOEDISC);
+  ethhdr->type = PP_HTONS(ETHTYPE_PPPOEDISC);
   MEMCPY(ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
   MEMCPY(ethhdr->src.addr, ((struct eth_addr *)outgoing_if->hwaddr)->addr, sizeof(ethhdr->src.addr));
 

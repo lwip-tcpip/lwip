@@ -555,7 +555,7 @@ ip_reass(struct pbuf *p)
    * to an existing one */
 
   /* check for 'no more fragments', and update queue entry*/
-  if ((ntohs(IPH_OFFSET(fraghdr)) & IP_MF) == 0) {
+  if ((IPH_OFFSET(fraghdr) & PP_NTOHS(IP_MF)) == 0) {
     ipr->flags |= IP_REASS_FLAG_LASTFRAG;
     ipr->datagram_len = offset + len;
     LWIP_DEBUGF(IP_REASS_DEBUG,
@@ -708,7 +708,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
       return ERR_MEM;
     }
     LWIP_ASSERT("this needs a pbuf in one piece!",
-      (p->len == p->tot_len) && (p->next == NULL));
+      (rambuf->len == rambuf->tot_len) && (rambuf->next == NULL));
     poff += pbuf_copy_partial(p, rambuf->payload, cop, poff);
     /* make room for the IP header */
     if(pbuf_header(rambuf, IP_HLEN)) {

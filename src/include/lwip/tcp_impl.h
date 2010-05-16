@@ -176,7 +176,7 @@ PACK_STRUCT_END
 
 #define TCPH_OFFSET_SET(phdr, offset) (phdr)->_hdrlen_rsvd_flags = htons(((offset) << 8) | TCPH_FLAGS(phdr))
 #define TCPH_HDRLEN_SET(phdr, len) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | TCPH_FLAGS(phdr))
-#define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & htons((u16_t)(~(u16_t)(TCP_FLAGS)))) | htons(flags))
+#define TCPH_FLAGS_SET(phdr, flags) (phdr)->_hdrlen_rsvd_flags = (((phdr)->_hdrlen_rsvd_flags & PP_HTONS((u16_t)(~(u16_t)(TCP_FLAGS)))) | htons(flags))
 #define TCPH_HDRLEN_FLAGS_SET(phdr, len, flags) (phdr)->_hdrlen_rsvd_flags = htons(((len) << 12) | (flags))
 
 #define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | htons(flags))
@@ -302,10 +302,10 @@ struct tcp_seg {
   (flags & TF_SEG_OPTS_TS  ? 12 : 0)
 
 /** This returns a TCP header option for MSS in an u32_t */
-#define TCP_BUILD_MSS_OPTION(x) (x) = htonl(((u32_t)2 << 24) |          \
-                                            ((u32_t)4 << 16) |          \
-                                            (((u32_t)TCP_MSS / 256) << 8) | \
-                                            (TCP_MSS & 255))
+#define TCP_BUILD_MSS_OPTION(x) (x) = PP_HTONL(((u32_t)2 << 24) |          \
+                                               ((u32_t)4 << 16) |          \
+                                               (((u32_t)TCP_MSS / 256) << 8) | \
+                                               (TCP_MSS & 255))
 
 /* Global variables: */
 extern struct tcp_pcb *tcp_input_pcb;
