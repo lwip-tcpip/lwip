@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-05-16: Simon Goldschmidt
+  * opt.h, memp_std.h, dns.h/.c: DNS_LOCAL_HOSTLIST_IS_DYNAMIC uses its own
+    MEMP pool instead of the heap
+
   2010-05-13: Simon Goldschmidt
   * tcp.c, udp.c: task #6995: Implement SO_REUSEADDR (correctly), added
     new option SO_REUSE_RXTOALL to pass received UDP broadcast/multicast
