@@ -447,10 +447,6 @@ pppInit(void)
       (*protp->init)(i);
     }
   }
-
-#if PPPOE_SUPPORT
-  pppoe_init();
-#endif /* PPPOE_SUPPORT */
 }
 
 void
