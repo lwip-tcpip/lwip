@@ -82,88 +82,6 @@
 #include <string.h>
 #include <stdio.h>
 
-/** @todo Replace this part with a simple list like other lwIP lists */
-#ifndef _SYS_QUEUE_H_
-#define _SYS_QUEUE_H_
-
-/*
- * A list is headed by a single forward pointer (or an array of forward
- * pointers for a hash table header). The elements are doubly linked
- * so that an arbitrary element can be removed without a need to
- * traverse the list. New elements can be added to the list before
- * or after an existing element or at the head of the list. A list
- * may only be traversed in the forward direction.
- *
- * For details on the use of these macros, see the queue(3) manual page.
- */
-
-/*
- * List declarations.
- */
-#define  LIST_HEAD(name, type)                                                 \
-struct name {                                                                  \
-  struct type *lh_first;  /* first element */                                  \
-}
-
-#define  LIST_HEAD_INITIALIZER(head)                                           \
-  { NULL }
-
-#define  LIST_ENTRY(type)                                                      \
-struct {                                                                       \
-  struct type *le_next;  /* next element */                                    \
-  struct type **le_prev; /* address of previous next element */                \
-}
-
-/*
- * List functions.
- */
-
-#define  LIST_EMPTY(head)  ((head)->lh_first == NULL)
-
-#define  LIST_FIRST(head)  ((head)->lh_first)
-
-#define  LIST_FOREACH(var, head, field)                                        \
-  for ((var) = LIST_FIRST((head));                                             \
-      (var);                                                                   \
-      (var) = LIST_NEXT((var), field))
-
-#define  LIST_INIT(head) do {                                                  \
-  LIST_FIRST((head)) = NULL;                                                   \
-} while (0)
-
-#define  LIST_INSERT_AFTER(listelm, elm, field) do {                           \
-  if ((LIST_NEXT((elm), field) = LIST_NEXT((listelm), field)) != NULL)         \
-    LIST_NEXT((listelm), field)->field.le_prev =                               \
-        &LIST_NEXT((elm), field);                                              \
-  LIST_NEXT((listelm), field) = (elm);                                         \
-  (elm)->field.le_prev = &LIST_NEXT((listelm), field);                         \
-} while (0)
-
-#define  LIST_INSERT_BEFORE(listelm, elm, field) do {                          \
-  (elm)->field.le_prev = (listelm)->field.le_prev;                             \
-  LIST_NEXT((elm), field) = (listelm);                                         \
-  *(listelm)->field.le_prev = (elm);                                           \
-  (listelm)->field.le_prev = &LIST_NEXT((elm), field);                         \
-} while (0)
-
-#define  LIST_INSERT_HEAD(head, elm, field) do {                               \
-  if ((LIST_NEXT((elm), field) = LIST_FIRST((head))) != NULL)                  \
-    LIST_FIRST((head))->field.le_prev = &LIST_NEXT((elm), field);              \
-  LIST_FIRST((head)) = (elm);                                                  \
-  (elm)->field.le_prev = &LIST_FIRST((head));                                  \
-} while (0)
-
-#define  LIST_NEXT(elm, field)  ((elm)->field.le_next)
-
-#define  LIST_REMOVE(elm, field) do {                                          \
-  if (LIST_NEXT((elm), field) != NULL)                                         \
-    LIST_NEXT((elm), field)->field.le_prev =                                   \
-        (elm)->field.le_prev;                                                  \
-  *(elm)->field.le_prev = LIST_NEXT((elm), field);                             \
-} while (0)
-
-#endif /* !_SYS_QUEUE_H_ */
-
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
@@ -198,7 +116,7 @@ static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 #endif
 
 struct pppoe_softc {
-  LIST_ENTRY(pppoe_softc) sc_list;
+  struct pppoe_softc *next;
   struct netif *sc_ethif;      /* ethernet interface we are using */
   int sc_pd;                   /* ppp unit number */
   void (*sc_linkStatusCB)(int pd, int up);
@@ -245,12 +163,13 @@ static err_t pppoe_send_padt(struct netif *, u_int, const u8_t *);
 static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct netif *);
 static struct pppoe_softc * pppoe_find_softc_by_hunique(u8_t *, size_t, struct netif *);
 
-static LIST_HEAD(pppoe_softc_head, pppoe_softc) pppoe_softc_list;
+/** linked list of created pppoe interfaces */
+static struct pppoe_softc *pppoe_softc_list;
 
 void
 pppoe_init(void)
 {
-  LIST_INIT(&pppoe_softc_list);
+  pppoe_softc_list = NULL;
 }
 
 err_t
@@ -272,7 +191,9 @@ pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), 
   sc->sc_linkStatusCB = linkStatusCB;
   sc->sc_ethif = ethif;
 
-  LIST_INSERT_HEAD(&pppoe_softc_list, sc, sc_list);
+  /* put the new interface at the head of the list */
+  sc->next = pppoe_softc_list;
+  pppoe_softc_list = sc;
 
   *scptr = sc;
 
@@ -282,9 +203,9 @@ pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), 
 err_t
 pppoe_destroy(struct netif *ifp)
 {
-  struct pppoe_softc * sc;
+  struct pppoe_softc *sc, *prev = NULL;
 
-  LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+  for (sc = pppoe_softc_list; sc != NULL; prev = sc, sc = sc->next) {
     if (sc->sc_ethif == ifp) {
       break;
     }
@@ -295,7 +216,13 @@ pppoe_destroy(struct netif *ifp)
   }
 
   sys_untimeout(pppoe_timeout, sc);
-  LIST_REMOVE(sc, sc_list);
+  if (prev == NULL) {
+    /* remove sc from the head of the list */
+    pppoe_softc_list = sc->next;
+  } else {
+    /* remove sc from the list */
+    prev->next = sc->next;
+  }
 
 #ifdef PPPOE_TODO
   if (sc->sc_concentrator_name) {
@@ -325,7 +252,7 @@ pppoe_find_softc_by_session(u_int session, struct netif *rcvif)
     return NULL;
   }
 
-  LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+  for (sc = pppoe_softc_list; sc != NULL; sc = sc->next) {
     if (sc->sc_state == PPPOE_STATE_SESSION
         && sc->sc_session == session) {
       if (sc->sc_ethif == rcvif) {
@@ -345,7 +272,7 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
 {
   struct pppoe_softc *sc, *t;
 
-  if (LIST_EMPTY(&pppoe_softc_list)) {
+  if (pppoe_softc_list == NULL) {
     return NULL;
   }
 
@@ -354,7 +281,7 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
   }
   MEMCPY(&t, token, len);
 
-  LIST_FOREACH(sc, &pppoe_softc_list, sc_list) {
+  for (sc = pppoe_softc_list; sc != NULL; sc = sc->next) {
     if (sc == t) {
       break;
     }
@@ -597,7 +524,7 @@ breakbreak:;
     case PPPOE_CODE_PADO:
       if (sc == NULL) {
         /* be quiet if there is not a single pppoe instance */
-        if (!LIST_EMPTY(&pppoe_softc_list)) {
+        if (pppoe_softc_list != NULL) {
           printf("pppoe: received PADO but could not find request for it\n");
         }
         goto done;
@@ -655,7 +582,7 @@ void
 pppoe_disc_input(struct netif *netif, struct pbuf *p)
 {
   /* avoid error messages if there is not a single pppoe instance */
-  if (!LIST_EMPTY(&pppoe_softc_list)) {
+  if (pppoe_softc_list != NULL) {
     pppoe_dispatch_disc_pkt(netif, p);
   } else {
     pbuf_free(p);
