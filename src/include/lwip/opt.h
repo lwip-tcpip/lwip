@@ -379,6 +379,14 @@
 #endif
 
 /**
+ * MEMP_NUM_PPPOE_INTERFACES: the number of concurrently active PPPoE
+ * interfaces (only used with PPPOE_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOE_INTERFACES
+#define MEMP_NUM_PPPOE_INTERFACES       1
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE

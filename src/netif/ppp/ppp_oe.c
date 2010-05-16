@@ -72,12 +72,13 @@
 
 #if PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
+#include "netif/ppp_oe.h"
+
 #include "ppp.h"
 #include "pppdebug.h"
 
 #include "lwip/timers.h"
-
-#include "netif/ppp_oe.h"
+#include "lwip/memp.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -111,33 +112,6 @@
 #endif
 static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
-#ifndef PPPOE_MAX_AC_COOKIE_LEN
-#define PPPOE_MAX_AC_COOKIE_LEN   64
-#endif
-
-struct pppoe_softc {
-  struct pppoe_softc *next;
-  struct netif *sc_ethif;      /* ethernet interface we are using */
-  int sc_pd;                   /* ppp unit number */
-  void (*sc_linkStatusCB)(int pd, int up);
-
-  int sc_state;                /* discovery phase or session connected */
-  struct eth_addr sc_dest;     /* hardware address of concentrator */
-  u16_t sc_session;            /* PPPoE session id */
-
-#ifdef PPPOE_TODO
-  char *sc_service_name;       /* if != NULL: requested name of service */
-  char *sc_concentrator_name;  /* if != NULL: requested concentrator id */
-#endif /* PPPOE_TODO */
-  u8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
-  size_t sc_ac_cookie_len;     /* length of cookie data */
-#ifdef PPPOE_SERVER
-  u8_t *sc_hunique;            /* content of host unique we must echo back */
-  size_t sc_hunique_len;       /* length of host unique */
-#endif
-  int sc_padi_retried;         /* number of PADI retries already done */
-  int sc_padr_retried;         /* number of PADR retries already done */
-};
 
 /* input routines */
 static void pppoe_dispatch_disc_pkt(struct netif *, struct pbuf *);
@@ -166,19 +140,13 @@ static struct pppoe_softc * pppoe_find_softc_by_hunique(u8_t *, size_t, struct n
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
 
-void
-pppoe_init(void)
-{
-  pppoe_softc_list = NULL;
-}
-
 err_t
 pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), struct pppoe_softc **scptr)
 {
   struct pppoe_softc *sc;
 
-  sc = mem_malloc(sizeof(struct pppoe_softc));
-  if(!sc) {
+  sc = (struct pppoe_softc *)memp_malloc(MEMP_PPPOE_IF);
+  if (sc == NULL) {
     *scptr = NULL;
     return ERR_MEM;
   }
@@ -232,7 +200,7 @@ pppoe_destroy(struct netif *ifp)
     mem_free(sc->sc_service_name);
   }
 #endif /* PPPOE_TODO */
-  mem_free(sc);
+  memp_free(MEMP_PPPOE_IF, sc);
 
   return ERR_OK;
 }

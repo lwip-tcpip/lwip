@@ -14,6 +14,10 @@ HISTORY
   ++ New features:
 
   2010-05-16: Simon Goldschmidt
+  * opt.h, memp_std.h, memp.c, ppp_oe.h/.c: PPPoE now uses its own MEMP pool
+    instead of the heap (moved struct pppoe_softc from ppp_oe.c to ppp_oe.h)
+
+  2010-05-16: Simon Goldschmidt
   * opt.h, memp_std.h, dns.h/.c: DNS_LOCAL_HOSTLIST_IS_DYNAMIC uses its own
     MEMP pool instead of the heap
 

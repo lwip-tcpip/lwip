@@ -140,10 +140,36 @@ PACK_STRUCT_END
 /* two byte PPP protocol discriminator, then IP data */
 #define PPPOE_MAXMTU          (ETHERMTU-PPPOE_HEADERLEN-2)
 
-struct pppoe_softc;
+#ifndef PPPOE_MAX_AC_COOKIE_LEN
+#define PPPOE_MAX_AC_COOKIE_LEN   64
+#endif
+
+struct pppoe_softc {
+  struct pppoe_softc *next;
+  struct netif *sc_ethif;      /* ethernet interface we are using */
+  int sc_pd;                   /* ppp unit number */
+  void (*sc_linkStatusCB)(int pd, int up);
+
+  int sc_state;                /* discovery phase or session connected */
+  struct eth_addr sc_dest;     /* hardware address of concentrator */
+  u16_t sc_session;            /* PPPoE session id */
+
+#ifdef PPPOE_TODO
+  char *sc_service_name;       /* if != NULL: requested name of service */
+  char *sc_concentrator_name;  /* if != NULL: requested concentrator id */
+#endif /* PPPOE_TODO */
+  u8_t sc_ac_cookie[PPPOE_MAX_AC_COOKIE_LEN]; /* content of AC cookie we must echo back */
+  size_t sc_ac_cookie_len;     /* length of cookie data */
+#ifdef PPPOE_SERVER
+  u8_t *sc_hunique;            /* content of host unique we must echo back */
+  size_t sc_hunique_len;       /* length of host unique */
+#endif
+  int sc_padi_retried;         /* number of PADI retries already done */
+  int sc_padr_retried;         /* number of PADR retries already done */
+};
 
 
-void pppoe_init(void);
+#define pppoe_init() /* compatibility define, no initialization needed */
 
 err_t pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), struct pppoe_softc **scptr);
 err_t pppoe_destroy(struct netif *ifp);
