@@ -349,6 +349,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           if (pcb->flags & TF_RXCLOSED) {
             /* received data although already closed -> abort (send RST) to
                notify the remote host that not all data has been processed */
+            pbuf_free(recv_data);
             tcp_abort(pcb);
             goto aborted;
           }
