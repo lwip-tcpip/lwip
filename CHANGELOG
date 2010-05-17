@@ -215,6 +215,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-05-17: Simon Goldschmidt
+  * netdb.c: Correctly NULL-terminate h_addr_list
+
   2010-05-16: Simon Goldschmidt
   * def.h/.c: changed the semantics of LWIP_PREFIX_BYTEORDER_FUNCS to prevent
     "symbol already defined" i.e. when linking to winsock
