@@ -635,6 +635,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
 static void
 dns_check_entry(u8_t i)
 {
+  err_t err;
   struct dns_table_entry *pEntry = &dns_table[i];
 
   LWIP_ASSERT("array index out of bounds", i < DNS_TABLE_SIZE);
@@ -649,7 +650,11 @@ dns_check_entry(u8_t i)
       pEntry->retries = 0;
       
       /* send DNS packet for this entry */
-      dns_send(pEntry->numdns, pEntry->name, i);
+      err = dns_send(pEntry->numdns, pEntry->name, i);
+      if (err != ERR_OK) {
+        LWIP_DEBUGF(DNS_DEBUG | LWIP_DBG_LEVEL_WARNING,
+                    ("dns_send returned error: %s\n", lwip_strerr(err)));
+      }
       break;
     }
 
@@ -678,7 +683,11 @@ dns_check_entry(u8_t i)
         pEntry->tmr = pEntry->retries;
 
         /* send DNS packet for this entry */
-        dns_send(pEntry->numdns, pEntry->name, i);
+        err = dns_send(pEntry->numdns, pEntry->name, i);
+        if (err != ERR_OK) {
+          LWIP_DEBUGF(DNS_DEBUG | LWIP_DBG_LEVEL_WARNING,
+                      ("dns_send returned error: %s\n", lwip_strerr(err)));
+        }
       }
       break;
     }
