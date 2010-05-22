@@ -80,7 +80,7 @@ extern "C" {
 
 struct autoip
 {
-  ip_addr_t llipaddr;  /* the currently selected, probed, announced or used LL IP-Address */
+  ip_addr_t llipaddr;       /* the currently selected, probed, announced or used LL IP-Address */
   u8_t state;               /* current AutoIP state machine state */
   u8_t sent_num;            /* sent number of probes or announces, dependent on state */
   u16_t ttw;                /* ticks to wait, tick is AUTOIP_TMR_INTERVAL long */
