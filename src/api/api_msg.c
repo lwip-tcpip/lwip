@@ -112,7 +112,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
       buf->p = q;
       buf->ptr = q;
-      buf->addr = &(((struct ip_hdr*)(q->payload))->src);
+      ip_addr_copy(buf->addr, *ip_current_src_addr());
       buf->port = pcb->protocol;
 
       len = q->tot_len;
@@ -173,7 +173,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   } else {
     buf->p = p;
     buf->ptr = p;
-    buf->addr = addr;
+    ip_addr_set(&buf->addr, addr);
     buf->port = port;
 #if LWIP_NETBUF_RECVINFO
     {
@@ -183,7 +183,7 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
 #if LWIP_CHECKSUM_ON_COPY
       buf->flags = NETBUF_FLAG_DESTADDR;
 #endif /* LWIP_CHECKSUM_ON_COPY */
-      buf->toaddr = (ip_addr_t*)&iphdr->dest;
+      ip_addr_set(&buf->toaddr, ip_current_dest_addr());
       buf->toport_chksum = udphdr->dest;
     }
 #endif /* LWIP_NETBUF_RECVINFO */
@@ -1085,10 +1085,10 @@ do_send(struct api_msg_msg *msg)
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        if (msg->msg.b->addr == NULL) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = raw_send(msg->conn->pcb.raw, msg->msg.b->p);
         } else {
-          msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, msg->msg.b->addr);
+          msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, &msg->msg.b->addr);
         }
         break;
 #endif
@@ -1104,10 +1104,10 @@ do_send(struct api_msg_msg *msg)
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
-        if (msg->msg.b->addr == NULL) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
-          msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, msg->msg.b->addr, msg->msg.b->port);
+          msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, &msg->msg.b->addr, msg->msg.b->port);
         }
 #endif /* LWIP_CHECKSUM_ON_COPY */
         break;

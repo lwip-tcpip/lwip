@@ -39,11 +39,19 @@
 extern "C" {
 #endif
 
+/* This is the aligned version of ip_addr_t,
+   used as local variable, on the stack, etc. */
+struct _ip_addr {
+  u32_t addr;
+};
+
+/* This is the packed version of ip_addr_t,
+   used in network headers that are itself packed */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct _ip_addr {
+struct _ip_addr_packed {
   PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -52,6 +60,7 @@ PACK_STRUCT_END
 #endif
 
 typedef struct _ip_addr ip_addr_t;
+typedef struct _ip_addr_packed ip_addr_p_t;
 
 /*
  * struct ipaddr2 is used in the definition of the ARP packet format in
@@ -188,7 +197,8 @@ extern const ip_addr_t ip_addr_broadcast;
 
 #define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
 
-u8_t ip_addr_isbroadcast(const ip_addr_t *, const struct netif *);
+#define ip_addr_isbroadcast(ipaddr, netif) ip4_addr_isbroadcast((ipaddr)->addr, (netif))
+u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif);
 
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
 

@@ -618,6 +618,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
 {
   struct eth_hdr *ethhdr;
   struct ip_hdr *iphdr;
+  ip_addr_t iphdr_src;
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
   /* Only insert an entry if the source IP address of the
@@ -630,8 +631,10 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   }
 #endif /* ETHARP_SUPPORT_VLAN */
 
+  ip_addr_copy(iphdr_src, iphdr->src);
+
   /* source is not on the local network? */
-  if (!ip_addr_netcmp(&(iphdr->src), &(netif->ip_addr), &(netif->netmask))) {
+  if (!ip_addr_netcmp(&iphdr_src, &(netif->ip_addr), &(netif->netmask))) {
     /* do nothing */
     return;
   }
@@ -640,7 +643,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   /* update the source IP address in the cache, if present */
   /* @todo We could use ETHARP_FLAG_TRY_HARD if we think we are going to talk
    * back soon (for example, if the destination IP address is ours. */
-  update_arp_entry(netif, &(iphdr->src), &(ethhdr->src), ETHARP_FLAG_FIND_ONLY);
+  update_arp_entry(netif, &iphdr_src, &(ethhdr->src), ETHARP_FLAG_FIND_ONLY);
 }
 #endif /* ETHARP_TRUST_IP_MAC */
 

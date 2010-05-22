@@ -113,7 +113,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   udphdr = (struct udp_hdr *)p->payload;
 
   /* is broadcast packet ? */
-  broadcast = ip_addr_isbroadcast(&(iphdr->dest), inp);
+  broadcast = ip_addr_isbroadcast(&current_iphdr_dest, inp);
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 
@@ -144,7 +144,7 @@ udp_input(struct pbuf *p, struct netif *inp)
            (- broadcast or directed to us) -> DHCP is link-layer-addressed, local ip is always ANY!
            - inp->dhcp->pcb->remote == ANY or iphdr->src */
         if ((ip_addr_isany(&inp->dhcp->pcb->remote_ip) ||
-           ip_addr_cmp(&(inp->dhcp->pcb->remote_ip), &(iphdr->src)))) {
+           ip_addr_cmp(&(inp->dhcp->pcb->remote_ip), &current_iphdr_src))) {
           pcb = inp->dhcp->pcb;
         }
       }
@@ -173,9 +173,9 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* compare PCB local addr+port to UDP destination addr+port */
       if ((pcb->local_port == dest) &&
           ((!broadcast && ip_addr_isany(&pcb->local_ip)) ||
-           ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)) ||
+           ip_addr_cmp(&(pcb->local_ip), &current_iphdr_dest) ||
 #if LWIP_IGMP
-           ip_addr_ismulticast(&(iphdr->dest)) ||
+           ip_addr_ismulticast(&current_iphdr_dest) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
            (broadcast && (pcb->so_options & SOF_BROADCAST)))) {
@@ -193,7 +193,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       if ((local_match != 0) &&
           (pcb->remote_port == src) &&
           (ip_addr_isany(&pcb->remote_ip) ||
-           ip_addr_cmp(&(pcb->remote_ip), &(iphdr->src)))) {
+           ip_addr_cmp(&(pcb->remote_ip), &current_iphdr_src))) {
         /* the first fully matching PCB */
         if (prev != NULL) {
           /* move the pcb to the front of udp_pcbs so that is
@@ -215,7 +215,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   }
 
   /* Check checksum if this is a match or if it was directed at us. */
-  if (pcb != NULL || ip_addr_cmp(&inp->ip_addr, &iphdr->dest)) {
+  if (pcb != NULL || ip_addr_cmp(&inp->ip_addr, &current_iphdr_dest)) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
 #if LWIP_UDPLITE
     if (IPH_PROTO(iphdr) == IP_PROTO_UDPLITE) {
@@ -237,7 +237,7 @@ udp_input(struct pbuf *p, struct netif *inp)
           goto end;
         }
       }
-      if (inet_chksum_pseudo_partial(p, &iphdr->src, &iphdr->dest,
+      if (inet_chksum_pseudo_partial(p, &current_iphdr_src, &current_iphdr_dest,
                              IP_PROTO_UDPLITE, p->tot_len, chklen) != 0) {
        LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                    ("udp_input: UDP Lite datagram discarded due to failing checksum\n"));
@@ -253,7 +253,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     {
 #if CHECKSUM_CHECK_UDP
       if (udphdr->chksum != 0) {
-        if (inet_chksum_pseudo(p, &iphdr->src, &iphdr->dest,
+        if (inet_chksum_pseudo(p, ip_current_src_addr(), ip_current_dest_addr(),
                                IP_PROTO_UDP, p->tot_len) != 0) {
           LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
                       ("udp_input: UDP datagram discarded due to failing checksum\n"));
@@ -277,7 +277,7 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (pcb != NULL) {
       snmp_inc_udpindatagrams();
 #if SO_REUSE && SO_REUSE_RXTOALL
-      if ((broadcast || ip_addr_ismulticast(&iphdr->dest)) &&
+      if ((broadcast || ip_addr_ismulticast(&current_iphdr_dest)) &&
           ((pcb->so_options & SOF_REUSEADDR) != 0)) {
         /* pass broadcast- or multicast packets to all multicast pcbs
            if SOF_REUSEADDR is set on the first match */
@@ -288,9 +288,9 @@ udp_input(struct pbuf *p, struct netif *inp)
             /* compare PCB local addr+port to UDP destination addr+port */
             if ((mpcb->local_port == dest) &&
                 ((!broadcast && ip_addr_isany(&mpcb->local_ip)) ||
-                 ip_addr_cmp(&(mpcb->local_ip), &(iphdr->dest)) ||
+                 ip_addr_cmp(&(mpcb->local_ip), &current_iphdr_dest) ||
 #if LWIP_IGMP
-                 ip_addr_ismulticast(&(iphdr->dest)) ||
+                 ip_addr_ismulticast(&current_iphdr_dest) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
                  (broadcast && (mpcb->so_options & SOF_BROADCAST)))) {
@@ -310,9 +310,8 @@ udp_input(struct pbuf *p, struct netif *inp)
                   err_t err = pbuf_copy(q, p);
                   if (err == ERR_OK) {
                     /* move payload to UDP data */
-                    struct ip_hdr *q_iphdr = (struct ip_hdr *)q->payload;
                     pbuf_header(q, -(s16_t)((IPH_HL(iphdr) * 4) + UDP_HLEN));
-                    mpcb->recv(mpcb->recv_arg, mpcb, q, &q_iphdr->src, src);
+                    mpcb->recv(mpcb->recv_arg, mpcb, q, ip_current_src_addr(), src);
                   }
                 }
               }
@@ -328,7 +327,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* callback */
       if (pcb->recv != NULL) {
         /* now the recv function is responsible for freeing p */
-        pcb->recv(pcb->recv_arg, pcb, p, &iphdr->src, src);
+        pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr(), src);
       } else {
         /* no recv function registered? then we have to free the pbuf! */
         pbuf_free(p);
@@ -341,7 +340,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* No match was found, send ICMP destination port unreachable unless
          destination address was broadcast/multicast. */
       if (!broadcast &&
-          !ip_addr_ismulticast(&iphdr->dest)) {
+          !ip_addr_ismulticast(&current_iphdr_dest)) {
         /* move payload pointer back to ip header */
         pbuf_header(p, (IPH_HL(iphdr) * 4) + UDP_HLEN);
         LWIP_ASSERT("p->payload == iphdr", (p->payload == iphdr));

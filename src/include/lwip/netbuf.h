@@ -47,7 +47,7 @@ extern "C" {
 
 struct netbuf {
   struct pbuf *p, *ptr;
-  ip_addr_t *addr;
+  ip_addr_t addr;
   u16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
 #if LWIP_CHECKSUM_ON_COPY
@@ -55,7 +55,7 @@ struct netbuf {
 #endif /* LWIP_CHECKSUM_ON_COPY */
   u16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
-  ip_addr_t *toaddr;
+  ip_addr_t toaddr;
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
 };
@@ -81,10 +81,12 @@ void              netbuf_first    (struct netbuf *buf);
 #define netbuf_copy(buf,dataptr,len) netbuf_copy_partial(buf, dataptr, len, 0)
 #define netbuf_take(buf, dataptr, len) pbuf_take((buf)->p, dataptr, len)
 #define netbuf_len(buf)              ((buf)->p->tot_len)
-#define netbuf_fromaddr(buf)         ((buf)->addr)
+#define netbuf_fromaddr(buf)         (&((buf)->addr))
+#define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set((&(buf)->addr), fromaddr)
 #define netbuf_fromport(buf)         ((buf)->port)
 #if LWIP_NETBUF_RECVINFO
-#define netbuf_destaddr(buf)         ((buf)->toaddr)
+#define netbuf_destaddr(buf)         (&((buf)->toaddr))
+#define netbuf_set_destaddr(buf, destaddr) ip_addr_set((&(buf)->addr), destaddr)
 #define netbuf_destport(buf)         (((buf)->flags & NETBUF_FLAG_DESTADDR) ? (buf)->toport_chksum : 0)
 #endif /* LWIP_NETBUF_RECVINFO */
 #if LWIP_CHECKSUM_ON_COPY

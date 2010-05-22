@@ -473,7 +473,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     buf->p = p;
     buf->ptr = p;
     buf->port = 0;
-    buf->addr = NULL;
+    ip_addr_set_any(&buf->addr);
     *new_buf = buf;
     /* don't set conn->last_err: it's only ERR_OK, anyway */
     return ERR_OK;
@@ -527,7 +527,7 @@ err_t
 netconn_sendto(struct netconn *conn, struct netbuf *buf, ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
-    buf->addr = addr;
+    ip_addr_set(&buf->addr, addr);
     buf->port = port;
     return netconn_send(conn, buf);
   }

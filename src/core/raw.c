@@ -92,16 +92,16 @@ raw_input(struct pbuf *p, struct netif *inp)
   while ((eaten == 0) && (pcb != NULL)) {
     if ((pcb->protocol == proto) &&
         (ip_addr_isany(&pcb->local_ip) ||
-         ip_addr_cmp(&(pcb->local_ip), &(iphdr->dest)))) {
+         ip_addr_cmp(&(pcb->local_ip), &current_iphdr_dest))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
-      if ((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(&(iphdr->dest), inp))
+      if ((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(&current_iphdr_dest, inp))
 #endif /* IP_SOF_BROADCAST_RECV */
       {
         /* receive callback function available? */
         if (pcb->recv != NULL) {
           /* the receive callback function did not eat the packet? */
-          if (pcb->recv(pcb->recv_arg, pcb, p, &(iphdr->src)) != 0) {
+          if (pcb->recv(pcb->recv_arg, pcb, p, ip_current_src_addr()) != 0) {
             /* receive function ate the packet */
             p = NULL;
             eaten = 1;

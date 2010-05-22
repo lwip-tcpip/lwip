@@ -127,7 +127,7 @@ struct igmp_msg {
  PACK_STRUCT_FIELD(u8_t           igmp_msgtype);
  PACK_STRUCT_FIELD(u8_t           igmp_maxresp);
  PACK_STRUCT_FIELD(u16_t          igmp_checksum);
- PACK_STRUCT_FIELD(ip_addr_t      igmp_group_address);
+ PACK_STRUCT_FIELD(ip_addr_p_t    igmp_group_address);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -443,8 +443,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
          IGMP_STATS_INC(igmp.rx_v1);
          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: got an all hosts query with time== 0 - this is V1 and not implemented - treat as v2\n"));
          igmp->igmp_maxresp = IGMP_V1_DELAYING_MEMBER_TMR;
-       }
-       else {
+       } else {
          IGMP_STATS_INC(igmp.rx_general);
        }
 
@@ -462,9 +461,11 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_input: IGMP_MEMB_QUERY to a specific group "));
          ip_addr_debug_print(IGMP_DEBUG, &igmp->igmp_group_address);
          if (ip_addr_cmp(dest, &allsystems)) {
+           ip_addr_t groupaddr;
            LWIP_DEBUGF(IGMP_DEBUG, (" using \"ALL SYSTEMS\" address (224.0.0.1) [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
-           /* we first need to re-lookfor the group since we used dest last time */
-           group = igmp_lookfor_group(inp, &igmp->igmp_group_address);
+           /* we first need to re-look for the group since we used dest last time */
+           ip_addr_copy(groupaddr, igmp->igmp_group_address);
+           group = igmp_lookfor_group(inp, &groupaddr);
          } else {
            LWIP_DEBUGF(IGMP_DEBUG, (" with the group address as destination [igmp_maxresp=%i]\n", (int)(igmp->igmp_maxresp)));
          }
@@ -472,12 +473,10 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
          if (group != NULL) {
            IGMP_STATS_INC(igmp.rx_group);
            igmp_delaying_member(group, igmp->igmp_maxresp);
-         }
-         else {
+         } else {
            IGMP_STATS_INC(igmp.drop);
          }
-       }
-       else {
+       } else {
          IGMP_STATS_INC(igmp.proterr);
        }
      }

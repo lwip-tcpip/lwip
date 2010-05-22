@@ -13,6 +13,11 @@ HISTORY
 
   ++ New features:
 
+  2010-05-22: Simon Goldschmidt
+  * many many files: bug #27352: removed packing from ip_addr_t, the packed
+    version is now only used in protocol headers. Added global storage for
+    current src/dest IP address while in input functions.
+
   2010-05-16: Simon Goldschmidt
   * def.h: task #10391: Add preprocessor-macros for compile-time htonl
     calculation (and use them throughout the stack where applicable)

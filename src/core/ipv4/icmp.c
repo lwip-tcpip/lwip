@@ -82,7 +82,6 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
   struct ip_hdr *iphdr;
-  ip_addr_t tmpaddr;
   s16_t hlen;
 
   ICMP_STATS_INC(icmp.recv);
@@ -111,13 +110,13 @@ icmp_input(struct pbuf *p, struct netif *inp)
       int accepted = 1;
 #if !LWIP_MULTICAST_PING
       /* multicast destination address? */
-      if (ip_addr_ismulticast(&iphdr->dest)) {
+      if (ip_addr_ismulticast(&current_iphdr_dest)) {
         accepted = 0;
       }
 #endif /* LWIP_MULTICAST_PING */
 #if !LWIP_BROADCAST_PING
       /* broadcast destination address? */
-      if (ip_addr_isbroadcast(&iphdr->dest, inp)) {
+      if (ip_addr_isbroadcast(&current_iphdr_dest, inp)) {
         accepted = 0;
       }
 #endif /* LWIP_BROADCAST_PING */
@@ -188,9 +187,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
-    ip_addr_copy(tmpaddr, iphdr->src);
-    ip_addr_copy(iphdr->src, iphdr->dest);
-    ip_addr_copy(iphdr->dest, tmpaddr);
+    ip_addr_copy(iphdr->src, *ip_current_dest_addr());
+    ip_addr_copy(iphdr->dest, *ip_current_src_addr());
     ICMPH_TYPE_SET(iecho, ICMP_ER);
     /* adjust the checksum */
     if (iecho->chksum >= PP_HTONS(0xffff - (ICMP_ECHO << 8))) {
@@ -216,7 +214,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
-      ret = ip_output_if(p, &(iphdr->src), IP_HDRINCL,
+      /* send an ICMP packet, src addr is the dest addr of the curren packet */
+      ret = ip_output_if(p, ip_current_dest_addr(), IP_HDRINCL,
                    ICMP_TTL, 0, IP_PROTO_ICMP, inp);
       if (ret != ERR_OK) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %c.\n", ret));
@@ -291,6 +290,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   struct ip_hdr *iphdr;
   /* we can use the echo header here */
   struct icmp_echo_hdr *icmphdr;
+  ip_addr_t iphdr_src;
 
   /* ICMP header + IP header + 8 bytes of data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
@@ -327,7 +327,8 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   snmp_inc_icmpoutmsgs();
   /* increase number of destination unreachable messages attempted to send */
   snmp_inc_icmpouttimeexcds();
-  ip_output(q, NULL, &(iphdr->src), ICMP_TTL, 0, IP_PROTO_ICMP);
+  ip_addr_copy(iphdr_src, iphdr->src);
+  ip_output(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP);
   pbuf_free(q);
 }
 

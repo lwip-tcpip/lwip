@@ -133,8 +133,8 @@ struct ip_hdr {
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);
   /* source and destination IP addresses */
-  PACK_STRUCT_FIELD(ip_addr_t src);
-  PACK_STRUCT_FIELD(ip_addr_t dest); 
+  PACK_STRUCT_FIELD(ip_addr_p_t src);
+  PACK_STRUCT_FIELD(ip_addr_p_t dest); 
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -163,6 +163,10 @@ PACK_STRUCT_END
 extern struct netif *current_netif;
 /** Header of the input packet currently being processed. */
 extern const struct ip_hdr *current_header;
+/** Source IP address of current_header */
+extern ip_addr_t current_iphdr_src;
+/** Destination IP address of current_header */
+extern ip_addr_t current_iphdr_dest;
 
 #define ip_init() /* Compatibility define, not init needed. */
 struct netif *ip_route(ip_addr_t *dest);
@@ -189,6 +193,11 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * This function must only be called from a receive callback (udp_recv,
  * raw_recv, tcp_accept). It will return NULL otherwise. */
 #define ip_current_header() (current_header)
+/** Source IP address of current_header */
+#define ip_current_src_addr()  (&current_iphdr_src)
+/** Destination IP address of current_header */
+#define ip_current_dest_addr() (&current_iphdr_dest)
+
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #else

@@ -787,7 +787,6 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
        const struct sockaddr *to, socklen_t tolen)
 {
   struct lwip_sock *sock;
-  ip_addr_t remote_addr;
   err_t err;
   u16_t short_size;
   const struct sockaddr_in *to_in;
@@ -821,8 +820,10 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 
 #if LWIP_TCPIP_CORE_LOCKING
   /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field...) */
-  { struct pbuf* p;
-  
+  {
+    struct pbuf* p;
+    ip_addr_t *remote_addr;
+
 #if LWIP_NETIF_TX_SINGLE_PBUF
     p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_RAM);
     if (p != NULL) {
@@ -838,19 +839,19 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
     if (p != NULL) {
       p->payload = (void*)data;
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
-      
-      inet_addr_to_ipaddr(&remote_addr, &to_in->sin_addr);
-      
+
+      inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
+
       LOCK_TCPIP_CORE();
       if (sock->conn->type == NETCONN_RAW) {
-        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, &remote_addr);
+        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, remote_addr);
       } else {
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
         err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
-          &remote_addr, ntohs(to_in->sin_port), 1, chksum);
+          remote_addr, ntohs(to_in->sin_port), 1, chksum);
 #else /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
         err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
-          &remote_addr, ntohs(to_in->sin_port));
+          remote_addr, ntohs(to_in->sin_port));
 #endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
       }
       UNLOCK_TCPIP_CORE();
@@ -867,20 +868,18 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   buf.flags = 0;
 #endif /* LWIP_CHECKSUM_ON_COPY */
   if (to) {
-    inet_addr_to_ipaddr(&remote_addr, &to_in->sin_addr);
+    inet_addr_to_ipaddr(&buf.addr, &to_in->sin_addr);
     remote_port           = ntohs(to_in->sin_port);
-    netbuf_fromaddr(&buf) = &remote_addr;
     netbuf_fromport(&buf) = remote_port;
   } else {
-    ip_addr_set_zero(&remote_addr);
     remote_port           = 0;
-    netbuf_fromaddr(&buf) = NULL;
+    ip_addr_set_any(&buf.addr);
     netbuf_fromport(&buf) = 0;
   }
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, short_size=%d"U16_F", flags=0x%x to=",
               s, data, short_size, flags));
-  ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
+  ip_addr_debug_print(SOCKETS_DEBUG, &buf.addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", remote_port));
 
   /* make the buffer point to the data that should be sent */
