@@ -1206,8 +1206,9 @@ dhcp_release(struct netif *netif)
 void
 dhcp_stop(struct netif *netif)
 {
-  struct dhcp *dhcp = netif->dhcp;
+  struct dhcp *dhcp;
   LWIP_ERROR("dhcp_stop: netif != NULL", (netif != NULL), return;);
+  dhcp = netif->dhcp;
   /* Remove the flag that says this netif is handled by DHCP. */
   netif->flags &= ~NETIF_FLAG_DHCP;
 
