@@ -220,6 +220,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-06-12: Simon Goldschmidt
+  * dhcp.c: Fixed bug #30038: dhcp_network_changed doesn't reset AUTOIP coop
+    state
+
   2010-05-17: Simon Goldschmidt
   * netdb.c: Correctly NULL-terminate h_addr_list
 

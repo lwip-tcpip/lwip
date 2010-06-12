@@ -754,6 +754,9 @@ dhcp_network_changed(struct netif *netif)
   case DHCP_REBOOTING:
     netif_set_down(netif);
     dhcp->tries = 0;
+#if LWIP_DHCP_AUTOIP_COOP
+    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+#endif /* LWIP_DHCP_AUTOIP_COOP */
     dhcp_reboot(netif);
     break;
   case DHCP_OFF:
