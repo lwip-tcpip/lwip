@@ -160,9 +160,9 @@ static const int err_to_errno_table[] = {
 #ifndef set_errno
 #define set_errno(err) errno = (err)
 #endif
-#else
+#else /* ERRNO */
 #define set_errno(err)
-#endif
+#endif /* ERRNO */
 
 #define sock_set_errno(sk, e) do { \
   sk->err = (e); \
@@ -758,7 +758,7 @@ lwip_send(int s, const void *data, size_t size, int flags)
   if (sock->conn->type != NETCONN_TCP) {
 #if (LWIP_UDP || LWIP_RAW)
     return lwip_sendto(s, data, size, flags, NULL, 0);
-#else
+#else /* (LWIP_UDP || LWIP_RAW) */
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
 #endif /* (LWIP_UDP || LWIP_RAW) */
@@ -790,9 +790,9 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   err_t err;
   u16_t short_size;
   const struct sockaddr_in *to_in;
+  u16_t remote_port;
 #if !LWIP_TCPIP_CORE_LOCKING
   struct netbuf buf;
-  u16_t remote_port;
 #endif
 
   sock = get_socket(s);
@@ -803,7 +803,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   if (sock->conn->type == NETCONN_TCP) {
 #if LWIP_TCP
     return lwip_send(s, data, size, flags);
-#else
+#else /* LWIP_TCP */
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
 #endif /* LWIP_TCP */
@@ -840,7 +840,13 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       p->payload = (void*)data;
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
-      inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
+      if (to_in != NULL) {
+        inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
+        remote_port = ntohs(to_in->sin_port);
+      } else {
+        ip_addr_set_any(&remote_addr);
+        remote_port = 0;
+      }
 
       LOCK_TCPIP_CORE();
       if (sock->conn->type == NETCONN_RAW) {
@@ -848,10 +854,10 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       } else {
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
         err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
-          remote_addr, ntohs(to_in->sin_port), 1, chksum);
+          remote_addr, remote_port, 1, chksum);
 #else /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
         err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
-          remote_addr, ntohs(to_in->sin_port));
+          remote_addr, remote_port);
 #endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
       }
       UNLOCK_TCPIP_CORE();
@@ -861,7 +867,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       err = ERR_MEM;
     }
   }
-#else
+#else /* LWIP_TCPIP_CORE_LOCKING */
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
 #if LWIP_CHECKSUM_ON_COPY
