@@ -1095,12 +1095,12 @@ do_send(struct api_msg_msg *msg)
 #if LWIP_UDP
       case NETCONN_UDP:
 #if LWIP_CHECKSUM_ON_COPY
-        if (msg->msg.b->addr == NULL) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = udp_send_chksum(msg->conn->pcb.udp, msg->msg.b->p,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         } else {
           msg->err = udp_sendto_chksum(msg->conn->pcb.udp, msg->msg.b->p,
-            msg->msg.b->addr, msg->msg.b->port,
+            &msg->msg.b->addr, msg->msg.b->port,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
