@@ -308,7 +308,7 @@ autoip_start(struct netif *netif)
         ("autoip_start(): could not allocate autoip\n"));
       return ERR_MEM;
     }
-    memset( autoip, 0, sizeof(struct autoip));
+    memset(autoip, 0, sizeof(struct autoip));
     /* store this AutoIP client in the netif */
     netif->autoip = autoip;
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE, ("autoip_start(): allocated autoip"));
@@ -316,7 +316,7 @@ autoip_start(struct netif *netif)
     autoip->state = AUTOIP_STATE_OFF;
     autoip->ttw = 0;
     autoip->sent_num = 0;
-    memset(&autoip->llipaddr, 0, sizeof(ip_addr_t));
+    ip_addr_set_zero(&autoip->llipaddr);
     autoip->lastconflict = 0;
   }
 
