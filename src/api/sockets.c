@@ -844,7 +844,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
         inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
         remote_port = ntohs(to_in->sin_port);
       } else {
-        ip_addr_set_any(&remote_addr);
+        remote_addr = IP_ADDR_ANY;
         remote_port = 0;
       }
 
