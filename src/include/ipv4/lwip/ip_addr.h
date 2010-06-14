@@ -41,7 +41,7 @@ extern "C" {
 
 /* This is the aligned version of ip_addr_t,
    used as local variable, on the stack, etc. */
-struct _ip_addr {
+struct ip_addr {
   u32_t addr;
 };
 
@@ -59,7 +59,7 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-typedef struct _ip_addr ip_addr_t;
+typedef struct ip_addr ip_addr_t;
 typedef struct _ip_addr_packed ip_addr_p_t;
 
 /*
