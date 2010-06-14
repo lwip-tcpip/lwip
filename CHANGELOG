@@ -220,6 +220,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-06-14: Simon Goldschmidt
+  * autoip.c: Fixed bug #30039: AutoIP does not reuse previous addresses
+
   2010-06-12: Simon Goldschmidt
   * dhcp.c: Fixed bug #30038: dhcp_network_changed doesn't reset AUTOIP coop
     state

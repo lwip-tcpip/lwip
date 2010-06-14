@@ -150,6 +150,17 @@ autoip_set_struct(struct netif *netif, struct autoip *autoip)
   netif->autoip = autoip;
 }
 
+/** Restart AutoIP client and check the next address (conflict detected)
+ *
+ * @param netif The netif under AutoIP control
+ */
+static void
+autoip_restart(struct netif *netif)
+{
+  netif->autoip->tried_llipaddr++;
+  autoip_start(netif);
+}
+
 /**
  * Handle a IP address conflict after an ARP conflict detection
  */
@@ -168,7 +179,7 @@ autoip_handle_arp_conflict(struct netif *netif)
         ("autoip_handle_arp_conflict(): we are defending, but in DEFEND_INTERVAL, retreating\n"));
 
       /* TODO: close all TCP sessions */
-      autoip_start(netif);
+      autoip_restart(netif);
     } else {
       LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
         ("autoip_handle_arp_conflict(): we are defend, send ARP Announce\n"));
@@ -179,7 +190,7 @@ autoip_handle_arp_conflict(struct netif *netif)
     LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
       ("autoip_handle_arp_conflict(): we do not defend, retreating\n"));
     /* TODO: close all TCP sessions */
-    autoip_start(netif);
+    autoip_restart(netif);
   }
 }
 
@@ -321,7 +332,6 @@ autoip_start(struct netif *netif)
   }
 
   autoip_create_addr(netif, &(autoip->llipaddr));
-  autoip->tried_llipaddr++;
   autoip_start_probing(netif);
 
   return result;
@@ -511,7 +521,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
            !eth_addr_cmp(&netifaddr, &hdr->shwaddr))) {
         LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
           ("autoip_arp_reply(): Probe Conflict detected\n"));
-        autoip_start(netif);
+        autoip_restart(netif);
       }
     } else {
      /* RFC 3927 Section 2.5:
