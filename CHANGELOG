@@ -220,6 +220,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-06-15: Simon Goldschmidt
+  * dhcp.c: Fixed bug #29970: DHCP endian issue parsing option responses
+
   2010-06-14: Simon Goldschmidt
   * autoip.c: Fixed bug #30039: AutoIP does not reuse previous addresses
 
