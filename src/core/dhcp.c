@@ -1434,7 +1434,7 @@ decode_next:
         value = ntohl(value);
       } else {
         LWIP_ASSERT("invalid decode_len", decode_len == 1);
-        value = ((u8_t*)value)[0];
+        value = ((u8_t*)&value)[0];
       }
       dhcp_got_option(dhcp, decode_idx);
       dhcp_set_option_value(dhcp, decode_idx, value);
