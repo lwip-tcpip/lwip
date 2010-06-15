@@ -51,7 +51,7 @@ struct ip_addr {
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct _ip_addr_packed {
+struct ip_addr_packed {
   PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -59,8 +59,10 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
+/** ip_addr_t uses a struct for convenience only, so that the same defines can
+ * operate both on ip_addr_t as well as on ip_addr_p_t. */
 typedef struct ip_addr ip_addr_t;
-typedef struct _ip_addr_packed ip_addr_p_t;
+typedef struct ip_addr_packed ip_addr_p_t;
 
 /*
  * struct ipaddr2 is used in the definition of the ARP packet format in
