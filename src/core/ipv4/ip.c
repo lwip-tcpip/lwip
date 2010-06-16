@@ -386,9 +386,9 @@ ip_input(struct pbuf *p, struct netif *inp)
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
+      u16_t dst_port = udphdr->dest;
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
         ntohs(udphdr->dest)));
-      u16_t dst_port = udphdr->dest;
       if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(dst_port)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
