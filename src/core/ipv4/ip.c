@@ -69,6 +69,30 @@
 #define CHECKSUM_GEN_IP_INLINE  0
 #endif
 
+#if LWIP_DHCP || defined(LWIP_IP_ACCEPT_UDP_PORT)
+#define IP_ACCEPT_LINK_LAYER_ADDRESSING 1
+
+/** Some defines for DHCP to let link-layer-addressed packets through while the
+ * netif is down.
+ * To use this in your own application/protocol, define LWIP_IP_ACCEPT_UDP_PORT
+ * to return 1 if the port is accepted and 0 if the port is not accepted.
+ */
+#if LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT)
+/* accept DHCP client port and custom port */
+#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (((port) == PP_NTOHS(DHCP_CLIENT_PORT)) \
+         || (LWIP_IP_ACCEPT_UDP_PORT(dst_port)))
+#elif defined(LWIP_IP_ACCEPT_UDP_PORT) /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) *)
+/* accept custom port only */
+#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (LWIP_IP_ACCEPT_UDP_PORT(dst_port))
+#else /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) *)
+/* accept DHCP client port only */
+#define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) ((port) == PP_NTOHS(DHCP_CLIENT_PORT))
+#endif /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
+
+#else /* LWIP_DHCP */
+#define IP_ACCEPT_LINK_LAYER_ADDRESSING 0
+#endif /* LWIP_DHCP */
+
 /**
  * The interface that provided the packet for the current callback
  * invocation.
@@ -221,9 +245,9 @@ ip_input(struct pbuf *p, struct netif *inp)
   struct netif *netif;
   u16_t iphdr_hlen;
   u16_t iphdr_len;
-#if LWIP_DHCP
+#if IP_ACCEPT_LINK_LAYER_ADDRESSING
   int check_ip_src=1;
-#endif /* LWIP_DHCP */
+#endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
 
   IP_STATS_INC(ip.recv);
   snmp_inc_ipinreceives();
@@ -348,10 +372,15 @@ ip_input(struct pbuf *p, struct netif *inp)
     } while(netif != NULL);
   }
 
-#if LWIP_DHCP
+#if IP_ACCEPT_LINK_LAYER_ADDRESSING
   /* Pass DHCP messages regardless of destination address. DHCP traffic is addressed
    * using link layer addressing (such as Ethernet MAC) so we must not filter on IP.
    * According to RFC 1542 section 3.1.1, referred by RFC 2131).
+   *
+   * If you want to accept private broadcast communication while a netif is down,
+   * define LWIP_IP_ACCEPT_UDP_PORT(dst_port), e.g.:
+   *
+   * #define LWIP_IP_ACCEPT_UDP_PORT(dst_port) ((dst_port) == PP_NTOHS(12345))
    */
   if (netif == NULL) {
     /* remote port is DHCP server? */
@@ -359,20 +388,21 @@ ip_input(struct pbuf *p, struct netif *inp)
       struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
         ntohs(udphdr->dest)));
-      if (udphdr->dest == PP_NTOHS(DHCP_CLIENT_PORT)) {
+      u16_t dst_port = udphdr->dest;
+      if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(dst_port)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
         check_ip_src = 0;
       }
     }
   }
-#endif /* LWIP_DHCP */
+#endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
 
   /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
-#if LWIP_DHCP
+#if IP_ACCEPT_LINK_LAYER_ADDRESSING
   /* DHCP servers need 0.0.0.0 to be allowed as source address (RFC 1.1.2.2: 3.2.1.3/a) */
   if (check_ip_src && !ip_addr_isany(&current_iphdr_src))
-#endif /* LWIP_DHCP */
+#endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
   {  if ((ip_addr_isbroadcast(&current_iphdr_src, inp)) ||
          (ip_addr_ismulticast(&current_iphdr_src))) {
       /* packet source is not valid */
