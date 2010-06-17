@@ -80,7 +80,7 @@
 #if LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT)
 /* accept DHCP client port and custom port */
 #define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (((port) == PP_NTOHS(DHCP_CLIENT_PORT)) \
-         || (LWIP_IP_ACCEPT_UDP_PORT(dst_port)))
+         || (LWIP_IP_ACCEPT_UDP_PORT(port)))
 #elif defined(LWIP_IP_ACCEPT_UDP_PORT) /* LWIP_DHCP && defined(LWIP_IP_ACCEPT_UDP_PORT) */
 /* accept custom port only */
 #define IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(port) (LWIP_IP_ACCEPT_UDP_PORT(dst_port))
@@ -386,10 +386,9 @@ ip_input(struct pbuf *p, struct netif *inp)
     /* remote port is DHCP server? */
     if (IPH_PROTO(iphdr) == IP_PROTO_UDP) {
       struct udp_hdr *udphdr = (struct udp_hdr *)((u8_t *)iphdr + iphdr_hlen);
-      u16_t dst_port = udphdr->dest;
       LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: UDP packet to DHCP client port %"U16_F"\n",
         ntohs(udphdr->dest)));
-      if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(dst_port)) {
+      if (IP_ACCEPT_LINK_LAYER_ADDRESSED_PORT(udphdr->dest)) {
         LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_TRACE, ("ip_input: DHCP packet accepted.\n"));
         netif = inp;
         check_ip_src = 0;
