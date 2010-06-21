@@ -326,6 +326,67 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   return p;
 }
 
+#if LWIP_SUPPORT_CUSTOM_PBUF
+/** Initialize a custom pbuf (already allocated).
+ *
+ * @param layer flag to define header size
+ * @param length size of the pbuf's payload
+ * @param type type of the pbuf (only used to treat the pbuf accordingly, as
+ *        this function allocates no memory)
+ * @param p pointer to the custom pbuf to initialize (already allocated)
+ * @param payload_mem pointer to the buffer that is used for payload and headers,
+ *        must be at least big enough to hold 'length' plus the header size,
+ *        may be NULL if set later
+ * @param payload_mem_len the size of the 'payload_mem' buffer, must be at least
+ *        big enough to hold 'length' plus the header size
+ */
+struct pbuf*
+pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_custom *p,
+                    void *payload_mem, u16_t payload_mem_len)
+{
+  u16_t offset;
+  LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_alloced_custom(length=%"U16_F")\n", length));
+
+  /* determine header offset */
+  offset = 0;
+  switch (l) {
+  case PBUF_TRANSPORT:
+    /* add room for transport (often TCP) layer header */
+    offset += PBUF_TRANSPORT_HLEN;
+    /* FALLTHROUGH */
+  case PBUF_IP:
+    /* add room for IP layer header */
+    offset += PBUF_IP_HLEN;
+    /* FALLTHROUGH */
+  case PBUF_LINK:
+    /* add room for link layer header */
+    offset += PBUF_LINK_HLEN;
+    break;
+  case PBUF_RAW:
+    break;
+  default:
+    LWIP_ASSERT("pbuf_alloced_custom: bad pbuf layer", 0);
+    return NULL;
+  }
+
+  if (LWIP_MEM_ALIGN_SIZE(offset) + length < payload_mem_len) {
+    LWIP_DEBUGF(PBUF_DEBUG | LWIP_DBG_LEVEL_WARNING, ("pbuf_alloced_custom(length=%"U16_F") buffer too short\n", length));
+    return NULL;
+  }
+
+  p->pbuf.next = NULL;
+  if (payload_mem != NULL) {
+    p->pbuf.payload = LWIP_MEM_ALIGN((void *)((u8_t *)payload_mem + offset));
+  } else {
+    p->pbuf.payload = NULL;
+  }
+  p->pbuf.flags = PBUF_FLAG_IS_CUSTOM;
+  p->pbuf.len = p->pbuf.tot_len = length;
+  p->pbuf.type = type;
+  p->pbuf.ref = 1;
+  return &p->pbuf;
+}
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 
 /**
  * Shrink a pbuf chain to a desired length.
@@ -573,15 +634,25 @@ pbuf_free(struct pbuf *p)
       q = p->next;
       LWIP_DEBUGF( PBUF_DEBUG | LWIP_DBG_TRACE, ("pbuf_free: deallocating %p\n", (void *)p));
       type = p->type;
-      /* is this a pbuf from the pool? */
-      if (type == PBUF_POOL) {
-        memp_free(MEMP_PBUF_POOL, p);
-      /* is this a ROM or RAM referencing pbuf? */
-      } else if (type == PBUF_ROM || type == PBUF_REF) {
-        memp_free(MEMP_PBUF, p);
-      /* type == PBUF_RAM */
-      } else {
-        mem_free(p);
+#if LWIP_SUPPORT_CUSTOM_PBUF
+      /* is this a custom pbuf? */
+      if ((p->flags & PBUF_FLAG_IS_CUSTOM) != 0) {
+        struct pbuf_custom *pc = (struct pbuf_custom*)p;
+        LWIP_ASSERT("pc->custom_free_function != NULL", pc->custom_free_function != NULL);
+        pc->custom_free_function(p);
+      } else
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+      {
+        /* is this a pbuf from the pool? */
+        if (type == PBUF_POOL) {
+          memp_free(MEMP_PBUF_POOL, p);
+        /* is this a ROM or RAM referencing pbuf? */
+        } else if (type == PBUF_ROM || type == PBUF_REF) {
+          memp_free(MEMP_PBUF, p);
+        /* type == PBUF_RAM */
+        } else {
+          mem_free(p);
+        }
       }
       count++;
       /* proceed to next pbuf */

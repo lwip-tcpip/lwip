@@ -225,6 +225,12 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-06-21: Simon Goldschmidt
+  * pbuf.c/.h, ip_frag.c/.h, opt.h, memp_std.h: Fixed bug #29361 (ip_frag has
+    problems with zero-copy DMA MACs) by adding custom pbufs and implementing
+    custom pbufs that reference other (original) pbufs. Additionally set
+    IP_FRAG_USES_STATIC_BUF=0 as default to be on the safe side.
+
   2010-06-15: Simon Goldschmidt
   * dhcp.c: Fixed bug #29970: DHCP endian issue parsing option responses
 
