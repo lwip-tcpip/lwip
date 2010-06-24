@@ -145,7 +145,7 @@
   #error "One and exactly one of LWIP_EVENT_API and LWIP_CALLBACK_API has to be enabled in your lwipopts.h"
 #endif
 /* There must be sufficient timeouts, taking into account requirements of the subsystems. */
-#if (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_SUPPORT))
+#if LWIP_TIMERS && (MEMP_NUM_SYS_TIMEOUT < (LWIP_TCP + IP_REASSEMBLY + LWIP_ARP + (2*LWIP_DHCP) + LWIP_AUTOIP + LWIP_IGMP + LWIP_DNS + PPP_SUPPORT))
   #error "MEMP_NUM_SYS_TIMEOUT is too low to accomodate all required timeouts"
 #endif
 #if (IP_REASSEMBLY && (MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS))
@@ -261,7 +261,9 @@ lwip_init(void)
 
   /* Modules initialization */
   stats_init();
+#if !NO_SYS
   sys_init();
+#endif /* !NO_SYS */
   mem_init();
   memp_init();
   pbuf_init();
@@ -295,5 +297,7 @@ lwip_init(void)
   dns_init();
 #endif /* LWIP_DNS */
 
+#if LWIP_TIMERS
   sys_timeouts_init();
+#endif /* LWIP_TIMERS */
 }

@@ -69,6 +69,14 @@
 #endif
 
 /**
+ * NO_SYS_NO_TIMERS==1: Drop support for sys_timeout when NO_SYS==1
+ * Mainly for compatibility to old versions.
+ */
+#ifndef NO_SYS_NO_TIMERS
+#define NO_SYS_NO_TIMERS                0
+#endif
+
+/**
  * MEMCPY: override this if you have a faster implementation at hand than the
  * one included in your C library
  */

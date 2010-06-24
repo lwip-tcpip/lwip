@@ -71,7 +71,9 @@ LWIP_MEMPOOL(ARP_QUEUE,      MEMP_NUM_ARP_QUEUE,       sizeof(struct etharp_q_en
 LWIP_MEMPOOL(IGMP_GROUP,     MEMP_NUM_IGMP_GROUP,      sizeof(struct igmp_group),     "IGMP_GROUP")
 #endif /* LWIP_IGMP */
 
+#if LWIP_TIMERS
 LWIP_MEMPOOL(SYS_TIMEOUT,    MEMP_NUM_SYS_TIMEOUT,     sizeof(struct sys_timeo),      "SYS_TIMEOUT")
+#endif /* LWIP_TIMERS */
 
 #if LWIP_SNMP
 LWIP_MEMPOOL(SNMP_ROOTNODE,  MEMP_NUM_SNMP_ROOTNODE,   sizeof(struct mib_list_rootnode), "SNMP_ROOTNODE")

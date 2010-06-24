@@ -226,6 +226,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-06-24: Simon Goldschmidt
+  * init.c, timers.c/.h, opt.h, memp_std.h: From patch #7221: added flag
+    NO_SYS_NO_TIMERS to drop timer support for NO_SYS==1 for easier upgrading
+
+  2010-06-24: Simon Goldschmidt
   * api(_lib).c/.h, api_msg.c/.h, sockets.c/.h: Fixed bug #10088: Correctly
     implemented shutdown at socket level.
 

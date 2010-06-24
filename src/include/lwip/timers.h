@@ -35,6 +35,11 @@
 
 #include "lwip/opt.h"
 
+/* Timers are not supported when NO_SYS==1 and NO_SYS_NO_TIMERS==1 */
+#define LWIP_TIMERS (!NO_SYS || (NO_SYS && !NO_SYS_NO_TIMERS))
+
+#if LWIP_TIMERS
+
 #include "lwip/err.h"
 #include "lwip/sys.h"
 
@@ -89,4 +94,5 @@ void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 }
 #endif
 
+#endif /* LWIP_TIMERS */
 #endif /* __LWIP_TIMERS_H__ */

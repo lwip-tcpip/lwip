@@ -42,6 +42,9 @@
 #include "lwip/opt.h"
 
 #include "lwip/timers.h"
+
+#if LWIP_TIMERS
+
 #include "lwip/def.h"
 #include "lwip/memp.h"
 #include "lwip/tcpip.h"
@@ -485,3 +488,11 @@ sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg)
 }
 
 #endif /* NO_SYS */
+
+#else /* LWIP_TIMERS */
+/* Satisfy the TCP code which calls this function */
+void
+tcp_timer_needed(void)
+{
+}
+#endif /* LWIP_TIMERS */
