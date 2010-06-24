@@ -225,6 +225,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-06-24: Simon Goldschmidt
+  * api(_lib).c/.h, api_msg.c/.h, sockets.c/.h: Fixed bug #10088: Correctly
+    implemented shutdown at socket level.
+
   2010-06-21: Simon Goldschmidt
   * pbuf.c/.h, ip_frag.c/.h, opt.h, memp_std.h: Fixed bug #29361 (ip_frag has
     problems with zero-copy DMA MACs) by adding custom pbufs and implementing

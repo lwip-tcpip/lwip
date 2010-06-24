@@ -48,6 +48,10 @@
 extern "C" {
 #endif
 
+#define NETCONN_SHUT_RD   1
+#define NETCONN_SHUT_WR   2
+#define NETCONN_SHUT_RDWR 3
+
 /* IP addresses and port numbers are expected to be in
  * the same byte order as in the corresponding pcb.
  */
@@ -89,6 +93,10 @@ struct api_msg_msg {
     struct {
       u32_t len;
     } r;
+    /** used for do_close (/shutdown) */
+    struct {
+      u8_t shut;
+    } sd;
 #if LWIP_IGMP
     /** used for do_join_leave_group */
     struct {
@@ -144,6 +152,7 @@ void do_recv            ( struct api_msg_msg *msg);
 void do_write           ( struct api_msg_msg *msg);
 void do_getaddr         ( struct api_msg_msg *msg);
 void do_close           ( struct api_msg_msg *msg);
+void do_shutdown        ( struct api_msg_msg *msg);
 #if LWIP_IGMP
 void do_join_leave_group( struct api_msg_msg *msg);
 #endif /* LWIP_IGMP */

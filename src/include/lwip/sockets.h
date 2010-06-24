@@ -279,6 +279,12 @@ typedef struct ip_mreq {
 #define O_NDELAY    1 /* same as O_NONBLOCK, for compatibility */
 #endif
 
+#ifndef SHUT_RD
+  #define SHUT_RD   1
+  #define SHUT_WR   2
+  #define SHUT_RDWR 3
+#endif
+
 /* FD_SET used for lwip_select */
 #ifndef FD_SET
   #undef  FD_SETSIZE

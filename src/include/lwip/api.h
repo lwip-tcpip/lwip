@@ -234,6 +234,7 @@ err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
 err_t   netconn_write(struct netconn *conn, const void *dataptr, size_t size,
                       u8_t apiflags);
 err_t   netconn_close(struct netconn *conn);
+err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
 
 #if LWIP_IGMP
 err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,

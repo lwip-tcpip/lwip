@@ -729,6 +729,7 @@ static void
 do_close_internal(struct netconn *conn)
 {
   err_t err;
+  u8_t shut, shut_rx, shut_tx, close;
 
   LWIP_ASSERT("invalid conn", (conn != NULL));
   LWIP_ASSERT("this is for tcp netconns only", (conn->type == NETCONN_TCP));
@@ -736,20 +737,38 @@ do_close_internal(struct netconn *conn)
   LWIP_ASSERT("pcb already closed", (conn->pcb.tcp != NULL));
   LWIP_ASSERT("conn->current_msg != NULL", conn->current_msg != NULL);
 
+  shut = conn->current_msg->msg.sd.shut;
+  shut_rx = shut & NETCONN_SHUT_RD;
+  shut_tx = shut & NETCONN_SHUT_WR;
+  /* shutting down both ends is the same as closing */
+  close = shut == NETCONN_SHUT_RDWR;
+
   /* Set back some callback pointers */
-  tcp_arg(conn->pcb.tcp, NULL);
+  if (close) {
+    tcp_arg(conn->pcb.tcp, NULL);
+  }
   if (conn->pcb.tcp->state == LISTEN) {
     tcp_accept(conn->pcb.tcp, NULL);
   } else {
-    tcp_recv(conn->pcb.tcp, NULL);
-    tcp_accept(conn->pcb.tcp, NULL);
     /* some callbacks have to be reset if tcp_close is not successful */
-    tcp_sent(conn->pcb.tcp, NULL);
-    tcp_poll(conn->pcb.tcp, NULL, 4);
-    tcp_err(conn->pcb.tcp, NULL);
+    if (shut_rx) {
+      tcp_recv(conn->pcb.tcp, NULL);
+      tcp_accept(conn->pcb.tcp, NULL);
+    }
+    if (shut_tx) {
+      tcp_sent(conn->pcb.tcp, NULL);
+    }
+    if (close) {
+      tcp_poll(conn->pcb.tcp, NULL, 4);
+      tcp_err(conn->pcb.tcp, NULL);
+    }
   }
   /* Try to close the connection */
-  err = tcp_close(conn->pcb.tcp);
+  if (shut == NETCONN_SHUT_RDWR) {
+    err = tcp_close(conn->pcb.tcp);
+  } else {
+    err = tcp_shutdown(conn->pcb.tcp, shut & NETCONN_SHUT_RD, shut & NETCONN_SHUT_WR);
+  }
   if (err == ERR_OK) {
     /* Closing succeeded */
     conn->current_msg->err = ERR_OK;
@@ -759,9 +778,15 @@ do_close_internal(struct netconn *conn)
     conn->pcb.tcp = NULL;
     /* Trigger select() in socket layer. Make sure everybody notices activity
        on the connection, error first! */
-    API_EVENT(conn, NETCONN_EVT_ERROR, 0);
-    API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
-    API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
+    if (close) {
+      API_EVENT(conn, NETCONN_EVT_ERROR, 0);
+    }
+    if (shut_rx) {
+      API_EVENT(conn, NETCONN_EVT_RCVPLUS, 0);
+    }
+    if (shut_tx) {
+      API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
+    }
     /* wake up the application task */
     sys_sem_signal(&conn->op_completed);
   } else {
@@ -772,6 +797,7 @@ do_close_internal(struct netconn *conn)
     tcp_poll(conn->pcb.tcp, poll_tcp, 4);
     tcp_err(conn->pcb.tcp, err_tcp);
     tcp_arg(conn->pcb.tcp, conn);
+    /* don't restore recv callback: we don't want to receive any more data */
   }
   /* If closing didn't succeed, we get called again either
      from poll_tcp or from sent_tcp */
@@ -1401,15 +1427,22 @@ do_close(struct api_msg_msg *msg)
     LWIP_ASSERT("msg->conn->type == NETCONN_TCP", msg->conn->type == NETCONN_TCP);
     msg->err = ERR_INPROGRESS;
   } else if ((msg->conn->pcb.tcp != NULL) && (msg->conn->type == NETCONN_TCP)) {
-    /* Drain and delete mboxes */
-    netconn_drain(msg->conn);
-    LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
-      msg->conn->write_offset == 0);
-    msg->conn->state = NETCONN_CLOSE;
-    msg->conn->current_msg = msg;
-    do_close_internal(msg->conn);
-    /* for tcp netconns, do_close_internal ACKs the message */
-    return;
+    if ((msg->msg.sd.shut != NETCONN_SHUT_RDWR) && (msg->conn->state == NETCONN_LISTEN)) {
+      /* LISTEN doesn't support half shutdown */
+      msg->err = ERR_CONN;
+    } else {
+      if (msg->msg.sd.shut & NETCONN_SHUT_RD) {
+        /* Drain and delete mboxes */
+        netconn_drain(msg->conn);
+      }
+      LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
+        msg->conn->write_offset == 0);
+      msg->conn->state = NETCONN_CLOSE;
+      msg->conn->current_msg = msg;
+      do_close_internal(msg->conn);
+      /* for tcp netconns, do_close_internal ACKs the message */
+      return;
+    }
   } else
 #endif /* LWIP_TCP */
   {

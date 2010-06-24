@@ -600,13 +600,14 @@ netconn_write(struct netconn *conn, const void *dataptr, size_t size, u8_t apifl
 }
 
 /**
- * Close a TCP netconn (doesn't delete it).
+ * Close ot shutdown a TCP netconn (doesn't delete it).
  *
- * @param conn the TCP netconn to close
+ * @param conn the TCP netconn to close or shutdown
+ * @param how fully close or only shutdown one side?
  * @return ERR_OK if the netconn was closed, any other err_t on error
  */
-err_t
-netconn_close(struct netconn *conn)
+static err_t
+netconn_close_shutdown(struct netconn *conn, u8_t how)
 {
   struct api_msg msg;
   err_t err;
@@ -615,12 +616,39 @@ netconn_close(struct netconn *conn)
 
   msg.function = do_close;
   msg.msg.conn = conn;
+  /* shutting down both ends is the same as closing */
+  msg.msg.msg.sd.shut = how;
   /* because of the LWIP_TCPIP_CORE_LOCKING implementation of do_close,
      don't use TCPIP_APIMSG here */
   err = tcpip_apimsg(&msg);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
+}
+
+/**
+ * Close a TCP netconn (doesn't delete it).
+ *
+ * @param conn the TCP netconn to close
+ * @return ERR_OK if the netconn was closed, any other err_t on error
+ */
+err_t
+netconn_close(struct netconn *conn)
+{
+  /* shutting down both ends is the same as closing */
+  return netconn_close_shutdown(conn, NETCONN_SHUT_RDWR);
+}
+
+/**
+ * Shut down one or both sides of a TCP netconn (doesn't delete it).
+ *
+ * @param conn the TCP netconn to shut down
+ * @return ERR_OK if the netconn was closed, any other err_t on error
+ */
+err_t
+netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx)
+{
+  return netconn_close_shutdown(conn, (shut_rx ? NETCONN_SHUT_RD : 0) | (shut_tx ? NETCONN_SHUT_WR : 0));
 }
 
 #if LWIP_IGMP

@@ -1344,9 +1344,42 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
 int
 lwip_shutdown(int s, int how)
 {
-  LWIP_UNUSED_ARG(how);
+  struct lwip_sock *sock;
+  err_t err;
+  u8_t shut_rx = 0, shut_tx = 0;
+
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_shutdown(%d, how=%d)\n", s, how));
-  return lwip_close(s); /* XXX temporary hack until proper implementation */
+
+  sock = get_socket(s);
+  if (!sock) {
+    return -1;
+  }
+
+  if (sock->conn != NULL) {
+    if (netconn_type(sock->conn) != NETCONN_TCP) {
+      sock_set_errno(sock, EOPNOTSUPP);
+      return EOPNOTSUPP;
+    }
+  } else {
+    sock_set_errno(sock, ENOTCONN);
+    return ENOTCONN;
+  }
+
+  if (how == SHUT_RD) {
+    shut_rx = 1;
+  } else if (how == SHUT_WR) {
+    shut_tx = 1;
+  } else if(how == SHUT_RDWR) {
+    shut_rx = 1;
+    shut_tx = 1;
+  } else {
+    sock_set_errno(sock, EINVAL);
+    return EINVAL;
+  }
+  err = netconn_shutdown(sock->conn, shut_rx, shut_tx);
+
+  sock_set_errno(sock, err_to_errno(err));
+  return (err == ERR_OK ? 0 : -1);
 }
 
 static int
