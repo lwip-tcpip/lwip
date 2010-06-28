@@ -621,7 +621,7 @@ static u8_t buf[LWIP_MEM_ALIGN_SIZE(IP_FRAG_MAX_MTU + MEM_ALIGNMENT - 1)];
 #if !LWIP_NETIF_TX_SINGLE_PBUF
 /** Allocate a new struct pbuf_custom_ref */
 static struct pbuf_custom_ref*
-ip_frag_alloc_pbuf_custom_ref()
+ip_frag_alloc_pbuf_custom_ref(void)
 {
   return (struct pbuf_custom_ref*)memp_malloc(MEMP_FRAG_PBUF);
 }
@@ -706,7 +706,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
   iphdr = (struct ip_hdr *)rambuf->payload;
   SMEMCPY(iphdr, p->payload, IP_HLEN);
 #else /* IP_FRAG_USES_STATIC_BUF */
-  original_iphdr = p->payload;
+  original_iphdr = (struct ip_hdr *)p->payload;
   iphdr = original_iphdr;
 #endif /* IP_FRAG_USES_STATIC_BUF */
 
@@ -763,7 +763,7 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
     LWIP_ASSERT("this needs a pbuf in one piece!",
                 (p->len >= (IP_HLEN)));
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
-    iphdr = rambuf->payload;
+    iphdr = (struct ip_hdr *)rambuf->payload;
 
     /* Can just adjust p directly for needed offset. */
     p->payload = (u8_t *)p->payload + poff;
