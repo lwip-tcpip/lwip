@@ -224,6 +224,8 @@ HISTORY
 
 
   ++ Bugfixes:
+  2010-06-28: Kieran Mansley
+  * timers.c remove unportable printing of C function pointers
 
   2010-06-24: Simon Goldschmidt
   * init.c, timers.c/.h, opt.h, memp_std.h: From patch #7221: added flag

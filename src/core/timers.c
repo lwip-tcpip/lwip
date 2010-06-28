@@ -279,14 +279,6 @@ sys_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
   timeout->handler_name = handler_name;
 #endif /* LWIP_DEBUG_TIMERNAMES */
 
-#if LWIP_DEBUG_TIMERNAMES
-  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p name=%s\n",
-    (void *)timeout, msecs, *(void**)&h, (void *)arg, handler_name));
-#else /* LWIP_DEBUG_TIMERNAMES */
-  LWIP_DEBUGF(TIMERS_DEBUG, ("sys_timeout: %p msecs=%"U32_F" h=%p arg=%p\n",
-    (void *)timeout, msecs, *(void**)&h, (void *)arg));
-#endif /* LWIP_DEBUG_TIMERNAMES */
-
   if (next_timeout == NULL) {
     next_timeout = timeout;
     return;
@@ -391,14 +383,7 @@ sys_check_timeouts(void)
         handler_name = tmptimeout->handler_name;
 #endif /* LWIP_DEBUG_TIMERNAMES */
         memp_free(MEMP_SYS_TIMEOUT, tmptimeout);
-        if (h != NULL) {
-#if LWIP_DEBUG_TIMERNAMES
-          LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%p(%p) (%s)\n", *(void**)&h, arg, handler_name));
-#else /* LWIP_DEBUG_TIMERNAMES */
-          LWIP_DEBUGF(TIMERS_DEBUG, ("sct calling h=%p(%p)\n", *(void**)&h, arg));
-#endif /* LWIP_DEBUG_TIMERNAMES */
-          h(arg);
-        }
+        if (h != NULL) h(arg);
       }
     /* repeat until all expired timers have been called */
     }while(had_one);
