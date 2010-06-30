@@ -224,6 +224,11 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2010-06-30: Simon Goldschmidt
+  * api_msg.c: fixed bug #30300 (shutdown parameter was not initialized in
+    netconn_delete)
+
   2010-06-28: Kieran Mansley
   * timers.c remove unportable printing of C function pointers
 

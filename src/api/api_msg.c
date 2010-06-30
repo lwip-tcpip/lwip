@@ -845,6 +845,7 @@ do_delconn(struct api_msg_msg *msg)
         LWIP_ASSERT("already writing or closing", msg->conn->current_msg == NULL &&
           msg->conn->write_offset == 0);
         msg->conn->state = NETCONN_CLOSE;
+        msg->msg.sd.shut = NETCONN_SHUT_RDWR;
         msg->conn->current_msg = msg;
         do_close_internal(msg->conn);
         /* API_EVENT is called inside do_close_internal, before releasing
