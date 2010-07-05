@@ -140,6 +140,11 @@ err_t pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
                        u16_t len, u16_t *chksum);
 #endif /* LWIP_CHECKSUM_ON_COPY */
 
+u8_t pbuf_get_at(struct pbuf* p, u16_t offset);
+u16_t pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n);
+u16_t pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset);
+u16_t pbuf_strstr(struct pbuf* p, const char* substr);
+
 #ifdef __cplusplus
 }
 #endif

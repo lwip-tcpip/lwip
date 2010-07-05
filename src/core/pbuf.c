@@ -974,8 +974,8 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
 /**
  * Creates a single pbuf out of a queue of pbufs.
  *
- * @remark: The source pbuf 'p' is not freed by this function because that can
- *          be illegal in some places!
+ * @remark: Either the source pbuf 'p' is freed by this function or the original
+ *          pbuf 'p' is returned, therefore the caller has to check the result!
  *
  * @param p the source pbuf
  * @param layer pbuf_layer of the new pbuf
@@ -1042,3 +1042,115 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
   return ERR_OK;
 }
 #endif /* LWIP_CHECKSUM_ON_COPY */
+
+ /** Get one byte from the specified position in a pbuf
+ * WARNING: returns zero for offset >= p->tot_len
+ *
+ * @param p pbuf to parse
+ * @param offset offset into p of the byte to return
+ * @return byte at an offset into p OR ZERO IF 'offset' >= p->tot_len
+ */
+u8_t
+pbuf_get_at(struct pbuf* p, u16_t offset)
+{
+  u16_t copy_from = offset;
+  struct pbuf* q = p;
+
+  /* get the correct pbuf */
+  while ((q != NULL) && (q->len <= copy_from)) {
+    copy_from -= q->len;
+    q = q->next;
+  }
+  /* return requested data if pbuf is OK */
+  if ((q != NULL) && (q->len > copy_from)) {
+    return ((u8_t*)q->payload)[copy_from];
+  }
+  return 0;
+}
+
+/** Compare pbuf contents at specified offset with memory s2, both of length n
+ *
+ * @param p pbuf to compare
+ * @param offset offset into p at wich to start comparing
+ * @param s2 buffer to compare
+ * @param n length of buffer to compare
+ * @return zero if equal, nonzero otherwise
+ *         (0xffff if p is too short, diffoffset+1 otherwise)
+ */
+u16_t
+pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
+{
+  u16_t start = offset;
+  struct pbuf* q = p;
+
+  /* get the correct pbuf */
+  while ((q != NULL) && (q->len <= start)) {
+    start -= q->len;
+    q = q->next;
+  }
+  /* return requested data if pbuf is OK */
+  if ((q != NULL) && (q->len > start)) {
+    u16_t i;
+    for(i = 0; i < n; i++) {
+      u8_t a = pbuf_get_at(q, start + i);
+      u8_t b = ((u8_t*)s2)[i];
+      if (a != b) {
+        return i+1;
+      }
+    }
+    return 0;
+  }
+  return 0xffff;
+}
+
+/** Find occurrence of mem (with length mem_len) in pbuf p, starting at offset
+ * start_offset.
+ *
+ * @param p pbuf to search, maximum length is 0xFFFE since 0xFFFF is used as
+ *        return value 'not found'
+ * @param mem search for the contents of this buffer
+ * @param mem_len length of 'mem'
+ * @param start_offset offset into p at which to start searching
+ * @return 0xFFFF if substr was not found in p or the index where it was found
+ */
+u16_t
+pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
+{
+  u16_t i;
+  u16_t max = p->tot_len - mem_len;
+  if (p->tot_len >= mem_len + start_offset) {
+    for(i = start_offset; i <= max; ) {
+      u16_t plus = pbuf_memcmp(p, i, mem, mem_len);
+      if (plus == 0) {
+        return i;
+      } else {
+        i += plus;
+      }
+    }
+  }
+  return 0xFFFF;
+}
+
+/** Find occurrence of substr with length substr_len in pbuf p, start at offset
+ * start_offset
+ * WARNING: in contrast to strstr(), this one does not stop at the first \0 in
+ * the pbuf/source string!
+ *
+ * @param p pbuf to search, maximum length is 0xFFFE since 0xFFFF is used as
+ *        return value 'not found'
+ * @param substr string to search for in p, maximum length is 0xFFFE
+ * @return 0xFFFF if substr was not found in p or the index where it was found
+ */
+u16_t
+pbuf_strstr(struct pbuf* p, const char* substr)
+{
+  size_t substr_len;
+  if ((substr == NULL) || (substr[0] == 0) || (p->tot_len == 0xFFFF)) {
+    return 0xFFFF;
+  }
+  substr_len = strlen(substr);
+  if (substr_len >= 0xFFFF) {
+    return 0xFFFF;
+  }
+  return pbuf_memfind(p, substr, (u16_t)substr_len, 0);
+}
