@@ -51,7 +51,8 @@ const ip_addr_t ip_addr_broadcast = { IPADDR_BROADCAST };
  * @param netif the network interface against which the address is checked
  * @return returns non-zero if the address is a broadcast address
  */
-u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
+u8_t
+ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
 {
   ip_addr_t ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
@@ -80,6 +81,34 @@ u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
   }
 }
 
+/** Checks if a netmask is valid (starting with ones, then only zeros)
+ *
+ * @param netmask the IPv4 netmask to check (in network byte order!)
+ * @return 1 if the netmask is valid, 0 if it is not
+ */
+u8_t
+ip4_addr_netmask_valid(u32_t netmask)
+{
+  u32_t mask;
+  u32_t nm_hostorder = lwip_htonl(netmask);
+
+  /* first, check for the first zero */
+  for (mask = 1U << 31 ; mask != 0; mask >>= 1) {
+    if ((nm_hostorder & mask) == 0) {
+      break;
+    }
+  }
+  /* then check that there is no one */
+  for (; mask != 0; mask >>= 1) {
+    if ((nm_hostorder & mask) != 0) {
+      /* there is a one after the first zero -> invalid */
+      return 0;
+    }
+  }
+  /* no one after the first zero -> valid */
+  return 1;
+}
+
 /* Here for now until needed in other places in lwIP */
 #ifndef isprint
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
@@ -88,8 +117,8 @@ u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
 #define isxdigit(c)          (isdigit(c) || in_range(c, 'a', 'f') || in_range(c, 'A', 'F'))
 #define islower(c)           in_range(c, 'a', 'z')
 #define isspace(c)           (c == ' ' || c == '\f' || c == '\n' || c == '\r' || c == '\t' || c == '\v')
-#endif    
-    
+#endif
+
 /**
  * Ascii internet address interpretation routine.
  * The value returned is in network order.

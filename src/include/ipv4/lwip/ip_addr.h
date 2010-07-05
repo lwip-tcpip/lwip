@@ -202,6 +202,9 @@ extern const ip_addr_t ip_addr_broadcast;
 #define ip_addr_isbroadcast(ipaddr, netif) ip4_addr_isbroadcast((ipaddr)->addr, (netif))
 u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif);
 
+#define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
+u8_t ip4_addr_netmask_valid(u32_t netmask);
+
 #define ip_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
 
 #define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
