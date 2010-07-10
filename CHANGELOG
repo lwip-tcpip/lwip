@@ -225,6 +225,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-07-10: Simon Goldschmidt
+  * ip.c: Fixed bug #30402: CHECKSUM_GEN_IP_INLINE does not add IP options
+
   2010-06-30: Simon Goldschmidt
   * api_msg.c: fixed bug #30300 (shutdown parameter was not initialized in
     netconn_delete)

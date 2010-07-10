@@ -591,7 +591,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   struct ip_hdr *iphdr;
   ip_addr_t dest_addr;
 #if CHECKSUM_GEN_IP_INLINE
-  u32_t chk_sum;
+  u32_t chk_sum = 0;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
@@ -606,6 +606,9 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #if IP_OPTIONS_SEND
     u16_t optlen_aligned = 0;
     if (optlen != 0) {
+#if CHECKSUM_GEN_IP_INLINE
+      int i;
+#endif /* CHECKSUM_GEN_IP_INLINE */
       /* round up to a multiple of 4 */
       optlen_aligned = ((optlen + 3) & ~3);
       ip_hlen += optlen_aligned;
@@ -621,6 +624,11 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
         /* zero the remaining bytes */
         memset(((char*)p->payload) + optlen, 0, optlen_aligned - optlen);
       }
+#if CHECKSUM_GEN_IP_INLINE
+      for (i = 0; i < optlen_aligned; i += sizeof(u16_t)) {
+        chk_sum += ((u16_t*)p->payload)[i];
+      }
+#endif /* CHECKSUM_GEN_IP_INLINE */
     }
 #endif /* IP_OPTIONS_SEND */
     /* generate IP header */
@@ -639,7 +647,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     IPH_TTL_SET(iphdr, ttl);
     IPH_PROTO_SET(iphdr, proto);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum = LWIP_MAKE_U16(proto, ttl);
+    chk_sum += LWIP_MAKE_U16(proto, ttl);
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
     /* dest cannot be NULL here */
