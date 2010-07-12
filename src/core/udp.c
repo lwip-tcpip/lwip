@@ -935,10 +935,6 @@ udp_new(void)
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
     pcb->ttl = UDP_TTL;
-#if LWIP_IGMP
-    /* multicast loopback shall be turned on by default */
-    pcb->flags = PBUF_FLAG_MCASTLOOP;
-#endif /* LWIP_IGMP */
   }
   return pcb;
 }
