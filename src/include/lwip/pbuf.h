@@ -67,6 +67,8 @@ typedef enum {
 /** indicates this is a custom pbuf: pbuf_free and pbuf_header handle such a
     a pbuf differently */
 #define PBUF_FLAG_IS_CUSTOM 0x02U
+/** indicates this pbuf is UDP multicast to be looped back */
+#define PBUF_FLAG_MCASTLOOP 0x04U
 
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */

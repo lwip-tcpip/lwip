@@ -63,9 +63,10 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define UDP_FLAGS_NOCHKSUM 0x01U
-#define UDP_FLAGS_UDPLITE  0x02U
-#define UDP_FLAGS_CONNECTED  0x04U
+#define UDP_FLAGS_NOCHKSUM       0x01U
+#define UDP_FLAGS_UDPLITE        0x02U
+#define UDP_FLAGS_CONNECTED      0x04U
+#define UDP_FLAGS_MULTICAST_LOOP 0x08U
 
 struct udp_pcb;
 

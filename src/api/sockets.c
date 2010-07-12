@@ -1524,6 +1524,14 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
         err = EINVAL;
       }
       break;
+    case IP_MULTICAST_LOOP:
+      if (*optlen < sizeof(u8_t)) {
+        err = EINVAL;
+      }
+      if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
+        err = EAFNOSUPPORT;
+      }
+      break;
 #endif /* LWIP_IGMP */
 
     default:
@@ -1738,6 +1746,15 @@ lwip_getsockopt_internal(void *arg)
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_IF) = 0x%"X32_F"\n",
                   s, *(u32_t *)optval));
       break;
+    case IP_MULTICAST_LOOP:
+      if ((sock->conn->pcb.udp->flags & UDP_FLAGS_MULTICAST_LOOP) != 0) {
+        *(u8_t*)optval = 1;
+      } else {
+        *(u8_t*)optval = 0;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_LOOP) = %d\n",
+                  s, *(int *)optval));
+      break;
 #endif /* LWIP_IGMP */
     default:
       LWIP_ASSERT("unhandled optname", 0);
@@ -1900,6 +1917,14 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
       break;
     case IP_MULTICAST_IF:
       if (optlen < sizeof(struct in_addr)) {
+        err = EINVAL;
+      }
+      if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
+        err = EAFNOSUPPORT;
+      }
+      break;
+    case IP_MULTICAST_LOOP:
+      if (optlen < sizeof(u8_t)) {
         err = EINVAL;
       }
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_UDP) {
@@ -2097,6 +2122,13 @@ lwip_setsockopt_internal(void *arg)
       break;
     case IP_MULTICAST_IF:
       inet_addr_to_ipaddr(&sock->conn->pcb.udp->multicast_ip, (struct in_addr*)optval);
+      break;
+    case IP_MULTICAST_LOOP:
+      if (*(u8_t*)optval) {
+        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) | UDP_FLAGS_MULTICAST_LOOP);
+      } else {
+        udp_setflags(sock->conn->pcb.udp, udp_flags(sock->conn->pcb.udp) & ~UDP_FLAGS_MULTICAST_LOOP);
+      }
       break;
     case IP_ADD_MEMBERSHIP:
     case IP_DROP_MEMBERSHIP:

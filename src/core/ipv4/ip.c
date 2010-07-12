@@ -710,13 +710,18 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
     return netif_loop_output(netif, p, dest);
   }
+#if LWIP_IGMP
+  if ((p->flags & PBUF_FLAG_MCASTLOOP) != 0) {
+    netif_loop_output(netif, p, dest);
+  }
+#endif /* LWIP_IGMP */
 #endif /* ENABLE_LOOPBACK */
 #if IP_FRAG
   /* don't fragment if interface has mtu set to 0 [loopif] */
   if (netif->mtu && (p->tot_len > netif->mtu)) {
     return ip_frag(p, netif, dest);
   }
-#endif
+#endif /* IP_FRAG */
 
   LWIP_DEBUGF(IP_DEBUG, ("netif->output()"));
   return netif->output(netif, p, dest);

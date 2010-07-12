@@ -540,6 +540,14 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
   /* in UDP, 0 checksum means 'no checksum' */
   udphdr->chksum = 0x0000; 
 
+  /* Multicast Loop? */
+#if LWIP_IGMP
+  if (ip_addr_ismulticast(dst_ip) && ((pcb->flags & UDP_FLAGS_MULTICAST_LOOP) != 0)) {
+    q->flags |= PBUF_FLAG_MCASTLOOP;
+  }
+#endif /* LWIP_IGMP */
+
+
   /* PCB local address is IP_ANY_ADDR? */
   if (ip_addr_isany(&pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
@@ -927,6 +935,10 @@ udp_new(void)
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
     pcb->ttl = UDP_TTL;
+#if LWIP_IGMP
+    /* multicast loopback shall be turned on by default */
+    pcb->flags = PBUF_FLAG_MCASTLOOP;
+#endif /* LWIP_IGMP */
   }
   return pcb;
 }

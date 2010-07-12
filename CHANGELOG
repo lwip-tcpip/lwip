@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-07-12: Simon Goldschmidt (patch by Stephane Lesage)
+  * ip.c, udp.c/.h, pbuf.h, sockets.c: task #10495: Added support for
+    IP_MULTICAST_LOOP at socket- and raw-API level.
+
   2010-06-16: Simon Goldschmidt
   * ip.c: Added an optional define (LWIP_IP_ACCEPT_UDP_PORT) that can allow
     link-layer-addressed UDP traffic to be received while a netif is down (just
