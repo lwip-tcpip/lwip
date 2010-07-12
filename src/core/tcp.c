@@ -55,7 +55,7 @@
 
 #include <string.h>
 
-const char *tcp_state_str[] = {
+const char * const tcp_state_str[] = {
   "CLOSED",      
   "LISTEN",      
   "SYN_SENT",    
