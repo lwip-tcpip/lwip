@@ -326,7 +326,7 @@ igmp_lookup_group(struct netif *ifp, ip_addr_t *addr)
   }
 
   /* Group doesn't exist yet, create a new one */
-  group = memp_malloc(MEMP_IGMP_GROUP);
+  group = (struct igmp_group *)memp_malloc(MEMP_IGMP_GROUP);
   if (group != NULL) {
     group->netif              = ifp;
     ip_addr_set(&(group->group_address), addr);
@@ -397,7 +397,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
   IGMP_STATS_INC(igmp.recv);
 
   /* Note that the length CAN be greater than 8 but only 8 are used - All are included in the checksum */    
-  iphdr = p->payload;
+  iphdr = (struct ip_hdr *)p->payload;
   if (pbuf_header(p, -(s16_t)(IPH_HL(iphdr) * 4)) || (p->len < IGMP_MINLEN)) {
     pbuf_free(p);
     IGMP_STATS_INC(igmp.lenerr);
@@ -782,7 +782,7 @@ igmp_send(struct igmp_group *group, u8_t type)
   p = pbuf_alloc(PBUF_TRANSPORT, IGMP_MINLEN, PBUF_RAM);
   
   if (p) {
-    igmp = p->payload;
+    igmp = (struct igmp_msg *)p->payload;
     LWIP_ASSERT("igmp_send: check that first pbuf can hold struct igmp_msg",
                (p->len >= sizeof(struct igmp_msg)));
     ip_addr_copy(src, group->netif->ip_addr);
