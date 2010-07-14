@@ -18,9 +18,7 @@ with newer versions.
   +++ Raw API:
     * Changed the semantics of tcp_close() (since it was rather a
       shutdown before): Now the application does *NOT* get any calls to the recv
-      callback (aside from NULL/closed) after calling tcp_close() - this means
-      that it also does not get the NULL-pbuf which tells it the remote side has
-      closed, too!
+      callback (aside from NULL/closed) after calling tcp_close()
 
     * When calling tcp_abort() from a raw API TCP callback function,
       make sure you return ERR_ABRT to prevent accessing unallocated memory.
