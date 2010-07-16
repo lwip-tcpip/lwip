@@ -46,12 +46,12 @@
 extern "C" {
 #endif
 
-#define SNMP_ASN1_UNIV   (!0x80 | !0x40)
-#define SNMP_ASN1_APPLIC (!0x80 |  0x40)
-#define SNMP_ASN1_CONTXT ( 0x80 | !0x40)
+#define SNMP_ASN1_UNIV   (0)    /* (!0x80 | !0x40) */
+#define SNMP_ASN1_APPLIC (0x40) /* (!0x80 |  0x40) */
+#define SNMP_ASN1_CONTXT (0x80) /* ( 0x80 | !0x40) */
 
-#define SNMP_ASN1_CONSTR (0x20)
-#define SNMP_ASN1_PRIMIT (!0x20)
+#define SNMP_ASN1_CONSTR (0x20) /* ( 0x20) */
+#define SNMP_ASN1_PRIMIT (0)    /* (!0x20) */
 
 /* universal tags */
 #define SNMP_ASN1_INTEG  2

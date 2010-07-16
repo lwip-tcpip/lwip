@@ -229,6 +229,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-07-16: Kieran Mansley
+  * msg_in.c: Fixed SNMP ASN constant defines to not use ! operator 
+
   2010-07-10: Simon Goldschmidt
   * ip.c: Fixed bug #30402: CHECKSUM_GEN_IP_INLINE does not add IP options
 
