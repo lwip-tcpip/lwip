@@ -625,7 +625,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
         memset(((char*)p->payload) + optlen, 0, optlen_aligned - optlen);
       }
 #if CHECKSUM_GEN_IP_INLINE
-      for (i = 0; i < optlen_aligned; i += sizeof(u16_t)) {
+      for (i = 0; i < optlen_aligned/2; i++) {
         chk_sum += ((u16_t*)p->payload)[i];
       }
 #endif /* CHECKSUM_GEN_IP_INLINE */
