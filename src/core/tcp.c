@@ -677,8 +677,8 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
        now that the 5-tuple is unique. */
     struct tcp_pcb *cpcb;
     int i;
-    /* Don't check listen PCBs, check bound-, active- and TIME-WAIT PCBs. */
-    for (i = 1; i < NUM_TCP_PCB_LISTS; i++) {
+    /* Don't check listen- and bound-PCBs, check active- and TIME-WAIT PCBs. */
+    for (i = 2; i < NUM_TCP_PCB_LISTS; i++) {
       for(cpcb = *tcp_pcb_lists[i]; cpcb != NULL; cpcb = cpcb->next) {
         if ((cpcb->local_port == pcb->local_port) &&
             (cpcb->remote_port == port) &&
