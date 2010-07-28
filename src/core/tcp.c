@@ -408,11 +408,9 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
      We do not dump TIME_WAIT pcb's; they can still be matched by incoming
      packets using both local and remote IP addresses and ports to distinguish.
    */
-#if SO_REUSE
   if ((pcb->so_options & SOF_REUSEADDR) != 0) {
     max_pcb_list = NUM_TCP_PCB_LISTS_NO_TIME_WAIT;
   }
-#endif /* SO_REUSE */
 #endif /* SO_REUSE */
 
   if (port == 0) {
