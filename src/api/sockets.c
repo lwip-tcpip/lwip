@@ -804,6 +804,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #if LWIP_TCP
     return lwip_send(s, data, size, flags);
 #else /* LWIP_TCP */
+    LWIP_UNUSED_ARG(flags);
     sock_set_errno(sock, err_to_errno(ERR_ARG));
     return -1;
 #endif /* LWIP_TCP */
@@ -852,6 +853,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
       if (sock->conn->type == NETCONN_RAW) {
         err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, remote_addr);
       } else {
+#if LWIP_UDP
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
         err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
           remote_addr, remote_port, 1, chksum);
@@ -859,6 +861,9 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
         err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
           remote_addr, remote_port);
 #endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
+#else /* LWIP_UDP */
+        err = ERR_ARG;
+#endif /* LWIP_UDP */
       }
       UNLOCK_TCPIP_CORE();
       
