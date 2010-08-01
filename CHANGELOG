@@ -229,6 +229,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-08-01: Simon Goldschmidt (patch by Greg Renda)
+  * ppp.c: Applied patch #7264 (PPP protocols are rejected incorrectly on big
+    endian architectures)
+  
   2010-07-28: Simon Goldschmidt
   * api_lib.c, api_msg.c, sockets.c, mib2.c: Fixed compilation with TCP or UDP
     disabled.

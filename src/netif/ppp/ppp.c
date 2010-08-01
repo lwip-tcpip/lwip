@@ -1704,8 +1704,8 @@ pppInput(void *arg)
       }
 #if BYTE_ORDER == LITTLE_ENDIAN
       protocol = htons(protocol);
-      SMEMCPY(nb->payload, &protocol, sizeof(protocol));
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
+      SMEMCPY(nb->payload, &protocol, sizeof(protocol));
       lcp_sprotrej(pd, nb->payload, nb->len);
     }
     break;
