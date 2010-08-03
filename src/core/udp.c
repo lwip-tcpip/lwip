@@ -520,8 +520,10 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
       LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("udp_send: could not allocate header\n"));
       return ERR_MEM;
     }
-    /* chain header q in front of given pbuf p */
-    pbuf_chain(q, p);
+    if (p->tot_len != 0) {
+      /* chain header q in front of given pbuf p (only if p contains data) */
+      pbuf_chain(q, p);
+    }
     /* first pbuf q points to header pbuf */
     LWIP_DEBUGF(UDP_DEBUG,
                 ("udp_send: added header pbuf %p before given pbuf %p\n", (void *)q, (void *)p));

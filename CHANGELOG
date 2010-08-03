@@ -229,6 +229,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-08-03: Simon Goldschmidt
+  * udp.c, raw.c: Don't chain empty pbufs when sending them (fixes bug #30625)
+
   2010-08-01: Simon Goldschmidt (patch by Greg Renda)
   * ppp.c: Applied patch #7264 (PPP protocols are rejected incorrectly on big
     endian architectures)
