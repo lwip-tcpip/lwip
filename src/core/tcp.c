@@ -616,7 +616,7 @@ tcp_new_port(void)
     port = TCP_LOCAL_PORT_RANGE_START;
   }
   /* Check all PCB lists. */
-  for (i = 1; i < NUM_TCP_PCB_LISTS; i++) {  
+  for (i = 0; i < NUM_TCP_PCB_LISTS; i++) {  
     for(pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
       if (pcb->local_port == port) {
         goto again;
