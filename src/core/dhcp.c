@@ -762,7 +762,10 @@ dhcp_network_changed(struct netif *netif)
   default:
     dhcp->tries = 0;
 #if LWIP_DHCP_AUTOIP_COOP
-    dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+    if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
+      autoip_stop(netif);
+      dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
+    }
 #endif /* LWIP_DHCP_AUTOIP_COOP */
     dhcp_discover(netif);
     break;

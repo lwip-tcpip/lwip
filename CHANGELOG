@@ -229,6 +229,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-10-05: Simon Goldschmidt
+  * dhcp.c: Once again fixed #30038: DHCP/AutoIP cooperation failed when
+    replugging the network cable after an AutoIP address was assigned.
+
   2010-08-10: Simon Goldschmidt
   * tcp.c: Fixed bug #30728: tcp_new_port() did not check listen pcbs
 
