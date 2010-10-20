@@ -59,7 +59,7 @@ struct sockaddr_in {
 struct sockaddr {
   u8_t sa_len;
   u8_t sa_family;
-  u16_t sa_data[14];
+  char sa_data[14];
 };
 
 #ifndef socklen_t

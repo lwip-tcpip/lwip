@@ -229,6 +229,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2010-10-20: Simon Goldschmidt
+  * sockets.h: Fixed bug #31385: sizeof(struct sockaddr) is 30 but should be 16
+
   2010-10-05: Simon Goldschmidt
   * dhcp.c: Once again fixed #30038: DHCP/AutoIP cooperation failed when
     replugging the network cable after an AutoIP address was assigned.
