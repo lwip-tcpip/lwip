@@ -230,9 +230,13 @@ HISTORY
   ++ Bugfixes:
 
   2010-11-20: Simon Goldschmidt
+  * dns.c: Fixed bug #31535: TCP_SND_QUEUELEN must be at least 2 or else
+    no-copy TCP writes will never succeed.
+
+  2010-11-20: Simon Goldschmidt
   * dns.c: Fixed bug #31701: Error return value from dns_gethostbyname() does
     not match documentation: return ERR_ARG instead of ERR_VAL if not
-	initialized or wrong argument.
+    initialized or wrong argument.
 
   2010-10-20: Simon Goldschmidt
   * sockets.h: Fixed bug #31385: sizeof(struct sockaddr) is 30 but should be 16
