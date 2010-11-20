@@ -773,6 +773,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
+  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % MEM_ALIGNMENT) == 0);
   LWIP_ASSERT("tcp_enqueue_flags: invalid segment length", seg->len == 0);
 
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE,
@@ -1067,7 +1068,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* Add any requested options.  NB MSS option is only set on SYN
      packets, so ignore it here */
-  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)(seg->tcphdr + 1) % 4) == 0);
+  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % MEM_ALIGNMENT) == 0);
   opts = (u32_t *)(void *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
     TCP_BUILD_MSS_OPTION(*opts);
