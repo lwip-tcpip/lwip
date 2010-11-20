@@ -230,6 +230,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-11-20: Simon Goldschmidt
+  * sockets.h: Fixed bug #31304: Changed SHUT_RD, SHUT_WR and SHUT_RDWR to
+    resemble other stacks.
+
+  2010-11-20: Simon Goldschmidt
   * dns.c: Fixed bug #31535: TCP_SND_QUEUELEN must be at least 2 or else
     no-copy TCP writes will never succeed.
 

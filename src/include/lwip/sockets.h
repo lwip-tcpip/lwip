@@ -280,9 +280,9 @@ typedef struct ip_mreq {
 #endif
 
 #ifndef SHUT_RD
-  #define SHUT_RD   1
-  #define SHUT_WR   2
-  #define SHUT_RDWR 3
+  #define SHUT_RD   0
+  #define SHUT_WR   1
+  #define SHUT_RDWR 2
 #endif
 
 /* FD_SET used for lwip_select */
