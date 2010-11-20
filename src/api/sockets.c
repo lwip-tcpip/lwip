@@ -105,8 +105,10 @@ struct lwip_select_cb {
 struct lwip_setgetsockopt_data {
   /** socket struct for which to change options */
   struct lwip_sock *sock;
+#ifdef LWIP_DEBUG
   /** socket index for which to change options */
   int s;
+#endif /* LWIP_DEBUG */
   /** level of the option to process */
   int level;
   /** name of the option to process */
@@ -1615,6 +1617,9 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 
   /* Now do the actual option processing */
   data.sock = sock;
+#ifdef LWIP_DEBUG
+  data.s = s;
+#endif /* LWIP_DEBUG */
   data.level = level;
   data.optname = optname;
   data.optval = optval;
@@ -2022,6 +2027,9 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 
   /* Now do the actual option processing */
   data.sock = sock;
+#ifdef LWIP_DEBUG
+  data.s = s;
+#endif /* LWIP_DEBUG */
   data.level = level;
   data.optname = optname;
   data.optval = (void*)optval;
