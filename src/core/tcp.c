@@ -738,7 +738,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
 void
 tcp_slowtmr(void)
 {
-  struct tcp_pcb *pcb, *pcb2, *prev;
+  struct tcp_pcb *pcb, *prev;
   u16_t eff_wnd;
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   u8_t pcb_reset;       /* flag if a RST should be sent when removing */
@@ -894,6 +894,7 @@ tcp_slowtmr(void)
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
+      struct tcp_pcb *pcb2;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
@@ -911,9 +912,9 @@ tcp_slowtmr(void)
           pcb->local_port, pcb->remote_port);
       }
 
-      pcb2 = pcb->next;
-      memp_free(MEMP_TCP_PCB, pcb);
-      pcb = pcb2;
+      pcb2 = pcb;
+      pcb = pcb->next;
+      memp_free(MEMP_TCP_PCB, pcb2);
     } else {
       /* get the 'next' element now and work with 'prev' below (in case of abort) */
       prev = pcb;
@@ -935,7 +936,7 @@ tcp_slowtmr(void)
 
   
   /* Steps through all of the TIME-WAIT PCBs. */
-  prev = NULL;    
+  prev = NULL;
   pcb = tcp_tw_pcbs;
   while (pcb != NULL) {
     LWIP_ASSERT("tcp_slowtmr: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
@@ -950,6 +951,7 @@ tcp_slowtmr(void)
 
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
+      struct tcp_pcb *pcb2;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_tw_pcbs list. */
       if (prev != NULL) {
@@ -960,9 +962,9 @@ tcp_slowtmr(void)
         LWIP_ASSERT("tcp_slowtmr: first pcb == tcp_tw_pcbs", tcp_tw_pcbs == pcb);
         tcp_tw_pcbs = pcb->next;
       }
-      pcb2 = pcb->next;
-      memp_free(MEMP_TCP_PCB, pcb);
-      pcb = pcb2;
+      pcb2 = pcb;
+      pcb = pcb->next;
+      memp_free(MEMP_TCP_PCB, pcb2);
     } else {
       prev = pcb;
       pcb = pcb->next;
@@ -997,7 +999,7 @@ tcp_fasttmr(void)
       }
     }
 
-    /* send delayed ACKs */  
+    /* send delayed ACKs */
     if (pcb && (pcb->flags & TF_ACK_DELAY)) {
       LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
       tcp_ack_now(pcb);
