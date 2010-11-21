@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2010-06-16: Simon Goldschmidt
+  * dhcp.c/.h: Added a function to deallocate the struct dhcp from a netif
+    (fixes bug #31525).
+
   2010-07-12: Simon Goldschmidt (patch by Stephane Lesage)
   * ip.c, udp.c/.h, pbuf.h, sockets.c: task #10495: Added support for
     IP_MULTICAST_LOOP at socket- and raw-API level.

@@ -592,6 +592,23 @@ dhcp_set_struct(struct netif *netif, struct dhcp *dhcp)
   netif->dhcp = dhcp;
 }
 
+/** Removes a struct dhcp from a netif.
+ *
+ * ATTENTION: Only use this when not using dhcp_set_struct() to allocate the
+ *            struct dhcp since the memory is passed back to the heap.
+ *
+ * @param netif the netif from which to remove the struct dhcp
+ */
+void dhcp_cleanup(struct netif *netif)
+{
+  LWIP_ASSERT("netif != NULL", netif != NULL);
+
+  if (netif->dhcp != NULL) {
+    mem_free(netif->dhcp);
+    netif->dhcp = NULL;
+  }
+}
+
 /**
  * Start DHCP negotiation for a network interface.
  *
