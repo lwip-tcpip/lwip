@@ -1701,8 +1701,8 @@ lwip_getsockopt_internal(void *arg)
       break;
 
     case SO_ERROR:
-      /* only overwrite if ERR_OK before */
-      if (sock->err == 0) {
+      /* only overwrite ERR_OK or tempoary errors */
+      if ((sock->err == 0) || (sock->err == EINPROGRESS)) {
         sock_set_errno(sock, err_to_errno(sock->conn->last_err));
       } 
       *(int *)optval = sock->err;
