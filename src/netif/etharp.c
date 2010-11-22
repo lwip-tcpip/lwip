@@ -871,14 +871,25 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
     /* outside local network? */
     if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
         !ip_addr_islinklocal(ipaddr)) {
-      /* interface has default gateway? */
-      if (!ip_addr_isany(&netif->gw)) {
-        /* send to hardware address of default gateway IP address */
-        ipaddr = &(netif->gw);
-      /* no default gateway available */
-      } else {
-        /* no route to destination error (default gateway missing) */
-        return ERR_RTE;
+#if LWIP_AUTOIP
+      struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
+        sizeof(struct eth_hdr));
+      /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
+         a link-local source address must always be "directly to its destination
+         on the same physical link. The host MUST NOT send the packet to any
+         router for forwarding". */
+      if (!ip_addr_islinklocal(&iphdr->src))
+#endif /* LWIP_AUTOIP */
+      {
+        /* interface has default gateway? */
+        if (!ip_addr_isany(&netif->gw)) {
+          /* send to hardware address of default gateway IP address */
+          ipaddr = &(netif->gw);
+        /* no default gateway available */
+        } else {
+          /* no route to destination error (default gateway missing) */
+          return ERR_RTE;
+        }
       }
     }
 #if LWIP_NETIF_HWADDRHINT
