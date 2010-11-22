@@ -234,6 +234,10 @@ HISTORY
   ++ Bugfixes:
 
   2010-11-20: Simon Goldschmidt
+  * timers.c: patch #7329: tcp_timer_needed prototype was ifdef'ed out for
+    LWIP_TIMERS==0
+
+  2010-11-20: Simon Goldschmidt
   * sockets.c: Fixed bug #31170: lwip_setsockopt() does not set socket number
 
   2010-11-20: Simon Goldschmidt
