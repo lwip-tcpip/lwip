@@ -58,7 +58,7 @@ typedef s8_t err_t;
 #define ERR_VAL        -6    /* Illegal value.           */
 #define ERR_WOULDBLOCK -7    /* Operation would block.   */
 
-#define ERR_IS_FATAL(e) ((e) < ERR_VAL)
+#define ERR_IS_FATAL(e) ((e) < ERR_WOULDBLOCK)
 
 #define ERR_ABRT       -8    /* Connection aborted.      */
 #define ERR_RST        -9    /* Connection reset.        */

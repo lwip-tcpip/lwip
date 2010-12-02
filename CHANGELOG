@@ -234,6 +234,9 @@ HISTORY
   ++ Bugfixes:
 
   2010-11-20: Simon Goldschmidt
+  * err.h: Fixed ERR_IS_FATAL so that ERR_WOULDBLOCK is not fatal.
+
+  2010-11-20: Simon Goldschmidt
   * sockets.c: Fixed bug #31590: getsockopt(... SO_ERROR ...) gives EINPROGRESS
     after a successful nonblocking connection.
 
