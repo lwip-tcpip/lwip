@@ -2252,15 +2252,18 @@ int
 lwip_ioctl(int s, long cmd, void *argp)
 {
   struct lwip_sock *sock = get_socket(s);
+  u8_t val;
+#if LWIP_SO_RCVBUF
   u16_t buflen = 0;
   s16_t recv_avail;
-  u8_t val;
+#endif /* LWIP_SO_RCVBUF */
 
   if (!sock) {
     return -1;
   }
 
   switch (cmd) {
+#if LWIP_SO_RCVBUF
   case FIONREAD:
     if (!argp) {
       sock_set_errno(sock, EINVAL);
@@ -2288,6 +2291,7 @@ lwip_ioctl(int s, long cmd, void *argp)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %"U16_F"\n", s, argp, *((u16_t*)argp)));
     sock_set_errno(sock, 0);
     return 0;
+#endif /* LWIP_SO_RCVBUF */
 
   case FIONBIO:
     val = 0;

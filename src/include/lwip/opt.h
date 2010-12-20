@@ -432,11 +432,14 @@
 #endif
 
 /**
- * ARP_QUEUEING==1: Outgoing packets are queued during hardware address
- * resolution.
+ * ARP_QUEUEING==1: Multiple outgoing packets are queued during hardware address
+ * resolution. By default, only the most recent packet is queued per IP address.
+ * This is sufficient for most protocols and mainly reduces TCP connection
+ * startup time. Set this to 1 if you know your application sends more than one
+ * packet in a row to an IP address that is not in the ARP cache.
  */
 #ifndef ARP_QUEUEING
-#define ARP_QUEUEING                    1
+#define ARP_QUEUEING                    0
 #endif
 
 /**

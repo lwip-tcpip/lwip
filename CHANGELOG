@@ -13,7 +13,7 @@ HISTORY
 
   ++ New features:
 
-  2010-06-16: Simon Goldschmidt
+  2010-11-21: Simon Goldschmidt
   * dhcp.c/.h: Added a function to deallocate the struct dhcp from a netif
     (fixes bug #31525).
 
@@ -233,18 +233,30 @@ HISTORY
 
   ++ Bugfixes:
 
-  2010-11-20: Simon Goldschmidt
+  2010-12-02: Simon Goldschmidt
   * err.h: Fixed ERR_IS_FATAL so that ERR_WOULDBLOCK is not fatal.
 
-  2010-11-20: Simon Goldschmidt
+  2010-11-23: Simon Goldschmidt
+  * api.h, api_lib.c, api_msg.c, sockets.c: netconn.recv_avail is only used for
+    LWIP_SO_RCVBUF and ioctl/FIONREAD.
+
+  2010-11-23: Simon Goldschmidt
+  * etharp.c: Fixed bug #31720: ARP-queueing: RFC 1122 recommends to queue at
+    least 1 packet -> ARP_QUEUEING==0 now queues the most recent packet.
+
+  2010-11-23: Simon Goldschmidt
+  * tcp_in.c: Fixed bug #30577: tcp_input: don't discard ACK-only packets after
+    refusing 'refused_data' again.
+  
+  2010-11-22: Simon Goldschmidt
   * sockets.c: Fixed bug #31590: getsockopt(... SO_ERROR ...) gives EINPROGRESS
     after a successful nonblocking connection.
 
-  2010-11-20: Simon Goldschmidt
+  2010-11-22: Simon Goldschmidt
   * etharp.c: Fixed bug #31722: IP packets sent with an AutoIP source addr
     must be sent link-local
 
-  2010-11-20: Simon Goldschmidt
+  2010-11-22: Simon Goldschmidt
   * timers.c: patch #7329: tcp_timer_needed prototype was ifdef'ed out for
     LWIP_TIMERS==0
 

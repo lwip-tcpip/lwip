@@ -408,7 +408,9 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   }
 #endif /* (LWIP_UDP || LWIP_RAW) */
 
+#if LWIP_SO_RCVBUF
   SYS_ARCH_DEC(conn->recv_avail, len);
+#endif /* LWIP_SO_RCVBUF */
   /* Register event with callback */
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, len);
 

@@ -305,9 +305,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
       TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
       if (err == ERR_OK) {
         pcb->refused_data = NULL;
-      } else {
+      } else if ((err == ERR_ABRT) || (tcplen > 0)) {
         /* if err == ERR_ABRT, 'pcb' is already deallocated */
-        /* drop incoming packets, because pcb is "full" */
+        /* Drop incoming packets because pcb is "full" (only if the incoming
+           segment contains data). */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
         TCP_STATS_INC(tcp.drop);
         snmp_inc_tcpinerrs();
@@ -346,6 +347,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         }
 
         if (recv_data != NULL) {
+          LWIP_ASSERT("pcb->refused_data == NULL", pcb->refused_data == NULL);
           if (pcb->flags & TF_RXCLOSED) {
             /* received data although already closed -> abort (send RST) to
                notify the remote host that not all data has been processed */

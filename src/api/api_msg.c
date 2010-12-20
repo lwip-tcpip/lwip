@@ -120,7 +120,9 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
         netbuf_delete(buf);
         return 0;
       } else {
+#if LWIP_SO_RCVBUF
         SYS_ARCH_INC(conn->recv_avail, len);
+#endif /* LWIP_SO_RCVBUF */
         /* Register event with callback */
         API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
       }
@@ -194,7 +196,9 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
     netbuf_delete(buf);
     return;
   } else {
+#if LWIP_SO_RCVBUF
     SYS_ARCH_INC(conn->recv_avail, len);
+#endif /* LWIP_SO_RCVBUF */
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
   }
@@ -248,7 +252,9 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
     /* don't deallocate p: it is presented to us later again from tcp_fasttmr! */
     return ERR_MEM;
   } else {
+#if LWIP_SO_RCVBUF
     SYS_ARCH_INC(conn->recv_avail, len);
+#endif /* LWIP_SO_RCVBUF */
     /* Register event with callback */
     API_EVENT(conn, NETCONN_EVT_RCVPLUS, len);
   }
@@ -614,7 +620,6 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->socket       = -1;
 #endif /* LWIP_SOCKET */
   conn->callback     = callback;
-  conn->recv_avail   = 0;
 #if LWIP_TCP
   conn->current_msg  = NULL;
   conn->write_offset = 0;
@@ -624,6 +629,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
   conn->recv_bufsize = RECV_BUFSIZE_DEFAULT;
+  conn->recv_avail   = 0;
 #endif /* LWIP_SO_RCVBUF */
   conn->flags = 0;
   return conn;
