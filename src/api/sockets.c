@@ -1188,6 +1188,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
       LWIP_ASSERT("select_cb.prev != NULL", select_cb.prev != NULL);
       select_cb.prev->next = select_cb.next;
     }
+    /* Increasing this counter tells even_callback that the list has changed. */
+    select_cb_ctr++;
     SYS_ARCH_UNPROTECT(lev);
 
     sys_sem_free(&select_cb.sem);
@@ -1230,6 +1232,7 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   int s;
   struct lwip_sock *sock;
   struct lwip_select_cb *scb;
+  int last_select_cb_ctr;
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_UNUSED_ARG(len);
@@ -1292,56 +1295,51 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
     return;
   }
 
-  SYS_ARCH_UNPROTECT(lev);
-
   /* Now decide if anyone is waiting for this socket */
-  /* NOTE: This code is written this way to protect the select link list
-     but to avoid a deadlock situation by releasing select_lock before
-     signalling for the select. This means we need to go through the list
-     multiple times ONLY IF a select was actually waiting. We go through
-     the list the number of waiting select calls + 1. This list is
-     expected to be small. */
-  while (1) {
-    int last_select_cb_ctr;
-    SYS_ARCH_PROTECT(lev);
-    for (scb = select_cb_list; scb; scb = scb->next) {
-      /* @todo: unprotect with each loop and check for changes? */
-      if (scb->sem_signalled == 0) {
-        /* Test this select call for our socket */
+  /* NOTE: This code goes through the select_cb_list list multiple times
+     ONLY IF a select was actually waiting. We go through the list the number
+     of waiting select calls + 1. This list is expected to be small. */
+
+  /* At this point, SYS_ARCH is still protected! */
+again:
+  for (scb = select_cb_list; scb != NULL; scb = scb->next) {
+    if (scb->sem_signalled == 0) {
+      /* semaphore not signalled yet */
+      int do_signal = 0;
+      /* Test this select call for our socket */
+      if (sock->rcvevent > 0) {
         if (scb->readset && FD_ISSET(s, scb->readset)) {
-          if (sock->rcvevent > 0) {
-            break;
-          }
-        }
-        if (scb->writeset && FD_ISSET(s, scb->writeset)) {
-          if (sock->sendevent != 0) {
-            break;
-          }
-        }
-        if (scb->exceptset && FD_ISSET(s, scb->exceptset)) {
-          if (sock->errevent != 0) {
-            break;
-          }
+          do_signal = 1;
         }
       }
-      /* unlock interrupts with each step */
-      last_select_cb_ctr = select_cb_ctr;
-      SYS_ARCH_UNPROTECT(lev);
-      SYS_ARCH_PROTECT(lev);
-      if (last_select_cb_ctr != select_cb_ctr) {
-        /* someone has changed select_cb_list, restart at the beginning */
-        scb = select_cb_list;
+      if (sock->sendevent != 0) {
+        if (!do_signal && scb->writeset && FD_ISSET(s, scb->writeset)) {
+          do_signal = 1;
+        }
+      }
+      if (sock->errevent != 0) {
+        if (!do_signal && scb->exceptset && FD_ISSET(s, scb->exceptset)) {
+          do_signal = 1;
+        }
+      }
+      if (do_signal) {
+        scb->sem_signalled = 1;
+        /* Don't call SYS_ARCH_UNPROTECT() before signaling the semaphore, as this might
+           lead to the select thread taking itself off the list, invalidagin the semaphore. */
+        sys_sem_signal(&scb->sem);
       }
     }
-    if (scb) {
-      scb->sem_signalled = 1;
-      sys_sem_signal(&scb->sem);
-      SYS_ARCH_UNPROTECT(lev);
-    } else {
-      SYS_ARCH_UNPROTECT(lev);
-      break;
+    /* unlock interrupts with each step */
+    last_select_cb_ctr = select_cb_ctr;
+    SYS_ARCH_UNPROTECT(lev);
+    /* this makes sure interrupt protection time is short */
+    SYS_ARCH_PROTECT(lev);
+    if (last_select_cb_ctr != select_cb_ctr) {
+      /* someone has changed select_cb_list, restart at the beginning */
+      goto again;
     }
   }
+  SYS_ARCH_UNPROTECT(lev);
 }
 
 /**

@@ -233,6 +233,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-01-24: Simon Goldschmidt
+  * sockets.c: Fixed bug #31741: lwip_select seems to have threading problems
+
   2010-12-02: Simon Goldschmidt
   * err.h: Fixed ERR_IS_FATAL so that ERR_WOULDBLOCK is not fatal.
 
