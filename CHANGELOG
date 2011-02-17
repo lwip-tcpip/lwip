@@ -233,6 +233,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-02-17: Simon Goldschmidt
+  * ipaddr.c: Fixed constant not being 32 bit.
+
   2011-01-24: Simon Goldschmidt
   * sockets.c: Fixed bug #31741: lwip_select seems to have threading problems
 
