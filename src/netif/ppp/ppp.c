@@ -439,7 +439,7 @@ pppInit(void)
 
   magicInit();
 
-  subnetMask = PP_HTONL(0xffffff00);
+  subnetMask = PP_HTONL(0xffffff00UL);
 
   for (i = 0; i < NUM_PPP; i++) {
     /* Initialize each protocol to the standard option set. */
