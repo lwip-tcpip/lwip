@@ -234,6 +234,10 @@ HISTORY
   ++ Bugfixes:
 
   2011-02-17: Simon Goldschmidt
+  * rawapi.txt: Fixed bug #32561 tcp_poll argument definition out-of-order in
+    documentation
+
+  2011-02-17: Simon Goldschmidt
   * many files: Added missing U/UL modifiers to fix 16-bit-arch portability.
 
   2011-01-24: Simon Goldschmidt
