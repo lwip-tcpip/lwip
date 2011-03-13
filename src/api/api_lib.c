@@ -307,9 +307,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
 
   if (newconn == NULL) {
-    /* connection has been closed */
-    NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
-    return ERR_CLSD;
+    /* connection has been aborted */
+    NETCONN_SET_SAFE_ERR(conn, ERR_ABRT);
+    return ERR_ABRT;
   }
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
