@@ -143,12 +143,12 @@ static const int err_to_errno_table[] = {
   EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
   ECONNABORTED,  /* ERR_ABRT       -8      Connection aborted.      */
   ECONNRESET,    /* ERR_RST        -9      Connection reset.        */
-  ESHUTDOWN,     /* ERR_CLSD       -10     Connection closed.       */
+  ENOTCONN,      /* ERR_CLSD       -10     Connection closed.       */
   ENOTCONN,      /* ERR_CONN       -11     Not connected.           */
   EIO,           /* ERR_ARG        -12     Illegal argument.        */
   EADDRINUSE,    /* ERR_USE        -13     Address in use.          */
   -1,            /* ERR_IF         -14     Low-level netif error    */
-  -1,            /* ERR_ISCONN     -15     Already connected.       */
+  EALREADY,      /* ERR_ISCONN     -15     Already connected.       */
 };
 
 #define ERR_TO_ERRNO_TABLE_SIZE \

@@ -233,6 +233,20 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-03-13: Simon Goldschmidt
+  * sockets.c: fixed bug #32769 (ESHUTDOWN is linux-specific) by fixing
+    err_to_errno_table (ERR_CLSD: ENOTCONN instead of ESHUTDOWN), ERR_ISCONN:
+    use EALRADY instead of -1
+
+  2011-03-13: Simon Goldschmidt
+  * api_lib.c: netconn_accept: return ERR_ABRT instead of ERR_CLSD if the
+    connection has been aborted by err_tcp (since this is not a normal closing
+    procedure).
+
+  2011-03-13: Simon Goldschmidt
+  * tcp.c: tcp_bind: return ERR_VAL instead of ERR_ISCONN when trying to bind
+    with pcb->state != CLOSED
+
   2011-02-17: Simon Goldschmidt
   * rawapi.txt: Fixed bug #32561 tcp_poll argument definition out-of-order in
     documentation
