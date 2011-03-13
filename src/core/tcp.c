@@ -391,6 +391,7 @@ tcp_abort(struct tcp_pcb *pcb)
  *        to any local address
  * @param port the local port to bind to
  * @return ERR_USE if the port is already in use
+ *         ERR_VAL if bind failed because the PCB is not in a valid state
  *         ERR_OK if bound
  */
 err_t
@@ -400,7 +401,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
   int max_pcb_list = NUM_TCP_PCB_LISTS;
   struct tcp_pcb *cpcb;
 
-  LWIP_ERROR("tcp_bind: can only bind in state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
+  LWIP_ERROR("tcp_bind: can only bind in state CLOSED", pcb->state == CLOSED, return ERR_VAL);
 
 #if SO_REUSE
   /* Unless the REUSEADDR flag is set,
@@ -645,7 +646,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   err_t ret;
   u32_t iss;
 
-  LWIP_ERROR("tcp_connect: can only connected from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
+  LWIP_ERROR("tcp_connect: can only connect from state CLOSED", pcb->state == CLOSED, return ERR_ISCONN);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_connect to port %"U16_F"\n", port));
   if (ipaddr != NULL) {
