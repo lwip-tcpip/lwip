@@ -233,6 +233,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-03-14: Simon Goldschmidt
+  * err.h/.c, sockets.c, api_msg.c: fixed bug #31748 (Calling non-blocking connect
+    more than once can render a socket useless) since it mainly involves changing
+    "FATAL" classification of error codes: ERR_USE and ERR_ISCONN just aren't fatal.
+
   2011-03-13: Simon Goldschmidt
   * sockets.c: fixed bug #32769 (ESHUTDOWN is linux-specific) by fixing
     err_to_errno_table (ERR_CLSD: ENOTCONN instead of ESHUTDOWN), ERR_ISCONN:

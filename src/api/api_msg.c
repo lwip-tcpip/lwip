@@ -950,12 +950,7 @@ do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
   conn->current_msg = NULL;
   conn->state = NETCONN_NONE;
   if (!was_blocking) {
-    SYS_ARCH_DECL_PROTECT(lev);
-    SYS_ARCH_PROTECT(lev);
-    if (conn->last_err == ERR_INPROGRESS) {
-      conn->last_err = ERR_OK;
-    }
-    SYS_ARCH_UNPROTECT(lev);
+    NETCONN_SET_SAFE_ERR(conn, ERR_OK);
   }
   API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
 
