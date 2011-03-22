@@ -233,6 +233,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-03-22: Simon Goldschmidt
+  * ppp.c: Fixed bug #32648 (PPP code crashes when terminating a link) by only
+    calling sio_read_abort() if the file descriptor is valid.
+
   2011-03-14: Simon Goldschmidt
   * err.h/.c, sockets.c, api_msg.c: fixed bug #31748 (Calling non-blocking connect
     more than once can render a socket useless) since it mainly involves changing

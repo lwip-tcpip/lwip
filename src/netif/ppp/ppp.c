@@ -344,7 +344,9 @@ static void
 pppRecvWakeup(int pd)
 {
   PPPDEBUG(LOG_DEBUG, ("pppRecvWakeup: unit %d\n", pd));
-  sio_read_abort(pppControl[pd].fd);
+  if (pppControl[pd].openFlag != 0) {
+    sio_read_abort(pppControl[pd].fd);
+  }
 }
 #endif /* PPPOS_SUPPORT */
 
@@ -681,20 +683,8 @@ pppClose(int pd)
 void
 pppSigHUP(int pd)
 {
-#if PPPOE_SUPPORT
-  PPPControl *pc = &pppControl[pd];
-  if(pc->ethif) {
-    PPPDEBUG(LOG_DEBUG, ("pppSigHUP: unit %d sig_hup -> pppHupCB\n", pd));
-    pppHup(pd);
-  } else
-#endif /* PPPOE_SUPPORT */
-  {
-#if PPPOS_SUPPORT
-    PPPDEBUG(LOG_DEBUG, ("pppSigHUP: unit %d sig_hup -> pppHupCB\n", pd));
-    pppHup(pd);
-    pppRecvWakeup(pd);
-#endif /* PPPOS_SUPPORT */
-  }
+  PPPDEBUG(LOG_DEBUG, ("pppSigHUP: unit %d sig_hup -> pppHupCB\n", pd));
+  pppHup(pd);
 }
 
 #if PPPOS_SUPPORT
