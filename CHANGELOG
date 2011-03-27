@@ -238,6 +238,10 @@ HISTORY
   ++ Bugfixes:
 
   2011-03-27: Simon Goldschmidt
+  * tcp.c: Fixed bug #32926 (TCP_RMV(&tcp_bound_pcbs) is called on unbound tcp
+    pcbs) by checking if the pcb was bound (local_port != 0).
+
+  2011-03-27: Simon Goldschmidt
   * ppp.c: Fixed bug #32280 (ppp: a pbuf is freed twice)
 
   2011-03-27: Simon Goldschmidt
