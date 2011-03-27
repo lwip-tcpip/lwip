@@ -1078,6 +1078,12 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   }
 #endif
 
+  /* Set retransmission timer running if it is not currently enabled 
+     This must be set before checking the route. */
+  if (pcb->rtime == -1) {
+    pcb->rtime = 0;
+  }
+
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
   if (ip_addr_isany(&(pcb->local_ip))) {
@@ -1086,11 +1092,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
       return;
     }
     ip_addr_copy(pcb->local_ip, netif->ip_addr);
-  }
-
-  /* Set retransmission timer running if it is not currently enabled */
-  if(pcb->rtime == -1) {
-    pcb->rtime = 0;
   }
 
   if (pcb->rttest == 0) {

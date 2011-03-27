@@ -13,7 +13,7 @@ HISTORY
 
   ++ New features:
 
-  2011-03-22: Simon Goldschmidt
+  2011-03-27: Simon Goldschmidt
   * tcp_impl.h, tcp_in.c, tcp_out.c: Removed 'dataptr' from 'struct tcp_seg' and
     calculate it in tcp_zero_window_probe (the only place where it was used).
 
@@ -236,6 +236,11 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2011-03-27: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #32820 (Outgoing TCP connections created before route
+    is present never times out) by starting retransmission timer before checking
+    route.
 
   2011-03-22: Simon Goldschmidt
   * ppp.c: Fixed bug #32648 (PPP code crashes when terminating a link) by only
