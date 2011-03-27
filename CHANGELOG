@@ -238,6 +238,9 @@ HISTORY
   ++ Bugfixes:
 
   2011-03-27: Simon Goldschmidt
+  * ppp.c: Fixed bug #32280 (ppp: a pbuf is freed twice)
+
+  2011-03-27: Simon Goldschmidt
   * sockets.c: Fixed bug #32906: lwip_connect+lwip_send did not work for udp and
     raw pcbs with LWIP_TCPIP_CORE_LOCKING==1.
   

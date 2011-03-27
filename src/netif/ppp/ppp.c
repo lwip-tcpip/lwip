@@ -365,7 +365,6 @@ pppLinkTerminated(int pd)
     PPPControl* pc;
     pppRecvWakeup(pd);
     pc = &pppControl[pd];
-    pppDrop(&pc->rx); /* bug fix #17726 */
 
     PPPDEBUG(LOG_DEBUG, ("pppLinkTerminated: unit %d: linkStatusCB=%p errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
     if (pc->linkStatusCB) {
@@ -1799,6 +1798,7 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
           pppDrop(pcrx);
         /* Otherwise it's a good packet so pass it on. */
         } else {
+          struct pbuf *inp;
           /* Trim off the checksum. */
           if(pcrx->inTail->len >= 2) {
             pcrx->inTail->len -= 2;
@@ -1817,18 +1817,20 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
           }
 
           /* Dispatch the packet thereby consuming it. */
+          inp = pcrx->inHead;
+          /* Packet consumed, release our references. */
+          pcrx->inHead = NULL;
+          pcrx->inTail = NULL;
 #if PPP_INPROC_MULTITHREADED
-          if(tcpip_callback_with_block(pppInput, pcrx->inHead, 0) != ERR_OK) {
+          if(tcpip_callback_with_block(pppInput, inp, 0) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppInProc[%d]: tcpip_callback() failed, dropping packet\n", pcrx->pd));
-            pbuf_free(pcrx->inHead);
+            pbuf_free(inp);
             LINK_STATS_INC(link.drop);
             snmp_inc_ifindiscards(&pppControl[pcrx->pd].netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
-          pppInput(pcrx->inHead);
+          pppInput(inp);
 #endif /* PPP_INPROC_MULTITHREADED */
-          pcrx->inHead = NULL;
-          pcrx->inTail = NULL;
         }
 
         /* Prepare for a new packet. */
@@ -1902,10 +1904,12 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
         case PDDATA:                    /* Process data byte. */
           /* Make space to receive processed data. */
           if (pcrx->inTail == NULL || pcrx->inTail->len == PBUF_POOL_BUFSIZE) {
-            if(pcrx->inTail) {
+            if (pcrx->inTail != NULL) {
               pcrx->inTail->tot_len = pcrx->inTail->len;
               if (pcrx->inTail != pcrx->inHead) {
                 pbuf_cat(pcrx->inHead, pcrx->inTail);
+                /* give up the inTail reference now */
+                pcrx->inTail = NULL;
               }
             }
             /* If we haven't started a packet, we need a packet header. */
