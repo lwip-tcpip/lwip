@@ -13,6 +13,10 @@ HISTORY
 
   ++ New features:
 
+  2011-03-22: Simon Goldschmidt
+  * tcp_impl.h, tcp_in.c, tcp_out.c: Removed 'dataptr' from 'struct tcp_seg' and
+    calculate it in tcp_zero_window_probe (the only place where it was used).
+
   2010-11-21: Simon Goldschmidt
   * dhcp.c/.h: Added a function to deallocate the struct dhcp from a netif
     (fixes bug #31525).

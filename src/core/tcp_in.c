@@ -291,7 +291,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* Set up a tcp_seg structure. */
     inseg.next = NULL;
     inseg.len = p->tot_len;
-    inseg.dataptr = p->payload;
     inseg.p = p;
     inseg.tcphdr = tcphdr;
 
@@ -1167,9 +1166,6 @@ tcp_receive(struct tcp_pcb *pcb)
           LWIP_ASSERT("pbuf_header failed", 0);
         }
       }
-      /* KJM following line changed to use p->payload rather than inseg->p->payload
-         to fix bug #9076 */
-      inseg.dataptr = p->payload;
       inseg.len -= (u16_t)(pcb->rcv_nxt - seqno);
       inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
     }
