@@ -847,8 +847,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
         inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
         remote_port = ntohs(to_in->sin_port);
       } else {
-        remote_addr = IP_ADDR_ANY;
-        remote_port = 0;
+        remote_addr = &sock->conn->pcb.raw->remote_ip;
+        if (sock->conn->type == NETCONN_RAW) {
+          remote_port = 0;
+        } else {
+          remote_port = sock->conn->pcb.udp->remote_port;
+        }
       }
 
       LOCK_TCPIP_CORE();

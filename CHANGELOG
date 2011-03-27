@@ -238,6 +238,10 @@ HISTORY
   ++ Bugfixes:
 
   2011-03-27: Simon Goldschmidt
+  * sockets.c: Fixed bug #32906: lwip_connect+lwip_send did not work for udp and
+    raw pcbs with LWIP_TCPIP_CORE_LOCKING==1.
+  
+  2011-03-27: Simon Goldschmidt
   * tcp_out.c: Fixed bug #32820 (Outgoing TCP connections created before route
     is present never times out) by starting retransmission timer before checking
     route.
