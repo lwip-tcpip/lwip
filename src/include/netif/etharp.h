@@ -94,8 +94,8 @@ PACK_STRUCT_BEGIN
  * if 'type' in ethernet header is ETHTYPE_VLAN.
  * See IEEE802.Q */
 struct eth_vlan_hdr {
-  PACK_STRUCT_FIELD(u16_t tpid);
   PACK_STRUCT_FIELD(u16_t prio_vid);
+  PACK_STRUCT_FIELD(u16_t tpid);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
