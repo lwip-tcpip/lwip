@@ -1219,6 +1219,13 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   struct eth_hdr* ethhdr;
   u16_t type;
 
+  if (p->tot_len <= SIZEOF_ETH_HDR) {
+    /* a packet with only an ethernet header (or less) is not valid */
+    ETHARP_STATS_INC(etharp.proterr);
+    ETHARP_STATS_INC(etharp.drop);
+    goto free_and_return;
+  }
+
   /* points to packet payload, which starts with an Ethernet header */
   ethhdr = (struct eth_hdr *)p->payload;
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE,
@@ -1232,6 +1239,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
   type = ethhdr->type;
 #if ETHARP_SUPPORT_VLAN
   if (type == PP_HTONS(ETHTYPE_VLAN)) {
+     /* @todo: check for minimum packet length */
     struct eth_vlan_hdr *vlan = (struct eth_vlan_hdr*)(((char*)ethhdr) + SIZEOF_ETH_HDR);
 #ifdef ETHARP_VLAN_CHECK /* if not, allow all VLANs */
     if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
