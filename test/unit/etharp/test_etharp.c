@@ -90,7 +90,8 @@ create_arp_response(ip_addr_t *adr)
 
   etharphdr->hwtype = htons(/*HWTYPE_ETHERNET*/ 1);
   etharphdr->proto = htons(ETHTYPE_IP);
-  etharphdr->_hwlen_protolen = htons((ETHARP_HWADDR_LEN << 8) | sizeof(ip_addr_t));
+  etharphdr->hwlen = ETHARP_HWADDR_LEN;
+  etharphdr->protolen = sizeof(ip_addr_t);
   etharphdr->opcode = htons(ARP_REPLY);
 
   SMEMCPY(&etharphdr->sipaddr, adr, sizeof(ip_addr_t));
