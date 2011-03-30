@@ -180,7 +180,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
   EXPECT(p_fin != NULL);
   if ((pinseq != NULL) && (p_8_9 != NULL) && (p_4_8 != NULL) && (p_4_10 != NULL) && (p_2_14 != NULL) && (p_fin != NULL)) {
     /* pass the segment to tcp_input */
-    tcp_input(p_8_9, &netif);
+    test_tcp_input(p_8_9, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -192,7 +192,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 9); /* includes FIN */
 
     /* pass the segment to tcp_input */
-    tcp_input(p_4_8, &netif);
+    test_tcp_input(p_4_8, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -206,7 +206,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 9); /* includes FIN */
 
     /* pass the segment to tcp_input */
-    tcp_input(p_4_10, &netif);
+    test_tcp_input(p_4_10, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -220,7 +220,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 9); /* includes FIN */
 
     /* pass the segment to tcp_input */
-    tcp_input(p_2_14, &netif);
+    test_tcp_input(p_2_14, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -232,7 +232,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 15); /* includes FIN */
 
     /* pass the segment to tcp_input */
-    tcp_input(p_fin, &netif);
+    test_tcp_input(p_fin, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -244,7 +244,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_OOSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 15); /* includes FIN */
 
     /* pass the segment to tcp_input */
-    tcp_input(pinseq, &netif);
+    test_tcp_input(pinseq, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 1);
     EXPECT(counters.recv_calls == 1);
@@ -330,7 +330,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
   if ((pinseq != NULL) && (p_1_2 != NULL) && (p_4_8 != NULL) && (p_3_11 != NULL) && (p_2_12 != NULL)
     && (p_15_1 != NULL) && (p_15_1a != NULL) && (pinseqFIN != NULL)) {
     /* pass the segment to tcp_input */
-    tcp_input(p_1_2, &netif);
+    test_tcp_input(p_1_2, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -342,7 +342,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 2);
 
     /* pass the segment to tcp_input */
-    tcp_input(p_4_8, &netif);
+    test_tcp_input(p_4_8, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -356,7 +356,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 8);
 
     /* pass the segment to tcp_input */
-    tcp_input(p_3_11, &netif);
+    test_tcp_input(p_3_11, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -371,7 +371,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 11);
 
     /* pass the segment to tcp_input */
-    tcp_input(p_2_12, &netif);
+    test_tcp_input(p_2_12, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -385,7 +385,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 1) == 12);
 
     /* pass the segment to tcp_input */
-    tcp_input(pinseq, &netif);
+    test_tcp_input(pinseq, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 1);
@@ -394,7 +394,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT(pcb->ooseq == NULL);
 
     /* pass the segment to tcp_input */
-    tcp_input(p_15_1, &netif);
+    test_tcp_input(p_15_1, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 1);
@@ -406,7 +406,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 1);
 
     /* pass the segment to tcp_input */
-    tcp_input(p_15_1a, &netif);
+    test_tcp_input(p_15_1a, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 1);
@@ -418,7 +418,7 @@ START_TEST(test_tcp_recv_ooseq_FIN_INSEQ)
     EXPECT_OOSEQ(tcp_oos_seg_tcplen(pcb, 0) == 1);
 
     /* pass the segment to tcp_input */
-    tcp_input(pinseqFIN, &netif);
+    test_tcp_input(pinseqFIN, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 1);
     EXPECT(counters.recv_calls == 2);
@@ -480,7 +480,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
                                            TCP_MSS, TCP_MSS*(k+1), 0, TCP_ACK);
     EXPECT(p != NULL);
     /* pass the segment to tcp_input */
-    tcp_input(p, &netif);
+    test_tcp_input(p, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 0);
@@ -504,7 +504,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   p_ovr = tcp_create_rx_segment(pcb, &data_full_wnd[TCP_MSS*(k+1)], TCP_MSS, TCP_MSS*(k+1), 0, TCP_ACK);
   EXPECT(p_ovr != NULL);
   /* pass the segment to tcp_input */
-  tcp_input(p_ovr, &netif);
+  test_tcp_input(p_ovr, &netif);
   /* check if counters are as expected */
   EXPECT(counters.close_calls == 0);
   EXPECT(counters.recv_calls == 0);
@@ -516,7 +516,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   EXPECT_OOSEQ(datalen == datalen2);
 
   /* now pass inseq */
-  tcp_input(pinseq, &netif);
+  test_tcp_input(pinseq, &netif);
   EXPECT(pcb->ooseq == NULL);
 
   /* make sure the pcb is freed */

@@ -33,4 +33,6 @@ err_t test_tcp_counters_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err
 
 struct tcp_pcb* test_tcp_new_counters_pcb(struct test_tcp_counters* counters);
 
+void test_tcp_input(struct pbuf *p, struct netif *inp);
+
 #endif

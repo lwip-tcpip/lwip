@@ -88,7 +88,8 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   memcpy((char*)tcphdr + sizeof(struct tcp_hdr), data, data_len);
 
   /* calculate checksum */
-  tcphdr->chksum = inet_chksum_pseudo(p, &(iphdr->src), &(iphdr->dest),
+
+  tcphdr->chksum = inet_chksum_pseudo(p, src_ip, dst_ip,
           IP_PROTO_TCP, p->tot_len);
 
   pbuf_header(p, sizeof(struct ip_hdr));
@@ -192,4 +193,21 @@ test_tcp_new_counters_pcb(struct test_tcp_counters* counters)
     tcp_err(pcb, test_tcp_counters_err);
   }
   return pcb;
+}
+
+/** Calls tcp_input() after adjusting current_iphdr_dest */
+void test_tcp_input(struct pbuf *p, struct netif *inp)
+{
+  struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
+  ip_addr_copy(current_iphdr_dest, iphdr->dest);
+  ip_addr_copy(current_iphdr_src, iphdr->src);
+  current_netif = inp;
+  current_header = iphdr;
+
+  tcp_input(p, inp);
+
+  current_iphdr_dest.addr = 0;
+  current_iphdr_src.addr = 0;
+  current_netif = NULL;
+  current_header = NULL;
 }

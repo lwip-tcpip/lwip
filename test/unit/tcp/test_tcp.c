@@ -76,7 +76,7 @@ START_TEST(test_tcp_recv_inseq)
   EXPECT(p != NULL);
   if (p != NULL) {
     /* pass the segment to tcp_input */
-    tcp_input(p, &netif);
+    test_tcp_input(p, &netif);
     /* check if counters are as expected */
     EXPECT(counters.close_calls == 0);
     EXPECT(counters.recv_calls == 1);
