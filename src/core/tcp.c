@@ -611,8 +611,10 @@ tcp_new_port(void)
   int i;
   struct tcp_pcb *pcb;
 #ifndef TCP_LOCAL_PORT_RANGE_START
-#define TCP_LOCAL_PORT_RANGE_START 4096
-#define TCP_LOCAL_PORT_RANGE_END   0x7fff
+/* From http://www.iana.org/assignments/port-numbers:
+   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
+#define TCP_LOCAL_PORT_RANGE_START  0xc000
+#define TCP_LOCAL_PORT_RANGE_END    0xffff
 #endif
   static u16_t port = TCP_LOCAL_PORT_RANGE_START;
   

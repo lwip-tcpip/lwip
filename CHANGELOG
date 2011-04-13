@@ -237,6 +237,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2011-04-13: Simon Goldschmidt
+  * tcp.c, udp.c: Fixed bug #33048 (Bad range for IP source port numbers) by
+    using ports in the IANA private/dynamic range (49152 through 65535).
+
   2011-03-29: Simon Goldschmidt, patch by Emil Lhungdahl:
   * etharp.h/.c: Fixed broken VLAN support.
 
