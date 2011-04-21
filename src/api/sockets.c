@@ -894,7 +894,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
     netbuf_fromport(&buf) = 0;
   }
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, short_size=%d"U16_F", flags=0x%x to=",
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_sendto(%d, data=%p, short_size=%"U16_F", flags=0x%x to=",
               s, data, short_size, flags));
   ip_addr_debug_print(SOCKETS_DEBUG, &buf.addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", remote_port));
