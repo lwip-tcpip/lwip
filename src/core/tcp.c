@@ -619,11 +619,11 @@ tcp_new_port(void)
   static u16_t port = TCP_LOCAL_PORT_RANGE_START;
   
  again:
-  if (++port > TCP_LOCAL_PORT_RANGE_END) {
+  if (port++ >= TCP_LOCAL_PORT_RANGE_END) {
     port = TCP_LOCAL_PORT_RANGE_START;
   }
   /* Check all PCB lists. */
-  for (i = 0; i < NUM_TCP_PCB_LISTS; i++) {  
+  for (i = 0; i < NUM_TCP_PCB_LISTS; i++) {
     for(pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
       if (pcb->local_port == port) {
         goto again;
