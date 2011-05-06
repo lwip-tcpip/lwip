@@ -1,15 +1,18 @@
-FUTURE
-
-  * TODO: The lwIP source code makes some invalid assumptions on processor
-    word-length, storage sizes and alignment. See the mailing lists for
-    problems with exoteric (/DSP) architectures showing these problems.
-    We still have to fix some of these issues neatly.
-
 HISTORY
 
 (CVS HEAD)
 
   * [Enter new changes just after this line - do not remove this line]
+
+ ++ New features:
+
+
+ ++ Bugfixes:
+
+
+
+
+(STABLE-1.4.0)
 
   ++ New features:
 
