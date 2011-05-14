@@ -4,6 +4,7 @@
 #include "../lwip_check.h"
 #include "lwip/arch.h"
 #include "lwip/tcp.h"
+#include "lwip/netif.h"
 
 /* counters used for test_tcp_counters_* callback functions */
 struct test_tcp_counters {
@@ -16,6 +17,11 @@ struct test_tcp_counters {
   err_t last_err;
   char* expected_data;
   u32_t expected_data_len;
+};
+
+struct test_tcp_txcounters {
+  u32_t num_tx_calls;
+  u32_t num_tx_bytes;
 };
 
 /* Helper functions */
@@ -34,5 +40,9 @@ err_t test_tcp_counters_recv(void* arg, struct tcp_pcb* pcb, struct pbuf* p, err
 struct tcp_pcb* test_tcp_new_counters_pcb(struct test_tcp_counters* counters);
 
 void test_tcp_input(struct pbuf *p, struct netif *inp);
+
+void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcounters,
+                         ip_addr_t *ip_addr, ip_addr_t *netmask);
+
 
 #endif

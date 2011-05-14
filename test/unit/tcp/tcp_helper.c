@@ -45,7 +45,7 @@ tcp_create_rx_segment(struct tcp_pcb* pcb, void* data, size_t data_len, u32_t se
                       u32_t ackno_offset, u8_t headerflags)
 {
   return tcp_create_segment(&pcb->remote_ip, &pcb->local_ip, pcb->remote_port, pcb->local_port,
-    data, data_len, pcb->rcv_nxt + seqno_offset, pcb->snd_nxt + ackno_offset, headerflags);
+    data, data_len, pcb->rcv_nxt + seqno_offset, pcb->lastack + ackno_offset, headerflags);
 }
 
 /** Create a TCP segment usable for passing to tcp_input */
@@ -191,6 +191,7 @@ test_tcp_new_counters_pcb(struct test_tcp_counters* counters)
     tcp_arg(pcb, counters);
     tcp_recv(pcb, test_tcp_counters_recv);
     tcp_err(pcb, test_tcp_counters_err);
+    pcb->snd_wnd = TCP_WND;
   }
   return pcb;
 }
@@ -210,4 +211,39 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
   current_iphdr_src.addr = 0;
   current_netif = NULL;
   current_header = NULL;
+}
+
+static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
+       ip_addr_t *ipaddr)
+{
+  struct test_tcp_txcounters *txcounters = (struct test_tcp_txcounters*)netif->state;
+  LWIP_UNUSED_ARG(ipaddr);
+  txcounters->num_tx_calls++;
+  txcounters->num_tx_bytes += p->tot_len;
+  /*if (txcounters->tx_packets == NULL) {
+    txcounters->tx_packets = p;
+  } else {
+    pbuf_cat(txcounters->tx_packets, p);
+  }*/
+  return ERR_OK;
+}
+
+void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcounters,
+                         ip_addr_t *ip_addr, ip_addr_t *netmask)
+{
+  struct netif *n;
+  memset(netif, 0, sizeof(struct netif));
+  memset(txcounters, 0, sizeof(struct test_tcp_txcounters));
+  netif->output = test_tcp_netif_output;
+  netif->state = txcounters;
+  netif->flags |= NETIF_FLAG_UP;
+  ip_addr_copy(netif->netmask, *netmask);
+  ip_addr_copy(netif->ip_addr, *ip_addr);
+  for (n = netif_list; n != NULL; n = n->next) {
+    if (n == netif) {
+      return;
+    }
+  }
+  netif->next = NULL;
+  netif_list = netif;
 }
