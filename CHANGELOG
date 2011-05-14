@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+   2011-05-14: Simon Goldschmidt (patch by Stéphane Lesage)
+  * tcpip.c/.h: patch #7449 allow tcpip callback from interrupt with static
+    memory message
+
 
  ++ Bugfixes:
 
