@@ -218,7 +218,7 @@ upap_timeout(void *arg)
         u->us_unit, u->us_timeouttime, u->us_clientstate));
 
   if (u->us_clientstate != UPAPCS_AUTHREQ) {
-	UPAPDEBUG(LOG_INFO, ("upap_timeout: not in AUTHREQ state!\n"));
+    UPAPDEBUG(LOG_INFO, ("upap_timeout: not in AUTHREQ state!\n"));
     return;
   }
 
