@@ -42,6 +42,8 @@
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
 #include "lwip/err.h"
+#include "lwip/ip6.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -366,6 +368,14 @@ err_t            tcp_output  (struct tcp_pcb *pcb);
 
 
 const char* tcp_debug_state_str(enum tcp_state s);
+
+#if LWIP_IPV6
+struct tcp_pcb * tcp_new_ip6 (void);
+#define          tcp_bind_ip6(pcb, ip6addr, port) \
+                   tcp_bind(pcb, (ip_addr_t *)ip6addr, port)
+#define          tcp_connect_ip6(pcb, ip6addr, port, connected) \
+                   udp_connect(pcb, (ip_addr_t *)ip6addr, port, connected)
+#endif /* LWIP_IPV6 */
 
 
 #ifdef __cplusplus

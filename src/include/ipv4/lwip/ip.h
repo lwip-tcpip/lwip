@@ -37,6 +37,7 @@
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
+#include "lwip/ip6_addr.h"
 #include "lwip/err.h"
 #include "lwip/netif.h"
 
@@ -69,14 +70,29 @@ extern "C" {
 #define IP_PCB_ADDRHINT
 #endif /* LWIP_NETIF_HWADDRHINT */
 
+#if LWIP_IPV6
+#define IP_PCB_ISIPV6  u8_t isipv6;
+#define IP_PCB_IP6   ip6_addr_t ip6;
+#else
+#define IP_PCB_ISIPV6
+#define IP_PCB_IP6
+#endif /* LWIP_IPV6 */
+
 /* This is the common part of all PCB types. It needs to be at the
    beginning of a PCB type definition. It is located here so that
    changes to this common part are made in one location instead of
    having to change all PCB structs. */
 #define IP_PCB \
+  IP_PCB_ISIPV6 \
   /* ip addresses in network byte order */ \
-  ip_addr_t local_ip; \
-  ip_addr_t remote_ip; \
+  union { \
+    ip_addr_t ip4; \
+    IP_PCB_IP6 \
+  } local_ip; \
+  union { \
+    ip_addr_t ip4; \
+    IP_PCB_IP6 \
+  } remote_ip; \
    /* Socket options */  \
   u8_t so_options;      \
    /* Type Of Service */ \

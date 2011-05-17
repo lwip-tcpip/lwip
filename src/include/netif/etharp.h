@@ -137,6 +137,7 @@ PACK_STRUCT_END
 #define ETHTYPE_ARP       0x0806U
 #define ETHTYPE_IP        0x0800U
 #define ETHTYPE_VLAN      0x8100U
+#define ETHTYPE_IPV6      0x86DDU
 #define ETHTYPE_PPPOEDISC 0x8863U  /* PPP Over Ethernet Discovery Stage */
 #define ETHTYPE_PPPOE     0x8864U  /* PPP Over Ethernet Session Stage */
 

@@ -43,6 +43,8 @@
 #include "lwip/ip.h"
 #include "lwip/icmp.h"
 #include "lwip/err.h"
+#include "lwip/ip6.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -429,6 +431,11 @@ void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 void tcp_rst(u32_t seqno, u32_t ackno,
        ip_addr_t *local_ip, ip_addr_t *remote_ip,
        u16_t local_port, u16_t remote_port);
+#if LWIP_IPV6
+void tcp_rst_ip6(u32_t seqno, u32_t ackno,
+       ip6_addr_t *local_ip6, ip6_addr_t *remote_ip6,
+       u16_t local_port, u16_t remote_port);
+#endif /* LWIP_IPV6 */
 
 u32_t tcp_next_iss(void);
 
@@ -437,6 +444,9 @@ void tcp_zero_window_probe(struct tcp_pcb *pcb);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss(u16_t sendmss, ip_addr_t *addr);
+#if LWIP_IPV6
+u16_t tcp_eff_send_mss_ip6(u16_t sendmss, ip6_addr_t *src, ip6_addr_t *dest);
+#endif /* LWIP_IPV6 */
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API

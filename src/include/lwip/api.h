@@ -76,20 +76,35 @@ extern "C" {
 
 
 /* Helpers to process several netconn_types by the same code */
-#define NETCONNTYPE_GROUP(t)    (t&0xF0)
-#define NETCONNTYPE_DATAGRAM(t) (t&0xE0)
+#define NETCONNTYPE_GROUP(t)    ((t)&0xF0)
+#define NETCONNTYPE_DATAGRAM(t) ((t)&0xE0)
+#define NETCONNTYPE_ISIPV6(t)   ((t)&0x08)
+#define NETCONNTYPE_ISUDPLITE(t)(((t)&0xF7) == NETCONN_UDPLITE)
+#define NETCONNTYPE_ISUDPNOCHKSUM(t)(((t)&0xF7) == NETCONN_UDPNOCHKSUM)
 
 /** Protocol family and type of the netconn */
 enum netconn_type {
   NETCONN_INVALID    = 0,
   /* NETCONN_TCP Group */
   NETCONN_TCP        = 0x10,
+#if LWIP_IPV6
+  NETCONN_TCP_IPV6   = 0x18,
+#endif /* LWIP_IPV6 */
   /* NETCONN_UDP Group */
   NETCONN_UDP        = 0x20,
   NETCONN_UDPLITE    = 0x21,
   NETCONN_UDPNOCHKSUM= 0x22,
+#if LWIP_IPV6
+  NETCONN_UDP_IPV6   = 0x28,
+  NETCONN_UDPLITE_IPV6    = 0x29,
+  NETCONN_UDPNOCHKSUM_IPV6= 0x2a,
+#endif /* LWIP_IPV6 */
   /* NETCONN_RAW Group */
   NETCONN_RAW        = 0x40
+#if LWIP_IPV6
+  ,
+  NETCONN_RAW_IPV6   = 0x48
+#endif /* LWIP_IPV6 */
 };
 
 /** Current state of the netconn. Non-TCP netconns are always
@@ -111,13 +126,13 @@ enum netconn_evt {
   NETCONN_EVT_ERROR
 };
 
-#if LWIP_IGMP
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 /** Used for netconn_join_leave_group() */
 enum netconn_igmp {
   NETCONN_JOIN,
   NETCONN_LEAVE
 };
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
 /* forward-declare some structs to avoid to include their headers */
 struct ip_pcb;
@@ -235,13 +250,25 @@ err_t   netconn_write(struct netconn *conn, const void *dataptr, size_t size,
 err_t   netconn_close(struct netconn *conn);
 err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
 
-#if LWIP_IGMP
+#if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
 err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
                                  ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
-#endif /* LWIP_IGMP */
+#endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if LWIP_DNS
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_DNS */
+#if LWIP_IPV6
+#define netconn_bind_ip6(conn, ip6addr, port) \
+        netconn_bind(conn, (ip_addr_t*) ip6addr, port)
+#define netconn_connect_ip6(conn, ip6addr, port) \
+        netconn_connect(conn, (ip_addr_t*) ip6addr, port)
+#define netconn_sendto_ip6(conn, buf, ip6addr, port) \
+        netconn_sendto(conn, buf, (ip_addr_t*) ip6addr, port)
+#if LWIP_IPV6_MLD
+#define netconn_join_leave_group_ip6(conn, multiaddr, srcaddr, join_or_leave) \
+        netconn_join_leave_group(conn, (ip_addr_t*)multiaddr, (ip_addr_t*)srcaddr, join_or_leave)
+#endif /* LWIP_IPV6_MLD*/
+#endif /* LWIP_IPV6 */
 
 #define netconn_err(conn)               ((conn)->last_err)
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)

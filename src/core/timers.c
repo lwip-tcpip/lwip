@@ -56,7 +56,9 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
-
+#include "lwip/nd6.h"
+#include "lwip/ip6_frag.h"
+#include "lwip/mld6.h"
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
@@ -217,6 +219,54 @@ dns_timer(void *arg)
 }
 #endif /* LWIP_DNS */
 
+#if LWIP_IPV6
+/**
+ * Timer callback function that calls nd6_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+static void
+nd6_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: nd6_tmr()\n"));
+  nd6_tmr();
+  sys_timeout(ND6_TMR_INTERVAL, nd6_timer, NULL);
+}
+
+#if LWIP_IPV6_REASS
+/**
+ * Timer callback function that calls ip6_reass_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+static void
+ip6_reass_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: ip6_reass_tmr()\n"));
+  ip6_reass_tmr();
+  sys_timeout(IP6_REASS_TMR_INTERVAL, ip6_reass_timer, NULL);
+}
+#endif /* LWIP_IPV6_REASS */
+
+#if LWIP_IPV6_MLD
+/**
+ * Timer callback function that calls mld6_tmr() and reschedules itself.
+ *
+ * @param arg unused argument
+ */
+static void
+mld6_timer(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  LWIP_DEBUGF(TIMERS_DEBUG, ("tcpip: mld6_tmr()\n"));
+  mld6_tmr();
+  sys_timeout(MLD6_TMR_INTERVAL, mld6_timer, NULL);
+}
+#endif /* LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6 */
+
 /** Initialize this module */
 void sys_timeouts_init(void)
 {
@@ -239,6 +289,15 @@ void sys_timeouts_init(void)
 #if LWIP_DNS
   sys_timeout(DNS_TMR_INTERVAL, dns_timer, NULL);
 #endif /* LWIP_DNS */
+#if LWIP_IPV6
+  sys_timeout(ND6_TMR_INTERVAL, nd6_timer, NULL);
+#if LWIP_IPV6_REASS
+  sys_timeout(IP6_REASS_TMR_INTERVAL, ip6_reass_timer, NULL);
+#endif /* LWIP_IPV6_REASS */
+#if LWIP_IPV6_MLD
+  sys_timeout(MLD6_TMR_INTERVAL, mld6_timer, NULL);
+#endif /* LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6 */
 
 #if NO_SYS
   /* Initialise timestamp for sys_check_timeouts */

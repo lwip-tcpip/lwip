@@ -144,6 +144,21 @@ struct stats_ {
 #if SYS_STATS
   struct stats_sys sys;
 #endif
+#if IP6_STATS
+  struct stats_proto ip6;
+#endif
+#if ICMP6_STATS
+  struct stats_proto icmp6;
+#endif
+#if IP6_FRAG_STATS
+  struct stats_proto ip6_frag;
+#endif
+#if MLD6_STATS
+  struct stats_igmp mld6;
+#endif
+#if ND6_STATS
+  struct stats_proto nd6;
+#endif
 };
 
 extern struct stats_ lwip_stats;
@@ -266,6 +281,46 @@ void stats_init(void);
 #define SYS_STATS_DEC(x)
 #define SYS_STATS_INC_USED(x)
 #define SYS_STATS_DISPLAY()
+#endif
+
+#if IP6_STATS
+#define IP6_STATS_INC(x) STATS_INC(x)
+#define IP6_STATS_DISPLAY() stats_display_proto(&lwip_stats.ip6, "IPv6")
+#else
+#define IP6_STATS_INC(x)
+#define IP6_STATS_DISPLAY()
+#endif
+
+#if ICMP6_STATS
+#define ICMP6_STATS_INC(x) STATS_INC(x)
+#define ICMP6_STATS_DISPLAY() stats_display_proto(&lwip_stats.icmp6, "ICMPv6")
+#else
+#define ICMP6_STATS_INC(x)
+#define ICMP6_STATS_DISPLAY()
+#endif
+
+#if IP6_FRAG_STATS
+#define IP6_FRAG_STATS_INC(x) STATS_INC(x)
+#define IP6_FRAG_STATS_DISPLAY() stats_display_proto(&lwip_stats.ip6_frag, "IPv6 FRAG")
+#else
+#define IP6_FRAG_STATS_INC(x)
+#define IP6_FRAG_STATS_DISPLAY()
+#endif
+
+#if MLD6_STATS
+#define MLD6_STATS_INC(x) STATS_INC(x)
+#define MLD6_STATS_DISPLAY() stats_display_proto(&lwip_stats.mld6, "MLDv1")
+#else
+#define MLD6_STATS_INC(x)
+#define MLD6_STATS_DISPLAY()
+#endif
+
+#if ND6_STATS
+#define ND6_STATS_INC(x) STATS_INC(x)
+#define ND6_STATS_DISPLAY() stats_display_proto(&lwip_stats.nd6, "ND")
+#else
+#define ND6_STATS_INC(x)
+#define ND6_STATS_DISPLAY()
 #endif
 
 /* Display of statistics */

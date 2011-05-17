@@ -45,7 +45,11 @@ extern "C" {
 #define LWIP_SUPPORT_CUSTOM_PBUF (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF)
 
 #define PBUF_TRANSPORT_HLEN 20
+#if LWIP_IPV6
+#define PBUF_IP_HLEN        40
+#else
 #define PBUF_IP_HLEN        20
+#endif
 
 typedef enum {
   PBUF_TRANSPORT,

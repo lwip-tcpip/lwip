@@ -35,6 +35,7 @@
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
+#include "lwip/ip6_addr.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -45,9 +46,18 @@ extern "C" {
 /** This netbuf includes a checksum */
 #define NETBUF_FLAG_CHKSUM      0x02
 
+#if LWIP_IPV6
+#define NETBUF_IP6   ip6_addr_t ip6;
+#else
+#define NETBUF_IP6
+#endif /* LWIP_IPV6 */
+
 struct netbuf {
   struct pbuf *p, *ptr;
-  ip_addr_t addr;
+  union {
+    ip_addr_t ip4;
+    NETBUF_IP6
+  } addr;
   u16_t port;
 #if LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY
 #if LWIP_CHECKSUM_ON_COPY
@@ -55,7 +65,10 @@ struct netbuf {
 #endif /* LWIP_CHECKSUM_ON_COPY */
   u16_t toport_chksum;
 #if LWIP_NETBUF_RECVINFO
-  ip_addr_t toaddr;
+  union {
+    ip_addr_t ip4;
+    NETBUF_IP6
+  } toaddr;
 #endif /* LWIP_NETBUF_RECVINFO */
 #endif /* LWIP_NETBUF_RECVINFO || LWIP_CHECKSUM_ON_COPY */
 };
@@ -81,18 +94,25 @@ void              netbuf_first    (struct netbuf *buf);
 #define netbuf_copy(buf,dataptr,len) netbuf_copy_partial(buf, dataptr, len, 0)
 #define netbuf_take(buf, dataptr, len) pbuf_take((buf)->p, dataptr, len)
 #define netbuf_len(buf)              ((buf)->p->tot_len)
-#define netbuf_fromaddr(buf)         (&((buf)->addr))
-#define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set((&(buf)->addr), fromaddr)
+#define netbuf_fromaddr(buf)         (&((buf)->addr.ip4))
+#define netbuf_set_fromaddr(buf, fromaddr) ip_addr_set((&(buf)->addr.ip4), fromaddr)
 #define netbuf_fromport(buf)         ((buf)->port)
 #if LWIP_NETBUF_RECVINFO
-#define netbuf_destaddr(buf)         (&((buf)->toaddr))
-#define netbuf_set_destaddr(buf, destaddr) ip_addr_set((&(buf)->addr), destaddr)
+#define netbuf_destaddr(buf)         (&((buf)->toaddr.ip4))
+#define netbuf_set_destaddr(buf, destaddr) ip_addr_set((&(buf)->toaddr.ip4), destaddr)
 #define netbuf_destport(buf)         (((buf)->flags & NETBUF_FLAG_DESTADDR) ? (buf)->toport_chksum : 0)
 #endif /* LWIP_NETBUF_RECVINFO */
 #if LWIP_CHECKSUM_ON_COPY
 #define netbuf_set_chksum(buf, chksum) do { (buf)->flags = NETBUF_FLAG_CHKSUM; \
                                             (buf)->toport_chksum = chksum; } while(0)
 #endif /* LWIP_CHECKSUM_ON_COPY */
+
+#if LWIP_IPV6
+#define netbuf_fromaddr_ip6(buf)         (&((buf)->addr.ip6))
+#define netbuf_set_fromaddr_ip6(buf, fromaddr) ip6_addr_set((&(buf)->addr.ip6), fromaddr)
+#define netbuf_destaddr_ip6(buf)         (&((buf)->toaddr.ip6))
+#define netbuf_set_destaddr_ip6(buf, destaddr) ip6_addr_set((&(buf)->toaddr.ip6), destaddr)
+#endif /* LWIP_IPV6 */
 
 #ifdef __cplusplus
 }

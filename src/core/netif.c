@@ -40,6 +40,7 @@
 
 #include "lwip/def.h"
 #include "lwip/ip_addr.h"
+#include "lwip/ip6_addr.h"
 #include "lwip/netif.h"
 #include "lwip/tcp_impl.h"
 #include "lwip/snmp.h"
@@ -59,6 +60,12 @@
 #if LWIP_DHCP
 #include "lwip/dhcp.h"
 #endif /* LWIP_DHCP */
+#if LWIP_IPV6_DHCP6
+#include "lwip/dhcp6.h"
+#endif /* LWIP_IPV6_DHCP6 */
+#if LWIP_IPV6_MLD
+#include "lwip/mld6.h"
+#endif /* LWIP_IPV6_MLD */
 
 #if LWIP_NETIF_STATUS_CALLBACK
 #define NETIF_STATUS_CALLBACK(n) do{ if (n->status_callback) { (n->status_callback)(n); }}while(0)
@@ -138,6 +145,9 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
   static u8_t netifnum = 0;
+#if LWIP_IPV6
+  u32_t i;
+#endif
 
   LWIP_ASSERT("No init function given", init != NULL);
 
@@ -145,6 +155,12 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   ip_addr_set_zero(&netif->ip_addr);
   ip_addr_set_zero(&netif->netmask);
   ip_addr_set_zero(&netif->gw);
+#if LWIP_IPV6
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    ip6_addr_set_zero(&netif->ip6_addr[i]);
+    netif_ip6_addr_set_state(netif, i, IP6_ADDR_INVALID);
+  }
+#endif /* LWIP_IPV6 */
   netif->flags = 0;
 #if LWIP_DHCP
   /* netif not under DHCP control by default */
@@ -154,6 +170,17 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   /* netif not under AutoIP control by default */
   netif->autoip = NULL;
 #endif /* LWIP_AUTOIP */
+#if LWIP_IPV6_AUTOCONFIG
+  /* IPv6 address autoconfiguration not enabled by default */
+  netif->ip6_autoconfig_enabled = 0;
+#endif /* LWIP_IPV6_AUTOCONFIG */
+#if LWIP_IPV6_SEND_ROUTER_SOLICIT
+  netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
+#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
+#if LWIP_IPV6_DHCP6
+  /* netif not under DHCPv6 control by default */
+  netif->dhcp6 = NULL;
+#endif /* LWIP_IPV6_DHCP6 */
 #if LWIP_NETIF_STATUS_CALLBACK
   netif->status_callback = NULL;
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
@@ -163,6 +190,9 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
 #if LWIP_IGMP
   netif->igmp_mac_filter = NULL;
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+  netif->mld_mac_filter = NULL;
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 #if ENABLE_LOOPBACK
   netif->loop_first = NULL;
   netif->loop_last = NULL;
@@ -245,6 +275,10 @@ netif_remove(struct netif *netif)
     igmp_stop(netif);
   }
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+  /* stop MLD processing */
+  mld6_stop(netif);
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
   if (netif_is_up(netif)) {
     /* set netif down before removing (call callback function) */
     netif_set_down(netif);
@@ -331,10 +365,10 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
     pcb = tcp_active_pcbs;
     while (pcb != NULL) {
       /* PCB bound to current local interface address? */
-      if (ip_addr_cmp(&(pcb->local_ip), &(netif->ip_addr))
+      if (ip_addr_cmp(&(pcb->local_ip.ip4), &(netif->ip_addr))
 #if LWIP_AUTOIP
         /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-        && !ip_addr_islinklocal(&(pcb->local_ip))
+        && !ip_addr_islinklocal(&(pcb->local_ip.ip4))
 #endif /* LWIP_AUTOIP */
         ) {
         /* this connection must be aborted */
@@ -348,11 +382,11 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
     }
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       /* PCB bound to current local interface address? */
-      if ((!(ip_addr_isany(&(lpcb->local_ip)))) &&
-          (ip_addr_cmp(&(lpcb->local_ip), &(netif->ip_addr)))) {
+      if ((!(ip_addr_isany(&(lpcb->local_ip.ip4)))) &&
+          (ip_addr_cmp(&(lpcb->local_ip.ip4), &(netif->ip_addr)))) {
         /* The PCB is listening to the old ipaddr and
          * is set to listen to the new one instead */
-        ip_addr_set(&(lpcb->local_ip), ipaddr);
+        ip_addr_set(&(lpcb->local_ip.ip4), ipaddr);
       }
     }
   }
@@ -471,6 +505,16 @@ void netif_set_up(struct netif *netif)
         igmp_report_groups( netif);
       }
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+      /* send mld memberships */
+      mld6_report_groups( netif);
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+
+#if LWIP_IPV6_SEND_ROUTER_SOLICIT
+      /* Send Router Solicitation messages. */
+      netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
+#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
+
     }
   }
 }
@@ -541,6 +585,10 @@ void netif_set_link_up(struct netif *netif )
         igmp_report_groups( netif);
       }
 #endif /* LWIP_IGMP */
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+      /* send mld memberships */
+      mld6_report_groups( netif);
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
     }
     NETIF_LINK_CALLBACK(netif);
   }
@@ -750,3 +798,62 @@ netif_poll_all(void)
 }
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
+
+#if LWIP_IPV6
+s8_t
+netif_matches_ip6_addr(struct netif * netif, ip6_addr_t * ip6addr)
+{
+  s8_t i;
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    if (ip6_addr_cmp(netif_ip6_addr(netif, i), ip6addr)) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+void
+netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
+{
+  u8_t i, addr_index;
+
+  /* Link-local prefix. */
+  netif->ip6_addr[0].addr[0] = PP_HTONL(0xfe800000ul);
+  netif->ip6_addr[0].addr[1] = 0;
+
+  /* Generate interface ID. */
+  if (from_mac_48bit) {
+    /* Assume hwaddr is a 48-bit IEEE 802 MAC. Convert to EUI-64 address. Complement Group bit. */
+    netif->ip6_addr[0].addr[2] = htonl((((u32_t)(netif->hwaddr[0] ^ 0x02)) << 24) |
+        ((u32_t)(netif->hwaddr[1]) << 16) |
+        ((u32_t)(netif->hwaddr[2]) << 8) |
+        (0xff));
+    netif->ip6_addr[0].addr[3] = htonl((0xfeul << 24) |
+        ((u32_t)(netif->hwaddr[3]) << 16) |
+        ((u32_t)(netif->hwaddr[4]) << 8) |
+        (netif->hwaddr[5]));
+  }
+  else {
+    /* Use hwaddr directly as interface ID. */
+    netif->ip6_addr[0].addr[2] = 0;
+    netif->ip6_addr[0].addr[3] = 0;
+
+    addr_index = 3;
+    for (i = 0; i < 8; i++) {
+      if (i == 4) {
+        addr_index--;
+      }
+      netif->ip6_addr[0].addr[addr_index] |= ((u32_t)(netif->hwaddr[netif->hwaddr_len - i - 1])) << (8 * (i & 0x03));
+    }
+  }
+
+  /* Set address state. */
+#if LWIP_IPV6_DUP_DETECT_ATTEMPTS
+  /* Will perform duplicate address detection (DAD). */
+  netif->ip6_addr_state[0] = IP6_ADDR_TENTATIVE;
+#else
+  /* Consider address valid. */
+  netif->ip6_addr_state[0] = IP6_ADDR_PREFERRED;
+#endif /* LWIP_IPV6_AUTOCONFIG */
+}
+#endif /* LWIP_IPV6 */

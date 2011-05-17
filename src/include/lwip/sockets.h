@@ -42,6 +42,7 @@
 
 #include "lwip/ip_addr.h"
 #include "lwip/inet.h"
+#include "lwip/inet6.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,10 +57,24 @@ struct sockaddr_in {
   char sin_zero[8];
 };
 
+#if LWIP_IPV6
+struct sockaddr_in6 {
+  u8_t sin6_len;             /* length of this structure */
+  u8_t sin6_family;          /* AF_INET6                 */
+  u16_t sin6_port;           /* Transport layer port #   */
+  u32_t sin6_flowinfo;       /* IPv6 flow information    */
+  struct in6_addr sin6_addr; /* IPv6 address             */
+};
+#endif /* LWIP_IPV6 */
+
 struct sockaddr {
   u8_t sa_len;
   u8_t sa_family;
-  char sa_data[14];
+#if LWIP_IPV6
+  u8_t sa_data[22];
+#else /* LWIP_IPV6 */
+  u8_t sa_data[14];
+#endif /* LWIP_IPV6 */
 };
 
 #ifndef socklen_t
@@ -118,7 +133,13 @@ struct linger {
 
 #define AF_UNSPEC       0
 #define AF_INET         2
+#if LWIP_IPV6
+#define AF_INET6        10
+#else /* LWIP_IPV6 */
+#define AF_INET6        AF_UNSPEC
+#endif /* LWIP_IPV6 */
 #define PF_INET         AF_INET
+#define PF_INET6        AF_INET6
 #define PF_UNSPEC       AF_UNSPEC
 
 #define IPPROTO_IP      0

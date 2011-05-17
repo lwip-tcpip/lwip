@@ -496,23 +496,27 @@ ip_input(struct pbuf *p, struct netif *inp)
     case IP_PROTO_UDPLITE:
 #endif /* LWIP_UDPLITE */
       snmp_inc_ipindelivers();
+      pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
       udp_input(p, inp);
       break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case IP_PROTO_TCP:
       snmp_inc_ipindelivers();
+      pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
       tcp_input(p, inp);
       break;
 #endif /* LWIP_TCP */
 #if LWIP_ICMP
     case IP_PROTO_ICMP:
       snmp_inc_ipindelivers();
+      pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
       icmp_input(p, inp);
       break;
 #endif /* LWIP_ICMP */
 #if LWIP_IGMP
     case IP_PROTO_IGMP:
+      pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
       igmp_input(p, inp, &current_iphdr_dest);
       break;
 #endif /* LWIP_IGMP */

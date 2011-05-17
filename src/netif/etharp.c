@@ -55,6 +55,7 @@
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "netif/etharp.h"
+#include "lwip/ip6.h"
 
 #if PPPOE_SUPPORT
 #include "netif/ppp_oe.h"
@@ -1300,6 +1301,19 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       pppoe_data_input(netif, p);
       break;
 #endif /* PPPOE_SUPPORT */
+
+#if LWIP_IPV6
+    case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
+      /* skip Ethernet header */
+      if(pbuf_header(p, -(s16_t)SIZEOF_ETH_HDR)) {
+        LWIP_ASSERT("Can't move over header in packet", 0);
+        goto free_and_return;
+      } else {
+        /* pass to IPv6 layer */
+        ip6_input(p, netif);
+      }
+      break;
+#endif /* LWIP_IPV6 */
 
     default:
       ETHARP_STATS_INC(etharp.proterr);

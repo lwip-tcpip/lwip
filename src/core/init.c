@@ -56,6 +56,9 @@
 #include "lwip/dns.h"
 #include "lwip/timers.h"
 #include "netif/etharp.h"
+#include "lwip/ip6.h"
+#include "lwip/nd6.h"
+#include "lwip/mld6.h"
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
@@ -299,6 +302,13 @@ lwip_init(void)
 #if LWIP_DNS
   dns_init();
 #endif /* LWIP_DNS */
+#if LWIP_IPV6
+  ip6_init();
+  nd6_init();
+#if LWIP_IPV6_MLD
+  mld6_init();
+#endif /* LWIP_IPV6_MLD */
+#endif /* LWIP_IPV6 */
 
 #if LWIP_TIMERS
   sys_timeouts_init();

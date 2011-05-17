@@ -1544,6 +1544,41 @@
 #define SYS_STATS                       (NO_SYS == 0)
 #endif
 
+/**
+ * IP6_STATS==1: Enable IPv6 stats.
+ */
+#ifndef IP6_STATS
+#define IP6_STATS                       (LWIP_IPV6)
+#endif
+
+/**
+ * ICMP6_STATS==1: Enable ICMP for IPv6 stats.
+ */
+#ifndef ICMP6_STATS
+#define ICMP6_STATS                     (LWIP_IPV6 && LWIP_ICMP6)
+#endif
+
+/**
+ * IP6_FRAG_STATS==1: Enable IPv6 fragmentation stats.
+ */
+#ifndef IP6_FRAG_STATS
+#define IP6_FRAG_STATS                  (LWIP_IPV6 && (LWIP_IPV6_FRAG || LWIP_IPV6_REASS))
+#endif
+
+/**
+ * MLD6_STATS==1: Enable MLD for IPv6 stats.
+ */
+#ifndef MLD6_STATS
+#define MLD6_STATS                      (LWIP_IPV6 && LWIP_IPV6_MLD)
+#endif
+
+/**
+ * ND6_STATS==1: Enable Neighbor discovery for IPv6 stats.
+ */
+#ifndef ND6_STATS
+#define ND6_STATS                       (LWIP_IPV6)
+#endif
+
 #else
 
 #define LINK_STATS                      0
@@ -1557,6 +1592,11 @@
 #define MEMP_STATS                      0
 #define SYS_STATS                       0
 #define LWIP_STATS_DISPLAY              0
+#define IP6_STATS                       0
+#define ICMP6_STATS                     0
+#define IP6_FRAG_STATS                  0
+#define MLD6_STATS                      0
+#define ND6_STATS                       0
 
 #endif /* LWIP_STATS */
 
@@ -1777,6 +1817,231 @@
  */
 #ifndef LWIP_CHECKSUM_ON_COPY
 #define LWIP_CHECKSUM_ON_COPY           0
+#endif
+
+/*
+   ---------------------------------------
+   ---------- IPv6 options ---------------
+   ---------------------------------------
+*/
+/**
+ * LWIP_IPV6==1: Enable IPv6
+ */
+#ifndef LWIP_IPV6
+#define LWIP_IPV6                       0
+#endif
+
+/**
+ * LWIP_IPV6_NUM_ADDRESSES: Number of IPv6 addresses per netif.
+ */
+#ifndef LWIP_IPV6_NUM_ADDRESSES
+#define LWIP_IPV6_NUM_ADDRESSES         3
+#endif
+
+/**
+ * LWIP_IPV6_FORWARD==1: Forward IPv6 packets across netifs
+ */
+#ifndef LWIP_IPV6_FORWARD
+#define LWIP_IPV6_FORWARD               0
+#endif
+
+/**
+ * LWIP_ICMP6==1: Enable ICMPv6 (mandatory per RFC)
+ */
+#ifndef LWIP_ICMP6
+#define LWIP_ICMP6                      (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_ICMP6_DATASIZE: bytes from original packet to send back in
+ * ICMPv6 error messages.
+ */
+#ifndef LWIP_ICMP6_DATASIZE
+#define LWIP_ICMP6_DATASIZE             8
+#endif
+
+/**
+ * LWIP_ICMP6_HL: default hop limit for ICMPv6 messages
+ */
+#ifndef LWIP_ICMP6_HL
+#define LWIP_ICMP6_HL                   255
+#endif
+
+/**
+ * LWIP_ICMP6_CHECKSUM_CHECK==1: verify checksum on ICMPv6 packets
+ */
+#ifndef LWIP_ICMP6_CHECKSUM_CHECK
+#define LWIP_ICMP6_CHECKSUM_CHECK       1
+#endif
+
+/**
+ * LWIP_IPV6_MLD==1: Enable multicast listener discovery protocol.
+ */
+#ifndef LWIP_IPV6_MLD
+#define LWIP_IPV6_MLD                   (LWIP_IPV6)
+#endif
+
+/**
+ * MEMP_NUM_MLD6_GROUP: Max number of IPv6 multicast that can be joined.
+ */
+#ifndef MEMP_NUM_MLD6_GROUP
+#define MEMP_NUM_MLD6_GROUP             4
+#endif
+
+/**
+ * LWIP_IPV6_FRAG==1: Fragment outgoing IPv6 packets that are too big.
+ */
+#ifndef LWIP_IPV6_FRAG
+#define LWIP_IPV6_FRAG                  0
+#endif
+
+/**
+ * LWIP_IPV6_REASS==1: reassemble incoming IPv6 packets that fragmented
+ */
+#ifndef LWIP_IPV6_REASS
+#define LWIP_IPV6_REASS                 (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_ND6_QUEUEING==1: queue outgoing IPv6 packets while MAC address
+ * is being resolved.
+ */
+#ifndef LWIP_ND6_QUEUEING
+#define LWIP_ND6_QUEUEING               (LWIP_IPV6)
+#endif
+
+/**
+ * MEMP_NUM_ND6_QUEUE: Max number of IPv6 packets to queue during MAC resolution.
+ */
+#ifndef MEMP_NUM_ND6_QUEUE
+#define MEMP_NUM_ND6_QUEUE              20
+#endif
+
+/**
+ * LWIP_ND6_NUM_NEIGHBORS: Number of entries in IPv6 neighbor cache
+ */
+#ifndef LWIP_ND6_NUM_NEIGHBORS
+#define LWIP_ND6_NUM_NEIGHBORS          10
+#endif
+
+/**
+ * LWIP_ND6_NUM_DESTINATIONS: number of entries in IPv6 destination cache
+ */
+#ifndef LWIP_ND6_NUM_DESTINATIONS
+#define LWIP_ND6_NUM_DESTINATIONS       10
+#endif
+
+/**
+ * LWIP_ND6_NUM_PREFIXES: number of entries in IPv6 on-link prefixes cache
+ */
+#ifndef LWIP_ND6_NUM_PREFIXES
+#define LWIP_ND6_NUM_PREFIXES           5
+#endif
+
+/**
+ * LWIP_ND6_NUM_ROUTERS: number of entries in IPv6 default router cache
+ */
+#ifndef LWIP_ND6_NUM_ROUTERS
+#define LWIP_ND6_NUM_ROUTERS            3
+#endif
+
+/**
+ * LWIP_ND6_MAX_MULTICAST_SOLICIT: max number of multicast solicit messages to send
+ * (neighbor solicit and router solicit)
+ */
+#ifndef LWIP_ND6_MAX_MULTICAST_SOLICIT
+#define LWIP_ND6_MAX_MULTICAST_SOLICIT  3
+#endif
+
+/**
+ * LWIP_ND6_MAX_UNICAST_SOLICIT: max number of unicast neighbor solicitation messages
+ * to send during neighbor reachability detection.
+ */
+#ifndef LWIP_ND6_MAX_UNICAST_SOLICIT
+#define LWIP_ND6_MAX_UNICAST_SOLICIT    3
+#endif
+
+/**
+ * Unused: See ND RFC (time in milliseconds).
+ */
+#ifndef LWIP_ND6_MAX_ANYCAST_DELAY_TIME
+#define LWIP_ND6_MAX_ANYCAST_DELAY_TIME 1000
+#endif
+
+/**
+ * Unused: See ND RFC
+ */
+#ifndef LWIP_ND6_MAX_NEIGHBOR_ADVERTISEMENT
+#define LWIP_ND6_MAX_NEIGHBOR_ADVERTISEMENT  3
+#endif
+
+/**
+ * LWIP_ND6_REACHABLE_TIME: default neighbor reachable time (in milliseconds).
+ * May be updated by router advertisement messages.
+ */
+#ifndef LWIP_ND6_REACHABLE_TIME
+#define LWIP_ND6_REACHABLE_TIME         30000
+#endif
+
+/**
+ * LWIP_ND6_RETRANS_TIMER: default retransmission timer for solicitation messages
+ */
+#ifndef LWIP_ND6_RETRANS_TIMER
+#define LWIP_ND6_RETRANS_TIMER          1000
+#endif
+
+/**
+ * LWIP_ND6_DELAY_FIRST_PROBE_TIME: Delay before first unicast neighbor solicitation
+ * message is sent, during neighbor reachability detection.
+ */
+#ifndef LWIP_ND6_DELAY_FIRST_PROBE_TIME
+#define LWIP_ND6_DELAY_FIRST_PROBE_TIME 5000
+#endif
+
+/**
+ * LWIP_ND6_ALLOW_RA_UPDATES==1: Allow Router Advertisement messages to update
+ * Reachable time and retransmission timers, and netif MTU.
+ */
+#ifndef LWIP_ND6_ALLOW_RA_UPDATES
+#define LWIP_ND6_ALLOW_RA_UPDATES       1
+#endif
+
+/**
+ * LWIP_IPV6_SEND_ROUTER_SOLICIT==1: Send router solicitation messages during
+ * network startup.
+ */
+#ifndef LWIP_IPV6_SEND_ROUTER_SOLICIT
+#define LWIP_IPV6_SEND_ROUTER_SOLICIT   1
+#endif
+
+/**
+ * LWIP_ND6_TCP_REACHABILITY_HINTS==1: Allow TCP to provide Neighbor Discovery
+ * with reachability hints for connected destinations. This helps avoid sending
+ * unicast neighbor solicitation messages.
+ */
+#ifndef LWIP_ND6_TCP_REACHABILITY_HINTS
+#define LWIP_ND6_TCP_REACHABILITY_HINTS 1
+#endif
+
+/**
+ * LWIP_IPV6_AUTOCONFIG==1: Enable stateless address autoconfiguration as per RFC 4862.
+ */
+#ifndef LWIP_IPV6_AUTOCONFIG
+#define LWIP_IPV6_AUTOCONFIG            (LWIP_IPV6)
+#endif
+
+/**
+ * LWIP_IPV6_DUP_DETECT_ATTEMPTS: Number of duplicate address detection attempts.
+ */
+#ifndef LWIP_IPV6_DUP_DETECT_ATTEMPTS
+#define LWIP_IPV6_DUP_DETECT_ATTEMPTS   1
+#endif
+
+/**
+ * LWIP_IPV6_DHCP6==1: enable DHCPv6 stateful address autoconfiguration.
+ */
+#ifndef LWIP_IPV6_DHCP6
+#define LWIP_IPV6_DHCP6                 0
 #endif
 
 /*
@@ -2038,6 +2303,13 @@
  */
 #ifndef DNS_DEBUG
 #define DNS_DEBUG                       LWIP_DBG_OFF
+#endif
+
+/**
+ * IP6_DEBUG: Enable debugging for IPv6.
+ */
+#ifndef IP6_DEBUG
+#define IP6_DEBUG                       LWIP_DBG_ON
 #endif
 
 #endif /* __LWIP_OPT_H__ */
