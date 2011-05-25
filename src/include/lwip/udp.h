@@ -183,20 +183,20 @@ void             udp_input      (struct pbuf *p, struct netif *inp);
 #if LWIP_IPV6
 struct udp_pcb * udp_new_ip6(void);
 #define          udp_bind_ip6(pcb, ip6addr, port) \
-                   udp_bind(pcb, (ip_addr_t *)ip6addr, port)
+                   udp_bind(pcb, ip6_2_ip(ip6addr), port)
 #define          udp_connect_ip6(pcb, ip6addr, port) \
-                   udp_connect(pcb, (ip_addr_t *)ip6addr, port)
+                   udp_connect(pcb, ip6_2_ip(ip6addr), port)
 #define          udp_recv_ip6(pcb, recv_ip6_fn, recv_arg) \
                    udp_recv(pcb, (udp_recv_fn)recv_ip6_fn, recv_arg)
 #define          udp_sendto_ip6(pcb, pbuf, ip6addr, port) \
-                   udp_sendto(pcb, pbuf, (ip_addr_t *)ip6addr, port)
+                   udp_sendto(pcb, pbuf, ip6_2_ip(ip6addr), port)
 #define          udp_sendto_if_ip6(pcb, pbuf, ip6addr, port, netif) \
-                   udp_sendto_if(pcb, pbuf, (ip_addr_t *)ip6addr, port, netif)
+                   udp_sendto_if(pcb, pbuf, ip6_2_ip(ip6addr), port, netif)
 #if LWIP_CHECKSUM_ON_COPY
 #define          udp_sendto_chksum_ip6(pcb, pbuf, ip6addr, port, have_chk, chksum) \
-                   udp_sendto_chksum(pcb, pbuf, (ip_addr_t *)ip6addr, port, have_chk, chksum)
+                   udp_sendto_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, have_chk, chksum)
 #define          udp_sendto_if_chksum_ip6(pcb, pbuf, ip6addr, port, netif, have_chk, chksum) \
-                   udp_sendto_if_chksum(pcb, pbuf, (ip_addr_t *)ip6addr, port, netif, have_chk, chksum)
+                   udp_sendto_if_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, netif, have_chk, chksum)
 #endif /*LWIP_CHECKSUM_ON_COPY */
 #endif /* LWIP_IPV6 */
 

@@ -112,10 +112,10 @@ err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 #if LWIP_IPV6
 struct raw_pcb * raw_new_ip6   (u8_t proto);
-#define          raw_bind_ip6(pcb, ip6addr) raw_bind(pcb, (ip_addr_t *)ip6addr)
-#define          raw_connect_ip6(pcb, ip6addr) raw_connect(pcb, (ip_addr_t *)ip6addr)
+#define          raw_bind_ip6(pcb, ip6addr) raw_bind(pcb, ip6_2_ip(ip6addr))
+#define          raw_connect_ip6(pcb, ip6addr) raw_connect(pcb, ip6_2_ip(ip6addr))
 #define          raw_recv_ip6(pcb, recv_ip6_fn, recv_arg) raw_recv(pcb, (raw_recv_fn)recv_ip6_fn, recv_arg)
-#define          raw_sendto_ip6(pcb, pbuf, ip6addr) raw_sendto(pcb, pbuf, (ip_addr_t *)ip6addr)
+#define          raw_sendto_ip6(pcb, pbuf, ip6addr) raw_sendto(pcb, pbuf, ip6_2_ip(ip6addr))
 #endif /* LWIP_IPV6 */
 
 /* The following functions are the lower layer interface to RAW. */
