@@ -644,7 +644,7 @@ tcp_new_port(void)
   static u16_t port = TCP_LOCAL_PORT_RANGE_START;
   
  again:
-  if (port++ >= TCP_LOCAL_PORT_RANGE_END) {
+  if (port++ == TCP_LOCAL_PORT_RANGE_END) {
     port = TCP_LOCAL_PORT_RANGE_START;
   }
   /* Check all PCB lists. */
