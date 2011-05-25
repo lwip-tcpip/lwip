@@ -44,6 +44,9 @@ extern "C" {
  * of IP_FRAG */
 #define LWIP_SUPPORT_CUSTOM_PBUF (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF)
 
+/* @todo: We need a mechanism to prevent wasting memory in every pbuf
+   (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
+
 #define PBUF_TRANSPORT_HLEN 20
 #if LWIP_IPV6
 #define PBUF_IP_HLEN        40

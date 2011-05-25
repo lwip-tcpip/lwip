@@ -115,35 +115,35 @@ Little-endian version, stored in network order (no htonl). */
 #define IP6_ADDR_BLOCK8(ip6addr) ((htonl((ip6addr)->addr[3])) & 0xffff)
 
 /** Copy IPv6 address - faster than ip6_addr_set: no NULL check */
-#define ip6_addr_copy(dest, src) {(dest).addr[0] = (src).addr[0]; \
-                                  (dest).addr[1] = (src).addr[1]; \
-                                  (dest).addr[2] = (src).addr[2]; \
-                                  (dest).addr[3] = (src).addr[3];}
+#define ip6_addr_copy(dest, src) do{(dest).addr[0] = (src).addr[0]; \
+                                    (dest).addr[1] = (src).addr[1]; \
+                                    (dest).addr[2] = (src).addr[2]; \
+                                    (dest).addr[3] = (src).addr[3];}while(0)
 /** Safely copy one IPv6 address to another (src may be NULL) */
-#define ip6_addr_set(dest, src)  {(dest)->addr[0] = (src) == NULL ? 0 : (src)->addr[0]; \
-                                  (dest)->addr[1] = (src) == NULL ? 0 : (src)->addr[1]; \
-                                  (dest)->addr[2] = (src) == NULL ? 0 : (src)->addr[2]; \
-                                  (dest)->addr[3] = (src) == NULL ? 0 : (src)->addr[3];}
+#define ip6_addr_set(dest, src) do{(dest)->addr[0] = (src) == NULL ? 0 : (src)->addr[0]; \
+                                   (dest)->addr[1] = (src) == NULL ? 0 : (src)->addr[1]; \
+                                   (dest)->addr[2] = (src) == NULL ? 0 : (src)->addr[2]; \
+                                   (dest)->addr[3] = (src) == NULL ? 0 : (src)->addr[3];}while(0)
 
 /** Set complete address to zero */
-#define ip6_addr_set_zero(ip6addr)      {(ip6addr)->addr[0] = 0; \
+#define ip6_addr_set_zero(ip6addr)    do{(ip6addr)->addr[0] = 0; \
                                          (ip6addr)->addr[1] = 0; \
                                          (ip6addr)->addr[2] = 0; \
-                                         (ip6addr)->addr[3] = 0;}
+                                         (ip6addr)->addr[3] = 0;}while(0)
 
 /** Set address to ipv6 'any' (no need for htonl()) */
 #define ip6_addr_set_any(ip6addr)       ip6_addr_set_zero(ip6addr)
 /** Set address to ipv6 loopback address */
-#define ip6_addr_set_loopback(ip6addr)  {(ip6addr)->addr[0] = 0; \
-                                         (ip6addr)->addr[1] = 0; \
-                                         (ip6addr)->addr[2] = 0; \
-                                         (ip6addr)->addr[3] = PP_HTONL(0x00000001UL);}
+#define ip6_addr_set_loopback(ip6addr) do{(ip6addr)->addr[0] = 0; \
+                                          (ip6addr)->addr[1] = 0; \
+                                          (ip6addr)->addr[2] = 0; \
+                                          (ip6addr)->addr[3] = PP_HTONL(0x00000001UL);}while(0)
 /** Safely copy one IPv6 address to another and change byte order
  * from host- to network-order. */
-#define ip6_addr_set_hton(dest, src) {(dest)->addr[0] = (src) == NULL ? 0 : htonl((src)->addr[0]); \
-                                      (dest)->addr[1] = (src) == NULL ? 0 : htonl((src)->addr[1]); \
-                                      (dest)->addr[2] = (src) == NULL ? 0 : htonl((src)->addr[2]); \
-                                      (dest)->addr[3] = (src) == NULL ? 0 : htonl((src)->addr[3]);}
+#define ip6_addr_set_hton(dest, src) do{(dest)->addr[0] = (src) == NULL ? 0 : htonl((src)->addr[0]); \
+                                        (dest)->addr[1] = (src) == NULL ? 0 : htonl((src)->addr[1]); \
+                                        (dest)->addr[2] = (src) == NULL ? 0 : htonl((src)->addr[2]); \
+                                        (dest)->addr[3] = (src) == NULL ? 0 : htonl((src)->addr[3]);}while(0)
 
 
 
@@ -211,28 +211,28 @@ Little-endian version, stored in network order (no htonl). */
     ((ip6addr)->addr[1] == 0UL) && \
     ((ip6addr)->addr[2] == 0UL) && \
     ((ip6addr)->addr[3] == PP_HTONL(0x00000001UL)))
-#define ip6_addr_set_allnodes_linklocal(ip6addr) {(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
+#define ip6_addr_set_allnodes_linklocal(ip6addr) do{(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
                 (ip6addr)->addr[1] = 0; \
                 (ip6addr)->addr[2] = 0; \
-                (ip6addr)->addr[3] = PP_HTONL(0x00000001UL);}
+                (ip6addr)->addr[3] = PP_HTONL(0x00000001UL);}while(0)
 
 #define ip6_addr_isallrouters_linklocal(ip6addr) (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
     ((ip6addr)->addr[1] == 0UL) && \
     ((ip6addr)->addr[2] == 0UL) && \
     ((ip6addr)->addr[3] == PP_HTONL(0x00000002UL)))
-#define ip6_addr_set_allrouters_linklocal(ip6addr) {(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
+#define ip6_addr_set_allrouters_linklocal(ip6addr) do{(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
                 (ip6addr)->addr[1] = 0; \
                 (ip6addr)->addr[2] = 0; \
-                (ip6addr)->addr[3] = PP_HTONL(0x00000002UL);}
+                (ip6addr)->addr[3] = PP_HTONL(0x00000002UL);}while(0)
 
 #define ip6_addr_issolicitednode(ip6addr) ( ((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
         ((ip6addr)->addr[2] == PP_HTONL(0x00000001UL)) && \
         (((ip6addr)->addr[3] & PP_HTONL(0xff000000UL)) == PP_HTONL(0xff000000UL)) )
 
-#define ip6_addr_set_solicitednode(ip6addr, if_id) {(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
+#define ip6_addr_set_solicitednode(ip6addr, if_id) do{(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
                 (ip6addr)->addr[1] = 0; \
                 (ip6addr)->addr[2] = PP_HTONL(0x00000001UL); \
-                (ip6addr)->addr[3] = htonl(0xff000000UL | (htonl(if_id) & 0x00ffffffUL));}
+                (ip6addr)->addr[3] = htonl(0xff000000UL | (htonl(if_id) & 0x00ffffffUL));}while(0)
 
 
 /* IPv6 address states. */

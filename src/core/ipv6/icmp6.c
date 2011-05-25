@@ -46,7 +46,7 @@
 #include "lwip/icmp6.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/ip6_chksum.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 #include "lwip/nd6.h"
@@ -63,7 +63,7 @@
 #endif
 
 /* Forward declarations */
-static void icmp6_send_response(struct pbuf *p, u8_t type, u8_t code, u32_t data);
+static void icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type);
 
 
 /**
@@ -96,8 +96,8 @@ icmp6_input(struct pbuf *p, struct netif *inp)
   icmp6hdr = (struct icmp6_hdr *)p->payload;
 
 #if LWIP_ICMP6_CHECKSUM_CHECK
-  if (ip6_chksum_pseudo(p, ip6_current_src_addr(), ip6_current_dest_addr(),
-                         IP6_NEXTH_ICMP6, p->tot_len) != 0) {
+  if (ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->tot_len, ip6_current_src_addr(),
+                        ip6_current_dest_addr()) != 0) {
     /* Checksum failed */
     pbuf_free(p);
     ICMP6_STATS_INC(icmp6.chkerr);
@@ -171,8 +171,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
     ((struct icmp6_echo_hdr *)(r->payload))->type = ICMP6_TYPE_EREP;
     ((struct icmp6_echo_hdr *)(r->payload))->chksum = 0;
     ((struct icmp6_echo_hdr *)(r->payload))->chksum = ip6_chksum_pseudo(r,
-        reply_src, ip6_current_src_addr(),
-        IP6_NEXTH_ICMP6, r->tot_len);
+        IP6_NEXTH_ICMP6, r->tot_len, reply_src, ip6_current_src_addr());
 
     /* Send reply. */
     ICMP6_STATS_INC(icmp6.xmit);
@@ -201,7 +200,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
 void
 icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
 {
-  icmp6_send_response(p, ICMP6_TYPE_DUR, c, 0);
+  icmp6_send_response(p, c, 0, ICMP6_TYPE_DUR);
 }
 
 /**
@@ -214,7 +213,7 @@ icmp6_dest_unreach(struct pbuf *p, enum icmp6_dur_code c)
 void
 icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
 {
-  icmp6_send_response(p, ICMP6_TYPE_PTB, 0, mtu);
+  icmp6_send_response(p, 0, mtu, ICMP6_TYPE_PTB);
 }
 
 /**
@@ -227,7 +226,7 @@ icmp6_packet_too_big(struct pbuf *p, u32_t mtu)
 void
 icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
 {
-  icmp6_send_response(p, ICMP6_TYPE_TE, c, 0);
+  icmp6_send_response(p, c, 0, ICMP6_TYPE_TE);
 }
 
 /**
@@ -241,7 +240,7 @@ icmp6_time_exceeded(struct pbuf *p, enum icmp6_te_code c)
 void
 icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
 {
-  icmp6_send_response(p, ICMP6_TYPE_PP, c, pointer);
+  icmp6_send_response(p, c, pointer, ICMP6_TYPE_PP);
 }
 
 /**
@@ -249,12 +248,12 @@ icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer)
  *
  * @param p the input packet for which the response should be sent,
  *          p->payload pointing to the IPv6 header
- * @param type Type of the ICMPv6 header
  * @param code Code of the ICMPv6 header
  * @param data Additional 32-bit parameter in the ICMPv6 header
+ * @param type Type of the ICMPv6 header
  */
 static void
-icmp6_send_response(struct pbuf *p, u8_t type, u8_t code, u32_t data)
+icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
 {
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
@@ -281,7 +280,7 @@ icmp6_send_response(struct pbuf *p, u8_t type, u8_t code, u32_t data)
           IP6_HLEN + LWIP_ICMP6_DATASIZE);
 
   /* Select an address to use as source. */
-  reply_src = ip6_select_source_address(current_netif, ip6_current_src_addr());
+  reply_src = ip6_select_source_address(ip_current_netif(), ip6_current_src_addr());
   if (reply_src == NULL) {
     /* drop */
     pbuf_free(q);
@@ -291,13 +290,12 @@ icmp6_send_response(struct pbuf *p, u8_t type, u8_t code, u32_t data)
 
   /* calculate checksum */
   icmp6hdr->chksum = 0;
-  icmp6hdr->chksum = ip6_chksum_pseudo(q, reply_src, ip6_current_src_addr(),
-      IP6_NEXTH_ICMP6, q->tot_len);
+  icmp6hdr->chksum = ip6_chksum_pseudo(q, IP6_NEXTH_ICMP6, q->tot_len,
+    reply_src, ip6_current_src_addr());
 
   ICMP6_STATS_INC(icmp6.xmit);
   ip6_output(q, reply_src, ip6_current_src_addr(), LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6);
   pbuf_free(q);
 }
-
 
 #endif /* LWIP_ICMP6 && LWIP_IPV6 */

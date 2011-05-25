@@ -48,13 +48,13 @@
 #include "lwip/pbuf.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/ip6_chksum.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp6.h"
 
 #include <string.h>
 
-#define ETHTYPE_IPV6        0x86dd
+#define ETHTYPE_IPV6        0x86DD
 
 /** The ethernet address */
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -89,7 +89,30 @@ PACK_STRUCT_END
 
 #define SIZEOF_ETH_HDR (14 + ETH_PAD_SIZE)
 
-static err_t ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst);
+/**
+ * Send an IPv6 packet on the network using netif->linkoutput
+ * The ethernet header is filled in before sending.
+ *
+ * @params netif the lwIP network interface on which to send the packet
+ * @params p the packet to send, p->payload pointing to the (uninitialized) ethernet header
+ * @params src the source MAC address to be copied into the ethernet header
+ * @params dst the destination MAC address to be copied into the ethernet header
+ * @return ERR_OK if the packet was sent, any other err_t on failure
+ */
+static err_t
+ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
+{
+  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
+
+  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethip6!",
+              (netif->hwaddr_len == 6));
+  SMEMCPY(&ethhdr->dest, dst, 6);
+  SMEMCPY(&ethhdr->src, src, 6);
+  ethhdr->type = PP_HTONS(ETHTYPE_IPV6);
+  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethip6_send: sending packet %p\n", (void *)p));
+  /* send the packet */
+  return netif->linkoutput(netif, p);
+}
 
 /**
  * Resolve and fill-in Ethernet address header for outgoing IPv6 packet.
@@ -167,31 +190,6 @@ ethip6_output(struct netif *netif, struct pbuf *q, ip6_addr_t *ip6addr)
   nd6_queue_packet(i, q);
 
   return ERR_OK;
-}
-
-/**
- * Send an IPv6 packet on the network using netif->linkoutput
- * The ethernet header is filled in before sending.
- *
- * @params netif the lwIP network interface on which to send the packet
- * @params p the packet to send, p->payload pointing to the (uninitialized) ethernet header
- * @params src the source MAC address to be copied into the ethernet header
- * @params dst the destination MAC address to be copied into the ethernet header
- * @return ERR_OK if the packet was sent, any other err_t on failure
- */
-static err_t
-ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
-{
-  struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
-
-  LWIP_ASSERT("netif->hwaddr_len must be 6 for ethip6!",
-              (netif->hwaddr_len == 6));
-  SMEMCPY(&ethhdr->dest, dst, 6);
-  SMEMCPY(&ethhdr->src, src, 6);
-  ethhdr->type = PP_HTONS(ETHTYPE_IPV6);
-  LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("ethip6_send: sending packet %p\n", (void *)p));
-  /* send the packet */
-  return netif->linkoutput(netif, p);
 }
 
 #endif /* LWIP_IPV6 && LWIP_ETHERNET */

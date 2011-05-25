@@ -2309,7 +2309,7 @@
  * IP6_DEBUG: Enable debugging for IPv6.
  */
 #ifndef IP6_DEBUG
-#define IP6_DEBUG                       LWIP_DBG_ON
+#define IP6_DEBUG                       LWIP_DBG_OFF
 #endif
 
 #endif /* __LWIP_OPT_H__ */

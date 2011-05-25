@@ -57,7 +57,7 @@
 #include "arch/perf.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/ip6_chksum.h"
+#include "lwip/inet_chksum.h"
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
@@ -104,6 +104,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
   u8_t hdrlen;
   err_t err;
+  u16_t chksum;
 
   PERF_START;
 
@@ -121,62 +122,26 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
-  if ((
-#if LWIP_IPV6
-       (ip6_current_header() != NULL) &&
-       ip6_addr_ismulticast(ip6_current_dest_addr())) ||
-      ((ip_current_header() != NULL) &&
-#endif /* LWIP_IPV6 */
-      (ip_addr_isbroadcast(ip_current_dest_addr(), inp) ||
-       ip_addr_ismulticast(ip_current_dest_addr())))) {
+  if ((!ip_current_is_v6() && ip_addr_isbroadcast(ip_current_dest_addr(), inp)) ||
+       ipX_addr_ismulticast(ip_current_is_v6(), ipX_current_dest_addr())) {
     TCP_STATS_INC(tcp.proterr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
 #if CHECKSUM_CHECK_TCP
-#if LWIP_IPV6
-  if (ip6_current_header() != NULL) {
-    if (ip6_chksum_pseudo(p, ip6_current_src_addr(), ip6_current_dest_addr(),
-        IP6_NEXTH_TCP, p->tot_len) != 0) {
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
-            ip6_chksum_pseudo(p, ip6_current_src_addr(), ip6_current_dest_addr(),
-                              IP6_NEXTH_TCP, p->tot_len)));
-  #if TCP_DEBUG
-      tcp_debug_print(tcphdr);
-  #endif /* TCP_DEBUG */
-      TCP_STATS_INC(tcp.chkerr);
-      TCP_STATS_INC(tcp.drop);
-      snmp_inc_tcpinerrs();
-      pbuf_free(p);
-      return;
-    }
-  }
-  else
-#endif /* LWIP_IPV6 */
   /* Verify TCP checksum. */
-  if (inet_chksum_pseudo(p, ip_current_src_addr(), ip_current_dest_addr(),
-      IP_PROTO_TCP, p->tot_len) != 0) {
+  chksum = ipX_chksum_pseudo(ip_current_is_v6(), p, IP_PROTO_TCP, p->tot_len,
+                             ipX_current_src_addr(), ipX_current_dest_addr());
+  if (chksum != 0) {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
-        inet_chksum_pseudo(p, ip_current_src_addr(), ip_current_dest_addr(),
-      IP_PROTO_TCP, p->tot_len)));
-#if TCP_DEBUG
+        chksum));
     tcp_debug_print(tcphdr);
-#endif /* TCP_DEBUG */
     TCP_STATS_INC(tcp.chkerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 #endif /* CHECKSUM_CHECK_TCP */
 
@@ -187,10 +152,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
     TCP_STATS_INC(tcp.lenerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
   /* Convert fields in TCP header to host byte order. */
@@ -214,18 +176,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
     LWIP_ASSERT("tcp_input: active pcb->state != LISTEN", pcb->state != LISTEN);
     if (pcb->remote_port == tcphdr->src &&
         pcb->local_port == tcphdr->dest &&
-        ((
-#if LWIP_IPV6
-          pcb->isipv6 &&
-          (ip6_current_header() != NULL) &&
-          ip6_addr_cmp(&(pcb->remote_ip.ip6), ip6_current_src_addr()) &&
-          ip6_addr_cmp(&(pcb->local_ip.ip6), ip6_current_dest_addr())) ||
-         (!pcb->isipv6 &&
-         (ip_current_header() != NULL) &&
-#endif /* LWIP_IPV6 */
-          ip_addr_cmp(&(pcb->remote_ip.ip4), ip_current_src_addr()) &&
-          ip_addr_cmp(&(pcb->local_ip.ip4), ip_current_dest_addr())))) {
-
+        IP_PCB_IPVER_INPUT_MATCH(pcb) &&
+        ipX_addr_cmp(ip_current_is_v6(), &pcb->remote_ip, ipX_current_src_addr()) &&
+        ipX_addr_cmp(ip_current_is_v6(),&pcb->local_ip, ipX_current_dest_addr())) {
       /* Move this PCB to the front of the list so that subsequent
          lookups will be faster (we exploit locality in TCP segment
          arrivals). */
@@ -248,17 +201,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("tcp_input: TIME-WAIT pcb->state == TIME-WAIT", pcb->state == TIME_WAIT);
       if (pcb->remote_port == tcphdr->src &&
           pcb->local_port == tcphdr->dest &&
-          ((
-#if LWIP_IPV6
-            pcb->isipv6 &&
-            (ip6_current_header() != NULL) &&
-            ip6_addr_cmp(&(pcb->remote_ip.ip6), ip6_current_src_addr()) &&
-            ip6_addr_cmp(&(pcb->local_ip.ip6), ip6_current_dest_addr())) ||
-           (!pcb->isipv6 &&
-           (ip_current_header() != NULL) &&
-#endif /* LWIP_IPV6 */
-            ip_addr_cmp(&(pcb->remote_ip.ip4), ip_current_src_addr()) &&
-            ip_addr_cmp(&(pcb->local_ip.ip4), ip_current_dest_addr())))) {
+          IP_PCB_IPVER_INPUT_MATCH(pcb) &&
+          ipX_addr_cmp(ip_current_is_v6(), &pcb->remote_ip, ipX_current_src_addr()) &&
+          ipX_addr_cmp(ip_current_is_v6(),&pcb->local_ip, ipX_current_dest_addr())) {
         /* We don't really care enough to move this PCB to the front
            of the list since we are not very likely to receive that
            many segments for connections in TIME-WAIT. */
@@ -274,53 +219,31 @@ tcp_input(struct pbuf *p, struct netif *inp)
     prev = NULL;
     for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if (lpcb->local_port == tcphdr->dest) {
+#if LWIP_IPV6
+        if (lpcb->accept_any_ip_version) {
+          /* found an ANY-match */
 #if SO_REUSE
-#if LWIP_IPV6
-        if (lpcb->isipv6 &&
-            (ip6_current_header() != NULL)) {
-          if (ip6_addr_cmp(&(lpcb->local_ip.ip6), ip6_current_dest_addr())) {
-            /* found an exact match */
-            break;
-          } else if(ip6_addr_isany(&(lpcb->local_ip.ip6))) {
-            /* found an ANY-match */
-            lpcb_any = lpcb;
-            lpcb_prev = prev;
-          }
-        }
-        else if (!lpcb->isipv6 &&
-                 (ip_current_header() != NULL))
-#endif /* LWIP_IPV6 */
-        {
-          if (ip_addr_cmp(&(lpcb->local_ip.ip4), ip_current_dest_addr())) {
-            /* found an exact match */
-            break;
-          } else if(ip_addr_isany(&(lpcb->local_ip.ip4))) {
-            /* found an ANY-match */
-            lpcb_any = lpcb;
-            lpcb_prev = prev;
-          }
-        }
+          lpcb_any = lpcb;
+          lpcb_prev = prev;
 #else /* SO_REUSE */
-#if LWIP_IPV6
-        if (lpcb->isipv6 &&
-            (ip6_current_header() != NULL)) {
-          if (ip6_addr_cmp(&(lpcb->local_ip.ip6), ip6_current_dest_addr()) ||
-              ip6_addr_isany(&(lpcb->local_ip.ip6))) {
+          break;
+#endif /* SO_REUSE */
+        } else
+#endif /* LWIP_IPV6 */
+        if (IP_PCB_IPVER_INPUT_MATCH(lpcb)) {
+          if (ipX_addr_cmp(ip_current_is_v6(), &lpcb->local_ip, ipX_current_dest_addr())) {
             /* found an exact match */
             break;
-          }
-        }
-        else if (!lpcb->isipv6 &&
-                 (ip_current_header() != NULL))
-#endif /* LWIP_IPV6 */
-        {
-          if (ip_addr_cmp(&(lpcb->local_ip.ip4), ip_current_dest_addr()) ||
-              ip_addr_isany(&(lpcb->local_ip.ip4))) {
-            /* found a match */
+          } else if (ipX_addr_isany(ip_current_is_v6(), &lpcb->local_ip)) {
+            /* found an ANY-match */
+#if SO_REUSE
+            lpcb_any = lpcb;
+            lpcb_prev = prev;
+#else /* SO_REUSE */
             break;
+ #endif /* SO_REUSE */
           }
         }
-#endif /* SO_REUSE */
       }
       prev = (struct tcp_pcb *)lpcb;
     }
@@ -387,10 +310,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* Drop incoming packets because pcb is "full" (only if the incoming
            segment contains data). */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
-        TCP_STATS_INC(tcp.drop);
-        snmp_inc_tcpinerrs();
-        pbuf_free(p);
-        return;
+        goto dropped;
       }
     }
     tcp_input_pcb = pcb;
@@ -493,25 +413,19 @@ aborted:
     if (!(TCPH_FLAGS(tcphdr) & TCP_RST)) {
       TCP_STATS_INC(tcp.proterr);
       TCP_STATS_INC(tcp.drop);
-#if LWIP_IPV6
-      if (ip6_current_header() != NULL) {
-        tcp_rst_ip6(ackno, seqno + tcplen,
-          ip6_current_dest_addr(), ip6_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
-      else
-#endif /* LWIP_IPV6 */
-      {
-        tcp_rst(ackno, seqno + tcplen,
-          ip_current_dest_addr(), ip_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
+      tcp_rst(ackno, seqno + tcplen, ipX_current_dest_addr(),
+        ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
     }
     pbuf_free(p);
   }
 
   LWIP_ASSERT("tcp_input: tcp_pcbs_sane()", tcp_pcbs_sane());
   PERF_STOP("tcp_input");
+  return;
+dropped:
+  TCP_STATS_INC(tcp.drop);
+  snmp_inc_tcpinerrs();
+  pbuf_free(p);
 }
 
 /**
@@ -538,19 +452,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* For incoming segments with the ACK flag set, respond with a
        RST. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
-#if LWIP_IPV6
-    if (ip6_current_header() != NULL) {
-      tcp_rst_ip6(ackno + 1, seqno + tcplen,
-        ip6_current_dest_addr(), ip6_current_src_addr(),
-        tcphdr->dest, tcphdr->src);
-    }
-    else
-#endif /* LWIP_IPV6 */
-    {
-      tcp_rst(ackno + 1, seqno + tcplen,
-        ip_current_dest_addr(), ip_current_src_addr(),
-        tcphdr->dest, tcphdr->src);
-    }
+    tcp_rst(ackno + 1, seqno + tcplen, ipX_current_dest_addr(),
+      ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
 #if TCP_LISTEN_BACKLOG
@@ -573,17 +476,10 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
 #if LWIP_IPV6
-    npcb->isipv6 = pcb->isipv6;
-    if (npcb->isipv6) {
-      ip6_addr_copy(npcb->local_ip.ip6, *ip6_current_dest_addr());
-      ip6_addr_copy(npcb->remote_ip.ip6, *ip6_current_src_addr());
-    }
-    else
+    npcb->isipv6 = ip_current_is_v6();
 #endif /* LWIP_IPV6 */
-    {
-      ip_addr_copy(npcb->local_ip.ip4, *ip_current_dest_addr());
-      ip_addr_copy(npcb->remote_ip.ip4, *ip_current_src_addr());
-    }
+    ipX_addr_copy(ip_current_is_v6(), npcb->local_ip, *ipX_current_dest_addr());
+    ipX_addr_copy(ip_current_is_v6(), npcb->remote_ip, *ipX_current_src_addr());
     npcb->local_port = pcb->local_port;
     npcb->remote_port = tcphdr->src;
     npcb->state = SYN_RCVD;
@@ -605,15 +501,8 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     /* Parse any options in the SYN. */
     tcp_parseopt(npcb);
 #if TCP_CALCULATE_EFF_SEND_MSS
-#if LWIP_IPV6
-    if (npcb->isipv6) {
-      npcb->mss = tcp_eff_send_mss_ip6(npcb->mss, &(npcb->local_ip.ip6), &(npcb->remote_ip.ip6));
-    }
-    else
-#endif /* LWIP_IPV6 */
-    {
-      npcb->mss = tcp_eff_send_mss(npcb->mss, &(npcb->remote_ip.ip4));
-    }
+    npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip,
+      &npcb->remote_ip, npcb->isipv6);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
     snmp_inc_tcppassiveopens();
@@ -655,17 +544,8 @@ tcp_timewait_input(struct tcp_pcb *pcb)
        should be sent in reply */
     if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
       /* If the SYN is in the window it is an error, send a reset */
-#if LWIP_IPV6
-      if (ip6_current_header() != NULL) {
-        tcp_rst_ip6(ackno, seqno + tcplen, ip6_current_dest_addr(), ip6_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
-      else
-#endif /* LWIP_IPV6 */
-      {
-        tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
+      tcp_rst(ackno, seqno + tcplen, ipX_current_dest_addr(),
+        ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
       return ERR_OK;
     }
   } else if (flags & TCP_FIN) {
@@ -762,15 +642,8 @@ tcp_process(struct tcp_pcb *pcb)
       pcb->state = ESTABLISHED;
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-#if LWIP_IPV6
-      if (pcb->isipv6) {
-        pcb->mss = tcp_eff_send_mss_ip6(pcb->mss, &(pcb->local_ip.ip6), &(pcb->remote_ip.ip6));
-      }
-      else
-#endif /* LWIP_IPV6 */
-      {
-        pcb->mss = tcp_eff_send_mss(pcb->mss, &(pcb->remote_ip.ip4));
-      }
+      pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip,
+        pcb->isipv6);
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
       /* Set ssthresh again after changing pcb->mss (already set in tcp_connect
@@ -806,17 +679,8 @@ tcp_process(struct tcp_pcb *pcb)
     /* received ACK? possibly a half-open connection */
     else if (flags & TCP_ACK) {
       /* send a RST to bring the other side in a non-synchronized state. */
-#if LWIP_IPV6
-      if (ip6_current_header() != NULL) {
-        tcp_rst_ip6(ackno, seqno + tcplen, ip6_current_dest_addr(), ip6_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
-      else
-#endif /* LWIP_IPV6 */
-      {
-        tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-          tcphdr->dest, tcphdr->src);
-      }
+      tcp_rst(ackno, seqno + tcplen, ipX_current_dest_addr(),
+        ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
     }
     break;
   case SYN_RCVD:
@@ -858,17 +722,8 @@ tcp_process(struct tcp_pcb *pcb)
         }
       } else {
         /* incorrect ACK number, send RST */
-#if LWIP_IPV6
-        if (ip6_current_header() != NULL) {
-          tcp_rst_ip6(ackno, seqno + tcplen, ip6_current_dest_addr(), ip6_current_src_addr(),
-                  tcphdr->dest, tcphdr->src);
-        }
-        else
-#endif /* LWIP_IPV6 */
-        {
-          tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(), ip_current_src_addr(),
-                  tcphdr->dest, tcphdr->src);
-        }
+        tcp_rst(ackno, seqno + tcplen, ipX_current_dest_addr(),
+          ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
       }
     } else if ((flags & TCP_SYN) && (seqno == pcb->rcv_nxt - 1)) {
       /* Looks like another copy of the SYN - retransmit our SYN-ACK */

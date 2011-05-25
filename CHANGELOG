@@ -6,7 +6,13 @@ HISTORY
 
  ++ New features:
 
-    2011-05-17: Patch by Ivan Delamer (only checked in by Simon Goldschmidt)
+  2011-05-25: Simon Goldschmidt
+  * again nearly the whole stack, renamed ip.c to ip4.c, ip_addr.c to ip4_addr.c,
+    combined ipv4/ipv6 inet_chksum.c, added ip.h, ip_addr.h: Combined IPv4
+    and IPv6 code where possible, added defines to access IPv4/IPv6 in non-IP
+    code so that the code is more readable.
+
+  2011-05-17: Patch by Ivan Delamer (only checked in by Simon Goldschmidt)
   * nearly the whole stack: Finally, we got decent IPv6 support, big thanks to
     Ivan! (this is work in progress: we're just post release anyway :-)
 

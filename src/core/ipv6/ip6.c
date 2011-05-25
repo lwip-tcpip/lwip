@@ -61,17 +61,6 @@
 #include "lwip/stats.h"
 
 
-/** Header of the input IPv6 packet currently being processed. */
-const struct ip6_hdr *current_ip6_header;
-/** Total header length of current_ip6_header (i.e. after this, the UDP/TCP header starts) */
-u16_t current_ip6_header_tot_len;
-/** Source IPv6 address of current_header */
-ip6_addr_t current_ip6hdr_src;
-/** Destination IPv6 address of current_header */
-ip6_addr_t current_ip6hdr_dest;
-
-
-
 /**
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
  * a netif following a sequence of heuristics:
@@ -380,11 +369,11 @@ ip6_input(struct pbuf *p, struct netif *inp)
   pbuf_realloc(p, IP6_HLEN + IP6H_PLEN(ip6hdr));
 
   /* copy IP addresses to aligned ip6_addr_t */
-  ip6_addr_copy(current_ip6hdr_dest, ip6hdr->dest);
-  ip6_addr_copy(current_ip6hdr_src, ip6hdr->src);
+  ip6_addr_copy(ip_data.current_iphdr_dest.ip6, ip6hdr->dest);
+  ip6_addr_copy(ip_data.current_iphdr_src.ip6, ip6hdr->src);
 
   /* current header pointer. */
-  current_ip6_header = ip6hdr;
+  ip_data.current_ip6_header = ip6hdr;
 
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
@@ -468,13 +457,13 @@ netif_found:
   }
 
   /* current netif pointer. */
-  current_netif = inp;
+  ip_data.current_netif = inp;
 
   /* Save next header type. */
   nexth = IP6H_NEXTH(ip6hdr);
 
   /* Init header length. */
-  hlen = current_ip6_header_tot_len = IP6_HLEN;
+  hlen = ip_data.current_ip_header_tot_len = IP6_HLEN;
 
   /* Move to payload. */
   pbuf_header(p, -IP6_HLEN);
@@ -490,7 +479,7 @@ netif_found:
 
       /* Get the header length. */
       hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
-      current_ip6_header_tot_len += hlen;
+      ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
       if (hlen > p->len) {
@@ -513,7 +502,7 @@ netif_found:
 
       /* Get the header length. */
       hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
-      current_ip6_header_tot_len += hlen;
+      ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
       if (hlen > p->len) {
@@ -536,7 +525,7 @@ netif_found:
 
       /* Get the header length. */
       hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
-      current_ip6_header_tot_len += hlen;
+      ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
       if (hlen > p->len) {
@@ -565,7 +554,7 @@ netif_found:
 
       /* Fragment Header length. */
       hlen = 8;
-      current_ip6_header_tot_len += hlen;
+      ip_data.current_ip_header_tot_len += hlen;
 
       /* Make sure this header fits in current pbuf. */
       if (hlen > p->len) {
@@ -601,7 +590,7 @@ netif_found:
          * Update all our variables and pointers and continue. */
         ip6hdr = (struct ip6_hdr *)p->payload;
         nexth = IP6H_NEXTH(ip6hdr);
-        hlen = current_ip6_header_tot_len = IP6_HLEN;
+        hlen = ip_data.current_ip_header_tot_len = IP6_HLEN;
         pbuf_header(p, -IP6_HLEN);
 
 #else /* LWIP_IPV6_REASS */
@@ -623,7 +612,7 @@ netif_found:
 options_done:
 
   /* p points to IPv6 header again. */
-  pbuf_header(p, current_ip6_header_tot_len);
+  pbuf_header(p, ip_data.current_ip_header_tot_len);
 
   /* send to upper layers */
   LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: \n"));
@@ -645,21 +634,21 @@ options_done:
     case IP6_NEXTH_UDPLITE:
 #endif /* LWIP_UDPLITE */
       /* Point to payload. */
-      pbuf_header(p, -current_ip6_header_tot_len);
+      pbuf_header(p, -ip_data.current_ip_header_tot_len);
       udp_input(p, inp);
       break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case IP6_NEXTH_TCP:
       /* Point to payload. */
-      pbuf_header(p, -current_ip6_header_tot_len);
+      pbuf_header(p, -ip_data.current_ip_header_tot_len);
       tcp_input(p, inp);
       break;
 #endif /* LWIP_TCP */
 #if LWIP_ICMP6
     case IP6_NEXTH_ICMP6:
       /* Point to payload. */
-      pbuf_header(p, -current_ip6_header_tot_len);
+      pbuf_header(p, -ip_data.current_ip_header_tot_len);
       icmp6_input(p, inp);
       break;
 #endif /* LWIP_ICMP */
@@ -668,7 +657,7 @@ options_done:
       /* send ICMP parameter problem unless it was a multicast or ICMPv6 */
       if ((!ip6_addr_ismulticast(ip6_current_dest_addr())) &&
           (IP6H_NEXTH(ip6hdr) != IP6_NEXTH_ICMP6)) {
-        icmp6_param_problem(p, ICMP6_PP_HEADER, current_ip6_header_tot_len - hlen);
+        icmp6_param_problem(p, ICMP6_PP_HEADER, ip_data.current_ip_header_tot_len - hlen);
       }
 #endif /* LWIP_ICMP */
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_input: Unsupported transport protocol %"U16_F"\n", IP6H_NEXTH(ip6hdr)));
@@ -680,11 +669,11 @@ options_done:
   }
 
 ip6_input_cleanup:
-  current_netif = NULL;
-  current_ip6_header = NULL;
-  current_ip6_header_tot_len = 0;
-  ip6_addr_set_any(&current_ip6hdr_src);
-  ip6_addr_set_any(&current_ip6hdr_dest);
+  ip_data.current_netif = NULL;
+  ip_data.current_ip6_header = NULL;
+  ip_data.current_ip_header_tot_len = 0;
+  ip6_addr_set_any(&ip_data.current_iphdr_src.ip6);
+  ip6_addr_set_any(&ip_data.current_iphdr_dest.ip6);
 
   return ERR_OK;
 }
@@ -727,7 +716,7 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
   LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
   /* Should the IPv6 header be generated or is it already included in p? */
-  if (dest != IP6_HDRINCL) {
+  if (dest != IP_HDRINCL) {
     /* generate IPv6 header */
     if (pbuf_header(p, IP6_HLEN)) {
       LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: not enough room for IPv6 header in pbuf\n"));
@@ -883,9 +872,9 @@ ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
     return ERR_RTE;
   }
 
-  netif->addr_hint = addr_hint;
+  NETIF_SET_HWADDRHINT(netif, addr_hint);
   err = ip6_output_if(p, src, dest, hl, tc, nexth, netif);
-  netif->addr_hint = NULL;
+  NETIF_SET_HWADDRHINT(netif, NULL);
 
   return err;
 }

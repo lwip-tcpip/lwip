@@ -1797,7 +1797,7 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
   u8_t level;
 
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  snmp_iptooid(&pcb->local_ip, &udpidx[0]);
+  snmp_iptooid(ipX_2_ip(&pcb->local_ip), &udpidx[0]);
   udpidx[4] = pcb->local_port;
 
   udp_rn = &udp_root;
@@ -1850,7 +1850,7 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
   u8_t bindings, fc, level, del_cnt;
 
   LWIP_ASSERT("pcb != NULL", pcb != NULL);
-  snmp_iptooid(&pcb->local_ip, &udpidx[0]);
+  snmp_iptooid(ipX_2_ip(&pcb->local_ip), &udpidx[0]);
   udpidx[4] = pcb->local_port;
 
   /* count PCBs for a given binding
@@ -1859,7 +1859,7 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
   npcb = udp_pcbs;
   while ((npcb != NULL))
   {
-    if (ip_addr_cmp(&npcb->local_ip, &pcb->local_ip) &&
+    if (ipX_addr_cmp(0, &npcb->local_ip, &pcb->local_ip) &&
         (npcb->local_port == udpidx[4]))
     {
       bindings++;
@@ -3881,17 +3881,17 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 {
   u8_t id;
   struct udp_pcb *pcb;
-  ip_addr_t ip;
+  ipX_addr_t ip;
   u16_t port;
 
   LWIP_UNUSED_ARG(len);
-  snmp_oidtoip(&od->id_inst_ptr[1], &ip);
+  snmp_oidtoip(&od->id_inst_ptr[1], (ip_addr_t*)&ip);
   LWIP_ASSERT("invalid port", (od->id_inst_ptr[5] >= 0) && (od->id_inst_ptr[5] <= 0xffff));
   port = (u16_t)od->id_inst_ptr[5];
 
   pcb = udp_pcbs;
   while ((pcb != NULL) &&
-         !(ip_addr_cmp(&pcb->local_ip, &ip) &&
+         !(ipX_addr_cmp(0, &pcb->local_ip, &ip) &&
            (pcb->local_port == port)))
   {
     pcb = pcb->next;
@@ -3905,8 +3905,8 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
     {
       case 1: /* udpLocalAddress */
         {
-          ip_addr_t *dst = (ip_addr_t*)value;
-          *dst = pcb->local_ip;
+          ipX_addr_t *dst = (ipX_addr_t*)value;
+          ipX_addr_copy(0, *dst, pcb->local_ip);
         }
         break;
       case 2: /* udpLocalPort */

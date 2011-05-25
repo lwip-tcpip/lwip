@@ -367,6 +367,11 @@ s8_t netif_matches_ip6_addr(struct netif * netif, ip6_addr_t * ip6addr);
 void netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit);
 #endif /* LWIP_IPV6 */
 
+#if LWIP_NETIF_HWADDRHINT
+#define NETIF_SET_HWADDRHINT(netif, hint) ((netif)->addr_hint = (hint))
+#else /* LWIP_NETIF_HWADDRHINT */
+#define NETIF_SET_HWADDRHINT(netif, hint)
+#endif /* LWIP_NETIF_HWADDRHINT */
 
 #ifdef __cplusplus
 }

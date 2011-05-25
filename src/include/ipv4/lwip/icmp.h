@@ -37,6 +37,10 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
+#if LWIP_IPV6 && LWIP_ICMP6
+#include "lwip/icmp6.h"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -103,6 +107,16 @@ void icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t);
 void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 
 #endif /* LWIP_ICMP */
+
+#if (LWIP_IPV6 && LWIP_ICMP6)
+#define icmp_port_unreach(isipv6, pbuf) ((isipv6) ? \
+                                         icmp6_dest_unreach(pbuf, ICMP6_DUR_PORT) : \
+                                         icmp_dest_unreach(pbuf, ICMP_DUR_PORT))
+#elif LWIP_ICMP
+#define icmp_port_unreach(isipv6, pbuf) icmp_dest_unreach(pbuf, ICMP_DUR_PORT)
+#else /* (LWIP_IPV6 && LWIP_ICMP6) || LWIP_ICMP*/
+#define icmp_port_unreach(isipv6, pbuf)
+#endif /* (LWIP_IPV6 && LWIP_ICMP6) || LWIP_ICMP*/
 
 #ifdef __cplusplus
 }

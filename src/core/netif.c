@@ -202,9 +202,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   netif->state = state;
   netif->num = netifnum++;
   netif->input = input;
-#if LWIP_NETIF_HWADDRHINT
-  netif->addr_hint = NULL;
-#endif /* LWIP_NETIF_HWADDRHINT*/
+  NETIF_SET_HWADDRHINT(netif, NULL);
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
 #endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
@@ -365,10 +363,10 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
     pcb = tcp_active_pcbs;
     while (pcb != NULL) {
       /* PCB bound to current local interface address? */
-      if (ip_addr_cmp(&(pcb->local_ip.ip4), &(netif->ip_addr))
+      if (ip_addr_cmp(ipX_2_ip(&pcb->local_ip), &(netif->ip_addr))
 #if LWIP_AUTOIP
         /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
-        && !ip_addr_islinklocal(&(pcb->local_ip.ip4))
+        && !ip_addr_islinklocal(ipX_2_ip(&pcb->local_ip))
 #endif /* LWIP_AUTOIP */
         ) {
         /* this connection must be aborted */
@@ -382,11 +380,11 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
     }
     for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       /* PCB bound to current local interface address? */
-      if ((!(ip_addr_isany(&(lpcb->local_ip.ip4)))) &&
-          (ip_addr_cmp(&(lpcb->local_ip.ip4), &(netif->ip_addr)))) {
+      if ((!(ip_addr_isany(ipX_2_ip(&lpcb->local_ip)))) &&
+          (ip_addr_cmp(ipX_2_ip(&lpcb->local_ip), &(netif->ip_addr)))) {
         /* The PCB is listening to the old ipaddr and
          * is set to listen to the new one instead */
-        ip_addr_set(&(lpcb->local_ip.ip4), ipaddr);
+        ip_addr_set(ipX_2_ip(&lpcb->local_ip), ipaddr);
       }
     }
   }

@@ -143,7 +143,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 
   msg.function = do_getaddr;
   msg.msg.conn = conn;
-  msg.msg.msg.ad.ipaddr = addr;
+  msg.msg.msg.ad.ipaddr = ip_2_ipX(addr);
   msg.msg.msg.ad.port = port;
   msg.msg.msg.ad.local = local;
   err = TCPIP_APIMSG(&msg);
@@ -481,11 +481,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     buf->p = p;
     buf->ptr = p;
     buf->port = 0;
-#if LWIP_IPV6
-    ip6_addr_set_any(&buf->addr.ip6);
-#else /* LWIP_IPV6 */
-    ip_addr_set_any(&buf->addr.ip4);
-#endif /* LWIP_IPV6 */
+    ipX_addr_set_any(LWIP_IPV6, &buf->addr);
     *new_buf = buf;
     /* don't set conn->last_err: it's only ERR_OK, anyway */
     return ERR_OK;
@@ -544,15 +540,7 @@ err_t
 netconn_sendto(struct netconn *conn, struct netbuf *buf, ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
-#if LWIP_IPV6
-    if (conn->pcb.ip->isipv6) {
-      ip6_addr_set(&buf->addr.ip6, (ip6_addr_t *)addr);
-    }
-    else
-#endif /* LWIP_IPV6 */
-    {
-      ip_addr_set(&buf->addr.ip4, addr);
-    }
+    ipX_addr_set_ipaddr(conn->pcb.ip->isipv6, &buf->addr, addr);
     buf->port = port;
     return netconn_send(conn, buf);
   }
@@ -700,8 +688,8 @@ netconn_join_leave_group(struct netconn *conn,
 
   msg.function = do_join_leave_group;
   msg.msg.conn = conn;
-  msg.msg.msg.jl.multiaddr = multiaddr;
-  msg.msg.msg.jl.netif_addr = netif_addr;
+  msg.msg.msg.jl.multiaddr = ip_2_ipX(multiaddr);
+  msg.msg.msg.jl.netif_addr = ip_2_ipX(netif_addr);
   msg.msg.msg.jl.join_or_leave = join_or_leave;
   err = TCPIP_APIMSG(&msg);
 

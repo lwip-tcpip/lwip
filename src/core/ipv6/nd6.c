@@ -51,7 +51,7 @@
 #include "lwip/memp.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/ip6_chksum.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
 #include "lwip/icmp6.h"
 #include "lwip/mld6.h"
@@ -827,8 +827,8 @@ nd6_send_ns(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
     target_addr = &multicast_address;
   }
 
-  ns_hdr->chksum = ip6_chksum_pseudo(p, src_addr, target_addr,
-      IP6_NEXTH_ICMP6, p->len);
+  ns_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+    target_addr);
 
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
@@ -897,8 +897,8 @@ nd6_send_na(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
     dest_addr = ip6_current_src_addr();
   }
 
-  na_hdr->chksum = ip6_chksum_pseudo(p, src_addr, dest_addr,
-      IP6_NEXTH_ICMP6, p->len);
+  na_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+    dest_addr);
 
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
@@ -964,8 +964,8 @@ nd6_send_rs(struct netif * netif)
     SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
   }
 
-  rs_hdr->chksum = ip6_chksum_pseudo(p, src_addr, &multicast_address,
-      IP6_NEXTH_ICMP6, p->len);
+  rs_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+    &multicast_address);
 
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
@@ -1407,12 +1407,11 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
   s8_t i;
 
 #if LWIP_NETIF_HWADDRHINT
-  /* TODO should addr_hint point to nd6_cached_neighbor_index instead? */
   if (netif->addr_hint != NULL) {
     /* per-pcb cached entry was given */
-    i = *(netif->addr_hint);
-    if ((i >= 0) && (i < LWIP_ND6_NUM_DESTINATIONS)) {
-      nd6_cached_destination_index = i;
+    u8_t addr_hint = *(netif->addr_hint);
+    if (addr_hint < LWIP_ND6_NUM_DESTINATIONS) {
+      nd6_cached_destination_index = addr_hint;
     }
   }
 #endif /* LWIP_NETIF_HWADDRHINT */
@@ -1425,7 +1424,7 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
   } else {
     /* Search destination cache. */
     i = nd6_find_destination_cache_entry(ip6addr);
-    if (i>= 0) {
+    if (i >= 0) {
       /* found destination entry. make it our new cached index. */
       nd6_cached_destination_index = i;
     }
@@ -1465,7 +1464,6 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
   }
 
 #if LWIP_NETIF_HWADDRHINT
-  /* TODO should addr_hint point to nd6_cached_neighbor_index instead? */
   if (netif->addr_hint != NULL) {
     /* per-pcb cached entry was given */
     *(netif->addr_hint) = nd6_cached_destination_index;

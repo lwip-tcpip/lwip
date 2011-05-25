@@ -54,7 +54,8 @@ struct sockaddr_in {
   u8_t sin_family;
   u16_t sin_port;
   struct in_addr sin_addr;
-  char sin_zero[8];
+#define SIN_ZERO_LEN 8
+  char sin_zero[SIN_ZERO_LEN];
 };
 
 #if LWIP_IPV6

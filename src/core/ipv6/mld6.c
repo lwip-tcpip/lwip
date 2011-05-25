@@ -50,7 +50,7 @@
 #include "lwip/icmp6.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
-#include "lwip/ip6_chksum.h"
+#include "lwip/inet_chksum.h"
 #include "lwip/pbuf.h"
 #include "lwip/netif.h"
 #include "lwip/memp.h"
@@ -560,8 +560,8 @@ mld6_send(struct mld_group *group, u8_t type)
   mld_hdr->reserved = 0;
   ip6_addr_set(&(mld_hdr->multicast_address), &(group->group_address));
 
-  mld_hdr->chksum = ip6_chksum_pseudo(p, src_addr, &(group->group_address),
-      IP6_NEXTH_ICMP6, p->len);
+  mld_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len,
+    src_addr, &(group->group_address));
 
   /* Add hop-by-hop headers options: router alert with MLD value. */
   ip6_options_add_hbh_ra(p, IP6_NEXTH_ICMP6, IP6_ROUTER_ALERT_VALUE_MLD);

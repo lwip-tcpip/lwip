@@ -71,15 +71,6 @@ extern "C" {
 #define IP6_NEXTH_UDPLITE   136
 
 
-/* This is passed as the destination address to ip6_output_if (not
-   to ip6_output), meaning that an IP header already is constructed
-   in the pbuf. This is used when TCP retransmits. */
-#ifdef IP6_HDRINCL
-#undef IP6_HDRINCL
-#endif /* IP6_HDRINCL */
-#define IP6_HDRINCL  NULL
-
-
 /* The IPv6 header. */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -171,16 +162,6 @@ PACK_STRUCT_END
 #define IP6H_HOPLIM_SET(hdr, hl) (hdr)->_hoplim = (u8_t)(hl)
 
 
-
-/** Header of the input IPv6 packet currently being processed. */
-extern const struct ip6_hdr *current_ip6_header;
-/** Total header length of current_ip6_header (i.e. after this, the UDP/TCP header starts) */
-extern u16_t current_ip6_header_tot_len;
-/** Source IPv6 address of current_header */
-extern ip6_addr_t current_ip6hdr_src;
-/** Destination IPv6 address of current_header */
-extern ip6_addr_t current_ip6hdr_dest;
-
 #define ip6_init() /* TODO should we init current addresses and header pointer? */
 struct netif *ip6_route(struct ip6_addr *src, struct ip6_addr *dest);
 ip6_addr_t   *ip6_select_source_address(struct netif *netif, ip6_addr_t * dest);
@@ -197,17 +178,6 @@ err_t         ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *des
 err_t         ip6_options_add_hbh_ra(struct pbuf * p, u8_t nexth, u8_t value);
 #endif /* LWIP_IPV6_MLD */
 
-
-/** Get the IPv6 header of the current packet.
- * This function must only be called from a receive callback (udp_recv,
- * raw_recv, tcp_accept). It will return NULL otherwise. */
-#define ip6_current_header() (current_ip6_header)
-/** Total header length of current_ip6_header (i.e. after this, the UDP/TCP header starts) */
-#define ip6_current_header_tot_len() (current_ip6_header_tot_len)
-/** Source IPv6 address of current_header */
-#define ip6_current_src_addr()  (&current_ip6hdr_src)
-/** Destination IPv6 address of current_header */
-#define ip6_current_dest_addr() (&current_ip6hdr_dest)
 
 #if IP6_DEBUG
 void ip6_debug_print(struct pbuf *p);
