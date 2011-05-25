@@ -865,13 +865,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
 
 #if LWIP_TCPIP_CORE_LOCKING
-  /* Should only be consider like a sample or a simple way to experiment this option (no check of "to" field...) */
+  /* Special speedup for fast UDP/RAW sending: call the raw API directly
+     instead of using the netconn functions. */
   {
     struct pbuf* p;
-    ip_addr_t *remote_addr;
-#if LWIP_IPV6
-    ip6_addr_t *remote_addr6;
-#endif /* LWIP_IPV6 */
+    ipX_addr_t *remote_addr;
+    ipX_addr_t remote_addr_tmp;
 
 #if LWIP_NETIF_TX_SINGLE_PBUF
     p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_RAM);
@@ -890,33 +889,11 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
 
       if (to != NULL) {
-#if LWIP_IPV6
-        if (to->sa_family == AF_INET6) {
-          const struct sockaddr_in6 *to_in6;
-          to_in6 = (const struct sockaddr_in6 *)(void*)to;
-          inet6_addr_to_ip6addr_p(remote_addr6, &to_in6->sin6_addr);
-          remote_addr = ip6_2_ip(remote_addr6);
-          remote_port = ntohs(to_in6->sin6_port);
-        }
-        else
-#endif /* LWIP_IPV6 */
-        {
-          const struct sockaddr_in *to_in;
-          to_in = (const struct sockaddr_in *)(void*)to;
-          inet_addr_to_ipaddr_p(remote_addr, &to_in->sin_addr);
-          remote_port = ntohs(to_in->sin_port);
-        }
+        SOCKADDR_TO_IPXADDR_PORT(to->sa_family == AF_INET6,
+          to, &remote_addr_tmp, remote_port);
+        remote_addr = &remote_addr_tmp;
       } else {
-        remote_addr = IP_ADDR_ANY;
-#if LWIP_IPV6
-        if (NETCONNTYPE_ISIPV6(netconn_type(sock->conn))) {
-          remote_addr = ip6_2_ip(IP6_ADDR_ANY);
-        }
-        else
-#endif /* LWIP_IPV6 */
-        {
-          remote_addr = IP_ADDR_ANY;
-        }
+        remote_addr = &sock->conn->pcb.raw->remote_ip;
         if (NETCONNTYPE_GROUP(sock->conn->type) == NETCONN_RAW) {
           remote_port = 0;
         } else {
@@ -926,7 +903,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 
       LOCK_TCPIP_CORE();
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_RAW) {
-        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, remote_addr);
+        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, ipX_2_ip(remote_addr));
       } else {
 #if LWIP_UDP
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
