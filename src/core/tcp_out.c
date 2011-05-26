@@ -1049,7 +1049,6 @@ static void
 tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 {
   u16_t len;
-  struct netif *netif;
   u32_t *opts;
 
   /** @bug Exclude retransmitted segments from this count. */
@@ -1089,30 +1088,14 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
-#if LWIP_IPV6
-  if (pcb->isipv6) {
-    if (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip))) {
-      ip6_addr_t * local_addr6;
-      netif = ip6_route(ipX_2_ip6(&pcb->local_ip), ipX_2_ip6(&pcb->remote_ip));
-      if (netif == NULL) {
-        return;
-      }
-      /* Select and IPv6 address from the netif. */
-      local_addr6 = ip6_select_source_address(netif, ipX_2_ip6(&pcb->remote_ip));
-      if (local_addr6 == NULL) {
-        return;
-      }
-      ip6_addr_set(ipX_2_ip6(&pcb->local_ip), local_addr6);
-    }
-  }
-  else
-#endif /* LWIP_IPV6 */
-  if (ip_addr_isany(ipX_2_ip(&pcb->local_ip))) {
-    netif = ip_route(ipX_2_ip(&pcb->remote_ip));
-    if (netif == NULL) {
+  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+    struct netif *netif;
+    ipX_addr_t *local_ip;
+    ipX_route_get_local_ipX(pcb->isipv6, &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
+    if ((netif == NULL) || (local_ip == NULL)) {
       return;
     }
-    ip_addr_copy(*ipX_2_ip(&pcb->local_ip), netif->ip_addr);
+    ipX_addr_copy(pcb->isipv6, pcb->local_ip, *local_ip);
   }
 
   if (pcb->rttest == 0) {

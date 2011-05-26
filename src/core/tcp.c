@@ -689,40 +689,18 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->remote_port = port;
 
   /* check if we have a route to the remote host */
-#if LWIP_IPV6
-  if (pcb->isipv6) {
-    if (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip))) {
-      /* no local IPv6 address set, yet. */
-      ip6_addr_t * local_addr6;
-      struct netif *netif = ip6_route(ipX_2_ip6(&pcb->remote_ip), ipX_2_ip6(&pcb->remote_ip));
-      if (netif == NULL) {
-        /* Don't even try to send a SYN packet if we have no route
-           since that will fail. */
-        return ERR_RTE;
-      }
-      /* Select and IPv6 address from the netif. */
-      local_addr6 = ip6_select_source_address(netif, ipX_2_ip6(&pcb->remote_ip));
-      if (local_addr6 == NULL) {
-        /* Don't even try to send a SYN packet if we have no suitable
-           source address. */
-        return ERR_RTE;
-      }
-
-      ip6_addr_set(ipX_2_ip6(&pcb->local_ip), local_addr6);
-    }
-  }
-  else
-#endif /* LWIP_IPV6 */
-  if (ip_addr_isany(ipX_2_ip(&pcb->local_ip))) {
+  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
     /* no local IP address set, yet. */
-    struct netif *netif = ip_route(ipX_2_ip(&pcb->remote_ip));
-    if (netif == NULL) {
+    struct netif *netif;
+    ipX_addr_t *local_ip;
+    ipX_route_get_local_ipX(pcb->isipv6, &pcb->remote_ip, &pcb->remote_ip, netif, local_ip);
+    if ((netif == NULL) || (local_ip == NULL)) {
       /* Don't even try to send a SYN packet if we have no route
          since that will fail. */
       return ERR_RTE;
     }
     /* Use the netif's IP address as local address. */
-    ip_addr_copy(*ipX_2_ip(&pcb->local_ip), netif->ip_addr);
+    ipX_addr_copy(pcb->isipv6, pcb->local_ip, *local_ip);
   }
 
   old_local_port = pcb->local_port;
@@ -769,7 +747,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->ssthresh = pcb->mss * 10;
 #if LWIP_CALLBACK_API
   pcb->connected = connected;
-#else /* LWIP_CALLBACK_API */  
+#else /* LWIP_CALLBACK_API */
   LWIP_UNUSED_ARG(connected);
 #endif /* LWIP_CALLBACK_API */
 
@@ -1554,18 +1532,15 @@ tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
   u16_t mss_s;
   struct netif *outif;
   s16_t mtu;
-  s16_t iphlen = IP_HLEN;
 
+  outif = ipX_route(isipv6, src, dest);
 #if LWIP_IPV6
   if (isipv6) {
     /* First look in destination cache, to see if there is a Path MTU. */
-    outif = ip6_route(ipX_2_ip6(src), ipX_2_ip6(dest));
     mtu = nd6_get_destination_mtu(ipX_2_ip6(dest), outif);
-    iphlen = IP6_HLEN;
   } else
 #endif /* LWIP_IPV6 */
   {
-    outif = ip_route(ipX_2_ip(dest));
     if (outif == NULL) {
       return sendmss;
     }
@@ -1573,7 +1548,11 @@ tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
   }
 
   if (mtu != 0) {
-    mss_s = mtu - iphlen - TCP_HLEN;
+    mss_s = mtu - IP_HLEN - TCP_HLEN;
+#if LWIP_IPV6
+    /* for IPv6, substract the difference in header size */
+    mss_s -= (IP6_HLEN - IP_HLEN);
+#endif /* LWIP_IPV6 */
     /* RFC 1122, chap 4.2.2.6:
      * Eff.snd.MSS = min(SendMSS+20, MMS_S) - TCPhdrsize - IPoptionsize
      * We correct for TCP options in tcp_write(), and don't support IP options.

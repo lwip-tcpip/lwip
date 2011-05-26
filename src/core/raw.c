@@ -224,13 +224,10 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 {
   err_t err;
   struct netif *netif;
-  ip_addr_t *src_ip;
+  ipX_addr_t *src_ip;
   struct pbuf *q; /* q will be sent down the stack */
   s16_t header_size;
-#if LWIP_IPV6
-  ip6_addr_t *ip6addr = ip_2_ip6(ipaddr);
-#endif /* LWIP_IPV6 */
-
+  ipX_addr_t *dst_ip = ip_2_ipX(ipaddr);
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 
@@ -264,16 +261,10 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
     }
   }
 
-#if LWIP_IPV6
-  if (pcb->isipv6) {
-    netif = ip6_route(ipX_2_ip6(&pcb->local_ip), ip6addr);
-  }
-  else
-#endif /* LWIP_IPV6 */
-  netif = ip_route(ipaddr);
+  netif = ipX_route(pcb->isipv6, &pcb->local_ip, dst_ip);
   if (netif == NULL) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
-    ipX_addr_debug_print(pcb->isipv6, RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ip_2_ipX(ipaddr));
+    ipX_addr_debug_print(pcb->isipv6, RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, dst_ip);
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {
       pbuf_free(q);
@@ -299,45 +290,26 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
   }
 #endif /* IP_SOF_BROADCAST */
 
-  NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
-
+  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+    /* use outgoing network interface IP address as source address */
+    src_ip = ipX_netif_get_local_ipX(pcb->isipv6, netif, dst_ip);
 #if LWIP_IPV6
-  if (pcb->isipv6) {
-    ip6_addr_t *src6_ip;
-    if (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip))) {
-      /* select an IPv6 address from the netif as source address */
-      src6_ip = ip6_select_source_address(netif, ip6addr);
-      if (src6_ip == NULL) {
-        /* No suitable source address was found. */
-        err = ERR_RTE;
-        NETIF_SET_HWADDRHINT(netif, NULL);
-        /* did we chain a header earlier? */
-        if (q != p) {
-          /* free the header */
-          pbuf_free(q);
-        }
-        return ERR_RTE;
+    if (src_ip == NULL) {
+      if (q != p) {
+        pbuf_free(q);
       }
-    } else {
-      /* use RAW PCB local IPv6 address as source address */
-      src6_ip = ipX_2_ip6(&pcb->local_ip);
+      return ERR_RTE;
     }
-    err = ip6_output_if(q, src6_ip, ip6addr, pcb->ttl, pcb->tos, pcb->protocol, netif);
-  }
-  else
 #endif /* LWIP_IPV6 */
-  {
-    if (ip_addr_isany(ipX_2_ip(&pcb->local_ip))) {
-      /* use outgoing network interface IP address as source address */
-      src_ip = &(netif->ip_addr);
-    } else {
-      /* use RAW PCB local IP address as source address */
-      src_ip = ipX_2_ip(&pcb->local_ip);
-    }
-    err = ip_output_if(q, src_ip, ipaddr, pcb->ttl, pcb->tos, pcb->protocol, netif);
+  } else {
+    /* use RAW PCB local IP address as source address */
+    src_ip = &pcb->local_ip;
   }
 
+  NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
+  err = ipX_output_if(pcb->isipv6, q, ipX_2_ip(src_ip), ipX_2_ip(dst_ip), pcb->ttl, pcb->tos, pcb->protocol, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
+
   /* did we chain a header earlier? */
   if (q != p) {
     /* free the header */

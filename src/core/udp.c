@@ -479,29 +479,28 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
 {
 #endif /* LWIP_CHECKSUM_ON_COPY */
   struct netif *netif;
+  ipX_addr_t *dst_ip_route = ip_2_ipX(dst_ip);
 
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_send\n"));
 
-  /* find the outgoing network interface for this packet */
+#if LWIP_IPV6 || LWIP_IGMP
+  if (ipX_addr_ismulticast(pcb->isipv6, dst_ip_route)) {
+    /* For multicast, find a netif based on source address. */
 #if LWIP_IPV6
-  if (pcb->isipv6) {
-    if (ip6_addr_ismulticast(ip_2_ip6(dst_ip))) {
-      /* For multicast, find a netif based on source address. */
-      netif = ip6_route(ipX_2_ip6(&pcb->local_ip), ipX_2_ip6(&pcb->local_ip));
-    }
-    else {
-      netif = ip6_route(ipX_2_ip6(&pcb->local_ip), ip_2_ip6(dst_ip));
-    }
-  }
-  else
+    if (pcb->isipv6) {
+      dst_ip_route = &pcb->local_ip;
+    } else
 #endif /* LWIP_IPV6 */
-  {
 #if LWIP_IGMP
-    netif = ip_route((ip_addr_ismulticast(dst_ip))?(&(pcb->multicast_ip)):(dst_ip));
-#else
-    netif = ip_route(dst_ip);
+    {
+      dst_ip_route = ip_2_ipX(&pcb->multicast_ip);
+    }
 #endif /* LWIP_IGMP */
   }
+#endif /* LWIP_IPV6 || LWIP_IGMP */
+
+  /* find the outgoing network interface for this packet */
+  netif = ipX_route(pcb->isipv6, &pcb->local_ip, dst_ip_route);
 
   /* no outgoing network interface could be found? */
   if (netif == NULL) {

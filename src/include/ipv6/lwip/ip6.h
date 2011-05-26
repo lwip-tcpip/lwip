@@ -178,6 +178,8 @@ err_t         ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *des
 err_t         ip6_options_add_hbh_ra(struct pbuf * p, u8_t nexth, u8_t value);
 #endif /* LWIP_IPV6_MLD */
 
+#define ip6_netif_get_local_ipX(netif, dest) (((netif) != NULL) ? \
+  ip6_2_ipX(ip6_select_source_address(netif, dest)) : NULL)
 
 #if IP6_DEBUG
 void ip6_debug_print(struct pbuf *p);

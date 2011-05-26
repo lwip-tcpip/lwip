@@ -126,6 +126,8 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */
 
+#define ip_netif_get_local_ipX(netif) (((netif) != NULL) ? ip_2_ipX(&((netif)->ip_addr)) : NULL)
+
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #else

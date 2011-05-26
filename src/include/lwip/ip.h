@@ -210,6 +210,14 @@ extern struct ip_globals ip_data;
         ((isipv6) ? \
         ip6_output_hinted(p, ipX_2_ip6(src), ipX_2_ip6(dest), ttl, tos, proto, addr_hint) : \
         ip_output_hinted(p, ipX_2_ip(src), ipX_2_ip(dest), ttl, tos, proto, addr_hint))
+#define ipX_route(isipv6, src, dest) \
+        ((isipv6) ? \
+        ip6_route(ipX_2_ip6(src), ipX_2_ip6(dest)) : \
+        ip_route(ipX_2_ip(dest)))
+#define ipX_netif_get_local_ipX(isipv6, netif, dest) \
+        ((isipv6) ? \
+        ip6_netif_get_local_ipX(netif, ipX_2_ip6(dest)) : \
+        ip_netif_get_local_ipX(netif))
 #define ipX_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip_debug_print(p))
 #else /* LWIP_IPV6 */
 #define ipX_output(isipv6, p, src, dest, ttl, tos, proto) \
@@ -218,8 +226,17 @@ extern struct ip_globals ip_data;
         ip_output_if(p, src, dest, ttl, tos, proto, netif)
 #define ipX_output_hinted(isipv6, p, src, dest, ttl, tos, proto, addr_hint) \
         ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
+#define ipX_route(isipv6, src, dest) \
+        ip_route(ipX_2_ip(dest))
+#define ipX_netif_get_local_ip(isipv6, netif, dest) \
+        ip_get_local_ip(netif)
 #define ipX_debug_print(is_ipv6, p) ip_debug_print(p)
 #endif /* LWIP_IPV6 */
+
+#define ipX_route_get_local_ipX(isipv6, src, dest, netif, ipXaddr) do { \
+  (netif) = ipX_route(isipv6, src, dest); \
+  (ipXaddr) = ipX_netif_get_local_ipX(isipv6, netif, dest); \
+}while(0)
 
 #ifdef __cplusplus
 }
