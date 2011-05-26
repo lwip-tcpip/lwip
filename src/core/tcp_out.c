@@ -1169,7 +1169,6 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   seg->tcphdr->chksum = ipX_chksum_pseudo(PCB_ISIPV6(pcb), seg->p, IP_PROTO_TCP,
     seg->p->tot_len, &pcb->local_ip, &pcb->remote_ip);
 #endif /* CHECKSUM_GEN_TCP */
-  }
 #endif /* TCP_CHECKSUM_ON_COPY */
   TCP_STATS_INC(tcp.xmit);
 

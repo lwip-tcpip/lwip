@@ -908,10 +908,10 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #if LWIP_UDP
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
         err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
-          remote_addr, remote_port, 1, chksum);
+          ipX_2_ip(remote_addr), remote_port, 1, chksum);
 #else /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
         err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
-          remote_addr, remote_port);
+          ipX_2_ip(remote_addr), remote_port);
 #endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
 #else /* LWIP_UDP */
         err = ERR_ARG;
