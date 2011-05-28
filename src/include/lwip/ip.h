@@ -228,8 +228,8 @@ extern struct ip_globals ip_data;
         ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
 #define ipX_route(isipv6, src, dest) \
         ip_route(ipX_2_ip(dest))
-#define ipX_netif_get_local_ip(isipv6, netif, dest) \
-        ip_get_local_ip(netif)
+#define ipX_netif_get_local_ipX(isipv6, netif, dest) \
+        ip_netif_get_local_ipX(netif)
 #define ipX_debug_print(is_ipv6, p) ip_debug_print(p)
 #endif /* LWIP_IPV6 */
 
