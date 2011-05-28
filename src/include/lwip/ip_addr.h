@@ -61,10 +61,10 @@ static ipX_addr_t* ip_2_ipX(ip_addr_t *ipaddr)
 static ipX_addr_t* ip6_2_ipX(ip6_addr_t *ip6addr)
 { return (ipX_addr_t*)ip6addr; }
 #else /* LWIP_ALLOW_STATIC_FN_IN_HEADER */
-#define ip_2_ip6(ipaddr)               ((ip6_addr_t*)(ipaddr))
-#define ip6_2_ip(ip6addr)              ((ip_addr_t*)(ip6addr))
-#define ip_2_ipX(ip_addr_t *ipaddr)    ((ipX_addr_t*)ipaddr)
-#define ip6_2_ipX(ip6_addr_t *ip6addr) ((ipX_addr_t*)ip6addr)
+#define ip_2_ip6(ipaddr)   ((ip6_addr_t*)(ipaddr))
+#define ip6_2_ip(ip6addr)  ((ip_addr_t*)(ip6addr))
+#define ip_2_ipX(ipaddr)   ((ipX_addr_t*)ipaddr)
+#define ip6_2_ipX(ip6addr) ((ipX_addr_t*)ip6addr)
 #endif /* LWIP_ALLOW_STATIC_FN_IN_HEADER*/
 #define ipX_2_ip6(ip6addr) (&((ip6addr)->ip6))
 #define ipX_2_ip(ipaddr)   (&((ipaddr)->ip4))
