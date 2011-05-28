@@ -540,7 +540,7 @@ err_t
 netconn_sendto(struct netconn *conn, struct netbuf *buf, ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
-    ipX_addr_set_ipaddr(conn->pcb.ip->isipv6, &buf->addr, addr);
+    ipX_addr_set_ipaddr(PCB_ISIPV6(conn->pcb.ip), &buf->addr, addr);
     buf->port = port;
     return netconn_send(conn, buf);
   }

@@ -869,14 +869,14 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 #endif 
 
 #if CHECKSUM_GEN_TCP
-  tcphdr->chksum = ipX_chksum_pseudo(pcb->isipv6, p, IP_PROTO_TCP, p->tot_len,
+  tcphdr->chksum = ipX_chksum_pseudo(PCB_ISIPV6(pcb), p, IP_PROTO_TCP, p->tot_len,
     &pcb->local_ip, &pcb->remote_ip);
 #endif
 #if LWIP_NETIF_HWADDRHINT
-  ipX_output_hinted(pcb->isipv6, p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
+  ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &pcb->addr_hint);
 #else /* LWIP_NETIF_HWADDRHINT*/
-  ipX_output(pcb->isipv6, p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
+  ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
   pbuf_free(p);
@@ -1088,14 +1088,14 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 
   /* If we don't have a local IP address, we get one by
      calling ip_route(). */
-  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+  if (ipX_addr_isany(PCB_ISIPV6(pcb), &pcb->local_ip)) {
     struct netif *netif;
     ipX_addr_t *local_ip;
-    ipX_route_get_local_ipX(pcb->isipv6, &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
+    ipX_route_get_local_ipX(PCB_ISIPV6(pcb), &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
     if ((netif == NULL) || (local_ip == NULL)) {
       return;
     }
-    ipX_addr_copy(pcb->isipv6, pcb->local_ip, *local_ip);
+    ipX_addr_copy(PCB_ISIPV6(pcb), pcb->local_ip, *local_ip);
   }
 
   if (pcb->rttest == 0) {
@@ -1358,7 +1358,7 @@ tcp_keepalive(struct tcp_pcb *pcb)
   struct tcp_hdr *tcphdr;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: sending KEEPALIVE probe to "));
-  ipX_addr_debug_print(pcb->isipv6, TCP_DEBUG, &pcb->remote_ip);
+  ipX_addr_debug_print(PCB_ISIPV6(pcb), TCP_DEBUG, &pcb->remote_ip);
   LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: tcp_ticks %"U32_F"   pcb->tmr %"U32_F" pcb->keep_cnt_sent %"U16_F"\n", 
@@ -1410,7 +1410,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   u8_t is_fin;
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: sending ZERO WINDOW probe to "));
-  ipX_addr_debug_print(pcb->isipv6, TCP_DEBUG, &pcb->remote_ip);
+  ipX_addr_debug_print(PCB_ISIPV6(pcb), TCP_DEBUG, &pcb->remote_ip);
   LWIP_DEBUGF(TCP_DEBUG, ("\n"));
 
   LWIP_DEBUGF(TCP_DEBUG, 

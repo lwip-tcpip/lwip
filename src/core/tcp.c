@@ -151,7 +151,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       /* don't call tcp_abort here: we must not deallocate the pcb since
          that might not be expected when calling tcp_close */
       tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
-               pcb->local_port, pcb->remote_port, pcb->isipv6);
+               pcb->local_port, pcb->remote_port, PCB_ISIPV6(pcb));
 
       tcp_pcb_purge(pcb);
 
@@ -356,7 +356,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* TCP_QUEUE_OOSEQ */
     if (reset) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
-      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port, pcb->isipv6);
+      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port, PCB_ISIPV6(pcb));
     }
     memp_free(MEMP_TCP_PCB, pcb);
     TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
@@ -441,8 +441,8 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
     }
   }
 
-  if (!ipX_addr_isany(pcb->isipv6, ip_2_ipX(ipaddr))) {
-    ipX_addr_set(pcb->isipv6, &pcb->local_ip, ip_2_ipX(ipaddr));
+  if (!ipX_addr_isany(PCB_ISIPV6(pcb), ip_2_ipX(ipaddr))) {
+    ipX_addr_set(PCB_ISIPV6(pcb), &pcb->local_ip, ip_2_ipX(ipaddr));
   }
   pcb->local_port = port;
   TCP_REG(&tcp_bound_pcbs, pcb);
@@ -498,7 +498,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
     for(lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
       if ((lpcb->local_port == pcb->local_port) &&
           IP_PCB_IPVER_EQ(pcb, lpcb)) {
-        if (ipX_addr_cmp(pcb->isipv6, &lpcb->local_ip, &pcb->local_ip)) {
+        if (ipX_addr_cmp(PCB_ISIPV6(pcb), &lpcb->local_ip, &pcb->local_ip)) {
           /* this address/port is already used */
           return NULL;
         }
@@ -519,10 +519,10 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
 #if LWIP_IPV6
-  lpcb->isipv6 = pcb->isipv6;
+  PCB_ISIPV6(lpcb) = PCB_ISIPV6(pcb);
   lpcb->accept_any_ip_version = 0;
 #endif /* LWIP_IPV6 */
-  ipX_addr_copy(pcb->isipv6, lpcb->local_ip, pcb->local_ip);
+  ipX_addr_copy(PCB_ISIPV6(pcb), lpcb->local_ip, pcb->local_ip);
   if (pcb->local_port != 0) {
     TCP_RMV(&tcp_bound_pcbs, pcb);
   }
@@ -548,7 +548,7 @@ tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb *lpcb;
 
-  if (!ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+  if (!ipX_addr_isany(PCB_ISIPV6(pcb), &pcb->local_ip)) {
     return NULL;
   }
   lpcb = tcp_listen_with_backlog(pcb, backlog);
@@ -689,18 +689,18 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   pcb->remote_port = port;
 
   /* check if we have a route to the remote host */
-  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+  if (ipX_addr_isany(PCB_ISIPV6(pcb), &pcb->local_ip)) {
     /* no local IP address set, yet. */
     struct netif *netif;
     ipX_addr_t *local_ip;
-    ipX_route_get_local_ipX(pcb->isipv6, &pcb->remote_ip, &pcb->remote_ip, netif, local_ip);
+    ipX_route_get_local_ipX(PCB_ISIPV6(pcb), &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
     if ((netif == NULL) || (local_ip == NULL)) {
       /* Don't even try to send a SYN packet if we have no route
          since that will fail. */
       return ERR_RTE;
     }
-    /* Use the netif's IP address as local address. */
-    ipX_addr_copy(pcb->isipv6, pcb->local_ip, *local_ip);
+    /* Use the address as local address of the pcb. */
+    ipX_addr_copy(PCB_ISIPV6(pcb), pcb->local_ip, *local_ip);
   }
 
   old_local_port = pcb->local_port;
@@ -741,7 +741,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
      The send MSS is updated when an MSS option is received. */
   pcb->mss = (TCP_MSS > 536) ? 536 : TCP_MSS;
 #if TCP_CALCULATE_EFF_SEND_MSS
-  pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip, pcb->isipv6);
+  pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip, PCB_ISIPV6(pcb));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
   pcb->cwnd = 1;
   pcb->ssthresh = pcb->mss * 10;
@@ -881,7 +881,7 @@ tcp_slowtmr(void)
 #endif /* LWIP_TCP_KEEPALIVE */
       {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to "));
-        ipX_addr_debug_print(pcb->isipv6, TCP_DEBUG, &pcb->remote_ip);
+        ipX_addr_debug_print(PCB_ISIPV6(pcb), TCP_DEBUG, &pcb->remote_ip);
         LWIP_DEBUGF(TCP_DEBUG, ("\n"));
         
         ++pcb_remove;
@@ -948,7 +948,7 @@ tcp_slowtmr(void)
       TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_ABRT);
       if (pcb_reset) {
         tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
-                 pcb->local_port, pcb->remote_port, pcb->isipv6);
+                 pcb->local_port, pcb->remote_port, PCB_ISIPV6(pcb));
       }
 
       pcb2 = pcb;
@@ -1423,8 +1423,8 @@ tcp_pcb_purge(struct tcp_pcb *pcb)
       for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = lpcb->next) {
         if ((lpcb->local_port == pcb->local_port) &&
             IP_PCB_IPVER_EQ(pcb, lpcb) &&
-            (ipX_addr_isany(lpcb->isipv6, &lpcb->local_ip) ||
-             ipX_addr_cmp(lpcb->isipv6, &pcb->local_ip, &lpcb->local_ip))) {
+            (ipX_addr_isany(PCB_ISIPV6(lpcb), &lpcb->local_ip) ||
+             ipX_addr_cmp(PCB_ISIPV6(lpcb), &pcb->local_ip, &lpcb->local_ip))) {
             /* port and address of the listen pcb match the timed-out pcb */
             LWIP_ASSERT("tcp_pcb_purge: listen pcb does not have accepts pending",
               lpcb->accepts_pending > 0);

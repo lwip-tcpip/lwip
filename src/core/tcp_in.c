@@ -476,7 +476,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
 #endif /* TCP_LISTEN_BACKLOG */
     /* Set up the new PCB. */
 #if LWIP_IPV6
-    npcb->isipv6 = ip_current_is_v6();
+    PCB_ISIPV6(npcb) = ip_current_is_v6();
 #endif /* LWIP_IPV6 */
     ipX_addr_copy(ip_current_is_v6(), npcb->local_ip, *ipX_current_dest_addr());
     ipX_addr_copy(ip_current_is_v6(), npcb->remote_ip, *ipX_current_src_addr());
@@ -502,7 +502,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     tcp_parseopt(npcb);
 #if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip,
-      &npcb->remote_ip, npcb->isipv6);
+      &npcb->remote_ip, PCB_ISIPV6(npcb));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
     snmp_inc_tcppassiveopens();
@@ -643,7 +643,7 @@ tcp_process(struct tcp_pcb *pcb)
 
 #if TCP_CALCULATE_EFF_SEND_MSS
       pcb->mss = tcp_eff_send_mss(pcb->mss, &pcb->local_ip, &pcb->remote_ip,
-        pcb->isipv6);
+        PCB_ISIPV6(pcb));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
       /* Set ssthresh again after changing pcb->mss (already set in tcp_connect
@@ -1027,7 +1027,7 @@ tcp_receive(struct tcp_pcb *pcb)
       pcb->polltmr = 0;
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
-      if (pcb->isipv6) {
+      if (PCB_ISIPV6(pcb)) {
         /* Inform neighbor reachability of forward progress. */
         nd6_reachability_hint(ip6_current_src_addr());
       }
@@ -1350,7 +1350,7 @@ tcp_receive(struct tcp_pcb *pcb)
         tcp_ack(pcb);
 
 #if LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS
-        if (pcb->isipv6) {
+        if (PCB_ISIPV6(pcb)) {
           /* Inform neighbor reachability of forward progress. */
           nd6_reachability_hint(ip6_current_src_addr());
         }

@@ -106,13 +106,13 @@ raw_input(struct pbuf *p, struct netif *inp)
   /* this allows multiple pcbs to match against the packet by design */
   while ((eaten == 0) && (pcb != NULL)) {
     if ((pcb->protocol == proto) && IP_PCB_IPVER_INPUT_MATCH(pcb) &&
-        (ipX_addr_isany(pcb->isipv6, &pcb->local_ip) ||
-         ipX_addr_cmp(pcb->isipv6, &(pcb->local_ip), ipX_current_dest_addr()))) {
+        (ipX_addr_isany(PCB_ISIPV6(pcb), &pcb->local_ip) ||
+         ipX_addr_cmp(PCB_ISIPV6(pcb), &(pcb->local_ip), ipX_current_dest_addr()))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
       if (((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), inp))
 #if LWIP_IPV6
-          && !pcb->isipv6
+          && !PCB_ISIPV6(pcb)
 #endif /* LWIP_IPV6 */
           )
 #endif /* IP_SOF_BROADCAST_RECV */
@@ -161,7 +161,7 @@ raw_input(struct pbuf *p, struct netif *inp)
 err_t
 raw_bind(struct raw_pcb *pcb, ip_addr_t *ipaddr)
 {
-  ipX_addr_set_ipaddr(pcb->isipv6, &pcb->local_ip, ipaddr);
+  ipX_addr_set_ipaddr(PCB_ISIPV6(pcb), &pcb->local_ip, ipaddr);
   return ERR_OK;
 }
 
@@ -181,7 +181,7 @@ raw_bind(struct raw_pcb *pcb, ip_addr_t *ipaddr)
 err_t
 raw_connect(struct raw_pcb *pcb, ip_addr_t *ipaddr)
 {
-  ipX_addr_set_ipaddr(pcb->isipv6, &pcb->remote_ip, ipaddr);
+  ipX_addr_set_ipaddr(PCB_ISIPV6(pcb), &pcb->remote_ip, ipaddr);
   return ERR_OK;
 }
 
@@ -233,7 +233,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 
   header_size = (
 #if LWIP_IPV6
-    pcb->isipv6 ? IP6_HLEN :
+    PCB_ISIPV6(pcb) ? IP6_HLEN :
 #endif /* LWIP_IPV6 */
     IP_HLEN);
 
@@ -261,10 +261,10 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
     }
   }
 
-  netif = ipX_route(pcb->isipv6, &pcb->local_ip, dst_ip);
+  netif = ipX_route(PCB_ISIPV6(pcb), &pcb->local_ip, dst_ip);
   if (netif == NULL) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: No route to "));
-    ipX_addr_debug_print(pcb->isipv6, RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, dst_ip);
+    ipX_addr_debug_print(PCB_ISIPV6(pcb), RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, dst_ip);
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {
       pbuf_free(q);
@@ -275,7 +275,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 #if IP_SOF_BROADCAST
 #if LWIP_IPV6
   /* @todo: why does IPv6 not filter broadcast with SOF_BROADCAST enabled? */
-  if (!netif->isipv6)
+  if (!PCB_ISIPV6(pcb))
 #endif /* LWIP_IPV6 */
   {
     /* broadcast filter? */
@@ -290,9 +290,9 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
   }
 #endif /* IP_SOF_BROADCAST */
 
-  if (ipX_addr_isany(pcb->isipv6, &pcb->local_ip)) {
+  if (ipX_addr_isany(PCB_ISIPV6(pcb), &pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
-    src_ip = ipX_netif_get_local_ipX(pcb->isipv6, netif, dst_ip);
+    src_ip = ipX_netif_get_local_ipX(PCB_ISIPV6(pcb), netif, dst_ip);
 #if LWIP_IPV6
     if (src_ip == NULL) {
       if (q != p) {
@@ -307,7 +307,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
   }
 
   NETIF_SET_HWADDRHINT(netif, &pcb->addr_hint);
-  err = ipX_output_if(pcb->isipv6, q, ipX_2_ip(src_ip), ipX_2_ip(dst_ip), pcb->ttl, pcb->tos, pcb->protocol, netif);
+  err = ipX_output_if(PCB_ISIPV6(pcb), q, ipX_2_ip(src_ip), ipX_2_ip(dst_ip), pcb->ttl, pcb->tos, pcb->protocol, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* did we chain a header earlier? */

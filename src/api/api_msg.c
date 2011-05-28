@@ -113,7 +113,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
       buf->p = q;
       buf->ptr = q;
-      ipX_addr_copy(pcb->isipv6, buf->addr, *ipX_current_src_addr());
+      ipX_addr_copy(PCB_ISIPV6(pcb), buf->addr, *ipX_current_src_addr());
       buf->port = pcb->protocol;
 
       len = q->tot_len;
@@ -1118,7 +1118,7 @@ do_send(struct api_msg_msg *msg)
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        if (ipX_addr_isany(msg->conn->pcb.ip->isipv6, &msg->msg.b->addr)) {
+        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
           msg->err = raw_send(msg->conn->pcb.raw, msg->msg.b->p);
         } else {
           msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, ipX_2_ip(&msg->msg.b->addr));
@@ -1128,7 +1128,7 @@ do_send(struct api_msg_msg *msg)
 #if LWIP_UDP
       case NETCONN_UDP:
 #if LWIP_CHECKSUM_ON_COPY
-        if (ipX_addr_isany(msg->conn->pcb.ip->isipv6, &msg->msg.b->addr)) {
+        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
           msg->err = udp_send_chksum(msg->conn->pcb.udp, msg->msg.b->p,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         } else {
@@ -1137,7 +1137,7 @@ do_send(struct api_msg_msg *msg)
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
-        if (ipX_addr_isany(msg->conn->pcb.ip->isipv6, &msg->msg.b->addr)) {
+        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
           msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, ipX_2_ip(&msg->msg.b->addr), msg->msg.b->port);
@@ -1374,10 +1374,10 @@ do_getaddr(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.ip != NULL) {
     if (msg->msg.ad.local) {
-      ipX_addr_copy(msg->conn->pcb.ip->isipv6, *(msg->msg.ad.ipaddr),
+      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), *(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->local_ip);
     } else {
-      ipX_addr_copy(msg->conn->pcb.ip->isipv6, *(msg->msg.ad.ipaddr),
+      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), *(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->remote_ip);
     }
     msg->err = ERR_OK;
@@ -1478,7 +1478,7 @@ do_join_leave_group(struct api_msg_msg *msg)
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_UDP) {
 #if LWIP_UDP
 #if LWIP_IPV6 && LWIP_IPV6_MLD
-        if (msg->conn->pcb.udp->isipv6) {
+        if (PCB_ISIPV6(msg->conn->pcb.udp)) {
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
             msg->err = mld6_joingroup(ipX_2_ip6(msg->msg.jl.netif_addr),
               ipX_2_ip6(msg->msg.jl.multiaddr));
