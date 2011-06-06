@@ -84,18 +84,18 @@
       inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipX_2_ip6(ipXaddr)); }while(0)
 #define IPXADDR_PORT_TO_SOCKADDR(isipv6, sockaddr, ipXaddr, port) do { \
     if (isipv6) { \
-      IP6ADDR_PORT_TO_SOCKADDR(((struct sockaddr_in6*)(sockaddr)), ipXaddr, port); \
+      IP6ADDR_PORT_TO_SOCKADDR((struct sockaddr_in6*)(void*)(sockaddr), ipXaddr, port); \
     } else { \
-      IP4ADDR_PORT_TO_SOCKADDR(((struct sockaddr_in*)(sockaddr)), ipXaddr, port); \
+      IP4ADDR_PORT_TO_SOCKADDR((struct sockaddr_in*)(void*)(sockaddr), ipXaddr, port); \
     } } while(0)
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipXaddr, port) do { \
     inet6_addr_to_ip6addr(ipX_2_ip6(ipXaddr), &((sin6)->sin6_addr)); \
     (port) = (sin6)->sin6_port; }while(0)
 #define SOCKADDR_TO_IPXADDR_PORT(isipv6, sockaddr, ipXaddr, port) do { \
     if (isipv6) { \
-      SOCKADDR6_TO_IP6ADDR_PORT(((struct sockaddr_in6*)(sockaddr)), ipXaddr, port); \
+      SOCKADDR6_TO_IP6ADDR_PORT((struct sockaddr_in6*)(void*)(sockaddr), ipXaddr, port); \
     } else { \
-      SOCKADDR4_TO_IP4ADDR_PORT(((struct sockaddr_in*)(sockaddr)), ipXaddr, port); \
+      SOCKADDR4_TO_IP4ADDR_PORT((struct sockaddr_in*)(void*)(sockaddr), ipXaddr, port); \
     } } while(0)
 #define DOMAIN_TO_NETCONN_TYPE(domain, netconn_type) (((domain) == AF_INET) ? \
   (netconn_type) : ((netconn_type) | NETCONN_TYPE_IPV6))
@@ -104,9 +104,9 @@
 #define IS_SOCK_ADDR_TYPE_VALID(name)    ((name)->sa_family == AF_INET)
 #define SOCK_ADDR_TYPE_MATCH(name, sock) 1
 #define IPXADDR_PORT_TO_SOCKADDR(isipv6, sockaddr, ipXaddr, port) \
-        IP4ADDR_PORT_TO_SOCKADDR(((struct sockaddr_in*)sockaddr), ipXaddr, port)
+        IP4ADDR_PORT_TO_SOCKADDR((struct sockaddr_in*)(void*)(sockaddr), ipXaddr, port)
 #define SOCKADDR_TO_IPXADDR_PORT(isipv6, sockaddr, ipXaddr, port) \
-      IP4ADDR_PORT_TO_SOCKADDR(((struct sockaddr_in*)(sockaddr)), ipXaddr, port)
+      IP4ADDR_PORT_TO_SOCKADDR((struct sockaddr_in*)(void*)(sockaddr), ipXaddr, port)
 #define DOMAIN_TO_NETCONN_TYPE(domain, netconn_type) (netconn_type)
 #endif /* LWIP_IPV6 */
 
@@ -181,6 +181,22 @@ struct lwip_setgetsockopt_data {
   /** if an error occures, it is temporarily stored here */
   err_t err;
 };
+
+/** A struct sockaddr replacement that has the same alignment as sockaddr_in/
+ *  sockaddr_in6 if instantiated.
+ */
+struct sockaddr_aligned {
+  u8_t  sa_len;
+  u8_t  sa_family;
+  u16_t alignment1;
+  u32_t alignment2;
+#if LWIP_IPV6
+  u8_t sa_data[SIN_ZERO_LEN + 8];
+#else /* LWIP_IPV6 */
+  u8_t sa_data[SIN_ZERO_LEN];
+#endif /* LWIP_IPV6 */
+};
+
 
 /** The global array of available sockets */
 static struct lwip_sock sockets[NUM_SOCKETS];
@@ -406,7 +422,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * not be NULL if addr is valid.
    */
   if (addr != NULL) {
-    struct sockaddr tempaddr;
+    struct sockaddr_aligned tempaddr;
     /* get the IP address and port of the remote host */
     err = netconn_peer(newconn, ipX_2_ip(&naddr), &port);
     if (err != ERR_OK) {
@@ -468,7 +484,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
     return -1;
   }
 
-  if (SOCK_ADDR_TYPE_MATCH(name, sock)) {
+  if (!SOCK_ADDR_TYPE_MATCH(name, sock)) {
     /* sockaddr does not match socket type (IPv4/IPv6) */
     sock_set_errno(sock, err_to_errno(ERR_VAL));
     return -1;
@@ -534,7 +550,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     return -1;
   }
 
-  if (SOCK_ADDR_TYPE_MATCH_OR_UNSPEC(name, sock)) {
+  if (!SOCK_ADDR_TYPE_MATCH_OR_UNSPEC(name, sock)) {
     /* sockaddr does not match socket type (IPv4/IPv6) */
    sock_set_errno(sock, err_to_errno(ERR_VAL));
    return -1;
@@ -721,7 +737,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         u16_t port;
         ipX_addr_t tmpaddr;
         ipX_addr_t *fromaddr;
-        struct sockaddr saddr;
+        struct sockaddr_aligned saddr;
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
           fromaddr = &tmpaddr;
@@ -850,7 +866,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_TCP */
   }
 
-  if (SOCK_ADDR_TYPE_MATCH(to, sock)) {
+  if (!SOCK_ADDR_TYPE_MATCH(to, sock)) {
     /* sockaddr does not match socket type (IPv4/IPv6) */
     sock_set_errno(sock, err_to_errno(ERR_VAL));
     return -1;
@@ -1443,7 +1459,7 @@ static int
 lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
   struct lwip_sock *sock;
-  struct sockaddr saddr;
+  struct sockaddr_aligned saddr;
   ipX_addr_t naddr;
   u16_t port;
 
