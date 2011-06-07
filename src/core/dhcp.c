@@ -126,6 +126,11 @@ u32_t dhcp_rx_options_val[DHCP_OPTION_IDX_MAX];
     @todo: move this into struct dhcp? */
 u8_t  dhcp_rx_options_given[DHCP_OPTION_IDX_MAX];
 
+#ifdef DHCP_GLOBAL_XID
+static u32_t xid;
+static u8_t xid_initialised;
+#endif /* DHCP_GLOBAL_XID */
+
 #define dhcp_option_given(dhcp, idx)          (dhcp_rx_options_given[idx] != 0)
 #define dhcp_got_option(dhcp, idx)            (dhcp_rx_options_given[idx] = 1)
 #define dhcp_clear_option(dhcp, idx)          (dhcp_rx_options_given[idx] = 0)
@@ -1628,8 +1633,6 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
    *  at runtime, any supporting function prototypes can be defined in DHCP_GLOBAL_XID_HEADER */
   static u32_t xid = 0xABCD0000;
 #else
-  static u32_t xid;
-  static u8_t xid_initialised = 0;
   if (!xid_initialised) {
     xid = DHCP_GLOBAL_XID;
     xid_initialised = !xid_initialised;
