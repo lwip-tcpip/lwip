@@ -488,6 +488,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   if (raw_input(p, inp) == 0)
 #endif /* LWIP_RAW */
   {
+    pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP
@@ -521,6 +522,7 @@ ip_input(struct pbuf *p, struct netif *inp)
       /* send ICMP destination protocol unreachable unless is was a broadcast */
       if (!ip_addr_isbroadcast(&current_iphdr_dest, inp) &&
           !ip_addr_ismulticast(&current_iphdr_dest)) {
+        pbuf_header(p, iphdr_hlen); /* Move to ip header, no check necessary. */
         p->payload = iphdr;
         icmp_dest_unreach(p, ICMP_DUR_PROTO);
       }
