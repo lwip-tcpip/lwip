@@ -75,6 +75,8 @@
 struct netif *netif_list;
 struct netif *netif_default;
 
+static u8_t netif_num;
+
 #if LWIP_HAVE_LOOPIF
 static struct netif loop_netif;
 
@@ -137,7 +139,6 @@ struct netif *
 netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
-  static u8_t netifnum = 0;
 
   LWIP_ASSERT("No init function given", init != NULL);
 
@@ -170,7 +171,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
 
   /* remember netif specific state information data */
   netif->state = state;
-  netif->num = netifnum++;
+  netif->num = netif_num++;
   netif->input = input;
 #if LWIP_NETIF_HWADDRHINT
   netif->addr_hint = NULL;
