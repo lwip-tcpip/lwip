@@ -177,22 +177,22 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid(&mbox)) {
-    msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
-    if (msg == NULL) {
-      return ERR_MEM;
-    }
-
-    msg->type = TCPIP_MSG_INPKT;
-    msg->msg.inp.p = p;
-    msg->msg.inp.netif = inp;
-    if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
-      memp_free(MEMP_TCPIP_MSG_INPKT, msg);
-      return ERR_MEM;
-    }
-    return ERR_OK;
+  if (!sys_mbox_valid(&mbox)) {
+    return ERR_VAL;
   }
-  return ERR_VAL;
+  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
+  if (msg == NULL) {
+    return ERR_MEM;
+  }
+
+  msg->type = TCPIP_MSG_INPKT;
+  msg->msg.inp.p = p;
+  msg->msg.inp.netif = inp;
+  if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
+    memp_free(MEMP_TCPIP_MSG_INPKT, msg);
+    return ERR_MEM;
+  }
+  return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 }
 
