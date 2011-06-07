@@ -205,7 +205,7 @@ void stats_init(void);
 
 #if IGMP_STATS
 #define IGMP_STATS_INC(x) STATS_INC(x)
-#define IGMP_STATS_DISPLAY() stats_display_igmp(&lwip_stats.igmp)
+#define IGMP_STATS_DISPLAY() stats_display_igmp(&lwip_stats.igmp, "IGMP")
 #else
 #define IGMP_STATS_INC(x)
 #define IGMP_STATS_DISPLAY()
@@ -309,7 +309,7 @@ void stats_init(void);
 
 #if MLD6_STATS
 #define MLD6_STATS_INC(x) STATS_INC(x)
-#define MLD6_STATS_DISPLAY() stats_display_proto(&lwip_stats.mld6, "MLDv1")
+#define MLD6_STATS_DISPLAY() stats_display_igmp(&lwip_stats.mld6, "MLDv1")
 #else
 #define MLD6_STATS_INC(x)
 #define MLD6_STATS_DISPLAY()
@@ -326,15 +326,15 @@ void stats_init(void);
 /* Display of statistics */
 #if LWIP_STATS_DISPLAY
 void stats_display(void);
-void stats_display_proto(struct stats_proto *proto, char *name);
-void stats_display_igmp(struct stats_igmp *igmp);
-void stats_display_mem(struct stats_mem *mem, char *name);
+void stats_display_proto(struct stats_proto *proto, const char *name);
+void stats_display_igmp(struct stats_igmp *igmp, const char *name);
+void stats_display_mem(struct stats_mem *mem, const char *name);
 void stats_display_memp(struct stats_mem *mem, int index);
 void stats_display_sys(struct stats_sys *sys);
 #else /* LWIP_STATS_DISPLAY */
 #define stats_display()
 #define stats_display_proto(proto, name)
-#define stats_display_igmp(igmp)
+#define stats_display_igmp(igmp, name)
 #define stats_display_mem(mem, name)
 #define stats_display_memp(mem, index)
 #define stats_display_sys(sys)
