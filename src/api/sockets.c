@@ -97,8 +97,8 @@
     } else { \
       SOCKADDR4_TO_IP4ADDR_PORT((struct sockaddr_in*)(void*)(sockaddr), ipXaddr, port); \
     } } while(0)
-#define DOMAIN_TO_NETCONN_TYPE(domain, netconn_type) (((domain) == AF_INET) ? \
-  (netconn_type) : ((netconn_type) | NETCONN_TYPE_IPV6))
+#define DOMAIN_TO_NETCONN_TYPE(domain, type) (((domain) == AF_INET) ? \
+  (type) : (enum netconn_type)((type) | NETCONN_TYPE_IPV6))
 #else /* LWIP_IPV6 */
 #define IS_SOCK_ADDR_LEN_VALID(namelen)  ((namelen) == sizeof(struct sockaddr_in))
 #define IS_SOCK_ADDR_TYPE_VALID(name)    ((name)->sa_family == AF_INET)
@@ -185,16 +185,12 @@ struct lwip_setgetsockopt_data {
 /** A struct sockaddr replacement that has the same alignment as sockaddr_in/
  *  sockaddr_in6 if instantiated.
  */
-struct sockaddr_aligned {
-  u8_t  sa_len;
-  u8_t  sa_family;
-  u16_t alignment1;
-  u32_t alignment2;
+union sockaddr_aligned {
+   struct sockaddr sa;
 #if LWIP_IPV6
-  u8_t sa_data[SIN_ZERO_LEN + 8];
-#else /* LWIP_IPV6 */
-  u8_t sa_data[SIN_ZERO_LEN];
+   struct sockaddr_in6 sin6;
 #endif /* LWIP_IPV6 */
+   struct sockaddr_in sin;
 };
 
 
@@ -422,7 +418,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * not be NULL if addr is valid.
    */
   if (addr != NULL) {
-    struct sockaddr_aligned tempaddr;
+    sockaddr_aligned tempaddr;
     /* get the IP address and port of the remote host */
     err = netconn_peer(newconn, ipX_2_ip(&naddr), &port);
     if (err != ERR_OK) {
@@ -434,8 +430,8 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
 
     IPXADDR_PORT_TO_SOCKADDR(NETCONNTYPE_ISIPV6(newconn->type), &tempaddr, &naddr, port);
-    if (*addrlen > tempaddr.sa_len) {
-      *addrlen = tempaddr.sa_len;
+    if (*addrlen > tempaddr.sa.sa_len) {
+      *addrlen = tempaddr.sa.sa_len;
     }
     MEMCPY(addr, &tempaddr, *addrlen);
   }
@@ -494,6 +490,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
   LWIP_ERROR("lwip_bind: invalid address", (IS_SOCK_ADDR_LEN_VALID(namelen) &&
              IS_SOCK_ADDR_TYPE_VALID(name) && IS_SOCK_ADDR_ALIGNED(name)),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_UNUSED_ARG(namelen);
 
   SOCKADDR_TO_IPXADDR_PORT((name->sa_family == AF_INET6), name, &local_addr, local_port);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
@@ -560,6 +557,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
   LWIP_ERROR("lwip_connect: invalid address", IS_SOCK_ADDR_LEN_VALID(namelen) &&
              IS_SOCK_ADDR_TYPE_VALID_OR_UNSPEC(name) && IS_SOCK_ADDR_ALIGNED(name),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_UNUSED_ARG(namelen);
   if (name->sa_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
     err = netconn_disconnect(sock->conn);
@@ -737,7 +735,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         u16_t port;
         ipX_addr_t tmpaddr;
         ipX_addr_t *fromaddr;
-        struct sockaddr_aligned saddr;
+        sockaddr_aligned saddr;
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
           fromaddr = &tmpaddr;
@@ -879,6 +877,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
              (IS_SOCK_ADDR_LEN_VALID(tolen) &&
              IS_SOCK_ADDR_TYPE_VALID(to) && IS_SOCK_ADDR_ALIGNED(to))),
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+  LWIP_UNUSED_ARG(tolen);
 
 #if LWIP_TCPIP_CORE_LOCKING
   /* Special speedup for fast UDP/RAW sending: call the raw API directly
@@ -1459,7 +1458,7 @@ static int
 lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
   struct lwip_sock *sock;
-  struct sockaddr_aligned saddr;
+  sockaddr_aligned saddr;
   ipX_addr_t naddr;
   u16_t port;
 
@@ -1479,8 +1478,8 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
     SOCKETS_DEBUG, &naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", port));
 
-  if (*namelen > saddr.sa_len) {
-    *namelen = saddr.sa_len;
+  if (*namelen > saddr.sa.sa_len) {
+    *namelen = saddr.sa.sa_len;
   }
   MEMCPY(name, &saddr, *namelen);
 
@@ -1954,7 +1953,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
         err = EINVAL;
       }
 #if LWIP_UDP
-      if (NETCONNTYPE_GROUP((netconn_type(sock->conn) != NETCONN_UDP)) ||
+      if ((NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) ||
           ((udp_flags(sock->conn->pcb.udp) & UDP_FLAGS_UDPLITE) != 0)) {
         /* this flag is only available for UDP, not for UDP lite */
         err = EAFNOSUPPORT;
