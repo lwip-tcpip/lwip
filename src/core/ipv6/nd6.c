@@ -336,7 +336,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct ra_header * ra_hdr;
     u8_t * buffer; /* Used to copy options. */
-    s8_t i;
     u16_t offset;
 
     /* Check that RA header fits in packet. */
@@ -486,7 +485,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
   case ICMP6_TYPE_RD: /* Redirect */
   {
     struct redirect_header * redir_hdr;
-    s8_t i;
     struct lladdr_option * lladdr_opt;
 
     /* Check that Redir header fits in packet. */
@@ -556,7 +554,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct icmp6_hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr * ip6hdr; /* IPv6 header of the packet which caused the error */
-    s8_t i;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct icmp6_hdr) + IP6_HLEN)) {
