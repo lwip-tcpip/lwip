@@ -418,7 +418,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
    * not be NULL if addr is valid.
    */
   if (addr != NULL) {
-    sockaddr_aligned tempaddr;
+    union sockaddr_aligned tempaddr;
     /* get the IP address and port of the remote host */
     err = netconn_peer(newconn, ipX_2_ip(&naddr), &port);
     if (err != ERR_OK) {
@@ -735,7 +735,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         u16_t port;
         ipX_addr_t tmpaddr;
         ipX_addr_t *fromaddr;
-        sockaddr_aligned saddr;
+        union sockaddr_aligned saddr;
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_recvfrom(%d): addr=", s));
         if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
           fromaddr = &tmpaddr;
@@ -1458,7 +1458,7 @@ static int
 lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 {
   struct lwip_sock *sock;
-  sockaddr_aligned saddr;
+  union sockaddr_aligned saddr;
   ipX_addr_t naddr;
   u16_t port;
 
