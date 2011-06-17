@@ -103,6 +103,11 @@ tcpip_thread(void *arg)
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_ETHERNET */
+#if LWIP_IPV6
+      if ((*((unsigned char *)(msg->msg.inp.p->payload)) & 0xf0) == 0x60) {
+          ip6_input(msg->msg.inp.p, msg->msg.inp.netif);
+      } else
+#endif /* LWIP_IPV6 */
       {
         ip_input(msg->msg.inp.p, msg->msg.inp.netif);
       }
