@@ -51,7 +51,7 @@
 
 #include <string.h>
 
-#if LWIP_IPV6_REASS  /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6 && LWIP_IPV6_REASS  /* don't build if not configured for use in lwipopts.h */
 
 
 /** Setting this to 0, you can turn off checking the fragments for overlapping
@@ -518,9 +518,9 @@ nullreturn:
   return NULL;
 }
 
-#endif /* LWIP_IPV6_REASS */
+#endif /* LWIP_IPV6 ^^ LWIP_IPV6_REASS */
 
-#if LWIP_IPV6_FRAG
+#if LWIP_IPV6 && LWIP_IPV6_FRAG
 
 /** Allocate a new struct pbuf_custom_ref */
 static struct pbuf_custom_ref*
@@ -686,4 +686,4 @@ ip6_frag(struct pbuf *p, struct netif *netif, ip6_addr_t *dest)
   return ERR_OK;
 }
 
-#endif /* LWIP_IPV6_FRAG */
+#endif /* LWIP_IPV6 && LWIP_IPV6_FRAG */

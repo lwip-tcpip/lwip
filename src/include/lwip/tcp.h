@@ -377,7 +377,7 @@ struct tcp_pcb * tcp_new_ip6 (void);
 #define          tcp_bind_ip6(pcb, ip6addr, port) \
                    tcp_bind(pcb, ip6_2_ip(ip6addr), port)
 #define          tcp_connect_ip6(pcb, ip6addr, port, connected) \
-                   udp_connect(pcb, ip6_2_ip(ip6addr), port, connected)
+                   tcp_connect(pcb, ip6_2_ip(ip6addr), port, connected)
 struct tcp_pcb * tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
 #define          tcp_listen_dual(pcb) tcp_listen_dual_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
 #else /* LWIP_IPV6 */

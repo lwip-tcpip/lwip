@@ -51,7 +51,7 @@ extern "C" {
 #endif
 
 
-#if LWIP_IPV6_REASS  /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6 && LWIP_IPV6_REASS  /* don't build if not configured for use in lwipopts.h */
 
 /* The IPv6 reassembly timer interval in milliseconds. */
 #define IP6_REASS_TMR_INTERVAL 1000
@@ -73,9 +73,9 @@ struct ip6_reassdata {
 void ip6_reass_tmr(void);
 struct pbuf * ip6_reass(struct pbuf *p);
 
-#endif /* LWIP_IPV6_REASS */
+#endif /* LWIP_IPV6 && LWIP_IPV6_REASS */
 
-#if LWIP_IPV6_FRAG  /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV6 && LWIP_IPV6_FRAG  /* don't build if not configured for use in lwipopts.h */
 
 /** A custom pbuf that holds a reference to another pbuf, which is freed
  * when this custom pbuf is freed. This is used to create a custom PBUF_REF
@@ -92,7 +92,7 @@ struct pbuf_custom_ref {
 
 err_t ip6_frag(struct pbuf *p, struct netif *netif, ip6_addr_t *dest);
 
-#endif /* LWIP_IPV6_FRAG */
+#endif /* LWIP_IPV6 && LWIP_IPV6_FRAG */
 
 
 #ifdef __cplusplus
