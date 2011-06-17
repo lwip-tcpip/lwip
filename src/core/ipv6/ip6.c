@@ -216,6 +216,14 @@ ip6_select_source_address(struct netif *netif, ip6_addr_t * dest)
     }
   }
 
+  /* Last resort: see if arbitrary prefix matches. */
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+        ip6_addr_netcmp(dest, netif_ip6_addr(netif, i))) {
+      return netif_ip6_addr(netif, i);
+    }
+  }
+
   return NULL;
 }
 
