@@ -1197,6 +1197,13 @@ nd6_is_prefix_in_netif(ip6_addr_t * ip6addr, struct netif * netif)
       return 1;
     }
   }
+  /* Check to see if address prefix matches a (manually?) configured address. */
+  for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+        ip6_addr_netcmp(ip6addr, netif_ip6_addr(netif, i))) {
+      return 1;
+    }
+  }
   return 0;
 }
 
