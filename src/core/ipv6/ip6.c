@@ -295,6 +295,17 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
     return;
   }
 
+  if (netif->mtu && (p->tot_len > netif->mtu)) {
+#if LWIP_ICMP6
+    /* Don't send ICMP messages in response to ICMP messages */
+    if (IP6H_NEXTH(iphdr) != IP6_NEXTH_ICMP6) {
+      icmp6_packet_too_big(p, netif->mtu);
+    }
+#endif /* LWIP_ICMP6 */
+    IP6_STATS_INC(ip6.drop);
+    return;
+  }
+
   LWIP_DEBUGF(IP6_DEBUG, ("ip6_forward: forwarding packet to %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
       IP6_ADDR_BLOCK1(ip6_current_dest_addr()),
       IP6_ADDR_BLOCK2(ip6_current_dest_addr()),
