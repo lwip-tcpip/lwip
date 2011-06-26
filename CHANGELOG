@@ -28,6 +28,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-06-26: Simon Goldschmidt
+  * mem.c: fixed bug #33545: With MEM_USE_POOLS==1, mem_malloc can return an
+    unaligned pointer.
+
+  2011-06-26: Simon Goldschmidt
   * mem.c: fixed bug #33544 "warning in mem.c in lwip 1.4.0 with NO_SYS=1"
 
 
