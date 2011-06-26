@@ -76,7 +76,6 @@
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/def.h"
-#include "lwip/sys.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "lwip/dns.h"

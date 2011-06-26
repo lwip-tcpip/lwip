@@ -56,6 +56,7 @@
 #include "lwip/autoip.h"
 #include "lwip/igmp.h"
 #include "lwip/dns.h"
+#include "lwip/sys.h"
 
 
 /** The one and only timeout list */
