@@ -1114,7 +1114,8 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 #endif /* LWIP_CALLBACK_API */
 
 /**
- * Kills the oldest active connection that has lower priority than prio.
+ * Kills the oldest active connection that has the same or lower priority than
+ * 'prio'.
  *
  * @param prio minimum priority
  */

@@ -18,6 +18,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-06-26: Simon Goldschmidt
+  * tcp.c: fixed bug #31723 (tcp_kill_prio() kills pcbs with the same prio) by
+    updating its documentation only.
+
+ 2011-06-26: Simon Goldschmidt
   * mem.c: fixed bug #33545: With MEM_USE_POOLS==1, mem_malloc can return an
     unaligned pointer.
 
