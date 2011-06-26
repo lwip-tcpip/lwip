@@ -155,11 +155,11 @@ enum tcp_state {
  */
 #define TCP_PCB_COMMON(type) \
   type *next; /* for the linked list */ \
-  enum tcp_state state; /* TCP state */ \
-  u8_t prio; \
   void *callback_arg; \
   /* the accept callback for listen- and normal pcbs, if LWIP_CALLBACK_API */ \
   DEF_ACCEPT_CALLBACK \
+  enum tcp_state state; /* TCP state */ \
+  u8_t prio; \
   /* ports are in host byte order */ \
   u16_t local_port
 
@@ -186,21 +186,22 @@ struct tcp_pcb {
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
+
+  /* Timers */
+  u8_t polltmr, pollinterval;
+  u32_t tmr;
+
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
   u16_t rcv_wnd;   /* receiver window available */
   u16_t rcv_ann_wnd; /* receiver window to announce */
   u32_t rcv_ann_right_edge; /* announced right edge of window */
 
-  /* Timers */
-  u32_t tmr;
-  u8_t polltmr, pollinterval;
-  
   /* Retransmission timer. */
   s16_t rtime;
-  
+
   u16_t mss;   /* maximum segment size */
-  
+
   /* RTT (round trip time) estimation variables */
   u32_t rttest; /* RTT estimate in 500ms ticks */
   u32_t rtseq;  /* sequence number being timed */
@@ -210,22 +211,22 @@ struct tcp_pcb {
   u8_t nrtx;    /* number of retransmissions */
 
   /* fast retransmit/recovery */
-  u32_t lastack; /* Highest acknowledged seqno. */
   u8_t dupacks;
-  
+  u32_t lastack; /* Highest acknowledged seqno. */
+
   /* congestion avoidance/control variables */
-  u16_t cwnd;  
+  u16_t cwnd;
   u16_t ssthresh;
 
   /* sender variables */
   u32_t snd_nxt;   /* next new seqno to be sent */
-  u16_t snd_wnd;   /* sender window */
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
                              window update. */
   u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
+  u16_t snd_wnd;   /* sender window */
 
   u16_t acked;
-  
+
   u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
   u16_t snd_queuelen; /* Available buffer space for sending (in tcp_segs). */
