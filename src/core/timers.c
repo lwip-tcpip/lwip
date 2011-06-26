@@ -59,6 +59,7 @@
 #include "lwip/nd6.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"
+#include "lwip/sys.h"
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;

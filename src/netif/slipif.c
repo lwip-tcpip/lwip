@@ -49,10 +49,12 @@
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
-#include "lwip/sys.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
 #include "lwip/sio.h"
+#if !NO_SYS
+#include "lwip/sys.h"
+#endif
 
 #define SLIP_BLOCK     1
 #define SLIP_DONTBLOCK 0
@@ -335,9 +337,11 @@ slipif_init(struct netif *netif)
    */
   NETIF_INIT_SNMP(netif, snmp_ifType_slip, 0);
 
+#if !NO_SYS
   /* Create a thread to poll the serial line. */
   sys_thread_new(SLIPIF_THREAD_NAME, slipif_loop_thread, netif,
     SLIPIF_THREAD_STACKSIZE, SLIPIF_THREAD_PRIO);
+#endif
   return ERR_OK;
 }
 
