@@ -78,9 +78,10 @@
 void *
 mem_malloc(mem_size_t size)
 {
+  void *ret;
   struct memp_malloc_helper *element;
   memp_t poolnr;
-  mem_size_t required_size = size + sizeof(struct memp_malloc_helper);
+  mem_size_t required_size = size + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper));
 
   for (poolnr = MEMP_POOL_FIRST; poolnr <= MEMP_POOL_LAST; poolnr = (memp_t)(poolnr + 1)) {
 #if MEM_USE_POOLS_TRY_BIGGER_POOL
@@ -113,9 +114,9 @@ again:
   /* save the pool number this element came from */
   element->poolnr = poolnr;
   /* and return a pointer to the memory directly after the struct memp_malloc_helper */
-  element++;
+  ret = (u8_t*)element + LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper));
 
-  return element;
+  return ret;
 }
 
 /**
@@ -128,13 +129,13 @@ again:
 void
 mem_free(void *rmem)
 {
-  struct memp_malloc_helper *hmem = (struct memp_malloc_helper*)rmem;
+  struct memp_malloc_helper *hmem;
 
   LWIP_ASSERT("rmem != NULL", (rmem != NULL));
   LWIP_ASSERT("rmem == MEM_ALIGN(rmem)", (rmem == LWIP_MEM_ALIGN(rmem)));
 
   /* get the original struct memp_malloc_helper */
-  hmem--;
+  hmem = (struct memp_malloc_helper*)(void*)((u8_t*)rmem - LWIP_MEM_ALIGN_SIZE(sizeof(struct memp_malloc_helper)));
 
   LWIP_ASSERT("hmem != NULL", (hmem != NULL));
   LWIP_ASSERT("hmem == MEM_ALIGN(hmem)", (hmem == LWIP_MEM_ALIGN(hmem)));
