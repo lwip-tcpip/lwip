@@ -601,6 +601,9 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 {
   int wnd_inflation;
 
+  /* pcb->state LISTEN not allowed here */
+  LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
+    pcb->state != LISTEN);
   LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
               len <= 0xffff - pcb->rcv_wnd );
 
@@ -1321,7 +1324,9 @@ tcp_new_ip6(void)
  */ 
 void
 tcp_arg(struct tcp_pcb *pcb, void *arg)
-{  
+{
+  /* This function is allowed to be called for both listen pcbs and
+     connection pcbs. */
   pcb->callback_arg = arg;
 }
 #if LWIP_CALLBACK_API
@@ -1336,6 +1341,7 @@ tcp_arg(struct tcp_pcb *pcb, void *arg)
 void
 tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 {
+  LWIP_ASSERT("invalid socket state for recv callback", pcb->state != LISTEN);
   pcb->recv = recv;
 }
 
@@ -1349,6 +1355,7 @@ tcp_recv(struct tcp_pcb *pcb, tcp_recv_fn recv)
 void
 tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 {
+  LWIP_ASSERT("invalid socket state for sent callback", pcb->state != LISTEN);
   pcb->sent = sent;
 }
 
@@ -1363,6 +1370,7 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 void
 tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 {
+  LWIP_ASSERT("invalid socket state for err callback", pcb->state != LISTEN);
   pcb->errf = err;
 }
 
@@ -1377,6 +1385,8 @@ tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
 void
 tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 {
+  /* This function is allowed to be called for both listen pcbs and
+     connection pcbs. */
   pcb->accept = accept;
 }
 #endif /* LWIP_CALLBACK_API */
@@ -1391,6 +1401,7 @@ tcp_accept(struct tcp_pcb *pcb, tcp_accept_fn accept)
 void
 tcp_poll(struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interval)
 {
+  LWIP_ASSERT("invalid socket state for poll", pcb->state != LISTEN);
 #if LWIP_CALLBACK_API
   pcb->poll = poll;
 #else /* LWIP_CALLBACK_API */  
