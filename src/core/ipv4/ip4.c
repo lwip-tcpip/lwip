@@ -470,7 +470,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   ip_data.current_netif = inp;
   ip_data.current_ip4_header = iphdr;
-  ip_data.current_ip_header_tot_len = IPH_LEN(iphdr);
+  ip_data.current_ip_header_tot_len = IPH_HL(iphdr) * 4;
 
 #if LWIP_RAW
   /* raw input did not eat the packet? */
