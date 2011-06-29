@@ -259,10 +259,11 @@ lwip_standard_chksum(void *dataptr, int len)
 
 /** Parts of the pseudo checksum which are common to IPv4 and IPv6 */
 static u16_t
-inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
+inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u16_t chksum_base)
 {
   struct pbuf *q;
   u8_t swapped = 0;
+  u32_t acc = chksum_base;
 
   /* iterate through all pbuf in chain */
   for(q = p; q != NULL; q = q->next) {
@@ -320,8 +321,11 @@ inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
   addr = ip4_addr_get_u32(dest);
   acc += (addr & 0xffffUL);
   acc += ((addr >> 16) & 0xffffUL);
+  /* fold down to 16 bits */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
 
-  return inet_cksum_pseudo_base(p, proto, proto_len, acc);
+  return inet_cksum_pseudo_base(p, proto, proto_len, (u16_t)acc);
 }
 #if LWIP_IPV6
 /**
@@ -351,19 +355,23 @@ ip6_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
     acc += (addr & 0xffffUL);
     acc += ((addr >> 16) & 0xffffUL);
   }
+  /* fold down to 16 bits */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
 
-  return inet_cksum_pseudo_base(p, proto, proto_len, acc);
+  return inet_cksum_pseudo_base(p, proto, proto_len, (u16_t)acc);
 }
 #endif /* LWIP_IPV6 */
 
 /** Parts of the pseudo checksum which are common to IPv4 and IPv6 */
 static u16_t
 inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
-       u16_t chksum_len, u32_t acc)
+       u16_t chksum_len, u16_t chksum_base)
 {
   struct pbuf *q;
   u8_t swapped = 0;
   u16_t chklen;
+  u32_t acc = chksum_base;
 
   /* iterate through all pbuf in chain */
   for(q = p; (q != NULL) && (chksum_len > 0); q = q->next) {
@@ -426,8 +434,11 @@ inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
   addr = ip4_addr_get_u32(dest);
   acc += (addr & 0xffffUL);
   acc += ((addr >> 16) & 0xffffUL);
+  /* fold down to 16 bits */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
 
-  return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
+  return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, (u16_t)acc);
 }
 
 #if LWIP_IPV6
@@ -460,8 +471,11 @@ ip6_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
     acc += (addr & 0xffffUL);
     acc += ((addr >> 16) & 0xffffUL);
   }
+  /* fold down to 16 bits */
+  acc = FOLD_U32T(acc);
+  acc = FOLD_U32T(acc);
 
-  return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
+  return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, (u16_t)acc);
 }
 #endif /* LWIP_IPV6 */
 
