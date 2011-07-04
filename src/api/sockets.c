@@ -864,7 +864,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 #endif /* LWIP_TCP */
   }
 
-  if (!SOCK_ADDR_TYPE_MATCH(to, sock)) {
+  if ((to != NULL) && !SOCK_ADDR_TYPE_MATCH(to, sock)) {
     /* sockaddr does not match socket type (IPv4/IPv6) */
     sock_set_errno(sock, err_to_errno(ERR_VAL));
     return -1;
