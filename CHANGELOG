@@ -17,6 +17,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-07-04: Simon Goldschmidt
+  * sys_arch.txt: Fixed documentation after changing sys arch prototypes for 1.4.0.
+
   2011-06-26: Simon Goldschmidt
   * tcp.c: fixed bug #31723 (tcp_kill_prio() kills pcbs with the same prio) by
     updating its documentation only.
