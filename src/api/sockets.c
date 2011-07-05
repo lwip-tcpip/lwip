@@ -66,7 +66,7 @@
       memset((sin)->sin_zero, 0, SIN_ZERO_LEN); }while(0)
 #define SOCKADDR4_TO_IP4ADDR_PORT(sin, ipXaddr, port) do { \
     inet_addr_to_ipaddr(ipX_2_ip(ipXaddr), &((sin)->sin_addr)); \
-    (port) = (sin)->sin_port; }while(0)
+    (port) = ntohs((sin)->sin_port); }while(0)
 
 #if LWIP_IPV6
 #define IS_SOCK_ADDR_LEN_VALID(namelen)  (((namelen) == sizeof(struct sockaddr_in)) || \
@@ -90,7 +90,7 @@
     } } while(0)
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipXaddr, port) do { \
     inet6_addr_to_ip6addr(ipX_2_ip6(ipXaddr), &((sin6)->sin6_addr)); \
-    (port) = (sin6)->sin6_port; }while(0)
+    (port) = ntohs((sin6)->sin6_port); }while(0)
 #define SOCKADDR_TO_IPXADDR_PORT(isipv6, sockaddr, ipXaddr, port) do { \
     if (isipv6) { \
       SOCKADDR6_TO_IP6ADDR_PORT((struct sockaddr_in6*)(void*)(sockaddr), ipXaddr, port); \
@@ -750,6 +750,10 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         ipX_addr_debug_print(NETCONNTYPE_ISIPV6(netconn_type(sock->conn)),
           SOCKETS_DEBUG, fromaddr);
         LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
+        if (*fromlen > saddr.sa.sa_len) {
+          *fromlen = saddr.sa.sa_len;
+        }
+        MEMCPY(from, &saddr, *fromlen);
       }
     }
 
@@ -775,7 +779,7 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
     }
   } while (!done);
 
-  if (off > 0) {
+  if ((off > 0) && (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP)) {
     /* update receive window */
     netconn_recved(sock->conn, (u32_t)off);
   }
