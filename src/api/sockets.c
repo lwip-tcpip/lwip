@@ -495,9 +495,9 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
   SOCKADDR_TO_IPXADDR_PORT((name->sa_family == AF_INET6), name, &local_addr, local_port);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
   ipX_addr_debug_print(name->sa_family == AF_INET6, SOCKETS_DEBUG, &local_addr);
-  LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", ntohs(local_port)));
+  LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", local_port));
 
-  err = netconn_bind(sock->conn, ipX_2_ip(&local_addr), ntohs(local_port));
+  err = netconn_bind(sock->conn, ipX_2_ip(&local_addr), local_port);
 
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d) failed, err=%d\n", s, err));
@@ -567,9 +567,9 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
     SOCKADDR_TO_IPXADDR_PORT((name->sa_family == AF_INET6), name, &remote_addr, remote_port);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
     ipX_addr_debug_print(name->sa_family == AF_INET6, SOCKETS_DEBUG, &remote_addr);
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", ntohs(remote_port)));
+    LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", remote_port));
 
-    err = netconn_connect(sock->conn, ipX_2_ip(&remote_addr), ntohs(remote_port));
+    err = netconn_connect(sock->conn, ipX_2_ip(&remote_addr), remote_port);
   }
 
   if (err != ERR_OK) {
