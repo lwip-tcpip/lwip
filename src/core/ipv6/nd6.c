@@ -1491,7 +1491,7 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
       i = nd6_new_neighbor_cache_entry();
       if (i >= 0) {
         /* got new neighbor entry. make it our new cached index. */
-        nd6_cached_destination_index = i;
+        nd6_cached_neighbor_index = i;
       } else {
         /* Could not create a neighbor cache entry. */
         return ERR_MEM;
