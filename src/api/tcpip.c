@@ -416,7 +416,7 @@ struct tcpip_callback_msg* tcpip_callbackmsg_new(tcpip_callback_fn function, voi
   if (msg == NULL) {
     return NULL;
   }
-  msg->type = TCPIP_MSG_CALLBACK;
+  msg->type = TCPIP_MSG_CALLBACK_STATIC;
   msg->msg.cb.function = function;
   msg->msg.cb.ctx = ctx;
   return (struct tcpip_callback_msg*)msg;
