@@ -1443,6 +1443,18 @@
 #define SO_REUSE_RXTOALL                0
 #endif
 
+/**
+ * LWIP_FIONREAD_LINUXMODE==0 (default): ioctl/FIONREAD returns the amount of
+ * pending data in the network buffer. This is the way windows does it. It's
+ * the default for lwIP since it is smaller.
+ * LWIP_FIONREAD_LINUXMODE==1: ioctl/FIONREAD returns the size of the next
+ * pending datagram in bytes. This is the way linux does it. This code is only
+ * here for compatibility.
+ */
+#ifndef LWIP_FIONREAD_LINUXMODE
+#define LWIP_FIONREAD_LINUXMODE         0
+#endif
+
 /*
    ----------------------------------------
    ---------- Statistics options ----------

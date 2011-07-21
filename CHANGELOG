@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2011-07-21: Simon Goldschmidt
+  * sockets.c, opt.h: (bug #30185): added LWIP_FIONREAD_LINUXMODE that makes
+    ioctl/FIONREAD return the size of the next pending datagram.
+
   2011-06-26: Simon Goldschmidt (patch by Cameron Gutman)
   * tcp.c, tcp_out.c: bug #33604: added some more asserts to check that
     pcb->state != LISTEN

@@ -2330,13 +2330,38 @@ lwip_ioctl(int s, long cmd, void *argp)
   }
 
   switch (cmd) {
-#if LWIP_SO_RCVBUF
+#if LWIP_SO_RCVBUF || LWIP_FIONREAD_LINUXMODE
   case FIONREAD:
     if (!argp) {
       sock_set_errno(sock, EINVAL);
       return -1;
     }
+#if LWIP_FIONREAD_LINUXMODE
+    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
+      struct pbuf *p;
+      if (sock->lastdata) {
+        p = ((struct netbuf *)sock->lastdata)->p;
+      } else {
+        struct netbuf *rxbuf;
+        err_t err;
+        if (sock->rcvevent <= 0) {
+          *((u16_t*)argp) = 0;
+        } else {
+          err = netconn_recv(sock->conn, &rxbuf);
+          if (err != ERR_OK) {
+            *((u16_t*)argp) = 0;
+          } else {
+            sock->lastdata = rxbuf;
+            *((u16_t*)argp) = rxbuf->p->tot_len;
+          }
+        }
+      }
+      return 0;
+    }
+#endif /* LWIP_FIONREAD_LINUXMODE */
 
+#if LWIP_SO_RCVBUF
+    /* we come here if either LWIP_FIONREAD_LINUXMODE==0 or this is a TCP socket */
     SYS_ARCH_GET(sock->conn->recv_avail, recv_avail);
     if (recv_avail < 0) {
       recv_avail = 0;
@@ -2358,7 +2383,10 @@ lwip_ioctl(int s, long cmd, void *argp)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %"U16_F"\n", s, argp, *((u16_t*)argp)));
     sock_set_errno(sock, 0);
     return 0;
+#else /* LWIP_SO_RCVBUF */
+    break;
 #endif /* LWIP_SO_RCVBUF */
+#endif /* LWIP_SO_RCVBUF || LWIP_FIONREAD_LINUXMODE */
 
   case FIONBIO:
     val = 0;
@@ -2371,10 +2399,11 @@ lwip_ioctl(int s, long cmd, void *argp)
     return 0;
 
   default:
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, UNIMPL: 0x%lx, %p)\n", s, cmd, argp));
-    sock_set_errno(sock, ENOSYS); /* not yet implemented */
-    return -1;
+    break;
   } /* switch (cmd) */
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, UNIMPL: 0x%lx, %p)\n", s, cmd, argp));
+  sock_set_errno(sock, ENOSYS); /* not yet implemented */
+  return -1;
 }
 
 /** A minimal implementation of fcntl.
