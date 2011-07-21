@@ -92,6 +92,9 @@ enum etharp_state {
   ETHARP_STATE_PENDING,
   ETHARP_STATE_STABLE,
   ETHARP_STATE_STABLE_REREQUESTING
+#if ETHARP_SUPPORT_STATIC_ENTRIES
+  ,ETHARP_STATE_STATIC
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 };
 
 struct etharp_entry {
@@ -107,9 +110,6 @@ struct etharp_entry {
   struct eth_addr ethaddr;
   u8_t state;
   u8_t ctime;
-#if ETHARP_SUPPORT_STATIC_ENTRIES
-  u8_t static_entry;
-#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 };
 
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];
@@ -122,7 +122,9 @@ static u8_t etharp_cached_entry;
     the cache (even if this means removing an active entry or so). */
 #define ETHARP_FLAG_TRY_HARD     1
 #define ETHARP_FLAG_FIND_ONLY    2
+#if ETHARP_SUPPORT_STATIC_ENTRIES
 #define ETHARP_FLAG_STATIC_ENTRY 4
+#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
 #if LWIP_NETIF_HWADDRHINT
 #define ETHARP_SET_HINT(netif, hint)  if (((netif) != NULL) && ((netif)->addr_hint != NULL))  \
@@ -182,9 +184,6 @@ free_entry(int i)
   }
   /* recycle entry for re-use */      
   arp_table[i].state = ETHARP_STATE_EMPTY;
-#if ETHARP_SUPPORT_STATIC_ENTRIES
-  arp_table[i].static_entry = 0;
-#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 #ifdef LWIP_DEBUG
   /* for debugging, clean out the complete entry */
   arp_table[i].ctime = 0;
@@ -211,7 +210,7 @@ etharp_tmr(void)
     u8_t state = arp_table[i].state;
     if (state != ETHARP_STATE_EMPTY
 #if ETHARP_SUPPORT_STATIC_ENTRIES
-      && (arp_table[i].static_entry == 0)
+      && (state != ETHARP_STATE_STATIC)
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
       ) {
       arp_table[i].ctime++;
@@ -323,7 +322,7 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
       } else if (state >= ETHARP_STATE_STABLE) {
 #if ETHARP_SUPPORT_STATIC_ENTRIES
         /* don't record old_stable for static entries since they never expire */
-        if (arp_table[i].static_entry == 0)
+        if (state < ETHARP_STATE_STATIC)
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
         {
           /* remember entry with oldest stable entry in oldest, its age in maxtime */
@@ -397,9 +396,6 @@ find_entry(ip_addr_t *ipaddr, u8_t flags)
     ip_addr_copy(arp_table[i].ipaddr, *ipaddr);
   }
   arp_table[i].ctime = 0;
-#if ETHARP_SUPPORT_STATIC_ENTRIES
-  arp_table[i].static_entry = 0;
-#endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   return (err_t)i;
 }
 
@@ -472,12 +468,13 @@ update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethadd
 #if ETHARP_SUPPORT_STATIC_ENTRIES
   if (flags & ETHARP_FLAG_STATIC_ENTRY) {
     /* record static type */
-    arp_table[i].static_entry = 1;
-  }
+    arp_table[i].state = ETHARP_STATE_STATIC;
+  } else
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
-
-  /* mark it stable */
-  arp_table[i].state = ETHARP_STATE_STABLE;
+  {
+    /* mark it stable */
+    arp_table[i].state = ETHARP_STATE_STABLE;
+  }
 
   /* record network interface */
   arp_table[i].netif = netif;
@@ -562,8 +559,7 @@ etharp_remove_static_entry(ip_addr_t *ipaddr)
     return (err_t)i;
   }
 
-  if ((arp_table[i].state < ETHARP_STATE_STABLE) ||
-    (arp_table[i].static_entry == 0)) {
+  if (arp_table[i].state != ETHARP_STATE_STATIC) {
     /* entry wasn't a static entry, cannot remove it */
     return ERR_ARG;
   }
