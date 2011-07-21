@@ -106,7 +106,9 @@ struct etharp_entry {
   struct pbuf *q;
 #endif /* ARP_QUEUEING */
   ip_addr_t ipaddr;
+#if LWIP_SNMP
   struct netif *netif;
+#endif /* LWIP_SNMP */
   struct eth_addr ethaddr;
   u8_t state;
   u8_t ctime;
@@ -182,12 +184,14 @@ free_entry(int i)
     free_etharp_q(arp_table[i].q);
     arp_table[i].q = NULL;
   }
-  /* recycle entry for re-use */      
+  /* recycle entry for re-use */
   arp_table[i].state = ETHARP_STATE_EMPTY;
 #ifdef LWIP_DEBUG
   /* for debugging, clean out the complete entry */
   arp_table[i].ctime = 0;
+#if LWIP_SNMP
   arp_table[i].netif = NULL;
+#endif /* LWIP_SNMP */
   ip_addr_set_zero(&arp_table[i].ipaddr);
   arp_table[i].ethaddr = ethzero;
 #endif /* LWIP_DEBUG */
@@ -223,11 +227,10 @@ etharp_tmr(void)
         /* clean up entries that have just been expired */
         free_entry(i);
       }
-      else if ((arp_table[i].ctime >= ARP_AGE_REREQUEST_USED) &&
-        (arp_table[i].state == ETHARP_STATE_STABLE_REREQUESTING)) {
-        /* stable entry that is in use is about to expire: re-request it to
-           prevent it from breaking communication when it expires */
-        etharp_request(arp_table[i].netif, &arp_table[i].ipaddr);
+      else if (arp_table[i].state == ETHARP_STATE_STABLE_REREQUESTING) {
+        /* Reset state to stable, so that the next transmitted packet will
+           re-send an ARP request. */
+        arp_table[i].state = ETHARP_STATE_STABLE;
       }
 #if ARP_QUEUEING
       /* still pending entry? (not expired) */
@@ -477,7 +480,9 @@ update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr *ethadd
   }
 
   /* record network interface */
+#if LWIP_SNMP
   arp_table[i].netif = netif;
+#endif /* LWIP_SNMP */
   /* insert in SNMP ARP index tree */
   snmp_insert_arpidx_tree(netif, &arp_table[i].ipaddr);
 
