@@ -596,6 +596,17 @@
 #endif
 
 /**
+ * IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1: allow ip_forward() to send packets back
+ * out on the netif where it was received. This should only be used for
+ * wireless networks.
+ * ATTENTION: When this is 1, make sure your netif driver correctly marks incoming
+ * link-layer-broadcast/multicast packets as such using the corresponding pbuf flags!
+ */
+#ifndef IP_FORWARD_ALLOW_TX_ON_RX_NETIF
+#define IP_FORWARD_ALLOW_TX_ON_RX_NETIF 0
+#endif
+
+/**
  * LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS==1: randomize the local port for the first
  * local TCP/UDP pcb (default==0). This can prevent creating predictable port
  * numbers after booting a device.
@@ -1820,6 +1831,34 @@
 #ifndef LWIP_CHECKSUM_ON_COPY
 #define LWIP_CHECKSUM_ON_COPY           0
 #endif
+
+/*
+   ---------------------------------------
+   ---------- Hook options ---------------
+   ---------------------------------------
+*/
+
+/* Hooks are undefined by default, define them to a function if you need them. */
+
+/**
+ * LWIP_HOOK_IP4_INPUT(pbuf, input_netif):
+ * - called from ip_input() (IPv4)
+ * - pbuf: received struct pbuf passed to ip_input()
+ * - input_netif: struct netif on which the packet has been received
+ * Return values:
+ * - 0: Hook has not consumed the packet, packet is processed as normal
+ * - != 0: Hook has consumed the packet.
+ * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
+ * (i.e. free it when done).
+ */
+
+/**
+ * LWIP_HOOK_IP4_ROUTE(dest):
+ * - called from ip_route() (IPv4)
+ * - dest: destination IPv4 address
+ * Returns the destination netif or NULL if no destination netif is found. In
+ * that case, ip_route() continues as normal.
+ */
 
 /*
    ---------------------------------------

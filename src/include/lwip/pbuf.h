@@ -69,6 +69,10 @@ typedef enum {
 #define PBUF_FLAG_IS_CUSTOM 0x02U
 /** indicates this pbuf is UDP multicast to be looped back */
 #define PBUF_FLAG_MCASTLOOP 0x04U
+/** indicates this pbuf was received as link-level broadcast */
+#define PBUF_FLAG_LLBCAST   0x08U
+/** indicates this pbuf was received as link-level multicast */
+#define PBUF_FLAG_LLMCAST   0x10U
 /** indicates this pbuf includes a TCP FIN flag */
 #define PBUF_FLAG_TCP_FIN   0x20U
 

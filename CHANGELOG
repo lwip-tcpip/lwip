@@ -6,6 +6,12 @@ HISTORY
 
  ++ New features:
 
+  2011-07-21: Simon Goldschmidt (patch by hanhui)
+  * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
+    Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.
+    Also added code to allow ip_forward() to forward non-broadcast packets to
+    the input netif (set IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1).
+
   2011-09-27: Simon Goldschmidt
   * opt.h, tcp.c, tcp_in.c: Implemented limiting data on ooseq queue (task #9989)
     (define TCP_OOSEQ_MAX_BYTES / TCP_OOSEQ_MAX_PBUFS in lwipopts.h)
