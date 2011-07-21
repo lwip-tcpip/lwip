@@ -113,8 +113,15 @@ ip_route(ip_addr_t *dest)
 {
   struct netif *netif;
 
+#ifdef LWIP_HOOK_IP4_ROUTE
+  netif = LWIP_HOOK_IP4_ROUTE(dest);
+  if (netif != NULL) {
+    return netif;
+  }
+#endif
+
   /* iterate through netifs */
-  for(netif = netif_list; netif != NULL; netif = netif->next) {
+  for (netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
     if (netif_is_up(netif)) {
       if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
@@ -136,6 +143,41 @@ ip_route(ip_addr_t *dest)
 
 #if IP_FORWARD
 /**
+ * Determine whether an IP address is in a reserved set of addresses
+ * that may not be forwarded, or whether datagrams to that destination
+ * may be forwarded.
+ * @param p the packet to forward
+ * @param dest the destination IP address
+ * @return 1: can forward 0: discard
+ */
+static int
+ip_canforward(struct pbuf *p)
+{
+  u32_t addr = ip4_addr_get_u32(ip_current_dest_addr());
+
+  if (p->flags & PBUF_FLAG_LLBCAST) {
+    /* don't route link-layer broadcasts */
+    return 0;
+  }
+  if ((p->flags & PBUF_FLAG_LLMCAST) && !IP_MULTICAST(addr)) {
+    /* don't route link-layer multicasts unless the destination address is an IP
+       multicast address */
+    return 0;
+  }
+  if (IP_EXPERIMENTAL(addr)) {
+    return 0;
+  }
+  if (IP_CLASSA(addr)) {
+    u32_t net = addr & IP_CLASSA_NET;
+    if ((net == 0) || (net == (IP_LOOPBACKNET << IP_CLASSA_NSHIFT))) {
+      /* don't route loopback packets */
+      return 0;
+    }
+  }
+  return 1;
+}
+
+/**
  * Forwards an IP packet. It finds an appropriate route for the
  * packet, decrements the TTL value of the packet, adjusts the
  * checksum and outputs the packet on the appropriate interface.
@@ -150,6 +192,10 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   struct netif *netif;
 
   PERF_START;
+
+  if (!ip_canforward(p)) {
+    goto return_noroute;
+  }
 
   /* RFC3927 2.7: do not forward link-local addresses */
   if (ip_addr_islinklocal(ip_current_dest_addr())) {
@@ -167,12 +213,14 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
       ip4_addr3_16(ip_current_dest_addr()), ip4_addr4_16(ip_current_dest_addr())));
     goto return_noroute;
   }
+#if !IP_FORWARD_ALLOW_TX_ON_RX_NETIF
   /* Do not forward packets onto the same network interface on which
    * they arrived. */
   if (netif == inp) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_forward: not bouncing packets back on incoming interface.\n"));
     goto return_noroute;
   }
+#endif /* IP_FORWARD_ALLOW_TX_ON_RX_NETIF */
 
   /* decrement TTL */
   IPH_TTL_SET(iphdr, IPH_TTL(iphdr) - 1);
@@ -251,6 +299,13 @@ ip_input(struct pbuf *p, struct netif *inp)
     snmp_inc_ipinhdrerrors();
     return ERR_OK;
   }
+
+#ifdef LWIP_HOOK_IP4_INPUT
+  if (LWIP_HOOK_IP4_INPUT(p, inp)) {
+    /* the packet has been eaten */
+    return ERR_OK;
+  }
+#endif
 
   /* obtain IP header length in number of 32-bit words */
   iphdr_hlen = IPH_HL(iphdr);

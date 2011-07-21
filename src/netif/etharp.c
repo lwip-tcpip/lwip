@@ -66,6 +66,11 @@
 const struct eth_addr ethbroadcast = {{0xff,0xff,0xff,0xff,0xff,0xff}};
 const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
+/** The 24-bit IANA multicast OUI is 01-00-5e: */
+#define LL_MULTICAST_ADDR_0 0x01
+#define LL_MULTICAST_ADDR_1 0x00
+#define LL_MULTICAST_ADDR_2 0x5e
+
 #if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 /** the time an ARP entry stays valid after its last update,
@@ -932,9 +937,9 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   /* multicast destination IP address? */
   } else if (ip_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address.*/
-    mcastaddr.addr[0] = 0x01;
-    mcastaddr.addr[1] = 0x00;
-    mcastaddr.addr[2] = 0x5e;
+    mcastaddr.addr[0] = LL_MULTICAST_ADDR_0;
+    mcastaddr.addr[1] = LL_MULTICAST_ADDR_1;
+    mcastaddr.addr[2] = LL_MULTICAST_ADDR_2;
     mcastaddr.addr[3] = ip4_addr2(ipaddr) & 0x7f;
     mcastaddr.addr[4] = ip4_addr3(ipaddr);
     mcastaddr.addr[5] = ip4_addr4(ipaddr);
@@ -1307,6 +1312,20 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_ARP_FILTER_NETIF
   netif = LWIP_ARP_FILTER_NETIF_FN(p, netif, htons(type));
 #endif /* LWIP_ARP_FILTER_NETIF*/
+
+  if (ethhdr->dest.addr[0] & 1) {
+    /* this might be a multicast or broadcast packet */
+    if (ethhdr->dest.addr[0] == LL_MULTICAST_ADDR_0) {
+      if ((ethhdr->dest.addr[1] == LL_MULTICAST_ADDR_1) &&
+          (ethhdr->dest.addr[2] == LL_MULTICAST_ADDR_2)) {
+        /* mark the pbuf as link-layer multicast */
+        p->flags |= PBUF_FLAG_LLMCAST;
+      }
+    } else if (eth_addr_cmp(&ethhdr->dest, &ethbroadcast)) {
+      /* mark the pbuf as link-layer broadcast */
+      p->flags |= PBUF_FLAG_LLBCAST;
+    }
+  }
 
   switch (type) {
 #if LWIP_ARP
