@@ -37,6 +37,11 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-07-22: Simon Goldschmidt
+  * pbuf.c/.h, timers.c: freeing ooseq pbufs when the pbuf pool is empty implemented
+    for NO_SYS==1: when not using sys_check_timeouts(), call PBUF_CHECK_FREE_OOSEQ()
+    at regular intervals from main level.
+
   2011-07-21: Simon Goldschmidt
   * etharp.c: fixed bug #33551 (ARP entries may time out although in use) by
     sending an ARP request when an ARP entry is used in the last minute before
