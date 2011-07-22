@@ -805,6 +805,7 @@ lwip_send(int s, const void *data, size_t size, int flags)
   struct lwip_sock *sock;
   err_t err;
   u8_t write_flags;
+  size_t written;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d, data=%p, size=%"SZT_F", flags=0x%x)\n",
                               s, data, size, flags));
@@ -823,22 +824,15 @@ lwip_send(int s, const void *data, size_t size, int flags)
 #endif /* (LWIP_UDP || LWIP_RAW) */
   }
 
-  if ((flags & MSG_DONTWAIT) || netconn_is_nonblocking(sock->conn)) {
-    if ((size > TCP_SND_BUF) || ((size / TCP_MSS) > TCP_SND_QUEUELEN)) {
-      /* too much data to ever send nonblocking! */
-      sock_set_errno(sock, EMSGSIZE);
-      return -1;
-    }
-  }
-
   write_flags = NETCONN_COPY |
     ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
     ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
-  err = netconn_write(sock->conn, data, size, write_flags);
+  written = 0;
+  err = netconn_write_partly(sock->conn, data, size, write_flags, &written);
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) err=%d size=%"SZT_F"\n", s, err, size));
+  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_send(%d) err=%d written=%"SZT_F"\n", s, err, written));
   sock_set_errno(sock, err_to_errno(err));
-  return (err == ERR_OK ? (int)size : -1);
+  return (err == ERR_OK ? (int)written : -1);
 }
 
 int
