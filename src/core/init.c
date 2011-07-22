@@ -56,6 +56,7 @@
 #include "lwip/dns.h"
 #include "lwip/timers.h"
 #include "netif/etharp.h"
+#include "lwip/api.h"
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
@@ -187,6 +188,32 @@
 #if IP_FRAG && IP_FRAG_USES_STATIC_BUF && LWIP_NETIF_TX_SINGLE_PBUF
   #error "LWIP_NETIF_TX_SINGLE_PBUF does not work with IP_FRAG_USES_STATIC_BUF==1 as that creates pbuf queues"
 #endif
+#if LWIP_NETCONN && LWIP_TCP
+#if NETCONN_COPY != TCP_WRITE_FLAG_COPY
+  #error "NETCONN_COPY != TCP_WRITE_FLAG_COPY"
+#endif
+#if NETCONN_MORE != TCP_WRITE_FLAG_MORE
+  #error "NETCONN_MORE != TCP_WRITE_FLAG_MORE"
+#endif
+#endif /* LWIP_NETCONN && LWIP_TCP */ 
+#if LWIP_SOCKET
+/* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
+#if SO_ACCEPTCONN != SOF_ACCEPTCONN
+  #error "SO_ACCEPTCONN != SOF_ACCEPTCONN"
+#endif
+#if SO_REUSEADDR != SOF_REUSEADDR
+  #error "WARNING: SO_REUSEADDR != SOF_REUSEADDR"
+#endif
+#if SO_KEEPALIVE != SOF_KEEPALIVE
+  #error "WARNING: SO_KEEPALIVE != SOF_KEEPALIVE"
+#endif
+#if SO_BROADCAST != SOF_BROADCAST
+  #error "WARNING: SO_BROADCAST != SOF_BROADCAST"
+#endif
+#if SO_LINGER != SOF_LINGER
+  #error "WARNING: SO_LINGER != SOF_LINGER"
+#endif
+#endif /* LWIP_SOCKET */
 
 
 /* Compile-time checks for deprecated options.
@@ -235,19 +262,6 @@ lwip_sanity_check(void)
   if (TCP_WND < TCP_MSS)
     LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
 #endif /* LWIP_TCP */
-#if LWIP_SOCKET
-  /* Check that the SO_* socket options and SOF_* lwIP-internal flags match */
-  if (SO_ACCEPTCONN != SOF_ACCEPTCONN)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_ACCEPTCONN != SOF_ACCEPTCONN\n"));
-  if (SO_REUSEADDR != SOF_REUSEADDR)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_REUSEADDR != SOF_REUSEADDR\n"));
-  if (SO_KEEPALIVE != SOF_KEEPALIVE)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_KEEPALIVE != SOF_KEEPALIVE\n"));
-  if (SO_BROADCAST != SOF_BROADCAST)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_BROADCAST != SOF_BROADCAST\n"));
-  if (SO_LINGER != SOF_LINGER)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: SO_LINGER != SOF_LINGER\n"));
-#endif /* LWIP_SOCKET */
 }
 #else  /* LWIP_DEBUG */
 #define lwip_sanity_check()
