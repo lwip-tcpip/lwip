@@ -60,6 +60,7 @@
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"
 #include "lwip/sys.h"
+#include "lwip/pbuf.h"
 
 /** The one and only timeout list */
 static struct sys_timeo *next_timeout;
@@ -428,6 +429,9 @@ sys_check_timeouts(void)
     diff = LWIP_U32_DIFF(now, timeouts_last_time);
     do
     {
+#if PBUF_POOL_FREE_OOSEQ
+      PBUF_CHECK_FREE_OOSEQ();
+#endif /* PBUF_POOL_FREE_OOSEQ */
       had_one = 0;
       tmptimeout = next_timeout;
       if (tmptimeout->time <= diff) {

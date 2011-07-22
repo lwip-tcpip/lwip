@@ -84,18 +84,25 @@
    aligned there. Therefore, PBUF_POOL_BUFSIZE_ALIGNED can be used here. */
 #define PBUF_POOL_BUFSIZE_ALIGNED LWIP_MEM_ALIGN_SIZE(PBUF_POOL_BUFSIZE)
 
-#if !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS
+#if !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ
 #define PBUF_POOL_IS_EMPTY()
-#else /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS */
-/** Define this to 0 to prevent freeing ooseq pbufs when the PBUF_POOL is empty */
-#ifndef PBUF_POOL_FREE_OOSEQ
-#define PBUF_POOL_FREE_OOSEQ 1
-#endif /* PBUF_POOL_FREE_OOSEQ */
+#else /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
 
-#if PBUF_POOL_FREE_OOSEQ
+#if !NO_SYS
+#ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
 #include "lwip/tcpip.h"
+#define PBUF_POOL_FREE_OOSEQ_QUEUE_CALL()  do { \
+  if(tcpip_callback_with_block(pbuf_free_ooseq_callback, NULL, 0) != ERR_OK) { \
+      SYS_ARCH_PROTECT(old_level); \
+      pbuf_free_ooseq_pending = 0; \
+      SYS_ARCH_UNPROTECT(old_level); \
+  } } while(0)
+#endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
+#endif /* !NO_SYS */
+
+volatile u8_t pbuf_free_ooseq_pending;
 #define PBUF_POOL_IS_EMPTY() pbuf_pool_is_empty()
-static u8_t pbuf_free_ooseq_queued;
+
 /**
  * Attempt to reclaim some memory from queued out-of-sequence TCP segments
  * if we run out of pool pbufs. It's better to give priority to new packets
@@ -104,15 +111,14 @@ static u8_t pbuf_free_ooseq_queued;
  * This must be done in the correct thread context therefore this function
  * can only be used with NO_SYS=0 and through tcpip_callback.
  */
-static void
-pbuf_free_ooseq(void* arg)
+void
+pbuf_free_ooseq()
 {
   struct tcp_pcb* pcb;
   SYS_ARCH_DECL_PROTECT(old_level);
-  LWIP_UNUSED_ARG(arg);
 
   SYS_ARCH_PROTECT(old_level);
-  pbuf_free_ooseq_queued = 0;
+  pbuf_free_ooseq_pending = 0;
   SYS_ARCH_UNPROTECT(old_level);
 
   for (pcb = tcp_active_pcbs; NULL != pcb; pcb = pcb->next) {
@@ -126,29 +132,39 @@ pbuf_free_ooseq(void* arg)
   }
 }
 
+/**
+ * Just a callback function for tcpip_timeout() that calls pbuf_free_ooseq().
+ */
+static void
+pbuf_free_ooseq_callback(void *arg)
+{
+  LWIP_UNUSED_ARG(arg);
+  pbuf_free_ooseq();
+}
+
 /** Queue a call to pbuf_free_ooseq if not already queued. */
 static void
 pbuf_pool_is_empty(void)
 {
-  u8_t queued;
   SYS_ARCH_DECL_PROTECT(old_level);
-
+#ifndef PBUF_POOL_FREE_OOSEQ_QUEUE_CALL
   SYS_ARCH_PROTECT(old_level);
-  queued = pbuf_free_ooseq_queued;
-  pbuf_free_ooseq_queued = 1;
+  pbuf_free_ooseq_pending = 1;
+  SYS_ARCH_UNPROTECT(old_level);
+#else /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
+  u8_t queued;
+  SYS_ARCH_PROTECT(old_level);
+  queued = pbuf_free_ooseq_pending;
+  pbuf_free_ooseq_pending = 1;
   SYS_ARCH_UNPROTECT(old_level);
 
   if(!queued) {
     /* queue a call to pbuf_free_ooseq if not already queued */
-    if(tcpip_callback_with_block(pbuf_free_ooseq, NULL, 0) != ERR_OK) {
-      SYS_ARCH_PROTECT(old_level);
-      pbuf_free_ooseq_queued = 0;
-      SYS_ARCH_UNPROTECT(old_level);
-    }
+    PBUF_POOL_FREE_OOSEQ_QUEUE_CALL();
   }
+#endif /* PBUF_POOL_FREE_OOSEQ_QUEUE_CALL */
 }
-#endif /* PBUF_POOL_FREE_OOSEQ */
-#endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || NO_SYS */
+#endif /* !LWIP_TCP || !TCP_QUEUE_OOSEQ || !PBUF_POOL_FREE_OOSEQ */
 
 /**
  * Allocates a pbuf of the given type (possibly a chain for PBUF_POOL type).
