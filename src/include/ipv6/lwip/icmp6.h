@@ -96,7 +96,7 @@ enum icmp6_te_code {
 enum icmp6_pp_code {
   ICMP6_PP_FIELD = 0,   /* Erroneous header field encountered */
   ICMP6_PP_HEADER = 1,  /* Unrecognized next header type encountered */
-  ICMP6_PP_OPTION = 2,  /* Unrecognized IPv6 option encountered */
+  ICMP6_PP_OPTION = 2   /* Unrecognized IPv6 option encountered */
 };
 
 /** This is the standard ICMP6 header. */

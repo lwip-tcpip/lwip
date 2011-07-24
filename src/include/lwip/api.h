@@ -106,9 +106,10 @@ enum netconn_type {
   NETCONN_UDPNOCHKSUM_IPV6 = NETCONN_UDPNOCHKSUM | NETCONN_TYPE_IPV6 /* 0x2a */,
 #endif /* LWIP_IPV6 */
   /* NETCONN_RAW Group */
-  NETCONN_RAW         = 0x40,
+  NETCONN_RAW         = 0x40
 #if LWIP_IPV6
-  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */,
+  ,
+  NETCONN_RAW_IPV6    = NETCONN_RAW | NETCONN_TYPE_IPV6 /* 0x48 */
 #endif /* LWIP_IPV6 */
 };
 
