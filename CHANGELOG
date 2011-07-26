@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2011-08-26: Simon Goldschmidt
+  * etharp.c: ETHARP_SUPPORT_VLAN: add support for an external VLAN filter
+    function instead of only checking for one VLAN (define ETHARP_VLAN_CHECK_FN)
+
   2011-06-26: Simon Goldschmidt (patch by Cameron Gutman)
   * tcp.c, tcp_out.c: bug #33604: added some more asserts to check that
     pcb->state != LISTEN

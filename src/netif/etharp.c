@@ -1293,13 +1293,17 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       ETHARP_STATS_INC(etharp.drop);
       goto free_and_return;
     }
-#ifdef ETHARP_VLAN_CHECK /* if not, allow all VLANs */
+#if defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) /* if not, allow all VLANs */
+#ifdef ETHARP_VLAN_CHECK_FN
+    if (!ETHARP_VLAN_CHECK_FN(ethhdr, vlan)) {
+#elif defined(ETHARP_VLAN_CHECK)
     if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
+#endif
       /* silently ignore this packet: not for our VLAN */
       pbuf_free(p);
       return ERR_OK;
     }
-#endif /* ETHARP_VLAN_CHECK */
+#endif /* defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) */
     type = vlan->tpid;
     ip_hdr_offset = SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR;
   }
