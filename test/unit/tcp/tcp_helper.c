@@ -69,7 +69,8 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   /* fill IP header */
   iphdr->dest.addr = dst_ip->addr;
   iphdr->src.addr = src_ip->addr;
-  IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, 0);
+  IPH_VHL_SET(iphdr, 4, IP_HLEN / 4);
+  IPH_TOS_SET(iphdr, 0);
   IPH_LEN_SET(iphdr, htons(p->tot_len));
   IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 
@@ -89,8 +90,8 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
 
   /* calculate checksum */
 
-  tcphdr->chksum = inet_chksum_pseudo(p, src_ip, dst_ip,
-          IP_PROTO_TCP, p->tot_len);
+  tcphdr->chksum = inet_chksum_pseudo(p,
+          IP_PROTO_TCP, p->tot_len, src_ip, dst_ip);
 
   pbuf_header(p, sizeof(struct ip_hdr));
 
@@ -200,17 +201,18 @@ test_tcp_new_counters_pcb(struct test_tcp_counters* counters)
 void test_tcp_input(struct pbuf *p, struct netif *inp)
 {
   struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
-  ip_addr_copy(current_iphdr_dest, iphdr->dest);
-  ip_addr_copy(current_iphdr_src, iphdr->src);
-  current_netif = inp;
-  current_header = iphdr;
+  /* these lines are a hack, don't use them as an example :-) */
+  ip_addr_copy(*ipX_current_dest_addr(), iphdr->dest);
+  ip_addr_copy(*ipX_current_src_addr(), iphdr->src);
+  ip_current_netif() = inp;
+  ip_current_header() = iphdr;
 
   tcp_input(p, inp);
 
-  current_iphdr_dest.addr = 0;
-  current_iphdr_src.addr = 0;
-  current_netif = NULL;
-  current_header = NULL;
+  ipX_current_dest_addr()->addr = 0;
+  ipX_current_src_addr()->addr = 0;
+  ip_current_netif() = NULL;
+  ip_current_header() = NULL;
 }
 
 static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
