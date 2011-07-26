@@ -114,8 +114,10 @@ struct ip_pcb {
 #endif
 PACK_STRUCT_BEGIN
 struct ip_hdr {
-  /* version / header length / type of service */
-  PACK_STRUCT_FIELD(u16_t _v_hl_tos);
+  /* version / header length */
+  PACK_STRUCT_FIELD(u8_t _v_hl);
+  /* type of service */
+  PACK_STRUCT_FIELD(u8_t _tos);
   /* total length */
   PACK_STRUCT_FIELD(u16_t _len);
   /* identification */
@@ -141,9 +143,14 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#define IPH_V(hdr)  (ntohs((hdr)->_v_hl_tos) >> 12)
-#define IPH_HL(hdr) ((ntohs((hdr)->_v_hl_tos) >> 8) & 0x0f)
-#define IPH_TOS(hdr) (ntohs((hdr)->_v_hl_tos) & 0xff)
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define IPH_V(hdr)  ((hdr)->_v_hl >> 4)
+#define IPH_HL(hdr) ((hdr)->_v_hl & 0x0f)
+#else /* BYTE_ORDER == LITTLE_ENDIAN */
+#define IPH_V(hdr)  ((hdr)->_v_hl & 0x0f)
+#define IPH_HL(hdr) ((hdr)->_v_hl >> 4)
+#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+#define IPH_TOS(hdr) ((hdr)->_tos)
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
 #define IPH_OFFSET(hdr) ((hdr)->_offset)
@@ -151,7 +158,12 @@ PACK_STRUCT_END
 #define IPH_PROTO(hdr) ((hdr)->_proto)
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
 
-#define IPH_VHLTOS_SET(hdr, v, hl, tos) (hdr)->_v_hl_tos = (htons(((v) << 12) | ((hl) << 8) | (tos)))
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (((v) << 4) | (hl))
+#else /* BYTE_ORDER == LITTLE_ENDIAN */
+#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = ((v) | ((hl) << 4))
+#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+#define IPH_TOS_SET(hdr, tos) (hdr)->_tos = (tos)
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)
 #define IPH_OFFSET_SET(hdr, off) (hdr)->_offset = (off)
