@@ -111,6 +111,9 @@ volatile u8_t pbuf_free_ooseq_pending;
  * This must be done in the correct thread context therefore this function
  * can only be used with NO_SYS=0 and through tcpip_callback.
  */
+#if !NO_SYS
+static
+#endif /* !NO_SYS */
 void
 pbuf_free_ooseq(void)
 {
