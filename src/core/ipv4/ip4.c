@@ -705,9 +705,10 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     chk_sum += ip4_addr_get_u32(&iphdr->dest) >> 16;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
-    IPH_VHLTOS_SET(iphdr, 4, ip_hlen / 4, tos);
+    IPH_VHL_SET(iphdr, 4, ip_hlen / 4);
+    IPH_TOS_SET(iphdr, tos);
 #if CHECKSUM_GEN_IP_INLINE
-    chk_sum += iphdr->_v_hl_tos;
+    chk_sum += LWIP_MAKE_U16(tos, iphdr->_v_hl);
 #endif /* CHECKSUM_GEN_IP_INLINE */
     IPH_LEN_SET(iphdr, htons(p->tot_len));
 #if CHECKSUM_GEN_IP_INLINE
