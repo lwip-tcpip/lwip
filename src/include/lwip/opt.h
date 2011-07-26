@@ -461,6 +461,8 @@
  * Additionally, you can define ETHARP_VLAN_CHECK to an u16_t VLAN ID to check.
  * If ETHARP_VLAN_CHECK is defined, only VLAN-traffic for this VLAN is accepted.
  * If ETHARP_VLAN_CHECK is not defined, all traffic is accepted.
+ * Alternatively, define a function/define ETHARP_VLAN_CHECK_FN(eth_hdr, vlan)
+ * that returns 1 to accept a packet or 0 to drop a packet.
  */
 #ifndef ETHARP_SUPPORT_VLAN
 #define ETHARP_SUPPORT_VLAN             0
