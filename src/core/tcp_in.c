@@ -104,7 +104,9 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
   u8_t hdrlen;
   err_t err;
+#if CHECKSUM_CHECK_TCP
   u16_t chksum;
+#endif /* CHECKSUM_CHECK_TCP */
 
   PERF_START;
 
