@@ -208,6 +208,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
       }
       else {
         buf[i++] = xchar(((current_block_value & 0xf000) >> 12));
+        zero_flag = 0;
         if (i >= buflen) return NULL;
       }
 
@@ -216,6 +217,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
       }
       else {
         buf[i++] = xchar(((current_block_value & 0xf00) >> 8));
+        zero_flag = 0;
         if (i >= buflen) return NULL;
       }
 
@@ -224,6 +226,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
       }
       else {
         buf[i++] = xchar(((current_block_value & 0xf0) >> 4));
+        zero_flag = 0;
         if (i >= buflen) return NULL;
       }
 
