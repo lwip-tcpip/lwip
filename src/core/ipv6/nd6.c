@@ -851,7 +851,9 @@ nd6_send_na(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
   ip6_addr_t * dest_addr;
 
   /* Use link-local address as source address. */
-  src_addr = &(netif->ip6_addr[0]);
+  /* src_addr = &(netif->ip6_addr[0]); */
+  /* Use target address as source address. */
+  src_addr = target_addr;
 
   /* Allocate a packet. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct na_header) + sizeof(struct lladdr_option), PBUF_RAM);
