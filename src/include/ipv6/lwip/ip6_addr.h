@@ -105,14 +105,14 @@ Little-endian version, stored in network order (no htonl). */
 #endif
 
 /** Access address in 16-bit block */
-#define IP6_ADDR_BLOCK1(ip6addr) ((htonl((ip6addr)->addr[0]) >> 16) & 0xffff)
-#define IP6_ADDR_BLOCK2(ip6addr) ((htonl((ip6addr)->addr[0])) & 0xffff)
-#define IP6_ADDR_BLOCK3(ip6addr) ((htonl((ip6addr)->addr[1]) >> 16) & 0xffff)
-#define IP6_ADDR_BLOCK4(ip6addr) ((htonl((ip6addr)->addr[1])) & 0xffff)
-#define IP6_ADDR_BLOCK5(ip6addr) ((htonl((ip6addr)->addr[2]) >> 16) & 0xffff)
-#define IP6_ADDR_BLOCK6(ip6addr) ((htonl((ip6addr)->addr[2])) & 0xffff)
-#define IP6_ADDR_BLOCK7(ip6addr) ((htonl((ip6addr)->addr[3]) >> 16) & 0xffff)
-#define IP6_ADDR_BLOCK8(ip6addr) ((htonl((ip6addr)->addr[3])) & 0xffff)
+#define IP6_ADDR_BLOCK1(ip6addr) ((u16_t)(htonl((ip6addr)->addr[0]) >> 16) & 0xffff)
+#define IP6_ADDR_BLOCK2(ip6addr) ((u16_t)(htonl((ip6addr)->addr[0])) & 0xffff)
+#define IP6_ADDR_BLOCK3(ip6addr) ((u16_t)(htonl((ip6addr)->addr[1]) >> 16) & 0xffff)
+#define IP6_ADDR_BLOCK4(ip6addr) ((u16_t)(htonl((ip6addr)->addr[1])) & 0xffff)
+#define IP6_ADDR_BLOCK5(ip6addr) ((u16_t)(htonl((ip6addr)->addr[2]) >> 16) & 0xffff)
+#define IP6_ADDR_BLOCK6(ip6addr) ((u16_t)(htonl((ip6addr)->addr[2])) & 0xffff)
+#define IP6_ADDR_BLOCK7(ip6addr) ((u16_t)(htonl((ip6addr)->addr[3]) >> 16) & 0xffff)
+#define IP6_ADDR_BLOCK8(ip6addr) ((u16_t)(htonl((ip6addr)->addr[3])) & 0xffff)
 
 /** Copy IPv6 address - faster than ip6_addr_set: no NULL check */
 #define ip6_addr_copy(dest, src) do{(dest).addr[0] = (src).addr[0]; \
