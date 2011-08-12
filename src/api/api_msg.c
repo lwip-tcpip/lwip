@@ -601,6 +601,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #endif /* LWIP_TCP */
   default:
     LWIP_ASSERT("netconn_alloc: undefined netconn_type", 0);
+    size = 0;
     break;
   }
 #endif
