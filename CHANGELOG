@@ -41,6 +41,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-08-22: Simon Goldschmidt
+  * tcp_out.c: fixed bug #33962 TF_FIN not always set after FIN is sent. (This
+    merely prevents nagle from not transmitting fast after closing.)
+
   2011-07-22: Simon Goldschmidt
   * api_lib.c, api_msg.c, sockets.c, api.h: fixed bug #31084 (socket API returns
     always EMSGSIZE on non-blocking sockets if data size > send buffers) -> now
