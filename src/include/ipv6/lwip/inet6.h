@@ -54,22 +54,25 @@ extern "C" {
 
 /** For compatibility with BSD code */
 struct in6_addr {
-  u32_t s_addr[4];
+  union {
+    u8_t  u8_addr[16];
+    u32_t u32_addr[4];
+  } un;
+#define s6_addr  un.u32_addr
 };
 
 #define IN6ADDR_ANY_INIT {0,0,0,0}
 #define IN6ADDR_LOOPBACK_INIT {0,0,0,PP_HTONL(1)}
 
 
-
-#define inet6_addr_from_ip6addr(target_in6addr, source_ip6addr) {(target_in6addr)->s_addr[0] = (source_ip6addr)->addr[0]; \
-                                                                 (target_in6addr)->s_addr[1] = (source_ip6addr)->addr[1]; \
-                                                                 (target_in6addr)->s_addr[2] = (source_ip6addr)->addr[2]; \
-                                                                 (target_in6addr)->s_addr[3] = (source_ip6addr)->addr[3];}
-#define inet6_addr_to_ip6addr(target_ip6addr, source_in6addr)   {(target_ip6addr)->addr[0] = (source_in6addr)->s_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->s_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->s_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->s_addr[0];}
+#define inet6_addr_from_ip6addr(target_in6addr, source_ip6addr) {(target_in6addr)->un.u32_addr[0] = (source_ip6addr)->addr[0]; \
+                                                                 (target_in6addr)->un.u32_addr[1] = (source_ip6addr)->addr[1]; \
+                                                                 (target_in6addr)->un.u32_addr[2] = (source_ip6addr)->addr[2]; \
+                                                                 (target_in6addr)->un.u32_addr[3] = (source_ip6addr)->addr[3];}
+#define inet6_addr_to_ip6addr(target_ip6addr, source_in6addr)   {(target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
+                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
+                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
+                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0];}
 /* ATTENTION: the next define only works because both in6_addr and ip6_addr_t are an u32_t[4] effectively! */
 #define inet6_addr_to_ip6addr_p(target_ip6addr_p, source_in6addr)   ((target_ip6addr_p) = (ip6_addr_t*)(source_in6addr))
 
