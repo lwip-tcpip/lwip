@@ -22,6 +22,9 @@ HISTORY
  ++ Bugfixes:
 
   2011-08-24: Simon Goldschmidt
+  * dhcp.c: fixed bug #34122 dhcp: hostname can overflow
+
+  2011-08-24: Simon Goldschmidt
   * netif.c: fixed bug #34121 netif_add/netif_set_ipaddr fail on NULL ipaddr
 
   2011-08-22: Simon Goldschmidt
