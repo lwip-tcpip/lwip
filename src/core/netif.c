@@ -358,7 +358,7 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
   struct tcp_pcb_listen *lpcb;
 
   /* address is actually being changed? */
-  if ((ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0) {
+  if (ipaddr && (ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0) {
     /* extern struct tcp_pcb *tcp_active_pcbs; defined by tcp.h */
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
     pcb = tcp_active_pcbs;
