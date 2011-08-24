@@ -168,6 +168,9 @@ static void dhcp_option(struct dhcp *dhcp, u8_t option_type, u8_t option_len);
 static void dhcp_option_byte(struct dhcp *dhcp, u8_t value);
 static void dhcp_option_short(struct dhcp *dhcp, u16_t value);
 static void dhcp_option_long(struct dhcp *dhcp, u32_t value);
+#if LWIP_NETIF_HOSTNAME
+static void dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif);
+#endif /* LWIP_NETIF_HOSTNAME */
 /* always add the DHCP options trailer to end and pad */
 static void dhcp_option_trailer(struct dhcp *dhcp);
 
@@ -299,17 +302,7 @@ dhcp_select(struct netif *netif)
     dhcp_option_byte(dhcp, DHCP_OPTION_DNS_SERVER);
 
 #if LWIP_NETIF_HOSTNAME
-    if (netif->hostname != NULL) {
-      const char *p = (const char*)netif->hostname;
-      u8_t namelen = (u8_t)strlen(p);
-      if (namelen > 0) {
-        LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
-        dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
-        while (*p) {
-          dhcp_option_byte(dhcp, *p++);
-        }
-      }
-    }
+    dhcp_option_hostname(dhcp, netif);
 #endif /* LWIP_NETIF_HOSTNAME */
 
     dhcp_option_trailer(dhcp);
@@ -1029,17 +1022,7 @@ dhcp_renew(struct netif *netif)
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
 #if LWIP_NETIF_HOSTNAME
-    if (netif->hostname != NULL) {
-      const char *p = (const char*)netif->hostname;
-      u8_t namelen = (u8_t)strlen(p);
-      if (namelen > 0) {
-        LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
-        dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
-        while (*p) {
-          dhcp_option_byte(dhcp, *p++);
-        }
-      }
-    }
+    dhcp_option_hostname(dhcp, netif);
 #endif /* LWIP_NETIF_HOSTNAME */
 
 #if 0
@@ -1092,17 +1075,7 @@ dhcp_rebind(struct netif *netif)
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
 #if LWIP_NETIF_HOSTNAME
-    if (netif->hostname != NULL) {
-      const char *p = (const char*)netif->hostname;
-      u8_t namelen = (u8_t)strlen(p);
-      if (namelen > 0) {
-        LWIP_ASSERT("DHCP: hostname is too long!", namelen < 255);
-        dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, namelen);
-        while (*p) {
-          dhcp_option_byte(dhcp, *p++);
-        }
-      }
-    }
+    dhcp_option_hostname(dhcp, netif);
 #endif /* LWIP_NETIF_HOSTNAME */
 
 #if 0
@@ -1313,6 +1286,26 @@ dhcp_option_long(struct dhcp *dhcp, u32_t value)
   dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0x0000ff00UL) >> 8);
   dhcp->msg_out->options[dhcp->options_out_len++] = (u8_t)((value & 0x000000ffUL));
 }
+
+#if LWIP_NETIF_HOSTNAME
+static void
+dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
+{
+  if (netif->hostname != NULL) {
+    size_t namelen = strlen(netif->hostname);
+    if (namelen > 0) {
+      u8_t len;
+      const char *p = netif->hostname;
+      LWIP_ASSERT("DHCP: hostname is too long!", namelen <= 255);
+      len = LWIP_MAX(namelen, 255);
+      dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, len);
+      while (len--) {
+        dhcp_option_byte(dhcp, *p++);
+      }
+    }
+  }
+}
+#endif /* LWIP_NETIF_HOSTNAME */
 
 /**
  * Extract the DHCP message and the DHCP options.
