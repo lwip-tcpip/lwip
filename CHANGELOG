@@ -6,7 +6,10 @@ HISTORY
 
  ++ New features:
 
-  2011-08-26: Simon Goldschmidt
+  2011-08-24: Simon Goldschmidt
+  * opt.h, netif.h/.c: added netif remove callback (bug #32397)
+
+  2011-07-26: Simon Goldschmidt
   * etharp.c: ETHARP_SUPPORT_VLAN: add support for an external VLAN filter
     function instead of only checking for one VLAN (define ETHARP_VLAN_CHECK_FN)
 
