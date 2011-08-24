@@ -22,6 +22,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-08-24: Simon Goldschmidt
+  * api_msg.c, sockets.c: fixed bug #33956 Wrong error returned when calling
+    accept() on UDP connections
+
+  2011-08-24: Simon Goldschmidt
   * sockets.h: fixed bug #34057 socklen_t should be a typedef
 
   2011-08-24: Simon Goldschmidt

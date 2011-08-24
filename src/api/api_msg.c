@@ -1089,6 +1089,8 @@ do_listen(struct api_msg_msg *msg)
             }
           }
         }
+      } else {
+        msg->err = ERR_ARG;
       }
     }
   }
