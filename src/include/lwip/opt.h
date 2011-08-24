@@ -1116,6 +1116,14 @@
 #endif
 
 /**
+ * LWIP_NETIF_REMOVE_CALLBACK==1: Support a callback function that is called
+ * when a netif has been removed
+ */
+#ifndef LWIP_NETIF_REMOVE_CALLBACK
+#define LWIP_NETIF_REMOVE_CALLBACK      0
+#endif
+
+/**
  * LWIP_NETIF_HWADDRHINT==1: Cache link-layer-address hints (e.g. table
  * indices) in struct netif. TCP and UDP can make use of this to prevent
  * scanning the ARP table for every sent packet. While this is faster for big
