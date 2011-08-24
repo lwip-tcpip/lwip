@@ -21,6 +21,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-08-24: Simon Goldschmidt
+  * netif.c: fixed bug #34121 netif_add/netif_set_ipaddr fail on NULL ipaddr
+
   2011-08-22: Simon Goldschmidt
   * tcp_out.c: fixed bug #33962 TF_FIN not always set after FIN is sent. (This
     merely prevents nagle from not transmitting fast after closing.)
