@@ -143,13 +143,8 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 #define IPH_V(hdr)  ((hdr)->_v_hl >> 4)
 #define IPH_HL(hdr) ((hdr)->_v_hl & 0x0f)
-#else /* BYTE_ORDER == LITTLE_ENDIAN */
-#define IPH_V(hdr)  ((hdr)->_v_hl & 0x0f)
-#define IPH_HL(hdr) ((hdr)->_v_hl >> 4)
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 #define IPH_TOS(hdr) ((hdr)->_tos)
 #define IPH_LEN(hdr) ((hdr)->_len)
 #define IPH_ID(hdr) ((hdr)->_id)
@@ -158,11 +153,7 @@ PACK_STRUCT_END
 #define IPH_PROTO(hdr) ((hdr)->_proto)
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
 
-#if BYTE_ORDER == LITTLE_ENDIAN
 #define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (((v) << 4) | (hl))
-#else /* BYTE_ORDER == LITTLE_ENDIAN */
-#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = ((v) | ((hl) << 4))
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
 #define IPH_TOS_SET(hdr, tos) (hdr)->_tos = (tos)
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)
