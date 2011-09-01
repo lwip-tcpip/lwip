@@ -448,13 +448,18 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
   struct tcp_pcb *npcb;
   err_t rc;
 
+  if (flags & TCP_RST) {
+    /* An incoming RST should be ignored. Return. */
+    return ERR_OK;
+  }
+
   /* In the LISTEN state, we check for incoming SYN segments,
      creates a new PCB, and responds with a SYN|ACK. */
   if (flags & TCP_ACK) {
     /* For incoming segments with the ACK flag set, respond with a
        RST. */
     LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_listen_input: ACK in LISTEN, sending reset\n"));
-    tcp_rst(ackno + 1, seqno + tcplen, ipX_current_dest_addr(),
+    tcp_rst(ackno, seqno + tcplen, ipX_current_dest_addr(),
       ipX_current_src_addr(), tcphdr->dest, tcphdr->src, ip_current_is_v6());
   } else if (flags & TCP_SYN) {
     LWIP_DEBUGF(TCP_DEBUG, ("TCP connection request %"U16_F" -> %"U16_F".\n", tcphdr->src, tcphdr->dest));
