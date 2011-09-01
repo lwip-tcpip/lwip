@@ -1034,14 +1034,11 @@
  *     LWIP_EVENT_API==1: The user defines lwip_tcp_event() to receive all
  *         events (accept, sent, etc) that happen in the system.
  *     LWIP_CALLBACK_API==1: The PCB callback function is called directly
- *         for the event.
+ *         for the event. This is the default.
  */
-#ifndef LWIP_EVENT_API
+#if !defined(LWIP_EVENT_API) && !defined(LWIP_CALLBACK_API)
 #define LWIP_EVENT_API                  0
 #define LWIP_CALLBACK_API               1
-#else 
-#define LWIP_EVENT_API                  1
-#define LWIP_CALLBACK_API               0
 #endif
 
 

@@ -25,6 +25,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-09-01: Simon Goldschmidt
+  * opt.h: fixed bug #31809 LWIP_EVENT_API in opts.h is inconsistent compared
+    to other options
+
+  2011-09-01: Simon Goldschmidt
   * tcp_in.c: fixed bug #34111 RST for ACK to listening pcb has wrong seqno
 
   2011-08-24: Simon Goldschmidt
