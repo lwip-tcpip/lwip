@@ -24,6 +24,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-09-03: Simon Goldschmidt
+  * tcp_in.c: fixed bug #33952 PUSH flag in incoming packet is lost when packet
+    is aggregated and sent to application
+
   2011-09-01: Simon Goldschmidt
   * opt.h: fixed bug #31809 LWIP_EVENT_API in opts.h is inconsistent compared
     to other options
