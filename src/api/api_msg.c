@@ -601,19 +601,16 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #endif /* LWIP_TCP */
   default:
     LWIP_ASSERT("netconn_alloc: undefined netconn_type", 0);
-    size = 0;
-    break;
+    goto free_and_return;
   }
 #endif
 
   if (sys_sem_new(&conn->op_completed, 0) != ERR_OK) {
-    memp_free(MEMP_NETCONN, conn);
-    return NULL;
+    goto free_and_return;
   }
   if (sys_mbox_new(&conn->recvmbox, size) != ERR_OK) {
     sys_sem_free(&conn->op_completed);
-    memp_free(MEMP_NETCONN, conn);
-    return NULL;
+    goto free_and_return;
   }
 
 #if LWIP_TCP
@@ -638,6 +635,9 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
 #endif /* LWIP_SO_RCVBUF */
   conn->flags = 0;
   return conn;
+free_and_return:
+  memp_free(MEMP_NETCONN, conn);
+  return NULL;
 }
 
 /**
