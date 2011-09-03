@@ -300,6 +300,10 @@ tcp_input(struct pbuf *p, struct netif *inp)
     recv_data = NULL;
     recv_flags = 0;
 
+    if (flags & TCP_PSH) {
+      p->flags |= PBUF_FLAG_PUSH;
+    }
+
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
       /* Notify again application with data previously received. */
@@ -353,9 +357,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
             pbuf_free(recv_data);
             tcp_abort(pcb);
             goto aborted;
-          }
-          if (flags & TCP_PSH) {
-            recv_data->flags |= PBUF_FLAG_PUSH;
           }
 
           /* Notify application that data has been received. */
