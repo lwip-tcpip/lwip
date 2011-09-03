@@ -54,16 +54,23 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
                    u16_t src_port, u16_t dst_port, void* data, size_t data_len,
                    u32_t seqno, u32_t ackno, u8_t headerflags)
 {
-  struct pbuf* p;
+  struct pbuf *p, *q;
   struct ip_hdr* iphdr;
   struct tcp_hdr* tcphdr;
   u16_t pbuf_len = (u16_t)(sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len);
 
   p = pbuf_alloc(PBUF_RAW, pbuf_len, PBUF_POOL);
   EXPECT_RETNULL(p != NULL);
-  EXPECT_RETNULL(p->next == NULL);
+  /* first pbuf must be big enough to hold the headers */
+  EXPECT_RETNULL(p->len >= (sizeof(struct ip_hdr) + sizeof(struct tcp_hdr)));
+  if (data_len > 0) {
+    /* first pbuf must be big enough to hold at least 1 data byte, too */
+    EXPECT_RETNULL(p->len > (sizeof(struct ip_hdr) + sizeof(struct tcp_hdr)));
+  }
 
-  memset(p->payload, 0, p->len);
+  for(q = p; q != NULL; q = q->next) {
+    memset(q->payload, 0, q->len);
+  }
 
   iphdr = p->payload;
   /* fill IP header */
@@ -73,6 +80,7 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   IPH_LEN_SET(iphdr, htons(p->tot_len));
   IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 
+  /* let p point to TCP header */
   pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
 
   tcphdr = p->payload;
@@ -84,8 +92,14 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   TCPH_FLAGS_SET(tcphdr, headerflags);
   tcphdr->wnd   = htons(TCP_WND);
 
-  /* copy data */
-  memcpy((char*)tcphdr + sizeof(struct tcp_hdr), data, data_len);
+  if (data_len > 0) {
+    /* let p point to TCP data */
+    pbuf_header(p, -(s16_t)sizeof(struct tcp_hdr));
+    /* copy data */
+    pbuf_take(p, data, data_len);
+    /* let p point to TCP header again */
+    pbuf_header(p, sizeof(struct tcp_hdr));
+  }
 
   /* calculate checksum */
 
@@ -204,6 +218,9 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
   ip_addr_copy(current_iphdr_src, iphdr->src);
   current_netif = inp;
   current_header = iphdr;
+
+  /* since adding IPv6, p->payload must point to tcp header, not ip header */
+  pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
 
   tcp_input(p, inp);
 
