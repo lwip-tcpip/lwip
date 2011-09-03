@@ -478,7 +478,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
     int count, expected_datalen;
     struct pbuf *p = tcp_create_rx_segment(pcb, &data_full_wnd[TCP_MSS*(k+1)],
                                            TCP_MSS, TCP_MSS*(k+1), 0, TCP_ACK);
-    EXPECT(p != NULL);
+    EXPECT_RET(p != NULL);
     /* pass the segment to tcp_input */
     test_tcp_input(p, &netif);
     /* check if counters are as expected */
@@ -502,7 +502,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
 
   /* pass in one more segment, cleary overrunning the rxwin */
   p_ovr = tcp_create_rx_segment(pcb, &data_full_wnd[TCP_MSS*(k+1)], TCP_MSS, TCP_MSS*(k+1), 0, TCP_ACK);
-  EXPECT(p_ovr != NULL);
+  EXPECT_RET(p_ovr != NULL);
   /* pass the segment to tcp_input */
   test_tcp_input(p_ovr, &netif);
   /* check if counters are as expected */
