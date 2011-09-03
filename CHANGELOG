@@ -6,6 +6,9 @@ HISTORY
 
  ++ New features:
 
+  2011-09-03: Simon Goldschmidt
+  * dhcp.c: DHCP uses LWIP_RAND() for xid's (bug #30302)
+
   2011-08-24: Simon Goldschmidt
   * opt.h, netif.h/.c: added netif remove callback (bug #32397)
 
