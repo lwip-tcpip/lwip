@@ -83,6 +83,13 @@
 
 #include <string.h>
 
+/** DHCP_CREATE_RAND_XID: if this is set to 1, the xid is created using
+ * LWIP_RAND() (this overrides DHCP_GLOBAL_XID)
+ */
+#ifndef DHCP_CREATE_RAND_XID
+#define DHCP_CREATE_RAND_XID 1
+#endif
+
 /** Default for DHCP_GLOBAL_XID is 0xABCD0000
  * This can be changed by defining DHCP_GLOBAL_XID and DHCP_GLOBAL_XID_HEADER, e.g.
  *  #define DHCP_GLOBAL_XID_HEADER "stdlib.h"
@@ -1623,7 +1630,11 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
    *  with a packet analyser). We simply increment for each new request.
    *  Predefine DHCP_GLOBAL_XID to a better value or a function call to generate one
    *  at runtime, any supporting function prototypes can be defined in DHCP_GLOBAL_XID_HEADER */
+#if DHCP_CREATE_RAND_XID && defined(LWIP_RAND)
+  static u32_t xid;
+#else /* DHCP_CREATE_RAND_XID && defined(LWIP_RAND) */
   static u32_t xid = 0xABCD0000;
+#endif /* DHCP_CREATE_RAND_XID && defined(LWIP_RAND) */
 #else
   if (!xid_initialised) {
     xid = DHCP_GLOBAL_XID;
@@ -1645,7 +1656,11 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
 
   /* reuse transaction identifier in retransmissions */
   if (dhcp->tries == 0) {
-      xid++;
+#if DHCP_CREATE_RAND_XID && defined(LWIP_RAND)
+    xid = LWIP_RAND();
+#else /* DHCP_CREATE_RAND_XID && defined(LWIP_RAND) */
+    xid++;
+#endif /* DHCP_CREATE_RAND_XID && defined(LWIP_RAND) */
   }
   dhcp->xid = xid;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE,
