@@ -983,7 +983,7 @@
 #endif
 
 /**
- * TCP_SNDQUEUELOWAT: TCP writable bufs (pbuf count). This must be grater
+ * TCP_SNDQUEUELOWAT: TCP writable bufs (pbuf count). This must be less
  * than TCP_SND_QUEUELEN. If the number of pbufs queued on a pcb drops below
  * this number, select returns writable (combined with TCP_SNDLOWAT).
  */
