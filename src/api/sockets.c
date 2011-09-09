@@ -386,7 +386,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   struct lwip_sock *sock, *nsock;
   struct netconn *newconn;
   ipX_addr_t naddr;
-  u16_t port;
+  u16_t port = 0;
   int newsock;
   err_t err;
   SYS_ARCH_DECL_PROTECT(lev);
