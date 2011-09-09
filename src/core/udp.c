@@ -171,22 +171,26 @@ udp_input(struct pbuf *p, struct netif *inp)
                    ip4_addr3_16(&pcb->remote_ip), ip4_addr4_16(&pcb->remote_ip), pcb->remote_port));
 
       /* compare PCB local addr+port to UDP destination addr+port */
-      if ((pcb->local_port == dest) &&
-          ((!broadcast && ip_addr_isany(&pcb->local_ip)) ||
+      if (pcb->local_port == dest) {
+        if (
+           (!broadcast && ip_addr_isany(&pcb->local_ip)) ||
            ip_addr_cmp(&(pcb->local_ip), &current_iphdr_dest) ||
 #if LWIP_IGMP
            ip_addr_ismulticast(&current_iphdr_dest) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
-           (broadcast && (pcb->so_options & SOF_BROADCAST)))) {
-#else  /* IP_SOF_BROADCAST_RECV */
-           (broadcast))) {
-#endif /* IP_SOF_BROADCAST_RECV */
-        local_match = 1;
-        if ((uncon_pcb == NULL) && 
-            ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
-          /* the first unconnected matching PCB */
-          uncon_pcb = pcb;
+            (broadcast && (pcb->so_options & SOF_BROADCAST) &&
+            ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))) {
+#else /* IP_SOF_BROADCAST_RECV */
+            (broadcast &&
+            ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))) {
+#endif /* IP_SOF_BROADCAST_RECV */ 
+          local_match = 1;
+          if ((uncon_pcb == NULL) && 
+              ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
+            /* the first unconnected matching PCB */
+            uncon_pcb = pcb;
+          }
         }
       }
       /* compare PCB remote addr+port to UDP source addr+port */

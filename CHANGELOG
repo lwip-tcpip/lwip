@@ -27,6 +27,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-09-09: Simon Goldschmidt
+  * udp.c: fixed bug #34072: UDP broadcast is received from wrong UDP pcb if
+    udp port matches
+
   2011-09-03: Simon Goldschmidt
   * tcp_in.c: fixed bug #33952 PUSH flag in incoming packet is lost when packet
     is aggregated and sent to application
