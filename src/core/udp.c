@@ -173,7 +173,8 @@ udp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(UDP_DEBUG, (", %"U16_F")\n", pcb->remote_port));
 
       /* compare PCB local addr+port to UDP destination addr+port */
-      if ((pcb->local_port == dest) &&
+      if (pcb->local_port == dest) {
+        if (
 #if LWIP_IPV6
           ((PCB_ISIPV6(pcb) && (ip_current_is_v6()) &&
             (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip)) ||
@@ -192,15 +193,18 @@ udp_input(struct pbuf *p, struct netif *inp)
             ip_addr_ismulticast(ip_current_dest_addr()) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
-            (broadcast && (pcb->so_options & SOF_BROADCAST)))))) {
-#else  /* IP_SOF_BROADCAST_RECV */
-            (broadcast))))) {
-#endif /* IP_SOF_BROADCAST_RECV */
-        local_match = 1;
-        if ((uncon_pcb == NULL) && 
-            ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
-          /* the first unconnected matching PCB */
-          uncon_pcb = pcb;
+            (broadcast && (pcb->so_options & SOF_BROADCAST) &&
+            ip_addr_netcmp(ipX_2_ip(&pcb->local_ip), ip_current_dest_addr(), &inp->netmask)))))) {
+#else /* IP_SOF_BROADCAST_RECV */
+            (broadcast &&
+            ip_addr_netcmp(ipX_2_ip(&pcb->local_ip), ip_current_dest_addr(), &inp->netmask)))))) {
+#endif /* IP_SOF_BROADCAST_RECV */ 
+          local_match = 1;
+          if ((uncon_pcb == NULL) && 
+              ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {
+            /* the first unconnected matching PCB */
+            uncon_pcb = pcb;
+          }
         }
       }
       /* compare PCB remote addr+port to UDP source addr+port */
