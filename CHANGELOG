@@ -52,6 +52,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-09-11: Simon Goldschmidt
+  * tcp_out.c: use pcb->mss instead of TCP_MSS for preallocate mss-sized pbufs
+    (bug #34019)
+
   2011-09-09: Simon Goldschmidt
   * udp.c: fixed bug #34072: UDP broadcast is received from wrong UDP pcb if
     udp port matches
