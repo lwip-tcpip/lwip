@@ -83,9 +83,9 @@
 
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
+#include "ppp_impl.h"
 #include "lwip/ip.h" /* for ip_input() */
 
-#include "ppp.h"
 #include "pppdebug.h"
 
 #include "randm.h"
@@ -527,7 +527,7 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
  * pppOpen() is directly defined to this function.
  */
 int
-pppOverSerialOpen(sio_fd_t fd, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
+pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx)
 {
   PPPControl *pc;
   int pd;
@@ -595,7 +595,8 @@ pppOverEthernetClose(int pd)
   pppoe_destroy(&pc->netif);
 }
 
-int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name, void (*linkStatusCB)(void *ctx, int errCode, void *arg), void *linkStatusCtx)
+int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name,
+                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx)
 {
   PPPControl *pc;
   int pd;
