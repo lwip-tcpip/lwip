@@ -229,7 +229,7 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
   LWIP_UNUSED_ARG(apiflags);
   LWIP_UNUSED_ARG(first_seg);
   /* always create MSS-sized pbufs */
-  alloc = TCP_MSS;
+  alloc = pcb->mss;
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
   if (length < max_length) {
     /* Should we allocate an oversized pbuf, or just the minimum
