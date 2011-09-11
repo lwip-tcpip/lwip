@@ -77,6 +77,9 @@ static u8_t nd6_cached_destination_index;
 /* Multicast address holder. */
 static ip6_addr_t multicast_address;
 
+/* Static buffer to parse RA packet options (size of a prefix option, biggest option) */
+static u8_t nd6_ra_buffer[sizeof(struct prefix_option)];
+
 /* Forward declarations. */
 static s8_t nd6_find_neighbor_cache_entry(ip6_addr_t * ip6addr);
 static s8_t nd6_new_neighbor_cache_entry(void);
@@ -392,17 +395,15 @@ nd6_input(struct pbuf *p, struct netif *inp)
     /* Offset to options. */
     offset = sizeof(struct ra_header);
 
-    /* Allocate buffer to copy options (so we can traverse pbufs). */
-    buffer = (u8_t *)mem_malloc(sizeof(struct prefix_option)); /* Size of a prefix option, biggest option. */
-    if (buffer == NULL) {
-      pbuf_free(p);
-      ND6_STATS_INC(nd6.memerr);
-      return;
-    }
-
     /* Process each option. */
     while ((p->tot_len - offset) > 0) {
-      pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset);
+      if (p->len == p->tot_len) {
+        /* no need to copy from contiguous pbuf */
+        buffer = &((u8_t*)p->payload)[offset];
+      } else {
+        buffer = nd6_ra_buffer;
+        pbuf_copy_partial(p, buffer, sizeof(struct prefix_option), offset);
+      }
       switch (buffer[0]) {
       case ND6_OPTION_TYPE_SOURCE_LLADDR:
       {
@@ -475,10 +476,6 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
       offset += 8 * ((u16_t)buffer[1]);
     }
-
-
-    /* free options buffer. */
-    mem_free(buffer);
 
     break; /* ICMP6_TYPE_RA */
   }
