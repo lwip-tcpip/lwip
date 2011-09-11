@@ -58,6 +58,14 @@
 
 #include <string.h>
 
+#ifndef TCP_LOCAL_PORT_RANGE_START
+/* From http://www.iana.org/assignments/port-numbers:
+   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
+#define TCP_LOCAL_PORT_RANGE_START        0xc000
+#define TCP_LOCAL_PORT_RANGE_END          0xffff
+#define TCP_ENSURE_LOCAL_PORT_RANGE(port) (((port) & ~TCP_LOCAL_PORT_RANGE_START) + TCP_LOCAL_PORT_RANGE_START)
+#endif
+
 const char * const tcp_state_str[] = {
   "CLOSED",      
   "LISTEN",      
@@ -71,6 +79,9 @@ const char * const tcp_state_str[] = {
   "LAST_ACK",    
   "TIME_WAIT"   
 };
+
+/* last local TCP port */
+static u16_t tcp_port = TCP_LOCAL_PORT_RANGE_START;
 
 /* Incremented every coarse grained timer shot (typically every 500 ms). */
 u32_t tcp_ticks;
@@ -105,8 +116,18 @@ static u8_t tcp_timer;
 static u16_t tcp_new_port(void);
 
 /**
+ * Initialize this module.
+ */
+void
+tcp_init(void)
+{
+#if LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND)
+  tcp_port = TCP_ENSURE_LOCAL_PORT_RANGE(LWIP_RAND());
+#endif /* LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND) */
+}
+
+/**
  * Called periodically to dispatch TCP timers.
- *
  */
 void
 tcp_tmr(void)
@@ -415,6 +436,9 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 
   if (port == 0) {
     port = tcp_new_port();
+    if (port == 0) {
+      return ERR_BUF;
+    }
   }
 
   /* Check if the address already is in use (on all lists) */
@@ -628,37 +652,33 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
 }
 
 /**
- * A nastly hack featuring 'goto' statements that allocates a
- * new TCP local port.
+ * Allocate a new local TCP port.
  *
  * @return a new (free) local TCP port number
  */
 static u16_t
 tcp_new_port(void)
 {
-  int i;
+  u8_t i;
+  u16_t n = 0;
   struct tcp_pcb *pcb;
-#ifndef TCP_LOCAL_PORT_RANGE_START
-/* From http://www.iana.org/assignments/port-numbers:
-   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
-#define TCP_LOCAL_PORT_RANGE_START  0xc000
-#define TCP_LOCAL_PORT_RANGE_END    0xffff
-#endif
-  static u16_t port = TCP_LOCAL_PORT_RANGE_START;
   
- again:
-  if (port++ == TCP_LOCAL_PORT_RANGE_END) {
-    port = TCP_LOCAL_PORT_RANGE_START;
+again:
+  if (tcp_port++ == TCP_LOCAL_PORT_RANGE_END) {
+    tcp_port = TCP_LOCAL_PORT_RANGE_START;
   }
   /* Check all PCB lists. */
   for (i = 0; i < NUM_TCP_PCB_LISTS; i++) {
     for(pcb = *tcp_pcb_lists[i]; pcb != NULL; pcb = pcb->next) {
-      if (pcb->local_port == port) {
+      if (pcb->local_port == tcp_port) {
+        if (++n > (TCP_LOCAL_PORT_RANGE_END - TCP_LOCAL_PORT_RANGE_START)) {
+          return 0;
+        }
         goto again;
       }
     }
   }
-  return port;
+  return tcp_port;
 }
 
 /**
@@ -709,6 +729,9 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
   old_local_port = pcb->local_port;
   if (pcb->local_port == 0) {
     pcb->local_port = tcp_new_port();
+    if (pcb->local_port == 0) {
+      return ERR_BUF;
+    }
   }
 #if SO_REUSE
   if ((pcb->so_options & SOF_REUSEADDR) != 0) {

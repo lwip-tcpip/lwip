@@ -606,6 +606,15 @@
 #define IP_FORWARD_ALLOW_TX_ON_RX_NETIF 0
 #endif
 
+/**
+ * LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS==1: randomize the local port for the first
+ * local TCP/UDP pcb (default==0). This can prevent creating predictable port
+ * numbers after booting a device.
+ */
+#ifndef LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS
+#define LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS 0
+#endif
+
 /*
    ----------------------------------
    ---------- ICMP options ----------
