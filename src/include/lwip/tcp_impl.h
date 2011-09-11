@@ -50,7 +50,7 @@ extern "C" {
 /* Functions for interfacing with TCP: */
 
 /* Lower layer interface to TCP: */
-#define tcp_init() /* Compatibility define, no init needed. */
+void             tcp_init    (void);  /* Initialize this module. */
 void             tcp_tmr     (void);  /* Must be called every
                                          TCP_TMR_INTERVAL
                                          ms. (Typically 250 ms). */

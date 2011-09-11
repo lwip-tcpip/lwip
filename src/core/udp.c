@@ -64,9 +64,76 @@
 
 #include <string.h>
 
+#ifndef UDP_LOCAL_PORT_RANGE_START
+/* From http://www.iana.org/assignments/port-numbers:
+   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
+#define UDP_LOCAL_PORT_RANGE_START  0xc000
+#define UDP_LOCAL_PORT_RANGE_END    0xffff
+#define UDP_ENSURE_LOCAL_PORT_RANGE(port) (((port) & ~UDP_LOCAL_PORT_RANGE_START) + UDP_LOCAL_PORT_RANGE_START)
+#endif
+
+/* last local UDP port */
+static u16_t udp_port = UDP_LOCAL_PORT_RANGE_START;
+
 /* The list of UDP PCBs */
 /* exported in udp.h (was static) */
 struct udp_pcb *udp_pcbs;
+
+/**
+ * Initialize this module.
+ */
+void
+udp_init(void)
+{
+#if LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND)
+  udp_port = UDP_ENSURE_LOCAL_PORT_RANGE(LWIP_RAND());
+#endif /* LWIP_RANDOMIZE_INITIAL_LOCAL_PORTS && defined(LWIP_RAND) */
+}
+
+/**
+ * Allocate a new local UDP port.
+ *
+ * @return a new (free) local UDP port number
+ */
+static u16_t
+udp_new_port(void)
+{
+  u16_t n = 0;
+  struct udp_pcb *pcb;
+  
+again:
+  if (udp_port++ == UDP_LOCAL_PORT_RANGE_END) {
+    udp_port = UDP_LOCAL_PORT_RANGE_START;
+  }
+  /* Check all PCBs. */
+  for(pcb = udp_pcbs; pcb != NULL; pcb = pcb->next) {
+    if (pcb->local_port == udp_port) {
+      if (++n > (UDP_LOCAL_PORT_RANGE_END - UDP_LOCAL_PORT_RANGE_START)) {
+        return 0;
+      }
+      goto again;
+    }
+  }
+  return udp_port;
+#if 0
+  struct udp_pcb *ipcb = udp_pcbs;
+  while ((ipcb != NULL) && (udp_port != UDP_LOCAL_PORT_RANGE_END)) {
+    if (ipcb->local_port == udp_port) {
+      /* port is already used by another udp_pcb */
+      udp_port++;
+      /* restart scanning all udp pcbs */
+      ipcb = udp_pcbs;
+    } else {
+      /* go on with next udp pcb */
+      ipcb = ipcb->next;
+    }
+  }
+  if (ipcb != NULL) {
+    return 0;
+  }
+  return udp_port;
+#endif
+}
 
 /**
  * Process an incoming UDP datagram.
@@ -749,26 +816,8 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
 
   /* no port specified? */
   if (port == 0) {
-#ifndef UDP_LOCAL_PORT_RANGE_START
-/* From http://www.iana.org/assignments/port-numbers:
-   "The Dynamic and/or Private Ports are those from 49152 through 65535" */
-#define UDP_LOCAL_PORT_RANGE_START  0xc000
-#define UDP_LOCAL_PORT_RANGE_END    0xffff
-#endif
-    port = UDP_LOCAL_PORT_RANGE_START;
-    ipcb = udp_pcbs;
-    while ((ipcb != NULL) && (port != UDP_LOCAL_PORT_RANGE_END)) {
-      if (ipcb->local_port == port) {
-        /* port is already used by another udp_pcb */
-        port++;
-        /* restart scanning all udp pcbs */
-        ipcb = udp_pcbs;
-      } else {
-        /* go on with next udp pcb */
-        ipcb = ipcb->next;
-      }
-    }
-    if (ipcb != NULL) {
+    port = udp_new_port();
+    if (port == 0) {
       /* no more ports available in local range */
       LWIP_DEBUGF(UDP_DEBUG, ("udp_bind: out of free UDP ports\n"));
       return ERR_USE;

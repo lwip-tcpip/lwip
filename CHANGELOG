@@ -6,6 +6,11 @@ HISTORY
 
  ++ New features:
 
+  2011-09-11: Simon Goldschmidt
+  * opt.h, tcp_impl.h, tcp.c, udp.h/.c: Added a config option to randomize
+    initial local TCP/UDP ports (so that different port ranges are used after
+    a reboot; bug #33818; this one added tcp_init/udp_init functions again)
+
   2011-09-03: Simon Goldschmidt
   * dhcp.c: DHCP uses LWIP_RAND() for xid's (bug #30302)
 
