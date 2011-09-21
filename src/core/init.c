@@ -240,35 +240,48 @@
   #error "ETHARP_ALWAYS_INSERT option is deprecated. Remove it from your lwipopts.h."
 #endif
 
-#ifdef LWIP_DEBUG
-static void
-lwip_sanity_check(void)
-{
-  /* Warnings */
+#ifndef LWIP_DISABLE_TCP_SANITY_CHECKS
+#define LWIP_DISABLE_TCP_SANITY_CHECKS  0
+#endif
+#ifndef LWIP_DISABLE_MEMP_SANITY_CHECKS
+#define LWIP_DISABLE_MEMP_SANITY_CHECKS 0
+#endif
+
+/* MEMP sanity checks */
+#if !LWIP_DISABLE_MEMP_SANITY_CHECKS
 #if LWIP_NETCONN
-  if (MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB))
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN\n"));
+#if MEMP_NUM_NETCONN > (MEMP_NUM_TCP_PCB+MEMP_NUM_TCP_PCB_LISTEN+MEMP_NUM_UDP_PCB+MEMP_NUM_RAW_PCB)
+#error "lwip_sanity_check: WARNING: MEMP_NUM_NETCONN should be less than the sum of MEMP_NUM_{TCP,RAW,UDP}_PCB+MEMP_NUM_TCP_PCB_LISTEN. If you know what you are doing, define LWIP_DISABLE_MEMP_SANITY_CHECKS to 1 to disable this error."
+#endif
 #endif /* LWIP_NETCONN */
+#endif /* !LWIP_DISABLE_MEMP_SANITY_CHECKS */
+
+/* TCP sanity checks */
+#if !LWIP_DISABLE_TCP_SANITY_CHECKS
 #if LWIP_TCP
-  if (MEMP_NUM_TCP_SEG < TCP_SND_QUEUELEN)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN\n"));
-  if (TCP_SND_BUF < 2 * TCP_MSS)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_BUF must be at least as much as (2 * TCP_MSS) for things to work smoothly\n"));
-  if (TCP_SND_QUEUELEN < (2 * (TCP_SND_BUF/TCP_MSS)))
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SND_QUEUELEN must be at least as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work\n"));
-  if (TCP_SNDLOWAT >= TCP_SND_BUF)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than TCP_SND_BUF.\n"));
-  if (TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN.\n"));
-  if (TCP_WND > (PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE))
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE*PBUF_POOL_BUFSIZE\n"));
-  if (TCP_WND < TCP_MSS)
-    LWIP_PLATFORM_DIAG(("lwip_sanity_check: WARNING: TCP_WND is smaller than MSS\n"));
+#if MEMP_NUM_TCP_SEG < TCP_SND_QUEUELEN
+  #error "lwip_sanity_check: WARNING: MEMP_NUM_TCP_SEG should be at least as big as TCP_SND_QUEUELEN. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_SND_BUF < (2 * TCP_MSS)
+  #error "lwip_sanity_check: WARNING: TCP_SND_BUF must be at least as much as (2 * TCP_MSS) for things to work smoothly. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_SND_QUEUELEN < (2 * (TCP_SND_BUF / TCP_MSS))
+  #error "lwip_sanity_check: WARNING: TCP_SND_QUEUELEN must be at least as much as (2 * TCP_SND_BUF/TCP_MSS) for things to work. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_SNDLOWAT >= TCP_SND_BUF
+  #error "lwip_sanity_check: WARNING: TCP_SNDLOWAT must be less than TCP_SND_BUF. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_SNDQUEUELOWAT >= TCP_SND_QUEUELEN
+  #error "lwip_sanity_check: WARNING: TCP_SNDQUEUELOWAT must be less than TCP_SND_QUEUELEN. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_WND > (PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - (PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN)))
+  #error "lwip_sanity_check: WARNING: TCP_WND is larger than space provided by PBUF_POOL_SIZE * (PBUF_POOL_BUFSIZE - protocol headers). If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
+#if TCP_WND < TCP_MSS
+  #error "lwip_sanity_check: WARNING: TCP_WND is smaller than MSS. If you know what you are doing, define LWIP_DISABLE_TCP_SANITY_CHECKS to 1 to disable this error."
+#endif
 #endif /* LWIP_TCP */
-}
-#else  /* LWIP_DEBUG */
-#define lwip_sanity_check()
-#endif /* LWIP_DEBUG */
+#endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
  * Perform Sanity check of user-configurable values, and initialize all modules.
@@ -276,9 +289,6 @@ lwip_sanity_check(void)
 void
 lwip_init(void)
 {
-  /* Sanity check user-configurable values */
-  lwip_sanity_check();
-
   /* Modules initialization */
   stats_init();
 #if !NO_SYS
