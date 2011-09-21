@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2011-09-21: Simon Goldschmidt
+  * init.c: Converted runtime-sanity-checks into compile-time checks that can
+    be disabled (since runtime checks can often not be seen on embedded targets)
+
   2011-09-11: Simon Goldschmidt
   * ppp.h, ppp_impl.h: splitted ppp.h to an internal and external header file
     to get a clear separation of which functions an application or port may use
