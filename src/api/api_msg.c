@@ -622,6 +622,9 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->current_msg  = NULL;
   conn->write_offset = 0;
 #endif /* LWIP_TCP */
+#if LWIP_SO_SNDTIMEO
+  conn->send_timeout = 0;
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
   conn->recv_timeout = 0;
 #endif /* LWIP_SO_RCVTIMEO */
@@ -1212,79 +1215,95 @@ do_writemore(struct netconn *conn)
   LWIP_ASSERT("conn->write_offset < conn->current_msg->msg.w.len",
     conn->write_offset < conn->current_msg->msg.w.len);
 
-  dataptr = (u8_t*)conn->current_msg->msg.w.dataptr + conn->write_offset;
-  diff = conn->current_msg->msg.w.len - conn->write_offset;
-  if (diff > 0xffffUL) { /* max_u16_t */
-    len = 0xffff;
-#if LWIP_TCPIP_CORE_LOCKING
-    conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
-#endif
-    apiflags |= TCP_WRITE_FLAG_MORE;
-  } else {
-    len = (u16_t)diff;
-  }
-  available = tcp_sndbuf(conn->pcb.tcp);
-  if (available < len) {
-    /* don't try to write more than sendbuf */
-    len = available;
-    if (dontblock){ 
-      if (!len) {
-        err = ERR_WOULDBLOCK;
-        goto err_mem;
-      }
+#if LWIP_SO_SNDTIMEO
+  if ((conn->send_timeout != 0) &&
+      ((s32_t)(sys_now() - conn->current_msg->msg.w.time_started) >= conn->send_timeout)) {
+    write_finished = 1;
+    if (conn->write_offset == 0) {
+      /* nothing has been written */
+      err = ERR_WOULDBLOCK;
+      conn->current_msg->msg.w.len = 0;
     } else {
+      /* partial write */
+      err = ERR_OK;
+      conn->current_msg->msg.w.len = conn->write_offset;
+    }
+  } else
+#endif /* LWIP_SO_SNDTIMEO */
+  {
+    dataptr = (u8_t*)conn->current_msg->msg.w.dataptr + conn->write_offset;
+    diff = conn->current_msg->msg.w.len - conn->write_offset;
+    if (diff > 0xffffUL) { /* max_u16_t */
+      len = 0xffff;
 #if LWIP_TCPIP_CORE_LOCKING
       conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
 #endif
       apiflags |= TCP_WRITE_FLAG_MORE;
+    } else {
+      len = (u16_t)diff;
     }
-  }
-  LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->current_msg->msg.w.len));
-  err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
-  /* if OK or memory error, check available space */
-  if ((err == ERR_OK) || (err == ERR_MEM)) {
+    available = tcp_sndbuf(conn->pcb.tcp);
+    if (available < len) {
+      /* don't try to write more than sendbuf */
+      len = available;
+      if (dontblock){ 
+        if (!len) {
+          err = ERR_WOULDBLOCK;
+          goto err_mem;
+        }
+      } else {
+#if LWIP_TCPIP_CORE_LOCKING
+        conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
+#endif
+        apiflags |= TCP_WRITE_FLAG_MORE;
+      }
+    }
+    LWIP_ASSERT("do_writemore: invalid length!", ((conn->write_offset + len) <= conn->current_msg->msg.w.len));
+    err = tcp_write(conn->pcb.tcp, dataptr, len, apiflags);
+    /* if OK or memory error, check available space */
+    if ((err == ERR_OK) || (err == ERR_MEM)) {
 err_mem:
-    if (dontblock && (len < conn->current_msg->msg.w.len)) {
-      /* non-blocking write did not write everything: mark the pcb non-writable
-         and let poll_tcp check writable space to mark the pcb writable again */
-      API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
-      conn->flags |= NETCONN_FLAG_CHECK_WRITESPACE;
-    } else if ((tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT) ||
-               (tcp_sndqueuelen(conn->pcb.tcp) >= TCP_SNDQUEUELOWAT)) {
-      /* The queued byte- or pbuf-count exceeds the configured low-water limit,
-         let select mark this pcb as non-writable. */
-      API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
+      if (dontblock && (len < conn->current_msg->msg.w.len)) {
+        /* non-blocking write did not write everything: mark the pcb non-writable
+           and let poll_tcp check writable space to mark the pcb writable again */
+        API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
+        conn->flags |= NETCONN_FLAG_CHECK_WRITESPACE;
+      } else if ((tcp_sndbuf(conn->pcb.tcp) <= TCP_SNDLOWAT) ||
+                 (tcp_sndqueuelen(conn->pcb.tcp) >= TCP_SNDQUEUELOWAT)) {
+        /* The queued byte- or pbuf-count exceeds the configured low-water limit,
+           let select mark this pcb as non-writable. */
+        API_EVENT(conn, NETCONN_EVT_SENDMINUS, len);
+      }
     }
-  }
 
-  if (err == ERR_OK) {
-    conn->write_offset += len;
-    if ((conn->write_offset == conn->current_msg->msg.w.len) || dontblock) {
-      /* return sent length */
-      conn->current_msg->msg.w.len = conn->write_offset;
-      /* everything was written */
-      write_finished = 1;
-      conn->write_offset = 0;
-    }
-    tcp_output(conn->pcb.tcp);
-  } else if ((err == ERR_MEM) && !dontblock) {
-    /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
-       we do NOT return to the application thread, since ERR_MEM is
-       only a temporary error! */
+    if (err == ERR_OK) {
+      conn->write_offset += len;
+      if ((conn->write_offset == conn->current_msg->msg.w.len) || dontblock) {
+        /* return sent length */
+        conn->current_msg->msg.w.len = conn->write_offset;
+        /* everything was written */
+        write_finished = 1;
+        conn->write_offset = 0;
+      }
+      tcp_output(conn->pcb.tcp);
+    } else if ((err == ERR_MEM) && !dontblock) {
+      /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
+         we do NOT return to the application thread, since ERR_MEM is
+         only a temporary error! */
 
-    /* tcp_write returned ERR_MEM, try tcp_output anyway */
-    tcp_output(conn->pcb.tcp);
+      /* tcp_write returned ERR_MEM, try tcp_output anyway */
+      tcp_output(conn->pcb.tcp);
 
 #if LWIP_TCPIP_CORE_LOCKING
-    conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
+      conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
 #endif
-  } else {
-    /* On errors != ERR_MEM, we don't try writing any more but return
-       the error to the application thread. */
-    write_finished = 1;
-    conn->current_msg->msg.w.len = 0;
+    } else {
+      /* On errors != ERR_MEM, we don't try writing any more but return
+         the error to the application thread. */
+      write_finished = 1;
+      conn->current_msg->msg.w.len = 0;
+    }
   }
-
   if (write_finished) {
     /* everything was written: set back connection state
        and back to application task */

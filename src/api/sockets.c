@@ -1470,7 +1470,9 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     case SO_ERROR:
     case SO_KEEPALIVE:
     /* UNIMPL case SO_CONTIMEO: */
-    /* UNIMPL case SO_SNDTIMEO: */
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
 #endif /* LWIP_SO_RCVTIMEO */
@@ -1715,6 +1717,11 @@ lwip_getsockopt_internal(void *arg)
                   s, *(int *)optval));
       break;
 
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+      *(int *)optval = netconn_get_sendtimeout(sock->conn);
+      break;
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
       *(int *)optval = netconn_get_recvtimeout(sock->conn);
@@ -1869,7 +1876,9 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case case SO_CONTIMEO: */
-    /* UNIMPL case case SO_SNDTIMEO: */
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
 #endif /* LWIP_SO_RCVTIMEO */
@@ -2095,6 +2104,11 @@ lwip_setsockopt_internal(void *arg)
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n",
                   s, optname, (*(int*)optval?"on":"off")));
       break;
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+      netconn_set_sendtimeout(sock->conn, (s32_t)*(int*)optval);
+      break;
+#endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
       netconn_set_recvtimeout(sock->conn, *(int*)optval);
