@@ -7,6 +7,10 @@ HISTORY
  ++ New features:
 
   2011-09-21: Simon Goldschmidt
+  * opt.h, api.h, api_lib.c, api_msg.h/.c, sockets.c: Implemented timeout on
+    send (TCP only, bug #33820)
+
+  2011-09-21: Simon Goldschmidt
   * init.c: Converted runtime-sanity-checks into compile-time checks that can
     be disabled (since runtime checks can often not be seen on embedded targets)
 

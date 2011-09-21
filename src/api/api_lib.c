@@ -611,12 +611,26 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   msg.msg.msg.w.dataptr = dataptr;
   msg.msg.msg.w.apiflags = apiflags;
   msg.msg.msg.w.len = size;
+#if LWIP_SO_SNDTIMEO
+  if (conn->send_timeout != 0) {
+    /* get the time we started, which is later compared to
+        sys_now() + conn->send_timeout */
+    msg.msg.msg.w.time_started = sys_now();
+  } else {
+    msg.msg.msg.w.time_started = 0;
+  }
+#endif /* LWIP_SO_SNDTIMEO */
+
   /* For locking the core: this _can_ be delayed on low memory/low send buffer,
      but if it is, this is done inside api_msg.c:do_write(), so we can use the
      non-blocking version here. */
   err = TCPIP_APIMSG(&msg);
   if ((err == ERR_OK) && (bytes_written != NULL)) {
-    if (dontblock) {
+    if (dontblock
+#if LWIP_SO_SNDTIMEO
+        || (conn->send_timeout != 0)
+#endif /* LWIP_SO_SNDTIMEO */
+       ) {
       /* nonblocking write: maybe the data has been sent partly */
       *bytes_written = msg.msg.msg.w.len;
     } else {
