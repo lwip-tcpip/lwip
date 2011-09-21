@@ -968,10 +968,11 @@
 
 
 /**
- * TCP_SND_BUF: TCP sender buffer space (bytes). 
+ * TCP_SND_BUF: TCP sender buffer space (bytes).
+ * To achieve good performance, this should be at least 2 * TCP_MSS.
  */
 #ifndef TCP_SND_BUF
-#define TCP_SND_BUF                     256
+#define TCP_SND_BUF                     (2 * TCP_MSS)
 #endif
 
 /**
@@ -1434,7 +1435,8 @@
 #endif
 
 /**
- * LWIP_SO_RCVTIMEO==1: Enable SO_RCVTIMEO processing.
+ * LWIP_SO_RCVTIMEO==1: Enable receive timeout for sockets/netconns and
+ * SO_RCVTIMEO processing.
  */
 #ifndef LWIP_SO_RCVTIMEO
 #define LWIP_SO_RCVTIMEO                0
