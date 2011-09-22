@@ -247,10 +247,12 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
             (broadcast && (pcb->so_options & SOF_BROADCAST) &&
-            ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))) {
+             (ip_addr_isany(&pcb->local_ip) ||
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))) {
 #else /* IP_SOF_BROADCAST_RECV */
             (broadcast &&
-            ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))) {
+             (ip_addr_isany(&pcb->local_ip) ||
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))) {
 #endif /* IP_SOF_BROADCAST_RECV */ 
           local_match = 1;
           if ((uncon_pcb == NULL) && 
