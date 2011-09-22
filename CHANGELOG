@@ -45,6 +45,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-09-22: Simon Goldschmidt
+  * tcp_impl.h: fixed bug #34355: nagle does not take snd_buf/snd_queuelen into
+    account
+
   2011-09-21: Simon Goldschmidt
   * opt.h: fixed default value of TCP_SND_BUF to not violate the sanity checks
     in init.c
