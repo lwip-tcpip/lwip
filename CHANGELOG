@@ -66,6 +66,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-09-22: Simon Goldschmidt
+  * tcp.c: fixed bug #34360 tcp_shutdown: RST on unacked is not send when
+    shutting down both rx AND tx
+
+  2011-09-22: Simon Goldschmidt
   * tcp_impl.h: fixed bug #34355: nagle does not take snd_buf/snd_queuelen into
     account
 
