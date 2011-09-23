@@ -306,17 +306,36 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
+      u8_t refused_flags = pcb->refused_data->flags;
+      /* set pcb->refused_data to NULL in case the callback frees it and then
+         closes the pcb */
+      struct pbuf *refused_data = pcb->refused_data;
+      pcb->refused_data = NULL;
       /* Notify again application with data previously received. */
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
-      TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
+      TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
       if (err == ERR_OK) {
-        pcb->refused_data = NULL;
+        /* did refused_data include a FIN? */
+        if (refused_flags & PBUF_FLAG_TCP_FIN) {
+          /* correct rcv_wnd as the application won't call tcp_recved()
+             for the FIN's seqno */
+          if (pcb->rcv_wnd != TCP_WND) {
+            pcb->rcv_wnd++;
+          }
+          TCP_EVENT_CLOSED(pcb, err);
+          if (err == ERR_ABRT) {
+            goto dropped;
+          }
+        }
       } else if ((err == ERR_ABRT) || (tcplen > 0)) {
         /* if err == ERR_ABRT, 'pcb' is already deallocated */
         /* Drop incoming packets because pcb is "full" (only if the incoming
            segment contains data). */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
         goto dropped;
+      } else {
+        /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
+        pcb->refused_data = refused_data;
       }
     }
     tcp_input_pcb = pcb;
@@ -375,14 +394,19 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* If a FIN segment was received, we call the callback
            function with a NULL buffer to indicate EOF. */
         if (recv_flags & TF_GOT_FIN) {
-          /* correct rcv_wnd as the application won't call tcp_recved()
-             for the FIN's seqno */
-          if (pcb->rcv_wnd != TCP_WND) {
-            pcb->rcv_wnd++;
-          }
-          TCP_EVENT_CLOSED(pcb, err);
-          if (err == ERR_ABRT) {
-            goto aborted;
+          if (pcb->refused_data != NULL) {
+            /* Delay this if we have refused data. */
+            pcb->refused_data->flags |= PBUF_FLAG_TCP_FIN;
+          } else {
+            /* correct rcv_wnd as the application won't call tcp_recved()
+               for the FIN's seqno */
+            if (pcb->rcv_wnd != TCP_WND) {
+              pcb->rcv_wnd++;
+            }
+            TCP_EVENT_CLOSED(pcb, err);
+            if (err == ERR_ABRT) {
+              goto aborted;
+            }
           }
         }
 

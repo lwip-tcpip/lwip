@@ -1054,13 +1054,32 @@ tcp_fasttmr(void)
     if (pcb->refused_data != NULL) {
       /* Notify again application with data previously received. */
       err_t err;
+      u8_t refused_flags = pcb->refused_data->flags;
+      /* set pcb->refused_data to NULL in case the callback frees it and then
+         closes the pcb */
+      struct pbuf *refused_data = pcb->refused_data;
+      pcb->refused_data = NULL;
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_fasttmr: notify kept packet\n"));
-      TCP_EVENT_RECV(pcb, pcb->refused_data, ERR_OK, err);
+      TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
       if (err == ERR_OK) {
-        pcb->refused_data = NULL;
+        /* did refused_data include a FIN? If so, handle it now. */
+        if (refused_flags & PBUF_FLAG_TCP_FIN) {
+          /* correct rcv_wnd as the application won't call tcp_recved()
+             for the FIN's seqno */
+          if (pcb->rcv_wnd != TCP_WND) {
+            pcb->rcv_wnd++;
+          }
+          TCP_EVENT_CLOSED(pcb, err);
+          if (err == ERR_ABRT) {
+            pcb = NULL;
+          }
+        }
       } else if (err == ERR_ABRT) {
         /* if err == ERR_ABRT, 'pcb' is already deallocated */
         pcb = NULL;
+      } else {
+        /* data is still refused */
+        pcb->refused_data = refused_data;
       }
     }
 

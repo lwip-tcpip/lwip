@@ -80,6 +80,8 @@ typedef enum {
 #define PBUF_FLAG_LLBCAST   0x08U
 /** indicates this pbuf was received as link-level multicast */
 #define PBUF_FLAG_LLMCAST   0x10U
+/** indicates this pbuf includes a TCP FIN flag */
+#define PBUF_FLAG_TCP_FIN   0x20U
 
 struct pbuf {
   /** next pbuf in singly linked pbuf chain */
