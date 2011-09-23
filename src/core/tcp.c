@@ -305,7 +305,12 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
     return ERR_CONN;
   }
   if (shut_rx) {
-    /* shut down the receive side: set a flag not to receive any more data */
+    /* shut down the receive side: free buffered data... */
+    if (pcb->refused_data != NULL) {
+      pbuf_free(pcb->refused_data);
+      pcb->refused_data = NULL;
+    }
+    /* ... and set a flag not to receive any more data */
     pcb->flags |= TF_RXCLOSED;
   }
   if (shut_tx) {
@@ -315,17 +320,11 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
   case SYN_RCVD:
   case ESTABLISHED:
   case CLOSE_WAIT:
-    /* if shut_tx AND shut_rx, send RST if we have unacked data */
-    return tcp_close_shutdown(pcb, (u8_t)shut_rx);
+    return tcp_close_shutdown(pcb, 0);
   default:
     /* don't shut down other states */
     break;
     }
-  }
-  if (shut_rx && (pcb->refused_data != NULL)) {
-    /* shut down the receive side: free buffered data if we come here */
-    pbuf_free(pcb->refused_data);
-    pcb->refused_data = NULL;
   }
   /* @todo: return another err_t if not in correct state or already shut? */
   return ERR_OK;
