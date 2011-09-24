@@ -45,6 +45,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-09-24: Simon Goldschmidt
+  * mem.h: fixed bug #34377 MEM_SIZE_F is not defined if MEM_LIBC_MALLOC==1
+
   2011-09-23: Simon Goldschmidt
   * pbuf.h, tcp.c, tcp_in.c: fixed bug #33871: rejecting TCP_EVENT_RECV() for
     the last packet including FIN can lose data
