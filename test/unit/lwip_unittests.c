@@ -19,7 +19,7 @@ int main()
     tcp_suite,
     tcp_oos_suite,
     mem_suite,
-    etharp_suite,
+    etharp_suite
   };
   size_t num = sizeof(suites)/sizeof(void*);
   LWIP_ASSERT("No suites defined", num > 0);
