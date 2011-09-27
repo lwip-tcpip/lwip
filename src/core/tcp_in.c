@@ -886,6 +886,10 @@ tcp_receive(struct tcp_pcb *pcb)
   u32_t right_wnd_edge;
   u16_t new_tot_len;
   int found_dupack = 0;
+#if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
+  u32_t ooseq_blen;
+  u16_t ooseq_qlen;
+#endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
 
   LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
 
@@ -1263,8 +1267,7 @@ tcp_receive(struct tcp_pcb *pcb)
               pcb->ooseq = pcb->ooseq->next;
               tcp_seg_free(old_ooseq);
             }
-          }
-          else {
+          } else {
             next = pcb->ooseq;
             /* Remove all segments on ooseq that are covered by inseg already.
              * FIN is copied from ooseq to inseg if present. */
@@ -1497,8 +1500,32 @@ tcp_receive(struct tcp_pcb *pcb)
             prev = next;
           }
         }
+#if TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS
+        /* Check that the data on ooseq doesn't exceed one of the limits
+           and throw away everything above that limit. */
+        ooseq_blen = 0;
+        ooseq_qlen = 0;
+        prev = NULL;
+        for(next = pcb->ooseq; next != NULL; prev = next, next = next->next) {
+          struct pbuf *p = next->p;
+          ooseq_blen += p->tot_len;
+          ooseq_qlen += pbuf_clen(p);
+          if ((ooseq_blen > TCP_OOSEQ_MAX_BYTES) ||
+              (ooseq_qlen > TCP_OOSEQ_MAX_PBUFS)) {
+             /* too much ooseq data, dump this and everything after it */
+             tcp_segs_free(next);
+             if (prev == NULL) {
+               /* first ooseq segment is too much, dump the whole queue */
+               pcb->ooseq = NULL;
+             } else {
+               /* just dump 'next' and everything after it */
+               prev->next = NULL;
+             }
+             break;
+          }
+        }
+#endif /* TCP_OOSEQ_MAX_BYTES || TCP_OOSEQ_MAX_PBUFS */
 #endif /* TCP_QUEUE_OOSEQ */
-
       }
     } else {
       /* The incoming segment is not withing the window. */

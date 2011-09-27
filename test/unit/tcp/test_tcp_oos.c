@@ -36,6 +36,18 @@ static int tcp_oos_count(struct tcp_pcb* pcb)
   return num;
 }
 
+/** Get the numbers of pbufs on the ooseq list */
+static int tcp_oos_pbuf_count(struct tcp_pcb* pcb)
+{
+  int num = 0;
+  struct tcp_seg* seg = pcb->ooseq;
+  while(seg != NULL) {
+    num += pbuf_clen(seg->p);
+    seg = seg->next;
+  }
+  return num;
+}
+
 /** Get the seqno of a segment (by index) on the ooseq list
  *
  * @param pcb the pcb to check for ooseq segments
@@ -440,6 +452,7 @@ static char data_full_wnd[TCP_WND];
  * to simulate overruning the rxwin with ooseq queueing enabled */
 START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
 {
+#if !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS
   int i, k;
   struct test_tcp_counters counters;
   struct tcp_pcb* pcb;
@@ -449,7 +462,6 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   struct netif netif;
   int datalen = 0;
   int datalen2;
-  LWIP_UNUSED_ARG(_i);
 
   for(i = 0; i < sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
@@ -523,6 +535,166 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin)
   EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
   tcp_abort(pcb);
   EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+#endif /* !TCP_OOSEQ_MAX_BYTES && !TCP_OOSEQ_MAX_PBUFS */
+  LWIP_UNUSED_ARG(_i);
+}
+END_TEST
+
+START_TEST(test_tcp_recv_ooseq_max_bytes)
+{
+#if TCP_OOSEQ_MAX_BYTES && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
+  int i, k;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf *p_ovr;
+  ip_addr_t remote_ip, local_ip;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  struct netif netif;
+  int datalen = 0;
+  int datalen2;
+
+  for(i = 0; i < sizeof(data_full_wnd); i++) {
+    data_full_wnd[i] = (char)i;
+  }
+
+  /* initialize local vars */
+  memset(&netif, 0, sizeof(netif));
+  IP4_ADDR(&local_ip, 192, 168, 1, 1);
+  IP4_ADDR(&remote_ip, 192, 168, 1, 2);
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = TCP_WND;
+  counters.expected_data = data_full_wnd;
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+  pcb->rcv_nxt = 0x8000;
+
+  /* don't 'recv' the first segment (1 byte) so that all other segments will be ooseq */
+
+  /* create segments and 'recv' them */
+  for(k = 1, i = 1; k < TCP_OOSEQ_MAX_BYTES; k += TCP_MSS, i++) {
+    int count;
+    struct pbuf *p = tcp_create_rx_segment(pcb, &data_full_wnd[k],
+                                           TCP_MSS, k, 0, TCP_ACK);
+    EXPECT_RET(p != NULL);
+    EXPECT_RET(p->next == NULL);
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(counters.close_calls == 0);
+    EXPECT(counters.recv_calls == 0);
+    EXPECT(counters.recved_bytes == 0);
+    EXPECT(counters.err_calls == 0);
+    /* check ooseq queue */
+    count = tcp_oos_pbuf_count(pcb);
+    EXPECT_OOSEQ(count == i);
+    datalen = tcp_oos_tcplen(pcb);
+    EXPECT_OOSEQ(datalen == (i * TCP_MSS));
+  }
+
+  /* pass in one more segment, overrunning the limit */
+  p_ovr = tcp_create_rx_segment(pcb, &data_full_wnd[k+1], 1, k+1, 0, TCP_ACK);
+  EXPECT_RET(p_ovr != NULL);
+  /* pass the segment to tcp_input */
+  test_tcp_input(p_ovr, &netif);
+  /* check if counters are as expected */
+  EXPECT(counters.close_calls == 0);
+  EXPECT(counters.recv_calls == 0);
+  EXPECT(counters.recved_bytes == 0);
+  EXPECT(counters.err_calls == 0);
+  /* check ooseq queue (ensure the new segment was not accepted) */
+  EXPECT_OOSEQ(tcp_oos_count(pcb) == (i-1));
+  datalen2 = tcp_oos_tcplen(pcb);
+  EXPECT_OOSEQ(datalen2 == ((i-1) * TCP_MSS));
+
+  /* make sure the pcb is freed */
+  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  tcp_abort(pcb);
+  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+#endif /* TCP_OOSEQ_MAX_BYTES && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN)) */
+  LWIP_UNUSED_ARG(_i);
+}
+END_TEST
+
+START_TEST(test_tcp_recv_ooseq_max_pbufs)
+{
+#if TCP_OOSEQ_MAX_PBUFS && (TCP_OOSEQ_MAX_PBUFS < ((TCP_WND / TCP_MSS) + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
+  int i;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf *p_ovr;
+  ip_addr_t remote_ip, local_ip;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  struct netif netif;
+  int datalen = 0;
+  int datalen2;
+
+  for(i = 0; i < sizeof(data_full_wnd); i++) {
+    data_full_wnd[i] = (char)i;
+  }
+
+  /* initialize local vars */
+  memset(&netif, 0, sizeof(netif));
+  IP4_ADDR(&local_ip, 192, 168, 1, 1);
+  IP4_ADDR(&remote_ip, 192, 168, 1, 2);
+  /* initialize counter struct */
+  memset(&counters, 0, sizeof(counters));
+  counters.expected_data_len = TCP_WND;
+  counters.expected_data = data_full_wnd;
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+  pcb->rcv_nxt = 0x8000;
+
+  /* don't 'recv' the first segment (1 byte) so that all other segments will be ooseq */
+
+  /* create segments and 'recv' them */
+  for(i = 1; i <= TCP_OOSEQ_MAX_PBUFS; i++) {
+    int count;
+    struct pbuf *p = tcp_create_rx_segment(pcb, &data_full_wnd[i],
+                                           1, i, 0, TCP_ACK);
+    EXPECT_RET(p != NULL);
+    EXPECT_RET(p->next == NULL);
+    /* pass the segment to tcp_input */
+    test_tcp_input(p, &netif);
+    /* check if counters are as expected */
+    EXPECT(counters.close_calls == 0);
+    EXPECT(counters.recv_calls == 0);
+    EXPECT(counters.recved_bytes == 0);
+    EXPECT(counters.err_calls == 0);
+    /* check ooseq queue */
+    count = tcp_oos_pbuf_count(pcb);
+    EXPECT_OOSEQ(count == i);
+    datalen = tcp_oos_tcplen(pcb);
+    EXPECT_OOSEQ(datalen == i);
+  }
+
+  /* pass in one more segment, overrunning the limit */
+  p_ovr = tcp_create_rx_segment(pcb, &data_full_wnd[i+1], 1, i+1, 0, TCP_ACK);
+  EXPECT_RET(p_ovr != NULL);
+  /* pass the segment to tcp_input */
+  test_tcp_input(p_ovr, &netif);
+  /* check if counters are as expected */
+  EXPECT(counters.close_calls == 0);
+  EXPECT(counters.recv_calls == 0);
+  EXPECT(counters.recved_bytes == 0);
+  EXPECT(counters.err_calls == 0);
+  /* check ooseq queue (ensure the new segment was not accepted) */
+  EXPECT_OOSEQ(tcp_oos_count(pcb) == (i-1));
+  datalen2 = tcp_oos_tcplen(pcb);
+  EXPECT_OOSEQ(datalen2 == (i-1));
+
+  /* make sure the pcb is freed */
+  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  tcp_abort(pcb);
+  EXPECT(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+#endif /* TCP_OOSEQ_MAX_PBUFS && (TCP_OOSEQ_MAX_BYTES < (TCP_WND + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN)) */
+  LWIP_UNUSED_ARG(_i);
 }
 END_TEST
 
@@ -662,7 +834,7 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
         exp_oos_tcplen++;
       }
     } else {
-      /* inseq: no change */      
+      /* inseq: no change */
     }
   }
   /* check if counters are as expected */
@@ -749,6 +921,8 @@ tcp_oos_suite(void)
     test_tcp_recv_ooseq_FIN_OOSEQ,
     test_tcp_recv_ooseq_FIN_INSEQ,
     test_tcp_recv_ooseq_overrun_rxwin,
+    test_tcp_recv_ooseq_max_bytes,
+    test_tcp_recv_ooseq_max_pbufs,
     test_tcp_recv_ooseq_double_FIN_0,
     test_tcp_recv_ooseq_double_FIN_1,
     test_tcp_recv_ooseq_double_FIN_2,

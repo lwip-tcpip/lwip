@@ -991,6 +991,22 @@
 #endif
 
 /**
+ * TCP_OOSEQ_MAX_BYTES: The maximum number of bytes queued on ooseq per pcb.
+ * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==0.
+ */
+#ifndef TCP_OOSEQ_MAX_BYTES
+#define TCP_OOSEQ_MAX_BYTES             0
+#endif
+
+/**
+ * TCP_OOSEQ_MAX_PBUFS: The maximum number of pbufs queued on ooseq per pcb.
+ * Default is 0 (no limit). Only valid for TCP_QUEUE_OOSEQ==0.
+ */
+#ifndef TCP_OOSEQ_MAX_PBUFS
+#define TCP_OOSEQ_MAX_PBUFS             0
+#endif
+
+/**
  * TCP_LISTEN_BACKLOG: Enable the backlog option for tcp listen pcb.
  */
 #ifndef TCP_LISTEN_BACKLOG
