@@ -892,6 +892,8 @@ tcp_receive(struct tcp_pcb *pcb)
   u16_t new_tot_len;
   int found_dupack = 0;
 
+  LWIP_ASSERT("tcp_receive: wrong state", pcb->state >= ESTABLISHED);
+
   if (flags & TCP_ACK) {
     right_wnd_edge = pcb->snd_wnd + pcb->snd_wl2;
 
@@ -1132,8 +1134,10 @@ tcp_receive(struct tcp_pcb *pcb)
   }
 
   /* If the incoming segment contains data, we must process it
-     further. */
-  if (tcplen > 0) {
+     further unless the pcb already received a FIN.
+     (RFC 793, chapeter 3.9, "SEGMENT ARRIVES" in states CLOSE-WAIT, CLOSING,
+     LAST-ACK and TIME-WAIT: "Ignore the segment text.") */
+  if ((tcplen > 0) && (pcb->state < CLOSE_WAIT)) {
     /* This code basically does three things:
 
     +) If the incoming segment contains data that is the next

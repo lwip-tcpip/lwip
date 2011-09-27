@@ -66,6 +66,9 @@ HISTORY
  ++ Bugfixes:
 
   2011-09-27: Simon Goldschmidt
+  * tcp_in.c: fixed bug #28288: Data after FIN in oos queue
+
+  2011-09-27: Simon Goldschmidt
   * dhcp.c: fixed bug #34406 dhcp_option_hostname() can overflow the pbuf
 
   2011-09-24: Simon Goldschmidt
