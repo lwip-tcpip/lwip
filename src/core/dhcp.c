@@ -1028,10 +1028,6 @@ dhcp_renew(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_MAX_MSG_SIZE, DHCP_OPTION_MAX_MSG_SIZE_LEN);
     dhcp_option_short(dhcp, DHCP_MAX_MSG_LEN(netif));
 
-#if LWIP_NETIF_HOSTNAME
-    dhcp_option_hostname(dhcp, netif);
-#endif /* LWIP_NETIF_HOSTNAME */
-
 #if 0
     dhcp_option(dhcp, DHCP_OPTION_REQUESTED_IP, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->offered_ip_addr.addr));
@@ -1041,6 +1037,11 @@ dhcp_renew(struct netif *netif)
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
     dhcp_option_long(dhcp, ntohl(dhcp->server_ip_addr.addr));
 #endif
+
+#if LWIP_NETIF_HOSTNAME
+    dhcp_option_hostname(dhcp, netif);
+#endif /* LWIP_NETIF_HOSTNAME */
+
     /* append DHCP message trailer */
     dhcp_option_trailer(dhcp);
 
@@ -1303,8 +1304,11 @@ dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
     if (namelen > 0) {
       u8_t len;
       const char *p = netif->hostname;
-      LWIP_ASSERT("DHCP: hostname is too long!", namelen <= 255);
-      len = LWIP_MAX(namelen, 255);
+      /* Shrink len to available bytes (need 2 bytes for OPTION_HOSTNAME
+         and 1 byte for trailer) */
+      size_t available = DHCP_OPTIONS_LEN - dhcp->options_out_len - 3;
+      LWIP_ASSERT("DHCP: hostname is too long!", namelen <= available);
+      len = LWIP_MIN(namelen, available);
       dhcp_option(dhcp, DHCP_OPTION_HOSTNAME, len);
       while (len--) {
         dhcp_option_byte(dhcp, *p++);
@@ -1744,9 +1748,8 @@ dhcp_option_trailer(struct dhcp *dhcp)
   LWIP_ASSERT("dhcp_option_trailer: dhcp->options_out_len < DHCP_OPTIONS_LEN\n", dhcp->options_out_len < DHCP_OPTIONS_LEN);
   dhcp->msg_out->options[dhcp->options_out_len++] = DHCP_OPTION_END;
   /* packet is too small, or not 4 byte aligned? */
-  while ((dhcp->options_out_len < DHCP_MIN_OPTIONS_LEN) || (dhcp->options_out_len & 3)) {
-    /* LWIP_DEBUGF(DHCP_DEBUG,("dhcp_option_trailer:dhcp->options_out_len=%"U16_F", DHCP_OPTIONS_LEN=%"U16_F, dhcp->options_out_len, DHCP_OPTIONS_LEN)); */
-    LWIP_ASSERT("dhcp_option_trailer: dhcp->options_out_len < DHCP_OPTIONS_LEN\n", dhcp->options_out_len < DHCP_OPTIONS_LEN);
+  while (((dhcp->options_out_len < DHCP_MIN_OPTIONS_LEN) || (dhcp->options_out_len & 3)) &&
+         (dhcp->options_out_len < DHCP_OPTIONS_LEN)) {
     /* add a fill/padding byte */
     dhcp->msg_out->options[dhcp->options_out_len++] = 0;
   }
