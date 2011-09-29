@@ -1090,6 +1090,11 @@ tcp_receive(struct tcp_pcb *pcb)
 
       next = pcb->unsent;
       pcb->unsent = pcb->unsent->next;
+#if TCP_OVERSIZE
+      if (pcb->unsent == NULL) {
+        pcb->unsent_oversize = 0;
+      }
+#endif /* TCP_OVERSIZE */ 
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_receive: queuelen %"U16_F" ... ", (u16_t)pcb->snd_queuelen));
       LWIP_ASSERT("pcb->snd_queuelen >= pbuf_clen(next->p)", (pcb->snd_queuelen >= pbuf_clen(next->p)));
       /* Prevent ACK for FIN to generate a sent event */
