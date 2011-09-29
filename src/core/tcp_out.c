@@ -1250,6 +1250,7 @@ tcp_rexmit_rto(struct tcp_pcb *pcb)
   pcb->unsent = pcb->unacked;
   /* unacked queue is now empty */
   pcb->unacked = NULL;
+  /* last unsent hasn't changed, no need to reset unsent_oversize */
 
   /* increment number of retransmissions */
   ++pcb->nrtx;
@@ -1290,6 +1291,12 @@ tcp_rexmit(struct tcp_pcb *pcb)
   }
   seg->next = *cur_seg;
   *cur_seg = seg;
+#if TCP_OVERSIZE
+  if (seg->next == NULL) {
+    /* the retransmitted segment is last in unsent, so reset unsent_oversize */
+    pcb->unsent_oversize = 0;
+  }
+#endif /* TCP_OVERSIZE */
 
   ++pcb->nrtx;
 

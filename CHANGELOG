@@ -50,6 +50,9 @@ HISTORY
  ++ Bugfixes:
 
   2011-09-27: Simon Goldschmidt
+  * tcp_in.c, tcp_out.c: Reset pcb->unsent_oversize in 2 more places...
+
+  2011-09-27: Simon Goldschmidt
   * tcp_in.c: fixed bug #28288: Data after FIN in oos queue
 
   2011-09-27: Simon Goldschmidt
