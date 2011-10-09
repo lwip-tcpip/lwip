@@ -69,6 +69,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-10-09: Simon Goldschmidt
+  * ip4.c: fixed bug #34447 LWIP_IP_ACCEPT_UDP_PORT(dst_port) wrong
+
   2011-09-27: Simon Goldschmidt
   * tcp_in.c, tcp_out.c: Reset pcb->unsent_oversize in 2 more places...
 
