@@ -50,6 +50,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-09: Simon Goldschmidt
+  * tcp_out.c: fixed bug #34426: tcp_zero_window_probe() transmits incorrect
+    byte value when pcb->unacked != NULL
+
+  2011-10-09: Simon Goldschmidt
   * ip4.c: fixed bug #34447 LWIP_IP_ACCEPT_UDP_PORT(dst_port) wrong
 
   2011-09-27: Simon Goldschmidt
