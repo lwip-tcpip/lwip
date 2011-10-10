@@ -7,6 +7,9 @@
 #if !LWIP_STATS || !TCP_STATS || !MEMP_STATS
 #error "This tests needs TCP- and MEMP-statistics enabled"
 #endif
+#if TCP_SND_BUF <= TCP_WND
+#error "This tests needs TCP_SND_BUF to be > TCP_WND"
+#endif
 
 /* Setups/teardown functions */
 
@@ -265,6 +268,159 @@ START_TEST(test_tcp_fast_retx_recover)
 }
 END_TEST
 
+static u8_t tx_data[TCP_WND*2];
+
+/** Provoke fast retransmission by duplicate ACKs and then recover by ACKing all sent data.
+ * At the end, send more data. */
+static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
+{
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf *p;
+  ip_addr_t remote_ip, local_ip, netmask;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  err_t err;
+  u16_t sent_total, i;
+  u8_t expected = 0xFE;
+
+  for (i = 0; i < sizeof(tx_data); i++) {
+    u8_t d = (u8_t)i;
+    if (d == 0xFE) {
+      d = 0xF0;
+    }
+    tx_data[i] = d;
+  }
+  if (zero_window_probe_from_unsent) {
+    tx_data[TCP_WND] = expected;
+  } else {
+    tx_data[0] = expected;
+  }
+
+  /* initialize local vars */
+  IP4_ADDR(&local_ip,  192, 168,   1, 1);
+  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
+  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
+  memset(&counters, 0, sizeof(counters));
+  memset(&txcounters, 0, sizeof(txcounters));
+
+  /* create and initialize the pcb */
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+  pcb->mss = TCP_MSS;
+  /* disable initial congestion window (we don't send a SYN here...) */
+  pcb->cwnd = pcb->snd_wnd;
+
+  /* send a full window (minus 1 packets) of TCP data in MSS-sized chunks */
+  sent_total = 0;
+  if ((TCP_WND - TCP_MSS) % TCP_MSS != 0) {
+    u16_t initial_data_len = (TCP_WND - TCP_MSS) % TCP_MSS;
+    err = tcp_write(pcb, &tx_data[sent_total], initial_data_len, TCP_WRITE_FLAG_COPY);
+    EXPECT_RET(err == ERR_OK);
+    err = tcp_output(pcb);
+    EXPECT_RET(err == ERR_OK);
+    EXPECT(txcounters.num_tx_calls == 1);
+    EXPECT(txcounters.num_tx_bytes == initial_data_len + 40U);
+    memset(&txcounters, 0, sizeof(txcounters));
+    sent_total += initial_data_len;
+  }
+  for (; sent_total < (TCP_WND - TCP_MSS); sent_total += TCP_MSS) {
+    err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+    EXPECT_RET(err == ERR_OK);
+    err = tcp_output(pcb);
+    EXPECT_RET(err == ERR_OK);
+    EXPECT(txcounters.num_tx_calls == 1);
+    EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
+    memset(&txcounters, 0, sizeof(txcounters));
+  }
+  EXPECT(sent_total == (TCP_WND - TCP_MSS));
+
+  /* now ACK the packet before the first */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 0, TCP_ACK);
+  test_tcp_input(p, &netif);
+  /* ensure this didn't trigger a retransmission */
+  EXPECT(txcounters.num_tx_calls == 0);
+  EXPECT(txcounters.num_tx_bytes == 0);
+
+  /* send the last packet, now a complete window has been sent */
+  err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+  sent_total += TCP_MSS;
+  EXPECT_RET(err == ERR_OK);
+  err = tcp_output(pcb);
+  EXPECT_RET(err == ERR_OK);
+  EXPECT(txcounters.num_tx_calls == 1);
+  EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
+  memset(&txcounters, 0, sizeof(txcounters));
+
+  if (zero_window_probe_from_unsent) {
+    /* ACK all data but close the TX window */
+    p = tcp_create_rx_segment_wnd(pcb, NULL, 0, 0, TCP_WND, TCP_ACK, 0);
+    test_tcp_input(p, &netif);
+    /* ensure this didn't trigger any transmission */
+    EXPECT(txcounters.num_tx_calls == 0);
+    EXPECT(txcounters.num_tx_bytes == 0);
+  }
+
+  /* send one byte more (out of window) -> persist timer starts */
+  err = tcp_write(pcb, &tx_data[sent_total], 1, TCP_WRITE_FLAG_COPY);
+  EXPECT_RET(err == ERR_OK);
+  err = tcp_output(pcb);
+  EXPECT_RET(err == ERR_OK);
+  EXPECT(txcounters.num_tx_calls == 0);
+  EXPECT(txcounters.num_tx_bytes == 0);
+  memset(&txcounters, 0, sizeof(txcounters));
+
+  /* call tcp_timer some more times to let persist timer count up */
+  if (zero_window_probe_from_unsent) {
+    tcp_tmr();
+  }
+  for (i = 0; i < 4; i++) {
+    tcp_tmr();
+    EXPECT(txcounters.num_tx_calls == 0);
+    EXPECT(txcounters.num_tx_bytes == 0);
+  }
+
+  /* this should trigger the zero-window-probe */
+  txcounters.copy_tx_packets = 1;
+  tcp_tmr();
+  txcounters.copy_tx_packets = 0;
+  EXPECT(txcounters.num_tx_calls == 1);
+  EXPECT(txcounters.num_tx_bytes == 1 + 40U);
+  EXPECT(txcounters.tx_packets != NULL);
+  if (txcounters.tx_packets != NULL) {
+    u8_t sent;
+    u16_t ret;
+    ret = pbuf_copy_partial(txcounters.tx_packets, &sent, 1, 40U);
+    EXPECT(ret == 1);
+    EXPECT(sent == expected);
+  }
+  if (txcounters.tx_packets != NULL) {
+    pbuf_free(txcounters.tx_packets);
+    txcounters.tx_packets = NULL;
+  }
+
+  /* make sure the pcb is freed */
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  tcp_abort(pcb);
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+}
+
+START_TEST(test_tcp_tx_full_window_lost_from_unsent)
+{
+  LWIP_UNUSED_ARG(_i);
+  test_tcp_tx_full_window_lost(1);
+}
+END_TEST
+
+START_TEST(test_tcp_tx_full_window_lost_from_unacked)
+{
+  LWIP_UNUSED_ARG(_i);
+  test_tcp_tx_full_window_lost(0);
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
@@ -273,7 +429,9 @@ tcp_suite(void)
   TFun tests[] = {
     test_tcp_new_abort,
     test_tcp_recv_inseq,
-    test_tcp_fast_retx_recover
+    test_tcp_fast_retx_recover,
+    test_tcp_tx_full_window_lost_from_unacked,
+    test_tcp_tx_full_window_lost_from_unsent
   };
   return create_suite("TCP", tests, sizeof(tests)/sizeof(TFun), tcp_setup, tcp_teardown);
 }

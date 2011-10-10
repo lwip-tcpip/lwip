@@ -36,23 +36,11 @@ tcp_remove_all(void)
   fail_unless(lwip_stats.memp[MEMP_PBUF_POOL].used == 0);
 }
 
-/** Create a TCP segment usable for passing to tcp_input
- * - IP-addresses, ports, seqno and ackno are taken from pcb
- * - seqno and ackno can be altered with an offset
- */
-struct pbuf*
-tcp_create_rx_segment(struct tcp_pcb* pcb, void* data, size_t data_len, u32_t seqno_offset,
-                      u32_t ackno_offset, u8_t headerflags)
-{
-  return tcp_create_segment(&pcb->remote_ip, &pcb->local_ip, pcb->remote_port, pcb->local_port,
-    data, data_len, pcb->rcv_nxt + seqno_offset, pcb->lastack + ackno_offset, headerflags);
-}
-
 /** Create a TCP segment usable for passing to tcp_input */
-struct pbuf*
-tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
+static struct pbuf*
+tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
                    u16_t src_port, u16_t dst_port, void* data, size_t data_len,
-                   u32_t seqno, u32_t ackno, u8_t headerflags)
+                   u32_t seqno, u32_t ackno, u8_t headerflags, u16_t wnd)
 {
   struct pbuf *p, *q;
   struct ip_hdr* iphdr;
@@ -90,7 +78,7 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   tcphdr->ackno = htonl(ackno);
   TCPH_HDRLEN_SET(tcphdr, sizeof(struct tcp_hdr)/4);
   TCPH_FLAGS_SET(tcphdr, headerflags);
-  tcphdr->wnd   = htons(TCP_WND);
+  tcphdr->wnd   = htons(wnd);
 
   if (data_len > 0) {
     /* let p point to TCP data */
@@ -109,6 +97,40 @@ tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   pbuf_header(p, sizeof(struct ip_hdr));
 
   return p;
+}
+
+/** Create a TCP segment usable for passing to tcp_input */
+struct pbuf*
+tcp_create_segment(ip_addr_t* src_ip, ip_addr_t* dst_ip,
+                   u16_t src_port, u16_t dst_port, void* data, size_t data_len,
+                   u32_t seqno, u32_t ackno, u8_t headerflags)
+{
+  return tcp_create_segment_wnd(src_ip, dst_ip, src_port, dst_port, data,
+    data_len, seqno, ackno, headerflags, TCP_WND);
+}
+
+/** Create a TCP segment usable for passing to tcp_input
+ * - IP-addresses, ports, seqno and ackno are taken from pcb
+ * - seqno and ackno can be altered with an offset
+ */
+struct pbuf*
+tcp_create_rx_segment(struct tcp_pcb* pcb, void* data, size_t data_len, u32_t seqno_offset,
+                      u32_t ackno_offset, u8_t headerflags)
+{
+  return tcp_create_segment(&pcb->remote_ip, &pcb->local_ip, pcb->remote_port, pcb->local_port,
+    data, data_len, pcb->rcv_nxt + seqno_offset, pcb->lastack + ackno_offset, headerflags);
+}
+
+/** Create a TCP segment usable for passing to tcp_input
+ * - IP-addresses, ports, seqno and ackno are taken from pcb
+ * - seqno and ackno can be altered with an offset
+ * - TCP window can be adjusted
+ */
+struct pbuf* tcp_create_rx_segment_wnd(struct tcp_pcb* pcb, void* data, size_t data_len,
+                   u32_t seqno_offset, u32_t ackno_offset, u8_t headerflags, u16_t wnd)
+{
+  return tcp_create_segment_wnd(&pcb->remote_ip, &pcb->local_ip, pcb->remote_port, pcb->local_port,
+    data, data_len, pcb->rcv_nxt + seqno_offset, pcb->lastack + ackno_offset, headerflags, wnd);
 }
 
 /** Safely bring a tcp_pcb into the requested state */
@@ -237,11 +259,18 @@ static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
   LWIP_UNUSED_ARG(ipaddr);
   txcounters->num_tx_calls++;
   txcounters->num_tx_bytes += p->tot_len;
-  /*if (txcounters->tx_packets == NULL) {
-    txcounters->tx_packets = p;
-  } else {
-    pbuf_cat(txcounters->tx_packets, p);
-  }*/
+  if (txcounters->copy_tx_packets) {
+    struct pbuf *p_copy = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
+    err_t err;
+    EXPECT(p_copy != NULL);
+    err = pbuf_copy(p_copy, p);
+    EXPECT(err == ERR_OK);
+    if (txcounters->tx_packets == NULL) {
+      txcounters->tx_packets = p_copy;
+    } else {
+      pbuf_cat(txcounters->tx_packets, p_copy);
+    }
+  }
   return ERR_OK;
 }
 
