@@ -4,6 +4,10 @@
 #include "lwip/stats.h"
 #include "tcp_helper.h"
 
+#ifdef _MSC_VER
+#pragma warning(disable: 4307) /* we explicitly wrap around TCP seqnos */
+#endif
+
 #if !LWIP_STATS || !TCP_STATS || !MEMP_STATS
 #error "This tests needs TCP- and MEMP-statistics enabled"
 #endif
@@ -11,11 +15,30 @@
 #error "This tests needs TCP_SND_BUF to be > TCP_WND"
 #endif
 
+static u8_t test_tcp_timer;
+
+/* our own version of tcp_tmr so we can reset fast/slow timer state */
+static void
+test_tcp_tmr(void)
+{
+  tcp_fasttmr();
+  if (++test_tcp_timer & 1) {
+    tcp_slowtmr();
+  }
+}
+
 /* Setups/teardown functions */
 
 static void
 tcp_setup(void)
 {
+  /* reset iss to default (6510) */
+  tcp_ticks = 0;
+  tcp_ticks = 0 - (tcp_next_iss() - 6510);
+  tcp_next_iss();
+  tcp_ticks = 0;
+
+  test_tcp_timer = 0;
   tcp_remove_all();
 }
 
@@ -270,6 +293,206 @@ END_TEST
 
 static u8_t tx_data[TCP_WND*2];
 
+static void
+check_seqnos(struct tcp_seg *segs, int num_expected, u32_t *seqnos_expected)
+{
+  struct tcp_seg *s = segs;
+  int i;
+  for (i = 0; i < num_expected; i++, s = s->next) {
+    EXPECT_RET(s != NULL);
+    EXPECT(s->tcphdr->seqno == htonl(seqnos_expected[i]));
+  }
+  EXPECT(s == NULL);
+}
+
+/** Send data with sequence numbers that wrap around the u32_t range.
+ * Then, provoke fast retransmission by duplicate ACKs and check that all
+ * segment lists are still properly sorted. */
+START_TEST(test_tcp_fast_rexmit_wraparound)
+{
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  struct pbuf* p;
+  ip_addr_t remote_ip, local_ip, netmask;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  err_t err;
+#define SEQNO1 (0xFFFFFF00 - TCP_MSS)
+#define ISS    6510
+  u16_t i, sent_total = 0;
+  u32_t seqnos[] = {
+    SEQNO1,
+    SEQNO1 + (1 * TCP_MSS),
+    SEQNO1 + (2 * TCP_MSS),
+    SEQNO1 + (3 * TCP_MSS),
+    SEQNO1 + (4 * TCP_MSS),
+    SEQNO1 + (5 * TCP_MSS)};
+  LWIP_UNUSED_ARG(_i);
+
+  for (i = 0; i < sizeof(tx_data); i++) {
+    tx_data[i] = (u8_t)i;
+  }
+
+  /* initialize local vars */
+  IP4_ADDR(&local_ip,  192, 168,   1, 1);
+  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
+  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
+  memset(&counters, 0, sizeof(counters));
+
+  /* create and initialize the pcb */
+  tcp_ticks = SEQNO1 - ISS;
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  EXPECT(pcb->lastack == SEQNO1);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+  pcb->mss = TCP_MSS;
+  /* disable initial congestion window (we don't send a SYN here...) */
+  pcb->cwnd = 2*TCP_MSS;
+
+  /* send 6 mss-sized segments */
+  for (i = 0; i < 6; i++) {
+    err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+    EXPECT_RET(err == ERR_OK);
+    sent_total += TCP_MSS;
+  }
+  check_seqnos(pcb->unsent, 6, seqnos);
+  EXPECT(pcb->unacked == NULL);
+  err = tcp_output(pcb);
+  EXPECT(txcounters.num_tx_calls == 2);
+  EXPECT(txcounters.num_tx_bytes == 2 * (TCP_MSS + 40U));
+  memset(&txcounters, 0, sizeof(txcounters));
+
+  check_seqnos(pcb->unacked, 2, seqnos);
+  check_seqnos(pcb->unsent, 4, &seqnos[2]);
+
+  /* ACK the first segment */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, TCP_MSS, TCP_ACK);
+  test_tcp_input(p, &netif);
+  /* ensure this didn't trigger a retransmission */
+  EXPECT(txcounters.num_tx_calls == 1);
+  EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
+  memset(&txcounters, 0, sizeof(txcounters));
+  check_seqnos(pcb->unacked, 2, &seqnos[1]);
+  check_seqnos(pcb->unsent, 3, &seqnos[3]);
+
+  /* 3 dupacks */
+  EXPECT(pcb->dupacks == 0);
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 0, TCP_ACK);
+  test_tcp_input(p, &netif);
+  EXPECT(txcounters.num_tx_calls == 0);
+  EXPECT(pcb->dupacks == 1);
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 0, TCP_ACK);
+  test_tcp_input(p, &netif);
+  EXPECT(txcounters.num_tx_calls == 0);
+  EXPECT(pcb->dupacks == 2);
+  /* 3rd dupack -> fast rexmit */
+  p = tcp_create_rx_segment(pcb, NULL, 0, 0, 0, TCP_ACK);
+  test_tcp_input(p, &netif);
+  EXPECT(pcb->dupacks == 3);
+  EXPECT(txcounters.num_tx_calls == 4);
+  memset(&txcounters, 0, sizeof(txcounters));
+  EXPECT(pcb->unsent == NULL);
+  check_seqnos(pcb->unacked, 5, &seqnos[1]);
+
+  /* make sure the pcb is freed */
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  tcp_abort(pcb);
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+}
+END_TEST
+
+/** Send data with sequence numbers that wrap around the u32_t range.
+ * Then, provoke RTO retransmission and check that all
+ * segment lists are still properly sorted. */
+START_TEST(test_tcp_rto_rexmit_wraparound)
+{
+  struct netif netif;
+  struct test_tcp_txcounters txcounters;
+  struct test_tcp_counters counters;
+  struct tcp_pcb* pcb;
+  ip_addr_t remote_ip, local_ip, netmask;
+  u16_t remote_port = 0x100, local_port = 0x101;
+  err_t err;
+#define SEQNO1 (0xFFFFFF00 - TCP_MSS)
+#define ISS    6510
+  u16_t i, sent_total = 0;
+  u32_t seqnos[] = {
+    SEQNO1,
+    SEQNO1 + (1 * TCP_MSS),
+    SEQNO1 + (2 * TCP_MSS),
+    SEQNO1 + (3 * TCP_MSS),
+    SEQNO1 + (4 * TCP_MSS),
+    SEQNO1 + (5 * TCP_MSS)};
+  LWIP_UNUSED_ARG(_i);
+
+  for (i = 0; i < sizeof(tx_data); i++) {
+    tx_data[i] = (u8_t)i;
+  }
+
+  /* initialize local vars */
+  IP4_ADDR(&local_ip,  192, 168,   1, 1);
+  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
+  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
+  memset(&counters, 0, sizeof(counters));
+
+  /* create and initialize the pcb */
+  tcp_ticks = 0;
+  tcp_ticks = 0 - tcp_next_iss();
+  tcp_ticks = SEQNO1 - tcp_next_iss();
+  pcb = test_tcp_new_counters_pcb(&counters);
+  EXPECT_RET(pcb != NULL);
+  EXPECT(pcb->lastack == SEQNO1);
+  tcp_set_state(pcb, ESTABLISHED, &local_ip, &remote_ip, local_port, remote_port);
+  pcb->mss = TCP_MSS;
+  /* disable initial congestion window (we don't send a SYN here...) */
+  pcb->cwnd = 2*TCP_MSS;
+
+  /* send 6 mss-sized segments */
+  for (i = 0; i < 6; i++) {
+    err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
+    EXPECT_RET(err == ERR_OK);
+    sent_total += TCP_MSS;
+  }
+  check_seqnos(pcb->unsent, 6, seqnos);
+  EXPECT(pcb->unacked == NULL);
+  err = tcp_output(pcb);
+  EXPECT(txcounters.num_tx_calls == 2);
+  EXPECT(txcounters.num_tx_bytes == 2 * (TCP_MSS + 40U));
+  memset(&txcounters, 0, sizeof(txcounters));
+
+  check_seqnos(pcb->unacked, 2, seqnos);
+  check_seqnos(pcb->unsent, 4, &seqnos[2]);
+
+  /* call the tcp timer some times */
+  for (i = 0; i < 10; i++) {
+    test_tcp_tmr();
+    EXPECT(txcounters.num_tx_calls == 0);
+  }
+  /* 11th call to tcp_tmr: RTO rexmit fires */
+  test_tcp_tmr();
+  EXPECT(txcounters.num_tx_calls == 1);
+  check_seqnos(pcb->unacked, 1, seqnos);
+  check_seqnos(pcb->unsent, 5, &seqnos[1]);
+
+  /* fake greater cwnd */
+  pcb->cwnd = pcb->snd_wnd;
+  /* send more data */
+  err = tcp_output(pcb);
+  EXPECT(err == ERR_OK);
+  /* check queues are sorted */
+  EXPECT(pcb->unsent == NULL);
+  check_seqnos(pcb->unacked, 6, seqnos);
+
+  /* make sure the pcb is freed */
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 1);
+  tcp_abort(pcb);
+  EXPECT_RET(lwip_stats.memp[MEMP_TCP_PCB].used == 0);
+}
+END_TEST
+
 /** Provoke fast retransmission by duplicate ACKs and then recover by ACKing all sent data.
  * At the end, send more data. */
 static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
@@ -374,18 +597,15 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   memset(&txcounters, 0, sizeof(txcounters));
 
   /* call tcp_timer some more times to let persist timer count up */
-  if (zero_window_probe_from_unsent) {
-    tcp_tmr();
-  }
   for (i = 0; i < 4; i++) {
-    tcp_tmr();
+    test_tcp_tmr();
     EXPECT(txcounters.num_tx_calls == 0);
     EXPECT(txcounters.num_tx_bytes == 0);
   }
 
   /* this should trigger the zero-window-probe */
   txcounters.copy_tx_packets = 1;
-  tcp_tmr();
+  test_tcp_tmr();
   txcounters.copy_tx_packets = 0;
   EXPECT(txcounters.num_tx_calls == 1);
   EXPECT(txcounters.num_tx_bytes == 1 + 40U);
@@ -430,6 +650,8 @@ tcp_suite(void)
     test_tcp_new_abort,
     test_tcp_recv_inseq,
     test_tcp_fast_retx_recover,
+    test_tcp_fast_rexmit_wraparound,
+    test_tcp_rto_rexmit_wraparound,
     test_tcp_tx_full_window_lost_from_unacked,
     test_tcp_tx_full_window_lost_from_unsent
   };
