@@ -688,6 +688,7 @@ tcp_process(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"U16_F"\n", (u16_t)pcb->snd_queuelen));
       rseg = pcb->unacked;
       pcb->unacked = rseg->next;
+      tcp_seg_free(rseg);
 
       /* If there's nothing left to acknowledge, stop the retransmit
          timer, otherwise reset it to start again */
@@ -697,8 +698,6 @@ tcp_process(struct tcp_pcb *pcb)
         pcb->rtime = 0;
         pcb->nrtx = 0;
       }
-
-      tcp_seg_free(rseg);
 
       /* Call the user specified function to call when sucessfully
        * connected. */
