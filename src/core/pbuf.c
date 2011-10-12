@@ -358,7 +358,8 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
  * @param p pointer to the custom pbuf to initialize (already allocated)
  * @param payload_mem pointer to the buffer that is used for payload and headers,
  *        must be at least big enough to hold 'length' plus the header size,
- *        may be NULL if set later
+ *        may be NULL if set later.
+ *        ATTENTION: The caller is responsible for correct alignment of this buffer!!
  * @param payload_mem_len the size of the 'payload_mem' buffer, must be at least
  *        big enough to hold 'length' plus the header size
  */
@@ -398,7 +399,7 @@ pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type, struct pbuf_cust
 
   p->pbuf.next = NULL;
   if (payload_mem != NULL) {
-    p->pbuf.payload = LWIP_MEM_ALIGN((void *)((u8_t *)payload_mem + offset));
+    p->pbuf.payload = (u8_t *)payload_mem + LWIP_MEM_ALIGN_SIZE(offset);
   } else {
     p->pbuf.payload = NULL;
   }
