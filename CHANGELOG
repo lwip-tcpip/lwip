@@ -69,6 +69,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-10-12: Simon Goldschmidt
+  * pbuf.c: fixed bug #34534: Error in sending fragmented IP if MEM_ALIGNMENT > 4
+
   2011-10-09: Simon Goldschmidt
   * tcp_out.c: fixed bug #34426: tcp_zero_window_probe() transmits incorrect
     byte value when pcb->unacked != NULL
