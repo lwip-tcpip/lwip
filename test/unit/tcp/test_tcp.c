@@ -568,6 +568,7 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   EXPECT(txcounters.num_tx_calls == 0);
   EXPECT(txcounters.num_tx_bytes == 0);
 
+  EXPECT(pcb->persist_backoff == 0);
   /* send the last packet, now a complete window has been sent */
   err = tcp_write(pcb, &tx_data[sent_total], TCP_MSS, TCP_WRITE_FLAG_COPY);
   sent_total += TCP_MSS;
@@ -577,6 +578,7 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   EXPECT(txcounters.num_tx_calls == 1);
   EXPECT(txcounters.num_tx_bytes == TCP_MSS + 40U);
   memset(&txcounters, 0, sizeof(txcounters));
+  EXPECT(pcb->persist_backoff == 0);
 
   if (zero_window_probe_from_unsent) {
     /* ACK all data but close the TX window */
@@ -585,6 +587,7 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
     /* ensure this didn't trigger any transmission */
     EXPECT(txcounters.num_tx_calls == 0);
     EXPECT(txcounters.num_tx_bytes == 0);
+    EXPECT(pcb->persist_backoff == 1);
   }
 
   /* send one byte more (out of window) -> persist timer starts */
@@ -595,31 +598,37 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   EXPECT(txcounters.num_tx_calls == 0);
   EXPECT(txcounters.num_tx_bytes == 0);
   memset(&txcounters, 0, sizeof(txcounters));
+  if (!zero_window_probe_from_unsent) {
+    /* no persist timer unless a zero window announcement has been received */
+    EXPECT(pcb->persist_backoff == 0);
+  } else {
+    EXPECT(pcb->persist_backoff == 1);
 
-  /* call tcp_timer some more times to let persist timer count up */
-  for (i = 0; i < 4; i++) {
+    /* call tcp_timer some more times to let persist timer count up */
+    for (i = 0; i < 4; i++) {
+      test_tcp_tmr();
+      EXPECT(txcounters.num_tx_calls == 0);
+      EXPECT(txcounters.num_tx_bytes == 0);
+    }
+
+    /* this should trigger the zero-window-probe */
+    txcounters.copy_tx_packets = 1;
     test_tcp_tmr();
-    EXPECT(txcounters.num_tx_calls == 0);
-    EXPECT(txcounters.num_tx_bytes == 0);
-  }
-
-  /* this should trigger the zero-window-probe */
-  txcounters.copy_tx_packets = 1;
-  test_tcp_tmr();
-  txcounters.copy_tx_packets = 0;
-  EXPECT(txcounters.num_tx_calls == 1);
-  EXPECT(txcounters.num_tx_bytes == 1 + 40U);
-  EXPECT(txcounters.tx_packets != NULL);
-  if (txcounters.tx_packets != NULL) {
-    u8_t sent;
-    u16_t ret;
-    ret = pbuf_copy_partial(txcounters.tx_packets, &sent, 1, 40U);
-    EXPECT(ret == 1);
-    EXPECT(sent == expected);
-  }
-  if (txcounters.tx_packets != NULL) {
-    pbuf_free(txcounters.tx_packets);
-    txcounters.tx_packets = NULL;
+    txcounters.copy_tx_packets = 0;
+    EXPECT(txcounters.num_tx_calls == 1);
+    EXPECT(txcounters.num_tx_bytes == 1 + 40U);
+    EXPECT(txcounters.tx_packets != NULL);
+    if (txcounters.tx_packets != NULL) {
+      u8_t sent;
+      u16_t ret;
+      ret = pbuf_copy_partial(txcounters.tx_packets, &sent, 1, 40U);
+      EXPECT(ret == 1);
+      EXPECT(sent == expected);
+    }
+    if (txcounters.tx_packets != NULL) {
+      pbuf_free(txcounters.tx_packets);
+      txcounters.tx_packets = NULL;
+    }
   }
 
   /* make sure the pcb is freed */

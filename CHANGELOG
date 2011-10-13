@@ -70,6 +70,12 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-13: Simon Goldschmidt
+  * tcp_in.c, tcp_out.c: fixed bug #34517 (persist timer is started although no
+    zero window is received) by starting the persist timer when a zero window is
+    received, not when we have more data queued for sending than fits into the
+    window
+
+  2011-10-13: Simon Goldschmidt
   * def.h, timers.c: fixed bug #34541: LWIP_U32_DIFF is unnecessarily complex
 
   2011-10-13: Simon Goldschmidt
