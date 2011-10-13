@@ -70,6 +70,9 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-13: Simon Goldschmidt
+  * def.h, timers.c: fixed bug #34541: LWIP_U32_DIFF is unnecessarily complex
+
+  2011-10-13: Simon Goldschmidt
   * sockets.c, api_lib.c: fixed bug #34540: compiler error when CORE_LOCKING is
     used and not all protocols are enabled
 

@@ -426,7 +426,7 @@ sys_check_timeouts(void)
 
     now = sys_now();
     /* this cares for wraparounds */
-    diff = LWIP_U32_DIFF(now, timeouts_last_time);
+    diff = now - timeouts_last_time;
     do
     {
 #if PBUF_POOL_FREE_OOSEQ
