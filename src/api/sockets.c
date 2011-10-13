@@ -914,18 +914,29 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
           to, &remote_addr_tmp, remote_port);
         remote_addr = &remote_addr_tmp;
       } else {
-        remote_addr = &sock->conn->pcb.raw->remote_ip;
-        if (NETCONNTYPE_GROUP(sock->conn->type) == NETCONN_RAW) {
-          remote_port = 0;
-        } else {
+        remote_addr = &sock->conn->pcb.ip->remote_ip;
+#if LWIP_UDP
+        if (NETCONNTYPE_GROUP(sock->conn->type) == NETCONN_UDP) {
           remote_port = sock->conn->pcb.udp->remote_port;
+        } else
+#endif /* LWIP_UDP */
+        {
+          remote_port = 0;
         }
       }
 
       LOCK_TCPIP_CORE();
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_RAW) {
+#if LWIP_RAW
         err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, ipX_2_ip(remote_addr));
-      } else {
+#else /* LWIP_RAW */
+        err = ERR_ARG;
+#endif /* LWIP_RAW */
+      }
+#if LWIP_UDP && LWIP_RAW
+      else
+#endif /* LWIP_UDP && LWIP_RAW */
+      {
 #if LWIP_UDP
 #if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
         err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,

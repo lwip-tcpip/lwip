@@ -372,7 +372,10 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 #endif /* LWIP_SO_RCVTIMEO*/
 
 #if LWIP_TCP
-  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
+#if (LWIP_UDP || LWIP_RAW)
+  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  {
     if (!netconn_get_noautorecved(conn) || (buf == NULL)) {
       /* Let the stack know that we have taken the data. */
       /* TODO: Speedup: Don't block and wait for the answer here
@@ -461,7 +464,10 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
   LWIP_ERROR("netconn_accept: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
 #if LWIP_TCP
-  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) {
+#if (LWIP_UDP || LWIP_RAW)
+  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  {
     struct pbuf *p = NULL;
     /* This is not a listening netconn, since recvmbox is set */
 
@@ -485,8 +491,11 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     *new_buf = buf;
     /* don't set conn->last_err: it's only ERR_OK, anyway */
     return ERR_OK;
-  } else
+  }
 #endif /* LWIP_TCP */
+#if LWIP_TCP && (LWIP_UDP || LWIP_RAW)
+  else
+#endif /* LWIP_TCP && (LWIP_UDP || LWIP_RAW) */
   {
 #if (LWIP_UDP || LWIP_RAW)
     return netconn_recv_data(conn, (void **)new_buf);

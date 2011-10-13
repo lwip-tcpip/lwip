@@ -69,6 +69,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-10-13: Simon Goldschmidt
+  * sockets.c, api_lib.c: fixed bug #34540: compiler error when CORE_LOCKING is
+    used and not all protocols are enabled
+
   2011-10-12: Simon Goldschmidt
   * pbuf.c: fixed bug #34534: Error in sending fragmented IP if MEM_ALIGNMENT > 4
 
