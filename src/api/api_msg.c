@@ -774,21 +774,21 @@ do_close_internal(struct netconn *conn)
     }
   }
   /* Try to close the connection */
-  if (shut == NETCONN_SHUT_RDWR) {
+  if (close) {
     err = tcp_close(conn->pcb.tcp);
   } else {
-    err = tcp_shutdown(conn->pcb.tcp, shut & NETCONN_SHUT_RD, shut & NETCONN_SHUT_WR);
+    err = tcp_shutdown(conn->pcb.tcp, shut_rx, shut_tx);
   }
   if (err == ERR_OK) {
     /* Closing succeeded */
     conn->current_msg->err = ERR_OK;
     conn->current_msg = NULL;
     conn->state = NETCONN_NONE;
-    /* Set back some callback pointers as conn is going away */
-    conn->pcb.tcp = NULL;
-    /* Trigger select() in socket layer. Make sure everybody notices activity
-       on the connection, error first! */
     if (close) {
+      /* Set back some callback pointers as conn is going away */
+      conn->pcb.tcp = NULL;
+      /* Trigger select() in socket layer. Make sure everybody notices activity
+       on the connection, error first! */
       API_EVENT(conn, NETCONN_EVT_ERROR, 0);
     }
     if (shut_rx) {
