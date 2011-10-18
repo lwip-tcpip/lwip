@@ -70,6 +70,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-18: Simon Goldschmidt
+  * tcp_impl.h, tcp_out.c: fixed bug #34587: TCP_BUILD_MSS_OPTION doesn't
+    consider netif->mtu, causes slow network
+
+  2011-10-18: Simon Goldschmidt
   * sockets.c: fixed bug #34581 missing parentheses in udplite sockets code
 
   2011-10-18: Simon Goldschmidt

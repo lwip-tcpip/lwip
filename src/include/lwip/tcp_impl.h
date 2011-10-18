@@ -303,10 +303,7 @@ struct tcp_seg {
   (flags & TF_SEG_OPTS_TS  ? 12 : 0)
 
 /** This returns a TCP header option for MSS in an u32_t */
-#define TCP_BUILD_MSS_OPTION(x) (x) = PP_HTONL(((u32_t)2 << 24) |          \
-                                               ((u32_t)4 << 16) |          \
-                                               (((u32_t)TCP_MSS / 256) << 8) | \
-                                               (TCP_MSS & 255))
+#define TCP_BUILD_MSS_OPTION(mss) htonl(0x02040000 | ((mss) & 0xFFFF))
 
 /* Global variables: */
 extern struct tcp_pcb *tcp_input_pcb;

@@ -1067,7 +1067,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   //LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % MEM_ALIGNMENT) == 0);
   opts = (u32_t *)(void *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
-    TCP_BUILD_MSS_OPTION(*opts);
+    *opts = TCP_BUILD_MSS_OPTION(pcb->mss);
     opts += 1;
   }
 #if LWIP_TCP_TIMESTAMPS
