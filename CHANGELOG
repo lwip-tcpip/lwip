@@ -50,6 +50,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-18: Simon Goldschmidt
+  * opt.h: fixed default values of TCP_SNDLOWAT and TCP_SNDQUEUELOWAT for small
+    windows (bug #34176 select after non-blocking send times out)
+
+  2011-10-18: Simon Goldschmidt
   * tcp_impl.h, tcp_out.c: fixed bug #34587: TCP_BUILD_MSS_OPTION doesn't
     consider netif->mtu, causes slow network
 

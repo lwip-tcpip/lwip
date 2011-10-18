@@ -978,7 +978,7 @@
  * TCP snd_buf for select to return writable (combined with TCP_SNDQUEUELOWAT).
  */
 #ifndef TCP_SNDLOWAT
-#define TCP_SNDLOWAT                    ((TCP_SND_BUF)/2)
+#define TCP_SNDLOWAT                    LWIP_MAX(((TCP_SND_BUF)/2), (2 * TCP_MSS) + 1)
 #endif
 
 /**
@@ -987,7 +987,7 @@
  * this number, select returns writable (combined with TCP_SNDLOWAT).
  */
 #ifndef TCP_SNDQUEUELOWAT
-#define TCP_SNDQUEUELOWAT               ((TCP_SND_QUEUELEN)/2)
+#define TCP_SNDQUEUELOWAT               LWIP_MAX(((TCP_SND_QUEUELEN)/2), 5)
 #endif
 
 /**
