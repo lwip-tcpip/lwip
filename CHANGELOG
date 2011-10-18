@@ -50,6 +50,9 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-18: Simon Goldschmidt
+  * sockets.c: fixed bug #34581 missing parentheses in udplite sockets code
+
+  2011-10-18: Simon Goldschmidt
   * sockets.h: fixed bug #34580 fcntl() is missing in LWIP_COMPAT_SOCKETS
 
   2011-10-17: Simon Goldschmidt
