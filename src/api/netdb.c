@@ -200,7 +200,7 @@ lwip_gethostbyname_r(const char *name, struct hostent *ret, char *buf,
   err = netconn_gethostbyname(name, &(h->addr));
   if (err != ERR_OK) {
     LWIP_DEBUGF(DNS_DEBUG, ("lwip_gethostbyname(%s) failed, err=%d\n", name, err));
-    *h_errnop = ENSRNOTFOUND;
+    *h_errnop = HOST_NOT_FOUND;
     return -1;
   }
 

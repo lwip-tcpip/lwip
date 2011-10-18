@@ -70,6 +70,10 @@ HISTORY
  ++ Bugfixes:
 
   2011-10-18: Simon Goldschmidt
+  * arch.h, netdb.c: fixed bug #34592: lwip_gethostbyname_r uses nonstandard
+    error value
+
+  2011-10-18: Simon Goldschmidt
   * opt.h: fixed default values of TCP_SNDLOWAT and TCP_SNDQUEUELOWAT for small
     windows (bug #34176 select after non-blocking send times out)
 
