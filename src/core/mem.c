@@ -521,7 +521,7 @@ mem_malloc(mem_size_t size)
   sys_mutex_lock(&mem_mutex);
   LWIP_MEM_ALLOC_PROTECT();
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
-  /* run as long as a mem_free disturbed mem_malloc */
+  /* run as long as a mem_free disturbed mem_malloc or mem_trim */
   do {
     local_mem_free_count = 0;
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
@@ -535,12 +535,14 @@ mem_malloc(mem_size_t size)
 #if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
       mem_free_count = 0;
       LWIP_MEM_ALLOC_UNPROTECT();
-      /* allow mem_free to run */
+      /* allow mem_free or mem_trim to run */
       LWIP_MEM_ALLOC_PROTECT();
       if (mem_free_count != 0) {
-        local_mem_free_count = mem_free_count;
+        /* If mem_free or mem_trim have run, we have to restart since they
+           could have altered our current struct mem. */
+        local_mem_free_count = 1;
+        break;
       }
-      mem_free_count = 0;
 #endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
 
       if ((!mem->used) &&
@@ -584,15 +586,27 @@ mem_malloc(mem_size_t size)
           mem->used = 1;
           MEM_STATS_INC_USED(used, mem->next - (mem_size_t)((u8_t *)mem - ram));
         }
-
+#if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
+mem_malloc_adjust_lfree:
+#endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
         if (mem == lfree) {
+          struct mem *cur = lfree;
           /* Find next free block after mem and update lowest free pointer */
-          while (lfree->used && lfree != ram_end) {
+          while (cur->used && cur != ram_end) {
+#if LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT
+            mem_free_count = 0;
             LWIP_MEM_ALLOC_UNPROTECT();
             /* prevent high interrupt latency... */
             LWIP_MEM_ALLOC_PROTECT();
-            lfree = (struct mem *)(void *)&ram[lfree->next];
+            if (mem_free_count != 0) {
+              /* If mem_free or mem_trim have run, we have to restart since they
+                 could have altered our current struct mem or lfree. */
+              goto mem_malloc_adjust_lfree;
+            }
+#endif /* LWIP_ALLOW_MEM_FREE_FROM_OTHER_CONTEXT */
+            cur = (struct mem *)(void *)&ram[cur->next];
           }
+          lfree = cur;
           LWIP_ASSERT("mem_malloc: !lfree->used", ((lfree == ram_end) || (!lfree->used)));
         }
         LWIP_MEM_ALLOC_UNPROTECT();
