@@ -117,20 +117,14 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet (%"U16_F" bytes) discarded\n", p->tot_len));
     TCP_STATS_INC(tcp.lenerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
   /* Don't even process incoming broadcasts/multicasts. */
   if (ip_addr_isbroadcast(&current_iphdr_dest, inp) ||
       ip_addr_ismulticast(&current_iphdr_dest)) {
     TCP_STATS_INC(tcp.proterr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
 #if CHECKSUM_CHECK_TCP
@@ -144,10 +138,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     tcp_debug_print(tcphdr);
 #endif /* TCP_DEBUG */
     TCP_STATS_INC(tcp.chkerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 #endif
 
@@ -158,10 +149,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
     /* drop short packets */
     LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
     TCP_STATS_INC(tcp.lenerr);
-    TCP_STATS_INC(tcp.drop);
-    snmp_inc_tcpinerrs();
-    pbuf_free(p);
-    return;
+    goto dropped;
   }
 
   /* Convert fields in TCP header to host byte order. */
@@ -303,39 +291,13 @@ tcp_input(struct pbuf *p, struct netif *inp)
 
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
-      u8_t refused_flags = pcb->refused_data->flags;
-      /* set pcb->refused_data to NULL in case the callback frees it and then
-         closes the pcb */
-      struct pbuf *refused_data = pcb->refused_data;
-      pcb->refused_data = NULL;
-      /* Notify again application with data previously received. */
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
-      TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
-      if (err == ERR_OK) {
-        /* did refused_data include a FIN? */
-        if (refused_flags & PBUF_FLAG_TCP_FIN) {
-          /* correct rcv_wnd as the application won't call tcp_recved()
-             for the FIN's seqno */
-          if (pcb->rcv_wnd != TCP_WND) {
-            pcb->rcv_wnd++;
-          }
-          TCP_EVENT_CLOSED(pcb, err);
-          if (err == ERR_ABRT) {
-            goto dropped;
-          }
-        }
-      } else if ((err == ERR_ABRT) || (tcplen > 0)) {
-        /* if err == ERR_ABRT, 'pcb' is already deallocated */
-        /* Drop incoming packets because pcb is "full" (only if the incoming
-           segment contains data). */
-        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+      if ((tcp_process_refused_data(pcb) == ERR_ABRT) ||
+        ((pcb->refused_data != NULL) && (tcplen > 0))) {
+        /* pcb has been aborted or refused data is still refused and the new
+           segment contains data */
         TCP_STATS_INC(tcp.drop);
         snmp_inc_tcpinerrs();
-        pbuf_free(p);
-        return;
-      } else {
-        /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
-        pcb->refused_data = refused_data;
+        goto aborted;
       }
     }
     tcp_input_pcb = pcb;

@@ -63,6 +63,14 @@
 #define TCP_ENSURE_LOCAL_PORT_RANGE(port) (((port) & ~TCP_LOCAL_PORT_RANGE_START) + TCP_LOCAL_PORT_RANGE_START)
 #endif
 
+#if LWIP_TCP_KEEPALIVE
+#define TCP_KEEP_DUR(pcb)   ((pcb)->keep_cnt * (pcb)->keep_intvl)
+#define TCP_KEEP_INTVL(pcb) ((pcb)->keep_intvl)
+#else /* LWIP_TCP_KEEPALIVE */
+#define TCP_KEEP_DUR(pcb)   TCP_MAXIDLE
+#define TCP_KEEP_INTVL(pcb) TCP_KEEPINTVL_DEFAULT
+#endif /* LWIP_TCP_KEEPALIVE */
+
 const char * const tcp_state_str[] = {
   "CLOSED",      
   "LISTEN",      
@@ -821,8 +829,9 @@ tcp_slowtmr(void)
         }
       } else {
         /* Increase the retransmission timer if it is running */
-        if(pcb->rtime >= 0)
+        if(pcb->rtime >= 0) {
           ++pcb->rtime;
+        }
 
         if (pcb->unacked != NULL && pcb->rtime >= pcb->rto) {
           /* Time for a retransmission. */
@@ -869,14 +878,8 @@ tcp_slowtmr(void)
     if((pcb->so_options & SOF_KEEPALIVE) &&
        ((pcb->state == ESTABLISHED) ||
         (pcb->state == CLOSE_WAIT))) {
-#if LWIP_TCP_KEEPALIVE
       if((u32_t)(tcp_ticks - pcb->tmr) >
-         (pcb->keep_idle + (pcb->keep_cnt*pcb->keep_intvl))
-         / TCP_SLOW_INTERVAL)
-#else      
-      if((u32_t)(tcp_ticks - pcb->tmr) >
-         (pcb->keep_idle + TCP_MAXIDLE) / TCP_SLOW_INTERVAL)
-#endif /* LWIP_TCP_KEEPALIVE */
+         (pcb->keep_idle + TCP_KEEP_DUR(pcb)) / TCP_SLOW_INTERVAL)
       {
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: KEEPALIVE timeout. Aborting connection to %"U16_F".%"U16_F".%"U16_F".%"U16_F".\n",
                                 ip4_addr1_16(&pcb->remote_ip), ip4_addr2_16(&pcb->remote_ip),
@@ -885,15 +888,9 @@ tcp_slowtmr(void)
         ++pcb_remove;
         ++pcb_reset;
       }
-#if LWIP_TCP_KEEPALIVE
       else if((u32_t)(tcp_ticks - pcb->tmr) > 
-              (pcb->keep_idle + pcb->keep_cnt_sent * pcb->keep_intvl)
+              (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
               / TCP_SLOW_INTERVAL)
-#else
-      else if((u32_t)(tcp_ticks - pcb->tmr) > 
-              (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEPINTVL_DEFAULT) 
-              / TCP_SLOW_INTERVAL)
-#endif /* LWIP_TCP_KEEPALIVE */
       {
         tcp_keepalive(pcb);
         pcb->keep_cnt_sent++;
@@ -1024,34 +1021,8 @@ tcp_fasttmr(void)
     struct tcp_pcb *next = pcb->next;
     /* If there is data which was previously "refused" by upper layer */
     if (pcb->refused_data != NULL) {
-      /* Notify again application with data previously received. */
-      err_t err;
-      u8_t refused_flags = pcb->refused_data->flags;
-      /* set pcb->refused_data to NULL in case the callback frees it and then
-         closes the pcb */
-      struct pbuf *refused_data = pcb->refused_data;
-      pcb->refused_data = NULL;
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_fasttmr: notify kept packet\n"));
-      TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
-      if (err == ERR_OK) {
-        /* did refused_data include a FIN? If so, handle it now. */
-        if (refused_flags & PBUF_FLAG_TCP_FIN) {
-          /* correct rcv_wnd as the application won't call tcp_recved()
-             for the FIN's seqno */
-          if (pcb->rcv_wnd != TCP_WND) {
-            pcb->rcv_wnd++;
-          }
-          TCP_EVENT_CLOSED(pcb, err);
-          if (err == ERR_ABRT) {
-            pcb = NULL;
-          }
-        }
-      } else if (err == ERR_ABRT) {
-        /* if err == ERR_ABRT, 'pcb' is already deallocated */
+      if (tcp_process_refused_data(pcb) == ERR_ABRT) {
         pcb = NULL;
-      } else {
-        /* data is still refused */
-        pcb->refused_data = refused_data;
       }
     }
 
@@ -1065,6 +1036,45 @@ tcp_fasttmr(void)
 
     pcb = next;
   }
+}
+
+/** Pass pcb->refused_data to the recv callback */
+err_t
+tcp_process_refused_data(struct tcp_pcb *pcb)
+{
+  err_t err;
+  u8_t refused_flags = pcb->refused_data->flags;
+  /* set pcb->refused_data to NULL in case the callback frees it and then
+     closes the pcb */
+  struct pbuf *refused_data = pcb->refused_data;
+  pcb->refused_data = NULL;
+  /* Notify again application with data previously received. */
+  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
+  TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
+  if (err == ERR_OK) {
+    /* did refused_data include a FIN? */
+    if (refused_flags & PBUF_FLAG_TCP_FIN) {
+      /* correct rcv_wnd as the application won't call tcp_recved()
+         for the FIN's seqno */
+      if (pcb->rcv_wnd != TCP_WND) {
+        pcb->rcv_wnd++;
+      }
+      TCP_EVENT_CLOSED(pcb, err);
+      if (err == ERR_ABRT) {
+        return ERR_ABRT;
+      }
+    }
+  } else if (err == ERR_ABRT) {
+    /* if err == ERR_ABRT, 'pcb' is already deallocated */
+    /* Drop incoming packets because pcb is "full" (only if the incoming
+       segment contains data). */
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+    return ERR_ABRT;
+  } else {
+    /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
+    pcb->refused_data = refused_data;
+  }
+  return ERR_OK;
 }
 
 /**

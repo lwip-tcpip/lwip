@@ -70,6 +70,7 @@ void             tcp_rexmit  (struct tcp_pcb *pcb);
 void             tcp_rexmit_rto  (struct tcp_pcb *pcb);
 void             tcp_rexmit_fast (struct tcp_pcb *pcb);
 u32_t            tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb);
+err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 
 /**
  * This is the Nagle algorithm: try to combine user data to send as few TCP
