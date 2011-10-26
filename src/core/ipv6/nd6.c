@@ -1543,10 +1543,11 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
   if(copy_needed) {
     /* copy the whole packet into new pbufs */
     p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
-    if ((p == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
+    while ((p == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
       /* Free oldest packet (as per RFC recommendation) */
       r = neighbor_cache[neighbor_index].q;
       neighbor_cache[neighbor_index].q = r->next;
+      r->next = NULL;
       nd6_free_q(r);
       p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
     }
@@ -1570,6 +1571,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
       /* Free oldest packet (as per RFC recommendation) */
       r = neighbor_cache[neighbor_index].q;
       neighbor_cache[neighbor_index].q = r->next;
+      r->next = NULL;
       nd6_free_q(r);
       new_entry = (struct nd6_q_entry *)memp_malloc(MEMP_ND6_QUEUE);
     }
