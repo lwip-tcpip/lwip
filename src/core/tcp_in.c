@@ -938,8 +938,9 @@ tcp_receive(struct tcp_pcb *pcb)
             /* Clause 5 */
             if (pcb->lastack == ackno) {
               found_dupack = 1;
-              if (pcb->dupacks + 1 > pcb->dupacks)
+              if ((u8_t)(pcb->dupacks + 1) > pcb->dupacks) {
                 ++pcb->dupacks;
+              }
               if (pcb->dupacks > 3) {
                 /* Inflate the congestion window, but not if it means that
                    the value overflows. */
