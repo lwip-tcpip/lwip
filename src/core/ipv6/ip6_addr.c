@@ -91,11 +91,13 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   current_block_value = 0;
   for (s = cp; *s != 0; s++) {
     if (*s == ':') {
-      if (current_block_index & 0x1) {
-        addr->addr[addr_index++] |= current_block_value;
-      }
-      else {
-        addr->addr[addr_index] = current_block_value << 16;
+      if (addr) {
+        if (current_block_index & 0x1) {
+          addr->addr[addr_index++] |= current_block_value;
+        }
+        else {
+          addr->addr[addr_index] = current_block_value << 16;
+        }
       }
       current_block_index++;
       current_block_value = 0;
@@ -110,7 +112,9 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
             addr_index++;
           }
           else {
-            addr->addr[addr_index] = 0;
+            if (addr) {
+              addr->addr[addr_index] = 0;
+            }
           }
           current_block_index++;
         }
@@ -126,16 +130,20 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
     }
   }
 
-  if (current_block_index & 0x1) {
-    addr->addr[addr_index++] |= current_block_value;
-  }
-  else {
-    addr->addr[addr_index] = current_block_value << 16;
+  if (addr) {
+    if (current_block_index & 0x1) {
+      addr->addr[addr_index++] |= current_block_value;
+    }
+    else {
+      addr->addr[addr_index] = current_block_value << 16;
+    }
   }
 
   /* convert to network byte order. */
-  for (addr_index = 0; addr_index < 4; addr_index++) {
-    addr->addr[addr_index] = htonl(addr->addr[addr_index]);
+  if (addr) {
+    for (addr_index = 0; addr_index < 4; addr_index++) {
+      addr->addr[addr_index] = htonl(addr->addr[addr_index]);
+    }
   }
 
   if (current_block_index != 7) {
@@ -143,7 +151,6 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
   }
 
   return 1;
-
 }
 
 /**
