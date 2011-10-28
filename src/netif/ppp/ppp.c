@@ -174,7 +174,7 @@ typedef struct PPPControlRx_s {
   /** receive buffer - encoded data is stored here */
 #if PPP_INPROC_OWNTHREAD
   u_char rxbuf[PPPOS_RX_BUFSIZE];
-#endif
+#endif /* PPP_INPROC_OWNTHREAD */
 
   /* The input packet. */
   struct pbuf *inHead, *inTail;
@@ -341,6 +341,7 @@ static u_char pppACCMMask[] = {
   0x80
 };
 
+#if PPP_INPROC_OWNTHREAD
 /** Wake up the task blocked in reading from serial line (if any) */
 static void
 pppRecvWakeup(int pd)
@@ -350,6 +351,7 @@ pppRecvWakeup(int pd)
     sio_read_abort(pppControl[pd].fd);
   }
 }
+#endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
 
 void
@@ -365,7 +367,9 @@ pppLinkTerminated(int pd)
   {
 #if PPPOS_SUPPORT
     PPPControl* pc;
+#if PPP_INPROC_OWNTHREAD
     pppRecvWakeup(pd);
+#endif /* PPP_INPROC_OWNTHREAD */
     pc = &pppControl[pd];
 
     PPPDEBUG(LOG_DEBUG, ("pppLinkTerminated: unit %d: linkStatusCB=%p errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
@@ -390,9 +394,9 @@ pppLinkDown(int pd)
   } else
 #endif /* PPPOE_SUPPORT */
   {
-#if PPPOS_SUPPORT
+#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
     pppRecvWakeup(pd);
-#endif /* PPPOS_SUPPORT */
+#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD*/
   }
 }
 
@@ -576,7 +580,7 @@ pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatus
     pppStart(pd);
 #if PPP_INPROC_OWNTHREAD
     sys_thread_new(PPP_THREAD_NAME, pppInputThread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
-#endif
+#endif /* PPP_INPROC_OWNTHREAD */
   }
 
   return pd;
@@ -674,7 +678,9 @@ pppClose(int pd)
     pc->errCode = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     pppStop(pd);
+#if PPP_INPROC_OWNTHREAD
     pppRecvWakeup(pd);
+#endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
   }
 
