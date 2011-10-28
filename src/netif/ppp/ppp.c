@@ -172,7 +172,9 @@ typedef struct PPPControlRx_s {
   /** the rx file descriptor */
   sio_fd_t fd;
   /** receive buffer - encoded data is stored here */
+#if PPP_INPROC_OWNTHREAD
   u_char rxbuf[PPPOS_RX_BUFSIZE];
+#endif
 
   /* The input packet. */
   struct pbuf *inHead, *inTail;
@@ -1737,6 +1739,7 @@ pppDrop(PPPControlRx *pcrx)
   snmp_inc_ifindiscards(&pppControl[pcrx->pd].netif);
 }
 
+#if !PPP_INPROC_OWNTHREAD
 /** Pass received raw characters to PPPoS to be decoded. This function is
  * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
  *
@@ -1749,6 +1752,7 @@ pppos_input(int pd, u_char* data, int len)
 {
   pppInProc(&pppControl[pd].rx, data, len);
 }
+#endif
 
 /**
  * Process a received octet string.
