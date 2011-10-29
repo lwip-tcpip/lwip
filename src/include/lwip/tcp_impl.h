@@ -92,10 +92,10 @@ err_t            tcp_process_refused_data(struct tcp_pcb *pcb);
 #define tcp_output_nagle(tpcb) (tcp_do_output_nagle(tpcb) ? tcp_output(tpcb) : ERR_OK)
 
 
-#define TCP_SEQ_LT(a,b)     ((s32_t)((a)-(b)) < 0)
-#define TCP_SEQ_LEQ(a,b)    ((s32_t)((a)-(b)) <= 0)
-#define TCP_SEQ_GT(a,b)     ((s32_t)((a)-(b)) > 0)
-#define TCP_SEQ_GEQ(a,b)    ((s32_t)((a)-(b)) >= 0)
+#define TCP_SEQ_LT(a,b)     ((s32_t)((u32_t)(a) - (u32_t)(b)) < 0)
+#define TCP_SEQ_LEQ(a,b)    ((s32_t)((u32_t)(a) - (u32_t)(b)) <= 0)
+#define TCP_SEQ_GT(a,b)     ((s32_t)((u32_t)(a) - (u32_t)(b)) > 0)
+#define TCP_SEQ_GEQ(a,b)    ((s32_t)((u32_t)(a) - (u32_t)(b)) >= 0)
 /* is b<=a<=c? */
 #if 0 /* see bug #10548 */
 #define TCP_SEQ_BETWEEN(a,b,c) ((c)-(b) >= (a)-(b))
