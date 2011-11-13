@@ -758,10 +758,15 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         ipX_addr_debug_print(NETCONNTYPE_ISIPV6(netconn_type(sock->conn)),
           SOCKETS_DEBUG, fromaddr);
         LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F" len=%d\n", port, off));
-        if (*fromlen > saddr.sa.sa_len) {
-          *fromlen = saddr.sa.sa_len;
+#if SOCKETS_DEBUG
+        if (from && fromlen)
+#endif /* SOCKETS_DEBUG */
+        {
+          if (*fromlen > saddr.sa.sa_len) {
+            *fromlen = saddr.sa.sa_len;
+          }
+          MEMCPY(from, &saddr, *fromlen);
         }
-        MEMCPY(from, &saddr, *fromlen);
       }
     }
 
