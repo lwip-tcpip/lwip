@@ -257,7 +257,9 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
 {
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
-  ip6_addr_t * reply_src;
+  ip6_addr_t *reply_src, *reply_dest;
+  struct ip6_hdr *ip6hdr;
+  struct netif *netif;
 
   /* ICMPv6 header + IPv6 header + data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp6_hdr) + IP6_HLEN + LWIP_ICMP6_DATASIZE,
@@ -279,8 +281,29 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
   SMEMCPY((u8_t *)q->payload + sizeof(struct icmp6_hdr), (u8_t *)p->payload,
           IP6_HLEN + LWIP_ICMP6_DATASIZE);
 
+  /* Get the destination address and netif for this ICMP message. */
+  if (ip_current_netif() != NULL) {
+    netif = ip_current_netif();
+    reply_dest = ip6_current_src_addr();
+  }
+  else {
+    /* We are not being called from input context, so we must determine
+     * addresses from the packet in question. reply_src is temporarily
+     * set to try and find the original netif where packet was accepted. */
+    ip6hdr = (struct ip6_hdr *)p->payload;
+    reply_dest = &ip6hdr->src;
+    reply_src = &ip6hdr->dest;
+    netif = ip6_route(reply_src, reply_dest);
+    if (netif == NULL) {
+      /* drop */
+      pbuf_free(q);
+      ICMP6_STATS_INC(icmp6.rterr);
+      return;
+    }
+  }
+
   /* Select an address to use as source. */
-  reply_src = ip6_select_source_address(ip_current_netif(), ip6_current_src_addr());
+  reply_src = ip6_select_source_address(netif, reply_dest);
   if (reply_src == NULL) {
     /* drop */
     pbuf_free(q);
@@ -291,10 +314,10 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
   /* calculate checksum */
   icmp6hdr->chksum = 0;
   icmp6hdr->chksum = ip6_chksum_pseudo(q, IP6_NEXTH_ICMP6, q->tot_len,
-    reply_src, ip6_current_src_addr());
+    reply_src, reply_dest);
 
   ICMP6_STATS_INC(icmp6.xmit);
-  ip6_output(q, reply_src, ip6_current_src_addr(), LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6);
+  ip6_output_if(q, reply_src, reply_dest, LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(q);
 }
 
