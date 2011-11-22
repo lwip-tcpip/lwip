@@ -258,6 +258,7 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
   ip6_addr_t *reply_src, *reply_dest;
+  ip6_addr_t reply_src_local, reply_dest_local;
   struct ip6_hdr *ip6hdr;
   struct netif *netif;
 
@@ -291,8 +292,11 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
      * addresses from the packet in question. reply_src is temporarily
      * set to try and find the original netif where packet was accepted. */
     ip6hdr = (struct ip6_hdr *)p->payload;
-    reply_dest = &ip6hdr->src;
-    reply_src = &ip6hdr->dest;
+    /* copy from packed address to aligned address */
+    ip6_addr_copy(reply_dest_local, ip6hdr->src);
+    ip6_addr_copy(reply_src_local, ip6hdr->dest);
+    reply_dest = &reply_dest_local;
+    reply_src = &reply_src_local;
     netif = ip6_route(reply_src, reply_dest);
     if (netif == NULL) {
       /* drop */
