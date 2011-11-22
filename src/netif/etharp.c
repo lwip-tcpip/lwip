@@ -112,9 +112,7 @@ struct etharp_entry {
   struct pbuf *q;
 #endif /* ARP_QUEUEING */
   ip_addr_t ipaddr;
-#if LWIP_SNMP
   struct netif *netif;
-#endif /* LWIP_SNMP */
   struct eth_addr ethaddr;
   u8_t state;
   u8_t ctime;
@@ -577,6 +575,23 @@ etharp_remove_static_entry(ip_addr_t *ipaddr)
   return ERR_OK;
 }
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
+
+/**
+ * Remove all ARP table entries of the specified netif.
+ *
+ * @param netif points to a network interface
+ */
+void etharp_cleanup_netif(struct netif *netif)
+{
+  u8_t i;
+
+  for (i = 0; i < ARP_TABLE_SIZE; ++i) {
+    u8_t state = arp_table[i].state;
+    if ((state != ETHARP_STATE_EMPTY) && (arp_table[i].netif == netif)) {
+      etharp_free_entry(i);
+    }
+  }
+}
 
 /**
  * Finds (stable) ethernet/IP address pair from ARP table

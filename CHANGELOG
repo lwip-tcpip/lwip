@@ -69,6 +69,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-11-22: Simon Goldschmidt
+  * netif.c, etharp.h/.c: fixed bug #34684: Clear the arp table cache when
+    netif is brought down
+
   2011-10-28: Simon Goldschmidt
   * tcp_in.c: fixed bug #34638: Dead code in tcp_receive - pcb->dupacks
 
