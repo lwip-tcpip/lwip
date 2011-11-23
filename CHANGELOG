@@ -69,6 +69,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-11-23: Simon Goldschmidt
+  * sys.c: fixed bug #34884: sys_msleep() body needs to be surrounded with
+    '#ifndef sys_msleep'
+
   2011-11-22: Simon Goldschmidt
   * netif.c, etharp.h/.c: fixed bug #34684: Clear the arp table cache when
     netif is brought down
