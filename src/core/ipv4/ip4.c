@@ -169,7 +169,7 @@ ip_canforward(struct pbuf *p)
   }
   if (IP_CLASSA(addr)) {
     u32_t net = addr & IP_CLASSA_NET;
-    if ((net == 0) || (net == (IP_LOOPBACKNET << IP_CLASSA_NSHIFT))) {
+    if ((net == 0) || (net == ((u32_t)IP_LOOPBACKNET << IP_CLASSA_NSHIFT))) {
       /* don't route loopback packets */
       return 0;
     }
