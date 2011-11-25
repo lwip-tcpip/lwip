@@ -116,8 +116,11 @@ struct tcp_pcb ** const tcp_pcb_lists[] = {&tcp_listen_pcbs.pcbs, &tcp_bound_pcb
 /** Only used for temporary storage. */
 struct tcp_pcb *tcp_tmp_pcb;
 
+u8_t tcp_active_pcbs_changed;
+
 /** Timer counter to handle calling slow-timer from tcp_tmr() */ 
 static u8_t tcp_timer;
+static u8_t tcp_timer_ctr;
 static u16_t tcp_new_port(void);
 
 /**
@@ -184,7 +187,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
       /* TODO: to which state do we move now? */
 
       /* move to TIME_WAIT since we close actively */
-      TCP_RMV(&tcp_active_pcbs, pcb);
+      TCP_RMV_ACTIVE(pcb);
       pcb->state = TIME_WAIT;
       TCP_REG(&tcp_tw_pcbs, pcb);
 
@@ -216,7 +219,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     break;
   case SYN_SENT:
     err = ERR_OK;
-    tcp_pcb_remove(&tcp_active_pcbs, pcb);
+    TCP_PCB_REMOVE_ACTIVE(pcb);
     memp_free(MEMP_TCP_PCB, pcb);
     pcb = NULL;
     snmp_inc_tcpattemptfails();
@@ -374,7 +377,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     errf = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
     errf_arg = pcb->callback_arg;
-    tcp_pcb_remove(&tcp_active_pcbs, pcb);
+    TCP_PCB_REMOVE_ACTIVE(pcb);
     if (pcb->unacked != NULL) {
       tcp_segs_free(pcb->unacked);
     }
@@ -765,7 +768,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     if (old_local_port != 0) {
       TCP_RMV(&tcp_bound_pcbs, pcb);
     }
-    TCP_REG(&tcp_active_pcbs, pcb);
+    TCP_REG_ACTIVE(pcb);
     snmp_inc_tcpactiveopens();
 
     tcp_output(pcb);
@@ -792,7 +795,9 @@ tcp_slowtmr(void)
   err = ERR_OK;
 
   ++tcp_ticks;
+  ++tcp_timer_ctr;
 
+tcp_slowtmr_start:
   /* Steps through all of the active PCBs. */
   prev = NULL;
   pcb = tcp_active_pcbs;
@@ -804,6 +809,12 @@ tcp_slowtmr(void)
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != CLOSED\n", pcb->state != CLOSED);
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != LISTEN\n", pcb->state != LISTEN);
     LWIP_ASSERT("tcp_slowtmr: active pcb->state != TIME-WAIT\n", pcb->state != TIME_WAIT);
+    if (pcb->last_timer == tcp_timer_ctr) {
+      /* skip this pcb, we have already processed it */
+      pcb = pcb->next;
+      continue;
+    }
+    pcb->last_timer = tcp_timer_ctr;
 
     pcb_remove = 0;
     pcb_reset = 0;
@@ -929,6 +940,8 @@ tcp_slowtmr(void)
     /* If the PCB should be removed, do it. */
     if (pcb_remove) {
       struct tcp_pcb *pcb2;
+      tcp_err_fn err_fn;
+      void *err_arg;
       tcp_pcb_purge(pcb);
       /* Remove PCB from tcp_active_pcbs list. */
       if (prev != NULL) {
@@ -940,15 +953,22 @@ tcp_slowtmr(void)
         tcp_active_pcbs = pcb->next;
       }
 
-      TCP_EVENT_ERR(pcb->errf, pcb->callback_arg, ERR_ABRT);
       if (pcb_reset) {
         tcp_rst(pcb->snd_nxt, pcb->rcv_nxt, &pcb->local_ip, &pcb->remote_ip,
           pcb->local_port, pcb->remote_port);
       }
 
+      err_fn = pcb->errf;
+      err_arg = pcb->callback_arg;
       pcb2 = pcb;
       pcb = pcb->next;
       memp_free(MEMP_TCP_PCB, pcb2);
+
+      tcp_active_pcbs_changed = 0;
+      TCP_EVENT_ERR(err_fn, err_arg, ERR_ABRT);
+      if (tcp_active_pcbs_changed) {
+        goto tcp_slowtmr_start;
+      }
     } else {
       /* get the 'next' element now and work with 'prev' below (in case of abort) */
       prev = pcb;
@@ -959,7 +979,11 @@ tcp_slowtmr(void)
       if (prev->polltmr >= prev->pollinterval) {
         prev->polltmr = 0;
         LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: polling application\n"));
+        tcp_active_pcbs_changed = 0;
         TCP_EVENT_POLL(prev, err);
+        if (tcp_active_pcbs_changed) {
+          goto tcp_slowtmr_start;
+        }
         /* if err == ERR_ABRT, 'prev' is already deallocated */
         if (err == ERR_OK) {
           tcp_output(prev);
@@ -1015,26 +1039,38 @@ tcp_slowtmr(void)
 void
 tcp_fasttmr(void)
 {
-  struct tcp_pcb *pcb = tcp_active_pcbs;
+  struct tcp_pcb *pcb;
+
+  ++tcp_timer_ctr;
+
+tcp_fasttmr_start:
+  pcb = tcp_active_pcbs;
 
   while(pcb != NULL) {
-    struct tcp_pcb *next = pcb->next;
-    /* If there is data which was previously "refused" by upper layer */
-    if (pcb->refused_data != NULL) {
-      if (tcp_process_refused_data(pcb) == ERR_ABRT) {
-        pcb = NULL;
+    if (pcb->last_timer != tcp_timer_ctr) {
+      struct tcp_pcb *next;
+      pcb->last_timer = tcp_timer_ctr;
+      /* send delayed ACKs */
+      if (pcb->flags & TF_ACK_DELAY) {
+        LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
+        tcp_ack_now(pcb);
+        tcp_output(pcb);
+        pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
       }
-    }
 
-    /* send delayed ACKs */
-    if (pcb && (pcb->flags & TF_ACK_DELAY)) {
-      LWIP_DEBUGF(TCP_DEBUG, ("tcp_fasttmr: delayed ACK\n"));
-      tcp_ack_now(pcb);
-      tcp_output(pcb);
-      pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
-    }
+      next = pcb->next;
 
-    pcb = next;
+      /* If there is data which was previously "refused" by upper layer */
+      if (pcb->refused_data != NULL) {
+        tcp_active_pcbs_changed = 0;
+        tcp_process_refused_data(pcb);
+        if (tcp_active_pcbs_changed) {
+          /* application callback has changed the pcb list: restart the loop */
+          goto tcp_fasttmr_start;
+        }
+      }
+      pcb = next;
+    }
   }
 }
 
@@ -1284,6 +1320,7 @@ tcp_alloc(u8_t prio)
     pcb->lastack = iss;
     pcb->snd_lbb = iss;   
     pcb->tmr = tcp_ticks;
+    pcb->last_timer = tcp_timer_ctr;
 
     pcb->polltmr = 0;
 

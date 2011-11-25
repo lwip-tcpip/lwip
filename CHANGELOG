@@ -49,6 +49,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2011-11-25: Simon Goldschmidt
+  * tcp.h/.c, tcp_impl.h, tcp_in.c: fixed bug #31177: tcp timers can corrupt
+    tcp_active_pcbs in some cases
+
   2011-11-23: Simon Goldschmidt
   * sys.c: fixed bug #34884: sys_msleep() body needs to be surrounded with
     '#ifndef sys_msleep'
