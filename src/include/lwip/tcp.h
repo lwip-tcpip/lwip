@@ -191,6 +191,7 @@ struct tcp_pcb {
 
   /* Timers */
   u8_t polltmr, pollinterval;
+  u8_t last_timer;
   u32_t tmr;
 
   /* receiver variables */
