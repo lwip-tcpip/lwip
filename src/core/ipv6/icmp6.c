@@ -283,14 +283,11 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
           IP6_HLEN + LWIP_ICMP6_DATASIZE);
 
   /* Get the destination address and netif for this ICMP message. */
-  if (ip_current_netif() != NULL) {
-    netif = ip_current_netif();
-    reply_dest = ip6_current_src_addr();
-  }
-  else {
-    /* We are not being called from input context, so we must determine
-     * addresses from the packet in question. reply_src is temporarily
-     * set to try and find the original netif where packet was accepted. */
+  if ((ip_current_netif() == NULL) ||
+      ((code == ICMP6_TE_FRAG) && (type == ICMP6_TYPE_TE))) {
+    /* Special case, as ip6_current_xxx is either NULL, or points
+     * to a different packet than the one that expired.
+     * We must use the addresses that are stored in the expired packet. */
     ip6hdr = (struct ip6_hdr *)p->payload;
     /* copy from packed address to aligned address */
     ip6_addr_copy(reply_dest_local, ip6hdr->src);
@@ -305,14 +302,18 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
       return;
     }
   }
+  else {
+    netif = ip_current_netif();
+    reply_dest = ip6_current_src_addr();
 
-  /* Select an address to use as source. */
-  reply_src = ip6_select_source_address(netif, reply_dest);
-  if (reply_src == NULL) {
-    /* drop */
-    pbuf_free(q);
-    ICMP6_STATS_INC(icmp6.rterr);
-    return;
+    /* Select an address to use as source. */
+    reply_src = ip6_select_source_address(netif, reply_dest);
+    if (reply_src == NULL) {
+      /* drop */
+      pbuf_free(q);
+      ICMP6_STATS_INC(icmp6.rterr);
+      return;
+    }
   }
 
   /* calculate checksum */
