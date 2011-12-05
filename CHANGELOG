@@ -13,6 +13,8 @@ HISTORY
 
  ++ Bugfixes:
 
+   2011-05-25: Simon Goldschmidt
+  * tcp.c: fixed bug #33398 (pointless conversion when checking TCP port range)
 
 
 
