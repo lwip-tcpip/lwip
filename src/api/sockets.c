@@ -336,7 +336,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   err = netconn_accept(sock->conn, &newconn);
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_acept failed, err=%d\n", s, err));
-    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
+    if (netconn_type(sock->conn) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
       return EOPNOTSUPP;
     }
@@ -541,7 +541,7 @@ lwip_listen(int s, int backlog)
 
   if (err != ERR_OK) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d) failed, err=%d\n", s, err));
-    if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
+    if (netconn_type(sock->conn) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
       return EOPNOTSUPP;
     }
