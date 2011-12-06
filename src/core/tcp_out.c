@@ -989,6 +989,9 @@ tcp_output(struct tcp_pcb *pcb)
       pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
 
+#if TCP_OVERSIZE_DBGCHECK
+    seg->oversize_left = 0;
+#endif /* TCP_OVERSIZE_DBGCHECK */
     tcp_output_segment(seg, pcb);
     snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
