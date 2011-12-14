@@ -315,6 +315,12 @@ void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 
+#if LWIP_NETIF_HWADDRHINT
+#define NETIF_SET_HWADDRHINT(netif, hint) ((netif)->addr_hint = (hint))
+#else /* LWIP_NETIF_HWADDRHINT */
+#define NETIF_SET_HWADDRHINT(netif, hint)
+#endif /* LWIP_NETIF_HWADDRHINT */
+
 #ifdef __cplusplus
 }
 #endif

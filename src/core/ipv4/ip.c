@@ -859,9 +859,9 @@ ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
     return ERR_RTE;
   }
 
-  netif->addr_hint = addr_hint;
+  NETIF_SET_HWADDRHINT(netif, addr_hint);
   err = ip_output_if(p, src, dest, ttl, tos, proto, netif);
-  netif->addr_hint = NULL;
+  NETIF_SET_HWADDRHINT(netif, NULL);
 
   return err;
 }

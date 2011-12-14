@@ -173,9 +173,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
   netif->state = state;
   netif->num = netif_num++;
   netif->input = input;
-#if LWIP_NETIF_HWADDRHINT
-  netif->addr_hint = NULL;
-#endif /* LWIP_NETIF_HWADDRHINT*/
+  NETIF_SET_HWADDRHINT(netif, NULL);
 #if ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS
   netif->loop_cnt_current = 0;
 #endif /* ENABLE_LOOPBACK && LWIP_LOOPBACK_MAX_PBUFS */
