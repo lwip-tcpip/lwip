@@ -64,7 +64,8 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   /* fill IP header */
   iphdr->dest.addr = dst_ip->addr;
   iphdr->src.addr = src_ip->addr;
-  IPH_VHLTOS_SET(iphdr, 4, IP_HLEN / 4, 0);
+  IPH_VHL_SET(iphdr, 4, IP_HLEN / 4);
+  IPH_TOS_SET(iphdr, 0);
   IPH_LEN_SET(iphdr, htons(p->tot_len));
   IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 
