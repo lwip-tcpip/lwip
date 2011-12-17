@@ -260,7 +260,7 @@ udp_input(struct pbuf *p, struct netif *inp)
             ip_addr_ismulticast(ip_current_dest_addr()) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
-            (broadcast && (pcb->so_options & SOF_BROADCAST) &&
+            (broadcast && ip_get_option(pcb, SOF_BROADCAST) &&
              (ipX_addr_isany(0, &pcb->local_ip) ||
               ip_addr_netcmp(ipX_2_ip(&pcb->local_ip), ip_current_dest_addr(), &inp->netmask))))))) {
 #else /* IP_SOF_BROADCAST_RECV */
@@ -365,7 +365,7 @@ udp_input(struct pbuf *p, struct netif *inp)
           ip6_addr_ismulticast(ip6_current_dest_addr()) ||
 #endif /* LWIP_IPV6 */
            ip_addr_ismulticast(ip_current_dest_addr())) &&
-          ((pcb->so_options & SOF_REUSEADDR) != 0)) {
+          ip_get_option(pcb, SOF_REUSEADDR)) {
         /* pass broadcast- or multicast packets to all multicast pcbs
            if SOF_REUSEADDR is set on the first match */
         struct udp_pcb *mpcb;
@@ -389,7 +389,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                    ip_addr_ismulticast(ip_current_dest_addr()) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
-                   (broadcast && (mpcb->so_options & SOF_BROADCAST)))))) {
+                   (broadcast && ip_get_option(mpcb, SOF_BROADCAST)))))) {
 #else  /* IP_SOF_BROADCAST_RECV */
                    (broadcast))))) {
 #endif /* IP_SOF_BROADCAST_RECV */
@@ -632,7 +632,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
 
 #if IP_SOF_BROADCAST
   /* broadcast filter? */
-  if ( ((pcb->so_options & SOF_BROADCAST) == 0) &&
+  if (!ip_get_option(pcb, SOF_BROADCAST) &&
 #if LWIP_IPV6
       !PCB_ISIPV6(pcb) &&
 #endif /* LWIP_IPV6 */
@@ -900,8 +900,8 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
        PCB is alread bound to, unless *all* PCBs with that port have tha
        REUSEADDR flag set. */
 #if SO_REUSE
-    else if (((pcb->so_options & SOF_REUSEADDR) == 0) &&
-             ((ipcb->so_options & SOF_REUSEADDR) == 0)) {
+    else if (!ip_get_option(pcb, SOF_REUSEADDR) &&
+             !ip_get_option(ipcb, SOF_REUSEADDR)) {
 #else /* SO_REUSE */
     /* port matches that of PCB in list and REUSEADDR not set -> reject */
     else {

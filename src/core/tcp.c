@@ -440,7 +440,7 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
      We do not dump TIME_WAIT pcb's; they can still be matched by incoming
      packets using both local and remote IP addresses and ports to distinguish.
    */
-  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+  if (ip_get_option(pcb, SOF_REUSEADDR)) {
     max_pcb_list = NUM_TCP_PCB_LISTS_NO_TIME_WAIT;
   }
 #endif /* SO_REUSE */
@@ -460,8 +460,8 @@ tcp_bind(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
         /* Omit checking for the same port if both pcbs have REUSEADDR set.
            For SO_REUSEADDR, the duplicate-check for a 5-tuple is done in
            tcp_connect. */
-        if (((pcb->so_options & SOF_REUSEADDR) == 0) ||
-          ((cpcb->so_options & SOF_REUSEADDR) == 0))
+        if (!ip_get_option(pcb, SOF_REUSEADDR) ||
+            !ip_get_option(cpcb, SOF_REUSEADDR))
 #endif /* SO_REUSE */
         {
           /* @todo: check accept_any_ip_version */
@@ -526,7 +526,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
     return pcb;
   }
 #if SO_REUSE
-  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+  if (ip_get_option(pcb, SOF_REUSEADDR)) {
     /* Since SOF_REUSEADDR allows reusing a local address before the pcb's usage
        is declared (listen-/connection-pcb), we have to make sure now that
        this port is only used once for every local IP. */
@@ -550,7 +550,7 @@ tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
   lpcb->state = LISTEN;
   lpcb->prio = pcb->prio;
   lpcb->so_options = pcb->so_options;
-  lpcb->so_options |= SOF_ACCEPTCONN;
+  ip_set_option(lpcb, SOF_ACCEPTCONN);
   lpcb->ttl = pcb->ttl;
   lpcb->tos = pcb->tos;
 #if LWIP_IPV6
@@ -745,7 +745,7 @@ tcp_connect(struct tcp_pcb *pcb, ip_addr_t *ipaddr, u16_t port,
     }
   }
 #if SO_REUSE
-  if ((pcb->so_options & SOF_REUSEADDR) != 0) {
+  if (ip_get_option(pcb, SOF_REUSEADDR)) {
     /* Since SOF_REUSEADDR allows reusing a local address, we have to make sure
        now that the 5-tuple is unique. */
     struct tcp_pcb *cpcb;
@@ -914,7 +914,7 @@ tcp_slowtmr_start:
     }
 
     /* Check if KEEPALIVE should be sent */
-    if((pcb->so_options & SOF_KEEPALIVE) &&
+    if(ip_get_option(pcb, SOF_KEEPALIVE) &&
        ((pcb->state == ESTABLISHED) ||
         (pcb->state == CLOSE_WAIT))) {
       if((u32_t)(tcp_ticks - pcb->tmr) >
