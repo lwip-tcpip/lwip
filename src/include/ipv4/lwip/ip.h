@@ -201,6 +201,13 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 /** Destination IP address of current_header */
 #define ip_current_dest_addr() (&current_iphdr_dest)
 
+/** Gets an IP pcb option (SOF_* flags) */
+#define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
+/** Sets an IP pcb option (SOF_* flags) */
+#define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
+/** Resets an IP pcb option (SOF_* flags) */
+#define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
+
 #if IP_DEBUG
 void ip_debug_print(struct pbuf *p);
 #else

@@ -95,7 +95,7 @@ raw_input(struct pbuf *p, struct netif *inp)
          ip_addr_cmp(&(pcb->local_ip), &current_iphdr_dest))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
-      if ((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(&current_iphdr_dest, inp))
+      if (ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(&current_iphdr_dest, inp))
 #endif /* IP_SOF_BROADCAST_RECV */
       {
         /* receive callback function available? */
@@ -245,7 +245,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 
 #if IP_SOF_BROADCAST
   /* broadcast filter? */
-  if (((pcb->so_options & SOF_BROADCAST) == 0) && ip_addr_isbroadcast(ipaddr, netif)) {
+  if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {
     LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
     /* free any temporary header pbuf allocated by pbuf_header() */
     if (q != p) {

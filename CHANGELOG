@@ -9,11 +9,9 @@ HISTORY
   2012-01-16: Simon Goldschmidt
   * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
 
-  2011-07-21: Simon Goldschmidt (patch by hanhui)
-  * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
-    Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.
-    Also added code to allow ip_forward() to forward non-broadcast packets to
-    the input netif (set IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1).
+  2011-12-17: Simon Goldschmidt
+  * ip.h: implemented API functions to access so_options of IP pcbs (UDP, TCP, RAW)
+    (fixes bug #35061)
 
   2011-09-27: Simon Goldschmidt
   * opt.h, tcp.c, tcp_in.c: Implemented limiting data on ooseq queue (task #9989)
@@ -46,6 +44,12 @@ HISTORY
   2011-07-26: Simon Goldschmidt
   * etharp.c: ETHARP_SUPPORT_VLAN: add support for an external VLAN filter
     function instead of only checking for one VLAN (define ETHARP_VLAN_CHECK_FN)
+
+  2011-07-21: Simon Goldschmidt (patch by hanhui)
+  * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
+    Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.
+    Also added code to allow ip_forward() to forward non-broadcast packets to
+    the input netif (set IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1).
 
   2011-06-26: Simon Goldschmidt (patch by Cameron Gutman)
   * tcp.c, tcp_out.c: bug #33604: added some more asserts to check that
