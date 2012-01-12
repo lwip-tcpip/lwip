@@ -191,9 +191,7 @@ etharp_free_entry(int i)
 #ifdef LWIP_DEBUG
   /* for debugging, clean out the complete entry */
   arp_table[i].ctime = 0;
-#if LWIP_SNMP
   arp_table[i].netif = NULL;
-#endif /* LWIP_SNMP */
   ip_addr_set_zero(&arp_table[i].ipaddr);
   arp_table[i].ethaddr = ethzero;
 #endif /* LWIP_DEBUG */
@@ -482,9 +480,7 @@ etharp_update_arp_entry(struct netif *netif, ip_addr_t *ipaddr, struct eth_addr 
   }
 
   /* record network interface */
-#if LWIP_SNMP
   arp_table[i].netif = netif;
-#endif /* LWIP_SNMP */
   /* insert in SNMP ARP index tree */
   snmp_insert_arpidx_tree(netif, &arp_table[i].ipaddr);
 

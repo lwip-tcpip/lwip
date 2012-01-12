@@ -1761,7 +1761,7 @@ lwip_getsockopt_internal(void *arg)
     case SO_REUSEPORT:
 #endif /* SO_REUSE */
     /*case SO_USELOOPBACK: UNIMPL */
-      *(int*)optval = sock->conn->pcb.ip->so_options & optname;
+      *(int*)optval = ip_get_option(sock->conn->pcb.ip, optname);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, optname=0x%x, ..) = %s\n",
                                   s, optname, (*(int*)optval?"on":"off")));
       break;
@@ -2178,9 +2178,9 @@ lwip_setsockopt_internal(void *arg)
 #endif /* SO_REUSE */
     /* UNIMPL case SO_USELOOPBACK: */
       if (*(int*)optval) {
-        sock->conn->pcb.ip->so_options |= optname;
+        ip_set_option(sock->conn->pcb.ip, optname);
       } else {
-        sock->conn->pcb.ip->so_options &= ~optname;
+        ip_reset_option(sock->conn->pcb.ip, optname);
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, SOL_SOCKET, optname=0x%x, ..) -> %s\n",
                   s, optname, (*(int*)optval?"on":"off")));

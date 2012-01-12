@@ -197,6 +197,13 @@ extern struct ip_globals ip_data;
 /** Union destination address of current_header */
 #define ipX_current_dest_addr()   (&ip_data.current_iphdr_dest)
 
+/** Gets an IP pcb option (SOF_* flags) */
+#define ip_get_option(pcb, opt)   ((pcb)->so_options & (opt))
+/** Sets an IP pcb option (SOF_* flags) */
+#define ip_set_option(pcb, opt)   ((pcb)->so_options |= (opt))
+/** Resets an IP pcb option (SOF_* flags) */
+#define ip_reset_option(pcb, opt) ((pcb)->so_options &= ~(opt))
+
 #if LWIP_IPV6
 #define ipX_output(isipv6, p, src, dest, ttl, tos, proto) \
         ((isipv6) ? \

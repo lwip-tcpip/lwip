@@ -505,7 +505,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     npcb->so_options = pcb->so_options & SOF_INHERITED;
     /* Register the new PCB so that we can begin receiving segments
        for it. */
-    TCP_REG(&tcp_active_pcbs, npcb);
+    TCP_REG_ACTIVE(npcb);
 
     /* Parse any options in the SYN. */
     tcp_parseopt(npcb);
@@ -755,7 +755,7 @@ tcp_process(struct tcp_pcb *pcb)
           ("TCP connection closed: FIN_WAIT_1 %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
         tcp_ack_now(pcb);
         tcp_pcb_purge(pcb);
-        TCP_RMV(&tcp_active_pcbs, pcb);
+        TCP_RMV_ACTIVE(pcb);
         pcb->state = TIME_WAIT;
         TCP_REG(&tcp_tw_pcbs, pcb);
       } else {
@@ -772,7 +772,7 @@ tcp_process(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed: FIN_WAIT_2 %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_ack_now(pcb);
       tcp_pcb_purge(pcb);
-      TCP_RMV(&tcp_active_pcbs, pcb);
+      TCP_RMV_ACTIVE(pcb);
       pcb->state = TIME_WAIT;
       TCP_REG(&tcp_tw_pcbs, pcb);
     }
@@ -782,7 +782,7 @@ tcp_process(struct tcp_pcb *pcb)
     if (flags & TCP_ACK && ackno == pcb->snd_nxt) {
       LWIP_DEBUGF(TCP_DEBUG, ("TCP connection closed: CLOSING %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
       tcp_pcb_purge(pcb);
-      TCP_RMV(&tcp_active_pcbs, pcb);
+      TCP_RMV_ACTIVE(pcb);
       pcb->state = TIME_WAIT;
       TCP_REG(&tcp_tw_pcbs, pcb);
     }

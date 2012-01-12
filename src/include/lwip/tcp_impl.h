@@ -309,6 +309,7 @@ struct tcp_seg {
 /* Global variables: */
 extern struct tcp_pcb *tcp_input_pcb;
 extern u32_t tcp_ticks;
+extern u8_t tcp_active_pcbs_changed;
 
 /* The TCP PCB lists. */
 union tcp_listen_pcbs_t { /* List of all TCP PCBs in LISTEN state. */
@@ -394,6 +395,24 @@ extern struct tcp_pcb *tcp_tmp_pcb;      /* Only used for temporary storage. */
   } while(0)
 
 #endif /* LWIP_DEBUG */
+
+#define TCP_REG_ACTIVE(npcb)                       \
+  do {                                             \
+    TCP_REG(&tcp_active_pcbs, npcb);               \
+    tcp_active_pcbs_changed = 1;                   \
+  } while (0)
+
+#define TCP_RMV_ACTIVE(npcb)                       \
+  do {                                             \
+    TCP_RMV(&tcp_active_pcbs, npcb);               \
+    tcp_active_pcbs_changed = 1;                   \
+  } while (0)
+
+#define TCP_PCB_REMOVE_ACTIVE(pcb)                 \
+  do {                                             \
+    tcp_pcb_remove(&tcp_active_pcbs, pcb);         \
+    tcp_active_pcbs_changed = 1;                   \
+  } while (0)
 
 
 /* Internal functions: */

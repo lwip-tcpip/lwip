@@ -680,7 +680,7 @@ dhcp_start(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG  | LWIP_DBG_TRACE, ("dhcp_start(): could not obtain pcb\n"));
     return ERR_MEM;
   }
-  dhcp->pcb->so_options |= SOF_BROADCAST;
+  ip_set_option(dhcp->pcb, SOF_BROADCAST);
   /* set up local and remote port for the pcb */
   udp_bind(dhcp->pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
   udp_connect(dhcp->pcb, IP_ADDR_ANY, DHCP_SERVER_PORT);
@@ -730,7 +730,7 @@ dhcp_inform(struct netif *netif)
       return;
     }
     dhcp.pcb = pcb;
-    dhcp.pcb->so_options |= SOF_BROADCAST;
+    ip_set_option(dhcp.pcb, SOF_BROADCAST);
     udp_bind(dhcp.pcb, IP_ADDR_ANY, DHCP_CLIENT_PORT);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_inform(): created new udp pcb\n"));
   }

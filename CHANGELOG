@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2011-12-17: Simon Goldschmidt
+  * ip.h: implemented API functions to access so_options of IP pcbs (UDP, TCP, RAW)
+    (fixes bug #35061)
+
   2011-09-27: Simon Goldschmidt
   * opt.h, tcp.c, tcp_in.c: Implemented limiting data on ooseq queue (task #9989)
     (define TCP_OOSEQ_MAX_BYTES / TCP_OOSEQ_MAX_PBUFS in lwipopts.h)
@@ -68,6 +72,10 @@ HISTORY
 
 
  ++ Bugfixes:
+
+  2011-11-25: Simon Goldschmidt
+  * tcp.h/.c, tcp_impl.h, tcp_in.c: fixed bug #31177: tcp timers can corrupt
+    tcp_active_pcbs in some cases
 
   2011-11-23: Simon Goldschmidt
   * sys.c: fixed bug #34884: sys_msleep() body needs to be surrounded with

@@ -110,7 +110,7 @@ raw_input(struct pbuf *p, struct netif *inp)
          ipX_addr_cmp(PCB_ISIPV6(pcb), &(pcb->local_ip), ipX_current_dest_addr()))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
-      if (((pcb->so_options & SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), inp))
+      if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), inp))
 #if LWIP_IPV6
           && !PCB_ISIPV6(pcb)
 #endif /* LWIP_IPV6 */
@@ -279,7 +279,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 #endif /* LWIP_IPV6 */
   {
     /* broadcast filter? */
-    if (((pcb->so_options & SOF_BROADCAST) == 0) && ip_addr_isbroadcast(ipaddr, netif)) {
+    if (!ip_get_option(pcb, SOF_BROADCAST) && ip_addr_isbroadcast(ipaddr, netif)) {
       LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_LEVEL_WARNING, ("raw_sendto: SOF_BROADCAST not enabled on pcb %p\n", (void *)pcb));
       /* free any temporary header pbuf allocated by pbuf_header() */
       if (q != p) {
