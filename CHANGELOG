@@ -6,6 +6,9 @@ HISTORY
 
  ++ New features:
 
+  2012-01-16: Simon Goldschmidt
+  * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
+
   2011-12-17: Simon Goldschmidt
   * ip.h: implemented API functions to access so_options of IP pcbs (UDP, TCP, RAW)
     (fixes bug #35061)
