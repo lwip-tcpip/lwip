@@ -6,6 +6,9 @@ HISTORY
 
  ++ New features:
 
+  2012-01-16: Simon Goldschmidt
+  * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
+
   2011-07-21: Simon Goldschmidt (patch by hanhui)
   * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
     Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.

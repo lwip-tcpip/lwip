@@ -1802,6 +1802,13 @@
 #ifndef CHECKSUM_GEN_TCP
 #define CHECKSUM_GEN_TCP                1
 #endif
+
+/**
+ * CHECKSUM_GEN_ICMP==1: Generate checksums in software for outgoing ICMP packets.
+ */
+#ifndef CHECKSUM_GEN_ICMP
+#define CHECKSUM_GEN_ICMP               1
+#endif
  
 /**
  * CHECKSUM_CHECK_IP==1: Check checksums in software for incoming IP packets.
