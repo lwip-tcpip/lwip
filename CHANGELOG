@@ -6,9 +6,6 @@ HISTORY
 
  ++ New features:
 
-  2012-01-20: Simon Goldschmidt
-  * pbuf.c: fixed bug #35291: NULL pointer in pbuf_copy
-
   2012-01-16: Simon Goldschmidt
   * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
 
@@ -64,6 +61,12 @@ HISTORY
 
 
  ++ Bugfixes:
+
+  2012-01-20: Simon Goldschmidt
+  * dhcp.c: fixed bug #35151: DHCP asserts on incoming option lengths
+
+ 2012-01-20: Simon Goldschmidt
+  * pbuf.c: fixed bug #35291: NULL pointer in pbuf_copy
 
   2011-11-25: Simon Goldschmidt
   * tcp.h/.c, tcp_impl.h, tcp_in.c: fixed bug #31177: tcp timers can corrupt

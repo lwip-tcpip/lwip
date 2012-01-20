@@ -1395,44 +1395,44 @@ again:
         offset--;
         break;
       case(DHCP_OPTION_SUBNET_MASK):
-        LWIP_ASSERT("len == 4", len == 4);
+        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_SUBNET_MASK;
         break;
       case(DHCP_OPTION_ROUTER):
         decode_len = 4; /* only copy the first given router */
-        LWIP_ASSERT("len >= decode_len", len >= decode_len);
+        LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_ROUTER;
         break;
       case(DHCP_OPTION_DNS_SERVER):
         /* special case: there might be more than one server */
-        LWIP_ASSERT("len % 4 == 0", len % 4 == 0);
+        LWIP_ERROR("len % 4 == 0", len % 4 == 0, return ERR_VAL;);
         /* limit number of DNS servers */
         decode_len = LWIP_MIN(len, 4 * DNS_MAX_SERVERS);
-        LWIP_ASSERT("len >= decode_len", len >= decode_len);
+        LWIP_ERROR("len >= decode_len", len >= decode_len, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_DNS_SERVER;
         break;
       case(DHCP_OPTION_LEASE_TIME):
-        LWIP_ASSERT("len == 4", len == 4);
+        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_LEASE_TIME;
         break;
       case(DHCP_OPTION_OVERLOAD):
-        LWIP_ASSERT("len == 1", len == 1);
+        LWIP_ERROR("len == 1", len == 1, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_OVERLOAD;
         break;
       case(DHCP_OPTION_MESSAGE_TYPE):
-        LWIP_ASSERT("len == 1", len == 1);
+        LWIP_ERROR("len == 1", len == 1, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_MSG_TYPE;
         break;
       case(DHCP_OPTION_SERVER_ID):
-        LWIP_ASSERT("len == 4", len == 4);
+        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_SERVER_ID;
         break;
       case(DHCP_OPTION_T1):
-        LWIP_ASSERT("len == 4", len == 4);
+        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_T1;
         break;
       case(DHCP_OPTION_T2):
-        LWIP_ASSERT("len == 4", len == 4);
+        LWIP_ERROR("len == 4", len == 4, return ERR_VAL;);
         decode_idx = DHCP_OPTION_IDX_T2;
         break;
       default:
@@ -1446,26 +1446,27 @@ again:
       u16_t copy_len;
 decode_next:
       LWIP_ASSERT("check decode_idx", decode_idx >= 0 && decode_idx < DHCP_OPTION_IDX_MAX);
-      LWIP_ASSERT("option already decoded", !dhcp_option_given(dhcp, decode_idx));
-      copy_len = LWIP_MIN(decode_len, 4);
-      pbuf_copy_partial(q, &value, copy_len, val_offset);
-      if (decode_len > 4) {
-        /* decode more than one u32_t */
-        LWIP_ASSERT("decode_len % 4 == 0", decode_len % 4 == 0);
+      if (!dhcp_option_given(dhcp, decode_idx)) {
+        copy_len = LWIP_MIN(decode_len, 4);
+        pbuf_copy_partial(q, &value, copy_len, val_offset);
+        if (decode_len > 4) {
+          /* decode more than one u32_t */
+          LWIP_ERROR("decode_len % 4 == 0", decode_len % 4 == 0, return ERR_VAL;);
+          dhcp_got_option(dhcp, decode_idx);
+          dhcp_set_option_value(dhcp, decode_idx, htonl(value));
+          decode_len -= 4;
+          val_offset += 4;
+          decode_idx++;
+          goto decode_next;
+        } else if (decode_len == 4) {
+          value = ntohl(value);
+        } else {
+          LWIP_ERROR("invalid decode_len", decode_len == 1, return ERR_VAL;);
+          value = ((u8_t*)&value)[0];
+        }
         dhcp_got_option(dhcp, decode_idx);
-        dhcp_set_option_value(dhcp, decode_idx, htonl(value));
-        decode_len -= 4;
-        val_offset += 4;
-        decode_idx++;
-        goto decode_next;
-      } else if (decode_len == 4) {
-        value = ntohl(value);
-      } else {
-        LWIP_ASSERT("invalid decode_len", decode_len == 1);
-        value = ((u8_t*)&value)[0];
+        dhcp_set_option_value(dhcp, decode_idx, value);
       }
-      dhcp_got_option(dhcp, decode_idx);
-      dhcp_set_option_value(dhcp, decode_idx, value);
     }
     if (offset >= q->len) {
       offset -= q->len;
