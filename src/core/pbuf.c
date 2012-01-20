@@ -863,7 +863,7 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
   /* iterate through pbuf chain */
   do
   {
-    LWIP_ASSERT("p_to != NULL", p_to != NULL);
+    LWIP_ERROR("p_to != NULL", p_to != NULL, return ERR_ARG;);
     /* copy one part of the original chain */
     if ((p_to->len - offset_to) >= (p_from->len - offset_from)) {
       /* complete current p_from fits into current p_to */
