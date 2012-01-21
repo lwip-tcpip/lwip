@@ -906,10 +906,15 @@ tcp_slowtmr_start:
     }
     /* Check if this PCB has stayed too long in FIN-WAIT-2 */
     if (pcb->state == FIN_WAIT_2) {
-      if ((u32_t)(tcp_ticks - pcb->tmr) >
-          TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
-        ++pcb_remove;
-        LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
+      /* If this PCB is in FIN_WAIT_2 because of SHUT_WR don't let it time out. */
+      if (pcb->flags & TF_RXCLOSED) {
+        /* PCB was fully closed (either through close() or SHUT_RDWR):
+           normal FIN-WAIT timeout handling. */
+        if ((u32_t)(tcp_ticks - pcb->tmr) >
+            TCP_FIN_WAIT_TIMEOUT / TCP_SLOW_INTERVAL) {
+          ++pcb_remove;
+          LWIP_DEBUGF(TCP_DEBUG, ("tcp_slowtmr: removing pcb stuck in FIN-WAIT-2\n"));
+        }
       }
     }
 
