@@ -62,6 +62,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-01-21: Simon Goldschmidt
+  * tcp.c: fixed bug #34636: FIN_WAIT_2 - Incorrect shutdown of TCP pcb
+
   2012-01-20: Simon Goldschmidt
   * dhcp.c: fixed bug #35151: DHCP asserts on incoming option lengths
 
