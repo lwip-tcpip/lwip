@@ -875,17 +875,17 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
     offset_to += len;
     offset_from += len;
     LWIP_ASSERT("offset_to <= p_to->len", offset_to <= p_to->len);
-    if (offset_to == p_to->len) {
-      /* on to next p_to (if any) */
-      offset_to = 0;
-      p_to = p_to->next;
-      LWIP_ERROR("p_to != NULL", p_to != NULL, return ERR_ARG;);
-    }
     LWIP_ASSERT("offset_from <= p_from->len", offset_from <= p_from->len);
     if (offset_from >= p_from->len) {
       /* on to next p_from (if any) */
       offset_from = 0;
       p_from = p_from->next;
+    }
+    if (offset_to == p_to->len) {
+      /* on to next p_to (if any) */
+      offset_to = 0;
+      p_to = p_to->next;
+      LWIP_ERROR("p_to != NULL", (p_to != NULL) || (p_from == NULL) , return ERR_ARG;);
     }
 
     if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
