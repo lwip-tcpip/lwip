@@ -301,7 +301,9 @@ tcp_close(struct tcp_pcb *pcb)
 
 /**
  * Causes all or part of a full-duplex connection of this PCB to be shut down.
- * This doesn't deallocate the PCB!
+ * This doesn't deallocate the PCB unless shutting down both sides!
+ * Shutting down both sides is the same as calling tcp_close, so if it succeds,
+ * the PCB should not be referenced any more.
  *
  * @param pcb PCB to shutdown
  * @param shut_rx shut down receive side if this is != 0
@@ -316,28 +318,32 @@ tcp_shutdown(struct tcp_pcb *pcb, int shut_rx, int shut_tx)
     return ERR_CONN;
   }
   if (shut_rx) {
-    /* shut down the receive side: free buffered data... */
+    /* shut down the receive side: set a flag not to receive any more data... */
+    pcb->flags |= TF_RXCLOSED;
+    if (shut_tx) {
+      /* shutting down the tx AND rx side is the same as closing for the raw API */
+      return tcp_close_shutdown(pcb, 1);
+    }
+    /* ... and free buffered data */
     if (pcb->refused_data != NULL) {
       pbuf_free(pcb->refused_data);
       pcb->refused_data = NULL;
     }
-    /* ... and set a flag not to receive any more data */
-    pcb->flags |= TF_RXCLOSED;
   }
   if (shut_tx) {
     /* This can't happen twice since if it succeeds, the pcb's state is changed.
        Only close in these states as the others directly deallocate the PCB */
     switch (pcb->state) {
-  case SYN_RCVD:
-  case ESTABLISHED:
-  case CLOSE_WAIT:
-    return tcp_close_shutdown(pcb, 0);
-  default:
-    /* don't shut down other states */
-    break;
+    case SYN_RCVD:
+    case ESTABLISHED:
+    case CLOSE_WAIT:
+      return tcp_close_shutdown(pcb, shut_rx);
+    default:
+      /* Not (yet?) connected, cannot shutdown the TX side as that would bring us
+        into CLOSED state, where the PCB is deallocated. */
+      return ERR_CONN;
     }
   }
-  /* @todo: return another err_t if not in correct state or already shut? */
   return ERR_OK;
 }
 
