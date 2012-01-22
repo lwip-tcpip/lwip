@@ -62,6 +62,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-01-22: Simon Goldschmidt
+  * tcp.c, tcp_in.c: fixed bug #35305: pcb may be freed too early on shutdown(WR)
+
   2012-01-21: Simon Goldschmidt
   * tcp.c: fixed bug #34636: FIN_WAIT_2 - Incorrect shutdown of TCP pcb
 
