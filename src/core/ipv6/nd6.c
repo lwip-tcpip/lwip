@@ -127,8 +127,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     struct na_header * na_hdr;
     struct lladdr_option * lladdr_opt;
 
-    /* Check that na header and link-layer address option fit in packet. */
-    if (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option))) {
+    /* Check that na header fits in packet. */
+    if (p->len < (sizeof(struct na_header))) {
       /* TODO debug message */
       pbuf_free(p);
       ND6_STATS_INC(nd6.lenerr);
@@ -137,13 +137,23 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     na_hdr = (struct na_header *)p->payload;
-    lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
 
     /* Unsolicited NA?*/
     if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
       /* This is an unsolicited NA.
        * link-layer changed?
        * part of DAD mechanism? */
+
+      /* Check that link-layer address option also fits in packet. */
+      if (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option))) {
+        /* TODO debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
+
+      lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
 
       /* Override ip6_current_dest_addr() so that we have an aligned copy. */
       ip6_addr_set(ip6_current_dest_addr(), &(na_hdr->target_address));
@@ -211,6 +221,17 @@ nd6_input(struct pbuf *p, struct netif *inp)
       neighbor_cache[i].counter.reachable_time = reachable_time;
       if ((na_hdr->flags & ND6_FLAG_OVERRIDE) ||
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
+        /* Check that link-layer address option also fits in packet. */
+        if (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option))) {
+          /* TODO debug message */
+          pbuf_free(p);
+          ND6_STATS_INC(nd6.lenerr);
+          ND6_STATS_INC(nd6.drop);
+          return;
+        }
+
+        lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
+
         MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
       }
       neighbor_cache[i].state = ND6_REACHABLE;
