@@ -174,7 +174,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
 {
   err_t err;
 
-  if (rst_on_unacked_data && (pcb->state != LISTEN)) {
+  if (rst_on_unacked_data && ((pcb->state == ESTABLISHED) || (pcb->state == CLOSE_WAIT))) {
     if ((pcb->refused_data != NULL) || (pcb->rcv_wnd != TCP_WND)) {
       /* Not all data received by application, send RST to tell the remote
          side about this. */
@@ -186,14 +186,15 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
                pcb->local_port, pcb->remote_port, PCB_ISIPV6(pcb));
 
       tcp_pcb_purge(pcb);
-
-      /* TODO: to which state do we move now? */
-
-      /* move to TIME_WAIT since we close actively */
       TCP_RMV_ACTIVE(pcb);
-      pcb->state = TIME_WAIT;
-      TCP_REG(&tcp_tw_pcbs, pcb);
-
+      if (pcb->state == ESTABLISHED) {
+        /* move to TIME_WAIT since we close actively */
+        pcb->state = TIME_WAIT;
+        TCP_REG(&tcp_tw_pcbs, pcb);
+      } else {
+        /* CLOSE_WAIT: deallocate the pcb since we already sent a RST for it */
+        memp_free(MEMP_TCP_PCB, pcb);
+      }
       return ERR_OK;
     }
   }

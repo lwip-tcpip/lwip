@@ -76,6 +76,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-02-11: Simon Goldschmidt
+  * tcp.c: fixed bug #35435: No pcb state check before adding it to time-wait
+    queue while closing
+
   2012-01-22: Simon Goldschmidt
   * tcp.c, tcp_in.c: fixed bug #35305: pcb may be freed too early on shutdown(WR)
 
