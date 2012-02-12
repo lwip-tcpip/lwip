@@ -274,7 +274,7 @@ struct tcp_pcb {
 #endif /* LWIP_TCP_KEEPALIVE */
   
   /* Persist timer counter */
-  u32_t persist_cnt;
+  u8_t persist_cnt;
   /* Persist timer back-off */
   u8_t persist_backoff;
 
