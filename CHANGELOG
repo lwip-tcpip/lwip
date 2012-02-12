@@ -62,6 +62,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-02-12: Simon Goldschmidt
+  * tcp.h, tcp_in.c, tcp_out.c: partly fixed bug #25882: TCP hangs on
+    MSS > pcb->snd_wnd (by not creating segments bigger than half the window)
+
   2012-02-11: Simon Goldschmidt
   * tcp.c: fixed bug #35435: No pcb state check before adding it to time-wait
     queue while closing
