@@ -227,6 +227,7 @@ struct tcp_pcb {
                              window update. */
   u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
   u16_t snd_wnd;   /* sender window */
+  u16_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
   u16_t acked;
 
