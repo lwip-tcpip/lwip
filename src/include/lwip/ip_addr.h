@@ -51,7 +51,7 @@ typedef union {
 
 /** These functions only exist for type-safe conversion from ip_addr_t to
     ip6_addr_t and back */
-#if LWIP_ALLOW_STATIC_FN_IN_HEADER
+#ifdef LWIP_ALLOW_STATIC_FN_IN_HEADER
 static ip6_addr_t* ip_2_ip6(ip_addr_t *ipaddr)
 { return (ip6_addr_t*)ipaddr;}
 static ip_addr_t* ip6_2_ip(ip6_addr_t *ip6addr)

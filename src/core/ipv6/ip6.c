@@ -347,7 +347,8 @@ ip6_input(struct pbuf *p, struct netif *inp)
   u8_t nexth;
   u16_t hlen; /* the current header length */
   u8_t i;
-#if IP_ACCEPT_LINK_LAYER_ADDRESSING
+#if 0 /*IP_ACCEPT_LINK_LAYER_ADDRESSING*/
+  @todo
   int check_ip_src=1;
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
 
