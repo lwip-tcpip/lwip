@@ -483,10 +483,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
       case ND6_OPTION_TYPE_ROUTE_INFO:
       {
+        /* TODO implement preferred routes.
         struct route_option * route_opt;
-        route_opt = (struct route_option *)buffer;
-
-        /* TODO implement preferred routes. */
+        route_opt = (struct route_option *)buffer;*/
 
         break;
       }
