@@ -62,6 +62,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-02-16: Simon Goldschmidt
+  * etharp.c: fixed bug #35531: Impossible to send multicast without a gateway
+    (introduced when fixing bug# 33551)
+
   2012-02-16: Simon Goldschmidt (patch by Stéphane Lesage)
   * msg_in.c, msg_out.c: fixed bug #35536 SNMP: error too big response is malformed
 
