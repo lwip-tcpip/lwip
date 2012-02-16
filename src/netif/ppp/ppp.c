@@ -243,6 +243,7 @@ static void pppInputThread(void *arg);
 #endif /* PPP_INPROC_OWNTHREAD */
 static void pppDrop(PPPControlRx *pcrx);
 static void pppInProc(PPPControlRx *pcrx, u_char *s, int l);
+static void pppFreeCurrentInputPacket(PPPControlRx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
 
@@ -551,6 +552,8 @@ pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatus
     pd = PPPERR_OPEN;
   } else {
     pc = &pppControl[pd];
+    /* input pbuf left over from last session? */
+    pppFreeCurrentInputPacket(&pc->rx);
     /* @todo: is this correct or do I overwrite something? */
     memset(pc, 0, sizeof(PPPControl));
     pc->rx.pd = pd;
@@ -1723,6 +1726,22 @@ out:
  * Drop the input packet.
  */
 static void
+pppFreeCurrentInputPacket(PPPControlRx *pcrx)
+{
+  if (pcrx->inHead != NULL) {
+    if (pcrx->inTail && (pcrx->inTail != pcrx->inHead)) {
+      pbuf_free(pcrx->inTail);
+    }
+    pbuf_free(pcrx->inHead);
+    pcrx->inHead = NULL;
+  }
+  pcrx->inTail = NULL;
+}
+
+/*
+ * Drop the input packet and increase error counters.
+ */
+static void
 pppDrop(PPPControlRx *pcrx)
 {
   if (pcrx->inHead != NULL) {
@@ -1730,13 +1749,8 @@ pppDrop(PPPControlRx *pcrx)
     PPPDEBUG(LOG_INFO, ("pppDrop: %d:%.*H\n", pcrx->inHead->len, min(60, pcrx->inHead->len * 2), pcrx->inHead->payload));
 #endif
     PPPDEBUG(LOG_INFO, ("pppDrop: pbuf len=%d, addr %p\n", pcrx->inHead->len, (void*)pcrx->inHead));
-    if (pcrx->inTail && (pcrx->inTail != pcrx->inHead)) {
-      pbuf_free(pcrx->inTail);
-    }
-    pbuf_free(pcrx->inHead);
-    pcrx->inHead = NULL;
-    pcrx->inTail = NULL;
   }
+  pppFreeCurrentInputPacket(pcrx);
 #if VJ_SUPPORT
   vj_uncompress_err(&pppControl[pcrx->pd].vjComp);
 #endif /* VJ_SUPPORT */
