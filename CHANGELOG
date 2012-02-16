@@ -62,6 +62,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-02-15: Simon Goldschmidt
+  * init.c: fixed bug #35537: MEMP_NUM_* sanity checks should be disabled with
+    MEMP_MEM_MALLOC==1
+
   2012-02-12: Simon Goldschmidt
   * tcp.h, tcp_in.c, tcp_out.c: partly fixed bug #25882: TCP hangs on
     MSS > pcb->snd_wnd (by not creating segments bigger than half the window)
