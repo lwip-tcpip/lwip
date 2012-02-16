@@ -899,7 +899,7 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   /* outside local network? if so, this can neither be a global broadcast nor
      a subnet broadcast. */
   if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
-      !ip_addr_islinklocal(ipaddr)) {
+      !ip_addr_islinklocal(ipaddr) && !ip_addr_ismulticast(ipaddr)) {
 #if LWIP_AUTOIP
     struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
       sizeof(struct eth_hdr));
