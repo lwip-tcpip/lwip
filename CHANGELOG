@@ -63,6 +63,10 @@ HISTORY
  ++ Bugfixes:
 
   2012-02-16: Simon Goldschmidt
+  * ppp.c: fixed pbuf leak when PPP session is aborted through pppSigHUP()
+    (bug #35541: PPP Memory Leak)
+
+  2012-02-16: Simon Goldschmidt
   * etharp.c: fixed bug #35531: Impossible to send multicast without a gateway
     (introduced when fixing bug# 33551)
 
