@@ -229,6 +229,7 @@ test_tcp_new_counters_pcb(struct test_tcp_counters* counters)
     tcp_recv(pcb, test_tcp_counters_recv);
     tcp_err(pcb, test_tcp_counters_err);
     pcb->snd_wnd = TCP_WND;
+    pcb->snd_wnd_max = TCP_WND;
   }
   return pcb;
 }
