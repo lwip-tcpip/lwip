@@ -152,7 +152,6 @@ START_TEST(test_tcp_fast_retx_recover)
   pcb->mss = TCP_MSS;
   /* disable initial congestion window (we don't send a SYN here...) */
   pcb->cwnd = pcb->snd_wnd;
-  //tcp_nagle_disable(pcb);
 
   /* send data1 */
   err = tcp_write(pcb, data1, sizeof(data1), TCP_WRITE_FLAG_COPY);
@@ -204,16 +203,16 @@ START_TEST(test_tcp_fast_retx_recover)
   p = tcp_create_rx_segment(pcb, NULL, 0, 0, 0, TCP_ACK);
   EXPECT_RET(p != NULL);
   test_tcp_input(p, &netif);
-  //EXPECT_RET(txcounters.num_tx_calls == 1);
+  /*EXPECT_RET(txcounters.num_tx_calls == 1);*/
   EXPECT_RET(pcb->dupacks == 3);
   memset(&txcounters, 0, sizeof(txcounters));
-  // TODO: check expected data?
+  /* TODO: check expected data?*/
   
   /* send data5, not output yet */
   err = tcp_write(pcb, data5, sizeof(data5), TCP_WRITE_FLAG_COPY);
   EXPECT_RET(err == ERR_OK);
-  //err = tcp_output(pcb);
-  //EXPECT_RET(err == ERR_OK);
+  /*err = tcp_output(pcb);
+  EXPECT_RET(err == ERR_OK);*/
   EXPECT_RET(txcounters.num_tx_calls == 0);
   EXPECT_RET(txcounters.num_tx_bytes == 0);
   memset(&txcounters, 0, sizeof(txcounters));
@@ -228,8 +227,8 @@ START_TEST(test_tcp_fast_retx_recover)
   }
   err = tcp_output(pcb);
   EXPECT_RET(err == ERR_OK);
-  //EXPECT_RET(txcounters.num_tx_calls == 0);
-  //EXPECT_RET(txcounters.num_tx_bytes == 0);
+  /*EXPECT_RET(txcounters.num_tx_calls == 0);
+  EXPECT_RET(txcounters.num_tx_bytes == 0);*/
   memset(&txcounters, 0, sizeof(txcounters));
 
   /* send even more data */
@@ -257,7 +256,7 @@ START_TEST(test_tcp_fast_retx_recover)
   p = tcp_create_rx_segment(pcb, NULL, 0, 0, 12, TCP_ACK);
   EXPECT_RET(p != NULL);
   test_tcp_input(p, &netif);
-  //EXPECT_RET(txcounters.num_tx_calls == 0);
+  /*EXPECT_RET(txcounters.num_tx_calls == 0);*/
 
   /* ...and even more data */
   err = tcp_write(pcb, data5, sizeof(data5), TCP_WRITE_FLAG_COPY);
