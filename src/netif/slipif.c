@@ -331,9 +331,6 @@ slipif_init(struct netif *netif)
   netif->name[0] = 's';
   netif->name[1] = 'l';
   netif->output = slipif_output;
-#if LWIP_IPV6
-  netif->output_ip6 = slipif_output;
-#endif /* LWIP_IPV6 */
   netif->mtu = SLIP_MAX_SIZE;
   netif->flags |= NETIF_FLAG_POINTTOPOINT;
 

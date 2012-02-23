@@ -243,9 +243,6 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
   current_netif = inp;
   current_header = iphdr;
 
-  /* since adding IPv6, p->payload must point to tcp header, not ip header */
-  pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
-
   tcp_input(p, inp);
 
   current_iphdr_dest.addr = 0;
