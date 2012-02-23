@@ -896,48 +896,6 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
     return ERR_BUF;
   }
 
-  /* outside local network? if so, this can neither be a global broadcast nor
-     a subnet broadcast. */
-  if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
-      !ip_addr_islinklocal(ipaddr) && !ip_addr_ismulticast(ipaddr)) {
-#if LWIP_AUTOIP
-    struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
-      sizeof(struct eth_hdr));
-    /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
-       a link-local source address must always be "directly to its destination
-       on the same physical link. The host MUST NOT send the packet to any
-       router for forwarding". */
-    if (!ip_addr_islinklocal(&iphdr->src))
-#endif /* LWIP_AUTOIP */
-    {
-      /* interface has default gateway? */
-      if (!ip_addr_isany(&netif->gw)) {
-        /* send to hardware address of default gateway IP address */
-        dst_addr = &(netif->gw);
-      /* no default gateway available */
-      } else {
-        /* no route to destination error (default gateway missing) */
-        return ERR_RTE;
-      }
-    }
-  }
-#if LWIP_NETIF_HWADDRHINT
-  if (netif->addr_hint != NULL) {
-    /* per-pcb cached entry was given */
-    u8_t etharp_cached_entry = *(netif->addr_hint);
-    if (etharp_cached_entry < ARP_TABLE_SIZE) {
-#endif /* LWIP_NETIF_HWADDRHINT */
-      if ((arp_table[etharp_cached_entry].state >= ETHARP_STATE_STABLE) &&
-          (ip_addr_cmp(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
-        /* the per-pcb-cached entry is stable and the right one! */
-        ETHARP_STATS_INC(etharp.cachehit);
-        return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
-      }
-#if LWIP_NETIF_HWADDRHINT
-    }
-  }
-#endif /* LWIP_NETIF_HWADDRHINT */
-
   /* Determine on destination hardware address. Broadcasts and multicasts
    * are special, other IP addresses are looked up in the ARP table. */
 
@@ -959,6 +917,48 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   /* unicast destination IP address? */
   } else {
     s8_t i;
+    /* outside local network? if so, this can neither be a global broadcast nor
+       a subnet broadcast. */
+    if (!ip_addr_netcmp(ipaddr, &(netif->ip_addr), &(netif->netmask)) &&
+        !ip_addr_islinklocal(ipaddr)) {
+#if LWIP_AUTOIP
+      struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
+        sizeof(struct eth_hdr));
+      /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
+         a link-local source address must always be "directly to its destination
+         on the same physical link. The host MUST NOT send the packet to any
+         router for forwarding". */
+      if (!ip_addr_islinklocal(&iphdr->src))
+#endif /* LWIP_AUTOIP */
+      {
+        /* interface has default gateway? */
+        if (!ip_addr_isany(&netif->gw)) {
+          /* send to hardware address of default gateway IP address */
+          dst_addr = &(netif->gw);
+        /* no default gateway available */
+        } else {
+          /* no route to destination error (default gateway missing) */
+          return ERR_RTE;
+        }
+      }
+    }
+#if LWIP_NETIF_HWADDRHINT
+    if (netif->addr_hint != NULL) {
+      /* per-pcb cached entry was given */
+      u8_t etharp_cached_entry = *(netif->addr_hint);
+      if (etharp_cached_entry < ARP_TABLE_SIZE) {
+#endif /* LWIP_NETIF_HWADDRHINT */
+        if ((arp_table[etharp_cached_entry].state >= ETHARP_STATE_STABLE) &&
+            (ip_addr_cmp(dst_addr, &arp_table[etharp_cached_entry].ipaddr))) {
+          /* the per-pcb-cached entry is stable and the right one! */
+          ETHARP_STATS_INC(etharp.cachehit);
+          return etharp_output_to_arp_index(netif, q, etharp_cached_entry);
+        }
+#if LWIP_NETIF_HWADDRHINT
+      }
+    }
+#endif /* LWIP_NETIF_HWADDRHINT */
+
     /* find stable entry: do this here since this is a critical path for
        throughput and etharp_find_entry() is kind of slow */
     for (i = 0; i < ARP_TABLE_SIZE; i++) {
