@@ -326,30 +326,6 @@ tcpip_apimsg(struct api_msg *apimsg)
   return ERR_VAL;
 }
 
-#if LWIP_TCPIP_CORE_LOCKING
-/**
- * Call the lower part of a netconn_* function
- * This function has exclusive access to lwIP core code by locking it
- * before the function is called.
- *
- * @param apimsg a struct containing the function to call and its parameters
- * @return ERR_OK (only for compatibility fo tcpip_apimsg())
- */
-err_t
-tcpip_apimsg_lock(struct api_msg *apimsg)
-{
-#ifdef LWIP_DEBUG
-  /* catch functions that don't set err */
-  apimsg->msg.err = ERR_VAL;
-#endif
-
-  LOCK_TCPIP_CORE();
-  apimsg->function(&(apimsg->msg));
-  UNLOCK_TCPIP_CORE();
-  return apimsg->msg.err;
-
-}
-#endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_NETCONN */
 
 #if LWIP_NETIF_API

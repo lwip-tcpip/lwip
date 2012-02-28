@@ -72,10 +72,11 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 
   conn = netconn_alloc(t, callback);
   if (conn != NULL) {
-    msg.function = do_newconn;
+    err_t err;
     msg.msg.msg.n.proto = proto;
     msg.msg.conn = conn;
-    if (TCPIP_APIMSG(&msg) != ERR_OK) {
+    TCPIP_APIMSG((&msg), do_newconn, err);
+    if (err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
       LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
@@ -141,12 +142,11 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   LWIP_ERROR("netconn_getaddr: invalid addr", (addr != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_getaddr: invalid port", (port != NULL), return ERR_ARG;);
 
-  msg.function = do_getaddr;
   msg.msg.conn = conn;
   msg.msg.msg.ad.ipaddr = ip_2_ipX(addr);
   msg.msg.msg.ad.port = port;
   msg.msg.msg.ad.local = local;
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_getaddr, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -170,11 +170,10 @@ netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port)
 
   LWIP_ERROR("netconn_bind: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  msg.function = do_bind;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
   msg.msg.msg.bc.port = port;
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_bind, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -196,12 +195,29 @@ netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port)
 
   LWIP_ERROR("netconn_connect: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  msg.function = do_connect;
   msg.msg.conn = conn;
   msg.msg.msg.bc.ipaddr = addr;
   msg.msg.msg.bc.port = port;
-  /* This is the only function which need to not block tcpip_thread */
-  err = tcpip_apimsg(&msg);
+#if LWIP_TCP
+#if (LWIP_UDP || LWIP_RAW)
+  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  {
+    /* The TCP version waits for the connect to succeed,
+       so always needs to use message passing. */
+    msg.function = do_connect;
+    err = tcpip_apimsg(&msg);
+  }
+#endif /* LWIP_TCP */
+#if (LWIP_UDP || LWIP_RAW) && LWIP_TCP
+  else
+#endif /* (LWIP_UDP || LWIP_RAW) && LWIP_TCP */
+#if (LWIP_UDP || LWIP_RAW)
+  {
+     /* UDP and RAW only set flags, so we can use core-locking. */
+     TCPIP_APIMSG(&msg, do_connect, err);
+  }
+#endif /* (LWIP_UDP || LWIP_RAW) */
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -221,9 +237,8 @@ netconn_disconnect(struct netconn *conn)
 
   LWIP_ERROR("netconn_disconnect: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  msg.function = do_disconnect;
   msg.msg.conn = conn;
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_disconnect, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -249,12 +264,11 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
 
   LWIP_ERROR("netconn_listen: invalid conn", (conn != NULL), return ERR_ARG;);
 
-  msg.function = do_listen;
   msg.msg.conn = conn;
 #if TCP_LISTEN_BACKLOG
   msg.msg.msg.lb.backlog = backlog;
 #endif /* TCP_LISTEN_BACKLOG */
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_listen, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -313,10 +327,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   }
 #if TCP_LISTEN_BACKLOG
   /* Let the stack know that we have accepted the connection. */
-  msg.function = do_recv;
   msg.msg.conn = conn;
   /* don't care for the return value of do_recv */
-  TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_recv, err);
 #endif /* TCP_LISTEN_BACKLOG */
 
   *new_conn = newconn;
@@ -380,7 +393,6 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
       /* Let the stack know that we have taken the data. */
       /* TODO: Speedup: Don't block and wait for the answer here
          (to prevent multiple thread-switches). */
-      msg.function = do_recv;
       msg.msg.conn = conn;
       if (buf != NULL) {
         msg.msg.msg.r.len = ((struct pbuf *)buf)->tot_len;
@@ -388,7 +400,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
         msg.msg.msg.r.len = 1;
       }
       /* don't care for the return value of do_recv */
-      TCPIP_APIMSG(&msg);
+      TCPIP_APIMSG(&msg, do_recv, err);
     }
 
     /* If we are closed, we indicate that we no longer wish to use the socket */
@@ -520,14 +532,14 @@ netconn_recved(struct netconn *conn, u32_t length)
   if ((conn != NULL) && (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) &&
       (netconn_get_noautorecved(conn))) {
     struct api_msg msg;
+    err_t err;
     /* Let the stack know that we have taken the data. */
     /* TODO: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
-    msg.function = do_recv;
     msg.msg.conn = conn;
     msg.msg.msg.r.len = length;
     /* don't care for the return value of do_recv */
-    TCPIP_APIMSG(&msg);
+    TCPIP_APIMSG(&msg, do_recv, err);
   }
 #else /* LWIP_TCP */
   LWIP_UNUSED_ARG(conn);
@@ -572,10 +584,9 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   LWIP_ERROR("netconn_send: invalid conn",  (conn != NULL), return ERR_ARG;);
 
   LWIP_DEBUGF(API_LIB_DEBUG, ("netconn_send: sending %"U16_F" bytes\n", buf->p->tot_len));
-  msg.function = do_send;
   msg.msg.conn = conn;
   msg.msg.msg.b = buf;
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_send, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
@@ -615,7 +626,6 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   }
 
   /* non-blocking write sends as much  */
-  msg.function = do_write;
   msg.msg.conn = conn;
   msg.msg.msg.w.dataptr = dataptr;
   msg.msg.msg.w.apiflags = apiflags;
@@ -633,7 +643,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   /* For locking the core: this _can_ be delayed on low memory/low send buffer,
      but if it is, this is done inside api_msg.c:do_write(), so we can use the
      non-blocking version here. */
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_write, err);
   if ((err == ERR_OK) && (bytes_written != NULL)) {
     if (dontblock
 #if LWIP_SO_SNDTIMEO
@@ -726,12 +736,11 @@ netconn_join_leave_group(struct netconn *conn,
 
   LWIP_ERROR("netconn_join_leave_group: invalid conn",  (conn != NULL), return ERR_ARG;);
 
-  msg.function = do_join_leave_group;
   msg.msg.conn = conn;
   msg.msg.msg.jl.multiaddr = ip_2_ipX(multiaddr);
   msg.msg.msg.jl.netif_addr = ip_2_ipX(netif_addr);
   msg.msg.msg.jl.join_or_leave = join_or_leave;
-  err = TCPIP_APIMSG(&msg);
+  TCPIP_APIMSG(&msg, do_join_leave_group, err);
 
   NETCONN_SET_SAFE_ERR(conn, err);
   return err;
