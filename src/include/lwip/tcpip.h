@@ -64,11 +64,14 @@ extern sys_mutex_t lock_tcpip_core;
 #else
 #define TCIP_APIMSG_SET_ERR(m, e)
 #endif
-#define TCPIP_APIMSG(m,f,e)   do { \
+#define TCPIP_APIMSG_NOERR(m,f) do { \
   TCIP_APIMSG_SET_ERR(m, ERR_VAL); \
   LOCK_TCPIP_CORE(); \
   f(&((m)->msg)); \
   UNLOCK_TCPIP_CORE(); \
+} while(0)
+#define TCPIP_APIMSG(m,f,e)   do { \
+  TCPIP_APIMSG_NOERR(m,f); \
   (e) = (m)->msg.err; \
 } while(0)
 #define TCPIP_APIMSG_ACK(m)
@@ -77,6 +80,7 @@ extern sys_mutex_t lock_tcpip_core;
 #else /* LWIP_TCPIP_CORE_LOCKING */
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
+#define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG_ACK(m)   sys_sem_signal(&m->conn->op_completed)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
