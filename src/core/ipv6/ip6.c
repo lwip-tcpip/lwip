@@ -827,6 +827,7 @@ ip6_output(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth)
 {
   struct netif *netif;
+  struct ip6_hdr *ip6hdr;
   ip6_addr_t src_addr, dest_addr;
 
   /* pbufs passed to IPv6 must have a ref-count of 1 as their payload pointer
@@ -886,6 +887,8 @@ ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth, u8_t *addr_hint)
 {
   struct netif *netif;
+  struct ip6_hdr *ip6hdr;
+  ip6_addr_t src_addr, dest_addr;
   err_t err;
 
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
