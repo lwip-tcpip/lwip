@@ -395,6 +395,9 @@ ip6_input(struct pbuf *p, struct netif *inp)
   /* current header pointer. */
   ip_data.current_ip6_header = ip6hdr;
 
+  /* In netif, used in case we need to send ICMPv6 packets back. */
+  ip_data.current_netif = inp;
+
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
     /* Always joined to multicast if-local and link-local all-nodes group. */
@@ -477,7 +480,7 @@ netif_found:
   }
 
   /* current netif pointer. */
-  ip_data.current_netif = inp;
+  ip_data.current_netif = netif;
 
   /* Save next header type. */
   nexth = IP6H_NEXTH(ip6hdr);
