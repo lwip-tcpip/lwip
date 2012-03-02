@@ -501,7 +501,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
@@ -524,7 +524,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
@@ -547,7 +547,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
