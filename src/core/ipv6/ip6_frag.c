@@ -149,8 +149,12 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     p = ipr->p;
     ipr->p = iprh->next_pbuf;
     /* Then, move back to the original header (we are now pointing to Fragment header). */
-    pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr);
-    icmp6_time_exceeded(p, ICMP6_TE_FRAG);
+    if (pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr)) {
+      LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
+    }
+    else {
+      icmp6_time_exceeded(p, ICMP6_TE_FRAG);
+    }
     clen = pbuf_clen(p);
     LWIP_ASSERT("pbufs_freed + clen <= 0xffff", pbufs_freed + clen <= 0xffff);
     pbufs_freed += clen;
@@ -490,9 +494,6 @@ ip6_reass(struct pbuf *p)
     frag_hdr->_fragment_offset = 0;
     frag_hdr->_identification = 0;
 
-    /* Move pbuf back to IPv6 header. */
-    pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr);
-
     /* release the sources allocate for the fragment queue entry */
     if (reassdatagrams == ipr) {
       /* it was the first in the list */
@@ -504,8 +505,15 @@ ip6_reass(struct pbuf *p)
     }
     memp_free(MEMP_IP6_REASSDATA, ipr);
 
-    /* and adjust the number of pbufs currently queued for reassembly. */
+    /* adjust the number of pbufs currently queued for reassembly. */
     ip6_reass_pbufcount -= pbuf_clen(p);
+
+    /* Move pbuf back to IPv6 header. */
+    if (pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr)) {
+      LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed\n", 0);
+      pbuf_free(p);
+      return NULL;
+    }
 
     /* Return the pbuf chain */
     return p;
