@@ -443,7 +443,7 @@ ip6_reass(struct pbuf *p)
   /* Final validity test: no gaps between current and last fragment. */
   iprh_prev = iprh;
   q = iprh->next_pbuf;
-  while (q != NULL) {
+  while ((q != NULL) && valid) {
     iprh = (struct ip6_reass_helper*)q->payload;
     if (iprh_prev->end != iprh->start) {
       valid = 0;
