@@ -827,12 +827,23 @@ ip6_output(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth)
 {
   struct netif *netif;
+  ip6_addr_t src_addr, dest_addr;
 
   /* pbufs passed to IPv6 must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
   LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
-  if ((netif = ip6_route(src, dest)) == NULL) {
+  if (dest != IP_HDRINCL) {
+    netif = ip6_route(src, dest);
+  } else {
+    /* IP header included in p, read addresses. */
+    ip6hdr = (struct ip6_hdr *)p->payload;
+    ip6_addr_copy(src_addr, ip6hdr->src);
+    ip6_addr_copy(dest_addr, ip6hdr->dest);
+    netif = ip6_route(&src_addr, &dest_addr);
+  }
+
+  if (netif == NULL) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),
@@ -881,7 +892,17 @@ ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
      gets altered as the packet is passed down the stack */
   LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
-  if ((netif = ip6_route(src, dest)) == NULL) {
+  if (dest != IP_HDRINCL) {
+    netif = ip6_route(src, dest);
+  } else {
+    /* IP header included in p, read addresses. */
+    ip6hdr = (struct ip6_hdr *)p->payload;
+    ip6_addr_copy(src_addr, ip6hdr->src);
+    ip6_addr_copy(dest_addr, ip6hdr->dest);
+    netif = ip6_route(&src_addr, &dest_addr);
+  }
+
+  if (netif == NULL) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),
