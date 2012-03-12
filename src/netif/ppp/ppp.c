@@ -250,8 +250,6 @@ static void pppFreeCurrentInputPacket(PPPControlRx *pcrx);
 /******************************/
 /*** PUBLIC DATA STRUCTURES ***/
 /******************************/
-u_long subnetMask;
-
 static PPPControl pppControl[NUM_PPP]; /* The PPP interface control blocks. */
 
 /*
@@ -446,8 +444,6 @@ pppInit(void)
   pppSetAuth(PPPAUTHTYPE_NONE, NULL, NULL);
 
   magicInit();
-
-  subnetMask = PP_HTONL(0xffffff00UL);
 
   for (i = 0; i < NUM_PPP; i++) {
     /* Initialize each protocol to the standard option set. */
@@ -1282,7 +1278,7 @@ GetMask(u32_t addr)
   }
 
   /* class D nets are disallowed by bad_ip_adrs */
-  mask = subnetMask | htonl(nmask);
+  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
   
   /* XXX
    * Scan through the system's network interfaces.
