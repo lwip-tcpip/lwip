@@ -1272,7 +1272,7 @@ GetMask(u32_t addr)
 {
   u32_t mask, nmask;
 
-  htonl(addr);
+  addr = htonl(addr);
   if (IP_CLASSA(addr)) { /* determine network mask for address class */
     nmask = IP_CLASSA_NET;
   } else if (IP_CLASSB(addr)) {

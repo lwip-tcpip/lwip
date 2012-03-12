@@ -76,6 +76,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-12: Simon Goldschmidt (patch by Bostjan Meglic)
+  * ppp.c: fixed bug #35809: PPP GetMask(): Compiler warning on big endian,
+    possible bug on little endian system
+
   2012-02-23: Simon Goldschmidt
   * etharp.c: fixed bug #35595: Impossible to send broadcast without a gateway
     (introduced when fixing bug# 33551)
