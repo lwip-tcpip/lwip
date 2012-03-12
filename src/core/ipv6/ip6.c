@@ -395,6 +395,9 @@ ip6_input(struct pbuf *p, struct netif *inp)
   /* current header pointer. */
   ip_data.current_ip6_header = ip6hdr;
 
+  /* In netif, used in case we need to send ICMPv6 packets back. */
+  ip_data.current_netif = inp;
+
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
     /* Always joined to multicast if-local and link-local all-nodes group. */
@@ -477,7 +480,7 @@ netif_found:
   }
 
   /* current netif pointer. */
-  ip_data.current_netif = inp;
+  ip_data.current_netif = netif;
 
   /* Save next header type. */
   nexth = IP6H_NEXTH(ip6hdr);
@@ -498,7 +501,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
@@ -521,7 +524,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
@@ -544,7 +547,7 @@ netif_found:
       nexth = *((u8_t *)p->payload);
 
       /* Get the header length. */
-      hlen = 8 * (1 + *((u8_t *)p->payload) + 1);
+      hlen = 8 * (1 + *((u8_t *)p->payload + 1));
       ip_data.current_ip_header_tot_len += hlen;
 
       /* Skip over this header. */
@@ -824,12 +827,24 @@ ip6_output(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth)
 {
   struct netif *netif;
+  struct ip6_hdr *ip6hdr;
+  ip6_addr_t src_addr, dest_addr;
 
   /* pbufs passed to IPv6 must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
   LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
-  if ((netif = ip6_route(src, dest)) == NULL) {
+  if (dest != IP_HDRINCL) {
+    netif = ip6_route(src, dest);
+  } else {
+    /* IP header included in p, read addresses. */
+    ip6hdr = (struct ip6_hdr *)p->payload;
+    ip6_addr_copy(src_addr, ip6hdr->src);
+    ip6_addr_copy(dest_addr, ip6hdr->dest);
+    netif = ip6_route(&src_addr, &dest_addr);
+  }
+
+  if (netif == NULL) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),
@@ -872,13 +887,25 @@ ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth, u8_t *addr_hint)
 {
   struct netif *netif;
+  struct ip6_hdr *ip6hdr;
+  ip6_addr_t src_addr, dest_addr;
   err_t err;
 
   /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
      gets altered as the packet is passed down the stack */
   LWIP_ASSERT("p->ref == 1", p->ref == 1);
 
-  if ((netif = ip6_route(src, dest)) == NULL) {
+  if (dest != IP_HDRINCL) {
+    netif = ip6_route(src, dest);
+  } else {
+    /* IP header included in p, read addresses. */
+    ip6hdr = (struct ip6_hdr *)p->payload;
+    ip6_addr_copy(src_addr, ip6hdr->src);
+    ip6_addr_copy(dest_addr, ip6hdr->dest);
+    netif = ip6_route(&src_addr, &dest_addr);
+  }
+
+  if (netif == NULL) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_output: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(dest),
         IP6_ADDR_BLOCK2(dest),

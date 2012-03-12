@@ -329,7 +329,7 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
   /* Let the stack know that we have accepted the connection. */
   msg.msg.conn = conn;
   /* don't care for the return value of do_recv */
-  TCPIP_APIMSG(&msg, do_recv, err);
+  TCPIP_APIMSG_NOERR(&msg, do_recv);
 #endif /* TCP_LISTEN_BACKLOG */
 
   *new_conn = newconn;
@@ -400,7 +400,7 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
         msg.msg.msg.r.len = 1;
       }
       /* don't care for the return value of do_recv */
-      TCPIP_APIMSG(&msg, do_recv, err);
+      TCPIP_APIMSG_NOERR(&msg, do_recv);
     }
 
     /* If we are closed, we indicate that we no longer wish to use the socket */
@@ -532,14 +532,13 @@ netconn_recved(struct netconn *conn, u32_t length)
   if ((conn != NULL) && (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP) &&
       (netconn_get_noautorecved(conn))) {
     struct api_msg msg;
-    err_t err;
     /* Let the stack know that we have taken the data. */
     /* TODO: Speedup: Don't block and wait for the answer here
        (to prevent multiple thread-switches). */
     msg.msg.conn = conn;
     msg.msg.msg.r.len = length;
     /* don't care for the return value of do_recv */
-    TCPIP_APIMSG(&msg, do_recv, err);
+    TCPIP_APIMSG_NOERR(&msg, do_recv);
   }
 #else /* LWIP_TCP */
   LWIP_UNUSED_ARG(conn);

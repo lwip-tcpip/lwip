@@ -375,9 +375,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* If we are sending RS messages, stop. */
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
-    if (inp->rs_count > 0) {
-      inp->rs_count = 0;
-    }
+    inp->rs_count = 0;
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
     /* Get the matching default router entry. */
@@ -885,7 +883,7 @@ nd6_send_na(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
 
   /* Set fields. */
   na_hdr = (struct na_header *)p->payload;
-  lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct ns_header));
+  lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
 
   na_hdr->type = ICMP6_TYPE_NA;
   na_hdr->code = 0;
@@ -1133,6 +1131,10 @@ nd6_new_neighbor_cache_entry(void)
 static void
 nd6_free_neighbor_cache_entry(s8_t i)
 {
+  if ((i < 0) || (i >= LWIP_ND6_NUM_NEIGHBORS)) {
+    return;
+  }
+
 #if LWIP_ND6_QUEUEING
   /* Free any queued packets. */
   if (neighbor_cache[i].q != NULL) {
@@ -1463,14 +1465,14 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
       }
 
       /* Copy dest address to destination cache. */
-      ip6_addr_set(&(destination_cache[i].destination_addr), ip6addr);
+      ip6_addr_set(&(destination_cache[nd6_cached_destination_index].destination_addr), ip6addr);
 
       /* Now find the next hop. is it a neighbor? */
       if (ip6_addr_islinklocal(ip6addr) ||
           nd6_is_prefix_in_netif(ip6addr, netif)) {
         /* Destination in local link. */
-        destination_cache[i].pmtu = netif->mtu;
-        ip6_addr_copy(destination_cache[i].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
+        destination_cache[nd6_cached_destination_index].pmtu = netif->mtu;
+        ip6_addr_copy(destination_cache[nd6_cached_destination_index].next_hop_addr, destination_cache[nd6_cached_destination_index].destination_addr);
       }
       else {
         /* We need to select a router. */
@@ -1548,6 +1550,10 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
   struct pbuf *p;
   int copy_needed = 0;
   struct nd6_q_entry *new_entry, *r;
+
+  if ((neighbor_index < 0) || (neighbor_index >= LWIP_ND6_NUM_NEIGHBORS)) {
+    return ERR_ARG;
+  }
 
   /* IF q includes a PBUF_REF, PBUF_POOL or PBUF_RAM, we have no choice but
    * to copy the whole queue into a new PBUF_RAM (see bug #11400)
@@ -1655,6 +1661,10 @@ nd6_send_q(s8_t i)
 {
   struct ip6_hdr *ip6hdr;
   struct nd6_q_entry *q;
+
+  if ((i < 0) || (i >= LWIP_ND6_NUM_NEIGHBORS)) {
+    return;
+  }
 
   while (neighbor_cache[i].q != NULL) {
     /* remember first in queue */
