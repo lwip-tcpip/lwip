@@ -1337,7 +1337,9 @@ nd6_new_router(ip6_addr_t * router_addr, struct netif * netif)
     }
     ip6_addr_set(&(neighbor_cache[neighbor_index].next_hop_address), router_addr);
     neighbor_cache[neighbor_index].netif = netif;
+#if LWIP_ND6_QUEUEING
     neighbor_cache[neighbor_index].q = NULL;
+#endif /* LWIP_ND6_QUEUEING */
     neighbor_cache[neighbor_index].state = ND6_INCOMPLETE;
     neighbor_cache[neighbor_index].counter.probes_sent = 0;
   }
