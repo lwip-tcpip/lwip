@@ -37,6 +37,10 @@
 #define LWIP_NETCONN                    0
 #define LWIP_SOCKET                     0
 
+/* Enable DHCP to test it, disable UDP checksum to easier inject packets */
+#define LWIP_DHCP                       1
+#define CHECKSUM_CHECK_UDP              0
+
 /* Minimal changes to opt.h required for tcp unit tests: */
 #define MEM_SIZE                        16000
 #define TCP_SND_QUEUELEN                40

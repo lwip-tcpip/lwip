@@ -5,6 +5,7 @@
 #include "tcp/test_tcp_oos.h"
 #include "core/test_mem.h"
 #include "etharp/test_etharp.h"
+#include "dhcp/test_dhcp.h"
 
 #include "lwip/init.h"
 
@@ -19,7 +20,8 @@ int main()
     tcp_suite,
     tcp_oos_suite,
     mem_suite,
-    etharp_suite
+    etharp_suite,
+    dhcp_suite
   };
   size_t num = sizeof(suites)/sizeof(void*);
   LWIP_ASSERT("No suites defined", num > 0);
