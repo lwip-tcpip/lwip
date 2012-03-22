@@ -76,6 +76,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-22: Simon Goldschmidt
+  * ip4.c: fixed bug #35927: missing refragmentaion in ip_forward
+ 
   2012-03-20: Simon Goldschmidt (patch by Mason)
   * netdb.c: fixed bug #35907: lwip_gethostbyname_r returns an invalid h_addr_list
  

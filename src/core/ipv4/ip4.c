@@ -211,6 +211,7 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
     LWIP_DEBUGF(IP_DEBUG, ("ip_forward: no forwarding route for %"U16_F".%"U16_F".%"U16_F".%"U16_F" found\n",
       ip4_addr1_16(ip_current_dest_addr()), ip4_addr2_16(ip_current_dest_addr()),
       ip4_addr3_16(ip_current_dest_addr()), ip4_addr4_16(ip_current_dest_addr())));
+    /* @todo: send ICMP_DUR_NET? */
     goto return_noroute;
   }
 #if !IP_FORWARD_ALLOW_TX_ON_RX_NETIF
@@ -252,6 +253,20 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   snmp_inc_ipforwdatagrams();
 
   PERF_STOP("ip_forward");
+  /* don't fragment if interface has mtu set to 0 [loopif] */
+  if (netif->mtu && (p->tot_len > netif->mtu)) {
+#if IP_FRAG
+    if ((IPH_OFFSET(iphdr) & PP_NTOHS(IP_DF)) == 0) {
+      ip_frag(p, netif, ip_current_dest_addr());
+    } else {
+      /* send ICMP Destination Unreacheable code 4: "Fragmentation Needed and DF Set" */
+      icmp_dest_unreach(p, ICMP_DUR_FRAG);
+    }
+    return;
+#else /* IP_FRAG */
+    /* @todo: send ICMP Destination Unreacheable code 13 "Communication administratively prohibited"? */
+#endif /* IP_FRAG */
+  }
   /* transmit pbuf on chosen interface */
   netif->output(netif, p, ip_current_dest_addr());
   return;
