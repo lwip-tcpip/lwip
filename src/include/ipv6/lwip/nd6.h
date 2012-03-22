@@ -67,6 +67,9 @@ struct nd6_neighbor_cache_entry {
 #if LWIP_ND6_QUEUEING
   /** Pointer to queue of pending outgoing packets on this entry. */
   struct nd6_q_entry *q;
+#else /* LWIP_ND6_QUEUEING */
+  /** Pointer to a single pending outgoing packet on this entry. */
+  struct pbuf *q;
 #endif /* LWIP_ND6_QUEUEING */
   u8_t state;
   u8_t isrouter;
@@ -352,9 +355,7 @@ void nd6_input(struct pbuf *p, struct netif *inp);
 s8_t nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif);
 s8_t nd6_select_router(ip6_addr_t * ip6addr, struct netif * netif);
 u16_t nd6_get_destination_mtu(ip6_addr_t * ip6addr, struct netif * netif);
-#if LWIP_ND6_QUEUEING
 err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf * p);
-#endif /* LWIP_ND6_QUEUEING */
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
 void nd6_reachability_hint(ip6_addr_t * ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */

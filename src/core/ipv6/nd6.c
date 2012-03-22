@@ -102,8 +102,10 @@ static void nd6_send_rs(struct netif * netif);
 
 #if LWIP_ND6_QUEUEING
 static void nd6_free_q(struct nd6_q_entry *q);
-static void nd6_send_q(s8_t i);
+#else /* LWIP_ND6_QUEUEING */
+#define nd6_free_q(q) pbuf_free(q)
 #endif /* LWIP_ND6_QUEUEING */
+static void nd6_send_q(s8_t i);
 
 
 /**
@@ -236,12 +238,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
       neighbor_cache[i].state = ND6_REACHABLE;
 
-#if LWIP_ND6_QUEUEING
       /* Send queued packets, if any. */
       if (neighbor_cache[i].q != NULL) {
         nd6_send_q(i);
       }
-#endif /* LWIP_ND6_QUEUEING */
     }
 
     break; /* ICMP6_TYPE_NA */
@@ -639,12 +639,10 @@ nd6_tmr(void)
       }
       break;
     case ND6_REACHABLE:
-#if LWIP_ND6_QUEUEING
       /* Send queued packets, if any are left. Should have been sent already. */
       if (neighbor_cache[i].q != NULL) {
         nd6_send_q(i);
       }
-#endif /* LWIP_ND6_QUEUEING */
       if (neighbor_cache[i].counter.reachable_time <= ND6_TMR_INTERVAL) {
         /* Change to stale state. */
         neighbor_cache[i].state = ND6_STALE;
@@ -1083,9 +1081,7 @@ nd6_new_neighbor_cache_entry(void)
   j = -1;
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
     if (
-#if LWIP_ND6_QUEUEING
         (neighbor_cache[i].q == NULL) &&
-#endif /* LWIP_ND6_QUEUEING */
         (neighbor_cache[i].state == ND6_INCOMPLETE) &&
         (!neighbor_cache[i].isrouter)) {
       if (neighbor_cache[i].counter.probes_sent >= time) {
@@ -1100,7 +1096,6 @@ nd6_new_neighbor_cache_entry(void)
   }
 
   /* Next, find oldest incomplete entry with queued packets. */
-#if LWIP_ND6_QUEUEING
   time = 0;
   j = -1;
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
@@ -1116,7 +1111,6 @@ nd6_new_neighbor_cache_entry(void)
     nd6_free_neighbor_cache_entry(j);
     return j;
   }
-#endif /* LWIP_ND6_QUEUEING */
 
   /* No more entries to try. */
   return -1;
@@ -1135,13 +1129,11 @@ nd6_free_neighbor_cache_entry(s8_t i)
     return;
   }
 
-#if LWIP_ND6_QUEUEING
   /* Free any queued packets. */
   if (neighbor_cache[i].q != NULL) {
     nd6_free_q(neighbor_cache[i].q);
     neighbor_cache[i].q = NULL;
   }
-#endif /* LWIP_ND6_QUEUEING */
 
   neighbor_cache[i].state = ND6_NO_ENTRY;
   neighbor_cache[i].isrouter = 0;
@@ -1337,9 +1329,7 @@ nd6_new_router(ip6_addr_t * router_addr, struct netif * netif)
     }
     ip6_addr_set(&(neighbor_cache[neighbor_index].next_hop_address), router_addr);
     neighbor_cache[neighbor_index].netif = netif;
-#if LWIP_ND6_QUEUEING
     neighbor_cache[neighbor_index].q = NULL;
-#endif /* LWIP_ND6_QUEUEING */
     neighbor_cache[neighbor_index].state = ND6_INCOMPLETE;
     neighbor_cache[neighbor_index].counter.probes_sent = 0;
   }
@@ -1536,8 +1526,6 @@ nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
   return nd6_cached_neighbor_index;
 }
 
-#if LWIP_ND6_QUEUEING
-
 /**
  * Queue a packet for a neighbor.
  *
@@ -1551,7 +1539,9 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
   err_t result = ERR_MEM;
   struct pbuf *p;
   int copy_needed = 0;
+#if LWIP_ND6_QUEUEING
   struct nd6_q_entry *new_entry, *r;
+#endif /* LWIP_ND6_QUEUEING */
 
   if ((neighbor_index < 0) || (neighbor_index >= LWIP_ND6_NUM_NEIGHBORS)) {
     return ERR_ARG;
@@ -1573,10 +1563,15 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
     p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
     while ((p == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
       /* Free oldest packet (as per RFC recommendation) */
+#if LWIP_ND6_QUEUEING
       r = neighbor_cache[neighbor_index].q;
       neighbor_cache[neighbor_index].q = r->next;
       r->next = NULL;
       nd6_free_q(r);
+#else /* LWIP_ND6_QUEUEING */
+      pbuf_free(neighbor_cache[neighbor_index].q);
+      neighbor_cache[neighbor_index].q = NULL;
+#endif /* LWIP_ND6_QUEUEING */
       p = pbuf_alloc(PBUF_LINK, q->tot_len, PBUF_RAM);
     }
     if(p != NULL) {
@@ -1593,6 +1588,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
   /* packet was copied/ref'd? */
   if (p != NULL) {
     /* queue packet ... */
+#if LWIP_ND6_QUEUEING
     /* allocate a new nd6 queue entry */
     new_entry = (struct nd6_q_entry *)memp_malloc(MEMP_ND6_QUEUE);
     if ((new_entry == NULL) && (neighbor_cache[neighbor_index].q != NULL)) {
@@ -1617,14 +1613,23 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
         /* queue did not exist, first item in queue */
         neighbor_cache[neighbor_index].q = new_entry;
       }
-      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)q, (s16_t)neighbor_index));
+      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (s16_t)neighbor_index));
       result = ERR_OK;
     } else {
       /* the pool MEMP_ND6_QUEUE is empty */
       pbuf_free(p);
-      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)q));
+      LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)p));
       /* { result == ERR_MEM } through initialization */
     }
+#else /* LWIP_ND6_QUEUEING */
+    /* Queue a single packet. If an older packet is already queued, free it as per RFC. */
+    if (neighbor_cache[neighbor_index].q != NULL) {
+      pbuf_free(neighbor_cache[neighbor_index].q);
+    }
+    neighbor_cache[neighbor_index].q = p;
+    LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: queued packet %p on neighbor entry %"S16_F"\n", (void *)p, (s16_t)neighbor_index));
+    result = ERR_OK;
+#endif /* LWIP_ND6_QUEUEING */
   } else {
     LWIP_DEBUGF(LWIP_DBG_TRACE, ("ipv6: could not queue a copy of packet %p (out of memory)\n", (void *)q));
     /* { result == ERR_MEM } through initialization */
@@ -1633,6 +1638,7 @@ nd6_queue_packet(s8_t neighbor_index, struct pbuf * q)
   return result;
 }
 
+#if LWIP_ND6_QUEUEING
 /**
  * Free a complete queue of nd6 q entries
  *
@@ -1652,6 +1658,7 @@ nd6_free_q(struct nd6_q_entry *q)
     memp_free(MEMP_ND6_QUEUE, r);
   }
 }
+#endif /* LWIP_ND6_QUEUEING */
 
 /**
  * Send queued packets for a neighbor
@@ -1662,12 +1669,15 @@ static void
 nd6_send_q(s8_t i)
 {
   struct ip6_hdr *ip6hdr;
+#if LWIP_ND6_QUEUEING
   struct nd6_q_entry *q;
+#endif /* LWIP_ND6_QUEUEING */
 
   if ((i < 0) || (i >= LWIP_ND6_NUM_NEIGHBORS)) {
     return;
   }
 
+#if LWIP_ND6_QUEUEING
   while (neighbor_cache[i].q != NULL) {
     /* remember first in queue */
     q = neighbor_cache[i].q;
@@ -1684,9 +1694,21 @@ nd6_send_q(s8_t i)
     /* now queue entry can be freed */
     memp_free(MEMP_ND6_QUEUE, q);
   }
+#else /* LWIP_ND6_QUEUEING */
+  if (neighbor_cache[i].q != NULL) {
+    /* Get ipv6 header. */
+    ip6hdr = (struct ip6_hdr *)(neighbor_cache[i].q->payload);
+    /* Override ip6_current_dest_addr() so that we have an aligned copy. */
+    ip6_addr_set(ip6_current_dest_addr(), &(ip6hdr->dest));
+    /* send the queued IPv6 packet */
+    (neighbor_cache[i].netif)->output_ip6(neighbor_cache[i].netif, neighbor_cache[i].q, ip6_current_dest_addr());
+    /* free the queued IP packet */
+    pbuf_free(neighbor_cache[i].q);
+    neighbor_cache[i].q = NULL;
+  }
+#endif /* LWIP_ND6_QUEUEING */
 }
 
-#endif /* LWIP_ND6_QUEUEING */
 
 /**
  * Get the Path MTU for a destination.

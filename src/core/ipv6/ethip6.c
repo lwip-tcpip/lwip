@@ -185,13 +185,9 @@ ethip6_output(struct netif *netif, struct pbuf *q, ip6_addr_t *ip6addr)
     return ethip6_send(netif, q, (struct eth_addr*)(netif->hwaddr), &dest);
   }
 
-#if LWIP_ND6_QUEUEING
   /* We should queue packet on this interface. */
   pbuf_header(q, -(s16_t)SIZEOF_ETH_HDR);
   return nd6_queue_packet(i, q);
-#else /* LWIP_ND6_QUEUEING */
-  return ERR_OK;
-#endif /* LWIP_ND6_QUEUEING */
 }
 
 #endif /* LWIP_IPV6 && LWIP_ETHERNET */
