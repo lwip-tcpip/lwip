@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2012-03-25: Simon Goldschmidt (idea by Mason)
+  * posix/*: added posix-compatibility include files posix/netdb.h and posix/sys/socket.h
+    which are a simple wrapper to the correct lwIP include files.
+ 
   2012-01-16: Simon Goldschmidt
   * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
 
