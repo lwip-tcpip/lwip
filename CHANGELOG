@@ -77,6 +77,10 @@ HISTORY
  ++ Bugfixes:
 
   2012-03-25: Simon Goldschmidt
+  * api_msg.c: Fixed bug #35817: do_connect() invalidly signals op_completed
+    for UDP/RAW with LWIP_TCPIP_CORE_LOCKING==1
+
+  2012-03-25: Simon Goldschmidt
   * api_msg.h, api_lib.c, api_msg.c, netifapi.c: fixed bug #35931: Name space
     pollution in api_msg.c and netifapi.c
 

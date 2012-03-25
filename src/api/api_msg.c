@@ -983,49 +983,58 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
   if (msg->conn->pcb.tcp == NULL) {
     /* This may happen when calling netconn_connect() a second time */
     msg->err = ERR_CLSD;
+    if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
+      /* For TCP, netconn_connect() calls tcpip_apimsg(), so signal op_completed here. */
+      sys_sem_signal(&msg->conn->op_completed);
+      return;
+    }
   } else {
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
-  case NETCONN_RAW:
-    msg->err = raw_connect(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
-    break;
+    case NETCONN_RAW:
+      msg->err = raw_connect(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
+      break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
-  case NETCONN_UDP:
-    msg->err = udp_connect(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
-    break;
+    case NETCONN_UDP:
+      msg->err = udp_connect(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+      break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
-  case NETCONN_TCP:
-    /* Prevent connect while doing any other action. */
-    if (msg->conn->state != NETCONN_NONE) {
-      msg->err = ERR_ISCONN;
-    } else {
-      setup_tcp(msg->conn);
-      msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr,
-        msg->msg.bc.port, lwip_netconn_do_connected);
-      if (msg->err == ERR_OK) {
-        u8_t non_blocking = netconn_is_nonblocking(msg->conn);
-        msg->conn->state = NETCONN_CONNECT;
-        SET_NONBLOCKING_CONNECT(msg->conn, non_blocking);
-        if (non_blocking) {
-          msg->err = ERR_INPROGRESS;
-        } else {
-          msg->conn->current_msg = msg;
-          /* sys_sem_signal() is called from lwip_netconn_do_connected (or err_tcp()),
-          * when the connection is established! */
-          return;
+    case NETCONN_TCP:
+      /* Prevent connect while doing any other action. */
+      if (msg->conn->state != NETCONN_NONE) {
+        msg->err = ERR_ISCONN;
+      } else {
+        setup_tcp(msg->conn);
+        msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr,
+          msg->msg.bc.port, lwip_netconn_do_connected);
+        if (msg->err == ERR_OK) {
+          u8_t non_blocking = netconn_is_nonblocking(msg->conn);
+          msg->conn->state = NETCONN_CONNECT;
+          SET_NONBLOCKING_CONNECT(msg->conn, non_blocking);
+          if (non_blocking) {
+            msg->err = ERR_INPROGRESS;
+          } else {
+            msg->conn->current_msg = msg;
+            /* sys_sem_signal() is called from lwip_netconn_do_connected (or err_tcp()),
+            * when the connection is established! */
+            return;
+          }
         }
       }
-    }
-    break;
+      /* For TCP, netconn_connect() calls tcpip_apimsg(), so signal op_completed here. */
+      sys_sem_signal(&msg->conn->op_completed);
+      return;
 #endif /* LWIP_TCP */
-  default:
-    LWIP_ERROR("Invalid netconn type", 0, do{ msg->err = ERR_VAL; }while(0));
-    break;
+    default:
+      LWIP_ERROR("Invalid netconn type", 0, do{ msg->err = ERR_VAL; }while(0));
+      break;
     }
   }
-  sys_sem_signal(&msg->conn->op_completed);
+  /* For all other protocols, netconn_connect() calls TCPIP_APIMSG(),
+     so use TCPIP_APIMSG_ACK() here. */
+  TCPIP_APIMSG_ACK(msg);
 }
 
 /**
