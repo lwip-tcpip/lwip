@@ -255,17 +255,17 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
   PERF_STOP("ip_forward");
   /* don't fragment if interface has mtu set to 0 [loopif] */
   if (netif->mtu && (p->tot_len > netif->mtu)) {
-#if IP_FRAG
     if ((IPH_OFFSET(iphdr) & PP_NTOHS(IP_DF)) == 0) {
+#if IP_FRAG
       ip_frag(p, netif, ip_current_dest_addr());
+#else /* IP_FRAG */
+      /* @todo: send ICMP Destination Unreacheable code 13 "Communication administratively prohibited"? */
+#endif /* IP_FRAG */
     } else {
       /* send ICMP Destination Unreacheable code 4: "Fragmentation Needed and DF Set" */
       icmp_dest_unreach(p, ICMP_DUR_FRAG);
     }
     return;
-#else /* IP_FRAG */
-    /* @todo: send ICMP Destination Unreacheable code 13 "Communication administratively prohibited"? */
-#endif /* IP_FRAG */
   }
   /* transmit pbuf on chosen interface */
   netif->output(netif, p, ip_current_dest_addr());
