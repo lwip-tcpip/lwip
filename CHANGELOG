@@ -76,6 +76,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-25: Simon Goldschmidt
+  * api_msg.h, api_lib.c, api_msg.c, netifapi.c: fixed bug #35931: Name space
+    pollution in api_msg.c and netifapi.c
+
   2012-03-22: Simon Goldschmidt
   * ip4.c: fixed bug #35927: missing refragmentaion in ip_forward
  
