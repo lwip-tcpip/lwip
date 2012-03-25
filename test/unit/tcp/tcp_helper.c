@@ -260,18 +260,21 @@ static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
 {
   struct test_tcp_txcounters *txcounters = (struct test_tcp_txcounters*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);
-  txcounters->num_tx_calls++;
-  txcounters->num_tx_bytes += p->tot_len;
-  if (txcounters->copy_tx_packets) {
-    struct pbuf *p_copy = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
-    err_t err;
-    EXPECT(p_copy != NULL);
-    err = pbuf_copy(p_copy, p);
-    EXPECT(err == ERR_OK);
-    if (txcounters->tx_packets == NULL) {
-      txcounters->tx_packets = p_copy;
-    } else {
-      pbuf_cat(txcounters->tx_packets, p_copy);
+  if (txcounters != NULL)
+  {
+    txcounters->num_tx_calls++;
+    txcounters->num_tx_bytes += p->tot_len;
+    if (txcounters->copy_tx_packets) {
+      struct pbuf *p_copy = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
+      err_t err;
+      EXPECT(p_copy != NULL);
+      err = pbuf_copy(p_copy, p);
+      EXPECT(err == ERR_OK);
+      if (txcounters->tx_packets == NULL) {
+        txcounters->tx_packets = p_copy;
+      } else {
+        pbuf_cat(txcounters->tx_packets, p_copy);
+      }
     }
   }
   return ERR_OK;
@@ -282,9 +285,11 @@ void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcoun
 {
   struct netif *n;
   memset(netif, 0, sizeof(struct netif));
-  memset(txcounters, 0, sizeof(struct test_tcp_txcounters));
+  if (txcounters != NULL) {
+    memset(txcounters, 0, sizeof(struct test_tcp_txcounters));
+    netif->state = txcounters;
+  }
   netif->output = test_tcp_netif_output;
-  netif->state = txcounters;
   netif->flags |= NETIF_FLAG_UP;
   ip_addr_copy(netif->netmask, *netmask);
   ip_addr_copy(netif->ip_addr, *ip_addr);
