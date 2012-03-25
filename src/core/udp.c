@@ -472,6 +472,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 end:
   PERF_STOP("udp_input");
   return;
+#if CHECKSUM_CHECK_UDP
 chkerr:
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
               ("udp_input: UDP (or UDP Lite) datagram discarded due to failing checksum\n"));
@@ -480,6 +481,7 @@ chkerr:
   snmp_inc_udpinerrors();
   pbuf_free(p);
   PERF_STOP("udp_input");
+#endif /* CHECKSUM_CHECK_UDP */
 }
 
 /**
