@@ -80,6 +80,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-27: Simon Goldschmidt (patch by Mason)
+  * tcp_out.c: fixed bug #35945: SYN packet should provide the recv MSS not the
+    send MSS
+
   2012-03-25: Simon Goldschmidt
   * api_msg.c: Fixed bug #35817: do_connect() invalidly signals op_completed
     for UDP/RAW with LWIP_TCPIP_CORE_LOCKING==1
