@@ -1066,7 +1066,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
      packets, so ignore it here */
   opts = (u32_t *)(void *)(seg->tcphdr + 1);
   if (seg->flags & TF_SEG_OPTS_MSS) {
-    *opts = TCP_BUILD_MSS_OPTION(pcb->mss);
+    *opts = TCP_BUILD_MSS_OPTION(tcp_eff_send_mss(TCP_MSS, &pcb->remote_ip));
     opts += 1;
   }
 #if LWIP_TCP_TIMESTAMPS

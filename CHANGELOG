@@ -66,6 +66,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-27: Simon Goldschmidt (patch by Mason)
+  * tcp_out.c: fixed bug #35945: SYN packet should provide the recv MSS not the
+    send MSS
+
   2012-03-22: Simon Goldschmidt
   * ip4.c: fixed bug #35927: missing refragmentaion in ip_forward
  
