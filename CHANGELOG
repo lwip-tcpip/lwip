@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-03-27: Simon Goldschmidt
+  * vj.c: fixed bug #35756 header length calculation problem in ppp/vj.c
+
   2012-03-27: Simon Goldschmidt (patch by Mason)
   * tcp_out.c: fixed bug #35945: SYN packet should provide the recv MSS not the
     send MSS
