@@ -1586,10 +1586,21 @@ pppSingleBuf(struct pbuf *p)
   return q;
 }
 
+/** Input helper struct, must be packed since it is stored to pbuf->payload,
+ * which might be unaligned.
+ */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
 struct pppInputHeader {
-  int unit;
-  u16_t proto;
-};
+  PACK_STRUCT_FIELD(int unit);
+  PACK_STRUCT_FIELD(u16_t proto);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
 
 /*
  * Pass the processed input packet to the appropriate handler.
