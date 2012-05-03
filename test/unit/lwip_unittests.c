@@ -4,6 +4,7 @@
 #include "tcp/test_tcp.h"
 #include "tcp/test_tcp_oos.h"
 #include "core/test_mem.h"
+#include "core/test_pbuf.h"
 #include "etharp/test_etharp.h"
 #include "dhcp/test_dhcp.h"
 
@@ -20,6 +21,7 @@ int main()
     tcp_suite,
     tcp_oos_suite,
     mem_suite,
+    pbuf_suite,
     etharp_suite,
     dhcp_suite
   };
