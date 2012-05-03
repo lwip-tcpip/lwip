@@ -1821,7 +1821,7 @@ pppInProc(PPPControlRx *pcrx, u_char *s, int l)
         } else {
           struct pbuf *inp;
           /* Trim off the checksum. */
-          if(pcrx->inTail->len >= 2) {
+          if(pcrx->inTail->len > 2) {
             pcrx->inTail->len -= 2;
 
             pcrx->inTail->tot_len = pcrx->inTail->len;

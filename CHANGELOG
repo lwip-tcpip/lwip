@@ -80,6 +80,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-05-03: Simon Goldschmidt (patch by David Empson)
+  * ppp.c: fixed bug #36388 (PPP: checksum-only in last pbuf leads to pbuf with
+    zero length)
+
   2012-03-27: Simon Goldschmidt
   * vj.c: fixed bug #35756 header length calculation problem in ppp/vj.c
 
