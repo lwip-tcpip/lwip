@@ -70,9 +70,9 @@ struct in6_addr {
                                                                  (target_in6addr)->un.u32_addr[2] = (source_ip6addr)->addr[2]; \
                                                                  (target_in6addr)->un.u32_addr[3] = (source_ip6addr)->addr[3];}
 #define inet6_addr_to_ip6addr(target_ip6addr, source_in6addr)   {(target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0]; \
-                                                                 (target_ip6addr)->addr[0] = (source_in6addr)->un.u32_addr[0];}
+                                                                 (target_ip6addr)->addr[1] = (source_in6addr)->un.u32_addr[1]; \
+                                                                 (target_ip6addr)->addr[2] = (source_in6addr)->un.u32_addr[2]; \
+                                                                 (target_ip6addr)->addr[3] = (source_in6addr)->un.u32_addr[3];}
 /* ATTENTION: the next define only works because both in6_addr and ip6_addr_t are an u32_t[4] effectively! */
 #define inet6_addr_to_ip6addr_p(target_ip6addr_p, source_in6addr)   ((target_ip6addr_p) = (ip6_addr_t*)(source_in6addr))
 
