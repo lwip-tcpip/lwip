@@ -158,13 +158,21 @@ icmp6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Determine reply source IPv6 address. */
-    reply_src = ip6_select_source_address(inp, ip6_current_src_addr());
-    if (reply_src == NULL) {
-      /* drop */
-      pbuf_free(p);
-      pbuf_free(r);
-      ICMP6_STATS_INC(icmp6.rterr);
-      return;
+#if LWIP_MULTICAST_PING
+    if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
+      reply_src = ip6_select_source_address(inp, ip6_current_src_addr());
+      if (reply_src == NULL) {
+        /* drop */
+        pbuf_free(p);
+        pbuf_free(r);
+        ICMP6_STATS_INC(icmp6.rterr);
+        return;
+      }
+    }
+    else
+#endif /* LWIP_MULTICAST_PING */
+    {
+      reply_src = ip6_current_dest_addr();
     }
 
     /* Set fields in reply. */
