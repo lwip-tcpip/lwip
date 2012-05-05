@@ -405,7 +405,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
         ip6_addr_isallnodes_linklocal(ip6_current_dest_addr())) {
       netif = inp;
     }
-#if 0
+#if LWIP_IPV6_MLD
     else if (mld6_lookfor_group(inp, ip6_current_dest_addr())) {
       netif = inp;
     }
