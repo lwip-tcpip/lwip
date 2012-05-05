@@ -80,7 +80,7 @@ HISTORY
 
  ++ Bugfixes:
 
-  2012-05-03: Simon Goldschmidt (patch by )
+  2012-05-03: Simon Goldschmidt (patch by Sylvain Rochet)
   * ppp.c: fixed bug #36283 (PPP struct used on header size computation and
     not packed)
 
