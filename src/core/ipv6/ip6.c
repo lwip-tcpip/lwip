@@ -405,15 +405,24 @@ ip6_input(struct pbuf *p, struct netif *inp)
         ip6_addr_isallnodes_linklocal(ip6_current_dest_addr())) {
       netif = inp;
     }
-#if LWIP_IPV6_MLD
+#if 0
     else if (mld6_lookfor_group(inp, ip6_current_dest_addr())) {
       netif = inp;
     }
 #else /* LWIP_IPV6_MLD */
     else if (ip6_addr_issolicitednode(ip6_current_dest_addr())) {
-      /* Accept all solicited node packets when MLD is not enabled
+      /* Filter solicited node packets when MLD is not enabled
        * (for Neighbor discovery). */
-      netif = inp;
+      netif = NULL;
+      for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+        if (ip6_addr_isvalid(netif_ip6_addr_state(inp, i)) &&
+            ip6_addr_cmp_solicitednode(ip6_current_dest_addr(), netif_ip6_addr(inp, i))) {
+          netif = inp;
+          LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: solicited node packet accepted on interface %c%c\n",
+              netif->name[0], netif->name[1]));
+          break;
+        }
+      }
     }
 #endif /* LWIP_IPV6_MLD */
     else {
