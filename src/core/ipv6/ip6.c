@@ -447,6 +447,11 @@ ip6_input(struct pbuf *p, struct netif *inp)
           }
         }
       }
+      if (ip6_addr_islinklocal(ip6_current_dest_addr())) {
+        /* Do not match link-local addresses to other netifs. */
+        netif = NULL;
+        break;
+      }
       if (first) {
         first = 0;
         netif = netif_list;
@@ -459,7 +464,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
     } while(netif != NULL);
 netif_found:
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_input: packet accepted on interface %c%c\n",
-        netif->name[0], netif->name[1]));
+        netif ? netif->name[0] : 'X', netif? netif->name[1] : 'X'));
   }
 
   /* "::" packet source address? (used in duplicate address detection) */
