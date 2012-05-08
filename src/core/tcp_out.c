@@ -480,7 +480,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
           goto memerr;
         }
 #if TCP_OVERSIZE_DBGCHECK
-        last_unsent->oversize_left = oversize;
+        last_unsent->oversize_left += oversize;
 #endif /* TCP_OVERSIZE_DBGCHECK */
         TCP_DATA_COPY2(concat_p->payload, (u8_t*)arg + pos, seglen, &concat_chksum, &concat_chksum_swapped);
 #if TCP_CHECKSUM_ON_COPY
@@ -635,6 +635,8 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
     }
     last_unsent->len += oversize_used;
 #if TCP_OVERSIZE_DBGCHECK
+    LWIP_ASSERT("last_unsent->oversize_left >= oversize_used",
+                last_unsent->oversize_left >= oversize_used);
     last_unsent->oversize_left -= oversize_used;
 #endif /* TCP_OVERSIZE_DBGCHECK */
   }
