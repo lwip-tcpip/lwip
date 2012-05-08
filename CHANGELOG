@@ -80,6 +80,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-05-08: Simon Goldschmidt
+  * tcp_out.c: fixed bug: #36380 unsent_oversize mismatch in 1.4.1RC1 (this was
+    a debug-check issue only)
+
   2012-05-03: Simon Goldschmidt (patch by Sylvain Rochet)
   * ppp.c: fixed bug #36283 (PPP struct used on header size computation and
     not packed)
