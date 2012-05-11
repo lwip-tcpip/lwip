@@ -285,17 +285,25 @@ memp_overflow_check_all(void)
   u16_t i, j;
   struct memp *p;
 
+#if !MEMP_SEPARATE_POOLS
   p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
+#endif /* !MEMP_SEPARATE_POOLS */
   for (i = 0; i < MEMP_MAX; ++i) {
-    p = p;
+#if MEMP_SEPARATE_POOLS
+    p = (struct memp *)(memp_bases[i]);
+#endif /* MEMP_SEPARATE_POOLS */
     for (j = 0; j < memp_num[i]; ++j) {
       memp_overflow_check_element_overflow(p, i);
       p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
     }
   }
+#if !MEMP_SEPARATE_POOLS
   p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
+#endif /* !MEMP_SEPARATE_POOLS */
   for (i = 0; i < MEMP_MAX; ++i) {
-    p = p;
+#if MEMP_SEPARATE_POOLS
+    p = (struct memp *)(memp_bases[i]);
+#endif /* MEMP_SEPARATE_POOLS */
     for (j = 0; j < memp_num[i]; ++j) {
       memp_overflow_check_element_underflow(p, i);
       p = (struct memp*)((u8_t*)p + MEMP_SIZE + memp_sizes[i] + MEMP_SANITY_REGION_AFTER_ALIGNED);
@@ -313,9 +321,13 @@ memp_overflow_init(void)
   struct memp *p;
   u8_t *m;
 
+#if !MEMP_SEPARATE_POOLS
   p = (struct memp *)LWIP_MEM_ALIGN(memp_memory);
+#endif /* !MEMP_SEPARATE_POOLS */
   for (i = 0; i < MEMP_MAX; ++i) {
-    p = p;
+#if MEMP_SEPARATE_POOLS
+    p = (struct memp *)(memp_bases[i]);
+#endif /* MEMP_SEPARATE_POOLS */
     for (j = 0; j < memp_num[i]; ++j) {
 #if MEMP_SANITY_REGION_BEFORE_ALIGNED > 0
       m = (u8_t*)p + MEMP_SIZE - MEMP_SANITY_REGION_BEFORE_ALIGNED;
