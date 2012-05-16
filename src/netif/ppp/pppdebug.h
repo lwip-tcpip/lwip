@@ -45,27 +45,26 @@
 #define LOG_DETAIL    (PPP_DEBUG)
 #define LOG_DEBUG     (PPP_DEBUG)
 
-
 #define TRACELCP PPP_DEBUG
 
 #if PPP_DEBUG
 
-#define AUTHDEBUG(a, b) LWIP_DEBUGF(a, b)
-#define IPCPDEBUG(a, b) LWIP_DEBUGF(a, b)
-#define UPAPDEBUG(a, b) LWIP_DEBUGF(a, b)
-#define LCPDEBUG(a, b)  LWIP_DEBUGF(a, b)
-#define FSMDEBUG(a, b)  LWIP_DEBUGF(a, b)
-#define CHAPDEBUG(a, b) LWIP_DEBUGF(a, b)
+//#define AUTHDEBUG(a, b) LWIP_DEBUGF(a, b)
+//#define IPCPDEBUG(a, b) LWIP_DEBUGF(a, b)
+//#define UPAPDEBUG(a, b) LWIP_DEBUGF(a, b)
+//#define LCPDEBUG(a, b)  LWIP_DEBUGF(a, b)
+//#define FSMDEBUG(a, b)  LWIP_DEBUGF(a, b)
+//#define CHAPDEBUG(a, b) LWIP_DEBUGF(a, b)
 #define PPPDEBUG(a, b)  LWIP_DEBUGF(a, b)
 
 #else /* PPP_DEBUG */
 
-#define AUTHDEBUG(a, b)
-#define IPCPDEBUG(a, b)
-#define UPAPDEBUG(a, b)
-#define LCPDEBUG(a, b)
-#define FSMDEBUG(a, b)
-#define CHAPDEBUG(a, b)
+//#define AUTHDEBUG(a, b)
+//#define IPCPDEBUG(a, b)
+//#define UPAPDEBUG(a, b)
+//#define LCPDEBUG(a, b)
+//#define FSMDEBUG(a, b)
+//#define CHAPDEBUG(a, b)
 #define PPPDEBUG(a, b)
 
 #endif /* PPP_DEBUG */

@@ -37,19 +37,29 @@
  ***********************************************************************
  */
 
-#ifndef MD5_H
-#define MD5_H
+#ifndef __MD5_INCLUDE__
+
+/* typedef a 32-bit type */
+#ifdef _LP64
+typedef unsigned int UINT4;
+typedef int          INT4;
+#else
+typedef unsigned long UINT4;
+typedef long          INT4;
+#endif
+#define _UINT4_T
 
 /* Data structure for MD5 (Message-Digest) computation */
 typedef struct {
-  u32_t i[2];               /* number of _bits_ handled mod 2^64 */
-  u32_t buf[4];             /* scratch buffer */
-  unsigned char in[64];     /* input buffer */
-  unsigned char digest[16]; /* actual digest after MD5Final call */
+  UINT4 i[2];                   /* number of _bits_ handled mod 2^64 */
+  UINT4 buf[4];                                    /* scratch buffer */
+  unsigned char in[64];                              /* input buffer */
+  unsigned char digest[16];     /* actual digest after MD5Final call */
 } MD5_CTX;
 
-void MD5Init  ( MD5_CTX *mdContext);
-void MD5Update( MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen);
-void MD5Final ( unsigned char hash[], MD5_CTX *mdContext);
+void MD5_Init (MD5_CTX *mdContext);
+void MD5_Update (MD5_CTX *mdContext, unsigned char *inBuf, unsigned int inLen);
+void MD5_Final (unsigned char hash[], MD5_CTX *mdContext);
 
-#endif /* MD5_H */
+#define __MD5_INCLUDE__
+#endif /* __MD5_INCLUDE__ */

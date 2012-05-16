@@ -1,5 +1,5 @@
 /*
- * magic.c - PPP Magic Number routines.
+ * ipxcp.h - IPX Control Protocol definitions.
  *
  * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
  *
@@ -38,88 +38,57 @@
  * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
  * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- */
-
-#include "lwip/opt.h"
-
-#define RCSID	"$Id: magic.c,v 1.11 2003/06/11 23:56:26 paulus Exp $"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/time.h>
-
-#include "pppd.h"
-#include "magic.h"
-
-static const char rcsid[] = RCSID;
-
-extern long mrand48 __P((void));
-extern void srand48 __P((long));
-
-/*
- * magic_init - Initialize the magic number generator.
  *
- * Attempts to compute a random number seed which will not repeat.
- * The current method uses the current hostid, current process ID
- * and current time, currently.
+ * $Id: ipxcp.h,v 1.5 2002/12/04 23:03:32 paulus Exp $
  */
-void
-magic_init()
-{
-    long seed;
-    struct timeval t;
-
-    gettimeofday(&t, NULL);
-    seed = get_host_seed() ^ t.tv_sec ^ t.tv_usec ^ getpid();
-    srand48(seed);
-}
 
 /*
- * magic - Returns the next magic number.
+ * Options.
  */
-u_int32_t
-magic()
-{
-    return (u_int32_t) mrand48();
-}
+#define IPX_NETWORK_NUMBER        1   /* IPX Network Number */
+#define IPX_NODE_NUMBER           2
+#define IPX_COMPRESSION_PROTOCOL  3
+#define IPX_ROUTER_PROTOCOL       4
+#define IPX_ROUTER_NAME           5
+#define IPX_COMPLETE              6
 
-/*
- * random_bytes - Fill a buffer with random bytes.
- */
-void
-random_bytes(unsigned char *buf, int len)
-{
-	int i;
+/* Values for the router protocol */
+#define IPX_NONE		  0
+#define RIP_SAP			  2
+#define NLSP			  4
 
-	for (i = 0; i < len; ++i)
-		buf[i] = mrand48() >> 24;
-}
+typedef struct ipxcp_options {
+    bool neg_node;		/* Negotiate IPX node number? */
+    bool req_node;		/* Ask peer to send IPX node number? */
 
-#ifdef NO_DRAND48
-/*
- * Substitute procedures for those systems which don't have
- * drand48 et al.
- */
+    bool neg_nn;		/* Negotiate IPX network number? */
+    bool req_nn;		/* Ask peer to send IPX network number */
 
-double
-drand48()
-{
-    return (double)random() / (double)0x7fffffffL; /* 2**31-1 */
-}
+    bool neg_name;		/* Negotiate IPX router name */
+    bool neg_complete;		/* Negotiate completion */
+    bool neg_router;		/* Negotiate IPX router number */
 
-long
-mrand48()
-{
-    return random();
-}
+    bool accept_local;		/* accept peer's value for ournode */
+    bool accept_remote;		/* accept peer's value for hisnode */
+    bool accept_network;	/* accept network number */
 
-void
-srand48(seedval)
-long seedval;
-{
-    srandom((int)seedval);
-}
+    bool tried_nlsp;		/* I have suggested NLSP already */
+    bool tried_rip;		/* I have suggested RIP/SAP already */
 
-#endif
+    u_int32_t his_network;	/* base network number */
+    u_int32_t our_network;	/* our value for network number */
+    u_int32_t network;		/* the final network number */
+
+    u_char his_node[6];		/* peer's node number */
+    u_char our_node[6];		/* our node number */
+    u_char name [48];		/* name of the router */
+    int    router;		/* routing protocol */
+} ipxcp_options;
+
+extern fsm ipxcp_fsm[];
+extern ipxcp_options ipxcp_wantoptions[];
+extern ipxcp_options ipxcp_gotoptions[];
+extern ipxcp_options ipxcp_allowoptions[];
+extern ipxcp_options ipxcp_hisoptions[];
+
+extern struct protent ipxcp_protent;
