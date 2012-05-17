@@ -282,8 +282,6 @@ struct protent ipcp_protent = {
 };
 
 static void ipcp_clear_addrs __P((int, u_int32_t, u_int32_t, bool));
-static void ipcp_script __P((char *, int));	/* Run an up/down script */
-static void ipcp_script_done __P((void *));
 
 /*
  * Lengths of configuration options.
@@ -297,16 +295,6 @@ static void ipcp_script_done __P((void *));
 
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
-
-/*
- * This state variable is used to ensure that we don't
- * run an ipcp-up/down script while one is already running.
- */
-static enum script_state {
-    s_down,
-    s_up,
-} ipcp_script_state;
-static pid_t ipcp_script_pid;
 
 /*
  * Make a string representation of a network IP address.
@@ -1746,7 +1734,6 @@ ip_demand_conf(u)
     }
     if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
 	return 0;
-    ipcp_script(_PATH_IPPREUP, 1);
     if (!sifup(u))
 	return 0;
     if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
@@ -1898,9 +1885,6 @@ ipcp_up(f)
 	}
 #endif
 
-	/* run the pre-up script, if any, and wait for it to finish */
-	ipcp_script(_PATH_IPPREUP, 1);
-
 	/* bring the interface up for IP */
 	if (!sifup(f->unit)) {
 	    if (debug)
@@ -1949,15 +1933,6 @@ ipcp_up(f)
     notify(ip_up_notifier, 0);
     if (ip_up_hook)
 	ip_up_hook();
-
-    /*
-     * Execute the ip-up script, like this:
-     *	/etc/ppp/ip-up interface tty speed local-IP remote-IP
-     */
-    if (ipcp_script_state == s_down && ipcp_script_pid == 0) {
-	ipcp_script_state = s_up;
-	ipcp_script(_PATH_IPUP, 0);
-    }
 }
 
 
@@ -2001,12 +1976,6 @@ ipcp_down(f)
 	sifdown(f->unit);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
 			 ipcp_hisoptions[f->unit].hisaddr, 0);
-    }
-
-    /* Execute the ip-down script */
-    if (ipcp_script_state == s_up && ipcp_script_pid == 0) {
-	ipcp_script_state = s_down;
-	ipcp_script(_PATH_IPDOWN, 0);
     }
 }
 
@@ -2057,87 +2026,13 @@ ipcp_finished(f)
 
 
 /*
- * ipcp_script_done - called when the ip-up or ip-down script
- * has finished.
- */
-static void
-ipcp_script_done(arg)
-    void *arg;
-{
-    ipcp_script_pid = 0;
-    switch (ipcp_script_state) {
-    case s_up:
-	if (ipcp_fsm[0].state != OPENED) {
-	    ipcp_script_state = s_down;
-	    ipcp_script(_PATH_IPDOWN, 0);
-	}
-	break;
-    case s_down:
-	if (ipcp_fsm[0].state == OPENED) {
-	    ipcp_script_state = s_up;
-	    ipcp_script(_PATH_IPUP, 0);
-	}
-	break;
-    }
-}
-
-
-/*
- * ipcp_script - Execute a script with arguments
- * interface-name tty-name speed local-IP remote-IP.
- */
-static void
-ipcp_script(script, wait)
-    char *script;
-    int wait;
-{
-    char strspeed[32], strlocal[32], strremote[32];
-    char *argv[8];
-
-    slprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
-    slprintf(strlocal, sizeof(strlocal), "%I", ipcp_gotoptions[0].ouraddr);
-    slprintf(strremote, sizeof(strremote), "%I", ipcp_hisoptions[0].hisaddr);
-
-    argv[0] = script;
-    argv[1] = ifname;
-    argv[2] = devnam;
-    argv[3] = strspeed;
-    argv[4] = strlocal;
-    argv[5] = strremote;
-    argv[6] = ipparam;
-    argv[7] = NULL;
-    if (wait)
-	run_program(script, argv, 0, NULL, NULL, 1);
-    else
-	ipcp_script_pid = run_program(script, argv, 0, ipcp_script_done,
-				      NULL, 0);
-}
-
-/*
  * create_resolv - create the replacement resolv.conf file
  */
 static void
 create_resolv(peerdns1, peerdns2)
     u_int32_t peerdns1, peerdns2;
 {
-    FILE *f;
-
-    f = fopen(_PATH_RESOLV, "w");
-    if (f == NULL) {
-	error("Failed to create %s: %m", _PATH_RESOLV);
-	return;
-    }
-
-    if (peerdns1)
-	fprintf(f, "nameserver %s\n", ip_ntoa(peerdns1));
-
-    if (peerdns2)
-	fprintf(f, "nameserver %s\n", ip_ntoa(peerdns2));
-
-    if (ferror(f))
-	error("Write failed to %s: %m", _PATH_RESOLV);
-
-    fclose(f);
+  /* FIXME: do we need to set here the DNS servers ?  */
 }
 
 /*

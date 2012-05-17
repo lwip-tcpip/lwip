@@ -203,19 +203,6 @@ struct notifier *auth_up_notifier = NULL;
 struct notifier *link_down_notifier = NULL;
 
 /*
- * This is used to ensure that we don't start an auth-up/down
- * script while one is already running.
- */
-enum script_state {
-    s_down,
-    s_up
-};
-
-static enum script_state auth_state = s_down;
-static enum script_state auth_script_state = s_down;
-static pid_t auth_script_pid = 0;
-
-/*
  * Option variables.
  */
 bool uselogin = 0;		/* Use /etc/passwd for checking PAP */
@@ -259,8 +246,6 @@ static int  scan_authfile __P((FILE *, char *, char *, char *,
 			       struct wordlist **, struct wordlist **,
 			       char *, int));
 static void free_wordlist __P((struct wordlist *));
-static void auth_script __P((char *));
-static void auth_script_done __P((void *));
 static void set_allowed_addrs __P((int, struct wordlist *, struct wordlist *));
 static int  some_ip_ok __P((struct wordlist *));
 static int  setupapfile __P((char **));
@@ -696,15 +681,6 @@ void
 link_down(unit)
     int unit;
 {
-    if (auth_state != s_down) {
-	notify(link_down_notifier, 0);
-	auth_state = s_down;
-	if (auth_script_state == s_up && auth_script_pid == 0) {
-	    update_link_stats(unit);
-	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN);
-	}
-    }
     if (!doing_multilink) {
 	upper_layers_down(unit);
 	if (phase != PHASE_DEAD && phase != PHASE_MASTER)
@@ -826,11 +802,6 @@ network_phase(unit)
      */
     if (go->neg_chap || go->neg_upap || go->neg_eap) {
 	notify(auth_up_notifier, 0);
-	auth_state = s_up;
-	if (auth_script_state == s_down && auth_script_pid == 0) {
-	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP);
-	}
     }
 
 #if CBCP_SUPPORT
@@ -2355,62 +2326,4 @@ free_wordlist(wp)
 	free(wp);
 	wp = next;
     }
-}
-
-/*
- * auth_script_done - called when the auth-up or auth-down script
- * has finished.
- */
-static void
-auth_script_done(arg)
-    void *arg;
-{
-    auth_script_pid = 0;
-    switch (auth_script_state) {
-    case s_up:
-	if (auth_state == s_down) {
-	    auth_script_state = s_down;
-	    auth_script(_PATH_AUTHDOWN);
-	}
-	break;
-    case s_down:
-	if (auth_state == s_up) {
-	    auth_script_state = s_up;
-	    auth_script(_PATH_AUTHUP);
-	}
-	break;
-    }
-}
-
-/*
- * auth_script - execute a script with arguments
- * interface-name peer-name real-user tty speed
- */
-static void
-auth_script(script)
-    char *script;
-{
-    char strspeed[32];
-    struct passwd *pw;
-    char struid[32];
-    char *user_name;
-    char *argv[8];
-
-    if ((pw = getpwuid(getuid())) != NULL && pw->pw_name != NULL)
-	user_name = pw->pw_name;
-    else {
-	slprintf(struid, sizeof(struid), "%d", getuid());
-	user_name = struid;
-    }
-    slprintf(strspeed, sizeof(strspeed), "%d", baud_rate);
-
-    argv[0] = script;
-    argv[1] = ifname;
-    argv[2] = peer_authname;
-    argv[3] = user_name;
-    argv[4] = devnam;
-    argv[5] = strspeed;
-    argv[6] = NULL;
-
-    auth_script_pid = run_program(script, argv, 0, auth_script_done, NULL, 0);
 }

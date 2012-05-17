@@ -478,9 +478,6 @@ void record_child __P((int, char *, void (*) (void *), void *, int));
 pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
 int  device_script __P((char *cmd, int in, int out, int dont_wait));
 				/* Run `cmd' with given stdin and stdout */
-pid_t run_program __P((char *prog, char **args, int must_exist,
-		       void (*done)(void *), void *arg, int wait));
-				/* Run program prog with args in child */
 void reopen_log __P((void));	/* (re)open the connection to syslog */
 void print_link_stats __P((void)); /* Print stats, if available */
 void reset_link_stats __P((int)); /* Reset (init) stats when link goes up */
