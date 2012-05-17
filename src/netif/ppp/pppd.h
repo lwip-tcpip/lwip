@@ -564,7 +564,7 @@ void demand_conf __P((void));	/* config interface(s) for demand-dial */
 void demand_block __P((void));	/* set all NPs to queue up packets */
 void demand_unblock __P((void)); /* set all NPs to pass packets */
 void demand_discard __P((void)); /* set all NPs to discard packets */
-void demand_rexmit __P((int));	/* retransmit saved frames for an NP */
+void demand_rexmit __P((int, u_int32_t)); /* retransmit saved frames for an NP*/
 int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
 int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
 

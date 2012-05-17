@@ -1880,7 +1880,7 @@ ipcp_up(f)
 		    proxy_arp_set[f->unit] = 1;
 
 	}
-	demand_rexmit(PPP_IP);
+	demand_rexmit(PPP_IP,go->ouraddr);
 	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
     } else {

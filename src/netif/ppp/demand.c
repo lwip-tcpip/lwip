@@ -38,6 +38,8 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
+#include <unistd.h>
+#include <syslog.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -45,6 +47,8 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #ifdef PPP_FILTER
 #include <pcap-bpf.h>
 #endif
@@ -223,6 +227,14 @@ loop_chars(p, n)
     int c, rv;
 
     rv = 0;
+
+/* check for synchronous connection... */
+
+    if ( (p[0] == 0xFF) && (p[1] == 0x03) ) {
+        rv = loop_frame(p,n);
+        return rv;
+    }
+
     for (; n > 0; --n) {
 	c = *p++;
 	if (c == PPP_FLAG) {
@@ -301,17 +313,102 @@ loop_frame(frame, len)
  * loopback, now that the real serial link is up.
  */
 void
-demand_rexmit(proto)
+demand_rexmit(proto, newip)
     int proto;
+    u_int32_t newip;
 {
     struct packet *pkt, *prev, *nextpkt;
+    unsigned short checksum;
+    unsigned short pkt_checksum = 0;
+    unsigned iphdr;
+    struct timeval tv;
+    char cv = 0;
+    char ipstr[16];
 
     prev = NULL;
     pkt = pend_q;
     pend_q = NULL;
+    tv.tv_sec = 1;
+    tv.tv_usec = 0;
+    select(0,NULL,NULL,NULL,&tv);	/* Sleep for 1 Seconds */
     for (; pkt != NULL; pkt = nextpkt) {
 	nextpkt = pkt->next;
 	if (PPP_PROTOCOL(pkt->data) == proto) {
+            if ( (proto == PPP_IP) && newip ) {
+		/* Get old checksum */
+
+		iphdr = (pkt->data[4] & 15) << 2;
+		checksum = *((unsigned short *) (pkt->data+14));
+                if (checksum == 0xFFFF) {
+                    checksum = 0;
+                }
+
+ 
+                if (pkt->data[13] == 17) {
+                    pkt_checksum =  *((unsigned short *) (pkt->data+10+iphdr));
+		    if (pkt_checksum) {
+                        cv = 1;
+                        if (pkt_checksum == 0xFFFF) {
+                            pkt_checksum = 0;
+                        }
+                    }
+                    else {
+                       cv = 0;
+                    }
+                }
+
+		if (pkt->data[13] == 6) {
+		    pkt_checksum = *((unsigned short *) (pkt->data+20+iphdr));
+		    cv = 1;
+                    if (pkt_checksum == 0xFFFF) {
+                        pkt_checksum = 0;
+                    }
+		}
+
+		/* Delete old Source-IP-Address */
+                checksum -= *((unsigned short *) (pkt->data+16)) ^ 0xFFFF;
+                checksum -= *((unsigned short *) (pkt->data+18)) ^ 0xFFFF;
+
+		pkt_checksum -= *((unsigned short *) (pkt->data+16)) ^ 0xFFFF;
+		pkt_checksum -= *((unsigned short *) (pkt->data+18)) ^ 0xFFFF;
+
+		/* Change Source-IP-Address */
+                * ((u_int32_t *) (pkt->data + 16)) = newip;
+
+		/* Add new Source-IP-Address */
+                checksum += *((unsigned short *) (pkt->data+16)) ^ 0xFFFF;
+                checksum += *((unsigned short *) (pkt->data+18)) ^ 0xFFFF;
+
+                pkt_checksum += *((unsigned short *) (pkt->data+16)) ^ 0xFFFF;
+                pkt_checksum += *((unsigned short *) (pkt->data+18)) ^ 0xFFFF;
+
+		/* Write new checksum */
+                if (!checksum) {
+                    checksum = 0xFFFF;
+                }
+                *((unsigned short *) (pkt->data+14)) = checksum;
+		if (pkt->data[13] == 6) {
+		    *((unsigned short *) (pkt->data+20+iphdr)) = pkt_checksum;
+		}
+		if (cv && (pkt->data[13] == 17) ) {
+		    *((unsigned short *) (pkt->data+10+iphdr)) = pkt_checksum;
+		}
+
+		/* Log Packet */
+		strcpy(ipstr,inet_ntoa(*( (struct in_addr *) (pkt->data+16))));
+		if (pkt->data[13] == 1) {
+		    syslog(LOG_INFO,"Open ICMP %s -> %s\n",
+			ipstr,
+			inet_ntoa(*( (struct in_addr *) (pkt->data+20))));
+		} else {
+		    syslog(LOG_INFO,"Open %s %s:%d -> %s:%d\n",
+			pkt->data[13] == 6 ? "TCP" : "UDP",
+			ipstr,
+			ntohs(*( (short *) (pkt->data+iphdr+4))),
+			inet_ntoa(*( (struct in_addr *) (pkt->data+20))),
+			ntohs(*( (short *) (pkt->data+iphdr+6))));
+                }
+            }
 	    output(0, pkt->data, pkt->length);
 	    free(pkt);
 	} else {
