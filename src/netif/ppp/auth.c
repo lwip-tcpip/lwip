@@ -1163,7 +1163,7 @@ check_idle(arg)
     if (idle_time_hook != 0) {
 	tlim = idle_time_hook(&idle);
     } else {
-	itime = MIN(idle.xmit_idle, idle.recv_idle);
+	itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
 	tlim = idle_time_limit - itime;
     }
     if (tlim <= 0) {

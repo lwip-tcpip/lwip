@@ -896,13 +896,6 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #endif /* defined(sun) || defined(SYSV) || defined(POSIX_SOURCE) */
 #endif /* SIGTYPE */
 
-#ifndef MIN
-#define MIN(a, b)	((a) < (b)? (a): (b))
-#endif
-#ifndef MAX
-#define MAX(a, b)	((a) > (b)? (a): (b))
-#endif
-
 #ifndef offsetof
 #define offsetof(type, member) ((size_t) &((type *)0)->member)
 #endif

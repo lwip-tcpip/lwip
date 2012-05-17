@@ -53,6 +53,7 @@
 #include <stdlib.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "chap-new.h"
@@ -1930,7 +1931,7 @@ lcp_up(f)
 #ifdef HAVE_MULTILINK
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
 #endif /* HAVE_MULTILINK */
-	netif_set_mtu(f->unit, MIN(MIN(mtu, mru), ao->mru));
+	netif_set_mtu(f->unit, LWIP_MIN(LWIP_MIN(mtu, mru), ao->mru));
     ppp_send_config(f->unit, mtu,
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
