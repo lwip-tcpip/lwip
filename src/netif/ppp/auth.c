@@ -223,13 +223,13 @@ bool session_mgmt = 0;		/* Do session management (login records) */
 bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
 //bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
 //bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
-bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
+//bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
 #ifdef CHAPMS
-bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
-bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
+//bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
+//bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #else
-bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
-bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
+//bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
+//bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #endif
 bool usehostname = 0;		/* Use hostname for our_name */
 bool auth_required = 0;		/* Always require authentication from peer */
@@ -330,6 +330,7 @@ option_t auth_options[] = {
       &lcp_allowoptions[0].chap_mdtype },
 #endif
 #ifdef CHAPMS
+#if 0
     { "refuse-mschap", o_bool, &refuse_mschap,
       "Don't agree to auth to peer with MS-CHAP",
       OPT_A2CLRB | MDTYPE_MICROSOFT,
@@ -347,13 +348,15 @@ option_t auth_options[] = {
       OPT_ALIAS | OPT_A2CLRB | MDTYPE_MICROSOFT_V2,
       &lcp_allowoptions[0].chap_mdtype },
 #endif
+#endif
 
     { "require-eap", o_bool, &lcp_wantoptions[0].neg_eap,
       "Require EAP authentication from peer", OPT_PRIOSUB | 1,
       &auth_required },
+#if 0
     { "refuse-eap", o_bool, &refuse_eap,
       "Don't agree to authenticate to peer with EAP", 1 },
-
+#endif
     { "name", o_string, our_name,
       "Set local name for authentication",
       OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXNAMELEN },
@@ -1319,12 +1322,15 @@ auth_reset(unit)
     lcp_options *go = &lcp_gotoptions[unit];
     lcp_options *ao = &lcp_allowoptions[unit];
     int hadchap;
-
     hadchap = -1;
+
     //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
+
     ao->neg_upap = !ppp_settings.refuse_pap && ppp_settings.passwd[0] != 0;
 
-    ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2) && ppp_settings.passwd[0];
+    ao->neg_chap = (!ppp_settings.refuse_chap || !ppp_settings.refuse_mschap || !ppp_settings.refuse_mschap_v2) && ppp_settings.passwd[0];
+
+    ao->neg_eap = !ppp_settings.refuse_eap && ppp_settings.passwd[0] != 0;
 
     return;
 
@@ -1333,12 +1339,14 @@ auth_reset(unit)
 	&& (passwd[0] != 0 ||
 	    (hadchap = have_chap_secret(user, (explicit_remote? remote_name:
 					       NULL), 0, NULL))); */
+    /*
     ao->neg_eap = !refuse_eap && (
 	passwd[0] != 0 ||
 	(hadchap == 1 || (hadchap == -1 && have_chap_secret(ppp_settings.user,
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
-	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL));
+	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL)); */
 
+    /* FIXME: find what the below stuff do */
     hadchap = -1;
     if (go->neg_upap && !uselogin && !have_pap_secret(NULL))
 	go->neg_upap = 0;
