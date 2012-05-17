@@ -74,38 +74,37 @@
 *   Extracted from avos.
 *****************************************************************************/
 
-#ifndef RANDM_H
-#define RANDM_H
+#ifndef MAGIC_H
+#define MAGIC_H
+
+#include "lwip/opt.h"
+
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /***********************
 *** PUBLIC FUNCTIONS ***
 ***********************/
+
 /*
  * Initialize the random number generator.
  */
-void avRandomInit(void);
-
-/*
- * Churn the randomness pool on a random event.  Call this early and often
- * on random and semi-random system events to build randomness in time for
- * usage.  For randomly timed events, pass a null pointer and a zero length
- * and this will use the system timer and other sources to add randomness.
- * If new random data is available, pass a pointer to that and it will be
- * included.
- */
-void avChurnRand(char *randData, u32_t randLen);
+void magic_init(void);
 
 /*
  * Randomize our random seed value.  To be called for truely random events
  * such as user operations and network traffic.
  */
-#if MD5_SUPPORT
-#define avRandomize() avChurnRand(NULL, 0)
-#else  /* MD5_SUPPORT */
-void avRandomize(void);
-#endif /* MD5_SUPPORT */
+void magic_randomize(void);
 
 /*
+ * Return a new random number.
+ */
+u32_t magic(void);	/* Returns the next magic number */
+
+#if MD5_SUPPORT
+/*
+ * Fill buffer with random bytes
+ *
  * Use the random pool to generate random data.  This degrades to pseudo
  * random when used faster than randomness is supplied using churnRand().
  * Thus it's important to make sure that the results of this are not
@@ -113,18 +112,8 @@ void avRandomize(void);
  * least some degree.  Also, it's important to get a good seed before
  * the first use.
  */
-void avGenRand(char *buf, u32_t bufLen);
+void random_bytes(unsigned char *buf, u32_t len);
+#endif /* MD5_SUPPORT */
 
-/*
- * Return a new random number.
- */
-u32_t avRandom(void);
-
-
-#endif /* RANDM_H */
-
-void magic_init __P((void));	/* Initialize the magic number generator */
-u_int32_t magic __P((void));	/* Returns the next magic number */
-
-/* Fill buffer with random bytes */
-void random_bytes __P((unsigned char *buf, int len));
+#endif /* PPP_SUPPORT */
+#endif /* MAGIC_H */

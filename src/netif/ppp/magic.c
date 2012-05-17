@@ -74,7 +74,6 @@
 
 #include "lwip/opt.h"
 
-#define PPP_SUPPORT 1
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "md5.h"
@@ -82,50 +81,21 @@
 #include "pppd.h"
 #include "pppmy.h"
 
-/*
- * magic_init - Initialize the magic number generator.
- *
- * Attempts to compute a random number seed which will not repeat.
- * The current method uses the current hostid, current process ID
- * and current time, currently.
- */
-void magic_init() {
-  avRandomInit();
-}
 
-/*
- * magic - Returns the next magic number.
- */
-u_int32_t magic() {
-    return (u_int32_t)avRandom();
-}
+#if MD5_SUPPORT /* Using MD5 for better randomness if MD5 support is enabled */
 
-#if MD5_SUPPORT /* this module depends on MD5 */
-#define RANDPOOLSZ 16   /* Bytes stored in the pool of randomness. */
+#define MAGIC_RANDPOOLSIZE 16   /* Bytes stored in the pool of randomness. */
 
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-static char randPool[RANDPOOLSZ];   /* Pool of randomness. */
-static long randCount = 0;      /* Pseudo-random incrementer */
+static char magic_randpool[MAGIC_RANDPOOLSIZE];   /* Pool of randomness. */
+static long magic_randcount = 0;      /* Pseudo-random incrementer */
 
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
-/*
- * Initialize the random number generator.
- *
- * Since this is to be called on power up, we don't have much
- *  system randomess to work with.  Here all we use is the
- *  real-time clock.  We'll accumulate more randomness as soon
- *  as things start happening.
- */
-void
-avRandomInit()
-{
-  avChurnRand(NULL, 0);
-}
 
 /*
  * Churn the randomness pool on a random event.  Call this early and often
@@ -137,33 +107,47 @@ avRandomInit()
  *
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  */
-void
-avChurnRand(char *randData, u32_t randLen)
-{
+void magic_churnrand(char *rand_data, u32_t rand_len) {
   MD5_CTX md5;
 
-  /* LWIP_DEBUGF(LOG_INFO, ("churnRand: %u@%P\n", randLen, randData)); */
+  /* LWIP_DEBUGF(LOG_INFO, ("churnRand: %u@%P\n", rand_len, rand_data)); */
   MD5_Init(&md5);
-  MD5_Update(&md5, (u_char *)randPool, sizeof(randPool));
-  if (randData) {
-    MD5_Update(&md5, (u_char *)randData, randLen);
+  MD5_Update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
+  if (rand_data) {
+    MD5_Update(&md5, (u_char *)rand_data, rand_len);
   } else {
     struct {
       /* INCLUDE fields for any system sources of randomness */
       char foobar;
-    } sysData;
+    } sys_data;
 
-    /* Load sysData fields here. */
-    MD5_Update(&md5, (u_char *)&sysData, sizeof(sysData));
+    /* Load sys_data fields here. */
+    MD5_Update(&md5, (u_char *)&sys_data, sizeof(sys_data));
   }
-  MD5_Final((u_char *)randPool, &md5);
+  MD5_Final((u_char *)magic_randpool, &md5);
 /*  LWIP_DEBUGF(LOG_INFO, ("churnRand: -> 0\n")); */
 }
 
 /*
+ * Initialize the random number generator.
+ */
+void magic_init() {
+  magic_churnrand(NULL, 0);
+}
+
+/*
+ * Randomize our random seed value.
+ */
+void magic_randomize(void) {
+  magic_churnrand(NULL, 0);
+}
+
+/*
+ * random_bytes - Fill a buffer with random bytes.
+ *
  * Use the random pool to generate random data.  This degrades to pseudo
  *  random when used faster than randomness is supplied using churnRand().
- * Note: It's important that there be sufficient randomness in randPool
+ * Note: It's important that there be sufficient randomness in magic_randpool
  *  before this is called for otherwise the range of the result may be
  *  narrow enough to make a search feasible.
  *
@@ -173,49 +157,36 @@ avChurnRand(char *randData, u32_t randLen)
  *  so that you don't ever publish the seed which could possibly help
  *  predict future values.
  * XXX Why don't we preserve md5 between blocks and just update it with
- *  randCount each time?  Probably there is a weakness but I wish that
+ *  magic_randcount each time?  Probably there is a weakness but I wish that
  *  it was documented.
  */
-void
-avGenRand(char *buf, u32_t bufLen)
-{
+void random_bytes(unsigned char *buf, u32_t buf_len) {
   MD5_CTX md5;
   u_char tmp[16];
   u32_t n;
 
-  while (bufLen > 0) {
-    n = LWIP_MIN(bufLen, RANDPOOLSZ);
+  while (buf_len > 0) {
+    n = LWIP_MIN(buf_len, MAGIC_RANDPOOLSIZE);
     MD5_Init(&md5);
-    MD5_Update(&md5, (u_char *)randPool, sizeof(randPool));
-    MD5_Update(&md5, (u_char *)&randCount, sizeof(randCount));
+    MD5_Update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
+    MD5_Update(&md5, (u_char *)&magic_randcount, sizeof(magic_randcount));
     MD5_Final(tmp, &md5);
-    randCount++;
+    magic_randcount++;
     MEMCPY(buf, tmp, n);
     buf += n;
-    bufLen -= n;
+    buf_len -= n;
   }
 }
 
 /*
  * Return a new random number.
  */
-u32_t
-avRandom()
-{
-  u32_t newRand;
+u32_t magic() {
+  u32_t new_rand;
 
-  avGenRand((char *)&newRand, sizeof(newRand));
+  random_bytes((char *)&new_rand, sizeof(new_rand));
 
-  return newRand;
-}
-
-/*
- * random_bytes - Fill a buffer with random bytes.
- */
-void
-random_bytes(unsigned char *buf, int len)
-{
-  avGenRand(buf, len);
+  return new_rand;
 }
 
 #else /* MD5_SUPPORT */
@@ -223,13 +194,14 @@ random_bytes(unsigned char *buf, int len)
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-static int  avRandomized = 0;       /* Set when truely randomized. */
-static u32_t avRandomSeed = 0;      /* Seed used for random number generation. */
+static int  magic_randomized = 0;       /* Set when truely randomized. */
+static u32_t magic_randomseed = 0;      /* Seed used for random number generation. */
 
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
+
 /*
  * Initialize the random number generator.
  *
@@ -244,59 +216,39 @@ static u32_t avRandomSeed = 0;      /* Seed used for random number generation. *
  * operational.  Thus we call it again on the first random
  * event.
  */
-void
-avRandomInit()
-{
-#if 0
-  /* Get a pointer into the last 4 bytes of clockBuf. */
-  u32_t *lptr1 = (u32_t *)((char *)&clockBuf[3]);
-
-  /*
-   * Initialize our seed using the real-time clock, the idle
-   * counter, the millisecond timer, and the hardware timer
-   * tick counter.  The real-time clock and the hardware
-   * tick counter are the best sources of randomness but
-   * since the tick counter is only 16 bit (and truncated
-   * at that), the idle counter and millisecond timer
-   * (which may be small values) are added to help
-   * randomize the lower 16 bits of the seed.
-   */
-  readClk();
-  avRandomSeed += *(u32_t *)clockBuf + *lptr1 + OSIdleCtr
-           + ppp_mtime() + ((u32_t)TM1 << 16) + TM1;
-#else
-  avRandomSeed += sys_jiffies(); /* XXX */
-#endif
+void magic_init() {
+  magic_randomseed += sys_jiffies();
 
   /* Initialize the Borland random number generator. */
-  srand((unsigned)avRandomSeed);
+  srand((unsigned)magic_randomseed);
 }
 
 /*
+ * magic_init - Initialize the magic number generator.
+ *
  * Randomize our random seed value.  Here we use the fact that
  * this function is called at *truely random* times by the polling
  * and network functions.  Here we only get 16 bits of new random
  * value but we use the previous value to randomize the other 16
  * bits.
  */
-void
-avRandomize(void)
-{
+void magic_randomize(void) {
   static u32_t last_jiffies;
 
-  if (!avRandomized) {
-    avRandomized = !0;
-    avRandomInit();
+  if (!magic_randomized) {
+    magic_randomized = !0;
+    magic_randominit();
     /* The initialization function also updates the seed. */
   } else {
-    /* avRandomSeed += (avRandomSeed << 16) + TM1; */
-    avRandomSeed += (sys_jiffies() - last_jiffies); /* XXX */
+    /* magic_randomseed += (magic_randomseed << 16) + TM1; */
+    magic_randomseed += (sys_jiffies() - last_jiffies); /* XXX */
   }
   last_jiffies = sys_jiffies();
 }
 
 /*
  * Return a new random number.
+ *
  * Here we use the Borland rand() function to supply a pseudo random
  * number which we make truely random by combining it with our own
  * seed which is randomized by truely random events.
@@ -304,10 +256,8 @@ avRandomize(void)
  * operator or network events in which case it will be pseudo random
  * seeded by the real time clock.
  */
-u32_t
-avRandom()
-{
-  return ((((u32_t)rand() << 16) + rand()) + avRandomSeed);
+u32_t magic() {
+  return ((((u32_t)rand() << 16) + rand()) + magic_randomseed);
 }
 
 #endif /* MD5_SUPPORT */
