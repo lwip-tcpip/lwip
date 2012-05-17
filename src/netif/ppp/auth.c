@@ -224,8 +224,8 @@ static pid_t auth_script_pid = 0;
 bool uselogin = 0;		/* Use /etc/passwd for checking PAP */
 bool session_mgmt = 0;		/* Do session management (login records) */
 bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
-bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
-bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
+//bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
+//bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
 bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
 #ifdef CHAPMS
 bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
@@ -252,7 +252,7 @@ static void network_phase __P((int));
 static void check_idle __P((void *));
 static void connect_time_expired __P((void *));
 static int  null_login __P((int));
-static int  get_pap_passwd __P((char *));
+/* static int  get_pap_passwd __P((char *)); */
 static int  have_pap_secret __P((int *));
 static int  have_chap_secret __P((char *, char *, int, int *));
 static int  have_srp_secret __P((char *client, char *server, int need_ip,
@@ -318,7 +318,7 @@ option_t auth_options[] = {
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MICROSOFT_V2,
       &lcp_wantoptions[0].chap_mdtype },
 #endif
-
+#if 0
     { "refuse-pap", o_bool, &refuse_pap,
       "Don't agree to auth to peer with PAP", 1 },
     { "-pap", o_bool, &refuse_pap,
@@ -331,6 +331,7 @@ option_t auth_options[] = {
       "Don't allow CHAP authentication with peer",
       OPT_ALIAS | OPT_A2CLRB | MDTYPE_MD5,
       &lcp_allowoptions[0].chap_mdtype },
+#endif
 #ifdef CHAPMS
     { "refuse-mschap", o_bool, &refuse_mschap,
       "Don't agree to auth to peer with MS-CHAP",
@@ -459,11 +460,11 @@ setupapfile(argv)
 	p[l-1] = 0;
 
     if (override_value("user", option_priority, fname)) {
-	strlcpy(user, u, sizeof(user));
+	strlcpy(ppp_settings.user, u, sizeof(ppp_settings.user));
 	explicit_user = 1;
     }
     if (override_value("passwd", option_priority, fname)) {
-	strlcpy(passwd, p, sizeof(passwd));
+	strlcpy(ppp_settings.passwd, p, sizeof(ppp_settings.passwd));
 	explicit_passwd = 1;
     }
 
@@ -789,10 +790,10 @@ link_established(unit)
 	auth |= PAP_PEER;
     }
     if (ho->neg_eap) {
-	eap_authwithpeer(unit, user);
+	eap_authwithpeer(unit, ppp_settings.user);
 	auth |= EAP_WITHPEER;
     } else if (ho->neg_chap) {
-	chap_auth_with_peer(unit, user, CHAP_DIGEST(ho->chap_mdtype));
+	chap_auth_with_peer(unit, ppp_settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else if (ho->neg_upap) {
 #if 0
@@ -1007,7 +1008,7 @@ auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
     if (passwd_from_file)
-	BZERO(passwd, MAXSECRETLEN);
+	BZERO(ppp_settings.passwd, MAXSECRETLEN);
     /*
      * We've failed to authenticate ourselves to our peer.
      * Some servers keep sending CHAP challenges, but there
@@ -1244,8 +1245,8 @@ auth_check_options()
 	strlcpy(our_name, hostname, sizeof(our_name));
     /* If a blank username was explicitly given as an option, trust
        the user and don't use our_name */
-    if (user[0] == 0 && !explicit_user)
-	strlcpy(user, our_name, sizeof(user));
+    if (ppp_settings.user[0] == 0 && !explicit_user)
+	strlcpy(ppp_settings.user, our_name, sizeof(ppp_settings.user));
 
     /*
      * If we have a default route, require the peer to authenticate
@@ -1337,16 +1338,23 @@ auth_reset(unit)
     int hadchap;
 
     hadchap = -1;
-    ao->neg_upap = !refuse_pap && (passwd[0] != 0 || get_pap_passwd(NULL));
-    ao->neg_chap = (!refuse_chap || !refuse_mschap || !refuse_mschap_v2)
+    //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
+    ao->neg_upap = !ppp_settings.refuse_pap && ppp_settings.passwd[0] != 0;
+
+    ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2) && ppp_settings.passwd[0];
+
+    return;
+
+    /*
+    ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2)
 	&& (passwd[0] != 0 ||
 	    (hadchap = have_chap_secret(user, (explicit_remote? remote_name:
-					       NULL), 0, NULL)));
+					       NULL), 0, NULL))); */
     ao->neg_eap = !refuse_eap && (
 	passwd[0] != 0 ||
-	(hadchap == 1 || (hadchap == -1 && have_chap_secret(user,
+	(hadchap == 1 || (hadchap == -1 && have_chap_secret(ppp_settings.user,
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
-	have_srp_secret(user, (explicit_remote? remote_name: NULL), 0, NULL));
+	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL));
 
     hadchap = -1;
     if (go->neg_upap && !uselogin && !have_pap_secret(NULL))
@@ -1364,7 +1372,6 @@ auth_reset(unit)
 	    NULL))
 	go->neg_eap = 0;
 }
-
 
 /*
  * check_passwd - Check the user name and passwd against the PAP secrets
@@ -1398,15 +1405,15 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
      * If there are unprintable characters in the password, make
      * them visible.
      */
-    slprintf(passwd, sizeof(passwd), "%.*v", passwdlen, apasswd);
-    slprintf(user, sizeof(user), "%.*v", userlen, auser);
+    slprintf(ppp_settings.passwd, sizeof(ppp_settings.passwd), "%.*v", passwdlen, apasswd);
+    slprintf(ppp_settings.user, sizeof(ppp_settings.user), "%.*v", userlen, auser);
     *msg = "";
 
     /*
      * Check if a plugin wants to handle this.
      */
     if (pap_auth_hook) {
-	ret = (*pap_auth_hook)(user, passwd, msg, &addrs, &opts);
+	ret = (*pap_auth_hook)(ppp_settings.user, ppp_settings.passwd, msg, &addrs, &opts);
 	if (ret >= 0) {
 	    /* note: set_allowed_addrs() saves opts (but not addrs):
 	       don't free it! */
@@ -1434,7 +1441,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 
     } else {
 	check_access(f, filename);
-	if (scan_authfile(f, user, our_name, secret, &addrs, &opts, filename, 0) < 0) {
+	if (scan_authfile(f, ppp_settings.user, our_name, secret, &addrs, &opts, filename, 0) < 0) {
 	    warn("no PAP secret found for %s", user);
 	} else {
 	    /*
@@ -1449,7 +1456,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 		    ret = UPAP_AUTHNAK;
 		}
 	    } else if (session_mgmt) {
-		if (session_check(user, NULL, devnam, NULL) == 0) {
+		if (session_check(ppp_settings.user, NULL, devnam, NULL) == 0) {
 		    warn("Peer %q failed PAP Session verification", user);
 		    ret = UPAP_AUTHNAK;
 		}
@@ -1546,7 +1553,7 @@ null_login(unit)
     return ret;
 }
 
-
+#if 0
 /*
  * get_pap_passwd - get a password for authenticating ourselves with
  * our peer using PAP.  Returns 1 on success, 0 if no suitable password
@@ -1566,7 +1573,7 @@ get_pap_passwd(passwd)
      * Check whether a plugin wants to supply this.
      */
     if (pap_passwd_hook) {
-	ret = (*pap_passwd_hook)(user, passwd);
+	ret = (*pap_passwd_hook)(ppp_settings,user, ppp_settings.passwd);
 	if (ret >= 0)
 	    return ret;
     }
@@ -1587,7 +1594,7 @@ get_pap_passwd(passwd)
     BZERO(secret, sizeof(secret));
     return 1;
 }
-
+#endif
 
 /*
  * have_pap_secret - check whether we have a PAP file with any
@@ -1734,6 +1741,43 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     int *secret_len;
     int am_server;
 {
+  int len;
+  struct wordlist *addrs;
+
+  LWIP_UNUSED_ARG(unit);
+  LWIP_UNUSED_ARG(server);
+  LWIP_UNUSED_ARG(am_server);
+
+  addrs = NULL;
+
+  if(!client || !client[0] || strcmp(client, ppp_settings.user)) {
+    return 0;
+  }
+
+  len = (int)strlen(ppp_settings.passwd);
+  if (len > MAXSECRETLEN) {
+    error("Secret for %s on %s is too long", client, server);
+    len = MAXSECRETLEN;
+  }
+
+  BCOPY(ppp_settings.passwd, secret, len);
+  *secret_len = len;
+
+  return 1;
+#if 0
+	    //	strlcpy(rname, ppp_settings.user, sizeof(rname));
+
+
+/*
+		strlcpy(rname, ppp_settings.user, sizeof(rname));
+		strlcpy(secret, ppp_settings.passwd, sizeof(secret));
+		secret_len = strlen(secret);
+
+		printf("CHAP USER = %s\n", ppp_settings.user);
+		printf("CHAP PASS = %s\n", ppp_settings.passwd);
+		printf("CHAP PASS LEN = %s\n", strlen(secret));
+*/
+
     FILE *f;
     int ret, len;
     char *filename;
@@ -1783,6 +1827,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     *secret_len = len;
 
     return 1;
+#endif
 }
 
 
@@ -1799,6 +1844,9 @@ get_srp_secret(unit, client, server, secret, am_server)
     char *secret;
     int am_server;
 {
+  /* FIXME: clean that */
+  return 0;
+#if 0
     FILE *fp;
     int ret;
     char *filename;
@@ -1833,6 +1881,7 @@ get_srp_secret(unit, client, server, secret, am_server)
     }
 
     return 1;
+#endif
 }
 
 /*

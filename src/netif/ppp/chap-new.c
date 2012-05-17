@@ -29,6 +29,7 @@
  */
 
 #include "lwip/opt.h"
+#include "pppmy.h"
 
 #define RCSID	"$Id: chap-new.c,v 1.9 2007/06/19 02:08:35 carlsonj Exp $"
 
@@ -455,8 +456,14 @@ chap_respond(struct chap_client_state *cs, int id,
 	slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
 	/* Microsoft doesn't send their name back in the PPP packet */
-	if (explicit_remote || (remote_name[0] != 0 && rname[0] == 0))
-		strlcpy(rname, remote_name, sizeof(rname));
+	if (ppp_settings.remote_name[0] != 0 && (ppp_settings.explicit_remote || rname[0] == 0)) {
+		strncpy(rname, ppp_settings.remote_name, sizeof(rname));
+		rname[sizeof(rname) - 1] = 0;
+	}
+
+//	/* Microsoft doesn't send their name back in the PPP packet */
+//	if (explicit_remote || (remote_name[0] != 0 && rname[0] == 0))
+//		strlcpy(rname, remote_name, sizeof(rname));
 
 	/* get secret for authenticating ourselves with the specified host */
 	if (!get_secret(0, cs->name, rname, secret, &secret_len, 0)) {
