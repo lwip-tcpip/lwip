@@ -406,21 +406,29 @@ lcp_close(unit, reason)
     char *reason;
 {
     fsm *f = &lcp_fsm[unit];
+    int oldstate;
 
     if (phase != PHASE_DEAD && phase != PHASE_MASTER)
 	new_phase(PHASE_TERMINATE);
-    if (f->state == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT)) {
+
+    if (f->flags & DELAYED_UP) {
+	untimeout(lcp_delayed_up, f);
+	f->state = STOPPED;
+    }
+    oldstate = f->state;
+
+    fsm_close(f, reason);
+    if (oldstate == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP)) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
 	 * but it does mean that the program terminates if you do a
-	 * lcp_close() in passive/silent mode when a connection hasn't
-	 * been established.
+	 * lcp_close() when a connection hasn't been established
+	 * because we are in passive/silent mode or because we have
+	 * delayed the fsm_lowerup() call and it hasn't happened yet.
 	 */
-	f->state = CLOSED;
+	f->flags &= ~DELAYED_UP;
 	lcp_finished(f);
-
-    } else
-	fsm_close(f, reason);
+    }
 }
 
 
@@ -462,9 +470,10 @@ lcp_lowerdown(unit)
 {
     fsm *f = &lcp_fsm[unit];
 
-    if (f->flags & DELAYED_UP)
+    if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-    else
+	untimeout(lcp_delayed_up, f);
+    } else
 	fsm_lowerdown(&lcp_fsm[unit]);
 }
 
@@ -498,6 +507,7 @@ lcp_input(unit, p, len)
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
+	untimeout(lcp_delayed_up, f);
 	fsm_lowerup(f);
     }
     fsm_input(f, p, len);
