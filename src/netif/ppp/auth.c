@@ -157,9 +157,6 @@ static int num_np_open;
 /* Number of network protocols which have come up. */
 static int num_np_up;
 
-/* Set if we got the contents of passwd[] from the pap-secrets file. */
-static int passwd_from_file;
-
 /* Set if we require authentication only because we have a default route. */
 static bool default_auth;
 
@@ -796,16 +793,6 @@ link_established(unit)
 	chap_auth_with_peer(unit, ppp_settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else if (ho->neg_upap) {
-#if 0
-	/* If a blank password was explicitly given as an option, trust
-	   the user and don't try to look up one. */
-	if (passwd[0] == 0 && !explicit_passwd) {
-	    passwd_from_file = 1;
-	    if (!get_pap_passwd(passwd))
-		error("No secret found for PAP login");
-	}
-	upap_authwithpeer(unit, user, passwd);
-#endif
 	upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
 	auth |= PAP_WITHPEER;
     }
@@ -1007,8 +994,6 @@ void
 auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
-    if (passwd_from_file)
-	BZERO(ppp_settings.passwd, MAXSECRETLEN);
     /*
      * We've failed to authenticate ourselves to our peer.
      * Some servers keep sending CHAP challenges, but there
@@ -1048,8 +1033,6 @@ auth_withpeer_success(unit, protocol, prot_flavor)
 	}
 	break;
     case PPP_PAP:
-	if (passwd_from_file)
-	    BZERO(passwd, MAXSECRETLEN);
 	bit = PAP_WITHPEER;
 	prot = "PAP";
 	break;
