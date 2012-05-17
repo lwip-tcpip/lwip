@@ -109,10 +109,6 @@
 #include "ecp.h"
 #include "pathnames.h"
 
-#ifdef USE_TDB
-#include "tdb.h"
-#endif
-
 #if CBCP_SUPPORT
 #include "cbcp.h"
 #endif
@@ -152,10 +148,6 @@ int doing_callback;		/* != 0 if we are doing callback */
 int ppp_session_number;		/* Session number, for channels with such a
 				   concept (eg PPPoE) */
 int childwait_done;		/* have timed out waiting for children */
-
-#ifdef USE_TDB
-TDB_CONTEXT *pppdb;		/* database for storing status etc. */
-#endif
 
 char db_key[32];
 
@@ -246,13 +238,6 @@ static void holdoff_end __P((void *));
 static void forget_child __P((int pid, int status));
 static int reap_kids __P((void));
 static void childwait_end __P((void *));
-
-#ifdef USE_TDB
-static void update_db_entry __P((void));
-static void add_db_key __P((const char *));
-static void delete_db_key __P((const char *));
-static void cleanup_db __P((void));
-#endif
 
 static void handle_events __P((void));
 void print_link_stats __P((void));
@@ -429,20 +414,6 @@ int ppp_oldmain() {
      * Initialize system-dependent stuff.
      */
     linux_sys_init();
-
-#ifdef USE_TDB
-    pppdb = tdb_open(_PATH_PPPDB, 0, 0, O_RDWR|O_CREAT, 0644);
-    if (pppdb != NULL) {
-	slprintf(db_key, sizeof(db_key), "pppd%d", getpid());
-	update_db_entry();
-    } else {
-	warn("Warning: couldn't open ppp database %s", _PATH_PPPDB);
-	if (multilink) {
-	    warn("Warning: disabling multilink");
-	    multilink = 0;
-	}
-    }
-#endif
 
     /*
      * Detach ourselves from the terminal, if required,
@@ -1184,12 +1155,6 @@ cleanup()
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
     remove_pidfiles();
-
-#ifdef USE_TDB
-    if (pppdb != NULL)
-	cleanup_db();
-#endif
-
 }
 
 void
@@ -1566,9 +1531,6 @@ safe_fork(int infd, int outfd, int errfd)
 
 	/* Executing in the child */
 	sys_close();
-#ifdef USE_TDB
-	tdb_close(pppdb);
-#endif
 
 	/* make sure infd, outfd and errfd won't get tromped on below */
 	if (infd == 1 || infd == 2)
@@ -1864,17 +1826,8 @@ script_setenv(var, value, iskey)
     if (script_env != 0) {
 	for (i = 0; (p = script_env[i]) != 0; ++i) {
 	    if (strncmp(p, var, varl) == 0 && p[varl] == '=') {
-#ifdef USE_TDB
-		if (p[-1] && pppdb != NULL)
-		    delete_db_key(p);
-#endif
 		free(p-1);
 		script_env[i] = newstring;
-#ifdef USE_TDB
-		if (iskey && pppdb != NULL)
-		    add_db_key(newstring);
-		update_db_entry();
-#endif
 		return;
 	    }
 	}
@@ -1900,14 +1853,6 @@ script_setenv(var, value, iskey)
 
     script_env[i] = newstring;
     script_env[i+1] = 0;
-
-#ifdef USE_TDB
-    if (pppdb != NULL) {
-	if (iskey)
-	    add_db_key(newstring);
-	update_db_entry();
-    }
-#endif
 }
 
 /*
@@ -1926,138 +1871,10 @@ script_unsetenv(var)
 	return;
     for (i = 0; (p = script_env[i]) != 0; ++i) {
 	if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
-#ifdef USE_TDB
-	    if (p[-1] && pppdb != NULL)
-		delete_db_key(p);
-#endif
 	    free(p-1);
 	    while ((script_env[i] = script_env[i+1]) != 0)
 		++i;
 	    break;
 	}
     }
-#ifdef USE_TDB
-    if (pppdb != NULL)
-	update_db_entry();
-#endif
 }
-
-/*
- * Any arbitrary string used as a key for locking the database.
- * It doesn't matter what it is as long as all pppds use the same string.
- */
-#define PPPD_LOCK_KEY	"pppd lock"
-
-/*
- * lock_db - get an exclusive lock on the TDB database.
- * Used to ensure atomicity of various lookup/modify operations.
- */
-void lock_db()
-{
-#ifdef USE_TDB
-	TDB_DATA key;
-
-	key.dptr = PPPD_LOCK_KEY;
-	key.dsize = strlen(key.dptr);
-	tdb_chainlock(pppdb, key);
-#endif
-}
-
-/*
- * unlock_db - remove the exclusive lock obtained by lock_db.
- */
-void unlock_db()
-{
-#ifdef USE_TDB
-	TDB_DATA key;
-
-	key.dptr = PPPD_LOCK_KEY;
-	key.dsize = strlen(key.dptr);
-	tdb_chainunlock(pppdb, key);
-#endif
-}
-
-#ifdef USE_TDB
-/*
- * update_db_entry - update our entry in the database.
- */
-static void
-update_db_entry()
-{
-    TDB_DATA key, dbuf;
-    int vlen, i;
-    char *p, *q, *vbuf;
-
-    if (script_env == NULL)
-	return;
-    vlen = 0;
-    for (i = 0; (p = script_env[i]) != 0; ++i)
-	vlen += strlen(p) + 1;
-    vbuf = malloc(vlen + 1);
-    if (vbuf == 0)
-	novm("database entry");
-    q = vbuf;
-    for (i = 0; (p = script_env[i]) != 0; ++i)
-	q += slprintf(q, vbuf + vlen - q, "%s;", p);
-
-    key.dptr = db_key;
-    key.dsize = strlen(db_key);
-    dbuf.dptr = vbuf;
-    dbuf.dsize = vlen;
-    if (tdb_store(pppdb, key, dbuf, TDB_REPLACE))
-	error("tdb_store failed: %s", tdb_errorstr(pppdb));
-
-    if (vbuf)
-        free(vbuf);
-
-}
-
-/*
- * add_db_key - add a key that we can use to look up our database entry.
- */
-static void
-add_db_key(str)
-    const char *str;
-{
-    TDB_DATA key, dbuf;
-
-    key.dptr = (char *) str;
-    key.dsize = strlen(str);
-    dbuf.dptr = db_key;
-    dbuf.dsize = strlen(db_key);
-    if (tdb_store(pppdb, key, dbuf, TDB_REPLACE))
-	error("tdb_store key failed: %s", tdb_errorstr(pppdb));
-}
-
-/*
- * delete_db_key - delete a key for looking up our database entry.
- */
-static void
-delete_db_key(str)
-    const char *str;
-{
-    TDB_DATA key;
-
-    key.dptr = (char *) str;
-    key.dsize = strlen(str);
-    tdb_delete(pppdb, key);
-}
-
-/*
- * cleanup_db - delete all the entries we put in the database.
- */
-static void
-cleanup_db()
-{
-    TDB_DATA key;
-    int i;
-    char *p;
-
-    key.dptr = db_key;
-    key.dsize = strlen(db_key);
-    tdb_delete(pppdb, key);
-    for (i = 0; (p = script_env[i]) != 0; ++i)
-	if (p[-1])
-	    delete_db_key(p);
-}
-#endif /* USE_TDB */

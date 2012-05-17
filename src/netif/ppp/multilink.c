@@ -30,6 +30,17 @@
 
 #include "lwip/opt.h"
 
+/* Multilink support
+ *
+ * Multilink uses Samba TDB (Trivial Database Library), which
+ * we cannot port, because it needs a filesystem.
+ *
+ * We have to choose between doing a memory-shared TDB-clone,
+ * or dropping multilink support at all.
+ */
+
+#ifdef HAVE_MULTILINK
+
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -593,3 +604,4 @@ str_to_epdisc(ep, str)
 	return 1;
 }
 
+#endif /* HAVE_MULTILINK */
