@@ -11,6 +11,7 @@
 #include <syslog.h> /* FIXME: temporary */
 
 #include "lwip/netif.h"
+#include "lwip/def.h"
 
 /*************************
 *** PUBLIC DEFINITIONS ***
