@@ -75,6 +75,9 @@ static void lcp_delayed_up __P((void *));
  */
 int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
+#if PPP_LCP_ADAPTIVE
+bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
+#endif
 bool	lax_recv = 0;		/* accept control chars in asyncmap */
 bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
 
@@ -153,6 +156,10 @@ static option_t lcp_option_list[] = {
       OPT_PRIO },
     { "lcp-echo-interval", o_int, &lcp_echo_interval,
       "Set time in seconds between LCP echo requests", OPT_PRIO },
+#if PPP_LCP_ADAPTIVE
+    { "lcp-echo-adaptive", o_bool, &lcp_echo_adaptive,
+      "Suppress LCP echo requests if traffic was received", 1 },
+#endif
     { "lcp-restart", o_int, &lcp_fsm[0].timeouttime,
       "Set time in seconds between LCP retransmissions", OPT_PRIO },
     { "lcp-max-terminate", o_int, &lcp_fsm[0].maxtermtransmits,
@@ -2324,6 +2331,24 @@ LcpSendEchoRequest (f)
 	    lcp_echos_pending = 0;
 	}
     }
+
+#if PPP_LCP_ADAPTIVE
+    /*
+     * If adaptive echos have been enabled, only send the echo request if
+     * no traffic was received since the last one.
+     */
+    if (lcp_echo_adaptive) {
+	static unsigned int last_pkts_in = 0;
+
+	update_link_stats(f->unit);
+	link_stats_valid = 0;
+
+	if (link_stats.pkts_in != last_pkts_in) {
+	    last_pkts_in = link_stats.pkts_in;
+	    return;
+	}
+    }
+#endif
 
     /*
      * Make and send the echo request frame.
