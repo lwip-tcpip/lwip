@@ -412,7 +412,7 @@ lcp_close(unit, reason)
 	new_phase(PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
 	f->state = STOPPED;
     }
     oldstate = f->state;
@@ -472,7 +472,7 @@ lcp_lowerdown(unit)
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
     } else
 	fsm_lowerdown(&lcp_fsm[unit]);
 }
@@ -507,7 +507,7 @@ lcp_input(unit, p, len)
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
-	untimeout(lcp_delayed_up, f);
+	UNTIMEOUT(lcp_delayed_up, f);
 	fsm_lowerup(f);
     }
     fsm_input(f, p, len);
