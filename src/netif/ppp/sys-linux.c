@@ -127,16 +127,6 @@
 #include "fsm.h"
 #include "ipcp.h"
 
-#ifdef IPX_CHANGE
-#include "ipxcp.h"
-#if __GLIBC__ >= 2 && \
-    !(defined(__powerpc__) && __GLIBC__ == 2 && __GLIBC_MINOR__ == 0)
-#include <netipx/ipx.h>
-#else
-#include <linux/ipx.h>
-#endif
-#endif /* IPX_CHANGE */
-
 #ifdef PPP_FILTER
 #include <pcap-bpf.h>
 #include <linux/filter.h>
@@ -2781,98 +2771,6 @@ sifnpmode(u, proto, mode)
 }
 #endif
 
-/********************************************************************
- *
- * sipxfaddr - Config the interface IPX networknumber
- */
-
-int sipxfaddr (int unit, unsigned long int network, unsigned char * node )
-{
-    int    result = 1;
-
-#ifdef IPX_CHANGE
-    int    skfd;
-    struct ifreq         ifr;
-    struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
-
-    skfd = socket (AF_IPX, SOCK_DGRAM, 0);
-    if (skfd < 0) {
-	if (! ok_error (errno))
-	    dbglog("socket(AF_IPX): %m (line %d)", __LINE__);
-	result = 0;
-    }
-    else {
-	memset (&ifr, '\0', sizeof (ifr));
-	strlcpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-	memcpy (sipx->sipx_node, node, IPX_NODE_LEN);
-	sipx->sipx_family  = AF_IPX;
-	sipx->sipx_port    = 0;
-	sipx->sipx_network = htonl (network);
-	sipx->sipx_type    = IPX_FRAME_ETHERII;
-	sipx->sipx_action  = IPX_CRTITF;
-/*
- *  Set the IPX device
- */
-	if (ioctl(skfd, SIOCSIFADDR, (caddr_t) &ifr) < 0) {
-	    result = 0;
-	    if (errno != EEXIST) {
-		if (! ok_error (errno))
-		    dbglog("ioctl(SIOCSIFADDR, CRTITF): %m (line %d)", __LINE__);
-	    }
-	    else {
-		warn("ioctl(SIOCSIFADDR, CRTITF): Address already exists");
-	    }
-	}
-	close (skfd);
-    }
-#endif
-    return result;
-}
-
-/********************************************************************
- *
- * cipxfaddr - Clear the information for the IPX network. The IPX routes
- *	       are removed and the device is no longer able to pass IPX
- *	       frames.
- */
-
-int cipxfaddr (int unit)
-{
-    int    result = 1;
-
-#ifdef IPX_CHANGE
-    int    skfd;
-    struct ifreq         ifr;
-    struct sockaddr_ipx *sipx = (struct sockaddr_ipx *) &ifr.ifr_addr;
-
-    skfd = socket (AF_IPX, SOCK_DGRAM, 0);
-    if (skfd < 0) {
-	if (! ok_error (errno))
-	    dbglog("socket(AF_IPX): %m (line %d)", __LINE__);
-	result = 0;
-    }
-    else {
-	memset (&ifr, '\0', sizeof (ifr));
-	strlcpy (ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
-
-	sipx->sipx_type    = IPX_FRAME_ETHERII;
-	sipx->sipx_action  = IPX_DLTITF;
-	sipx->sipx_family  = AF_IPX;
-/*
- *  Set the IPX device
- */
-	if (ioctl(skfd, SIOCSIFADDR, (caddr_t) &ifr) < 0) {
-	    if (! ok_error (errno))
-		info("ioctl(SIOCSIFADDR, IPX_DLTITF): %m (line %d)", __LINE__);
-	    result = 0;
-	}
-	close (skfd);
-    }
-#endif
-    return result;
-}
-
 /*
  * Use the hostname as part of the random number seed.
  */
@@ -2896,22 +2794,6 @@ get_host_seed()
 int
 sys_check_options(void)
 {
-#ifdef IPX_CHANGE
-/*
- * Disable the IPX protocol if the support is not present in the kernel.
- */
-    char *path;
-
-    if (ipxcp_protent.enabled_flag) {
-	struct stat stat_buf;
-	if (  ((path = path_to_procfs("/net/ipx/interface")) == NULL
-	    && (path = path_to_procfs("/net/ipx_interface")) == NULL)
-	    || lstat(path, &stat_buf) < 0) {
-	    error("IPX support is not present in the kernel\n");
-	    ipxcp_protent.enabled_flag = 0;
-	}
-    }
-#endif
     if (demand && driver_is_old) {
 	option_error("demand dialling is not supported by kernel driver "
 		     "version %d.%d.%d", driver_version, driver_modification,
