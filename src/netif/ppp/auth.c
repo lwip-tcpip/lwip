@@ -559,6 +559,7 @@ void start_link(unit)
 {
     char *msg;
 
+    status = EXIT_NEGOTIATION_FAILED;
     new_phase(PHASE_SERIALCONN);
 
     hungup = 0;
@@ -595,7 +596,6 @@ void start_link(unit)
 	notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
-    status = EXIT_NEGOTIATION_FAILED;
     new_phase(PHASE_ESTABLISH);
 
     lcp_lowerup(0);
