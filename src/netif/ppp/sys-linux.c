@@ -208,6 +208,8 @@ static unsigned char inbuf[512]; /* buffer for chars read from loopback */
 
 static int	if_is_up;	/* Interface has been marked up */
 static int	have_default_route;	/* Gateway for default route added */
+static struct	rtentry old_def_rt;	/* Old default route */
+static int	default_rt_repl_rest;	/* replace and restore old default rt */
 static u_int32_t proxy_arp_addr;	/* Addr for proxy arp entry added */
 static char proxy_arp_dev[16];		/* Device for proxy arp entry */
 static u_int32_t our_old_addr;		/* for detecting address changes */
@@ -1546,6 +1548,9 @@ static int read_route_table(struct rtentry *rt)
 	p = NULL;
     }
 
+    SET_SA_FAMILY (rt->rt_dst,     AF_INET);
+    SET_SA_FAMILY (rt->rt_gateway, AF_INET);
+
     SIN_ADDR(rt->rt_dst) = strtoul(cols[route_dest_col], NULL, 16);
     SIN_ADDR(rt->rt_gateway) = strtoul(cols[route_gw_col], NULL, 16);
     SIN_ADDR(rt->rt_genmask) = strtoul(cols[route_mask_col], NULL, 16);
@@ -1615,20 +1620,51 @@ int have_route_to(u_int32_t addr)
 /********************************************************************
  *
  * sifdefaultroute - assign a default route through the address given.
+ *
+ * If the global default_rt_repl_rest flag is set, then this function
+ * already replaced the original system defaultroute with some other
+ * route and it should just replace the current defaultroute with
+ * another one, without saving the current route. Use: demand mode,
+ * when pppd sets first a defaultroute it it's temporary ppp0 addresses
+ * and then changes the temporary addresses to the addresses for the real
+ * ppp connection when it has come up.
  */
 
-int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway)
+int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace)
 {
-    struct rtentry rt;
+    struct rtentry rt, tmp_rt;
+    struct rtentry *del_rt = NULL;
 
-    if (defaultroute_exists(&rt) && strcmp(rt.rt_dev, ifname) != 0) {
-	if (rt.rt_flags & RTF_GATEWAY)
-	    error("not replacing existing default route via %I",
-		  SIN_ADDR(rt.rt_gateway));
-	else
+    if (default_rt_repl_rest) {
+	/* We have already reclaced the original defaultroute, if we
+	   are called again, we will delete the current default route
+	   and set the new default route in this function.
+	   - this is normally only the case the doing demand: */
+	if (defaultroute_exists(&tmp_rt))
+	    del_rt = &tmp_rt;
+    } else if (defaultroute_exists(&old_def_rt) &&
+	       strcmp(old_def_rt.rt_dev, ifname) != 0) {
+	/* We did not yet replace an existing default route, let's
+	   check if we should save and replace a default route: */
+	if (old_def_rt.rt_flags & RTF_GATEWAY) {
+	    if (!replace) {
+		error("not replacing existing default route via %I",
+		      SIN_ADDR(old_def_rt.rt_gateway));
+		return 0;
+	    } else {
+		/* we need to copy rt_dev because we need it permanent too: */
+		char *tmp_dev = malloc(strlen(old_def_rt.rt_dev) + 1);
+		strcpy(tmp_dev, old_def_rt.rt_dev);
+		old_def_rt.rt_dev = tmp_dev;
+
+		notice("replacing old default route to %s [%I]",
+			old_def_rt.rt_dev, SIN_ADDR(old_def_rt.rt_gateway));
+		default_rt_repl_rest = 1;
+		del_rt = &old_def_rt;
+	    }
+	} else
 	    error("not replacing existing default route through %s",
-		  rt.rt_dev);
-	return 0;
+		  old_def_rt.rt_dev);
     }
 
     memset (&rt, 0, sizeof (rt));
@@ -1643,10 +1679,16 @@ int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway)
 
     rt.rt_flags = RTF_UP;
     if (ioctl(sock_fd, SIOCADDRT, &rt) < 0) {
-	if ( ! ok_error ( errno ))
+	if (!ok_error(errno))
 	    error("default route ioctl(SIOCADDRT): %m");
 	return 0;
     }
+    if (default_rt_repl_rest && del_rt)
+        if (ioctl(sock_fd, SIOCDELRT, del_rt) < 0) {
+	    if (!ok_error(errno))
+	        error("del old default route ioctl(SIOCDELRT): %m");
+	    return 0;
+        }
 
     have_default_route = 1;
     return 1;
@@ -1677,10 +1719,20 @@ int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway)
     rt.rt_flags = RTF_UP;
     if (ioctl(sock_fd, SIOCDELRT, &rt) < 0 && errno != ESRCH) {
 	if (still_ppp()) {
-	    if ( ! ok_error ( errno ))
+	    if (!ok_error(errno))
 		error("default route ioctl(SIOCDELRT): %m");
 	    return 0;
 	}
+    }
+    if (default_rt_repl_rest) {
+	notice("restoring old default route to %s [%I]",
+		old_def_rt.rt_dev, SIN_ADDR(old_def_rt.rt_gateway));
+        if (ioctl(sock_fd, SIOCADDRT, &old_def_rt) < 0) {
+	    if (!ok_error(errno))
+	        error("restore default route ioctl(SIOCADDRT): %m");
+	    return 0;
+        }
+        default_rt_repl_rest = 0;
     }
 
     return 1;
