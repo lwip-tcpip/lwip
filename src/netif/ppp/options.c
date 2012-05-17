@@ -99,8 +99,8 @@ char	devnam[MAXPATHLEN];	/* Device name */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 int	maxconnect = 0;		/* Maximum connect time */
-char	user[MAXNAMELEN];	/* Username for PAP */
-char	passwd[MAXSECRETLEN];	/* Password for PAP */
+//char	user[MAXNAMELEN];	/* Username for PAP */
+//char	passwd[MAXSECRETLEN];	/* Password for PAP */
 bool	persist = 0;		/* Reopen link after it goes down */
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 bool	demand = 0;		/* do dial-on-demand */

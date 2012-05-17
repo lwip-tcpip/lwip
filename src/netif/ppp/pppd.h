@@ -288,8 +288,8 @@ extern char	*disconnect_script; /* Script to disestablish physical link */
 extern char	*welcomer;	/* Script to welcome client after connection */
 extern char	*ptycommand;	/* Command to run on other side of pty */
 extern int	maxconnect;	/* Maximum connect time (seconds) */
-extern char	user[MAXNAMELEN];/* Our name for authenticating ourselves */
-extern char	passwd[MAXSECRETLEN];	/* Password for PAP or CHAP */
+//extern char	user[MAXNAMELEN];/* Our name for authenticating ourselves */
+//extern char	passwd[MAXSECRETLEN];	/* Password for PAP or CHAP */
 extern bool	auth_required;	/* Peer is required to authenticate */
 extern bool	persist;	/* Reopen link after it goes down */
 extern bool	uselogin;	/* Use /etc/passwd for checking PAP */

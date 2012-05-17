@@ -365,6 +365,7 @@ option_t auth_options[] = {
       "Get PAP user and password from file",
       OPT_PRIO | OPT_A2STRVAL, &uafname },
 
+#if 0
     { "user", o_string, user,
       "Set name for auth with peer", OPT_PRIO | OPT_STATIC,
       &explicit_user, MAXNAMELEN },
@@ -373,6 +374,7 @@ option_t auth_options[] = {
       "Password for authenticating us to the peer",
       OPT_PRIO | OPT_STATIC | OPT_HIDE,
       &explicit_passwd, MAXSECRETLEN },
+#endif
 
     { "usehostname", o_bool, &usehostname,
       "Must use hostname for authentication", 1 },
@@ -1414,7 +1416,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 		free_wordlist(opts);
 	    if (addrs != 0)
 		free_wordlist(addrs);
-	    BZERO(passwd, sizeof(passwd));
+	    BZERO(ppp_settings.passwd, sizeof(ppp_settings.passwd));
 	    return ret? UPAP_AUTHACK: UPAP_AUTHNAK;
 	}
     }
@@ -1443,7 +1445,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 	    ret = UPAP_AUTHACK;
 	    if (uselogin || login_secret) {
 		/* login option or secret is @login */
-		if (session_full(user, passwd, devnam, msg) == 0) {
+		if (session_full(ppp_settings.user, ppp_settings.passwd, devnam, msg) == 0) {
 		    ret = UPAP_AUTHNAK;
 		}
 	    } else if (session_mgmt) {
@@ -1454,8 +1456,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 	    }
 	    if (secret[0] != 0 && !login_secret) {
 		/* password given in pap-secrets - must match */
-		if ((cryptpap || strcmp(passwd, secret) != 0)
-		    && strcmp(crypt(passwd, secret), secret) != 0)
+		if ((cryptpap || strcmp(ppp_settings.passwd, secret) != 0)
+		    && strcmp(crypt(ppp_settings.passwd, secret), secret) != 0)
 		    ret = UPAP_AUTHNAK;
 	    }
 	}
@@ -1489,7 +1491,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 
     if (addrs != NULL)
 	free_wordlist(addrs);
-    BZERO(passwd, sizeof(passwd));
+    BZERO(ppp_settings.passwd, sizeof(ppp_settings.passwd));
     BZERO(secret, sizeof(secret));
 
     return ret;
@@ -1775,8 +1777,8 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     struct wordlist *addrs, *opts;
     char secbuf[MAXWORDLEN];
 
-    if (!am_server && passwd[0] != 0) {
-	strlcpy(secbuf, passwd, sizeof(secbuf));
+    if (!am_server && ppp_settings.passwd[0] != 0) {
+	strlcpy(secbuf, ppp_settings.passwd, sizeof(secbuf));
     } else if (!am_server && chap_passwd_hook) {
 	if ( (*chap_passwd_hook)(client, secbuf) < 0) {
 	    error("Unable to obtain CHAP password for %s on %s from plugin",
@@ -1843,8 +1845,8 @@ get_srp_secret(unit, client, server, secret, am_server)
     char *filename;
     struct wordlist *addrs, *opts;
 
-    if (!am_server && passwd[0] != '\0') {
-	strlcpy(secret, passwd, MAXWORDLEN);
+    if (!am_server && ppp_settings.passwd[0] != '\0') {
+	strlcpy(secret, ppp_settings.passwd, MAXWORDLEN);
     } else {
 	filename = _PATH_SRPFILE;
 	addrs = NULL;
