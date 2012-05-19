@@ -91,13 +91,14 @@
 #include "pppd.h"
 #include "chap-new.h"
 #include "chap_ms.h"
-#include "md4.h"
-#include "sha1.h"
+#include "polarssl/md4.h"
+#include "polarssl/sha1.h"
 #include "pppcrypt.h"
 #include "magic.h"
 
 static const char rcsid[] = RCSID;
 
+#define SHA1_SIGNATURE_SIZE 20
 
 static void	ascii2unicode __P((char[], int, u_char[]));
 static void	NTPasswordHash __P((u_char *, int, u_char[MD4_SIGNATURE_SIZE]));
@@ -472,7 +473,7 @@ ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
 	      char *username, u_char Challenge[8])
     
 {
-    SHA1_CTX	sha1Context;
+    sha1_context	sha1Context;
     u_char	sha1Hash[SHA1_SIGNATURE_SIZE];
     char	*user;
 
@@ -482,11 +483,11 @@ ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
     else
 	user = username;
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PeerChallenge, 16);
-    SHA1_Update(&sha1Context, rchallenge, 16);
-    SHA1_Update(&sha1Context, (unsigned char *)user, strlen(user));
-    SHA1_Final(sha1Hash, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, PeerChallenge, 16);
+    sha1_update(&sha1Context, rchallenge, 16);
+    sha1_update(&sha1Context, (unsigned char *)user, strlen(user));
+    sha1_finish(&sha1Context, sha1Hash);
 
     BCOPY(sha1Hash, Challenge, 8);
 }
@@ -517,17 +518,17 @@ NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
 #else
     int			mdlen = secret_len * 8;
 #endif
-    MD4_CTX		md4Context;
+    md4_context		md4Context;
 
-    MD4Init(&md4Context);
+    md4_starts(&md4Context);
     /* MD4Update can take at most 64 bytes at a time */
     while (mdlen > 512) {
-	MD4Update(&md4Context, secret, 512);
+	md4_update(&md4Context, secret, 512);
 	secret += 64;
 	mdlen -= 512;
     }
-    MD4Update(&md4Context, secret, mdlen);
-    MD4Final(hash, &md4Context);
+    md4_update(&md4Context, secret, mdlen);
+    md4_finish(&md4Context, hash);
 
 }
 
@@ -608,23 +609,23 @@ GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	  0x6E };
 
     int		i;
-    SHA1_CTX	sha1Context;
+    sha1_context	sha1Context;
     u_char	Digest[SHA1_SIGNATURE_SIZE];
     u_char	Challenge[8];
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, NTResponse, 24);
-    SHA1_Update(&sha1Context, Magic1, sizeof(Magic1));
-    SHA1_Final(Digest, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    sha1_update(&sha1Context, NTResponse, 24);
+    sha1_update(&sha1Context, Magic1, sizeof(Magic1));
+    sha1_finish(&sha1Context, Digest);
 
     ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, Digest, sizeof(Digest));
-    SHA1_Update(&sha1Context, Challenge, sizeof(Challenge));
-    SHA1_Update(&sha1Context, Magic2, sizeof(Magic2));
-    SHA1_Final(Digest, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, Digest, sizeof(Digest));
+    sha1_update(&sha1Context, Challenge, sizeof(Challenge));
+    sha1_update(&sha1Context, Magic2, sizeof(Magic2));
+    sha1_finish(&sha1Context, Digest);
 
     /* Convert to ASCII hex string. */
     for (i = 0; i < MAX((MS_AUTH_RESPONSE_LENGTH / 2), sizeof(Digest)); i++)
@@ -662,14 +663,14 @@ GenerateAuthenticatorResponsePlain
 void
 mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE])
 {
-    SHA1_CTX	sha1Context;
+    sha1_context	sha1Context;
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, rchallenge, 8);
-    SHA1_Final(Digest, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    sha1_update(&sha1Context, rchallenge, 8);
+    sha1_finish(&sha1Context, Digest);
 
     /* Same key in both directions. */
     BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
@@ -706,7 +707,7 @@ void
 mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	       u_char NTResponse[24], int IsServer)
 {
-    SHA1_CTX	sha1Context;
+    sha1_context	sha1Context;
     u_char	MasterKey[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
@@ -752,11 +753,11 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	  0x6b, 0x65, 0x79, 0x2e };
     u_char *s;
 
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
-    SHA1_Update(&sha1Context, NTResponse, 24);
-    SHA1_Update(&sha1Context, Magic1, sizeof(Magic1));
-    SHA1_Final(MasterKey, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
+    sha1_update(&sha1Context, NTResponse, 24);
+    sha1_update(&sha1Context, Magic1, sizeof(Magic1));
+    sha1_finish(&sha1Context, MasterKey);
 
     /*
      * generate send key
@@ -765,12 +766,12 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	s = Magic3;
     else
 	s = Magic2;
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, MasterKey, 16);
-    SHA1_Update(&sha1Context, SHApad1, sizeof(SHApad1));
-    SHA1_Update(&sha1Context, s, 84);
-    SHA1_Update(&sha1Context, SHApad2, sizeof(SHApad2));
-    SHA1_Final(Digest, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, MasterKey, 16);
+    sha1_update(&sha1Context, SHApad1, sizeof(SHApad1));
+    sha1_update(&sha1Context, s, 84);
+    sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
+    sha1_finish(&sha1Context, Digest);
 
     BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
 
@@ -781,12 +782,12 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 	s = Magic2;
     else
 	s = Magic3;
-    SHA1_Init(&sha1Context);
-    SHA1_Update(&sha1Context, MasterKey, 16);
-    SHA1_Update(&sha1Context, SHApad1, sizeof(SHApad1));
-    SHA1_Update(&sha1Context, s, 84);
-    SHA1_Update(&sha1Context, SHApad2, sizeof(SHApad2));
-    SHA1_Final(Digest, &sha1Context);
+    sha1_starts(&sha1Context);
+    sha1_update(&sha1Context, MasterKey, 16);
+    sha1_update(&sha1Context, SHApad1, sizeof(SHApad1));
+    sha1_update(&sha1Context, s, 84);
+    sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
+    sha1_finish(&sha1Context, Digest);
 
     BCOPY(Digest, mppe_recv_key, sizeof(mppe_recv_key));
 

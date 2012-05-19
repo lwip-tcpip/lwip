@@ -76,7 +76,7 @@
 
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#include "md5.h"
+#include "polarssl/md5.h"
 #include "magic.h"
 #include "pppd.h"
 #include "pppmy.h"
@@ -108,13 +108,13 @@ static long magic_randcount = 0;      /* Pseudo-random incrementer */
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  */
 void magic_churnrand(char *rand_data, u32_t rand_len) {
-  MD5_CTX md5;
+  md5_context md5;
 
   /* LWIP_DEBUGF(LOG_INFO, ("churnRand: %u@%P\n", rand_len, rand_data)); */
-  MD5_Init(&md5);
-  MD5_Update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
+  md5_starts(&md5);
+  md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
   if (rand_data) {
-    MD5_Update(&md5, (u_char *)rand_data, rand_len);
+    md5_update(&md5, (u_char *)rand_data, rand_len);
   } else {
     struct {
       /* INCLUDE fields for any system sources of randomness */
@@ -122,9 +122,9 @@ void magic_churnrand(char *rand_data, u32_t rand_len) {
     } sys_data;
 
     /* Load sys_data fields here. */
-    MD5_Update(&md5, (u_char *)&sys_data, sizeof(sys_data));
+    md5_update(&md5, (u_char *)&sys_data, sizeof(sys_data));
   }
-  MD5_Final((u_char *)magic_randpool, &md5);
+  md5_finish(&md5, (u_char *)magic_randpool);
 /*  LWIP_DEBUGF(LOG_INFO, ("churnRand: -> 0\n")); */
 }
 
@@ -161,16 +161,16 @@ void magic_randomize(void) {
  *  it was documented.
  */
 void random_bytes(unsigned char *buf, u32_t buf_len) {
-  MD5_CTX md5;
+  md5_context md5;
   u_char tmp[16];
   u32_t n;
 
   while (buf_len > 0) {
     n = LWIP_MIN(buf_len, MAGIC_RANDPOOLSIZE);
-    MD5_Init(&md5);
-    MD5_Update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
-    MD5_Update(&md5, (u_char *)&magic_randcount, sizeof(magic_randcount));
-    MD5_Final(tmp, &md5);
+    md5_starts(&md5);
+    md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
+    md5_update(&md5, (u_char *)&magic_randcount, sizeof(magic_randcount));
+    md5_finish(&md5, tmp);
     magic_randcount++;
     MEMCPY(buf, tmp, n);
     buf += n;
