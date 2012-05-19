@@ -141,6 +141,7 @@ struct protent eap_protent = {
 	NULL			/* say whether to bring up link for this pkt */
 };
 
+#ifdef USE_SRP
 /*
  * A well-known 2048 bit modulus.
  */
@@ -178,6 +179,7 @@ static const u_char wkmodulus[] = {
 	0x9B, 0x65, 0xE3, 0x72, 0xFC, 0xD6, 0x8E, 0xF2,
 	0x0F, 0xA7, 0x11, 0x1F, 0x9E, 0x4A, 0xFF, 0x73
 };
+#endif
 
 /* Local forward declarations. */
 static void eap_server_timeout __P((void *arg));
