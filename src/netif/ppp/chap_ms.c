@@ -93,6 +93,7 @@
 #include "chap_ms.h"
 #include "polarssl/md4.h"
 #include "polarssl/sha1.h"
+#include "polarssl/des.h"
 #include "pppcrypt.h"
 #include "magic.h"
 
@@ -447,6 +448,8 @@ ChallengeResponse(u_char *challenge,
 		  u_char response[24])
 {
     u_char    ZPasswordHash[21];
+    des_context des;
+    u_char des_key[8];
 
     BZERO(ZPasswordHash, sizeof(ZPasswordHash));
     BCOPY(PasswordHash, ZPasswordHash, MD4_SIGNATURE_SIZE);
@@ -456,12 +459,17 @@ ChallengeResponse(u_char *challenge,
 	   sizeof(ZPasswordHash), ZPasswordHash);
 #endif
 
-    (void) DesSetkey(ZPasswordHash + 0);
-    DesEncrypt(challenge, response + 0);
-    (void) DesSetkey(ZPasswordHash + 7);
-    DesEncrypt(challenge, response + 8);
-    (void) DesSetkey(ZPasswordHash + 14);
-    DesEncrypt(challenge, response + 16);
+    pppcrypt_56_to_64_bit_key(ZPasswordHash + 0, des_key);
+    des_setkey_enc(&des, des_key);
+    des_crypt_ecb(&des, challenge, response +0);
+
+    pppcrypt_56_to_64_bit_key(ZPasswordHash + 7, des_key);
+    des_setkey_enc(&des, des_key);
+    des_crypt_ecb(&des, challenge, response +8);
+
+    pppcrypt_56_to_64_bit_key(ZPasswordHash + 14, des_key);
+    des_setkey_enc(&des, des_key);
+    des_crypt_ecb(&des, challenge, response +16);
 
 #if 0
     dbglog("ChallengeResponse - response %.24B", response);
@@ -560,15 +568,22 @@ ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
     int			i;
     u_char		UcasePassword[MAX_NT_PASSWORD]; /* max is actually 14 */
     u_char		PasswordHash[MD4_SIGNATURE_SIZE];
+    des_context des;
+    u_char des_key[8];
 
     /* LANMan password is case insensitive */
     BZERO(UcasePassword, sizeof(UcasePassword));
     for (i = 0; i < secret_len; i++)
        UcasePassword[i] = (u_char)toupper(secret[i]);
-    (void) DesSetkey(UcasePassword + 0);
-    DesEncrypt( StdText, PasswordHash + 0 );
-    (void) DesSetkey(UcasePassword + 7);
-    DesEncrypt( StdText, PasswordHash + 8 );
+
+    pppcrypt_56_to_64_bit_key(UcasePassword +0, des_key);
+    des_setkey_enc(&des, des_key);
+    des_crypt_ecb(&des, StdText, PasswordHash +0);
+
+    pppcrypt_56_to_64_bit_key(UcasePassword +7, des_key);
+    des_setkey_enc(&des, des_key);
+    des_crypt_ecb(&des, StdText, PasswordHash +8);
+
     ChallengeResponse(rchallenge, PasswordHash, &response[MS_CHAP_LANMANRESP]);
 }
 #endif
