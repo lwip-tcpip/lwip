@@ -512,24 +512,11 @@ ascii2unicode(char ascii[], int ascii_len, u_char unicode[])
 static void
 NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
 {
-#ifdef __NetBSD__
-    /* NetBSD uses the libc md4 routines which take bytes instead of bits */
-    int			mdlen = secret_len;
-#else
-    int			mdlen = secret_len * 8;
-#endif
     md4_context		md4Context;
 
     md4_starts(&md4Context);
-    /* MD4Update can take at most 64 bytes at a time */
-    while (mdlen > 512) {
-	md4_update(&md4Context, secret, 512);
-	secret += 64;
-	mdlen -= 512;
-    }
-    md4_update(&md4Context, secret, mdlen);
+    md4_update(&md4Context, secret, secret_len);
     md4_finish(&md4Context, hash);
-
 }
 
 static void
