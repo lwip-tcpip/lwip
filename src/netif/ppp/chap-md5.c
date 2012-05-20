@@ -38,7 +38,7 @@
 #include "chap-new.h"
 #include "chap-md5.h"
 #include "magic.h"
-#include "polarssl/md5.h"
+#include "md5.h"
 
 #define MD5_HASH_SIZE		16
 #define MD5_MIN_CHALLENGE	16
@@ -61,7 +61,7 @@ chap_md5_verify_response(int id, char *name,
 			 unsigned char *challenge, unsigned char *response,
 			 char *message, int message_space)
 {
-	md5_context ctx;
+	MD5_CTX ctx;
 	unsigned char idbyte = id;
 	unsigned char hash[MD5_HASH_SIZE];
 	int challenge_len, response_len;
@@ -70,11 +70,11 @@ chap_md5_verify_response(int id, char *name,
 	response_len = *response++;
 	if (response_len == MD5_HASH_SIZE) {
 		/* Generate hash of ID, secret, challenge */
-		md5_starts(&ctx);
-		md5_update(&ctx, &idbyte, 1);
-		md5_update(&ctx, secret, secret_len);
-		md5_update(&ctx, challenge, challenge_len);
-		md5_finish(&ctx, hash);
+		MD5_Init(&ctx);
+		MD5_Update(&ctx, &idbyte, 1);
+		MD5_Update(&ctx, secret, secret_len);
+		MD5_Update(&ctx, challenge, challenge_len);
+		MD5_Final(hash, &ctx);
 
 		/* Test if our hash matches the peer's response */
 		if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
@@ -91,15 +91,15 @@ chap_md5_make_response(unsigned char *response, int id, char *our_name,
 		       unsigned char *challenge, char *secret, int secret_len,
 		       unsigned char *private)
 {
-	md5_context ctx;
+	MD5_CTX ctx;
 	unsigned char idbyte = id;
 	int challenge_len = *challenge++;
 
-	md5_starts(&ctx);
-	md5_update(&ctx, &idbyte, 1);
-	md5_update(&ctx, (u_char *)secret, secret_len);
-	md5_update(&ctx, challenge, challenge_len);
-	md5_finish(&ctx, &response[1]);
+	MD5_Init(&ctx);
+	MD5_Update(&ctx, &idbyte, 1);
+	MD5_Update(&ctx, (u_char *)secret, secret_len);
+	MD5_Update(&ctx, challenge, challenge_len);
+	MD5_Final(&response[1], &ctx);
 	response[0] = MD5_HASH_SIZE;
 }
 
