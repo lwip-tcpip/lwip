@@ -529,7 +529,6 @@ void link_down __P((int));	  /* the LCP layer has left the Opened state */
 void upper_layers_down __P((int));/* take all NCPs down */
 void link_established __P((int)); /* the link is up; authenticate now */
 void start_networks __P((int));   /* start all the network control protos */
-void continue_networks __P((int)); /* start network [ip, etc] control protos */
 void np_up __P((int, int));	  /* a network protocol has come up */
 void np_down __P((int, int));	  /* a network protocol has gone down */
 void np_finished __P((int, int)); /* a network protocol no longer needs link */

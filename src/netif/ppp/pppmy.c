@@ -436,9 +436,7 @@ void
 pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 {
   ppp_settings.refuse_pap = 1;
-  ppp_settings.refuse_chap = 1;
-  ppp_settings.refuse_mschap = 1;
-  ppp_settings.refuse_mschap_v2 = 0;
+  ppp_settings.refuse_chap = 0;
   ppp_settings.refuse_eap = 1;
 
 /* FIXME: re-enable that */

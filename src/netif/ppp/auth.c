@@ -106,15 +106,10 @@
 #include "pppd.h"
 #include "fsm.h"
 #include "lcp.h"
-#include "ccp.h"
-#include "ecp.h"
 #include "ipcp.h"
 #include "upap.h"
 #include "chap-new.h"
 #include "eap.h"
-#if CBCP_SUPPORT
-#include "cbcp.h"
-#endif
 #include "pathnames.h"
 #include "session.h"
 
@@ -832,47 +827,8 @@ start_networks(unit)
 {
     int i;
     struct protent *protp;
-    int ecp_required, mppe_required;
 
     new_phase(PHASE_NETWORK);
-
-#ifdef HAVE_MULTILINK
-    if (multilink) {
-	if (mp_join_bundle()) {
-	    if (multilink_join_hook)
-		(*multilink_join_hook)();
-	    if (updetach && !nodetach)
-		detach();
-	    return;
-	}
-    }
-#endif /* HAVE_MULTILINK */
-
-#ifdef PPP_FILTER
-    if (!demand)
-	set_filters(&pass_filter, &active_filter);
-#endif
-    /* Start CCP and ECP */
-    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if ((protp->protocol == PPP_ECP || protp->protocol == PPP_CCP)
-	    && protp->enabled_flag && protp->open != NULL)
-	    (*protp->open)(0);
-
-    /*
-     * Bring up other network protocols iff encryption is not required.
-     */
-    ecp_required = ecp_gotoptions[unit].required;
-    mppe_required = ccp_gotoptions[unit].mppe;
-    if (!ecp_required && !mppe_required)
-	continue_networks(unit);
-}
-
-void
-continue_networks(unit)
-    int unit;
-{
-    int i;
-    struct protent *protp;
 
     /*
      * Start the "real" network protocols.
@@ -1301,15 +1257,10 @@ auth_reset(unit)
 
     ao->neg_eap = !ppp_settings.refuse_eap;
 
-    ao->chap_mdtype = MDTYPE_NONE;
-    if(!ppp_settings.refuse_chap)
-      ao->chap_mdtype |= MDTYPE_MD5;
-    if(!ppp_settings.refuse_mschap)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT;
-    if(!ppp_settings.refuse_mschap_v2)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
-
-    ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
+    if(!ppp_settings.refuse_chap) {
+      ao->chap_mdtype = MDTYPE_MD5;
+      ao->neg_chap = 1;
+    }
 
   } else {
     ao->neg_upap = 0;
@@ -1317,7 +1268,6 @@ auth_reset(unit)
     ao->neg_eap = 0;
     ao->chap_mdtype = MDTYPE_NONE;
   }
-
 
   printf("neg_upap: %d\n", ao->neg_upap);
   printf("neg_chap: %d\n", ao->neg_chap);

@@ -105,13 +105,7 @@
 #include "upap.h"
 #include "chap-new.h"
 #include "eap.h"
-#include "ccp.h"
-#include "ecp.h"
 #include "pathnames.h"
-
-#if CBCP_SUPPORT
-#include "cbcp.h"
-#endif
 
 #ifdef AT_CHANGE
 #include "atcp.h"
@@ -165,7 +159,6 @@ int fd_ppp = -1;		/* fd for talking PPP */
 int phase;			/* where the link is at */
 int kill_link;
 int asked_to_quit;
-int open_ccp_flag;
 int listen_time;
 int got_sigusr2;
 int got_sigterm;
@@ -232,7 +225,6 @@ static void hup __P((int));
 static void term __P((int));
 static void chld __P((int));
 static void toggle_debug __P((int));
-static void open_ccp __P((int));
 static void bad_signal __P((int));
 static void holdoff_end __P((void *));
 static void forget_child __P((int pid, int status));
@@ -271,8 +263,6 @@ struct protent *protocols[] = {
 #ifdef INET6
     &ipv6cp_protent,
 #endif
-    &ccp_protent,
-    &ecp_protent,
 #ifdef AT_CHANGE
     &atcp_protent,
 #endif
@@ -513,12 +503,6 @@ int ppp_oldmain() {
 		if (phase == PHASE_MASTER)
 		    mp_bundle_terminated();
 	    }
-	    if (open_ccp_flag) {
-		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
-		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
-		    (*ccp_protent.open)(0);
-		}
-	    }
 	}
 	/* restore FSMs to original state */
 	lcp_close(0, "");
@@ -574,7 +558,7 @@ handle_events()
 {
     struct timeval timo;
 
-    kill_link = open_ccp_flag = 0;
+    kill_link = 0;
     if (sigsetjmp(sigjmp, 1) == 0) {
 	sigprocmask(SIG_BLOCK, &signals_handled, NULL);
 	if (got_sighup || got_sigterm || got_sigusr2 || got_sigchld) {
@@ -605,10 +589,6 @@ handle_events()
     if (got_sigchld) {
 	got_sigchld = 0;
 	reap_kids();	/* Don't leave dead kids lying around */
-    }
-    if (got_sigusr2) {
-	open_ccp_flag = 1;
-	got_sigusr2 = 0;
     }
 }
 
@@ -646,7 +626,6 @@ setup_signals()
     SIGNAL(SIGCHLD, chld);
 
     SIGNAL(SIGUSR1, toggle_debug);	/* Toggle debug flag */
-    SIGNAL(SIGUSR2, open_ccp);		/* Reopen CCP */
 
     /*
      * Install a handler for other signals which would otherwise
@@ -1454,23 +1433,6 @@ toggle_debug(sig)
 	setlogmask(LOG_UPTO(LOG_WARNING));
     }
 }
-
-
-/*
- * open_ccp - Catch SIGUSR2 signal.
- *
- * Try to (re)negotiate compression.
- */
-/*ARGSUSED*/
-static void
-open_ccp(sig)
-    int sig;
-{
-    got_sigusr2 = 1;
-    if (waiting)
-	siglongjmp(sigjmp, 1);
-}
-
 
 /*
  * bad_signal - We've caught a fatal signal.  Clean up state and exit.

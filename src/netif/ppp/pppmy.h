@@ -46,8 +46,6 @@ struct ppp_settings {
   u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
   u_int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
   u_int  refuse_chap       : 1;       /* Don't wanna auth. ourselves with CHAP */
-  u_int  refuse_mschap     : 1;       /* Don't wanna auth. ourselves with MS-CHAP */
-  u_int  refuse_mschap_v2  : 1;       /* Don't wanna auth. ourselves with MS-CHAPv2 */
   u_int  refuse_eap        : 1;       /* Don't wanna auth. ourselves with EAP */
   u_int  usehostname       : 1;       /* Use hostname for our_name */
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
