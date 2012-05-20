@@ -1388,6 +1388,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
     int passwdlen;
     char **msg;
 {
+  return UPAP_AUTHNAK;
+#if 0
     int ret;
     char *filename;
     FILE *f;
@@ -1498,6 +1500,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
     BZERO(secret, sizeof(secret));
 
     return ret;
+#endif
 }
 
 /*

@@ -347,12 +347,14 @@ session_start(flags, user, passwd, ttyName, msg)
 
 #endif /* #ifdef HAS_SHADOW */
 
+#if 0
 	/*
 	 * If no passwd, don't let them login if we're authenticating.
 	 */
         if (pw->pw_passwd == NULL || strlen(pw->pw_passwd) < 2
             || strcmp(crypt(passwd, pw->pw_passwd), pw->pw_passwd) != 0)
             return SESSION_FAILED;
+#endif
     }
 
 #endif /* #ifdef USE_PAM */
