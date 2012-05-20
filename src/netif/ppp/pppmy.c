@@ -437,7 +437,11 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 {
   ppp_settings.refuse_pap = 1;
   ppp_settings.refuse_chap = 0;
-  ppp_settings.refuse_eap = 1;
+#if EAP_SUPPORT
+  ppp_settings.refuse_pap = 1;
+  ppp_settings.refuse_chap = 1;
+  ppp_settings.refuse_eap = 0;
+#endif /* EAP_SUPPORT */
 
 /* FIXME: re-enable that */
 #if 0

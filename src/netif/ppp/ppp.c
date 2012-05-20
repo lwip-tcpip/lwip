@@ -104,7 +104,9 @@
 #endif
 #include "upap.h"
 #include "chap-new.h"
+#if EAP_SUPPORT
 #include "eap.h"
+#endif /* EAP_SUPPORT */
 #include "pathnames.h"
 
 #ifdef AT_CHANGE
@@ -266,7 +268,9 @@ struct protent *protocols[] = {
 #ifdef AT_CHANGE
     &atcp_protent,
 #endif
+#if EAP_SUPPORT
     &eap_protent,
+#endif /* EAP_SUPPORT */
     NULL
 };
 

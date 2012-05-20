@@ -371,7 +371,9 @@ lcp_init(unit)
     ao->neg_chap = 1;
     ao->chap_mdtype = chap_mdtype_all;
     ao->neg_upap = 1;
+#if EAP_SUPPORT
     ao->neg_eap = 1;
+#endif /* EAP_SUPPORT */
     ao->neg_magicnumber = 1;
     ao->neg_pcompression = 1;
     ao->neg_accompression = 1;
@@ -696,9 +698,19 @@ lcp_cilen(f)
      */
     return (LENCISHORT(go->neg_mru && go->mru != DEFMRU) +
 	    LENCILONG(go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) +
+#if EAP_SUPPORT
 	    LENCISHORT(go->neg_eap) +
-	    LENCICHAP(!go->neg_eap && go->neg_chap) +
-	    LENCISHORT(!go->neg_eap && !go->neg_chap && go->neg_upap) +
+#endif /* EAP_SUPPORT */
+	    LENCICHAP(
+#if EAP_SUPPORT
+	        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+	        go->neg_chap) +
+	    LENCISHORT(
+#if EAP_SUPPORT
+	        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+	        !go->neg_chap && go->neg_upap) +
 	    LENCILQR(go->neg_lqr) +
 	    LENCICBCP(go->neg_cbcp) +
 	    LENCILONG(go->neg_magicnumber) +
@@ -772,10 +784,19 @@ lcp_addci(f, ucp, lenp)
     ADDCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
     ADDCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
 	      go->asyncmap);
+#if EAP_SUPPORT
     ADDCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
-    ADDCICHAP(CI_AUTHTYPE, !go->neg_eap && go->neg_chap, go->chap_mdtype);
-    ADDCISHORT(CI_AUTHTYPE, !go->neg_eap && !go->neg_chap && go->neg_upap,
-	       PPP_PAP);
+#endif /* EAP_SUPPORT */
+    ADDCICHAP(CI_AUTHTYPE,
+#if EAP_SUPPORT
+        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+        go->neg_chap, go->chap_mdtype);
+    ADDCISHORT(CI_AUTHTYPE,
+#if EAP_SUPPORT
+        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+        !go->neg_chap && go->neg_upap, PPP_PAP);
     ADDCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ADDCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ADDCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
@@ -921,10 +942,19 @@ lcp_ackci(f, p, len)
     ACKCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
     ACKCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
 	      go->asyncmap);
+#if EAP_SUPPORT
     ACKCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
-    ACKCICHAP(CI_AUTHTYPE, !go->neg_eap && go->neg_chap, go->chap_mdtype);
-    ACKCISHORT(CI_AUTHTYPE, !go->neg_eap && !go->neg_chap && go->neg_upap,
-	       PPP_PAP);
+#endif /* EAP_SUPPORT */
+    ACKCICHAP(CI_AUTHTYPE,
+#if EAP_SUPPORT
+        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+        go->neg_chap, go->chap_mdtype);
+    ACKCISHORT(CI_AUTHTYPE,
+#if EAP_SUPPORT
+        !go->neg_eap &&
+#endif /* EAP_SUPPORT */
+        !go->neg_chap && go->neg_upap, PPP_PAP);
     ACKCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ACKCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ACKCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
@@ -1092,23 +1122,32 @@ lcp_nakci(f, p, len, treat_as_reject)
      * they are proposing a different protocol, or a different
      * hash algorithm for CHAP.
      */
-    if ((go->neg_chap || go->neg_upap || go->neg_eap)
+    if ((go->neg_chap || go->neg_upap
+#if EAP_SUPPORT
+        || go->neg_eap
+#endif /* EAP_SUPPORT */
+        )
 	&& len >= CILEN_SHORT
 	&& p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT && p[1] <= len) {
 	cilen = p[1];
 	len -= cilen;
 	no.neg_chap = go->neg_chap;
 	no.neg_upap = go->neg_upap;
+#if EAP_SUPPORT
 	no.neg_eap = go->neg_eap;
+#endif /* EAP_SUPPORT */
 	INCPTR(2, p);
 	GETSHORT(cishort, p);
 	if (cishort == PPP_PAP && cilen == CILEN_SHORT) {
+#if EAP_SUPPORT
 	    /* If we were asking for EAP, then we need to stop that. */
 	    if (go->neg_eap)
 		try.neg_eap = 0;
+	    else
+#endif /* EAP_SUPPORT */
 
 	    /* If we were asking for CHAP, then we need to stop that. */
-	    else if (go->neg_chap)
+	    if (go->neg_chap)
 		try.neg_chap = 0;
 	    /*
 	     * If we weren't asking for CHAP or EAP, then we were asking for
@@ -1119,13 +1158,16 @@ lcp_nakci(f, p, len, treat_as_reject)
 
 	} else if (cishort == PPP_CHAP && cilen == CILEN_CHAP) {
 	    GETCHAR(cichar, p);
+#if EAP_SUPPORT
 	    /* Stop asking for EAP, if we were. */
 	    if (go->neg_eap) {
 		try.neg_eap = 0;
 		/* Try to set up to use their suggestion, if possible */
 		if (CHAP_CANDIGEST(go->chap_mdtype, cichar))
 		    try.chap_mdtype = CHAP_MDTYPE_D(cichar);
-	    } else if (go->neg_chap) {
+	    } else
+#endif /* EAP_SUPPORT */
+	    if (go->neg_chap) {
 		/*
 		 * We were asking for our preferred algorithm, they must
 		 * want something different.
@@ -1156,6 +1198,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 
 	} else {
 
+#if EAP_SUPPORT
 	    /*
 	     * If we were asking for EAP, and they're Conf-Naking EAP,
 	     * well, that's just strange.  Nobody should do that.
@@ -1169,7 +1212,9 @@ lcp_nakci(f, p, len, treat_as_reject)
 	     */
 	    if (go->neg_eap)
 		try.neg_eap = 0;
-	    else if (go->neg_chap)
+	    else
+#endif /* EAP_SUPPORT */
+	    if (go->neg_chap)
 		try.neg_chap = 0;
 	    else
 		try.neg_upap = 0;
@@ -1277,8 +1322,11 @@ lcp_nakci(f, p, len, treat_as_reject)
 		goto bad;
 	    break;
 	case CI_AUTHTYPE:
-	    if (go->neg_chap || no.neg_chap || go->neg_upap || no.neg_upap ||
-		go->neg_eap || no.neg_eap)
+	    if (go->neg_chap || no.neg_chap || go->neg_upap || no.neg_upap
+#if EAP_SUPPORT
+		|| go->neg_eap || no.neg_eap
+#endif /* EAP_SUPPORT */
+		)
 		goto bad;
 	    break;
 	case CI_MAGICNUMBER:
@@ -1391,6 +1439,7 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
     }
+#if EAP_SUPPORT
 #define REJCICHAP(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_CHAP && \
@@ -1406,6 +1455,24 @@ lcp_rejci(f, p, len)
 	try.neg = 0; \
 	try.neg_eap = try.neg_upap = 0; \
     }
+#endif /* EAP_SUPPORT */
+#if !EAP_SUPPORT
+#define REJCICHAP(opt, neg, val) \
+    if (go->neg && \
+	len >= CILEN_CHAP && \
+	p[1] == CILEN_CHAP && \
+	p[0] == opt) { \
+	len -= CILEN_CHAP; \
+	INCPTR(2, p); \
+	GETSHORT(cishort, p); \
+	GETCHAR(cichar, p); \
+	/* Check rejected value. */ \
+	if ((cishort != PPP_CHAP) || (cichar != (CHAP_DIGEST(val)))) \
+	    goto bad; \
+	try.neg = 0; \
+	try.neg_upap = 0; \
+    }
+#endif /* !EAP_SUPPORT */
 #define REJCILONG(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_LONG && \
@@ -1467,13 +1534,17 @@ lcp_rejci(f, p, len)
 
     REJCISHORT(CI_MRU, neg_mru, go->mru);
     REJCILONG(CI_ASYNCMAP, neg_asyncmap, go->asyncmap);
+#if EAP_SUPPORT
     REJCISHORT(CI_AUTHTYPE, neg_eap, PPP_EAP);
     if (!go->neg_eap) {
+#endif /* EAP_SUPPORT */
 	REJCICHAP(CI_AUTHTYPE, neg_chap, go->chap_mdtype);
 	if (!go->neg_chap) {
 	    REJCISHORT(CI_AUTHTYPE, neg_upap, PPP_PAP);
 	}
+#if EAP_SUPPORT
     }
+#endif /* EAP_SUPPORT */
     REJCILQR(CI_QUALITY, neg_lqr, go->lqr_period);
     REJCICBCP(CI_CALLBACK, neg_cbcp, CBCP_OPT);
     REJCILONG(CI_MAGICNUMBER, neg_magicnumber, go->magicnumber);
@@ -1609,7 +1680,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	case CI_AUTHTYPE:
 	    if (cilen < CILEN_SHORT ||
-		!(ao->neg_upap || ao->neg_chap || ao->neg_eap)) {
+		!(ao->neg_upap || ao->neg_chap
+#if EAP_SUPPORT
+		|| ao->neg_eap
+#endif /* EAP_SUPPORT */
+		)) {
 		/*
 		 * Reject the option if we're not willing to authenticate.
 		 */
@@ -1632,8 +1707,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	    if (cishort == PPP_PAP) {
 		/* we've already accepted CHAP or EAP */
-		if (ho->neg_chap || ho->neg_eap ||
-		    cilen != CILEN_SHORT) {
+		if (ho->neg_chap
+#if EAP_SUPPORT
+		    || ho->neg_eap
+#endif /* EAP_SUPPORT */
+		    || cilen != CILEN_SHORT) {
 		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
 		    orc = CONFREJ;
 		    break;
@@ -1641,14 +1719,18 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		if (!ao->neg_upap) {	/* we don't want to do PAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or EAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
+#if EAP_SUPPORT
 		    if (ao->neg_eap) {
 			PUTCHAR(CILEN_SHORT, nakp);
 			PUTSHORT(PPP_EAP, nakp);
 		    } else {
+#endif /* EAP_SUPPORT */
 			PUTCHAR(CILEN_CHAP, nakp);
 			PUTSHORT(PPP_CHAP, nakp);
 			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+#if EAP_SUPPORT
 		    }
+#endif /* EAP_SUPPORT */
 		    break;
 		}
 		ho->neg_upap = 1;
@@ -1656,8 +1738,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    }
 	    if (cishort == PPP_CHAP) {
 		/* we've already accepted PAP or EAP */
-		if (ho->neg_upap || ho->neg_eap ||
-		    cilen != CILEN_CHAP) {
+		if (ho->neg_upap
+#if EAP_SUPPORT
+		    || ho->neg_eap
+#endif /* EAP_SUPPORT */
+		    || cilen != CILEN_CHAP) {
 		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
 		    orc = CONFREJ;
 		    break;
@@ -1666,11 +1751,15 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		    orc = CONFNAK;	/* NAK it and suggest EAP or PAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
 		    PUTCHAR(CILEN_SHORT, nakp);
+#if EAP_SUPPORT
 		    if (ao->neg_eap) {
 			PUTSHORT(PPP_EAP, nakp);
 		    } else {
+#endif /* EAP_SUPPORT */
 			PUTSHORT(PPP_PAP, nakp);
+#if EAP_SUPPORT
 		    }
+#endif /* EAP_SUPPORT */
 		    break;
 		}
 		GETCHAR(cichar, p);	/* get digest type */
@@ -1690,6 +1779,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		ho->neg_chap = 1;
 		break;
 	    }
+#if EAP_SUPPORT
 	    if (cishort == PPP_EAP) {
 		/* we've already accepted CHAP or PAP */
 		if (ho->neg_chap || ho->neg_upap || cilen != CILEN_SHORT) {
@@ -1713,6 +1803,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		ho->neg_eap = 1;
 		break;
 	    }
+#endif /* EAP_SUPPORT */
 
 	    /*
 	     * We don't recognize the protocol they're asking for.
@@ -1722,10 +1813,14 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	     */
 	    orc = CONFNAK;
 	    PUTCHAR(CI_AUTHTYPE, nakp);
+
+#if EAP_SUPPORT
 	    if (ao->neg_eap) {
 		PUTCHAR(CILEN_SHORT, nakp);
 		PUTSHORT(PPP_EAP, nakp);
-	    } else if (ao->neg_chap) {
+	    } else
+#endif /* EAP_SUPPORT */
+	    if (ao->neg_chap) {
 		PUTCHAR(CILEN_CHAP, nakp);
 		PUTSHORT(PPP_CHAP, nakp);
 		PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);

@@ -44,12 +44,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp $"
-
-/*
- * TODO:
- */
+#if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include "pppd.h"
 #include "pathnames.h"
@@ -66,8 +61,6 @@
 #ifndef SHA_DIGESTSIZE
 #define	SHA_DIGESTSIZE 20
 #endif
-
-static const char rcsid[] = RCSID;
 
 eap_state eap_states[NUM_PPP];		/* EAP state; one for each unit */
 #ifdef USE_SRP
@@ -2419,3 +2412,4 @@ void *arg;
 
 	return (inp - pstart);
 }
+#endif /* PPP_SUPPORT && EAP_SUPPORT */

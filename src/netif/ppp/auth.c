@@ -109,7 +109,9 @@
 #include "ipcp.h"
 #include "upap.h"
 #include "chap-new.h"
+#if EAP_SUPPORT
 #include "eap.h"
+#endif /* EAP_SUPPORT */
 #include "pathnames.h"
 #include "session.h"
 
@@ -329,7 +331,7 @@ option_t auth_options[] = {
       &lcp_allowoptions[0].chap_mdtype },
 #endif
 #endif
-
+#if EAP_SUPPORT
     { "require-eap", o_bool, &lcp_wantoptions[0].neg_eap,
       "Require EAP authentication from peer", OPT_PRIOSUB | 1,
       &auth_required },
@@ -337,6 +339,7 @@ option_t auth_options[] = {
     { "refuse-eap", o_bool, &refuse_eap,
       "Don't agree to authenticate to peer with EAP", 1 },
 #endif
+#endif /* EAP_SUPPORT */
     { "name", o_string, our_name,
       "Set local name for authentication",
       OPT_PRIO | OPT_PRIV | OPT_STATIC, NULL, MAXNAMELEN },
@@ -732,7 +735,11 @@ link_established(unit)
     if (!auth_required && noauth_addrs != NULL)
 	set_allowed_addrs(unit, NULL, NULL);
 
-    if (auth_required && !(go->neg_upap || go->neg_chap || go->neg_eap)) {
+    if (auth_required && !(go->neg_upap || go->neg_chap
+#if EAP_SUPPORT
+	|| go->neg_eap
+#endif /* EAP_SUPPORT */
+	)) {
 	/*
 	 * We wanted the peer to authenticate itself, and it refused:
 	 * if we have some address(es) it can use without auth, fine,
@@ -752,20 +759,26 @@ link_established(unit)
 
     new_phase(PHASE_AUTHENTICATE);
     auth = 0;
+#if EAP_SUPPORT
     if (go->neg_eap) {
 	eap_authpeer(unit, our_name);
 	auth |= EAP_PEER;
-    } else if (go->neg_chap) {
+    } else
+#endif /* EAP_SUPPORT */
+    if (go->neg_chap) {
 	chap_auth_peer(unit, our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else if (go->neg_upap) {
 	upap_authpeer(unit);
 	auth |= PAP_PEER;
     }
+#if EAP_SUPPORT
     if (ho->neg_eap) {
 	eap_authwithpeer(unit, ppp_settings.user);
 	auth |= EAP_WITHPEER;
-    } else if (ho->neg_chap) {
+    } else
+#endif /* EAP_SUPPORT */
+    if (ho->neg_chap) {
 	chap_auth_with_peer(unit, ppp_settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else if (ho->neg_upap) {
@@ -795,7 +808,11 @@ network_phase(unit)
     /*
      * If the peer had to authenticate, run the auth-up script now.
      */
-    if (go->neg_chap || go->neg_upap || go->neg_eap) {
+    if (go->neg_chap || go->neg_upap
+#if EAP_SUPPORT
+	|| go->neg_eap
+#endif /* EAP_SUPPORT */
+	) {
 	notify(auth_up_notifier, 0);
     }
 
@@ -1179,17 +1196,25 @@ auth_check_options()
     /* If authentication is required, ask peer for CHAP, PAP, or EAP. */
     if (auth_required) {
 	allow_any_ip = 0;
-	if (!wo->neg_chap && !wo->neg_upap && !wo->neg_eap) {
+	if (!wo->neg_chap && !wo->neg_upap
+#if EAP_SUPPORT
+	    && !wo->neg_eap
+#endif /* EAP_SUPPORT */
+	    ) {
 	    wo->neg_chap = chap_mdtype_all != MDTYPE_NONE;
 	    wo->chap_mdtype = chap_mdtype_all;
 	    wo->neg_upap = 1;
+#if EAP_SUPPORT
 	    wo->neg_eap = 1;
+#endif /* EAP_SUPPORT */
 	}
     } else {
 	wo->neg_chap = 0;
 	wo->chap_mdtype = MDTYPE_NONE;
 	wo->neg_upap = 0;
+#if EAP_SUPPORT
 	wo->neg_eap = 0;
+#endif /* EAP_SUPPORT */
     }
 
     /*
@@ -1199,11 +1224,19 @@ auth_check_options()
      */
     lacks_ip = 0;
     can_auth = wo->neg_upap && (uselogin || have_pap_secret(&lacks_ip));
-    if (!can_auth && (wo->neg_chap || wo->neg_eap)) {
+    if (!can_auth && (wo->neg_chap
+#if EAP_SUPPORT
+	|| wo->neg_eap
+#endif /* EAP_SUPPORT */
+	)) {
 	can_auth = have_chap_secret((explicit_remote? remote_name: NULL),
 				    our_name, 1, &lacks_ip);
     }
-    if (!can_auth && wo->neg_eap) {
+    if (!can_auth
+#if EAP_SUPPORT
+	&& wo->neg_eap
+#endif /* EAP_SUPPORT */
+	) {
 	can_auth = have_srp_secret((explicit_remote? remote_name: NULL),
 				    our_name, 1, &lacks_ip);
     }
@@ -1255,7 +1288,9 @@ auth_reset(unit)
 
     ao->neg_upap = !ppp_settings.refuse_pap;
 
+#if EAP_SUPPORT
     ao->neg_eap = !ppp_settings.refuse_eap;
+#endif /* EAP_SUPPORT */
 
     if(!ppp_settings.refuse_chap) {
       ao->chap_mdtype = MDTYPE_MD5;
@@ -1265,7 +1300,9 @@ auth_reset(unit)
   } else {
     ao->neg_upap = 0;
     ao->neg_chap = 0;
+#if EAP_SUPPORT
     ao->neg_eap = 0;
+#endif /* EAP_SUPPORT */
     ao->chap_mdtype = MDTYPE_NONE;
   }
 
@@ -1274,7 +1311,9 @@ auth_reset(unit)
   printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
   printf("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT) );
   printf("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2) );
+#if EAP_SUPPORT
   printf("neg_eap: %d\n", ao->neg_eap);
+#endif /* EAP_SUPPORT */
 
     //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
 
@@ -1292,10 +1331,12 @@ auth_reset(unit)
 
   go->neg_upap = 0;
   go->neg_chap = 0;
+#if EAP_SUPPORT
   go->neg_eap = 0;
+#endif /* EAP_SUPPORT */
   go->chap_mdtype = MDTYPE_NONE;
   return;
-
+#if 0
     /* FIXME: find what the below stuff do */
     int hadchap;
     hadchap = -1;
@@ -1317,6 +1358,7 @@ auth_reset(unit)
 	!have_srp_secret((explicit_remote? remote_name: NULL), our_name, 1,
 	    NULL))
 	go->neg_eap = 0;
+#endif
 }
 
 /*

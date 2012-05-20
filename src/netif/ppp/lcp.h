@@ -93,7 +93,9 @@ typedef struct lcp_options {
     bool neg_asyncmap;		/* Negotiate the async map? */
     bool neg_upap;		/* Ask for UPAP authentication? */
     bool neg_chap;		/* Ask for CHAP authentication? */
+#if EAP_SUPPORT
     bool neg_eap;		/* Ask for EAP authentication? */
+#endif /* EAP_SUPPORT */
     bool neg_magicnumber;	/* Ask for magic number? */
     bool neg_pcompression;	/* HDLC Protocol Field Compression? */
     bool neg_accompression;	/* HDLC Address/Control Field Compression? */
