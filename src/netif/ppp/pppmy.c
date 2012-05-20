@@ -435,14 +435,6 @@ int ppp_init(void) {
 void
 pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 {
-  ppp_settings.refuse_pap = 1;
-  ppp_settings.refuse_chap = 1;
-  ppp_settings.refuse_mschap = 1;
-  ppp_settings.refuse_mschap_v2 = 0;
-  ppp_settings.refuse_eap = 1;
-
-/* FIXME: re-enable that */
-#if 0
   switch(authType) {
     case PPPAUTHTYPE_NONE:
     default:
@@ -489,7 +481,6 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
       ppp_settings.refuse_chap = 0;
       break;
   }
-#endif
 
   if(user) {
     strncpy(ppp_settings.user, user, sizeof(ppp_settings.user)-1);

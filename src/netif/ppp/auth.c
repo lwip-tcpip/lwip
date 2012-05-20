@@ -1292,41 +1292,20 @@ void
 auth_reset(unit)
     int unit;
 {
-  lcp_options *go = &lcp_gotoptions[unit];
-  lcp_options *ao = &lcp_allowoptions[unit];
-
-  if( ppp_settings.passwd[0] ) {
-
-    ao->neg_upap = !ppp_settings.refuse_pap;
-
-    ao->neg_eap = !ppp_settings.refuse_eap;
-
-    ao->chap_mdtype = MDTYPE_NONE;
-    if(!ppp_settings.refuse_chap)
-      ao->chap_mdtype |= MDTYPE_MD5;
-    if(!ppp_settings.refuse_mschap)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT;
-    if(!ppp_settings.refuse_mschap_v2)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
-
-    ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
-
-  } else {
-    ao->neg_upap = 0;
-    ao->neg_chap = 0;
-    ao->neg_eap = 0;
-    ao->chap_mdtype = MDTYPE_NONE;
-  }
-
-
-  printf("neg_upap: %d\n", ao->neg_upap);
-  printf("neg_chap: %d\n", ao->neg_chap);
-  printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
-  printf("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT) );
-  printf("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2) );
-  printf("neg_eap: %d\n", ao->neg_eap);
+    lcp_options *go = &lcp_gotoptions[unit];
+    lcp_options *ao = &lcp_allowoptions[unit];
+    int hadchap;
+    hadchap = -1;
 
     //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
+
+    ao->neg_upap = !ppp_settings.refuse_pap && ppp_settings.passwd[0] != 0;
+
+    ao->neg_chap = (!ppp_settings.refuse_chap || !ppp_settings.refuse_mschap || !ppp_settings.refuse_mschap_v2) && ppp_settings.passwd[0];
+
+    ao->neg_eap = !ppp_settings.refuse_eap && ppp_settings.passwd[0] != 0;
+
+    return;
 
     /*
     ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2)
@@ -1340,26 +1319,15 @@ auth_reset(unit)
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
 	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL)); */
 
-  go->neg_upap = 0;
-  go->neg_chap = 0;
-  go->neg_eap = 0;
-  go->chap_mdtype = MDTYPE_NONE;
-  return;
-
     /* FIXME: find what the below stuff do */
-    int hadchap;
-    hadchap = -1;
-
     hadchap = -1;
     if (go->neg_upap && !uselogin && !have_pap_secret(NULL))
 	go->neg_upap = 0;
-
     if (go->neg_chap) {
 	if (!(hadchap = have_chap_secret((explicit_remote? remote_name: NULL),
 			      our_name, 1, NULL)))
 	    go->neg_chap = 0;
     }
-
     if (go->neg_eap &&
 	(hadchap == 0 || (hadchap == -1 &&
 	    !have_chap_secret((explicit_remote? remote_name: NULL), our_name,
@@ -1763,8 +1731,6 @@ get_secret(unit, client, server, secret, secret_len, am_server)
   *secret_len = len;
 
   return 1;
-
-/* FIXME: clean that */
 #if 0
 	    //	strlcpy(rname, ppp_settings.user, sizeof(rname));
 
