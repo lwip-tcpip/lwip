@@ -33,6 +33,16 @@
 #ifndef PPPCRYPT_H
 #define	PPPCRYPT_H
 
-void pppcrypt_56_to_64_bit_key(u_char *key, u_char *des_key);
+#ifdef HAVE_CRYPT_H
+#include <crypt.h>
+#endif
+
+#ifndef USE_CRYPT
+#include <des.h>
+#endif
+
+extern bool	DesSetkey __P((u_char *));
+extern bool	DesEncrypt __P((u_char *, u_char *));
+extern bool	DesDecrypt __P((u_char *, u_char *));
 
 #endif /* PPPCRYPT_H */
