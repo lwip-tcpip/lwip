@@ -51,17 +51,6 @@
  * TODO:
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pwd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <assert.h>
-#include <errno.h>
-
 #include "pppd.h"
 #include "pathnames.h"
 #include "md5.h"
@@ -1121,7 +1110,7 @@ int lenstr;
 	int msglen;
 
 	outp = outpacket_buf;
-    
+
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
@@ -1152,7 +1141,7 @@ u_char *str;
 	int msglen;
 
 	outp = outpacket_buf;
-    
+
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
