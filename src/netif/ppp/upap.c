@@ -58,6 +58,7 @@ static const char rcsid[] = RCSID;
 
 static bool hide_password = 1;
 
+#if PPP_OPTIONS
 /*
  * Command-line options.
  */
@@ -76,6 +77,7 @@ static option_t pap_option_list[] = {
 
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points.
@@ -102,7 +104,9 @@ struct protent pap_protent = {
     1,
     "PAP",
     NULL,
+#if PPP_OPTIONS
     pap_option_list,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL,
     NULL

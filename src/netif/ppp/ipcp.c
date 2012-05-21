@@ -143,6 +143,7 @@ static int setnetmask __P((char **));
 int setipaddr __P((char *, char **, int));
 static void printipaddr __P((option_t *, void (*)(void *, char *,...),void *));
 
+#if PPP_OPTIONS
 static option_t ipcp_option_list[] = {
     { "noip", o_bool, &ipcp_protent.enabled_flag,
       "Disable IP and IPCP" },
@@ -243,6 +244,7 @@ static option_t ipcp_option_list[] = {
 
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points from main code.
@@ -275,7 +277,9 @@ struct protent ipcp_protent = {
     1,
     "IPCP",
     "IP",
+#if PPP_OPTIONS
     ipcp_option_list,
+#endif /* PPP_OPTIONS */
     ip_check_options,
     ip_demand_conf,
     ip_active_pkt
@@ -322,8 +326,12 @@ setvjslots(argv)
 {
     int value;
 
+/* FIXME: found what int_option() did */
+#if PPP_OPTIONS
     if (!int_option(*argv, &value))
 	return 0;
+#endif /* PPP_OPTIONS */
+
     if (value < 2 || value > 16) {
 	option_error("vj-max-slots value must be between 2 and 16");
 	return 0;

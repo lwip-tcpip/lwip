@@ -427,7 +427,7 @@ void tty_process_extra_options()
 			fatal("Couldn't stat default device %s: %m", devnam);
 	}
 
-
+#if PPP_OPTIONS
 	/*
 	 * Parse the tty options file.
 	 * The per-tty options file should not change
@@ -437,6 +437,7 @@ void tty_process_extra_options()
 	 */
 	if (!options_for_tty())
 		exit(EXIT_OPTION_ERROR);
+#endif /* PPP_OPTIONS */
 }
 
 /*

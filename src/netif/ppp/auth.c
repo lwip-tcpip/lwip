@@ -238,29 +238,36 @@ static void network_phase __P((int));
 static void check_idle __P((void *));
 static void connect_time_expired __P((void *));
 static int  null_login __P((int));
+#if 0 /* UNUSED */
 /* static int  get_pap_passwd __P((char *)); */
 static int  have_pap_secret __P((int *));
 static int  have_chap_secret __P((char *, char *, int, int *));
 static int  have_srp_secret __P((char *client, char *server, int need_ip,
     int *lacks_ipp));
+#endif /* UNUSED */
 static int  ip_addr_check __P((u_int32_t, struct permitted_ip *));
+#if 0 /* UNUSED */
 static int  scan_authfile __P((FILE *, char *, char *, char *,
 			       struct wordlist **, struct wordlist **,
 			       char *, int));
 static void free_wordlist __P((struct wordlist *));
 static void set_allowed_addrs __P((int, struct wordlist *, struct wordlist *));
+#endif /* UNUSED */
 static int  some_ip_ok __P((struct wordlist *));
 static int  setupapfile __P((char **));
 static int  privgroup __P((char **));
 static int  set_noauth_addr __P((char **));
 static int  set_permitted_number __P((char **));
 static void check_access __P((FILE *, char *));
+#if 0 /* UNUSED */
 static int  wordlist_count __P((struct wordlist *));
+#endif /* UNUSED */
 
 #ifdef MAXOCTETS
 static void check_maxoctets __P((void *));
 #endif
 
+#if PPP_OPTIONS
 /*
  * Authentication-related options.
  */
@@ -397,6 +404,7 @@ option_t auth_options[] = {
 
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * setupapfile - specifies UPAP info for authenticating with peer.
@@ -737,14 +745,18 @@ link_established(unit)
 		(*protp->lowerup)(unit);
     }
 
+#if PPP_ALLOWED_ADDRS
     if (!auth_required && noauth_addrs != NULL)
 	set_allowed_addrs(unit, NULL, NULL);
+#endif /* PPP_ALLOWED_ADDRS */
 
     if (auth_required && !(go->neg_upap || go->neg_chap
 #if EAP_SUPPORT
 	|| go->neg_eap
 #endif /* EAP_SUPPORT */
 	)) {
+
+#if PPP_ALLOWED_ADDRS
 	/*
 	 * We wanted the peer to authenticate itself, and it refused:
 	 * if we have some address(es) it can use without auth, fine,
@@ -754,7 +766,9 @@ link_established(unit)
 	 */
 	if (noauth_addrs != NULL) {
 	    set_allowed_addrs(unit, NULL, NULL);
-	} else if (!wo->neg_upap || uselogin || !null_login(unit)) {
+	} else
+#endif /* PPP_ALLOWED_ADDRS */
+	if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
 	    status = EXIT_PEER_AUTH_FAILED;
 	    lcp_close(unit, "peer refused to authenticate");
@@ -832,6 +846,7 @@ network_phase(unit)
     }
 #endif
 
+#if PPP_OPTIONS
     /*
      * Process extra options from the secrets file
      */
@@ -840,6 +855,7 @@ network_phase(unit)
 	free_wordlist(extra_options);
 	extra_options = 0;
     }
+#endif /* PPP_OPTIONS */
     start_networks(unit);
 }
 
@@ -1206,6 +1222,7 @@ connect_time_expired(arg)
     lcp_close(0, "Connect time expired");	/* Close connection */
 }
 
+#if PPP_OPTIONS
 /*
  * auth_check_options - called to check authentication options.
  */
@@ -1315,6 +1332,7 @@ auth_check_options()
 	exit(EXIT_CNID_AUTH_FAILED);
     }
 }
+#endif /* PPP_OPTIONS */
 
 /*
  * auth_reset - called when LCP is starting negotiations to recheck
@@ -1554,6 +1572,9 @@ static int
 null_login(unit)
     int unit;
 {
+    return 0;
+/* FIXME: clean that */
+#if 0 /* UNUSED  */
     char *filename;
     FILE *f;
     int i, ret;
@@ -1592,6 +1613,7 @@ null_login(unit)
 	free_wordlist(addrs);
 
     return ret;
+#endif
 }
 
 #if 0
@@ -1637,6 +1659,7 @@ get_pap_passwd(passwd)
 }
 #endif
 
+#if 0 /* UNUSED */
 /*
  * have_pap_secret - check whether we have a PAP file with any
  * secrets that we could possibly use for authenticating the peer.
@@ -1675,7 +1698,6 @@ have_pap_secret(lacks_ipp)
 
     return ret >= 0;
 }
-
 
 /*
  * have_chap_secret - check whether we have a CHAP file with a
@@ -1725,7 +1747,6 @@ have_chap_secret(client, server, need_ip, lacks_ipp)
     return ret >= 0;
 }
 
-
 /*
  * have_srp_secret - check whether we have a SRP file with a
  * secret that we could possibly use for authenticating `client'
@@ -1766,7 +1787,7 @@ have_srp_secret(client, server, need_ip, lacks_ipp)
 
     return ret >= 0;
 }
-
+#endif /* UNUSED */
 
 /*
  * get_secret - open the CHAP secret file and return the secret
@@ -1927,6 +1948,7 @@ get_srp_secret(unit, client, server, secret, am_server)
 #endif
 }
 
+#if 0 /* UNUSED */
 /*
  * set_allowed_addrs() - set the list of allowed addresses.
  * Also looks for `--' indicating options to apply for this peer
@@ -2083,6 +2105,7 @@ set_allowed_addrs(unit, addrs, opts)
 	    wo->accept_remote = 1;
     }
 }
+#endif /* UNUSED */
 
 /*
  * auth_ip_addr - check whether the peer is authorized to use
@@ -2202,7 +2225,7 @@ check_access(f, filename)
     }
 }
 
-/* FIXME: useless ! */
+#if 0 /* UNUSED */
 /*
  * scan_authfile - Scan an authorization file for a secret suitable
  * for authenticating `client' on `server'.  The return value is -1
@@ -2406,3 +2429,4 @@ free_wordlist(wp)
 	wp = next;
     }
 }
+#endif /* UNUSED */

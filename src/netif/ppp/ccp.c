@@ -71,6 +71,7 @@ static char deflate_value[8];
 bool refuse_mppe_stateful = 1;		/* Allow stateful mode? */
 #endif
 
+#if PPP_OPTIONS
 static option_t ccp_option_list[] = {
     { "noccp", o_bool, &ccp_protent.enabled_flag,
       "Disable CCP negotiation" },
@@ -162,6 +163,7 @@ static option_t ccp_option_list[] = {
 
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points from main code.
@@ -192,7 +194,9 @@ struct protent ccp_protent = {
     1,
     "CCP",
     "Compressed",
+#if PPP_OPTIONS
     ccp_option_list,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL,
     NULL

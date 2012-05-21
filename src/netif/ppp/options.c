@@ -184,6 +184,7 @@ struct option_list {
 
 static struct option_list *extra_options = NULL;
 
+#if PPP_OPTIONS
 /*
  * Valid arguments.
  */
@@ -1625,3 +1626,4 @@ loadplugin(argv)
     return 0;
 }
 #endif /* PLUGIN */
+#endif /* PPP_OPTIONS */

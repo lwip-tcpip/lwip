@@ -343,6 +343,7 @@ int ppp_oldmain() {
 
     progname = *argv;
 
+#if PPP_OPTIONS
     /*
      * Parse, in order, the system options file, the user's options file,
      * and the command line arguments.
@@ -351,6 +352,8 @@ int ppp_oldmain() {
 	|| !options_from_user()
 	|| !parse_args(argc-1, argv+1))
 	exit(EXIT_OPTION_ERROR);
+#endif /* PPP_OPTIONS */
+
     devnam_fixed = 1;		/* can no longer change device name */
 
     /*
@@ -363,6 +366,7 @@ int ppp_oldmain() {
     if (debug)
 	setlogmask(LOG_UPTO(LOG_DEBUG));
 
+#if 0
     /*
      * Check that we are running as root.
      */
@@ -376,7 +380,9 @@ int ppp_oldmain() {
 	option_error("%s", no_ppp_msg);
 	exit(EXIT_NO_KERNEL_SUPPORT);
     }
+#endif
 
+#if PPP_OPTIONS
     /*
      * Check that the options given are valid and consistent.
      */
@@ -399,6 +405,7 @@ int ppp_oldmain() {
 	print_options(pr_log, NULL);
 	end_pr_log();
     }
+#endif /* PPP_OPTIONS */
 
     if (dryrun)
 	die(0);

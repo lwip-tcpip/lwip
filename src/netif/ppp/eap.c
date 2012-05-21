@@ -67,6 +67,7 @@ eap_state eap_states[NUM_PPP];		/* EAP state; one for each unit */
 static char *pn_secret = NULL;		/* Pseudonym generating secret */
 #endif
 
+#if PPP_OPTIONS
 /*
  * Command-line options.
  */
@@ -91,6 +92,7 @@ static option_t eap_option_list[] = {
 #endif
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points.
@@ -117,7 +119,9 @@ struct protent eap_protent = {
 	1,			/* protocol enabled */
 	"EAP",			/* text name of protocol */
 	NULL,			/* text name of corresponding data protocol */
+#if PPP_OPTIONS
 	eap_option_list,	/* list of command-line options */
+#endif /* PPP_OPTIONS */
 	NULL,			/* check requested options; assign defaults */
 	NULL,			/* configure interface for demand-dial */
 	NULL			/* say whether to bring up link for this pkt */

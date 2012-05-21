@@ -142,6 +142,7 @@ static char *mschap2_peer_challenge = NULL;
 #include <net/ppp-comp.h>
 #endif
 
+#if PPP_OPTIONS
 /*
  * Command-line options.
  */
@@ -158,6 +159,7 @@ static option_t chapms_option_list[] = {
 #endif
 	{ NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * chapms_generate_challenge - generate a challenge for MS-CHAP.
@@ -940,7 +942,9 @@ chapms_init(void)
 {
 	chap_register_digest(&chapms_digest);
 	chap_register_digest(&chapms2_digest);
+#if PPP_OPTIONS
 	add_options(chapms_option_list);
+#endif /* PPP_OPTIONS */
 }
 
 #endif /* CHAPMS */

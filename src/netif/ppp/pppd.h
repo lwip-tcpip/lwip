@@ -415,8 +415,10 @@ struct protent {
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
     option_t *options;		/* List of command-line options */
+#if PPP_OPTIONS
     /* Check requested options, assign defaults */
     void (*check_options) __P((void));
+#endif /* PPP_OPTIONS */
     /* Configure interface for demand-dial */
     int  (*demand_conf) __P((int unit));
     /* Say whether to bring up link for this pkt */
@@ -680,8 +682,12 @@ int  options_from_list __P((struct wordlist *, int privileged));
 				/* Parse options from a wordlist */
 int  getword __P((FILE *f, char *word, int *newlinep, char *filename));
 				/* Read a word from a file */
+#if PPP_OPTIONS
 void option_error __P((char *fmt, ...));
 				/* Print an error message about an option */
+#else
+#define option_error(x, ...)
+#endif /* PPP_OPTIONS */
 int int_option __P((char *, int *));
 				/* Simplified number_option for decimal ints */
 void add_options __P((option_t *)); /* Add extra options */

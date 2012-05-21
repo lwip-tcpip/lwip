@@ -90,6 +90,7 @@ static void printendpoint __P((option_t *, void (*)(void *, char *, ...),
 			       void *));
 #endif /* HAVE_MULTILINK */
 
+#if PPP_OPTIONS
 static option_t lcp_option_list[] = {
     /* LCP options */
     { "-all", o_special_noarg, (void *)noopt,
@@ -195,6 +196,7 @@ static option_t lcp_option_list[] = {
 
     {NULL}
 };
+#endif /* PPP_OPTIONS */
 
 /* global vars */
 fsm lcp_fsm[NUM_PPP];			/* LCP fsm structure (global)*/
@@ -281,7 +283,9 @@ struct protent lcp_protent = {
     1,
     "LCP",
     NULL,
+#if PPP_OPTIONS
     lcp_option_list,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL,
     NULL

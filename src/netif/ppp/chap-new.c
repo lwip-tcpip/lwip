@@ -62,6 +62,7 @@ int chap_timeout_time = 3;
 int chap_max_transmits = 10;
 int chap_rechallenge_time = 0;
 
+#if PPP_OPTIONS
 /*
  * Command-line options.
  */
@@ -74,6 +75,7 @@ static option_t chap_option_list[] = {
 	  "Set interval for rechallenge", OPT_PRIO },
 	{ NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Internal state.
@@ -654,6 +656,8 @@ struct protent chap_protent = {
 	1,		/* enabled_flag */
 	"CHAP",		/* name */
 	NULL,		/* data_name */
+#if PPP_OPTIONS
 	chap_option_list,
+#endif /* PPP_OPTIONS */
 	NULL,		/* check_options */
 };

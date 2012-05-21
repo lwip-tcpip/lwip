@@ -69,6 +69,7 @@ static const char rcsid[] = RCSID;
 #include "fsm.h"
 #include "ecp.h"
 
+#if PPP_OPTIONS
 static option_t ecp_option_list[] = {
     { "noecp", o_bool, &ecp_protent.enabled_flag,
       "Disable ECP negotiation" },
@@ -77,6 +78,7 @@ static option_t ecp_option_list[] = {
 
     { NULL }
 };
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points from main code.
@@ -111,7 +113,9 @@ struct protent ecp_protent = {
     0,
     "ECP",
     "Encrypted",
+#if PPP_OPTIONS
     ecp_option_list,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL,
     NULL
