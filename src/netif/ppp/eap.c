@@ -48,7 +48,7 @@
 
 #include "pppd.h"
 #include "pathnames.h"
-#include "md5.h"
+#include "polarssl/md5.h"
 #include "eap.h"
 
 #ifdef USE_SRP
@@ -1304,7 +1304,7 @@ int len;
 	int secret_len;
 	char secret[MAXWORDLEN];
 	char rhostname[256];
-	MD5_CTX mdContext;
+	md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
 	struct t_client *tc;
@@ -1431,13 +1431,13 @@ int len;
 			eap_send_nak(esp, id, EAPT_SRP);
 			break;
 		}
-		MD5_Init(&mdContext);
+		md5_starts(&mdContext);
 		typenum = id;
-		MD5_Update(&mdContext, &typenum, 1);
-		MD5_Update(&mdContext, (u_char *)secret, secret_len);
+		md5_update(&mdContext, &typenum, 1);
+		md5_update(&mdContext, (u_char *)secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		MD5_Update(&mdContext, inp, vallen);
-		MD5_Final(hash, &mdContext);
+		md5_update(&mdContext, inp, vallen);
+		md5_finish(&mdContext, hash);
 		eap_chap_response(esp, id, hash, esp->es_client.ea_name,
 		    esp->es_client.ea_namelen);
 		break;
@@ -1714,7 +1714,7 @@ int len;
 	int secret_len;
 	char secret[MAXSECRETLEN];
 	char rhostname[256];
-	MD5_CTX mdContext;
+	md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
 	struct t_server *ts;
@@ -1857,12 +1857,12 @@ int len;
 			eap_send_failure(esp);
 			break;
 		}
-		MD5_Init(&mdContext);
-		MD5_Update(&mdContext, &esp->es_server.ea_id, 1);
-		MD5_Update(&mdContext, (u_char *)secret, secret_len);
+		md5_starts(&mdContext);
+		md5_update(&mdContext, &esp->es_server.ea_id, 1);
+		md5_update(&mdContext, (u_char *)secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		MD5_Update(&mdContext, esp->es_challenge, esp->es_challen);
-		MD5_Final(hash, &mdContext);
+		md5_update(&mdContext, esp->es_challenge, esp->es_challen);
+		md5_finish(&mdContext, hash);
 		if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0) {
 			eap_send_failure(esp);
 			break;
