@@ -32,9 +32,9 @@
 
 #include "lwip/opt.h"
 
+#include <errno.h>
 #include "pppd.h"
 #include "pppcrypt.h"
-#include "des.h"
 
 static u_char
 Get7Bits(input, startBit)
@@ -64,8 +64,13 @@ u_char *des_key;	/* OUT 64 bit DES key with parity bits added */
 	des_key[5] = Get7Bits(key, 35);
 	des_key[6] = Get7Bits(key, 42);
 	des_key[7] = Get7Bits(key, 49);
+
+#ifndef USE_CRYPT
+	des_set_odd_parity((des_cblock *)des_key);
+#endif
 }
 
+#ifdef USE_CRYPT
 /*
  * in == 8-byte string (expanded version of the 56-bit key)
  * out == 64-byte string where each byte is either 1 or 0
@@ -115,7 +120,10 @@ u_char *key;
 
 	MakeKey(key, des_key);
 	Expand(des_key, crypt_key);
+	errno = 0;
 	setkey((const char *)crypt_key);
+	if (errno != 0)
+		return (0);
 	return (1);
 }
 
@@ -127,7 +135,10 @@ u_char *cipher;	/* OUT 8 octets */
 	u_char des_input[66];
 
 	Expand(clear, des_input);
+	errno = 0;
 	encrypt((char *)des_input, 0);
+	if (errno != 0)
+		return (0);
 	Collapse(des_input, cipher);
 	return (1);
 }
@@ -140,7 +151,45 @@ u_char *clear;	/* OUT 8 octets */
 	u_char des_input[66];
 
 	Expand(cipher, des_input);
+	errno = 0;
 	encrypt((char *)des_input, 1);
+	if (errno != 0)
+		return (0);
 	Collapse(des_input, clear);
 	return (1);
 }
+
+#else /* USE_CRYPT */
+static des_key_schedule	key_schedule;
+
+bool
+DesSetkey(key)
+u_char *key;
+{
+	des_cblock des_key;
+	MakeKey(key, des_key);
+	des_set_key(&des_key, key_schedule);
+	return (1);
+}
+
+bool
+DesEncrypt(clear, key, cipher)
+u_char *clear;	/* IN  8 octets */
+u_char *cipher;	/* OUT 8 octets */
+{
+	des_ecb_encrypt((des_cblock *)clear, (des_cblock *)cipher,
+	    key_schedule, 1);
+	return (1);
+}
+
+bool
+DesDecrypt(cipher, clear)
+u_char *cipher;	/* IN  8 octets */
+u_char *clear;	/* OUT 8 octets */
+{
+	des_ecb_encrypt((des_cblock *)cipher, (des_cblock *)clear,
+	    key_schedule, 0);
+	return (1);
+}
+
+#endif /* USE_CRYPT */
