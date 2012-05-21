@@ -1,8 +1,9 @@
 About PolarSSL files into lwIP PPP support
 ------------------------------------------
 
-This folder contains some files fetched from the PolarSSL project for
-ciphers and encryption methods we need for lwIP PPP support.
+This folder contains some files fetched from the latest BSD release of
+the PolarSSL project for ciphers and encryption methods we need for lwIP
+PPP support.
 
 The PolarSSL files were cleaned to contain only the necessary struct
 fields and functions needed for lwIP.
