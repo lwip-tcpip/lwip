@@ -47,9 +47,18 @@
  */
 
 #include "lwip/opt.h"
-/* FIXME: don't build if not necessary */
 
 #include "lwip/def.h"
+
+#include <sys/types.h>
+#include <sys/param.h>
+#include <pwd.h>
+#include <unistd.h>
+#include <string.h>
+
+#ifdef DEBUG
+# include <stdio.h>
+#endif
 
 static const u_char	IP[64] = {
 	58, 50, 42, 34, 26, 18, 10,  2, 60, 52, 44, 36, 28, 20, 12,  4,
@@ -155,6 +164,8 @@ const u_int32_t _des_bits32[32] =
 
 const u_char	_des_bits8[8] = { 0x80, 0x40, 0x20, 0x10, 0x08, 0x04, 0x02, 0x01 };
 
+static u_int32_t saltbits;
+static int32_t	old_salt;
 static const u_int32_t *bits28, *bits24;
 static u_char	init_perm[64], final_perm[64];
 static u_int32_t en_keysl[16], en_keysr[16];
@@ -175,6 +186,8 @@ _des_init(void)
 	u_int32_t	*p, *il, *ir, *fl, *fr;
 
 	old_rawkey0 = old_rawkey1 = 0;
+	saltbits = 0;
+	old_salt = 0;
 	bits24 = (bits28 = _des_bits32 + 4) + 4;
 
 	/*
@@ -447,10 +460,12 @@ _des_do_des(u_int32_t l_in, u_int32_t r_in, u_int32_t *l_out, u_int32_t *r_out,
 				| ((r & 0x0000001f) << 1)
 				| ((r & 0x80000000) >> 31);
 			/*
-			 * Do XOR with the permuted key.
+			 * Do salting for crypt() and friends, and
+			 * XOR with the permuted key.
 			 */
-			r48l ^= *kl++;
-			r48r ^= *kr++;
+			f = (r48l ^ r48r) & saltbits;
+			r48l ^= f ^ *kl++;
+			r48r ^= f ^ *kr++;
 			/*
 			 * Do sbox lookups (which shrink it back to 32 bits)
 			 * and do the pbox permutation at the same time.
@@ -515,6 +530,7 @@ int encrypt(char *block, int flag) {
         if (!_des_initialised)
                 _des_init();
 
+        //_des_setup_salt(0);
         p = (u_char *)block;
         for (i = 0; i < 2; i++) {
                 io[i] = 0L;
