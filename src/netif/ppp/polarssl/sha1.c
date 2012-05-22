@@ -259,7 +259,7 @@ void sha1_update( sha1_context *ctx, unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, fill );
         sha1_process( ctx, ctx->buffer );
         input += fill;
@@ -276,7 +276,7 @@ void sha1_update( sha1_context *ctx, unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, ilen );
     }
 }
@@ -328,8 +328,6 @@ void sha1( unsigned char *input, int ilen, unsigned char output[20] )
     sha1_starts( &ctx );
     sha1_update( &ctx, input, ilen );
     sha1_finish( &ctx, output );
-
-    memset( &ctx, 0, sizeof( sha1_context ) );
 }
 
 #endif /* LWIP_INCLUDED_POLARSSL_SHA1_C */

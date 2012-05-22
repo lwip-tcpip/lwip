@@ -206,7 +206,7 @@ void md4_update( md4_context *ctx, unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, fill );
         md4_process( ctx, ctx->buffer );
         input += fill;
@@ -223,7 +223,7 @@ void md4_update( md4_context *ctx, unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, ilen );
     }
 }
@@ -274,8 +274,6 @@ void md4( unsigned char *input, int ilen, unsigned char output[16] )
     md4_starts( &ctx );
     md4_update( &ctx, input, ilen );
     md4_finish( &ctx, output );
-
-    memset( &ctx, 0, sizeof( md4_context ) );
 }
 
 #endif /* LWIP_INCLUDED_POLARSSL_MD4_C */

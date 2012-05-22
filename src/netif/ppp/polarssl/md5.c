@@ -225,7 +225,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
 
     if( left && ilen >= fill )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, fill );
         md5_process( ctx, ctx->buffer );
         input += fill;
@@ -242,7 +242,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
 
     if( ilen > 0 )
     {
-        memcpy( (void *) (ctx->buffer + left),
+        MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, ilen );
     }
 }
@@ -293,8 +293,6 @@ void md5( unsigned char *input, int ilen, unsigned char output[16] )
     md5_starts( &ctx );
     md5_update( &ctx, input, ilen );
     md5_finish( &ctx, output );
-
-    memset( &ctx, 0, sizeof( md5_context ) );
 }
 
 #endif /* LWIP_INCLUDED_POLARSSL_MD5_C */
