@@ -814,7 +814,7 @@ fsm_sdata(f, code, id, data, datalen)
     if (datalen > peer_mru[f->unit] - HEADERLEN)
 	datalen = peer_mru[f->unit] - HEADERLEN;
     if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
-	BCOPY(data, outp + PPP_HDRLEN + HEADERLEN, datalen);
+	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     outlen = datalen + HEADERLEN;
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);

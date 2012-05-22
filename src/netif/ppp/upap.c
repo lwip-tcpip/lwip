@@ -571,10 +571,10 @@ upap_sauthreq(u)
     PUTCHAR(++u->us_id, outp);
     PUTSHORT(outlen, outp);
     PUTCHAR(u->us_userlen, outp);
-    BCOPY(u->us_user, outp, u->us_userlen);
+    MEMCPY(outp, u->us_user, u->us_userlen);
     INCPTR(u->us_userlen, outp);
     PUTCHAR(u->us_passwdlen, outp);
-    BCOPY(u->us_passwd, outp, u->us_passwdlen);
+    MEMCPY(outp, u->us_passwd, u->us_passwdlen);
 
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 
@@ -605,7 +605,7 @@ upap_sresp(u, code, id, msg, msglen)
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
     PUTCHAR(msglen, outp);
-    BCOPY(msg, outp, msglen);
+    MEMCPY(outp, msg, msglen);
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 }
 

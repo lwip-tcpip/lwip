@@ -1935,7 +1935,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    ho->neg_endpoint = 1;
 	    ho->endpoint.class = cichar;
 	    ho->endpoint.length = cilen;
-	    BCOPY(p, ho->endpoint.value, cilen);
+	    MEMCPY(ho->endpoint.value, p, cilen);
 	    INCPTR(cilen, p);
 	    break;
 
@@ -1963,7 +1963,7 @@ endswitch:
 	if (orc == CONFREJ) {		/* Reject this CI */
 	    rc = CONFREJ;
 	    if (cip != rejp)		/* Need to move rejected CI? */
-		BCOPY(cip, rejp, cilen); /* Move it */
+		MEMCPY(rejp, cip, cilen); /* Move it */
 	    INCPTR(cilen, rejp);	/* Update output pointer */
 	}
     }
@@ -1984,7 +1984,7 @@ endswitch:
 	 * Copy the Nak'd options from the nak_buffer to the caller's buffer.
 	 */
 	*lenp = nakp - nak_buffer;
-	BCOPY(nak_buffer, inp, *lenp);
+	MEMCPY(inp, nak_buffer, *lenp);
 	break;
     case CONFREJ:
 	*lenp = rejp - inp;
@@ -2267,7 +2267,7 @@ lcp_printpkt(p, plen, printer, arg)
 		    if (epd.length > MAX_ENDP_LEN)
 			epd.length = MAX_ENDP_LEN;
 		    if (epd.length > 0) {
-			BCOPY(p, epd.value, epd.length);
+			MEMCPY(epd.value, p, epd.length);
 			p += epd.length;
 		    }
 		    printer(arg, "endpoint [%s]", epdisc_to_str(&epd));

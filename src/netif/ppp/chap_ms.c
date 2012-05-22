@@ -385,7 +385,7 @@ chapms_handle_failure(unsigned char *inp, int len)
 		notice("Out of memory in chapms_handle_failure");
 		return;
 	}
-	BCOPY(inp, msg, len);
+	MEMCPY(msg, inp, len);
 	msg[len] = 0;
 	p = msg;
 
@@ -454,7 +454,7 @@ ChallengeResponse(u_char *challenge,
     u_char des_key[8];
 
     BZERO(ZPasswordHash, sizeof(ZPasswordHash));
-    BCOPY(PasswordHash, ZPasswordHash, MD4_SIGNATURE_SIZE);
+    MEMCPY(ZPasswordHash, PasswordHash, MD4_SIGNATURE_SIZE);
 
 #if 0
     dbglog("ChallengeResponse - ZPasswordHash %.*B",
@@ -499,7 +499,7 @@ ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
     sha1_update(&sha1Context, (unsigned char *)user, strlen(user));
     sha1_finish(&sha1Context, sha1Hash);
 
-    BCOPY(sha1Hash, Challenge, 8);
+    MEMCPY(Challenge, sha1Hash, 8);
 }
 
 /*
@@ -677,8 +677,8 @@ mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE])
     sha1_finish(&sha1Context, Digest);
 
     /* Same key in both directions. */
-    BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
-    BCOPY(Digest, mppe_recv_key, sizeof(mppe_recv_key));
+    MEMCPY(mppe_send_key, Digest, sizeof(mppe_send_key));
+    MEMCPY(mppe_recv_key, Digest, sizeof(mppe_recv_key));
 
     mppe_keys_set = 1;
 }
@@ -777,7 +777,7 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
     sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
     sha1_finish(&sha1Context, Digest);
 
-    BCOPY(Digest, mppe_send_key, sizeof(mppe_send_key));
+    MEMCPY(mppe_send_key, Digest, sizeof(mppe_send_key));
 
     /*
      * generate recv key
@@ -793,7 +793,7 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
     sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
     sha1_finish(&sha1Context, Digest);
 
-    BCOPY(Digest, mppe_recv_key, sizeof(mppe_recv_key));
+    MEMCPY(mppe_recv_key, Digest, sizeof(mppe_recv_key));
 
     mppe_keys_set = 1;
 }
@@ -867,7 +867,7 @@ ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
 	for (i = 0; i < MS_CHAP2_PEER_CHAL_LEN; i++)
 	    *p++ = (u_char) (drand48() * 0xff);
     else
-	BCOPY(PeerChallenge, &response[MS_CHAP2_PEER_CHALLENGE],
+	MEMCPY(&response[MS_CHAP2_PEER_CHALLENGE], PeerChallenge,
 	      MS_CHAP2_PEER_CHAL_LEN);
 
     /* Generate the NT-Response */

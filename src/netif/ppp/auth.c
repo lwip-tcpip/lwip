@@ -518,7 +518,7 @@ set_noauth_addr(argv)
 	novm("allow-ip argument");
     wp->word = (char *) (wp + 1);
     wp->next = noauth_addrs;
-    BCOPY(addr, wp->word, l);
+    MEMCPY(wp->word, addr, l);
     noauth_addrs = wp;
     return 1;
 }
@@ -540,7 +540,7 @@ set_permitted_number(argv)
 	novm("allow-number argument");
     wp->word = (char *) (wp + 1);
     wp->next = permitted_numbers;
-    BCOPY(number, wp->word, l);
+    MEMCPY(wp->word, number, l);
     permitted_numbers = wp;
     return 1;
 }
@@ -987,7 +987,7 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
      */
     if (namelen > sizeof(peer_authname) - 1)
 	namelen = sizeof(peer_authname) - 1;
-    BCOPY(name, peer_authname, namelen);
+    MEMCPY(peer_authname, name, namelen);
     peer_authname[namelen] = 0;
     script_setenv("PEERNAME", peer_authname, 0);
 
@@ -1828,7 +1828,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     len = MAXSECRETLEN;
   }
 
-  BCOPY(ppp_settings.passwd, secret, len);
+  MEMCPY(secret, ppp_settings.passwd, len);
   *secret_len = len;
 
   return 1;
@@ -1892,7 +1892,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
 	error("Secret for %s on %s is too long", client, server);
 	len = MAXSECRETLEN;
     }
-    BCOPY(secbuf, secret, len);
+    MEMCPY(secret, secbuf, len);
     BZERO(secbuf, sizeof(secbuf));
     *secret_len = len;
 

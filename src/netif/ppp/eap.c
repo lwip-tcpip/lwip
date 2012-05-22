@@ -483,7 +483,7 @@ int status;
 					i = 7;
 				esp->es_server.ea_peerlen = plen;
 				dp = (unsigned char *)esp->es_server.ea_peer;
-				BCOPY(clear + 1, dp, i);
+				MEMCPY(dp, clear + 1, i);
 				plen -= i;
 				dp += i;
 				sp = secbuf + 8;
@@ -687,7 +687,7 @@ eap_state *esp;
 		PUTCHAR(EAPT_IDENTITY, outp);
 		str = "Name";
 		challen = strlen(str);
-		BCOPY(str, outp, challen);
+		MEMCPY(outp, str, challen);
 		INCPTR(challen, outp);
 		break;
 
@@ -705,9 +705,9 @@ eap_state *esp;
 		ptr = esp->es_challenge;
 		while (--challen >= 0)
 			*ptr++ = (u_char) (drand48() * 0x100);
-		BCOPY(esp->es_challenge, outp, esp->es_challen);
+		MEMCPY(outp, esp->es_challenge, esp->es_challen);
 		INCPTR(esp->es_challen, outp);
-		BCOPY(esp->es_server.ea_name, outp, esp->es_server.ea_namelen);
+		MEMCPY(outp, esp->es_server.ea_name, esp->es_server.ea_namelen);
 		INCPTR(esp->es_server.ea_namelen, outp);
 		break;
 
@@ -717,26 +717,26 @@ eap_state *esp;
 		PUTCHAR(EAPSRP_CHALLENGE, outp);
 
 		PUTCHAR(esp->es_server.ea_namelen, outp);
-		BCOPY(esp->es_server.ea_name, outp, esp->es_server.ea_namelen);
+		MEMCPY(outp, esp->es_server.ea_name, esp->es_server.ea_namelen);
 		INCPTR(esp->es_server.ea_namelen, outp);
 
 		ts = (struct t_server *)esp->es_server.ea_session;
 		assert(ts != NULL);
 		PUTCHAR(ts->s.len, outp);
-		BCOPY(ts->s.data, outp, ts->s.len);
+		MEMCPY(outp, ts->s.data, ts->s.len);
 		INCPTR(ts->s.len, outp);
 
 		if (ts->g.len == 1 && ts->g.data[0] == 2) {
 			PUTCHAR(0, outp);
 		} else {
 			PUTCHAR(ts->g.len, outp);
-			BCOPY(ts->g.data, outp, ts->g.len);
+			MEMCPY(outp, ts->g.data, ts->g.len);
 			INCPTR(ts->g.len, outp);
 		}
 
 		if (ts->n.len != sizeof (wkmodulus) ||
 		    BCMP(ts->n.data, wkmodulus, sizeof (wkmodulus)) != 0) {
-			BCOPY(ts->n.data, outp, ts->n.len);
+			MEMCPY(outp, ts->n.data, ts->n.len);
 			INCPTR(ts->n.len, outp);
 		}
 		break;
@@ -747,7 +747,7 @@ eap_state *esp;
 
 		ts = (struct t_server *)esp->es_server.ea_session;
 		assert(ts != NULL);
-		BCOPY(ts->B.data, outp, ts->B.len);
+		MEMCPY(outp, ts->B.data, ts->B.len);
 		INCPTR(ts->B.len, outp);
 		break;
 
@@ -757,7 +757,7 @@ eap_state *esp;
 		PUTLONG(SRPVAL_EBIT, outp);
 		ts = (struct t_server *)esp->es_server.ea_session;
 		assert(ts != NULL);
-		BCOPY(t_serverresponse(ts), outp, SHA_DIGESTSIZE);
+		MEMCPY(outp, t_serverresponse(ts), SHA_DIGESTSIZE);
 		INCPTR(SHA_DIGESTSIZE, outp);
 
 		if (pncrypt_setkey(0)) {
@@ -767,7 +767,7 @@ eap_state *esp;
 			if ((j = i = esp->es_server.ea_peerlen) > 7)
 				j = 7;
 			clear[0] = i;
-			BCOPY(cp, clear + 1, j);
+			MEMCPY(clear + 1, cp, j);
 			i -= j;
 			cp += j;
 			/* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL des_context instead of using static memory */
@@ -786,7 +786,7 @@ eap_state *esp;
 				i -= 8;
 			}
 			if (i > 0) {
-				BCOPY(cp, clear, i);
+				MEMCPY(clear, cp, i);
 				cp += i;
 				while (i < 8) {
 					*cp++ = drand48() * 0x100;
@@ -840,7 +840,7 @@ eap_state *esp;
 		ptr = esp->es_challenge;
 		while (--challen >= 0)
 			*ptr++ = drand48() * 0x100;
-		BCOPY(esp->es_challenge, outp, esp->es_challen);
+		MEMCPY(outp, esp->es_challenge, esp->es_challen);
 		INCPTR(esp->es_challen, outp);
 		break;
 #endif /* USE_SRP */
@@ -1056,7 +1056,7 @@ int lenstr;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(typenum, outp);
 	if (lenstr > 0) {
-		BCOPY(str, outp, lenstr);
+		MEMCPY(outp, str, lenstr);
 	}
 
 	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
@@ -1088,10 +1088,10 @@ int namelen;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_MD5CHAP, outp);
 	PUTCHAR(MD5_SIGNATURE_SIZE, outp);
-	BCOPY(hash, outp, MD5_SIGNATURE_SIZE);
+	MEMCPY(outp, hash, MD5_SIGNATURE_SIZE);
 	INCPTR(MD5_SIGNATURE_SIZE, outp);
 	if (namelen > 0) {
-		BCOPY(name, outp, namelen);
+		MEMCPY(outp, name, namelen);
 	}
 
 	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
@@ -1124,7 +1124,7 @@ int lenstr;
 	PUTCHAR(EAPT_SRP, outp);
 	PUTCHAR(subtypenum, outp);
 	if (lenstr > 0) {
-		BCOPY(str, outp, lenstr);
+		MEMCPY(outp, str, lenstr);
 	}
 
 	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
@@ -1156,7 +1156,7 @@ u_char *str;
 	PUTCHAR(EAPT_SRP, outp);
 	PUTCHAR(EAPSRP_CVALIDATOR, outp);
 	PUTLONG(flags, outp);
-	BCOPY(str, outp, SHA_DIGESTSIZE);
+	MEMCPY(outp, str, SHA_DIGESTSIZE);
 
 	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
@@ -1419,10 +1419,10 @@ int len;
 		/* Not so likely to happen. */
 		if (vallen >= len + sizeof (rhostname)) {
 			dbglog("EAP: trimming really long peer name down");
-			BCOPY(inp + vallen, rhostname, sizeof (rhostname) - 1);
+			MEMCPY(rhostname, inp + vallen, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
 		} else {
-			BCOPY(inp + vallen, rhostname, len - vallen);
+			MEMCPY(rhostname, inp + vallen, len - vallen);
 			rhostname[len - vallen] = '\0';
 		}
 
@@ -1491,7 +1491,7 @@ int len;
 					/* Ignore badly-formed messages */
 					return;
 				}
-				BCOPY(inp, rhostname, vallen);
+				MEMCPY(rhostname, inp, vallen);
 				rhostname[vallen] = '\0';
 				INCPTR(vallen, inp);
 				len -= vallen;
@@ -1766,7 +1766,7 @@ int len;
 			eap_figure_next_state(esp, 1);
 			break;
 		}
-		BCOPY(inp, esp->es_server.ea_peer, len);
+		MEMCPY(esp->es_server.ea_peer, inp, len);
 		esp->es_server.ea_peer[len] = '\0';
 		esp->es_server.ea_peerlen = len;
 		eap_figure_next_state(esp, 0);
@@ -1845,10 +1845,10 @@ int len;
 		/* Not so likely to happen. */
 		if (vallen >= len + sizeof (rhostname)) {
 			dbglog("EAP: trimming really long peer name down");
-			BCOPY(inp + vallen, rhostname, sizeof (rhostname) - 1);
+			MEMCPY(rhostname, inp + vallen, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
 		} else {
-			BCOPY(inp + vallen, rhostname, len - vallen);
+			MEMCPY(rhostname, inp + vallen, len - vallen);
 			rhostname[len - vallen] = '\0';
 		}
 

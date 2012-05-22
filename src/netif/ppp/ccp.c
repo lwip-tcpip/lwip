@@ -714,7 +714,7 @@ ccp_addci(f, p, lenp)
 	p[1] = opt_buf[1] = CILEN_MPPE;
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
 	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
-	BCOPY(mppe_recv_key, &opt_buf[CILEN_MPPE], MPPE_MAX_KEY_LEN);
+	MEMCPY(&opt_buf[CILEN_MPPE], mppe_recv_key, MPPE_MAX_KEY_LEN);
 	res = ccp_test(f->unit, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0);
 	if (res > 0)
 	    p += CILEN_MPPE;
@@ -1178,8 +1178,8 @@ ccp_reqci(f, p, lenp, dont_nak)
 		    u_char opt_buf[CILEN_MPPE + MPPE_MAX_KEY_LEN];
 		    int mtu;
 
-		    BCOPY(p, opt_buf, CILEN_MPPE);
-		    BCOPY(mppe_send_key, &opt_buf[CILEN_MPPE],
+		    MEMCPY(opt_buf, p, CILEN_MPPE);
+		    MEMCPY(&opt_buf[CILEN_MPPE], mppe_send_key,
 			  MPPE_MAX_KEY_LEN);
 		    if (ccp_test(f->unit, opt_buf,
 				 CILEN_MPPE + MPPE_MAX_KEY_LEN, 1) <= 0) {
@@ -1336,7 +1336,7 @@ ccp_reqci(f, p, lenp, dont_nak)
 		retp = p0;
 	    ret = newret;
 	    if (p != retp)
-		BCOPY(p, retp, clen);
+		MEMCPY(retp, p, clen);
 	    retp += clen;
 	}
 

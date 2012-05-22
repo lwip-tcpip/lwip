@@ -42,6 +42,8 @@
  * $Id: pppd.h,v 1.96 2008/06/23 11:47:18 paulus Exp $
  */
 
+#include "lwip/opt.h"
+
 /*
  * TODO:
  */
@@ -784,7 +786,6 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define TIMEOUTMS(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
 #define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
 
-#define BCOPY(s, d, l)		memcpy(d, s, l)
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 
