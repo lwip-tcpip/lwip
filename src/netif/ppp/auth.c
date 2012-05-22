@@ -137,10 +137,10 @@ static int auth_pending[NUM_PPP];
 /* Records which authentication operations have been completed. */
 int auth_done[NUM_PPP];
 
+#if 0 /* UNUSED */
 /* List of addresses which the peer may use. */
 static struct permitted_ip *addresses[NUM_PPP];
 
-#if 0 /* UNUSED */
 /* Wordlist giving addresses which the peer may use
    without authenticating itself. */
 static struct wordlist *noauth_addrs;
@@ -149,10 +149,10 @@ static struct wordlist *noauth_addrs;
 /* Remote telephone number, if available */
 char remote_number[MAXNAMELEN];
 
+#if 0 /* UNUSED */
 /* Wordlist giving remote telephone numbers which may connect. */
 static struct wordlist *permitted_numbers;
 
-#if 0 /* UNUSED */
 /* Extra options to apply, from the secrets file entry for the peer. */
 static struct wordlist *extra_options;
 #endif /* UNUSED */
@@ -227,40 +227,39 @@ bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
 //bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #endif
 bool usehostname = 0;		/* Use hostname for our_name */
+#if 0 /* UNUSED */
 bool auth_required = 0;		/* Always require authentication from peer */
+#endif /* UNUSED */
 bool allow_any_ip = 0;		/* Allow peer to use any IP address */
 bool explicit_remote = 0;	/* User specified explicit remote name */
 bool explicit_user = 0;		/* Set if "user" option supplied */
 bool explicit_passwd = 0;	/* Set if "password" option supplied */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
 
+#if 0 /* UNUSED */
 static char *uafname;		/* name of most recent +ua file */
 
 extern char *crypt __P((const char *, const char *));
-
+#endif /* UNUSED */
 /* Prototypes for procedures local to this file. */
 
 static void network_phase __P((int));
 static void check_idle __P((void *));
 static void connect_time_expired __P((void *));
-static int  null_login __P((int));
 #if 0 /* UNUSED */
+static int  null_login __P((int));
 /* static int  get_pap_passwd __P((char *)); */
 static int  have_pap_secret __P((int *));
 static int  have_chap_secret __P((char *, char *, int, int *));
 static int  have_srp_secret __P((char *client, char *server, int need_ip,
     int *lacks_ipp));
-#endif /* UNUSED */
 static int  ip_addr_check __P((u_int32_t, struct permitted_ip *));
-#if 0 /* UNUSED */
 static int  scan_authfile __P((FILE *, char *, char *, char *,
 			       struct wordlist **, struct wordlist **,
 			       char *, int));
 static void free_wordlist __P((struct wordlist *));
 static void set_allowed_addrs __P((int, struct wordlist *, struct wordlist *));
-#endif /* UNUSED */
 static int  some_ip_ok __P((struct wordlist *));
-#if 0 /* UNUSE */
 static int  setupapfile __P((char **));
 static int  privgroup __P((char **));
 static int  set_noauth_addr __P((char **));
@@ -751,6 +750,7 @@ link_established(unit)
 		(*protp->lowerup)(unit);
     }
 
+#if 0 /* UNUSED */
 #if PPP_ALLOWED_ADDRS
     if (!auth_required && noauth_addrs != NULL)
 	set_allowed_addrs(unit, NULL, NULL);
@@ -781,6 +781,7 @@ link_established(unit)
 	    return;
 	}
     }
+#endif /* UNUSED */
 
     new_phase(PHASE_AUTHENTICATE);
     auth = 0;
@@ -1567,7 +1568,6 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 
     return ret;
 }
-#endif
 
 /*
  * null_login - Check if a username of "" and a password of "" are
@@ -1578,9 +1578,6 @@ static int
 null_login(unit)
     int unit;
 {
-    return 0;
-/* FIXME: clean that */
-#if 0 /* UNUSED  */
     char *filename;
     FILE *f;
     int i, ret;
@@ -1619,10 +1616,8 @@ null_login(unit)
 	free_wordlist(addrs);
 
     return ret;
-#endif
 }
 
-#if 0
 /*
  * get_pap_passwd - get a password for authenticating ourselves with
  * our peer using PAP.  Returns 1 on success, 0 if no suitable password
