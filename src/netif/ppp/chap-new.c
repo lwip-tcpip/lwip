@@ -376,6 +376,8 @@ chap_handle_response(struct chap_server_state *ss, int id,
 	if (ss->flags & CHALLENGE_VALID) {
 		ss->flags &= ~CHALLENGE_VALID;
 		if (!(ss->flags & AUTH_DONE) && !(ss->flags & AUTH_FAILED)) {
+
+#if 0 /* UNUSED */
 		    /*
 		     * Auth is OK, so now we need to check session restrictions
 		     * to ensure everything is OK, but only if we used a
@@ -390,6 +392,8 @@ chap_handle_response(struct chap_server_state *ss, int id,
 			ss->flags |= AUTH_FAILED;
 			warn("Peer %q failed CHAP Session verification", name);
 		    }
+#endif /* UNUSED */
+
 		}
 		if (ss->flags & AUTH_FAILED) {
 			auth_peer_fail(0, PPP_CHAP);

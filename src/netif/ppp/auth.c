@@ -71,8 +71,6 @@
 #include "lwip/opt.h"
 #include "pppmy.h"
 
-#define RCSID	"$Id: auth.c,v 1.117 2008/07/01 12:27:56 paulus Exp $"
-
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -117,16 +115,20 @@
 #if CBCP_SUPPORT
 #include "cbcp.h"
 #endif
+
+#if 0 /* UNUSED */
 #include "pathnames.h"
+#endif /* UNUSED */
+
 #include "session.h"
 
-static const char rcsid[] = RCSID;
-
+#if 0 /* UNUSED */
 /* Bits in scan_authfile return value */
 #define NONWILD_SERVER	1
 #define NONWILD_CLIENT	2
 
 #define ISWILD(word)	(word[0] == '*' && word[1] == 0)
+#endif /* UNUSED */
 
 /* The name by which the peer authenticated itself to us. */
 char peer_authname[MAXNAMELEN];
@@ -144,12 +146,10 @@ static struct permitted_ip *addresses[NUM_PPP];
 /* Wordlist giving addresses which the peer may use
    without authenticating itself. */
 static struct wordlist *noauth_addrs;
-#endif /* UNUSED */
 
 /* Remote telephone number, if available */
 char remote_number[MAXNAMELEN];
 
-#if 0 /* UNUSED */
 /* Wordlist giving remote telephone numbers which may connect. */
 static struct wordlist *permitted_numbers;
 
@@ -166,7 +166,6 @@ static int num_np_up;
 #if 0 /* UNUSED */
 /* Set if we require authentication only because we have a default route. */
 static bool default_auth;
-#endif /* UNUSED */
 
 /* Hook to enable a plugin to control the idle time limit */
 int (*idle_time_hook) __P((struct ppp_idle *)) = NULL;
@@ -197,22 +196,26 @@ int (*null_auth_hook) __P((struct wordlist **paddrs,
 			   struct wordlist **popts)) = NULL;
 
 int (*allowed_address_hook) __P((u_int32_t addr)) = NULL;
+#endif /* UNUSED */
 
 #ifdef HAVE_MULTILINK
 /* Hook for plugin to hear when an interface joins a multilink bundle */
 void (*multilink_join_hook) __P((void)) = NULL;
 #endif
 
+#if 0 /* UNUSED */
 /* A notifier for when the peer has authenticated itself,
    and we are proceeding to the network phase. */
 struct notifier *auth_up_notifier = NULL;
 
 /* A notifier for when the link goes down. */
 struct notifier *link_down_notifier = NULL;
+#endif /* UNUSED */
 
 /*
  * Option variables.
  */
+#if 0 /* MOVED TO ppp_settings */
 bool uselogin = 0;		/* Use /etc/passwd for checking PAP */
 bool session_mgmt = 0;		/* Do session management (login records) */
 bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
@@ -221,21 +224,23 @@ bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
 //bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
 #ifdef CHAPMS
 //bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
-//bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
+//bool refuse_mschap_v2 = 0;	/* Don't wanna auth. oif 0 /* UNUSED */urselves with MS-CHAPv2 */
 #else
 //bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
 //bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #endif
-bool usehostname = 0;		/* Use hostname for our_name */
+#endif /* MOVED TO ppp_settings */
 #if 0 /* UNUSED */
+bool usehostname = 0;		/* Use hostname for our_name */
 bool auth_required = 0;		/* Always require authentication from peer */
-#endif /* UNUSED */
 bool allow_any_ip = 0;		/* Allow peer to use any IP address */
+#endif /* UNUSED */
 bool explicit_remote = 0;	/* User specified explicit remote name */
+#if 0 /* UNUSED */
 bool explicit_user = 0;		/* Set if "user" option supplied */
 bool explicit_passwd = 0;	/* Set if "password" option supplied */
+#endif /* UNUSED */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
-
 #if 0 /* UNUSED */
 static char *uafname;		/* name of most recent +ua file */
 
@@ -629,10 +634,12 @@ link_terminated(unit)
 	return;
     new_phase(PHASE_DISCONNECT);
 
+#if 0 /* UNUSED */
     if (pap_logout_hook) {
 	pap_logout_hook();
     }
     session_end(devnam);
+#endif /* UNUSED */
 
     if (!doing_multilink) {
 	notice("Connection terminated.");
@@ -827,10 +834,13 @@ network_phase(unit)
 {
     lcp_options *go = &lcp_gotoptions[unit];
 
+#if 0 /* UNUSED */
     /* Log calling number. */
     if (*remote_number)
 	notice("peer from calling number %q authorized", remote_number);
+#endif /* UNUSED */
 
+#if 0 /* UNUSED */
     /*
      * If the peer had to authenticate, run the auth-up script now.
      */
@@ -841,6 +851,7 @@ network_phase(unit)
 	) {
 	notify(auth_up_notifier, 0);
     }
+#endif /* UNUSED */
 
 #if CBCP_SUPPORT
     /*
@@ -1092,9 +1103,11 @@ np_up(unit, proto)
 	unsuccess = 0;
 	new_phase(PHASE_RUNNING);
 
+#if 0 /* UNUSED */
 	if (idle_time_hook != 0)
 	    tlim = (*idle_time_hook)(NULL);
 	else
+#endif /* UNUSED */
 	    tlim = idle_time_limit;
 	if (tlim > 0)
 	    TIMEOUT(check_idle, NULL, tlim);
@@ -1200,12 +1213,16 @@ check_idle(arg)
 
     if (!get_idle_time(0, &idle))
 	return;
+#if 0 /* UNUSED */
     if (idle_time_hook != 0) {
 	tlim = idle_time_hook(&idle);
     } else {
+#endif /* UNUSED */
 	itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
 	tlim = idle_time_limit - itime;
+#if 0 /* UNUSED */
     }
+#endif /* UNUSED */
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
@@ -1390,6 +1407,7 @@ auth_reset(unit)
   printf("neg_eap: %d\n", ao->neg_eap);
 #endif /* EAP_SUPPORT */
 
+#if 0 /* OLD CODE */
     //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
 
     /*
@@ -1403,6 +1421,7 @@ auth_reset(unit)
 	(hadchap == 1 || (hadchap == -1 && have_chap_secret(ppp_settings.user,
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
 	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL)); */
+#endif /* OLD CODE */
 
   go->neg_upap = 0;
   go->neg_chap = 0;

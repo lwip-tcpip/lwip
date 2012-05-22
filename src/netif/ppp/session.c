@@ -68,6 +68,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if 0 /* UNUSED */
+
 #include "lwip/opt.h"
 
 #include <stdio.h>
@@ -423,3 +425,5 @@ session_end(const char* ttyName)
 	logged_in = 0;
     }
 }
+
+#endif /* UNUSED */

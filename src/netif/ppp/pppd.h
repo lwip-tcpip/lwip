@@ -265,7 +265,9 @@ extern struct notifier *exitnotify;  /* for notification that we're exiting */
 extern struct notifier *sigreceived; /* notification of received signal */
 extern struct notifier *ip_up_notifier; /* IPCP has come up */
 extern struct notifier *ip_down_notifier; /* IPCP has gone down */
+#if 0 /* UNUSED */
 extern struct notifier *auth_up_notifier; /* peer has authenticated */
+#endif /* UNUSED */
 extern struct notifier *link_down_notifier; /* link has gone down */
 extern struct notifier *fork_notifier;	/* we are a new child process */
 

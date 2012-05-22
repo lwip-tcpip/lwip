@@ -28,6 +28,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if 0 /* UNUSED */
+
 #ifndef __SESSION_H
 #define __SESSION_H
 
@@ -89,3 +91,5 @@ void
 session_end(const char* tty);
 
 #endif
+
+#endif /* UNUSED */
