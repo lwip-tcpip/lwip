@@ -116,7 +116,9 @@ upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */
 
 static void upap_timeout __P((void *));
 static void upap_reqtimeout __P((void *));
+#if 0 /* UNUSED */
 static void upap_rauthreq __P((upap_state *, u_char *, int, int));
+#endif /* UNUSED */
 static void upap_rauthack __P((upap_state *, u_char *, int, int));
 static void upap_rauthnak __P((upap_state *, u_char *, int, int));
 static void upap_sauthreq __P((upap_state *));
@@ -353,7 +355,9 @@ upap_input(unit, inpacket, l)
      */
     switch (code) {
     case UPAP_AUTHREQ:
+#if 0 /* UNUSED */
 	upap_rauthreq(u, inp, id, len);
+#endif /* UNUSED */
 	break;
 
     case UPAP_AUTHACK:
@@ -369,7 +373,7 @@ upap_input(unit, inpacket, l)
     }
 }
 
-
+#if 0 /* UNUSED */
 /*
  * upap_rauth - Receive Authenticate.
  */
@@ -468,7 +472,7 @@ upap_rauthreq(u, inp, id, len)
     if (u->us_reqtimeout > 0)
 	UNTIMEOUT(upap_reqtimeout, u);
 }
-
+#endif /* UNUSED */
 
 /*
  * upap_rauthack - Receive Authenticate-Ack.

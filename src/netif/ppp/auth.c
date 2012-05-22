@@ -1435,6 +1435,7 @@ auth_reset(unit)
 #endif
 }
 
+#if 0 /* UNUSED */
 /*
  * check_passwd - Check the user name and passwd against the PAP secrets
  * file.  If requested, also check against the system password database,
@@ -1455,7 +1456,6 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
     char **msg;
 {
   return UPAP_AUTHNAK;
-#if 0
     int ret;
     char *filename;
     FILE *f;
@@ -1566,8 +1566,8 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
     BZERO(secret, sizeof(secret));
 
     return ret;
-#endif
 }
+#endif
 
 /*
  * null_login - Check if a username of "" and a password of "" are
@@ -1663,9 +1663,7 @@ get_pap_passwd(passwd)
     BZERO(secret, sizeof(secret));
     return 1;
 }
-#endif
 
-#if 0 /* UNUSED */
 /*
  * have_pap_secret - check whether we have a PAP file with any
  * secrets that we could possibly use for authenticating the peer.
@@ -1901,6 +1899,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
 }
 
 
+#if 0 /* UNUSED */
 /*
  * get_srp_secret - open the SRP secret file and return the secret
  * for authenticating the given client on the given server.
@@ -1914,9 +1913,6 @@ get_srp_secret(unit, client, server, secret, am_server)
     char *secret;
     int am_server;
 {
-  /* FIXME: clean that */
-  return 0;
-#if 0
     FILE *fp;
     int ret;
     char *filename;
@@ -1951,10 +1947,8 @@ get_srp_secret(unit, client, server, secret, am_server)
     }
 
     return 1;
-#endif
 }
 
-#if 0 /* UNUSED */
 /*
  * set_allowed_addrs() - set the list of allowed addresses.
  * Also looks for `--' indicating options to apply for this peer
