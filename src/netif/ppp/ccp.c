@@ -196,8 +196,8 @@ struct protent ccp_protent = {
     "Compressed",
 #if PPP_OPTIONS
     ccp_option_list,
-#endif /* PPP_OPTIONS */
     NULL,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL
 };

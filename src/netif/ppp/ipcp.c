@@ -141,9 +141,10 @@ static int setdnsaddr __P((char **));
 static int setwinsaddr __P((char **));
 static int setnetmask __P((char **));
 int setipaddr __P((char *, char **, int));
-static void printipaddr __P((option_t *, void (*)(void *, char *,...),void *));
 
 #if PPP_OPTIONS
+static void printipaddr __P((option_t *, void (*)(void *, char *,...),void *));
+
 static option_t ipcp_option_list[] = {
     { "noip", o_bool, &ipcp_protent.enabled_flag,
       "Disable IP and IPCP" },
@@ -279,8 +280,8 @@ struct protent ipcp_protent = {
     "IP",
 #if PPP_OPTIONS
     ipcp_option_list,
-#endif /* PPP_OPTIONS */
     ip_check_options,
+#endif /* PPP_OPTIONS */
     ip_demand_conf,
     ip_active_pkt
 };
@@ -412,6 +413,7 @@ setwinsaddr(argv)
     return (1);
 }
 
+#if 0 /* UNUSED */
 /*
  * setipaddr - Set the IP address
  * If doit is 0, the call is to check whether this option is
@@ -484,7 +486,9 @@ setipaddr(arg, argv, doit)
 
     return 1;
 }
+#endif /* UNUSED */
 
+#if PPP_OPTIONS
 static void
 printipaddr(opt, printer, arg)
     option_t *opt;
@@ -499,6 +503,7 @@ printipaddr(opt, printer, arg)
 	if (wo->hisaddr != 0)
 		printer(arg, "%I", wo->hisaddr);
 }
+#endif /* PPP_OPTIONS */
 
 /*
  * setnetmask - set the netmask to be used on the interface.
@@ -1687,6 +1692,7 @@ endswitch:
 }
 
 
+#if 0 /* UNUSED */
 /*
  * ip_check_options - check that any IP-related options are OK,
  * and assign appropriate defaults.
@@ -1717,7 +1723,7 @@ ip_check_options()
     }
     ask_for_local = wo->ouraddr != 0 || !disable_defaultip;
 }
-
+#endif /* UNUSED */
 
 /*
  * ip_demand_conf - configure the interface as though

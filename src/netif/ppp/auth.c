@@ -140,9 +140,11 @@ int auth_done[NUM_PPP];
 /* List of addresses which the peer may use. */
 static struct permitted_ip *addresses[NUM_PPP];
 
+#if 0 /* UNUSED */
 /* Wordlist giving addresses which the peer may use
    without authenticating itself. */
 static struct wordlist *noauth_addrs;
+#endif /* UNUSED */
 
 /* Remote telephone number, if available */
 char remote_number[MAXNAMELEN];
@@ -150,8 +152,10 @@ char remote_number[MAXNAMELEN];
 /* Wordlist giving remote telephone numbers which may connect. */
 static struct wordlist *permitted_numbers;
 
+#if 0 /* UNUSED */
 /* Extra options to apply, from the secrets file entry for the peer. */
 static struct wordlist *extra_options;
+#endif /* UNUSED */
 
 /* Number of network protocols which we have opened. */
 static int num_np_open;
@@ -159,8 +163,10 @@ static int num_np_open;
 /* Number of network protocols which have come up. */
 static int num_np_up;
 
+#if 0 /* UNUSED */
 /* Set if we require authentication only because we have a default route. */
 static bool default_auth;
+#endif /* UNUSED */
 
 /* Hook to enable a plugin to control the idle time limit */
 int (*idle_time_hook) __P((struct ppp_idle *)) = NULL;
@@ -254,12 +260,12 @@ static void free_wordlist __P((struct wordlist *));
 static void set_allowed_addrs __P((int, struct wordlist *, struct wordlist *));
 #endif /* UNUSED */
 static int  some_ip_ok __P((struct wordlist *));
+#if 0 /* UNUSE */
 static int  setupapfile __P((char **));
 static int  privgroup __P((char **));
 static int  set_noauth_addr __P((char **));
 static int  set_permitted_number __P((char **));
 static void check_access __P((FILE *, char *));
-#if 0 /* UNUSED */
 static int  wordlist_count __P((struct wordlist *));
 #endif /* UNUSED */
 
@@ -406,6 +412,7 @@ option_t auth_options[] = {
 };
 #endif /* PPP_OPTIONS */
 
+#if 0 /* UNUSED */
 /*
  * setupapfile - specifies UPAP info for authenticating with peer.
  */
@@ -468,7 +475,6 @@ setupapfile(argv)
 
     return (1);
 }
-
 
 /*
  * privgroup - allow members of the group to have privileged access.
@@ -538,7 +544,7 @@ set_permitted_number(argv)
     permitted_numbers = wp;
     return 1;
 }
-
+#endif
 
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
@@ -2105,7 +2111,6 @@ set_allowed_addrs(unit, addrs, opts)
 	    wo->accept_remote = 1;
     }
 }
-#endif /* UNUSED */
 
 /*
  * auth_ip_addr - check whether the peer is authorized to use
@@ -2225,7 +2230,6 @@ check_access(f, filename)
     }
 }
 
-#if 0 /* UNUSED */
 /*
  * scan_authfile - Scan an authorization file for a secret suitable
  * for authenticating `client' on `server'.  The return value is -1

@@ -285,8 +285,8 @@ struct protent lcp_protent = {
     NULL,
 #if PPP_OPTIONS
     lcp_option_list,
-#endif /* PPP_OPTIONS */
     NULL,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL
 };

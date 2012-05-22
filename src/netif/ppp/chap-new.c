@@ -350,7 +350,10 @@ chap_handle_response(struct chap_server_state *ss, int id,
 		ok = (*verifier)(name, ss->name, id, ss->digest,
 				 ss->challenge + PPP_HDRLEN + CHAP_HDRLEN,
 				 response, ss->message, sizeof(ss->message));
+#if 0 /* UNUSED */
 		if (!ok || !auth_number()) {
+#endif /* UNUSED */
+		if (!ok) {
 			ss->flags |= AUTH_FAILED;
 			warn("Peer %q failed CHAP authentication", name);
 		}
@@ -658,6 +661,8 @@ struct protent chap_protent = {
 	NULL,		/* data_name */
 #if PPP_OPTIONS
 	chap_option_list,
-#endif /* PPP_OPTIONS */
 	NULL,		/* check_options */
+#endif /* PPP_OPTIONS */
+	NULL,
+	NULL
 };

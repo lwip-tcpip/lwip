@@ -106,8 +106,8 @@ struct protent pap_protent = {
     NULL,
 #if PPP_OPTIONS
     pap_option_list,
-#endif /* PPP_OPTIONS */
     NULL,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL
 };
@@ -432,6 +432,7 @@ upap_rauthreq(u, inp, id, len)
 			   rpasswdlen, &msg);
     BZERO(rpasswd, rpasswdlen);
 
+#if 0 /* UNUSED */
     /*
      * Check remote number authorization.  A plugin may have filled in
      * the remote number or added an allowed number, and rather than
@@ -444,6 +445,7 @@ upap_rauthreq(u, inp, id, len)
 	    warn("calling number %q is not authorized", remote_number);
 	}
     }
+#endif /* UNUSED */
 
     msglen = strlen(msg);
     if (msglen > 255)

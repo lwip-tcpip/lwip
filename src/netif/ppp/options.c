@@ -128,9 +128,10 @@ int maxoctets_dir = 0;       /* default - sum of traffic */
 int maxoctets_timeout = 1;   /* default 1 second */ 
 #endif
 
-
+#if 0 /* UNUSED */
 extern option_t auth_options[];
 extern struct stat devstat;
+#endif /* UNUSED */
 
 #ifdef PPP_FILTER
 struct	bpf_program pass_filter;/* Filter program for packets to pass */
@@ -140,15 +141,20 @@ struct	bpf_program active_filter; /* Filter program for link-active pkts */
 char *current_option;		/* the name of the option being parsed */
 int  privileged_option;		/* set iff the current option came from root */
 char *option_source;		/* string saying where the option came from */
+#if 0 /* UNUSED */
 int  option_priority = OPRIO_CFGFILE; /* priority of the current options */
+#endif /* UNUSED */
 bool devnam_fixed;		/* can no longer change device name */
 
+#if 0 /* UNUSED */
 static int logfile_fd = -1;	/* fd opened for log file */
 static char logfile_name[MAXPATHLEN];	/* name of log file */
+#endif /* UNUSED */
 
 /*
  * Prototypes
  */
+#if 0 /* UNUSED */
 static int setdomain __P((char **));
 static int readfile __P((char **));
 static int callfile __P((char **));
@@ -156,6 +162,7 @@ static int showversion __P((char **));
 static int showhelp __P((char **));
 static void usage __P((void));
 static int setlogfile __P((char **));
+#endif /* UNUSED */
 #ifdef PLUGIN
 static int loadplugin __P((char **));
 #endif
@@ -169,6 +176,7 @@ static int setactivefilter __P((char **));
 static int setmodir __P((char **));
 #endif
 
+#if 0 /* UNUSED */
 static option_t *find_option __P((const char *name));
 static int process_option __P((option_t *, char *, char **));
 static int n_arguments __P((option_t *));
@@ -184,7 +192,6 @@ struct option_list {
 
 static struct option_list *extra_options = NULL;
 
-#if PPP_OPTIONS
 /*
  * Valid arguments.
  */

@@ -87,6 +87,7 @@
 
 typedef unsigned char	bool;
 
+#if 0
 enum opt_type {
 	o_special_noarg = 0,
 	o_special = 1,
@@ -162,6 +163,7 @@ struct permitted_ip {
     u_int32_t	base;		/* match if (addr & mask) == base */
     u_int32_t	mask;		/* base and mask are in network byte order */
 };
+#endif
 
 /*
  * Unfortunately, the linux kernel driver uses a different structure
@@ -227,7 +229,9 @@ extern int	privileged;	/* We were run by real-uid root */
 extern int	need_holdoff;	/* Need holdoff period after link terminates */
 extern char	**script_env;	/* Environment variables for scripts */
 extern int	detached;	/* Have detached from controlling tty */
+#if 0
 extern GIDSET_TYPE groups[NGROUPS_MAX];	/* groups the user is in */
+#endif
 extern int	ngroups;	/* How many groups valid in groups */
 extern struct pppd_stats link_stats; /* byte/packet counts etc. for link */
 extern int	link_stats_valid; /* set if link_stats is valid */
@@ -414,8 +418,8 @@ struct protent {
     bool enabled_flag;		/* 0 iff protocol is disabled */
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
-    option_t *options;		/* List of command-line options */
 #if PPP_OPTIONS
+    option_t *options;		/* List of command-line options */
     /* Check requested options, assign defaults */
     void (*check_options) __P((void));
 #endif /* PPP_OPTIONS */
@@ -436,6 +440,7 @@ extern struct protent *protocols[];
  * with PPP STREAMS modules pushed onto it).
  */
 struct channel {
+#if PPP_OPTIONS
 	/* set of options for this channel */
 	option_t *options;
 	/* find and process a per-channel options file */
@@ -444,6 +449,7 @@ struct channel {
 	void (*check_options) __P((void));
 	/* get the channel ready to do PPP, return a file descriptor */
 	int  (*connect) __P((void));
+#endif /* PPP_OPTIONS */
 	/* we're finished with the channel */
 	void (*disconnect) __P((void));
 	/* put the channel into PPP `mode' */
@@ -670,7 +676,9 @@ int  get_if_hwaddr __P((u_char *addr, char *name));
 char *get_first_ethernet __P((void));
 
 /* Procedures exported from options.c */
+#if 0 /* UNUSED */
 int setipaddr __P((char *, char **, int)); /* Set local/remote ip addresses */
+#endif /* UNUSED */
 int  parse_args __P((int argc, char **argv));
 				/* Parse options from arguments given */
 int  options_from_file __P((char *filename, int must_exist, int check_prot,
@@ -688,6 +696,7 @@ void option_error __P((char *fmt, ...));
 #else
 #define option_error(x, ...)
 #endif /* PPP_OPTIONS */
+#if PPP_OPTIONS
 int int_option __P((char *, int *));
 				/* Simplified number_option for decimal ints */
 void add_options __P((option_t *)); /* Add extra options */
@@ -696,6 +705,7 @@ int  override_value __P((const char *, int, const char *));
 				/* override value if permitted by priority */
 void print_options __P((void (*) __P((void *, char *, ...)), void *));
 				/* print out values of all options */
+#endif /* PPP_OPTIONS */
 
 int parse_dotted_ip __P((char *, u_int32_t *));
 

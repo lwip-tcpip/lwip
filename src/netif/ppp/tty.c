@@ -112,7 +112,9 @@ static int setdevname __P((char *, char **, int));
 static int setspeed __P((char *, char **, int));
 static int setxonxoff __P((char **));
 static int setescape __P((char **));
+#if 0 /* UNUSED */
 static void printescape __P((option_t *, void (*)(void *, char *,...),void *));
+#endif /* UNUSED */
 static void finish_tty __P((void));
 static int start_charshunt __P((int, int));
 static void stop_charshunt __P((void *, int));
@@ -154,7 +156,9 @@ char	*pty_socket = NULL;	/* Socket to connect to pty */
 int	using_pty = 0;		/* we're allocating a pty as the device */
 
 extern uid_t uid;
+#if 0 /* UNUSED */
 extern int kill_link;
+#endif /* UNUSED */
 extern int asked_to_quit;
 extern int got_sigterm;
 
@@ -163,6 +167,7 @@ extern int privopen;		/* don't lock, open device as root */
 
 u_int32_t xmit_accm[8];		/* extended transmit ACCM */
 
+#if 0 /* UNUSED */
 /* option descriptors */
 option_t tty_options[] = {
     /* device name must be first, or change connect_tty() below! */
@@ -243,12 +248,15 @@ option_t tty_options[] = {
     { NULL }
 };
 
+#endif /* UNUSED */
 
 struct channel tty_channel = {
+#if PPP_OPTIONS
 	tty_options,
 	&tty_process_extra_options,
 	&tty_check_options,
 	&connect_tty,
+#endif /* UNUSED */
 	&disconnect_tty,
 	&tty_establish_ppp,
 	&tty_disestablish_ppp,
@@ -373,6 +381,7 @@ setescape(argv)
     return ret;
 }
 
+#if 0 /* UNUSED */
 static void
 printescape(opt, printer, arg)
     option_t *opt;
@@ -396,6 +405,7 @@ printescape(opt, printer, arg)
 	if (first)
 		printer(arg, "oops # nothing escaped");
 }
+#endif /* UNUSED */
 
 /*
  * tty_init - do various tty-related initializations.
@@ -440,6 +450,7 @@ void tty_process_extra_options()
 #endif /* PPP_OPTIONS */
 }
 
+#if 0 /* UNUSED */
 /*
  * tty_check_options - do consistency checks on the options we were given.
  */
@@ -508,7 +519,9 @@ tty_check_options()
 	    && S_ISCHR(statbuf.st_mode) && statbuf.st_rdev == devstat.st_rdev)
 		log_to_fd = -1;
 }
+#endif /* UNUSED */
 
+#if 0 /* UNUSED */
 /*
  * connect_tty - get the serial port ready to start doing PPP.
  * That is, open the serial port, set its speed and mode, and run
@@ -770,7 +783,7 @@ int connect_tty()
 		asked_to_quit = 1;
 	return -1;
 }
-
+#endif /* UNUSED */
 
 void disconnect_tty()
 {

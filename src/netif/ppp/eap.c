@@ -121,8 +121,8 @@ struct protent eap_protent = {
 	NULL,			/* text name of corresponding data protocol */
 #if PPP_OPTIONS
 	eap_option_list,	/* list of command-line options */
-#endif /* PPP_OPTIONS */
 	NULL,			/* check requested options; assign defaults */
+#endif /* PPP_OPTIONS */
 	NULL,			/* configure interface for demand-dial */
 	NULL			/* say whether to bring up link for this pkt */
 };

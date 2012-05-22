@@ -115,8 +115,8 @@ struct protent ecp_protent = {
     "Encrypted",
 #if PPP_OPTIONS
     ecp_option_list,
-#endif /* PPP_OPTIONS */
     NULL,
+#endif /* PPP_OPTIONS */
     NULL,
     NULL
 };

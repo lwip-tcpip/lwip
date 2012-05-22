@@ -190,8 +190,10 @@ int privopen;			/* don't lock, open device as root */
 
 char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
 
+#if 0 /* UNUSED */
 GIDSET_TYPE groups[NGROUPS_MAX];/* groups the user is in */
 int ngroups;			/* How many groups valid in groups */
+#endif /* UNUSED */
 
 static struct timeval start_time;	/* Time when link was started. */
 
@@ -322,7 +324,9 @@ int ppp_oldmain() {
     slprintf(numbuf, sizeof(numbuf), "%d", uid);
     script_setenv("ORIG_UID", numbuf, 0);
 
+#if 0 /* UNUSED */
     ngroups = getgroups(NGROUPS_MAX, groups);
+#endif /* UNUSED */
 
     /*
      * Initialize magic number generator now so that protocols may
@@ -356,12 +360,14 @@ int ppp_oldmain() {
 
     devnam_fixed = 1;		/* can no longer change device name */
 
+#if 0 /* UNUSED */
     /*
      * Work out the device name, if it hasn't already been specified,
      * and parse the tty's options file.
      */
     if (the_channel->process_extra_options)
 	(*the_channel->process_extra_options)();
+#endif /* UNUSED */
 
     if (debug)
 	setlogmask(LOG_UPTO(LOG_DEBUG));
