@@ -103,7 +103,9 @@
 #include "ipv6cp.h"
 #endif
 #include "upap.h"
+#if CHAP_SUPPORT
 #include "chap-new.h"
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 #include "eap.h"
 #endif /* EAP_SUPPORT */
@@ -267,7 +269,9 @@ extern	char	*getlogin __P((void));
 struct protent *protocols[] = {
     &lcp_protent,
     &pap_protent,
+#if CHAP_SUPPORT
     &chap_protent,
+#endif /* CHAP_SUPPORT */
 #if CBCP_SUPPORT
     &cbcp_protent,
 #endif
@@ -1056,8 +1060,14 @@ get_input()
      */
     if (phase <= PHASE_AUTHENTICATE
 	&& !(protocol == PPP_LCP || protocol == PPP_LQR
-	     || protocol == PPP_PAP || protocol == PPP_CHAP ||
-		protocol == PPP_EAP)) {
+	     || protocol == PPP_PAP
+#if CHAP_SUPPORT
+	     || protocol == PPP_CHAP
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+	     || protocol == PPP_EAP
+#endif /* EAP_SUPPORT */
+	     )) {
 	dbglog("discarding proto 0x%x in phase %d",
 		   protocol, phase);
 	return;

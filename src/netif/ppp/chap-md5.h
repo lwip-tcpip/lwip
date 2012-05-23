@@ -28,4 +28,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 extern void chap_md5_init(void);
+
+#endif /* PPP_SUPPORT && CHAP_SUPPORT */

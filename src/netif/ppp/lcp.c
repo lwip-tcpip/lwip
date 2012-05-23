@@ -42,8 +42,6 @@
 
 #include "lwip/opt.h"
 
-#define RCSID	"$Id: lcp.c,v 1.76 2006/05/22 00:04:07 paulus Exp $"
-
 /*
  * TODO:
  */
@@ -56,10 +54,10 @@
 #include "pppmy.h"
 #include "fsm.h"
 #include "lcp.h"
+#if CHAP_SUPPORT
 #include "chap-new.h"
+#endif /* CHAP_SUPPORT */
 #include "magic.h"
-
-static const char rcsid[] = RCSID;
 
 /*
  * When the link comes up we want to be able to wait for a short while,
@@ -299,7 +297,9 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 #define CILEN_VOID	2
 #define CILEN_CHAR	3
 #define CILEN_SHORT	4	/* CILEN_VOID + 2 */
+#if CHAP_SUPPORT
 #define CILEN_CHAP	5	/* CILEN_VOID + 2 + 1 */
+#endif /* CHAP_SUPPORT */
 #define CILEN_LONG	6	/* CILEN_VOID + 4 */
 #define CILEN_LQR	8	/* CILEN_VOID + 2 + 4 */
 #define CILEN_CBCP	3
@@ -372,8 +372,10 @@ lcp_init(unit)
     ao->neg_mru = 1;
     ao->mru = MAXMRU;
     ao->neg_asyncmap = 1;
+#if CHAP_SUPPORT
     ao->neg_chap = 1;
     ao->chap_mdtype = chap_mdtype_all;
+#endif /* CHAP_SUPPORT */
     ao->neg_upap = 1;
 #if EAP_SUPPORT
     ao->neg_eap = 1;
@@ -690,7 +692,9 @@ lcp_cilen(f)
     lcp_options *go = &lcp_gotoptions[f->unit];
 
 #define LENCIVOID(neg)	((neg) ? CILEN_VOID : 0)
+#if CHAP_SUPPORT
 #define LENCICHAP(neg)	((neg) ? CILEN_CHAP : 0)
+#endif /* CHAP_SUPPORT */
 #define LENCISHORT(neg)	((neg) ? CILEN_SHORT : 0)
 #define LENCILONG(neg)	((neg) ? CILEN_LONG : 0)
 #define LENCILQR(neg)	((neg) ? CILEN_LQR: 0)
@@ -705,16 +709,21 @@ lcp_cilen(f)
 #if EAP_SUPPORT
 	    LENCISHORT(go->neg_eap) +
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
 	    LENCICHAP(
 #if EAP_SUPPORT
 	        !go->neg_eap &&
 #endif /* EAP_SUPPORT */
 	        go->neg_chap) +
+#endif /* CHAP_SUPPORT */
 	    LENCISHORT(
 #if EAP_SUPPORT
 	        !go->neg_eap &&
 #endif /* EAP_SUPPORT */
-	        !go->neg_chap && go->neg_upap) +
+#if CHAP_SUPPORT
+	        !go->neg_chap &&
+#endif /* CHAP_SUPPORT */
+	        go->neg_upap) +
 	    LENCILQR(go->neg_lqr) +
 	    LENCICBCP(go->neg_cbcp) +
 	    LENCILONG(go->neg_magicnumber) +
@@ -749,6 +758,7 @@ lcp_addci(f, ucp, lenp)
 	PUTCHAR(CILEN_SHORT, ucp); \
 	PUTSHORT(val, ucp); \
     }
+#if CHAP_SUPPORT
 #define ADDCICHAP(opt, neg, val) \
     if (neg) { \
 	PUTCHAR((opt), ucp); \
@@ -756,6 +766,7 @@ lcp_addci(f, ucp, lenp)
 	PUTSHORT(PPP_CHAP, ucp); \
 	PUTCHAR((CHAP_DIGEST(val)), ucp); \
     }
+#endif /* CHAP_SUPPORT */
 #define ADDCILONG(opt, neg, val) \
     if (neg) { \
 	PUTCHAR(opt, ucp); \
@@ -791,16 +802,21 @@ lcp_addci(f, ucp, lenp)
 #if EAP_SUPPORT
     ADDCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
     ADDCICHAP(CI_AUTHTYPE,
 #if EAP_SUPPORT
         !go->neg_eap &&
 #endif /* EAP_SUPPORT */
         go->neg_chap, go->chap_mdtype);
+#endif /* CHAP_SUPPORT */
     ADDCISHORT(CI_AUTHTYPE,
 #if EAP_SUPPORT
         !go->neg_eap &&
 #endif /* EAP_SUPPORT */
-        !go->neg_chap && go->neg_upap, PPP_PAP);
+#if CHAP_SUPPORT
+        !go->neg_chap &&
+#endif /* CHAP_SUPPORT */
+        go->neg_upap, PPP_PAP);
     ADDCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ADDCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ADDCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
@@ -878,6 +894,7 @@ lcp_ackci(f, p, len)
 	if (cichar != val) \
 	    goto bad; \
     }
+#if CHAP_SUPPORT
 #define ACKCICHAP(opt, neg, val) \
     if (neg) { \
 	if ((len -= CILEN_CHAP) < 0) \
@@ -894,6 +911,7 @@ lcp_ackci(f, p, len)
 	if (cichar != (CHAP_DIGEST(val))) \
 	  goto bad; \
     }
+#endif /* CHAP_SUPPORT */
 #define ACKCILONG(opt, neg, val) \
     if (neg) { \
 	if ((len -= CILEN_LONG) < 0) \
@@ -949,16 +967,21 @@ lcp_ackci(f, p, len)
 #if EAP_SUPPORT
     ACKCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
     ACKCICHAP(CI_AUTHTYPE,
 #if EAP_SUPPORT
         !go->neg_eap &&
 #endif /* EAP_SUPPORT */
         go->neg_chap, go->chap_mdtype);
+#endif /* CHAP_SUPPORT */
     ACKCISHORT(CI_AUTHTYPE,
 #if EAP_SUPPORT
         !go->neg_eap &&
 #endif /* EAP_SUPPORT */
-        !go->neg_chap && go->neg_upap, PPP_PAP);
+#if CHAP_SUPPORT
+        !go->neg_chap &&
+#endif /* CHAP_SUPPORT */
+        go->neg_upap, PPP_PAP);
     ACKCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ACKCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ACKCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
@@ -1025,6 +1048,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	no.neg = 1; \
 	try.neg = 0; \
     }
+#if CHAP_SUPPORT
 #define NAKCICHAP(opt, neg, code) \
     if (go->neg && \
 	len >= CILEN_CHAP && \
@@ -1037,6 +1061,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	no.neg = 1; \
 	code \
     }
+#endif /* CHAP_SUPPORT */
 #define NAKCICHAR(opt, neg, code) \
     if (go->neg && \
 	len >= CILEN_CHAR && \
@@ -1126,7 +1151,11 @@ lcp_nakci(f, p, len, treat_as_reject)
      * they are proposing a different protocol, or a different
      * hash algorithm for CHAP.
      */
-    if ((go->neg_chap || go->neg_upap
+    if ((0
+#if CHAP_SUPPORT
+        || go->neg_chap
+#endif /* CHAP_SUPPORT */
+        || go->neg_upap
 #if EAP_SUPPORT
         || go->neg_eap
 #endif /* EAP_SUPPORT */
@@ -1135,7 +1164,9 @@ lcp_nakci(f, p, len, treat_as_reject)
 	&& p[0] == CI_AUTHTYPE && p[1] >= CILEN_SHORT && p[1] <= len) {
 	cilen = p[1];
 	len -= cilen;
+#if CHAP_SUPPORT
 	no.neg_chap = go->neg_chap;
+#endif /* CHAP_SUPPORT */
 	no.neg_upap = go->neg_upap;
 #if EAP_SUPPORT
 	no.neg_eap = go->neg_eap;
@@ -1150,17 +1181,21 @@ lcp_nakci(f, p, len, treat_as_reject)
 	    else
 #endif /* EAP_SUPPORT */
 
+#if CHAP_SUPPORT
 	    /* If we were asking for CHAP, then we need to stop that. */
 	    if (go->neg_chap)
 		try.neg_chap = 0;
+	    else
+#endif /* CHAP_SUPPORT */
+
 	    /*
 	     * If we weren't asking for CHAP or EAP, then we were asking for
 	     * PAP, in which case this Nak is bad.
 	     */
-	    else
 		goto bad;
-
-	} else if (cishort == PPP_CHAP && cilen == CILEN_CHAP) {
+	}
+#if CHAP_SUPPORT
+	else if (cishort == PPP_CHAP && cilen == CILEN_CHAP) {
 	    GETCHAR(cichar, p);
 #if EAP_SUPPORT
 	    /* Stop asking for EAP, if we were. */
@@ -1200,7 +1235,9 @@ lcp_nakci(f, p, len, treat_as_reject)
 		try.neg_upap = 0;
 	    }
 
-	} else {
+	}
+#endif /* CHAP_SUPPORT */
+	else {
 
 #if EAP_SUPPORT
 	    /*
@@ -1218,9 +1255,12 @@ lcp_nakci(f, p, len, treat_as_reject)
 		try.neg_eap = 0;
 	    else
 #endif /* EAP_SUPPORT */
+
+#if CHAP_SUPPORT
 	    if (go->neg_chap)
 		try.neg_chap = 0;
 	    else
+#endif /* CHAP_SUPPORT */
 		try.neg_upap = 0;
 	    p += cilen - CILEN_SHORT;
 	}
@@ -1326,7 +1366,11 @@ lcp_nakci(f, p, len, treat_as_reject)
 		goto bad;
 	    break;
 	case CI_AUTHTYPE:
-	    if (go->neg_chap || no.neg_chap || go->neg_upap || no.neg_upap
+	    if (0
+#if CHAP_SUPPORT
+                || go->neg_chap || no.neg_chap
+#endif /* CHAP_SUPPORT */
+                || go->neg_upap || no.neg_upap
 #if EAP_SUPPORT
 		|| go->neg_eap || no.neg_eap
 #endif /* EAP_SUPPORT */
@@ -1443,7 +1487,8 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
     }
-#if EAP_SUPPORT
+
+#if CHAP_SUPPORT && EAP_SUPPORT
 #define REJCICHAP(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_CHAP && \
@@ -1459,8 +1504,9 @@ lcp_rejci(f, p, len)
 	try.neg = 0; \
 	try.neg_eap = try.neg_upap = 0; \
     }
-#endif /* EAP_SUPPORT */
-#if !EAP_SUPPORT
+#endif /* CHAP_SUPPORT && EAP_SUPPORT */
+
+#if CHAP_SUPPORT && !EAP_SUPPORT
 #define REJCICHAP(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_CHAP && \
@@ -1476,7 +1522,8 @@ lcp_rejci(f, p, len)
 	try.neg = 0; \
 	try.neg_upap = 0; \
     }
-#endif /* !EAP_SUPPORT */
+#endif /* CHAP_SUPPORT && !EAP_SUPPORT */
+
 #define REJCILONG(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_LONG && \
@@ -1542,10 +1589,14 @@ lcp_rejci(f, p, len)
     REJCISHORT(CI_AUTHTYPE, neg_eap, PPP_EAP);
     if (!go->neg_eap) {
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
 	REJCICHAP(CI_AUTHTYPE, neg_chap, go->chap_mdtype);
 	if (!go->neg_chap) {
+#endif /* CHAP_SUPPORT */
 	    REJCISHORT(CI_AUTHTYPE, neg_upap, PPP_PAP);
+#if CHAP_SUPPORT
 	}
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
     }
 #endif /* EAP_SUPPORT */
@@ -1684,7 +1735,10 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	case CI_AUTHTYPE:
 	    if (cilen < CILEN_SHORT ||
-		!(ao->neg_upap || ao->neg_chap
+		!(ao->neg_upap
+#if CHAP_SUPPORT
+		|| ao->neg_chap
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 		|| ao->neg_eap
 #endif /* EAP_SUPPORT */
@@ -1711,7 +1765,10 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 
 	    if (cishort == PPP_PAP) {
 		/* we've already accepted CHAP or EAP */
-		if (ho->neg_chap
+		if (0
+#if CHAP_SUPPORT
+		    || ho->neg_chap
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 		    || ho->neg_eap
 #endif /* EAP_SUPPORT */
@@ -1729,9 +1786,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 			PUTSHORT(PPP_EAP, nakp);
 		    } else {
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
 			PUTCHAR(CILEN_CHAP, nakp);
 			PUTSHORT(PPP_CHAP, nakp);
 			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 		    }
 #endif /* EAP_SUPPORT */
@@ -1740,6 +1799,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		ho->neg_upap = 1;
 		break;
 	    }
+#if CHAP_SUPPORT
 	    if (cishort == PPP_CHAP) {
 		/* we've already accepted PAP or EAP */
 		if (ho->neg_upap
@@ -1783,10 +1843,15 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		ho->neg_chap = 1;
 		break;
 	    }
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 	    if (cishort == PPP_EAP) {
 		/* we've already accepted CHAP or PAP */
-		if (ho->neg_chap || ho->neg_upap || cilen != CILEN_SHORT) {
+		if (
+#if CHAP_SUPPORT
+		    ho->neg_chap ||
+#endif /* CHAP_SUPPORT */
+		    ho->neg_upap || cilen != CILEN_SHORT) {
 		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE EAP, rejecting..."));
 		    orc = CONFREJ;
 		    break;
@@ -1794,14 +1859,18 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		if (!ao->neg_eap) {	/* we don't want to do EAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or PAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
+#if CHAP_SUPPORT
 		    if (ao->neg_chap) {
 			PUTCHAR(CILEN_CHAP, nakp);
 			PUTSHORT(PPP_CHAP, nakp);
 			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
 		    } else {
+#endif /* CHAP_SUPPORT */
 			PUTCHAR(CILEN_SHORT, nakp);
 			PUTSHORT(PPP_PAP, nakp);
+#if CHAP_SUPPORT
 		    }
+#endif /* CHAP_SUPPORT */
 		    break;
 		}
 		ho->neg_eap = 1;
@@ -1824,11 +1893,14 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		PUTSHORT(PPP_EAP, nakp);
 	    } else
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
 	    if (ao->neg_chap) {
 		PUTCHAR(CILEN_CHAP, nakp);
 		PUTSHORT(PPP_CHAP, nakp);
 		PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
-	    } else {
+	    } else
+#endif CHAP_SUPPORT
+	    {
 		PUTCHAR(CILEN_SHORT, nakp);
 		PUTSHORT(PPP_PAP, nakp);
 	    }
@@ -2169,6 +2241,7 @@ lcp_printpkt(p, plen, printer, arg)
 		    case PPP_PAP:
 			printer(arg, "pap");
 			break;
+#if CHAP_SUPPORT
 		    case PPP_CHAP:
 			printer(arg, "chap");
 			if (p < optend) {
@@ -2191,6 +2264,7 @@ lcp_printpkt(p, plen, printer, arg)
 			    }
 			}
 			break;
+#endif /* CHAP_SUPPORT */
 		    case PPP_EAP:
 			printer(arg, "eap");
 			break;

@@ -92,7 +92,9 @@ typedef struct lcp_options {
     bool neg_mru;		/* Negotiate the MRU? */
     bool neg_asyncmap;		/* Negotiate the async map? */
     bool neg_upap;		/* Ask for UPAP authentication? */
+#if CHAP_SUPPORT
     bool neg_chap;		/* Ask for CHAP authentication? */
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
     bool neg_eap;		/* Ask for EAP authentication? */
 #endif /* EAP_SUPPORT */
@@ -106,7 +108,9 @@ typedef struct lcp_options {
     bool neg_endpoint;		/* negotiate endpoint discriminator */
     int  mru;			/* Value of MRU */
     int	 mrru;			/* Value of MRRU, and multilink enable */
+#if CHAP_SUPPORT
     u_char chap_mdtype;		/* which MD types (hashing algorithm) */
+#endif /* CHAP_SUPPORT */
     u_int32_t asyncmap;		/* Value of async map */
     u_int32_t magicnumber;
     int  numloops;		/* Number of loops during magic number neg. */

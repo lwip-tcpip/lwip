@@ -438,19 +438,29 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
+  ppp_settings.refuse_pap = 0;
+
+#if CHAP_SUPPORT
   ppp_settings.refuse_pap = 1;
   ppp_settings.refuse_chap = 0;
+#endif /* CHAP_SUPPORT */
+
 #if MSCHAP_SUPPORT
   ppp_settings.refuse_pap = 1;
   ppp_settings.refuse_chap = 1;
   ppp_settings.refuse_mschap = 1;
   ppp_settings.refuse_mschap_v2 = 0;
 #endif /* MSCHAP_SUPPORT */
+
 #if EAP_SUPPORT
   ppp_settings.refuse_pap = 1;
+#if CHAP_SUPPORT
   ppp_settings.refuse_chap = 1;
+#if MSCHAP_SUPPORT
   ppp_settings.refuse_mschap = 1;
   ppp_settings.refuse_mschap_v2 = 1;
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
   ppp_settings.refuse_eap = 0;
 #endif /* EAP_SUPPORT */
 

@@ -29,6 +29,8 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 #include "pppmy.h"
 
 #define RCSID	"$Id: chap-new.c,v 1.9 2007/06/19 02:08:35 carlsonj Exp $"
@@ -670,3 +672,5 @@ struct protent chap_protent = {
 	NULL,
 	NULL
 };
+
+#endif /* PPP_SUPPORT && CHAP_SUPPORT */

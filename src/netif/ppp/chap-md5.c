@@ -29,8 +29,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: chap-md5.c,v 1.4 2004/11/09 22:39:25 paulus Exp $"
+#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include <stdlib.h>
 #include <string.h>
@@ -117,3 +116,5 @@ chap_md5_init(void)
 {
 	chap_register_digest(&md5_digest);
 }
+
+#endif /* PPP_SUPPORT && CHAP_SUPPORT */

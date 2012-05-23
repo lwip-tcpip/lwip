@@ -29,6 +29,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
@@ -152,3 +153,5 @@ extern void chap_auth_with_peer(int unit, char *our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
 extern struct protent chap_protent;
+
+#endif /* PPP_SUPPORT && CHAP_SUPPORT */

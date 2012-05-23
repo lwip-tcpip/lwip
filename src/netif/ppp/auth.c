@@ -108,7 +108,9 @@
 #include "ecp.h"
 #include "ipcp.h"
 #include "upap.h"
+#if CHAP_SUPPORT
 #include "chap-new.h"
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 #include "eap.h"
 #endif /* EAP_SUPPORT */
@@ -763,7 +765,10 @@ link_established(unit)
 	set_allowed_addrs(unit, NULL, NULL);
 #endif /* PPP_ALLOWED_ADDRS */
 
-    if (auth_required && !(go->neg_upap || go->neg_chap
+    if (auth_required && !(go->neg_upap
+#if CHAP_SUPPORT
+	|| go->neg_chap
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 	|| go->neg_eap
 #endif /* EAP_SUPPORT */
@@ -798,10 +803,13 @@ link_established(unit)
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
     if (go->neg_chap) {
 	chap_auth_peer(unit, our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
-    } else if (go->neg_upap) {
+    } else
+#endif /* CHAP_SUPPORT */
+    if (go->neg_upap) {
 	upap_authpeer(unit);
 	auth |= PAP_PEER;
     }
@@ -811,10 +819,13 @@ link_established(unit)
 	auth |= EAP_WITHPEER;
     } else
 #endif /* EAP_SUPPORT */
+#if CHAP_SUPPORT
     if (ho->neg_chap) {
 	chap_auth_with_peer(unit, ppp_settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
-    } else if (ho->neg_upap) {
+    } else
+#endif /* CHAP_SUPPORT */
+    if (ho->neg_upap) {
 	upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
 	auth |= PAP_WITHPEER;
     }
@@ -844,7 +855,11 @@ network_phase(unit)
     /*
      * If the peer had to authenticate, run the auth-up script now.
      */
-    if (go->neg_chap || go->neg_upap
+    if (0
+#if CHAP_SUPPORT
+	|| go->neg_chap
+#endif /* CHAP_SUPPORT */
+	|| go->neg_upap
 #if EAP_SUPPORT
 	|| go->neg_eap
 #endif /* EAP_SUPPORT */
@@ -967,6 +982,7 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
     int bit;
 
     switch (protocol) {
+#if CHAP_SUPPORT
     case PPP_CHAP:
 	bit = CHAP_PEER;
 	switch (prot_flavor) {
@@ -983,6 +999,7 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
 #endif /* MSCHAP_SUPPORT */
 	}
 	break;
+#endif /* CHAP_SUPPORT */
     case PPP_PAP:
 	bit = PAP_PEER;
 	break;
@@ -1042,6 +1059,7 @@ auth_withpeer_success(unit, protocol, prot_flavor)
     const char *prot = "";
 
     switch (protocol) {
+#if CHAP_SUPPORT
     case PPP_CHAP:
 	bit = CHAP_WITHPEER;
 	prot = "CHAP";
@@ -1059,6 +1077,7 @@ auth_withpeer_success(unit, protocol, prot_flavor)
 #endif /* MSCHAP_SUPPORT */
 	}
 	break;
+#endif /* CHAP_SUPPORT */
     case PPP_PAP:
 	bit = PAP_WITHPEER;
 	prot = "PAP";
@@ -1274,28 +1293,38 @@ auth_check_options()
 	default_auth = 1;
     }
 
+#if CHAP_SUPPORT
     /* If we selected any CHAP flavors, we should probably negotiate it. :-) */
     if (wo->chap_mdtype)
 	wo->neg_chap = 1;
+#endif /* CHAP_SUPPORT */
 
     /* If authentication is required, ask peer for CHAP, PAP, or EAP. */
     if (auth_required) {
 	allow_any_ip = 0;
-	if (!wo->neg_chap && !wo->neg_upap
+	if (1
+#if CHAP_SUPPORT
+	    && !wo->neg_chap
+#endif /* CHAP_SUPPORT */
+	    && !wo->neg_upap
 #if EAP_SUPPORT
 	    && !wo->neg_eap
 #endif /* EAP_SUPPORT */
 	    ) {
+#if CHAP_SUPPORT
 	    wo->neg_chap = chap_mdtype_all != MDTYPE_NONE;
 	    wo->chap_mdtype = chap_mdtype_all;
+#endif /* CHAP_SUPPORT */
 	    wo->neg_upap = 1;
 #if EAP_SUPPORT
 	    wo->neg_eap = 1;
 #endif /* EAP_SUPPORT */
 	}
     } else {
+#if CHAP_SUPPORT
 	wo->neg_chap = 0;
 	wo->chap_mdtype = MDTYPE_NONE;
+#endif /* CHAP_SUPPORT */
 	wo->neg_upap = 0;
 #if EAP_SUPPORT
 	wo->neg_eap = 0;
@@ -1309,13 +1338,20 @@ auth_check_options()
      */
     lacks_ip = 0;
     can_auth = wo->neg_upap && (uselogin || have_pap_secret(&lacks_ip));
-    if (!can_auth && (wo->neg_chap
+    if (!can_auth && (0
+#if CHAP_SUPPORT
+	|| wo->neg_chap
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 	|| wo->neg_eap
 #endif /* EAP_SUPPORT */
 	)) {
+#if CHAP_SUPPORT
 	can_auth = have_chap_secret((explicit_remote? remote_name: NULL),
 				    our_name, 1, &lacks_ip);
+#else
+	can_auth = 0;
+#endif
     }
     if (!can_auth
 #if EAP_SUPPORT
@@ -1378,6 +1414,7 @@ auth_reset(unit)
     ao->neg_eap = !ppp_settings.refuse_eap;
 #endif /* EAP_SUPPORT */
 
+#if CHAP_SUPPORT
     ao->chap_mdtype = MDTYPE_NONE;
     if(!ppp_settings.refuse_chap)
       ao->chap_mdtype |= MDTYPE_MD5;
@@ -1389,24 +1426,29 @@ auth_reset(unit)
 #endif /* MSCHAP_SUPPORT */
 
     ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
+#endif /* CHAP_SUPPORT */
 
   } else {
     ao->neg_upap = 0;
+#if CHAP_SUPPORT
     ao->neg_chap = 0;
+    ao->chap_mdtype = MDTYPE_NONE;
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
     ao->neg_eap = 0;
 #endif /* EAP_SUPPORT */
-    ao->chap_mdtype = MDTYPE_NONE;
   }
 
 
   printf("neg_upap: %d\n", ao->neg_upap);
+#if CHAP_SUPPORT
   printf("neg_chap: %d\n", ao->neg_chap);
   printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
 #if MSCHAP_SUPPORT
   printf("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT) );
   printf("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2) );
 #endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
   printf("neg_eap: %d\n", ao->neg_eap);
 #endif /* EAP_SUPPORT */
@@ -1428,11 +1470,13 @@ auth_reset(unit)
 #endif /* OLD CODE */
 
   go->neg_upap = 0;
+#if CHAP_SUPPORT
   go->neg_chap = 0;
+  go->chap_mdtype = MDTYPE_NONE;
+#endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
   go->neg_eap = 0;
 #endif /* EAP_SUPPORT */
-  go->chap_mdtype = MDTYPE_NONE;
   return;
 #if 0
     /* FIXME: find what the below stuff do */
