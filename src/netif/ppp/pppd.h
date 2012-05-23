@@ -365,11 +365,13 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 /* Values for auth_done only */
 #define CHAP_MD5_WITHPEER	0x40
 #define CHAP_MD5_PEER		0x80
+#if MSCHAP_SUPPORT
 #define CHAP_MS_SHIFT		8	/* LSB position for MS auths */
 #define CHAP_MS_WITHPEER	0x100
 #define CHAP_MS_PEER		0x200
 #define CHAP_MS2_WITHPEER	0x400
 #define CHAP_MS2_PEER		0x800
+#endif /* MSCHAP_SUPPORT */
 
 extern char *current_option;	/* the name of the option being parsed */
 extern int  privileged_option;	/* set iff the current option came from root */

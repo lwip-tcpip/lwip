@@ -30,6 +30,9 @@
  * $Id: chap_ms.h,v 1.13 2004/11/15 22:13:26 paulus Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && MSCHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 #ifndef __CHAPMS_INCLUDE__
 
 #define MD4_SIGNATURE_SIZE	16	/* 16 bytes in a MD4 message digest */
@@ -107,3 +110,5 @@ void chapms_init(void);
 
 #define __CHAPMS_INCLUDE__
 #endif /* __CHAPMS_INCLUDE__ */
+
+#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */

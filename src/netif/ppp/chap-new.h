@@ -28,6 +28,8 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "lwip/opt.h"
+
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
  */
@@ -45,8 +47,10 @@
  * CHAP digest codes.
  */
 #define CHAP_MD5		5
+#if MSCHAP_SUPPORT
 #define CHAP_MICROSOFT		0x80
 #define CHAP_MICROSOFT_V2	0x81
+#endif /* MSCHAP_SUPPORT */
 
 /*
  * Semi-arbitrary limits on challenge and response fields.
@@ -55,37 +59,57 @@
 #define MAX_RESPONSE_LEN	64
 
 /* bitmask of supported algorithms */
+#if MSCHAP_SUPPORT
 #define MDTYPE_MICROSOFT_V2	0x1
 #define MDTYPE_MICROSOFT	0x2
+#endif /* MSCHAP_SUPPORT */
 #define MDTYPE_MD5		0x4
 #define MDTYPE_NONE		0
 
 /* hashes supported by this instance of pppd */
 extern int chap_mdtype_all;
 
+#if MSCHAP_SUPPORT
 /* Return the digest alg. ID for the most preferred digest type. */
 #define CHAP_DIGEST(mdtype) \
     ((mdtype) & MDTYPE_MD5)? CHAP_MD5: \
     ((mdtype) & MDTYPE_MICROSOFT_V2)? CHAP_MICROSOFT_V2: \
     ((mdtype) & MDTYPE_MICROSOFT)? CHAP_MICROSOFT: \
     0
+#else /* !MSCHAP_SUPPORT */
+#define CHAP_DIGEST(mdtype) \
+    ((mdtype) & MDTYPE_MD5)? CHAP_MD5: \
+    0
+#endif /* MSCHAP_SUPPORT */
 
 /* Return the bit flag (lsb set) for our most preferred digest type. */
 #define CHAP_MDTYPE(mdtype) ((mdtype) ^ ((mdtype) - 1)) & (mdtype)
 
 /* Return the bit flag for a given digest algorithm ID. */
+#if MSCHAP_SUPPORT
 #define CHAP_MDTYPE_D(digest) \
     ((digest) == CHAP_MICROSOFT_V2)? MDTYPE_MICROSOFT_V2: \
     ((digest) == CHAP_MICROSOFT)? MDTYPE_MICROSOFT: \
     ((digest) == CHAP_MD5)? MDTYPE_MD5: \
     0
+#else /* !MSCHAP_SUPPORT */
+#define CHAP_MDTYPE_D(digest) \
+    ((digest) == CHAP_MD5)? MDTYPE_MD5: \
+    0
+#endif /* MSCHAP_SUPPORT */
 
 /* Can we do the requested digest? */
+#if MSCHAP_SUPPORT
 #define CHAP_CANDIGEST(mdtype, digest) \
     ((digest) == CHAP_MICROSOFT_V2)? (mdtype) & MDTYPE_MICROSOFT_V2: \
     ((digest) == CHAP_MICROSOFT)? (mdtype) & MDTYPE_MICROSOFT: \
     ((digest) == CHAP_MD5)? (mdtype) & MDTYPE_MD5: \
     0
+#else /* !MSCHAP_SUPPORT */
+#define CHAP_CANDIGEST(mdtype, digest) \
+    ((digest) == CHAP_MD5)? (mdtype) & MDTYPE_MD5: \
+    0
+#endif /* MSCHAP_SUPPORT */
 
 /*
  * The code for each digest type has to supply one of these.

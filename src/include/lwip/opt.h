@@ -1717,7 +1717,7 @@
 #endif
 
 /**
- * MSCHAP_SUPPORT==1: Support MSCHAP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * MSCHAP_SUPPORT==1: Support MSCHAP.
  */
 #ifndef MSCHAP_SUPPORT
 #define MSCHAP_SUPPORT                  0

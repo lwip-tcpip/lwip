@@ -222,13 +222,13 @@ bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
 //bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
 //bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
 //bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 //bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
 //bool refuse_mschap_v2 = 0;	/* Don't wanna auth. oif 0 /* UNUSED */urselves with MS-CHAPv2 */
-#else
+#else /* MSCHAP_SUPPORT */
 //bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
 //bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
-#endif
+#endif /* MSCHAP_SUPPORT */
 #endif /* MOVED TO ppp_settings */
 #if 0 /* UNUSED */
 bool usehostname = 0;		/* Use hostname for our_name */
@@ -301,7 +301,7 @@ option_t auth_options[] = {
       "Require CHAP authentication from peer",
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MD5,
       &lcp_wantoptions[0].chap_mdtype },
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
     { "require-mschap", o_bool, &auth_required,
       "Require MS-CHAP authentication from peer",
       OPT_PRIOSUB | OPT_A2OR | MDTYPE_MICROSOFT,
@@ -318,7 +318,7 @@ option_t auth_options[] = {
       "Require MS-CHAPv2 authentication from peer",
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2OR | MDTYPE_MICROSOFT_V2,
       &lcp_wantoptions[0].chap_mdtype },
-#endif
+#endif /* MSCHAP_SUPPORT */
 #if 0
     { "refuse-pap", o_bool, &refuse_pap,
       "Don't agree to auth to peer with PAP", 1 },
@@ -333,7 +333,7 @@ option_t auth_options[] = {
       OPT_ALIAS | OPT_A2CLRB | MDTYPE_MD5,
       &lcp_allowoptions[0].chap_mdtype },
 #endif
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 #if 0
     { "refuse-mschap", o_bool, &refuse_mschap,
       "Don't agree to auth to peer with MS-CHAP",
@@ -352,7 +352,7 @@ option_t auth_options[] = {
       OPT_ALIAS | OPT_A2CLRB | MDTYPE_MICROSOFT_V2,
       &lcp_allowoptions[0].chap_mdtype },
 #endif
-#endif
+#endif /* MSCHAP_SUPPORT*/
 #if EAP_SUPPORT
     { "require-eap", o_bool, &lcp_wantoptions[0].neg_eap,
       "Require EAP authentication from peer", OPT_PRIOSUB | 1,
@@ -973,14 +973,14 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
 	case CHAP_MD5:
 	    bit |= CHAP_MD5_PEER;
 	    break;
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 	case CHAP_MICROSOFT:
 	    bit |= CHAP_MS_PEER;
 	    break;
 	case CHAP_MICROSOFT_V2:
 	    bit |= CHAP_MS2_PEER;
 	    break;
-#endif
+#endif /* MSCHAP_SUPPORT */
 	}
 	break;
     case PPP_PAP:
@@ -1049,14 +1049,14 @@ auth_withpeer_success(unit, protocol, prot_flavor)
 	case CHAP_MD5:
 	    bit |= CHAP_MD5_WITHPEER;
 	    break;
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 	case CHAP_MICROSOFT:
 	    bit |= CHAP_MS_WITHPEER;
 	    break;
 	case CHAP_MICROSOFT_V2:
 	    bit |= CHAP_MS2_WITHPEER;
 	    break;
-#endif
+#endif /* MSCHAP_SUPPORT */
 	}
 	break;
     case PPP_PAP:
@@ -1381,10 +1381,12 @@ auth_reset(unit)
     ao->chap_mdtype = MDTYPE_NONE;
     if(!ppp_settings.refuse_chap)
       ao->chap_mdtype |= MDTYPE_MD5;
+#if MSCHAP_SUPPORT
     if(!ppp_settings.refuse_mschap)
       ao->chap_mdtype |= MDTYPE_MICROSOFT;
     if(!ppp_settings.refuse_mschap_v2)
       ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
+#endif /* MSCHAP_SUPPORT */
 
     ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
 
@@ -1401,8 +1403,10 @@ auth_reset(unit)
   printf("neg_upap: %d\n", ao->neg_upap);
   printf("neg_chap: %d\n", ao->neg_chap);
   printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
+#if MSCHAP_SUPPORT
   printf("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT) );
   printf("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2) );
+#endif /* MSCHAP_SUPPORT */
 #if EAP_SUPPORT
   printf("neg_eap: %d\n", ao->neg_eap);
 #endif /* EAP_SUPPORT */

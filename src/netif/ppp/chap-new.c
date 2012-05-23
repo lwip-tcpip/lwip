@@ -40,7 +40,7 @@
 #include "chap-new.h"
 #include "chap-md5.h"
 
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 #include "chap_ms.h"
 #define MDTYPE_ALL (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
 #else
@@ -149,7 +149,7 @@ chap_init(int unit)
 	memset(&server, 0, sizeof(server));
 
 	chap_md5_init();
-#ifdef CHAPMS
+#if MSCHAP_SUPPORT
 	chapms_init();
 #endif
 }

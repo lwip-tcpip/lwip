@@ -2177,6 +2177,7 @@ lcp_printpkt(p, plen, printer, arg)
 				printer(arg, " MD5");
 				++p;
 				break;
+#if MSCHAP_SUPPORT
 			    case CHAP_MICROSOFT:
 				printer(arg, " MS");
 				++p;
@@ -2186,6 +2187,7 @@ lcp_printpkt(p, plen, printer, arg)
 				printer(arg, " MS-v2");
 				++p;
 				break;
+#endif /* MSCHAP_SUPPORT */
 			    }
 			}
 			break;

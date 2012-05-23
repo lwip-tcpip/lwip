@@ -75,10 +75,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: chap_ms.c,v 1.38 2007/12/01 20:10:51 carlsonj Exp $"
-
-#ifdef CHAPMS
+#if PPP_SUPPORT && MSCHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -96,8 +93,6 @@
 #include "polarssl/des.h"
 #include "pppcrypt.h"
 #include "magic.h"
-
-static const char rcsid[] = RCSID;
 
 #define SHA1_SIGNATURE_SIZE 20
 
@@ -947,4 +942,4 @@ chapms_init(void)
 #endif /* PPP_OPTIONS */
 }
 
-#endif /* CHAPMS */
+#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */
