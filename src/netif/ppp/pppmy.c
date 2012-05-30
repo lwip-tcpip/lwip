@@ -197,8 +197,16 @@ static void ppp_input(void *arg) {
    */
   if (phase <= PHASE_AUTHENTICATE
 	&& !(protocol == PPP_LCP || protocol == PPP_LQR
-	     || protocol == PPP_PAP || protocol == PPP_CHAP ||
-		protocol == PPP_EAP)) {
+#if PAP_SUPPORT
+	     || protocol == PPP_PAP
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+	     || protocol == PPP_CHAP
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+	     || protocol == PPP_EAP
+#endif /* EAP_SUPPORT */
+	     )) {
 	dbglog("discarding proto 0x%x in phase %d",
 		   protocol, phase);
 	return;
@@ -438,22 +446,30 @@ pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
+#if PAP_SUPPORT
   ppp_settings.refuse_pap = 0;
+#endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
+#if PAP_SUPPORT
   ppp_settings.refuse_pap = 1;
+#endif /* PAP_SUPPORT */
   ppp_settings.refuse_chap = 0;
 #endif /* CHAP_SUPPORT */
 
 #if MSCHAP_SUPPORT
+#if PAP_SUPPORT
   ppp_settings.refuse_pap = 1;
+#endif /* PAP_SUPPORT */
   ppp_settings.refuse_chap = 1;
   ppp_settings.refuse_mschap = 1;
   ppp_settings.refuse_mschap_v2 = 0;
 #endif /* MSCHAP_SUPPORT */
 
 #if EAP_SUPPORT
+#if PAP_SUPPORT
   ppp_settings.refuse_pap = 1;
+#endif/* PAP_SUPPORT */
 #if CHAP_SUPPORT
   ppp_settings.refuse_chap = 1;
 #if MSCHAP_SUPPORT

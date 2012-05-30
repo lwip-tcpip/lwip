@@ -46,7 +46,9 @@ struct ppp_settings {
   u_int  disable_defaultip : 1;       /* Don't use hostname for default IP addrs */
   u_int  auth_required     : 1;       /* Peer is required to authenticate */
   u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
+#if PAP_SUPPORT
   u_int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
   u_int  refuse_chap       : 1;       /* Don't wanna auth. ourselves with CHAP */
 #endif /* CHAP_SUPPORT */

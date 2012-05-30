@@ -41,8 +41,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: upap.c,v 1.30 2005/07/13 10:41:58 paulus Exp $"
+#if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 /*
  * TODO:
@@ -53,8 +52,6 @@
 
 #include "pppd.h"
 #include "upap.h"
-
-static const char rcsid[] = RCSID;
 
 static bool hide_password = 1;
 
@@ -692,3 +689,5 @@ upap_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+
+#endif /* PPP_SUPPORT && PAP_SUPPORT */

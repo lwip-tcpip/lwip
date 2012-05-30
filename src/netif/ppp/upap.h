@@ -42,6 +42,9 @@
  * $Id: upap.h,v 1.8 2002/12/04 23:03:33 paulus Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 /*
  * Packet header = Code, id, length.
  */
@@ -108,3 +111,5 @@ void upap_authwithpeer __P((int, char *, char *));
 void upap_authpeer __P((int));
 
 extern struct protent pap_protent;
+
+#endif /* PPP_SUPPORT && PAP_SUPPORT */

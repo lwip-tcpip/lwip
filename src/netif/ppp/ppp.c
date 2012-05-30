@@ -102,7 +102,9 @@
 #ifdef INET6
 #include "ipv6cp.h"
 #endif
+#if PAP_SUPPORT
 #include "upap.h"
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
 #include "chap-new.h"
 #endif /* CHAP_SUPPORT */
@@ -268,7 +270,9 @@ extern	char	*getlogin __P((void));
  */
 struct protent *protocols[] = {
     &lcp_protent,
+#if PAP_SUPPORT
     &pap_protent,
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
     &chap_protent,
 #endif /* CHAP_SUPPORT */

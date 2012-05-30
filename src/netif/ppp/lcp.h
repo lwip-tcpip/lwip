@@ -91,7 +91,9 @@ typedef struct lcp_options {
     bool restart;		/* Restart vs. exit after close */
     bool neg_mru;		/* Negotiate the MRU? */
     bool neg_asyncmap;		/* Negotiate the async map? */
+#if PAP_SUPPORT
     bool neg_upap;		/* Ask for UPAP authentication? */
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
     bool neg_chap;		/* Ask for CHAP authentication? */
 #endif /* CHAP_SUPPORT */

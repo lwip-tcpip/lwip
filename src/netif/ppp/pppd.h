@@ -355,14 +355,21 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 #endif
 
 /* Values for auth_pending, auth_done */
+#if PAP_SUPPORT
 #define PAP_WITHPEER	0x1
 #define PAP_PEER	0x2
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
 #define CHAP_WITHPEER	0x4
 #define CHAP_PEER	0x8
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
 #define EAP_WITHPEER	0x10
 #define EAP_PEER	0x20
+#endif /* EAP_SUPPORT */
 
 /* Values for auth_done only */
+#if CHAP_SUPPORT
 #define CHAP_MD5_WITHPEER	0x40
 #define CHAP_MD5_PEER		0x80
 #if MSCHAP_SUPPORT
@@ -372,6 +379,7 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 #define CHAP_MS2_WITHPEER	0x400
 #define CHAP_MS2_PEER		0x800
 #endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
 
 extern char *current_option;	/* the name of the option being parsed */
 extern int  privileged_option;	/* set iff the current option came from root */

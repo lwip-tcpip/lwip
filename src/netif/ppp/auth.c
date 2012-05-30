@@ -107,7 +107,9 @@
 #include "ccp.h"
 #include "ecp.h"
 #include "ipcp.h"
+#if PAP_SUPPORT
 #include "upap.h"
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
 #include "chap-new.h"
 #endif /* CHAP_SUPPORT */
@@ -765,7 +767,10 @@ link_established(unit)
 	set_allowed_addrs(unit, NULL, NULL);
 #endif /* PPP_ALLOWED_ADDRS */
 
-    if (auth_required && !(go->neg_upap
+    if (auth_required && !(0
+#if PAP_SUPPORT
+	|| go->neg_upap
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
 	|| go->neg_chap
 #endif /* CHAP_SUPPORT */
@@ -809,10 +814,14 @@ link_established(unit)
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
     if (go->neg_upap) {
 	upap_authpeer(unit);
 	auth |= PAP_PEER;
-    }
+    } else
+#endif /* PAP_SUPPORT */
+    {}
+
 #if EAP_SUPPORT
     if (ho->neg_eap) {
 	eap_authwithpeer(unit, ppp_settings.user);
@@ -825,10 +834,14 @@ link_established(unit)
 	auth |= CHAP_WITHPEER;
     } else
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
     if (ho->neg_upap) {
 	upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
 	auth |= PAP_WITHPEER;
-    }
+    } else
+#endif /* PAP_SUPPORT */
+    {}
+
     auth_pending[unit] = auth;
     auth_done[unit] = 0;
 
@@ -859,7 +872,9 @@ network_phase(unit)
 #if CHAP_SUPPORT
 	|| go->neg_chap
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
 	|| go->neg_upap
+#endif /* PAP_SUPPORT */
 #if EAP_SUPPORT
 	|| go->neg_eap
 #endif /* EAP_SUPPORT */
@@ -1000,12 +1015,16 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
 	}
 	break;
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
     case PPP_PAP:
 	bit = PAP_PEER;
 	break;
+#endif /* PAP_SUPPORT */
+#if EAP_SUPPORT
     case PPP_EAP:
 	bit = EAP_PEER;
 	break;
+#endif /* EAP_SUPPORT */
     default:
 	warn("auth_peer_success: unknown protocol %x", protocol);
 	return;
@@ -1078,14 +1097,18 @@ auth_withpeer_success(unit, protocol, prot_flavor)
 	}
 	break;
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
     case PPP_PAP:
 	bit = PAP_WITHPEER;
 	prot = "PAP";
 	break;
+#endif /* PAP_SUPPORT */
+#if EAP_SUPPORT
     case PPP_EAP:
 	bit = EAP_WITHPEER;
 	prot = "EAP";
 	break;
+#endif /* EAP_SUPPORT */
     default:
 	warn("auth_withpeer_success: unknown protocol %x", protocol);
 	bit = 0;
@@ -1306,7 +1329,9 @@ auth_check_options()
 #if CHAP_SUPPORT
 	    && !wo->neg_chap
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
 	    && !wo->neg_upap
+#endif /* PAP_SUPPORT */
 #if EAP_SUPPORT
 	    && !wo->neg_eap
 #endif /* EAP_SUPPORT */
@@ -1315,7 +1340,9 @@ auth_check_options()
 	    wo->neg_chap = chap_mdtype_all != MDTYPE_NONE;
 	    wo->chap_mdtype = chap_mdtype_all;
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
 	    wo->neg_upap = 1;
+#endif /* PAP_SUPPORT */
 #if EAP_SUPPORT
 	    wo->neg_eap = 1;
 #endif /* EAP_SUPPORT */
@@ -1325,7 +1352,9 @@ auth_check_options()
 	wo->neg_chap = 0;
 	wo->chap_mdtype = MDTYPE_NONE;
 #endif /* CHAP_SUPPORT */
+#if PAP_SUPPORT
 	wo->neg_upap = 0;
+#endif /* PAP_SUPPORT */
 #if EAP_SUPPORT
 	wo->neg_eap = 0;
 #endif /* EAP_SUPPORT */
@@ -1337,7 +1366,11 @@ auth_check_options()
      * of a CHAP-like exchanges as well as SRP.
      */
     lacks_ip = 0;
+#if PAP_SUPPORT
     can_auth = wo->neg_upap && (uselogin || have_pap_secret(&lacks_ip));
+#else
+    can_auth = 0;
+#endif /* PAP_SUPPORT */
     if (!can_auth && (0
 #if CHAP_SUPPORT
 	|| wo->neg_chap
@@ -1408,7 +1441,9 @@ auth_reset(unit)
 
   if( ppp_settings.passwd[0] ) {
 
+#if PAP_SUPPORT
     ao->neg_upap = !ppp_settings.refuse_pap;
+#endif /* PAP_SUPPORT */
 
 #if EAP_SUPPORT
     ao->neg_eap = !ppp_settings.refuse_eap;
@@ -1429,7 +1464,9 @@ auth_reset(unit)
 #endif /* CHAP_SUPPORT */
 
   } else {
+#if PAP_SUPPORT
     ao->neg_upap = 0;
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
     ao->neg_chap = 0;
     ao->chap_mdtype = MDTYPE_NONE;
@@ -1439,8 +1476,9 @@ auth_reset(unit)
 #endif /* EAP_SUPPORT */
   }
 
-
+#if PAP_SUPPORT
   printf("neg_upap: %d\n", ao->neg_upap);
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
   printf("neg_chap: %d\n", ao->neg_chap);
   printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
@@ -1469,7 +1507,9 @@ auth_reset(unit)
 	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL)); */
 #endif /* OLD CODE */
 
+#if PAP_SUPPORT
   go->neg_upap = 0;
+#endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
   go->neg_chap = 0;
   go->chap_mdtype = MDTYPE_NONE;
