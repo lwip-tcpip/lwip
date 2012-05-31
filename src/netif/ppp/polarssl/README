@@ -15,10 +15,10 @@ library into lwIP:
 
 The following defines are available for flexibility:
 
-LWIP_INCLUDED_POLARSSL_MD4_C   ; Use lwIP internal PolarSSL for MD4
-LWIP_INCLUDED_POLARSSL_MD5_C   ; Use lwIP internal PolarSSL for MD5
-LWIP_INCLUDED_POLARSSL_SHA1_C  ; Use lwIP internal PolarSSL for SHA1
-LWIP_INCLUDED_POLARSSL_DES_C   ; Use lwIP internal PolarSSL for DES
+LWIP_INCLUDED_POLARSSL_MD4   ; Use lwIP internal PolarSSL for MD4
+LWIP_INCLUDED_POLARSSL_MD5   ; Use lwIP internal PolarSSL for MD5
+LWIP_INCLUDED_POLARSSL_SHA1  ; Use lwIP internal PolarSSL for SHA1
+LWIP_INCLUDED_POLARSSL_DES   ; Use lwIP internal PolarSSL for DES
 
 If set (=1), the default if required by another enabled PPP feature unless
 explicitly set to 0, using included lwIP PolarSSL.

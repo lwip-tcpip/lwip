@@ -40,7 +40,7 @@
  */
 
 #include "lwip/opt.h"
-#if defined(LWIP_INCLUDED_POLARSSL_MD4_C)
+#if LWIP_INCLUDED_POLARSSL_MD4
 
 #include "polarssl/md4.h"
 
@@ -276,4 +276,4 @@ void md4( unsigned char *input, int ilen, unsigned char output[16] )
     md4_finish( &ctx, output );
 }
 
-#endif /* LWIP_INCLUDED_POLARSSL_MD4_C */
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */

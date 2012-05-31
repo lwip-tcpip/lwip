@@ -39,7 +39,7 @@
  */
 
 #include "lwip/opt.h"
-#if defined(LWIP_INCLUDED_POLARSSL_MD5_C)
+#if LWIP_INCLUDED_POLARSSL_MD5
 
 #include "polarssl/md5.h"
 
@@ -295,4 +295,4 @@ void md5( unsigned char *input, int ilen, unsigned char output[16] )
     md5_finish( &ctx, output );
 }
 
-#endif /* LWIP_INCLUDED_POLARSSL_MD5_C */
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */

@@ -39,7 +39,7 @@
  */
 
 #include "lwip/opt.h"
-#if defined(LWIP_INCLUDED_POLARSSL_SHA1_C)
+#if LWIP_INCLUDED_POLARSSL_SHA1
 
 #include "polarssl/sha1.h"
 
@@ -330,4 +330,4 @@ void sha1( unsigned char *input, int ilen, unsigned char output[20] )
     sha1_finish( &ctx, output );
 }
 
-#endif /* LWIP_INCLUDED_POLARSSL_SHA1_C */
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
