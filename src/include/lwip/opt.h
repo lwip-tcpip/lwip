@@ -1722,6 +1722,10 @@
 #ifndef MSCHAP_SUPPORT
 #define MSCHAP_SUPPORT                  0
 #endif
+#if MSCHAP_SUPPORT
+#undef CHAP_SUPPORT
+#define CHAP_SUPPORT			1	/* MSCHAP require CHAP support */
+#endif /* MSCHAP_SUPPORT */
 
 /**
  * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
@@ -1750,6 +1754,57 @@
 #ifndef MD5_SUPPORT
 #define MD5_SUPPORT                     0
 #endif
+
+/**
+ * PolarSSL library, used if necessary and not previously disabled
+ *
+ *
+ * lwIP contains some files fetched from the latest BSD release of
+ * the PolarSSL project for ciphers and encryption methods we need for lwIP
+ * PPP support.
+ *
+ * The PolarSSL files were cleaned to contain only the necessary struct
+ * fields and functions needed for lwIP.
+ *
+ * The PolarSSL API was not changed at all, so if you are already using
+ * PolarSSL you can choose to skip the compilation of the included PolarSSL
+ * library into lwIP:
+ *
+ * The following defines are available for flexibility:
+ *
+ * LWIP_INCLUDED_POLARSSL_MD4   ; Use lwIP internal PolarSSL for MD4
+ * LWIP_INCLUDED_POLARSSL_MD5   ; Use lwIP internal PolarSSL for MD5
+ * LWIP_INCLUDED_POLARSSL_SHA1  ; Use lwIP internal PolarSSL for SHA1
+ * LWIP_INCLUDED_POLARSSL_DES   ; Use lwIP internal PolarSSL for DES
+ *
+ * If set (=1), the default if required by another enabled PPP feature unless
+ * explicitly set to 0, using included lwIP PolarSSL.
+ * 
+ * If clear (=0), using external PolarSSL.
+ * 
+ * Undefined if not needed.
+ * 
+ * Beware of the stack requirements which can be a lot larger if you are not
+ * using our cleaned PolarSSL library.
+ */
+
+#if CHAP_SUPPORT || EAP_SUPPORT
+#ifndef LWIP_INCLUDED_POLARSSL_MD5
+#define LWIP_INCLUDED_POLARSSL_MD5	1	/* CHAP and EAP require MD5 support */
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#endif /* CHAP_SUPPORT || EAP_SUPPORT */
+
+#if MSCHAP_SUPPORT
+#ifndef LWIP_INCLUDED_POLARSSL_MD4
+#define LWIP_INCLUDED_POLARSSL_MD4	1	/* MSCHAP require MD4 support */
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
+#ifndef LWIP_INCLUDED_POLARSSL_SHA1
+#define LWIP_INCLUDED_POLARSSL_SHA1	1	/* MSCHAP require SHA1 support */
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+#ifndef LWIP_INCLUDED_POLARSSL_DES
+#define LWIP_INCLUDED_POLARSSL_DES	1	/* MSCHAP require DES support */
+#endif /* LWIP_INCLUDED_POLARSSL_DES */
+#endif /* MSCHAP_SUPPORT */
 
 /*
  * Timeouts

@@ -73,7 +73,6 @@
 *****************************************************************************/
 
 #include "lwip/opt.h"
-
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "polarssl/md5.h"

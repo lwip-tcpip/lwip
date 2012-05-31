@@ -30,9 +30,14 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #ifndef PPPCRYPT_H
 #define	PPPCRYPT_H
 
 void pppcrypt_56_to_64_bit_key(u_char *key, u_char *des_key);
 
 #endif /* PPPCRYPT_H */
+
+#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */

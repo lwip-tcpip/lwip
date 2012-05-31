@@ -31,8 +31,7 @@
  */
 
 #include "lwip/opt.h"
-
-/* FIXME: dont include if not needed */
+#if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not necessary */
 
 #include "pppd.h"
 #include "pppcrypt.h"
@@ -62,3 +61,5 @@ void pppcrypt_56_to_64_bit_key(u_char *key, u_char * des_key) {
 	des_key[6] = pppcrypt_get_7bits(key, 42);
 	des_key[7] = pppcrypt_get_7bits(key, 49);
 }
+
+#endif /* PPP_SUPPORT && MSCHAP_SUPPORT */
