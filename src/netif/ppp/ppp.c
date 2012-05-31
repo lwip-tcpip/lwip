@@ -389,11 +389,6 @@ int ppp_oldmain() {
 		     argv[0]);
 	exit(EXIT_NOT_ROOT);
     }
-
-    if (!ppp_available()) {
-	option_error("%s", no_ppp_msg);
-	exit(EXIT_NO_KERNEL_SUPPORT);
-    }
 #endif
 
 #if PPP_OPTIONS
@@ -436,11 +431,6 @@ int ppp_oldmain() {
     }
 
     /*
-     * Initialize system-dependent stuff.
-     */
-    linux_sys_init();
-
-    /*
      * Detach ourselves from the terminal, if required,
      * and identify who is running us.
      */
@@ -454,7 +444,7 @@ int ppp_oldmain() {
 	else
 	    p = "(unknown)";
     }
-    syslog(LOG_NOTICE, "pppd %s started by %s, uid %d", VERSION, p, uid);
+    syslog(LOG_NOTICE, "pppd started by %s, uid %d", p, uid);
     script_setenv("PPPLOGNAME", p, 0);
 
     if (devnam[0])

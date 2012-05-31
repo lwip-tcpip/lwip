@@ -57,7 +57,6 @@
 #include <sys/types.h>		/* for u_int32_t, if defined */
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
-#include "patchlevel.h"
 
 #if defined(__STDC__)
 #include <stdarg.h>
@@ -603,11 +602,9 @@ int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from sys-*.c */
-void sys_init __P((void));	/* Do system-dependent initialization */
 void sys_cleanup __P((void));	/* Restore system state before exiting */
 int  sys_check_options __P((void)); /* Check options specified */
 void sys_close __P((void));	/* Clean up in a child before execing */
-int  ppp_available __P((void));	/* Test whether ppp kernel support exists */
 int  get_pty __P((int *, int *, char *, int));	/* Get pty master/slave */
 int  open_ppp_loopback __P((void)); /* Open loopback for demand-dialling */
 int  tty_establish_ppp __P((int));  /* Turn serial port into a ppp interface */
