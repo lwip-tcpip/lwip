@@ -29,8 +29,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: demand.c,v 1.20 2005/08/25 12:14:18 paulus Exp $"
+#if PPP_SUPPORT && DEMAND_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -466,3 +465,5 @@ active_packet(p, len)
     }
     return 0;			/* not a supported protocol !!?? */
 }
+
+#endif /* PPP_SUPPORT && DEMAND_SUPPORT */

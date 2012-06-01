@@ -436,10 +436,12 @@ struct protent {
     /* Check requested options, assign defaults */
     void (*check_options) __P((void));
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     /* Configure interface for demand-dial */
     int  (*demand_conf) __P((int unit));
     /* Say whether to bring up link for this pkt */
     int  (*active_pkt) __P((u_char *pkt, int len));
+#endif /* DEMAND_SUPPORT */
 };
 
 /* Table of pointers to supported protocols */

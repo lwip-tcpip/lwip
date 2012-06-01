@@ -259,8 +259,10 @@ static void ipcp_protrej __P((int));
 static int  ipcp_printpkt __P((u_char *, int,
 			       void (*) __P((void *, char *, ...)), void *));
 static void ip_check_options __P((void));
+#if DEMAND_SUPPORT
 static int  ip_demand_conf __P((int));
 static int  ip_active_pkt __P((u_char *, int));
+#endif /* DEMAND_SUPPORT */
 static void create_resolv __P((u_int32_t, u_int32_t));
 
 struct protent ipcp_protent = {
@@ -281,8 +283,10 @@ struct protent ipcp_protent = {
     ipcp_option_list,
     ip_check_options,
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     ip_demand_conf,
     ip_active_pkt
+#endif /* DEMAND_SUPPORT */
 };
 
 static void ipcp_clear_addrs __P((int, u_int32_t, u_int32_t, bool));
@@ -1724,6 +1728,7 @@ ip_check_options()
 }
 #endif /* UNUSED */
 
+#if DEMAND_SUPPORT
 /*
  * ip_demand_conf - configure the interface as though
  * IPCP were up, for use with dial-on-demand.
@@ -1765,7 +1770,7 @@ ip_demand_conf(u)
 
     return 1;
 }
-
+#endif /* DEMAND_SUPPORT */
 
 /*
  * ipcp_up - IPCP has come UP.
@@ -1837,6 +1842,7 @@ ipcp_up(f)
     /* set tcp compression */
     sifvjcomp(f->unit, ho->neg_vj, ho->cflag, ho->maxslotindex);
 
+#if DEMAND_SUPPORT
     /*
      * If we are doing dial-on-demand, the interface is already
      * configured, so we put out any saved-up packets, then set the
@@ -1883,7 +1889,9 @@ ipcp_up(f)
 	demand_rexmit(PPP_IP,go->ouraddr);
 	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
-    } else {
+    } else
+#endif /* DEMAND_SUPPORT */
+    {
 	/*
 	 * Set IP addresses and (if specified) netmask.
 	 */
@@ -1978,13 +1986,16 @@ ipcp_down(f)
 			 * because print_link_stats() sets link_stats_valid
 			 * to 0 (zero) */
 
+#if DEMAND_SUPPORT
     /*
      * If we are doing dial-on-demand, set the interface
      * to queue up outgoing packets (for now).
      */
     if (demand) {
 	sifnpmode(f->unit, PPP_IP, NPMODE_QUEUE);
-    } else {
+    } else
+#endif /* DEMAND_SUPPORT */
+    {
 	sifnpmode(f->unit, PPP_IP, NPMODE_DROP);
 	sifdown(f->unit);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
@@ -2188,6 +2199,7 @@ ipcp_printpkt(p, plen, printer, arg)
 #define TCP_HDRLEN	20
 #define TH_FIN		0x01
 
+#if DEMAND_SUPPORT
 /*
  * We use these macros because the IP header may be at an odd address,
  * and some compilers might use word loads to get th_off or ip_hl.
@@ -2224,3 +2236,4 @@ ip_active_pkt(pkt, len)
 	return 0;
     return 1;
 }
+#endif /* DEMAND_SUPPORT */

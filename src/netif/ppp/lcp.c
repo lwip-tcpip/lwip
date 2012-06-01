@@ -285,8 +285,10 @@ struct protent lcp_protent = {
     lcp_option_list,
     NULL,
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     NULL,
     NULL
+#endif /* DEMAND_SUPPORT */
 };
 
 int lcp_loopbackfail = DEFLOOPBACKFAIL;

@@ -105,8 +105,10 @@ struct protent pap_protent = {
     pap_option_list,
     NULL,
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     NULL,
     NULL
+#endif /* DEMAND_SUPPORT */
 };
 
 upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */

@@ -669,8 +669,10 @@ struct protent chap_protent = {
 	chap_option_list,
 	NULL,		/* check_options */
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
 	NULL,
 	NULL
+#endif /* DEMAND_SUPPORT */
 };
 
 #endif /* PPP_SUPPORT && CHAP_SUPPORT */

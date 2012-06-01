@@ -102,7 +102,9 @@ int	maxconnect = 0;		/* Maximum connect time */
 //char	passwd[MAXSECRETLEN];	/* Password for PAP */
 bool	persist = 0;		/* Reopen link after it goes down */
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
+#if DEMAND_SUPPORT
 bool	demand = 0;		/* do dial-on-demand */
+#endif /* DEMAND_SUPPORT */
 char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */

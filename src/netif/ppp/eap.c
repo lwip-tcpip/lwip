@@ -122,8 +122,10 @@ struct protent eap_protent = {
 	eap_option_list,	/* list of command-line options */
 	NULL,			/* check requested options; assign defaults */
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
 	NULL,			/* configure interface for demand-dial */
 	NULL			/* say whether to bring up link for this pkt */
+#endif /* DEMAND_SUPPORT */
 };
 
 #ifdef USE_SRP

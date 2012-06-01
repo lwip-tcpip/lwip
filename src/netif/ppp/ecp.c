@@ -118,8 +118,10 @@ struct protent ecp_protent = {
     ecp_option_list,
     NULL,
 #endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     NULL,
     NULL
+#endif /* DEMAND_SUPPORT */
 };
 
 fsm ecp_fsm[NUM_PPP];
