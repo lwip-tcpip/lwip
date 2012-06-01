@@ -113,7 +113,6 @@
 #endif /* EAP_SUPPORT */
 #include "ccp.h"
 #include "ecp.h"
-#include "pathnames.h"
 
 #if CBCP_SUPPORT
 #include "cbcp.h"
@@ -133,8 +132,8 @@ struct channel *the_channel;
 
 char *progname;			/* Name of this program */
 char hostname[MAXNAMELEN];	/* Our hostname */
-static char pidfilename[MAXPATHLEN];	/* name of pid file */
-static char linkpidfile[MAXPATHLEN];	/* name of linkname pid file */
+//static char pidfilename[MAXPATHLEN];	/* name of pid file */
+//static char linkpidfile[MAXPATHLEN];	/* name of linkname pid file */
 char ppp_devnam[MAXPATHLEN];	/* name of PPP tty (maybe ttypx) */
 uid_t uid;			/* Our real user-id */
 struct notifier *pidchange = NULL;
@@ -229,8 +228,8 @@ static struct subprocess *children;
 /* Prototypes for procedures local to this file. */
 
 //static void setup_signals __P((void));
-static void create_pidfile __P((int pid));
-static void create_linkpidfile __P((int pid));
+//static void create_pidfile __P((int pid));
+//static void create_linkpidfile __P((int pid));
 //static void cleanup __P((void));
 static void get_input __P((void));
 static void calltimeout __P((void));
@@ -739,8 +738,8 @@ set_ifunit(iskey)
     slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
     script_setenv("IFNAME", ifname, iskey);
     if (iskey) {
-	create_pidfile(getpid());	/* write pid to file */
-	create_linkpidfile(getpid());
+//	create_pidfile(getpid());	/* write pid to file */
+//	create_linkpidfile(getpid());
     }
 }
 
@@ -801,6 +800,7 @@ reopen_log()
     setlogmask(LOG_UPTO(LOG_INFO));
 }
 
+#if 0
 /*
  * Create a file containing our process ID.
  */
@@ -820,7 +820,9 @@ create_pidfile(pid)
 	pidfilename[0] = 0;
     }
 }
+#endif
 
+#if 0
 void
 create_linkpidfile(pid)
     int pid;
@@ -855,6 +857,7 @@ void remove_pidfiles()
 	warn("unable to delete pid file %s: %m", linkpidfile);
     linkpidfile[0] = 0;
 }
+#endif
 
 /*
  * holdoff_end - called via a timeout when the holdoff period ends.
@@ -1624,6 +1627,7 @@ safe_fork(int infd, int outfd, int errfd)
 }
 #endif
 
+#if 0
 /*
  * device_script - run a program to talk to the specified fds
  * (e.g. to run the connector or disconnector script).
@@ -1685,7 +1689,7 @@ device_script(program, in, out, dont_wait)
     exit(99);
     /* NOTREACHED */
 }
-
+#endif
 
 /*
  * record_child - add a child process to the list for reap_kids

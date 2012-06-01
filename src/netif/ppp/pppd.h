@@ -505,7 +505,7 @@ void record_child __P((int, char *, void (*) (void *), void *, int));
 pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
 #endif
 
-int  device_script __P((char *cmd, int in, int out, int dont_wait));
+//int  device_script __P((char *cmd, int in, int out, int dont_wait));
 				/* Run `cmd' with given stdin and stdout */
 void reopen_log __P((void));	/* (re)open the connection to syslog */
 void print_link_stats __P((void)); /* Print stats, if available */
@@ -520,7 +520,7 @@ void notify __P((struct notifier *, int));
 int  ppp_send_config __P((int, int, u_int32_t, int, int));
 int  ppp_recv_config __P((int, int, u_int32_t, int, int));
 const char *protocol_name __P((int));
-void remove_pidfiles __P((void));
+//void remove_pidfiles __P((void));
 void lock_db __P((void));
 void unlock_db __P((void));
 

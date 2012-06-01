@@ -61,7 +61,6 @@
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
-#include "pathnames.h"
 
 static const char rcsid[] = RCSID;
 

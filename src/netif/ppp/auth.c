@@ -120,10 +120,6 @@
 #include "cbcp.h"
 #endif
 
-#if 0 /* UNUSED */
-#include "pathnames.h"
-#endif /* UNUSED */
-
 #include "session.h"
 
 #if 0 /* UNUSED */
