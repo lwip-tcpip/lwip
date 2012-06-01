@@ -913,7 +913,12 @@ start_networks(unit)
 {
     int i;
     struct protent *protp;
-    int ecp_required, mppe_required;
+#if ECP_SUPPORT
+    int ecp_required;
+#endif /* ECP_SUPPORT */
+#ifdef MPPE
+    int mppe_required;
+#endif /* MPPE */
 
     new_phase(PHASE_NETWORK);
 
@@ -933,18 +938,40 @@ start_networks(unit)
     if (!demand)
 	set_filters(&pass_filter, &active_filter);
 #endif
+#if CCP_SUPPORT || ECP_SUPPORT
     /* Start CCP and ECP */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if ((protp->protocol == PPP_ECP || protp->protocol == PPP_CCP)
+	if (
+	    (0
+#if ECP_SUPPORT
+	    || protp->protocol == PPP_ECP
+#endif /* ECP_SUPPORT */
+#if CCP_SUPPORT
+	    || protp->protocol == PPP_CCP
+#endif /* CCP_SUPPORT */
+	    )
 	    && protp->enabled_flag && protp->open != NULL)
 	    (*protp->open)(0);
+#endif /* CCP_SUPPORT || ECP_SUPPORT */
 
     /*
      * Bring up other network protocols iff encryption is not required.
      */
+#if ECP_SUPPORT
     ecp_required = ecp_gotoptions[unit].required;
+#endif /* ECP_SUPPORT */
+#ifdef MPPE
     mppe_required = ccp_gotoptions[unit].mppe;
-    if (!ecp_required && !mppe_required)
+#endif /* MPPE */
+
+    if (1
+#if ECP_SUPPORT
+        && !ecp_required
+#endif /* ECP_SUPPORT */
+#ifdef MPPE
+        && !mppe_required
+#endif /* MPPE */
+        )
 	continue_networks(unit);
 }
 
@@ -1166,11 +1193,13 @@ np_up(unit, proto)
 	    TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
 #endif
 
+#if 0 /* Unused */
 	/*
 	 * Detach now, if the updetach option was given.
 	 */
 	if (updetach && !nodetach)
 	    detach();
+#endif /* Unused */
     }
     ++num_np_up;
 }

@@ -1093,6 +1093,27 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
   return st;
 }
 
+/********************************************************************
+ *
+ * cifaddr - Clear the interface IP addresses, and delete routes
+ * through the interface if possible.
+ */
+int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
+    /* FIXME: do the code which clear a IP on a PPP interface */
+    return 0;
+}
+
+
+/********************************************************************
+ *
+ * sifdown - Disable the indicated protocol and config the interface
+ *	     down if there are no remaining protocols.
+ */
+int sifdown (int u) {
+    /* FIXME: do the code which shutdown a PPP interface */
+    return 1;
+}
+
 /*
  * pppifNetifInit - netif init callback
  */
@@ -1156,3 +1177,102 @@ sifnpmode(int u, int proto, enum NPmode mode)
   return 0;
 }
 
+/*
+ * netif_set_mtu - set the MTU on the PPP network interface.
+ */
+void netif_set_mtu(int unit, int mtu) {
+  /* FIXME: set lwIP MTU */
+}
+
+/********************************************************************
+ *
+ * sifdefaultroute - assign a default route through the address given.
+ *
+ * If the global default_rt_repl_rest flag is set, then this function
+ * already replaced the original system defaultroute with some other
+ * route and it should just replace the current defaultroute with
+ * another one, without saving the current route. Use: demand mode,
+ * when pppd sets first a defaultroute it it's temporary ppp0 addresses
+ * and then changes the temporary addresses to the addresses for the real
+ * ppp connection when it has come up.
+ */
+
+int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace) {
+  /* FIXME: do the code which add the default route */
+  return 0;
+}
+
+/********************************************************************
+ *
+ * cifdefaultroute - delete a default route through the address given.
+ */
+
+int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway) {
+   /* FIXME: do the code which remove the default route */
+   return 0;
+}
+
+/********************************************************************
+ *
+ * sifproxyarp - Make a proxy ARP entry for the peer.
+ */
+
+int sifproxyarp (int unit, u_int32_t his_adr) {
+    /* FIXME: do we really need that in IPCP ? */
+    return 0;
+}
+
+/********************************************************************
+ *
+ * cifproxyarp - Delete the proxy ARP entry for the peer.
+ */
+
+int cifproxyarp (int unit, u_int32_t his_adr) {
+   /* FIXME: do we really need that in IPCP ? */
+   return 0;
+}
+
+/********************************************************************
+ *
+ * sifvjcomp - config tcp header compression
+ */
+int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid) {
+    /* FIXME: add VJ support */
+    return 1;
+}
+
+/********************************************************************
+ *
+ * get_idle_time - return how long the link has been idle.
+ */
+int get_idle_time(int u, struct ppp_idle *ip) {
+    /* FIXME: add idle time support */
+    return 1;
+}
+
+
+/********************************************************************
+ *
+ * get_loop_output - get outgoing packets from the ppp device,
+ * and detect when we want to bring the real link up.
+ * Return value is 1 if we need to bring up the link, 0 otherwise.
+ */
+int get_loop_output(void) {
+    /* FIXME: necessary for "demand", do we really need to support on-demand ? */
+    return 0;
+}
+
+/********************************************************************
+ *
+ * Return user specified netmask, modified by any mask we might determine
+ * for address `addr' (in network byte order).
+ * Here we scan through the system's list of interfaces, looking for
+ * any non-point-to-point interfaces which might appear to be on the same
+ * network as `addr'.  If we find any, we OR in their netmask to the
+ * user-specified netmask.
+ */
+
+u_int32_t GetMask (u_int32_t addr) {
+  /* FIXME: do we really need that in IPCP ? */
+  return 0;
+}

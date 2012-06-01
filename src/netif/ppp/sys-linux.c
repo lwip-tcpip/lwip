@@ -69,7 +69,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#if 0 /* BAH */
 
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -2694,3 +2694,5 @@ ether_to_eui64(eui64_t *p_eui64)
     return 1;
 }
 #endif
+
+#endif /* BAH */

@@ -228,10 +228,10 @@ static struct subprocess *children;
 
 /* Prototypes for procedures local to this file. */
 
-static void setup_signals __P((void));
+//static void setup_signals __P((void));
 static void create_pidfile __P((int pid));
 static void create_linkpidfile __P((int pid));
-static void cleanup __P((void));
+//static void cleanup __P((void));
 static void get_input __P((void));
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
@@ -283,8 +283,12 @@ struct protent *protocols[] = {
 #ifdef INET6
     &ipv6cp_protent,
 #endif
+#if CCP_SUPPORT
     &ccp_protent,
+#endif /* CCP_SUPPORT */
+#if ECP_SUPPORT
     &ecp_protent,
+#endif /* ECP_SUPPORT */
 #ifdef AT_CHANGE
     &atcp_protent,
 #endif
@@ -301,6 +305,7 @@ struct protent *protocols[] = {
 #define PPP_DRV_NAME	"ppp"
 #endif /* !defined(PPP_DRV_NAME) */
 
+#if 0
 int ppp_oldmain() {
     int argc = 0;
     char *argv[0];
@@ -348,10 +353,12 @@ int ppp_oldmain() {
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
 
+#if 0
     /*
      * Initialize the default channel.
      */
     tty_init();
+#endif
 
     progname = *argv;
 
@@ -416,8 +423,10 @@ int ppp_oldmain() {
     }
 #endif /* PPP_OPTIONS */
 
+#if 0
     if (dryrun)
 	die(0);
+#endif
 
     /* Make sure fds 0, 1, 2 are open to somewhere. */
     fd_devnull = open(_PATH_DEVNULL, O_RDWR);
@@ -430,12 +439,15 @@ int ppp_oldmain() {
 	fd_devnull = i;
     }
 
+#if 0 /* Unused */
     /*
      * Detach ourselves from the terminal, if required,
      * and identify who is running us.
      */
     if (!nodetach && !updetach)
 	detach();
+#endif /* Unused */
+
     p = getlogin();
     if (p == NULL) {
 	pw = getpwuid(uid);
@@ -452,7 +464,7 @@ int ppp_oldmain() {
     slprintf(numbuf, sizeof(numbuf), "%d", getpid());
     script_setenv("PPPD_PID", numbuf, 1);
 
-    setup_signals();
+    //setup_signals();
 
     create_linkpidfile(getpid());
 
@@ -465,8 +477,8 @@ int ppp_oldmain() {
 	/*
 	 * Open the loopback channel and set it up to be the ppp interface.
 	 */
-	fd_loop = open_ppp_loopback();
-	set_ifunit(1);
+	//fd_loop = open_ppp_loopback();
+	//set_ifunit(1);
 	/*
 	 * Configure the interface and mark it up, etc.
 	 */
@@ -580,7 +592,9 @@ int ppp_oldmain() {
     die(status);
     return 0;
 }
+#endif
 
+#if 0
 /*
  * handle_events - wait for something to happen and respond to it.
  */
@@ -626,7 +640,9 @@ handle_events()
 	got_sigusr2 = 0;
     }
 }
+#endif
 
+#if 0
 /*
  * setup_signals - initialize signal handling.
  */
@@ -709,6 +725,7 @@ setup_signals()
      */
     signal(SIGPIPE, SIG_IGN);
 }
+#endif
 
 /*
  * set_ifunit - do things we need to do once we know which ppp
@@ -727,6 +744,7 @@ set_ifunit(iskey)
     }
 }
 
+#if 0
 /*
  * detach - detach us from the controlling terminal.
  */
@@ -771,6 +789,7 @@ detach()
     complete_read(pipefd[0], numbuf, 1);
     close(pipefd[0]);
 }
+#endif
 
 /*
  * reopen_log - (re)open our connection to syslog.
@@ -1147,6 +1166,7 @@ new_phase(p)
     notify(phasechange, p);
 }
 
+#if 0
 /*
  * die - clean up state and exit with the specified status.
  */
@@ -1161,7 +1181,9 @@ die(status)
     syslog(LOG_INFO, "Exit.");
     exit(status);
 }
+#endif
 
+#if 0
 /*
  * cleanup - restore anything which needs to be restored before we exit
  */
@@ -1177,6 +1199,7 @@ cleanup()
 	(*the_channel->cleanup)();
     remove_pidfiles();
 }
+#endif
 
 void
 print_link_stats()
@@ -1200,8 +1223,10 @@ void
 reset_link_stats(u)
     int u;
 {
+#if 0
     if (!get_ppp_stats(u, &old_link_stats))
 	return;
+#endif
     gettimeofday(&start_time, NULL);
 }
 
@@ -1215,9 +1240,11 @@ update_link_stats(u)
     struct timeval now;
     char numbuf[32];
 
+#if 0
     if (!get_ppp_stats(u, &link_stats)
 	|| gettimeofday(&now, NULL) < 0)
 	return;
+#endif
     link_connect_time = now.tv_sec - start_time.tv_sec;
     link_stats_valid = 1;
 
@@ -1492,7 +1519,7 @@ open_ccp(sig)
 	siglongjmp(sigjmp, 1);
 }
 
-
+#if 0
 /*
  * bad_signal - We've caught a fatal signal.  Clean up state and exit.
  */
@@ -1511,7 +1538,9 @@ bad_signal(sig)
     notify(sigreceived, sig);
     die(127);
 }
+#endif
 
+#if 0
 /*
  * safe_fork - Create a child process.  The child closes all the
  * file descriptors that we don't want to leak to a script.
@@ -1593,6 +1622,7 @@ safe_fork(int infd, int outfd, int errfd)
 
 	return 0;
 }
+#endif
 
 /*
  * device_script - run a program to talk to the specified fds
@@ -1615,7 +1645,8 @@ device_script(program, in, out, dont_wait)
 	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
 
     ++conn_running;
-    pid = safe_fork(in, out, errfd);
+    //pid = safe_fork(in, out, errfd);
+    pid = -1;
 
     if (pid != 0 && log_to_fd < 0)
 	close(errfd);

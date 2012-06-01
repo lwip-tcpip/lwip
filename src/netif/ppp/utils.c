@@ -698,7 +698,10 @@ fatal __V((char *fmt, ...))
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
+/* FIXME: find a way to die */
+#if 0
     die(1);			/* as promised */
+#endif
 }
 
 /*
@@ -831,6 +834,8 @@ dump_packet(const char *tag, unsigned char *p, int len)
 
     dbglog("%s %P", tag, p, len);
 }
+
+#if 0 /* Unused */
 
 /*
  * complete_read - read a full `count' bytes from fd,
@@ -1054,3 +1059,4 @@ unlock()
     }
 }
 
+#endif /* Unused */

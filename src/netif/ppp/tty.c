@@ -68,7 +68,7 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#if 0 /* NEED OUR OWN PORT */
 
 #define RCSID	"$Id: tty.c,v 1.27 2008/07/01 12:27:56 paulus Exp $"
 
@@ -123,7 +123,10 @@ static void charshunt __P((int, int, char *));
 static int record_write __P((FILE *, int code, u_char *buf, int nb,
 			     struct timeval *));
 static int open_socket __P((char *));
+
+#if 0
 static void maybe_relock __P((void *, int));
+#endif
 
 static int pty_master;		/* fd for master side of pty */
 static int pty_slave;		/* fd for slave side of pty */
@@ -407,6 +410,7 @@ printescape(opt, printer, arg)
 }
 #endif /* UNUSED */
 
+#if 0
 /*
  * tty_init - do various tty-related initializations.
  */
@@ -416,6 +420,7 @@ void tty_init()
     the_channel = &tty_channel;
     xmit_accm[3] = 0x60000000;
 }
+#endif
 
 /*
  * tty_process_extra_options - work out which tty device we are using
@@ -815,10 +820,12 @@ void cleanup_tty()
 	if (real_ttyfd >= 0)
 		finish_tty();
 	tty_close_fds();
+#if 0
 	if (locked) {
 		unlock();
 		locked = 0;
 	}
+#endif
 }
 
 /*
@@ -864,6 +871,7 @@ finish_tty()
 	real_ttyfd = -1;
 }
 
+#if 0
 /*
  * maybe_relock - our PID has changed, maybe update the lock file.
  */
@@ -875,6 +883,7 @@ maybe_relock(arg, pid)
     if (locked)
 	relock(pid);
 }
+#endif
 
 /*
  * open_socket - establish a stream socket connection to the nominated
@@ -940,7 +949,7 @@ start_charshunt(ifd, ofd)
 {
     int cpid;
 
-    cpid = safe_fork(ifd, ofd, (log_to_fd >= 0? log_to_fd: 2));
+    cpid = -1; // safe_fork(ifd, ofd, (log_to_fd >= 0? log_to_fd: 2));
     if (cpid == -1) {
 	error("Can't fork process for character shunt: %m");
 	return 0;
@@ -1276,3 +1285,5 @@ record_write(f, code, buf, nb, tp)
     }
     return 1;
 }
+
+#endif /* NEED OUR OWN PORT */

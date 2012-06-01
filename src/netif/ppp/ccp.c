@@ -29,6 +29,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT && CCP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 #define RCSID	"$Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp $"
 
@@ -1682,3 +1683,4 @@ ccp_rack_timeout(arg)
 	ccp_localstate[f->unit] &= ~RACK_PENDING;
 }
 
+#endif /* PPP_SUPPORT && CCP_SUPPORT */

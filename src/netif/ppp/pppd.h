@@ -487,7 +487,11 @@ extern struct channel *the_channel;
 
 /* Procedures exported from main.c. */
 void set_ifunit __P((int));	/* set stuff that depends on ifunit */
+
+#if 0
 void detach __P((void));	/* Detach from controlling tty */
+#endif
+
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
@@ -496,7 +500,11 @@ void timeout __P((void (*func)(void *), void *arg, int s, int us));
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
 void record_child __P((int, char *, void (*) (void *), void *, int));
+
+#if 0
 pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
+#endif
+
 int  device_script __P((char *cmd, int in, int out, int dont_wait));
 				/* Run `cmd' with given stdin and stdout */
 void reopen_log __P((void));	/* (re)open the connection to syslog */
@@ -539,8 +547,11 @@ void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
 void end_pr_log __P((void));	/* finish up after using pr_log */
 void dump_packet __P((const char *, u_char *, int));
 				/* dump packet to debug log if interesting */
+
+#if 0 /* Unused */
 ssize_t complete_read __P((int, void *, size_t));
 				/* read a complete buffer */
+#endif /* Unused */
 
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
@@ -668,9 +679,11 @@ int  sifproxyarp __P((int, u_int32_t));
 int  cifproxyarp __P((int, u_int32_t));
 				/* Delete proxy ARP entry for peer */
 u_int32_t GetMask __P((u_int32_t)); /* Get appropriate netmask for address */
+#if 0 /* Unused */
 int  lock __P((char *));	/* Create lock file for device */
 int  relock __P((int));		/* Rewrite lock file with new pid */
 void unlock __P((void));	/* Delete previously-created lock file */
+#endif /* Unused */
 void logwtmp __P((const char *, const char *, const char *));
 				/* Write entry to wtmp file */
 int  get_host_seed __P((void));	/* Get host-dependent random number seed */

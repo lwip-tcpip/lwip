@@ -31,6 +31,9 @@
  * $Id: ecp.h,v 1.2 2003/01/10 07:12:36 fcusack Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && ECP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 typedef struct ecp_options {
     bool required;		/* Is ECP required? */
     unsigned enctype;		/* Encryption type */
@@ -43,3 +46,5 @@ extern ecp_options ecp_allowoptions[];
 extern ecp_options ecp_hisoptions[];
 
 extern struct protent ecp_protent;
+
+#endif /* PPP_SUPPORT && ECP_SUPPORT */
