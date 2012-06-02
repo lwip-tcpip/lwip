@@ -220,10 +220,10 @@ struct notifier {
  */
 
 extern int	hungup;		/* Physical layer has disconnected */
-extern int	ifunit;		/* Interface unit number */
-extern char	ifname[];	/* Interface name */
+//extern int	ifunit;		/* Interface unit number */
+//extern char	ifname[];	/* Interface name */
 extern char	hostname[];	/* Our hostname */
-extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
+//extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 extern int	devfd;		/* fd of underlying device */
 extern int	fd_ppp;		/* fd for talking PPP */
 extern int	phase;		/* Current state of link - see values below */
@@ -233,7 +233,7 @@ extern int	redirect_stderr;/* Connector's stderr should go to file */
 extern char	peer_authname[];/* Authenticated name of peer */
 extern int	auth_done[NUM_PPP]; /* Methods actually used for auth */
 extern int	privileged;	/* We were run by real-uid root */
-extern int	need_holdoff;	/* Need holdoff period after link terminates */
+//extern int	need_holdoff;	/* Need holdoff period after link terminates */
 extern char	**script_env;	/* Environment variables for scripts */
 extern int	detached;	/* Have detached from controlling tty */
 #if 0
@@ -249,18 +249,18 @@ extern int	using_pty;	/* using pty as device (notty or pty opt.) */
 extern int	log_to_fd;	/* logging to this fd as well as syslog */
 extern bool	log_default;	/* log_to_fd is default (stdout) */
 extern char	*no_ppp_msg;	/* message to print if ppp not in kernel */
-extern volatile int status;	/* exit status for pppd */
+//extern volatile int status;	/* exit status for pppd */
 extern bool	devnam_fixed;	/* can no longer change devnam */
-extern int	unsuccess;	/* # unsuccessful connection attempts */
+//extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	do_callback;	/* set if we want to do callback next */
 extern int	doing_callback;	/* set if this is a callback */
-extern int	error_count;	/* # of times error() has been called */
-extern char	ppp_devnam[MAXPATHLEN];
+//extern int	error_count;	/* # of times error() has been called */
+//extern char	ppp_devnam[MAXPATHLEN];
 extern char     remote_number[MAXNAMELEN]; /* Remote telephone number, if avail. */
 extern int      ppp_session_number; /* Session number (eg PPPoE session) */
 extern int	fd_devnull;	/* fd open to /dev/null */
 
-extern int	listen_time;	/* time to listen first (ms) */
+//extern int	listen_time;	/* time to listen first (ms) */
 extern bool	doing_multilink;
 extern bool	multilink_master;
 extern bool	bundle_eof;
@@ -466,6 +466,7 @@ struct protent {
 extern struct protent *protocols[];
 #endif
 
+#if 0
 /*
  * This struct contains pointers to a set of procedures for
  * doing operations on a "channel".  A channel provides a way
@@ -501,6 +502,7 @@ struct channel {
 };
 
 extern struct channel *the_channel;
+#endif
 
 /*
  * Prototypes.
@@ -768,6 +770,7 @@ int parse_dotted_ip __P((char *, u_int32_t *));
 /*
  * Hooks to enable plugins to change various things.
  */
+#if 0
 extern int (*new_phase_hook) __P((int));
 extern int (*idle_time_hook) __P((struct ppp_idle *));
 extern int (*holdoff_hook) __P((void));
@@ -789,6 +792,7 @@ extern void (*multilink_join_hook) __P((void));
 /* Let a plugin snoop sent and received packets.  Useful for L2TP */
 extern void (*snoop_recv_hook) __P((unsigned char *p, int len));
 extern void (*snoop_send_hook) __P((unsigned char *p, int len));
+#endif
 
 /*
  * Inline versions of get/put char/short/long.

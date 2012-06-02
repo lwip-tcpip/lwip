@@ -66,9 +66,9 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "lwip/opt.h"
+#if 0 /* PPP.C DISABLED */
 
-#define RCSID	"$Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp $"
+#include "lwip/opt.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -122,26 +122,32 @@
 #include "atcp.h"
 #endif
 
-static const char rcsid[] = RCSID;
-
+#if 0
 /* interface vars */
 char ifname[32];		/* Interface name */
 int ifunit;			/* Interface unit number */
+#endif
 
+#if 0
 struct channel *the_channel;
+#endif
 
+#if 0
 char *progname;			/* Name of this program */
 char hostname[MAXNAMELEN];	/* Our hostname */
 //static char pidfilename[MAXPATHLEN];	/* name of pid file */
 //static char linkpidfile[MAXPATHLEN];	/* name of linkname pid file */
 char ppp_devnam[MAXPATHLEN];	/* name of PPP tty (maybe ttypx) */
 uid_t uid;			/* Our real user-id */
+
 struct notifier *pidchange = NULL;
 struct notifier *phasechange = NULL;
 struct notifier *exitnotify = NULL;
 struct notifier *sigreceived = NULL;
 struct notifier *fork_notifier = NULL;
+#endif
 
+#if 0
 int hungup;			/* terminal has been hung up */
 int privileged;			/* we're running as real uid root */
 int need_holdoff;		/* need holdoff period before restarting */
@@ -153,17 +159,25 @@ int doing_callback;		/* != 0 if we are doing callback */
 int ppp_session_number;		/* Session number, for channels with such a
 				   concept (eg PPPoE) */
 int childwait_done;		/* have timed out waiting for children */
+#endif
 
+#if 0
 char db_key[32];
+#endif
 
+#if 0
 int (*holdoff_hook) __P((void)) = NULL;
 int (*new_phase_hook) __P((int)) = NULL;
 void (*snoop_recv_hook) __P((unsigned char *p, int len)) = NULL;
 void (*snoop_send_hook) __P((unsigned char *p, int len)) = NULL;
+#endif
 
+#if 0
 static int conn_running;	/* we have a [dis]connector running */
 static int fd_loop;		/* fd for getting demand-dial packets */
+#endif
 
+#if 0
 int fd_devnull;			/* fd for /dev/null */
 int devfd = -1;			/* fd of underlying device */
 int fd_ppp = -1;		/* fd for talking PPP */
@@ -175,29 +189,37 @@ int listen_time;
 int got_sigusr2;
 int got_sigterm;
 int got_sighup;
+#endif
 
+#if 0
 static sigset_t signals_handled;
 static int waiting;
 static sigjmp_buf sigjmp;
 
 char **script_env;		/* Env. variable values for scripts */
 int s_env_nalloc;		/* # words avail at script_env */
+#endif
 
+#if 0
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
+#endif
 
+#if 0
 static int n_children;		/* # child processes still running */
 static int got_sigchld;		/* set if we have received a SIGCHLD */
 
 int privopen;			/* don't lock, open device as root */
 
 char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
+#endif
 
 #if 0 /* UNUSED */
 GIDSET_TYPE groups[NGROUPS_MAX];/* groups the user is in */
 int ngroups;			/* How many groups valid in groups */
 #endif /* UNUSED */
 
+#if 0
 //static struct timeval start_time;	/* Time when link was started. */
 
 //static struct pppd_stats old_link_stats;
@@ -224,6 +246,7 @@ struct subprocess {
 };
 
 static struct subprocess *children;
+#endif
 
 /* Prototypes for procedures local to this file. */
 
@@ -253,9 +276,11 @@ static void handle_events __P((void));
 void print_link_stats __P((void));
 #endif
 
+#if 0
 extern	char	*ttyname __P((int));
 extern	char	*getlogin __P((void));
 //int main __P((int, char *[]));
+#endif
 
 #ifdef ultrix
 #undef	O_NONBLOCK
@@ -1821,3 +1846,5 @@ script_unsetenv(var)
     }
 }
 #endif /* UNUSED */
+
+#endif /* PPP.C DISABLED */

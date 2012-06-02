@@ -39,8 +39,27 @@
 #include "ecp.h"
 #endif /* EAP_SUPPORT */
 
-/* FIXME: add a phase per PPP session */
+
+/*
+ * Global variables.
+ */
+/* FIXME: global variables per PPP session */
+/* FIXME: clean global variables */
 int phase;			/* where the link is at */
+int error_count;		/* # of times error() has been called */
+int unsuccess;			/* # unsuccessful connection attempts */
+int listen_time;		/* time to listen first (ms) */
+int status;			/* exit status for pppd */
+int need_holdoff;		/* need holdoff period before restarting */
+/* FIXME: remove ifunit */
+int ifunit;			/* Interface unit number */
+
+/* FIXME: outpacket_buf per PPP session */
+u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
+
+#if PPPOS_SUPPORT
+u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
+#endif /* PPPOS_SUPPORT */
 
 /* FIXME: add stats per PPP session */
 #if PPP_STATS_SUPPORT
@@ -491,6 +510,7 @@ int ppp_init(void) {
     struct protent *protp;
 
     debug = 1;
+    ifunit = 1; /* FIXME: remove ifunit */
 
     openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_PPP);
     setlogmask(LOG_UPTO(LOG_DEBUG));
