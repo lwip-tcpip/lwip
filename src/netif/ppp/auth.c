@@ -203,14 +203,12 @@ int (*allowed_address_hook) __P((u_int32_t addr)) = NULL;
 void (*multilink_join_hook) __P((void)) = NULL;
 #endif
 
-#if 0 /* UNUSED */
 /* A notifier for when the peer has authenticated itself,
    and we are proceeding to the network phase. */
 struct notifier *auth_up_notifier = NULL;
 
 /* A notifier for when the link goes down. */
 struct notifier *link_down_notifier = NULL;
-#endif /* UNUSED */
 
 /*
  * Option variables.
@@ -704,6 +702,8 @@ void
 link_down(unit)
     int unit;
 {
+    notify(link_down_notifier, 0);
+
     if (!doing_multilink) {
 	upper_layers_down(unit);
 	if (phase != PHASE_DEAD && phase != PHASE_MASTER)
@@ -860,9 +860,8 @@ network_phase(unit)
 	notice("peer from calling number %q authorized", remote_number);
 #endif /* UNUSED */
 
-#if 0 /* UNUSED */
     /*
-     * If the peer had to authenticate, run the auth-up script now.
+     * If the peer had to authenticate, notify it now.
      */
     if (0
 #if CHAP_SUPPORT
@@ -877,7 +876,6 @@ network_phase(unit)
 	) {
 	notify(auth_up_notifier, 0);
     }
-#endif /* UNUSED */
 
 #if CBCP_SUPPORT
     /*
