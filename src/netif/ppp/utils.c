@@ -58,6 +58,7 @@
 #endif
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "fsm.h"
 #include "lcp.h"
 

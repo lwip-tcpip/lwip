@@ -124,6 +124,7 @@
 #include <linux/if_ppp.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "fsm.h"
 #include "ipcp.h"
 

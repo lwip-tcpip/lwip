@@ -67,7 +67,6 @@
  */
 
 #include "lwip/opt.h"
-#include "pppmy.h"
 
 #define RCSID	"$Id: main.c,v 1.156 2008/06/23 11:47:18 paulus Exp $"
 
@@ -95,6 +94,7 @@
 #include <arpa/inet.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "magic.h"
 #include "fsm.h"
 #include "lcp.h"

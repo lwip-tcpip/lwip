@@ -34,6 +34,7 @@
 #if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not necessary */
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "pppcrypt.h"
 
 

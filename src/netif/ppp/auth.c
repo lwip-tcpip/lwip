@@ -69,7 +69,6 @@
  */
 
 #include "lwip/opt.h"
-#include "pppmy.h"
 
 #include <stdio.h>
 #include <stddef.h>
@@ -102,6 +101,7 @@
 #include <time.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "fsm.h"
 #include "lcp.h"
 #include "ccp.h"

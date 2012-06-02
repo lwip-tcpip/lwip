@@ -85,6 +85,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "pppd.h"
+#include "pppmy.h"
 #include "session.h"
 
 #ifdef USE_PAM

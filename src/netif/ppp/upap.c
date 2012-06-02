@@ -51,6 +51,7 @@
 #include <string.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "upap.h"
 
 static bool hide_password = 1;

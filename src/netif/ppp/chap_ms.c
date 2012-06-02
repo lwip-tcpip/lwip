@@ -86,6 +86,7 @@
 #include <unistd.h>
 
 #include "pppd.h"
+#include "pppmy.h"
 #include "chap-new.h"
 #include "chap_ms.h"
 #include "polarssl/md4.h"

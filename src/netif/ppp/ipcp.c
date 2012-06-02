@@ -58,8 +58,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "pppmy.h"
 #include "pppd.h"
+#include "pppmy.h"
 #include "fsm.h"
 #include "ipcp.h"
 
