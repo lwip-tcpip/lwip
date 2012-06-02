@@ -428,6 +428,9 @@ struct protent {
 			  void (*printer) __P((void *, char *, ...)),
 			  void *arg));
 #endif /* PRINTPKT_SUPPORT */
+    /* FIXME: data input is only used by CCP, which is not supported at this time,
+     *        should we remove this entry and save some flash ?
+     */
     /* Process a received data packet */
     void (*datainput) __P((int unit, u_char *pkt, int len));
     bool enabled_flag;		/* 0 iff protocol is disabled */

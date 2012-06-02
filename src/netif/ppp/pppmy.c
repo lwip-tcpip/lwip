@@ -277,13 +277,21 @@ static void ppp_input(void *arg) {
 		    (*protp->input)(pd, nb->payload, nb->len);
 		    goto out;
 		}
-#if 0 /* Unused ? */
+#if 0 /* UNUSED
+       *
+       * This is actually a (hacked?) way for the PPP kernel implementation to pass a
+       * data packet to the PPP daemon. The PPP daemon normally only do signaling
+       * (LCP, PAP, CHAP, IPCP, ...) and does not handle any data packet at all.
+       *
+       * This is only used by CCP, which we cannot support until we have a CCP data
+       * implementation.
+       */
 		if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
 		    && protp->datainput != NULL) {
 		    (*protp->datainput)(pd, nb->payload, nb->len);
 		    goto out;
 		}
-#endif /* Unused */
+#endif /* UNUSED */
 	  }
 
 	  if (debug) {
