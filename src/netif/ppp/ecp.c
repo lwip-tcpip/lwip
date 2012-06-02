@@ -93,9 +93,11 @@ static void ecp_lowerdown __P((int));
 static void ecp_input __P((int unit, u_char *pkt, int len));
 static void ecp_protrej __P((int unit));
 */
+#if PRINTPKT_SUPPORT
 static int  ecp_printpkt __P((u_char *pkt, int len,
 			      void (*printer) __P((void *, char *, ...)),
 			      void *arg));
+#endif /* PRINTPKT_SUPPORT */
 /*
 static void ecp_datainput __P((int unit, u_char *pkt, int len));
 */
@@ -109,7 +111,9 @@ struct protent ecp_protent = {
     NULL, /* ecp_lowerdown, */
     NULL, /* ecp_open, */
     NULL, /* ecp_close, */
+#if PRINTPKT_SUPPORT
     ecp_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     NULL, /* ecp_datainput, */
     0,
     "ECP",
@@ -170,6 +174,7 @@ ecp_init(unit)
 }
 
 
+#if PRINTPKT_SUPPORT
 static int
 ecp_printpkt(p, plen, printer, arg)
     u_char *p;
@@ -179,5 +184,6 @@ ecp_printpkt(p, plen, printer, arg)
 {
     return 0;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 #endif /* PPP_SUPPORT && ECP_SUPPORT */

@@ -135,8 +135,10 @@ static void chap_handle_status(struct chap_client_state *cs, int code, int id,
 		unsigned char *pkt, int len);
 static void chap_protrej(int unit);
 static void chap_input(int unit, unsigned char *pkt, int pktlen);
+#if PRINTPKT_SUPPORT
 static int chap_print_pkt(unsigned char *p, int plen,
 		void (*printer) __P((void *, char *, ...)), void *arg);
+#endif /* PRINTPKT_SUPPORT */
 
 /* List of digest types that we know about */
 static struct chap_digest_type *chap_digests;
@@ -589,6 +591,7 @@ chap_protrej(int unit)
 	}
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * chap_print_pkt - print the contents of a CHAP packet.
  */
@@ -650,6 +653,7 @@ chap_print_pkt(unsigned char *p, int plen,
 
 	return len + CHAP_HDRLEN;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 struct protent chap_protent = {
 	PPP_CHAP,
@@ -660,7 +664,9 @@ struct protent chap_protent = {
 	chap_lowerdown,
 	NULL,		/* open */
 	NULL,		/* close */
+#if PRINTPKT_SUPPORT
 	chap_print_pkt,
+#endif /* PRINTPKT_SUPPORT */
 	NULL,		/* datainput */
 	1,		/* enabled_flag */
 	"CHAP",		/* name */

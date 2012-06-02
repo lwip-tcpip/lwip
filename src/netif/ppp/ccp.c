@@ -176,9 +176,11 @@ static void ccp_lowerup __P((int unit));
 static void ccp_lowerdown __P((int));
 static void ccp_input __P((int unit, u_char *pkt, int len));
 static void ccp_protrej __P((int unit));
+#if PRINTPKT_SUPPORT
 static int  ccp_printpkt __P((u_char *pkt, int len,
 			      void (*printer) __P((void *, char *, ...)),
 			      void *arg));
+#endif /* PRINTPKT_SUPPORT */
 static void ccp_datainput __P((int unit, u_char *pkt, int len));
 
 struct protent ccp_protent = {
@@ -190,7 +192,9 @@ struct protent ccp_protent = {
     ccp_lowerdown,
     ccp_open,
     ccp_close,
+#if PRINTPKT_SUPPORT
     ccp_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     ccp_datainput,
     1,
     "CCP",
@@ -1484,6 +1488,7 @@ ccp_down(f)
 #endif
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * Print the contents of a CCP packet.
  */
@@ -1614,6 +1619,7 @@ ccp_printpkt(p, plen, printer, arg)
 
     return p - p0;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 /*
  * We have received a packet that the decompressor failed to

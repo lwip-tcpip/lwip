@@ -256,8 +256,10 @@ static void ipcp_lowerup __P((int));
 static void ipcp_lowerdown __P((int));
 static void ipcp_input __P((int, u_char *, int));
 static void ipcp_protrej __P((int));
+#if PRINTPKT_SUPPORT
 static int  ipcp_printpkt __P((u_char *, int,
 			       void (*) __P((void *, char *, ...)), void *));
+#endif /* PRINTPKT_SUPPORT */
 static void ip_check_options __P((void));
 #if DEMAND_SUPPORT
 static int  ip_demand_conf __P((int));
@@ -274,7 +276,9 @@ struct protent ipcp_protent = {
     ipcp_lowerdown,
     ipcp_open,
     ipcp_close,
+#if PRINTPKT_SUPPORT
     ipcp_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
     "IPCP",
@@ -2059,6 +2063,7 @@ create_resolv(peerdns1, peerdns2)
   /* FIXME: do we need to set here the DNS servers ?  */
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * ipcp_printpkt - print the contents of an IPCP packet.
  */
@@ -2185,7 +2190,9 @@ ipcp_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+#endif /* PRINTPKT_SUPPORT */
 
+#if DEMAND_SUPPORT
 /*
  * ip_active_pkt - see if this IP packet is worth bringing the link up for.
  * We don't bring the link up for IP fragments or for TCP FIN packets
@@ -2199,7 +2206,6 @@ ipcp_printpkt(p, plen, printer, arg)
 #define TCP_HDRLEN	20
 #define TH_FIN		0x01
 
-#if DEMAND_SUPPORT
 /*
  * We use these macros because the IP header may be at an odd address,
  * and some compilers might use word loads to get th_off or ip_hl.

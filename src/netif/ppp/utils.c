@@ -70,8 +70,10 @@ extern char *strerror();
 static void logit __P((int, char *, va_list));
 static void log_write __P((int, char *));
 static void vslp_printer __P((void *, char *, ...));
+#if PRINTPKT_SUPPORT
 static void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
 			       void *));
+#endif /* PRINTPKT_SUPPORT */
 
 struct buffer_info {
     char *ptr;
@@ -354,6 +356,7 @@ vslprintf(buf, buflen, fmt, args)
 		    OUTCHAR(c);
 	    }
 	    continue;
+#if PRINTPKT_SUPPORT
 	case 'P':		/* print PPP packet */
 	    bufinfo.ptr = buf;
 	    bufinfo.len = buflen + 1;
@@ -363,6 +366,7 @@ vslprintf(buf, buflen, fmt, args)
 	    buf = bufinfo.ptr;
 	    buflen = bufinfo.len - 1;
 	    continue;
+#endif /* PRINTPKT_SUPPORT */
 	case 'B':
 	    p = va_arg(args, unsigned char *);
 	    for (n = prec; n > 0; --n) {
@@ -469,6 +473,7 @@ log_packet(p, len, prefix, level)
 }
 #endif /* unused */
 
+#if PRINTPKT_SUPPORT
 /*
  * format_packet - make a readable representation of a packet,
  * calling `printer(arg, format, ...)' to output it.
@@ -518,6 +523,7 @@ format_packet(p, len, printer, arg)
     else
 	printer(arg, "%.*B", len, p);
 }
+#endif /* PRINTPKT_SUPPORT */
 
 /*
  * init_pr_log, end_pr_log - initialize and finish use of pr_log.

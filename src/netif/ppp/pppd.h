@@ -422,10 +422,12 @@ struct protent {
     void (*open) __P((int unit));
     /* Close the protocol */
     void (*close) __P((int unit, char *reason));
+#if PRINTPKT_SUPPORT
     /* Print a packet in readable form */
     int  (*printpkt) __P((u_char *pkt, int len,
 			  void (*printer) __P((void *, char *, ...)),
 			  void *arg));
+#endif /* PRINTPKT_SUPPORT */
     /* Process a received data packet */
     void (*datainput) __P((int unit, u_char *pkt, int len));
     bool enabled_flag;		/* 0 iff protocol is disabled */

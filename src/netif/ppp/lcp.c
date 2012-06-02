@@ -264,8 +264,10 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
 static void lcp_init __P((int));
 static void lcp_input __P((int, u_char *, int));
 static void lcp_protrej __P((int));
+#if PRINTPKT_SUPPORT
 static int  lcp_printpkt __P((u_char *, int,
 			      void (*) __P((void *, char *, ...)), void *));
+#endif /* PRINTPKT_SUPPORT */
 
 struct protent lcp_protent = {
     PPP_LCP,
@@ -276,7 +278,9 @@ struct protent lcp_protent = {
     lcp_lowerdown,
     lcp_open,
     lcp_close,
+#if PRINTPKT_SUPPORT
     lcp_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
     "LCP",
@@ -2249,6 +2253,7 @@ lcp_finished(f)
 }
 
 
+#if PRINTPKT_SUPPORT
 /*
  * lcp_printpkt - print the contents of an LCP packet.
  */
@@ -2503,6 +2508,7 @@ lcp_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 /*
  * Time to shut down the link because there is nothing out there.

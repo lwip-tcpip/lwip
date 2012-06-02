@@ -84,8 +84,10 @@ static void upap_lowerup __P((int));
 static void upap_lowerdown __P((int));
 static void upap_input __P((int, u_char *, int));
 static void upap_protrej __P((int));
+#if PRINTPKT_SUPPORT
 static int  upap_printpkt __P((u_char *, int,
 			       void (*) __P((void *, char *, ...)), void *));
+#endif /* PRINTPKT_SUPPORT */
 
 struct protent pap_protent = {
     PPP_PAP,
@@ -96,7 +98,9 @@ struct protent pap_protent = {
     upap_lowerdown,
     NULL,
     NULL,
+#if PRINTPKT_SUPPORT
     upap_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
     "PAP",
@@ -612,6 +616,7 @@ upap_sresp(u, code, id, msg, msglen)
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * upap_printpkt - print the contents of a PAP packet.
  */
@@ -691,5 +696,6 @@ upap_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 #endif /* PPP_SUPPORT && PAP_SUPPORT */

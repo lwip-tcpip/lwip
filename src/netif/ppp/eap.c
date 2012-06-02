@@ -101,8 +101,10 @@ static void eap_input __P((int unit, u_char *inp, int inlen));
 static void eap_protrej __P((int unit));
 static void eap_lowerup __P((int unit));
 static void eap_lowerdown __P((int unit));
+#if PRINTPKT_SUPPORT
 static int  eap_printpkt __P((u_char *inp, int inlen,
     void (*)(void *arg, char *fmt, ...), void *arg));
+#endif /* PRINTPKT_SUPPORT */
 
 struct protent eap_protent = {
 	PPP_EAP,		/* protocol number */
@@ -113,7 +115,9 @@ struct protent eap_protent = {
 	eap_lowerdown,		/* lower layer has gone down */
 	NULL,			/* open the protocol */
 	NULL,			/* close the protocol */
+#if PRINTPKT_SUPPORT
 	eap_printpkt,		/* print a packet in readable form */
+#endif /* PRINTPKT_SUPPORT */
 	NULL,			/* process a received data packet */
 	1,			/* protocol enabled */
 	"EAP",			/* text name of protocol */
@@ -2122,6 +2126,7 @@ int inlen;
 	}
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * eap_printpkt - print the contents of an EAP packet.
  */
@@ -2423,4 +2428,6 @@ void *arg;
 
 	return (inp - pstart);
 }
+#endif /* PRINTPKT_SUPPORT */
+
 #endif /* PPP_SUPPORT && EAP_SUPPORT */
