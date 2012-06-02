@@ -26,6 +26,15 @@
 /* FIXME: add a phase per PPP session */
 int phase;			/* where the link is at */
 
+/* FIXME: add stats per PPP session */
+#if PPP_STATS_SUPPORT
+static struct timeval start_time;	/* Time when link was started. */
+static struct pppd_stats old_link_stats;
+struct pppd_stats link_stats;
+unsigned link_connect_time;
+int link_stats_valid;
+#endif /* PPP_STATS_SUPPORT */
+
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
 typedef enum {
@@ -148,8 +157,7 @@ PACK_STRUCT_END
 
 
 /** Initiate LCP open request */
-static void pppStart(int pd)
-{
+static void pppStart(int pd) {
   PPPDEBUG(LOG_DEBUG, ("pppStart: unit %d\n", pd));
   lcp_open(pd); /* Start protocol */
   lcp_lowerup(pd);
@@ -454,9 +462,7 @@ int ppp_init(void) {
         (*protp->init)(0);
 }
 
-void
-pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
-{
+void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd) {
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
@@ -649,9 +655,7 @@ drop:
   return;
 }
 
-void
-pppOverEthernetInitFailed(int pd)
-{
+void pppOverEthernetInitFailed(int pd) {
   PPPControl* pc;
 
   //pppHup(pd);
@@ -666,9 +670,7 @@ pppOverEthernetInitFailed(int pd)
   }
 }
 
-static void
-pppOverEthernetLinkStatusCB(int pd, int up)
-{
+static void pppOverEthernetLinkStatusCB(int pd, int up) {
   printf("pppOverEthernetLinkStatusCB: called, pd = %d, up = %d\n", pd, up);
   if(up) {
     PPPDEBUG(LOG_INFO, ("pppOverEthernetLinkStatusCB: unit %d: Connecting\n", pd));
@@ -680,9 +682,7 @@ pppOverEthernetLinkStatusCB(int pd, int up)
 #endif
 
 #if PPPOE_SUPPORT
-static err_t
-pppifOutputOverEthernet(int pd, struct pbuf *p)
-{
+static err_t pppifOutputOverEthernet(int pd, struct pbuf *p) {
   PPPControl *pc = &pppControl[pd];
   struct pbuf *pb;
   u_short protocol = PPP_IP;
@@ -724,9 +724,7 @@ pppifOutputOverEthernet(int pd, struct pbuf *p)
 #endif /* PPPOE_SUPPORT */
 
 /* Send a packet on the given connection. */
-static err_t
-pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
-{
+static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
   int pd = (int)(size_t)netif->state;
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
@@ -877,9 +875,7 @@ pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr)
 /*
  * Return the Maximum Transmission Unit for the given PPP connection.
  */
-u_short
-pppMTU(int pd)
-{
+u_short pppMTU(int pd) {
   PPPControl *pc = &pppControl[pd];
   u_short st;
 
@@ -894,9 +890,7 @@ pppMTU(int pd)
 }
 
 #if PPPOE_SUPPORT
-int
-pppWriteOverEthernet(int pd, const u_char *s, int n)
-{
+int pppWriteOverEthernet(int pd, const u_char *s, int n) {
   PPPControl *pc = &pppControl[pd];
   struct pbuf *pb;
 
@@ -939,9 +933,7 @@ pppWriteOverEthernet(int pd, const u_char *s, int n)
  *  RETURN: >= 0 Number of characters written
  *           -1 Failed to write to device
  */
-int
-pppWrite(int pd, const u_char *s, int n)
-{
+int pppWrite(int pd, const u_char *s, int n) {
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
   u_char c;
@@ -1030,12 +1022,7 @@ void output (int unit, unsigned char *p, int len)
  * ppp_send_config - configure the transmit-side characteristics of
  * the ppp interface.
  */
-int
-ppp_send_config(unit, mtu, accm, pcomp, accomp)
-    int unit, mtu;
-    u_int32_t accm;
-    int pcomp, accomp;
-{
+int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp) {
   PPPControl *pc = &pppControl[unit];
   int i;
 
@@ -1050,18 +1037,14 @@ ppp_send_config(unit, mtu, accm, pcomp, accomp)
   PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]: outACCM=%X %X %X %X\n",
             unit,
             pc->outACCM[0], pc->outACCM[1], pc->outACCM[2], pc->outACCM[3]));
+  return 0;
 }
 
 /*
  * ppp_recv_config - configure the receive-side characteristics of
  * the ppp interface.
  */
-int
-ppp_recv_config(unit, mru, accm, pcomp, accomp)
-    int unit, mru;
-    u_int32_t accm;
-    int pcomp, accomp;
-{
+int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp) {
   PPPControl *pc = &pppControl[unit];
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
@@ -1080,17 +1063,15 @@ ppp_recv_config(unit, mru, accm, pcomp, accomp)
   PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]: inACCM=%X %X %X %X\n",
             unit,
             pc->rx.inACCM[0], pc->rx.inACCM[1], pc->rx.inACCM[2], pc->rx.inACCM[3]));
+  return 0;
 }
-
-
 
 
 /*
  * sifaddr - Config the interface IP addresses and netmask.
  */
 int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
-	     u_int32_t net_mask)
-{
+	     u_int32_t net_mask) {
   PPPControl *pc = &pppControl[unit];
   int st = 1;
 
@@ -1117,16 +1098,6 @@ int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
     return 0;
 }
 
-
-/********************************************************************
- *
- * sifdown - Disable the indicated protocol and config the interface
- *	     down if there are no remaining protocols.
- */
-int sifdown (int u) {
-    /* FIXME: do the code which shutdown a PPP interface */
-    return 1;
-}
 
 /*
  * pppifNetifInit - netif init callback
@@ -1178,13 +1149,20 @@ int sifup(int u)
   return st;
 }
 
+/********************************************************************
+ *
+ * sifdown - Disable the indicated protocol and config the interface
+ *	     down if there are no remaining protocols.
+ */
+int sifdown (int u) {
+    /* FIXME: do the code which shutdown a PPP interface */
+    return 1;
+}
 
 /*
  * sifnpmode - Set the mode for handling packets for a given NP.
  */
-int
-sifnpmode(int u, int proto, enum NPmode mode)
-{
+int sifnpmode(int u, int proto, enum NPmode mode) {
   LWIP_UNUSED_ARG(u);
   LWIP_UNUSED_ARG(proto);
   LWIP_UNUSED_ARG(mode);
@@ -1196,6 +1174,12 @@ sifnpmode(int u, int proto, enum NPmode mode)
  */
 void netif_set_mtu(int unit, int mtu) {
   /* FIXME: set lwIP MTU */
+}
+/*
+ * netif_get_mtu - get PPP interface MTU
+ */
+int netif_get_mtu(int mtu) {
+  /* FIXME: get lwIP MTU */
 }
 
 /********************************************************************
@@ -1450,3 +1434,54 @@ void new_phase(int p) {
     /* The one willing notify support should add here the code to be notified of phase changes */
 #endif /* PPP_NOTIFY */
 }
+
+#if PPP_STATS_SUPPORT
+
+/* ---- Note on PPP Stats support ----
+ *
+ * The one willing link stats support should add the get_ppp_stats()
+ * to fetch statistics from lwIP.
+ */
+
+/*
+ * reset_link_stats - "reset" stats when link goes up.
+ */
+void reset_link_stats(int u) {
+    if (!get_ppp_stats(u, &old_link_stats))
+	return;
+    gettimeofday(&start_time, NULL);
+}
+
+/*
+ * update_link_stats - get stats at link termination.
+ */
+void update_link_stats(int u) {
+
+    struct timeval now;
+    char numbuf[32];
+
+    if (!get_ppp_stats(u, &link_stats)
+	|| gettimeofday(&now, NULL) < 0)
+	return;
+    link_connect_time = now.tv_sec - start_time.tv_sec;
+    link_stats_valid = 1;
+
+    link_stats.bytes_in  -= old_link_stats.bytes_in;
+    link_stats.bytes_out -= old_link_stats.bytes_out;
+    link_stats.pkts_in   -= old_link_stats.pkts_in;
+    link_stats.pkts_out  -= old_link_stats.pkts_out;
+}
+
+void print_link_stats() {
+    /*
+     * Print connect time and statistics.
+     */
+    if (link_stats_valid) {
+       int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
+       info("Connect time %d.%d minutes.", t/10, t%10);
+       info("Sent %u bytes, received %u bytes.",
+	    link_stats.bytes_out, link_stats.bytes_in);
+       link_stats_valid = 0;
+    }
+}
+#endif PPP_STATS_SUPPORT

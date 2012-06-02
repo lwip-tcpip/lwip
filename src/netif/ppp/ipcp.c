@@ -1958,7 +1958,9 @@ ipcp_up(f)
 	    notice("secondary DNS address %I", go->dnsaddr[1]);
     }
 
+#if PPP_STATS_SUPPORT
     reset_link_stats(f->unit);
+#endif /* PPP_STATS_SUPPORT */
 
     np_up(f->unit, PPP_IP);
     ipcp_is_up = 1;
@@ -1982,11 +1984,13 @@ ipcp_down(f)
     fsm *f;
 {
     IPCPDEBUG(("ipcp: down"));
+#if PPP_STATS_SUPPORT
     /* XXX a bit IPv4-centric here, we only need to get the stats
      * before the interface is marked down. */
     /* XXX more correct: we must get the stats before running the notifiers,
      * at least for the radius plugin */
     update_link_stats(f->unit);
+#endif /* PPP_STATS_SUPPORT */
 #if PPP_NOTIFY
     notify(ip_down_notifier, 0);
 #endif /* PPP_NOTIFY */
@@ -1998,9 +2002,11 @@ ipcp_down(f)
     }
     sifvjcomp(f->unit, 0, 0, 0);
 
+#if PPP_STATS_SUPPORT
     print_link_stats(); /* _after_ running the notifiers and ip_down_hook(),
 			 * because print_link_stats() sets link_stats_valid
 			 * to 0 (zero) */
+#endif /* PPP_STATS_SUPPORT */
 
 #if DEMAND_SUPPORT
     /*

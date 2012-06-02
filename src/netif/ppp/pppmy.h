@@ -12,8 +12,15 @@
 
 #include <syslog.h> /* FIXME: temporary */
 
+
 #include "lwip/netif.h"
 #include "lwip/def.h"
+
+#ifndef bool
+typedef unsigned char	bool;
+#endif
+
+
 
 /*************************
 *** PUBLIC DEFINITIONS ***
@@ -38,6 +45,17 @@ struct ppp_addrs {
   ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
 
+#if PPP_STATS_SUPPORT
+/*
+ * PPP statistics structure
+ */
+struct pppd_stats {
+    unsigned int	bytes_in;
+    unsigned int	bytes_out;
+    unsigned int	pkts_in;
+    unsigned int	pkts_out;
+};
+#endif /* PPP_STATS_SUPPORT */
 
 /* FIXME: use PPP option instead ? */
 
@@ -121,6 +139,14 @@ enum pppAuthType {
 #endif /* CHAP_SUPPORT */
 };
 
+struct pbuf * pppSingleBuf(struct pbuf *p);
+
+static void pppStart(int pd);
+
+static void ppp_input(void *arg);
+
+int ppp_init(void);
+
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
@@ -132,13 +158,67 @@ typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
 int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name,
                         pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
 
+
 void pppInProcOverEthernet(int pd, struct pbuf *pb);
 
+void pppOverEthernetInitFailed(int pd);
+
+static void pppOverEthernetLinkStatusCB(int pd, int up);
+
+static err_t pppifOutputOverEthernet(int pd, struct pbuf *p);
+
+static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+
+u_short pppMTU(int pd);
+
+int pppWriteOverEthernet(int pd, const u_char *s, int n);
+
+int pppWrite(int pd, const u_char *s, int n);
+
+void pppInProcOverEthernet(int pd, struct pbuf *pb);
+
+void output (int unit, unsigned char *p, int len);
+
+int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp);
+int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
+
+int sifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
+int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr);
+
+static err_t pppifNetifInit(struct netif *netif);
+
+int sifup(int u);
+int sifdown (int u);
+
+int sifnpmode(int u, int proto, enum NPmode mode);
+
+void netif_set_mtu(int unit, int mtu);
+int netif_get_mtu(int mtu);
+
+int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace);
+int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway);
+
+int sifproxyarp (int unit, u_int32_t his_adr);
+int cifproxyarp (int unit, u_int32_t his_adr);
+
+int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid);
+
+int get_idle_time(int u, struct ppp_idle *ip);
+
+int get_loop_output(void);
+
+u_int32_t GetMask (u_int32_t addr);
 
 #if PPP_PROTOCOLNAME
 const char * protocol_name(int proto);
 #endif /* PPP_PROTOCOLNAME  */
 
 void new_phase(int p);
+
+#if PPP_STATS_SUPPORT
+void print_link_stats(void); /* Print stats, if available */
+void reset_link_stats(int u); /* Reset (init) stats when link goes up */
+void update_link_stats(int u); /* Get stats at link termination */
+#endif /* PPP_STATS_SUPPORT */
 
 #endif /* PPPMY_H_ */

@@ -643,7 +643,9 @@ link_terminated(unit)
 
     if (!doing_multilink) {
 	notice("Connection terminated.");
+#if PPP_STATS_SUPPORT
 	print_link_stats();
+#endif /* PPP_STATS_SUPPORT */
     } else
 	notice("Link terminated.");
 
@@ -1242,11 +1244,12 @@ static void
 check_maxoctets(arg)
     void *arg;
 {
+#if PPP_STATS_SUPPORT
     unsigned int used;
 
     update_link_stats(ifunit);
     link_stats_valid=0;
-    
+
     switch(maxoctets_dir) {
 	case PPP_OCTETS_DIRECTION_IN:
 	    used = link_stats.bytes_in;
@@ -1270,8 +1273,9 @@ check_maxoctets(arg)
     } else {
         TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
     }
+#endif /* PPP_STATS_SUPPORT */
 }
-#endif
+#endif /* MAXOCTETS */
 
 /*
  * check_idle - check whether the link has been idle for long

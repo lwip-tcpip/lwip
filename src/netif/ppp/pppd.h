@@ -86,7 +86,9 @@
  * Option descriptor structure.
  */
 
+#ifndef bool
 typedef unsigned char	bool;
+#endif
 
 #if 0
 enum opt_type {
@@ -166,6 +168,7 @@ struct permitted_ip {
 };
 #endif
 
+#if 0
 /*
  * Unfortunately, the linux kernel driver uses a different structure
  * for statistics from the rest of the ports.
@@ -178,6 +181,7 @@ struct pppd_stats {
     unsigned int	pkts_in;
     unsigned int	pkts_out;
 };
+#endif
 
 /* Used for storing a sequence of words.  Usually malloced. */
 struct wordlist {
@@ -236,9 +240,11 @@ extern int	detached;	/* Have detached from controlling tty */
 extern GIDSET_TYPE groups[NGROUPS_MAX];	/* groups the user is in */
 #endif
 extern int	ngroups;	/* How many groups valid in groups */
+#if PPP_STATS_SUPPORT
 extern struct pppd_stats link_stats; /* byte/packet counts etc. for link */
 extern int	link_stats_valid; /* set if link_stats is valid */
 extern unsigned	link_connect_time; /* time the link was up for */
+#endif /* PPP_STATS_SUPPORT */
 extern int	using_pty;	/* using pty as device (notty or pty opt.) */
 extern int	log_to_fd;	/* logging to this fd as well as syslog */
 extern bool	log_default;	/* log_to_fd is default (stdout) */
@@ -522,10 +528,14 @@ pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
 
 //int  device_script __P((char *cmd, int in, int out, int dont_wait));
 				/* Run `cmd' with given stdin and stdout */
+#if 0
 void reopen_log __P((void));	/* (re)open the connection to syslog */
+#endif
+#if 0
 void print_link_stats __P((void)); /* Print stats, if available */
 void reset_link_stats __P((int)); /* Reset (init) stats when link goes up */
 void update_link_stats __P((int)); /* Get stats at link termination */
+#endif
 #if 0 /* UNUSED */
 void script_setenv __P((char *, char *, int));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
@@ -536,8 +546,8 @@ void add_notifier __P((struct notifier **, notify_func, void *));
 void remove_notifier __P((struct notifier **, notify_func, void *));
 void notify __P((struct notifier *, int));
 #endif /* UNUSED */
-int  ppp_send_config __P((int, int, u_int32_t, int, int));
-int  ppp_recv_config __P((int, int, u_int32_t, int, int));
+//int  ppp_send_config __P((int, int, u_int32_t, int, int));
+//int  ppp_recv_config __P((int, int, u_int32_t, int, int));
 //void remove_pidfiles __P((void));
 void lock_db __P((void));
 void unlock_db __P((void));
@@ -668,21 +678,21 @@ int  ccp_test __P((int, u_char *, int, int));
 void ccp_flags_set __P((int, int, int));
 				/* Set kernel CCP state */
 int  ccp_fatal_error __P((int)); /* Test for fatal decomp error in kernel */
-int  get_idle_time __P((int, struct ppp_idle *));
+//int  get_idle_time __P((int, struct ppp_idle *));
 				/* Find out how long link has been idle */
-int  get_ppp_stats __P((int, struct pppd_stats *));
+//int  get_ppp_stats __P((int, struct pppd_stats *));
 				/* Return link statistics */
-void netif_set_mtu __P((int, int)); /* Set PPP interface MTU */
-int  netif_get_mtu __P((int));      /* Get PPP interface MTU */
-int  sifvjcomp __P((int, int, int, int));
+//void netif_set_mtu __P((int, int)); /* Set PPP interface MTU */
+//int  netif_get_mtu __P((int));      /* Get PPP interface MTU */
+//int  sifvjcomp __P((int, int, int, int));
 				/* Configure VJ TCP header compression */
-int  sifup __P((int));		/* Configure i/f up for one protocol */
-int  sifnpmode __P((int u, int proto, enum NPmode mode));
+//int  sifup __P((int));		/* Configure i/f up for one protocol */
+//int  sifnpmode __P((int u, int proto, enum NPmode mode));
 				/* Set mode for handling packets for proto */
-int  sifdown __P((int));	/* Configure i/f down for one protocol */
-int  sifaddr __P((int, u_int32_t, u_int32_t, u_int32_t));
+//int  sifdown __P((int));	/* Configure i/f down for one protocol */
+//int  sifaddr __P((int, u_int32_t, u_int32_t, u_int32_t));
 				/* Configure IPv4 addresses for i/f */
-int  cifaddr __P((int, u_int32_t, u_int32_t));
+//int  cifaddr __P((int, u_int32_t, u_int32_t));
 				/* Reset i/f IP addresses */
 #ifdef INET6
 int  sif6addr __P((int, eui64_t, eui64_t));
@@ -690,15 +700,15 @@ int  sif6addr __P((int, eui64_t, eui64_t));
 int  cif6addr __P((int, eui64_t, eui64_t));
 				/* Remove an IPv6 address from i/f */
 #endif
-int  sifdefaultroute __P((int, u_int32_t, u_int32_t, bool replace_default_rt));
+//int  sifdefaultroute __P((int, u_int32_t, u_int32_t, bool replace_default_rt));
 				/* Create default route through i/f */
-int  cifdefaultroute __P((int, u_int32_t, u_int32_t));
+//int  cifdefaultroute __P((int, u_int32_t, u_int32_t));
 				/* Delete default route through i/f */
-int  sifproxyarp __P((int, u_int32_t));
+//int  sifproxyarp __P((int, u_int32_t));
 				/* Add proxy ARP entry for peer */
-int  cifproxyarp __P((int, u_int32_t));
+//int  cifproxyarp __P((int, u_int32_t));
 				/* Delete proxy ARP entry for peer */
-u_int32_t GetMask __P((u_int32_t)); /* Get appropriate netmask for address */
+//u_int32_t GetMask __P((u_int32_t)); /* Get appropriate netmask for address */
 #if 0 /* Unused */
 int  lock __P((char *));	/* Create lock file for device */
 int  relock __P((int));		/* Rewrite lock file with new pid */

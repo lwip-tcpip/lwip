@@ -279,7 +279,9 @@ void mp_bundle_terminated()
 	bundle_terminating = 1;
 	upper_layers_down(0);
 	notice("Connection terminated.");
+#if PPP_STATS_SUPPORT
 	print_link_stats();
+#endif /* PPP_STATS_SUPPORT */
 	if (!demand) {
 		remove_pidfiles();
 		script_unsetenv("IFNAME");

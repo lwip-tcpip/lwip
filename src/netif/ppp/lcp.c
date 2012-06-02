@@ -2629,8 +2629,10 @@ LcpSendEchoRequest (f)
     if (lcp_echo_adaptive) {
 	static unsigned int last_pkts_in = 0;
 
+#if PPP_STATS_SUPPORT
 	update_link_stats(f->unit);
 	link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
 
 	if (link_stats.pkts_in != last_pkts_in) {
 	    last_pkts_in = link_stats.pkts_in;

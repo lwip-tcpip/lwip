@@ -198,12 +198,12 @@ GIDSET_TYPE groups[NGROUPS_MAX];/* groups the user is in */
 int ngroups;			/* How many groups valid in groups */
 #endif /* UNUSED */
 
-static struct timeval start_time;	/* Time when link was started. */
+//static struct timeval start_time;	/* Time when link was started. */
 
-static struct pppd_stats old_link_stats;
-struct pppd_stats link_stats;
-unsigned link_connect_time;
-int link_stats_valid;
+//static struct pppd_stats old_link_stats;
+//struct pppd_stats link_stats;
+//unsigned link_connect_time;
+//int link_stats_valid;
 
 int error_count;
 
@@ -249,7 +249,9 @@ static void childwait_end __P((void *));
 
 static void handle_events __P((void));
 #endif
+#if 0
 void print_link_stats __P((void));
+#endif
 
 extern	char	*ttyname __P((int));
 extern	char	*getlogin __P((void));
@@ -794,6 +796,7 @@ detach()
 }
 #endif
 
+#if 0
 /*
  * reopen_log - (re)open our connection to syslog.
  */
@@ -803,6 +806,7 @@ reopen_log()
     openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
     setlogmask(LOG_UPTO(LOG_INFO));
 }
+#endif
 
 #if 0
 /*
@@ -1066,6 +1070,7 @@ cleanup()
 }
 #endif
 
+#if 0
 void
 print_link_stats()
 {
@@ -1127,7 +1132,7 @@ update_link_stats(u)
     script_setenv("BYTES_RCVD", numbuf, 0);
 #endif
 }
-
+#endif
 
 struct	callout {
     struct timeval	c_time;		/* time at which to call routine */
