@@ -273,6 +273,7 @@ static void ppp_input(void *arg) {
 	   */
 	  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 		if (protp->protocol == protocol && protp->enabled_flag) {
+		    nb = pppSingleBuf(nb);
 		    (*protp->input)(pd, nb->payload, nb->len);
 		    goto out;
 		}
