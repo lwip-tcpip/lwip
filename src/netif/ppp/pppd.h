@@ -505,7 +505,9 @@ void timeout __P((void (*func)(void *), void *arg, int s, int us));
 				/* Call func(arg) after s.us seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
+#if 0
 void record_child __P((int, char *, void (*) (void *), void *, int));
+#endif
 
 #if 0
 pid_t safe_fork __P((int, int, int));	/* Fork & close stuff in child */
@@ -517,8 +519,10 @@ void reopen_log __P((void));	/* (re)open the connection to syslog */
 void print_link_stats __P((void)); /* Print stats, if available */
 void reset_link_stats __P((int)); /* Reset (init) stats when link goes up */
 void update_link_stats __P((int)); /* Get stats at link termination */
+#if 0 /* UNUSED */
 void script_setenv __P((char *, char *, int));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
+#endif /* UNUSED */
 void new_phase __P((int));	/* signal start of new phase */
 void add_notifier __P((struct notifier **, notify_func, void *));
 void remove_notifier __P((struct notifier **, notify_func, void *));

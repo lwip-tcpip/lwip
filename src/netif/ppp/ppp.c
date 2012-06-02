@@ -231,9 +231,12 @@ static struct subprocess *children;
 //static void create_pidfile __P((int pid));
 //static void create_linkpidfile __P((int pid));
 //static void cleanup __P((void));
+#if 0
 static void get_input __P((void));
+#endif
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
+#if 0
 static void kill_my_pg __P((int));
 static void hup __P((int));
 static void term __P((int));
@@ -241,12 +244,15 @@ static void chld __P((int));
 static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
+#endif
 static void holdoff_end __P((void *));
+#if 0
 static void forget_child __P((int pid, int status));
 static int reap_kids __P((void));
 static void childwait_end __P((void *));
 
 static void handle_events __P((void));
+#endif
 void print_link_stats __P((void));
 
 extern	char	*ttyname __P((int));
@@ -1021,6 +1027,7 @@ protocol_name(proto)
     return NULL;
 }
 
+#if 0
 /*
  * get_input - called when incoming data is available.
  */
@@ -1115,7 +1122,9 @@ get_input()
     }
     lcp_sprotrej(0, p - PPP_HDRLEN, len + PPP_HDRLEN);
 }
+#endif
 
+#if 0
 /*
  * ppp_send_config - configure the transmit-side characteristics of
  * the ppp interface.  Returns -1, indicating an error, if the channel
@@ -1157,6 +1166,7 @@ old_ppp_recv_config(unit, mru, accm, pcomp, accomp)
 	(*the_channel->recv_config)(mru, accm, pcomp, accomp);
 	return (error_count != errs)? -1: 0;
 }
+#endif
 
 /*
  * new_phase - signal the start of a new phase of pppd's operation.
@@ -1390,7 +1400,7 @@ timeleft(tvp)
     return tvp;
 }
 
-
+#if 0
 /*
  * kill_my_pg - send a signal to our process group, and ignore it ourselves.
  * We assume that sig is currently blocked.
@@ -1525,6 +1535,7 @@ open_ccp(sig)
     if (waiting)
 	siglongjmp(sigjmp, 1);
 }
+#endif
 
 #if 0
 /*
@@ -1695,6 +1706,7 @@ device_script(program, in, out, dont_wait)
 }
 #endif
 
+#if 0 /* UNUSED */
 /*
  * record_child - add a child process to the list for reap_kids
  * to use.
@@ -1794,6 +1806,7 @@ reap_kids()
     }
     return 0;
 }
+#endif /* UNUSED */
 
 /*
  * add_notifier - add a new function to be called when something happens.
