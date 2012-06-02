@@ -412,6 +412,7 @@ extern int  option_priority;	/* priority of current options */
 #define PHASE_HOLDOFF		11
 #define PHASE_MASTER		12
 
+#if 0
 /*
  * The following struct gives the addresses of procedures to call
  * for a particular protocol.
@@ -463,6 +464,7 @@ struct protent {
 
 /* Table of pointers to supported protocols */
 extern struct protent *protocols[];
+#endif
 
 /*
  * This struct contains pointers to a set of procedures for

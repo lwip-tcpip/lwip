@@ -21,6 +21,57 @@
 typedef unsigned char	bool;
 #endif
 
+/*
+ * The following struct gives the addresses of procedures to call
+ * for a particular protocol.
+ */
+struct protent {
+    u_short protocol;		/* PPP protocol number */
+    /* Initialization procedure */
+    void (*init) __P((int unit));
+    /* Process a received packet */
+    void (*input) __P((int unit, u_char *pkt, int len));
+    /* Process a received protocol-reject */
+    void (*protrej) __P((int unit));
+    /* Lower layer has come up */
+    void (*lowerup) __P((int unit));
+    /* Lower layer has gone down */
+    void (*lowerdown) __P((int unit));
+    /* Open the protocol */
+    void (*open) __P((int unit));
+    /* Close the protocol */
+    void (*close) __P((int unit, char *reason));
+#if PRINTPKT_SUPPORT
+    /* Print a packet in readable form */
+    int  (*printpkt) __P((u_char *pkt, int len,
+			  void (*printer) __P((void *, char *, ...)),
+			  void *arg));
+#endif /* PRINTPKT_SUPPORT */
+    /* FIXME: data input is only used by CCP, which is not supported at this time,
+     *        should we remove this entry and save some flash ?
+     */
+    /* Process a received data packet */
+    void (*datainput) __P((int unit, u_char *pkt, int len));
+    bool enabled_flag;		/* 0 iff protocol is disabled */
+#if PRINTPKT_SUPPORT
+    char *name;			/* Text name of protocol */
+    char *data_name;		/* Text name of corresponding data protocol */
+#endif /* PRINTPKT_SUPPORT */
+#if PPP_OPTIONS
+    option_t *options;		/* List of command-line options */
+    /* Check requested options, assign defaults */
+    void (*check_options) __P((void));
+#endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
+    /* Configure interface for demand-dial */
+    int  (*demand_conf) __P((int unit));
+    /* Say whether to bring up link for this pkt */
+    int  (*active_pkt) __P((u_char *pkt, int len));
+#endif /* DEMAND_SUPPORT */
+};
+
+/* Table of pointers to supported protocols */
+extern struct protent *protocols[];
 
 
 /*************************

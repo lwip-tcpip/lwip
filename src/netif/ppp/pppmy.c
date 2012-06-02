@@ -11,17 +11,33 @@
 #include "lwip/stats.h"
 #include "lwip/sys.h"
 
+#if PPPOE_SUPPORT
+#include "netif/ppp_oe.h"
+#endif /* PPPOE_SUPPORT */
+
 #include "pppd.h"
+#include "pppdebug.h"
+#include "pppmy.h"
+
 #include "fsm.h"
 #include "lcp.h"
 #include "ipcp.h"
 
-#include "pppdebug.h"
-#include "pppmy.h"
-
-#if PPPOE_SUPPORT
-#include "netif/ppp_oe.h"
-#endif /* PPPOE_SUPPORT */
+#if PAP_SUPPORT
+#include "upap.h"
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+#include "chap-new.h"
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+#include "eap.h"
+#endif /* EAP_SUPPORT */
+#if CCP_SUPPORT
+#include "ccp.h"
+#endif /* EAP_SUPPORT */
+#if ECP_SUPPORT
+#include "ecp.h"
+#endif /* EAP_SUPPORT */
 
 /* FIXME: add a phase per PPP session */
 int phase;			/* where the link is at */
@@ -34,6 +50,41 @@ struct pppd_stats link_stats;
 unsigned link_connect_time;
 int link_stats_valid;
 #endif /* PPP_STATS_SUPPORT */
+
+/*
+ * PPP Data Link Layer "protocol" table.
+ * One entry per supported protocol.
+ * The last entry must be NULL.
+ */
+struct protent *protocols[] = {
+    &lcp_protent,
+#if PAP_SUPPORT
+    &pap_protent,
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+    &chap_protent,
+#endif /* CHAP_SUPPORT */
+#if CBCP_SUPPORT
+    &cbcp_protent,
+#endif
+    &ipcp_protent,
+#ifdef INET6
+    &ipv6cp_protent,
+#endif
+#if CCP_SUPPORT
+    &ccp_protent,
+#endif /* CCP_SUPPORT */
+#if ECP_SUPPORT
+    &ecp_protent,
+#endif /* ECP_SUPPORT */
+#ifdef AT_CHANGE
+    &atcp_protent,
+#endif
+#if EAP_SUPPORT
+    &eap_protent,
+#endif /* EAP_SUPPORT */
+    NULL
+};
 
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */

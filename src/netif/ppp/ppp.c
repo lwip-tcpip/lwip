@@ -266,6 +266,7 @@ extern	char	*getlogin __P((void));
 #define setlogmask(x)
 #endif
 
+#if 0
 /*
  * PPP Data Link Layer "protocol" table.
  * One entry per supported protocol.
@@ -300,7 +301,7 @@ struct protent *protocols[] = {
 #endif /* EAP_SUPPORT */
     NULL
 };
-
+#endif
 
 #if 0
 /*
