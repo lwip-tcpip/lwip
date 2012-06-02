@@ -281,8 +281,8 @@ struct ppp_settings {
   char user       [MAXNAMELEN   + 1]; /* Username for PAP */
   char passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
   char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
-  // FIXME: re-enable that
-  //  char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+  /* FIXME: re-enable that */
+  /*  char remote_name[MAXNAMELEN   + 1]; */ /* Peer's name for authentication */
 };
 
 struct ppp_settings ppp_settings;
@@ -315,12 +315,12 @@ int ppp_init(void);
  *
  */
 enum pppAuthType {
-    PPPAUTHTYPE_NONE,
-    PPPAUTHTYPE_ANY,
-    PPPAUTHTYPE_PAP,
 #if CHAP_SUPPORT
     PPPAUTHTYPE_CHAP,
 #endif /* CHAP_SUPPORT */
+    PPPAUTHTYPE_PAP,
+    PPPAUTHTYPE_ANY,
+    PPPAUTHTYPE_NONE
 };
 
 int ppp_init(void);
@@ -511,7 +511,7 @@ int  get_secret __P((int, char *, char *, char *, int *, int));
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */
-//int parse_dotted_ip __P((char *, u_int32_t *));
+/* int parse_dotted_ip __P((char *, u_int32_t *)); */
 
 /* Procedures exported from demand.c */
 #if DEMAND_SUPPORT

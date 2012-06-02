@@ -40,7 +40,9 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-//#include <syslog.h>
+#if 0
+#include <syslog.h>
+#endif
 #include <netdb.h>
 #include <time.h>
 #include <utmp.h>
@@ -678,7 +680,7 @@ log_write(level, buf)
     char *buf;
 {
 /* FIXME: replace this with a log callback */
-    // if(level >= min_log_level) /* FIXME: add a minimum log level */
+    /* if(level >= min_log_level) */ /* FIXME: add a minimum log level */
     printf("LOG: %s\n", buf);
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {

@@ -736,7 +736,7 @@ void pppInProcOverEthernet(int pd, struct pbuf *pb) {
 
 drop:
   LINK_STATS_INC(link.drop);
-//  snmp_inc_ifindiscards(&pppControl[pd].netif);
+  snmp_inc_ifindiscards(&pppControl[pd].netif);
   pbuf_free(pb);
   return;
 }
@@ -744,8 +744,10 @@ drop:
 void pppOverEthernetInitFailed(int pd) {
   PPPControl* pc;
 
-  //pppHup(pd);
-  //pppStop(pd);
+  /* FIXME: re-enable that
+   * pppHup(pd);
+   * pppStop(pd);
+   */
 
   pc = &pppControl[pd];
   pppoe_destroy(&pc->netif);
@@ -827,7 +829,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
    * and the peer will just drop it if it's not accepting it. */
   if (pd < 0 || pd >= NUM_PPP || !pc->openFlag || !pb) {
     PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: bad parms prot=%d pb=%p\n",
-              pd, PPP_IP, pb));
+              pd, PPP_IP, (void*)pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
@@ -1168,8 +1170,10 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
     SMEMCPY(&pc->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
     SMEMCPY(&pc->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
     SMEMCPY(&pc->addrs.netmask, &net_mask, sizeof(net_mask));
-//    SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
-//    SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
+/* FIXME: re-enable DNS
+ *    SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
+ *    SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
+ */
   }
   return st;
 }

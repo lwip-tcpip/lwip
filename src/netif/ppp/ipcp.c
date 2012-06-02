@@ -304,7 +304,7 @@ struct protent ipcp_protent = {
 #endif /* DEMAND_SUPPORT */
 };
 
-static void ipcp_clear_addrs __P((int, u_int32_t, u_int32_t, bool));
+static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute);
 
 /*
  * Lengths of configuration options.
@@ -2038,13 +2038,8 @@ ipcp_down(f)
  * ipcp_clear_addrs() - clear the interface addresses, routes,
  * proxy arp entries, etc.
  */
-static void
-ipcp_clear_addrs(unit, ouraddr, hisaddr, replacedefaultroute)
-    int unit;
-    u_int32_t ouraddr;  /* local address */
-    u_int32_t hisaddr;  /* remote address */
-    bool replacedefaultroute;
-{
+static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute) {
+
     if (proxy_arp_set[unit]) {
 	cifproxyarp(unit, hisaddr);
 	proxy_arp_set[unit] = 0;

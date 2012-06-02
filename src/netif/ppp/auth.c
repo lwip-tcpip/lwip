@@ -223,15 +223,15 @@ struct notifier *link_down_notifier = NULL;
 bool uselogin = 0;		/* Use /etc/passwd for checking PAP */
 bool session_mgmt = 0;		/* Do session management (login records) */
 bool cryptpap = 0;		/* Passwords in pap-secrets are encrypted */
-//bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
-//bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
-//bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
+bool refuse_pap = 0;		/* Don't wanna auth. ourselves with PAP */
+bool refuse_chap = 0;		/* Don't wanna auth. ourselves with CHAP */
+bool refuse_eap = 0;		/* Don't wanna auth. ourselves with EAP */
 #if MSCHAP_SUPPORT
-//bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
-//bool refuse_mschap_v2 = 0;	/* Don't wanna auth. oif 0 /* UNUSED */urselves with MS-CHAPv2 */
+bool refuse_mschap = 0;		/* Don't wanna auth. ourselves with MS-CHAP */
+bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #else /* MSCHAP_SUPPORT */
-//bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
-//bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
+bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
+bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #endif /* MSCHAP_SUPPORT */
 #endif /* MOVED TO ppp_settings */
 #if 0 /* UNUSED */
@@ -1079,7 +1079,9 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
 	namelen = sizeof(peer_authname) - 1;
     MEMCPY(peer_authname, name, namelen);
     peer_authname[namelen] = 0;
-    //script_setenv("PEERNAME", peer_authname, 0);
+#if 0 /* UNUSED */
+    script_setenv("PEERNAME", peer_authname, 0);
+#endif /* UNUSED */
 
     /* Save the authentication method for later. */
     auth_done[unit] |= bit;
@@ -1538,7 +1540,7 @@ auth_reset(unit)
 #endif /* EAP_SUPPORT */
 
 #if 0 /* OLD CODE */
-    //ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
+    ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
 
     /*
     ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2)
@@ -1978,7 +1980,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
 
 /* FIXME: clean that */
 #if 0
-	    //	strlcpy(rname, ppp_settings.user, sizeof(rname));
+	    	strlcpy(rname, ppp_settings.user, sizeof(rname));
 
 
 /*

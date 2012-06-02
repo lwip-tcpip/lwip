@@ -50,7 +50,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
-//#include <syslog.h>
+#if 0
+#include <syslog.h>
+#endif
 #include <string.h>
 #include <pwd.h>
 #ifdef PLUGIN
@@ -94,12 +96,16 @@ struct option_value {
 int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
-//char	devnam[MAXPATHLEN];	/* Device name */
+#if 0
+char	devnam[MAXPATHLEN];	/* Device name */
+#endif
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 int	maxconnect = 0;		/* Maximum connect time */
-//char	user[MAXNAMELEN];	/* Username for PAP */
-//char	passwd[MAXSECRETLEN];	/* Password for PAP */
+#if 0
+char	user[MAXNAMELEN];	/* Username for PAP */
+char	passwd[MAXSECRETLEN];	/* Password for PAP */
+#endif
 bool	persist = 0;		/* Reopen link after it goes down */
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 #if DEMAND_SUPPORT
@@ -114,14 +120,18 @@ int	log_to_fd = 1;		/* send log messages to this fd too */
 #endif
 bool	log_default = 1;	/* log_to_fd is default (stdout) */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
-//char	linkname[MAXPATHLEN];	/* logical name for link */
+#if 0
+char	linkname[MAXPATHLEN];	/* logical name for link */
+#endif
 bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */
 bool	multilink = 0;		/* Enable multilink operation */
 char	*bundle_name = NULL;	/* bundle name for multilink */
 bool	dump_options;		/* print out option values */
-//bool	dryrun;			/* print out option values and exit */
+#if 0
+bool	dryrun;			/* print out option values and exit */
+#endif
 char	*domain;		/* domain name set by domain option */
 int	child_wait = 5;		/* # seconds to wait for children at exit */
 

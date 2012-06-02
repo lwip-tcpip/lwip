@@ -731,22 +731,27 @@ lcp_cilen(f)
 #if EAP_SUPPORT
 	    LENCISHORT(go->neg_eap) +
 #endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-	    LENCICHAP(
+#if CHAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
 #if EAP_SUPPORT
-	        !go->neg_eap &&
+	    LENCICHAP(!go->neg_eap && go->neg_chap) +
 #endif /* EAP_SUPPORT */
-	        go->neg_chap) +
+#if !EAP_SUPPORT
+	    LENCICHAP(go->neg_chap) +
+#endif /* !EAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-#if PAP_SUPPORT
-	    LENCISHORT(
-#if EAP_SUPPORT
-	        !go->neg_eap &&
-#endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-	        !go->neg_chap &&
-#endif /* CHAP_SUPPORT */
-	        go->neg_upap) +
+#if PAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
+#if EAP_SUPPORT && CHAP_SUPPORT
+	    LENCISHORT(!go->neg_eap && !go->neg_chap && go->neg_upap) +
+#endif /* EAP_SUPPORT && CHAP_SUPPORT */
+#if EAP_SUPPORT && !CHAP_SUPPORT
+	    LENCISHORT(!go->neg_eap && go->neg_upap) +
+#endif /* EAP_SUPPORT && !CHAP_SUPPORT */
+#if !EAP_SUPPORT && CHAP_SUPPORT
+	    LENCISHORT(!go->neg_chap && go->neg_upap) +
+#endif /* !EAP_SUPPORT && CHAP_SUPPORT */
+#if !EAP_SUPPORT && !CHAP_SUPPORT
+	    LENCISHORT(go->neg_upap) +
+#endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
 	    LENCILQR(go->neg_lqr) +
 	    LENCICBCP(go->neg_cbcp) +
@@ -826,22 +831,27 @@ lcp_addci(f, ucp, lenp)
 #if EAP_SUPPORT
     ADDCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
 #endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-    ADDCICHAP(CI_AUTHTYPE,
+#if CHAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
 #if EAP_SUPPORT
-        !go->neg_eap &&
+    ADDCICHAP(CI_AUTHTYPE, !go->neg_eap && go->neg_chap, go->chap_mdtype);
 #endif /* EAP_SUPPORT */
-        go->neg_chap, go->chap_mdtype);
+#if !EAP_SUPPORT
+    ADDCICHAP(CI_AUTHTYPE, go->neg_chap, go->chap_mdtype);
+#endif /* !EAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-#if PAP_SUPPORT
-    ADDCISHORT(CI_AUTHTYPE,
-#if EAP_SUPPORT
-        !go->neg_eap &&
-#endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-        !go->neg_chap &&
-#endif /* CHAP_SUPPORT */
-        go->neg_upap, PPP_PAP);
+#if PAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
+#if EAP_SUPPORT && CHAP_SUPPORT
+    ADDCISHORT(CI_AUTHTYPE, !go->neg_eap && !go->neg_chap && go->neg_upap, PPP_PAP);
+#endif /* EAP_SUPPORT && CHAP_SUPPORT */
+#if EAP_SUPPORT && !CHAP_SUPPORT
+    ADDCISHORT(CI_AUTHTYPE, !go->neg_eap && go->neg_upap, PPP_PAP);
+#endif /* EAP_SUPPORT && !CHAP_SUPPORT */
+#if !EAP_SUPPORT && CHAP_SUPPORT
+    ADDCISHORT(CI_AUTHTYPE, !go->neg_chap && go->neg_upap, PPP_PAP);
+#endif /* !EAP_SUPPORT && CHAP_SUPPORT */
+#if !EAP_SUPPORT && !CHAP_SUPPORT
+    ADDCISHORT(CI_AUTHTYPE, go->neg_upap, PPP_PAP);
+#endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
     ADDCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ADDCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
@@ -993,22 +1003,27 @@ lcp_ackci(f, p, len)
 #if EAP_SUPPORT
     ACKCISHORT(CI_AUTHTYPE, go->neg_eap, PPP_EAP);
 #endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-    ACKCICHAP(CI_AUTHTYPE,
+#if CHAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
 #if EAP_SUPPORT
-        !go->neg_eap &&
+    ACKCICHAP(CI_AUTHTYPE, !go->neg_eap && go->neg_chap, go->chap_mdtype);
 #endif /* EAP_SUPPORT */
-        go->neg_chap, go->chap_mdtype);
+#if !EAP_SUPPORT
+    ACKCICHAP(CI_AUTHTYPE, go->neg_chap, go->chap_mdtype);
+#endif /* !EAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-#if PAP_SUPPORT
-    ACKCISHORT(CI_AUTHTYPE,
-#if EAP_SUPPORT
-        !go->neg_eap &&
-#endif /* EAP_SUPPORT */
-#if CHAP_SUPPORT
-        !go->neg_chap &&
-#endif /* CHAP_SUPPORT */
-        go->neg_upap, PPP_PAP);
+#if PAP_SUPPORT /* cannot be improved, embedding a directive within macro arguments is not portable */
+#if EAP_SUPPORT && CHAP_SUPPORT
+    ACKCISHORT(CI_AUTHTYPE, !go->neg_eap && !go->neg_chap && go->neg_upap, PPP_PAP);
+#endif /* EAP_SUPPORT && CHAP_SUPPORT */
+#if EAP_SUPPORT && !CHAP_SUPPORT
+    ACKCISHORT(CI_AUTHTYPE, !go->neg_eap && go->neg_upap, PPP_PAP);
+#endif /* EAP_SUPPORT && !CHAP_SUPPORT */
+#if !EAP_SUPPORT && CHAP_SUPPORT
+    ACKCISHORT(CI_AUTHTYPE, !go->neg_chap && go->neg_upap, PPP_PAP);
+#endif /* !EAP_SUPPORT && CHAP_SUPPORT */
+#if !EAP_SUPPORT && !CHAP_SUPPORT
+    ACKCISHORT(CI_AUTHTYPE, go->neg_upap, PPP_PAP);
+#endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
     ACKCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
     ACKCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
