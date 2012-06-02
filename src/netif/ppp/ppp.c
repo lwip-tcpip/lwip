@@ -301,12 +301,15 @@ struct protent *protocols[] = {
     NULL
 };
 
+
+#if 0
 /*
  * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
  */
 #if !defined(PPP_DRV_NAME)
 #define PPP_DRV_NAME	"ppp"
 #endif /* !defined(PPP_DRV_NAME) */
+#endif
 
 #if 0
 int ppp_oldmain() {
@@ -1134,6 +1137,7 @@ update_link_stats(u)
 }
 #endif
 
+#if 0
 struct	callout {
     struct timeval	c_time;		/* time at which to call routine */
     void		*c_arg;		/* argument to routine */
@@ -1143,6 +1147,7 @@ struct	callout {
 
 static struct callout *callout = NULL;	/* Callout list */
 static struct timeval timenow;		/* Current time */
+#endif
 
 #if 0
 /*
