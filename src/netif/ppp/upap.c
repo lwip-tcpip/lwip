@@ -592,7 +592,7 @@ upap_sauthreq(u)
     PUTCHAR(u->us_passwdlen, outp);
     MEMCPY(outp, u->us_passwd, u->us_passwdlen);
 
-    ppp_output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 
     TIMEOUT(upap_timeout, u, u->us_timeouttime);
     ++u->us_transmits;
@@ -622,7 +622,7 @@ upap_sresp(u, code, id, msg, msglen)
     PUTSHORT(outlen, outp);
     PUTCHAR(msglen, outp);
     MEMCPY(outp, msg, msglen);
-    ppp_output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 }
 #endif /* UNUSED */
 

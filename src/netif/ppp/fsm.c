@@ -818,5 +818,5 @@ fsm_sdata(f, code, id, data, datalen)
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
-    ppp_output(f->unit, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(f->unit, outpacket_buf, outlen + PPP_HDRLEN);
 }

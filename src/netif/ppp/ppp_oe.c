@@ -300,7 +300,7 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
   int off, err;
   struct eth_hdr *ethhdr;
 
-  pb = pppSingleBuf(pb);
+  pb = ppp_singlebuf(pb);
 
   strcpy(devname, "pppoe");  /* as long as we don't know which instance */
   err_msg = NULL;
@@ -574,7 +574,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   } 
 
-  pb = pppSingleBuf (pb);
+  pb = ppp_singlebuf (pb);
 
   if (pb->len <= PPPOE_HEADERLEN) {
     PPPDEBUG(LOG_DEBUG, ("pppoe (data): dropping too short packet: %d bytes\n", pb->len));
@@ -622,7 +622,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   }
 
-  pppInProcOverEthernet(sc->sc_pd, pb);
+  ppp_input_over_ethernet(sc->sc_pd, pb);
 
   return;
 

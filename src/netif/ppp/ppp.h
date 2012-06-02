@@ -342,19 +342,19 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
 
 /* PPP flow functions
  */
-struct pbuf * pppSingleBuf(struct pbuf *p);
-
-void pppInProcOverEthernet(int pd, struct pbuf *pb);
-
 void pppOverEthernetInitFailed(int pd);
 
 u_short pppMTU(int pd);
 
-int pppWriteOverEthernet(int pd, const u_char *s, int n);
+#if PPPOE_SUPPORT
+/* function called by pppoe.c */
+void ppp_input_over_ethernet(int pd, struct pbuf *pb);
+#endif /* PPPOE_SUPPORT */
 
-int ppp_output(int pd, const u_char *s, int n);
+/* function called by all PPP subsystems to send packets */
+int ppp_write(int pd, const u_char *s, int n);
 
-void pppInProcOverEthernet(int pd, struct pbuf *pb);
+struct pbuf * ppp_singlebuf(struct pbuf *p);
 
 
 /* Functions called by various PPP subsystems to configure
