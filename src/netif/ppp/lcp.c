@@ -80,7 +80,9 @@ bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
 bool	lax_recv = 0;		/* accept control chars in asyncmap */
 bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
 
+#if PPP_OPTIONS
 static int noopt __P((char **));
+#endif /* PPP_OPTIONS */
 
 #ifdef HAVE_MULTILINK
 static int setendpoint __P((char **));
@@ -315,6 +317,7 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
+#if PPP_OPTIONS
 /*
  * noopt - Disable all options (why?).
  */
@@ -327,6 +330,7 @@ noopt(argv)
 
     return (1);
 }
+#endif /* PPP_OPTIONS */
 
 #ifdef HAVE_MULTILINK
 static int
@@ -1995,7 +1999,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		PUTSHORT(PPP_CHAP, nakp);
 		PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
 	    } else
-#endif CHAP_SUPPORT
+#endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
 	    if(1) {
 		PUTCHAR(CILEN_SHORT, nakp);

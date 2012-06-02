@@ -70,8 +70,8 @@ extern char *strerror();
 
 static void logit __P((int, char *, va_list));
 static void log_write __P((int, char *));
-static void vslp_printer __P((void *, char *, ...));
 #if PRINTPKT_SUPPORT
+static void vslp_printer __P((void *, char *, ...));
 static void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
 			       void *));
 #endif /* PRINTPKT_SUPPORT */
@@ -172,7 +172,9 @@ vslprintf(buf, buflen, fmt, args)
     time_t t;
     u_int32_t ip;
     static char hexchars[] = "0123456789abcdef";
+#if PRINTPKT_SUPPORT
     struct buffer_info bufinfo;
+#endif /* PRINTPKT_SUPPORT */
 
     buf0 = buf;
     --buflen;
@@ -428,6 +430,7 @@ vslprintf(buf, buflen, fmt, args)
     return buf - buf0;
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * vslp_printer - used in processing a %P format
  */
@@ -455,6 +458,7 @@ vslp_printer __V((void *arg, char *fmt, ...))
     bi->ptr += n;
     bi->len -= n;
 }
+#endif /* PRINTPKT_SUPPORT */
 
 #ifdef unused
 /*
@@ -662,10 +666,9 @@ logit(level, fmt, args)
     char *fmt;
     va_list args;
 {
-    int n;
     char buf[1024];
 
-    n = vslprintf(buf, sizeof(buf), fmt, args);
+    vslprintf(buf, sizeof(buf), fmt, args);
     log_write(level, buf);
 }
 

@@ -645,8 +645,8 @@ pppoe_output(struct pppoe_softc *sc, struct pbuf *pb)
   ethhdr = (struct eth_hdr *)pb->payload;
   etype = sc->sc_state == PPPOE_STATE_SESSION ? ETHTYPE_PPPOE : ETHTYPE_PPPOEDISC;
   ethhdr->type = htons(etype);
-  MEMCPY(ethhdr->dest.addr, sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
-  MEMCPY(ethhdr->src.addr, ((struct eth_addr *)sc->sc_ethif->hwaddr)->addr, sizeof(ethhdr->src.addr));
+  MEMCPY(&ethhdr->dest.addr, &sc->sc_dest.addr, sizeof(ethhdr->dest.addr));
+  MEMCPY(&ethhdr->src.addr, &sc->sc_ethif->hwaddr, sizeof(ethhdr->src.addr));
 
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F" (%x) state=%d, session=0x%x output -> %02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F":%02"X16_F", len=%d\n",
       sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, etype,
@@ -957,8 +957,8 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
 
   ethhdr = (struct eth_hdr *)pb->payload;
   ethhdr->type = PP_HTONS(ETHTYPE_PPPOEDISC);
-  MEMCPY(ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
-  MEMCPY(ethhdr->src.addr, ((struct eth_addr *)outgoing_if->hwaddr)->addr, sizeof(ethhdr->src.addr));
+  MEMCPY(&ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
+  MEMCPY(&ethhdr->src.addr, &outgoing_if->hwaddr, sizeof(ethhdr->src.addr));
 
   p = (u8_t*)(ethhdr + 1);
   PPPOE_ADD_HEADER(p, PPPOE_CODE_PADT, session, 0);

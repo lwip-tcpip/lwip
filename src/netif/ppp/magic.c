@@ -182,7 +182,7 @@ void random_bytes(unsigned char *buf, u32_t buf_len) {
 u32_t magic() {
   u32_t new_rand;
 
-  random_bytes((char *)&new_rand, sizeof(new_rand));
+  random_bytes((unsigned char *)&new_rand, sizeof(new_rand));
 
   return new_rand;
 }

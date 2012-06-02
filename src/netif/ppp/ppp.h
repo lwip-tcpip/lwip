@@ -12,6 +12,7 @@
 
 #include "lwip/netif.h"
 #include "lwip/def.h"
+#include "lwip/timers.h"
 
 #include "pppdebug.h"
 
@@ -286,17 +287,6 @@ struct ppp_settings {
 
 struct ppp_settings ppp_settings;
 
-/* FIXME: move all private stuff into a new include */
-
-/*************************
- *** PRIVATE FUNCTIONS ***
- *************************/
-
-/** Initiate LCP open request */
-static void pppStart(int pd);
-
-struct pbuf *pppSingleBuf(struct pbuf *p);
-
 
 /************************
  *** PUBLIC FUNCTIONS ***
@@ -333,12 +323,6 @@ enum pppAuthType {
 #endif /* CHAP_SUPPORT */
 };
 
-struct pbuf * pppSingleBuf(struct pbuf *p);
-
-static void pppStart(int pd);
-
-static void ppp_input(void *arg);
-
 int ppp_init(void);
 
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
@@ -353,15 +337,13 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
                         pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
 
 
+/* -- private */
+
+struct pbuf * pppSingleBuf(struct pbuf *p);
+
 void pppInProcOverEthernet(int pd, struct pbuf *pb);
 
 void pppOverEthernetInitFailed(int pd);
-
-static void pppOverEthernetLinkStatusCB(int pd, int up);
-
-static err_t pppifOutputOverEthernet(int pd, struct pbuf *p);
-
-static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
 
 u_short pppMTU(int pd);
 
@@ -378,8 +360,6 @@ int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
 
 int sifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
 int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr);
-
-static err_t pppifNetifInit(struct netif *netif);
 
 int sifup(int u);
 int sifdown (int u);
@@ -531,7 +511,7 @@ int  get_secret __P((int, char *, char *, char *, int *, int));
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */
-int parse_dotted_ip __P((char *, u_int32_t *));
+//int parse_dotted_ip __P((char *, u_int32_t *));
 
 /* Procedures exported from demand.c */
 #if DEMAND_SUPPORT

@@ -10,16 +10,16 @@
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
 #include "lwip/sys.h"
-
-#if PPPOE_SUPPORT
-#include "netif/ppp_oe.h"
-#endif /* PPPOE_SUPPORT */
+#include "lwip/tcpip.h"
+#include "lwip/api.h"
+#include "lwip/snmp.h"
 
 #include "ppp.h"
 
 #include "fsm.h"
 #include "lcp.h"
 #include "ipcp.h"
+#include "magic.h"
 
 #if PAP_SUPPORT
 #include "upap.h"
@@ -37,6 +37,9 @@
 #include "ecp.h"
 #endif /* EAP_SUPPORT */
 
+#if PPPOE_SUPPORT
+#include "netif/ppp_oe.h"
+#endif /* PPPOE_SUPPORT */
 
 /*
  * Global variables.
@@ -176,36 +179,21 @@ typedef struct PPPControl_s {
 
 } PPPControl;
 
+
+/* Prototypes for procedures local to this file. */
+
+static void pppStart(int pd);		/** Initiate LCP open request */
+static void ppp_input(void *arg);
+static void pppOverEthernetLinkStatusCB(int pd, int up);
+static err_t pppifOutputOverEthernet(int pd, struct pbuf *p);
+static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+static err_t pppifNetifInit(struct netif *netif);
+
+
 /******************************/
 /*** PUBLIC DATA STRUCTURES ***/
 /******************************/
 static PPPControl pppControl[NUM_PPP]; /* The PPP interface control blocks. */
-
-
-struct pbuf * pppSingleBuf(struct pbuf *p) {
-  struct pbuf *q, *b;
-  u_char *pl;
-
-  if(p->tot_len == p->len) {
-    return p;
-  }
-
-  q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
-  if(!q) {
-    PPPDEBUG(LOG_ERR,
-             ("pppSingleBuf: unable to alloc new buf (%d)\n", p->tot_len));
-    return p; /* live dangerously */
-  }
-
-  for(b = p, pl = q->payload; b != NULL; b = b->next) {
-    MEMCPY(pl, b->payload, b->len);
-    pl += b->len;
-  }
-
-  pbuf_free(p);
-
-  return q;
-}
 
 /** Input helper struct, must be packed since it is stored to pbuf->payload,
  * which might be unaligned.
@@ -309,7 +297,7 @@ static void ppp_input(void *arg) {
       PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ compressed\n", pd));
 #else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO, ("pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: drop VJ Comp in %d\n", pd, nb->len));
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
@@ -329,8 +317,8 @@ static void ppp_input(void *arg) {
 #else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG(LOG_INFO,
-               ("pppInput[%d]: drop VJ UnComp in %d:.*H\n",
-                pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
+               ("pppInput[%d]: drop VJ UnComp in %d\n",
+                pd, nb->len));
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
@@ -531,6 +519,8 @@ int ppp_init(void) {
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
+
+    return 0;
 }
 
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd) {
@@ -686,6 +676,31 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
   }
 
   return pd;
+}
+
+struct pbuf * pppSingleBuf(struct pbuf *p) {
+  struct pbuf *q, *b;
+  u_char *pl;
+
+  if(p->tot_len == p->len) {
+    return p;
+  }
+
+  q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+  if(!q) {
+    PPPDEBUG(LOG_ERR,
+             ("pppSingleBuf: unable to alloc new buf (%d)\n", p->tot_len));
+    return p; /* live dangerously */
+  }
+
+  for(b = p, pl = q->payload; b != NULL; b = b->next) {
+    MEMCPY(pl, b->payload, b->len);
+    pl += b->len;
+  }
+
+  pbuf_free(p);
+
+  return q;
 }
 
 /* FIXME: maybe we should pass in two arguments pppInputHeader and payload
@@ -1251,6 +1266,7 @@ void netif_set_mtu(int unit, int mtu) {
  */
 int netif_get_mtu(int mtu) {
   /* FIXME: get lwIP MTU */
+  return 1492;
 }
 
 /********************************************************************
@@ -1555,4 +1571,4 @@ void print_link_stats() {
        link_stats_valid = 0;
     }
 }
-#endif PPP_STATS_SUPPORT
+#endif /* PPP_STATS_SUPPORT */

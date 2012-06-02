@@ -98,8 +98,10 @@ static bool usepeerdns;			/* Ask peer for DNS addrs */
 static int ipcp_is_up;			/* have called np_up() */
 static int ipcp_is_open;		/* haven't called np_finished() */
 static bool ask_for_local;		/* request our address from peer */
+#if 0 /* UNUSED */
 static char vj_value[8];		/* string form of vj option value */
 static char netmask_str[20];		/* string form of netmask value */
+#endif /* UNUSED */
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -138,13 +140,13 @@ static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
 /*
  * Command-line options.
  */
+#if PPP_OPTIONS
 static int setvjslots __P((char **));
 static int setdnsaddr __P((char **));
 static int setwinsaddr __P((char **));
 static int setnetmask __P((char **));
 int setipaddr __P((char *, char **, int));
 
-#if PPP_OPTIONS
 static void printipaddr __P((option_t *, void (*)(void *, char *,...),void *));
 
 static option_t ipcp_option_list[] = {
@@ -263,12 +265,16 @@ static void ipcp_protrej __P((int));
 static int  ipcp_printpkt __P((u_char *, int,
 			       void (*) __P((void *, char *, ...)), void *));
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_OPTIONS
 static void ip_check_options __P((void));
+#endif /* PPP_OPTIONS */
 #if DEMAND_SUPPORT
 static int  ip_demand_conf __P((int));
 static int  ip_active_pkt __P((u_char *, int));
 #endif /* DEMAND_SUPPORT */
+#if 0 /* UNUSED */
 static void create_resolv __P((u_int32_t, u_int32_t));
+#endif /* UNUSED */
 
 struct protent ipcp_protent = {
     PPP_IPCP,
@@ -331,7 +337,7 @@ u_int32_t ipaddr;
 /*
  * Option parsing.
  */
-
+#if PPP_OPTIONS
 /*
  * setvjslots - set maximum number of connection slots for VJ compression
  */
@@ -427,7 +433,6 @@ setwinsaddr(argv)
     return (1);
 }
 
-#if 0 /* UNUSED */
 /*
  * setipaddr - Set the IP address
  * If doit is 0, the call is to check whether this option is
@@ -500,9 +505,7 @@ setipaddr(arg, argv, doit)
 
     return 1;
 }
-#endif /* UNUSED */
 
-#if PPP_OPTIONS
 static void
 printipaddr(opt, printer, arg)
     option_t *opt;
@@ -517,7 +520,6 @@ printipaddr(opt, printer, arg)
 	if (wo->hisaddr != 0)
 		printer(arg, "%I", wo->hisaddr);
 }
-#endif /* PPP_OPTIONS */
 
 /*
  * setnetmask - set the netmask to be used on the interface.
@@ -582,7 +584,7 @@ parse_dotted_ip(p, vp)
     *vp = v;
     return p - p0;
 }
-
+#endif /* PPP_OPTIONS */
 
 /*
  * ipcp_init - Initialize IPCP.
@@ -1836,11 +1838,14 @@ ipcp_up(f)
 	script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]), 0);
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
+#endif /* UNUSED */
     if (usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+	/* FIXME: set here the DNS servers ?  */
+#if 0 /* UNUSED */
 	script_setenv("USEPEERDNS", "1", 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
-    }
 #endif /* UNUSED */
+    }
 
 /* FIXME: check why it fails, just to know */
 #if 0 /* Unused */
@@ -2074,6 +2079,7 @@ ipcp_finished(f)
 }
 
 
+#if 0 /* UNUSED */
 /*
  * create_resolv - create the replacement resolv.conf file
  */
@@ -2081,8 +2087,9 @@ static void
 create_resolv(peerdns1, peerdns2)
     u_int32_t peerdns1, peerdns2;
 {
-  /* FIXME: do we need to set here the DNS servers ?  */
+
 }
+#endif /* UNUSED */
 
 #if PRINTPKT_SUPPORT
 /*

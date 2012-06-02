@@ -423,7 +423,7 @@ fsm_rconfreq(f, id, inp, len)
 {
     int code, reject_if_disagree;
 
-    printf("fsm_rconfreq() called, f->state = %d\n");
+    printf("fsm_rconfreq() called, f->state = %d\n", f->state);
 
     switch( f->state ){
     case CLOSED:

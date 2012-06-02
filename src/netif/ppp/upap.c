@@ -54,7 +54,9 @@
 
 #include "upap.h"
 
+#if 0 /* UNUSED */
 static bool hide_password = 1;
+#endif /* UNUSED */
 
 #if PPP_OPTIONS
 /*
@@ -128,7 +130,9 @@ static void upap_rauthreq __P((upap_state *, u_char *, int, int));
 static void upap_rauthack __P((upap_state *, u_char *, int, int));
 static void upap_rauthnak __P((upap_state *, u_char *, int, int));
 static void upap_sauthreq __P((upap_state *));
+#if 0 /* UNUSED */
 static void upap_sresp __P((upap_state *, int, int, char *, int));
+#endif /* UNUSED */
 
 
 /*
@@ -593,7 +597,7 @@ upap_sauthreq(u)
     u->us_clientstate = UPAPCS_AUTHREQ;
 }
 
-
+#if 0 /* UNUSED */
 /*
  * upap_sresp - Send a response (ack or nak).
  */
@@ -618,6 +622,7 @@ upap_sresp(u, code, id, msg, msglen)
     MEMCPY(outp, msg, msglen);
     output(u->us_unit, outpacket_buf, outlen + PPP_HDRLEN);
 }
+#endif /* UNUSED */
 
 #if PRINTPKT_SUPPORT
 /*

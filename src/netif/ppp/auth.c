@@ -751,7 +751,9 @@ link_established(unit)
     int unit;
 {
     int auth;
+#if 0 /* UNUSED */
     lcp_options *wo = &lcp_wantoptions[unit];
+#endif /* UNUSED */
     lcp_options *go = &lcp_gotoptions[unit];
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
@@ -864,7 +866,9 @@ static void
 network_phase(unit)
     int unit;
 {
+#if 0 /* UNUSED */
     lcp_options *go = &lcp_gotoptions[unit];
+#endif /* UNUSED */
 
 #if 0 /* UNUSED */
     /* Log calling number. */
@@ -919,8 +923,10 @@ void
 start_networks(unit)
     int unit;
 {
+#if CCP_SUPPORT || ECP_SUPPORT
     int i;
     struct protent *protp;
+#endif /* CCP_SUPPORT || ECP_SUPPORT */
 #if ECP_SUPPORT
     int ecp_required;
 #endif /* ECP_SUPPORT */
@@ -1950,13 +1956,10 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     int am_server;
 {
   int len;
-  struct wordlist *addrs;
 
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
-
-  addrs = NULL;
 
   if(!client || !client[0] || strcmp(client, ppp_settings.user)) {
     return 0;
@@ -1993,6 +1996,8 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     char *filename;
     struct wordlist *addrs, *opts;
     char secbuf[MAXWORDLEN];
+    struct wordlist *addrs;
+    addrs = NULL;
 
     if (!am_server && ppp_settings.passwd[0] != 0) {
 	strlcpy(secbuf, ppp_settings.passwd, sizeof(secbuf));
