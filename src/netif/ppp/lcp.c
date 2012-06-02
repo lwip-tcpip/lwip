@@ -587,7 +587,9 @@ lcp_rprotrej(f, inp, len)
     int i;
     struct protent *protp;
     u_short prot;
+#if PPP_PROTOCOLNAME
     const char *pname;
+#endif /* PPP_PROTOCOLNAME */
 
     if (len < 2) {
 	LCPDEBUG(("lcp_rprotrej: Rcvd short Protocol-Reject packet!"));
@@ -605,27 +607,33 @@ lcp_rprotrej(f, inp, len)
 	return;
     }
 
+#if PPP_PROTOCOLNAME
     pname = protocol_name(prot);
+#endif /* PPP_PROTOCOLNAME */
 
     /*
      * Upcall the proper Protocol-Reject routine.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->protocol == prot && protp->enabled_flag) {
-	    if (pname == NULL)
-		dbglog("Protocol-Reject for 0x%x received", prot);
-	    else
+#if PPP_PROTOCOLNAME
+	    if (pname != NULL)
 		dbglog("Protocol-Reject for '%s' (0x%x) received", pname,
 		       prot);
+	    else
+#endif /* PPP_PROTOCOLNAME */
+		dbglog("Protocol-Reject for 0x%x received", prot);
 	    (*protp->protrej)(f->unit);
 	    return;
 	}
 
-    if (pname == NULL)
-	warn("Protocol-Reject for unsupported protocol 0x%x", prot);
-    else
+#if PPP_PROTOCOLNAME
+    if (pname != NULL)
 	warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
 	     prot);
+    else
+#endif /* #if PPP_PROTOCOLNAME */
+	warn("Protocol-Reject for unsupported protocol 0x%x", prot);
 }
 
 

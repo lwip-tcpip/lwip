@@ -233,10 +233,8 @@ static struct subprocess *children;
 //static void cleanup __P((void));
 #if 0
 static void get_input __P((void));
-#endif
 static void calltimeout __P((void));
 static struct timeval *timeleft __P((struct timeval *));
-#if 0
 static void kill_my_pg __P((int));
 static void hup __P((int));
 static void term __P((int));
@@ -244,9 +242,7 @@ static void chld __P((int));
 static void toggle_debug __P((int));
 static void open_ccp __P((int));
 static void bad_signal __P((int));
-#endif
 static void holdoff_end __P((void *));
-#if 0
 static void forget_child __P((int pid, int status));
 static int reap_kids __P((void));
 static void childwait_end __P((void *));
@@ -867,6 +863,7 @@ void remove_pidfiles()
 }
 #endif
 
+#if 0
 /*
  * holdoff_end - called via a timeout when the holdoff period ends.
  */
@@ -876,156 +873,7 @@ holdoff_end(arg)
 {
     new_phase(PHASE_DORMANT);
 }
-
-/* List of protocol names, to make our messages a little more informative. */
-struct protocol_list {
-    u_short	proto;
-    const char	*name;
-} protocol_list[] = {
-    { 0x21,	"IP" },
-    { 0x23,	"OSI Network Layer" },
-    { 0x25,	"Xerox NS IDP" },
-    { 0x27,	"DECnet Phase IV" },
-    { 0x29,	"Appletalk" },
-    { 0x2b,	"Novell IPX" },
-    { 0x2d,	"VJ compressed TCP/IP" },
-    { 0x2f,	"VJ uncompressed TCP/IP" },
-    { 0x31,	"Bridging PDU" },
-    { 0x33,	"Stream Protocol ST-II" },
-    { 0x35,	"Banyan Vines" },
-    { 0x39,	"AppleTalk EDDP" },
-    { 0x3b,	"AppleTalk SmartBuffered" },
-    { 0x3d,	"Multi-Link" },
-    { 0x3f,	"NETBIOS Framing" },
-    { 0x41,	"Cisco Systems" },
-    { 0x43,	"Ascom Timeplex" },
-    { 0x45,	"Fujitsu Link Backup and Load Balancing (LBLB)" },
-    { 0x47,	"DCA Remote Lan" },
-    { 0x49,	"Serial Data Transport Protocol (PPP-SDTP)" },
-    { 0x4b,	"SNA over 802.2" },
-    { 0x4d,	"SNA" },
-    { 0x4f,	"IP6 Header Compression" },
-    { 0x51,	"KNX Bridging Data" },
-    { 0x53,	"Encryption" },
-    { 0x55,	"Individual Link Encryption" },
-    { 0x57,	"IPv6" },
-    { 0x59,	"PPP Muxing" },
-    { 0x5b,	"Vendor-Specific Network Protocol" },
-    { 0x61,	"RTP IPHC Full Header" },
-    { 0x63,	"RTP IPHC Compressed TCP" },
-    { 0x65,	"RTP IPHC Compressed non-TCP" },
-    { 0x67,	"RTP IPHC Compressed UDP 8" },
-    { 0x69,	"RTP IPHC Compressed RTP 8" },
-    { 0x6f,	"Stampede Bridging" },
-    { 0x73,	"MP+" },
-    { 0xc1,	"NTCITS IPI" },
-    { 0xfb,	"single-link compression" },
-    { 0xfd,	"Compressed Datagram" },
-    { 0x0201,	"802.1d Hello Packets" },
-    { 0x0203,	"IBM Source Routing BPDU" },
-    { 0x0205,	"DEC LANBridge100 Spanning Tree" },
-    { 0x0207,	"Cisco Discovery Protocol" },
-    { 0x0209,	"Netcs Twin Routing" },
-    { 0x020b,	"STP - Scheduled Transfer Protocol" },
-    { 0x020d,	"EDP - Extreme Discovery Protocol" },
-    { 0x0211,	"Optical Supervisory Channel Protocol" },
-    { 0x0213,	"Optical Supervisory Channel Protocol" },
-    { 0x0231,	"Luxcom" },
-    { 0x0233,	"Sigma Network Systems" },
-    { 0x0235,	"Apple Client Server Protocol" },
-    { 0x0281,	"MPLS Unicast" },
-    { 0x0283,	"MPLS Multicast" },
-    { 0x0285,	"IEEE p1284.4 standard - data packets" },
-    { 0x0287,	"ETSI TETRA Network Protocol Type 1" },
-    { 0x0289,	"Multichannel Flow Treatment Protocol" },
-    { 0x2063,	"RTP IPHC Compressed TCP No Delta" },
-    { 0x2065,	"RTP IPHC Context State" },
-    { 0x2067,	"RTP IPHC Compressed UDP 16" },
-    { 0x2069,	"RTP IPHC Compressed RTP 16" },
-    { 0x4001,	"Cray Communications Control Protocol" },
-    { 0x4003,	"CDPD Mobile Network Registration Protocol" },
-    { 0x4005,	"Expand accelerator protocol" },
-    { 0x4007,	"ODSICP NCP" },
-    { 0x4009,	"DOCSIS DLL" },
-    { 0x400B,	"Cetacean Network Detection Protocol" },
-    { 0x4021,	"Stacker LZS" },
-    { 0x4023,	"RefTek Protocol" },
-    { 0x4025,	"Fibre Channel" },
-    { 0x4027,	"EMIT Protocols" },
-    { 0x405b,	"Vendor-Specific Protocol (VSP)" },
-    { 0x8021,	"Internet Protocol Control Protocol" },
-    { 0x8023,	"OSI Network Layer Control Protocol" },
-    { 0x8025,	"Xerox NS IDP Control Protocol" },
-    { 0x8027,	"DECnet Phase IV Control Protocol" },
-    { 0x8029,	"Appletalk Control Protocol" },
-    { 0x802b,	"Novell IPX Control Protocol" },
-    { 0x8031,	"Bridging NCP" },
-    { 0x8033,	"Stream Protocol Control Protocol" },
-    { 0x8035,	"Banyan Vines Control Protocol" },
-    { 0x803d,	"Multi-Link Control Protocol" },
-    { 0x803f,	"NETBIOS Framing Control Protocol" },
-    { 0x8041,	"Cisco Systems Control Protocol" },
-    { 0x8043,	"Ascom Timeplex" },
-    { 0x8045,	"Fujitsu LBLB Control Protocol" },
-    { 0x8047,	"DCA Remote Lan Network Control Protocol (RLNCP)" },
-    { 0x8049,	"Serial Data Control Protocol (PPP-SDCP)" },
-    { 0x804b,	"SNA over 802.2 Control Protocol" },
-    { 0x804d,	"SNA Control Protocol" },
-    { 0x804f,	"IP6 Header Compression Control Protocol" },
-    { 0x8051,	"KNX Bridging Control Protocol" },
-    { 0x8053,	"Encryption Control Protocol" },
-    { 0x8055,	"Individual Link Encryption Control Protocol" },
-    { 0x8057,	"IPv6 Control Protocol" },
-    { 0x8059,	"PPP Muxing Control Protocol" },
-    { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
-    { 0x806f,	"Stampede Bridging Control Protocol" },
-    { 0x8073,	"MP+ Control Protocol" },
-    { 0x80c1,	"NTCITS IPI Control Protocol" },
-    { 0x80fb,	"Single Link Compression Control Protocol" },
-    { 0x80fd,	"Compression Control Protocol" },
-    { 0x8207,	"Cisco Discovery Protocol Control" },
-    { 0x8209,	"Netcs Twin Routing" },
-    { 0x820b,	"STP - Control Protocol" },
-    { 0x820d,	"EDPCP - Extreme Discovery Protocol Ctrl Prtcl" },
-    { 0x8235,	"Apple Client Server Protocol Control" },
-    { 0x8281,	"MPLSCP" },
-    { 0x8285,	"IEEE p1284.4 standard - Protocol Control" },
-    { 0x8287,	"ETSI TETRA TNP1 Control Protocol" },
-    { 0x8289,	"Multichannel Flow Treatment Protocol" },
-    { 0xc021,	"Link Control Protocol" },
-    { 0xc023,	"Password Authentication Protocol" },
-    { 0xc025,	"Link Quality Report" },
-    { 0xc027,	"Shiva Password Authentication Protocol" },
-    { 0xc029,	"CallBack Control Protocol (CBCP)" },
-    { 0xc02b,	"BACP Bandwidth Allocation Control Protocol" },
-    { 0xc02d,	"BAP" },
-    { 0xc05b,	"Vendor-Specific Authentication Protocol (VSAP)" },
-    { 0xc081,	"Container Control Protocol" },
-    { 0xc223,	"Challenge Handshake Authentication Protocol" },
-    { 0xc225,	"RSA Authentication Protocol" },
-    { 0xc227,	"Extensible Authentication Protocol" },
-    { 0xc229,	"Mitsubishi Security Info Exch Ptcl (SIEP)" },
-    { 0xc26f,	"Stampede Bridging Authorization Protocol" },
-    { 0xc281,	"Proprietary Authentication Protocol" },
-    { 0xc283,	"Proprietary Authentication Protocol" },
-    { 0xc481,	"Proprietary Node ID Authentication Protocol" },
-    { 0,	NULL },
-};
-
-/*
- * protocol_name - find a name for a PPP protocol.
- */
-const char *
-protocol_name(proto)
-    int proto;
-{
-    struct protocol_list *lp;
-
-    for (lp = protocol_list; lp->proto != 0; ++lp)
-	if (proto == lp->proto)
-	    return lp->name;
-    return NULL;
-}
+#endif
 
 #if 0
 /*
@@ -1351,6 +1199,7 @@ untimeout(func, arg)
 }
 #endif
 
+#if 0
 /*
  * calltimeout - Call any timeout routines which are now due.
  */
@@ -1399,6 +1248,7 @@ timeleft(tvp)
 
     return tvp;
 }
+#endif
 
 #if 0
 /*
