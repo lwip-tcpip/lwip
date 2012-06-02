@@ -42,6 +42,8 @@
  * $Id: pppd.h,v 1.96 2008/06/23 11:47:18 paulus Exp $
  */
 
+#if 0 /* PPPD.H DISABLED */
+
 #include "lwip/opt.h"
 
 #include "pppmy.h"
@@ -60,6 +62,7 @@
 #include <sys/time.h>		/* for struct timeval */
 #include <net/ppp_defs.h>
 
+#if 0
 #if defined(__STDC__)
 #include <stdarg.h>
 #define __V(x)	x
@@ -72,6 +75,8 @@
 
 #ifdef INET6
 #include "eui64.h"
+#endif
+
 #endif
 
 #if 0
@@ -225,6 +230,7 @@ struct notifier {
 };
 #endif /* UNUSED */
 
+#if 0
 /*
  * Global variables.
  */
@@ -271,10 +277,13 @@ extern int      ppp_session_number; /* Session number (eg PPPoE session) */
 extern int	fd_devnull;	/* fd open to /dev/null */
 
 //extern int	listen_time;	/* time to listen first (ms) */
+
+#if 0
 extern bool	doing_multilink;
 extern bool	multilink_master;
 extern bool	bundle_eof;
 extern bool	bundle_terminating;
+#endif
 
 extern struct notifier *pidchange;   /* for notifications of pid changing */
 extern struct notifier *phasechange; /* for notifications of phase changes */
@@ -373,7 +382,11 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 				/* Has meaning only with MS-CHAP challenges */
 #endif
 
+#endif
+
+
 #if 0
+
 /* Values for auth_pending, auth_done */
 #if PAP_SUPPORT
 #define PAP_WITHPEER	0x1
@@ -400,6 +413,7 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 #define CHAP_MS2_PEER		0x800
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
+
 #endif
 
 #if 0
@@ -583,9 +597,8 @@ void unlock_db __P((void));
 void tty_init __P((void));
 #endif
 
+#if 0
 /* Procedures exported from utils.c. */
-void log_packet __P((u_char *, int, char *, int));
-				/* Format a packet and log it with syslog */
 void print_string __P((char *, int,  void (*) (void *, char *, ...),
 		void *));	/* Format a string for output */
 int slprintf __P((char *, int, char *, ...));		/* sprintf++ */
@@ -601,14 +614,18 @@ void fatal __P((char *, ...));	/* log an error message and die(1) */
 void init_pr_log __P((const char *, int)); /* initialize for using pr_log */
 void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
 void end_pr_log __P((void));	/* finish up after using pr_log */
+#if PRINTPKT_SUPPORT
 void dump_packet __P((const char *, u_char *, int));
 				/* dump packet to debug log if interesting */
+#endif /* PRINTPKT_SUPPORT */
+#endif
 
 #if 0 /* Unused */
 ssize_t complete_read __P((int, void *, size_t));
 				/* read a complete buffer */
 #endif /* Unused */
 
+#if 0
 /* Procedures exported from auth.c */
 void link_required __P((int));	  /* we are starting to use the link */
 void start_link __P((int));	  /* bring the link up now */
@@ -643,7 +660,9 @@ int  auth_ip_addr __P((int, u_int32_t));
 int  auth_number __P((void));	/* check if remote number is authorized */
 int  bad_ip_adrs __P((u_int32_t));
 				/* check if IP address is unreasonable */
+#endif
 
+#if 0
 /* Procedures exported from demand.c */
 #if DEMAND_SUPPORT
 void demand_conf __P((void));	/* config interface(s) for demand-dial */
@@ -654,7 +673,9 @@ void demand_rexmit __P((int, u_int32_t)); /* retransmit saved frames for an NP*/
 int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
 int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
 #endif /* DEMAND_SUPPORT */
+#endif
 
+#if 0
 /* Procedures exported from multilink.c */
 #ifdef HAVE_MULTILINK
 void mp_check_options __P((void)); /* Check multilink-related options */
@@ -669,7 +690,9 @@ int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
 #define doing_multilink		0
 #define multilink_master	0
 #endif
+#endif
 
+#if 0
 /* Procedures exported from sys-*.c */
 void sys_cleanup __P((void));	/* Restore system state before exiting */
 int  sys_check_options __P((void)); /* Check options specified */
@@ -756,7 +779,9 @@ int  cipxfaddr __P((int));
 #endif
 int  get_if_hwaddr __P((u_char *addr, char *name));
 char *get_first_ethernet __P((void));
+#endif
 
+#if 0
 /* Procedures exported from options.c */
 #if 0 /* UNUSED */
 int setipaddr __P((char *, char **, int)); /* Set local/remote ip addresses */
@@ -788,8 +813,12 @@ int  override_value __P((const char *, int, const char *));
 void print_options __P((void (*) __P((void *, char *, ...)), void *));
 				/* print out values of all options */
 #endif /* PPP_OPTIONS */
+#endif
 
+#if 0
+/* Procedures exported from ipcp.c */
 int parse_dotted_ip __P((char *, u_int32_t *));
+#endif
 
 /*
  * Hooks to enable plugins to change various things.
@@ -1007,3 +1036,5 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #endif
 
 #endif /* __PPP_H__ */
+
+#endif /* PPPD.H DISABLED */

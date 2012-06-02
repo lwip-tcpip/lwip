@@ -816,6 +816,7 @@ dbglog __V((char *fmt, ...))
     va_end(pvar);
 }
 
+#if PRINTPKT_SUPPORT
 /*
  * dump_packet - print out a packet in readable form if it is interesting.
  * Assumes len >= PPP_HDRLEN.
@@ -845,6 +846,7 @@ dump_packet(const char *tag, unsigned char *p, int len)
 
     dbglog("%s %P", tag, p, len);
 }
+#endif /* PRINTPKT_SUPPORT */
 
 #if 0 /* Unused */
 

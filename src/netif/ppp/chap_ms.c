@@ -628,7 +628,7 @@ GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
     sha1_finish(&sha1Context, Digest);
 
     /* Convert to ASCII hex string. */
-    for (i = 0; i < MAX((MS_AUTH_RESPONSE_LENGTH / 2), sizeof(Digest)); i++)
+    for (i = 0; i < LWIP_MAX((MS_AUTH_RESPONSE_LENGTH / 2), sizeof(Digest)); i++)
 	sprintf((char *)&authResponse[i * 2], "%02X", Digest[i]);
 }
 

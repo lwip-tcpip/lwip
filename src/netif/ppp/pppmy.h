@@ -21,7 +21,15 @@
 #include "eui64.h"
 #endif
 
-
+#if defined(__STDC__)
+#include <stdarg.h>
+#define __V(x)	x
+#else
+#include <varargs.h>
+#define __V(x)	(va_alist) va_dcl
+#define const
+#define volatile
+#endif
 
 /*
  * Limits.
@@ -60,6 +68,18 @@ struct epdisc {
 /*
  * Global variables.
  */
+/* FIXME: improve debug flag */
+extern int	debug;		/* Debug flag */
+
+/* FIXME: is our_name really necessary ? */
+extern char	our_name[MAXNAMELEN];/* Our name for authentication purposes */
+extern char	remote_name[MAXNAMELEN]; /* Peer's name for authentication */
+extern bool	explicit_remote;/* remote_name specified with remotename opt */
+
+/* FIXME: make it a compile time option */
+extern int	idle_time_limit;/* Shut down link if idle for this long */
+
+extern int	phase;		/* Current state of link - see values below */
 extern int	error_count;	/* # of times error() has been called */
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
@@ -68,6 +88,35 @@ extern int	need_holdoff;	/* Need holdoff period after link terminates */
 /* FIXME: remove ifunit */
 extern int	ifunit;		/* Interface unit number */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
+
+/* FIXME: add more HAVE_MULTILINK */
+extern bool	multilink;	/* enable multilink operation */
+
+/* FIXME: it is really necessary ? */
+extern int	maxconnect;	/* Maximum connect time (seconds) */
+
+#ifdef HAVE_MULTILINK
+extern bool	doing_multilink;
+extern bool	multilink_master;
+extern bool	bundle_eof;
+extern bool	bundle_terminating;
+#endif
+
+#ifdef MAXOCTETS
+extern unsigned int maxoctets;	     /* Maximum octetes per session (in bytes) */
+extern int       maxoctets_dir;      /* Direction :
+				      0 - in+out (default)
+				      1 - in
+				      2 - out
+				      3 - max(in,out) */
+extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
+#define PPP_OCTETS_DIRECTION_SUM        0
+#define PPP_OCTETS_DIRECTION_IN         1
+#define PPP_OCTETS_DIRECTION_OUT        2
+#define PPP_OCTETS_DIRECTION_MAXOVERAL  3
+/* same as previos, but little different on RADIUS side */
+#define PPP_OCTETS_DIRECTION_MAXSESSION 4
+#endif
 
 /*
  * The following struct gives the addresses of procedures to call
@@ -456,3 +505,77 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define EXIT_TRAFFIC_LIMIT	20
 #endif
 #define EXIT_CNID_AUTH_FAILED	21
+
+/* Procedures exported from auth.c */
+void link_required __P((int));	  /* we are starting to use the link */
+void link_terminated __P((int));  /* we are finished with the link */
+void link_down __P((int));	  /* the LCP layer has left the Opened state */
+void upper_layers_down __P((int));/* take all NCPs down */
+void link_established __P((int)); /* the link is up; authenticate now */
+void start_networks __P((int));   /* start all the network control protos */
+void continue_networks __P((int)); /* start network [ip, etc] control protos */
+
+void auth_peer_fail __P((int, int));
+				/* peer failed to authenticate itself */
+void auth_peer_success __P((int, int, int, char *, int));
+				/* peer successfully authenticated itself */
+void auth_withpeer_fail __P((int, int));
+				/* we failed to authenticate ourselves */
+void auth_withpeer_success __P((int, int, int));
+				/* we successfully authenticated ourselves */
+void np_up __P((int, int));	  /* a network protocol has come up */
+void np_down __P((int, int));	  /* a network protocol has gone down */
+void np_finished __P((int, int)); /* a network protocol no longer needs link */
+void auth_reset __P((int));	/* check what secrets we have */
+int  get_secret __P((int, char *, char *, char *, int *, int));
+				/* get "secret" for chap */
+
+/* Procedures exported from ipcp.c */
+int parse_dotted_ip __P((char *, u_int32_t *));
+
+/* Procedures exported from demand.c */
+#if DEMAND_SUPPORT
+void demand_conf __P((void));	/* config interface(s) for demand-dial */
+void demand_block __P((void));	/* set all NPs to queue up packets */
+void demand_unblock __P((void)); /* set all NPs to pass packets */
+void demand_discard __P((void)); /* set all NPs to discard packets */
+void demand_rexmit __P((int, u_int32_t)); /* retransmit saved frames for an NP*/
+int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
+int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
+#endif /* DEMAND_SUPPORT */
+
+/* Procedures exported from multilink.c */
+#ifdef HAVE_MULTILINK
+void mp_check_options __P((void)); /* Check multilink-related options */
+int  mp_join_bundle __P((void));  /* join our link to an appropriate bundle */
+void mp_exit_bundle __P((void));  /* have disconnected our link from bundle */
+void mp_bundle_terminated __P((void));
+char *epdisc_to_str __P((struct epdisc *)); /* string from endpoint discrim. */
+int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
+#else
+#define mp_bundle_terminated()	/* nothing */
+#define mp_exit_bundle()	/* nothing */
+#define doing_multilink		0
+#define multilink_master	0
+#endif
+
+/* Procedures exported from utils.c. */
+void print_string __P((char *, int,  void (*) (void *, char *, ...),
+		void *));	/* Format a string for output */
+int slprintf __P((char *, int, char *, ...));		/* sprintf++ */
+int vslprintf __P((char *, int, char *, va_list));	/* vsprintf++ */
+size_t strlcpy __P((char *, const char *, size_t));	/* safe strcpy */
+size_t strlcat __P((char *, const char *, size_t));	/* safe strncpy */
+void dbglog __P((char *, ...));	/* log a debug message */
+void info __P((char *, ...));	/* log an informational message */
+void notice __P((char *, ...));	/* log a notice-level message */
+void warn __P((char *, ...));	/* log a warning message */
+void error __P((char *, ...));	/* log an error message */
+void fatal __P((char *, ...));	/* log an error message and die(1) */
+void init_pr_log __P((const char *, int)); /* initialize for using pr_log */
+void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
+void end_pr_log __P((void));	/* finish up after using pr_log */
+#if PRINTPKT_SUPPORT
+void dump_packet __P((const char *, u_char *, int));
+				/* dump packet to debug log if interesting */
+#endif /* PRINTPKT_SUPPORT */

@@ -2197,7 +2197,7 @@ lcp_up(f)
      * MTU we want to use, and our link MRU.
      */
     mtu = ho->neg_mru? ho->mru: PPP_MRU;
-    mru = go->neg_mru? MAX(wo->mru, go->mru): PPP_MRU;
+    mru = go->neg_mru? LWIP_MAX(wo->mru, go->mru): PPP_MRU;
 #ifdef HAVE_MULTILINK
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
 #endif /* HAVE_MULTILINK */

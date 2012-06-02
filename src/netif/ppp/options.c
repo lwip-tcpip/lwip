@@ -50,7 +50,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdlib.h>
-#include <syslog.h>
+//#include <syslog.h>
 #include <string.h>
 #include <pwd.h>
 #ifdef PLUGIN
@@ -95,7 +95,7 @@ struct option_value {
 int	debug = 0;		/* Debug flag */
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
-char	devnam[MAXPATHLEN];	/* Device name */
+//char	devnam[MAXPATHLEN];	/* Device name */
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
 int	maxconnect = 0;		/* Maximum connect time */
@@ -115,7 +115,7 @@ int	log_to_fd = 1;		/* send log messages to this fd too */
 #endif
 bool	log_default = 1;	/* log_to_fd is default (stdout) */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
-char	linkname[MAXPATHLEN];	/* logical name for link */
+//char	linkname[MAXPATHLEN];	/* logical name for link */
 bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */

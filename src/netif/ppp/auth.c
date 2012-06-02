@@ -104,8 +104,12 @@
 #include "pppmy.h"
 #include "fsm.h"
 #include "lcp.h"
+#if CCP_SUPPORT
 #include "ccp.h"
+#endif /* CCP_SUPPORT */
+#if ECP_SUPPORT
 #include "ecp.h"
+#endif /* ECP_SUPPORT */
 #include "ipcp.h"
 #if PAP_SUPPORT
 #include "upap.h"
