@@ -1056,11 +1056,12 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
     /*
      * Save the authenticated name of the peer for later.
      */
+    /* FIXME: do we need that ? */
     if (namelen > sizeof(peer_authname) - 1)
 	namelen = sizeof(peer_authname) - 1;
     MEMCPY(peer_authname, name, namelen);
     peer_authname[namelen] = 0;
-    script_setenv("PEERNAME", peer_authname, 0);
+    //script_setenv("PEERNAME", peer_authname, 0);
 
     /* Save the authentication method for later. */
     auth_done[unit] |= bit;

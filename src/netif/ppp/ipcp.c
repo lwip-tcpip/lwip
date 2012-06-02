@@ -1816,14 +1816,17 @@ ipcp_up(f)
 	warn("Could not determine remote IP address: defaulting to %I",
 	     ho->hisaddr);
     }
+#if 0 /* UNUSED */
     script_setenv("IPLOCAL", ip_ntoa(go->ouraddr), 0);
     if (ho->hisaddr != 0)
 	script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr), 1);
+#endif /* UNUSED */
 
     if (!go->req_dns1)
 	    go->dnsaddr[0] = 0;
     if (!go->req_dns2)
 	    go->dnsaddr[1] = 0;
+#if 0 /* UNUSED */
     if (go->dnsaddr[0])
 	script_setenv("DNS1", ip_ntoa(go->dnsaddr[0]), 0);
     if (go->dnsaddr[1])
@@ -1832,6 +1835,7 @@ ipcp_up(f)
 	script_setenv("USEPEERDNS", "1", 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
     }
+#endif /* UNUSED */
 
 /* FIXME: check why it fails, just to know */
 #if 0 /* Unused */

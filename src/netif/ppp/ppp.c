@@ -726,6 +726,7 @@ setup_signals()
 }
 #endif
 
+#if 0
 /*
  * set_ifunit - do things we need to do once we know which ppp
  * unit we are using.
@@ -742,6 +743,7 @@ set_ifunit(iskey)
 //	create_linkpidfile(getpid());
     }
 }
+#endif
 
 #if 0
 /*
@@ -1256,12 +1258,14 @@ update_link_stats(u)
     link_stats.pkts_in   -= old_link_stats.pkts_in;
     link_stats.pkts_out  -= old_link_stats.pkts_out;
 
+#if 0
     slprintf(numbuf, sizeof(numbuf), "%u", link_connect_time);
     script_setenv("CONNECT_TIME", numbuf, 0);
     slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_out);
     script_setenv("BYTES_SENT", numbuf, 0);
     slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_in);
     script_setenv("BYTES_RCVD", numbuf, 0);
+#endif
 }
 
 
@@ -1804,7 +1808,8 @@ add_notifier(notif, func, arg)
 
     np = malloc(sizeof(struct notifier));
     if (np == 0)
-	novm("notifier struct");
+	return;
+	//novm("notifier struct");
     np->next = *notif;
     np->func = func;
     np->arg = arg;
@@ -1848,6 +1853,7 @@ notify(notif, val)
     }
 }
 
+#if 0 /* UNUSED */
 /*
  * novm - log an error message saying we ran out of memory, and die.
  */
@@ -1934,3 +1940,4 @@ script_unsetenv(var)
 	}
     }
 }
+#endif /* UNUSED */
