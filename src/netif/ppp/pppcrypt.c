@@ -33,8 +33,8 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && MSCHAP_SUPPORT /* don't build if not necessary */
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "pppcrypt.h"
 
 

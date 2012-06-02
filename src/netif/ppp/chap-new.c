@@ -35,8 +35,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "pppd.h"
-#include "pppmy.h"
+
+#include "ppp.h"
+
 #include "session.h"
 #include "chap-new.h"
 #include "chap-md5.h"

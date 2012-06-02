@@ -96,8 +96,8 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 #include "lcp.h"
 

@@ -52,8 +52,8 @@
 #include <pcap-bpf.h>
 #endif
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 #include "ipcp.h"
 #include "lcp.h"

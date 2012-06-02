@@ -1,107 +1,26 @@
 /*
- * main.c - Point-to-Point Protocol main module
+ * ppp.c
  *
- * Copyright (c) 1984-2000 Carnegie Mellon University. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in
- *    the documentation and/or other materials provided with the
- *    distribution.
- *
- * 3. The name "Carnegie Mellon University" must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission. For permission or any legal
- *    details, please contact
- *      Office of Technology Transfer
- *      Carnegie Mellon University
- *      5000 Forbes Avenue
- *      Pittsburgh, PA  15213-3890
- *      (412) 268-4387, fax: (412) 268-7395
- *      tech-transfer@andrew.cmu.edu
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Computing Services
- *     at Carnegie Mellon University (http://www.cmu.edu/computing/)."
- *
- * CARNEGIE MELLON UNIVERSITY DISCLAIMS ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY BE LIABLE
- * FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
- *
- * Copyright (c) 1999-2004 Paul Mackerras. All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- *
- * 2. The name(s) of the authors of this software must not be used to
- *    endorse or promote products derived from this software without
- *    prior written permission.
- *
- * 3. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
- *
- * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
- * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
- * AND FITNESS, IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY
- * SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
- * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN
- * AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
- * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *  Created on: May 12, 2012
+ *      Author: gradator
  */
-
-#if 0 /* PPP.C DISABLED */
 
 #include "lwip/opt.h"
 
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <signal.h>
-#include <errno.h>
-#include <fcntl.h>
-#include <syslog.h>
-#include <netdb.h>
-#include <utmp.h>
-#include <pwd.h>
-#include <setjmp.h>
-#include <sys/param.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#include <sys/time.h>
-#include <sys/resource.h>
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
+#include "lwip/pbuf.h"
+#include "lwip/stats.h"
+#include "lwip/sys.h"
 
-#include "pppd.h"
-#include "pppmy.h"
-#include "magic.h"
+#if PPPOE_SUPPORT
+#include "netif/ppp_oe.h"
+#endif /* PPPOE_SUPPORT */
+
+#include "ppp.h"
+
 #include "fsm.h"
 #include "lcp.h"
 #include "ipcp.h"
-#ifdef INET6
-#include "ipv6cp.h"
-#endif
+
 #if PAP_SUPPORT
 #include "upap.h"
 #endif /* PAP_SUPPORT */
@@ -111,187 +30,44 @@
 #if EAP_SUPPORT
 #include "eap.h"
 #endif /* EAP_SUPPORT */
+#if CCP_SUPPORT
 #include "ccp.h"
+#endif /* EAP_SUPPORT */
+#if ECP_SUPPORT
 #include "ecp.h"
+#endif /* EAP_SUPPORT */
 
-#if CBCP_SUPPORT
-#include "cbcp.h"
-#endif
-
-#ifdef AT_CHANGE
-#include "atcp.h"
-#endif
-
-#if 0
-/* interface vars */
-char ifname[32];		/* Interface name */
-int ifunit;			/* Interface unit number */
-#endif
-
-#if 0
-struct channel *the_channel;
-#endif
-
-#if 0
-char *progname;			/* Name of this program */
-char hostname[MAXNAMELEN];	/* Our hostname */
-//static char pidfilename[MAXPATHLEN];	/* name of pid file */
-//static char linkpidfile[MAXPATHLEN];	/* name of linkname pid file */
-char ppp_devnam[MAXPATHLEN];	/* name of PPP tty (maybe ttypx) */
-uid_t uid;			/* Our real user-id */
-
-struct notifier *pidchange = NULL;
-struct notifier *phasechange = NULL;
-struct notifier *exitnotify = NULL;
-struct notifier *sigreceived = NULL;
-struct notifier *fork_notifier = NULL;
-#endif
-
-#if 0
-int hungup;			/* terminal has been hung up */
-int privileged;			/* we're running as real uid root */
-int need_holdoff;		/* need holdoff period before restarting */
-int detached;			/* have detached from terminal */
-volatile int status;		/* exit status for pppd */
-int unsuccess;			/* # unsuccessful connection attempts */
-int do_callback;		/* != 0 if we should do callback next */
-int doing_callback;		/* != 0 if we are doing callback */
-int ppp_session_number;		/* Session number, for channels with such a
-				   concept (eg PPPoE) */
-int childwait_done;		/* have timed out waiting for children */
-#endif
-
-#if 0
-char db_key[32];
-#endif
-
-#if 0
-int (*holdoff_hook) __P((void)) = NULL;
-int (*new_phase_hook) __P((int)) = NULL;
-void (*snoop_recv_hook) __P((unsigned char *p, int len)) = NULL;
-void (*snoop_send_hook) __P((unsigned char *p, int len)) = NULL;
-#endif
-
-#if 0
-static int conn_running;	/* we have a [dis]connector running */
-static int fd_loop;		/* fd for getting demand-dial packets */
-#endif
-
-#if 0
-int fd_devnull;			/* fd for /dev/null */
-int devfd = -1;			/* fd of underlying device */
-int fd_ppp = -1;		/* fd for talking PPP */
-//int phase;			/* where the link is at */
-int kill_link;
-int asked_to_quit;
-int open_ccp_flag;
-int listen_time;
-int got_sigusr2;
-int got_sigterm;
-int got_sighup;
-#endif
-
-#if 0
-static sigset_t signals_handled;
-static int waiting;
-static sigjmp_buf sigjmp;
-
-char **script_env;		/* Env. variable values for scripts */
-int s_env_nalloc;		/* # words avail at script_env */
-#endif
-
-#if 0
-u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
-u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
-#endif
-
-#if 0
-static int n_children;		/* # child processes still running */
-static int got_sigchld;		/* set if we have received a SIGCHLD */
-
-int privopen;			/* don't lock, open device as root */
-
-char *no_ppp_msg = "Sorry - this system lacks PPP kernel support\n";
-#endif
-
-#if 0 /* UNUSED */
-GIDSET_TYPE groups[NGROUPS_MAX];/* groups the user is in */
-int ngroups;			/* How many groups valid in groups */
-#endif /* UNUSED */
-
-#if 0
-//static struct timeval start_time;	/* Time when link was started. */
-
-//static struct pppd_stats old_link_stats;
-//struct pppd_stats link_stats;
-//unsigned link_connect_time;
-//int link_stats_valid;
-
-int error_count;
-
-bool bundle_eof;
-bool bundle_terminating;
 
 /*
- * We maintain a list of child process pids and
- * functions to call when they exit.
+ * Global variables.
  */
-struct subprocess {
-    pid_t	pid;
-    char	*prog;
-    void	(*done) __P((void *));
-    void	*arg;
-    int		killable;
-    struct subprocess *next;
-};
+/* FIXME: global variables per PPP session */
+/* FIXME: clean global variables */
+int phase;			/* where the link is at */
+int error_count;		/* # of times error() has been called */
+int unsuccess;			/* # unsuccessful connection attempts */
+int listen_time;		/* time to listen first (ms) */
+int status;			/* exit status for pppd */
+int need_holdoff;		/* need holdoff period before restarting */
+/* FIXME: remove ifunit */
+int ifunit;			/* Interface unit number */
 
-static struct subprocess *children;
-#endif
+/* FIXME: outpacket_buf per PPP session */
+u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 
-/* Prototypes for procedures local to this file. */
+#if PPPOS_SUPPORT
+u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
+#endif /* PPPOS_SUPPORT */
 
-//static void setup_signals __P((void));
-//static void create_pidfile __P((int pid));
-//static void create_linkpidfile __P((int pid));
-//static void cleanup __P((void));
-#if 0
-static void get_input __P((void));
-static void calltimeout __P((void));
-static struct timeval *timeleft __P((struct timeval *));
-static void kill_my_pg __P((int));
-static void hup __P((int));
-static void term __P((int));
-static void chld __P((int));
-static void toggle_debug __P((int));
-static void open_ccp __P((int));
-static void bad_signal __P((int));
-static void holdoff_end __P((void *));
-static void forget_child __P((int pid, int status));
-static int reap_kids __P((void));
-static void childwait_end __P((void *));
+/* FIXME: add stats per PPP session */
+#if PPP_STATS_SUPPORT
+static struct timeval start_time;	/* Time when link was started. */
+static struct pppd_stats old_link_stats;
+struct pppd_stats link_stats;
+unsigned link_connect_time;
+int link_stats_valid;
+#endif /* PPP_STATS_SUPPORT */
 
-static void handle_events __P((void));
-#endif
-#if 0
-void print_link_stats __P((void));
-#endif
-
-#if 0
-extern	char	*ttyname __P((int));
-extern	char	*getlogin __P((void));
-//int main __P((int, char *[]));
-#endif
-
-#ifdef ultrix
-#undef	O_NONBLOCK
-#define	O_NONBLOCK	O_NDELAY
-#endif
-
-#ifdef ULTRIX
-#define setlogmask(x)
-#endif
-
-#if 0
 /*
  * PPP Data Link Layer "protocol" table.
  * One entry per supported protocol.
@@ -326,52 +102,423 @@ struct protent *protocols[] = {
 #endif /* EAP_SUPPORT */
     NULL
 };
-#endif
 
-#if 0
+/* PPP packet parser states.  Current state indicates operation yet to be
+ * completed. */
+typedef enum {
+  PDIDLE = 0,  /* Idle state - waiting. */
+  PDSTART,     /* Process start flag. */
+  PDADDRESS,   /* Process address field. */
+  PDCONTROL,   /* Process control field. */
+  PDPROTOCOL1, /* Process protocol field 1. */
+  PDPROTOCOL2, /* Process protocol field 2. */
+  PDDATA       /* Process data byte. */
+} PPPDevStates;
+
+typedef struct PPPControlRx_s {
+  /** unit number / ppp descriptor */
+  int pd;
+  /** the rx file descriptor */
+#if PPPOS_SUPPORT		/* FIXME: enable sio_fd_t back */
+  sio_fd_t fd;
+#endif
+#if PPPOE_SUPPORT
+  int fd;
+#endif
+  /** receive buffer - encoded data is stored here */
+#if PPP_INPROC_OWNTHREAD
+  u_char rxbuf[PPPOS_RX_BUFSIZE];
+#endif /* PPP_INPROC_OWNTHREAD */
+
+  /* The input packet. */
+  struct pbuf *inHead, *inTail;
+
+#if PPPOS_SUPPORT
+  u16_t inProtocol;             /* The input protocol code. */
+  u16_t inFCS;                  /* Input Frame Check Sequence value. */
+#endif /* PPPOS_SUPPORT */
+  PPPDevStates inState;         /* The input process state. */
+  char inEscaped;               /* Escape next character. */
+  ext_accm inACCM;              /* Async-Ctl-Char-Map for input. */
+} PPPControlRx;
+
 /*
- * If PPP_DRV_NAME is not defined, use the default "ppp" as the device name.
+ * PPP interface control block.
  */
-#if !defined(PPP_DRV_NAME)
-#define PPP_DRV_NAME	"ppp"
-#endif /* !defined(PPP_DRV_NAME) */
+typedef struct PPPControl_s {
+  PPPControlRx rx;
+  char openFlag;                /* True when in use. */
+#if PPPOE_SUPPORT
+  struct netif *ethif;
+  struct pppoe_softc *pppoe_sc;
+#endif /* PPPOE_SUPPORT */
+  int  if_up;                   /* True when the interface is up. */
+  int  errCode;                 /* Code indicating why interface is down. */
+#if PPPOS_SUPPORT
+  sio_fd_t fd;                  /* File device ID of port. */
+#endif /* PPPOS_SUPPORT */
+  u16_t mtu;                    /* Peer's mru */
+  int  pcomp;                   /* Does peer accept protocol compression? */
+  int  accomp;                  /* Does peer accept addr/ctl compression? */
+  u_long lastXMit;              /* Time of last transmission. */
+  ext_accm outACCM;             /* Async-Ctl-Char-Map for output. */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+  int  vjEnabled;               /* Flag indicating VJ compression enabled. */
+  struct vjcompress vjComp;     /* Van Jacobson compression header. */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+
+  struct netif netif;
+
+  struct ppp_addrs addrs;
+
+  void (*linkStatusCB)(void *ctx, int errCode, void *arg);
+  void *linkStatusCtx;
+
+} PPPControl;
+
+/******************************/
+/*** PUBLIC DATA STRUCTURES ***/
+/******************************/
+static PPPControl pppControl[NUM_PPP]; /* The PPP interface control blocks. */
+
+
+struct pbuf * pppSingleBuf(struct pbuf *p) {
+  struct pbuf *q, *b;
+  u_char *pl;
+
+  if(p->tot_len == p->len) {
+    return p;
+  }
+
+  q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+  if(!q) {
+    PPPDEBUG(LOG_ERR,
+             ("pppSingleBuf: unable to alloc new buf (%d)\n", p->tot_len));
+    return p; /* live dangerously */
+  }
+
+  for(b = p, pl = q->payload; b != NULL; b = b->next) {
+    MEMCPY(pl, b->payload, b->len);
+    pl += b->len;
+  }
+
+  pbuf_free(p);
+
+  return q;
+}
+
+/** Input helper struct, must be packed since it is stored to pbuf->payload,
+ * which might be unaligned.
+ */
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct pppInputHeader {
+  PACK_STRUCT_FIELD(int unit);
+  PACK_STRUCT_FIELD(u16_t proto);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
 #endif
 
-#if 0
-int ppp_oldmain() {
-    int argc = 0;
-    char *argv[0];
-    int i, t;
-    char *p;
-    struct passwd *pw;
-    struct protent *protp;
-    char numbuf[16];
 
-    link_stats_valid = 0;
-    new_phase(PHASE_INITIALIZE);
+/** Initiate LCP open request */
+static void pppStart(int pd) {
+  PPPDEBUG(LOG_DEBUG, ("pppStart: unit %d\n", pd));
+  lcp_open(pd); /* Start protocol */
+  lcp_lowerup(pd);
+  PPPDEBUG(LOG_DEBUG, ("pppStart: finished\n"));
+}
 
-    script_env = NULL;
 
-    /* Initialize syslog facilities */
-    reopen_log();
+/*
+ * Pass the processed input packet to the appropriate handler.
+ * This function and all handlers run in the context of the tcpip_thread
+ */
 
-    if (gethostname(hostname, MAXNAMELEN) < 0 ) {
-	option_error("Couldn't get hostname: %m");
-	exit(1);
-    }
-    hostname[MAXNAMELEN-1] = 0;
+/* FIXME: maybe we should pass in two arguments pppInputHeader and payload
+ * this is totally stupid to make room for it and then modify the packet directly
+ * or it is used in output ?  have to find out...
+ */
+static void ppp_input(void *arg) {
+  struct pbuf *nb = (struct pbuf *)arg;
+  u16_t protocol;
+  int pd;
 
-    /* make sure we don't create world or group writable files. */
-    umask(umask(0777) | 022);
+  pd = ((struct pppInputHeader *)nb->payload)->unit;
+  protocol = ((struct pppInputHeader *)nb->payload)->proto;
+  printf("ppp_input() called, pd = %d, protocol = 0x%x\n", pd, protocol);
 
-    uid = getuid();
-    privileged = uid == 0;
-    slprintf(numbuf, sizeof(numbuf), "%d", uid);
-    script_setenv("ORIG_UID", numbuf, 0);
+  if(pbuf_header(nb, -(int)sizeof(struct pppInputHeader))) {
+    LWIP_ASSERT("pbuf_header failed\n", 0);
+    goto drop;
+  }
 
-#if 0 /* UNUSED */
-    ngroups = getgroups(NGROUPS_MAX, groups);
+  LINK_STATS_INC(link.recv);
+  snmp_inc_ifinucastpkts(&pppControl[pd].netif);
+  snmp_add_ifinoctets(&pppControl[pd].netif, nb->tot_len);
+
+  /*
+   * Toss all non-LCP packets unless LCP is OPEN.
+   */
+  if (protocol != PPP_LCP && lcp_fsm[0].state != OPENED) {
+	dbglog("Discarded non-LCP packet when LCP not open");
+	return;
+  }
+
+  /* FIXME: add a phase per connection */
+
+  /*
+   * Until we get past the authentication phase, toss all packets
+   * except LCP, LQR and authentication packets.
+   */
+  if (phase <= PHASE_AUTHENTICATE
+	&& !(protocol == PPP_LCP || protocol == PPP_LQR
+#if PAP_SUPPORT
+	     || protocol == PPP_PAP
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+	     || protocol == PPP_CHAP
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+	     || protocol == PPP_EAP
+#endif /* EAP_SUPPORT */
+	     )) {
+	dbglog("discarding proto 0x%x in phase %d",
+		   protocol, phase);
+	return;
+  }
+
+  /* FIXME: should we write protent to do that ? */
+
+  switch(protocol) {
+    case PPP_VJC_COMP:      /* VJ compressed TCP */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_comp in pbuf len=%d\n", pd, nb->len));
+      /*
+       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
+       * pass the result to IP.
+       */
+      if ((vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) && (pppControl[pd].netif.input)) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ compressed\n", pd));
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
+      /* No handler for this protocol so drop the packet. */
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+      break;
+
+    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
+      /*
+       * Process the TCP/IP header for VJ header compression and then pass
+       * the packet to IP.
+       */
+      if ((vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) && pppControl[pd].netif.input) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ uncompressed\n", pd));
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
+      /* No handler for this protocol so drop the packet. */
+      PPPDEBUG(LOG_INFO,
+               ("pppInput[%d]: drop VJ UnComp in %d:.*H\n",
+                pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+      break;
+
+    case PPP_IP:            /* Internet Protocol */
+	    printf("IP packet received\n");
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
+      if (pppControl[pd].netif.input) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      break;
+
+    default: {
+
+	  int i;
+	  struct protent *protp;
+	  /*
+	   * Upcall the proper protocol input routine.
+	   */
+	  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+		if (protp->protocol == protocol && protp->enabled_flag) {
+		    nb = pppSingleBuf(nb);
+		    (*protp->input)(pd, nb->payload, nb->len);
+		    goto out;
+		}
+#if 0 /* UNUSED
+       *
+       * This is actually a (hacked?) way for the PPP kernel implementation to pass a
+       * data packet to the PPP daemon. The PPP daemon normally only do signaling
+       * (LCP, PAP, CHAP, IPCP, ...) and does not handle any data packet at all.
+       *
+       * This is only used by CCP, which we cannot support until we have a CCP data
+       * implementation.
+       */
+		if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
+		    && protp->datainput != NULL) {
+		    (*protp->datainput)(pd, nb->payload, nb->len);
+		    goto out;
+		}
 #endif /* UNUSED */
+	  }
+
+	  if (debug) {
+#if PPP_PROTOCOLNAME
+		const char *pname = protocol_name(protocol);
+		if (pname != NULL)
+		    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+		else
+#endif /* PPP_PROTOCOLNAME */
+		    warn("Unsupported protocol 0x%x received", protocol);
+	  }
+	  if (pbuf_header(nb, sizeof(protocol))) {
+	        LWIP_ASSERT("pbuf_header failed\n", 0);
+	        goto drop;
+	  }
+	  lcp_sprotrej(pd, nb->payload, nb->len);
+    }
+    break;
+ }
+
+drop:
+  LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(&pppControl[pd].netif);
+
+out:
+  pbuf_free(nb);
+  return;
+
+ #if 0
+  /*
+   * Toss all non-LCP packets unless LCP is OPEN.
+   * Until we get past the authentication phase, toss all packets
+   * except LCP, LQR and authentication packets.
+   */
+  if((lcp_phase[pd] <= PHASE_AUTHENTICATE) && (protocol != PPP_LCP)) {
+    if(!((protocol == PPP_LQR) || (protocol == PPP_PAP) || (protocol == PPP_CHAP)) ||
+        (lcp_phase[pd] != PHASE_AUTHENTICATE)) {
+      PPPDEBUG(LOG_INFO, ("pppInput: discarding proto 0x%"X16_F" in phase %d\n", protocol, lcp_phase[pd]));
+      goto drop;
+    }
+  }
+
+  switch(protocol) {
+    case PPP_VJC_COMP:      /* VJ compressed TCP */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_comp in pbuf len=%d\n", pd, nb->len));
+      /*
+       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
+       * pass the result to IP.
+       */
+      if ((vj_uncompress_tcp(&nb, &pppControl[pd].vjComp) >= 0) && (pppControl[pd].netif.input)) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ compressed\n", pd));
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
+      /* No handler for this protocol so drop the packet. */
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: drop VJ Comp in %d:%s\n", pd, nb->len, nb->payload));
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+      break;
+
+    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
+      /*
+       * Process the TCP/IP header for VJ header compression and then pass
+       * the packet to IP.
+       */
+      if ((vj_uncompress_uncomp(nb, &pppControl[pd].vjComp) >= 0) && pppControl[pd].netif.input) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ uncompressed\n", pd));
+#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
+      /* No handler for this protocol so drop the packet. */
+      PPPDEBUG(LOG_INFO,
+               ("pppInput[%d]: drop VJ UnComp in %d:.*H\n",
+                pd, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+      break;
+
+    case PPP_IP:            /* Internet Protocol */
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
+      if (pppControl[pd].netif.input) {
+        pppControl[pd].netif.input(nb, &pppControl[pd].netif);
+        return;
+      }
+      break;
+
+    default: {
+      struct protent *protp;
+      int i;
+
+      /*
+       * Upcall the proper protocol input routine.
+       */
+      for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i) {
+        if (protp->protocol == protocol && protp->enabled_flag) {
+          PPPDEBUG(LOG_INFO, ("pppInput[%d]: %s len=%d\n", pd, protp->name, nb->len));
+          nb = pppSingleBuf(nb);
+          (*protp->input)(pd, nb->payload, nb->len);
+          PPPDEBUG(LOG_DETAIL, ("pppInput[%d]: packet processed\n", pd));
+          goto out;
+        }
+      }
+
+      /* No handler for this protocol so reject the packet. */
+      PPPDEBUG(LOG_INFO, ("pppInput[%d]: rejecting unsupported proto 0x%"X16_F" len=%d\n", pd, protocol, nb->len));
+      if (pbuf_header(nb, sizeof(protocol))) {
+        LWIP_ASSERT("pbuf_header failed\n", 0);
+        goto drop;
+      }
+#if BYTE_ORDER == LITTLE_ENDIAN
+      protocol = htons(protocol);
+#endif /* BYTE_ORDER == LITTLE_ENDIAN */
+      SMEMCPY(nb->payload, &protocol, sizeof(protocol));
+      lcp_sprotrej(pd, nb->payload, nb->len);
+    }
+    break;
+  }
+#endif
+
+
+}
+
+/***********************************/
+/*** PUBLIC FUNCTION DEFINITIONS ***/
+/***********************************/
+/* Initialize the PPP subsystem. */
+
+int ppp_init(void) {
+    int i;
+    struct protent *protp;
+
+    debug = 1;
+    ifunit = 1; /* FIXME: remove ifunit */
+
+    /*
+    openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_DAEMON);
+    setlogmask(LOG_UPTO(LOG_DEBUG));
+    syslog(LOG_DEBUG, "hello, this is gradator lwIP PPP!");
+    */
+
+    memset(&ppp_settings, 0, sizeof(ppp_settings));
+    ppp_settings.usepeerdns = 1;
+    pppSetAuth(PPPAUTHTYPE_NONE, NULL, NULL);
 
     /*
      * Initialize magic number generator now so that protocols may
@@ -384,725 +531,1019 @@ int ppp_oldmain() {
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(0);
-
-#if 0
-    /*
-     * Initialize the default channel.
-     */
-    tty_init();
-#endif
-
-    progname = *argv;
-
-#if PPP_OPTIONS
-    /*
-     * Parse, in order, the system options file, the user's options file,
-     * and the command line arguments.
-     */
-    if (!options_from_file(_PATH_SYSOPTIONS, !privileged, 0, 1)
-	|| !options_from_user()
-	|| !parse_args(argc-1, argv+1))
-	exit(EXIT_OPTION_ERROR);
-#endif /* PPP_OPTIONS */
-
-    devnam_fixed = 1;		/* can no longer change device name */
-
-#if 0 /* UNUSED */
-    /*
-     * Work out the device name, if it hasn't already been specified,
-     * and parse the tty's options file.
-     */
-    if (the_channel->process_extra_options)
-	(*the_channel->process_extra_options)();
-#endif /* UNUSED */
-
-    if (debug)
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-
-#if 0
-    /*
-     * Check that we are running as root.
-     */
-    if (geteuid() != 0) {
-	option_error("must be root to run %s, since it is not setuid-root",
-		     argv[0]);
-	exit(EXIT_NOT_ROOT);
-    }
-#endif
-
-#if PPP_OPTIONS
-    /*
-     * Check that the options given are valid and consistent.
-     */
-    check_options();
-    if (!sys_check_options())
-	exit(EXIT_OPTION_ERROR);
-    auth_check_options();
-#ifdef HAVE_MULTILINK
-    mp_check_options();
-#endif
-    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->check_options != NULL)
-	    (*protp->check_options)();
-    if (the_channel->check_options)
-	(*the_channel->check_options)();
-
-
-    if (dump_options || dryrun) {
-	init_pr_log(NULL, LOG_INFO);
-	print_options(pr_log, NULL);
-	end_pr_log();
-    }
-#endif /* PPP_OPTIONS */
-
-#if 0
-    if (dryrun)
-	die(0);
-#endif
-
-    /* Make sure fds 0, 1, 2 are open to somewhere. */
-    fd_devnull = open(_PATH_DEVNULL, O_RDWR);
-    if (fd_devnull < 0)
-	fatal("Couldn't open %s: %m", _PATH_DEVNULL);
-    while (fd_devnull <= 2) {
-	i = dup(fd_devnull);
-	if (i < 0)
-	    fatal("Critical shortage of file descriptors: dup failed: %m");
-	fd_devnull = i;
-    }
-
-#if 0 /* Unused */
-    /*
-     * Detach ourselves from the terminal, if required,
-     * and identify who is running us.
-     */
-    if (!nodetach && !updetach)
-	detach();
-#endif /* Unused */
-
-    p = getlogin();
-    if (p == NULL) {
-	pw = getpwuid(uid);
-	if (pw != NULL && pw->pw_name != NULL)
-	    p = pw->pw_name;
-	else
-	    p = "(unknown)";
-    }
-    syslog(LOG_NOTICE, "pppd started by %s, uid %d", p, uid);
-    script_setenv("PPPLOGNAME", p, 0);
-
-    if (devnam[0])
-	script_setenv("DEVICE", devnam, 1);
-    slprintf(numbuf, sizeof(numbuf), "%d", getpid());
-    script_setenv("PPPD_PID", numbuf, 1);
-
-    //setup_signals();
-
-    create_linkpidfile(getpid());
-
-    waiting = 0;
-
-    /*
-     * If we're doing dial-on-demand, set up the interface now.
-     */
-    if (demand) {
-	/*
-	 * Open the loopback channel and set it up to be the ppp interface.
-	 */
-	//fd_loop = open_ppp_loopback();
-	//set_ifunit(1);
-	/*
-	 * Configure the interface and mark it up, etc.
-	 */
-	demand_conf();
-    }
-
-    do_callback = 0;
-    for (;;) {
-
-	bundle_eof = 0;
-	bundle_terminating = 0;
-	listen_time = 0;
-	need_holdoff = 1;
-	devfd = -1;
-	status = EXIT_OK;
-	++unsuccess;
-	doing_callback = do_callback;
-	do_callback = 0;
-
-	if (demand && !doing_callback) {
-	    /*
-	     * Don't do anything until we see some activity.
-	     */
-	    new_phase(PHASE_DORMANT);
-	    demand_unblock();
-	    add_fd(fd_loop);
-	    for (;;) {
-		handle_events();
-		if (asked_to_quit)
-		    break;
-		if (get_loop_output())
-		    break;
-	    }
-	    remove_fd(fd_loop);
-	    if (asked_to_quit)
-		break;
-
-	    /*
-	     * Now we want to bring up the link.
-	     */
-	    demand_block();
-	    info("Starting link");
-	}
-
-	gettimeofday(&start_time, NULL);
-	script_unsetenv("CONNECT_TIME");
-	script_unsetenv("BYTES_SENT");
-	script_unsetenv("BYTES_RCVD");
-
-	lcp_open(0);		/* Start protocol */
-	//start_link(0);
-	while (phase != PHASE_DEAD) {
-	    handle_events();
-	    get_input();
-	    if (kill_link)
-		lcp_close(0, "User request");
-	    if (asked_to_quit) {
-		bundle_terminating = 1;
-		if (phase == PHASE_MASTER)
-		    mp_bundle_terminated();
-	    }
-	    if (open_ccp_flag) {
-		if (phase == PHASE_NETWORK || phase == PHASE_RUNNING) {
-		    ccp_fsm[0].flags = OPT_RESTART; /* clears OPT_SILENT */
-		    (*ccp_protent.open)(0);
-		}
-	    }
-	}
-	/* restore FSMs to original state */
-	lcp_close(0, "");
-
-	if (!persist || asked_to_quit || (maxfail > 0 && unsuccess >= maxfail))
-	    break;
-
-	if (demand)
-	    demand_discard();
-	t = need_holdoff? holdoff: 0;
-	if (holdoff_hook)
-	    t = (*holdoff_hook)();
-	if (t > 0) {
-	    new_phase(PHASE_HOLDOFF);
-	    TIMEOUT(holdoff_end, NULL, t);
-	    do {
-		handle_events();
-		if (kill_link)
-		    new_phase(PHASE_DORMANT); /* allow signal to end holdoff */
-	    } while (phase == PHASE_HOLDOFF);
-	    if (!persist)
-		break;
-	}
-    }
-
-    /* Wait for scripts to finish */
-    reap_kids();
-    if (n_children > 0) {
-	if (child_wait > 0)
-	    TIMEOUT(childwait_end, NULL, child_wait);
-	if (debug) {
-	    struct subprocess *chp;
-	    dbglog("Waiting for %d child processes...", n_children);
-	    for (chp = children; chp != NULL; chp = chp->next)
-		dbglog("  script %s, pid %d", chp->prog, chp->pid);
-	}
-	while (n_children > 0 && !childwait_done) {
-	    handle_events();
-	    if (kill_link && !childwait_done)
-		childwait_end(NULL);
-	}
-    }
-
-    die(status);
-    return 0;
-}
-#endif
-
-#if 0
-/*
- * handle_events - wait for something to happen and respond to it.
- */
-static void
-handle_events()
-{
-    struct timeval timo;
-
-    kill_link = open_ccp_flag = 0;
-    if (sigsetjmp(sigjmp, 1) == 0) {
-	sigprocmask(SIG_BLOCK, &signals_handled, NULL);
-	if (got_sighup || got_sigterm || got_sigusr2 || got_sigchld) {
-	    sigprocmask(SIG_UNBLOCK, &signals_handled, NULL);
-	} else {
-	    waiting = 1;
-	    sigprocmask(SIG_UNBLOCK, &signals_handled, NULL);
-	    wait_input(timeleft(&timo));
-	}
-    }
-    waiting = 0;
-    calltimeout();
-    if (got_sighup) {
-	info("Hangup (SIGHUP)");
-	kill_link = 1;
-	got_sighup = 0;
-	if (status != EXIT_HANGUP)
-	    status = EXIT_USER_REQUEST;
-    }
-    if (got_sigterm) {
-	info("Terminating on signal %d", got_sigterm);
-	kill_link = 1;
-	asked_to_quit = 1;
-	persist = 0;
-	status = EXIT_USER_REQUEST;
-	got_sigterm = 0;
-    }
-    if (got_sigchld) {
-	got_sigchld = 0;
-	reap_kids();	/* Don't leave dead kids lying around */
-    }
-    if (got_sigusr2) {
-	open_ccp_flag = 1;
-	got_sigusr2 = 0;
-    }
-}
-#endif
-
-#if 0
-/*
- * setup_signals - initialize signal handling.
- */
-static void
-setup_signals()
-{
-    struct sigaction sa;
-
-    /*
-     * Compute mask of all interesting signals and install signal handlers
-     * for each.  Only one signal handler may be active at a time.  Therefore,
-     * all other signals should be masked when any handler is executing.
-     */
-    sigemptyset(&signals_handled);
-    sigaddset(&signals_handled, SIGHUP);
-    sigaddset(&signals_handled, SIGINT);
-    sigaddset(&signals_handled, SIGTERM);
-    sigaddset(&signals_handled, SIGCHLD);
-    sigaddset(&signals_handled, SIGUSR2);
-
-#define SIGNAL(s, handler)	do { \
-	sa.sa_handler = handler; \
-	if (sigaction(s, &sa, NULL) < 0) \
-	    fatal("Couldn't establish signal handler (%d): %m", s); \
-    } while (0)
-
-    sa.sa_mask = signals_handled;
-    sa.sa_flags = 0;
-    SIGNAL(SIGHUP, hup);		/* Hangup */
-    SIGNAL(SIGINT, term);		/* Interrupt */
-    SIGNAL(SIGTERM, term);		/* Terminate */
-    SIGNAL(SIGCHLD, chld);
-
-    SIGNAL(SIGUSR1, toggle_debug);	/* Toggle debug flag */
-    SIGNAL(SIGUSR2, open_ccp);		/* Reopen CCP */
-
-    /*
-     * Install a handler for other signals which would otherwise
-     * cause pppd to exit without cleaning up.
-     */
-    SIGNAL(SIGABRT, bad_signal);
-    SIGNAL(SIGALRM, bad_signal);
-    SIGNAL(SIGFPE, bad_signal);
-    SIGNAL(SIGILL, bad_signal);
-    SIGNAL(SIGPIPE, bad_signal);
-    SIGNAL(SIGQUIT, bad_signal);
-    SIGNAL(SIGSEGV, bad_signal);
-#ifdef SIGBUS
-    SIGNAL(SIGBUS, bad_signal);
-#endif
-#ifdef SIGEMT
-    SIGNAL(SIGEMT, bad_signal);
-#endif
-#ifdef SIGPOLL
-    SIGNAL(SIGPOLL, bad_signal);
-#endif
-#ifdef SIGPROF
-    SIGNAL(SIGPROF, bad_signal);
-#endif
-#ifdef SIGSYS
-    SIGNAL(SIGSYS, bad_signal);
-#endif
-#ifdef SIGTRAP
-    SIGNAL(SIGTRAP, bad_signal);
-#endif
-#ifdef SIGVTALRM
-    SIGNAL(SIGVTALRM, bad_signal);
-#endif
-#ifdef SIGXCPU
-    SIGNAL(SIGXCPU, bad_signal);
-#endif
-#ifdef SIGXFSZ
-    SIGNAL(SIGXFSZ, bad_signal);
-#endif
-
-    /*
-     * Apparently we can get a SIGPIPE when we call syslog, if
-     * syslogd has died and been restarted.  Ignoring it seems
-     * be sufficient.
-     */
-    signal(SIGPIPE, SIG_IGN);
-}
-#endif
-
-#if 0
-/*
- * set_ifunit - do things we need to do once we know which ppp
- * unit we are using.
- */
-void
-set_ifunit(iskey)
-    int iskey;
-{
-    info("Using interface %s%d", PPP_DRV_NAME, ifunit);
-    slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
-    script_setenv("IFNAME", ifname, iskey);
-    if (iskey) {
-//	create_pidfile(getpid());	/* write pid to file */
-//	create_linkpidfile(getpid());
-    }
-}
-#endif
-
-#if 0
-/*
- * detach - detach us from the controlling terminal.
- */
-void
-detach()
-{
-    int pid;
-    char numbuf[16];
-    int pipefd[2];
-
-    if (detached)
-	return;
-    if (pipe(pipefd) == -1)
-	pipefd[0] = pipefd[1] = -1;
-    if ((pid = fork()) < 0) {
-	error("Couldn't detach (fork failed: %m)");
-	die(1);			/* or just return? */
-    }
-    if (pid != 0) {
-	/* parent */
-	notify(pidchange, pid);
-	/* update pid files if they have been written already */
-	if (pidfilename[0])
-	    create_pidfile(pid);
-	if (linkpidfile[0])
-	    create_linkpidfile(pid);
-	exit(0);		/* parent dies */
-    }
-    setsid();
-    chdir("/");
-    dup2(fd_devnull, 0);
-    dup2(fd_devnull, 1);
-    dup2(fd_devnull, 2);
-    detached = 1;
-    if (log_default)
-	log_to_fd = -1;
-    slprintf(numbuf, sizeof(numbuf), "%d", getpid());
-    script_setenv("PPPD_PID", numbuf, 1);
-
-    /* wait for parent to finish updating pid & lock files and die */
-    close(pipefd[1]);
-    complete_read(pipefd[0], numbuf, 1);
-    close(pipefd[0]);
-}
-#endif
-
-#if 0
-/*
- * reopen_log - (re)open our connection to syslog.
- */
-void
-reopen_log()
-{
-    openlog("pppd", LOG_PID | LOG_NDELAY, LOG_PPP);
-    setlogmask(LOG_UPTO(LOG_INFO));
-}
-#endif
-
-#if 0
-/*
- * Create a file containing our process ID.
- */
-static void
-create_pidfile(pid)
-    int pid;
-{
-    FILE *pidfile;
-
-    slprintf(pidfilename, sizeof(pidfilename), "%s%s.pid",
-	     _PATH_VARRUN, ifname);
-    if ((pidfile = fopen(pidfilename, "w")) != NULL) {
-	fprintf(pidfile, "%d\n", pid);
-	(void) fclose(pidfile);
-    } else {
-	error("Failed to create pid file %s: %m", pidfilename);
-	pidfilename[0] = 0;
-    }
-}
-#endif
-
-#if 0
-void
-create_linkpidfile(pid)
-    int pid;
-{
-    FILE *pidfile;
-
-    if (linkname[0] == 0)
-	return;
-    script_setenv("LINKNAME", linkname, 1);
-    slprintf(linkpidfile, sizeof(linkpidfile), "%sppp-%s.pid",
-	     _PATH_VARRUN, linkname);
-    if ((pidfile = fopen(linkpidfile, "w")) != NULL) {
-	fprintf(pidfile, "%d\n", pid);
-	if (ifname[0])
-	    fprintf(pidfile, "%s\n", ifname);
-	(void) fclose(pidfile);
-    } else {
-	error("Failed to create pid file %s: %m", linkpidfile);
-	linkpidfile[0] = 0;
-    }
 }
 
-/*
- * remove_pidfile - remove our pid files
- */
-void remove_pidfiles()
-{
-    if (pidfilename[0] != 0 && unlink(pidfilename) < 0 && errno != ENOENT)
-	warn("unable to delete pid file %s: %m", pidfilename);
-    pidfilename[0] = 0;
-    if (linkpidfile[0] != 0 && unlink(linkpidfile) < 0 && errno != ENOENT)
-	warn("unable to delete pid file %s: %m", linkpidfile);
-    linkpidfile[0] = 0;
-}
-#endif
+void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd) {
+  /* FIXME: the following may look stupid, but this is just an easy way
+   * to check different auth by changing compile time option
+   */
+#if PAP_SUPPORT
+  ppp_settings.refuse_pap = 0;
+#endif /* PAP_SUPPORT */
 
-#if 0
-/*
- * holdoff_end - called via a timeout when the holdoff period ends.
- */
-static void
-holdoff_end(arg)
-    void *arg;
-{
-    new_phase(PHASE_DORMANT);
-}
-#endif
-
-#if 0
-/*
- * get_input - called when incoming data is available.
- */
-static void
-get_input()
-{
-    int len, i;
-    u_char *p;
-    u_short protocol;
-    struct protent *protp;
-
-    p = inpacket_buf;	/* point to beginning of packet buffer */
-
-    len = read_packet(inpacket_buf);
-    if (len < 0)
-	return;
-
-    if (len == 0) {
-	if (bundle_eof && multilink_master) {
-	    notice("Last channel has disconnected");
-	    mp_bundle_terminated();
-	    return;
-	}
-	notice("Modem hangup");
-	hungup = 1;
-	status = EXIT_HANGUP;
-	lcp_lowerdown(0);	/* serial link is no longer available */
-	link_terminated(0);
-	return;
-    }
-
-    if (len < PPP_HDRLEN) {
-	dbglog("received short packet:%.*B", len, p);
-	return;
-    }
-
-    dump_packet("rcvd", p, len);
-    if (snoop_recv_hook) snoop_recv_hook(p, len);
-
-    p += 2;				/* Skip address and control */
-    GETSHORT(protocol, p);
-    len -= PPP_HDRLEN;
-
-    /*
-     * Toss all non-LCP packets unless LCP is OPEN.
-     */
-    if (protocol != PPP_LCP && lcp_fsm[0].state != OPENED) {
-	dbglog("Discarded non-LCP packet when LCP not open");
-	return;
-    }
-
-    /*
-     * Until we get past the authentication phase, toss all packets
-     * except LCP, LQR and authentication packets.
-     */
-    if (phase <= PHASE_AUTHENTICATE
-	&& !(protocol == PPP_LCP || protocol == PPP_LQR
-	     || protocol == PPP_PAP
 #if CHAP_SUPPORT
-	     || protocol == PPP_CHAP
+#if PAP_SUPPORT
+  ppp_settings.refuse_pap = 1;
+#endif /* PAP_SUPPORT */
+  ppp_settings.refuse_chap = 0;
 #endif /* CHAP_SUPPORT */
+
+#if MSCHAP_SUPPORT
+#if PAP_SUPPORT
+  ppp_settings.refuse_pap = 1;
+#endif /* PAP_SUPPORT */
+  ppp_settings.refuse_chap = 1;
+  ppp_settings.refuse_mschap = 1;
+  ppp_settings.refuse_mschap_v2 = 0;
+#endif /* MSCHAP_SUPPORT */
+
 #if EAP_SUPPORT
-	     || protocol == PPP_EAP
+#if PAP_SUPPORT
+  ppp_settings.refuse_pap = 1;
+#endif/* PAP_SUPPORT */
+#if CHAP_SUPPORT
+  ppp_settings.refuse_chap = 1;
+#if MSCHAP_SUPPORT
+  ppp_settings.refuse_mschap = 1;
+  ppp_settings.refuse_mschap_v2 = 1;
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
+  ppp_settings.refuse_eap = 0;
 #endif /* EAP_SUPPORT */
-	     )) {
-	dbglog("discarding proto 0x%x in phase %d",
-		   protocol, phase);
-	return;
+
+/* FIXME: re-enable that */
+#if 0
+  switch(authType) {
+    case PPPAUTHTYPE_NONE:
+    default:
+#ifdef LWIP_PPP_STRICT_PAP_REJECT
+      ppp_settings.refuse_pap = 1;
+#else  /* LWIP_PPP_STRICT_PAP_REJECT */
+      /* some providers request pap and accept an empty login/pw */
+      ppp_settings.refuse_pap = 0;
+#endif /* LWIP_PPP_STRICT_PAP_REJECT */
+      ppp_settings.refuse_chap = 1;
+      break;
+
+    case PPPAUTHTYPE_ANY:
+      /* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
+       * RFC 1994 says:
+       *
+       * In practice, within or associated with each PPP server, there is a
+       * database which associates "user" names with authentication
+       * information ("secrets").  It is not anticipated that a particular
+       * named user would be authenticated by multiple methods.  This would
+       * make the user vulnerable to attacks which negotiate the least secure
+       * method from among a set (such as PAP rather than CHAP).  If the same
+       * secret was used, PAP would reveal the secret to be used later with
+       * CHAP.
+       *
+       * Instead, for each user name there should be an indication of exactly
+       * one method used to authenticate that user name.  If a user needs to
+       * make use of different authentication methods under different
+       * circumstances, then distinct user names SHOULD be employed, each of
+       * which identifies exactly one authentication method.
+       *
+       */
+      ppp_settings.refuse_pap = 0;
+      ppp_settings.refuse_chap = 0;
+      break;
+
+    case PPPAUTHTYPE_PAP:
+      ppp_settings.refuse_pap = 0;
+      ppp_settings.refuse_chap = 1;
+      break;
+
+    case PPPAUTHTYPE_CHAP:
+      ppp_settings.refuse_pap = 1;
+      ppp_settings.refuse_chap = 0;
+      break;
+  }
+#endif
+
+  if(user) {
+    strncpy(ppp_settings.user, user, sizeof(ppp_settings.user)-1);
+    ppp_settings.user[sizeof(ppp_settings.user)-1] = '\0';
+  } else {
+    ppp_settings.user[0] = '\0';
+  }
+
+  if(passwd) {
+    strncpy(ppp_settings.passwd, passwd, sizeof(ppp_settings.passwd)-1);
+    ppp_settings.passwd[sizeof(ppp_settings.passwd)-1] = '\0';
+  } else {
+    ppp_settings.passwd[0] = '\0';
+  }
+}
+
+#if PPPOE_SUPPORT
+static void pppOverEthernetLinkStatusCB(int pd, int up);
+
+int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name,
+                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx)
+{
+  PPPControl *pc;
+  int pd;
+
+  LWIP_UNUSED_ARG(service_name);
+  LWIP_UNUSED_ARG(concentrator_name);
+
+  if (linkStatusCB == NULL) {
+    /* PPP is single-threaded: without a callback,
+     * there is no way to know when the link is up. */
+    return PPPERR_PARAM;
+  }
+
+  /* Find a free PPP session descriptor. Critical region? */
+  for (pd = 0; pd < NUM_PPP && pppControl[pd].openFlag != 0; pd++);
+  if (pd >= NUM_PPP) {
+    pd = PPPERR_OPEN;
+  } else {
+    pc = &pppControl[pd];
+    memset(pc, 0, sizeof(PPPControl));
+    pc->openFlag = 1;
+    pc->ethif = ethif;
+
+    pc->linkStatusCB  = linkStatusCB;
+    pc->linkStatusCtx = linkStatusCtx;
+
+    lcp_wantoptions[pd].mru = PPPOE_MAXMTU;
+    lcp_wantoptions[pd].neg_asyncmap = 0;
+    lcp_wantoptions[pd].neg_pcompression = 0;
+    lcp_wantoptions[pd].neg_accompression = 0;
+
+    lcp_allowoptions[pd].mru = PPPOE_MAXMTU;
+    lcp_allowoptions[pd].neg_asyncmap = 0;
+    lcp_allowoptions[pd].neg_pcompression = 0;
+    lcp_allowoptions[pd].neg_accompression = 0;
+
+    if(pppoe_create(ethif, pd, pppOverEthernetLinkStatusCB, &pc->pppoe_sc) != ERR_OK) {
+      pc->openFlag = 0;
+      return PPPERR_OPEN;
     }
 
-    /*
-     * Upcall the proper protocol input routine.
-     */
-    for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-	if (protp->protocol == protocol && protp->enabled_flag) {
-	    (*protp->input)(0, p, len);
-	    return;
-	}
-        if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
-	    && protp->datainput != NULL) {
-	    (*protp->datainput)(0, p, len);
-	    return;
-	}
-    }
+    pppoe_connect(pc->pppoe_sc);
+  }
 
-    if (debug) {
-	const char *pname = protocol_name(protocol);
-	if (pname != NULL)
-	    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
-	else
-	    warn("Unsupported protocol 0x%x received", protocol);
-    }
-    lcp_sprotrej(0, p - PPP_HDRLEN, len + PPP_HDRLEN);
+  return pd;
+}
+
+/* FIXME: maybe we should pass in two arguments pppInputHeader and payload
+ * this is totally stupid to make room for it and then modify the packet directly
+ * or it is used in output ?  have to find out...
+ */
+void pppInProcOverEthernet(int pd, struct pbuf *pb) {
+  struct pppInputHeader *pih;
+  u16_t inProtocol;
+
+  if(pb->len < sizeof(inProtocol)) {
+    PPPDEBUG(LOG_ERR, ("pppInProcOverEthernet: too small for protocol field\n"));
+    goto drop;
+  }
+
+  inProtocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
+  printf("pppInProcOverEthernet() called, pd = %d, inprotocol = 0x%x\n", pd, inProtocol);
+
+  /* make room for pppInputHeader - should not fail */
+  if (pbuf_header(pb, sizeof(*pih) - sizeof(inProtocol)) != 0) {
+    PPPDEBUG(LOG_ERR, ("pppInProcOverEthernet: could not allocate room for header\n"));
+    goto drop;
+  }
+
+  pih = pb->payload;
+
+  pih->unit = pd;
+  pih->proto = inProtocol;
+
+  /* Dispatch the packet thereby consuming it. */
+  ppp_input(pb);
+  return;
+
+drop:
+  LINK_STATS_INC(link.drop);
+//  snmp_inc_ifindiscards(&pppControl[pd].netif);
+  pbuf_free(pb);
+  return;
+}
+
+void pppOverEthernetInitFailed(int pd) {
+  PPPControl* pc;
+
+  //pppHup(pd);
+  //pppStop(pd);
+
+  pc = &pppControl[pd];
+  pppoe_destroy(&pc->netif);
+  pc->openFlag = 0;
+
+  if(pc->linkStatusCB) {
+    pc->linkStatusCB(pc->linkStatusCtx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
+  }
+}
+
+static void pppOverEthernetLinkStatusCB(int pd, int up) {
+  printf("pppOverEthernetLinkStatusCB: called, pd = %d, up = %d\n", pd, up);
+  if(up) {
+    PPPDEBUG(LOG_INFO, ("pppOverEthernetLinkStatusCB: unit %d: Connecting\n", pd));
+    pppStart(pd);
+  } else {
+    pppOverEthernetInitFailed(pd);
+  }
 }
 #endif
 
-#if 0
+#if PPPOE_SUPPORT
+static err_t pppifOutputOverEthernet(int pd, struct pbuf *p) {
+  PPPControl *pc = &pppControl[pd];
+  struct pbuf *pb;
+  u_short protocol = PPP_IP;
+  int i=0;
+  u16_t tot_len;
+
+  /* @todo: try to use pbuf_header() here! */
+  pb = pbuf_alloc(PBUF_LINK, PPPOE_HDRLEN + sizeof(protocol), PBUF_RAM);
+  if(!pb) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return ERR_MEM;
+  }
+
+  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
+
+  pc->lastXMit = sys_jiffies();
+
+  if (!pc->pcomp || protocol > 0xFF) {
+    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
+  }
+  *((u_char*)pb->payload + i) = protocol & 0xFF;
+
+  pbuf_chain(pb, p);
+  tot_len = pb->tot_len;
+
+  if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return PPPERR_DEVICE;
+  }
+
+  snmp_add_ifoutoctets(&pc->netif, tot_len);
+  snmp_inc_ifoutucastpkts(&pc->netif);
+  LINK_STATS_INC(link.xmit);
+  return ERR_OK;
+}
+#endif /* PPPOE_SUPPORT */
+
+/* Send a packet on the given connection. */
+static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+  int pd = (int)(size_t)netif->state;
+  PPPControl *pc = &pppControl[pd];
+#if PPPOS_SUPPORT
+  u_short protocol = PPP_IP;
+  u_int fcsOut = PPP_INITFCS;
+  struct pbuf *headMB = NULL, *tailMB = NULL, *p;
+  u_char c;
+#endif /* PPPOS_SUPPORT */
+
+  LWIP_UNUSED_ARG(ipaddr);
+
+  /* Validate parameters. */
+  /* We let any protocol value go through - it can't hurt us
+   * and the peer will just drop it if it's not accepting it. */
+  if (pd < 0 || pd >= NUM_PPP || !pc->openFlag || !pb) {
+    PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: bad parms prot=%d pb=%p\n",
+              pd, PPP_IP, pb));
+    LINK_STATS_INC(link.opterr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_ARG;
+  }
+
+  /* Check that the link is up. */
+  if (phase == PHASE_DEAD) {
+    PPPDEBUG(LOG_ERR, ("pppifOutput[%d]: link not up\n", pd));
+    LINK_STATS_INC(link.rterr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_RTE;
+  }
+
+#if PPPOE_SUPPORT
+  if(pc->ethif) {
+    return pppifOutputOverEthernet(pd, pb);
+  }
+#endif /* PPPOE_SUPPORT */
+
+#if PPPOS_SUPPORT
+  /* Grab an output buffer. */
+  headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  if (headMB == NULL) {
+    PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: first alloc fail\n", pd));
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_MEM;
+  }
+
+#if VJ_SUPPORT
+  /*
+   * Attempt Van Jacobson header compression if VJ is configured and
+   * this is an IP packet.
+   */
+  if (protocol == PPP_IP && pc->vjEnabled) {
+    switch (vj_compress_tcp(&pc->vjComp, pb)) {
+      case TYPE_IP:
+        /* No change...
+           protocol = PPP_IP_PROTOCOL; */
+        break;
+      case TYPE_COMPRESSED_TCP:
+        protocol = PPP_VJC_COMP;
+        break;
+      case TYPE_UNCOMPRESSED_TCP:
+        protocol = PPP_VJC_UNCOMP;
+        break;
+      default:
+        PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: bad IP packet\n", pd));
+        LINK_STATS_INC(link.proterr);
+        LINK_STATS_INC(link.drop);
+        snmp_inc_ifoutdiscards(netif);
+        pbuf_free(headMB);
+        return ERR_VAL;
+    }
+  }
+#endif /* VJ_SUPPORT */
+
+  tailMB = headMB;
+
+  /* Build the PPP header. */
+  if ((sys_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG) {
+    tailMB = pppAppend(PPP_FLAG, tailMB, NULL);
+  }
+
+  pc->lastXMit = sys_jiffies();
+  if (!pc->accomp) {
+    fcsOut = PPP_FCS(fcsOut, PPP_ALLSTATIONS);
+    tailMB = pppAppend(PPP_ALLSTATIONS, tailMB, &pc->outACCM);
+    fcsOut = PPP_FCS(fcsOut, PPP_UI);
+    tailMB = pppAppend(PPP_UI, tailMB, &pc->outACCM);
+  }
+  if (!pc->pcomp || protocol > 0xFF) {
+    c = (protocol >> 8) & 0xFF;
+    fcsOut = PPP_FCS(fcsOut, c);
+    tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  }
+  c = protocol & 0xFF;
+  fcsOut = PPP_FCS(fcsOut, c);
+  tailMB = pppAppend(c, tailMB, &pc->outACCM);
+
+  /* Load packet. */
+  for(p = pb; p; p = p->next) {
+    int n;
+    u_char *sPtr;
+
+    sPtr = (u_char*)p->payload;
+    n = p->len;
+    while (n-- > 0) {
+      c = *sPtr++;
+
+      /* Update FCS before checking for special characters. */
+      fcsOut = PPP_FCS(fcsOut, c);
+
+      /* Copy to output buffer escaping special characters. */
+      tailMB = pppAppend(c, tailMB, &pc->outACCM);
+    }
+  }
+
+  /* Add FCS and trailing flag. */
+  c = ~fcsOut & 0xFF;
+  tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  c = (~fcsOut >> 8) & 0xFF;
+  tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  tailMB = pppAppend(PPP_FLAG, tailMB, NULL);
+
+  /* If we failed to complete the packet, throw it away. */
+  if (!tailMB) {
+    PPPDEBUG(LOG_WARNING,
+             ("pppifOutput[%d]: Alloc err - dropping proto=%d\n",
+              pd, protocol));
+    pbuf_free(headMB);
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_MEM;
+  }
+
+  /* Send it. */
+  PPPDEBUG(LOG_INFO, ("pppifOutput[%d]: proto=0x%"X16_F"\n", pd, protocol));
+
+  nPut(pc, headMB);
+#endif /* PPPOS_SUPPORT */
+
+  return ERR_OK;
+}
+
+
+/*
+ * Return the Maximum Transmission Unit for the given PPP connection.
+ */
+u_short pppMTU(int pd) {
+  PPPControl *pc = &pppControl[pd];
+  u_short st;
+
+  /* Validate parameters. */
+  if (pd < 0 || pd >= NUM_PPP || !pc->openFlag) {
+    st = 0;
+  } else {
+    st = pc->mtu;
+  }
+
+  return st;
+}
+
+#if PPPOE_SUPPORT
+int pppWriteOverEthernet(int pd, const u_char *s, int n) {
+  PPPControl *pc = &pppControl[pd];
+  struct pbuf *pb;
+
+  printf("pppWriteOverEthernet() called\n");
+
+  /* skip address & flags */
+  s += 2;
+  n -= 2;
+
+  LWIP_ASSERT("PPPOE_HDRLEN + n <= 0xffff", PPPOE_HDRLEN + n <= 0xffff);
+  pb = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN + n), PBUF_RAM);
+  if(!pb) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return PPPERR_ALLOC;
+  }
+
+  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
+
+  pc->lastXMit = sys_jiffies();
+
+  MEMCPY(pb->payload, s, n);
+
+  if(pppoe_xmit(pc->pppoe_sc, pb) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return PPPERR_DEVICE;
+  }
+
+  snmp_add_ifoutoctets(&pc->netif, (u16_t)n);
+  snmp_inc_ifoutucastpkts(&pc->netif);
+  LINK_STATS_INC(link.xmit);
+  return PPPERR_NONE;
+}
+#endif /* PPPOE_SUPPORT */
+
+/*
+ * Write n characters to a ppp link.
+ *  RETURN: >= 0 Number of characters written
+ *           -1 Failed to write to device
+ */
+int pppWrite(int pd, const u_char *s, int n) {
+  PPPControl *pc = &pppControl[pd];
+#if PPPOS_SUPPORT
+  u_char c;
+  u_int fcsOut;
+  struct pbuf *headMB, *tailMB;
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
+  if(pc->ethif) {
+    return pppWriteOverEthernet(pd, s, n);
+  }
+#endif /* PPPOE_SUPPORT */
+
+#if PPPOS_SUPPORT
+  headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  if (headMB == NULL) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return PPPERR_ALLOC;
+  }
+
+  tailMB = headMB;
+
+  /* If the link has been idle, we'll send a fresh flag character to
+   * flush any noise. */
+  if ((sys_jiffies() - pc->lastXMit) >= PPP_MAXIDLEFLAG) {
+    tailMB = pppAppend(PPP_FLAG, tailMB, NULL);
+  }
+  pc->lastXMit = sys_jiffies();
+
+  fcsOut = PPP_INITFCS;
+  /* Load output buffer. */
+  while (n-- > 0) {
+    c = *s++;
+
+    /* Update FCS before checking for special characters. */
+    fcsOut = PPP_FCS(fcsOut, c);
+
+    /* Copy to output buffer escaping special characters. */
+    tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  }
+
+  /* Add FCS and trailing flag. */
+  c = ~fcsOut & 0xFF;
+  tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  c = (~fcsOut >> 8) & 0xFF;
+  tailMB = pppAppend(c, tailMB, &pc->outACCM);
+  tailMB = pppAppend(PPP_FLAG, tailMB, NULL);
+
+  /* If we failed to complete the packet, throw it away.
+   * Otherwise send it. */
+  if (!tailMB) {
+    PPPDEBUG(LOG_WARNING,
+             ("pppWrite[%d]: Alloc err - dropping pbuf len=%d\n", pd, headMB->len));
+           /*"pppWrite[%d]: Alloc err - dropping %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
+    pbuf_free(headMB);
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pc->netif);
+    return PPPERR_ALLOC;
+  }
+
+  PPPDEBUG(LOG_INFO, ("pppWrite[%d]: len=%d\n", pd, headMB->len));
+                   /* "pppWrite[%d]: %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
+  nPut(pc, headMB);
+#endif /* PPPOS_SUPPORT */
+
+  return PPPERR_NONE;
+}
+
+
+/* FIXME: rename all output() to pppWrite() */
+/********************************************************************
+ *
+ * output - Output PPP packet.
+ */
+
+void output (int unit, unsigned char *p, int len)
+{
+	pppWrite(unit, p, len);
+}
+
+
 /*
  * ppp_send_config - configure the transmit-side characteristics of
- * the ppp interface.  Returns -1, indicating an error, if the channel
- * send_config procedure called error() (or incremented error_count
- * itself), otherwise 0.
+ * the ppp interface.
  */
-int
-old_ppp_send_config(unit, mtu, accm, pcomp, accomp)
-    int unit, mtu;
-    u_int32_t accm;
-    int pcomp, accomp;
-{
-	int errs;
+int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp) {
+  PPPControl *pc = &pppControl[unit];
+  int i;
 
-	if (the_channel->send_config == NULL)
-		return 0;
-	errs = error_count;
-	(*the_channel->send_config)(mtu, accm, pcomp, accomp);
-	return (error_count != errs)? -1: 0;
+  pc->mtu = mtu;
+  pc->pcomp = pcomp;
+  pc->accomp = accomp;
+
+  /* Load the ACCM bits for the 32 control codes. */
+  for (i = 0; i < 32/8; i++) {
+    pc->outACCM[i] = (u_char)((accm >> (8 * i)) & 0xFF);
+  }
+  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]: outACCM=%X %X %X %X\n",
+            unit,
+            pc->outACCM[0], pc->outACCM[1], pc->outACCM[2], pc->outACCM[3]));
+  return 0;
 }
 
 /*
  * ppp_recv_config - configure the receive-side characteristics of
- * the ppp interface.  Returns -1, indicating an error, if the channel
- * recv_config procedure called error() (or incremented error_count
- * itself), otherwise 0.
+ * the ppp interface.
  */
-int
-old_ppp_recv_config(unit, mru, accm, pcomp, accomp)
-    int unit, mru;
-    u_int32_t accm;
-    int pcomp, accomp;
-{
-	int errs;
+int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp) {
+  PPPControl *pc = &pppControl[unit];
+  int i;
+  SYS_ARCH_DECL_PROTECT(lev);
 
-	if (the_channel->recv_config == NULL)
-		return 0;
-	errs = error_count;
-	(*the_channel->recv_config)(mru, accm, pcomp, accomp);
-	return (error_count != errs)? -1: 0;
+  LWIP_UNUSED_ARG(accomp);
+  LWIP_UNUSED_ARG(pcomp);
+  LWIP_UNUSED_ARG(mru);
+
+  /* Load the ACCM bits for the 32 control codes. */
+  SYS_ARCH_PROTECT(lev);
+  for (i = 0; i < 32 / 8; i++) {
+    /* @todo: does this work? ext_accm has been modified from pppd! */
+    pc->rx.inACCM[i] = (u_char)(accm >> (i * 8));
+  }
+  SYS_ARCH_UNPROTECT(lev);
+  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]: inACCM=%X %X %X %X\n",
+            unit,
+            pc->rx.inACCM[0], pc->rx.inACCM[1], pc->rx.inACCM[2], pc->rx.inACCM[3]));
+  return 0;
 }
-#endif
 
-#if 0
+
+/*
+ * sifaddr - Config the interface IP addresses and netmask.
+ */
+int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
+	     u_int32_t net_mask) {
+  PPPControl *pc = &pppControl[unit];
+  int st = 1;
+
+  if (unit < 0 || unit >= NUM_PPP || !pc->openFlag) {
+    st = 0;
+    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", unit));
+  } else {
+    SMEMCPY(&pc->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
+    SMEMCPY(&pc->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
+    SMEMCPY(&pc->addrs.netmask, &net_mask, sizeof(net_mask));
+//    SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
+//    SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
+  }
+  return st;
+}
+
+/********************************************************************
+ *
+ * cifaddr - Clear the interface IP addresses, and delete routes
+ * through the interface if possible.
+ */
+int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
+    /* FIXME: do the code which clear a IP on a PPP interface */
+    return 0;
+}
+
+
+/*
+ * pppifNetifInit - netif init callback
+ */
+static err_t
+pppifNetifInit(struct netif *netif)
+{
+  netif->name[0] = 'p';
+  netif->name[1] = 'p';
+  netif->output = pppifOutput;
+  netif->mtu = pppMTU((int)(size_t)netif->state);
+  netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
+#if LWIP_NETIF_HOSTNAME
+  /* @todo: Initialize interface hostname */
+  /* netif_set_hostname(netif, "lwip"); */
+#endif /* LWIP_NETIF_HOSTNAME */
+  return ERR_OK;
+}
+
+/*
+ * sifup - Config the interface up and enable IP packets to pass.
+ */
+int sifup(int u)
+{
+  PPPControl *pc = &pppControl[u];
+  int st = 1;
+
+  if (u < 0 || u >= NUM_PPP || !pc->openFlag) {
+    st = 0;
+    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", u));
+  } else {
+    netif_remove(&pc->netif);
+    if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask,
+                  &pc->addrs.his_ipaddr, (void *)(size_t)u, pppifNetifInit, ip_input)) {
+      netif_set_up(&pc->netif);
+      pc->if_up = 1;
+      pc->errCode = PPPERR_NONE;
+
+      PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: linkStatusCB=%p errCode=%d\n", u, pc->linkStatusCB, pc->errCode));
+      if (pc->linkStatusCB) {
+        pc->linkStatusCB(pc->linkStatusCtx, pc->errCode, &pc->addrs);
+      }
+    } else {
+      st = 0;
+      PPPDEBUG(LOG_ERR, ("sifup[%d]: netif_add failed\n", u));
+    }
+  }
+
+  return st;
+}
+
+/********************************************************************
+ *
+ * sifdown - Disable the indicated protocol and config the interface
+ *	     down if there are no remaining protocols.
+ */
+int sifdown (int u) {
+    /* FIXME: do the code which shutdown a PPP interface */
+    return 1;
+}
+
+/*
+ * sifnpmode - Set the mode for handling packets for a given NP.
+ */
+int sifnpmode(int u, int proto, enum NPmode mode) {
+  LWIP_UNUSED_ARG(u);
+  LWIP_UNUSED_ARG(proto);
+  LWIP_UNUSED_ARG(mode);
+  return 0;
+}
+
+/*
+ * netif_set_mtu - set the MTU on the PPP network interface.
+ */
+void netif_set_mtu(int unit, int mtu) {
+  /* FIXME: set lwIP MTU */
+}
+/*
+ * netif_get_mtu - get PPP interface MTU
+ */
+int netif_get_mtu(int mtu) {
+  /* FIXME: get lwIP MTU */
+}
+
+/********************************************************************
+ *
+ * sifdefaultroute - assign a default route through the address given.
+ *
+ * If the global default_rt_repl_rest flag is set, then this function
+ * already replaced the original system defaultroute with some other
+ * route and it should just replace the current defaultroute with
+ * another one, without saving the current route. Use: demand mode,
+ * when pppd sets first a defaultroute it it's temporary ppp0 addresses
+ * and then changes the temporary addresses to the addresses for the real
+ * ppp connection when it has come up.
+ */
+
+int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace) {
+  /* FIXME: do the code which add the default route */
+  return 0;
+}
+
+/********************************************************************
+ *
+ * cifdefaultroute - delete a default route through the address given.
+ */
+
+int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway) {
+   /* FIXME: do the code which remove the default route */
+   return 0;
+}
+
+/********************************************************************
+ *
+ * sifproxyarp - Make a proxy ARP entry for the peer.
+ */
+
+int sifproxyarp (int unit, u_int32_t his_adr) {
+    /* FIXME: do we really need that in IPCP ? */
+    return 0;
+}
+
+/********************************************************************
+ *
+ * cifproxyarp - Delete the proxy ARP entry for the peer.
+ */
+
+int cifproxyarp (int unit, u_int32_t his_adr) {
+   /* FIXME: do we really need that in IPCP ? */
+   return 0;
+}
+
+/********************************************************************
+ *
+ * sifvjcomp - config tcp header compression
+ */
+int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid) {
+    /* FIXME: add VJ support */
+    return 1;
+}
+
+/********************************************************************
+ *
+ * get_idle_time - return how long the link has been idle.
+ */
+int get_idle_time(int u, struct ppp_idle *ip) {
+    /* FIXME: add idle time support */
+    return 1;
+}
+
+
+/********************************************************************
+ *
+ * get_loop_output - get outgoing packets from the ppp device,
+ * and detect when we want to bring the real link up.
+ * Return value is 1 if we need to bring up the link, 0 otherwise.
+ */
+int get_loop_output(void) {
+    /* FIXME: necessary for "demand", do we really need to support on-demand ? */
+    return 0;
+}
+
+/********************************************************************
+ *
+ * Return user specified netmask, modified by any mask we might determine
+ * for address `addr' (in network byte order).
+ * Here we scan through the system's list of interfaces, looking for
+ * any non-point-to-point interfaces which might appear to be on the same
+ * network as `addr'.  If we find any, we OR in their netmask to the
+ * user-specified netmask.
+ */
+
+u_int32_t GetMask (u_int32_t addr) {
+  /* FIXME: do we really need that in IPCP ? */
+  return 0;
+}
+
+
+#if PPP_PROTOCOLNAME
+/* List of protocol names, to make our messages a little more informative. */
+struct protocol_list {
+    u_short	proto;
+    const char	*name;
+} protocol_list[] = {
+    { 0x21,	"IP" },
+    { 0x23,	"OSI Network Layer" },
+    { 0x25,	"Xerox NS IDP" },
+    { 0x27,	"DECnet Phase IV" },
+    { 0x29,	"Appletalk" },
+    { 0x2b,	"Novell IPX" },
+    { 0x2d,	"VJ compressed TCP/IP" },
+    { 0x2f,	"VJ uncompressed TCP/IP" },
+    { 0x31,	"Bridging PDU" },
+    { 0x33,	"Stream Protocol ST-II" },
+    { 0x35,	"Banyan Vines" },
+    { 0x39,	"AppleTalk EDDP" },
+    { 0x3b,	"AppleTalk SmartBuffered" },
+    { 0x3d,	"Multi-Link" },
+    { 0x3f,	"NETBIOS Framing" },
+    { 0x41,	"Cisco Systems" },
+    { 0x43,	"Ascom Timeplex" },
+    { 0x45,	"Fujitsu Link Backup and Load Balancing (LBLB)" },
+    { 0x47,	"DCA Remote Lan" },
+    { 0x49,	"Serial Data Transport Protocol (PPP-SDTP)" },
+    { 0x4b,	"SNA over 802.2" },
+    { 0x4d,	"SNA" },
+    { 0x4f,	"IP6 Header Compression" },
+    { 0x51,	"KNX Bridging Data" },
+    { 0x53,	"Encryption" },
+    { 0x55,	"Individual Link Encryption" },
+    { 0x57,	"IPv6" },
+    { 0x59,	"PPP Muxing" },
+    { 0x5b,	"Vendor-Specific Network Protocol" },
+    { 0x61,	"RTP IPHC Full Header" },
+    { 0x63,	"RTP IPHC Compressed TCP" },
+    { 0x65,	"RTP IPHC Compressed non-TCP" },
+    { 0x67,	"RTP IPHC Compressed UDP 8" },
+    { 0x69,	"RTP IPHC Compressed RTP 8" },
+    { 0x6f,	"Stampede Bridging" },
+    { 0x73,	"MP+" },
+    { 0xc1,	"NTCITS IPI" },
+    { 0xfb,	"single-link compression" },
+    { 0xfd,	"Compressed Datagram" },
+    { 0x0201,	"802.1d Hello Packets" },
+    { 0x0203,	"IBM Source Routing BPDU" },
+    { 0x0205,	"DEC LANBridge100 Spanning Tree" },
+    { 0x0207,	"Cisco Discovery Protocol" },
+    { 0x0209,	"Netcs Twin Routing" },
+    { 0x020b,	"STP - Scheduled Transfer Protocol" },
+    { 0x020d,	"EDP - Extreme Discovery Protocol" },
+    { 0x0211,	"Optical Supervisory Channel Protocol" },
+    { 0x0213,	"Optical Supervisory Channel Protocol" },
+    { 0x0231,	"Luxcom" },
+    { 0x0233,	"Sigma Network Systems" },
+    { 0x0235,	"Apple Client Server Protocol" },
+    { 0x0281,	"MPLS Unicast" },
+    { 0x0283,	"MPLS Multicast" },
+    { 0x0285,	"IEEE p1284.4 standard - data packets" },
+    { 0x0287,	"ETSI TETRA Network Protocol Type 1" },
+    { 0x0289,	"Multichannel Flow Treatment Protocol" },
+    { 0x2063,	"RTP IPHC Compressed TCP No Delta" },
+    { 0x2065,	"RTP IPHC Context State" },
+    { 0x2067,	"RTP IPHC Compressed UDP 16" },
+    { 0x2069,	"RTP IPHC Compressed RTP 16" },
+    { 0x4001,	"Cray Communications Control Protocol" },
+    { 0x4003,	"CDPD Mobile Network Registration Protocol" },
+    { 0x4005,	"Expand accelerator protocol" },
+    { 0x4007,	"ODSICP NCP" },
+    { 0x4009,	"DOCSIS DLL" },
+    { 0x400B,	"Cetacean Network Detection Protocol" },
+    { 0x4021,	"Stacker LZS" },
+    { 0x4023,	"RefTek Protocol" },
+    { 0x4025,	"Fibre Channel" },
+    { 0x4027,	"EMIT Protocols" },
+    { 0x405b,	"Vendor-Specific Protocol (VSP)" },
+    { 0x8021,	"Internet Protocol Control Protocol" },
+    { 0x8023,	"OSI Network Layer Control Protocol" },
+    { 0x8025,	"Xerox NS IDP Control Protocol" },
+    { 0x8027,	"DECnet Phase IV Control Protocol" },
+    { 0x8029,	"Appletalk Control Protocol" },
+    { 0x802b,	"Novell IPX Control Protocol" },
+    { 0x8031,	"Bridging NCP" },
+    { 0x8033,	"Stream Protocol Control Protocol" },
+    { 0x8035,	"Banyan Vines Control Protocol" },
+    { 0x803d,	"Multi-Link Control Protocol" },
+    { 0x803f,	"NETBIOS Framing Control Protocol" },
+    { 0x8041,	"Cisco Systems Control Protocol" },
+    { 0x8043,	"Ascom Timeplex" },
+    { 0x8045,	"Fujitsu LBLB Control Protocol" },
+    { 0x8047,	"DCA Remote Lan Network Control Protocol (RLNCP)" },
+    { 0x8049,	"Serial Data Control Protocol (PPP-SDCP)" },
+    { 0x804b,	"SNA over 802.2 Control Protocol" },
+    { 0x804d,	"SNA Control Protocol" },
+    { 0x804f,	"IP6 Header Compression Control Protocol" },
+    { 0x8051,	"KNX Bridging Control Protocol" },
+    { 0x8053,	"Encryption Control Protocol" },
+    { 0x8055,	"Individual Link Encryption Control Protocol" },
+    { 0x8057,	"IPv6 Control Protocol" },
+    { 0x8059,	"PPP Muxing Control Protocol" },
+    { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
+    { 0x806f,	"Stampede Bridging Control Protocol" },
+    { 0x8073,	"MP+ Control Protocol" },
+    { 0x80c1,	"NTCITS IPI Control Protocol" },
+    { 0x80fb,	"Single Link Compression Control Protocol" },
+    { 0x80fd,	"Compression Control Protocol" },
+    { 0x8207,	"Cisco Discovery Protocol Control" },
+    { 0x8209,	"Netcs Twin Routing" },
+    { 0x820b,	"STP - Control Protocol" },
+    { 0x820d,	"EDPCP - Extreme Discovery Protocol Ctrl Prtcl" },
+    { 0x8235,	"Apple Client Server Protocol Control" },
+    { 0x8281,	"MPLSCP" },
+    { 0x8285,	"IEEE p1284.4 standard - Protocol Control" },
+    { 0x8287,	"ETSI TETRA TNP1 Control Protocol" },
+    { 0x8289,	"Multichannel Flow Treatment Protocol" },
+    { 0xc021,	"Link Control Protocol" },
+    { 0xc023,	"Password Authentication Protocol" },
+    { 0xc025,	"Link Quality Report" },
+    { 0xc027,	"Shiva Password Authentication Protocol" },
+    { 0xc029,	"CallBack Control Protocol (CBCP)" },
+    { 0xc02b,	"BACP Bandwidth Allocation Control Protocol" },
+    { 0xc02d,	"BAP" },
+    { 0xc05b,	"Vendor-Specific Authentication Protocol (VSAP)" },
+    { 0xc081,	"Container Control Protocol" },
+    { 0xc223,	"Challenge Handshake Authentication Protocol" },
+    { 0xc225,	"RSA Authentication Protocol" },
+    { 0xc227,	"Extensible Authentication Protocol" },
+    { 0xc229,	"Mitsubishi Security Info Exch Ptcl (SIEP)" },
+    { 0xc26f,	"Stampede Bridging Authorization Protocol" },
+    { 0xc281,	"Proprietary Authentication Protocol" },
+    { 0xc283,	"Proprietary Authentication Protocol" },
+    { 0xc481,	"Proprietary Node ID Authentication Protocol" },
+    { 0,	NULL },
+};
+
+/*
+ * protocol_name - find a name for a PPP protocol.
+ */
+const char * protocol_name(int proto) {
+    struct protocol_list *lp;
+
+    for (lp = protocol_list; lp->proto != 0; ++lp)
+	if (proto == lp->proto)
+	    return lp->name;
+    return NULL;
+}
+#endif /* PPP_PROTOCOLNAME */
+
 /*
  * new_phase - signal the start of a new phase of pppd's operation.
  */
-void
-new_phase(p)
-    int p;
-{
+void new_phase(int p) {
     phase = p;
-    if (new_phase_hook)
-	(*new_phase_hook)(p);
-    notify(phasechange, p);
+#if PPP_NOTIFY
+    /* The one willing notify support should add here the code to be notified of phase changes */
+#endif /* PPP_NOTIFY */
 }
-#endif
 
-#if 0
-/*
- * die - clean up state and exit with the specified status.
+#if PPP_STATS_SUPPORT
+
+/* ---- Note on PPP Stats support ----
+ *
+ * The one willing link stats support should add the get_ppp_stats()
+ * to fetch statistics from lwIP.
  */
-void
-die(status)
-    int status;
-{
-    if (!doing_multilink || multilink_master)
-	print_link_stats();
-    cleanup();
-    notify(exitnotify, status);
-    syslog(LOG_INFO, "Exit.");
-    exit(status);
-}
-#endif
 
-#if 0
 /*
- * cleanup - restore anything which needs to be restored before we exit
+ * reset_link_stats - "reset" stats when link goes up.
  */
-/* ARGSUSED */
-static void
-cleanup()
-{
-    sys_cleanup();
-
-    if (fd_ppp >= 0)
-	the_channel->disestablish_ppp(devfd);
-    if (the_channel->cleanup)
-	(*the_channel->cleanup)();
-    remove_pidfiles();
+void reset_link_stats(int u) {
+    if (!get_ppp_stats(u, &old_link_stats))
+	return;
+    gettimeofday(&start_time, NULL);
 }
-#endif
 
-#if 0
-void
-print_link_stats()
-{
+/*
+ * update_link_stats - get stats at link termination.
+ */
+void update_link_stats(int u) {
+
+    struct timeval now;
+    char numbuf[32];
+
+    if (!get_ppp_stats(u, &link_stats)
+	|| gettimeofday(&now, NULL) < 0)
+	return;
+    link_connect_time = now.tv_sec - start_time.tv_sec;
+    link_stats_valid = 1;
+
+    link_stats.bytes_in  -= old_link_stats.bytes_in;
+    link_stats.bytes_out -= old_link_stats.bytes_out;
+    link_stats.pkts_in   -= old_link_stats.pkts_in;
+    link_stats.pkts_out  -= old_link_stats.pkts_out;
+}
+
+void print_link_stats() {
     /*
      * Print connect time and statistics.
      */
@@ -1114,737 +1555,4 @@ print_link_stats()
        link_stats_valid = 0;
     }
 }
-
-/*
- * reset_link_stats - "reset" stats when link goes up.
- */
-void
-reset_link_stats(u)
-    int u;
-{
-#if 0
-    if (!get_ppp_stats(u, &old_link_stats))
-	return;
-#endif
-    gettimeofday(&start_time, NULL);
-}
-
-/*
- * update_link_stats - get stats at link termination.
- */
-void
-update_link_stats(u)
-    int u;
-{
-    struct timeval now;
-    char numbuf[32];
-
-#if 0
-    if (!get_ppp_stats(u, &link_stats)
-	|| gettimeofday(&now, NULL) < 0)
-	return;
-#endif
-    link_connect_time = now.tv_sec - start_time.tv_sec;
-    link_stats_valid = 1;
-
-    link_stats.bytes_in  -= old_link_stats.bytes_in;
-    link_stats.bytes_out -= old_link_stats.bytes_out;
-    link_stats.pkts_in   -= old_link_stats.pkts_in;
-    link_stats.pkts_out  -= old_link_stats.pkts_out;
-
-#if 0
-    slprintf(numbuf, sizeof(numbuf), "%u", link_connect_time);
-    script_setenv("CONNECT_TIME", numbuf, 0);
-    slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_out);
-    script_setenv("BYTES_SENT", numbuf, 0);
-    slprintf(numbuf, sizeof(numbuf), "%u", link_stats.bytes_in);
-    script_setenv("BYTES_RCVD", numbuf, 0);
-#endif
-}
-#endif
-
-#if 0
-struct	callout {
-    struct timeval	c_time;		/* time at which to call routine */
-    void		*c_arg;		/* argument to routine */
-    void		(*c_func) __P((void *)); /* routine */
-    struct		callout *c_next;
-};
-
-static struct callout *callout = NULL;	/* Callout list */
-static struct timeval timenow;		/* Current time */
-#endif
-
-#if 0
-/*
- * timeout - Schedule a timeout.
- */
-void
-timeout(func, arg, secs, usecs)
-    void (*func) __P((void *));
-    void *arg;
-    int secs, usecs;
-{
-    struct callout *newp, *p, **pp;
-
-    /*
-     * Allocate timeout.
-     */
-    if ((newp = (struct callout *) malloc(sizeof(struct callout))) == NULL)
-	fatal("Out of memory in timeout()!");
-    newp->c_arg = arg;
-    newp->c_func = func;
-    gettimeofday(&timenow, NULL);
-    newp->c_time.tv_sec = timenow.tv_sec + secs;
-    newp->c_time.tv_usec = timenow.tv_usec + usecs;
-    if (newp->c_time.tv_usec >= 1000000) {
-	newp->c_time.tv_sec += newp->c_time.tv_usec / 1000000;
-	newp->c_time.tv_usec %= 1000000;
-    }
-
-    /*
-     * Find correct place and link it in.
-     */
-    for (pp = &callout; (p = *pp); pp = &p->c_next)
-	if (newp->c_time.tv_sec < p->c_time.tv_sec
-	    || (newp->c_time.tv_sec == p->c_time.tv_sec
-		&& newp->c_time.tv_usec < p->c_time.tv_usec))
-	    break;
-    newp->c_next = p;
-    *pp = newp;
-}
-
-
-/*
- * untimeout - Unschedule a timeout.
- */
-void
-untimeout(func, arg)
-    void (*func) __P((void *));
-    void *arg;
-{
-    struct callout **copp, *freep;
-
-    /*
-     * Find first matching timeout and remove it from the list.
-     */
-    for (copp = &callout; (freep = *copp); copp = &freep->c_next)
-	if (freep->c_func == func && freep->c_arg == arg) {
-	    *copp = freep->c_next;
-	    free((char *) freep);
-	    break;
-	}
-}
-#endif
-
-#if 0
-/*
- * calltimeout - Call any timeout routines which are now due.
- */
-static void
-calltimeout()
-{
-    struct callout *p;
-
-    while (callout != NULL) {
-	p = callout;
-
-	if (gettimeofday(&timenow, NULL) < 0)
-	    fatal("Failed to get time of day: %m");
-	if (!(p->c_time.tv_sec < timenow.tv_sec
-	      || (p->c_time.tv_sec == timenow.tv_sec
-		  && p->c_time.tv_usec <= timenow.tv_usec)))
-	    break;		/* no, it's not time yet */
-
-	callout = p->c_next;
-	(*p->c_func)(p->c_arg);
-
-	free((char *) p);
-    }
-}
-
-
-/*
- * timeleft - return the length of time until the next timeout is due.
- */
-static struct timeval *
-timeleft(tvp)
-    struct timeval *tvp;
-{
-    if (callout == NULL)
-	return NULL;
-
-    gettimeofday(&timenow, NULL);
-    tvp->tv_sec = callout->c_time.tv_sec - timenow.tv_sec;
-    tvp->tv_usec = callout->c_time.tv_usec - timenow.tv_usec;
-    if (tvp->tv_usec < 0) {
-	tvp->tv_usec += 1000000;
-	tvp->tv_sec -= 1;
-    }
-    if (tvp->tv_sec < 0)
-	tvp->tv_sec = tvp->tv_usec = 0;
-
-    return tvp;
-}
-#endif
-
-#if 0
-/*
- * kill_my_pg - send a signal to our process group, and ignore it ourselves.
- * We assume that sig is currently blocked.
- */
-static void
-kill_my_pg(sig)
-    int sig;
-{
-    struct sigaction act, oldact;
-    struct subprocess *chp;
-
-    if (!detached) {
-	/*
-	 * There might be other things in our process group that we
-	 * didn't start that would get hit if we did a kill(0), so
-	 * just send the signal individually to our children.
-	 */
-	for (chp = children; chp != NULL; chp = chp->next)
-	    if (chp->killable)
-		kill(chp->pid, sig);
-	return;
-    }
-
-    /* We've done a setsid(), so we can just use a kill(0) */
-    sigemptyset(&act.sa_mask);		/* unnecessary in fact */
-    act.sa_handler = SIG_IGN;
-    act.sa_flags = 0;
-    kill(0, sig);
-    /*
-     * The kill() above made the signal pending for us, as well as
-     * the rest of our process group, but we don't want it delivered
-     * to us.  It is blocked at the moment.  Setting it to be ignored
-     * will cause the pending signal to be discarded.  If we did the
-     * kill() after setting the signal to be ignored, it is unspecified
-     * (by POSIX) whether the signal is immediately discarded or left
-     * pending, and in fact Linux would leave it pending, and so it
-     * would be delivered after the current signal handler exits,
-     * leading to an infinite loop.
-     */
-    sigaction(sig, &act, &oldact);
-    sigaction(sig, &oldact, NULL);
-}
-
-
-/*
- * hup - Catch SIGHUP signal.
- *
- * Indicates that the physical layer has been disconnected.
- * We don't rely on this indication; if the user has sent this
- * signal, we just take the link down.
- */
-static void
-hup(sig)
-    int sig;
-{
-    /* can't log a message here, it can deadlock */
-    got_sighup = 1;
-    if (conn_running)
-	/* Send the signal to the [dis]connector process(es) also */
-	kill_my_pg(sig);
-    notify(sigreceived, sig);
-    if (waiting)
-	siglongjmp(sigjmp, 1);
-}
-
-
-/*
- * term - Catch SIGTERM signal and SIGINT signal (^C/del).
- *
- * Indicates that we should initiate a graceful disconnect and exit.
- */
-/*ARGSUSED*/
-static void
-term(sig)
-    int sig;
-{
-    /* can't log a message here, it can deadlock */
-    got_sigterm = sig;
-    if (conn_running)
-	/* Send the signal to the [dis]connector process(es) also */
-	kill_my_pg(sig);
-    notify(sigreceived, sig);
-    if (waiting)
-	siglongjmp(sigjmp, 1);
-}
-
-
-/*
- * chld - Catch SIGCHLD signal.
- * Sets a flag so we will call reap_kids in the mainline.
- */
-static void
-chld(sig)
-    int sig;
-{
-    got_sigchld = 1;
-    if (waiting)
-	siglongjmp(sigjmp, 1);
-}
-
-
-/*
- * toggle_debug - Catch SIGUSR1 signal.
- *
- * Toggle debug flag.
- */
-/*ARGSUSED*/
-static void
-toggle_debug(sig)
-    int sig;
-{
-    debug = !debug;
-    if (debug) {
-	setlogmask(LOG_UPTO(LOG_DEBUG));
-    } else {
-	setlogmask(LOG_UPTO(LOG_WARNING));
-    }
-}
-
-
-/*
- * open_ccp - Catch SIGUSR2 signal.
- *
- * Try to (re)negotiate compression.
- */
-/*ARGSUSED*/
-static void
-open_ccp(sig)
-    int sig;
-{
-    got_sigusr2 = 1;
-    if (waiting)
-	siglongjmp(sigjmp, 1);
-}
-#endif
-
-#if 0
-/*
- * bad_signal - We've caught a fatal signal.  Clean up state and exit.
- */
-static void
-bad_signal(sig)
-    int sig;
-{
-    static int crashed = 0;
-
-    if (crashed)
-	_exit(127);
-    crashed = 1;
-    error("Fatal signal %d", sig);
-    if (conn_running)
-	kill_my_pg(SIGTERM);
-    notify(sigreceived, sig);
-    die(127);
-}
-#endif
-
-#if 0
-/*
- * safe_fork - Create a child process.  The child closes all the
- * file descriptors that we don't want to leak to a script.
- * The parent waits for the child to do this before returning.
- * This also arranges for the specified fds to be dup'd to
- * fds 0, 1, 2 in the child.
- */
-pid_t
-safe_fork(int infd, int outfd, int errfd)
-{
-	pid_t pid;
-	int fd, pipefd[2];
-	char buf[1];
-
-	/* make sure fds 0, 1, 2 are occupied (probably not necessary) */
-	while ((fd = dup(fd_devnull)) >= 0) {
-		if (fd > 2) {
-			close(fd);
-			break;
-		}
-	}
-
-	if (pipe(pipefd) == -1)
-		pipefd[0] = pipefd[1] = -1;
-	pid = fork();
-	if (pid < 0) {
-		error("fork failed: %m");
-		return -1;
-	}
-	if (pid > 0) {
-		/* parent */
-		close(pipefd[1]);
-		/* this read() blocks until the close(pipefd[1]) below */
-		complete_read(pipefd[0], buf, 1);
-		close(pipefd[0]);
-		return pid;
-	}
-
-	/* Executing in the child */
-	sys_close();
-
-	/* make sure infd, outfd and errfd won't get tromped on below */
-	if (infd == 1 || infd == 2)
-		infd = dup(infd);
-	if (outfd == 0 || outfd == 2)
-		outfd = dup(outfd);
-	if (errfd == 0 || errfd == 1)
-		errfd = dup(errfd);
-
-	closelog();
-
-	/* dup the in, out, err fds to 0, 1, 2 */
-	if (infd != 0)
-		dup2(infd, 0);
-	if (outfd != 1)
-		dup2(outfd, 1);
-	if (errfd != 2)
-		dup2(errfd, 2);
-
-	if (log_to_fd > 2)
-		close(log_to_fd);
-	if (the_channel->close)
-		(*the_channel->close)();
-	else
-		close(devfd);	/* some plugins don't have a close function */
-	close(fd_ppp);
-	close(fd_devnull);
-	if (infd != 0)
-		close(infd);
-	if (outfd != 1)
-		close(outfd);
-	if (errfd != 2)
-		close(errfd);
-
-	notify(fork_notifier, 0);
-	close(pipefd[0]);
-	/* this close unblocks the read() call above in the parent */
-	close(pipefd[1]);
-
-	return 0;
-}
-#endif
-
-#if 0
-/*
- * device_script - run a program to talk to the specified fds
- * (e.g. to run the connector or disconnector script).
- * stderr gets connected to the log fd or to the _PATH_CONNERRS file.
- */
-int
-device_script(program, in, out, dont_wait)
-    char *program;
-    int in, out;
-    int dont_wait;
-{
-    int pid;
-    int status = -1;
-    int errfd;
-
-    if (log_to_fd >= 0)
-	errfd = log_to_fd;
-    else
-	errfd = open(_PATH_CONNERRS, O_WRONLY | O_APPEND | O_CREAT, 0600);
-
-    ++conn_running;
-    //pid = safe_fork(in, out, errfd);
-    pid = -1;
-
-    if (pid != 0 && log_to_fd < 0)
-	close(errfd);
-
-    if (pid < 0) {
-	--conn_running;
-	error("Failed to create child process: %m");
-	return -1;
-    }
-
-    if (pid != 0) {
-	record_child(pid, program, NULL, NULL, 1);
-	status = 0;
-	if (!dont_wait) {
-	    while (waitpid(pid, &status, 0) < 0) {
-		if (errno == EINTR)
-		    continue;
-		fatal("error waiting for (dis)connection process: %m");
-	    }
-	    forget_child(pid, status);
-	    --conn_running;
-	}
-	return (status == 0 ? 0 : -1);
-    }
-
-    /* here we are executing in the child */
-
-    setgid(getgid());
-    setuid(uid);
-    if (getuid() != uid) {
-	fprintf(stderr, "pppd: setuid failed\n");
-	exit(1);
-    }
-    execl("/bin/sh", "sh", "-c", program, (char *)0);
-    perror("pppd: could not exec /bin/sh");
-    exit(99);
-    /* NOTREACHED */
-}
-#endif
-
-#if 0 /* UNUSED */
-/*
- * record_child - add a child process to the list for reap_kids
- * to use.
- */
-void
-record_child(pid, prog, done, arg, killable)
-    int pid;
-    char *prog;
-    void (*done) __P((void *));
-    void *arg;
-    int killable;
-{
-    struct subprocess *chp;
-
-    ++n_children;
-
-    chp = (struct subprocess *) malloc(sizeof(struct subprocess));
-    if (chp == NULL) {
-	warn("losing track of %s process", prog);
-    } else {
-	chp->pid = pid;
-	chp->prog = prog;
-	chp->done = done;
-	chp->arg = arg;
-	chp->next = children;
-	chp->killable = killable;
-	children = chp;
-    }
-}
-
-/*
- * childwait_end - we got fed up waiting for the child processes to
- * exit, send them all a SIGTERM.
- */
-static void
-childwait_end(arg)
-    void *arg;
-{
-    struct subprocess *chp;
-
-    for (chp = children; chp != NULL; chp = chp->next) {
-	if (debug)
-	    dbglog("sending SIGTERM to process %d", chp->pid);
-	kill(chp->pid, SIGTERM);
-    }
-    childwait_done = 1;
-}
-
-/*
- * forget_child - clean up after a dead child
- */
-static void
-forget_child(pid, status)
-    int pid, status;
-{
-    struct subprocess *chp, **prevp;
-
-    for (prevp = &children; (chp = *prevp) != NULL; prevp = &chp->next) {
-        if (chp->pid == pid) {
-	    --n_children;
-	    *prevp = chp->next;
-	    break;
-	}
-    }
-    if (WIFSIGNALED(status)) {
-        warn("Child process %s (pid %d) terminated with signal %d",
-	     (chp? chp->prog: "??"), pid, WTERMSIG(status));
-    } else if (debug)
-        dbglog("Script %s finished (pid %d), status = 0x%x",
-	       (chp? chp->prog: "??"), pid,
-	       WIFEXITED(status) ? WEXITSTATUS(status) : status);
-    if (chp && chp->done)
-        (*chp->done)(chp->arg);
-    if (chp)
-        free(chp);
-}
-
-/*
- * reap_kids - get status from any dead child processes,
- * and log a message for abnormal terminations.
- */
-static int
-reap_kids()
-{
-    int pid, status;
-
-    if (n_children == 0)
-	return 0;
-    while ((pid = waitpid(-1, &status, WNOHANG)) != -1 && pid != 0) {
-        forget_child(pid, status);
-    }
-    if (pid == -1) {
-	if (errno == ECHILD)
-	    return -1;
-	if (errno != EINTR)
-	    error("Error waiting for child process: %m");
-    }
-    return 0;
-}
-#endif /* UNUSED */
-
-#if 0 /* UNUSED */
-/*
- * add_notifier - add a new function to be called when something happens.
- */
-void
-add_notifier(notif, func, arg)
-    struct notifier **notif;
-    notify_func func;
-    void *arg;
-{
-    struct notifier *np;
-
-    np = malloc(sizeof(struct notifier));
-    if (np == 0)
-	return;
-	//novm("notifier struct");
-    np->next = *notif;
-    np->func = func;
-    np->arg = arg;
-    *notif = np;
-}
-
-/*
- * remove_notifier - remove a function from the list of things to
- * be called when something happens.
- */
-void
-remove_notifier(notif, func, arg)
-    struct notifier **notif;
-    notify_func func;
-    void *arg;
-{
-    struct notifier *np;
-
-    for (; (np = *notif) != 0; notif = &np->next) {
-	if (np->func == func && np->arg == arg) {
-	    *notif = np->next;
-	    free(np);
-	    break;
-	}
-    }
-}
-#endif /* UNUSED */
-
-#if 0
-/*
- * notify - call a set of functions registered with add_notifier.
- */
-void
-notify(notif, val)
-    struct notifier *notif;
-    int val;
-{
-    struct notifier *np;
-
-    while ((np = notif) != 0) {
-	notif = np->next;
-	(*np->func)(np->arg, val);
-    }
-}
-#endif
-
-#if 0 /* UNUSED */
-/*
- * novm - log an error message saying we ran out of memory, and die.
- */
-void
-novm(msg)
-    char *msg;
-{
-    fatal("Virtual memory exhausted allocating %s\n", msg);
-}
-
-/*
- * script_setenv - set an environment variable value to be used
- * for scripts that we run (e.g. ip-up, auth-up, etc.)
- */
-void
-script_setenv(var, value, iskey)
-    char *var, *value;
-    int iskey;
-{
-    size_t varl = strlen(var);
-    size_t vl = varl + strlen(value) + 2;
-    int i;
-    char *p, *newstring;
-
-    newstring = (char *) malloc(vl+1);
-    if (newstring == 0)
-	return;
-    *newstring++ = iskey;
-    slprintf(newstring, vl, "%s=%s", var, value);
-
-    /* check if this variable is already set */
-    if (script_env != 0) {
-	for (i = 0; (p = script_env[i]) != 0; ++i) {
-	    if (strncmp(p, var, varl) == 0 && p[varl] == '=') {
-		free(p-1);
-		script_env[i] = newstring;
-		return;
-	    }
-	}
-    } else {
-	/* no space allocated for script env. ptrs. yet */
-	i = 0;
-	script_env = (char **) malloc(16 * sizeof(char *));
-	if (script_env == 0)
-	    return;
-	s_env_nalloc = 16;
-    }
-
-    /* reallocate script_env with more space if needed */
-    if (i + 1 >= s_env_nalloc) {
-	int new_n = i + 17;
-	char **newenv = (char **) realloc((void *)script_env,
-					  new_n * sizeof(char *));
-	if (newenv == 0)
-	    return;
-	script_env = newenv;
-	s_env_nalloc = new_n;
-    }
-
-    script_env[i] = newstring;
-    script_env[i+1] = 0;
-}
-
-/*
- * script_unsetenv - remove a variable from the environment
- * for scripts.
- */
-void
-script_unsetenv(var)
-    char *var;
-{
-    int vl = strlen(var);
-    int i;
-    char *p;
-
-    if (script_env == 0)
-	return;
-    for (i = 0; (p = script_env[i]) != 0; ++i) {
-	if (strncmp(p, var, vl) == 0 && p[vl] == '=') {
-	    free(p-1);
-	    while ((script_env[i] = script_env[i+1]) != 0)
-		++i;
-	    break;
-	}
-    }
-}
-#endif /* UNUSED */
-
-#endif /* PPP.C DISABLED */
+#endif PPP_STATS_SUPPORT

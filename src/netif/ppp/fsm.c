@@ -54,8 +54,8 @@
 #include <string.h>
 #include <sys/types.h>
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 
 static const char rcsid[] = RCSID;

@@ -75,11 +75,10 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
+#include "ppp.h"
+
 #include "polarssl/md5.h"
 #include "magic.h"
-#include "pppd.h"
-#include "pppmy.h"
-
 
 #if MD5_SUPPORT /* Using MD5 for better randomness if MD5 support is enabled */
 

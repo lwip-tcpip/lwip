@@ -1,5 +1,5 @@
 /*
- * pppmy.h
+ * ppp.h
  *
  *  Created on: May 12, 2012
  *      Author: gradator

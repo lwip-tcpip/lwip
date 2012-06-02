@@ -33,8 +33,9 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "pppd.h"
-#include "pppmy.h"
+
+#include "ppp.h"
+
 #include "chap-new.h"
 #include "chap-md5.h"
 #include "magic.h"

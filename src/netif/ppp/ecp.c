@@ -66,8 +66,8 @@ static const char rcsid[] = RCSID;
 
 #include <string.h>
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 #include "ecp.h"
 

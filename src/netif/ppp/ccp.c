@@ -36,8 +36,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 #include "ccp.h"
 #include <net/ppp-comp.h>

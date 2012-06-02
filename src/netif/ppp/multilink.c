@@ -50,8 +50,8 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
+
 #include "fsm.h"
 #include "lcp.h"
 #include "tdb.h"

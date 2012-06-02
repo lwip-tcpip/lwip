@@ -74,8 +74,7 @@
 #endif
 #endif /* PPP_FILTER */
 
-#include "pppd.h"
-#include "pppmy.h"
+#include "ppp.h"
 
 #if defined(ultrix) || defined(NeXT)
 char *strdup __P((char *));
