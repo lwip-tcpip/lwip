@@ -237,7 +237,6 @@ static void ppp_input(void *arg) {
 
   pd = ((struct pppInputHeader *)nb->payload)->unit;
   protocol = ((struct pppInputHeader *)nb->payload)->proto;
-  printf("ppp_input() called, pd = %d, protocol = 0x%x\n", pd, protocol);
 
   if(pbuf_header(nb, -(int)sizeof(struct pppInputHeader))) {
     LWIP_ASSERT("pbuf_header failed\n", 0);
@@ -323,7 +322,6 @@ static void ppp_input(void *arg) {
       break;
 
     case PPP_IP:            /* Internet Protocol */
-	    printf("IP packet received\n");
       PPPDEBUG(LOG_INFO, ("pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
       if (pppControl[pd].netif.input) {
         pppControl[pd].netif.input(nb, &pppControl[pd].netif);
@@ -717,7 +715,6 @@ void pppInProcOverEthernet(int pd, struct pbuf *pb) {
   }
 
   inProtocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
-  printf("pppInProcOverEthernet() called, pd = %d, inprotocol = 0x%x\n", pd, inProtocol);
 
   /* make room for pppInputHeader - should not fail */
   if (pbuf_header(pb, sizeof(*pih) - sizeof(inProtocol)) != 0) {
@@ -759,7 +756,6 @@ void pppOverEthernetInitFailed(int pd) {
 }
 
 static void pppOverEthernetLinkStatusCB(int pd, int up) {
-  printf("pppOverEthernetLinkStatusCB: called, pd = %d, up = %d\n", pd, up);
   if(up) {
     PPPDEBUG(LOG_INFO, ("pppOverEthernetLinkStatusCB: unit %d: Connecting\n", pd));
     pppStart(pd);
@@ -981,8 +977,6 @@ u_short pppMTU(int pd) {
 int pppWriteOverEthernet(int pd, const u_char *s, int n) {
   PPPControl *pc = &pppControl[pd];
   struct pbuf *pb;
-
-  printf("pppWriteOverEthernet() called\n");
 
   /* skip address & flags */
   s += 2;

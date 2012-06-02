@@ -343,8 +343,6 @@ fsm_input(f, inpacket, l)
     u_char code, id;
     int len;
 
-    printf("fsm_input: l = %d\n", l);
-
     /*
      * Parse header (code, id and length).
      * If packet too short, drop it.
@@ -423,8 +421,6 @@ fsm_rconfreq(f, id, inp, len)
 {
     int code, reject_if_disagree;
 
-    printf("fsm_rconfreq() called, f->state = %d\n", f->state);
-
     switch( f->state ){
     case CLOSED:
 	/* Go away, we're closed */
@@ -464,7 +460,6 @@ fsm_rconfreq(f, id, inp, len)
     /* send the Ack, Nak or Rej to the peer */
     fsm_sdata(f, code, id, inp, len);
 
-    printf("fsm_rconfreq() code = %d, f->state = %d\n", code, f->state);
     if (code == CONFACK) {
 	if (f->state == ACKRCVD) {
 	    UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */

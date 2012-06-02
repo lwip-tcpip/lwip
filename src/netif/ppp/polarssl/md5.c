@@ -41,7 +41,7 @@
 #include "lwip/opt.h"
 #if LWIP_INCLUDED_POLARSSL_MD5
 
-#include "polarssl/md5.h"
+#include "md5.h"
 
 /*
  * 32-bit integer manipulation macros (little endian)

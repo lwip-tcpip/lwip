@@ -42,7 +42,7 @@
 #include "lwip/opt.h"
 #if LWIP_INCLUDED_POLARSSL_MD4
 
-#include "polarssl/md4.h"
+#include "md4.h"
 
 /*
  * 32-bit integer manipulation macros (little endian)

@@ -41,7 +41,7 @@
 #include "lwip/opt.h"
 #if LWIP_INCLUDED_POLARSSL_SHA1
 
-#include "polarssl/sha1.h"
+#include "sha1.h"
 
 /*
  * 32-bit integer manipulation macros (big endian)

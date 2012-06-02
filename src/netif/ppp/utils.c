@@ -42,10 +42,12 @@
 #include <fcntl.h>
 #if 0
 #include <syslog.h>
-#endif
 #include <netdb.h>
+#endif
 #include <time.h>
+#if 0
 #include <utmp.h>
+#endif
 #include <pwd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -53,8 +55,10 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
+#if 0
 #include <sys/socket.h>
 #include <netinet/in.h>
+#endif
 #ifdef SVR4
 #include <sys/mkdev.h>
 #endif
@@ -681,7 +685,7 @@ log_write(level, buf)
 {
 /* FIXME: replace this with a log callback */
     /* if(level >= min_log_level) */ /* FIXME: add a minimum log level */
-    printf("LOG: %s\n", buf);
+    PPPDEBUG(LOG_DEBUG, ("LOG: %s\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
 	int n = strlen(buf);

@@ -51,12 +51,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#if 0
 #include <netdb.h>
+#endif
 #include <sys/param.h>
 #include <sys/types.h>
+#if 0
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include "ppp.h"
 

@@ -2199,8 +2199,6 @@ lcp_up(f)
     lcp_options *ao = &lcp_allowoptions[f->unit];
     int mtu, mru;
 
-    printf("LCP IS UP !\n");
-
     if (!go->neg_magicnumber)
 	go->magicnumber = 0;
     if (!ho->neg_magicnumber)

@@ -80,16 +80,20 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if 0
 #include <sys/socket.h>
 #include <utmp.h>
+#endif
 #include <fcntl.h>
 #if defined(_PATH_LASTLOG) && defined(__linux__)
 #include <lastlog.h>
 #endif
 
+#if 0
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 
 #ifdef HAS_SHADOW
@@ -758,8 +762,6 @@ link_established(unit)
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
     struct protent *protp;
-
-    printf("AUTH: link_established() called");
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -1525,18 +1527,18 @@ auth_reset(unit)
   }
 
 #if PAP_SUPPORT
-  printf("neg_upap: %d\n", ao->neg_upap);
+  PPPDEBUG(LOG_DEBUG, ("neg_upap: %d\n", ao->neg_upap) );
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  printf("neg_chap: %d\n", ao->neg_chap);
-  printf("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5) );
+  PPPDEBUG(LOG_DEBUG, ("neg_chap: %d\n", ao->neg_chap) );
+  PPPDEBUG(LOG_DEBUG, ("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5)) );
 #if MSCHAP_SUPPORT
-  printf("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT) );
-  printf("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2) );
+  PPPDEBUG(LOG_DEBUG, ("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT)) );
+  PPPDEBUG(LOG_DEBUG, ("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)) );
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-  printf("neg_eap: %d\n", ao->neg_eap);
+  PPPDEBUG(LOG_DEBUG, ("neg_eap: %d\n", ao->neg_eap) );
 #endif /* EAP_SUPPORT */
 
 #if 0 /* OLD CODE */
@@ -1987,10 +1989,6 @@ get_secret(unit, client, server, secret, secret_len, am_server)
 		strlcpy(rname, ppp_settings.user, sizeof(rname));
 		strlcpy(secret, ppp_settings.passwd, sizeof(secret));
 		secret_len = strlen(secret);
-
-		printf("CHAP USER = %s\n", ppp_settings.user);
-		printf("CHAP PASS = %s\n", ppp_settings.passwd);
-		printf("CHAP PASS LEN = %s\n", strlen(secret));
 */
 
     FILE *f;

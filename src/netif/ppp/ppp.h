@@ -15,8 +15,7 @@
 #include "lwip/timers.h"
 
 #include "pppdebug.h"
-
-#include <net/ppp_defs.h> /* FIXME: merge linux/ppp_defs.h content here */
+#include "net/ppp_defs.h" /* FIXME: merge linux/ppp_defs.h content here */
 
 #ifdef INET6
 #include "eui64.h"
