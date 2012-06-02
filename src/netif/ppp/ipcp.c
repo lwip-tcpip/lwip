@@ -58,6 +58,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include "pppmy.h"
 #include "pppd.h"
 #include "fsm.h"
 #include "ipcp.h"
@@ -312,6 +313,7 @@ static void ipcp_clear_addrs __P((int, u_int32_t, u_int32_t, bool));
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
+#if 0 /* UNUSED, already defined by lwIP */
 /*
  * Make a string representation of a network IP address.
  */
@@ -324,6 +326,7 @@ u_int32_t ipaddr;
     slprintf(b, sizeof(b), "%I", ipaddr);
     return b;
 }
+#endif /* UNUSED, already defined by lwIP */
 
 /*
  * Option parsing.

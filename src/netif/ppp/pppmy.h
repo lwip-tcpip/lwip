@@ -12,6 +12,7 @@
 
 #include <syslog.h> /* FIXME: temporary */
 
+#include <net/ppp_defs.h> /* FIXME: merge linux/ppp_defs.h content here */
 
 #include "lwip/netif.h"
 #include "lwip/def.h"
