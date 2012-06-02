@@ -184,10 +184,12 @@ typedef struct PPPControl_s {
 
 static void pppStart(int pd);		/** Initiate LCP open request */
 static void ppp_input(void *arg);
+#if PPPOE_SUPPORT
 static void pppOverEthernetLinkStatusCB(int pd, int up);
 static err_t pppifOutputOverEthernet(int pd, struct pbuf *p);
-static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
-static err_t pppifNetifInit(struct netif *netif);
+#endif /* PPPOE_SUPPORT */
+static err_t ppp_low_level_output(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+static err_t ppp_netif_init_cb(struct netif *netif);
 
 
 /******************************/
@@ -807,8 +809,12 @@ static err_t pppifOutputOverEthernet(int pd, struct pbuf *p) {
 }
 #endif /* PPPOE_SUPPORT */
 
-/* Send a packet on the given connection. */
-static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+
+/* Send a packet on the given connection.
+ *
+ * This is the low level function that send the PPP packet.
+ */
+static err_t ppp_low_level_output(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
   int pd = (int)(size_t)netif->state;
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
@@ -824,7 +830,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
   /* We let any protocol value go through - it can't hurt us
    * and the peer will just drop it if it's not accepting it. */
   if (pd < 0 || pd >= NUM_PPP || !pc->openFlag || !pb) {
-    PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: bad parms prot=%d pb=%p\n",
+    PPPDEBUG(LOG_WARNING, ("ppp_low_level_output[%d]: bad parms prot=%d pb=%p\n",
               pd, PPP_IP, (void*)pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
@@ -834,7 +840,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
 
   /* Check that the link is up. */
   if (phase == PHASE_DEAD) {
-    PPPDEBUG(LOG_ERR, ("pppifOutput[%d]: link not up\n", pd));
+    PPPDEBUG(LOG_ERR, ("ppp_low_level_output[%d]: link not up\n", pd));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
@@ -851,7 +857,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
   /* Grab an output buffer. */
   headMB = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (headMB == NULL) {
-    PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: first alloc fail\n", pd));
+    PPPDEBUG(LOG_WARNING, ("ppp_low_level_output[%d]: first alloc fail\n", pd));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
@@ -876,7 +882,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
         protocol = PPP_VJC_UNCOMP;
         break;
       default:
-        PPPDEBUG(LOG_WARNING, ("pppifOutput[%d]: bad IP packet\n", pd));
+        PPPDEBUG(LOG_WARNING, ("ppp_low_level_output[%d]: bad IP packet\n", pd));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
         snmp_inc_ifoutdiscards(netif);
@@ -937,7 +943,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
   /* If we failed to complete the packet, throw it away. */
   if (!tailMB) {
     PPPDEBUG(LOG_WARNING,
-             ("pppifOutput[%d]: Alloc err - dropping proto=%d\n",
+             ("ppp_low_level_output[%d]: Alloc err - dropping proto=%d\n",
               pd, protocol));
     pbuf_free(headMB);
     LINK_STATS_INC(link.memerr);
@@ -947,7 +953,7 @@ static err_t pppifOutput(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr
   }
 
   /* Send it. */
-  PPPDEBUG(LOG_INFO, ("pppifOutput[%d]: proto=0x%"X16_F"\n", pd, protocol));
+  PPPDEBUG(LOG_INFO, ("ppp_low_level_output[%d]: proto=0x%"X16_F"\n", pd, protocol));
 
   nPut(pc, headMB);
 #endif /* PPPOS_SUPPORT */
@@ -1015,7 +1021,7 @@ int pppWriteOverEthernet(int pd, const u_char *s, int n) {
  *  RETURN: >= 0 Number of characters written
  *           -1 Failed to write to device
  */
-int pppWrite(int pd, const u_char *s, int n) {
+int ppp_output(int pd, const u_char *s, int n) {
   PPPControl *pc = &pppControl[pd];
 #if PPPOS_SUPPORT
   u_char c;
@@ -1070,8 +1076,8 @@ int pppWrite(int pd, const u_char *s, int n) {
    * Otherwise send it. */
   if (!tailMB) {
     PPPDEBUG(LOG_WARNING,
-             ("pppWrite[%d]: Alloc err - dropping pbuf len=%d\n", pd, headMB->len));
-           /*"pppWrite[%d]: Alloc err - dropping %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
+             ("ppp_output[%d]: Alloc err - dropping pbuf len=%d\n", pd, headMB->len));
+           /*"ppp_output[%d]: Alloc err - dropping %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
     pbuf_free(headMB);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
@@ -1079,8 +1085,8 @@ int pppWrite(int pd, const u_char *s, int n) {
     return PPPERR_ALLOC;
   }
 
-  PPPDEBUG(LOG_INFO, ("pppWrite[%d]: len=%d\n", pd, headMB->len));
-                   /* "pppWrite[%d]: %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
+  PPPDEBUG(LOG_INFO, ("ppp_output[%d]: len=%d\n", pd, headMB->len));
+                   /* "ppp_output[%d]: %d:%.*H", pd, headMB->len, LWIP_MIN(headMB->len * 2, 40), headMB->payload)); */
   nPut(pc, headMB);
 #endif /* PPPOS_SUPPORT */
 
@@ -1093,12 +1099,29 @@ int pppWrite(int pd, const u_char *s, int n) {
  *
  * output - Output PPP packet.
  */
-
+/*
 void output (int unit, unsigned char *p, int len)
 {
 	pppWrite(unit, p, len);
 }
+*/
 
+
+/************************************************************************
+ * Functions called by various PPP subsystems to configure
+ * the PPP interface or change the PPP phase.
+ */
+
+
+/*
+ * new_phase - signal the start of a new phase of pppd's operation.
+ */
+void new_phase(int p) {
+    phase = p;
+#if PPP_NOTIFY
+    /* The one willing notify support should add here the code to be notified of phase changes */
+#endif /* PPP_NOTIFY */
+}
 
 /*
  * ppp_send_config - configure the transmit-side characteristics of
@@ -1182,25 +1205,6 @@ int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
     return 0;
 }
 
-
-/*
- * pppifNetifInit - netif init callback
- */
-static err_t
-pppifNetifInit(struct netif *netif)
-{
-  netif->name[0] = 'p';
-  netif->name[1] = 'p';
-  netif->output = pppifOutput;
-  netif->mtu = pppMTU((int)(size_t)netif->state);
-  netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
-#if LWIP_NETIF_HOSTNAME
-  /* @todo: Initialize interface hostname */
-  /* netif_set_hostname(netif, "lwip"); */
-#endif /* LWIP_NETIF_HOSTNAME */
-  return ERR_OK;
-}
-
 /*
  * sifup - Config the interface up and enable IP packets to pass.
  */
@@ -1215,7 +1219,7 @@ int sifup(int u)
   } else {
     netif_remove(&pc->netif);
     if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask,
-                  &pc->addrs.his_ipaddr, (void *)(size_t)u, pppifNetifInit, ip_input)) {
+                  &pc->addrs.his_ipaddr, (void *)(size_t)u, ppp_netif_init_cb, ip_input)) {
       netif_set_up(&pc->netif);
       pc->if_up = 1;
       pc->errCode = PPPERR_NONE;
@@ -1231,6 +1235,22 @@ int sifup(int u)
   }
 
   return st;
+}
+
+/*
+ * ppp_netif_init_cb - netif init callback
+ */
+static err_t ppp_netif_init_cb(struct netif *netif) {
+  netif->name[0] = 'p';
+  netif->name[1] = 'p';
+  netif->output = ppp_low_level_output;
+  netif->mtu = pppMTU((int)(size_t)netif->state);
+  netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
+#if LWIP_NETIF_HOSTNAME
+  /* @todo: Initialize interface hostname */
+  /* netif_set_hostname(netif, "lwip"); */
+#endif /* LWIP_NETIF_HOSTNAME */
+  return ERR_OK;
 }
 
 /********************************************************************
@@ -1509,16 +1529,6 @@ const char * protocol_name(int proto) {
     return NULL;
 }
 #endif /* PPP_PROTOCOLNAME */
-
-/*
- * new_phase - signal the start of a new phase of pppd's operation.
- */
-void new_phase(int p) {
-    phase = p;
-#if PPP_NOTIFY
-    /* The one willing notify support should add here the code to be notified of phase changes */
-#endif /* PPP_NOTIFY */
-}
 
 #if PPP_STATS_SUPPORT
 

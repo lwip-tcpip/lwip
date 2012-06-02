@@ -274,7 +274,7 @@ eap_state *esp;
 	PUTCHAR(esp->es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	output(esp->es_unit, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
+	ppp_output(esp->es_unit, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
 
 	esp->es_server.ea_state = eapBadAuth;
 	auth_peer_fail(esp->es_unit, PPP_EAP);
@@ -299,7 +299,7 @@ eap_state *esp;
 	PUTCHAR(esp->es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
 
 	auth_peer_success(esp->es_unit, PPP_EAP, 0,
 	    esp->es_server.ea_peer, esp->es_server.ea_peerlen);
@@ -860,7 +860,7 @@ eap_state *esp;
 	outlen = (outp - outpacket_buf) - PPP_HDRLEN;
 	PUTSHORT(outlen, lenloc);
 
-	output(esp->es_unit, outpacket_buf, outlen + PPP_HDRLEN);
+	ppp_output(esp->es_unit, outpacket_buf, outlen + PPP_HDRLEN);
 
 	esp->es_server.ea_requests++;
 
@@ -1067,7 +1067,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 /*
@@ -1102,7 +1102,7 @@ int namelen;
 		MEMCPY(outp, name, namelen);
 	}
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 #ifdef USE_SRP
@@ -1135,7 +1135,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 /*
@@ -1166,7 +1166,7 @@ u_char *str;
 	PUTLONG(flags, outp);
 	MEMCPY(outp, str, SHA_DIGESTSIZE);
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
 #endif /* USE_SRP */
 
@@ -1191,7 +1191,7 @@ u_char type;
 	PUTCHAR(EAPT_NAK, outp);
 	PUTCHAR(type, outp);
 
-	output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_output(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 #ifdef USE_SRP

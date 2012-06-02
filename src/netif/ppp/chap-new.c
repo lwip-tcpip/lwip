@@ -276,7 +276,7 @@ chap_timeout(void *arg)
 		return;
 	}
 
-	output(0, ss->challenge, ss->challenge_pktlen);
+	ppp_output(0, ss->challenge, ss->challenge_pktlen);
 	++ss->challenge_xmits;
 	ss->flags |= TIMEOUT_PENDING;
 	TIMEOUT(chap_timeout, arg, chap_timeout_time);
@@ -377,7 +377,7 @@ chap_handle_response(struct chap_server_state *ss, int id,
 	p[3] = len;
 	if (mlen > 0)
 		memcpy(p + CHAP_HDRLEN, ss->message, mlen);
-	output(0, outpacket_buf, PPP_HDRLEN + len);
+	ppp_output(0, outpacket_buf, PPP_HDRLEN + len);
 
 	if (ss->flags & CHALLENGE_VALID) {
 		ss->flags &= ~CHALLENGE_VALID;
@@ -499,7 +499,7 @@ chap_respond(struct chap_client_state *cs, int id,
 	p[2] = len >> 8;
 	p[3] = len;
 
-	output(0, response, PPP_HDRLEN + len);
+	ppp_output(0, response, PPP_HDRLEN + len);
 }
 
 static void

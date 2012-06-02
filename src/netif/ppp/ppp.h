@@ -293,9 +293,6 @@ struct ppp_settings ppp_settings;
  *** PUBLIC FUNCTIONS ***
  ************************/
 
-/* Initialize the PPP subsystem. */
-int ppp_init(void);
-
 /* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
  *
@@ -324,6 +321,7 @@ enum pppAuthType {
     PPPAUTHTYPE_NONE
 };
 
+/* Initialize the PPP subsystem. */
 int ppp_init(void);
 
 void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
@@ -338,8 +336,12 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
                         pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
 
 
-/* -- private */
 
+
+/* --- EVERYTHING BELOW SHOULD BE CONSIDERED PRIVATE ---- */
+
+/* PPP flow functions
+ */
 struct pbuf * pppSingleBuf(struct pbuf *p);
 
 void pppInProcOverEthernet(int pd, struct pbuf *pb);
@@ -350,11 +352,15 @@ u_short pppMTU(int pd);
 
 int pppWriteOverEthernet(int pd, const u_char *s, int n);
 
-int pppWrite(int pd, const u_char *s, int n);
+int ppp_output(int pd, const u_char *s, int n);
 
 void pppInProcOverEthernet(int pd, struct pbuf *pb);
 
-void output (int unit, unsigned char *p, int len);
+
+/* Functions called by various PPP subsystems to configure
+ * the PPP interface or change the PPP phase.
+ */
+void new_phase(int p);
 
 int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp);
 int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
@@ -384,19 +390,19 @@ int get_loop_output(void);
 
 u_int32_t GetMask (u_int32_t addr);
 
+
+/* Optional protocol names list, to make our messages a little more informative. */
 #if PPP_PROTOCOLNAME
 const char * protocol_name(int proto);
 #endif /* PPP_PROTOCOLNAME  */
 
-void new_phase(int p);
 
+/* Optional stats support, to get some statistics on the PPP interface */
 #if PPP_STATS_SUPPORT
 void print_link_stats(void); /* Print stats, if available */
 void reset_link_stats(int u); /* Reset (init) stats when link goes up */
 void update_link_stats(int u); /* Get stats at link termination */
 #endif /* PPP_STATS_SUPPORT */
-
-#endif /* PPPMY_H_ */
 
 
 
@@ -560,3 +566,6 @@ void end_pr_log __P((void));	/* finish up after using pr_log */
 void dump_packet __P((const char *, u_char *, int));
 				/* dump packet to debug log if interesting */
 #endif /* PRINTPKT_SUPPORT */
+
+
+#endif /* PPPMY_H_ */
