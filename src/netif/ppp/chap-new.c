@@ -669,8 +669,10 @@ struct protent chap_protent = {
 #endif /* PRINTPKT_SUPPORT */
 	NULL,		/* datainput */
 	1,		/* enabled_flag */
+#if PRINTPKT_SUPPORT
 	"CHAP",		/* name */
 	NULL,		/* data_name */
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
 	chap_option_list,
 	NULL,		/* check_options */

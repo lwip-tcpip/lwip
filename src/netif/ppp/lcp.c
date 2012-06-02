@@ -283,8 +283,10 @@ struct protent lcp_protent = {
 #endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
+#if PRINTPKT_SUPPORT
     "LCP",
     NULL,
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     lcp_option_list,
     NULL,

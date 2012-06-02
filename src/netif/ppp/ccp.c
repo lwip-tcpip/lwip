@@ -197,8 +197,10 @@ struct protent ccp_protent = {
 #endif /* PRINTPKT_SUPPORT */
     ccp_datainput,
     1,
+#if PRINTPKT_SUPPORT
     "CCP",
     "Compressed",
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     ccp_option_list,
     NULL,

@@ -120,8 +120,10 @@ struct protent eap_protent = {
 #endif /* PRINTPKT_SUPPORT */
 	NULL,			/* process a received data packet */
 	1,			/* protocol enabled */
+#if PRINTPKT_SUPPORT
 	"EAP",			/* text name of protocol */
 	NULL,			/* text name of corresponding data protocol */
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
 	eap_option_list,	/* list of command-line options */
 	NULL,			/* check requested options; assign defaults */

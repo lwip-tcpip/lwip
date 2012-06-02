@@ -116,8 +116,10 @@ struct protent ecp_protent = {
 #endif /* PRINTPKT_SUPPORT */
     NULL, /* ecp_datainput, */
     0,
+#if PRINTPKT_SUPPORT
     "ECP",
     "Encrypted",
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     ecp_option_list,
     NULL,

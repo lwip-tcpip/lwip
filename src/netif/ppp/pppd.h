@@ -431,8 +431,10 @@ struct protent {
     /* Process a received data packet */
     void (*datainput) __P((int unit, u_char *pkt, int len));
     bool enabled_flag;		/* 0 iff protocol is disabled */
+#if PRINTPKT_SUPPORT
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     option_t *options;		/* List of command-line options */
     /* Check requested options, assign defaults */

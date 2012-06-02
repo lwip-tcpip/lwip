@@ -103,8 +103,10 @@ struct protent pap_protent = {
 #endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
+#if PRINTPKT_SUPPORT
     "PAP",
     NULL,
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     pap_option_list,
     NULL,

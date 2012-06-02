@@ -281,8 +281,10 @@ struct protent ipcp_protent = {
 #endif /* PRINTPKT_SUPPORT */
     NULL,
     1,
+#if PRINTPKT_SUPPORT
     "IPCP",
     "IP",
+#endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     ipcp_option_list,
     ip_check_options,
