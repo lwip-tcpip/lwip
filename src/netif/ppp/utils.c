@@ -40,7 +40,7 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <syslog.h>
+//#include <syslog.h>
 #include <netdb.h>
 #include <time.h>
 #include <utmp.h>
@@ -557,7 +557,7 @@ end_pr_log()
 }
 
 /*
- * pr_log - printer routine for outputting to syslog
+ * pr_log - printer routine for outputting to log
  */
 void
 pr_log __V((void *arg, char *fmt, ...))
@@ -674,7 +674,10 @@ log_write(level, buf)
     int level;
     char *buf;
 {
-    syslog(level, "%s", buf);
+/* FIXME: replace this with a log callback */
+    // if(level >= min_log_level) /* FIXME: add a minimum log level */
+    printf("LOG: %s\n", buf);
+#if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
 	int n = strlen(buf);
 
@@ -684,6 +687,7 @@ log_write(level, buf)
 	    || write(log_to_fd, "\n", 1) != 1)
 	    log_to_fd = -1;
     }
+#endif
 }
 
 /*

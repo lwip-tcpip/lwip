@@ -44,6 +44,8 @@
 
 #include "lwip/opt.h"
 
+#include "pppmy.h"
+
 /*
  * TODO:
  */
@@ -72,6 +74,7 @@
 #include "eui64.h"
 #endif
 
+#if 0
 /*
  * Limits.
  */
@@ -81,13 +84,16 @@
 #define MAXARGS		1	/* max # args to a command */
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
 #define MAXSECRETLEN	256	/* max length of password or secret */
+#endif
 
+#if 0
 /*
  * Option descriptor structure.
  */
 
 #ifndef bool
 typedef unsigned char	bool;
+#endif
 #endif
 
 #if 0
@@ -183,12 +189,15 @@ struct pppd_stats {
 };
 #endif
 
+#if 0
 /* Used for storing a sequence of words.  Usually malloced. */
 struct wordlist {
     struct wordlist	*next;
     char		*word;
 };
+#endif
 
+#if 0
 /* An endpoint discriminator, used with multilink. */
 #define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
 struct epdisc {
@@ -204,6 +213,7 @@ struct epdisc {
 #define EPD_MAC		3
 #define EPD_MAGIC	4
 #define EPD_PHONENUM	5
+#endif
 
 #if 0 /* UNUSED */
 typedef void (*notify_func) __P((void *, int));
@@ -363,6 +373,7 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 				/* Has meaning only with MS-CHAP challenges */
 #endif
 
+#if 0
 /* Values for auth_pending, auth_done */
 #if PAP_SUPPORT
 #define PAP_WITHPEER	0x1
@@ -389,12 +400,16 @@ extern bool	ms_lanman;	/* Use LanMan password instead of NT */
 #define CHAP_MS2_PEER		0x800
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
+#endif
 
+#if 0
 extern char *current_option;	/* the name of the option being parsed */
 extern int  privileged_option;	/* set iff the current option came from root */
 extern char *option_source;	/* string saying where the option came from */
 extern int  option_priority;	/* priority of current options */
+#endif
 
+#if 0
 /*
  * Values for phase.
  */
@@ -411,6 +426,7 @@ extern int  option_priority;	/* priority of current options */
 #define PHASE_DISCONNECT	10
 #define PHASE_HOLDOFF		11
 #define PHASE_MASTER		12
+#endif
 
 #if 0
 /*
@@ -508,13 +524,16 @@ extern struct channel *the_channel;
  * Prototypes.
  */
 
+#if 0
 /* Procedures exported from main.c. */
 void set_ifunit __P((int));	/* set stuff that depends on ifunit */
+#endif
 
 #if 0
 void detach __P((void));	/* Detach from controlling tty */
 #endif
 
+#if 0
 void die __P((int));		/* Cleanup and exit */
 void quit __P((void));		/* like die(1) */
 void novm __P((char *));	/* Say we ran out of memory, and die */
@@ -522,6 +541,7 @@ void timeout __P((void (*func)(void *), void *arg, int s, int us));
 				/* Call func(arg) after s.us seconds */
 void untimeout __P((void (*func)(void *), void *arg));
 				/* Cancel call to func(arg) */
+#endif
 #if 0
 void record_child __P((int, char *, void (*) (void *), void *, int));
 #endif
@@ -553,11 +573,15 @@ void notify __P((struct notifier *, int));
 //int  ppp_send_config __P((int, int, u_int32_t, int, int));
 //int  ppp_recv_config __P((int, int, u_int32_t, int, int));
 //void remove_pidfiles __P((void));
+#if 0
 void lock_db __P((void));
 void unlock_db __P((void));
+#endif
 
+#if 0
 /* Procedures exported from tty.c. */
 void tty_init __P((void));
+#endif
 
 /* Procedures exported from utils.c. */
 void log_packet __P((u_char *, int, char *, int));
@@ -794,6 +818,7 @@ extern void (*snoop_recv_hook) __P((unsigned char *p, int len));
 extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #endif
 
+#if 0
 /*
  * Inline versions of get/put char/short/long.
  * Pointer is advanced; we assume that both arguments
@@ -836,13 +861,8 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 /*
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
  */
-/*
 #define TIMEOUT(r, f, t)	timeout((r), (f), (t), 0)
 #define UNTIMEOUT(r, f)		untimeout((r), (f))
-*/
-#define TIMEOUT(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
-#define TIMEOUTMS(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-#define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
 
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
@@ -884,7 +904,10 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define EXIT_TRAFFIC_LIMIT	20
 #endif
 #define EXIT_CNID_AUTH_FAILED	21
+#endif
 
+
+#if 0
 /*
  * Debug macros.  Slightly useful for finding bugs in pppd, not particularly
  * useful for finding out why your connection isn't being established.
@@ -899,6 +922,7 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define DEBUGCHAP	1
 #endif
 
+#if 0
 #ifndef LOG_PPP			/* we use LOG_LOCAL2 for syslog by default */
 #if defined(DEBUGMAIN) || defined(DEBUGFSM) || defined(DEBUGSYS) \
   || defined(DEBUGLCP) || defined(DEBUGIPCP) || defined(DEBUGUPAP) \
@@ -908,6 +932,7 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define LOG_PPP LOG_DAEMON
 #endif
 #endif /* LOG_PPP */
+#endif
 
 #ifdef DEBUGMAIN
 #define MAINDEBUG(x)	if (debug) dbglog x
@@ -963,6 +988,9 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define IPXCPDEBUG(x)
 #endif
 
+#endif
+
+#if 0
 #ifndef SIGTYPE
 #if defined(sun) || defined(SYSV) || defined(POSIX_SOURCE)
 #define SIGTYPE void
@@ -970,9 +998,12 @@ extern void (*snoop_send_hook) __P((unsigned char *p, int len));
 #define SIGTYPE int
 #endif /* defined(sun) || defined(SYSV) || defined(POSIX_SOURCE) */
 #endif /* SIGTYPE */
+#endif
 
+#if 0
 #ifndef offsetof
 #define offsetof(type, member) ((size_t) &((type *)0)->member)
+#endif
 #endif
 
 #endif /* __PPP_H__ */

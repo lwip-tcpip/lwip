@@ -10,16 +10,50 @@
 #ifndef PPPMY_H_
 #define PPPMY_H_
 
-#include <syslog.h> /* FIXME: temporary */
+#include "lwip/netif.h"
+#include "lwip/def.h"
+
+#include "pppdebug.h"
 
 #include <net/ppp_defs.h> /* FIXME: merge linux/ppp_defs.h content here */
 
-#include "lwip/netif.h"
-#include "lwip/def.h"
+#ifdef INET6
+#include "eui64.h"
+#endif
+
+
+
+/*
+ * Limits.
+ */
+
+#define NUM_PPP		1	/* One PPP interface supported (per process) */
+#define MAXWORDLEN	1024	/* max length of word in file (incl null) */
+#define MAXARGS		1	/* max # args to a command */
+#define MAXNAMELEN	256	/* max length of hostname or name for auth */
+#define MAXSECRETLEN	256	/* max length of password or secret */
 
 #ifndef bool
 typedef unsigned char	bool;
 #endif
+
+/* FIXME: make endpoint discriminator optional */
+
+/* An endpoint discriminator, used with multilink. */
+#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
+struct epdisc {
+    unsigned char	class;
+    unsigned char	length;
+    unsigned char	value[MAX_ENDP_LEN];
+};
+
+/* values for epdisc.class */
+#define EPD_NULL	0	/* null discriminator, no data */
+#define EPD_LOCAL	1
+#define EPD_IP		2
+#define EPD_MAC		3
+#define EPD_MAGIC	4
+#define EPD_PHONENUM	5
 
 /* FIXME: global variables per PPP session */
 
@@ -86,6 +120,51 @@ struct protent {
 
 /* Table of pointers to supported protocols */
 extern struct protent *protocols[];
+
+
+/* Values for auth_pending, auth_done */
+#if PAP_SUPPORT
+#define PAP_WITHPEER	0x1
+#define PAP_PEER	0x2
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+#define CHAP_WITHPEER	0x4
+#define CHAP_PEER	0x8
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+#define EAP_WITHPEER	0x10
+#define EAP_PEER	0x20
+#endif /* EAP_SUPPORT */
+
+/* Values for auth_done only */
+#if CHAP_SUPPORT
+#define CHAP_MD5_WITHPEER	0x40
+#define CHAP_MD5_PEER		0x80
+#if MSCHAP_SUPPORT
+#define CHAP_MS_SHIFT		8	/* LSB position for MS auths */
+#define CHAP_MS_WITHPEER	0x100
+#define CHAP_MS_PEER		0x200
+#define CHAP_MS2_WITHPEER	0x400
+#define CHAP_MS2_PEER		0x800
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
+
+/*
+ * Values for phase.
+ */
+#define PHASE_DEAD		0
+#define PHASE_INITIALIZE	1
+#define PHASE_SERIALCONN	2
+#define PHASE_DORMANT		3
+#define PHASE_ESTABLISH		4
+#define PHASE_AUTHENTICATE	5
+#define PHASE_CALLBACK		6
+#define PHASE_NETWORK		7
+#define PHASE_RUNNING		8
+#define PHASE_TERMINATE		9
+#define PHASE_DISCONNECT	10
+#define PHASE_HOLDOFF		11
+#define PHASE_MASTER		12
 
 
 /*************************
@@ -288,3 +367,92 @@ void update_link_stats(int u); /* Get stats at link termination */
 #endif /* PPP_STATS_SUPPORT */
 
 #endif /* PPPMY_H_ */
+
+
+
+/*
+ * Inline versions of get/put char/short/long.
+ * Pointer is advanced; we assume that both arguments
+ * are lvalues and will already be in registers.
+ * cp MUST be u_char *.
+ */
+#define GETCHAR(c, cp) { \
+	(c) = *(cp)++; \
+}
+#define PUTCHAR(c, cp) { \
+	*(cp)++ = (u_char) (c); \
+}
+
+
+#define GETSHORT(s, cp) { \
+	(s) = *(cp)++ << 8; \
+	(s) |= *(cp)++; \
+}
+#define PUTSHORT(s, cp) { \
+	*(cp)++ = (u_char) ((s) >> 8); \
+	*(cp)++ = (u_char) (s); \
+}
+
+#define GETLONG(l, cp) { \
+	(l) = *(cp)++ << 8; \
+	(l) |= *(cp)++; (l) <<= 8; \
+	(l) |= *(cp)++; (l) <<= 8; \
+	(l) |= *(cp)++; \
+}
+#define PUTLONG(l, cp) { \
+	*(cp)++ = (u_char) ((l) >> 24); \
+	*(cp)++ = (u_char) ((l) >> 16); \
+	*(cp)++ = (u_char) ((l) >> 8); \
+	*(cp)++ = (u_char) (l); \
+}
+
+#define INCPTR(n, cp)	((cp) += (n))
+#define DECPTR(n, cp)	((cp) -= (n))
+
+/*
+ * System dependent definitions for user-level 4.3BSD UNIX implementation.
+ */
+#define TIMEOUT(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
+#define TIMEOUTMS(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
+#define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
+
+#define BZERO(s, n)		memset(s, 0, n)
+#define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
+
+#define PRINTMSG(m, l)		{ info("Remote message: %0.*v", l, m); }
+
+/*
+ * MAKEHEADER - Add Header fields to a packet.
+ */
+#define MAKEHEADER(p, t) { \
+    PUTCHAR(PPP_ALLSTATIONS, p); \
+    PUTCHAR(PPP_UI, p); \
+    PUTSHORT(t, p); }
+
+/*
+ * Exit status values.
+ */
+#define EXIT_OK			0
+#define EXIT_FATAL_ERROR	1
+#define EXIT_OPTION_ERROR	2
+#define EXIT_NOT_ROOT		3
+#define EXIT_NO_KERNEL_SUPPORT	4
+#define EXIT_USER_REQUEST	5
+#define EXIT_LOCK_FAILED	6
+#define EXIT_OPEN_FAILED	7
+#define EXIT_CONNECT_FAILED	8
+#define EXIT_PTYCMD_FAILED	9
+#define EXIT_NEGOTIATION_FAILED	10
+#define EXIT_PEER_AUTH_FAILED	11
+#define EXIT_IDLE_TIMEOUT	12
+#define EXIT_CONNECT_TIME	13
+#define EXIT_CALLBACK		14
+#define EXIT_PEER_DEAD		15
+#define EXIT_HANGUP		16
+#define EXIT_LOOPBACK		17
+#define EXIT_INIT_FAILED	18
+#define EXIT_AUTH_TOPEER_FAILED	19
+#ifdef MAXOCTETS
+#define EXIT_TRAFFIC_LIMIT	20
+#endif
+#define EXIT_CNID_AUTH_FAILED	21

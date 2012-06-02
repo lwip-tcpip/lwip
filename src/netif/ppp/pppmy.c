@@ -512,9 +512,11 @@ int ppp_init(void) {
     debug = 1;
     ifunit = 1; /* FIXME: remove ifunit */
 
-    openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_PPP);
+    /*
+    openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_DAEMON);
     setlogmask(LOG_UPTO(LOG_DEBUG));
     syslog(LOG_DEBUG, "hello, this is gradator lwIP PPP!");
+    */
 
     memset(&ppp_settings, 0, sizeof(ppp_settings));
     ppp_settings.usepeerdns = 1;
