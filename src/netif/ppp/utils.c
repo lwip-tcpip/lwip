@@ -32,6 +32,7 @@
 
 #define RCSID	"$Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp $"
 
+#if 0 /* UNUSED */
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h>
@@ -40,14 +41,10 @@
 #include <signal.h>
 #include <errno.h>
 #include <fcntl.h>
-#if 0
 #include <syslog.h>
 #include <netdb.h>
-#endif
 #include <time.h>
-#if 0
 #include <utmp.h>
-#endif
 #include <pwd.h>
 #include <sys/param.h>
 #include <sys/types.h>
@@ -55,13 +52,14 @@
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
-#if 0
 #include <sys/socket.h>
 #include <netinet/in.h>
-#endif
 #ifdef SVR4
 #include <sys/mkdev.h>
 #endif
+#endif /* UNUSED */
+
+#include <ctype.h>  /* isdigit() */
 
 #include "ppp.h"
 
@@ -175,7 +173,9 @@ vslprintf(buf, buflen, fmt, args)
     char *str, *f, *buf0;
     unsigned char *p;
     char num[32];
+#if 0 /* need port */
     time_t t;
+#endif /* need port */
     u_int32_t ip;
     static char hexchars[] = "0123456789abcdef";
 #if PRINTPKT_SUPPORT
@@ -313,12 +313,14 @@ vslprintf(buf, buflen, fmt, args)
 	    buflen -= n;
 	    continue;
 #endif
+#if 0 /* need port */
 	case 't':
 	    time(&t);
 	    str = ctime(&t);
 	    str += 4;		/* chop off the day name */
 	    str[15] = 0;	/* chop off year and newline */
 	    break;
+#endif /* need port */
 	case 'v':		/* "visible" string */
 	case 'q':		/* quoted string */
 	    quoted = c == 'q';

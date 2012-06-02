@@ -10,16 +10,7 @@
 #ifndef PPPMY_H_
 #define PPPMY_H_
 
-#include "lwip/netif.h"
-#include "lwip/def.h"
-#include "lwip/timers.h"
-
-#include "pppdebug.h"
-#include "net/ppp_defs.h" /* FIXME: merge linux/ppp_defs.h content here */
-
-#ifdef INET6
-#include "eui64.h"
-#endif
+#include <stdio.h> /* formats */
 
 #if defined(__STDC__)
 #include <stdarg.h>
@@ -29,6 +20,17 @@
 #define __V(x)	(va_alist) va_dcl
 #define const
 #define volatile
+#endif
+
+#include "lwip/netif.h"
+#include "lwip/def.h"
+#include "lwip/timers.h"
+
+#include "pppdebug.h"
+#include "net/ppp_defs.h" /* FIXME: merge linux/ppp_defs.h content here */
+
+#ifdef INET6
+#include "eui64.h"
 #endif
 
 /*

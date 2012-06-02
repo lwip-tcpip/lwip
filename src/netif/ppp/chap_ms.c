@@ -77,6 +77,7 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && MSCHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#if 0 /* UNUSED */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,6 +85,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+#endif /* UNUSED */
 
 #include "ppp.h"
 

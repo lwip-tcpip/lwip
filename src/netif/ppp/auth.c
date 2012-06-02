@@ -70,6 +70,7 @@
 
 #include "lwip/opt.h"
 
+#if 0 /* UNUSED */
 #include <stdio.h>
 #include <stddef.h>
 #include <stdlib.h>
@@ -80,21 +81,16 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#if 0
 #include <sys/socket.h>
 #include <utmp.h>
-#endif
 #include <fcntl.h>
 #if defined(_PATH_LASTLOG) && defined(__linux__)
 #include <lastlog.h>
 #endif
 
-#if 0
 #include <netdb.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#endif
-
 
 #ifdef HAS_SHADOW
 #include <shadow.h>
@@ -102,7 +98,9 @@
 #define PW_PPP PW_LOGIN
 #endif
 #endif
+
 #include <time.h>
+#endif /* UNUSED */
 
 #include "ppp.h"
 

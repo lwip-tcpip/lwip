@@ -46,9 +46,11 @@
  * TODO:
  */
 
+#if 0 /* UNUSED */
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#endif /* UNUSED */
 
 #include "ppp.h"
 

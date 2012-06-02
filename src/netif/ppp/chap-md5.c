@@ -31,8 +31,10 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#if 0 /* UNUSED */
 #include <stdlib.h>
 #include <string.h>
+#endif /* UNUSED */
 
 #include "ppp.h"
 

@@ -69,20 +69,20 @@
  */
 
 #include "lwip/opt.h"
-
 #if PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#include "netif/ppp_oe.h"
-
-#include "ppp.h"
+#if 0 /* UNUSED */
+#include <string.h>
+#include <stdio.h>
+#endif /* UNUSED */
 
 #include "lwip/timers.h"
 #include "lwip/memp.h"
 #include "lwip/stats.h"
 
-#include <string.h>
-#include <stdio.h>
+#include "ppp.h"
 
+#include "netif/ppp_oe.h"
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
