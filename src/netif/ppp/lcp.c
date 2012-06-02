@@ -427,10 +427,8 @@ lcp_close(unit, reason)
     fsm *f = &lcp_fsm[unit];
     int oldstate;
 
-#if PPP_NOTIFY
     if (phase != PHASE_DEAD && phase != PHASE_MASTER)
 	new_phase(PHASE_TERMINATE);
-#endif /* PPP_NOTIFY */
 
     if (f->flags & DELAYED_UP) {
 	UNTIMEOUT(lcp_delayed_up, f);

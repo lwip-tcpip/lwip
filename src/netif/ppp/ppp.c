@@ -167,7 +167,7 @@ static int fd_loop;		/* fd for getting demand-dial packets */
 int fd_devnull;			/* fd for /dev/null */
 int devfd = -1;			/* fd of underlying device */
 int fd_ppp = -1;		/* fd for talking PPP */
-int phase;			/* where the link is at */
+//int phase;			/* where the link is at */
 int kill_link;
 int asked_to_quit;
 int open_ccp_flag;

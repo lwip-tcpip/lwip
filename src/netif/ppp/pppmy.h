@@ -139,8 +139,6 @@ void pppInProcOverEthernet(int pd, struct pbuf *pb);
 const char * protocol_name(int proto);
 #endif /* PPP_PROTOCOLNAME  */
 
-#if PPP_NOTIFY
 void new_phase(int p);
-#endif /* PPP_NOTIFY */
 
 #endif /* PPPMY_H_ */

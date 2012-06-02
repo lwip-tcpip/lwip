@@ -23,6 +23,9 @@
 #include "netif/ppp_oe.h"
 #endif /* PPPOE_SUPPORT */
 
+/* FIXME: add a phase per PPP session */
+int phase;			/* where the link is at */
+
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
 typedef enum {
@@ -1438,11 +1441,12 @@ const char * protocol_name(int proto) {
 }
 #endif /* PPP_PROTOCOLNAME */
 
-#if PPP_NOTIFY
 /*
  * new_phase - signal the start of a new phase of pppd's operation.
  */
 void new_phase(int p) {
-
-}
+    phase = p;
+#if PPP_NOTIFY
+    /* The one willing notify support should add here the code to be notified of phase changes */
 #endif /* PPP_NOTIFY */
+}
