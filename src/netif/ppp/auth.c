@@ -203,12 +203,14 @@ int (*allowed_address_hook) __P((u_int32_t addr)) = NULL;
 void (*multilink_join_hook) __P((void)) = NULL;
 #endif
 
+#if PPP_NOTIFY
 /* A notifier for when the peer has authenticated itself,
    and we are proceeding to the network phase. */
 struct notifier *auth_up_notifier = NULL;
 
 /* A notifier for when the link goes down. */
 struct notifier *link_down_notifier = NULL;
+#endif /* PPP_NOTIFY */
 
 /*
  * Option variables.
@@ -567,7 +569,9 @@ void start_link(unit)
     char *msg;
 
     status = EXIT_NEGOTIATION_FAILED;
+#if PPP_NOTIFY
     new_phase(PHASE_SERIALCONN);
+#endif /* PPP_NOTIFY */
 
     hungup = 0;
     devfd = the_channel->connect();
@@ -603,18 +607,24 @@ void start_link(unit)
 	notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
+#if PPP_NOTIFY
     new_phase(PHASE_ESTABLISH);
+#endif /* PPP_NOTIFY */
 
     lcp_lowerup(0);
     return;
 
  disconnect:
+#if PPP_NOTIFY
     new_phase(PHASE_DISCONNECT);
+#endif /* PPP_NOTIFY */
     if (the_channel->disconnect)
 	the_channel->disconnect();
 
  fail:
+#if PPP_NOTIFY
     new_phase(PHASE_DEAD);
+#endif /* PPP_NOTIFY */
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
 }
@@ -630,7 +640,9 @@ link_terminated(unit)
 {
     if (phase == PHASE_DEAD || phase == PHASE_MASTER)
 	return;
+#if PPP_NOTIFY
     new_phase(PHASE_DISCONNECT);
+#endif /* PPP_NOTIFY */
 
 #if 0 /* UNUSED */
     if (pap_logout_hook) {
@@ -646,6 +658,10 @@ link_terminated(unit)
 	notice("Link terminated.");
 
     lcp_lowerdown(0);
+
+#if PPP_NOTIFY
+    new_phase(PHASE_DEAD);
+#endif /* PPP_NOTIFY */
 
 #if 0
     /*
@@ -702,12 +718,16 @@ void
 link_down(unit)
     int unit;
 {
+#if PPP_NOTIFY
     notify(link_down_notifier, 0);
+#endif /* #if PPP_NOTIFY */
 
     if (!doing_multilink) {
 	upper_layers_down(unit);
+#if PPP_NOTIFY
 	if (phase != PHASE_DEAD && phase != PHASE_MASTER)
 	    new_phase(PHASE_ESTABLISH);
+#endif /* PPP_NOTIFY */
     }
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
@@ -796,7 +816,9 @@ link_established(unit)
     }
 #endif /* UNUSED */
 
+#if PPP_NOTIFY
     new_phase(PHASE_AUTHENTICATE);
+#endif /* PPP_NOTIFY */
     auth = 0;
 #if EAP_SUPPORT
     if (go->neg_eap) {
@@ -860,6 +882,7 @@ network_phase(unit)
 	notice("peer from calling number %q authorized", remote_number);
 #endif /* UNUSED */
 
+#if PPP_NOTIFY
     /*
      * If the peer had to authenticate, notify it now.
      */
@@ -876,13 +899,16 @@ network_phase(unit)
 	) {
 	notify(auth_up_notifier, 0);
     }
+#endif /* PPP_NOTIFY */
 
 #if CBCP_SUPPORT
     /*
      * If we negotiated callback, do it now.
      */
     if (go->neg_cbcp) {
+#if PPP_NOTIFY
 	new_phase(PHASE_CALLBACK);
+#endif /* PPP_NOTIFY */
 	(*cbcp_protent.open)(unit);
 	return;
     }
@@ -914,7 +940,9 @@ start_networks(unit)
     int mppe_required;
 #endif /* MPPE */
 
+#if PPP_NOTIFY
     new_phase(PHASE_NETWORK);
+#endif /* PPP_NOTIFY */
 
 #ifdef HAVE_MULTILINK
     if (multilink) {
@@ -1165,7 +1193,9 @@ np_up(unit, proto)
 	 */
 	status = EXIT_OK;
 	unsuccess = 0;
+#if PPP_NOTIFY
 	new_phase(PHASE_RUNNING);
+#endif /* PPP_NOTIFY */
 
 #if 0 /* UNUSED */
 	if (idle_time_hook != 0)
@@ -1211,8 +1241,10 @@ np_down(unit, proto)
 	UNTIMEOUT(connect_time_expired, NULL);
 #ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
-#endif	
+#endif
+#if PPP_NOTIFY
 	new_phase(PHASE_NETWORK);
+#endif /* PPP_NOTIFY */
     }
 }
 

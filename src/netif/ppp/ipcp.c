@@ -84,9 +84,11 @@ void (*ip_down_hook) __P((void)) = NULL;
 /* Hook for a plugin to choose the remote IP address */
 void (*ip_choose_hook) __P((u_int32_t *)) = NULL;
 
+#if PPP_NOTIFY
 /* Notifiers for when IPCP goes up and down */
 struct notifier *ip_up_notifier = NULL;
 struct notifier *ip_down_notifier = NULL;
+#endif /* PPP_NOTIFY */
 
 /* local vars */
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
@@ -1961,7 +1963,9 @@ ipcp_up(f)
     np_up(f->unit, PPP_IP);
     ipcp_is_up = 1;
 
+#if PPP_NOTIFY
     notify(ip_up_notifier, 0);
+#endif /* PPP_NOTIFY */
     if (ip_up_hook)
 	ip_up_hook();
 }
@@ -1983,7 +1987,9 @@ ipcp_down(f)
     /* XXX more correct: we must get the stats before running the notifiers,
      * at least for the radius plugin */
     update_link_stats(f->unit);
+#if PPP_NOTIFY
     notify(ip_down_notifier, 0);
+#endif /* PPP_NOTIFY */
     if (ip_down_hook)
 	ip_down_hook();
     if (ipcp_is_up) {

@@ -201,6 +201,7 @@ struct epdisc {
 #define EPD_MAGIC	4
 #define EPD_PHONENUM	5
 
+#if 0 /* UNUSED */
 typedef void (*notify_func) __P((void *, int));
 
 struct notifier {
@@ -208,6 +209,7 @@ struct notifier {
     notify_func	    func;
     void	    *arg;
 };
+#endif /* UNUSED */
 
 /*
  * Global variables.
@@ -262,12 +264,14 @@ extern struct notifier *pidchange;   /* for notifications of pid changing */
 extern struct notifier *phasechange; /* for notifications of phase changes */
 extern struct notifier *exitnotify;  /* for notification that we're exiting */
 extern struct notifier *sigreceived; /* notification of received signal */
+
+#if PPP_NOTIFY
 extern struct notifier *ip_up_notifier; /* IPCP has come up */
 extern struct notifier *ip_down_notifier; /* IPCP has gone down */
-#if 0 /* UNUSED */
 extern struct notifier *auth_up_notifier; /* peer has authenticated */
-#endif /* UNUSED */
 extern struct notifier *link_down_notifier; /* link has gone down */
+#endif /* PPP_NOTIFY */
+
 extern struct notifier *fork_notifier;	/* we are a new child process */
 
 /* Values for do_callback and doing_callback */
@@ -526,10 +530,12 @@ void update_link_stats __P((int)); /* Get stats at link termination */
 void script_setenv __P((char *, char *, int));	/* set script env var */
 void script_unsetenv __P((char *));		/* unset script env var */
 #endif /* UNUSED */
-void new_phase __P((int));	/* signal start of new phase */
+//void new_phase __P((int));	/* signal start of new phase */
+#if 0 /* UNUSED */
 void add_notifier __P((struct notifier **, notify_func, void *));
 void remove_notifier __P((struct notifier **, notify_func, void *));
 void notify __P((struct notifier *, int));
+#endif /* UNUSED */
 int  ppp_send_config __P((int, int, u_int32_t, int, int));
 int  ppp_recv_config __P((int, int, u_int32_t, int, int));
 //void remove_pidfiles __P((void));

@@ -1437,3 +1437,12 @@ const char * protocol_name(int proto) {
     return NULL;
 }
 #endif /* PPP_PROTOCOLNAME */
+
+#if PPP_NOTIFY
+/*
+ * new_phase - signal the start of a new phase of pppd's operation.
+ */
+void new_phase(int p) {
+
+}
+#endif /* PPP_NOTIFY */

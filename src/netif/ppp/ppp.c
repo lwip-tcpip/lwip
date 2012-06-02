@@ -1016,6 +1016,7 @@ old_ppp_recv_config(unit, mru, accm, pcomp, accomp)
 }
 #endif
 
+#if 0
 /*
  * new_phase - signal the start of a new phase of pppd's operation.
  */
@@ -1028,6 +1029,7 @@ new_phase(p)
 	(*new_phase_hook)(p);
     notify(phasechange, p);
 }
+#endif
 
 #if 0
 /*
@@ -1658,6 +1660,7 @@ reap_kids()
 }
 #endif /* UNUSED */
 
+#if 0 /* UNUSED */
 /*
  * add_notifier - add a new function to be called when something happens.
  */
@@ -1699,7 +1702,9 @@ remove_notifier(notif, func, arg)
 	}
     }
 }
+#endif /* UNUSED */
 
+#if 0
 /*
  * notify - call a set of functions registered with add_notifier.
  */
@@ -1715,6 +1720,7 @@ notify(notif, val)
 	(*np->func)(np->arg, val);
     }
 }
+#endif
 
 #if 0 /* UNUSED */
 /*

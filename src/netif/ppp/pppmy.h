@@ -135,9 +135,12 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
 void pppInProcOverEthernet(int pd, struct pbuf *pb);
 
 
-
 #if PPP_PROTOCOLNAME
 const char * protocol_name(int proto);
 #endif /* PPP_PROTOCOLNAME  */
+
+#if PPP_NOTIFY
+void new_phase(int p);
+#endif /* PPP_NOTIFY */
 
 #endif /* PPPMY_H_ */
