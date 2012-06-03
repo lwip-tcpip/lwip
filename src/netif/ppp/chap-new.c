@@ -31,8 +31,6 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#define RCSID	"$Id: chap-new.c,v 1.9 2007/06/19 02:08:35 carlsonj Exp $"
-
 #if 0 /* UNUSED */
 #include <stdlib.h>
 #include <string.h>

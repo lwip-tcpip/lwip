@@ -33,6 +33,10 @@
 *
 *****************************************************************************
 */
+
+#include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #ifndef PPPDEBUG_H
 #define PPPDEBUG_H
 
@@ -72,3 +76,5 @@
 #endif /* PPP_DEBUG */
 
 #endif /* PPPDEBUG_H */
+
+#endif /* PPP_SUPPORT */

@@ -42,6 +42,9 @@
  * $Id: ipcp.h,v 1.14 2002/12/04 23:03:32 paulus Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 /*
  * Options.
  */
@@ -97,3 +100,5 @@ char *ip_ntoa __P((u_int32_t));
 #endif /* UNUSED, already defined by lwIP */
 
 extern struct protent ipcp_protent;
+
+#endif /* PPP_SUPPORT */

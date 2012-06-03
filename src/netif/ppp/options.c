@@ -41,8 +41,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: options.c,v 1.102 2008/06/15 06:53:06 paulus Exp $"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include <ctype.h>
 #include <stdio.h>
@@ -81,8 +80,6 @@
 #if defined(ultrix) || defined(NeXT)
 char *strdup __P((char *));
 #endif
-
-static const char rcsid[] = RCSID;
 
 struct option_value {
     struct option_value *next;
@@ -1647,3 +1644,5 @@ loadplugin(argv)
 }
 #endif /* PLUGIN */
 #endif /* PPP_OPTIONS */
+
+#endif /* PPP_SUPPORT */

@@ -29,6 +29,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT && HAVE_MULTILINK /* don't build if not configured for use in lwipopts.h */
 
 /* Multilink support
  *
@@ -38,8 +39,6 @@
  * We have to choose between doing a memory-shared TDB-clone,
  * or dropping multilink support at all.
  */
-
-#ifdef HAVE_MULTILINK
 
 #include <string.h>
 #include <ctype.h>
@@ -607,4 +606,4 @@ str_to_epdisc(ep, str)
 	return 1;
 }
 
-#endif /* HAVE_MULTILINK */
+#endif /* PPP_SUPPORT && HAVE_MULTILINK */

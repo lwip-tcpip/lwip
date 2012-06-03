@@ -31,8 +31,6 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && CCP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#define RCSID	"$Id: ccp.c,v 1.50 2005/06/26 19:34:41 carlsonj Exp $"
-
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,8 +44,6 @@
 #include "chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
 #include "lcp.h"	/* lcp_close(), lcp_fsm */
 #endif
-
-static const char rcsid[] = RCSID;
 
 /*
  * Unfortunately there is a bug in zlib which means that using a

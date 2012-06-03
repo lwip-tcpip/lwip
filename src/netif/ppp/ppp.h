@@ -6,6 +6,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #ifndef PPPMY_H_
 #define PPPMY_H_
@@ -744,3 +745,5 @@ void dump_packet __P((const char *, u_char *, int));
 
 
 #endif /* PPPMY_H_ */
+
+#endif /* PPP_SUPPORT */

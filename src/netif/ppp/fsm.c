@@ -41,8 +41,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: fsm.c,v 1.23 2004/11/13 02:28:15 paulus Exp $"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
  * TODO:
@@ -59,8 +58,6 @@
 #include "ppp.h"
 
 #include "fsm.h"
-
-static const char rcsid[] = RCSID;
 
 static void fsm_timeout __P((void *));
 static void fsm_rconfreq __P((fsm *, int, u_char *, int));
@@ -820,3 +817,5 @@ fsm_sdata(f, code, id, data, datalen)
     PUTSHORT(outlen, outp);
     ppp_write(f->unit, outpacket_buf, outlen + PPP_HDRLEN);
 }
+
+#endif /* PPP_SUPPORT */

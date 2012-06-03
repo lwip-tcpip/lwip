@@ -29,8 +29,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: utils.c,v 1.25 2008/06/03 12:06:37 paulus Exp $"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
 #include <stdio.h>
@@ -65,8 +64,6 @@
 
 #include "fsm.h"
 #include "lcp.h"
-
-static const char rcsid[] = RCSID;
 
 #if defined(SUNOS4)
 extern char *strerror();
@@ -1084,3 +1081,5 @@ unlock()
 }
 
 #endif /* Unused */
+
+#endif /* PPP_SUPPORT */

@@ -74,11 +74,11 @@
 *   Extracted from avos.
 *****************************************************************************/
 
-#ifndef MAGIC_H
-#define MAGIC_H
-
 #include "lwip/opt.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
+#ifndef MAGIC_H
+#define MAGIC_H
 
 /***********************
 *** PUBLIC FUNCTIONS ***
@@ -114,5 +114,6 @@ u32_t magic(void);	/* Returns the next magic number */
 void random_bytes(unsigned char *buf, u32_t len);
 #endif /* PPP_MD5_RANDM */
 
-#endif /* PPP_SUPPORT */
 #endif /* MAGIC_H */
+
+#endif /* PPP_SUPPORT */

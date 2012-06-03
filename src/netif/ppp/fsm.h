@@ -42,6 +42,9 @@
  * $Id: fsm.h,v 1.10 2004/11/13 02:28:15 paulus Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 /*
  * Packet header = Code, id, length.
  */
@@ -166,3 +169,5 @@ void fsm_sdata __P((fsm *, int, int, u_char *, int));
  * Variables
  */
 extern int peer_mru[];		/* currently negotiated peer MRU (per unit) */
+
+#endif /* PPP_SUPPORT */

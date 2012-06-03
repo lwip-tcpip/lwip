@@ -6,6 +6,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
@@ -1571,3 +1572,5 @@ void print_link_stats() {
     }
 }
 #endif /* PPP_STATS_SUPPORT */
+
+#endif /* PPP_SUPPORT */

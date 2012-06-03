@@ -42,6 +42,9 @@
  * $Id: lcp.h,v 1.20 2004/11/14 22:53:42 carlsonj Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 /*
  * Options.
  */
@@ -145,3 +148,5 @@ extern struct protent lcp_protent;
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
 #define DEFLOOPBACKFAIL	10
+
+#endif /* PPP_SUPPORT */

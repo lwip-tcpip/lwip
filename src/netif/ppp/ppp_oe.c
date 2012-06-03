@@ -69,7 +69,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT && PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
 #include <string.h>
@@ -1126,5 +1126,4 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_session = 0;
 }
 
-#endif /* PPPOE_SUPPORT */
-
+#endif /* PPP_SUPPORT && PPPOE_SUPPORT */

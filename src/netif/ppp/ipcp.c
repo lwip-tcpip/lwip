@@ -41,8 +41,7 @@
  */
 
 #include "lwip/opt.h"
-
-#define RCSID	"$Id: ipcp.c,v 1.73 2008/05/26 08:33:22 paulus Exp $"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
  * TODO:
@@ -64,8 +63,6 @@
 
 #include "fsm.h"
 #include "ipcp.h"
-
-static const char rcsid[] = RCSID;
 
 /* global vars */
 ipcp_options ipcp_wantoptions[NUM_PPP];	/* Options that we want to request */
@@ -2268,3 +2265,5 @@ ip_active_pkt(pkt, len)
     return 1;
 }
 #endif /* DEMAND_SUPPORT */
+
+#endif /* PPP_SUPPORT */

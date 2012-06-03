@@ -69,6 +69,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #if 0 /* UNUSED */
 #include <stdio.h>
@@ -2580,3 +2581,5 @@ free_wordlist(wp)
     }
 }
 #endif /* UNUSED */
+
+#endif /* PPP_SUPPORT */

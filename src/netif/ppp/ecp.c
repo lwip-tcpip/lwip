@@ -60,10 +60,6 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && ECP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#define RCSID	"$Id: ecp.c,v 1.4 2004/11/04 10:02:26 paulus Exp $"
-
-static const char rcsid[] = RCSID;
-
 #include <string.h>
 
 #include "ppp.h"

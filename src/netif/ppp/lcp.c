@@ -41,6 +41,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
  * TODO:
@@ -2735,3 +2736,5 @@ lcp_echo_lowerdown (unit)
         lcp_echo_timer_running = 0;
     }
 }
+
+#endif /* PPP_SUPPORT */
