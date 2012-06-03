@@ -1763,7 +1763,7 @@
 #endif
 
 /**
- * PPP_MD5_RANDM==1: Use MD5 for better randomness.
+ * PPP_MD5_RANDM==1: Use MD5 for better randomness. Automatically enabled if CHAP or EAP support is enabled.
  */
 #ifndef PPP_MD5_RANDM
 #define PPP_MD5_RANDM                     0
@@ -1805,6 +1805,8 @@
 #if CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM
 #ifndef LWIP_INCLUDED_POLARSSL_MD5
 #define LWIP_INCLUDED_POLARSSL_MD5	1	/* CHAP and EAP require MD5 support */
+#undef PPP_MD5_RANDM
+#define PPP_MD5_RANDM			1	/*  MD5 Random is required for CHAP and EAP */
 #endif /* LWIP_INCLUDED_POLARSSL_MD5 */
 #endif /* CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM */
 
