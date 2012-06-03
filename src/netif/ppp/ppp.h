@@ -497,7 +497,7 @@ enum pppAuthType {
 /* Initialize the PPP subsystem. */
 int ppp_init(void);
 
-void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd);
+void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
 typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
@@ -505,13 +505,14 @@ typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
 /*
  * Open a new PPP Over Ethernet (PPPOE) connection.
  */
-int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
                         pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
 
 
 
-
-/* --- EVERYTHING BELOW SHOULD BE CONSIDERED PRIVATE ---- */
+/* ------------------------------------------------------ *
+ * --- EVERYTHING BELOW SHOULD BE CONSIDERED PRIVATE ---- *
+ * ------------------------------------------------------ */
 
 /* PPP flow functions
  */
@@ -527,6 +528,7 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb);
 /* function called by all PPP subsystems to send packets */
 int ppp_write(int pd, const u_char *s, int n);
 
+/* merge a pbuf chain into one pbuf */
 struct pbuf * ppp_singlebuf(struct pbuf *p);
 
 

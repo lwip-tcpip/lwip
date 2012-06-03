@@ -181,10 +181,6 @@ typedef struct PPPControl_s {
 
 /* Prototypes for procedures local to this file. */
 
-#if PPPOE_SUPPORT
-static void pppOverEthernetLinkStatusCB(int pd, int up);
-#endif /* PPPOE_SUPPORT */
-
 static void ppp_start(int pd);		/** Initiate LCP open request */
 static void ppp_input(void *arg);
 
@@ -240,7 +236,7 @@ int ppp_init(void) {
 
     memset(&ppp_settings, 0, sizeof(ppp_settings));
     ppp_settings.usepeerdns = 1;
-    pppSetAuth(PPPAUTHTYPE_NONE, NULL, NULL);
+    ppp_set_auth(PPPAUTHTYPE_NONE, NULL, NULL);
 
     /*
      * Initialize magic number generator now so that protocols may
@@ -257,7 +253,7 @@ int ppp_init(void) {
     return 0;
 }
 
-void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd) {
+void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passwd) {
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
@@ -361,11 +357,10 @@ void pppSetAuth(enum pppAuthType authType, const char *user, const char *passwd)
 }
 
 #if PPPOE_SUPPORT
-static void pppOverEthernetLinkStatusCB(int pd, int up);
+static void ppp_over_ethernet_link_status_cb(int pd, int up);
 
-int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx)
-{
+int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
+                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx) {
   PPPControl *pc;
   int pd;
 
@@ -401,7 +396,7 @@ int pppOverEthernetOpen(struct netif *ethif, const char *service_name, const cha
     lcp_allowoptions[pd].neg_pcompression = 0;
     lcp_allowoptions[pd].neg_accompression = 0;
 
-    if(pppoe_create(ethif, pd, pppOverEthernetLinkStatusCB, &pc->pppoe_sc) != ERR_OK) {
+    if(pppoe_create(ethif, pd, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
       pc->openFlag = 0;
       return PPPERR_OPEN;
     }
@@ -430,16 +425,15 @@ void pppOverEthernetInitFailed(int pd) {
   }
 }
 
-static void pppOverEthernetLinkStatusCB(int pd, int up) {
+static void ppp_over_ethernet_link_status_cb(int pd, int up) {
   if(up) {
-    PPPDEBUG(LOG_INFO, ("pppOverEthernetLinkStatusCB: unit %d: Connecting\n", pd));
+    PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: Connecting\n", pd));
     ppp_start(pd);
   } else {
     pppOverEthernetInitFailed(pd);
   }
 }
-#endif
-
+#endif /* PPPOE_SUPPORT */
 
 
 /** Initiate LCP open request */
@@ -449,6 +443,7 @@ static void ppp_start(int pd) {
   lcp_lowerup(pd);
   PPPDEBUG(LOG_DEBUG, ("ppp_start: finished\n"));
 }
+
 
 /*
  * Pass the processed input packet to the appropriate handler.
@@ -1093,7 +1088,7 @@ static int ppp_write_over_ethernet(int pd, const u_char *s, int n) {
 #endif /* PPPOE_SUPPORT */
 
 
-
+/* merge a pbuf chain into one pbuf */
 struct pbuf * ppp_singlebuf(struct pbuf *p) {
   struct pbuf *q, *b;
   u_char *pl;
