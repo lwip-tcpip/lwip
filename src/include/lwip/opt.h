@@ -1749,6 +1749,13 @@
 #endif
 
 /**
+ * LQR_SUPPORT==1: Support Link Quality Report. Do nothing except exchanging some LCP packets.
+ */
+#ifndef LQR_SUPPORT
+#define LQR_SUPPORT                     0
+#endif
+
+/**
  * VJ_SUPPORT==1: Support VJ header compression.
  */
 #ifndef VJ_SUPPORT

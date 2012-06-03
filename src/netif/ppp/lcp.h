@@ -103,7 +103,9 @@ typedef struct lcp_options {
     bool neg_magicnumber;	/* Ask for magic number? */
     bool neg_pcompression;	/* HDLC Protocol Field Compression? */
     bool neg_accompression;	/* HDLC Address/Control Field Compression? */
+#if LQR_SUPPORT
     bool neg_lqr;		/* Negotiate use of Link Quality Reports */
+#endif /* LQR_SUPPORT */
     bool neg_cbcp;		/* Negotiate use of CBCP */
     bool neg_mrru;		/* negotiate multilink MRRU */
     bool neg_ssnhf;		/* negotiate short sequence numbers */
@@ -116,7 +118,9 @@ typedef struct lcp_options {
     u_int32_t asyncmap;		/* Value of async map */
     u_int32_t magicnumber;
     int  numloops;		/* Number of loops during magic number neg. */
+#if LQR_SUPPORT
     u_int32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
+#endif /* LQR_SUPPORT */
     struct epdisc endpoint;	/* endpoint discriminator */
 } lcp_options;
 

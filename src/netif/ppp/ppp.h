@@ -109,8 +109,9 @@ typedef unsigned char	bool;
 #if PAP_SUPPORT
 #define PPP_PAP		0xc023	/* Password Authentication Protocol */
 #endif /* PAP_SUPPORT */
-/* FIXME: make LQR support optional, anyway, there is no LQR support at all in pppd */
+#if LQR_SUPPORT
 #define PPP_LQR		0xc025	/* Link Quality Report protocol */
+#endif /* LQR_SUPPORT */
 #if CHAP_SUPPORT
 #define PPP_CHAP	0xc223	/* Cryptographic Handshake Auth. Protocol */
 #endif /* CHAP_SUPPORT */

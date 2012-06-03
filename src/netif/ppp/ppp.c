@@ -491,7 +491,10 @@ static void ppp_input(void *arg) {
    * except LCP, LQR and authentication packets.
    */
   if (phase <= PHASE_AUTHENTICATE
-	&& !(protocol == PPP_LCP || protocol == PPP_LQR
+	&& !(protocol == PPP_LCP
+#if LQR_SUPPORT
+	     || protocol == PPP_LQR
+#endif /* LQR_SUPPORT */
 #if PAP_SUPPORT
 	     || protocol == PPP_PAP
 #endif /* PAP_SUPPORT */

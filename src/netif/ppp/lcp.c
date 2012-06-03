@@ -313,7 +313,9 @@ int lcp_loopbackfail = DEFLOOPBACKFAIL;
 #define CILEN_CHAP	5	/* CILEN_VOID + 2 + 1 */
 #endif /* CHAP_SUPPORT */
 #define CILEN_LONG	6	/* CILEN_VOID + 4 */
+#if LQR_SUPPORT
 #define CILEN_LQR	8	/* CILEN_VOID + 2 + 4 */
+#endif /* LQR_SUPPORT */
 #define CILEN_CBCP	3
 
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
@@ -721,7 +723,9 @@ lcp_cilen(f)
 #endif /* CHAP_SUPPORT */
 #define LENCISHORT(neg)	((neg) ? CILEN_SHORT : 0)
 #define LENCILONG(neg)	((neg) ? CILEN_LONG : 0)
+#if LQR_SUPPORT
 #define LENCILQR(neg)	((neg) ? CILEN_LQR: 0)
+#endif /* LQR_SUPPORT */
 #define LENCICBCP(neg)	((neg) ? CILEN_CBCP: 0)
     /*
      * NB: we only ask for one of CHAP, UPAP, or EAP, even if we will
@@ -755,7 +759,9 @@ lcp_cilen(f)
 	    LENCISHORT(go->neg_upap) +
 #endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
+#if LQR_SUPPORT
 	    LENCILQR(go->neg_lqr) +
+#endif /* LQR_SUPPORT */
 	    LENCICBCP(go->neg_cbcp) +
 	    LENCILONG(go->neg_magicnumber) +
 	    LENCIVOID(go->neg_pcompression) +
@@ -804,6 +810,7 @@ lcp_addci(f, ucp, lenp)
 	PUTCHAR(CILEN_LONG, ucp); \
 	PUTLONG(val, ucp); \
     }
+#if LQR_SUPPORT
 #define ADDCILQR(opt, neg, val) \
     if (neg) { \
 	PUTCHAR(opt, ucp); \
@@ -811,6 +818,7 @@ lcp_addci(f, ucp, lenp)
 	PUTSHORT(PPP_LQR, ucp); \
 	PUTLONG(val, ucp); \
     }
+#endif /* LQR_SUPPORT */
 #define ADDCICHAR(opt, neg, val) \
     if (neg) { \
 	PUTCHAR(opt, ucp); \
@@ -855,7 +863,9 @@ lcp_addci(f, ucp, lenp)
     ADDCISHORT(CI_AUTHTYPE, go->neg_upap, PPP_PAP);
 #endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
+#if LQR_SUPPORT
     ADDCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
+#endif /* LQR_SUPPORT */
     ADDCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ADDCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ADDCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
@@ -963,6 +973,7 @@ lcp_ackci(f, p, len)
 	if (cilong != val) \
 	    goto bad; \
     }
+#if LQR_SUPPORT
 #define ACKCILQR(opt, neg, val) \
     if (neg) { \
 	if ((len -= CILEN_LQR) < 0) \
@@ -979,6 +990,7 @@ lcp_ackci(f, p, len)
 	if (cilong != val) \
 	  goto bad; \
     }
+#endif /* LQR_SUPPORT */
 #define ACKCIENDP(opt, neg, class, val, vlen) \
     if (neg) { \
 	int i; \
@@ -1027,7 +1039,9 @@ lcp_ackci(f, p, len)
     ACKCISHORT(CI_AUTHTYPE, go->neg_upap, PPP_PAP);
 #endif /* !EAP_SUPPORT && !CHAP_SUPPORT */
 #endif /* PAP_SUPPORT */
+#if LQR_SUPPORT
     ACKCILQR(CI_QUALITY, go->neg_lqr, go->lqr_period);
+#endif /* LQR_SUPPORT */
     ACKCICHAR(CI_CALLBACK, go->neg_cbcp, CBCP_OPT);
     ACKCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ACKCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
@@ -1140,6 +1154,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	no.neg = 1; \
 	code \
     }
+#if LQR_SUPPORT
 #define NAKCILQR(opt, neg, code) \
     if (go->neg && \
 	len >= CILEN_LQR && \
@@ -1152,6 +1167,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	no.neg = 1; \
 	code \
     }
+#endif /* LQR_SUPPORT */
 #define NAKCIENDP(opt, neg) \
     if (go->neg && \
 	len >= CILEN_CHAR && \
@@ -1328,6 +1344,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	}
     }
 
+#if LQR_SUPPORT
     /*
      * If they can't cope with our link quality protocol, we'll have
      * to stop asking for LQR.  We haven't got any other protocol.
@@ -1339,6 +1356,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	     else
 		 try.lqr_period = cilong;
 	     );
+#endif /* LQR_SUPPORT */
 
     /*
      * Only implementing CBCP...not the rest of the callback options
@@ -1456,10 +1474,12 @@ lcp_nakci(f, p, len, treat_as_reject)
 		|| cilen != CILEN_VOID)
 		goto bad;
 	    break;
+#if LQR_SUPPORT
 	case CI_QUALITY:
 	    if (go->neg_lqr || no.neg_lqr || cilen != CILEN_LQR)
 		goto bad;
 	    break;
+#endif /* LQR_SUPPORT */
 	case CI_MRRU:
 	    if (go->neg_mrru || no.neg_mrru || cilen != CILEN_SHORT)
 		goto bad;
@@ -1636,6 +1656,7 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
     }
+#if LQR_SUPPORT
 #define REJCILQR(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_LQR && \
@@ -1650,6 +1671,7 @@ lcp_rejci(f, p, len)
 	    goto bad; \
 	try.neg = 0; \
     }
+#endif /* LQR_SUPPORT */
 #define REJCICBCP(opt, neg, val) \
     if (go->neg && \
 	len >= CILEN_CBCP && \
@@ -1701,7 +1723,9 @@ lcp_rejci(f, p, len)
 #if EAP_SUPPORT
     }
 #endif /* EAP_SUPPORT */
+#if LQR_SUPPORT
     REJCILQR(CI_QUALITY, neg_lqr, go->lqr_period);
+#endif /* LQR_SUPPORT */
     REJCICBCP(CI_CALLBACK, neg_cbcp, CBCP_OPT);
     REJCILONG(CI_MAGICNUMBER, neg_magicnumber, go->magicnumber);
     REJCIVOID(CI_PCOMPRESSION, neg_pcompression);
@@ -2026,6 +2050,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    {}
 	    break;
 
+#if LQR_SUPPORT
 	case CI_QUALITY:
 	    if (!ao->neg_lqr ||
 		cilen != CILEN_LQR) {
@@ -2049,6 +2074,7 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 		break;
 	    }
 	    break;
+#endif /* LQR_SUPPORT */
 
 	case CI_MAGICNUMBER:
 	    if (!(ao->neg_magicnumber || go->neg_magicnumber) ||
@@ -2394,6 +2420,7 @@ lcp_printpkt(p, plen, printer, arg)
 		    }
 		}
 		break;
+#if LQR_SUPPORT
 	    case CI_QUALITY:
 		if (olen >= CILEN_SHORT) {
 		    p += 2;
@@ -2408,6 +2435,7 @@ lcp_printpkt(p, plen, printer, arg)
 		    }
 		}
 		break;
+#endif /* LQR_SUPPORT */
 	    case CI_CALLBACK:
 		if (olen >= CILEN_CHAR) {
 		    p += 2;
