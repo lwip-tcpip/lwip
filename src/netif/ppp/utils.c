@@ -601,7 +601,7 @@ pr_log (void *arg, char *fmt, ...)
  * print_string - print a readable representation of a string using
  * printer.
  */
-void print_string(char *p, int len, void (*printer) (void *, char *, ...), void arg) {
+void print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg) {
     int c;
 
     printer(arg, "\"");
