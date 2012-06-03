@@ -89,6 +89,7 @@
 #include "lwip/api.h"
 #include "lwip/snmp.h"
 #include "lwip/sio.h"
+#include "lwip/sys.h"
 #include "lwip/ip.h" /* for ip_input() */
 
 #include "ppp_impl.h"
@@ -113,6 +114,9 @@
 #if ECP_SUPPORT
 #include "ecp.h"
 #endif /* EAP_SUPPORT */
+#if VJ_SUPPORT
+#include "vj.h"
+#endif /* VJ_SUPPORT */
 
 #if PPPOE_SUPPORT
 #include "netif/ppp_oe.h"

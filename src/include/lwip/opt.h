@@ -1759,8 +1759,12 @@
  * VJ_SUPPORT==1: Support VJ header compression.
  */
 #ifndef VJ_SUPPORT
-#define VJ_SUPPORT                      0
+#define VJ_SUPPORT                      1
 #endif
+#if !PPPOS_SUPPORT
+#undef VJ_SUPPORT
+#define VJ_SUPPORT                      0   /*  Only PPPoS may need VJ compression */
+#endif /* !PPPOS_SUPPORT */
 
 /**
  * PPP_MD5_RANDM==1: Use MD5 for better randomness. Automatically enabled if CHAP support is enabled.
