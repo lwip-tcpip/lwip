@@ -100,7 +100,7 @@ struct ppp_addrs {
 /* Initialize the PPP subsystem. */
 int ppp_init(void);
 
-/* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
+/* Warning: Using ppp_auth_type_ANY might have security consequences.
  * RFC 1994 says:
  *
  * In practice, within or associated with each PPP server, there is a
@@ -119,7 +119,7 @@ int ppp_init(void);
  * which identifies exactly one authentication method.
  *
  */
-enum pppAuthType {
+enum ppp_auth_type {
 #if CHAP_SUPPORT
     PPPAUTHTYPE_CHAP,
 #endif /* CHAP_SUPPORT */
@@ -130,10 +130,10 @@ enum pppAuthType {
     PPPAUTHTYPE_NONE
 };
 
-void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passwd);
+void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
-typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
+typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
 
 #if PPPOS_SUPPORT
 /*
@@ -147,7 +147,7 @@ typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure.
  */
-int pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
+int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
@@ -155,35 +155,32 @@ int pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkSt
  * Open a new PPP Over Ethernet (PPPoE) connection.
  */
 int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
+                        ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
-
-/* for source code compatibility */
-#define pppOpen(fd,cb,ls) pppOverSerialOpen(fd,cb,ls)
 
 /*
  * Close a PPP connection and release the descriptor. 
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure. 
  */
-int pppClose(int pd);
+int ppp_close(int pd);
 
 /*
  * Indicate to the PPP process that the line has disconnected.
  */
-void pppSigHUP(int pd);
+void ppp_sighup(int pd);
 
 /*
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. 
  */
-int  pppIOCtl(int pd, int cmd, void *arg);
+int ppp_ioctl(int pd, int cmd, void *arg);
 
 /*
  * Return the Maximum Transmission Unit for the given PPP connection.
  */
 /* FIXME: demystify MTU support */
-u_short pppMTU(int pd);
+u_short ppp_mtu(int pd);
 
 #if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
 /*
@@ -203,6 +200,21 @@ void ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callba
 /* Set an lwIP-style link-callback for the selected PPP device */
 void ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback);
 #endif /* LWIP_NETIF_LINK_CALLBACK */
+
+
+/* Source code compatibility */
+#if 0
+#define pppAuthType ppp_auth_type
+#define pppInit() ppp_init()
+#define pppSetAuth(authtype,user,passwd) ppp_set_auth(authtype,user,passwd)
+#define pppOpen(fd,cb,ls) ppp_over_serial_open(fd,cb,ls)
+#define pppOverSerialOpen(fd,cb,ls) ppp_over_serial_open(fd,cb,ls)
+#define pppOverEthernetOpen(ethif,sn,cn,lscb,lsctx) ppp_over_ethernet_open(ethif,sn,cn,lscb,lsctx)
+#define pppClose(unit) ppp_close(unit)
+#define pppSigHUP(unit) ppp_sigup(unit)
+#define pppIOCtl(pd,cmd,arg) ppp_ioctl(pd,cmd,arg)
+#define pppMTU(unit) ppp_mtu(unit)
+#endif
 
 #endif /* PPP_H */
 

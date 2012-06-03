@@ -1125,7 +1125,7 @@ auth_withpeer_fail(unit, protocol)
      * He'll probably take the link down, and there's not much
      * we can do except wait for that.
      */
-    pppIOCtl(unit, PPPCTLS_ERRCODE, &errcode);
+    ppp_ioctl(unit, PPPCTLS_ERRCODE, &errcode);
     lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 

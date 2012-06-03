@@ -289,8 +289,8 @@ typedef struct PPPControl_s {
 
   struct ppp_addrs addrs;
 
-  void (*linkStatusCB)(void *ctx, int errCode, void *arg);
-  void *linkStatusCtx;
+  void (*link_status_cb)(void *ctx, int errCode, void *arg);
+  void *link_status_ctx;
 
 } PPPControl;
 
@@ -383,7 +383,7 @@ int ppp_init(void) {
     return 0;
 }
 
-void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passwd) {
+void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *passwd) {
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
@@ -423,7 +423,7 @@ void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passw
 
 /* FIXME: re-enable that */
 #if 0
-  switch(authType) {
+  switch(authtype) {
     case PPPAUTHTYPE_NONE:
     default:
 #ifdef LWIP_PPP_STRICT_PAP_REJECT
@@ -497,11 +497,11 @@ void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passw
  *
  * pppOpen() is directly defined to this function.
  */
-int pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx) {
+int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
   PPPControl *pc;
   int pd;
 
-  if (linkStatusCB == NULL) {
+  if (link_status_cb == NULL) {
     /* PPP is single-threaded: without a callback,
      * there is no way to know when the link is up. */
     return PPPERR_PARAM;
@@ -535,13 +535,13 @@ int pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkSt
     pc->rx.inACCM[15] = 0x60; /* no need to protect since RX is not running */
     pc->outACCM[15] = 0x60;
 
-    pc->linkStatusCB = linkStatusCB;
-    pc->linkStatusCtx = linkStatusCtx;
+    pc->link_status_cb = link_status_cb;
+    pc->link_status_ctx = link_status_ctx;
 
     /*
      * Start the connection and handle incoming events (packet or timeout).
      */
-    PPPDEBUG(LOG_INFO, ("pppOverSerialOpen: unit %d: Connecting\n", pd));
+    PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pd));
     ppp_start(pd);
 #if PPP_INPROC_OWNTHREAD
     sys_thread_new(PPP_THREAD_NAME, pppInputThread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
@@ -569,14 +569,14 @@ void ppp_set_xaccm(int unit, ext_accm *accm) {
 static void ppp_over_ethernet_link_status_cb(int pd, int up);
 
 int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx) {
+                        ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
   PPPControl *pc;
   int pd;
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
-  if (linkStatusCB == NULL) {
+  if (link_status_cb == NULL) {
     /* PPP is single-threaded: without a callback,
      * there is no way to know when the link is up. */
     return PPPERR_PARAM;
@@ -592,8 +592,8 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
     pc->openFlag = 1;
     pc->ethif = ethif;
 
-    pc->linkStatusCB  = linkStatusCB;
-    pc->linkStatusCtx = linkStatusCtx;
+    pc->link_status_cb  = link_status_cb;
+    pc->link_status_ctx = link_status_ctx;
 
     lcp_wantoptions[pd].mru = PPPOE_MAXMTU;
     lcp_wantoptions[pd].neg_asyncmap = 0;
@@ -631,17 +631,17 @@ void pppOverEthernetClose(int pd) {
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure. */
 int
-pppClose(int pd)
+ppp_close(int pd)
 {
   PPPControl *pc = &pppControl[pd];
   int st = 0;
 
-  PPPDEBUG(LOG_DEBUG, ("pppClose() called\n"));
+  PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
 
   /* Disconnect */
 #if PPPOE_SUPPORT
   if(pc->ethif) {
-    PPPDEBUG(LOG_DEBUG, ("pppClose: unit %d kill_link -> pppStop\n", pd));
+    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> pppStop\n", pd));
     pc->errCode = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     pppStop(pd);
@@ -649,7 +649,7 @@ pppClose(int pd)
 #endif /* PPPOE_SUPPORT */
   {
 #if PPPOS_SUPPORT
-    PPPDEBUG(LOG_DEBUG, ("pppClose: unit %d kill_link -> pppStop\n", pd));
+    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> pppStop\n", pd));
     pc->errCode = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     pppStop(pd);
@@ -664,9 +664,9 @@ pppClose(int pd)
 
 /* This function is called when carrier is lost on the PPP channel. */
 void
-pppSigHUP(int pd)
+ppp_sighup(int pd)
 {
-  PPPDEBUG(LOG_DEBUG, ("pppSigHUP: unit %d sig_hup -> pppHupCB\n", pd));
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> pppHupCB\n", pd));
   pppHup(pd);
 }
 
@@ -1072,7 +1072,7 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
   netif->name[0] = 'p';
   netif->name[1] = 'p';
   netif->output = ppp_netif_output;
-  netif->mtu = pppMTU((int)(size_t)netif->state);
+  netif->mtu = ppp_mtu((int)(size_t)netif->state);
   netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
 #if LWIP_NETIF_HOSTNAME
   /* @todo: Initialize interface hostname */
@@ -1368,7 +1368,7 @@ static err_t ppp_netif_output_over_ethernet(int pd, struct pbuf *p) {
 /*
  * Return the Maximum Transmission Unit for the given PPP connection.
  */
-u_short pppMTU(int pd) {
+u_short ppp_mtu(int pd) {
   PPPControl *pc = &pppControl[pd];
   u_short st;
 
@@ -1381,10 +1381,12 @@ u_short pppMTU(int pd) {
 
   return st;
 }
+
+
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 int
-pppIOCtl(int pd, int cmd, void *arg)
+ppp_ioctl(int pd, int cmd, void *arg)
 {
   PPPControl *pc = &pppControl[pd];
   int st = 0;
@@ -1838,8 +1840,8 @@ void pppOverEthernetInitFailed(int pd) {
   pppoe_destroy(&pc->netif);
   pc->openFlag = 0;
 
-  if(pc->linkStatusCB) {
-    pc->linkStatusCB(pc->linkStatusCtx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
+  if(pc->link_status_cb) {
+    pc->link_status_cb(pc->link_status_ctx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
   }
 }
 
@@ -1884,9 +1886,9 @@ void pppLinkTerminated(int pd) {
 #endif /* PPP_INPROC_OWNTHREAD */
     pc = &pppControl[pd];
 
-    PPPDEBUG(LOG_DEBUG, ("pppLinkTerminated: unit %d: linkStatusCB=%p errCode=%d\n", pd, pc->linkStatusCB, pc->errCode));
-    if (pc->linkStatusCB) {
-      pc->linkStatusCB(pc->linkStatusCtx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
+    PPPDEBUG(LOG_DEBUG, ("pppLinkTerminated: unit %d: link_status_cb=%p errCode=%d\n", pd, pc->link_status_cb, pc->errCode));
+    if (pc->link_status_cb) {
+      pc->link_status_cb(pc->link_status_ctx, pc->errCode ? pc->errCode : PPPERR_PROTOCOL, NULL);
     }
 
     pc->openFlag = 0;/**/
@@ -2078,9 +2080,9 @@ int sifup(int u)
       pc->if_up = 1;
       pc->errCode = PPPERR_NONE;
 
-      PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: linkStatusCB=%p errCode=%d\n", u, pc->linkStatusCB, pc->errCode));
-      if (pc->linkStatusCB) {
-        pc->linkStatusCB(pc->linkStatusCtx, pc->errCode, &pc->addrs);
+      PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: link_status_cb=%p errCode=%d\n", u, pc->link_status_cb, pc->errCode));
+      if (pc->link_status_cb) {
+        pc->link_status_cb(pc->link_status_ctx, pc->errCode, &pc->addrs);
       }
     } else {
       st = 0;
@@ -2108,9 +2110,9 @@ int sifdown(int unit) {
     /* make sure the netif status callback is called */
     netif_set_down(&pc->netif);
     netif_remove(&pc->netif);
-    PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: linkStatusCB=%p errCode=%d\n", unit, pc->linkStatusCB, pc->errCode));
-    if (pc->linkStatusCB) {
-      pc->linkStatusCB(pc->linkStatusCtx, PPPERR_CONNECT, NULL);
+    PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: link_status_cb=%p errCode=%d\n", unit, pc->link_status_cb, pc->errCode));
+    if (pc->link_status_cb) {
+      pc->link_status_cb(pc->link_status_ctx, PPPERR_CONNECT, NULL);
     }
   }
   return st;
