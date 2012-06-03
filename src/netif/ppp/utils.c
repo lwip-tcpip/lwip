@@ -69,12 +69,12 @@
 extern char *strerror();
 #endif
 
-static void logit __P((int, char *, va_list));
-static void log_write __P((int, char *));
+static void logit (int, char *, va_list);
+static void log_write (int, char *);
 #if PRINTPKT_SUPPORT
-static void vslp_printer __P((void *, char *, ...));
-static void format_packet __P((u_char *, int, void (*) (void *, char *, ...),
-			       void *));
+static void vslp_printer (void *, char *, ...);
+static void format_packet (u_char *, int, void (*) (void *, char *, ...),
+			       void *);
 #endif /* PRINTPKT_SUPPORT */
 
 struct buffer_info {
@@ -130,7 +130,7 @@ strlcat(dest, src, len)
  * Returns the number of chars put into buf.
  */
 int
-slprintf __V((char *buf, int buflen, char *fmt, ...))
+slprintf (char *buf, int buflen, char *fmt, ...)
 {
     va_list args;
     int n;
@@ -440,7 +440,7 @@ vslprintf(buf, buflen, fmt, args)
  * vslp_printer - used in processing a %P format
  */
 static void
-vslp_printer __V((void *arg, char *fmt, ...))
+vslp_printer (void *arg, char *fmt, ...)
 {
     int n;
     va_list pvar;
@@ -492,7 +492,7 @@ static void
 format_packet(p, len, printer, arg)
     u_char *p;
     int len;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
     int i, n;
@@ -569,7 +569,7 @@ end_pr_log()
  * pr_log - printer routine for outputting to log
  */
 void
-pr_log __V((void *arg, char *fmt, ...))
+pr_log (void *arg, char *fmt, ...)
 {
 	int l, n;
 	va_list pvar;
@@ -631,7 +631,7 @@ void
 print_string(p, len, printer, arg)
     char *p;
     int len;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
     int c;
@@ -702,7 +702,7 @@ log_write(level, buf)
  * fatal - log an error message and die horribly.
  */
 void
-fatal __V((char *fmt, ...))
+fatal (char *fmt, ...)
 {
     va_list pvar;
 
@@ -727,7 +727,7 @@ fatal __V((char *fmt, ...))
  * error - log an error message.
  */
 void
-error __V((char *fmt, ...))
+error (char *fmt, ...)
 {
     va_list pvar;
 
@@ -748,7 +748,7 @@ error __V((char *fmt, ...))
  * warn - log a warning message.
  */
 void
-warn __V((char *fmt, ...))
+warn (char *fmt, ...)
 {
     va_list pvar;
 
@@ -768,7 +768,7 @@ warn __V((char *fmt, ...))
  * notice - log a notice-level message.
  */
 void
-notice __V((char *fmt, ...))
+notice (char *fmt, ...)
 {
     va_list pvar;
 
@@ -788,7 +788,7 @@ notice __V((char *fmt, ...))
  * info - log an informational message.
  */
 void
-info __V((char *fmt, ...))
+info (char *fmt, ...)
 {
     va_list pvar;
 
@@ -808,7 +808,7 @@ info __V((char *fmt, ...))
  * dbglog - log a debug message.
  */
 void
-dbglog __V((char *fmt, ...))
+dbglog (char *fmt, ...)
 {
     va_list pvar;
 

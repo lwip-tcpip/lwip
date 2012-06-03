@@ -78,7 +78,7 @@
 #include "ppp_impl.h"
 
 #if defined(ultrix) || defined(NeXT)
-char *strdup __P((char *));
+char *strdup (char *);
 #endif
 
 struct option_value {
@@ -165,32 +165,32 @@ static char logfile_name[MAXPATHLEN];	/* name of log file */
  * Prototypes
  */
 #if 0 /* UNUSED */
-static int setdomain __P((char **));
-static int readfile __P((char **));
-static int callfile __P((char **));
-static int showversion __P((char **));
-static int showhelp __P((char **));
-static void usage __P((void));
-static int setlogfile __P((char **));
+static int setdomain (char **);
+static int readfile (char **);
+static int callfile (char **);
+static int showversion (char **);
+static int showhelp (char **);
+static void usage (void);
+static int setlogfile (char **);
 #endif /* UNUSED */
 #ifdef PLUGIN
-static int loadplugin __P((char **));
+static int loadplugin (char **);
 #endif
 
 #ifdef PPP_FILTER
-static int setpassfilter __P((char **));
-static int setactivefilter __P((char **));
+static int setpassfilter (char **);
+static int setactivefilter (char **);
 #endif
 
 #ifdef MAXOCTETS
-static int setmodir __P((char **));
+static int setmodir (char **);
 #endif
 
 #if 0 /* UNUSED */
-static option_t *find_option __P((const char *name));
-static int process_option __P((option_t *, char *, char **));
-static int n_arguments __P((option_t *));
-static int number_option __P((char *, u_int32_t *, int));
+static option_t *find_option (const char *name);
+static int process_option (option_t *, char *, char **);
+static int n_arguments (option_t *);
+static int number_option (char *, u_int32_t *, int);
 
 /*
  * Structure to store extra lists of options.
@@ -597,13 +597,13 @@ match_option(name, opt, dowild)
     option_t *opt;
     int dowild;
 {
-	int (*match) __P((char *, char **, int));
+	int (*match) (char *, char **, int);
 
 	if (dowild != (opt->type == o_wild))
 		return 0;
 	if (!dowild)
 		return strcmp(name, opt->name) == 0;
-	match = (int (*) __P((char *, char **, int))) opt->addr;
+	match = (int (*) (char *, char **, int)) opt->addr;
 	return (*match)(name, NULL, 0);
 }
 
@@ -655,8 +655,8 @@ process_option(opt, cmd, argv)
     u_int32_t v;
     int iv, a;
     char *sv;
-    int (*parser) __P((char **));
-    int (*wildp) __P((char *, char **, int));
+    int (*parser) (char **);
+    int (*wildp) (char *, char **, int);
     char *optopt = (opt->type == o_wild)? "": " option";
     int prio = option_priority;
     option_t *mainopt = opt;
@@ -787,7 +787,7 @@ process_option(opt, cmd, argv)
 
     case o_special_noarg:
     case o_special:
-	parser = (int (*) __P((char **))) opt->addr;
+	parser = (int (*) (char **)) opt->addr;
 	if (!(*parser)(argv))
 	    return 0;
 	if (opt->flags & OPT_A2LIST) {
@@ -810,7 +810,7 @@ process_option(opt, cmd, argv)
 	break;
 
     case o_wild:
-	wildp = (int (*) __P((char *, char **, int))) opt->addr;
+	wildp = (int (*) (char *, char **, int)) opt->addr;
 	if (!(*wildp)(cmd, argv, 1))
 	    return 0;
 	break;
@@ -901,7 +901,7 @@ check_options()
 static void
 print_option(opt, mainopt, printer, arg)
     option_t *opt, *mainopt;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
 	int i, v;
@@ -964,12 +964,12 @@ print_option(opt, mainopt, printer, arg)
 			printer(arg, " ");
 		}
 		if (opt->flags & OPT_A2PRINTER) {
-			void (*oprt) __P((option_t *,
-					  void ((*)__P((void *, char *, ...))),
-					  void *));
-			oprt = (void (*) __P((option_t *,
-					 void ((*)__P((void *, char *, ...))),
-					 void *)))opt->addr2;
+			void (*oprt) (option_t *,
+					  void ((*)(void *, char *, ...)),
+					  void *);
+			oprt = (void (*) (option_t *,
+					 void ((*)(void *, char *, ...)),
+					 void *))opt->addr2;
 			(*oprt)(opt, printer, arg);
 		} else if (opt->flags & OPT_A2STRVAL) {
 			p = (char *) opt->addr2;
@@ -1006,7 +1006,7 @@ print_option(opt, mainopt, printer, arg)
 static void
 print_option_list(opt, printer, arg)
     option_t *opt;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
 	while (opt->name != NULL) {
@@ -1024,7 +1024,7 @@ print_option_list(opt, printer, arg)
  */
 void
 print_options(printer, arg)
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
 	struct option_list *list;
@@ -1084,7 +1084,7 @@ showversion(argv)
  * stderr if phase == PHASE_INITIALIZE.
  */
 void
-option_error __V((char *fmt, ...))
+option_error (char *fmt, ...)
 {
     va_list args;
     char buf[1024];
@@ -1596,7 +1596,7 @@ loadplugin(argv)
     char *arg = *argv;
     void *handle;
     const char *err;
-    void (*init) __P((void));
+    void (*init) (void);
     char *path = arg;
     const char *vers;
 

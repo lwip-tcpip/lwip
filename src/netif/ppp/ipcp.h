@@ -96,7 +96,7 @@ extern ipcp_options ipcp_allowoptions[];
 extern ipcp_options ipcp_hisoptions[];
 
 #if 0 /* UNUSED, already defined by lwIP */
-char *ip_ntoa __P((u_int32_t));
+char *ip_ntoa (u_int32_t);
 #endif /* UNUSED, already defined by lwIP */
 
 extern struct protent ipcp_protent;

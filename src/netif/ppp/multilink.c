@@ -64,13 +64,13 @@ bool multilink_master;		/* we own the multilink bundle */
 extern TDB_CONTEXT *pppdb;
 extern char db_key[];
 
-static void make_bundle_links __P((int append));
-static void remove_bundle_link __P((void));
-static void iterate_bundle_links __P((void (*func) __P((char *))));
+static void make_bundle_links (int append);
+static void remove_bundle_link (void);
+static void iterate_bundle_links (void (*func) (char *));
 
-static int get_default_epdisc __P((struct epdisc *));
-static int parse_num __P((char *str, const char *key, int *valp));
-static int owns_unit __P((TDB_DATA pid, int unit));
+static int get_default_epdisc (struct epdisc *);
+static int parse_num (char *str, const char *key, int *valp);
+static int owns_unit (TDB_DATA pid, int unit);
 
 #define set_ip_epdisc(ep, addr) do {	\
 	ep->length = 4;			\

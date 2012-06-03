@@ -148,8 +148,8 @@ typedef struct eap_state {
 
 extern eap_state eap_states[];
 
-void eap_authwithpeer __P((int unit, char *localname));
-void eap_authpeer __P((int unit, char *localname));
+void eap_authwithpeer (int unit, char *localname);
+void eap_authpeer (int unit, char *localname);
 
 extern struct protent eap_protent;
 

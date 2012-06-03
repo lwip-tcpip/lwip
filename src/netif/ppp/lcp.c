@@ -70,7 +70,7 @@
 /* steal a bit in fsm flags word */
 #define DELAYED_UP	0x100
 
-static void lcp_delayed_up __P((void *));
+static void lcp_delayed_up (void *);
 
 /*
  * LCP-related command-line options.
@@ -84,13 +84,13 @@ bool	lax_recv = 0;		/* accept control chars in asyncmap */
 bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
 
 #if PPP_OPTIONS
-static int noopt __P((char **));
+static int noopt (char **);
 #endif /* PPP_OPTIONS */
 
 #ifdef HAVE_MULTILINK
-static int setendpoint __P((char **));
-static void printendpoint __P((option_t *, void (*)(void *, char *, ...),
-			       void *));
+static int setendpoint (char **);
+static void printendpoint (option_t *, void (*)(void *, char *, ...),
+			       void *);
 #endif /* HAVE_MULTILINK */
 
 #if PPP_OPTIONS
@@ -220,31 +220,31 @@ static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
-static void lcp_resetci __P((fsm *));	/* Reset our CI */
-static int  lcp_cilen __P((fsm *));		/* Return length of our CI */
-static void lcp_addci __P((fsm *, u_char *, int *)); /* Add our CI to pkt */
-static int  lcp_ackci __P((fsm *, u_char *, int)); /* Peer ack'd our CI */
-static int  lcp_nakci __P((fsm *, u_char *, int, int)); /* Peer nak'd our CI */
-static int  lcp_rejci __P((fsm *, u_char *, int)); /* Peer rej'd our CI */
-static int  lcp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv peer CI */
-static void lcp_up __P((fsm *));		/* We're UP */
-static void lcp_down __P((fsm *));		/* We're DOWN */
-static void lcp_starting __P((fsm *));	/* We need lower layer up */
-static void lcp_finished __P((fsm *));	/* We need lower layer down */
-static int  lcp_extcode __P((fsm *, int, int, u_char *, int));
-static void lcp_rprotrej __P((fsm *, u_char *, int));
+static void lcp_resetci (fsm *);	/* Reset our CI */
+static int  lcp_cilen (fsm *);		/* Return length of our CI */
+static void lcp_addci (fsm *, u_char *, int *); /* Add our CI to pkt */
+static int  lcp_ackci (fsm *, u_char *, int); /* Peer ack'd our CI */
+static int  lcp_nakci (fsm *, u_char *, int, int); /* Peer nak'd our CI */
+static int  lcp_rejci (fsm *, u_char *, int); /* Peer rej'd our CI */
+static int  lcp_reqci (fsm *, u_char *, int *, int); /* Rcv peer CI */
+static void lcp_up (fsm *);		/* We're UP */
+static void lcp_down (fsm *);		/* We're DOWN */
+static void lcp_starting (fsm *);	/* We need lower layer up */
+static void lcp_finished (fsm *);	/* We need lower layer down */
+static int  lcp_extcode (fsm *, int, int, u_char *, int);
+static void lcp_rprotrej (fsm *, u_char *, int);
 
 /*
  * routines to send LCP echos to peer
  */
 
-static void lcp_echo_lowerup __P((int));
-static void lcp_echo_lowerdown __P((int));
-static void LcpEchoTimeout __P((void *));
-static void lcp_received_echo_reply __P((fsm *, int, u_char *, int));
-static void LcpSendEchoRequest __P((fsm *));
-static void LcpLinkFailure __P((fsm *));
-static void LcpEchoCheck __P((fsm *));
+static void lcp_echo_lowerup (int);
+static void lcp_echo_lowerdown (int);
+static void LcpEchoTimeout (void *);
+static void lcp_received_echo_reply (fsm *, int, u_char *, int);
+static void LcpSendEchoRequest (fsm *);
+static void LcpLinkFailure (fsm *);
+static void LcpEchoCheck (fsm *);
 
 static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_resetci,		/* Reset our Configuration Information */
@@ -269,12 +269,12 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
  * Some of these are called directly.
  */
 
-static void lcp_init __P((int));
-static void lcp_input __P((int, u_char *, int));
-static void lcp_protrej __P((int));
+static void lcp_init (int);
+static void lcp_input (int, u_char *, int);
+static void lcp_protrej (int);
 #if PRINTPKT_SUPPORT
-static int  lcp_printpkt __P((u_char *, int,
-			      void (*) __P((void *, char *, ...)), void *));
+static int  lcp_printpkt (u_char *, int,
+			      void (*) (void *, char *, ...), void *);
 #endif /* PRINTPKT_SUPPORT */
 
 struct protent lcp_protent = {
@@ -356,7 +356,7 @@ setendpoint(argv)
 static void
 printendpoint(opt, printer, arg)
     option_t *opt;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
 	printer(arg, "%s", epdisc_to_str(&lcp_wantoptions[0].endpoint));
@@ -2360,7 +2360,7 @@ static int
 lcp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
     int code, id, len, olen, i;

@@ -97,14 +97,14 @@ static option_t eap_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void eap_init __P((int unit));
-static void eap_input __P((int unit, u_char *inp, int inlen));
-static void eap_protrej __P((int unit));
-static void eap_lowerup __P((int unit));
-static void eap_lowerdown __P((int unit));
+static void eap_init (int unit);
+static void eap_input (int unit, u_char *inp, int inlen);
+static void eap_protrej (int unit);
+static void eap_lowerup (int unit);
+static void eap_lowerdown (int unit);
 #if PRINTPKT_SUPPORT
-static int  eap_printpkt __P((u_char *inp, int inlen,
-    void (*)(void *arg, char *fmt, ...), void *arg));
+static int  eap_printpkt (u_char *inp, int inlen,
+    void (*)(void *arg, char *fmt, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 struct protent eap_protent = {
@@ -176,7 +176,7 @@ static const u_char wkmodulus[] = {
 #endif
 
 /* Local forward declarations. */
-static void eap_server_timeout __P((void *arg));
+static void eap_server_timeout (void *arg);
 
 /*
  * Convert EAP state code to printable string for debug.
@@ -2149,7 +2149,7 @@ static int
 eap_printpkt(inp, inlen, printer, arg)
 u_char *inp;
 int inlen;
-void (*printer) __P((void *, char *, ...));
+void (*printer) (void *, char *, ...);
 void *arg;
 {
 	int code, id, len, rtype, vallen;

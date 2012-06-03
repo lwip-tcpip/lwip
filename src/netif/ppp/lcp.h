@@ -140,11 +140,11 @@ extern ext_accm xmit_accm[];
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
 
-void lcp_open __P((int));
-void lcp_close __P((int, char *));
-void lcp_lowerup __P((int));
-void lcp_lowerdown __P((int));
-void lcp_sprotrej __P((int, u_char *, int));	/* send protocol reject */
+void lcp_open (int);
+void lcp_close (int, char *);
+void lcp_lowerup (int);
+void lcp_lowerdown (int);
+void lcp_sprotrej (int, u_char *, int);	/* send protocol reject */
 
 extern struct protent lcp_protent;
 

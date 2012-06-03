@@ -38,24 +38,7 @@
 #define PPP_IMP_H_
 
 #include <stdio.h> /* formats */
-
-#if defined(__STDC__)
 #include <stdarg.h>
-#define __V(x)	x
-#else
-#include <varargs.h>
-#define __V(x)	(va_alist) va_dcl
-#define const
-#define volatile
-#endif
-
-#ifndef __P
-#ifdef __STDC__
-#define __P(x)	x
-#else
-#define __P(x)	()
-#endif
-#endif
 
 #ifndef bool
 typedef unsigned char	bool;
@@ -329,30 +312,30 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 struct protent {
     u_short protocol;		/* PPP protocol number */
     /* Initialization procedure */
-    void (*init) __P((int unit));
+    void (*init) (int unit);
     /* Process a received packet */
-    void (*input) __P((int unit, u_char *pkt, int len));
+    void (*input) (int unit, u_char *pkt, int len);
     /* Process a received protocol-reject */
-    void (*protrej) __P((int unit));
+    void (*protrej) (int unit);
     /* Lower layer has come up */
-    void (*lowerup) __P((int unit));
+    void (*lowerup) (int unit);
     /* Lower layer has gone down */
-    void (*lowerdown) __P((int unit));
+    void (*lowerdown) (int unit);
     /* Open the protocol */
-    void (*open) __P((int unit));
+    void (*open) (int unit);
     /* Close the protocol */
-    void (*close) __P((int unit, char *reason));
+    void (*close) (int unit, char *reason);
 #if PRINTPKT_SUPPORT
     /* Print a packet in readable form */
-    int  (*printpkt) __P((u_char *pkt, int len,
-			  void (*printer) __P((void *, char *, ...)),
-			  void *arg));
+    int  (*printpkt) (u_char *pkt, int len,
+			  void (*printer) (void *, char *, ...),
+			  void *arg);
 #endif /* PRINTPKT_SUPPORT */
     /* FIXME: data input is only used by CCP, which is not supported at this time,
      *        should we remove this entry and save some flash ?
      */
     /* Process a received data packet */
-    void (*datainput) __P((int unit, u_char *pkt, int len));
+    void (*datainput) (int unit, u_char *pkt, int len);
     bool enabled_flag;		/* 0 iff protocol is disabled */
 #if PRINTPKT_SUPPORT
     char *name;			/* Text name of protocol */
@@ -361,13 +344,13 @@ struct protent {
 #if PPP_OPTIONS
     option_t *options;		/* List of command-line options */
     /* Check requested options, assign defaults */
-    void (*check_options) __P((void));
+    void (*check_options) (void);
 #endif /* PPP_OPTIONS */
 #if DEMAND_SUPPORT
     /* Configure interface for demand-dial */
-    int  (*demand_conf) __P((int unit));
+    int  (*demand_conf) (int unit);
     /* Say whether to bring up link for this pkt */
-    int  (*active_pkt) __P((u_char *pkt, int len));
+    int  (*active_pkt) (u_char *pkt, int len);
 #endif /* DEMAND_SUPPORT */
 };
 
@@ -627,51 +610,51 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define EXIT_CNID_AUTH_FAILED	21
 
 /* Procedures exported from auth.c */
-void link_required __P((int));	  /* we are starting to use the link */
-void link_terminated __P((int));  /* we are finished with the link */
-void link_down __P((int));	  /* the LCP layer has left the Opened state */
-void upper_layers_down __P((int));/* take all NCPs down */
-void link_established __P((int)); /* the link is up; authenticate now */
-void start_networks __P((int));   /* start all the network control protos */
-void continue_networks __P((int)); /* start network [ip, etc] control protos */
+void link_required (int);	  /* we are starting to use the link */
+void link_terminated (int);  /* we are finished with the link */
+void link_down (int);	  /* the LCP layer has left the Opened state */
+void upper_layers_down (int);/* take all NCPs down */
+void link_established (int); /* the link is up; authenticate now */
+void start_networks (int);   /* start all the network control protos */
+void continue_networks (int); /* start network [ip, etc] control protos */
 
-void auth_peer_fail __P((int, int));
+void auth_peer_fail (int, int);
 				/* peer failed to authenticate itself */
-void auth_peer_success __P((int, int, int, char *, int));
+void auth_peer_success (int, int, int, char *, int);
 				/* peer successfully authenticated itself */
-void auth_withpeer_fail __P((int, int));
+void auth_withpeer_fail (int, int);
 				/* we failed to authenticate ourselves */
-void auth_withpeer_success __P((int, int, int));
+void auth_withpeer_success (int, int, int);
 				/* we successfully authenticated ourselves */
-void np_up __P((int, int));	  /* a network protocol has come up */
-void np_down __P((int, int));	  /* a network protocol has gone down */
-void np_finished __P((int, int)); /* a network protocol no longer needs link */
-void auth_reset __P((int));	/* check what secrets we have */
-int  get_secret __P((int, char *, char *, char *, int *, int));
+void np_up (int, int);	  /* a network protocol has come up */
+void np_down (int, int);	  /* a network protocol has gone down */
+void np_finished (int, int); /* a network protocol no longer needs link */
+void auth_reset (int);	/* check what secrets we have */
+int  get_secret (int, char *, char *, char *, int *, int);
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */
-/* int parse_dotted_ip __P((char *, u_int32_t *)); */
+/* int parse_dotted_ip (char *, u_int32_t *); */
 
 /* Procedures exported from demand.c */
 #if DEMAND_SUPPORT
-void demand_conf __P((void));	/* config interface(s) for demand-dial */
-void demand_block __P((void));	/* set all NPs to queue up packets */
-void demand_unblock __P((void)); /* set all NPs to pass packets */
-void demand_discard __P((void)); /* set all NPs to discard packets */
-void demand_rexmit __P((int, u_int32_t)); /* retransmit saved frames for an NP*/
-int  loop_chars __P((unsigned char *, int)); /* process chars from loopback */
-int  loop_frame __P((unsigned char *, int)); /* should we bring link up? */
+void demand_conf (void);	/* config interface(s) for demand-dial */
+void demand_block (void);	/* set all NPs to queue up packets */
+void demand_unblock (void); /* set all NPs to pass packets */
+void demand_discard (void); /* set all NPs to discard packets */
+void demand_rexmit (int, u_int32_t); /* retransmit saved frames for an NP*/
+int  loop_chars (unsigned char *, int); /* process chars from loopback */
+int  loop_frame (unsigned char *, int); /* should we bring link up? */
 #endif /* DEMAND_SUPPORT */
 
 /* Procedures exported from multilink.c */
 #ifdef HAVE_MULTILINK
-void mp_check_options __P((void)); /* Check multilink-related options */
-int  mp_join_bundle __P((void));  /* join our link to an appropriate bundle */
-void mp_exit_bundle __P((void));  /* have disconnected our link from bundle */
-void mp_bundle_terminated __P((void));
-char *epdisc_to_str __P((struct epdisc *)); /* string from endpoint discrim. */
-int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
+void mp_check_options (void); /* Check multilink-related options */
+int  mp_join_bundle (void);  /* join our link to an appropriate bundle */
+void mp_exit_bundle (void);  /* have disconnected our link from bundle */
+void mp_bundle_terminated (void);
+char *epdisc_to_str (struct epdisc *); /* string from endpoint discrim. */
+int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
 #else
 #define mp_bundle_terminated()	/* nothing */
 #define mp_exit_bundle()	/* nothing */
@@ -680,23 +663,23 @@ int  str_to_epdisc __P((struct epdisc *, char *)); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from utils.c. */
-void print_string __P((char *, int,  void (*) (void *, char *, ...),
-		void *));	/* Format a string for output */
-int slprintf __P((char *, int, char *, ...));		/* sprintf++ */
-int vslprintf __P((char *, int, char *, va_list));	/* vsprintf++ */
-size_t strlcpy __P((char *, const char *, size_t));	/* safe strcpy */
-size_t strlcat __P((char *, const char *, size_t));	/* safe strncpy */
-void dbglog __P((char *, ...));	/* log a debug message */
-void info __P((char *, ...));	/* log an informational message */
-void notice __P((char *, ...));	/* log a notice-level message */
-void warn __P((char *, ...));	/* log a warning message */
-void error __P((char *, ...));	/* log an error message */
-void fatal __P((char *, ...));	/* log an error message and die(1) */
-void init_pr_log __P((const char *, int)); /* initialize for using pr_log */
-void pr_log __P((void *, char *, ...));	/* printer fn, output to syslog */
-void end_pr_log __P((void));	/* finish up after using pr_log */
+void print_string (char *, int,  void (*) (void *, char *, ...),
+		void *);	/* Format a string for output */
+int slprintf (char *, int, char *, ...);		/* sprintf++ */
+int vslprintf (char *, int, char *, va_list);	/* vsprintf++ */
+size_t strlcpy (char *, const char *, size_t);	/* safe strcpy */
+size_t strlcat (char *, const char *, size_t);	/* safe strncpy */
+void dbglog (char *, ...);	/* log a debug message */
+void info (char *, ...);	/* log an informational message */
+void notice (char *, ...);	/* log a notice-level message */
+void warn (char *, ...);	/* log a warning message */
+void error (char *, ...);	/* log an error message */
+void fatal (char *, ...);	/* log an error message and die(1) */
+void init_pr_log (const char *, int); /* initialize for using pr_log */
+void pr_log (void *, char *, ...);	/* printer fn, output to syslog */
+void end_pr_log (void);	/* finish up after using pr_log */
 #if PRINTPKT_SUPPORT
-void dump_packet __P((const char *, u_char *, int));
+void dump_packet (const char *, u_char *, int);
 				/* dump packet to debug log if interesting */
 #endif /* PRINTPKT_SUPPORT */
 

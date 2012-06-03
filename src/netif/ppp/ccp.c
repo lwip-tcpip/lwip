@@ -57,8 +57,8 @@
 /*
  * Command-line options.
  */
-static int setbsdcomp __P((char **));
-static int setdeflate __P((char **));
+static int setbsdcomp (char **);
+static int setdeflate (char **);
 static char bsd_value[8];
 static char deflate_value[8];
 
@@ -166,19 +166,19 @@ static option_t ccp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ccp_init __P((int unit));
-static void ccp_open __P((int unit));
-static void ccp_close __P((int unit, char *));
-static void ccp_lowerup __P((int unit));
-static void ccp_lowerdown __P((int));
-static void ccp_input __P((int unit, u_char *pkt, int len));
-static void ccp_protrej __P((int unit));
+static void ccp_init (int unit);
+static void ccp_open (int unit);
+static void ccp_close (int unit, char *);
+static void ccp_lowerup (int unit);
+static void ccp_lowerdown (int);
+static void ccp_input (int unit, u_char *pkt, int len);
+static void ccp_protrej (int unit);
 #if PRINTPKT_SUPPORT
-static int  ccp_printpkt __P((u_char *pkt, int len,
-			      void (*printer) __P((void *, char *, ...)),
-			      void *arg));
+static int  ccp_printpkt (u_char *pkt, int len,
+			      void (*printer) (void *, char *, ...),
+			      void *arg);
 #endif /* PRINTPKT_SUPPORT */
-static void ccp_datainput __P((int unit, u_char *pkt, int len));
+static void ccp_datainput (int unit, u_char *pkt, int len);
 
 struct protent ccp_protent = {
     PPP_CCP,
@@ -217,18 +217,18 @@ ccp_options ccp_hisoptions[NUM_PPP];	/* what we agreed to do */
 /*
  * Callbacks for fsm code.
  */
-static void ccp_resetci __P((fsm *));
-static int  ccp_cilen __P((fsm *));
-static void ccp_addci __P((fsm *, u_char *, int *));
-static int  ccp_ackci __P((fsm *, u_char *, int));
-static int  ccp_nakci __P((fsm *, u_char *, int, int));
-static int  ccp_rejci __P((fsm *, u_char *, int));
-static int  ccp_reqci __P((fsm *, u_char *, int *, int));
-static void ccp_up __P((fsm *));
-static void ccp_down __P((fsm *));
-static int  ccp_extcode __P((fsm *, int, int, u_char *, int));
-static void ccp_rack_timeout __P((void *));
-static char *method_name __P((ccp_options *, ccp_options *));
+static void ccp_resetci (fsm *);
+static int  ccp_cilen (fsm *);
+static void ccp_addci (fsm *, u_char *, int *);
+static int  ccp_ackci (fsm *, u_char *, int);
+static int  ccp_nakci (fsm *, u_char *, int, int);
+static int  ccp_rejci (fsm *, u_char *, int);
+static int  ccp_reqci (fsm *, u_char *, int *, int);
+static void ccp_up (fsm *);
+static void ccp_down (fsm *);
+static int  ccp_extcode (fsm *, int, int, u_char *, int);
+static void ccp_rack_timeout (void *);
+static char *method_name (ccp_options *, ccp_options *);
 
 static fsm_callbacks ccp_callbacks = {
     ccp_resetci,
@@ -267,7 +267,7 @@ static int ccp_localstate[NUM_PPP];
 static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
 
 /*
- * Option parsing.
+ * Option parsing
  */
 static int
 setbsdcomp(argv)
@@ -1502,7 +1502,7 @@ static int
 ccp_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
     u_char *p0, *optend;

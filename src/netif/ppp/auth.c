@@ -177,39 +177,39 @@ static int num_np_up;
 static bool default_auth;
 
 /* Hook to enable a plugin to control the idle time limit */
-int (*idle_time_hook) __P((struct ppp_idle *)) = NULL;
+int (*idle_time_hook) (struct ppp_idle *) = NULL;
 
 /* Hook for a plugin to say whether we can possibly authenticate any peer */
-int (*pap_check_hook) __P((void)) = NULL;
+int (*pap_check_hook) (void) = NULL;
 
 /* Hook for a plugin to check the PAP user and password */
-int (*pap_auth_hook) __P((char *user, char *passwd, char **msgp,
+int (*pap_auth_hook) (char *user, char *passwd, char **msgp,
 			  struct wordlist **paddrs,
-			  struct wordlist **popts)) = NULL;
+			  struct wordlist **popts) = NULL;
 
 /* Hook for a plugin to know about the PAP user logout */
-void (*pap_logout_hook) __P((void)) = NULL;
+void (*pap_logout_hook) (void) = NULL;
 
 /* Hook for a plugin to get the PAP password for authenticating us */
-int (*pap_passwd_hook) __P((char *user, char *passwd)) = NULL;
+int (*pap_passwd_hook) (char *user, char *passwd) = NULL;
 
 /* Hook for a plugin to say if we can possibly authenticate a peer using CHAP */
-int (*chap_check_hook) __P((void)) = NULL;
+int (*chap_check_hook) (void) = NULL;
 
 /* Hook for a plugin to get the CHAP password for authenticating us */
-int (*chap_passwd_hook) __P((char *user, char *passwd)) = NULL;
+int (*chap_passwd_hook) (char *user, char *passwd) = NULL;
 
 /* Hook for a plugin to say whether it is OK if the peer
    refuses to authenticate. */
-int (*null_auth_hook) __P((struct wordlist **paddrs,
-			   struct wordlist **popts)) = NULL;
+int (*null_auth_hook) (struct wordlist **paddrs,
+			   struct wordlist **popts) = NULL;
 
-int (*allowed_address_hook) __P((u_int32_t addr)) = NULL;
+int (*allowed_address_hook) (u_int32_t addr) = NULL;
 #endif /* UNUSED */
 
 #ifdef HAVE_MULTILINK
 /* Hook for plugin to hear when an interface joins a multilink bundle */
-void (*multilink_join_hook) __P((void)) = NULL;
+void (*multilink_join_hook) (void) = NULL;
 #endif
 
 #if PPP_NOTIFY
@@ -253,37 +253,37 @@ char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
 #if 0 /* UNUSED */
 static char *uafname;		/* name of most recent +ua file */
 
-extern char *crypt __P((const char *, const char *));
+extern char *crypt (const char *, const char *);
 #endif /* UNUSED */
 /* Prototypes for procedures local to this file. */
 
-static void network_phase __P((int));
-static void check_idle __P((void *));
-static void connect_time_expired __P((void *));
+static void network_phase (int);
+static void check_idle (void *);
+static void connect_time_expired (void *);
 #if 0 /* UNUSED */
-static int  null_login __P((int));
-/* static int  get_pap_passwd __P((char *)); */
-static int  have_pap_secret __P((int *));
-static int  have_chap_secret __P((char *, char *, int, int *));
-static int  have_srp_secret __P((char *client, char *server, int need_ip,
-    int *lacks_ipp));
-static int  ip_addr_check __P((u_int32_t, struct permitted_ip *));
-static int  scan_authfile __P((FILE *, char *, char *, char *,
+static int  null_login (int);
+/* static int  get_pap_passwd (char *); */
+static int  have_pap_secret (int *);
+static int  have_chap_secret (char *, char *, int, int *);
+static int  have_srp_secret (char *client, char *server, int need_ip,
+    int *lacks_ipp);
+static int  ip_addr_check (u_int32_t, struct permitted_ip *);
+static int  scan_authfile (FILE *, char *, char *, char *,
 			       struct wordlist **, struct wordlist **,
-			       char *, int));
-static void free_wordlist __P((struct wordlist *));
-static void set_allowed_addrs __P((int, struct wordlist *, struct wordlist *));
-static int  some_ip_ok __P((struct wordlist *));
-static int  setupapfile __P((char **));
-static int  privgroup __P((char **));
-static int  set_noauth_addr __P((char **));
-static int  set_permitted_number __P((char **));
-static void check_access __P((FILE *, char *));
-static int  wordlist_count __P((struct wordlist *));
+			       char *, int);
+static void free_wordlist (struct wordlist *);
+static void set_allowed_addrs (int, struct wordlist *, struct wordlist *);
+static int  some_ip_ok (struct wordlist *);
+static int  setupapfile (char **);
+static int  privgroup (char **);
+static int  set_noauth_addr (char **);
+static int  set_permitted_number (char **);
+static void check_access (FILE *, char *);
+static int  wordlist_count (struct wordlist *);
 #endif /* UNUSED */
 
 #ifdef MAXOCTETS
-static void check_maxoctets __P((void *));
+static void check_maxoctets (void *);
 #endif
 
 #if PPP_OPTIONS

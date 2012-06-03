@@ -99,22 +99,22 @@
 
 #define SHA1_SIGNATURE_SIZE 20
 
-static void	ascii2unicode __P((char[], int, u_char[]));
-static void	NTPasswordHash __P((u_char *, int, u_char[MD4_SIGNATURE_SIZE]));
-static void	ChallengeResponse __P((u_char *, u_char *, u_char[24]));
-static void	ChapMS_NT __P((u_char *, char *, int, u_char[24]));
-static void	ChapMS2_NT __P((u_char *, u_char[16], char *, char *, int,
-				u_char[24]));
+static void	ascii2unicode (char[], int, u_char[]);
+static void	NTPasswordHash (u_char *, int, u_char[MD4_SIGNATURE_SIZE]);
+static void	ChallengeResponse (u_char *, u_char *, u_char[24]);
+static void	ChapMS_NT (u_char *, char *, int, u_char[24]);
+static void	ChapMS2_NT (u_char *, u_char[16], char *, char *, int,
+				u_char[24]);
 static void	GenerateAuthenticatorResponsePlain
-			__P((char*, int, u_char[24], u_char[16], u_char *,
-			     char *, u_char[41]));
+			(char*, int, u_char[24], u_char[16], u_char *,
+			     char *, u_char[41]);
 #ifdef MSLANMAN
-static void	ChapMS_LANMan __P((u_char *, char *, int, u_char *));
+static void	ChapMS_LANMan (u_char *, char *, int, u_char *);
 #endif
 
 #ifdef MPPE
-static void	Set_Start_Key __P((u_char *, char *, int));
-static void	SetMasterKeys __P((char *, int, u_char[24], int));
+static void	Set_Start_Key (u_char *, char *, int);
+static void	SetMasterKeys (char *, int, u_char[24], int);
 #endif
 
 #ifdef MSLANMAN

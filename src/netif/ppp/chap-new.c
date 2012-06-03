@@ -140,7 +140,7 @@ static void chap_protrej(int unit);
 static void chap_input(int unit, unsigned char *pkt, int pktlen);
 #if PRINTPKT_SUPPORT
 static int chap_print_pkt(unsigned char *p, int plen,
-		void (*printer) __P((void *, char *, ...)), void *arg);
+		void (*printer) (void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 /* List of digest types that we know about */
@@ -604,7 +604,7 @@ static char *chap_code_names[] = {
 
 static int
 chap_print_pkt(unsigned char *p, int plen,
-	       void (*printer) __P((void *, char *, ...)), void *arg)
+	       void (*printer) (void *, char *, ...), void *arg)
 {
 	int code, id, len;
 	int clen, nlen;

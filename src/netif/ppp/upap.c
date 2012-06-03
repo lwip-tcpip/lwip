@@ -84,14 +84,14 @@ static option_t pap_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void upap_init __P((int));
-static void upap_lowerup __P((int));
-static void upap_lowerdown __P((int));
-static void upap_input __P((int, u_char *, int));
-static void upap_protrej __P((int));
+static void upap_init (int);
+static void upap_lowerup (int);
+static void upap_lowerdown (int);
+static void upap_input (int, u_char *, int);
+static void upap_protrej (int);
 #if PRINTPKT_SUPPORT
-static int  upap_printpkt __P((u_char *, int,
-			       void (*) __P((void *, char *, ...)), void *));
+static int  upap_printpkt (u_char *, int,
+			       void (*) (void *, char *, ...), void *);
 #endif /* PRINTPKT_SUPPORT */
 
 struct protent pap_protent = {
@@ -124,16 +124,16 @@ struct protent pap_protent = {
 
 upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */
 
-static void upap_timeout __P((void *));
-static void upap_reqtimeout __P((void *));
+static void upap_timeout (void *);
+static void upap_reqtimeout (void *);
 #if 0 /* UNUSED */
-static void upap_rauthreq __P((upap_state *, u_char *, int, int));
+static void upap_rauthreq (upap_state *, u_char *, int, int);
 #endif /* UNUSED */
-static void upap_rauthack __P((upap_state *, u_char *, int, int));
-static void upap_rauthnak __P((upap_state *, u_char *, int, int));
-static void upap_sauthreq __P((upap_state *));
+static void upap_rauthack (upap_state *, u_char *, int, int);
+static void upap_rauthnak (upap_state *, u_char *, int, int);
+static void upap_sauthreq (upap_state *);
 #if 0 /* UNUSED */
-static void upap_sresp __P((upap_state *, int, int, char *, int));
+static void upap_sresp (upap_state *, int, int, char *, int);
 #endif /* UNUSED */
 
 
@@ -638,7 +638,7 @@ static int
 upap_printpkt(p, plen, printer, arg)
     u_char *p;
     int plen;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer) (void *, char *, ...);
     void *arg;
 {
     int code, id, len;
