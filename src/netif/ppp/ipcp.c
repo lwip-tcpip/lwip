@@ -75,6 +75,7 @@ u_int32_t netmask = 0;		/* IP netmask to set on interface */
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 bool	noremoteip = 0;		/* Let him have no IP address */
 
+#if 0 /* UNUSED */
 /* Hook for a plugin to know when IP protocol has come up */
 void (*ip_up_hook) __P((void)) = NULL;
 
@@ -83,6 +84,7 @@ void (*ip_down_hook) __P((void)) = NULL;
 
 /* Hook for a plugin to choose the remote IP address */
 void (*ip_choose_hook) __P((u_int32_t *)) = NULL;
+#endif /* UNUSED */
 
 #if PPP_NOTIFY
 /* Notifiers for when IPCP goes up and down */
@@ -732,12 +734,14 @@ ipcp_resetci(f)
     *go = *wo;
     if (!ask_for_local)
 	go->ouraddr = 0;
+#if 0 /* UNUSED */
     if (ip_choose_hook) {
 	ip_choose_hook(&wo->hisaddr);
 	if (wo->hisaddr) {
 	    wo->accept_remote = 0;
 	}
     }
+#endif /* UNUSED */
     BZERO(&ipcp_hisoptions[f->unit], sizeof(ipcp_options));
 }
 
@@ -1975,8 +1979,10 @@ ipcp_up(f)
 #if PPP_NOTIFY
     notify(ip_up_notifier, 0);
 #endif /* PPP_NOTIFY */
+#if 0 /* UNUSED */
     if (ip_up_hook)
 	ip_up_hook();
+#endif /* UNUSED */
 }
 
 
@@ -2001,8 +2007,10 @@ ipcp_down(f)
 #if PPP_NOTIFY
     notify(ip_down_notifier, 0);
 #endif /* PPP_NOTIFY */
+#if 0 /* UNUSED */
     if (ip_down_hook)
 	ip_down_hook();
+#endif /* UNUSED */
     if (ipcp_is_up) {
 	ipcp_is_up = 0;
 	np_down(f->unit, PPP_IP);
