@@ -316,8 +316,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       ntohs(IPH_LEN(&cs->cs_ip)) == hlen) {
       break;
     }
-
-  /* (fall through) */
+    /* no break */
+    /* fall through */
 
   case SPECIAL_I:
   case SPECIAL_D:

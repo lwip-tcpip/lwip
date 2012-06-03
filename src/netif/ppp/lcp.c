@@ -467,7 +467,7 @@ lcp_close(unit, reason)
     oldstate = f->state;
 
     fsm_close(f, reason);
-    if (oldstate == STOPPED && f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP)) {
+    if (oldstate == STOPPED && (f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
 	 * but it does mean that the program terminates if you do a

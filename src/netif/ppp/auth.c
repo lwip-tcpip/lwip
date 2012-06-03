@@ -1174,6 +1174,7 @@ auth_withpeer_success(unit, protocol, prot_flavor)
     default:
 	warn("auth_withpeer_success: unknown protocol %x", protocol);
 	bit = 0;
+	/* no break */
     }
 
     notice("%s authentication succeeded", prot);

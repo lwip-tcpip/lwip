@@ -135,17 +135,7 @@ slprintf (char *buf, int buflen, char *fmt, ...)
     va_list args;
     int n;
 
-#if defined(__STDC__)
     va_start(args, fmt);
-#else
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_start(args);
-    buf = va_arg(args, char *);
-    buflen = va_arg(args, int);
-    fmt = va_arg(args, char *);
-#endif
     n = vslprintf(buf, buflen, fmt, args);
     va_end(args);
     return n;
@@ -287,9 +277,11 @@ vslprintf(buf, buflen, fmt, args)
 	    num[1] = 0;
 	    str = num;
 	    break;
+#if 0 /* do we always have strerror() in embedded ? */
 	case 'm':
 	    str = strerror(errno);
 	    break;
+#endif /* do we always have strerror() in embedded ? */
 	case 'I':
 	    ip = va_arg(args, u_int32_t);
 	    ip = ntohl(ip);
@@ -446,16 +438,7 @@ vslp_printer (void *arg, char *fmt, ...)
     va_list pvar;
     struct buffer_info *bi;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    void *arg;
-    char *fmt;
-    va_start(pvar);
-    arg = va_arg(pvar, void *);
-    fmt = va_arg(pvar, char *);
-#endif
-
     bi = (struct buffer_info *) arg;
     n = vslprintf(bi->ptr, bi->len, fmt, pvar);
     va_end(pvar);
@@ -576,16 +559,7 @@ pr_log (void *arg, char *fmt, ...)
 	char *p, *eol;
 	char buf[256];
 
-#if defined(__STDC__)
 	va_start(pvar, fmt);
-#else
-	void *arg;
-	char *fmt;
-	va_start(pvar);
-	arg = va_arg(pvar, void *);
-	fmt = va_arg(pvar, char *);
-#endif
-
 	n = vslprintf(buf, sizeof(buf), fmt, pvar);
 	va_end(pvar);
 
@@ -627,13 +601,7 @@ pr_log (void *arg, char *fmt, ...)
  * print_string - print a readable representation of a string using
  * printer.
  */
-void
-print_string(p, len, printer, arg)
-    char *p;
-    int len;
-    void (*printer) (void *, char *, ...);
-    void *arg;
-{
+void print_string(char *p, int len, void (*printer) (void *, char *, ...), void arg) {
     int c;
 
     printer(arg, "\"");
@@ -656,6 +624,7 @@ print_string(p, len, printer, arg)
 		break;
 	    default:
 		printer(arg, "\\%.3o", c);
+		/* no break */
 	    }
 	}
     }
@@ -706,14 +675,7 @@ fatal (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
@@ -731,14 +693,7 @@ error (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
     ++error_count;
@@ -752,14 +707,7 @@ warn (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_WARNING, fmt, pvar);
     va_end(pvar);
 }
@@ -772,14 +720,7 @@ notice (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_NOTICE, fmt, pvar);
     va_end(pvar);
 }
@@ -792,14 +733,7 @@ info (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_INFO, fmt, pvar);
     va_end(pvar);
 }
@@ -812,14 +746,7 @@ dbglog (char *fmt, ...)
 {
     va_list pvar;
 
-#if defined(__STDC__)
     va_start(pvar, fmt);
-#else
-    char *fmt;
-    va_start(pvar);
-    fmt = va_arg(pvar, char *);
-#endif
-
     logit(LOG_DEBUG, fmt, pvar);
     va_end(pvar);
 }

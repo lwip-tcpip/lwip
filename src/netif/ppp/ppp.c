@@ -1712,18 +1712,22 @@ pppos_input_proc(ppp_control_rx *pcrx, u_char *s, int l)
           if (cur_char != PPP_ALLSTATIONS) {
             break;
           }
+          /* no break */
+          /* Fall through */
 
-        /* Fall through */
         case PDSTART:                   /* Process start flag. */
           /* Prepare for a new packet. */
           pcrx->in_fcs = PPP_INITFCS;
+          /* no break */
+          /* Fall through */
 
-        /* Fall through */
         case PDADDRESS:                 /* Process address field. */
           if (cur_char == PPP_ALLSTATIONS) {
             pcrx->in_state = PDCONTROL;
             break;
           }
+          /* no break */
+
           /* Else assume compressed address and control fields so
            * fall through to get the protocol... */
         case PDCONTROL:                 /* Process control field. */
@@ -1732,6 +1736,8 @@ pppos_input_proc(ppp_control_rx *pcrx, u_char *s, int l)
             pcrx->in_state = PDPROTOCOL1;
             break;
           }
+          /* no break */
+
 #if 0
           else {
             PPPDEBUG(LOG_WARNING,

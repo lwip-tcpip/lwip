@@ -117,6 +117,7 @@ fsm_lowerup(f)
 
     default:
 	FSMDEBUG(("%s: Up event in state %d!", PROTO_NAME(f), f->state));
+	/* no break */
     }
 }
 
@@ -162,6 +163,7 @@ fsm_lowerdown(f)
 
     default:
 	FSMDEBUG(("%s: Down event in state %d!", PROTO_NAME(f), f->state));
+	/* no break */
     }
 }
 
@@ -193,6 +195,7 @@ fsm_open(f)
     case CLOSING:
 	f->state = STOPPING;
 	/* fall through */
+	/* no break */
     case STOPPED:
     case OPENED:
 	if( f->flags & OPT_RESTART ){
@@ -325,6 +328,7 @@ fsm_timeout(arg)
 
     default:
 	FSMDEBUG(("%s: Timeout event in state %d!", PROTO_NAME(f), f->state));
+	/* no break */
     }
 }
 
@@ -711,6 +715,7 @@ fsm_protreject(f)
     case CLOSING:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
+	/* no break */
     case CLOSED:
 	f->state = CLOSED;
 	if( f->callbacks->finished )
@@ -723,6 +728,7 @@ fsm_protreject(f)
     case ACKSENT:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
+	/* no break */
     case STOPPED:
 	f->state = STOPPED;
 	if( f->callbacks->finished )
@@ -736,6 +742,7 @@ fsm_protreject(f)
     default:
 	FSMDEBUG(("%s: Protocol-reject event in state %d!",
 		  PROTO_NAME(f), f->state));
+	/* no break */
     }
 }
 
