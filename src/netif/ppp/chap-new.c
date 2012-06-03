@@ -40,7 +40,10 @@
 
 #include "ppp.h"
 
+#if 0 /* UNUSED */
 #include "session.h"
+#endif /* UNUSED */
+
 #include "chap-new.h"
 #include "chap-md5.h"
 

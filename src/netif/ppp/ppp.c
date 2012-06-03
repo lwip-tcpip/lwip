@@ -510,8 +510,9 @@ static void ppp_input(void *arg) {
   /* FIXME: should we write protent to do that ? */
 
   switch(protocol) {
-    case PPP_VJC_COMP:      /* VJ compressed TCP */
+
 #if PPPOS_SUPPORT && VJ_SUPPORT
+    case PPP_VJC_COMP:      /* VJ compressed TCP */
       PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_comp in pbuf len=%d\n", pd, nb->len));
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
@@ -523,14 +524,9 @@ static void ppp_input(void *arg) {
       }
       /* Something's wrong so drop it. */
       PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ compressed\n", pd));
-#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
-      /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO, ("pppInput[%d]: drop VJ Comp in %d\n", pd, nb->len));
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-#if PPPOS_SUPPORT && VJ_SUPPORT
       PPPDEBUG(LOG_INFO, ("pppInput[%d]: vj_un in pbuf len=%d\n", pd, nb->len));
       /*
        * Process the TCP/IP header for VJ header compression and then pass
@@ -542,13 +538,8 @@ static void ppp_input(void *arg) {
       }
       /* Something's wrong so drop it. */
       PPPDEBUG(LOG_WARNING, ("pppInput[%d]: Dropping VJ uncompressed\n", pd));
-#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
-      /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO,
-               ("pppInput[%d]: drop VJ UnComp in %d\n",
-                pd, nb->len));
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("pppInput[%d]: ip in pbuf len=%d\n", pd, nb->len));
@@ -614,7 +605,7 @@ out:
   pbuf_free(nb);
   return;
 
- #if 0
+#if 0
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
    * Until we get past the authentication phase, toss all packets
@@ -1351,7 +1342,7 @@ int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid) {
  * get_idle_time - return how long the link has been idle.
  */
 int get_idle_time(int u, struct ppp_idle *ip) {
-    /* FIXME: add idle time support */
+    /* FIXME: add idle time support and make it optional */
     return 1;
 }
 

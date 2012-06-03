@@ -126,7 +126,9 @@
 #include "cbcp.h"
 #endif
 
+#if 0 /* UNUSED */
 #include "session.h"
+#endif /* UNUSED */
 
 #if 0 /* UNUSED */
 /* Bits in scan_authfile return value */
@@ -1001,7 +1003,12 @@ continue_networks(unit)
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->protocol < 0xC000
-	    && protp->protocol != PPP_CCP && protp->protocol != PPP_ECP
+#if CCP_SUPPORT
+	    && protp->protocol != PPP_CCP
+#endif /* CCP_SUPPORT */
+#if ECP_SUPPORT
+	    && protp->protocol != PPP_ECP
+#endif /* ECP_SUPPORT */
 	    && protp->enabled_flag && protp->open != NULL) {
 	    (*protp->open)(0);
 	    ++num_np_open;
