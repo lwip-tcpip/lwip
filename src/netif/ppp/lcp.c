@@ -207,6 +207,9 @@ lcp_options lcp_wantoptions[NUM_PPP];	/* Options that we want to request */
 lcp_options lcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
 lcp_options lcp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 lcp_options lcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
+#if PPPOS_SUPPORT
+ext_accm xmit_accm[NUM_PPP];            /* extended transmit ACCM */
+#endif /* PPPOS_SUPPORT */
 
 static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static int lcp_echo_number   = 0;	/* ID number of next echo frame */
@@ -403,6 +406,24 @@ lcp_init(unit)
     ao->neg_pcompression = 1;
     ao->neg_accompression = 1;
     ao->neg_endpoint = 1;
+
+#if PPPOS_SUPPORT
+    /*
+     * Set transmit escape for the flag and escape characters plus anything
+     * set for the allowable options.
+     */
+    memset(xmit_accm[unit], 0, sizeof(xmit_accm[0]));
+    xmit_accm[unit][15] = 0x60;
+    xmit_accm[unit][0]  = (u_char)((ao->asyncmap        & 0xFF));
+    xmit_accm[unit][1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
+    xmit_accm[unit][2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
+    xmit_accm[unit][3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
+    LCPDEBUG(("lcp_init: xmit_accm=%X %X %X %X\n",
+          xmit_accm[unit][0],
+          xmit_accm[unit][1],
+          xmit_accm[unit][2],
+          xmit_accm[unit][3]));
+#endif /* PPPOS_SUPPORT */
 }
 
 
@@ -475,11 +496,26 @@ lcp_lowerup(unit)
      * but accept A/C and protocol compressed packets
      * if we are going to ask for A/C and protocol compression.
      */
+#if PPPOS_SUPPORT
+    ppp_set_xaccm(unit, &xmit_accm[unit]);
+#endif /* PPPOS_SUPPORT */
     if (ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0) < 0
 	|| ppp_recv_config(unit, PPP_MRU, (lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
     peer_mru[unit] = PPP_MRU;
+
+    #if PPPOS_SUPPORT
+    lcp_allowoptions[unit].asyncmap = (u_long)xmit_accm[unit][0]
+                                   | ((u_long)xmit_accm[unit][1] << 8)
+                                   | ((u_long)xmit_accm[unit][2] << 16)
+                                   | ((u_long)xmit_accm[unit][3] << 24);
+    LCPDEBUG(("lcp_lowerup: asyncmap=%X %X %X %X\n",
+              xmit_accm[unit][3],
+              xmit_accm[unit][2],
+              xmit_accm[unit][1],
+              xmit_accm[unit][0]));
+#endif /* PPPOS_SUPPORT */
 
     if (listen_time != 0) {
 	f->flags |= DELAYED_UP;

@@ -1,9 +1,35 @@
-/*
- * ppp.h
- *
- *  Created on: May 12, 2012
- *      Author: gradator
- */
+/*****************************************************************************
+* ppp.h - Network Point to Point Protocol header file.
+*
+* Copyright (c) 2003 by Marc Boucher, Services Informatiques (MBSI) inc.
+* portions Copyright (c) 1997 Global Election Systems Inc.
+*
+* The authors hereby grant permission to use, copy, modify, distribute,
+* and license this software and its documentation for any purpose, provided
+* that existing copyright notices are retained in all copies and that this
+* notice and the following disclaimer are included verbatim in any
+* distributions. No written agreement, license, or royalty fee is required
+* for any of the authorized uses.
+*
+* THIS SOFTWARE IS PROVIDED BY THE CONTRIBUTORS *AS IS* AND ANY EXPRESS OR
+* IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+* OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+* IN NO EVENT SHALL THE CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+* INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+* NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+* DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+* THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+* THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+******************************************************************************
+* REVISION HISTORY
+*
+* 03-01-01 Marc Boucher <marc@mbsi.ca>
+*   Ported to lwIP.
+* 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
+*   Original derived from BSD codes.
+*****************************************************************************/
 
 #include "lwip/opt.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
@@ -38,6 +64,7 @@ typedef unsigned char	bool;
 #include "lwip/netif.h"
 #include "lwip/def.h"
 #include "lwip/timers.h"
+#include "lwip/sio.h"
 
 #include "pppdebug.h"
 
@@ -147,7 +174,7 @@ typedef unsigned short  u_int16_t;
 /*
  * Extended asyncmap - allows any character to be escaped.
  */
-typedef u_int32_t	ext_accm[8];
+typedef u_char  ext_accm[32];
 
 /*
  * What to do with network protocol (NP) packets.
@@ -407,6 +434,18 @@ extern struct protent *protocols[];
 #define PPPERR_AUTHFAIL -7 /* Failed authentication challenge. */
 #define PPPERR_PROTOCOL -8 /* Failed to meet protocol. */
 
+/*
+ * PPP IOCTL commands.
+ */
+/*
+ * Get the up status - 0 for down, non-zero for up.  The argument must
+ * point to an int.
+ */
+#define PPPCTLG_UPSTATUS 100 /* Get the up status - 0 down else up */
+#define PPPCTLS_ERRCODE  101 /* Set the error code */
+#define PPPCTLG_ERRCODE  102 /* Get the error code */
+#define PPPCTLG_FD       103 /* Get the fd associated with the ppp */
+
 /************************
 *** PUBLIC DATA TYPES ***
 ************************/
@@ -503,11 +542,62 @@ void ppp_set_auth(enum pppAuthType authType, const char *user, const char *passw
 /* Link status callback function prototype */
 typedef void (*pppLinkStatusCB_fn)(void *ctx, int errCode, void *arg);
 
+#if PPPOS_SUPPORT
+
+/*
+ * Open a new PPP connection using the given serial I/O device.
+ * This initializes the PPP control block but does not
+ * attempt to negotiate the LCP session.
+ *
+ * If this port connects to a modem, the modem connection must be
+ * established before calling this.
+ *
+ * Return a new PPP connection descriptor on success or
+ * an error code (negative) on failure.
+ */
+int pppOverSerialOpen(sio_fd_t fd, pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
+
+#if !PPP_INPROC_OWNTHREAD
+/*
+ * PPP over Serial: this is the input function to be called for received data.
+ * If PPP_INPROC_OWNTHREAD==1, a separate input thread using the blocking
+ * sio_read() is used, so this is deactivated.
+ */
+void pppos_input(int pd, u_char* data, int len);
+#endif /* !PPP_INPROC_OWNTHREAD */
+
+#endif /* PPPOS_SUPPORT */
+
+#if PPPOE_SUPPORT
 /*
  * Open a new PPP Over Ethernet (PPPOE) connection.
  */
 int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
                         pppLinkStatusCB_fn linkStatusCB, void *linkStatusCtx);
+#endif /* PPPOE_SUPPORT */
+
+/*
+ * Close a PPP connection and release the descriptor.
+ * Any outstanding packets in the queues are dropped.
+ * Return 0 on success, an error code on failure.
+ */
+int pppClose(int pd);
+
+/*
+ * Indicate to the PPP process that the line has disconnected.
+ */
+void pppSigHUP(int pd);
+
+#if LWIP_NETIF_STATUS_CALLBACK
+/* Set an lwIP-style status-callback for the selected PPP device */
+void ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback);
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
+
+#if LWIP_NETIF_LINK_CALLBACK
+/* Set an lwIP-style link-callback for the selected PPP device */
+void ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback);
+#endif /* LWIP_NETIF_LINK_CALLBACK */
+
 
 
 
@@ -517,17 +607,23 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
 
 /* PPP flow functions
  */
-void pppOverEthernetInitFailed(int pd);
-
-u_short pppMTU(int pd);
-
 #if PPPOE_SUPPORT
+void pppOverEthernetInitFailed(int pd);
 /* function called by pppoe.c */
 void ppp_input_over_ethernet(int pd, struct pbuf *pb);
 #endif /* PPPOE_SUPPORT */
 
+int pppIOCtl(int pd, int cmd, void *arg);
+
+/* FIXME: demystify MTU support */
+u_short pppMTU(int pd);
+
 /* function called by all PPP subsystems to send packets */
 int ppp_write(int pd, const u_char *s, int n);
+
+/* functions called by auth.c link_terminated() */
+void pppLinkDown(int pd);
+void pppLinkTerminated(int pd);
 
 /* merge a pbuf chain into one pbuf */
 struct pbuf * ppp_singlebuf(struct pbuf *p);
@@ -538,6 +634,9 @@ struct pbuf * ppp_singlebuf(struct pbuf *p);
  */
 void new_phase(int p);
 
+#if PPPOS_SUPPORT
+void ppp_set_xaccm(int unit, ext_accm *accm);
+#endif /* PPPOS_SUPPORT */
 int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp);
 int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
 

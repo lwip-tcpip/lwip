@@ -132,6 +132,9 @@ extern lcp_options lcp_wantoptions[];
 extern lcp_options lcp_gotoptions[];
 extern lcp_options lcp_allowoptions[];
 extern lcp_options lcp_hisoptions[];
+#if PPPOS_SUPPORT
+extern ext_accm xmit_accm[];
+#endif /* #if PPPOS_SUPPORT */
 
 #define DEFMRU	1500		/* Try for this */
 #define MINMRU	128		/* No MRUs below this */

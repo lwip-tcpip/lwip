@@ -661,7 +661,7 @@ link_terminated(unit)
     lcp_lowerdown(0);
 
     new_phase(PHASE_DEAD);
-
+    pppLinkTerminated(unit);
 #if 0
     /*
      * Delete pid files before disestablishing ppp.  Otherwise it
@@ -728,6 +728,8 @@ link_down(unit)
     }
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
+
+    pppLinkDown(unit);
 }
 
 void upper_layers_down(int unit)
@@ -1109,6 +1111,7 @@ void
 auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
+    int errcode = PPPERR_AUTHFAIL;
     /*
      * We've failed to authenticate ourselves to our peer.
      * Some servers keep sending CHAP challenges, but there
@@ -1116,6 +1119,13 @@ auth_withpeer_fail(unit, protocol)
      * authentication secrets.
      */
     status = EXIT_AUTH_TOPEER_FAILED;
+
+    /*
+     * We've failed to authenticate ourselves to our peer.
+     * He'll probably take the link down, and there's not much
+     * we can do except wait for that.
+     */
+    pppIOCtl(unit, PPPCTLS_ERRCODE, &errcode);
     lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
