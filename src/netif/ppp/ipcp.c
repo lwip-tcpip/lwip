@@ -1762,7 +1762,7 @@ ip_demand_conf(u)
 	wo->accept_local = 1;
 	ask_for_local = 0;	/* don't tell the peer this address */
     }
-    if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
+    if (!sifaddr(u, wo->ouraddr, wo->hisaddr, get_mask(wo->ouraddr)))
 	return 0;
     if (!sifup(u))
 	return 0;
@@ -1885,7 +1885,7 @@ ipcp_up(f)
 		script_unsetenv("OLDIPREMOTE");
 
 	    /* Set the interface to the new addresses */
-	    mask = GetMask(go->ouraddr);
+	    mask = get_mask(go->ouraddr);
 	    if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
 		if (debug)
 		    warn("Interface configuration failed");
@@ -1914,7 +1914,7 @@ ipcp_up(f)
 	/*
 	 * Set IP addresses and (if specified) netmask.
 	 */
-	mask = GetMask(go->ouraddr);
+	mask = get_mask(go->ouraddr);
 
 #if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {

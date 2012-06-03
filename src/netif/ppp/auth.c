@@ -661,7 +661,7 @@ link_terminated(unit)
     lcp_lowerdown(0);
 
     new_phase(PHASE_DEAD);
-    pppLinkTerminated(unit);
+    ppp_link_terminated(unit);
 #if 0
     /*
      * Delete pid files before disestablishing ppp.  Otherwise it
@@ -729,7 +729,7 @@ link_down(unit)
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
 
-    pppLinkDown(unit);
+    ppp_link_down(unit);
 }
 
 void upper_layers_down(int unit)

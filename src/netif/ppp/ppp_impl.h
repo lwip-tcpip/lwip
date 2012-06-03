@@ -471,7 +471,7 @@ struct ppp_settings ppp_settings;
 /* PPP flow functions
  */
 #if PPPOE_SUPPORT
-void pppOverEthernetInitFailed(int pd);
+void ppp_over_ethernet_init_failed(int pd);
 /* function called by pppoe.c */
 void ppp_input_over_ethernet(int pd, struct pbuf *pb);
 #endif /* PPPOE_SUPPORT */
@@ -480,8 +480,8 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb);
 int ppp_write(int pd, const u_char *s, int n);
 
 /* functions called by auth.c link_terminated() */
-void pppLinkDown(int pd);
-void pppLinkTerminated(int pd);
+void ppp_link_down(int pd);
+void ppp_link_terminated(int pd);
 
 /* merge a pbuf chain into one pbuf */
 struct pbuf * ppp_singlebuf(struct pbuf *p);
@@ -521,7 +521,7 @@ int get_idle_time(int u, struct ppp_idle *ip);
 
 int get_loop_output(void);
 
-u_int32_t GetMask (u_int32_t addr);
+u_int32_t get_mask (u_int32_t addr);
 
 
 /* Optional protocol names list, to make our messages a little more informative. */
