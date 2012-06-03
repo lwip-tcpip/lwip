@@ -100,7 +100,7 @@ void magic_randomize(void);
  */
 u32_t magic(void);	/* Returns the next magic number */
 
-#if MD5_SUPPORT
+#if PPP_MD5_RANDM
 /*
  * Fill buffer with random bytes
  *
@@ -112,7 +112,7 @@ u32_t magic(void);	/* Returns the next magic number */
  * the first use.
  */
 void random_bytes(unsigned char *buf, u32_t len);
-#endif /* MD5_SUPPORT */
+#endif /* PPP_MD5_RANDM */
 
 #endif /* PPP_SUPPORT */
 #endif /* MAGIC_H */

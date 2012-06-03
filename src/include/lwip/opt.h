@@ -1742,6 +1742,13 @@
 #endif
 
 /**
+ * ECP_SUPPORT==1: Support ECP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef ECP_SUPPORT
+#define ECP_SUPPORT                     0
+#endif
+
+/**
  * VJ_SUPPORT==1: Support VJ header compression.
  */
 #ifndef VJ_SUPPORT
@@ -1749,10 +1756,10 @@
 #endif
 
 /**
- * MD5_SUPPORT==1: Support MD5 (see also CHAP).
+ * PPP_MD5_RANDM==1: Use MD5 for better randomness.
  */
-#ifndef MD5_SUPPORT
-#define MD5_SUPPORT                     0
+#ifndef PPP_MD5_RANDM
+#define PPP_MD5_RANDM                     0
 #endif
 
 /**
@@ -1788,11 +1795,11 @@
  * using our cleaned PolarSSL library.
  */
 
-#if CHAP_SUPPORT || EAP_SUPPORT || MD5_SUPPORT
+#if CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM
 #ifndef LWIP_INCLUDED_POLARSSL_MD5
 #define LWIP_INCLUDED_POLARSSL_MD5	1	/* CHAP and EAP require MD5 support */
 #endif /* LWIP_INCLUDED_POLARSSL_MD5 */
-#endif /* CHAP_SUPPORT || EAP_SUPPORT || MD5_SUPPORT */
+#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM */
 
 #if MSCHAP_SUPPORT
 #ifndef LWIP_INCLUDED_POLARSSL_MD4

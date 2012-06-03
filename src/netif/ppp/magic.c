@@ -80,7 +80,7 @@
 #include "polarssl/md5.h"
 #include "magic.h"
 
-#if MD5_SUPPORT /* Using MD5 for better randomness if MD5 support is enabled */
+#if PPP_MD5_RANDM /* Using MD5 for better randomness if enabled */
 
 #define MAGIC_RANDPOOLSIZE 16   /* Bytes stored in the pool of randomness. */
 
@@ -187,7 +187,7 @@ u32_t magic() {
   return new_rand;
 }
 
-#else /* MD5_SUPPORT */
+#else /* PPP_MD5_RANDM */
 
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
@@ -258,6 +258,6 @@ u32_t magic() {
   return ((((u32_t)rand() << 16) + rand()) + magic_randomseed);
 }
 
-#endif /* MD5_SUPPORT */
+#endif /* PPP_MD5_RANDM */
 
 #endif /* PPP_SUPPORT */
