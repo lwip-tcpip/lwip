@@ -136,11 +136,13 @@ struct chap_digest_type {
 	struct chap_digest_type *next;
 };
 
+#if 0 /* UNUSED */
 /* Hook for a plugin to validate CHAP challenge */
 extern int (*chap_verify_hook)(char *name, char *ourname, int id,
 			struct chap_digest_type *digest,
 			unsigned char *challenge, unsigned char *response,
 			char *message, int message_space);
+#endif /* UNUSED */
 
 /* Called by digest code to register a digest type */
 extern void chap_register_digest(struct chap_digest_type *);
