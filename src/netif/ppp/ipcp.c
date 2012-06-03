@@ -59,7 +59,7 @@
 #include <arpa/inet.h>
 #endif /* UNUSED */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "fsm.h"
 #include "ipcp.h"

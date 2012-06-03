@@ -36,7 +36,7 @@
 #include <string.h>
 #endif /* UNUSED */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #if 0 /* UNUSED */
 #include "session.h"

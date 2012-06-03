@@ -91,7 +91,7 @@
 #include "lwip/sio.h"
 #include "lwip/ip.h" /* for ip_input() */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "fsm.h"
 #include "lcp.h"

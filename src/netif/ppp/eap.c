@@ -46,7 +46,7 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "polarssl/md5.h"
 #include "eap.h"

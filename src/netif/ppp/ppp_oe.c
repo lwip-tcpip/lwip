@@ -80,7 +80,7 @@
 #include "lwip/memp.h"
 #include "lwip/stats.h"
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "netif/ppp_oe.h"
 

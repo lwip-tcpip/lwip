@@ -49,7 +49,7 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "fsm.h"
 #include "lcp.h"

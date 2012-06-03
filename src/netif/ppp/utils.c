@@ -60,7 +60,7 @@
 
 #include <ctype.h>  /* isdigit() */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "fsm.h"
 #include "lcp.h"

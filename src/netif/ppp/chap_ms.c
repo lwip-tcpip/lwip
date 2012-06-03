@@ -87,7 +87,7 @@
 #include <unistd.h>
 #endif /* UNUSED */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "chap-new.h"
 #include "chap_ms.h"

@@ -34,7 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "fsm.h"
 #include "ccp.h"

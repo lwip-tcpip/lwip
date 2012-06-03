@@ -52,7 +52,7 @@
 #include <string.h>
 #endif /* UNUSED */
 
-#include "ppp.h"
+#include "ppp_impl.h"
 
 #include "upap.h"
 
