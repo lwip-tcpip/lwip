@@ -1866,7 +1866,8 @@ void ppp_link_down(int pd) {
 
 #if PPPOE_SUPPORT
   if (ppp_control_list[pd].ethif) {
-    pppoe_disconnect(ppp_control_list[pd].pppoe_sc);
+/* FIXME: find a way to set PPPoE down without disconnecting and freeing PPPoE structures */
+/*    pppoe_disconnect(ppp_control_list[pd].pppoe_sc); */
   } else
 #endif /* PPPOE_SUPPORT */
   {
