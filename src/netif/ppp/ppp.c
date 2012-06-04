@@ -360,7 +360,17 @@ int ppp_init(void) {
     struct protent *protp;
 
     debug = 1;
+
+    new_phase(PHASE_INITIALIZE);
+    error_count = 0;
+    unsuccess = 0;
+    listen_time = 0;
+    status = EXIT_OK;
+    need_holdoff = 1;
     ifunit = 1; /* FIXME: remove ifunit */
+#if PPP_STATS_SUPPORT
+    link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
 
     /*
     openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_DAEMON);
