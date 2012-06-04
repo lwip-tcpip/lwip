@@ -296,6 +296,11 @@ typedef struct ppp_control_s {
 
 /* Prototypes for procedures local to this file. */
 
+/* FIXME: PPPoE close seem bogus, it was actually not exported at all in the previous port */
+#if 0 /* UNUSED */
+void ppp_over_ethernet_close(int pd);
+#endif /* UNUSED */
+
 static void ppp_start(int pd);		/** Initiate LCP open request */
 static void ppp_input(void *arg);
 
@@ -321,7 +326,6 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
 #if PPPOE_SUPPORT
 static err_t ppp_netif_output_over_ethernet(int pd, struct pbuf *p);
 /* function called by ppp_write() */
-void pppOverEthernetClose(int pd);
 static int ppp_write_over_ethernet(int pd, const u_char *s, int n);
 #endif /* PPPOE_SUPPORT */
 
@@ -616,7 +620,8 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
   return pd;
 }
 
-void pppOverEthernetClose(int pd) {
+#if 0 /* UNUSED */
+void ppp_over_ethernet_close(int pd) {
   ppp_control* pc = &ppp_control_list[pd];
 
   /* *TJL* There's no lcp_deinit */
@@ -624,6 +629,7 @@ void pppOverEthernetClose(int pd) {
 
   pppoe_destroy(&pc->netif);
 }
+#endif /* UNUSED */
 #endif /* PPPOE_SUPPORT */
 
 
