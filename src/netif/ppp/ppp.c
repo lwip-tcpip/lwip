@@ -2278,10 +2278,31 @@ int get_loop_output(void) {
  * network as `addr'.  If we find any, we OR in their netmask to the
  * user-specified netmask.
  */
+u_int32_t get_mask(u_int32_t addr) {
+#if 0
+	u32_t mask, nmask;
 
-u_int32_t get_mask (u_int32_t addr) {
-  /* FIXME: do we really need that in IPCP ? */
-  return 0;
+  addr = htonl(addr);
+  if (IP_CLASSA(addr)) { /* determine network mask for address class */
+    nmask = IP_CLASSA_NET;
+  } else if (IP_CLASSB(addr)) {
+    nmask = IP_CLASSB_NET;
+  } else {
+    nmask = IP_CLASSC_NET;
+  }
+
+  /* class D nets are disallowed by bad_ip_adrs */
+  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
+
+  /* XXX
+   * Scan through the system's network interfaces.
+   * Get each netmask and OR them into our mask.
+   */
+  /* return mask; */
+  return mask;
+#endif
+  LWIP_UNUSED_ARG(addr);
+  return 0xFFFFFFFF;
 }
 
 
