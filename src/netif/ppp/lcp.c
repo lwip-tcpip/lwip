@@ -222,6 +222,7 @@ static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
 static int lcp_echo_number   = 0;	/* ID number of next echo frame */
 static int lcp_echo_timer_running = 0;  /* set if a timer is running */
 
+/* FIXME: do we really need such a large buffer? The typical 1500 bytes seem too much. */
 static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
 
 /*
