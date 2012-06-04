@@ -620,6 +620,9 @@ ipcp_init(unit)
     wo->maxslotindex = MAX_STATES - 1; /* really max index */
     wo->cflag = 1;
 
+    /* wanting default route by default */
+    /* FIXME: should be configurable */
+    wo->default_route = 1;
 
     /* max slots and slot-id compression are currently hardwired in */
     /* ppp_if.c to 16 and 1, this needs to be changed (among other */
