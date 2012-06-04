@@ -75,8 +75,15 @@ static void lcp_delayed_up (void *);
 /*
  * LCP-related command-line options.
  */
+#if 0 /* UNUSED */
 int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
+#endif /* UNUSED */
+
+/* options */
+static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
+static u_int lcp_echo_fails         = LCP_MAXECHOFAILS; /* Tolerance to unanswered echo-requests */
+
 #if PPP_LCP_ADAPTIVE
 bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
 #endif
