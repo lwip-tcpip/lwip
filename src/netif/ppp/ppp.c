@@ -2052,20 +2052,17 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
     SMEMCPY(&pc->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
     SMEMCPY(&pc->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
     SMEMCPY(&pc->addrs.netmask, &net_mask, sizeof(net_mask));
-/* FIXME: re-enable DNS
- *    SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
- *    SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
- */
   }
   return st;
 }
+
 
 /********************************************************************
  *
  * cifaddr - Clear the interface IP addresses, and delete routes
  * through the interface if possible.
  */
-int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr) {
+int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
   ppp_control *pc = &ppp_control_list[unit];
   int st = 1;
 
@@ -2077,12 +2074,50 @@ int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr) {
   } else {
     IP4_ADDR(&pc->addrs.our_ipaddr, 0,0,0,0);
     IP4_ADDR(&pc->addrs.his_ipaddr, 0,0,0,0);
-    IP4_ADDR(&pc->addrs.netmask, 255,255,255,0);
+    IP4_ADDR(&pc->addrs.netmask, 255,255,255,255);
+  }
+  return st;
+}
+
+
+/*
+ * sdns - Config the DNS servers
+ */
+int sdns (int unit, u_int32_t ns1, u_int32_t ns2) {
+  ppp_control *pc = &ppp_control_list[unit];
+  int st = 1;
+
+  if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
+    st = 0;
+    PPPDEBUG(LOG_WARNING, ("sdns[%d]: bad parms\n", unit));
+  } else {
+    SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
+    SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
+  }
+  return st;
+}
+
+
+/********************************************************************
+ *
+ * cdns - Clear the DNS servers
+ */
+int cdns (int unit, u_int32_t ns1, u_int32_t ns2) {
+  ppp_control *pc = &ppp_control_list[unit];
+  int st = 1;
+
+  LWIP_UNUSED_ARG(ns1);
+  LWIP_UNUSED_ARG(ns2);
+  if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
+    st = 0;
+    PPPDEBUG(LOG_WARNING, ("cifaddr[%d]: bad parms\n", unit));
+  } else {
     IP4_ADDR(&pc->addrs.dns1, 0,0,0,0);
     IP4_ADDR(&pc->addrs.dns2, 0,0,0,0);
   }
   return st;
 }
+
 
 /*
  * sifup - Config the interface up and enable IP packets to pass.

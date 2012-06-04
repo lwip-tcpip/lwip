@@ -95,7 +95,6 @@ struct notifier *ip_down_notifier = NULL;
 /* local vars */
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
 static int proxy_arp_set[NUM_PPP];	/* Have created proxy arp entry */
-static bool usepeerdns;			/* Ask peer for DNS addrs */
 static int ipcp_is_up;			/* have called np_up() */
 static int ipcp_is_open;		/* haven't called np_finished() */
 static bool ask_for_local;		/* request our address from peer */
@@ -732,8 +731,8 @@ ipcp_resetci(f)
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
-    wo->req_dns1 = usepeerdns;	/* Request DNS addresses from the peer */
-    wo->req_dns2 = usepeerdns;
+    wo->req_dns1 = ppp_settings.usepeerdns;	/* Request DNS addresses from the peer */
+    wo->req_dns2 = ppp_settings.usepeerdns;
     *go = *wo;
     if (!ask_for_local)
 	go->ouraddr = 0;
@@ -1845,7 +1844,8 @@ ipcp_up(f)
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 #endif /* UNUSED */
-    if (usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+    if (ppp_settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+	sdns(f->unit, go->dnsaddr[0], go->dnsaddr[1]);
 	/* FIXME: set here the DNS servers ?  */
 #if 0 /* UNUSED */
 	script_setenv("USEPEERDNS", "1", 0);
@@ -2040,6 +2040,7 @@ ipcp_down(f)
 	sifdown(f->unit);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
 			 ipcp_hisoptions[f->unit].hisaddr, 0);
+	cdns(f->unit, ipcp_gotoptions[f->unit].dnsaddr[0], ipcp_gotoptions[f->unit].dnsaddr[1]);
     }
 }
 

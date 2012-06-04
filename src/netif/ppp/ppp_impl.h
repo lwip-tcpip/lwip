@@ -484,6 +484,9 @@ int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
 int sifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
 int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr);
 
+int sdns(int unit, u_int32_t ns1, u_int32_t ns2);
+int cdns(int unit, u_int32_t ns1, u_int32_t ns2);
+
 int sifup(int u);
 int sifdown (int u);
 
