@@ -609,12 +609,12 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
     pc->link_status_cb  = link_status_cb;
     pc->link_status_ctx = link_status_ctx;
 
-    lcp_wantoptions[pd].mru = PPPOE_MAXMTU;
+    lcp_wantoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
     lcp_wantoptions[pd].neg_asyncmap = 0;
     lcp_wantoptions[pd].neg_pcompression = 0;
     lcp_wantoptions[pd].neg_accompression = 0;
 
-    lcp_allowoptions[pd].mru = PPPOE_MAXMTU;
+    lcp_allowoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
     lcp_allowoptions[pd].neg_asyncmap = 0;
     lcp_allowoptions[pd].neg_pcompression = 0;
     lcp_allowoptions[pd].neg_accompression = 0;

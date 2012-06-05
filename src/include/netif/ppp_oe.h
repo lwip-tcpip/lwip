@@ -133,13 +133,6 @@ PACK_STRUCT_END
 #define PPPOE_CODE_PADS       0x65    /* Active Discovery Session confirmation */
 #define PPPOE_CODE_PADT       0xA7    /* Active Discovery Terminate */
 
-#ifndef ETHERMTU
-#define ETHERMTU 1500
-#endif
-
-/* two byte PPP protocol discriminator, then IP data */
-#define PPPOE_MAXMTU          (ETHERMTU-PPPOE_HEADERLEN-2)
-
 #ifndef PPPOE_MAX_AC_COOKIE_LEN
 #define PPPOE_MAX_AC_COOKIE_LEN   64
 #endif
