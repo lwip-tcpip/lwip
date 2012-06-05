@@ -1088,7 +1088,7 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
   netif->name[0] = 'p';
   netif->name[1] = 'p';
   netif->output = ppp_netif_output;
-  netif->mtu = ppp_mtu((int)(size_t)netif->state);
+  netif->mtu = netif_get_mtu((int)(size_t)netif->state);
   netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
 #if LWIP_NETIF_HOSTNAME
   /* @todo: Initialize interface hostname */
@@ -1379,24 +1379,6 @@ static err_t ppp_netif_output_over_ethernet(int pd, struct pbuf *p) {
   return ERR_OK;
 }
 #endif /* PPPOE_SUPPORT */
-
-
-/*
- * Return the Maximum Transmission Unit for the given PPP connection.
- */
-u_short ppp_mtu(int pd) {
-  ppp_control *pc = &ppp_control_list[pd];
-  u_short st;
-
-  /* Validate parameters. */
-  if (pd < 0 || pd >= NUM_PPP || !pc->open_flag) {
-    st = 0;
-  } else {
-    st = pc->mtu;
-  }
-
-  return st;
-}
 
 
 /* Get and set parameters for the given connection.
@@ -1976,7 +1958,7 @@ int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp) {
   int i;
 #endif /* PPPOS_SUPPORT */
 
-  pc->mtu = mtu;
+  /* pc->mtu = mtu; -- set correctly with netif_set_mtu */
   pc->pcomp = pcomp;
   pc->accomp = accomp;
 
@@ -2190,14 +2172,26 @@ int sifnpmode(int u, int proto, enum NPmode mode) {
  * netif_set_mtu - set the MTU on the PPP network interface.
  */
 void netif_set_mtu(int unit, int mtu) {
-  /* FIXME: set lwIP MTU */
+  ppp_control *pc = &ppp_control_list[unit];
+
+  /* Validate parameters. */
+  if (unit < 0 || unit >= NUM_PPP || !pc->open_flag)
+    return;
+
+  pc->mtu = mtu;
 }
+
 /*
  * netif_get_mtu - get PPP interface MTU
  */
-int netif_get_mtu(int mtu) {
-  /* FIXME: get lwIP MTU */
-  return 1492;
+int netif_get_mtu(int unit) {
+  ppp_control *pc = &ppp_control_list[unit];
+
+  /* Validate parameters. */
+  if (unit < 0 || unit >= NUM_PPP || !pc->open_flag)
+    return  0;
+
+  return pc->mtu;
 }
 
 /********************************************************************

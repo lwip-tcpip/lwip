@@ -493,7 +493,7 @@ int sifdown (int u);
 int sifnpmode(int u, int proto, enum NPmode mode);
 
 void netif_set_mtu(int unit, int mtu);
-int netif_get_mtu(int mtu);
+int netif_get_mtu(int unit);
 
 int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace);
 int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway);

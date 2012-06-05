@@ -176,12 +176,6 @@ void ppp_sighup(int pd);
  */
 int ppp_ioctl(int pd, int cmd, void *arg);
 
-/*
- * Return the Maximum Transmission Unit for the given PPP connection.
- */
-/* FIXME: demystify MTU support */
-u_short ppp_mtu(int pd);
-
 #if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
 /*
  * PPP over Serial: this is the input function to be called for received data.
