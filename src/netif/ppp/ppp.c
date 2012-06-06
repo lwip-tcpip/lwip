@@ -2029,7 +2029,7 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sifaddr[%d]: bad parms\n", unit));
   } else {
     SMEMCPY(&pc->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
     SMEMCPY(&pc->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
@@ -2092,7 +2092,7 @@ int cdns (int unit, u_int32_t ns1, u_int32_t ns2) {
   LWIP_UNUSED_ARG(ns2);
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("cifaddr[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("cdns[%d]: bad parms\n", unit));
   } else {
     IP4_ADDR(&pc->addrs.dns1, 0,0,0,0);
     IP4_ADDR(&pc->addrs.dns2, 0,0,0,0);
@@ -2217,7 +2217,7 @@ int sifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sifdefaultroute[%d]: bad parms\n", unit));
   } else {
     netif_set_default(&pc->netif);
   }
@@ -2240,7 +2240,7 @@ int cifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway) {
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("cifdefaultroute[%d]: bad parms\n", unit));
   } else {
     netif_set_default(NULL);
   }
