@@ -67,12 +67,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#include "lwip/opt.h"
+#if PPP_SUPPORT && PPPOE_SUPPORT /* don't build if not configured for use in lwipopts.h */
+
 #ifndef PPP_OE_H
 #define PPP_OE_H
 
-#include "lwip/opt.h"
-
-#if PPPOE_SUPPORT > 0
+#include "ppp_impl.h"
 
 #include "netif/etharp.h"
 
@@ -163,6 +164,8 @@ struct pppoe_softc {
 #endif
   int sc_padi_retried;         /* number of PADI retries already done */
   int sc_padr_retried;         /* number of PADR retries already done */
+
+  u_int  persist         : 1;  /* Persist mode, don't timeout sending PADI packets */
 };
 
 
@@ -171,7 +174,7 @@ struct pppoe_softc {
 err_t pppoe_create(struct netif *ethif, int pd, void (*link_status_cb)(int pd, int up), struct pppoe_softc **scptr);
 err_t pppoe_destroy(struct netif *ifp);
 
-int pppoe_connect(struct pppoe_softc *sc);
+int pppoe_connect(struct pppoe_softc *sc, bool persist);
 void pppoe_disconnect(struct pppoe_softc *sc);
 
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);
@@ -182,6 +185,6 @@ err_t pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb);
 /** used in ppp.c */
 #define PPPOE_HDRLEN (sizeof(struct eth_hdr) + PPPOE_HEADERLEN)
 
-#endif /* PPPOE_SUPPORT */
-
 #endif /* PPP_OE_H */
+
+#endif /* PPP_SUPPORT && PPPOE_SUPPORT */
