@@ -141,7 +141,7 @@ static struct pppoe_softc * pppoe_find_softc_by_hunique(u8_t *, size_t, struct n
 static struct pppoe_softc *pppoe_softc_list;
 
 err_t
-pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), struct pppoe_softc **scptr)
+pppoe_create(struct netif *ethif, int pd, void (*link_status_cb)(int pd, int up), struct pppoe_softc **scptr)
 {
   struct pppoe_softc *sc;
 
@@ -156,7 +156,7 @@ pppoe_create(struct netif *ethif, int pd, void (*linkStatusCB)(int pd, int up), 
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
 
   sc->sc_pd = pd;
-  sc->sc_linkStatusCB = linkStatusCB;
+  sc->sc_link_status_cb = link_status_cb;
   sc->sc_ethif = ethif;
 
   /* put the new interface at the head of the list */
@@ -277,7 +277,7 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
 static void
 pppoe_linkstatus_up(struct pppoe_softc *sc)
 {
-  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_UP);
+  sc->sc_link_status_cb(sc->sc_pd, PPPOE_CB_STATE_UP);
 }
 
 /* analyze and handle a single received packet while not in session state */
@@ -806,6 +806,12 @@ pppoe_connect(struct pppoe_softc *sc)
     return EBUSY;
   }
 
+  /* stop any timer */
+  sys_untimeout(pppoe_timeout, sc);
+  sc->sc_session = 0;
+  sc->sc_padi_retried = 0;
+  sc->sc_padr_retried = 0;
+
 #ifdef PPPOE_SERVER
   /* wait PADI if IFF_PASSIVE */
   if ((sc->sc_sppp.pp_if.if_flags & IFF_PASSIVE)) {
@@ -814,7 +820,6 @@ pppoe_connect(struct pppoe_softc *sc)
 #endif
   /* save state, in case we fail to send PADI */
   sc->sc_state = PPPOE_STATE_PADI_SENT;
-  sc->sc_padr_retried = 0;
   if ((err = pppoe_send_padi(sc)) != 0) {
     PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to send PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
   }
@@ -862,8 +867,10 @@ pppoe_do_disconnect(struct pppoe_softc *sc)
   sc->sc_hunique_len = 0;
 #endif
   sc->sc_session = 0;
+  sc->sc_padi_retried = 0;
+  sc->sc_padr_retried = 0;
 
-  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_DOWN); /* notify upper layers */
+  sc->sc_link_status_cb(sc->sc_pd, PPPOE_CB_STATE_DOWN); /* notify upper layers */
   return err;
 }
 
@@ -872,13 +879,16 @@ static void
 pppoe_abort_connect(struct pppoe_softc *sc)
 {
   PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-  sc->sc_state = PPPOE_STATE_CLOSING;
-
-  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_FAILED); /* notify upper layers */
 
   /* clear connection state */
-  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   sc->sc_state = PPPOE_STATE_INITIAL;
+  MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
+  sc->sc_ac_cookie_len = 0;
+  sc->sc_session = 0;
+  sc->sc_padi_retried = 0;
+  sc->sc_padr_retried = 0;
+
+  sc->sc_link_status_cb(sc->sc_pd, PPPOE_CB_STATE_FAILED); /* notify upper layers */
 }
 
 /* Send a PADR packet */
@@ -1112,17 +1122,17 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   /* stop timer */
   sys_untimeout(pppoe_timeout, sc);
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": session 0x%x terminated, %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, sc->sc_session, message));
-
   /* fix our state */
   sc->sc_state = PPPOE_STATE_INITIAL;
 
   /* notify upper layers */
-  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_DOWN);
+  sc->sc_link_status_cb(sc->sc_pd, PPPOE_CB_STATE_DOWN);
 
   /* clean up softc */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
   sc->sc_ac_cookie_len = 0;
   sc->sc_session = 0;
+  sc->sc_padi_retried = 0;
+  sc->sc_padr_retried = 0;
 }
-
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */

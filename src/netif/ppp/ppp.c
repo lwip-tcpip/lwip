@@ -380,6 +380,7 @@ int ppp_init(void) {
 
     memset(&ppp_settings, 0, sizeof(ppp_settings));
     ppp_settings.usepeerdns = 1;
+    ppp_settings.persist = 1;
     ppp_set_auth(PPPAUTHTYPE_NONE, NULL, NULL);
 
     /*
@@ -1835,39 +1836,46 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(int pd, int state) {
-  ppp_control *pc = &ppp_control_list[pd];
+  int pppoe_err_code = PPPERR_NONE;
+  ppp_control *pc;
 
   switch(state) {
+
+    /* PPPoE link is established, starting PPP negotiation */
     case PPPOE_CB_STATE_UP:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pd));
       ppp_start(pd);
-      break;
+      return;
 
-    /* FIXME: here we can handle the PPPoE persist, in case of DOWN or FAILED, we just have to
-     * call pppoe_connect(sc); without setting pc->open_flag to 0.
-     */
+    /* PPPoE link normally down (i.e. asked to do so) */
     case PPPOE_CB_STATE_DOWN:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pd));
-      ppp_hup(pd);
-      ppp_stop(pd);
-      pppoe_destroy(&pc->netif);
-      pc->open_flag = 0;
-      if(pc->link_status_cb) {
-        pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : PPPERR_CONNECT, NULL);
-      }
+      pppoe_err_code = PPPERR_CONNECT;
       break;
 
+    /* PPPoE link failed to setup (i.e. PADI/PADO timeout */
     case PPPOE_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pd));
-      ppp_hup(pd);
-      ppp_stop(pd);
-      pppoe_destroy(&pc->netif);
-      pc->open_flag = 0;
-      if(pc->link_status_cb) {
-        pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : PPPERR_PROTOCOL, NULL);
-      }
+      pppoe_err_code = PPPERR_OPEN;
       break;
   }
+
+  pc = &ppp_control_list[pd];
+
+  /* Reconnect if persist mode is enabled */
+  if(ppp_settings.persist) {
+    if(pc->link_status_cb)
+      pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : pppoe_err_code, NULL);
+    pppoe_connect(pc->pppoe_sc);
+    return;
+  }
+
+  ppp_hup(pd);
+  ppp_stop(pd);
+  pppoe_destroy(&pc->netif);
+  pc->open_flag = 0;
+  if(pc->link_status_cb)
+    pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : pppoe_err_code, NULL);
 }
 #endif /* PPPOE_SUPPORT */
 

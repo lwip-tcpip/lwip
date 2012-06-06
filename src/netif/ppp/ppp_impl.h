@@ -437,6 +437,7 @@ struct ppp_settings {
 #endif /* EAP_SUPPORT */
   u_int  usehostname       : 1;       /* Use hostname for our_name */
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
+  u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
 
   u_short idle_time_limit;            /* Shut down link if idle for this long */
   int  maxconnect;                    /* Maximum connect time (seconds) */
