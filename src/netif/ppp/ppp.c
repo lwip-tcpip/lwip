@@ -1207,7 +1207,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
   /* We let any protocol value go through - it can't hurt us
    * and the peer will just drop it if it's not accepting it. */
   if (pd < 0 || pd >= NUM_PPP || !pc->open_flag || !pb) {
-    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad parms prot=%d pb=%p\n",
+    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
               pd, PPP_IP, (void*)pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
@@ -2029,7 +2029,7 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifaddr[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sifaddr[%d]: bad params\n", unit));
   } else {
     SMEMCPY(&pc->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
     SMEMCPY(&pc->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
@@ -2052,7 +2052,7 @@ int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
   LWIP_UNUSED_ARG(his_adr);
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("cifaddr[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("cifaddr[%d]: bad params\n", unit));
   } else {
     IP4_ADDR(&pc->addrs.our_ipaddr, 0,0,0,0);
     IP4_ADDR(&pc->addrs.his_ipaddr, 0,0,0,0);
@@ -2071,7 +2071,7 @@ int sdns (int unit, u_int32_t ns1, u_int32_t ns2) {
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sdns[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sdns[%d]: bad params\n", unit));
   } else {
     SMEMCPY(&pc->addrs.dns1, &ns1, sizeof(ns1));
     SMEMCPY(&pc->addrs.dns2, &ns2, sizeof(ns2));
@@ -2092,7 +2092,7 @@ int cdns (int unit, u_int32_t ns1, u_int32_t ns2) {
   LWIP_UNUSED_ARG(ns2);
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("cdns[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("cdns[%d]: bad params\n", unit));
   } else {
     IP4_ADDR(&pc->addrs.dns1, 0,0,0,0);
     IP4_ADDR(&pc->addrs.dns2, 0,0,0,0);
@@ -2111,7 +2111,7 @@ int sifup(int u)
 
   if (u < 0 || u >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad parms\n", u));
+    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad params\n", u));
   } else {
     netif_remove(&pc->netif);
     if (netif_add(&pc->netif, &pc->addrs.our_ipaddr, &pc->addrs.netmask,
@@ -2144,7 +2144,7 @@ int sifdown(int unit) {
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifdown[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sifdown[%d]: bad params\n", unit));
   } else {
     pc->if_up = 0;
     /* make sure the netif status callback is called */
@@ -2217,7 +2217,7 @@ int sifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("sifdefaultroute[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("sifdefaultroute[%d]: bad params\n", unit));
   } else {
     netif_set_default(&pc->netif);
   }
@@ -2240,7 +2240,7 @@ int cifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway) {
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
     st = 0;
-    PPPDEBUG(LOG_WARNING, ("cifdefaultroute[%d]: bad parms\n", unit));
+    PPPDEBUG(LOG_WARNING, ("cifdefaultroute[%d]: bad params\n", unit));
   } else {
     netif_set_default(NULL);
   }
