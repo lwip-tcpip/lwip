@@ -113,6 +113,10 @@ PACK_STRUCT_END
 /* passive */
 #define PPPOE_STATE_PADO_SENT 1
 
+#define PPPOE_CB_STATE_UP       0 /* PPPoE link is UP */
+#define PPPOE_CB_STATE_DOWN     1 /* PPPoE link is DOWN - normal condition */
+#define PPPOE_CB_STATE_FAILED   2 /* Failed to setup PPPoE link */
+
 #define PPPOE_HEADERLEN       sizeof(struct pppoehdr)
 #define PPPOE_VERTYPE         0x11    /* VER=1, TYPE = 1 */
 

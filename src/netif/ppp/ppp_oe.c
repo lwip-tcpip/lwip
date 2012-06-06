@@ -277,7 +277,7 @@ pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
 static void
 pppoe_linkstatus_up(struct pppoe_softc *sc)
 {
-  sc->sc_linkStatusCB(sc->sc_pd, 1);
+  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_UP);
 }
 
 /* analyze and handle a single received packet while not in session state */
@@ -863,8 +863,7 @@ pppoe_do_disconnect(struct pppoe_softc *sc)
 #endif
   sc->sc_session = 0;
 
-  sc->sc_linkStatusCB(sc->sc_pd, 0); /* notify upper layers */
-
+  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_DOWN); /* notify upper layers */
   return err;
 }
 
@@ -875,7 +874,7 @@ pppoe_abort_connect(struct pppoe_softc *sc)
   PPPDEBUG(LOG_DEBUG, ("%c%c%"U16_F": could not establish connection\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
   sc->sc_state = PPPOE_STATE_CLOSING;
 
-  sc->sc_linkStatusCB(sc->sc_pd, 0); /* notify upper layers */
+  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_FAILED); /* notify upper layers */
 
   /* clear connection state */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
@@ -1118,7 +1117,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_state = PPPOE_STATE_INITIAL;
 
   /* notify upper layers */
-  sc->sc_linkStatusCB(sc->sc_pd, 0);
+  sc->sc_linkStatusCB(sc->sc_pd, PPPOE_CB_STATE_DOWN);
 
   /* clean up softc */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));

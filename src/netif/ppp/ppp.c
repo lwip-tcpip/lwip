@@ -580,7 +580,7 @@ void ppp_set_xaccm(int unit, ext_accm *accm) {
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_link_status_cb(int pd, int up);
+static void ppp_over_ethernet_link_status_cb(int pd, int state);
 
 int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
@@ -682,7 +682,7 @@ ppp_close(int pd)
 void
 ppp_sighup(int pd)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> ppp_hupCB\n", pd));
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> ppp_hup\n", pd));
   ppp_hup(pd);
 }
 
@@ -709,7 +709,7 @@ ppp_stop(int pd)
 static void
 ppp_hup(int pd)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_hupCB: unit %d\n", pd));
+  PPPDEBUG(LOG_DEBUG, ("ppp_hup: unit %d\n", pd));
   lcp_lowerdown(pd);
   link_terminated(pd);
 }
@@ -1834,27 +1834,39 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 }
 
 #if PPPOE_SUPPORT
-void ppp_over_ethernet_init_failed(int pd) {
-  ppp_control* pc;
+static void ppp_over_ethernet_link_status_cb(int pd, int state) {
+  ppp_control *pc = &ppp_control_list[pd];
 
-  ppp_hup(pd);
-  ppp_stop(pd);
+  switch(state) {
+    case PPPOE_CB_STATE_UP:
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pd));
+      ppp_start(pd);
+      break;
 
-  pc = &ppp_control_list[pd];
-  pppoe_destroy(&pc->netif);
-  pc->open_flag = 0;
+    /* FIXME: here we can handle the PPPoE persist, in case of DOWN or FAILED, we just have to
+     * call pppoe_connect(sc); without setting pc->open_flag to 0.
+     */
+    case PPPOE_CB_STATE_DOWN:
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pd));
+      ppp_hup(pd);
+      ppp_stop(pd);
+      pppoe_destroy(&pc->netif);
+      pc->open_flag = 0;
+      if(pc->link_status_cb) {
+        pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : PPPERR_CONNECT, NULL);
+      }
+      break;
 
-  if(pc->link_status_cb) {
-    pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : PPPERR_PROTOCOL, NULL);
-  }
-}
-
-static void ppp_over_ethernet_link_status_cb(int pd, int up) {
-  if(up) {
-    PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: Connecting\n", pd));
-    ppp_start(pd);
-  } else {
-    ppp_over_ethernet_init_failed(pd);
+    case PPPOE_CB_STATE_FAILED:
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pd));
+      ppp_hup(pd);
+      ppp_stop(pd);
+      pppoe_destroy(&pc->netif);
+      pc->open_flag = 0;
+      if(pc->link_status_cb) {
+        pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : PPPERR_PROTOCOL, NULL);
+      }
+      break;
   }
 }
 #endif /* PPPOE_SUPPORT */
