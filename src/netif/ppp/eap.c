@@ -175,8 +175,10 @@ static const u_char wkmodulus[] = {
 };
 #endif
 
+#if PPP_SERVER
 /* Local forward declarations. */
 static void eap_server_timeout (void *arg);
+#endif /* PPP_SERVER */
 
 /*
  * Convert EAP state code to printable string for debug.
@@ -202,9 +204,11 @@ int unit;
 
 	BZERO(esp, sizeof (*esp));
 	esp->es_unit = unit;
+#if PPP_SERVER
 	esp->es_server.ea_timeout = EAP_DEFTIMEOUT;
 	esp->es_server.ea_maxrequests = EAP_DEFTRANSMITS;
 	esp->es_server.ea_id = (u_char)(drand48() * 0x100);
+#endif /* PPP_SERVER */
 	esp->es_client.ea_timeout = EAP_DEFREQTIME;
 	esp->es_client.ea_maxrequests = EAP_DEFALLOWREQ;
 }
@@ -255,6 +259,7 @@ char *localname;
 		    esp->es_client.ea_timeout);
 }
 
+#if PPP_SERVER
 /*
  * Format a standard EAP Failure message and send it to the peer.
  * (Server operation)
@@ -304,6 +309,7 @@ eap_state *esp;
 	auth_peer_success(esp->es_unit, PPP_EAP, 0,
 	    esp->es_server.ea_peer, esp->es_server.ea_peerlen);
 }
+#endif /* PPP_SERVER */
 
 #ifdef USE_SRP
 /*
@@ -414,6 +420,7 @@ u_char *outp;
 }
 #endif /* USE_SRP */
 
+#if PPP_SERVER
 /*
  * Assume that current waiting server state is complete and figure
  * next state to use based on available authentication data.  'status'
@@ -954,6 +961,7 @@ void *arg;
 	esp->es_server.ea_id++;
 	eap_send_request(esp);
 }
+#endif /* PPP_SERVER */
 
 /*
  * eap_lowerup - The lower layer is now up.
@@ -970,16 +978,20 @@ int unit;
 	eap_state *esp = &eap_states[unit];
 
 	/* Discard any (possibly authenticated) peer name. */
+#if PPP_SERVER
 	if (esp->es_server.ea_peer != NULL &&
 	    esp->es_server.ea_peer != remote_name)
 		free(esp->es_server.ea_peer);
 	esp->es_server.ea_peer = NULL;
+#endif /* PPP_SERVER */
 	if (esp->es_client.ea_peer != NULL)
 		free(esp->es_client.ea_peer);
 	esp->es_client.ea_peer = NULL;
 
 	esp->es_client.ea_state = eapClosed;
+#if PPP_SERVER
 	esp->es_server.ea_state = eapClosed;
+#endif /* PPP_SERVER */
 }
 
 /*
@@ -996,6 +1008,7 @@ int unit;
 	if (eap_client_active(esp) && esp->es_client.ea_timeout > 0) {
 		UNTIMEOUT(eap_client_timeout, (void *)esp);
 	}
+#if PPP_SERVER
 	if (eap_server_active(esp)) {
 		if (esp->es_server.ea_timeout > 0) {
 			UNTIMEOUT(eap_server_timeout, (void *)esp);
@@ -1014,6 +1027,7 @@ int unit;
 
 	esp->es_client.ea_state = esp->es_server.ea_state = eapInitial;
 	esp->es_client.ea_requests = esp->es_server.ea_requests = 0;
+#endif /* PPP_SERVER */
 }
 
 /*
@@ -1032,10 +1046,12 @@ int unit;
 		error("EAP authentication failed due to Protocol-Reject");
 		auth_withpeer_fail(unit, PPP_EAP);
 	}
+#if PPP_SERVER
 	if (eap_server_active(esp)) {
 		error("EAP authentication of peer failed on Protocol-Reject");
 		auth_peer_fail(unit, PPP_EAP);
 	}
+#endif /* PPP_SERVER */
 	eap_lowerdown(unit);
 }
 
@@ -1717,6 +1733,8 @@ client_failure:
 #endif /* USE_SRP */
 }
 
+#if PPP_SERVER
+/* FIXME: remove malloc() and free() */
 /*
  * eap_response - Receive EAP Response message (server mode).
  */
@@ -2011,6 +2029,7 @@ int len;
 		eap_send_request(esp);
 	}
 }
+#endif /* PPP_SERVER */
 
 /*
  * eap_success - Receive EAP Success message (client mode).
@@ -2110,9 +2129,11 @@ int inlen;
 		eap_request(esp, inp, id, len);
 		break;
 
+#if PPP_SERVER
 	case EAP_RESPONSE:
 		eap_response(esp, inp, id, len);
 		break;
+#endif /* PPP_SERVER */
 
 	case EAP_SUCCESS:
 		eap_success(esp, inp, id, len);

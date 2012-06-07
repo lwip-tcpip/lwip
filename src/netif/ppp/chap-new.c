@@ -85,6 +85,7 @@ static option_t chap_option_list[] = {
 /*
  * Internal state.
  */
+/* FIXME: one client struct per ppp session */
 static struct chap_client_state {
 	int flags;
 	char *name;
@@ -99,6 +100,8 @@ static struct chap_client_state {
 #define CHAL_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_CHALLENGE_LEN + MAXNAMELEN)
 #define RESP_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_RESPONSE_LEN + MAXNAMELEN)
 
+#if PPP_SERVER
+/* FIXME: one server struct per ppp session */
 static struct chap_server_state {
 	int flags;
 	int id;
@@ -109,6 +112,7 @@ static struct chap_server_state {
 	unsigned char challenge[CHAL_MAX_PKTLEN];
 	char message[256];
 } server;
+#endif /* PPP_SERVER */
 
 /* Values for flags in chap_client_state and chap_server_state */
 #define LOWERUP			1
@@ -124,6 +128,7 @@ static struct chap_server_state {
 static void chap_init(int unit);
 static void chap_lowerup(int unit);
 static void chap_lowerdown(int unit);
+#if PPP_SERVER
 static void chap_timeout(void *arg);
 static void chap_generate_challenge(struct chap_server_state *ss);
 static void chap_handle_response(struct chap_server_state *ss, int code,
@@ -132,6 +137,7 @@ static int chap_verify_response(char *name, char *ourname, int id,
 		struct chap_digest_type *digest,
 		unsigned char *challenge, unsigned char *response,
 		char *message, int message_space);
+#endif /* PPP_SERVER */
 static void chap_respond(struct chap_client_state *cs, int id,
 		unsigned char *pkt, int len);
 static void chap_handle_status(struct chap_client_state *cs, int code, int id,
@@ -153,7 +159,9 @@ static void
 chap_init(int unit)
 {
 	memset(&client, 0, sizeof(client));
+#if PPP_SERVER
 	memset(&server, 0, sizeof(server));
+#endif /* PPP_SERVER */
 
 	chap_md5_init();
 #if MSCHAP_SUPPORT
@@ -178,26 +186,35 @@ static void
 chap_lowerup(int unit)
 {
 	struct chap_client_state *cs = &client;
+#if PPP_SERVER
 	struct chap_server_state *ss = &server;
+#endif /* PPP_SERVER */
 
 	cs->flags |= LOWERUP;
+#if PPP_SERVER
 	ss->flags |= LOWERUP;
 	if (ss->flags & AUTH_STARTED)
 		chap_timeout(ss);
+#endif /* PPP_SERVER */
 }
 
 static void
 chap_lowerdown(int unit)
 {
 	struct chap_client_state *cs = &client;
+#if PPP_SERVER
 	struct chap_server_state *ss = &server;
+#endif /* PPP_SERVER */
 
 	cs->flags = 0;
+#if PPP_SERVER
 	if (ss->flags & TIMEOUT_PENDING)
 		UNTIMEOUT(chap_timeout, ss);
 	ss->flags = 0;
+#endif /* PPP_SERVER */
 }
 
+#if PPP_SERVER
 /*
  * chap_auth_peer - Start authenticating the peer.
  * If the lower layer is already up, we start sending challenges,
@@ -228,6 +245,7 @@ chap_auth_peer(int unit, char *our_name, int digest_code)
 	if (ss->flags & LOWERUP)
 		chap_timeout(ss);
 }
+#endif /* PPP_SERVER */
 
 /*
  * chap_auth_with_peer - Prepare to authenticate ourselves to the peer.
@@ -255,6 +273,7 @@ chap_auth_with_peer(int unit, char *our_name, int digest_code)
 	cs->flags |= AUTH_STARTED;
 }
 
+# if PPP_SERVER
 /*
  * chap_timeout - It's time to send another challenge to the peer.
  * This could be either a retransmission of a previous challenge,
@@ -446,6 +465,7 @@ chap_verify_response(char *name, char *ourname, int id,
 
 	return ok;
 }
+#endif /* PPP_SERVER */
 
 /*
  * chap_respond - Generate and send a response to a challenge.
@@ -546,7 +566,10 @@ static void
 chap_input(int unit, unsigned char *pkt, int pktlen)
 {
 	struct chap_client_state *cs = &client;
+#if PPP_SERVER
 	struct chap_server_state *ss = &server;
+#endif /* PPP_SERVER */
+
 	unsigned char code, id;
 	int len;
 
@@ -563,9 +586,11 @@ chap_input(int unit, unsigned char *pkt, int pktlen)
 	case CHAP_CHALLENGE:
 		chap_respond(cs, id, pkt, len);
 		break;
+#if PPP_SERVER
 	case CHAP_RESPONSE:
 		chap_handle_response(ss, id, pkt, len);
 		break;
+#endif /* PPP_SERVER */
 	case CHAP_FAILURE:
 	case CHAP_SUCCESS:
 		chap_handle_status(cs, code, id, pkt, len);
@@ -577,6 +602,7 @@ static void
 chap_protrej(int unit)
 {
 	struct chap_client_state *cs = &client;
+#if PPP_SERVER
 	struct chap_server_state *ss = &server;
 
 	if (ss->flags & TIMEOUT_PENDING) {
@@ -587,6 +613,7 @@ chap_protrej(int unit)
 		ss->flags = 0;
 		auth_peer_fail(0, PPP_CHAP);
 	}
+#endif /* PPP_SERVER */
 	if ((cs->flags & (AUTH_STARTED|AUTH_DONE)) == AUTH_STARTED) {
 		cs->flags &= ~AUTH_STARTED;
 		error("CHAP authentication failed due to protocol-reject");

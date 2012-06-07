@@ -47,6 +47,7 @@
 #define MD5_MIN_CHALLENGE	16
 #define MD5_MAX_CHALLENGE	24
 
+#if PPP_SERVER
 static void
 chap_md5_generate_challenge(unsigned char *cp)
 {
@@ -88,6 +89,7 @@ chap_md5_verify_response(int id, char *name,
 	slprintf(message, message_space, "Access denied");
 	return 0;
 }
+#endif /* PPP_SERVER */
 
 static void
 chap_md5_make_response(unsigned char *response, int id, char *our_name,
@@ -108,8 +110,10 @@ chap_md5_make_response(unsigned char *response, int id, char *our_name,
 
 static struct chap_digest_type md5_digest = {
 	CHAP_MD5,		/* code */
+#if PPP_SERVER
 	chap_md5_generate_challenge,
 	chap_md5_verify_response,
+#endif /* PPP_SERVER */
 	chap_md5_make_response,
 	NULL,			/* check_success */
 	NULL,			/* handle_failure */

@@ -159,6 +159,7 @@ static option_t chapms_option_list[] = {
 };
 #endif /* PPP_OPTIONS */
 
+#if PPP_SERVER
 /*
  * chapms_generate_challenge - generate a challenge for MS-CHAP.
  * For MS-CHAP the challenge length is fixed at 8 bytes.
@@ -313,6 +314,7 @@ chapms2_verify_response(int id, char *name,
 		 challenge_len, challenge, "Access denied");
 	return 0;
 }
+#endif /* PPP_SERVER */
 
 static void
 chapms_make_response(unsigned char *response, int id, char *our_name,
@@ -919,8 +921,10 @@ set_mppe_enc_types(int policy, int types)
 
 static struct chap_digest_type chapms_digest = {
 	CHAP_MICROSOFT,		/* code */
+#if PPP_SERVER
 	chapms_generate_challenge,
 	chapms_verify_response,
+#endif /* PPP_SERVER */
 	chapms_make_response,
 	NULL,			/* check_success */
 	chapms_handle_failure,
@@ -928,8 +932,10 @@ static struct chap_digest_type chapms_digest = {
 
 static struct chap_digest_type chapms2_digest = {
 	CHAP_MICROSOFT_V2,	/* code */
+#if PPP_SERVER
 	chapms2_generate_challenge,
 	chapms2_verify_response,
+#endif /* PPP_SERVER */
 	chapms2_make_response,
 	chapms2_check_success,
 	chapms_handle_failure,

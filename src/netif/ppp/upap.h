@@ -69,7 +69,9 @@ typedef struct upap_state {
     char *us_passwd;		/* Password */
     int us_passwdlen;		/* Password length */
     int us_clientstate;		/* Client state */
+#if PPP_SERVER
     int us_serverstate;		/* Server state */
+#endif /* PPP_SERVER */
     u_char us_id;		/* Current id */
     int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
     int us_transmits;		/* Number of auth-reqs sent */

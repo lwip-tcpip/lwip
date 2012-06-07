@@ -761,7 +761,9 @@ link_established(unit)
 #if 0 /* UNUSED */
     lcp_options *wo = &lcp_wantoptions[unit];
 #endif /* UNUSED */
+#if PPP_SERVER
     lcp_options *go = &lcp_gotoptions[unit];
+#endif /* #if PPP_SERVER */
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
     struct protent *protp;
@@ -817,6 +819,7 @@ link_established(unit)
 
     new_phase(PHASE_AUTHENTICATE);
     auth = 0;
+#if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
 	eap_authpeer(unit, our_name);
@@ -836,6 +839,7 @@ link_established(unit)
     } else
 #endif /* PAP_SUPPORT */
     {}
+#endif /* PPP_SERVER */
 
 #if EAP_SUPPORT
     if (ho->neg_eap) {
@@ -1022,6 +1026,7 @@ continue_networks(unit)
 	lcp_close(0, "No network protocols running");
 }
 
+#if PPP_SERVER
 /*
  * The peer has failed to authenticate himself using `protocol'.
  */
@@ -1103,6 +1108,7 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
     if ((auth_pending[unit] &= ~bit) == 0)
         network_phase(unit);
 }
+#endif /* PPP_SERVER */
 
 /*
  * We have failed to authenticate ourselves to the peer using `protocol'.

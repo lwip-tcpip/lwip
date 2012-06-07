@@ -125,7 +125,9 @@ struct protent pap_protent = {
 upap_state upap[NUM_PPP];		/* UPAP state; one for each unit */
 
 static void upap_timeout (void *);
+#if PPP_SERVER
 static void upap_reqtimeout (void *);
+#endif /* PPP_SERVER */
 #if 0 /* UNUSED */
 static void upap_rauthreq (upap_state *, u_char *, int, int);
 #endif /* UNUSED */
@@ -152,7 +154,9 @@ upap_init(unit)
     u->us_passwd = NULL;
     u->us_passwdlen = 0;
     u->us_clientstate = UPAPCS_INITIAL;
+#if PPP_SERVER
     u->us_serverstate = UPAPSS_INITIAL;
+#endif /* PPP_SERVER */
     u->us_id = 0;
     u->us_timeouttime = UPAP_DEFTIMEOUT;
     u->us_maxtransmits = 10;
@@ -189,7 +193,7 @@ upap_authwithpeer(unit, user, password)
     upap_sauthreq(u);			/* Start protocol */
 }
 
-
+#if PPP_SERVER
 /*
  * upap_authpeer - Authenticate our peer (start server).
  *
@@ -212,7 +216,7 @@ upap_authpeer(unit)
     if (u->us_reqtimeout > 0)
 	TIMEOUT(upap_reqtimeout, u, u->us_reqtimeout);
 }
-
+#endif /* PPP_SERVER */
 
 /*
  * upap_timeout - Retransmission timer for sending auth-reqs expired.
@@ -238,6 +242,7 @@ upap_timeout(arg)
 }
 
 
+#if PPP_SERVER
 /*
  * upap_reqtimeout - Give up waiting for the peer to send an auth-req.
  */
@@ -253,6 +258,7 @@ upap_reqtimeout(arg)
     auth_peer_fail(u->us_unit, PPP_PAP);
     u->us_serverstate = UPAPSS_BADAUTH;
 }
+#endif /* PPP_SERVER */
 
 
 /*
@@ -272,6 +278,7 @@ upap_lowerup(unit)
 	upap_sauthreq(u);	/* send an auth-request */
     }
 
+#if PPP_SERVER
     if (u->us_serverstate == UPAPSS_INITIAL)
 	u->us_serverstate = UPAPSS_CLOSED;
     else if (u->us_serverstate == UPAPSS_PENDING) {
@@ -279,6 +286,7 @@ upap_lowerup(unit)
 	if (u->us_reqtimeout > 0)
 	    TIMEOUT(upap_reqtimeout, u, u->us_reqtimeout);
     }
+#endif /* PPP_SERVER */
 }
 
 
@@ -295,11 +303,15 @@ upap_lowerdown(unit)
 
     if (u->us_clientstate == UPAPCS_AUTHREQ)	/* Timeout pending? */
 	UNTIMEOUT(upap_timeout, u);		/* Cancel timeout */
+#if PPP_SERVER
     if (u->us_serverstate == UPAPSS_LISTEN && u->us_reqtimeout > 0)
 	UNTIMEOUT(upap_reqtimeout, u);
+#endif /* PPP_SERVER */
 
     u->us_clientstate = UPAPCS_INITIAL;
+#if PPP_SERVER
     u->us_serverstate = UPAPSS_INITIAL;
+#endif /* PPP_SERVER */
 }
 
 
@@ -318,10 +330,12 @@ upap_protrej(unit)
 	error("PAP authentication failed due to protocol-reject");
 	auth_withpeer_fail(unit, PPP_PAP);
     }
+#if PPP_SERVER
     if (u->us_serverstate == UPAPSS_LISTEN) {
 	error("PAP authentication of peer failed (protocol-reject)");
 	auth_peer_fail(unit, PPP_PAP);
     }
+#endif /* PPP_SERVER */
     upap_lowerdown(unit);
 }
 

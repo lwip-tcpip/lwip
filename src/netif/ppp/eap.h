@@ -101,9 +101,11 @@ enum eap_state_code {
 	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
 
 #define	eap_client_active(esp)	((esp)->es_client.ea_state == eapListen)
+#if PPP_SERVER
 #define	eap_server_active(esp)	\
 	((esp)->es_server.ea_state >= eapIdentify && \
 	 (esp)->es_server.ea_state <= eapMD5Chall)
+#endif /* PPP_SERVER */
 
 struct eap_auth {
 	char *ea_name;		/* Our name */
@@ -128,7 +130,9 @@ struct eap_auth {
 typedef struct eap_state {
 	int es_unit;			/* Interface unit number */
 	struct eap_auth es_client;	/* Client (authenticatee) data */
+#if PPP_SERVER
 	struct eap_auth es_server;	/* Server (authenticator) data */
+#endif /* PPP_SERVER */
 	int es_savedtime;		/* Saved timeout */
 	int es_rechallenge;		/* EAP rechallenge interval */
 	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */

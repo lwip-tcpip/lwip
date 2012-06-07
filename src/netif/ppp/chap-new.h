@@ -118,6 +118,7 @@ extern int chap_mdtype_all;
 struct chap_digest_type {
 	int code;
 
+#if PPP_SERVER
 	/*
 	 * Note: challenge and response arguments below are formatted as
 	 * a length byte followed by the actual challenge/response data.
@@ -127,6 +128,7 @@ struct chap_digest_type {
 		unsigned char *secret, int secret_len,
 		unsigned char *challenge, unsigned char *response,
 		char *message, int message_space);
+#endif /* PPP_SERVER */
 	void (*make_response)(unsigned char *response, int id, char *our_name,
 		unsigned char *challenge, char *secret, int secret_len,
 		unsigned char *priv);
@@ -147,8 +149,10 @@ extern int (*chap_verify_hook)(char *name, char *ourname, int id,
 /* Called by digest code to register a digest type */
 extern void chap_register_digest(struct chap_digest_type *);
 
+#if PPP_SERVER
 /* Called by authentication code to start authenticating the peer. */
 extern void chap_auth_peer(int unit, char *our_name, int digest_code);
+#endif /* PPP_SERVER */
 
 /* Called by auth. code to start authenticating us to the peer. */
 extern void chap_auth_with_peer(int unit, char *our_name, int digest_code);
