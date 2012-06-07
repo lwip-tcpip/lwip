@@ -377,14 +377,10 @@ static void
 chapms_handle_failure(unsigned char *inp, int len)
 {
 	int err;
-	char *p, *msg;
+	char *p, msg[64];
 
 	/* We want a null-terminated string for strxxx(). */
-	msg = malloc(len + 1);
-	if (!msg) {
-		notice("Out of memory in chapms_handle_failure");
-		return;
-	}
+	len = LWIP_MIN(len, 63);
 	MEMCPY(msg, inp, len);
 	msg[len] = 0;
 	p = msg;
@@ -432,7 +428,6 @@ chapms_handle_failure(unsigned char *inp, int len)
 			break;
 
 		default:
-			free(msg);
 			error("Unknown MS-CHAP authentication failure: %.*v",
 			      len, inp);
 			return;
@@ -441,7 +436,6 @@ chapms_handle_failure(unsigned char *inp, int len)
 print_msg:
 	if (p != NULL)
 		error("MS-CHAP authentication failed: %v", p);
-	free(msg);
 }
 
 static void
