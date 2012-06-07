@@ -235,7 +235,7 @@ void magic_randomize(void) {
 
   if (!magic_randomized) {
     magic_randomized = !0;
-    magic_randominit();
+    magic_init();
     /* The initialization function also updates the seed. */
   } else {
     /* magic_randomseed += (magic_randomseed << 16) + TM1; */
