@@ -746,7 +746,7 @@ static void ppp_input(void *arg) {
    */
   if (protocol != PPP_LCP && lcp_fsm[0].state != OPENED) {
 	dbglog("Discarded non-LCP packet when LCP not open");
-	return;
+	goto drop;
   }
 
   /* FIXME: add a phase per connection */
@@ -772,7 +772,7 @@ static void ppp_input(void *arg) {
 	     )) {
 	dbglog("discarding proto 0x%x in phase %d",
 		   protocol, phase);
-	return;
+	goto drop;
   }
 
   /* FIXME: should we write protent to do that ? */
