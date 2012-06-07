@@ -1846,7 +1846,6 @@ ipcp_up(f)
 #endif /* UNUSED */
     if (ppp_settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
 	sdns(f->unit, go->dnsaddr[0], go->dnsaddr[1]);
-	/* FIXME: set here the DNS servers ?  */
 #if 0 /* UNUSED */
 	script_setenv("USEPEERDNS", "1", 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
