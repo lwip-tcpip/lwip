@@ -98,8 +98,8 @@ char	devnam[MAXPATHLEN];	/* Device name */
 #endif
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
-int	maxconnect = 0;		/* Maximum connect time */
 #if 0
+int	maxconnect = 0;		/* Maximum connect time */
 char	user[MAXNAMELEN];	/* Username for PAP */
 char	passwd[MAXSECRETLEN];	/* Password for PAP */
 #endif

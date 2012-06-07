@@ -1227,8 +1227,8 @@ np_up(unit, proto)
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
-	if (maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, maxconnect);
+	if (ppp_settings.maxconnect > 0)
+	    TIMEOUT(connect_time_expired, 0, ppp_settings.maxconnect);
 
 #ifdef MAXOCTETS
 	if (maxoctets > 0)

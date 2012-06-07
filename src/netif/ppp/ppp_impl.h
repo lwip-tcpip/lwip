@@ -279,9 +279,6 @@ extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 /* FIXME: add more HAVE_MULTILINK */
 extern bool	multilink;	/* enable multilink operation */
 
-/* FIXME: it is really necessary ? */
-extern int	maxconnect;	/* Maximum connect time (seconds) */
-
 #ifdef HAVE_MULTILINK
 extern bool	doing_multilink;
 extern bool	multilink_master;
