@@ -91,19 +91,17 @@ struct option_value {
  * Option variables and default values.
  */
 int	debug = 0;		/* Debug flag */
+#if 0
 int	kdebugflag = 0;		/* Tell kernel to print debug messages */
 int	default_device = 1;	/* Using /dev/tty or equivalent */
-#if 0
 char	devnam[MAXPATHLEN];	/* Device name */
-#endif
 bool	nodetach = 0;		/* Don't detach from controlling tty */
 bool	updetach = 0;		/* Detach once link is up */
-#if 0
 int	maxconnect = 0;		/* Maximum connect time */
 char	user[MAXNAMELEN];	/* Username for PAP */
 char	passwd[MAXSECRETLEN];	/* Password for PAP */
-#endif
 bool	persist = 0;		/* Reopen link after it goes down */
+#endif
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 #if DEMAND_SUPPORT
 bool	demand = 0;		/* do dial-on-demand */

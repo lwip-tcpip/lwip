@@ -1057,6 +1057,10 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
     goto drop;
   }
 
+#if PRINTPKT_SUPPORT
+  dump_packet("rcvd", pb->payload, pb->len);
+#endif /* PRINTPKT_SUPPORT */
+
   in_protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
   /* make room for ppp_input_header - should not fail */
@@ -1068,7 +1072,7 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
   pih = pb->payload;
 
   pih->unit = pd;
-  pih->proto = in_protocol;
+  pih->proto = in_protocol; /* pih->proto is now in host byte order */
 
   /* Dispatch the packet thereby consuming it. */
   ppp_input(pb);
@@ -1539,6 +1543,10 @@ static int ppp_write_over_ethernet(int pd, const u_char *s, int n) {
     snmp_inc_ifoutdiscards(&pc->netif);
     return PPPERR_DEVICE;
   }
+
+#if PRINTPKT_SUPPORT
+  dump_packet("sent", (unsigned char *)s, n);
+#endif /* PRINTPKT_SUPPORT */
 
   snmp_add_ifoutoctets(&pc->netif, (u16_t)n);
   snmp_inc_ifoutucastpkts(&pc->netif);

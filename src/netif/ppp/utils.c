@@ -75,12 +75,12 @@ static void log_write (int, char *);
 static void vslp_printer (void *, char *, ...);
 static void format_packet (u_char *, int, void (*) (void *, char *, ...),
 			       void *);
-#endif /* PRINTPKT_SUPPORT */
 
 struct buffer_info {
     char *ptr;
     int len;
 };
+#endif /* PRINTPKT_SUPPORT */
 
 /*
  * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
@@ -482,10 +482,9 @@ format_packet(p, len, printer, arg)
     u_short proto;
     struct protent *protp;
 
-    if (len >= PPP_HDRLEN && p[0] == PPP_ALLSTATIONS && p[1] == PPP_UI) {
-	p += 2;
+    if (len >= 2) {
 	GETSHORT(proto, p);
-	len -= PPP_HDRLEN;
+	len -= 2;
 	for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	    if (proto == protp->protocol)
 		break;
@@ -651,9 +650,7 @@ log_write(level, buf)
     int level;
     char *buf;
 {
-/* FIXME: replace this with a log callback */
-    /* if(level >= min_log_level) */ /* FIXME: add a minimum log level */
-    PPPDEBUG(LOG_DEBUG, ("LOG: %s\n", buf) );
+    PPPDEBUG(level, ("%s\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
 	int n = strlen(buf);
@@ -765,17 +762,27 @@ dump_packet(const char *tag, unsigned char *p, int len)
 	return;
 
     /*
+     * don't print IPv4 and IPv6 packets.
+     */
+    proto = (p[0] << 8) + p[1];
+    if (proto == PPP_IP)
+	return;
+#ifdef INET6
+    if (proto == PPP_IPV6 || proto == PPP_IPV6CP)
+	return;
+#endif
+
+    /*
      * don't print LCP echo request/reply packets if debug <= 1
      * and the link is up.
      */
-    proto = (p[2] << 8) + p[3];
     if (debug <= 1 && unsuccess == 0 && proto == PPP_LCP
-	&& len >= PPP_HDRLEN + HEADERLEN) {
-	unsigned char *lcp = p + PPP_HDRLEN;
+	&& len >= 2 + HEADERLEN) {
+	unsigned char *lcp = p + 2;
 	int l = (lcp[2] << 8) + lcp[3];
 
 	if ((lcp[0] == ECHOREQ || lcp[0] == ECHOREP)
-	    && l >= HEADERLEN && l <= len - PPP_HDRLEN)
+	    && l >= HEADERLEN && l <= len - 2)
 	    return;
     }
 

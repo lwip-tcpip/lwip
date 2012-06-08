@@ -56,9 +56,10 @@
 
 #include "upap.h"
 
-#if 0 /* UNUSED */
+/* FIXME: move that to ppp_options */
+#if PRINTPKT_SUPPORT
 static bool hide_password = 1;
-#endif /* UNUSED */
+#endif /* PRINTPKT_SUPPORT */
 
 #if PPP_OPTIONS
 /*
