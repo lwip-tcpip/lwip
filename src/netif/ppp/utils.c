@@ -448,7 +448,7 @@ vslp_printer (void *arg, char *fmt, ...)
 }
 #endif /* PRINTPKT_SUPPORT */
 
-#ifdef unused
+#if 0 /* UNUSED */
 /*
  * log_packet - format a packet and log it.
  */
@@ -464,7 +464,7 @@ log_packet(p, len, prefix, level)
 	format_packet(p, len, pr_log, &level);
 	end_pr_log();
 }
-#endif /* unused */
+#endif /* UNUSED */
 
 #if PRINTPKT_SUPPORT
 /*
@@ -517,6 +517,7 @@ format_packet(p, len, printer, arg)
 }
 #endif /* PRINTPKT_SUPPORT */
 
+#if 0 /* UNUSED */
 /*
  * init_pr_log, end_pr_log - initialize and finish use of pr_log.
  */
@@ -595,6 +596,7 @@ pr_log (void *arg, char *fmt, ...)
 		linep = line + l;
 	}
 }
+#endif /* UNUSED */
 
 /*
  * print_string - print a readable representation of a string using
