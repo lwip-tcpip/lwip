@@ -272,8 +272,6 @@ extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
 extern int	status;		/* exit status for pppd */
 extern int	need_holdoff;	/* Need holdoff period after link terminates */
-/* FIXME: remove ifunit */
-extern int	ifunit;		/* Interface unit number */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 
 /* FIXME: add more HAVE_MULTILINK */

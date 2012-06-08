@@ -1824,7 +1824,7 @@ ipcp_up(f)
 	return;
     }
     if (ho->hisaddr == 0 && !noremoteip) {
-	ho->hisaddr = htonl(0x0a404040 + ifunit);
+	ho->hisaddr = htonl(0x0a404040);
 	warn("Could not determine remote IP address: defaulting to %I",
 	     ho->hisaddr);
     }

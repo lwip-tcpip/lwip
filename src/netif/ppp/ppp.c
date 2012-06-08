@@ -156,8 +156,6 @@ int unsuccess;			/* # unsuccessful connection attempts */
 int listen_time;		/* time to listen first (ms) */
 int status;			/* exit status for pppd */
 int need_holdoff;		/* need holdoff period before restarting */
-/* FIXME: remove ifunit */
-int ifunit;			/* Interface unit number */
 
 /* FIXME: outpacket_buf per PPP session */
 
@@ -367,7 +365,6 @@ int ppp_init(void) {
     listen_time = 0;
     status = EXIT_OK;
     need_holdoff = 1;
-    ifunit = 1; /* FIXME: remove ifunit */
 #if PPP_STATS_SUPPORT
     link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
