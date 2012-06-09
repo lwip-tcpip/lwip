@@ -1219,7 +1219,7 @@ np_up(unit, proto)
 	    tlim = (*idle_time_hook)(NULL);
 	else
 #endif /* UNUSED */
-	    tlim = idle_time_limit;
+	    tlim = ppp_settings.idle_time_limit;
 	if (tlim > 0)
 	    TIMEOUT(check_idle, NULL, tlim);
 
@@ -1336,7 +1336,7 @@ check_idle(arg)
     } else {
 #endif /* UNUSED */
 	itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
-	tlim = idle_time_limit - itime;
+	tlim = ppp_settings.idle_time_limit - itime;
 #if 0 /* UNUSED */
     }
 #endif /* UNUSED */

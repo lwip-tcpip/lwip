@@ -108,9 +108,7 @@ bool	demand = 0;		/* do dial-on-demand */
 #endif /* DEMAND_SUPPORT */
 #if 0
 char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
-#endif
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
-#if 0
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 bool	holdoff_specified;	/* true if a holdoff value has been given */
 int	log_to_fd = 1;		/* send log messages to this fd too */
