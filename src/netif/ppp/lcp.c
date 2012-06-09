@@ -741,11 +741,15 @@ lcp_resetci(f)
     wo->magicnumber = magic();
     wo->numloops = 0;
     *go = *wo;
+#ifdef HAVE_MULTILINK
     if (!multilink) {
+#endif /* HAVE_MULTILINK */
 	go->neg_mrru = 0;
 	go->neg_ssnhf = 0;
 	go->neg_endpoint = 0;
+#ifdef HAVE_MULTILINK
     }
+#endif /* HAVE_MULTILINK */
     if (noendpoint)
 	ao->neg_endpoint = 0;
     peer_mru[f->unit] = PPP_MRU;
@@ -2165,8 +2169,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_MRRU:
-	    if (!ao->neg_mrru || !multilink ||
-		cilen != CILEN_SHORT) {
+	    if (!ao->neg_mrru
+#ifdef HAVE_MULTILINK
+		|| !multilink
+#endif /* HAVE_MULTILINK */
+		|| cilen != CILEN_SHORT) {
 		orc = CONFREJ;
 		break;
 	    }
@@ -2178,8 +2185,11 @@ lcp_reqci(f, inp, lenp, reject_if_disagree)
 	    break;
 
 	case CI_SSNHF:
-	    if (!ao->neg_ssnhf || !multilink ||
-		cilen != CILEN_VOID) {
+	    if (!ao->neg_ssnhf
+#ifdef HAVE_MULTILINK
+		|| !multilink
+#endif /* HAVE_MULTILINK */
+		|| cilen != CILEN_VOID) {
 		orc = CONFREJ;
 		break;
 	    }
