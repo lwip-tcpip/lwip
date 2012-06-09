@@ -145,8 +145,8 @@ PACK_STRUCT_END
 struct pppoe_softc {
   struct pppoe_softc *next;
   struct netif *sc_ethif;      /* ethernet interface we are using */
-  int sc_pd;                   /* ppp unit number */
-  void (*sc_link_status_cb)(int pd, int up);
+  ppp_pcb *pcb;                /* PPP PCB */
+  void (*sc_link_status_cb)(ppp_pcb *pcb, int up);
 
   int sc_state;                /* discovery phase or session connected */
   struct eth_addr sc_dest;     /* hardware address of concentrator */
@@ -171,7 +171,7 @@ struct pppoe_softc {
 
 #define pppoe_init() /* compatibility define, no initialization needed */
 
-err_t pppoe_create(struct netif *ethif, int pd, void (*link_status_cb)(int pd, int up), struct pppoe_softc **scptr);
+err_t pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp_pcb *pcb, int up), struct pppoe_softc **scptr);
 err_t pppoe_destroy(struct netif *ifp);
 
 int pppoe_connect(struct pppoe_softc *sc, bool persist);

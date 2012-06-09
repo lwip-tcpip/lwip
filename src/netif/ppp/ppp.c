@@ -439,7 +439,7 @@ void ppp_set_xaccm(int unit, ext_accm *accm) {
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_link_status_cb(int pd, int state);
+static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 
 int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
@@ -467,7 +467,7 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   lcp_allowoptions[pcb->unit].neg_pcompression = 0;
   lcp_allowoptions[pcb->unit].neg_accompression = 0;
 
-  if(pppoe_create(ethif, pcb->unit, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
+  if(pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
     pcb->open_flag = 0;
     return PPPERR_OPEN;
   }
@@ -891,7 +891,7 @@ ppp_receive_wakeup(int pd)
  * this is totally stupid to make room for it and then modify the packet directly
  * or it is used in output ?  have to find out...
  */
-void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
+void ppp_input_over_ethernet(ppp_pcb *pcb, struct pbuf *pb) {
   struct ppp_input_header *pih;
   u16_t in_protocol;
 
@@ -914,16 +914,16 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
 
   pih = pb->payload;
 
-  pih->unit = pd;
+  pih->unit = pcb->unit;
   pih->proto = in_protocol; /* pih->proto is now in host byte order */
 
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(pd, pb);
+  ppp_input(pcb->unit, pb);
   return;
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&ppp_pcb_list[pd].netif);
+  snmp_inc_ifindiscards(&pcb->netif);
   pbuf_free(pb);
   return;
 }
@@ -1685,47 +1685,44 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 }
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_link_status_cb(int pd, int state) {
+static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   int pppoe_err_code = PPPERR_NONE;
-  ppp_pcb *pc;
 
   switch(state) {
 
     /* PPPoE link is established, starting PPP negotiation */
     case PPPOE_CB_STATE_UP:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pd));
-      ppp_start(pd);
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pcb->unit));
+      ppp_start(pcb->unit);
       return;
 
     /* PPPoE link normally down (i.e. asked to do so) */
     case PPPOE_CB_STATE_DOWN:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pd));
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pcb->unit));
       pppoe_err_code = PPPERR_CONNECT;
       break;
 
     /* PPPoE link failed to setup (i.e. PADI/PADO timeout */
     case PPPOE_CB_STATE_FAILED:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pd));
+      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->unit));
       pppoe_err_code = PPPERR_OPEN;
       break;
   }
 
-  pc = &ppp_pcb_list[pd];
-
   /* Reconnect if persist mode is enabled */
-  if(pc->settings.persist) {
-    if(pc->link_status_cb)
-      pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : pppoe_err_code, NULL);
-    pppoe_connect(pc->pppoe_sc, pc->settings.persist);
+  if(pcb->settings.persist) {
+    if(pcb->link_status_cb)
+      pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
+    pppoe_connect(pcb->pppoe_sc, pcb->settings.persist);
     return;
   }
 
-  ppp_hup(pd);
-  ppp_stop(pd);
-  pppoe_destroy(&pc->netif);
-  pc->open_flag = 0;
-  if(pc->link_status_cb)
-    pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : pppoe_err_code, NULL);
+  ppp_hup(pcb->unit);
+  ppp_stop(pcb->unit);
+  pppoe_destroy(&pcb->netif);
+  pcb->open_flag = 0;
+  if(pcb->link_status_cb)
+    pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
 }
 #endif /* PPPOE_SUPPORT */
 

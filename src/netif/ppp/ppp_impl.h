@@ -398,7 +398,7 @@ ppp_pcb ppp_pcb_list[NUM_PPP]; /* The PPP interface control blocks. */
 #if PPPOE_SUPPORT
 void ppp_over_ethernet_init_failed(int pd);
 /* function called by pppoe.c */
-void ppp_input_over_ethernet(int pd, struct pbuf *pb);
+void ppp_input_over_ethernet(ppp_pcb *pcb, struct pbuf *pb);
 #endif /* PPPOE_SUPPORT */
 
 /* function called by all PPP subsystems to send packets */
