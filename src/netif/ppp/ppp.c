@@ -150,7 +150,6 @@
  */
 /* FIXME: global variables per PPP session */
 /* FIXME: clean global variables */
-int debug = 0;			/* Debug flag */
 int phase;			/* where the link is at */
 int error_count;		/* # of times error() has been called */
 int unsuccess;			/* # unsuccessful connection attempts */
@@ -266,14 +265,14 @@ typedef struct ppp_control_s {
   struct netif *ethif;
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */
-  int  if_up;                   /* True when the interface is up. */
+  int  if_up;                    /* True when the interface is up. */
   int  err_code;                 /* Code indicating why interface is down. */
 #if PPPOS_SUPPORT
-  sio_fd_t fd;                  /* File device ID of port. */
+  sio_fd_t fd;                   /* File device ID of port. */
 #endif /* PPPOS_SUPPORT */
-  u16_t mtu;                    /* Peer's mru */
-  int  pcomp;                   /* Does peer accept protocol compression? */
-  int  accomp;                  /* Does peer accept addr/ctl compression? */
+  u16_t mtu;                     /* Peer's mru */
+  int  pcomp;                    /* Does peer accept protocol compression? */
+  int  accomp;                   /* Does peer accept addr/ctl compression? */
   u_long last_xmit;              /* Time of last transmission. */
 #if PPPOS_SUPPORT
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
@@ -356,8 +355,6 @@ PACK_STRUCT_END
 int ppp_init(void) {
     int i;
     struct protent *protp;
-
-    debug = 1;
 
     new_phase(PHASE_INITIALIZE);
     error_count = 0;
@@ -843,15 +840,15 @@ static void ppp_input(void *arg) {
 #endif /* UNUSED */
 	  }
 
-	  if (debug) {
+#if PPP_DEBUG
 #if PPP_PROTOCOLNAME
-		const char *pname = protocol_name(protocol);
-		if (pname != NULL)
-		    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
-		else
+	const char *pname = protocol_name(protocol);
+	if (pname != NULL)
+	    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+	else
 #endif /* PPP_PROTOCOLNAME */
-		    warn("Unsupported protocol 0x%x received", protocol);
-	  }
+	    warn("Unsupported protocol 0x%x received", protocol);
+#endif /* PPP_DEBUG */
 	  if (pbuf_header(nb, sizeof(protocol))) {
 	        LWIP_ASSERT("pbuf_header failed\n", 0);
 	        goto drop;

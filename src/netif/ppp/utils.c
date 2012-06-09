@@ -760,9 +760,6 @@ dump_packet(const char *tag, unsigned char *p, int len)
 {
     int proto;
 
-    if (!debug)
-	return;
-
     /*
      * don't print IPv4 and IPv6 packets.
      */
@@ -775,10 +772,9 @@ dump_packet(const char *tag, unsigned char *p, int len)
 #endif
 
     /*
-     * don't print LCP echo request/reply packets if debug <= 1
-     * and the link is up.
+     * don't print LCP echo request/reply packets if the link is up.
      */
-    if (debug <= 1 && unsuccess == 0 && proto == PPP_LCP
+    if (unsuccess == 0 && proto == PPP_LCP
 	&& len >= 2 + HEADERLEN) {
 	unsigned char *lcp = p + 2;
 	int l = (lcp[2] << 8) + lcp[3];

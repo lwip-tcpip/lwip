@@ -1893,8 +1893,9 @@ ipcp_up(f)
 	    /* Set the interface to the new addresses */
 	    mask = get_mask(go->ouraddr);
 	    if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
-		if (debug)
-		    warn("Interface configuration failed");
+#if PPP_DEBUG
+		warn("Interface configuration failed");
+#endif /* PPP_DEBUG */
 		ipcp_close(f->unit, "Interface configuration failed");
 		return;
 	    }
@@ -1924,8 +1925,9 @@ ipcp_up(f)
 
 #if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
-	    if (debug)
-		warn("Interface configuration failed");
+#if PPP_DEBUG
+	    warn("Interface configuration failed");
+#endif /* PPP_DEBUG */
 	    ipcp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
@@ -1933,16 +1935,18 @@ ipcp_up(f)
 
 	/* bring the interface up for IP */
 	if (!sifup(f->unit)) {
-	    if (debug)
-		warn("Interface failed to come up");
+#if PPP_DEBUG
+	    warn("Interface failed to come up");
+#endif /* PPP_DEBUG */
 	    ipcp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
 
 #if (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
-	    if (debug)
-		warn("Interface configuration failed");
+#if PPP_DEBUG
+	    warn("Interface configuration failed");
+#endif /* PPP_DEBUG */
 	    ipcp_close(f->unit, "Interface configuration failed");
 	    return;
 	}
