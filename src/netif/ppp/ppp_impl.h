@@ -255,9 +255,7 @@ struct epdisc {
 /*
  * Global variables.
  */
-extern int	listen_time;	/* time to listen first (ms) */
 extern int	status;		/* exit status for pppd */
-extern int	need_holdoff;	/* Need holdoff period after link terminates */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 
 #ifdef HAVE_MULTILINK
@@ -418,8 +416,10 @@ struct ppp_settings {
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
   u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
 
+  u16_t  listen_time;                 /* time to listen first (ms) */
+
   /* FIXME: make it a compile time option */
-  u_short idle_time_limit;	      /* Disconnect if idle for this many seconds */
+  u16_t idle_time_limit;	      /* Disconnect if idle for this many seconds */
   int  maxconnect;                    /* Maximum connect time (seconds) */
 
   char user       [MAXNAMELEN   + 1]; /* Username for PAP */

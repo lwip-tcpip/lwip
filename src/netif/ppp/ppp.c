@@ -150,7 +150,6 @@
  */
 /* FIXME: global variables per PPP session */
 /* FIXME: clean global variables */
-int listen_time;		/* time to listen first (ms) */
 int status;			/* exit status for pppd */
 
 /* FIXME: outpacket_buf per PPP session */
@@ -294,7 +293,6 @@ int ppp_init(void) {
     int i;
     struct protent *protp;
 
-    listen_time = 0;
     status = EXIT_OK;
 #if PPP_STATS_SUPPORT
     link_stats_valid = 0;

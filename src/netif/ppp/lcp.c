@@ -526,9 +526,9 @@ lcp_lowerup(unit)
               xmit_accm[unit][0]));
 #endif /* PPPOS_SUPPORT */
 
-    if (listen_time != 0) {
+    if (ppp_settings.listen_time != 0) {
 	f->flags |= DELAYED_UP;
-	TIMEOUTMS(lcp_delayed_up, f, listen_time);
+	TIMEOUTMS(lcp_delayed_up, f, ppp_settings.listen_time);
     } else
 	fsm_lowerup(f);
 }
