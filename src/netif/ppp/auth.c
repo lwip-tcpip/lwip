@@ -822,13 +822,13 @@ link_established(unit)
 #if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
-	eap_authpeer(unit, our_name);
+	eap_authpeer(unit, ppp_settings.our_name);
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (go->neg_chap) {
-	chap_auth_peer(unit, our_name, CHAP_DIGEST(go->chap_mdtype));
+	chap_auth_peer(unit, ppp_settings.our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */

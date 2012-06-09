@@ -101,8 +101,8 @@ int	maxconnect = 0;		/* Maximum connect time */
 char	user[MAXNAMELEN];	/* Username for PAP */
 char	passwd[MAXSECRETLEN];	/* Password for PAP */
 bool	persist = 0;		/* Reopen link after it goes down */
-#endif
 char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
+#endif
 #if DEMAND_SUPPORT
 bool	demand = 0;		/* do dial-on-demand */
 #endif /* DEMAND_SUPPORT */

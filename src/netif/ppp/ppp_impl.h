@@ -439,7 +439,9 @@ struct ppp_settings {
 
   char user       [MAXNAMELEN   + 1]; /* Username for PAP */
   char passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
+#if PPP_SERVER
   char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
+#endif /* PPP_SERVER */
   /* FIXME: re-enable that */
   /*  char remote_name[MAXNAMELEN   + 1]; */ /* Peer's name for authentication */
 };
