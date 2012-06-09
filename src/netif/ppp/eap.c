@@ -1333,7 +1333,7 @@ u_char *inp;
 int id;
 int len;
 {
-	ppp_control *pc = &ppp_control_list[esp->es_unit];
+	ppp_pcb *pc = &ppp_pcb_list[esp->es_unit];
 	u_char typenum;
 	u_char vallen;
 	int secret_len;

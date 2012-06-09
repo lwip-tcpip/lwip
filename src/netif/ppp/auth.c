@@ -633,7 +633,7 @@ void
 link_terminated(unit)
     int unit;
 {
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
     if (pc->phase == PHASE_DEAD || pc->phase == PHASE_MASTER)
 	return;
     new_phase(unit, PHASE_DISCONNECT);
@@ -712,7 +712,7 @@ void
 link_down(unit)
     int unit;
 {
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
 #if PPP_NOTIFY
     notify(link_down_notifier, 0);
 #endif /* #if PPP_NOTIFY */
@@ -763,7 +763,7 @@ link_established(unit)
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
     struct protent *protp;
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -1114,7 +1114,7 @@ void
 auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     int errcode = PPPERR_AUTHFAIL;
     /*
      * We've failed to authenticate ourselves to our peer.
@@ -1122,14 +1122,14 @@ auth_withpeer_fail(unit, protocol)
      * is no point in persisting without any way to get updated
      * authentication secrets.
      */
-    pc->status = EXIT_AUTH_TOPEER_FAILED;
+    pcb->status = EXIT_AUTH_TOPEER_FAILED;
 
     /*
      * We've failed to authenticate ourselves to our peer.
      * He'll probably take the link down, and there's not much
      * we can do except wait for that.
      */
-    ppp_ioctl(unit, PPPCTLS_ERRCODE, &errcode);
+    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
     lcp_close(unit, "Failed to authenticate ourselves to peer");
 }
 
@@ -1203,7 +1203,7 @@ np_up(unit, proto)
     int unit, proto;
 {
     int tlim;
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
 
     if (num_np_up == 0) {
 	/*
@@ -1323,7 +1323,7 @@ check_idle(arg)
     void *arg;
 {
     /* FIXME: fix forced unit 0 */
-    ppp_control *pc = &ppp_control_list[0];
+    ppp_pcb *pc = &ppp_pcb_list[0];
     struct ppp_idle idle;
     time_t itime;
     int tlim;
@@ -1361,7 +1361,7 @@ connect_time_expired(arg)
     void *arg;
 {
     /* FIXME: fix forced unit 0 */
-    ppp_control *pc = &ppp_control_list[0];
+    ppp_pcb *pc = &ppp_pcb_list[0];
     info("Connect time expired");
     pc->status = EXIT_CONNECT_TIME;
     lcp_close(0, "Connect time expired");	/* Close connection */
@@ -1517,7 +1517,7 @@ auth_reset(unit)
 {
   lcp_options *go = &lcp_gotoptions[unit];
   lcp_options *ao = &lcp_allowoptions[unit];
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
 
   if( pc->settings.passwd[0] ) {
 
@@ -1990,7 +1990,7 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     int am_server;
 {
   int len;
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
 
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(server);

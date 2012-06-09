@@ -462,7 +462,7 @@ lcp_close(unit, reason)
     int unit;
     char *reason;
 {
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
     fsm *f = &lcp_fsm[unit];
     int oldstate;
 
@@ -499,7 +499,7 @@ lcp_lowerup(unit)
 {
     lcp_options *wo = &lcp_wantoptions[unit];
     fsm *f = &lcp_fsm[unit];
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
     /*
      * Don't use A/C or protocol compression on transmission,
      * but accept A/C and protocol compressed packets
@@ -1129,7 +1129,7 @@ lcp_nakci(f, p, len, treat_as_reject)
     int len;
     int treat_as_reject;
 {
-    ppp_control *pc = &ppp_control_list[f->unit];
+    ppp_pcb *pc = &ppp_pcb_list[f->unit];
     lcp_options *go = &lcp_gotoptions[f->unit];
     lcp_options *wo = &lcp_wantoptions[f->unit];
     u_char citype, cichar, *next;
@@ -2632,7 +2632,7 @@ static
 void LcpLinkFailure (f)
     fsm *f;
 {
-    ppp_control *pc = &ppp_control_list[f->unit];
+    ppp_pcb *pc = &ppp_pcb_list[f->unit];
     if (f->state == OPENED) {
 	info("No response to %d echo-requests", lcp_echos_pending);
         notice("Serial link appears to be disconnected.");

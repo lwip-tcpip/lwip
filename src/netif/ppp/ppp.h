@@ -88,6 +88,9 @@ typedef unsigned char  u_char;
 *** PUBLIC DATA TYPES ***
 ************************/
 
+/*
+ * PPP configuration.
+ */
 typedef struct ppp_settings_s {
 
   u_int  disable_defaultip : 1;       /* Don't use hostname for default IP addrs */
@@ -132,6 +135,71 @@ struct ppp_addrs {
   ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
 
+/*
+ * PPP interface RX control block.
+ */
+typedef struct ppp_pcb_rx_s {
+  /** unit number / ppp descriptor */
+  int pd;
+  /** the rx file descriptor */
+  sio_fd_t fd;
+  /** receive buffer - encoded data is stored here */
+#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
+  u_char rxbuf[PPPOS_RX_BUFSIZE];
+#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
+
+#if PPPOS_SUPPORT
+  /* The input packet. */
+  struct pbuf *in_head, *in_tail;
+
+  u16_t in_protocol;             /* The input protocol code. */
+  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
+  ppp_dev_states in_state;         /* The input process state. */
+  char in_escaped;               /* Escape next character. */
+  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
+#endif /* PPPOS_SUPPORT */
+} ppp_pcb_rx;
+
+/*
+ * PPP interface control block.
+ */
+typedef struct ppp_pcb_s {
+  ppp_settings settings;
+  int unit;
+
+  ppp_pcb_rx rx;
+  char open_flag;                /* True when in use. */
+  u8_t phase;                    /* where the link is at */
+  u8_t status;                   /* exit status */
+#if PPPOE_SUPPORT
+  struct netif *ethif;
+  struct pppoe_softc *pppoe_sc;
+#endif /* PPPOE_SUPPORT */
+  int  if_up;                    /* True when the interface is up. */
+  int  err_code;                 /* Code indicating why interface is down. */
+#if PPPOS_SUPPORT
+  sio_fd_t fd;                   /* File device ID of port. */
+#endif /* PPPOS_SUPPORT */
+  u16_t mtu;                     /* Peer's mru */
+  int  pcomp;                    /* Does peer accept protocol compression? */
+  int  accomp;                   /* Does peer accept addr/ctl compression? */
+  u_long last_xmit;              /* Time of last transmission. */
+#if PPPOS_SUPPORT
+  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
+#endif /* PPPOS_SUPPORT */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+  int  vj_enabled;               /* Flag indicating VJ compression enabled. */
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+
+  struct netif netif;
+
+  struct ppp_addrs addrs;
+
+  void (*link_status_cb)(void *ctx, int err_code, void *arg);
+  void *link_status_ctx;
+
+} ppp_pcb;
 
 /************************
  *** PUBLIC FUNCTIONS ***
@@ -140,10 +208,10 @@ struct ppp_addrs {
 /* Initialize the PPP subsystem. */
 int ppp_init(void);
 
-/* Create a new PPP session, returns a PPP descriptor. */
-int ppp_new(void);
+/* Create a new PPP session, returns a PPP PCB structure. */
+ppp_pcb *ppp_new(void);
 
-/* Warning: Using ppp_auth_type_ANY might have security consequences.
+/* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
  *
  * In practice, within or associated with each PPP server, there is a
@@ -173,7 +241,7 @@ enum ppp_auth_type {
     PPPAUTHTYPE_NONE
 };
 
-void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const char *passwd);
+void ppp_set_auth(ppp_pcb *pcb, enum ppp_auth_type authtype, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
@@ -190,14 +258,14 @@ typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure.
  */
-int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 /*
  * Open a new PPP Over Ethernet (PPPoE) connection.
  */
-int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 
@@ -206,18 +274,18 @@ int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_na
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure. 
  */
-int ppp_close(int pd);
+int ppp_close(ppp_pcb *pcb);
 
 /*
  * Indicate to the PPP process that the line has disconnected.
  */
-void ppp_sighup(int pd);
+void ppp_sighup(ppp_pcb *pcb);
 
 /*
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. 
  */
-int ppp_ioctl(int pd, int cmd, void *arg);
+int ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 
 #if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
 /*
@@ -225,17 +293,17 @@ int ppp_ioctl(int pd, int cmd, void *arg);
  * If PPP_INPROC_OWNTHREAD==1, a seperate input thread using the blocking
  * sio_read() is used, so this is deactivated.
  */
-void pppos_input(int pd, u_char* data, int len);
+void pppos_input(ppp_pcb *pcb, u_char* data, int len);
 #endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
 
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /* Set an lwIP-style status-callback for the selected PPP device */
-void ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback);
+void ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 #if LWIP_NETIF_LINK_CALLBACK
 /* Set an lwIP-style link-callback for the selected PPP device */
-void ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback);
+void ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback);
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
 

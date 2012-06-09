@@ -655,7 +655,7 @@ upap_printpkt(p, plen, printer, arg)
     int mlen, ulen, wlen;
     char *user, *pwd, *msg;
     u_char *pstart;
-    ppp_control *pc = &ppp_control_list[0];
+    ppp_pcb *pc = &ppp_pcb_list[0];
 
     if (plen < UPAP_HEADERLEN)
 	return 0;

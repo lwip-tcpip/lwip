@@ -721,7 +721,7 @@ static void
 ipcp_resetci(f)
     fsm *f;
 {
-    ppp_control *pc = &ppp_control_list[f->unit];
+    ppp_pcb *pc = &ppp_pcb_list[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *ao = &ipcp_allowoptions[f->unit];
@@ -1801,7 +1801,7 @@ ipcp_up(f)
     fsm *f;
 {
     u_int32_t mask;
-    ppp_control *pc = &ppp_control_list[f->unit];
+    ppp_pcb *pc = &ppp_pcb_list[f->unit];
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];

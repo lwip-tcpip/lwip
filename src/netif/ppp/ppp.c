@@ -242,9 +242,9 @@ static void ppp_hup(int pd);
 #if PPP_INPROC_OWNTHREAD
 static void ppp_input_thread(void *arg);
 #endif /* PPP_INPROC_OWNTHREAD */
-static void ppp_drop(ppp_control_rx *pcrx);
-static void pppos_input_proc(ppp_control_rx *pcrx, u_char *s, int l);
-static void ppp_free_current_input_packet(ppp_control_rx *pcrx);
+static void ppp_drop(ppp_pcb_rx *pcrx);
+static void pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l);
+static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
 static err_t ppp_netif_init_cb(struct netif *netif);
@@ -293,30 +293,30 @@ int ppp_init(void) {
 }
 
 /* Create a new PPP session. */
-int ppp_new(void) {
+ppp_pcb *ppp_new(void) {
     int i, pd;
-    ppp_control *pc;
+    ppp_pcb *pcb;
     struct protent *protp;
 
     /* Find a free PPP session descriptor. */
-    for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
+    for (pd = 0; pd < NUM_PPP && ppp_pcb_list[pd].open_flag != 0; pd++);
     if (pd >= NUM_PPP)
-      return PPPERR_OPEN;
+      return NULL;
 
-    pc = &ppp_control_list[pd];
+    pcb = &ppp_pcb_list[pd];
 
 #if PPP_STATS_SUPPORT
     link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
 
-    memset(pc, 0, sizeof(ppp_control));
-    pc->open_flag = 1;
-    pc->status = EXIT_OK;
+    memset(pcb, 0, sizeof(ppp_pcb));
+    pcb->unit = pd;
+    pcb->open_flag = 1;
+    pcb->status = EXIT_OK;
     new_phase(pd, PHASE_INITIALIZE);
 
-    /* memset(&pc->settings, 0, sizeof(ppp_settings)); -- already done previously */
-    pc->settings.usepeerdns = 1;
-    pc->settings.persist = 1;
+    pcb->settings.usepeerdns = 1;
+    pcb->settings.persist = 1;
 
     /*
      * Initialize each protocol.
@@ -324,47 +324,46 @@ int ppp_new(void) {
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(pd);
 
-    return pd;
+    return pcb;
 }
 
-void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const char *passwd) {
-  ppp_control *pc = &ppp_control_list[unit];
+void ppp_set_auth(ppp_pcb *pcb, enum ppp_auth_type authtype, const char *user, const char *passwd) {
 
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
 #if PAP_SUPPORT
-  pc->settings.refuse_pap = 0;
+  pcb->settings.refuse_pap = 0;
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
 #if PAP_SUPPORT
-  pc->settings.refuse_pap = 1;
+  pcb->settings.refuse_pap = 1;
 #endif /* PAP_SUPPORT */
-  pc->settings.refuse_chap = 0;
+  pcb->settings.refuse_chap = 0;
 #endif /* CHAP_SUPPORT */
 
 #if MSCHAP_SUPPORT
 #if PAP_SUPPORT
-  pc->settings.refuse_pap = 1;
+  pcb->settings.refuse_pap = 1;
 #endif /* PAP_SUPPORT */
-  pc->settings.refuse_chap = 1;
-  pc->settings.refuse_mschap = 1;
-  pc->settings.refuse_mschap_v2 = 0;
+  pcb->settings.refuse_chap = 1;
+  pcb->settings.refuse_mschap = 1;
+  pcb->settings.refuse_mschap_v2 = 0;
 #endif /* MSCHAP_SUPPORT */
 
 #if EAP_SUPPORT
 #if PAP_SUPPORT
-  pc->settings.refuse_pap = 1;
+  pcb->settings.refuse_pap = 1;
 #endif/* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  pc->settings.refuse_chap = 1;
+  pcb->settings.refuse_chap = 1;
 #if MSCHAP_SUPPORT
-  pc->settings.refuse_mschap = 1;
-  pc->settings.refuse_mschap_v2 = 1;
+  pcb->settings.refuse_mschap = 1;
+  pcb->settings.refuse_mschap_v2 = 1;
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-  pc->settings.refuse_eap = 0;
+  pcb->settings.refuse_eap = 0;
 #endif /* EAP_SUPPORT */
 
 /* FIXME: re-enable that */
@@ -418,17 +417,17 @@ void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const
 #endif
 
   if(user) {
-    strncpy(pc->settings.user, user, sizeof(pc->settings.user)-1);
-    pc->settings.user[sizeof(pc->settings.user)-1] = '\0';
+    strncpy(pcb->settings.user, user, sizeof(pcb->settings.user)-1);
+    pcb->settings.user[sizeof(pcb->settings.user)-1] = '\0';
   } else {
-	  pc->settings.user[0] = '\0';
+	  pcb->settings.user[0] = '\0';
   }
 
   if(passwd) {
-    strncpy(pc->settings.passwd, passwd, sizeof(pc->settings.passwd)-1);
-    pc->settings.passwd[sizeof(pc->settings.passwd)-1] = '\0';
+    strncpy(pcb->settings.passwd, passwd, sizeof(pcb->settings.passwd)-1);
+    pcb->settings.passwd[sizeof(pcb->settings.passwd)-1] = '\0';
   } else {
-    pc->settings.passwd[0] = '\0';
+    pcb->settings.passwd[0] = '\0';
   }
 }
 
@@ -443,8 +442,7 @@ void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const
  *
  * pppOpen() is directly defined to this function.
  */
-int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-  ppp_control *pc = &ppp_control_list[unit];
+int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -452,26 +450,26 @@ int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_statu
     return PPPERR_PARAM;
 
   /* input pbuf left over from last session? */
-  ppp_free_current_input_packet(&pc->rx);
+  ppp_free_current_input_packet(&pcb->rx);
 
-  pc->fd = fd;
+  pcb->fd = fd;
 
-  pc->rx.pd = unit;
-  pc->rx.fd = fd;
+  pcb->rx.pd = unit;
+  pcb->rx.fd = fd;
 
 #if VJ_SUPPORT
-  vj_compress_init(&pc->vj_comp);
+  vj_compress_init(&pcb->vj_comp);
 #endif /* VJ_SUPPORT */
 
   /*
    * Default the in and out accm so that escape and flag characters
    * are always escaped.
    */
-  pc->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
-  pc->out_accm[15] = 0x60;
+  pcb->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pcb->out_accm[15] = 0x60;
 
-  pc->link_status_cb = link_status_cb;
-  pc->link_status_ctx = link_status_ctx;
+  pcb->link_status_cb = link_status_cb;
+  pcb->link_status_ctx = link_status_ctx;
 
   /*
    * Start the connection and handle incoming events (packet or timeout).
@@ -479,7 +477,7 @@ int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_statu
   PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pd));
   ppp_start(unit);
 #if PPP_INPROC_OWNTHREAD
-  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
+  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
 #endif /* PPP_INPROC_OWNTHREAD */
 
   return unit;
@@ -489,22 +487,21 @@ int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_statu
  * ppp_set_xaccm - set the extended transmit ACCM for the interface.
  */
 void ppp_set_xaccm(int unit, ext_accm *accm) {
-  SMEMCPY(ppp_control_list[unit].out_accm, accm, sizeof(ext_accm));
+  SMEMCPY(ppp_pcb_list[unit].out_accm, accm, sizeof(ext_accm));
   PPPDEBUG(LOG_INFO, ("ppp_set_xaccm[%d]: out_accm=%X %X %X %X\n",
             unit,
-            ppp_control_list[unit].out_accm[0],
-            ppp_control_list[unit].out_accm[1],
-            ppp_control_list[unit].out_accm[2],
-            ppp_control_list[unit].out_accm[3]));
+            ppp_pcb_list[unit].out_accm[0],
+            ppp_pcb_list[unit].out_accm[1],
+            ppp_pcb_list[unit].out_accm[2],
+            ppp_pcb_list[unit].out_accm[3]));
 }
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(int pd, int state);
 
-int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-  ppp_control *pc = &ppp_control_list[unit];
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
@@ -514,38 +511,38 @@ int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_na
   if (link_status_cb == NULL)
     return PPPERR_PARAM;
 
-  pc->ethif = ethif;
+  pcb->ethif = ethif;
 
-  pc->link_status_cb  = link_status_cb;
-  pc->link_status_ctx = link_status_ctx;
+  pcb->link_status_cb  = link_status_cb;
+  pcb->link_status_ctx = link_status_ctx;
 
-  lcp_wantoptions[unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_wantoptions[unit].neg_asyncmap = 0;
-  lcp_wantoptions[unit].neg_pcompression = 0;
-  lcp_wantoptions[unit].neg_accompression = 0;
+  lcp_wantoptions[pcb->unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_wantoptions[pcb->unit].neg_asyncmap = 0;
+  lcp_wantoptions[pcb->unit].neg_pcompression = 0;
+  lcp_wantoptions[pcb->unit].neg_accompression = 0;
 
-  lcp_allowoptions[unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_allowoptions[unit].neg_asyncmap = 0;
-  lcp_allowoptions[unit].neg_pcompression = 0;
-  lcp_allowoptions[unit].neg_accompression = 0;
+  lcp_allowoptions[pcb->unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_allowoptions[pcb->unit].neg_asyncmap = 0;
+  lcp_allowoptions[pcb->unit].neg_pcompression = 0;
+  lcp_allowoptions[pcb->unit].neg_accompression = 0;
 
-  if(pppoe_create(ethif, unit, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
-    pc->open_flag = 0;
+  if(pppoe_create(ethif, pcb->unit, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
+    pcb->open_flag = 0;
     return PPPERR_OPEN;
   }
 
-  pppoe_connect(pc->pppoe_sc, pc->settings.persist);
-  return unit;
+  pppoe_connect(pcb->pppoe_sc, pcb->settings.persist);
+  return pcb->unit;
 }
 
 #if 0 /* UNUSED */
 void ppp_over_ethernet_close(int pd) {
-  ppp_control* pc = &ppp_control_list[pd];
+  ppp_pcb* pc = &ppp_pcb_list[pd];
 
   /* *TJL* There's no lcp_deinit */
   lcp_close(pd, NULL);
 
-  pppoe_destroy(&pc->netif);
+  pppoe_destroy(&pcb->netif);
 }
 #endif /* UNUSED */
 #endif /* PPPOE_SUPPORT */
@@ -555,30 +552,29 @@ void ppp_over_ethernet_close(int pd) {
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure. */
 int
-ppp_close(int pd)
+ppp_close(ppp_pcb *pcb)
 {
-  ppp_control *pc = &ppp_control_list[pd];
   int st = 0;
 
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
 
   /* Disconnect */
 #if PPPOE_SUPPORT
-  if(pc->ethif) {
-    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pd));
-    pc->err_code = PPPERR_USER;
+  if(pcb->ethif) {
+    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->unit));
+    pcb->err_code = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
-    ppp_stop(pd);
+    ppp_stop(pcb->unit);
   } else
 #endif /* PPPOE_SUPPORT */
   {
 #if PPPOS_SUPPORT
-    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pd));
-    pc->err_code = PPPERR_USER;
+    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->unit));
+    pcb->err_code = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
-    ppp_stop(pd);
+    ppp_stop(pcb->unit);
 #if PPP_INPROC_OWNTHREAD
-    ppp_receive_wakeup(pd);
+    ppp_receive_wakeup(pcb->unit);
 #endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
   }
@@ -588,10 +584,10 @@ ppp_close(int pd)
 
 /* This function is called when carrier is lost on the PPP channel. */
 void
-ppp_sighup(int pd)
+ppp_sighup(ppp_pcb *pcb)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> ppp_hup\n", pd));
-  ppp_hup(pd);
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> ppp_hup\n", pcb->unit));
+  ppp_hup(pcb->unit);
 }
 
 
@@ -632,7 +628,7 @@ ppp_hup(int pd)
  * or it is used in output ?  have to find out...
  */
 static void ppp_input(int unit, void *arg) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   struct pbuf *nb = (struct pbuf *)arg;
   u16_t protocol;
   int pd;
@@ -646,8 +642,8 @@ static void ppp_input(int unit, void *arg) {
   }
 
   LINK_STATS_INC(link.recv);
-  snmp_inc_ifinucastpkts(&ppp_control_list[pd].netif);
-  snmp_add_ifinoctets(&ppp_control_list[pd].netif, nb->tot_len);
+  snmp_inc_ifinucastpkts(&ppp_pcb_list[pd].netif);
+  snmp_add_ifinoctets(&ppp_pcb_list[pd].netif, nb->tot_len);
 
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
@@ -692,8 +688,8 @@ static void ppp_input(int unit, void *arg) {
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
        * pass the result to IP.
        */
-      if ((vj_uncompress_tcp(&nb, &ppp_control_list[pd].vj_comp) >= 0) && (ppp_control_list[pd].netif.input)) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if ((vj_uncompress_tcp(&nb, &ppp_pcb_list[pd].vj_comp) >= 0) && (ppp_pcb_list[pd].netif.input)) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -706,8 +702,8 @@ static void ppp_input(int unit, void *arg) {
        * Process the TCP/IP header for VJ header compression and then pass
        * the packet to IP.
        */
-      if ((vj_uncompress_uncomp(nb, &ppp_control_list[pd].vj_comp) >= 0) && ppp_control_list[pd].netif.input) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if ((vj_uncompress_uncomp(nb, &ppp_pcb_list[pd].vj_comp) >= 0) && ppp_pcb_list[pd].netif.input) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -717,8 +713,8 @@ static void ppp_input(int unit, void *arg) {
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pd, nb->len));
-      if (ppp_control_list[pd].netif.input) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if (ppp_pcb_list[pd].netif.input) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       break;
@@ -773,7 +769,7 @@ static void ppp_input(int unit, void *arg) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&ppp_control_list[pd].netif);
+  snmp_inc_ifindiscards(&ppp_pcb_list[pd].netif);
 
 out:
   pbuf_free(nb);
@@ -801,8 +797,8 @@ out:
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
        * pass the result to IP.
        */
-      if ((vj_uncompress_tcp(&nb, &ppp_control_list[pd].vj_comp) >= 0) && (ppp_control_list[pd].netif.input)) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if ((vj_uncompress_tcp(&nb, &ppp_pcb_list[pd].vj_comp) >= 0) && (ppp_pcb_list[pd].netif.input)) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -820,8 +816,8 @@ out:
        * Process the TCP/IP header for VJ header compression and then pass
        * the packet to IP.
        */
-      if ((vj_uncompress_uncomp(nb, &ppp_control_list[pd].vj_comp) >= 0) && ppp_control_list[pd].netif.input) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if ((vj_uncompress_uncomp(nb, &ppp_pcb_list[pd].vj_comp) >= 0) && ppp_pcb_list[pd].netif.input) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -836,8 +832,8 @@ out:
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pd, nb->len));
-      if (ppp_control_list[pd].netif.input) {
-        ppp_control_list[pd].netif.input(nb, &ppp_control_list[pd].netif);
+      if (ppp_pcb_list[pd].netif.input) {
+        ppp_pcb_list[pd].netif.input(nb, &ppp_pcb_list[pd].netif);
         return;
       }
       break;
@@ -937,8 +933,8 @@ static void
 ppp_receive_wakeup(int pd)
 {
   PPPDEBUG(LOG_DEBUG, ("ppp_receive_wakeup: unit %d\n", pd));
-  if (ppp_control_list[pd].open_flag != 0) {
-    sio_read_abort(ppp_control_list[pd].fd);
+  if (ppp_pcb_list[pd].open_flag != 0) {
+    sio_read_abort(ppp_pcb_list[pd].fd);
   }
 }
 #endif /* PPP_INPROC_OWNTHREAD */
@@ -986,7 +982,7 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&ppp_control_list[pd].netif);
+  snmp_inc_ifindiscards(&ppp_pcb_list[pd].netif);
   pbuf_free(pb);
   return;
 }
@@ -1020,7 +1016,7 @@ static void
 ppp_input_thread(void *arg)
 {
   int count;
-  ppp_control_rx *pcrx = arg;
+  ppp_pcb_rx *pcrx = arg;
 
   while (phase != PHASE_DEAD) {
     count = sio_read(pcrx->fd, pcrx->rxbuf, PPPOS_RX_BUFSIZE);
@@ -1037,7 +1033,7 @@ ppp_input_thread(void *arg)
 
 #if PPPOS_SUPPORT
 static void
-pppos_put(ppp_control *pc, struct pbuf *nb)
+pppos_put(ppp_pcb *pc, struct pbuf *nb)
 {
   struct pbuf *b;
   int c;
@@ -1104,7 +1100,7 @@ ppp_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
  */
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
   int pd = (int)(size_t)netif->state;
-  ppp_control *pc = &ppp_control_list[pd];
+  ppp_pcb *pc = &ppp_pcb_list[pd];
 #if PPPOS_SUPPORT
   u_short protocol = PPP_IP;
   u_int fcs_out = PPP_INITFCS;
@@ -1251,7 +1247,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
 
 #if PPPOE_SUPPORT
 static err_t ppp_netif_output_over_ethernet(int pd, struct pbuf *p) {
-  ppp_control *pc = &ppp_control_list[pd];
+  ppp_pcb *pc = &ppp_pcb_list[pd];
   struct pbuf *pb;
   u_short protocol = PPP_IP;
   int i=0;
@@ -1295,32 +1291,31 @@ static err_t ppp_netif_output_over_ethernet(int pd, struct pbuf *p) {
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 int
-ppp_ioctl(int pd, int cmd, void *arg)
+ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 {
-  ppp_control *pc = &ppp_control_list[pd];
   int st = 0;
 
-  if (pd < 0 || pd >= NUM_PPP) {
+  if (pcb->unit < 0 || pcb->unit >= NUM_PPP) {
     st = PPPERR_PARAM;
   } else {
     switch(cmd) {
     case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
       if (arg) {
-        *(int *)arg = (int)(pc->if_up);
+        *(int *)arg = (int)(pcb->if_up);
       } else {
         st = PPPERR_PARAM;
       }
       break;
     case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
       if (arg) {
-        pc->err_code = *(int *)arg;
+        pcb->err_code = *(int *)arg;
       } else {
         st = PPPERR_PARAM;
       }
       break;
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
       if (arg) {
-        *(int *)arg = (int)(pc->err_code);
+        *(int *)arg = (int)(pcb->err_code);
       } else {
         st = PPPERR_PARAM;
       }
@@ -1328,7 +1323,7 @@ ppp_ioctl(int pd, int cmd, void *arg)
 #if PPPOS_SUPPORT
     case PPPCTLG_FD:            /* Get the fd associated with the ppp */
       if (arg) {
-        *(sio_fd_t *)arg = pc->fd;
+        *(sio_fd_t *)arg = pcb->fd;
       } else {
         st = PPPERR_PARAM;
       }
@@ -1349,7 +1344,7 @@ ppp_ioctl(int pd, int cmd, void *arg)
  *           -1 Failed to write to device
  */
 int ppp_write(int pd, const u_char *s, int n) {
-  ppp_control *pc = &ppp_control_list[pd];
+  ppp_pcb *pc = &ppp_pcb_list[pd];
 #if PPPOS_SUPPORT
   u_char c;
   u_int fcs_out;
@@ -1422,7 +1417,7 @@ int ppp_write(int pd, const u_char *s, int n) {
 
 #if PPPOE_SUPPORT
 static int ppp_write_over_ethernet(int pd, const u_char *s, int n) {
-  ppp_control *pc = &ppp_control_list[pd];
+  ppp_pcb *pc = &ppp_pcb_list[pd];
   struct pbuf *pb;
 
   /* skip address & flags */
@@ -1467,7 +1462,7 @@ static int ppp_write_over_ethernet(int pd, const u_char *s, int n) {
  * Drop the input packet.
  */
 static void
-ppp_free_current_input_packet(ppp_control_rx *pcrx)
+ppp_free_current_input_packet(ppp_pcb_rx *pcrx)
 {
   if (pcrx->in_head != NULL) {
     if (pcrx->in_tail && (pcrx->in_tail != pcrx->in_head)) {
@@ -1483,7 +1478,7 @@ ppp_free_current_input_packet(ppp_control_rx *pcrx)
  * Drop the input packet and increase error counters.
  */
 static void
-ppp_drop(ppp_control_rx *pcrx)
+ppp_drop(ppp_pcb_rx *pcrx)
 {
   if (pcrx->in_head != NULL) {
 #if 0
@@ -1493,11 +1488,11 @@ ppp_drop(ppp_control_rx *pcrx)
   }
   ppp_free_current_input_packet(pcrx);
 #if VJ_SUPPORT
-  vj_uncompress_err(&ppp_control_list[pcrx->pd].vj_comp);
+  vj_uncompress_err(&ppp_pcb_list[pcrx->pd].vj_comp);
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&ppp_control_list[pcrx->pd].netif);
+  snmp_inc_ifindiscards(&ppp_pcb_list[pcrx->pd].netif);
 }
 
 #if !PPP_INPROC_OWNTHREAD
@@ -1509,9 +1504,9 @@ ppp_drop(ppp_control_rx *pcrx)
  * @param len length of received data
  */
 void
-pppos_input(int pd, u_char* data, int len)
+pppos_input(ppp_pcb *pcb, u_char* data, int len)
 {
-  pppos_input_proc(&ppp_control_list[pd].rx, data, len);
+  pppos_input_proc(pcb->rx, data, len);
 }
 #endif
 
@@ -1519,7 +1514,7 @@ pppos_input(int pd, u_char* data, int len)
  * Process a received octet string.
  */
 static void
-pppos_input_proc(ppp_control_rx *pcrx, u_char *s, int l)
+pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
 {
   struct pbuf *next_pbuf;
   u_char cur_char;
@@ -1592,7 +1587,7 @@ pppos_input_proc(ppp_control_rx *pcrx, u_char *s, int l)
             PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: tcpip_callback() failed, dropping packet\n", pcrx->pd));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
-            snmp_inc_ifindiscards(&ppp_control_list[pcrx->pd].netif);
+            snmp_inc_ifindiscards(&ppp_pcb_list[pcrx->pd].netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
           ppp_input(inp);
@@ -1751,7 +1746,7 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(int pd, int state) {
   int pppoe_err_code = PPPERR_NONE;
-  ppp_control *pc;
+  ppp_pcb *pc;
 
   switch(state) {
 
@@ -1774,7 +1769,7 @@ static void ppp_over_ethernet_link_status_cb(int pd, int state) {
       break;
   }
 
-  pc = &ppp_control_list[pd];
+  pc = &ppp_pcb_list[pd];
 
   /* Reconnect if persist mode is enabled */
   if(pc->settings.persist) {
@@ -1805,17 +1800,17 @@ void ppp_link_terminated(int pd) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pd));
 
 #if PPPOE_SUPPORT
-  if (ppp_control_list[pd].ethif) {
-    pppoe_disconnect(ppp_control_list[pd].pppoe_sc);
+  if (ppp_pcb_list[pd].ethif) {
+    pppoe_disconnect(ppp_pcb_list[pd].pppoe_sc);
   } else
 #endif /* PPPOE_SUPPORT */
   {
 #if PPPOS_SUPPORT
-    ppp_control* pc;
+    ppp_pcb* pc;
 #if PPP_INPROC_OWNTHREAD
     ppp_receive_wakeup(pd);
 #endif /* PPP_INPROC_OWNTHREAD */
-    pc = &ppp_control_list[pd];
+    pc = &ppp_pcb_list[pd];
 
     PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pd, pc->link_status_cb, pc->err_code));
     if (pc->link_status_cb) {
@@ -1838,9 +1833,9 @@ void ppp_link_terminated(int pd) {
  * @see netif_set_status_callback
  */
 void
-ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback)
+ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
 {
-  netif_set_status_callback(&ppp_control_list[pd].netif, status_callback);
+  netif_set_status_callback(pcb->netif, status_callback);
 }
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
@@ -1853,9 +1848,9 @@ ppp_set_netif_statuscallback(int pd, netif_status_callback_fn status_callback)
  * @see netif_set_link_callback
  */
 void
-ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback)
+ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
 {
-  netif_set_link_callback(&ppp_control_list[pd].netif, link_callback);
+  netif_set_link_callback(pcb->netif, link_callback);
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
@@ -1868,7 +1863,7 @@ ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback)
  * new_phase - signal the start of a new phase of pppd's operation.
  */
 void new_phase(int unit, int p) {
-    ppp_control *pc = &ppp_control_list[unit];
+    ppp_pcb *pc = &ppp_pcb_list[unit];
     pc->phase = p;
 #if PPP_NOTIFY
     /* The one willing notify support should add here the code to be notified of phase changes */
@@ -1880,7 +1875,7 @@ void new_phase(int unit, int p) {
  * the ppp interface.
  */
 int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
 #if PPPOS_SUPPORT
   int i;
 #endif /* PPPOS_SUPPORT */
@@ -1914,7 +1909,7 @@ int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp) {
  */
 int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp) {
 #if PPPOS_SUPPORT
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
 #endif /* PPPOS_SUPPORT */
@@ -1951,7 +1946,7 @@ int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp) {
  */
 int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
 	     u_int32_t net_mask) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
@@ -1972,7 +1967,7 @@ int sifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr,
  * through the interface if possible.
  */
 int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   LWIP_UNUSED_ARG(our_adr);
@@ -1993,7 +1988,7 @@ int cifaddr (int unit, u_int32_t our_adr, u_int32_t his_adr) {
  * sdns - Config the DNS servers
  */
 int sdns (int unit, u_int32_t ns1, u_int32_t ns2) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
@@ -2012,7 +2007,7 @@ int sdns (int unit, u_int32_t ns1, u_int32_t ns2) {
  * cdns - Clear the DNS servers
  */
 int cdns (int unit, u_int32_t ns1, u_int32_t ns2) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   LWIP_UNUSED_ARG(ns1);
@@ -2033,7 +2028,7 @@ int cdns (int unit, u_int32_t ns1, u_int32_t ns2) {
  */
 int sifup(int u)
 {
-  ppp_control *pc = &ppp_control_list[u];
+  ppp_pcb *pc = &ppp_pcb_list[u];
   int st = 1;
 
   if (u < 0 || u >= NUM_PPP || !pc->open_flag) {
@@ -2066,7 +2061,7 @@ int sifup(int u)
  *	     down if there are no remaining protocols.
  */
 int sifdown(int unit) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {
@@ -2099,7 +2094,7 @@ int sifnpmode(int u, int proto, enum NPmode mode) {
  * netif_set_mtu - set the MTU on the PPP network interface.
  */
 void netif_set_mtu(int unit, int mtu) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
 
   /* Validate parameters. */
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag)
@@ -2112,7 +2107,7 @@ void netif_set_mtu(int unit, int mtu) {
  * netif_get_mtu - get PPP interface MTU
  */
 int netif_get_mtu(int unit) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
 
   /* Validate parameters. */
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag)
@@ -2134,7 +2129,7 @@ int netif_get_mtu(int unit) {
  * ppp connection when it has come up.
  */
 int sifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   LWIP_UNUSED_ARG(ouraddr);
@@ -2158,7 +2153,7 @@ int sifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace
  * cifdefaultroute - delete a default route through the address given.
  */
 int cifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway) {
-  ppp_control *pc = &ppp_control_list[unit];
+  ppp_pcb *pc = &ppp_pcb_list[unit];
   int st = 1;
 
   LWIP_UNUSED_ARG(ouraddr);
@@ -2200,7 +2195,7 @@ int cifproxyarp(int unit, u_int32_t his_adr) {
  */
 int sifvjcomp(int u, int vjcomp, int cidcomp, int maxcid) {
 #if PPPOS_SUPPORT && VJ_SUPPORT
-  ppp_control *pc = &ppp_control_list[u];
+  ppp_pcb *pc = &ppp_pcb_list[u];
 
   pc->vj_enabled = vjcomp;
   pc->vj_comp.compressSlot = cidcomp;

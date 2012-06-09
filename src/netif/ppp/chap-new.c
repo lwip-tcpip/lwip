@@ -480,7 +480,7 @@ chap_respond(struct chap_client_state *cs, int id,
 	unsigned char response[RESP_MAX_PKTLEN];
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
-	ppp_control *pc = &ppp_control_list[0];
+	ppp_pcb *pc = &ppp_pcb_list[0];
 
 	if ((cs->flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
 		return;		/* not ready */
