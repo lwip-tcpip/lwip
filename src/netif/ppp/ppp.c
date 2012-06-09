@@ -341,14 +341,16 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
     pcb->settings.refuse_chap = 0;
   else
     pcb->settings.refuse_chap = 1;
-#endif /* CHAP_SUPPORT */
-
 #if MSCHAP_SUPPORT
-  if(authtype & PPPAUTHTYPE_MSCHAP)
+  if(authtype & PPPAUTHTYPE_MSCHAP) {
     pcb->settings.refuse_mschap = 0;
-  else
+    pcb->settings.refuse_mschap_v2 = 0;
+  } else {
     pcb->settings.refuse_mschap = 1;
+    pcb->settings.refuse_mschap_v2 = 1;
+  }
 #endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
 
 #if EAP_SUPPORT
   if(authtype & PPPAUTHTYPE_EAP)
