@@ -211,6 +211,8 @@ int ppp_init(void);
 /* Create a new PPP session, returns a PPP PCB structure. */
 ppp_pcb *ppp_new(void);
 
+/* Set auth helper, optional, you can either fill ppp_pcb->settings. */
+
 /* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
  *
@@ -230,18 +232,14 @@ ppp_pcb *ppp_new(void);
  * which identifies exactly one authentication method.
  *
  */
-enum ppp_auth_type {
-#if CHAP_SUPPORT
-    PPPAUTHTYPE_CHAP,
-#endif /* CHAP_SUPPORT */
-#if PAP_SUPPORT
-    PPPAUTHTYPE_PAP,
-#endif /* PAP_SUPPORT */
-    PPPAUTHTYPE_ANY,
-    PPPAUTHTYPE_NONE
-};
+#define PPPAUTHTYPE_NONE   0x00
+#define PPPAUTHTYPE_PAP    0x01
+#define PPPAUTHTYPE_CHAP   0x02
+#define PPPAUTHTYPE_MSCHAP 0x04
+#define PPPAUTHTYPE_EAP    0x08
+#define PPPAUTHTYPE_ANY    0xff
 
-void ppp_set_auth(ppp_pcb *pcb, enum ppp_auth_type authtype, const char *user, const char *passwd);
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
