@@ -255,7 +255,6 @@ struct epdisc {
 /*
  * Global variables.
  */
-extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
 extern int	status;		/* exit status for pppd */
 extern int	need_holdoff;	/* Need holdoff period after link terminates */

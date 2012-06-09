@@ -776,8 +776,7 @@ dump_packet(const char *tag, unsigned char *p, int len)
     /*
      * don't print LCP echo request/reply packets if the link is up.
      */
-    if (unsuccess == 0 && proto == PPP_LCP
-	&& len >= 2 + HEADERLEN) {
+    if (proto == PPP_LCP && len >= 2 + HEADERLEN) {
 	unsigned char *lcp = p + 2;
 	int l = (lcp[2] << 8) + lcp[3];
 

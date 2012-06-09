@@ -1207,7 +1207,6 @@ np_up(unit, proto)
 	 * At this point we consider that the link has come up successfully.
 	 */
 	status = EXIT_OK;
-	unsuccess = 0;
 	new_phase(unit, PHASE_RUNNING);
 
 #if 0 /* UNUSED */

@@ -150,7 +150,6 @@
  */
 /* FIXME: global variables per PPP session */
 /* FIXME: clean global variables */
-int unsuccess;			/* # unsuccessful connection attempts */
 int listen_time;		/* time to listen first (ms) */
 int status;			/* exit status for pppd */
 
@@ -295,7 +294,6 @@ int ppp_init(void) {
     int i;
     struct protent *protp;
 
-    unsuccess = 0;
     listen_time = 0;
     status = EXIT_OK;
 #if PPP_STATS_SUPPORT
