@@ -56,11 +56,6 @@
 
 #include "upap.h"
 
-/* FIXME: move that to ppp_options */
-#if PRINTPKT_SUPPORT
-static bool hide_password = 1;
-#endif /* PRINTPKT_SUPPORT */
-
 #if PPP_OPTIONS
 /*
  * Command-line options.
@@ -693,7 +688,7 @@ upap_printpkt(p, plen, printer, arg)
 	printer(arg, " user=");
 	print_string(user, ulen, printer, arg);
 	printer(arg, " password=");
-	if (!hide_password)
+	if (!ppp_settings.hide_password)
 	    print_string(pwd, wlen, printer, arg);
 	else
 	    printer(arg, "<hidden>");

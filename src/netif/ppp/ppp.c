@@ -662,8 +662,6 @@ static void ppp_input(int unit, void *arg) {
 	goto drop;
   }
 
-  /* FIXME: add a phase per connection */
-
   /*
    * Until we get past the authentication phase, toss all packets
    * except LCP, LQR and authentication packets.
@@ -2146,7 +2144,6 @@ int sifdefaultroute(int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace
 
   LWIP_UNUSED_ARG(ouraddr);
   LWIP_UNUSED_ARG(gateway);
-  /* FIXME: handle replace condition */
   LWIP_UNUSED_ARG(replace);
 
   if (unit < 0 || unit >= NUM_PPP || !pc->open_flag) {

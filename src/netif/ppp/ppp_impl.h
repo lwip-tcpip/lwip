@@ -414,6 +414,9 @@ struct ppp_settings {
   u_int  usehostname       : 1;       /* Use hostname for our_name */
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
   u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
+#if PRINTPKT_SUPPORT
+  u_int hide_password      : 1;       /* Hide password in dumped packets */
+#endif /* PRINTPKT_SUPPORT */
 
   u16_t  listen_time;                 /* time to listen first (ms) */
 
