@@ -266,18 +266,14 @@ extern bool	explicit_remote;/* remote_name specified with remotename opt */
 /* FIXME: make it a compile time option */
 extern int	idle_time_limit;/* Shut down link if idle for this long */
 
-extern int	phase;		/* Current state of link - see values below */
-extern int	error_count;	/* # of times error() has been called */
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
 extern int	status;		/* exit status for pppd */
 extern int	need_holdoff;	/* Need holdoff period after link terminates */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 
-/* FIXME: add more HAVE_MULTILINK */
-extern bool	multilink;	/* enable multilink operation */
-
 #ifdef HAVE_MULTILINK
+extern bool	multilink;	/* enable multilink operation */
 extern bool	doing_multilink;
 extern bool	multilink_master;
 extern bool	bundle_eof;

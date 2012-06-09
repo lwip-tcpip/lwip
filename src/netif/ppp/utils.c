@@ -695,7 +695,9 @@ error (char *fmt, ...)
     va_start(pvar, fmt);
     logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
+#if 0 /* UNUSED */
     ++error_count;
+#endif /* UNUSED */
 }
 
 /*
