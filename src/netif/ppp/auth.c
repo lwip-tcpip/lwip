@@ -1306,7 +1306,9 @@ check_maxoctets(arg)
 	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
 	status = EXIT_TRAFFIC_LIMIT;
 	lcp_close(0, "Traffic limit");
+#if 0 /* UNUSED */
 	need_holdoff = 0;
+#endif /* UNUSED */
     } else {
         TIMEOUT(check_maxoctets, NULL, maxoctets_timeout);
     }
@@ -1343,7 +1345,9 @@ check_idle(arg)
 	notice("Terminating connection due to lack of activity.");
 	status = EXIT_IDLE_TIMEOUT;
 	lcp_close(0, "Link inactive");
+#if 0 /* UNUSED */
 	need_holdoff = 0;
+#endif /* UNUSED */
     } else {
 	TIMEOUT(check_idle, NULL, tlim);
     }
