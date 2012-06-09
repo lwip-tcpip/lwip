@@ -465,6 +465,7 @@ typedef struct ppp_control_s {
   ppp_control_rx rx;
   char open_flag;                /* True when in use. */
   u8_t phase;                    /* where the link is at */
+  u8_t status;                   /* exit status */
 #if PPPOE_SUPPORT
   struct netif *ethif;
   struct pppoe_softc *pppoe_sc;

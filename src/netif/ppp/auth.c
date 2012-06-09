@@ -1113,6 +1113,7 @@ void
 auth_withpeer_fail(unit, protocol)
     int unit, protocol;
 {
+    ppp_control *pc = &ppp_control_list[unit];
     int errcode = PPPERR_AUTHFAIL;
     /*
      * We've failed to authenticate ourselves to our peer.
@@ -1120,7 +1121,7 @@ auth_withpeer_fail(unit, protocol)
      * is no point in persisting without any way to get updated
      * authentication secrets.
      */
-    status = EXIT_AUTH_TOPEER_FAILED;
+    pc->status = EXIT_AUTH_TOPEER_FAILED;
 
     /*
      * We've failed to authenticate ourselves to our peer.
@@ -1201,12 +1202,13 @@ np_up(unit, proto)
     int unit, proto;
 {
     int tlim;
+    ppp_control *pc = &ppp_control_list[unit];
 
     if (num_np_up == 0) {
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
-	status = EXIT_OK;
+	pc->status = EXIT_OK;
 	new_phase(unit, PHASE_RUNNING);
 
 #if 0 /* UNUSED */
@@ -1319,6 +1321,8 @@ static void
 check_idle(arg)
     void *arg;
 {
+    /* FIXME: fix forced unit 0 */
+    ppp_control *pc = &ppp_control_list[0];
     struct ppp_idle idle;
     time_t itime;
     int tlim;
@@ -1338,7 +1342,7 @@ check_idle(arg)
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
-	status = EXIT_IDLE_TIMEOUT;
+	pc->status = EXIT_IDLE_TIMEOUT;
 	lcp_close(0, "Link inactive");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
@@ -1355,8 +1359,10 @@ static void
 connect_time_expired(arg)
     void *arg;
 {
+    /* FIXME: fix forced unit 0 */
+    ppp_control *pc = &ppp_control_list[0];
     info("Connect time expired");
-    status = EXIT_CONNECT_TIME;
+    pc->status = EXIT_CONNECT_TIME;
     lcp_close(0, "Connect time expired");	/* Close connection */
 }
 

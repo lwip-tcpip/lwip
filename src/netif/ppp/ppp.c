@@ -146,18 +146,10 @@
 #endif
 
 /*
- * Global variables.
- */
-/* FIXME: global variables per PPP session */
-/* FIXME: clean global variables */
-int status;			/* exit status for pppd */
-
-/* FIXME: outpacket_buf per PPP session */
-
-/*
  * Buffers for outgoing packets.  This must be accessed only from the appropriate
  * PPP task so that it doesn't need to be protected to avoid collisions.
  */
+/* FIXME: outpacket_buf per PPP session */
 u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 
 #if PPPOS_SUPPORT
@@ -293,7 +285,6 @@ int ppp_init(void) {
     int i;
     struct protent *protp;
 
-    status = EXIT_OK;
 #if PPP_STATS_SUPPORT
     link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
@@ -457,6 +448,7 @@ int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void
 
   pc->open_flag = 1;
   pc->fd = fd;
+  pc->status = EXIT_OK;
 
   new_phase(pd, PHASE_INITIALIZE);
 
@@ -525,6 +517,7 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
   memset(pc, 0, sizeof(ppp_control));
   pc->open_flag = 1;
   pc->ethif = ethif;
+  pc->status = EXIT_OK;
 
   new_phase(pd, PHASE_INITIALIZE);
 
