@@ -255,9 +255,6 @@ struct epdisc {
 /*
  * Global variables.
  */
-extern char	remote_name[MAXNAMELEN]; /* Peer's name for authentication */
-extern bool	explicit_remote;/* remote_name specified with remotename opt */
-
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
 extern int	status;		/* exit status for pppd */
@@ -431,8 +428,8 @@ struct ppp_settings {
 #if PPP_SERVER
   char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
 #endif /* PPP_SERVER */
-  /* FIXME: re-enable that */
-  /*  char remote_name[MAXNAMELEN   + 1]; */ /* Peer's name for authentication */
+  /* FIXME: make it a compile time option */
+  char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
 };
 
 struct ppp_settings ppp_settings;

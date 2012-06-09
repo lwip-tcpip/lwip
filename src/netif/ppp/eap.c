@@ -1451,9 +1451,9 @@ int len;
 		}
 
 		/* In case the remote doesn't give us his name. */
-		if (explicit_remote ||
-		    (remote_name[0] != '\0' && vallen == len))
-			strlcpy(rhostname, remote_name, sizeof (rhostname));
+		if (ppp_settings.explicit_remote ||
+		    (ppp_settings.remote_name[0] != '\0' && vallen == len))
+			strlcpy(rhostname, ppp_settings.remote_name, sizeof (rhostname));
 
 		/*
 		 * Get the secret for authenticating ourselves with

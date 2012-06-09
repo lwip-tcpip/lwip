@@ -238,19 +238,13 @@ bool refuse_mschap_v2 = 0;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 bool refuse_mschap = 1;		/* Don't wanna auth. ourselves with MS-CHAP */
 bool refuse_mschap_v2 = 1;	/* Don't wanna auth. ourselves with MS-CHAPv2 */
 #endif /* MSCHAP_SUPPORT */
-#endif /* MOVED TO ppp_settings */
-#if 0 /* UNUSED */
 bool usehostname = 0;		/* Use hostname for our_name */
 bool auth_required = 0;		/* Always require authentication from peer */
 bool allow_any_ip = 0;		/* Allow peer to use any IP address */
-#endif /* UNUSED */
 bool explicit_remote = 0;	/* User specified explicit remote name */
-#if 0 /* UNUSED */
 bool explicit_user = 0;		/* Set if "user" option supplied */
 bool explicit_passwd = 0;	/* Set if "password" option supplied */
-#endif /* UNUSED */
 char remote_name[MAXNAMELEN];	/* Peer's name for authentication */
-#if 0 /* UNUSED */
 static char *uafname;		/* name of most recent +ua file */
 
 extern char *crypt (const char *, const char *);
