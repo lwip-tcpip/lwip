@@ -81,11 +81,13 @@
 char *strdup (char *);
 #endif
 
+#if 0
 struct option_value {
     struct option_value *next;
     const char *source;
     char value[1];
 };
+#endif
 
 /*
  * Option variables and default values.
@@ -142,13 +144,17 @@ struct	bpf_program pass_filter;/* Filter program for packets to pass */
 struct	bpf_program active_filter; /* Filter program for link-active pkts */
 #endif
 
+#if 0
 char *current_option;		/* the name of the option being parsed */
 int  privileged_option;		/* set iff the current option came from root */
 char *option_source;		/* string saying where the option came from */
+#endif
 #if 0 /* UNUSED */
 int  option_priority = OPRIO_CFGFILE; /* priority of the current options */
 #endif /* UNUSED */
+#if 0
 bool devnam_fixed;		/* can no longer change device name */
+#endif
 
 #if 0 /* UNUSED */
 static int logfile_fd = -1;	/* fd opened for log file */

@@ -150,6 +150,7 @@
  */
 /* FIXME: global variables per PPP session */
 /* FIXME: clean global variables */
+int debug = 0;			/* Debug flag */
 int phase;			/* where the link is at */
 int error_count;		/* # of times error() has been called */
 int unsuccess;			/* # unsuccessful connection attempts */
