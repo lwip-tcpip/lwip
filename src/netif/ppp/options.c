@@ -106,31 +106,27 @@ char	our_name[MAXNAMELEN];	/* Our name for authentication purposes */
 #if DEMAND_SUPPORT
 bool	demand = 0;		/* do dial-on-demand */
 #endif /* DEMAND_SUPPORT */
+#if 0
 char	*ipparam = NULL;	/* Extra parameter for ip up/down scripts */
+#endif
 int	idle_time_limit = 0;	/* Disconnect if idle for this many seconds */
 int	holdoff = 30;		/* # seconds to pause before reconnecting */
 bool	holdoff_specified;	/* true if a holdoff value has been given */
 #if 0
 int	log_to_fd = 1;		/* send log messages to this fd too */
-#endif
 bool	log_default = 1;	/* log_to_fd is default (stdout) */
 int	maxfail = 10;		/* max # of unsuccessful connection attempts */
-#if 0
 char	linkname[MAXPATHLEN];	/* logical name for link */
-#endif
 bool	tune_kernel;		/* may alter kernel settings */
 int	connect_delay = 1000;	/* wait this many ms after connect script */
 int	req_unit = -1;		/* requested interface unit */
-#if 0
 bool	multilink = 0;		/* Enable multilink operation */
-#endif
 char	*bundle_name = NULL;	/* bundle name for multilink */
 bool	dump_options;		/* print out option values */
-#if 0
 bool	dryrun;			/* print out option values and exit */
-#endif
 char	*domain;		/* domain name set by domain option */
 int	child_wait = 5;		/* # seconds to wait for children at exit */
+#endif
 
 #ifdef MAXOCTETS
 unsigned int  maxoctets = 0;    /* default - no limit */
