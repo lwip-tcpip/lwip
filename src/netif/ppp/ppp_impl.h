@@ -255,16 +255,8 @@ struct epdisc {
 /*
  * Global variables.
  */
-/* FIXME: improve debug flag */
-extern int	debug;		/* Debug flag */
-
-/* FIXME: is our_name really necessary ? */
-extern char	our_name[MAXNAMELEN];/* Our name for authentication purposes */
 extern char	remote_name[MAXNAMELEN]; /* Peer's name for authentication */
 extern bool	explicit_remote;/* remote_name specified with remotename opt */
-
-/* FIXME: make it a compile time option */
-extern int	idle_time_limit;/* Shut down link if idle for this long */
 
 extern int	unsuccess;	/* # unsuccessful connection attempts */
 extern int	listen_time;	/* time to listen first (ms) */
@@ -430,6 +422,7 @@ struct ppp_settings {
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
   u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
 
+  /* FIXME: make it a compile time option */
   u_short idle_time_limit;	      /* Disconnect if idle for this many seconds */
   int  maxconnect;                    /* Maximum connect time (seconds) */
 
