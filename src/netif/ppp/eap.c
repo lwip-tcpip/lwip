@@ -1333,6 +1333,7 @@ u_char *inp;
 int id;
 int len;
 {
+	ppp_control *pc = &ppp_control_list[esp->es_unit];
 	u_char typenum;
 	u_char vallen;
 	int secret_len;
@@ -1451,9 +1452,9 @@ int len;
 		}
 
 		/* In case the remote doesn't give us his name. */
-		if (ppp_settings.explicit_remote ||
-		    (ppp_settings.remote_name[0] != '\0' && vallen == len))
-			strlcpy(rhostname, ppp_settings.remote_name, sizeof (rhostname));
+		if (pc->settings.explicit_remote ||
+		    (pc->settings.remote_name[0] != '\0' && vallen == len))
+			strlcpy(rhostname, pc->settings.remote_name, sizeof (rhostname));
 
 		/*
 		 * Get the secret for authenticating ourselves with

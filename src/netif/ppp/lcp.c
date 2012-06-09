@@ -499,7 +499,7 @@ lcp_lowerup(unit)
 {
     lcp_options *wo = &lcp_wantoptions[unit];
     fsm *f = &lcp_fsm[unit];
-
+    ppp_control *pc = &ppp_control_list[unit];
     /*
      * Don't use A/C or protocol compression on transmission,
      * but accept A/C and protocol compressed packets
@@ -526,9 +526,9 @@ lcp_lowerup(unit)
               xmit_accm[unit][0]));
 #endif /* PPPOS_SUPPORT */
 
-    if (ppp_settings.listen_time != 0) {
+    if (pc->settings.listen_time != 0) {
 	f->flags |= DELAYED_UP;
-	TIMEOUTMS(lcp_delayed_up, f, ppp_settings.listen_time);
+	TIMEOUTMS(lcp_delayed_up, f, pc->settings.listen_time);
     } else
 	fsm_lowerup(f);
 }

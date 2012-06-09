@@ -282,18 +282,6 @@ PACK_STRUCT_END
 
 /* Initialize the PPP subsystem. */
 int ppp_init(void) {
-    int i;
-    struct protent *protp;
-
-#if PPP_STATS_SUPPORT
-    link_stats_valid = 0;
-#endif /* PPP_STATS_SUPPORT */
-
-    /* FIXME: Remove that, do a user provided ppp_settings with a ppp_settings init function */
-    memset(&ppp_settings, 0, sizeof(ppp_settings));
-    ppp_settings.usepeerdns = 1;
-    ppp_settings.persist = 1;
-    ppp_set_auth(PPPAUTHTYPE_NONE, NULL, NULL);
 
     /*
      * Initialize magic number generator now so that protocols may
@@ -301,51 +289,82 @@ int ppp_init(void) {
      */
     magic_init();
 
+    return 0;
+}
+
+/* Create a new PPP session. */
+int ppp_new(void) {
+    int i, pd;
+    ppp_control *pc;
+    struct protent *protp;
+
+    /* Find a free PPP session descriptor. */
+    for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
+    if (pd >= NUM_PPP)
+      return PPPERR_OPEN;
+
+    pc = &ppp_control_list[pd];
+
+#if PPP_STATS_SUPPORT
+    link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
+
+    memset(pc, 0, sizeof(ppp_control));
+    pc->open_flag = 1;
+    pc->status = EXIT_OK;
+    new_phase(pd, PHASE_INITIALIZE);
+
+    /* memset(&pc->settings, 0, sizeof(ppp_settings)); -- already done previously */
+    pc->settings.usepeerdns = 1;
+    pc->settings.persist = 1;
+
     /*
      * Initialize each protocol.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-        (*protp->init)(0);
+        (*protp->init)(pd);
 
-    return 0;
+    return pd;
 }
 
-void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *passwd) {
+void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const char *passwd) {
+  ppp_control *pc = &ppp_control_list[unit];
+
   /* FIXME: the following may look stupid, but this is just an easy way
    * to check different auth by changing compile time option
    */
 #if PAP_SUPPORT
-  ppp_settings.refuse_pap = 0;
+  pc->settings.refuse_pap = 0;
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
 #if PAP_SUPPORT
-  ppp_settings.refuse_pap = 1;
+  pc->settings.refuse_pap = 1;
 #endif /* PAP_SUPPORT */
-  ppp_settings.refuse_chap = 0;
+  pc->settings.refuse_chap = 0;
 #endif /* CHAP_SUPPORT */
 
 #if MSCHAP_SUPPORT
 #if PAP_SUPPORT
-  ppp_settings.refuse_pap = 1;
+  pc->settings.refuse_pap = 1;
 #endif /* PAP_SUPPORT */
-  ppp_settings.refuse_chap = 1;
-  ppp_settings.refuse_mschap = 1;
-  ppp_settings.refuse_mschap_v2 = 0;
+  pc->settings.refuse_chap = 1;
+  pc->settings.refuse_mschap = 1;
+  pc->settings.refuse_mschap_v2 = 0;
 #endif /* MSCHAP_SUPPORT */
 
 #if EAP_SUPPORT
 #if PAP_SUPPORT
-  ppp_settings.refuse_pap = 1;
+  pc->settings.refuse_pap = 1;
 #endif/* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  ppp_settings.refuse_chap = 1;
+  pc->settings.refuse_chap = 1;
 #if MSCHAP_SUPPORT
-  ppp_settings.refuse_mschap = 1;
-  ppp_settings.refuse_mschap_v2 = 1;
+  pc->settings.refuse_mschap = 1;
+  pc->settings.refuse_mschap_v2 = 1;
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-  ppp_settings.refuse_eap = 0;
+  pc->settings.refuse_eap = 0;
 #endif /* EAP_SUPPORT */
 
 /* FIXME: re-enable that */
@@ -399,17 +418,17 @@ void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *pas
 #endif
 
   if(user) {
-    strncpy(ppp_settings.user, user, sizeof(ppp_settings.user)-1);
-    ppp_settings.user[sizeof(ppp_settings.user)-1] = '\0';
+    strncpy(pc->settings.user, user, sizeof(pc->settings.user)-1);
+    pc->settings.user[sizeof(pc->settings.user)-1] = '\0';
   } else {
-    ppp_settings.user[0] = '\0';
+	  pc->settings.user[0] = '\0';
   }
 
   if(passwd) {
-    strncpy(ppp_settings.passwd, passwd, sizeof(ppp_settings.passwd)-1);
-    ppp_settings.passwd[sizeof(ppp_settings.passwd)-1] = '\0';
+    strncpy(pc->settings.passwd, passwd, sizeof(pc->settings.passwd)-1);
+    pc->settings.passwd[sizeof(pc->settings.passwd)-1] = '\0';
   } else {
-    ppp_settings.passwd[0] = '\0';
+    pc->settings.passwd[0] = '\0';
   }
 }
 
@@ -424,33 +443,21 @@ void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *pas
  *
  * pppOpen() is directly defined to this function.
  */
-int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-  ppp_control *pc;
-  int pd;
+int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+  ppp_control *pc = &ppp_control_list[unit];
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
   if (link_status_cb == NULL)
     return PPPERR_PARAM;
 
-  /* Find a free PPP session descriptor. */
-  for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
-  if (pd >= NUM_PPP)
-    return PPPERR_OPEN;
-
-  pc = &ppp_control_list[pd];
   /* input pbuf left over from last session? */
   ppp_free_current_input_packet(&pc->rx);
-  /* @todo: is this correct or do I overwrite something? */
-  memset(pc, 0, sizeof(ppp_control));
-  pc->rx.pd = pd;
-  pc->rx.fd = fd;
 
-  pc->open_flag = 1;
   pc->fd = fd;
-  pc->status = EXIT_OK;
 
-  new_phase(pd, PHASE_INITIALIZE);
+  pc->rx.pd = unit;
+  pc->rx.fd = fd;
 
 #if VJ_SUPPORT
   vj_compress_init(&pc->vj_comp);
@@ -470,12 +477,12 @@ int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void
    * Start the connection and handle incoming events (packet or timeout).
    */
   PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pd));
-  ppp_start(pd);
+  ppp_start(unit);
 #if PPP_INPROC_OWNTHREAD
   sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
 #endif /* PPP_INPROC_OWNTHREAD */
 
-  return pd;
+  return unit;
 }
 
 /*
@@ -495,10 +502,9 @@ void ppp_set_xaccm(int unit, ext_accm *accm) {
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(int pd, int state);
 
-int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-  ppp_control *pc;
-  int pd;
+  ppp_control *pc = &ppp_control_list[unit];
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
@@ -508,39 +514,28 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
   if (link_status_cb == NULL)
     return PPPERR_PARAM;
 
-  /* Find a free PPP session descriptor. Critical region? */
-  for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
-  if (pd >= NUM_PPP)
-    pd = PPPERR_OPEN;
-
-  pc = &ppp_control_list[pd];
-  memset(pc, 0, sizeof(ppp_control));
-  pc->open_flag = 1;
   pc->ethif = ethif;
-  pc->status = EXIT_OK;
-
-  new_phase(pd, PHASE_INITIALIZE);
 
   pc->link_status_cb  = link_status_cb;
   pc->link_status_ctx = link_status_ctx;
 
-  lcp_wantoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_wantoptions[pd].neg_asyncmap = 0;
-  lcp_wantoptions[pd].neg_pcompression = 0;
-  lcp_wantoptions[pd].neg_accompression = 0;
+  lcp_wantoptions[unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_wantoptions[unit].neg_asyncmap = 0;
+  lcp_wantoptions[unit].neg_pcompression = 0;
+  lcp_wantoptions[unit].neg_accompression = 0;
 
-  lcp_allowoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_allowoptions[pd].neg_asyncmap = 0;
-  lcp_allowoptions[pd].neg_pcompression = 0;
-  lcp_allowoptions[pd].neg_accompression = 0;
+  lcp_allowoptions[unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_allowoptions[unit].neg_asyncmap = 0;
+  lcp_allowoptions[unit].neg_pcompression = 0;
+  lcp_allowoptions[unit].neg_accompression = 0;
 
-  if(pppoe_create(ethif, pd, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
+  if(pppoe_create(ethif, unit, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
     pc->open_flag = 0;
     return PPPERR_OPEN;
   }
 
-  pppoe_connect(pc->pppoe_sc, ppp_settings.persist);
-  return pd;
+  pppoe_connect(pc->pppoe_sc, pc->settings.persist);
+  return unit;
 }
 
 #if 0 /* UNUSED */
@@ -1782,10 +1777,10 @@ static void ppp_over_ethernet_link_status_cb(int pd, int state) {
   pc = &ppp_control_list[pd];
 
   /* Reconnect if persist mode is enabled */
-  if(ppp_settings.persist) {
+  if(pc->settings.persist) {
     if(pc->link_status_cb)
       pc->link_status_cb(pc->link_status_ctx, pc->err_code ? pc->err_code : pppoe_err_code, NULL);
-    pppoe_connect(pc->pppoe_sc, ppp_settings.persist);
+    pppoe_connect(pc->pppoe_sc, pc->settings.persist);
     return;
   }
 

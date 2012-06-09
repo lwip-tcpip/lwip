@@ -763,6 +763,7 @@ link_established(unit)
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
     struct protent *protp;
+    ppp_control *pc = &ppp_control_list[unit];
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -818,13 +819,13 @@ link_established(unit)
 #if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
-	eap_authpeer(unit, ppp_settings.our_name);
+	eap_authpeer(unit, pc->settings.our_name);
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (go->neg_chap) {
-	chap_auth_peer(unit, ppp_settings.our_name, CHAP_DIGEST(go->chap_mdtype));
+	chap_auth_peer(unit, pc->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */
@@ -839,19 +840,19 @@ link_established(unit)
 
 #if EAP_SUPPORT
     if (ho->neg_eap) {
-	eap_authwithpeer(unit, ppp_settings.user);
+	eap_authwithpeer(unit, pc->settings.user);
 	auth |= EAP_WITHPEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (ho->neg_chap) {
-	chap_auth_with_peer(unit, ppp_settings.user, CHAP_DIGEST(ho->chap_mdtype));
+	chap_auth_with_peer(unit, pc->settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     if (ho->neg_upap) {
-	upap_authwithpeer(unit, ppp_settings.user, ppp_settings.passwd);
+	upap_authwithpeer(unit, pc->settings.user, pc->settings.passwd);
 	auth |= PAP_WITHPEER;
     } else
 #endif /* PAP_SUPPORT */
@@ -1216,7 +1217,7 @@ np_up(unit, proto)
 	    tlim = (*idle_time_hook)(NULL);
 	else
 #endif /* UNUSED */
-	    tlim = ppp_settings.idle_time_limit;
+	    tlim = pc->settings.idle_time_limit;
 	if (tlim > 0)
 	    TIMEOUT(check_idle, NULL, tlim);
 
@@ -1224,8 +1225,8 @@ np_up(unit, proto)
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
-	if (ppp_settings.maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, ppp_settings.maxconnect);
+	if (pc->settings.maxconnect > 0)
+	    TIMEOUT(connect_time_expired, 0, pc->settings.maxconnect);
 
 #ifdef MAXOCTETS
 	if (maxoctets > 0)
@@ -1335,7 +1336,7 @@ check_idle(arg)
     } else {
 #endif /* UNUSED */
 	itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
-	tlim = ppp_settings.idle_time_limit - itime;
+	tlim = pc->settings.idle_time_limit - itime;
 #if 0 /* UNUSED */
     }
 #endif /* UNUSED */
@@ -1516,25 +1517,26 @@ auth_reset(unit)
 {
   lcp_options *go = &lcp_gotoptions[unit];
   lcp_options *ao = &lcp_allowoptions[unit];
+  ppp_control *pc = &ppp_control_list[unit];
 
-  if( ppp_settings.passwd[0] ) {
+  if( pc->settings.passwd[0] ) {
 
 #if PAP_SUPPORT
-    ao->neg_upap = !ppp_settings.refuse_pap;
+    ao->neg_upap = !pc->settings.refuse_pap;
 #endif /* PAP_SUPPORT */
 
 #if EAP_SUPPORT
-    ao->neg_eap = !ppp_settings.refuse_eap;
+    ao->neg_eap = !pc->settings.refuse_eap;
 #endif /* EAP_SUPPORT */
 
 #if CHAP_SUPPORT
     ao->chap_mdtype = MDTYPE_NONE;
-    if(!ppp_settings.refuse_chap)
+    if(!pc->settings.refuse_chap)
       ao->chap_mdtype |= MDTYPE_MD5;
 #if MSCHAP_SUPPORT
-    if(!ppp_settings.refuse_mschap)
+    if(!pc->settings.refuse_mschap)
       ao->chap_mdtype |= MDTYPE_MICROSOFT;
-    if(!ppp_settings.refuse_mschap_v2)
+    if(!pc->settings.refuse_mschap_v2)
       ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
 #endif /* MSCHAP_SUPPORT */
 
@@ -1988,22 +1990,23 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     int am_server;
 {
   int len;
+  ppp_control *pc = &ppp_control_list[unit];
 
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 
-  if(!client || !client[0] || strcmp(client, ppp_settings.user)) {
+  if(!client || !client[0] || strcmp(client, pc->settings.user)) {
     return 0;
   }
 
-  len = (int)strlen(ppp_settings.passwd);
+  len = (int)strlen(pc->settings.passwd);
   if (len > MAXSECRETLEN) {
     error("Secret for %s on %s is too long", client, server);
     len = MAXSECRETLEN;
   }
 
-  MEMCPY(secret, ppp_settings.passwd, len);
+  MEMCPY(secret, pc->settings.passwd, len);
   *secret_len = len;
 
   return 1;

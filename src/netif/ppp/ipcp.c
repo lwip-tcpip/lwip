@@ -721,6 +721,7 @@ static void
 ipcp_resetci(f)
     fsm *f;
 {
+    ppp_control *pc = &ppp_control_list[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *ao = &ipcp_allowoptions[f->unit];
@@ -731,8 +732,8 @@ ipcp_resetci(f)
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
-    wo->req_dns1 = ppp_settings.usepeerdns;	/* Request DNS addresses from the peer */
-    wo->req_dns2 = ppp_settings.usepeerdns;
+    wo->req_dns1 = pc->settings.usepeerdns;	/* Request DNS addresses from the peer */
+    wo->req_dns2 = pc->settings.usepeerdns;
     *go = *wo;
     if (!ask_for_local)
 	go->ouraddr = 0;
@@ -1800,6 +1801,7 @@ ipcp_up(f)
     fsm *f;
 {
     u_int32_t mask;
+    ppp_control *pc = &ppp_control_list[f->unit];
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
@@ -1844,7 +1846,7 @@ ipcp_up(f)
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 #endif /* UNUSED */
-    if (ppp_settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+    if (pc->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
 	sdns(f->unit, go->dnsaddr[0], go->dnsaddr[1]);
 #if 0 /* UNUSED */
 	script_setenv("USEPEERDNS", "1", 0);

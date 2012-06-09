@@ -88,6 +88,46 @@ typedef unsigned char  u_char;
 *** PUBLIC DATA TYPES ***
 ************************/
 
+typedef struct ppp_settings_s {
+
+  u_int  disable_defaultip : 1;       /* Don't use hostname for default IP addrs */
+  u_int  auth_required     : 1;       /* Peer is required to authenticate */
+  u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
+#if PAP_SUPPORT
+  u_int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+  u_int  refuse_chap       : 1;       /* Don't wanna auth. ourselves with CHAP */
+#endif /* CHAP_SUPPORT */
+#if MSCHAP_SUPPORT
+  u_int  refuse_mschap     : 1;       /* Don't wanna auth. ourselves with MS-CHAP */
+  u_int  refuse_mschap_v2  : 1;       /* Don't wanna auth. ourselves with MS-CHAPv2 */
+#endif /* MSCHAP_SUPPORT */
+#if EAP_SUPPORT
+  u_int  refuse_eap        : 1;       /* Don't wanna auth. ourselves with EAP */
+#endif /* EAP_SUPPORT */
+  u_int  usehostname       : 1;       /* Use hostname for our_name */
+  u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
+  u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
+#if PRINTPKT_SUPPORT
+  u_int  hide_password     : 1;       /* Hide password in dumped packets */
+#endif /* PRINTPKT_SUPPORT */
+
+  u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
+
+  /* FIXME: make it a compile time option */
+  u16_t idle_time_limit;	      /* Disconnect if idle for this many seconds */
+  int  maxconnect;                    /* Maximum connect time (seconds) */
+
+  char user       [MAXNAMELEN   + 1]; /* Username for PAP */
+  char passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
+#if PPP_SERVER
+  char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
+#endif /* PPP_SERVER */
+  /* FIXME: make it a compile time option */
+  char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+} ppp_settings;
+
 struct ppp_addrs {
   ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
@@ -99,6 +139,9 @@ struct ppp_addrs {
 
 /* Initialize the PPP subsystem. */
 int ppp_init(void);
+
+/* Create a new PPP session, returns a PPP descriptor. */
+int ppp_new(void);
 
 /* Warning: Using ppp_auth_type_ANY might have security consequences.
  * RFC 1994 says:
@@ -130,7 +173,7 @@ enum ppp_auth_type {
     PPPAUTHTYPE_NONE
 };
 
-void ppp_set_auth(enum ppp_auth_type authtype, const char *user, const char *passwd);
+void ppp_set_auth(int unit, enum ppp_auth_type authtype, const char *user, const char *passwd);
 
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
@@ -147,14 +190,14 @@ typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
  * Return a new PPP connection descriptor on success or
  * an error code (negative) on failure.
  */
-int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+int ppp_over_serial_open(int unit, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 /*
  * Open a new PPP Over Ethernet (PPPoE) connection.
  */
-int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_open(int unit, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 

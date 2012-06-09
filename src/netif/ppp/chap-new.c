@@ -480,6 +480,7 @@ chap_respond(struct chap_client_state *cs, int id,
 	unsigned char response[RESP_MAX_PKTLEN];
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
+	ppp_control *pc = &ppp_control_list[0];
 
 	if ((cs->flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
 		return;		/* not ready */
@@ -492,8 +493,8 @@ chap_respond(struct chap_client_state *cs, int id,
 	slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
 	/* Microsoft doesn't send their name back in the PPP packet */
-	if (ppp_settings.explicit_remote || (ppp_settings.remote_name[0] != 0 && rname[0] == 0))
-		strlcpy(rname, ppp_settings.remote_name, sizeof(rname));
+	if (pc->settings.explicit_remote || (pc->settings.remote_name[0] != 0 && rname[0] == 0))
+		strlcpy(rname, pc->settings.remote_name, sizeof(rname));
 
 	/* get secret for authenticating ourselves with the specified host */
 	if (!get_secret(0, cs->name, rname, secret, &secret_len, 0)) {

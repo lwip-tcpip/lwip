@@ -655,6 +655,7 @@ upap_printpkt(p, plen, printer, arg)
     int mlen, ulen, wlen;
     char *user, *pwd, *msg;
     u_char *pstart;
+    ppp_control *pc = &ppp_control_list[0];
 
     if (plen < UPAP_HEADERLEN)
 	return 0;
@@ -688,7 +689,7 @@ upap_printpkt(p, plen, printer, arg)
 	printer(arg, " user=");
 	print_string(user, ulen, printer, arg);
 	printer(arg, " password=");
-	if (!ppp_settings.hide_password)
+	if (!pc->settings.hide_password)
 	    print_string(pwd, wlen, printer, arg);
 	else
 	    printer(arg, "<hidden>");
