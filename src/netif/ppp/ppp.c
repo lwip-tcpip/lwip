@@ -223,11 +223,6 @@ typedef enum {
 
 /* Prototypes for procedures local to this file. */
 
-/* FIXME: PPPoE close seem bogus, it was actually not exported at all in the previous port */
-#if 0 /* UNUSED */
-void ppp_over_ethernet_close(int pd);
-#endif /* UNUSED */
-
 static void ppp_start(int pd);		/** Initiate LCP open request */
 static void ppp_input(int unit, void *arg);
 
@@ -475,17 +470,6 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   pppoe_connect(pcb->pppoe_sc);
   return pcb->unit;
 }
-
-#if 0 /* UNUSED */
-void ppp_over_ethernet_close(int pd) {
-  ppp_pcb* pc = &ppp_pcb_list[pd];
-
-  /* *TJL* There's no lcp_deinit */
-  lcp_close(pd, NULL);
-
-  pppoe_destroy(&pcb->netif);
-}
-#endif /* UNUSED */
 #endif /* PPPOE_SUPPORT */
 
 
@@ -498,6 +482,7 @@ ppp_close(ppp_pcb *pcb)
   int st = 0;
 
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
+  pcb->settings.persist = 0;
 
   /* Disconnect */
 #if PPPOE_SUPPORT
