@@ -150,7 +150,6 @@
  */
 /* FIXME: global variables per PPP session */
 /* FIXME: clean global variables */
-int phase;			/* where the link is at */
 int error_count;		/* # of times error() has been called */
 int unsuccess;			/* # unsuccessful connection attempts */
 int listen_time;		/* time to listen first (ms) */
@@ -233,64 +232,6 @@ typedef enum {
 #endif
 #endif /* PPPOS_SUPPORT */
 
-typedef struct ppp_control_rx_s {
-  /** unit number / ppp descriptor */
-  int pd;
-  /** the rx file descriptor */
-  sio_fd_t fd;
-  /** receive buffer - encoded data is stored here */
-#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
-  u_char rxbuf[PPPOS_RX_BUFSIZE];
-#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
-
-#if PPPOS_SUPPORT
-  /* The input packet. */
-  struct pbuf *in_head, *in_tail;
-
-  u16_t in_protocol;             /* The input protocol code. */
-  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
-  ppp_dev_states in_state;         /* The input process state. */
-  char in_escaped;               /* Escape next character. */
-  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
-#endif /* PPPOS_SUPPORT */
-} ppp_control_rx;
-
-/*
- * PPP interface control block.
- */
-typedef struct ppp_control_s {
-  ppp_control_rx rx;
-  char open_flag;                /* True when in use. */
-#if PPPOE_SUPPORT
-  struct netif *ethif;
-  struct pppoe_softc *pppoe_sc;
-#endif /* PPPOE_SUPPORT */
-  int  if_up;                    /* True when the interface is up. */
-  int  err_code;                 /* Code indicating why interface is down. */
-#if PPPOS_SUPPORT
-  sio_fd_t fd;                   /* File device ID of port. */
-#endif /* PPPOS_SUPPORT */
-  u16_t mtu;                     /* Peer's mru */
-  int  pcomp;                    /* Does peer accept protocol compression? */
-  int  accomp;                   /* Does peer accept addr/ctl compression? */
-  u_long last_xmit;              /* Time of last transmission. */
-#if PPPOS_SUPPORT
-  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
-#endif /* PPPOS_SUPPORT */
-#if PPPOS_SUPPORT && VJ_SUPPORT
-  int  vj_enabled;               /* Flag indicating VJ compression enabled. */
-  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-
-  struct netif netif;
-
-  struct ppp_addrs addrs;
-
-  void (*link_status_cb)(void *ctx, int err_code, void *arg);
-  void *link_status_ctx;
-
-} ppp_control;
-
 /* Prototypes for procedures local to this file. */
 
 /* FIXME: PPPoE close seem bogus, it was actually not exported at all in the previous port */
@@ -299,7 +240,7 @@ void ppp_over_ethernet_close(int pd);
 #endif /* UNUSED */
 
 static void ppp_start(int pd);		/** Initiate LCP open request */
-static void ppp_input(void *arg);
+static void ppp_input(int unit, void *arg);
 
 #if PPPOS_SUPPORT
 static void ppp_receive_wakeup(int pd);
@@ -329,7 +270,6 @@ static int ppp_write_over_ethernet(int pd, const u_char *s, int n);
 /******************************/
 /*** PUBLIC DATA STRUCTURES ***/
 /******************************/
-static ppp_control ppp_control_list[NUM_PPP]; /* The PPP interface control blocks. */
 
 /** Input helper struct, must be packed since it is stored to pbuf->payload,
  * which might be unaligned.
@@ -356,7 +296,6 @@ int ppp_init(void) {
     int i;
     struct protent *protp;
 
-    new_phase(PHASE_INITIALIZE);
     error_count = 0;
     unsuccess = 0;
     listen_time = 0;
@@ -365,12 +304,7 @@ int ppp_init(void) {
     link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
 
-    /*
-    openlog("LWIP-PPP", LOG_PID | LOG_NDELAY, LOG_DAEMON);
-    setlogmask(LOG_UPTO(LOG_DEBUG));
-    syslog(LOG_DEBUG, "hello, this is gradator lwIP PPP!");
-    */
-
+    /* FIXME: Remove that, do a user provided ppp_settings with a ppp_settings init function */
     memset(&ppp_settings, 0, sizeof(ppp_settings));
     ppp_settings.usepeerdns = 1;
     ppp_settings.persist = 1;
@@ -509,52 +443,51 @@ int ppp_over_serial_open(sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void
   ppp_control *pc;
   int pd;
 
-  if (link_status_cb == NULL) {
-    /* PPP is single-threaded: without a callback,
-     * there is no way to know when the link is up. */
+  /* PPP is single-threaded: without a callback,
+   * there is no way to know when the link is up. */
+  if (link_status_cb == NULL)
     return PPPERR_PARAM;
-  }
 
   /* Find a free PPP session descriptor. */
   for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
+  if (pd >= NUM_PPP)
+    return PPPERR_OPEN;
 
-  if (pd >= NUM_PPP) {
-    pd = PPPERR_OPEN;
-  } else {
-    pc = &ppp_control_list[pd];
-    /* input pbuf left over from last session? */
-    ppp_free_current_input_packet(&pc->rx);
-    /* @todo: is this correct or do I overwrite something? */
-    memset(pc, 0, sizeof(ppp_control));
-    pc->rx.pd = pd;
-    pc->rx.fd = fd;
+  pc = &ppp_control_list[pd];
+  /* input pbuf left over from last session? */
+  ppp_free_current_input_packet(&pc->rx);
+  /* @todo: is this correct or do I overwrite something? */
+  memset(pc, 0, sizeof(ppp_control));
+  pc->rx.pd = pd;
+  pc->rx.fd = fd;
 
-    pc->open_flag = 1;
-    pc->fd = fd;
+  pc->open_flag = 1;
+  pc->fd = fd;
+
+  new_phase(pd, PHASE_INITIALIZE);
 
 #if VJ_SUPPORT
-    vj_compress_init(&pc->vj_comp);
+  vj_compress_init(&pc->vj_comp);
 #endif /* VJ_SUPPORT */
 
-    /*
-     * Default the in and out accm so that escape and flag characters
-     * are always escaped.
-     */
-    pc->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
-    pc->out_accm[15] = 0x60;
+  /*
+   * Default the in and out accm so that escape and flag characters
+   * are always escaped.
+   */
+  pc->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pc->out_accm[15] = 0x60;
 
-    pc->link_status_cb = link_status_cb;
-    pc->link_status_ctx = link_status_ctx;
+  pc->link_status_cb = link_status_cb;
+  pc->link_status_ctx = link_status_ctx;
 
-    /*
-     * Start the connection and handle incoming events (packet or timeout).
-     */
-    PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pd));
-    ppp_start(pd);
+  /*
+   * Start the connection and handle incoming events (packet or timeout).
+   */
+  PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pd));
+  ppp_start(pd);
 #if PPP_INPROC_OWNTHREAD
-    sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
+  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pc->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
 #endif /* PPP_INPROC_OWNTHREAD */
-  }
 
   return pd;
 }
@@ -584,43 +517,42 @@ int ppp_over_ethernet_open(struct netif *ethif, const char *service_name, const 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
-  if (link_status_cb == NULL) {
-    /* PPP is single-threaded: without a callback,
-     * there is no way to know when the link is up. */
+  /* PPP is single-threaded: without a callback,
+   * there is no way to know when the link is up. */
+  if (link_status_cb == NULL)
     return PPPERR_PARAM;
-  }
 
   /* Find a free PPP session descriptor. Critical region? */
   for (pd = 0; pd < NUM_PPP && ppp_control_list[pd].open_flag != 0; pd++);
-  if (pd >= NUM_PPP) {
+  if (pd >= NUM_PPP)
     pd = PPPERR_OPEN;
-  } else {
-    pc = &ppp_control_list[pd];
-    memset(pc, 0, sizeof(ppp_control));
-    pc->open_flag = 1;
-    pc->ethif = ethif;
 
-    pc->link_status_cb  = link_status_cb;
-    pc->link_status_ctx = link_status_ctx;
+  pc = &ppp_control_list[pd];
+  memset(pc, 0, sizeof(ppp_control));
+  pc->open_flag = 1;
+  pc->ethif = ethif;
 
-    lcp_wantoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-    lcp_wantoptions[pd].neg_asyncmap = 0;
-    lcp_wantoptions[pd].neg_pcompression = 0;
-    lcp_wantoptions[pd].neg_accompression = 0;
+  new_phase(pd, PHASE_INITIALIZE);
 
-    lcp_allowoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-    lcp_allowoptions[pd].neg_asyncmap = 0;
-    lcp_allowoptions[pd].neg_pcompression = 0;
-    lcp_allowoptions[pd].neg_accompression = 0;
+  pc->link_status_cb  = link_status_cb;
+  pc->link_status_ctx = link_status_ctx;
 
-    if(pppoe_create(ethif, pd, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
-      pc->open_flag = 0;
-      return PPPERR_OPEN;
-    }
+  lcp_wantoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_wantoptions[pd].neg_asyncmap = 0;
+  lcp_wantoptions[pd].neg_pcompression = 0;
+  lcp_wantoptions[pd].neg_accompression = 0;
 
-    pppoe_connect(pc->pppoe_sc, ppp_settings.persist);
+  lcp_allowoptions[pd].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_allowoptions[pd].neg_asyncmap = 0;
+  lcp_allowoptions[pd].neg_pcompression = 0;
+  lcp_allowoptions[pd].neg_accompression = 0;
+
+  if(pppoe_create(ethif, pd, ppp_over_ethernet_link_status_cb, &pc->pppoe_sc) != ERR_OK) {
+    pc->open_flag = 0;
+    return PPPERR_OPEN;
   }
 
+  pppoe_connect(pc->pppoe_sc, ppp_settings.persist);
   return pd;
 }
 
@@ -717,7 +649,8 @@ ppp_hup(int pd)
  * this is totally stupid to make room for it and then modify the packet directly
  * or it is used in output ?  have to find out...
  */
-static void ppp_input(void *arg) {
+static void ppp_input(int unit, void *arg) {
+  ppp_control *pc = &ppp_control_list[unit];
   struct pbuf *nb = (struct pbuf *)arg;
   u16_t protocol;
   int pd;
@@ -748,7 +681,7 @@ static void ppp_input(void *arg) {
    * Until we get past the authentication phase, toss all packets
    * except LCP, LQR and authentication packets.
    */
-  if (phase <= PHASE_AUTHENTICATE
+  if (pc->phase <= PHASE_AUTHENTICATE
 	&& !(protocol == PPP_LCP
 #if LQR_SUPPORT
 	     || protocol == PPP_LQR
@@ -764,7 +697,7 @@ static void ppp_input(void *arg) {
 #endif /* EAP_SUPPORT */
 	     )) {
 	dbglog("discarding proto 0x%x in phase %d",
-		   protocol, phase);
+		   protocol, pc->phase);
 	goto drop;
   }
 
@@ -1068,7 +1001,7 @@ void ppp_input_over_ethernet(int pd, struct pbuf *pb) {
   pih->proto = in_protocol; /* pih->proto is now in host byte order */
 
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(pb);
+  ppp_input(pd, pb);
   return;
 
 drop:
@@ -1214,7 +1147,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
   }
 
   /* Check that the link is up. */
-  if (phase == PHASE_DEAD) {
+  if (pc->phase == PHASE_DEAD) {
     PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pd));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
@@ -1962,8 +1895,9 @@ ppp_set_netif_linkcallback(int pd, netif_status_callback_fn link_callback)
 /*
  * new_phase - signal the start of a new phase of pppd's operation.
  */
-void new_phase(int p) {
-    phase = p;
+void new_phase(int unit, int p) {
+    ppp_control *pc = &ppp_control_list[unit];
+    pc->phase = p;
 #if PPP_NOTIFY
     /* The one willing notify support should add here the code to be notified of phase changes */
 #endif /* PPP_NOTIFY */

@@ -462,11 +462,12 @@ lcp_close(unit, reason)
     int unit;
     char *reason;
 {
+    ppp_control *pc = &ppp_control_list[unit];
     fsm *f = &lcp_fsm[unit];
     int oldstate;
 
-    if (phase != PHASE_DEAD && phase != PHASE_MASTER)
-	new_phase(PHASE_TERMINATE);
+    if (pc->phase != PHASE_DEAD && pc->phase != PHASE_MASTER)
+	new_phase(unit, PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
 	UNTIMEOUT(lcp_delayed_up, f);

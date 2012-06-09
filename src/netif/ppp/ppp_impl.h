@@ -448,6 +448,69 @@ struct ppp_settings {
 
 struct ppp_settings ppp_settings;
 
+/*
+ * PPP interface RX control block.
+ */
+typedef struct ppp_control_rx_s {
+  /** unit number / ppp descriptor */
+  int pd;
+  /** the rx file descriptor */
+  sio_fd_t fd;
+  /** receive buffer - encoded data is stored here */
+#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
+  u_char rxbuf[PPPOS_RX_BUFSIZE];
+#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
+
+#if PPPOS_SUPPORT
+  /* The input packet. */
+  struct pbuf *in_head, *in_tail;
+
+  u16_t in_protocol;             /* The input protocol code. */
+  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
+  ppp_dev_states in_state;         /* The input process state. */
+  char in_escaped;               /* Escape next character. */
+  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
+#endif /* PPPOS_SUPPORT */
+} ppp_control_rx;
+
+/*
+ * PPP interface control block.
+ */
+typedef struct ppp_control_s {
+  ppp_control_rx rx;
+  char open_flag;                /* True when in use. */
+  u8_t phase;                    /* where the link is at */
+#if PPPOE_SUPPORT
+  struct netif *ethif;
+  struct pppoe_softc *pppoe_sc;
+#endif /* PPPOE_SUPPORT */
+  int  if_up;                    /* True when the interface is up. */
+  int  err_code;                 /* Code indicating why interface is down. */
+#if PPPOS_SUPPORT
+  sio_fd_t fd;                   /* File device ID of port. */
+#endif /* PPPOS_SUPPORT */
+  u16_t mtu;                     /* Peer's mru */
+  int  pcomp;                    /* Does peer accept protocol compression? */
+  int  accomp;                   /* Does peer accept addr/ctl compression? */
+  u_long last_xmit;              /* Time of last transmission. */
+#if PPPOS_SUPPORT
+  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
+#endif /* PPPOS_SUPPORT */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+  int  vj_enabled;               /* Flag indicating VJ compression enabled. */
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+
+  struct netif netif;
+
+  struct ppp_addrs addrs;
+
+  void (*link_status_cb)(void *ctx, int err_code, void *arg);
+  void *link_status_ctx;
+
+} ppp_control;
+
+ppp_control ppp_control_list[NUM_PPP]; /* The PPP interface control blocks. */
 
 /* PPP flow functions
  */
@@ -471,7 +534,7 @@ struct pbuf * ppp_singlebuf(struct pbuf *p);
 /* Functions called by various PPP subsystems to configure
  * the PPP interface or change the PPP phase.
  */
-void new_phase(int p);
+void new_phase(int unit, int p);
 
 #if PPPOS_SUPPORT
 void ppp_set_xaccm(int unit, ext_accm *accm);
