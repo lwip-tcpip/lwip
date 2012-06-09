@@ -755,7 +755,7 @@ pppoe_timeout(void *arg)
        */
       if(sc->sc_padi_retried < 100000)
         sc->sc_padi_retried++;
-      if (!sc->persist && sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
+      if (!sc->pcb->settings.persist && sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
 #if 0
         if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0) {
           /* slow retry mode */
@@ -802,7 +802,7 @@ pppoe_timeout(void *arg)
 
 /* Start a connection (i.e. initiate discovery phase) */
 int
-pppoe_connect(struct pppoe_softc *sc, bool persist)
+pppoe_connect(struct pppoe_softc *sc)
 {
   int err;
 
@@ -815,7 +815,6 @@ pppoe_connect(struct pppoe_softc *sc, bool persist)
   sc->sc_session = 0;
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
-  sc->persist = persist;
 #ifdef PPPOE_SERVER
   /* wait PADI if IFF_PASSIVE */
   if ((sc->sc_sppp.pp_if.if_flags & IFF_PASSIVE)) {

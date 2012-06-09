@@ -164,8 +164,6 @@ struct pppoe_softc {
 #endif
   int sc_padi_retried;         /* number of PADI retries already done */
   int sc_padr_retried;         /* number of PADR retries already done */
-
-  u_int  persist         : 1;  /* Persist mode, don't timeout sending PADI packets */
 };
 
 
@@ -174,7 +172,7 @@ struct pppoe_softc {
 err_t pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp_pcb *pcb, int up), struct pppoe_softc **scptr);
 err_t pppoe_destroy(struct netif *ifp);
 
-int pppoe_connect(struct pppoe_softc *sc, bool persist);
+int pppoe_connect(struct pppoe_softc *sc);
 void pppoe_disconnect(struct pppoe_softc *sc);
 
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);

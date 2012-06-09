@@ -472,7 +472,7 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
     return PPPERR_OPEN;
   }
 
-  pppoe_connect(pcb->pppoe_sc, pcb->settings.persist);
+  pppoe_connect(pcb->pppoe_sc);
   return pcb->unit;
 }
 
@@ -1713,7 +1713,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   if(pcb->settings.persist) {
     if(pcb->link_status_cb)
       pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
-    pppoe_connect(pcb->pppoe_sc, pcb->settings.persist);
+    pppoe_connect(pcb->pppoe_sc);
     return;
   }
 
