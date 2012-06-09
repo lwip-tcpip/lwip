@@ -1803,17 +1803,9 @@ static void ppp_over_ethernet_link_status_cb(int pd, int state) {
 void ppp_link_down(int pd) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pd));
 
-#if PPPOE_SUPPORT
-  if (ppp_control_list[pd].ethif) {
-/* FIXME: find a way to set PPPoE down without disconnecting and freeing PPPoE structures */
-/*    pppoe_disconnect(ppp_control_list[pd].pppoe_sc); */
-  } else
-#endif /* PPPOE_SUPPORT */
-  {
 #if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
-    ppp_receive_wakeup(pd);
+  ppp_receive_wakeup(pd);
 #endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD*/
-  }
 }
 
 void ppp_link_terminated(int pd) {

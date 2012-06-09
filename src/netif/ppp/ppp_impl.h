@@ -255,7 +255,6 @@ struct epdisc {
 /*
  * Global variables.
  */
-extern int	status;		/* exit status for pppd */
 extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
 
 #ifdef HAVE_MULTILINK
