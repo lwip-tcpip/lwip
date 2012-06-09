@@ -2469,9 +2469,11 @@ lcp_printpkt(p, plen, printer, arg)
 			}
 			break;
 #endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
 		    case PPP_EAP:
 			printer(arg, "eap");
 			break;
+#endif /* EAP_SUPPORT */
 		    default:
 			printer(arg, "0x%x", cishort);
 		    }
