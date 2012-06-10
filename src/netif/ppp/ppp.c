@@ -200,6 +200,7 @@ struct protent *protocols[] = {
     NULL
 };
 
+#if PPPOS_SUPPORT
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
 typedef enum {
@@ -212,7 +213,6 @@ typedef enum {
   PDDATA       /* Process data byte. */
 } ppp_dev_states;
 
-#if PPPOS_SUPPORT
 #define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
 
 /** RX buffer size: this may be configured smaller! */

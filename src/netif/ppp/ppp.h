@@ -135,6 +135,7 @@ struct ppp_addrs {
   ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
 
+#if PPPOS_SUPPORT
 /*
  * PPP interface RX control block.
  */
@@ -144,11 +145,10 @@ typedef struct ppp_pcb_rx_s {
   /** the rx file descriptor */
   sio_fd_t fd;
   /** receive buffer - encoded data is stored here */
-#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
+#if PPP_INPROC_OWNTHREAD
   u_char rxbuf[PPPOS_RX_BUFSIZE];
 #endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
 
-#if PPPOS_SUPPORT
   /* The input packet. */
   struct pbuf *in_head, *in_tail;
 
@@ -157,8 +157,8 @@ typedef struct ppp_pcb_rx_s {
   ppp_dev_states in_state;         /* The input process state. */
   char in_escaped;               /* Escape next character. */
   ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
-#endif /* PPPOS_SUPPORT */
 } ppp_pcb_rx;
+#endif /* PPPOS_SUPPORT */
 
 /*
  * PPP interface control block.
@@ -166,8 +166,9 @@ typedef struct ppp_pcb_rx_s {
 typedef struct ppp_pcb_s {
   ppp_settings settings;
   int unit;
-
+#if PPPOS_SUPPORT
   ppp_pcb_rx rx;
+#endif /* PPPOS_SUPPORT */
   char open_flag;                /* True when in use. */
   u8_t phase;                    /* where the link is at */
   u8_t status;                   /* exit status */
