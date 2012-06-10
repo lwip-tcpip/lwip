@@ -69,9 +69,6 @@ typedef unsigned char	bool;
 /*
  * The basic PPP frame.
  */
-#define PPP_HDRLEN	4	/* octets for standard ppp header */
-#define PPP_FCSLEN	2	/* octets for FCS */
-
 #define PPP_ADDRESS(p)	(((u_char *)(p))[0])
 #define PPP_CONTROL(p)	(((u_char *)(p))[1])
 #define PPP_PROTOCOL(p)	((((u_char *)(p))[2] << 8) + ((u_char *)(p))[3])
@@ -154,11 +151,6 @@ typedef unsigned int	u_int32_t;
 typedef unsigned short  u_int16_t;
 #endif
 #endif
-
-/*
- * Extended asyncmap - allows any character to be escaped.
- */
-typedef u_char  ext_accm[32];
 
 /*
  * What to do with network protocol (NP) packets.
@@ -312,7 +304,7 @@ struct protent {
      */
     /* Process a received data packet */
     void (*datainput) (int unit, u_char *pkt, int len);
-    bool enabled_flag;		/* 0 iff protocol is disabled */
+    bool enabled_flag;		/* 0 if protocol is disabled */
 #if PRINTPKT_SUPPORT
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
@@ -396,17 +388,16 @@ ppp_pcb ppp_pcb_list[NUM_PPP]; /* The PPP interface control blocks. */
 /* PPP flow functions
  */
 #if PPPOE_SUPPORT
-void ppp_over_ethernet_init_failed(int pd);
 /* function called by pppoe.c */
 void ppp_input_over_ethernet(ppp_pcb *pcb, struct pbuf *pb);
 #endif /* PPPOE_SUPPORT */
 
 /* function called by all PPP subsystems to send packets */
-int ppp_write(int pd, const u_char *s, int n);
+int ppp_write(ppp_pcb *pcb, const u_char *s, int n);
 
 /* functions called by auth.c link_terminated() */
-void ppp_link_down(int pd);
-void ppp_link_terminated(int pd);
+void ppp_link_down(ppp_pcb *pcb);
+void ppp_link_terminated(ppp_pcb *pcb);
 
 /* merge a pbuf chain into one pbuf */
 struct pbuf * ppp_singlebuf(struct pbuf *p);
@@ -415,37 +406,37 @@ struct pbuf * ppp_singlebuf(struct pbuf *p);
 /* Functions called by various PPP subsystems to configure
  * the PPP interface or change the PPP phase.
  */
-void new_phase(int unit, int p);
+void new_phase(ppp_pcb *pcb, int p);
 
 #if PPPOS_SUPPORT
-void ppp_set_xaccm(int unit, ext_accm *accm);
+void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm);
 #endif /* PPPOS_SUPPORT */
-int ppp_send_config(int unit, int mtu, u_int32_t accm, int pcomp, int accomp);
-int ppp_recv_config(int unit, int mru, u_int32_t accm, int pcomp, int accomp);
+int ppp_send_config(ppp_pcb *pcb, int mtu, u_int32_t accm, int pcomp, int accomp);
+int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp);
 
-int sifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
-int cifaddr(int unit, u_int32_t our_adr, u_int32_t his_adr);
+int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
+int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr);
 
-int sdns(int unit, u_int32_t ns1, u_int32_t ns2);
-int cdns(int unit, u_int32_t ns1, u_int32_t ns2);
+int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);
+int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);
 
-int sifup(int u);
-int sifdown (int u);
+int sifup(ppp_pcb *pcb);
+int sifdown (ppp_pcb *pcb);
 
-int sifnpmode(int u, int proto, enum NPmode mode);
+int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 
-void netif_set_mtu(int unit, int mtu);
-int netif_get_mtu(int unit);
+void netif_set_mtu(ppp_pcb *pcb, int mtu);
+int netif_get_mtu(ppp_pcb *pcb);
 
-int sifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway, bool replace);
-int cifdefaultroute (int unit, u_int32_t ouraddr, u_int32_t gateway);
+int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, bool replace);
+int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway);
 
-int sifproxyarp (int unit, u_int32_t his_adr);
-int cifproxyarp (int unit, u_int32_t his_adr);
+int sifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
+int cifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
 
-int sifvjcomp (int u, int vjcomp, int cidcomp, int maxcid);
+int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 
-int get_idle_time(int u, struct ppp_idle *ip);
+int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 
 int get_loop_output(void);
 

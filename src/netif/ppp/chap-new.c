@@ -282,6 +282,8 @@ chap_auth_with_peer(int unit, char *our_name, int digest_code)
 static void
 chap_timeout(void *arg)
 {
+	/* FIXME: fix forced unit 0 */
+	ppp_pcb *pcb = &ppp_pcb_list[0];
 	struct chap_server_state *ss = arg;
 
 	ss->flags &= ~TIMEOUT_PENDING;
@@ -296,7 +298,7 @@ chap_timeout(void *arg)
 		return;
 	}
 
-	ppp_write(0, ss->challenge, ss->challenge_pktlen);
+	ppp_write(pcb, ss->challenge, ss->challenge_pktlen);
 	++ss->challenge_xmits;
 	ss->flags |= TIMEOUT_PENDING;
 	TIMEOUT(chap_timeout, arg, chap_timeout_time);
@@ -337,6 +339,8 @@ static void
 chap_handle_response(struct chap_server_state *ss, int id,
 		     unsigned char *pkt, int len)
 {
+	/* FIXME: fix forced unit 0 */
+	ppp_pcb *pcb = &ppp_pcb_list[0];
 	int response_len, ok, mlen;
 	unsigned char *response, *p;
 	char *name = NULL;	/* initialized to shut gcc up */
@@ -397,7 +401,7 @@ chap_handle_response(struct chap_server_state *ss, int id,
 	p[3] = len;
 	if (mlen > 0)
 		memcpy(p + CHAP_HDRLEN, ss->message, mlen);
-	ppp_write(0, outpacket_buf, PPP_HDRLEN + len);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + len);
 
 	if (ss->flags & CHALLENGE_VALID) {
 		ss->flags &= ~CHALLENGE_VALID;
@@ -474,6 +478,8 @@ static void
 chap_respond(struct chap_client_state *cs, int id,
 	     unsigned char *pkt, int len)
 {
+	/* FIXME: fix forced unit 0 */
+	ppp_pcb *pcb = &ppp_pcb_list[0];
 	int clen, nlen;
 	int secret_len;
 	unsigned char *p;
@@ -521,7 +527,7 @@ chap_respond(struct chap_client_state *cs, int id,
 	p[2] = len >> 8;
 	p[3] = len;
 
-	ppp_write(0, response, PPP_HDRLEN + len);
+	ppp_write(pcb, response, PPP_HDRLEN + len);
 }
 
 static void

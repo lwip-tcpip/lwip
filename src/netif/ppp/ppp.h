@@ -45,6 +45,35 @@
 #include "lwip/sys.h"
 #include "lwip/timers.h"
 
+#include "vj.h"
+
+
+/** PPP_INPROC_MULTITHREADED==1 call ppp_input using tcpip_callback().
+ * Set this to 0 if pppos_input_proc is called inside tcpip_thread or with NO_SYS==1.
+ * Default is 1 for NO_SYS==0 (multithreaded) and 0 for NO_SYS==1 (single-threaded).
+ */
+#ifndef PPP_INPROC_MULTITHREADED
+#define PPP_INPROC_MULTITHREADED (NO_SYS==0)
+#endif
+
+/** PPP_INPROC_OWNTHREAD==1: start a dedicated RX thread per PPP session.
+ * Default is 0: call pppos_input() for received raw characters, character
+ * reception is up to the port */
+#ifndef PPP_INPROC_OWNTHREAD
+#define PPP_INPROC_OWNTHREAD      PPP_INPROC_MULTITHREADED
+#endif
+
+#if PPP_INPROC_OWNTHREAD && !PPP_INPROC_MULTITHREADED
+  #error "PPP_INPROC_OWNTHREAD needs PPP_INPROC_MULTITHREADED==1"
+#endif
+
+#if PPPOS_SUPPORT
+/** RX buffer size: this may be configured smaller! */
+#ifndef PPPOS_RX_BUFSIZE
+#define PPPOS_RX_BUFSIZE    (PPP_MRU + PPP_HDRLEN)
+#endif
+#endif /* PPPOS_SUPPORT */
+
 
 #ifndef __u_char_defined
 
@@ -60,6 +89,12 @@ typedef unsigned char  u_char;
 /*************************
 *** PUBLIC DEFINITIONS ***
 *************************/
+
+/*
+ * The basic PPP frame.
+ */
+#define PPP_HDRLEN	4	/* octets for standard ppp header */
+#define PPP_FCSLEN	2	/* octets for FCS */
 
 /* Error codes. */
 #define PPPERR_NONE      0 /* No error. */
@@ -135,7 +170,25 @@ struct ppp_addrs {
   ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
 };
 
+/* FIXME: find a way to move ppp_dev_states and ppp_pcb_rx_s to ppp_impl.h */
 #if PPPOS_SUPPORT
+/*
+ * Extended asyncmap - allows any character to be escaped.
+ */
+typedef u_char  ext_accm[32];
+
+/* PPP packet parser states.  Current state indicates operation yet to be
+ * completed. */
+typedef enum {
+  PDIDLE = 0,  /* Idle state - waiting. */
+  PDSTART,     /* Process start flag. */
+  PDADDRESS,   /* Process address field. */
+  PDCONTROL,   /* Process control field. */
+  PDPROTOCOL1, /* Process protocol field 1. */
+  PDPROTOCOL2, /* Process protocol field 2. */
+  PDDATA       /* Process data byte. */
+} ppp_dev_states;
+
 /*
  * PPP interface RX control block.
  */

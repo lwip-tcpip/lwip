@@ -462,12 +462,12 @@ lcp_close(unit, reason)
     int unit;
     char *reason;
 {
-    ppp_pcb *pc = &ppp_pcb_list[unit];
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     fsm *f = &lcp_fsm[unit];
     int oldstate;
 
-    if (pc->phase != PHASE_DEAD && pc->phase != PHASE_MASTER)
-	new_phase(unit, PHASE_TERMINATE);
+    if (pcb->phase != PHASE_DEAD && pcb->phase != PHASE_MASTER)
+	new_phase(pcb, PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
 	UNTIMEOUT(lcp_delayed_up, f);
@@ -497,19 +497,19 @@ void
 lcp_lowerup(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     lcp_options *wo = &lcp_wantoptions[unit];
     fsm *f = &lcp_fsm[unit];
-    ppp_pcb *pc = &ppp_pcb_list[unit];
     /*
      * Don't use A/C or protocol compression on transmission,
      * but accept A/C and protocol compressed packets
      * if we are going to ask for A/C and protocol compression.
      */
 #if PPPOS_SUPPORT
-    ppp_set_xaccm(unit, &xmit_accm[unit]);
+    ppp_set_xaccm(pcb, &xmit_accm[unit]);
 #endif /* PPPOS_SUPPORT */
-    if (ppp_send_config(unit, PPP_MRU, 0xffffffff, 0, 0) < 0
-	|| ppp_recv_config(unit, PPP_MRU, (lax_recv? 0: 0xffffffff),
+    if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
+	|| ppp_recv_config(pcb, PPP_MRU, (lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
     peer_mru[unit] = PPP_MRU;
@@ -526,9 +526,9 @@ lcp_lowerup(unit)
               xmit_accm[unit][0]));
 #endif /* PPPOS_SUPPORT */
 
-    if (pc->settings.listen_time != 0) {
+    if (pcb->settings.listen_time != 0) {
 	f->flags |= DELAYED_UP;
-	TIMEOUTMS(lcp_delayed_up, f, pc->settings.listen_time);
+	TIMEOUTMS(lcp_delayed_up, f, pcb->settings.listen_time);
     } else
 	fsm_lowerup(f);
 }
@@ -2278,6 +2278,7 @@ static void
 lcp_up(f)
     fsm *f;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     lcp_options *wo = &lcp_wantoptions[f->unit];
     lcp_options *ho = &lcp_hisoptions[f->unit];
     lcp_options *go = &lcp_gotoptions[f->unit];
@@ -2303,11 +2304,11 @@ lcp_up(f)
 #ifdef HAVE_MULTILINK
     if (!(multilink && go->neg_mrru && ho->neg_mrru))
 #endif /* HAVE_MULTILINK */
-	netif_set_mtu(f->unit, LWIP_MIN(LWIP_MIN(mtu, mru), ao->mru));
-    ppp_send_config(f->unit, mtu,
+	netif_set_mtu(pcb, LWIP_MIN(LWIP_MIN(mtu, mru), ao->mru));
+    ppp_send_config(pcb, mtu,
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
-    ppp_recv_config(f->unit, mru,
+    ppp_recv_config(pcb, mru,
 		    (lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
@@ -2329,14 +2330,15 @@ static void
 lcp_down(f)
     fsm *f;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     lcp_options *go = &lcp_gotoptions[f->unit];
 
     lcp_echo_lowerdown(f->unit);
 
     link_down(f->unit);
 
-    ppp_send_config(f->unit, PPP_MRU, 0xffffffff, 0, 0);
-    ppp_recv_config(f->unit, PPP_MRU,
+    ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0);
+    ppp_recv_config(pcb, PPP_MRU,
 		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
     peer_mru[f->unit] = PPP_MRU;

@@ -268,6 +268,7 @@ static void
 eap_send_failure(esp)
 eap_state *esp;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 
 	outp = outpacket_buf;
@@ -279,7 +280,7 @@ eap_state *esp;
 	PUTCHAR(esp->es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write(esp->es_unit, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
+	ppp_write(pcb, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
 
 	esp->es_server.ea_state = eapBadAuth;
 	auth_peer_fail(esp->es_unit, PPP_EAP);
@@ -293,6 +294,7 @@ static void
 eap_send_success(esp)
 eap_state *esp;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 
 	outp = outpacket_buf;
@@ -304,7 +306,7 @@ eap_state *esp;
 	PUTCHAR(esp->es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
 
 	auth_peer_success(esp->es_unit, PPP_EAP, 0,
 	    esp->es_server.ea_peer, esp->es_server.ea_peerlen);
@@ -648,6 +650,7 @@ static void
 eap_send_request(esp)
 eap_state *esp;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	u_char *lenloc;
 	u_char *ptr;
@@ -867,7 +870,7 @@ eap_state *esp;
 	outlen = (outp - outpacket_buf) - PPP_HDRLEN;
 	PUTSHORT(outlen, lenloc);
 
-	ppp_write(esp->es_unit, outpacket_buf, outlen + PPP_HDRLEN);
+	ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
 
 	esp->es_server.ea_requests++;
 
@@ -1066,6 +1069,7 @@ u_char typenum;
 u_char *str;
 int lenstr;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1083,7 +1087,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 /*
@@ -1097,6 +1101,7 @@ u_char *hash;
 char *name;
 int namelen;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1118,7 +1123,7 @@ int namelen;
 		MEMCPY(outp, name, namelen);
 	}
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 #ifdef USE_SRP
@@ -1133,6 +1138,7 @@ u_char subtypenum;
 u_char *str;
 int lenstr;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1151,7 +1157,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 /*
@@ -1164,6 +1170,7 @@ u_char id;
 u_int32_t flags;
 u_char *str;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1182,7 +1189,7 @@ u_char *str;
 	PUTLONG(flags, outp);
 	MEMCPY(outp, str, SHA_DIGESTSIZE);
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + msglen);
 }
 #endif /* USE_SRP */
 
@@ -1192,6 +1199,7 @@ eap_state *esp;
 u_char id;
 u_char type;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1207,7 +1215,7 @@ u_char type;
 	PUTCHAR(EAPT_NAK, outp);
 	PUTCHAR(type, outp);
 
-	ppp_write(esp->es_unit, outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + msglen);
 }
 
 #ifdef USE_SRP

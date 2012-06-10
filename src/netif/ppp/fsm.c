@@ -808,6 +808,7 @@ fsm_sdata(f, code, id, data, datalen)
     u_char *data;
     int datalen;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     u_char *outp;
     int outlen;
 
@@ -822,7 +823,7 @@ fsm_sdata(f, code, id, data, datalen)
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
-    ppp_write(f->unit, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
 }
 
 #endif /* PPP_SUPPORT */

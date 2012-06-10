@@ -569,10 +569,11 @@ link_required(unit)
 void start_link(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     char *msg;
 
     status = EXIT_NEGOTIATION_FAILED;
-    new_phase(unit, PHASE_SERIALCONN);
+    new_phase(pcb, PHASE_SERIALCONN);
 
     hungup = 0;
     devfd = the_channel->connect();
@@ -608,18 +609,18 @@ void start_link(unit)
 	notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
-    new_phase(unit, PHASE_ESTABLISH);
+    new_phase(pcb, PHASE_ESTABLISH);
 
     lcp_lowerup(0);
     return;
 
  disconnect:
-    new_phase(unit, PHASE_DISCONNECT);
+    new_phase(pcb, PHASE_DISCONNECT);
     if (the_channel->disconnect)
 	the_channel->disconnect();
 
  fail:
-    new_phase(unit, PHASE_DEAD);
+    new_phase(pcb, PHASE_DEAD);
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
 }
@@ -633,10 +634,10 @@ void
 link_terminated(unit)
     int unit;
 {
-    ppp_pcb *pc = &ppp_pcb_list[unit];
-    if (pc->phase == PHASE_DEAD || pc->phase == PHASE_MASTER)
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    if (pcb->phase == PHASE_DEAD || pcb->phase == PHASE_MASTER)
 	return;
-    new_phase(unit, PHASE_DISCONNECT);
+    new_phase(pcb, PHASE_DISCONNECT);
 
 #if 0 /* UNUSED */
     if (pap_logout_hook) {
@@ -656,7 +657,7 @@ link_terminated(unit)
     lcp_lowerdown(0);
 
     new_phase(unit, PHASE_DEAD);
-    ppp_link_terminated(unit);
+    ppp_link_terminated(pcb);
 #if 0
     /*
      * Delete pid files before disestablishing ppp.  Otherwise it
@@ -697,11 +698,11 @@ link_terminated(unit)
 
     if (doing_multilink && multilink_master) {
 	if (!bundle_terminating)
-	    new_phase(unit, PHASE_MASTER);
+	    new_phase(pcb, PHASE_MASTER);
 	else
 	    mp_bundle_terminated();
     } else
-	new_phase(unit, PHASE_DEAD);
+	new_phase(pcb, PHASE_DEAD);
 #endif
 }
 
@@ -712,20 +713,20 @@ void
 link_down(unit)
     int unit;
 {
-    ppp_pcb *pc = &ppp_pcb_list[unit];
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
 #if PPP_NOTIFY
     notify(link_down_notifier, 0);
 #endif /* #if PPP_NOTIFY */
 
     if (!doing_multilink) {
 	upper_layers_down(unit);
-	if (pc->phase != PHASE_DEAD && pc->phase != PHASE_MASTER)
-	    new_phase(unit, PHASE_ESTABLISH);
+	if (pcb->phase != PHASE_DEAD && pcb->phase != PHASE_MASTER)
+	    new_phase(pcb, PHASE_ESTABLISH);
     }
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
 
-    ppp_link_down(unit);
+    ppp_link_down(pcb);
 }
 
 void upper_layers_down(int unit)
@@ -753,6 +754,7 @@ void
 link_established(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     int auth;
 #if 0 /* UNUSED */
     lcp_options *wo = &lcp_wantoptions[unit];
@@ -763,7 +765,6 @@ link_established(unit)
     lcp_options *ho = &lcp_hisoptions[unit];
     int i;
     struct protent *protp;
-    ppp_pcb *pc = &ppp_pcb_list[unit];
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -814,18 +815,18 @@ link_established(unit)
     }
 #endif /* UNUSED */
 
-    new_phase(unit, PHASE_AUTHENTICATE);
+    new_phase(pcb, PHASE_AUTHENTICATE);
     auth = 0;
 #if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
-	eap_authpeer(unit, pc->settings.our_name);
+	eap_authpeer(unit, pcb->settings.our_name);
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (go->neg_chap) {
-	chap_auth_peer(unit, pc->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
+	chap_auth_peer(unit, pcb->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */
@@ -840,19 +841,19 @@ link_established(unit)
 
 #if EAP_SUPPORT
     if (ho->neg_eap) {
-	eap_authwithpeer(unit, pc->settings.user);
+	eap_authwithpeer(unit, pcb->settings.user);
 	auth |= EAP_WITHPEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (ho->neg_chap) {
-	chap_auth_with_peer(unit, pc->settings.user, CHAP_DIGEST(ho->chap_mdtype));
+	chap_auth_with_peer(unit, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     if (ho->neg_upap) {
-	upap_authwithpeer(unit, pc->settings.user, pc->settings.passwd);
+	upap_authwithpeer(unit, pcb->settings.user, pcb->settings.passwd);
 	auth |= PAP_WITHPEER;
     } else
 #endif /* PAP_SUPPORT */
@@ -872,6 +873,7 @@ static void
 network_phase(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
 #if 0 /* UNUSED */
     lcp_options *go = &lcp_gotoptions[unit];
 #endif /* UNUSED */
@@ -906,7 +908,7 @@ network_phase(unit)
      * If we negotiated callback, do it now.
      */
     if (go->neg_cbcp) {
-	new_phase(unit, PHASE_CALLBACK);
+	new_phase(pcb, PHASE_CALLBACK);
 	(*cbcp_protent.open)(unit);
 	return;
     }
@@ -929,6 +931,7 @@ void
 start_networks(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
 #if CCP_SUPPORT || ECP_SUPPORT
     int i;
     struct protent *protp;
@@ -940,7 +943,7 @@ start_networks(unit)
     int mppe_required;
 #endif /* MPPE */
 
-    new_phase(unit, PHASE_NETWORK);
+    new_phase(pcb, PHASE_NETWORK);
 
 #ifdef HAVE_MULTILINK
     if (multilink) {
@@ -1203,21 +1206,21 @@ np_up(unit, proto)
     int unit, proto;
 {
     int tlim;
-    ppp_pcb *pc = &ppp_pcb_list[unit];
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
 
     if (num_np_up == 0) {
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
-	pc->status = EXIT_OK;
-	new_phase(unit, PHASE_RUNNING);
+	pcb->status = EXIT_OK;
+	new_phase(pcb, PHASE_RUNNING);
 
 #if 0 /* UNUSED */
 	if (idle_time_hook != 0)
 	    tlim = (*idle_time_hook)(NULL);
 	else
 #endif /* UNUSED */
-	    tlim = pc->settings.idle_time_limit;
+	    tlim = pcb->settings.idle_time_limit;
 	if (tlim > 0)
 	    TIMEOUT(check_idle, NULL, tlim);
 
@@ -1225,8 +1228,8 @@ np_up(unit, proto)
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
-	if (pc->settings.maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, pc->settings.maxconnect);
+	if (pcb->settings.maxconnect > 0)
+	    TIMEOUT(connect_time_expired, 0, pcb->settings.maxconnect);
 
 #ifdef MAXOCTETS
 	if (maxoctets > 0)
@@ -1251,13 +1254,14 @@ void
 np_down(unit, proto)
     int unit, proto;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     if (--num_np_up == 0) {
 	UNTIMEOUT(check_idle, NULL);
 	UNTIMEOUT(connect_time_expired, NULL);
 #ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
 #endif
-	new_phase(unit, PHASE_NETWORK);
+	new_phase(pcb, PHASE_NETWORK);
     }
 }
 
@@ -1323,12 +1327,12 @@ check_idle(arg)
     void *arg;
 {
     /* FIXME: fix forced unit 0 */
-    ppp_pcb *pc = &ppp_pcb_list[0];
+    ppp_pcb *pcb = &ppp_pcb_list[0];
     struct ppp_idle idle;
     time_t itime;
     int tlim;
 
-    if (!get_idle_time(0, &idle))
+    if (!get_idle_time(pcb, &idle))
 	return;
 #if 0 /* UNUSED */
     if (idle_time_hook != 0) {
@@ -1336,14 +1340,14 @@ check_idle(arg)
     } else {
 #endif /* UNUSED */
 	itime = LWIP_MIN(idle.xmit_idle, idle.recv_idle);
-	tlim = pc->settings.idle_time_limit - itime;
+	tlim = pcb->settings.idle_time_limit - itime;
 #if 0 /* UNUSED */
     }
 #endif /* UNUSED */
     if (tlim <= 0) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
-	pc->status = EXIT_IDLE_TIMEOUT;
+	pcb->status = EXIT_IDLE_TIMEOUT;
 	lcp_close(0, "Link inactive");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
@@ -1361,9 +1365,9 @@ connect_time_expired(arg)
     void *arg;
 {
     /* FIXME: fix forced unit 0 */
-    ppp_pcb *pc = &ppp_pcb_list[0];
+    ppp_pcb *pcb = &ppp_pcb_list[0];
     info("Connect time expired");
-    pc->status = EXIT_CONNECT_TIME;
+    pcb->status = EXIT_CONNECT_TIME;
     lcp_close(0, "Connect time expired");	/* Close connection */
 }
 
@@ -1517,26 +1521,26 @@ auth_reset(unit)
 {
   lcp_options *go = &lcp_gotoptions[unit];
   lcp_options *ao = &lcp_allowoptions[unit];
-  ppp_pcb *pc = &ppp_pcb_list[unit];
+  ppp_pcb *pcb = &ppp_pcb_list[unit];
 
-  if( pc->settings.passwd[0] ) {
+  if( pcb->settings.passwd[0] ) {
 
 #if PAP_SUPPORT
-    ao->neg_upap = !pc->settings.refuse_pap;
+    ao->neg_upap = !pcb->settings.refuse_pap;
 #endif /* PAP_SUPPORT */
 
 #if EAP_SUPPORT
-    ao->neg_eap = !pc->settings.refuse_eap;
+    ao->neg_eap = !pcb->settings.refuse_eap;
 #endif /* EAP_SUPPORT */
 
 #if CHAP_SUPPORT
     ao->chap_mdtype = MDTYPE_NONE;
-    if(!pc->settings.refuse_chap)
+    if(!pcb->settings.refuse_chap)
       ao->chap_mdtype |= MDTYPE_MD5;
 #if MSCHAP_SUPPORT
-    if(!pc->settings.refuse_mschap)
+    if(!pcb->settings.refuse_mschap)
       ao->chap_mdtype |= MDTYPE_MICROSOFT;
-    if(!pc->settings.refuse_mschap_v2)
+    if(!pcb->settings.refuse_mschap_v2)
       ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
 #endif /* MSCHAP_SUPPORT */
 
@@ -1990,23 +1994,23 @@ get_secret(unit, client, server, secret, secret_len, am_server)
     int am_server;
 {
   int len;
-  ppp_pcb *pc = &ppp_pcb_list[unit];
+  ppp_pcb *pcb = &ppp_pcb_list[unit];
 
   LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 
-  if(!client || !client[0] || strcmp(client, pc->settings.user)) {
+  if(!client || !client[0] || strcmp(client, pcb->settings.user)) {
     return 0;
   }
 
-  len = (int)strlen(pc->settings.passwd);
+  len = (int)strlen(pcb->settings.passwd);
   if (len > MAXSECRETLEN) {
     error("Secret for %s on %s is too long", client, server);
     len = MAXSECRETLEN;
   }
 
-  MEMCPY(secret, pc->settings.passwd, len);
+  MEMCPY(secret, pcb->settings.passwd, len);
   *secret_len = len;
 
   return 1;

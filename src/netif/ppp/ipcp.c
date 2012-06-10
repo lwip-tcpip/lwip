@@ -1756,6 +1756,7 @@ static int
 ip_demand_conf(u)
     int u;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[u];
     ipcp_options *wo = &ipcp_wantoptions[u];
 
     if (wo->hisaddr == 0 && !noremoteip) {
@@ -1769,18 +1770,18 @@ ip_demand_conf(u)
 	wo->accept_local = 1;
 	ask_for_local = 0;	/* don't tell the peer this address */
     }
-    if (!sifaddr(u, wo->ouraddr, wo->hisaddr, get_mask(wo->ouraddr)))
+    if (!sifaddr(pcb, wo->ouraddr, wo->hisaddr, get_mask(wo->ouraddr)))
 	return 0;
-    if (!sifup(u))
+    if (!sifup(pcb))
 	return 0;
-    if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
+    if (!sifnpmode(pcb, PPP_IP, NPMODE_QUEUE))
 	return 0;
     if (wo->default_route)
-	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr,
+	if (sifdefaultroute(pcb, wo->ouraddr, wo->hisaddr,
 		wo->replace_default_route))
 	    default_route_set[u] = 1;
     if (wo->proxy_arp)
-	if (sifproxyarp(u, wo->hisaddr))
+	if (sifproxyarp(pcb, wo->hisaddr))
 	    proxy_arp_set[u] = 1;
 
     notice("local  IP address %I", wo->ouraddr);
@@ -1800,8 +1801,8 @@ static void
 ipcp_up(f)
     fsm *f;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     u_int32_t mask;
-    ppp_pcb *pc = &ppp_pcb_list[f->unit];
     ipcp_options *ho = &ipcp_hisoptions[f->unit];
     ipcp_options *go = &ipcp_gotoptions[f->unit];
     ipcp_options *wo = &ipcp_wantoptions[f->unit];
@@ -1846,8 +1847,8 @@ ipcp_up(f)
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 #endif /* UNUSED */
-    if (pc->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
-	sdns(f->unit, go->dnsaddr[0], go->dnsaddr[1]);
+    if (pcb->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
+	sdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
 #if 0 /* UNUSED */
 	script_setenv("USEPEERDNS", "1", 0);
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
@@ -1867,7 +1868,7 @@ ipcp_up(f)
 #endif /* Unused */
 
     /* set tcp compression */
-    sifvjcomp(f->unit, ho->neg_vj, ho->cflag, ho->maxslotindex);
+    sifvjcomp(pcb, ho->neg_vj, ho->cflag, ho->maxslotindex);
 
 #if DEMAND_SUPPORT
     /*
@@ -1894,7 +1895,7 @@ ipcp_up(f)
 
 	    /* Set the interface to the new addresses */
 	    mask = get_mask(go->ouraddr);
-	    if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+	    if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
 		warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
@@ -1904,18 +1905,18 @@ ipcp_up(f)
 
 	    /* assign a default route through the interface if required */
 	    if (ipcp_wantoptions[f->unit].default_route) 
-		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
+		if (sifdefaultroute(pcb, go->ouraddr, ho->hisaddr,
 			wo->replace_default_route))
 		    default_route_set[f->unit] = 1;
 
 	    /* Make a proxy ARP entry if requested. */
 	    if (ho->hisaddr != 0 && ipcp_wantoptions[f->unit].proxy_arp)
-		if (sifproxyarp(f->unit, ho->hisaddr))
+		if (sifproxyarp(pcb, ho->hisaddr))
 		    proxy_arp_set[f->unit] = 1;
 
 	}
 	demand_rexmit(PPP_IP,go->ouraddr);
-	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
+	sifnpmode(pcb, PPP_IP, NPMODE_PASS);
 
     } else
 #endif /* DEMAND_SUPPORT */
@@ -1926,7 +1927,7 @@ ipcp_up(f)
 	mask = get_mask(go->ouraddr);
 
 #if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+	if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
 	    warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
@@ -1936,7 +1937,7 @@ ipcp_up(f)
 #endif
 
 	/* bring the interface up for IP */
-	if (!sifup(f->unit)) {
+	if (!sifup(pcb)) {
 #if PPP_DEBUG
 	    warn("Interface failed to come up");
 #endif /* PPP_DEBUG */
@@ -1945,7 +1946,7 @@ ipcp_up(f)
 	}
 
 #if (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sifaddr(f->unit, go->ouraddr, ho->hisaddr, mask)) {
+	if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
 	    warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
@@ -1953,17 +1954,17 @@ ipcp_up(f)
 	    return;
 	}
 #endif
-	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
+	sifnpmode(pcb, PPP_IP, NPMODE_PASS);
 
 	/* assign a default route through the interface if required */
 	if (ipcp_wantoptions[f->unit].default_route) 
-	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
+	    if (sifdefaultroute(pcb, go->ouraddr, ho->hisaddr,
 		    wo->replace_default_route))
 		default_route_set[f->unit] = 1;
 
 	/* Make a proxy ARP entry if requested. */
 	if (ho->hisaddr != 0 && ipcp_wantoptions[f->unit].proxy_arp)
-	    if (sifproxyarp(f->unit, ho->hisaddr))
+	    if (sifproxyarp(pcb, ho->hisaddr))
 		proxy_arp_set[f->unit] = 1;
 
 	ipcp_wantoptions[0].ouraddr = go->ouraddr;
@@ -2004,6 +2005,7 @@ static void
 ipcp_down(f)
     fsm *f;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     IPCPDEBUG(("ipcp: down"));
 #if PPP_STATS_SUPPORT
     /* XXX a bit IPv4-centric here, we only need to get the stats
@@ -2023,7 +2025,7 @@ ipcp_down(f)
 	ipcp_is_up = 0;
 	np_down(f->unit, PPP_IP);
     }
-    sifvjcomp(f->unit, 0, 0, 0);
+    sifvjcomp(pcb, 0, 0, 0);
 
 #if PPP_STATS_SUPPORT
     print_link_stats(); /* _after_ running the notifiers and ip_down_hook(),
@@ -2037,15 +2039,15 @@ ipcp_down(f)
      * to queue up outgoing packets (for now).
      */
     if (demand) {
-	sifnpmode(f->unit, PPP_IP, NPMODE_QUEUE);
+	sifnpmode(pcb, PPP_IP, NPMODE_QUEUE);
     } else
 #endif /* DEMAND_SUPPORT */
     {
-	sifnpmode(f->unit, PPP_IP, NPMODE_DROP);
-	sifdown(f->unit);
+	sifnpmode(pcb, PPP_IP, NPMODE_DROP);
+	sifdown(pcb);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
 			 ipcp_hisoptions[f->unit].hisaddr, 0);
-	cdns(f->unit, ipcp_gotoptions[f->unit].dnsaddr[0], ipcp_gotoptions[f->unit].dnsaddr[1]);
+	cdns(pcb, ipcp_gotoptions[f->unit].dnsaddr[0], ipcp_gotoptions[f->unit].dnsaddr[1]);
     }
 }
 
@@ -2056,8 +2058,10 @@ ipcp_down(f)
  */
 static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute) {
 
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+
     if (proxy_arp_set[unit]) {
-	cifproxyarp(unit, hisaddr);
+	cifproxyarp(pcb, hisaddr);
 	proxy_arp_set[unit] = 0;
     }
     /* If replacedefaultroute, sifdefaultroute will be called soon
@@ -2069,10 +2073,10 @@ static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, boo
      * is one saved by an sifdefaultroute with replacedefaultroute.
      */
     if (!replacedefaultroute && default_route_set[unit]) {
-	cifdefaultroute(unit, ouraddr, hisaddr);
+	cifdefaultroute(pcb, ouraddr, hisaddr);
 	default_route_set[unit] = 0;
     }
-    cifaddr(unit, ouraddr, hisaddr);
+    cifaddr(pcb, ouraddr, hisaddr);
 }
 
 
