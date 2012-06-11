@@ -656,7 +656,7 @@ link_terminated(unit)
 
     lcp_lowerdown(0);
 
-    new_phase(unit, PHASE_DEAD);
+    new_phase(pcb, PHASE_DEAD);
     ppp_link_terminated(pcb);
 #if 0
     /*
@@ -873,7 +873,9 @@ static void
 network_phase(unit)
     int unit;
 {
+#if CBCP_SUPPORT
     ppp_pcb *pcb = &ppp_pcb_list[unit];
+#endif
 #if 0 /* UNUSED */
     lcp_options *go = &lcp_gotoptions[unit];
 #endif /* UNUSED */
