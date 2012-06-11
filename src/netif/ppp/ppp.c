@@ -516,11 +516,9 @@ static void ppp_hup(ppp_pcb *pcb) {
 static void ppp_input(void *arg) {
   struct pbuf *nb = (struct pbuf *)arg;
   u16_t protocol;
-  int unit;
   ppp_pcb *pcb;
 
-  unit = ((struct ppp_input_header *)nb->payload)->unit;
-  pcb = &ppp_pcb_list[unit];
+  pcb = &ppp_pcb_list[((struct ppp_input_header *)nb->payload)->unit];
   protocol = ((struct ppp_input_header *)nb->payload)->proto;
 
   if(pbuf_header(nb, -(int)sizeof(struct ppp_input_header))) {
@@ -575,7 +573,7 @@ static void ppp_input(void *arg) {
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
        * pass the result to IP.
        */
-      if ((vj_uncompress_tcp(&nb, pcb->vj_comp) >= 0) && (pcb->netif.input)) {
+      if ((vj_uncompress_tcp(&nb, &pcb->vj_comp) >= 0) && (pcb->netif.input)) {
         pcb->netif.input(nb, &pcb->netif);
         return;
       }
@@ -589,7 +587,7 @@ static void ppp_input(void *arg) {
        * Process the TCP/IP header for VJ header compression and then pass
        * the packet to IP.
        */
-      if ((vj_uncompress_uncomp(nb, pcb->vj_comp) >= 0) && pcb->netif.input) {
+      if ((vj_uncompress_uncomp(nb, &pcb->vj_comp) >= 0) && pcb->netif.input) {
         pcb->netif.input(nb, &pcb->netif);
         return;
       }
