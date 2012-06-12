@@ -361,7 +361,7 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
   sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
 #endif /* PPP_INPROC_OWNTHREAD */
 
-  return pcb->unit;
+  return PPPERR_NONE;
 }
 
 /*
@@ -413,7 +413,7 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   }
 
   pppoe_connect(pcb->pppoe_sc);
-  return pcb->unit;
+  return PPPERR_NONE;
 }
 #endif /* PPPOE_SUPPORT */
 
@@ -1105,49 +1105,50 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 int
 ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 {
-  int st = 0;
+  if(NULL == pcb)
+    return PPPERR_PARAM;
 
-  if (pcb->unit < 0 || pcb->unit >= NUM_PPP) {
-    st = PPPERR_PARAM;
-  } else {
-    switch(cmd) {
+  switch(cmd) {
     case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
       if (arg) {
         *(int *)arg = (int)(pcb->if_up);
-      } else {
-        st = PPPERR_PARAM;
+        return PPPERR_NONE;
       }
+      return PPPERR_PARAM;
       break;
+
     case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
       if (arg) {
         pcb->err_code = *(int *)arg;
-      } else {
-        st = PPPERR_PARAM;
+        return PPPERR_NONE;
       }
+      return PPPERR_PARAM;
       break;
+
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
       if (arg) {
         *(int *)arg = (int)(pcb->err_code);
-      } else {
-        st = PPPERR_PARAM;
+        return PPPERR_NONE;
       }
+      return PPPERR_PARAM;
       break;
+
 #if PPPOS_SUPPORT
     case PPPCTLG_FD:            /* Get the fd associated with the ppp */
       if (arg) {
         *(sio_fd_t *)arg = pcb->fd;
-      } else {
-        st = PPPERR_PARAM;
+        return PPPERR_NONE;
       }
+      return PPPERR_PARAM;
       break;
 #endif /* PPPOS_SUPPORT */
+
     default:
-      st = PPPERR_PARAM;
+      return PPPERR_PARAM;
       break;
-    }
   }
 
-  return st;
+  return PPPERR_PARAM;
 }
 
 /*
