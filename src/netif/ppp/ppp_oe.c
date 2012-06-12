@@ -622,8 +622,8 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   }
 
-  ppp_input_over_ethernet(sc->pcb, pb);
-
+  /* Dispatch the packet thereby consuming it. */
+  ppp_input(sc->pcb, pb);
   return;
 
 drop:

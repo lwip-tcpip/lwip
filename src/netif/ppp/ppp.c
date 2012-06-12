@@ -188,7 +188,6 @@ struct protent *protocols[] = {
 /* Prototypes for procedures local to this file. */
 
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
-static void ppp_input(void *arg);
 
 #if PPPOS_SUPPORT
 static void ppp_receive_wakeup(ppp_pcb *pcb);
@@ -203,6 +202,7 @@ static void ppp_input_thread(void *arg);
 #endif /* PPP_INPROC_OWNTHREAD */
 static void ppp_drop(ppp_pcb_rx *pcrx);
 static void pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l);
+static void pppos_input_callback(void *arg);
 static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
@@ -215,25 +215,6 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n);
 #endif /* PPPOE_SUPPORT */
 
-/******************************/
-/*** PUBLIC DATA STRUCTURES ***/
-/******************************/
-
-/** Input helper struct, must be packed since it is stored to pbuf->payload,
- * which might be unaligned.
- */
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/bpstruct.h"
-#endif
-PACK_STRUCT_BEGIN
-struct ppp_input_header {
-  PACK_STRUCT_FIELD(int unit);
-  PACK_STRUCT_FIELD(u16_t proto);
-} PACK_STRUCT_STRUCT;
-PACK_STRUCT_END
-#ifdef PACK_STRUCT_USE_INCLUDES
-#  include "arch/epstruct.h"
-#endif
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -354,7 +335,7 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
 
   pcb->fd = fd;
 
-  pcb->rx.pd = pcb->unit;
+  pcb->rx.pcb = (void*)pcb;
   pcb->rx.fd = fd;
 
 #if VJ_SUPPORT
@@ -508,27 +489,23 @@ static void ppp_hup(ppp_pcb *pcb) {
  * Pass the processed input packet to the appropriate handler.
  * This function and all handlers run in the context of the tcpip_thread
  */
-
-/* FIXME: maybe we should pass in two arguments ppp_input_header and payload
- * this is totally stupid to make room for it and then modify the packet directly
- * or it is used in output ?  have to find out...
- */
-static void ppp_input(void *arg) {
-  struct pbuf *nb = (struct pbuf *)arg;
+void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   u16_t protocol;
-  ppp_pcb *pcb;
 
-  pcb = &ppp_pcb_list[((struct ppp_input_header *)nb->payload)->unit];
-  protocol = ((struct ppp_input_header *)nb->payload)->proto;
+  protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
-  if(pbuf_header(nb, -(int)sizeof(struct ppp_input_header))) {
+#if PRINTPKT_SUPPORT
+  dump_packet("rcvd", pb->payload, pb->len);
+#endif /* PRINTPKT_SUPPORT */
+
+  if(pbuf_header(pb, -(int)sizeof(protocol))) {
     LWIP_ASSERT("pbuf_header failed\n", 0);
     goto drop;
   }
 
   LINK_STATS_INC(link.recv);
   snmp_inc_ifinucastpkts(&pcb->netif);
-  snmp_add_ifinoctets(&pcb->netif, nb->tot_len);
+  snmp_add_ifinoctets(&pcb->netif, pb->tot_len);
 
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
@@ -568,13 +545,13 @@ static void ppp_input(void *arg) {
 
 #if PPPOS_SUPPORT && VJ_SUPPORT
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->unit, pb->len));
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
        * pass the result to IP.
        */
-      if ((vj_uncompress_tcp(&nb, &pcb->vj_comp) >= 0) && (pcb->netif.input)) {
-        pcb->netif.input(nb, &pcb->netif);
+      if ((vj_uncompress_tcp(&pb, &pcb->vj_comp) >= 0) && (pcb->netif.input)) {
+        pcb->netif.input(pb, &pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -582,13 +559,13 @@ static void ppp_input(void *arg) {
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->unit, pb->len));
       /*
        * Process the TCP/IP header for VJ header compression and then pass
        * the packet to IP.
        */
-      if ((vj_uncompress_uncomp(nb, &pcb->vj_comp) >= 0) && pcb->netif.input) {
-        pcb->netif.input(nb, &pcb->netif);
+      if ((vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0) && pcb->netif.input) {
+        pcb->netif.input(pb, &pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -597,9 +574,9 @@ static void ppp_input(void *arg) {
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
     case PPP_IP:            /* Internet Protocol */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->unit, pb->len));
       if (pcb->netif.input) {
-        pcb->netif.input(nb, &pcb->netif);
+        pcb->netif.input(pb, &pcb->netif);
         return;
       }
       break;
@@ -613,8 +590,8 @@ static void ppp_input(void *arg) {
 	   */
 	  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 		if (protp->protocol == protocol && protp->enabled_flag) {
-		    nb = ppp_singlebuf(nb);
-		    (*protp->input)(pcb->unit, nb->payload, nb->len);
+		    pb = ppp_singlebuf(pb);
+		    (*protp->input)(pcb->unit, pb->payload, pb->len);
 		    goto out;
 		}
 #if 0 /* UNUSED
@@ -628,7 +605,7 @@ static void ppp_input(void *arg) {
        */
 		if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
 		    && protp->datainput != NULL) {
-		    (*protp->datainput)(pcb->unit, nb->payload, nb->len);
+		    (*protp->datainput)(pcb->unit, pb->payload, pb->len);
 		    goto out;
 		}
 #endif /* UNUSED */
@@ -643,11 +620,11 @@ static void ppp_input(void *arg) {
 #endif /* PPP_PROTOCOLNAME */
 	    warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-	  if (pbuf_header(nb, sizeof(protocol))) {
+	  if (pbuf_header(pb, sizeof(protocol))) {
 	        LWIP_ASSERT("pbuf_header failed\n", 0);
 	        goto drop;
 	  }
-	  lcp_sprotrej(pcb->unit, nb->payload, nb->len);
+	  lcp_sprotrej(pcb->unit, pb->payload, pb->len);
     }
     break;
  }
@@ -657,7 +634,7 @@ drop:
   snmp_inc_ifindiscards(&pcb->netif);
 
 out:
-  pbuf_free(nb);
+  pbuf_free(pb);
   return;
 
 #if 0
@@ -677,32 +654,32 @@ out:
   switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
 #if PPPOS_SUPPORT && VJ_SUPPORT
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->unit, pb->len));
       /*
        * Clip off the VJ header and prepend the rebuilt TCP/IP header and
        * pass the result to IP.
        */
-      if ((vj_uncompress_tcp(&nb, pcb->vj_comp) >= 0) && (pcb->netif.input)) {
-        pcb->netif.input(nb, pcb->netif);
+      if ((vj_uncompress_tcp(&pb, pcb->vj_comp) >= 0) && (pcb->netif.input)) {
+        pcb->netif.input(pb, pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
       PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->unit));
 #else  /* PPPOS_SUPPORT && VJ_SUPPORT */
       /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: drop VJ Comp in %d:%s\n", pcb->unit, nb->len, nb->payload));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: drop VJ Comp in %d:%s\n", pcb->unit, pb->len, pb->payload));
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
 #if PPPOS_SUPPORT && VJ_SUPPORT
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->unit, pb->len));
       /*
        * Process the TCP/IP header for VJ header compression and then pass
        * the packet to IP.
        */
-      if ((vj_uncompress_uncomp(nb, pcb->vj_comp) >= 0) && pcb->netif.input) {
-        pcb->netif.input(nb, pcb->netif);
+      if ((vj_uncompress_uncomp(pb, pcb->vj_comp) >= 0) && pcb->netif.input) {
+        pcb->netif.input(pb, pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -711,14 +688,14 @@ out:
       /* No handler for this protocol so drop the packet. */
       PPPDEBUG(LOG_INFO,
                ("ppp_input[%d]: drop VJ UnComp in %d:.*H\n",
-                pcb->unit, nb->len, LWIP_MIN(nb->len * 2, 40), nb->payload));
+                pcb->unit, pb->len, LWIP_MIN(pb->len * 2, 40), pb->payload));
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
       break;
 
     case PPP_IP:            /* Internet Protocol */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->unit, nb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->unit, pb->len));
       if (pcb->netif.input) {
-        pcb->netif.input(nb, pcb->netif);
+        pcb->netif.input(pb, pcb->netif);
         return;
       }
       break;
@@ -732,25 +709,25 @@ out:
        */
       for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol && protp->enabled_flag) {
-          PPPDEBUG(LOG_INFO, ("ppp_input[%d]: %s len=%d\n", pcb->unit, protp->name, nb->len));
-          nb = ppp_singlebuf(nb);
-          (*protp->input)(pcb->unit, nb->payload, nb->len);
+          PPPDEBUG(LOG_INFO, ("ppp_input[%d]: %s len=%d\n", pcb->unit, protp->name, pb->len));
+          pb = ppp_singlebuf(pb);
+          (*protp->input)(pcb->unit, pb->payload, pb->len);
           PPPDEBUG(LOG_DETAIL, ("ppp_input[%d]: packet processed\n", pcb->unit));
           goto out;
         }
       }
 
       /* No handler for this protocol so reject the packet. */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: rejecting unsupported proto 0x%"X16_F" len=%d\n", pcb->unit, protocol, nb->len));
-      if (pbuf_header(nb, sizeof(protocol))) {
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: rejecting unsupported proto 0x%"X16_F" len=%d\n", pcb->unit, protocol, pb->len));
+      if (pbuf_header(pb, sizeof(protocol))) {
         LWIP_ASSERT("pbuf_header failed\n", 0);
         goto drop;
       }
 #if BYTE_ORDER == LITTLE_ENDIAN
       protocol = htons(protocol);
 #endif /* BYTE_ORDER == LITTLE_ENDIAN */
-      SMEMCPY(nb->payload, &protocol, sizeof(protocol));
-      lcp_sprotrej(pcb->unit, nb->payload, nb->len);
+      SMEMCPY(pb->payload, &protocol, sizeof(protocol));
+      lcp_sprotrej(pcb->unit, pb->payload, pb->len);
     }
     break;
   }
@@ -824,54 +801,6 @@ ppp_receive_wakeup(ppp_pcb *pcb)
 #endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOE_SUPPORT
-/* ppp_input_over_ethernet
- *
- * take a packet from PPPoE subsystem and pass it to the PPP stack through ppp_input()
- */
-
-/* FIXME: maybe we should pass in two arguments ppp_input_header and payload
- * this is totally stupid to make room for it and then modify the packet directly
- * or it is used in output ?  have to find out...
- */
-void ppp_input_over_ethernet(ppp_pcb *pcb, struct pbuf *pb) {
-  struct ppp_input_header *pih;
-  u16_t in_protocol;
-
-  if(pb->len < sizeof(in_protocol)) {
-    PPPDEBUG(LOG_ERR, ("ppp_input_over_ethernet: too small for protocol field\n"));
-    goto drop;
-  }
-
-#if PRINTPKT_SUPPORT
-  dump_packet("rcvd", pb->payload, pb->len);
-#endif /* PRINTPKT_SUPPORT */
-
-  in_protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
-
-  /* make room for ppp_input_header - should not fail */
-  if (pbuf_header(pb, sizeof(*pih) - sizeof(in_protocol)) != 0) {
-    PPPDEBUG(LOG_ERR, ("ppp_input_over_ethernet: could not allocate room for header\n"));
-    goto drop;
-  }
-
-  pih = pb->payload;
-
-  pih->unit = pcb->unit;
-  pih->proto = in_protocol; /* pih->proto is now in host byte order */
-
-  /* Dispatch the packet thereby consuming it. */
-  ppp_input(pb);
-  return;
-
-drop:
-  LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&pcb->netif);
-  pbuf_free(pb);
-  return;
-}
-#endif /* PPPOE_SUPPORT */
-
 /*
  * ppp_netif_init_cb - netif init callback
  */
@@ -901,7 +830,7 @@ ppp_input_thread(void *arg)
 {
   int count;
   ppp_pcb_rx *pcrx = arg;
-  ppp_pcb *pcb = &ppp_pcb_list[pcrx->pd];
+  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
 
   while (pcb->phase != PHASE_DEAD) {
     count = sio_read(pcrx->fd, pcrx->rxbuf, PPPOS_RX_BUFSIZE);
@@ -1361,6 +1290,7 @@ ppp_free_current_input_packet(ppp_pcb_rx *pcrx)
 static void
 ppp_drop(ppp_pcb_rx *pcrx)
 {
+  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
   if (pcrx->in_head != NULL) {
 #if 0
     PPPDEBUG(LOG_INFO, ("ppp_drop: %d:%.*H\n", pcrx->in_head->len, min(60, pcrx->in_head->len * 2), pcrx->in_head->payload));
@@ -1369,11 +1299,11 @@ ppp_drop(ppp_pcb_rx *pcrx)
   }
   ppp_free_current_input_packet(pcrx);
 #if VJ_SUPPORT
-  vj_uncompress_err(&ppp_pcb_list[pcrx->pd].vj_comp);
+  vj_uncompress_err(&pcb->vj_comp);
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&ppp_pcb_list[pcrx->pd].netif);
+  snmp_inc_ifindiscards(&pcb->netif);
 }
 
 #if !PPP_INPROC_OWNTHREAD
@@ -1397,12 +1327,13 @@ pppos_input(ppp_pcb *pcb, u_char* data, int len)
 static void
 pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
 {
+  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
   SYS_ARCH_DECL_PROTECT(lev);
 
-  PPPDEBUG(LOG_DEBUG, ("pppos_input_proc[%d]: got %d bytes\n", pcrx->pd, l));
+  PPPDEBUG(LOG_DEBUG, ("pppos_input_proc[%d]: got %d bytes\n", pcb->unit, l));
   while (l-- > 0) {
     cur_char = *s++;
 
@@ -1427,20 +1358,23 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
         } else if (pcrx->in_state < PDDATA) {
           PPPDEBUG(LOG_WARNING,
                    ("pppos_input_proc[%d]: Dropping incomplete packet %d\n",
-                    pcrx->pd, pcrx->in_state));
+                    pcb->unit, pcrx->in_state));
           LINK_STATS_INC(link.lenerr);
           ppp_drop(pcrx);
         /* If the fcs is invalid, drop the packet. */
         } else if (pcrx->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
                    ("pppos_input_proc[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
-                    pcrx->pd, pcrx->in_fcs, pcrx->in_protocol));
+                    pcb->unit, pcrx->in_fcs, pcrx->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
           ppp_drop(pcrx);
         /* Otherwise it's a good packet so pass it on. */
         } else {
           struct pbuf *inp;
+#if PPP_INPROC_MULTITHREADED
+          struct pbuf *head;
+#endif /* PPP_INPROC_MULTITHREADED */
           /* Trim off the checksum. */
           if(pcrx->in_tail->len > 2) {
             pcrx->in_tail->len -= 2;
@@ -1464,14 +1398,20 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
           pcrx->in_head = NULL;
           pcrx->in_tail = NULL;
 #if PPP_INPROC_MULTITHREADED
-          if(tcpip_callback_with_block(ppp_input, inp, 0) != ERR_OK) {
-            PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: tcpip_callback() failed, dropping packet\n", pcrx->pd));
-            pbuf_free(inp);
-            LINK_STATS_INC(link.drop);
-            snmp_inc_ifindiscards(&ppp_pcb_list[pcrx->pd].netif);
+          head = pbuf_alloc(PBUF_RAW, sizeof(void*), PBUF_POOL);
+          if(NULL != head) {
+            MEMCPY(head->payload, pcb, sizeof(void*));
+            pbuf_chain(head, inp);
+            if(tcpip_callback_with_block(pppos_input_callback, head, 0) != ERR_OK) {
+              PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: tcpip_callback() failed, dropping packet\n", pcb->unit));
+              pbuf_free(head);
+              pbuf_free(inp);
+              LINK_STATS_INC(link.drop);
+              snmp_inc_ifindiscards(&pcb->netif);
+            }
           }
 #else /* PPP_INPROC_MULTITHREADED */
-          ppp_input(inp);
+          ppp_input(pcrx->pcb, inp);
 #endif /* PPP_INPROC_MULTITHREADED */
         }
 
@@ -1483,7 +1423,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
        * been inserted by the physical layer so here we just drop them. */
       } else {
         PPPDEBUG(LOG_WARNING,
-                 ("pppos_input_proc[%d]: Dropping ACCM char <%d>\n", pcrx->pd, cur_char));
+                 ("pppos_input_proc[%d]: Dropping ACCM char <%d>\n", pcb->unit, cur_char));
       }
     /* Process other characters. */
     } else {
@@ -1530,7 +1470,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
 #if 0
           else {
             PPPDEBUG(LOG_WARNING,
-                     ("pppos_input_proc[%d]: Invalid control <%d>\n", pcrx->pd, cur_char));
+                     ("pppos_input_proc[%d]: Invalid control <%d>\n", pcb->unit, cur_char));
             pcrx->in_state = PDSTART;
           }
 #endif
@@ -1566,19 +1506,16 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
                * the received pbuf chain in case a new packet starts. */
-              PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: NO FREE MBUFS!\n", pcrx->pd));
+              PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: NO FREE MBUFS!\n", pcb->unit));
               LINK_STATS_INC(link.memerr);
               ppp_drop(pcrx);
               pcrx->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
             if (pcrx->in_head == NULL) {
-              struct ppp_input_header *pih = next_pbuf->payload;
-
-              pih->unit = pcrx->pd;
-              pih->proto = pcrx->in_protocol;
-
-              next_pbuf->len += sizeof(*pih);
+              ((u8_t*)next_pbuf->payload)[0] = pcrx->in_protocol & 0xFF;
+              ((u8_t*)next_pbuf->payload)[1] = pcrx->in_protocol >> 8;
+              next_pbuf->len += sizeof(pcrx->in_protocol);
 
               pcrx->in_head = next_pbuf;
             }
@@ -1595,6 +1532,34 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
   } /* while (l-- > 0), all bytes processed */
 
   magic_randomize();
+}
+
+/* PPPoS input callback using one input pointer
+ *   *arg is a pbuf chain of two chained pbuf, the first contains
+ *   a pointer to the PPP PCB structure, the second contains the
+ *   PPP payload
+ */
+static void pppos_input_callback(void *arg) {
+  struct pbuf *hd, *pl;
+  ppp_pcb *pcb;
+
+  hd = (struct pbuf *)arg;
+  pcb = (ppp_pcb *)hd->payload;
+
+  pl = hd->next;
+  pbuf_free(hd);
+  if(NULL == pl)
+    goto drop;
+
+  /* Dispatch the packet thereby consuming it. */
+  ppp_input(pcb, pl);
+  return;
+
+drop:
+  LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(&pcb->netif);
+  pbuf_free(pl);
+  return;
 }
 #endif /* PPPOS_SUPPORT */
 
@@ -1642,7 +1607,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
       pppoe_err_code = PPPERR_CONNECT;
       break;
 
-    /* PPPoE link failed to setup (i.e. PADI/PADO timeout */
+    /* PPPoE link failed to setup (i.e. PADI/PADO timeout) */
     case PPPOE_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->unit));
       pppoe_err_code = PPPERR_OPEN;

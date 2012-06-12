@@ -193,8 +193,8 @@ typedef enum {
  * PPP interface RX control block.
  */
 typedef struct ppp_pcb_rx_s {
-  /** unit number / ppp descriptor */
-  int pd;
+  /** ppp descriptor */
+  void *pcb;
   /** the rx file descriptor */
   sio_fd_t fd;
   /** receive buffer - encoded data is stored here */
