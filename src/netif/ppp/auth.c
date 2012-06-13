@@ -139,17 +139,6 @@
 #define ISWILD(word)	(word[0] == '*' && word[1] == 0)
 #endif /* UNUSED */
 
-#if PPP_SERVER
-/* The name by which the peer authenticated itself to us. */
-char peer_authname[MAXNAMELEN];
-#endif /* PPP_SERVER */
-
-/* Records which authentication operations haven't completed yet. */
-static int auth_pending[NUM_PPP];
-
-/* Records which authentication operations have been completed. */
-int auth_done[NUM_PPP];
-
 #if 0 /* UNUSED */
 /* List of addresses which the peer may use. */
 static struct permitted_ip *addresses[NUM_PPP];
@@ -167,12 +156,6 @@ static struct wordlist *permitted_numbers;
 /* Extra options to apply, from the secrets file entry for the peer. */
 static struct wordlist *extra_options;
 #endif /* UNUSED */
-
-/* Number of network protocols which we have opened. */
-static int num_np_open;
-
-/* Number of network protocols which have come up. */
-static int num_np_up;
 
 #if 0 /* UNUSED */
 /* Set if we require authentication only because we have a default route. */
@@ -732,8 +715,8 @@ void upper_layers_down(ppp_pcb *pcb) {
         if (protp->protocol < 0xC000 && protp->close != NULL)
 	    (*protp->close)(pcb->unit, "LCP down");
     }
-    num_np_open = 0;
-    num_np_up = 0;
+    pcb->num_np_open = 0;
+    pcb->num_np_up = 0;
 }
 
 /*
@@ -845,8 +828,8 @@ void link_established(ppp_pcb *pcb) {
 #endif /* PAP_SUPPORT */
     {}
 
-    auth_pending[pcb->unit] = auth;
-    auth_done[pcb->unit] = 0;
+    pcb->auth_pending = auth;
+    pcb->auth_done = 0;
 
     if (!auth)
 	network_phase(pcb);
@@ -996,10 +979,10 @@ void continue_networks(ppp_pcb *pcb) {
 #endif /* ECP_SUPPORT */
 	    && protp->enabled_flag && protp->open != NULL) {
 	    (*protp->open)(0);
-	    ++num_np_open;
+	    ++pcb->num_np_open;
 	}
 
-    if (num_np_open == 0)
+    if (pcb->num_np_open == 0)
 	/* nothing to do */
 	lcp_close(0, "No network protocols running");
 }
@@ -1008,26 +991,18 @@ void continue_networks(ppp_pcb *pcb) {
 /*
  * The peer has failed to authenticate himself using `protocol'.
  */
-void
-auth_peer_fail(unit, protocol)
-    int unit, protocol;
-{
+void auth_peer_fail(ppp_pcb *pcb, int protocol) {
     /*
      * Authentication failure: take the link down
      */
     status = EXIT_PEER_AUTH_FAILED;
-    lcp_close(unit, "Authentication failed");
+    lcp_close(pcb->unit, "Authentication failed");
 }
 
 /*
  * The peer has been successfully authenticated using `protocol'.
  */
-void
-auth_peer_success(unit, protocol, prot_flavor, name, namelen)
-    int unit, protocol, prot_flavor;
-    char *name;
-    int namelen;
-{
+void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, int namelen) {
     int bit;
 
     switch (protocol) {
@@ -1068,22 +1043,22 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
      * Save the authenticated name of the peer for later.
      */
     /* FIXME: do we need that ? */
-    if (namelen > sizeof(peer_authname) - 1)
-	namelen = sizeof(peer_authname) - 1;
-    MEMCPY(peer_authname, name, namelen);
-    peer_authname[namelen] = 0;
+    if (namelen > sizeof(pcb->peer_authname) - 1)
+	namelen = sizeof(pcb->peer_authname) - 1;
+    MEMCPY(pcb->peer_authname, name, namelen);
+    pcb->peer_authname[namelen] = 0;
 #if 0 /* UNUSED */
-    script_setenv("PEERNAME", peer_authname, 0);
+    script_setenv("PEERNAME", , 0);
 #endif /* UNUSED */
 
     /* Save the authentication method for later. */
-    auth_done[unit] |= bit;
+    pcb->auth_done |= bit;
 
     /*
      * If there is no more authentication still to be done,
      * proceed to the network (or callback) phase.
      */
-    if ((auth_pending[unit] &= ~bit) == 0)
+    if ((pcb->auth_pending &= ~bit) == 0)
         network_phase(unit);
 }
 #endif /* PPP_SERVER */
@@ -1158,13 +1133,13 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
     notice("%s authentication succeeded", prot);
 
     /* Save the authentication method for later. */
-    auth_done[pcb->unit] |= bit;
+    pcb->auth_done |= bit;
 
     /*
      * If there is no more authentication still being done,
      * proceed to the network (or callback) phase.
      */
-    if ((auth_pending[pcb->unit] &= ~bit) == 0)
+    if ((pcb->auth_pending &= ~bit) == 0)
 	network_phase(pcb);
 }
 
@@ -1175,7 +1150,7 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
 void np_up(ppp_pcb *pcb, int proto) {
     int tlim;
 
-    if (num_np_up == 0) {
+    if (pcb->num_np_up == 0) {
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
@@ -1211,14 +1186,14 @@ void np_up(ppp_pcb *pcb, int proto) {
 	    detach();
 #endif /* Unused */
     }
-    ++num_np_up;
+    ++pcb->num_np_up;
 }
 
 /*
  * np_down - a network protocol has gone down.
  */
 void np_down(ppp_pcb *pcb, int proto) {
-    if (--num_np_up == 0) {
+    if (--pcb->num_np_up == 0) {
 	UNTIMEOUT(check_idle, (void*)pcb);
 	UNTIMEOUT(connect_time_expired, NULL);
 #ifdef MAXOCTETS
@@ -1232,7 +1207,7 @@ void np_down(ppp_pcb *pcb, int proto) {
  * np_finished - a network protocol has finished using the link.
  */
 void np_finished(ppp_pcb *pcb, int proto) {
-    if (--num_np_open <= 0) {
+    if (--pcb->num_np_open <= 0) {
 	/* no further use for the link: shut up shop. */
 	lcp_close(0, "No network protocols running");
     }

@@ -284,7 +284,7 @@ eap_state *esp;
 	ppp_write(pcb, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
 
 	esp->es_server.ea_state = eapBadAuth;
-	auth_peer_fail(esp->es_unit, PPP_EAP);
+	auth_peer_fail(pcb, PPP_EAP);
 }
 
 /*
@@ -309,7 +309,7 @@ eap_state *esp;
 
 	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
 
-	auth_peer_success(esp->es_unit, PPP_EAP, 0,
+	auth_peer_success(pcb, PPP_EAP, 0,
 	    esp->es_server.ea_peer, esp->es_server.ea_peerlen);
 }
 #endif /* PPP_SERVER */

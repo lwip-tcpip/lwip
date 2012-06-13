@@ -157,6 +157,7 @@ typedef struct ppp_settings_s {
   u16_t idle_time_limit;	      /* Disconnect if idle for this many seconds */
   int  maxconnect;                    /* Maximum connect time (seconds) */
 
+  /* auth data */
   char user       [MAXNAMELEN   + 1]; /* Username for PAP */
   char passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
 #if PPP_SERVER
@@ -253,6 +254,14 @@ typedef struct ppp_pcb_s {
   void (*link_status_cb)(void *ctx, int err_code, void *arg);
   void *link_status_ctx;
 
+  /* auth data */
+#if PPP_SERVER
+  char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */
+#endif /* PPP_SERVER */
+  int auth_pending;        /* Records which authentication operations haven't completed yet. */
+  int auth_done;           /* Records which authentication operations have been completed. */
+  int num_np_open;         /* Number of network protocols which we have opened. */
+  int num_np_up;           /* Number of network protocols which have come up. */
 } ppp_pcb;
 
 /************************

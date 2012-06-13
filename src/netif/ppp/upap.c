@@ -252,7 +252,7 @@ upap_reqtimeout(arg)
     if (u->us_serverstate != UPAPSS_LISTEN)
 	return;			/* huh?? */
 
-    auth_peer_fail(u->us_unit, PPP_PAP);
+    auth_peer_fail(pcb, PPP_PAP);
     u->us_serverstate = UPAPSS_BADAUTH;
 }
 #endif /* PPP_SERVER */
@@ -486,11 +486,11 @@ upap_rauthreq(u, inp, id, len)
     if (retcode == UPAP_AUTHACK) {
 	u->us_serverstate = UPAPSS_OPEN;
 	notice("PAP peer authentication succeeded for %q", rhostname);
-	auth_peer_success(u->us_unit, PPP_PAP, 0, ruser, ruserlen);
+	auth_peer_success(pcb, PPP_PAP, 0, ruser, ruserlen);
     } else {
 	u->us_serverstate = UPAPSS_BADAUTH;
 	warn("PAP peer authentication failed for %q", rhostname);
-	auth_peer_fail(u->us_unit, PPP_PAP);
+	auth_peer_fail(pcb, PPP_PAP);
     }
 
     if (u->us_reqtimeout > 0)

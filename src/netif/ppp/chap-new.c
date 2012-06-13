@@ -294,7 +294,7 @@ chap_timeout(void *arg)
 	} else if (ss->challenge_xmits >= chap_max_transmits) {
 		ss->flags &= ~CHALLENGE_VALID;
 		ss->flags |= AUTH_DONE | AUTH_FAILED;
-		auth_peer_fail(0, PPP_CHAP);
+		auth_peer_fail(pcb, PPP_CHAP);
 		return;
 	}
 
@@ -426,10 +426,10 @@ chap_handle_response(struct chap_server_state *ss, int id,
 
 		}
 		if (ss->flags & AUTH_FAILED) {
-			auth_peer_fail(0, PPP_CHAP);
+			auth_peer_fail(pcb, PPP_CHAP);
 		} else {
 			if ((ss->flags & AUTH_DONE) == 0)
-				auth_peer_success(0, PPP_CHAP,
+				auth_peer_success(pcb, PPP_CHAP,
 						  ss->digest->code,
 						  name, strlen(name));
 			if (chap_rechallenge_time) {
@@ -621,7 +621,7 @@ chap_protrej(int unit)
 	}
 	if (ss->flags & AUTH_STARTED) {
 		ss->flags = 0;
-		auth_peer_fail(0, PPP_CHAP);
+		auth_peer_fail(pcb, PPP_CHAP);
 	}
 #endif /* PPP_SERVER */
 	if ((cs->flags & (AUTH_STARTED|AUTH_DONE)) == AUTH_STARTED) {
