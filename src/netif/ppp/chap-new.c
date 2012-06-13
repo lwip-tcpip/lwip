@@ -458,7 +458,7 @@ chap_verify_response(char *name, char *ourname, int id,
 	int secret_len;
 
 	/* Get the secret that the peer is supposed to know */
-	if (!get_secret(0, name, ourname, (char *)secret, &secret_len, 1)) {
+	if (!get_secret(pcb, name, ourname, (char *)secret, &secret_len, 1)) {
 		error("No CHAP secret found for authenticating %q", name);
 		return 0;
 	}
@@ -503,7 +503,7 @@ chap_respond(struct chap_client_state *cs, int id,
 		strlcpy(rname, pc->settings.remote_name, sizeof(rname));
 
 	/* get secret for authenticating ourselves with the specified host */
-	if (!get_secret(0, cs->name, rname, secret, &secret_len, 0)) {
+	if (!get_secret(pcb, cs->name, rname, secret, &secret_len, 0)) {
 		secret_len = 0;	/* assume null secret if can't find one */
 		warn("No CHAP secret found for authenticating us to %q", rname);
 	}
@@ -534,6 +534,8 @@ static void
 chap_handle_status(struct chap_client_state *cs, int code, int id,
 		   unsigned char *pkt, int len)
 {
+	/* FIXME: fix forced unit 0 */
+	ppp_pcb *pcb = &ppp_pcb_list[0];
 	const char *msg = NULL;
 
 	if ((cs->flags & (AUTH_DONE|AUTH_STARTED|LOWERUP))
@@ -561,11 +563,11 @@ chap_handle_status(struct chap_client_state *cs, int code, int id,
 			info("%s", msg);
 	}
 	if (code == CHAP_SUCCESS)
-		auth_withpeer_success(0, PPP_CHAP, cs->digest->code);
+		auth_withpeer_success(pcb, PPP_CHAP, cs->digest->code);
 	else {
 		cs->flags |= AUTH_FAILED;
 		error("CHAP authentication failed");
-		auth_withpeer_fail(0, PPP_CHAP);
+		auth_withpeer_fail(pcb, PPP_CHAP);
 	}
 }
 
@@ -608,6 +610,7 @@ chap_input(int unit, unsigned char *pkt, int pktlen)
 static void
 chap_protrej(int unit)
 {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 	struct chap_client_state *cs = &client;
 #if PPP_SERVER
 	struct chap_server_state *ss = &server;
@@ -624,7 +627,7 @@ chap_protrej(int unit)
 	if ((cs->flags & (AUTH_STARTED|AUTH_DONE)) == AUTH_STARTED) {
 		cs->flags &= ~AUTH_STARTED;
 		error("CHAP authentication failed due to protocol-reject");
-		auth_withpeer_fail(0, PPP_CHAP);
+		auth_withpeer_fail(pcb, PPP_CHAP);
 	}
 }
 

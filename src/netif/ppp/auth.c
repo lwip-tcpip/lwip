@@ -139,8 +139,10 @@
 #define ISWILD(word)	(word[0] == '*' && word[1] == 0)
 #endif /* UNUSED */
 
+#if PPP_SERVER
 /* The name by which the peer authenticated itself to us. */
 char peer_authname[MAXNAMELEN];
+#endif /* PPP_SERVER */
 
 /* Records which authentication operations haven't completed yet. */
 static int auth_pending[NUM_PPP];
@@ -251,9 +253,9 @@ extern char *crypt (const char *, const char *);
 #endif /* UNUSED */
 /* Prototypes for procedures local to this file. */
 
-static void network_phase (int);
-static void check_idle (void *);
-static void connect_time_expired (void *);
+static void network_phase(ppp_pcb *pcb);
+static void check_idle(void *arg);
+static void connect_time_expired(void *arg);
 #if 0 /* UNUSED */
 static int  null_login (int);
 /* static int  get_pap_passwd (char *); */
@@ -556,10 +558,7 @@ set_permitted_number(argv)
 /*
  * An Open on LCP has requested a change from Dead to Establish phase.
  */
-void
-link_required(unit)
-    int unit;
-{
+void link_required(ppp_pcb *pcb) {
 }
 
 #if 0
@@ -630,11 +629,7 @@ void start_link(unit)
  * LCP has terminated the link; go to the Dead phase and take the
  * physical layer down.
  */
-void
-link_terminated(unit)
-    int unit;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void link_terminated(ppp_pcb *pcb) {
     if (pcb->phase == PHASE_DEAD || pcb->phase == PHASE_MASTER)
 	return;
     new_phase(pcb, PHASE_DISCONNECT);
@@ -709,17 +704,13 @@ link_terminated(unit)
 /*
  * LCP has gone down; it will either die or try to re-establish.
  */
-void
-link_down(unit)
-    int unit;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void link_down(ppp_pcb *pcb) {
 #if PPP_NOTIFY
     notify(link_down_notifier, 0);
 #endif /* #if PPP_NOTIFY */
 
     if (!doing_multilink) {
-	upper_layers_down(unit);
+	upper_layers_down(pcb);
 	if (pcb->phase != PHASE_DEAD && pcb->phase != PHASE_MASTER)
 	    new_phase(pcb, PHASE_ESTABLISH);
     }
@@ -729,8 +720,7 @@ link_down(unit)
     ppp_link_down(pcb);
 }
 
-void upper_layers_down(int unit)
-{
+void upper_layers_down(ppp_pcb *pcb) {
     int i;
     struct protent *protp;
 
@@ -738,9 +728,9 @@ void upper_layers_down(int unit)
 	if (!protp->enabled_flag)
 	    continue;
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
-	    (*protp->lowerdown)(unit);
+	    (*protp->lowerdown)(pcb->unit);
         if (protp->protocol < 0xC000 && protp->close != NULL)
-	    (*protp->close)(unit, "LCP down");
+	    (*protp->close)(pcb->unit, "LCP down");
     }
     num_np_open = 0;
     num_np_up = 0;
@@ -750,19 +740,15 @@ void upper_layers_down(int unit)
  * The link is established.
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
-void
-link_established(unit)
-    int unit;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void link_established(ppp_pcb *pcb) {
     int auth;
 #if 0 /* UNUSED */
-    lcp_options *wo = &lcp_wantoptions[unit];
+    lcp_options *wo = &lcp_wantoptions[pcb->unit];
 #endif /* UNUSED */
 #if PPP_SERVER
-    lcp_options *go = &lcp_gotoptions[unit];
+    lcp_options *go = &lcp_gotoptions[pcb->unit];
 #endif /* #if PPP_SERVER */
-    lcp_options *ho = &lcp_hisoptions[unit];
+    lcp_options *ho = &lcp_hisoptions[pcb->unit];
     int i;
     struct protent *protp;
 
@@ -773,7 +759,7 @@ link_established(unit)
 	for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	    if (protp->protocol != PPP_LCP && protp->enabled_flag
 		&& protp->lowerup != NULL)
-		(*protp->lowerup)(unit);
+		(*protp->lowerup)(pcb->unit);
     }
 
 #if 0 /* UNUSED */
@@ -809,7 +795,7 @@ link_established(unit)
 	if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
 	    status = EXIT_PEER_AUTH_FAILED;
-	    lcp_close(unit, "peer refused to authenticate");
+	    lcp_close(pcb->unit, "peer refused to authenticate");
 	    return;
 	}
     }
@@ -841,38 +827,35 @@ link_established(unit)
 
 #if EAP_SUPPORT
     if (ho->neg_eap) {
-	eap_authwithpeer(unit, pcb->settings.user);
+	eap_authwithpeer(pcb->unit, pcb->settings.user);
 	auth |= EAP_WITHPEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (ho->neg_chap) {
-	chap_auth_with_peer(unit, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
+	chap_auth_with_peer(pcb->unit, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     if (ho->neg_upap) {
-	upap_authwithpeer(unit, pcb->settings.user, pcb->settings.passwd);
+	upap_authwithpeer(pcb->unit, pcb->settings.user, pcb->settings.passwd);
 	auth |= PAP_WITHPEER;
     } else
 #endif /* PAP_SUPPORT */
     {}
 
-    auth_pending[unit] = auth;
-    auth_done[unit] = 0;
+    auth_pending[pcb->unit] = auth;
+    auth_done[pcb->unit] = 0;
 
     if (!auth)
-	network_phase(unit);
+	network_phase(pcb);
 }
 
 /*
  * Proceed to the network phase.
  */
-static void
-network_phase(unit)
-    int unit;
-{
+static void network_phase(ppp_pcb *pcb) {
 #if CBCP_SUPPORT
     ppp_pcb *pcb = &ppp_pcb_list[unit];
 #endif
@@ -926,14 +909,10 @@ network_phase(unit)
 	extra_options = 0;
     }
 #endif /* PPP_OPTIONS */
-    start_networks(unit);
+    start_networks(pcb);
 }
 
-void
-start_networks(unit)
-    int unit;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void start_networks(ppp_pcb *pcb) {
 #if CCP_SUPPORT || ECP_SUPPORT
     int i;
     struct protent *protp;
@@ -997,13 +976,10 @@ start_networks(unit)
         && !mppe_required
 #endif /* MPPE */
         )
-	continue_networks(unit);
+	continue_networks(pcb);
 }
 
-void
-continue_networks(unit)
-    int unit;
-{
+void continue_networks(ppp_pcb *pcb) {
     int i;
     struct protent *protp;
 
@@ -1115,11 +1091,7 @@ auth_peer_success(unit, protocol, prot_flavor, name, namelen)
 /*
  * We have failed to authenticate ourselves to the peer using `protocol'.
  */
-void
-auth_withpeer_fail(unit, protocol)
-    int unit, protocol;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
     int errcode = PPPERR_AUTHFAIL;
     /*
      * We've failed to authenticate ourselves to our peer.
@@ -1135,16 +1107,13 @@ auth_withpeer_fail(unit, protocol)
      * we can do except wait for that.
      */
     ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
-    lcp_close(unit, "Failed to authenticate ourselves to peer");
+    lcp_close(pcb->unit, "Failed to authenticate ourselves to peer");
 }
 
 /*
  * We have successfully authenticated ourselves with the peer using `protocol'.
  */
-void
-auth_withpeer_success(unit, protocol, prot_flavor)
-    int unit, protocol, prot_flavor;
-{
+void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
     int bit;
     const char *prot = "";
 
@@ -1189,26 +1158,22 @@ auth_withpeer_success(unit, protocol, prot_flavor)
     notice("%s authentication succeeded", prot);
 
     /* Save the authentication method for later. */
-    auth_done[unit] |= bit;
+    auth_done[pcb->unit] |= bit;
 
     /*
      * If there is no more authentication still being done,
      * proceed to the network (or callback) phase.
      */
-    if ((auth_pending[unit] &= ~bit) == 0)
-	network_phase(unit);
+    if ((auth_pending[pcb->unit] &= ~bit) == 0)
+	network_phase(pcb);
 }
 
 
 /*
  * np_up - a network protocol has come up.
  */
-void
-np_up(unit, proto)
-    int unit, proto;
-{
+void np_up(ppp_pcb *pcb, int proto) {
     int tlim;
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
 
     if (num_np_up == 0) {
 	/*
@@ -1224,14 +1189,14 @@ np_up(unit, proto)
 #endif /* UNUSED */
 	    tlim = pcb->settings.idle_time_limit;
 	if (tlim > 0)
-	    TIMEOUT(check_idle, NULL, tlim);
+	    TIMEOUT(check_idle, (void*)pcb, tlim);
 
 	/*
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
 	if (pcb->settings.maxconnect > 0)
-	    TIMEOUT(connect_time_expired, 0, pcb->settings.maxconnect);
+	    TIMEOUT(connect_time_expired, (void*)pcb, pcb->settings.maxconnect);
 
 #ifdef MAXOCTETS
 	if (maxoctets > 0)
@@ -1252,13 +1217,9 @@ np_up(unit, proto)
 /*
  * np_down - a network protocol has gone down.
  */
-void
-np_down(unit, proto)
-    int unit, proto;
-{
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void np_down(ppp_pcb *pcb, int proto) {
     if (--num_np_up == 0) {
-	UNTIMEOUT(check_idle, NULL);
+	UNTIMEOUT(check_idle, (void*)pcb);
 	UNTIMEOUT(connect_time_expired, NULL);
 #ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
@@ -1270,10 +1231,7 @@ np_down(unit, proto)
 /*
  * np_finished - a network protocol has finished using the link.
  */
-void
-np_finished(unit, proto)
-    int unit, proto;
-{
+void np_finished(ppp_pcb *pcb, int proto) {
     if (--num_np_open <= 0) {
 	/* no further use for the link: shut up shop. */
 	lcp_close(0, "No network protocols running");
@@ -1324,12 +1282,8 @@ check_maxoctets(arg)
  * check_idle - check whether the link has been idle for long
  * enough that we can shut it down.
  */
-static void
-check_idle(arg)
-    void *arg;
-{
-    /* FIXME: fix forced unit 0 */
-    ppp_pcb *pcb = &ppp_pcb_list[0];
+static void check_idle(void *arg) {
+    ppp_pcb *pcb = (ppp_pcb*)arg;
     struct ppp_idle idle;
     time_t itime;
     int tlim;
@@ -1355,19 +1309,15 @@ check_idle(arg)
 	need_holdoff = 0;
 #endif /* UNUSED */
     } else {
-	TIMEOUT(check_idle, NULL, tlim);
+	TIMEOUT(check_idle, (void*)pcb, tlim);
     }
 }
 
 /*
  * connect_time_expired - log a message and close the connection.
  */
-static void
-connect_time_expired(arg)
-    void *arg;
-{
-    /* FIXME: fix forced unit 0 */
-    ppp_pcb *pcb = &ppp_pcb_list[0];
+static void connect_time_expired(void *arg) {
+    ppp_pcb *pcb = (ppp_pcb*)arg;
     info("Connect time expired");
     pcb->status = EXIT_CONNECT_TIME;
     lcp_close(0, "Connect time expired");	/* Close connection */
@@ -1517,13 +1467,9 @@ auth_check_options()
  * authentication options, i.e. whether we have appropriate secrets
  * to use for authenticating ourselves and/or the peer.
  */
-void
-auth_reset(unit)
-    int unit;
-{
-  lcp_options *go = &lcp_gotoptions[unit];
-  lcp_options *ao = &lcp_allowoptions[unit];
-  ppp_pcb *pcb = &ppp_pcb_list[unit];
+void auth_reset(ppp_pcb *pcb) {
+  lcp_options *go = &lcp_gotoptions[pcb->unit];
+  lcp_options *ao = &lcp_allowoptions[pcb->unit];
 
   if( pcb->settings.passwd[0] ) {
 
@@ -1986,19 +1932,9 @@ have_srp_secret(client, server, need_ip, lacks_ipp)
  * for authenticating the given client on the given server.
  * (We could be either client or server).
  */
-int
-get_secret(unit, client, server, secret, secret_len, am_server)
-    int unit;
-    char *client;
-    char *server;
-    char *secret;
-    int *secret_len;
-    int am_server;
-{
+int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secret_len, int am_server) {
   int len;
-  ppp_pcb *pcb = &ppp_pcb_list[unit];
 
-  LWIP_UNUSED_ARG(unit);
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 

@@ -482,7 +482,7 @@ static void ppp_stop(ppp_pcb *pcb) {
 static void ppp_hup(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_hup: unit %d\n", pcb->unit));
   lcp_lowerdown(pcb->unit);
-  link_terminated(pcb->unit);
+  link_terminated(pcb);
 }
 
 /*

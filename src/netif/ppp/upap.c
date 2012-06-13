@@ -222,6 +222,7 @@ upap_timeout(arg)
     void *arg;
 {
     upap_state *u = (upap_state *) arg;
+    ppp_pcb *pcb = &ppp_pcb_list[u->us_unit];
 
     if (u->us_clientstate != UPAPCS_AUTHREQ)
 	return;
@@ -230,7 +231,7 @@ upap_timeout(arg)
 	/* give up in disgust */
 	error("No response to PAP authenticate-requests");
 	u->us_clientstate = UPAPCS_BADAUTH;
-	auth_withpeer_fail(u->us_unit, PPP_PAP);
+	auth_withpeer_fail(pcb, PPP_PAP);
 	return;
     }
 
@@ -321,15 +322,16 @@ upap_protrej(unit)
     int unit;
 {
     upap_state *u = &upap[unit];
+    ppp_pcb *pcb = &ppp_pcb_list[u->us_unit];
 
     if (u->us_clientstate == UPAPCS_AUTHREQ) {
 	error("PAP authentication failed due to protocol-reject");
-	auth_withpeer_fail(unit, PPP_PAP);
+	auth_withpeer_fail(pcb, PPP_PAP);
     }
 #if PPP_SERVER
     if (u->us_serverstate == UPAPSS_LISTEN) {
 	error("PAP authentication of peer failed (protocol-reject)");
-	auth_peer_fail(unit, PPP_PAP);
+	auth_peer_fail(pcb, PPP_PAP);
     }
 #endif /* PPP_SERVER */
     upap_lowerdown(unit);
@@ -506,6 +508,7 @@ upap_rauthack(u, inp, id, len)
     int id;
     int len;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[u->us_unit];
     u_char msglen;
     char *msg;
 
@@ -532,7 +535,7 @@ upap_rauthack(u, inp, id, len)
 
     u->us_clientstate = UPAPCS_OPEN;
 
-    auth_withpeer_success(u->us_unit, PPP_PAP, 0);
+    auth_withpeer_success(pcb, PPP_PAP, 0);
 }
 
 
@@ -546,6 +549,7 @@ upap_rauthnak(u, inp, id, len)
     int id;
     int len;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[u->us_unit];
     u_char msglen;
     char *msg;
 
@@ -573,7 +577,7 @@ upap_rauthnak(u, inp, id, len)
     u->us_clientstate = UPAPCS_BADAUTH;
 
     error("PAP authentication failed");
-    auth_withpeer_fail(u->us_unit, PPP_PAP);
+    auth_withpeer_fail(pcb, PPP_PAP);
 }
 
 

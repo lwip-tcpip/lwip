@@ -544,27 +544,27 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define EXIT_CNID_AUTH_FAILED	21
 
 /* Procedures exported from auth.c */
-void link_required (int);	  /* we are starting to use the link */
-void link_terminated (int);  /* we are finished with the link */
-void link_down (int);	  /* the LCP layer has left the Opened state */
-void upper_layers_down (int);/* take all NCPs down */
-void link_established (int); /* the link is up; authenticate now */
-void start_networks (int);   /* start all the network control protos */
-void continue_networks (int); /* start network [ip, etc] control protos */
+void link_required(ppp_pcb *pcb);     /* we are starting to use the link */
+void link_terminated(ppp_pcb *pcb);   /* we are finished with the link */
+void link_down(ppp_pcb *pcb);	      /* the LCP layer has left the Opened state */
+void upper_layers_down(ppp_pcb *pcb); /* take all NCPs down */
+void link_established(ppp_pcb *pcb);  /* the link is up; authenticate now */
+void start_networks(ppp_pcb *pcb);    /* start all the network control protos */
+void continue_networks(ppp_pcb *pcb); /* start network [ip, etc] control protos */
 
 void auth_peer_fail (int, int);
 				/* peer failed to authenticate itself */
 void auth_peer_success (int, int, int, char *, int);
 				/* peer successfully authenticated itself */
-void auth_withpeer_fail (int, int);
+void auth_withpeer_fail(ppp_pcb *pcb, int protocol);
 				/* we failed to authenticate ourselves */
-void auth_withpeer_success (int, int, int);
+void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor);
 				/* we successfully authenticated ourselves */
-void np_up (int, int);	  /* a network protocol has come up */
-void np_down (int, int);	  /* a network protocol has gone down */
-void np_finished (int, int); /* a network protocol no longer needs link */
-void auth_reset (int);	/* check what secrets we have */
-int  get_secret (int, char *, char *, char *, int *, int);
+void np_up(ppp_pcb *pcb, int proto);    /* a network protocol has come up */
+void np_down(ppp_pcb *pcb, int proto);  /* a network protocol has gone down */
+void np_finished(ppp_pcb *pcb, int proto); /* a network protocol no longer needs link */
+void auth_reset(ppp_pcb *pcb);	/* check what secrets we have */
+int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secret_len, int am_server);
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */

@@ -222,12 +222,13 @@ eap_client_timeout(arg)
 void *arg;
 {
 	eap_state *esp = (eap_state *) arg;
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 
 	if (!eap_client_active(esp))
 		return;
 
 	error("EAP: timeout waiting for Request from peer");
-	auth_withpeer_fail(esp->es_unit, PPP_EAP);
+	auth_withpeer_fail(pcb, PPP_EAP);
 	esp->es_client.ea_state = eapBadAuth;
 }
 
@@ -1043,16 +1044,17 @@ static void
 eap_protrej(unit)
 int unit;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 	eap_state *esp = &eap_states[unit];
 
 	if (eap_client_active(esp)) {
 		error("EAP authentication failed due to Protocol-Reject");
-		auth_withpeer_fail(unit, PPP_EAP);
+		auth_withpeer_fail(pcb, PPP_EAP);
 	}
 #if PPP_SERVER
 	if (eap_server_active(esp)) {
 		error("EAP authentication of peer failed on Protocol-Reject");
-		auth_peer_fail(unit, PPP_EAP);
+		auth_peer_fail(pcb, PPP_EAP);
 	}
 #endif /* PPP_SERVER */
 	eap_lowerdown(unit);
@@ -1341,7 +1343,7 @@ u_char *inp;
 int id;
 int len;
 {
-	ppp_pcb *pc = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	u_char typenum;
 	u_char vallen;
 	int secret_len;
@@ -1371,7 +1373,7 @@ int len;
 		if (esp->es_client.ea_timeout > 0) {
 			UNTIMEOUT(eap_client_timeout, (void *)esp);
 		}
-		auth_withpeer_fail(esp->es_unit, PPP_EAP);
+		auth_withpeer_fail(pcb, PPP_EAP);
 		return;
 	}
 
@@ -1460,15 +1462,15 @@ int len;
 		}
 
 		/* In case the remote doesn't give us his name. */
-		if (pc->settings.explicit_remote ||
-		    (pc->settings.remote_name[0] != '\0' && vallen == len))
-			strlcpy(rhostname, pc->settings.remote_name, sizeof (rhostname));
+		if (pcb->settings.explicit_remote ||
+		    (pcb->settings.remote_name[0] != '\0' && vallen == len))
+			strlcpy(rhostname, pcb->settings.remote_name, sizeof (rhostname));
 
 		/*
 		 * Get the secret for authenticating ourselves with
 		 * the specified host.
 		 */
-		if (!get_secret(esp->es_unit, esp->es_client.ea_name,
+		if (!get_secret(pcb, esp->es_client.ea_name,
 		    rhostname, secret, &secret_len, 0)) {
 			dbglog("EAP: no MD5 secret for auth to %q", rhostname);
 			eap_send_nak(esp, id, EAPT_SRP);
@@ -1738,7 +1740,7 @@ client_failure:
 	}
 	esp->es_client.ea_session = NULL;
 	t_clientclose(tc);
-	auth_withpeer_fail(esp->es_unit, PPP_EAP);
+	auth_withpeer_fail(pcb, PPP_EAP);
 #endif /* USE_SRP */
 }
 
@@ -1896,7 +1898,7 @@ int len;
 		 * Get the secret for authenticating the specified
 		 * host.
 		 */
-		if (!get_secret(esp->es_unit, rhostname,
+		if (!get_secret(pcb, rhostname,
 		    esp->es_server.ea_name, secret, &secret_len, 1)) {
 			dbglog("EAP: no MD5 secret for auth of %q", rhostname);
 			eap_send_failure(esp);
@@ -2050,6 +2052,7 @@ u_char *inp;
 int id;
 int len;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	if (esp->es_client.ea_state != eapOpen && !eap_client_active(esp)) {
 		dbglog("EAP unexpected success message in state %s (%d)",
 		    eap_state_name(esp->es_client.ea_state),
@@ -2067,7 +2070,7 @@ int len;
 	}
 
 	esp->es_client.ea_state = eapOpen;
-	auth_withpeer_success(esp->es_unit, PPP_EAP, 0);
+	auth_withpeer_success(pcb, PPP_EAP, 0);
 }
 
 /*
@@ -2080,6 +2083,7 @@ u_char *inp;
 int id;
 int len;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
 	if (!eap_client_active(esp)) {
 		dbglog("EAP unexpected failure message in state %s (%d)",
 		    eap_state_name(esp->es_client.ea_state),
@@ -2098,7 +2102,7 @@ int len;
 	esp->es_client.ea_state = eapBadAuth;
 
 	error("EAP: peer reports authentication failure");
-	auth_withpeer_fail(esp->es_unit, PPP_EAP);
+	auth_withpeer_fail(pcb, PPP_EAP);
 }
 
 /*

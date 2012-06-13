@@ -1982,7 +1982,7 @@ ipcp_up(f)
     reset_link_stats(f->unit);
 #endif /* PPP_STATS_SUPPORT */
 
-    np_up(f->unit, PPP_IP);
+    np_up(pcb, PPP_IP);
     ipcp_is_up = 1;
 
 #if PPP_NOTIFY
@@ -2023,7 +2023,7 @@ ipcp_down(f)
 #endif /* UNUSED */
     if (ipcp_is_up) {
 	ipcp_is_up = 0;
-	np_down(f->unit, PPP_IP);
+	np_down(pcb, PPP_IP);
     }
     sifvjcomp(pcb, 0, 0, 0);
 
@@ -2087,9 +2087,10 @@ static void
 ipcp_finished(f)
     fsm *f;
 {
+	ppp_pcb *pcb = &ppp_pcb_list[f->unit];
 	if (ipcp_is_open) {
 		ipcp_is_open = 0;
-		np_finished(f->unit, PPP_IP);
+		np_finished(pcb, PPP_IP);
 	}
 }
 

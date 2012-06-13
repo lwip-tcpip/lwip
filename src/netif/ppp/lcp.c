@@ -735,6 +735,7 @@ static void
 lcp_resetci(f)
     fsm *f;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     lcp_options *wo = &lcp_wantoptions[f->unit];
     lcp_options *go = &lcp_gotoptions[f->unit];
     lcp_options *ao = &lcp_allowoptions[f->unit];
@@ -754,7 +755,7 @@ lcp_resetci(f)
     if (noendpoint)
 	ao->neg_endpoint = 0;
     peer_mru[f->unit] = PPP_MRU;
-    auth_reset(f->unit);
+    auth_reset(pcb);
 }
 
 
@@ -2317,7 +2318,7 @@ lcp_up(f)
 
     lcp_echo_lowerup(f->unit);  /* Enable echo messages */
 
-    link_established(f->unit);
+    link_established(pcb);
 }
 
 
@@ -2335,7 +2336,7 @@ lcp_down(f)
 
     lcp_echo_lowerdown(f->unit);
 
-    link_down(f->unit);
+    link_down(pcb);
 
     ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0);
     ppp_recv_config(pcb, PPP_MRU,
@@ -2348,22 +2349,18 @@ lcp_down(f)
 /*
  * lcp_starting - LCP needs the lower layer up.
  */
-static void
-lcp_starting(f)
-    fsm *f;
-{
-    link_required(f->unit);
+static void lcp_starting(fsm *f) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    link_required(pcb);
 }
 
 
 /*
  * lcp_finished - LCP has finished with the lower layer.
  */
-static void
-lcp_finished(f)
-    fsm *f;
-{
-    link_terminated(f->unit);
+static void lcp_finished(fsm *f) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    link_terminated(pcb);
 }
 
 
