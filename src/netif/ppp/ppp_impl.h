@@ -40,10 +40,6 @@
 #include <stdio.h> /* formats */
 #include <stdarg.h>
 
-#ifndef bool
-typedef unsigned char	bool;
-#endif
-
 #include "lwip/netif.h"
 #include "lwip/def.h"
 #include "lwip/timers.h"

@@ -789,7 +789,7 @@ void link_established(ppp_pcb *pcb) {
 #if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
-	eap_authpeer(unit, pcb->settings.our_name);
+	eap_authpeer(pcb, pcb->settings.our_name);
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
@@ -801,7 +801,7 @@ void link_established(ppp_pcb *pcb) {
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     if (go->neg_upap) {
-	upap_authpeer(unit);
+	upap_authpeer(pcb);
 	auth |= PAP_PEER;
     } else
 #endif /* PAP_SUPPORT */
@@ -810,7 +810,7 @@ void link_established(ppp_pcb *pcb) {
 
 #if EAP_SUPPORT
     if (ho->neg_eap) {
-	eap_authwithpeer(pcb->unit, pcb->settings.user);
+	eap_authwithpeer(pcb, pcb->settings.user);
 	auth |= EAP_WITHPEER;
     } else
 #endif /* EAP_SUPPORT */

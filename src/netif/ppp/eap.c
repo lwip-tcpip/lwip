@@ -62,7 +62,6 @@
 #define	SHA_DIGESTSIZE 20
 #endif
 
-eap_state eap_states[NUM_PPP];		/* EAP state; one for each unit */
 #ifdef USE_SRP
 static char *pn_secret = NULL;		/* Pseudonym generating secret */
 #endif
@@ -97,13 +96,13 @@ static option_t eap_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void eap_init (int unit);
-static void eap_input (int unit, u_char *inp, int inlen);
-static void eap_protrej (int unit);
-static void eap_lowerup (int unit);
-static void eap_lowerdown (int unit);
+static void eap_init(int unit);
+static void eap_input(int unit, u_char *inp, int inlen);
+static void eap_protrej(int unit);
+static void eap_lowerup(int unit);
+static void eap_lowerdown(int unit);
 #if PRINTPKT_SUPPORT
-static int  eap_printpkt (u_char *inp, int inlen,
+static int  eap_printpkt(u_char *inp, int inlen,
     void (*)(void *arg, char *fmt, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
@@ -177,7 +176,7 @@ static const u_char wkmodulus[] = {
 
 #if PPP_SERVER
 /* Local forward declarations. */
-static void eap_server_timeout (void *arg);
+static void eap_server_timeout(void *arg);
 #endif /* PPP_SERVER */
 
 /*
@@ -196,40 +195,33 @@ enum eap_state_code esc;
  * eap_init - Initialize state for an EAP user.  This is currently
  * called once by main() during start-up.
  */
-static void
-eap_init(unit)
-int unit;
-{
-	eap_state *esp = &eap_states[unit];
+static void eap_init(int unit) {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 
-	BZERO(esp, sizeof (*esp));
-	esp->es_unit = unit;
+	BZERO(&pcb->eap, sizeof(eap_state));
+	pcb->eap.es_unit = unit;
 #if PPP_SERVER
-	esp->es_server.ea_timeout = EAP_DEFTIMEOUT;
-	esp->es_server.ea_maxrequests = EAP_DEFTRANSMITS;
-	esp->es_server.ea_id = (u_char)(drand48() * 0x100);
+	pcb->eap.es_server.ea_timeout = EAP_DEFTIMEOUT;
+	pcb->eap.es_server.ea_maxrequests = EAP_DEFTRANSMITS;
+	pcb->eap.es_server.ea_id = (u_char)(drand48() * 0x100);
 #endif /* PPP_SERVER */
-	esp->es_client.ea_timeout = EAP_DEFREQTIME;
-	esp->es_client.ea_maxrequests = EAP_DEFALLOWREQ;
+	pcb->eap.es_client.ea_timeout = EAP_DEFREQTIME;
+	pcb->eap.es_client.ea_maxrequests = EAP_DEFALLOWREQ;
 }
 
 /*
  * eap_client_timeout - Give up waiting for the peer to send any
  * Request messages.
  */
-static void
-eap_client_timeout(arg)
-void *arg;
-{
-	eap_state *esp = (eap_state *) arg;
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+static void eap_client_timeout(void *arg) {
+	ppp_pcb *pcb = (ppp_pcb*)arg;
 
-	if (!eap_client_active(esp))
+	if (!eap_client_active(pcb))
 		return;
 
 	error("EAP: timeout waiting for Request from peer");
 	auth_withpeer_fail(pcb, PPP_EAP);
-	esp->es_client.ea_state = eapBadAuth;
+	pcb->eap.es_client.ea_state = eapBadAuth;
 }
 
 /*
@@ -238,26 +230,21 @@ void *arg;
  * Start client state and wait for requests.  This is called only
  * after eap_lowerup.
  */
-void
-eap_authwithpeer(unit, localname)
-int unit;
-char *localname;
-{
-	eap_state *esp = &eap_states[unit];
+void eap_authwithpeer(ppp_pcb *pcb, char *localname) {
 
 	/* Save the peer name we're given */
-	esp->es_client.ea_name = localname;
-	esp->es_client.ea_namelen = strlen(localname);
+	pcb->eap.es_client.ea_name = localname;
+	pcb->eap.es_client.ea_namelen = strlen(localname);
 
-	esp->es_client.ea_state = eapListen;
+	pcb->eap.es_client.ea_state = eapListen;
 
 	/*
 	 * Start a timer so that if the other end just goes
 	 * silent, we don't sit here waiting forever.
 	 */
-	if (esp->es_client.ea_timeout > 0)
-		TIMEOUT(eap_client_timeout, (void *)esp,
-		    esp->es_client.ea_timeout);
+	if (pcb->eap.es_client.ea_timeout > 0)
+		TIMEOUT(eap_client_timeout, pcb,
+		    pcb->eap.es_client.ea_timeout);
 }
 
 #if PPP_SERVER
@@ -269,7 +256,7 @@ static void
 eap_send_failure(esp)
 eap_state *esp;
 {
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	u_char *outp;
 
 	outp = outpacket_buf;
@@ -277,13 +264,13 @@ eap_state *esp;
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_FAILURE, outp);
-	esp->es_server.ea_id++;
-	PUTCHAR(esp->es_server.ea_id, outp);
+	pcb->eap.es_server.ea_id++;
+	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
 	ppp_write(pcb, outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
 
-	esp->es_server.ea_state = eapBadAuth;
+	pcb->eap.es_server.ea_state = eapBadAuth;
 	auth_peer_fail(pcb, PPP_EAP);
 }
 
@@ -295,7 +282,7 @@ static void
 eap_send_success(esp)
 eap_state *esp;
 {
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	u_char *outp;
 
 	outp = outpacket_buf;
@@ -303,14 +290,14 @@ eap_state *esp;
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_SUCCESS, outp);
-	esp->es_server.ea_id++;
-	PUTCHAR(esp->es_server.ea_id, outp);
+	pcb->eap.es_server.ea_id++;
+	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
 	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
 
 	auth_peer_success(pcb, PPP_EAP, 0,
-	    esp->es_server.ea_peer, esp->es_server.ea_peerlen);
+	    pcb->eap.es_server.ea_peer, pcb->eap.es_server.ea_peerlen);
 }
 #endif /* PPP_SERVER */
 
@@ -446,36 +433,36 @@ int status;
 	struct b64state bs;
 #endif /* USE_SRP */
 
-	esp->es_server.ea_timeout = esp->es_savedtime;
-	switch (esp->es_server.ea_state) {
+	pcb->eap.es_server.ea_timeout = pcb->eap.es_savedtime;
+	switch (pcb->eap.es_server.ea_state) {
 	case eapBadAuth:
 		return;
 
 	case eapIdentify:
 #ifdef USE_SRP
 		/* Discard any previous session. */
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		if (ts != NULL) {
 			t_serverclose(ts);
-			esp->es_server.ea_session = NULL;
-			esp->es_server.ea_skey = NULL;
+			pcb->eap.es_server.ea_session = NULL;
+			pcb->eap.es_server.ea_skey = NULL;
 		}
 #endif /* USE_SRP */
 		if (status != 0) {
-			esp->es_server.ea_state = eapBadAuth;
+			pcb->eap.es_server.ea_state = eapBadAuth;
 			break;
 		}
 #ifdef USE_SRP
 		/* If we've got a pseudonym, try to decode to real name. */
-		if (esp->es_server.ea_peerlen > SRP_PSEUDO_LEN &&
-		    strncmp(esp->es_server.ea_peer, SRP_PSEUDO_ID,
+		if (pcb->eap.es_server.ea_peerlen > SRP_PSEUDO_LEN &&
+		    strncmp(pcb->eap.es_server.ea_peer, SRP_PSEUDO_ID,
 			SRP_PSEUDO_LEN) == 0 &&
-		    (esp->es_server.ea_peerlen - SRP_PSEUDO_LEN) * 3 / 4 <
+		    (pcb->eap.es_server.ea_peerlen - SRP_PSEUDO_LEN) * 3 / 4 <
 		    sizeof (secbuf)) {
 			BZERO(&bs, sizeof (bs));
 			plen = b64dec(&bs,
-			    esp->es_server.ea_peer + SRP_PSEUDO_LEN,
-			    esp->es_server.ea_peerlen - SRP_PSEUDO_LEN,
+			    pcb->eap.es_server.ea_peer + SRP_PSEUDO_LEN,
+			    pcb->eap.es_server.ea_peerlen - SRP_PSEUDO_LEN,
 			    secbuf);
 			toffs = 0;
 			for (i = 0; i < 5; i++) {
@@ -499,8 +486,8 @@ int status;
 				 */
 				if ((i = plen = *(unsigned char *)clear) > 7)
 					i = 7;
-				esp->es_server.ea_peerlen = plen;
-				dp = (unsigned char *)esp->es_server.ea_peer;
+				pcb->eap.es_server.ea_peerlen = plen;
+				dp = (unsigned char *)pcb->eap.es_server.ea_peer;
 				MEMCPY(dp, clear + 1, i);
 				plen -= i;
 				dp += i;
@@ -512,11 +499,11 @@ int status;
 					dp += 8;
 					plen -= 8;
 				}
-				esp->es_server.ea_peer[
-					esp->es_server.ea_peerlen] = '\0';
+				pcb->eap.es_server.ea_peer[
+					pcb->eap.es_server.ea_peerlen] = '\0';
 				dbglog("decoded pseudonym to \"%.*q\"",
-				    esp->es_server.ea_peerlen,
-				    esp->es_server.ea_peer);
+				    pcb->eap.es_server.ea_peerlen,
+				    pcb->eap.es_server.ea_peer);
 			} else {
 				dbglog("failed to decode real name");
 				/* Stay in eapIdentfy state; requery */
@@ -524,10 +511,10 @@ int status;
 			}
 		}
 		/* Look up user in secrets database. */
-		if (get_srp_secret(esp->es_unit, esp->es_server.ea_peer,
-		    esp->es_server.ea_name, (char *)secbuf, 1) != 0) {
+		if (get_srp_secret(pcb->eap.es_unit, pcb->eap.es_server.ea_peer,
+		    pcb->eap.es_server.ea_name, (char *)secbuf, 1) != 0) {
 			/* Set up default in case SRP entry is bad */
-			esp->es_server.ea_state = eapMD5Chall;
+			pcb->eap.es_server.ea_state = eapMD5Chall;
 			/* Get t_confent based on index in srp-secrets */
 			id = strtol((char *)secbuf, &cp, 10);
 			if (*cp++ != ':' || id < 0)
@@ -545,16 +532,16 @@ int status;
 				 * generator combination, and that will take
 				 * a while.  Lengthen the timeout here.
 				 */
-				if (esp->es_server.ea_timeout > 0 &&
-				    esp->es_server.ea_timeout < 30)
-					esp->es_server.ea_timeout = 30;
+				if (pcb->eap.es_server.ea_timeout > 0 &&
+				    pcb->eap.es_server.ea_timeout < 30)
+					pcb->eap.es_server.ea_timeout = 30;
 			} else {
 				break;
 			}
 			if ((cp2 = strchr(cp, ':')) == NULL)
 				break;
 			*cp2++ = '\0';
-			tpw.pebuf.name = esp->es_server.ea_peer;
+			tpw.pebuf.name = pcb->eap.es_server.ea_peer;
 			tpw.pebuf.password.len = t_fromb64((char *)tpw.pwbuf,
 			    cp);
 			tpw.pebuf.password.data = tpw.pwbuf;
@@ -563,9 +550,9 @@ int status;
 			tpw.pebuf.salt.data = tpw.saltbuf;
 			if ((ts = t_serveropenraw(&tpw.pebuf, tce)) == NULL)
 				break;
-			esp->es_server.ea_session = (void *)ts;
-			esp->es_server.ea_state = eapSRP1;
-			vals[0] = esp->es_server.ea_id + 1;
+			pcb->eap.es_server.ea_session = (void *)ts;
+			pcb->eap.es_server.ea_state = eapSRP1;
+			vals[0] = pcb->eap.es_server.ea_id + 1;
 			vals[1] = EAPT_SRP;
 			t_serveraddexdata(ts, vals, 2);
 			/* Generate B; must call before t_servergetkey() */
@@ -573,73 +560,73 @@ int status;
 			break;
 		}
 #endif /* USE_SRP */
-		esp->es_server.ea_state = eapMD5Chall;
+		pcb->eap.es_server.ea_state = eapMD5Chall;
 		break;
 
 	case eapSRP1:
 #ifdef USE_SRP
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		if (ts != NULL && status != 0) {
 			t_serverclose(ts);
-			esp->es_server.ea_session = NULL;
-			esp->es_server.ea_skey = NULL;
+			pcb->eap.es_server.ea_session = NULL;
+			pcb->eap.es_server.ea_skey = NULL;
 		}
 #endif /* USE_SRP */
 		if (status == 1) {
-			esp->es_server.ea_state = eapMD5Chall;
-		} else if (status != 0 || esp->es_server.ea_session == NULL) {
-			esp->es_server.ea_state = eapBadAuth;
+			pcb->eap.es_server.ea_state = eapMD5Chall;
+		} else if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+			pcb->eap.es_server.ea_state = eapBadAuth;
 		} else {
-			esp->es_server.ea_state = eapSRP2;
+			pcb->eap.es_server.ea_state = eapSRP2;
 		}
 		break;
 
 	case eapSRP2:
 #ifdef USE_SRP
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		if (ts != NULL && status != 0) {
 			t_serverclose(ts);
-			esp->es_server.ea_session = NULL;
-			esp->es_server.ea_skey = NULL;
+			pcb->eap.es_server.ea_session = NULL;
+			pcb->eap.es_server.ea_skey = NULL;
 		}
 #endif /* USE_SRP */
-		if (status != 0 || esp->es_server.ea_session == NULL) {
-			esp->es_server.ea_state = eapBadAuth;
+		if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+			pcb->eap.es_server.ea_state = eapBadAuth;
 		} else {
-			esp->es_server.ea_state = eapSRP3;
+			pcb->eap.es_server.ea_state = eapSRP3;
 		}
 		break;
 
 	case eapSRP3:
 	case eapSRP4:
 #ifdef USE_SRP
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		if (ts != NULL && status != 0) {
 			t_serverclose(ts);
-			esp->es_server.ea_session = NULL;
-			esp->es_server.ea_skey = NULL;
+			pcb->eap.es_server.ea_session = NULL;
+			pcb->eap.es_server.ea_skey = NULL;
 		}
 #endif /* USE_SRP */
-		if (status != 0 || esp->es_server.ea_session == NULL) {
-			esp->es_server.ea_state = eapBadAuth;
+		if (status != 0 || pcb->eap.es_server.ea_session == NULL) {
+			pcb->eap.es_server.ea_state = eapBadAuth;
 		} else {
-			esp->es_server.ea_state = eapOpen;
+			pcb->eap.es_server.ea_state = eapOpen;
 		}
 		break;
 
 	case eapMD5Chall:
 		if (status != 0) {
-			esp->es_server.ea_state = eapBadAuth;
+			pcb->eap.es_server.ea_state = eapBadAuth;
 		} else {
-			esp->es_server.ea_state = eapOpen;
+			pcb->eap.es_server.ea_state = eapOpen;
 		}
 		break;
 
 	default:
-		esp->es_server.ea_state = eapBadAuth;
+		pcb->eap.es_server.ea_state = eapBadAuth;
 		break;
 	}
-	if (esp->es_server.ea_state == eapBadAuth)
+	if (pcb->eap.es_server.ea_state == eapBadAuth)
 		eap_send_failure(esp);
 }
 
@@ -651,7 +638,7 @@ static void
 eap_send_request(esp)
 eap_state *esp;
 {
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	u_char *outp;
 	u_char *lenloc;
 	u_char *ptr;
@@ -667,24 +654,24 @@ eap_state *esp;
 #endif /* USE_SRP */
 
 	/* Handle both initial auth and restart */
-	if (esp->es_server.ea_state < eapIdentify &&
-	    esp->es_server.ea_state != eapInitial) {
-		esp->es_server.ea_state = eapIdentify;
+	if (pcb->eap.es_server.ea_state < eapIdentify &&
+	    pcb->eap.es_server.ea_state != eapInitial) {
+		pcb->eap.es_server.ea_state = eapIdentify;
 		if (explicit_remote) {
 			/*
 			 * If we already know the peer's
 			 * unauthenticated name, then there's no
 			 * reason to ask.  Go to next state instead.
 			 */
-			esp->es_server.ea_peer = remote_name;
-			esp->es_server.ea_peerlen = strlen(remote_name);
+			pcb->eap.es_server.ea_peer = remote_name;
+			pcb->eap.es_server.ea_peerlen = strlen(remote_name);
 			eap_figure_next_state(esp, 0);
 		}
 	}
 
-	if (esp->es_server.ea_maxrequests > 0 &&
-	    esp->es_server.ea_requests >= esp->es_server.ea_maxrequests) {
-		if (esp->es_server.ea_responses > 0)
+	if (pcb->eap.es_server.ea_maxrequests > 0 &&
+	    pcb->eap.es_server.ea_requests >= pcb->eap.es_server.ea_maxrequests) {
+		if (pcb->eap.es_server.ea_responses > 0)
 			error("EAP: too many Requests sent");
 		else
 			error("EAP: no response to Requests");
@@ -697,11 +684,11 @@ eap_state *esp;
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_REQUEST, outp);
-	PUTCHAR(esp->es_server.ea_id, outp);
+	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	lenloc = outp;
 	INCPTR(2, outp);
 
-	switch (esp->es_server.ea_state) {
+	switch (pcb->eap.es_server.ea_state) {
 	case eapIdentify:
 		PUTCHAR(EAPT_IDENTITY, outp);
 		str = "Name";
@@ -714,20 +701,20 @@ eap_state *esp;
 		PUTCHAR(EAPT_MD5CHAP, outp);
 		/*
 		 * pick a random challenge length between
-		 * MIN_CHALLENGE_LENGTH and MAX_CHALLENGE_LENGTH
+		 * EAP_MIN_CHALLENGE_LENGTH and EAP_MAX_CHALLENGE_LENGTH
 		 */
 		challen = (drand48() *
-		    (MAX_CHALLENGE_LENGTH - MIN_CHALLENGE_LENGTH)) +
-			    MIN_CHALLENGE_LENGTH;
+		    (EAP_MAX_CHALLENGE_LENGTH - EAP_MIN_CHALLENGE_LENGTH)) +
+			    EAP_MIN_CHALLENGE_LENGTH;
 		PUTCHAR(challen, outp);
-		esp->es_challen = challen;
-		ptr = esp->es_challenge;
+		pcb->eap.es_challen = challen;
+		ptr = pcb->eap.es_challenge;
 		while (--challen >= 0)
 			*ptr++ = (u_char) (drand48() * 0x100);
-		MEMCPY(outp, esp->es_challenge, esp->es_challen);
-		INCPTR(esp->es_challen, outp);
-		MEMCPY(outp, esp->es_server.ea_name, esp->es_server.ea_namelen);
-		INCPTR(esp->es_server.ea_namelen, outp);
+		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
+		INCPTR(pcb->eap.es_challen, outp);
+		MEMCPY(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
+		INCPTR(pcb->eap.es_server.ea_namelen, outp);
 		break;
 
 #ifdef USE_SRP
@@ -735,11 +722,11 @@ eap_state *esp;
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_CHALLENGE, outp);
 
-		PUTCHAR(esp->es_server.ea_namelen, outp);
-		MEMCPY(outp, esp->es_server.ea_name, esp->es_server.ea_namelen);
-		INCPTR(esp->es_server.ea_namelen, outp);
+		PUTCHAR(pcb->eap.es_server.ea_namelen, outp);
+		MEMCPY(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
+		INCPTR(pcb->eap.es_server.ea_namelen, outp);
 
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		assert(ts != NULL);
 		PUTCHAR(ts->s.len, outp);
 		MEMCPY(outp, ts->s.data, ts->s.len);
@@ -764,7 +751,7 @@ eap_state *esp;
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_SKEY, outp);
 
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		assert(ts != NULL);
 		MEMCPY(outp, ts->B.data, ts->B.len);
 		INCPTR(ts->B.len, outp);
@@ -774,7 +761,7 @@ eap_state *esp;
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_SVALIDATOR, outp);
 		PUTLONG(SRPVAL_EBIT, outp);
-		ts = (struct t_server *)esp->es_server.ea_session;
+		ts = (struct t_server *)pcb->eap.es_server.ea_session;
 		assert(ts != NULL);
 		MEMCPY(outp, t_serverresponse(ts), SHA_DIGESTSIZE);
 		INCPTR(SHA_DIGESTSIZE, outp);
@@ -782,8 +769,8 @@ eap_state *esp;
 		if (pncrypt_setkey(0)) {
 			/* Generate pseudonym */
 			optr = outp;
-			cp = (unsigned char *)esp->es_server.ea_peer;
-			if ((j = i = esp->es_server.ea_peerlen) > 7)
+			cp = (unsigned char *)pcb->eap.es_server.ea_peer;
+			if ((j = i = pcb->eap.es_server.ea_peerlen) > 7)
 				j = 7;
 			clear[0] = i;
 			MEMCPY(clear + 1, cp, j);
@@ -830,19 +817,19 @@ eap_state *esp;
 
 			/* Obscure the pseudonym with SHA1 hash */
 			SHA1Init(&ctxt);
-			SHA1Update(&ctxt, &esp->es_server.ea_id, 1);
-			SHA1Update(&ctxt, esp->es_server.ea_skey,
+			SHA1Update(&ctxt, &pcb->eap.es_server.ea_id, 1);
+			SHA1Update(&ctxt, pcb->eap.es_server.ea_skey,
 			    SESSION_KEY_LEN);
-			SHA1Update(&ctxt, esp->es_server.ea_peer,
-			    esp->es_server.ea_peerlen);
+			SHA1Update(&ctxt, pcb->eap.es_server.ea_peer,
+			    pcb->eap.es_server.ea_peerlen);
 			while (optr < outp) {
 				SHA1Final(dig, &ctxt);
 				cp = dig;
 				while (cp < dig + SHA_DIGESTSIZE)
 					*optr++ ^= *cp++;
 				SHA1Init(&ctxt);
-				SHA1Update(&ctxt, &esp->es_server.ea_id, 1);
-				SHA1Update(&ctxt, esp->es_server.ea_skey,
+				SHA1Update(&ctxt, &pcb->eap.es_server.ea_id, 1);
+				SHA1Update(&ctxt, pcb->eap.es_server.ea_skey,
 				    SESSION_KEY_LEN);
 				SHA1Update(&ctxt, optr - SHA_DIGESTSIZE,
 				    SHA_DIGESTSIZE);
@@ -853,14 +840,14 @@ eap_state *esp;
 	case eapSRP4:
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_LWRECHALLENGE, outp);
-		challen = MIN_CHALLENGE_LENGTH +
-		    ((MAX_CHALLENGE_LENGTH - MIN_CHALLENGE_LENGTH) * drand48());
-		esp->es_challen = challen;
-		ptr = esp->es_challenge;
+		challen = EAP_MIN_CHALLENGE_LENGTH +
+		    ((EAP_MAX_CHALLENGE_LENGTH - EAP_MIN_CHALLENGE_LENGTH) * drand48());
+		pcb->eap.es_challen = challen;
+		ptr = pcb->eap.es_challenge;
 		while (--challen >= 0)
 			*ptr++ = drand48() * 0x100;
-		MEMCPY(outp, esp->es_challenge, esp->es_challen);
-		INCPTR(esp->es_challen, outp);
+		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
+		INCPTR(pcb->eap.es_challen, outp);
 		break;
 #endif /* USE_SRP */
 
@@ -873,10 +860,10 @@ eap_state *esp;
 
 	ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
 
-	esp->es_server.ea_requests++;
+	pcb->eap.es_server.ea_requests++;
 
-	if (esp->es_server.ea_timeout > 0)
-		TIMEOUT(eap_server_timeout, esp, esp->es_server.ea_timeout);
+	if (pcb->eap.es_server.ea_timeout > 0)
+		TIMEOUT(eap_server_timeout, pcb, pcb->eap.es_server.ea_timeout);
 }
 
 /*
@@ -885,27 +872,23 @@ eap_state *esp;
  * Start server state and send first request.  This is called only
  * after eap_lowerup.
  */
-void
-eap_authpeer(unit, localname)
-int unit;
-char *localname;
-{
+void eap_authpeer(ppp_pcb *pcb, char *localname) {
 	eap_state *esp = &eap_states[unit];
 
 	/* Save the name we're given. */
-	esp->es_server.ea_name = localname;
-	esp->es_server.ea_namelen = strlen(localname);
+	pcb->eap.es_server.ea_name = localname;
+	pcb->eap.es_server.ea_namelen = strlen(localname);
 
-	esp->es_savedtime = esp->es_server.ea_timeout;
+	pcb->eap.es_savedtime = pcb->eap.es_server.ea_timeout;
 
 	/* Lower layer up yet? */
-	if (esp->es_server.ea_state == eapInitial ||
-	    esp->es_server.ea_state == eapPending) {
-		esp->es_server.ea_state = eapPending;
+	if (pcb->eap.es_server.ea_state == eapInitial ||
+	    pcb->eap.es_server.ea_state == eapPending) {
+		pcb->eap.es_server.ea_state = eapPending;
 		return;
 	}
 
-	esp->es_server.ea_state = eapPending;
+	pcb->eap.es_server.ea_state = eapPending;
 
 	/* ID number not updated here intentionally; hashed into M1 */
 	eap_send_request(esp);
@@ -915,11 +898,8 @@ char *localname;
  * eap_server_timeout - Retransmission timer for sending Requests
  * expired.
  */
-static void
-eap_server_timeout(arg)
-void *arg;
-{
-	eap_state *esp = (eap_state *) arg;
+static void eap_server_timeout(void *arg) {
+	ppp_pcb *pcb = (ppp_pcb*)arg;
 
 	if (!eap_server_active(esp))
 		return;
@@ -939,14 +919,14 @@ void *arg;
 {
 	eap_state *esp = (eap_state *)arg;
 
-	if (esp->es_server.ea_state != eapOpen &&
-	    esp->es_server.ea_state != eapSRP4)
+	if (pcb->eap.es_server.ea_state != eapOpen &&
+	    pcb->eap.es_server.ea_state != eapSRP4)
 		return;
 
-	esp->es_server.ea_requests = 0;
-	esp->es_server.ea_state = eapIdentify;
+	pcb->eap.es_server.ea_requests = 0;
+	pcb->eap.es_server.ea_state = eapIdentify;
 	eap_figure_next_state(esp, 0);
-	esp->es_server.ea_id++;
+	pcb->eap.es_server.ea_id++;
 	eap_send_request(esp);
 }
 
@@ -956,13 +936,13 @@ void *arg;
 {
 	eap_state *esp = (eap_state *)arg;
 
-	if (esp->es_server.ea_state != eapOpen ||
-	    esp->es_server.ea_type != EAPT_SRP)
+	if (pcb->eap.es_server.ea_state != eapOpen ||
+	    pcb->eap.es_server.ea_type != EAPT_SRP)
 		return;
 
-	esp->es_server.ea_requests = 0;
-	esp->es_server.ea_state = eapSRP4;
-	esp->es_server.ea_id++;
+	pcb->eap.es_server.ea_requests = 0;
+	pcb->eap.es_server.ea_state = eapSRP4;
+	pcb->eap.es_server.ea_id++;
 	eap_send_request(esp);
 }
 #endif /* PPP_SERVER */
@@ -975,26 +955,23 @@ void *arg;
  * return to closed state so that those two routines will do the right
  * thing.
  */
-static void
-eap_lowerup(unit)
-int unit;
-{
-	eap_state *esp = &eap_states[unit];
+static void eap_lowerup(int unit) {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 
 	/* Discard any (possibly authenticated) peer name. */
 #if PPP_SERVER
-	if (esp->es_server.ea_peer != NULL &&
-	    esp->es_server.ea_peer != remote_name)
-		free(esp->es_server.ea_peer);
-	esp->es_server.ea_peer = NULL;
+	if (pcb->eap.es_server.ea_peer != NULL &&
+	    pcb->eap.es_server.ea_peer != remote_name)
+		free(pcb->eap.es_server.ea_peer);
+	pcb->eap.es_server.ea_peer = NULL;
 #endif /* PPP_SERVER */
-	if (esp->es_client.ea_peer != NULL)
-		free(esp->es_client.ea_peer);
-	esp->es_client.ea_peer = NULL;
+	if (pcb->eap.es_client.ea_peer != NULL)
+		free(pcb->eap.es_client.ea_peer);
+	pcb->eap.es_client.ea_peer = NULL;
 
-	esp->es_client.ea_state = eapClosed;
+	pcb->eap.es_client.ea_state = eapClosed;
 #if PPP_SERVER
-	esp->es_server.ea_state = eapClosed;
+	pcb->eap.es_server.ea_state = eapClosed;
 #endif /* PPP_SERVER */
 }
 
@@ -1003,34 +980,31 @@ int unit;
  *
  * Cancel all timeouts and return to initial state.
  */
-static void
-eap_lowerdown(unit)
-int unit;
-{
-	eap_state *esp = &eap_states[unit];
+static void eap_lowerdown(int unit) {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 
-	if (eap_client_active(esp) && esp->es_client.ea_timeout > 0) {
-		UNTIMEOUT(eap_client_timeout, (void *)esp);
+	if (eap_client_active(pcb) && pcb->eap.es_client.ea_timeout > 0) {
+		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 #if PPP_SERVER
 	if (eap_server_active(esp)) {
-		if (esp->es_server.ea_timeout > 0) {
-			UNTIMEOUT(eap_server_timeout, (void *)esp);
+		if (pcb->eap.es_server.ea_timeout > 0) {
+			UNTIMEOUT(eap_server_timeout, pcb);
 		}
 	} else {
-		if ((esp->es_server.ea_state == eapOpen ||
-		    esp->es_server.ea_state == eapSRP4) &&
-		    esp->es_rechallenge > 0) {
+		if ((pcb->eap.es_server.ea_state == eapOpen ||
+		    pcb->eap.es_server.ea_state == eapSRP4) &&
+		    pcb->eap.es_rechallenge > 0) {
 			UNTIMEOUT(eap_rechallenge, (void *)esp);
 		}
-		if (esp->es_server.ea_state == eapOpen &&
-		    esp->es_lwrechallenge > 0) {
+		if (pcb->eap.es_server.ea_state == eapOpen &&
+		    pcb->eap.es_lwrechallenge > 0) {
 			UNTIMEOUT(srp_lwrechallenge, (void *)esp);
 		}
 	}
 
-	esp->es_client.ea_state = esp->es_server.ea_state = eapInitial;
-	esp->es_client.ea_requests = esp->es_server.ea_requests = 0;
+	pcb->eap.es_client.ea_state = pcb->eap.es_server.ea_state = eapInitial;
+	pcb->eap.es_client.ea_requests = pcb->eap.es_server.ea_requests = 0;
 #endif /* PPP_SERVER */
 }
 
@@ -1040,14 +1014,10 @@ int unit;
  * This shouldn't happen.  If it does, it represents authentication
  * failure.
  */
-static void
-eap_protrej(unit)
-int unit;
-{
+static void eap_protrej(int unit) {
 	ppp_pcb *pcb = &ppp_pcb_list[unit];
-	eap_state *esp = &eap_states[unit];
 
-	if (eap_client_active(esp)) {
+	if (eap_client_active(pcb)) {
 		error("EAP authentication failed due to Protocol-Reject");
 		auth_withpeer_fail(pcb, PPP_EAP);
 	}
@@ -1063,15 +1033,7 @@ int unit;
 /*
  * Format and send a regular EAP Response message.
  */
-static void
-eap_send_response(esp, id, typenum, str, lenstr)
-eap_state *esp;
-u_char id;
-u_char typenum;
-u_char *str;
-int lenstr;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *str, int lenstr) {
 	u_char *outp;
 	int msglen;
 
@@ -1081,7 +1043,7 @@ int lenstr;
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
-	esp->es_client.ea_id = id;
+	pcb->eap.es_client.ea_id = id;
 	msglen = EAP_HEADERLEN + sizeof (u_char) + lenstr;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(typenum, outp);
@@ -1095,15 +1057,7 @@ int lenstr;
 /*
  * Format and send an MD5-Challenge EAP Response message.
  */
-static void
-eap_chap_response(esp, id, hash, name, namelen)
-eap_state *esp;
-u_char id;
-u_char *hash;
-char *name;
-int namelen;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name, int namelen) {
 	u_char *outp;
 	int msglen;
 
@@ -1113,7 +1067,7 @@ int namelen;
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
-	esp->es_client.ea_id = id;
+	pcb->eap.es_client.ea_id = id;
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + MD5_SIGNATURE_SIZE +
 	    namelen;
 	PUTSHORT(msglen, outp);
@@ -1140,7 +1094,7 @@ u_char subtypenum;
 u_char *str;
 int lenstr;
 {
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1150,7 +1104,7 @@ int lenstr;
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
-	esp->es_client.ea_id = id;
+	pcb->eap.es_client.ea_id = id;
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + lenstr;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_SRP, outp);
@@ -1172,7 +1126,7 @@ u_char id;
 u_int32_t flags;
 u_char *str;
 {
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
 	u_char *outp;
 	int msglen;
 
@@ -1182,7 +1136,7 @@ u_char *str;
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
-	esp->es_client.ea_id = id;
+	pcb->eap.es_client.ea_id = id;
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u_int32_t) +
 	    SHA_DIGESTSIZE;
 	PUTSHORT(msglen, outp);
@@ -1195,13 +1149,7 @@ u_char *str;
 }
 #endif /* USE_SRP */
 
-static void
-eap_send_nak(esp, id, type)
-eap_state *esp;
-u_char id;
-u_char type;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+static void eap_send_nak(ppp_pcb *pcb, u_char id, u_char type) {
 	u_char *outp;
 	int msglen;
 
@@ -1211,7 +1159,7 @@ u_char type;
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
-	esp->es_client.ea_id = id;
+	pcb->eap.es_client.ea_id = id;
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char);
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_NAK, outp);
@@ -1298,12 +1246,12 @@ int len, id;
 		datp = inp + len;
 		SHA1Init(&ctxt);
 		SHA1Update(&ctxt, &val, 1);
-		SHA1Update(&ctxt, esp->es_client.ea_skey, SESSION_KEY_LEN);
+		SHA1Update(&ctxt, pcb->eap.es_client.ea_skey, SESSION_KEY_LEN);
 		if (len > 0) {
 			SHA1Update(&ctxt, datp, SHA_DIGESTSIZE);
 		} else {
-			SHA1Update(&ctxt, esp->es_client.ea_name,
-			    esp->es_client.ea_namelen);
+			SHA1Update(&ctxt, pcb->eap.es_client.ea_name,
+			    pcb->eap.es_client.ea_namelen);
 		}
 		SHA1Final(dig, &ctxt);
 		for (digp = dig; digp < dig + SHA_DIGESTSIZE; digp++)
@@ -1325,7 +1273,7 @@ int len, id;
 	len = write(fd, inp + 1, *inp);
 	if (close(fd) != -1 && len == *inp) {
 		dbglog("EAP: saved pseudonym");
-		esp->es_usedpseudo = 0;
+		pcb->eap.es_usedpseudo = 0;
 	} else {
 		dbglog("EAP: failed to save pseudonym");
 		remove_pn_file();
@@ -1336,14 +1284,7 @@ int len, id;
 /*
  * eap_request - Receive EAP Request message (client mode).
  */
-static void
-eap_request(esp, inp, id, len)
-eap_state *esp;
-u_char *inp;
-int id;
-int len;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
+static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	u_char typenum;
 	u_char vallen;
 	int secret_len;
@@ -1366,12 +1307,12 @@ int len;
 	 * same for duplicate detection purposes.
 	 */
 
-	esp->es_client.ea_requests++;
-	if (esp->es_client.ea_maxrequests != 0 &&
-	    esp->es_client.ea_requests > esp->es_client.ea_maxrequests) {
+	pcb->eap.es_client.ea_requests++;
+	if (pcb->eap.es_client.ea_maxrequests != 0 &&
+	    pcb->eap.es_client.ea_requests > pcb->eap.es_client.ea_maxrequests) {
 		info("EAP: received too many Request messages");
-		if (esp->es_client.ea_timeout > 0) {
-			UNTIMEOUT(eap_client_timeout, (void *)esp);
+		if (pcb->eap.es_client.ea_timeout > 0) {
+			UNTIMEOUT(eap_client_timeout, pcb);
 		}
 		auth_withpeer_fail(pcb, PPP_EAP);
 		return;
@@ -1390,11 +1331,11 @@ int len;
 		if (len > 0)
 			info("EAP: Identity prompt \"%.*q\"", len, inp);
 #ifdef USE_SRP
-		if (esp->es_usepseudo &&
-		    (esp->es_usedpseudo == 0 ||
-			(esp->es_usedpseudo == 1 &&
-			    id == esp->es_client.ea_id))) {
-			esp->es_usedpseudo = 1;
+		if (pcb->eap.es_usepseudo &&
+		    (pcb->eap.es_usedpseudo == 0 ||
+			(pcb->eap.es_usedpseudo == 1 &&
+			    id == pcb->eap.es_client.ea_id))) {
+			pcb->eap.es_usedpseudo = 1;
 			/* Try to get a pseudonym */
 			if ((fd = open_pn_file(O_RDONLY)) >= 0) {
 				strcpy(rhostname, SRP_PSEUDO_ID);
@@ -1402,7 +1343,7 @@ int len;
 				    sizeof (rhostname) - SRP_PSEUDO_LEN);
 				/* XXX NAI unsupported */
 				if (len > 0) {
-					eap_send_response(esp, id, typenum,
+					eap_send_response(pcb, id, typenum,
 					    rhostname, len + SRP_PSEUDO_LEN);
 				}
 				(void) close(fd);
@@ -1411,19 +1352,19 @@ int len;
 			}
 		}
 		/* Stop using pseudonym now. */
-		if (esp->es_usepseudo && esp->es_usedpseudo != 2) {
+		if (pcb->eap.es_usepseudo && pcb->eap.es_usedpseudo != 2) {
 			remove_pn_file();
-			esp->es_usedpseudo = 2;
+			pcb->eap.es_usedpseudo = 2;
 		}
 #endif /* USE_SRP */
-		eap_send_response(esp, id, typenum, esp->es_client.ea_name,
-		    esp->es_client.ea_namelen);
+		eap_send_response(pcb, id, typenum, (u_char*)pcb->eap.es_client.ea_name,
+		    pcb->eap.es_client.ea_namelen);
 		break;
 
 	case EAPT_NOTIFICATION:
 		if (len > 0)
 			info("EAP: Notification \"%.*q\"", len, inp);
-		eap_send_response(esp, id, typenum, NULL, 0);
+		eap_send_response(pcb, id, typenum, NULL, 0);
 		break;
 
 	case EAPT_NAK:
@@ -1447,7 +1388,7 @@ int len;
 			error("EAP: MD5-Challenge with bad length %d (8..%d)",
 			    vallen, len);
 			/* Try something better. */
-			eap_send_nak(esp, id, EAPT_SRP);
+			eap_send_nak(pcb, id, EAPT_SRP);
 			break;
 		}
 
@@ -1470,10 +1411,10 @@ int len;
 		 * Get the secret for authenticating ourselves with
 		 * the specified host.
 		 */
-		if (!get_secret(pcb, esp->es_client.ea_name,
+		if (!get_secret(pcb, pcb->eap.es_client.ea_name,
 		    rhostname, secret, &secret_len, 0)) {
 			dbglog("EAP: no MD5 secret for auth to %q", rhostname);
-			eap_send_nak(esp, id, EAPT_SRP);
+			eap_send_nak(pcb, id, EAPT_SRP);
 			break;
 		}
 		md5_starts(&mdContext);
@@ -1483,8 +1424,8 @@ int len;
 		BZERO(secret, sizeof (secret));
 		md5_update(&mdContext, inp, vallen);
 		md5_finish(&mdContext, hash);
-		eap_chap_response(esp, id, hash, esp->es_client.ea_name,
-		    esp->es_client.ea_namelen);
+		eap_chap_response(pcb, id, hash, pcb->eap.es_client.ea_name,
+		    pcb->eap.es_client.ea_namelen);
 		break;
 
 #ifdef USE_SRP
@@ -1501,22 +1442,22 @@ int len;
 		switch (vallen) {
 		case EAPSRP_CHALLENGE:
 			tc = NULL;
-			if (esp->es_client.ea_session != NULL) {
-				tc = (struct t_client *)esp->es_client.
+			if (pcb->eap.es_client.ea_session != NULL) {
+				tc = (struct t_client *)pcb->eap.es_client.
 				    ea_session;
 				/*
 				 * If this is a new challenge, then start
 				 * over with a new client session context.
 				 * Otherwise, just resend last response.
 				 */
-				if (id != esp->es_client.ea_id) {
+				if (id != pcb->eap.es_client.ea_id) {
 					t_clientclose(tc);
-					esp->es_client.ea_session = NULL;
+					pcb->eap.es_client.ea_session = NULL;
 					tc = NULL;
 				}
 			}
 			/* No session key just yet */
-			esp->es_client.ea_skey = NULL;
+			pcb->eap.es_client.ea_skey = NULL;
 			if (tc == NULL) {
 				GETCHAR(vallen, inp);
 				len--;
@@ -1541,10 +1482,10 @@ int len;
 					    sizeof (rhostname));
 				}
 
-				if (esp->es_client.ea_peer != NULL)
-					free(esp->es_client.ea_peer);
-				esp->es_client.ea_peer = strdup(rhostname);
-				esp->es_client.ea_peerlen = strlen(rhostname);
+				if (pcb->eap.es_client.ea_peer != NULL)
+					free(pcb->eap.es_client.ea_peer);
+				pcb->eap.es_client.ea_peer = strdup(rhostname);
+				pcb->eap.es_client.ea_peerlen = strlen(rhostname);
 
 				GETCHAR(vallen, inp);
 				len--;
@@ -1589,13 +1530,13 @@ int len;
 					Nval.data = inp;
 					Nval.len = len;
 				}
-				tc = t_clientopen(esp->es_client.ea_name,
+				tc = t_clientopen(pcb->eap.es_client.ea_name,
 				    &Nval, &gval, &sval);
 				if (tc == NULL) {
-					eap_send_nak(esp, id, EAPT_MD5CHAP);
+					eap_send_nak(pcb, id, EAPT_MD5CHAP);
 					break;
 				}
-				esp->es_client.ea_session = (void *)tc;
+				pcb->eap.es_client.ea_session = (void *)tc;
 
 				/* Add Challenge ID & type to verifier */
 				vals[0] = id;
@@ -1608,41 +1549,41 @@ int len;
 			break;
 
 		case EAPSRP_SKEY:
-			tc = (struct t_client *)esp->es_client.ea_session;
+			tc = (struct t_client *)pcb->eap.es_client.ea_session;
 			if (tc == NULL) {
 				warn("EAP: peer sent Subtype 2 without 1");
-				eap_send_nak(esp, id, EAPT_MD5CHAP);
+				eap_send_nak(pcb, id, EAPT_MD5CHAP);
 				break;
 			}
-			if (esp->es_client.ea_skey != NULL) {
+			if (pcb->eap.es_client.ea_skey != NULL) {
 				/*
 				 * ID number should not change here.  Warn
 				 * if it does (but otherwise ignore).
 				 */
-				if (id != esp->es_client.ea_id) {
+				if (id != pcb->eap.es_client.ea_id) {
 					warn("EAP: ID changed from %d to %d "
 					    "in SRP Subtype 2 rexmit",
-					    esp->es_client.ea_id, id);
+					    pcb->eap.es_client.ea_id, id);
 				}
 			} else {
-				if (get_srp_secret(esp->es_unit,
-				    esp->es_client.ea_name,
-				    esp->es_client.ea_peer, secret, 0) == 0) {
+				if (get_srp_secret(pcb->eap.es_unit,
+				    pcb->eap.es_client.ea_name,
+				    pcb->eap.es_client.ea_peer, secret, 0) == 0) {
 					/*
 					 * Can't work with this peer because
 					 * the secret is missing.  Just give
 					 * up.
 					 */
-					eap_send_nak(esp, id, EAPT_MD5CHAP);
+					eap_send_nak(pcb, id, EAPT_MD5CHAP);
 					break;
 				}
 				Bval.data = inp;
 				Bval.len = len;
 				t_clientpasswd(tc, secret);
 				BZERO(secret, sizeof (secret));
-				esp->es_client.ea_skey =
+				pcb->eap.es_client.ea_skey =
 				    t_clientgetkey(tc, &Bval);
-				if (esp->es_client.ea_skey == NULL) {
+				if (pcb->eap.es_client.ea_skey == NULL) {
 					/* Server is rogue; stop now */
 					error("EAP: SRP server is rogue");
 					goto client_failure;
@@ -1653,10 +1594,10 @@ int len;
 			break;
 
 		case EAPSRP_SVALIDATOR:
-			tc = (struct t_client *)esp->es_client.ea_session;
-			if (tc == NULL || esp->es_client.ea_skey == NULL) {
+			tc = (struct t_client *)pcb->eap.es_client.ea_session;
+			if (tc == NULL || pcb->eap.es_client.ea_skey == NULL) {
 				warn("EAP: peer sent Subtype 3 without 1/2");
-				eap_send_nak(esp, id, EAPT_MD5CHAP);
+				eap_send_nak(pcb, id, EAPT_MD5CHAP);
 				break;
 			}
 			/*
@@ -1664,11 +1605,11 @@ int len;
 			 * duplicate.  Otherwise, check that the server is
 			 * who we think it is.
 			 */
-			if (esp->es_client.ea_state == eapOpen) {
-				if (id != esp->es_client.ea_id) {
+			if (pcb->eap.es_client.ea_state == eapOpen) {
+				if (id != pcb->eap.es_client.ea_id) {
 					warn("EAP: ID changed from %d to %d "
 					    "in SRP Subtype 3 rexmit",
-					    esp->es_client.ea_id, id);
+					    pcb->eap.es_client.ea_id, id);
 				}
 			} else {
 				len -= sizeof (u_int32_t) + SHA_DIGESTSIZE;
@@ -1678,9 +1619,9 @@ int len;
 					    "failed");
 					goto client_failure;
 				}
-				GETLONG(esp->es_client.ea_keyflags, inp);
+				GETLONG(pcb->eap.es_client.ea_keyflags, inp);
 				/* Save pseudonym if user wants it. */
-				if (len > 0 && esp->es_usepseudo) {
+				if (len > 0 && pcb->eap.es_usepseudo) {
 					INCPTR(SHA_DIGESTSIZE, inp);
 					write_pseudonym(esp, inp, len, id);
 				}
@@ -1701,11 +1642,11 @@ int len;
 			SHA1Init(&ctxt);
 			vals[0] = id;
 			SHA1Update(&ctxt, vals, 1);
-			SHA1Update(&ctxt, esp->es_client.ea_skey,
+			SHA1Update(&ctxt, pcb->eap.es_client.ea_skey,
 			    SESSION_KEY_LEN);
 			SHA1Update(&ctxt, inp, len);
-			SHA1Update(&ctxt, esp->es_client.ea_name,
-			    esp->es_client.ea_namelen);
+			SHA1Update(&ctxt, pcb->eap.es_client.ea_name,
+			    pcb->eap.es_client.ea_namelen);
 			SHA1Final(dig, &ctxt);
 			eap_srp_response(esp, id, EAPSRP_LWRECHALLENGE, dig,
 			    SHA_DIGESTSIZE);
@@ -1713,7 +1654,7 @@ int len;
 
 		default:
 			error("EAP: unknown SRP Subtype %d", vallen);
-			eap_send_nak(esp, id, EAPT_MD5CHAP);
+			eap_send_nak(pcb, id, EAPT_MD5CHAP);
 			break;
 		}
 		break;
@@ -1721,24 +1662,24 @@ int len;
 
 	default:
 		info("EAP: unknown authentication type %d; Naking", typenum);
-		eap_send_nak(esp, id, EAPT_SRP);
+		eap_send_nak(pcb, id, EAPT_SRP);
 		break;
 	}
 
-	if (esp->es_client.ea_timeout > 0) {
-		UNTIMEOUT(eap_client_timeout, (void *)esp);
-		TIMEOUT(eap_client_timeout, (void *)esp,
-		    esp->es_client.ea_timeout);
+	if (pcb->eap.es_client.ea_timeout > 0) {
+		UNTIMEOUT(eap_client_timeout, pcb);
+		TIMEOUT(eap_client_timeout, pcb,
+		    pcb->eap.es_client.ea_timeout);
 	}
 	return;
 
 #ifdef USE_SRP
 client_failure:
-	esp->es_client.ea_state = eapBadAuth;
-	if (esp->es_client.ea_timeout > 0) {
+	pcb->eap.es_client.ea_state = eapBadAuth;
+	if (pcb->eap.es_client.ea_timeout > 0) {
 		UNTIMEOUT(eap_client_timeout, (void *)esp);
 	}
-	esp->es_client.ea_session = NULL;
+	pcb->eap.es_client.ea_session = NULL;
 	t_clientclose(tc);
 	auth_withpeer_fail(pcb, PPP_EAP);
 #endif /* USE_SRP */
@@ -1749,13 +1690,7 @@ client_failure:
 /*
  * eap_response - Receive EAP Response message (server mode).
  */
-static void
-eap_response(esp, inp, id, len)
-eap_state *esp;
-u_char *inp;
-int id;
-int len;
-{
+static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	u_char typenum;
 	u_char vallen;
 	int secret_len;
@@ -1770,13 +1705,13 @@ int len;
 	u_char dig[SHA_DIGESTSIZE];
 #endif /* USE_SRP */
 
-	if (esp->es_server.ea_id != id) {
+	if (pcb->eap.es_server.ea_id != id) {
 		dbglog("EAP: discarding Response %d; expected ID %d", id,
-		    esp->es_server.ea_id);
+		    pcb->eap.es_server.ea_id);
 		return;
 	}
 
-	esp->es_server.ea_responses++;
+	pcb->eap.es_server.ea_responses++;
 
 	if (len <= 0) {
 		error("EAP: empty Response message discarded");
@@ -1788,24 +1723,24 @@ int len;
 
 	switch (typenum) {
 	case EAPT_IDENTITY:
-		if (esp->es_server.ea_state != eapIdentify) {
+		if (pcb->eap.es_server.ea_state != eapIdentify) {
 			dbglog("EAP discarding unwanted Identify \"%.q\"", len,
 			    inp);
 			break;
 		}
 		info("EAP: unauthenticated peer name \"%.*q\"", len, inp);
-		if (esp->es_server.ea_peer != NULL &&
-		    esp->es_server.ea_peer != remote_name)
-			free(esp->es_server.ea_peer);
-		esp->es_server.ea_peer = malloc(len + 1);
-		if (esp->es_server.ea_peer == NULL) {
-			esp->es_server.ea_peerlen = 0;
+		if (pcb->eap.es_server.ea_peer != NULL &&
+		    pcb->eap.es_server.ea_peer != remote_name)
+			free(pcb->eap.es_server.ea_peer);
+		pcb->eap.es_server.ea_peer = malloc(len + 1);
+		if (pcb->eap.es_server.ea_peer == NULL) {
+			pcb->eap.es_server.ea_peerlen = 0;
 			eap_figure_next_state(esp, 1);
 			break;
 		}
-		MEMCPY(esp->es_server.ea_peer, inp, len);
-		esp->es_server.ea_peer[len] = '\0';
-		esp->es_server.ea_peerlen = len;
+		MEMCPY(pcb->eap.es_server.ea_peer, inp, len);
+		pcb->eap.es_server.ea_peer[len] = '\0';
+		pcb->eap.es_server.ea_peerlen = len;
 		eap_figure_next_state(esp, 0);
 		break;
 
@@ -1823,7 +1758,7 @@ int len;
 		GETCHAR(vallen, inp);
 		len--;
 
-		if (!explicit_remote && esp->es_server.ea_state == eapIdentify){
+		if (!explicit_remote && pcb->eap.es_server.ea_state == eapIdentify){
 			/* Peer cannot Nak Identify Request */
 			eap_figure_next_state(esp, 1);
 			break;
@@ -1832,25 +1767,25 @@ int len;
 		switch (vallen) {
 		case EAPT_SRP:
 			/* Run through SRP validator selection again. */
-			esp->es_server.ea_state = eapIdentify;
+			pcb->eap.es_server.ea_state = eapIdentify;
 			eap_figure_next_state(esp, 0);
 			break;
 
 		case EAPT_MD5CHAP:
-			esp->es_server.ea_state = eapMD5Chall;
+			pcb->eap.es_server.ea_state = eapMD5Chall;
 			break;
 
 		default:
 			dbglog("EAP: peer requesting unknown Type %d", vallen);
-			switch (esp->es_server.ea_state) {
+			switch (pcb->eap.es_server.ea_state) {
 			case eapSRP1:
 			case eapSRP2:
 			case eapSRP3:
-				esp->es_server.ea_state = eapMD5Chall;
+				pcb->eap.es_server.ea_state = eapMD5Chall;
 				break;
 			case eapMD5Chall:
 			case eapSRP4:
-				esp->es_server.ea_state = eapIdentify;
+				pcb->eap.es_server.ea_state = eapIdentify;
 				eap_figure_next_state(esp, 0);
 				break;
 			default:
@@ -1861,7 +1796,7 @@ int len;
 		break;
 
 	case EAPT_MD5CHAP:
-		if (esp->es_server.ea_state != eapMD5Chall) {
+		if (pcb->eap.es_server.ea_state != eapMD5Chall) {
 			error("EAP: unexpected MD5-Response");
 			eap_figure_next_state(esp, 1);
 			break;
@@ -1899,26 +1834,26 @@ int len;
 		 * host.
 		 */
 		if (!get_secret(pcb, rhostname,
-		    esp->es_server.ea_name, secret, &secret_len, 1)) {
+		    pcb->eap.es_server.ea_name, secret, &secret_len, 1)) {
 			dbglog("EAP: no MD5 secret for auth of %q", rhostname);
 			eap_send_failure(esp);
 			break;
 		}
 		md5_starts(&mdContext);
-		md5_update(&mdContext, &esp->es_server.ea_id, 1);
+		md5_update(&mdContext, &pcb->eap.es_server.ea_id, 1);
 		md5_update(&mdContext, (u_char *)secret, secret_len);
 		BZERO(secret, sizeof (secret));
-		md5_update(&mdContext, esp->es_challenge, esp->es_challen);
+		md5_update(&mdContext, pcb->eap.es_challenge, pcb->eap.es_challen);
 		md5_finish(&mdContext, hash);
 		if (BCMP(hash, inp, MD5_SIGNATURE_SIZE) != 0) {
 			eap_send_failure(esp);
 			break;
 		}
-		esp->es_server.ea_type = EAPT_MD5CHAP;
+		pcb->eap.es_server.ea_type = EAPT_MD5CHAP;
 		eap_send_success(esp);
 		eap_figure_next_state(esp, 0);
-		if (esp->es_rechallenge != 0)
-			TIMEOUT(eap_rechallenge, esp, esp->es_rechallenge);
+		if (pcb->eap.es_rechallenge != 0)
+			TIMEOUT(eap_rechallenge, esp, pcb->eap.es_rechallenge);
 		break;
 
 #ifdef USE_SRP
@@ -1932,17 +1867,17 @@ int len;
 		len--;
 		switch (typenum) {
 		case EAPSRP_CKEY:
-			if (esp->es_server.ea_state != eapSRP1) {
+			if (pcb->eap.es_server.ea_state != eapSRP1) {
 				error("EAP: unexpected SRP Subtype 1 Response");
 				eap_figure_next_state(esp, 1);
 				break;
 			}
 			A.data = inp;
 			A.len = len;
-			ts = (struct t_server *)esp->es_server.ea_session;
+			ts = (struct t_server *)pcb->eap.es_server.ea_session;
 			assert(ts != NULL);
-			esp->es_server.ea_skey = t_servergetkey(ts, &A);
-			if (esp->es_server.ea_skey == NULL) {
+			pcb->eap.es_server.ea_skey = t_servergetkey(ts, &A);
+			if (pcb->eap.es_server.ea_skey == NULL) {
 				/* Client's A value is bogus; terminate now */
 				error("EAP: bogus A value from client");
 				eap_send_failure(esp);
@@ -1952,7 +1887,7 @@ int len;
 			break;
 
 		case EAPSRP_CVALIDATOR:
-			if (esp->es_server.ea_state != eapSRP2) {
+			if (pcb->eap.es_server.ea_state != eapSRP2) {
 				error("EAP: unexpected SRP Subtype 2 Response");
 				eap_figure_next_state(esp, 1);
 				break;
@@ -1963,8 +1898,8 @@ int len;
 				eap_figure_next_state(esp, 1);
 				break;
 			}
-			GETLONG(esp->es_server.ea_keyflags, inp);
-			ts = (struct t_server *)esp->es_server.ea_session;
+			GETLONG(pcb->eap.es_server.ea_keyflags, inp);
+			ts = (struct t_server *)pcb->eap.es_server.ea_session;
 			assert(ts != NULL);
 			if (t_serververify(ts, inp)) {
 				info("EAP: unable to validate client identity");
@@ -1975,24 +1910,24 @@ int len;
 			break;
 
 		case EAPSRP_ACK:
-			if (esp->es_server.ea_state != eapSRP3) {
+			if (pcb->eap.es_server.ea_state != eapSRP3) {
 				error("EAP: unexpected SRP Subtype 3 Response");
 				eap_send_failure(esp);
 				break;
 			}
-			esp->es_server.ea_type = EAPT_SRP;
+			pcb->eap.es_server.ea_type = EAPT_SRP;
 			eap_send_success(esp);
 			eap_figure_next_state(esp, 0);
-			if (esp->es_rechallenge != 0)
+			if (pcb->eap.es_rechallenge != 0)
 				TIMEOUT(eap_rechallenge, esp,
-				    esp->es_rechallenge);
-			if (esp->es_lwrechallenge != 0)
+				    pcb->eap.es_rechallenge);
+			if (pcb->eap.es_lwrechallenge != 0)
 				TIMEOUT(srp_lwrechallenge, esp,
-				    esp->es_lwrechallenge);
+				    pcb->eap.es_lwrechallenge);
 			break;
 
 		case EAPSRP_LWRECHALLENGE:
-			if (esp->es_server.ea_state != eapSRP4) {
+			if (pcb->eap.es_server.ea_state != eapSRP4) {
 				info("EAP: unexpected SRP Subtype 4 Response");
 				return;
 			}
@@ -2004,21 +1939,21 @@ int len;
 			SHA1Init(&ctxt);
 			vallen = id;
 			SHA1Update(&ctxt, &vallen, 1);
-			SHA1Update(&ctxt, esp->es_server.ea_skey,
+			SHA1Update(&ctxt, pcb->eap.es_server.ea_skey,
 			    SESSION_KEY_LEN);
-			SHA1Update(&ctxt, esp->es_challenge, esp->es_challen);
-			SHA1Update(&ctxt, esp->es_server.ea_peer,
-			    esp->es_server.ea_peerlen);
+			SHA1Update(&ctxt, pcb->eap.es_challenge, pcb->eap.es_challen);
+			SHA1Update(&ctxt, pcb->eap.es_server.ea_peer,
+			    pcb->eap.es_server.ea_peerlen);
 			SHA1Final(dig, &ctxt);
 			if (BCMP(dig, inp, SHA_DIGESTSIZE) != 0) {
 				error("EAP: failed Lightweight rechallenge");
 				eap_send_failure(esp);
 				break;
 			}
-			esp->es_server.ea_state = eapOpen;
-			if (esp->es_lwrechallenge != 0)
+			pcb->eap.es_server.ea_state = eapOpen;
+			if (pcb->eap.es_lwrechallenge != 0)
 				TIMEOUT(srp_lwrechallenge, esp,
-				    esp->es_lwrechallenge);
+				    pcb->eap.es_lwrechallenge);
 			break;
 		}
 		break;
@@ -2030,13 +1965,13 @@ int len;
 		return;
 	}
 
-	if (esp->es_server.ea_timeout > 0) {
-		UNTIMEOUT(eap_server_timeout, (void *)esp);
+	if (pcb->eap.es_server.ea_timeout > 0) {
+		UNTIMEOUT(eap_server_timeout, pcb);
 	}
 
-	if (esp->es_server.ea_state != eapBadAuth &&
-	    esp->es_server.ea_state != eapOpen) {
-		esp->es_server.ea_id++;
+	if (pcb->eap.es_server.ea_state != eapBadAuth &&
+	    pcb->eap.es_server.ea_state != eapOpen) {
+		pcb->eap.es_server.ea_id++;
 		eap_send_request(esp);
 	}
 }
@@ -2045,23 +1980,16 @@ int len;
 /*
  * eap_success - Receive EAP Success message (client mode).
  */
-static void
-eap_success(esp, inp, id, len)
-eap_state *esp;
-u_char *inp;
-int id;
-int len;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
-	if (esp->es_client.ea_state != eapOpen && !eap_client_active(esp)) {
+static void eap_success(ppp_pcb *pcb, u_char *inp, int id, int len) {
+	if (pcb->eap.es_client.ea_state != eapOpen && !eap_client_active(pcb)) {
 		dbglog("EAP unexpected success message in state %s (%d)",
-		    eap_state_name(esp->es_client.ea_state),
-		    esp->es_client.ea_state);
+		    eap_state_name(pcb->eap.es_client.ea_state),
+		    pcb->eap.es_client.ea_state);
 		return;
 	}
 
-	if (esp->es_client.ea_timeout > 0) {
-		UNTIMEOUT(eap_client_timeout, (void *)esp);
+	if (pcb->eap.es_client.ea_timeout > 0) {
+		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 
 	if (len > 0) {
@@ -2069,29 +1997,22 @@ int len;
 		PRINTMSG(inp, len);
 	}
 
-	esp->es_client.ea_state = eapOpen;
+	pcb->eap.es_client.ea_state = eapOpen;
 	auth_withpeer_success(pcb, PPP_EAP, 0);
 }
 
 /*
  * eap_failure - Receive EAP Failure message (client mode).
  */
-static void
-eap_failure(esp, inp, id, len)
-eap_state *esp;
-u_char *inp;
-int id;
-int len;
-{
-	ppp_pcb *pcb = &ppp_pcb_list[esp->es_unit];
-	if (!eap_client_active(esp)) {
+static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
+	if (!eap_client_active(pcb)) {
 		dbglog("EAP unexpected failure message in state %s (%d)",
-		    eap_state_name(esp->es_client.ea_state),
-		    esp->es_client.ea_state);
+		    eap_state_name(pcb->eap.es_client.ea_state),
+		    pcb->eap.es_client.ea_state);
 	}
 
-	if (esp->es_client.ea_timeout > 0) {
-		UNTIMEOUT(eap_client_timeout, (void *)esp);
+	if (pcb->eap.es_client.ea_timeout > 0) {
+		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 
 	if (len > 0) {
@@ -2099,7 +2020,7 @@ int len;
 		PRINTMSG(inp, len);
 	}
 
-	esp->es_client.ea_state = eapBadAuth;
+	pcb->eap.es_client.ea_state = eapBadAuth;
 
 	error("EAP: peer reports authentication failure");
 	auth_withpeer_fail(pcb, PPP_EAP);
@@ -2108,13 +2029,8 @@ int len;
 /*
  * eap_input - Handle received EAP message.
  */
-static void
-eap_input(unit, inp, inlen)
-int unit;
-u_char *inp;
-int inlen;
-{
-	eap_state *esp = &eap_states[unit];
+static void eap_input(int unit, u_char *inp, int inlen) {
+	ppp_pcb *pcb = &ppp_pcb_list[unit];
 	u_char code, id;
 	int len;
 
@@ -2139,21 +2055,21 @@ int inlen;
 	/* Dispatch based on message code */
 	switch (code) {
 	case EAP_REQUEST:
-		eap_request(esp, inp, id, len);
+		eap_request(pcb, inp, id, len);
 		break;
 
 #if PPP_SERVER
 	case EAP_RESPONSE:
-		eap_response(esp, inp, id, len);
+		eap_response(pcb, inp, id, len);
 		break;
 #endif /* PPP_SERVER */
 
 	case EAP_SUCCESS:
-		eap_success(esp, inp, id, len);
+		eap_success(pcb, inp, id, len);
 		break;
 
 	case EAP_FAILURE:
-		eap_failure(esp, inp, id, len);
+		eap_failure(pcb, inp, id, len);
 		break;
 
 	default:				/* XXX Need code reject */
@@ -2179,13 +2095,7 @@ static char *eap_typenames[] = {
 	"Cisco", "Nokia", "SRP"
 };
 
-static int
-eap_printpkt(inp, inlen, printer, arg)
-u_char *inp;
-int inlen;
-void (*printer) (void *, char *, ...);
-void *arg;
-{
+static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *, ...), void *arg) {
 	int code, id, len, rtype, vallen;
 	u_char *pstart;
 	u_int32_t uval;

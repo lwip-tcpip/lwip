@@ -78,69 +78,19 @@ extern "C" {
 #define	SRP_PSEUDO_LEN	7
 
 #define MD5_SIGNATURE_SIZE	16
-#define MIN_CHALLENGE_LENGTH	16
-#define MAX_CHALLENGE_LENGTH	24
-
-enum eap_state_code {
-	eapInitial = 0,	/* No EAP authentication yet requested */
-	eapPending,	/* Waiting for LCP (no timer) */
-	eapClosed,	/* Authentication not in use */
-	eapListen,	/* Client ready (and timer running) */
-	eapIdentify,	/* EAP Identify sent */
-	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
-	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
-	eapSRP3,	/* Sent EAP SRP-SHA1 Subtype 3 */
-	eapMD5Chall,	/* Sent MD5-Challenge */
-	eapOpen,	/* Completed authentication */
-	eapSRP4,	/* Sent EAP SRP-SHA1 Subtype 4 */
-	eapBadAuth	/* Failed authentication */
-};
+#define EAP_MIN_CHALLENGE_LENGTH	16
+#define EAP_MAX_CHALLENGE_LENGTH	24
 
 #define	EAP_STATES	\
 	"Initial", "Pending", "Closed", "Listen", "Identify", \
 	"SRP1", "SRP2", "SRP3", "MD5Chall", "Open", "SRP4", "BadAuth"
 
-#define	eap_client_active(esp)	((esp)->es_client.ea_state == eapListen)
+#define	eap_client_active(pcb)	((pcb)->eap.es_client.ea_state == eapListen)
 #if PPP_SERVER
-#define	eap_server_active(esp)	\
-	((esp)->es_server.ea_state >= eapIdentify && \
-	 (esp)->es_server.ea_state <= eapMD5Chall)
+#define	eap_server_active(pcb)	\
+	((pcb)->eap.es_server.ea_state >= eapIdentify && \
+	 (pcb)->eap.es_server.ea_state <= eapMD5Chall)
 #endif /* PPP_SERVER */
-
-struct eap_auth {
-	char *ea_name;		/* Our name */
-	char *ea_peer;		/* Peer's name */
-	void *ea_session;	/* Authentication library linkage */
-	u_char *ea_skey;	/* Shared encryption key */
-	int ea_timeout;		/* Time to wait (for retransmit/fail) */
-	int ea_maxrequests;	/* Max Requests allowed */
-	u_short ea_namelen;	/* Length of our name */
-	u_short ea_peerlen;	/* Length of peer's name */
-	enum eap_state_code ea_state;
-	u_char ea_id;		/* Current id */
-	u_char ea_requests;	/* Number of Requests sent/received */
-	u_char ea_responses;	/* Number of Responses */
-	u_char ea_type;		/* One of EAPT_* */
-	u_int32_t ea_keyflags;	/* SRP shared key usage flags */
-};
-
-/*
- * Complete EAP state for one PPP session.
- */
-typedef struct eap_state {
-	int es_unit;			/* Interface unit number */
-	struct eap_auth es_client;	/* Client (authenticatee) data */
-#if PPP_SERVER
-	struct eap_auth es_server;	/* Server (authenticator) data */
-#endif /* PPP_SERVER */
-	int es_savedtime;		/* Saved timeout */
-	int es_rechallenge;		/* EAP rechallenge interval */
-	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */
-	bool es_usepseudo;		/* Use SRP Pseudonym if offered one */
-	int es_usedpseudo;		/* Set if we already sent PN */
-	int es_challen;			/* Length of challenge string */
-	u_char es_challenge[MAX_CHALLENGE_LENGTH];
-} eap_state;
 
 /*
  * Timeouts.
@@ -150,10 +100,8 @@ typedef struct eap_state {
 #define	EAP_DEFREQTIME		20	/* Time to wait for peer request */
 #define	EAP_DEFALLOWREQ		20	/* max # times to accept requests */
 
-extern eap_state eap_states[];
-
-void eap_authwithpeer (int unit, char *localname);
-void eap_authpeer (int unit, char *localname);
+void eap_authwithpeer(ppp_pcb *pcb, char *localname);
+void eap_authpeer(ppp_pcb *pcb, char *localname);
 
 extern struct protent eap_protent;
 

@@ -48,9 +48,7 @@
 #define MD5_MAX_CHALLENGE	24
 
 #if PPP_SERVER
-static void
-chap_md5_generate_challenge(unsigned char *cp)
-{
+static void chap_md5_generate_challenge(unsigned char *cp) {
 	int clen;
 
 	clen = (int)(drand48() * (MD5_MAX_CHALLENGE - MD5_MIN_CHALLENGE))
@@ -59,12 +57,10 @@ chap_md5_generate_challenge(unsigned char *cp)
 	random_bytes(cp, clen);
 }
 
-static int
-chap_md5_verify_response(int id, char *name,
+static int chap_md5_verify_response(int id, char *name,
 			 unsigned char *secret, int secret_len,
 			 unsigned char *challenge, unsigned char *response,
-			 char *message, int message_space)
-{
+			 char *message, int message_space) {
 	md5_context ctx;
 	unsigned char idbyte = id;
 	unsigned char hash[MD5_HASH_SIZE];
@@ -91,11 +87,9 @@ chap_md5_verify_response(int id, char *name,
 }
 #endif /* PPP_SERVER */
 
-static void
-chap_md5_make_response(unsigned char *response, int id, char *our_name,
+static void chap_md5_make_response(unsigned char *response, int id, char *our_name,
 		       unsigned char *challenge, char *secret, int secret_len,
-		       unsigned char *private)
-{
+		       unsigned char *private) {
 	md5_context ctx;
 	unsigned char idbyte = id;
 	int challenge_len = *challenge++;
@@ -119,9 +113,7 @@ static struct chap_digest_type md5_digest = {
 	NULL,			/* handle_failure */
 };
 
-void
-chap_md5_init(void)
-{
+void chap_md5_init(void) {
 	chap_register_digest(&md5_digest);
 }
 

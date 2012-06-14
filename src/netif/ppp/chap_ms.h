@@ -43,7 +43,7 @@
 #define MS_AUTH_RESPONSE_LENGTH	40	/* MS-CHAPv2 authenticator response, */
 					/* as ASCII */
 
-/* E=eeeeeeeeee error codes for MS-CHAP failure messages. */
+/* Error codes for MS-CHAP failure messages. */
 #define MS_CHAP_ERROR_RESTRICTED_LOGON_HOURS	646
 #define MS_CHAP_ERROR_ACCT_DISABLED		647
 #define MS_CHAP_ERROR_PASSWD_EXPIRED		648

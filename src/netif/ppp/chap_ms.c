@@ -166,9 +166,7 @@ static option_t chapms_option_list[] = {
  * The length goes in challenge[0] and the actual challenge starts
  * at challenge[1].
  */
-static void
-chapms_generate_challenge(unsigned char *challenge)
-{
+static void chapms_generate_challenge(unsigned char *challenge) {
 	*challenge++ = 8;
 #ifdef DEBUGMPPEKEY
 	if (mschap_challenge && strlen(mschap_challenge) == 8)
@@ -178,9 +176,7 @@ chapms_generate_challenge(unsigned char *challenge)
 		random_bytes(challenge, 8);
 }
 
-static void
-chapms2_generate_challenge(unsigned char *challenge)
-{
+static void chapms2_generate_challenge(unsigned char *challenge) {
 	*challenge++ = 16;
 #ifdef DEBUGMPPEKEY
 	if (mschap_challenge && strlen(mschap_challenge) == 16)
@@ -190,12 +186,10 @@ chapms2_generate_challenge(unsigned char *challenge)
 		random_bytes(challenge, 16);
 }
 
-static int
-chapms_verify_response(int id, char *name,
+static int chapms_verify_response(int id, char *name,
 		       unsigned char *secret, int secret_len,
 		       unsigned char *challenge, unsigned char *response,
-		       char *message, int message_space)
-{
+		       char *message, int message_space) {
 	unsigned char md[MS_CHAP_RESPONSE_LEN];
 	int diff;
 	int challenge_len, response_len;
@@ -238,12 +232,10 @@ chapms_verify_response(int id, char *name,
 	return 0;
 }
 
-static int
-chapms2_verify_response(int id, char *name,
+static int chapms2_verify_response(int id, char *name,
 			unsigned char *secret, int secret_len,
 			unsigned char *challenge, unsigned char *response,
-			char *message, int message_space)
-{
+			char *message, int message_space) {
 	unsigned char md[MS_CHAP2_RESPONSE_LEN];
 	char saresponse[MS_AUTH_RESPONSE_LENGTH+1];
 	int challenge_len, response_len;
@@ -316,21 +308,17 @@ chapms2_verify_response(int id, char *name,
 }
 #endif /* PPP_SERVER */
 
-static void
-chapms_make_response(unsigned char *response, int id, char *our_name,
+static void chapms_make_response(unsigned char *response, int id, char *our_name,
 		     unsigned char *challenge, char *secret, int secret_len,
-		     unsigned char *private)
-{
+		     unsigned char *private) {
 	challenge++;	/* skip length, should be 8 */
 	*response++ = MS_CHAP_RESPONSE_LEN;
 	ChapMS(challenge, secret, secret_len, response);
 }
 
-static void
-chapms2_make_response(unsigned char *response, int id, char *our_name,
+static void chapms2_make_response(unsigned char *response, int id, char *our_name,
 		      unsigned char *challenge, char *secret, int secret_len,
-		      unsigned char *private)
-{
+		      unsigned char *private) {
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;
 	ChapMS2(challenge,
@@ -343,9 +331,7 @@ chapms2_make_response(unsigned char *response, int id, char *our_name,
 		MS_CHAP2_AUTHENTICATEE);
 }
 
-static int
-chapms2_check_success(unsigned char *msg, int len, unsigned char *private)
-{
+static int chapms2_check_success(unsigned char *msg, int len, unsigned char *private) {
 	if ((len < MS_AUTH_RESPONSE_LENGTH + 2) ||
 	    strncmp((char *)msg, "S=", 2) != 0) {
 		/* Packet does not start with "S=" */
@@ -373,9 +359,7 @@ chapms2_check_success(unsigned char *msg, int len, unsigned char *private)
 	return 1;
 }
 
-static void
-chapms_handle_failure(unsigned char *inp, int len)
-{
+static void chapms_handle_failure(unsigned char *inp, int len) {
 	int err;
 	char *p, msg[64];
 
@@ -438,11 +422,9 @@ print_msg:
 		error("MS-CHAP authentication failed: %v", p);
 }
 
-static void
-ChallengeResponse(u_char *challenge,
+static void ChallengeResponse(u_char *challenge,
 		  u_char PasswordHash[MD4_SIGNATURE_SIZE],
-		  u_char response[24])
-{
+		  u_char response[24]) {
     u_char    ZPasswordHash[21];
     des_context des;
     u_char des_key[8];
@@ -472,11 +454,8 @@ ChallengeResponse(u_char *challenge,
 #endif
 }
 
-void
-ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
-	      char *username, u_char Challenge[8])
-    
-{
+void ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
+	      char *username, u_char Challenge[8]) {
     sha1_context	sha1Context;
     u_char	sha1Hash[SHA1_SIGNATURE_SIZE];
     char	*user;
@@ -503,9 +482,7 @@ ChallengeHash(u_char PeerChallenge[16], u_char *rchallenge,
  * is assumed by all M$ CHAP RFCs.  (Unicode byte ordering
  * is machine-dependent.)
  */
-static void
-ascii2unicode(char ascii[], int ascii_len, u_char unicode[])
-{
+static void ascii2unicode(char ascii[], int ascii_len, u_char unicode[]) {
     int i;
 
     BZERO(unicode, ascii_len * 2);
@@ -513,9 +490,7 @@ ascii2unicode(char ascii[], int ascii_len, u_char unicode[])
 	unicode[i * 2] = (u_char) ascii[i];
 }
 
-static void
-NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
-{
+static void NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE]) {
     md4_context		md4Context;
 
     md4_starts(&md4Context);
@@ -523,10 +498,8 @@ NTPasswordHash(u_char *secret, int secret_len, u_char hash[MD4_SIGNATURE_SIZE])
     md4_finish(&md4Context, hash);
 }
 
-static void
-ChapMS_NT(u_char *rchallenge, char *secret, int secret_len,
-	  u_char NTResponse[24])
-{
+static void ChapMS_NT(u_char *rchallenge, char *secret, int secret_len,
+	  u_char NTResponse[24]) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
 
@@ -537,10 +510,8 @@ ChapMS_NT(u_char *rchallenge, char *secret, int secret_len,
     ChallengeResponse(rchallenge, PasswordHash, NTResponse);
 }
 
-static void
-ChapMS2_NT(u_char *rchallenge, u_char PeerChallenge[16], char *username,
-	   char *secret, int secret_len, u_char NTResponse[24])
-{
+static void ChapMS2_NT(u_char *rchallenge, u_char PeerChallenge[16], char *username,
+	   char *secret, int secret_len, u_char NTResponse[24]) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
     u_char	Challenge[8];
@@ -557,10 +528,8 @@ ChapMS2_NT(u_char *rchallenge, u_char PeerChallenge[16], char *username,
 #ifdef MSLANMAN
 static u_char *StdText = (u_char *)"KGS!@#$%"; /* key from rasapi32.dll */
 
-static void
-ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
-	      unsigned char *response)
-{
+static void ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
+	      unsigned char *response) {
     int			i;
     u_char		UcasePassword[MAX_NT_PASSWORD]; /* max is actually 14 */
     u_char		PasswordHash[MD4_SIGNATURE_SIZE];
@@ -585,12 +554,10 @@ ChapMS_LANMan(u_char *rchallenge, char *secret, int secret_len,
 #endif
 
 
-void
-GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
+void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 			      u_char NTResponse[24], u_char PeerChallenge[16],
 			      u_char *rchallenge, char *username,
-			      u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1])
-{
+			      u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1]) {
     /*
      * "Magic" constants used in response generation, from RFC 2759.
      */
@@ -631,13 +598,11 @@ GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 }
 
 
-static void
-GenerateAuthenticatorResponsePlain
+static void GenerateAuthenticatorResponsePlain
 		(char *secret, int secret_len,
 		 u_char NTResponse[24], u_char PeerChallenge[16],
 		 u_char *rchallenge, char *username,
-		 u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1])
-{
+		 u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1]) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
     u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
@@ -658,9 +623,7 @@ GenerateAuthenticatorResponsePlain
  * Set mppe_xxxx_key from the NTPasswordHashHash.
  * RFC 2548 (RADIUS support) requires us to export this function (ugh).
  */
-void
-mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE])
-{
+void mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE]) {
     sha1_context	sha1Context;
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
@@ -680,9 +643,7 @@ mppe_set_keys(u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE])
 /*
  * Set mppe_xxxx_key from MS-CHAP credentials. (see RFC 3079)
  */
-static void
-Set_Start_Key(u_char *rchallenge, char *secret, int secret_len)
-{
+static void Set_Start_Key(u_char *rchallenge, char *secret, int secret_len) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
     u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
@@ -701,10 +662,8 @@ Set_Start_Key(u_char *rchallenge, char *secret, int secret_len)
  * This helper function used in the Winbind module, which gets the
  * NTHashHash from the server.
  */
-void
-mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
-	       u_char NTResponse[24], int IsServer)
-{
+void mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
+	       u_char NTResponse[24], int IsServer) {
     sha1_context	sha1Context;
     u_char	MasterKey[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
@@ -795,9 +754,7 @@ mppe_set_keys2(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 /*
  * Set mppe_xxxx_key from MS-CHAPv2 credentials. (see RFC 3079)
  */
-static void
-SetMasterKeys(char *secret, int secret_len, u_char NTResponse[24], int IsServer)
-{
+static void SetMasterKeys(char *secret, int secret_len, u_char NTResponse[24], int IsServer) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
     u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
@@ -811,10 +768,8 @@ SetMasterKeys(char *secret, int secret_len, u_char NTResponse[24], int IsServer)
 #endif /* MPPE */
 
 
-void
-ChapMS(u_char *rchallenge, char *secret, int secret_len,
-       unsigned char *response)
-{
+void ChapMS(u_char *rchallenge, char *secret, int secret_len,
+       unsigned char *response) {
     BZERO(response, MS_CHAP_RESPONSE_LEN);
 
     ChapMS_NT(rchallenge, secret, secret_len, &response[MS_CHAP_NTRESP]);
@@ -845,11 +800,9 @@ ChapMS(u_char *rchallenge, char *secret, int secret_len,
  * The PeerChallenge field of response is then used for calculation of the
  * Authenticator Response.
  */
-void
-ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
+void ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
 	char *user, char *secret, int secret_len, unsigned char *response,
-	u_char authResponse[], int authenticator)
-{
+	u_char authResponse[], int authenticator) {
     /* ARGSUSED */
     u_char *p = &response[MS_CHAP2_PEER_CHALLENGE];
     int i;
@@ -884,9 +837,7 @@ ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
 /*
  * Set MPPE options from plugins.
  */
-void
-set_mppe_enc_types(int policy, int types)
-{
+void set_mppe_enc_types(int policy, int types) {
     /* Early exit for unknown policies. */
     if (policy != MPPE_ENC_POL_ENC_ALLOWED ||
 	policy != MPPE_ENC_POL_ENC_REQUIRED)
@@ -935,9 +886,7 @@ static struct chap_digest_type chapms2_digest = {
 	chapms_handle_failure,
 };
 
-void
-chapms_init(void)
-{
+void chapms_init(void) {
 	chap_register_digest(&chapms_digest);
 	chap_register_digest(&chapms2_digest);
 #if PPP_OPTIONS
