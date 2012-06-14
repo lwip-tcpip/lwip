@@ -151,11 +151,11 @@ extern void chap_register_digest(struct chap_digest_type *);
 
 #if PPP_SERVER
 /* Called by authentication code to start authenticating the peer. */
-extern void chap_auth_peer(int unit, char *our_name, int digest_code);
+extern void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code);
 #endif /* PPP_SERVER */
 
 /* Called by auth. code to start authenticating us to the peer. */
-extern void chap_auth_with_peer(int unit, char *our_name, int digest_code);
+extern void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
 extern struct protent chap_protent;

@@ -795,7 +795,7 @@ void link_established(ppp_pcb *pcb) {
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (go->neg_chap) {
-	chap_auth_peer(unit, pcb->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
+	chap_auth_peer(pcb, pcb->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */
@@ -816,13 +816,13 @@ void link_established(ppp_pcb *pcb) {
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (ho->neg_chap) {
-	chap_auth_with_peer(pcb->unit, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
+	chap_auth_with_peer(pcb, pcb->settings.user, CHAP_DIGEST(ho->chap_mdtype));
 	auth |= CHAP_WITHPEER;
     } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     if (ho->neg_upap) {
-	upap_authwithpeer(pcb->unit, pcb->settings.user, pcb->settings.passwd);
+	upap_authwithpeer(pcb, pcb->settings.user, pcb->settings.passwd);
 	auth |= PAP_WITHPEER;
     } else
 #endif /* PAP_SUPPORT */
@@ -832,6 +832,7 @@ void link_established(ppp_pcb *pcb) {
     pcb->auth_done = 0;
 
     if (!auth)
+
 	network_phase(pcb);
 }
 

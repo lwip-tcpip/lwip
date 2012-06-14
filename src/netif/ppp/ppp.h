@@ -215,6 +215,53 @@ typedef struct ppp_pcb_rx_s {
 #endif /* PPPOS_SUPPORT */
 
 /*
+ * Each interface is described by upap structure.
+ */
+#if PAP_SUPPORT
+typedef struct upap_state {
+    int us_unit;		/* Interface unit number */
+    char *us_user;		/* User */
+    int us_userlen;		/* User length */
+    char *us_passwd;		/* Password */
+    int us_passwdlen;		/* Password length */
+    int us_clientstate;		/* Client state */
+#if PPP_SERVER
+    int us_serverstate;		/* Server state */
+#endif /* PPP_SERVER */
+    u_char us_id;		/* Current id */
+    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
+    int us_transmits;		/* Number of auth-reqs sent */
+    int us_maxtransmits;	/* Maximum number of auth-reqs to send */
+    int us_reqtimeout;		/* Time to wait for auth-req from peer */
+} upap_state;
+#endif /* PAP_SUPPORT */
+
+/*
+ * Each interface is described by chap structure.
+ */
+#if CHAP_SUPPORT
+typedef struct chap_client_state {
+	int flags;
+	char *name;
+	struct chap_digest_type *digest;
+	unsigned char priv[64];		/* private area for digest's use */
+} chap_client_state;
+
+#if PPP_SERVER
+static struct chap_server_state {
+	int flags;
+	int id;
+	char *name;
+	struct chap_digest_type *digest;
+	int challenge_xmits;
+	int challenge_pktlen;
+	unsigned char challenge[CHAL_MAX_PKTLEN];
+	char message[256];
+} chap_server_state;
+#endif /* PPP_SERVER */
+#endif /* CHAP_SUPPORT */
+
+/*
  * PPP interface control block.
  */
 typedef struct ppp_pcb_s {
@@ -262,6 +309,17 @@ typedef struct ppp_pcb_s {
   int auth_done;           /* Records which authentication operations have been completed. */
   int num_np_open;         /* Number of network protocols which we have opened. */
   int num_np_up;           /* Number of network protocols which have come up. */
+
+#if PAP_SUPPORT
+  upap_state upap;         /* PAP data */
+#endif /* PAP_SUPPORT */
+
+#if CHAP_SUPPORT
+  chap_client_state chap_client;
+#if PPP_SERVER
+  chap_server_state chap_server;
+#endif /* PPP_SERVER */
+#endif /* CHAP_SUPPORT */
 } ppp_pcb;
 
 /************************

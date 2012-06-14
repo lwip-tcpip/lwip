@@ -45,6 +45,11 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && PAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#ifndef UPAP_H
+#define UPAP_H
+
+#include "ppp.h"
+
 /*
  * Packet header = Code, id, length.
  */
@@ -57,27 +62,6 @@
 #define UPAP_AUTHREQ	1	/* Authenticate-Request */
 #define UPAP_AUTHACK	2	/* Authenticate-Ack */
 #define UPAP_AUTHNAK	3	/* Authenticate-Nak */
-
-
-/*
- * Each interface is described by upap structure.
- */
-typedef struct upap_state {
-    int us_unit;		/* Interface unit number */
-    char *us_user;		/* User */
-    int us_userlen;		/* User length */
-    char *us_passwd;		/* Password */
-    int us_passwdlen;		/* Password length */
-    int us_clientstate;		/* Client state */
-#if PPP_SERVER
-    int us_serverstate;		/* Server state */
-#endif /* PPP_SERVER */
-    u_char us_id;		/* Current id */
-    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
-    int us_transmits;		/* Number of auth-reqs sent */
-    int us_maxtransmits;	/* Maximum number of auth-reqs to send */
-    int us_reqtimeout;		/* Time to wait for auth-req from peer */
-} upap_state;
 
 
 /*
@@ -109,11 +93,12 @@ typedef struct upap_state {
 #endif /* moved to opt.h */
 #define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
 
-extern upap_state upap[];
-
-void upap_authwithpeer (int, char *, char *);
-void upap_authpeer (int);
+void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password);
+#if PPP_SERVER
+void upap_authpeer(ppp_pcb *pcb);
+#endif /* PPP_SERVER */
 
 extern struct protent pap_protent;
 
+#endif /* UPAP_H */
 #endif /* PPP_SUPPORT && PAP_SUPPORT */
