@@ -255,8 +255,13 @@ ppp_pcb *ppp_new(void) {
     pcb->status = EXIT_OK;
     new_phase(pcb, PHASE_INITIALIZE);
 
+    /* default configuration */
     pcb->settings.usepeerdns = 1;
     pcb->settings.persist = 1;
+#if CHAP_SUPPORT
+    pcb->settings.chap_timeout_time = 3;
+    pcb->settings.chap_max_transmits = 10;
+#endif /* CHAP_SUPPPORT */
 
     /*
      * Initialize each protocol.

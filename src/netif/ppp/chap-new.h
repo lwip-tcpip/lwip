@@ -67,9 +67,6 @@
 #define MDTYPE_MD5		0x4
 #define MDTYPE_NONE		0
 
-/* hashes supported by this instance of pppd */
-extern int chap_mdtype_all;
-
 #if MSCHAP_SUPPORT
 /* Return the digest alg. ID for the most preferred digest type. */
 #define CHAP_DIGEST(mdtype) \

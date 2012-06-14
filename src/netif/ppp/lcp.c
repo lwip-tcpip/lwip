@@ -378,6 +378,7 @@ static void
 lcp_init(unit)
     int unit;
 {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
     fsm *f = &lcp_fsm[unit];
     lcp_options *wo = &lcp_wantoptions[unit];
     lcp_options *ao = &lcp_allowoptions[unit];
@@ -402,7 +403,7 @@ lcp_init(unit)
     ao->neg_asyncmap = 1;
 #if CHAP_SUPPORT
     ao->neg_chap = 1;
-    ao->chap_mdtype = chap_mdtype_all;
+    ao->chap_mdtype = pcb->chap_mdtype_all;
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     ao->neg_upap = 1;

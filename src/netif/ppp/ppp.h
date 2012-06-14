@@ -169,6 +169,12 @@ typedef struct ppp_settings_s {
 #endif /* PPP_SERVER */
   /* FIXME: make it a compile time option */
   char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+
+#if CHAP_SUPPORT
+  int chap_timeout_time;
+  int chap_max_transmits;
+  int chap_rechallenge_time;
+#endif /* CHAP_SUPPPORT */
 } ppp_settings;
 
 struct ppp_addrs {
@@ -374,6 +380,8 @@ typedef struct ppp_pcb_s {
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
+  /* FIXME: we can probably remove this entry */
+  int chap_mdtype_all;     /* hashes supported by this instance of pppd */
   chap_client_state chap_client;
 #if PPP_SERVER
   chap_server_state chap_server;

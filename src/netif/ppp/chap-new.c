@@ -52,20 +52,11 @@
 #define MDTYPE_ALL (MDTYPE_MD5)
 #endif
 
-int chap_mdtype_all = MDTYPE_ALL;
-
 /* Hook for a plugin to validate CHAP challenge */
 int (*chap_verify_hook)(char *name, char *ourname, int id,
 			struct chap_digest_type *digest,
 			unsigned char *challenge, unsigned char *response,
 			char *message, int message_space) = NULL;
-
-/*
- * Option variables.
- */
-int chap_timeout_time = 3;
-int chap_max_transmits = 10;
-int chap_rechallenge_time = 0;
 
 #if PPP_OPTIONS
 /*
@@ -74,9 +65,9 @@ int chap_rechallenge_time = 0;
 static option_t chap_option_list[] = {
 	{ "chap-restart", o_int, &chap_timeout_time,
 	  "Set timeout for CHAP", OPT_PRIO },
-	{ "chap-max-challenge", o_int, &chap_max_transmits,
+	{ "chap-max-challenge", o_int, &pcb->settings.chap_max_transmits,
 	  "Set max #xmits for challenge", OPT_PRIO },
-	{ "chap-interval", o_int, &chap_rechallenge_time,
+	{ "chap-interval", o_int, &pcb->settings.chap_rechallenge_time,
 	  "Set interval for rechallenge", OPT_PRIO },
 	{ NULL }
 };
@@ -137,6 +128,8 @@ static void chap_init(int unit) {
 #if PPP_SERVER
 	memset(&pcb->chap_server, 0, sizeof(chap_server_state));
 #endif /* PPP_SERVER */
+
+	pcb->chap_mdtype_all = MDTYPE_ALL;
 
 	chap_md5_init();
 #if MSCHAP_SUPPORT
@@ -245,7 +238,7 @@ static void chap_timeout(void *arg) {
 		pcb->chap_server.challenge_xmits = 0;
 		chap_generate_challenge(pcb);
 		pcb->chap_server.flags |= CHALLENGE_VALID;
-	} else if (pcb->chap_server.challenge_xmits >= chap_max_transmits) {
+	} else if (pcb->chap_server.challenge_xmits >= pcb->settings.chap_max_transmits) {
 		pcb->chap_server.flags &= ~CHALLENGE_VALID;
 		pcb->chap_server.flags |= AUTH_DONE | AUTH_FAILED;
 		auth_peer_fail(pcb, PPP_CHAP);
@@ -255,7 +248,7 @@ static void chap_timeout(void *arg) {
 	ppp_write(pcb, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
 	++pcb->chap_server.challenge_xmits;
 	pcb->chap_server.flags |= TIMEOUT_PENDING;
-	TIMEOUT(chap_timeout, arg, chap_timeout_time);
+	TIMEOUT(chap_timeout, arg, pcb->settings.chap_timeout_time);
 }
 
 /*
@@ -380,10 +373,10 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 				auth_peer_success(pcb, PPP_CHAP,
 						  pcb->chap_server.digest->code,
 						  name, strlen(name));
-			if (chap_rechallenge_time) {
+			if (pcb->settings.chap_rechallenge_time) {
 				pcb->chap_server.flags |= TIMEOUT_PENDING;
 				TIMEOUT(chap_timeout, pcb,
-					chap_rechallenge_time);
+					pcb->settings.chap_rechallenge_time);
 			}
 		}
 		pcb->chap_server.flags |= AUTH_DONE;

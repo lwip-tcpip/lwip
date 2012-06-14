@@ -1348,8 +1348,8 @@ auth_check_options()
 #endif /* EAP_SUPPORT */
 	    ) {
 #if CHAP_SUPPORT
-	    wo->neg_chap = chap_mdtype_all != MDTYPE_NONE;
-	    wo->chap_mdtype = chap_mdtype_all;
+	    wo->neg_chap = pcb->chap_mdtype_all != MDTYPE_NONE;
+	    wo->chap_mdtype = pcb->chap_mdtype_all;
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
 	    wo->neg_upap = 1;
