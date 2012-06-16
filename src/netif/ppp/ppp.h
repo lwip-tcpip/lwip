@@ -391,7 +391,7 @@ typedef struct eap_state {
  */
 typedef struct ppp_pcb_s {
   ppp_settings settings;
-  int unit;
+  u8_t num;                      /* Interface number - only useful for debugging */
 #if PPPOS_SUPPORT
   ppp_pcb_rx rx;
 #endif /* PPPOS_SUPPORT */
@@ -503,7 +503,7 @@ typedef struct ppp_pcb_s {
 int ppp_init(void);
 
 /* Create a new PPP session, returns a PPP PCB structure. */
-ppp_pcb *ppp_new(void);
+ppp_pcb *ppp_new(u8_t num);
 
 /* Set auth helper, optional, you can either fill ppp_pcb->settings. */
 

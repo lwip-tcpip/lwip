@@ -306,7 +306,7 @@ struct protent ipcp_protent = {
 #endif /* DEMAND_SUPPORT */
 };
 
-static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute);
+static void ipcp_clear_addrs(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute);
 
 /*
  * Lengths of configuration options.
@@ -2003,7 +2003,7 @@ static void ipcp_down(fsm *f) {
     {
 	sifnpmode(pcb, PPP_IP, NPMODE_DROP);
 	sifdown(pcb);
-	ipcp_clear_addrs(pcb->unit, go->ouraddr,
+	ipcp_clear_addrs(pcb, go->ouraddr,
 			 ho->hisaddr, 0);
 	cdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
     }
@@ -2014,9 +2014,7 @@ static void ipcp_down(fsm *f) {
  * ipcp_clear_addrs() - clear the interface addresses, routes,
  * proxy arp entries, etc.
  */
-static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute) {
-
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_clear_addrs(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute) {
 
     if (pcb->proxy_arp_set) {
 	cifproxyarp(pcb, hisaddr);
