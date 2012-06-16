@@ -80,15 +80,19 @@ int	lcp_echo_interval = 0; 	/* Interval between LCP echo-requests */
 int	lcp_echo_fails = 0;	/* Tolerance to unanswered echo-requests */
 #endif /* UNUSED */
 
+#if 0 /* UNUSED */
 /* options */
 static u_int lcp_echo_interval      = LCP_ECHOINTERVAL; /* Interval between LCP echo-requests */
 static u_int lcp_echo_fails         = LCP_MAXECHOFAILS; /* Tolerance to unanswered echo-requests */
+#endif /* UNUSED */
 
+#if 0 /* UNUSED */
 #if PPP_LCP_ADAPTIVE
 bool	lcp_echo_adaptive = 0;	/* request echo only if the link was idle */
 #endif
 bool	lax_recv = 0;		/* accept control chars in asyncmap */
 bool	noendpoint = 0;		/* don't send/accept endpoint discriminator */
+#endif /* UNUSED */
 
 #if PPP_OPTIONS
 static int noopt (char **);
@@ -208,18 +212,6 @@ static option_t lcp_option_list[] = {
 };
 #endif /* PPP_OPTIONS */
 
-/* global vars */
-#if PPPOS_SUPPORT
-ext_accm xmit_accm[NUM_PPP];            /* extended transmit ACCM */
-#endif /* PPPOS_SUPPORT */
-
-static int lcp_echos_pending = 0;	/* Number of outstanding echo msgs */
-static int lcp_echo_number   = 0;	/* ID number of next echo frame */
-static int lcp_echo_timer_running = 0;  /* set if a timer is running */
-
-/* FIXME: do we really need such a large buffer? The typical 1500 bytes seem too much. */
-static u_char nak_buffer[PPP_MRU];	/* where we construct a nak packet */
-
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
@@ -307,8 +299,6 @@ struct protent lcp_protent = {
     NULL
 #endif /* DEMAND_SUPPORT */
 };
-
-int lcp_loopbackfail = DEFLOOPBACKFAIL;
 
 /*
  * Length of each type of configuration option (in octets)
@@ -492,7 +482,7 @@ void lcp_lowerup(ppp_pcb *pcb) {
     ppp_set_xaccm(pcb, &xmit_accm[pcb->unit]);
 #endif /* PPPOS_SUPPORT */
     if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
-	|| ppp_recv_config(pcb, PPP_MRU, (lax_recv? 0: 0xffffffff),
+	|| ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
     pcb->peer_mru = PPP_MRU;
@@ -705,7 +695,7 @@ static void lcp_resetci(fsm *f) {
 #ifdef HAVE_MULTILINK
     }
 #endif /* HAVE_MULTILINK */
-    if (noendpoint)
+    if (pcb->settings.noendpoint)
 	ao->neg_endpoint = 0;
     pcb->peer_mru = PPP_MRU;
     auth_reset(pcb);
@@ -1492,7 +1482,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     if (f->state != OPENED) {
 	if (looped_back) {
-	    if (++try.numloops >= lcp_loopbackfail) {
+	    if (++try.numloops >= pcb->lcp_loopbackfail) {
 		notice("Serial line is looped back.");
 		pcb->status = EXIT_LOOPBACK;
 		lcp_close(f->pcb, "Loopback detected");
@@ -1773,7 +1763,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
      * Process all his options.
      */
     next = inp;
-    nakp = nak_buffer;
+    nakp = pcb->nak_buffer;
     rejp = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
@@ -2190,8 +2180,8 @@ endswitch:
 	/*
 	 * Copy the Nak'd options from the nak_buffer to the caller's buffer.
 	 */
-	*lenp = nakp - nak_buffer;
-	MEMCPY(inp, nak_buffer, *lenp);
+	*lenp = nakp - pcb->nak_buffer;
+	MEMCPY(inp, pcb->nak_buffer, *lenp);
 	break;
     case CONFREJ:
 	*lenp = rejp - inp;
@@ -2238,7 +2228,7 @@ static void lcp_up(fsm *f) {
 		    (ho->neg_asyncmap? ho->asyncmap: 0xffffffff),
 		    ho->neg_pcompression, ho->neg_accompression);
     ppp_recv_config(pcb, mru,
-		    (lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
+		    (pcb->settings.lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
@@ -2550,12 +2540,12 @@ static int lcp_printpkt(u_char *p, int plen,
  */
 
 static void LcpLinkFailure(fsm *f) {
-    ppp_pcb *pc = f->pcb;
+    ppp_pcb *pcb = f->pcb;
     if (f->state == OPENED) {
-	info("No response to %d echo-requests", lcp_echos_pending);
+	info("No response to %d echo-requests", pcb->lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
-	pc->status = EXIT_PEER_DEAD;
-	lcp_close(f->pcb, "Peer not responding");
+	pcb->status = EXIT_PEER_DEAD;
+	lcp_close(pcb, "Peer not responding");
     }
 }
 
@@ -2564,6 +2554,8 @@ static void LcpLinkFailure(fsm *f) {
  */
 
 static void LcpEchoCheck(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
+
     LcpSendEchoRequest (f);
     if (f->state != OPENED)
 	return;
@@ -2571,10 +2563,10 @@ static void LcpEchoCheck(fsm *f) {
     /*
      * Start the timer for the next interval.
      */
-    if (lcp_echo_timer_running)
+    if (pcb->lcp_echo_timer_running)
 	warn("assertion lcp_echo_timer_running==0 failed");
-    TIMEOUT (LcpEchoTimeout, f, lcp_echo_interval);
-    lcp_echo_timer_running = 1;
+    TIMEOUT (LcpEchoTimeout, f, pcb->settings.lcp_echo_interval);
+    pcb->lcp_echo_timer_running = 1;
 }
 
 /*
@@ -2582,8 +2574,10 @@ static void LcpEchoCheck(fsm *f) {
  */
 
 static void LcpEchoTimeout(void *arg) {
-    if (lcp_echo_timer_running != 0) {
-        lcp_echo_timer_running = 0;
+    fsm *f = (fsm*)f;
+    ppp_pcb *pcb = f->pcb;
+    if (pcb->lcp_echo_timer_running != 0) {
+        pcb->lcp_echo_timer_running = 0;
         LcpEchoCheck ((fsm *) arg);
     }
 }
@@ -2610,7 +2604,7 @@ static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
     }
 
     /* Reset the number of outstanding echo frames */
-    lcp_echos_pending = 0;
+    pcb->lcp_echos_pending = 0;
 }
 
 /*
@@ -2626,10 +2620,10 @@ static void LcpSendEchoRequest(fsm *f) {
     /*
      * Detect the failure of the peer at this point.
      */
-    if (lcp_echo_fails != 0) {
-        if (lcp_echos_pending >= lcp_echo_fails) {
+    if (pcb->settings.lcp_echo_fails != 0) {
+        if (pcb->lcp_echos_pending >= pcb->settings.lcp_echo_fails) {
             LcpLinkFailure(f);
-	    lcp_echos_pending = 0;
+            pcb->lcp_echos_pending = 0;
 	}
     }
 
@@ -2638,7 +2632,7 @@ static void LcpSendEchoRequest(fsm *f) {
      * If adaptive echos have been enabled, only send the echo request if
      * no traffic was received since the last one.
      */
-    if (lcp_echo_adaptive) {
+    if (pcb->settings.lcp_echo_adaptive) {
 	static unsigned int last_pkts_in = 0;
 
 #if PPP_STATS_SUPPORT
@@ -2660,8 +2654,8 @@ static void LcpSendEchoRequest(fsm *f) {
         lcp_magic = go->magicnumber;
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
-        fsm_sdata(f, ECHOREQ, lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
-	++lcp_echos_pending;
+        fsm_sdata(f, ECHOREQ, pcb->lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+	++pcb->lcp_echos_pending;
     }
 }
 
@@ -2673,12 +2667,12 @@ static void lcp_echo_lowerup(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     /* Clear the parameters for generating echo frames */
-    lcp_echos_pending      = 0;
-    lcp_echo_number        = 0;
-    lcp_echo_timer_running = 0;
+    pcb->lcp_echos_pending      = 0;
+    pcb->lcp_echo_number        = 0;
+    pcb->lcp_echo_timer_running = 0;
   
     /* If a timeout interval is specified then start the timer */
-    if (lcp_echo_interval != 0)
+    if (pcb->settings.lcp_echo_interval != 0)
         LcpEchoCheck (f);
 }
 
@@ -2689,9 +2683,9 @@ static void lcp_echo_lowerup(ppp_pcb *pcb) {
 static void lcp_echo_lowerdown(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
-    if (lcp_echo_timer_running != 0) {
+    if (pcb->lcp_echo_timer_running != 0) {
         UNTIMEOUT (LcpEchoTimeout, f);
-        lcp_echo_timer_running = 0;
+        pcb->lcp_echo_timer_running = 0;
     }
 }
 

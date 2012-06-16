@@ -329,7 +329,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		return;
 
 	/* send the response */
-	p = outpacket_buf;
+	p = pcb->outpacket_buf;
 	MAKEHEADER(p, PPP_CHAP);
 	mlen = strlen(pcb->chap_server.message);
 	len = CHAP_HDRLEN + mlen;
@@ -339,7 +339,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	p[3] = len;
 	if (mlen > 0)
 		memcpy(p + CHAP_HDRLEN, pcb->chap_server.message, mlen);
-	ppp_write(pcb, outpacket_buf, PPP_HDRLEN + len);
+	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + len);
 
 	if (pcb->chap_server.flags & CHALLENGE_VALID) {
 		pcb->chap_server.flags &= ~CHALLENGE_VALID;

@@ -708,7 +708,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     /*
      * Make up the request packet
      */
-    outp = outpacket_buf + PPP_HDRLEN + HEADERLEN;
+    outp = pcb->outpacket_buf + PPP_HDRLEN + HEADERLEN;
     if( f->callbacks->cilen && f->callbacks->addci ){
 	cilen = (*f->callbacks->cilen)(f);
 	if( cilen > pcb->peer_mru - HEADERLEN )
@@ -738,7 +738,7 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
     int outlen;
 
     /* Adjust length to be smaller than MTU */
-    outp = outpacket_buf;
+    outp = pcb->outpacket_buf;
     if (datalen > pcb->peer_mru - HEADERLEN)
 	datalen = pcb->peer_mru - HEADERLEN;
     if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
@@ -748,7 +748,7 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
-    ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
 }
 
 #endif /* PPP_SUPPORT */

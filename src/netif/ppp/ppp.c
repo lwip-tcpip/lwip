@@ -126,17 +126,6 @@
 /*** LOCAL DEFINITIONS ***/
 /*************************/
 
-/*
- * Buffers for outgoing packets.  This must be accessed only from the appropriate
- * PPP task so that it doesn't need to be protected to avoid collisions.
- */
-/* FIXME: outpacket_buf per PPP session */
-u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
-
-#if PPPOS_SUPPORT
-u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
-#endif /* PPPOS_SUPPORT */
-
 /* FIXME: add stats per PPP session */
 #if PPP_STATS_SUPPORT
 static struct timeval start_time;	/* Time when link was started. */
@@ -253,6 +242,7 @@ ppp_pcb *ppp_new(void) {
     pcb->unit = pd;
     pcb->open_flag = 1;
     pcb->status = EXIT_OK;
+    pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
     new_phase(pcb, PHASE_INITIALIZE);
 
     /* default configuration */
@@ -262,6 +252,8 @@ ppp_pcb *ppp_new(void) {
     pcb->settings.chap_timeout_time = 3;
     pcb->settings.chap_max_transmits = 10;
 #endif /* CHAP_SUPPPORT */
+    pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
+    pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
 
     /*
      * Initialize each protocol.

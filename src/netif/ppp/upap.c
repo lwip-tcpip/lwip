@@ -525,7 +525,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
 
     outlen = UPAP_HEADERLEN + 2 * sizeof (u_char) +
 	pcb->upap.us_userlen + pcb->upap.us_passwdlen;
-    outp = outpacket_buf;
+    outp = pcb->outpacket_buf;
     
     MAKEHEADER(outp, PPP_PAP);
 
@@ -538,7 +538,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
     PUTCHAR(pcb->upap.us_passwdlen, outp);
     MEMCPY(outp, pcb->upap.us_passwd, pcb->upap.us_passwdlen);
 
-    ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
 
     TIMEOUT(upap_timeout, pcb, pcb->upap.us_timeouttime);
     ++pcb->upap.us_transmits;
@@ -554,7 +554,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
     int outlen;
 
     outlen = UPAP_HEADERLEN + sizeof (u_char) + msglen;
-    outp = outpacket_buf;
+    outp = pcb->outpacket_buf;
     MAKEHEADER(outp, PPP_PAP);
 
     PUTCHAR(code, outp);
@@ -562,7 +562,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
     PUTSHORT(outlen, outp);
     PUTCHAR(msglen, outp);
     MEMCPY(outp, msg, msglen);
-    ppp_write(pcb, outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
 }
 #endif /* UNUSED */
 

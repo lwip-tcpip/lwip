@@ -178,6 +178,15 @@ typedef struct ppp_settings_s {
   int chap_max_transmits;
   int chap_rechallenge_time;
 #endif /* CHAP_SUPPPORT */
+
+  u_int lcp_echo_interval;    /* Interval between LCP echo-requests */
+  u_int lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
+#if PPP_LCP_ADAPTIVE
+  bool lcp_echo_adaptive;     /* request echo only if the link was idle */
+#endif
+  bool lax_recv;             /* accept control chars in asyncmap */
+  bool noendpoint;            /* don't send/accept endpoint discriminator */
+
 } ppp_settings;
 
 struct ppp_addrs {
@@ -450,8 +459,17 @@ typedef struct ppp_pcb_s {
   lcp_options lcp_gotoptions;     /* Options that peer ack'd */
   lcp_options lcp_allowoptions;   /* Options we allow peer to request */
   lcp_options lcp_hisoptions;     /* Options that we ack'd */
+#if PPPOS_SUPPORT
+  ext_accm xmit_accm;            /* extended transmit ACCM */
+#endif /* PPPOS_SUPPORT */
+  int lcp_echos_pending;         /* Number of outstanding echo msgs */
+  int lcp_echo_number;           /* ID number of next echo frame */
+  int lcp_echo_timer_running;    /* set if a timer is running */
+  /* FIXME: do we really need such a large buffer? The typical 1500 bytes seem too much. */
+  u_char nak_buffer[PPP_MRU];    /* where we construct a nak packet */
+  int lcp_loopbackfail;
 
-  fsm ipcp_fsm;         /* IPCP fsm structure */
+  fsm ipcp_fsm;          /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;    /* Options that we want to request */
   ipcp_options ipcp_gotoptions;	    /* Options that peer ack'd */
   ipcp_options ipcp_allowoptions;   /* Options we allow peer to request */
@@ -461,6 +479,16 @@ typedef struct ppp_pcb_s {
   int ipcp_is_open;             /* haven't called np_finished() */
   int ipcp_is_up;               /* have called np_up() */
   bool ask_for_local;           /* request our address from peer */
+
+  /*
+   * Buffers for outgoing packets.  This must be accessed only from the appropriate
+   * PPP task so that it doesn't need to be protected to avoid collisions.
+   */
+  u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
+
+#if PPPOS_SUPPORT
+  u_char inpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for incoming packet */
+#endif /* PPPOS_SUPPORT */
 
 } ppp_pcb;
 
