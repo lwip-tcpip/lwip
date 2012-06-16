@@ -47,7 +47,6 @@
 
 #include "vj.h"
 
-
 /** PPP_INPROC_MULTITHREADED==1 call ppp_input using tcpip_callback().
  * Set this to 0 if pppos_input_proc is called inside tcpip_thread or with NO_SYS==1.
  * Default is 1 for NO_SYS==0 (multithreaded) and 0 for NO_SYS==1 (single-threaded).
@@ -88,6 +87,10 @@ typedef unsigned char  u_char;
 #ifndef bool
 typedef unsigned char	bool;
 #endif
+
+#include "fsm.h"
+#include "lcp.h"
+#include "ipcp.h"
 
 
 /*************************
@@ -391,6 +394,19 @@ typedef struct ppp_pcb_s {
 #if EAP_SUPPORT
   eap_state eap;
 #endif /* EAP_SUPPORT */
+
+  fsm lcp_fsm;          /* LCP fsm structure */
+  lcp_options lcp_wantoptions;    /* Options that we want to request */
+  lcp_options lcp_gotoptions;     /* Options that peer ack'd */
+  lcp_options lcp_allowoptions;   /* Options we allow peer to request */
+  lcp_options lcp_hisoptions;     /* Options that we ack'd */
+
+  fsm ipcp_fsm;         /* IPCP fsm structure */
+  ipcp_options ipcp_wantoptions;    /* Options that we want to request */
+  ipcp_options ipcp_gotoptions;	    /* Options that peer ack'd */
+  ipcp_options ipcp_allowoptions;   /* Options we allow peer to request */
+  ipcp_options ipcp_hisoptions;     /* Options that we ack'd */
+
 } ppp_pcb;
 
 /************************

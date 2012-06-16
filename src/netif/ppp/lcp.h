@@ -45,6 +45,9 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
+#ifndef LCP_H
+#define	LCP_H
+
 /*
  * Options.
  */
@@ -84,6 +87,15 @@
 
 /* Value used as data for CI_CALLBACK option */
 #define CBCP_OPT	6	/* Use callback control protocol */
+
+/* FIXME: moved temporarily from ppp.h */
+/* An endpoint discriminator, used with multilink. */
+#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
+struct epdisc {
+    unsigned char	class;
+    unsigned char	length;
+    unsigned char	value[MAX_ENDP_LEN];
+};
 
 /*
  * The state of options is described by an lcp_options structure.
@@ -127,11 +139,6 @@ typedef struct lcp_options {
     struct epdisc endpoint;	/* endpoint discriminator */
 } lcp_options;
 
-extern fsm lcp_fsm[];
-extern lcp_options lcp_wantoptions[];
-extern lcp_options lcp_gotoptions[];
-extern lcp_options lcp_allowoptions[];
-extern lcp_options lcp_hisoptions[];
 #if PPPOS_SUPPORT
 extern ext_accm xmit_accm[];
 #endif /* #if PPPOS_SUPPORT */
@@ -140,11 +147,11 @@ extern ext_accm xmit_accm[];
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
 
-void lcp_open (int);
-void lcp_close (int, char *);
-void lcp_lowerup (int);
-void lcp_lowerdown (int);
-void lcp_sprotrej (int, u_char *, int);	/* send protocol reject */
+void lcp_open(int unit);
+void lcp_close(int unit, char *reason);
+void lcp_lowerup(int unit);
+void lcp_lowerdown(int unit);
+void lcp_sprotrej(int unit, u_char *p, int len);    /* send protocol reject */
 
 extern struct protent lcp_protent;
 
@@ -152,4 +159,5 @@ extern struct protent lcp_protent;
    before deciding the link is looped-back. */
 #define DEFLOOPBACKFAIL	10
 
+#endif /* LCP_H */
 #endif /* PPP_SUPPORT */

@@ -731,7 +731,7 @@ void link_established(ppp_pcb *pcb) {
 #if PPP_SERVER
     lcp_options *go = &lcp_gotoptions[pcb->unit];
 #endif /* #if PPP_SERVER */
-    lcp_options *ho = &lcp_hisoptions[pcb->unit];
+    lcp_options *ho = &pcb->lcp_hisoptions;
     int i;
     struct protent *protp;
 
@@ -1444,8 +1444,8 @@ auth_check_options()
  * to use for authenticating ourselves and/or the peer.
  */
 void auth_reset(ppp_pcb *pcb) {
-  lcp_options *go = &lcp_gotoptions[pcb->unit];
-  lcp_options *ao = &lcp_allowoptions[pcb->unit];
+  lcp_options *go = &pcb->lcp_gotoptions;
+  lcp_options *ao = &pcb->lcp_allowoptions;
 
   if( pcb->settings.passwd[0] ) {
 

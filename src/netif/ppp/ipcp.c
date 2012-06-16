@@ -65,14 +65,11 @@
 #include "ipcp.h"
 
 /* global vars */
-ipcp_options ipcp_wantoptions[NUM_PPP];	/* Options that we want to request */
-ipcp_options ipcp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
-ipcp_options ipcp_allowoptions[NUM_PPP]; /* Options we allow peer to request */
-ipcp_options ipcp_hisoptions[NUM_PPP];	/* Options that we ack'd */
-
 u_int32_t netmask = 0;		/* IP netmask to set on interface */
 
+#if 0 /* UNUSED */
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
+#endif /* UNUSED */
 bool	noremoteip = 0;		/* Let him have no IP address */
 
 #if 0 /* UNUSED */
@@ -106,18 +103,16 @@ static char netmask_str[20];		/* string form of netmask value */
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
-static void ipcp_resetci (fsm *);	/* Reset our CI */
-static int  ipcp_cilen (fsm *);	        /* Return length of our CI */
-static void ipcp_addci (fsm *, u_char *, int *); /* Add our CI */
-static int  ipcp_ackci (fsm *, u_char *, int);	/* Peer ack'd our CI */
-static int  ipcp_nakci (fsm *, u_char *, int, int);/* Peer nak'd our CI */
-static int  ipcp_rejci (fsm *, u_char *, int);	/* Peer rej'd our CI */
-static int  ipcp_reqci (fsm *, u_char *, int *, int); /* Rcv CI */
-static void ipcp_up (fsm *);		/* We're UP */
-static void ipcp_down (fsm *);		/* We're DOWN */
-static void ipcp_finished (fsm *);	/* Don't need lower layer */
-
-fsm ipcp_fsm[NUM_PPP];		/* IPCP fsm structure */
+static void ipcp_resetci(fsm *f);	/* Reset our CI */
+static int  ipcp_cilen(fsm *f);	        /* Return length of our CI */
+static void ipcp_addci(fsm *f, u_char *ucp, int *lenp); /* Add our CI */
+static int  ipcp_ackci(fsm *f, u_char *p, int len);	/* Peer ack'd our CI */
+static int  ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject);/* Peer nak'd our CI */
+static int  ipcp_rejci(fsm *f, u_char *p, int len);	/* Peer rej'd our CI */
+static int  ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree); /* Rcv CI */
+static void ipcp_up(fsm *f);		/* We're UP */
+static void ipcp_down(fsm *f);		/* We're DOWN */
+static void ipcp_finished(fsm *f);	/* Don't need lower layer */
 
 static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
     ipcp_resetci,		/* Reset our Configuration Information */
@@ -254,16 +249,16 @@ static option_t ipcp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ipcp_init (int);
-static void ipcp_open (int);
-static void ipcp_close (int, char *);
-static void ipcp_lowerup (int);
-static void ipcp_lowerdown (int);
-static void ipcp_input (int, u_char *, int);
-static void ipcp_protrej (int);
+static void ipcp_init(int unit);
+static void ipcp_open(int unit);
+static void ipcp_close(int unit, char *reason);
+static void ipcp_lowerup(int unit);
+static void ipcp_lowerdown(int unit);
+static void ipcp_input(int unit, u_char *p, int len);
+static void ipcp_protrej(int unit);
 #if PRINTPKT_SUPPORT
-static int  ipcp_printpkt (u_char *, int,
-			       void (*) (void *, char *, ...), void *);
+static int ipcp_printpkt(u_char *p, int plen,
+		void (*printer) (void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
 static void ip_check_options (void);
@@ -589,18 +584,17 @@ parse_dotted_ip(p, vp)
 /*
  * ipcp_init - Initialize IPCP.
  */
-static void
-ipcp_init(unit)
-    int unit;
-{
-    fsm *f = &ipcp_fsm[unit];
-    ipcp_options *wo = &ipcp_wantoptions[unit];
-    ipcp_options *ao = &ipcp_allowoptions[unit];
+static void ipcp_init(int unit) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+
+    ipcp_options *wo = &pcb->ipcp_wantoptions;
+    ipcp_options *ao = &pcb->ipcp_allowoptions;
 
     f->unit = unit;
     f->protocol = PPP_IPCP;
     f->callbacks = &ipcp_callbacks;
-    fsm_init(&ipcp_fsm[unit]);
+    fsm_init(f);
 
     /*
      * Some 3G modems use repeated IPCP NAKs as a way of stalling
@@ -644,11 +638,10 @@ ipcp_init(unit)
 /*
  * ipcp_open - IPCP is allowed to come up.
  */
-static void
-ipcp_open(unit)
-    int unit;
-{
-    fsm_open(&ipcp_fsm[unit]);
+static void ipcp_open(int unit) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_open(f);
     ipcp_is_open = 1;
 }
 
@@ -656,47 +649,40 @@ ipcp_open(unit)
 /*
  * ipcp_close - Take IPCP down.
  */
-static void
-ipcp_close(unit, reason)
-    int unit;
-    char *reason;
-{
-    fsm_close(&ipcp_fsm[unit], reason);
+static void ipcp_close(int unit, char *reason) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_close(f, reason);
 }
 
 
 /*
  * ipcp_lowerup - The lower layer is up.
  */
-static void
-ipcp_lowerup(unit)
-    int unit;
-{
-    fsm_lowerup(&ipcp_fsm[unit]);
+static void ipcp_lowerup(int unit) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_lowerup(f);
 }
 
 
 /*
  * ipcp_lowerdown - The lower layer is down.
  */
-static void
-ipcp_lowerdown(unit)
-    int unit;
-{
-    fsm_lowerdown(&ipcp_fsm[unit]);
+static void ipcp_lowerdown(int unit) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_lowerdown(f);
 }
 
 
 /*
  * ipcp_input - Input IPCP packet.
  */
-static void
-ipcp_input(unit, p, len)
-    int unit;
-    u_char *p;
-    int len;
-{
-    fsm_input(&ipcp_fsm[unit], p, len);
+static void ipcp_input(int unit, u_char *p, int len) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_input(f, p, len);
 }
 
 
@@ -705,11 +691,10 @@ ipcp_input(unit, p, len)
  *
  * Pretend the lower layer went down, so we shut up.
  */
-static void
-ipcp_protrej(unit)
-    int unit;
-{
-    fsm_lowerdown(&ipcp_fsm[unit]);
+static void ipcp_protrej(int unit) {
+    ppp_pcb *pcb = &ppp_pcb_list[unit];
+    fsm *f = &pcb->ipcp_fsm;
+    fsm_lowerdown(f);
 }
 
 
@@ -717,14 +702,11 @@ ipcp_protrej(unit)
  * ipcp_resetci - Reset our CI.
  * Called by fsm_sconfreq, Send Configure Request.
  */
-static void
-ipcp_resetci(f)
-    fsm *f;
-{
-    ppp_pcb *pc = &ppp_pcb_list[f->unit];
-    ipcp_options *wo = &ipcp_wantoptions[f->unit];
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
-    ipcp_options *ao = &ipcp_allowoptions[f->unit];
+static void ipcp_resetci(fsm *f) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *wo = &pcb->ipcp_wantoptions;
+    ipcp_options *go = &pcb->ipcp_gotoptions;
+    ipcp_options *ao = &pcb->ipcp_allowoptions;
 
     wo->req_addr = (wo->neg_addr || wo->old_addrs) &&
 	(ao->neg_addr || ao->old_addrs);
@@ -732,8 +714,8 @@ ipcp_resetci(f)
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
-    wo->req_dns1 = pc->settings.usepeerdns;	/* Request DNS addresses from the peer */
-    wo->req_dns2 = pc->settings.usepeerdns;
+    wo->req_dns1 = pcb->settings.usepeerdns;	/* Request DNS addresses from the peer */
+    wo->req_dns2 = pcb->settings.usepeerdns;
     *go = *wo;
     if (!ask_for_local)
 	go->ouraddr = 0;
@@ -745,7 +727,7 @@ ipcp_resetci(f)
 	}
     }
 #endif /* UNUSED */
-    BZERO(&ipcp_hisoptions[f->unit], sizeof(ipcp_options));
+    BZERO(&pcb->ipcp_hisoptions, sizeof(ipcp_options));
 }
 
 
@@ -753,13 +735,11 @@ ipcp_resetci(f)
  * ipcp_cilen - Return length of our CI.
  * Called by fsm_sconfreq, Send Configure Request.
  */
-static int
-ipcp_cilen(f)
-    fsm *f;
-{
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
-    ipcp_options *wo = &ipcp_wantoptions[f->unit];
-    ipcp_options *ho = &ipcp_hisoptions[f->unit];
+static int ipcp_cilen(fsm *f) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *go = &pcb->ipcp_gotoptions;
+    ipcp_options *wo = &pcb->ipcp_wantoptions;
+    ipcp_options *ho = &pcb->ipcp_hisoptions;
 
 #define LENCIADDRS(neg)		(neg ? CILEN_ADDRS : 0)
 #define LENCIVJ(neg, old)	(neg ? (old? CILEN_COMPRESS : CILEN_VJ) : 0)
@@ -797,13 +777,9 @@ ipcp_cilen(f)
  * ipcp_addci - Add our desired CIs to a packet.
  * Called by fsm_sconfreq, Send Configure Request.
  */
-static void
-ipcp_addci(f, ucp, lenp)
-    fsm *f;
-    u_char *ucp;
-    int *lenp;
-{
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
+static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *go = &pcb->ipcp_gotoptions;
     int len = *lenp;
 
 #define ADDCIADDRS(opt, neg, val1, val2) \
@@ -904,13 +880,9 @@ ipcp_addci(f, ucp, lenp)
  *	0 - Ack was bad.
  *	1 - Ack was good.
  */
-static int
-ipcp_ackci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
-{
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
+static int ipcp_ackci(fsm *f, u_char *p, int len) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *go = &pcb->ipcp_gotoptions;
     u_short cilen, citype, cishort;
     u_int32_t cilong;
     u_char cimaxslotindex, cicflag;
@@ -1029,14 +1001,9 @@ bad:
  *	0 - Nak was bad.
  *	1 - Nak was good.
  */
-static int
-ipcp_nakci(f, p, len, treat_as_reject)
-    fsm *f;
-    u_char *p;
-    int len;
-    int treat_as_reject;
-{
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
+static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *go = &pcb->ipcp_gotoptions;
     u_char cimaxslotindex, cicflag;
     u_char citype, cilen, *next;
     u_short cishort;
@@ -1278,13 +1245,9 @@ bad:
  * ipcp_rejci - Reject some of our CIs.
  * Callback from fsm_rconfnakrej.
  */
-static int
-ipcp_rejci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
-{
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
+static int ipcp_rejci(fsm *f, u_char *p, int len) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *go = &pcb->ipcp_gotoptions;
     u_char cimaxslotindex, ciflag, cilen;
     u_short cishort;
     u_int32_t cilong;
@@ -1428,17 +1391,15 @@ bad:
  * Returns: CONFACK, CONFNAK or CONFREJ and input packet modified
  * appropriately.  If reject_if_disagree is non-zero, doesn't return
  * CONFNAK; returns CONFREJ if it can't return CONFACK.
+ *
+ * inp = Requested CIs
+ * len = Length of requested CIs
  */
-static int
-ipcp_reqci(f, inp, len, reject_if_disagree)
-    fsm *f;
-    u_char *inp;		/* Requested CIs */
-    int *len;			/* Length of requested CIs */
-    int reject_if_disagree;
-{
-    ipcp_options *wo = &ipcp_wantoptions[f->unit];
-    ipcp_options *ho = &ipcp_hisoptions[f->unit];
-    ipcp_options *ao = &ipcp_allowoptions[f->unit];
+static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
+    ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *wo = &pcb->ipcp_wantoptions;
+    ipcp_options *ho = &pcb->ipcp_hisoptions;
+    ipcp_options *ao = &pcb->ipcp_allowoptions;
     u_char *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
     u_short cishort;		/* Parsed short value */
@@ -1797,15 +1758,12 @@ ip_demand_conf(u)
  *
  * Configure the IP network interface appropriately and bring it up.
  */
-static void
-ipcp_up(f)
-    fsm *f;
-{
+static void ipcp_up(fsm *f) {
     ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     u_int32_t mask;
-    ipcp_options *ho = &ipcp_hisoptions[f->unit];
-    ipcp_options *go = &ipcp_gotoptions[f->unit];
-    ipcp_options *wo = &ipcp_wantoptions[f->unit];
+    ipcp_options *ho = &pcb->ipcp_hisoptions;
+    ipcp_options *go = &pcb->ipcp_gotoptions;
+    ipcp_options *wo = &pcb->ipcp_wantoptions;
 
     IPCPDEBUG(("ipcp: up"));
 
@@ -1957,17 +1915,17 @@ ipcp_up(f)
 	sifnpmode(pcb, PPP_IP, NPMODE_PASS);
 
 	/* assign a default route through the interface if required */
-	if (ipcp_wantoptions[f->unit].default_route) 
+	if (wo->default_route)
 	    if (sifdefaultroute(pcb, go->ouraddr, ho->hisaddr,
 		    wo->replace_default_route))
 		default_route_set[f->unit] = 1;
 
 	/* Make a proxy ARP entry if requested. */
-	if (ho->hisaddr != 0 && ipcp_wantoptions[f->unit].proxy_arp)
+	if (ho->hisaddr != 0 && wo->proxy_arp)
 	    if (sifproxyarp(pcb, ho->hisaddr))
 		proxy_arp_set[f->unit] = 1;
 
-	ipcp_wantoptions[0].ouraddr = go->ouraddr;
+	wo->ouraddr = go->ouraddr;
 
 	notice("local  IP address %I", go->ouraddr);
 	if (ho->hisaddr != 0)
@@ -2001,11 +1959,11 @@ ipcp_up(f)
  * Take the IP network interface down, clear its addresses
  * and delete routes through it.
  */
-static void
-ipcp_down(f)
-    fsm *f;
-{
+static void ipcp_down(fsm *f) {
     ppp_pcb *pcb = &ppp_pcb_list[f->unit];
+    ipcp_options *ho = &pcb->ipcp_hisoptions;
+    ipcp_options *go = &pcb->ipcp_gotoptions;
+
     IPCPDEBUG(("ipcp: down"));
 #if PPP_STATS_SUPPORT
     /* XXX a bit IPv4-centric here, we only need to get the stats
@@ -2045,9 +2003,9 @@ ipcp_down(f)
     {
 	sifnpmode(pcb, PPP_IP, NPMODE_DROP);
 	sifdown(pcb);
-	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
-			 ipcp_hisoptions[f->unit].hisaddr, 0);
-	cdns(pcb, ipcp_gotoptions[f->unit].dnsaddr[0], ipcp_gotoptions[f->unit].dnsaddr[1]);
+	ipcp_clear_addrs(f->unit, go->ouraddr,
+			 ho->hisaddr, 0);
+	cdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
     }
 }
 
@@ -2083,10 +2041,7 @@ static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, boo
 /*
  * ipcp_finished - possibly shut down the lower layers.
  */
-static void
-ipcp_finished(f)
-    fsm *f;
-{
+static void ipcp_finished(fsm *f) {
 	ppp_pcb *pcb = &ppp_pcb_list[f->unit];
 	if (ipcp_is_open) {
 		ipcp_is_open = 0;
@@ -2116,13 +2071,8 @@ static char *ipcp_codenames[] = {
     "TermReq", "TermAck", "CodeRej"
 };
 
-static int
-ipcp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) (void *, char *, ...);
-    void *arg;
-{
+static int ipcp_printpkt(u_char *p, int plen,
+		void (*printer) (void *, char *, ...), void *arg) {
     int code, id, len, olen;
     u_char *pstart, *optend;
     u_short cishort;

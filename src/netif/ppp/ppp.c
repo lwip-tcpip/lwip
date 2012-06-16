@@ -389,6 +389,9 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
 
+  lcp_options *wo = &pcb->lcp_wantoptions;
+  lcp_options *ao = &pcb->lcp_allowoptions;
+
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
@@ -402,15 +405,15 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
 
-  lcp_wantoptions[pcb->unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_wantoptions[pcb->unit].neg_asyncmap = 0;
-  lcp_wantoptions[pcb->unit].neg_pcompression = 0;
-  lcp_wantoptions[pcb->unit].neg_accompression = 0;
+  wo->mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
 
-  lcp_allowoptions[pcb->unit].mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  lcp_allowoptions[pcb->unit].neg_asyncmap = 0;
-  lcp_allowoptions[pcb->unit].neg_pcompression = 0;
-  lcp_allowoptions[pcb->unit].neg_accompression = 0;
+  ao->mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
 
   if(pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
     pcb->open_flag = 0;
@@ -515,7 +518,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
    */
-  if (protocol != PPP_LCP && lcp_fsm[0].state != OPENED) {
+  if (protocol != PPP_LCP && pcb->lcp_fsm.state != OPENED) {
 	dbglog("Discarded non-LCP packet when LCP not open");
 	goto drop;
   }
