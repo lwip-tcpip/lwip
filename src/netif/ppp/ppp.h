@@ -156,6 +156,7 @@ typedef struct ppp_settings_s {
 #if PRINTPKT_SUPPORT
   u_int  hide_password     : 1;       /* Hide password in dumped packets */
 #endif /* PRINTPKT_SUPPORT */
+  u_int  noremoteip        : 1;
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
@@ -453,6 +454,11 @@ typedef struct ppp_pcb_s {
   ipcp_options ipcp_gotoptions;	    /* Options that peer ack'd */
   ipcp_options ipcp_allowoptions;   /* Options we allow peer to request */
   ipcp_options ipcp_hisoptions;     /* Options that we ack'd */
+  int default_route_set;        /* Have set up a default route */
+  int proxy_arp_set;            /* Have created proxy arp entry */
+  int ipcp_is_open;             /* haven't called np_finished() */
+  int ipcp_is_up;               /* have called np_up() */
+  bool ask_for_local;           /* request our address from peer */
 
 } ppp_pcb;
 

@@ -64,13 +64,18 @@
 #include "fsm.h"
 #include "ipcp.h"
 
+#if 0 /* UNUSED */
 /* global vars */
 u_int32_t netmask = 0;		/* IP netmask to set on interface */
+#endif /* UNUSED */
 
 #if 0 /* UNUSED */
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 #endif /* UNUSED */
+
+#if 0 /* moved to ppp_settings */
 bool	noremoteip = 0;		/* Let him have no IP address */
+#endif /* moved to ppp_setting */
 
 #if 0 /* UNUSED */
 /* Hook for a plugin to know when IP protocol has come up */
@@ -90,11 +95,13 @@ struct notifier *ip_down_notifier = NULL;
 #endif /* PPP_NOTIFY */
 
 /* local vars */
+#if 0 /* moved to ppp_pcb */
 static int default_route_set[NUM_PPP];	/* Have set up a default route */
 static int proxy_arp_set[NUM_PPP];	/* Have created proxy arp entry */
 static int ipcp_is_up;			/* have called np_up() */
 static int ipcp_is_open;		/* haven't called np_finished() */
 static bool ask_for_local;		/* request our address from peer */
+#endif /* moved to ppp_pcb */
 #if 0 /* UNUSED */
 static char vj_value[8];		/* string form of vj option value */
 static char netmask_str[20];		/* string form of netmask value */
@@ -640,7 +647,7 @@ static void ipcp_init(ppp_pcb *pcb) {
 static void ipcp_open(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_open(f);
-    ipcp_is_open = 1;
+    pcb->ipcp_is_open = 1;
 }
 
 
@@ -710,7 +717,7 @@ static void ipcp_resetci(fsm *f) {
     wo->req_dns1 = pcb->settings.usepeerdns;	/* Request DNS addresses from the peer */
     wo->req_dns2 = pcb->settings.usepeerdns;
     *go = *wo;
-    if (!ask_for_local)
+    if (!pcb->ask_for_local)
 	go->ouraddr = 0;
 #if 0 /* UNUSED */
     if (ip_choose_hook) {
@@ -1650,7 +1657,7 @@ endswitch:
      * option safely.
      */
     if (rc != CONFREJ && !ho->neg_addr && !ho->old_addrs &&
-	wo->req_addr && !reject_if_disagree && !noremoteip) {
+	wo->req_addr && !reject_if_disagree && !pcb->settings.noremoteip) {
 	if (rc == CONFACK) {
 	    rc = CONFNAK;
 	    ucp = inp;			/* reset pointer */
@@ -1713,7 +1720,7 @@ ip_demand_conf(u)
     ppp_pcb *pcb = &ppp_pcb_list[u];
     ipcp_options *wo = &ipcp_wantoptions[u];
 
-    if (wo->hisaddr == 0 && !noremoteip) {
+    if (wo->hisaddr == 0 && !pcb->settings.noremoteip) {
 	/* make up an arbitrary address for the peer */
 	wo->hisaddr = htonl(0x0a707070 + ifunit);
 	wo->accept_remote = 1;
@@ -1777,7 +1784,7 @@ static void ipcp_up(fsm *f) {
 	ipcp_close(f->pcb, "Could not determine local IP address");
 	return;
     }
-    if (ho->hisaddr == 0 && !noremoteip) {
+    if (ho->hisaddr == 0 && !pcb->settings.noremoteip) {
 	ho->hisaddr = htonl(0x0a404040);
 	warn("Could not determine remote IP address: defaulting to %I",
 	     ho->hisaddr);
@@ -1911,12 +1918,12 @@ static void ipcp_up(fsm *f) {
 	if (wo->default_route)
 	    if (sifdefaultroute(pcb, go->ouraddr, ho->hisaddr,
 		    wo->replace_default_route))
-		default_route_set[pcb->unit] = 1;
+		    pcb->default_route_set = 1;
 
 	/* Make a proxy ARP entry if requested. */
 	if (ho->hisaddr != 0 && wo->proxy_arp)
 	    if (sifproxyarp(pcb, ho->hisaddr))
-		proxy_arp_set[pcb->unit] = 1;
+		pcb->proxy_arp_set = 1;
 
 	wo->ouraddr = go->ouraddr;
 
@@ -1934,7 +1941,7 @@ static void ipcp_up(fsm *f) {
 #endif /* PPP_STATS_SUPPORT */
 
     np_up(pcb, PPP_IP);
-    ipcp_is_up = 1;
+    pcb->ipcp_is_up = 1;
 
 #if PPP_NOTIFY
     notify(ip_up_notifier, 0);
@@ -1972,8 +1979,8 @@ static void ipcp_down(fsm *f) {
     if (ip_down_hook)
 	ip_down_hook();
 #endif /* UNUSED */
-    if (ipcp_is_up) {
-	ipcp_is_up = 0;
+    if (pcb->ipcp_is_up) {
+	pcb->ipcp_is_up = 0;
 	np_down(pcb, PPP_IP);
     }
     sifvjcomp(pcb, 0, 0, 0);
@@ -2011,9 +2018,9 @@ static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, boo
 
     ppp_pcb *pcb = &ppp_pcb_list[unit];
 
-    if (proxy_arp_set[unit]) {
+    if (pcb->proxy_arp_set) {
 	cifproxyarp(pcb, hisaddr);
-	proxy_arp_set[unit] = 0;
+	pcb->proxy_arp_set = 0;
     }
     /* If replacedefaultroute, sifdefaultroute will be called soon
      * with replacedefaultroute set and that will overwrite the current
@@ -2023,9 +2030,9 @@ static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, boo
      * case, we'll delete the default route and restore the old if there
      * is one saved by an sifdefaultroute with replacedefaultroute.
      */
-    if (!replacedefaultroute && default_route_set[unit]) {
+    if (!replacedefaultroute && pcb->default_route_set) {
 	cifdefaultroute(pcb, ouraddr, hisaddr);
-	default_route_set[unit] = 0;
+	pcb->default_route_set = 0;
     }
     cifaddr(pcb, ouraddr, hisaddr);
 }
@@ -2036,8 +2043,8 @@ static void ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, boo
  */
 static void ipcp_finished(fsm *f) {
 	ppp_pcb *pcb = f->pcb;
-	if (ipcp_is_open) {
-		ipcp_is_open = 0;
+	if (pcb->ipcp_is_open) {
+		pcb->ipcp_is_open = 0;
 		np_finished(pcb, PPP_IP);
 	}
 }
