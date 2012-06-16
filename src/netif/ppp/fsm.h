@@ -70,8 +70,7 @@
  * Each FSM is described by an fsm structure and fsm callbacks.
  */
 typedef struct fsm {
-    int unit;			/* Interface unit number */
-    void *pcb;  /* FIXME: Temporary */
+    void *pcb;			/* PPP Interface */ /* FIXME: try to use ppp_pcb here */
     int protocol;		/* Data Link Layer Protocol field value */
     int state;			/* State */
     int flags;			/* Contains option bits */
@@ -159,14 +158,14 @@ typedef struct fsm_callbacks {
 /*
  * Prototypes
  */
-void fsm_init (fsm *);
-void fsm_lowerup (fsm *);
-void fsm_lowerdown (fsm *);
-void fsm_open (fsm *);
-void fsm_close (fsm *, char *);
-void fsm_input (fsm *, u_char *, int);
-void fsm_protreject (fsm *);
-void fsm_sdata (fsm *, int, int, u_char *, int);
+void fsm_init(fsm *f);
+void fsm_lowerup(fsm *f);
+void fsm_lowerdown(fsm *f);
+void fsm_open(fsm *f);
+void fsm_close(fsm *f, char *reason);
+void fsm_input(fsm *f, u_char *inpacket, int l);
+void fsm_protreject(fsm *f);
+void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen);
 
 
 /*
