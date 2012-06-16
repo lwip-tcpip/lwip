@@ -586,24 +586,20 @@ int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from utils.c. */
-void print_string (char *, int,  void (*) (void *, char *, ...),
-		void *);	/* Format a string for output */
-int slprintf (char *, int, char *, ...);		/* sprintf++ */
-int vslprintf (char *, int, char *, va_list);	/* vsprintf++ */
-size_t strlcpy (char *, const char *, size_t);	/* safe strcpy */
-size_t strlcat (char *, const char *, size_t);	/* safe strncpy */
-void dbglog (char *, ...);	/* log a debug message */
-void info (char *, ...);	/* log an informational message */
-void notice (char *, ...);	/* log a notice-level message */
-void warn (char *, ...);	/* log a warning message */
-void error (char *, ...);	/* log an error message */
-void fatal (char *, ...);	/* log an error message and die(1) */
-void init_pr_log (const char *, int); /* initialize for using pr_log */
-void pr_log (void *, char *, ...);	/* printer fn, output to syslog */
-void end_pr_log (void);	/* finish up after using pr_log */
+void print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg);   /* Format a string for output */
+int slprintf(char *buf, int buflen, char *fmt, ...);            /* sprintf++ */
+int vslprintf(char *buf, int buflen, char *fmt, va_list args);  /* vsprintf++ */
+size_t strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
+size_t strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
+void dbglog(char *fmt, ...);    /* log a debug message */
+void info(char *fmt, ...);      /* log an informational message */
+void notice(char *fmt, ...);    /* log a notice-level message */
+void warn(char *fmt, ...);      /* log a warning message */
+void error(char *fmt, ...);     /* log an error message */
+void fatal(char *fmt, ...);     /* log an error message and die(1) */
 #if PRINTPKT_SUPPORT
-void dump_packet (const char *, u_char *, int);
-				/* dump packet to debug log if interesting */
+void dump_packet(const char *tag, unsigned char *p, int len);
+                                /* dump packet to debug log if interesting */
 #endif /* PRINTPKT_SUPPORT */
 
 

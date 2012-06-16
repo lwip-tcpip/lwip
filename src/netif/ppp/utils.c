@@ -69,12 +69,12 @@
 extern char *strerror();
 #endif
 
-static void logit (int, char *, va_list);
-static void log_write (int, char *);
+static void logit(int level, char *fmt, va_list args);
+static void log_write(int level, char *buf);
 #if PRINTPKT_SUPPORT
-static void vslp_printer (void *, char *, ...);
-static void format_packet (u_char *, int, void (*) (void *, char *, ...),
-			       void *);
+static void vslp_printer(void *arg, char *fmt, ...);
+static void format_packet(u_char *p, int len,
+		void (*printer) (void *, char *, ...), void *arg);
 
 struct buffer_info {
     char *ptr;
@@ -86,12 +86,7 @@ struct buffer_info {
  * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
  * always leaves destination null-terminated (for len > 0).
  */
-size_t
-strlcpy(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
+size_t strlcpy(char *dest, const char *src, size_t len) {
     size_t ret = strlen(src);
 
     if (len != 0) {
@@ -109,12 +104,7 @@ strlcpy(dest, src, len)
  * strlcat - like strcat/strncat, doesn't overflow destination buffer,
  * always leaves destination null-terminated (for len > 0).
  */
-size_t
-strlcat(dest, src, len)
-    char *dest;
-    const char *src;
-    size_t len;
-{
+size_t strlcat(char *dest, const char *src, size_t len) {
     size_t dlen = strlen(dest);
 
     return dlen + strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
@@ -129,9 +119,7 @@ strlcat(dest, src, len)
  * Doesn't do floating-point formats.
  * Returns the number of chars put into buf.
  */
-int
-slprintf (char *buf, int buflen, char *fmt, ...)
-{
+int slprintf(char *buf, int buflen, char *fmt, ...) {
     va_list args;
     int n;
 
@@ -146,13 +134,7 @@ slprintf (char *buf, int buflen, char *fmt, ...)
  */
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
-int
-vslprintf(buf, buflen, fmt, args)
-    char *buf;
-    int buflen;
-    char *fmt;
-    va_list args;
-{
+int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
     int c, i, n;
     int width, prec, fillch;
     int base, len, neg, quoted;
@@ -431,9 +413,7 @@ vslprintf(buf, buflen, fmt, args)
 /*
  * vslp_printer - used in processing a %P format
  */
-static void
-vslp_printer (void *arg, char *fmt, ...)
-{
+static void vslp_printer(void *arg, char *fmt, ...) {
     int n;
     va_list pvar;
     struct buffer_info *bi;
@@ -471,13 +451,8 @@ log_packet(p, len, prefix, level)
  * format_packet - make a readable representation of a packet,
  * calling `printer(arg, format, ...)' to output it.
  */
-static void
-format_packet(p, len, printer, arg)
-    u_char *p;
-    int len;
-    void (*printer) (void *, char *, ...);
-    void *arg;
-{
+static void format_packet(u_char *p, int len,
+		void (*printer) (void *, char *, ...), void *arg) {
     int i, n;
     u_short proto;
     struct protent *protp;
@@ -635,23 +610,14 @@ void print_string(char *p, int len, void (*printer) (void *, char *, ...), void 
 /*
  * logit - does the hard work for fatal et al.
  */
-static void
-logit(level, fmt, args)
-    int level;
-    char *fmt;
-    va_list args;
-{
+static void logit(int level, char *fmt, va_list args) {
     char buf[1024];
 
     vslprintf(buf, sizeof(buf), fmt, args);
     log_write(level, buf);
 }
 
-static void
-log_write(level, buf)
-    int level;
-    char *buf;
-{
+static void log_write(int level, char *buf) {
     PPPDEBUG(level, ("%s\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
@@ -669,9 +635,7 @@ log_write(level, buf)
 /*
  * fatal - log an error message and die horribly.
  */
-void
-fatal (char *fmt, ...)
-{
+void fatal(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -687,9 +651,7 @@ fatal (char *fmt, ...)
 /*
  * error - log an error message.
  */
-void
-error (char *fmt, ...)
-{
+void error(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -703,9 +665,7 @@ error (char *fmt, ...)
 /*
  * warn - log a warning message.
  */
-void
-warn (char *fmt, ...)
-{
+void warn(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -716,9 +676,7 @@ warn (char *fmt, ...)
 /*
  * notice - log a notice-level message.
  */
-void
-notice (char *fmt, ...)
-{
+void notice(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -729,9 +687,7 @@ notice (char *fmt, ...)
 /*
  * info - log an informational message.
  */
-void
-info (char *fmt, ...)
-{
+void info(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -742,9 +698,7 @@ info (char *fmt, ...)
 /*
  * dbglog - log a debug message.
  */
-void
-dbglog (char *fmt, ...)
-{
+void dbglog(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -757,9 +711,7 @@ dbglog (char *fmt, ...)
  * dump_packet - print out a packet in readable form if it is interesting.
  * Assumes len >= PPP_HDRLEN.
  */
-void
-dump_packet(const char *tag, unsigned char *p, int len)
-{
+void dump_packet(const char *tag, unsigned char *p, int len) {
     int proto;
 
     /*
