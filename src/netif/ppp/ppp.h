@@ -468,6 +468,9 @@ typedef struct ppp_pcb_s {
   /* FIXME: do we really need such a large buffer? The typical 1500 bytes seem too much. */
   u_char nak_buffer[PPP_MRU];    /* where we construct a nak packet */
   int lcp_loopbackfail;
+#if PPPOS_SUPPORT
+
+#endif /* #if PPPOS_SUPPORT */
 
   fsm ipcp_fsm;          /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;    /* Options that we want to request */

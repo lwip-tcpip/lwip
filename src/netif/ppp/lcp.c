@@ -402,12 +402,12 @@ static void lcp_init(ppp_pcb *pcb) {
      * Set transmit escape for the flag and escape characters plus anything
      * set for the allowable options.
      */
-    memset(xmit_accm[pcb->unit], 0, sizeof(xmit_accm[0]));
-    xmit_accm[pcb->unit][15] = 0x60;
-    xmit_accm[pcb->unit][0]  = (u_char)((ao->asyncmap        & 0xFF));
-    xmit_accm[pcb->unit][1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
-    xmit_accm[pcb->unit][2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
-    xmit_accm[pcb->unit][3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
+    memset(pcb->xmit_accm, 0, sizeof(ext_accm));
+    pcb->xmit_accm[15] = 0x60;
+    pcb->xmit_accm[0]  = (u_char)((ao->asyncmap        & 0xFF));
+    pcb->xmit_accm[1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
+    pcb->xmit_accm[2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
+    pcb->xmit_accm[3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
     LCPDEBUG(("lcp_init: xmit_accm=%X %X %X %X\n",
           xmit_accm[unit][0],
           xmit_accm[unit][1],
@@ -479,7 +479,7 @@ void lcp_lowerup(ppp_pcb *pcb) {
      * if we are going to ask for A/C and protocol compression.
      */
 #if PPPOS_SUPPORT
-    ppp_set_xaccm(pcb, &xmit_accm[pcb->unit]);
+    ppp_set_xaccm(pcb, &pcb->xmit_accm);
 #endif /* PPPOS_SUPPORT */
     if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
 	|| ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
@@ -488,10 +488,10 @@ void lcp_lowerup(ppp_pcb *pcb) {
     pcb->peer_mru = PPP_MRU;
 
 #if PPPOS_SUPPORT
-    ao->asyncmap = (u_long)xmit_accm[pcb->unit][0]
-                                   | ((u_long)xmit_accm[pcb->unit][1] << 8)
-                                   | ((u_long)xmit_accm[pcb->unit][2] << 16)
-                                   | ((u_long)xmit_accm[pcb->unit][3] << 24);
+    ao->asyncmap = (u_long)pcb->xmit_accm[0]
+                                   | ((u_long)pcb->xmit_accm[1] << 8)
+                                   | ((u_long)pcb->xmit_accm[2] << 16)
+                                   | ((u_long)pcb->xmit_accm[3] << 24);
     LCPDEBUG(("lcp_lowerup: asyncmap=%X %X %X %X\n",
               xmit_accm[unit][3],
               xmit_accm[unit][2],
