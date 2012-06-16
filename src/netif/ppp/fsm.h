@@ -71,6 +71,7 @@
  */
 typedef struct fsm {
     int unit;			/* Interface unit number */
+    void *pcb;  /* FIXME: Temporary */
     int protocol;		/* Data Link Layer Protocol field value */
     int state;			/* State */
     int flags;			/* Contains option bits */

@@ -96,11 +96,11 @@ static option_t eap_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void eap_init(int unit);
-static void eap_input(int unit, u_char *inp, int inlen);
-static void eap_protrej(int unit);
-static void eap_lowerup(int unit);
-static void eap_lowerdown(int unit);
+static void eap_init(ppp_pcb *pcb);
+static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen);
+static void eap_protrej(ppp_pcb *pcb);
+static void eap_lowerup(ppp_pcb *pcb);
+static void eap_lowerdown(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int  eap_printpkt(u_char *inp, int inlen,
     void (*)(void *arg, char *fmt, ...), void *arg);
@@ -195,11 +195,9 @@ enum eap_state_code esc;
  * eap_init - Initialize state for an EAP user.  This is currently
  * called once by main() during start-up.
  */
-static void eap_init(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void eap_init(ppp_pcb *pcb) {
 
 	BZERO(&pcb->eap, sizeof(eap_state));
-	pcb->eap.es_unit = unit;
 #if PPP_SERVER
 	pcb->eap.es_server.ea_timeout = EAP_DEFTIMEOUT;
 	pcb->eap.es_server.ea_maxrequests = EAP_DEFTRANSMITS;
@@ -955,8 +953,7 @@ void *arg;
  * return to closed state so that those two routines will do the right
  * thing.
  */
-static void eap_lowerup(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void eap_lowerup(ppp_pcb *pcb) {
 
 	/* Discard any (possibly authenticated) peer name. */
 #if PPP_SERVER
@@ -980,8 +977,7 @@ static void eap_lowerup(int unit) {
  *
  * Cancel all timeouts and return to initial state.
  */
-static void eap_lowerdown(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void eap_lowerdown(ppp_pcb *pcb) {
 
 	if (eap_client_active(pcb) && pcb->eap.es_client.ea_timeout > 0) {
 		UNTIMEOUT(eap_client_timeout, pcb);
@@ -1014,8 +1010,7 @@ static void eap_lowerdown(int unit) {
  * This shouldn't happen.  If it does, it represents authentication
  * failure.
  */
-static void eap_protrej(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void eap_protrej(ppp_pcb *pcb) {
 
 	if (eap_client_active(pcb)) {
 		error("EAP authentication failed due to Protocol-Reject");
@@ -1027,7 +1022,7 @@ static void eap_protrej(int unit) {
 		auth_peer_fail(pcb, PPP_EAP);
 	}
 #endif /* PPP_SERVER */
-	eap_lowerdown(unit);
+	eap_lowerdown(pcb);
 }
 
 /*
@@ -2029,8 +2024,7 @@ static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
 /*
  * eap_input - Handle received EAP message.
  */
-static void eap_input(int unit, u_char *inp, int inlen) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen) {
 	u_char code, id;
 	int len;
 

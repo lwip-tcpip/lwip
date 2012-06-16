@@ -711,9 +711,9 @@ void upper_layers_down(ppp_pcb *pcb) {
 	if (!protp->enabled_flag)
 	    continue;
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
-	    (*protp->lowerdown)(pcb->unit);
+	    (*protp->lowerdown)(pcb);
         if (protp->protocol < 0xC000 && protp->close != NULL)
-	    (*protp->close)(pcb->unit, "LCP down");
+	    (*protp->close)(pcb, "LCP down");
     }
     pcb->num_np_open = 0;
     pcb->num_np_up = 0;
@@ -742,7 +742,7 @@ void link_established(ppp_pcb *pcb) {
 	for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	    if (protp->protocol != PPP_LCP && protp->enabled_flag
 		&& protp->lowerup != NULL)
-		(*protp->lowerup)(pcb->unit);
+		(*protp->lowerup)(pcb);
     }
 
 #if 0 /* UNUSED */
@@ -979,7 +979,7 @@ void continue_networks(ppp_pcb *pcb) {
 	    && protp->protocol != PPP_ECP
 #endif /* ECP_SUPPORT */
 	    && protp->enabled_flag && protp->open != NULL) {
-	    (*protp->open)(0);
+	    (*protp->open)(pcb);
 	    ++pcb->num_np_open;
 	}
 
@@ -1083,7 +1083,7 @@ void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
      * we can do except wait for that.
      */
     ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
-    lcp_close(pcb->unit, "Failed to authenticate ourselves to peer");
+    lcp_close(pcb, "Failed to authenticate ourselves to peer");
 }
 
 /*

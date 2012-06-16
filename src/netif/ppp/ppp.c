@@ -267,7 +267,7 @@ ppp_pcb *ppp_new(void) {
      * Initialize each protocol.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-        (*protp->init)(pd);
+        (*protp->init)(pcb);
 
     return pcb;
 }
@@ -475,21 +475,21 @@ ppp_sighup(ppp_pcb *pcb)
 /** Initiate LCP open request */
 static void ppp_start(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->unit));
-  lcp_open(pcb->unit); /* Start protocol */
-  lcp_lowerup(pcb->unit);
+  lcp_open(pcb); /* Start protocol */
+  lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start: finished\n"));
 }
 
 /** LCP close request */
 static void ppp_stop(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_stop: unit %d\n", pcb->unit));
-  lcp_close(pcb->unit, "User request");
+  lcp_close(pcb, "User request");
 }
 
 /** Called when carrier/link is lost */
 static void ppp_hup(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_hup: unit %d\n", pcb->unit));
-  lcp_lowerdown(pcb->unit);
+  lcp_lowerdown(pcb);
   link_terminated(pcb);
 }
 
@@ -599,7 +599,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 	  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 		if (protp->protocol == protocol && protp->enabled_flag) {
 		    pb = ppp_singlebuf(pb);
-		    (*protp->input)(pcb->unit, pb->payload, pb->len);
+		    (*protp->input)(pcb, pb->payload, pb->len);
 		    goto out;
 		}
 #if 0 /* UNUSED
@@ -632,7 +632,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 	        LWIP_ASSERT("pbuf_header failed\n", 0);
 	        goto drop;
 	  }
-	  lcp_sprotrej(pcb->unit, pb->payload, pb->len);
+	  lcp_sprotrej(pcb, pb->payload, pb->len);
     }
     break;
  }

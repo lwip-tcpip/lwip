@@ -89,7 +89,6 @@ typedef unsigned char	bool;
 #endif
 
 #include "fsm.h"
-#include "lcp.h"
 #include "ipcp.h"
 
 
@@ -227,12 +226,61 @@ typedef struct ppp_pcb_rx_s {
 } ppp_pcb_rx;
 #endif /* PPPOS_SUPPORT */
 
+/* An endpoint discriminator, used with multilink. */
+#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
+struct epdisc {
+    unsigned char	class;
+    unsigned char	length;
+    unsigned char	value[MAX_ENDP_LEN];
+};
+
+/*
+ * The state of options is described by an lcp_options structure.
+ */
+typedef struct lcp_options {
+    bool passive;		/* Don't die if we don't get a response */
+    bool silent;		/* Wait for the other end to start first */
+    bool restart;		/* Restart vs. exit after close */
+    bool neg_mru;		/* Negotiate the MRU? */
+    bool neg_asyncmap;		/* Negotiate the async map? */
+#if PAP_SUPPORT
+    bool neg_upap;		/* Ask for UPAP authentication? */
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+    bool neg_chap;		/* Ask for CHAP authentication? */
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+    bool neg_eap;		/* Ask for EAP authentication? */
+#endif /* EAP_SUPPORT */
+    bool neg_magicnumber;	/* Ask for magic number? */
+    bool neg_pcompression;	/* HDLC Protocol Field Compression? */
+    bool neg_accompression;	/* HDLC Address/Control Field Compression? */
+#if LQR_SUPPORT
+    bool neg_lqr;		/* Negotiate use of Link Quality Reports */
+#endif /* LQR_SUPPORT */
+    bool neg_cbcp;		/* Negotiate use of CBCP */
+    bool neg_mrru;		/* negotiate multilink MRRU */
+    bool neg_ssnhf;		/* negotiate short sequence numbers */
+    bool neg_endpoint;		/* negotiate endpoint discriminator */
+    int  mru;			/* Value of MRU */
+    int	 mrru;			/* Value of MRRU, and multilink enable */
+#if CHAP_SUPPORT
+    u_char chap_mdtype;		/* which MD types (hashing algorithm) */
+#endif /* CHAP_SUPPORT */
+    u_int32_t asyncmap;		/* Value of async map */
+    u_int32_t magicnumber;
+    int  numloops;		/* Number of loops during magic number neg. */
+#if LQR_SUPPORT
+    u_int32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
+#endif /* LQR_SUPPORT */
+    struct epdisc endpoint;	/* endpoint discriminator */
+} lcp_options;
+
 /*
  * Each interface is described by upap structure.
  */
 #if PAP_SUPPORT
 typedef struct upap_state {
-    int us_unit;		/* Interface unit number */
     char *us_user;		/* User */
     int us_userlen;		/* User length */
     char *us_passwd;		/* Password */
@@ -314,7 +362,6 @@ struct eap_auth {
 #define EAP_MAX_CHALLENGE_LENGTH	24
 #endif
 typedef struct eap_state {
-	int es_unit;			/* Interface unit number */
 	struct eap_auth es_client;	/* Client (authenticatee) data */
 #if PPP_SERVER
 	struct eap_auth es_server;	/* Server (authenticator) data */

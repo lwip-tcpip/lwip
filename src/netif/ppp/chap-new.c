@@ -91,9 +91,9 @@ static option_t chap_option_list[] = {
 /*
  * Prototypes.
  */
-static void chap_init(int unit);
-static void chap_lowerup(int unit);
-static void chap_lowerdown(int unit);
+static void chap_init(ppp_pcb *pcb);
+static void chap_lowerup(ppp_pcb *pcb);
+static void chap_lowerdown(ppp_pcb *pcb);
 #if PPP_SERVER
 static void chap_timeout(void *arg);
 static void chap_generate_challenge(ppp_pcb *pcb);
@@ -108,8 +108,8 @@ static void chap_respond(ppp_pcb *pcb, int id,
 		unsigned char *pkt, int len);
 static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 		unsigned char *pkt, int len);
-static void chap_protrej(int unit);
-static void chap_input(int unit, unsigned char *pkt, int pktlen);
+static void chap_protrej(ppp_pcb *pcb);
+static void chap_input(ppp_pcb *pcb, unsigned char *pkt, int pktlen);
 #if PRINTPKT_SUPPORT
 static int chap_print_pkt(unsigned char *p, int plen,
 		void (*printer) (void *, char *, ...), void *arg);
@@ -121,8 +121,7 @@ static struct chap_digest_type *chap_digests;
 /*
  * chap_init - reset to initial state.
  */
-static void chap_init(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void chap_init(ppp_pcb *pcb) {
 
 	memset(&pcb->chap_client, 0, sizeof(chap_client_state));
 #if PPP_SERVER
@@ -148,8 +147,7 @@ void chap_register_digest(struct chap_digest_type *dp) {
 /*
  * chap_lowerup - we can start doing stuff now.
  */
-static void chap_lowerup(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void chap_lowerup(ppp_pcb *pcb) {
 
 	pcb->chap_client.flags |= LOWERUP;
 #if PPP_SERVER
@@ -159,8 +157,7 @@ static void chap_lowerup(int unit) {
 #endif /* PPP_SERVER */
 }
 
-static void chap_lowerdown(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void chap_lowerdown(ppp_pcb *pcb) {
 
 	pcb->chap_client.flags = 0;
 #if PPP_SERVER
@@ -502,8 +499,7 @@ static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 	}
 }
 
-static void chap_input(int unit, unsigned char *pkt, int pktlen) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void chap_input(ppp_pcb *pcb, unsigned char *pkt, int pktlen) {
 	unsigned char code, id;
 	int len;
 
@@ -532,8 +528,7 @@ static void chap_input(int unit, unsigned char *pkt, int pktlen) {
 	}
 }
 
-static void chap_protrej(int unit) {
-	ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void chap_protrej(ppp_pcb *pcb) {
 
 #if PPP_SERVER
 	if (pcb->chap_server.flags & TIMEOUT_PENDING) {

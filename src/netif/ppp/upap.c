@@ -80,11 +80,11 @@ static option_t pap_option_list[] = {
 /*
  * Protocol entry points.
  */
-static void upap_init(int unit);
-static void upap_lowerup(int unit);
-static void upap_lowerdown(int unit);
-static void upap_input(int unit, u_char *inpacket, int l);
-static void upap_protrej(int unit);
+static void upap_init(ppp_pcb *pcb);
+static void upap_lowerup(ppp_pcb *pcb);
+static void upap_lowerdown(ppp_pcb *pcb);
+static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l);
+static void upap_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
@@ -135,10 +135,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
 /*
  * upap_init - Initialize a UPAP unit.
  */
-static void upap_init(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
-
-    pcb->upap.us_unit = unit;
+static void upap_init(ppp_pcb *pcb) {
     pcb->upap.us_user = NULL;
     pcb->upap.us_userlen = 0;
     pcb->upap.us_passwd = NULL;
@@ -240,8 +237,7 @@ static void upap_reqtimeout(void *arg) {
  *
  * Start authenticating if pending.
  */
-static void upap_lowerup(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void upap_lowerup(ppp_pcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_INITIAL)
 	pcb->upap.us_clientstate = UPAPCS_CLOSED;
@@ -266,8 +262,7 @@ static void upap_lowerup(int unit) {
  *
  * Cancel all timeouts.
  */
-static void upap_lowerdown(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void upap_lowerdown(ppp_pcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ)	/* Timeout pending? */
 	UNTIMEOUT(upap_timeout, pcb);		/* Cancel timeout */
@@ -288,8 +283,7 @@ static void upap_lowerdown(int unit) {
  *
  * This shouldn't happen.  In any case, pretend lower layer went down.
  */
-static void upap_protrej(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void upap_protrej(ppp_pcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ) {
 	error("PAP authentication failed due to protocol-reject");
@@ -301,15 +295,14 @@ static void upap_protrej(int unit) {
 	auth_peer_fail(pcb, PPP_PAP);
     }
 #endif /* PPP_SERVER */
-    upap_lowerdown(unit);
+    upap_lowerdown(pcb);
 }
 
 
 /*
  * upap_input - Input UPAP packet.
  */
-static void upap_input(int unit, u_char *inpacket, int l) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l) {
     u_char *inp;
     u_char code, id;
     int len;

@@ -221,7 +221,7 @@ struct ppp_idle {
 };
 
 /* FIXME: make endpoint discriminator optional */
-/* FIXME: moved temporarily to lcp.h */
+/* FIXME: moved temporarily to ppp.h */
 
 /* values for epdisc.class */
 #define EPD_NULL	0	/* null discriminator, no data */
@@ -269,19 +269,19 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 struct protent {
     u_short protocol;		/* PPP protocol number */
     /* Initialization procedure */
-    void (*init) (int unit);
+    void (*init) (ppp_pcb *pcb);
     /* Process a received packet */
-    void (*input) (int unit, u_char *pkt, int len);
+    void (*input) (ppp_pcb *pcb, u_char *pkt, int len);
     /* Process a received protocol-reject */
-    void (*protrej) (int unit);
+    void (*protrej) (ppp_pcb *pcb);
     /* Lower layer has come up */
-    void (*lowerup) (int unit);
+    void (*lowerup) (ppp_pcb *pcb);
     /* Lower layer has gone down */
-    void (*lowerdown) (int unit);
+    void (*lowerdown) (ppp_pcb *pcb);
     /* Open the protocol */
-    void (*open) (int unit);
+    void (*open) (ppp_pcb *pcb);
     /* Close the protocol */
-    void (*close) (int unit, char *reason);
+    void (*close) (ppp_pcb *pcb, char *reason);
 #if PRINTPKT_SUPPORT
     /* Print a packet in readable form */
     int  (*printpkt) (u_char *pkt, int len,
@@ -292,7 +292,7 @@ struct protent {
      *        should we remove this entry and save some flash ?
      */
     /* Process a received data packet */
-    void (*datainput) (int unit, u_char *pkt, int len);
+    void (*datainput) (ppp_pcb *pcb, u_char *pkt, int len);
     bool enabled_flag;		/* 0 if protocol is disabled */
 #if PRINTPKT_SUPPORT
     char *name;			/* Text name of protocol */

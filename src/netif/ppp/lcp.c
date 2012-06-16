@@ -241,8 +241,8 @@ static void lcp_rprotrej (fsm *, u_char *, int);
  * routines to send LCP echos to peer
  */
 
-static void lcp_echo_lowerup(int unit);
-static void lcp_echo_lowerdown(int unit);
+static void lcp_echo_lowerup(ppp_pcb *pcb);
+static void lcp_echo_lowerdown(ppp_pcb *pcb);
 static void LcpEchoTimeout (void *);
 static void lcp_received_echo_reply (fsm *, int, u_char *, int);
 static void LcpSendEchoRequest (fsm *);
@@ -272,9 +272,9 @@ static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
  * Some of these are called directly.
  */
 
-static void lcp_init(int unit);
-static void lcp_input(int unit, u_char *p, int len);
-static void lcp_protrej(int unit);
+static void lcp_init(ppp_pcb *pcb);
+static void lcp_input(ppp_pcb *pcb, u_char *p, int len);
+static void lcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int lcp_printpkt(u_char *p, int plen,
 		void (*printer) (void *, char *, ...), void *arg);
@@ -369,13 +369,13 @@ printendpoint(opt, printer, arg)
 /*
  * lcp_init - Initialize LCP.
  */
-static void lcp_init(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void lcp_init(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
 
-    f->unit = unit;
+    f->unit = pcb->unit;
+    f->pcb = (void*)pcb;
     f->protocol = PPP_LCP;
     f->callbacks = &lcp_callbacks;
 
@@ -413,12 +413,12 @@ static void lcp_init(int unit) {
      * Set transmit escape for the flag and escape characters plus anything
      * set for the allowable options.
      */
-    memset(xmit_accm[unit], 0, sizeof(xmit_accm[0]));
-    xmit_accm[unit][15] = 0x60;
-    xmit_accm[unit][0]  = (u_char)((ao->asyncmap        & 0xFF));
-    xmit_accm[unit][1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
-    xmit_accm[unit][2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
-    xmit_accm[unit][3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
+    memset(xmit_accm[pcb->unit], 0, sizeof(xmit_accm[0]));
+    xmit_accm[pcb->unit][15] = 0x60;
+    xmit_accm[pcb->unit][0]  = (u_char)((ao->asyncmap        & 0xFF));
+    xmit_accm[pcb->unit][1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
+    xmit_accm[pcb->unit][2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
+    xmit_accm[pcb->unit][3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
     LCPDEBUG(("lcp_init: xmit_accm=%X %X %X %X\n",
           xmit_accm[unit][0],
           xmit_accm[unit][1],
@@ -431,8 +431,7 @@ static void lcp_init(int unit) {
 /*
  * lcp_open - LCP is allowed to come up.
  */
-void lcp_open(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void lcp_open(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
     lcp_options *wo = &pcb->lcp_wantoptions;
 
@@ -448,8 +447,7 @@ void lcp_open(int unit) {
 /*
  * lcp_close - Take LCP down.
  */
-void lcp_close(int unit, char *reason) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void lcp_close(ppp_pcb *pcb, char *reason) {
     fsm *f = &pcb->lcp_fsm;
     int oldstate;
 
@@ -480,8 +478,7 @@ void lcp_close(int unit, char *reason) {
 /*
  * lcp_lowerup - The lower layer is up.
  */
-void lcp_lowerup(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void lcp_lowerup(ppp_pcb *pcb) {
     lcp_options *wo = &pcb->lcp_wantoptions;
 #if PPPOS_SUPPORT
     lcp_options *ao = &pcb->lcp_allowoptions;
@@ -493,19 +490,19 @@ void lcp_lowerup(int unit) {
      * if we are going to ask for A/C and protocol compression.
      */
 #if PPPOS_SUPPORT
-    ppp_set_xaccm(pcb, &xmit_accm[unit]);
+    ppp_set_xaccm(pcb, &xmit_accm[pcb->unit]);
 #endif /* PPPOS_SUPPORT */
     if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
 	|| ppp_recv_config(pcb, PPP_MRU, (lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
-    peer_mru[unit] = PPP_MRU;
+    peer_mru[pcb->unit] = PPP_MRU;
 
 #if PPPOS_SUPPORT
-    ao->asyncmap = (u_long)xmit_accm[unit][0]
-                                   | ((u_long)xmit_accm[unit][1] << 8)
-                                   | ((u_long)xmit_accm[unit][2] << 16)
-                                   | ((u_long)xmit_accm[unit][3] << 24);
+    ao->asyncmap = (u_long)xmit_accm[f->unit][0]
+                                   | ((u_long)xmit_accm[pcb->unit][1] << 8)
+                                   | ((u_long)xmit_accm[pcb->unit][2] << 16)
+                                   | ((u_long)xmit_accm[pcb->unit][3] << 24);
     LCPDEBUG(("lcp_lowerup: asyncmap=%X %X %X %X\n",
               xmit_accm[unit][3],
               xmit_accm[unit][2],
@@ -524,8 +521,7 @@ void lcp_lowerup(int unit) {
 /*
  * lcp_lowerdown - The lower layer is down.
  */
-void lcp_lowerdown(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void lcp_lowerdown(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     if (f->flags & DELAYED_UP) {
@@ -552,8 +548,7 @@ static void lcp_delayed_up(void *arg) {
 /*
  * lcp_input - Input LCP packet.
  */
-static void lcp_input(int unit, u_char *p, int len) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void lcp_input(ppp_pcb *pcb, u_char *p, int len) {
     fsm *f = &pcb->lcp_fsm;
 
     if (f->flags & DELAYED_UP) {
@@ -657,7 +652,7 @@ lcp_rprotrej(f, inp, len)
 	    else
 #endif /* PPP_PROTOCOLNAME */
 		dbglog("Protocol-Reject for 0x%x received", prot);
-	    (*protp->protrej)(f->unit);
+	    (*protp->protrej)(f->pcb);
 	    return;
 	}
 
@@ -675,8 +670,7 @@ lcp_rprotrej(f, inp, len)
  * lcp_protrej - A Protocol-Reject was received.
  */
 /*ARGSUSED*/
-static void lcp_protrej(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void lcp_protrej(ppp_pcb *pcb) {
     /*
      * Can't reject LCP!
      */
@@ -688,8 +682,7 @@ static void lcp_protrej(int unit) {
 /*
  * lcp_sprotrej - Send a Protocol-Reject for some protocol.
  */
-void lcp_sprotrej(int unit, u_char *p, int len) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len) {
     fsm *f = &pcb->lcp_fsm;
     /*
      * Send back the protocol and the information field of the
@@ -1536,7 +1529,7 @@ lcp_nakci(f, p, len, treat_as_reject)
 	    if (++try.numloops >= lcp_loopbackfail) {
 		notice("Serial line is looped back.");
 		pcb->status = EXIT_LOOPBACK;
-		lcp_close(f->unit, "Loopback detected");
+		lcp_close(f->pcb, "Loopback detected");
 	    }
 	} else
 	    try.numloops = 0;
@@ -2296,7 +2289,7 @@ lcp_up(f)
     if (ho->neg_mru)
 	peer_mru[f->unit] = ho->mru;
 
-    lcp_echo_lowerup(f->unit);  /* Enable echo messages */
+    lcp_echo_lowerup(f->pcb);  /* Enable echo messages */
 
     link_established(pcb);
 }
@@ -2314,7 +2307,7 @@ lcp_down(f)
     ppp_pcb *pcb = &ppp_pcb_list[f->unit];
     lcp_options *go = &pcb->lcp_gotoptions;
 
-    lcp_echo_lowerdown(f->unit);
+    lcp_echo_lowerdown(f->pcb);
 
     link_down(pcb);
 
@@ -2613,7 +2606,7 @@ void LcpLinkFailure (f)
 	info("No response to %d echo-requests", lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
 	pc->status = EXIT_PEER_DEAD;
-	lcp_close(f->unit, "Peer not responding");
+	lcp_close(f->pcb, "Peer not responding");
     }
 }
 
@@ -2742,8 +2735,7 @@ LcpSendEchoRequest (f)
  * lcp_echo_lowerup - Start the timer for the LCP frame
  */
 
-static void lcp_echo_lowerup(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void lcp_echo_lowerup(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     /* Clear the parameters for generating echo frames */
@@ -2760,8 +2752,7 @@ static void lcp_echo_lowerup(int unit) {
  * lcp_echo_lowerdown - Stop the timer for the LCP frame
  */
 
-static void lcp_echo_lowerdown(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void lcp_echo_lowerdown(ppp_pcb *pcb) {
     fsm *f = &pcb->lcp_fsm;
 
     if (lcp_echo_timer_running != 0) {

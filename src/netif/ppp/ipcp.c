@@ -249,13 +249,13 @@ static option_t ipcp_option_list[] = {
 /*
  * Protocol entry points from main code.
  */
-static void ipcp_init(int unit);
-static void ipcp_open(int unit);
-static void ipcp_close(int unit, char *reason);
-static void ipcp_lowerup(int unit);
-static void ipcp_lowerdown(int unit);
-static void ipcp_input(int unit, u_char *p, int len);
-static void ipcp_protrej(int unit);
+static void ipcp_init(ppp_pcb *pcb);
+static void ipcp_open(ppp_pcb *pcb);
+static void ipcp_close(ppp_pcb *pcb, char *reason);
+static void ipcp_lowerup(ppp_pcb *pcb);
+static void ipcp_lowerdown(ppp_pcb *pcb);
+static void ipcp_input(ppp_pcb *pcb, u_char *p, int len);
+static void ipcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int ipcp_printpkt(u_char *p, int plen,
 		void (*printer) (void *, char *, ...), void *arg);
@@ -584,14 +584,14 @@ parse_dotted_ip(p, vp)
 /*
  * ipcp_init - Initialize IPCP.
  */
-static void ipcp_init(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_init(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
 
     ipcp_options *wo = &pcb->ipcp_wantoptions;
     ipcp_options *ao = &pcb->ipcp_allowoptions;
 
-    f->unit = unit;
+    f->unit = pcb->unit;
+    f->pcb = (void*)pcb;
     f->protocol = PPP_IPCP;
     f->callbacks = &ipcp_callbacks;
     fsm_init(f);
@@ -638,8 +638,7 @@ static void ipcp_init(int unit) {
 /*
  * ipcp_open - IPCP is allowed to come up.
  */
-static void ipcp_open(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_open(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_open(f);
     ipcp_is_open = 1;
@@ -649,8 +648,7 @@ static void ipcp_open(int unit) {
 /*
  * ipcp_close - Take IPCP down.
  */
-static void ipcp_close(int unit, char *reason) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_close(ppp_pcb *pcb, char *reason) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_close(f, reason);
 }
@@ -659,8 +657,7 @@ static void ipcp_close(int unit, char *reason) {
 /*
  * ipcp_lowerup - The lower layer is up.
  */
-static void ipcp_lowerup(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_lowerup(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_lowerup(f);
 }
@@ -669,8 +666,7 @@ static void ipcp_lowerup(int unit) {
 /*
  * ipcp_lowerdown - The lower layer is down.
  */
-static void ipcp_lowerdown(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_lowerdown(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_lowerdown(f);
 }
@@ -679,8 +675,7 @@ static void ipcp_lowerdown(int unit) {
 /*
  * ipcp_input - Input IPCP packet.
  */
-static void ipcp_input(int unit, u_char *p, int len) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_input(ppp_pcb *pcb, u_char *p, int len) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_input(f, p, len);
 }
@@ -691,8 +686,7 @@ static void ipcp_input(int unit, u_char *p, int len) {
  *
  * Pretend the lower layer went down, so we shut up.
  */
-static void ipcp_protrej(int unit) {
-    ppp_pcb *pcb = &ppp_pcb_list[unit];
+static void ipcp_protrej(ppp_pcb *pcb) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_lowerdown(f);
 }
@@ -1776,12 +1770,12 @@ static void ipcp_up(fsm *f) {
     if (!(go->neg_addr || go->old_addrs) && (wo->neg_addr || wo->old_addrs)
 	&& wo->ouraddr != 0) {
 	error("Peer refused to agree to our IP address");
-	ipcp_close(f->unit, "Refused our IP address");
+	ipcp_close(f->pcb, "Refused our IP address");
 	return;
     }
     if (go->ouraddr == 0) {
 	error("Could not determine local IP address");
-	ipcp_close(f->unit, "Could not determine local IP address");
+	ipcp_close(f->pcb, "Could not determine local IP address");
 	return;
     }
     if (ho->hisaddr == 0 && !noremoteip) {
@@ -1889,7 +1883,7 @@ static void ipcp_up(fsm *f) {
 #if PPP_DEBUG
 	    warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
-	    ipcp_close(f->unit, "Interface configuration failed");
+	    ipcp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
 #endif
@@ -1899,7 +1893,7 @@ static void ipcp_up(fsm *f) {
 #if PPP_DEBUG
 	    warn("Interface failed to come up");
 #endif /* PPP_DEBUG */
-	    ipcp_close(f->unit, "Interface configuration failed");
+	    ipcp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
 
