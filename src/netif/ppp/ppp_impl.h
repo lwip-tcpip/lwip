@@ -55,7 +55,6 @@
 /*
  * Limits.
  */
-#define NUM_PPP		1	/* One PPP interface supported (per process) */
 #define MAXWORDLEN	1024	/* max length of word in file (incl null) */
 #define MAXARGS		1	/* max # args to a command */
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
