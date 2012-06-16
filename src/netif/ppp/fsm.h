@@ -168,10 +168,5 @@ void fsm_protreject(fsm *f);
 void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen);
 
 
-/*
- * Variables
- */
-extern int peer_mru[];		/* currently negotiated peer MRU (per unit) */
-
 #endif /* FSM_H */
 #endif /* PPP_SUPPORT */

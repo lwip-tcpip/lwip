@@ -495,7 +495,7 @@ void lcp_lowerup(ppp_pcb *pcb) {
 	|| ppp_recv_config(pcb, PPP_MRU, (lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
-    peer_mru[pcb->unit] = PPP_MRU;
+    pcb->peer_mru = PPP_MRU;
 
 #if PPPOS_SUPPORT
     ao->asyncmap = (u_long)xmit_accm[pcb->unit][0]
@@ -707,7 +707,7 @@ static void lcp_resetci(fsm *f) {
 #endif /* HAVE_MULTILINK */
     if (noendpoint)
 	ao->neg_endpoint = 0;
-    peer_mru[pcb->unit] = PPP_MRU;
+    pcb->peer_mru = PPP_MRU;
     auth_reset(pcb);
 }
 
@@ -2242,7 +2242,7 @@ static void lcp_up(fsm *f) {
 		    go->neg_pcompression, go->neg_accompression);
 
     if (ho->neg_mru)
-	peer_mru[pcb->unit] = ho->mru;
+	pcb->peer_mru = ho->mru;
 
     lcp_echo_lowerup(f->pcb);  /* Enable echo messages */
 
@@ -2267,7 +2267,7 @@ static void lcp_down(fsm *f) {
     ppp_recv_config(pcb, PPP_MRU,
 		    (go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
-    peer_mru[pcb->unit] = PPP_MRU;
+    pcb->peer_mru = PPP_MRU;
 }
 
 

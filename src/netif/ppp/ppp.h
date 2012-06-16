@@ -443,6 +443,8 @@ typedef struct ppp_pcb_s {
   eap_state eap;
 #endif /* EAP_SUPPORT */
 
+  int peer_mru;         /* currently negotiated peer MRU (per unit) */
+
   fsm lcp_fsm;          /* LCP fsm structure */
   lcp_options lcp_wantoptions;    /* Options that we want to request */
   lcp_options lcp_gotoptions;     /* Options that peer ack'd */

@@ -70,9 +70,6 @@ static void fsm_sconfreq(fsm *f, int retransmit);
 
 #define PROTO_NAME(f)	((f)->callbacks->proto_name)
 
-int peer_mru[NUM_PPP];
-
-
 /*
  * fsm_init - Initialize fsm.
  *
@@ -714,8 +711,8 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     outp = outpacket_buf + PPP_HDRLEN + HEADERLEN;
     if( f->callbacks->cilen && f->callbacks->addci ){
 	cilen = (*f->callbacks->cilen)(f);
-	if( cilen > peer_mru[pcb->unit] - HEADERLEN )
-	    cilen = peer_mru[pcb->unit] - HEADERLEN;
+	if( cilen > pcb->peer_mru - HEADERLEN )
+	    cilen = pcb->peer_mru - HEADERLEN;
 	if (f->callbacks->addci)
 	    (*f->callbacks->addci)(f, outp, &cilen);
     } else
@@ -742,8 +739,8 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
 
     /* Adjust length to be smaller than MTU */
     outp = outpacket_buf;
-    if (datalen > peer_mru[pcb->unit] - HEADERLEN)
-	datalen = peer_mru[pcb->unit] - HEADERLEN;
+    if (datalen > pcb->peer_mru - HEADERLEN)
+	datalen = pcb->peer_mru - HEADERLEN;
     if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
 	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     outlen = datalen + HEADERLEN;
