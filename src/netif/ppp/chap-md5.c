@@ -41,7 +41,12 @@
 #include "chap-new.h"
 #include "chap-md5.h"
 #include "magic.h"
+
+#if LWIP_INCLUDED_POLARSSL_MD5
+#include "polarssl/lwip_md5.h"
+#else
 #include "polarssl/md5.h"
+#endif
 
 #define MD5_HASH_SIZE		16
 #define MD5_MIN_CHALLENGE	16

@@ -77,7 +77,12 @@
 
 #include "ppp_impl.h"
 
+#if LWIP_INCLUDED_POLARSSL_MD5
+#include "polarssl/lwip_md5.h"
+#else
 #include "polarssl/md5.h"
+#endif
+
 #include "magic.h"
 
 #if PPP_MD5_RANDM /* Using MD5 for better randomness if enabled */

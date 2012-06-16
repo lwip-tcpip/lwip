@@ -48,7 +48,12 @@
 
 #include "ppp_impl.h"
 
+#if LWIP_INCLUDED_POLARSSL_MD5
+#include "polarssl/lwip_md5.h"
+#else
 #include "polarssl/md5.h"
+#endif
+
 #include "eap.h"
 
 #ifdef USE_SRP

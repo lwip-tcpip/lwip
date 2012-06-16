@@ -91,11 +91,26 @@
 
 #include "chap-new.h"
 #include "chap_ms.h"
-#include "polarssl/md4.h"
-#include "polarssl/sha1.h"
-#include "polarssl/des.h"
 #include "pppcrypt.h"
 #include "magic.h"
+
+#if LWIP_INCLUDED_POLARSSL_MD4
+#include "polarssl/lwip_md4.h"
+#else
+#include "polarssl/md4.h"
+#endif
+
+#if LWIP_INCLUDED_POLARSSL_SHA1
+#include "polarssl/lwip_sha1.h"
+#else
+#include "polarssl/sha1.h"
+#endif
+
+#if LWIP_INCLUDED_POLARSSL_DES
+#include "polarssl/lwip_des.h"
+#else
+#include "polarssl/des.h"
+#endif
 
 #define SHA1_SIGNATURE_SIZE 20
 
