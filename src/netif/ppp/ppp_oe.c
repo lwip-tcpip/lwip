@@ -134,8 +134,8 @@ static err_t pppoe_send_pads(struct pppoe_softc *);
 static err_t pppoe_send_padt(struct netif *, u_int, const u8_t *);
 
 /* internal helper functions */
-static struct pppoe_softc * pppoe_find_softc_by_session(u_int, struct netif *);
-static struct pppoe_softc * pppoe_find_softc_by_hunique(u8_t *, size_t, struct netif *);
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif);
+static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif);
 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
@@ -211,9 +211,7 @@ pppoe_destroy(struct netif *ifp)
  * and lean implementation, so number of open sessions typically should
  * be 1.
  */
-static struct pppoe_softc *
-pppoe_find_softc_by_session(u_int session, struct netif *rcvif)
-{
+static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif) {
   struct pppoe_softc *sc;
 
   if (session == 0) {
@@ -222,22 +220,17 @@ pppoe_find_softc_by_session(u_int session, struct netif *rcvif)
 
   for (sc = pppoe_softc_list; sc != NULL; sc = sc->next) {
     if (sc->sc_state == PPPOE_STATE_SESSION
-        && sc->sc_session == session) {
-      if (sc->sc_ethif == rcvif) {
-        return sc;
-      } else {
-        return NULL;
+        && sc->sc_session == session
+         && sc->sc_ethif == rcvif) {
+           return sc;
       }
-    }
   }
   return NULL;
 }
 
 /* Check host unique token passed and return appropriate softc pointer,
  * or NULL if token is bogus. */
-static struct pppoe_softc *
-pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif)
-{
+static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif) {
   struct pppoe_softc *sc, *t;
 
   if (pppoe_softc_list == NULL) {
