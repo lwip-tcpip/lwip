@@ -98,9 +98,9 @@ demand_conf()
     flush_flag = 0;
     fcs = PPP_INITFCS;
 
-    netif_set_mtu(0, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
-    if (ppp_send_config(0, PPP_MRU, (u_int32_t) 0, 0, 0) < 0
-	|| ppp_recv_config(0, PPP_MRU, (u_int32_t) 0, 0, 0) < 0)
+    netif_set_mtu(pcb, LWIP_MIN(lcp_allowoptions[0].mru, PPP_MRU));
+    if (ppp_send_config(pcb, PPP_MRU, (u_int32_t) 0, 0, 0) < 0
+	|| ppp_recv_config(pcb, PPP_MRU, (u_int32_t) 0, 0, 0) < 0)
 	    fatal("Couldn't set up demand-dialled PPP interface: %m");
 
 #ifdef PPP_FILTER
@@ -112,10 +112,10 @@ demand_conf()
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
-	    ((*protp->demand_conf)(0));
+	    ((*protp->demand_conf)(pcb));
 /* FIXME: find a way to die() here */
 #if 0
-	    if (!((*protp->demand_conf)(0)))
+	    if (!((*protp->demand_conf)(pcb)))
 		die(1);
 #endif
 }
@@ -132,7 +132,7 @@ demand_block()
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
-	    sifnpmode(0, protp->protocol & ~0x8000, NPMODE_QUEUE);
+	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_QUEUE);
     get_loop_output();
 }
 
@@ -149,7 +149,7 @@ demand_discard()
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
-	    sifnpmode(0, protp->protocol & ~0x8000, NPMODE_ERROR);
+	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_ERROR);
     get_loop_output();
 
     /* discard all saved packets */
@@ -175,7 +175,7 @@ demand_unblock()
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
-	    sifnpmode(0, protp->protocol & ~0x8000, NPMODE_PASS);
+	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_PASS);
 }
 
 /*
@@ -411,7 +411,7 @@ demand_rexmit(proto, newip)
 			ntohs(*( (short *) (pkt->data+iphdr+6))));
                 }
             }
-	    output(0, pkt->data, pkt->length);
+	    output(pcb, pkt->data, pkt->length);
 	    free(pkt);
 	} else {
 	    if (prev == NULL)

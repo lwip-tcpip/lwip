@@ -593,7 +593,7 @@ void start_link(unit)
 
     new_phase(pcb, PHASE_ESTABLISH);
 
-    lcp_lowerup(0);
+    lcp_lowerup(pcb);
     return;
 
  disconnect:
@@ -632,7 +632,7 @@ void link_terminated(ppp_pcb *pcb) {
     } else
 	notice("Link terminated.");
 
-    lcp_lowerdown(0);
+    lcp_lowerdown(pcb);
 
     new_phase(pcb, PHASE_DEAD);
     ppp_link_terminated(pcb);
@@ -659,7 +659,7 @@ void link_terminated(ppp_pcb *pcb) {
 	fd_ppp = -1;
     }
     if (!hungup)
-	lcp_lowerdown(0);
+	lcp_lowerdown(pcb);
     if (!doing_multilink && !demand)
 	script_unsetenv("IFNAME");
 
@@ -778,7 +778,7 @@ void link_established(ppp_pcb *pcb) {
 	if (!wo->neg_upap || uselogin || !null_login(unit)) {
 	    warn("peer refused to authenticate: terminating link");
 	    status = EXIT_PEER_AUTH_FAILED;
-	    lcp_close(pcb->unit, "peer refused to authenticate");
+	    lcp_close(pcb, "peer refused to authenticate");
 	    return;
 	}
     }
@@ -878,7 +878,7 @@ static void network_phase(ppp_pcb *pcb) {
      */
     if (go->neg_cbcp) {
 	new_phase(pcb, PHASE_CALLBACK);
-	(*cbcp_protent.open)(unit);
+	(*cbcp_protent.open)(pcb);
 	return;
     }
 #endif
@@ -939,7 +939,7 @@ void start_networks(ppp_pcb *pcb) {
 #endif /* CCP_SUPPORT */
 	    )
 	    && protp->enabled_flag && protp->open != NULL)
-	    (*protp->open)(0);
+	    (*protp->open)(pcb);
 #endif /* CCP_SUPPORT || ECP_SUPPORT */
 
     /*
@@ -985,7 +985,7 @@ void continue_networks(ppp_pcb *pcb) {
 
     if (pcb->num_np_open == 0)
 	/* nothing to do */
-	lcp_close(0, "No network protocols running");
+	lcp_close(pcb, "No network protocols running");
 }
 
 #if PPP_SERVER
@@ -997,7 +997,7 @@ void auth_peer_fail(ppp_pcb *pcb, int protocol) {
      * Authentication failure: take the link down
      */
     status = EXIT_PEER_AUTH_FAILED;
-    lcp_close(pcb->unit, "Authentication failed");
+    lcp_close(pcb, "Authentication failed");
 }
 
 /*
@@ -1210,7 +1210,7 @@ void np_down(ppp_pcb *pcb, int proto) {
 void np_finished(ppp_pcb *pcb, int proto) {
     if (--pcb->num_np_open <= 0) {
 	/* no further use for the link: shut up shop. */
-	lcp_close(0, "No network protocols running");
+	lcp_close(pcb, "No network protocols running");
     }
 }
 
@@ -1243,7 +1243,7 @@ check_maxoctets(arg)
     if (used > maxoctets) {
 	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
 	status = EXIT_TRAFFIC_LIMIT;
-	lcp_close(0, "Traffic limit");
+	lcp_close(pcb, "Traffic limit");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
 #endif /* UNUSED */
@@ -1280,7 +1280,7 @@ static void check_idle(void *arg) {
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
 	pcb->status = EXIT_IDLE_TIMEOUT;
-	lcp_close(0, "Link inactive");
+	lcp_close(pcb, "Link inactive");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
 #endif /* UNUSED */
@@ -1296,7 +1296,7 @@ static void connect_time_expired(void *arg) {
     ppp_pcb *pcb = (ppp_pcb*)arg;
     info("Connect time expired");
     pcb->status = EXIT_CONNECT_TIME;
-    lcp_close(0, "Connect time expired");	/* Close connection */
+    lcp_close(pcb, "Connect time expired");	/* Close connection */
 }
 
 #if PPP_OPTIONS
@@ -1662,7 +1662,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 	 */
 	if (attempts++ >= 10) {
 	    warn("%d LOGIN FAILURES ON %s, %s", attempts, devnam, user);
-	    lcp_close(unit, "login failed");
+	    lcp_close(pcb, "login failed");
 	}
 	if (attempts > 3)
 	    sleep((u_int) (attempts - 3) * 5);

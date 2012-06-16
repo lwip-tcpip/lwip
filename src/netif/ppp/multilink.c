@@ -130,7 +130,7 @@ mp_join_bundle()
 		/* have previously joined a bundle */
 		if (!go->neg_mrru || !ho->neg_mrru) {
 			notice("oops, didn't get multilink on renegotiation");
-			lcp_close(0, "multilink required");
+			lcp_close(pcb, "multilink required");
 			return 0;
 		}
 		/* XXX should check the peer_authname and ho->endpoint
@@ -148,12 +148,12 @@ mp_join_bundle()
 		if (demand) {
 			/* already have a bundle */
 			cfg_bundle(0, 0, 0, 0);
-			netif_set_mtu(0, mtu);
+			netif_set_mtu(pcb, mtu);
 			return 0;
 		}
 		make_new_bundle(0, 0, 0, 0);
 		set_ifunit(1);
-		netif_set_mtu(0, mtu);
+		netif_set_mtu(pcb, mtu);
 		return 0;
 	}
 
@@ -198,7 +198,7 @@ mp_join_bundle()
 	mtu = LWIP_MIN(ho->mrru, ao->mru);
 	if (demand) {
 		cfg_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
-		netif_set_mtu(0, mtu);
+		netif_set_mtu(pcb, mtu);
 		script_setenv("BUNDLE", bundle_id + 7, 1);
 		return 0;
 	}
@@ -245,9 +245,9 @@ mp_join_bundle()
 	/* we have to make a new bundle */
 	make_new_bundle(go->mrru, ho->mrru, go->neg_ssnhf, ho->neg_ssnhf);
 	set_ifunit(1);
-	netif_set_mtu(0, mtu);
+	netif_set_mtu(pcb, mtu);
 	script_setenv("BUNDLE", bundle_id + 7, 1);
-	make_bundle_links(0);
+	make_bundle_links(pcb);
 	unlock_db();
 	info("New bundle %s created", ifname);
 	multilink_master = 1;
@@ -277,7 +277,7 @@ void mp_bundle_terminated()
 	TDB_DATA key;
 
 	bundle_terminating = 1;
-	upper_layers_down(0);
+	upper_layers_down(pcb);
 	notice("Connection terminated.");
 #if PPP_STATS_SUPPORT
 	print_link_stats();
