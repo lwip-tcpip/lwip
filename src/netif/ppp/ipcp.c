@@ -597,7 +597,7 @@ static void ipcp_init(ppp_pcb *pcb) {
     ipcp_options *wo = &pcb->ipcp_wantoptions;
     ipcp_options *ao = &pcb->ipcp_allowoptions;
 
-    f->pcb = (void*)pcb;
+    f->pcb = pcb;
     f->protocol = PPP_IPCP;
     f->callbacks = &ipcp_callbacks;
     fsm_init(f);

@@ -364,7 +364,7 @@ static void lcp_init(ppp_pcb *pcb) {
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
 
-    f->pcb = (void*)pcb;
+    f->pcb = pcb;
     f->protocol = PPP_LCP;
     f->callbacks = &lcp_callbacks;
 

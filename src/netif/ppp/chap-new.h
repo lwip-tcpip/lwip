@@ -31,6 +31,11 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && CHAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#ifndef CHAP_H
+#define CHAP_H
+
+#include "ppp.h"
+
 /*
  * CHAP packets begin with a standard header with code, id, len (2 bytes).
  */
@@ -135,6 +140,31 @@ struct chap_digest_type {
 	struct chap_digest_type *next;
 };
 
+/*
+ * Each interface is described by chap structure.
+ */
+#if CHAP_SUPPORT
+typedef struct chap_client_state {
+	int flags;
+	char *name;
+	struct chap_digest_type *digest;
+	unsigned char priv[64];		/* private area for digest's use */
+} chap_client_state;
+
+#if PPP_SERVER
+static struct chap_server_state {
+	int flags;
+	int id;
+	char *name;
+	struct chap_digest_type *digest;
+	int challenge_xmits;
+	int challenge_pktlen;
+	unsigned char challenge[CHAL_MAX_PKTLEN];
+	char message[256];
+} chap_server_state;
+#endif /* PPP_SERVER */
+#endif /* CHAP_SUPPORT */
+
 #if 0 /* UNUSED */
 /* Hook for a plugin to validate CHAP challenge */
 extern int (*chap_verify_hook)(char *name, char *ourname, int id,
@@ -157,4 +187,5 @@ extern void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code);
 /* Represents the CHAP protocol to the main pppd code */
 extern struct protent chap_protent;
 
+#endif /* CHAP_H */
 #endif /* PPP_SUPPORT && CHAP_SUPPORT */

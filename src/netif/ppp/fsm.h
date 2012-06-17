@@ -48,6 +48,8 @@
 #ifndef FSM_H
 #define	FSM_H
 
+#include "ppp.h"
+
 /*
  * Packet header = Code, id, length.
  */
@@ -70,7 +72,7 @@
  * Each FSM is described by an fsm structure and fsm callbacks.
  */
 typedef struct fsm {
-    void *pcb;			/* PPP Interface */ /* FIXME: try to use ppp_pcb here */
+    ppp_pcb *pcb;		/* PPP Interface */
     int protocol;		/* Data Link Layer Protocol field value */
     int state;			/* State */
     int flags;			/* Contains option bits */

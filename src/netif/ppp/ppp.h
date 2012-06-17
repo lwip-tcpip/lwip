@@ -88,10 +88,6 @@ typedef unsigned char  u_char;
 typedef unsigned char	bool;
 #endif
 
-#include "fsm.h"
-#include "ipcp.h"
-
-
 /*************************
 *** PUBLIC DEFINITIONS ***
 *************************/
@@ -128,6 +124,27 @@ typedef unsigned char	bool;
 /************************
 *** PUBLIC DATA TYPES ***
 ************************/
+
+/*
+ * Other headers require ppp_pcb definition for prototypes, but ppp_pcb
+ * require some structure definition from other headers as well, we are
+ * fixing the dependency loop here by declaring the ppp_pcb type then
+ * by including headers containing necessary struct definition for ppp_pcb
+ */
+typedef struct ppp_pcb_s ppp_pcb;
+
+#include "fsm.h"
+#include "lcp.h"
+#include "ipcp.h"
+#if PAP_SUPPORT
+#include "upap.h"
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+#include "chap-new.h"
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+#include "eap.h"
+#endif /* EAP_SUPPORT */
 
 /*
  * PPP configuration.
@@ -217,7 +234,7 @@ typedef enum {
  */
 typedef struct ppp_pcb_rx_s {
   /** ppp descriptor */
-  void *pcb;
+  ppp_pcb *pcb;
   /** the rx file descriptor */
   sio_fd_t fd;
   /** receive buffer - encoded data is stored here */
@@ -236,160 +253,10 @@ typedef struct ppp_pcb_rx_s {
 } ppp_pcb_rx;
 #endif /* PPPOS_SUPPORT */
 
-/* An endpoint discriminator, used with multilink. */
-#define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
-struct epdisc {
-    unsigned char	class;
-    unsigned char	length;
-    unsigned char	value[MAX_ENDP_LEN];
-};
-
-/*
- * The state of options is described by an lcp_options structure.
- */
-typedef struct lcp_options {
-    bool passive;		/* Don't die if we don't get a response */
-    bool silent;		/* Wait for the other end to start first */
-    bool restart;		/* Restart vs. exit after close */
-    bool neg_mru;		/* Negotiate the MRU? */
-    bool neg_asyncmap;		/* Negotiate the async map? */
-#if PAP_SUPPORT
-    bool neg_upap;		/* Ask for UPAP authentication? */
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-    bool neg_chap;		/* Ask for CHAP authentication? */
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
-    bool neg_eap;		/* Ask for EAP authentication? */
-#endif /* EAP_SUPPORT */
-    bool neg_magicnumber;	/* Ask for magic number? */
-    bool neg_pcompression;	/* HDLC Protocol Field Compression? */
-    bool neg_accompression;	/* HDLC Address/Control Field Compression? */
-#if LQR_SUPPORT
-    bool neg_lqr;		/* Negotiate use of Link Quality Reports */
-#endif /* LQR_SUPPORT */
-    bool neg_cbcp;		/* Negotiate use of CBCP */
-    bool neg_mrru;		/* negotiate multilink MRRU */
-    bool neg_ssnhf;		/* negotiate short sequence numbers */
-    bool neg_endpoint;		/* negotiate endpoint discriminator */
-    int  mru;			/* Value of MRU */
-    int	 mrru;			/* Value of MRRU, and multilink enable */
-#if CHAP_SUPPORT
-    u_char chap_mdtype;		/* which MD types (hashing algorithm) */
-#endif /* CHAP_SUPPORT */
-    u_int32_t asyncmap;		/* Value of async map */
-    u_int32_t magicnumber;
-    int  numloops;		/* Number of loops during magic number neg. */
-#if LQR_SUPPORT
-    u_int32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
-#endif /* LQR_SUPPORT */
-    struct epdisc endpoint;	/* endpoint discriminator */
-} lcp_options;
-
-/*
- * Each interface is described by upap structure.
- */
-#if PAP_SUPPORT
-typedef struct upap_state {
-    char *us_user;		/* User */
-    int us_userlen;		/* User length */
-    char *us_passwd;		/* Password */
-    int us_passwdlen;		/* Password length */
-    int us_clientstate;		/* Client state */
-#if PPP_SERVER
-    int us_serverstate;		/* Server state */
-#endif /* PPP_SERVER */
-    u_char us_id;		/* Current id */
-    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
-    int us_transmits;		/* Number of auth-reqs sent */
-    int us_maxtransmits;	/* Maximum number of auth-reqs to send */
-    int us_reqtimeout;		/* Time to wait for auth-req from peer */
-} upap_state;
-#endif /* PAP_SUPPORT */
-
-/*
- * Each interface is described by chap structure.
- */
-#if CHAP_SUPPORT
-typedef struct chap_client_state {
-	int flags;
-	char *name;
-	struct chap_digest_type *digest;
-	unsigned char priv[64];		/* private area for digest's use */
-} chap_client_state;
-
-#if PPP_SERVER
-static struct chap_server_state {
-	int flags;
-	int id;
-	char *name;
-	struct chap_digest_type *digest;
-	int challenge_xmits;
-	int challenge_pktlen;
-	unsigned char challenge[CHAL_MAX_PKTLEN];
-	char message[256];
-} chap_server_state;
-#endif /* PPP_SERVER */
-#endif /* CHAP_SUPPORT */
-
-#if EAP_SUPPORT
-/*
- * Complete EAP state for one PPP session.
- */
-enum eap_state_code {
-	eapInitial = 0,	/* No EAP authentication yet requested */
-	eapPending,	/* Waiting for LCP (no timer) */
-	eapClosed,	/* Authentication not in use */
-	eapListen,	/* Client ready (and timer running) */
-	eapIdentify,	/* EAP Identify sent */
-	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
-	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
-	eapSRP3,	/* Sent EAP SRP-SHA1 Subtype 3 */
-	eapMD5Chall,	/* Sent MD5-Challenge */
-	eapOpen,	/* Completed authentication */
-	eapSRP4,	/* Sent EAP SRP-SHA1 Subtype 4 */
-	eapBadAuth	/* Failed authentication */
-};
-
-struct eap_auth {
-	char *ea_name;		/* Our name */
-	char *ea_peer;		/* Peer's name */
-	void *ea_session;	/* Authentication library linkage */
-	u_char *ea_skey;	/* Shared encryption key */
-	int ea_timeout;		/* Time to wait (for retransmit/fail) */
-	int ea_maxrequests;	/* Max Requests allowed */
-	u_short ea_namelen;	/* Length of our name */
-	u_short ea_peerlen;	/* Length of peer's name */
-	enum eap_state_code ea_state;
-	u_char ea_id;		/* Current id */
-	u_char ea_requests;	/* Number of Requests sent/received */
-	u_char ea_responses;	/* Number of Responses */
-	u_char ea_type;		/* One of EAPT_* */
-	u_int32_t ea_keyflags;	/* SRP shared key usage flags */
-};
-
-#ifndef EAP_MAX_CHALLENGE_LENGTH
-#define EAP_MAX_CHALLENGE_LENGTH	24
-#endif
-typedef struct eap_state {
-	struct eap_auth es_client;	/* Client (authenticatee) data */
-#if PPP_SERVER
-	struct eap_auth es_server;	/* Server (authenticator) data */
-#endif /* PPP_SERVER */
-	int es_savedtime;		/* Saved timeout */
-	int es_rechallenge;		/* EAP rechallenge interval */
-	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */
-	bool es_usepseudo;		/* Use SRP Pseudonym if offered one */
-	int es_usedpseudo;		/* Set if we already sent PN */
-	int es_challen;			/* Length of challenge string */
-	u_char es_challenge[EAP_MAX_CHALLENGE_LENGTH];
-} eap_state;
-#endif /* EAP_SUPPORT */
-
 /*
  * PPP interface control block.
  */
-typedef struct ppp_pcb_s {
+struct ppp_pcb_s {
   ppp_settings settings;
   u8_t num;                      /* Interface number - only useful for debugging */
 #if PPPOS_SUPPORT
@@ -486,7 +353,7 @@ typedef struct ppp_pcb_s {
    */
   u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
 
-} ppp_pcb;
+};
 
 /************************
  *** PUBLIC FUNCTIONS ***

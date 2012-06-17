@@ -332,7 +332,7 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
 
   pcb->fd = fd;
 
-  pcb->rx.pcb = (void*)pcb;
+  pcb->rx.pcb = pcb;
   pcb->rx.fd = fd;
 
 #if VJ_SUPPORT

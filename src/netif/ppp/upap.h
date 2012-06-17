@@ -93,6 +93,28 @@
 #endif /* moved to opt.h */
 #define UPAP_DEFREQTIME	30	/* Time to wait for auth-req from peer */
 
+/*
+ * Each interface is described by upap structure.
+ */
+#if PAP_SUPPORT
+typedef struct upap_state {
+    char *us_user;		/* User */
+    int us_userlen;		/* User length */
+    char *us_passwd;		/* Password */
+    int us_passwdlen;		/* Password length */
+    int us_clientstate;		/* Client state */
+#if PPP_SERVER
+    int us_serverstate;		/* Server state */
+#endif /* PPP_SERVER */
+    u_char us_id;		/* Current id */
+    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
+    int us_transmits;		/* Number of auth-reqs sent */
+    int us_maxtransmits;	/* Maximum number of auth-reqs to send */
+    int us_reqtimeout;		/* Time to wait for auth-req from peer */
+} upap_state;
+#endif /* PAP_SUPPORT */
+
+
 void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password);
 #if PPP_SERVER
 void upap_authpeer(ppp_pcb *pcb);
