@@ -280,7 +280,7 @@ static void chap_generate_challenge(ppp_pcb *pcb) {
 static void  chap_handle_response(ppp_pcb *pcb, int id,
 		     unsigned char *pkt, int len) {
 	int response_len, ok, mlen;
-	unsigned char *response, *p;
+	unsigned char *response, *outp;
 	char *name = NULL;	/* initialized to shut gcc up */
 	int (*verifier)(char *, char *, int, struct chap_digest_type *,
 		unsigned char *, unsigned char *, char *, int);
@@ -329,17 +329,22 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		return;
 
 	/* send the response */
-	p = pcb->outpacket_buf;
-	MAKEHEADER(p, PPP_CHAP);
 	mlen = strlen(pcb->chap_server.message);
 	len = CHAP_HDRLEN + mlen;
-	p[0] = (pcb->chap_server.flags & AUTH_FAILED)? CHAP_FAILURE: CHAP_SUCCESS;
-	p[1] = id;
-	p[2] = len >> 8;
-	p[3] = len;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
+	MAKEHEADER(outp, PPP_CHAP);
+
+	outp[0] = (pcb->chap_server.flags & AUTH_FAILED)? CHAP_FAILURE: CHAP_SUCCESS;
+	outp[1] = id;
+	outp[2] = len >> 8;
+	outp[3] = len;
 	if (mlen > 0)
-		memcpy(p + CHAP_HDRLEN, pcb->chap_server.message, mlen);
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + len);
+		memcpy(outp + CHAP_HDRLEN, pcb->chap_server.message, mlen);
+	ppp_write_pbuf(pcb, p);
 
 	if (pcb->chap_server.flags & CHALLENGE_VALID) {
 		pcb->chap_server.flags &= ~CHALLENGE_VALID;
