@@ -418,7 +418,6 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	unsigned char response[RESP_MAX_PKTLEN];
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
-	ppp_pcb *pc = &ppp_pcb_list[0];
 
 	if ((pcb->chap_client.flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
 		return;		/* not ready */
@@ -431,8 +430,8 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
 	/* Microsoft doesn't send their name back in the PPP packet */
-	if (pc->settings.explicit_remote || (pc->settings.remote_name[0] != 0 && rname[0] == 0))
-		strlcpy(rname, pc->settings.remote_name, sizeof(rname));
+	if (pcb->settings.explicit_remote || (pcb->settings.remote_name[0] != 0 && rname[0] == 0))
+		strlcpy(rname, pcb->settings.remote_name, sizeof(rname));
 
 	/* get secret for authenticating ourselves with the specified host */
 	if (!get_secret(pcb, pcb->chap_client.name, rname, secret, &secret_len, 0)) {

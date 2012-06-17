@@ -204,6 +204,7 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n);
 #endif /* PPPOE_SUPPORT */
 
+static void ppp_destroy(ppp_pcb *pcb);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -223,16 +224,13 @@ int ppp_init(void) {
 
 /* Create a new PPP session. */
 ppp_pcb *ppp_new(u8_t num) {
-    int i, pd;
+    int i;
     ppp_pcb *pcb;
     struct protent *protp;
 
-    /* Find a free PPP session descriptor. */
-    for (pd = 0; pd < NUM_PPP && ppp_pcb_list[pd].open_flag != 0; pd++);
-    if (pd >= NUM_PPP)
+    pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
+    if (pcb == NULL)
       return NULL;
-
-    pcb = &ppp_pcb_list[pd];
 
 #if PPP_STATS_SUPPORT
     link_stats_valid = 0;
@@ -240,7 +238,6 @@ ppp_pcb *ppp_new(u8_t num) {
 
     memset(pcb, 0, sizeof(ppp_pcb));
     pcb->num = num;
-    pcb->open_flag = 1;
     pcb->status = EXIT_OK;
     pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
     new_phase(pcb, PHASE_INITIALIZE);
@@ -408,7 +405,6 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   ao->neg_accompression = 0;
 
   if(pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
-    pcb->open_flag = 0;
     return PPPERR_OPEN;
   }
 
@@ -795,8 +791,7 @@ static void
 ppp_receive_wakeup(ppp_pcb *pcb)
 {
   PPPDEBUG(LOG_DEBUG, ("ppp_receive_wakeup: unit %d\n", pcb->num));
-  if (pcb->open_flag != 0)
-    sio_read_abort(pcb->fd);
+  sio_read_abort(pcb->fd);
 }
 #endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
@@ -926,7 +921,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
   /* Validate parameters. */
   /* We let any protocol value go through - it can't hurt us
    * and the peer will just drop it if it's not accepting it. */
-  if (!pcb->open_flag || !pb) {
+  if (!pcb || !pb) {
     PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
               pcb->num, PPP_IP, (void*)pb));
     LINK_STATS_INC(link.opterr);
@@ -1626,9 +1621,9 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   ppp_hup(pcb);
   ppp_stop(pcb);
   pppoe_destroy(&pcb->netif);
-  pcb->open_flag = 0;
   if(pcb->link_status_cb)
     pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
+  ppp_destroy(pcb);
 }
 #endif /* PPPOE_SUPPORT */
 
@@ -1658,13 +1653,17 @@ void ppp_link_terminated(ppp_pcb *pcb) {
     if (pcb->link_status_cb) {
       pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, NULL);
     }
-
-    pcb->open_flag = 0;
+    ppp_destroy(pcb);
 #endif /* PPPOS_SUPPORT */
   }
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
 }
 
+static void ppp_destroy(ppp_pcb *pcb) {
+
+  PPPDEBUG(LOG_DEBUG, ("ppp_destroy: unit %d\n", pcb->num));
+  memp_free(MEMP_PPP_PCB, pcb);
+}
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /** Set the status callback of a PPP's netif
@@ -1786,11 +1785,6 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp
 int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr,
 	     u_int32_t net_mask) {
 
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("sifaddr[%d]: bad params\n", pcb->num));
-    return 0;
-  }
-
   SMEMCPY(&pcb->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
   SMEMCPY(&pcb->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
   SMEMCPY(&pcb->addrs.netmask, &net_mask, sizeof(net_mask));
@@ -1808,11 +1802,6 @@ int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr) {
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("cifaddr[%d]: bad params\n", pcb->num));
-    return 0;
-  }
-
   IP4_ADDR(&pcb->addrs.our_ipaddr, 0,0,0,0);
   IP4_ADDR(&pcb->addrs.his_ipaddr, 0,0,0,0);
   IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
@@ -1824,11 +1813,6 @@ int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr) {
  * sdns - Config the DNS servers
  */
 int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
-
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("sdns[%d]: bad params\n", pcb->num));
-    return 0;
-  }
 
   SMEMCPY(&pcb->addrs.dns1, &ns1, sizeof(ns1));
   SMEMCPY(&pcb->addrs.dns2, &ns2, sizeof(ns2));
@@ -1845,11 +1829,6 @@ int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
   LWIP_UNUSED_ARG(ns1);
   LWIP_UNUSED_ARG(ns2);
 
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("cdns[%d]: bad params\n", pcb->num));
-    return 0;
-  }
-
   IP4_ADDR(&pcb->addrs.dns1, 0,0,0,0);
   IP4_ADDR(&pcb->addrs.dns2, 0,0,0,0);
   return 1;
@@ -1860,11 +1839,6 @@ int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
  * sifup - Config the interface up and enable IP packets to pass.
  */
 int sifup(ppp_pcb *pcb) {
-
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("sifup[%d]: bad params\n", pcb->num));
-    return 0;
-  }
 
   netif_remove(&pcb->netif);
   if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
@@ -1890,11 +1864,6 @@ int sifup(ppp_pcb *pcb) {
  *	     down if there are no remaining protocols.
  */
 int sifdown(ppp_pcb *pcb) {
-
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("sifdown[%d]: bad params\n", pcb->num));
-    return 0;
-  }
 
   pcb->if_up = 0;
   /* make sure the netif status callback is called */
@@ -1922,10 +1891,6 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
  */
 void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
-  /* Validate parameters. */
-  if(!pcb->open_flag)
-    return;
-
   pcb->mtu = mtu;
 }
 
@@ -1933,10 +1898,6 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu) {
  * netif_get_mtu - get PPP interface MTU
  */
 int netif_get_mtu(ppp_pcb *pcb) {
-
-  /* Validate parameters. */
-  if(!pcb->open_flag)
-    return 0;
 
   return pcb->mtu;
 }
@@ -1959,11 +1920,6 @@ int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, bool rep
   LWIP_UNUSED_ARG(gateway);
   LWIP_UNUSED_ARG(replace);
 
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("sifdefaultroute[%d]: bad params\n", pcb->num));
-    return 0;
-  }
-
   netif_set_default(&pcb->netif);
   return 1;
 }
@@ -1976,11 +1932,6 @@ int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway) {
 
   LWIP_UNUSED_ARG(ouraddr);
   LWIP_UNUSED_ARG(gateway);
-
-  if(!pcb->open_flag) {
-    PPPDEBUG(LOG_WARNING, ("cifdefaultroute[%d]: bad params\n", pcb->num));
-    return 0;
-  }
 
   netif_set_default(NULL);
   return 1;

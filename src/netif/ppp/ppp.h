@@ -262,7 +262,6 @@ struct ppp_pcb_s {
 #if PPPOS_SUPPORT
   ppp_pcb_rx rx;
 #endif /* PPPOS_SUPPORT */
-  char open_flag;                /* True when in use. */
   u8_t phase;                    /* where the link is at */
   u8_t status;                   /* exit status */
 #if PPPOE_SUPPORT

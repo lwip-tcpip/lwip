@@ -371,7 +371,6 @@ struct pppd_stats {
 };
 #endif /* PPP_STATS_SUPPORT */
 
-ppp_pcb ppp_pcb_list[NUM_PPP]; /* The PPP interface control blocks. */
 
 /* PPP flow functions
  */

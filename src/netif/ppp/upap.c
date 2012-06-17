@@ -579,7 +579,6 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
     int mlen, ulen, wlen;
     char *user, *pwd, *msg;
     u_char *pstart;
-    ppp_pcb *pc = &ppp_pcb_list[0];
 
     if (plen < UPAP_HEADERLEN)
 	return 0;
@@ -613,10 +612,15 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
 	printer(arg, " user=");
 	print_string(user, ulen, printer, arg);
 	printer(arg, " password=");
-	if (!pc->settings.hide_password)
+/* FIXME: require ppp_pcb struct as printpkt() argument */
+#if 0
+	if (!pcb->settings.hide_password)
+#endif
 	    print_string(pwd, wlen, printer, arg);
+#if 0
 	else
 	    printer(arg, "<hidden>");
+#endif
 	break;
     case UPAP_AUTHACK:
     case UPAP_AUTHNAK:

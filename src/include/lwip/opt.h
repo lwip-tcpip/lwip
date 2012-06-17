@@ -400,6 +400,14 @@
 #endif
 
 /**
+ * MEMP_NUM_PPP_PCB: the number of simultaneously active PPP
+ * connections (requires the PPP_SUPPORT option)
+ */
+#ifndef MEMP_NUM_PPP_PCB
+#define MEMP_NUM_PPP_PCB       1
+#endif
+
+/**
  * MEMP_NUM_PPPOE_INTERFACES: the number of concurrently active PPPoE
  * interfaces (only used with PPPOE_SUPPORT==1)
  */
@@ -1694,13 +1702,6 @@
 #endif
 
 #if PPP_SUPPORT
-
-/**
- * NUM_PPP: Max PPP sessions.
- */
-#ifndef NUM_PPP
-#define NUM_PPP                         1
-#endif
 
 /**
  * PAP_SUPPORT==1: Support PAP.
