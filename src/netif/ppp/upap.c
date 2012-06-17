@@ -520,13 +520,17 @@ static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len) {
  * upap_sauthreq - Send an Authenticate-Request.
  */
 static void upap_sauthreq(ppp_pcb *pcb) {
+    struct pbuf *p;
     u_char *outp;
     int outlen;
 
     outlen = UPAP_HEADERLEN + 2 * sizeof (u_char) +
 	pcb->upap.us_userlen + pcb->upap.us_passwdlen;
-    outp = pcb->outpacket_buf;
-    
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PBUF_RAM);
+    if(NULL == p)
+        return;
+
+    outp = p->payload;
     MAKEHEADER(outp, PPP_PAP);
 
     PUTCHAR(UPAP_AUTHREQ, outp);
@@ -538,7 +542,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
     PUTCHAR(pcb->upap.us_passwdlen, outp);
     MEMCPY(outp, pcb->upap.us_passwd, pcb->upap.us_passwdlen);
 
-    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write_pbuf(pcb, p);
 
     TIMEOUT(upap_timeout, pcb, pcb->upap.us_timeouttime);
     ++pcb->upap.us_transmits;
@@ -550,11 +554,16 @@ static void upap_sauthreq(ppp_pcb *pcb) {
  * upap_sresp - Send a response (ack or nak).
  */
 static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msglen) {
+    struct pbuf *p;
     u_char *outp;
     int outlen;
 
     outlen = UPAP_HEADERLEN + sizeof (u_char) + msglen;
-    outp = pcb->outpacket_buf;
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PBUF_RAM);
+    if(NULL == p)
+        return;
+
+    outp = p->payload;
     MAKEHEADER(outp, PPP_PAP);
 
     PUTCHAR(code, outp);
@@ -562,7 +571,8 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
     PUTSHORT(outlen, outp);
     PUTCHAR(msglen, outp);
     MEMCPY(outp, msg, msglen);
-    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
+
+    ppp_write_pbuf(pcb, p);
 }
 #endif /* UNUSED */
 

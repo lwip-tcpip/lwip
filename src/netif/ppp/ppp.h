@@ -285,7 +285,7 @@ struct ppp_pcb_s {
   struct vjcompress vj_comp;     /* Van Jacobson compression header. */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
-  struct netif netif;
+  struct netif netif;            /* PPP interface */
 
   struct ppp_addrs addrs;
 
