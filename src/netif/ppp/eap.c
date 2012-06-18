@@ -694,7 +694,7 @@ eap_state *esp;
 	}
 
 	/* FIXME: improve buffer size */
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_MRU+PPP_HDRLEN), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->peer_mru+PPP_HDRLEN), PBUF_RAM);
 	if(NULL == p)
 		return;
 
