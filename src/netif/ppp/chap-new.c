@@ -281,6 +281,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		     unsigned char *pkt, int len) {
 	int response_len, ok, mlen;
 	unsigned char *response, *outp;
+	struct pbuf *p;
 	char *name = NULL;	/* initialized to shut gcc up */
 	int (*verifier)(char *, char *, int, struct chap_digest_type *,
 		unsigned char *, unsigned char *, char *, int);

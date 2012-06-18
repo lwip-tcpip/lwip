@@ -345,13 +345,6 @@ struct ppp_pcb_s {
   int ipcp_is_open;             /* haven't called np_finished() */
   int ipcp_is_up;               /* have called np_up() */
   bool ask_for_local;           /* request our address from peer */
-
-  /*
-   * Buffers for outgoing packets.  This must be accessed only from the appropriate
-   * PPP task so that it doesn't need to be protected to avoid collisions.
-   */
-  u_char outpacket_buf[PPP_MRU+PPP_HDRLEN]; /* buffer for outgoing packet */
-
 };
 
 /************************

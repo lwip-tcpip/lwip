@@ -235,8 +235,6 @@ struct ppp_idle {
 /*
  * Global variables.
  */
-extern u_char	outpacket_buf[]; /* Buffer for outgoing packets */
-
 #ifdef HAVE_MULTILINK
 extern bool	multilink;	/* enable multilink operation */
 extern bool	doing_multilink;

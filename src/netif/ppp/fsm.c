@@ -686,6 +686,7 @@ void fsm_protreject(fsm *f) {
  */
 static void fsm_sconfreq(fsm *f, int retransmit) {
     ppp_pcb *pcb = f->pcb;
+    struct pbuf *p;
     u_char *outp;
     int cilen;
 
@@ -705,10 +706,15 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 
     f->seen_ack = 0;
 
+    /* FIXME: improve buffer size */
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_MRU+PPP_HDRLEN), PBUF_RAM);
+    if(NULL == p)
+        return;
+
     /*
      * Make up the request packet
      */
-    outp = pcb->outpacket_buf + PPP_HDRLEN + HEADERLEN;
+    outp = (u_char*)p->payload + PPP_HDRLEN + HEADERLEN;
     if( f->callbacks->cilen && f->callbacks->addci ){
 	cilen = (*f->callbacks->cilen)(f);
 	if( cilen > pcb->peer_mru - HEADERLEN )
@@ -719,7 +725,14 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 	cilen = 0;
 
     /* send the request to our peer */
-    fsm_sdata(f, CONFREQ, f->reqid, outp, cilen);
+    outp = p->payload;
+    MAKEHEADER(outp, f->protocol);
+    PUTCHAR(CONFREQ, outp);
+    PUTCHAR(f->reqid, outp);
+    PUTSHORT(cilen + HEADERLEN, outp);
+
+    pbuf_realloc(p, cilen + HEADERLEN + PPP_HDRLEN);
+    ppp_write_pbuf(pcb, p);
 
     /* start the retransmit timer */
     --f->retransmits;
@@ -734,21 +747,27 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
  */
 void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
     ppp_pcb *pcb = f->pcb;
+    struct pbuf *p;
     u_char *outp;
     int outlen;
 
     /* Adjust length to be smaller than MTU */
-    outp = pcb->outpacket_buf;
     if (datalen > pcb->peer_mru - HEADERLEN)
 	datalen = pcb->peer_mru - HEADERLEN;
-    if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
-	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     outlen = datalen + HEADERLEN;
+
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(outlen + PPP_HDRLEN), PBUF_RAM);
+    if(NULL == p)
+        return;
+
+    outp = p->payload;
+/*  if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)  -- was only for fsm_sconfreq() */
+	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
-    ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
+    ppp_write_pbuf(pcb, p);
 }
 
 #endif /* PPP_SUPPORT */

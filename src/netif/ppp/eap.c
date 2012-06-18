@@ -260,10 +260,15 @@ eap_send_failure(esp)
 eap_state *esp;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
+	struct pbuf *p;
 	u_char *outp;
 
-	outp = pcb->outpacket_buf;
-    
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
+
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_FAILURE, outp);
@@ -271,7 +276,7 @@ eap_state *esp;
 	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write(pcb, pcb->outpacket_buf, EAP_HEADERLEN + PPP_HDRLEN);
+	ppp_write_pbuf(pcb, p);
 
 	pcb->eap.es_server.ea_state = eapBadAuth;
 	auth_peer_fail(pcb, PPP_EAP);
@@ -286,9 +291,14 @@ eap_send_success(esp)
 eap_state *esp;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
+	struct pbuf *p;
 	u_char *outp;
 
-	outp = pcb->outpacket_buf;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -297,7 +307,7 @@ eap_state *esp;
 	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + EAP_HEADERLEN);
+	ppp_write_pbuf(pcb, p);
 
 	auth_peer_success(pcb, PPP_EAP, 0,
 	    pcb->eap.es_server.ea_peer, pcb->eap.es_server.ea_peerlen);
@@ -642,6 +652,7 @@ eap_send_request(esp)
 eap_state *esp;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
+	struct pbuf *p;
 	u_char *outp;
 	u_char *lenloc;
 	u_char *ptr;
@@ -682,7 +693,12 @@ eap_state *esp;
 		return;
 	}
 
-	outp = pcb->outpacket_buf;
+	/* FIXME: improve buffer size */
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_MRU+PPP_HDRLEN), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -858,10 +874,11 @@ eap_state *esp;
 		return;
 	}
 
-	outlen = (outp - pcb->outpacket_buf) - PPP_HDRLEN;
+	outlen = (outp - p->payload) - PPP_HDRLEN;
 	PUTSHORT(outlen, lenloc);
 
-	ppp_write(pcb, pcb->outpacket_buf, outlen + PPP_HDRLEN);
+	pbuf_realloc(p, outlen + PPP_HDRLEN);
+	ppp_write_pbuf(pcb, p);
 
 	pcb->eap.es_server.ea_requests++;
 
@@ -1034,42 +1051,52 @@ static void eap_protrej(ppp_pcb *pcb) {
  * Format and send a regular EAP Response message.
  */
 static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *str, int lenstr) {
+	struct pbuf *p;
 	u_char *outp;
 	int msglen;
 
-	outp = pcb->outpacket_buf;
+	msglen = EAP_HEADERLEN + sizeof (u_char) + lenstr;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
 	pcb->eap.es_client.ea_id = id;
-	msglen = EAP_HEADERLEN + sizeof (u_char) + lenstr;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(typenum, outp);
 	if (lenstr > 0) {
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write_pbuf(pcb, p);
 }
 
 /*
  * Format and send an MD5-Challenge EAP Response message.
  */
 static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name, int namelen) {
+	struct pbuf *p;
 	u_char *outp;
 	int msglen;
 
-	outp = pcb->outpacket_buf;
+	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + MD5_SIGNATURE_SIZE +
+	    namelen;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
 	pcb->eap.es_client.ea_id = id;
-	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + MD5_SIGNATURE_SIZE +
-	    namelen;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_MD5CHAP, outp);
 	PUTCHAR(MD5_SIGNATURE_SIZE, outp);
@@ -1079,7 +1106,7 @@ static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name,
 		MEMCPY(outp, name, namelen);
 	}
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write_pbuf(pcb, p);
 }
 
 #ifdef USE_SRP
@@ -1095,17 +1122,22 @@ u_char *str;
 int lenstr;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
+	struct pbuf *p;
 	u_char *outp;
 	int msglen;
 
-	outp = pcb->outpacket_buf;
+	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + lenstr;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
 	pcb->eap.es_client.ea_id = id;
-	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + lenstr;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_SRP, outp);
 	PUTCHAR(subtypenum, outp);
@@ -1113,7 +1145,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write_pbuf(pcb, p);
 }
 
 /*
@@ -1127,45 +1159,55 @@ u_int32_t flags;
 u_char *str;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
+	struct pbuf *p;
 	u_char *outp;
 	int msglen;
 
-	outp = pcb->outpacket_buf;
+	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u_int32_t) +
+	    SHA_DIGESTSIZE;
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
 	pcb->eap.es_client.ea_id = id;
-	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u_int32_t) +
-	    SHA_DIGESTSIZE;
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_SRP, outp);
 	PUTCHAR(EAPSRP_CVALIDATOR, outp);
 	PUTLONG(flags, outp);
 	MEMCPY(outp, str, SHA_DIGESTSIZE);
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write_pbuf(pcb, p);
 }
 #endif /* USE_SRP */
 
 static void eap_send_nak(ppp_pcb *pcb, u_char id, u_char type) {
+	struct pbuf *p;
 	u_char *outp;
 	int msglen;
 
-	outp = pcb->outpacket_buf;
+	msglen = EAP_HEADERLEN + 2 * sizeof (u_char);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	if(NULL == p)
+		return;
+
+	outp = p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
 	PUTCHAR(EAP_RESPONSE, outp);
 	PUTCHAR(id, outp);
 	pcb->eap.es_client.ea_id = id;
-	msglen = EAP_HEADERLEN + 2 * sizeof (u_char);
 	PUTSHORT(msglen, outp);
 	PUTCHAR(EAPT_NAK, outp);
 	PUTCHAR(type, outp);
 
-	ppp_write(pcb, pcb->outpacket_buf, PPP_HDRLEN + msglen);
+	ppp_write_pbuf(pcb, p);
 }
 
 #ifdef USE_SRP

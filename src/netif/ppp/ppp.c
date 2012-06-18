@@ -1146,6 +1146,7 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
   return PPPERR_PARAM;
 }
 
+/* FIXME: improve that */
 int ppp_write_pbuf(ppp_pcb *pcb, struct pbuf *p) {
   ppp_write(pcb, p->payload, p->len);
   pbuf_free(p);
