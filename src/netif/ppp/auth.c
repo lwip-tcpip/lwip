@@ -237,8 +237,12 @@ extern char *crypt (const char *, const char *);
 /* Prototypes for procedures local to this file. */
 
 static void network_phase(ppp_pcb *pcb);
+#if PPP_IDLETIMELIMIT
 static void check_idle(void *arg);
+#endif /* PPP_IDLETIMELIMIT */
+#if PPP_MAXCONNECT
 static void connect_time_expired(void *arg);
+#endif /* PPP_MAXCONNECT */
 #if 0 /* UNUSED */
 static int  null_login (int);
 /* static int  get_pap_passwd (char *); */
@@ -1149,7 +1153,9 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
  * np_up - a network protocol has come up.
  */
 void np_up(ppp_pcb *pcb, int proto) {
+#if PPP_IDLETIMELIMIT
     int tlim;
+#endif /* PPP_IDLETIMELIMIT */
 
     if (pcb->num_np_up == 0) {
 	/*
@@ -1158,6 +1164,7 @@ void np_up(ppp_pcb *pcb, int proto) {
 	pcb->status = EXIT_OK;
 	new_phase(pcb, PHASE_RUNNING);
 
+#if PPP_IDLETIMELIMIT
 #if 0 /* UNUSED */
 	if (idle_time_hook != 0)
 	    tlim = (*idle_time_hook)(NULL);
@@ -1166,13 +1173,16 @@ void np_up(ppp_pcb *pcb, int proto) {
 	    tlim = pcb->settings.idle_time_limit;
 	if (tlim > 0)
 	    TIMEOUT(check_idle, (void*)pcb, tlim);
+#endif /* PPP_IDLETIMELIMIT */
 
+#if PPP_MAXCONNECT
 	/*
 	 * Set a timeout to close the connection once the maximum
 	 * connect time has expired.
 	 */
 	if (pcb->settings.maxconnect > 0)
 	    TIMEOUT(connect_time_expired, (void*)pcb, pcb->settings.maxconnect);
+#endif /* PPP_MAXCONNECT */
 
 #ifdef MAXOCTETS
 	if (maxoctets > 0)
@@ -1195,8 +1205,12 @@ void np_up(ppp_pcb *pcb, int proto) {
  */
 void np_down(ppp_pcb *pcb, int proto) {
     if (--pcb->num_np_up == 0) {
+#if PPP_IDLETIMELIMIT
 	UNTIMEOUT(check_idle, (void*)pcb);
+#endif /* PPP_IDLETIMELIMIT */
+#if PPP_MAXCONNECT
 	UNTIMEOUT(connect_time_expired, NULL);
+#endif /* PPP_MAXCONNECT */
 #ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
 #endif
@@ -1254,6 +1268,7 @@ check_maxoctets(arg)
 }
 #endif /* MAXOCTETS */
 
+#if PPP_IDLETIMELIMIT
 /*
  * check_idle - check whether the link has been idle for long
  * enough that we can shut it down.
@@ -1288,7 +1303,9 @@ static void check_idle(void *arg) {
 	TIMEOUT(check_idle, (void*)pcb, tlim);
     }
 }
+#endif /* PPP_IDLETIMELIMIT */
 
+#if PPP_MAXCONNECT
 /*
  * connect_time_expired - log a message and close the connection.
  */
@@ -1298,6 +1315,7 @@ static void connect_time_expired(void *arg) {
     pcb->status = EXIT_CONNECT_TIME;
     lcp_close(pcb, "Connect time expired");	/* Close connection */
 }
+#endif /* PPP_MAXCONNECT */
 
 #if PPP_OPTIONS
 /*

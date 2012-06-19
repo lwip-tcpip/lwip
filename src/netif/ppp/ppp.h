@@ -185,8 +185,12 @@ typedef struct ppp_settings_s {
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
   /* FIXME: make it a compile time option */
+#if PPP_IDLETIMELIMIT
   u16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
+#endif /* PPP_IDLETIMELIMIT */
+#if PPP_MAXCONNECT
   u32_t  maxconnect;                  /* Maximum connect time (seconds) */
+#endif /* PPP_MAXCONNECT */
 
   /* auth data */
   char  user       [MAXNAMELEN   + 1]; /* Username for PAP */
