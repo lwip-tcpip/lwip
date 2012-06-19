@@ -145,7 +145,7 @@ struct chap_digest_type {
  */
 #if CHAP_SUPPORT
 typedef struct chap_client_state {
-	int flags;
+	u8_t flags;
 	char *name;
 	struct chap_digest_type *digest;
 	unsigned char priv[64];		/* private area for digest's use */
@@ -153,7 +153,7 @@ typedef struct chap_client_state {
 
 #if PPP_SERVER
 static struct chap_server_state {
-	int flags;
+	u8_t flags;
 	int id;
 	char *name;
 	struct chap_digest_type *digest;
