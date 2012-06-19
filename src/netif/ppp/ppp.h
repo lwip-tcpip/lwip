@@ -151,8 +151,9 @@ typedef struct ppp_pcb_s ppp_pcb;
  */
 typedef struct ppp_settings_s {
 
-  u_int  disable_defaultip : 1;       /* Don't use hostname for default IP addrs */
+#if PPP_SERVER
   u_int  auth_required     : 1;       /* Peer is required to authenticate */
+#endif /* PPP_SERVER */
 #if PPP_REMOTENAME
   u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
 #endif /* PPP_REMOTENAME */
@@ -169,13 +170,12 @@ typedef struct ppp_settings_s {
 #if EAP_SUPPORT
   u_int  refuse_eap        : 1;       /* Don't wanna auth. ourselves with EAP */
 #endif /* EAP_SUPPORT */
-  u_int  usehostname       : 1;       /* Use hostname for our_name */
   u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
   u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
 #if PRINTPKT_SUPPORT
   u_int  hide_password     : 1;       /* Hide password in dumped packets */
 #endif /* PRINTPKT_SUPPORT */
-  u_int  noremoteip        : 1;
+  u_int  noremoteip        : 1;       /* Let him have no IP address */
   u_int  lax_recv          : 1;       /* accept control chars in asyncmap */
   u_int  noendpoint        : 1;       /* don't send/accept endpoint discriminator */
 #if PPP_LCP_ADAPTIVE
