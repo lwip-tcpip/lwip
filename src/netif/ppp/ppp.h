@@ -188,7 +188,6 @@ typedef struct ppp_settings_s {
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
-  /* FIXME: make it a compile time option */
 #if PPP_IDLETIMELIMIT
   u16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
 #endif /* PPP_IDLETIMELIMIT */
@@ -289,7 +288,9 @@ struct ppp_pcb_s {
 
 #if PPPOS_SUPPORT
   sio_fd_t fd;                   /* File device ID of port. */
+/* FIXME: there is probably one superfluous */
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
+  ext_accm xmit_accm;            /* extended transmit ACCM */
   ppp_pcb_rx rx;
 #if VJ_SUPPORT
   struct vjcompress vj_comp;     /* Van Jacobson compression header. */
@@ -326,18 +327,18 @@ struct ppp_pcb_s {
   u8_t num_np_up;           /* Number of network protocols which have come up. */
 
 #if PAP_SUPPORT
-  upap_state upap;         /* PAP data */
+  upap_state upap;          /* PAP data */
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
-  chap_client_state chap_client;
+  chap_client_state chap_client;  /* CHAP client data */
 #if PPP_SERVER
-  chap_server_state chap_server;
+  chap_server_state chap_server;  /* CHAP server data */
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPORT */
 
 #if EAP_SUPPORT
-  eap_state eap;
+  eap_state eap;            /* EAP data */
 #endif /* EAP_SUPPORT */
 
   fsm lcp_fsm;                   /* LCP fsm structure */
@@ -345,11 +346,8 @@ struct ppp_pcb_s {
   lcp_options lcp_gotoptions;    /* Options that peer ack'd */
   lcp_options lcp_allowoptions;  /* Options we allow peer to request */
   lcp_options lcp_hisoptions;    /* Options that we ack'd */
-#if PPPOS_SUPPORT
-  ext_accm xmit_accm;            /* extended transmit ACCM */
-#endif /* PPPOS_SUPPORT */
-  u8_t lcp_echos_pending;         /* Number of outstanding echo msgs */
-  u8_t lcp_echo_number;           /* ID number of next echo frame */
+  u8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
+  u8_t lcp_echo_number;          /* ID number of next echo frame */
   u8_t lcp_loopbackfail;
 
   fsm ipcp_fsm;                   /* IPCP fsm structure */
