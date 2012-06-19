@@ -331,8 +331,6 @@ struct ppp_pcb_s {
   int lcp_echos_pending;         /* Number of outstanding echo msgs */
   int lcp_echo_number;           /* ID number of next echo frame */
   int lcp_echo_timer_running;    /* set if a timer is running */
-  /* FIXME: do we really need such a large buffer? The typical 1500 bytes seem too much. */
-  u_char nak_buffer[PPP_MRU];    /* where we construct a nak packet */
   int lcp_loopbackfail;
 
   fsm ipcp_fsm;          /* IPCP fsm structure */

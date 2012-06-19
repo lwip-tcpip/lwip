@@ -1751,7 +1751,8 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
     int orc;			/* Individual option return code */
     u_char *p;			/* Pointer to next char to parse */
     u_char *rejp;		/* Pointer to next char in reject frame */
-    u_char *nakp;		/* Pointer to next char in Nak frame */
+    struct pbuf *nakp;          /* Nak buffer */
+    u_char *nakoutp;		/* Pointer to next char in Nak frame */
     int l = *lenp;		/* Length left */
 
     /*
@@ -1763,7 +1764,10 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
      * Process all his options.
      */
     next = inp;
-    nakp = pcb->nak_buffer;
+    nakp = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->peer_mru), PBUF_RAM);
+    if(NULL == nakp)
+        return 0;
+    nakoutp = nakp->payload;
     rejp = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
@@ -1799,9 +1803,9 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	     */
 	    if (cishort < MINMRU) {
 		orc = CONFNAK;		/* Nak CI */
-		PUTCHAR(CI_MRU, nakp);
-		PUTCHAR(CILEN_SHORT, nakp);
-		PUTSHORT(MINMRU, nakp);	/* Give him a hint */
+		PUTCHAR(CI_MRU, nakoutp);
+		PUTCHAR(CILEN_SHORT, nakoutp);
+		PUTSHORT(MINMRU, nakoutp);	/* Give him a hint */
 		break;
 	    }
 	    ho->neg_mru = 1;		/* Remember he sent MRU */
@@ -1822,9 +1826,9 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	     */
 	    if ((ao->asyncmap & ~cilong) != 0) {
 		orc = CONFNAK;
-		PUTCHAR(CI_ASYNCMAP, nakp);
-		PUTCHAR(CILEN_LONG, nakp);
-		PUTLONG(ao->asyncmap | cilong, nakp);
+		PUTCHAR(CI_ASYNCMAP, nakoutp);
+		PUTCHAR(CILEN_LONG, nakoutp);
+		PUTLONG(ao->asyncmap | cilong, nakoutp);
 		break;
 	    }
 	    ho->neg_asyncmap = 1;
@@ -1881,17 +1885,17 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		}
 		if (!ao->neg_upap) {	/* we don't want to do PAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or EAP */
-		    PUTCHAR(CI_AUTHTYPE, nakp);
+		    PUTCHAR(CI_AUTHTYPE, nakoutp);
 #if EAP_SUPPORT
 		    if (ao->neg_eap) {
-			PUTCHAR(CILEN_SHORT, nakp);
-			PUTSHORT(PPP_EAP, nakp);
+			PUTCHAR(CILEN_SHORT, nakoutp);
+			PUTSHORT(PPP_EAP, nakoutp);
 		    } else {
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
-			PUTCHAR(CILEN_CHAP, nakp);
-			PUTSHORT(PPP_CHAP, nakp);
-			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+			PUTCHAR(CILEN_CHAP, nakoutp);
+			PUTSHORT(PPP_CHAP, nakoutp);
+			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
 		    }
@@ -1919,16 +1923,16 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		}
 		if (!ao->neg_chap) {	/* we don't want to do CHAP */
 		    orc = CONFNAK;	/* NAK it and suggest EAP or PAP */
-		    PUTCHAR(CI_AUTHTYPE, nakp);
-		    PUTCHAR(CILEN_SHORT, nakp);
+		    PUTCHAR(CI_AUTHTYPE, nakoutp);
+		    PUTCHAR(CILEN_SHORT, nakoutp);
 #if EAP_SUPPORT
 		    if (ao->neg_eap) {
-			PUTSHORT(PPP_EAP, nakp);
+			PUTSHORT(PPP_EAP, nakoutp);
 		    } else
 #endif /* EAP_SUPPORT */
 #if PAP_SUPPORT
 		    if(1) {
-			PUTSHORT(PPP_PAP, nakp);
+			PUTSHORT(PPP_PAP, nakoutp);
 		    }
 		    else
 #endif /* PAP_SUPPORT */
@@ -1942,10 +1946,10 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		     * suggest something else.
 		     */
 		    orc = CONFNAK;
-		    PUTCHAR(CI_AUTHTYPE, nakp);
-		    PUTCHAR(CILEN_CHAP, nakp);
-		    PUTSHORT(PPP_CHAP, nakp);
-		    PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+		    PUTCHAR(CI_AUTHTYPE, nakoutp);
+		    PUTCHAR(CILEN_CHAP, nakoutp);
+		    PUTSHORT(PPP_CHAP, nakoutp);
+		    PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
 		    break;
 		}
 		ho->chap_mdtype = CHAP_MDTYPE_D(cichar); /* save md type */
@@ -1970,18 +1974,18 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		}
 		if (!ao->neg_eap) {	/* we don't want to do EAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or PAP */
-		    PUTCHAR(CI_AUTHTYPE, nakp);
+		    PUTCHAR(CI_AUTHTYPE, nakoutp);
 #if CHAP_SUPPORT
 		    if (ao->neg_chap) {
-			PUTCHAR(CILEN_CHAP, nakp);
-			PUTSHORT(PPP_CHAP, nakp);
-			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+			PUTCHAR(CILEN_CHAP, nakoutp);
+			PUTSHORT(PPP_CHAP, nakoutp);
+			PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
 		    } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
 		    if(1) {
-			PUTCHAR(CILEN_SHORT, nakp);
-			PUTSHORT(PPP_PAP, nakp);
+			PUTCHAR(CILEN_SHORT, nakoutp);
+			PUTSHORT(PPP_PAP, nakoutp);
 		    } else
 #endif /* PAP_SUPPORT */
 		    {}
@@ -1999,25 +2003,25 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	     * ao->neg_eap.)
 	     */
 	    orc = CONFNAK;
-	    PUTCHAR(CI_AUTHTYPE, nakp);
+	    PUTCHAR(CI_AUTHTYPE, nakoutp);
 
 #if EAP_SUPPORT
 	    if (ao->neg_eap) {
-		PUTCHAR(CILEN_SHORT, nakp);
-		PUTSHORT(PPP_EAP, nakp);
+		PUTCHAR(CILEN_SHORT, nakoutp);
+		PUTSHORT(PPP_EAP, nakoutp);
 	    } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
 	    if (ao->neg_chap) {
-		PUTCHAR(CILEN_CHAP, nakp);
-		PUTSHORT(PPP_CHAP, nakp);
-		PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakp);
+		PUTCHAR(CILEN_CHAP, nakoutp);
+		PUTSHORT(PPP_CHAP, nakoutp);
+		PUTCHAR(CHAP_DIGEST(ao->chap_mdtype), nakoutp);
 	    } else
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
 	    if(1) {
-		PUTCHAR(CILEN_SHORT, nakp);
-		PUTSHORT(PPP_PAP, nakp);
+		PUTCHAR(CILEN_SHORT, nakoutp);
+		PUTSHORT(PPP_PAP, nakoutp);
 	    } else
 #endif /* PAP_SUPPORT */
 	    {}
@@ -2040,10 +2044,10 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	     */
 	    if (cishort != PPP_LQR) {
 		orc = CONFNAK;
-		PUTCHAR(CI_QUALITY, nakp);
-		PUTCHAR(CILEN_LQR, nakp);
-		PUTSHORT(PPP_LQR, nakp);
-		PUTLONG(ao->lqr_period, nakp);
+		PUTCHAR(CI_QUALITY, nakoutp);
+		PUTCHAR(CILEN_LQR, nakoutp);
+		PUTSHORT(PPP_LQR, nakoutp);
+		PUTLONG(ao->lqr_period, nakoutp);
 		break;
 	    }
 	    break;
@@ -2064,9 +2068,9 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		cilong == go->magicnumber) {
 		cilong = magic();	/* Don't put magic() inside macro! */
 		orc = CONFNAK;
-		PUTCHAR(CI_MAGICNUMBER, nakp);
-		PUTCHAR(CILEN_LONG, nakp);
-		PUTLONG(cilong, nakp);
+		PUTCHAR(CI_MAGICNUMBER, nakoutp);
+		PUTCHAR(CILEN_LONG, nakoutp);
+		PUTLONG(cilong, nakoutp);
 		break;
 	    }
 	    ho->neg_magicnumber = 1;
@@ -2167,7 +2171,7 @@ endswitch:
 
     /*
      * If we wanted to send additional NAKs (for unsent CIs), the
-     * code would go here.  The extra NAKs would go at *nakp.
+     * code would go here.  The extra NAKs would go at *nakoutp.
      * At present there are no cases where we want to ask the
      * peer to negotiate an option.
      */
@@ -2178,16 +2182,17 @@ endswitch:
 	break;
     case CONFNAK:
 	/*
-	 * Copy the Nak'd options from the nak_buffer to the caller's buffer.
+	 * Copy the Nak'd options from the nak buffer to the caller's buffer.
 	 */
-	*lenp = nakp - pcb->nak_buffer;
-	MEMCPY(inp, pcb->nak_buffer, *lenp);
+	*lenp = nakoutp - (u_char*)nakp->payload;
+	MEMCPY(inp, nakp->payload, *lenp);
 	break;
     case CONFREJ:
 	*lenp = rejp - inp;
 	break;
     }
 
+    pbuf_free(nakp);
     LCPDEBUG(("lcp_reqci: returning CONF%s.", CODENAME(rc)));
     return (rc);			/* Return final code */
 }
