@@ -72,24 +72,26 @@
 				/* compression option*/ 
 
 typedef struct ipcp_options {
-    bool neg_addr;		/* Negotiate IP Address? */
-    bool old_addrs;		/* Use old (IP-Addresses) option? */
-    bool req_addr;		/* Ask peer to send IP address? */
-    bool default_route;		/* Assign default route through interface? */
-    bool replace_default_route;	/* Replace default route through interface? */
-    bool proxy_arp;		/* Make proxy ARP entry for peer? */
-    bool neg_vj;		/* Van Jacobson Compression? */
-    bool old_vj;		/* use old (short) form of VJ option? */
-    bool accept_local;		/* accept peer's value for ouraddr */
-    bool accept_remote;		/* accept peer's value for hisaddr */
-    bool req_dns1;		/* Ask peer to send primary DNS address? */
-    bool req_dns2;		/* Ask peer to send secondary DNS address? */
-    int  vj_protocol;		/* protocol value to use in VJ option */
-    int  maxslotindex;		/* values for RFC1332 VJ compression neg. */
-    bool cflag;
+    u_int neg_addr               :1; /* Negotiate IP Address? */
+    u_int old_addrs              :1; /* Use old (IP-Addresses) option? */
+    u_int req_addr               :1; /* Ask peer to send IP address? */
+    u_int default_route          :1; /* Assign default route through interface? */
+    u_int replace_default_route  :1; /* Replace default route through interface? */
+    u_int proxy_arp              :1; /* Make proxy ARP entry for peer? */
+    u_int neg_vj                 :1; /* Van Jacobson Compression? */
+    u_int old_vj                 :1; /* use old (short) form of VJ option? */
+    u_int accept_local           :1; /* accept peer's value for ouraddr */
+    u_int accept_remote          :1; /* accept peer's value for hisaddr */
+    u_int req_dns1               :1; /* Ask peer to send primary DNS address? */
+    u_int req_dns2               :1; /* Ask peer to send secondary DNS address? */
+    u_int cflag                  :1;
+
     u_int32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
     u_int32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
     u_int32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
+
+    u16_t vj_protocol;		/* protocol value to use in VJ option */
+    u8_t  maxslotindex;		/* values for RFC1332 VJ compression neg. */
 } ipcp_options;
 
 #if 0 /* UNUSED, already defined by lwIP */
