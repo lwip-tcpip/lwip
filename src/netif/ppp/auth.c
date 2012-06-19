@@ -1465,7 +1465,7 @@ void auth_reset(ppp_pcb *pcb) {
   lcp_options *go = &pcb->lcp_gotoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
 
-  if( pcb->settings.passwd[0] ) {
+  if(pcb->settings.passwd) {
 
 #if PAP_SUPPORT
     ao->neg_upap = !pcb->settings.refuse_pap;
@@ -1932,7 +1932,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 
-  if(!client || !client[0] || strcmp(client, pcb->settings.user)) {
+  if(!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user)) {
     return 0;
   }
 

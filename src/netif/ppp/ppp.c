@@ -261,7 +261,7 @@ ppp_pcb *ppp_new(u8_t num) {
     return pcb;
 }
 
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 
 #if PAP_SUPPORT
   if(authtype & PPPAUTHTYPE_PAP)
@@ -293,17 +293,11 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
     pcb->settings.refuse_eap = 1;
 #endif /* EAP_SUPPORT */
 
-  if(user) {
-    strncpy(pcb->settings.user, user, sizeof(pcb->settings.user)-1);
-    pcb->settings.user[sizeof(pcb->settings.user)-1] = '\0';
-  } else
-    pcb->settings.user[0] = '\0';
+  if(user)
+    pcb->settings.user = user;
 
-  if(passwd) {
-    strncpy(pcb->settings.passwd, passwd, sizeof(pcb->settings.passwd)-1);
-    pcb->settings.passwd[sizeof(pcb->settings.passwd)-1] = '\0';
-  } else
-    pcb->settings.passwd[0] = '\0';
+  if(passwd)
+    pcb->settings.passwd = passwd;
 }
 
 #if PPPOS_SUPPORT

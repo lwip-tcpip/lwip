@@ -235,6 +235,9 @@ static void eap_client_timeout(void *arg) {
  */
 void eap_authwithpeer(ppp_pcb *pcb, char *localname) {
 
+	if(NULL == localname)
+		return;
+
 	/* Save the peer name we're given */
 	pcb->eap.es_client.ea_name = localname;
 	pcb->eap.es_client.ea_namelen = strlen(localname);

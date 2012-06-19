@@ -157,6 +157,10 @@ static void upap_init(ppp_pcb *pcb) {
  * Set new state and send authenticate's.
  */
 void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password) {
+
+    if(!user || !password)
+        return;
+
     /* Save the username and password we're given */
     pcb->upap.us_user = user;
     pcb->upap.us_userlen = strlen(user);

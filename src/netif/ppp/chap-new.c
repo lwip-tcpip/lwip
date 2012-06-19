@@ -205,6 +205,9 @@ void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 	struct chap_digest_type *dp;
 
+	if(NULL == our_name)
+		return;
+
 	if (pcb->chap_client.flags & AUTH_STARTED) {
 		error("CHAP: authentication with peer already started!");
 		return;
@@ -221,7 +224,7 @@ void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 	pcb->chap_client.flags |= AUTH_STARTED;
 }
 
-# if PPP_SERVER
+#if PPP_SERVER
 /*
  * chap_timeout - It's time to send another challenge to the peer.
  * This could be either a retransmission of a previous challenge,
