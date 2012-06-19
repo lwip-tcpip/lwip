@@ -122,6 +122,12 @@
 #include "netif/ppp_oe.h"
 #endif /* PPPOE_SUPPORT */
 
+/* Global variables */
+
+#if PPP_DEBUG
+u8_t ppp_num;   /* PPP Interface counter, used for debugging messages */
+#endif /* PPP_DEBUG */
+
 /*************************/
 /*** LOCAL DEFINITIONS ***/
 /*************************/
@@ -223,7 +229,7 @@ int ppp_init(void) {
 }
 
 /* Create a new PPP session. */
-ppp_pcb *ppp_new(u8_t num) {
+ppp_pcb *ppp_new(void) {
     int i;
     ppp_pcb *pcb;
     struct protent *protp;
@@ -237,7 +243,9 @@ ppp_pcb *ppp_new(u8_t num) {
 #endif /* PPP_STATS_SUPPORT */
 
     memset(pcb, 0, sizeof(ppp_pcb));
-    pcb->num = num;
+#if PPP_DEBUG
+    pcb->num = ppp_num++;
+#endif /* PPP_DEBUG */
     pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
     new_phase(pcb, PHASE_INITIALIZE);
 
@@ -1141,8 +1149,9 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 
 /* FIXME: improve that */
 int ppp_write_pbuf(ppp_pcb *pcb, struct pbuf *p) {
-  ppp_write(pcb, p->payload, p->len);
+  int ret = ppp_write(pcb, p->payload, p->len);
   pbuf_free(p);
+  return ret;
 }
 
 /*
