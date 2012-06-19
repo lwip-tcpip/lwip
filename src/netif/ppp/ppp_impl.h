@@ -209,15 +209,16 @@ struct ppp_comp_stats {
 
 #endif /* PPP_STATS_SUPPORT */
 
+#if PPP_IDLETIMELIMIT
 /*
  * The following structure records the time in seconds since
  * the last NP packet was sent or received.
  */
-/* FIXME: add idle time support and make it optional */
 struct ppp_idle {
     time_t xmit_idle;		/* time since last NP packet sent */
     time_t recv_idle;		/* time since last NP packet received */
 };
+#endif /* PPP_IDLETIMELIMIT */
 
 /* FIXME: make endpoint discriminator optional */
 /* FIXME: moved temporarily to ppp.h */
@@ -420,7 +421,9 @@ int cifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
 
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 
+#if PPP_IDLETIMELIMIT
 int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
+#endif /* PPP_IDLETIMELIMIT */
 
 int get_loop_output(void);
 

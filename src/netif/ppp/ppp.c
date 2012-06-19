@@ -1989,6 +1989,7 @@ int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
   return 0;
 }
 
+#if PPP_IDLETIMELIMIT
 /********************************************************************
  *
  * get_idle_time - return how long the link has been idle.
@@ -1999,7 +2000,7 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip) {
     LWIP_UNUSED_ARG(ip);
     return 1;
 }
-
+#endif /* PPP_IDLETIMELIMIT */
 
 /********************************************************************
  *
