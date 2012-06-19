@@ -688,8 +688,8 @@ static void lcp_resetci(fsm *f) {
     *go = *wo;
 #ifdef HAVE_MULTILINK
     if (!multilink) {
-#endif /* HAVE_MULTILINK */
 	go->neg_mrru = 0;
+#endif /* HAVE_MULTILINK */
 	go->neg_ssnhf = 0;
 	go->neg_endpoint = 0;
 #ifdef HAVE_MULTILINK
@@ -758,7 +758,9 @@ static int lcp_cilen(fsm *f) {
 	    LENCILONG(go->neg_magicnumber) +
 	    LENCIVOID(go->neg_pcompression) +
 	    LENCIVOID(go->neg_accompression) +
+#ifdef HAVE_MULTILINK
 	    LENCISHORT(go->neg_mrru) +
+#endif /* HAVE_MULTILINK */
 	    LENCIVOID(go->neg_ssnhf) +
 	    (go->neg_endpoint? CILEN_CHAR + go->endpoint.length: 0));
 }
@@ -858,7 +860,9 @@ static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
     ADDCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ADDCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
     ADDCIVOID(CI_ACCOMPRESSION, go->neg_accompression);
+#ifdef HAVE_MULTILINK
     ADDCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
+#endif
     ADDCIVOID(CI_SSNHF, go->neg_ssnhf);
     ADDCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
 	      go->endpoint.value, go->endpoint.length);
@@ -1030,7 +1034,9 @@ static int lcp_ackci(fsm *f, u_char *p, int len) {
     ACKCILONG(CI_MAGICNUMBER, go->neg_magicnumber, go->magicnumber);
     ACKCIVOID(CI_PCOMPRESSION, go->neg_pcompression);
     ACKCIVOID(CI_ACCOMPRESSION, go->neg_accompression);
+#ifdef HAVE_MULTILINK
     ACKCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
+#endif /* HAVE_MULTILINK */
     ACKCIVOID(CI_SSNHF, go->neg_ssnhf);
     ACKCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
 	      go->endpoint.value, go->endpoint.length);
@@ -1360,6 +1366,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     NAKCIVOID(CI_PCOMPRESSION, neg_pcompression);
     NAKCIVOID(CI_ACCOMPRESSION, neg_accompression);
 
+#ifdef HAVE_MULTILINK
     /*
      * Nak for MRRU option - accept their value if it is smaller
      * than the one we want.
@@ -1372,6 +1379,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		       try.mrru = cishort;
 		   );
     }
+#endif /* HAVE_MULTILINK */
 
     /*
      * Nak for short sequence numbers shouldn't be sent, treat it
@@ -1459,10 +1467,12 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		goto bad;
 	    break;
 #endif /* LQR_SUPPORT */
+#ifdef HAVE_MULTILINK
 	case CI_MRRU:
 	    if (go->neg_mrru || no.neg_mrru || cilen != CILEN_SHORT)
 		goto bad;
 	    break;
+#endif /* HAVE_MULTILINK */
 	case CI_SSNHF:
 	    if (go->neg_ssnhf || no.neg_ssnhf || cilen != CILEN_VOID)
 		goto bad;
@@ -1706,7 +1716,9 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
     REJCILONG(CI_MAGICNUMBER, neg_magicnumber, go->magicnumber);
     REJCIVOID(CI_PCOMPRESSION, neg_pcompression);
     REJCIVOID(CI_ACCOMPRESSION, neg_accompression);
+#ifdef HAVE_MULTILINK
     REJCISHORT(CI_MRRU, neg_mrru, go->mrru);
+#endif /* HAVE_MULTILINK */
     REJCIVOID(CI_SSNHF, neg_ssnhf);
     REJCIENDP(CI_EPDISC, neg_endpoint, go->endpoint.class,
 	      go->endpoint.value, go->endpoint.length);
@@ -2097,11 +2109,10 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	    ho->neg_accompression = 1;
 	    break;
 
+#ifdef HAVE_MULTILINK
 	case CI_MRRU:
 	    if (!ao->neg_mrru
-#ifdef HAVE_MULTILINK
 		|| !multilink
-#endif /* HAVE_MULTILINK */
 		|| cilen != CILEN_SHORT) {
 		orc = CONFREJ;
 		break;
@@ -2112,6 +2123,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	    ho->neg_mrru = 1;
 	    ho->mrru = cishort;
 	    break;
+#endif /* HAVE_MULTILINK */
 
 	case CI_SSNHF:
 	    if (!ao->neg_ssnhf
