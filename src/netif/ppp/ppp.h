@@ -298,7 +298,10 @@ struct ppp_pcb_s {
   u8_t phase;                    /* where the link is at */
   u8_t err_code;                 /* Code indicating why interface is down. */
 
+  /* FIXME: maybe we should cleanup one of those MTU variables */
   u16_t mtu;                     /* Peer's mru */
+  u16_t peer_mru;                /* currently negotiated peer MRU */
+
   u32_t last_xmit;               /* Time of last transmission. */
 
   struct ppp_addrs addrs;        /* PPP addresses */
@@ -332,8 +335,6 @@ struct ppp_pcb_s {
 #if EAP_SUPPORT
   eap_state eap;
 #endif /* EAP_SUPPORT */
-
-  int peer_mru;         /* currently negotiated peer MRU */
 
   fsm lcp_fsm;          /* LCP fsm structure */
   lcp_options lcp_wantoptions;    /* Options that we want to request */
