@@ -268,50 +268,53 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
+  u_int if_up           :1;      /* True when the interface is up. */
+  u_int pcomp           :1;      /* Does peer accept protocol compression? */
+  u_int accomp          :1;      /* Does peer accept addr/ctl compression? */
+#if PPPOS_SUPPORT && VJ_SUPPORT
+  u_int vj_enabled      :1;      /* Flag indicating VJ compression enabled. */
+#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+
   ppp_settings settings;
+
 #if PPP_DEBUG
   u8_t num;                      /* Interface number - only useful for debugging */
 #endif /* PPP_DEBUG */
+
 #if PPPOS_SUPPORT
+  sio_fd_t fd;                   /* File device ID of port. */
+  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
   ppp_pcb_rx rx;
+#if VJ_SUPPORT
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* VJ_SUPPORT */
 #endif /* PPPOS_SUPPORT */
-  u8_t phase;                    /* where the link is at */
+
 #if PPPOE_SUPPORT
   struct netif *ethif;
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */
-  int  if_up;                    /* True when the interface is up. */
-  int  err_code;                 /* Code indicating why interface is down. */
-#if PPPOS_SUPPORT
-  sio_fd_t fd;                   /* File device ID of port. */
-#endif /* PPPOS_SUPPORT */
-  u16_t mtu;                     /* Peer's mru */
-  int  pcomp;                    /* Does peer accept protocol compression? */
-  int  accomp;                   /* Does peer accept addr/ctl compression? */
-  u_long last_xmit;              /* Time of last transmission. */
-#if PPPOS_SUPPORT
-  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
-#endif /* PPPOS_SUPPORT */
-#if PPPOS_SUPPORT && VJ_SUPPORT
-  int  vj_enabled;               /* Flag indicating VJ compression enabled. */
-  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
+  u8_t phase;                    /* where the link is at */
+  u8_t err_code;                 /* Code indicating why interface is down. */
+
+  u16_t mtu;                     /* Peer's mru */
+  u32_t last_xmit;               /* Time of last transmission. */
+
+  struct ppp_addrs addrs;        /* PPP addresses */
   struct netif netif;            /* PPP interface */
 
-  struct ppp_addrs addrs;
-
-  void (*link_status_cb)(void *ctx, int err_code, void *arg);
-  void *link_status_ctx;
+  void (*link_status_cb)(void *ctx, int err_code, void *arg);  /* Status change callback */
+  void *link_status_ctx;                                       /* Status change callback optional pointer */
 
   /* auth data */
 #if PPP_SERVER
   char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */
 #endif /* PPP_SERVER */
-  int auth_pending;        /* Records which authentication operations haven't completed yet. */
-  int auth_done;           /* Records which authentication operations have been completed. */
-  int num_np_open;         /* Number of network protocols which we have opened. */
-  int num_np_up;           /* Number of network protocols which have come up. */
+  u16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
+  u16_t auth_done;           /* Records which authentication operations have been completed. */
+  u8_t num_np_open;         /* Number of network protocols which we have opened. */
+  u8_t num_np_up;           /* Number of network protocols which have come up. */
 
 #if PAP_SUPPORT
   upap_state upap;         /* PAP data */
