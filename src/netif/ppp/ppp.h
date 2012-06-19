@@ -174,6 +174,8 @@ typedef struct ppp_settings_s {
   u_int  hide_password     : 1;       /* Hide password in dumped packets */
 #endif /* PRINTPKT_SUPPORT */
   u_int  noremoteip        : 1;
+  u_int  lax_recv          : 1;       /* accept control chars in asyncmap */
+  u_int  noendpoint        : 1;       /* don't send/accept endpoint discriminator */
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
@@ -201,8 +203,6 @@ typedef struct ppp_settings_s {
 #if PPP_LCP_ADAPTIVE
   bool lcp_echo_adaptive;     /* request echo only if the link was idle */
 #endif
-  bool lax_recv;             /* accept control chars in asyncmap */
-  bool noendpoint;            /* don't send/accept endpoint discriminator */
 
 } ppp_settings;
 
