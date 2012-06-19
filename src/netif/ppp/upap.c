@@ -163,9 +163,9 @@ void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password) {
 
     /* Save the username and password we're given */
     pcb->upap.us_user = user;
-    pcb->upap.us_userlen = strlen(user);
+    pcb->upap.us_userlen = LWIP_MIN(strlen(user), 0xff);
     pcb->upap.us_passwd = password;
-    pcb->upap.us_passwdlen = strlen(password);
+    pcb->upap.us_passwdlen = LWIP_MIN(strlen(password), 0xff);
     pcb->upap.us_transmits = 0;
 
     /* Lower layer up yet? */

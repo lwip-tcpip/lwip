@@ -99,18 +99,18 @@
 #if PAP_SUPPORT
 typedef struct upap_state {
     char *us_user;		/* User */
-    int us_userlen;		/* User length */
+    u8_t us_userlen;		/* User length */
     char *us_passwd;		/* Password */
-    int us_passwdlen;		/* Password length */
-    int us_clientstate;		/* Client state */
+    u8_t us_passwdlen;		/* Password length */
+    u8_t us_clientstate;	/* Client state */
 #if PPP_SERVER
-    int us_serverstate;		/* Server state */
+    u8_t us_serverstate		/* Server state */
 #endif /* PPP_SERVER */
-    u_char us_id;		/* Current id */
-    int us_timeouttime;		/* Timeout (seconds) for auth-req retrans. */
-    int us_transmits;		/* Number of auth-reqs sent */
-    int us_maxtransmits;	/* Maximum number of auth-reqs to send */
-    int us_reqtimeout;		/* Time to wait for auth-req from peer */
+    u8_t us_id;		        /* Current id */
+    u8_t us_timeouttime;	/* Timeout (seconds) for auth-req retrans. */
+    u8_t us_transmits;		/* Number of auth-reqs sent */
+    u8_t us_maxtransmits;	/* Maximum number of auth-reqs to send */
+    u8_t us_reqtimeout;		/* Time to wait for auth-req from peer */
 } upap_state;
 #endif /* PAP_SUPPORT */
 
