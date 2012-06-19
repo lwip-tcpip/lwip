@@ -324,8 +324,6 @@ struct ppp_pcb_s {
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
-  /* FIXME: we can probably remove this entry */
-  int chap_mdtype_all;     /* hashes supported by this instance of pppd */
   chap_client_state chap_client;
 #if PPP_SERVER
   chap_server_state chap_server;

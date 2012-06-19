@@ -384,7 +384,7 @@ static void lcp_init(ppp_pcb *pcb) {
     ao->neg_asyncmap = 1;
 #if CHAP_SUPPORT
     ao->neg_chap = 1;
-    ao->chap_mdtype = pcb->chap_mdtype_all;
+    ao->chap_mdtype = CHAP_MDTYPE_SUPPORTED;
 #endif /* CHAP_SUPPORT */
 #if PAP_SUPPORT
     ao->neg_upap = 1;

@@ -357,6 +357,17 @@ extern struct protent *protocols[];
 #define PHASE_HOLDOFF		11
 #define PHASE_MASTER		12
 
+/* Supported CHAP protocols */
+#if CHAP_SUPPORT
+#include "chap-new.h"
+#if MSCHAP_SUPPORT
+#define CHAP_MDTYPE_SUPPORTED (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
+#else
+#define CHAP_MDTYPE_SUPPORTED (MDTYPE_MD5)
+#endif
+#else
+#define CHAP_MDTYPE_SUPPORTED (MDTYPE_NONE)
+#endif
 
 #if PPP_STATS_SUPPORT
 /*

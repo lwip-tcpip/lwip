@@ -44,12 +44,8 @@
 
 #include "chap-new.h"
 #include "chap-md5.h"
-
 #if MSCHAP_SUPPORT
 #include "chap_ms.h"
-#define MDTYPE_ALL (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
-#else
-#define MDTYPE_ALL (MDTYPE_MD5)
 #endif
 
 /* Hook for a plugin to validate CHAP challenge */
@@ -127,8 +123,6 @@ static void chap_init(ppp_pcb *pcb) {
 #if PPP_SERVER
 	memset(&pcb->chap_server, 0, sizeof(chap_server_state));
 #endif /* PPP_SERVER */
-
-	pcb->chap_mdtype_all = MDTYPE_ALL;
 
 	chap_md5_init();
 #if MSCHAP_SUPPORT
