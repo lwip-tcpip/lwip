@@ -178,34 +178,34 @@ typedef struct ppp_settings_s {
   u_int  noremoteip        : 1;
   u_int  lax_recv          : 1;       /* accept control chars in asyncmap */
   u_int  noendpoint        : 1;       /* don't send/accept endpoint discriminator */
+#if PPP_LCP_ADAPTIVE
+  u_int lcp_echo_adaptive  : 1;       /* request echo only if the link was idle */
+#endif
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
   /* FIXME: make it a compile time option */
-  u16_t idle_time_limit;	      /* Disconnect if idle for this many seconds */
-  int  maxconnect;                    /* Maximum connect time (seconds) */
+  u16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
+  u32_t  maxconnect;                  /* Maximum connect time (seconds) */
 
   /* auth data */
-  char user       [MAXNAMELEN   + 1]; /* Username for PAP */
-  char passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
+  char  user       [MAXNAMELEN   + 1]; /* Username for PAP */
+  char  passwd     [MAXSECRETLEN + 1]; /* Password for PAP, secret for CHAP */
 #if PPP_SERVER
-  char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
+  char  our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
 #endif /* PPP_SERVER */
 #if PPP_REMOTENAME
-  char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+  char  remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
 #endif /* PPP_REMOTENAME */
 
 #if CHAP_SUPPORT
-  int chap_timeout_time;
-  int chap_max_transmits;
-  int chap_rechallenge_time;
+  u8_t  chap_timeout_time;
+  u8_t  chap_max_transmits;
+  u8_t  chap_rechallenge_time;
 #endif /* CHAP_SUPPPORT */
 
-  u_int lcp_echo_interval;    /* Interval between LCP echo-requests */
-  u_int lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
-#if PPP_LCP_ADAPTIVE
-  bool lcp_echo_adaptive;     /* request echo only if the link was idle */
-#endif
+  u8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
+  u8_t  lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
 
 } ppp_settings;
 
