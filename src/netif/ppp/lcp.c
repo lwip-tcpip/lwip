@@ -1483,8 +1483,9 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     if (f->state != OPENED) {
 	if (looped_back) {
 	    if (++try.numloops >= pcb->lcp_loopbackfail) {
+		int errcode = PPPERR_LOOPBACK;
 		notice("Serial line is looped back.");
-		pcb->status = EXIT_LOOPBACK;
+		ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 		lcp_close(f->pcb, "Loopback detected");
 	    }
 	} else
@@ -2547,9 +2548,10 @@ static int lcp_printpkt(u_char *p, int plen,
 static void LcpLinkFailure(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     if (f->state == OPENED) {
+	int errcode = PPPERR_PEERDEAD;
 	info("No response to %d echo-requests", pcb->lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
-	pcb->status = EXIT_PEER_DEAD;
+	ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 	lcp_close(pcb, "Peer not responding");
     }
 }

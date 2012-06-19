@@ -504,34 +504,6 @@ void update_link_stats(int u); /* Get stats at link termination */
     PUTCHAR(PPP_UI, p); \
     PUTSHORT(t, p); }
 
-/*
- * Exit status values.
- */
-#define EXIT_OK			0
-#define EXIT_FATAL_ERROR	1
-#define EXIT_OPTION_ERROR	2
-#define EXIT_NOT_ROOT		3
-#define EXIT_NO_KERNEL_SUPPORT	4
-#define EXIT_USER_REQUEST	5
-#define EXIT_LOCK_FAILED	6
-#define EXIT_OPEN_FAILED	7
-#define EXIT_CONNECT_FAILED	8
-#define EXIT_PTYCMD_FAILED	9
-#define EXIT_NEGOTIATION_FAILED	10
-#define EXIT_PEER_AUTH_FAILED	11
-#define EXIT_IDLE_TIMEOUT	12
-#define EXIT_CONNECT_TIME	13
-#define EXIT_CALLBACK		14
-#define EXIT_PEER_DEAD		15
-#define EXIT_HANGUP		16
-#define EXIT_LOOPBACK		17
-#define EXIT_INIT_FAILED	18
-#define EXIT_AUTH_TOPEER_FAILED	19
-#ifdef MAXOCTETS
-#define EXIT_TRAFFIC_LIMIT	20
-#endif
-#define EXIT_CNID_AUTH_FAILED	21
-
 /* Procedures exported from auth.c */
 void link_required(ppp_pcb *pcb);     /* we are starting to use the link */
 void link_terminated(ppp_pcb *pcb);   /* we are finished with the link */

@@ -1075,14 +1075,11 @@ void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
     int errcode = PPPERR_AUTHFAIL;
     /*
      * We've failed to authenticate ourselves to our peer.
+     *
      * Some servers keep sending CHAP challenges, but there
      * is no point in persisting without any way to get updated
      * authentication secrets.
-     */
-    pcb->status = EXIT_AUTH_TOPEER_FAILED;
-
-    /*
-     * We've failed to authenticate ourselves to our peer.
+     *
      * He'll probably take the link down, and there's not much
      * we can do except wait for that.
      */
@@ -1161,7 +1158,6 @@ void np_up(ppp_pcb *pcb, int proto) {
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
-	pcb->status = EXIT_OK;
 	new_phase(pcb, PHASE_RUNNING);
 
 #if PPP_IDLETIMELIMIT
@@ -1292,9 +1288,10 @@ static void check_idle(void *arg) {
     }
 #endif /* UNUSED */
     if (tlim <= 0) {
+	int errcode = PPPERR_IDLETIMEOUT;
 	/* link is idle: shut it down. */
 	notice("Terminating connection due to lack of activity.");
-	pcb->status = EXIT_IDLE_TIMEOUT;
+	ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 	lcp_close(pcb, "Link inactive");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
@@ -1310,9 +1307,10 @@ static void check_idle(void *arg) {
  * connect_time_expired - log a message and close the connection.
  */
 static void connect_time_expired(void *arg) {
+    int errcode = PPPERR_CONNECTTIME;
     ppp_pcb *pcb = (ppp_pcb*)arg;
     info("Connect time expired");
-    pcb->status = EXIT_CONNECT_TIME;
+    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
     lcp_close(pcb, "Connect time expired");	/* Close connection */
 }
 #endif /* PPP_MAXCONNECT */

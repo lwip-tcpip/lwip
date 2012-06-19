@@ -99,15 +99,19 @@ typedef unsigned char	bool;
 #define PPP_FCSLEN	2	/* octets for FCS */
 
 /* Error codes. */
-#define PPPERR_NONE      0 /* No error. */
-#define PPPERR_PARAM    -1 /* Invalid parameter. */
-#define PPPERR_OPEN     -2 /* Unable to open PPP session. */
-#define PPPERR_DEVICE   -3 /* Invalid I/O device for PPP. */
-#define PPPERR_ALLOC    -4 /* Unable to allocate resources. */
-#define PPPERR_USER     -5 /* User interrupt. */
-#define PPPERR_CONNECT  -6 /* Connection lost. */
-#define PPPERR_AUTHFAIL -7 /* Failed authentication challenge. */
-#define PPPERR_PROTOCOL -8 /* Failed to meet protocol. */
+#define PPPERR_NONE         0  /* No error. */
+#define PPPERR_PARAM        1  /* Invalid parameter. */
+#define PPPERR_OPEN         2  /* Unable to open PPP session. */
+#define PPPERR_DEVICE       3  /* Invalid I/O device for PPP. */
+#define PPPERR_ALLOC        4  /* Unable to allocate resources. */
+#define PPPERR_USER         5  /* User interrupt. */
+#define PPPERR_CONNECT      6  /* Connection lost. */
+#define PPPERR_AUTHFAIL     7  /* Failed authentication challenge. */
+#define PPPERR_PROTOCOL     8  /* Failed to meet protocol. */
+#define PPPERR_PEERDEAD     9  /* Connection timeout */
+#define PPPERR_IDLETIMEOUT  10 /* Idle Timeout */
+#define PPPERR_CONNECTTIME  11 /* Max connect time reached */
+#define PPPERR_LOOPBACK     12 /* Loopback detected */
 
 /*
  * PPP IOCTL commands.
@@ -270,7 +274,6 @@ struct ppp_pcb_s {
   ppp_pcb_rx rx;
 #endif /* PPPOS_SUPPORT */
   u8_t phase;                    /* where the link is at */
-  u8_t status;                   /* exit status */
 #if PPPOE_SUPPORT
   struct netif *ethif;
   struct pppoe_softc *pppoe_sc;

@@ -238,7 +238,6 @@ ppp_pcb *ppp_new(u8_t num) {
 
     memset(pcb, 0, sizeof(ppp_pcb));
     pcb->num = num;
-    pcb->status = EXIT_OK;
     pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
     new_phase(pcb, PHASE_INITIALIZE);
 
