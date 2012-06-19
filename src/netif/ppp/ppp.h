@@ -153,7 +153,9 @@ typedef struct ppp_settings_s {
 
   u_int  disable_defaultip : 1;       /* Don't use hostname for default IP addrs */
   u_int  auth_required     : 1;       /* Peer is required to authenticate */
+#if PPP_REMOTENAME
   u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
+#endif /* PPP_REMOTENAME */
 #if PAP_SUPPORT
   u_int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
 #endif /* PAP_SUPPORT */
@@ -189,8 +191,9 @@ typedef struct ppp_settings_s {
 #if PPP_SERVER
   char our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
 #endif /* PPP_SERVER */
-  /* FIXME: make it a compile time option */
+#if PPP_REMOTENAME
   char remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
+#endif /* PPP_REMOTENAME */
 
 #if CHAP_SUPPORT
   int chap_timeout_time;

@@ -435,9 +435,11 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	/* Null terminate and clean remote name. */
 	slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
+#if PPP_REMOTENAME
 	/* Microsoft doesn't send their name back in the PPP packet */
 	if (pcb->settings.explicit_remote || (pcb->settings.remote_name[0] != 0 && rname[0] == 0))
 		strlcpy(rname, pcb->settings.remote_name, sizeof(rname));
+#endif /* PPP_REMOTENAME */
 
 	/* get secret for authenticating ourselves with the specified host */
 	if (!get_secret(pcb, pcb->chap_client.name, rname, secret, &secret_len, 0)) {

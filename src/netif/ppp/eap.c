@@ -1444,10 +1444,12 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			rhostname[len - vallen] = '\0';
 		}
 
+#if PPP_REMOTENAME
 		/* In case the remote doesn't give us his name. */
 		if (pcb->settings.explicit_remote ||
 		    (pcb->settings.remote_name[0] != '\0' && vallen == len))
 			strlcpy(rhostname, pcb->settings.remote_name, sizeof (rhostname));
+#endif /* PPP_REMOTENAME */
 
 		/*
 		 * Get the secret for authenticating ourselves with
