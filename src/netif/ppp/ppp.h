@@ -268,11 +268,17 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
-  u_int if_up           :1;      /* True when the interface is up. */
-  u_int pcomp           :1;      /* Does peer accept protocol compression? */
-  u_int accomp          :1;      /* Does peer accept addr/ctl compression? */
+  u_int if_up                   :1; /* True when the interface is up. */
+  u_int pcomp                   :1; /* Does peer accept protocol compression? */
+  u_int accomp                  :1; /* Does peer accept addr/ctl compression? */
+  u_int default_route_set       :1; /* Have set up a default route */
+  u_int proxy_arp_set           :1; /* Have created proxy arp entry */
+  u_int ipcp_is_open            :1; /* haven't called np_finished() */
+  u_int ipcp_is_up              :1; /* have called np_up() */
+  u_int ask_for_local           :1; /* request our address from peer */
+  u_int lcp_echo_timer_running  :1; /* set if a timer is running */
 #if PPPOS_SUPPORT && VJ_SUPPORT
-  u_int vj_enabled      :1;      /* Flag indicating VJ compression enabled. */
+  u_int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
 
   ppp_settings settings;
@@ -334,29 +340,23 @@ struct ppp_pcb_s {
   eap_state eap;
 #endif /* EAP_SUPPORT */
 
-  fsm lcp_fsm;          /* LCP fsm structure */
-  lcp_options lcp_wantoptions;    /* Options that we want to request */
-  lcp_options lcp_gotoptions;     /* Options that peer ack'd */
-  lcp_options lcp_allowoptions;   /* Options we allow peer to request */
-  lcp_options lcp_hisoptions;     /* Options that we ack'd */
+  fsm lcp_fsm;                   /* LCP fsm structure */
+  lcp_options lcp_wantoptions;   /* Options that we want to request */
+  lcp_options lcp_gotoptions;    /* Options that peer ack'd */
+  lcp_options lcp_allowoptions;  /* Options we allow peer to request */
+  lcp_options lcp_hisoptions;    /* Options that we ack'd */
 #if PPPOS_SUPPORT
   ext_accm xmit_accm;            /* extended transmit ACCM */
 #endif /* PPPOS_SUPPORT */
-  int lcp_echos_pending;         /* Number of outstanding echo msgs */
-  int lcp_echo_number;           /* ID number of next echo frame */
-  int lcp_echo_timer_running;    /* set if a timer is running */
-  int lcp_loopbackfail;
+  u8_t lcp_echos_pending;         /* Number of outstanding echo msgs */
+  u8_t lcp_echo_number;           /* ID number of next echo frame */
+  u8_t lcp_loopbackfail;
 
-  fsm ipcp_fsm;          /* IPCP fsm structure */
-  ipcp_options ipcp_wantoptions;    /* Options that we want to request */
-  ipcp_options ipcp_gotoptions;	    /* Options that peer ack'd */
-  ipcp_options ipcp_allowoptions;   /* Options we allow peer to request */
-  ipcp_options ipcp_hisoptions;     /* Options that we ack'd */
-  int default_route_set;        /* Have set up a default route */
-  int proxy_arp_set;            /* Have created proxy arp entry */
-  int ipcp_is_open;             /* haven't called np_finished() */
-  int ipcp_is_up;               /* have called np_up() */
-  bool ask_for_local;           /* request our address from peer */
+  fsm ipcp_fsm;                   /* IPCP fsm structure */
+  ipcp_options ipcp_wantoptions;  /* Options that we want to request */
+  ipcp_options ipcp_gotoptions;   /* Options that peer ack'd */
+  ipcp_options ipcp_allowoptions; /* Options we allow peer to request */
+  ipcp_options ipcp_hisoptions;   /* Options that we ack'd */
 };
 
 /************************

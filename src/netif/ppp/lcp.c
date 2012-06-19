@@ -2661,7 +2661,7 @@ static void LcpSendEchoRequest(fsm *f) {
         lcp_magic = go->magicnumber;
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);
-        fsm_sdata(f, ECHOREQ, pcb->lcp_echo_number++ & 0xFF, pkt, pktp - pkt);
+        fsm_sdata(f, ECHOREQ, pcb->lcp_echo_number++, pkt, pktp - pkt);
 	++pcb->lcp_echos_pending;
     }
 }
