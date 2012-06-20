@@ -35,19 +35,16 @@
  * $Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp $
  */
 
-#define RCSID	"$Id: eui64.c,v 1.6 2002/12/04 23:03:32 paulus Exp $"
+#include "lwip/opt.h"
+#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#include "pppd.h"
-
-static const char rcsid[] = RCSID;
+#include "ppp_impl.h"
+#include "eui64.h"
 
 /*
  * eui64_ntoa - Make an ascii representation of an interface identifier
  */
-char *
-eui64_ntoa(e)
-    eui64_t e;
-{
+char *eui64_ntoa(eui64_t e) {
     static char buf[32];
 
     snprintf(buf, 32, "%02x%02x:%02x%02x:%02x%02x:%02x%02x",
@@ -55,3 +52,5 @@ eui64_ntoa(e)
 	     e.e8[4], e.e8[5], e.e8[6], e.e8[7]);
     return buf;
 }
+
+#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */
