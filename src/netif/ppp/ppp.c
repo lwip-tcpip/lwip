@@ -251,6 +251,7 @@ ppp_pcb *ppp_new(void) {
 #if PPP_DEBUG
     pcb->num = ppp_num++;
 #endif /* PPP_DEBUG */
+    IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
     pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
     new_phase(pcb, PHASE_INITIALIZE);
 
@@ -1906,16 +1907,22 @@ int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
  */
 int sifup(ppp_pcb *pcb) {
 
-  netif_remove(&pcb->netif);
-  if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
-    PPPDEBUG(LOG_ERR, ("sifup[%d]: netif_add failed\n", pcb->num));
-    return 0;
+  if(!pcb->if_up) {
+    if(!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
+      PPPDEBUG(LOG_ERR, ("sifup[%d]: netif_add failed\n", pcb->num));
+      return 0;
+    }
+  } else {
+    netif_set_addr(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                   &pcb->addrs.his_ipaddr);
   }
+
 #if PPP_IPV6_SUPPORT
   ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
   netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
 #endif /* PPP_IPV6_SUPPORT */
+
   netif_set_up(&pcb->netif);
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
@@ -1933,6 +1940,9 @@ int sifup(ppp_pcb *pcb) {
  *	     down if there are no remaining protocols.
  */
 int sifdown(ppp_pcb *pcb) {
+
+  if(!pcb->if_up)
+    return 1;
 
   pcb->if_up = 0;
   /* make sure the netif status callback is called */
