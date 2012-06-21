@@ -226,6 +226,7 @@ void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
  */
 static void chap_timeout(void *arg) {
 	ppp_pcb *pcb = (ppp_pcb*)arg;
+	struct pbuf *p;
 
 	pcb->chap_server.flags &= ~TIMEOUT_PENDING;
 	if ((pcb->chap_server.flags & CHALLENGE_VALID) == 0) {
@@ -239,7 +240,11 @@ static void chap_timeout(void *arg) {
 		return;
 	}
 
-	ppp_write(pcb, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->chap_server.challenge_pktlen), PBUF_RAM);
+	if(NULL == p)
+		return;
+	MEMCPY(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
+	ppp_write_pbuf(pcb, p);
 	++pcb->chap_server.challenge_xmits;
 	pcb->chap_server.flags |= TIMEOUT_PENDING;
 	TIMEOUT(chap_timeout, arg, pcb->settings.chap_timeout_time);
@@ -417,10 +422,14 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	     unsigned char *pkt, int len) {
 	int clen, nlen;
 	int secret_len;
-	unsigned char *p;
-	unsigned char response[RESP_MAX_PKTLEN];
+	struct pbuf *p;
+	u_char *outp;
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
+
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(RESP_MAX_PKTLEN), PBUF_RAM);
+	if(NULL == p)
+		return;
 
 	if ((pcb->chap_client.flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
 		return;		/* not ready */
@@ -444,26 +453,27 @@ static void chap_respond(ppp_pcb *pcb, int id,
 		warn("No CHAP secret found for authenticating us to %q", rname);
 	}
 
-	p = response;
-	MAKEHEADER(p, PPP_CHAP);
-	p += CHAP_HDRLEN;
+	outp = p->payload;
+	MAKEHEADER(outp, PPP_CHAP);
+	outp += CHAP_HDRLEN;
 
-	pcb->chap_client.digest->make_response(p, id, pcb->chap_client.name, pkt,
+	pcb->chap_client.digest->make_response(outp, id, pcb->chap_client.name, pkt,
 				  secret, secret_len, pcb->chap_client.priv);
 	memset(secret, 0, secret_len);
 
-	clen = *p;
+	clen = *outp;
 	nlen = strlen(pcb->chap_client.name);
-	memcpy(p + clen + 1, pcb->chap_client.name, nlen);
+	memcpy(outp + clen + 1, pcb->chap_client.name, nlen);
 
-	p = response + PPP_HDRLEN;
+	outp = (u_char*)p->payload + PPP_HDRLEN;
 	len = CHAP_HDRLEN + clen + 1 + nlen;
-	p[0] = CHAP_RESPONSE;
-	p[1] = id;
-	p[2] = len >> 8;
-	p[3] = len;
+	outp[0] = CHAP_RESPONSE;
+	outp[1] = id;
+	outp[2] = len >> 8;
+	outp[3] = len;
 
-	ppp_write(pcb, response, PPP_HDRLEN + len);
+	pbuf_realloc(p, PPP_HDRLEN + len);
+	ppp_write_pbuf(pcb, p);
 }
 
 static void chap_handle_status(ppp_pcb *pcb, int code, int id,
