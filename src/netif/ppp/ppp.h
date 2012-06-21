@@ -44,6 +44,9 @@
 #include "lwip/netif.h"
 #include "lwip/sys.h"
 #include "lwip/timers.h"
+#if PPP_IPV6_SUPPORT
+#include "lwip/ip6_addr.h"
+#endif /* PPP_IPV6_SUPPORT */
 
 #include "vj.h"
 
@@ -140,6 +143,9 @@ typedef struct ppp_pcb_s ppp_pcb;
 #include "fsm.h"
 #include "lcp.h"
 #include "ipcp.h"
+#if PPP_IPV6_SUPPORT
+#include "ipv6cp.h"
+#endif /* PPP_IPV6_SUPPORT */
 #if PAP_SUPPORT
 #include "upap.h"
 #endif /* PAP_SUPPORT */
@@ -217,7 +223,11 @@ typedef struct ppp_settings_s {
 } ppp_settings;
 
 struct ppp_addrs {
-  ip_addr_t our_ipaddr, his_ipaddr, netmask, dns1, dns2;
+  ip_addr_t our_ipaddr, his_ipaddr, netmask;
+  ip_addr_t dns1, dns2;
+#if PPP_IPV6_SUPPORT
+  ip6_addr_t our6_ipaddr, his6_ipaddr;
+#endif /* PPP_IPV6_SUPPORT */
 };
 
 /* FIXME: find a way to move ppp_dev_states and ppp_pcb_rx_s to ppp_impl.h */
@@ -355,6 +365,14 @@ struct ppp_pcb_s {
   ipcp_options ipcp_gotoptions;   /* Options that peer ack'd */
   ipcp_options ipcp_allowoptions; /* Options we allow peer to request */
   ipcp_options ipcp_hisoptions;   /* Options that we ack'd */
+
+#if PPP_IPV6_SUPPORT
+  fsm ipv6cp_fsm;                     /* IPV6CP fsm structure */
+  ipv6cp_options ipv6cp_wantoptions;  /* Options that we want to request */
+  ipv6cp_options ipv6cp_gotoptions;   /* Options that peer ack'd */
+  ipv6cp_options ipv6cp_allowoptions; /* Options we allow peer to request */
+  ipv6cp_options ipv6cp_hisoptions;   /* Options that we ack'd */
+#endif /* PPP_IPV6_SUPPORT */
 };
 
 /************************

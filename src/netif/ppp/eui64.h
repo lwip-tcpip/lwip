@@ -88,7 +88,7 @@ typedef union
 				} while (0)
 #define eui64_setlo32(e, l)	eui64_set32(e, l)
 
-char *eui64_ntoa __P((eui64_t));	/* Returns ascii representation of id */
+char *eui64_ntoa(eui64_t);	/* Returns ascii representation of id */
 
 #endif /* __EUI64_H__ */
 #endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

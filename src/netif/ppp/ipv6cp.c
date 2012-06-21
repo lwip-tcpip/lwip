@@ -138,8 +138,6 @@
  * $Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp $ 
  */
 
-#define RCSID	"$Id: ipv6cp.c,v 1.21 2005/08/25 23:59:34 paulus Exp $"
-
 /*
  * TODO: 
  *
@@ -150,6 +148,10 @@
  *   since SVR4 && (SNI || __USLC__) didn't work properly)
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
+#if 0 /* UNUSED */
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
@@ -159,21 +161,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif /* UNUSED */
 
-#include "pppd.h"
+#include "ppp_impl.h"
 #include "fsm.h"
 #include "ipcp.h"
 #include "ipv6cp.h"
 #include "magic.h"
-#include "pathnames.h"
 
-static const char rcsid[] = RCSID;
-
+/* FIXME: clean that */
 /* global vars */
-ipv6cp_options ipv6cp_wantoptions[NUM_PPP];     /* Options that we want to request */
-ipv6cp_options ipv6cp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
-ipv6cp_options ipv6cp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
-ipv6cp_options ipv6cp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 int no_ifaceid_neg = 0;
 
 /* local vars */
@@ -182,18 +179,16 @@ static int ipv6cp_is_up;
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
  */
-static void ipv6cp_resetci __P((fsm *));	/* Reset our CI */
-static int  ipv6cp_cilen __P((fsm *));	        /* Return length of our CI */
-static void ipv6cp_addci __P((fsm *, u_char *, int *)); /* Add our CI */
-static int  ipv6cp_ackci __P((fsm *, u_char *, int));	/* Peer ack'd our CI */
-static int  ipv6cp_nakci __P((fsm *, u_char *, int, int));/* Peer nak'd our CI */
-static int  ipv6cp_rejci __P((fsm *, u_char *, int));	/* Peer rej'd our CI */
-static int  ipv6cp_reqci __P((fsm *, u_char *, int *, int)); /* Rcv CI */
-static void ipv6cp_up __P((fsm *));		/* We're UP */
-static void ipv6cp_down __P((fsm *));		/* We're DOWN */
-static void ipv6cp_finished __P((fsm *));	/* Don't need lower layer */
-
-fsm ipv6cp_fsm[NUM_PPP];		/* IPV6CP fsm structure */
+static void ipv6cp_resetci(fsm *f); /* Reset our CI */
+static int  ipv6cp_cilen(fsm *f); /* Return length of our CI */
+static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp); /* Add our CI */
+static int  ipv6cp_ackci(fsm *f, u_char *p, int len); /* Peer ack'd our CI */
+static int  ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject); /* Peer nak'd our CI */
+static int  ipv6cp_rejci(fsm *f, u_char *p, int len); /* Peer rej'd our CI */
+static int  ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree); /* Rcv CI */
+static void ipv6cp_up(fsm *f); /* We're UP */
+static void ipv6cp_down(fsm *f); /* We're DOWN */
+static void ipv6cp_finished(fsm *f); /* Don't need lower layer */
 
 static fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
     ipv6cp_resetci,		/* Reset our Configuration Information */
@@ -213,11 +208,12 @@ static fsm_callbacks ipv6cp_callbacks = { /* IPV6CP callback routines */
     "IPV6CP"			/* String name of protocol */
 };
 
+#if PPP_OPTIONS
 /*
  * Command-line options.
  */
-static int setifaceid __P((char **arg));
-static void printifaceid __P((option_t *,
+static int setifaceid(char **arg));
+static void printifaceid(option_t *,
 			      void (*)(void *, char *, ...), void *));
 
 static option_t ipv6cp_option_list[] = {
@@ -254,23 +250,31 @@ static option_t ipv6cp_option_list[] = {
 
    { NULL }
 };
-
+#endif /* PPP_OPTIONS */
 
 /*
  * Protocol entry points from main code.
  */
-static void ipv6cp_init __P((int));
-static void ipv6cp_open __P((int));
-static void ipv6cp_close __P((int, char *));
-static void ipv6cp_lowerup __P((int));
-static void ipv6cp_lowerdown __P((int));
-static void ipv6cp_input __P((int, u_char *, int));
-static void ipv6cp_protrej __P((int));
-static int  ipv6cp_printpkt __P((u_char *, int,
-			       void (*) __P((void *, char *, ...)), void *));
-static void ipv6_check_options __P((void));
-static int  ipv6_demand_conf __P((int));
-static int  ipv6_active_pkt __P((u_char *, int));
+static void ipv6cp_init(ppp_pcb *pcb);
+static void ipv6cp_open(ppp_pcb *pcb);
+static void ipv6cp_close(ppp_pcb *pcb, char *reason);
+static void ipv6cp_lowerup(ppp_pcb *pcb);
+static void ipv6cp_lowerdown(ppp_pcb *pcb);
+static void ipv6cp_input(ppp_pcb *pcb, u_char *p, int len);
+static void ipv6cp_protrej(ppp_pcb *pcb);
+#if PPP_OPTIONS
+static void ipv6_check_options(void);
+#endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
+static int  ipv6_demand_conf(int u);
+#endif /* DEMAND_SUPPORT */
+#if PRINTPKT_SUPPORT
+static int ipv6cp_printpkt(u_char *p, int plen,
+		void (*printer)(void *, char *, ...), void *arg);
+#endif /* PRINTPKT_SUPPORT */
+#if PPP_DEMAND
+static int ipv6_active_pkt(u_char *pkt, int len);
+#endif /* PPP_DEMAND */
 
 struct protent ipv6cp_protent = {
     PPP_IPV6CP,
@@ -281,20 +285,30 @@ struct protent ipv6cp_protent = {
     ipv6cp_lowerdown,
     ipv6cp_open,
     ipv6cp_close,
+#if PRINTPKT_SUPPORT
     ipv6cp_printpkt,
+#endif /* PRINTPKT_SUPPORT */
     NULL,
-    0,
+    1,
+#if PRINTPKT_SUPPORT
     "IPV6CP",
     "IPV6",
+#endif /* PRINTPKT_SUPPORT */
+#if PPP_OPTIONS
     ipv6cp_option_list,
     ipv6_check_options,
+#endif /* PPP_OPTIONS */
+#if DEMAND_SUPPORT
     ipv6_demand_conf,
     ipv6_active_pkt
+#endif /* DEMAND_SUPPORT */
 };
 
-static void ipv6cp_clear_addrs __P((int, eui64_t, eui64_t));
-static void ipv6cp_script __P((char *));
-static void ipv6cp_script_done __P((void *));
+static void ipv6cp_clear_addrs(ppp_pcb *pcb, eui64_t ourid, eui64_t hisid);
+#if 0 /* UNUSED */
+static void ipv6cp_script(char *));
+static void ipv6cp_script_done(void *));
+#endif /* UNUSED */
 
 /*
  * Lengths of configuration options.
@@ -306,6 +320,7 @@ static void ipv6cp_script_done __P((void *));
 #define CODENAME(x)	((x) == CONFACK ? "ACK" : \
 			 (x) == CONFNAK ? "NAK" : "REJ")
 
+#if 0 /* UNUSED */
 /*
  * This state variable is used to ensure that we don't
  * run an ipcp-up/down script while one is already running.
@@ -315,7 +330,9 @@ static enum script_state {
     s_up,
 } ipv6cp_script_state;
 static pid_t ipv6cp_script_pid;
+#endif /* UNUSED */
 
+#if PPP_OPTIONS
 /*
  * setifaceid - set the interface identifiers manually
  */
@@ -380,7 +397,7 @@ char *llv6_ntoa(eui64_t ifaceid);
 static void
 printifaceid(opt, printer, arg)
     option_t *opt;
-    void (*printer) __P((void *, char *, ...));
+    void (*printer)(void *, char *, ...));
     void *arg;
 {
 	ipv6cp_options *wo = &ipv6cp_wantoptions[0];
@@ -391,6 +408,7 @@ printifaceid(opt, printer, arg)
 	if (wo->opt_remote)
 		printer(arg, "%s", llv6_ntoa(wo->hisid));
 }
+#endif /* PPP_OPTIONS */
 
 /*
  * Make a string representation of a network address.
@@ -409,18 +427,15 @@ llv6_ntoa(ifaceid)
 /*
  * ipv6cp_init - Initialize IPV6CP.
  */
-static void
-ipv6cp_init(unit)
-    int unit;
-{
-    fsm *f = &ipv6cp_fsm[unit];
-    ipv6cp_options *wo = &ipv6cp_wantoptions[unit];
-    ipv6cp_options *ao = &ipv6cp_allowoptions[unit];
+static void ipv6cp_init(ppp_pcb *pcb) {
+    fsm *f = &pcb->ipv6cp_fsm;
+    ipv6cp_options *wo = &pcb->ipv6cp_wantoptions;
+    ipv6cp_options *ao = &pcb->ipv6cp_allowoptions;
 
-    f->unit = unit;
+    f->pcb = pcb;
     f->protocol = PPP_IPV6CP;
     f->callbacks = &ipv6cp_callbacks;
-    fsm_init(&ipv6cp_fsm[unit]);
+    fsm_init(f);
 
     memset(wo, 0, sizeof(*wo));
     memset(ao, 0, sizeof(*ao));
@@ -441,58 +456,40 @@ ipv6cp_init(unit)
 /*
  * ipv6cp_open - IPV6CP is allowed to come up.
  */
-static void
-ipv6cp_open(unit)
-    int unit;
-{
-    fsm_open(&ipv6cp_fsm[unit]);
+static void ipv6cp_open(ppp_pcb *pcb) {
+    fsm_open(&pcb->ipv6cp_fsm);
 }
 
 
 /*
  * ipv6cp_close - Take IPV6CP down.
  */
-static void
-ipv6cp_close(unit, reason)
-    int unit;
-    char *reason;
-{
-    fsm_close(&ipv6cp_fsm[unit], reason);
+static void ipv6cp_close(ppp_pcb *pcb, char *reason) {
+    fsm_close(&pcb->ipv6cp_fsm, reason);
 }
 
 
 /*
  * ipv6cp_lowerup - The lower layer is up.
  */
-static void
-ipv6cp_lowerup(unit)
-    int unit;
-{
-    fsm_lowerup(&ipv6cp_fsm[unit]);
+static void ipv6cp_lowerup(ppp_pcb *pcb) {
+    fsm_lowerup(&pcb->ipv6cp_fsm);
 }
 
 
 /*
  * ipv6cp_lowerdown - The lower layer is down.
  */
-static void
-ipv6cp_lowerdown(unit)
-    int unit;
-{
-    fsm_lowerdown(&ipv6cp_fsm[unit]);
+static void ipv6cp_lowerdown(ppp_pcb *pcb) {
+    fsm_lowerdown(&pcb->ipv6cp_fsm);
 }
 
 
 /*
  * ipv6cp_input - Input IPV6CP packet.
  */
-static void
-ipv6cp_input(unit, p, len)
-    int unit;
-    u_char *p;
-    int len;
-{
-    fsm_input(&ipv6cp_fsm[unit], p, len);
+static void ipv6cp_input(ppp_pcb *pcb, u_char *p, int len) {
+    fsm_input(&pcb->ipv6cp_fsm, p, len);
 }
 
 
@@ -501,25 +498,21 @@ ipv6cp_input(unit, p, len)
  *
  * Pretend the lower layer went down, so we shut up.
  */
-static void
-ipv6cp_protrej(unit)
-    int unit;
-{
-    fsm_lowerdown(&ipv6cp_fsm[unit]);
+static void ipv6cp_protrej(ppp_pcb *pcb) {
+    fsm_lowerdown(&pcb->ipv6cp_fsm);
 }
 
 
 /*
  * ipv6cp_resetci - Reset our CI.
  */
-static void
-ipv6cp_resetci(f)
-    fsm *f;
-{
-    ipv6cp_options *wo = &ipv6cp_wantoptions[f->unit];
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static void ipv6cp_resetci(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *wo = &pcb->ipv6cp_wantoptions;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
+    ipv6cp_options *ao = &pcb->ipv6cp_allowoptions;
 
-    wo->req_ifaceid = wo->neg_ifaceid && ipv6cp_allowoptions[f->unit].neg_ifaceid;
+    wo->req_ifaceid = wo->neg_ifaceid && ao->neg_ifaceid;
     
     if (!wo->opt_local) {
 	eui64_magic_nz(wo->ourid);
@@ -533,11 +526,9 @@ ipv6cp_resetci(f)
 /*
  * ipv6cp_cilen - Return length of our CI.
  */
-static int
-ipv6cp_cilen(f)
-    fsm *f;
-{
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static int ipv6cp_cilen(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
 
 #define LENCIVJ(neg)		(neg ? CILEN_COMPRESS : 0)
 #define LENCIIFACEID(neg)	(neg ? CILEN_IFACEID : 0)
@@ -550,13 +541,9 @@ ipv6cp_cilen(f)
 /*
  * ipv6cp_addci - Add our desired CIs to a packet.
  */
-static void
-ipv6cp_addci(f, ucp, lenp)
-    fsm *f;
-    u_char *ucp;
-    int *lenp;
-{
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     int len = *lenp;
 
 #define ADDCIVJ(opt, neg, val) \
@@ -598,13 +585,9 @@ ipv6cp_addci(f, ucp, lenp)
  *	0 - Ack was bad.
  *	1 - Ack was good.
  */
-static int
-ipv6cp_ackci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
-{
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static int ipv6cp_ackci(fsm *f, u_char *p, int len) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_short cilen, citype, cishort;
     eui64_t ifaceid;
 
@@ -669,14 +652,9 @@ bad:
  *	0 - Nak was bad.
  *	1 - Nak was good.
  */
-static int
-ipv6cp_nakci(f, p, len, treat_as_reject)
-    fsm *f;
-    u_char *p;
-    int len;
-    int treat_as_reject;
-{
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char citype, cilen, *next;
     u_short cishort;
     eui64_t ifaceid;
@@ -807,13 +785,9 @@ bad:
 /*
  * ipv6cp_rejci - Reject some of our CIs.
  */
-static int
-ipv6cp_rejci(f, p, len)
-    fsm *f;
-    u_char *p;
-    int len;
-{
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char cilen;
     u_short cishort;
     eui64_t ifaceid;
@@ -881,18 +855,17 @@ bad:
  * Returns: CONFACK, CONFNAK or CONFREJ and input packet modified
  * appropriately.  If reject_if_disagree is non-zero, doesn't return
  * CONFNAK; returns CONFREJ if it can't return CONFACK.
+ *
+ * inp = Requested CIs
+ * len = Length of requested CIs
+ *
  */
-static int
-ipv6cp_reqci(f, inp, len, reject_if_disagree)
-    fsm *f;
-    u_char *inp;		/* Requested CIs */
-    int *len;			/* Length of requested CIs */
-    int reject_if_disagree;
-{
-    ipv6cp_options *wo = &ipv6cp_wantoptions[f->unit];
-    ipv6cp_options *ho = &ipv6cp_hisoptions[f->unit];
-    ipv6cp_options *ao = &ipv6cp_allowoptions[f->unit];
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
+static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *wo = &pcb->ipv6cp_wantoptions;
+    ipv6cp_options *ho = &pcb->ipv6cp_hisoptions;
+    ipv6cp_options *ao = &pcb->ipv6cp_allowoptions;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
     u_short cishort;		/* Parsed short value */
@@ -1034,7 +1007,7 @@ endswitch:
 
 	/* Need to move CI? */
 	if (ucp != cip)
-	    BCOPY(cip, ucp, cilen);	/* Move it */
+	    MEMCPY(ucp, cip, cilen);	/* Move it */
 
 	/* Update output pointer */
 	INCPTR(cilen, ucp);
@@ -1064,14 +1037,12 @@ endswitch:
     return (rc);			/* Return final code */
 }
 
-
+#if PPP_OPTION
 /*
  * ipv6_check_options - check that any IP-related options are OK,
  * and assign appropriate defaults.
  */
-static void
-ipv6_check_options()
-{
+static void ipv6_check_options() {
     ipv6cp_options *wo = &ipv6cp_wantoptions[0];
 
     if (!ipv6cp_protent.enabled_flag)
@@ -1123,16 +1094,14 @@ ipv6_check_options()
 	exit(1);
     }
 }
+#endif /* PPP_OPTION */
 
-
+#if DEMAND_SUPPORT
 /*
  * ipv6_demand_conf - configure the interface as though
  * IPV6CP were up, for use with dial-on-demand.
  */
-static int
-ipv6_demand_conf(u)
-    int u;
-{
+static int ipv6_demand_conf(int u) {
     ipv6cp_options *wo = &ipv6cp_wantoptions[u];
 
 #if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
@@ -1159,6 +1128,7 @@ ipv6_demand_conf(u)
 
     return 1;
 }
+#endif /* DEMAND_SUPPORT */
 
 
 /*
@@ -1166,13 +1136,11 @@ ipv6_demand_conf(u)
  *
  * Configure the IPv6 network interface appropriately and bring it up.
  */
-static void
-ipv6cp_up(f)
-    fsm *f;
-{
-    ipv6cp_options *ho = &ipv6cp_hisoptions[f->unit];
-    ipv6cp_options *go = &ipv6cp_gotoptions[f->unit];
-    ipv6cp_options *wo = &ipv6cp_wantoptions[f->unit];
+static void ipv6cp_up(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *wo = &pcb->ipv6cp_wantoptions;
+    ipv6cp_options *ho = &pcb->ipv6cp_hisoptions;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
 
     IPV6CPDEBUG(("ipv6cp: up"));
 
@@ -1185,28 +1153,31 @@ ipv6cp_up(f)
     if(!no_ifaceid_neg) {
 	if (eui64_iszero(ho->hisid)) {
 	    error("Could not determine remote LL address");
-	    ipv6cp_close(f->unit, "Could not determine remote LL address");
+	    ipv6cp_close(f->pcb, "Could not determine remote LL address");
 	    return;
 	}
 	if (eui64_iszero(go->ourid)) {
 	    error("Could not determine local LL address");
-	    ipv6cp_close(f->unit, "Could not determine local LL address");
+	    ipv6cp_close(f->pcb, "Could not determine local LL address");
 	    return;
 	}
 	if (eui64_equals(go->ourid, ho->hisid)) {
 	    error("local and remote LL addresses are equal");
-	    ipv6cp_close(f->unit, "local and remote LL addresses are equal");
+	    ipv6cp_close(f->pcb, "local and remote LL addresses are equal");
 	    return;
 	}
     }
+#if 0 /* UNUSED */
     script_setenv("LLLOCAL", llv6_ntoa(go->ourid), 0);
     script_setenv("LLREMOTE", llv6_ntoa(ho->hisid), 0);
+#endif /* UNUSED */
 
 #ifdef IPV6CP_COMP
     /* set tcp compression */
     sif6comp(f->unit, ho->neg_vj);
 #endif
 
+#if DEMAND_SUPPORT
     /*
      * If we are doing dial-on-demand, the interface is already
      * configured, so we put out any saved-up packets, then set the
@@ -1221,10 +1192,10 @@ ipv6cp_up(f)
 	    if (! eui64_equals(ho->hisid, wo->hisid))
 		warn("Remote LL address changed to %s", 
 		     llv6_ntoa(ho->hisid));
-	    ipv6cp_clear_addrs(f->unit, go->ourid, ho->hisid);
+	    ipv6cp_clear_addrs(f->pcb, go->ourid, ho->hisid);
 
 	    /* Set the interface to the new addresses */
-	    if (!sif6addr(f->unit, go->ourid, ho->hisid)) {
+	    if (!sif6addr(f->pcb, go->ourid, ho->hisid)) {
 		if (debug)
 		    warn("sif6addr failed");
 		ipv6cp_close(f->unit, "Interface configuration failed");
@@ -1235,7 +1206,9 @@ ipv6cp_up(f)
 	demand_rexmit(PPP_IPV6);
 	sifnpmode(f->unit, PPP_IPV6, NPMODE_PASS);
 
-    } else {
+    } else
+#endif /* DEMAND_SUPPORT */
+    {
 	/*
 	 * Set LL addresses
 	 */
@@ -1257,31 +1230,30 @@ ipv6cp_up(f)
 	    return;
 	}
 #else
-	if (!sifup(f->unit)) {
-	    if (debug)
-		warn("sifup failed (IPV6)");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
+	if (!sifup(f->pcb)) {
+	    PPPDEBUG(LOG_DEBUG, ("sifup failed (IPV6)"));
+	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
 #endif /* defined(SOL2) */
 
 #if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sif6addr(f->unit, go->ourid, ho->hisid)) {
-	    if (debug)
-		warn("sif6addr failed");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
+	if (!sif6addr(f->pcb, go->ourid, ho->hisid)) {
+	    PPPDEBUG(LOG_DEBUG, ("sif6addr failed"));
+	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
 #endif
-	sifnpmode(f->unit, PPP_IPV6, NPMODE_PASS);
+	sifnpmode(f->pcb, PPP_IPV6, NPMODE_PASS);
 
 	notice("local  LL address %s", llv6_ntoa(go->ourid));
 	notice("remote LL address %s", llv6_ntoa(ho->hisid));
     }
 
-    np_up(f->unit, PPP_IPV6);
+    np_up(f->pcb, PPP_IPV6);
     ipv6cp_is_up = 1;
 
+#if 0 /* UNUSED */
     /*
      * Execute the ipv6-up script, like this:
      *	/etc/ppp/ipv6-up interface tty speed local-LL remote-LL
@@ -1290,6 +1262,7 @@ ipv6cp_up(f)
 	ipv6cp_script_state = s_up;
 	ipv6cp_script(_PATH_IPV6UP);
     }
+#endif /* UNUSED */
 }
 
 
@@ -1299,28 +1272,34 @@ ipv6cp_up(f)
  * Take the IPv6 network interface down, clear its addresses
  * and delete routes through it.
  */
-static void
-ipv6cp_down(f)
-    fsm *f;
-{
+static void ipv6cp_down(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
+    ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
+    ipv6cp_options *ho = &pcb->ipv6cp_hisoptions;
+
     IPV6CPDEBUG(("ipv6cp: down"));
+#if PPP_STATS_SUPPORT
     update_link_stats(f->unit);
+#endif /* PPP_STATS_SUPPORT */
     if (ipv6cp_is_up) {
 	ipv6cp_is_up = 0;
-	np_down(f->unit, PPP_IPV6);
+	np_down(f->pcb, PPP_IPV6);
     }
 #ifdef IPV6CP_COMP
     sif6comp(f->unit, 0);
 #endif
 
+#if PPP_DEMAND
     /*
      * If we are doing dial-on-demand, set the interface
      * to queue up outgoing packets (for now).
      */
     if (demand) {
-	sifnpmode(f->unit, PPP_IPV6, NPMODE_QUEUE);
-    } else {
-	sifnpmode(f->unit, PPP_IPV6, NPMODE_DROP);
+	sifnpmode(f->pcb, PPP_IPV6, NPMODE_QUEUE);
+    } else
+#endif /* PPP_DEMAND */
+    {
+	sifnpmode(f->pcb, PPP_IPV6, NPMODE_DROP);
 #if !defined(__linux__) && !(defined(SVR4) && (defined(SNI) || defined(__USLC)))
 #if defined(SOL2)
 	sif6down(f->unit);
@@ -1328,19 +1307,21 @@ ipv6cp_down(f)
 	sifdown(f->unit);
 #endif /* defined(SOL2) */
 #endif
-	ipv6cp_clear_addrs(f->unit, 
-			   ipv6cp_gotoptions[f->unit].ourid,
-			   ipv6cp_hisoptions[f->unit].hisid);
+	ipv6cp_clear_addrs(f->pcb,
+			   go->ourid,
+			   ho->hisid);
 #if defined(__linux__) || (defined(SVR4) && (defined(SNI) || defined(__USLC)))
-	sifdown(f->unit);
+	sifdown(f->pcb);
 #endif
     }
 
+#if 0 /* UNUSED */
     /* Execute the ipv6-down script */
     if (ipv6cp_script_state == s_up && ipv6cp_script_pid == 0) {
 	ipv6cp_script_state = s_down;
 	ipv6cp_script(_PATH_IPV6DOWN);
     }
+#endif /* UNUSED */
 }
 
 
@@ -1348,27 +1329,20 @@ ipv6cp_down(f)
  * ipv6cp_clear_addrs() - clear the interface addresses, routes,
  * proxy neighbour discovery entries, etc.
  */
-static void
-ipv6cp_clear_addrs(unit, ourid, hisid)
-    int unit;
-    eui64_t ourid;
-    eui64_t hisid;
-{
-    cif6addr(unit, ourid, hisid);
+static void ipv6cp_clear_addrs(ppp_pcb *pcb, eui64_t ourid, eui64_t hisid) {
+    cif6addr(pcb, ourid, hisid);
 }
 
 
 /*
  * ipv6cp_finished - possibly shut down the lower layers.
  */
-static void
-ipv6cp_finished(f)
-    fsm *f;
-{
-    np_finished(f->unit, PPP_IPV6);
+static void ipv6cp_finished(fsm *f) {
+    np_finished(f->pcb, PPP_IPV6);
 }
 
 
+#if 0 /* UNUSED */
 /*
  * ipv6cp_script_done - called when the ipv6-up or ipv6-down script
  * has finished.
@@ -1422,7 +1396,9 @@ ipv6cp_script(script)
     ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done,
 				    NULL, 0);
 }
+#endif /* UNUSED */
 
+#if PRINTPKT_SUPPORT
 /*
  * ipv6cp_printpkt - print the contents of an IPV6CP packet.
  */
@@ -1431,13 +1407,8 @@ static char *ipv6cp_codenames[] = {
     "TermReq", "TermAck", "CodeRej"
 };
 
-static int
-ipv6cp_printpkt(p, plen, printer, arg)
-    u_char *p;
-    int plen;
-    void (*printer) __P((void *, char *, ...));
-    void *arg;
-{
+static int ipv6cp_printpkt(u_char *p, int plen,
+		void (*printer)(void *, char *, ...), void *arg) {
     int code, id, len, olen;
     u_char *pstart, *optend;
     u_short cishort;
@@ -1518,7 +1489,9 @@ ipv6cp_printpkt(p, plen, printer, arg)
 
     return p - pstart;
 }
+#endif /* PRINTPKT_SUPPORT */
 
+#if PPP_DEMAND
 /*
  * ipv6_active_pkt - see if this IP packet is worth bringing the link up for.
  * We don't bring the link up for IP fragments or for TCP FIN packets
@@ -1538,11 +1511,7 @@ ipv6cp_printpkt(p, plen, printer, arg)
 #define get_tcpoff(x)	(((unsigned char *)(x))[12] >> 4)
 #define get_tcpflags(x)	(((unsigned char *)(x))[13])
 
-static int
-ipv6_active_pkt(pkt, len)
-    u_char *pkt;
-    int len;
-{
+static int ipv6_active_pkt(u_char *pkt, int len) {
     u_char *tcp;
 
     len -= PPP_HDRLEN;
@@ -1560,3 +1529,6 @@ ipv6_active_pkt(pkt, len)
 	return 0;
     return 1;
 }
+#endif /* PPP_DEMAND */
+
+#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

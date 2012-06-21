@@ -138,6 +138,14 @@
  * $Id: ipv6cp.h,v 1.7 2002/12/04 23:03:32 paulus Exp $
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && PPP_IPV6_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
+#ifndef IPV6CP_H
+#define	IPV6CP_H
+
+#include "eui64.h"
+
 /*
  * Options.
  */
@@ -162,10 +170,7 @@ typedef struct ipv6cp_options {
     eui64_t ourid, hisid;	/* Interface identifiers */
 } ipv6cp_options;
 
-extern fsm ipv6cp_fsm[];
-extern ipv6cp_options ipv6cp_wantoptions[];
-extern ipv6cp_options ipv6cp_gotoptions[];
-extern ipv6cp_options ipv6cp_allowoptions[];
-extern ipv6cp_options ipv6cp_hisoptions[];
-
 extern struct protent ipv6cp_protent;
+
+#endif /* IPV6CP_H */
+#endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

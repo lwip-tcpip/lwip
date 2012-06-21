@@ -48,10 +48,6 @@
 #include "ppp.h"
 #include "pppdebug.h"
 
-#ifdef INET6
-#include "eui64.h"
-#endif
-
 /*
  * Limits.
  */
@@ -89,9 +85,9 @@
 #define	PPP_VJC_COMP	0x2d	/* VJ compressed TCP */
 #define	PPP_VJC_UNCOMP	0x2f	/* VJ uncompressed TCP */
 #endif /* VJ_SUPPORT */
-#ifdef INET6
+#if PPP_IPV6_SUPPORT
 #define PPP_IPV6	0x57	/* Internet Protocol Version 6 */
-#endif /* INET6 */
+#endif /* PPP_IPV6_SUPPORT */
 #if CCP_SUPPORT
 #define PPP_COMP	0xfd	/* compressed packet */
 #endif /* CCP_SUPPORT */
@@ -100,9 +96,9 @@
 #define PPP_ATCP	0x8029	/* AppleTalk Control Protocol */
 #define PPP_IPXCP	0x802b	/* IPX Control Protocol */
 #endif /* UNUSED */
-#ifdef INET6
+#if PPP_IPV6_SUPPORT
 #define PPP_IPV6CP	0x8057	/* IPv6 Control Protocol */
-#endif /* INET6 */
+#endif /* PPP_IPV6_SUPPORT */
 #if CCP_SUPPORT
 #define PPP_CCP		0x80fd	/* Compression Control Protocol */
 #endif /* CCP_SUPPORT */
@@ -412,6 +408,11 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp
 
 int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
 int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr);
+
+#if PPP_IPV6_SUPPORT
+int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
+int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
+#endif /* PPP_IPV6_SUPPORT */
 
 int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);
 int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);

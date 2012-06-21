@@ -117,6 +117,9 @@
 #if VJ_SUPPORT
 #include "vj.h"
 #endif /* VJ_SUPPORT */
+#if PPP_IPV6_SUPPORT
+#include "ipv6cp.h"
+#endif /* PPP_IPV6_SUPPORT */
 
 #if PPPOE_SUPPORT
 #include "netif/ppp_oe.h"
@@ -158,7 +161,7 @@ struct protent *protocols[] = {
     &cbcp_protent,
 #endif
     &ipcp_protent,
-#ifdef INET6
+#if PPP_IPV6_SUPPORT
     &ipv6cp_protent,
 #endif
 #if CCP_SUPPORT
@@ -202,10 +205,12 @@ static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
 static err_t ppp_netif_init_cb(struct netif *netif);
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr);
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
 
 #if PPPOE_SUPPORT
-static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
+static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 /* function called by ppp_write() */
 static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n);
 #endif /* PPPOE_SUPPORT */
@@ -572,11 +577,15 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->num, pb->len));
-      if (pcb->netif.input) {
-        pcb->netif.input(pb, &pcb->netif);
-        return;
-      }
-      break;
+      ip_input(pb, &pcb->netif);
+      return;
+
+#if PPP_IPV6_SUPPORT
+    case PPP_IPV6:          /* Interval Protocol Version 6 */
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->num, pb->len));
+      ip6_input(pb, &pcb->netif);
+      return;
+#endif /* PPP_IPV6_SUPPORT */
 
     default: {
 
@@ -803,7 +812,10 @@ ppp_receive_wakeup(ppp_pcb *pcb)
 static err_t ppp_netif_init_cb(struct netif *netif) {
   netif->name[0] = 'p';
   netif->name[1] = 'p';
-  netif->output = ppp_netif_output;
+  netif->output = ppp_netif_output_ip4;
+#if PPP_IPV6_SUPPORT
+  netif->output_ip6 = ppp_netif_output_ip6;
+#endif /* PPP_IPV6_SUPPORT */
   netif->mtu = netif_get_mtu((ppp_pcb*)netif->state);
   netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
 #if LWIP_NETIF_HOSTNAME
@@ -904,20 +916,32 @@ ppp_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
 }
 #endif /* PPPOS_SUPPORT */
 
+
+/* Send a IPv4 packet on the given connection.
+ */
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+  LWIP_UNUSED_ARG(ipaddr);
+  return ppp_netif_output(netif, pb, PPP_IP);
+}
+
+/* Send a IPv6 packet on the given connection.
+ */
+static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
+  LWIP_UNUSED_ARG(ipaddr);
+  return ppp_netif_output(netif, pb, PPP_IPV6);
+}
+
 /* Send a packet on the given connection.
  *
  * This is the low level function that send the PPP packet.
  */
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
 #if PPPOS_SUPPORT
-  u_short protocol = PPP_IP;
   u_int fcs_out = PPP_INITFCS;
   struct pbuf *head = NULL, *tail = NULL, *p;
   u_char c;
 #endif /* PPPOS_SUPPORT */
-
-  LWIP_UNUSED_ARG(ipaddr);
 
   /* Validate parameters. */
   /* We let any protocol value go through - it can't hurt us
@@ -942,7 +966,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
 
 #if PPPOE_SUPPORT
   if(pcb->ethif) {
-    return ppp_netif_output_over_ethernet(pcb, pb);
+    return ppp_netif_output_over_ethernet(pcb, pb, protocol);
   }
 #endif /* PPPOE_SUPPORT */
 
@@ -1054,10 +1078,10 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, ip_addr_t *i
   return ERR_OK;
 }
 
+
 #if PPPOE_SUPPORT
-static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
+static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
   struct pbuf *pb;
-  u_short protocol = PPP_IP;
   int i=0;
   u16_t tot_len;
 
@@ -1817,6 +1841,40 @@ int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr) {
 }
 
 
+#if PPP_IPV6_SUPPORT
+#define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {			\
+  memset(&ip6.addr, 0, sizeof(ip6_addr_t));	\
+  ip6.addr[0] = PP_HTONL(0xfe800000);			\
+  eui64_copy(eui64, ip6.addr[2]);			\
+  } while (0)
+
+/********************************************************************
+ *
+ * sif6addr - Config the interface with an IPv6 link-local address
+ */
+int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
+
+  IN6_LLADDR_FROM_EUI64(pcb->addrs.our6_ipaddr, our_eui64);
+  IN6_LLADDR_FROM_EUI64(pcb->addrs.his6_ipaddr, his_eui64);
+  return 1;
+}
+
+/********************************************************************
+ *
+ * cif6addr - Remove IPv6 address from interface
+ */
+int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
+
+  LWIP_UNUSED_ARG(our_eui64);
+  LWIP_UNUSED_ARG(his_eui64);
+
+  IP6_ADDR(&pcb->addrs.our6_ipaddr, 0, 0,0,0,0);
+  IP6_ADDR(&pcb->addrs.his6_ipaddr, 0, 0,0,0,0);
+  return 1;
+}
+#endif /* PPP_IPV6_SUPPORT */
+
+
 /*
  * sdns - Config the DNS servers
  */
@@ -1850,11 +1908,14 @@ int sifup(ppp_pcb *pcb) {
 
   netif_remove(&pcb->netif);
   if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, ip_input)) {
+                &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
     PPPDEBUG(LOG_ERR, ("sifup[%d]: netif_add failed\n", pcb->num));
     return 0;
   }
-
+#if PPP_IPV6_SUPPORT
+  ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
+  netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
+#endif /* PPP_IPV6_SUPPORT */
   netif_set_up(&pcb->netif);
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;

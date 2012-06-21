@@ -720,7 +720,7 @@ void dump_packet(const char *tag, unsigned char *p, int len) {
     proto = (p[0] << 8) + p[1];
     if (proto == PPP_IP)
 	return;
-#ifdef INET6
+#if PPP_IPV6_SUPPORT
     if (proto == PPP_IPV6 || proto == PPP_IPV6CP)
 	return;
 #endif
