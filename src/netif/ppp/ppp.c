@@ -642,6 +642,7 @@ drop:
 
 out:
   pbuf_free(pb);
+  magic_randomize();
   return;
 
 #if 0

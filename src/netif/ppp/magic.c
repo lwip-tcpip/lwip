@@ -113,7 +113,7 @@ static long magic_randcount = 0;      /* Pseudo-random incrementer */
 void magic_churnrand(char *rand_data, u32_t rand_len) {
   md5_context md5;
 
-  /* LWIP_DEBUGF(LOG_INFO, ("churnRand: %u@%P\n", rand_len, rand_data)); */
+  /* LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: %u@%P\n", rand_len, rand_data)); */
   md5_starts(&md5);
   md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
   if (rand_data) {
@@ -121,14 +121,14 @@ void magic_churnrand(char *rand_data, u32_t rand_len) {
   } else {
     struct {
       /* INCLUDE fields for any system sources of randomness */
-      char foobar;
+      u32_t jiffies;
     } sys_data;
-
+    sys_data.jiffies = sys_jiffies();
     /* Load sys_data fields here. */
     md5_update(&md5, (u_char *)&sys_data, sizeof(sys_data));
   }
   md5_finish(&md5, (u_char *)magic_randpool);
-/*  LWIP_DEBUGF(LOG_INFO, ("churnRand: -> 0\n")); */
+/*  LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: -> 0\n")); */
 }
 
 /*
@@ -149,14 +149,14 @@ void magic_randomize(void) {
  * random_bytes - Fill a buffer with random bytes.
  *
  * Use the random pool to generate random data.  This degrades to pseudo
- *  random when used faster than randomness is supplied using churnRand().
+ *  random when used faster than randomness is supplied using magic_churnrand().
  * Note: It's important that there be sufficient randomness in magic_randpool
  *  before this is called for otherwise the range of the result may be
  *  narrow enough to make a search feasible.
  *
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  *
- * XXX Why does he not just call churnRand() for each block?  Probably
+ * XXX Why does he not just call magic_churnrand() for each block?  Probably
  *  so that you don't ever publish the seed which could possibly help
  *  predict future values.
  * XXX Why don't we preserve md5 between blocks and just update it with
