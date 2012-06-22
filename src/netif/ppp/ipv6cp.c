@@ -1214,38 +1214,18 @@ static void ipv6cp_up(fsm *f) {
 	/*
 	 * Set LL addresses
 	 */
-#if !defined(__linux__) && !defined(SOL2) && !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-	if (!sif6addr(f->unit, go->ourid, ho->hisid)) {
-	    if (debug)
-		warn("sif6addr failed");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
-	    return;
-	}
-#endif
-
-	/* bring the interface up for IPv6 */
-#if defined(SOL2)
-	if (!sif6up(f->unit)) {
-	    if (debug)
-		warn("sifup failed (IPV6)");
-	    ipv6cp_close(f->unit, "Interface configuration failed");
-	    return;
-	}
-#else
-	if (!sifup(f->pcb)) {
-	    PPPDEBUG(LOG_DEBUG, ("sifup failed (IPV6)"));
-	    ipv6cp_close(f->pcb, "Interface configuration failed");
-	    return;
-	}
-#endif /* defined(SOL2) */
-
-#if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sif6addr(f->pcb, go->ourid, ho->hisid)) {
 	    PPPDEBUG(LOG_DEBUG, ("sif6addr failed"));
 	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
-#endif
+
+	/* bring the interface up for IPv6 */
+	if (!sifup(f->pcb)) {
+	    PPPDEBUG(LOG_DEBUG, ("sifup failed (IPV6)"));
+	    ipv6cp_close(f->pcb, "Interface configuration failed");
+	    return;
+	}
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_PASS);
 
 	notice("local  LL address %s", llv6_ntoa(go->ourid));
@@ -1302,19 +1282,10 @@ static void ipv6cp_down(fsm *f) {
 #endif /* PPP_DEMAND */
     {
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_DROP);
-#if !defined(__linux__) && !(defined(SVR4) && (defined(SNI) || defined(__USLC)))
-#if defined(SOL2)
-	sif6down(f->unit);
-#else
-	sifdown(f->unit);
-#endif /* defined(SOL2) */
-#endif
 	ipv6cp_clear_addrs(f->pcb,
 			   go->ourid,
 			   ho->hisid);
-#if defined(__linux__) || (defined(SVR4) && (defined(SNI) || defined(__USLC)))
 	sifdown(f->pcb);
-#endif
     }
 
 #if 0 /* UNUSED */
