@@ -192,6 +192,7 @@ typedef struct ppp_settings_s {
   u_int lcp_echo_adaptive  : 1;       /* request echo only if the link was idle */
 #endif
 
+
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
 #if PPP_IDLETIMELIMIT
@@ -283,7 +284,10 @@ struct ppp_pcb_s {
   u_int default_route_set       :1; /* Have set up a default route */
   u_int proxy_arp_set           :1; /* Have created proxy arp entry */
   u_int ipcp_is_open            :1; /* haven't called np_finished() */
-  u_int ipcp_is_up              :1; /* have called np_up() */
+  u_int ipcp_is_up              :1; /* have called ipcp_up() */
+#if PPP_IPV6_SUPPORT
+  u_int ipv6cp_is_up            :1; /* have called ip6cp_up() */
+#endif /* PPP_IPV6_SUPPORT */
   u_int ask_for_local           :1; /* request our address from peer */
   u_int lcp_echo_timer_running  :1; /* set if a timer is running */
 #if PPPOS_SUPPORT && VJ_SUPPORT

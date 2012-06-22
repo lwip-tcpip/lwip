@@ -169,12 +169,10 @@
 #include "ipv6cp.h"
 #include "magic.h"
 
-/* FIXME: clean that */
 /* global vars */
+#if 0 /* UNUSED */
 int no_ifaceid_neg = 0;
-
-/* local vars */
-static int ipv6cp_is_up;
+#endif /* UNUSED */
 
 /*
  * Callbacks for fsm code.  (CI = Configuration Information)
@@ -1150,7 +1148,9 @@ static void ipv6cp_up(fsm *f) {
     if (!ho->neg_ifaceid)
 	ho->hisid = wo->hisid;
 
+#if 0 /* UNUSED */
     if(!no_ifaceid_neg) {
+#endif /* UNUSED */
 	if (eui64_iszero(ho->hisid)) {
 	    error("Could not determine remote LL address");
 	    ipv6cp_close(f->pcb, "Could not determine remote LL address");
@@ -1166,7 +1166,9 @@ static void ipv6cp_up(fsm *f) {
 	    ipv6cp_close(f->pcb, "local and remote LL addresses are equal");
 	    return;
 	}
+#if 0 /* UNUSED */
     }
+#endif /* UNUSED */
 #if 0 /* UNUSED */
     script_setenv("LLLOCAL", llv6_ntoa(go->ourid), 0);
     script_setenv("LLREMOTE", llv6_ntoa(ho->hisid), 0);
@@ -1251,7 +1253,7 @@ static void ipv6cp_up(fsm *f) {
     }
 
     np_up(f->pcb, PPP_IPV6);
-    ipv6cp_is_up = 1;
+    pcb->ipv6cp_is_up = 1;
 
 #if 0 /* UNUSED */
     /*
@@ -1281,8 +1283,8 @@ static void ipv6cp_down(fsm *f) {
 #if PPP_STATS_SUPPORT
     update_link_stats(f->unit);
 #endif /* PPP_STATS_SUPPORT */
-    if (ipv6cp_is_up) {
-	ipv6cp_is_up = 0;
+    if (pcb->ipv6cp_is_up) {
+	pcb->ipv6cp_is_up = 0;
 	np_down(f->pcb, PPP_IPV6);
     }
 #ifdef IPV6CP_COMP
