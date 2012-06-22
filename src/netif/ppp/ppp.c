@@ -1174,7 +1174,13 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 }
 
 /*
- * Write a pbuf to a ppp link.
+ * Write a pbuf to a ppp link, only used from PPP functions
+ * to send PPP packets.
+ *
+ * IPv4 and IPv6 packets from lwIP are sent, respectively,
+ * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
+ * functions (which are callbacks of the netif PPP interface).
+ *
  *  RETURN: >= 0 Number of characters written
  *           -1 Failed to write to device
  */
@@ -1256,17 +1262,13 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 
 #if PPPOE_SUPPORT
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
-  u_char *s = p->payload;
-  int n = p->len;
-  struct pbuf *pb;
+  struct pbuf *ph; /* Ethernet + PPPoE header */
 
   /* skip address & flags */
-  s += 2;
-  n -= 2;
+  pbuf_header(p, -(s16_t)2);
 
-  LWIP_ASSERT("PPPOE_HDRLEN + n <= 0xffff", PPPOE_HDRLEN + n <= 0xffff);
-  pb = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN + n), PBUF_RAM);
-  if(!pb) {
+  ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN), PBUF_RAM);
+  if(!ph) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(&pcb->netif);
@@ -1274,27 +1276,27 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
     return PPPERR_ALLOC;
   }
 
-  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
+  pbuf_header(ph, -(s16_t)PPPOE_HDRLEN); /* hide PPPoE header */
+  pbuf_cat(ph, p);
+  pbuf_ref(ph); /* we need the pbuf after pppoe_xmit() returned, which free the pbuf */
 
   pcb->last_xmit = sys_jiffies();
 
-  MEMCPY(pb->payload, s, n);
-
-  if(pppoe_xmit(pcb->pppoe_sc, pb) != ERR_OK) {
+  if(pppoe_xmit(pcb->pppoe_sc, ph) != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(&pcb->netif);
-    pbuf_free(p);
+    pbuf_free(ph);
     return PPPERR_DEVICE;
   }
 
 #if PRINTPKT_SUPPORT
-  dump_packet("sent", (unsigned char *)s, n);
+  dump_packet("sent", (unsigned char *)ph->payload, ph->len);
 #endif /* PRINTPKT_SUPPORT */
 
-  snmp_add_ifoutoctets(&pcb->netif, (u16_t)n);
+  snmp_add_ifoutoctets(&pcb->netif, (u16_t)ph->len);
   snmp_inc_ifoutucastpkts(&pcb->netif);
   LINK_STATS_INC(link.xmit);
-  pbuf_free(p);
+  pbuf_free(ph);
   return PPPERR_NONE;
 }
 #endif /* PPPOE_SUPPORT */
