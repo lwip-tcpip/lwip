@@ -409,10 +409,10 @@ static void lcp_init(ppp_pcb *pcb) {
     pcb->xmit_accm[2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
     pcb->xmit_accm[3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
     LCPDEBUG(("lcp_init: xmit_accm=%X %X %X %X\n",
-          xmit_accm[unit][0],
-          xmit_accm[unit][1],
-          xmit_accm[unit][2],
-          xmit_accm[unit][3]));
+	  pcb->xmit_accm[0],
+          pcb->xmit_accm[1],
+          pcb->xmit_accm[2],
+          pcb->xmit_accm[3]));
 #endif /* PPPOS_SUPPORT */
 }
 
@@ -493,10 +493,10 @@ void lcp_lowerup(ppp_pcb *pcb) {
                                    | ((u_long)pcb->xmit_accm[2] << 16)
                                    | ((u_long)pcb->xmit_accm[3] << 24);
     LCPDEBUG(("lcp_lowerup: asyncmap=%X %X %X %X\n",
-              xmit_accm[unit][3],
-              xmit_accm[unit][2],
-              xmit_accm[unit][1],
-              xmit_accm[unit][0]));
+              pcb->xmit_accm[3],
+              pcb->xmit_accm[2],
+              pcb->xmit_accm[1],
+              pcb->xmit_accm[0]));
 #endif /* PPPOS_SUPPORT */
 
     if (pcb->settings.listen_time != 0) {
