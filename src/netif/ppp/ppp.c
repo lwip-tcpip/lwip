@@ -1938,7 +1938,7 @@ int sifup(ppp_pcb *pcb) {
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
 
-  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   if (pcb->link_status_cb)
     pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
 
@@ -1959,7 +1959,7 @@ int sifdown(ppp_pcb *pcb) {
   /* make sure the netif status callback is called */
   netif_set_down(&pcb->netif);
   netif_remove(&pcb->netif);
-  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   if (pcb->link_status_cb)
     pcb->link_status_cb(pcb, PPPERR_CONNECT, pcb->link_status_ctx);
 
