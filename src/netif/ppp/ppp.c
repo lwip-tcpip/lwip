@@ -1288,6 +1288,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 
   pbuf_header(ph, -(s16_t)PPPOE_HDRLEN); /* hide PPPoE header */
   pbuf_cat(ph, p);
+  tot_len = ph->tot_len;
 
   pcb->last_xmit = sys_jiffies();
 
