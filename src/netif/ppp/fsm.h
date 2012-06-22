@@ -73,22 +73,23 @@
  */
 typedef struct fsm {
     ppp_pcb *pcb;		/* PPP Interface */
-    int protocol;		/* Data Link Layer Protocol field value */
-    int state;			/* State */
-    int flags;			/* Contains option bits */
-    u_char id;			/* Current id */
-    u_char reqid;		/* Current request id */
-    u_char seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
-    int timeouttime;		/* Timeout time in milliseconds */
-    int maxconfreqtransmits;	/* Maximum Configure-Request transmissions */
-    int retransmits;		/* Number of retransmissions left */
-    int maxtermtransmits;	/* Maximum Terminate-Request transmissions */
-    int nakloops;		/* Number of nak loops since last ack */
-    int rnakloops;		/* Number of naks received */
-    int maxnakloops;		/* Maximum number of nak loops tolerated */
     struct fsm_callbacks *callbacks;	/* Callback routines */
     char *term_reason;		/* Reason for closing protocol */
-    int term_reason_len;	/* Length of term_reason */
+    u8_t seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
+				  /* -- This is our only flag, we might use u_int :1 if we have more flags */
+    u16_t protocol;		/* Data Link Layer Protocol field value */
+    u8_t state;			/* State */
+    u8_t flags;			/* Contains option bits */
+    u8_t id;			/* Current id */
+    u8_t reqid;			/* Current request id */
+    u8_t timeouttime;		/* Timeout time in seconds */
+    u8_t maxconfreqtransmits;	/* Maximum Configure-Request transmissions */
+    u8_t retransmits;		/* Number of retransmissions left */
+    u8_t maxtermtransmits;	/* Maximum Terminate-Request transmissions */
+    u8_t nakloops;		/* Number of nak loops since last ack */
+    u8_t rnakloops;		/* Number of naks received */
+    u8_t maxnakloops;		/* Maximum number of nak loops tolerated */
+    u8_t term_reason_len;	/* Length of term_reason */
 } fsm;
 
 

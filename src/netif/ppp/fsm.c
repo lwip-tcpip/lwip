@@ -234,7 +234,7 @@ static void terminate_layer(fsm *f, int nextstate) {
  */
 void fsm_close(fsm *f, char *reason) {
     f->term_reason = reason;
-    f->term_reason_len = (reason == NULL? 0: strlen(reason));
+    f->term_reason_len = (reason == NULL? 0: LWIP_MIN(strlen(reason), 0xFF) );
     switch( f->state ){
     case STARTING:
 	f->state = INITIAL;
