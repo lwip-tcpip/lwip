@@ -1654,7 +1654,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   /* Reconnect if persist mode is enabled */
   if(pcb->settings.persist) {
     if(pcb->link_status_cb)
-      pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
+      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
     pppoe_connect(pcb->pppoe_sc);
     return;
   }
@@ -1663,7 +1663,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   ppp_stop(pcb);
   pppoe_destroy(&pcb->netif);
   if(pcb->link_status_cb)
-    pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : pppoe_err_code, NULL);
+    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
   ppp_destroy(pcb);
 }
 #endif /* PPPOE_SUPPORT */
@@ -1692,7 +1692,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 
     PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
     if (pcb->link_status_cb) {
-      pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, NULL);
+      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->link_status_ctx);
     }
     ppp_destroy(pcb);
 #endif /* PPPOS_SUPPORT */
@@ -1937,7 +1937,7 @@ int sifup(ppp_pcb *pcb) {
 
   PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
   if (pcb->link_status_cb)
-    pcb->link_status_cb(pcb->link_status_ctx, pcb->err_code, &pcb->addrs);
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
 
   return 1;
 }
@@ -1958,7 +1958,7 @@ int sifdown(ppp_pcb *pcb) {
   netif_remove(&pcb->netif);
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
   if (pcb->link_status_cb)
-    pcb->link_status_cb(pcb->link_status_ctx, PPPERR_CONNECT, NULL);
+    pcb->link_status_cb(pcb, PPPERR_CONNECT, pcb->link_status_ctx);
 
   return 1;
 }

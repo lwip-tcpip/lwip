@@ -328,7 +328,7 @@ struct ppp_pcb_s {
   struct ppp_addrs addrs;        /* PPP addresses */
   struct netif netif;            /* PPP interface */
 
-  void (*link_status_cb)(void *ctx, int err_code, void *arg);  /* Status change callback */
+  void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
   void *link_status_ctx;                                       /* Status change callback optional pointer */
 
   /* auth data */
@@ -420,7 +420,7 @@ ppp_pcb *ppp_new(void);
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd);
 
 /* Link status callback function prototype */
-typedef void (*ppp_link_status_cb_fn)(void *ctx, int errcode, void *arg);
+typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
 #if PPPOS_SUPPORT
 /*
