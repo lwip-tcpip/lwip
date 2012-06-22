@@ -582,7 +582,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       return;
 
 #if PPP_IPV6_SUPPORT
-    case PPP_IPV6:          /* Interval Protocol Version 6 */
+    case PPP_IPV6:          /* Internet Protocol Version 6 */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->num, pb->len));
       ip6_input(pb, &pcb->netif);
       return;
@@ -1263,9 +1263,14 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PPPOE_SUPPORT
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
   struct pbuf *ph; /* Ethernet + PPPoE header */
+  u16_t tot_len;
 
   /* skip address & flags */
   pbuf_header(p, -(s16_t)2);
+
+#if PRINTPKT_SUPPORT
+  dump_packet("sent", (unsigned char *)p->payload, p->len);
+#endif /* PRINTPKT_SUPPORT */
 
   ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN), PBUF_RAM);
   if(!ph) {
@@ -1278,25 +1283,18 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 
   pbuf_header(ph, -(s16_t)PPPOE_HDRLEN); /* hide PPPoE header */
   pbuf_cat(ph, p);
-  pbuf_ref(ph); /* we need the pbuf after pppoe_xmit() returned, which free the pbuf */
 
   pcb->last_xmit = sys_jiffies();
 
   if(pppoe_xmit(pcb->pppoe_sc, ph) != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(&pcb->netif);
-    pbuf_free(ph);
     return PPPERR_DEVICE;
   }
 
-#if PRINTPKT_SUPPORT
-  dump_packet("sent", (unsigned char *)ph->payload, ph->len);
-#endif /* PRINTPKT_SUPPORT */
-
-  snmp_add_ifoutoctets(&pcb->netif, (u16_t)ph->tot_len);
+  snmp_add_ifoutoctets(&pcb->netif, (u16_t)tot_len);
   snmp_inc_ifoutucastpkts(&pcb->netif);
   LINK_STATS_INC(link.xmit);
-  pbuf_free(ph);
   return PPPERR_NONE;
 }
 #endif /* PPPOE_SUPPORT */
