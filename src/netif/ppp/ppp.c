@@ -1293,7 +1293,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
   dump_packet("sent", (unsigned char *)ph->payload, ph->len);
 #endif /* PRINTPKT_SUPPORT */
 
-  snmp_add_ifoutoctets(&pcb->netif, (u16_t)ph->len);
+  snmp_add_ifoutoctets(&pcb->netif, (u16_t)ph->tot_len);
   snmp_inc_ifoutucastpkts(&pcb->netif);
   LINK_STATS_INC(link.xmit);
   pbuf_free(ph);
