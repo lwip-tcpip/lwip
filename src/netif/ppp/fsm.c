@@ -732,7 +732,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     PUTSHORT(cilen + HEADERLEN, outp);
 
     pbuf_realloc(p, cilen + HEADERLEN + PPP_HDRLEN);
-    ppp_write_pbuf(pcb, p);
+    ppp_write(pcb, p);
 
     /* start the retransmit timer */
     --f->retransmits;
@@ -767,7 +767,7 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
     PUTCHAR(code, outp);
     PUTCHAR(id, outp);
     PUTSHORT(outlen, outp);
-    ppp_write_pbuf(pcb, p);
+    ppp_write(pcb, p);
 }
 
 #endif /* PPP_SUPPORT */

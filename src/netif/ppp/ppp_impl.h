@@ -383,9 +383,8 @@ struct pppd_stats {
 /* function called by pppoe.c */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
 
-int ppp_write_pbuf(ppp_pcb *pcb, struct pbuf *p);
 /* function called by all PPP subsystems to send packets */
-int ppp_write(ppp_pcb *pcb, const u_char *s, int n);
+int ppp_write(ppp_pcb *pcb, struct pbuf *p);
 
 /* functions called by auth.c link_terminated() */
 void ppp_link_down(ppp_pcb *pcb);

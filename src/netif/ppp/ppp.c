@@ -212,7 +212,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 #if PPPOE_SUPPORT
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 /* function called by ppp_write() */
-static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n);
+static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
 
 static void ppp_destroy(ppp_pcb *pcb);
@@ -1173,20 +1173,15 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
   return PPPERR_PARAM;
 }
 
-/* FIXME: improve that */
-int ppp_write_pbuf(ppp_pcb *pcb, struct pbuf *p) {
-  int ret = ppp_write(pcb, p->payload, p->len);
-  pbuf_free(p);
-  return ret;
-}
-
 /*
- * Write n characters to a ppp link.
+ * Write a pbuf to a ppp link.
  *  RETURN: >= 0 Number of characters written
  *           -1 Failed to write to device
  */
-int ppp_write(ppp_pcb *pcb, const u_char *s, int n) {
+int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PPPOS_SUPPORT
+  u_char *s = p->payload;
+  int n = p->len;
   u_char c;
   u_int fcs_out;
   struct pbuf *head, *tail;
@@ -1194,7 +1189,7 @@ int ppp_write(ppp_pcb *pcb, const u_char *s, int n) {
 
 #if PPPOE_SUPPORT
   if(pcb->ethif) {
-    return ppp_write_over_ethernet(pcb, s, n);
+    return ppp_write_over_ethernet(pcb, p);
   }
 #endif /* PPPOE_SUPPORT */
 
@@ -1204,6 +1199,7 @@ int ppp_write(ppp_pcb *pcb, const u_char *s, int n) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(&pcb->netif);
+    pbuf_free(p);
     return PPPERR_ALLOC;
   }
 
@@ -1245,6 +1241,7 @@ int ppp_write(ppp_pcb *pcb, const u_char *s, int n) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(&pcb->netif);
+    pbuf_free(p);
     return PPPERR_ALLOC;
   }
 
@@ -1253,11 +1250,14 @@ int ppp_write(ppp_pcb *pcb, const u_char *s, int n) {
   pppos_put(pcb, head);
 #endif /* PPPOS_SUPPORT */
 
+  pbuf_free(p);
   return PPPERR_NONE;
 }
 
 #if PPPOE_SUPPORT
-static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n) {
+static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
+  u_char *s = p->payload;
+  int n = p->len;
   struct pbuf *pb;
 
   /* skip address & flags */
@@ -1270,6 +1270,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(&pcb->netif);
+    pbuf_free(p);
     return PPPERR_ALLOC;
   }
 
@@ -1282,6 +1283,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n) {
   if(pppoe_xmit(pcb->pppoe_sc, pb) != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(&pcb->netif);
+    pbuf_free(p);
     return PPPERR_DEVICE;
   }
 
@@ -1292,6 +1294,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, const u_char *s, int n) {
   snmp_add_ifoutoctets(&pcb->netif, (u16_t)n);
   snmp_inc_ifoutucastpkts(&pcb->netif);
   LINK_STATS_INC(link.xmit);
+  pbuf_free(p);
   return PPPERR_NONE;
 }
 #endif /* PPPOE_SUPPORT */

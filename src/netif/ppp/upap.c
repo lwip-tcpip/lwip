@@ -546,7 +546,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
     PUTCHAR(pcb->upap.us_passwdlen, outp);
     MEMCPY(outp, pcb->upap.us_passwd, pcb->upap.us_passwdlen);
 
-    ppp_write_pbuf(pcb, p);
+    ppp_write(pcb, p);
 
     TIMEOUT(upap_timeout, pcb, pcb->upap.us_timeouttime);
     ++pcb->upap.us_transmits;
@@ -576,7 +576,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
     PUTCHAR(msglen, outp);
     MEMCPY(outp, msg, msglen);
 
-    ppp_write_pbuf(pcb, p);
+    ppp_write(pcb, p);
 }
 #endif /* UNUSED */
 

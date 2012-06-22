@@ -279,7 +279,7 @@ eap_state *esp;
 	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 
 	pcb->eap.es_server.ea_state = eapBadAuth;
 	auth_peer_fail(pcb, PPP_EAP);
@@ -310,7 +310,7 @@ eap_state *esp;
 	PUTCHAR(pcb->eap.es_server.ea_id, outp);
 	PUTSHORT(EAP_HEADERLEN, outp);
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 
 	auth_peer_success(pcb, PPP_EAP, 0,
 	    pcb->eap.es_server.ea_peer, pcb->eap.es_server.ea_peerlen);
@@ -881,7 +881,7 @@ eap_state *esp;
 	PUTSHORT(outlen, lenloc);
 
 	pbuf_realloc(p, outlen + PPP_HDRLEN);
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 
 	pcb->eap.es_server.ea_requests++;
 
@@ -1076,7 +1076,7 @@ static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *s
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 
 /*
@@ -1109,7 +1109,7 @@ static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name,
 		MEMCPY(outp, name, namelen);
 	}
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 
 #ifdef USE_SRP
@@ -1148,7 +1148,7 @@ int lenstr;
 		MEMCPY(outp, str, lenstr);
 	}
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 
 /*
@@ -1185,7 +1185,7 @@ u_char *str;
 	PUTLONG(flags, outp);
 	MEMCPY(outp, str, SHA_DIGESTSIZE);
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 #endif /* USE_SRP */
 
@@ -1210,7 +1210,7 @@ static void eap_send_nak(ppp_pcb *pcb, u_char id, u_char type) {
 	PUTCHAR(EAPT_NAK, outp);
 	PUTCHAR(type, outp);
 
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 
 #ifdef USE_SRP

@@ -244,7 +244,7 @@ static void chap_timeout(void *arg) {
 	if(NULL == p)
 		return;
 	MEMCPY(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 	++pcb->chap_server.challenge_xmits;
 	pcb->chap_server.flags |= TIMEOUT_PENDING;
 	TIMEOUT(chap_timeout, arg, pcb->settings.chap_timeout_time);
@@ -347,7 +347,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	outp[3] = len;
 	if (mlen > 0)
 		memcpy(outp + CHAP_HDRLEN, pcb->chap_server.message, mlen);
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 
 	if (pcb->chap_server.flags & CHALLENGE_VALID) {
 		pcb->chap_server.flags &= ~CHALLENGE_VALID;
@@ -473,7 +473,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	outp[3] = len;
 
 	pbuf_realloc(p, PPP_HDRLEN + len);
-	ppp_write_pbuf(pcb, p);
+	ppp_write(pcb, p);
 }
 
 static void chap_handle_status(ppp_pcb *pcb, int code, int id,
