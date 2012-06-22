@@ -156,18 +156,18 @@
  *#define IPV6CP_COMP	0x004f
  */
 typedef struct ipv6cp_options {
-    int neg_ifaceid;		/* Negotiate interface identifier? */
-    int req_ifaceid;		/* Ask peer to send interface identifier? */
-    int accept_local;		/* accept peer's value for iface id? */
-    int opt_local;		/* ourtoken set by option */
-    int opt_remote;		/* histoken set by option */
-    int use_ip;			/* use IP as interface identifier */
+    u_int neg_ifaceid      :1;  /* Negotiate interface identifier? */
+    u_int req_ifaceid      :1;	/* Ask peer to send interface identifier? */
+    u_int accept_local     :1;  /* accept peer's value for iface id? */
+    u_int opt_local        :1;  /* ourtoken set by option */
+    u_int opt_remote       :1;  /* histoken set by option */
+    u_int use_ip           :1;  /* use IP as interface identifier */
 #if defined(SOL2) || defined(__linux__)
-    int use_persistent;		/* use uniquely persistent value for address */
+    u_int use_persistent   :1;  /* use uniquely persistent value for address */
 #endif /* defined(SOL2) */
-    int neg_vj;			/* Van Jacobson Compression? */
-    u_short vj_protocol;	/* protocol value to use in VJ option */
-    eui64_t ourid, hisid;	/* Interface identifiers */
+    u_int neg_vj           :1;  /* Van Jacobson Compression? */
+    u_short vj_protocol;        /* protocol value to use in VJ option */
+    eui64_t ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;
 
 extern struct protent ipv6cp_protent;
