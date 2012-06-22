@@ -721,7 +721,7 @@ void dump_packet(const char *tag, unsigned char *p, int len) {
     if (proto == PPP_IP)
 	return;
 #if PPP_IPV6_SUPPORT
-    if (proto == PPP_IPV6 || proto == PPP_IPV6CP)
+    if (proto == PPP_IPV6)
 	return;
 #endif
 

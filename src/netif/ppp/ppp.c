@@ -187,9 +187,9 @@ struct protent *protocols[] = {
 
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
 
-#if PPPOS_SUPPORT
+#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
 static void ppp_receive_wakeup(ppp_pcb *pcb);
-#endif /* #if PPPOS_SUPPORT */
+#endif /* #if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
 
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
@@ -200,7 +200,9 @@ static void ppp_input_thread(void *arg);
 #endif /* PPP_INPROC_OWNTHREAD */
 static void ppp_drop(ppp_pcb_rx *pcrx);
 static void pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l);
+#if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
+#endif /* PPP_INPROC_MULTITHREADED */
 static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
@@ -1356,7 +1358,7 @@ ppp_drop(ppp_pcb_rx *pcrx)
 void
 pppos_input(ppp_pcb *pcb, u_char* data, int len)
 {
-  pppos_input_proc(pcb->rx, data, len);
+  pppos_input_proc(&pcb->rx, data, len);
 }
 #endif
 
@@ -1573,6 +1575,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
   magic_randomize();
 }
 
+#if PPP_INPROC_MULTITHREADED
 /* PPPoS input callback using one input pointer
  *   *arg is a pbuf chain of two chained pbuf, the first contains
  *   a pointer to the PPP PCB structure, the second contains the
@@ -1600,6 +1603,7 @@ drop:
   pbuf_free(pl);
   return;
 }
+#endif /* PPP_INPROC_MULTITHREADED */
 #endif /* PPPOS_SUPPORT */
 
 /* merge a pbuf chain into one pbuf */
