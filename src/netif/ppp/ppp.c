@@ -206,7 +206,9 @@ static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 
 static err_t ppp_netif_init_cb(struct netif *netif);
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+#if PPP_IPV6_SUPPORT
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr);
+#endif /* PPP_IPV6_SUPPORT */
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
 
 #if PPPOE_SUPPORT
@@ -926,12 +928,14 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_
   return ppp_netif_output(netif, pb, PPP_IP);
 }
 
+#if PPP_IPV6_SUPPORT
 /* Send a IPv6 packet on the given connection.
  */
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
   LWIP_UNUSED_ARG(ipaddr);
   return ppp_netif_output(netif, pb, PPP_IPV6);
 }
+#endif /* PPP_IPV6_SUPPORT */
 
 /* Send a packet on the given connection.
  *
