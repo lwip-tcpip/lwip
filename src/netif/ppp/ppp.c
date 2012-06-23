@@ -506,7 +506,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   dump_packet("rcvd", pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
-  if(pbuf_header(pb, -(int)sizeof(protocol))) {
+  if(pbuf_header(pb, -(s16_t)sizeof(protocol))) {
     LWIP_ASSERT("pbuf_header failed\n", 0);
     goto drop;
   }
@@ -632,7 +632,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* PPP_PROTOCOLNAME */
 	    warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-	  if (pbuf_header(pb, sizeof(protocol))) {
+	  if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
 	        LWIP_ASSERT("pbuf_header failed\n", 0);
 	        goto drop;
 	  }
@@ -866,6 +866,10 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
 {
   struct pbuf *b;
   int c;
+
+#if PRINTPKT_SUPPORT
+  dump_packet("sent", (unsigned char *)nb->payload+2, nb->len-2);
+#endif /* PRINTPKT_SUPPORT */
 
   for(b = nb; b != NULL; b = b->next) {
     if((c = sio_write(pcb->fd, b->payload, b->len)) != b->len) {
@@ -1554,8 +1558,8 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
               break;
             }
             if (pcrx->in_head == NULL) {
-              ((u8_t*)next_pbuf->payload)[0] = pcrx->in_protocol & 0xFF;
-              ((u8_t*)next_pbuf->payload)[1] = pcrx->in_protocol >> 8;
+              ((u8_t*)next_pbuf->payload)[0] = pcrx->in_protocol >> 8;
+              ((u8_t*)next_pbuf->payload)[1] = pcrx->in_protocol & 0xFF;
               next_pbuf->len += sizeof(pcrx->in_protocol);
 
               pcrx->in_head = next_pbuf;

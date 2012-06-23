@@ -666,8 +666,10 @@ void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len) {
      * Send back the protocol and the information field of the
      * rejected packet.  We only get here if LCP is in the OPENED state.
      */
+#if 0
     p += 2;
     len -= 2;
+#endif
 
     fsm_sdata(f, PROTREJ, ++f->id,
 	      p, len);
