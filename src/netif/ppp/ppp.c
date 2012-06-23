@@ -867,10 +867,6 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
   struct pbuf *b;
   int c;
 
-#if PRINTPKT_SUPPORT
-  dump_packet("sent", (unsigned char *)nb->payload+2, nb->len-2);
-#endif /* PRINTPKT_SUPPORT */
-
   for(b = nb; b != NULL; b = b->next) {
     if((c = sio_write(pcb->fd, b->payload, b->len)) != b->len) {
       PPPDEBUG(LOG_WARNING,
@@ -946,7 +942,8 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr
 
 /* Send a packet on the given connection.
  *
- * This is the low level function that send the PPP packet.
+ * This is the low level function that send the PPP packet,
+ * only for IPv4 and IPv6 packets coming from lwIP.
  */
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
@@ -1204,6 +1201,10 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
   struct pbuf *head, *tail;
 #endif /* PPPOS_SUPPORT */
 
+#if PRINTPKT_SUPPORT
+  dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
+#endif /* PRINTPKT_SUPPORT */
+
 #if PPPOE_SUPPORT
   if(pcb->ethif) {
     return ppp_write_over_ethernet(pcb, p);
@@ -1278,10 +1279,6 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 
   /* skip address & flags */
   pbuf_header(p, -(s16_t)2);
-
-#if PRINTPKT_SUPPORT
-  dump_packet("sent", (unsigned char *)p->payload, p->len);
-#endif /* PRINTPKT_SUPPORT */
 
   ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN), PBUF_RAM);
   if(!ph) {

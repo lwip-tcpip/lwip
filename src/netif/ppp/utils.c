@@ -481,7 +481,7 @@ static void format_packet(u_char *p, int len,
 		    printer(arg, "%.*B", len, p);
 		len = 0;
 	    } else
-		printer(arg, "[proto=0x%x]", PP_NTOHS(proto));
+		printer(arg, "[proto=0x%x]", proto);
 	}
     }
 
