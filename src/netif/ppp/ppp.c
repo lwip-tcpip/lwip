@@ -750,9 +750,9 @@ out:
 }
 
 #if PPPOS_SUPPORT
+#if PPP_FCS_TABLE
 /*
  * FCS lookup table as calculated by genfcstab.
- * @todo: smaller, slower implementation for lower memory footprint?
  */
 static const u_short fcstab[256] = {
   0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
@@ -788,6 +788,19 @@ static const u_short fcstab[256] = {
   0xf78f, 0xe606, 0xd49d, 0xc514, 0xb1ab, 0xa022, 0x92b9, 0x8330,
   0x7bc7, 0x6a4e, 0x58d5, 0x495c, 0x3de3, 0x2c6a, 0x1ef1, 0x0f78
 };
+#else /* PPP_FCS_TABLE */
+/* The HDLC polynomial: X**0 + X**5 + X**12 + X**16 (0x8408) */
+#define PPP_FCS_POLYNOMIAL 0x8408
+u16_t ppp_get_fcs(u8_t byte) {
+  unsigned int octet;
+  int bit;
+  octet = byte;
+  for (bit = 8; bit-- > 0; ) {
+    octet = (octet & 0x01) ? ((octet >> 1) ^ PPP_FCS_POLYNOMIAL) : (octet >> 1);
+  }
+  return octet & 0xffff;
+}
+#endif /* PPP_FCS_TABLE */
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */

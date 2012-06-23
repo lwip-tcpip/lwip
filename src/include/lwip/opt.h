@@ -1704,6 +1704,13 @@
 #if PPP_SUPPORT
 
 /**
+ * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation
+ */
+#ifndef PPP_FCS_TABLE
+#define PPP_FCS_TABLE                   1
+#endif
+
+/**
  * PAP_SUPPORT==1: Support PAP.
  */
 #ifndef PAP_SUPPORT
