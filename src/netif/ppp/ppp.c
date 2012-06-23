@@ -845,7 +845,7 @@ ppp_input_thread(void *arg)
 {
   int count;
   ppp_pcb_rx *pcrx = arg;
-  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
+  ppp_pcb *pcb = pcrx->pcb;
 
   while (pcb->phase != PHASE_DEAD) {
     count = sio_read(pcrx->fd, pcrx->rxbuf, PPPOS_RX_BUFSIZE);
@@ -1363,6 +1363,12 @@ pppos_input(ppp_pcb *pcb, u_char* data, int len)
 }
 #endif
 
+#if PPP_INPROC_MULTITHREADED
+struct ppp_tcpip_callback_header {
+  ppp_pcb *pcb;
+};
+#endif /* PPP_INPROC_MULTITHREADED */
+
 /**
  * Process a received octet string.
  */
@@ -1416,6 +1422,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
           struct pbuf *inp;
 #if PPP_INPROC_MULTITHREADED
           struct pbuf *head;
+          struct ppp_tcpip_callback_header *cbhead;
 #endif /* PPP_INPROC_MULTITHREADED */
           /* Trim off the checksum. */
           if(pcrx->in_tail->len > 2) {
@@ -1440,9 +1447,10 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
           pcrx->in_head = NULL;
           pcrx->in_tail = NULL;
 #if PPP_INPROC_MULTITHREADED
-          head = pbuf_alloc(PBUF_RAW, sizeof(void*), PBUF_POOL);
+          head = pbuf_alloc(PBUF_RAW, sizeof(struct ppp_tcpip_callback_header), PBUF_POOL);
           if(NULL != head) {
-            MEMCPY(head->payload, pcb, sizeof(void*));
+            cbhead = (struct ppp_tcpip_callback_header*)head->payload;
+            cbhead->pcb = pcb;
             pbuf_chain(head, inp);
             if(tcpip_callback_with_block(pppos_input_callback, head, 0) != ERR_OK) {
               PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
@@ -1584,10 +1592,12 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
  */
 static void pppos_input_callback(void *arg) {
   struct pbuf *hd, *pl;
+  struct ppp_tcpip_callback_header *cbhead;
   ppp_pcb *pcb;
 
   hd = (struct pbuf *)arg;
-  pcb = (ppp_pcb *)hd->payload;
+  cbhead = (struct ppp_tcpip_callback_header *)hd->payload;
+  pcb = cbhead->pcb;
 
   pl = hd->next;
   pbuf_free(hd);
