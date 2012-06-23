@@ -59,8 +59,10 @@
 #endif
 
 /** PPP_INPROC_OWNTHREAD==1: start a dedicated RX thread per PPP session.
- * Default is 0: call pppos_input() for received raw characters, character
- * reception is up to the port */
+ * Default is 1 if PPP_INPROC_MULTITHREADED is enabled.
+ * If set to 0, call pppos_input() for received raw characters, character
+ * reception is up to the port.
+ */
 #ifndef PPP_INPROC_OWNTHREAD
 #define PPP_INPROC_OWNTHREAD      PPP_INPROC_MULTITHREADED
 #endif
