@@ -1664,6 +1664,24 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
+
+#if LWIP_IPV6
+/* Level: IPPROTO_IPV6 */
+  case IPPROTO_IPV6:
+    switch (optname) {
+    case IPV6_V6ONLY:
+      if (*optlen < sizeof(int)) {
+        err = EINVAL;
+      }
+      break;
+    default:
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
+                                  s, optname));
+      err = ENOPROTOOPT;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_IPV6 */
+
 #if LWIP_UDP && LWIP_UDPLITE
 /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:
@@ -1902,6 +1920,23 @@ lwip_getsockopt_internal(void *arg)
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
+
+#if LWIP_IPV6
+/* Level: IPPROTO_IPV6 */
+  case IPPROTO_IPV6:
+    switch (optname) {
+    case IPV6_V6ONLY:
+      *(int*)optval = ((sock->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) ? 1 : 0);
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY) = %d\n",
+                  s, *(int *)optval));
+      break;
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_IPV6 */
+
 #if LWIP_UDP && LWIP_UDPLITE
   /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:
@@ -2081,6 +2116,24 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP */
+
+#if LWIP_IPV6
+/* Level: IPPROTO_IPV6 */
+  case IPPROTO_IPV6:
+    switch (optname) {
+    case IPV6_V6ONLY:
+      if (optlen < sizeof(int)) {
+        err = EINVAL;
+      }
+      break;
+      default:
+        LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
+                    s, optname));
+        err = ENOPROTOOPT;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_IPV6 */
+
 #if LWIP_UDP && LWIP_UDPLITE
 /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:
@@ -2310,6 +2363,27 @@ lwip_setsockopt_internal(void *arg)
     }  /* switch (optname) */
     break;
 #endif /* LWIP_TCP*/
+
+#if LWIP_IPV6
+/* Level: IPPROTO_IPV6 */
+  case IPPROTO_IPV6:
+    switch (optname) {
+    case IPV6_V6ONLY:
+      if (*(int*)optval) {
+        sock->conn->flags |= NETCONN_FLAG_IPV6_V6ONLY;
+      } else {
+        sock->conn->flags &= ~NETCONN_FLAG_IPV6_V6ONLY;
+      }
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, IPV6_V6ONLY, ..) -> %d\n",
+                  s, ((sock->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) ? 1 : 0)));
+      break;
+    default:
+      LWIP_ASSERT("unhandled optname", 0);
+      break;
+    }  /* switch (optname) */
+    break;
+#endif /* LWIP_IPV6 */
+
 #if LWIP_UDP && LWIP_UDPLITE
   /* Level: IPPROTO_UDPLITE */
   case IPPROTO_UDPLITE:

@@ -148,6 +148,9 @@ struct linger {
 #define IPPROTO_IP      0
 #define IPPROTO_TCP     6
 #define IPPROTO_UDP     17
+#if LWIP_IPV6
+#define IPPROTO_IPV6    41
+#endif /* LWIP_IPV6 */
 #define IPPROTO_UDPLITE 136
 
 /* Flags we can use with send and recv. */
@@ -174,6 +177,13 @@ struct linger {
 #define TCP_KEEPINTVL  0x04    /* set pcb->keep_intvl - Use seconds for get/setsockopt */
 #define TCP_KEEPCNT    0x05    /* set pcb->keep_cnt   - Use number of probes sent for get/setsockopt */
 #endif /* LWIP_TCP */
+
+#if LWIP_IPV6
+/*
+ * Options for level IPPROTO_IPV6
+ */
+#define IPV6_V6ONLY 27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
+#endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
 /*
