@@ -1076,11 +1076,23 @@ lwip_netconn_do_listen(struct api_msg_msg *msg)
     if (msg->conn->pcb.tcp != NULL) {
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
         if (msg->conn->state == NETCONN_NONE) {
+          struct tcp_pcb* lpcb;
+#if LWIP_IPV6
+          if ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0) {
 #if TCP_LISTEN_BACKLOG
-          struct tcp_pcb* lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+            lpcb = tcp_listen_dual_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
 #else  /* TCP_LISTEN_BACKLOG */
-          struct tcp_pcb* lpcb = tcp_listen(msg->conn->pcb.tcp);
+            lpcb = tcp_listen_dual(msg->conn->pcb.tcp);
 #endif /* TCP_LISTEN_BACKLOG */
+          } else
+#endif /* LWIP_IPV6 */
+          {
+#if TCP_LISTEN_BACKLOG
+            lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+#else  /* TCP_LISTEN_BACKLOG */
+            lpcb = tcp_listen(msg->conn->pcb.tcp);
+#endif /* TCP_LISTEN_BACKLOG */
+          }
           if (lpcb == NULL) {
             /* in this case, the old pcb is still allocated */
             msg->err = ERR_MEM;

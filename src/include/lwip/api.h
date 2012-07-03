@@ -73,6 +73,12 @@ extern "C" {
 /** If a nonblocking write has been rejected before, poll_tcp needs to
     check if the netconn is writable again */
 #define NETCONN_FLAG_CHECK_WRITESPACE         0x10
+#if LWIP_IPV6
+/** If this flag is set then only IPv6 communication is allowed on the
+    netconn. As per RFC#3493 this features defaults to OFF allowing
+    dual-stack usage by default. */
+#define NETCONN_FLAG_IPV6_V6ONLY              0x20
+#endif /* LWIP_IPV6 */
 
 
 /* Helpers to process several netconn_types by the same code */
