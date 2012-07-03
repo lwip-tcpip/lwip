@@ -156,16 +156,19 @@
  *#define IPV6CP_COMP	0x004f
  */
 typedef struct ipv6cp_options {
-    u_int neg_ifaceid      :1;  /* Negotiate interface identifier? */
-    u_int req_ifaceid      :1;	/* Ask peer to send interface identifier? */
-    u_int accept_local     :1;  /* accept peer's value for iface id? */
-    u_int opt_local        :1;  /* ourtoken set by option */
-    u_int opt_remote       :1;  /* histoken set by option */
-    u_int use_ip           :1;  /* use IP as interface identifier */
+    unsigned int neg_ifaceid    :1;  /* Negotiate interface identifier? */
+    unsigned int req_ifaceid    :1;  /* Ask peer to send interface identifier? */
+    unsigned int accept_local   :1;  /* accept peer's value for iface id? */
+    unsigned int opt_local      :1;  /* ourtoken set by option */
+    unsigned int opt_remote     :1;  /* histoken set by option */
+    unsigned int use_ip         :1;  /* use IP as interface identifier */
+#if 0
 #if defined(SOL2) || defined(__linux__)
-    u_int use_persistent   :1;  /* use uniquely persistent value for address */
+    unsigned int use_persistent :1;  /* use uniquely persistent value for address */
 #endif /* defined(SOL2) */
-    u_int neg_vj           :1;  /* Van Jacobson Compression? */
+#endif
+    unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
+    unsigned int                :1;  /* 1 bit of padding to round out to 8 bits */
     u_short vj_protocol;        /* protocol value to use in VJ option */
     eui64_t ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;

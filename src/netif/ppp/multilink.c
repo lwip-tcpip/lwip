@@ -454,7 +454,7 @@ get_default_epdisc(ep)
 {
 	char *p;
 	struct hostent *hp;
-	u_int32_t addr;
+	u32_t addr;
 
 	/* First try for an ethernet MAC address */
 	p = get_first_ethernet();
@@ -467,7 +467,7 @@ get_default_epdisc(ep)
 	/* see if our hostname corresponds to a reasonable IP address */
 	hp = gethostbyname(hostname);
 	if (hp != NULL) {
-		addr = *(u_int32_t *)hp->h_addr;
+		addr = *(u32_t *)hp->h_addr;
 		if (!bad_ip_adrs(addr)) {
 			addr = ntohl(addr);
 			if (!LOCAL_IP_ADDR(addr)) {
@@ -501,7 +501,7 @@ epdisc_to_str(ep)
 	if (ep->class == EPD_NULL && ep->length == 0)
 		return "null";
 	if (ep->class == EPD_IP && ep->length == 4) {
-		u_int32_t addr;
+		u32_t addr;
 
 		GETLONG(addr, p);
 		slprintf(str, sizeof(str), "IP:%I", htonl(addr));
@@ -572,7 +572,7 @@ str_to_epdisc(ep, str)
 	++str;
 
 	if (i == EPD_IP) {
-		u_int32_t addr;
+		u32_t addr;
 		i = parse_dotted_ip(str, &addr);
 		if (i == 0 || str[i] != 0)
 			return 0;

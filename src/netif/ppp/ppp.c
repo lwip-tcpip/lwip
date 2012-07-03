@@ -1786,7 +1786,7 @@ void new_phase(ppp_pcb *pcb, int p) {
  * ppp_send_config - configure the transmit-side characteristics of
  * the ppp interface.
  */
-int ppp_send_config(ppp_pcb *pcb, int mtu, u_int32_t accm, int pcomp, int accomp) {
+int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
 #if PPPOS_SUPPORT
   int i;
 #endif /* PPPOS_SUPPORT */
@@ -1818,7 +1818,7 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u_int32_t accm, int pcomp, int accomp
  * ppp_recv_config - configure the receive-side characteristics of
  * the ppp interface.
  */
-int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp) {
+int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
 #if PPPOS_SUPPORT
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
@@ -1854,8 +1854,8 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp
 /*
  * sifaddr - Config the interface IP addresses and netmask.
  */
-int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr,
-	     u_int32_t net_mask) {
+int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr,
+	     u32_t net_mask) {
 
   SMEMCPY(&pcb->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
   SMEMCPY(&pcb->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
@@ -1869,7 +1869,7 @@ int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr,
  * cifaddr - Clear the interface IP addresses, and delete routes
  * through the interface if possible.
  */
-int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr) {
+int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
 
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
@@ -1918,7 +1918,7 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
 /*
  * sdns - Config the DNS servers
  */
-int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
+int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
 
   SMEMCPY(&pcb->addrs.dns1, &ns1, sizeof(ns1));
   SMEMCPY(&pcb->addrs.dns2, &ns2, sizeof(ns2));
@@ -1930,7 +1930,7 @@ int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
  *
  * cdns - Clear the DNS servers
  */
-int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2) {
+int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
 
   LWIP_UNUSED_ARG(ns1);
   LWIP_UNUSED_ARG(ns2);
@@ -2032,7 +2032,7 @@ int netif_get_mtu(ppp_pcb *pcb) {
  * and then changes the temporary addresses to the addresses for the real
  * ppp connection when it has come up.
  */
-int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, u8_t replace) {
+int sifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway, u8_t replace) {
 
   LWIP_UNUSED_ARG(ouraddr);
   LWIP_UNUSED_ARG(gateway);
@@ -2046,7 +2046,7 @@ int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, u8_t rep
  *
  * cifdefaultroute - delete a default route through the address given.
  */
-int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway) {
+int cifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway) {
 
   LWIP_UNUSED_ARG(ouraddr);
   LWIP_UNUSED_ARG(gateway);
@@ -2060,7 +2060,7 @@ int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway) {
  * sifproxyarp - Make a proxy ARP entry for the peer.
  */
 
-int sifproxyarp(ppp_pcb *pcb, u_int32_t his_adr) {
+int sifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(his_adr);
   /* FIXME: do we really need that in IPCP ? */
@@ -2072,7 +2072,7 @@ int sifproxyarp(ppp_pcb *pcb, u_int32_t his_adr) {
  * cifproxyarp - Delete the proxy ARP entry for the peer.
  */
 
-int cifproxyarp(ppp_pcb *pcb, u_int32_t his_adr) {
+int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(his_adr);
   /* FIXME: do we really need that in IPCP ? */
@@ -2134,7 +2134,7 @@ int get_loop_output(void) {
  * network as `addr'.  If we find any, we OR in their netmask to the
  * user-specified netmask.
  */
-u_int32_t get_mask(u_int32_t addr) {
+u32_t get_mask(u32_t addr) {
 #if 0
 	u32_t mask, nmask;
 

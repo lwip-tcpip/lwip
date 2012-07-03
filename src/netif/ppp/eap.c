@@ -348,7 +348,7 @@ static char base64[] =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 struct b64state {
-	u_int32_t bs_bits;
+	u32_t bs_bits;
 	int bs_offs;
 };
 
@@ -1158,7 +1158,7 @@ static void
 eap_srpval_response(esp, id, flags, str)
 eap_state *esp;
 u_char id;
-u_int32_t flags;
+u32_t flags;
 u_char *str;
 {
 	ppp_pcb *pcb = &ppp_pcb_list[pcb->eap.es_unit];
@@ -1166,7 +1166,7 @@ u_char *str;
 	u_char *outp;
 	int msglen;
 
-	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u_int32_t) +
+	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u32_t) +
 	    SHA_DIGESTSIZE;
 	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
 	if(NULL == p)
@@ -1659,9 +1659,9 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 					    pcb->eap.es_client.ea_id, id);
 				}
 			} else {
-				len -= sizeof (u_int32_t) + SHA_DIGESTSIZE;
+				len -= sizeof (u32_t) + SHA_DIGESTSIZE;
 				if (len < 0 || t_clientverify(tc, inp +
-					sizeof (u_int32_t)) != 0) {
+					sizeof (u32_t)) != 0) {
 					error("EAP: SRP server verification "
 					    "failed");
 					goto client_failure;
@@ -1939,9 +1939,9 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 				eap_figure_next_state(esp, 1);
 				break;
 			}
-			if (len < sizeof (u_int32_t) + SHA_DIGESTSIZE) {
+			if (len < sizeof (u32_t) + SHA_DIGESTSIZE) {
 				error("EAP: M1 length %d < %d", len,
-				    sizeof (u_int32_t) + SHA_DIGESTSIZE);
+				    sizeof (u32_t) + SHA_DIGESTSIZE);
 				eap_figure_next_state(esp, 1);
 				break;
 			}
@@ -2144,7 +2144,7 @@ static char *eap_typenames[] = {
 static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *, ...), void *arg) {
 	int code, id, len, rtype, vallen;
 	u_char *pstart;
-	u_int32_t uval;
+	u32_t uval;
 
 	if (inlen < EAP_HEADERLEN)
 		return (0);
@@ -2265,10 +2265,10 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				break;
 
 			case EAPSRP_SVALIDATOR:
-				if (len < sizeof (u_int32_t))
+				if (len < sizeof (u32_t))
 					break;
 				GETLONG(uval, inp);
-				len -= sizeof (u_int32_t);
+				len -= sizeof (u32_t);
 				if (uval & SRPVAL_EBIT) {
 					printer(arg, " E");
 					uval &= ~SRPVAL_EBIT;
@@ -2371,10 +2371,10 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				break;
 
 			case EAPSRP_CVALIDATOR:
-				if (len < sizeof (u_int32_t))
+				if (len < sizeof (u32_t))
 					break;
 				GETLONG(uval, inp);
-				len -= sizeof (u_int32_t);
+				len -= sizeof (u32_t);
 				if (uval & SRPVAL_EBIT) {
 					printer(arg, " E");
 					uval &= ~SRPVAL_EBIT;

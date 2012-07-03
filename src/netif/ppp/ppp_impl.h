@@ -394,19 +394,19 @@ void new_phase(ppp_pcb *pcb, int p);
 #if PPPOS_SUPPORT
 void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm);
 #endif /* PPPOS_SUPPORT */
-int ppp_send_config(ppp_pcb *pcb, int mtu, u_int32_t accm, int pcomp, int accomp);
-int ppp_recv_config(ppp_pcb *pcb, int mru, u_int32_t accm, int pcomp, int accomp);
+int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp);
+int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp);
 
-int sifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr, u_int32_t net_mask);
-int cifaddr(ppp_pcb *pcb, u_int32_t our_adr, u_int32_t his_adr);
+int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t net_mask);
+int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr);
 
 #if PPP_IPV6_SUPPORT
 int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
 int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
 #endif /* PPP_IPV6_SUPPORT */
 
-int sdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);
-int cdns(ppp_pcb *pcb, u_int32_t ns1, u_int32_t ns2);
+int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
+int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
 
 int sifup(ppp_pcb *pcb);
 int sifdown (ppp_pcb *pcb);
@@ -416,11 +416,11 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
 
-int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, u8_t replace);
-int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway);
+int sifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway, u8_t replace);
+int cifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway);
 
-int sifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
-int cifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
+int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
+int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 
@@ -430,7 +430,7 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 
 int get_loop_output(void);
 
-u_int32_t get_mask (u_int32_t addr);
+u32_t get_mask (u32_t addr);
 
 
 /* Optional protocol names list, to make our messages a little more informative. */
@@ -533,7 +533,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */
-/* int parse_dotted_ip (char *, u_int32_t *); */
+/* int parse_dotted_ip (char *, u32_t *); */
 
 /* Procedures exported from demand.c */
 #if DEMAND_SUPPORT
@@ -541,7 +541,7 @@ void demand_conf (void);	/* config interface(s) for demand-dial */
 void demand_block (void);	/* set all NPs to queue up packets */
 void demand_unblock (void); /* set all NPs to pass packets */
 void demand_discard (void); /* set all NPs to discard packets */
-void demand_rexmit (int, u_int32_t); /* retransmit saved frames for an NP*/
+void demand_rexmit (int, u32_t); /* retransmit saved frames for an NP*/
 int  loop_chars (unsigned char *, int); /* process chars from loopback */
 int  loop_frame (unsigned char *, int); /* should we bring link up? */
 #endif /* DEMAND_SUPPORT */

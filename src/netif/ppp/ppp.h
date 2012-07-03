@@ -150,36 +150,52 @@ typedef struct ppp_pcb_s ppp_pcb;
 typedef struct ppp_settings_s {
 
 #if PPP_SERVER
-  u_int  auth_required     : 1;       /* Peer is required to authenticate */
+  unsigned int  auth_required     : 1;       /* Peer is required to authenticate */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* PPP_SERVER */
 #if PPP_REMOTENAME
-  u_int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
+  unsigned int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* PPP_REMOTENAME */
 #if PAP_SUPPORT
-  u_int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
+  unsigned int  refuse_pap        : 1;       /* Don't wanna auth. ourselves with PAP */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  u_int  refuse_chap       : 1;       /* Don't wanna auth. ourselves with CHAP */
+  unsigned int  refuse_chap       : 1;       /* Don't wanna auth. ourselves with CHAP */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* CHAP_SUPPORT */
 #if MSCHAP_SUPPORT
-  u_int  refuse_mschap     : 1;       /* Don't wanna auth. ourselves with MS-CHAP */
-  u_int  refuse_mschap_v2  : 1;       /* Don't wanna auth. ourselves with MS-CHAPv2 */
+  unsigned int  refuse_mschap     : 1;       /* Don't wanna auth. ourselves with MS-CHAP */
+  unsigned int  refuse_mschap_v2  : 1;       /* Don't wanna auth. ourselves with MS-CHAPv2 */
+#else
+    unsigned int                   :2;       /* 2 bits of padding */
 #endif /* MSCHAP_SUPPORT */
 #if EAP_SUPPORT
-  u_int  refuse_eap        : 1;       /* Don't wanna auth. ourselves with EAP */
+  unsigned int  refuse_eap        : 1;       /* Don't wanna auth. ourselves with EAP */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* EAP_SUPPORT */
-  u_int  usepeerdns        : 1;       /* Ask peer for DNS adds */
-  u_int  persist           : 1;       /* Persist mode, always try to reopen the connection */
+  unsigned int  usepeerdns        : 1;       /* Ask peer for DNS adds */
+  unsigned int  persist           : 1;       /* Persist mode, always try to reopen the connection */
 #if PRINTPKT_SUPPORT
-  u_int  hide_password     : 1;       /* Hide password in dumped packets */
+  unsigned int  hide_password     : 1;       /* Hide password in dumped packets */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif /* PRINTPKT_SUPPORT */
-  u_int  noremoteip        : 1;       /* Let him have no IP address */
-  u_int  lax_recv          : 1;       /* accept control chars in asyncmap */
-  u_int  noendpoint        : 1;       /* don't send/accept endpoint discriminator */
+  unsigned int  noremoteip        : 1;       /* Let him have no IP address */
+  unsigned int  lax_recv          : 1;       /* accept control chars in asyncmap */
+  unsigned int  noendpoint        : 1;       /* don't send/accept endpoint discriminator */
 #if PPP_LCP_ADAPTIVE
-  u_int lcp_echo_adaptive  : 1;       /* request echo only if the link was idle */
+  unsigned int lcp_echo_adaptive  : 1;       /* request echo only if the link was idle */
+#else
+    unsigned int                   :1;       /* 1 bit of padding */
 #endif
-
+    unsigned int                   :2;       /* 2 bits of padding to round out to 16 bits */
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
@@ -266,21 +282,26 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
-  u_int if_up                   :1; /* True when the interface is up. */
-  u_int pcomp                   :1; /* Does peer accept protocol compression? */
-  u_int accomp                  :1; /* Does peer accept addr/ctl compression? */
-  u_int default_route_set       :1; /* Have set up a default route */
-  u_int proxy_arp_set           :1; /* Have created proxy arp entry */
-  u_int ipcp_is_open            :1; /* haven't called np_finished() */
-  u_int ipcp_is_up              :1; /* have called ipcp_up() */
+  unsigned int if_up                   :1; /* True when the interface is up. */
+  unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
+  unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
+  unsigned int default_route_set       :1; /* Have set up a default route */
+  unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
+  unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
+  unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
 #if PPP_IPV6_SUPPORT
-  u_int ipv6cp_is_up            :1; /* have called ip6cp_up() */
+  unsigned int ipv6cp_is_up            :1; /* have called ip6cp_up() */
+#else
+  unsigned int                         :1; /* 1 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
-  u_int ask_for_local           :1; /* request our address from peer */
-  u_int lcp_echo_timer_running  :1; /* set if a timer is running */
+  unsigned int ask_for_local           :1; /* request our address from peer */
+  unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
 #if PPPOS_SUPPORT && VJ_SUPPORT
-  u_int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
+  unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
+#else
+  unsigned int                         :1; /* 1 bit of padding */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+  unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
   ppp_settings settings;
 

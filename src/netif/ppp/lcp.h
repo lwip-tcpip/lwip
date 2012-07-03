@@ -106,32 +106,42 @@ struct epdisc {
  * The state of options is described by an lcp_options structure.
  */
 typedef struct lcp_options {
-    u_int passive           :1; /* Don't die if we don't get a response */
-    u_int silent            :1; /* Wait for the other end to start first */
-    u_int restart           :1; /* Restart vs. exit after close */
-    u_int neg_mru           :1; /* Negotiate the MRU? */
-    u_int neg_asyncmap      :1; /* Negotiate the async map? */
+    unsigned int passive           :1; /* Don't die if we don't get a response */
+    unsigned int silent            :1; /* Wait for the other end to start first */
+    unsigned int restart           :1; /* Restart vs. exit after close */
+    unsigned int neg_mru           :1; /* Negotiate the MRU? */
+    unsigned int neg_asyncmap      :1; /* Negotiate the async map? */
 #if PAP_SUPPORT
-    u_int neg_upap          :1; /* Ask for UPAP authentication? */
+    unsigned int neg_upap          :1; /* Ask for UPAP authentication? */
+#else
+    unsigned int                   :1; /* 1 bit of padding */
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-    u_int neg_chap          :1; /* Ask for CHAP authentication? */
+    unsigned int neg_chap          :1; /* Ask for CHAP authentication? */
+#else
+    unsigned int                   :1; /* 1 bit of padding */
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-    u_int neg_eap           :1; /* Ask for EAP authentication? */
+    unsigned int neg_eap           :1; /* Ask for EAP authentication? */
+#else
+    unsigned int                   :1; /* 1 bit of padding */
 #endif /* EAP_SUPPORT */
-    u_int neg_magicnumber   :1; /* Ask for magic number? */
-    u_int neg_pcompression  :1; /* HDLC Protocol Field Compression? */
-    u_int neg_accompression :1; /* HDLC Address/Control Field Compression? */
+    unsigned int neg_magicnumber   :1; /* Ask for magic number? */
+    unsigned int neg_pcompression  :1; /* HDLC Protocol Field Compression? */
+    unsigned int neg_accompression :1; /* HDLC Address/Control Field Compression? */
 #if LQR_SUPPORT
-    u_int neg_lqr           :1; /* Negotiate use of Link Quality Reports */
+    unsigned int neg_lqr           :1; /* Negotiate use of Link Quality Reports */
+#else
+    unsigned int                   :1; /* 1 bit of padding */
 #endif /* LQR_SUPPORT */
-    u_int neg_cbcp          :1; /* Negotiate use of CBCP */
+    unsigned int neg_cbcp          :1; /* Negotiate use of CBCP */
 #ifdef HAVE_MULTILINK
-    u_int neg_mrru          :1; /* negotiate multilink MRRU */
+    unsigned int neg_mrru          :1; /* negotiate multilink MRRU */
+#else
+    unsigned int                   :1; /* 1 bit of padding */
 #endif /* HAVE_MULTILINK */
-    u_int neg_ssnhf         :1; /* negotiate short sequence numbers */
-    u_int neg_endpoint      :1; /* negotiate endpoint discriminator */
+    unsigned int neg_ssnhf         :1; /* negotiate short sequence numbers */
+    unsigned int neg_endpoint      :1; /* negotiate endpoint discriminator */
     u16_t mru;			/* Value of MRU */
 #ifdef HAVE_MULTILINK
     u16_t mrru;			/* Value of MRRU, and multilink enable */
@@ -139,11 +149,11 @@ typedef struct lcp_options {
 #if CHAP_SUPPORT
     u8_t chap_mdtype;		/* which MD types (hashing algorithm) */
 #endif /* CHAP_SUPPORT */
-    u_int32_t asyncmap;		/* Value of async map */
-    u_int32_t magicnumber;
+    u32_t asyncmap;		/* Value of async map */
+    u32_t magicnumber;
     u8_t  numloops;		/* Number of loops during magic number neg. */
 #if LQR_SUPPORT
-    u_int32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
+    u32_t lqr_period;	/* Reporting period for LQR 1/100ths second */
 #endif /* LQR_SUPPORT */
     struct epdisc endpoint;	/* endpoint discriminator */
 } lcp_options;

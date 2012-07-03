@@ -126,7 +126,7 @@ struct eap_auth {
 	u_char ea_requests;	/* Number of Requests sent/received */
 	u_char ea_responses;	/* Number of Responses */
 	u_char ea_type;		/* One of EAPT_* */
-	u_int32_t ea_keyflags;	/* SRP shared key usage flags */
+	u32_t ea_keyflags;	/* SRP shared key usage flags */
 };
 
 #ifndef EAP_MAX_CHALLENGE_LENGTH

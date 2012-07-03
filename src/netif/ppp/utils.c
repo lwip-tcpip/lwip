@@ -145,7 +145,7 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 #if 0 /* need port */
     time_t t;
 #endif /* need port */
-    u_int32_t ip;
+    u32_t ip;
     static char hexchars[] = "0123456789abcdef";
 #if PRINTPKT_SUPPORT
     struct buffer_info bufinfo;
@@ -265,7 +265,7 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 	    break;
 #endif /* do we always have strerror() in embedded ? */
 	case 'I':
-	    ip = va_arg(args, u_int32_t);
+	    ip = va_arg(args, u32_t);
 	    ip = ntohl(ip);
 	    slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
