@@ -2032,7 +2032,7 @@ int netif_get_mtu(ppp_pcb *pcb) {
  * and then changes the temporary addresses to the addresses for the real
  * ppp connection when it has come up.
  */
-int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, bool replace) {
+int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, u8_t replace) {
 
   LWIP_UNUSED_ARG(ouraddr);
   LWIP_UNUSED_ARG(gateway);

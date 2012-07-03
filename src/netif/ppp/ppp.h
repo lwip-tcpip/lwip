@@ -79,20 +79,6 @@
 #endif /* PPPOS_SUPPORT */
 
 
-#ifndef __u_char_defined
-
-/* Type definitions for BSD code. */
-typedef unsigned long  u_long;
-typedef unsigned int   u_int;
-typedef unsigned short u_short;
-typedef unsigned char  u_char;
-
-#endif
-
-#ifndef bool
-typedef unsigned char	bool;
-#endif
-
 /*************************
 *** PUBLIC DEFINITIONS ***
 *************************/

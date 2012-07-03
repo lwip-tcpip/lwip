@@ -134,19 +134,6 @@ u16_t ppp_get_fcs(u8_t byte);
 #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ ppp_get_fcs(((fcs) ^ (c)) & 0xff))
 #endif
 
-/*
- * A 32-bit unsigned integral type.
- */
-
-#if !defined(__BIT_TYPES_DEFINED__) && !defined(_BITYPES) \
- && !defined(__FreeBSD__) && (NS_TARGET < 40)
-#ifdef	UINT32_T
-typedef UINT32_T	u_int32_t;
-#else
-typedef unsigned int	u_int32_t;
-typedef unsigned short  u_int16_t;
-#endif
-#endif
 
 /*
  * What to do with network protocol (NP) packets.
@@ -238,11 +225,11 @@ struct ppp_idle {
  * Global variables.
  */
 #ifdef HAVE_MULTILINK
-extern bool	multilink;	/* enable multilink operation */
-extern bool	doing_multilink;
-extern bool	multilink_master;
-extern bool	bundle_eof;
-extern bool	bundle_terminating;
+extern u8_t	multilink;	/* enable multilink operation */
+extern u8_t	doing_multilink;
+extern u8_t	multilink_master;
+extern u8_t	bundle_eof;
+extern u8_t	bundle_terminating;
 #endif
 
 #ifdef MAXOCTETS
@@ -292,7 +279,7 @@ struct protent {
      */
     /* Process a received data packet */
     void (*datainput) (ppp_pcb *pcb, u_char *pkt, int len);
-    bool enabled_flag;		/* 0 if protocol is disabled */
+    u8_t enabled_flag;		/* 0 if protocol is disabled */
 #if PRINTPKT_SUPPORT
     char *name;			/* Text name of protocol */
     char *data_name;		/* Text name of corresponding data protocol */
@@ -429,7 +416,7 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
 
-int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, bool replace);
+int sifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway, u8_t replace);
 int cifdefaultroute(ppp_pcb *pcb, u_int32_t ouraddr, u_int32_t gateway);
 
 int sifproxyarp(ppp_pcb *pcb, u_int32_t his_adr);
