@@ -1673,6 +1673,9 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
       if (*optlen < sizeof(int)) {
         err = EINVAL;
       }
+      /* @todo: this does not work for datagram sockets, yet */
+      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP)
+        return 0;
       break;
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
@@ -2125,6 +2128,11 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
       if (optlen < sizeof(int)) {
         err = EINVAL;
       }
+
+      /* @todo: this does not work for datagram sockets, yet */
+      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP)
+        return 0;
+
       break;
       default:
         LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_IPV6, UNIMPL: optname=0x%x, ..)\n",
