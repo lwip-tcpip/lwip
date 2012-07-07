@@ -1738,7 +1738,7 @@ static void ppp_destroy(ppp_pcb *pcb) {
 void
 ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
 {
-  netif_set_status_callback(pcb->netif, status_callback);
+  netif_set_status_callback(&pcb->netif, status_callback);
 }
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
@@ -1753,7 +1753,7 @@ ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callb
 void
 ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
 {
-  netif_set_link_callback(pcb->netif, link_callback);
+  netif_set_link_callback(&pcb->netif, link_callback);
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 

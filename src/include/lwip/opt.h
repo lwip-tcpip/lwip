@@ -1704,6 +1704,13 @@
 #if PPP_SUPPORT
 
 /**
+ * LWIP_PPP_API==1: Support PPP API (in pppapi.c)
+ */
+#ifndef LWIP_PPP_API
+#define LWIP_PPP_API                    0
+#endif
+
+/**
  * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation
  */
 #ifndef PPP_FCS_TABLE

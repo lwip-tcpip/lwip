@@ -38,6 +38,7 @@
 
 #include "lwip/api_msg.h"
 #include "lwip/netifapi.h"
+#include "lwip/pppapi.h"
 #include "lwip/pbuf.h"
 #include "lwip/api.h"
 #include "lwip/sys.h"
@@ -77,6 +78,8 @@ extern sys_mutex_t lock_tcpip_core;
 #define TCPIP_APIMSG_ACK(m)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
 #define TCPIP_NETIFAPI_ACK(m)
+#define TCPIP_PPPAPI(m)       tcpip_pppapi_lock(m)
+#define TCPIP_PPPAPI_ACK(m)
 #else /* LWIP_TCPIP_CORE_LOCKING */
 #define LOCK_TCPIP_CORE()
 #define UNLOCK_TCPIP_CORE()
@@ -85,6 +88,8 @@ extern sys_mutex_t lock_tcpip_core;
 #define TCPIP_APIMSG_ACK(m)   sys_sem_signal(&m->conn->op_completed)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
 #define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
+#define TCPIP_PPPAPI(m)       tcpip_pppapi(m)
+#define TCPIP_PPPAPI_ACK(m)   sys_sem_signal(&m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
 /** Function prototype for the init_done function passed to tcpip_init */
@@ -110,6 +115,13 @@ err_t tcpip_netifapi_lock(struct netifapi_msg *netifapimsg);
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 #endif /* LWIP_NETIF_API */
 
+#if LWIP_PPP_API
+err_t tcpip_pppapi(struct pppapi_msg *pppapimsg);
+#if LWIP_TCPIP_CORE_LOCKING
+err_t tcpip_pppapi_lock(struct pppapi_msg *pppapimsg);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+#endif /* LWIP_PPP_API */
+
 err_t tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block);
 #define tcpip_callback(f, ctx)              tcpip_callback_with_block(f, ctx, 1)
 
@@ -134,6 +146,9 @@ enum tcpip_msg_type {
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */
+#if LWIP_PPP_API
+  TCPIP_MSG_PPPAPI,
+#endif /* LWIP_PPP_API */
 #if LWIP_TCPIP_TIMEOUT
   TCPIP_MSG_TIMEOUT,
   TCPIP_MSG_UNTIMEOUT,
@@ -152,6 +167,9 @@ struct tcpip_msg {
 #if LWIP_NETIF_API
     struct netifapi_msg *netifapimsg;
 #endif /* LWIP_NETIF_API */
+#if LWIP_PPP_API
+    struct pppapi_msg *pppapimsg;
+#endif /* LWIP_PPP_API */
     struct {
       struct pbuf *p;
       struct netif *netif;
