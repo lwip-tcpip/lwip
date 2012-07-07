@@ -60,6 +60,7 @@
 #include "lwip/nd6.h"
 #include "lwip/mld6.h"
 #include "lwip/api.h"
+#include "ppp.h"
 
 /* Compile-time sanity checks for configuration errors.
  * These can be done independently of LWIP_DEBUG, without penalty.
@@ -335,6 +336,9 @@ lwip_init(void)
   mld6_init();
 #endif /* LWIP_IPV6_MLD */
 #endif /* LWIP_IPV6 */
+#if PPP_SUPPORT
+  ppp_init();
+#endif
 
 #if LWIP_TIMERS
   sys_timeouts_init();
