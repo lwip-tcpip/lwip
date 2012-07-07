@@ -392,15 +392,26 @@ struct ppp_pcb_s {
  *** PUBLIC FUNCTIONS ***
  ************************/
 
-/* Initialize the PPP subsystem. */
+/*
+ * Initialize the PPP subsystem.
+ */
 int ppp_init(void);
 
-/* Create a new PPP session, returns a PPP PCB structure. */
+/*
+ * Create a new PPP session.
+ *
+ * This initializes the PPP control block but does not
+ * attempt to negotiate the LCP session.
+ *
+ * Return a new PPP connection control block pointer
+ * on success or a null pointer on failure.
+ */
 ppp_pcb *ppp_new(void);
 
-/* Set auth helper, optional, you can either fill ppp_pcb->settings. */
-
-/* Warning: Using PPPAUTHTYPE_ANY might have security consequences.
+/*
+ * Set auth helper, optional, you can either fill ppp_pcb->settings.
+ *
+ * Warning: Using PPPAUTHTYPE_ANY might have security consequences.
  * RFC 1994 says:
  *
  * In practice, within or associated with each PPP server, there is a
@@ -433,36 +444,35 @@ typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
 #if PPPOS_SUPPORT
 /*
- * Open a new PPP connection using the given serial I/O device.
- * This initializes the PPP control block but does not
- * attempt to negotiate the LCP session.
+ * Start a new PPP connection using the given serial I/O device.
  *
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  *
- * Return a new PPP connection descriptor on success or
- * an error code (negative) on failure.
+ * Return 0 on success, an error code on failure.
  */
 int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 /*
- * Open a new PPP Over Ethernet (PPPoE) connection.
+ * Start a new PPP Over Ethernet (PPPoE) connection.
+ *
+ * Return 0 on success, an error code on failure.
  */
 int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 
 /*
- * Close a PPP connection and release the descriptor. 
+ * Close a PPP connection and release the control block.
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure. 
  */
 int ppp_close(ppp_pcb *pcb);
 
 /*
- * Indicate to the PPP process that the line has disconnected.
+ * Indicate to the PPP stack that the line has disconnected.
  */
 void ppp_sighup(ppp_pcb *pcb);
 

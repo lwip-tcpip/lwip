@@ -317,16 +317,6 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 }
 
 #if PPPOS_SUPPORT
-/** Open a new PPP connection using the given I/O device.
- * This initializes the PPP control block but does not
- * attempt to negotiate the LCP session.  If this port
- * connects to a modem, the modem connection must be
- * established before calling this.
- * Return a new PPP connection descriptor on success or
- * an error code (negative) on failure.
- *
- * pppOpen() is directly defined to this function.
- */
 int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
 
   /* PPP is single-threaded: without a callback,
