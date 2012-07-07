@@ -2595,7 +2595,7 @@ static void LcpEchoCheck(fsm *f) {
  */
 
 static void LcpEchoTimeout(void *arg) {
-    fsm *f = (fsm*)f;
+    fsm *f = (fsm*)arg;
     ppp_pcb *pcb = f->pcb;
     if (pcb->lcp_echo_timer_running != 0) {
         pcb->lcp_echo_timer_running = 0;
