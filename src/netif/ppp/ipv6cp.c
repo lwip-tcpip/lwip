@@ -769,7 +769,7 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     /*
      * OK, the Nak is good.  Now we can update state.
      */
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
 
     return 1;
@@ -837,7 +837,7 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
     /*
      * Now we can update state.
      */
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
     return 1;
 
@@ -1327,13 +1327,13 @@ ipv6cp_script_done(arg)
     ipv6cp_script_pid = 0;
     switch (ipv6cp_script_state) {
     case s_up:
-	if (ipv6cp_fsm[0].state != OPENED) {
+	if (ipv6cp_fsm[0].state != PPP_FSM_OPENED) {
 	    ipv6cp_script_state = s_down;
 	    ipv6cp_script(_PATH_IPV6DOWN);
 	}
 	break;
     case s_down:
-	if (ipv6cp_fsm[0].state == OPENED) {
+	if (ipv6cp_fsm[0].state == PPP_FSM_OPENED) {
 	    ipv6cp_script_state = s_up;
 	    ipv6cp_script(_PATH_IPV6UP);
 	}
