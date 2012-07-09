@@ -67,6 +67,18 @@ struct pppapi_msg_msg {
       void *link_status_ctx;
     } ethernetopen;
 #endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+    struct {
+      ip_addr_t *ipaddr;
+      u16_t port;
+#if PPPOL2TP_AUTH_SUPPORT
+      u8_t *secret;
+      u8_t secret_len;
+#endif /* PPPOL2TP_AUTH_SUPPORT */
+      ppp_link_status_cb_fn link_status_cb;
+      void *link_status_ctx;
+    } l2tpopen;
+#endif /* PPPOL2TP_SUPPORT */
     struct {
       int cmd;
       void *arg;
@@ -106,6 +118,10 @@ int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *ser
 		const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
 		void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+int pppapi_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+                ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+#endif /* PPPOL2TP_SUPPORT */
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
 int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);

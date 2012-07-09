@@ -142,6 +142,47 @@ int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *ser
 #endif /* PPPOE_SUPPORT */
 
 
+#if PPPOL2TP_SUPPORT
+/**
+ * Call ppp_over_l2tp_open() inside the tcpip_thread context.
+ */
+static void pppapi_do_ppp_over_l2tp_open(struct pppapi_msg_msg *msg) {
+
+  msg->err = ppp_over_l2tp_open(msg->ppp, msg->msg.l2tpopen.ipaddr,
+		  msg->msg.l2tpopen.port,
+#if PPPOL2TP_AUTH_SUPPORT
+		  msg->msg.l2tpopen.secret,
+		  msg->msg.l2tpopen.secret_len,
+#else /* PPPOL2TP_AUTH_SUPPORT */
+		  NULL,
+#endif /* PPPOL2TP_AUTH_SUPPORT */
+		  msg->msg.l2tpopen.link_status_cb, msg->msg.l2tpopen.link_status_ctx);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_over_l2tp_open() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+int pppapi_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+                ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_over_l2tp_open;
+  msg.msg.ppp = pcb;
+  msg.msg.msg.l2tpopen.ipaddr = ipaddr;
+  msg.msg.msg.l2tpopen.port = port;
+#if PPPOL2TP_AUTH_SUPPORT
+  msg.msg.msg.l2tpopen.secret = secret;
+  msg.msg.msg.l2tpopen.secret_len = secret_len;
+#endif /* PPPOL2TP_AUTH_SUPPORT */
+  msg.msg.msg.l2tpopen.link_status_cb = link_status_cb;
+  msg.msg.msg.l2tpopen.link_status_ctx = link_status_ctx;
+  TCPIP_PPPAPI(&msg);
+  return msg.msg.err;
+}
+#endif /* PPPOL2TP_SUPPORT */
+
+
 /**
  * Call ppp_close() inside the tcpip_thread context.
  */

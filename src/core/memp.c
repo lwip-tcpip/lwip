@@ -58,6 +58,7 @@
 #include "lwip/snmp_msg.h"
 #include "lwip/dns.h"
 #include "netif/ppp_oe.h"
+#include "netif/pppol2tp.h"
 #include "lwip/nd6.h"
 #include "lwip/ip6_frag.h"
 #include "lwip/mld6.h"

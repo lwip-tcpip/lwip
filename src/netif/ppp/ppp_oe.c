@@ -81,7 +81,6 @@
 #include "lwip/stats.h"
 
 #include "ppp_impl.h"
-
 #include "netif/ppp_oe.h"
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
@@ -683,6 +682,7 @@ pppoe_send_padi(struct pppoe_softc *sc)
   LWIP_ASSERT("sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len <= 0xffff",
     sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len <= 0xffff);
 
+  /* FIXME: PBUF_LINK already allocate a eth_hdr */
   /* allocate a buffer */
   pb = pbuf_alloc(PBUF_LINK, (u16_t)(sizeof(struct eth_hdr) + PPPOE_HEADERLEN + len), PBUF_RAM);
   if (!pb) {

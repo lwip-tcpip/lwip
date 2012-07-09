@@ -416,6 +416,14 @@
 #endif
 
 /**
+ * MEMP_NUM_PPPOL2TP_INTERFACES: the number of concurrently active PPPoL2TP
+ * interfaces (only used with PPPOL2TP_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOL2TP_INTERFACES
+#define MEMP_NUM_PPPOL2TP_INTERFACES       1
+#endif
+
+/**
  * PBUF_POOL_SIZE: the number of buffers in the pbuf pool. 
  */
 #ifndef PBUF_POOL_SIZE
@@ -1695,6 +1703,20 @@
 #endif
 
 /**
+ * PPPOL2TP_SUPPORT==1: Enable PPP Over L2TP
+ */
+#ifndef PPPOL2TP_SUPPORT
+#define PPPOL2TP_SUPPORT                0
+#endif
+
+/**
+ * PPPOL2TP_AUTH_SUPPORT==1: Enable PPP Over L2TP Auth (enable MD5 support)
+ */
+#ifndef PPPOL2TP_AUTH_SUPPORT
+#define PPPOL2TP_AUTH_SUPPORT           PPPOL2TP_SUPPORT
+#endif
+
+/**
  * PPPOS_SUPPORT==1: Enable PPP Over Serial
  */
 #ifndef PPPOS_SUPPORT
@@ -1782,15 +1804,15 @@
 #endif /* !PPPOS_SUPPORT */
 
 /**
- * PPP_MD5_RANDM==1: Use MD5 for better randomness. Automatically enabled if CHAP support is enabled.
+ * PPP_MD5_RANDM==1: Use MD5 for better randomness. Automatically enabled if CHAP or L2TP AUTH support is enabled.
  */
 #ifndef PPP_MD5_RANDM
 #define PPP_MD5_RANDM                     0
 #endif
-#if CHAP_SUPPORT
+#if CHAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT
 #undef PPP_MD5_RANDM
-#define PPP_MD5_RANDM                     1   /*  MD5 Random is required for CHAP */
-#endif /* CHAP_SUPPORT */
+#define PPP_MD5_RANDM                     1   /*  MD5 Random is required for CHAP and L2TP AUTH */
+#endif /* CHAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT */
 
 /**
  * PolarSSL library, used if necessary and not previously disabled
@@ -1825,11 +1847,11 @@
  * using our cleaned PolarSSL library.
  */
 
-#if CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM
+#if CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM
 #ifndef LWIP_INCLUDED_POLARSSL_MD5
-#define LWIP_INCLUDED_POLARSSL_MD5	1	/* CHAP, EAP and MD5 Random require MD5 support */
+#define LWIP_INCLUDED_POLARSSL_MD5	1	/* CHAP, EAP, L2TP AUTH and MD5 Random require MD5 support */
 #endif /* LWIP_INCLUDED_POLARSSL_MD5 */
-#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPP_MD5_RANDM */
+#endif /* CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT || PPP_MD5_RANDM */
 
 #if MSCHAP_SUPPORT
 #ifndef LWIP_INCLUDED_POLARSSL_MD4

@@ -144,6 +144,13 @@ typedef struct ppp_pcb_s ppp_pcb;
 #include "eap.h"
 #endif /* EAP_SUPPORT */
 
+#if PPPOE_SUPPORT
+#include "netif/ppp_oe.h"
+#endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+#include "netif/pppol2tp.h"
+#endif /* PPPOL2TP_SUPPORT */
+
 /*
  * PPP configuration.
  */
@@ -325,6 +332,10 @@ struct ppp_pcb_s {
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */
 
+#if PPPOL2TP_SUPPORT
+  pppol2tp_pcb *l2tp_pcb;
+#endif /* PPPOL2TP_SUPPORT */
+
   u8_t phase;                    /* where the link is at */
   u8_t err_code;                 /* Code indicating why interface is down. */
 
@@ -463,6 +474,14 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
 int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
+
+#if PPPOL2TP_SUPPORT
+/*
+ * Open a new PPP Over L2TP (PPPoL2TP) connection.
+ */
+int ppp_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+#endif /* PPPOL2TP_SUPPORT */
 
 /*
  * Close a PPP connection and release the control block.

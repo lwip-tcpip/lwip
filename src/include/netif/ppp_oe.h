@@ -73,8 +73,7 @@
 #ifndef PPP_OE_H
 #define PPP_OE_H
 
-#include "ppp_impl.h"
-
+#include "ppp.h"
 #include "netif/etharp.h"
 
 #ifdef PACK_STRUCT_USE_INCLUDES

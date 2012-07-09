@@ -124,6 +124,9 @@
 #if PPPOE_SUPPORT
 #include "netif/ppp_oe.h"
 #endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+#include "netif/pppol2tp.h"
+#endif /* PPPOL2TP_SUPPORT */
 
 /* Global variables */
 
@@ -218,6 +221,12 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
 /* function called by ppp_write() */
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
+
+#if PPPOL2TP_SUPPORT
+static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
+/* function called by ppp_write() */
+static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
+#endif /* PPPOL2TP_SUPPORT */
 
 static void ppp_destroy(ppp_pcb *pcb);
 
@@ -415,6 +424,44 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
 }
 #endif /* PPPOE_SUPPORT */
 
+#if PPPOL2TP_SUPPORT
+static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
+
+int ppp_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+
+  lcp_options *wo = &pcb->lcp_wantoptions;
+  lcp_options *ao = &pcb->lcp_allowoptions;
+
+  /* PPP is single-threaded: without a callback,
+   * there is no way to know when the link is up. */
+  if (link_status_cb == NULL)
+    return PPPERR_PARAM;
+
+  pcb->link_status_cb  = link_status_cb;
+  pcb->link_status_ctx = link_status_ctx;
+
+  wo->mru = 1500; /* FIXME: MTU depends we support IP fragmentation or not */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
+
+  ao->mru = 1500; /* FIXME: MTU depends we support IP fragmentation or not */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
+
+  if(pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, secret, secret_len) != ERR_OK) {
+    return PPPERR_OPEN;
+  }
+
+  new_phase(pcb, PHASE_INITIALIZE);
+  if(!pppol2tp_connect(pcb->l2tp_pcb, ipaddr, port) != ERR_OK) {
+    return PPPERR_OPEN;
+  }
+  return PPPERR_NONE;
+}
+#endif /* PPPOL2TP_SUPPORT */
 
 /* Close a PPP connection and release the descriptor.
  * Any outstanding packets in the queues are dropped.
@@ -983,6 +1030,12 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
   }
 #endif /* PPPOE_SUPPORT */
 
+#if PPPOL2TP_SUPPORT
+  if(pcb->l2tp_pcb) {
+    return ppp_netif_output_over_l2tp(pcb, pb, protocol);
+  }
+#endif /* PPPOL2TP_SUPPORT */
+
 #if PPPOS_SUPPORT
   /* Grab an output buffer. */
   head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
@@ -1133,6 +1186,47 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
 #endif /* PPPOE_SUPPORT */
 
 
+#if PPPOL2TP_SUPPORT
+static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
+  struct pbuf *pb;
+  int i=0;
+  u16_t tot_len;
+
+  /* @todo: try to use pbuf_header() here! */
+  pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol), PBUF_RAM);
+  if(!pb) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pcb->netif);
+    return ERR_MEM;
+  }
+
+  pbuf_header(pb, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN);
+
+  pcb->last_xmit = sys_jiffies();
+
+  if (!pcb->pcomp || protocol > 0xFF) {
+    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
+  }
+  *((u_char*)pb->payload + i) = protocol & 0xFF;
+
+  pbuf_chain(pb, p);
+  tot_len = pb->tot_len;
+
+  if(pppol2tp_xmit(pcb->l2tp_pcb, pb) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pcb->netif);
+    return PPPERR_DEVICE;
+  }
+
+  snmp_add_ifoutoctets(&pcb->netif, tot_len);
+  snmp_inc_ifoutucastpkts(&pcb->netif);
+  LINK_STATS_INC(link.xmit);
+  return ERR_OK;
+}
+#endif /* PPPOL2TP_SUPPORT */
+
+
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 int
@@ -1213,6 +1307,12 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
     return ppp_write_over_ethernet(pcb, p);
   }
 #endif /* PPPOE_SUPPORT */
+
+#if PPPOL2TP_SUPPORT
+  if(pcb->l2tp_pcb) {
+    return ppp_write_over_l2tp(pcb, p);
+  }
+#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
   head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
@@ -1311,6 +1411,38 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 }
 #endif /* PPPOE_SUPPORT */
 
+#if PPPOL2TP_SUPPORT
+static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
+  struct pbuf *ph; /* UDP + L2TP header */
+  u16_t tot_len;
+
+  ph = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN), PBUF_RAM);
+  if(!ph) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(&pcb->netif);
+    pbuf_free(p);
+    return PPPERR_ALLOC;
+  }
+
+  pbuf_header(ph, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
+  pbuf_cat(ph, p);
+  tot_len = ph->tot_len;
+
+  pcb->last_xmit = sys_jiffies();
+
+  if(pppol2tp_xmit(pcb->l2tp_pcb, ph) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(&pcb->netif);
+    return PPPERR_DEVICE;
+  }
+
+  snmp_add_ifoutoctets(&pcb->netif, (u16_t)tot_len);
+  snmp_inc_ifoutucastpkts(&pcb->netif);
+  LINK_STATS_INC(link.xmit);
+  return PPPERR_NONE;
+}
+#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
 /*
@@ -1689,6 +1821,49 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
 }
 #endif /* PPPOE_SUPPORT */
 
+#if PPPOL2TP_SUPPORT
+static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
+  int pppol2tp_err_code = PPPERR_NONE;
+
+  switch(state) {
+
+    /* PPPoL2TP link is established, starting PPP negotiation */
+    case PPPOL2TP_CB_STATE_UP:
+      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: UP, connecting\n", pcb->num));
+      ppp_start(pcb);
+      return;
+
+    /* PPPoL2TP link normally down (i.e. asked to do so) */
+    case PPPOL2TP_CB_STATE_DOWN:
+      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: DOWN, disconnected\n", pcb->num));
+      pppol2tp_err_code = PPPERR_CONNECT;
+      break;
+
+    /* PPPoL2TP link failed to setup (i.e. L2TP timeout) */
+    case PPPOL2TP_CB_STATE_FAILED:
+      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
+      pppol2tp_err_code = PPPERR_OPEN;
+      break;
+  }
+
+  /* Reconnect if persist mode is enabled */
+  if(pcb->settings.persist) {
+    if(pcb->link_status_cb)
+      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
+    new_phase(pcb, PHASE_INITIALIZE);
+    pppol2tp_reconnect(pcb->l2tp_pcb);
+    return;
+  }
+
+  ppp_hup(pcb);
+  ppp_stop(pcb);
+  pppol2tp_destroy(pcb->l2tp_pcb);
+  if(pcb->link_status_cb)
+    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
+  ppp_destroy(pcb);
+}
+#endif /* PPPOL2TP_SUPPORT */
+
 void ppp_link_down(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
 
@@ -1705,6 +1880,11 @@ void ppp_link_terminated(ppp_pcb *pcb) {
     pppoe_disconnect(pcb->pppoe_sc);
   } else
 #endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+  if (pcb->l2tp_pcb) {
+    pppol2tp_disconnect(pcb->l2tp_pcb);
+  } else
+#endif /* PPPOL2TP_SUPPORT */
   {
 #if PPPOS_SUPPORT
 #if PPP_INPROC_OWNTHREAD
