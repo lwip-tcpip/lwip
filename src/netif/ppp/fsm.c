@@ -76,7 +76,7 @@ static void fsm_sconfreq(fsm *f, int retransmit);
  * Initialize fsm state.
  */
 void fsm_init(fsm *f) {
-    f->state = INITIAL;
+    f->state = PPP_FSM_INITIAL;
     f->flags = 0;
     f->id = 0;				/* XXX Start with random id? */
     f->timeouttime = DEFTIMEOUT;
@@ -92,17 +92,17 @@ void fsm_init(fsm *f) {
  */
 void fsm_lowerup(fsm *f) {
     switch( f->state ){
-    case INITIAL:
-	f->state = CLOSED;
+    case PPP_FSM_INITIAL:
+	f->state = PPP_FSM_CLOSED;
 	break;
 
-    case STARTING:
+    case PPP_FSM_STARTING:
 	if( f->flags & OPT_SILENT )
-	    f->state = STOPPED;
+	    f->state = PPP_FSM_STOPPED;
 	else {
 	    /* Send an initial configure-request */
 	    fsm_sconfreq(f, 0);
-	    f->state = REQSENT;
+	    f->state = PPP_FSM_REQSENT;
 	}
 	break;
 
@@ -120,33 +120,33 @@ void fsm_lowerup(fsm *f) {
  */
 void fsm_lowerdown(fsm *f) {
     switch( f->state ){
-    case CLOSED:
-	f->state = INITIAL;
+    case PPP_FSM_CLOSED:
+	f->state = PPP_FSM_INITIAL;
 	break;
 
-    case STOPPED:
-	f->state = STARTING;
+    case PPP_FSM_STOPPED:
+	f->state = PPP_FSM_STARTING;
 	if( f->callbacks->starting )
 	    (*f->callbacks->starting)(f);
 	break;
 
-    case CLOSING:
-	f->state = INITIAL;
+    case PPP_FSM_CLOSING:
+	f->state = PPP_FSM_INITIAL;
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	break;
 
-    case STOPPING:
-    case REQSENT:
-    case ACKRCVD:
-    case ACKSENT:
-	f->state = STARTING;
+    case PPP_FSM_STOPPING:
+    case PPP_FSM_REQSENT:
+    case PPP_FSM_ACKRCVD:
+    case PPP_FSM_ACKSENT:
+	f->state = PPP_FSM_STARTING;
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	break;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	if( f->callbacks->down )
 	    (*f->callbacks->down)(f);
-	f->state = STARTING;
+	f->state = PPP_FSM_STARTING;
 	break;
 
     default:
@@ -161,28 +161,28 @@ void fsm_lowerdown(fsm *f) {
  */
 void fsm_open(fsm *f) {
     switch( f->state ){
-    case INITIAL:
-	f->state = STARTING;
+    case PPP_FSM_INITIAL:
+	f->state = PPP_FSM_STARTING;
 	if( f->callbacks->starting )
 	    (*f->callbacks->starting)(f);
 	break;
 
-    case CLOSED:
+    case PPP_FSM_CLOSED:
 	if( f->flags & OPT_SILENT )
-	    f->state = STOPPED;
+	    f->state = PPP_FSM_STOPPED;
 	else {
 	    /* Send an initial configure-request */
 	    fsm_sconfreq(f, 0);
-	    f->state = REQSENT;
+	    f->state = PPP_FSM_REQSENT;
 	}
 	break;
 
-    case CLOSING:
-	f->state = STOPPING;
+    case PPP_FSM_CLOSING:
+	f->state = PPP_FSM_STOPPING;
 	/* fall through */
 	/* no break */
-    case STOPPED:
-    case OPENED:
+    case PPP_FSM_STOPPED:
+    case PPP_FSM_OPENED:
 	if( f->flags & OPT_RESTART ){
 	    fsm_lowerdown(f);
 	    fsm_lowerup(f);
@@ -198,7 +198,7 @@ void fsm_open(fsm *f) {
  * send a terminate-request message as configured.
  */
 static void terminate_layer(fsm *f, int nextstate) {
-    if( f->state != OPENED )
+    if( f->state != PPP_FSM_OPENED )
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
     else if( f->callbacks->down )
 	(*f->callbacks->down)(f);	/* Inform upper layers we're down */
@@ -214,7 +214,7 @@ static void terminate_layer(fsm *f, int nextstate) {
 	 * We've already fired off one Terminate-Request just to be nice
 	 * to the peer, but we're not going to wait for a reply.
 	 */
-	f->state = nextstate == CLOSING ? CLOSED : STOPPED;
+	f->state = nextstate == PPP_FSM_CLOSING ? PPP_FSM_CLOSED : PPP_FSM_STOPPED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	return;
@@ -230,27 +230,27 @@ static void terminate_layer(fsm *f, int nextstate) {
  * fsm_close - Start closing connection.
  *
  * Cancel timeouts and either initiate close or possibly go directly to
- * the CLOSED state.
+ * the PPP_FSM_CLOSED state.
  */
 void fsm_close(fsm *f, char *reason) {
     f->term_reason = reason;
     f->term_reason_len = (reason == NULL? 0: LWIP_MIN(strlen(reason), 0xFF) );
     switch( f->state ){
-    case STARTING:
-	f->state = INITIAL;
+    case PPP_FSM_STARTING:
+	f->state = PPP_FSM_INITIAL;
 	break;
-    case STOPPED:
-	f->state = CLOSED;
+    case PPP_FSM_STOPPED:
+	f->state = PPP_FSM_CLOSED;
 	break;
-    case STOPPING:
-	f->state = CLOSING;
+    case PPP_FSM_STOPPING:
+	f->state = PPP_FSM_CLOSING;
 	break;
 
-    case REQSENT:
-    case ACKRCVD:
-    case ACKSENT:
-    case OPENED:
-	terminate_layer(f, CLOSING);
+    case PPP_FSM_REQSENT:
+    case PPP_FSM_ACKRCVD:
+    case PPP_FSM_ACKSENT:
+    case PPP_FSM_OPENED:
+	terminate_layer(f, PPP_FSM_CLOSING);
 	break;
     }
 }
@@ -263,13 +263,13 @@ static void fsm_timeout(void *arg) {
     fsm *f = (fsm *) arg;
 
     switch (f->state) {
-    case CLOSING:
-    case STOPPING:
+    case PPP_FSM_CLOSING:
+    case PPP_FSM_STOPPING:
 	if( f->retransmits <= 0 ){
 	    /*
 	     * We've waited for an ack long enough.  Peer probably heard us.
 	     */
-	    f->state = (f->state == CLOSING)? CLOSED: STOPPED;
+	    f->state = (f->state == PPP_FSM_CLOSING)? PPP_FSM_CLOSED: PPP_FSM_STOPPED;
 	    if( f->callbacks->finished )
 		(*f->callbacks->finished)(f);
 	} else {
@@ -281,12 +281,12 @@ static void fsm_timeout(void *arg) {
 	}
 	break;
 
-    case REQSENT:
-    case ACKRCVD:
-    case ACKSENT:
+    case PPP_FSM_REQSENT:
+    case PPP_FSM_ACKRCVD:
+    case PPP_FSM_ACKSENT:
 	if (f->retransmits <= 0) {
 	    warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
-	    f->state = STOPPED;
+	    f->state = PPP_FSM_STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);
 
@@ -295,8 +295,8 @@ static void fsm_timeout(void *arg) {
 	    if (f->callbacks->retransmit)
 		(*f->callbacks->retransmit)(f);
 	    fsm_sconfreq(f, 1);		/* Re-send Configure-Request */
-	    if( f->state == ACKRCVD )
-		f->state = REQSENT;
+	    if( f->state == PPP_FSM_ACKRCVD )
+		f->state = PPP_FSM_REQSENT;
 	}
 	break;
 
@@ -337,7 +337,7 @@ void fsm_input(fsm *f, u_char *inpacket, int l) {
     }
     len -= HEADERLEN;		/* subtract header length */
 
-    if( f->state == INITIAL || f->state == STARTING ){
+    if( f->state == PPP_FSM_INITIAL || f->state == PPP_FSM_STARTING ){
 	FSMDEBUG(("fsm_input(%x): Rcvd packet in state %d.",
 		  f->protocol, f->state));
 	return;
@@ -388,26 +388,26 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
     int code, reject_if_disagree;
 
     switch( f->state ){
-    case CLOSED:
+    case PPP_FSM_CLOSED:
 	/* Go away, we're closed */
 	fsm_sdata(f, TERMACK, id, NULL, 0);
 	return;
-    case CLOSING:
-    case STOPPING:
+    case PPP_FSM_CLOSING:
+    case PPP_FSM_STOPPING:
 	return;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	/* Go down and restart negotiation */
 	if( f->callbacks->down )
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
 
-    case STOPPED:
+    case PPP_FSM_STOPPED:
 	/* Negotiation started by our peer */
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
     }
 
@@ -427,19 +427,19 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
     fsm_sdata(f, code, id, inp, len);
 
     if (code == CONFACK) {
-	if (f->state == ACKRCVD) {
+	if (f->state == PPP_FSM_ACKRCVD) {
 	    UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
-	    f->state = OPENED;
+	    f->state = PPP_FSM_OPENED;
 	    if (f->callbacks->up)
 		(*f->callbacks->up)(f);	/* Inform upper layers */
 	} else
-	    f->state = ACKSENT;
+	    f->state = PPP_FSM_ACKSENT;
 	f->nakloops = 0;
 
     } else {
 	/* we sent CONFACK or CONFREJ */
-	if (f->state != ACKRCVD)
-	    f->state = REQSENT;
+	if (f->state != PPP_FSM_ACKRCVD)
+	    f->state = PPP_FSM_REQSENT;
 	if( code == CONFNAK )
 	    ++f->nakloops;
     }
@@ -462,37 +462,37 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
     f->rnakloops = 0;
 
     switch (f->state) {
-    case CLOSED:
-    case STOPPED:
+    case PPP_FSM_CLOSED:
+    case PPP_FSM_STOPPED:
 	fsm_sdata(f, TERMACK, id, NULL, 0);
 	break;
 
-    case REQSENT:
-	f->state = ACKRCVD;
+    case PPP_FSM_REQSENT:
+	f->state = PPP_FSM_ACKRCVD;
 	f->retransmits = f->maxconfreqtransmits;
 	break;
 
-    case ACKRCVD:
+    case PPP_FSM_ACKRCVD:
 	/* Huh? an extra valid Ack? oh well... */
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	fsm_sconfreq(f, 0);
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
 
-    case ACKSENT:
+    case PPP_FSM_ACKSENT:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
-	f->state = OPENED;
+	f->state = PPP_FSM_OPENED;
 	f->retransmits = f->maxconfreqtransmits;
 	if (f->callbacks->up)
 	    (*f->callbacks->up)(f);	/* Inform upper layers */
 	break;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	/* Go down and restart negotiation */
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
     }
 }
@@ -528,34 +528,34 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
     f->seen_ack = 1;
 
     switch (f->state) {
-    case CLOSED:
-    case STOPPED:
+    case PPP_FSM_CLOSED:
+    case PPP_FSM_STOPPED:
 	fsm_sdata(f, TERMACK, id, NULL, 0);
 	break;
 
-    case REQSENT:
-    case ACKSENT:
+    case PPP_FSM_REQSENT:
+    case PPP_FSM_ACKSENT:
 	/* They didn't agree to what we wanted - try another request */
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	if (ret < 0)
-	    f->state = STOPPED;		/* kludge for stopping CCP */
+	    f->state = PPP_FSM_STOPPED;		/* kludge for stopping CCP */
 	else
 	    fsm_sconfreq(f, 0);		/* Send Configure-Request */
 	break;
 
-    case ACKRCVD:
+    case PPP_FSM_ACKRCVD:
 	/* Got a Nak/reject when we had already had an Ack?? oh well... */
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	fsm_sconfreq(f, 0);
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	/* Go down and restart negotiation */
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
     }
 }
@@ -566,18 +566,18 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
  */
 static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
     switch (f->state) {
-    case ACKRCVD:
-    case ACKSENT:
-	f->state = REQSENT;		/* Start over but keep trying */
+    case PPP_FSM_ACKRCVD:
+    case PPP_FSM_ACKSENT:
+	f->state = PPP_FSM_REQSENT;		/* Start over but keep trying */
 	break;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	if (len > 0) {
 	    info("%s terminated by peer (%0.*v)", PROTO_NAME(f), len, p);
 	} else
 	    info("%s terminated by peer", PROTO_NAME(f));
 	f->retransmits = 0;
-	f->state = STOPPING;
+	f->state = PPP_FSM_STOPPING;
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	TIMEOUT(fsm_timeout, f, f->timeouttime);
@@ -593,28 +593,28 @@ static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
  */
 static void fsm_rtermack(fsm *f) {
     switch (f->state) {
-    case CLOSING:
+    case PPP_FSM_CLOSING:
 	UNTIMEOUT(fsm_timeout, f);
-	f->state = CLOSED;
+	f->state = PPP_FSM_CLOSED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	break;
-    case STOPPING:
+    case PPP_FSM_STOPPING:
 	UNTIMEOUT(fsm_timeout, f);
-	f->state = STOPPED;
+	f->state = PPP_FSM_STOPPED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	break;
 
-    case ACKRCVD:
-	f->state = REQSENT;
+    case PPP_FSM_ACKRCVD:
+	f->state = PPP_FSM_REQSENT;
 	break;
 
-    case OPENED:
+    case PPP_FSM_OPENED:
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	fsm_sconfreq(f, 0);
-	f->state = REQSENT;
+	f->state = PPP_FSM_REQSENT;
 	break;
     }
 }
@@ -634,8 +634,8 @@ static void fsm_rcoderej(fsm *f, u_char *inp, int len) {
     GETCHAR(id, inp);
     warn("%s: Rcvd Code-Reject for code %d, id %d", PROTO_NAME(f), code, id);
 
-    if( f->state == ACKRCVD )
-	f->state = REQSENT;
+    if( f->state == PPP_FSM_ACKRCVD )
+	f->state = PPP_FSM_REQSENT;
 }
 
 
@@ -646,31 +646,31 @@ static void fsm_rcoderej(fsm *f, u_char *inp, int len) {
  */
 void fsm_protreject(fsm *f) {
     switch( f->state ){
-    case CLOSING:
+    case PPP_FSM_CLOSING:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
 	/* no break */
-    case CLOSED:
-	f->state = CLOSED;
+    case PPP_FSM_CLOSED:
+	f->state = PPP_FSM_CLOSED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	break;
 
-    case STOPPING:
-    case REQSENT:
-    case ACKRCVD:
-    case ACKSENT:
+    case PPP_FSM_STOPPING:
+    case PPP_FSM_REQSENT:
+    case PPP_FSM_ACKRCVD:
+    case PPP_FSM_ACKSENT:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	/* fall through */
 	/* no break */
-    case STOPPED:
-	f->state = STOPPED;
+    case PPP_FSM_STOPPED:
+	f->state = PPP_FSM_STOPPED;
 	if( f->callbacks->finished )
 	    (*f->callbacks->finished)(f);
 	break;
 
-    case OPENED:
-	terminate_layer(f, STOPPING);
+    case PPP_FSM_OPENED:
+	terminate_layer(f, PPP_FSM_STOPPING);
 	break;
 
     default:
@@ -690,7 +690,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     u_char *outp;
     int cilen;
 
-    if( f->state != REQSENT && f->state != ACKRCVD && f->state != ACKSENT ){
+    if( f->state != PPP_FSM_REQSENT && f->state != PPP_FSM_ACKRCVD && f->state != PPP_FSM_ACKSENT ){
 	/* Not currently negotiating - reset options */
 	if( f->callbacks->resetci )
 	    (*f->callbacks->resetci)(f);

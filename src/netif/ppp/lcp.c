@@ -445,12 +445,12 @@ void lcp_close(ppp_pcb *pcb, char *reason) {
 
     if (f->flags & DELAYED_UP) {
 	UNTIMEOUT(lcp_delayed_up, f);
-	f->state = STOPPED;
+	f->state = PPP_FSM_STOPPED;
     }
     oldstate = f->state;
 
     fsm_close(f, reason);
-    if (oldstate == STOPPED && (f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
+    if (oldstate == PPP_FSM_STOPPED && (f->flags & (OPT_PASSIVE|OPT_SILENT|DELAYED_UP))) {
 	/*
 	 * This action is not strictly according to the FSM in RFC1548,
 	 * but it does mean that the program terminates if you do a
@@ -562,7 +562,7 @@ static int lcp_extcode(fsm *f, int code, int id, u_char *inp, int len) {
 	break;
     
     case ECHOREQ:
-	if (f->state != OPENED)
+	if (f->state != PPP_FSM_OPENED)
 	    break;
 	magp = inp;
 	PUTLONG(go->magicnumber, magp);
@@ -609,7 +609,7 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
      * Protocol-Reject packets received in any state other than the LCP
      * OPENED state SHOULD be silently discarded.
      */
-    if( f->state != OPENED ){
+    if( f->state != PPP_FSM_OPENED ){
 	LCPDEBUG(("Protocol-Reject discarded: LCP in state %d", f->state));
 	return;
     }
@@ -1492,7 +1492,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * OK, the Nak is good.  Now we can update state.
      * If there are any options left we ignore them.
      */
-    if (f->state != OPENED) {
+    if (f->state != PPP_FSM_OPENED) {
 	if (looped_back) {
 	    if (++try.numloops >= pcb->lcp_loopbackfail) {
 		int errcode = PPPERR_LOOPBACK;
@@ -1733,7 +1733,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
     /*
      * Now we can update state.
      */
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
     return 1;
 
@@ -2561,7 +2561,7 @@ static int lcp_printpkt(u_char *p, int plen,
 
 static void LcpLinkFailure(fsm *f) {
     ppp_pcb *pcb = f->pcb;
-    if (f->state == OPENED) {
+    if (f->state == PPP_FSM_OPENED) {
 	int errcode = PPPERR_PEERDEAD;
 	info("No response to %d echo-requests", pcb->lcp_echos_pending);
         notice("Serial link appears to be disconnected.");
@@ -2578,7 +2578,7 @@ static void LcpEchoCheck(fsm *f) {
     ppp_pcb *pcb = f->pcb;
 
     LcpSendEchoRequest (f);
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	return;
 
     /*
@@ -2671,7 +2671,7 @@ static void LcpSendEchoRequest(fsm *f) {
     /*
      * Make and send the echo request frame.
      */
-    if (f->state == OPENED) {
+    if (f->state == PPP_FSM_OPENED) {
         lcp_magic = go->magicnumber;
 	pktp = pkt;
 	PUTLONG(lcp_magic, pktp);

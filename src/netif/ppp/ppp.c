@@ -508,7 +508,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
    */
-  if (protocol != PPP_LCP && pcb->lcp_fsm.state != OPENED) {
+  if (protocol != PPP_LCP && pcb->lcp_fsm.state != PPP_FSM_OPENED) {
 	dbglog("Discarded non-LCP packet when LCP not open");
 	goto drop;
   }

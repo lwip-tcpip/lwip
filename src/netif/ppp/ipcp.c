@@ -1230,7 +1230,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * OK, the Nak is good.  Now we can update state.
      * If there are any remaining options, we ignore them.
      */
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
 
     return 1;
@@ -1374,7 +1374,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
     /*
      * Now we can update state.
      */
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
     return 1;
 

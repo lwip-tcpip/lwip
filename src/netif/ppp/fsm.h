@@ -108,9 +108,9 @@ typedef struct fsm_callbacks {
 		(fsm *, u_char *, int);
     int  (*reqci)		/* Request peer's Configuration Information */
 		(fsm *, u_char *, int *, int);
-    void (*up)			/* Called when fsm reaches OPENED state */
+    void (*up)			/* Called when fsm reaches PPP_FSM_OPENED state */
 		(fsm *);
-    void (*down)		/* Called when fsm leaves OPENED state */
+    void (*down)		/* Called when fsm leaves PPP_FSM_OPENED state */
 		(fsm *);
     void (*starting)		/* Called when we want the lower layer */
 		(fsm *);
@@ -129,16 +129,16 @@ typedef struct fsm_callbacks {
 /*
  * Link states.
  */
-#define INITIAL		0	/* Down, hasn't been opened */
-#define STARTING	1	/* Down, been opened */
-#define CLOSED		2	/* Up, hasn't been opened */
-#define STOPPED		3	/* Open, waiting for down event */
-#define CLOSING		4	/* Terminating the connection, not open */
-#define STOPPING	5	/* Terminating, but open */
-#define REQSENT		6	/* We've sent a Config Request */
-#define ACKRCVD		7	/* We've received a Config Ack */
-#define ACKSENT		8	/* We've sent a Config Ack */
-#define OPENED		9	/* Connection available */
+#define PPP_FSM_INITIAL		0	/* Down, hasn't been opened */
+#define PPP_FSM_STARTING	1	/* Down, been opened */
+#define PPP_FSM_CLOSED		2	/* Up, hasn't been opened */
+#define PPP_FSM_STOPPED		3	/* Open, waiting for down event */
+#define PPP_FSM_CLOSING		4	/* Terminating the connection, not open */
+#define PPP_FSM_STOPPING	5	/* Terminating, but open */
+#define PPP_FSM_REQSENT		6	/* We've sent a Config Request */
+#define PPP_FSM_ACKRCVD		7	/* We've received a Config Ack */
+#define PPP_FSM_ACKSENT		8	/* We've sent a Config Ack */
+#define PPP_FSM_OPENED		9	/* Connection available */
 
 
 /*
