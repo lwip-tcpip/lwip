@@ -206,6 +206,8 @@ typedef struct ppp_settings_s {
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
+  u16_t  holdoff;                     /* time to wait (s) before re-initiating the link after it terminates */
+
 #if PPP_IDLETIMELIMIT
   u16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
 #endif /* PPP_IDLETIMELIMIT */

@@ -71,6 +71,7 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
  /* Prototypes for procedures local to this file. */
+static void pppol2tp_do_reconnect(pppol2tp_pcb *l2tp);
 static void pppol2tp_do_disconnect(pppol2tp_pcb *l2tp);
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
@@ -168,14 +169,26 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp, ip_addr_t *ipaddr, u16_t port) {
 }
 
 /* Reconnect to a LNS, using previously set L2TP server IP address and port. */
-err_t pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
-  err_t err;
+void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
-    return ERR_VAL;
+    return;
   }
 
   pppol2tp_clear(l2tp);
+
+  if (l2tp->ppp->settings.holdoff == 0) {
+    pppol2tp_do_reconnect(l2tp);
+    return;
+  }
+
+  l2tp->phase = PPPOL2TP_STATE_HOLDOFF;
+  sys_timeout((u32_t)l2tp->ppp->settings.holdoff*1000, pppol2tp_timeout, l2tp);
+  return;
+}
+
+static void pppol2tp_do_reconnect(pppol2tp_pcb *l2tp) {
+  err_t err;
 
   do {
     l2tp->remote_tunnel_id = magic();
@@ -187,7 +200,7 @@ err_t pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
     PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
   }
   sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
-  return err;
+  return;
 }
 
 /* Disconnect */
@@ -219,6 +232,10 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   u8_t *inp;
+
+  if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
+    goto free_and_return;
+  }
 
   printf("-----------\nL2TP INPUT, %d\n", p->len);
   p = ppp_singlebuf(p);
@@ -396,6 +413,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
           break;
         /* Stop Control Connection Notification */
         case PPPOL2TP_MESSAGETYPE_STOPCCN:
+          pppol2tp_send_zlb(l2tp, l2tp->our_ns); /* Ack the StopCCN before we switch to down state */
           if (l2tp->phase < PPPOL2TP_STATE_DATA) {
             pppol2tp_abort_connect(l2tp);
           } else if (l2tp->phase == PPPOL2TP_STATE_DATA) {
@@ -599,6 +617,10 @@ static void pppol2tp_timeout(void *arg) {
 
     case PPPOL2TP_STATE_CLOSING:
       pppol2tp_do_disconnect(l2tp);
+      break;
+
+    case PPPOL2TP_STATE_HOLDOFF:
+      pppol2tp_do_reconnect(l2tp);
       break;
 
     default:

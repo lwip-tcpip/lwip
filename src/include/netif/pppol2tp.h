@@ -150,11 +150,12 @@
 
 /* L2TP Session state */
 #define PPPOL2TP_STATE_INITIAL     0
-#define PPPOL2TP_STATE_SCCRQ_SENT  1
-#define PPPOL2TP_STATE_ICRQ_SENT   2
-#define PPPOL2TP_STATE_ICCN_SENT   3
-#define PPPOL2TP_STATE_DATA        4
-#define PPPOL2TP_STATE_CLOSING     5
+#define PPPOL2TP_STATE_HOLDOFF     1
+#define PPPOL2TP_STATE_SCCRQ_SENT  2
+#define PPPOL2TP_STATE_ICRQ_SENT   3
+#define PPPOL2TP_STATE_ICCN_SENT   4
+#define PPPOL2TP_STATE_DATA        5
+#define PPPOL2TP_STATE_CLOSING     6
 
 #define PPPOL2TP_CB_STATE_UP       0 /* PPPoL2TP link is UP */
 #define PPPOL2TP_CB_STATE_DOWN     1 /* PPPo2TP link is DOWN - normal condition */
@@ -210,7 +211,7 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp, ip_addr_t *ipaddr, u16_t port);
 void pppol2tp_disconnect(pppol2tp_pcb *l2tp);
 
 /* Reconnect to a LNS, using previously set L2TP server IP address and port. */
-err_t pppol2tp_reconnect(pppol2tp_pcb *l2tp);
+void pppol2tp_reconnect(pppol2tp_pcb *l2tp);
 
 /* Data packet from PPP to L2TP */
 err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);

@@ -106,10 +106,11 @@ PACK_STRUCT_END
 
 
 #define PPPOE_STATE_INITIAL   0
-#define PPPOE_STATE_PADI_SENT 1
-#define PPPOE_STATE_PADR_SENT 2
-#define PPPOE_STATE_SESSION   3
-#define PPPOE_STATE_CLOSING   4
+#define PPPOE_STATE_HOLDOFF   1
+#define PPPOE_STATE_PADI_SENT 2
+#define PPPOE_STATE_PADR_SENT 3
+#define PPPOE_STATE_SESSION   4
+#define PPPOE_STATE_CLOSING   5
 /* passive */
 #define PPPOE_STATE_PADO_SENT 1
 
@@ -172,6 +173,7 @@ err_t pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp
 err_t pppoe_destroy(struct netif *ifp);
 
 int pppoe_connect(struct pppoe_softc *sc);
+void pppoe_reconnect(struct pppoe_softc *sc);
 void pppoe_disconnect(struct pppoe_softc *sc);
 
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);

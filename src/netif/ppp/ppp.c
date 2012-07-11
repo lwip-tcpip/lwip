@@ -270,6 +270,7 @@ ppp_pcb *ppp_new(void) {
     /* default configuration */
     pcb->settings.usepeerdns = 1;
     pcb->settings.persist = 1;
+    pcb->settings.holdoff = 30;
 #if CHAP_SUPPORT
     pcb->settings.chap_timeout_time = 3;
     pcb->settings.chap_max_transmits = 10;
@@ -1808,7 +1809,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
     if(pcb->link_status_cb)
       pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
     new_phase(pcb, PHASE_INITIALIZE);
-    pppoe_connect(pcb->pppoe_sc);
+    pppoe_reconnect(pcb->pppoe_sc);
     return;
   }
 

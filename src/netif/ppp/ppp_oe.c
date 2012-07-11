@@ -788,6 +788,10 @@ pppoe_timeout(void *arg)
     case PPPOE_STATE_CLOSING:
       pppoe_do_disconnect(sc);
       break;
+    case PPPOE_STATE_HOLDOFF:
+      sc->sc_state = PPPOE_STATE_INITIAL;
+      pppoe_connect(sc);
+      break;
     default:
       return;  /* all done, work in peace */
   }
@@ -821,6 +825,23 @@ pppoe_connect(struct pppoe_softc *sc)
   }
   sys_timeout(PPPOE_DISC_TIMEOUT, pppoe_timeout, sc);
   return err;
+}
+
+/* Start a reconnection */
+void pppoe_reconnect(struct pppoe_softc *sc) {
+
+  if (sc->sc_state != PPPOE_STATE_INITIAL) {
+    return;
+  }
+
+  if (sc->pcb->settings.holdoff == 0) {
+    pppoe_connect(sc);
+    return;
+  }
+
+  sc->sc_state = PPPOE_STATE_HOLDOFF;
+  sys_timeout((u32_t)sc->pcb->settings.holdoff*1000, pppoe_timeout, sc);
+  return;
 }
 
 /* disconnect */
