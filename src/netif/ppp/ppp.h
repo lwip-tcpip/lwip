@@ -481,7 +481,8 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
 /*
  * Open a new PPP Over L2TP (PPPoL2TP) connection.
  */
-int ppp_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -512,6 +513,8 @@ int ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 void pppos_input(ppp_pcb *pcb, u_char* data, int len);
 #endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
 
+/* Get the PPP netif interface */
+#define ppp_netif(ppp)               (&(ppp)->netif)
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /* Set an lwIP-style status-callback for the selected PPP device */

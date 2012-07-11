@@ -55,6 +55,7 @@
 
 #include "lwip/err.h"
 #include "lwip/memp.h"
+#include "lwip/netif.h"
 #include "lwip/udp.h"
 
 #include "ppp_impl.h"
@@ -132,13 +133,14 @@ err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 }
 
 /* Be a LAC, connect to a LNS. */
-err_t pppol2tp_connect(pppol2tp_pcb *l2tp, ip_addr_t *ipaddr, u16_t port) {
+err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipaddr, u16_t port) {
   err_t err;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return ERR_VAL;
   }
 
+  l2tp->netif = netif;
   ip_addr_set(&l2tp->remote_ip, ipaddr);
   l2tp->remote_port = l2tp->tunnel_port = port;
 
@@ -743,7 +745,11 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -796,7 +802,11 @@ static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns) {
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -847,7 +857,11 @@ static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns) {
   serialnumber = magic();
   PUTLONG(serialnumber, p); /* Attribute value: Serial number */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -896,7 +910,11 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(PPPOL2TP_AVPTYPE_TXCONNECTSPEED, p); /* Attribute type: TX Connect speed */
   PUTLONG(PPPOL2TP_TXCONNECTSPEED, p); /* Attribute value: TX Connect speed */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -927,7 +945,11 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
   PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -976,7 +998,11 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(PPPOL2TP_AVPTYPE_RESULTCODE, p); /* Attribute type: Result code */
   PUTSHORT(PPPOL2TP_RESULTCODE, p); /* Attribute value: Result code */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }
@@ -1004,7 +1030,11 @@ err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */
 
-  udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+  if(l2tp->netif) {
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+  } else {
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+  }
   pbuf_free(pb);
   return ERR_OK;
 }

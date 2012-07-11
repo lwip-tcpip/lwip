@@ -284,6 +284,13 @@ ppp_pcb *ppp_new(void) {
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
         (*protp->init)(pcb);
 
+    if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
+      memp_free(MEMP_PPP_PCB, pcb);
+      PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
+      return NULL;
+    }
+
     return pcb;
 }
 
@@ -428,7 +435,8 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
 
-int ppp_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;
@@ -457,7 +465,7 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret
   }
 
   new_phase(pcb, PHASE_INITIALIZE);
-  if(!pppol2tp_connect(pcb->l2tp_pcb, ipaddr, port) != ERR_OK) {
+  if(!pppol2tp_connect(pcb->l2tp_pcb, netif, ipaddr, port) != ERR_OK) {
     return PPPERR_OPEN;
   }
   return PPPERR_NONE;
@@ -874,7 +882,6 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 #if PPP_IPV6_SUPPORT
   netif->output_ip6 = ppp_netif_output_ip6;
 #endif /* PPP_IPV6_SUPPORT */
-  netif->mtu = netif_get_mtu((ppp_pcb*)netif->state);
   netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
 #if LWIP_NETIF_HOSTNAME
   /* @todo: Initialize interface hostname */
@@ -1017,7 +1024,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
   }
 
   /* Check that the link is up. */
-  if (pcb->phase == PHASE_DEAD) {
+  if (!pcb->if_up) {
     PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->num));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
@@ -1905,6 +1912,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 static void ppp_destroy(ppp_pcb *pcb) {
 
   PPPDEBUG(LOG_DEBUG, ("ppp_destroy: unit %d\n", pcb->num));
+  netif_remove(&pcb->netif);
   memp_free(MEMP_PPP_PCB, pcb);
 }
 
@@ -2117,22 +2125,14 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
  */
 int sifup(ppp_pcb *pcb) {
 
-  if(!pcb->if_up) {
-    if(!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
-      PPPDEBUG(LOG_ERR, ("sifup[%d]: netif_add failed\n", pcb->num));
-      return 0;
-    }
-  } else {
-    netif_set_addr(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                   &pcb->addrs.his_ipaddr);
-  }
-
+  netif_set_addr(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                 &pcb->addrs.his_ipaddr);
 #if PPP_IPV6_SUPPORT
   ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
   netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
 #endif /* PPP_IPV6_SUPPORT */
 
+  pcb->netif.mtu = netif_get_mtu(pcb);
   netif_set_up(&pcb->netif);
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
@@ -2157,7 +2157,6 @@ int sifdown(ppp_pcb *pcb) {
   pcb->if_up = 0;
   /* make sure the netif status callback is called */
   netif_set_down(&pcb->netif);
-  netif_remove(&pcb->netif);
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   if (pcb->link_status_cb)
     pcb->link_status_cb(pcb, PPPERR_CONNECT, pcb->link_status_ctx);

@@ -172,6 +172,7 @@ struct pppol2tp_pcb_s {
   u8_t phase;                  /* L2TP phase */
   void (*link_status_cb)(ppp_pcb *pcb, int status);
   struct udp_pcb *udp;         /* UDP L2TP Socket */
+  struct netif *netif;         /* Output interface, used as a default route */
   ip_addr_t remote_ip;         /* LNS IP Address */
   u16_t remote_port;           /* LNS port */
 #if PPPOL2TP_AUTH_SUPPORT
@@ -205,7 +206,7 @@ err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int sta
 err_t pppol2tp_destroy(pppol2tp_pcb *l2tp);
 
 /* Be a LAC, connect to a LNS. */
-err_t pppol2tp_connect(pppol2tp_pcb *l2tp, ip_addr_t *ipaddr, u16_t port);
+err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipaddr, u16_t port);
 
 /* Disconnect */
 void pppol2tp_disconnect(pppol2tp_pcb *l2tp);

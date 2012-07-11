@@ -69,6 +69,7 @@ struct pppapi_msg_msg {
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
     struct {
+      struct netif *netif;
       ip_addr_t *ipaddr;
       u16_t port;
 #if PPPOL2TP_AUTH_SUPPORT
@@ -119,7 +120,8 @@ int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *ser
 		void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
-int pppapi_over_l2tp_open(ppp_pcb *pcb, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+		u8_t *secret, u8_t secret_len,
                 ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOL2TP_SUPPORT */
 int pppapi_close(ppp_pcb *pcb);
