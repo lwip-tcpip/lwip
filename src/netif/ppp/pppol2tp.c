@@ -239,7 +239,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
     goto free_and_return;
   }
 
-  printf("-----------\nL2TP INPUT, %d\n", p->len);
+  /* printf("-----------\nL2TP INPUT, %d\n", p->len); */
   p = ppp_singlebuf(p);
 
   /* L2TP header */
@@ -309,14 +309,16 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
     INCPTR(offset, inp);
   }
 
-  printf("HLEN = %d\n", hlen);
+  /* printf("HLEN = %d\n", hlen); */
 
   /* skip L2TP header */
   if (pbuf_header(p, -hlen) != 0) {
     goto free_and_return;
   }
 
-  printf("LEN=%d, TUNNEL_ID=%d, SESSION_ID=%d, NS=%d, NR=%d, OFFSET=%d\n", len, tunnel_id, session_id, ns, nr, offset);
+  /* printf("LEN=%d, TUNNEL_ID=%d, SESSION_ID=%d, NS=%d, NR=%d, OFFSET=%d\n", len, tunnel_id, session_id, ns, nr, offset); */
+  PPPDEBUG(LOG_DEBUG, ("pppol2tp: input packet, len=%"U16_F", tunnel=%"U16_F", session=%"U16_F", ns=%"U16_F", nr=%"U16_F"\n",
+    len, tunnel_id, session_id, ns, nr));
 
   /* Control packet */
   if (hflags & PPPOL2TP_HEADERFLAG_CONTROL) {
@@ -362,7 +364,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
 
   l2tp->peer_nr = nr;
   l2tp->peer_ns = ns;
-  printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len);
+  /* printf("L2TP CTRL INPUT, ns=%d, nr=%d, len=%d\n", ns, nr, p->len); */
 
   /* Handle the special case of the ICCN acknowledge */
   if (l2tp->phase == PPPOL2TP_STATE_ICCN_SENT && l2tp->peer_nr > l2tp->our_ns) {
@@ -382,7 +384,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
     }
     GETSHORT(avpflags, inp);
     avplen = avpflags & PPPOL2TP_AVPHEADERFLAG_LENGTHMASK;
-    printf("AVPLEN = %d\n", avplen);
+    /* printf("AVPLEN = %d\n", avplen); */
     if (p->len < avplen || avplen < sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype)) {
       goto packet_too_short;
     }
@@ -397,7 +399,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
         return;
       }
       GETSHORT(messagetype, inp);
-      printf("Message type = %d\n", messagetype);
+      /* printf("Message type = %d\n", messagetype); */
       switch(messagetype) {
         /* Start Control Connection Reply */
         case PPPOL2TP_MESSAGETYPE_SCCRP:
@@ -441,7 +443,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
                return;
             }
             GETSHORT(l2tp->source_tunnel_id, inp);
-            printf("Assigned tunnel %d\n", l2tp->source_tunnel_id);
+            PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %"U16_F"\n", l2tp->source_tunnel_id));
             goto nextavp;
 #if PPPOL2TP_AUTH_SUPPORT
 	  case PPPOL2TP_AVPTYPE_CHALLENGE:
@@ -493,7 +495,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
                return;
             }
             GETSHORT(l2tp->source_session_id, inp);
-            printf("Assigned session %d\n", l2tp->source_session_id);
+            PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned session ID %"U16_F"\n", l2tp->source_session_id));
             goto nextavp;
 	}
 	break;
@@ -502,7 +504,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
 skipavp:
     INCPTR(avplen, inp);
 nextavp:
-    printf("AVP Found, vendor=%d, attribute=%d, len=%d\n", vendorid, attributetype, avplen);
+    /* printf("AVP Found, vendor=%d, attribute=%d, len=%d\n", vendorid, attributetype, avplen); */
     /* next AVP */
     if (pbuf_header(p, -avplen - sizeof(avpflags) - sizeof(vendorid) - sizeof(attributetype) ) != 0) {
       return;
