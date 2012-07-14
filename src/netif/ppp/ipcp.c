@@ -619,9 +619,10 @@ static void ipcp_init(ppp_pcb *pcb) {
     wo->maxslotindex = MAX_STATES - 1; /* really max index */
     wo->cflag = 1;
 
+#if 0 /* UNUSED */
     /* wanting default route by default */
-    /* FIXME: should be configurable */
     wo->default_route = 1;
+#endif /* UNUSED */
 
     /* max slots and slot-id compression are currently hardwired in */
     /* ppp_if.c to 16 and 1, this needs to be changed (among other */
@@ -632,12 +633,14 @@ static void ipcp_init(ppp_pcb *pcb) {
     ao->maxslotindex = MAX_STATES - 1;
     ao->cflag = 1;
 
+#if 0 /* UNUSED */
     /*
      * XXX These control whether the user may use the proxyarp
      * and defaultroute options.
      */
     ao->proxy_arp = 1;
     ao->default_route = 1;
+#endif /* UNUSED */
 }
 
 
@@ -1737,10 +1740,12 @@ ip_demand_conf(u)
 	return 0;
     if (!sifnpmode(pcb, PPP_IP, NPMODE_QUEUE))
 	return 0;
+#if 0 /* UNUSED */
     if (wo->default_route)
 	if (sifdefaultroute(pcb, wo->ouraddr, wo->hisaddr,
 		wo->replace_default_route))
 	    default_route_set[u] = 1;
+#endif /* UNUSED */
     if (wo->proxy_arp)
 	if (sifproxyarp(pcb, wo->hisaddr))
 	    proxy_arp_set[u] = 1;
@@ -1914,11 +1919,13 @@ static void ipcp_up(fsm *f) {
 #endif
 	sifnpmode(pcb, PPP_IP, NPMODE_PASS);
 
+#if 0 /* UNUSED */
 	/* assign a default route through the interface if required */
 	if (wo->default_route)
 	    if (sifdefaultroute(pcb, go->ouraddr, ho->hisaddr,
 		    wo->replace_default_route))
 		    pcb->default_route_set = 1;
+#endif /* UNUSED */
 
 	/* Make a proxy ARP entry if requested. */
 	if (ho->hisaddr != 0 && wo->proxy_arp)
@@ -2020,6 +2027,7 @@ static void ipcp_clear_addrs(ppp_pcb *pcb, u32_t ouraddr, u32_t hisaddr, u8_t re
 	cifproxyarp(pcb, hisaddr);
 	pcb->proxy_arp_set = 0;
     }
+#if 0 /* UNUSED */
     /* If replacedefaultroute, sifdefaultroute will be called soon
      * with replacedefaultroute set and that will overwrite the current
      * default route. This is the case only when doing demand, otherwise
@@ -2032,6 +2040,7 @@ static void ipcp_clear_addrs(ppp_pcb *pcb, u32_t ouraddr, u32_t hisaddr, u8_t re
 	cifdefaultroute(pcb, ouraddr, hisaddr);
 	pcb->default_route_set = 0;
     }
+#endif /* UNUSED */
     cifaddr(pcb, ouraddr, hisaddr);
 }
 

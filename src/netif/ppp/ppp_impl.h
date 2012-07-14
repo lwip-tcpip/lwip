@@ -416,9 +416,6 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
 
-int sifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway, u8_t replace);
-int cifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway);
-
 int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 

@@ -75,8 +75,10 @@ typedef struct ipcp_options {
     unsigned int neg_addr               :1; /* Negotiate IP Address? */
     unsigned int old_addrs              :1; /* Use old (IP-Addresses) option? */
     unsigned int req_addr               :1; /* Ask peer to send IP address? */
+#if 0 /* UNUSED */
     unsigned int default_route          :1; /* Assign default route through interface? */
     unsigned int replace_default_route  :1; /* Replace default route through interface? */
+#endif /* UNUSED */
     unsigned int proxy_arp              :1; /* Make proxy ARP entry for peer? */
     unsigned int neg_vj                 :1; /* Van Jacobson Compression? */
     unsigned int old_vj                 :1; /* use old (short) form of VJ option? */
@@ -85,7 +87,7 @@ typedef struct ipcp_options {
     unsigned int req_dns1               :1; /* Ask peer to send primary DNS address? */
     unsigned int req_dns2               :1; /* Ask peer to send secondary DNS address? */
     unsigned int cflag                  :1;
-    unsigned int                        :3; /* 3 bits of padding to round out to 16 bits */
+    unsigned int                        :5; /* 3 bits of padding to round out to 16 bits */
 
     u32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
     u32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */

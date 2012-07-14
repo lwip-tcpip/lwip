@@ -294,6 +294,10 @@ ppp_pcb *ppp_new(void) {
     return pcb;
 }
 
+void ppp_set_default(ppp_pcb *pcb) {
+  netif_set_default(&pcb->netif);
+}
+
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 
 #if PAP_SUPPORT
@@ -2188,41 +2192,6 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 int netif_get_mtu(ppp_pcb *pcb) {
 
   return pcb->mtu;
-}
-
-/********************************************************************
- *
- * sifdefaultroute - assign a default route through the address given.
- *
- * If the global default_rt_repl_rest flag is set, then this function
- * already replaced the original system defaultroute with some other
- * route and it should just replace the current defaultroute with
- * another one, without saving the current route. Use: demand mode,
- * when pppd sets first a defaultroute it it's temporary ppp0 addresses
- * and then changes the temporary addresses to the addresses for the real
- * ppp connection when it has come up.
- */
-int sifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway, u8_t replace) {
-
-  LWIP_UNUSED_ARG(ouraddr);
-  LWIP_UNUSED_ARG(gateway);
-  LWIP_UNUSED_ARG(replace);
-
-  netif_set_default(&pcb->netif);
-  return 1;
-}
-
-/********************************************************************
- *
- * cifdefaultroute - delete a default route through the address given.
- */
-int cifdefaultroute(ppp_pcb *pcb, u32_t ouraddr, u32_t gateway) {
-
-  LWIP_UNUSED_ARG(ouraddr);
-  LWIP_UNUSED_ARG(gateway);
-
-  netif_set_default(NULL);
-  return 1;
 }
 
 /********************************************************************

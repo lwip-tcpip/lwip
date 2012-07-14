@@ -110,6 +110,7 @@ struct pppapi_msg {
 
 /* API for application */
 ppp_pcb *pppapi_new(void);
+void pppapi_set_default(ppp_pcb *pcb);
 void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd);
 #if PPPOS_SUPPORT
 int pppapi_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);

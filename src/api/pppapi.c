@@ -59,6 +59,26 @@ ppp_pcb *pppapi_new(void) {
 
 
 /**
+ * Call ppp_set_default() inside the tcpip_thread context.
+ */
+static void pppapi_do_ppp_set_default(struct pppapi_msg_msg *msg) {
+  ppp_set_default(msg->ppp);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_set_default() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+void pppapi_set_default(ppp_pcb *pcb) {
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_set_default;
+  msg.msg.ppp = pcb;
+  TCPIP_PPPAPI(&msg);
+}
+
+
+/**
  * Call ppp_set_auth() inside the tcpip_thread context.
  */
 static void pppapi_do_ppp_set_auth(struct pppapi_msg_msg *msg) {

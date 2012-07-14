@@ -294,7 +294,6 @@ struct ppp_pcb_s {
   unsigned int if_up                   :1; /* True when the interface is up. */
   unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
   unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
-  unsigned int default_route_set       :1; /* Have set up a default route */
   unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
   unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
   unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
@@ -310,7 +309,7 @@ struct ppp_pcb_s {
 #else
   unsigned int                         :1; /* 1 bit of padding */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-  unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
+  unsigned int                         :6; /* 5 bits of padding to round out to 16 bits */
 
   ppp_settings settings;
 
@@ -420,6 +419,12 @@ int ppp_init(void);
  * on success or a null pointer on failure.
  */
 ppp_pcb *ppp_new(void);
+
+/*
+ * Set a PPP interface as the default network interface
+ * (used to output all packets for which no specific route is found).
+ */
+void ppp_set_default(ppp_pcb *pcb);
 
 /*
  * Set auth helper, optional, you can either fill ppp_pcb->settings.
