@@ -112,9 +112,6 @@
 static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
-/* input routines */
-static void pppoe_dispatch_disc_pkt(struct netif *, struct pbuf *);
-
 /* management routines */
 static int pppoe_do_disconnect(struct pppoe_softc *);
 static void pppoe_abort_connect(struct pppoe_softc *);
@@ -273,8 +270,8 @@ pppoe_linkstatus_up(struct pppoe_softc *sc)
 }
 
 /* analyze and handle a single received packet while not in session state */
-static void
-pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
+void
+pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 {
   u16_t tag, len;
   u16_t session, plen;
@@ -291,6 +288,12 @@ pppoe_dispatch_disc_pkt(struct netif *netif, struct pbuf *pb)
   struct pppoetag pt;
   int off, err;
   struct eth_hdr *ethhdr;
+
+  /* don't do anything if there is not a single PPPoE instance */
+  if (pppoe_softc_list == NULL) {
+    pbuf_free(pb);
+    return;
+  }
 
   pb = ppp_singlebuf(pb);
 
@@ -532,18 +535,6 @@ breakbreak:;
 done:
   pbuf_free(pb);
   return;
-}
-
-/* FIXME: is this shit really necessary, why we don't call pppoe_dispatch_disc_pkt() instead !? */
-void
-pppoe_disc_input(struct netif *netif, struct pbuf *p)
-{
-  /* avoid error messages if there is not a single pppoe instance */
-  if (pppoe_softc_list != NULL) {
-    pppoe_dispatch_disc_pkt(netif, p);
-  } else {
-    pbuf_free(p);
-  }
 }
 
 void
