@@ -208,9 +208,6 @@ struct ppp_idle {
 };
 #endif /* PPP_IDLETIMELIMIT */
 
-/* FIXME: make endpoint discriminator optional */
-/* FIXME: moved temporarily to ppp.h */
-
 /* values for epdisc.class */
 #define EPD_NULL	0	/* null discriminator, no data */
 #define EPD_LOCAL	1
@@ -218,8 +215,6 @@ struct ppp_idle {
 #define EPD_MAC		3
 #define EPD_MAGIC	4
 #define EPD_PHONENUM	5
-
-/* FIXME: global variables per PPP session */
 
 /*
  * Global variables.
