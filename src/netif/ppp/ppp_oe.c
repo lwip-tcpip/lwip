@@ -730,7 +730,8 @@ pppoe_send_padi(struct pppoe_softc *sc)
 static void
 pppoe_timeout(void *arg)
 {
-  int retry_wait, err;
+  u32_t retry_wait;
+  int err;
   struct pppoe_softc *sc = (struct pppoe_softc*)arg;
 
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": timeout\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
@@ -746,15 +747,9 @@ pppoe_timeout(void *arg)
        * We only enter slow retry mode if IFF_LINK1 (aka autodial)
        * is not set.
        */
-
-      /* initialize for quick retry mode */
-      retry_wait = LWIP_MIN(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padi_retried), PPPOE_SLOW_RETRY);
-
-      /* prevent sc_padi_retried integer overflow << ~2^31/PPPOE_DISC_TIMEOUT
-       * FIXME: can be improved
-       */
-      if(sc->sc_padi_retried < 100000)
+      if (sc->sc_padi_retried < UCHAR_MAX) {
         sc->sc_padi_retried++;
+      }
       if (!sc->pcb->settings.persist && sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
 #if 0
         if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0) {
@@ -767,6 +762,8 @@ pppoe_timeout(void *arg)
           return;
         }
       }
+      /* initialize for quick retry mode */
+      retry_wait = LWIP_MIN(PPPOE_DISC_TIMEOUT * sc->sc_padi_retried, PPPOE_SLOW_RETRY);
       if ((err = pppoe_send_padi(sc)) != 0) {
         sc->sc_padi_retried--;
         PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": failed to transmit PADI, error=%d\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err));
