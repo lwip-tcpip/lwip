@@ -738,7 +738,7 @@ pppoe_timeout(void *arg)
        * We only enter slow retry mode if IFF_LINK1 (aka autodial)
        * is not set.
        */
-      if (sc->sc_padi_retried < UCHAR_MAX) {
+      if (sc->sc_padi_retried < 0xff) {
         sc->sc_padi_retried++;
       }
       if (!sc->pcb->settings.persist && sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {

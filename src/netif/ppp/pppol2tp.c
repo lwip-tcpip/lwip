@@ -567,7 +567,7 @@ static void pppol2tp_timeout(void *arg) {
   switch (l2tp->phase) {
     case PPPOL2TP_STATE_SCCRQ_SENT:
       /* backoff wait */
-      if (l2tp->sccrq_retried < UCHAR_MAX) {
+      if (l2tp->sccrq_retried < 0xff) {
         l2tp->sccrq_retried++;
       }
       if (!l2tp->ppp->settings.persist && l2tp->sccrq_retried >= PPPOL2TP_MAXSCCRQ) {
