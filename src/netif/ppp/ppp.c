@@ -187,6 +187,7 @@ struct protent *protocols[] = {
 #endif /* PPPOS_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
+static void ppp_clear(ppp_pcb *pcb);
 
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
 
@@ -248,24 +249,16 @@ int ppp_init(void) {
 
 /* Create a new PPP session. */
 ppp_pcb *ppp_new(void) {
-    int i;
     ppp_pcb *pcb;
-    struct protent *protp;
 
     pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
     if (pcb == NULL)
       return NULL;
 
-#if PPP_STATS_SUPPORT
-    link_stats_valid = 0;
-#endif /* PPP_STATS_SUPPORT */
-
     memset(pcb, 0, sizeof(ppp_pcb));
 #if PPP_DEBUG
     pcb->num = ppp_num++;
 #endif /* PPP_DEBUG */
-    IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
-    pcb->lcp_loopbackfail = DEFLOOPBACKFAIL;
 
     /* default configuration */
     pcb->settings.usepeerdns = 1;
@@ -275,14 +268,11 @@ ppp_pcb *ppp_new(void) {
     pcb->settings.chap_timeout_time = 3;
     pcb->settings.chap_max_transmits = 10;
 #endif /* CHAP_SUPPPORT */
+    pcb->settings.lcp_loopbackfail = DEFLOOPBACKFAIL;
     pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
     pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
 
-    /*
-     * Initialize each protocol.
-     */
-    for (i = 0; (protp = protocols[i]) != NULL; ++i)
-        (*protp->init)(pcb);
+    ppp_clear(pcb);
 
     if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                   &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
@@ -292,6 +282,25 @@ ppp_pcb *ppp_new(void) {
     }
 
     return pcb;
+}
+
+/* Set a PPP PCB to its initial state */
+static void ppp_clear(ppp_pcb *pcb) {
+  struct protent *protp;
+  int i;
+
+#if PPP_STATS_SUPPORTs
+  link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
+
+  memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
+  IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
+
+  /*
+   * Initialize each protocol.
+   */
+  for (i = 0; (protp = protocols[i]) != NULL; ++i)
+      (*protp->init)(pcb);
 }
 
 void ppp_set_default(ppp_pcb *pcb) {
@@ -371,7 +380,6 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
    * Start the connection and handle incoming events (packet or timeout).
    */
   PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pcb->num));
-  new_phase(pcb, PHASE_INITIALIZE);
   ppp_start(pcb);
 #if PPP_INPROC_OWNTHREAD
   sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
@@ -430,7 +438,6 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
     return PPPERR_OPEN;
   }
 
-  new_phase(pcb, PHASE_INITIALIZE);
   pppoe_connect(pcb->pppoe_sc);
   return PPPERR_NONE;
 }
@@ -454,12 +461,12 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
 
-  wo->mru = 1500; /* FIXME: MTU depends we support IP fragmentation or not */
+  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
   wo->neg_asyncmap = 0;
   wo->neg_pcompression = 0;
   wo->neg_accompression = 0;
 
-  ao->mru = 1500; /* FIXME: MTU depends we support IP fragmentation or not */
+  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
   ao->neg_asyncmap = 0;
   ao->neg_pcompression = 0;
   ao->neg_accompression = 0;
@@ -468,7 +475,6 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
     return PPPERR_OPEN;
   }
 
-  new_phase(pcb, PHASE_INITIALIZE);
   if(!pppol2tp_connect(pcb->l2tp_pcb, netif, ipaddr, port) != ERR_OK) {
     return PPPERR_OPEN;
   }
@@ -525,6 +531,7 @@ ppp_sighup(ppp_pcb *pcb)
 /** Initiate LCP open request */
 static void ppp_start(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->num));
+  new_phase(pcb, PHASE_INITIALIZE);
   lcp_open(pcb); /* Start protocol */
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start: finished\n"));
@@ -1817,9 +1824,24 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
 
   /* Reconnect if persist mode is enabled */
   if(pcb->settings.persist) {
+    lcp_options *wo = &pcb->lcp_wantoptions;
+    lcp_options *ao = &pcb->lcp_allowoptions;
+
     if(pcb->link_status_cb)
       pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
-    new_phase(pcb, PHASE_INITIALIZE);
+
+    ppp_clear(pcb);
+
+    wo->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+    wo->neg_asyncmap = 0;
+    wo->neg_pcompression = 0;
+    wo->neg_accompression = 0;
+
+    ao->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+    ao->neg_asyncmap = 0;
+    ao->neg_pcompression = 0;
+    ao->neg_accompression = 0;
+
     pppoe_reconnect(pcb->pppoe_sc);
     return;
   }
@@ -1860,9 +1882,24 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
 
   /* Reconnect if persist mode is enabled */
   if(pcb->settings.persist) {
+    lcp_options *wo = &pcb->lcp_wantoptions;
+    lcp_options *ao = &pcb->lcp_allowoptions;
+
     if(pcb->link_status_cb)
       pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
-    new_phase(pcb, PHASE_INITIALIZE);
+
+    ppp_clear(pcb);
+
+    wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+    wo->neg_asyncmap = 0;
+    wo->neg_pcompression = 0;
+    wo->neg_accompression = 0;
+
+    ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+    ao->neg_asyncmap = 0;
+    ao->neg_pcompression = 0;
+    ao->neg_accompression = 0;
+
     pppol2tp_reconnect(pcb->l2tp_pcb);
     return;
   }

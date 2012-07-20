@@ -1494,7 +1494,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     if (f->state != PPP_FSM_OPENED) {
 	if (looped_back) {
-	    if (++try.numloops >= pcb->lcp_loopbackfail) {
+	    if (++try.numloops >= pcb->settings.lcp_loopbackfail) {
 		int errcode = PPPERR_LOOPBACK;
 		notice("Serial line is looped back.");
 		ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);

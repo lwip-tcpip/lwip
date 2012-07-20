@@ -231,6 +231,8 @@ typedef struct ppp_settings_s {
   u8_t  chap_rechallenge_time;
 #endif /* CHAP_SUPPPORT */
 
+  u8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
+                                 before deciding the link is looped-back. */
   u8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */
   u8_t  lcp_echo_fails;       /* Tolerance to unanswered echo-requests */
 
@@ -281,7 +283,7 @@ typedef struct ppp_pcb_rx_s {
 
   u16_t in_protocol;             /* The input protocol code. */
   u16_t in_fcs;                  /* Input Frame Check Sequence value. */
-  ppp_dev_states in_state;         /* The input process state. */
+  ppp_dev_states in_state;       /* The input process state. */
   char in_escaped;               /* Escape next character. */
   ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
 } ppp_pcb_rx;
@@ -291,6 +293,35 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
+  /* -- below are data that will NOT be cleared between two sessions if persist mode is enabled */
+#if PPP_DEBUG
+  u8_t num;                      /* Interface number - only useful for debugging */
+#endif /* PPP_DEBUG */
+  ppp_settings settings;
+#if PPPOS_SUPPORT
+  sio_fd_t fd;                   /* File device ID of port. */
+#endif /* PPPOS_SUPPORT */
+#if PPPOE_SUPPORT
+  struct netif *ethif;
+  struct pppoe_softc *pppoe_sc;
+#endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+  pppol2tp_pcb *l2tp_pcb;
+#endif /* PPPOL2TP_SUPPORT */
+  void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
+  void *link_status_ctx;                                          /* Status change callback optional pointer */
+  struct netif netif;            /* PPP interface */
+
+  /* -- below are data that will be cleared between two sessions if persist mode is enabled */
+
+  /*
+   * phase must be the first member of cleared members, because it is used to know
+   * which part must not be cleared.
+   */
+  u8_t phase;                    /* where the link is at */
+  u8_t err_code;                 /* Code indicating why interface is down. */
+
+  /* flags */
   unsigned int if_up                   :1; /* True when the interface is up. */
   unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
   unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
@@ -311,14 +342,7 @@ struct ppp_pcb_s {
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
   unsigned int                         :6; /* 5 bits of padding to round out to 16 bits */
 
-  ppp_settings settings;
-
-#if PPP_DEBUG
-  u8_t num;                      /* Interface number - only useful for debugging */
-#endif /* PPP_DEBUG */
-
 #if PPPOS_SUPPORT
-  sio_fd_t fd;                   /* File device ID of port. */
 /* FIXME: there is probably one superfluous */
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
   ext_accm xmit_accm;            /* extended transmit ACCM */
@@ -328,18 +352,6 @@ struct ppp_pcb_s {
 #endif /* VJ_SUPPORT */
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOE_SUPPORT
-  struct netif *ethif;
-  struct pppoe_softc *pppoe_sc;
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-  pppol2tp_pcb *l2tp_pcb;
-#endif /* PPPOL2TP_SUPPORT */
-
-  u8_t phase;                    /* where the link is at */
-  u8_t err_code;                 /* Code indicating why interface is down. */
-
   /* FIXME: maybe we should cleanup one of those MTU variables */
   u16_t mtu;                     /* Peer's mru */
   u16_t peer_mru;                /* currently negotiated peer MRU */
@@ -347,10 +359,6 @@ struct ppp_pcb_s {
   u32_t last_xmit;               /* Time of last transmission. */
 
   struct ppp_addrs addrs;        /* PPP addresses */
-  struct netif netif;            /* PPP interface */
-
-  void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
-  void *link_status_ctx;                                       /* Status change callback optional pointer */
 
   /* auth data */
 #if PPP_SERVER
@@ -358,11 +366,11 @@ struct ppp_pcb_s {
 #endif /* PPP_SERVER */
   u16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   u16_t auth_done;           /* Records which authentication operations have been completed. */
-  u8_t num_np_open;         /* Number of network protocols which we have opened. */
-  u8_t num_np_up;           /* Number of network protocols which have come up. */
+  u8_t num_np_open;          /* Number of network protocols which we have opened. */
+  u8_t num_np_up;            /* Number of network protocols which have come up. */
 
 #if PAP_SUPPORT
-  upap_state upap;          /* PAP data */
+  upap_state upap;           /* PAP data */
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
@@ -383,7 +391,6 @@ struct ppp_pcb_s {
   lcp_options lcp_hisoptions;    /* Options that we ack'd */
   u8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   u8_t lcp_echo_number;          /* ID number of next echo frame */
-  u8_t lcp_loopbackfail;
 
   fsm ipcp_fsm;                   /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;  /* Options that we want to request */
