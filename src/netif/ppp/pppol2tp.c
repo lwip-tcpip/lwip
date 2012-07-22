@@ -72,7 +72,6 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_do_reconnect(pppol2tp_pcb *l2tp);
 static void pppol2tp_do_disconnect(pppol2tp_pcb *l2tp);
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
@@ -106,6 +105,7 @@ err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int sta
     *l2tpptr = NULL;
     return ERR_MEM;
   }
+  udp_recv(udp, pppol2tp_input, l2tp);
 
   memset(l2tp, 0, sizeof(pppol2tp_pcb));
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
@@ -148,7 +148,6 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipadd
    * because the L2TP LNS might answer with its own random source port (!= 1701)
    */
   udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
-  udp_recv(l2tp->udp, pppol2tp_input, l2tp);
 
 #if PPPOL2TP_AUTH_SUPPORT
   /* Generate random vector */
@@ -172,6 +171,7 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipadd
 
 /* Reconnect to a LNS, using previously set L2TP server IP address and port. */
 void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
+  err_t err;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return;
@@ -179,20 +179,7 @@ void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
 
   pppol2tp_clear(l2tp);
 
-  if (l2tp->ppp->settings.holdoff == 0) {
-    pppol2tp_do_reconnect(l2tp);
-    return;
-  }
-
-  l2tp->phase = PPPOL2TP_STATE_HOLDOFF;
-  sys_timeout((u32_t)l2tp->ppp->settings.holdoff*1000, pppol2tp_timeout, l2tp);
-  return;
-}
-
-static void pppol2tp_do_reconnect(pppol2tp_pcb *l2tp) {
-  err_t err;
-
-  /* FIXME: bind to a new source port so that we don't get packet from the previous session ? */
+  udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
 
   do {
     l2tp->remote_tunnel_id = magic();
@@ -623,10 +610,6 @@ static void pppol2tp_timeout(void *arg) {
 
     case PPPOL2TP_STATE_CLOSING:
       pppol2tp_do_disconnect(l2tp);
-      break;
-
-    case PPPOL2TP_STATE_HOLDOFF:
-      pppol2tp_do_reconnect(l2tp);
       break;
 
     default:

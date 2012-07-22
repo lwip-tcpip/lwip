@@ -499,6 +499,16 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
 #endif /* PPPOL2TP_SUPPORT */
 
 /*
+ * Open a previously opened PPP connection.
+ *
+ * This can only be called if PPP is in the dead phase.
+ *
+ * Holdoff is the time to wait (in seconds) before initiating
+ * the connection.
+ */
+int ppp_reopen(ppp_pcb *pcb, u16_t holdoff);
+
+/*
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure.

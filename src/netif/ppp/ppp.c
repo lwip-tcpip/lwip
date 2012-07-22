@@ -189,16 +189,19 @@ struct protent *protocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_clear(ppp_pcb *pcb);
 
+static void ppp_do_reopen(void *arg);
+
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
 
 #if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
 static void ppp_receive_wakeup(ppp_pcb *pcb);
-#endif /* #if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
+#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
 
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
 
 #if PPPOS_SUPPORT
+static void ppp_over_serial_reopen(ppp_pcb *pcb);
 #if PPP_INPROC_OWNTHREAD
 static void ppp_input_thread(void *arg);
 #endif /* PPP_INPROC_OWNTHREAD */
@@ -218,12 +221,14 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
 
 #if PPPOE_SUPPORT
+static void ppp_over_ethernet_reopen(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 /* function called by ppp_write() */
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
+static void ppp_over_l2tp_reopen(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 /* function called by ppp_write() */
 static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
@@ -247,59 +252,39 @@ int ppp_init(void) {
 
 /* Create a new PPP session. */
 ppp_pcb *ppp_new(void) {
-    ppp_pcb *pcb;
+  ppp_pcb *pcb;
 
-    pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
-    if (pcb == NULL)
-      return NULL;
+  pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
+  if (pcb == NULL) {
+    return NULL;
+  }
 
-    memset(pcb, 0, sizeof(ppp_pcb));
+  memset(pcb, 0, sizeof(ppp_pcb));
 #if PPP_DEBUG
-    pcb->num = ppp_num++;
+  pcb->num = ppp_num++;
 #endif /* PPP_DEBUG */
 
-    /* default configuration */
-    pcb->settings.usepeerdns = 1;
-    pcb->settings.persist = 1;
-    pcb->settings.holdoff = 30;
+  /* default configuration */
+  pcb->settings.usepeerdns = 1;
+  pcb->settings.persist = 1;
+  pcb->settings.holdoff = 30;
 #if CHAP_SUPPORT
-    pcb->settings.chap_timeout_time = 3;
-    pcb->settings.chap_max_transmits = 10;
+  pcb->settings.chap_timeout_time = 3;
+  pcb->settings.chap_max_transmits = 10;
 #endif /* CHAP_SUPPPORT */
-    pcb->settings.lcp_loopbackfail = DEFLOOPBACKFAIL;
-    pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
-    pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
+  pcb->settings.lcp_loopbackfail = DEFLOOPBACKFAIL;
+  pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
+  pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
 
-    if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
-      memp_free(MEMP_PPP_PCB, pcb);
-      PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
-      return NULL;
-    }
+  if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                 &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
+    memp_free(MEMP_PPP_PCB, pcb);
+    PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
+    return NULL;
+  }
 
-    new_phase(pcb, PHASE_DEAD);
-    return pcb;
-}
-
-/* Set a PPP PCB to its initial state */
-static void ppp_clear(ppp_pcb *pcb) {
-  struct protent *protp;
-  int i;
-
-  LWIP_ASSERT("pcb->phase == PHASE_DEAD", pcb->phase == PHASE_DEAD);
-
-#if PPP_STATS_SUPPORTs
-  link_stats_valid = 0;
-#endif /* PPP_STATS_SUPPORT */
-
-  memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
-  IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
-
-  /*
-   * Initialize each protocol.
-   */
-  for (i = 0; (protp = protocols[i]) != NULL; ++i)
-      (*protp->init)(pcb);
+  new_phase(pcb, PHASE_DEAD);
+  return pcb;
 }
 
 void ppp_set_default(ppp_pcb *pcb) {
@@ -309,19 +294,21 @@ void ppp_set_default(ppp_pcb *pcb) {
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 
 #if PAP_SUPPORT
-  if(authtype & PPPAUTHTYPE_PAP)
+  if (authtype & PPPAUTHTYPE_PAP) {
     pcb->settings.refuse_pap = 0;
-  else
+  } else {
     pcb->settings.refuse_pap = 1;
+  }
 #endif /* PAP_SUPPORT */
 
 #if CHAP_SUPPORT
-  if(authtype & PPPAUTHTYPE_CHAP)
+  if (authtype & PPPAUTHTYPE_CHAP) {
     pcb->settings.refuse_chap = 0;
-  else
+  } else {
     pcb->settings.refuse_chap = 1;
+  }
 #if MSCHAP_SUPPORT
-  if(authtype & PPPAUTHTYPE_MSCHAP) {
+  if (authtype & PPPAUTHTYPE_MSCHAP) {
     pcb->settings.refuse_mschap = 0;
     pcb->settings.refuse_mschap_v2 = 0;
   } else {
@@ -332,17 +319,20 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 #endif /* CHAP_SUPPORT */
 
 #if EAP_SUPPORT
-  if(authtype & PPPAUTHTYPE_EAP)
+  if (authtype & PPPAUTHTYPE_EAP) {
     pcb->settings.refuse_eap = 0;
-  else
+  } else {
     pcb->settings.refuse_eap = 1;
+  }
 #endif /* EAP_SUPPORT */
 
-  if(user)
+  if (user) {
     pcb->settings.user = user;
+  }
 
-  if(passwd)
+  if (passwd) {
     pcb->settings.passwd = passwd;
+  }
 }
 
 #if PPPOS_SUPPORT
@@ -350,8 +340,9 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
-  if (link_status_cb == NULL)
+  if (link_status_cb == NULL) {
     return PPPERR_PARAM;
+  }
 
   /* input pbuf left over from last session? */
   ppp_free_current_input_packet(&pcb->rx);
@@ -418,8 +409,9 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
-  if (link_status_cb == NULL)
+  if (link_status_cb == NULL) {
     return PPPERR_PARAM;
+  }
 
   ppp_clear(pcb);
   new_phase(pcb, PHASE_INITIALIZE);
@@ -460,8 +452,9 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
-  if (link_status_cb == NULL)
+  if (link_status_cb == NULL) {
     return PPPERR_PARAM;
+  }
 
   ppp_clear(pcb);
   new_phase(pcb, PHASE_INITIALIZE);
@@ -491,6 +484,32 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
 #endif /* PPPOL2TP_SUPPORT */
 
 /*
+ * Open a previously opened PPP connection.
+ *
+ * This can only be called if PPP is in the dead phase.
+ *
+ * Holdoff is the time to wait (in seconds) before initiating
+ * the connection.
+ */
+int ppp_reopen(ppp_pcb *pcb, u16_t holdoff) {
+  if (pcb->phase != PHASE_DEAD) {
+    return PPPERR_PARAM;
+  }
+
+  PPPDEBUG(LOG_DEBUG, ("ppp_reopen() called, holdoff=%d\n", holdoff));
+  ppp_clear(pcb);
+
+  if (holdoff == 0) {
+    ppp_do_reopen(pcb);
+    return PPPERR_NONE;
+  }
+
+  new_phase(pcb, PHASE_HOLDOFF);
+  sys_timeout((u32_t)(holdoff*1000), ppp_do_reopen, pcb);
+  return PPPERR_NONE;
+}
+
+/*
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure.
@@ -501,7 +520,7 @@ ppp_close(ppp_pcb *pcb)
   int st = 0;
 
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
-  pcb->settings.persist = 0;
+  pcb->settings.persist = 0; /* FIXME: not necessary anymore since persistence is done through link status callback */
 
   /* Disconnect */
 #if PPPOE_SUPPORT
@@ -579,6 +598,56 @@ int ppp_delete(ppp_pcb *pcb) {
 
 
 
+
+/************************************/
+/*** PRIVATE FUNCTION DEFINITIONS ***/
+/************************************/
+
+/* Set a PPP PCB to its initial state */
+static void ppp_clear(ppp_pcb *pcb) {
+  struct protent *protp;
+  int i;
+
+  LWIP_ASSERT("pcb->phase == PHASE_DEAD", pcb->phase == PHASE_DEAD);
+
+#if PPP_STATS_SUPPORTs
+  link_stats_valid = 0;
+#endif /* PPP_STATS_SUPPORT */
+
+  memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
+  IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
+
+  /*
+   * Initialize each protocol.
+   */
+  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+      (*protp->init)(pcb);
+  }
+}
+
+static void ppp_do_reopen(void *arg) {
+  ppp_pcb *pcb = (ppp_pcb*)arg;
+
+  new_phase(pcb, PHASE_INITIALIZE);
+
+#if PPPOE_SUPPORT
+  if (pcb->ethif) {
+    ppp_over_ethernet_reopen(pcb);
+    return;
+  }
+#endif /* PPPOE_SUPPORT */
+
+#if PPPOL2TP_SUPPORT
+  if (pcb->l2tp_pcb) {
+    ppp_over_l2tp_reopen(pcb);
+    return;
+  }
+#endif /* PPPOL2TP_SUPPORT */
+
+#if PPPOS_SUPPORT
+  ppp_over_serial_reopen(pcb);
+#endif /* PPPOS_SUPPORT */
+}
 
 /** Initiate LCP open request */
 static void ppp_start(ppp_pcb *pcb) {
@@ -957,7 +1026,13 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 /*** LOCAL FUNCTION DEFINITIONS ***/
 /**********************************/
 
-#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
+#if PPPOS_SUPPORT
+static void ppp_over_serial_reopen(ppp_pcb *pcb) {
+
+/* FIXME: fill me */
+}
+
+#if PPP_INPROC_OWNTHREAD
 /* The main PPP process function.  This implements the state machine according
  * to section 4 of RFC 1661: The Point-To-Point Protocol. */
 static void
@@ -977,10 +1052,8 @@ ppp_input_thread(void *arg)
     }
   }
 }
-#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
+#endif /* PPP_INPROC_OWNTHREAD */
 
-
-#if PPPOS_SUPPORT
 static void
 pppos_put(ppp_pcb *pcb, struct pbuf *nb)
 {
@@ -1857,7 +1930,6 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
     /* PPPoE link is established, starting PPP negotiation */
     case PPPOE_CB_STATE_UP:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pcb->num));
-      new_phase(pcb, PHASE_INITIALIZE);
       ppp_start(pcb);
       return;
 
@@ -1874,41 +1946,29 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
       break;
   }
 
-  /* Reconnect if persist mode is enabled */
-  if(pcb->settings.persist) {
-    lcp_options *wo = &pcb->lcp_wantoptions;
-    lcp_options *ao = &pcb->lcp_allowoptions;
-
-    ppp_clear(pcb);
-
-    wo->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-    wo->neg_asyncmap = 0;
-    wo->neg_pcompression = 0;
-    wo->neg_accompression = 0;
-
-    ao->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-    ao->neg_asyncmap = 0;
-    ao->neg_pcompression = 0;
-    ao->neg_accompression = 0;
-
-    new_phase(pcb, PHASE_HOLDOFF);
-
-    /* Callback must be called after phase changed to holdoff. It prevents
-     * the user to call ppp_delete() while we are going to reconnect.
-     */
-    if (pcb->link_status_cb) {
-      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
-    }
-
-    pppoe_reconnect(pcb->pppoe_sc);
-    return;
-  }
-
   ppp_hup(pcb);
   ppp_stop(pcb);
   if (pcb->link_status_cb) {
     pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
   }
+}
+
+static void ppp_over_ethernet_reopen(ppp_pcb *pcb) {
+
+  lcp_options *wo = &pcb->lcp_wantoptions;
+  lcp_options *ao = &pcb->lcp_allowoptions;
+
+  wo->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
+
+  ao->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
+
+  pppoe_connect(pcb->pppoe_sc);
 }
 #endif /* PPPOE_SUPPORT */
 
@@ -1921,7 +1981,6 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
     /* PPPoL2TP link is established, starting PPP negotiation */
     case PPPOL2TP_CB_STATE_UP:
       PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: UP, connecting\n", pcb->num));
-      new_phase(pcb, PHASE_INITIALIZE);
       ppp_start(pcb);
       return;
 
@@ -1938,41 +1997,29 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
       break;
   }
 
-  /* Reconnect if persist mode is enabled */
-  if(pcb->settings.persist) {
-    lcp_options *wo = &pcb->lcp_wantoptions;
-    lcp_options *ao = &pcb->lcp_allowoptions;
-
-    ppp_clear(pcb);
-
-    wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-    wo->neg_asyncmap = 0;
-    wo->neg_pcompression = 0;
-    wo->neg_accompression = 0;
-
-    ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-    ao->neg_asyncmap = 0;
-    ao->neg_pcompression = 0;
-    ao->neg_accompression = 0;
-
-    new_phase(pcb, PHASE_HOLDOFF);
-
-    /* Callback must be called after phase changed to holdoff. It prevents
-     * the user to call ppp_delete() while we are going to reconnect.
-     */
-    if (pcb->link_status_cb) {
-      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
-    }
-
-    pppol2tp_reconnect(pcb->l2tp_pcb);
-    return;
-  }
-
   ppp_hup(pcb);
   ppp_stop(pcb);
   if (pcb->link_status_cb) {
     pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
   }
+}
+
+static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
+
+  lcp_options *wo = &pcb->lcp_wantoptions;
+  lcp_options *ao = &pcb->lcp_allowoptions;
+
+  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
+
+  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
+
+  pppol2tp_reconnect(pcb->l2tp_pcb);
 }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -2053,7 +2100,6 @@ ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
 void new_phase(ppp_pcb *pcb, int p) {
   pcb->phase = p;
   PPPDEBUG(LOG_DEBUG, ("ppp phase changed: unit %d: phase=%d\n", pcb->num, pcb->phase));
-  printf("ppp phase changed: phase=%d\n", pcb->phase);
 #if PPP_NOTIFY
   /* The one willing notify support should add here the code to be notified of phase changes */
 #endif /* PPP_NOTIFY */

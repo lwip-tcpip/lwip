@@ -206,6 +206,27 @@ int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, 
 
 
 /**
+ * Call ppp_reopen() inside the tcpip_thread context.
+ */
+static void pppapi_do_ppp_reopen(struct pppapi_msg_msg *msg) {
+  ppp_reopen(msg->ppp, msg->msg.reopen.holdoff);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_reopen() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+void pppapi_reopen(ppp_pcb *pcb, u16_t holdoff) {
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_reopen;
+  msg.msg.ppp = pcb;
+  msg.msg.msg.reopen.holdoff = holdoff;
+  TCPIP_PPPAPI(&msg);
+}
+
+
+/**
  * Call ppp_close() inside the tcpip_thread context.
  */
 static void pppapi_do_ppp_close(struct pppapi_msg_msg *msg) {
