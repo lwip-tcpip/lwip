@@ -499,9 +499,9 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
 #endif /* PPPOL2TP_SUPPORT */
 
 /*
- * Close a PPP connection and release the control block.
+ * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
- * Return 0 on success, an error code on failure. 
+ * Return 0 on success, an error code on failure.
  */
 int ppp_close(ppp_pcb *pcb);
 
@@ -509,6 +509,18 @@ int ppp_close(ppp_pcb *pcb);
  * Indicate to the PPP stack that the line has disconnected.
  */
 void ppp_sighup(ppp_pcb *pcb);
+
+/*
+ * Release the control block.
+ *
+ * This can only be called if PPP is in the dead phase.
+ *
+ * You must use ppp_close() before if you wish to terminate
+ * an established PPP session.
+ *
+ * Return 0 on success, an error code on failure.
+ */
+int ppp_delete(ppp_pcb *pcb);
 
 /*
  * Get and set parameters for the given connection.

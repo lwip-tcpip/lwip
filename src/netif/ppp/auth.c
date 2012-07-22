@@ -694,7 +694,7 @@ void link_terminated(ppp_pcb *pcb) {
 void link_down(ppp_pcb *pcb) {
 #if PPP_NOTIFY
     notify(link_down_notifier, 0);
-#endif /* #if PPP_NOTIFY */
+#endif /* PPP_NOTIFY */
 
     if (!doing_multilink) {
 	upper_layers_down(pcb);

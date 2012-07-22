@@ -192,6 +192,8 @@ void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
 static void pppol2tp_do_reconnect(pppol2tp_pcb *l2tp) {
   err_t err;
 
+  /* FIXME: bind to a new source port so that we don't get packet from the previous session ? */
+
   do {
     l2tp->remote_tunnel_id = magic();
   } while(l2tp->remote_tunnel_id == 0);
