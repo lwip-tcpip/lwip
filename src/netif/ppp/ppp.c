@@ -1950,8 +1950,6 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOE_CB_STATE_DOWN:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pcb->num));
       pppoe_err_code = PPPERR_CONNECT;
-      ppp_hup(pcb);
-      ppp_stop(pcb);
       break;
 
     /* PPPoE link failed to setup (i.e. PADI/PADO timeout) */
@@ -2001,8 +1999,6 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOL2TP_CB_STATE_DOWN:
       PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: DOWN, disconnected\n", pcb->num));
       pppol2tp_err_code = PPPERR_CONNECT;
-      ppp_hup(pcb);
-      ppp_stop(pcb);
       break;
 
     /* PPPoL2TP link failed to setup (i.e. L2TP timeout) */
