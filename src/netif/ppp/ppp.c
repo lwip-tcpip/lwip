@@ -1956,6 +1956,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOE_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
       pppoe_err_code = PPPERR_OPEN;
+      new_phase(pcb, PHASE_DEAD);
       break;
   }
 
@@ -2005,6 +2006,7 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOL2TP_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
       pppol2tp_err_code = PPPERR_OPEN;
+      new_phase(pcb, PHASE_DEAD);
       break;
   }
 
