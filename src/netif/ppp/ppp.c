@@ -512,6 +512,14 @@ ppp_close(ppp_pcb *pcb)
     ppp_stop(pcb);
   } else
 #endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+  if (pcb->l2tp_pcb) {
+    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
+    pcb->err_code = PPPERR_USER;
+    /* This will leave us at PHASE_DEAD. */
+    ppp_stop(pcb);
+  } else
+#endif /* PPPOL2TP_SUPPORT */
   {
 #if PPPOS_SUPPORT
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
