@@ -519,6 +519,19 @@ ppp_close(ppp_pcb *pcb)
 {
   int st = 0;
 
+  /* dead phase, nothing to do, call the status callback to be consistent */
+  if (pcb->phase == PHASE_DEAD) {
+    pcb->link_status_cb(pcb, PPPERR_USER, pcb->link_status_ctx);
+    return PPPERR_NONE;
+  }
+
+  /* holdoff phase, cancel the reconnection and call the status callback */
+  if (pcb->phase == PHASE_HOLDOFF) {
+    sys_untimeout(ppp_do_reopen, pcb);
+    pcb->link_status_cb(pcb, PPPERR_USER, pcb->link_status_ctx);
+    return PPPERR_NONE;
+  }
+
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
   pcb->settings.persist = 0; /* FIXME: not necessary anymore since persistence is done through link status callback */
 
