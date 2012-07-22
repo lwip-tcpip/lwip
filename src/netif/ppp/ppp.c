@@ -519,16 +519,18 @@ ppp_close(ppp_pcb *pcb)
 {
   int st = 0;
 
+  pcb->err_code = PPPERR_USER;
+
   /* dead phase, nothing to do, call the status callback to be consistent */
   if (pcb->phase == PHASE_DEAD) {
-    pcb->link_status_cb(pcb, PPPERR_USER, pcb->link_status_ctx);
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
     return PPPERR_NONE;
   }
 
   /* holdoff phase, cancel the reconnection and call the status callback */
   if (pcb->phase == PHASE_HOLDOFF) {
     sys_untimeout(ppp_do_reopen, pcb);
-    pcb->link_status_cb(pcb, PPPERR_USER, pcb->link_status_ctx);
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
     return PPPERR_NONE;
   }
 
@@ -539,7 +541,6 @@ ppp_close(ppp_pcb *pcb)
 #if PPPOE_SUPPORT
   if (pcb->ethif) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    pcb->err_code = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     ppp_stop(pcb);
   } else
@@ -547,7 +548,6 @@ ppp_close(ppp_pcb *pcb)
 #if PPPOL2TP_SUPPORT
   if (pcb->l2tp_pcb) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    pcb->err_code = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     ppp_stop(pcb);
   } else
@@ -555,7 +555,6 @@ ppp_close(ppp_pcb *pcb)
   {
 #if PPPOS_SUPPORT
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    pcb->err_code = PPPERR_USER;
     /* This will leave us at PHASE_DEAD. */
     ppp_stop(pcb);
 #if PPP_INPROC_OWNTHREAD
@@ -1960,9 +1959,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
       break;
   }
 
-  if (pcb->link_status_cb) {
-    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
-  }
+  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
 }
 
 static void ppp_over_ethernet_reopen(ppp_pcb *pcb) {
@@ -2010,9 +2007,7 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
       break;
   }
 
-  if (pcb->link_status_cb) {
-    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
-  }
+  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
 }
 
 static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
@@ -2062,9 +2057,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 #endif /* PPP_INPROC_OWNTHREAD */
 
     PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
-    if (pcb->link_status_cb) {
-      pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->link_status_ctx);
-    }
+    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->link_status_ctx);
 #endif /* PPPOS_SUPPORT */
   }
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
@@ -2293,9 +2286,7 @@ int sifup(ppp_pcb *pcb) {
   pcb->err_code = PPPERR_NONE;
 
   PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
-  if (pcb->link_status_cb) {
-    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
-  }
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
   return 1;
 }
 
