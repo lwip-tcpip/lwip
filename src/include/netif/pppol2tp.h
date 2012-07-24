@@ -154,7 +154,6 @@
 #define PPPOL2TP_STATE_ICRQ_SENT   2
 #define PPPOL2TP_STATE_ICCN_SENT   3
 #define PPPOL2TP_STATE_DATA        4
-#define PPPOL2TP_STATE_CLOSING     5
 
 #define PPPOL2TP_CB_STATE_UP       0 /* PPPoL2TP link is UP */
 #define PPPOL2TP_CB_STATE_DOWN     1 /* PPPo2TP link is DOWN - normal condition */

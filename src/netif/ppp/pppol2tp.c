@@ -72,7 +72,6 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_do_disconnect(pppol2tp_pcb *l2tp);
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
              struct pbuf *p, u16_t len, u16_t tunnel_id, u16_t session_id, u16_t ns, u16_t nr);
@@ -197,22 +196,12 @@ void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
 /* Disconnect */
 void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
 
-  if (l2tp->phase == PPPOL2TP_STATE_CLOSING) {
+  if (l2tp->phase < PPPOL2TP_STATE_DATA) {
     return;
   }
 
   l2tp->our_ns++;
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
-  /*
-   * Do not call pppol2tp_disconnect here, the upper layer state
-   * machine gets confused by this. We must return from this
-   * function and defer disconnecting to the timeout handler.
-   */
-  l2tp->phase = PPPOL2TP_STATE_CLOSING;
-  sys_timeout(20, pppol2tp_timeout, l2tp);
-}
-
-static void pppol2tp_do_disconnect(pppol2tp_pcb *l2tp) {
 
   pppol2tp_clear(l2tp);
   l2tp->link_status_cb(l2tp->ppp, PPPOL2TP_CB_STATE_DOWN); /* notify upper layers */
@@ -410,7 +399,11 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
           if (l2tp->phase < PPPOL2TP_STATE_DATA) {
             pppol2tp_abort_connect(l2tp);
           } else if (l2tp->phase == PPPOL2TP_STATE_DATA) {
-            pppol2tp_disconnect(l2tp);
+            /* Don't disconnect here, we let the LCP Echo/Reply find the fact
+             * that PPP session is down. Asking the PPP stack to end the session
+             * require strict checking about the PPP phase to prevent endless
+             * disconnection loops.
+             */
           }
           return;
       }
@@ -606,10 +599,6 @@ static void pppol2tp_timeout(void *arg) {
 	PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICCN, error=%d\n", err));
       }
       sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
-      break;
-
-    case PPPOL2TP_STATE_CLOSING:
-      pppol2tp_do_disconnect(l2tp);
       break;
 
     default:

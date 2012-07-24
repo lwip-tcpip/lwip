@@ -113,7 +113,6 @@ static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
 /* management routines */
-static int pppoe_do_disconnect(struct pppoe_softc *);
 static void pppoe_abort_connect(struct pppoe_softc *);
 static void pppoe_clear_softc(struct pppoe_softc *, const char *);
 
@@ -780,9 +779,6 @@ pppoe_timeout(void *arg)
       }
       sys_timeout(PPPOE_DISC_TIMEOUT * (1 + sc->sc_padr_retried), pppoe_timeout, sc);
       break;
-    case PPPOE_STATE_CLOSING:
-      pppoe_do_disconnect(sc);
-      break;
     default:
       return;  /* all done, work in peace */
   }
@@ -822,29 +818,14 @@ pppoe_connect(struct pppoe_softc *sc)
 void
 pppoe_disconnect(struct pppoe_softc *sc)
 {
-  if (sc->sc_state < PPPOE_STATE_SESSION) {
-    return;
-  }
-  /*
-   * Do not call pppoe_disconnect here, the upper layer state
-   * machine gets confused by this. We must return from this
-   * function and defer disconnecting to the timeout handler.
-   */
-  sc->sc_state = PPPOE_STATE_CLOSING;
-  sys_timeout(20, pppoe_timeout, sc);
-}
-
-static int
-pppoe_do_disconnect(struct pppoe_softc *sc)
-{
   int err;
 
   if (sc->sc_state < PPPOE_STATE_SESSION) {
-    err = EBUSY;
-  } else {
-    PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-    err = pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
+    return EBUSY;
   }
+
+  PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
+  err = pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
 
   /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
