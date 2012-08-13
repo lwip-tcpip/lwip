@@ -81,6 +81,10 @@ HISTORY
  ++ Bugfixes:
 
   2012-08-13: Simon Goldschmidt
+  * msg_out.c: fixed bug #36840 snmp_send_trap() NULL de-reference if traps
+    configured but no interfaces available
+
+  2012-08-13: Simon Goldschmidt
   * dns.c: fixed bug #36899 DNS TTL 0 is cached for a long time
 
   2012-05-11: Simon Goldschmidt (patch by Marty)
