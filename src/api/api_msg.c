@@ -579,10 +579,7 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
   conn->type = t;
   conn->pcb.tcp = NULL;
 
-#if (DEFAULT_RAW_RECVMBOX_SIZE == DEFAULT_UDP_RECVMBOX_SIZE) && \
-    (DEFAULT_RAW_RECVMBOX_SIZE == DEFAULT_TCP_RECVMBOX_SIZE)
-  size = DEFAULT_RAW_RECVMBOX_SIZE;
-#else
+  /* If all sizes are the same, every compiler should optimize this switch to nothing, */
   switch(NETCONNTYPE_GROUP(t)) {
 #if LWIP_RAW
   case NETCONN_RAW:
@@ -603,7 +600,6 @@ netconn_alloc(enum netconn_type t, netconn_callback callback)
     LWIP_ASSERT("netconn_alloc: undefined netconn_type", 0);
     goto free_and_return;
   }
-#endif
 
   if (sys_sem_new(&conn->op_completed, 0) != ERR_OK) {
     goto free_and_return;
