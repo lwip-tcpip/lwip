@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-08-13: Simon Goldschmidt
+  * dns.c: fixed bug #36899 DNS TTL 0 is cached for a long time
+
   2012-05-11: Simon Goldschmidt (patch by Marty)
   * memp.c: fixed bug #36412: memp.c does not compile when
     MEMP_OVERFLOW_CHECK > zero and MEMP_SEPARATE_POOLS == 1
