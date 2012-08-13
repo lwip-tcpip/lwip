@@ -1164,6 +1164,9 @@ dhcp_release(struct netif *netif)
   err_t result;
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release()\n"));
+  if (dhcp == NULL) {
+    return ERR_ARG;
+  }
 
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
