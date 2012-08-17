@@ -818,14 +818,12 @@ pppoe_connect(struct pppoe_softc *sc)
 void
 pppoe_disconnect(struct pppoe_softc *sc)
 {
-  int err;
-
   if (sc->sc_state < PPPOE_STATE_SESSION) {
-    return EBUSY;
+    return;
   }
 
   PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": disconnecting\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
-  err = pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
+  pppoe_send_padt(sc->sc_ethif, sc->sc_session, (const u8_t *)&sc->sc_dest);
 
   /* cleanup softc */
   sc->sc_state = PPPOE_STATE_INITIAL;
@@ -843,7 +841,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
   sc->sc_padr_retried = 0;
 
   sc->sc_link_status_cb(sc->pcb, PPPOE_CB_STATE_DOWN); /* notify upper layers */
-  return err;
+  return;
 }
 
 /* Connection attempt aborted */
