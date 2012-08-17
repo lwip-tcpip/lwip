@@ -84,6 +84,10 @@ struct netif *netif_default;
 
 static u8_t netif_num;
 
+#if LWIP_IPV6
+static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr);
+#endif /* LWIP_IPV6 */
+
 #if LWIP_HAVE_LOOPIF
 static struct netif loop_netif;
 
@@ -161,6 +165,7 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
     ip6_addr_set_zero(&netif->ip6_addr[i]);
     netif_ip6_addr_set_state(netif, i, IP6_ADDR_INVALID);
   }
+  netif->output_ip6 = netif_null_output_ip6;
 #endif /* LWIP_IPV6 */
   netif->flags = 0;
 #if LWIP_DHCP
@@ -877,5 +882,15 @@ netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
   /* Consider address valid. */
   netif->ip6_addr_state[0] = IP6_ADDR_PREFERRED;
 #endif /* LWIP_IPV6_AUTOCONFIG */
+}
+
+static err_t
+netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr)
+{
+    (void)netif;
+    (void)pbuf;
+    (void)ipaddr;
+
+    return ERR_IF;
 }
 #endif /* LWIP_IPV6 */
