@@ -888,7 +888,7 @@ static err_t
 netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr)
 {
     (void)netif;
-    (void)pbuf;
+    (void)p;
     (void)ipaddr;
 
     return ERR_IF;
