@@ -1164,6 +1164,9 @@ dhcp_release(struct netif *netif)
   err_t result;
   u16_t msecs;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release()\n"));
+  if (dhcp == NULL) {
+    return ERR_ARG;
+  }
 
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
@@ -1693,7 +1696,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   ip_addr_set_zero(&dhcp->msg_out->giaddr);
   for (i = 0; i < DHCP_CHADDR_LEN; i++) {
     /* copy netif hardware address, pad with zeroes */
-    dhcp->msg_out->chaddr[i] = (i < netif->hwaddr_len) ? netif->hwaddr[i] : 0/* pad byte*/;
+    dhcp->msg_out->chaddr[i] = (i < netif->hwaddr_len && i < NETIF_MAX_HWADDR_LEN) ? netif->hwaddr[i] : 0/* pad byte*/;
   }
   for (i = 0; i < DHCP_SNAME_LEN; i++) {
     dhcp->msg_out->sname[i] = 0;
