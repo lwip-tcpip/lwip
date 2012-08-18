@@ -60,10 +60,10 @@
 
 #include <ctype.h>  /* isdigit() */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "lcp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/lcp.h"
 
 #if defined(SUNOS4)
 extern char *strerror();

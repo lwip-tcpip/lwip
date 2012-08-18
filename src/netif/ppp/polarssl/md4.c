@@ -1,5 +1,5 @@
 /*
- *  RFC 1321 compliant MD5 implementation
+ *  RFC 1186/1320 compliant MD4 implementation
  *
  *  Based on XySSL: Copyright (C) 2006-2008  Christophe Devine
  *
@@ -33,15 +33,16 @@
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- *  The MD5 algorithm was designed by Ron Rivest in 1991.
+ *  The MD4 algorithm was designed by Ron Rivest in 1990.
  *
- *  http://www.ietf.org/rfc/rfc1321.txt
+ *  http://www.ietf.org/rfc/rfc1186.txt
+ *  http://www.ietf.org/rfc/rfc1320.txt
  */
 
 #include "lwip/opt.h"
-#if LWIP_INCLUDED_POLARSSL_MD5
+#if LWIP_INCLUDED_POLARSSL_MD4
 
-#include "lwip_md5.h"
+#include "netif/ppp/polarssl/md4.h"
 
 /*
  * 32-bit integer manipulation macros (little endian)
@@ -67,9 +68,9 @@
 #endif
 
 /*
- * MD5 context setup
+ * MD4 context setup
  */
-void md5_starts( md5_context *ctx )
+void md4_starts( md4_context *ctx )
 {
     ctx->total[0] = 0;
     ctx->total[1] = 0;
@@ -80,7 +81,7 @@ void md5_starts( md5_context *ctx )
     ctx->state[3] = 0x10325476;
 }
 
-static void md5_process( md5_context *ctx, unsigned char data[64] )
+static void md4_process( md4_context *ctx, unsigned char data[64] )
 {
     unsigned long X[16], A, B, C, D;
 
@@ -103,99 +104,79 @@ static void md5_process( md5_context *ctx, unsigned char data[64] )
 
 #define S(x,n) ((x << n) | ((x & 0xFFFFFFFF) >> (32 - n)))
 
-#define P(a,b,c,d,k,s,t)                                \
-{                                                       \
-    a += F(b,c,d) + X[k] + t; a = S(a,s) + b;           \
-}
-
     A = ctx->state[0];
     B = ctx->state[1];
     C = ctx->state[2];
     D = ctx->state[3];
 
-#define F(x,y,z) (z ^ (x & (y ^ z)))
+#define F(x, y, z) ((x & y) | ((~x) & z))
+#define P(a,b,c,d,x,s) { a += F(b,c,d) + x; a = S(a,s); }
 
-    P( A, B, C, D,  0,  7, 0xD76AA478 );
-    P( D, A, B, C,  1, 12, 0xE8C7B756 );
-    P( C, D, A, B,  2, 17, 0x242070DB );
-    P( B, C, D, A,  3, 22, 0xC1BDCEEE );
-    P( A, B, C, D,  4,  7, 0xF57C0FAF );
-    P( D, A, B, C,  5, 12, 0x4787C62A );
-    P( C, D, A, B,  6, 17, 0xA8304613 );
-    P( B, C, D, A,  7, 22, 0xFD469501 );
-    P( A, B, C, D,  8,  7, 0x698098D8 );
-    P( D, A, B, C,  9, 12, 0x8B44F7AF );
-    P( C, D, A, B, 10, 17, 0xFFFF5BB1 );
-    P( B, C, D, A, 11, 22, 0x895CD7BE );
-    P( A, B, C, D, 12,  7, 0x6B901122 );
-    P( D, A, B, C, 13, 12, 0xFD987193 );
-    P( C, D, A, B, 14, 17, 0xA679438E );
-    P( B, C, D, A, 15, 22, 0x49B40821 );
+    P( A, B, C, D, X[ 0],  3 );
+    P( D, A, B, C, X[ 1],  7 );
+    P( C, D, A, B, X[ 2], 11 );
+    P( B, C, D, A, X[ 3], 19 );
+    P( A, B, C, D, X[ 4],  3 );
+    P( D, A, B, C, X[ 5],  7 );
+    P( C, D, A, B, X[ 6], 11 );
+    P( B, C, D, A, X[ 7], 19 );
+    P( A, B, C, D, X[ 8],  3 );
+    P( D, A, B, C, X[ 9],  7 );
+    P( C, D, A, B, X[10], 11 );
+    P( B, C, D, A, X[11], 19 );
+    P( A, B, C, D, X[12],  3 );
+    P( D, A, B, C, X[13],  7 );
+    P( C, D, A, B, X[14], 11 );
+    P( B, C, D, A, X[15], 19 );
 
+#undef P
 #undef F
 
-#define F(x,y,z) (y ^ (z & (x ^ y)))
+#define F(x,y,z) ((x & y) | (x & z) | (y & z))
+#define P(a,b,c,d,x,s) { a += F(b,c,d) + x + 0x5A827999; a = S(a,s); }
 
-    P( A, B, C, D,  1,  5, 0xF61E2562 );
-    P( D, A, B, C,  6,  9, 0xC040B340 );
-    P( C, D, A, B, 11, 14, 0x265E5A51 );
-    P( B, C, D, A,  0, 20, 0xE9B6C7AA );
-    P( A, B, C, D,  5,  5, 0xD62F105D );
-    P( D, A, B, C, 10,  9, 0x02441453 );
-    P( C, D, A, B, 15, 14, 0xD8A1E681 );
-    P( B, C, D, A,  4, 20, 0xE7D3FBC8 );
-    P( A, B, C, D,  9,  5, 0x21E1CDE6 );
-    P( D, A, B, C, 14,  9, 0xC33707D6 );
-    P( C, D, A, B,  3, 14, 0xF4D50D87 );
-    P( B, C, D, A,  8, 20, 0x455A14ED );
-    P( A, B, C, D, 13,  5, 0xA9E3E905 );
-    P( D, A, B, C,  2,  9, 0xFCEFA3F8 );
-    P( C, D, A, B,  7, 14, 0x676F02D9 );
-    P( B, C, D, A, 12, 20, 0x8D2A4C8A );
+    P( A, B, C, D, X[ 0],  3 );
+    P( D, A, B, C, X[ 4],  5 );
+    P( C, D, A, B, X[ 8],  9 );
+    P( B, C, D, A, X[12], 13 );
+    P( A, B, C, D, X[ 1],  3 );
+    P( D, A, B, C, X[ 5],  5 );
+    P( C, D, A, B, X[ 9],  9 );
+    P( B, C, D, A, X[13], 13 );
+    P( A, B, C, D, X[ 2],  3 );
+    P( D, A, B, C, X[ 6],  5 );
+    P( C, D, A, B, X[10],  9 );
+    P( B, C, D, A, X[14], 13 );
+    P( A, B, C, D, X[ 3],  3 );
+    P( D, A, B, C, X[ 7],  5 );
+    P( C, D, A, B, X[11],  9 );
+    P( B, C, D, A, X[15], 13 );
 
+#undef P
 #undef F
-    
+
 #define F(x,y,z) (x ^ y ^ z)
+#define P(a,b,c,d,x,s) { a += F(b,c,d) + x + 0x6ED9EBA1; a = S(a,s); }
 
-    P( A, B, C, D,  5,  4, 0xFFFA3942 );
-    P( D, A, B, C,  8, 11, 0x8771F681 );
-    P( C, D, A, B, 11, 16, 0x6D9D6122 );
-    P( B, C, D, A, 14, 23, 0xFDE5380C );
-    P( A, B, C, D,  1,  4, 0xA4BEEA44 );
-    P( D, A, B, C,  4, 11, 0x4BDECFA9 );
-    P( C, D, A, B,  7, 16, 0xF6BB4B60 );
-    P( B, C, D, A, 10, 23, 0xBEBFBC70 );
-    P( A, B, C, D, 13,  4, 0x289B7EC6 );
-    P( D, A, B, C,  0, 11, 0xEAA127FA );
-    P( C, D, A, B,  3, 16, 0xD4EF3085 );
-    P( B, C, D, A,  6, 23, 0x04881D05 );
-    P( A, B, C, D,  9,  4, 0xD9D4D039 );
-    P( D, A, B, C, 12, 11, 0xE6DB99E5 );
-    P( C, D, A, B, 15, 16, 0x1FA27CF8 );
-    P( B, C, D, A,  2, 23, 0xC4AC5665 );
-
-#undef F
-
-#define F(x,y,z) (y ^ (x | ~z))
-
-    P( A, B, C, D,  0,  6, 0xF4292244 );
-    P( D, A, B, C,  7, 10, 0x432AFF97 );
-    P( C, D, A, B, 14, 15, 0xAB9423A7 );
-    P( B, C, D, A,  5, 21, 0xFC93A039 );
-    P( A, B, C, D, 12,  6, 0x655B59C3 );
-    P( D, A, B, C,  3, 10, 0x8F0CCC92 );
-    P( C, D, A, B, 10, 15, 0xFFEFF47D );
-    P( B, C, D, A,  1, 21, 0x85845DD1 );
-    P( A, B, C, D,  8,  6, 0x6FA87E4F );
-    P( D, A, B, C, 15, 10, 0xFE2CE6E0 );
-    P( C, D, A, B,  6, 15, 0xA3014314 );
-    P( B, C, D, A, 13, 21, 0x4E0811A1 );
-    P( A, B, C, D,  4,  6, 0xF7537E82 );
-    P( D, A, B, C, 11, 10, 0xBD3AF235 );
-    P( C, D, A, B,  2, 15, 0x2AD7D2BB );
-    P( B, C, D, A,  9, 21, 0xEB86D391 );
+    P( A, B, C, D, X[ 0],  3 );
+    P( D, A, B, C, X[ 8],  9 );
+    P( C, D, A, B, X[ 4], 11 );
+    P( B, C, D, A, X[12], 15 );
+    P( A, B, C, D, X[ 2],  3 );
+    P( D, A, B, C, X[10],  9 );
+    P( C, D, A, B, X[ 6], 11 );
+    P( B, C, D, A, X[14], 15 );
+    P( A, B, C, D, X[ 1],  3 );
+    P( D, A, B, C, X[ 9],  9 );
+    P( C, D, A, B, X[ 5], 11 );
+    P( B, C, D, A, X[13], 15 );
+    P( A, B, C, D, X[ 3],  3 );
+    P( D, A, B, C, X[11],  9 );
+    P( C, D, A, B, X[ 7], 11 );
+    P( B, C, D, A, X[15], 15 );
 
 #undef F
+#undef P
 
     ctx->state[0] += A;
     ctx->state[1] += B;
@@ -204,9 +185,9 @@ static void md5_process( md5_context *ctx, unsigned char data[64] )
 }
 
 /*
- * MD5 process buffer
+ * MD4 process buffer
  */
-void md5_update( md5_context *ctx, unsigned char *input, int ilen )
+void md4_update( md4_context *ctx, unsigned char *input, int ilen )
 {
     int fill;
     unsigned long left;
@@ -227,7 +208,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
     {
         MEMCPY( (void *) (ctx->buffer + left),
                 (void *) input, fill );
-        md5_process( ctx, ctx->buffer );
+        md4_process( ctx, ctx->buffer );
         input += fill;
         ilen  -= fill;
         left = 0;
@@ -235,7 +216,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
 
     while( ilen >= 64 )
     {
-        md5_process( ctx, input );
+        md4_process( ctx, input );
         input += 64;
         ilen  -= 64;
     }
@@ -247,7 +228,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
     }
 }
 
-static const unsigned char md5_padding[64] =
+static const unsigned char md4_padding[64] =
 {
  0x80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -256,9 +237,9 @@ static const unsigned char md5_padding[64] =
 };
 
 /*
- * MD5 final digest
+ * MD4 final digest
  */
-void md5_finish( md5_context *ctx, unsigned char output[16] )
+void md4_finish( md4_context *ctx, unsigned char output[16] )
 {
     unsigned long last, padn;
     unsigned long high, low;
@@ -274,8 +255,8 @@ void md5_finish( md5_context *ctx, unsigned char output[16] )
     last = ctx->total[0] & 0x3F;
     padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
-    md5_update( ctx, (unsigned char *) md5_padding, padn );
-    md5_update( ctx, msglen, 8 );
+    md4_update( ctx, (unsigned char *) md4_padding, padn );
+    md4_update( ctx, msglen, 8 );
 
     PUT_ULONG_LE( ctx->state[0], output,  0 );
     PUT_ULONG_LE( ctx->state[1], output,  4 );
@@ -284,15 +265,15 @@ void md5_finish( md5_context *ctx, unsigned char output[16] )
 }
 
 /*
- * output = MD5( input buffer )
+ * output = MD4( input buffer )
  */
-void md5( unsigned char *input, int ilen, unsigned char output[16] )
+void md4( unsigned char *input, int ilen, unsigned char output[16] )
 {
-    md5_context ctx;
+    md4_context ctx;
 
-    md5_starts( &ctx );
-    md5_update( &ctx, input, ilen );
-    md5_finish( &ctx, output );
+    md4_starts( &ctx );
+    md4_update( &ctx, input, ilen );
+    md4_finish( &ctx, output );
 }
 
-#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */

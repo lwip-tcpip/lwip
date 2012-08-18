@@ -36,14 +36,14 @@
 #include <string.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "chap-new.h"
-#include "chap-md5.h"
-#include "magic.h"
+#include "netif/ppp/chap-new.h"
+#include "netif/ppp/chap-md5.h"
+#include "netif/ppp/magic.h"
 
 #if LWIP_INCLUDED_POLARSSL_MD5
-#include "polarssl/lwip_md5.h"
+#include "netif/ppp/polarssl/md5.h"
 #else
 #include "polarssl/md5.h"
 #endif

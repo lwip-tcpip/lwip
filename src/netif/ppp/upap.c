@@ -52,9 +52,9 @@
 #include <string.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "upap.h"
+#include "netif/ppp/upap.h"
 
 #if PPP_OPTIONS
 /*

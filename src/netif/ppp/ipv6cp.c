@@ -163,11 +163,11 @@
 #include <arpa/inet.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
-#include "fsm.h"
-#include "ipcp.h"
-#include "ipv6cp.h"
-#include "magic.h"
+#include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/ipcp.h"
+#include "netif/ppp/ipv6cp.h"
+#include "netif/ppp/magic.h"
 
 /* global vars */
 #if 0 /* UNUSED */

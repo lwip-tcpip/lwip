@@ -46,21 +46,21 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && EAP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
 #if LWIP_INCLUDED_POLARSSL_MD5
-#include "polarssl/lwip_md5.h"
+#include "netif/ppp/polarssl/md5.h"
 #else
 #include "polarssl/md5.h"
 #endif
 
-#include "eap.h"
+#include "netif/ppp/eap.h"
 
 #ifdef USE_SRP
 #include <t_pwd.h>
 #include <t_server.h>
 #include <t_client.h>
-#include "pppcrypt.h"
+#include "netif/ppp/pppcrypt.h"
 #endif /* USE_SRP */
 
 #ifndef SHA_DIGESTSIZE

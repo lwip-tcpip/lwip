@@ -36,16 +36,16 @@
 #include <string.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
 #if 0 /* UNUSED */
 #include "session.h"
 #endif /* UNUSED */
 
-#include "chap-new.h"
-#include "chap-md5.h"
+#include "netif/ppp/chap-new.h"
+#include "netif/ppp/chap-md5.h"
 #if MSCHAP_SUPPORT
-#include "chap_ms.h"
+#include "netif/ppp/chap_ms.h"
 #endif
 
 /* Hook for a plugin to validate CHAP challenge */

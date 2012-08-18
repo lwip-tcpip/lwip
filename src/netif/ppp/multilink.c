@@ -49,11 +49,11 @@
 #include <netinet/in.h>
 #include <unistd.h>
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "lcp.h"
-#include "tdb.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/lcp.h"
+#include "netif/ppp/tdb.h"
 
 bool endpoint_specified;	/* user gave explicit endpoint discriminator */
 char *bundle_id;		/* identifier for our bundle */

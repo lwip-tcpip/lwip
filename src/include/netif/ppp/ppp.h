@@ -145,10 +145,10 @@ typedef struct ppp_pcb_s ppp_pcb;
 #endif /* EAP_SUPPORT */
 
 #if PPPOE_SUPPORT
-#include "netif/ppp_oe.h"
+#include "netif/ppp/pppoe.h"
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
-#include "netif/pppol2tp.h"
+#include "netif/ppp/pppol2tp.h"
 #endif /* PPPOL2TP_SUPPORT */
 
 /*

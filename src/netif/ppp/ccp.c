@@ -34,15 +34,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "ccp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/ccp.h"
 #include <net/ppp-comp.h>
 
 #ifdef MPPE
-#include "chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
-#include "lcp.h"	/* lcp_close(), lcp_fsm */
+#include "netif/ppp/chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
+#include "netif/ppp/lcp.h"	/* lcp_close(), lcp_fsm */
 #endif
 
 /*

@@ -92,40 +92,40 @@
 #include "lwip/sys.h"
 #include "lwip/ip.h" /* for ip_input() */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "lcp.h"
-#include "ipcp.h"
-#include "magic.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/lcp.h"
+#include "netif/ppp/ipcp.h"
+#include "netif/ppp/magic.h"
 
 #if PAP_SUPPORT
-#include "upap.h"
+#include "netif/ppp/upap.h"
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-#include "chap-new.h"
+#include "netif/ppp/chap-new.h"
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-#include "eap.h"
+#include "netif/ppp/eap.h"
 #endif /* EAP_SUPPORT */
 #if CCP_SUPPORT
-#include "ccp.h"
+#include "netif/ppp/ccp.h"
 #endif /* EAP_SUPPORT */
 #if ECP_SUPPORT
-#include "ecp.h"
+#include "netif/ppp/ecp.h"
 #endif /* EAP_SUPPORT */
 #if VJ_SUPPORT
-#include "vj.h"
+#include "netif/ppp/vj.h"
 #endif /* VJ_SUPPORT */
 #if PPP_IPV6_SUPPORT
-#include "ipv6cp.h"
+#include "netif/ppp/ipv6cp.h"
 #endif /* PPP_IPV6_SUPPORT */
 
 #if PPPOE_SUPPORT
-#include "netif/ppp_oe.h"
+#include "netif/ppp/pppoe.h"
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
-#include "netif/pppol2tp.h"
+#include "netif/ppp/pppol2tp.h"
 #endif /* PPPOL2TP_SUPPORT */
 
 /* Global variables */

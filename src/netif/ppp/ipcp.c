@@ -59,10 +59,10 @@
 #include <arpa/inet.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "ipcp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/ipcp.h"
 
 #if 0 /* UNUSED */
 /* global vars */

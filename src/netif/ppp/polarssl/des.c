@@ -42,7 +42,7 @@
 #include "lwip/opt.h"
 #if LWIP_INCLUDED_POLARSSL_DES
 
-#include "lwip_des.h"
+#include "netif/ppp/polarssl/des.h"
 
 /*
  * 32-bit integer manipulation macros (big endian)

@@ -87,27 +87,27 @@
 #include <unistd.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "chap-new.h"
-#include "chap_ms.h"
-#include "pppcrypt.h"
-#include "magic.h"
+#include "netif/ppp/chap-new.h"
+#include "netif/ppp/chap_ms.h"
+#include "netif/ppp/pppcrypt.h"
+#include "netif/ppp/magic.h"
 
 #if LWIP_INCLUDED_POLARSSL_MD4
-#include "polarssl/lwip_md4.h"
+#include "netif/ppp/polarssl/md4.h"
 #else
 #include "polarssl/md4.h"
 #endif
 
 #if LWIP_INCLUDED_POLARSSL_SHA1
-#include "polarssl/lwip_sha1.h"
+#include "netif/ppp/polarssl/sha1.h"
 #else
 #include "polarssl/sha1.h"
 #endif
 
 #if LWIP_INCLUDED_POLARSSL_DES
-#include "polarssl/lwip_des.h"
+#include "netif/ppp/polarssl/des.h"
 #else
 #include "polarssl/des.h"
 #endif
@@ -150,8 +150,8 @@ static char *mschap_challenge = NULL;
 static char *mschap2_peer_challenge = NULL;
 #endif
 
-#include "fsm.h"		/* Need to poke MPPE options */
-#include "ccp.h"
+#include "netif/ppp/fsm.h"		/* Need to poke MPPE options */
+#include "netif/ppp/ccp.h"
 #include <net/ppp-comp.h>
 #endif
 

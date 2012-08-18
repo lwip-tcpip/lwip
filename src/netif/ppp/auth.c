@@ -103,28 +103,28 @@
 #include <time.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "lcp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/lcp.h"
 #if CCP_SUPPORT
-#include "ccp.h"
+#include "netif/ppp/ccp.h"
 #endif /* CCP_SUPPORT */
 #if ECP_SUPPORT
-#include "ecp.h"
+#include "netif/ppp/ecp.h"
 #endif /* ECP_SUPPORT */
-#include "ipcp.h"
+#include "netif/ppp/ipcp.h"
 #if PAP_SUPPORT
-#include "upap.h"
+#include "netif/ppp/upap.h"
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-#include "chap-new.h"
+#include "netif/ppp/chap-new.h"
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-#include "eap.h"
+#include "netif/ppp/eap.h"
 #endif /* EAP_SUPPORT */
 #if CBCP_SUPPORT
-#include "cbcp.h"
+#include "netif/ppp/cbcp.h"
 #endif
 
 #if 0 /* UNUSED */

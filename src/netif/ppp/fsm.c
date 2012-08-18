@@ -55,9 +55,9 @@
 #include <sys/types.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
+#include "netif/ppp/fsm.h"
 
 static void fsm_timeout (void *);
 static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len);

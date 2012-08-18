@@ -52,11 +52,11 @@
 #include <pcap-bpf.h>
 #endif
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "ipcp.h"
-#include "lcp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/ipcp.h"
+#include "netif/ppp/lcp.h"
 
 char *frame;
 int framelen;

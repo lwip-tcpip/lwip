@@ -58,14 +58,14 @@
 #include "lwip/netif.h"
 #include "lwip/udp.h"
 
-#include "ppp_impl.h"
-#include "netif/pppol2tp.h"
+#include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/pppol2tp.h"
 
-#include "magic.h"
+#include "netif/ppp/magic.h"
 
 #if PPPOL2TP_AUTH_SUPPORT
 #if LWIP_INCLUDED_POLARSSL_MD5
-#include "polarssl/lwip_md5.h"
+#include "netif/ppp/polarssl/md5.h"
 #else
 #include "polarssl/md5.h"
 #endif

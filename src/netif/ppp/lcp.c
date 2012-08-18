@@ -53,14 +53,14 @@
 #include <stdlib.h>
 #endif /* UNUSED */
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "lcp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/lcp.h"
 #if CHAP_SUPPORT
-#include "chap-new.h"
+#include "netif/ppp/chap-new.h"
 #endif /* CHAP_SUPPORT */
-#include "magic.h"
+#include "netif/ppp/magic.h"
 
 /*
  * When the link comes up we want to be able to wait for a short while,

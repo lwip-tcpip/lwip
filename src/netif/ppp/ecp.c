@@ -62,10 +62,10 @@
 
 #include <string.h>
 
-#include "ppp_impl.h"
+#include "netif/ppp/ppp_impl.h"
 
-#include "fsm.h"
-#include "ecp.h"
+#include "netif/ppp/fsm.h"
+#include "netif/ppp/ecp.h"
 
 #if PPP_OPTIONS
 static option_t ecp_option_list[] = {

@@ -58,7 +58,7 @@
 #include "lwip/ip6.h"
 
 #if PPPOE_SUPPORT
-#include "netif/ppp_oe.h"
+#include "netif/ppp/pppoe.h"
 #endif /* PPPOE_SUPPORT */
 
 #include <string.h>

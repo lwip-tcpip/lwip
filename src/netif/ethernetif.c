@@ -54,7 +54,7 @@
 #include "lwip/snmp.h"
 #include "lwip/ethip6.h"
 #include "netif/etharp.h"
-#include "netif/ppp_oe.h"
+#include "netif/ppp/pppoe.h"
 
 /* Define those to better describe your network interface. */
 #define IFNAME0 'e'

@@ -1,5 +1,5 @@
 /*****************************************************************************
-* ppp_oe.h - PPP Over Ethernet implementation for lwIP.
+* pppoe.h - PPP Over Ethernet implementation for lwIP.
 *
 * Copyright (c) 2006 by Marc Boucher, Services Informatiques (MBSI) inc.
 *

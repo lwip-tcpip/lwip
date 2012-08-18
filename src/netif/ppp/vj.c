@@ -31,10 +31,10 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && VJ_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#include "ppp_impl.h"
-#include "pppdebug.h"
+#include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/pppdebug.h"
 
-#include "vj.h"
+#include "netif/ppp/vj.h"
 
 #include <string.h>
 

@@ -33,7 +33,7 @@
 #if LWIP_PPP_API /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/sys.h"
-#include "ppp.h"
+#include "netif/ppp/ppp.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,5 +1,5 @@
 /*****************************************************************************
-* ppp_oe.c - PPP Over Ethernet implementation for lwIP.
+* pppoe.c - PPP Over Ethernet implementation for lwIP.
 *
 * Copyright (c) 2006 by Marc Boucher, Services Informatiques (MBSI) inc.
 *
@@ -80,8 +80,8 @@
 #include "lwip/memp.h"
 #include "lwip/stats.h"
 
-#include "ppp_impl.h"
-#include "netif/ppp_oe.h"
+#include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/pppoe.h"
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
 #define PPPOE_ADD_16(PTR, VAL) \
