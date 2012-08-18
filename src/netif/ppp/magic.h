@@ -105,7 +105,7 @@ u32_t magic(void);	/* Returns the next magic number */
  * Fill buffer with random bytes
  *
  * Use the random pool to generate random data.  This degrades to pseudo
- * random when used faster than randomness is supplied using churnRand().
+ * random when used faster than randomness is supplied using magic_churnrand().
  * Thus it's important to make sure that the results of this are not
  * published directly because one could predict the next result to at
  * least some degree.  Also, it's important to get a good seed before
