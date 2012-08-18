@@ -39,6 +39,7 @@
 
 #include <stdio.h> /* formats */
 #include <stdarg.h>
+#include <string.h>
 
 #include "lwip/netif.h"
 #include "lwip/def.h"
