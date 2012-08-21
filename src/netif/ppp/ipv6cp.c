@@ -1120,9 +1120,9 @@ static int ipv6_demand_conf(int u) {
     if (!sifnpmode(u, PPP_IPV6, NPMODE_QUEUE))
 	return 0;
 
-    notice("ipv6_demand_conf");
-    notice("local  LL address %s", llv6_ntoa(wo->ourid));
-    notice("remote LL address %s", llv6_ntoa(wo->hisid));
+    ppp_notice("ipv6_demand_conf");
+    ppp_notice("local  LL address %s", llv6_ntoa(wo->ourid));
+    ppp_notice("remote LL address %s", llv6_ntoa(wo->hisid));
 
     return 1;
 }
@@ -1152,17 +1152,17 @@ static void ipv6cp_up(fsm *f) {
     if(!no_ifaceid_neg) {
 #endif /* UNUSED */
 	if (eui64_iszero(ho->hisid)) {
-	    error("Could not determine remote LL address");
+	    ppp_error("Could not determine remote LL address");
 	    ipv6cp_close(f->pcb, "Could not determine remote LL address");
 	    return;
 	}
 	if (eui64_iszero(go->ourid)) {
-	    error("Could not determine local LL address");
+	    ppp_error("Could not determine local LL address");
 	    ipv6cp_close(f->pcb, "Could not determine local LL address");
 	    return;
 	}
 	if (eui64_equals(go->ourid, ho->hisid)) {
-	    error("local and remote LL addresses are equal");
+	    ppp_error("local and remote LL addresses are equal");
 	    ipv6cp_close(f->pcb, "local and remote LL addresses are equal");
 	    return;
 	}
@@ -1228,8 +1228,8 @@ static void ipv6cp_up(fsm *f) {
 	}
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_PASS);
 
-	notice("local  LL address %s", llv6_ntoa(go->ourid));
-	notice("remote LL address %s", llv6_ntoa(ho->hisid));
+	ppp_notice("local  LL address %s", llv6_ntoa(go->ourid));
+	ppp_notice("remote LL address %s", llv6_ntoa(ho->hisid));
     }
 
     np_up(f->pcb, PPP_IPV6);
@@ -1447,7 +1447,7 @@ static int ipv6cp_printpkt(u_char *p, int plen,
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    print_string((char *)p, len, printer, arg);
+	    ppp_print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}

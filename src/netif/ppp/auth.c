@@ -590,9 +590,9 @@ void start_link(unit)
      * incoming events (reply, timeout, etc.).
      */
     if (ifunit >= 0)
-	notice("Connect: %s <--> %s", ifname, ppp_devnam);
+	ppp_notice("Connect: %s <--> %s", ifname, ppp_devnam);
     else
-	notice("Starting negotiation on %s", ppp_devnam);
+	ppp_notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
     new_phase(pcb, PHASE_ESTABLISH);
@@ -629,12 +629,12 @@ void link_terminated(ppp_pcb *pcb) {
 #endif /* UNUSED */
 
     if (!doing_multilink) {
-	notice("Connection terminated.");
+	ppp_notice("Connection terminated.");
 #if PPP_STATS_SUPPORT
 	print_link_stats();
 #endif /* PPP_STATS_SUPPORT */
     } else
-	notice("Link terminated.");
+	ppp_notice("Link terminated.");
 
     lcp_lowerdown(pcb);
 
@@ -780,7 +780,7 @@ void link_established(ppp_pcb *pcb) {
 	} else
 #endif /* PPP_ALLOWED_ADDRS */
 	if (!wo->neg_upap || uselogin || !null_login(unit)) {
-	    warn("peer refused to authenticate: terminating link");
+	    ppp_warn("peer refused to authenticate: terminating link");
 	    status = EXIT_PEER_AUTH_FAILED;
 	    lcp_close(pcb, "peer refused to authenticate");
 	    return;
@@ -854,7 +854,7 @@ static void network_phase(ppp_pcb *pcb) {
 #if 0 /* UNUSED */
     /* Log calling number. */
     if (*remote_number)
-	notice("peer from calling number %q authorized", remote_number);
+	ppp_notice("peer from calling number %q authorized", remote_number);
 #endif /* UNUSED */
 
 #if PPP_NOTIFY
@@ -1040,7 +1040,7 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, 
 	break;
 #endif /* EAP_SUPPORT */
     default:
-	warn("auth_peer_success: unknown protocol %x", protocol);
+	ppp_warn("auth_peer_success: unknown protocol %x", protocol);
 	return;
     }
 
@@ -1127,12 +1127,12 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
 	break;
 #endif /* EAP_SUPPORT */
     default:
-	warn("auth_withpeer_success: unknown protocol %x", protocol);
+	ppp_warn("auth_withpeer_success: unknown protocol %x", protocol);
 	bit = 0;
 	/* no break */
     }
 
-    notice("%s authentication succeeded", prot);
+    ppp_notice("%s authentication succeeded", prot);
 
     /* Save the authentication method for later. */
     pcb->auth_done |= bit;
@@ -1251,7 +1251,7 @@ check_maxoctets(arg)
 	    break;
     }
     if (used > maxoctets) {
-	notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
+	ppp_notice("Traffic limit reached. Limit: %u Used: %u", maxoctets, used);
 	status = EXIT_TRAFFIC_LIMIT;
 	lcp_close(pcb, "Traffic limit");
 #if 0 /* UNUSED */
@@ -1290,7 +1290,7 @@ static void check_idle(void *arg) {
     if (tlim <= 0) {
 	int errcode = PPPERR_IDLETIMEOUT;
 	/* link is idle: shut it down. */
-	notice("Terminating connection due to lack of activity.");
+	ppp_notice("Terminating connection due to lack of activity.");
 	ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 	lcp_close(pcb, "Link inactive");
 #if 0 /* UNUSED */
@@ -1309,7 +1309,7 @@ static void check_idle(void *arg) {
 static void connect_time_expired(void *arg) {
     int errcode = PPPERR_CONNECTTIME;
     ppp_pcb *pcb = (ppp_pcb*)arg;
-    info("Connect time expired");
+    ppp_info("Connect time expired");
     ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
     lcp_close(pcb, "Connect time expired");	/* Close connection */
 }
@@ -1448,7 +1448,7 @@ auth_check_options()
      * Early check for remote number authorization.
      */
     if (!auth_number()) {
-	warn("calling number %q is not authorized", remote_number);
+	ppp_warn("calling number %q is not authorized", remote_number);
 	exit(EXIT_CNID_AUTH_FAILED);
     }
 }
@@ -1633,12 +1633,12 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
     ret = UPAP_AUTHNAK;
     f = fopen(filename, "r");
     if (f == NULL) {
-	error("Can't open PAP password file %s: %m", filename);
+	ppp_error("Can't open PAP password file %s: %m", filename);
 
     } else {
 	check_access(f, filename);
 	if (scan_authfile(f, ppp_settings.user, our_name, secret, &addrs, &opts, filename, 0) < 0) {
-	    warn("no PAP secret found for %s", user);
+	    ppp_warn("no PAP secret found for %s", user);
 	} else {
 	    /*
 	     * If the secret is "@login", it means to check
@@ -1653,7 +1653,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 		}
 	    } else if (session_mgmt) {
 		if (session_check(ppp_settings.user, NULL, devnam, NULL) == 0) {
-		    warn("Peer %q failed PAP Session verification", user);
+		    ppp_warn("Peer %q failed PAP Session verification", user);
 		    ret = UPAP_AUTHNAK;
 		}
 	    }
@@ -1677,7 +1677,7 @@ check_passwd(unit, auser, userlen, apasswd, passwdlen, msg)
 	 * On 10'th, drop the connection.
 	 */
 	if (attempts++ >= 10) {
-	    warn("%d LOGIN FAILURES ON %s, %s", attempts, devnam, user);
+	    ppp_warn("%d LOGIN FAILURES ON %s, %s", attempts, devnam, user);
 	    lcp_close(pcb, "login failed");
 	}
 	if (attempts > 3)
@@ -1936,7 +1936,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
 
   len = (int)strlen(pcb->settings.passwd);
   if (len > MAXSECRETLEN) {
-    error("Secret for %s on %s is too long", client, server);
+    ppp_error("Secret for %s on %s is too long", client, server);
     len = MAXSECRETLEN;
   }
 
@@ -1968,7 +1968,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
 	strlcpy(secbuf, ppp_settings.passwd, sizeof(secbuf));
     } else if (!am_server && chap_passwd_hook) {
 	if ( (*chap_passwd_hook)(client, secbuf) < 0) {
-	    error("Unable to obtain CHAP password for %s on %s from plugin",
+	    ppp_error("Unable to obtain CHAP password for %s on %s from plugin",
 		  client, server);
 	    return 0;
 	}
@@ -1979,7 +1979,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
 
 	f = fopen(filename, "r");
 	if (f == NULL) {
-	    error("Can't open chap secret file %s: %m", filename);
+	    ppp_error("Can't open chap secret file %s: %m", filename);
 	    return 0;
 	}
 	check_access(f, filename);
@@ -1999,7 +1999,7 @@ int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secr
 
     len = strlen(secbuf);
     if (len > MAXSECRETLEN) {
-	error("Secret for %s on %s is too long", client, server);
+	ppp_error("Secret for %s on %s is too long", client, server);
 	len = MAXSECRETLEN;
     }
     MEMCPY(secret, secbuf, len);
@@ -2038,7 +2038,7 @@ get_srp_secret(unit, client, server, secret, am_server)
 
 	fp = fopen(filename, "r");
 	if (fp == NULL) {
-	    error("Can't open srp secret file %s: %m", filename);
+	    ppp_error("Can't open srp secret file %s: %m", filename);
 	    return 0;
 	}
 	check_access(fp, filename);
@@ -2132,7 +2132,7 @@ set_allowed_addrs(unit, addrs, opts)
 
 	    bit_count = (int) strtol (ptr_mask+1, &endp, 10);
 	    if (bit_count <= 0 || bit_count > 32) {
-		warn("invalid address length %v in auth. address list",
+		ppp_warn("invalid address length %v in auth. address list",
 		     ptr_mask+1);
 		continue;
 	    }
@@ -2142,7 +2142,7 @@ set_allowed_addrs(unit, addrs, opts)
 		++endp;
 	    }
 	    if (*endp != 0) {
-		warn("invalid address length syntax: %v", ptr_mask+1);
+		ppp_warn("invalid address length syntax: %v", ptr_mask+1);
 		continue;
 	    }
 	    *ptr_mask = '\0';
@@ -2175,12 +2175,12 @@ set_allowed_addrs(unit, addrs, opts)
 	    *ptr_mask = '/';
 
 	if (a == (u32_t)-1L) {
-	    warn("unknown host %s in auth. address list", ap->word);
+	    ppp_warn("unknown host %s in auth. address list", ap->word);
 	    continue;
 	}
 	if (offset != 0) {
 	    if (offset >= ~mask) {
-		warn("interface unit %d too large for subnet %v",
+		ppp_warn("interface unit %d too large for subnet %v",
 		     ifunit, ptr_word);
 		continue;
 	    }
@@ -2329,9 +2329,9 @@ check_access(f, filename)
     struct stat sbuf;
 
     if (fstat(fileno(f), &sbuf) < 0) {
-	warn("cannot stat secret file %s: %m", filename);
+	ppp_warn("cannot stat secret file %s: %m", filename);
     } else if ((sbuf.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-	warn("Warning - secret file %s has world and/or group access",
+	ppp_warn("Warning - secret file %s has world and/or group access",
 	     filename);
     }
 }
@@ -2442,12 +2442,12 @@ scan_authfile(f, client, server, secret, addrs, opts, filename, flags)
 	    if (word[0] == '@' && word[1] == '/') {
 		strlcpy(atfile, word+1, sizeof(atfile));
 		if ((sf = fopen(atfile, "r")) == NULL) {
-		    warn("can't open indirect secret file %s", atfile);
+		    ppp_warn("can't open indirect secret file %s", atfile);
 		    continue;
 		}
 		check_access(sf, atfile);
 		if (!getword(sf, word, &xxx, atfile)) {
-		    warn("no secret in indirect secret file %s", atfile);
+		    ppp_warn("no secret in indirect secret file %s", atfile);
 		    fclose(sf);
 		    continue;
 		}

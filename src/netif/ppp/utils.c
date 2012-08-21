@@ -69,11 +69,11 @@
 extern char *strerror();
 #endif
 
-static void logit(int level, char *fmt, va_list args);
-static void log_write(int level, char *buf);
+static void ppp_logit(int level, char *fmt, va_list args);
+static void ppp_log_write(int level, char *buf);
 #if PRINTPKT_SUPPORT
-static void vslp_printer(void *arg, char *fmt, ...);
-static void format_packet(u_char *p, int len,
+static void ppp_vslp_printer(void *arg, char *fmt, ...);
+static void ppp_format_packet(u_char *p, int len,
 		void (*printer) (void *, char *, ...), void *arg);
 
 struct buffer_info {
@@ -83,10 +83,10 @@ struct buffer_info {
 #endif /* PRINTPKT_SUPPORT */
 
 /*
- * strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
+ * ppp_strlcpy - like strcpy/strncpy, doesn't overflow destination buffer,
  * always leaves destination null-terminated (for len > 0).
  */
-size_t strlcpy(char *dest, const char *src, size_t len) {
+size_t ppp_strlcpy(char *dest, const char *src, size_t len) {
     size_t ret = strlen(src);
 
     if (len != 0) {
@@ -101,40 +101,40 @@ size_t strlcpy(char *dest, const char *src, size_t len) {
 }
 
 /*
- * strlcat - like strcat/strncat, doesn't overflow destination buffer,
+ * ppp_strlcat - like strcat/strncat, doesn't overflow destination buffer,
  * always leaves destination null-terminated (for len > 0).
  */
-size_t strlcat(char *dest, const char *src, size_t len) {
+size_t ppp_strlcat(char *dest, const char *src, size_t len) {
     size_t dlen = strlen(dest);
 
-    return dlen + strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
+    return dlen + ppp_strlcpy(dest + dlen, src, (len > dlen? len - dlen: 0));
 }
 
 
 /*
- * slprintf - format a message into a buffer.  Like sprintf except we
+ * ppp_slprintf - format a message into a buffer.  Like sprintf except we
  * also specify the length of the output buffer, and we handle
  * %m (error message), %v (visible string),
  * %q (quoted string), %t (current time) and %I (IP address) formats.
  * Doesn't do floating-point formats.
  * Returns the number of chars put into buf.
  */
-int slprintf(char *buf, int buflen, char *fmt, ...) {
+int ppp_slprintf(char *buf, int buflen, char *fmt, ...) {
     va_list args;
     int n;
 
     va_start(args, fmt);
-    n = vslprintf(buf, buflen, fmt, args);
+    n = ppp_vslprintf(buf, buflen, fmt, args);
     va_end(args);
     return n;
 }
 
 /*
- * vslprintf - like slprintf, takes a va_list instead of a list of args.
+ * ppp_vslprintf - like ppp_slprintf, takes a va_list instead of a list of args.
  */
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
-int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
+int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
     int c, i, n;
     int width, prec, fillch;
     int base, len, neg, quoted;
@@ -267,7 +267,7 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 	case 'I':
 	    ip = va_arg(args, u32_t);
 	    ip = ntohl(ip);
-	    slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
+	    ppp_slprintf(num, sizeof(num), "%d.%d.%d.%d", (ip >> 24) & 0xff,
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;
 	    break;
@@ -275,10 +275,10 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 	case 'r':
 	    f = va_arg(args, char *);
 #ifndef __powerpc__
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
+	    n = ppp_vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
 #else
 	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = vslprintf(buf, buflen + 1, f, va_arg(args, void *));
+	    n = ppp_vslprintf(buf, buflen + 1, f, va_arg(args, void *));
 #endif
 	    buf += n;
 	    buflen -= n;
@@ -344,7 +344,7 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 	    bufinfo.len = buflen + 1;
 	    p = va_arg(args, unsigned char *);
 	    n = va_arg(args, int);
-	    format_packet(p, n, vslp_printer, &bufinfo);
+	    ppp_format_packet(p, n, ppp_vslp_printer, &bufinfo);
 	    buf = bufinfo.ptr;
 	    buflen = bufinfo.len - 1;
 	    continue;
@@ -413,14 +413,14 @@ int vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 /*
  * vslp_printer - used in processing a %P format
  */
-static void vslp_printer(void *arg, char *fmt, ...) {
+static void ppp_vslp_printer(void *arg, char *fmt, ...) {
     int n;
     va_list pvar;
     struct buffer_info *bi;
 
     va_start(pvar, fmt);
     bi = (struct buffer_info *) arg;
-    n = vslprintf(bi->ptr, bi->len, fmt, pvar);
+    n = ppp_vslprintf(bi->ptr, bi->len, fmt, pvar);
     va_end(pvar);
 
     bi->ptr += n;
@@ -441,17 +441,17 @@ log_packet(p, len, prefix, level)
     int level;
 {
 	init_pr_log(prefix, level);
-	format_packet(p, len, pr_log, &level);
+	ppp_format_packet(p, len, pr_log, &level);
 	end_pr_log();
 }
 #endif /* UNUSED */
 
 #if PRINTPKT_SUPPORT
 /*
- * format_packet - make a readable representation of a packet,
+ * ppp_format_packet - make a readable representation of a packet,
  * calling `printer(arg, format, ...)' to output it.
  */
-static void format_packet(u_char *p, int len,
+static void ppp_format_packet(u_char *p, int len,
 		void (*printer) (void *, char *, ...), void *arg) {
     int i, n;
     u_short proto;
@@ -508,7 +508,7 @@ init_pr_log(prefix, level)
 {
 	linep = line;
 	if (prefix != NULL) {
-		strlcpy(line, prefix, sizeof(line));
+		ppp_strlcpy(line, prefix, sizeof(line));
 		linep = line + strlen(line);
 	}
 	llevel = level;
@@ -519,7 +519,7 @@ end_pr_log()
 {
 	if (linep != line) {
 		*linep = 0;
-		log_write(llevel, line);
+		ppp_log_write(llevel, line);
 	}
 }
 
@@ -535,7 +535,7 @@ pr_log (void *arg, char *fmt, ...)
 	char buf[256];
 
 	va_start(pvar, fmt);
-	n = vslprintf(buf, sizeof(buf), fmt, pvar);
+	n = ppp_vslprintf(buf, sizeof(buf), fmt, pvar);
 	va_end(pvar);
 
 	p = buf;
@@ -553,13 +553,13 @@ pr_log (void *arg, char *fmt, ...)
 			eol = strchr(p, '\n');
 		}
 		*linep = 0;
-		log_write(llevel, line);
+		ppp_log_write(llevel, line);
 		linep = line;
 	}
 
 	while (eol != NULL) {
 		*eol = 0;
-		log_write(llevel, p);
+		ppp_log_write(llevel, p);
 		p = eol + 1;
 		eol = strchr(p, '\n');
 	}
@@ -574,10 +574,10 @@ pr_log (void *arg, char *fmt, ...)
 #endif /* UNUSED */
 
 /*
- * print_string - print a readable representation of a string using
+ * ppp_print_string - print a readable representation of a string using
  * printer.
  */
-void print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg) {
+void ppp_print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg) {
     int c;
 
     printer(arg, "\"");
@@ -608,16 +608,16 @@ void print_string(char *p, int len, void (*printer) (void *, char *, ...), void 
 }
 
 /*
- * logit - does the hard work for fatal et al.
+ * ppp_logit - does the hard work for fatal et al.
  */
-static void logit(int level, char *fmt, va_list args) {
+static void ppp_logit(int level, char *fmt, va_list args) {
     char buf[1024];
 
-    vslprintf(buf, sizeof(buf), fmt, args);
-    log_write(level, buf);
+    ppp_vslprintf(buf, sizeof(buf), fmt, args);
+    ppp_log_write(level, buf);
 }
 
-static void log_write(int level, char *buf) {
+static void ppp_log_write(int level, char *buf) {
     PPPDEBUG(level, ("%s\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {
@@ -633,13 +633,13 @@ static void log_write(int level, char *buf) {
 }
 
 /*
- * fatal - log an error message and die horribly.
+ * ppp_fatal - log an error message and die horribly.
  */
-void fatal(char *fmt, ...) {
+void ppp_fatal(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_ERR, fmt, pvar);
+    ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
 /* FIXME: find a way to die */
@@ -649,13 +649,13 @@ void fatal(char *fmt, ...) {
 }
 
 /*
- * error - log an error message.
+ * ppp_error - log an error message.
  */
-void error(char *fmt, ...) {
+void ppp_error(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_ERR, fmt, pvar);
+    ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 #if 0 /* UNUSED */
     ++error_count;
@@ -663,55 +663,55 @@ void error(char *fmt, ...) {
 }
 
 /*
- * warn - log a warning message.
+ * ppp_warn - log a warning message.
  */
-void warn(char *fmt, ...) {
+void ppp_warn(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_WARNING, fmt, pvar);
+    ppp_logit(LOG_WARNING, fmt, pvar);
     va_end(pvar);
 }
 
 /*
- * notice - log a notice-level message.
+ * ppp_notice - log a notice-level message.
  */
-void notice(char *fmt, ...) {
+void ppp_notice(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_NOTICE, fmt, pvar);
+    ppp_logit(LOG_NOTICE, fmt, pvar);
     va_end(pvar);
 }
 
 /*
- * info - log an informational message.
+ * ppp_info - log an informational message.
  */
-void info(char *fmt, ...) {
+void ppp_info(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_INFO, fmt, pvar);
+    ppp_logit(LOG_INFO, fmt, pvar);
     va_end(pvar);
 }
 
 /*
- * dbglog - log a debug message.
+ * ppp_dbglog - log a debug message.
  */
-void dbglog(char *fmt, ...) {
+void ppp_dbglog(char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
-    logit(LOG_DEBUG, fmt, pvar);
+    ppp_logit(LOG_DEBUG, fmt, pvar);
     va_end(pvar);
 }
 
 #if PRINTPKT_SUPPORT
 /*
- * dump_packet - print out a packet in readable form if it is interesting.
+ * ppp_dump_packet - print out a packet in readable form if it is interesting.
  * Assumes len >= PPP_HDRLEN.
  */
-void dump_packet(const char *tag, unsigned char *p, int len) {
+void ppp_dump_packet(const char *tag, unsigned char *p, int len) {
     int proto;
 
     /*
@@ -737,7 +737,7 @@ void dump_packet(const char *tag, unsigned char *p, int len) {
 	    return;
     }
 
-    dbglog("%s %P", tag, p, len);
+    ppp_dbglog("%s %P", tag, p, len);
 }
 #endif /* PRINTPKT_SUPPORT */
 
@@ -796,14 +796,14 @@ lock(dev)
 
     result = mklock (dev, (void *) 0);
     if (result == 0) {
-	strlcpy(lock_file, dev, sizeof(lock_file));
+	ppp_strlcpy(lock_file, dev, sizeof(lock_file));
 	return 0;
     }
 
     if (result > 0)
-        notice("Device %s is locked by pid %d", dev, result);
+        ppp_notice("Device %s is locked by pid %d", dev, result);
     else
-	error("Can't create lock file %s", lock_file);
+	ppp_error("Can't create lock file %s", lock_file);
     return -1;
 
 #else /* LOCKLIB */
@@ -815,14 +815,14 @@ lock(dev)
     struct stat sbuf;
 
     if (stat(dev, &sbuf) < 0) {
-	error("Can't get device number for %s: %m", dev);
+	ppp_error("Can't get device number for %s: %m", dev);
 	return -1;
     }
     if ((sbuf.st_mode & S_IFMT) != S_IFCHR) {
-	error("Can't lock %s: not a character device", dev);
+	ppp_error("Can't lock %s: not a character device", dev);
 	return -1;
     }
-    slprintf(lock_file, sizeof(lock_file), "%s/LK.%03d.%03d.%03d",
+    ppp_slprintf(lock_file, sizeof(lock_file), "%s/LK.%03d.%03d.%03d",
 	     LOCK_DIR, major(sbuf.st_dev),
 	     major(sbuf.st_rdev), minor(sbuf.st_rdev));
 #else
@@ -841,12 +841,12 @@ lock(dev)
 	if ((p = strrchr(dev, '/')) != NULL)
 	    dev = p + 1;
 
-    slprintf(lock_file, sizeof(lock_file), "%s/LCK..%s", LOCK_DIR, dev);
+    ppp_slprintf(lock_file, sizeof(lock_file), "%s/LCK..%s", LOCK_DIR, dev);
 #endif
 
     while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) < 0) {
 	if (errno != EEXIST) {
-	    error("Can't create lock file %s: %m", lock_file);
+	    ppp_error("Can't create lock file %s: %m", lock_file);
 	    break;
 	}
 
@@ -855,7 +855,7 @@ lock(dev)
 	if (fd < 0) {
 	    if (errno == ENOENT) /* This is just a timing problem. */
 		continue;
-	    error("Can't open existing lock file %s: %m", lock_file);
+	    ppp_error("Can't open existing lock file %s: %m", lock_file);
 	    break;
 	}
 #ifndef LOCK_BINARY
@@ -866,7 +866,7 @@ lock(dev)
 	close(fd);
 	fd = -1;
 	if (n <= 0) {
-	    error("Can't read pid from lock file %s", lock_file);
+	    ppp_error("Can't read pid from lock file %s", lock_file);
 	    break;
 	}
 
@@ -880,12 +880,12 @@ lock(dev)
 	if (pid == 0
 	    || (kill(pid, 0) == -1 && errno == ESRCH)) {
 	    if (unlink (lock_file) == 0) {
-		notice("Removed stale lock on %s (pid %d)", dev, pid);
+		ppp_notice("Removed stale lock on %s (pid %d)", dev, pid);
 		continue;
 	    }
-	    warn("Couldn't remove stale lock on %s", dev);
+	    ppp_warn("Couldn't remove stale lock on %s", dev);
 	} else
-	    notice("Device %s is locked by pid %d", dev, pid);
+	    ppp_notice("Device %s is locked by pid %d", dev, pid);
 	break;
     }
 
@@ -896,7 +896,7 @@ lock(dev)
 
     pid = getpid();
 #ifndef LOCK_BINARY
-    slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
+    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
     write (fd, lock_buffer, 11);
 #else
     write(fd, &pid, sizeof (pid));
@@ -932,13 +932,13 @@ relock(pid)
 	return -1;
     fd = open(lock_file, O_WRONLY, 0);
     if (fd < 0) {
-	error("Couldn't reopen lock file %s: %m", lock_file);
+	ppp_error("Couldn't reopen lock file %s: %m", lock_file);
 	lock_file[0] = 0;
 	return -1;
     }
 
 #ifndef LOCK_BINARY
-    slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
+    ppp_slprintf(lock_buffer, sizeof(lock_buffer), "%10d\n", pid);
     write (fd, lock_buffer, 11);
 #else
     write(fd, &pid, sizeof(pid));

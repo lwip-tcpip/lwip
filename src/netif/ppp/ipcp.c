@@ -1750,9 +1750,9 @@ ip_demand_conf(u)
 	if (sifproxyarp(pcb, wo->hisaddr))
 	    proxy_arp_set[u] = 1;
 
-    notice("local  IP address %I", wo->ouraddr);
+    ppp_notice("local  IP address %I", wo->ouraddr);
     if (wo->hisaddr)
-	notice("remote IP address %I", wo->hisaddr);
+	ppp_notice("remote IP address %I", wo->hisaddr);
 
     return 1;
 }
@@ -1780,18 +1780,18 @@ static void ipcp_up(fsm *f) {
 
     if (!(go->neg_addr || go->old_addrs) && (wo->neg_addr || wo->old_addrs)
 	&& wo->ouraddr != 0) {
-	error("Peer refused to agree to our IP address");
+	ppp_error("Peer refused to agree to our IP address");
 	ipcp_close(f->pcb, "Refused our IP address");
 	return;
     }
     if (go->ouraddr == 0) {
-	error("Could not determine local IP address");
+	ppp_error("Could not determine local IP address");
 	ipcp_close(f->pcb, "Could not determine local IP address");
 	return;
     }
     if (ho->hisaddr == 0 && !pcb->settings.noremoteip) {
 	ho->hisaddr = htonl(0x0a404040);
-	warn("Could not determine remote IP address: defaulting to %I",
+	ppp_warn("Could not determine remote IP address: defaulting to %I",
 	     ho->hisaddr);
     }
 #if 0 /* UNUSED */
@@ -1824,7 +1824,7 @@ static void ipcp_up(fsm *f) {
      * Check that the peer is allowed to use the IP address it wants.
      */
     if (ho->hisaddr != 0 && !auth_ip_addr(f->unit, ho->hisaddr)) {
-	error("Peer is not authorized to use remote address %I", ho->hisaddr);
+	ppp_error("Peer is not authorized to use remote address %I", ho->hisaddr);
 	ipcp_close(f->unit, "Unauthorized remote IP address");
 	return;
     }
@@ -1844,13 +1844,13 @@ static void ipcp_up(fsm *f) {
 	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr,
 				      wo->replace_default_route);
 	    if (go->ouraddr != wo->ouraddr) {
-		warn("Local IP address changed to %I", go->ouraddr);
+		ppp_warn("Local IP address changed to %I", go->ouraddr);
 		script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
 		wo->ouraddr = go->ouraddr;
 	    } else
 		script_unsetenv("OLDIPLOCAL");
 	    if (ho->hisaddr != wo->hisaddr && wo->hisaddr != 0) {
-		warn("Remote IP address changed to %I", ho->hisaddr);
+		ppp_warn("Remote IP address changed to %I", ho->hisaddr);
 		script_setenv("OLDIPREMOTE", ip_ntoa(wo->hisaddr), 0);
 		wo->hisaddr = ho->hisaddr;
 	    } else
@@ -1860,7 +1860,7 @@ static void ipcp_up(fsm *f) {
 	    mask = get_mask(go->ouraddr);
 	    if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
-		warn("Interface configuration failed");
+		ppp_warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
 		ipcp_close(f->unit, "Interface configuration failed");
 		return;
@@ -1892,7 +1892,7 @@ static void ipcp_up(fsm *f) {
 #if !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
-	    warn("Interface configuration failed");
+	    ppp_warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
 	    ipcp_close(f->pcb, "Interface configuration failed");
 	    return;
@@ -1902,7 +1902,7 @@ static void ipcp_up(fsm *f) {
 	/* bring the interface up for IP */
 	if (!sifup(pcb)) {
 #if PPP_DEBUG
-	    warn("Interface failed to come up");
+	    ppp_warn("Interface failed to come up");
 #endif /* PPP_DEBUG */
 	    ipcp_close(f->pcb, "Interface configuration failed");
 	    return;
@@ -1911,7 +1911,7 @@ static void ipcp_up(fsm *f) {
 #if (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
 	if (!sifaddr(pcb, go->ouraddr, ho->hisaddr, mask)) {
 #if PPP_DEBUG
-	    warn("Interface configuration failed");
+	    ppp_warn("Interface configuration failed");
 #endif /* PPP_DEBUG */
 	    ipcp_close(f->unit, "Interface configuration failed");
 	    return;
@@ -1934,13 +1934,13 @@ static void ipcp_up(fsm *f) {
 
 	wo->ouraddr = go->ouraddr;
 
-	notice("local  IP address %I", go->ouraddr);
+	ppp_notice("local  IP address %I", go->ouraddr);
 	if (ho->hisaddr != 0)
-	    notice("remote IP address %I", ho->hisaddr);
+	    ppp_notice("remote IP address %I", ho->hisaddr);
 	if (go->dnsaddr[0])
-	    notice("primary   DNS address %I", go->dnsaddr[0]);
+	    ppp_notice("primary   DNS address %I", go->dnsaddr[0]);
 	if (go->dnsaddr[1])
-	    notice("secondary DNS address %I", go->dnsaddr[1]);
+	    ppp_notice("secondary DNS address %I", go->dnsaddr[1]);
     }
 
 #if PPP_STATS_SUPPORT
@@ -2176,7 +2176,7 @@ static int ipcp_printpkt(u_char *p, int plen,
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    print_string((char *)p, len, printer, arg);
+	    ppp_print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}

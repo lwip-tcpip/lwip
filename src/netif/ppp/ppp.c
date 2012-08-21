@@ -692,7 +692,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
 #if PRINTPKT_SUPPORT
-  dump_packet("rcvd", pb->payload, pb->len);
+  ppp_dump_packet("rcvd", pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
   if(pbuf_header(pb, -(s16_t)sizeof(protocol))) {
@@ -708,7 +708,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    * Toss all non-LCP packets unless LCP is OPEN.
    */
   if (protocol != PPP_LCP && pcb->lcp_fsm.state != PPP_FSM_OPENED) {
-	dbglog("Discarded non-LCP packet when LCP not open");
+	ppp_dbglog("Discarded non-LCP packet when LCP not open");
 	goto drop;
   }
 
@@ -731,7 +731,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 	     || protocol == PPP_EAP
 #endif /* EAP_SUPPORT */
 	     )) {
-	dbglog("discarding proto 0x%x in phase %d",
+	ppp_dbglog("discarding proto 0x%x in phase %d",
 		   protocol, pcb->phase);
 	goto drop;
   }
@@ -816,10 +816,10 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #if PPP_PROTOCOLNAME
 	const char *pname = protocol_name(protocol);
 	if (pname != NULL)
-	    warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+	    ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
 	else
 #endif /* PPP_PROTOCOLNAME */
-	    warn("Unsupported protocol 0x%x received", protocol);
+	    ppp_warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
 	  if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
 	        LWIP_ASSERT("pbuf_header failed\n", 0);
@@ -1454,7 +1454,7 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #endif /* PPPOS_SUPPORT */
 
 #if PRINTPKT_SUPPORT
-  dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
+  ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */
 
 #if PPPOE_SUPPORT

@@ -210,7 +210,7 @@ static void upap_timeout(void *arg) {
 
     if (pcb->upap.us_transmits >= pcb->upap.us_maxtransmits) {
 	/* give up in disgust */
-	error("No response to PAP authenticate-requests");
+	ppp_error("No response to PAP authenticate-requests");
 	pcb->upap.us_clientstate = UPAPCS_BADAUTH;
 	auth_withpeer_fail(pcb, PPP_PAP);
 	return;
@@ -290,12 +290,12 @@ static void upap_lowerdown(ppp_pcb *pcb) {
 static void upap_protrej(ppp_pcb *pcb) {
 
     if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ) {
-	error("PAP authentication failed due to protocol-reject");
+	ppp_error("PAP authentication failed due to protocol-reject");
 	auth_withpeer_fail(pcb, PPP_PAP);
     }
 #if PPP_SERVER
     if (pcb->upap.us_serverstate == UPAPSS_LISTEN) {
-	error("PAP authentication of peer failed (protocol-reject)");
+	ppp_error("PAP authentication of peer failed (protocol-reject)");
 	auth_peer_fail(pcb, PPP_PAP);
     }
 #endif /* PPP_SERVER */
@@ -515,7 +515,7 @@ static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len) {
 
     pcb->upap.us_clientstate = UPAPCS_BADAUTH;
 
-    error("PAP authentication failed");
+    ppp_error("PAP authentication failed");
     auth_withpeer_fail(pcb, PPP_PAP);
 }
 
@@ -624,13 +624,13 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
 	p += ulen + wlen + 2;
 	len -= ulen + wlen + 2;
 	printer(arg, " user=");
-	print_string(user, ulen, printer, arg);
+	ppp_print_string(user, ulen, printer, arg);
 	printer(arg, " password=");
 /* FIXME: require ppp_pcb struct as printpkt() argument */
 #if 0
 	if (!pcb->settings.hide_password)
 #endif
-	    print_string(pwd, wlen, printer, arg);
+	    ppp_print_string(pwd, wlen, printer, arg);
 #if 0
 	else
 	    printer(arg, "<hidden>");
@@ -647,7 +647,7 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
 	p += mlen + 1;
 	len -= mlen + 1;
 	printer(arg, " ");
-	print_string(msg, mlen, printer, arg);
+	ppp_print_string(msg, mlen, printer, arg);
 	break;
     }
 

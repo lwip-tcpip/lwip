@@ -172,14 +172,14 @@ void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 	struct chap_digest_type *dp;
 
 	if (pcb->chap_server.flags & AUTH_STARTED) {
-		error("CHAP: peer authentication already started!");
+		ppp_error("CHAP: peer authentication already started!");
 		return;
 	}
 	for (dp = chap_digests; dp != NULL; dp = dp->next)
 		if (dp->code == digest_code)
 			break;
 	if (dp == NULL)
-		fatal("CHAP digest 0x%x requested but not available",
+		ppp_fatal("CHAP digest 0x%x requested but not available",
 		      digest_code);
 
 	pcb->chap_server.digest = dp;
@@ -203,14 +203,14 @@ void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 		return;
 
 	if (pcb->chap_client.flags & AUTH_STARTED) {
-		error("CHAP: authentication with peer already started!");
+		ppp_error("CHAP: authentication with peer already started!");
 		return;
 	}
 	for (dp = chap_digests; dp != NULL; dp = dp->next)
 		if (dp->code == digest_code)
 			break;
 	if (dp == NULL)
-		fatal("CHAP digest 0x%x requested but not available",
+		ppp_fatal("CHAP digest 0x%x requested but not available",
 		      digest_code);
 
 	pcb->chap_client.digest = dp;
@@ -310,7 +310,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 			name = remote_name;
 		} else {
 			/* Null terminate and clean remote name. */
-			slprintf(rname, sizeof(rname), "%.*v", len, name);
+			ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
 			name = rname;
 		}
 
@@ -326,7 +326,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 #endif /* UNUSED */
 		if (!ok) {
 			pcb->chap_server.flags |= AUTH_FAILED;
-			warn("Peer %q failed CHAP authentication", name);
+			ppp_warn("Peer %q failed CHAP authentication", name);
 		}
 	} else if ((pcb->chap_server.flags & AUTH_DONE) == 0)
 		return;
@@ -366,7 +366,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		    if (session_mgmt &&
 			session_check(name, NULL, devnam, NULL) == 0) {
 			pcb->chap_server.flags |= AUTH_FAILED;
-			warn("Peer %q failed CHAP Session verification", name);
+			ppp_warn("Peer %q failed CHAP Session verification", name);
 		    }
 #endif /* UNUSED */
 
@@ -403,7 +403,7 @@ static int chap_verify_response(char *name, char *ourname, int id,
 
 	/* Get the secret that the peer is supposed to know */
 	if (!get_secret(pcb, name, ourname, (char *)secret, &secret_len, 1)) {
-		error("No CHAP secret found for authenticating %q", name);
+		ppp_error("No CHAP secret found for authenticating %q", name);
 		return 0;
 	}
 
@@ -439,7 +439,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	nlen = len - (clen + 1);
 
 	/* Null terminate and clean remote name. */
-	slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
+	ppp_slprintf(rname, sizeof(rname), "%.*v", nlen, pkt + clen + 1);
 
 #if PPP_REMOTENAME
 	/* Microsoft doesn't send their name back in the PPP packet */
@@ -450,7 +450,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	/* get secret for authenticating ourselves with the specified host */
 	if (!get_secret(pcb, pcb->chap_client.name, rname, secret, &secret_len, 0)) {
 		secret_len = 0;	/* assume null secret if can't find one */
-		warn("No CHAP secret found for authenticating us to %q", rname);
+		ppp_warn("No CHAP secret found for authenticating us to %q", rname);
 	}
 
 	outp = p->payload;
@@ -500,15 +500,15 @@ static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 	}
 	if (msg) {
 		if (len > 0)
-			info("%s: %.*v", msg, len, pkt);
+			ppp_info("%s: %.*v", msg, len, pkt);
 		else
-			info("%s", msg);
+			ppp_info("%s", msg);
 	}
 	if (code == CHAP_SUCCESS)
 		auth_withpeer_success(pcb, PPP_CHAP, pcb->chap_client.digest->code);
 	else {
 		pcb->chap_client.flags |= AUTH_FAILED;
-		error("CHAP authentication failed");
+		ppp_error("CHAP authentication failed");
 		auth_withpeer_fail(pcb, PPP_CHAP);
 	}
 }
@@ -556,7 +556,7 @@ static void chap_protrej(ppp_pcb *pcb) {
 #endif /* PPP_SERVER */
 	if ((pcb->chap_client.flags & (AUTH_STARTED|AUTH_DONE)) == AUTH_STARTED) {
 		pcb->chap_client.flags &= ~AUTH_STARTED;
-		error("CHAP authentication failed due to protocol-reject");
+		ppp_error("CHAP authentication failed due to protocol-reject");
 		auth_withpeer_fail(pcb, PPP_CHAP);
 	}
 }
@@ -605,12 +605,12 @@ static int chap_print_pkt(unsigned char *p, int plen,
 			printer(arg, "%.2x", x);
 		}
 		printer(arg, ">, name = ");
-		print_string((char *)p, nlen, printer, arg);
+		ppp_print_string((char *)p, nlen, printer, arg);
 		break;
 	case CHAP_FAILURE:
 	case CHAP_SUCCESS:
 		printer(arg, " ");
-		print_string((char *)p, len, printer, arg);
+		ppp_print_string((char *)p, len, printer, arg);
 		break;
 	default:
 		for (clen = len; clen > 0; --clen) {

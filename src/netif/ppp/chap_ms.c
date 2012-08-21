@@ -350,7 +350,7 @@ static int chapms2_check_success(unsigned char *msg, int len, unsigned char *pri
 	if ((len < MS_AUTH_RESPONSE_LENGTH + 2) ||
 	    strncmp((char *)msg, "S=", 2) != 0) {
 		/* Packet does not start with "S=" */
-		error("MS-CHAPv2 Success packet is badly formed.");
+		ppp_error("MS-CHAPv2 Success packet is badly formed.");
 		return 0;
 	}
 	msg += 2;
@@ -358,7 +358,7 @@ static int chapms2_check_success(unsigned char *msg, int len, unsigned char *pri
 	if (len < MS_AUTH_RESPONSE_LENGTH
 	    || memcmp(msg, private, MS_AUTH_RESPONSE_LENGTH)) {
 		/* Authenticator Response did not match expected. */
-		error("MS-CHAPv2 mutual authentication failed.");
+		ppp_error("MS-CHAPv2 mutual authentication failed.");
 		return 0;
 	}
 	/* Authenticator Response matches. */
@@ -368,7 +368,7 @@ static int chapms2_check_success(unsigned char *msg, int len, unsigned char *pri
 		msg += 3; /* Eat the delimiter */
 	} else if (len) {
 		/* Packet has extra text which does not begin " M=" */
-		error("MS-CHAPv2 Success packet is badly formed.");
+		ppp_error("MS-CHAPv2 Success packet is badly formed.");
 		return 0;
 	}
 	return 1;
@@ -427,14 +427,14 @@ static void chapms_handle_failure(unsigned char *inp, int len) {
 			break;
 
 		default:
-			error("Unknown MS-CHAP authentication failure: %.*v",
+			ppp_error("Unknown MS-CHAP authentication failure: %.*v",
 			      len, inp);
 			return;
 		}
 	}
 print_msg:
 	if (p != NULL)
-		error("MS-CHAP authentication failed: %v", p);
+		ppp_error("MS-CHAP authentication failed: %v", p);
 }
 
 static void ChallengeResponse(u_char *challenge,

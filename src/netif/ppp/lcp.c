@@ -625,22 +625,22 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
 	if (protp->protocol == prot && protp->enabled_flag) {
 #if PPP_PROTOCOLNAME
 	    if (pname != NULL)
-		dbglog("Protocol-Reject for '%s' (0x%x) received", pname,
+		ppp_dbglog("Protocol-Reject for '%s' (0x%x) received", pname,
 		       prot);
 	    else
 #endif /* PPP_PROTOCOLNAME */
-		dbglog("Protocol-Reject for 0x%x received", prot);
+		ppp_dbglog("Protocol-Reject for 0x%x received", prot);
 	    (*protp->protrej)(f->pcb);
 	    return;
 	}
 
 #if PPP_PROTOCOLNAME
     if (pname != NULL)
-	warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
+	ppp_warn("Protocol-Reject for unsupported protocol '%s' (0x%x)", pname,
 	     prot);
     else
 #endif /* #if PPP_PROTOCOLNAME */
-	warn("Protocol-Reject for unsupported protocol 0x%x", prot);
+	ppp_warn("Protocol-Reject for unsupported protocol 0x%x", prot);
 }
 
 
@@ -652,7 +652,7 @@ static void lcp_protrej(ppp_pcb *pcb) {
     /*
      * Can't reject LCP!
      */
-    error("Received Protocol-Reject for LCP!");
+    ppp_error("Received Protocol-Reject for LCP!");
     fsm_protreject(&pcb->lcp_fsm);
 }
 
@@ -871,7 +871,7 @@ static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
 
     if (ucp - start_ucp != *lenp) {
 	/* this should never happen, because peer_mtu should be 1500 */
-	error("Bug in lcp_addci: wrong length");
+	ppp_error("Bug in lcp_addci: wrong length");
     }
 }
 
@@ -1303,7 +1303,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	     * well, that's just strange.  Nobody should do that.
 	     */
 	    if (cishort == PPP_EAP && cilen == CILEN_SHORT && go->neg_eap)
-		dbglog("Unexpected Conf-Nak for EAP");
+		ppp_dbglog("Unexpected Conf-Nak for EAP");
 
 	    /*
 	     * We don't recognize what they're suggesting.
@@ -1496,7 +1496,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	if (looped_back) {
 	    if (++try.numloops >= pcb->settings.lcp_loopbackfail) {
 		int errcode = PPPERR_LOOPBACK;
-		notice("Serial line is looped back.");
+		ppp_notice("Serial line is looped back.");
 		ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 		lcp_close(f->pcb, "Loopback detected");
 	    }
@@ -1866,7 +1866,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 		/*
 		 * Reject the option if we're not willing to authenticate.
 		 */
-		dbglog("No auth is possible");
+		ppp_dbglog("No auth is possible");
 		orc = CONFREJ;
 		break;
 	    }
@@ -2502,7 +2502,7 @@ static int lcp_printpkt(u_char *p, int plen,
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    print_string((char *)p, len, printer, arg);
+	    ppp_print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
@@ -2534,7 +2534,7 @@ static int lcp_printpkt(u_char *p, int plen,
 	}
 	if (len > 0) {
 	    printer(arg, " ");
-	    print_string((char *)p, len, printer, arg);
+	    ppp_print_string((char *)p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
@@ -2563,8 +2563,8 @@ static void LcpLinkFailure(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     if (f->state == PPP_FSM_OPENED) {
 	int errcode = PPPERR_PEERDEAD;
-	info("No response to %d echo-requests", pcb->lcp_echos_pending);
-        notice("Serial link appears to be disconnected.");
+	ppp_info("No response to %d echo-requests", pcb->lcp_echos_pending);
+        ppp_notice("Serial link appears to be disconnected.");
 	ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 	lcp_close(pcb, "Peer not responding");
     }
@@ -2585,7 +2585,7 @@ static void LcpEchoCheck(fsm *f) {
      * Start the timer for the next interval.
      */
     if (pcb->lcp_echo_timer_running)
-	warn("assertion lcp_echo_timer_running==0 failed");
+	ppp_warn("assertion lcp_echo_timer_running==0 failed");
     TIMEOUT (LcpEchoTimeout, f, pcb->settings.lcp_echo_interval);
     pcb->lcp_echo_timer_running = 1;
 }
@@ -2614,13 +2614,13 @@ static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
 
     /* Check the magic number - don't count replies from ourselves. */
     if (len < 4) {
-	dbglog("lcp: received short Echo-Reply, length %d", len);
+	ppp_dbglog("lcp: received short Echo-Reply, length %d", len);
 	return;
     }
     GETLONG(magic, inp);
     if (go->neg_magicnumber
 	&& magic == go->magicnumber) {
-	warn("appear to have received our own echo-reply!");
+	ppp_warn("appear to have received our own echo-reply!");
 	return;
     }
 

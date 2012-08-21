@@ -491,7 +491,7 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 
-#define PRINTMSG(m, l)		{ info("Remote message: %0.*v", l, m); }
+#define PRINTMSG(m, l)		{ ppp_info("Remote message: %0.*v", l, m); }
 
 /*
  * MAKEHEADER - Add Header fields to a packet.
@@ -556,19 +556,19 @@ int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from utils.c. */
-void print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg);   /* Format a string for output */
-int slprintf(char *buf, int buflen, char *fmt, ...);            /* sprintf++ */
-int vslprintf(char *buf, int buflen, char *fmt, va_list args);  /* vsprintf++ */
-size_t strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
-size_t strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
-void dbglog(char *fmt, ...);    /* log a debug message */
-void info(char *fmt, ...);      /* log an informational message */
-void notice(char *fmt, ...);    /* log a notice-level message */
-void warn(char *fmt, ...);      /* log a warning message */
-void error(char *fmt, ...);     /* log an error message */
-void fatal(char *fmt, ...);     /* log an error message and die(1) */
+void ppp_print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg);   /* Format a string for output */
+int ppp_slprintf(char *buf, int buflen, char *fmt, ...);            /* sprintf++ */
+int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args);  /* vsprintf++ */
+size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
+size_t ppp_strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
+void ppp_dbglog(char *fmt, ...);    /* log a debug message */
+void ppp_info(char *fmt, ...);      /* log an informational message */
+void ppp_notice(char *fmt, ...);    /* log a notice-level message */
+void ppp_warn(char *fmt, ...);      /* log a warning message */
+void ppp_error(char *fmt, ...);     /* log an error message */
+void ppp_fatal(char *fmt, ...);     /* log an error message and die(1) */
 #if PRINTPKT_SUPPORT
-void dump_packet(const char *tag, unsigned char *p, int len);
+void ppp_dump_packet(const char *tag, unsigned char *p, int len);
                                 /* dump packet to debug log if interesting */
 #endif /* PRINTPKT_SUPPORT */
 
