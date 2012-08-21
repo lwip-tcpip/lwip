@@ -268,6 +268,27 @@ void pppapi_sighup(ppp_pcb *pcb) {
 
 
 /**
+ * Call ppp_delete() inside the tcpip_thread context.
+ */
+static void pppapi_do_ppp_delete(struct pppapi_msg_msg *msg) {
+  msg->err = ppp_delete(msg->ppp);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_delete() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+int pppapi_delete(ppp_pcb *pcb) {
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_delete;
+  msg.msg.ppp = pcb;
+  TCPIP_PPPAPI(&msg);
+  return msg.msg.err;
+}
+
+
+/**
  * Call ppp_ioctl() inside the tcpip_thread context.
  */
 static void pppapi_do_ppp_ioctl(struct pppapi_msg_msg *msg) {
