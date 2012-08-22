@@ -131,6 +131,7 @@ int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, 
 void pppapi_reopen(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
+int pppapi_delete(ppp_pcb *pcb);
 int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 #if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
 void ppposapi_input(ppp_pcb *pcb, u_char* data, int len);
