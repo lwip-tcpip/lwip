@@ -1,0 +1,170 @@
+The lwIP PPP support is based from pppd 2.4.5 (http://ppp.samba.org) with
+huge changes to match code size and memory requirements for embedded devices.
+
+Anyway, pppd has a mature codebase for years and the average commit count
+is getting low on their Git repositories, meaning that we can follow what
+is happening on their side and merge what is relevant for lwIP.
+
+So, here is the pppd follow up, so that we don't get away too far from pppd.
+
+
+== Patch fetched from from pppd Debian packages ==
+
+This has nothing to do with pppd, but we merged some good patch from
+Debian and this is a good place to be.
+
+- LCP adaptive echo, so that we don't send LCP echo request if we
+  are receiving data from peer, can be enabled by setting PPP_LCP_ADAPTIVE
+  to true.
+ 
+- IPCP no/replace default route option, were added in the early stage of
+  the ppp port, but it wasn't really helpful and was disabled when adding
+  the new API ppp_set_default() call, which gives the lwIP user control over
+  which one is the default interface, it was actually a requirement if you
+  are doing PPP over PPP (i.e. PPPoL2TP, VPN link, over PPPoE, ADSL link).
+
+- using rp-pppoe pppd exits with EXIT_OK after receiving a timeout waiting
+  for PADO due to no modem attached, bug reported to pppd bug tracker, fixed
+  in Debian but not in the latest (at the time where the port where started)
+  pppd release.
+
+
+== Commits on pppd ==
+
+2010-03-06 - Document +ipv6 and ipv6cp-accept-local
+  e7537958aee79b3f653c601e903cb31d78fb7dcc
+
+Don't care.
+
+
+2010-03-06 - Install pppol2tp plugins with sane permissions
+  406215672cfadc03017341fe03802d1c7294b903
+
+Don't care.
+
+
+2010-03-07 - pppd: Terminate correctly if lcp_lowerup delayed calling
+             fsm_lowerup
+  3eb9e810cfa515543655659b72dde30c54fea0a5
+
+Merged 2012-05-17.
+
+
+2010-03-07 - rp_pppoe: Copy acName and pppd_pppoe_service after option parsing
+  cab58617fd9d328029fffabc788020264b4fa91f
+
+Don't care, is a patch for pppd/plugins/rp-pppoe/plugin.c which is not part
+of the port.
+
+
+2010-08-23 - set and reset options to control environment variables
+             for scripts.
+  2b6310fd24dba8e0fca8999916a162f0a1842a84
+
+We can't fork processes in embedded, therefore all the pppd process run
+feature is disabled in the port, so we don't care about the new
+"environment variables" pppd feature.
+
+
+2010-08-23 - Nit: use _exit when exec fails and restrict values to 0-255
+             per POSIX.
+  2b4ea140432eeba5a007c0d4e6236bd0e0c12ba4
+
+Again, we are not running as a heavy process, so all exit() or _exit() calls
+were removed.
+
+
+2010-08-23 - Fix quote handling in configuration files to be more like shell
+             quoting.
+  3089132cdf5b58dbdfc2daf08ec5c08eb47f8aca
+
+We are not parsing config file, all the filesystem I/O stuff were disabled
+in our port.
+
+
+2010-08-24 - rp-pppoe: allow MTU to be increased up to 1500
+  fd1dcdf758418f040da3ed801ab001b5e46854e7
+
+Only concern changes on RP-PPPoE plugin, which we don't use.
+
+
+2010-09-11 - chat: Allow TIMEOUT value to come from environment variable
+  ae80bf833e48a6202f44a935a68083ae52ad3824
+
+See 2b6310fd24dba8e0fca8999916a162f0a1842a84.
+
+
+2011-03-05 - pppdump: Fix printfs with insufficient arguments
+  7b8db569642c83ba3283745034f2e2c95e459423
+
+pppdump is a ppp tool outside pppd source tree.
+
+
+2012-05-06 - pppd: Don't unconditionally disable VJ compression under Linux
+  d8a66adf98a0e525cf38031b42098d539da6eeb6
+
+Patch for sys-linux.c, which we don't use.
+
+
+2012-05-20 - Remove old version of Linux if_pppol2tp.h
+  c41092dd4c49267f232f6cba3d31c6c68bfdf68d
+
+Not in the port.
+
+
+2012-05-20 - pppd: Make MSCHAP-v2 cope better with packet loss
+  08ef47ca532294eb428238c831616748940e24a2
+
+This is an interesting patch. However it consumes much more memory for
+MSCHAP and I am not sure if the benefit worth it. The PPP client can
+always start the authentication again if it failed for whatever reason.
+
+
+2012-05-20 - scripts: Make poff ignore extra arguments to pppd
+  18f515f32c9f5723a9c2c912601e04335106534b
+
+Again, we are not running scripts.
+
+
+2012-05-20 - rp-pppoe plugin: Print leading zeros in MAC address
+  f5dda0cfc220c4b52e26144096d729e27b30f0f7
+
+Again, we are not using the RP-PPPoE plugin.
+
+
+2012-05-20 - pppd: Notify IPv6 up/down as we do for IPv4
+  845cda8fa18939cf56e60b073f63a7efa65336fc
+
+This is just a patch that adds plugins hooks for IPv6, the plugin interface
+was disabled because we don't have .so plugins in embedded.
+
+
+2012-05-20 - pppd: Enable IPV6 by default and fix some warnings
+  0b6118239615e98959f7e0b4e746bdd197533248
+
+Change on Makefile for IPv6, warnings were already cleared during port.
+
+
+2012-05-20 - contrib: Fix pppgetpass.gtk compilation
+  80a8e2ce257ca12cce723519a0f20ea1d663b14a
+
+Change on Makefile, don't care.
+
+
+2012-05-20 - pppd: Don't crash if crypt() returns NULL
+  04c4348108d847e034dd91066cc6843f60d71731
+
+We are using the PolarSSL DES implementation that does not return NULL.
+
+
+2012-05-20 - pppd: Eliminate some warnings
+  c44ae5e6a7338c96eb463881fe709b2dfaffe568
+
+Again, we are handling compilation warnings on our own.
+
+
+2012-05-20 - rp-pppoe plugin: Import some fixes from rp-pppoe-3.10
+  1817d83e51a411044e730ba89ebdb0480e1c8cd4
+
+Once more, we are not using the RP-PPPoE plugin.
+
