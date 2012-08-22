@@ -66,6 +66,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-08-22: Simon Goldschmidt
+  * memp.c: fixed bug #37166: memp_sanity check loops itself
+
   2012-05-08: Simon Goldschmidt
   * tcp_out.c: fixed bug: #36380 unsent_oversize mismatch in 1.4.1RC1 (this was
     a debug-check issue only)
