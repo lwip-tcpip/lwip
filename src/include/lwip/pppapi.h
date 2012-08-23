@@ -128,7 +128,7 @@ int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, 
 		u8_t *secret, u8_t secret_len,
                 ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOL2TP_SUPPORT */
-void pppapi_reopen(ppp_pcb *pcb, u16_t holdoff);
+int pppapi_reopen(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
 int pppapi_delete(ppp_pcb *pcb);
