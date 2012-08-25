@@ -316,8 +316,16 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
      PPPDEBUG(LOG_DEBUG, ("pppol2tp: session ID mismatch, assigned=%d, received=%d\n", l2tp->remote_session_id, session_id));
      goto free_and_return;
   }
-  /* skip address & flags */
-  pbuf_header(p, -(s16_t)2);
+  /*
+   * skip address & flags if necessary
+   *
+   * RFC 2661 does not specify whether the PPP frame in the L2TP payload should
+   * have a HDLC header or not. We handle both cases for compatibility.
+   */
+  GETSHORT(hflags, inp);
+  if (hflags == 0xff03) {
+    pbuf_header(p, -(s16_t)2);
+  }
   /* Dispatch the packet thereby consuming it. */
   ppp_input(l2tp->ppp, p);
   return;
