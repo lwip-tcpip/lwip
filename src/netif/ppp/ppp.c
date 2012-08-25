@@ -1307,7 +1307,7 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
   u16_t tot_len;
 
   /* @todo: try to use pbuf_header() here! */
-  pb = pbuf_alloc(PBUF_LINK, PPPOE_HDRLEN + sizeof(protocol), PBUF_RAM);
+  pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
@@ -1315,7 +1315,7 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
     return ERR_MEM;
   }
 
-  pbuf_header(pb, -(s16_t)PPPOE_HDRLEN);
+  pbuf_header(pb, -(s16_t)PPPOE_HEADERLEN);
 
   pcb->last_xmit = sys_jiffies();
 
@@ -1538,7 +1538,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
   /* skip address & flags */
   pbuf_header(p, -(s16_t)2);
 
-  ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HDRLEN), PBUF_RAM);
+  ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HEADERLEN), PBUF_RAM);
   if(!ph) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
@@ -1547,7 +1547,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
     return PPPERR_ALLOC;
   }
 
-  pbuf_header(ph, -(s16_t)PPPOE_HDRLEN); /* hide PPPoE header */
+  pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
   pbuf_cat(ph, p);
   tot_len = ph->tot_len;
 

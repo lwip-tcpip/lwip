@@ -178,9 +178,6 @@ void pppoe_data_input(struct netif *netif, struct pbuf *p);
 
 err_t pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb);
 
-/** used in ppp.c */
-#define PPPOE_HDRLEN (sizeof(struct eth_hdr) + PPPOE_HEADERLEN)
-
 #endif /* PPP_OE_H */
 
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */
