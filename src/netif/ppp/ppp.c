@@ -182,28 +182,28 @@ struct protent *protocols[] = {
     NULL
 };
 
-#if PPPOS_SUPPORT
-#define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
-#endif /* PPPOS_SUPPORT */
-
 /* Prototypes for procedures local to this file. */
 static void ppp_clear(ppp_pcb *pcb);
-
 static void ppp_do_reopen(void *arg);
-
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
-
-#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
-static void ppp_receive_wakeup(ppp_pcb *pcb);
-#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
-
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
 
+static err_t ppp_netif_init_cb(struct netif *netif);
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
+#if PPP_IPV6_SUPPORT
+static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr);
+#endif /* PPP_IPV6_SUPPORT */
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
+
 #if PPPOS_SUPPORT
+#define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
 static void ppp_over_serial_reopen(ppp_pcb *pcb);
+static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short protocol);
+static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p);
 #if PPP_INPROC_OWNTHREAD
 static void ppp_input_thread(void *arg);
+static void ppp_receive_wakeup(ppp_pcb *pcb);
 #endif /* PPP_INPROC_OWNTHREAD */
 static void ppp_drop(ppp_pcb_rx *pcrx);
 static void pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l);
@@ -213,24 +213,15 @@ static void pppos_input_callback(void *arg);
 static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
-static err_t ppp_netif_init_cb(struct netif *netif);
-static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
-#if PPP_IPV6_SUPPORT
-static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr);
-#endif /* PPP_IPV6_SUPPORT */
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
-
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_reopen(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
-/* function called by ppp_write() */
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_reopen(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
-/* function called by ppp_write() */
 static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -740,7 +731,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
   switch(protocol) {
 
-#if PPPOS_SUPPORT && VJ_SUPPORT
+#if VJ_SUPPORT
     case PPP_VJC_COMP:      /* VJ compressed TCP */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->num, pb->len));
       /*
@@ -768,7 +759,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       /* Something's wrong so drop it. */
       PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->num));
       break;
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+#endif /* VJ_SUPPORT */
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->num, pb->len));
@@ -1152,11 +1143,6 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr
  */
 static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
-#if PPPOS_SUPPORT
-  u_int fcs_out = PPP_INITFCS;
-  struct pbuf *head = NULL, *tail = NULL, *p;
-  u_char c;
-#endif /* PPPOS_SUPPORT */
 
   /* Validate parameters. */
   /* We let any protocol value go through - it can't hurt us
@@ -1192,13 +1178,25 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 #endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
+  return ppp_netif_output_over_serial(pcb, pb, protocol);
+#endif /* PPPOS_SUPPORT */
+
+  return ERR_OK;
+}
+
+#if PPPOS_SUPPORT
+static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short protocol) {
+  u_int fcs_out = PPP_INITFCS;
+  struct pbuf *head = NULL, *tail = NULL, *p;
+  u_char c;
+
   /* Grab an output buffer. */
   head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (head == NULL) {
     PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: first alloc fail\n", pcb->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
+    snmp_inc_ifoutdiscards(&pcb->netif);
     return ERR_MEM;
   }
 
@@ -1223,7 +1221,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
         PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad IP packet\n", pcb->num));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
-        snmp_inc_ifoutdiscards(netif);
+        snmp_inc_ifoutdiscards(&pcb->netif);
         pbuf_free(head);
         return ERR_VAL;
     }
@@ -1286,7 +1284,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
     pbuf_free(head);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
+    snmp_inc_ifoutdiscards(&pcb->netif);
     return ERR_MEM;
   }
 
@@ -1294,11 +1292,9 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
   PPPDEBUG(LOG_INFO, ("ppp_netif_output[%d]: proto=0x%"X16_F"\n", pcb->num, protocol));
 
   pppos_put(pcb, head);
-#endif /* PPPOS_SUPPORT */
-
   return ERR_OK;
 }
-
+#endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
@@ -1445,14 +1441,6 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
  *           -1 Failed to write to device
  */
 int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
-#if PPPOS_SUPPORT
-  u_char *s = p->payload;
-  int n = p->len;
-  u_char c;
-  u_int fcs_out;
-  struct pbuf *head, *tail;
-#endif /* PPPOS_SUPPORT */
-
 #if PRINTPKT_SUPPORT
   ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */
@@ -1470,6 +1458,21 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
+  return ppp_write_over_serial(pcb, p);
+#endif /* PPPOS_SUPPORT */
+
+  pbuf_free(p);
+  return PPPERR_NONE;
+}
+
+#if PPPOS_SUPPORT
+static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
+  u_char *s = p->payload;
+  int n = p->len;
+  u_char c;
+  u_int fcs_out;
+  struct pbuf *head, *tail;
+
   head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
   if (head == NULL) {
     LINK_STATS_INC(link.memerr);
@@ -1524,11 +1527,10 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
   PPPDEBUG(LOG_INFO, ("ppp_write[%d]: len=%d\n", pcb->num, head->len));
                    /* "ppp_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
   pppos_put(pcb, head);
-#endif /* PPPOS_SUPPORT */
-
   pbuf_free(p);
   return PPPERR_NONE;
 }
+#endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
@@ -2031,6 +2033,17 @@ static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
 
 void ppp_link_down(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
+
+#if PPPOE_SUPPORT
+  if (pcb->ethif) {
+    return;
+  }
+#endif /* PPPOE_SUPPORT */
+#if PPPOL2TP_SUPPORT
+  if (pcb->l2tp_pcb) {
+    return;
+  }
+#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
   ppp_receive_wakeup(pcb);
