@@ -775,17 +775,17 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
     default: {
 
-	  int i;
-	  struct protent *protp;
-	  /*
-	   * Upcall the proper protocol input routine.
-	   */
-	  for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-		if (protp->protocol == protocol && protp->enabled_flag) {
-		    pb = ppp_singlebuf(pb);
-		    (*protp->input)(pcb, pb->payload, pb->len);
-		    goto out;
-		}
+      int i;
+      struct protent *protp;
+      /*
+       * Upcall the proper protocol input routine.
+       */
+      for (i = 0; (protp = protocols[i]) != NULL; ++i) {
+        if (protp->protocol == protocol && protp->enabled_flag) {
+          pb = ppp_singlebuf(pb);
+          (*protp->input)(pcb, pb->payload, pb->len);
+          goto out;
+        }
 #if 0 /* UNUSED
        *
        * This is actually a (hacked?) way for the PPP kernel implementation to pass a
@@ -795,31 +795,31 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        * This is only used by CCP, which we cannot support until we have a CCP data
        * implementation.
        */
-		if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
-		    && protp->datainput != NULL) {
-		    (*protp->datainput)(pcb, pb->payload, pb->len);
-		    goto out;
-		}
+      if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
+        && protp->datainput != NULL) {
+        (*protp->datainput)(pcb, pb->payload, pb->len);
+        goto out;
+      }
 #endif /* UNUSED */
-	  }
+    }
 
 #if PPP_DEBUG
 #if PPP_PROTOCOLNAME
-	const char *pname = protocol_name(protocol);
-	if (pname != NULL)
-	    ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
-	else
+    const char *pname = protocol_name(protocol);
+    if (pname != NULL) {
+      ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+    } else
 #endif /* PPP_PROTOCOLNAME */
-	    ppp_warn("Unsupported protocol 0x%x received", protocol);
+      ppp_warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-	  if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
-	        LWIP_ASSERT("pbuf_header failed\n", 0);
-	        goto drop;
-	  }
-	  lcp_sprotrej(pcb, pb->payload, pb->len);
+      if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
+        LWIP_ASSERT("pbuf_header failed\n", 0);
+        goto drop;
+      }
+      lcp_sprotrej(pcb, pb->payload, pb->len);
     }
     break;
- }
+  }
 
 drop:
   LINK_STATS_INC(link.drop);
@@ -829,104 +829,6 @@ out:
   pbuf_free(pb);
   magic_randomize();
   return;
-
-#if 0
-  /*
-   * Toss all non-LCP packets unless LCP is OPEN.
-   * Until we get past the authentication phase, toss all packets
-   * except LCP, LQR and authentication packets.
-   */
-  if((lcp_phase[pcb->unit] <= PHASE_AUTHENTICATE) && (protocol != PPP_LCP)) {
-    if(!((protocol == PPP_LQR) || (protocol == PPP_PAP) || (protocol == PPP_CHAP)) ||
-        (lcp_phase[pcb->unit] != PHASE_AUTHENTICATE)) {
-      PPPDEBUG(LOG_INFO, ("ppp_input: discarding proto 0x%"X16_F" in phase %d\n", protocol, lcp_phase[pcb->unit]));
-      goto drop;
-    }
-  }
-
-  switch(protocol) {
-    case PPP_VJC_COMP:      /* VJ compressed TCP */
-#if PPPOS_SUPPORT && VJ_SUPPORT
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->unit, pb->len));
-      /*
-       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
-       * pass the result to IP.
-       */
-      if ((vj_uncompress_tcp(&pb, pcb->vj_comp) >= 0) && (pcb->netif.input)) {
-        pcb->netif.input(pb, pcb->netif);
-        return;
-      }
-      /* Something's wrong so drop it. */
-      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->unit));
-#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
-      /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: drop VJ Comp in %d:%s\n", pcb->unit, pb->len, pb->payload));
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-      break;
-
-    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-#if PPPOS_SUPPORT && VJ_SUPPORT
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->unit, pb->len));
-      /*
-       * Process the TCP/IP header for VJ header compression and then pass
-       * the packet to IP.
-       */
-      if ((vj_uncompress_uncomp(pb, pcb->vj_comp) >= 0) && pcb->netif.input) {
-        pcb->netif.input(pb, pcb->netif);
-        return;
-      }
-      /* Something's wrong so drop it. */
-      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->unit));
-#else  /* PPPOS_SUPPORT && VJ_SUPPORT */
-      /* No handler for this protocol so drop the packet. */
-      PPPDEBUG(LOG_INFO,
-               ("ppp_input[%d]: drop VJ UnComp in %d:.*H\n",
-                pcb->unit, pb->len, LWIP_MIN(pb->len * 2, 40), pb->payload));
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-      break;
-
-    case PPP_IP:            /* Internet Protocol */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->unit, pb->len));
-      if (pcb->netif.input) {
-        pcb->netif.input(pb, pcb->netif);
-        return;
-      }
-      break;
-
-    default: {
-      struct protent *protp;
-      int i;
-
-      /*
-       * Upcall the proper protocol input routine.
-       */
-      for (i = 0; (protp = ppp_protocols[i]) != NULL; ++i) {
-        if (protp->protocol == protocol && protp->enabled_flag) {
-          PPPDEBUG(LOG_INFO, ("ppp_input[%d]: %s len=%d\n", pcb->unit, protp->name, pb->len));
-          pb = ppp_singlebuf(pb);
-          (*protp->input)(pcb->unit, pb->payload, pb->len);
-          PPPDEBUG(LOG_DETAIL, ("ppp_input[%d]: packet processed\n", pcb->unit));
-          goto out;
-        }
-      }
-
-      /* No handler for this protocol so reject the packet. */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: rejecting unsupported proto 0x%"X16_F" len=%d\n", pcb->unit, protocol, pb->len));
-      if (pbuf_header(pb, sizeof(protocol))) {
-        LWIP_ASSERT("pbuf_header failed\n", 0);
-        goto drop;
-      }
-#if BYTE_ORDER == LITTLE_ENDIAN
-      protocol = htons(protocol);
-#endif /* BYTE_ORDER == LITTLE_ENDIAN */
-      SMEMCPY(pb->payload, &protocol, sizeof(protocol));
-      lcp_sprotrej(pcb->unit, pb->payload, pb->len);
-    }
-    break;
-  }
-#endif
-
-
 }
 
 #if PPPOS_SUPPORT
