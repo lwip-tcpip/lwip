@@ -240,9 +240,13 @@ static void chap_timeout(void *arg) {
 		return;
 	}
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->chap_server.challenge_pktlen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->chap_server.challenge_pktlen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 	MEMCPY(p->payload, pcb->chap_server.challenge, pcb->chap_server.challenge_pktlen);
 	ppp_write(pcb, p);
 	++pcb->chap_server.challenge_xmits;
@@ -334,9 +338,13 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	/* send the response */
 	mlen = strlen(pcb->chap_server.message);
 	len = CHAP_HDRLEN + mlen;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 	MAKEHEADER(outp, PPP_CHAP);
@@ -427,9 +435,13 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(RESP_MAX_PKTLEN), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(RESP_MAX_PKTLEN), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	if ((pcb->chap_client.flags & (LOWERUP | AUTH_STARTED)) != (LOWERUP | AUTH_STARTED))
 		return;		/* not ready */

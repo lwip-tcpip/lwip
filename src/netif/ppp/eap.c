@@ -266,9 +266,13 @@ eap_state *esp;
 	struct pbuf *p;
 	u_char *outp;
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 
@@ -297,9 +301,13 @@ eap_state *esp;
 	struct pbuf *p;
 	u_char *outp;
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + EAP_HEADERLEN), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
     
@@ -696,10 +704,13 @@ eap_state *esp;
 		return;
 	}
 
-	/* FIXME: improve buffer size */
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->peer_mru+PPP_HDRLEN), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PBUF_POOL_BUFSIZE), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
     
@@ -1059,9 +1070,13 @@ static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *s
 	int msglen;
 
 	msglen = EAP_HEADERLEN + sizeof (u_char) + lenstr;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 
@@ -1089,9 +1104,13 @@ static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name,
 
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + MD5_SIGNATURE_SIZE +
 	    namelen;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
     
@@ -1130,9 +1149,13 @@ int lenstr;
 	int msglen;
 
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + lenstr;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 
@@ -1168,9 +1191,13 @@ u_char *str;
 
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char) + sizeof (u32_t) +
 	    SHA_DIGESTSIZE;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 
@@ -1195,9 +1222,13 @@ static void eap_send_nak(ppp_pcb *pcb, u_char id, u_char type) {
 	int msglen;
 
 	msglen = EAP_HEADERLEN + 2 * sizeof (u_char);
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_RAM);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN + msglen), PBUF_POOL);
 	if(NULL == p)
 		return;
+	if(p->tot_len != p->len) {
+		pbuf_free(p);
+		return;
+	}
 
 	outp = p->payload;
 

@@ -706,10 +706,13 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 
     f->seen_ack = 0;
 
-    /* FIXME: improve buffer size */
-    p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->peer_mru+PPP_HDRLEN), PBUF_RAM);
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PBUF_POOL_BUFSIZE), PBUF_POOL);
     if(NULL == p)
         return;
+    if(p->tot_len != p->len) {
+        pbuf_free(p);
+        return;
+    }
 
     /*
      * Make up the request packet
@@ -756,9 +759,13 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
 	datalen = pcb->peer_mru - HEADERLEN;
     outlen = datalen + HEADERLEN;
 
-    p = pbuf_alloc(PBUF_RAW, (u16_t)(outlen + PPP_HDRLEN), PBUF_RAM);
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(outlen + PPP_HDRLEN), PBUF_POOL);
     if(NULL == p)
         return;
+    if(p->tot_len != p->len) {
+        pbuf_free(p);
+        return;
+    }
 
     outp = p->payload;
 /*  if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)  -- was only for fsm_sconfreq() */

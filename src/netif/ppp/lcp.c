@@ -1779,9 +1779,14 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
      * Process all his options.
      */
     next = inp;
-    nakp = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->peer_mru), PBUF_RAM);
+    nakp = pbuf_alloc(PBUF_RAW, (u16_t)(PBUF_POOL_BUFSIZE), PBUF_POOL);
     if(NULL == nakp)
         return 0;
+    if(nakp->tot_len != nakp->len) {
+        pbuf_free(nakp);
+        return 0;
+    }
+
     nakoutp = nakp->payload;
     rejp = inp;
     while (l) {
