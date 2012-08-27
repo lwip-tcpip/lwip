@@ -706,7 +706,17 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 
     f->seen_ack = 0;
 
-    p = pbuf_alloc(PBUF_RAW, (u16_t)(PBUF_POOL_BUFSIZE), PBUF_POOL);
+    /*
+     * Make up the request packet
+     */
+    if( f->callbacks->cilen && f->callbacks->addci ){
+	cilen = (*f->callbacks->cilen)(f);
+	if( cilen > pcb->peer_mru - HEADERLEN )
+	    cilen = pcb->peer_mru - HEADERLEN;
+    } else
+	cilen = 0;
+
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(cilen + HEADERLEN + PPP_HDRLEN), PBUF_POOL);
     if(NULL == p)
         return;
     if(p->tot_len != p->len) {
@@ -714,27 +724,16 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
         return;
     }
 
-    /*
-     * Make up the request packet
-     */
-    outp = (u_char*)p->payload + PPP_HDRLEN + HEADERLEN;
-    if( f->callbacks->cilen && f->callbacks->addci ){
-	cilen = (*f->callbacks->cilen)(f);
-	if( cilen > pcb->peer_mru - HEADERLEN )
-	    cilen = pcb->peer_mru - HEADERLEN;
-	if (f->callbacks->addci)
-	    (*f->callbacks->addci)(f, outp, &cilen);
-    } else
-	cilen = 0;
-
     /* send the request to our peer */
     outp = p->payload;
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(CONFREQ, outp);
     PUTCHAR(f->reqid, outp);
     PUTSHORT(cilen + HEADERLEN, outp);
+    if (cilen != 0) {
+	(*f->callbacks->addci)(f, outp, &cilen);
+    }
 
-    pbuf_realloc(p, cilen + HEADERLEN + PPP_HDRLEN);
     ppp_write(pcb, p);
 
     /* start the retransmit timer */
