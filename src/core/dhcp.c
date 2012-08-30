@@ -1472,8 +1472,14 @@ decode_next:
     if (offset >= q->len) {
       offset -= q->len;
       offset_max -= q->len;
-      q = q->next;
-      options = (u8_t*)q->payload;
+      if (offset < offset_max && offset_max) {
+        q = q->next;
+        LWIP_ASSERT("next pbuf was null", q);
+        options = (u8_t*)q->payload;
+      } else {
+        // We've run out of bytes, probably no end marker. Don't proceed.
+        break;
+      }
     }
   }
   /* is this an overloaded message? */
