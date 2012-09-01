@@ -258,7 +258,6 @@ ppp_pcb *ppp_new(void) {
   /* default configuration */
   pcb->settings.usepeerdns = 1;
   pcb->settings.persist = 1;
-  pcb->settings.holdoff = 30;
 #if CHAP_SUPPORT
   pcb->settings.chap_timeout_time = 3;
   pcb->settings.chap_max_transmits = 10;
@@ -526,7 +525,6 @@ ppp_close(ppp_pcb *pcb)
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
-  pcb->settings.persist = 0; /* FIXME: not necessary anymore since persistence is done through link status callback */
 
   /* Disconnect */
 #if PPPOE_SUPPORT

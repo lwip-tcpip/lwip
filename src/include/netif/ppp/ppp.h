@@ -206,8 +206,6 @@ typedef struct ppp_settings_s {
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
-  u16_t  holdoff;                     /* time to wait (s) before re-initiating the link after it terminates */
-
 #if PPP_IDLETIMELIMIT
   u16_t  idle_time_limit;             /* Disconnect if idle for this many seconds */
 #endif /* PPP_IDLETIMELIMIT */
@@ -293,7 +291,7 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 struct ppp_pcb_s {
-  /* -- below are data that will NOT be cleared between two sessions if persist mode is enabled */
+  /* -- below are data that will NOT be cleared between two sessions */
 #if PPP_DEBUG
   u8_t num;                      /* Interface number - only useful for debugging */
 #endif /* PPP_DEBUG */
@@ -312,7 +310,7 @@ struct ppp_pcb_s {
   void *link_status_ctx;                                          /* Status change callback optional pointer */
   struct netif netif;            /* PPP interface */
 
-  /* -- below are data that will be cleared between two sessions if persist mode is enabled */
+  /* -- below are data that will be cleared between two sessions */
 
   /*
    * phase must be the first member of cleared members, because it is used to know
