@@ -338,7 +338,6 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
   ppp_free_current_input_packet(&pcb->rx);
 
   ppp_clear(pcb);
-  new_phase(pcb, PHASE_INITIALIZE);
 
   pcb->fd = fd;
 
@@ -362,7 +361,7 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
   /*
    * Start the connection and handle incoming events (packet or timeout).
    */
-  PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: Connecting\n", pcb->num));
+  PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: connecting\n", pcb->num));
   ppp_start(pcb);
 #if PPP_INPROC_OWNTHREAD
   sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
@@ -404,7 +403,6 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   }
 
   ppp_clear(pcb);
-  new_phase(pcb, PHASE_INITIALIZE);
 
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
@@ -445,7 +443,6 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
   }
 
   ppp_clear(pcb);
-  new_phase(pcb, PHASE_INITIALIZE);
 
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
@@ -485,7 +482,6 @@ int ppp_reopen(ppp_pcb *pcb, u16_t holdoff) {
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_reopen() called, holdoff=%d\n", holdoff));
-  ppp_clear(pcb);
 
   if (holdoff == 0) {
     ppp_do_reopen(pcb);
@@ -607,7 +603,7 @@ static void ppp_clear(ppp_pcb *pcb) {
   struct protent *protp;
   int i;
 
-  LWIP_ASSERT("pcb->phase == PHASE_DEAD", pcb->phase == PHASE_DEAD);
+  LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
 
 #if PPP_STATS_SUPPORTs
   link_stats_valid = 0;
@@ -622,12 +618,14 @@ static void ppp_clear(ppp_pcb *pcb) {
   for (i = 0; (protp = protocols[i]) != NULL; ++i) {
       (*protp->init)(pcb);
   }
+
+  new_phase(pcb, PHASE_INITIALIZE);
 }
 
 static void ppp_do_reopen(void *arg) {
   ppp_pcb *pcb = (ppp_pcb*)arg;
 
-  new_phase(pcb, PHASE_INITIALIZE);
+  LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
@@ -930,7 +928,33 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 #if PPPOS_SUPPORT
 static void ppp_over_serial_reopen(ppp_pcb *pcb) {
 
-/* FIXME: fill me */
+  /* input pbuf left over from last session? */
+  ppp_free_current_input_packet(&pcb->rx);
+
+  ppp_clear(pcb);
+
+  pcb->rx.pcb = pcb;
+  pcb->rx.fd = pcb->fd;
+
+#if VJ_SUPPORT
+  vj_compress_init(&pcb->vj_comp);
+#endif /* VJ_SUPPORT */
+
+  /*
+   * Default the in and out accm so that escape and flag characters
+   * are always escaped.
+   */
+  pcb->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pcb->out_accm[15] = 0x60;
+
+  /*
+   * Start the connection and handle incoming events (packet or timeout).
+   */
+  PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: connecting\n", pcb->num));
+  ppp_start(pcb);
+#if PPP_INPROC_OWNTHREAD
+  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
+#endif /* PPP_INPROC_OWNTHREAD */
 }
 
 #if PPP_INPROC_OWNTHREAD
@@ -1867,6 +1891,8 @@ static void ppp_over_ethernet_reopen(ppp_pcb *pcb) {
   lcp_options *wo = &pcb->lcp_wantoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
 
+  ppp_clear(pcb);
+
   wo->mru = pcb->pppoe_sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
   wo->neg_asyncmap = 0;
   wo->neg_pcompression = 0;
@@ -1914,6 +1940,8 @@ static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
+
+  ppp_clear(pcb);
 
   wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
   wo->neg_asyncmap = 0;
