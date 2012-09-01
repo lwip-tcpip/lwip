@@ -300,7 +300,6 @@ struct ppp_pcb_s {
   sio_fd_t fd;                   /* File device ID of port. */
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
-  struct netif *ethif;
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT

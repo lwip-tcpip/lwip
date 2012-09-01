@@ -406,8 +406,6 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
   ppp_clear(pcb);
   new_phase(pcb, PHASE_INITIALIZE);
 
-  pcb->ethif = ethif;
-
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
 
@@ -528,7 +526,7 @@ ppp_close(ppp_pcb *pcb)
 
   /* Disconnect */
 #if PPPOE_SUPPORT
-  if (pcb->ethif) {
+  if (pcb->pppoe_sc) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
     /* This will leave us at PHASE_DEAD. */
     ppp_stop(pcb);
@@ -582,7 +580,7 @@ int ppp_delete(ppp_pcb *pcb) {
   netif_remove(&pcb->netif);
 
 #if PPPOE_SUPPORT
-  if (pcb->ethif) {
+  if (pcb->pppoe_sc) {
     pppoe_destroy(&pcb->netif);
   }
 #endif /* PPPOE_SUPPORT */
@@ -632,7 +630,7 @@ static void ppp_do_reopen(void *arg) {
   new_phase(pcb, PHASE_INITIALIZE);
 
 #if PPPOE_SUPPORT
-  if (pcb->ethif) {
+  if (pcb->pppoe_sc) {
     ppp_over_ethernet_reopen(pcb);
     return;
   }
@@ -1066,7 +1064,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
   }
 
 #if PPPOE_SUPPORT
-  if(pcb->ethif) {
+  if(pcb->pppoe_sc) {
     return ppp_netif_output_over_ethernet(pcb, pb, protocol);
   }
 #endif /* PPPOE_SUPPORT */
@@ -1346,7 +1344,7 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #endif /* PRINTPKT_SUPPORT */
 
 #if PPPOE_SUPPORT
-  if(pcb->ethif) {
+  if(pcb->pppoe_sc) {
     return ppp_write_over_ethernet(pcb, p);
   }
 #endif /* PPPOE_SUPPORT */
@@ -1869,12 +1867,12 @@ static void ppp_over_ethernet_reopen(ppp_pcb *pcb) {
   lcp_options *wo = &pcb->lcp_wantoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
 
-  wo->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  wo->mru = pcb->pppoe_sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
   wo->neg_asyncmap = 0;
   wo->neg_pcompression = 0;
   wo->neg_accompression = 0;
 
-  ao->mru = pcb->ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  ao->mru = pcb->pppoe_sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
   ao->neg_asyncmap = 0;
   ao->neg_pcompression = 0;
   ao->neg_accompression = 0;
@@ -1935,7 +1933,7 @@ void ppp_link_down(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
 
 #if PPPOE_SUPPORT
-  if (pcb->ethif) {
+  if (pcb->pppoe_sc) {
     return;
   }
 #endif /* PPPOE_SUPPORT */
@@ -1954,7 +1952,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->num));
 
 #if PPPOE_SUPPORT
-  if (pcb->ethif) {
+  if (pcb->pppoe_sc) {
     pppoe_disconnect(pcb->pppoe_sc);
   } else
 #endif /* PPPOE_SUPPORT */
