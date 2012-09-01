@@ -349,10 +349,6 @@ struct ppp_pcb_s {
 #endif /* VJ_SUPPORT */
 #endif /* PPPOS_SUPPORT */
 
-  /* FIXME: maybe we should cleanup one of those MTU variables */
-  u16_t mtu;                     /* Peer's mru */
-  u16_t peer_mru;                /* currently negotiated peer MRU */
-
   u32_t last_xmit;               /* Time of last transmission. */
 
   struct ppp_addrs addrs;        /* PPP addresses */
@@ -388,6 +384,7 @@ struct ppp_pcb_s {
   lcp_options lcp_hisoptions;    /* Options that we ack'd */
   u8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   u8_t lcp_echo_number;          /* ID number of next echo frame */
+  u16_t peer_mru;                /* currently negotiated peer MRU */
 
   fsm ipcp_fsm;                   /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;  /* Options that we want to request */

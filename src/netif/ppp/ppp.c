@@ -2219,7 +2219,6 @@ int sifup(ppp_pcb *pcb) {
   netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
 #endif /* PPP_IPV6_SUPPORT */
 
-  pcb->netif.mtu = netif_get_mtu(pcb);
   netif_set_up(&pcb->netif);
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
@@ -2261,7 +2260,7 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
  */
 void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
-  pcb->mtu = mtu;
+  pcb->netif.mtu = mtu;
 }
 
 /*
@@ -2269,7 +2268,7 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu) {
  */
 int netif_get_mtu(ppp_pcb *pcb) {
 
-  return pcb->mtu;
+  return pcb->netif.mtu;
 }
 
 /********************************************************************
