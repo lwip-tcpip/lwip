@@ -960,6 +960,11 @@ dhcp_bind(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_bind(): set request timeout %"U32_F" msecs\n", dhcp->offered_t2_rebind*1000));
   }
 
+  /* If we have sub 1 minute lease, t2 and t1 will kick in at the same time. */
+  if (dhcp->t1_timeout >= dhcp->t2_timeout && dhcp->t2_timeout > 0) {
+    dhcp->t1_timeout = 0;
+  }
+
   if (dhcp->subnet_mask_given) {
     /* copy offered network mask */
     ip_addr_copy(sn_mask, dhcp->offered_sn_mask);
