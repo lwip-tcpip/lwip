@@ -961,7 +961,7 @@ dhcp_bind(struct netif *netif)
   }
 
   /* If we have sub 1 minute lease, t2 and t1 will kick in at the same time. */
-  if (dhcp->t1_timeout >= dhcp->t2_timeout && dhcp->t2_timeout > 0) {
+  if ((dhcp->t1_timeout >= dhcp->t2_timeout) && (dhcp->t2_timeout > 0)) {
     dhcp->t1_timeout = 0;
   }
 

@@ -81,6 +81,9 @@ HISTORY
  ++ Bugfixes:
 
   2012-09-26: patch by Henrik Persson
+  * dhcp.c: patch #7843 Fix corner case with dhcp timeouts
+
+  2012-09-26: patch by Henrik Persson
   * dhcp.c: patch #7840 Segfault in dhcp_parse_reply if no end marker in dhcp packet
 
   2012-08-22: Simon Goldschmidt
