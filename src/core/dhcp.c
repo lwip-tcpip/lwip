@@ -1472,7 +1472,7 @@ decode_next:
     if (offset >= q->len) {
       offset -= q->len;
       offset_max -= q->len;
-      if (offset < offset_max && offset_max) {
+      if ((offset < offset_max) && offset_max) {
         q = q->next;
         LWIP_ASSERT("next pbuf was null", q);
         options = (u8_t*)q->payload;
