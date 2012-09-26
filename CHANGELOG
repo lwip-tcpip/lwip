@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2012-09-26: Simon Goldschmidt
+  * api_msg.c: fixed bug #37405 'err_tcp()' uses already freed 'netconn' object
+
   2012-09-26: patch by Henrik Persson
   * dhcp.c: patch #7843 Fix corner case with dhcp timeouts
 

@@ -456,6 +456,14 @@ accept_function(void *arg, struct tcp_pcb *newpcb, err_t err)
   if (sys_mbox_trypost(&conn->acceptmbox, newconn) != ERR_OK) {
     /* When returning != ERR_OK, the pcb is aborted in tcp_process(),
        so do nothing here! */
+    /* remove all references to this netconn from the pcb */
+    struct tcp_pcb* pcb = newconn->pcb.tcp;
+    tcp_arg(pcb, NULL);
+    tcp_recv(pcb, NULL);
+    tcp_sent(pcb, NULL);
+    tcp_poll(pcb, NULL, 4);
+    tcp_err(pcb, NULL);
+    /* remove reference from to the pcb from this netconn */
     newconn->pcb.tcp = NULL;
     /* no need to drain since we know the recvmbox is empty. */
     sys_mbox_free(&newconn->recvmbox);
