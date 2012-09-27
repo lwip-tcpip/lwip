@@ -158,8 +158,9 @@ typedef struct ppp_settings_s {
 
 #if PPP_SERVER
   unsigned int  auth_required     : 1;       /* Peer is required to authenticate */
+  unsigned int  null_login        : 1;       /* Username of "" and a password of "" are acceptable */
 #else
-    unsigned int                   :1;       /* 1 bit of padding */
+    unsigned int                   :2;       /* 2 bits of padding */
 #endif /* PPP_SERVER */
 #if PPP_REMOTENAME
   unsigned int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
@@ -202,7 +203,7 @@ typedef struct ppp_settings_s {
 #else
     unsigned int                   :1;       /* 1 bit of padding */
 #endif
-    unsigned int                   :2;       /* 2 bits of padding to round out to 16 bits */
+    unsigned int                   :1;       /* 1 bit of padding to round out to 16 bits */
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 

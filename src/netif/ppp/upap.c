@@ -120,16 +120,14 @@ struct protent pap_protent = {
 static void upap_timeout(void *arg);
 #if PPP_SERVER
 static void upap_reqtimeout(void *arg);
-#endif /* PPP_SERVER */
-#if 0 /* UNUSED */
 static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len);
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 static void upap_rauthack(ppp_pcb *pcb, u_char *inp, int id, int len);
 static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len);
 static void upap_sauthreq(ppp_pcb *pcb);
-#if 0 /* UNUSED */
+#if PPP_SERVER
 static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msglen);
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 
 
 /*
@@ -255,7 +253,7 @@ static void upap_lowerup(ppp_pcb *pcb) {
     else if (pcb->upap.us_serverstate == UPAPSS_PENDING) {
 	pcb->upap.us_serverstate = UPAPSS_LISTEN;
 	if (pcb->upap.us_reqtimeout > 0)
-	    TIMEOUT(upap_reqtimeout, u, pcb->upap.us_reqtimeout);
+	    TIMEOUT(upap_reqtimeout, pcb, pcb->upap.us_reqtimeout);
     }
 #endif /* PPP_SERVER */
 }
@@ -272,7 +270,7 @@ static void upap_lowerdown(ppp_pcb *pcb) {
 	UNTIMEOUT(upap_timeout, pcb);		/* Cancel timeout */
 #if PPP_SERVER
     if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->upap.us_reqtimeout > 0)
-	UNTIMEOUT(upap_reqtimeout, u);
+	UNTIMEOUT(upap_reqtimeout, pcb);
 #endif /* PPP_SERVER */
 
     pcb->upap.us_clientstate = UPAPCS_INITIAL;
@@ -338,9 +336,9 @@ static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l) {
      */
     switch (code) {
     case UPAP_AUTHREQ:
-#if 0 /* UNUSED */
+#if PPP_SERVER
 	upap_rauthreq(pcb, inp, id, len);
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 	break;
 
     case UPAP_AUTHACK:
@@ -356,7 +354,7 @@ static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l) {
     }
 }
 
-#if 0 /* UNUSED */
+#if PPP_SERVER
 /*
  * upap_rauth - Receive Authenticate.
  */
@@ -376,11 +374,11 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
      * supposed to return the same status as for the first request.
      */
     if (pcb->upap.us_serverstate == UPAPSS_OPEN) {
-	upap_sresp(u, UPAP_AUTHACK, id, "", 0);	/* return auth-ack */
+	upap_sresp(pcb, UPAP_AUTHACK, id, "", 0);	/* return auth-ack */
 	return;
     }
     if (pcb->upap.us_serverstate == UPAPSS_BADAUTH) {
-	upap_sresp(u, UPAP_AUTHNAK, id, "", 0);	/* return auth-nak */
+	upap_sresp(pcb, UPAP_AUTHNAK, id, "", 0);	/* return auth-nak */
 	return;
     }
 
@@ -404,16 +402,18 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	UPAPDEBUG(("pap_rauth: rcvd short packet."));
 	return;
     }
+
+    /* FIXME: we need a way to check peer secret */
     rpasswd = (char *) inp;
 
     /*
      * Check the username and password given.
      */
+#if 0
     retcode = check_passwd(pcb->upap.us_unit, ruser, ruserlen, rpasswd,
 			   rpasswdlen, &msg);
     BZERO(rpasswd, rpasswdlen);
 
-#if 0 /* UNUSED */
     /*
      * Check remote number authorization.  A plugin may have filled in
      * the remote number or added an allowed number, and rather than
@@ -426,30 +426,30 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	    warn("calling number %q is not authorized", remote_number);
 	}
     }
-#endif /* UNUSED */
+#endif
 
     msglen = strlen(msg);
     if (msglen > 255)
 	msglen = 255;
-    upap_sresp(u, retcode, id, msg, msglen);
+    upap_sresp(pcb, retcode, id, msg, msglen);
 
     /* Null terminate and clean remote name. */
-    slprintf(rhostname, sizeof(rhostname), "%.*v", ruserlen, ruser);
+    ppp_slprintf(rhostname, sizeof(rhostname), "%.*v", ruserlen, ruser);
 
     if (retcode == UPAP_AUTHACK) {
 	pcb->upap.us_serverstate = UPAPSS_OPEN;
-	notice("PAP peer authentication succeeded for %q", rhostname);
+	ppp_notice("PAP peer authentication succeeded for %q", rhostname);
 	auth_peer_success(pcb, PPP_PAP, 0, ruser, ruserlen);
     } else {
 	pcb->upap.us_serverstate = UPAPSS_BADAUTH;
-	warn("PAP peer authentication failed for %q", rhostname);
+	ppp_warn("PAP peer authentication failed for %q", rhostname);
 	auth_peer_fail(pcb, PPP_PAP);
     }
 
     if (pcb->upap.us_reqtimeout > 0)
-	UNTIMEOUT(upap_reqtimeout, u);
+	UNTIMEOUT(upap_reqtimeout, pcb);
 }
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 
 /*
  * upap_rauthack - Receive Authenticate-Ack.
@@ -557,7 +557,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
     pcb->upap.us_clientstate = UPAPCS_AUTHREQ;
 }
 
-#if 0 /* UNUSED */
+#if PPP_SERVER
 /*
  * upap_sresp - Send a response (ack or nak).
  */
@@ -586,7 +586,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
 
     ppp_write(pcb, p);
 }
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 
 #if PRINTPKT_SUPPORT
 /*

@@ -64,6 +64,13 @@
 #define MAX_CHALLENGE_LEN	64
 #define MAX_RESPONSE_LEN	64
 
+/*
+ * These limits apply to challenge and response packets we send.
+ * The +4 is the +1 that we actually need rounded up.
+ */
+#define CHAL_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_CHALLENGE_LEN + MAXNAMELEN)
+#define RESP_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_RESPONSE_LEN + MAXNAMELEN)
+
 /* bitmask of supported algorithms */
 #if MSCHAP_SUPPORT
 #define MDTYPE_MICROSOFT_V2	0x1
@@ -152,7 +159,7 @@ typedef struct chap_client_state {
 } chap_client_state;
 
 #if PPP_SERVER
-static struct chap_server_state {
+typedef struct chap_server_state {
 	u8_t flags;
 	int id;
 	char *name;

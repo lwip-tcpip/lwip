@@ -104,7 +104,7 @@ typedef struct upap_state {
     u8_t us_passwdlen;		/* Password length */
     u8_t us_clientstate;	/* Client state */
 #if PPP_SERVER
-    u8_t us_serverstate		/* Server state */
+    u8_t us_serverstate;	/* Server state */
 #endif /* PPP_SERVER */
     u8_t us_id;		        /* Current id */
     u8_t us_timeouttime;	/* Timeout (seconds) for auth-req retrans. */

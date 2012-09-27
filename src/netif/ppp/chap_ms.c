@@ -217,7 +217,7 @@ static int chapms_verify_response(int id, char *name,
 #ifndef MSLANMAN
 	if (!response[MS_CHAP_USENT]) {
 		/* Should really propagate this into the error packet. */
-		notice("Peer request for LANMAN auth not supported");
+		ppp_notice("Peer request for LANMAN auth not supported");
 		goto bad;
 	}
 #endif
@@ -236,13 +236,13 @@ static int chapms_verify_response(int id, char *name,
 			      MS_CHAP_NTRESP_LEN);
 
 	if (diff == 0) {
-		slprintf(message, message_space, "Access granted");
+		ppp_slprintf(message, message_space, "Access granted");
 		return 1;
 	}
 
  bad:
 	/* See comments below for MS-CHAP V2 */
-	slprintf(message, message_space, "E=691 R=1 C=%0.*B V=0",
+	ppp_slprintf(message, message_space, "E=691 R=1 C=%0.*B V=0",
 		 challenge_len, challenge);
 	return 0;
 }
@@ -288,9 +288,9 @@ static int chapms2_verify_response(int id, char *name,
 	if (memcmp(&md[MS_CHAP2_NTRESP], &response[MS_CHAP2_NTRESP],
 		   MS_CHAP2_NTRESP_LEN) == 0) {
 		if (response[MS_CHAP2_FLAGS])
-			slprintf(message, message_space, "S=%s", saresponse);
+			ppp_slprintf(message, message_space, "S=%s", saresponse);
 		else
-			slprintf(message, message_space, "S=%s M=%s",
+			ppp_slprintf(message, message_space, "S=%s M=%s",
 				 saresponse, "Access granted");
 		return 1;
 	}
@@ -317,7 +317,7 @@ static int chapms2_verify_response(int id, char *name,
 	 * Basically, this whole bit is useless code, even the small
 	 * implementation here is only because of overspecification.
 	 */
-	slprintf(message, message_space, "E=691 R=1 C=%0.*B V=0 M=%s",
+	ppp_slprintf(message, message_space, "E=691 R=1 C=%0.*B V=0 M=%s",
 		 challenge_len, challenge, "Access denied");
 	return 0;
 }

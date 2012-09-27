@@ -83,11 +83,11 @@ static int chap_md5_verify_response(int id, char *name,
 
 		/* Test if our hash matches the peer's response */
 		if (memcmp(hash, response, MD5_HASH_SIZE) == 0) {
-			slprintf(message, message_space, "Access granted");
+			ppp_slprintf(message, message_space, "Access granted");
 			return 1;
 		}
 	}
-	slprintf(message, message_space, "Access denied");
+	ppp_slprintf(message, message_space, "Access denied");
 	return 0;
 }
 #endif /* PPP_SERVER */

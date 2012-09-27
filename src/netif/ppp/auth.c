@@ -729,15 +729,16 @@ void upper_layers_down(ppp_pcb *pcb) {
  */
 void link_established(ppp_pcb *pcb) {
     int auth;
-#if 0 /* UNUSED */
-    lcp_options *wo = &lcp_wantoptions[pcb->unit];
-#endif /* UNUSED */
 #if PPP_SERVER
-    lcp_options *go = &lcp_gotoptions[pcb->unit];
-#endif /* #if PPP_SERVER */
+    lcp_options *wo = &pcb->lcp_wantoptions;
+    lcp_options *go = &pcb->lcp_gotoptions;
+#endif /* PPP_SERVER */
     lcp_options *ho = &pcb->lcp_hisoptions;
     int i;
     struct protent *protp;
+#if PPP_SERVER
+    int errcode;
+#endif /* PPP_SERVER */
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -749,13 +750,13 @@ void link_established(ppp_pcb *pcb) {
 		(*protp->lowerup)(pcb);
     }
 
-#if 0 /* UNUSED */
+#if PPP_SERVER
 #if PPP_ALLOWED_ADDRS
     if (!auth_required && noauth_addrs != NULL)
 	set_allowed_addrs(unit, NULL, NULL);
 #endif /* PPP_ALLOWED_ADDRS */
 
-    if (auth_required && !(0
+    if (pcb->settings.auth_required && !(0
 #if PAP_SUPPORT
 	|| go->neg_upap
 #endif /* PAP_SUPPORT */
@@ -779,14 +780,18 @@ void link_established(ppp_pcb *pcb) {
 	    set_allowed_addrs(unit, NULL, NULL);
 	} else
 #endif /* PPP_ALLOWED_ADDRS */
-	if (!wo->neg_upap || uselogin || !null_login(unit)) {
+	if (!wo->neg_upap || !pcb->settings.null_login) {
 	    ppp_warn("peer refused to authenticate: terminating link");
+#if 0 /* UNUSED */
 	    status = EXIT_PEER_AUTH_FAILED;
+#endif /* UNUSED */
+	    errcode = PPPERR_AUTHFAIL;
+	    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 	    lcp_close(pcb, "peer refused to authenticate");
 	    return;
 	}
     }
-#endif /* UNUSED */
+#endif /* PPP_SERVER */
 
     new_phase(pcb, PHASE_AUTHENTICATE);
     auth = 0;
@@ -997,10 +1002,14 @@ void continue_networks(ppp_pcb *pcb) {
  * The peer has failed to authenticate himself using `protocol'.
  */
 void auth_peer_fail(ppp_pcb *pcb, int protocol) {
+    int errcode = PPPERR_AUTHFAIL;
     /*
      * Authentication failure: take the link down
      */
+#if 0 /* UNUSED */
     status = EXIT_PEER_AUTH_FAILED;
+#endif /* UNUSED */
+    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
     lcp_close(pcb, "Authentication failed");
 }
 
@@ -1064,7 +1073,7 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, 
      * proceed to the network (or callback) phase.
      */
     if ((pcb->auth_pending &= ~bit) == 0)
-        network_phase(unit);
+        network_phase(pcb);
 }
 #endif /* PPP_SERVER */
 

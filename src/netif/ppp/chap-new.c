@@ -69,12 +69,6 @@ static option_t chap_option_list[] = {
 };
 #endif /* PPP_OPTIONS */
 
-/*
- * These limits apply to challenge and response packets we send.
- * The +4 is the +1 that we actually need rounded up.
- */
-#define CHAL_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_CHALLENGE_LEN + MAXNAMELEN)
-#define RESP_MAX_PKTLEN	(PPP_HDRLEN + CHAP_HDRLEN + 4 + MAX_RESPONSE_LEN + MAXNAMELEN)
 
 /* Values for flags in chap_client_state and chap_server_state */
 #define LOWERUP			1
@@ -168,7 +162,7 @@ static void chap_lowerdown(ppp_pcb *pcb) {
  * otherwise we wait for the lower layer to come up.
  */
 void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
-	struct chap_server_state *ss = &server;
+	struct chap_server_state *ss = &pcb->chap_server;
 	struct chap_digest_type *dp;
 
 	if (pcb->chap_server.flags & AUTH_STARTED) {
@@ -309,10 +303,12 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 			pcb->chap_server.flags &= ~TIMEOUT_PENDING;
 			UNTIMEOUT(chap_timeout, pcb);
 		}
-
-		if (explicit_remote) {
-			name = remote_name;
-		} else {
+#if PPP_REMOTENAME
+		if (pcb->settings.explicit_remote) {
+			name = pcb->remote_name;
+		} else
+#endif /* PPP_REMOTENAME */
+		{
 			/* Null terminate and clean remote name. */
 			ppp_slprintf(rname, sizeof(rname), "%.*v", len, name);
 			name = rname;
@@ -409,12 +405,14 @@ static int chap_verify_response(char *name, char *ourname, int id,
 	unsigned char secret[MAXSECRETLEN];
 	int secret_len;
 
+/* FIXME: we need a way to check peer secret */
+#if 0
 	/* Get the secret that the peer is supposed to know */
 	if (!get_secret(pcb, name, ourname, (char *)secret, &secret_len, 1)) {
 		ppp_error("No CHAP secret found for authenticating %q", name);
 		return 0;
 	}
-
+#endif
 	ok = digest->verify_response(id, name, secret, secret_len, challenge,
 				     response, message, message_space);
 	memset(secret, 0, sizeof(secret));
