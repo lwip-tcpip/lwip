@@ -257,7 +257,6 @@ ppp_pcb *ppp_new(void) {
 
   /* default configuration */
   pcb->settings.usepeerdns = 1;
-  pcb->settings.persist = 1;
 #if CHAP_SUPPORT
   pcb->settings.chap_timeout_time = 3;
   pcb->settings.chap_max_transmits = 10;
