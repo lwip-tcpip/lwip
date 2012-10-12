@@ -866,7 +866,7 @@ static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
     ADDCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
 #endif
     ADDCIVOID(CI_SSNHF, go->neg_ssnhf);
-    ADDCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
+    ADDCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class_,
 	      go->endpoint.value, go->endpoint.length);
 
     if (ucp - start_ucp != *lenp) {
@@ -1040,7 +1040,7 @@ static int lcp_ackci(fsm *f, u_char *p, int len) {
     ACKCISHORT(CI_MRRU, go->neg_mrru, go->mrru);
 #endif /* HAVE_MULTILINK */
     ACKCIVOID(CI_SSNHF, go->neg_ssnhf);
-    ACKCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class,
+    ACKCIENDP(CI_EPDISC, go->neg_endpoint, go->endpoint.class_,
 	      go->endpoint.value, go->endpoint.length);
 
     /*
@@ -1722,7 +1722,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
     REJCISHORT(CI_MRRU, neg_mrru, go->mrru);
 #endif /* HAVE_MULTILINK */
     REJCIVOID(CI_SSNHF, neg_ssnhf);
-    REJCIENDP(CI_EPDISC, neg_endpoint, go->endpoint.class,
+    REJCIENDP(CI_EPDISC, neg_endpoint, go->endpoint.class_,
 	      go->endpoint.value, go->endpoint.length);
 
     /*
@@ -2154,7 +2154,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	    GETCHAR(cichar, p);
 	    cilen -= CILEN_CHAR;
 	    ho->neg_endpoint = 1;
-	    ho->endpoint.class = cichar;
+	    ho->endpoint.class_ = cichar;
 	    ho->endpoint.length = cilen;
 	    MEMCPY(ho->endpoint.value, p, cilen);
 	    INCPTR(cilen, p);

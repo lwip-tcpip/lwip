@@ -97,7 +97,7 @@
 /* An endpoint discriminator, used with multilink. */
 #define MAX_ENDP_LEN	20	/* maximum length of discriminator value */
 struct epdisc {
-    unsigned char	class;
+    unsigned char	class_; /* -- The word "class" is reserved in C++. */
     unsigned char	length;
     unsigned char	value[MAX_ENDP_LEN];
 };
