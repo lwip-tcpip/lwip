@@ -106,6 +106,7 @@
 #define IFF_PASSIVE IFF_LINK0 /* wait passively for connection */
 #endif
 
+/* FIXME: we should probably remove that, this is only used for debug purposes */
 #ifndef PPPOE_ERRORSTRING_LEN
 #define PPPOE_ERRORSTRING_LEN     64
 #endif

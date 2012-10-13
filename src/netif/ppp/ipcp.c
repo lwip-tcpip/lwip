@@ -121,7 +121,7 @@ static void ipcp_up(fsm *f);		/* We're UP */
 static void ipcp_down(fsm *f);		/* We're DOWN */
 static void ipcp_finished(fsm *f);	/* Don't need lower layer */
 
-static fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
+static const fsm_callbacks ipcp_callbacks = { /* IPCP callback routines */
     ipcp_resetci,		/* Reset our Configuration Information */
     ipcp_cilen,			/* Length of our Configuration Information */
     ipcp_addci,			/* Add our Configuration Information */

@@ -133,7 +133,7 @@ ecp_options ecp_gotoptions[NUM_PPP];	/* what the peer agreed to do */
 ecp_options ecp_allowoptions[NUM_PPP];	/* what we'll agree to do */
 ecp_options ecp_hisoptions[NUM_PPP];	/* what we agreed to do */
 
-static fsm_callbacks ecp_callbacks = {
+static const fsm_callbacks ecp_callbacks = {
     NULL, /* ecp_resetci, */
     NULL, /* ecp_cilen, */
     NULL, /* ecp_addci, */

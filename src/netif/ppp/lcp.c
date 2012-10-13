@@ -241,7 +241,7 @@ static void LcpSendEchoRequest(fsm *f);
 static void LcpLinkFailure(fsm *f);
 static void LcpEchoCheck(fsm *f);
 
-static fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
+static const fsm_callbacks lcp_callbacks = {	/* LCP callback routines */
     lcp_resetci,		/* Reset our Configuration Information */
     lcp_cilen,			/* Length of our Configuration Information */
     lcp_addci,			/* Add our Configuration Information */

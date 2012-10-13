@@ -73,7 +73,7 @@
  */
 typedef struct fsm {
     ppp_pcb *pcb;		/* PPP Interface */
-    struct fsm_callbacks *callbacks;	/* Callback routines */
+    const struct fsm_callbacks *callbacks;	/* Callback routines */
     char *term_reason;		/* Reason for closing protocol */
     u8_t seen_ack;		/* Have received valid Ack/Nak/Rej to Req */
 				  /* -- This is our only flag, we might use u_int :1 if we have more flags */

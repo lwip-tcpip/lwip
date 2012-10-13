@@ -230,7 +230,7 @@ static int  ccp_extcode (fsm *, int, int, u_char *, int);
 static void ccp_rack_timeout (void *);
 static char *method_name (ccp_options *, ccp_options *);
 
-static fsm_callbacks ccp_callbacks = {
+static const fsm_callbacks ccp_callbacks = {
     ccp_resetci,
     ccp_cilen,
     ccp_addci,
