@@ -180,7 +180,7 @@ static int  ccp_printpkt (u_char *pkt, int len,
 #endif /* PRINTPKT_SUPPORT */
 static void ccp_datainput (int unit, u_char *pkt, int len);
 
-struct protent ccp_protent = {
+const struct protent ccp_protent = {
     PPP_CCP,
     ccp_init,
     ccp_input,

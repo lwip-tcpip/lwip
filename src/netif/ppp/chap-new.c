@@ -634,7 +634,7 @@ static int chap_print_pkt(unsigned char *p, int plen,
 }
 #endif /* PRINTPKT_SUPPORT */
 
-struct protent chap_protent = {
+const struct protent chap_protent = {
 	PPP_CHAP,
 	chap_init,
 	chap_input,

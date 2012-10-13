@@ -152,7 +152,7 @@ int link_stats_valid;
  * One entry per supported protocol.
  * The last entry must be NULL.
  */
-struct protent *protocols[] = {
+const struct protent* const protocols[] = {
     &lcp_protent,
 #if PAP_SUPPORT
     &pap_protent,
@@ -599,7 +599,7 @@ int ppp_delete(ppp_pcb *pcb) {
 
 /* Set a PPP PCB to its initial state */
 static void ppp_clear(ppp_pcb *pcb) {
-  struct protent *protp;
+  const struct protent *protp;
   int i;
 
   LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
@@ -769,7 +769,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     default: {
 
       int i;
-      struct protent *protp;
+      const struct protent *protp;
       /*
        * Upcall the proper protocol input routine.
        */

@@ -295,7 +295,7 @@ struct protent {
 };
 
 /* Table of pointers to supported protocols */
-extern struct protent *protocols[];
+extern const struct protent* const protocols[];
 
 
 /* Values for auth_pending, auth_done */

@@ -274,7 +274,7 @@ static int ipv6cp_printpkt(u_char *p, int plen,
 static int ipv6_active_pkt(u_char *pkt, int len);
 #endif /* PPP_DEMAND */
 
-struct protent ipv6cp_protent = {
+const struct protent ipv6cp_protent = {
     PPP_IPV6CP,
     ipv6cp_init,
     ipv6cp_input,

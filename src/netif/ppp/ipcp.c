@@ -278,7 +278,7 @@ static int  ip_active_pkt (u_char *, int);
 static void create_resolv (u32_t, u32_t);
 #endif /* UNUSED */
 
-struct protent ipcp_protent = {
+const struct protent ipcp_protent = {
     PPP_IPCP,
     ipcp_init,
     ipcp_input,

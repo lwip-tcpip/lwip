@@ -192,7 +192,7 @@ extern void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code);
 extern void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
-extern struct protent chap_protent;
+extern const struct protent chap_protent;
 
 #endif /* CHAP_H */
 #endif /* PPP_SUPPORT && CHAP_SUPPORT */

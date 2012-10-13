@@ -709,7 +709,7 @@ void link_down(ppp_pcb *pcb) {
 
 void upper_layers_down(ppp_pcb *pcb) {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 	if (!protp->enabled_flag)
@@ -735,7 +735,7 @@ void link_established(ppp_pcb *pcb) {
 #endif /* PPP_SERVER */
     lcp_options *ho = &pcb->lcp_hisoptions;
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 #if PPP_SERVER
     int errcode;
 #endif /* PPP_SERVER */
@@ -908,7 +908,7 @@ static void network_phase(ppp_pcb *pcb) {
 void start_networks(ppp_pcb *pcb) {
 #if CCP_SUPPORT || ECP_SUPPORT
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 #endif /* CCP_SUPPORT || ECP_SUPPORT */
 #if ECP_SUPPORT
     int ecp_required;
@@ -974,7 +974,7 @@ void start_networks(ppp_pcb *pcb) {
 
 void continue_networks(ppp_pcb *pcb) {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
     /*
      * Start the "real" network protocols.

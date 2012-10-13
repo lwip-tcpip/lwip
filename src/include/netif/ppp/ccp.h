@@ -52,6 +52,6 @@ extern ccp_options ccp_gotoptions[];
 extern ccp_options ccp_allowoptions[];
 extern ccp_options ccp_hisoptions[];
 
-extern struct protent ccp_protent;
+extern const struct protent ccp_protent;
 
 #endif /* PPP_SUPPORT && CCP_SUPPORT */

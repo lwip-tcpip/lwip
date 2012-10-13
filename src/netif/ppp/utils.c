@@ -455,7 +455,7 @@ static void ppp_format_packet(u_char *p, int len,
 		void (*printer) (void *, char *, ...), void *arg) {
     int i, n;
     u_short proto;
-    struct protent *protp;
+    const struct protent *protp;
 
     if (len >= 2) {
 	GETSHORT(proto, p);

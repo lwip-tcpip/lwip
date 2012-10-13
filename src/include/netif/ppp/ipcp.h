@@ -101,7 +101,7 @@ typedef struct ipcp_options {
 char *ip_ntoa (u32_t);
 #endif /* UNUSED, already defined by lwIP */
 
-extern struct protent ipcp_protent;
+extern const struct protent ipcp_protent;
 
 #endif /* IPCP_H */
 #endif /* PPP_SUPPORT */

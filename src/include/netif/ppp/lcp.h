@@ -164,7 +164,7 @@ void lcp_lowerup(ppp_pcb *pcb);
 void lcp_lowerdown(ppp_pcb *pcb);
 void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject */
 
-extern struct protent lcp_protent;
+extern const struct protent lcp_protent;
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */

@@ -272,7 +272,7 @@ static int lcp_printpkt(u_char *p, int plen,
 		void (*printer) (void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
-struct protent lcp_protent = {
+const struct protent lcp_protent = {
     PPP_LCP,
     lcp_init,
     lcp_input,
@@ -592,7 +592,7 @@ static int lcp_extcode(fsm *f, int code, int id, u_char *inp, int len) {
  */
 static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
     u_short prot;
 #if PPP_PROTOCOLNAME
     const char *pname;

@@ -120,7 +120,7 @@ void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password);
 void upap_authpeer(ppp_pcb *pcb);
 #endif /* PPP_SERVER */
 
-extern struct protent pap_protent;
+extern const struct protent pap_protent;
 
 #endif /* UPAP_H */
 #endif /* PPP_SUPPORT && PAP_SUPPORT */

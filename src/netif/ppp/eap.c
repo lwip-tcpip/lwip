@@ -111,7 +111,7 @@ static int  eap_printpkt(u_char *inp, int inlen,
     void (*)(void *arg, char *fmt, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
-struct protent eap_protent = {
+const struct protent eap_protent = {
 	PPP_EAP,		/* protocol number */
 	eap_init,		/* initialization procedure */
 	eap_input,		/* process a received packet */

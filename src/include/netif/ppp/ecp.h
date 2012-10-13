@@ -45,6 +45,6 @@ extern ecp_options ecp_gotoptions[];
 extern ecp_options ecp_allowoptions[];
 extern ecp_options ecp_hisoptions[];
 
-extern struct protent ecp_protent;
+extern const struct protent ecp_protent;
 
 #endif /* PPP_SUPPORT && ECP_SUPPORT */

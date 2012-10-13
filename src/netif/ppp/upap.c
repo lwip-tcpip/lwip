@@ -89,7 +89,7 @@ static void upap_protrej(ppp_pcb *pcb);
 static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
-struct protent pap_protent = {
+const struct protent pap_protent = {
     PPP_PAP,
     upap_init,
     upap_input,

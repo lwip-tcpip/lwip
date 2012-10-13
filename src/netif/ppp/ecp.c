@@ -99,7 +99,7 @@ static int  ecp_printpkt (u_char *pkt, int len,
 static void ecp_datainput (int unit, u_char *pkt, int len);
 */
 
-struct protent ecp_protent = {
+const struct protent ecp_protent = {
     PPP_ECP,
     ecp_init,
     NULL, /* ecp_input, */

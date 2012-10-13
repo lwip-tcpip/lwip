@@ -157,7 +157,7 @@ typedef struct eap_state {
 void eap_authwithpeer(ppp_pcb *pcb, char *localname);
 void eap_authpeer(ppp_pcb *pcb, char *localname);
 
-extern struct protent eap_protent;
+extern const struct protent eap_protent;
 
 #ifdef	__cplusplus
 }

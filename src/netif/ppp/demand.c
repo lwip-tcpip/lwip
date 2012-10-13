@@ -83,7 +83,7 @@ void
 demand_conf()
 {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
 /*    framemax = lcp_allowoptions[0].mru;
     if (framemax < PPP_MRU) */
@@ -128,7 +128,7 @@ void
 demand_block()
 {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
@@ -145,7 +145,7 @@ demand_discard()
 {
     struct packet *pkt, *nextpkt;
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
@@ -171,7 +171,7 @@ void
 demand_unblock()
 {
     int i;
-    struct protent *protp;
+    const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
 	if (protp->enabled_flag && protp->demand_conf != NULL)
@@ -436,7 +436,7 @@ active_packet(p, len)
     int len;
 {
     int proto, i;
-    struct protent *protp;
+    const struct protent *protp;
 
     if (len < PPP_HDRLEN)
 	return 0;

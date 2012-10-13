@@ -173,7 +173,7 @@ typedef struct ipv6cp_options {
     eui64_t ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;
 
-extern struct protent ipv6cp_protent;
+extern const struct protent ipv6cp_protent;
 
 #endif /* IPV6CP_H */
 #endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */
