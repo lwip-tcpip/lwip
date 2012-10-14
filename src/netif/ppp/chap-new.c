@@ -50,7 +50,7 @@
 
 /* Hook for a plugin to validate CHAP challenge */
 int (*chap_verify_hook)(char *name, char *ourname, int id,
-			struct chap_digest_type *digest,
+			const struct chap_digest_type *digest,
 			unsigned char *challenge, unsigned char *response,
 			char *message, int message_space) = NULL;
 
@@ -90,7 +90,7 @@ static void chap_generate_challenge(ppp_pcb *pcb);
 static void chap_handle_response(ppp_pcb *pcb, int code,
 		unsigned char *pkt, int len);
 static int chap_verify_response(char *name, char *ourname, int id,
-		struct chap_digest_type *digest,
+		const struct chap_digest_type *digest,
 		unsigned char *challenge, unsigned char *response,
 		char *message, int message_space);
 #endif /* PPP_SERVER */
@@ -106,7 +106,14 @@ static int chap_print_pkt(unsigned char *p, int plen,
 #endif /* PRINTPKT_SUPPORT */
 
 /* List of digest types that we know about */
-static struct chap_digest_type *chap_digests;
+const static struct chap_digest_type* const chap_digests[] = {
+    &md5_digest,
+#if MSCHAP_SUPPORT
+    &chapms_digest,
+    &chapms2_digest,
+#endif /* MSCHAP_SUPPORT */
+    NULL
+};
 
 /*
  * chap_init - reset to initial state.
@@ -117,19 +124,6 @@ static void chap_init(ppp_pcb *pcb) {
 #if PPP_SERVER
 	memset(&pcb->chap_server, 0, sizeof(chap_server_state));
 #endif /* PPP_SERVER */
-
-	chap_md5_init();
-#if MSCHAP_SUPPORT
-	chapms_init();
-#endif
-}
-
-/*
- * Add a new digest type to the list.
- */
-void chap_register_digest(struct chap_digest_type *dp) {
-	dp->next = chap_digests;
-	chap_digests = dp;
 }
 
 /*
@@ -163,13 +157,14 @@ static void chap_lowerdown(ppp_pcb *pcb) {
  */
 void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 	struct chap_server_state *ss = &pcb->chap_server;
-	struct chap_digest_type *dp;
+	const struct chap_digest_type *dp;
+	int i;
 
 	if (pcb->chap_server.flags & AUTH_STARTED) {
 		ppp_error("CHAP: peer authentication already started!");
 		return;
 	}
-	for (dp = chap_digests; dp != NULL; dp = dp->next)
+	for (i = 0; (dp = chap_digests[i]) != NULL; ++i)
 		if (dp->code == digest_code)
 			break;
 	if (dp == NULL)
@@ -191,7 +186,8 @@ void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
  * There isn't much to do until we receive a challenge.
  */
 void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
-	struct chap_digest_type *dp;
+	const struct chap_digest_type *dp;
+	int i;
 
 	if(NULL == our_name)
 		return;
@@ -200,9 +196,10 @@ void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
 		ppp_error("CHAP: authentication with peer already started!");
 		return;
 	}
-	for (dp = chap_digests; dp != NULL; dp = dp->next)
+	for (i = 0; (dp = chap_digests[i]) != NULL; ++i)
 		if (dp->code == digest_code)
 			break;
+
 	if (dp == NULL)
 		ppp_fatal("CHAP digest 0x%x requested but not available",
 		      digest_code);
@@ -283,7 +280,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	unsigned char *response, *outp;
 	struct pbuf *p;
 	char *name = NULL;	/* initialized to shut gcc up */
-	int (*verifier)(char *, char *, int, struct chap_digest_type *,
+	int (*verifier)(char *, char *, int, const struct chap_digest_type *,
 		unsigned char *, unsigned char *, char *, int);
 	char rname[MAXNAMELEN+1];
 
@@ -398,7 +395,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
  * succeeded), or 0 if it doesn't.
  */
 static int chap_verify_response(char *name, char *ourname, int id,
-		     struct chap_digest_type *digest,
+		     const struct chap_digest_type *digest,
 		     unsigned char *challenge, unsigned char *response,
 		     char *message, int message_space) {
 	int ok;

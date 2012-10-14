@@ -879,7 +879,7 @@ void set_mppe_enc_types(int policy, int types) {
 }
 #endif /* MPPE */
 
-static struct chap_digest_type chapms_digest = {
+const struct chap_digest_type chapms_digest = {
 	CHAP_MICROSOFT,		/* code */
 #if PPP_SERVER
 	chapms_generate_challenge,
@@ -890,7 +890,7 @@ static struct chap_digest_type chapms_digest = {
 	chapms_handle_failure,
 };
 
-static struct chap_digest_type chapms2_digest = {
+const struct chap_digest_type chapms2_digest = {
 	CHAP_MICROSOFT_V2,	/* code */
 #if PPP_SERVER
 	chapms2_generate_challenge,
@@ -900,13 +900,5 @@ static struct chap_digest_type chapms2_digest = {
 	chapms2_check_success,
 	chapms_handle_failure,
 };
-
-void chapms_init(void) {
-	chap_register_digest(&chapms_digest);
-	chap_register_digest(&chapms2_digest);
-#if PPP_OPTIONS
-	add_options(chapms_option_list);
-#endif /* PPP_OPTIONS */
-}
 
 #endif /* PPP_SUPPORT && MSCHAP_SUPPORT */

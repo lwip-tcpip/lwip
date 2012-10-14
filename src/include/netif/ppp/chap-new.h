@@ -143,8 +143,6 @@ struct chap_digest_type {
 		unsigned char *priv);
 	int (*check_success)(unsigned char *pkt, int len, unsigned char *priv);
 	void (*handle_failure)(unsigned char *pkt, int len);
-
-	struct chap_digest_type *next;
 };
 
 /*
@@ -154,7 +152,7 @@ struct chap_digest_type {
 typedef struct chap_client_state {
 	u8_t flags;
 	char *name;
-	struct chap_digest_type *digest;
+	const struct chap_digest_type *digest;
 	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
 
@@ -163,7 +161,7 @@ typedef struct chap_server_state {
 	u8_t flags;
 	int id;
 	char *name;
-	struct chap_digest_type *digest;
+	const struct chap_digest_type *digest;
 	int challenge_xmits;
 	int challenge_pktlen;
 	unsigned char challenge[CHAL_MAX_PKTLEN];
@@ -175,13 +173,10 @@ typedef struct chap_server_state {
 #if 0 /* UNUSED */
 /* Hook for a plugin to validate CHAP challenge */
 extern int (*chap_verify_hook)(char *name, char *ourname, int id,
-			struct chap_digest_type *digest,
+			const struct chap_digest_type *digest,
 			unsigned char *challenge, unsigned char *response,
 			char *message, int message_space);
 #endif /* UNUSED */
-
-/* Called by digest code to register a digest type */
-extern void chap_register_digest(struct chap_digest_type *);
 
 #if PPP_SERVER
 /* Called by authentication code to start authenticating the peer. */

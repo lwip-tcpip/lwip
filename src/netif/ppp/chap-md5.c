@@ -107,7 +107,7 @@ static void chap_md5_make_response(unsigned char *response, int id, char *our_na
 	response[0] = MD5_HASH_SIZE;
 }
 
-static struct chap_digest_type md5_digest = {
+const struct chap_digest_type md5_digest = {
 	CHAP_MD5,		/* code */
 #if PPP_SERVER
 	chap_md5_generate_challenge,
@@ -117,9 +117,5 @@ static struct chap_digest_type md5_digest = {
 	NULL,			/* check_success */
 	NULL,			/* handle_failure */
 };
-
-void chap_md5_init(void) {
-	chap_register_digest(&md5_digest);
-}
 
 #endif /* PPP_SUPPORT && CHAP_SUPPORT */

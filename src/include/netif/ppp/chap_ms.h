@@ -106,7 +106,8 @@ void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
 			u_char *rchallenge, char *username,
 			u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
 
-void chapms_init(void);
+extern const struct chap_digest_type chapms_digest;
+extern const struct chap_digest_type chapms2_digest;
 
 #define __CHAPMS_INCLUDE__
 #endif /* __CHAPMS_INCLUDE__ */
