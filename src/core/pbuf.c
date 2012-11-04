@@ -890,12 +890,12 @@ pbuf_copy(struct pbuf *p_to, struct pbuf *p_from)
 
     if((p_from != NULL) && (p_from->len == p_from->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                  (p_from->next == NULL), return ERR_VAL;);
     }
     if((p_to != NULL) && (p_to->len == p_to->tot_len)) {
       /* don't copy more than one packet! */
-      LWIP_ERROR("pbuf_copy() does not allow packet queues!\n",
+      LWIP_ERROR("pbuf_copy() does not allow packet queues!",
                   (p_to->next == NULL), return ERR_VAL;);
     }
   } while (p_from);
