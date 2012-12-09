@@ -271,6 +271,14 @@ ppp_pcb *ppp_new(void) {
   pcb->settings.chap_rechallenge_time = CHAP_DEFREQTIME;
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
+#if EAP_SUPPORT
+  pcb->settings.eap_req_time = EAP_DEFREQTIME;
+  pcb->settings.eap_allow_req = EAP_DEFALLOWREQ;
+#if PPP_SERVER
+  pcb->settings.eap_timeout_time = EAP_DEFTIMEOUT;
+  pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
+#endif /* PPP_SERVER */
+#endif /* EAP_SUPPORT */
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
   pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;

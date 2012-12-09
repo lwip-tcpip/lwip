@@ -1913,11 +1913,11 @@
 #endif /* PPP_SERVER */
 
 #ifndef EAP_DEFREQTIME
-#define	EAP_DEFREQTIME                  20      /* Time to wait for peer request */
+#define	EAP_DEFREQTIME                  6       /* Time to wait for peer request */
 #endif
 
 #ifndef EAP_DEFALLOWREQ
-#define	EAP_DEFALLOWREQ                 20      /* max # times to accept requests */
+#define	EAP_DEFALLOWREQ                 10      /* max # times to accept requests */
 #endif
 
 #if PPP_SERVER

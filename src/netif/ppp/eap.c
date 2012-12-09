@@ -204,12 +204,8 @@ static void eap_init(ppp_pcb *pcb) {
 
 	BZERO(&pcb->eap, sizeof(eap_state));
 #if PPP_SERVER
-	pcb->eap.es_server.ea_timeout = EAP_DEFTIMEOUT;
-	pcb->eap.es_server.ea_maxrequests = EAP_DEFTRANSMITS;
-	pcb->eap.es_server.ea_id = (u_char)(drand48() * 0x100);
+	pcb->eap.es_server.ea_id = (u_char)(drand48() * 0x100); /* FIXME: use magic.c random function */
 #endif /* PPP_SERVER */
-	pcb->eap.es_client.ea_timeout = EAP_DEFREQTIME;
-	pcb->eap.es_client.ea_maxrequests = EAP_DEFALLOWREQ;
 }
 
 /*
@@ -248,9 +244,9 @@ void eap_authwithpeer(ppp_pcb *pcb, char *localname) {
 	 * Start a timer so that if the other end just goes
 	 * silent, we don't sit here waiting forever.
 	 */
-	if (pcb->eap.es_client.ea_timeout > 0)
+	if (pcb->settings.eap_req_time > 0)
 		TIMEOUT(eap_client_timeout, pcb,
-		    pcb->eap.es_client.ea_timeout);
+		    pcb->settings.eap_req_time);
 }
 
 #if PPP_SERVER
@@ -445,7 +441,7 @@ static void eap_figure_next_state(ppp_pcb *pcb, int status) {
 	struct b64state bs;
 #endif /* USE_SRP */
 
-	pcb->eap.es_server.ea_timeout = pcb->eap.es_savedtime;
+	pcb->settings.eap_timeout_time = pcb->eap.es_savedtime;
 	switch (pcb->eap.es_server.ea_state) {
 	case eapBadAuth:
 		return;
@@ -544,9 +540,9 @@ static void eap_figure_next_state(ppp_pcb *pcb, int status) {
 				 * generator combination, and that will take
 				 * a while.  Lengthen the timeout here.
 				 */
-				if (pcb->eap.es_server.ea_timeout > 0 &&
-				    pcb->eap.es_server.ea_timeout < 30)
-					pcb->eap.es_server.ea_timeout = 30;
+				if (pcb->settings.eap_timeout_time > 0 &&
+				    pcb->settings.eap_timeout_time < 30)
+					pcb->settings.eap_timeout_time = 30;
 			} else {
 				break;
 			}
@@ -680,8 +676,8 @@ static void eap_send_request(ppp_pcb *pcb) {
 #endif /* PPP_REMOTENAME */
 	}
 
-	if (pcb->eap.es_server.ea_maxrequests > 0 &&
-	    pcb->eap.es_server.ea_requests >= pcb->eap.es_server.ea_maxrequests) {
+	if (pcb->settings.eap_max_transmits > 0 &&
+	    pcb->eap.es_server.ea_requests >= pcb->settings.eap_max_transmits) {
 		if (pcb->eap.es_server.ea_responses > 0)
 			ppp_error("EAP: too many Requests sent");
 		else
@@ -882,8 +878,8 @@ static void eap_send_request(ppp_pcb *pcb) {
 
 	pcb->eap.es_server.ea_requests++;
 
-	if (pcb->eap.es_server.ea_timeout > 0)
-		TIMEOUT(eap_server_timeout, pcb, pcb->eap.es_server.ea_timeout);
+	if (pcb->settings.eap_timeout_time > 0)
+		TIMEOUT(eap_server_timeout, pcb, pcb->settings.eap_timeout_time);
 }
 
 /*
@@ -898,7 +894,7 @@ void eap_authpeer(ppp_pcb *pcb, char *localname) {
 	pcb->eap.es_server.ea_name = localname;
 	pcb->eap.es_server.ea_namelen = strlen(localname);
 
-	pcb->eap.es_savedtime = pcb->eap.es_server.ea_timeout;
+	pcb->eap.es_savedtime = pcb->settings.eap_timeout_time;
 
 	/* Lower layer up yet? */
 	if (pcb->eap.es_server.ea_state == eapInitial ||
@@ -997,12 +993,12 @@ static void eap_lowerup(ppp_pcb *pcb) {
  */
 static void eap_lowerdown(ppp_pcb *pcb) {
 
-	if (eap_client_active(pcb) && pcb->eap.es_client.ea_timeout > 0) {
+	if (eap_client_active(pcb) && pcb->settings.eap_req_time > 0) {
 		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 #if PPP_SERVER
 	if (eap_server_active(pcb)) {
-		if (pcb->eap.es_server.ea_timeout > 0) {
+		if (pcb->settings.eap_timeout_time > 0) {
 			UNTIMEOUT(eap_server_timeout, pcb);
 		}
 	} else {
@@ -1366,10 +1362,10 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	 */
 
 	pcb->eap.es_client.ea_requests++;
-	if (pcb->eap.es_client.ea_maxrequests != 0 &&
-	    pcb->eap.es_client.ea_requests > pcb->eap.es_client.ea_maxrequests) {
+	if (pcb->settings.eap_allow_req != 0 &&
+	    pcb->eap.es_client.ea_requests > pcb->settings.eap_allow_req) {
 		ppp_info("EAP: received too many Request messages");
-		if (pcb->eap.es_client.ea_timeout > 0) {
+		if (pcb->settings.eap_req_time > 0) {
 			UNTIMEOUT(eap_client_timeout, pcb);
 		}
 		auth_withpeer_fail(pcb, PPP_EAP);
@@ -1726,17 +1722,17 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		break;
 	}
 
-	if (pcb->eap.es_client.ea_timeout > 0) {
+	if (pcb->settings.eap_req_time > 0) {
 		UNTIMEOUT(eap_client_timeout, pcb);
 		TIMEOUT(eap_client_timeout, pcb,
-		    pcb->eap.es_client.ea_timeout);
+		    pcb->settings.eap_req_time);
 	}
 	return;
 
 #ifdef USE_SRP
 client_failure:
 	pcb->eap.es_client.ea_state = eapBadAuth;
-	if (pcb->eap.es_client.ea_timeout > 0) {
+	if (pcb->settings.eap_req_time > 0) {
 		UNTIMEOUT(eap_client_timeout, (void *)esp);
 	}
 	pcb->eap.es_client.ea_session = NULL;
@@ -2034,7 +2030,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		return;
 	}
 
-	if (pcb->eap.es_server.ea_timeout > 0) {
+	if (pcb->settings.eap_timeout_time > 0) {
 		UNTIMEOUT(eap_server_timeout, pcb);
 	}
 
@@ -2057,7 +2053,7 @@ static void eap_success(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		return;
 	}
 
-	if (pcb->eap.es_client.ea_timeout > 0) {
+	if (pcb->settings.eap_req_time > 0) {
 		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 
@@ -2080,7 +2076,7 @@ static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
 		    pcb->eap.es_client.ea_state);
 	}
 
-	if (pcb->eap.es_client.ea_timeout > 0) {
+	if (pcb->settings.eap_req_time > 0) {
 		UNTIMEOUT(eap_client_timeout, pcb);
 	}
 

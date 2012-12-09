@@ -240,6 +240,15 @@ typedef struct ppp_settings_s {
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
 
+#if EAP_SUPPORT
+  u8_t  eap_req_time;            /* Time to wait (for retransmit/fail) */
+  u8_t  eap_allow_req;           /* Max Requests allowed */
+#if PPP_SERVER
+  u8_t  eap_timeout_time;        /* Time to wait (for retransmit/fail) */
+  u8_t  eap_max_transmits;       /* Max Requests allowed */
+#endif /* PPP_SERVER */
+#endif /* EAP_SUPPORT */
+
   u8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
                                  before deciding the link is looped-back. */
   u8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */

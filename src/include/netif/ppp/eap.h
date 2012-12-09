@@ -117,8 +117,6 @@ struct eap_auth {
 	char *ea_peer;		/* Peer's name */
 	void *ea_session;	/* Authentication library linkage */
 	u_char *ea_skey;	/* Shared encryption key */
-	int ea_timeout;		/* Time to wait (for retransmit/fail) */
-	int ea_maxrequests;	/* Max Requests allowed */
 	u_short ea_namelen;	/* Length of our name */
 	u_short ea_peerlen;	/* Length of peer's name */
 	enum eap_state_code ea_state;
