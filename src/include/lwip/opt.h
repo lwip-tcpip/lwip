@@ -1912,6 +1912,24 @@
 #endif
 #endif /* PPP_SERVER */
 
+#ifndef EAP_DEFREQTIME
+#define	EAP_DEFREQTIME                  20      /* Time to wait for peer request */
+#endif
+
+#ifndef EAP_DEFALLOWREQ
+#define	EAP_DEFALLOWREQ                 20      /* max # times to accept requests */
+#endif
+
+#if PPP_SERVER
+#ifndef EAP_DEFTIMEOUT
+#define	EAP_DEFTIMEOUT                  6       /* Timeout (seconds) for rexmit */
+#endif
+
+#ifndef EAP_DEFTRANSMITS
+#define	EAP_DEFTRANSMITS                10      /* max # times to transmit */
+#endif
+#endif /* PPP_SERVER */
+
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
 #ifndef LCP_DEFLOOPBACKFAIL
