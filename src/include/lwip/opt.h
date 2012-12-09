@@ -1900,6 +1900,12 @@
 #define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
 #endif
 
+/* Default number of times we receive our magic number from the peer
+   before deciding the link is looped-back. */
+#ifndef LCP_DEFLOOPBACKFAIL
+#define LCP_DEFLOOPBACKFAIL             10
+#endif
+
 /* Interval in seconds between keepalive echo requests, 0 to disable. */
 #ifndef LCP_ECHOINTERVAL
 #define LCP_ECHOINTERVAL                0

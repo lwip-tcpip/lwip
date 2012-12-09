@@ -166,9 +166,11 @@ void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject 
 
 extern const struct protent lcp_protent;
 
+#if 0 /* moved to opt.h */
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */
 #define DEFLOOPBACKFAIL	10
+#endif /* moved to opt.h */
 
 #endif /* LCP_H */
 #endif /* PPP_SUPPORT */
