@@ -79,10 +79,10 @@ void fsm_init(fsm *f) {
     f->state = PPP_FSM_INITIAL;
     f->flags = 0;
     f->id = 0;				/* XXX Start with random id? */
-    f->timeouttime = DEFTIMEOUT;
-    f->maxconfreqtransmits = DEFMAXCONFREQS;
-    f->maxtermtransmits = DEFMAXTERMREQS;
-    f->maxnakloops = DEFMAXNAKLOOPS;
+    f->timeouttime = FSM_DEFTIMEOUT;
+    f->maxconfreqtransmits = FSM_DEFMAXCONFREQS;
+    f->maxtermtransmits = FSM_DEFMAXTERMREQS;
+    f->maxnakloops = FSM_DEFMAXNAKLOOPS;
     f->term_reason_len = 0;
 }
 

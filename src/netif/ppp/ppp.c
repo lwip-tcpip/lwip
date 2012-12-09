@@ -258,8 +258,8 @@ ppp_pcb *ppp_new(void) {
   /* default configuration */
   pcb->settings.usepeerdns = 1;
 #if CHAP_SUPPORT
-  pcb->settings.chap_timeout_time = 3;
-  pcb->settings.chap_max_transmits = 10;
+  pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
+  pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
 #endif /* CHAP_SUPPPORT */
   pcb->settings.lcp_loopbackfail = DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
