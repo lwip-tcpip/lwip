@@ -1888,17 +1888,29 @@
 #define UPAP_DEFTIMEOUT                 6       /* Timeout (seconds) for retransmitting req */
 #endif
 
+#ifndef UPAP_DEFTRANSMITS
+#define UPAP_DEFTRANSMITS               10      /* Maximum number of auth-reqs to send */
+#endif
+
+#if PPP_SERVER
 #ifndef UPAP_DEFREQTIME
 #define UPAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
 #endif
+#endif /* PPP_SERVER */
 
 #ifndef CHAP_DEFTIMEOUT
-#define CHAP_DEFTIMEOUT                 6       /* Timeout time in seconds */
+#define CHAP_DEFTIMEOUT                 6       /* Timeout (seconds) for retransmitting req */
 #endif
 
 #ifndef CHAP_DEFTRANSMITS
 #define CHAP_DEFTRANSMITS               10      /* max # times to send challenge */
 #endif
+
+#if PPP_SERVER
+#ifndef CHAP_DEFREQTIME
+#define CHAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
+#endif
+#endif /* PPP_SERVER */
 
 /* Default number of times we receive our magic number from the peer
    before deciding the link is looped-back. */

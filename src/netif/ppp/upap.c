@@ -144,8 +144,10 @@ static void upap_init(ppp_pcb *pcb) {
 #endif /* PPP_SERVER */
     pcb->upap.us_id = 0;
     pcb->upap.us_timeouttime = UPAP_DEFTIMEOUT;
-    pcb->upap.us_maxtransmits = 10;
+    pcb->upap.us_maxtransmits = UPAP_DEFTRANSMITS;
+#if PPP_SERVER
     pcb->upap.us_reqtimeout = UPAP_DEFREQTIME;
+#endif /* PPP_SERVER */
 }
 
 

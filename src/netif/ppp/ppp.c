@@ -260,6 +260,9 @@ ppp_pcb *ppp_new(void) {
 #if CHAP_SUPPORT
   pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
   pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
+#if PPP_SERVER
+  pcb->settings.chap_rechallenge_time = CHAP_DEFREQTIME;
+#endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;

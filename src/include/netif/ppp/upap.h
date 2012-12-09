@@ -110,7 +110,9 @@ typedef struct upap_state {
     u8_t us_timeouttime;	/* Timeout (seconds) for auth-req retrans. */
     u8_t us_transmits;		/* Number of auth-reqs sent */
     u8_t us_maxtransmits;	/* Maximum number of auth-reqs to send */
+#if PPP_SERVER
     u8_t us_reqtimeout;		/* Time to wait for auth-req from peer */
+#endif /* PPP_SERVER */
 } upap_state;
 #endif /* PAP_SUPPORT */
 

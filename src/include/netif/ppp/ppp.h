@@ -225,9 +225,11 @@ typedef struct ppp_settings_s {
 #endif /* PPP_REMOTENAME */
 
 #if CHAP_SUPPORT
-  u8_t  chap_timeout_time;
-  u8_t  chap_max_transmits;
-  u8_t  chap_rechallenge_time;
+  u8_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
+  u8_t  chap_max_transmits;      /* max # times to send challenge */
+#if PPP_SERVER
+  u8_t  chap_rechallenge_time;   /* Time to wait for auth-req from peer */
+#endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
 
   u8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
