@@ -249,6 +249,11 @@ typedef struct ppp_settings_s {
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
 
+  u8_t  fsm_timeout_time;            /* Timeout time in seconds */
+  u8_t  fsm_max_conf_req_transmits;  /* Maximum Configure-Request transmissions */
+  u8_t  fsm_max_term_transmits;      /* Maximum Terminate-Request transmissions */
+  u8_t  fsm_max_nak_loops;           /* Maximum number of nak loops tolerated */
+
   u8_t  lcp_loopbackfail;     /* Number of times we receive our magic number from the peer
                                  before deciding the link is looped-back. */
   u8_t  lcp_echo_interval;    /* Interval between LCP echo-requests */

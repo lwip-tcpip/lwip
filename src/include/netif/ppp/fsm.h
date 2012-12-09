@@ -82,13 +82,11 @@ typedef struct fsm {
     u8_t flags;			/* Contains option bits */
     u8_t id;			/* Current id */
     u8_t reqid;			/* Current request id */
-    u8_t timeouttime;		/* Timeout time in seconds */
-    u8_t maxconfreqtransmits;	/* Maximum Configure-Request transmissions */
     u8_t retransmits;		/* Number of retransmissions left */
-    u8_t maxtermtransmits;	/* Maximum Terminate-Request transmissions */
     u8_t nakloops;		/* Number of nak loops since last ack */
     u8_t rnakloops;		/* Number of naks received */
-    u8_t maxnakloops;		/* Maximum number of nak loops tolerated */
+    u8_t maxnakloops;		/* Maximum number of nak loops tolerated
+				   (necessary because IPCP require a custom large max nak loops value) */
     u8_t term_reason_len;	/* Length of term_reason */
 } fsm;
 

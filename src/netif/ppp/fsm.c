@@ -76,13 +76,11 @@ static void fsm_sconfreq(fsm *f, int retransmit);
  * Initialize fsm state.
  */
 void fsm_init(fsm *f) {
+    ppp_pcb *pcb = f->pcb;
     f->state = PPP_FSM_INITIAL;
     f->flags = 0;
     f->id = 0;				/* XXX Start with random id? */
-    f->timeouttime = FSM_DEFTIMEOUT;
-    f->maxconfreqtransmits = FSM_DEFMAXCONFREQS;
-    f->maxtermtransmits = FSM_DEFMAXTERMREQS;
-    f->maxnakloops = FSM_DEFMAXNAKLOOPS;
+    f->maxnakloops = pcb->settings.fsm_max_nak_loops;
     f->term_reason_len = 0;
 }
 
@@ -198,13 +196,15 @@ void fsm_open(fsm *f) {
  * send a terminate-request message as configured.
  */
 static void terminate_layer(fsm *f, int nextstate) {
+    ppp_pcb *pcb = f->pcb;
+
     if( f->state != PPP_FSM_OPENED )
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
     else if( f->callbacks->down )
 	(*f->callbacks->down)(f);	/* Inform upper layers we're down */
 
     /* Init restart counter and send Terminate-Request */
-    f->retransmits = f->maxtermtransmits;
+    f->retransmits = pcb->settings.fsm_max_term_transmits;
     fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 	      (u_char *) f->term_reason, f->term_reason_len);
 
@@ -220,7 +220,7 @@ static void terminate_layer(fsm *f, int nextstate) {
 	return;
     }
 
-    TIMEOUT(fsm_timeout, f, f->timeouttime);
+    TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
     --f->retransmits;
 
     f->state = nextstate;
@@ -261,6 +261,7 @@ void fsm_close(fsm *f, char *reason) {
  */
 static void fsm_timeout(void *arg) {
     fsm *f = (fsm *) arg;
+    ppp_pcb *pcb = f->pcb;
 
     switch (f->state) {
     case PPP_FSM_CLOSING:
@@ -276,7 +277,7 @@ static void fsm_timeout(void *arg) {
 	    /* Send Terminate-Request */
 	    fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
 		      (u_char *) f->term_reason, f->term_reason_len);
-	    TIMEOUT(fsm_timeout, f, f->timeouttime);
+	    TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
 	    --f->retransmits;
 	}
 	break;
@@ -450,6 +451,8 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
  * fsm_rconfack - Receive Configure-Ack.
  */
 static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
+    ppp_pcb *pcb = f->pcb;
+
     if (id != f->reqid || f->seen_ack)		/* Expected id? */
 	return;					/* Nope, toss... */
     if( !(f->callbacks->ackci? (*f->callbacks->ackci)(f, inp, len):
@@ -469,7 +472,7 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
 
     case PPP_FSM_REQSENT:
 	f->state = PPP_FSM_ACKRCVD;
-	f->retransmits = f->maxconfreqtransmits;
+	f->retransmits = pcb->settings.fsm_max_conf_req_transmits;
 	break;
 
     case PPP_FSM_ACKRCVD:
@@ -482,7 +485,7 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
     case PPP_FSM_ACKSENT:
 	UNTIMEOUT(fsm_timeout, f);	/* Cancel timeout */
 	f->state = PPP_FSM_OPENED;
-	f->retransmits = f->maxconfreqtransmits;
+	f->retransmits = pcb->settings.fsm_max_conf_req_transmits;
 	if (f->callbacks->up)
 	    (*f->callbacks->up)(f);	/* Inform upper layers */
 	break;
@@ -565,6 +568,8 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
  * fsm_rtermreq - Receive Terminate-Req.
  */
 static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
+    ppp_pcb *pcb = f->pcb;
+
     switch (f->state) {
     case PPP_FSM_ACKRCVD:
     case PPP_FSM_ACKSENT:
@@ -580,7 +585,7 @@ static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
 	f->state = PPP_FSM_STOPPING;
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
-	TIMEOUT(fsm_timeout, f, f->timeouttime);
+	TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
 	break;
     }
 
@@ -700,7 +705,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 
     if( !retransmit ){
 	/* New request - reset retransmission counter, use new ID */
-	f->retransmits = f->maxconfreqtransmits;
+	f->retransmits = pcb->settings.fsm_max_conf_req_transmits;
 	f->reqid = ++f->id;
     }
 
@@ -738,7 +743,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
 
     /* start the retransmit timer */
     --f->retransmits;
-    TIMEOUT(fsm_timeout, f, f->timeouttime);
+    TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
 }
 
 

@@ -257,6 +257,7 @@ ppp_pcb *ppp_new(void) {
 
   /* default configuration */
   pcb->settings.usepeerdns = 1;
+
 #if PAP_SUPPORT
   pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
   pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;
@@ -264,6 +265,7 @@ ppp_pcb *ppp_new(void) {
   pcb->settings.pap_req_timeout = UPAP_DEFREQTIME;
 #endif /* PPP_SERVER */
 #endif /* PAP_SUPPORT */
+
 #if CHAP_SUPPORT
   pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
   pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
@@ -271,6 +273,7 @@ ppp_pcb *ppp_new(void) {
   pcb->settings.chap_rechallenge_time = CHAP_DEFREQTIME;
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPPORT */
+
 #if EAP_SUPPORT
   pcb->settings.eap_req_time = EAP_DEFREQTIME;
   pcb->settings.eap_allow_req = EAP_DEFALLOWREQ;
@@ -279,9 +282,15 @@ ppp_pcb *ppp_new(void) {
   pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
+
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
   pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
+
+  pcb->settings.fsm_timeout_time = FSM_DEFTIMEOUT;
+  pcb->settings.fsm_max_conf_req_transmits = FSM_DEFMAXCONFREQS;
+  pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
+  pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
   if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
