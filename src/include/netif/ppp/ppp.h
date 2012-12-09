@@ -224,6 +224,14 @@ typedef struct ppp_settings_s {
   char  remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
 #endif /* PPP_REMOTENAME */
 
+#if PAP_SUPPORT
+  u8_t  pap_timeout_time;        /* Timeout (seconds) for auth-req retrans. */
+  u8_t  pap_max_transmits;       /* Number of auth-reqs sent */
+#if PPP_SERVER
+  u8_t  pap_req_timeout;         /* Time to wait for auth-req from peer */
+#endif /* PPP_SERVER */
+#endif /* PAP_SUPPPORT */
+
 #if CHAP_SUPPORT
   u8_t  chap_timeout_time;       /* Timeout (seconds) for retransmitting req */
   u8_t  chap_max_transmits;      /* max # times to send challenge */

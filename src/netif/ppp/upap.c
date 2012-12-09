@@ -143,11 +143,6 @@ static void upap_init(ppp_pcb *pcb) {
     pcb->upap.us_serverstate = UPAPSS_INITIAL;
 #endif /* PPP_SERVER */
     pcb->upap.us_id = 0;
-    pcb->upap.us_timeouttime = UPAP_DEFTIMEOUT;
-    pcb->upap.us_maxtransmits = UPAP_DEFTRANSMITS;
-#if PPP_SERVER
-    pcb->upap.us_reqtimeout = UPAP_DEFREQTIME;
-#endif /* PPP_SERVER */
 }
 
 
@@ -194,8 +189,8 @@ void upap_authpeer(ppp_pcb *pcb) {
     }
 
     pcb->upap.us_serverstate = UPAPSS_LISTEN;
-    if (pcb->upap.us_reqtimeout > 0)
-	TIMEOUT(upap_reqtimeout, pcb, pcb->upap.us_reqtimeout);
+    if (pcb->settings.pap_req_timeout > 0)
+	TIMEOUT(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
 }
 #endif /* PPP_SERVER */
 
@@ -208,7 +203,7 @@ static void upap_timeout(void *arg) {
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ)
 	return;
 
-    if (pcb->upap.us_transmits >= pcb->upap.us_maxtransmits) {
+    if (pcb->upap.us_transmits >= pcb->settings.pap_max_transmits) {
 	/* give up in disgust */
 	ppp_error("No response to PAP authenticate-requests");
 	pcb->upap.us_clientstate = UPAPCS_BADAUTH;
@@ -254,8 +249,8 @@ static void upap_lowerup(ppp_pcb *pcb) {
 	pcb->upap.us_serverstate = UPAPSS_CLOSED;
     else if (pcb->upap.us_serverstate == UPAPSS_PENDING) {
 	pcb->upap.us_serverstate = UPAPSS_LISTEN;
-	if (pcb->upap.us_reqtimeout > 0)
-	    TIMEOUT(upap_reqtimeout, pcb, pcb->upap.us_reqtimeout);
+	if (pcb->settings.pap_req_timeout > 0)
+	    TIMEOUT(upap_reqtimeout, pcb, pcb->settings.pap_req_timeout);
     }
 #endif /* PPP_SERVER */
 }
@@ -271,7 +266,7 @@ static void upap_lowerdown(ppp_pcb *pcb) {
     if (pcb->upap.us_clientstate == UPAPCS_AUTHREQ)	/* Timeout pending? */
 	UNTIMEOUT(upap_timeout, pcb);		/* Cancel timeout */
 #if PPP_SERVER
-    if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->upap.us_reqtimeout > 0)
+    if (pcb->upap.us_serverstate == UPAPSS_LISTEN && pcb->settings.pap_req_timeout > 0)
 	UNTIMEOUT(upap_reqtimeout, pcb);
 #endif /* PPP_SERVER */
 
@@ -448,7 +443,7 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	auth_peer_fail(pcb, PPP_PAP);
     }
 
-    if (pcb->upap.us_reqtimeout > 0)
+    if (pcb->settings.pap_req_timeout > 0)
 	UNTIMEOUT(upap_reqtimeout, pcb);
 }
 #endif /* PPP_SERVER */
@@ -554,7 +549,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
 
     ppp_write(pcb, p);
 
-    TIMEOUT(upap_timeout, pcb, pcb->upap.us_timeouttime);
+    TIMEOUT(upap_timeout, pcb, pcb->settings.pap_timeout_time);
     ++pcb->upap.us_transmits;
     pcb->upap.us_clientstate = UPAPCS_AUTHREQ;
 }
