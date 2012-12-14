@@ -357,7 +357,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
   /* identify the IP header */
   ip6hdr = (struct ip6_hdr *)p->payload;
   if (IP6H_V(ip6hdr) != 6) {
-    LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IPv6 packet dropped due to bad version number %"U16_F"\n",
+    LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_WARNING, ("IPv6 packet dropped due to bad version number %"U32_F"\n",
         IP6H_V(ip6hdr)));
     pbuf_free(p);
     IP6_STATS_INC(ip6.err);
