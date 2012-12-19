@@ -996,9 +996,9 @@ ip6_debug_print(struct pbuf *p)
                     IP6H_FL(ip6hdr)));
   LWIP_DEBUGF(IP6_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP6_DEBUG, ("|     %5"U16_F"     |  %3"U16_F"  |  %3"U16_F"  | (plen, nexth, hopl)\n",
-                    ntohs(IP6H_PLEN(ip6hdr)),
-                    ntohs(IP6H_NEXTH(ip6hdr)),
-                    ntohs(IP6H_HOPLIM(ip6hdr))));
+                    IP6H_PLEN(ip6hdr),
+                    IP6H_NEXTH(ip6hdr),
+                    IP6H_HOPLIM(ip6hdr)));
   LWIP_DEBUGF(IP6_DEBUG, ("+-------------------------------+\n"));
   LWIP_DEBUGF(IP6_DEBUG, ("|  %4"X32_F" |  %4"X32_F" |  %4"X32_F" |  %4"X32_F" | (src)\n",
                     IP6_ADDR_BLOCK1(&(ip6hdr->src)),
