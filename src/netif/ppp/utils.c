@@ -207,7 +207,7 @@ int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 	    switch (c) {
 	    case 'd':
 		val = va_arg(args, long);
-		if (val < 0) {
+		if ((long)val < 0) {
 		    neg = 1;
 		    val = -val;
 		}

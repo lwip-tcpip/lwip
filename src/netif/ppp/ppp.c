@@ -1012,7 +1012,8 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
   int c;
 
   for(b = nb; b != NULL; b = b->next) {
-    if((c = sio_write(pcb->fd, b->payload, b->len)) != b->len) {
+    c = sio_write(pcb->fd, b->payload, b->len)
+    if(c != b->len) {
       PPPDEBUG(LOG_WARNING,
                ("PPP pppos_put: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pcb->fd, b->len, c, c));
       LINK_STATS_INC(link.err);
@@ -1129,7 +1130,9 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
   return ppp_netif_output_over_serial(pcb, pb, protocol);
 #endif /* PPPOS_SUPPORT */
 
+#if !PPPOS_SUPPORT
   return ERR_OK;
+#endif
 }
 
 #if PPPOS_SUPPORT
@@ -1368,10 +1371,6 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
       return PPPERR_PARAM;
       break;
 #endif /* PPPOS_SUPPORT */
-
-    default:
-      return PPPERR_PARAM;
-      break;
   }
 
   return PPPERR_PARAM;
@@ -1409,8 +1408,10 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
   return ppp_write_over_serial(pcb, p);
 #endif /* PPPOS_SUPPORT */
 
+#if !PPPOS_SUPPORT
   pbuf_free(p);
   return PPPERR_NONE;
+#endif
 }
 
 #if PPPOS_SUPPORT
