@@ -1012,7 +1012,7 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
   int c;
 
   for(b = nb; b != NULL; b = b->next) {
-    c = sio_write(pcb->fd, b->payload, b->len)
+    c = sio_write(pcb->fd, b->payload, b->len);
     if(c != b->len) {
       PPPDEBUG(LOG_WARNING,
                ("PPP pppos_put: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pcb->fd, b->len, c, c));
