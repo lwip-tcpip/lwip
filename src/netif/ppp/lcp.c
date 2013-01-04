@@ -1072,12 +1072,12 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     u_short cishort;
     u32_t cilong;
     lcp_options no;		/* options we've seen Naks for */
-    lcp_options try;		/* options to request next time */
+    lcp_options try_;		/* options to request next time */
     int looped_back = 0;
     int cilen;
 
     BZERO(&no, sizeof(no));
-    try = *go;
+    try_ = *go;
 
     /*
      * Any Nak'd CIs must be in exactly the same order that we sent.
@@ -1092,7 +1092,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	len -= CILEN_VOID; \
 	INCPTR(CILEN_VOID, p); \
 	no.neg = 1; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #if CHAP_SUPPORT
 #define NAKCICHAP(opt, neg, code) \
@@ -1164,7 +1164,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	len -= p[1]; \
 	INCPTR(p[1], p); \
 	no.neg = 1; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
     /*
@@ -1181,7 +1181,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     if (go->neg_mru && go->mru != DEFMRU) {
 	NAKCISHORT(CI_MRU, neg_mru,
 		   if (cishort <= wo->mru || cishort <= DEFMRU)
-		       try.mru = cishort;
+		       try_.mru = cishort;
 		   );
     }
 
@@ -1190,7 +1190,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     if (go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) {
 	NAKCILONG(CI_ASYNCMAP, neg_asyncmap,
-		  try.asyncmap = go->asyncmap | cilong;
+		  try_.asyncmap = go->asyncmap | cilong;
 		  );
     }
 
@@ -1231,14 +1231,14 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 #if EAP_SUPPORT
 	    /* If we were asking for EAP, then we need to stop that. */
 	    if (go->neg_eap)
-		try.neg_eap = 0;
+		try_.neg_eap = 0;
 	    else
 #endif /* EAP_SUPPORT */
 
 #if CHAP_SUPPORT
 	    /* If we were asking for CHAP, then we need to stop that. */
 	    if (go->neg_chap)
-		try.neg_chap = 0;
+		try_.neg_chap = 0;
 	    else
 #endif /* CHAP_SUPPORT */
 
@@ -1256,10 +1256,10 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 #if EAP_SUPPORT
 	    /* Stop asking for EAP, if we were. */
 	    if (go->neg_eap) {
-		try.neg_eap = 0;
+		try_.neg_eap = 0;
 		/* Try to set up to use their suggestion, if possible */
 		if (CHAP_CANDIGEST(go->chap_mdtype, cichar))
-		    try.chap_mdtype = CHAP_MDTYPE_D(cichar);
+		    try_.chap_mdtype = CHAP_MDTYPE_D(cichar);
 	    } else
 #endif /* EAP_SUPPORT */
 	    if (go->neg_chap) {
@@ -1270,12 +1270,12 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		if (cichar != CHAP_DIGEST(go->chap_mdtype)) {
 		    if (CHAP_CANDIGEST(go->chap_mdtype, cichar)) {
 			/* Use their suggestion if we support it ... */
-			try.chap_mdtype = CHAP_MDTYPE_D(cichar);
+			try_.chap_mdtype = CHAP_MDTYPE_D(cichar);
 		    } else {
 			/* ... otherwise, try our next-preferred algorithm. */
-			try.chap_mdtype &= ~(CHAP_MDTYPE(try.chap_mdtype));
-			if (try.chap_mdtype == MDTYPE_NONE) /* out of algos */
-			    try.neg_chap = 0;
+			try_.chap_mdtype &= ~(CHAP_MDTYPE(try_.chap_mdtype));
+			if (try_.chap_mdtype == MDTYPE_NONE) /* out of algos */
+			    try_.neg_chap = 0;
 		    }
 		} else {
 		    /*
@@ -1289,7 +1289,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		 * Stop asking for PAP if we were asking for it.
 		 */
 #if PAP_SUPPORT
-		try.neg_upap = 0;
+		try_.neg_upap = 0;
 #endif /* PAP_SUPPORT */
 	    }
 
@@ -1310,19 +1310,19 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	     * Stop asking for what we were asking for.
 	     */
 	    if (go->neg_eap)
-		try.neg_eap = 0;
+		try_.neg_eap = 0;
 	    else
 #endif /* EAP_SUPPORT */
 
 #if CHAP_SUPPORT
 	    if (go->neg_chap)
-		try.neg_chap = 0;
+		try_.neg_chap = 0;
 	    else
 #endif /* CHAP_SUPPORT */
 
 #if PAP_SUPPORT
 	    if(1)
-		try.neg_upap = 0;
+		try_.neg_upap = 0;
 	    else
 #endif /* PAP_SUPPORT */
 	    {}
@@ -1339,9 +1339,9 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     NAKCILQR(CI_QUALITY, neg_lqr,
 	     if (cishort != PPP_LQR)
-		 try.neg_lqr = 0;
+		 try_.neg_lqr = 0;
 	     else
-		 try.lqr_period = cilong;
+		 try_.lqr_period = cilong;
 	     );
 #endif /* LQR_SUPPORT */
 
@@ -1349,7 +1349,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * Only implementing CBCP...not the rest of the callback options
      */
     NAKCICHAR(CI_CALLBACK, neg_cbcp,
-              try.neg_cbcp = 0;
+              try_.neg_cbcp = 0;
               (void)cichar; /* if CHAP support is not compiled, cichar is set but not used, which makes some compilers complaining */
               );
 
@@ -1357,7 +1357,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * Check for a looped-back line.
      */
     NAKCILONG(CI_MAGICNUMBER, neg_magicnumber,
-	      try.magicnumber = magic();
+	      try_.magicnumber = magic();
 	      looped_back = 1;
 	      );
 
@@ -1377,9 +1377,9 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     if (go->neg_mrru) {
 	NAKCISHORT(CI_MRRU, neg_mrru,
 		   if (treat_as_reject)
-		       try.neg_mrru = 0;
+		       try_.neg_mrru = 0;
 		   else if (cishort <= wo->mrru)
-		       try.mrru = cishort;
+		       try_.mrru = cishort;
 		   );
     }
 #endif /* HAVE_MULTILINK */
@@ -1426,8 +1426,8 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		goto bad;
 	    GETSHORT(cishort, p);
 	    if (cishort < DEFMRU) {
-		try.neg_mru = 1;
-		try.mru = cishort;
+		try_.neg_mru = 1;
+		try_.mru = cishort;
 	    }
 	    break;
 	case CI_ASYNCMAP:
@@ -1479,7 +1479,7 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	case CI_SSNHF:
 	    if (go->neg_ssnhf || no.neg_ssnhf || cilen != CILEN_VOID)
 		goto bad;
-	    try.neg_ssnhf = 1;
+	    try_.neg_ssnhf = 1;
 	    break;
 	case CI_EPDISC:
 	    if (go->neg_endpoint || no.neg_endpoint || cilen < CILEN_CHAR)
@@ -1495,15 +1495,15 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     if (f->state != PPP_FSM_OPENED) {
 	if (looped_back) {
-	    if (++try.numloops >= pcb->settings.lcp_loopbackfail) {
+	    if (++try_.numloops >= pcb->settings.lcp_loopbackfail) {
 		int errcode = PPPERR_LOOPBACK;
 		ppp_notice("Serial line is looped back.");
 		ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
 		lcp_close(f->pcb, "Loopback detected");
 	    }
 	} else
-	    try.numloops = 0;
-	*go = try;
+	    try_.numloops = 0;
+	*go = try_;
     }
 
     return 1;
@@ -1529,9 +1529,9 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
     u_char cichar;
     u_short cishort;
     u32_t cilong;
-    lcp_options try;		/* options to request next time */
+    lcp_options try_;		/* options to request next time */
 
-    try = *go;
+    try_ = *go;
 
     /*
      * Any Rejected CIs must be in exactly the same order that we sent.
@@ -1545,7 +1545,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	p[0] == opt) { \
 	len -= CILEN_VOID; \
 	INCPTR(CILEN_VOID, p); \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #define REJCISHORT(opt, neg, val) \
     if (go->neg && \
@@ -1558,7 +1558,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cishort != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
 #if CHAP_SUPPORT && EAP_SUPPORT && PAP_SUPPORT
@@ -1574,8 +1574,8 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if ((cishort != PPP_CHAP) || (cichar != (CHAP_DIGEST(val)))) \
 	    goto bad; \
-	try.neg = 0; \
-	try.neg_eap = try.neg_upap = 0; \
+	try_.neg = 0; \
+	try_.neg_eap = try_.neg_upap = 0; \
     }
 #endif /* CHAP_SUPPORT && EAP_SUPPORT && PAP_SUPPORT */
 
@@ -1592,8 +1592,8 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if ((cishort != PPP_CHAP) || (cichar != (CHAP_DIGEST(val)))) \
 	    goto bad; \
-	try.neg = 0; \
-	try.neg_upap = 0; \
+	try_.neg = 0; \
+	try_.neg_upap = 0; \
     }
 #endif /* CHAP_SUPPORT && !EAP_SUPPORT && PAP_SUPPORT */
 
@@ -1610,8 +1610,8 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if ((cishort != PPP_CHAP) || (cichar != (CHAP_DIGEST(val)))) \
 	    goto bad; \
-	try.neg = 0; \
-	try.neg_eap = 0; \
+	try_.neg = 0; \
+	try_.neg_eap = 0; \
     }
 #endif /* CHAP_SUPPORT && EAP_SUPPORT && !PAP_SUPPORT */
 
@@ -1628,7 +1628,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if ((cishort != PPP_CHAP) || (cichar != (CHAP_DIGEST(val)))) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #endif /* CHAP_SUPPORT && !EAP_SUPPORT && !PAP_SUPPORT */
 
@@ -1643,7 +1643,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cilong != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #if LQR_SUPPORT
 #define REJCILQR(opt, neg, val) \
@@ -1658,7 +1658,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cishort != PPP_LQR || cilong != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #endif /* LQR_SUPPORT */
 #define REJCICBCP(opt, neg, val) \
@@ -1672,7 +1672,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cichar != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 #define REJCIENDP(opt, neg, class, val, vlen) \
     if (go->neg && \
@@ -1690,7 +1690,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
 	    if (cichar != val[i]) \
 		goto bad; \
 	} \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
     REJCISHORT(CI_MRU, neg_mru, go->mru);
@@ -1735,7 +1735,7 @@ static int lcp_rejci(fsm *f, u_char *p, int len) {
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
-	*go = try;
+	*go = try_;
     return 1;
 
 bad:
