@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-01-11: Simon Goldschmidt
+  * raw.c: fixed bug #38066 Raw pcbs can alter packet without eating it
+
   2012-09-26: Simon Goldschmidt
   * api_msg.c: fixed bug #37405 'err_tcp()' uses already freed 'netconn' object
 
