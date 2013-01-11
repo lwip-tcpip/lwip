@@ -1482,7 +1482,7 @@ decode_next:
         LWIP_ASSERT("next pbuf was null", q);
         options = (u8_t*)q->payload;
       } else {
-        // We've run out of bytes, probably no end marker. Don't proceed.
+        /* We've run out of bytes, probably no end marker. Don't proceed. */
         break;
       }
     }
