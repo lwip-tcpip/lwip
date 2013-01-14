@@ -573,7 +573,7 @@ dns_send(u8_t numdns, const char* name, u8_t id)
   LWIP_ASSERT("dns server has no IP address set", !ip_addr_isany(&dns_servers[numdns]));
 
   /* if here, we have either a new query or a retry on a previous query to process */
-  p = pbuf_alloc(PBUF_TRANSPORT, SIZEOF_DNS_HDR + DNS_MAX_NAME_LENGTH +
+  p = pbuf_alloc(PBUF_TRANSPORT, SIZEOF_DNS_HDR + DNS_MAX_NAME_LENGTH + 1 +
                  SIZEOF_DNS_QUERY, PBUF_RAM);
   if (p != NULL) {
     u16_t realloc_size;
