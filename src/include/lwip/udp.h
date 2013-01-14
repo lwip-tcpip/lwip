@@ -160,7 +160,7 @@ err_t            udp_sendto     (struct udp_pcb *pcb, struct pbuf *p,
                                  ip_addr_t *dst_ip, u16_t dst_port);
 err_t            udp_send       (struct udp_pcb *pcb, struct pbuf *p);
 
-#if LWIP_CHECKSUM_ON_COPY
+#if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
 err_t            udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p,
                                  ip_addr_t *dst_ip, u16_t dst_port,
                                  struct netif *netif, u8_t have_chksum,
@@ -170,7 +170,7 @@ err_t            udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p,
                                  u8_t have_chksum, u16_t chksum);
 err_t            udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
                                  u8_t have_chksum, u16_t chksum);
-#endif /* LWIP_CHECKSUM_ON_COPY */
+#endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 
 #define          udp_flags(pcb) ((pcb)->flags)
 #define          udp_setflags(pcb, f)  ((pcb)->flags = (f))
@@ -192,12 +192,12 @@ struct udp_pcb * udp_new_ip6(void);
                    udp_sendto(pcb, pbuf, ip6_2_ip(ip6addr), port)
 #define          udp_sendto_if_ip6(pcb, pbuf, ip6addr, port, netif) \
                    udp_sendto_if(pcb, pbuf, ip6_2_ip(ip6addr), port, netif)
-#if LWIP_CHECKSUM_ON_COPY
+#if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
 #define          udp_sendto_chksum_ip6(pcb, pbuf, ip6addr, port, have_chk, chksum) \
                    udp_sendto_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, have_chk, chksum)
 #define          udp_sendto_if_chksum_ip6(pcb, pbuf, ip6addr, port, netif, have_chk, chksum) \
                    udp_sendto_if_chksum(pcb, pbuf, ip6_2_ip(ip6addr), port, netif, have_chk, chksum)
-#endif /*LWIP_CHECKSUM_ON_COPY */
+#endif /*LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 #endif /* LWIP_IPV6 */
 
 #if UDP_DEBUG
