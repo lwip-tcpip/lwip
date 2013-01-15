@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-01-15: Simon Goldschmidt
+  * pbuf.h: fixed bug #38097 pbuf_free_ooseq() warning
+ 
   2013-01-14: Simon Goldschmidt
   * dns.c: fixed bug #37705 Possible memory corruption in DNS query
  
