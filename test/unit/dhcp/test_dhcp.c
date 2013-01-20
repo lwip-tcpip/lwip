@@ -11,25 +11,25 @@ static const u8_t broadcast[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 static const u8_t magic_cookie[] = { 0x63, 0x82, 0x53, 0x63 };
 
 static u8_t dhcp_offer[] = {
-    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, // To unit
-    0x00, 0x0F, 0xEE, 0x30, 0xAB, 0x22, // From Remote host
-    0x08, 0x00, // Protocol: IP
-    0x45, 0x10, 0x01, 0x48, 0x00, 0x00, 0x00, 0x00, 0x80, 0x11, 0x36, 0xcc, 0xc3, 0xaa, 0xbd, 0xab, 0xc3, 0xaa, 0xbd, 0xc8, // IP header
-    0x00, 0x43, 0x00, 0x44, 0x01, 0x34, 0x00, 0x00, // UDP header
+    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, /* To unit */
+    0x00, 0x0F, 0xEE, 0x30, 0xAB, 0x22, /* From Remote host */
+    0x08, 0x00, /* Protocol: IP */
+    0x45, 0x10, 0x01, 0x48, 0x00, 0x00, 0x00, 0x00, 0x80, 0x11, 0x36, 0xcc, 0xc3, 0xaa, 0xbd, 0xab, 0xc3, 0xaa, 0xbd, 0xc8, /* IP header */
+    0x00, 0x43, 0x00, 0x44, 0x01, 0x34, 0x00, 0x00, /* UDP header */
 
-    0x02, // Type == Boot reply
-    0x01, 0x06, // Hw Ethernet, 6 bytes addrlen
-    0x00, // 0 hops
-    0xAA, 0xAA, 0xAA, 0xAA, // Transaction id, will be overwritten
-    0x00, 0x00, // 0 seconds elapsed
-    0x00, 0x00, // Flags (unicast)
-    0x00, 0x00, 0x00, 0x00, // Client ip
-    0xc3, 0xaa, 0xbd, 0xc8, // Your IP
-    0xc3, 0xaa, 0xbd, 0xab, // DHCP server ip
-    0x00, 0x00, 0x00, 0x00, // relay agent
-    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // MAC addr + padding
+    0x02, /* Type == Boot reply */
+    0x01, 0x06, /* Hw Ethernet, 6 bytes addrlen */
+    0x00, /* 0 hops */
+    0xAA, 0xAA, 0xAA, 0xAA, /* Transaction id, will be overwritten */
+    0x00, 0x00, /* 0 seconds elapsed */
+    0x00, 0x00, /* Flags (unicast) */
+    0x00, 0x00, 0x00, 0x00, /* Client ip */
+    0xc3, 0xaa, 0xbd, 0xc8, /* Your IP */
+    0xc3, 0xaa, 0xbd, 0xab, /* DHCP server ip */
+    0x00, 0x00, 0x00, 0x00, /* relay agent */
+    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* MAC addr + padding */
 
-    // Empty server name and boot file name
+    /* Empty server name and boot file name */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -43,36 +43,36 @@ static u8_t dhcp_offer[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
 
-    0x63, 0x82, 0x53, 0x63, // Magic cookie
-    0x35, 0x01, 0x02, // Message type: Offer
-    0x36, 0x04, 0xc3, 0xaa, 0xbd, 0xab, // Server identifier (IP)
-    0x33, 0x04, 0x00, 0x00, 0x00, 0x78, // Lease time 2 minutes
-    0x03, 0x04, 0xc3, 0xaa, 0xbd, 0xab, // Router IP
-    0x01, 0x04, 0xff, 0xff, 0xff, 0x00, // Subnet mask
-    0xff, // End option
+    0x63, 0x82, 0x53, 0x63, /* Magic cookie */
+    0x35, 0x01, 0x02, /* Message type: Offer */
+    0x36, 0x04, 0xc3, 0xaa, 0xbd, 0xab, /* Server identifier (IP) */
+    0x33, 0x04, 0x00, 0x00, 0x00, 0x78, /* Lease time 2 minutes */
+    0x03, 0x04, 0xc3, 0xaa, 0xbd, 0xab, /* Router IP */
+    0x01, 0x04, 0xff, 0xff, 0xff, 0x00, /* Subnet mask */
+    0xff, /* End option */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Padding
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Padding */
 };
 
 static u8_t dhcp_ack[] = {
-    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, // To unit
-    0x00, 0x0f, 0xEE, 0x30, 0xAB, 0x22, // From remote host
-    0x08, 0x00, // Proto IP
-    0x45, 0x10, 0x01, 0x48, 0x00, 0x00, 0x00, 0x00, 0x80, 0x11, 0x36, 0xcc, 0xc3, 0xaa, 0xbd, 0xab, 0xc3, 0xaa, 0xbd, 0xc8, // IP header
-    0x00, 0x43, 0x00, 0x44, 0x01, 0x34, 0x00, 0x00, // UDP header
-    0x02, // Bootp reply
-    0x01, 0x06, // Hw type Eth, len 6
-    0x00, // 0 hops
+    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, /* To unit */
+    0x00, 0x0f, 0xEE, 0x30, 0xAB, 0x22, /* From remote host */
+    0x08, 0x00, /* Proto IP */
+    0x45, 0x10, 0x01, 0x48, 0x00, 0x00, 0x00, 0x00, 0x80, 0x11, 0x36, 0xcc, 0xc3, 0xaa, 0xbd, 0xab, 0xc3, 0xaa, 0xbd, 0xc8, /* IP header */
+    0x00, 0x43, 0x00, 0x44, 0x01, 0x34, 0x00, 0x00, /* UDP header */
+    0x02, /* Bootp reply */
+    0x01, 0x06, /* Hw type Eth, len 6 */
+    0x00, /* 0 hops */
     0xAA, 0xAA, 0xAA, 0xAA,
-    0x00, 0x00, // 0 seconds elapsed
-    0x00, 0x00, // Flags (unicast)
-    0x00, 0x00, 0x00, 0x00, // Client IP
-    0xc3, 0xaa, 0xbd, 0xc8, // Your IP
-    0xc3, 0xaa, 0xbd, 0xab, // DHCP server IP
-    0x00, 0x00, 0x00, 0x00, // Relay agent
-    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Macaddr + padding
+    0x00, 0x00, /* 0 seconds elapsed */
+    0x00, 0x00, /* Flags (unicast) */
+    0x00, 0x00, 0x00, 0x00, /* Client IP */
+    0xc3, 0xaa, 0xbd, 0xc8, /* Your IP */
+    0xc3, 0xaa, 0xbd, 0xab, /* DHCP server IP */
+    0x00, 0x00, 0x00, 0x00, /* Relay agent */
+    0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Macaddr + padding */
 
-    // Empty server name and boot file name
+    /* Empty server name and boot file name */
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -86,31 +86,31 @@ static u8_t dhcp_ack[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00,
 
-    0x63, 0x82, 0x53, 0x63, // Magic cookie
-    0x35, 0x01, 0x05, // Dhcp message type ack
-    0x36, 0x04, 0xc3, 0xaa, 0xbd, 0xab, // DHCP server identifier
-    0x33, 0x04, 0x00, 0x00, 0x00, 0x78, // Lease time 2 minutes
-    0x03, 0x04, 0xc3, 0xaa, 0xbd, 0xab, // Router IP
-    0x01, 0x04, 0xff, 0xff, 0xff, 0x00, // Netmask
-    0xff, // End marker
+    0x63, 0x82, 0x53, 0x63, /* Magic cookie */
+    0x35, 0x01, 0x05, /* Dhcp message type ack */
+    0x36, 0x04, 0xc3, 0xaa, 0xbd, 0xab, /* DHCP server identifier */
+    0x33, 0x04, 0x00, 0x00, 0x00, 0x78, /* Lease time 2 minutes */
+    0x03, 0x04, 0xc3, 0xaa, 0xbd, 0xab, /* Router IP */
+    0x01, 0x04, 0xff, 0xff, 0xff, 0x00, /* Netmask */
+    0xff, /* End marker */
 
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // Padding
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* Padding */
 };
 
 static const u8_t arpreply[] = {
-    0x00, 0x23, 0xC1, 0xDE, 0xD0, 0x0D, // dst mac
-    0x00, 0x32, 0x44, 0x20, 0x01, 0x02, // src mac
-    0x08, 0x06, // proto arp
-    0x00, 0x01, // hw eth
-    0x08, 0x00, // proto ip
-    0x06, // hw addr len 6
-    0x04, // proto addr len 4
-    0x00, 0x02, // arp reply
-    0x00, 0x32, 0x44, 0x20, 0x01, 0x02, // sender mac
-    0xc3, 0xaa, 0xbd, 0xc8, // sender ip
-    0x00, 0x23, 0xC1, 0xDE, 0xD0, 0x0D, // target mac
-    0x00, 0x00, 0x00, 0x00, // target ip
+    0x00, 0x23, 0xC1, 0xDE, 0xD0, 0x0D, /* dst mac */
+    0x00, 0x32, 0x44, 0x20, 0x01, 0x02, /* src mac */
+    0x08, 0x06, /* proto arp */
+    0x00, 0x01, /* hw eth */
+    0x08, 0x00, /* proto ip */
+    0x06, /* hw addr len 6 */
+    0x04, /* proto addr len 4 */
+    0x00, 0x02, /* arp reply */
+    0x00, 0x32, 0x44, 0x20, 0x01, 0x02, /* sender mac */
+    0xc3, 0xaa, 0xbd, 0xc8, /* sender ip */
+    0x00, 0x23, 0xC1, 0xDE, 0xD0, 0x0D, /* target mac */
+    0x00, 0x00, 0x00, 0x00, /* target ip */
 };
 
 static int txpacket;
@@ -142,7 +142,7 @@ static void send_pkt(struct netif *netif, const u8_t *data, u32_t len)
   struct pbuf *q;
 
   if (debug) {
-    // Dump data
+    /* Dump data */
     u32_t i;
     printf("RX data (len %d)", p->tot_len);
     for (i = 0; i < len; i++) {
@@ -200,7 +200,7 @@ static void check_pkt(struct pbuf *p, u32_t pos, const u8_t *mem, u32_t len)
     p = p->next;
   }
   fail_if(p == NULL);
-  fail_unless(pos + len <= p->len); // All data we seek within same pbuf
+  fail_unless(pos + len <= p->len); /* All data we seek within same pbuf */
 
   data = p->payload;
   fail_if(memcmp(&data[pos], mem, len), "data at pos %d, len %d in packet %d did not match", pos, len, txpacket);
@@ -218,7 +218,7 @@ static void check_pkt_fuzzy(struct pbuf *p, u32_t startpos, const u8_t *mem, u32
     p = p->next;
   }
   fail_if(p == NULL);
-  fail_unless(startpos + len <= p->len); // All data we seek within same pbuf
+  fail_unless(startpos + len <= p->len); /* All data we seek within same pbuf */
 
   found = 0;
   data = p->payload;
@@ -238,7 +238,7 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
 
   if (debug) {
     struct pbuf *pp = p;
-    // Dump data
+    /* Dump data */
     printf("TX data (pkt %d, len %d, tick %d)", txpacket, p->tot_len, tick);
     do {
       int i;
@@ -259,29 +259,29 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
     case 2:
       {
         const u8_t ipproto[] = { 0x08, 0x00 };
-        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; // bootp request, eth, hwaddr len 6, 0 hops
+        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; /* bootp request, eth, hwaddr len 6, 0 hops */
         const u8_t ipaddrs[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        check_pkt(p, 0, broadcast, 6); // eth level dest: broadcast
-        check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+        check_pkt(p, 0, broadcast, 6); /* eth level dest: broadcast */
+        check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-        check_pkt(p, 12, ipproto, sizeof(ipproto)); // eth level proto: ip
+        check_pkt(p, 12, ipproto, sizeof(ipproto)); /* eth level proto: ip */
 
         check_pkt(p, 42, bootp_start, sizeof(bootp_start));
 
         check_pkt(p, 53, ipaddrs, sizeof(ipaddrs));
 
-        check_pkt(p, 70, netif->hwaddr, 6); // mac addr inside bootp
+        check_pkt(p, 70, netif->hwaddr, 6); /* mac addr inside bootp */
 
         check_pkt(p, 278, magic_cookie, sizeof(magic_cookie));
 
-        // Check dchp message type, can be at different positions
+        /* Check dchp message type, can be at different positions */
         if (txpacket == 1) {
           u8_t dhcp_discover_opt[] = { 0x35, 0x01, 0x01 };
           check_pkt_fuzzy(p, 282, dhcp_discover_opt, sizeof(dhcp_discover_opt));
         } else if (txpacket == 2) {
           u8_t dhcp_request_opt[] = { 0x35, 0x01, 0x03 };
-          u8_t requested_ipaddr[] = { 0x32, 0x04, 0xc3, 0xaa, 0xbd, 0xc8 }; // Ask for offered IP
+          u8_t requested_ipaddr[] = { 0x32, 0x04, 0xc3, 0xaa, 0xbd, 0xc8 }; /* Ask for offered IP */
 
           check_pkt_fuzzy(p, 282, dhcp_request_opt, sizeof(dhcp_request_opt));
           check_pkt_fuzzy(p, 282, requested_ipaddr, sizeof(requested_ipaddr));
@@ -294,10 +294,10 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
       {
         const u8_t arpproto[] = { 0x08, 0x06 };
 
-        check_pkt(p, 0, broadcast, 6); // eth level dest: broadcast
-        check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+        check_pkt(p, 0, broadcast, 6); /* eth level dest: broadcast */
+        check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-        check_pkt(p, 12, arpproto, sizeof(arpproto)); // eth level proto: ip
+        check_pkt(p, 12, arpproto, sizeof(arpproto)); /* eth level proto: ip */
         break;
       }
     }
@@ -306,26 +306,26 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
   case TEST_LWIP_DHCP_NAK:
     {
       const u8_t ipproto[] = { 0x08, 0x00 };
-      const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; // bootp request, eth, hwaddr len 6, 0 hops
+      const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; /* bootp request, eth, hwaddr len 6, 0 hops */
       const u8_t ipaddrs[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
       const u8_t dhcp_nak_opt[] = { 0x35, 0x01, 0x04 };
-      const u8_t requested_ipaddr[] = { 0x32, 0x04, 0xc3, 0xaa, 0xbd, 0xc8 }; // offered IP
+      const u8_t requested_ipaddr[] = { 0x32, 0x04, 0xc3, 0xaa, 0xbd, 0xc8 }; /* offered IP */
 
       fail_unless(txpacket == 4);
-      check_pkt(p, 0, broadcast, 6); // eth level dest: broadcast
-      check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+      check_pkt(p, 0, broadcast, 6); /* eth level dest: broadcast */
+      check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-      check_pkt(p, 12, ipproto, sizeof(ipproto)); // eth level proto: ip
+      check_pkt(p, 12, ipproto, sizeof(ipproto)); /* eth level proto: ip */
 
       check_pkt(p, 42, bootp_start, sizeof(bootp_start));
 
       check_pkt(p, 53, ipaddrs, sizeof(ipaddrs));
 
-      check_pkt(p, 70, netif->hwaddr, 6); // mac addr inside bootp
+      check_pkt(p, 70, netif->hwaddr, 6); /* mac addr inside bootp */
 
       check_pkt(p, 278, magic_cookie, sizeof(magic_cookie));
 
-      check_pkt_fuzzy(p, 282, dhcp_nak_opt, sizeof(dhcp_nak_opt)); // NAK the ack
+      check_pkt_fuzzy(p, 282, dhcp_nak_opt, sizeof(dhcp_nak_opt)); /* NAK the ack */
 
       check_pkt_fuzzy(p, 282, requested_ipaddr, sizeof(requested_ipaddr));
       break;
@@ -337,29 +337,29 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
     case 2:
       {
         const u8_t ipproto[] = { 0x08, 0x00 };
-        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; // bootp request, eth, hwaddr len 6, 0 hops
+        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; /* bootp request, eth, hwaddr len 6, 0 hops */
         const u8_t ipaddrs[] = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-        check_pkt(p, 0, broadcast, 6); // eth level dest: broadcast
-        check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+        check_pkt(p, 0, broadcast, 6); /* eth level dest: broadcast */
+        check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-        check_pkt(p, 12, ipproto, sizeof(ipproto)); // eth level proto: ip
+        check_pkt(p, 12, ipproto, sizeof(ipproto)); /* eth level proto: ip */
 
         check_pkt(p, 42, bootp_start, sizeof(bootp_start));
 
         check_pkt(p, 53, ipaddrs, sizeof(ipaddrs));
 
-        check_pkt(p, 70, netif->hwaddr, 6); // mac addr inside bootp
+        check_pkt(p, 70, netif->hwaddr, 6); /* mac addr inside bootp */
 
         check_pkt(p, 278, magic_cookie, sizeof(magic_cookie));
 
-        // Check dchp message type, can be at different positions
+        /* Check dchp message type, can be at different positions */
         if (txpacket == 1) {
           u8_t dhcp_discover_opt[] = { 0x35, 0x01, 0x01 };
           check_pkt_fuzzy(p, 282, dhcp_discover_opt, sizeof(dhcp_discover_opt));
         } else if (txpacket == 2) {
           u8_t dhcp_request_opt[] = { 0x35, 0x01, 0x03 };
-          u8_t requested_ipaddr[] = { 0x32, 0x04, 0x4f, 0x8a, 0x33, 0x05 }; // Ask for offered IP
+          u8_t requested_ipaddr[] = { 0x32, 0x04, 0x4f, 0x8a, 0x33, 0x05 }; /* Ask for offered IP */
 
           check_pkt_fuzzy(p, 282, dhcp_request_opt, sizeof(dhcp_request_opt));
           check_pkt_fuzzy(p, 282, requested_ipaddr, sizeof(requested_ipaddr));
@@ -373,34 +373,34 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
       {
         const u8_t arpproto[] = { 0x08, 0x06 };
 
-        check_pkt(p, 0, broadcast, 6); // eth level dest: broadcast
-        check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+        check_pkt(p, 0, broadcast, 6); /* eth level dest: broadcast */
+        check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-        check_pkt(p, 12, arpproto, sizeof(arpproto)); // eth level proto: ip
+        check_pkt(p, 12, arpproto, sizeof(arpproto)); /* eth level proto: ip */
         break;
       }
     case 7:
       {
         const u8_t fake_arp[6] = { 0x12, 0x34, 0x56, 0x78, 0x9a, 0xab };
         const u8_t ipproto[] = { 0x08, 0x00 };
-        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; // bootp request, eth, hwaddr len 6, 0 hops
+        const u8_t bootp_start[] = { 0x01, 0x01, 0x06, 0x00}; /* bootp request, eth, hwaddr len 6, 0 hops */
         const u8_t ipaddrs[] = { 0x00, 0x4f, 0x8a, 0x33, 0x05, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
         const u8_t dhcp_request_opt[] = { 0x35, 0x01, 0x03 };
 
-        check_pkt(p, 0, fake_arp, 6); // eth level dest: broadcast
-        check_pkt(p, 6, netif->hwaddr, 6); // eth level src: unit mac
+        check_pkt(p, 0, fake_arp, 6); /* eth level dest: broadcast */
+        check_pkt(p, 6, netif->hwaddr, 6); /* eth level src: unit mac */
 
-        check_pkt(p, 12, ipproto, sizeof(ipproto)); // eth level proto: ip
+        check_pkt(p, 12, ipproto, sizeof(ipproto)); /* eth level proto: ip */
 
         check_pkt(p, 42, bootp_start, sizeof(bootp_start));
 
         check_pkt(p, 53, ipaddrs, sizeof(ipaddrs));
 
-        check_pkt(p, 70, netif->hwaddr, 6); // mac addr inside bootp
+        check_pkt(p, 70, netif->hwaddr, 6); /* mac addr inside bootp */
 
         check_pkt(p, 278, magic_cookie, sizeof(magic_cookie));
 
-        // Check dchp message type, can be at different positions
+        /* Check dchp message type, can be at different positions */
         check_pkt_fuzzy(p, 282, dhcp_request_opt, sizeof(dhcp_request_opt));
         break;
       }
@@ -438,43 +438,43 @@ START_TEST(test_dhcp)
 
   dhcp_start(&net_test);
 
-  fail_unless(txpacket == 1); // DHCP discover sent
-  xid = net_test.dhcp->xid; // Write bad xid, not using htonl!
+  fail_unless(txpacket == 1); /* DHCP discover sent */
+  xid = net_test.dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_offer[46], &xid, 4);
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
-  // Interface down
+  /* Interface down */
   fail_if(netif_is_up(&net_test));
 
-  // IP addresses should be zero
+  /* IP addresses should be zero */
   fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
   fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
   fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
 
-  fail_unless(txpacket == 1, "TX %d packets, expected 1", txpacket); // Nothing more sent
+  fail_unless(txpacket == 1, "TX %d packets, expected 1", txpacket); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
-  memcpy(&dhcp_offer[46], &xid, 4); // insert correct transaction id
+  memcpy(&dhcp_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
-  fail_unless(txpacket == 2, "TX %d packets, expected 2", txpacket); // DHCP request sent
-  xid = net_test.dhcp->xid; // Write bad xid, not using htonl!
+  fail_unless(txpacket == 2, "TX %d packets, expected 2", txpacket); /* DHCP request sent */
+  xid = net_test.dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_ack[46], &xid, 4);
   send_pkt(&net_test, dhcp_ack, sizeof(dhcp_ack));
 
-  fail_unless(txpacket == 2, "TX %d packets, still expected 2", txpacket); // No more sent
-  xid = htonl(net_test.dhcp->xid); // xid updated
-  memcpy(&dhcp_ack[46], &xid, 4); // insert transaction id
+  fail_unless(txpacket == 2, "TX %d packets, still expected 2", txpacket); /* No more sent */
+  xid = htonl(net_test.dhcp->xid); /* xid updated */
+  memcpy(&dhcp_ack[46], &xid, 4); /* insert transaction id */
   send_pkt(&net_test, dhcp_ack, sizeof(dhcp_ack));
 
   for (i = 0; i < 20; i++) {
     tick_lwip();
   }
-  fail_unless(txpacket == 4, "TX %d packets, expected 4", txpacket); // ARP requests sent
+  fail_unless(txpacket == 4, "TX %d packets, expected 4", txpacket); /* ARP requests sent */
 
-  // Interface up
+  /* Interface up */
   fail_unless(netif_is_up(&net_test));
 
-  // Now it should have taken the IP
+  /* Now it should have taken the IP */
   IP4_ADDR(&addr, 195, 170, 189, 200);
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 195, 170, 189, 171);
@@ -509,42 +509,42 @@ START_TEST(test_dhcp_nak)
 
   dhcp_start(&net_test);
 
-  fail_unless(txpacket == 1); // DHCP discover sent
-  xid = net_test.dhcp->xid; // Write bad xid, not using htonl!
+  fail_unless(txpacket == 1); /* DHCP discover sent */
+  xid = net_test.dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_offer[46], &xid, 4);
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
-  // Interface down
+  /* Interface down */
   fail_if(netif_is_up(&net_test));
 
-  // IP addresses should be zero
+  /* IP addresses should be zero */
   fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
   fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
   fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
 
-  fail_unless(txpacket == 1); // Nothing more sent
+  fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
-  memcpy(&dhcp_offer[46], &xid, 4); // insert correct transaction id
+  memcpy(&dhcp_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
-  fail_unless(txpacket == 2); // DHCP request sent
-  xid = net_test.dhcp->xid; // Write bad xid, not using htonl!
+  fail_unless(txpacket == 2); /* DHCP request sent */
+  xid = net_test.dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_ack[46], &xid, 4);
   send_pkt(&net_test, dhcp_ack, sizeof(dhcp_ack));
 
-  fail_unless(txpacket == 2); // No more sent
-  xid = htonl(net_test.dhcp->xid); // xid updated
-  memcpy(&dhcp_ack[46], &xid, 4); // insert transaction id
+  fail_unless(txpacket == 2); /* No more sent */
+  xid = htonl(net_test.dhcp->xid); /* xid updated */
+  memcpy(&dhcp_ack[46], &xid, 4); /* insert transaction id */
   send_pkt(&net_test, dhcp_ack, sizeof(dhcp_ack));
 
-  fail_unless(txpacket == 3); // ARP request sent
+  fail_unless(txpacket == 3); /* ARP request sent */
 
-  tcase = TEST_LWIP_DHCP_NAK; // Switch testcase
+  tcase = TEST_LWIP_DHCP_NAK; /* Switch testcase */
 
-  // Send arp reply, mark offered IP as taken
+  /* Send arp reply, mark offered IP as taken */
   send_pkt(&net_test, arpreply, sizeof(arpreply));
 
-  fail_unless(txpacket == 4); // DHCP nak sent
+  fail_unless(txpacket == 4); /* DHCP nak sent */
 
   netif_remove(&net_test);
 }
@@ -691,22 +691,22 @@ START_TEST(test_dhcp_relayed)
   0x04, 0x0a, 0xb5, 0x04, 0x01, 0xff };
 
   const u8_t arp_resp[] = {
-  0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, // DEST
-  0x00, 0x22, 0x93, 0x5a, 0xf7, 0x60, // SRC
-  0x08, 0x06, // Type: ARP
-  0x00, 0x01, // HW: Ethernet
-  0x08, 0x00, // PROTO: IP
-  0x06, // HW size
-  0x04, // PROTO size
-  0x00, 0x02, // OPCODE: Reply
+  0x00, 0x23, 0xc1, 0xde, 0xd0, 0x0d, /* DEST */
+  0x00, 0x22, 0x93, 0x5a, 0xf7, 0x60, /* SRC */
+  0x08, 0x06, /* Type: ARP */
+  0x00, 0x01, /* HW: Ethernet */
+  0x08, 0x00, /* PROTO: IP */
+  0x06, /* HW size */
+  0x04, /* PROTO size */
+  0x00, 0x02, /* OPCODE: Reply */
 
-  0x12, 0x34, 0x56, 0x78, 0x9a, 0xab, // Target MAC
-  0x4f, 0x8a, 0x32, 0x01, // Target IP
+  0x12, 0x34, 0x56, 0x78, 0x9a, 0xab, /* Target MAC */
+  0x4f, 0x8a, 0x32, 0x01, /* Target IP */
 
-  0x00, 0x23, 0xc1, 0x00, 0x06, 0x50, // src mac
-  0x4f, 0x8a, 0x33, 0x05, // src ip
+  0x00, 0x23, 0xc1, 0x00, 0x06, 0x50, /* src mac */
+  0x4f, 0x8a, 0x33, 0x05, /* src ip */
 
-  // Padding follows..
+  /* Padding follows.. */
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00 };
@@ -729,36 +729,36 @@ START_TEST(test_dhcp_relayed)
 
   dhcp_start(&net_test);
 
-  fail_unless(txpacket == 1); // DHCP discover sent
+  fail_unless(txpacket == 1); /* DHCP discover sent */
 
-  // Interface down
+  /* Interface down */
   fail_if(netif_is_up(&net_test));
 
-  // IP addresses should be zero
+  /* IP addresses should be zero */
   fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
   fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
   fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
 
-  fail_unless(txpacket == 1); // Nothing more sent
+  fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
-  memcpy(&relay_offer[46], &xid, 4); // insert correct transaction id
+  memcpy(&relay_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, relay_offer, sizeof(relay_offer));
 
-  // request sent?
+  /* request sent? */
   fail_unless(txpacket == 2, "txpkt = %d, should be 2", txpacket);
-  xid = htonl(net_test.dhcp->xid); // xid updated
-  memcpy(&relay_ack1[46], &xid, 4); // insert transaction id
+  xid = htonl(net_test.dhcp->xid); /* xid updated */
+  memcpy(&relay_ack1[46], &xid, 4); /* insert transaction id */
   send_pkt(&net_test, relay_ack1, sizeof(relay_ack1));
 
   for (i = 0; i < 25; i++) {
     tick_lwip();
   }
-  fail_unless(txpacket == 4, "txpkt should be 5, is %d", txpacket); // ARP requests sent
+  fail_unless(txpacket == 4, "txpkt should be 5, is %d", txpacket); /* ARP requests sent */
 
-  // Interface up
+  /* Interface up */
   fail_unless(netif_is_up(&net_test));
 
-  // Now it should have taken the IP
+  /* Now it should have taken the IP */
   IP4_ADDR(&addr, 79, 138, 51, 5);
   IP4_ADDR(&netmask, 255, 255, 254, 0);
   IP4_ADDR(&gw, 79, 138, 50, 1);
@@ -775,15 +775,15 @@ START_TEST(test_dhcp_relayed)
   fail_unless(netif_is_up(&net_test));
   fail_unless(txpacket == 6, "txpacket = %d", txpacket);
 
-  // We need to send arp response here..
+  /* We need to send arp response here.. */
 
   send_pkt(&net_test, arp_resp, sizeof(arp_resp));
 
   fail_unless(txpacket == 7, "txpacket = %d", txpacket);
   fail_unless(netif_is_up(&net_test));
 
-  xid = htonl(net_test.dhcp->xid); // xid updated
-  memcpy(&relay_ack2[46], &xid, 4); // insert transaction id
+  xid = htonl(net_test.dhcp->xid); /* xid updated */
+  memcpy(&relay_ack2[46], &xid, 4); /* insert transaction id */
   send_pkt(&net_test, relay_ack2, sizeof(relay_ack2));
 
   for (i = 0; i < 100000; i++) {
@@ -855,6 +855,8 @@ START_TEST(test_dhcp_nak_no_endmarker)
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
   };
+  u32_t xid;
+  LWIP_UNUSED_ARG(_i);
 
   tcase = TEST_LWIP_DHCP_NAK_NO_ENDMARKER;
   setdebug(0);
@@ -867,32 +869,32 @@ START_TEST(test_dhcp_nak_no_endmarker)
 
   dhcp_start(&net_test);
 
-  fail_unless(txpacket == 1); // DHCP discover sent
-  u32_t xid = net_test.dhcp->xid; // Write bad xid, not using htonl!
+  fail_unless(txpacket == 1); /* DHCP discover sent */
+  xid = net_test.dhcp->xid; /* Write bad xid, not using htonl! */
   memcpy(&dhcp_offer[46], &xid, 4);
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
-  // Interface down
+  /* Interface down */
   fail_if(netif_is_up(&net_test));
 
-  // IP addresses should be zero
+  /* IP addresses should be zero */
   fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
   fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
   fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
 
-  fail_unless(txpacket == 1); // Nothing more sent
+  fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
-  memcpy(&dhcp_offer[46], &xid, 4); // insert correct transaction id
+  memcpy(&dhcp_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
   
   fail_unless(net_test.dhcp->state == DHCP_REQUESTING);
 
-  fail_unless(txpacket == 2); // No more sent
-  xid = htonl(net_test.dhcp->xid); // xid updated
-  memcpy(&dhcp_nack_no_endmarker[46], &xid, 4); // insert transaction id
+  fail_unless(txpacket == 2); /* No more sent */
+  xid = htonl(net_test.dhcp->xid); /* xid updated */
+  memcpy(&dhcp_nack_no_endmarker[46], &xid, 4); /* insert transaction id */
   send_pkt(&net_test, dhcp_nack_no_endmarker, sizeof(dhcp_nack_no_endmarker));
 
-  // NAK should put us in another state for a while, no other way detecting it
+  /* NAK should put us in another state for a while, no other way detecting it */
   fail_unless(net_test.dhcp->state != DHCP_REQUESTING);
 
   netif_remove(&net_test);

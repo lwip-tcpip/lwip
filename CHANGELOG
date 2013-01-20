@@ -145,6 +145,18 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-01-15: Simon Goldschmidt
+  * ip4.c: fixed bug #37665 ip_canforward operates on address in wrong byte order
+
+  2013-01-15: Simon Goldschmidt
+  * pbuf.h: fixed bug #38097 pbuf_free_ooseq() warning
+
+  2013-01-14: Simon Goldschmidt
+  * dns.c: fixed bug #37705 Possible memory corruption in DNS query
+
+  2013-01-11: Simon Goldschmidt
+  * raw.c: fixed bug #38066 Raw pcbs can alter packet without eating it
+
   2012-09-26: Simon Goldschmidt
   * api_msg.c: fixed bug #37405 'err_tcp()' uses already freed 'netconn' object
 

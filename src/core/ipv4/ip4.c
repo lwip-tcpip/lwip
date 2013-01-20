@@ -153,7 +153,7 @@ ip_route(ip_addr_t *dest)
 static int
 ip_canforward(struct pbuf *p)
 {
-  u32_t addr = ip4_addr_get_u32(ip_current_dest_addr());
+  u32_t addr = htonl(ip4_addr_get_u32(ip_current_dest_addr()));
 
   if (p->flags & PBUF_FLAG_LLBCAST) {
     /* don't route link-layer broadcasts */

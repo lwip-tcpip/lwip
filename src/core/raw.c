@@ -119,6 +119,9 @@ raw_input(struct pbuf *p, struct netif *inp)
       {
         /* receive callback function available? */
         if (pcb->recv.ip4 != NULL) {
+#ifndef LWIP_NOASSERT
+          void* old_payload = p->payload;
+#endif
           /* the receive callback function did not eat the packet? */
           eaten = pcb->recv.ip4(pcb->recv_arg, pcb, p, ip_current_src_addr());
           if (eaten != 0) {
@@ -132,6 +135,10 @@ raw_input(struct pbuf *p, struct netif *inp)
               pcb->next = raw_pcbs;
               raw_pcbs = pcb;
             }
+          } else {
+            /* sanity-check that the receive callback did not alter the pbuf */
+            LWIP_ASSERT("raw pcb recv callback altered pbuf payload pointer without eating packet",
+              p->payload == old_payload);
           }
         }
         /* no receive callback function was set for this raw PCB */
