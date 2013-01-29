@@ -88,6 +88,12 @@ static u8_t netif_num;
 static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr);
 #endif /* LWIP_IPV6 */
 
+#if LWIP_IPV6
+#define ipX_input(in, netif) (IP6H_V((const struct ip6_hdr *)in->payload) == 6) ? ip6_input(in, netif) : ip_input(in, netif)
+#else
+#define ipX_input(in, netif) ip_input(in, netif)
+#endif
+
 #if LWIP_HAVE_LOOPIF
 static struct netif loop_netif;
 
@@ -804,7 +810,7 @@ netif_poll(struct netif *netif)
       snmp_add_ifinoctets(stats_if, in->tot_len);
       snmp_inc_ifinucastpkts(stats_if);
       /* loopback packets are always IP packets! */
-      if (ip_input(in, netif) != ERR_OK) {
+      if (ipX_input(in, netif) != ERR_OK) {
         pbuf_free(in);
       }
       /* Don't reference the packet any more! */
