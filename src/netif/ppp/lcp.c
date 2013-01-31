@@ -68,7 +68,7 @@
  * configure-requests.  We do this by delaying the fsm_lowerup call.
  */
 /* steal a bit in fsm flags word */
-#define DELAYED_UP	0x100
+#define DELAYED_UP	0x80
 
 static void lcp_delayed_up(void *arg);
 
