@@ -1252,6 +1252,7 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
   struct pbuf *pb;
   int i=0;
   u16_t tot_len;
+  err_t err;
 
   /* @todo: try to use pbuf_header() here! */
   pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
@@ -1274,10 +1275,10 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
   pbuf_chain(pb, p);
   tot_len = pb->tot_len;
 
-  if(pppoe_xmit(pcb->pppoe_sc, pb) != ERR_OK) {
+  if( (err = pppoe_xmit(pcb->pppoe_sc, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(&pcb->netif);
-    return PPPERR_DEVICE;
+    return err;
   }
 
   snmp_add_ifoutoctets(&pcb->netif, tot_len);
@@ -1293,6 +1294,7 @@ static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short pr
   struct pbuf *pb;
   int i=0;
   u16_t tot_len;
+  err_t err;
 
   /* @todo: try to use pbuf_header() here! */
   pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol), PBUF_RAM);
@@ -1315,10 +1317,10 @@ static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short pr
   pbuf_chain(pb, p);
   tot_len = pb->tot_len;
 
-  if(pppol2tp_xmit(pcb->l2tp_pcb, pb) != ERR_OK) {
+  if( (err = pppol2tp_xmit(pcb->l2tp_pcb, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(&pcb->netif);
-    return PPPERR_DEVICE;
+    return err;
   }
 
   snmp_add_ifoutoctets(&pcb->netif, tot_len);
