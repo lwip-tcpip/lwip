@@ -613,6 +613,11 @@ int ppp_delete(ppp_pcb *pcb) {
   }
 #endif /* PPPOL2TP_SUPPORT */
 
+#if PPPOS_SUPPORT
+  /* input pbuf left ? */
+  ppp_free_current_input_packet(&pcb->rx);
+#endif /* PPPOS_SUPPORT */
+
   memp_free(MEMP_PPP_PCB, pcb);
   return 0;
 }
@@ -2020,6 +2025,9 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 #endif /* PPPOL2TP_SUPPORT */
   {
 #if PPPOS_SUPPORT
+    /* We cannot call ppp_free_current_input_packet() here because
+     * rx thread might still call pppos_input_proc()
+     */
 #if PPP_INPROC_OWNTHREAD
     ppp_receive_wakeup(pcb);
 #endif /* PPP_INPROC_OWNTHREAD */
