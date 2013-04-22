@@ -197,20 +197,18 @@ struct pppol2tp_pcb_s {
 
 
 /* Create a new L2TP session. */
-err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int status),
-		pppol2tp_pcb **l2tpptr, u8_t *secret, u8_t secret_len);
+err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int status), pppol2tp_pcb **l2tpptr,
+                      struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+                      u8_t *secret, u8_t secret_len);
 
 /* Destroy a L2TP control block */
 err_t pppol2tp_destroy(pppol2tp_pcb *l2tp);
 
 /* Be a LAC, connect to a LNS. */
-err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipaddr, u16_t port);
+err_t pppol2tp_connect(pppol2tp_pcb *l2tp);
 
 /* Disconnect */
 void pppol2tp_disconnect(pppol2tp_pcb *l2tp);
-
-/* Reconnect to a LNS, using previously set L2TP server IP address and port. */
-void pppol2tp_reconnect(pppol2tp_pcb *l2tp);
 
 /* Data packet from PPP to L2TP */
 err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);

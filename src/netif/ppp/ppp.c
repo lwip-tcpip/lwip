@@ -184,7 +184,7 @@ const struct protent* const protocols[] = {
 
 /* Prototypes for procedures local to this file. */
 static void ppp_clear(ppp_pcb *pcb);
-static void ppp_do_reopen(void *arg);
+static void ppp_do_open(void *arg);
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
@@ -198,7 +198,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 
 #if PPPOS_SUPPORT
 #define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
-static void ppp_over_serial_reopen(ppp_pcb *pcb);
+static void ppp_over_serial_open(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short protocol);
 static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p);
 #if PPP_INPROC_OWNTHREAD
@@ -214,13 +214,13 @@ static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_reopen(ppp_pcb *pcb);
+static void ppp_over_ethernet_open(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
-static void ppp_over_l2tp_reopen(ppp_pcb *pcb);
+static void ppp_over_l2tp_open(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
 static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOL2TP_SUPPORT */
@@ -352,7 +352,7 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 }
 
 #if PPPOS_SUPPORT
-int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -360,39 +360,9 @@ int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_s
     return PPPERR_PARAM;
   }
 
-  /* input pbuf left over from last session? */
-  ppp_free_current_input_packet(&pcb->rx);
-
-  ppp_clear(pcb);
-
   pcb->fd = fd;
-
-  pcb->rx.pcb = pcb;
-  pcb->rx.fd = fd;
-
-#if VJ_SUPPORT
-  vj_compress_init(&pcb->vj_comp);
-#endif /* VJ_SUPPORT */
-
-  /*
-   * Default the in and out accm so that escape and flag characters
-   * are always escaped.
-   */
-  pcb->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
-  pcb->out_accm[15] = 0x60;
-
   pcb->link_status_cb = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
-
-  /*
-   * Start the connection and handle incoming events (packet or timeout).
-   */
-  PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: connecting\n", pcb->num));
-  ppp_start(pcb);
-#if PPP_INPROC_OWNTHREAD
-  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
-#endif /* PPP_INPROC_OWNTHREAD */
-
   return PPPERR_NONE;
 }
 
@@ -413,11 +383,8 @@ void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 
-int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-
-  lcp_options *wo = &pcb->lcp_wantoptions;
-  lcp_options *ao = &pcb->lcp_allowoptions;
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
@@ -428,26 +395,13 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
     return PPPERR_PARAM;
   }
 
-  ppp_clear(pcb);
-
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
-
-  wo->mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
-
-  ao->mru = ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
 
   if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
     return PPPERR_OPEN;
   }
 
-  pppoe_connect(pcb->pppoe_sc);
   return PPPERR_NONE;
 }
 #endif /* PPPOE_SUPPORT */
@@ -455,12 +409,9 @@ int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *servic
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
 
-int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
-
-  lcp_options *wo = &pcb->lcp_wantoptions;
-  lcp_options *ao = &pcb->lcp_allowoptions;
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -468,54 +419,39 @@ int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16
     return PPPERR_PARAM;
   }
 
-  ppp_clear(pcb);
-
   pcb->link_status_cb  = link_status_cb;
   pcb->link_status_ctx = link_status_ctx;
 
-  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
-
-  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
-
-  if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, secret, secret_len) != ERR_OK) {
+  if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
     return PPPERR_OPEN;
   }
 
-  if (pppol2tp_connect(pcb->l2tp_pcb, netif, ipaddr, port) != ERR_OK) {
-    return PPPERR_OPEN;
-  }
   return PPPERR_NONE;
 }
 #endif /* PPPOL2TP_SUPPORT */
 
 /*
- * Open a previously opened PPP connection.
+ * Open a PPP connection.
  *
  * This can only be called if PPP is in the dead phase.
  *
  * Holdoff is the time to wait (in seconds) before initiating
  * the connection.
  */
-int ppp_reopen(ppp_pcb *pcb, u16_t holdoff) {
+int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
   if (pcb->phase != PHASE_DEAD) {
     return PPPERR_PARAM;
   }
 
-  PPPDEBUG(LOG_DEBUG, ("ppp_reopen() called, holdoff=%d\n", holdoff));
+  PPPDEBUG(LOG_DEBUG, ("ppp_open() called, holdoff=%d\n", holdoff));
 
   if (holdoff == 0) {
-    ppp_do_reopen(pcb);
+    ppp_do_open(pcb);
     return PPPERR_NONE;
   }
 
   new_phase(pcb, PHASE_HOLDOFF);
-  sys_timeout((u32_t)(holdoff*1000), ppp_do_reopen, pcb);
+  sys_timeout((u32_t)(holdoff*1000), ppp_do_open, pcb);
   return PPPERR_NONE;
 }
 
@@ -539,7 +475,7 @@ ppp_close(ppp_pcb *pcb)
 
   /* holdoff phase, cancel the reconnection and call the status callback */
   if (pcb->phase == PHASE_HOLDOFF) {
-    sys_untimeout(ppp_do_reopen, pcb);
+    sys_untimeout(ppp_do_open, pcb);
     pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
     return PPPERR_NONE;
   }
@@ -653,27 +589,27 @@ static void ppp_clear(ppp_pcb *pcb) {
   new_phase(pcb, PHASE_INITIALIZE);
 }
 
-static void ppp_do_reopen(void *arg) {
+static void ppp_do_open(void *arg) {
   ppp_pcb *pcb = (ppp_pcb*)arg;
 
   LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
-    ppp_over_ethernet_reopen(pcb);
+    ppp_over_ethernet_open(pcb);
     return;
   }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
   if (pcb->l2tp_pcb) {
-    ppp_over_l2tp_reopen(pcb);
+    ppp_over_l2tp_open(pcb);
     return;
   }
 #endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
-  ppp_over_serial_reopen(pcb);
+  ppp_over_serial_open(pcb);
 #endif /* PPPOS_SUPPORT */
 }
 
@@ -957,7 +893,7 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 /**********************************/
 
 #if PPPOS_SUPPORT
-static void ppp_over_serial_reopen(ppp_pcb *pcb) {
+static void ppp_over_serial_open(ppp_pcb *pcb) {
 
   /* input pbuf left over from last session? */
   ppp_free_current_input_packet(&pcb->rx);
@@ -1920,7 +1856,7 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
   pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
 }
 
-static void ppp_over_ethernet_reopen(ppp_pcb *pcb) {
+static void ppp_over_ethernet_open(ppp_pcb *pcb) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
@@ -1970,7 +1906,7 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
   pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
 }
 
-static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
+static void ppp_over_l2tp_open(ppp_pcb *pcb) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;
   lcp_options *ao = &pcb->lcp_allowoptions;
@@ -1987,7 +1923,7 @@ static void ppp_over_l2tp_reopen(ppp_pcb *pcb) {
   ao->neg_pcompression = 0;
   ao->neg_accompression = 0;
 
-  pppol2tp_reconnect(pcb->l2tp_pcb);
+  pppol2tp_connect(pcb->l2tp_pcb);
 }
 #endif /* PPPOL2TP_SUPPORT */
 

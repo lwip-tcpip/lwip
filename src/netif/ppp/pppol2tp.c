@@ -87,8 +87,9 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 
 
 /* Create a new L2TP session. */
-err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int status),
-		pppol2tp_pcb **l2tpptr, u8_t *secret, u8_t secret_len) {
+err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int status), pppol2tp_pcb **l2tpptr,
+                      struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+                      u8_t *secret, u8_t secret_len) {
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
 
@@ -111,7 +112,10 @@ err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int sta
   l2tp->ppp = ppp;
   l2tp->udp = udp;
   l2tp->link_status_cb = link_status_cb;
-#if PPPOL2TP_AUTH_SUPPORT
+  l2tp->netif = netif;
+  ip_addr_set(&l2tp->remote_ip, ipaddr);
+  l2tp->remote_port = port;
+  #if PPPOL2TP_AUTH_SUPPORT
   l2tp->secret = secret;
   l2tp->secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
@@ -132,16 +136,14 @@ err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 }
 
 /* Be a LAC, connect to a LNS. */
-err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipaddr, u16_t port) {
+err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
   err_t err;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return ERR_VAL;
   }
 
-  l2tp->netif = netif;
-  ip_addr_set(&l2tp->remote_ip, ipaddr);
-  l2tp->remote_port = l2tp->tunnel_port = port;
+  pppol2tp_clear(l2tp);
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
@@ -166,31 +168,6 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp, struct netif *netif, ip_addr_t *ipadd
   }
   sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
   return err;
-}
-
-/* Reconnect to a LNS, using previously set L2TP server IP address and port. */
-void pppol2tp_reconnect(pppol2tp_pcb *l2tp) {
-  err_t err;
-
-  if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
-    return;
-  }
-
-  pppol2tp_clear(l2tp);
-
-  udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
-
-  do {
-    l2tp->remote_tunnel_id = magic();
-  } while(l2tp->remote_tunnel_id == 0);
-  /* save state, in case we fail to send SCCRQ */
-  l2tp->sccrq_retried = 0;
-  l2tp->phase = PPPOL2TP_STATE_SCCRQ_SENT;
-  if ((err = pppol2tp_send_sccrq(l2tp)) != 0) {
-    PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send SCCRQ, error=%d\n", err));
-  }
-  sys_timeout(PPPOL2TP_CONTROL_TIMEOUT, pppol2tp_timeout, l2tp);
-  return;
 }
 
 /* Disconnect */

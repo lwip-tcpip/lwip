@@ -104,25 +104,25 @@ void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 
 #if PPPOS_SUPPORT
 /**
- * Call ppp_over_serial_open() inside the tcpip_thread context.
+ * Call ppp_over_serial_create() inside the tcpip_thread context.
  */
-static void pppapi_do_ppp_over_serial_open(struct pppapi_msg_msg *msg) {
-  msg->err = ppp_over_serial_open(msg->ppp, msg->msg.serialopen.fd,
-		  msg->msg.serialopen.link_status_cb, msg->msg.serialopen.link_status_ctx);
+static void pppapi_do_ppp_over_serial_create(struct pppapi_msg_msg *msg) {
+  msg->err = ppp_over_serial_create(msg->ppp, msg->msg.serialcreate.fd,
+		  msg->msg.serialcreate.link_status_cb, msg->msg.serialcreate.link_status_ctx);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_over_serial_open() in a thread-safe way by running that function inside the
+ * Call ppp_over_serial_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int pppapi_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+int pppapi_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_serial_open;
+  msg.function = pppapi_do_ppp_over_serial_create;
   msg.msg.ppp = pcb;
-  msg.msg.msg.serialopen.fd = fd;
-  msg.msg.msg.serialopen.link_status_cb = link_status_cb;
-  msg.msg.msg.serialopen.link_status_ctx = link_status_ctx;
+  msg.msg.msg.serialcreate.fd = fd;
+  msg.msg.msg.serialcreate.link_status_cb = link_status_cb;
+  msg.msg.msg.serialcreate.link_status_ctx = link_status_ctx;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
@@ -131,31 +131,31 @@ int pppapi_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn lin
 
 #if PPPOE_SUPPORT
 /**
- * Call ppp_over_ethernet_open() inside the tcpip_thread context.
+ * Call ppp_over_ethernet_create() inside the tcpip_thread context.
  */
-static void pppapi_do_ppp_over_ethernet_open(struct pppapi_msg_msg *msg) {
+static void pppapi_do_ppp_over_ethernet_create(struct pppapi_msg_msg *msg) {
 
-  msg->err = ppp_over_ethernet_open(msg->ppp, msg->msg.ethernetopen.ethif,
-		  msg->msg.ethernetopen.service_name, msg->msg.ethernetopen.concentrator_name,
-		  msg->msg.ethernetopen.link_status_cb, msg->msg.ethernetopen.link_status_ctx);
+  msg->err = ppp_over_ethernet_create(msg->ppp, msg->msg.ethernetcreate.ethif,
+		  msg->msg.ethernetcreate.service_name, msg->msg.ethernetcreate.concentrator_name,
+		  msg->msg.ethernetcreate.link_status_cb, msg->msg.ethernetcreate.link_status_ctx);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_over_ethernet_open() in a thread-safe way by running that function inside the
+ * Call ppp_over_ethernet_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
+int pppapi_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
 		const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
 		void *link_status_ctx) {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_ethernet_open;
+  msg.function = pppapi_do_ppp_over_ethernet_create;
   msg.msg.ppp = pcb;
-  msg.msg.msg.ethernetopen.ethif = ethif;
-  msg.msg.msg.ethernetopen.service_name = service_name;
-  msg.msg.msg.ethernetopen.concentrator_name = concentrator_name;
-  msg.msg.msg.ethernetopen.link_status_cb = link_status_cb;
-  msg.msg.msg.ethernetopen.link_status_ctx = link_status_ctx;
+  msg.msg.msg.ethernetcreate.ethif = ethif;
+  msg.msg.msg.ethernetcreate.service_name = service_name;
+  msg.msg.msg.ethernetcreate.concentrator_name = concentrator_name;
+  msg.msg.msg.ethernetcreate.link_status_cb = link_status_cb;
+  msg.msg.msg.ethernetcreate.link_status_ctx = link_status_ctx;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
@@ -164,41 +164,41 @@ int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *ser
 
 #if PPPOL2TP_SUPPORT
 /**
- * Call ppp_over_l2tp_open() inside the tcpip_thread context.
+ * Call ppp_over_l2tp_create() inside the tcpip_thread context.
  */
-static void pppapi_do_ppp_over_l2tp_open(struct pppapi_msg_msg *msg) {
+static void pppapi_do_ppp_over_l2tp_create(struct pppapi_msg_msg *msg) {
 
-  msg->err = ppp_over_l2tp_open(msg->ppp,
-		  msg->msg.l2tpopen.netif, msg->msg.l2tpopen.ipaddr, msg->msg.l2tpopen.port,
+  msg->err = ppp_over_l2tp_create(msg->ppp,
+		  msg->msg.l2tpcreate.netif, msg->msg.l2tpcreate.ipaddr, msg->msg.l2tpcreate.port,
 #if PPPOL2TP_AUTH_SUPPORT
-		  msg->msg.l2tpopen.secret,
-		  msg->msg.l2tpopen.secret_len,
+		  msg->msg.l2tpcreate.secret,
+		  msg->msg.l2tpcreate.secret_len,
 #else /* PPPOL2TP_AUTH_SUPPORT */
 		  NULL,
 #endif /* PPPOL2TP_AUTH_SUPPORT */
-		  msg->msg.l2tpopen.link_status_cb, msg->msg.l2tpopen.link_status_ctx);
+		  msg->msg.l2tpcreate.link_status_cb, msg->msg.l2tpcreate.link_status_ctx);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_over_l2tp_open() in a thread-safe way by running that function inside the
+ * Call ppp_over_l2tp_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+int pppapi_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
                 ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_l2tp_open;
+  msg.function = pppapi_do_ppp_over_l2tp_create;
   msg.msg.ppp = pcb;
-  msg.msg.msg.l2tpopen.netif = netif;
-  msg.msg.msg.l2tpopen.ipaddr = ipaddr;
-  msg.msg.msg.l2tpopen.port = port;
+  msg.msg.msg.l2tpcreate.netif = netif;
+  msg.msg.msg.l2tpcreate.ipaddr = ipaddr;
+  msg.msg.msg.l2tpcreate.port = port;
 #if PPPOL2TP_AUTH_SUPPORT
-  msg.msg.msg.l2tpopen.secret = secret;
-  msg.msg.msg.l2tpopen.secret_len = secret_len;
+  msg.msg.msg.l2tpcreate.secret = secret;
+  msg.msg.msg.l2tpcreate.secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
-  msg.msg.msg.l2tpopen.link_status_cb = link_status_cb;
-  msg.msg.msg.l2tpopen.link_status_ctx = link_status_ctx;
+  msg.msg.msg.l2tpcreate.link_status_cb = link_status_cb;
+  msg.msg.msg.l2tpcreate.link_status_ctx = link_status_ctx;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
@@ -206,22 +206,22 @@ int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, 
 
 
 /**
- * Call ppp_reopen() inside the tcpip_thread context.
+ * Call ppp_open() inside the tcpip_thread context.
  */
-static void pppapi_do_ppp_reopen(struct pppapi_msg_msg *msg) {
-  msg->err = ppp_reopen(msg->ppp, msg->msg.reopen.holdoff);
+static void pppapi_do_ppp_open(struct pppapi_msg_msg *msg) {
+  msg->err = ppp_open(msg->ppp, msg->msg.open.holdoff);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_reopen() in a thread-safe way by running that function inside the
+ * Call ppp_open() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int pppapi_reopen(ppp_pcb *pcb, u16_t holdoff) {
+int pppapi_open(ppp_pcb *pcb, u16_t holdoff) {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_reopen;
+  msg.function = pppapi_do_ppp_open;
   msg.msg.ppp = pcb;
-  msg.msg.msg.reopen.holdoff = holdoff;
+  msg.msg.msg.open.holdoff = holdoff;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }

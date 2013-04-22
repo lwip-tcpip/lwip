@@ -488,44 +488,44 @@ typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
 #if PPPOS_SUPPORT
 /*
- * Start a new PPP connection using the given serial I/O device.
+ * Create a new PPP connection using the given serial I/O device.
  *
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
 /*
- * Start a new PPP Over Ethernet (PPPoE) connection.
+ * Create a new PPP Over Ethernet (PPPoE) connection.
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
+int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
 /*
- * Open a new PPP Over L2TP (PPPoL2TP) connection.
+ * Create a new PPP Over L2TP (PPPoL2TP) connection.
  */
-int ppp_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOL2TP_SUPPORT */
 
 /*
- * Open a previously opened PPP connection.
+ * Open a PPP connection.
  *
  * This can only be called if PPP is in the dead phase.
  *
  * Holdoff is the time to wait (in seconds) before initiating
  * the connection.
  */
-int ppp_reopen(ppp_pcb *pcb, u16_t holdoff);
+int ppp_open(ppp_pcb *pcb, u16_t holdoff);
 
 /*
  * Initiate the end of a PPP connection.

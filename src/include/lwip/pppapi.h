@@ -56,7 +56,7 @@ struct pppapi_msg_msg {
       sio_fd_t fd;
       ppp_link_status_cb_fn link_status_cb;
       void *link_status_ctx;
-    } serialopen;
+    } serialcreate;
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
     struct {
@@ -65,7 +65,7 @@ struct pppapi_msg_msg {
       const char *concentrator_name;
       ppp_link_status_cb_fn link_status_cb;
       void *link_status_ctx;
-    } ethernetopen;
+    } ethernetcreate;
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
     struct {
@@ -78,11 +78,11 @@ struct pppapi_msg_msg {
 #endif /* PPPOL2TP_AUTH_SUPPORT */
       ppp_link_status_cb_fn link_status_cb;
       void *link_status_ctx;
-    } l2tpopen;
+    } l2tpcreate;
 #endif /* PPPOL2TP_SUPPORT */
     struct {
       u16_t holdoff;
-    } reopen;
+    } open;
     struct {
       int cmd;
       void *arg;
@@ -110,19 +110,19 @@ ppp_pcb *pppapi_new(void);
 void pppapi_set_default(ppp_pcb *pcb);
 void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd);
 #if PPPOS_SUPPORT
-int pppapi_over_serial_open(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
+int pppapi_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
-int pppapi_over_ethernet_open(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
+int pppapi_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
 		const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
 		void *link_status_ctx);
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
-int pppapi_over_l2tp_open(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+int pppapi_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
                 ppp_link_status_cb_fn link_status_cb, void *link_status_ctx);
 #endif /* PPPOL2TP_SUPPORT */
-int pppapi_reopen(ppp_pcb *pcb, u16_t holdoff);
+int pppapi_open(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
 int pppapi_delete(ppp_pcb *pcb);
