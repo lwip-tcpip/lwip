@@ -47,6 +47,14 @@
 #include "lwip/timers.h"
 #include "lwip/sio.h"
 
+/* Type definitions for BSD code. */
+#ifndef __u_char_defined
+typedef unsigned long  u_long;
+typedef unsigned int   u_int;
+typedef unsigned short u_short;
+typedef unsigned char  u_char;
+#endif
+
 #include "ppp.h"
 #include "pppdebug.h"
 
