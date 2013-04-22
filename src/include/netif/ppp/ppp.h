@@ -540,6 +540,21 @@ int ppp_close(ppp_pcb *pcb);
 void ppp_sighup(ppp_pcb *pcb);
 
 /*
+ * Free the control block, clean everything except the PPP PCB itself
+ * and the netif, it allows you to change the underlying PPP protocol
+ * (eg. from PPPoE to PPPoS to switch from DSL to GPRS) without losing
+ * your PPP and netif handlers.
+ *
+ * This can only be called if PPP is in the dead phase.
+ *
+ * You must use ppp_close() before if you wish to terminate
+ * an established PPP session.
+ *
+ * Return 0 on success, an error code on failure.
+ */
+int ppp_free(ppp_pcb *pcb);
+
+/*
  * Release the control block.
  *
  * This can only be called if PPP is in the dead phase.
