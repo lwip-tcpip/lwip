@@ -569,6 +569,9 @@ void pppos_input(ppp_pcb *pcb, u_char* data, int len);
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (&(ppp)->netif)
 
+/* Get the PPP addresses */
+#define ppp_addrs(ppp)               (&(ppp)->addrs)
+
 #if LWIP_NETIF_STATUS_CALLBACK
 /* Set an lwIP-style status-callback for the selected PPP device */
 void ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
