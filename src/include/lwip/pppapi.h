@@ -87,12 +87,6 @@ struct pppapi_msg_msg {
       int cmd;
       void *arg;
     } ioctl;
-#if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
-    struct {
-      u_char *data;
-      int len;
-    } ppposinput;
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
 #if LWIP_NETIF_STATUS_CALLBACK
     struct {
       netif_status_callback_fn status_callback;
@@ -133,9 +127,6 @@ int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
 int pppapi_delete(ppp_pcb *pcb);
 int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
-#if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
-void ppposapi_input(ppp_pcb *pcb, u_char* data, int len);
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
 #if LWIP_NETIF_STATUS_CALLBACK
 void pppapi_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */

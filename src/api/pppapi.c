@@ -312,30 +312,6 @@ int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg) {
 }
 
 
-#if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
-/**
- * Call pppos_input() inside the tcpip_thread context.
- */
-static void pppapi_do_pppos_input(struct pppapi_msg_msg *msg) {
-  pppos_input(msg->ppp, msg->msg.ppposinput.data, msg->msg.ppposinput.len);
-  TCPIP_PPPAPI_ACK(msg);
-}
-
-/**
- * Call pppos_input() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- */
-void ppposapi_input(ppp_pcb *pcb, u_char* data, int len) {
-  struct pppapi_msg msg;
-  msg.function = pppapi_do_pppos_input;
-  msg.msg.ppp = pcb;
-  msg.msg.msg.ppposinput.data = data;
-  msg.msg.msg.ppposinput.len = len;
-  TCPIP_PPPAPI(&msg);
-}
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
-
-
 #if LWIP_NETIF_STATUS_CALLBACK
 /**
  * Call ppp_set_netif_statuscallback() inside the tcpip_thread context.
