@@ -81,6 +81,9 @@ HISTORY
  ++ Bugfixes:
 
   2013-04-24: Simon Goldschmidt
+  * igmp.c: fixed possible division by zero
+
+  2013-04-24: Simon Goldschmidt
   * ip6.h, some ipv6 C files: fixed bug #38526 Coverity: Recursive Header Inclusion in ip6.h
 
   2013-04-24: Simon Goldschmidt (patch by Emil Ljungdahl):
