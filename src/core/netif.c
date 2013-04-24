@@ -719,7 +719,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
   for (last = r; last->next != NULL; last = last->next);
 
   SYS_ARCH_PROTECT(lev);
-  if(netif->loop_first != NULL) {
+  if (netif->loop_first != NULL) {
     LWIP_ASSERT("if first != NULL, last must also be != NULL", netif->loop_last != NULL);
     netif->loop_last->next = r;
     netif->loop_last = last;
@@ -735,7 +735,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
-  tcpip_callback((tcpip_callback_fn)netif_poll, netif);
+  tcpip_callback_with_block((tcpip_callback_fn)netif_poll, netif, 0);
 #endif /* LWIP_NETIF_LOOPBACK_MULTITHREADING */
 
   return ERR_OK;

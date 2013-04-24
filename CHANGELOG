@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-04-24: Simon Goldschmidt (patch by Emil Ljungdahl):
+  * netif.c: fixed bug #38586 netif_loop_output() "deadlocks"
+
   2013-01-15: Simon Goldschmidt
   * ip4.c: fixed bug #37665 ip_canforward operates on address in wrong byte order
 
