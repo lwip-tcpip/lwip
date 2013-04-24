@@ -44,6 +44,7 @@
 #include "lwip/ip6.h"
 #include "lwip/icmp6.h"
 #include "lwip/nd6.h"
+#include "lwip/ip.h"
 
 #include "lwip/pbuf.h"
 #include "lwip/memp.h"
