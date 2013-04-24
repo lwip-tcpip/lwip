@@ -145,6 +145,18 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-04-24: patch by Liam <morepork>
+  api_msg.c: patch #8008 Fix a potential null pointer dereference in assert
+
+  2013-04-24: Simon Goldschmidt
+  * igmp.c: fixed possible division by zero
+
+  2013-04-24: Simon Goldschmidt
+  * ip6.h, some ipv6 C files: fixed bug #38526 Coverity: Recursive Header Inclusion in ip6.h
+
+  2013-04-24: Simon Goldschmidt (patch by Emil Ljungdahl):
+  * netif.c: fixed bug #38586 netif_loop_output() "deadlocks"
+
   2013-01-15: Simon Goldschmidt
   * ip4.c: fixed bug #37665 ip_canforward operates on address in wrong byte order
 
