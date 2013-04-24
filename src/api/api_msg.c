@@ -222,11 +222,12 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
   LWIP_ASSERT("recv_tcp must have a pcb argument", pcb != NULL);
   LWIP_ASSERT("recv_tcp must have an argument", arg != NULL);
   conn = (struct netconn *)arg;
-  LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
 
   if (conn == NULL) {
     return ERR_VAL;
   }
+  LWIP_ASSERT("recv_tcp: recv for wrong pcb!", conn->pcb.tcp == pcb);
+
   if (!sys_mbox_valid(&conn->recvmbox)) {
     /* recvmbox already deleted */
     if (p != NULL) {
