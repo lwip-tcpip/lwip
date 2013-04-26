@@ -1522,12 +1522,6 @@ ppp_drop(ppp_pcb_rx *pcrx)
   snmp_inc_ifindiscards(&pcb->netif);
 }
 
-#if PPP_INPROC_MULTITHREADED
-struct ppp_tcpip_callback_header {
-  ppp_pcb *pcb;
-};
-#endif /* PPP_INPROC_MULTITHREADED */
-
 /** Pass received raw characters to PPPoS to be decoded. This function is
  * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
  *
@@ -1583,10 +1577,6 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
         /* Otherwise it's a good packet so pass it on. */
         } else {
           struct pbuf *inp;
-#if PPP_INPROC_MULTITHREADED
-          struct pbuf *head;
-          struct ppp_tcpip_callback_header *cbhead;
-#endif /* PPP_INPROC_MULTITHREADED */
           /* Trim off the checksum. */
           if(pcrx->in_tail->len > 2) {
             pcrx->in_tail->len -= 2;
@@ -1610,21 +1600,14 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
           pcrx->in_head = NULL;
           pcrx->in_tail = NULL;
 #if PPP_INPROC_MULTITHREADED
-          head = pbuf_alloc(PBUF_RAW, sizeof(struct ppp_tcpip_callback_header), PBUF_POOL);
-          if(NULL != head) {
-            cbhead = (struct ppp_tcpip_callback_header*)head->payload;
-            cbhead->pcb = pcb;
-            pbuf_chain(head, inp);
-            if(tcpip_callback_with_block(pppos_input_callback, head, 0) != ERR_OK) {
-              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
-              pbuf_free(head);
-              pbuf_free(inp);
-              LINK_STATS_INC(link.drop);
-              snmp_inc_ifindiscards(&pcb->netif);
-            }
+          if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
+            PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
+            pbuf_free(inp);
+            LINK_STATS_INC(link.drop);
+            snmp_inc_ifindiscards(&pcb->netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
-          ppp_input(pcrx->pcb, inp);
+          ppp_input(pcb, inp);
 #endif /* PPP_INPROC_MULTITHREADED */
         }
 
@@ -1726,10 +1709,15 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
               break;
             }
             if (pcrx->in_head == NULL) {
-              ((u8_t*)next_pbuf->payload)[0] = pcrx->in_protocol >> 8;
-              ((u8_t*)next_pbuf->payload)[1] = pcrx->in_protocol & 0xFF;
+              u8_t *payload = next_pbuf->payload;
+#if PPP_INPROC_MULTITHREADED
+              *((ppp_pcb**)payload) = pcb;
+              payload += sizeof(ppp_pcb*);
+              next_pbuf->len += sizeof(ppp_pcb*);
+#endif /* PPP_INPROC_MULTITHREADED */
+              *(payload++) = pcrx->in_protocol >> 8;
+              *(payload) = pcrx->in_protocol & 0xFF;
               next_pbuf->len += sizeof(pcrx->in_protocol);
-
               pcrx->in_head = next_pbuf;
             }
             pcrx->in_tail = next_pbuf;
@@ -1749,33 +1737,25 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
 
 #if PPP_INPROC_MULTITHREADED
 /* PPPoS input callback using one input pointer
- *   *arg is a pbuf chain of two chained pbuf, the first contains
- *   a pointer to the PPP PCB structure, the second contains the
- *   PPP payload
  */
 static void pppos_input_callback(void *arg) {
-  struct pbuf *hd, *pl;
-  struct ppp_tcpip_callback_header *cbhead;
+  struct pbuf *pb = (struct pbuf*)arg;
   ppp_pcb *pcb;
 
-  hd = (struct pbuf *)arg;
-  cbhead = (struct ppp_tcpip_callback_header *)hd->payload;
-  pcb = cbhead->pcb;
-
-  pl = hd->next;
-  pbuf_free(hd);
-  if(NULL == pl)
+  pcb = *((ppp_pcb**)pb->payload);
+  if(pbuf_header(pb, -(s16_t)sizeof(ppp_pcb*))) {
+    LWIP_ASSERT("pbuf_header failed\n", 0);
     goto drop;
+  }
 
   /* Dispatch the packet thereby consuming it. */
-  ppp_input(pcb, pl);
+  ppp_input(pcb, pb);
   return;
 
 drop:
   LINK_STATS_INC(link.drop);
   snmp_inc_ifindiscards(&pcb->netif);
-  pbuf_free(pl);
-  return;
+  pbuf_free(pb);
 }
 #endif /* PPP_INPROC_MULTITHREADED */
 #endif /* PPPOS_SUPPORT */
