@@ -1701,6 +1701,15 @@
 #if PPP_SUPPORT
 
 /**
+ * PPP_INPROC_MULTITHREADED==1 call ppp_input() using tcpip_callback().
+ * Set this to 0 if pppos_input() is called inside tcpip_thread or with NO_SYS==1.
+ * Default is 1 for NO_SYS==0 (multithreaded) and 0 for NO_SYS==1 (single-threaded).
+ */
+#ifndef PPP_INPROC_MULTITHREADED
+#define PPP_INPROC_MULTITHREADED (NO_SYS==0)
+#endif
+
+/**
  * LWIP_PPP_API==1: Support PPP API (in pppapi.c)
  */
 #ifndef LWIP_PPP_API
