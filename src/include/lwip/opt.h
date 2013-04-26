@@ -1310,31 +1310,6 @@
 #endif
 
 /**
- * PPP_THREAD_NAME: The name assigned to the pppInputThread.
- */
-#ifndef PPP_THREAD_NAME
-#define PPP_THREAD_NAME                "pppInputThread"
-#endif
-
-/**
- * PPP_THREAD_STACKSIZE: The stack size used by the pppInputThread.
- * The stack size value itself is platform-dependent, but is passed to
- * sys_thread_new() when the thread is created.
- */
-#ifndef PPP_THREAD_STACKSIZE
-#define PPP_THREAD_STACKSIZE            0
-#endif
-
-/**
- * PPP_THREAD_PRIO: The priority assigned to the pppInputThread.
- * The priority value itself is platform-dependent, but is passed to
- * sys_thread_new() when the thread is created.
- */
-#ifndef PPP_THREAD_PRIO
-#define PPP_THREAD_PRIO                 1
-#endif
-
-/**
  * DEFAULT_THREAD_NAME: The name assigned to any other lwIP thread.
  */
 #ifndef DEFAULT_THREAD_NAME

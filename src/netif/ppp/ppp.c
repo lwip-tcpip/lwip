@@ -201,12 +201,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 static void ppp_over_serial_open(ppp_pcb *pcb);
 static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short protocol);
 static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p);
-#if PPP_INPROC_OWNTHREAD
-static void ppp_input_thread(void *arg);
-static void ppp_receive_wakeup(ppp_pcb *pcb);
-#endif /* PPP_INPROC_OWNTHREAD */
 static void ppp_drop(ppp_pcb_rx *pcrx);
-static void pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -502,9 +497,6 @@ ppp_close(ppp_pcb *pcb)
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
     /* This will leave us at PHASE_DEAD. */
     ppp_stop(pcb);
-#if PPP_INPROC_OWNTHREAD
-    ppp_receive_wakeup(pcb);
-#endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
   }
 
@@ -888,16 +880,6 @@ static u_char ppp_accm_mask[] = {
   0x40,
   0x80
 };
-
-#if PPP_INPROC_OWNTHREAD
-/** Wake up the task blocked in reading from serial line (if any) */
-static void
-ppp_receive_wakeup(ppp_pcb *pcb)
-{
-  PPPDEBUG(LOG_DEBUG, ("ppp_receive_wakeup: unit %d\n", pcb->num));
-  sio_read_abort(pcb->fd);
-}
-#endif /* PPP_INPROC_OWNTHREAD */
 #endif /* PPPOS_SUPPORT */
 
 /*
@@ -950,32 +932,7 @@ static void ppp_over_serial_open(ppp_pcb *pcb) {
    */
   PPPDEBUG(LOG_INFO, ("ppp_over_serial_open: unit %d: connecting\n", pcb->num));
   ppp_start(pcb);
-#if PPP_INPROC_OWNTHREAD
-  sys_thread_new(PPP_THREAD_NAME, ppp_input_thread, (void*)&pcb->rx, PPP_THREAD_STACKSIZE, PPP_THREAD_PRIO);
-#endif /* PPP_INPROC_OWNTHREAD */
 }
-
-#if PPP_INPROC_OWNTHREAD
-/* The main PPP process function.  This implements the state machine according
- * to section 4 of RFC 1661: The Point-To-Point Protocol. */
-static void
-ppp_input_thread(void *arg)
-{
-  int count;
-  ppp_pcb_rx *pcrx = arg;
-  ppp_pcb *pcb = pcrx->pcb;
-
-  while (pcb->phase != PHASE_DEAD) {
-    count = sio_read(pcrx->fd, pcrx->rxbuf, PPPOS_RX_BUFSIZE);
-    if(count > 0) {
-      pppos_input_proc(pcrx, pcrx->rxbuf, count);
-    } else {
-      /* nothing received, give other tasks a chance to run */
-      sys_msleep(1);
-    }
-  }
-}
-#endif /* PPP_INPROC_OWNTHREAD */
 
 static void
 pppos_put(ppp_pcb *pcb, struct pbuf *nb)
@@ -1565,40 +1522,29 @@ ppp_drop(ppp_pcb_rx *pcrx)
   snmp_inc_ifindiscards(&pcb->netif);
 }
 
-#if !PPP_INPROC_OWNTHREAD
-/** Pass received raw characters to PPPoS to be decoded. This function is
- * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
- *
- * @param pd PPP descriptor index, returned by pppOpen()
- * @param data received data
- * @param len length of received data
- */
-void
-pppos_input(ppp_pcb *pcb, u_char* data, int len)
-{
-  pppos_input_proc(&pcb->rx, data, len);
-}
-#endif
-
 #if PPP_INPROC_MULTITHREADED
 struct ppp_tcpip_callback_header {
   ppp_pcb *pcb;
 };
 #endif /* PPP_INPROC_MULTITHREADED */
 
-/**
- * Process a received octet string.
+/** Pass received raw characters to PPPoS to be decoded. This function is
+ * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
+ *
+ * @param pcb PPP descriptor index, returned by ppp_new()
+ * @param data received data
+ * @param len length of received data
  */
-static void
-pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
+void
+pppos_input(ppp_pcb *pcb, u_char *s, int l)
 {
-  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
+  ppp_pcb_rx *pcrx = &pcb->rx;
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
   SYS_ARCH_DECL_PROTECT(lev);
 
-  PPPDEBUG(LOG_DEBUG, ("pppos_input_proc[%d]: got %d bytes\n", pcb->num, l));
+  PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", pcb->num, l));
   while (l-- > 0) {
     cur_char = *s++;
 
@@ -1622,14 +1568,14 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
         /* If we haven't received the packet header, drop what has come in. */
         } else if (pcrx->in_state < PDDATA) {
           PPPDEBUG(LOG_WARNING,
-                   ("pppos_input_proc[%d]: Dropping incomplete packet %d\n",
+                   ("pppos_input[%d]: Dropping incomplete packet %d\n",
                     pcb->num, pcrx->in_state));
           LINK_STATS_INC(link.lenerr);
           ppp_drop(pcrx);
         /* If the fcs is invalid, drop the packet. */
         } else if (pcrx->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
-                   ("pppos_input_proc[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
+                   ("pppos_input[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
                     pcb->num, pcrx->in_fcs, pcrx->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
@@ -1670,7 +1616,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
             cbhead->pcb = pcb;
             pbuf_chain(head, inp);
             if(tcpip_callback_with_block(pppos_input_callback, head, 0) != ERR_OK) {
-              PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
+              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
               pbuf_free(head);
               pbuf_free(inp);
               LINK_STATS_INC(link.drop);
@@ -1690,7 +1636,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
        * been inserted by the physical layer so here we just drop them. */
       } else {
         PPPDEBUG(LOG_WARNING,
-                 ("pppos_input_proc[%d]: Dropping ACCM char <%d>\n", pcb->num, cur_char));
+                 ("pppos_input[%d]: Dropping ACCM char <%d>\n", pcb->num, cur_char));
       }
     /* Process other characters. */
     } else {
@@ -1737,7 +1683,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
 #if 0
           else {
             PPPDEBUG(LOG_WARNING,
-                     ("pppos_input_proc[%d]: Invalid control <%d>\n", pcb->num, cur_char));
+                     ("pppos_input[%d]: Invalid control <%d>\n", pcb->num, cur_char));
             pcrx->in_state = PDSTART;
           }
 #endif
@@ -1773,7 +1719,7 @@ pppos_input_proc(ppp_pcb_rx *pcrx, u_char *s, int l)
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
                * the received pbuf chain in case a new packet starts. */
-              PPPDEBUG(LOG_ERR, ("pppos_input_proc[%d]: NO FREE MBUFS!\n", pcb->num));
+              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE MBUFS!\n", pcb->num));
               LINK_STATS_INC(link.memerr);
               ppp_drop(pcrx);
               pcrx->in_state = PDSTART;  /* Wait for flag sequence. */
@@ -1962,21 +1908,6 @@ static void ppp_over_l2tp_open(ppp_pcb *pcb) {
 
 void ppp_link_down(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
-
-#if PPPOE_SUPPORT
-  if (pcb->pppoe_sc) {
-    return;
-  }
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-  if (pcb->l2tp_pcb) {
-    return;
-  }
-#endif /* PPPOL2TP_SUPPORT */
-
-#if PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD
-  ppp_receive_wakeup(pcb);
-#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD*/
 }
 
 void ppp_link_terminated(ppp_pcb *pcb) {
@@ -1995,12 +1926,8 @@ void ppp_link_terminated(ppp_pcb *pcb) {
   {
 #if PPPOS_SUPPORT
     /* We cannot call ppp_free_current_input_packet() here because
-     * rx thread might still call pppos_input_proc()
+     * rx thread might still call pppos_input()
      */
-#if PPP_INPROC_OWNTHREAD
-    ppp_receive_wakeup(pcb);
-#endif /* PPP_INPROC_OWNTHREAD */
-
     PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->link_status_ctx);
 #endif /* PPPOS_SUPPORT */
@@ -2011,7 +1938,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 #if LWIP_NETIF_STATUS_CALLBACK
 /** Set the status callback of a PPP's netif
  *
- * @param pd The PPP descriptor returned by pppOpen()
+ * @param pcb The PPP descriptor returned by ppp_new()
  * @param status_callback pointer to the status callback function
  *
  * @see netif_set_status_callback
@@ -2026,7 +1953,7 @@ ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callb
 #if LWIP_NETIF_LINK_CALLBACK
 /** Set the link callback of a PPP's netif
  *
- * @param pd The PPP descriptor returned by pppOpen()
+ * @param pcb The PPP descriptor returned by ppp_new()
  * @param link_callback pointer to the link callback function
  *
  * @see netif_set_link_callback

@@ -50,33 +50,13 @@
 
 #include "vj.h"
 
-/** PPP_INPROC_MULTITHREADED==1 call ppp_input using tcpip_callback().
- * Set this to 0 if pppos_input_proc is called inside tcpip_thread or with NO_SYS==1.
+/** PPP_INPROC_MULTITHREADED==1 call pppos_input using tcpip_callback().
+ * Set this to 0 if pppos_input is called inside tcpip_thread or with NO_SYS==1.
  * Default is 1 for NO_SYS==0 (multithreaded) and 0 for NO_SYS==1 (single-threaded).
  */
 #ifndef PPP_INPROC_MULTITHREADED
 #define PPP_INPROC_MULTITHREADED (NO_SYS==0)
 #endif
-
-/** PPP_INPROC_OWNTHREAD==1: start a dedicated RX thread per PPP session.
- * Default is 1 if PPP_INPROC_MULTITHREADED is enabled.
- * If set to 0, call pppos_input() for received raw characters, character
- * reception is up to the port.
- */
-#ifndef PPP_INPROC_OWNTHREAD
-#define PPP_INPROC_OWNTHREAD      PPP_INPROC_MULTITHREADED
-#endif
-
-#if PPP_INPROC_OWNTHREAD && !PPP_INPROC_MULTITHREADED
-  #error "PPP_INPROC_OWNTHREAD needs PPP_INPROC_MULTITHREADED==1"
-#endif
-
-#if PPPOS_SUPPORT
-/** RX buffer size: this may be configured smaller! */
-#ifndef PPPOS_RX_BUFSIZE
-#define PPPOS_RX_BUFSIZE    (PPP_MRU + PPP_HDRLEN)
-#endif
-#endif /* PPPOS_SUPPORT */
 
 
 /*************************
@@ -296,10 +276,6 @@ typedef struct ppp_pcb_rx_s {
   ppp_pcb *pcb;
   /** the rx file descriptor */
   sio_fd_t fd;
-  /** receive buffer - encoded data is stored here */
-#if PPP_INPROC_OWNTHREAD
-  u_char rxbuf[PPPOS_RX_BUFSIZE];
-#endif /* PPPOS_SUPPORT && PPP_INPROC_OWNTHREAD */
 
   /* The input packet. */
   struct pbuf *in_head, *in_tail;
@@ -572,14 +548,12 @@ int ppp_delete(ppp_pcb *pcb);
  */
 int ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 
-#if PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD
+#if PPPOS_SUPPORT
 /*
  * PPP over Serial: this is the input function to be called for received data.
- * If PPP_INPROC_OWNTHREAD==1, a separate input thread using the blocking
- * sio_read() is used, so this is deactivated.
  */
 void pppos_input(ppp_pcb *pcb, u_char* data, int len);
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_OWNTHREAD */
+#endif /* PPPOS_SUPPORT */
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (&(ppp)->netif)
@@ -595,21 +569,6 @@ void ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_
 /* Set an lwIP-style link-callback for the selected PPP device */
 void ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback);
 #endif /* LWIP_NETIF_LINK_CALLBACK */
-
-
-/* Source code compatibility */
-#if 0
-#define pppAuthType ppp_auth_type
-#define pppInit() ppp_init()
-#define pppSetAuth(authtype,user,passwd) ppp_set_auth(authtype,user,passwd)
-#define pppOpen(fd,cb,ls) ppp_over_serial_open(fd,cb,ls)
-#define pppOverSerialOpen(fd,cb,ls) ppp_over_serial_open(fd,cb,ls)
-#define pppOverEthernetOpen(ethif,sn,cn,lscb,lsctx) ppp_over_ethernet_open(ethif,sn,cn,lscb,lsctx)
-#define pppClose(unit) ppp_close(unit)
-#define pppSigHUP(unit) ppp_sigup(unit)
-#define pppIOCtl(pd,cmd,arg) ppp_ioctl(pd,cmd,arg)
-#define pppMTU(unit) ppp_mtu(unit)
-#endif
 
 #endif /* PPP_H */
 
