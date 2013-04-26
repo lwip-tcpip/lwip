@@ -527,7 +527,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
 
     outlen = UPAP_HEADERLEN + 2 * sizeof (u_char) +
 	pcb->upap.us_userlen + pcb->upap.us_passwdlen;
-    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PBUF_POOL);
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
     if(NULL == p)
         return;
     if(p->tot_len != p->len) {
@@ -564,7 +564,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
     int outlen;
 
     outlen = UPAP_HEADERLEN + sizeof (u_char) + msglen;
-    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PBUF_POOL);
+    p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +outlen), PPP_CTRL_PBUF_TYPE);
     if(NULL == p)
         return;
     if(p->tot_len != p->len) {

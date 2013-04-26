@@ -1780,7 +1780,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
      * Process all his options.
      */
     next = inp;
-    nakp = pbuf_alloc(PBUF_RAW, (u16_t)(PBUF_POOL_BUFSIZE), PBUF_POOL);
+    nakp = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_CTRL_PBUF_MAX_SIZE), PPP_CTRL_PBUF_TYPE);
     if(NULL == nakp)
         return 0;
     if(nakp->tot_len != nakp->len) {

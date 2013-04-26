@@ -231,7 +231,7 @@ static void chap_timeout(void *arg) {
 		return;
 	}
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->chap_server.challenge_pktlen), PBUF_POOL);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(pcb->chap_server.challenge_pktlen), PPP_CTRL_PBUF_TYPE);
 	if(NULL == p)
 		return;
 	if(p->tot_len != p->len) {
@@ -331,7 +331,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	/* send the response */
 	mlen = strlen(pcb->chap_server.message);
 	len = CHAP_HDRLEN + mlen;
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PBUF_POOL);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PPP_CTRL_PBUF_TYPE);
 	if(NULL == p)
 		return;
 	if(p->tot_len != p->len) {
@@ -430,7 +430,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	char rname[MAXNAMELEN+1];
 	char secret[MAXSECRETLEN+1];
 
-	p = pbuf_alloc(PBUF_RAW, (u16_t)(RESP_MAX_PKTLEN), PBUF_POOL);
+	p = pbuf_alloc(PBUF_RAW, (u16_t)(RESP_MAX_PKTLEN), PPP_CTRL_PBUF_TYPE);
 	if(NULL == p)
 		return;
 	if(p->tot_len != p->len) {

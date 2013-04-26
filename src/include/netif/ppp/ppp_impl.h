@@ -59,13 +59,26 @@ typedef unsigned char  u_char;
 #include "pppdebug.h"
 
 /*
+ * Memory used for control packets.
+ *
+ * PPP_CTRL_PBUF_MAX_SIZE is the amount of memory we allocate when we
+ * cannot figure out how much we are going to use before filling the buffer.
+ */
+#if PPP_USE_PBUF_RAM
+#define PPP_CTRL_PBUF_TYPE       PBUF_RAM
+#define PPP_CTRL_PBUF_MAX_SIZE   512
+#else /* PPP_USE_PBUF_RAM */
+#define PPP_CTRL_PBUF_TYPE       PBUF_POOL
+#define PPP_CTRL_PBUF_MAX_SIZE   PBUF_POOL_BUFSIZE
+#endif /* PPP_USE_PBUF_RAM */
+
+/*
  * Limits.
  */
 #define MAXWORDLEN	1024	/* max length of word in file (incl null) */
 #define MAXARGS		1	/* max # args to a command */
 #define MAXNAMELEN	256	/* max length of hostname or name for auth */
 #define MAXSECRETLEN	256	/* max length of password or secret */
-
 
 /*
  * The basic PPP frame.
