@@ -82,7 +82,7 @@ HISTORY
 
   2013-04-26: Sylvain Rochet
   * dhcp.c, reverted from DOS (CRLF) to UNIX format (LF), it was saved in DOS format
-    by mistake the 2012-08-13
+    by mistake the 2012-09-26
 
   2013-04-26: Sylvain Rochet
   * ip6.h, cleared compilation warning, C++ style comments are not allowed in ISO C90
