@@ -1547,7 +1547,9 @@ ppp_free_current_input_packet(ppp_pcb_rx *pcrx)
 static void
 ppp_drop(ppp_pcb_rx *pcrx)
 {
+#if LWIP_SNMP || VJ_SUPPORT
   ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
+#endif /* LWIP_SNMP || VJ_SUPPORT */
   if (pcrx->in_head != NULL) {
 #if 0
     PPPDEBUG(LOG_INFO, ("ppp_drop: %d:%.*H\n", pcrx->in_head->len, min(60, pcrx->in_head->len * 2), pcrx->in_head->payload));
