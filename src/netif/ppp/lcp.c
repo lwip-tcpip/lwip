@@ -440,8 +440,8 @@ void lcp_close(ppp_pcb *pcb, char *reason) {
     fsm *f = &pcb->lcp_fsm;
     int oldstate;
 
-    if (pcb->phase != PHASE_DEAD && pcb->phase != PHASE_MASTER)
-	new_phase(pcb, PHASE_TERMINATE);
+    if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
+	new_phase(pcb, PPP_PHASE_TERMINATE);
 
     if (f->flags & DELAYED_UP) {
 	UNTIMEOUT(lcp_delayed_up, f);

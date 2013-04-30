@@ -295,7 +295,7 @@ void mp_bundle_terminated()
 	tdb_delete(pppdb, key);
 	unlock_db();
 
-	new_phase(PHASE_DEAD);
+	new_phase(PPP_PHASE_DEAD);
 
 	doing_multilink = 0;
 	multilink_master = 0;

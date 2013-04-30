@@ -559,7 +559,7 @@ void start_link(unit)
     char *msg;
 
     status = EXIT_NEGOTIATION_FAILED;
-    new_phase(pcb, PHASE_SERIALCONN);
+    new_phase(pcb, PPP_PHASE_SERIALCONN);
 
     hungup = 0;
     devfd = the_channel->connect();
@@ -595,18 +595,18 @@ void start_link(unit)
 	ppp_notice("Starting negotiation on %s", ppp_devnam);
     add_fd(fd_ppp);
 
-    new_phase(pcb, PHASE_ESTABLISH);
+    new_phase(pcb, PPP_PHASE_ESTABLISH);
 
     lcp_lowerup(pcb);
     return;
 
  disconnect:
-    new_phase(pcb, PHASE_DISCONNECT);
+    new_phase(pcb, PPP_PHASE_DISCONNECT);
     if (the_channel->disconnect)
 	the_channel->disconnect();
 
  fail:
-    new_phase(pcb, PHASE_DEAD);
+    new_phase(pcb, PPP_PHASE_DEAD);
     if (the_channel->cleanup)
 	(*the_channel->cleanup)();
 }
@@ -617,9 +617,9 @@ void start_link(unit)
  * physical layer down.
  */
 void link_terminated(ppp_pcb *pcb) {
-    if (pcb->phase == PHASE_DEAD || pcb->phase == PHASE_MASTER)
+    if (pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_MASTER)
 	return;
-    new_phase(pcb, PHASE_DISCONNECT);
+    new_phase(pcb, PPP_PHASE_DISCONNECT);
 
 #if 0 /* UNUSED */
     if (pap_logout_hook) {
@@ -638,7 +638,7 @@ void link_terminated(ppp_pcb *pcb) {
 
     lcp_lowerdown(pcb);
 
-    new_phase(pcb, PHASE_DEAD);
+    new_phase(pcb, PPP_PHASE_DEAD);
     ppp_link_terminated(pcb);
 #if 0
     /*
@@ -680,11 +680,11 @@ void link_terminated(ppp_pcb *pcb) {
 
     if (doing_multilink && multilink_master) {
 	if (!bundle_terminating)
-	    new_phase(pcb, PHASE_MASTER);
+	    new_phase(pcb, PPP_PHASE_MASTER);
 	else
 	    mp_bundle_terminated();
     } else
-	new_phase(pcb, PHASE_DEAD);
+	new_phase(pcb, PPP_PHASE_DEAD);
 #endif
 }
 
@@ -698,8 +698,8 @@ void link_down(ppp_pcb *pcb) {
 
     if (!doing_multilink) {
 	upper_layers_down(pcb);
-	if (pcb->phase != PHASE_DEAD && pcb->phase != PHASE_MASTER)
-	    new_phase(pcb, PHASE_ESTABLISH);
+	if (pcb->phase != PPP_PHASE_DEAD && pcb->phase != PPP_PHASE_MASTER)
+	    new_phase(pcb, PPP_PHASE_ESTABLISH);
     }
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
@@ -793,7 +793,7 @@ void link_established(ppp_pcb *pcb) {
     }
 #endif /* PPP_SERVER */
 
-    new_phase(pcb, PHASE_AUTHENTICATE);
+    new_phase(pcb, PPP_PHASE_AUTHENTICATE);
     auth = 0;
 #if PPP_SERVER
 #if EAP_SUPPORT
@@ -886,7 +886,7 @@ static void network_phase(ppp_pcb *pcb) {
      * If we negotiated callback, do it now.
      */
     if (go->neg_cbcp) {
-	new_phase(pcb, PHASE_CALLBACK);
+	new_phase(pcb, PPP_PHASE_CALLBACK);
 	(*cbcp_protent.open)(pcb);
 	return;
     }
@@ -917,7 +917,7 @@ void start_networks(ppp_pcb *pcb) {
     int mppe_required;
 #endif /* MPPE */
 
-    new_phase(pcb, PHASE_NETWORK);
+    new_phase(pcb, PPP_PHASE_NETWORK);
 
 #ifdef HAVE_MULTILINK
     if (multilink) {
@@ -1167,7 +1167,7 @@ void np_up(ppp_pcb *pcb, int proto) {
 	/*
 	 * At this point we consider that the link has come up successfully.
 	 */
-	new_phase(pcb, PHASE_RUNNING);
+	new_phase(pcb, PPP_PHASE_RUNNING);
 
 #if PPP_IDLETIMELIMIT
 #if 0 /* UNUSED */
@@ -1219,7 +1219,7 @@ void np_down(ppp_pcb *pcb, int proto) {
 #ifdef MAXOCTETS
 	UNTIMEOUT(check_maxoctets, NULL);
 #endif
-	new_phase(pcb, PHASE_NETWORK);
+	new_phase(pcb, PPP_PHASE_NETWORK);
     }
 }
 

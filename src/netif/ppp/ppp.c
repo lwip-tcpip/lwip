@@ -294,7 +294,7 @@ ppp_pcb *ppp_new(void) {
     return NULL;
   }
 
-  new_phase(pcb, PHASE_DEAD);
+  new_phase(pcb, PPP_PHASE_DEAD);
   return pcb;
 }
 
@@ -346,8 +346,15 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
   }
 }
 
+#if PPP_NOTIFY_PHASE
+void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
+	pcb->notify_phase_cb = notify_phase_cb;
+	notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
+}
+#endif /* PPP_NOTIFY_PHASE */
+
 #if PPPOS_SUPPORT
-int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -357,7 +364,7 @@ int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link
 
   pcb->fd = fd;
   pcb->link_status_cb = link_status_cb;
-  pcb->link_status_ctx = link_status_ctx;
+  pcb->ctx_cb = ctx_cb;
   return PPPERR_NONE;
 }
 
@@ -379,7 +386,7 @@ void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
 static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 
 int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+                        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
@@ -391,7 +398,7 @@ int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *serv
   }
 
   pcb->link_status_cb  = link_status_cb;
-  pcb->link_status_ctx = link_status_ctx;
+  pcb->ctx_cb = ctx_cb;
 
   if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
     return PPPERR_OPEN;
@@ -406,7 +413,7 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
 
 int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
-		ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
@@ -415,7 +422,7 @@ int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u
   }
 
   pcb->link_status_cb  = link_status_cb;
-  pcb->link_status_ctx = link_status_ctx;
+  pcb->ctx_cb = ctx_cb;
 
   if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
     return PPPERR_OPEN;
@@ -434,7 +441,7 @@ int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u
  * the connection.
  */
 int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
-  if (pcb->phase != PHASE_DEAD) {
+  if (pcb->phase != PPP_PHASE_DEAD) {
     return PPPERR_PARAM;
   }
 
@@ -445,7 +452,7 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
     return PPPERR_NONE;
   }
 
-  new_phase(pcb, PHASE_HOLDOFF);
+  new_phase(pcb, PPP_PHASE_HOLDOFF);
   sys_timeout((u32_t)(holdoff*1000), ppp_do_open, pcb);
   return PPPERR_NONE;
 }
@@ -463,15 +470,15 @@ ppp_close(ppp_pcb *pcb)
   pcb->err_code = PPPERR_USER;
 
   /* dead phase, nothing to do, call the status callback to be consistent */
-  if (pcb->phase == PHASE_DEAD) {
-    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
+  if (pcb->phase == PPP_PHASE_DEAD) {
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return PPPERR_NONE;
   }
 
   /* holdoff phase, cancel the reconnection and call the status callback */
-  if (pcb->phase == PHASE_HOLDOFF) {
+  if (pcb->phase == PPP_PHASE_HOLDOFF) {
     sys_untimeout(ppp_do_open, pcb);
-    pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return PPPERR_NONE;
   }
 
@@ -481,21 +488,21 @@ ppp_close(ppp_pcb *pcb)
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PHASE_DEAD. */
+    /* This will leave us at PPP_PHASE_DEAD. */
     ppp_stop(pcb);
   } else
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
   if (pcb->l2tp_pcb) {
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PHASE_DEAD. */
+    /* This will leave us at PPP_PHASE_DEAD. */
     ppp_stop(pcb);
   } else
 #endif /* PPPOL2TP_SUPPORT */
   {
 #if PPPOS_SUPPORT
     PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PHASE_DEAD. */
+    /* This will leave us at PPP_PHASE_DEAD. */
     ppp_stop(pcb);
 #endif /* PPPOS_SUPPORT */
   }
@@ -525,7 +532,7 @@ ppp_sighup(ppp_pcb *pcb)
  * Return 0 on success, an error code on failure.
  */
 int ppp_free(ppp_pcb *pcb) {
-  if (pcb->phase != PHASE_DEAD) {
+  if (pcb->phase != PPP_PHASE_DEAD) {
     return PPPERR_PARAM;
   }
 
@@ -566,7 +573,7 @@ int ppp_free(ppp_pcb *pcb) {
 int ppp_delete(ppp_pcb *pcb) {
   int err;
 
-  if (pcb->phase != PHASE_DEAD) {
+  if (pcb->phase != PPP_PHASE_DEAD) {
     return PPPERR_PARAM;
   }
 
@@ -593,7 +600,7 @@ static void ppp_clear(ppp_pcb *pcb) {
   const struct protent *protp;
   int i;
 
-  LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
 #if PPP_STATS_SUPPORTs
   link_stats_valid = 0;
@@ -609,13 +616,13 @@ static void ppp_clear(ppp_pcb *pcb) {
       (*protp->init)(pcb);
   }
 
-  new_phase(pcb, PHASE_INITIALIZE);
+  new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
 static void ppp_do_open(void *arg) {
   ppp_pcb *pcb = (ppp_pcb*)arg;
 
-  LWIP_ASSERT("pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF", pcb->phase == PHASE_DEAD || pcb->phase == PHASE_HOLDOFF);
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
@@ -691,7 +698,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    * Until we get past the authentication phase, toss all packets
    * except LCP, LQR and authentication packets.
    */
-  if (pcb->phase <= PHASE_AUTHENTICATE
+  if (pcb->phase <= PPP_PHASE_AUTHENTICATE
 	&& !(protocol == PPP_LCP
 #if LQR_SUPPORT
 	     || protocol == PPP_LQR
@@ -1808,11 +1815,11 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOE_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
       pppoe_err_code = PPPERR_OPEN;
-      new_phase(pcb, PHASE_DEAD);
+      new_phase(pcb, PPP_PHASE_DEAD);
       break;
   }
 
-  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->link_status_ctx);
+  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->ctx_cb);
 }
 
 static void ppp_over_ethernet_open(ppp_pcb *pcb) {
@@ -1858,11 +1865,11 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
     case PPPOL2TP_CB_STATE_FAILED:
       PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
       pppol2tp_err_code = PPPERR_OPEN;
-      new_phase(pcb, PHASE_DEAD);
+      new_phase(pcb, PPP_PHASE_DEAD);
       break;
   }
 
-  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->link_status_ctx);
+  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->ctx_cb);
 }
 
 static void ppp_over_l2tp_open(ppp_pcb *pcb) {
@@ -1909,7 +1916,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
      * rx thread might still call pppos_input()
      */
     PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
-    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->link_status_ctx);
+    pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->ctx_cb);
 #endif /* PPPOS_SUPPORT */
   }
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
@@ -1956,9 +1963,11 @@ ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
 void new_phase(ppp_pcb *pcb, int p) {
   pcb->phase = p;
   PPPDEBUG(LOG_DEBUG, ("ppp phase changed: unit %d: phase=%d\n", pcb->num, pcb->phase));
-#if PPP_NOTIFY
-  /* The one willing notify support should add here the code to be notified of phase changes */
-#endif /* PPP_NOTIFY */
+#if PPP_NOTIFY_PHASE
+  if(NULL != pcb->notify_phase_cb) {
+	pcb->notify_phase_cb(pcb, p, pcb->ctx_cb);
+  }
+#endif /* PPP_NOTIFY_PHASE */
 }
 
 /*
@@ -2137,7 +2146,7 @@ int sifup(ppp_pcb *pcb) {
   pcb->err_code = PPPERR_NONE;
 
   PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
-  pcb->link_status_cb(pcb, pcb->err_code, pcb->link_status_ctx);
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
   return 1;
 }
 

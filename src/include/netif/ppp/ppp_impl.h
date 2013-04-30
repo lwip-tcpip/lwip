@@ -346,23 +346,6 @@ extern const struct protent* const protocols[];
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
 
-/*
- * Values for phase.
- */
-#define PHASE_DEAD		0
-#define PHASE_INITIALIZE	1
-#define PHASE_SERIALCONN	2
-#define PHASE_DORMANT		3
-#define PHASE_ESTABLISH		4
-#define PHASE_AUTHENTICATE	5
-#define PHASE_CALLBACK		6
-#define PHASE_NETWORK		7
-#define PHASE_RUNNING		8
-#define PHASE_TERMINATE		9
-#define PHASE_DISCONNECT	10
-#define PHASE_HOLDOFF		11
-#define PHASE_MASTER		12
-
 /* Supported CHAP protocols */
 #if CHAP_SUPPORT
 #include "chap-new.h"

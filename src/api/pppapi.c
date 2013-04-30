@@ -102,13 +102,36 @@ void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd) {
 }
 
 
+#if PPP_NOTIFY_PHASE
+/**
+ * Call ppp_set_notify_phase_callback() inside the tcpip_thread context.
+ */
+static void pppapi_do_ppp_set_notify_phase_callback(struct pppapi_msg_msg *msg) {
+  ppp_set_notify_phase_callback(msg->ppp, msg->msg.setnotifyphasecb.notify_phase_cb);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_set_notify_phase_callback() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+void pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_set_notify_phase_callback;
+  msg.msg.ppp = pcb;
+  msg.msg.msg.setnotifyphasecb.notify_phase_cb = notify_phase_cb;
+  TCPIP_PPPAPI(&msg);
+}
+#endif /* PPP_NOTIFY_PHASE */
+
+
 #if PPPOS_SUPPORT
 /**
  * Call ppp_over_serial_create() inside the tcpip_thread context.
  */
 static void pppapi_do_ppp_over_serial_create(struct pppapi_msg_msg *msg) {
   msg->err = ppp_over_serial_create(msg->ppp, msg->msg.serialcreate.fd,
-		  msg->msg.serialcreate.link_status_cb, msg->msg.serialcreate.link_status_ctx);
+		  msg->msg.serialcreate.link_status_cb, msg->msg.serialcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
 
@@ -116,13 +139,13 @@ static void pppapi_do_ppp_over_serial_create(struct pppapi_msg_msg *msg) {
  * Call ppp_over_serial_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int pppapi_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+int pppapi_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_over_serial_create;
   msg.msg.ppp = pcb;
   msg.msg.msg.serialcreate.fd = fd;
   msg.msg.msg.serialcreate.link_status_cb = link_status_cb;
-  msg.msg.msg.serialcreate.link_status_ctx = link_status_ctx;
+  msg.msg.msg.serialcreate.ctx_cb = ctx_cb;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
@@ -137,7 +160,7 @@ static void pppapi_do_ppp_over_ethernet_create(struct pppapi_msg_msg *msg) {
 
   msg->err = ppp_over_ethernet_create(msg->ppp, msg->msg.ethernetcreate.ethif,
 		  msg->msg.ethernetcreate.service_name, msg->msg.ethernetcreate.concentrator_name,
-		  msg->msg.ethernetcreate.link_status_cb, msg->msg.ethernetcreate.link_status_ctx);
+		  msg->msg.ethernetcreate.link_status_cb, msg->msg.ethernetcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
 
@@ -147,7 +170,7 @@ static void pppapi_do_ppp_over_ethernet_create(struct pppapi_msg_msg *msg) {
  */
 int pppapi_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
 		const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
-		void *link_status_ctx) {
+		void *ctx_cb) {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_over_ethernet_create;
   msg.msg.ppp = pcb;
@@ -155,7 +178,7 @@ int pppapi_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *s
   msg.msg.msg.ethernetcreate.service_name = service_name;
   msg.msg.msg.ethernetcreate.concentrator_name = concentrator_name;
   msg.msg.msg.ethernetcreate.link_status_cb = link_status_cb;
-  msg.msg.msg.ethernetcreate.link_status_ctx = link_status_ctx;
+  msg.msg.msg.ethernetcreate.ctx_cb = ctx_cb;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
@@ -176,7 +199,7 @@ static void pppapi_do_ppp_over_l2tp_create(struct pppapi_msg_msg *msg) {
 #else /* PPPOL2TP_AUTH_SUPPORT */
 		  NULL,
 #endif /* PPPOL2TP_AUTH_SUPPORT */
-		  msg->msg.l2tpcreate.link_status_cb, msg->msg.l2tpcreate.link_status_ctx);
+		  msg->msg.l2tpcreate.link_status_cb, msg->msg.l2tpcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
 
@@ -186,7 +209,7 @@ static void pppapi_do_ppp_over_l2tp_create(struct pppapi_msg_msg *msg) {
  */
 int pppapi_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
-                ppp_link_status_cb_fn link_status_cb, void *link_status_ctx) {
+                ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_over_l2tp_create;
   msg.msg.ppp = pcb;
@@ -198,7 +221,7 @@ int pppapi_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr
   msg.msg.msg.l2tpcreate.secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
   msg.msg.msg.l2tpcreate.link_status_cb = link_status_cb;
-  msg.msg.msg.l2tpcreate.link_status_ctx = link_status_ctx;
+  msg.msg.msg.l2tpcreate.ctx_cb = ctx_cb;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }
