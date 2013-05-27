@@ -39,6 +39,10 @@
 extern "C" {
 #endif
 
+/* run once with empty definition to handle all custom includes in lwippools.h */
+#define LWIP_MEMPOOL(name,num,size,desc)
+#include "lwip/memp_std.h"
+
 /* Create the list of all memory pools managed by memp. MEMP_MAX represents a NULL pool at the end */
 typedef enum {
 #define LWIP_MEMPOOL(name,num,size,desc)  MEMP_##name,
