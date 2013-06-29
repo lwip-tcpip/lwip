@@ -48,33 +48,54 @@
 extern "C" {
 #endif
 
+/* If your port already typedef's sa_family_t, define SA_FAMILY_T_DEFINED
+   to prevent this code from redefining it. */
+#if !defined(sa_family_t) && !defined(SA_FAMILY_T_DEFINED)
+typedef u8_t sa_family_t;
+#endif
+/* If your port already typedef's in_port_t, define IN_PORT_T_DEFINED
+   to prevent this code from redefining it. */
+#if !defined(in_port_t) && !defined(IN_PORT_T_DEFINED)
+typedef u16_t in_port_t;
+#endif
+
 /* members are in network byte order */
 struct sockaddr_in {
-  u8_t sin_len;
-  u8_t sin_family;
-  u16_t sin_port;
-  struct in_addr sin_addr;
+  u8_t            sin_len;
+  sa_family_t     sin_family;
+  in_port_t       sin_port;
+  struct in_addr  sin_addr;
 #define SIN_ZERO_LEN 8
-  char sin_zero[SIN_ZERO_LEN];
+  char            sin_zero[SIN_ZERO_LEN];
 };
 
 #if LWIP_IPV6
 struct sockaddr_in6 {
-  u8_t sin6_len;             /* length of this structure */
-  u8_t sin6_family;          /* AF_INET6                 */
-  u16_t sin6_port;           /* Transport layer port #   */
-  u32_t sin6_flowinfo;       /* IPv6 flow information    */
-  struct in6_addr sin6_addr; /* IPv6 address             */
+  u8_t            sin6_len;      /* length of this structure */
+  sa_family_t     sin6_family;   /* AF_INET6                 */
+  in_port_t       sin6_port;     /* Transport layer port #   */
+  u32_t           sin6_flowinfo; /* IPv6 flow information    */
+  struct in6_addr sin6_addr;     /* IPv6 address             */
 };
 #endif /* LWIP_IPV6 */
 
 struct sockaddr {
-  u8_t sa_len;
-  u8_t sa_family;
+  u8_t        sa_len;
+  sa_family_t sa_family;
 #if LWIP_IPV6
-  u8_t sa_data[22];
+  char        sa_data[22];
 #else /* LWIP_IPV6 */
-  u8_t sa_data[14];
+  char        sa_data[14];
+#endif /* LWIP_IPV6 */
+};
+
+struct sockaddr_storage {
+  u8_t        s2_len;
+  sa_family_t ss_family;
+  char        s2_data1[2];
+  u32_t       s2_data2[3];
+#if LWIP_IPV6
+  u32_t       s2_data3[2];
 #endif /* LWIP_IPV6 */
 };
 
