@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2013-06-29: Simon Goldschmidt
+  * inet6.h: bug #37585/task #12600: fixed struct in6_addr.s6_addr to conform to spec
+
   2013-04-24: patch by Liam <morepork>
   * api_msg.c: patch #8008 Fix a potential null pointer dereference in assert
 

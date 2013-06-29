@@ -58,7 +58,7 @@ struct in6_addr {
     u8_t  u8_addr[16];
     u32_t u32_addr[4];
   } un;
-#define s6_addr  un.u32_addr
+#define s6_addr  un.u8_addr
 };
 
 #define IN6ADDR_ANY_INIT {0,0,0,0}
