@@ -264,7 +264,7 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_isdeprecated(addr_state) (addr_state == IP6_ADDR_DEPRECATED)
 
 #define ip6_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F, \
+  LWIP_DEBUGF(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F, \
                       ipaddr != NULL ? IP6_ADDR_BLOCK1(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK2(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK3(ipaddr) : 0,    \
