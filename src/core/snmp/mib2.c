@@ -765,7 +765,8 @@ const struct mib_array_node internet = {
 #endif
 
 /** mib-2.system.sysObjectID  */
-static struct snmp_obj_id sysobjid = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
+static const struct snmp_obj_id sysobjid_default = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
+static const struct snmp_obj_id* sysobjid_ptr = &sysobjid_default;
 /** enterprise ID for generic TRAPs, .iso.org.dod.internet.mgmt.mib-2.snmp */
 static struct snmp_obj_id snmpgrp_id = {7,{1,3,6,1,2,1,11}};
 /** mib-2.system.sysServices */
@@ -910,9 +911,9 @@ void snmp_set_sysdescr(const u8_t *str, const u8_t *len)
   }
 }
 
-void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid)
+void snmp_get_sysobjid_ptr(const struct snmp_obj_id **oid)
 {
-  *oid = &sysobjid;
+  *oid = sysobjid_ptr;
 }
 
 /**
@@ -920,9 +921,9 @@ void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid)
  *
  * @param oid points to stuct snmp_obj_id to copy
  */
-void snmp_set_sysobjid(struct snmp_obj_id *oid)
+void snmp_set_sysobjid(const struct snmp_obj_id *oid)
 {
-  sysobjid = *oid;
+  sysobjid_ptr = oid;
 }
 
 /**
@@ -2109,7 +2110,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->instance = MIB_OBJECT_SCALAR;
         od->access = MIB_OBJECT_READ_ONLY;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
-        od->v_len = sysobjid.len * sizeof(s32_t);
+        od->v_len = sysobjid_ptr->len * sizeof(s32_t);
         break;
       case 3: /* sysUpTime */
         od->instance = MIB_OBJECT_SCALAR;
@@ -2175,7 +2176,7 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
       MEMCPY(value, sysdescr_ptr, len);
       break;
     case 2: /* sysObjectID */
-      MEMCPY(value, sysobjid.id, len);
+      MEMCPY(value, sysobjid_ptr->id, len);
       break;
     case 3: /* sysUpTime */
       {
