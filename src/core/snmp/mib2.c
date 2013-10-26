@@ -902,7 +902,7 @@ static u32_t snmpinpkts = 0,
  * @param src points to source
  * @param n number of octets to copy.
  */
-static void ocstrncpy(u8_t *dst, u8_t *src, u16_t n)
+static void ocstrncpy(u8_t *dst, const u8_t *src, u16_t n)
 {
   u16_t i = n;
   while (i > 0) {
@@ -918,7 +918,7 @@ static void ocstrncpy(u8_t *dst, u8_t *src, u16_t n)
  * @param src points to source
  * @param n number of sub identifiers to copy.
  */
-void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
+void objectidncpy(s32_t *dst, const s32_t *src, u8_t n)
 {
   u8_t i = n;
   while(i > 0) {
