@@ -98,7 +98,7 @@ struct snmp_obj_id
 };
 
 /* system */
-void snmp_set_sysdescr(u8_t* str, u8_t* len);
+void snmp_set_sysdescr(const u8_t* str, const u8_t* len);
 void snmp_set_sysobjid(struct snmp_obj_id *oid);
 void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);

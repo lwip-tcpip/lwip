@@ -772,8 +772,8 @@ static const s32_t sysservices = SNMP_SYSSERVICES;
 /** mib-2.system.sysDescr */
 static const u8_t sysdescr_len_default = 4;
 static const u8_t sysdescr_default[] = "lwIP";
-static u8_t* sysdescr_len_ptr = (u8_t*)&sysdescr_len_default;
-static u8_t* sysdescr_ptr = (u8_t*)&sysdescr_default[0];
+static const u8_t* sysdescr_len_ptr = &sysdescr_len_default;
+static const u8_t* sysdescr_ptr = &sysdescr_default[0];
 /** mib-2.system.sysContact */
 static const u8_t syscontact_len_default = 0;
 static const u8_t syscontact_default[] = "";
@@ -933,7 +933,7 @@ void objectidncpy(s32_t *dst, const s32_t *src, u8_t n)
  * @param str if non-NULL then copy str pointer
  * @param len points to string length, excluding zero terminator
  */
-void snmp_set_sysdescr(u8_t *str, u8_t *len)
+void snmp_set_sysdescr(const u8_t *str, const u8_t *len)
 {
   if (str != NULL)
   {
