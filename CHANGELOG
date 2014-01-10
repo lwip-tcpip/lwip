@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-01-10: Simon Goldschmidt
+  * tcp.c: fixed bug #39898 tcp_fasttmr() possible lock due to infinte queue process loop
+
   2013-06-29: Simon Goldschmidt
   * inet.h, sockets.h: partially fixed bug #37585: IPv6 compatibility (in socket structs)
 
