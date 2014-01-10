@@ -349,6 +349,8 @@ ip6_reass(struct pbuf *p)
 
   /* Overwrite Fragment Header with our own helper struct. */
   iprh = (struct ip6_reass_helper *)p->payload;
+  LWIP_ASSERT("sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN",
+    sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN);
   iprh->next_pbuf = NULL;
   iprh->start = (offset & IP6_FRAG_OFFSET_MASK);
   iprh->end = (offset & IP6_FRAG_OFFSET_MASK) + len;
