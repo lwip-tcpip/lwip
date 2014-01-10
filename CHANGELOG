@@ -81,6 +81,9 @@ HISTORY
  ++ Bugfixes:
 
   2014-01-10: Simon Goldschmidt
+  * memp.c: fixed bug #41188 Alignment error in memp_init() when MEMP_SEPARATE_POOLS==1
+
+  2014-01-10: Simon Goldschmidt
   * tcp.c: fixed bug #39898 tcp_fasttmr() possible lock due to infinte queue process loop
 
   2013-06-29: Simon Goldschmidt
