@@ -290,7 +290,14 @@ ip6_reass(struct pbuf *p)
       /* Make room and try again. */
       ip6_reass_remove_oldest_datagram(ipr, clen);
       ipr = (struct ip6_reassdata *)memp_malloc(MEMP_IP6_REASSDATA);
-      if (ipr == NULL)
+      if (ipr != NULL) {
+        /* re-search ipr_prev since it might have been removed */
+        for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr = ipr->next) {
+          if (ipr_prev->next == ipr) {
+            break;
+          }
+        }
+      } else
 #endif /* IP_REASS_FREE_OLDEST */
       {
         IP6_FRAG_STATS_INC(ip6_frag.memerr);
@@ -322,7 +329,14 @@ ip6_reass(struct pbuf *p)
   if ((ip6_reass_pbufcount + clen) > IP_REASS_MAX_PBUFS) {
 #if IP_REASS_FREE_OLDEST
     ip6_reass_remove_oldest_datagram(ipr, clen);
-    if ((ip6_reass_pbufcount + clen) > IP_REASS_MAX_PBUFS)
+    if ((ip6_reass_pbufcount + clen) <= IP_REASS_MAX_PBUFS) {
+      /* re-search ipr_prev since it might have been removed */
+      for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr = ipr->next) {
+        if (ipr_prev->next == ipr) {
+          break;
+        }
+      }
+    } else
 #endif /* IP_REASS_FREE_OLDEST */
     {
       /* @todo: send ICMPv6 time exceeded here? */
@@ -456,6 +470,7 @@ ip6_reass(struct pbuf *p)
 
   if (valid) {
     /* All fragments have been received */
+    u8_t* iphdr_ptr;
 
     /* chain together the pbufs contained within the ip6_reassdata list. */
     iprh = (struct ip6_reass_helper*) ipr->p->payload;
@@ -504,13 +519,14 @@ ip6_reass(struct pbuf *p)
       LWIP_ASSERT("sanity check linked list", ipr_prev != NULL);
       ipr_prev->next = ipr->next;
     }
+    iphdr_ptr = (u8_t*)ipr->iphdr;
     memp_free(MEMP_IP6_REASSDATA, ipr);
 
     /* adjust the number of pbufs currently queued for reassembly. */
     ip6_reass_pbufcount -= pbuf_clen(p);
 
     /* Move pbuf back to IPv6 header. */
-    if (pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr)) {
+    if (pbuf_header(p, (u8_t*)p->payload - iphdr_ptr)) {
       LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed\n", 0);
       pbuf_free(p);
       return NULL;

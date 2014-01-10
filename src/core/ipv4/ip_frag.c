@@ -481,7 +481,6 @@ ip_reass(struct pbuf *p)
   struct ip_reass_helper *iprh;
   u16_t offset, len;
   u8_t clen;
-  struct ip_reassdata *ipr_prev = NULL;
 
   IPFRAG_STATS_INC(ip_frag.recv);
   snmp_inc_ipreasmreqds();
@@ -527,7 +526,6 @@ ip_reass(struct pbuf *p)
       IPFRAG_STATS_INC(ip_frag.cachehit);
       break;
     }
-    ipr_prev = ipr;
   }
 
   if (ipr == NULL) {
@@ -565,6 +563,7 @@ ip_reass(struct pbuf *p)
   /* find the right place to insert this pbuf */
   /* @todo: trim pbufs if fragments are overlapping */
   if (ip_reass_chain_frag_into_datagram_and_validate(ipr, p)) {
+    struct ip_reassdata *ipr_prev;
     /* the totally last fragment (flag more fragments = 0) was received at least
      * once AND all fragments are received */
     ipr->datagram_len += IP_HLEN;
@@ -592,6 +591,14 @@ ip_reass(struct pbuf *p)
       pbuf_cat(p, r);
       r = iprh->next_pbuf;
     }
+
+    /* find the previous entry in the linked list */
+    for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr = ipr->next) {
+      if (ipr_prev->next == ipr) {
+        break;
+      }
+    }
+
     /* release the sources allocate for the fragment queue entry */
     ip_reass_dequeue_datagram(ipr, ipr_prev);
 

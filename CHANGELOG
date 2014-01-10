@@ -81,6 +81,9 @@ HISTORY
  ++ Bugfixes:
 
   2014-01-10: Simon Goldschmidt
+  * ip_frag.c, ip6_frag.c: fixed bug #41041 Potential use-after-free in IPv6 reassembly
+
+  2014-01-10: Simon Goldschmidt
   * memp.c: fixed bug #41188 Alignment error in memp_init() when MEMP_SEPARATE_POOLS==1
 
   2014-01-10: Simon Goldschmidt
