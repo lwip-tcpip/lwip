@@ -933,7 +933,7 @@ void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
  * @param str if non-NULL then copy str pointer
  * @param len points to string length, excluding zero terminator
  */
-void snmp_set_sysdesr(u8_t *str, u8_t *len)
+void snmp_set_sysdescr(u8_t *str, u8_t *len)
 {
   if (str != NULL)
   {
