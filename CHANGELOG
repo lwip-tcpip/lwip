@@ -80,6 +80,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-01-14: Simo Goldschmidt (patch by Thomas Faber)
+  * tcpip.c: patch #8241: Fix implicit declaration of ip_input with
+    LWIP_TCPIP_CORE_LOCKING_INPUT disabled
+
   2014-01-14: chrysn
   * timers.c: patch #8244 make timeouts usable reliably from outside of the
     timeout routine
