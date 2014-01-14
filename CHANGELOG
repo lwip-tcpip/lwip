@@ -80,7 +80,10 @@ HISTORY
 
  ++ Bugfixes:
 
-  2014-01-14: Simo Goldschmidt (patch by Thomas Faber)
+  2014-01-14: "Freddie Chopin"
+  * snmp.h, mib2.c: fixed constness and spelling of sysdescr
+
+  2014-01-14: Simon Goldschmidt (patch by Thomas Faber)
   * tcpip.c: patch #8241: Fix implicit declaration of ip_input with
     LWIP_TCPIP_CORE_LOCKING_INPUT disabled
 
