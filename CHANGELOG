@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-01-16: Stathis Voukelatos
+  * netif.c: patch #7902 Fixed netif_poll() operation when LWIP_LOOPBACK_MAX_PBUFS > 0
+
   2014-01-14: "Freddie Chopin"
   * snmp.h, mib2.c: fixed constness and spelling of sysdescr
 
