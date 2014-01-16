@@ -769,16 +769,22 @@ netif_poll(struct netif *netif)
     if (in != NULL) {
       struct pbuf *in_end = in;
 #if LWIP_LOOPBACK_MAX_PBUFS
-      u8_t clen = pbuf_clen(in);
+      u8_t clen = 1;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
+      while (in_end->len != in_end->tot_len) {
+        LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
+        in_end = in_end->next;
+#if LWIP_LOOPBACK_MAX_PBUFS
+        clen++;
+#endif /* LWIP_LOOPBACK_MAX_PBUFS */
+      }
+#if LWIP_LOOPBACK_MAX_PBUFS
       /* adjust the number of pbufs on queue */
       LWIP_ASSERT("netif->loop_cnt_current underflow",
         ((netif->loop_cnt_current - clen) < netif->loop_cnt_current));
       netif->loop_cnt_current -= clen;
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
-      while (in_end->len != in_end->tot_len) {
-        LWIP_ASSERT("bogus pbuf: len != tot_len but next == NULL!", in_end->next != NULL);
-        in_end = in_end->next;
-      }
+
       /* 'in_end' now points to the last pbuf from 'in' */
       if (in_end == netif->loop_last) {
         /* this was the last pbuf in the list */
