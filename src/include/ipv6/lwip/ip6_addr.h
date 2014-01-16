@@ -170,6 +170,10 @@ Little-endian version, stored in network order (no htonl). */
                              ((ip6addr)->addr[2] == 0) && \
                              ((ip6addr)->addr[3] == 0)))
 
+#define ip6_addr_isloopback(ip6addr) (((ip6addr)->addr[0] == 0UL) && \
+                                      ((ip6addr)->addr[1] == 0UL) && \
+                                      ((ip6addr)->addr[2] == 0UL) && \
+                                      ((ip6addr)->addr[3] == PP_HTONL(0x00000001UL)))
 
 #define ip6_addr_isglobal(ip6addr) (((ip6addr)->addr[0] & PP_HTONL(0xe0000000UL)) == PP_HTONL(0x20000000UL))
 
