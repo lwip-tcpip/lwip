@@ -236,12 +236,12 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_set_solicitednode(ip6addr, if_id) do{(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
                 (ip6addr)->addr[1] = 0; \
                 (ip6addr)->addr[2] = PP_HTONL(0x00000001UL); \
-                (ip6addr)->addr[3] = htonl(0xff000000UL | (htonl(if_id) & 0x00ffffffUL));}while(0)
+                (ip6addr)->addr[3] = (PP_HTONL(0xff000000UL) | (if_id));}while(0)
 
 #define ip6_addr_cmp_solicitednode(ip6addr, sn_addr) (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
                                     ((ip6addr)->addr[1] == 0) && \
                                     ((ip6addr)->addr[2] == PP_HTONL(0x00000001UL)) && \
-                                    ((ip6addr)->addr[3] == htonl(0xff000000UL | (htonl((sn_addr)->addr[3]) & 0x00ffffffUL))))
+                                    ((ip6addr)->addr[3] == (PP_HTONL(0xff000000UL) | (sn_addr)->addr[3])))
 
 /* IPv6 address states. */
 #define IP6_ADDR_INVALID      0x00
