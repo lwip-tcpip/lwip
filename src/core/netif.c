@@ -96,7 +96,9 @@ static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr
 
 #if LWIP_HAVE_LOOPIF
 static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr);
+#if LWIP_IPV6
 static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr);
+#endif
 
 
 static struct netif loop_netif;
@@ -119,7 +121,9 @@ netif_loopif_init(struct netif *netif)
   netif->name[0] = 'l';
   netif->name[1] = 'o';
   netif->output = netif_loop_output_ipv4;
+#if LWIP_IPV6
   netif->output_ip6 = netif_loop_output_ipv6;
+#endif
   return ERR_OK;
 }
 #endif /* LWIP_HAVE_LOOPIF */
@@ -765,12 +769,14 @@ netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr)
   return netif_loop_output(netif, p);
 }
 
+#if LWIP_IPV6
 static err_t
 netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr)
 {
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);
 }
+#endif
 
 
 /**
