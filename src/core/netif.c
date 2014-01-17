@@ -95,6 +95,10 @@ static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr
 #endif
 
 #if LWIP_HAVE_LOOPIF
+static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr);
+static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr);
+
+
 static struct netif loop_netif;
 
 /**
@@ -114,7 +118,8 @@ netif_loopif_init(struct netif *netif)
 
   netif->name[0] = 'l';
   netif->name[1] = 'o';
-  netif->output = netif_loop_output;
+  netif->output = netif_loop_output_ipv4;
+  netif->output_ip6 = netif_loop_output_ipv6;
   return ERR_OK;
 }
 #endif /* LWIP_HAVE_LOOPIF */
@@ -133,6 +138,15 @@ netif_init(void)
 #else  /* NO_SYS */
   netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, tcpip_input);
 #endif /* NO_SYS */
+
+#if LWIP_IPV6
+  loop_netif.ip6_addr[0].addr[0] = 0;
+  loop_netif.ip6_addr[0].addr[1] = 0;
+  loop_netif.ip6_addr[0].addr[2] = 0;
+  loop_netif.ip6_addr[0].addr[3] = PP_HTONL(0x00000001UL);
+  loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
+#endif /* LWIP_IPV6 */
+
   netif_set_up(&loop_netif);
 
 #endif /* LWIP_HAVE_LOOPIF */
@@ -661,13 +675,11 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
  *
  * @param netif the lwip network interface structure
  * @param p the (IP) packet to 'send'
- * @param ipaddr the ip address to send the packet to (not used)
  * @return ERR_OK if the packet has been sent
  *         ERR_MEM if the pbuf used to copy the packet couldn't be allocated
  */
 err_t
-netif_loop_output(struct netif *netif, struct pbuf *p,
-       ip_addr_t *ipaddr)
+netif_loop_output(struct netif *netif, struct pbuf *p)
 {
   struct pbuf *r;
   err_t err;
@@ -685,7 +697,6 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 #endif /* LWIP_HAVE_LOOPIF */
 #endif /* LWIP_SNMP */
   SYS_ARCH_DECL_PROTECT(lev);
-  LWIP_UNUSED_ARG(ipaddr);
 
   /* Allocate a new pbuf */
   r = pbuf_alloc(PBUF_LINK, p->tot_len, PBUF_RAM);
@@ -746,6 +757,21 @@ netif_loop_output(struct netif *netif, struct pbuf *p,
 
   return ERR_OK;
 }
+
+static err_t
+netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr)
+{
+  LWIP_UNUSED_ARG(addr);
+  return netif_loop_output(netif, p);
+}
+
+static err_t
+netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr)
+{
+  LWIP_UNUSED_ARG(addr);
+  return netif_loop_output(netif, p);
+}
+
 
 /**
  * Call netif_poll() in the main loop of your application. This is to prevent

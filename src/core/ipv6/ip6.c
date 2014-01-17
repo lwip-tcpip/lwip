@@ -803,13 +803,13 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
 
 #if ENABLE_LOOPBACK
   {
-	int i;
+    int i;
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
           ip6_addr_cmp(dest, netif_ip6_addr(netif, i))) {
-		/* Packet to self, enqueue it for loopback */
-		LWIP_DEBUGF(IP6_DEBUG, ("netif_loop_output()\n"));
-		return netif_loop_output(netif, p, dest);
+        /* Packet to self, enqueue it for loopback */
+        LWIP_DEBUGF(IP6_DEBUG, ("netif_loop_output()\n"));
+        return netif_loop_output(netif, p);
       }
     }
   }

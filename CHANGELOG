@@ -80,6 +80,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-01-17: Grant Erickson, Jay Logue, Simon Goldschmidt
+  * ipv6.c, netif.c: patch #7913 Enable Support for IPv6 Loopback
+
   2014-01-16: Stathis Voukelatos
   * netif.c: patch #7902 Fixed netif_poll() operation when LWIP_LOOPBACK_MAX_PBUFS > 0
 
