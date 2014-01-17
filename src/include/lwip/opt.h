@@ -1865,6 +1865,13 @@
 #endif
  
 /**
+ * CHECKSUM_GEN_ICMP6==1: Generate checksums in software for outgoing ICMP6 packets.
+ */
+#ifndef CHECKSUM_GEN_ICMP6
+#define CHECKSUM_GEN_ICMP6              1
+#endif
+ 
+/**
  * CHECKSUM_CHECK_IP==1: Check checksums in software for incoming IP packets.
  */
 #ifndef CHECKSUM_CHECK_IP
@@ -1883,6 +1890,20 @@
  */
 #ifndef CHECKSUM_CHECK_TCP
 #define CHECKSUM_CHECK_TCP              1
+#endif
+
+/**
+ * CHECKSUM_CHECK_ICMP==1: Check checksums in software for incoming ICMP packets.
+ */
+#ifndef CHECKSUM_CHECK_ICMP
+#define CHECKSUM_CHECK_ICMP             1
+#endif
+
+/**
+ * CHECKSUM_CHECK_ICMP6==1: Check checksums in software for incoming ICMPv6 packets
+ */
+#ifndef CHECKSUM_CHECK_ICMP6
+#define CHECKSUM_CHECK_ICMP6            1
 #endif
 
 /**
@@ -1939,13 +1960,6 @@
  */
 #ifndef LWIP_ICMP6_HL
 #define LWIP_ICMP6_HL                   255
-#endif
-
-/**
- * LWIP_ICMP6_CHECKSUM_CHECK==1: verify checksum on ICMPv6 packets
- */
-#ifndef LWIP_ICMP6_CHECKSUM_CHECK
-#define LWIP_ICMP6_CHECKSUM_CHECK       1
 #endif
 
 /**

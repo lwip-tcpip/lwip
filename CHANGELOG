@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2014-01-17: Jiri Engelthaler
+  * icmp, icmp6, opt.h: patch #8027: Completed HW checksuming for IPv4 and
+    IPv6 ICMP's
+
   2012-03-25: Simon Goldschmidt (idea by Mason)
   * posix/*: added posix-compatibility include files posix/netdb.h and posix/sys/socket.h
     which are a simple wrapper to the correct lwIP include files.
