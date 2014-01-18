@@ -85,8 +85,6 @@ extern const ip6_addr_t ip6_addr_any;
 #define IP6_ADDR_ANY         ((ip6_addr_t *)&ip6_addr_any)
 
 
-
-
 #if BYTE_ORDER == BIG_ENDIAN
 /** Set an IPv6 partial address given by byte-parts. */
 #define IP6_ADDR(ip6addr, index, a,b,c,d) \
@@ -144,7 +142,6 @@ Little-endian version, stored in network order (no htonl). */
                                         (dest)->addr[1] = (src) == NULL ? 0 : htonl((src)->addr[1]); \
                                         (dest)->addr[2] = (src) == NULL ? 0 : htonl((src)->addr[2]); \
                                         (dest)->addr[3] = (src) == NULL ? 0 : htonl((src)->addr[3]);}while(0)
-
 
 
 /**
@@ -273,6 +270,8 @@ Little-endian version, stored in network order (no htonl). */
                       ipaddr != NULL ? IP6_ADDR_BLOCK6(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK7(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK8(ipaddr) : 0))
+
+#define IP6ADDR_STRLEN_MAX    46
 
 int ip6addr_aton(const char *cp, ip6_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
