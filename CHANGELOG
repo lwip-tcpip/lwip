@@ -84,6 +84,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-01-18: Brian Fahs
+  * tcp_out.c: patch #8237: tcp_rexmit_rto fails to update pcb->unsent_oversize
+    when necessary
+
   2014-01-17: Grant Erickson, Jay Logue, Simon Goldschmidt
   * ipv6.c, netif.c: patch #7913 Enable Support for IPv6 Loopback
 
