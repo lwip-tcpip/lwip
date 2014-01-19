@@ -210,7 +210,7 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
 #define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
 #define ip_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("%"U16_F".%"U16_F".%"U16_F".%"U16_F,             \
+  LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F,      \
                       ipaddr != NULL ? ip4_addr1_16(ipaddr) : 0,       \
                       ipaddr != NULL ? ip4_addr2_16(ipaddr) : 0,       \
                       ipaddr != NULL ? ip4_addr3_16(ipaddr) : 0,       \
@@ -227,6 +227,9 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
 #define ip4_addr2_16(ipaddr) ((u16_t)ip4_addr2(ipaddr))
 #define ip4_addr3_16(ipaddr) ((u16_t)ip4_addr3(ipaddr))
 #define ip4_addr4_16(ipaddr) ((u16_t)ip4_addr4(ipaddr))
+
+#define IP4ADDR_STRLEN_MAX  16
+#define IPADDR_STRLEN_MAX   IP4ADDR_STRLEN_MAX
 
 /** For backwards compatibility */
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)

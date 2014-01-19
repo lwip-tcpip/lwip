@@ -772,11 +772,11 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   if (ip_addr_cmp(dest, &netif->ip_addr)) {
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
-    return netif_loop_output(netif, p, dest);
+    return netif_loop_output(netif, p);
   }
 #if LWIP_IGMP
   if ((p->flags & PBUF_FLAG_MCASTLOOP) != 0) {
-    netif_loop_output(netif, p, dest);
+    netif_loop_output(netif, p);
   }
 #endif /* LWIP_IGMP */
 #endif /* ENABLE_LOOPBACK */

@@ -94,6 +94,9 @@ struct autoip
 /** Set a struct autoip allocated by the application to work with */
 void autoip_set_struct(struct netif *netif, struct autoip *autoip);
 
+/** Remove a struct autoip previously set to the netif using autoip_set_struct() */
+#define autoip_remove_struct(netif) do { (netif)->autoip = NULL; } while (0)
+
 /** Start AutoIP client */
 err_t autoip_start(struct netif *netif);
 

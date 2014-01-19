@@ -359,7 +359,7 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #endif /* LWIP_IGMP */
 
 #if ENABLE_LOOPBACK
-err_t netif_loop_output(struct netif *netif, struct pbuf *p, ip_addr_t *dest_ip);
+err_t netif_loop_output(struct netif *netif, struct pbuf *p);
 void netif_poll(struct netif *netif);
 #if !LWIP_NETIF_LOOPBACK_MULTITHREADING
 void netif_poll_all(void);

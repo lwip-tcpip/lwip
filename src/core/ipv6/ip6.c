@@ -802,10 +802,17 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
   ip6_debug_print(p);
 
 #if ENABLE_LOOPBACK
-  /* TODO implement loopback for v6
-  if (ip6_addr_cmp(dest, netif_ip6_addr(0))) {
-    return netif_loop_output(netif, p, dest);
-  }*/
+  {
+    int i;
+    for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+      if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
+          ip6_addr_cmp(dest, netif_ip6_addr(netif, i))) {
+        /* Packet to self, enqueue it for loopback */
+        LWIP_DEBUGF(IP6_DEBUG, ("netif_loop_output()\n"));
+        return netif_loop_output(netif, p);
+      }
+    }
+  }
 #endif /* ENABLE_LOOPBACK */
 #if LWIP_IPV6_FRAG
   /* don't fragment if interface has mtu set to 0 [loopif] */
@@ -814,7 +821,7 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
   }
 #endif /* LWIP_IPV6_FRAG */
 
-  LWIP_DEBUGF(IP6_DEBUG, ("netif->output_ip6()"));
+  LWIP_DEBUGF(IP6_DEBUG, ("netif->output_ip6()\n"));
   return netif->output_ip6(netif, p, dest);
 }
 

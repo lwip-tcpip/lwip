@@ -86,7 +86,7 @@ stats_display_proto(struct stats_proto *proto, const char *name)
   LWIP_PLATFORM_DIAG(("cachehit: %"STAT_COUNTER_F"\n", proto->cachehit)); 
 }
 
-#if IGMP_STATS
+#if IGMP_STATS || MLD6_STATS
 void
 stats_display_igmp(struct stats_igmp *igmp, const char *name)
 {
@@ -106,7 +106,7 @@ stats_display_igmp(struct stats_igmp *igmp, const char *name)
   LWIP_PLATFORM_DIAG(("tx_leave: %"STAT_COUNTER_F"\n\t", igmp->tx_leave)); 
   LWIP_PLATFORM_DIAG(("tx_report: %"STAT_COUNTER_F"\n\t", igmp->tx_report)); 
 }
-#endif /* IGMP_STATS */
+#endif /* IGMP_STATS || MLD6_STATS */
 
 #if MEM_STATS || MEMP_STATS
 void

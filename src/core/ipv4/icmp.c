@@ -133,6 +133,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
       goto lenerr;
     }
+#if CHECKSUM_CHECK_ICMP
     if (inet_chksum_pbuf(p) != 0) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
       pbuf_free(p);
@@ -140,6 +141,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       snmp_inc_icmpinerrors();
       return;
     }
+#endif
 #if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
     if (pbuf_header(p, (PBUF_IP_HLEN + PBUF_LINK_HLEN))) {
       /* p is not big enough to contain link headers
@@ -324,7 +326,9 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 
   /* calculate checksum */
   icmphdr->chksum = 0;
+#if CHECKSUM_GEN_ICMP
   icmphdr->chksum = inet_chksum(icmphdr, q->len);
+#endif
   ICMP_STATS_INC(icmp.xmit);
   /* increase number of messages attempted to send */
   snmp_inc_icmpoutmsgs();

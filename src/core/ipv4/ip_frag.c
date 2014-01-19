@@ -578,7 +578,9 @@ ip_reass(struct pbuf *p)
     IPH_OFFSET_SET(fraghdr, 0);
     IPH_CHKSUM_SET(fraghdr, 0);
     /* @todo: do we need to set calculate the correct checksum? */
+#if CHECKSUM_GEN_IP
     IPH_CHKSUM_SET(fraghdr, inet_chksum(fraghdr, IP_HLEN));
+#endif /* CHECKSUM_GEN_IP */
 
     p = ipr->p;
 
@@ -818,7 +820,9 @@ ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest)
     IPH_OFFSET_SET(iphdr, htons(tmp));
     IPH_LEN_SET(iphdr, htons(cop + IP_HLEN));
     IPH_CHKSUM_SET(iphdr, 0);
+#if CHECKSUM_GEN_IP
     IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+#endif /* CHECKSUM_GEN_IP */
 
 #if IP_FRAG_USES_STATIC_BUF
     if (last) {

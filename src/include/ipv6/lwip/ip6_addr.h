@@ -85,8 +85,6 @@ extern const ip6_addr_t ip6_addr_any;
 #define IP6_ADDR_ANY         ((ip6_addr_t *)&ip6_addr_any)
 
 
-
-
 #if BYTE_ORDER == BIG_ENDIAN
 /** Set an IPv6 partial address given by byte-parts. */
 #define IP6_ADDR(ip6addr, index, a,b,c,d) \
@@ -144,7 +142,6 @@ Little-endian version, stored in network order (no htonl). */
                                         (dest)->addr[1] = (src) == NULL ? 0 : htonl((src)->addr[1]); \
                                         (dest)->addr[2] = (src) == NULL ? 0 : htonl((src)->addr[2]); \
                                         (dest)->addr[3] = (src) == NULL ? 0 : htonl((src)->addr[3]);}while(0)
-
 
 
 /**
@@ -236,12 +233,12 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_set_solicitednode(ip6addr, if_id) do{(ip6addr)->addr[0] = PP_HTONL(0xff020000UL); \
                 (ip6addr)->addr[1] = 0; \
                 (ip6addr)->addr[2] = PP_HTONL(0x00000001UL); \
-                (ip6addr)->addr[3] = htonl(0xff000000UL | (htonl(if_id) & 0x00ffffffUL));}while(0)
+                (ip6addr)->addr[3] = (PP_HTONL(0xff000000UL) | (if_id));}while(0)
 
 #define ip6_addr_cmp_solicitednode(ip6addr, sn_addr) (((ip6addr)->addr[0] == PP_HTONL(0xff020000UL)) && \
                                     ((ip6addr)->addr[1] == 0) && \
                                     ((ip6addr)->addr[2] == PP_HTONL(0x00000001UL)) && \
-                                    ((ip6addr)->addr[3] == htonl(0xff000000UL | (htonl((sn_addr)->addr[3]) & 0x00ffffffUL))))
+                                    ((ip6addr)->addr[3] == (PP_HTONL(0xff000000UL) | (sn_addr)->addr[3])))
 
 /* IPv6 address states. */
 #define IP6_ADDR_INVALID      0x00
@@ -264,7 +261,7 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_isdeprecated(addr_state) (addr_state == IP6_ADDR_DEPRECATED)
 
 #define ip6_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F, \
+  LWIP_DEBUGF(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F, \
                       ipaddr != NULL ? IP6_ADDR_BLOCK1(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK2(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK3(ipaddr) : 0,    \
@@ -273,6 +270,8 @@ Little-endian version, stored in network order (no htonl). */
                       ipaddr != NULL ? IP6_ADDR_BLOCK6(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK7(ipaddr) : 0,    \
                       ipaddr != NULL ? IP6_ADDR_BLOCK8(ipaddr) : 0))
+
+#define IP6ADDR_STRLEN_MAX    46
 
 int ip6addr_aton(const char *cp, ip6_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
