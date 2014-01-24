@@ -83,6 +83,9 @@
 #endif /* LWIP_ERROR */
 
 #ifdef LWIP_DEBUG
+#ifndef LWIP_PLATFORM_DIAG
+  #error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG needs to be defined in your arch/cc.h"
+#endif
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least LWIP_DBG_LEVEL
  */
