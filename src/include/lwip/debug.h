@@ -62,9 +62,16 @@
 /** flag for LWIP_DEBUGF to halt after printing this debug message */
 #define LWIP_DBG_HALT          0x08U
 
+/**
+ * LWIP_NOASSERT: Disable LWIP_ASSERT checks.
+ * -- To disable assertions define LWIP_NOASSERT in arch/cc.h.
+ */
 #ifndef LWIP_NOASSERT
 #define LWIP_ASSERT(message, assertion) do { if(!(assertion)) \
   LWIP_PLATFORM_ASSERT(message); } while(0)
+#ifndef LWIP_PLATFORM_ASSERT
+  #error "If you want to use LWIP_ASSERT, LWIP_PLATFORM_ASSERT needs to be defined in your arch/cc.h"
+#endif
 #else  /* LWIP_NOASSERT */
 #define LWIP_ASSERT(message, assertion) 
 #endif /* LWIP_NOASSERT */
