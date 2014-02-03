@@ -52,6 +52,8 @@
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
 
+#include <string.h>
+
 struct snmp_trap_dst
 {
   /* destination IP address in network order */
@@ -398,7 +400,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
   snmp_asn1_enc_length_cnt(thl->pdulen, &thl->pdulenlen);
   tot_len += 1 + thl->pdulenlen;
 
-  thl->comlen = sizeof(snmp_publiccommunity) - 1;
+  thl->comlen = strlen(snmp_publiccommunity);
   snmp_asn1_enc_length_cnt(thl->comlen, &thl->comlenlen);
   tot_len += 1 + thl->comlenlen + thl->comlen;
 
