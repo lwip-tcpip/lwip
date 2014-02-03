@@ -50,8 +50,8 @@
 /* public (non-static) constants */
 /** SNMP v1 == 0 */
 const s32_t snmp_version = 0;
-/** default SNMP community string */
-const char snmp_publiccommunity[] = "public";
+/** SNMP community string */
+const char snmp_community[] = "public";
 
 /* statically allocated buffers for SNMP_CONCURRENT_REQUESTS */
 struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
@@ -974,7 +974,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   len = ((len < (SNMP_COMMUNITY_STR_LEN))?(len):(SNMP_COMMUNITY_STR_LEN));
   m_stat->community[len] = 0;
   m_stat->com_strlen = (u8_t)len;
-  if (strncmp(snmp_publiccommunity, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
+  if (strncmp(snmp_community, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
   {
     /** @todo: move this if we need to check more names */
     snmp_inc_snmpinbadcommunitynames();

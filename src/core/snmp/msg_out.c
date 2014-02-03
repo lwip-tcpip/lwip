@@ -400,7 +400,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
   snmp_asn1_enc_length_cnt(thl->pdulen, &thl->pdulenlen);
   tot_len += 1 + thl->pdulenlen;
 
-  thl->comlen = strlen(snmp_publiccommunity);
+  thl->comlen = strlen(snmp_community);
   snmp_asn1_enc_length_cnt(thl->comlen, &thl->comlenlen);
   tot_len += 1 + thl->comlenlen + thl->comlen;
 
@@ -567,7 +567,7 @@ snmp_trap_header_enc(struct snmp_msg_trap *m_trap, struct pbuf *p)
   ofs += 1;
   snmp_asn1_enc_length(p, ofs, m_trap->thl.comlen);
   ofs += m_trap->thl.comlenlen;
-  snmp_asn1_enc_raw(p, ofs, m_trap->thl.comlen, (u8_t *)&snmp_publiccommunity[0]);
+  snmp_asn1_enc_raw(p, ofs, m_trap->thl.comlen, (u8_t *)&snmp_community[0]);
   ofs += m_trap->thl.comlen;
 
   snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_CONTXT | SNMP_ASN1_CONSTR | SNMP_ASN1_PDU_TRAP));
