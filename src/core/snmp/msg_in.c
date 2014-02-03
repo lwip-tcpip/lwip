@@ -102,6 +102,30 @@ snmp_init(void)
   snmp_coldstart_trap();
 }
 
+/**
+ * Returns current SNMP community string.
+ * @return current SNMP community string
+ */
+const char *
+snmp_get_community(void)
+{
+	return snmp_community;
+}
+
+/**
+ * Sets SNMP community string.
+ * The string itself (its storage) must be valid throughout the whole life of
+ * program (or until it is changed to sth else).
+ *
+ * @param community is a pointer to new community string
+ */
+void
+snmp_set_community(const char * const community)
+{
+	LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
+	snmp_community = community;
+}
+
 static void
 snmp_error_response(struct snmp_msg_pstat *msg_ps, u8_t error)
 {

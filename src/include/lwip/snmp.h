@@ -97,6 +97,9 @@ struct snmp_obj_id
   s32_t id[LWIP_SNMP_OBJ_ID_LEN];
 };
 
+const char * snmp_get_community(void);
+void snmp_set_community(const char *community);
+
 /* system */
 void snmp_set_sysdescr(const u8_t* str, const u8_t* len);
 void snmp_set_sysobjid(const struct snmp_obj_id *oid);
