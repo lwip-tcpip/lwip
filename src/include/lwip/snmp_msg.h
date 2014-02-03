@@ -283,7 +283,7 @@ struct snmp_msg_trap
 /** Agent Version constant, 0 = v1 oddity */
 extern const s32_t snmp_version;
 /** Agent default "public" community string */
-extern const char snmp_publiccommunity[7];
+extern const char snmp_publiccommunity[];
 
 extern struct snmp_msg_trap trap_msg;
 
