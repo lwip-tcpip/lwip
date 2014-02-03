@@ -51,7 +51,7 @@
 /** SNMP v1 == 0 */
 const s32_t snmp_version = 0;
 /** SNMP community string */
-const char snmp_community[] = "public";
+const char *snmp_community = "public";
 
 /* statically allocated buffers for SNMP_CONCURRENT_REQUESTS */
 struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
