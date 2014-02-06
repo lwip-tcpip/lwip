@@ -115,9 +115,24 @@
   #error "MEMP_NUM_REASSDATA > IP_REASS_MAX_PBUFS doesn't make sense since each struct ip_reassdata must hold 2 pbufs at least!"
 #endif
 #endif /* !MEMP_MEM_MALLOC */
-#if (LWIP_TCP && (TCP_WND > 0xffff))
-  #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
+#if LWIP_WND_SCALE
+#if (LWIP_TCP && (TCP_WND > 0xffffffff))
+  #error "If you want to use TCP, TCP_WND must fit in an u32_t, so, you have to reduce it in your lwipopts.h"
 #endif
+#if (LWIP_TCP && LWIP_WND_SCALE > 14)
+  #error "The maximum valid window scale value is 14!"
+#endif
+#if (LWIP_TCP && (TCP_WND > (0xFFFFU << TCP_RCV_SCALE)))
+  #error "TCP_WND is bigger than the configured LWIP_WND_SCALE allows!"
+#endif
+#if (LWIP_TCP && ((TCP_WND >> TCP_RCV_SCALE) == 0))
+  #error "TCP_WND is too small for the configured LWIP_WND_SCALE (results in zero window)!"
+#endif
+#else /* LWIP_WND_SCALE */
+#if (LWIP_TCP && (TCP_WND > 0xffff))
+  #error "If you want to use TCP, TCP_WND must fit in an u16_t, so, you have to reduce it in your lwipopts.h (or enable window scaling)"
+#endif
+#endif /* LWIP_WND_SCALE */
 #if (LWIP_TCP && (TCP_SND_QUEUELEN > 0xffff))
   #error "If you want to use TCP, TCP_SND_QUEUELEN must fit in an u16_t, so, you have to reduce it in your lwipopts.h"
 #endif

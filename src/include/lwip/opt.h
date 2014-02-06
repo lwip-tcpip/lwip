@@ -1080,6 +1080,19 @@
 #define LWIP_CALLBACK_API               1
 #endif
 
+/**
+ * LWIP_WND_SCALE and TCP_RCV_SCALE:
+ * Set LWIP_WND_SCALE to 1 to enable window scaling.
+ * Set TCP_RCV_SCALE to the desired scaling factor (shift count in the
+ * range of [0..14]).
+ * When LWIP_WND_SCALE is enabled but TCP_RCV_SCALE is 0, we can use a large
+ * send window while having a small receive window only.
+ */
+#ifndef LWIP_WND_SCALE
+#define LWIP_WND_SCALE                  0
+#define TCP_RCV_SCALE                   0
+#endif
+
 
 /*
    ----------------------------------

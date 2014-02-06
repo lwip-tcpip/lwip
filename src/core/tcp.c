@@ -625,8 +625,10 @@ u32_t tcp_update_rcv_ann_wnd(struct tcp_pcb *pcb)
     } else {
       /* keep the right edge of window constant */
       u32_t new_rcv_ann_wnd = pcb->rcv_ann_right_edge - pcb->rcv_nxt;
+#if !LWIP_WND_SCALE
       LWIP_ASSERT("new_rcv_ann_wnd <= 0xffff", new_rcv_ann_wnd <= 0xffff);
-      pcb->rcv_ann_wnd = (u16_t)new_rcv_ann_wnd;
+#endif
+      pcb->rcv_ann_wnd = (tcpwnd_size_t)new_rcv_ann_wnd;
     }
     return 0;
   }
@@ -649,7 +651,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
     pcb->state != LISTEN);
   LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
-              len <= 0xffff - pcb->rcv_wnd );
+              len <= TCPWND_MAX - pcb->rcv_wnd);
 
   pcb->rcv_wnd += len;
   if (pcb->rcv_wnd > TCP_WND) {
@@ -824,7 +826,7 @@ void
 tcp_slowtmr(void)
 {
   struct tcp_pcb *pcb, *prev;
-  u16_t eff_wnd;
+  tcpwnd_size_t eff_wnd;
   u8_t pcb_remove;      /* flag if a PCB should be removed */
   u8_t pcb_reset;       /* flag if a RST should be sent when removing */
   err_t err;
@@ -899,14 +901,14 @@ tcp_slowtmr_start:
           /* Reduce congestion window and ssthresh. */
           eff_wnd = LWIP_MIN(pcb->cwnd, pcb->snd_wnd);
           pcb->ssthresh = eff_wnd >> 1;
-          if (pcb->ssthresh < (pcb->mss << 1)) {
+          if (pcb->ssthresh < (tcpwnd_size_t)(pcb->mss << 1)) {
             pcb->ssthresh = (pcb->mss << 1);
           }
           pcb->cwnd = pcb->mss;
-          LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"U16_F
-                                       " ssthresh %"U16_F"\n",
+          LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_slowtmr: cwnd %"TCPWNDSIZE_F
+                                       " ssthresh %"TCPWNDSIZE_F"\n",
                                        pcb->cwnd, pcb->ssthresh));
- 
+
           /* The following needs to be called AFTER cwnd is set to one
              mss - STJ */
           tcp_rexmit_rto(pcb);
@@ -1348,6 +1350,11 @@ tcp_alloc(u8_t prio)
     pcb->snd_queuelen = 0;
     pcb->rcv_wnd = TCP_WND;
     pcb->rcv_ann_wnd = TCP_WND;
+#if LWIP_WND_SCALE
+    /* snd_scale and rcv_scale are zero unless both sides agree to use scaling */
+    pcb->snd_scale = 0;
+    pcb->rcv_scale = 0;
+#endif
     pcb->tos = 0;
     pcb->ttl = TCP_TTL;
     /* As initial send MSS, we use TCP_MSS but limit it to 536.
