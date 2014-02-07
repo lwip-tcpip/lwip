@@ -1660,10 +1660,12 @@ tcp_parseopt(struct tcp_pcb *pcb)
           return;
         }
         /* TCP timestamp option with valid length */
-        tsval = (opts[c+2]) | (opts[c+3] << 8) | 
+        tsval = (opts[c+2]) | (opts[c+3] << 8) |
           (opts[c+4] << 16) | (opts[c+5] << 24);
         if (flags & TCP_SYN) {
           pcb->ts_recent = ntohl(tsval);
+          /* Enable sending timestamps in every segment now that we know
+             the remote host supports it. */
           pcb->flags |= TF_TIMESTAMP;
         } else if (TCP_SEQ_BETWEEN(pcb->ts_lastacksent, seqno, seqno+tcplen)) {
           pcb->ts_recent = ntohl(tsval);

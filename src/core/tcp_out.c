@@ -393,6 +393,8 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
 #if LWIP_TCP_TIMESTAMPS
   if ((pcb->flags & TF_TIMESTAMP)) {
+    /* Make sure the timestamp option is only included in data segments if we
+       agreed about it with the remote host. */
     optflags = TF_SEG_OPTS_TS;
     optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
   }
@@ -754,7 +756,9 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
 #endif /* LWIP_WND_SCALE */
   }
 #if LWIP_TCP_TIMESTAMPS
-  if ((pcb->flags & TF_TIMESTAMP)) {
+  if ((pcb->flags & TF_TIMESTAMP) {
+    /* Make sure the timestamp option is only included in data segments if we
+       agreed about it with the remote host. */
     optflags |= TF_SEG_OPTS_TS;
   }
 #endif /* LWIP_TCP_TIMESTAMPS */

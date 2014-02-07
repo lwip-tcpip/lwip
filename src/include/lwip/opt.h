@@ -1055,6 +1055,9 @@
 
 /**
  * LWIP_TCP_TIMESTAMPS==1: support the TCP timestamp option.
+ * The timestamp option is currently only used to help remote hosts, it is not
+ * really used locally. Therefore, it is only enabled when a TS option is
+ * received in the initial SYN packet from a remote host.
  */
 #ifndef LWIP_TCP_TIMESTAMPS
 #define LWIP_TCP_TIMESTAMPS             0
