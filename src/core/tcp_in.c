@@ -345,9 +345,22 @@ tcp_input(struct pbuf *p, struct netif *inp)
            called when new send buffer space is available, we call it
            now. */
         if (pcb->acked > 0) {
-          TCP_EVENT_SENT(pcb, pcb->acked, err);
-          if (err == ERR_ABRT) {
-            goto aborted;
+          u16_t acked;
+#if LWIP_WND_SCALE
+          /* pcb->acked is u32_t but the sent callback only takes a u16_t,
+             so we might have to call it multiple timess. */
+          u32_t pcb_acked = pcb->acked;
+          while(pcb_acked > 0) {
+            acked = (u16_t)LWIP_MIN(pcb_acked, 0xffffu);
+            pcb_acked -= acked;
+#else
+          {
+            acked = pcb->acked;
+#endif
+            TCP_EVENT_SENT(pcb, (u16_t)acked, err);
+            if (err == ERR_ABRT) {
+              goto aborted;
+            }
           }
         }
 
@@ -991,8 +1004,9 @@ tcp_receive(struct tcp_pcb *pcb)
       /* Reset the retransmission time-out. */
       pcb->rto = (pcb->sa >> 3) + pcb->sv;
 
-      /* Update the send buffer space. Diff between the two can never exceed 64K? */
-      pcb->acked = (u16_t)(ackno - pcb->lastack);
+      /* Update the send buffer space. Diff between the two can never exceed 64K
+         unless window scaling is used. */
+      pcb->acked = (tcpwnd_size_t)(ackno - pcb->lastack);
 
       pcb->snd_buf += pcb->acked;
 
