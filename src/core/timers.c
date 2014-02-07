@@ -386,10 +386,8 @@ sys_timeout(u32_t msecs, sys_timeout_handler handler, void *arg)
 
 /**
  * Go through timeout list (for this task only) and remove the first matching
- * entry, even though the timeout has not triggered yet.
- *
- * @note This function only works as expected if there is only one timeout
- * calling 'handler' in the list of timeouts.
+ * entry (subsequent entries remain untouched), even though the timeout has not
+ * triggered yet.
  *
  * @param handler callback function that would be called by the timeout
  * @param arg callback argument that would be passed to handler
