@@ -183,7 +183,7 @@ PACK_STRUCT_END
 #define TCPH_SET_FLAG(phdr, flags ) (phdr)->_hdrlen_rsvd_flags = ((phdr)->_hdrlen_rsvd_flags | htons(flags))
 #define TCPH_UNSET_FLAG(phdr, flags) (phdr)->_hdrlen_rsvd_flags = htons(ntohs((phdr)->_hdrlen_rsvd_flags) | (TCPH_FLAGS(phdr) & ~(flags)) )
 
-#define TCP_TCPLEN(seg) ((seg)->len + ((TCPH_FLAGS((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0))
+#define TCP_TCPLEN(seg) ((seg)->len + (((TCPH_FLAGS((seg)->tcphdr) & (TCP_FIN | TCP_SYN)) != 0) ? 1U : 0U))
 
 /** Flags used on input processing, not on pcb->flags
 */
@@ -294,15 +294,37 @@ struct tcp_seg {
 #define TF_SEG_OPTS_TS          (u8_t)0x02U /* Include timestamp option. */
 #define TF_SEG_DATA_CHECKSUMMED (u8_t)0x04U /* ALL data (not the header) is
                                                checksummed into 'chksum' */
+#define TF_SEG_OPTS_WND_SCALE   (u8_t)0x08U /* Include WND SCALE option */
   struct tcp_hdr *tcphdr;  /* the TCP header */
 };
 
-#define LWIP_TCP_OPT_LENGTH(flags)              \
-  (flags & TF_SEG_OPTS_MSS ? 4  : 0) +          \
-  (flags & TF_SEG_OPTS_TS  ? 12 : 0)
+#define LWIP_TCP_OPT_LEN_MSS  4
+#if LWIP_TCP_TIMESTAMPS
+#define LWIP_TCP_OPT_LEN_TS   12
+#else
+#define LWIP_TCP_OPT_LEN_TS   0
+#endif
+#if LWIP_WND_SCALE
+#define LWIP_TCP_OPT_LEN_WS   4
+#else
+#define LWIP_TCP_OPT_LEN_WS   0
+#endif
+
+#define LWIP_TCP_OPT_LENGTH(flags) \
+  (flags & TF_SEG_OPTS_MSS       ? LWIP_TCP_OPT_LEN_MSS : 0) + \
+  (flags & TF_SEG_OPTS_TS        ? LWIP_TCP_OPT_LEN_TS  : 0) + \
+  (flags & TF_SEG_OPTS_WND_SCALE ? LWIP_TCP_OPT_LEN_WS  : 0)
 
 /** This returns a TCP header option for MSS in an u32_t */
 #define TCP_BUILD_MSS_OPTION(mss) htonl(0x02040000 | ((mss) & 0xFFFF))
+
+#if LWIP_WND_SCALE
+#define TCPWNDSIZE_F  U32_F
+#define TCPWND_MAX    0xFFFFFFFFU
+#else /* LWIP_WND_SCALE */
+#define TCPWNDSIZE_F  U16_F
+#define TCPWND_MAX    0xFFFFU
+#endif /* LWIP_WND_SCALE */
 
 /* Global variables: */
 extern struct tcp_pcb *tcp_input_pcb;

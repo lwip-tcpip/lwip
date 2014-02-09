@@ -108,7 +108,7 @@ tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
     tcphdr->seqno = seqno_be;
     tcphdr->ackno = htonl(pcb->rcv_nxt);
     TCPH_HDRLEN_FLAGS_SET(tcphdr, (5 + optlen / 4), TCP_ACK);
-    tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+    tcphdr->wnd = htons(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd));
     tcphdr->chksum = 0;
     tcphdr->urgp = 0;
 
@@ -315,13 +315,13 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
     return ERR_MEM;
   }
 
-  LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_write: queuelen: %"U16_F"\n", (u16_t)pcb->snd_queuelen));
+  LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_write: queuelen: %"TCPWNDSIZE_F"\n", (tcpwnd_size_t)pcb->snd_queuelen));
 
   /* If total number of pbufs on the unsent/unacked queues exceeds the
    * configured maximum, return an error */
   /* check for configured max queuelen and possible overflow */
   if ((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too long queue %"TCPWNDSIZE_F" (max %"TCPWNDSIZE_F")\n",
       pcb->snd_queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
@@ -393,6 +393,8 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
 #if LWIP_TCP_TIMESTAMPS
   if ((pcb->flags & TF_TIMESTAMP)) {
+    /* Make sure the timestamp option is only included in data segments if we
+       agreed about it with the remote host. */
     optflags = TF_SEG_OPTS_TS;
     optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
   }
@@ -581,7 +583,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      * length of the queue exceeds the configured maximum or
      * overflows. */
     if ((queuelen > TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: queue too long %"U16_F" (%"U16_F")\n", queuelen, TCP_SND_QUEUELEN));
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: queue too long %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F")\n", queuelen, TCP_SND_QUEUELEN));
       pbuf_free(p);
       goto memerr;
     }
@@ -745,9 +747,18 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
 
   if (flags & TCP_SYN) {
     optflags = TF_SEG_OPTS_MSS;
+#if LWIP_WND_SCALE
+    if ((pcb->state != SYN_RCVD) || (pcb->flags & TF_WND_SCALE)) {
+      /* In a <SYN,ACK> (sent in state SYN_RCVD), the window scale option may only
+         be sent if we received a window scale option from the remote host. */
+      optflags |= TF_SEG_OPTS_WND_SCALE;
+    }
+#endif /* LWIP_WND_SCALE */
   }
 #if LWIP_TCP_TIMESTAMPS
   if ((pcb->flags & TF_TIMESTAMP)) {
+    /* Make sure the timestamp option is only included in data segments if we
+       agreed about it with the remote host. */
     optflags |= TF_SEG_OPTS_TS;
   }
 #endif /* LWIP_TCP_TIMESTAMPS */
@@ -837,6 +848,19 @@ tcp_build_timestamp_option(struct tcp_pcb *pcb, u32_t *opts)
 }
 #endif
 
+#if LWIP_WND_SCALE
+/** Build a window scale option (3 bytes long) at the specified options pointer)
+ *
+ * @param opts option pointer where to store the window scale option
+ */
+static void
+tcp_build_wnd_scale_option(u32_t *opts)
+{
+  /* Pad with one NOP option to make everything nicely aligned */
+  opts[0] = PP_HTONL(0x01030300 | TCP_RCV_SCALE);
+}
+#endif
+
 /** Send an ACK without data.
  *
  * @param pcb Protocol control block for the TCP connection to send the ACK
@@ -869,7 +893,7 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
   /* remove ACK flags from the PCB, as we send an empty ACK now */
   pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
 
-  /* NB. MSS option is only sent on SYNs, so ignore it here */
+  /* NB. MSS and window scale options are only sent on SYNs, so ignore them here */
 #if LWIP_TCP_TIMESTAMPS
   pcb->ts_lastacksent = pcb->rcv_nxt;
 
@@ -952,13 +976,13 @@ tcp_output(struct tcp_pcb *pcb)
 #endif /* TCP_OUTPUT_DEBUG */
 #if TCP_CWND_DEBUG
   if (seg == NULL) {
-    LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"U16_F
-                                 ", cwnd %"U16_F", wnd %"U32_F
+    LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F
+                                 ", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
                                  ", seg == NULL, ack %"U32_F"\n",
                                  pcb->snd_wnd, pcb->cwnd, wnd, pcb->lastack));
   } else {
     LWIP_DEBUGF(TCP_CWND_DEBUG, 
-                ("tcp_output: snd_wnd %"U16_F", cwnd %"U16_F", wnd %"U32_F
+                ("tcp_output: snd_wnd %"TCPWNDSIZE_F", cwnd %"TCPWNDSIZE_F", wnd %"U32_F
                  ", effwnd %"U32_F", seq %"U32_F", ack %"U32_F"\n",
                  pcb->snd_wnd, pcb->cwnd, wnd,
                  ntohl(seg->tcphdr->seqno) - pcb->lastack + seg->len,
@@ -982,7 +1006,7 @@ tcp_output(struct tcp_pcb *pcb)
       break;
     }
 #if TCP_CWND_DEBUG
-    LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"U16_F", cwnd %"U16_F", wnd %"U32_F", effwnd %"U32_F", seq %"U32_F", ack %"U32_F", i %"S16_F"\n",
+    LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_output: snd_wnd %"TCPWNDSIZE_F", cwnd %"TCPWNDSIZE_F", wnd %"U32_F", effwnd %"U32_F", seq %"U32_F", ack %"U32_F", i %"S16_F"\n",
                             pcb->snd_wnd, pcb->cwnd, wnd,
                             ntohl(seg->tcphdr->seqno) + seg->len -
                             pcb->lastack,
@@ -1069,7 +1093,16 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   seg->tcphdr->ackno = htonl(pcb->rcv_nxt);
 
   /* advertise our receive window size in this TCP segment */
-  seg->tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+#if LWIP_WND_SCALE
+  if (seg->flags & TF_SEG_OPTS_WND_SCALE) {
+    /* The Window field in a SYN segment itself (the only type where we send
+       the window scale option) is never scaled. */
+    seg->tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+  } else
+#endif /* LWIP_WND_SCALE */
+  {
+    seg->tcphdr->wnd = htons(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd));
+  }
 
   pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;
 
@@ -1094,7 +1127,13 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     opts += 3;
   }
 #endif
-
+#if LWIP_WND_SCALE
+  if (seg->flags & TF_SEG_OPTS_WND_SCALE) {
+    tcp_build_wnd_scale_option(opts);
+    opts += 1;
+  }
+#endif
+  
   /* Set retransmission timer running if it is not currently enabled 
      This must be set before checking the route. */
   if (pcb->rtime == -1) {
@@ -1224,7 +1263,11 @@ tcp_rst_impl(u32_t seqno, u32_t ackno,
   tcphdr->seqno = htonl(seqno);
   tcphdr->ackno = htonl(ackno);
   TCPH_HDRLEN_FLAGS_SET(tcphdr, TCP_HLEN/4, TCP_RST | TCP_ACK);
+#if LWIP_WND_SCALE
+  tcphdr->wnd = PP_HTONS(((TCP_WND >> TCP_RCV_SCALE) & 0xFFFF));
+#else
   tcphdr->wnd = PP_HTONS(TCP_WND);
+#endif
   tcphdr->chksum = 0;
   tcphdr->urgp = 0;
 
@@ -1356,7 +1399,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
     }
     
     /* The minimum value for ssthresh should be 2 MSS */
-    if (pcb->ssthresh < 2*pcb->mss) {
+    if (pcb->ssthresh < (2U * pcb->mss)) {
       LWIP_DEBUGF(TCP_FR_DEBUG, 
                   ("tcp_receive: The minimum value for ssthresh %"U16_F
                    " should be min 2 mss %"U16_F"...\n",

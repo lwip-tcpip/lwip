@@ -125,6 +125,18 @@ typedef void  (*tcp_err_fn)(void *arg, err_t err);
  */
 typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 
+#if LWIP_WND_SCALE
+#define RCV_WND_SCALE(pcb, wnd) (((wnd) >> (pcb)->rcv_scale))
+#define SND_WND_SCALE(pcb, wnd) (((wnd) << (pcb)->snd_scale))
+typedef u32_t tcpwnd_size_t;
+typedef u16_t tcpflags_t;
+#else
+#define RCV_WND_SCALE(pcb, wnd) (wnd)
+#define SND_WND_SCALE(pcb, wnd) (wnd)
+typedef u16_t tcpwnd_size_t;
+typedef u8_t tcpflags_t;
+#endif
+
 enum tcp_state {
   CLOSED      = 0,
   LISTEN      = 1,
@@ -176,15 +188,18 @@ struct tcp_pcb {
   /* ports are in host byte order */
   u16_t remote_port;
   
-  u8_t flags;
-#define TF_ACK_DELAY   ((u8_t)0x01U)   /* Delayed ACK. */
-#define TF_ACK_NOW     ((u8_t)0x02U)   /* Immediate ACK. */
-#define TF_INFR        ((u8_t)0x04U)   /* In fast recovery. */
-#define TF_TIMESTAMP   ((u8_t)0x08U)   /* Timestamp option enabled */
-#define TF_RXCLOSED    ((u8_t)0x10U)   /* rx closed by tcp_shutdown */
-#define TF_FIN         ((u8_t)0x20U)   /* Connection was closed locally (FIN segment enqueued). */
-#define TF_NODELAY     ((u8_t)0x40U)   /* Disable Nagle algorithm */
-#define TF_NAGLEMEMERR ((u8_t)0x80U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+  tcpflags_t flags;
+#define TF_ACK_DELAY   ((tcpflags_t)0x0001U)   /* Delayed ACK. */
+#define TF_ACK_NOW     ((tcpflags_t)0x0002U)   /* Immediate ACK. */
+#define TF_INFR        ((tcpflags_t)0x0004U)   /* In fast recovery. */
+#define TF_TIMESTAMP   ((tcpflags_t)0x0008U)   /* Timestamp option enabled */
+#define TF_RXCLOSED    ((tcpflags_t)0x0010U)   /* rx closed by tcp_shutdown */
+#define TF_FIN         ((tcpflags_t)0x0020U)   /* Connection was closed locally (FIN segment enqueued). */
+#define TF_NODELAY     ((tcpflags_t)0x0040U)   /* Disable Nagle algorithm */
+#define TF_NAGLEMEMERR ((tcpflags_t)0x0080U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+#if LWIP_WND_SCALE
+#define TF_WND_SCALE   ((tcpflags_t)0x0100U)   /* Window Scale option enabled */
+#endif
 
   /* the rest of the fields are in host byte order
      as we have to do some math with them */
@@ -196,8 +211,8 @@ struct tcp_pcb {
 
   /* receiver variables */
   u32_t rcv_nxt;   /* next seqno expected */
-  u16_t rcv_wnd;   /* receiver window available */
-  u16_t rcv_ann_wnd; /* receiver window to announce */
+  tcpwnd_size_t rcv_wnd;   /* receiver window available */
+  tcpwnd_size_t rcv_ann_wnd; /* receiver window to announce */
   u32_t rcv_ann_right_edge; /* announced right edge of window */
 
   /* Retransmission timer. */
@@ -218,27 +233,27 @@ struct tcp_pcb {
   u32_t lastack; /* Highest acknowledged seqno. */
 
   /* congestion avoidance/control variables */
-  u16_t cwnd;
-  u16_t ssthresh;
+  tcpwnd_size_t cwnd;
+  tcpwnd_size_t ssthresh;
 
   /* sender variables */
   u32_t snd_nxt;   /* next new seqno to be sent */
   u32_t snd_wl1, snd_wl2; /* Sequence and acknowledgement numbers of last
                              window update. */
   u32_t snd_lbb;       /* Sequence number of next byte to be buffered. */
-  u16_t snd_wnd;   /* sender window */
-  u16_t snd_wnd_max; /* the maximum sender window announced by the remote host */
+  tcpwnd_size_t snd_wnd;   /* sender window */
+  tcpwnd_size_t snd_wnd_max; /* the maximum sender window announced by the remote host */
 
-  u16_t acked;
+  tcpwnd_size_t acked;
 
-  u16_t snd_buf;   /* Available buffer space for sending (in bytes). */
+  tcpwnd_size_t snd_buf;   /* Available buffer space for sending (in bytes). */
 #define TCP_SNDQUEUELEN_OVERFLOW (0xffffU-3)
   u16_t snd_queuelen; /* Available buffer space for sending (in pbufs). */
 
 #if TCP_OVERSIZE
   /* Extra bytes available at the end of the last pbuf in unsent. */
   u16_t unsent_oversize;
-#endif /* TCP_OVERSIZE */ 
+#endif /* TCP_OVERSIZE */
 
   /* These are ordered by sequence number: */
   struct tcp_seg *unsent;   /* Unsent (queued) segments. */
@@ -281,6 +296,11 @@ struct tcp_pcb {
 
   /* KEEPALIVE counter */
   u8_t keep_cnt_sent;
+
+#if LWIP_WND_SCALE
+  u8_t snd_scale;
+  u8_t rcv_scale;
+#endif
 };
 
 struct tcp_pcb_listen {

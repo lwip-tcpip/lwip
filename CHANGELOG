@@ -6,6 +6,9 @@ HISTORY
 
  ++ New features:
 
+  2014-02-05: Simon Goldschmidt (patch by "xtian" and "alex_ab")
+  * patch #6537/#7858: TCP window scaling support
+
   2014-01-17: Jiri Engelthaler
   * icmp, icmp6, opt.h: patch #8027: Completed HW checksuming for IPv4 and
     IPv6 ICMP's

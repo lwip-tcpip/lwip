@@ -1071,6 +1071,9 @@
 
 /**
  * LWIP_TCP_TIMESTAMPS==1: support the TCP timestamp option.
+ * The timestamp option is currently only used to help remote hosts, it is not
+ * really used locally. Therefore, it is only enabled when a TS option is
+ * received in the initial SYN packet from a remote host.
  */
 #ifndef LWIP_TCP_TIMESTAMPS
 #define LWIP_TCP_TIMESTAMPS             0
@@ -1094,6 +1097,19 @@
 #if !defined(LWIP_EVENT_API) && !defined(LWIP_CALLBACK_API)
 #define LWIP_EVENT_API                  0
 #define LWIP_CALLBACK_API               1
+#endif
+
+/**
+ * LWIP_WND_SCALE and TCP_RCV_SCALE:
+ * Set LWIP_WND_SCALE to 1 to enable window scaling.
+ * Set TCP_RCV_SCALE to the desired scaling factor (shift count in the
+ * range of [0..14]).
+ * When LWIP_WND_SCALE is enabled but TCP_RCV_SCALE is 0, we can use a large
+ * send window while having a small receive window only.
+ */
+#ifndef LWIP_WND_SCALE
+#define LWIP_WND_SCALE                  0
+#define TCP_RCV_SCALE                   0
 #endif
 
 
