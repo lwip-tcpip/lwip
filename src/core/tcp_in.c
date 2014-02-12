@@ -364,12 +364,24 @@ tcp_input(struct pbuf *p, struct netif *inp)
           }
         }
 
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+        while (recv_data != NULL) {
+          struct pbuf *rest = NULL;
+          pbuf_split_64k(recv_data, &rest);
+#else /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
         if (recv_data != NULL) {
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
           LWIP_ASSERT("pcb->refused_data == NULL", pcb->refused_data == NULL);
           if (pcb->flags & TF_RXCLOSED) {
             /* received data although already closed -> abort (send RST) to
                notify the remote host that not all data has been processed */
             pbuf_free(recv_data);
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+            if (rest != NULL) {
+              pbuf_free(rest);
+            }
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
             tcp_abort(pcb);
             goto aborted;
           }
@@ -377,13 +389,29 @@ tcp_input(struct pbuf *p, struct netif *inp)
           /* Notify application that data has been received. */
           TCP_EVENT_RECV(pcb, recv_data, ERR_OK, err);
           if (err == ERR_ABRT) {
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+            if (rest != NULL) {
+              pbuf_free(rest);
+            }
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
             goto aborted;
           }
 
           /* If the upper layer can't receive this data, store it */
           if (err != ERR_OK) {
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+            if (rest != NULL) {
+              pbuf_cat(recv_data, rest);
+            }
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
             pcb->refused_data = recv_data;
             LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: keep incoming packet, because pcb is \"full\"\n"));
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+            break;
+          } else {
+            /* Upper layer received the data, go on with the rest if > 64K */
+            recv_data = rest;
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
           }
         }
 
@@ -1382,6 +1410,9 @@ tcp_receive(struct tcp_pcb *pcb)
           if (cseg->p->tot_len > 0) {
             /* Chain this pbuf onto the pbuf that we will pass to
                the application. */
+            /* With window scaling, this can overflow recv_data->tot_len, but
+               that's not a problem since we explicitly fix that before passing
+               recv_data to the application. */
             if (recv_data) {
               pbuf_cat(recv_data, cseg->p);
             } else {

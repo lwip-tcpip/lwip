@@ -952,6 +952,56 @@ pbuf_copy_partial(struct pbuf *buf, void *dataptr, u16_t len, u16_t offset)
   return copied_total;
 }
 
+#if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+/**
+ * This method modifies a 'pbuf chain', so that its total length is
+ * smaller than 64K. The remainder of the original pbuf chain is stored
+ * in *rest.
+ * This function never creates new pbufs, but splits an existing chain
+ * in two parts. The tot_len of the modified packet queue will likely be
+ * smaller than 64K.
+ * 'packet queues' are not supported by this function.
+ *
+ * @param p the pbuf queue to be splitted
+ * @param rest pointer to store the remainder (after the first 64K)
+ */
+void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
+{
+  *rest = NULL;
+  if ((p != NULL) && (p->next != NULL)) {
+    u16_t tot_len_front = p->len;
+    struct pbuf *i = p;
+    struct pbuf *r = p->next;
+
+    /* continue until the total length (summed up as u16_t) overflows */
+    while ((r != NULL) && ((u16_t)(tot_len_front + r->len) > tot_len_front)) {
+      tot_len_front += r->len;
+      i = r;
+      r = r->next;
+    }
+    /* i now points to last packet of the first segment. Set next
+       pointer to NULL */
+    i->next = NULL;
+
+    if (r != NULL) {
+      /* Update the tot_len field in the first part */
+      for (i = p; i != NULL; i = i->next) {
+        i->tot_len -= r->tot_len;
+        LWIP_ASSERT("tot_len/len mismatch in last pbuf",
+                    (i->next != NULL) || (i->tot_len == i->len));
+      }
+      if (p->flags & PBUF_FLAG_TCP_FIN) {
+        r->flags |= PBUF_FLAG_TCP_FIN;
+      }
+
+      /* tot_len field in rest does not need modifications */
+      /* reference counters do not need modifications */
+      *rest = r;
+    }
+  }
+}
+#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+
 /**
  * Copy application supplied data into a pbuf.
  * This function can only be used to copy the equivalent of buf->tot_len data.

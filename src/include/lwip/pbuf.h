@@ -172,6 +172,9 @@ struct pbuf *pbuf_coalesce(struct pbuf *p, pbuf_layer layer);
 err_t pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
                        u16_t len, u16_t *chksum);
 #endif /* LWIP_CHECKSUM_ON_COPY */
+#if LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+void pbuf_split_64k(struct pbuf *p, struct pbuf **rest);
+#endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
 
 u8_t pbuf_get_at(struct pbuf* p, u16_t offset);
 u16_t pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n);
