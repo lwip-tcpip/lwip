@@ -143,10 +143,10 @@ END_TEST
 Suite *
 pbuf_suite(void)
 {
-  TFun tests[] = {
-    test_pbuf_copy_zero_pbuf,
-    test_pbuf_split_64k_on_small_pbufs,
-    test_pbuf_queueing_bigger_than_64k
+  testfunc tests[] = {
+    TESTFUNC(test_pbuf_copy_zero_pbuf),
+    TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
+    TESTFUNC(test_pbuf_queueing_bigger_than_64k)
   };
-  return create_suite("PBUF", tests, sizeof(tests)/sizeof(TFun), pbuf_setup, pbuf_teardown);
+  return create_suite("PBUF", tests, sizeof(tests)/sizeof(testfunc), pbuf_setup, pbuf_teardown);
 }

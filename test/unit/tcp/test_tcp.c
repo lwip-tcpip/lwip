@@ -658,14 +658,14 @@ END_TEST
 Suite *
 tcp_suite(void)
 {
-  TFun tests[] = {
-    test_tcp_new_abort,
-    test_tcp_recv_inseq,
-    test_tcp_fast_retx_recover,
-    test_tcp_fast_rexmit_wraparound,
-    test_tcp_rto_rexmit_wraparound,
-    test_tcp_tx_full_window_lost_from_unacked,
-    test_tcp_tx_full_window_lost_from_unsent
+  testfunc tests[] = {
+    TESTFUNC(test_tcp_new_abort),
+    TESTFUNC(test_tcp_recv_inseq),
+    TESTFUNC(test_tcp_fast_retx_recover),
+    TESTFUNC(test_tcp_fast_rexmit_wraparound),
+    TESTFUNC(test_tcp_rto_rexmit_wraparound),
+    TESTFUNC(test_tcp_tx_full_window_lost_from_unacked),
+    TESTFUNC(test_tcp_tx_full_window_lost_from_unsent)
   };
-  return create_suite("TCP", tests, sizeof(tests)/sizeof(TFun), tcp_setup, tcp_teardown);
+  return create_suite("TCP", tests, sizeof(tests)/sizeof(testfunc), tcp_setup, tcp_teardown);
 }

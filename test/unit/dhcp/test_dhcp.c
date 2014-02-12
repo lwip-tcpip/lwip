@@ -906,11 +906,11 @@ END_TEST
 Suite *
 dhcp_suite(void)
 {
-  TFun tests[] = {
-    test_dhcp,
-    test_dhcp_nak,
-    test_dhcp_relayed,
-    test_dhcp_nak_no_endmarker
+  testfunc tests[] = {
+    TESTFUNC(test_dhcp),
+    TESTFUNC(test_dhcp_nak),
+    TESTFUNC(test_dhcp_relayed),
+    TESTFUNC(test_dhcp_nak_no_endmarker)
   };
-  return create_suite("DHCP", tests, sizeof(tests)/sizeof(TFun), dhcp_setup, dhcp_teardown);
+  return create_suite("DHCP", tests, sizeof(tests)/sizeof(testfunc), dhcp_setup, dhcp_teardown);
 }

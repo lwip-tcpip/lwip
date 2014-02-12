@@ -66,8 +66,8 @@ END_TEST
 Suite *
 mem_suite(void)
 {
-  TFun tests[] = {
-    test_mem_one
+  testfunc tests[] = {
+    TESTFUNC(test_mem_one)
   };
-  return create_suite("MEM", tests, sizeof(tests)/sizeof(TFun), mem_setup, mem_teardown);
+  return create_suite("MEM", tests, sizeof(tests)/sizeof(testfunc), mem_setup, mem_teardown);
 }
