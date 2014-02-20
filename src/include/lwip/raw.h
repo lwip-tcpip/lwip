@@ -99,8 +99,8 @@ struct raw_pcb {
   void *recv_arg;
 #if LWIP_IPV6
   /* fields for handling checksum computations as per RFC3542. */
-  u8_t  chksum_reqd;
   u16_t chksum_offset;
+  u8_t  chksum_reqd;
 #endif
 };
 
