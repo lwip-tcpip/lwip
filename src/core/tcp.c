@@ -1124,37 +1124,58 @@ tcp_fasttmr_start:
 err_t
 tcp_process_refused_data(struct tcp_pcb *pcb)
 {
-  err_t err;
-  u8_t refused_flags = pcb->refused_data->flags;
-  /* set pcb->refused_data to NULL in case the callback frees it and then
-     closes the pcb */
-  struct pbuf *refused_data = pcb->refused_data;
-  pcb->refused_data = NULL;
-  /* Notify again application with data previously received. */
-  LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
-  TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
-  if (err == ERR_OK) {
-    /* did refused_data include a FIN? */
-    if (refused_flags & PBUF_FLAG_TCP_FIN) {
-      /* correct rcv_wnd as the application won't call tcp_recved()
-         for the FIN's seqno */
-      if (pcb->rcv_wnd != TCP_WND) {
-        pcb->rcv_wnd++;
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+  struct pbuf *rest;
+  while (pcb->refused_data != NULL)
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+  {
+    err_t err;
+    u8_t refused_flags = pcb->refused_data->flags;
+    /* set pcb->refused_data to NULL in case the callback frees it and then
+       closes the pcb */
+    struct pbuf *refused_data = pcb->refused_data;
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+    pbuf_split_64k(refused_data, &rest);
+    pcb->refused_data = rest;
+#else /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+    pcb->refused_data = NULL;
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+    /* Notify again application with data previously received. */
+    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: notify kept packet\n"));
+    TCP_EVENT_RECV(pcb, refused_data, ERR_OK, err);
+    if (err == ERR_OK) {
+      /* did refused_data include a FIN? */
+      if (refused_flags & PBUF_FLAG_TCP_FIN
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+          && (rest == NULL)
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+         ) {
+        /* correct rcv_wnd as the application won't call tcp_recved()
+           for the FIN's seqno */
+        if (pcb->rcv_wnd != TCP_WND) {
+          pcb->rcv_wnd++;
+        }
+        TCP_EVENT_CLOSED(pcb, err);
+        if (err == ERR_ABRT) {
+          return ERR_ABRT;
+        }
       }
-      TCP_EVENT_CLOSED(pcb, err);
-      if (err == ERR_ABRT) {
-        return ERR_ABRT;
+    } else if (err == ERR_ABRT) {
+      /* if err == ERR_ABRT, 'pcb' is already deallocated */
+      /* Drop incoming packets because pcb is "full" (only if the incoming
+         segment contains data). */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
+      return ERR_ABRT;
+    } else {
+      /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
+#if TCP_QUEUE_OOSEQ && LWIP_WND_SCALE
+      if (rest != NULL) {
+        pbuf_cat(refused_data, rest);
       }
+#endif /* TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
+      pcb->refused_data = refused_data;
+      return ERR_INPROGRESS;
     }
-  } else if (err == ERR_ABRT) {
-    /* if err == ERR_ABRT, 'pcb' is already deallocated */
-    /* Drop incoming packets because pcb is "full" (only if the incoming
-       segment contains data). */
-    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: drop incoming packets, because pcb is \"full\"\n"));
-    return ERR_ABRT;
-  } else {
-    /* data is still refused, pbuf is still valid (go on for ACK-only packets) */
-    pcb->refused_data = refused_data;
   }
   return ERR_OK;
 }

@@ -61,8 +61,8 @@ END_TEST
 Suite *
 udp_suite(void)
 {
-  TFun tests[] = {
-    test_udp_new_remove,
+  testfunc tests[] = {
+    TESTFUNC(test_udp_new_remove),
   };
-  return create_suite("UDP", tests, sizeof(tests)/sizeof(TFun), udp_setup, udp_teardown);
+  return create_suite("UDP", tests, sizeof(tests)/sizeof(testfunc), udp_setup, udp_teardown);
 }

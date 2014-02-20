@@ -931,28 +931,28 @@ FIN_TEST(test_tcp_recv_ooseq_double_FIN_15, 15)
 Suite *
 tcp_oos_suite(void)
 {
-  TFun tests[] = {
-    test_tcp_recv_ooseq_FIN_OOSEQ,
-    test_tcp_recv_ooseq_FIN_INSEQ,
-    test_tcp_recv_ooseq_overrun_rxwin,
-    test_tcp_recv_ooseq_max_bytes,
-    test_tcp_recv_ooseq_max_pbufs,
-    test_tcp_recv_ooseq_double_FIN_0,
-    test_tcp_recv_ooseq_double_FIN_1,
-    test_tcp_recv_ooseq_double_FIN_2,
-    test_tcp_recv_ooseq_double_FIN_3,
-    test_tcp_recv_ooseq_double_FIN_4,
-    test_tcp_recv_ooseq_double_FIN_5,
-    test_tcp_recv_ooseq_double_FIN_6,
-    test_tcp_recv_ooseq_double_FIN_7,
-    test_tcp_recv_ooseq_double_FIN_8,
-    test_tcp_recv_ooseq_double_FIN_9,
-    test_tcp_recv_ooseq_double_FIN_10,
-    test_tcp_recv_ooseq_double_FIN_11,
-    test_tcp_recv_ooseq_double_FIN_12,
-    test_tcp_recv_ooseq_double_FIN_13,
-    test_tcp_recv_ooseq_double_FIN_14,
-    test_tcp_recv_ooseq_double_FIN_15
+  testfunc tests[] = {
+    TESTFUNC(test_tcp_recv_ooseq_FIN_OOSEQ),
+    TESTFUNC(test_tcp_recv_ooseq_FIN_INSEQ),
+    TESTFUNC(test_tcp_recv_ooseq_overrun_rxwin),
+    TESTFUNC(test_tcp_recv_ooseq_max_bytes),
+    TESTFUNC(test_tcp_recv_ooseq_max_pbufs),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_0),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_1),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_2),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_3),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_4),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_5),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_6),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_7),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_8),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_9),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_10),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_11),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_12),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_13),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_14),
+    TESTFUNC(test_tcp_recv_ooseq_double_FIN_15)
   };
-  return create_suite("TCP_OOS", tests, sizeof(tests)/sizeof(TFun), tcp_oos_setup, tcp_oos_teardown);
+  return create_suite("TCP_OOS", tests, sizeof(tests)/sizeof(testfunc), tcp_oos_setup, tcp_oos_teardown);
 }

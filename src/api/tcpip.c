@@ -50,6 +50,11 @@
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
 
+#define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
+#define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
+#define TCPIP_MSG_VAR_ALLOC(name)   API_VAR_ALLOC(struct tcpip_msg, MEMP_TCPIP_MSG_API, name)
+#define TCPIP_MSG_VAR_FREE(name)    API_VAR_FREE(MEMP_TCPIP_MSG_API, name)
+
 /* global variables */
 static tcpip_init_done_fn tcpip_init_done;
 static void *tcpip_init_done_arg;
@@ -318,17 +323,19 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 err_t
 tcpip_apimsg(struct api_msg *apimsg)
 {
-  struct tcpip_msg msg;
+  TCPIP_MSG_VAR_DECLARE(msg);
 #ifdef LWIP_DEBUG
   /* catch functions that don't set err */
   apimsg->msg.err = ERR_VAL;
 #endif
   
   if (sys_mbox_valid(&mbox)) {
-    msg.type = TCPIP_MSG_API;
-    msg.msg.apimsg = apimsg;
-    sys_mbox_post(&mbox, &msg);
+    TCPIP_MSG_VAR_ALLOC(msg);
+    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
+    TCPIP_MSG_VAR_REF(msg).msg.apimsg = apimsg;
+    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
     sys_arch_sem_wait(&apimsg->msg.conn->op_completed, 0);
+    TCPIP_MSG_VAR_FREE(msg);
     return apimsg->msg.err;
   }
   return ERR_VAL;
@@ -348,20 +355,24 @@ tcpip_apimsg(struct api_msg *apimsg)
 err_t
 tcpip_netifapi(struct netifapi_msg* netifapimsg)
 {
-  struct tcpip_msg msg;
-  
+  TCPIP_MSG_VAR_DECLARE(msg);
+
   if (sys_mbox_valid(&mbox)) {
-    err_t err = sys_sem_new(&netifapimsg->msg.sem, 0);
+    err_t err;
+    TCPIP_MSG_VAR_ALLOC(msg);
+
+    err = sys_sem_new(&netifapimsg->msg.sem, 0);
     if (err != ERR_OK) {
       netifapimsg->msg.err = err;
       return err;
     }
     
-    msg.type = TCPIP_MSG_NETIFAPI;
-    msg.msg.netifapimsg = netifapimsg;
-    sys_mbox_post(&mbox, &msg);
+    TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_NETIFAPI;
+    TCPIP_MSG_VAR_REF(msg).msg.netifapimsg = netifapimsg;
+    sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
     sys_sem_wait(&netifapimsg->msg.sem);
     sys_sem_free(&netifapimsg->msg.sem);
+    TCPIP_MSG_VAR_FREE(msg);
     return netifapimsg->msg.err;
   }
   return ERR_VAL;

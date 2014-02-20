@@ -416,12 +416,28 @@ static err_t
 etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
 {
   struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  struct eth_vlan_hdr *vlanhdr;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
 
   LWIP_ASSERT("netif->hwaddr_len must be the same as ETHARP_HWADDR_LEN for etharp!",
               (netif->hwaddr_len == ETHARP_HWADDR_LEN));
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
+  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
+  vlanhdr->prio_vid = 0;
+  vlanhdr->tpid = PP_HTONS(ETHTYPE_IP);
+  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
+    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
+    pbuf_header(p, -SIZEOF_VLAN_HDR);
+    ethhdr = (struct eth_hdr *)p->payload;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+    ethhdr->type = PP_HTONS(ETHTYPE_IP);
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  }
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   ETHADDR32_COPY(&ethhdr->dest, dst);
   ETHADDR16_COPY(&ethhdr->src, src);
-  ethhdr->type = PP_HTONS(ETHTYPE_IP);
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_send_ip: sending packet %p\n", (void *)p));
   /* send the packet */
   return netif->linkoutput(netif, p);
@@ -888,7 +904,11 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
   LWIP_ASSERT("ipaddr != NULL", ipaddr != NULL);
 
   /* make room for Ethernet header - should not fail */
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  if (pbuf_header(q, sizeof(struct eth_hdr) + SIZEOF_VLAN_HDR) != 0) {
+#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   if (pbuf_header(q, sizeof(struct eth_hdr)) != 0) {
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
     /* bail out */
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("etharp_output: could not allocate room for header.\n"));
@@ -923,6 +943,9 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
         !ip_addr_islinklocal(ipaddr)) {
 #if LWIP_AUTOIP
       struct ip_hdr *iphdr = (struct ip_hdr*)((u8_t*)q->payload +
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+        SIZEOF_VLAN_HDR +
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
         sizeof(struct eth_hdr));
       /* According to RFC 3297, chapter 2.6.2 (Forwarding Rules), a packet with
          a link-local source address must always be "directly to its destination
@@ -1182,6 +1205,9 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   struct pbuf *p;
   err_t result = ERR_OK;
   struct eth_hdr *ethhdr;
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  struct eth_vlan_hdr *vlanhdr;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   struct etharp_hdr *hdr;
 #if LWIP_AUTOIP
   const u8_t * ethdst_hwaddr;
@@ -1190,7 +1216,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET, PBUF_RAM);
+  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
@@ -1199,10 +1225,15 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
     return ERR_MEM;
   }
   LWIP_ASSERT("check that first pbuf can hold struct etharp_hdr",
-              (p->len >= SIZEOF_ETHARP_PACKET));
+              (p->len >= SIZEOF_ETHARP_PACKET_TX));
 
   ethhdr = (struct eth_hdr *)p->payload;
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  vlanhdr = (struct eth_vlan_hdr*)(((u8_t*)ethhdr) + SIZEOF_ETH_HDR);
+  hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR);
+#else /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   hdr = (struct etharp_hdr *)((u8_t*)ethhdr + SIZEOF_ETH_HDR);
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_raw: sending raw ARP packet.\n"));
   hdr->opcode = htons(opcode);
 
@@ -1217,13 +1248,6 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   /* Write the ARP MAC-Addresses */
   ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);
   ETHADDR16_COPY(&hdr->dhwaddr, hwdst_addr);
-  /* Write the Ethernet MAC-Addresses */
-#if LWIP_AUTOIP
-  ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
-#else  /* LWIP_AUTOIP */
-  ETHADDR16_COPY(&ethhdr->dest, ethdst_addr);
-#endif /* LWIP_AUTOIP */
-  ETHADDR16_COPY(&ethhdr->src, ethsrc_addr);
   /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
    * structure packing. */ 
   IPADDR2_COPY(&hdr->sipaddr, ipsrc_addr);
@@ -1235,7 +1259,28 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   hdr->hwlen = ETHARP_HWADDR_LEN;
   hdr->protolen = sizeof(ip_addr_t);
 
-  ethhdr->type = PP_HTONS(ETHTYPE_ARP);
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  ethhdr->type = PP_HTONS(ETHTYPE_VLAN);
+  vlanhdr->tpid = PP_HTONS(ETHTYPE_ARP);
+  vlanhdr->prio_vid = 0;
+  if (!LWIP_HOOK_VLAN_SET(netif, ethhdr, vlanhdr)) {
+    /* packet shall not contain VLAN header, so hide it and set correct ethertype */
+    pbuf_header(p, -SIZEOF_VLAN_HDR);
+    ethhdr = (struct eth_hdr *)p->payload;
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+    ethhdr->type = PP_HTONS(ETHTYPE_ARP);
+#if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
+  }
+#endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
+
+  /* Write the Ethernet MAC-Addresses */
+#if LWIP_AUTOIP
+  ETHADDR16_COPY(&ethhdr->dest, ethdst_hwaddr);
+#else  /* LWIP_AUTOIP */
+  ETHADDR16_COPY(&ethhdr->dest, ethdst_addr);
+#endif /* LWIP_AUTOIP */
+  ETHADDR16_COPY(&ethhdr->src, ethsrc_addr);
+
   /* send ARP query */
   result = netif->linkoutput(netif, p);
   ETHARP_STATS_INC(etharp.xmit);
@@ -1310,8 +1355,10 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       ETHARP_STATS_INC(etharp.drop);
       goto free_and_return;
     }
-#if defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) /* if not, allow all VLANs */
-#ifdef ETHARP_VLAN_CHECK_FN
+#if defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) /* if not, allow all VLANs */
+#ifdef LWIP_HOOK_VLAN_CHECK
+    if (!LWIP_HOOK_VLAN_CHECK(netif, ethhdr, vlan)) {
+#elif defined(ETHARP_VLAN_CHECK_FN)
     if (!ETHARP_VLAN_CHECK_FN(ethhdr, vlan)) {
 #elif defined(ETHARP_VLAN_CHECK)
     if (VLAN_ID(vlan) != ETHARP_VLAN_CHECK) {
@@ -1320,7 +1367,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       pbuf_free(p);
       return ERR_OK;
     }
-#endif /* defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) */
+#endif /* defined(LWIP_HOOK_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK) || defined(ETHARP_VLAN_CHECK_FN) */
     type = vlan->tpid;
     ip_hdr_offset = SIZEOF_ETH_HDR + SIZEOF_VLAN_HDR;
   }

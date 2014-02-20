@@ -97,6 +97,11 @@ struct raw_pcb {
   } recv;
   /* user-supplied argument for the recv callback */
   void *recv_arg;
+#if LWIP_IPV6
+  /* fields for handling checksum computations as per RFC3542. */
+  u16_t chksum_offset;
+  u8_t  chksum_reqd;
+#endif
 };
 
 /* The following functions is the application layer interface to the

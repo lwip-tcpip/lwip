@@ -255,8 +255,8 @@ END_TEST
 Suite *
 etharp_suite(void)
 {
-  TFun tests[] = {
-    test_etharp_table
+  testfunc tests[] = {
+    TESTFUNC(test_etharp_table)
   };
-  return create_suite("ETHARP", tests, sizeof(tests)/sizeof(TFun), etharp_setup, etharp_teardown);
+  return create_suite("ETHARP", tests, sizeof(tests)/sizeof(testfunc), etharp_setup, etharp_teardown);
 }

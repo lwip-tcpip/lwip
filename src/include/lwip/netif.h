@@ -123,7 +123,7 @@ typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
        ip_addr_t *ipaddr);
 #if LWIP_IPV6
 /** Function prototype for netif->output_ip6 functions. Called by lwIP when a packet
- * shall be sent. For ethernet netif, set this to 'nd_output' and set
+ * shall be sent. For ethernet netif, set this to 'ethip6_output' and set
  * 'linkoutput'.
  *
  * @param netif The netif which shall send a packet

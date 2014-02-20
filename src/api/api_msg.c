@@ -907,17 +907,17 @@ lwip_netconn_do_bind(struct api_msg_msg *msg)
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        msg->err = raw_bind(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
+        msg->err = raw_bind(msg->conn->pcb.raw, API_EXPR_REF(msg->msg.bc.ipaddr));
         break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
       case NETCONN_UDP:
-        msg->err = udp_bind(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+        msg->err = udp_bind(msg->conn->pcb.udp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
         break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
       case NETCONN_TCP:
-        msg->err = tcp_bind(msg->conn->pcb.tcp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+        msg->err = tcp_bind(msg->conn->pcb.tcp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
         break;
 #endif /* LWIP_TCP */
       default:
@@ -997,12 +997,12 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
     case NETCONN_RAW:
-      msg->err = raw_connect(msg->conn->pcb.raw, msg->msg.bc.ipaddr);
+      msg->err = raw_connect(msg->conn->pcb.raw, API_EXPR_REF(msg->msg.bc.ipaddr));
       break;
 #endif /* LWIP_RAW */
 #if LWIP_UDP
     case NETCONN_UDP:
-      msg->err = udp_connect(msg->conn->pcb.udp, msg->msg.bc.ipaddr, msg->msg.bc.port);
+      msg->err = udp_connect(msg->conn->pcb.udp, API_EXPR_REF(msg->msg.bc.ipaddr), msg->msg.bc.port);
       break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
@@ -1012,7 +1012,7 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
         msg->err = ERR_ISCONN;
       } else {
         setup_tcp(msg->conn);
-        msg->err = tcp_connect(msg->conn->pcb.tcp, msg->msg.bc.ipaddr,
+        msg->err = tcp_connect(msg->conn->pcb.tcp, API_EXPR_REF(msg->msg.bc.ipaddr),
           msg->msg.bc.port, lwip_netconn_do_connected);
         if (msg->err == ERR_OK) {
           u8_t non_blocking = netconn_is_nonblocking(msg->conn);
@@ -1422,10 +1422,10 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.ip != NULL) {
     if (msg->msg.ad.local) {
-      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), *(msg->msg.ad.ipaddr),
+      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->local_ip);
     } else {
-      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), *(msg->msg.ad.ipaddr),
+      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->remote_ip);
     }
     msg->err = ERR_OK;
@@ -1433,7 +1433,7 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
 #if LWIP_RAW
     case NETCONN_RAW:
       if (msg->msg.ad.local) {
-        *(msg->msg.ad.port) = msg->conn->pcb.raw->protocol;
+        API_EXPR_DEREF(msg->msg.ad.port) = msg->conn->pcb.raw->protocol;
       } else {
         /* return an error as connecting is only a helper for upper layers */
         msg->err = ERR_CONN;
@@ -1443,19 +1443,19 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
 #if LWIP_UDP
     case NETCONN_UDP:
       if (msg->msg.ad.local) {
-        *(msg->msg.ad.port) = msg->conn->pcb.udp->local_port;
+        API_EXPR_DEREF(msg->msg.ad.port) = msg->conn->pcb.udp->local_port;
       } else {
         if ((msg->conn->pcb.udp->flags & UDP_FLAGS_CONNECTED) == 0) {
           msg->err = ERR_CONN;
         } else {
-          *(msg->msg.ad.port) = msg->conn->pcb.udp->remote_port;
+          API_EXPR_DEREF(msg->msg.ad.port) = msg->conn->pcb.udp->remote_port;
         }
       }
       break;
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case NETCONN_TCP:
-      *(msg->msg.ad.port) = (msg->msg.ad.local?msg->conn->pcb.tcp->local_port:msg->conn->pcb.tcp->remote_port);
+      API_EXPR_DEREF(msg->msg.ad.port) = (msg->msg.ad.local?msg->conn->pcb.tcp->local_port:msg->conn->pcb.tcp->remote_port);
       break;
 #endif /* LWIP_TCP */
     default:
@@ -1528,11 +1528,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
 #if LWIP_IPV6 && LWIP_IPV6_MLD
         if (PCB_ISIPV6(msg->conn->pcb.udp)) {
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = mld6_joingroup(ipX_2_ip6(msg->msg.jl.netif_addr),
-              ipX_2_ip6(msg->msg.jl.multiaddr));
+            msg->err = mld6_joingroup(ipX_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ipX_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = mld6_leavegroup(ipX_2_ip6(msg->msg.jl.netif_addr),
-              ipX_2_ip6(msg->msg.jl.multiaddr));
+            msg->err = mld6_leavegroup(ipX_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ipX_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
         }
         else
@@ -1540,11 +1540,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
         {
 #if LWIP_IGMP
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = igmp_joingroup(ipX_2_ip(msg->msg.jl.netif_addr),
-              ipX_2_ip(msg->msg.jl.multiaddr));
+            msg->err = igmp_joingroup(ipX_2_ip(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ipX_2_ip(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = igmp_leavegroup(ipX_2_ip(msg->msg.jl.netif_addr),
-              ipX_2_ip(msg->msg.jl.multiaddr));
+            msg->err = igmp_leavegroup(ipX_2_ip(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ipX_2_ip(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
 #endif /* LWIP_IGMP */
         }
@@ -1578,14 +1578,14 @@ lwip_netconn_do_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 
   if (ipaddr == NULL) {
     /* timeout or memory error */
-    *msg->err = ERR_VAL;
+    API_EXPR_DEREF(msg->err) = ERR_VAL;
   } else {
     /* address was resolved */
-    *msg->err = ERR_OK;
-    *msg->addr = *ipaddr;
+    API_EXPR_DEREF(msg->err) = ERR_OK;
+    API_EXPR_DEREF(msg->addr) = *ipaddr;
   }
   /* wake up the application task waiting in netconn_gethostbyname */
-  sys_sem_signal(msg->sem);
+  sys_sem_signal(API_EXPR_REF(msg->sem));
 }
 
 /**
@@ -1599,11 +1599,11 @@ lwip_netconn_do_gethostbyname(void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
-  *msg->err = dns_gethostbyname(msg->name, msg->addr, lwip_netconn_do_dns_found, msg);
-  if (*msg->err != ERR_INPROGRESS) {
+  API_EXPR_DEREF(msg->err) = dns_gethostbyname(msg->name, API_EXPR_REF(msg->addr), lwip_netconn_do_dns_found, msg);
+  if (API_EXPR_DEREF(msg->err) != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */
-    sys_sem_signal(msg->sem);
+    sys_sem_signal(API_EXPR_REF(msg->sem));
   }
 }
 #endif /* LWIP_DNS */

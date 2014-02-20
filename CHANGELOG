@@ -6,6 +6,15 @@ HISTORY
 
  ++ New features:
 
+  2013-04-20: Fatih Asici
+  * opt.h, etharp.h/.c: patch #7993: Added support for transmitting packets
+    with VLAN headers via hook function LWIP_HOOK_VLAN_SET and to check them
+    via hook function LWIP_HOOK_VLAN_CHECK
+
+  2014-02-20: Simon Goldschmidt (based on patch by Artem Pisarenko)
+  * patch #7885: modification of api modules to support FreeRTOS-MPU
+    (don't pass stack-pointers to other threads)
+
   2014-02-05: Simon Goldschmidt (patch by "xtian" and "alex_ab")
   * patch #6537/#7858: TCP window scaling support
 
@@ -151,6 +160,19 @@ HISTORY
 
 
  ++ Bugfixes:
+
+  2014-02-20: Simon Goldschmidt
+  * tcp_out.c: fixed bug #39683 Assertion "seg->tcphdr not aligned" failed with
+    MEM_ALIGNMENT = 8
+
+  2014-02-20: Simon Goldschmidt
+  * sockets.c: fixed bug #39882 No function shall set errno to 0
+
+  2014-02-20: Simon Goldschmidt
+  * mib_structs.c: fixed bug #40050 SNMP problem with MIB arrays > 255
+
+  2014-02-20: Simon Goldschmidt
+  * api.h, sockets.c: fixed bug #41499 netconn::recv_avail can overflow
 
   2014-01-08: Stathis Voukelatos
   * memp_std.h: patch #7928 Fixed size calculation in MALLOC memory pool

@@ -92,6 +92,35 @@ extern sys_mutex_t lock_tcpip_core;
 #define TCPIP_PPPAPI_ACK(m)   sys_sem_signal(&m->sem)
 #endif /* LWIP_TCPIP_CORE_LOCKING */
 
+
+#if LWIP_MPU_COMPATIBLE
+#define API_VAR_REF(name)               (*(name))
+#define API_VAR_DECLARE(type, name)     type * name
+#define API_VAR_ALLOC(type, pool, name) do { \
+                                          name = (type *)memp_malloc(pool); \
+                                          if (name == NULL) { \
+                                            return ERR_MEM; \
+                                          } \
+                                        } while(0)
+#define API_VAR_ALLOC_DONTFAIL(type, pool, name) do { \
+                                          name = (type *)memp_malloc(pool); \
+                                          LWIP_ASSERT("pool empty", name != NULL); \
+                                        } while(0)
+#define API_VAR_FREE(pool, name)        memp_free(pool, name)
+#define API_EXPR_REF(expr)              &(expr)
+#define API_EXPR_DEREF(expr)            expr
+#else /* LWIP_MPU_COMPATIBLE */
+#define API_VAR_REF(name)               name
+#define API_VAR_DECLARE(type, name)     type name
+#define API_VAR_ALLOC(type, pool, name)
+#define API_VAR_ALLOC_DONTFAIL(type, pool, name)
+#define API_VAR_FREE(pool, name)
+#define API_EXPR_REF(expr)              expr
+#define API_EXPR_DEREF(expr)            *(expr)
+#endif /* LWIP_MPU_COMPATIBLE */
+
+
+
 /** Function prototype for the init_done function passed to tcpip_init */
 typedef void (*tcpip_init_done_fn)(void *arg);
 /** Function prototype for functions passed to tcpip_callback() */

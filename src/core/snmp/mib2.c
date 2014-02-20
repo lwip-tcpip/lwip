@@ -51,6 +51,8 @@
 #include "lwip/sys.h"
 #include "netif/etharp.h"
 
+#include <string.h>
+
 /**
  * IANA assigned enterprise ID for lwIP is 26381
  * @see http://www.iana.org/assignments/enterprise-numbers
@@ -763,7 +765,8 @@ const struct mib_array_node internet = {
 #endif
 
 /** mib-2.system.sysObjectID  */
-static struct snmp_obj_id sysobjid = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
+static const struct snmp_obj_id sysobjid_default = {SNMP_SYSOBJID_LEN, SNMP_SYSOBJID};
+static const struct snmp_obj_id* sysobjid_ptr = &sysobjid_default;
 /** enterprise ID for generic TRAPs, .iso.org.dod.internet.mgmt.mib-2.snmp */
 static struct snmp_obj_id snmpgrp_id = {7,{1,3,6,1,2,1,11}};
 /** mib-2.system.sysServices */
@@ -893,40 +896,6 @@ static u32_t snmpinpkts = 0,
              snmpouttraps = 0;
 
 
-
-/* prototypes of the following functions are in lwip/src/include/lwip/snmp.h */
-/**
- * Copy octet string.
- *
- * @param dst points to destination
- * @param src points to source
- * @param n number of octets to copy.
- */
-static void ocstrncpy(u8_t *dst, const u8_t *src, u16_t n)
-{
-  u16_t i = n;
-  while (i > 0) {
-    i--;
-    *dst++ = *src++;
-  }
-}
-
-/**
- * Copy object identifier (s32_t) array.
- *
- * @param dst points to destination
- * @param src points to source
- * @param n number of sub identifiers to copy.
- */
-void objectidncpy(s32_t *dst, const s32_t *src, u8_t n)
-{
-  u8_t i = n;
-  while(i > 0) {
-    i--;
-    *dst++ = *src++;
-  }
-}
-
 /**
  * Initializes sysDescr pointers.
  *
@@ -942,9 +911,9 @@ void snmp_set_sysdescr(const u8_t *str, const u8_t *len)
   }
 }
 
-void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid)
+void snmp_get_sysobjid_ptr(const struct snmp_obj_id **oid)
 {
-  *oid = &sysobjid;
+  *oid = sysobjid_ptr;
 }
 
 /**
@@ -952,9 +921,9 @@ void snmp_get_sysobjid_ptr(struct snmp_obj_id **oid)
  *
  * @param oid points to stuct snmp_obj_id to copy
  */
-void snmp_set_sysobjid(struct snmp_obj_id *oid)
+void snmp_set_sysobjid(const struct snmp_obj_id *oid)
 {
-  sysobjid = *oid;
+  sysobjid_ptr = oid;
 }
 
 /**
@@ -2141,7 +2110,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         od->instance = MIB_OBJECT_SCALAR;
         od->access = MIB_OBJECT_READ_ONLY;
         od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
-        od->v_len = sysobjid.len * sizeof(s32_t);
+        od->v_len = sysobjid_ptr->len * sizeof(s32_t);
         break;
       case 3: /* sysUpTime */
         od->instance = MIB_OBJECT_SCALAR;
@@ -2204,10 +2173,10 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 1: /* sysDescr */
-      ocstrncpy((u8_t*)value, sysdescr_ptr, len);
+      MEMCPY(value, sysdescr_ptr, len);
       break;
     case 2: /* sysObjectID */
-      objectidncpy((s32_t*)value, (s32_t*)sysobjid.id, (u8_t)(len / sizeof(s32_t)));
+      MEMCPY(value, sysobjid_ptr->id, len);
       break;
     case 3: /* sysUpTime */
       {
@@ -2215,13 +2184,13 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
       }
       break;
     case 4: /* sysContact */
-      ocstrncpy((u8_t*)value, syscontact_ptr, len);
+      MEMCPY(value, syscontact_ptr, len);
       break;
     case 5: /* sysName */
-      ocstrncpy((u8_t*)value, sysname_ptr, len);
+      MEMCPY(value, sysname_ptr, len);
       break;
     case 6: /* sysLocation */
-      ocstrncpy((u8_t*)value, syslocation_ptr, len);
+      MEMCPY(value, syslocation_ptr, len);
       break;
     case 7: /* sysServices */
       {
@@ -2279,15 +2248,15 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 4: /* sysContact */
-      ocstrncpy(syscontact_ptr, (u8_t*)value, len);
+      MEMCPY(syscontact_ptr, value, len);
       *syscontact_len_ptr = (u8_t)len;
       break;
     case 5: /* sysName */
-      ocstrncpy(sysname_ptr, (u8_t*)value, len);
+      MEMCPY(sysname_ptr, value, len);
       *sysname_len_ptr = (u8_t)len;
       break;
     case 6: /* sysLocation */
-      ocstrncpy(syslocation_ptr, (u8_t*)value, len);
+      MEMCPY(syslocation_ptr, value, len);
       *syslocation_len_ptr = (u8_t)len;
       break;
   };
@@ -2475,7 +2444,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       }
       break;
     case 2: /* ifDescr */
-      ocstrncpy((u8_t*)value, (u8_t*)netif->name, len);
+      MEMCPY(value, netif->name, len);
       break;
     case 3: /* ifType */
       {
@@ -2496,7 +2465,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       }
       break;
     case 6: /* ifPhysAddress */
-      ocstrncpy((u8_t*)value, netif->hwaddr, len);
+      MEMCPY(value, netif->hwaddr, len);
       break;
     case 7: /* ifAdminStatus */
       {
@@ -2608,7 +2577,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
       }
       break;
     case 22: /* ifSpecific */
-      objectidncpy((s32_t*)value, (s32_t*)ifspecific.id, (u8_t)(len / sizeof(s32_t)));
+      MEMCPY(value, ifspecific.id, len);
       break;
   };
 }
@@ -3352,7 +3321,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         }
         break;
       case 13: /* ipRouteInfo */
-        objectidncpy((s32_t*)value, (s32_t*)iprouteinfo.id, (u8_t)(len / sizeof(s32_t)));
+        MEMCPY(value, iprouteinfo.id, len);
         break;
     }
   }

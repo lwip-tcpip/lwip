@@ -41,6 +41,7 @@
 #include <stddef.h> /* for size_t */
 
 #include "lwip/ip_addr.h"
+#include "lwip/err.h"
 #include "lwip/inet.h"
 #include "lwip/inet6.h"
 
@@ -105,6 +106,30 @@ struct sockaddr_storage {
 typedef u32_t socklen_t;
 #endif
 
+struct lwip_sock;
+
+/** This struct is used to pass data to the set/getsockopt_internal
+ * functions running in tcpip_thread context (only a void* is allowed) */
+struct lwip_setgetsockopt_data {
+  /** socket struct for which to change options */
+  struct lwip_sock *sock;
+#ifdef LWIP_DEBUG
+  /** socket index for which to change options */
+  int s;
+#endif /* LWIP_DEBUG */
+  /** level of the option to process */
+  int level;
+  /** name of the option to process */
+  int optname;
+  /** set: value to set the option to
+    * get: value of the option is stored here */
+  void *optval;
+  /** size of *optval */
+  socklen_t *optlen;
+  /** if an error occures, it is temporarily stored here */
+  err_t err;
+};
+
 /* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1
 #define SOCK_DGRAM      2
@@ -167,7 +192,7 @@ struct linger {
 #define PF_UNSPEC       AF_UNSPEC
 
 #define IPPROTO_IP      0
-#define IPPROTO_ICMP    1 
+#define IPPROTO_ICMP    1
 #define IPPROTO_TCP     6
 #define IPPROTO_UDP     17
 #if LWIP_IPV6
@@ -175,6 +200,7 @@ struct linger {
 #define IPPROTO_ICMPV6  58
 #endif /* LWIP_IPV6 */
 #define IPPROTO_UDPLITE 136
+#define IPPROTO_RAW     255
 
 /* Flags we can use with send and recv. */
 #define MSG_PEEK       0x01    /* Peeks at an incoming message */
@@ -205,7 +231,8 @@ struct linger {
 /*
  * Options for level IPPROTO_IPV6
  */
-#define IPV6_V6ONLY 27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
+#define IPV6_CHECKSUM       7  /* RFC3542: calculate and insert the ICMPv6 checksum for raw sockets. */
+#define IPV6_V6ONLY         27 /* RFC3493: boolean control to restrict AF_INET6 sockets to IPv6 communications only. */
 #endif /* LWIP_IPV6 */
 
 #if LWIP_UDP && LWIP_UDPLITE
@@ -422,6 +449,20 @@ int lwip_fcntl(int s, int cmd, int val);
 #define close(s)              lwip_close(s)
 #define fcntl(a,b,c)          lwip_fcntl(a,b,c)
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
+
+#if LWIP_IPV6
+#define inet_ntop(af,src,dst,size) \
+    (((af) == AF_INET6) ? ip6addr_ntoa_r((src),(dst),(size)) \
+     : (((af) == AF_INET) ? ipaddr_ntoa_r((src),(dst),(size)) : NULL))
+#define inet_pton(af,src,dst) \
+    (((af) == AF_INET6) ? inet6_aton((src),(dst)) \
+     : (((af) == AF_INET) ? inet_aton((src),(dst)) : 0))
+#else /* LWIP_IPV6 */
+#define inet_ntop(af,src,dst,size) \
+    (((af) == AF_INET) ? ipaddr_ntoa_r((src),(dst),(size)) : NULL)
+#define inet_pton(af,src,dst) \
+    (((af) == AF_INET) ? inet_aton((src),(dst)) : 0)
+#endif /* LWIP_IPV6 */
 
 #endif /* LWIP_COMPAT_SOCKETS */
 

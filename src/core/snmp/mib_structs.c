@@ -737,13 +737,13 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           }
           else
           {
-            u8_t j;
+            u16_t j;
             struct nse cur_node;
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
             LWIP_ASSERT("i < 0xff", i < 0xff);
-            j = (u8_t)i + 1;
+            j = i + 1;
             while ((j < an->maxlength) && (empty_table(an->nptr[j])))
             {
               j++;
@@ -781,7 +781,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
       }
       else
       {
-        u8_t j;
+        u16_t j;
         /* ident_len == 0, complete with leftmost '.thing' */
         j = 0;
         while ((j < an->maxlength) && empty_table(an->nptr[j]))
@@ -980,13 +980,13 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           }
           else
           {
-            u8_t j;
+            u16_t j;
             struct nse cur_node;
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
             LWIP_ASSERT("i < 0xff", i < 0xff);
-            j = (u8_t)i + 1;
+            j = i + 1;
             if (j < len)
             {
               /* right node is the current external node */

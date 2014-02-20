@@ -789,7 +789,7 @@ tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags)
     TCP_STATS_INC(tcp.memerr);
     return ERR_MEM;
   }
-  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % MEM_ALIGNMENT) == 0);
+  LWIP_ASSERT("seg->tcphdr not aligned", ((mem_ptr_t)seg->tcphdr % 4) == 0);
   LWIP_ASSERT("tcp_enqueue_flags: invalid segment length", seg->len == 0);
 
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG | LWIP_DBG_TRACE,
