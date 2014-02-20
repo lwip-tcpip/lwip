@@ -225,7 +225,7 @@ static const int err_to_errno_table[] = {
 
 #ifdef ERRNO
 #ifndef set_errno
-#define set_errno(err) errno = (err)
+#define set_errno(err) do { if (err) { errno = (err); } } while(0)
 #endif
 #else /* ERRNO */
 #define set_errno(err)

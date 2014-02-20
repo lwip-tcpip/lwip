@@ -97,6 +97,9 @@ HISTORY
  ++ Bugfixes:
 
   2014-02-20: Simon Goldschmidt
+  * sockets.c: fixed bug #39882 No function shall set errno to 0
+
+  2014-02-20: Simon Goldschmidt
   * mib_structs.c: fixed bug #40050 SNMP problem with MIB arrays > 255
 
   2014-02-20: Simon Goldschmidt
