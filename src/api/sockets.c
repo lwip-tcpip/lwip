@@ -2576,7 +2576,7 @@ lwip_ioctl(int s, long cmd, void *argp)
       buflen = p->tot_len;
       buflen -= sock->lastoffset;
 
-      *((u16_t*)argp) += buflen;
+      *((int*)argp) += buflen;
     }
 
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_ioctl(%d, FIONREAD, %p) = %"U16_F"\n", s, argp, *((u16_t*)argp)));
