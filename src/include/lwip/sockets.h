@@ -41,6 +41,7 @@
 #include <stddef.h> /* for size_t */
 
 #include "lwip/ip_addr.h"
+#include "lwip/err.h"
 #include "lwip/inet.h"
 #include "lwip/inet6.h"
 
@@ -104,6 +105,30 @@ struct sockaddr_storage {
 #if !defined(socklen_t) && !defined(SOCKLEN_T_DEFINED)
 typedef u32_t socklen_t;
 #endif
+
+struct lwip_sock;
+
+/** This struct is used to pass data to the set/getsockopt_internal
+ * functions running in tcpip_thread context (only a void* is allowed) */
+struct lwip_setgetsockopt_data {
+  /** socket struct for which to change options */
+  struct lwip_sock *sock;
+#ifdef LWIP_DEBUG
+  /** socket index for which to change options */
+  int s;
+#endif /* LWIP_DEBUG */
+  /** level of the option to process */
+  int level;
+  /** name of the option to process */
+  int optname;
+  /** set: value to set the option to
+    * get: value of the option is stored here */
+  void *optval;
+  /** size of *optval */
+  socklen_t *optlen;
+  /** if an error occures, it is temporarily stored here */
+  err_t err;
+};
 
 /* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1

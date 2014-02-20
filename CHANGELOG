@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2014-02-20: Simon Goldschmidt (based on patch by Artem Pisarenko)
+  * patch #7885: modification of api modules to support FreeRTOS-MPU
+    (don't pass stack-pointers to other threads)
+
   2014-02-05: Simon Goldschmidt (patch by "xtian" and "alex_ab")
   * patch #6537/#7858: TCP window scaling support
 

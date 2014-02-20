@@ -48,6 +48,12 @@
 extern "C" {
 #endif
 
+#if LWIP_MPU_COMPATIBLE
+#define API_MSG_M_DEF(m)  m
+#else /* LWIP_MPU_COMPATIBLE */
+#define API_MSG_M_DEF(m)  *m
+#endif /* LWIP_MPU_COMPATIBLE */
+
 /* For the netconn API, these values are use as a bitmask! */
 #define NETCONN_SHUT_RD   1
 #define NETCONN_SHUT_WR   2
@@ -75,13 +81,13 @@ struct api_msg_msg {
     } n;
     /** used for lwip_netconn_do_bind and lwip_netconn_do_connect */
     struct {
-      ip_addr_t *ipaddr;
+      ip_addr_t API_MSG_M_DEF(ipaddr);
       u16_t port;
     } bc;
     /** used for lwip_netconn_do_getaddr */
     struct {
-      ipX_addr_t *ipaddr;
-      u16_t *port;
+      ipX_addr_t API_MSG_M_DEF(ipaddr);
+      u16_t API_MSG_M_DEF(port);
       u8_t local;
     } ad;
     /** used for lwip_netconn_do_write */
@@ -104,8 +110,8 @@ struct api_msg_msg {
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
     /** used for lwip_netconn_do_join_leave_group */
     struct {
-      ipX_addr_t *multiaddr;
-      ipX_addr_t *netif_addr;
+      ipX_addr_t API_MSG_M_DEF(multiaddr);
+      ipX_addr_t API_MSG_M_DEF(netif_addr);
       enum netconn_igmp join_or_leave;
     } jl;
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
@@ -136,12 +142,12 @@ struct dns_api_msg {
   /** Hostname to query or dotted IP address string */
   const char *name;
   /** Rhe resolved address is stored here */
-  ip_addr_t *addr;
+  ip_addr_t API_MSG_M_DEF(addr);
   /** This semaphore is posted when the name is resolved, the application thread
       should wait on it. */
-  sys_sem_t *sem;
+  sys_sem_t API_MSG_M_DEF(sem);
   /** Errors are given back here */
-  err_t *err;
+  err_t API_MSG_M_DEF(err);
 };
 #endif /* LWIP_DNS */
 

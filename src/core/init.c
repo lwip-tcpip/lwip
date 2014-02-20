@@ -232,9 +232,6 @@
 #ifdef MEMP_NUM_TCPIP_MSG
   #error "MEMP_NUM_TCPIP_MSG option is deprecated. Remove it from your lwipopts.h."
 #endif
-#ifdef MEMP_NUM_API_MSG
-  #error "MEMP_NUM_API_MSG option is deprecated. Remove it from your lwipopts.h."
-#endif
 #ifdef TCP_REXMIT_DEBUG
   #error "TCP_REXMIT_DEBUG option is deprecated. Remove it from your lwipopts.h."
 #endif

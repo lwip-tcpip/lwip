@@ -41,6 +41,12 @@
 extern "C" {
 #endif
 
+#if LWIP_MPU_COMPATIBLE
+#define NETIFAPI_IPADDR_DEF(m)  m
+#else /* LWIP_MPU_COMPATIBLE */
+#define NETIFAPI_IPADDR_DEF(m)  *m
+#endif /* LWIP_MPU_COMPATIBLE */
+
 typedef void (*netifapi_void_fn)(struct netif *netif);
 typedef err_t (*netifapi_errt_fn)(struct netif *netif);
 
@@ -52,9 +58,9 @@ struct netifapi_msg_msg {
   struct netif *netif;
   union {
     struct {
-      ip_addr_t *ipaddr;
-      ip_addr_t *netmask;
-      ip_addr_t *gw;
+      ip_addr_t NETIFAPI_IPADDR_DEF(ipaddr);
+      ip_addr_t NETIFAPI_IPADDR_DEF(netmask);
+      ip_addr_t NETIFAPI_IPADDR_DEF(gw);
       void *state;
       netif_init_fn init;
       netif_input_fn input;

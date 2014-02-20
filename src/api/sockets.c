@@ -51,6 +51,7 @@
 #include "lwip/raw.h"
 #include "lwip/udp.h"
 #include "lwip/tcpip.h"
+#include "lwip/memp.h"
 #include "lwip/pbuf.h"
 #if LWIP_CHECKSUM_ON_COPY
 #include "lwip/inet_chksum.h"
@@ -117,6 +118,20 @@
 #define IS_SOCK_ADDR_ALIGNED(name)      ((((mem_ptr_t)(name)) % 4) == 0)
 
 
+#define LWIP_SETGETSOCKOPT_DATA_VAR_REF(name)     API_VAR_REF(name)
+#define LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(name) API_VAR_DECLARE(struct lwip_setgetsockopt_data, name)
+#define LWIP_SETGETSOCKOPT_DATA_VAR_FREE(name)    API_VAR_FREE(MEMP_SOCKET_SETGETSOCKOPT_DATA, name)
+#if LWIP_MPU_COMPATIBLE
+#define LWIP_SETGETSOCKOPT_DATA_VAR_ALLOC(name, sock) do { \
+  name = (struct lwip_setgetsockopt_data *)memp_malloc(MEMP_SOCKET_SETGETSOCKOPT_DATA); \
+  if (name == NULL) { \
+    sock_set_errno(sock, ERR_MEM); \
+    return -1; \
+  } }while(0)
+#else /* LWIP_MPU_COMPATIBLE */
+#define LWIP_SETGETSOCKOPT_DATA_VAR_ALLOC(name, sock)
+#endif /* LWIP_MPU_COMPATIBLE */
+
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
 
@@ -158,28 +173,6 @@ struct lwip_select_cb {
   int sem_signalled;
   /** semaphore to wake up a task waiting for select */
   sys_sem_t sem;
-};
-
-/** This struct is used to pass data to the set/getsockopt_internal
- * functions running in tcpip_thread context (only a void* is allowed) */
-struct lwip_setgetsockopt_data {
-  /** socket struct for which to change options */
-  struct lwip_sock *sock;
-#ifdef LWIP_DEBUG
-  /** socket index for which to change options */
-  int s;
-#endif /* LWIP_DEBUG */
-  /** level of the option to process */
-  int level;
-  /** name of the option to process */
-  int optname;
-  /** set: value to set the option to
-    * get: value of the option is stored here */
-  void *optval;
-  /** size of *optval */
-  socklen_t *optlen;
-  /** if an error occures, it is temporarily stored here */
-  err_t err;
 };
 
 /** A struct sockaddr replacement that has the same alignment as sockaddr_in/
@@ -1526,7 +1519,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
   err_t err = ERR_OK;
   struct lwip_sock *sock = get_socket(s);
-  struct lwip_setgetsockopt_data data;
+  LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 
   if (!sock) {
     return -1;
@@ -1724,19 +1717,21 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   }
 
   /* Now do the actual option processing */
-  data.sock = sock;
+  LWIP_SETGETSOCKOPT_DATA_VAR_ALLOC(data, sock);
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).sock = sock;
 #ifdef LWIP_DEBUG
-  data.s = s;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).s = s;
 #endif /* LWIP_DEBUG */
-  data.level = level;
-  data.optname = optname;
-  data.optval = optval;
-  data.optlen = optlen;
-  data.err = err;
-  tcpip_callback(lwip_getsockopt_internal, &data);
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).level = level;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optname = optname;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optval = optval;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optlen = optlen;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err = err;
+  tcpip_callback(lwip_getsockopt_internal, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
   sys_arch_sem_wait(&sock->conn->op_completed, 0);
   /* maybe lwip_getsockopt_internal has changed err */
-  err = data.err;
+  err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
+  LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
 
   sock_set_errno(sock, err);
   return err ? -1 : 0;
@@ -1972,7 +1967,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 {
   struct lwip_sock *sock = get_socket(s);
   err_t err = ERR_OK;
-  struct lwip_setgetsockopt_data data;
+  LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 
   if (!sock) {
     return -1;
@@ -2181,19 +2176,21 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
 
 
   /* Now do the actual option processing */
-  data.sock = sock;
+  LWIP_SETGETSOCKOPT_DATA_VAR_ALLOC(data, sock);
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).sock = sock;
 #ifdef LWIP_DEBUG
-  data.s = s;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).s = s;
 #endif /* LWIP_DEBUG */
-  data.level = level;
-  data.optname = optname;
-  data.optval = (void*)optval;
-  data.optlen = &optlen;
-  data.err = err;
-  tcpip_callback(lwip_setsockopt_internal, &data);
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).level = level;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optname = optname;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optval = (void*)optval;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optlen = &optlen;
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err = err;
+  tcpip_callback(lwip_setsockopt_internal, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
   sys_arch_sem_wait(&sock->conn->op_completed, 0);
   /* maybe lwip_setsockopt_internal has changed err */
-  err = data.err;
+  err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
+  LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
 
   sock_set_errno(sock, err);
   return err ? -1 : 0;

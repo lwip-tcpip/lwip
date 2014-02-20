@@ -92,6 +92,16 @@
 #define SMEMCPY(dst,src,len)            memcpy(dst,src,len)
 #endif
 
+/**
+ * LWIP_MPU_COMPATIBLE: enables special memory management mechanism
+ * which makes lwip able to work on MPU (Memory Protection Unit) system
+ * by not passing stack-pointers to other threads
+ * (this decreases performance)
+ */
+#ifndef LWIP_MPU_COMPATIBLE
+#define LWIP_MPU_COMPATIBLE             0
+#endif
+
 /*
    ------------------------------------
    ---------- Memory options ----------
@@ -412,6 +422,33 @@
  */
 #ifndef PBUF_POOL_SIZE
 #define PBUF_POOL_SIZE                  16
+#endif
+
+/** MEMP_NUM_API_MSG: the number of concurrently active calls to various
+ * socket, netconn, and tcpip functions
+ */
+#ifndef MEMP_NUM_API_MSG
+#define MEMP_NUM_API_MSG                MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_DNS_API_MSG: the number of concurrently active calls to netconn_gethostbyname
+ */
+#ifndef MEMP_NUM_DNS_API_MSG
+#define MEMP_NUM_DNS_API_MSG            MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA: the number of concurrently active calls
+ * to getsockopt/setsockopt
+ */
+#ifndef MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA
+#define MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA MEMP_NUM_TCPIP_MSG_API
+#endif
+
+/** MEMP_NUM_NETIFAPI_MSG: the number of concurrently active calls to the
+ * netifapi functions
+ */
+#ifndef MEMP_NUM_NETIFAPI_MSG
+#define MEMP_NUM_NETIFAPI_MSG           MEMP_NUM_TCPIP_MSG_API
 #endif
 
 /*

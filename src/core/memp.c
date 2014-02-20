@@ -48,6 +48,7 @@
 #include "lwip/igmp.h"
 #include "lwip/api.h"
 #include "lwip/api_msg.h"
+#include "lwip/sockets.h"
 #include "lwip/tcpip.h"
 #include "lwip/sys.h"
 #include "lwip/timers.h"
