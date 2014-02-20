@@ -1270,7 +1270,7 @@
    ------------------------------------
 */
 /**
- * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1) and loopif.c
+ * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1)
  */
 #ifndef LWIP_HAVE_LOOPIF
 #define LWIP_HAVE_LOOPIF                0
