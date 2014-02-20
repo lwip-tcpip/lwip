@@ -550,10 +550,6 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
    return -1;
   }
 
-  /* check size, familiy and alignment of 'name' */
-  LWIP_ERROR("lwip_connect: invalid address", IS_SOCK_ADDR_LEN_VALID(namelen) &&
-             IS_SOCK_ADDR_TYPE_VALID_OR_UNSPEC(name) && IS_SOCK_ADDR_ALIGNED(name),
-             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
   LWIP_UNUSED_ARG(namelen);
   if (name->sa_family == AF_UNSPEC) {
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, AF_UNSPEC)\n", s));
@@ -561,6 +557,12 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
   } else {
     ipX_addr_t remote_addr;
     u16_t remote_port;
+
+    /* check size, familiy and alignment of 'name' */
+    LWIP_ERROR("lwip_connect: invalid address", IS_SOCK_ADDR_LEN_VALID(namelen) &&
+               IS_SOCK_ADDR_TYPE_VALID_OR_UNSPEC(name) && IS_SOCK_ADDR_ALIGNED(name),
+               sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+
     SOCKADDR_TO_IPXADDR_PORT((name->sa_family == AF_INET6), name, &remote_addr, remote_port);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
     ipX_addr_debug_print(name->sa_family == AF_INET6, SOCKETS_DEBUG, &remote_addr);
