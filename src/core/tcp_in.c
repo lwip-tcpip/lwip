@@ -348,7 +348,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           u16_t acked;
 #if LWIP_WND_SCALE
           /* pcb->acked is u32_t but the sent callback only takes a u16_t,
-             so we might have to call it multiple timess. */
+             so we might have to call it multiple times. */
           u32_t pcb_acked = pcb->acked;
           while(pcb_acked > 0) {
             acked = (u16_t)LWIP_MIN(pcb_acked, 0xffffu);
