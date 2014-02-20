@@ -496,7 +496,9 @@
 #endif
 
 /**
- * ETHARP_SUPPORT_VLAN==1: support receiving ethernet packets with VLAN header.
+ * ETHARP_SUPPORT_VLAN==1: support receiving and sending ethernet packets with
+ * VLAN header. See the description of LWIP_HOOK_VLAN_CHECK and
+ * LWIP_HOOK_VLAN_SET hooks to check/set VLAN headers.
  * Additionally, you can define ETHARP_VLAN_CHECK to an u16_t VLAN ID to check.
  * If ETHARP_VLAN_CHECK is defined, only VLAN-traffic for this VLAN is accepted.
  * If ETHARP_VLAN_CHECK is not defined, all traffic is accepted.
@@ -1145,7 +1147,11 @@
  * Ethernet.
  */
 #ifndef PBUF_LINK_HLEN
+#ifdef LWIP_HOOK_VLAN_SET
+#define PBUF_LINK_HLEN                  (18 + ETH_PAD_SIZE)
+#else /* LWIP_HOOK_VLAN_SET */
 #define PBUF_LINK_HLEN                  (14 + ETH_PAD_SIZE)
+#endif /* LWIP_HOOK_VLAN_SET */
 #endif
 
 /**
@@ -2211,6 +2217,29 @@
  * - dest: destination IPv4 address
  * Returns the destination netif or NULL if no destination netif is found. In
  * that case, ip_route() continues as normal.
+ */
+
+/**
+ * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
+ * - called from ethernet_input() if VLAN support is enabled
+ * - netif: struct netif on which the packet has been received
+ * - eth_hdr: struct eth_hdr of the packet
+ * - vlan_hdr: struct eth_vlan_hdr of the packet
+ * Return values:
+ * - 0: Packet must be dropped.
+ * - != 0: Packet must be accepted.
+ */
+
+/**
+ * LWIP_HOOK_VLAN_SET(netif, eth_hdr, vlan_hdr):
+ * - called from etharp_raw() and etharp_send_ip() if VLAN support is enabled
+ * - netif: struct netif that the packet will be sent through
+ * - eth_hdr: struct eth_hdr of the packet
+ * - vlan_hdr: struct eth_vlan_hdr of the packet
+ * Return values:
+ * - 0: Packet shall not contain VLAN header.
+ * - != 0: Packet shall contain VLAN header.
+ * Hook can be used to set prio_vid field of vlan_hdr.
  */
 
 /*
