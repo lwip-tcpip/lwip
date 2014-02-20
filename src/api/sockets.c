@@ -2521,7 +2521,7 @@ lwip_ioctl(int s, long cmd, void *argp)
   u8_t val;
 #if LWIP_SO_RCVBUF
   u16_t buflen = 0;
-  s16_t recv_avail;
+  int recv_avail;
 #endif /* LWIP_SO_RCVBUF */
 
   if (!sock) {
@@ -2565,7 +2565,7 @@ lwip_ioctl(int s, long cmd, void *argp)
     if (recv_avail < 0) {
       recv_avail = 0;
     }
-    *((u16_t*)argp) = (u16_t)recv_avail;
+    *((int*)argp) = recv_avail;
 
     /* Check if there is data left from the last recv operation. /maq 041215 */
     if (sock->lastdata) {

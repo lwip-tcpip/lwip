@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-02-20: Simon Goldschmidt
+  * api.h, sockets.c: fixed bug #41499 netconn::recv_avail can overflow
+
   2014-01-08: Stathis Voukelatos
   * memp_std.h: patch #7928 Fixed size calculation in MALLOC memory pool
     creation macro

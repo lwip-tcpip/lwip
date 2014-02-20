@@ -203,7 +203,7 @@ struct netconn {
   /** number of bytes currently in recvmbox to be received,
       tested against recv_bufsize to limit bytes on recvmbox
       for UDP and RAW, used for FIONREAD */
-  s16_t recv_avail;
+  int recv_avail;
 #endif /* LWIP_SO_RCVBUF */
   /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
   u8_t flags;
