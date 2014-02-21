@@ -318,9 +318,9 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
   /* If requested, based on the IPV6_CHECKSUM socket option per RFC3542,
      compute the checksum and update the checksum in the payload. */
   if (PCB_ISIPV6(pcb) && pcb->chksum_reqd) {
-    u16_t chksum;
-    chksum = ip6_chksum_pseudo(q, pcb->protocol, q->tot_len, ipX_2_ip6(src_ip), ipX_2_ip6(dst_ip));
-    *(u16_t *)(((u8_t *)q->payload) + pcb->chksum_offset) = chksum;
+    u16_t chksum = ip6_chksum_pseudo(p, pcb->protocol, p->tot_len, ipX_2_ip6(src_ip), ipX_2_ip6(dst_ip));
+    LWIP_ASSERT("Checksum must fit into first pbuf", p->len >= (pcb->chksum_offset + 2));
+    SMEMCPY(((u8_t *)p->payload) + pcb->chksum_offset, &chksum, sizeof(u16_t));
   }
 #endif
 
