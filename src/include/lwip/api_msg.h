@@ -140,7 +140,11 @@ struct api_msg {
     (see netconn_gethostbyname). */
 struct dns_api_msg {
   /** Hostname to query or dotted IP address string */
+#if LWIP_MPU_COMPATIBLE
+  char name[DNS_MAX_NAME_LENGTH];
+#else /* LWIP_MPU_COMPATIBLE */
   const char *name;
+#endif /* LWIP_MPU_COMPATIBLE */
   /** Rhe resolved address is stored here */
   ip_addr_t API_MSG_M_DEF(addr);
   /** This semaphore is posted when the name is resolved, the application thread
