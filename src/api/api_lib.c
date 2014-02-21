@@ -829,20 +829,19 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 
   API_VAR_ALLOC(struct dns_api_msg, MEMP_DNS_API_MSG, msg);
 #if LWIP_MPU_COMPATIBLE
-  if (addr == NULL) {
-    addr = IP_ADDR_ANY;
-  }
-#else
+  strncpy(API_VAR_REF(msg).name, name, DNS_MAX_NAME_LENGTH-1);
+  API_VAR_REF(msg).name[DNS_MAX_NAME_LENGTH-1] = 0;
+#else /* LWIP_MPU_COMPATIBLE */
   msg.err = &err;
   msg.sem = &sem;
   API_VAR_REF(msg).addr = API_VAR_REF(addr);
+  API_VAR_REF(msg).name = name;
 #endif /* LWIP_MPU_COMPATIBLE */
   err = sys_sem_new(API_EXPR_REF(API_VAR_REF(msg).sem), 0);
   if (err != ERR_OK) {
     API_VAR_FREE(MEMP_DNS_API_MSG, msg);
     return err;
   }
-  API_VAR_REF(msg).name = name;
 
   tcpip_callback(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg));
   sys_sem_wait(API_EXPR_REF(API_VAR_REF(msg).sem));
