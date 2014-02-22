@@ -1140,20 +1140,32 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
       /* allocate a new arp queue entry */
       new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);
       if (new_entry != NULL) {
+        unsigned int qlen = 0;
         new_entry->next = 0;
         new_entry->p = p;
         if(arp_table[i].q != NULL) {
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
           r = arp_table[i].q;
+          qlen++;
           while (r->next != NULL) {
             r = r->next;
+            qlen++;
           }
           r->next = new_entry;
         } else {
           /* queue did not exist, first item in queue */
           arp_table[i].q = new_entry;
         }
+#if ARP_QUEUE_LEN
+        if (qlen >= ARP_QUEUE_LEN) {
+          struct etharp_q_entry *old;
+          old = arp_table[i].q;
+          arp_table[i].q = arp_table[i].q->next;
+          pbuf_free(old->p);
+          memp_free(MEMP_ARP_QUEUE, old);
+        }
+#endif
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
         result = ERR_OK;
       } else {

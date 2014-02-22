@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+ 2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
+  * etharp.c, opt.h: fixed bug #34681 Limit ARP queue length by ARP_QUEUE_LEN (=3)
+
   2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
   * etharp.h/.c: fixed bug #34682 Limit ARP request flood for unresolved entry
 
