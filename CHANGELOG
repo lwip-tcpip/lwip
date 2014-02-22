@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
+  * etharp.h/.c: fixed bug #34682 Limit ARP request flood for unresolved entry
+
   2014-02-20: Simon Goldschmidt
   * tcp_out.c: fixed bug #39683 Assertion "seg->tcphdr not aligned" failed with
     MEM_ALIGNMENT = 8
