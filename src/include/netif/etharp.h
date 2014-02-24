@@ -137,8 +137,8 @@ PACK_STRUCT_END
 #define SIZEOF_ETHARP_PACKET_TX SIZEOF_ETHARP_PACKET
 #endif /* ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET) */
 
-/** 5 seconds period */
-#define ARP_TMR_INTERVAL 5000
+/** 1 seconds period */
+#define ARP_TMR_INTERVAL 1000
 
 #define ETHTYPE_ARP       0x0806U
 #define ETHTYPE_IP        0x0800U

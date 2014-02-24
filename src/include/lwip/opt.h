@@ -497,6 +497,14 @@
 #define ARP_QUEUEING                    0
 #endif
 
+/** The maximum number of packets which may be queued for each
+ *  unresolved address by other network layers. Defaults to 3, 0 means disabled.
+ *  Old packets are dropped, new packets are queued.
+ */ 
+#ifndef ARP_QUEUE_LEN
+#define ARP_QUEUE_LEN 3
+#endif
+
 /**
  * ETHARP_TRUST_IP_MAC==1: Incoming IP packets cause the ARP table to be
  * updated with the source MAC and IP addresses supplied in the packet.

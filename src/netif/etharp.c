@@ -74,22 +74,22 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 #if LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 /** the time an ARP entry stays valid after its last update,
- *  for ARP_TMR_INTERVAL = 5000, this is
- *  (240 * 5) seconds = 20 minutes.
+ *  for ARP_TMR_INTERVAL = 1000, this is
+ *  (60 * 20) seconds = 20 minutes.
  */
-#define ARP_MAXAGE              240
+#define ARP_MAXAGE              (60*20)
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
-#define ARP_AGE_REREQUEST_USED  (ARP_MAXAGE - 12)
+#define ARP_AGE_REREQUEST_USED  (ARP_MAXAGE - 60)
 
 /** the time an ARP entry stays pending after first request,
- *  for ARP_TMR_INTERVAL = 5000, this is
- *  (2 * 5) seconds = 10 seconds.
+ *  for ARP_TMR_INTERVAL = 1000, this is
+ *  10 seconds.
  * 
  *  @internal Keep this number at least 2, otherwise it might
  *  run out instantly if the timeout occurs directly after a request.
  */
-#define ARP_MAXPENDING 2
+#define ARP_MAXPENDING 5
 
 #define HWTYPE_ETHERNET 1
 
@@ -232,12 +232,12 @@ etharp_tmr(void)
            re-send an ARP request. */
         arp_table[i].state = ETHARP_STATE_STABLE;
       }
-#if ARP_QUEUEING
       /* still pending entry? (not expired) */
-      if (arp_table[i].state == ETHARP_STATE_PENDING) {
+      else if (arp_table[i].state == ETHARP_STATE_PENDING) {
         /* resend an ARP query here? */
+        if (etharp_request(arp_table[i].netif, &arp_table[i].ipaddr) != ERR_OK) {
+        }
       }
-#endif /* ARP_QUEUEING */
     }
   }
 }
@@ -1041,6 +1041,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
 {
   struct eth_addr * srcaddr = (struct eth_addr *)netif->hwaddr;
   err_t result = ERR_MEM;
+  int is_new_entry = 0;
   s8_t i; /* ARP entry index */
 
   /* non-unicast address? */
@@ -1066,7 +1067,10 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
 
   /* mark a fresh entry as pending (we just sent a request) */
   if (arp_table[i].state == ETHARP_STATE_EMPTY) {
+    is_new_entry = 1;
     arp_table[i].state = ETHARP_STATE_PENDING;
+    /* record network interface for re-sending arp request in etharp_tmr */
+    arp_table[i].netif = netif;
   }
 
   /* { i is either a STABLE or (new or existing) PENDING entry } */
@@ -1074,8 +1078,8 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
   ((arp_table[i].state == ETHARP_STATE_PENDING) ||
    (arp_table[i].state >= ETHARP_STATE_STABLE)));
 
-  /* do we have a pending entry? or an implicit query request? */
-  if ((arp_table[i].state == ETHARP_STATE_PENDING) || (q == NULL)) {
+  /* do we have a new entry? or an implicit query request? */
+  if (is_new_entry || (q == NULL)) {
     /* try to resolve it; send out ARP request */
     result = etharp_request(netif, ipaddr);
     if (result != ERR_OK) {
@@ -1136,20 +1140,32 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
       /* allocate a new arp queue entry */
       new_entry = (struct etharp_q_entry *)memp_malloc(MEMP_ARP_QUEUE);
       if (new_entry != NULL) {
+        unsigned int qlen = 0;
         new_entry->next = 0;
         new_entry->p = p;
         if(arp_table[i].q != NULL) {
           /* queue was already existent, append the new entry to the end */
           struct etharp_q_entry *r;
           r = arp_table[i].q;
+          qlen++;
           while (r->next != NULL) {
             r = r->next;
+            qlen++;
           }
           r->next = new_entry;
         } else {
           /* queue did not exist, first item in queue */
           arp_table[i].q = new_entry;
         }
+#if ARP_QUEUE_LEN
+        if (qlen >= ARP_QUEUE_LEN) {
+          struct etharp_q_entry *old;
+          old = arp_table[i].q;
+          arp_table[i].q = arp_table[i].q->next;
+          pbuf_free(old->p);
+          memp_free(MEMP_ARP_QUEUE, old);
+        }
+#endif
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_query: queued packet %p on ARP entry %"S16_F"\n", (void *)q, (s16_t)i));
         result = ERR_OK;
       } else {
