@@ -872,7 +872,7 @@ netif_poll_all(void)
 
 #if LWIP_IPV6
 s8_t
-netif_matches_ip6_addr(struct netif * netif, ip6_addr_t * ip6addr)
+netif_get_ip6_addr_match(struct netif * netif, ip6_addr_t * ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {

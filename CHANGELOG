@@ -97,6 +97,10 @@ HISTORY
  ++ Bugfixes:
 
   2014-02-25: Simon Goldschmidt
+  * netif.c/.h, udp.c: fixed bug #39225 udp.c uses netif_matches_ip6_addr() incorrectly;
+    renamed function netif_matches_ip6_addr() to netif_get_ip6_addr_match()
+
+  2014-02-25: Simon Goldschmidt
   * igmp.c: fixed bug #39145 IGMP membership report for 224.0.0.1
 
   2014-02-22: Simon Goldschmidt (patch by Amir Shalem)

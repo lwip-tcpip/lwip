@@ -307,7 +307,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   } else {
 #if LWIP_IPV6
     if (ip_current_is_v6()) {
-      for_us = netif_matches_ip6_addr(inp, ip6_current_dest_addr());
+      for_us = netif_get_ip6_addr_match(inp, ip6_current_dest_addr()) >= 0;
     } else
 #endif /* LWIP_IPV6 */
     {
@@ -721,7 +721,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
       }
     } else {
       /* use UDP PCB local IPv6 address as source address, if still valid. */
-      if (netif_matches_ip6_addr(netif, ipX_2_ip6(&pcb->local_ip)) < 0) {
+      if (netif_get_ip6_addr_match(netif, ipX_2_ip6(&pcb->local_ip)) < 0) {
         /* Address isn't valid anymore. */
         if (q != p) {
           /* free the header pbuf */
