@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-02-25: Simon Goldschmidt
+  ip4.c: fixed bug #39514 ip_route() may return an IPv6-only interface
+
   2014-02-25: Simon Goldschmidt, patch by Fatih Asici
   * pbuf.c: fixed bug #39356 Wrong increment in pbuf_memfind()
 
