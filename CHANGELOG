@@ -96,7 +96,10 @@ HISTORY
 
  ++ Bugfixes:
 
- 2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
+  2014-02-25: Simon Goldschmidt
+  * igmp.c: fixed bug #39145 IGMP membership report for 224.0.0.1
+
+  2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
   * etharp.c, opt.h: fixed bug #34681 Limit ARP queue length by ARP_QUEUE_LEN (=3)
 
   2014-02-22: Simon Goldschmidt (patch by Amir Shalem)

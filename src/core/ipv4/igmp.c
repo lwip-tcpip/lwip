@@ -271,7 +271,7 @@ igmp_report_groups(struct netif *netif)
   LWIP_DEBUGF(IGMP_DEBUG, ("igmp_report_groups: sending IGMP reports on if %p\n", netif));
 
   while (group != NULL) {
-    if (group->netif == netif) {
+    if ((group->netif == netif) && (!(ip_addr_cmp(&(group->group_address), &allsystems)))) {
       igmp_delaying_member(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
     }
     group = group->next;
@@ -674,8 +674,10 @@ igmp_tmr(void)
 static void
 igmp_timeout(struct igmp_group *group)
 {
-  /* If the state is IGMP_GROUP_DELAYING_MEMBER then we send a report for this group */
-  if (group->group_state == IGMP_GROUP_DELAYING_MEMBER) {
+  /* If the state is IGMP_GROUP_DELAYING_MEMBER then we send a report for this group
+     (unless it is the allsystems group) */
+  if ((group->group_state == IGMP_GROUP_DELAYING_MEMBER) &&
+      (!(ip_addr_cmp(&(group->group_address), &allsystems)))) {
     LWIP_DEBUGF(IGMP_DEBUG, ("igmp_timeout: report membership for group with address "));
     ip_addr_debug_print(IGMP_DEBUG, &(group->group_address));
     LWIP_DEBUGF(IGMP_DEBUG, (" on if %p\n", group->netif));
