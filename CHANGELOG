@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-02-25: Simon Goldschmidt, patch by Fatih Asici
+  * pbuf.c: fixed bug #39356 Wrong increment in pbuf_memfind()
+
   2014-02-25: Simon Goldschmidt
   * netif.c/.h, udp.c: fixed bug #39225 udp.c uses netif_matches_ip6_addr() incorrectly;
     renamed function netif_matches_ip6_addr() to netif_get_ip6_addr_match()
