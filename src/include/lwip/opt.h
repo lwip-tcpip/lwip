@@ -1716,6 +1716,7 @@
 #else
 
 #define LINK_STATS                      0
+#define ETHARP_STATS                    0
 #define IP_STATS                        0
 #define IPFRAG_STATS                    0
 #define ICMP_STATS                      0
