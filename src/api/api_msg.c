@@ -1455,7 +1455,13 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
 #endif /* LWIP_UDP */
 #if LWIP_TCP
     case NETCONN_TCP:
-      API_EXPR_DEREF(msg->msg.ad.port) = (msg->msg.ad.local?msg->conn->pcb.tcp->local_port:msg->conn->pcb.tcp->remote_port);
+      if ((msg->msg.ad.local == 0) &&
+          ((msg->conn->pcb.tcp->state == CLOSED) || (msg->conn->pcb.tcp->state == LISTEN))) {
+        /* pcb is not connected and remote name is requested */
+        msg->err = ERR_CONN;
+      } else {
+        API_EXPR_DEREF(msg->msg.ad.port) = (msg->msg.ad.local ? msg->conn->pcb.tcp->local_port : msg->conn->pcb.tcp->remote_port);
+      }
       break;
 #endif /* LWIP_TCP */
     default:

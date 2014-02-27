@@ -1478,6 +1478,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   union sockaddr_aligned saddr;
   ipX_addr_t naddr;
   u16_t port;
+  err_t err;
 
   sock = get_socket(s);
   if (!sock) {
@@ -1486,7 +1487,11 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 
   /* get the IP address and port */
   /* @todo: this does not work for IPv6, yet */
-  netconn_getaddr(sock->conn, ipX_2_ip(&naddr), &port, local);
+  err = netconn_getaddr(sock->conn, ipX_2_ip(&naddr), &port, local);
+  if (err != ERR_OK) {
+    sock_set_errno(sock, err_to_errno(err));
+    return -1;
+  }
   IPXADDR_PORT_TO_SOCKADDR(NETCONNTYPE_ISIPV6(netconn_type(sock->conn)),
     &saddr, &naddr, port);
 

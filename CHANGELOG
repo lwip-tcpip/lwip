@@ -97,6 +97,10 @@ HISTORY
  ++ Bugfixes:
 
   2014-02-27: Simon Goldschmidt
+  * api_msg.c, sockets.c: fixed bug #38404 getpeeraddr returns success on
+    unconnected/listening TCP sockets
+
+  2014-02-27: Simon Goldschmidt
   * sockets.c: fixed bug #41729 Some socket functions return Exyz instead of -1
 
   2014-02-25: Simon Goldschmidt
