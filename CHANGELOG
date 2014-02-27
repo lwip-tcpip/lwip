@@ -97,6 +97,9 @@ HISTORY
  ++ Bugfixes:
 
   2014-02-27: Simon Goldschmidt
+  * dhcp.c: fixed bug #40303 DHCP xid renewed when sending a DHCPREQUEST
+
+  2014-02-27: Simon Goldschmidt
   * raw.c: fixed bug #41680 raw socket can not receive IPv6 packet when
     IP_SOF_BROADCAST_RECV==1
 
