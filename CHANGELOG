@@ -97,6 +97,10 @@ HISTORY
  ++ Bugfixes:
 
   2014-02-27: Simon Goldschmidt
+  * raw.c: fixed bug #41680 raw socket can not receive IPv6 packet when
+    IP_SOF_BROADCAST_RECV==1
+
+  2014-02-27: Simon Goldschmidt
   * api_msg.c, sockets.c: fixed bug #38404 getpeeraddr returns success on
     unconnected/listening TCP sockets
 
