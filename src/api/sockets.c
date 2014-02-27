@@ -612,7 +612,7 @@ lwip_listen(int s, int backlog)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d) failed, err=%d\n", s, err));
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
-      return EOPNOTSUPP;
+      return -1;
     }
     sock_set_errno(sock, err_to_errno(err));
     return -1;
@@ -1447,11 +1447,11 @@ lwip_shutdown(int s, int how)
   if (sock->conn != NULL) {
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
-      return EOPNOTSUPP;
+      return -1;
     }
   } else {
     sock_set_errno(sock, ENOTCONN);
-    return ENOTCONN;
+    return -1;
   }
 
   if (how == SHUT_RD) {
@@ -1463,7 +1463,7 @@ lwip_shutdown(int s, int how)
     shut_tx = 1;
   } else {
     sock_set_errno(sock, EINVAL);
-    return EINVAL;
+    return -1;
   }
   err = netconn_shutdown(sock->conn, shut_rx, shut_tx);
 
