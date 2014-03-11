@@ -223,13 +223,13 @@ static const int err_to_errno_table[] = {
   ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
     err_to_errno_table[-(err)] : EIO)
 
-#ifdef ERRNO
+#if LWIP_SOCKET_SET_ERRNO
 #ifndef set_errno
 #define set_errno(err) do { if (err) { errno = (err); } } while(0)
 #endif
-#else /* ERRNO */
+#else /* LWIP_SOCKET_SET_ERRNO */
 #define set_errno(err)
-#endif /* ERRNO */
+#endif /* LWIP_SOCKET_SET_ERRNO */
 
 #define sock_set_errno(sk, e) do { \
   sk->err = (e); \

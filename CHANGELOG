@@ -96,6 +96,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-03-11: Simon Goldschmidt (patch by Mason)
+  * opt.h, sockets.c: fixed bug #35928 BSD sockets functions must set errno for
+    POSIX-compliance
+
   2014-02-27: Simon Goldschmidt
   * dhcp.c: fixed bug #40303 DHCP xid renewed when sending a DHCPREQUEST
 
