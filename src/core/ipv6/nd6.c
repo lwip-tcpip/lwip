@@ -723,7 +723,7 @@ nd6_tmr(void)
         /* Try to get an address on this netif that is invalid.
          * Skip 0 index (link-local address) */
         for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
-          if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDRESS_STATE_INVALID) {
+          if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDR_INVALID) {
             /* Generate an address using this prefix and interface ID from link-local address. */
             prefix_list[i].netif->ip6_addr[j].addr[0] = prefix_list[i].prefix.addr[0];
             prefix_list[i].netif->ip6_addr[j].addr[1] = prefix_list[i].prefix.addr[1];

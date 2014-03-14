@@ -161,7 +161,41 @@ HISTORY
 
  ++ Bugfixes:
 
- 2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
+  2014-03-14: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #36153 TCP Cheksum error if LWIP_CHECKSUM_ON_COPY=1
+
+  2014-03-11: Simon Goldschmidt (patch by Mason)
+  * opt.h, sockets.c: fixed bug #35928 BSD sockets functions must set errno for
+    POSIX-compliance
+
+  2014-02-27: Simon Goldschmidt
+  * dhcp.c: fixed bug #40303 DHCP xid renewed when sending a DHCPREQUEST
+
+  2014-02-27: Simon Goldschmidt
+  * raw.c: fixed bug #41680 raw socket can not receive IPv6 packet when
+    IP_SOF_BROADCAST_RECV==1
+
+  2014-02-27: Simon Goldschmidt
+  * api_msg.c, sockets.c: fixed bug #38404 getpeeraddr returns success on
+    unconnected/listening TCP sockets
+
+  2014-02-27: Simon Goldschmidt
+  * sockets.c: fixed bug #41729 Some socket functions return Exyz instead of -1
+
+  2014-02-25: Simon Goldschmidt
+  * ip4.c: fixed bug #39514 ip_route() may return an IPv6-only interface
+
+  2014-02-25: Simon Goldschmidt, patch by Fatih Asici
+  * pbuf.c: fixed bug #39356 Wrong increment in pbuf_memfind()
+
+  2014-02-25: Simon Goldschmidt
+  * netif.c/.h, udp.c: fixed bug #39225 udp.c uses netif_matches_ip6_addr() incorrectly;
+    renamed function netif_matches_ip6_addr() to netif_get_ip6_addr_match()
+
+  2014-02-25: Simon Goldschmidt
+  * igmp.c: fixed bug #39145 IGMP membership report for 224.0.0.1
+
+  2014-02-22: Simon Goldschmidt (patch by Amir Shalem)
   * etharp.c, opt.h: fixed bug #34681 Limit ARP queue length by ARP_QUEUE_LEN (=3)
 
   2014-02-22: Simon Goldschmidt (patch by Amir Shalem)

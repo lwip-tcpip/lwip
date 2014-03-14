@@ -77,7 +77,7 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
  *  for ARP_TMR_INTERVAL = 1000, this is
  *  (60 * 20) seconds = 20 minutes.
  */
-#define ARP_MAXAGE              (60*20)
+#define ARP_MAXAGE              1200
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
 #define ARP_AGE_REREQUEST_USED  (ARP_MAXAGE - 60)
@@ -114,8 +114,8 @@ struct etharp_entry {
   ip_addr_t ipaddr;
   struct netif *netif;
   struct eth_addr ethaddr;
+  u16_t ctime;
   u8_t state;
-  u8_t ctime;
 };
 
 static struct etharp_entry arp_table[ARP_TABLE_SIZE];

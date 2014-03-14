@@ -1192,12 +1192,10 @@ pbuf_memfind(struct pbuf* p, const void* mem, u16_t mem_len, u16_t start_offset)
   u16_t i;
   u16_t max = p->tot_len - mem_len;
   if (p->tot_len >= mem_len + start_offset) {
-    for(i = start_offset; i <= max; ) {
+    for(i = start_offset; i <= max; i++) {
       u16_t plus = pbuf_memcmp(p, i, mem, mem_len);
       if (plus == 0) {
         return i;
-      } else {
-        i += plus;
       }
     }
   }

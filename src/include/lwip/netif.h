@@ -370,7 +370,7 @@ void netif_poll_all(void);
 #define netif_ip6_addr(netif, i)  (&((netif)->ip6_addr[(i)]))
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[(i)])
 #define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[(i)] = (state))
-s8_t netif_matches_ip6_addr(struct netif * netif, ip6_addr_t * ip6addr);
+s8_t netif_get_ip6_addr_match(struct netif * netif, ip6_addr_t * ip6addr);
 void netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit);
 #endif /* LWIP_IPV6 */
 

@@ -223,13 +223,13 @@ static const int err_to_errno_table[] = {
   ((unsigned)(-(err)) < ERR_TO_ERRNO_TABLE_SIZE ? \
     err_to_errno_table[-(err)] : EIO)
 
-#ifdef ERRNO
+#if LWIP_SOCKET_SET_ERRNO
 #ifndef set_errno
 #define set_errno(err) do { if (err) { errno = (err); } } while(0)
 #endif
-#else /* ERRNO */
+#else /* LWIP_SOCKET_SET_ERRNO */
 #define set_errno(err)
-#endif /* ERRNO */
+#endif /* LWIP_SOCKET_SET_ERRNO */
 
 #define sock_set_errno(sk, e) do { \
   sk->err = (e); \
@@ -612,7 +612,7 @@ lwip_listen(int s, int backlog)
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_listen(%d) failed, err=%d\n", s, err));
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
-      return EOPNOTSUPP;
+      return -1;
     }
     sock_set_errno(sock, err_to_errno(err));
     return -1;
@@ -1447,11 +1447,11 @@ lwip_shutdown(int s, int how)
   if (sock->conn != NULL) {
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_TCP) {
       sock_set_errno(sock, EOPNOTSUPP);
-      return EOPNOTSUPP;
+      return -1;
     }
   } else {
     sock_set_errno(sock, ENOTCONN);
-    return ENOTCONN;
+    return -1;
   }
 
   if (how == SHUT_RD) {
@@ -1463,7 +1463,7 @@ lwip_shutdown(int s, int how)
     shut_tx = 1;
   } else {
     sock_set_errno(sock, EINVAL);
-    return EINVAL;
+    return -1;
   }
   err = netconn_shutdown(sock->conn, shut_rx, shut_tx);
 
@@ -1478,6 +1478,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   union sockaddr_aligned saddr;
   ipX_addr_t naddr;
   u16_t port;
+  err_t err;
 
   sock = get_socket(s);
   if (!sock) {
@@ -1486,7 +1487,11 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
 
   /* get the IP address and port */
   /* @todo: this does not work for IPv6, yet */
-  netconn_getaddr(sock->conn, ipX_2_ip(&naddr), &port, local);
+  err = netconn_getaddr(sock->conn, ipX_2_ip(&naddr), &port, local);
+  if (err != ERR_OK) {
+    sock_set_errno(sock, err_to_errno(err));
+    return -1;
+  }
   IPXADDR_PORT_TO_SOCKADDR(NETCONNTYPE_ISIPV6(netconn_type(sock->conn)),
     &saddr, &naddr, port);
 

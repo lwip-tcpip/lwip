@@ -82,18 +82,15 @@ raw_input(struct pbuf *p, struct netif *inp)
   struct ip_hdr *iphdr;
   s16_t proto;
   u8_t eaten = 0;
-#if LWIP_IPV6
-  struct ip6_hdr *ip6hdr;
-#endif /* LWIP_IPV6 */
-
 
   LWIP_UNUSED_ARG(inp);
 
   iphdr = (struct ip_hdr *)p->payload;
 #if LWIP_IPV6
   if (IPH_V(iphdr) == 6) {
-    ip6hdr = (struct ip6_hdr *)p->payload;
+    struct ip6_hdr *ip6hdr = (struct ip6_hdr *)p->payload;
     proto = IP6H_NEXTH(ip6hdr);
+    iphdr = NULL;
   }
   else
 #endif /* LWIP_IPV6 */
@@ -113,7 +110,7 @@ raw_input(struct pbuf *p, struct netif *inp)
       /* broadcast filter? */
       if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), inp))
 #if LWIP_IPV6
-          && !PCB_ISIPV6(pcb)
+          || PCB_ISIPV6(pcb)
 #endif /* LWIP_IPV6 */
           )
 #endif /* IP_SOF_BROADCAST_RECV */
@@ -124,7 +121,14 @@ raw_input(struct pbuf *p, struct netif *inp)
           void* old_payload = p->payload;
 #endif
           /* the receive callback function did not eat the packet? */
-          eaten = pcb->recv.ip4(pcb->recv_arg, pcb, p, ip_current_src_addr());
+#if LWIP_IPV6
+          if (PCB_ISIPV6(pcb)) {
+            eaten = pcb->recv.ip6(pcb->recv_arg, pcb, p, ip6_current_src_addr());
+          } else
+#endif /* LWIP_IPV6 */
+          {
+            eaten = pcb->recv.ip4(pcb->recv_arg, pcb, p, ip_current_src_addr());
+          }
           if (eaten != 0) {
             /* receive function ate the packet */
             p = NULL;
@@ -282,7 +286,6 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
 
 #if IP_SOF_BROADCAST
 #if LWIP_IPV6
-  /* @todo: why does IPv6 not filter broadcast with SOF_BROADCAST enabled? */
   if (!PCB_ISIPV6(pcb))
 #endif /* LWIP_IPV6 */
   {

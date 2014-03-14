@@ -123,7 +123,12 @@ ip_route(ip_addr_t *dest)
   /* iterate through netifs */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     /* network mask matches? */
-    if (netif_is_up(netif)) {
+    if ((netif_is_up(netif))
+#if LWIP_IPV6
+        /* prevent using IPv6-only interfaces */
+        && (!ip_addr_isany(&(netif->ip_addr)))
+#endif /* LWIP_IPV6 */ 
+        ) {
       if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
         /* return netif on which to forward IP packet */
         return netif;

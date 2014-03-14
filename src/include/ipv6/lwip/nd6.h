@@ -328,13 +328,6 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-/* the possible states of an IP address */
-#define IP6_ADDRESS_STATE_INVALID     (0)
-#define IP6_ADDRESS_STATE_VALID       (0x4)
-#define IP6_ADDRESS_STATE_PREFERRED   (0x5) /* includes valid */
-#define IP6_ADDRESS_STATE_DEPRECATED  (0x6) /* includes valid */
-#define IP6_ADDRESS_STATE_TENTATIV    (0x8)
-
 /** 1 second period */
 #define ND6_TMR_INTERVAL 1000
 

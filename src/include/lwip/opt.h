@@ -1484,6 +1484,13 @@
 #define LWIP_SOCKET                     1
 #endif
 
+/* LWIP_SOCKET_SET_ERRNO==1: Set errno when socket functions cannot complete
+ * successfully, as required by POSIX. Default is POSIX-compliant.
+ */
+#ifndef LWIP_SOCKET_SET_ERRNO
+#define LWIP_SOCKET_SET_ERRNO           1
+#endif
+
 /**
  * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names.
  * (only used if you use sockets.c)
@@ -1707,6 +1714,7 @@
 #else
 
 #define LINK_STATS                      0
+#define ETHARP_STATS                    0
 #define IP_STATS                        0
 #define IPFRAG_STATS                    0
 #define ICMP_STATS                      0
