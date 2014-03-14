@@ -96,6 +96,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-03-14: Simon Goldschmidt
+  * tcp_out.c: Fixed bug #36153 TCP Cheksum error if LWIP_CHECKSUM_ON_COPY=1
+
   2014-03-11: Simon Goldschmidt (patch by Mason)
   * opt.h, sockets.c: fixed bug #35928 BSD sockets functions must set errno for
     POSIX-compliance

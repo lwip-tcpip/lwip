@@ -172,6 +172,7 @@ tcp_create_segment(struct tcp_pcb *pcb, struct pbuf *p, u8_t flags, u32_t seqno,
   seg->flags = optflags;
   seg->next = NULL;
   seg->p = p;
+  LWIP_ASSERT("p->tot_len >= optlen", p->tot_len >= optlen);
   seg->len = p->tot_len - optlen;
 #if TCP_OVERSIZE_DBGCHECK
   seg->oversize_left = 0;
@@ -397,6 +398,8 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
        agreed about it with the remote host. */
     optflags = TF_SEG_OPTS_TS;
     optlen = LWIP_TCP_OPT_LENGTH(TF_SEG_OPTS_TS);
+    /* ensure that segments can hold at least one data byte... */
+    mss_local = LWIP_MAX(mss_local, LWIP_TCP_OPT_LEN_TS + 1);
   }
 #endif /* LWIP_TCP_TIMESTAMPS */
 
@@ -434,6 +437,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 
     /* Usable space at the end of the last unsent segment */
     unsent_optlen = LWIP_TCP_OPT_LENGTH(last_unsent->flags);
+    LWIP_ASSERT("mss_local is too small", mss_local >= last_unsent->len + unsent_optlen);
     space = mss_local - (last_unsent->len + unsent_optlen);
 
     /*
@@ -658,6 +662,10 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
     last_unsent->len += concat_p->tot_len;
 #if TCP_CHECKSUM_ON_COPY
     if (concat_chksummed) {
+      /*if concat checksumm swapped - swap it back */
+      if (concat_chksum_swapped){
+        concat_chksum = SWAP_BYTES_IN_WORD(concat_chksum);
+      }
       tcp_seg_add_chksum(concat_chksum, concat_chksummed, &last_unsent->chksum,
         &last_unsent->chksum_swapped);
       last_unsent->flags |= TF_SEG_DATA_CHECKSUMMED;
