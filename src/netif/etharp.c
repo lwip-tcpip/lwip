@@ -954,14 +954,22 @@ etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr)
       if (!ip_addr_islinklocal(&iphdr->src))
 #endif /* LWIP_AUTOIP */
       {
-        /* interface has default gateway? */
-        if (!ip_addr_isany(&netif->gw)) {
-          /* send to hardware address of default gateway IP address */
-          dst_addr = &(netif->gw);
-        /* no default gateway available */
-        } else {
-          /* no route to destination error (default gateway missing) */
-          return ERR_RTE;
+#ifdef LWIP_HOOK_ETHARP_GET_GW
+        /* For advanced routing, a single default gateway might not be enough, so get
+           the IP address of the gateway to handle the current destination address. */
+        dst_addr = LWIP_HOOK_ETHARP_GET_GW(netif, ipaddr);
+        if(dst_addr == NULL)
+#endif /* LWIP_HOOK_ETHARP_GET_GW */
+        {
+          /* interface has default gateway? */
+          if (!ip_addr_isany(&netif->gw)) {
+            /* send to hardware address of default gateway IP address */
+            dst_addr = &(netif->gw);
+          /* no default gateway available */
+          } else {
+            /* no route to destination error (default gateway missing) */
+            return ERR_RTE;
+          }
         }
       }
     }

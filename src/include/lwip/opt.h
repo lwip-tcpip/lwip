@@ -2236,6 +2236,19 @@
  */
 
 /**
+ * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
+ * - called from etharp_output() (IPv4)
+ * - netif: the netif used for sending
+ * - dest: the destination IPv4 address
+ * Returns the IPv4 address of the gateway to handle the specified destination
+ * IPv4 address. If NULL is returned, the netif's default gateway is used.
+ * The returned address MUST be reachable on the specified netif!
+ * This function is meant to implement advanced IPv4 routing together with
+ * LWIP_HOOK_IP4_ROUTE(). The actual routing/gateway table implementation is
+ * not part of lwIP but can e.g. be hidden in the netif's state argument.
+*/
+
+/**
  * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
  * - called from ethernet_input() if VLAN support is enabled
  * - netif: struct netif on which the packet has been received
