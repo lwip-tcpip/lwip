@@ -6,6 +6,10 @@ HISTORY
 
  ++ New features:
 
+  2013-03-17: Simon Goldschmidt (patch by Ghobad Emadi)
+  * opt.h, etharp.c: Added LWIP_HOOK_ETHARP_GET_GW to implement IPv4 routing with
+    multiple gateways
+
   2013-04-20: Fatih Asici
   * opt.h, etharp.h/.c: patch #7993: Added support for transmitting packets
     with VLAN headers via hook function LWIP_HOOK_VLAN_SET and to check them
