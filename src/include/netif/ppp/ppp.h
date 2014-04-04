@@ -48,7 +48,6 @@
 #include "lwip/ip6_addr.h"
 #endif /* PPP_IPV6_SUPPORT */
 
-#include "vj.h"
 
 
 /*************************
@@ -117,6 +116,14 @@
  */
 typedef struct ppp_pcb_s ppp_pcb;
 
+/* Type definitions for BSD code. */
+#ifndef __u_char_defined
+typedef unsigned long  u_long;
+typedef unsigned int   u_int;
+typedef unsigned short u_short;
+typedef unsigned char  u_char;
+#endif
+
 #include "fsm.h"
 #include "lcp.h"
 #include "ipcp.h"
@@ -132,6 +139,9 @@ typedef struct ppp_pcb_s ppp_pcb;
 #if EAP_SUPPORT
 #include "eap.h"
 #endif /* EAP_SUPPORT */
+#if VJ_SUPPORT
+#include "vj.h"
+#endif /* VJ_SUPPORT */
 
 #if PPPOE_SUPPORT
 #include "netif/ppp/pppoe.h"
