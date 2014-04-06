@@ -1112,8 +1112,9 @@ tcp_receive(struct tcp_pcb *pcb)
       }
 #endif /* LWIP_IPV6 && LWIP_ND6_TCP_REACHABILITY_HINTS*/
     } else {
-      /* Fix bug bug #21582: out of sequence ACK, didn't really ack anything */
+      /* Out of sequence ACK, didn't really ack anything */
       pcb->acked = 0;
+      tcp_send_empty_ack(pcb);
     }
 
     /* We go through the ->unsent list to see if any of the segments
