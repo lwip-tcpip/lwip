@@ -169,6 +169,8 @@ err_t         ip6_output(struct pbuf *p, struct ip6_addr *src, struct ip6_addr *
                          u8_t hl, u8_t tc, u8_t nexth);
 err_t         ip6_output_if(struct pbuf *p, struct ip6_addr *src, struct ip6_addr *dest,
                             u8_t hl, u8_t tc, u8_t nexth, struct netif *netif);
+err_t         ip6_output_if_src(struct pbuf *p, struct ip6_addr *src, struct ip6_addr *dest,
+                            u8_t hl, u8_t tc, u8_t nexth, struct netif *netif);
 #if LWIP_NETIF_HWADDRHINT
 err_t         ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
                                 u8_t hl, u8_t tc, u8_t nexth, u8_t *addr_hint);

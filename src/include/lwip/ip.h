@@ -213,6 +213,10 @@ extern struct ip_globals ip_data;
         ((isipv6) ? \
         ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
         ip_output_if(p, (src), (dest), ttl, tos, proto, netif))
+#define ipX_output_if_src(isipv6, p, src, dest, ttl, tos, proto, netif) \
+        ((isipv6) ? \
+        ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
+        ip_output_if_src(p, (src), (dest), ttl, tos, proto, netif))
 #define ipX_output_hinted(isipv6, p, src, dest, ttl, tos, proto, addr_hint) \
         ((isipv6) ? \
         ip6_output_hinted(p, ipX_2_ip6(src), ipX_2_ip6(dest), ttl, tos, proto, addr_hint) : \
@@ -231,6 +235,8 @@ extern struct ip_globals ip_data;
         ip_output(p, src, dest, ttl, tos, proto)
 #define ipX_output_if(isipv6, p, src, dest, ttl, tos, proto, netif) \
         ip_output_if(p, src, dest, ttl, tos, proto, netif)
+#define ipX_output_if_src(isipv6, p, src, dest, ttl, tos, proto, netif) \
+        ip_output_if_src(p, src, dest, ttl, tos, proto, netif)
 #define ipX_output_hinted(isipv6, p, src, dest, ttl, tos, proto, addr_hint) \
         ip_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
 #define ipX_route(isipv6, src, dest) \

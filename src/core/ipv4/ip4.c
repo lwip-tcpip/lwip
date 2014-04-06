@@ -656,6 +656,43 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
        u16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
+  ip_addr_t *src_used = src;
+  if (dest != IP_HDRINCL) {
+    if (ip_addr_isany(src)) {
+      src_used = &netif->ip_addr;
+    }
+  }
+
+#if IP_OPTIONS_SEND
+  return ip_output_if_opt_src(p, src_used, dest, ttl, tos, proto, netif,
+    ip_options, optlen);
+#else /* IP_OPTIONS_SEND */
+  return ip_output_if_src(p, src_used, dest, ttl, tos, proto, netif);
+#endif /* IP_OPTIONS_SEND */
+}
+
+/**
+ * Same as ip_output_if() but 'src' address is not replaced by netif address
+ * when it is 'any'.
+ */
+err_t
+ip_output_if_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+             u8_t ttl, u8_t tos,
+             u8_t proto, struct netif *netif)
+{
+#if IP_OPTIONS_SEND
+  return ip_output_if_opt_src(p, src, dest, ttl, tos, proto, netif, NULL, 0);
+}
+
+/**
+ * Same as ip_output_if_opt() but 'src' address is not replaced by netif address
+ * when it is 'any'.
+ */
+err_t ip_output_if_opt_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+       u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
+       u16_t optlen)
+{
+#endif /* IP_OPTIONS_SEND */
   struct ip_hdr *iphdr;
   ip_addr_t dest_addr;
 #if CHECKSUM_GEN_IP_INLINE
@@ -741,8 +778,8 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 #endif /* CHECKSUM_GEN_IP_INLINE */
     ++ip_id;
 
-    if (ip_addr_isany(src)) {
-      ip_addr_copy(iphdr->src, netif->ip_addr);
+    if (src == NULL) {
+      ip_addr_copy(iphdr->src, ip_addr_any);
     } else {
       /* src cannot be NULL here */
       ip_addr_copy(iphdr->src, *src);

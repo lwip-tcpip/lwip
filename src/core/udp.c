@@ -626,8 +626,65 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
                      u16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
-  struct udp_hdr *udphdr;
   ip_addr_t *src_ip;
+
+  /* PCB local address is IP_ANY_ADDR? */
+#if LWIP_IPV6
+  if (PCB_ISIPV6(pcb)) {
+    if (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip))) {
+      src_ip = ip6_2_ip(ip6_select_source_address(netif, ip_2_ip6(dst_ip)));
+      if (src_ip == NULL) {
+        /* No suitable source address was found. */
+        return ERR_RTE;
+      }
+    } else {
+      /* use UDP PCB local IPv6 address as source address, if still valid. */
+      if (netif_get_ip6_addr_match(netif, ipX_2_ip6(&pcb->local_ip)) < 0) {
+        /* Address isn't valid anymore. */
+        return ERR_RTE;
+      }
+      src_ip = ipX_2_ip(&pcb->local_ip);
+    }
+  }
+  else
+#endif /* LWIP_IPV6 */
+  if (ip_addr_isany(ipX_2_ip(&pcb->local_ip))) {
+    /* use outgoing network interface IP address as source address */
+    src_ip = &(netif->ip_addr);
+  } else {
+    /* check if UDP PCB local IP address is correct
+     * this could be an old address if netif->ip_addr has changed */
+    if (!ip_addr_cmp(ipX_2_ip(&(pcb->local_ip)), &(netif->ip_addr))) {
+      /* local_ip doesn't match, drop the packet */
+      return ERR_VAL;
+    }
+    /* use UDP PCB local IP address as source address */
+    src_ip = ipX_2_ip(&(pcb->local_ip));
+  }
+#if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
+  return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, have_chksum, chksum, src_ip);
+#else /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
+  return udp_sendto_if_src(pcb, p, dst_ip, dst_port, netif, src_ip);
+#endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
+}
+
+/** Same as udp_sendto_if(), but with source address */
+err_t
+udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
+  ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif, ip_addr_t *src_ip)
+{
+#if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
+  return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
+}
+
+/** Same as udp_sendto_if_src(), but with checksum */
+err_t
+udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+                     u16_t dst_port, struct netif *netif, u8_t have_chksum,
+                     u16_t chksum, ip_addr_t *src_ip)
+{
+#endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
+  struct udp_hdr *udphdr;
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
   u8_t ip_proto;
@@ -703,57 +760,6 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
     q->flags |= PBUF_FLAG_MCASTLOOP;
   }
 #endif /* LWIP_IGMP */
-
-
-  /* PCB local address is IP_ANY_ADDR? */
-#if LWIP_IPV6
-  if (PCB_ISIPV6(pcb)) {
-    if (ip6_addr_isany(ipX_2_ip6(&pcb->local_ip))) {
-      src_ip = ip6_2_ip(ip6_select_source_address(netif, ip_2_ip6(dst_ip)));
-      if (src_ip == NULL) {
-        /* No suitable source address was found. */
-        if (q != p) {
-          /* free the header pbuf */
-          pbuf_free(q);
-          /* p is still referenced by the caller, and will live on */
-        }
-        return ERR_RTE;
-      }
-    } else {
-      /* use UDP PCB local IPv6 address as source address, if still valid. */
-      if (netif_get_ip6_addr_match(netif, ipX_2_ip6(&pcb->local_ip)) < 0) {
-        /* Address isn't valid anymore. */
-        if (q != p) {
-          /* free the header pbuf */
-          pbuf_free(q);
-          /* p is still referenced by the caller, and will live on */
-        }
-        return ERR_RTE;
-      }
-      src_ip = ipX_2_ip(&pcb->local_ip);
-    }
-  }
-  else
-#endif /* LWIP_IPV6 */
-  if (ip_addr_isany(ipX_2_ip(&pcb->local_ip))) {
-    /* use outgoing network interface IP address as source address */
-    src_ip = &(netif->ip_addr);
-  } else {
-    /* check if UDP PCB local IP address is correct
-     * this could be an old address if netif->ip_addr has changed */
-    if (!ip_addr_cmp(ipX_2_ip(&(pcb->local_ip)), &(netif->ip_addr))) {
-      /* local_ip doesn't match, drop the packet */
-      if (q != p) {
-        /* free the header pbuf */
-        pbuf_free(q);
-        q = NULL;
-        /* p is still referenced by the caller, and will live on */
-      }
-      return ERR_VAL;
-    }
-    /* use UDP PCB local IP address as source address */
-    src_ip = ipX_2_ip(&(pcb->local_ip));
-  }
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: sending datagram of length %"U16_F"\n", q->tot_len));
 
@@ -840,7 +846,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  err = ipX_output_if(PCB_ISIPV6(pcb), q, src_ip, dst_ip, pcb->ttl, pcb->tos, ip_proto, netif);
+  err = ipX_output_if_src(PCB_ISIPV6(pcb), q, src_ip, dst_ip, pcb->ttl, pcb->tos, ip_proto, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* TODO: must this be increased even if error occured? */

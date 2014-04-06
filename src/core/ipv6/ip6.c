@@ -745,6 +745,29 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
              u8_t hl, u8_t tc,
              u8_t nexth, struct netif *netif)
 {
+  ip6_addr_t *src_used = src;
+  if (dest != IP_HDRINCL) {
+    if (src != NULL && ip6_addr_isany(src)) {
+      src = ip6_select_source_address(netif, dest);
+      if ((src == NULL) || ip6_addr_isany(src)) {
+        /* No appropriate source address was found for this packet. */
+        LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: No suitable source address for packet.\n"));
+        IP6_STATS_INC(ip6.rterr);
+        return ERR_RTE;
+      }
+  }
+  return ip6_output_if_src(p, src_used, dest, hl, tc, nexth, netif);
+}
+
+/**
+ * Same as ip6_output_if() but 'src' address is not replaced by netif address
+ * when it is 'any'.
+ */
+err_t
+ip6_output_if_src(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
+             u8_t hl, u8_t tc,
+             u8_t nexth, struct netif *netif)
+{
   struct ip6_hdr *ip6hdr;
   ip6_addr_t dest_addr;
 
@@ -776,15 +799,6 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
 
     if (src == NULL) {
       src = IP6_ADDR_ANY;
-    }
-    else if (ip6_addr_isany(src)) {
-      src = ip6_select_source_address(netif, dest);
-      if ((src == NULL) || ip6_addr_isany(src)) {
-        /* No appropriate source address was found for this packet. */
-        LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: No suitable source address for packet.\n"));
-        IP6_STATS_INC(ip6.rterr);
-        return ERR_RTE;
-      }
     }
     /* src cannot be NULL here */
     ip6_addr_copy(ip6hdr->src, *src);
