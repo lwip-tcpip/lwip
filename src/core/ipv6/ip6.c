@@ -755,6 +755,7 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
         IP6_STATS_INC(ip6.rterr);
         return ERR_RTE;
       }
+    }
   }
   return ip6_output_if_src(p, src_used, dest, hl, tc, nexth, netif);
 }
