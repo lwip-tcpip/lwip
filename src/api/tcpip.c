@@ -93,6 +93,11 @@ tcpip_thread(void *arg)
     /* wait for a message, timeouts are processed while waiting */
     sys_timeouts_mbox_fetch(&mbox, (void **)&msg);
     LOCK_TCPIP_CORE();
+    if (msg == NULL) {
+      LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: invalid message: NULL\n"));
+      LWIP_ASSERT("tcpip_thread: invalid message", 0);
+      continue;
+    }
     switch (msg->type) {
 #if LWIP_NETCONN
     case TCPIP_MSG_API:

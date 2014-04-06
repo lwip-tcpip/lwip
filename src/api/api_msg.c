@@ -1235,9 +1235,8 @@ lwip_netconn_do_writemore(struct netconn *conn)
   u16_t len, available;
   u8_t write_finished = 0;
   size_t diff;
-  u8_t dontblock = netconn_is_nonblocking(conn) ||
-       (conn->current_msg->msg.w.apiflags & NETCONN_DONTBLOCK);
-  u8_t apiflags = conn->current_msg->msg.w.apiflags;
+  u8_t dontblock;
+  u8_t apiflags;
 
   LWIP_ASSERT("conn != NULL", conn != NULL);
   LWIP_ASSERT("conn->state == NETCONN_WRITE", (conn->state == NETCONN_WRITE));
@@ -1245,6 +1244,10 @@ lwip_netconn_do_writemore(struct netconn *conn)
   LWIP_ASSERT("conn->pcb.tcp != NULL", conn->pcb.tcp != NULL);
   LWIP_ASSERT("conn->write_offset < conn->current_msg->msg.w.len",
     conn->write_offset < conn->current_msg->msg.w.len);
+
+  dontblock = netconn_is_nonblocking(conn) ||
+       (conn->current_msg->msg.w.apiflags & NETCONN_DONTBLOCK);
+  apiflags = conn->current_msg->msg.w.apiflags;
 
 #if LWIP_SO_SNDTIMEO
   if ((conn->send_timeout != 0) &&
