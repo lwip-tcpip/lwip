@@ -100,6 +100,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-04-08: Simon Goldschmidt
+  * tcp.c: Fixed bug #36167 tcp server crash when client closes (maximum window)
+
   2014-04-06: Simon Goldschmidt
   * tcp_in.c: Fixed bug #36210 lwIP does not elicit an empty ACK when received
     unacceptable ACK
