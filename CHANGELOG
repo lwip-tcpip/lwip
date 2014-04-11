@@ -165,6 +165,17 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-04-08: Simon Goldschmidt
+  * tcp.c: Fixed bug #36167 tcp server crash when client closes (maximum window)
+
+  2014-04-06: Simon Goldschmidt
+  * tcp_in.c: Fixed bug #36210 lwIP does not elicit an empty ACK when received
+    unacceptable ACK
+
+  2014-04-06: Simon Goldschmidt
+  * dhcp.c, ip4.c/.h, ip6.c/.h, udp.c/.h, ip.h: Fixed bug #41787 DHCP Discovery
+    is invalid when an IP is set to thet netif.
+
   2014-03-14: Simon Goldschmidt
   * tcp_out.c: Fixed bug #36153 TCP Cheksum error if LWIP_CHECKSUM_ON_COPY=1
 

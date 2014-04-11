@@ -650,12 +650,20 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   /* pcb->state LISTEN not allowed here */
   LWIP_ASSERT("don't call tcp_recved for listen-pcbs",
     pcb->state != LISTEN);
-  LWIP_ASSERT("tcp_recved: len would wrap rcv_wnd\n",
-              len <= TCPWND_MAX - pcb->rcv_wnd);
 
   pcb->rcv_wnd += len;
   if (pcb->rcv_wnd > TCP_WND) {
     pcb->rcv_wnd = TCP_WND;
+  } else if(pcb->rcv_wnd == 0) {
+    /* rcv_wnd overflowed */
+    if ((pcb->state == CLOSE_WAIT) || (pcb->state == LAST_ACK)) {
+      /* In passive close, we allow this, since the FIN bit is added to rcv_wnd
+         by the stack itself, since it is not mandatory for an application
+         to call tcp_recved() for the FIN bit, but e.g. the netconn API does so. */
+      pcb->rcv_wnd = TCP_WND;
+    } else {
+      LWIP_ASSERT("tcp_recved: len wrapped rcv_wnd\n", 0);
+    }
   }
 
   wnd_inflation = tcp_update_rcv_ann_wnd(pcb);

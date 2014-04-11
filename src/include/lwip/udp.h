@@ -156,6 +156,9 @@ void             udp_recv       (struct udp_pcb *pcb, udp_recv_fn recv,
 err_t            udp_sendto_if  (struct udp_pcb *pcb, struct pbuf *p,
                                  ip_addr_t *dst_ip, u16_t dst_port,
                                  struct netif *netif);
+err_t            udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
+                                 ip_addr_t *dst_ip, u16_t dst_port,
+                                 struct netif *netif, ip_addr_t *src_ip);
 err_t            udp_sendto     (struct udp_pcb *pcb, struct pbuf *p,
                                  ip_addr_t *dst_ip, u16_t dst_port);
 err_t            udp_send       (struct udp_pcb *pcb, struct pbuf *p);
@@ -170,6 +173,9 @@ err_t            udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p,
                                  u8_t have_chksum, u16_t chksum);
 err_t            udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
                                  u8_t have_chksum, u16_t chksum);
+err_t            udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p,
+                                 ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif,
+                                 u8_t have_chksum, u16_t chksum, ip_addr_t *src_ip);
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 
 #define          udp_flags(pcb) ((pcb)->flags)

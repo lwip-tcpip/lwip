@@ -423,7 +423,7 @@ ip_reass_chain_frag_into_datagram_and_validate(struct ip_reassdata *ipr, struct 
     if (valid) {
       /* then check if the rest of the fragments is here */
       /* Check if the queue starts with the first datagram */
-      if (((struct ip_reass_helper*)ipr->p->payload)->start != 0) {
+      if ((ipr->p == NULL) || (((struct ip_reass_helper*)ipr->p->payload)->start != 0)) {
         valid = 0;
       } else {
         /* and check that there are no wholes after this datagram */
