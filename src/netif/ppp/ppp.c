@@ -1529,6 +1529,22 @@ ppp_drop(ppp_pcb_rx *pcrx)
   snmp_inc_ifindiscards(&pcb->netif);
 }
 
+/** PPPoS input helper struct, must be packed since it is stored
+ * to pbuf->payload, which might be unaligned. */
+#if PPP_INPROC_MULTITHREADED
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/bpstruct.h"
+#endif
+PACK_STRUCT_BEGIN
+struct pppos_input_header {
+  PACK_STRUCT_FIELD(ppp_pcb *pcb);
+} PACK_STRUCT_STRUCT;
+PACK_STRUCT_END
+#ifdef PACK_STRUCT_USE_INCLUDES
+#  include "arch/epstruct.h"
+#endif
+#endif /* PPP_INPROC_MULTITHREADED */
+
 /** Pass received raw characters to PPPoS to be decoded. This function is
  * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
  *
@@ -1704,7 +1720,15 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
               }
             }
             /* If we haven't started a packet, we need a packet header. */
+#if IP_FORWARD || LWIP_IPV6_FORWARD
+            /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
+             * the packet is being allocated with enough header space to be
+             * forwarded (to Ethernet for example).
+             */
+            next_pbuf = pbuf_alloc(PBUF_LINK, 0, PBUF_POOL);
+#else /* IP_FORWARD || LWIP_IPV6_FORWARD */
             next_pbuf = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+#endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
             if (next_pbuf == NULL) {
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
@@ -1716,15 +1740,27 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
               break;
             }
             if (pcrx->in_head == NULL) {
-              u8_t *payload = next_pbuf->payload;
+              u8_t *payload;
+              /* pbuf_header() used below is only trying to put PPP headers
+               * before the current payload pointer if there is enough space
+               * in the pbuf to do so. Therefore we don't care if it fails,
+               * but if it fail we have to set len to the size used by PPP headers.
+               */
 #if PPP_INPROC_MULTITHREADED
-              *((ppp_pcb**)payload) = pcb;
-              payload += sizeof(ppp_pcb*);
-              next_pbuf->len += sizeof(ppp_pcb*);
+              if (pbuf_header(next_pbuf, +sizeof(struct pppos_input_header) +sizeof(pcrx->in_protocol))) {
+                next_pbuf->len += sizeof(struct pppos_input_header) + sizeof(pcrx->in_protocol);
+              }
+              payload = next_pbuf->payload;
+              ((struct pppos_input_header*)payload)->pcb = pcb;
+              payload += sizeof(struct pppos_input_header);
+#else /* PPP_INPROC_MULTITHREADED */
+              if (pbuf_header(next_pbuf, +sizeof(pcrx->in_protocol))) {
+                next_pbuf->len += sizeof(pcrx->in_protocol);
+              }
+              payload = next_pbuf->payload;
 #endif /* PPP_INPROC_MULTITHREADED */
               *(payload++) = pcrx->in_protocol >> 8;
               *(payload) = pcrx->in_protocol & 0xFF;
-              next_pbuf->len += sizeof(pcrx->in_protocol);
               pcrx->in_head = next_pbuf;
             }
             pcrx->in_tail = next_pbuf;
@@ -1749,8 +1785,8 @@ static void pppos_input_callback(void *arg) {
   struct pbuf *pb = (struct pbuf*)arg;
   ppp_pcb *pcb;
 
-  pcb = *((ppp_pcb**)pb->payload);
-  if(pbuf_header(pb, -(s16_t)sizeof(ppp_pcb*))) {
+  pcb = ((struct pppos_input_header*)pb->payload)->pcb;
+  if(pbuf_header(pb, -(s16_t)sizeof(struct pppos_input_header))) {
     LWIP_ASSERT("pbuf_header failed\n", 0);
     goto drop;
   }
