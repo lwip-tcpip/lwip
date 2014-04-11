@@ -593,7 +593,15 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     struct pbuf *np, *q;
     u8_t *bufptr;
 
+#if IP_FORWARD
+    /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
+     * the packet is being allocated with enough header space to be
+     * forwarded (to Ethernet for example).
+     */
+    np = pbuf_alloc(PBUF_LINK, n0->len + cs->cs_hlen, PBUF_POOL);
+#else /* IP_FORWARD */
     np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
+#endif /* IP_FORWARD */
     if(!np) {
       PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
       goto bad;
