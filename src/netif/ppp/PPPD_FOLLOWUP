@@ -25,7 +25,7 @@ Debian and this is a good place to be.
 
 - using rp-pppoe pppd exits with EXIT_OK after receiving a timeout waiting
   for PADO due to no modem attached, bug reported to pppd bug tracker, fixed
-  in Debian but not in the latest (at the time where the port where started)
+  in Debian but not in the latest (at the time when the port were started)
   pppd release.
 
 
@@ -168,3 +168,147 @@ Again, we are handling compilation warnings on our own.
 
 Once more, we are not using the RP-PPPoE plugin.
 
+
+2013-01-23 - pppd: Clarify circumstances where DNS1/DNS2 environment variables are set
+  cf2f5c9538b9400ade23446a194729b0a4113b3a
+
+Documentation only.
+
+
+2013-02-03 - ppp: ignore unrecognised radiusclient configuration directives
+  7f736dde0da3c19855997d9e67370e351e15e923
+
+Radius plugin, not in the port.
+
+
+2013-02-03 - pppd: Take out unused %r conversion completely
+  356d8d558d844412119aa18c8e5a113bc6459c7b
+
+Merged 2014-04-15.
+
+
+2013-02-03 - pppd: Arrange to use logwtmp from libutil on Linux
+  9617a7eb137f4fee62799a677a9ecf8d834db3f5
+
+Patch for sys-linux.c, which we don't use.
+
+
+2013-02-03 - pppdump: Eliminate some compiler warnings
+  3e3acf1ba2b3046c072a42c19164788a9e419bd1
+
+pppdump is a ppp tool outside pppd source tree.
+
+
+2013-02-03 - chat: Correct spelling errors in the man page
+  8dea1b969d266ccbf6f3a8c5474eb6dcd8838e3b
+
+Documentation only.
+
+
+2013-02-03 - pppd: Fix spelling errors in man page
+  9e05a25d76b3f83096c661678010320df673df6b
+
+Documentation only.
+
+
+2013-02-03 - plugins/passprompt: Fix potential out-of-bounds array reference
+  8edb889b753056a691a3e4b217a110a35f9fdedb
+
+Plugin patch, we do not have plugins.
+
+
+2013-02-03 - chat: Fix *roff errors in the man page
+  a7c3489eeaf44e83ce592143c7c8a5b5c29f4c48
+
+Documentation only.
+
+
+2013-03-02 - pppd: Fix man page description of case when remote IP address isn't known
+  224841f4799f4f1e2e71bc490c54448d66740f4f
+
+Documentation only.
+
+
+2013-03-02 - pppd: Add master_detach option
+  398ed2585640d198c53e736ee5bbd67f7ce8168e
+
+Option for multilink support, we do not support multilink and this option
+is about detaching from the terminal, which is out of the embedded scope.
+
+
+2013-03-11 - pppd: Default exit status to EXIT_CONNECT_FAILED during connection phase
+  225361d64ae737afdc8cb57579a2f33525461bc9
+
+Commented out in our port, and already fixed by a previously applied Debian patch.
+
+
+2013-03-11 - pppstats: Fix undefined macro in man page
+  d16a3985eade5280b8e171f5dd0670a91cba0d39
+
+Documentation only.
+
+
+2013-05-11 - plugins/radius: Handle bindaddr keyword in radiusclient.conf
+  d883b2dbafeed3ebd9d7a56ab1469373bd001a3b
+
+Radius plugin, not in the port.
+
+
+2013-06-09 - pppoatm: Remove explicit loading of pppoatm kernel module
+  52cd43a84bea524033b918b603698104f221bbb7
+
+PPPoATM plugin, not in the port.
+
+
+2013-06-09 - pppd: Fix segfault in update_db_entry()
+  37476164f15a45015310b9d4b197c2d7db1f7f8f
+
+We do not use the samba db.
+
+
+2013-06-09 - chat: Fix some text that was intended to be literal
+  cd9683676618adcee8add2c3cfa3382341b5a1f6
+
+Documentation only.
+
+
+2013-06-09 - README.pppoe: Minor semantic fix
+  b5b8898af6fd3d44e873cfc66810ace5f1f47e17
+
+Documentation only.
+
+
+2013-06-10 - radius: Handle additional attributes
+  2f581cd986a56f2ec4a95abad4f8297a1b10d7e2
+
+Radius plugin, not in the port.
+
+
+2013-06-10 - chat, pppd: Use \e instead of \\ in man pages
+  8d6942415d22f6ca4377340ca26e345c3f5fa5db
+
+Documentation only.
+
+
+2014-01-02 - pppd: Don't crash if NULL pointer passed to vslprintf for %q or %v
+  906814431bddeb2061825fa1ebad1a967b6d87a9
+
+Merged 2014-04-15.
+
+
+2014-01-02 - pppd: Accept IPCP ConfAck packets containing MS-WINS options
+  a243f217f1c6ac1aa7793806bc88590d077f490a
+
+Merged 2014-04-15.
+
+
+2014-01-02 - config: Update Solaris compiler options and enable CHAPMS and IPV6
+  99c46caaed01b7edba87962aa52b77fad61bfd7b
+
+Solaris port, don't care.
+
+
+2014-01-02 - Update README and patchlevel for 2.4.6 release
+  4043750fca36e7e0eb90d702e048ad1da4929418
+
+Just release stuff.
