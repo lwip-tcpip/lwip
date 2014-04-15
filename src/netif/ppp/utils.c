@@ -271,19 +271,6 @@ int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 		     (ip >> 16) & 0xff, (ip >> 8) & 0xff, ip & 0xff);
 	    str = num;
 	    break;
-#if 0	/* not used, and breaks on S/390, apparently */
-	case 'r':
-	    f = va_arg(args, char *);
-#ifndef __powerpc__
-	    n = ppp_vslprintf(buf, buflen + 1, f, va_arg(args, va_list));
-#else
-	    /* On the powerpc, a va_list is an array of 1 structure */
-	    n = ppp_vslprintf(buf, buflen + 1, f, va_arg(args, void *));
-#endif
-	    buf += n;
-	    buflen -= n;
-	    continue;
-#endif
 #if 0 /* need port */
 	case 't':
 	    time(&t);
