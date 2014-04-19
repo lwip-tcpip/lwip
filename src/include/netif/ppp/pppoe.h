@@ -168,7 +168,7 @@ struct pppoe_softc {
 #define pppoe_init() /* compatibility define, no initialization needed */
 
 err_t pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp_pcb *pcb, int up), struct pppoe_softc **scptr);
-err_t pppoe_destroy(struct netif *ifp);
+err_t pppoe_destroy(struct pppoe_softc *sc);
 
 int pppoe_connect(struct pppoe_softc *sc);
 void pppoe_disconnect(struct pppoe_softc *sc);

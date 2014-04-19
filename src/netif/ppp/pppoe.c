@@ -165,17 +165,18 @@ pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp_pcb *
 }
 
 err_t
-pppoe_destroy(struct netif *ifp)
+pppoe_destroy(struct pppoe_softc *sc)
 {
-  struct pppoe_softc *sc, *prev = NULL;
+  struct pppoe_softc *cur, *prev = NULL;
 
-  for (sc = pppoe_softc_list; sc != NULL; prev = sc, sc = sc->next) {
-    if (sc->sc_ethif == ifp) {
+  /* find previous linked list entry */
+  for (cur = pppoe_softc_list; cur != NULL; prev = cur, cur = cur->next) {
+    if (sc == cur) {
       break;
     }
   }
 
-  if(!(sc && (sc->sc_ethif == ifp))) {
+  if (cur != sc) {
     return ERR_IF;
   }
 

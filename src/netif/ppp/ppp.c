@@ -540,7 +540,7 @@ int ppp_free(ppp_pcb *pcb) {
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
-    pppoe_destroy(&pcb->netif);
+    pppoe_destroy(pcb->pppoe_sc);
     pcb->pppoe_sc = NULL;
   }
 #endif /* PPPOE_SUPPORT */
