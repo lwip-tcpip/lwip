@@ -2198,6 +2198,9 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
         *sint_ptr = sysservices;
       }
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_value(): unknown id: %d\n", id));
+      break;
   };
 }
 
@@ -2233,6 +2236,9 @@ system_set_test(struct obj_def *od, u16_t len, void *value)
         set_ok = 1;
       }
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_set_test(): unknown id: %d\n", id));
+      break;
   };
   return set_ok;
 }
@@ -2258,6 +2264,9 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
     case 6: /* sysLocation */
       MEMCPY(syslocation_ptr, value, len);
       *syslocation_len_ptr = (u8_t)len;
+      break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_set_value(): unknown id: %d\n", id));
       break;
   };
 }
@@ -2579,6 +2588,9 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
     case 22: /* ifSpecific */
       MEMCPY(value, ifspecific.id, len);
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_value(): unknown id: %d\n", id));
+      break;
   };
 }
 
@@ -2729,6 +2741,9 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
 
           *dst = *ipaddr_ret;
         }
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("atentry_get_value(): unknown id: %d\n", id));
         break;
     }
   }
@@ -2942,6 +2957,9 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
         *uint_ptr = iproutingdiscards;
       }
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_value(): unknown id: %d\n", id));
+      break;
   };
 }
 
@@ -2984,6 +3002,9 @@ ip_set_test(struct obj_def *od, u16_t len, void *value)
       {
         set_ok = 1;
       }
+      break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_set_test(): unknown id: %d\n", id));
       break;
   };
   return set_ok;
@@ -3101,6 +3122,9 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
           *sint_ptr = 0;
 #endif
         }
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_addrentry_get_value(): unknown id: %d\n", id));
         break;
     }
   }
@@ -3323,6 +3347,9 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
       case 13: /* ipRouteInfo */
         MEMCPY(value, iprouteinfo.id, len);
         break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_rteentry_get_value(): unknown id: %d\n", id));
+        break;
     }
   }
 }
@@ -3428,6 +3455,9 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
           *sint_ptr = 3;
         }
         break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_ntomentry_get_value(): unknown id: %d\n", id));
+      break;
     }
   }
 #endif /* LWIP_ARP */
@@ -3545,6 +3575,9 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
       break;
     case 26: /* icmpOutAddrMaskReps */
       *uint_ptr = icmpoutaddrmaskreps;
+      break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("icmp_get_value(): unknown id: %d\n", id));
       break;
   }
 }
@@ -3683,6 +3716,9 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
     case 15: /* tcpOutRsts */
       *uint_ptr = tcpoutrsts;
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_value(): unknown id: %d\n", id));
+      break;
   }
 }
 #ifdef THIS_SEEMS_UNUSED
@@ -3803,6 +3839,9 @@ udp_get_value(struct obj_def *od, u16_t len, void *value)
     case 4: /* udpOutDatagrams */
       *uint_ptr = udpoutdatagrams;
       break;
+    default:
+      LWIP_DEBUGF(SNMP_MIB_DEBUG,("udp_get_value(): unknown id: %d\n", id));
+      break;
   }
 }
 
@@ -3883,6 +3922,9 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
           s32_t *sint_ptr = (s32_t*)value;
           *sint_ptr = pcb->local_port;
         }
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("udpentry_get_value(): unknown id: %d\n", id));
         break;
     }
   }
@@ -4050,6 +4092,9 @@ snmp_get_value(struct obj_def *od, u16_t len, void *value)
         break;
       case 30: /* snmpEnableAuthenTraps */
         *uint_ptr = *snmpenableauthentraps_ptr;
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_value(): unknown id: %d\n", id));
         break;
   };
 }

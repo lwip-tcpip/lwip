@@ -149,6 +149,9 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
 
     switch (m_stat->error_status)
     {
+      case SNMP_ES_NOERROR:
+        /* nothing to do */
+        break;
       case SNMP_ES_TOOBIG:
         snmp_inc_snmpouttoobigs();
         break;
@@ -160,6 +163,9 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
         break;
       case SNMP_ES_GENERROR:
         snmp_inc_snmpoutgenerrs();
+        break;
+      default:
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_send_response(): unknown error_status: %d\n", m_stat->error_status));
         break;
     }
     snmp_inc_snmpoutgetresponses();
