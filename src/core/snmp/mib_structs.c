@@ -63,6 +63,11 @@ static struct nse node_stack[NODE_STACK_SIZE];
 static void
 push_node(struct nse* node)
 {
+  if (node->r_ptr == NULL) {
+    /* set uninitialized fields to known values */
+    node->r_id = 0;
+    node->r_nl = 0;
+  }
   LWIP_ASSERT("node_stack_cnt < NODE_STACK_SIZE",node_stack_cnt < NODE_STACK_SIZE);
   LWIP_DEBUGF(SNMP_MIB_DEBUG,("push_node() node=%p id=%"S32_F"\n",(void*)(node->r_ptr),node->r_id));
   if (node_stack_cnt < NODE_STACK_SIZE)
