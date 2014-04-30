@@ -314,7 +314,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     total_size <= NETDB_ELEM_SIZE);
   ai = (struct addrinfo *)memp_malloc(MEMP_NETDB);
   if (ai == NULL) {
-    goto memerr;
+    return EAI_MEMORY;
   }
   memset(ai, 0, total_size);
   sa = (struct sockaddr_in*)((u8_t*)ai + sizeof(struct addrinfo));
@@ -343,11 +343,6 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   *res = ai;
 
   return 0;
-memerr:
-  if (ai != NULL) {
-    memp_free(MEMP_NETDB, ai);
-  }
-  return EAI_MEMORY;
 }
 
 #endif /* LWIP_DNS && LWIP_SOCKET */
