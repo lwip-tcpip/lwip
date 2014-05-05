@@ -1067,6 +1067,9 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   }
   switch (m_stat->error_status)
   {
+    case SNMP_ES_NOERROR:
+      /* nothing to do */
+      break;
     case SNMP_ES_TOOBIG:
       snmp_inc_snmpintoobigs();
       break;
@@ -1081,6 +1084,9 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
       break;
     case SNMP_ES_GENERROR:
       snmp_inc_snmpingenerrs();
+      break;
+    default:
+      LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_pdu_header_check(): unknown error_status: %d\n", m_stat->error_status));
       break;
   }
   ofs += (1 + len_octets + len);

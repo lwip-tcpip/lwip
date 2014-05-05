@@ -455,24 +455,25 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
         if (prefix_opt->flags & ND6_PREFIX_FLAG_ON_LINK) {
           /* Add to on-link prefix list. */
+          s8_t prefix;
 
           /* Get a memory-aligned copy of the prefix. */
           ip6_addr_set(ip6_current_dest_addr(), &(prefix_opt->prefix));
 
           /* find cache entry for this prefix. */
-          i = nd6_get_onlink_prefix(ip6_current_dest_addr(), inp);
-          if (i < 0) {
+          prefix = nd6_get_onlink_prefix(ip6_current_dest_addr(), inp);
+          if (prefix < 0) {
             /* Create a new cache entry. */
-            i = nd6_new_onlink_prefix(ip6_current_dest_addr(), inp);
+            prefix = nd6_new_onlink_prefix(ip6_current_dest_addr(), inp);
           }
-          if (i >= 0) {
-            prefix_list[i].invalidation_timer = prefix_opt->valid_lifetime;
+          if (prefix >= 0) {
+            prefix_list[prefix].invalidation_timer = prefix_opt->valid_lifetime;
 
 #if LWIP_IPV6_AUTOCONFIG
             if (prefix_opt->flags & ND6_PREFIX_FLAG_AUTONOMOUS) {
               /* Mark prefix as autonomous, so that address autoconfiguration can take place.
                * Only OR flag, so that we don't over-write other flags (such as ADDRESS_DUPLICATE)*/
-              prefix_list[i].flags |= ND6_PREFIX_AUTOCONFIG_AUTONOMOUS;
+              prefix_list[prefix].flags |= ND6_PREFIX_AUTOCONFIG_AUTONOMOUS;
             }
 #endif /* LWIP_IPV6_AUTOCONFIG */
           }
