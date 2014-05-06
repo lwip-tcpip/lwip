@@ -56,18 +56,14 @@ struct nse
 };
 static u8_t node_stack_cnt;
 static struct nse node_stack[NODE_STACK_SIZE];
+const struct nse node_null = {NULL, 0, 0};
 
 /**
  * Pushes nse struct onto stack.
  */
 static void
-push_node(struct nse* node)
+push_node(const struct nse* node)
 {
-  if (node->r_ptr == NULL) {
-    /* set uninitialized fields to known values */
-    node->r_id = 0;
-    node->r_nl = 0;
-  }
   LWIP_ASSERT("node_stack_cnt < NODE_STACK_SIZE",node_stack_cnt < NODE_STACK_SIZE);
   LWIP_DEBUGF(SNMP_MIB_DEBUG,("push_node() node=%p id=%"S32_F"\n",(void*)(node->r_ptr),node->r_id));
   if (node_stack_cnt < NODE_STACK_SIZE)
@@ -743,7 +739,6 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           else
           {
             u16_t j;
-            struct nse cur_node;
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
@@ -755,15 +750,16 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             }
             if (j < an->maxlength)
             {
+              struct nse cur_node;
               cur_node.r_ptr = an->nptr[j];
               cur_node.r_id = an->objid[j];
               cur_node.r_nl = 0;
+              push_node(&cur_node);
             }
             else
             {
-              cur_node.r_ptr = NULL;
+              push_node(&node_null);
             }
-            push_node(&cur_node);
             if (an->objid[i] == *ident)
             {
               ident_len--;
@@ -861,7 +857,6 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           else
           {
             struct mib_list_node *jn;
-            struct nse cur_node;
 
             /* non-leaf, store right child ptr and id */
             jn = ln->next;
@@ -871,15 +866,16 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             }
             if (jn != NULL)
             {
+              struct nse cur_node;
               cur_node.r_ptr = jn->nptr;
               cur_node.r_id = jn->objid;
               cur_node.r_nl = 0;
+              push_node(&cur_node);
             }
             else
             {
-              cur_node.r_ptr = NULL;
+              push_node(&node_null);
             }
-            push_node(&cur_node);
             if (ln->objid == *ident)
             {
               ident_len--;
@@ -986,7 +982,6 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           else
           {
             u16_t j;
-            struct nse cur_node;
 
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("non-leaf node\n"));
             /* non-leaf, store right child ptr and id */
@@ -994,16 +989,17 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             j = i + 1;
             if (j < len)
             {
+              struct nse cur_node;
               /* right node is the current external node */
               cur_node.r_ptr = node;
               en->get_objid(en->addr_inf,ext_level,j,&cur_node.r_id);
               cur_node.r_nl = ext_level + 1;
+              push_node(&cur_node);
             }
             else
             {
-              cur_node.r_ptr = NULL;
+              push_node(&node_null);
             }
-            push_node(&cur_node);
             if (en->ident_cmp(en->addr_inf,ext_level,i,*ident) == 0)
             {
               ident_len--;
