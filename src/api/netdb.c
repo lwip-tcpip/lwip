@@ -106,6 +106,7 @@ lwip_gethostbyname(const char *name)
   s_phostent_addr[0] = &s_hostent_addr;
   s_phostent_addr[1] = NULL;
   s_hostent.h_name = (char*)name;
+  s_aliases = NULL;
   s_hostent.h_aliases = &s_aliases;
   s_hostent.h_addrtype = AF_INET;
   s_hostent.h_length = sizeof(ip_addr_t);
@@ -115,13 +116,7 @@ lwip_gethostbyname(const char *name)
   /* dump hostent */
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_name           == %s\n", s_hostent.h_name));
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases        == %p\n", s_hostent.h_aliases));
-  if (s_hostent.h_aliases != NULL) {
-    u8_t idx;
-    for ( idx=0; s_hostent.h_aliases[idx]; idx++) {
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %p\n", idx, s_hostent.h_aliases[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_aliases[%i]->   == %s\n", idx, s_hostent.h_aliases[idx]));
-    }
-  }
+  /* h_aliases are always empty */
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addrtype       == %d\n", s_hostent.h_addrtype));
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_length         == %d\n", s_hostent.h_length));
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list      == %p\n", s_hostent.h_addr_list));
