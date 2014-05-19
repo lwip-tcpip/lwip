@@ -595,9 +595,13 @@ ip_reass(struct pbuf *p)
     }
 
     /* find the previous entry in the linked list */
-    for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr_prev = ipr_prev->next) {
-      if (ipr_prev->next == ipr) {
-        break;
+    if (ipr == reassdatagrams_ipv4) {
+      ipr_prev = NULL;
+    } else {
+      for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr_prev = ipr_prev->next) {
+        if (ipr_prev->next == ipr) {
+          break;
+        }
       }
     }
 
