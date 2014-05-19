@@ -292,7 +292,7 @@ ip6_reass(struct pbuf *p)
       ipr = (struct ip6_reassdata *)memp_malloc(MEMP_IP6_REASSDATA);
       if (ipr != NULL) {
         /* re-search ipr_prev since it might have been removed */
-        for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr = ipr->next) {
+        for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr_prev = ipr_prev->next) {
           if (ipr_prev->next == ipr) {
             break;
           }
@@ -331,7 +331,7 @@ ip6_reass(struct pbuf *p)
     ip6_reass_remove_oldest_datagram(ipr, clen);
     if ((ip6_reass_pbufcount + clen) <= IP_REASS_MAX_PBUFS) {
       /* re-search ipr_prev since it might have been removed */
-      for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr = ipr->next) {
+      for (ipr_prev = reassdatagrams; ipr_prev != NULL; ipr_prev = ipr_prev->next) {
         if (ipr_prev->next == ipr) {
           break;
         }
