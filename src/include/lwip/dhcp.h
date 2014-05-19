@@ -1,8 +1,8 @@
 /** @file
  */
 
-#ifndef __LWIP_DHCP_H__
-#define __LWIP_DHCP_H__
+#ifndef LWIP_HDR_DHCP_H__
+#define LWIP_HDR_DHCP_H__
 
 #include "lwip/opt.h"
 
@@ -239,4 +239,4 @@ void dhcp_fine_tmr(void);
 
 #endif /* LWIP_DHCP */
 
-#endif /*__LWIP_DHCP_H__*/
+#endif /*LWIP_HDR_DHCP_H__*/

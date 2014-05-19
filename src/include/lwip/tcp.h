@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_TCP_H__
-#define __LWIP_TCP_H__
+#ifndef LWIP_HDR_TCP_H__
+#define LWIP_HDR_TCP_H__
 
 #include "lwip/opt.h"
 
@@ -414,4 +414,4 @@ struct tcp_pcb * tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 
 #endif /* LWIP_TCP */
 
-#endif /* __LWIP_TCP_H__ */
+#endif /* LWIP_HDR_TCP_H__ */

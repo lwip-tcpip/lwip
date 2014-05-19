@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_IP_ADDR_H__
-#define __LWIP_IP_ADDR_H__
+#ifndef LWIP_HDR_IP_ADDR_H__
+#define LWIP_HDR_IP_ADDR_H__
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -127,4 +127,4 @@ typedef ip_addr_t ipX_addr_t;
 }
 #endif
 
-#endif /* __LWIP_IP_ADDR_H__ */
+#endif /* LWIP_HDR_IP_ADDR_H__ */

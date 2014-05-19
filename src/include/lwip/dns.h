@@ -31,8 +31,8 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef __LWIP_DNS_H__
-#define __LWIP_DNS_H__
+#ifndef LWIP_HDR_DNS_H__
+#define LWIP_HDR_DNS_H__
 
 #include "lwip/opt.h"
 
@@ -121,4 +121,4 @@ err_t          dns_local_addhost(const char *hostname, const ip_addr_t *addr);
 
 #endif /* LWIP_DNS */
 
-#endif /* __LWIP_DNS_H__ */
+#endif /* LWIP_HDR_DNS_H__ */

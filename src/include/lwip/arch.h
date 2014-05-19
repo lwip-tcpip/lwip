@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_ARCH_H__
-#define __LWIP_ARCH_H__
+#ifndef LWIP_HDR_ARCH_H__
+#define LWIP_HDR_ARCH_H__
 
 #ifndef LITTLE_ENDIAN
 #define LITTLE_ENDIAN 1234
@@ -214,4 +214,4 @@ extern int errno;
 }
 #endif
 
-#endif /* __LWIP_ARCH_H__ */
+#endif /* LWIP_HDR_ARCH_H__ */

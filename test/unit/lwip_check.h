@@ -1,5 +1,5 @@
-#ifndef __LWIP_CHECK_H__
-#define __LWIP_CHECK_H__
+#ifndef LWIP_HDR_LWIP_CHECK_H__
+#define LWIP_HDR_LWIP_CHECK_H__
 
 /* Common header file for lwIP unit tests using the check framework */
 
@@ -44,4 +44,4 @@ static Suite* create_suite(const char* name, testfunc *tests, size_t num_tests, 
   return s;
 }
 
-#endif /* __LWIP_CHECK_H__ */
+#endif /* LWIP_HDR_LWIP_CHECK_H__ */

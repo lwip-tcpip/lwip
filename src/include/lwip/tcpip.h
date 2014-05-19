@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_TCPIP_H__
-#define __LWIP_TCPIP_H__
+#ifndef LWIP_HDR_TCPIP_H__
+#define LWIP_HDR_TCPIP_H__
 
 #include "lwip/opt.h"
 
@@ -205,4 +205,4 @@ struct tcpip_msg {
 
 #endif /* !NO_SYS */
 
-#endif /* __LWIP_TCPIP_H__ */
+#endif /* LWIP_HDR_TCPIP_H__ */

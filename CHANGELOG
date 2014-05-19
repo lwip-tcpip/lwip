@@ -100,6 +100,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-05-19: Simon Goldschmidt
+  * *.h: Fixed bug #35874 reserved identifier violation (removed leading underscores
+    from header include guards)
+
   2014-04-08: Simon Goldschmidt
   * tcp.c: Fixed bug #36167 tcp server crash when client closes (maximum window)
 

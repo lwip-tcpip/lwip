@@ -40,8 +40,8 @@
  * <delamer@inicotech.com>
  */
 
-#ifndef __LWIP_MLD6_H__
-#define __LWIP_MLD6_H__
+#ifndef LWIP_HDR_MLD6_H__
+#define LWIP_HDR_MLD6_H__
 
 #include "lwip/opt.h"
 
@@ -115,4 +115,4 @@ err_t  mld6_leavegroup(ip6_addr_t *srcaddr, ip6_addr_t *groupaddr);
 
 #endif /* LWIP_IPV6_MLD && LWIP_IPV6 */
 
-#endif /* __LWIP_MLD6_H__ */
+#endif /* LWIP_HDR_MLD6_H__ */

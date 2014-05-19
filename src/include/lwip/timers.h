@@ -30,8 +30,8 @@
  *         Simon Goldschmidt
  *
  */
-#ifndef __LWIP_TIMERS_H__
-#define __LWIP_TIMERS_H__
+#ifndef LWIP_HDR_TIMERS_H__
+#define LWIP_HDR_TIMERS_H__
 
 #include "lwip/opt.h"
 
@@ -97,4 +97,4 @@ void sys_timeouts_mbox_fetch(sys_mbox_t *mbox, void **msg);
 #endif
 
 #endif /* LWIP_TIMERS */
-#endif /* __LWIP_TIMERS_H__ */
+#endif /* LWIP_HDR_TIMERS_H__ */

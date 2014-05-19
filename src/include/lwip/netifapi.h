@@ -25,8 +25,8 @@
  * 
  */
  
-#ifndef __LWIP_NETIFAPI_H__
-#define __LWIP_NETIFAPI_H__
+#ifndef LWIP_HDR_NETIFAPI_H__
+#define LWIP_HDR_NETIFAPI_H__
 
 #include "lwip/opt.h"
 
@@ -114,4 +114,4 @@ err_t netifapi_netif_common    ( struct netif *netif,
 
 #endif /* LWIP_NETIF_API */
 
-#endif /* __LWIP_NETIFAPI_H__ */
+#endif /* LWIP_HDR_NETIFAPI_H__ */

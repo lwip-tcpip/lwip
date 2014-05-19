@@ -32,8 +32,8 @@
  * It needs to be implemented by those platforms which need SLIP or PPP
  */
 
-#ifndef __SIO_H__
-#define __SIO_H__
+#ifndef SIO_H__
+#define SIO_H__
 
 #include "lwip/arch.h"
 
@@ -138,4 +138,4 @@ void sio_read_abort(sio_fd_t fd);
 }
 #endif
 
-#endif /* __SIO_H__ */
+#endif /* SIO_H__ */

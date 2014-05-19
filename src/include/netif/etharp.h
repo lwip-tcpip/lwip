@@ -32,8 +32,8 @@
  *
  */
 
-#ifndef __NETIF_ETHARP_H__
-#define __NETIF_ETHARP_H__
+#ifndef LWIP_HDR_NETIF_ETHARP_H__
+#define LWIP_HDR_NETIF_ETHARP_H__
 
 #include "lwip/opt.h"
 
@@ -226,4 +226,4 @@ extern const struct eth_addr ethbroadcast, ethzero;
 }
 #endif
 
-#endif /* __NETIF_ARP_H__ */
+#endif /* LWIP_HDR_NETIF_ARP_H__ */

@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_STATS_H__
-#define __LWIP_STATS_H__
+#ifndef LWIP_HDR_STATS_H__
+#define LWIP_HDR_STATS_H__
 
 #include "lwip/opt.h"
 
@@ -344,4 +344,4 @@ void stats_display_sys(struct stats_sys *sys);
 }
 #endif
 
-#endif /* __LWIP_STATS_H__ */
+#endif /* LWIP_HDR_STATS_H__ */

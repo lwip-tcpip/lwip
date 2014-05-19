@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_INET_H__
-#define __LWIP_INET_H__
+#ifndef LWIP_HDR_INET_H__
+#define LWIP_HDR_INET_H__
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -118,4 +118,4 @@ struct in_addr {
 }
 #endif
 
-#endif /* __LWIP_INET_H__ */
+#endif /* LWIP_HDR_INET_H__ */

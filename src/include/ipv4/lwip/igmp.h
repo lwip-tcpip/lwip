@@ -32,8 +32,8 @@
  * source code.
 */
 
-#ifndef __LWIP_IGMP_H__
-#define __LWIP_IGMP_H__
+#ifndef LWIP_HDR_IGMP_H__
+#define LWIP_HDR_IGMP_H__
 
 #include "lwip/opt.h"
 #include "lwip/ip_addr.h"
@@ -103,4 +103,4 @@ void   igmp_tmr(void);
 
 #endif /* LWIP_IGMP */
 
-#endif /* __LWIP_IGMP_H__ */
+#endif /* LWIP_HDR_IGMP_H__ */

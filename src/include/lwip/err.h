@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_ERR_H__
-#define __LWIP_ERR_H__
+#ifndef LWIP_HDR_ERR_H__
+#define LWIP_HDR_ERR_H__
 
 #include "lwip/opt.h"
 #include "lwip/arch.h"
@@ -82,4 +82,4 @@ extern const char *lwip_strerr(err_t err);
 }
 #endif
 
-#endif /* __LWIP_ERR_H__ */
+#endif /* LWIP_HDR_ERR_H__ */

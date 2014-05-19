@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef __LWIP_PBUF_H__
-#define __LWIP_PBUF_H__
+#ifndef LWIP_HDR_PBUF_H__
+#define LWIP_HDR_PBUF_H__
 
 #include "lwip/opt.h"
 #include "lwip/err.h"
@@ -185,4 +185,4 @@ u16_t pbuf_strstr(struct pbuf* p, const char* substr);
 }
 #endif
 
-#endif /* __LWIP_PBUF_H__ */
+#endif /* LWIP_HDR_PBUF_H__ */

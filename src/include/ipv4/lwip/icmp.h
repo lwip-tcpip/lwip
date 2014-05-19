@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_ICMP_H__
-#define __LWIP_ICMP_H__
+#ifndef LWIP_HDR_ICMP_H__
+#define LWIP_HDR_ICMP_H__
 
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
@@ -122,4 +122,4 @@ void icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t);
 }
 #endif
 
-#endif /* __LWIP_ICMP_H__ */
+#endif /* LWIP_HDR_ICMP_H__ */

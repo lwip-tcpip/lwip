@@ -41,8 +41,8 @@
  * <delamer@inicotech.com>
  */
 
-#ifndef __LWIP_ND6_H__
-#define __LWIP_ND6_H__
+#ifndef LWIP_HDR_ND6_H__
+#define LWIP_HDR_ND6_H__
 
 #include "lwip/opt.h"
 
@@ -359,4 +359,4 @@ void nd6_reachability_hint(ip6_addr_t * ip6addr);
 
 #endif /* LWIP_IPV6 */
 
-#endif /* __LWIP_ND6_H__ */
+#endif /* LWIP_HDR_ND6_H__ */

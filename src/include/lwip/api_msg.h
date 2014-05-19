@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_API_MSG_H__
-#define __LWIP_API_MSG_H__
+#ifndef LWIP_HDR_API_MSG_H__
+#define LWIP_HDR_API_MSG_H__
 
 #include "lwip/opt.h"
 
@@ -184,4 +184,4 @@ void netconn_free(struct netconn *conn);
 
 #endif /* LWIP_NETCONN */
 
-#endif /* __LWIP_API_MSG_H__ */
+#endif /* LWIP_HDR_API_MSG_H__ */

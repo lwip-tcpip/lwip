@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef __LWIP_IP_H__
-#define __LWIP_IP_H__
+#ifndef LWIP_HDR_IP_H__
+#define LWIP_HDR_IP_H__
 
 #include "lwip/opt.h"
 
@@ -255,6 +255,6 @@ extern struct ip_globals ip_data;
 }
 #endif
 
-#endif /* __LWIP_IP_H__ */
+#endif /* LWIP_HDR_IP_H__ */
 
 

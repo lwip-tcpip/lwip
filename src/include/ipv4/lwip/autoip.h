@@ -41,8 +41,8 @@
  * <kontakt@dspies.de>
  */
  
-#ifndef __LWIP_AUTOIP_H__
-#define __LWIP_AUTOIP_H__
+#ifndef LWIP_HDR_AUTOIP_H__
+#define LWIP_HDR_AUTOIP_H__
 
 #include "lwip/opt.h"
 
@@ -118,4 +118,4 @@ void autoip_network_changed(struct netif *netif);
 
 #endif /* LWIP_AUTOIP */
 
-#endif /* __LWIP_AUTOIP_H__ */
+#endif /* LWIP_HDR_AUTOIP_H__ */
