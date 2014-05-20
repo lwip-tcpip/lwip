@@ -100,6 +100,9 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-05-20: Simon Goldschmidt
+  * tcp_out.c: fixed bug #37184 tcp_write problem for pcbs in the SYN_SENT state
+
   2014-05-19: Simon Goldschmidt
   * *.h: Fixed bug #35874 reserved identifier violation (removed leading underscores
     from header include guards)
