@@ -31,8 +31,8 @@
  */
 
 
-#ifndef LWIP_HDR_SOCKETS_H__
-#define LWIP_HDR_SOCKETS_H__
+#ifndef LWIP_HDR_SOCKETS_H
+#define LWIP_HDR_SOCKETS_H
 
 #include "lwip/opt.h"
 
@@ -472,4 +472,4 @@ int lwip_fcntl(int s, int cmd, int val);
 
 #endif /* LWIP_SOCKET */
 
-#endif /* LWIP_HDR_SOCKETS_H__ */
+#endif /* LWIP_HDR_SOCKETS_H */

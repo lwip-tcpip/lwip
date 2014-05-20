@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_DEF_H__
-#define LWIP_HDR_DEF_H__
+#ifndef LWIP_HDR_DEF_H
+#define LWIP_HDR_DEF_H
 
 /* arch.h might define NULL already */
 #include "lwip/arch.h"
@@ -119,5 +119,5 @@ u32_t lwip_ntohl(u32_t x);
 }
 #endif
 
-#endif /* LWIP_HDR_DEF_H__ */
+#endif /* LWIP_HDR_DEF_H */
 

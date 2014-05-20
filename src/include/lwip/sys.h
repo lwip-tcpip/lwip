@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_SYS_H__
-#define LWIP_HDR_SYS_H__
+#ifndef LWIP_HDR_SYS_H
+#define LWIP_HDR_SYS_H
 
 #include "lwip/opt.h"
 
@@ -333,4 +333,4 @@ void sys_arch_unprotect(sys_prot_t pval);
 }
 #endif
 
-#endif /* LWIP_HDR_SYS_H__ */
+#endif /* LWIP_HDR_SYS_H */

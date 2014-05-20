@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_INIT_H__
-#define LWIP_HDR_INIT_H__
+#ifndef LWIP_HDR_INIT_H
+#define LWIP_HDR_INIT_H
 
 #include "lwip/opt.h"
 
@@ -69,4 +69,4 @@ void lwip_init(void);
 }
 #endif
 
-#endif /* LWIP_HDR_INIT_H__ */
+#endif /* LWIP_HDR_INIT_H */

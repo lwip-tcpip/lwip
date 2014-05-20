@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_DEBUG_H__
-#define LWIP_HDR_DEBUG_H__
+#ifndef LWIP_HDR_DEBUG_H
+#define LWIP_HDR_DEBUG_H
 
 #include "lwip/arch.h"
 #include "lwip/opt.h"
@@ -95,5 +95,5 @@
 #define LWIP_DEBUGF(debug, message) 
 #endif /* LWIP_DEBUG */
 
-#endif /* LWIP_HDR_DEBUG_H__ */
+#endif /* LWIP_HDR_DEBUG_H */
 

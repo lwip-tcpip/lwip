@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_UDP_H__
-#define LWIP_HDR_UDP_H__
+#ifndef LWIP_HDR_UDP_H
+#define LWIP_HDR_UDP_H
 
 #include "lwip/opt.h"
 
@@ -218,4 +218,4 @@ void udp_debug_print(struct udp_hdr *udphdr);
 
 #endif /* LWIP_UDP */
 
-#endif /* LWIP_HDR_UDP_H__ */
+#endif /* LWIP_HDR_UDP_H */

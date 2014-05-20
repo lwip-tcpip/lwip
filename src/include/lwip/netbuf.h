@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_NETBUF_H__
-#define LWIP_HDR_NETBUF_H__
+#ifndef LWIP_HDR_NETBUF_H
+#define LWIP_HDR_NETBUF_H
 
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
@@ -109,4 +109,4 @@ void              netbuf_first    (struct netbuf *buf);
 }
 #endif
 
-#endif /* LWIP_HDR_NETBUF_H__ */
+#endif /* LWIP_HDR_NETBUF_H */

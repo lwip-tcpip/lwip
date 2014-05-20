@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_RAW_H__
-#define LWIP_HDR_RAW_H__
+#ifndef LWIP_HDR_RAW_H
+#define LWIP_HDR_RAW_H
 
 #include "lwip/opt.h"
 
@@ -133,4 +133,4 @@ u8_t             raw_input      (struct pbuf *p, struct netif *inp);
 
 #endif /* LWIP_RAW */
 
-#endif /* LWIP_HDR_RAW_H__ */
+#endif /* LWIP_HDR_RAW_H */

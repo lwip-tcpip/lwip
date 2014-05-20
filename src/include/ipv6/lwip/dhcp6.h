@@ -40,8 +40,8 @@
  * <delamer@inicotech.com>
  */
 
-#ifndef LWIP_HDR_IP6_DHCP6_H__
-#define LWIP_HDR_IP6_DHCP6_H__
+#ifndef LWIP_HDR_IP6_DHCP6_H
+#define LWIP_HDR_IP6_DHCP6_H
 
 #include "lwip/opt.h"
 
@@ -55,4 +55,4 @@ struct dhcp6
 
 #endif /* LWIP_IPV6_DHCP6 */
 
-#endif /* LWIP_HDR_IP6_DHCP6_H__ */
+#endif /* LWIP_HDR_IP6_DHCP6_H */

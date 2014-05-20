@@ -38,8 +38,8 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_INET6_H__
-#define LWIP_HDR_INET6_H__
+#ifndef LWIP_HDR_INET6_H
+#define LWIP_HDR_INET6_H
 
 #include "lwip/opt.h"
 
@@ -88,5 +88,5 @@ struct in6_addr {
 
 #endif /* LWIP_IPV6 */
 
-#endif /* LWIP_HDR_INET6_H__ */
+#endif /* LWIP_HDR_INET6_H */
 

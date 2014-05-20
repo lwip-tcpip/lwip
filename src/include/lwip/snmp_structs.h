@@ -34,8 +34,8 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#ifndef LWIP_HDR_SNMP_STRUCTS_H__
-#define LWIP_HDR_SNMP_STRUCTS_H__
+#ifndef LWIP_HDR_SNMP_STRUCTS_H
+#define LWIP_HDR_SNMP_STRUCTS_H
 
 #include "lwip/opt.h"
 
@@ -265,4 +265,4 @@ u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oi
 
 #endif /* LWIP_SNMP */
 
-#endif /* LWIP_HDR_SNMP_STRUCTS_H__ */
+#endif /* LWIP_HDR_SNMP_STRUCTS_H */

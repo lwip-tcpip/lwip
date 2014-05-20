@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_INET_CHKSUM_H__
-#define LWIP_HDR_INET_CHKSUM_H__
+#ifndef LWIP_HDR_INET_CHKSUM_H
+#define LWIP_HDR_INET_CHKSUM_H
 
 #include "lwip/opt.h"
 
@@ -108,5 +108,5 @@ u16_t ip6_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 }
 #endif
 
-#endif /* LWIP_HDR_INET_H__ */
+#endif /* LWIP_HDR_INET_H */
 

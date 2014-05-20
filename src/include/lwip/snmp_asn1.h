@@ -32,8 +32,8 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#ifndef LWIP_HDR_SNMP_ASN1_H__
-#define LWIP_HDR_SNMP_ASN1_H__
+#ifndef LWIP_HDR_SNMP_ASN1_H
+#define LWIP_HDR_SNMP_ASN1_H
 
 #include "lwip/opt.h"
 #include "lwip/err.h"
@@ -98,4 +98,4 @@ err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, u8_t *raw);
 
 #endif /* LWIP_SNMP */
 
-#endif /* LWIP_HDR_SNMP_ASN1_H__ */
+#endif /* LWIP_HDR_SNMP_ASN1_H */

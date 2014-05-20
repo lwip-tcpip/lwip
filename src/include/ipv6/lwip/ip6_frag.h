@@ -38,8 +38,8 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_IP6_FRAG_H__
-#define LWIP_HDR_IP6_FRAG_H__
+#ifndef LWIP_HDR_IP6_FRAG_H
+#define LWIP_HDR_IP6_FRAG_H
 
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
@@ -99,4 +99,4 @@ err_t ip6_frag(struct pbuf *p, struct netif *netif, ip6_addr_t *dest);
 }
 #endif
 
-#endif /* LWIP_HDR_IP6_FRAG_H__ */
+#endif /* LWIP_HDR_IP6_FRAG_H */

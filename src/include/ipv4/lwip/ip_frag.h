@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef LWIP_HDR_IP_FRAG_H__
-#define LWIP_HDR_IP_FRAG_H__
+#ifndef LWIP_HDR_IP_FRAG_H
+#define LWIP_HDR_IP_FRAG_H
 
 #include "lwip/opt.h"
 #include "lwip/err.h"
@@ -88,4 +88,4 @@ err_t ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest);
 }
 #endif
 
-#endif /* LWIP_HDR_IP_FRAG_H__ */
+#endif /* LWIP_HDR_IP_FRAG_H */

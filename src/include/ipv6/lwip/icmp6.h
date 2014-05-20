@@ -38,8 +38,8 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_ICMP6_H__
-#define LWIP_HDR_ICMP6_H__
+#ifndef LWIP_HDR_ICMP6_H
+#define LWIP_HDR_ICMP6_H
 
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
@@ -149,4 +149,4 @@ void icmp6_param_problem(struct pbuf *p, enum icmp6_pp_code c, u32_t pointer);
 #endif
 
 
-#endif /* LWIP_HDR_ICMP6_H__ */
+#endif /* LWIP_HDR_ICMP6_H */

@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_IP4_ADDR_H__
-#define LWIP_HDR_IP4_ADDR_H__
+#ifndef LWIP_HDR_IP4_ADDR_H
+#define LWIP_HDR_IP4_ADDR_H
 
 #include "lwip/opt.h"
 #include "lwip/def.h"
@@ -244,4 +244,4 @@ char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
 }
 #endif
 
-#endif /* LWIP_HDR_IP_ADDR_H__ */
+#endif /* LWIP_HDR_IP_ADDR_H */

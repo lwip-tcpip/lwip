@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_API_H__
-#define LWIP_HDR_API_H__
+#ifndef LWIP_HDR_API_H
+#define LWIP_HDR_API_H
 
 #include "lwip/opt.h"
 
@@ -335,4 +335,4 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 
 #endif /* LWIP_NETCONN */
 
-#endif /* LWIP_HDR_API_H__ */
+#endif /* LWIP_HDR_API_H */

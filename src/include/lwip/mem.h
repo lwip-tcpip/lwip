@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_MEM_H__
-#define LWIP_HDR_MEM_H__
+#ifndef LWIP_HDR_MEM_H
+#define LWIP_HDR_MEM_H
 
 #include "lwip/opt.h"
 
@@ -120,4 +120,4 @@ void  mem_free(void *mem);
 }
 #endif
 
-#endif /* LWIP_HDR_MEM_H__ */
+#endif /* LWIP_HDR_MEM_H */

@@ -32,8 +32,8 @@
  * Author: Christiaan Simons <christiaan.simons@axon.tv>
  */
 
-#ifndef LWIP_HDR_SNMP_MSG_H__
-#define LWIP_HDR_SNMP_MSG_H__
+#ifndef LWIP_HDR_SNMP_MSG_H
+#define LWIP_HDR_SNMP_MSG_H
 
 #include "lwip/opt.h"
 #include "lwip/snmp.h"
@@ -312,4 +312,4 @@ void snmp_authfail_trap(void);
 
 #endif /* LWIP_SNMP */
 
-#endif /* LWIP_HDR_SNMP_MSG_H__ */
+#endif /* LWIP_HDR_SNMP_MSG_H */

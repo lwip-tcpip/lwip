@@ -39,8 +39,8 @@
  * Please coordinate changes and requests with Ivan Delamer
  * <delamer@inicotech.com>
  */
-#ifndef LWIP_HDR_IP6_ADDR_H__
-#define LWIP_HDR_IP6_ADDR_H__
+#ifndef LWIP_HDR_IP6_ADDR_H
+#define LWIP_HDR_IP6_ADDR_H
 
 #include "lwip/opt.h"
 
@@ -286,4 +286,4 @@ char *ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen);
 
 #endif /* LWIP_IPV6 */
 
-#endif /* LWIP_HDR_IP6_ADDR_H__ */
+#endif /* LWIP_HDR_IP6_ADDR_H */

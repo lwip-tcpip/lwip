@@ -30,8 +30,8 @@
  *
  */
 
-#ifndef LWIP_HDR_MEMP_H__
-#define LWIP_HDR_MEMP_H__
+#ifndef LWIP_HDR_MEMP_H
+#define LWIP_HDR_MEMP_H
 
 #include "lwip/opt.h"
 
@@ -113,4 +113,4 @@ void  memp_free(memp_t type, void *mem);
 }
 #endif
 
-#endif /* LWIP_HDR_MEMP_H__ */
+#endif /* LWIP_HDR_MEMP_H */

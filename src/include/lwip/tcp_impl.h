@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_TCP_IMPL_H__
-#define LWIP_HDR_TCP_IMPL_H__
+#ifndef LWIP_HDR_TCP_IMPL_H
+#define LWIP_HDR_TCP_IMPL_H
 
 #include "lwip/opt.h"
 
@@ -527,4 +527,4 @@ void tcp_timer_needed(void);
 
 #endif /* LWIP_TCP */
 
-#endif /* LWIP_HDR_TCP_H__ */
+#endif /* LWIP_HDR_TCP_H */

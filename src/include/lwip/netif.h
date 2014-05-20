@@ -29,8 +29,8 @@
  * Author: Adam Dunkels <adam@sics.se>
  *
  */
-#ifndef LWIP_HDR_NETIF_H__
-#define LWIP_HDR_NETIF_H__
+#ifndef LWIP_HDR_NETIF_H
+#define LWIP_HDR_NETIF_H
 
 #include "lwip/opt.h"
 
@@ -384,4 +384,4 @@ void netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bi
 }
 #endif
 
-#endif /* LWIP_HDR_NETIF_H__ */
+#endif /* LWIP_HDR_NETIF_H */
