@@ -26,6 +26,71 @@ HISTORY
   * icmp, icmp6, opt.h: patch #8027: Completed HW checksuming for IPv4 and
     IPv6 ICMP's
 
+  2012-08-22: Sylvain Rochet
+  * New PPP stack for lwIP, developed in ppp-new branch.
+    Based from pppd 2.4.5, released 2009-11-17, with huge changes to match
+    code size and memory requirements for embedded devices, including:
+    - Gluing together the previous low-level PPP code in lwIP to pppd 2.4.5, which
+      is more or less what pppd sys-* files are, so that we get something working
+      using the unix port.
+    - Merged some patchs from lwIP Git repository which add interesting features
+      or fix bugs.
+    - Merged some patchs from Debian pppd package which add interesting features
+      or fix bugs.
+    - Ported PPP timeout handling to the lwIP timers system
+    - Disabled all the PPP code using filesystem access, replaced in necessary cases
+      to configuration variables.
+    - Disabled all the PPP code forking processes.
+    - Removed IPX support, lwIP does not support IPX.
+    - Ported and improved random module from the previous PPP port.
+    - Removed samba TDB (file-driven database) usage, because it needs a filesystem.
+    - MS-CHAP required a DES implementation, we added the latest PolarSSL DES
+      implementation which is under a BSD-ish license.
+    - Also switched to PolarSSL MD4,MD5,SHA1 implementations, which are meant to be
+      used in embedded devices with reduced memory footprint.
+    - Removed PPP configuration file parsing support. 
+    - Added macro definition EAP_SUPPORT to make EAP support optional.
+    - Added macro definition CHAP_SUPPORT to make CHAP support optional.
+    - Added macro definition MSCHAP_SUPPORT to make MSCHAP support optional.
+    - Added macro definition PAP_SUPPORT to make PAP support optional.
+    - Cleared all Linux syscall calls.
+    - Disabled demand support using a macro, so that it can be ported later.
+    - Disabled ECP support using a macro, so that it can be ported later.
+    - Disabled CCP support using a macro, so that it can be ported later.
+    - Disabled CBCP support using a macro, so that it can be ported later.
+    - Disabled LQR support using a macro, so that it can be ported later.
+    - Print packet debug feature optional, through PRINTPKT_SUPPORT
+    - Removed POSIX signal usage.
+    - Fully ported PPPoS code from the previous port.
+    - Fully ported PPPoE code from the previous port.
+    - Fully ported VJ compression protocol code from the previous port.
+    - Removed all malloc()/free() use from PPP, replaced by stack usage or PBUF.
+    - Disabled PPP server support using a macro, so that it can be ported later.
+    - Switched all PPP debug to lwIP debug system.
+    - Created PPP Control Block (PPP PCB), removed PPP unit integer everywhere,
+      removed all global variables everywhere, did everything necessary for
+      the PPP stack to support more than one PPP session (pppd only support
+      one session per process).
+    - Removed the statically allocated output buffer, now using PBUF.
+    - Improved structure size of all PPP modules, deep analyze of code to reduce
+      variables size to the bare minimum. Switched all boolean type (char type in
+      most architecture) to compiler generated bitfields.
+    - Added PPP IPv6 support, glued lwIP IPv6 support to PPP.
+    - Now using a persistent netif interface which can then be used in lwIP
+      functions requiring a netif.
+    - Now initializing PPP in lwip_init() function.
+    - Reworked completely the PPP state machine, so that we don't end up in
+      anymore in inconsistent state, especially with PPPoE.
+    - Improved the way we handle PPP reconnection after disconnect, cleaning
+      everything required so that we start the PPP connection again from a
+      clean state.
+    - Added PPP holdoff support, allow the lwIP user to wait a little bit before
+      reconnecting, prevents connection flood, especially when using PPPoL2TP.
+    - Added PPPoL2TP LAC support (a.k.a. UDP tunnels), adding a VPN client
+      feature to lwIP, L2TP being a widely used tunnel protocol.
+    - Switched all used PPP types to lwIP types (u8t, u16t, u32t, ...)
+    - Added PPP API "sequential" thread-safe API, based from NETIFAPI.
+
   2012-03-25: Simon Goldschmidt (idea by Mason)
   * posix/*: added posix-compatibility include files posix/netdb.h and posix/sys/socket.h
     which are a simple wrapper to the correct lwIP include files.

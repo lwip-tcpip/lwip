@@ -29,17 +29,14 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT && VJ_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/pppdebug.h"
 
-#include "ppp_impl.h"
-#include "pppdebug.h"
-
-#include "vj.h"
+#include "netif/ppp/vj.h"
 
 #include <string.h>
-
-#if VJ_SUPPORT
 
 #if LINK_STATS
 #define INCR(counter) ++comp->stats.counter
@@ -142,7 +139,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   register u_short hlen = IPH_HL(ip);
   register struct tcp_hdr *oth;
   register struct tcp_hdr *th;
-  register u_short deltaS, deltaA;
+  register u_short deltaS, deltaA = 0;
   register u_long deltaL;
   register u_int changes = 0;
   u_char new_seq[16];
@@ -319,8 +316,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       ntohs(IPH_LEN(&cs->cs_ip)) == hlen) {
       break;
     }
-
-  /* (fall through) */
+    /* no break */
+    /* fall through */
 
   case SPECIAL_I:
   case SPECIAL_D:
@@ -360,7 +357,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * state with this packet's header.
    */
   deltaA = ntohs(th->chksum);
-  BCOPY(ip, &cs->cs_ip, hlen);
+  MEMCPY(&cs->cs_ip, ip, hlen);
 
   /*
    * We want to use the original packet as our compressed packet.
@@ -393,7 +390,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
   }
   *cp++ = (u_char)(deltaA >> 8);
   *cp++ = (u_char)deltaA;
-  BCOPY(new_seq, cp, deltaS);
+  MEMCPY(cp, new_seq, deltaS);
   INCR(vjs_compressed);
   return (TYPE_COMPRESSED_TCP);
 
@@ -403,7 +400,7 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
    * to use on future compressed packets in the protocol field).
    */
 uncompressed:
-  BCOPY(ip, &cs->cs_ip, hlen);
+  MEMCPY(&cs->cs_ip, ip, hlen);
   IPH_PROTO_SET(ip, cs->cs_id);
   comp->last_xmit = cs->cs_id;
   return (TYPE_UNCOMPRESSED_TCP);
@@ -446,7 +443,7 @@ vj_uncompress_uncomp(struct pbuf *nb, struct vjcompress *comp)
   cs = &comp->rstate[comp->last_recv = IPH_PROTO(ip)];
   comp->flags &=~ VJF_TOSS;
   IPH_PROTO_SET(ip, IP_PROTO_TCP);
-  BCOPY(ip, &cs->cs_ip, hlen);
+  MEMCPY(&cs->cs_ip, ip, hlen);
   cs->cs_hlen = (u_short)hlen;
   INCR(vjs_uncompressedin);
   return 0;
@@ -596,7 +593,15 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
     struct pbuf *np, *q;
     u8_t *bufptr;
 
+#if IP_FORWARD
+    /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
+     * the packet is being allocated with enough header space to be
+     * forwarded (to Ethernet for example).
+     */
+    np = pbuf_alloc(PBUF_LINK, n0->len + cs->cs_hlen, PBUF_POOL);
+#else /* IP_FORWARD */
     np = pbuf_alloc(PBUF_RAW, n0->len + cs->cs_hlen, PBUF_POOL);
+#endif /* IP_FORWARD */
     if(!np) {
       PPPDEBUG(LOG_WARNING, ("vj_uncompress_tcp: realign failed\n"));
       goto bad;
@@ -647,6 +652,4 @@ bad:
   return (-1);
 }
 
-#endif /* VJ_SUPPORT */
-
-#endif /* PPP_SUPPORT */
+#endif /* PPP_SUPPORT && VJ_SUPPORT */
