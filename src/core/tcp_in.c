@@ -67,6 +67,9 @@
    function. */
 static struct tcp_seg inseg;
 static struct tcp_hdr *tcphdr;
+static u16_t tcphdr_opt1len;
+static u8_t* tcphdr_opt2;
+static u16_t tcp_optidx;
 static u32_t seqno, ackno;
 static u8_t flags;
 static u16_t tcplen;
@@ -150,11 +153,39 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Move the payload pointer in the pbuf so that it points to the
      TCP data instead of the TCP header. */
   hdrlen = TCPH_HDRLEN(tcphdr);
-  if(pbuf_header(p, -(hdrlen * 4))){
-    /* drop short packets */
-    LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
-    TCP_STATS_INC(tcp.lenerr);
-    goto dropped;
+  tcphdr_opt1len = (hdrlen * 4) - TCP_HLEN;
+  tcphdr_opt2 = NULL;
+  if (p->len < hdrlen * 4) {
+    if (p->len >= TCP_HLEN) {
+      /* TCP header fits into first pbuf, options don't - data is in the next pbuf */
+      u16_t optlen = tcphdr_opt1len;
+      pbuf_header(p, -TCP_HLEN); /* cannot fail */
+      LWIP_ASSERT("tcphdr_opt1len >= p->len", tcphdr_opt1len >= p->len);
+      LWIP_ASSERT("p->next != NULL", p->next != NULL);
+      tcphdr_opt1len = p->len;
+      if (optlen > tcphdr_opt1len) {
+        s16_t opt2len;
+        /* options continue in the next pbuf: set p to zero length and hide the
+           options in the next pbuf (adjusting p->tot_len) */
+        u8_t phret = pbuf_header(p, -(s16_t)tcphdr_opt1len);
+        LWIP_ASSERT("phret == 0", phret == 0);
+        tcphdr_opt2 = (u8_t*)p->next->payload;
+        opt2len = optlen - tcphdr_opt1len;
+        phret = pbuf_header(p->next, -opt2len);
+        LWIP_ASSERT("phret == 0", phret == 0);
+        /* p->next->payload now points to the TCP data */
+        /* manually adjust p->tot_len to changed p->next->tot_len change */
+        p->tot_len -= opt2len;
+      }
+      LWIP_ASSERT("p->len == 0", p->len == 0);
+    } else {
+      /* drop short packets */
+      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: short packet\n"));
+      TCP_STATS_INC(tcp.lenerr);
+      goto dropped;
+    }
+  } else {
+    pbuf_header(p, -(hdrlen * 4)); /* cannot fail */
   }
 
   /* Convert fields in TCP header to host byte order. */
@@ -1611,8 +1642,19 @@ tcp_receive(struct tcp_pcb *pcb)
   }
 }
 
+static u8_t tcp_getoptbyte(void)
+{
+  if ((tcphdr_opt2 == NULL) || (tcp_optidx < tcphdr_opt1len)) {
+    u8_t* opts = (u8_t *)tcphdr + TCP_HLEN;
+    return opts[tcp_optidx++];
+  } else {
+    u8_t idx = tcp_optidx++ - tcphdr_opt1len;
+    return tcphdr_opt2[idx];
+  }
+}
+
 /**
- * Parses the options contained in the incoming segment. 
+ * Parses the options contained in the incoming segment.
  *
  * Called from tcp_listen_input() and tcp_process().
  * Currently, only the MSS option is supported!
@@ -1622,78 +1664,74 @@ tcp_receive(struct tcp_pcb *pcb)
 static void
 tcp_parseopt(struct tcp_pcb *pcb)
 {
-  u16_t c, max_c;
+  u8_t data;
   u16_t mss;
-  u8_t *opts, opt;
 #if LWIP_TCP_TIMESTAMPS
   u32_t tsval;
 #endif
 
-  opts = (u8_t *)tcphdr + TCP_HLEN;
-
   /* Parse the TCP MSS option, if present. */
   if (TCPH_HDRLEN(tcphdr) > 0x5) {
-    max_c = (TCPH_HDRLEN(tcphdr) - 5) << 2;
-    for (c = 0; c < max_c; ) {
-      opt = opts[c];
+    u16_t max_c = (TCPH_HDRLEN(tcphdr) - 5) << 2;
+    for (tcp_optidx = 0; tcp_optidx < max_c; ) {
+      u8_t opt = tcp_getoptbyte();
       switch (opt) {
-      case 0x00:
+      case LWIP_TCP_OPT_EOL:
         /* End of options. */
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: EOL\n"));
         return;
-      case 0x01:
+      case LWIP_TCP_OPT_NOP:
         /* NOP option. */
-        ++c;
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: NOP\n"));
         break;
-      case 0x02:
+      case LWIP_TCP_OPT_MSS:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: MSS\n"));
-        if (opts[c + 1] != 0x04 || c + 0x04 > max_c) {
+        if (tcp_getoptbyte() != LWIP_TCP_OPT_LEN_MSS || (tcp_optidx - 2 + LWIP_TCP_OPT_LEN_MSS) > max_c) {
           /* Bad length */
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           return;
         }
         /* An MSS option with the right option length. */
-        mss = (opts[c + 2] << 8) | opts[c + 3];
+        mss = (tcp_getoptbyte() << 8);
+        mss |= tcp_getoptbyte();
         /* Limit the mss to the configured TCP_MSS and prevent division by zero */
         pcb->mss = ((mss > TCP_MSS) || (mss == 0)) ? TCP_MSS : mss;
-        /* Advance to next option */
-        c += 0x04;
         break;
 #if LWIP_WND_SCALE
-      case 0x03:
+      case LWIP_TCP_OPT_WS:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: WND_SCALE\n"));
-        if (opts[c + 1] != 0x03 || c + 0x03 > max_c) {
+        if (tcp_getoptbyte() != LWIP_TCP_OPT_LEN_WS || (tcp_optidx - 2 + LWIP_TCP_OPT_LEN_WS) > max_c) {
           /* Bad length */
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           return;
         }
         /* If syn was received with wnd scale option,
            activate wnd scale opt */
+        data = tcp_getoptbyte();
         if (flags & TCP_SYN) {
           /* An WND_SCALE option with the right option length. */
-          pcb->snd_scale = opts[c + 2];
+          pcb->snd_scale = data;
           if (pcb->snd_scale > 14U) {
             pcb->snd_scale = 14U;
           }
           pcb->rcv_scale = TCP_RCV_SCALE;
           pcb->flags |= TF_WND_SCALE;
         }
-        /* Advance to next option */
-        c += 0x03;
         break;
 #endif
 #if LWIP_TCP_TIMESTAMPS
-      case 0x08:
+      case LWIP_TCP_OPT_TS:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: TS\n"));
-        if (opts[c + 1] != 0x0A || c + 0x0A > max_c) {
+        if (tcp_getoptbyte() != LWIP_TCP_OPT_LEN_TS || (tcp_optidx - 2 + LWIP_TCP_OPT_LEN_TS) > max_c) {
           /* Bad length */
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           return;
         }
         /* TCP timestamp option with valid length */
-        tsval = (opts[c+2]) | (opts[c+3] << 8) |
-          (opts[c+4] << 16) | (opts[c+5] << 24);
+        tsval = tcp_getoptbyte();
+        tsval |= (tcp_getoptbyte() << 8);
+        tsval |= (tcp_getoptbyte() << 16);
+        tsval |= (tcp_getoptbyte() << 24);
         if (flags & TCP_SYN) {
           pcb->ts_recent = ntohl(tsval);
           /* Enable sending timestamps in every segment now that we know
@@ -1702,13 +1740,14 @@ tcp_parseopt(struct tcp_pcb *pcb)
         } else if (TCP_SEQ_BETWEEN(pcb->ts_lastacksent, seqno, seqno+tcplen)) {
           pcb->ts_recent = ntohl(tsval);
         }
-        /* Advance to next option */
-        c += 0x0A;
+        /* Advance to next option (6 bytes already read) */
+        tcp_optidx += LWIP_TCP_OPT_LEN_TS - 6;
         break;
 #endif
       default:
         LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: other\n"));
-        if (opts[c + 1] == 0) {
+        data = tcp_getoptbyte();
+        if (data < 2) {
           LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_parseopt: bad length\n"));
           /* If the length field is zero, the options are malformed
              and we don't process them further. */
@@ -1716,7 +1755,7 @@ tcp_parseopt(struct tcp_pcb *pcb)
         }
         /* All other options have a length field, so that we easily
            can skip past them. */
-        c += opts[c + 1];
+        tcp_optidx += data - 2;
       }
     }
   }

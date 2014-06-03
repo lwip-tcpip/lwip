@@ -165,6 +165,10 @@ HISTORY
 
  ++ Bugfixes:
 
+  2014-06-03: Simon Goldschmidt
+  * tcp_impl.h, tcp_in.c: fixed bug #37969 SYN packet dropped as short packet in
+    tcp_input function
+
   2014-05-20: Simon Goldschmidt
   * tcp_out.c: fixed bug #37184 tcp_write problem for pcbs in the SYN_SENT state
 
