@@ -718,7 +718,8 @@ again:
  * @param pcb the tcp_pcb used to establish the connection
  * @param ipaddr the remote ip address to connect to
  * @param port the remote tcp port to connect to
- * @param connected callback function to call when connected (or on error)
+ * @param connected callback function to call when connected (on error,
+                    the err calback will be called)
  * @return ERR_VAL if invalid arguments are given
  *         ERR_OK if connect request has been sent
  *         other err_t values if connect request couldn't be sent
