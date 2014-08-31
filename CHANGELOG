@@ -168,6 +168,9 @@ HISTORY
 
 
  ++ Bugfixes:
+  2014-08-20: Simon Goldschmidt
+  * dns.c: fixed bug #42987 lwIP is vulnerable to DNS cache poisoning due to
+    non-randomized TXIDs
 
   2014-06-03: Simon Goldschmidt
   * tcp_impl.h, tcp_in.c: fixed bug #37969 SYN packet dropped as short packet in
