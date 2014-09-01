@@ -1,10 +1,10 @@
 HISTORY
 
-(CVS HEAD)
+(git master)
 
   * [Enter new changes just after this line - do not remove this line]
 
- ++ New features:
+  ++ New features:
 
   2013-08-19: Simon Goldschmidt
   * netif.h: bug #42998: made NETIF_MAX_HWADDR_LEN overridable for some special
@@ -95,64 +95,11 @@ HISTORY
     - Switched all used PPP types to lwIP types (u8t, u16t, u32t, ...)
     - Added PPP API "sequential" thread-safe API, based from NETIFAPI.
 
-  2012-03-25: Simon Goldschmidt (idea by Mason)
-  * posix/*: added posix-compatibility include files posix/netdb.h and posix/sys/socket.h
-    which are a simple wrapper to the correct lwIP include files.
- 
-  2012-01-16: Simon Goldschmidt
-  * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
-
-  2011-12-17: Simon Goldschmidt
-  * ip.h: implemented API functions to access so_options of IP pcbs (UDP, TCP, RAW)
-    (fixes bug #35061)
-
-  2011-09-27: Simon Goldschmidt
-  * opt.h, tcp.c, tcp_in.c: Implemented limiting data on ooseq queue (task #9989)
-    (define TCP_OOSEQ_MAX_BYTES / TCP_OOSEQ_MAX_PBUFS in lwipopts.h)
-
-  2011-09-21: Simon Goldschmidt
-  * opt.h, api.h, api_lib.c, api_msg.h/.c, sockets.c: Implemented timeout on
-    send (TCP only, bug #33820)
-
-  2011-09-21: Simon Goldschmidt
-  * init.c: Converted runtime-sanity-checks into compile-time checks that can
-    be disabled (since runtime checks can often not be seen on embedded targets)
-
-  2011-09-11: Simon Goldschmidt
-  * ppp.h, ppp_impl.h: splitted ppp.h to an internal and external header file
-    to get a clear separation of which functions an application or port may use
-    (task #11281)
-
- 2011-09-11: Simon Goldschmidt
-  * opt.h, tcp_impl.h, tcp.c, udp.h/.c: Added a config option to randomize
-    initial local TCP/UDP ports (so that different port ranges are used after
-    a reboot; bug #33818; this one added tcp_init/udp_init functions again)
-
-  2011-09-03: Simon Goldschmidt
-  * dhcp.c: DHCP uses LWIP_RAND() for xid's (bug #30302)
-
-  2011-08-24: Simon Goldschmidt
-  * opt.h, netif.h/.c: added netif remove callback (bug #32397)
-
-  2011-07-26: Simon Goldschmidt
-  * etharp.c: ETHARP_SUPPORT_VLAN: add support for an external VLAN filter
-    function instead of only checking for one VLAN (define ETHARP_VLAN_CHECK_FN)
-
-  2011-07-21: Simon Goldschmidt (patch by hanhui)
-  * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
-    Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.
-    Also added code to allow ip_forward() to forward non-broadcast packets to
-    the input netif (set IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1).
-
   2011-07-21: Simon Goldschmidt
   * sockets.c, opt.h: (bug #30185): added LWIP_FIONREAD_LINUXMODE that makes
     ioctl/FIONREAD return the size of the next pending datagram.
 
-  2011-06-26: Simon Goldschmidt (patch by Cameron Gutman)
-  * tcp.c, tcp_out.c: bug #33604: added some more asserts to check that
-    pcb->state != LISTEN
-
- 2011-05-25: Simon Goldschmidt
+  2011-05-25: Simon Goldschmidt
   * again nearly the whole stack, renamed ip.c to ip4.c, ip_addr.c to ip4_addr.c,
     combined ipv4/ipv6 inet_chksum.c, added ip.h, ip_addr.h: Combined IPv4
     and IPv6 code where possible, added defines to access IPv4/IPv6 in non-IP
@@ -162,12 +109,9 @@ HISTORY
   * nearly the whole stack: Finally, we got decent IPv6 support, big thanks to
     Ivan! (this is work in progress: we're just post release anyway :-)
 
-   2011-05-14: Simon Goldschmidt (patch by Stéphane Lesage)
-  * tcpip.c/.h: patch #7449 allow tcpip callback from interrupt with static
-    memory message
 
+  ++ Bugfixes:
 
- ++ Bugfixes:
   2014-08-20: Simon Goldschmidt
   * dns.c: fixed bug #42987 lwIP is vulnerable to DNS cache poisoning due to
     non-randomized TXIDs
@@ -311,15 +255,6 @@ HISTORY
   2013-01-11: Simon Goldschmidt
   * raw.c: fixed bug #38066 Raw pcbs can alter packet without eating it
 
-  2012-09-26: Simon Goldschmidt
-  * api_msg.c: fixed bug #37405 'err_tcp()' uses already freed 'netconn' object
-
-  2012-09-26: patch by Henrik Persson
-  * dhcp.c: patch #7843 Fix corner case with dhcp timeouts
-
-  2012-09-26: patch by Henrik Persson
-  * dhcp.c: patch #7840 Segfault in dhcp_parse_reply if no end marker in dhcp packet
-
   2012-08-22: Simon Goldschmidt
   * memp.c: fixed bug #37166: memp_sanity check loops itself
 
@@ -338,10 +273,6 @@ HISTORY
   * memp.c: fixed bug #36412: memp.c does not compile when
     MEMP_OVERFLOW_CHECK > zero and MEMP_SEPARATE_POOLS == 1
 
-  2012-05-08: Simon Goldschmidt
-  * tcp_out.c: fixed bug #36380: unsent_oversize mismatch in 1.4.1RC1 (this was
-    a debug-check issue only)
-
   2012-05-03: Simon Goldschmidt (patch by Sylvain Rochet)
   * ppp.c: fixed bug #36283 (PPP struct used on header size computation and
     not packed)
@@ -350,13 +281,6 @@ HISTORY
   * ppp.c: fixed bug #36388 (PPP: checksum-only in last pbuf leads to pbuf with
     zero length)
 
-  2012-03-27: Simon Goldschmidt
-  * vj.c: fixed bug #35756 header length calculation problem in ppp/vj.c
-
-  2012-03-27: Simon Goldschmidt (patch by Mason)
-  * tcp_out.c: fixed bug #35945: SYN packet should provide the recv MSS not the
-    send MSS
-
   2012-03-25: Simon Goldschmidt
   * api_msg.c: Fixed bug #35817: do_connect() invalidly signals op_completed
     for UDP/RAW with LWIP_TCPIP_CORE_LOCKING==1
@@ -364,6 +288,98 @@ HISTORY
   2012-03-25: Simon Goldschmidt
   * api_msg.h, api_lib.c, api_msg.c, netifapi.c: fixed bug #35931: Name space
     pollution in api_msg.c and netifapi.c
+
+  2011-08-24: Simon Goldschmidt
+  * inet6.h: fixed bug #34124 struct in6_addr does not conform to the standard
+
+
+
+(STABLE-1.4.1)
+
+  ++ New features:
+
+  2012-03-25: Simon Goldschmidt (idea by Mason)
+  * posix/*: added posix-compatibility include files posix/netdb.h and posix/sys/socket.h
+    which are a simple wrapper to the correct lwIP include files.
+ 
+  2012-01-16: Simon Goldschmidt
+  * opt.h, icmp.c: Added option CHECKSUM_GEN_ICMP
+
+  2011-12-17: Simon Goldschmidt
+  * ip.h: implemented API functions to access so_options of IP pcbs (UDP, TCP, RAW)
+    (fixes bug #35061)
+
+  2011-09-27: Simon Goldschmidt
+  * opt.h, tcp.c, tcp_in.c: Implemented limiting data on ooseq queue (task #9989)
+    (define TCP_OOSEQ_MAX_BYTES / TCP_OOSEQ_MAX_PBUFS in lwipopts.h)
+
+  2011-09-21: Simon Goldschmidt
+  * opt.h, api.h, api_lib.c, api_msg.h/.c, sockets.c: Implemented timeout on
+    send (TCP only, bug #33820)
+
+  2011-09-21: Simon Goldschmidt
+  * init.c: Converted runtime-sanity-checks into compile-time checks that can
+    be disabled (since runtime checks can often not be seen on embedded targets)
+
+  2011-09-11: Simon Goldschmidt
+  * ppp.h, ppp_impl.h: splitted ppp.h to an internal and external header file
+    to get a clear separation of which functions an application or port may use
+    (task #11281)
+
+ 2011-09-11: Simon Goldschmidt
+  * opt.h, tcp_impl.h, tcp.c, udp.h/.c: Added a config option to randomize
+    initial local TCP/UDP ports (so that different port ranges are used after
+    a reboot; bug #33818; this one added tcp_init/udp_init functions again)
+
+  2011-09-03: Simon Goldschmidt
+  * dhcp.c: DHCP uses LWIP_RAND() for xid's (bug #30302)
+
+  2011-08-24: Simon Goldschmidt
+  * opt.h, netif.h/.c: added netif remove callback (bug #32397)
+
+  2011-07-26: Simon Goldschmidt
+  * etharp.c: ETHARP_SUPPORT_VLAN: add support for an external VLAN filter
+    function instead of only checking for one VLAN (define ETHARP_VLAN_CHECK_FN)
+
+  2011-07-21: Simon Goldschmidt (patch by hanhui)
+  * ip4.c, etharp.c, pbuf.h: bug #33634 ip_forward() have a faulty behaviour:
+    Added pbuf flags to mark incoming packets as link-layer broadcast/multicast.
+    Also added code to allow ip_forward() to forward non-broadcast packets to
+    the input netif (set IP_FORWARD_ALLOW_TX_ON_RX_NETIF==1).
+
+  2011-06-26: Simon Goldschmidt (patch by Cameron Gutman)
+  * tcp.c, tcp_out.c: bug #33604: added some more asserts to check that
+    pcb->state != LISTEN
+
+   2011-05-14: Simon Goldschmidt (patch by Stéphane Lesage)
+  * tcpip.c/.h: patch #7449 allow tcpip callback from interrupt with static
+    memory message
+
+
+  ++ Bugfixes:
+
+  2012-09-26: Simon Goldschmidt
+  * api_msg.c: fixed bug #37405 'err_tcp()' uses already freed 'netconn' object
+
+  2012-09-26: patch by Henrik Persson
+  * dhcp.c: patch #7843 Fix corner case with dhcp timeouts
+
+  2012-09-26: patch by Henrik Persson
+  * dhcp.c: patch #7840 Segfault in dhcp_parse_reply if no end marker in dhcp packet
+
+  2012-08-22: Simon Goldschmidt
+  * memp.c: fixed bug #37166: memp_sanity check loops itself
+
+  2012-05-08: Simon Goldschmidt
+  * tcp_out.c: fixed bug: #36380 unsent_oversize mismatch in 1.4.1RC1 (this was
+    a debug-check issue only)
+
+  2012-03-27: Simon Goldschmidt
+  * vj.c: fixed bug #35756 header length calculation problem in ppp/vj.c
+
+  2012-03-27: Simon Goldschmidt (patch by Mason)
+  * tcp_out.c: fixed bug #35945: SYN packet should provide the recv MSS not the
+    send MSS
 
   2012-03-22: Simon Goldschmidt
   * ip4.c: fixed bug #35927: missing refragmentaion in ip_forward
@@ -524,9 +540,6 @@ HISTORY
   * tcp_in.c: fixed bug #34111 RST for ACK to listening pcb has wrong seqno
 
   2011-08-24: Simon Goldschmidt
-  * inet6.h: fixed bug #34124 struct in6_addr does not conform to the standard
-
-  2011-08-24: Simon Goldschmidt
   * api_msg.c, sockets.c: fixed bug #33956 Wrong error returned when calling
     accept() on UDP connections
 
@@ -574,6 +587,9 @@ HISTORY
 
   2011-06-26: Simon Goldschmidt
   * mem.c: fixed bug #33544 "warning in mem.c in lwip 1.4.0 with NO_SYS=1"
+
+   2011-05-25: Simon Goldschmidt
+  * tcp.c: fixed bug #33398 (pointless conversion when checking TCP port range)
 
 
 
