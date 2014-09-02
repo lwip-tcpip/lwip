@@ -545,7 +545,7 @@ nullreturn:
   return NULL;
 }
 
-#endif /* LWIP_IPV6 ^^ LWIP_IPV6_REASS */
+#endif /* LWIP_IPV6 && LWIP_IPV6_REASS */
 
 #if LWIP_IPV6 && LWIP_IPV6_FRAG
 
