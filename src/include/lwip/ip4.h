@@ -63,9 +63,9 @@ extern "C" {
 PACK_STRUCT_BEGIN
 struct ip_hdr {
   /* version / header length */
-  PACK_STRUCT_FIELD(u8_t _v_hl);
+  PACK_STRUCT_FLD_8(u8_t _v_hl);
   /* type of service */
-  PACK_STRUCT_FIELD(u8_t _tos);
+  PACK_STRUCT_FLD_8(u8_t _tos);
   /* total length */
   PACK_STRUCT_FIELD(u16_t _len);
   /* identification */
@@ -77,14 +77,14 @@ struct ip_hdr {
 #define IP_MF 0x2000U        /* more fragments flag */
 #define IP_OFFMASK 0x1fffU   /* mask for fragmenting bits */
   /* time to live */
-  PACK_STRUCT_FIELD(u8_t _ttl);
+  PACK_STRUCT_FLD_8(u8_t _ttl);
   /* protocol*/
-  PACK_STRUCT_FIELD(u8_t _proto);
+  PACK_STRUCT_FLD_8(u8_t _proto);
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);
   /* source and destination IP addresses */
-  PACK_STRUCT_FIELD(ip_addr_p_t src);
-  PACK_STRUCT_FIELD(ip_addr_p_t dest); 
+  PACK_STRUCT_FLD_S(ip_addr_p_t src);
+  PACK_STRUCT_FLD_S(ip_addr_p_t dest);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES

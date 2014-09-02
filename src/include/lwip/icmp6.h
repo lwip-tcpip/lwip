@@ -105,8 +105,8 @@ enum icmp6_pp_code {
 #endif
 PACK_STRUCT_BEGIN
 struct icmp6_hdr {
-  PACK_STRUCT_FIELD(u8_t type);
-  PACK_STRUCT_FIELD(u8_t code);
+  PACK_STRUCT_FLD_8(u8_t type);
+  PACK_STRUCT_FLD_8(u8_t code);
   PACK_STRUCT_FIELD(u16_t chksum);
   PACK_STRUCT_FIELD(u32_t data);
 } PACK_STRUCT_STRUCT;
@@ -121,8 +121,8 @@ PACK_STRUCT_END
 #endif
 PACK_STRUCT_BEGIN
 struct icmp6_echo_hdr {
-  PACK_STRUCT_FIELD(u8_t type);
-  PACK_STRUCT_FIELD(u8_t code);
+  PACK_STRUCT_FLD_8(u8_t type);
+  PACK_STRUCT_FLD_8(u8_t code);
   PACK_STRUCT_FIELD(u16_t chksum);
   PACK_STRUCT_FIELD(u16_t id);
   PACK_STRUCT_FIELD(u16_t seqno);

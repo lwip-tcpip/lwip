@@ -68,6 +68,18 @@ extern "C" {
 #define PACK_STRUCT_FIELD(x) x
 #endif /* PACK_STRUCT_FIELD */
 
+/* Used for struct fields of u8_t,
+ * where some compilers warn that packing is not necessary */
+#ifndef PACK_STRUCT_FLD_8
+#define PACK_STRUCT_FLD_8(x) PACK_STRUCT_FIELD(x)
+#endif /* PACK_STRUCT_FLD_8 */
+
+/* Used for struct fields of that are packed structs themself,
+ * where some compilers warn that packing is not necessary */
+#ifndef PACK_STRUCT_FLD_S
+#define PACK_STRUCT_FLD_S(x) PACK_STRUCT_FIELD(x)
+#endif /* PACK_STRUCT_FLD_S */
+
 
 #ifndef LWIP_UNUSED_ARG
 #define LWIP_UNUSED_ARG(x) (void)x

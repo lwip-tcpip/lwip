@@ -152,8 +152,8 @@ PACK_STRUCT_BEGIN
 /** DNS message header */
 struct dns_hdr {
   PACK_STRUCT_FIELD(u16_t id);
-  PACK_STRUCT_FIELD(u8_t flags1);
-  PACK_STRUCT_FIELD(u8_t flags2);
+  PACK_STRUCT_FLD_8(u8_t flags1);
+  PACK_STRUCT_FLD_8(u8_t flags2);
   PACK_STRUCT_FIELD(u16_t numquestions);
   PACK_STRUCT_FIELD(u16_t numanswers);
   PACK_STRUCT_FIELD(u16_t numauthrr);

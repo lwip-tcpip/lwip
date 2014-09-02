@@ -57,7 +57,7 @@ extern "C" {
 #endif
 PACK_STRUCT_BEGIN
 struct eth_addr {
-  PACK_STRUCT_FIELD(u8_t addr[ETHARP_HWADDR_LEN]);
+  PACK_STRUCT_FLD_8(u8_t addr[ETHARP_HWADDR_LEN]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -71,10 +71,10 @@ PACK_STRUCT_BEGIN
 /** Ethernet header */
 struct eth_hdr {
 #if ETH_PAD_SIZE
-  PACK_STRUCT_FIELD(u8_t padding[ETH_PAD_SIZE]);
+  PACK_STRUCT_FLD_8(u8_t padding[ETH_PAD_SIZE]);
 #endif
-  PACK_STRUCT_FIELD(struct eth_addr dest);
-  PACK_STRUCT_FIELD(struct eth_addr src);
+  PACK_STRUCT_FLD_S(struct eth_addr dest);
+  PACK_STRUCT_FLD_S(struct eth_addr src);
   PACK_STRUCT_FIELD(u16_t type);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -115,13 +115,13 @@ PACK_STRUCT_BEGIN
 struct etharp_hdr {
   PACK_STRUCT_FIELD(u16_t hwtype);
   PACK_STRUCT_FIELD(u16_t proto);
-  PACK_STRUCT_FIELD(u8_t  hwlen);
-  PACK_STRUCT_FIELD(u8_t  protolen);
+  PACK_STRUCT_FLD_8(u8_t  hwlen);
+  PACK_STRUCT_FLD_8(u8_t  protolen);
   PACK_STRUCT_FIELD(u16_t opcode);
-  PACK_STRUCT_FIELD(struct eth_addr shwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr2 sipaddr);
-  PACK_STRUCT_FIELD(struct eth_addr dhwaddr);
-  PACK_STRUCT_FIELD(struct ip_addr2 dipaddr);
+  PACK_STRUCT_FLD_S(struct eth_addr shwaddr);
+  PACK_STRUCT_FLD_S(struct ip_addr2 sipaddr);
+  PACK_STRUCT_FLD_S(struct eth_addr dhwaddr);
+  PACK_STRUCT_FLD_S(struct ip_addr2 dipaddr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES

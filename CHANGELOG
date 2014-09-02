@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2013-09-02: Simon Goldschmidt
+  * arch.h and many other files: added optional macros PACK_STRUCT_FLD_8() and
+    PACK_STRUCT_FLD_S() to prevent gcc 4 from warning about struct members that
+    do not need packing
+
   2013-08-19: Simon Goldschmidt
   * netif.h: bug #42998: made NETIF_MAX_HWADDR_LEN overridable for some special
     networks

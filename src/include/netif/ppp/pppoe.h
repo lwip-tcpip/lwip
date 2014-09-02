@@ -81,8 +81,8 @@
 #endif
 PACK_STRUCT_BEGIN
 struct pppoehdr {
-  PACK_STRUCT_FIELD(u8_t vertype);
-  PACK_STRUCT_FIELD(u8_t code);
+  PACK_STRUCT_FLD_8(u8_t vertype);
+  PACK_STRUCT_FLD_8(u8_t code);
   PACK_STRUCT_FIELD(u16_t session);
   PACK_STRUCT_FIELD(u16_t plen);
 } PACK_STRUCT_STRUCT;
