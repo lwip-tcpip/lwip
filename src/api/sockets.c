@@ -208,10 +208,10 @@ static const int err_to_errno_table[] = {
   EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
   EADDRINUSE,    /* ERR_USE        -8      Address in use.          */
   EALREADY,      /* ERR_ISCONN     -9      Already connected.       */
-  ECONNABORTED,  /* ERR_ABRT       -10     Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -11     Connection reset.        */
-  ENOTCONN,      /* ERR_CLSD       -12     Connection closed.       */
-  ENOTCONN,      /* ERR_CONN       -13     Not connected.           */
+  ENOTCONN,      /* ERR_CONN       -10     Not connected.           */
+  ECONNABORTED,  /* ERR_ABRT       -11     Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -12     Connection reset.        */
+  ENOTCONN,      /* ERR_CLSD       -13     Connection closed.       */
   EIO,           /* ERR_ARG        -14     Illegal argument.        */
   -1,            /* ERR_IF         -15     Low-level netif error    */
 };

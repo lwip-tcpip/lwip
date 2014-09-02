@@ -1074,7 +1074,7 @@ lwip_netconn_do_disconnect(struct api_msg_msg *msg)
 void
 lwip_netconn_do_listen(struct api_msg_msg *msg)
 {
-  if (ERR_IS_FATAL(msg->conn->last_err)) {
+  if (ERR_IS_FATAL_LISTENCONNECT(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
     msg->err = ERR_CONN;
@@ -1082,45 +1082,50 @@ lwip_netconn_do_listen(struct api_msg_msg *msg)
       if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
         if (msg->conn->state == NETCONN_NONE) {
           struct tcp_pcb* lpcb;
-#if LWIP_IPV6
-          if ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0) {
-#if TCP_LISTEN_BACKLOG
-            lpcb = tcp_listen_dual_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-#else  /* TCP_LISTEN_BACKLOG */
-            lpcb = tcp_listen_dual(msg->conn->pcb.tcp);
-#endif /* TCP_LISTEN_BACKLOG */
-          } else
-#endif /* LWIP_IPV6 */
-          {
-#if TCP_LISTEN_BACKLOG
-            lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
-#else  /* TCP_LISTEN_BACKLOG */
-            lpcb = tcp_listen(msg->conn->pcb.tcp);
-#endif /* TCP_LISTEN_BACKLOG */
-          }
-          if (lpcb == NULL) {
-            /* in this case, the old pcb is still allocated */
-            msg->err = ERR_MEM;
+          if (msg->conn->pcb.tcp->state != CLOSED) {
+            /* connection is not closed, cannot listen */
+            msg->err = ERR_VAL;
           } else {
-            /* delete the recvmbox and allocate the acceptmbox */
-            if (sys_mbox_valid(&msg->conn->recvmbox)) {
-              /** @todo: should we drain the recvmbox here? */
-              sys_mbox_free(&msg->conn->recvmbox);
-              sys_mbox_set_invalid(&msg->conn->recvmbox);
+#if LWIP_IPV6
+            if ((msg->conn->flags & NETCONN_FLAG_IPV6_V6ONLY) == 0) {
+#if TCP_LISTEN_BACKLOG
+              lpcb = tcp_listen_dual_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+#else  /* TCP_LISTEN_BACKLOG */
+              lpcb = tcp_listen_dual(msg->conn->pcb.tcp);
+#endif /* TCP_LISTEN_BACKLOG */
+            } else
+#endif /* LWIP_IPV6 */
+            {
+#if TCP_LISTEN_BACKLOG
+              lpcb = tcp_listen_with_backlog(msg->conn->pcb.tcp, msg->msg.lb.backlog);
+#else  /* TCP_LISTEN_BACKLOG */
+              lpcb = tcp_listen(msg->conn->pcb.tcp);
+#endif /* TCP_LISTEN_BACKLOG */
             }
-            msg->err = ERR_OK;
-            if (!sys_mbox_valid(&msg->conn->acceptmbox)) {
-              msg->err = sys_mbox_new(&msg->conn->acceptmbox, DEFAULT_ACCEPTMBOX_SIZE);
-            }
-            if (msg->err == ERR_OK) {
-              msg->conn->state = NETCONN_LISTEN;
-              msg->conn->pcb.tcp = lpcb;
-              tcp_arg(msg->conn->pcb.tcp, msg->conn);
-              tcp_accept(msg->conn->pcb.tcp, accept_function);
+            if (lpcb == NULL) {
+              /* in this case, the old pcb is still allocated */
+              msg->err = ERR_MEM;
             } else {
-              /* since the old pcb is already deallocated, free lpcb now */
-              tcp_close(lpcb);
-              msg->conn->pcb.tcp = NULL;
+              /* delete the recvmbox and allocate the acceptmbox */
+              if (sys_mbox_valid(&msg->conn->recvmbox)) {
+                /** @todo: should we drain the recvmbox here? */
+                sys_mbox_free(&msg->conn->recvmbox);
+                sys_mbox_set_invalid(&msg->conn->recvmbox);
+              }
+              msg->err = ERR_OK;
+              if (!sys_mbox_valid(&msg->conn->acceptmbox)) {
+                msg->err = sys_mbox_new(&msg->conn->acceptmbox, DEFAULT_ACCEPTMBOX_SIZE);
+              }
+              if (msg->err == ERR_OK) {
+                msg->conn->state = NETCONN_LISTEN;
+                msg->conn->pcb.tcp = lpcb;
+                tcp_arg(msg->conn->pcb.tcp, msg->conn);
+                tcp_accept(msg->conn->pcb.tcp, accept_function);
+              } else {
+                /* since the old pcb is already deallocated, free lpcb now */
+                tcp_close(lpcb);
+                msg->conn->pcb.tcp = NULL;
+              }
             }
           }
         }

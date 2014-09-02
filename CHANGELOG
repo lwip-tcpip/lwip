@@ -118,6 +118,10 @@ HISTORY
   ++ Bugfixes:
 
   2014-09-02: Simon Goldschmidt
+  * err.h/.c, sockets.c, api_msg.c: fixed bug #43110 call getpeername() before
+    listen() will cause a error
+
+  2014-09-02: Simon Goldschmidt
   * sockets.c: fixed bug #42117 lwip_fcntl does not set errno
 
   2014-09-02: Simon Goldschmidt

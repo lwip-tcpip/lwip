@@ -51,10 +51,10 @@ static const char *err_strerr[] = {
            "Operation would block.", /* ERR_WOULDBLOCK -7  */
            "Address in use.",        /* ERR_USE        -8  */
            "Already connected.",     /* ERR_ISCONN     -9  */
-           "Connection aborted.",    /* ERR_ABRT       -10 */
-           "Connection reset.",      /* ERR_RST        -11 */
-           "Connection closed.",     /* ERR_CLSD       -12 */
-           "Not connected.",         /* ERR_CONN       -13 */
+           "Not connected.",         /* ERR_CONN       -10 */
+           "Connection aborted.",    /* ERR_ABRT       -11 */
+           "Connection reset.",      /* ERR_RST        -12 */
+           "Connection closed.",     /* ERR_CLSD       -13 */
            "Illegal argument.",      /* ERR_ARG        -14 */
            "Low-level netif error.", /* ERR_IF         -15 */
 };
