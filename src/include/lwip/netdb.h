@@ -92,6 +92,8 @@ struct addrinfo {
 };
 #endif /* LWIP_DNS_API_DECLARE_STRUCTS */
 
+#define NETDB_ELEM_SIZE           (sizeof(struct addrinfo) + sizeof(struct sockaddr_in) + DNS_MAX_NAME_LENGTH + 1)
+
 #if LWIP_DNS_API_DECLARE_H_ERRNO
 /* application accessable error code set by the DNS API functions */
 extern int h_errno;

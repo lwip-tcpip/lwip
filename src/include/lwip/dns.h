@@ -70,13 +70,6 @@ extern "C" {
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
 
-/* The size used for the next line is rather a hack, but it prevents including socket.h in all files
-   that include memp.h, and that would possibly break portability (since socket.h defines some types
-   and constants possibly already define by the OS).
-   Calculation rule:
-   sizeof(struct addrinfo) + sizeof(struct sockaddr_in) + DNS_MAX_NAME_LENGTH + 1 byte zero-termination */
-#define NETDB_ELEM_SIZE           (32 + 16 + DNS_MAX_NAME_LENGTH + 1)
-
 #if DNS_LOCAL_HOSTLIST
 /** struct used for local host-list */
 struct local_hostlist_entry {
