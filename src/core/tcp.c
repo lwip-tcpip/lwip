@@ -382,14 +382,19 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     errf = pcb->errf;
 #endif /* LWIP_CALLBACK_API */
     errf_arg = pcb->callback_arg;
-    TCP_PCB_REMOVE_ACTIVE(pcb);
+    if ((pcb->state == CLOSED) && (pcb->local_port != 0)) {
+      /* bound, not yet opened */
+      TCP_RMV(&tcp_bound_pcbs, pcb);
+    } else {
+      TCP_PCB_REMOVE_ACTIVE(pcb);
+    }
     if (pcb->unacked != NULL) {
       tcp_segs_free(pcb->unacked);
     }
     if (pcb->unsent != NULL) {
       tcp_segs_free(pcb->unsent);
     }
-#if TCP_QUEUE_OOSEQ    
+#if TCP_QUEUE_OOSEQ
     if (pcb->ooseq != NULL) {
       tcp_segs_free(pcb->ooseq);
     }
@@ -1634,7 +1639,7 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   TCP_RMV(pcblist, pcb);
 
   tcp_pcb_purge(pcb);
-  
+
   /* if there is an outstanding delayed ACKs, send it */
   if (pcb->state != TIME_WAIT &&
      pcb->state != LISTEN &&
@@ -1652,6 +1657,8 @@ tcp_pcb_remove(struct tcp_pcb **pcblist, struct tcp_pcb *pcb)
   }
 
   pcb->state = CLOSED;
+  /* reset the local port to prevent the pcb from being 'bound' */
+  pcb->local_port = 0;
 
   LWIP_ASSERT("tcp_pcb_remove: tcp_pcbs_sane()", tcp_pcbs_sane());
 }

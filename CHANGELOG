@@ -117,6 +117,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-09-02: Simon Goldschmidt
+  * tcp.c: fixed bug #42299 tcp_abort() leaves freed pcb on tcp_bound_pcbs list
+
   2014-08-20: Simon Goldschmidt
   * dns.c: fixed bug #42987 lwIP is vulnerable to DNS cache poisoning due to
     non-randomized TXIDs
