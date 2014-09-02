@@ -2622,23 +2622,28 @@ lwip_fcntl(int s, int cmd, int val)
   struct lwip_sock *sock = get_socket(s);
   int ret = -1;
 
-  if (!sock || !sock->conn) {
+  if (!sock) {
     return -1;
   }
 
   switch (cmd) {
   case F_GETFL:
     ret = netconn_is_nonblocking(sock->conn) ? O_NONBLOCK : 0;
+    sock_set_errno(sock, 0);
     break;
   case F_SETFL:
     if ((val & ~O_NONBLOCK) == 0) {
       /* only O_NONBLOCK, all other bits are zero */
       netconn_set_nonblocking(sock->conn, val & O_NONBLOCK);
       ret = 0;
+      sock_set_errno(sock, 0);
+    } else {
+      sock_set_errno(sock, ENOSYS); /* not yet implemented */
     }
     break;
   default:
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_fcntl(%d, UNIMPL: %d, %d)\n", s, cmd, val));
+    sock_set_errno(sock, ENOSYS); /* not yet implemented */
     break;
   }
   return ret;
