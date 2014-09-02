@@ -826,6 +826,11 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 
   LWIP_ERROR("netconn_gethostbyname: invalid name", (name != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_gethostbyname: invalid addr", (addr != NULL), return ERR_ARG;);
+#if LWIP_MPU_COMPATIBLE
+  if (strlen(name >= DNS_MAX_NAME_LENGTH) {
+    return ERR_ARG;
+  }
+#endif
 
   API_VAR_ALLOC(struct dns_api_msg, MEMP_DNS_API_MSG, msg);
 #if LWIP_MPU_COMPATIBLE
