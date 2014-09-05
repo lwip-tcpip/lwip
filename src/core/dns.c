@@ -92,7 +92,7 @@
  * This is overridable but should only be needed by very small targets
  * or when using against non standard DNS servers. */
 #ifndef LWIP_DNS_SECURE
-#define LWIP_DNS_SECURE 0//(LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING)
+#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING)
 #endif
 
 /** Random generator function to create random TXIDs for queries */
