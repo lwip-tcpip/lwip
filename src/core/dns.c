@@ -11,6 +11,8 @@
  * Port to lwIP from uIP
  * by Jim Pettinato April 2007
 
+ * security fixes and more by Simon Goldschmidt
+
  * uIP version Copyright (c) 2002-2003, Adam Dunkels.
  * All rights reserved.
  *
@@ -90,7 +92,7 @@
  * This is overridable but should only be needed by very small targets
  * or when using against non standard DNS servers. */
 #ifndef LWIP_DNS_SECURE
-#define LWIP_DNS_SECURE (LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING)
+#define LWIP_DNS_SECURE 0//(LWIP_DNS_SECURE_RAND_XID | LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING)
 #endif
 
 /** Random generator function to create random TXIDs for queries */
@@ -123,6 +125,20 @@ static u16_t dns_txid;
 #define DNS_MAX_TTL               604800
 #endif
 
+/* The number of parallel requests (i.e. calls to dns_gethostbyname
+ * that cannot be answered from the DNS table.
+ * This is set to the table size by default.
+ */
+#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
+#ifndef DNS_MAX_REQUESTS
+#define DNS_MAX_REQUESTS          DNS_TABLE_SIZE
+#endif
+#else
+/* In this configuration, both arrays have to have the same size and are used
+ * like one entry (used/free) */
+#define DNS_MAX_REQUESTS          DNS_TABLE_SIZE
+#endif
+
 /* DNS protocol flags */
 #define DNS_FLAG1_RESPONSE        0x80
 #define DNS_FLAG1_OPCODE_STATUS   0x10
@@ -140,10 +156,7 @@ static u16_t dns_txid;
 #define DNS_STATE_UNUSED            0
 #define DNS_STATE_NEW               1
 #define DNS_STATE_ASKING            2
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
-#define DNS_STATE_DUPLICATE_PENDING 3
-#endif
-#define DNS_STATE_DONE              4
+#define DNS_STATE_DONE              3
 
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
@@ -186,6 +199,8 @@ struct dns_answer {
   u16_t len;
 };
 #define SIZEOF_DNS_ANSWER 10
+/* maximum allowed size for the struct due to non-packed */
+#define SIZEOF_DNS_ANSWER_ASSERT 12
 
 /** DNS table entry */
 struct dns_table_entry {
@@ -199,9 +214,18 @@ struct dns_table_entry {
   u32_t ttl;
   char name[DNS_MAX_NAME_LENGTH];
   ip_addr_t ipaddr;
+};
+
+/** DNS request table entry: used when dns_gehostbyname cannot answer the
+ * request from the DNS table */
+struct dns_req_entry {
   /* pointer to callback on DNS query done */
   dns_found_callback found;
+  /* argument passed to the callback function */
   void *arg;
+#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
+  u8_t dns_table_idx;
+#endif
 };
 
 #if DNS_LOCAL_HOSTLIST
@@ -243,6 +267,7 @@ static void dns_check_entries(void);
 static struct udp_pcb        *dns_pcb;
 static u8_t                   dns_seqno;
 static struct dns_table_entry dns_table[DNS_TABLE_SIZE];
+static struct dns_req_entry   dns_requests[DNS_MAX_REQUESTS];
 static ip_addr_t              dns_servers[DNS_MAX_SERVERS];
 /** Contiguous buffer for processing responses */
 static u8_t                   dns_payload_buffer[LWIP_MEM_ALIGN_BUFFER(DNS_MSG_SIZE)];
@@ -290,6 +315,11 @@ void
 dns_init()
 {
   ip_addr_t dnsserver;
+
+  LWIP_ASSERT("sanity check SIZEOF_DNS_QUERY",
+    sizeof(struct dns_query) == SIZEOF_DNS_QUERY);
+  LWIP_ASSERT("sanity check SIZEOF_DNS_ANSWER",
+    sizeof(struct dns_answer) <= SIZEOF_DNS_ANSWER_ASSERT);
 
   dns_payload = (u8_t *)LWIP_MEM_ALIGN(dns_payload_buffer);
 
@@ -687,31 +717,26 @@ dns_send(u8_t numdns, const char* name, u16_t txid)
  * entries for the given hostname. If there are any, their found callback will
  * be called and they will be removed.
  *
- * @param pEntry entry that is resolved or removed
+ * @param idx dns table index of the entry that is resolved or removed
  * @param addr IP address for the hostname (or NULL on error or memory shortage)
  */
 static void
-dns_call_found(struct dns_table_entry* pEntry, ip_addr_t* addr)
+dns_call_found(u8_t idx, ip_addr_t* addr)
 {
-  if (pEntry->found) {
-    (*pEntry->found)(pEntry->name, addr, pEntry->arg);
-  }
-
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
-  {
-    u8_t i;
-    for (i = 0; i < DNS_TABLE_SIZE; i++) {
-      if ((dns_table[i].state == DNS_STATE_DUPLICATE_PENDING) &&
-        (LWIP_DNS_STRICMP(dns_table[i].name, pEntry->name) == 0)) {
-        if (dns_table[i].found) {
-          (*dns_table[i].found)(dns_table[i].name, addr, dns_table[i].arg);
-        }
-        /* flush this entry */
-        dns_table[i].state   = DNS_STATE_UNUSED;
-        dns_table[i].found   = NULL;
-      }
+  u8_t i;
+  for (i = 0; i < DNS_MAX_REQUESTS; i++) {
+    if (dns_requests[i].found && (dns_requests[i].dns_table_idx == idx)) {
+      (*dns_requests[i].found)(dns_table[idx].name, addr, dns_requests[i].arg);
+      /* flush this entry */
+      dns_requests[i].found   = NULL;
     }
   }
+#else
+  if (dns_requests[idx].found) {
+    (*dns_requests[idx].found)(dns_table[idx].name, addr, dns_requests[idx].arg);
+  }
+  dns_requests[idx].found = NULL;
 #endif
 }
 
@@ -754,7 +779,7 @@ dns_check_entry(u8_t i)
 
   LWIP_ASSERT("array index out of bounds", i < DNS_TABLE_SIZE);
 
-  switch(pEntry->state) {
+  switch (pEntry->state) {
 
     case DNS_STATE_NEW: {
       u16_t txid;
@@ -775,7 +800,7 @@ dns_check_entry(u8_t i)
       break;
     }
 
-    case DNS_STATE_ASKING: {
+    case DNS_STATE_ASKING:
       if (--pEntry->tmr == 0) {
         if (++pEntry->retries == DNS_MAX_RETRIES) {
           if ((pEntry->numdns+1<DNS_MAX_SERVERS) && !ip_addr_isany(&dns_servers[pEntry->numdns+1])) {
@@ -787,10 +812,9 @@ dns_check_entry(u8_t i)
           } else {
             LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": timeout\n", pEntry->name));
             /* call specified callback function if provided */
-            dns_call_found(pEntry, NULL);
+            dns_call_found(i, NULL);
             /* flush this entry */
             pEntry->state   = DNS_STATE_UNUSED;
-            pEntry->found   = NULL;
             break;
           }
         }
@@ -806,22 +830,14 @@ dns_check_entry(u8_t i)
         }
       }
       break;
-    }
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
-    case DNS_STATE_DUPLICATE_PENDING:
-      /* nothing to do */
-      break;
-#endif
-    case DNS_STATE_DONE: {
+    case DNS_STATE_DONE:
       /* if the time to live is nul */
       if ((pEntry->ttl == 0) || (--pEntry->ttl == 0)) {
         LWIP_DEBUGF(DNS_DEBUG, ("dns_check_entry: \"%s\": flush\n", pEntry->name));
         /* flush this entry, there cannot be any related pending entries in this state */
         pEntry->state = DNS_STATE_UNUSED;
-        pEntry->found = NULL;
       }
       break;
-    }
     case DNS_STATE_UNUSED:
       /* nothing to do */
       break;
@@ -852,12 +868,11 @@ dns_check_entries(void)
 static void
 dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t port)
 {
-  u8_t i;
+  u8_t i, entry_idx = DNS_TABLE_SIZE;
   u16_t txid;
   char *ptr;
   struct dns_hdr *hdr;
   struct dns_answer ans;
-  struct dns_table_entry *pEntry;
   struct dns_query qry;
   u16_t nquestions, nanswers;
 
@@ -885,7 +900,8 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
     hdr = (struct dns_hdr*)dns_payload;
     txid = htons(hdr->id);
     for (i = 0; i < DNS_TABLE_SIZE; i++) {
-      pEntry = &dns_table[i];
+      struct dns_table_entry *pEntry = &dns_table[i];
+      entry_idx = i;
       if ((pEntry->state == DNS_STATE_ASKING) &&
           (pEntry->txid == txid)) {
         /* This entry is now completed. */
@@ -949,7 +965,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
             ip_addr_debug_print(DNS_DEBUG, (&(pEntry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
             /* call specified callback function if provided */
-            dns_call_found(pEntry, &pEntry->ipaddr);
+            dns_call_found(entry_idx, &pEntry->ipaddr);
             if (pEntry->ttl == 0) {
               /* RFC 883, page 29: "Zero values are
                  interpreted to mean that the RR can only be used for the
@@ -976,11 +992,10 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *addr, u16_t 
 
 responseerr:
   /* ERROR: call specified callback function with NULL as name to indicate an error */
-  dns_call_found(pEntry, NULL);
+  dns_call_found(entry_idx, NULL);
 flushentry:
   /* flush this entry */
-  pEntry->state = DNS_STATE_UNUSED;
-  pEntry->found = NULL;
+  dns_table[entry_idx].state = DNS_STATE_UNUSED;
 
 memerr:
   /* free pbuf */
@@ -1005,6 +1020,28 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   u8_t lseq, lseqi;
   struct dns_table_entry *pEntry = NULL;
   size_t namelen;
+  struct dns_req_entry* req;
+
+#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
+  u8_t r;
+  /* check for duplicate entries */
+  for (i = 0; i < DNS_TABLE_SIZE; i++) {
+    if ((dns_table[i].state == DNS_STATE_ASKING) &&
+        (LWIP_DNS_STRICMP(name, dns_table[i].name) == 0)) {
+      /* this is a duplicate entry, find a free request entry */
+      for (r = 0; r < DNS_MAX_REQUESTS; r++) {
+        if (dns_requests[r].found == 0) {
+          dns_requests[r].found = found;
+          dns_requests[r].arg = callback_arg;
+          dns_requests[r].dns_table_idx = i;
+          LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": duplicate request\n", name));
+          return ERR_INPROGRESS;
+        }
+      }
+    }
+  }
+  /* no duplicate entries found */
+#endif
 
   /* search an unused entry, or the oldest one */
   lseq = 0;
@@ -1027,7 +1064,7 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
   /* if we don't have found an unused entry, use the oldest completed one */
   if (i == DNS_TABLE_SIZE) {
     if ((lseqi >= DNS_TABLE_SIZE) || (dns_table[lseqi].state != DNS_STATE_DONE)) {
-      /* no entry can't be used now, table is full */
+      /* no entry can be used now, table is full */
       LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS entries table is full\n", name));
       return ERR_MEM;
     } else {
@@ -1037,36 +1074,38 @@ dns_enqueue(const char *name, size_t hostnamelen, dns_found_callback found,
     }
   }
 
+#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
+  /* find a free request entry */
+  req = NULL;
+  for (r = 0; r < DNS_MAX_REQUESTS; r++) {
+    if (dns_requests[r].found == 0) {
+      req = &dns_requests[r];
+      break;
+    }
+  }
+  if (req == NULL) {
+    /* no request entry can be used now, table is full */
+    LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": DNS request entries table is full\n", name));
+    return ERR_MEM;
+  }
+#else
+  /* in this configuration, the entry index is the same as the request index */
+  req = &dns_requests[i];
+#endif
+
+
   /* use this entry */
   LWIP_DEBUGF(DNS_DEBUG, ("dns_enqueue: \"%s\": use DNS entry %"U16_F"\n", name, (u16_t)(i)));
 
   /* fill the entry */
   pEntry->state = DNS_STATE_NEW;
   pEntry->seqno = dns_seqno;
-  pEntry->found = found;
-  pEntry->arg   = callback_arg;
+  req->found = found;
+  req->arg   = callback_arg;
   namelen = LWIP_MIN(hostnamelen, DNS_MAX_NAME_LENGTH-1);
   MEMCPY(pEntry->name, name, namelen);
   pEntry->name[namelen] = 0;
 
-#if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
-  /* check for duplicate entries */
-  {
-    u8_t n;
-    for (n = 0; n < DNS_TABLE_SIZE; n++) {
-      if ((dns_table[n].state == DNS_STATE_ASKING) &&
-          (LWIP_DNS_STRICMP(name, dns_table[n].name) == 0)) {
-        /* this is a duplicate entry */
-        struct dns_table_entry *orig = &dns_table[n];
-        pEntry->state = DNS_STATE_DUPLICATE_PENDING;
-        pEntry->seqno = orig->seqno;
-        /* don't send a query for this entry, only for the original */
-        return ERR_INPROGRESS;
-      }
-    }
-  }
-  /* no duplicate entries found */
-#endif
   dns_seqno++;
 
   /* force to send query without waiting timer */
