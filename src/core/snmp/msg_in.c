@@ -110,6 +110,10 @@ snmp_error_response(struct snmp_msg_pstat *msg_ps, u8_t error)
   struct snmp_varbind *vbi = msg_ps->invb.head;
   struct snmp_varbind *vbo = msg_ps->outvb.head;
   for (v=0; v<msg_ps->vb_idx; v++) {
+    if (vbi->ident != NULL) {
+      /* free previously allocated value before overwriting the pointer */
+      memp_free(MEMP_SNMP_VALUE, vbi->ident);
+    }
     vbi->ident_len = vbo->ident_len;
     vbo->ident_len = 0;
     vbi->ident = vbo->ident;

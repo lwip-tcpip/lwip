@@ -117,6 +117,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-09-03: Simon Goldschmidt
+  * msg_in.c: fixed bug #39355 SNMP Memory Leak in case of error
+
   2014-09-02: Simon Goldschmidt
   * err.h/.c, sockets.c, api_msg.c: fixed bug #43110 call getpeername() before
     listen() will cause a error
