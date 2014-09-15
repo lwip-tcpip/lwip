@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2014-09-15: Simon Goldschmidt
+  * dns.c: added source port randomization to make the DNS client more robust
+    (see bug #43144)
+
   2013-09-02: Simon Goldschmidt
   * arch.h and many other files: added optional macros PACK_STRUCT_FLD_8() and
     PACK_STRUCT_FLD_S() to prevent gcc 4 from warning about struct members that
