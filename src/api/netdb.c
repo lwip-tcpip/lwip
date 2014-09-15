@@ -278,6 +278,12 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     return EAI_NONAME;
   }
 
+  if (hints != NULL) {
+    if ((hints->ai_family != AF_UNSPEC) && (hints->ai_family != AF_INET)) {
+      return EAI_FAMILY;
+    }
+  }
+
   if (servname != NULL) {
     /* service name specified: convert to port number
      * @todo?: currently, only ASCII integers (port numbers) are supported! */

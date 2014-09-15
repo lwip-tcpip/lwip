@@ -1587,7 +1587,7 @@ lwip_netconn_do_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
-  LWIP_ASSERT("DNS response for wrong host name", strcmp(msg->name, name) == 0);
+  /* we trust the internal implementation to be correct :-) */
   LWIP_UNUSED_ARG(name);
 
   if (ipaddr == NULL) {

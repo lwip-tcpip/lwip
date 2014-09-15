@@ -61,6 +61,7 @@ extern "C" {
 #define EAI_SERVICE     201
 #define EAI_FAIL        202
 #define EAI_MEMORY      203
+#define EAI_FAMILY      204
 
 #define HOST_NOT_FOUND  210
 #define NO_DATA         211
