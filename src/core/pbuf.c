@@ -1003,6 +1003,31 @@ void pbuf_split_64k(struct pbuf *p, struct pbuf **rest)
 #endif /* LWIP_TCP && TCP_QUEUE_OOSEQ && LWIP_WND_SCALE */
 
 /**
+ * Skip a number of bytes at the start of a pbuf
+ *
+ * @param in input pbuf
+ * @param in_offset offset to skip
+ * @param out_offset resulting offset in the returned pbuf
+ * @return the pbuf in the queue where the offset is
+ */
+static struct pbuf*
+pbuf_skip(struct pbuf* in, u16_t in_offset, u16_t* out_offset)
+{
+  u16_t offset_left = in_offset;
+  struct pbuf* q = in;
+
+  /* get the correct pbuf */
+  while ((q != NULL) && (q->len <= offset_left)) {
+    offset_left -= q->len;
+    q = q->next;
+  }
+  if (out_offset != NULL) {
+    *out_offset = offset_left;
+  }
+  return q;
+}
+
+/**
  * Copy application supplied data into a pbuf.
  * This function can only be used to copy the equivalent of buf->tot_len data.
  *
@@ -1042,6 +1067,40 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
   }
   LWIP_ASSERT("did not copy all data", total_copy_len == 0 && copied_total == len);
   return ERR_OK;
+}
+
+/**
+ * Same as pbuf_take() but puts data at an offset
+ *
+ * @param buf pbuf to fill with data
+ * @param dataptr application supplied data buffer
+ * @param len length of the application supplied data buffer
+ *
+ * @return ERR_OK if successful, ERR_MEM if the pbuf is not big enough
+ */
+err_t
+pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
+{
+  u16_t target_offset;
+  struct pbuf* q = pbuf_skip(buf, offset, &target_offset);
+
+  /* return requested data if pbuf is OK */
+  if ((q != NULL) && (q->tot_len >= target_offset + len)) {
+    u16_t remaining_len = len;
+    u8_t* src_ptr = (u8_t*)dataptr;
+    if (target_offset > 0) {
+      /* copy the part that goes into the first pbuf */
+      u16_t first_copy_len = LWIP_MIN(q->len - target_offset, len);
+      MEMCPY(((u8_t*)q->payload) + target_offset, dataptr, first_copy_len);
+      remaining_len -= first_copy_len;
+      src_ptr += first_copy_len;
+    }
+    if (remaining_len > 0) {
+      return pbuf_take(q->next, src_ptr, remaining_len);
+    }
+    return ERR_OK;
+  }
+  return ERR_MEM;
 }
 
 /**
@@ -1126,19 +1185,33 @@ pbuf_fill_chksum(struct pbuf *p, u16_t start_offset, const void *dataptr,
 u8_t
 pbuf_get_at(struct pbuf* p, u16_t offset)
 {
-  u16_t copy_from = offset;
-  struct pbuf* q = p;
+  u16_t q_idx;
+  struct pbuf* q = pbuf_skip(p, offset, &q_idx);
 
-  /* get the correct pbuf */
-  while ((q != NULL) && (q->len <= copy_from)) {
-    copy_from -= q->len;
-    q = q->next;
-  }
   /* return requested data if pbuf is OK */
-  if ((q != NULL) && (q->len > copy_from)) {
-    return ((u8_t*)q->payload)[copy_from];
+  if ((q != NULL) && (q->len > q_idx)) {
+    return ((u8_t*)q->payload)[q_idx];
   }
   return 0;
+}
+
+ /** Put one byte to the specified position in a pbuf
+ * WARNING: silently ignores offset >= p->tot_len
+ *
+ * @param p pbuf to fill
+ * @param offset offset into p of the byte to write
+ * @param data byte to write at an offset into p
+ */
+void
+pbuf_put_at(struct pbuf* p, u16_t offset, u8_t data)
+{
+  u16_t q_idx;
+  struct pbuf* q = pbuf_skip(p, offset, &q_idx);
+
+  /* write requested data if pbuf is OK */
+  if ((q != NULL) && (q->len > q_idx)) {
+    ((u8_t*)q->payload)[q_idx] = data;
+  }
 }
 
 /** Compare pbuf contents at specified offset with memory s2, both of length n

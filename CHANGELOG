@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2014-09-16: Simon Goldschmidt
+  * pbuf.h/.c: added pbuf_take_at() and pbuf_put_at()
+
   2014-09-15: Simon Goldschmidt
   * dns.c: added source port randomization to make the DNS client more robust
     (see bug #43144)
