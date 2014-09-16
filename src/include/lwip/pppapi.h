@@ -122,13 +122,13 @@ int pppapi_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn l
 #endif /* PPPOS_SUPPORT */
 #if PPPOE_SUPPORT
 int pppapi_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name,
-		const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
-		void *ctx_cb);
+                                const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
+                                void *ctx_cb);
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
 int pppapi_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-		u8_t *secret, u8_t secret_len,
-                ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+                            u8_t *secret, u8_t secret_len,
+                            ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
 int pppapi_open(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
