@@ -127,6 +127,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-09-16: Simon Goldschmidt
+  * tcp_out.c: fixed bug #43192 tcp_enqueue_flags() should not check TCP_SND_QUEUELEN
+    when sending FIN
+
   2014-09-03: Simon Goldschmidt
   * msg_in.c: fixed bug #39355 SNMP Memory Leak in case of error
 
