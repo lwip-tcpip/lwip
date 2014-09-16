@@ -7,6 +7,9 @@ HISTORY
   ++ New features:
 
   2014-09-16: Simon Goldschmidt
+  * dns.c, opt.h: reduced ram usage by parsing DNS responses in place
+
+  2014-09-16: Simon Goldschmidt
   * pbuf.h/.c: added pbuf_take_at() and pbuf_put_at()
 
   2014-09-15: Simon Goldschmidt

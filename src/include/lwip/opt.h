@@ -901,11 +901,6 @@
 #define DNS_DOES_NAME_CHECK             1
 #endif
 
-/** DNS message max. size. Default value is RFC compliant. */
-#ifndef DNS_MSG_SIZE
-#define DNS_MSG_SIZE                    512
-#endif
-
 /** DNS_LOCAL_HOSTLIST: Implements a local host-to-address list. If enabled,
  *  you have to define
  *    #define DNS_LOCAL_HOSTLIST_INIT {{"host1", 0x123}, {"host2", 0x234}}
