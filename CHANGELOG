@@ -127,6 +127,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-09-16: Kevin Cernekee
+  * dns.c: patch #8480 Fix handling of dns_seqno wraparound
+
   2014-09-16: Simon Goldschmidt
   * tcp_out.c: fixed bug #43192 tcp_enqueue_flags() should not check TCP_SND_QUEUELEN
     when sending FIN
