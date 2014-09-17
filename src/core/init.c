@@ -152,6 +152,9 @@
 #if (!LWIP_NETCONN && LWIP_SOCKET)
   #error "If you want to use Socket API, you have to define LWIP_NETCONN=1 in your lwipopts.h"
 #endif
+#if (LWIP_PPP_API && (NO_SYS==1))
+  #error "If you want to use PPP API, you have to define NO_SYS=0 in your lwipopts.h"
+#endif
 #if (((!LWIP_DHCP) || (!LWIP_AUTOIP)) && LWIP_DHCP_AUTOIP_COOP)
   #error "If you want to use DHCP/AUTOIP cooperation mode, you have to define LWIP_DHCP=1 and LWIP_AUTOIP=1 in your lwipopts.h"
 #endif
