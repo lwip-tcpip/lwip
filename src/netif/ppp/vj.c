@@ -1,5 +1,5 @@
 /*
- * Routines to compress and uncompress tcp packets (for transmission
+ * Routines to compress and uncompess tcp packets (for transmission
  * over low speed serial lines.
  *
  * Copyright (c) 1989 Regents of the University of California.
