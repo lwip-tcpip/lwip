@@ -75,7 +75,7 @@ enum icmp_te_type {
 #  include "arch/bpstruct.h"
 #endif
 /** This is the standard ICMP header only that the u32_t data
- *  is splitted to two u16_t like ICMP echo needs it.
+ *  is split to two u16_t like ICMP echo needs it.
  *  This header is also used for other ICMP types that do not
  *  use the data part.
  */
