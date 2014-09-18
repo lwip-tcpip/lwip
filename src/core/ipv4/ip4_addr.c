@@ -123,7 +123,7 @@ ip4_addr_netmask_valid(u32_t netmask)
  * Ascii internet address interpretation routine.
  * The value returned is in network order.
  *
- * @param cp IP address in ascii represenation (e.g. "127.0.0.1")
+ * @param cp IP address in ascii representation (e.g. "127.0.0.1")
  * @return ip address in network order
  */
 u32_t
@@ -144,7 +144,7 @@ ipaddr_addr(const char *cp)
  * This replaces inet_addr, the return value from which
  * cannot distinguish between failure and a local broadcast address.
  *
- * @param cp IP address in ascii represenation (e.g. "127.0.0.1")
+ * @param cp IP address in ascii representation (e.g. "127.0.0.1")
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
@@ -255,7 +255,7 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
  *
  * @param addr ip address in network order to convert
  * @return pointer to a global static (!) buffer that holds the ASCII
- *         represenation of addr
+ *         representation of addr
  */
 char *
 ipaddr_ntoa(const ip_addr_t *addr)

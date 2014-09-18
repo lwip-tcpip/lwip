@@ -126,7 +126,7 @@ struct lwip_setgetsockopt_data {
   void *optval;
   /** size of *optval */
   socklen_t *optlen;
-  /** if an error occures, it is temporarily stored here */
+  /** if an error occurs, it is temporarily stored here */
   err_t err;
 };
 

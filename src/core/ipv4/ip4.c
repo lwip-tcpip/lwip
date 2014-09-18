@@ -264,10 +264,10 @@ ip_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
 #if IP_FRAG
       ip_frag(p, netif, ip_current_dest_addr());
 #else /* IP_FRAG */
-      /* @todo: send ICMP Destination Unreacheable code 13 "Communication administratively prohibited"? */
+      /* @todo: send ICMP Destination Unreachable code 13 "Communication administratively prohibited"? */
 #endif /* IP_FRAG */
     } else {
-      /* send ICMP Destination Unreacheable code 4: "Fragmentation Needed and DF Set" */
+      /* send ICMP Destination Unreachable code 4: "Fragmentation Needed and DF Set" */
       icmp_dest_unreach(p, ICMP_DUR_FRAG);
     }
     return;

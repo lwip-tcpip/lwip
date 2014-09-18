@@ -698,7 +698,7 @@ nd6_tmr(void)
         default_router_list[i].invalidation_timer -= ND6_TMR_INTERVAL / 1000;
       }
       if (default_router_list[i].invalidation_timer < ND6_TMR_INTERVAL / 1000) {
-        /* Less than 1 second remainig. Clear this entry. */
+        /* Less than 1 second remaining. Clear this entry. */
         default_router_list[i].neighbor_entry->isrouter = 0;
         default_router_list[i].neighbor_entry = NULL;
         default_router_list[i].invalidation_timer = 0;

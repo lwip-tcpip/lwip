@@ -342,14 +342,14 @@ autoip_start_probing(struct netif *netif)
       ip4_addr3_16(&netif->autoip->llipaddr), ip4_addr4_16(&netif->autoip->llipaddr)));
 
   /* time to wait to first probe, this is randomly
-   * choosen out of 0 to PROBE_WAIT seconds.
+   * chosen out of 0 to PROBE_WAIT seconds.
    * compliant to RFC 3927 Section 2.2.1
    */
   autoip->ttw = (u16_t)(LWIP_AUTOIP_RAND(netif) % (PROBE_WAIT * AUTOIP_TICKS_PER_SECOND));
 
   /*
    * if we tried more then MAX_CONFLICTS we must limit our rate for
-   * accquiring and probing address
+   * acquiring and probing address
    * compliant to RFC 3927 Section 2.2.1
    */
   if (autoip->tried_llipaddr > MAX_CONFLICTS) {

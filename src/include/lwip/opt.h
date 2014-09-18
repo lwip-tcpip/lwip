@@ -40,7 +40,7 @@
 
 /*
  * Include user defined options first. Anything not defined in these files
- * will be set to standard values. Override anything you dont like!
+ * will be set to standard values. Override anything you don't like!
  */
 #include "lwipopts.h"
 #include "lwip/debug.h"
@@ -194,7 +194,7 @@
  * MEMP_USE_CUSTOM_POOLS==1: whether to include a user file lwippools.h
  * that defines additional pools beyond the "standard" ones required
  * by lwIP. If you set this to 1, you must have lwippools.h in your 
- * inlude path somewhere. 
+ * include path somewhere.
  */
 #ifndef MEMP_USE_CUSTOM_POOLS
 #define MEMP_USE_CUSTOM_POOLS           0
@@ -254,7 +254,7 @@
 #endif
 
 /**
- * MEMP_NUM_TCP_PCB: the number of simulatenously active TCP connections.
+ * MEMP_NUM_TCP_PCB: the number of simultaneously active TCP connections.
  * (requires the LWIP_TCP option)
  */
 #ifndef MEMP_NUM_TCP_PCB
@@ -297,7 +297,7 @@
 #endif
 
 /**
- * MEMP_NUM_ARP_QUEUE: the number of simulateously queued outgoing
+ * MEMP_NUM_ARP_QUEUE: the number of simultaneously queued outgoing
  * packets (pbufs) that are waiting for an ARP request (to resolve
  * their destination address) to finish.
  * (requires the ARP_QUEUEING option)
@@ -308,7 +308,7 @@
 
 /**
  * MEMP_NUM_IGMP_GROUP: The number of multicast groups whose network interfaces
- * can be members et the same time (one per netif - allsystems group -, plus one
+ * can be members at the same time (one per netif - allsystems group -, plus one
  * per netif membership).
  * (requires the LWIP_IGMP option)
  */
@@ -317,7 +317,7 @@
 #endif
 
 /**
- * MEMP_NUM_SYS_TIMEOUT: the number of simulateously active timeouts.
+ * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
  * (requires NO_SYS==0)
  * The default number of timeouts is calculated here for all enabled modules.
  * The formula expects settings to be either '0' or '1'.
@@ -823,7 +823,7 @@
 #endif
 
 /**
- * Only allow SNMP write actions that are 'safe' (e.g. disabeling netifs is not
+ * Only allow SNMP write actions that are 'safe' (e.g. disabling netifs is not
  * a safe action and disabled when SNMP_SAFE_REQUESTS = 1).
  * Unsafe requests are disabled by default!
  */
@@ -1175,7 +1175,7 @@
 
 /**
  * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
- * designed to accomodate single full size TCP frame in one pbuf, including
+ * designed to accommodate single full size TCP frame in one pbuf, including
  * TCP_MSS, IP header, and link header.
  */
 #ifndef PBUF_POOL_BUFSIZE
@@ -1204,7 +1204,7 @@
 
 /**
  * LWIP_NETIF_STATUS_CALLBACK==1: Support a callback function whenever an interface
- * changes its up/down status (i.e., due to DHCP IP acquistion)
+ * changes its up/down status (i.e., due to DHCP IP acquisition)
  */
 #ifndef LWIP_NETIF_STATUS_CALLBACK
 #define LWIP_NETIF_STATUS_CALLBACK      0
@@ -1460,7 +1460,7 @@
 #define LWIP_NETCONN                    1
 #endif
 
-/** LWIP_TCPIP_TIMEOUT==1: Enable tcpip_timeout/tcpip_untimeout tod create
+/** LWIP_TCPIP_TIMEOUT==1: Enable tcpip_timeout/tcpip_untimeout to create
  * timers running in tcpip_thread from another thread.
  */
 #ifndef LWIP_TCPIP_TIMEOUT

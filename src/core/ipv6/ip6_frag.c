@@ -482,7 +482,7 @@ ip6_reass(struct pbuf *p)
         /* Save next helper struct (will be hidden in next step). */
         iprh_tmp = (struct ip6_reass_helper*) iprh->next_pbuf->payload;
 
-        /* hide the fragment header for every succeding fragment */
+        /* hide the fragment header for every succeeding fragment */
         pbuf_header(iprh->next_pbuf, -IP6_FRAG_HLEN);
         pbuf_cat(ipr->p, iprh->next_pbuf);
       }
@@ -501,7 +501,7 @@ ip6_reass(struct pbuf *p)
     /* Set payload length in ip header. */
     ipr->iphdr->_plen = htons(ipr->datagram_len);
 
-    /* Get the furst pbuf. */
+    /* Get the first pbuf. */
     p = ipr->p;
 
     /* Restore Fragment Header in first pbuf. Mark as "single fragment"

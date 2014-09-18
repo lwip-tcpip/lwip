@@ -1330,7 +1330,7 @@ dhcp_option_hostname(struct dhcp *dhcp, struct netif *netif)
  * Extract the DHCP message and the DHCP options, each into a contiguous
  * piece of memory. As a DHCP message is variable sized by its options,
  * and also allows overriding some fields for options, the easy approach
- * is to first unfold the options into a conitguous piece of memory, and
+ * is to first unfold the options into a contiguous piece of memory, and
  * use that further on.
  *
  */

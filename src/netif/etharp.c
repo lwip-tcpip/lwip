@@ -455,7 +455,7 @@ etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct
  * @param flags @see definition of ETHARP_FLAG_*
  *
  * @return
- * - ERR_OK Succesfully updated ARP cache.
+ * - ERR_OK Successfully updated ARP cache.
  * - ERR_MEM If we could not add a new ARP entry when ETHARP_FLAG_TRY_HARD was set.
  * - ERR_ARG Non-unicast address given, those will not appear in ARP cache.
  *
@@ -752,7 +752,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
 
 #if LWIP_AUTOIP
   /* We have to check if a host already has configured our random
-   * created link local address and continously check if there is
+   * created link local address and continuously check if there is
    * a host with this IP-address so we can detect collisions */
   autoip_arp_reply(netif, hdr);
 #endif /* LWIP_AUTOIP */
@@ -784,7 +784,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   case PP_HTONS(ARP_REQUEST):
     /* ARP request. If it asked for our address, we send out a
      * reply. In any case, we time-stamp any existing ARP entry,
-     * and possiby send out an IP packet that was queued on it. */
+     * and possibly send out an IP packet that was queued on it. */
 
     LWIP_DEBUGF (ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: incoming ARP request\n"));
     /* ARP request for our address? */
@@ -1340,7 +1340,7 @@ etharp_request(struct netif *netif, ip_addr_t *ipaddr)
  * calling ip_input and passing ARP frames through etharp in ethernetif_input,
  * the ARP cache is protected from concurrent access.
  *
- * @param p the recevied packet, p->payload pointing to the ethernet header
+ * @param p the received packet, p->payload pointing to the ethernet header
  * @param netif the network interface on which the packet was received
  */
 err_t

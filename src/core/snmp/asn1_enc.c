@@ -175,7 +175,7 @@ snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
  * @param p points to output pbuf to encode value into
  * @param ofs points to the offset within the pbuf chain
  * @param type input ASN1 type
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
 snmp_asn1_enc_type(struct pbuf *p, u16_t ofs, u8_t type)
@@ -207,7 +207,7 @@ snmp_asn1_enc_type(struct pbuf *p, u16_t ofs, u8_t type)
  * @param p points to output pbuf to encode length into
  * @param ofs points to the offset within the pbuf chain
  * @param length is the host order length to be encoded
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
 snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length)
@@ -300,7 +300,7 @@ snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length)
  * @param ofs points to the offset within the pbuf chain
  * @param octets_needed encoding length (from snmp_asn1_enc_u32t_cnt())
  * @param value is the host order u32_t value to be encoded
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  *
  * @see snmp_asn1_enc_u32t_cnt()
  */
@@ -376,7 +376,7 @@ snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, u32_t value)
  * @param ofs points to the offset within the pbuf chain
  * @param octets_needed encoding length (from snmp_asn1_enc_s32t_cnt())
  * @param value is the host order s32_t value to be encoded
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  *
  * @see snmp_asn1_enc_s32t_cnt()
  */
@@ -432,7 +432,7 @@ snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, s32_t value)
  * @param ofs points to the offset within the pbuf chain
  * @param ident_len object identifier array length
  * @param ident points to object identifier array
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
 snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
@@ -556,7 +556,7 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
  * @param ofs points to the offset within the pbuf chain
  * @param raw_len raw data length
  * @param raw points raw data
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
 snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, u8_t *raw)

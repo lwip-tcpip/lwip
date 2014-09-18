@@ -172,7 +172,7 @@ struct netconn {
   } pcb;
   /** the last error this netconn had */
   err_t last_err;
-  /** sem that is used to synchroneously execute functions in the core context */
+  /** sem that is used to synchronously execute functions in the core context */
   sys_sem_t op_completed;
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */

@@ -119,7 +119,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
         accepted = 0;
       }
 #endif /* LWIP_BROADCAST_PING */
-      /* broadcast or multicast destination address not acceptd? */
+      /* broadcast or multicast destination address not accepted? */
       if (!accepted) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
         ICMP_STATS_INC(icmp.err);
@@ -219,7 +219,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
-      /* send an ICMP packet, src addr is the dest addr of the curren packet */
+      /* send an ICMP packet, src addr is the dest addr of the current packet */
       ret = ip_output_if(p, ip_current_dest_addr(), IP_HDRINCL,
                    ICMP_TTL, 0, IP_PROTO_ICMP, inp);
       if (ret != ERR_OK) {

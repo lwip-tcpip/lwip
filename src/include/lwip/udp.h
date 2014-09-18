@@ -139,7 +139,7 @@ struct udp_pcb {
   /** user-supplied argument for the recv callback */
   void *recv_arg;  
 };
-/* udp_pcbs export for exernal reference (e.g. SNMP agent) */
+/* udp_pcbs export for external reference (e.g. SNMP agent) */
 extern struct udp_pcb *udp_pcbs;
 
 /* The following functions is the application layer interface to the

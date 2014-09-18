@@ -65,7 +65,7 @@ const ip6_addr_t ip6_addr_any = { { 0ul, 0ul, 0ul, 0ul } };
  * of an IPv6 address and convert to a binary address.
  * Returns 1 if the address is valid, 0 if not.
  *
- * @param cp IPv6 address in ascii represenation (e.g. "FF01::1")
+ * @param cp IPv6 address in ascii representation (e.g. "FF01::1")
  * @param addr pointer to which to save the ip address in network order
  * @return 1 if cp could be converted to addr, 0 on failure
  */
@@ -159,7 +159,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
  *
  * @param addr ip6 address in network order to convert
  * @return pointer to a global static (!) buffer that holds the ASCII
- *         represenation of addr
+ *         representation of addr
  */
 char *
 ip6addr_ntoa(const ip6_addr_t *addr)

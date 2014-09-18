@@ -152,7 +152,7 @@ void sys_sem_free(sys_sem_t *sem);
 /** Wait for a semaphore - forever/no timeout */
 #define sys_sem_wait(sem)                  sys_arch_sem_wait(sem, 0)
 #ifndef sys_sem_valid
-/** Check if a sempahore is valid/allocated: return 1 for valid, 0 for invalid */
+/** Check if a semaphore is valid/allocated: return 1 for valid, 0 for invalid */
 int sys_sem_valid(sys_sem_t *sem);
 #endif
 #ifndef sys_sem_set_invalid
@@ -169,7 +169,7 @@ void sys_msleep(u32_t ms); /* only has a (close to) 1 jiffy resolution. */
 
 /** Create a new mbox of specified size
  * @param mbox pointer to the mbox to create
- * @param size (miminum) number of messages in this mbox
+ * @param size (minimum) number of messages in this mbox
  * @return ERR_OK if successful, another err_t otherwise */
 err_t sys_mbox_new(sys_mbox_t *mbox, int size);
 /** Post a message to an mbox - may not fail
@@ -189,7 +189,7 @@ err_t sys_mbox_trypost(sys_mbox_t *mbox, void *msg);
            or SYS_ARCH_TIMEOUT on timeout
  *         The returned time has to be accurate to prevent timer jitter! */
 u32_t sys_arch_mbox_fetch(sys_mbox_t *mbox, void **msg, u32_t timeout);
-/* Allow port to override with a macro, e.g. special timout for sys_arch_mbox_fetch() */
+/* Allow port to override with a macro, e.g. special timeout for sys_arch_mbox_fetch() */
 #ifndef sys_arch_mbox_tryfetch
 /** Wait for a new message to arrive in the mbox
  * @param mbox mbox to get a message from
@@ -224,7 +224,7 @@ sys_thread_t sys_thread_new(const char *name, lwip_thread_fn thread, void *arg, 
 
 #endif /* NO_SYS */
 
-/* sys_init() must be called before anthing else. */
+/* sys_init() must be called before anything else. */
 void sys_init(void);
 
 #ifndef sys_jiffies

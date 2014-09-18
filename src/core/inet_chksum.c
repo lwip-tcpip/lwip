@@ -162,7 +162,7 @@ lwip_standard_chksum(void *dataptr, int len)
   sum += t;
 
   /* Fold 32-bit sum to 16 bits
-     calling this twice is propably faster than if statements... */
+     calling this twice is probably faster than if statements... */
   sum = FOLD_U32T(sum);
   sum = FOLD_U32T(sum);
 
@@ -245,7 +245,7 @@ lwip_standard_chksum(void *dataptr, int len)
   sum += t;                     /* add end bytes */
 
   /* Fold 32-bit sum to 16 bits
-     calling this twice is propably faster than if statements... */
+     calling this twice is probably faster than if statements... */
   sum = FOLD_U32T(sum);
   sum = FOLD_U32T(sum);
 
@@ -288,7 +288,7 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
   acc += (u32_t)htons(proto_len);
 
   /* Fold 32-bit sum to 16 bits
-     calling this twice is propably faster than if statements... */
+     calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));
@@ -400,7 +400,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
   acc += (u32_t)htons(proto_len);
 
   /* Fold 32-bit sum to 16 bits
-     calling this twice is propably faster than if statements... */
+     calling this twice is probably faster than if statements... */
   acc = FOLD_U32T(acc);
   acc = FOLD_U32T(acc);
   LWIP_DEBUGF(INET_DEBUG, ("inet_chksum_pseudo(): pbuf chain lwip_chksum()=%"X32_F"\n", acc));

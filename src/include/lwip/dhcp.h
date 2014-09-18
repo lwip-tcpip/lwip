@@ -170,7 +170,7 @@ void dhcp_fine_tmr(void);
 /** not yet implemented #define DHCP_RELEASING 11 */
 #define DHCP_BACKING_OFF  12
 
-/** AUTOIP cooperatation flags */
+/** AUTOIP cooperation flags */
 #define DHCP_AUTOIP_COOP_STATE_OFF  0
 #define DHCP_AUTOIP_COOP_STATE_ON   1
  

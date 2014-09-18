@@ -209,7 +209,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
  * @return ERR_OK when success, ERR_MEM if we're out of memory
  *
  * @note the caller is responsible for filling in outvb in the trap_msg
- * @note the use of the enterpise identifier field
+ * @note the use of the enterprise identifier field
  * is per RFC1215.
  * Use .iso.org.dod.internet.mgmt.mib-2.snmp for generic traps
  * and .iso.org.dod.internet.private.enterprises.yourenterprise
@@ -316,7 +316,7 @@ snmp_authfail_trap(void)
  *
  * @param vb_len varbind-list length
  * @param rhl points to returned header lengths
- * @return the required lenght for encoding the response header
+ * @return the required length for encoding the response header
  */
 static u16_t
 snmp_resp_header_sum(struct snmp_msg_pstat *m_stat, u16_t vb_len)
@@ -363,7 +363,7 @@ snmp_resp_header_sum(struct snmp_msg_pstat *m_stat, u16_t vb_len)
  *
  * @param vb_len varbind-list length
  * @param thl points to returned header lengths
- * @return the required lenght for encoding the trap header
+ * @return the required length for encoding the trap header
  */
 static u16_t
 snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
@@ -418,7 +418,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
  * annotates lengths in varbind for second encoding pass.
  *
  * @param root points to the root of the variable binding list
- * @return the required lenght for encoding the variable bindings
+ * @return the required length for encoding the variable bindings
  */
 static u16_t
 snmp_varbind_list_sum(struct snmp_varbind_root *root)

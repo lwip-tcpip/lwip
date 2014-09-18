@@ -425,7 +425,7 @@ tcp_abort(struct tcp_pcb *pcb)
 }
 
 /**
- * Binds the connection to a local portnumber and IP address. If the
+ * Binds the connection to a local port number and IP address. If the
  * IP address is not given (i.e., ipaddr == NULL), the IP address of
  * the outgoing network interface is used instead.
  *
@@ -1509,11 +1509,11 @@ tcp_sent(struct tcp_pcb *pcb, tcp_sent_fn sent)
 
 /**
  * Used to specify the function that should be called when a fatal error
- * has occured on the connection.
+ * has occurred on the connection.
  *
  * @param pcb tcp_pcb to set the err callback
  * @param err callback function to call for this pcb when a fatal error
- *        has occured on the connection
+ *        has occurred on the connection
  */ 
 void
 tcp_err(struct tcp_pcb *pcb, tcp_err_fn err)
@@ -1679,8 +1679,8 @@ tcp_next_iss(void)
 
 #if TCP_CALCULATE_EFF_SEND_MSS
 /**
- * Calcluates the effective send mss that can be used for a specific IP address
- * by using ip_route to determin the netif used to send to the address and
+ * Calculates the effective send mss that can be used for a specific IP address
+ * by using ip_route to determine the netif used to send to the address and
  * calculating the minimum of TCP_MSS and that netif's mtu (if set).
  */
 u16_t
@@ -1711,7 +1711,7 @@ tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
   if (mtu != 0) {
     mss_s = mtu - IP_HLEN - TCP_HLEN;
 #if LWIP_IPV6
-    /* for IPv6, substract the difference in header size */
+    /* for IPv6, subtract the difference in header size */
     mss_s -= (IP6_HLEN - IP_HLEN);
 #endif /* LWIP_IPV6 */
     /* RFC 1122, chap 4.2.2.6:

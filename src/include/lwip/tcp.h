@@ -157,7 +157,7 @@ enum tcp_state {
    * @param pcb a new tcp_pcb that now is connected
    * @param err an error argument (TODO: that is current always ERR_OK?)
    * @return ERR_OK: accept the new connection,
-   *                 any other err_t abortsthe new connection
+   *                 any other err_t aborts the new connection
    */
 #define DEF_ACCEPT_CALLBACK  tcp_accept_fn accept;
 #else /* LWIP_CALLBACK_API */

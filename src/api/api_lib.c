@@ -644,7 +644,7 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
  * @param apiflags combination of following flags :
  * - NETCONN_COPY: data will be copied into memory belonging to the stack
  * - NETCONN_MORE: for TCP connection, PSH flag will be set on last segment sent
- * - NETCONN_DONTBLOCK: only write the data if all dat can be written at once
+ * - NETCONN_DONTBLOCK: only write the data if all data can be written at once
  * @param bytes_written pointer to a location that receives the number of written bytes
  * @return ERR_OK if data was sent, any other err_t on error
  */
@@ -708,7 +708,7 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
 }
 
 /**
- * Close ot shutdown a TCP netconn (doesn't delete it).
+ * Close or shutdown a TCP netconn (doesn't delete it).
  *
  * @param conn the TCP netconn to close or shutdown
  * @param how fully close or only shutdown one side?

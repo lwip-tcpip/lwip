@@ -46,7 +46,7 @@
  * @param p points to a pbuf holding an ASN1 coded type field
  * @param ofs points to the offset within the pbuf chain of the ASN1 coded type field
  * @param type return ASN1 type
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
 snmp_asn1_dec_type(struct pbuf *p, u16_t ofs, u8_t *type)
@@ -78,8 +78,8 @@ snmp_asn1_dec_type(struct pbuf *p, u16_t ofs, u8_t *type)
  * @param p points to a pbuf holding an ASN1 coded length
  * @param ofs points to the offset within the pbuf chain of the ASN1 coded length
  * @param octets_used returns number of octets used by the length code
- * @param length return host order length, upto 64k
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @param length return host order length, up to 64k
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
 snmp_asn1_dec_length(struct pbuf *p, u16_t ofs, u8_t *octets_used, u16_t *length)
@@ -230,7 +230,7 @@ snmp_asn1_dec_length(struct pbuf *p, u16_t ofs, u8_t *octets_used, u16_t *length
  * @param ofs points to the offset within the pbuf chain of the ASN1 coded integer
  * @param len length of the coded integer field
  * @param value return host order integer
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  *
  * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
  * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
@@ -325,7 +325,7 @@ snmp_asn1_dec_u32t(struct pbuf *p, u16_t ofs, u16_t len, u32_t *value)
  * @param ofs points to the offset within the pbuf chain of the ASN1 coded integer
  * @param len length of the coded integer field
  * @param value return host order integer
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  *
  * @note ASN coded integers are _always_ signed!
  */
@@ -423,7 +423,7 @@ snmp_asn1_dec_s32t(struct pbuf *p, u16_t ofs, u16_t len, s32_t *value)
  * @param ofs points to the offset within the pbuf chain of the ASN1 coded object identifier
  * @param len length of the coded object identifier
  * @param oid return object identifier struct
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
 snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
@@ -590,7 +590,7 @@ snmp_asn1_dec_oid(struct pbuf *p, u16_t ofs, u16_t len, struct snmp_obj_id *oid)
  * @param len length of the coded raw data (zero is valid, e.g. empty string!)
  * @param raw_len length of the raw return value
  * @param raw return raw bytes
- * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
+ * @return ERR_OK if successful, ERR_ARG if we can't (or won't) decode
  */
 err_t
 snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw)

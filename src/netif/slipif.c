@@ -107,7 +107,7 @@ struct slipif_priv {
  * Uses the serial layer's sio_send()
  *
  * @param netif the lwip network interface structure for this slipif
- * @param p the pbuf chaing packet to send
+ * @param p the pbuf chain packet to send
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
 static err_t
@@ -161,7 +161,7 @@ slipif_output(struct netif *netif, struct pbuf *p)
  * Uses the serial layer's sio_send()
  *
  * @param netif the lwip network interface structure for this slipif
- * @param p the pbuf chaing packet to send
+ * @param p the pbuf chain packet to send
  * @param ipaddr the ip address to send the packet to (not used for slipif)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */
@@ -179,7 +179,7 @@ slipif_output_v4(struct netif *netif, struct pbuf *p, ip_addr_t *ipaddr)
  * Uses the serial layer's sio_send()
  *
  * @param netif the lwip network interface structure for this slipif
- * @param p the pbuf chaing packet to send
+ * @param p the pbuf chain packet to send
  * @param ipaddr the ip address to send the packet to (not used for slipif)
  * @return always returns ERR_OK since the serial layer does not provide return values
  */

@@ -188,7 +188,7 @@ PACK_STRUCT_END
 /** Flags used on input processing, not on pcb->flags
 */
 #define TF_RESET     (u8_t)0x08U   /* Connection was reset. */
-#define TF_CLOSED    (u8_t)0x10U   /* Connection was sucessfully closed. */
+#define TF_CLOSED    (u8_t)0x10U   /* Connection was successfully closed. */
 #define TF_GOT_FIN   (u8_t)0x20U   /* Connection was closed by the remote end. */
 
 
@@ -277,7 +277,7 @@ PACK_STRUCT_END
 
 /* This structure represents a TCP segment on the unsent, unacked and ooseq queues */
 struct tcp_seg {
-  struct tcp_seg *next;    /* used when putting segements on a queue */
+  struct tcp_seg *next;    /* used when putting segments on a queue */
   struct pbuf *p;          /* buffer containing data + TCP header */
   u16_t len;               /* the TCP length of this segment */
 #if TCP_OVERSIZE_DBGCHECK

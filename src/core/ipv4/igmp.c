@@ -561,7 +561,7 @@ igmp_joingroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
       } else {
         /* Return an error even if some network interfaces are joined */
         /** @todo undo any other netif already joined */
-        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: Not enought memory to join to group\n"));
+        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: Not enough memory to join to group\n"));
         return ERR_MEM;
       }
     }

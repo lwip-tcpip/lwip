@@ -151,7 +151,7 @@ mem_free(void *rmem)
 /**
  * The heap is made up as a list of structs of this type.
  * This does not have to be aligned since for getting its size,
- * we only use the macro SIZEOF_STRUCT_MEM, which automatically alignes.
+ * we only use the macro SIZEOF_STRUCT_MEM, which automatically aligns.
  */
 struct mem {
   /** index (-> ram[next]) of the next struct */
@@ -579,7 +579,7 @@ mem_malloc(mem_size_t size)
           /* (a mem2 struct does no fit into the user data space of mem and mem->next will always
            * be used at this point: if not we have 2 unused structs in a row, plug_holes should have
            * take care of this).
-           * -> near fit or excact fit: do not split, no mem2 creation
+           * -> near fit or exact fit: do not split, no mem2 creation
            * also can't move mem->next directly behind mem, since mem->next
            * will always be used at this point!
            */
