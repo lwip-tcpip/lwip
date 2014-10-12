@@ -602,7 +602,7 @@ static void ppp_clear(ppp_pcb *pcb) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
-#if PPP_STATS_SUPPORTs
+#if PPP_STATS_SUPPORT
   link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
 

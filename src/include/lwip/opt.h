@@ -1780,10 +1780,39 @@
 #endif
 
 /**
- * LWIP_PPP_API==1: Support PPP API (in pppapi.c)
+ * PRINTPKT_SUPPORT==1: Enable PPP print packet support
+ *
+ * Mandatory for debugging, it displays exchanged packet content in debug trace.
+ */
+#ifndef PRINTPKT_SUPPORT
+#define PRINTPKT_SUPPORT                0
+#endif
+
+/**
+ * PPP_IPV6_SUPPORT==1: Enable PPP IPv6 support
+ */
+#ifndef PPP_IPV6_SUPPORT
+#define PPP_IPV6_SUPPORT                0
+#endif
+
+/**
+ * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
  */
 #ifndef LWIP_PPP_API
 #define LWIP_PPP_API                    0
+#endif
+
+/**
+ * PPP_NOTIFY_PHASE==1: Support PPP notify phase support
+ *
+ * PPP notify phase support allows you to set a callback which is
+ * called on change of the internal PPP state machine.
+ *
+ * This can be used for example to set a LED pattern depending on the
+ * current phase of the PPP session.
+ */
+#ifndef PPP_NOTIFY_PHASE
+#define PPP_NOTIFY_PHASE                0
 #endif
 
 /**
@@ -1833,6 +1862,13 @@
 #endif /* MSCHAP_SUPPORT */
 
 /**
+ * EAP_SUPPORT==1: Support EAP.
+ */
+#ifndef EAP_SUPPORT
+#define EAP_SUPPORT                     0
+#endif
+
+/**
  * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
 #ifndef CBCP_SUPPORT
@@ -1858,6 +1894,13 @@
  */
 #ifndef LQR_SUPPORT
 #define LQR_SUPPORT                     0
+#endif
+
+/**
+ * PPP_SERVER==1: Enable PPP server support (waiting for incoming PPP session). CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef PPP_SERVER
+#define PPP_SERVER                      0
 #endif
 
 /**

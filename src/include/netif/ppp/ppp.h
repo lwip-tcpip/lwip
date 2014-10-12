@@ -48,6 +48,42 @@
 #include "lwip/ip6_addr.h"
 #endif /* PPP_IPV6_SUPPORT */
 
+/* Disable non-working or rarely used PPP feature, so rarely that we don't want to bloat opt.h with them */
+#ifndef PPP_OPTIONS
+#define PPP_OPTIONS         0
+#endif
+
+#ifndef PPP_REMOTENAME
+#define PPP_REMOTENAME      0
+#endif
+
+#ifndef PPP_IDLETIMELIMIT
+#define PPP_IDLETIMELIMIT   0
+#endif
+
+#ifndef PPP_LCP_ADAPTIVE
+#define PPP_LCP_ADAPTIVE    0
+#endif
+
+#ifndef PPP_MAXCONNECT
+#define PPP_MAXCONNECT      0
+#endif
+
+#ifndef DEMAND_SUPPORT
+#define DEMAND_SUPPORT      0
+#endif
+
+#ifndef PPP_ALLOWED_ADDRS
+#define PPP_ALLOWED_ADDRS   0
+#endif
+
+#ifndef PPP_PROTOCOLNAME
+#define PPP_PROTOCOLNAME    0
+#endif
+
+#ifndef PPP_STATS_SUPPORT
+#define PPP_STATS_SUPPORT   0
+#endif
 
 
 /*************************

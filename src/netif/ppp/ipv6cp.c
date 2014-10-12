@@ -270,9 +270,9 @@ static int  ipv6_demand_conf(int u);
 static int ipv6cp_printpkt(u_char *p, int plen,
 		void (*printer)(void *, char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
-#if PPP_DEMAND
+#if DEMAND_SUPPORT
 static int ipv6_active_pkt(u_char *pkt, int len);
-#endif /* PPP_DEMAND */
+#endif /* DEMAND_SUPPORT */
 
 const struct protent ipv6cp_protent = {
     PPP_IPV6CP,
@@ -1035,7 +1035,7 @@ endswitch:
     return (rc);			/* Return final code */
 }
 
-#if PPP_OPTION
+#if PPP_OPTIONS
 /*
  * ipv6_check_options - check that any IP-related options are OK,
  * and assign appropriate defaults.
@@ -1092,7 +1092,7 @@ static void ipv6_check_options() {
 	exit(1);
     }
 }
-#endif /* PPP_OPTION */
+#endif /* PPP_OPTIONS */
 
 #if DEMAND_SUPPORT
 /*
@@ -1271,7 +1271,7 @@ static void ipv6cp_down(fsm *f) {
     sif6comp(f->unit, 0);
 #endif
 
-#if PPP_DEMAND
+#if DEMAND_SUPPORT
     /*
      * If we are doing dial-on-demand, set the interface
      * to queue up outgoing packets (for now).
@@ -1279,7 +1279,7 @@ static void ipv6cp_down(fsm *f) {
     if (demand) {
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_QUEUE);
     } else
-#endif /* PPP_DEMAND */
+#endif /* DEMAND_SUPPORT */
     {
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_DROP);
 	ipv6cp_clear_addrs(f->pcb,
@@ -1464,7 +1464,7 @@ static int ipv6cp_printpkt(u_char *p, int plen,
 }
 #endif /* PRINTPKT_SUPPORT */
 
-#if PPP_DEMAND
+#if DEMAND_SUPPORT
 /*
  * ipv6_active_pkt - see if this IP packet is worth bringing the link up for.
  * We don't bring the link up for IP fragments or for TCP FIN packets
@@ -1502,6 +1502,6 @@ static int ipv6_active_pkt(u_char *pkt, int len) {
 	return 0;
     return 1;
 }
-#endif /* PPP_DEMAND */
+#endif /* DEMAND_SUPPORT */
 
 #endif /* PPP_SUPPORT && PPP_IPV6_SUPPORT */

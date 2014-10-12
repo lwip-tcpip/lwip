@@ -29,7 +29,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT && HAVE_MULTILINK /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT && defined(HAVE_MULTILINK) /* don't build if not configured for use in lwipopts.h */
 
 /* Multilink support
  *
