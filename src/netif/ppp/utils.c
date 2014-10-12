@@ -209,7 +209,7 @@ int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 		val = va_arg(args, long);
 		if ((long)val < 0) {
 		    neg = 1;
-		    val = -val;
+		    val = (unsigned long)-val;
 		}
 		base = 10;
 		break;
@@ -607,6 +607,8 @@ static void ppp_logit(int level, char *fmt, va_list args) {
 }
 
 static void ppp_log_write(int level, char *buf) {
+    LWIP_UNUSED_ARG(level); /* necessary if PPPDEBUG is defined to an empty function */
+    LWIP_UNUSED_ARG(buf);
     PPPDEBUG(level, ("%s\n", buf) );
 #if 0
     if (log_to_fd >= 0 && (level != LOG_DEBUG || debug)) {

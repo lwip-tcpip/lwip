@@ -44,30 +44,30 @@
     Alain.Durand@imag.fr, IMAG,
     Jean-Luc.Richier@imag.fr, IMAG-LSR.
 
-    Ce travail a été fait au sein du GIE DYADE (Groupement d'Intérêt
-    Économique ayant pour membres BULL S.A. et l'INRIA).
+    Ce travail a ï¿½tï¿½ fait au sein du GIE DYADE (Groupement d'Intï¿½rï¿½t
+    ï¿½conomique ayant pour membres BULL S.A. et l'INRIA).
 
     Ce logiciel informatique est disponible aux conditions
-    usuelles dans la recherche, c'est-à-dire qu'il peut
-    être utilisé, copié, modifié, distribué à l'unique
-    condition que ce texte soit conservé afin que
+    usuelles dans la recherche, c'est-ï¿½-dire qu'il peut
+    ï¿½tre utilisï¿½, copiï¿½, modifiï¿½, distribuï¿½ ï¿½ l'unique
+    condition que ce texte soit conservï¿½ afin que
     l'origine de ce logiciel soit reconnue.
 
     Le nom de l'Institut National de Recherche en Informatique
     et en Automatique (INRIA), de l'IMAG, ou d'une personne morale
-    ou physique ayant participé à l'élaboration de ce logiciel ne peut
-    être utilisé sans son accord préalable explicite.
+    ou physique ayant participï¿½ ï¿½ l'ï¿½laboration de ce logiciel ne peut
+    ï¿½tre utilisï¿½ sans son accord prï¿½alable explicite.
 
     Ce logiciel est fourni tel quel sans aucune garantie,
-    support ou responsabilité d'aucune sorte.
-    Ce logiciel est dérivé de sources d'origine
+    support ou responsabilitï¿½ d'aucune sorte.
+    Ce logiciel est dï¿½rivï¿½ de sources d'origine
     "University of California at Berkeley" et
     "Digital Equipment Corporation" couvertes par des copyrights.
 
-    L'Institut d'Informatique et de Mathématiques Appliquées de Grenoble (IMAG)
-    est une fédération d'unités mixtes de recherche du CNRS, de l'Institut National
-    Polytechnique de Grenoble et de l'Université Joseph Fourier regroupant
-    sept laboratoires dont le laboratoire Logiciels, Systèmes, Réseaux (LSR).
+    L'Institut d'Informatique et de Mathï¿½matiques Appliquï¿½es de Grenoble (IMAG)
+    est une fï¿½dï¿½ration d'unitï¿½s mixtes de recherche du CNRS, de l'Institut National
+    Polytechnique de Grenoble et de l'Universitï¿½ Joseph Fourier regroupant
+    sept laboratoires dont le laboratoire Logiciels, Systï¿½mes, Rï¿½seaux (LSR).
 
     This work has been done in the context of GIE DYADE (joint R & D venture
     between BULL S.A. and INRIA).
@@ -1396,7 +1396,7 @@ static int ipv6cp_printpkt(u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= sizeof(ipv6cp_codenames) / sizeof(char *))
+    if (code >= 1 && code <= (int)sizeof(ipv6cp_codenames) / (int)sizeof(char *))
 	printer(arg, " %s", ipv6cp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

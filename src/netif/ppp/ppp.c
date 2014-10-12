@@ -1925,6 +1925,7 @@ static void ppp_over_l2tp_open(ppp_pcb *pcb) {
 #endif /* PPPOL2TP_SUPPORT */
 
 void ppp_link_down(ppp_pcb *pcb) {
+  LWIP_UNUSED_ARG(pcb); /* necessary if PPPDEBUG is defined to an empty function */
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
 }
 
@@ -2009,6 +2010,7 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
 #if PPPOS_SUPPORT
   int i;
 #endif /* PPPOS_SUPPORT */
+  LWIP_UNUSED_ARG(mtu);
 
   /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
   pcb->pcomp = pcomp;

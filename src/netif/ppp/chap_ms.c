@@ -208,6 +208,8 @@ static int chapms_verify_response(int id, char *name,
 	unsigned char md[MS_CHAP_RESPONSE_LEN];
 	int diff;
 	int challenge_len, response_len;
+	LWIP_UNUSED_ARG(id);
+	LWIP_UNUSED_ARG(name);
 
 	challenge_len = *challenge++;	/* skip length, is 8 */
 	response_len = *response++;
@@ -254,6 +256,7 @@ static int chapms2_verify_response(int id, char *name,
 	unsigned char md[MS_CHAP2_RESPONSE_LEN];
 	char saresponse[MS_AUTH_RESPONSE_LENGTH+1];
 	int challenge_len, response_len;
+	LWIP_UNUSED_ARG(id);
 
 	challenge_len = *challenge++;	/* skip length, is 16 */
 	response_len = *response++;
@@ -326,6 +329,9 @@ static int chapms2_verify_response(int id, char *name,
 static void chapms_make_response(unsigned char *response, int id, char *our_name,
 		     unsigned char *challenge, char *secret, int secret_len,
 		     unsigned char *private) {
+	LWIP_UNUSED_ARG(id);
+	LWIP_UNUSED_ARG(our_name);
+	LWIP_UNUSED_ARG(private);
 	challenge++;	/* skip length, should be 8 */
 	*response++ = MS_CHAP_RESPONSE_LEN;
 	ChapMS(challenge, secret, secret_len, response);
@@ -334,6 +340,7 @@ static void chapms_make_response(unsigned char *response, int id, char *our_name
 static void chapms2_make_response(unsigned char *response, int id, char *our_name,
 		      unsigned char *challenge, char *secret, int secret_len,
 		      unsigned char *private) {
+	LWIP_UNUSED_ARG(id);
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;
 	ChapMS2(challenge,
@@ -608,7 +615,7 @@ void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
     sha1_finish(&sha1Context, Digest);
 
     /* Convert to ASCII hex string. */
-    for (i = 0; i < LWIP_MAX((MS_AUTH_RESPONSE_LENGTH / 2), sizeof(Digest)); i++)
+    for (i = 0; i < LWIP_MAX((MS_AUTH_RESPONSE_LENGTH / 2), (int)sizeof(Digest)); i++)
 	sprintf((char *)&authResponse[i * 2], "%02X", Digest[i]);
 }
 
@@ -821,6 +828,7 @@ void ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
     /* ARGSUSED */
     u_char *p = &response[MS_CHAP2_PEER_CHALLENGE];
     int i;
+    LWIP_UNUSED_ARG(authenticator);
 
     BZERO(response, MS_CHAP2_RESPONSE_LEN);
 

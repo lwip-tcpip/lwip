@@ -357,7 +357,10 @@ static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l) {
  */
 static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
     u_char ruserlen, rpasswdlen;
-    char *ruser, *rpasswd;
+    char *ruser;
+#if 0
+    char *rpasswd;
+#endif
     char rhostname[256];
     int retcode;
     char *msg;
@@ -401,12 +404,12 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
     }
 
     /* FIXME: we need a way to check peer secret */
+#if 0
     rpasswd = (char *) inp;
 
     /*
      * Check the username and password given.
      */
-#if 0
     retcode = check_passwd(pcb->upap.us_unit, ruser, ruserlen, rpasswd,
 			   rpasswdlen, &msg);
     BZERO(rpasswd, rpasswdlen);
@@ -423,11 +426,17 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	    warn("calling number %q is not authorized", remote_number);
 	}
     }
-#endif
 
     msglen = strlen(msg);
     if (msglen > 255)
 	msglen = 255;
+#else
+    /* only here to clean compiler warnings */
+    retcode = UPAP_AUTHNAK;
+    msg = NULL;
+    msglen = 0;
+#endif /* 0 */
+
     upap_sresp(pcb, retcode, id, msg, msglen);
 
     /* Null terminate and clean remote name. */
@@ -454,6 +463,7 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 static void upap_rauthack(ppp_pcb *pcb, u_char *inp, int id, int len) {
     u_char msglen;
     char *msg;
+    LWIP_UNUSED_ARG(id);
 
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;
@@ -488,6 +498,7 @@ static void upap_rauthack(ppp_pcb *pcb, u_char *inp, int id, int len) {
 static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len) {
     u_char msglen;
     char *msg;
+    LWIP_UNUSED_ARG(id);
 
     if (pcb->upap.us_clientstate != UPAPCS_AUTHREQ) /* XXX */
 	return;
@@ -608,7 +619,7 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
     if (len < UPAP_HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= sizeof(upap_codenames) / sizeof(char *))
+    if (code >= 1 && code <= (int)sizeof(upap_codenames) / (int)sizeof(char *))
 	printer(arg, " %s", upap_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

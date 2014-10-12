@@ -189,6 +189,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   u8_t *inp;
+  LWIP_UNUSED_ARG(pcb);
 
   if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
     goto free_and_return;
@@ -324,6 +325,10 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
   u8_t md5_hash[16];
   u8_t challenge_id = 0;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
+  LWIP_UNUSED_ARG(addr);
+  LWIP_UNUSED_ARG(len);
+  LWIP_UNUSED_ARG(tunnel_id);
+  LWIP_UNUSED_ARG(session_id);
 
   l2tp->peer_nr = nr;
   l2tp->peer_ns = ns;

@@ -1382,6 +1382,8 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		       try_.mrru = cishort;
 		   );
     }
+#else /* HAVE_MULTILINK */
+    LWIP_UNUSED_ARG(treat_as_reject);
 #endif /* HAVE_MULTILINK */
 
     /*
@@ -2332,7 +2334,7 @@ static int lcp_printpkt(u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= sizeof(lcp_codenames) / sizeof(char *))
+   if (code >= 1 && code <= (int)sizeof(lcp_codenames) / (int)sizeof(char *))
 	printer(arg, " %s", lcp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);
@@ -2617,6 +2619,7 @@ static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
     ppp_pcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
     u32_t magic;
+    LWIP_UNUSED_ARG(id);
 
     /* Check the magic number - don't count replies from ourselves. */
     if (len < 4) {

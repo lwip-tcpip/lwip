@@ -2041,6 +2041,7 @@ static void ipcp_down(fsm *f) {
  * proxy arp entries, etc.
  */
 static void ipcp_clear_addrs(ppp_pcb *pcb, u32_t ouraddr, u32_t hisaddr, u8_t replacedefaultroute) {
+    LWIP_UNUSED_ARG(replacedefaultroute);
 
     if (pcb->proxy_arp_set) {
 	cifproxyarp(pcb, hisaddr);
@@ -2113,7 +2114,7 @@ static int ipcp_printpkt(u_char *p, int plen,
     if (len < HEADERLEN || len > plen)
 	return 0;
 
-    if (code >= 1 && code <= sizeof(ipcp_codenames) / sizeof(char *))
+    if (code >= 1 && code <= (int)sizeof(ipcp_codenames) / (int)sizeof(char *))
 	printer(arg, " %s", ipcp_codenames[code-1]);
     else
 	printer(arg, " code=0x%x", code);

@@ -106,7 +106,7 @@ static int chap_print_pkt(unsigned char *p, int plen,
 #endif /* PRINTPKT_SUPPORT */
 
 /* List of digest types that we know about */
-const static struct chap_digest_type* const chap_digests[] = {
+static const struct chap_digest_type* const chap_digests[] = {
     &md5_digest,
 #if MSCHAP_SUPPORT
     &chapms_digest,
@@ -409,7 +409,11 @@ static int chap_verify_response(char *name, char *ourname, int id,
 		ppp_error("No CHAP secret found for authenticating %q", name);
 		return 0;
 	}
-#endif
+#else
+	/* only here to clean compiler warnings */
+	LWIP_UNUSED_ARG(ourname);
+	secret_len = 0;
+#endif /* 0 */
 	ok = digest->verify_response(id, name, secret, secret_len, challenge,
 				     response, message, message_space);
 	memset(secret, 0, sizeof(secret));
@@ -486,6 +490,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 		   unsigned char *pkt, int len) {
 	const char *msg = NULL;
+	LWIP_UNUSED_ARG(id);
 
 	if ((pcb->chap_client.flags & (AUTH_DONE|AUTH_STARTED|LOWERUP))
 	    != (AUTH_STARTED|LOWERUP))
@@ -590,7 +595,7 @@ static int chap_print_pkt(unsigned char *p, int plen,
 	if (len < CHAP_HDRLEN || len > plen)
 		return 0;
 
-	if (code >= 1 && code <= sizeof(chap_code_names) / sizeof(char *))
+	if (code >= 1 && code <= (int)sizeof(chap_code_names) / (int)sizeof(char *))
 		printer(arg, " %s", chap_code_names[code-1]);
 	else
 		printer(arg, " code=0x%x", code);
