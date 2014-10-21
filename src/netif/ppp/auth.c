@@ -546,6 +546,7 @@ set_permitted_number(argv)
  * An Open on LCP has requested a change from Dead to Establish phase.
  */
 void link_required(ppp_pcb *pcb) {
+    LWIP_UNUSED_ARG(pcb);
 }
 
 #if 0
@@ -1003,6 +1004,7 @@ void continue_networks(ppp_pcb *pcb) {
  */
 void auth_peer_fail(ppp_pcb *pcb, int protocol) {
     int errcode = PPPERR_AUTHFAIL;
+    LWIP_UNUSED_ARG(protocol);
     /*
      * Authentication failure: take the link down
      */
@@ -1057,8 +1059,8 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, 
      * Save the authenticated name of the peer for later.
      */
     /* FIXME: do we need that ? */
-    if (namelen > sizeof(pcb->peer_authname) - 1)
-	namelen = sizeof(pcb->peer_authname) - 1;
+    if (namelen > (int)sizeof(pcb->peer_authname) - 1)
+	namelen = (int)sizeof(pcb->peer_authname) - 1;
     MEMCPY(pcb->peer_authname, name, namelen);
     pcb->peer_authname[namelen] = 0;
 #if 0 /* UNUSED */
@@ -1082,6 +1084,7 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, 
  */
 void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
     int errcode = PPPERR_AUTHFAIL;
+    LWIP_UNUSED_ARG(protocol);
     /*
      * We've failed to authenticate ourselves to our peer.
      *
@@ -1162,6 +1165,7 @@ void np_up(ppp_pcb *pcb, int proto) {
 #if PPP_IDLETIMELIMIT
     int tlim;
 #endif /* PPP_IDLETIMELIMIT */
+    LWIP_UNUSED_ARG(proto);
 
     if (pcb->num_np_up == 0) {
 	/*
@@ -1209,6 +1213,7 @@ void np_up(ppp_pcb *pcb, int proto) {
  * np_down - a network protocol has gone down.
  */
 void np_down(ppp_pcb *pcb, int proto) {
+    LWIP_UNUSED_ARG(proto);
     if (--pcb->num_np_up == 0) {
 #if PPP_IDLETIMELIMIT
 	UNTIMEOUT(check_idle, (void*)pcb);
@@ -1227,6 +1232,7 @@ void np_down(ppp_pcb *pcb, int proto) {
  * np_finished - a network protocol has finished using the link.
  */
 void np_finished(ppp_pcb *pcb, int proto) {
+    LWIP_UNUSED_ARG(proto);
     if (--pcb->num_np_open <= 0) {
 	/* no further use for the link: shut up shop. */
 	lcp_close(pcb, "No network protocols running");

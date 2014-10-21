@@ -602,7 +602,7 @@ static void ppp_clear(ppp_pcb *pcb) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
-#if PPP_STATS_SUPPORTs
+#if PPP_STATS_SUPPORT
   link_stats_valid = 0;
 #endif /* PPP_STATS_SUPPORT */
 
@@ -1622,6 +1622,10 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
           /* Packet consumed, release our references. */
           pcrx->in_head = NULL;
           pcrx->in_tail = NULL;
+#if IP_FORWARD || LWIP_IPV6_FORWARD
+          /* hide the room for Ethernet forwarding header */
+          pbuf_header(inp, -(s16_t)PBUF_LINK_HLEN);
+#endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_MULTITHREADED
           if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
@@ -1711,6 +1715,7 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
         case PDDATA:                    /* Process data byte. */
           /* Make space to receive processed data. */
           if (pcrx->in_tail == NULL || pcrx->in_tail->len == PBUF_POOL_BUFSIZE) {
+            u16_t pbuf_alloc_len;
             if (pcrx->in_tail != NULL) {
               pcrx->in_tail->tot_len = pcrx->in_tail->len;
               if (pcrx->in_tail != pcrx->in_head) {
@@ -1720,45 +1725,35 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
               }
             }
             /* If we haven't started a packet, we need a packet header. */
+            pbuf_alloc_len = 0;
 #if IP_FORWARD || LWIP_IPV6_FORWARD
-            /* If IP forwarding is enabled we are using a PBUF_LINK packet type so
+            /* If IP forwarding is enabled we are reserving PBUF_LINK_HLEN bytes so
              * the packet is being allocated with enough header space to be
              * forwarded (to Ethernet for example).
              */
-            next_pbuf = pbuf_alloc(PBUF_LINK, 0, PBUF_POOL);
-#else /* IP_FORWARD || LWIP_IPV6_FORWARD */
-            next_pbuf = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+            if (pcrx->in_head == NULL) {
+              pbuf_alloc_len = PBUF_LINK_HLEN;
+            }
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
+            next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len, PBUF_POOL);
             if (next_pbuf == NULL) {
               /* No free buffers.  Drop the input packet and let the
                * higher layers deal with it.  Continue processing
                * the received pbuf chain in case a new packet starts. */
-              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE MBUFS!\n", pcb->num));
+              PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", pcb->num));
               LINK_STATS_INC(link.memerr);
               ppp_drop(pcrx);
               pcrx->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
             if (pcrx->in_head == NULL) {
-              u8_t *payload;
-              /* pbuf_header() used below is only trying to put PPP headers
-               * before the current payload pointer if there is enough space
-               * in the pbuf to do so. Therefore we don't care if it fails,
-               * but if it fail we have to set len to the size used by PPP headers.
-               */
+              u8_t *payload = ((u8_t*)next_pbuf->payload) + pbuf_alloc_len;
 #if PPP_INPROC_MULTITHREADED
-              if (pbuf_header(next_pbuf, +sizeof(struct pppos_input_header) +sizeof(pcrx->in_protocol))) {
-                next_pbuf->len += sizeof(struct pppos_input_header) + sizeof(pcrx->in_protocol);
-              }
-              payload = next_pbuf->payload;
               ((struct pppos_input_header*)payload)->pcb = pcb;
               payload += sizeof(struct pppos_input_header);
-#else /* PPP_INPROC_MULTITHREADED */
-              if (pbuf_header(next_pbuf, +sizeof(pcrx->in_protocol))) {
-                next_pbuf->len += sizeof(pcrx->in_protocol);
-              }
-              payload = next_pbuf->payload;
+              next_pbuf->len += sizeof(struct pppos_input_header);
 #endif /* PPP_INPROC_MULTITHREADED */
+              next_pbuf->len += sizeof(pcrx->in_protocol);
               *(payload++) = pcrx->in_protocol >> 8;
               *(payload) = pcrx->in_protocol & 0xFF;
               pcrx->in_head = next_pbuf;
@@ -1930,6 +1925,7 @@ static void ppp_over_l2tp_open(ppp_pcb *pcb) {
 #endif /* PPPOL2TP_SUPPORT */
 
 void ppp_link_down(ppp_pcb *pcb) {
+  LWIP_UNUSED_ARG(pcb); /* necessary if PPPDEBUG is defined to an empty function */
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
 }
 
@@ -2014,6 +2010,7 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
 #if PPPOS_SUPPORT
   int i;
 #endif /* PPPOS_SUPPORT */
+  LWIP_UNUSED_ARG(mtu);
 
   /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
   pcb->pcomp = pcomp;

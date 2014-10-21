@@ -313,7 +313,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   hunique_len = 0;
 #endif
   session = 0;
-  if (pb->len - off < PPPOE_HEADERLEN) {
+  if (pb->len - off < (u16_t)PPPOE_HEADERLEN) {
     PPPDEBUG(LOG_DEBUG, ("pppoe: packet too short: %d\n", pb->len));
     goto done;
   }

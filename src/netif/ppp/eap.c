@@ -2046,6 +2046,8 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
  * eap_success - Receive EAP Success message (client mode).
  */
 static void eap_success(ppp_pcb *pcb, u_char *inp, int id, int len) {
+	LWIP_UNUSED_ARG(id);
+
 	if (pcb->eap.es_client.ea_state != eapOpen && !eap_client_active(pcb)) {
 		ppp_dbglog("EAP unexpected success message in state %s (%d)",
 		    eap_state_name(pcb->eap.es_client.ea_state),
@@ -2070,6 +2072,8 @@ static void eap_success(ppp_pcb *pcb, u_char *inp, int id, int len) {
  * eap_failure - Receive EAP Failure message (client mode).
  */
 static void eap_failure(ppp_pcb *pcb, u_char *inp, int id, int len) {
+	LWIP_UNUSED_ARG(id);
+
 	if (!eap_client_active(pcb)) {
 		ppp_dbglog("EAP unexpected failure message in state %s (%d)",
 		    eap_state_name(pcb->eap.es_client.ea_state),
@@ -2173,7 +2177,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 	if (len < EAP_HEADERLEN || len > inlen)
 		return (0);
 
-	if (code >= 1 && code <= sizeof(eap_codenames) / sizeof(char *))
+	if (code >= 1 && code <= (int)sizeof(eap_codenames) / (int)sizeof(char *))
 		printer(arg, " %s", eap_codenames[code-1]);
 	else
 		printer(arg, " code=0x%x", code);
@@ -2188,7 +2192,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 		GETCHAR(rtype, inp);
 		len--;
 		if (rtype >= 1 &&
-		    rtype <= sizeof (eap_typenames) / sizeof (char *))
+		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2283,7 +2287,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				break;
 
 			case EAPSRP_SVALIDATOR:
-				if (len < sizeof (u32_t))
+				if (len < (int)sizeof (u32_t))
 					break;
 				GETLONG(uval, inp);
 				len -= sizeof (u32_t);
@@ -2323,7 +2327,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 		GETCHAR(rtype, inp);
 		len--;
 		if (rtype >= 1 &&
-		    rtype <= sizeof (eap_typenames) / sizeof (char *))
+		    rtype <= (int)sizeof (eap_typenames) / (int)sizeof (char *))
 			printer(arg, " %s", eap_typenames[rtype-1]);
 		else
 			printer(arg, " type=0x%x", rtype);
@@ -2347,7 +2351,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 			len--;
 			printer(arg, " <Suggested-type %02X", rtype);
 			if (rtype >= 1 &&
-			    rtype < sizeof (eap_typenames) / sizeof (char *))
+			    rtype < (int)sizeof (eap_typenames) / (int)sizeof (char *))
 				printer(arg, " (%s)", eap_typenames[rtype-1]);
 			printer(arg, ">");
 			break;
@@ -2389,7 +2393,7 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				break;
 
 			case EAPSRP_CVALIDATOR:
-				if (len < sizeof (u32_t))
+				if (len < (int)sizeof (u32_t))
 					break;
 				GETLONG(uval, inp);
 				len -= sizeof (u32_t);
