@@ -127,6 +127,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-10-21: Simon Goldschmidt
+  * api_msg.c: fixed bug #38219 Assert on TCP netconn_write with sndtimeout set
+
   2014-09-16: Kevin Cernekee
   * dns.c: patch #8480 Fix handling of dns_seqno wraparound
 
