@@ -1387,6 +1387,8 @@ event_callback(struct netconn *conn, enum netconn_evt evt, u16_t len)
   /* At this point, SYS_ARCH is still protected! */
 again:
   for (scb = select_cb_list; scb != NULL; scb = scb->next) {
+    /* remember the state of select_cb_list to detect changes */
+    last_select_cb_ctr = select_cb_ctr;
     if (scb->sem_signalled == 0) {
       /* semaphore not signalled yet */
       int do_signal = 0;
@@ -1414,7 +1416,6 @@ again:
       }
     }
     /* unlock interrupts with each step */
-    last_select_cb_ctr = select_cb_ctr;
     SYS_ARCH_UNPROTECT(lev);
     /* this makes sure interrupt protection time is short */
     SYS_ARCH_PROTECT(lev);

@@ -127,6 +127,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-10-21: Simon Goldschmidt (patch by Joel Cunningham and Albert Huitsing)
+  * sockts.c: fixed bugs #41495 Possible threading issue in select() and #43278
+    event_callback() handle context switch when calling sys_sem_signal()
+
   2014-10-21: Simon Goldschmidt
   * api_msg.c: fixed bug #38219 Assert on TCP netconn_write with sndtimeout set
 
