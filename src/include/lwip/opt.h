@@ -318,7 +318,6 @@
 
 /**
  * MEMP_NUM_SYS_TIMEOUT: the number of simultaneously active timeouts.
- * (requires NO_SYS==0)
  * The default number of timeouts is calculated here for all enabled modules.
  * The formula expects settings to be either '0' or '1'.
  */
