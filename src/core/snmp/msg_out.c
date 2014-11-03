@@ -165,7 +165,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
         snmp_inc_snmpoutgenerrs();
         break;
       default:
-        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_send_response(): unknown error_status: %d\n", m_stat->error_status));
+        LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_send_response(): unknown error_status: %d\n", (int)m_stat->error_status));
         break;
     }
     snmp_inc_snmpoutgetresponses();
