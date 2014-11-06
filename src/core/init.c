@@ -316,9 +316,6 @@ lwip_init(void)
   memp_init();
   pbuf_init();
   netif_init();
-#if LWIP_SOCKET
-  lwip_socket_init();
-#endif /* LWIP_SOCKET */
   ip_init();
 #if LWIP_ARP
   etharp_init();

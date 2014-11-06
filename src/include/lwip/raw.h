@@ -125,7 +125,7 @@ struct raw_pcb * raw_new_ip6   (u8_t proto);
 
 /* The following functions are the lower layer interface to RAW. */
 u8_t             raw_input      (struct pbuf *p, struct netif *inp);
-#define raw_init() /* Compatibility define, not init needed. */
+#define raw_init() /* Compatibility define, no init needed. */
 
 #ifdef __cplusplus
 }

@@ -398,7 +398,7 @@ struct timeval {
 };
 #endif /* LWIP_TIMEVAL_PRIVATE */
 
-void lwip_socket_init(void);
+#define lwip_socket_init() /* Compatibility define, no init needed. */
 
 int lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen);
 int lwip_bind(int s, const struct sockaddr *name, socklen_t namelen);

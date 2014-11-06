@@ -242,15 +242,6 @@ static void lwip_getsockopt_internal(void *arg);
 static void lwip_setsockopt_internal(void *arg);
 
 /**
- * Initialize this module. This function has to be called before any other
- * functions in this module!
- */
-void
-lwip_socket_init(void)
-{
-}
-
-/**
  * Map a externally used socket index to the internal socket representation.
  *
  * @param s externally used socket index

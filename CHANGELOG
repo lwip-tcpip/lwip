@@ -7,6 +7,10 @@ HISTORY
   ++ New features:
 
   2014-09-16: Simon Goldschmidt
+  * sockets.c/.h, init.c: lwip_socket_init() is not needed any more
+    -> compatibility define
+
+  2014-09-16: Simon Goldschmidt
   * dns.c, opt.h: reduced ram usage by parsing DNS responses in place
 
   2014-09-16: Simon Goldschmidt
