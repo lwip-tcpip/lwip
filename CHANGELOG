@@ -6,7 +6,7 @@ HISTORY
 
   ++ New features:
 
-  2014-09-16: Simon Goldschmidt
+  2014-11-06: Simon Goldschmidt
   * sockets.c/.h, init.c: lwip_socket_init() is not needed any more
     -> compatibility define
 
