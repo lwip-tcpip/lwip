@@ -40,6 +40,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT
 #if LWIP_INCLUDED_POLARSSL_MD4
 
 #include "netif/ppp/polarssl/md4.h"
@@ -276,4 +277,5 @@ void md4( unsigned char *input, int ilen, unsigned char output[16] )
     md4_finish( &ctx, output );
 }
 
+#endif /* PPP_SUPPORT */
 #endif /* LWIP_INCLUDED_POLARSSL_MD4 */

@@ -552,7 +552,7 @@ ip_input(struct pbuf *p, struct netif *inp)
   if (raw_input(p, inp) == 0)
 #endif /* LWIP_RAW */
   {
-    pbuf_header(p, -iphdr_hlen); /* Move to payload, no check necessary. */
+    pbuf_header(p, -(s16_t)iphdr_hlen); /* Move to payload, no check necessary. */
 
     switch (IPH_PROTO(iphdr)) {
 #if LWIP_UDP

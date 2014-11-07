@@ -751,6 +751,13 @@
 #define DHCP_DOES_ARP_CHECK             ((LWIP_DHCP) && (LWIP_ARP))
 #endif
 
+/**
+ * LWIP_DHCP_BOOTP_FILE==1: Store offered_si_addr and boot_file_name.
+ */
+#ifndef LWIP_DHCP_BOOTP_FILE
+#define LWIP_DHCP_BOOTP_FILE            0
+#endif
+
 /*
    ------------------------------------
    ---------- AUTOIP options ----------
@@ -1767,6 +1774,13 @@
 #define PPPOS_SUPPORT                   PPP_SUPPORT
 #endif
 
+/**
+ * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
+ */
+#ifndef LWIP_PPP_API
+#define LWIP_PPP_API                    0
+#endif
+
 #if PPP_SUPPORT
 
 /**
@@ -1792,13 +1806,6 @@
  */
 #ifndef PPP_IPV6_SUPPORT
 #define PPP_IPV6_SUPPORT                0
-#endif
-
-/**
- * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
- */
-#ifndef LWIP_PPP_API
-#define LWIP_PPP_API                    0
 #endif
 
 /**

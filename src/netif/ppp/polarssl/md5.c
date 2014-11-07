@@ -39,6 +39,7 @@
  */
 
 #include "lwip/opt.h"
+#if PPP_SUPPORT
 #if LWIP_INCLUDED_POLARSSL_MD5
 
 #include "netif/ppp/polarssl/md5.h"
@@ -295,4 +296,5 @@ void md5( unsigned char *input, int ilen, unsigned char output[16] )
     md5_finish( &ctx, output );
 }
 
+#endif /* PPP_SUPPORT */
 #endif /* LWIP_INCLUDED_POLARSSL_MD5 */

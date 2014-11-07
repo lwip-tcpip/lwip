@@ -64,6 +64,10 @@ extern "C" {
 #define PACK_STRUCT_END
 #endif /* PACK_STRUCT_END */
 
+#ifndef PACK_STRUCT_STRUCT
+#define PACK_STRUCT_STRUCT
+#endif /* PACK_STRUCT_STRUCT */
+
 #ifndef PACK_STRUCT_FIELD
 #define PACK_STRUCT_FIELD(x) x
 #endif /* PACK_STRUCT_FIELD */

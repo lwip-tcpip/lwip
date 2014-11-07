@@ -57,8 +57,6 @@ struct dhcp
   u32_t offered_t0_lease; /* lease period (in seconds) */
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
   u32_t offered_t2_rebind; /* recommended rebind time (usually 66% of lease period)  */
-  /* @todo: LWIP_DHCP_BOOTP_FILE configuration option?
-     integrate with possible TFTP-client for booting? */
 #if LWIP_DHCP_BOOTP_FILE
   ip_addr_t offered_si_addr;
   char boot_file_name[DHCP_FILE_LEN];
