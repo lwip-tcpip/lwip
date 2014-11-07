@@ -98,7 +98,7 @@ void  mem_free(void *mem);
  * LWIP_MEM_ALIGN_SIZE(4) will both yield 4 for MEM_ALIGNMENT == 4).
  */
 #ifndef LWIP_MEM_ALIGN_SIZE
-#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1) & ~(MEM_ALIGNMENT-1))
+#define LWIP_MEM_ALIGN_SIZE(size) (((size) + MEM_ALIGNMENT - 1U) & ~(MEM_ALIGNMENT-1U))
 #endif
 
 /** Calculate safe memory size for an aligned buffer when using an unaligned
@@ -106,7 +106,7 @@ void  mem_free(void *mem);
  * start (e.g. if buffer is u8_t[] and actual data will be u32_t*)
  */
 #ifndef LWIP_MEM_ALIGN_BUFFER
-#define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1))
+#define LWIP_MEM_ALIGN_BUFFER(size) (((size) + MEM_ALIGNMENT - 1U))
 #endif
 
 /** Align a memory pointer to the alignment defined by MEM_ALIGNMENT
