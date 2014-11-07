@@ -39,8 +39,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT
-#if LWIP_INCLUDED_POLARSSL_SHA1
+#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_SHA1
 
 #include "netif/ppp/polarssl/sha1.h"
 
@@ -331,5 +330,4 @@ void sha1( unsigned char *input, int ilen, unsigned char output[20] )
     sha1_finish( &ctx, output );
 }
 
-#endif /* PPP_SUPPORT */
-#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_SHA1 */

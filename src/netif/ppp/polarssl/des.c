@@ -40,8 +40,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT
-#if LWIP_INCLUDED_POLARSSL_DES
+#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES
 
 #include "netif/ppp/polarssl/des.h"
 
@@ -420,5 +419,4 @@ void des_crypt_ecb( des_context *ctx,
     PUT_ULONG_BE( X, output, 4 );
 }
 
-#endif /* PPP_SUPPORT */
-#endif /* LWIP_INCLUDED_POLARSSL_DES */
+#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES */
