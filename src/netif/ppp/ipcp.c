@@ -972,7 +972,7 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
 
 #define ACKCIWINS(opt, addr) \
     if (addr) { \
-	u_int32_t l; \
+	u32_t l; \
 	if ((len -= CILEN_ADDR) < 0) \
 	    goto bad; \
 	GETCHAR(citype, p); \
