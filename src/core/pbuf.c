@@ -489,26 +489,17 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
 /**
  * Adjusts the payload pointer to hide or reveal headers in the payload.
- *
- * Adjusts the ->payload pointer so that space for a header
- * (dis)appears in the pbuf payload.
- *
- * The ->payload, ->tot_len and ->len fields are adjusted.
+ * @see pbuf_header.
  *
  * @param p pbuf to change the header size.
- * @param header_size_increment Number of bytes to increment header size which
- * increases the size of the pbuf. New space is on the front.
- * (Using a negative value decreases the header size.)
- * If hdr_size_inc is 0, this function does nothing and returns successful.
+ * @param header_size_increment Number of bytes to increment header size.
+ * @param force Allow 'header_size_increment > 0' for PBUF_REF/PBUF_ROM types
  *
- * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
- * the call will fail. A check is made that the increase in header size does
- * not move the payload pointer in front of the start of the buffer.
  * @return non-zero on failure, zero on success.
  *
  */
 u8_t
-pbuf_header(struct pbuf *p, s16_t header_size_increment)
+pbuf_header_impl(struct pbuf *p, s16_t header_size_increment, u8_t force)
 {
   u16_t type;
   void *payload;
@@ -561,6 +552,8 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     if ((header_size_increment < 0) && (increment_magnitude <= p->len)) {
       /* increase payload pointer */
       p->payload = (u8_t *)p->payload - header_size_increment;
+    } else if ((header_size_increment > 0) && force) {
+      p->payload = (u8_t *)p->payload - header_size_increment;
     } else {
       /* cannot expand payload to front (yet!)
        * bail out unsuccessfully */
@@ -579,6 +572,42 @@ pbuf_header(struct pbuf *p, s16_t header_size_increment)
     (void *)payload, (void *)p->payload, header_size_increment));
 
   return 0;
+}
+
+/**
+ * Adjusts the payload pointer to hide or reveal headers in the payload.
+ *
+ * Adjusts the ->payload pointer so that space for a header
+ * (dis)appears in the pbuf payload.
+ *
+ * The ->payload, ->tot_len and ->len fields are adjusted.
+ *
+ * @param p pbuf to change the header size.
+ * @param header_size_increment Number of bytes to increment header size which
+ * increases the size of the pbuf. New space is on the front.
+ * (Using a negative value decreases the header size.)
+ * If hdr_size_inc is 0, this function does nothing and returns successful.
+ *
+ * PBUF_ROM and PBUF_REF type buffers cannot have their sizes increased, so
+ * the call will fail. A check is made that the increase in header size does
+ * not move the payload pointer in front of the start of the buffer.
+ * @return non-zero on failure, zero on success.
+ *
+ */
+u8_t
+pbuf_header(struct pbuf *p, s16_t header_size_increment)
+{
+   return pbuf_header_impl(p, header_size_increment, 0);
+}
+
+/**
+ * Same as pbuf_header but does not check if 'header_size > 0' is allowed.
+ * This is used internally only, to allow PBUF_REF for RX.
+ */
+u8_t
+pbuf_header_force(struct pbuf *p, s16_t header_size_increment)
+{
+   return pbuf_header_impl(p, header_size_increment, 1);
 }
 
 /**

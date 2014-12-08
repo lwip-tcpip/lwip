@@ -398,7 +398,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                 struct pbuf *q;
                 /* for that, move payload to IP header again */
                 if (p_header_changed == 0) {
-                  pbuf_header(p, hdrs_len);
+                  pbuf_header_force(p, hdrs_len);
                   p_header_changed = 1;
                 }
                 q = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
@@ -457,7 +457,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IPV6 */
           !ip_addr_ismulticast(ip_current_dest_addr())) {
         /* move payload pointer back to ip header */
-        pbuf_header(p, ip_current_header_tot_len() + UDP_HLEN);
+        pbuf_header_force(p, ip_current_header_tot_len() + UDP_HLEN);
         icmp_port_unreach(ip_current_is_v6(), p);
       }
 #endif /* LWIP_ICMP || LWIP_ICMP6 */

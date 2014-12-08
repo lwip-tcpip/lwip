@@ -649,6 +649,7 @@ netif_found:
 options_done:
 
   /* p points to IPv6 header again. */
+  /* @todo: this does not work for PBUF_REF pbufs */
   pbuf_header(p, ip_data.current_ip_header_tot_len);
 
   /* send to upper layers */

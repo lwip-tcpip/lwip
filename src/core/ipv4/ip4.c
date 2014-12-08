@@ -586,7 +586,7 @@ ip_input(struct pbuf *p, struct netif *inp)
       /* send ICMP destination protocol unreachable unless is was a broadcast */
       if (!ip_addr_isbroadcast(ip_current_dest_addr(), inp) &&
           !ip_addr_ismulticast(ip_current_dest_addr())) {
-        pbuf_header(p, iphdr_hlen); /* Move to ip header, no check necessary. */
+        pbuf_header_force(p, iphdr_hlen); /* Move to ip header, no check necessary. */
         p->payload = iphdr;
         icmp_dest_unreach(p, ICMP_DUR_PROTO);
       }

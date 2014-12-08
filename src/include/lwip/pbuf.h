@@ -42,7 +42,9 @@ extern "C" {
 
 /** Currently, the pbuf_custom code is only needed for one specific configuration
  * of IP_FRAG */
+#ifndef LWIP_SUPPORT_CUSTOM_PBUF
 #define LWIP_SUPPORT_CUSTOM_PBUF (IP_FRAG && !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF)
+#endif
 
 /* @todo: We need a mechanism to prevent wasting memory in every pbuf
    (TCP vs. UDP, IPv4 vs. IPv6: UDP/IPv4 packets may waste up to 28 bytes) */
@@ -158,6 +160,7 @@ struct pbuf *pbuf_alloced_custom(pbuf_layer l, u16_t length, pbuf_type type,
 #endif /* LWIP_SUPPORT_CUSTOM_PBUF */
 void pbuf_realloc(struct pbuf *p, u16_t size);
 u8_t pbuf_header(struct pbuf *p, s16_t header_size);
+u8_t pbuf_header_force(struct pbuf *p, s16_t header_size);
 void pbuf_ref(struct pbuf *p);
 u8_t pbuf_free(struct pbuf *p);
 u8_t pbuf_clen(struct pbuf *p);  
