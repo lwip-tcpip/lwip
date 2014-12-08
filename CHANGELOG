@@ -6,6 +6,14 @@ HISTORY
 
   ++ New features:
 
+  2014-12-08: Simon Goldschmidt
+  * ip6.h: fixed bug #43778: IPv6 header version not set on 16-bit platform
+    (macro IP6H_VTCFL_SET())
+
+  2014-12-08: Simon Goldschmidt
+  * icmp.c, ip4.c, pbuf.c, udp.c, pbuf.h: task #11472 Support PBUF_REF for RX
+    (IPv6 and IPv4/v6 reassembly might not work yet)
+
   2014-11-06: Simon Goldschmidt
   * sockets.c/.h, init.c: lwip_socket_init() is not needed any more
     -> compatibility define
