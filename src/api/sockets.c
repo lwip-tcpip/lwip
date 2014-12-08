@@ -2586,7 +2586,7 @@ lwip_ioctl(int s, long cmd, void *argp)
 #endif /* LWIP_SO_RCVBUF */
 #endif /* LWIP_SO_RCVBUF || LWIP_FIONREAD_LINUXMODE */
 
-  case FIONBIO:
+  case (long)FIONBIO:
     val = 0;
     if (argp && *(u32_t*)argp) {
       val = 1;
