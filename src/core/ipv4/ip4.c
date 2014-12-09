@@ -301,9 +301,9 @@ ip_input(struct pbuf *p, struct netif *inp)
   struct netif *netif;
   u16_t iphdr_hlen;
   u16_t iphdr_len;
-#if IP_ACCEPT_LINK_LAYER_ADDRESSING
-  int check_ip_src=1;
-#endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
+#if IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP
+  int check_ip_src = 1;
+#endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING || LWIP_IGMP */
 
   IP_STATS_INC(ip.recv);
   snmp_inc_ipinreceives();
@@ -381,6 +381,13 @@ ip_input(struct pbuf *p, struct netif *inp)
 #if LWIP_IGMP
   if (ip_addr_ismulticast(ip_current_dest_addr())) {
     if ((inp->flags & NETIF_FLAG_IGMP) && (igmp_lookfor_group(inp, ip_current_dest_addr()))) {
+      /* IGMP snooping switches need 0.0.0.0 to be allowed as source address (RFC 4541) */
+      ip_addr_t allsystems;
+      IP4_ADDR(&allsystems, 224, 0, 0, 1);
+      if (ip_addr_cmp(ip_current_dest_addr(), &allsystems) &&
+          ip_addr_isany(ip_current_src_addr())) {
+        check_ip_src = 0;
+      }
       netif = inp;
     } else {
       netif = NULL;
@@ -461,10 +468,14 @@ ip_input(struct pbuf *p, struct netif *inp)
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
 
   /* broadcast or multicast packet source address? Compliant with RFC 1122: 3.2.1.3 */
+#if LWIP_IGMP || IP_ACCEPT_LINK_LAYER_ADDRESSING
+  if (check_ip_src
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING
   /* DHCP servers need 0.0.0.0 to be allowed as source address (RFC 1.1.2.2: 3.2.1.3/a) */
-  if (check_ip_src && !ip_addr_isany(ip_current_src_addr()))
+      && !ip_addr_isany(ip_current_src_addr())
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
+     )
+#endif /* LWIP_IGMP || IP_ACCEPT_LINK_LAYER_ADDRESSING */
   {  if ((ip_addr_isbroadcast(ip_current_src_addr(), inp)) ||
          (ip_addr_ismulticast(ip_current_src_addr()))) {
       /* packet source is not valid */
