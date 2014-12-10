@@ -1536,7 +1536,7 @@ lwip_getsockname(int s, struct sockaddr *name, socklen_t *namelen)
 int
 lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
 {
-  err_t err = ERR_OK;
+  u8_t err = 0;
   struct lwip_sock *sock = get_socket(s);
   LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 
@@ -1563,12 +1563,6 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
     case SO_ERROR:
     case SO_KEEPALIVE:
     /* UNIMPL case SO_CONTIMEO: */
-#if LWIP_SO_SNDTIMEO
-    case SO_SNDTIMEO:
-#endif /* LWIP_SO_SNDTIMEO */
-#if LWIP_SO_RCVTIMEO
-    case SO_RCVTIMEO:
-#endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
     case SO_RCVBUF:
 #endif /* LWIP_SO_RCVBUF */
@@ -1586,6 +1580,24 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
         err = EINVAL;
       }
       break;
+#if LWIP_SO_SNDTIMEO || LWIP_SO_RCVTIMEO
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+#endif /* LWIP_SO_SNDTIMEO */
+#if LWIP_SO_RCVTIMEO
+    case SO_RCVTIMEO:
+#endif /* LWIP_SO_RCVTIMEO */
+      if (*optlen <
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        sizeof(int)
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        sizeof(struct timeval)
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD*/
+        ) {
+        err = EINVAL;
+      }
+      break;
+#endif /* LWIP_SO_SNDTIMEO || LWIP_SO_RCVTIMEO */
 
     case SO_NO_CHECK:
       if (*optlen < sizeof(int)) {
@@ -1746,7 +1758,7 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   }  /* switch */
 
    
-  if (err != ERR_OK) {
+  if (err != 0) {
     sock_set_errno(sock, err);
     return -1;
   }
@@ -1811,8 +1823,19 @@ lwip_getsockopt_internal(void *arg)
   case SOL_SOCKET:
     switch (optname) {
 
-    /* The option flags */
     case SO_ACCEPTCONN:
+      if (NETCONNTYPE_GROUP(sock->conn->type) == NETCONN_TCP) {
+        if ((sock->conn->pcb.tcp != NULL) && (sock->conn->pcb.tcp->state == LISTEN)) {
+          *(int*)optval = 1;
+        } else {
+          *(int*)optval = 0;
+        }
+      } else {
+        data->err = ENOPROTOOPT;
+      }
+      break;
+
+    /* The option flags */
     case SO_BROADCAST:
     /* UNIMPL case SO_DEBUG: */
     /* UNIMPL case SO_DONTROUTE: */
@@ -1862,12 +1885,28 @@ lwip_getsockopt_internal(void *arg)
 
 #if LWIP_SO_SNDTIMEO
     case SO_SNDTIMEO:
-      *(int *)optval = netconn_get_sendtimeout(sock->conn);
+      {
+        s32_t val = netconn_get_sendtimeout(sock->conn);
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        *(int *)optval = val;
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        ((struct timeval *)optval)->tv_sec = val / 1000U;
+        ((struct timeval *)optval)->tv_sec = (val % 1000U) * 1000U;
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+      }
       break;
 #endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
-      *(int *)optval = netconn_get_recvtimeout(sock->conn);
+      {
+        s32_t val = netconn_get_recvtimeout(sock->conn);
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        *(int *)optval = (int)val;
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        ((struct timeval *)optval)->tv_sec = val / 1000U;
+        ((struct timeval *)optval)->tv_sec = (val % 1000U) * 1000U;
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+      }
       break;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
@@ -2033,7 +2072,7 @@ int
 lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t optlen)
 {
   struct lwip_sock *sock = get_socket(s);
-  err_t err = ERR_OK;
+  u8_t err = 0;
   LWIP_SETGETSOCKOPT_DATA_VAR_DECLARE(data);
 
   if (!sock) {
@@ -2057,12 +2096,6 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
     /* UNIMPL case SO_DONTROUTE: */
     case SO_KEEPALIVE:
     /* UNIMPL case case SO_CONTIMEO: */
-#if LWIP_SO_SNDTIMEO
-    case SO_SNDTIMEO:
-#endif /* LWIP_SO_SNDTIMEO */
-#if LWIP_SO_RCVTIMEO
-    case SO_RCVTIMEO:
-#endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
     case SO_RCVBUF:
 #endif /* LWIP_SO_RCVBUF */
@@ -2079,6 +2112,24 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
         err = EINVAL;
       }
       break;
+#if LWIP_SO_SNDTIMEO || LWIP_SO_RCVTIMEO
+#if LWIP_SO_SNDTIMEO
+    case SO_SNDTIMEO:
+#endif /* LWIP_SO_SNDTIMEO */
+#if LWIP_SO_RCVTIMEO
+    case SO_RCVTIMEO:
+#endif /* LWIP_SO_RCVTIMEO */
+      if (optlen <
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        sizeof(int)
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        sizeof(struct timeval)
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD*/
+        ) {
+        err = EINVAL;
+      }
+      break;
+#endif /* LWIP_SO_SNDTIMEO || LWIP_SO_RCVTIMEO */
     case SO_NO_CHECK:
       if (optlen < sizeof(int)) {
         err = EINVAL;
@@ -2269,7 +2320,7 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   }  /* switch (level) */
 
 
-  if (err != ERR_OK) {
+  if (err != 0) {
     sock_set_errno(sock, err);
     return -1;
   }
@@ -2356,12 +2407,28 @@ lwip_setsockopt_internal(void *arg)
       break;
 #if LWIP_SO_SNDTIMEO
     case SO_SNDTIMEO:
-      netconn_set_sendtimeout(sock->conn, (s32_t)*(int*)optval);
+      {
+        s32_t val;
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        val = (s32_t)*(int*)optval;
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        val = (((struct timeval *)optval)->tv_sec * 1000U) + (((struct timeval *)optval)->tv_usec / 1000U);
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        netconn_set_sendtimeout(sock->conn, val);
+      }
       break;
 #endif /* LWIP_SO_SNDTIMEO */
 #if LWIP_SO_RCVTIMEO
     case SO_RCVTIMEO:
-      netconn_set_recvtimeout(sock->conn, *(int*)optval);
+      {
+        s32_t val;
+#if LWIP_SO_SNDRCVTIMEO_NONSTANDARD
+        val = (s32_t)*(int*)optval;
+#else /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        val = (((struct timeval *)optval)->tv_sec * 1000U) + (((struct timeval *)optval)->tv_usec / 1000U);
+#endif /* LWIP_SO_SNDRCVTIMEO_NONSTANDARD */
+        netconn_set_recvtimeout(sock->conn, (int)val);
+      }
       break;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVBUF
@@ -2415,17 +2482,18 @@ lwip_setsockopt_internal(void *arg)
     case IP_DROP_MEMBERSHIP:
       {
         /* If this is a TCP or a RAW socket, ignore these options. */
+        err_t err;
         struct ip_mreq *imr = (struct ip_mreq *)optval;
         ip_addr_t if_addr;
         ip_addr_t multi_addr;
         inet_addr_to_ipaddr(&if_addr, &imr->imr_interface);
         inet_addr_to_ipaddr(&multi_addr, &imr->imr_multiaddr);
         if(optname == IP_ADD_MEMBERSHIP){
-          data->err = igmp_joingroup(&if_addr, &multi_addr);
+          err = igmp_joingroup(&if_addr, &multi_addr);
         } else {
-          data->err = igmp_leavegroup(&if_addr, &multi_addr);
+          err = igmp_leavegroup(&if_addr, &multi_addr);
         }
-        if(data->err != ERR_OK) {
+        if(err != ERR_OK) {
           data->err = EADDRNOTAVAIL;
         }
       }

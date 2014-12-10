@@ -143,6 +143,12 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-12-10: Simon Goldschmidt
+  * sockets.c, tcp.c, others: fixed bug #43797 set/getsockopt: SO_SNDTIMEO/SO_RCVTIMEO
+    take int as option but should take timeval (LWIP_SO_SNDRCVTIMEO_STANDARD==0 can
+    be used to revert to the old 'winsock' style behaviour)
+    Fixed implementation of SO_ACCEPTCONN to just look at the pcb state
+
   2014-12-09: Simon Goldschmidt
   * ip4.c: fixed bug #43596 IGMP queries from 0.0.0.0 are discarded
 
