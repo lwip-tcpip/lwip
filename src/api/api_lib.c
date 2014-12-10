@@ -247,8 +247,8 @@ netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port)
 #endif /* (LWIP_UDP || LWIP_RAW) && LWIP_TCP */
 #if (LWIP_UDP || LWIP_RAW)
   {
-     /* UDP and RAW only set flags, so we can use core-locking. */
-     TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_connect, err);
+    /* UDP and RAW only set flags, so we can use core-locking. */
+    TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_connect, err);
   }
 #endif /* (LWIP_UDP || LWIP_RAW) */
   API_MSG_VAR_FREE(msg);
