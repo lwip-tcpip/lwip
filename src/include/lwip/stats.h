@@ -91,10 +91,10 @@ struct stats_mem {
 #ifdef LWIP_DEBUG
   const char *name;
 #endif /* LWIP_DEBUG */
+  STAT_COUNTER err;
   mem_size_t avail;
   mem_size_t used;
   mem_size_t max;
-  STAT_COUNTER err;
   STAT_COUNTER illegal;
 };
 
