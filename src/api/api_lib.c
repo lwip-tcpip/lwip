@@ -86,12 +86,14 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
     API_MSG_VAR_FREE(msg);
     if (err != ERR_OK) {
       LWIP_ASSERT("freeing conn without freeing pcb", conn->pcb.tcp == NULL);
-      LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       LWIP_ASSERT("conn has no recvmbox", sys_mbox_valid(&conn->recvmbox));
 #if LWIP_TCP
       LWIP_ASSERT("conn->acceptmbox shouldn't exist", !sys_mbox_valid(&conn->acceptmbox));
 #endif /* LWIP_TCP */
+#if !LWIP_NETCONN_SEM_PER_THREAD
+      LWIP_ASSERT("conn has no op_completed", sys_sem_valid(&conn->op_completed));
       sys_sem_free(&conn->op_completed);
+#endif /* !LWIP_NETCONN_SEM_PER_THREAD */
       sys_mbox_free(&conn->recvmbox);
       memp_free(MEMP_NETCONN, conn);
       return NULL;
@@ -827,7 +829,7 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   LWIP_ERROR("netconn_gethostbyname: invalid name", (name != NULL), return ERR_ARG;);
   LWIP_ERROR("netconn_gethostbyname: invalid addr", (addr != NULL), return ERR_ARG;);
 #if LWIP_MPU_COMPATIBLE
-  if (strlen(name >= DNS_MAX_NAME_LENGTH) {
+  if (strlen(name) >= DNS_MAX_NAME_LENGTH) {
     return ERR_ARG;
   }
 #endif
@@ -861,5 +863,26 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   return err;
 }
 #endif /* LWIP_DNS*/
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+void netconn_thread_init(void)
+{
+  sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
+  if (sem == SYS_SEM_NULL) {
+    /* call alloc only once */
+    LWIP_NETCONN_THREAD_SEM_ALLOC();
+    LWIP_ASSERT("LWIP_NETCONN_THREAD_SEM_ALLOC() failed", LWIP_NETCONN_THREAD_SEM_GET() != SYS_SEM_NULL);
+  }
+}
+
+void netconn_thread_cleanup(void)
+{
+  sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
+  if (sem == SYS_SEM_NULL) {
+    /* call free only once */
+    LWIP_NETCONN_THREAD_SEM_FREE();
+  }
+}
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
 #endif /* LWIP_NETCONN */

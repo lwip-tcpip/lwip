@@ -338,8 +338,13 @@ tcpip_apimsg(struct api_msg *apimsg)
     TCPIP_MSG_VAR_ALLOC(msg);
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
     TCPIP_MSG_VAR_REF(msg).msg.apimsg = apimsg;
+#if LWIP_NETCONN_SEM_PER_THREAD
+    apimsg->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+    LWIP_ASSERT("netconn semaphore not initialized",
+      apimsg->msg.op_completed_sem != SYS_SEM_NULL);
+#endif
     sys_mbox_post(&mbox, &TCPIP_MSG_VAR_REF(msg));
-    sys_arch_sem_wait(&apimsg->msg.conn->op_completed, 0);
+    sys_arch_sem_wait(LWIP_API_MSG_SEM(&apimsg->msg), 0);
     TCPIP_MSG_VAR_FREE(msg);
     return apimsg->msg.err;
   }

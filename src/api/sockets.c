@@ -125,7 +125,7 @@
 #define LWIP_SETGETSOCKOPT_DATA_VAR_ALLOC(name, sock) do { \
   name = (struct lwip_setgetsockopt_data *)memp_malloc(MEMP_SOCKET_SETGETSOCKOPT_DATA); \
   if (name == NULL) { \
-    sock_set_errno(sock, ERR_MEM); \
+    sock_set_errno(sock, ENOMEM); \
     return -1; \
   } }while(0)
 #else /* LWIP_MPU_COMPATIBLE */
@@ -134,6 +134,13 @@
 
 
 #define NUM_SOCKETS MEMP_NUM_NETCONN
+
+/** This is overridable for the rare case where more than 255 threads
+ * select on the same socket...
+ */
+#ifndef SELWAIT_T
+#define SELWAIT_T u8_t
+#endif
 
 /** Contains all internal pointers and states used for a socket */
 struct lwip_sock {
@@ -150,12 +157,20 @@ struct lwip_sock {
       tested by select */
   u16_t sendevent;
   /** error happened for this socket, set by event_callback(), tested by select */
-  u16_t errevent; 
-  /** last error that occurred on this socket */
-  int err;
+  u16_t errevent;
+  /** last error that occurred on this socket (in fact, all our errnos fit into an u8_t) */
+  u8_t err;
   /** counter of how many threads are waiting for this socket using select */
-  int select_waiting;
+  SELWAIT_T select_waiting;
 };
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+#define SELECT_SEM_T        sys_sem_t*
+#define SELECT_SEM_PTR(sem) (sem)
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
+#define SELECT_SEM_T        sys_sem_t
+#define SELECT_SEM_PTR(sem) (&(sem))
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
 /** Description for a task waiting in select */
 struct lwip_select_cb {
@@ -172,7 +187,7 @@ struct lwip_select_cb {
   /** don't signal the same semaphore twice: set to 1 when signalled */
   int sem_signalled;
   /** semaphore to wake up a task waiting for select */
-  sys_sem_t sem;
+  SELECT_SEM_T sem;
 };
 
 /** A struct sockaddr replacement that has the same alignment as sockaddr_in/
@@ -537,8 +552,8 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 
   if (!SOCK_ADDR_TYPE_MATCH_OR_UNSPEC(name, sock)) {
     /* sockaddr does not match socket type (IPv4/IPv6) */
-   sock_set_errno(sock, err_to_errno(ERR_VAL));
-   return -1;
+    sock_set_errno(sock, err_to_errno(ERR_VAL));
+    return -1;
   }
 
   LWIP_UNUSED_ARG(namelen);
@@ -1153,7 +1168,6 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   fd_set lreadset, lwriteset, lexceptset;
   u32_t msectimeout;
   struct lwip_select_cb select_cb;
-  err_t err;
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
 
@@ -1186,12 +1200,15 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb.writeset = writeset;
     select_cb.exceptset = exceptset;
     select_cb.sem_signalled = 0;
-    err = sys_sem_new(&select_cb.sem, 0);
-    if (err != ERR_OK) {
+#if LWIP_NETCONN_SEM_PER_THREAD
+    select_cb.sem = LWIP_NETCONN_THREAD_SEM_GET();
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
+    if (sys_sem_new(&select_cb.sem, 0) != ERR_OK) {
       /* failed to create semaphore */
       set_errno(ENOMEM);
       return -1;
     }
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
     /* Protect the select_cb_list */
     SYS_ARCH_PROTECT(lev);
@@ -1217,7 +1234,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         LWIP_ASSERT("sock != NULL", sock != NULL);
         SYS_ARCH_PROTECT(lev);
         sock->select_waiting++;
-        LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
+        LWIP_ASSERT("sock->select_waiting overflow", sock->select_waiting > 0);
         SYS_ARCH_UNPROTECT(lev);
       }
     }
@@ -1238,7 +1255,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         }
       }
 
-      waitres = sys_arch_sem_wait(&select_cb.sem, msectimeout);
+      waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
     }
     /* Increase select_waiting for each socket we are interested in */
     for(i = 0; i < maxfdp1; i++) {
@@ -1269,8 +1286,11 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     select_cb_ctr++;
     SYS_ARCH_UNPROTECT(lev);
 
+#if !LWIP_NETCONN_SEM_PER_THREAD
     sys_sem_free(&select_cb.sem);
-    if (waitres == SYS_ARCH_TIMEOUT)  {
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
+    if (waitres == SYS_ARCH_TIMEOUT) {
       /* Timeout */
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select: timeout expired\n"));
       /* This is OK as the local fdsets are empty and nready is zero,
@@ -1403,7 +1423,7 @@ again:
         scb->sem_signalled = 1;
         /* Don't call SYS_ARCH_UNPROTECT() before signaling the semaphore, as this might
            lead to the select thread taking itself off the list, invalidating the semaphore. */
-        sys_sem_signal(&scb->sem);
+        sys_sem_signal(SELECT_SEM_PTR(scb->sem));
       }
     }
     /* unlock interrupts with each step */
@@ -1742,8 +1762,19 @@ lwip_getsockopt(int s, int level, int optname, void *optval, socklen_t *optlen)
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optval = optval;
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optlen = optlen;
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err = err;
+#if LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  lwip_getsockopt_internal(&LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
+  UNLOCK_TCPIP_CORE();
+#else /* LWIP_TCPIP_CORE_LOCKING */
+#if LWIP_NETCONN_SEM_PER_THREAD
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+#else
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = &sock->conn->op_completed;
+#endif
   tcpip_callback(lwip_getsockopt_internal, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
-  sys_arch_sem_wait(&sock->conn->op_completed, 0);
+  sys_arch_sem_wait((sys_sem_t*)(LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem), 0);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
   /* maybe lwip_getsockopt_internal has changed err */
   err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
   LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
@@ -1993,7 +2024,9 @@ lwip_getsockopt_internal(void *arg)
     LWIP_ASSERT("unhandled level", 0);
     break;
   } /* switch (level) */
-  sys_sem_signal(&sock->conn->op_completed);
+#if !LWIP_TCPIP_CORE_LOCKING
+  sys_sem_signal((sys_sem_t*)(data->completed_sem));
+#endif
 }
 
 int
@@ -2253,8 +2286,19 @@ lwip_setsockopt(int s, int level, int optname, const void *optval, socklen_t opt
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optval = (void*)optval;
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).optlen = &optlen;
   LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err = err;
+#if LWIP_TCPIP_CORE_LOCKING
+  LOCK_TCPIP_CORE();
+  lwip_setsockopt_internal(&LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
+  UNLOCK_TCPIP_CORE();
+#else /* LWIP_TCPIP_CORE_LOCKING */
+#if LWIP_NETCONN_SEM_PER_THREAD
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = LWIP_NETCONN_THREAD_SEM_GET();
+#else
+  LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem = &sock->conn->op_completed;
+#endif
   tcpip_callback(lwip_setsockopt_internal, &LWIP_SETGETSOCKOPT_DATA_VAR_REF(data));
-  sys_arch_sem_wait(&sock->conn->op_completed, 0);
+  sys_arch_sem_wait((sys_sem_t*)(LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).completed_sem), 0);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
   /* maybe lwip_setsockopt_internal has changed err */
   err = LWIP_SETGETSOCKOPT_DATA_VAR_REF(data).err;
   LWIP_SETGETSOCKOPT_DATA_VAR_FREE(data);
@@ -2510,7 +2554,9 @@ lwip_setsockopt_internal(void *arg)
     LWIP_ASSERT("unhandled level", 0);
     break;
   }  /* switch (level) */
-  sys_sem_signal(&sock->conn->op_completed);
+#if !LWIP_TCPIP_CORE_LOCKING
+  sys_sem_signal((sys_sem_t*)(data->completed_sem));
+#endif
 }
 
 int

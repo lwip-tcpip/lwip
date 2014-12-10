@@ -172,8 +172,10 @@ struct netconn {
   } pcb;
   /** the last error this netconn had */
   err_t last_err;
+#if !LWIP_NETCONN_SEM_PER_THREAD
   /** sem that is used to synchronously execute functions in the core context */
   sys_sem_t op_completed;
+#endif
   /** mbox where received packets are stored until they are fetched
       by the netconn application thread (can grow quite big) */
   sys_mbox_t recvmbox;
@@ -188,11 +190,11 @@ struct netconn {
 #endif /* LWIP_SOCKET */
 #if LWIP_SO_SNDTIMEO
   /** timeout to wait for sending data (which means enqueueing data for sending
-      in internal buffers) */
+      in internal buffers) in milliseconds */
   s32_t send_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
 #if LWIP_SO_RCVTIMEO
-  /** timeout to wait for new data to be received
+  /** timeout in milliseconds to wait for new data to be received
       (or connections to arrive for listening netconns) */
   int recv_timeout;
 #endif /* LWIP_SO_RCVTIMEO */
@@ -328,6 +330,14 @@ err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 /** Get the receive buffer in bytes */
 #define netconn_get_recvbufsize(conn)               ((conn)->recv_bufsize)
 #endif /* LWIP_SO_RCVBUF*/
+
+#if LWIP_NETCONN_SEM_PER_THREAD
+void netconn_thread_init(void);
+void netconn_thread_cleanup(void);
+#else /* LWIP_NETCONN_SEM_PER_THREAD */
+#define netconn_thread_init()
+#define netconn_thread_cleanup()
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
 #ifdef __cplusplus
 }

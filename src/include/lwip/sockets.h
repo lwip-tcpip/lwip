@@ -128,6 +128,10 @@ struct lwip_setgetsockopt_data {
   socklen_t *optlen;
   /** if an error occurs, it is temporarily stored here */
   err_t err;
+#if !LWIP_TCPIP_CORE_LOCKING
+  /** semaphore to wake up the calling task */
+  void* completed_sem;
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
 
 /* Socket protocol types (TCP/UDP/RAW) */

@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2014-12-10: Simon Goldschmidt
+  * api: added option LWIP_NETCONN_SEM_PER_THREAD to use a semaphore per thread
+    instead of using one per netconn and per select call
+
   2014-12-08: Simon Goldschmidt
   * ip6.h: fixed bug #43778: IPv6 header version not set on 16-bit platform
     (macro IP6H_VTCFL_SET())

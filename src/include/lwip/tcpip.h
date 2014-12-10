@@ -65,8 +65,14 @@ extern sys_mutex_t lock_tcpip_core;
 #else
 #define TCIP_APIMSG_SET_ERR(m, e)
 #endif
+#if LWIP_NETCONN_SEM_PER_THREAD
+#define TCPIP_APIMSG_SET_SEM(m) ((m)->msg.op_completed_sem = LWIP_NETCONN_THREAD_SEM_GET())
+#else
+#define TCPIP_APIMSG_SET_SEM(m)
+#endif
 #define TCPIP_APIMSG_NOERR(m,f) do { \
   TCIP_APIMSG_SET_ERR(m, ERR_VAL); \
+  TCPIP_APIMSG_SET_SEM(m); \
   LOCK_TCPIP_CORE(); \
   f(&((m)->msg)); \
   UNLOCK_TCPIP_CORE(); \
@@ -85,7 +91,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define UNLOCK_TCPIP_CORE()
 #define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG_ACK(m)   sys_sem_signal(&m->conn->op_completed)
+#define TCPIP_APIMSG_ACK(m)   sys_sem_signal(LWIP_API_MSG_SEM(m))
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
 #define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
 #define TCPIP_PPPAPI(m)       tcpip_pppapi(m)
