@@ -139,6 +139,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-12-09: Simon Goldschmidt
+  * ip4.c: fixed bug #43596 IGMP queries from 0.0.0.0 are discarded
+
   2014-10-21: Simon Goldschmidt (patch by Joel Cunningham and Albert Huitsing)
   * sockts.c: fixed bugs #41495 Possible threading issue in select() and #43278
     event_callback() handle context switch when calling sys_sem_signal()
