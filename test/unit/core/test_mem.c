@@ -35,10 +35,6 @@ START_TEST(test_mem_one)
   mem_size_t s1, s2;
   LWIP_UNUSED_ARG(_i);
 
-#if LWIP_DNS
-  fail("This test needs DNS turned off (as it mallocs on init)");
-#endif
-
   fail_unless(lwip_stats.mem.used == 0);
 
   p1 = mem_malloc(SIZE1);
@@ -61,13 +57,63 @@ START_TEST(test_mem_one)
 }
 END_TEST
 
+static void malloc_keep_x(int x, int num, int size, int freestep)
+{
+   int i;
+   void* p[16];
+   memset(p, 0, sizeof(p));
+   for(i = 0; i < num && i < 16; i++) {
+      p[i] = mem_malloc(size);
+      fail_unless(p[i] != NULL);
+   }
+   for(i = 0; i < num && i < 16; i += freestep) {
+      if (i == x) {
+         continue;
+      }
+      mem_free(p[i]);
+      p[i] = NULL;
+   }
+   for(i = 0; i < num && i < 16; i++) {
+      if (i == x) {
+         continue;
+      }
+      if (p[i] != NULL) {
+         mem_free(p[i]);
+         p[i] = NULL;
+      }
+   }
+   fail_unless(p[x] != NULL);
+   mem_free(p[x]);
+}
+
+START_TEST(test_mem_random)
+{
+  const int num = 16;
+  int x;
+  int size;
+  int freestep;
+
+  fail_unless(lwip_stats.mem.used == 0);
+
+  for (x = 0; x < num; x++) {
+     for (size = 1; size < 32; size++) {
+        for (freestep = 1; freestep <= 3; freestep++) {
+          fail_unless(lwip_stats.mem.used == 0);
+          malloc_keep_x(x, num, size, freestep);
+          fail_unless(lwip_stats.mem.used == 0);
+        }
+     }
+  }
+}
+END_TEST
 
 /** Create the suite including all tests for this module */
 Suite *
 mem_suite(void)
 {
   testfunc tests[] = {
-    TESTFUNC(test_mem_one)
+    TESTFUNC(test_mem_one),
+    TESTFUNC(test_mem_random)
   };
   return create_suite("MEM", tests, sizeof(tests)/sizeof(testfunc), mem_setup, mem_teardown);
 }

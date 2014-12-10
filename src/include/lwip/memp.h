@@ -94,6 +94,9 @@ extern const u16_t memp_sizes[MEMP_MAX];
 struct memp_malloc_helper
 {
    memp_t poolnr;
+#if MEMP_OVERFLOW_CHECK
+   u16_t size;
+#endif /* MEMP_OVERFLOW_CHECK */
 };
 #endif /* MEM_USE_POOLS */
 
