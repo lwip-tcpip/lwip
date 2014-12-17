@@ -1265,8 +1265,8 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
         struct lwip_sock *sock = tryget_socket(i);
         LWIP_ASSERT("sock != NULL", sock != NULL);
         SYS_ARCH_PROTECT(lev);
+        LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
         sock->select_waiting--;
-        LWIP_ASSERT("sock->select_waiting >= 0", sock->select_waiting >= 0);
         SYS_ARCH_UNPROTECT(lev);
       }
     }
