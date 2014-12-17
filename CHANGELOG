@@ -143,6 +143,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-12-17: Simon Goldschmidt
+  * tcp_out.c: fixed bug #43840 Checksum error for TCP_CHECKSUM_ON_COPY==1 for
+    no-copy data with odd length
+
   2014-12-10: Simon Goldschmidt
   * sockets.c, tcp.c, others: fixed bug #43797 set/getsockopt: SO_SNDTIMEO/SO_RCVTIMEO
     take int as option but should take timeval (LWIP_SO_SNDRCVTIMEO_STANDARD==0 can

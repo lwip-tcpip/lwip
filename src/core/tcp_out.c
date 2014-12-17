@@ -79,6 +79,12 @@
 #ifndef TCP_CHECKSUM_ON_COPY_SANITY_CHECK
 #define TCP_CHECKSUM_ON_COPY_SANITY_CHECK   0
 #endif
+/* Allow to override the failure of sanity check from warning to e.g. hard failure */
+#if TCP_CHECKSUM_ON_COPY_SANITY_CHECK
+#ifndef TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL
+#define TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(msg) LWIP_DEBUGF(TCP_DEBUG | LWIP_DBG_LEVEL_WARNING, msg)
+#endif
+#endif
 
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
@@ -566,6 +572,10 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 #if TCP_CHECKSUM_ON_COPY
       /* calculate the checksum of nocopy-data */
       chksum = ~inet_chksum((u8_t*)arg + pos, seglen);
+      if (seglen & 1) {
+        chksum_swapped = 1;
+        chksum = SWAP_BYTES_IN_WORD(chksum);
+      }
 #endif /* TCP_CHECKSUM_ON_COPY */
       /* reference the non-volatile payload data */
       p2->payload = (u8_t*)arg + pos;
@@ -1204,7 +1214,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     seg->tcphdr->chksum = FOLD_U32T(acc);
 #if TCP_CHECKSUM_ON_COPY_SANITY_CHECK
     if (chksum_slow != seg->tcphdr->chksum) {
-      LWIP_DEBUGF(TCP_DEBUG | LWIP_DBG_LEVEL_WARNING,
+      TCP_CHECKSUM_ON_COPY_SANITY_CHECK_FAIL(
                   ("tcp_output_segment: calculated checksum is %"X16_F" instead of %"X16_F"\n",
                   seg->tcphdr->chksum, chksum_slow));
       seg->tcphdr->chksum = chksum_slow;
