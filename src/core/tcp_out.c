@@ -86,6 +86,13 @@
 #endif
 #endif
 
+#if TCP_OVERSIZE
+/** The size of segment pbufs created when TCP_OVERSIZE is enabled */
+#ifndef TCP_OVERSIZE_CALC_LENGTH
+#define TCP_OVERSIZE_CALC_LENGTH(length) ((length) + TCP_OVERSIZE)
+#endif
+#endif
+
 /* Forward declarations.*/
 static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
@@ -258,7 +265,7 @@ tcp_pbuf_prealloc(pbuf_layer layer, u16_t length, u16_t max_length,
          (!first_seg ||
           pcb->unsent != NULL ||
           pcb->unacked != NULL))) {
-      alloc = LWIP_MIN(max_length, LWIP_MEM_ALIGN_SIZE(length + TCP_OVERSIZE));
+      alloc = LWIP_MIN(max_length, LWIP_MEM_ALIGN_SIZE(TCP_OVERSIZE_CALC_LENGTH(length)));
     }
   }
 #endif /* LWIP_NETIF_TX_SINGLE_PBUF */
