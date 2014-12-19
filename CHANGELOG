@@ -143,6 +143,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-12-19: Simon Goldschmidt
+  * opt.h, dhcp.h/.c: prevent dhcp from starting when netif link is down (only
+    when LWIP_DHCP_CHECK_LINK_UP==1, which is disabled by default for
+    compatibility reasons)
+
   2014-12-17: Simon Goldschmidt
   * tcp_out.c: fixed bug #43840 Checksum error for TCP_CHECKSUM_ON_COPY==1 for
     no-copy data with odd length

@@ -752,6 +752,16 @@
 #endif
 
 /**
+ * LWIP_DHCP_CHECK_LINK_UP==1: dhcp_start() only really starts if the netif has
+ * NETIF_FLAG_LINK_UP set in its flags. As this is only an optimization and
+ * netif drivers might not set this flag, the default is off. If enabled,
+ * netif_set_link_up() must be called to continue dhcp starting.
+ */
+#ifndef LWIP_DHCP_CHECK_LINK_UP
+#define LWIP_DHCP_CHECK_LINK_UP         0
+#endif
+
+/**
  * LWIP_DHCP_BOOTP_FILE==1: Store offered_si_addr and boot_file_name.
  */
 #ifndef LWIP_DHCP_BOOTP_FILE

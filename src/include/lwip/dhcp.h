@@ -161,9 +161,9 @@ void dhcp_fine_tmr(void);
 #define DHCP_REBINDING    4
 #define DHCP_RENEWING     5
 #define DHCP_SELECTING    6
-#define DHCP_INFORMING    7
+/* not yet implemented #define DHCP_INFORMING    7*/
 #define DHCP_CHECKING     8
-#define DHCP_PERMANENT    9
+/* not yet implemented #define DHCP_PERMANENT    9*/
 #define DHCP_BOUND        10
 /** not yet implemented #define DHCP_RELEASING 11 */
 #define DHCP_BACKING_OFF  12

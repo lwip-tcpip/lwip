@@ -627,14 +627,11 @@ err_t
 dhcp_start(struct netif *netif)
 {
   struct dhcp *dhcp;
-  err_t result = ERR_OK;
+  err_t result;
 
   LWIP_ERROR("netif != NULL", (netif != NULL), return ERR_ARG;);
   dhcp = netif->dhcp;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
-  /* Remove the flag that says this netif is handled by DHCP,
-     it is set when we succeeded starting. */
-  netif->flags &= ~NETIF_FLAG_DHCP;
 
   /* check hwtype of the netif */
   if ((netif->flags & NETIF_FLAG_ETHARP) == 0) {
@@ -647,6 +644,10 @@ dhcp_start(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): Cannot use this netif with DHCP: MTU is too small\n"));
     return ERR_MEM;
   }
+
+  /* Remove the flag that says this netif is handled by DHCP,
+     it is set when we succeeded starting. */
+  netif->flags &= ~NETIF_FLAG_DHCP;
 
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
@@ -668,7 +669,7 @@ dhcp_start(struct netif *netif)
     LWIP_ASSERT("pbuf p_out wasn't freed", dhcp->p_out == NULL);
     LWIP_ASSERT("reply wasn't freed", dhcp->msg_in == NULL );
   }
-    
+
   /* clear data structure */
   memset(dhcp, 0, sizeof(struct dhcp));
   /* dhcp_set_state(&dhcp, DHCP_OFF); */
@@ -685,6 +686,16 @@ dhcp_start(struct netif *netif)
   /* set up the recv callback and argument */
   udp_recv(dhcp->pcb, dhcp_recv, netif);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting DHCP configuration\n"));
+
+#if LWIP_DHCP_CHECK_LINK_UP
+  if (!netif_is_link_up(netif)) {
+    /* set state INIT and wait for dhcp_network_changed() to call dhcp_discover() */
+    dhcp_set_state(dhcp, DHCP_INIT);
+    netif->flags |= NETIF_FLAG_DHCP;
+    return ERR_OK;
+  }
+#endif /* LWIP_DHCP_CHECK_LINK_UP */
+
   /* (re)start the DHCP negotiation */
   result = dhcp_discover(netif);
   if (result != ERR_OK) {
@@ -779,7 +790,9 @@ dhcp_network_changed(struct netif *netif)
     /* stay off */
     break;
   default:
-    dhcp->tries = 0;
+    /* INIT/REQUESTING/CHECKING/BACKING_OFF restart with new 'rid' because the
+       state changes, SELECTING: continue with current 'rid' as we stay in the
+       same state */
 #if LWIP_DHCP_AUTOIP_COOP
     if(dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_ON) {
       autoip_stop(netif);
