@@ -268,11 +268,11 @@ etharp_find_entry(ip_addr_t *ipaddr, u8_t flags)
 {
   s8_t old_pending = ARP_TABLE_SIZE, old_stable = ARP_TABLE_SIZE;
   s8_t empty = ARP_TABLE_SIZE;
-  u8_t i = 0, age_pending = 0, age_stable = 0;
+  u8_t i = 0;
   /* oldest entry with packets on queue */
   s8_t old_queue = ARP_TABLE_SIZE;
   /* its age */
-  u8_t age_queue = 0;
+  u16_t age_queue = 0, age_pending = 0, age_stable = 0;
 
   /**
    * a) do a search through the cache, remember candidates
@@ -1427,7 +1427,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_ip_input(netif, p);
 #endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
-      if(pbuf_header(p, -ip_hdr_offset)) {
+      if(pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_ASSERT("Can't move over header in packet", 0);
         goto free_and_return;
       } else {
