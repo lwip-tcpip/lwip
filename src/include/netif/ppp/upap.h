@@ -98,9 +98,9 @@
  */
 #if PAP_SUPPORT
 typedef struct upap_state {
-    char *us_user;		/* User */
+    const char *us_user;	/* User */
     u8_t us_userlen;		/* User length */
-    char *us_passwd;		/* Password */
+    const char *us_passwd;	/* Password */
     u8_t us_passwdlen;		/* Password length */
     u8_t us_clientstate;	/* Client state */
 #if PPP_SERVER
@@ -112,7 +112,7 @@ typedef struct upap_state {
 #endif /* PAP_SUPPORT */
 
 
-void upap_authwithpeer(ppp_pcb *pcb, char *user, char *password);
+void upap_authwithpeer(ppp_pcb *pcb, const char *user, const char *password);
 #if PPP_SERVER
 void upap_authpeer(ppp_pcb *pcb);
 #endif /* PPP_SERVER */

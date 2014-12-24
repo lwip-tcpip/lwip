@@ -227,7 +227,7 @@ static void eap_client_timeout(void *arg) {
  * Start client state and wait for requests.  This is called only
  * after eap_lowerup.
  */
-void eap_authwithpeer(ppp_pcb *pcb, char *localname) {
+void eap_authwithpeer(ppp_pcb *pcb, const char *localname) {
 
 	if(NULL == localname)
 		return;
@@ -886,7 +886,7 @@ static void eap_send_request(ppp_pcb *pcb) {
  * Start server state and send first request.  This is called only
  * after eap_lowerup.
  */
-void eap_authpeer(ppp_pcb *pcb, char *localname) {
+void eap_authpeer(ppp_pcb *pcb, const char *localname) {
 
 	/* Save the name we're given. */
 	pcb->eap.es_server.ea_name = localname;
@@ -1073,7 +1073,7 @@ static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *s
 /*
  * Format and send an MD5-Challenge EAP Response message.
  */
-static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name, int namelen) {
+static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, const char *name, int namelen) {
 	struct pbuf *p;
 	u_char *outp;
 	int msglen;

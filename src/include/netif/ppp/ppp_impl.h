@@ -508,7 +508,7 @@ void continue_networks(ppp_pcb *pcb); /* start network [ip, etc] control protos 
 #if PPP_SERVER
 void auth_peer_fail(ppp_pcb *pcb, int protocol);
 				/* peer failed to authenticate itself */
-void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, int namelen);
+void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *name, int namelen);
 				/* peer successfully authenticated itself */
 #endif /* PPP_SERVER */
 void auth_withpeer_fail(ppp_pcb *pcb, int protocol);
@@ -519,7 +519,7 @@ void np_up(ppp_pcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(ppp_pcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(ppp_pcb *pcb, int proto); /* a network protocol no longer needs link */
 void auth_reset(ppp_pcb *pcb);	/* check what secrets we have */
-int get_secret(ppp_pcb *pcb, char *client, char *server, char *secret, int *secret_len, int am_server);
+int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server);
 				/* get "secret" for chap */
 
 /* Procedures exported from ipcp.c */

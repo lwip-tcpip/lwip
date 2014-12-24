@@ -62,9 +62,9 @@ static void chap_md5_generate_challenge(unsigned char *cp) {
 	random_bytes(cp, clen);
 }
 
-static int chap_md5_verify_response(int id, char *name,
-			 unsigned char *secret, int secret_len,
-			 unsigned char *challenge, unsigned char *response,
+static int chap_md5_verify_response(int id, const char *name,
+			 const unsigned char *secret, int secret_len,
+			 const unsigned char *challenge, const unsigned char *response,
 			 char *message, int message_space) {
 	md5_context ctx;
 	unsigned char idbyte = id;
@@ -78,8 +78,8 @@ static int chap_md5_verify_response(int id, char *name,
 		/* Generate hash of ID, secret, challenge */
 		md5_starts(&ctx);
 		md5_update(&ctx, &idbyte, 1);
-		md5_update(&ctx, secret, secret_len);
-		md5_update(&ctx, challenge, challenge_len);
+		md5_update(&ctx, (unsigned char*)secret, secret_len);
+		md5_update(&ctx, (unsigned char*)challenge, challenge_len);
 		md5_finish(&ctx, hash);
 
 		/* Test if our hash matches the peer's response */
@@ -93,9 +93,9 @@ static int chap_md5_verify_response(int id, char *name,
 }
 #endif /* PPP_SERVER */
 
-static void chap_md5_make_response(unsigned char *response, int id, char *our_name,
-		       unsigned char *challenge, char *secret, int secret_len,
-		       unsigned char *private_) {
+static void chap_md5_make_response(unsigned char *response, int id, const char *our_name,
+		       const unsigned char *challenge, const char *secret, int secret_len,
+		       const unsigned char *private_) {
 	md5_context ctx;
 	unsigned char idbyte = id;
 	int challenge_len = *challenge++;
@@ -105,7 +105,7 @@ static void chap_md5_make_response(unsigned char *response, int id, char *our_na
 	md5_starts(&ctx);
 	md5_update(&ctx, &idbyte, 1);
 	md5_update(&ctx, (u_char *)secret, secret_len);
-	md5_update(&ctx, challenge, challenge_len);
+	md5_update(&ctx, (unsigned char *)challenge, challenge_len);
 	md5_finish(&ctx, &response[1]);
 	response[0] = MD5_HASH_SIZE;
 }

@@ -49,9 +49,9 @@
 #endif
 
 /* Hook for a plugin to validate CHAP challenge */
-int (*chap_verify_hook)(char *name, char *ourname, int id,
+int (*chap_verify_hook)(const char *name, const char *ourname, int id,
 			const struct chap_digest_type *digest,
-			unsigned char *challenge, unsigned char *response,
+			const unsigned char *challenge, const unsigned char *response,
 			char *message, int message_space) = NULL;
 
 #if PPP_OPTIONS
@@ -89,9 +89,9 @@ static void chap_timeout(void *arg);
 static void chap_generate_challenge(ppp_pcb *pcb);
 static void chap_handle_response(ppp_pcb *pcb, int code,
 		unsigned char *pkt, int len);
-static int chap_verify_response(char *name, char *ourname, int id,
+static int chap_verify_response(const char *name, const char *ourname, int id,
 		const struct chap_digest_type *digest,
-		unsigned char *challenge, unsigned char *response,
+		const unsigned char *challenge, const unsigned char *response,
 		char *message, int message_space);
 #endif /* PPP_SERVER */
 static void chap_respond(ppp_pcb *pcb, int id,
@@ -155,7 +155,7 @@ static void chap_lowerdown(ppp_pcb *pcb) {
  * If the lower layer is already up, we start sending challenges,
  * otherwise we wait for the lower layer to come up.
  */
-void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
+void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
 	struct chap_server_state *ss = &pcb->chap_server;
 	const struct chap_digest_type *dp;
 	int i;
@@ -185,7 +185,7 @@ void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
  * chap_auth_with_peer - Prepare to authenticate ourselves to the peer.
  * There isn't much to do until we receive a challenge.
  */
-void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code) {
+void chap_auth_with_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
 	const struct chap_digest_type *dp;
 	int i;
 
@@ -277,11 +277,12 @@ static void chap_generate_challenge(ppp_pcb *pcb) {
 static void  chap_handle_response(ppp_pcb *pcb, int id,
 		     unsigned char *pkt, int len) {
 	int response_len, ok, mlen;
-	unsigned char *response, *outp;
+	const unsigned char *response;
+	unsigned char *outp;
 	struct pbuf *p;
-	char *name = NULL;	/* initialized to shut gcc up */
-	int (*verifier)(char *, char *, int, const struct chap_digest_type *,
-		unsigned char *, unsigned char *, char *, int);
+	const char *name = NULL;	/* initialized to shut gcc up */
+	int (*verifier)(const char *, const char *, int, const struct chap_digest_type *,
+		const unsigned char *, const unsigned char *, char *, int);
 	char rname[MAXNAMELEN+1];
 
 	if ((pcb->chap_server.flags & LOWERUP) == 0)
@@ -394,9 +395,9 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
  * what we think it should be.  Returns 1 if it does (authentication
  * succeeded), or 0 if it doesn't.
  */
-static int chap_verify_response(char *name, char *ourname, int id,
+static int chap_verify_response(const char *name, const char *ourname, int id,
 		     const struct chap_digest_type *digest,
-		     unsigned char *challenge, unsigned char *response,
+		     const unsigned char *challenge, const unsigned char *response,
 		     char *message, int message_space) {
 	int ok;
 	unsigned char secret[MAXSECRETLEN];

@@ -133,14 +133,14 @@ struct chap_digest_type {
 	 * a length byte followed by the actual challenge/response data.
 	 */
 	void (*generate_challenge)(unsigned char *challenge);
-	int (*verify_response)(int id, char *name,
-		unsigned char *secret, int secret_len,
-		unsigned char *challenge, unsigned char *response,
+	int (*verify_response)(int id, const char *name,
+		const unsigned char *secret, int secret_len,
+		const unsigned char *challenge, const unsigned char *response,
 		char *message, int message_space);
 #endif /* PPP_SERVER */
-	void (*make_response)(unsigned char *response, int id, char *our_name,
-		unsigned char *challenge, char *secret, int secret_len,
-		unsigned char *priv);
+	void (*make_response)(unsigned char *response, int id, const char *our_name,
+		const unsigned char *challenge, const char *secret, int secret_len,
+		const unsigned char *priv);
 	int (*check_success)(unsigned char *pkt, int len, unsigned char *priv);
 	void (*handle_failure)(unsigned char *pkt, int len);
 };
@@ -151,7 +151,7 @@ struct chap_digest_type {
 #if CHAP_SUPPORT
 typedef struct chap_client_state {
 	u8_t flags;
-	char *name;
+	const char *name;
 	const struct chap_digest_type *digest;
 	unsigned char priv[64];		/* private area for digest's use */
 } chap_client_state;
@@ -160,7 +160,7 @@ typedef struct chap_client_state {
 typedef struct chap_server_state {
 	u8_t flags;
 	int id;
-	char *name;
+	const char *name;
 	const struct chap_digest_type *digest;
 	int challenge_xmits;
 	int challenge_pktlen;
@@ -180,11 +180,11 @@ extern int (*chap_verify_hook)(char *name, char *ourname, int id,
 
 #if PPP_SERVER
 /* Called by authentication code to start authenticating the peer. */
-extern void chap_auth_peer(ppp_pcb *pcb, char *our_name, int digest_code);
+extern void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code);
 #endif /* PPP_SERVER */
 
 /* Called by auth. code to start authenticating us to the peer. */
-extern void chap_auth_with_peer(ppp_pcb *pcb, char *our_name, int digest_code);
+extern void chap_auth_with_peer(ppp_pcb *pcb, const char *our_name, int digest_code);
 
 /* Represents the CHAP protocol to the main pppd code */
 extern const struct protent chap_protent;

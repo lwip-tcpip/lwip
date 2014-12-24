@@ -250,8 +250,8 @@ typedef struct ppp_settings_s {
 #endif /* PPP_MAXCONNECT */
 
   /* auth data */
-  char  *user;                         /* Username for PAP */
-  char  *passwd;                       /* Password for PAP, secret for CHAP */
+  const char  *user;                   /* Username for PAP */
+  const char  *passwd;                 /* Password for PAP, secret for CHAP */
 #if PPP_SERVER
   char  our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
 #endif /* PPP_SERVER */
@@ -515,7 +515,7 @@ void ppp_set_default(ppp_pcb *pcb);
 #define PPPAUTHTYPE_EAP    0x08
 #define PPPAUTHTYPE_ANY    0xff
 
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd);
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
 #if PPP_NOTIFY_PHASE
 /*

@@ -201,9 +201,9 @@ static void chapms2_generate_challenge(unsigned char *challenge) {
 		random_bytes(challenge, 16);
 }
 
-static int chapms_verify_response(int id, char *name,
-		       unsigned char *secret, int secret_len,
-		       unsigned char *challenge, unsigned char *response,
+static int chapms_verify_response(int id, const char *name,
+		       const unsigned char *secret, int secret_len,
+		       const unsigned char *challenge, const unsigned char *response,
 		       char *message, int message_space) {
 	unsigned char md[MS_CHAP_RESPONSE_LEN];
 	int diff;
@@ -225,7 +225,7 @@ static int chapms_verify_response(int id, char *name,
 #endif
 
 	/* Generate the expected response. */
-	ChapMS(challenge, (char *)secret, secret_len, md);
+	ChapMS((u_char *)challenge, (char *)secret, secret_len, md);
 
 #ifdef MSLANMAN
 	/* Determine which part of response to verify against */
@@ -249,9 +249,9 @@ static int chapms_verify_response(int id, char *name,
 	return 0;
 }
 
-static int chapms2_verify_response(int id, char *name,
-			unsigned char *secret, int secret_len,
-			unsigned char *challenge, unsigned char *response,
+static int chapms2_verify_response(int id, const char *name,
+			const unsigned char *secret, int secret_len,
+			const unsigned char *challenge, const unsigned char *response,
 			char *message, int message_space) {
 	unsigned char md[MS_CHAP2_RESPONSE_LEN];
 	char saresponse[MS_AUTH_RESPONSE_LENGTH+1];
@@ -264,7 +264,7 @@ static int chapms2_verify_response(int id, char *name,
 		goto bad;	/* not even the right length */
 
 	/* Generate the expected response and our mutual auth. */
-	ChapMS2(challenge, &response[MS_CHAP2_PEER_CHALLENGE], name,
+	ChapMS2((u_char*)challenge, (u_char*)&response[MS_CHAP2_PEER_CHALLENGE], (char*)name,
 		(char *)secret, secret_len, md,
 		(unsigned char *)saresponse, MS_CHAP2_AUTHENTICATOR);
 
@@ -326,30 +326,30 @@ static int chapms2_verify_response(int id, char *name,
 }
 #endif /* PPP_SERVER */
 
-static void chapms_make_response(unsigned char *response, int id, char *our_name,
-		     unsigned char *challenge, char *secret, int secret_len,
-		     unsigned char *private_) {
+static void chapms_make_response(unsigned char *response, int id, const char *our_name,
+		     const unsigned char *challenge, const char *secret, int secret_len,
+		     const unsigned char *private_) {
 	LWIP_UNUSED_ARG(id);
 	LWIP_UNUSED_ARG(our_name);
 	LWIP_UNUSED_ARG(private_);
 	challenge++;	/* skip length, should be 8 */
 	*response++ = MS_CHAP_RESPONSE_LEN;
-	ChapMS(challenge, secret, secret_len, response);
+	ChapMS((u_char*)challenge, (char*)secret, secret_len, response);
 }
 
-static void chapms2_make_response(unsigned char *response, int id, char *our_name,
-		      unsigned char *challenge, char *secret, int secret_len,
-		      unsigned char *private_) {
+static void chapms2_make_response(unsigned char *response, int id, const char *our_name,
+		      const unsigned char *challenge, const char *secret, int secret_len,
+		      const unsigned char *private_) {
 	LWIP_UNUSED_ARG(id);
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;
-	ChapMS2(challenge,
+	ChapMS2((u_char*)challenge,
 #ifdef DEBUGMPPEKEY
 		mschap2_peer_challenge,
 #else
 		NULL,
 #endif
-		our_name, secret, secret_len, response, private_,
+		(char*)our_name, (char*)secret, secret_len, response, (u_char*)private_,
 		MS_CHAP2_AUTHENTICATEE);
 }
 
