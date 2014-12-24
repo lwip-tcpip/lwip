@@ -144,8 +144,7 @@
  * Proxy Neighbour Discovery.
  *
  * Better defines for selecting the ordering of
- *   interface up / set address. (currently checks for __linux__,
- *   since SVR4 && (SNI || __USLC__) didn't work properly)
+ *   interface up / set address.
  */
 
 #include "lwip/opt.h"
@@ -232,10 +231,8 @@ static option_t ipv6cp_option_list[] = {
     { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
       "Use (default) IPv4 address as interface identifier", 1 },
 
-#if defined(SOL2) || defined(__linux__)
     { "ipv6cp-use-persistent", o_bool, &ipv6cp_wantoptions[0].use_persistent,
       "Use uniquely-available persistent value for link local address", 1 },
-#endif /* defined(SOL2) */
 
     { "ipv6cp-restart", o_int, &ipv6cp_fsm[0].timeouttime,
       "Set timeout for IPv6CP", OPT_PRIO },
@@ -1047,7 +1044,6 @@ static void ipv6_check_options() {
     if (!ipv6cp_protent.enabled_flag)
 	return;
 
-#if defined(SOL2) || defined(__linux__)
     /*
      * Persistent link-local id is only used when user has not explicitly
      * configure/hard-code the id
@@ -1067,7 +1063,6 @@ static void ipv6_check_options() {
 	    wo->opt_local = 1;
 	}
     }
-#endif
 
     if (!wo->opt_local) {	/* init interface identifier */
 	if (wo->use_ip && eui64_iszero(wo->ourid)) {

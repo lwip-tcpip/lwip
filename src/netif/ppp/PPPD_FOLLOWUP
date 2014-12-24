@@ -324,3 +324,21 @@ Low level serial port, not in the port.
   b04d2dc6df5c6b5650fea44250d58757ee3dac4a
 
 Reimplemented.
+
+
+2014-03-09 - pppol2tp: Connect up/down events to notifiers and add IPv6 ones
+  fafbe50251efc7d6b4a8be652d085316e112b34f
+
+Not in the port.
+
+
+2014-03-09 - pppd: Add declarations to eliminate compile warnings
+  50967962addebe15c7a7e63116ff46a0441dc464
+
+We are handling compilation warnings on our own
+
+
+2014-03-09 - pppd: Eliminate some unnecessary ifdefs
+  de8da14d845ee6db9236ccfddabf1d8ebf045ddb
+
+We mostly did that previously. Anyway, merged 2014-12-24.

@@ -163,9 +163,7 @@ typedef struct ipv6cp_options {
     unsigned int opt_remote     :1;  /* histoken set by option */
     unsigned int use_ip         :1;  /* use IP as interface identifier */
 #if 0
-#if defined(SOL2) || defined(__linux__)
     unsigned int use_persistent :1;  /* use uniquely persistent value for address */
-#endif /* defined(SOL2) */
 #endif
     unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
     unsigned int                :1;  /* 1 bit of padding to round out to 8 bits */

@@ -237,10 +237,10 @@ static option_t ipcp_option_list[] = {
     { "ipcp-no-address", o_bool, &ipcp_wantoptions[0].neg_addr,
       "Disable IP-Address usage", OPT_A2CLR,
       &ipcp_allowoptions[0].neg_addr },
-#ifdef __linux__
+
     { "noremoteip", o_bool, &noremoteip,
       "Allow peer to have no IP address", 1 },
-#endif
+
     { "nosendip", o_bool, &ipcp_wantoptions[0].neg_addr,
       "Don't send our IP address to peer", OPT_A2CLR,
       &ipcp_wantoptions[0].old_addrs},
