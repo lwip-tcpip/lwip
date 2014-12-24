@@ -48,8 +48,8 @@ struct pppapi_msg_msg {
   union {
     struct {
       u8_t authtype;
-      char *user;
-      char *passwd;
+      const char *user;
+      const char *passwd;
     } setauth;
 #if PPP_NOTIFY_PHASE
     struct {
@@ -113,7 +113,7 @@ struct pppapi_msg {
 /* API for application */
 ppp_pcb *pppapi_new(void);
 void pppapi_set_default(ppp_pcb *pcb);
-void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd);
+void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 #if PPP_NOTIFY_PHASE
 void pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
 #endif /* PPP_NOTIFY_PHASE */

@@ -102,7 +102,7 @@ pppapi_do_ppp_set_auth(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 void
-pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, char *user, char *passwd)
+pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd)
 {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_set_auth;
