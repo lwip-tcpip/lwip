@@ -64,8 +64,8 @@
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
-#include "lwip/sio.h"
 #include "lwip/sys.h"
+#include "lwip/sio.h"
 
 #define SLIP_END     0xC0 /* 0300: start and end of every packet */
 #define SLIP_ESC     0xDB /* 0333: escape start (one byte escaped data follows) */

@@ -45,7 +45,6 @@
 #include "lwip/netif.h"
 #include "lwip/def.h"
 #include "lwip/timers.h"
-#include "lwip/sio.h"
 
 #include "ppp.h"
 #include "pppdebug.h"
