@@ -1037,6 +1037,8 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, char *name, 
 	    bit |= CHAP_MS2_PEER;
 	    break;
 #endif /* MSCHAP_SUPPORT */
+	default:
+	    break;
 	}
 	break;
 #endif /* CHAP_SUPPORT */
@@ -1123,6 +1125,8 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
 	    bit |= CHAP_MS2_WITHPEER;
 	    break;
 #endif /* MSCHAP_SUPPORT */
+	default:
+	    break;
 	}
 	break;
 #endif /* CHAP_SUPPORT */

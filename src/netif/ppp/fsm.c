@@ -186,6 +186,8 @@ void fsm_open(fsm *f) {
 	    fsm_lowerup(f);
 	}
 	break;
+    default:
+	break;
     }
 }
 
@@ -232,7 +234,7 @@ static void terminate_layer(fsm *f, int nextstate) {
  * Cancel timeouts and either initiate close or possibly go directly to
  * the PPP_FSM_CLOSED state.
  */
-void fsm_close(fsm *f, char *reason) {
+void fsm_close(fsm *f, const char *reason) {
     f->term_reason = reason;
     f->term_reason_len = (reason == NULL? 0: LWIP_MIN(strlen(reason), 0xFF) );
     switch( f->state ){
@@ -251,6 +253,8 @@ void fsm_close(fsm *f, char *reason) {
     case PPP_FSM_ACKSENT:
     case PPP_FSM_OPENED:
 	terminate_layer(f, PPP_FSM_CLOSING);
+	break;
+    default:
 	break;
     }
 }
@@ -410,6 +414,8 @@ static void fsm_rconfreq(fsm *f, u_char id, u_char *inp, int len) {
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
 	f->state = PPP_FSM_REQSENT;
 	break;
+    default:
+	break;
     }
 
     /*
@@ -497,6 +503,8 @@ static void fsm_rconfack(fsm *f, int id, u_char *inp, int len) {
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
 	f->state = PPP_FSM_REQSENT;
 	break;
+    default:
+	break;
     }
 }
 
@@ -560,6 +568,8 @@ static void fsm_rconfnakrej(fsm *f, int code, int id, u_char *inp, int len) {
 	fsm_sconfreq(f, 0);		/* Send initial Configure-Request */
 	f->state = PPP_FSM_REQSENT;
 	break;
+    default:
+	break;
     }
 }
 
@@ -586,6 +596,8 @@ static void fsm_rtermreq(fsm *f, int id, u_char *p, int len) {
 	if (f->callbacks->down)
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
+	break;
+    default:
 	break;
     }
 
@@ -620,6 +632,8 @@ static void fsm_rtermack(fsm *f) {
 	    (*f->callbacks->down)(f);	/* Inform upper layers */
 	fsm_sconfreq(f, 0);
 	f->state = PPP_FSM_REQSENT;
+	break;
+    default:
 	break;
     }
 }
@@ -730,7 +744,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
     }
 
     /* send the request to our peer */
-    outp = p->payload;
+    outp = (u_char*)p->payload;
     MAKEHEADER(outp, f->protocol);
     PUTCHAR(CONFREQ, outp);
     PUTCHAR(f->reqid, outp);
@@ -771,7 +785,7 @@ void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
         return;
     }
 
-    outp = p->payload;
+    outp = (u_char*)p->payload;
 /*  if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)  -- was only for fsm_sconfreq() */
 	MEMCPY(outp + PPP_HDRLEN + HEADERLEN, data, datalen);
     MAKEHEADER(outp, f->protocol);

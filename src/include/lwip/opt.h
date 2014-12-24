@@ -1928,6 +1928,13 @@
 #endif
 
 /**
+ * DEMAND_SUPPORT==1: Support dial on demand. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef DEMAND_SUPPORT
+#define DEMAND_SUPPORT                  0
+#endif
+
+/**
  * LQR_SUPPORT==1: Support Link Quality Report. Do nothing except exchanging some LCP packets.
  */
 #ifndef LQR_SUPPORT

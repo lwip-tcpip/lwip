@@ -258,14 +258,14 @@ static option_t ipcp_option_list[] = {
  */
 static void ipcp_init(ppp_pcb *pcb);
 static void ipcp_open(ppp_pcb *pcb);
-static void ipcp_close(ppp_pcb *pcb, char *reason);
+static void ipcp_close(ppp_pcb *pcb, const char *reason);
 static void ipcp_lowerup(ppp_pcb *pcb);
 static void ipcp_lowerdown(ppp_pcb *pcb);
 static void ipcp_input(ppp_pcb *pcb, u_char *p, int len);
 static void ipcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int ipcp_printpkt(u_char *p, int plen,
-		void (*printer) (void *, char *, ...), void *arg);
+		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
 static void ip_check_options (void);
@@ -657,7 +657,7 @@ static void ipcp_open(ppp_pcb *pcb) {
 /*
  * ipcp_close - Take IPCP down.
  */
-static void ipcp_close(ppp_pcb *pcb, char *reason) {
+static void ipcp_close(ppp_pcb *pcb, const char *reason) {
     fsm *f = &pcb->ipcp_fsm;
     fsm_close(f, reason);
 }
@@ -1031,10 +1031,10 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     u_short cishort;
     u32_t ciaddr1, ciaddr2, l, cidnsaddr;
     ipcp_options no;		/* options we've seen Naks for */
-    ipcp_options try;		/* options to request next time */
+    ipcp_options try_;		/* options to request next time */
 
     BZERO(&no, sizeof(no));
-    try = *go;
+    try_ = *go;
 
     /*
      * Any Nak'd CIs must be in exactly the same order that we sent.
@@ -1100,15 +1100,15 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     NAKCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs,
 	       if (treat_as_reject) {
-		   try.old_addrs = 0;
+		   try_.old_addrs = 0;
 	       } else {
 		   if (go->accept_local && ciaddr1) {
 		       /* take his idea of our address */
-		       try.ouraddr = ciaddr1;
+		       try_.ouraddr = ciaddr1;
 		   }
 		   if (go->accept_remote && ciaddr2) {
 		       /* take his idea of his address */
-		       try.hisaddr = ciaddr2;
+		       try_.hisaddr = ciaddr2;
 		   }
 	       }
 	);
@@ -1121,52 +1121,52 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
 	    if (treat_as_reject) {
-		try.neg_vj = 0;
+		try_.neg_vj = 0;
 	    } else if (cilen == CILEN_VJ) {
 		GETCHAR(cimaxslotindex, p);
 		GETCHAR(cicflag, p);
 		if (cishort == IPCP_VJ_COMP) {
-		    try.old_vj = 0;
+		    try_.old_vj = 0;
 		    if (cimaxslotindex < go->maxslotindex)
-			try.maxslotindex = cimaxslotindex;
+			try_.maxslotindex = cimaxslotindex;
 		    if (!cicflag)
-			try.cflag = 0;
+			try_.cflag = 0;
 		} else {
-		    try.neg_vj = 0;
+		    try_.neg_vj = 0;
 		}
 	    } else {
 		if (cishort == IPCP_VJ_COMP || cishort == IPCP_VJ_COMP_OLD) {
-		    try.old_vj = 1;
-		    try.vj_protocol = cishort;
+		    try_.old_vj = 1;
+		    try_.vj_protocol = cishort;
 		} else {
-		    try.neg_vj = 0;
+		    try_.neg_vj = 0;
 		}
 	    }
 	    );
 
     NAKCIADDR(CI_ADDR, neg_addr,
 	      if (treat_as_reject) {
-		  try.neg_addr = 0;
-		  try.old_addrs = 0;
+		  try_.neg_addr = 0;
+		  try_.old_addrs = 0;
 	      } else if (go->accept_local && ciaddr1) {
 		  /* take his idea of our address */
-		  try.ouraddr = ciaddr1;
+		  try_.ouraddr = ciaddr1;
 	      }
 	      );
 
     NAKCIDNS(CI_MS_DNS1, req_dns1,
 	     if (treat_as_reject) {
-		 try.req_dns1 = 0;
+		 try_.req_dns1 = 0;
 	     } else {
-		 try.dnsaddr[0] = cidnsaddr;
+		 try_.dnsaddr[0] = cidnsaddr;
 	     }
 	     );
 
     NAKCIDNS(CI_MS_DNS2, req_dns2,
 	     if (treat_as_reject) {
-		 try.req_dns2 = 0;
+		 try_.req_dns2 = 0;
 	     } else {
-		 try.dnsaddr[1] = cidnsaddr;
+		 try_.dnsaddr[1] = cidnsaddr;
 	     }
 	     );
 
@@ -1196,43 +1196,43 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    if ((!go->neg_addr && go->old_addrs) || no.old_addrs
 		|| cilen != CILEN_ADDRS)
 		goto bad;
-	    try.neg_addr = 0;
+	    try_.neg_addr = 0;
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
 	    if (ciaddr1 && go->accept_local)
-		try.ouraddr = ciaddr1;
+		try_.ouraddr = ciaddr1;
 	    GETLONG(l, p);
 	    ciaddr2 = htonl(l);
 	    if (ciaddr2 && go->accept_remote)
-		try.hisaddr = ciaddr2;
+		try_.hisaddr = ciaddr2;
 	    no.old_addrs = 1;
 	    break;
 	case CI_ADDR:
 	    if (go->neg_addr || no.neg_addr || cilen != CILEN_ADDR)
 		goto bad;
-	    try.old_addrs = 0;
+	    try_.old_addrs = 0;
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
 	    if (ciaddr1 && go->accept_local)
-		try.ouraddr = ciaddr1;
-	    if (try.ouraddr != 0)
-		try.neg_addr = 1;
+		try_.ouraddr = ciaddr1;
+	    if (try_.ouraddr != 0)
+		try_.neg_addr = 1;
 	    no.neg_addr = 1;
 	    break;
 	case CI_MS_DNS1:
 	    if (go->req_dns1 || no.req_dns1 || cilen != CILEN_ADDR)
 		goto bad;
 	    GETLONG(l, p);
-	    try.dnsaddr[0] = htonl(l);
-	    try.req_dns1 = 1;
+	    try_.dnsaddr[0] = htonl(l);
+	    try_.req_dns1 = 1;
 	    no.req_dns1 = 1;
 	    break;
 	case CI_MS_DNS2:
 	    if (go->req_dns2 || no.req_dns2 || cilen != CILEN_ADDR)
 		goto bad;
 	    GETLONG(l, p);
-	    try.dnsaddr[1] = htonl(l);
-	    try.req_dns2 = 1;
+	    try_.dnsaddr[1] = htonl(l);
+	    try_.req_dns2 = 1;
 	    no.req_dns2 = 1;
 	    break;
 	case CI_MS_WINS1:
@@ -1242,7 +1242,9 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    GETLONG(l, p);
 	    ciaddr1 = htonl(l);
 	    if (ciaddr1)
-		try.winsaddr[citype == CI_MS_WINS2] = ciaddr1;
+		try_.winsaddr[citype == CI_MS_WINS2] = ciaddr1;
+	    break;
+	default:
 	    break;
 	}
 	p = next;
@@ -1253,7 +1255,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * If there are any remaining options, we ignore them.
      */
     if (f->state != PPP_FSM_OPENED)
-	*go = try;
+	*go = try_;
 
     return 1;
 
@@ -1273,9 +1275,9 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
     u_char cimaxslotindex, ciflag, cilen;
     u_short cishort;
     u32_t cilong;
-    ipcp_options try;		/* options to request next time */
+    ipcp_options try_;		/* options to request next time */
 
-    try = *go;
+    try_ = *go;
     /*
      * Any Rejected CIs must be in exactly the same order that we sent.
      * Check packet length and CI length at each step.
@@ -1299,7 +1301,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cilong != val2) \
 	    goto bad; \
-	try.old_addrs = 0; \
+	try_.old_addrs = 0; \
     }
 
 #define REJCIVJ(opt, neg, val, old, maxslot, cflag) \
@@ -1321,7 +1323,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	   if (ciflag != cflag) \
 	     goto bad; \
         } \
-	try.neg = 0; \
+	try_.neg = 0; \
      }
 
 #define REJCIADDR(opt, neg, val) \
@@ -1337,7 +1339,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cilong != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
 #define REJCIDNS(opt, neg, dnsaddr) \
@@ -1353,7 +1355,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cilong != dnsaddr) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
 #define REJCIWINS(opt, addr) \
@@ -1369,7 +1371,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (cilong != addr) \
 	    goto bad; \
-	try.winsaddr[opt == CI_MS_WINS2] = 0; \
+	try_.winsaddr[opt == CI_MS_WINS2] = 0; \
     }
 
     REJCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs,
@@ -1397,7 +1399,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
-	*go = try;
+	*go = try_;
     return 1;
 
 bad:
@@ -2093,13 +2095,13 @@ create_resolv(peerdns1, peerdns2)
 /*
  * ipcp_printpkt - print the contents of an IPCP packet.
  */
-static char *ipcp_codenames[] = {
+static const char *ipcp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej"
 };
 
 static int ipcp_printpkt(u_char *p, int plen,
-		void (*printer) (void *, char *, ...), void *arg) {
+		void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len, olen;
     u_char *pstart, *optend;
     u_short cishort;
@@ -2183,6 +2185,8 @@ static int ipcp_printpkt(u_char *p, int plen,
 		GETLONG(cilong, p);
 		printer(arg, "ms-wins %I", htonl(cilong));
 		break;
+	    default:
+		break;
 	    }
 	    while (p < optend) {
 		GETCHAR(code, p);
@@ -2200,6 +2204,8 @@ static int ipcp_printpkt(u_char *p, int plen,
 	    p += len;
 	    len = 0;
 	}
+	break;
+    default:
 	break;
     }
 

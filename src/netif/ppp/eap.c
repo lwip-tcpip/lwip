@@ -108,7 +108,7 @@ static void eap_lowerup(ppp_pcb *pcb);
 static void eap_lowerdown(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int  eap_printpkt(u_char *inp, int inlen,
-    void (*)(void *arg, char *fmt, ...), void *arg);
+    void (*)(void *arg, const char *fmt, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 const struct protent eap_protent = {
@@ -187,9 +187,7 @@ static void eap_server_timeout(void *arg);
 /*
  * Convert EAP state code to printable string for debug.
  */
-static const char *
-eap_state_name(esc)
-enum eap_state_code esc;
+static const char * eap_state_name(enum eap_state_code esc)
 {
 	static const char *state_names[] = { EAP_STATES };
 
@@ -266,7 +264,7 @@ static void eap_send_failure(ppp_pcb *pcb) {
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -297,7 +295,7 @@ static void eap_send_success(ppp_pcb *pcb) {
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -649,7 +647,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 	u_char *ptr;
 	int outlen;
 	int challen;
-	char *str;
+	const char *str;
 #ifdef USE_SRP
 	struct t_server *ts;
 	u_char clear[8], cipher[8], dig[SHA_DIGESTSIZE], *optr, *cp;
@@ -694,7 +692,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -1056,7 +1054,7 @@ static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *s
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -1090,7 +1088,7 @@ static void eap_chap_response(ppp_pcb *pcb, u_char id, u_char *hash, char *name,
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
     
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -1208,7 +1206,7 @@ static void eap_send_nak(ppp_pcb *pcb, u_char id, u_char type) {
 		return;
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
 
 	MAKEHEADER(outp, PPP_EAP);
 
@@ -1791,7 +1789,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #endif /* PPP_REMOTENAME */
 		    )
 			free(pcb->eap.es_server.ea_peer);
-		pcb->eap.es_server.ea_peer = malloc(len + 1);
+		pcb->eap.es_server.ea_peer = (char*)malloc(len + 1);
 		if (pcb->eap.es_server.ea_peer == NULL) {
 			pcb->eap.es_server.ea_peerlen = 0;
 			eap_figure_next_state(pcb, 1);
@@ -2151,11 +2149,11 @@ static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen) {
 /*
  * eap_printpkt - print the contents of an EAP packet.
  */
-static char *eap_codenames[] = {
+static const char *eap_codenames[] = {
 	"Request", "Response", "Success", "Failure"
 };
 
-static char *eap_typenames[] = {
+static const char *eap_typenames[] = {
 	"Identity", "Notification", "Nak", "MD5-Challenge",
 	"OTP", "Generic-Token", NULL, NULL,
 	"RSA", "DSS", "KEA", "KEA-Validate",
@@ -2163,7 +2161,7 @@ static char *eap_typenames[] = {
 	"Cisco", "Nokia", "SRP"
 };
 
-static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *, ...), void *arg) {
+static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, const char *, ...), void *arg) {
 	int code, id, len, rtype, vallen;
 	u_char *pstart;
 	u32_t uval;
@@ -2316,7 +2314,11 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				INCPTR(len, inp);
 				len = 0;
 				break;
+			default:
+				break;
 			}
+			break;
+		default:
 			break;
 		}
 		break;
@@ -2421,13 +2423,18 @@ static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, char *,
 				INCPTR(vallen, inp);
 				len -= vallen;
 				break;
+			default:
+				break;
 			}
+			break;
+		default:
 			break;
 		}
 		break;
 
 	case EAP_SUCCESS:	/* No payload expected for these! */
 	case EAP_FAILURE:
+	default:
 		break;
 
 	truncated:

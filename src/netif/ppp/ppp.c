@@ -674,7 +674,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
 #if PRINTPKT_SUPPORT
-  ppp_dump_packet("rcvd", pb->payload, pb->len);
+  ppp_dump_packet("rcvd", (unsigned char *)pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
   if(pbuf_header(pb, -(s16_t)sizeof(protocol))) {
@@ -774,7 +774,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol && protp->enabled_flag) {
           pb = ppp_singlebuf(pb);
-          (*protp->input)(pcb, pb->payload, pb->len);
+          (*protp->input)(pcb, (u_char*)pb->payload, pb->len);
           goto out;
         }
 #if 0 /* UNUSED
@@ -807,7 +807,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
         LWIP_ASSERT("pbuf_header failed\n", 0);
         goto drop;
       }
-      lcp_sprotrej(pcb, pb->payload, pb->len);
+      lcp_sprotrej(pcb, (u_char*)pb->payload, pb->len);
     }
     break;
   }
@@ -948,7 +948,7 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
   int c;
 
   for(b = nb; b != NULL; b = b->next) {
-    c = sio_write(pcb->fd, b->payload, b->len);
+    c = sio_write(pcb->fd, (u8_t*)b->payload, b->len);
     if(c != b->len) {
       PPPDEBUG(LOG_WARNING,
                ("PPP pppos_put: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pcb->fd, b->len, c, c));
@@ -1187,7 +1187,9 @@ static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short
 static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
   struct pbuf *pb;
   int i=0;
+#if LWIP_SNMP
   u16_t tot_len;
+#endif /* LWIP_SNMP */
   err_t err;
 
   /* @todo: try to use pbuf_header() here! */
@@ -1209,7 +1211,9 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
   *((u_char*)pb->payload + i) = protocol & 0xFF;
 
   pbuf_chain(pb, p);
+#if LWIP_SNMP
   tot_len = pb->tot_len;
+#endif /* LWIP_SNMP */
 
   if( (err = pppoe_xmit(pcb->pppoe_sc, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
@@ -1229,7 +1233,9 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
 static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
   struct pbuf *pb;
   int i=0;
+#if LWIP_SNMP
   u16_t tot_len;
+#endif /* LWIP_SNMP */
   err_t err;
 
   /* @todo: try to use pbuf_header() here! */
@@ -1251,7 +1257,9 @@ static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short pr
   *((u_char*)pb->payload + i) = protocol & 0xFF;
 
   pbuf_chain(pb, p);
+#if LWIP_SNMP
   tot_len = pb->tot_len;
+#endif /* LWIP_SNMP */
 
   if( (err = pppol2tp_xmit(pcb->l2tp_pcb, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
@@ -1309,6 +1317,9 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
       return PPPERR_PARAM;
       break;
 #endif /* PPPOS_SUPPORT */
+
+    default:
+      break;
   }
 
   return PPPERR_PARAM;
@@ -1354,7 +1365,7 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 
 #if PPPOS_SUPPORT
 static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
-  u_char *s = p->payload;
+  u_char *s = (u_char*)p->payload;
   int n = p->len;
   u_char c;
   u_int fcs_out;
@@ -1422,7 +1433,9 @@ static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
 #if PPPOE_SUPPORT
 static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
   struct pbuf *ph; /* Ethernet + PPPoE header */
+#if LWIP_SNMP
   u16_t tot_len;
+#endif /* LWIP_SNMP */
 
   /* skip address & flags */
   pbuf_header(p, -(s16_t)2);
@@ -1438,7 +1451,9 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 
   pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
   pbuf_cat(ph, p);
+#if LWIP_SNMP
   tot_len = ph->tot_len;
+#endif /* LWIP_SNMP */
 
   pcb->last_xmit = sys_jiffies();
 
@@ -1458,7 +1473,9 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 #if PPPOL2TP_SUPPORT
 static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
   struct pbuf *ph; /* UDP + L2TP header */
+#if LWIP_SNMP
   u16_t tot_len;
+#endif /* LWIP_SNMP */
 
   ph = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN), PBUF_RAM);
   if(!ph) {
@@ -1471,7 +1488,9 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
 
   pbuf_header(ph, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
   pbuf_cat(ph, p);
+#if LWIP_SNMP
   tot_len = ph->tot_len;
+#endif /* LWIP_SNMP */
 
   pcb->last_xmit = sys_jiffies();
 
@@ -1763,6 +1782,8 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
           /* Load character into buffer. */
           ((u_char*)pcrx->in_tail->payload)[pcrx->in_tail->len++] = cur_char;
           break;
+        default:
+          break;
       }
 
       /* update the frame check sequence number. */
@@ -1814,7 +1835,7 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
     return p; /* live dangerously */
   }
 
-  for(b = p, pl = q->payload; b != NULL; b = b->next) {
+  for(b = p, pl = (u_char*)q->payload; b != NULL; b = b->next) {
     MEMCPY(pl, b->payload, b->len);
     pl += b->len;
   }
@@ -1847,6 +1868,9 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
       PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
       pppoe_err_code = PPPERR_OPEN;
       new_phase(pcb, PPP_PHASE_DEAD);
+      break;
+
+    default:
       break;
   }
 
@@ -1898,6 +1922,9 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
       pppol2tp_err_code = PPPERR_OPEN;
       new_phase(pcb, PPP_PHASE_DEAD);
       break;
+
+    default:
+      break;
   }
 
   pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->ctx_cb);
@@ -1947,7 +1974,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
     /* We cannot call ppp_free_current_input_packet() here because
      * rx thread might still call pppos_input()
      */
-    PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: link_status_cb=%p err_code=%d\n", pcb->num, pcb->link_status_cb, pcb->err_code));
+    PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
     pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : PPPERR_PROTOCOL, pcb->ctx_cb);
 #endif /* PPPOS_SUPPORT */
   }

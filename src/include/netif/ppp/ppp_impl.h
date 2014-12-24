@@ -277,11 +277,11 @@ struct protent {
     /* Open the protocol */
     void (*open) (ppp_pcb *pcb);
     /* Close the protocol */
-    void (*close) (ppp_pcb *pcb, char *reason);
+    void (*close) (ppp_pcb *pcb, const char *reason);
 #if PRINTPKT_SUPPORT
     /* Print a packet in readable form */
     int  (*printpkt) (u_char *pkt, int len,
-			  void (*printer) (void *, char *, ...),
+			  void (*printer) (void *, const char *, ...),
 			  void *arg);
 #endif /* PRINTPKT_SUPPORT */
     /* FIXME: data input is only used by CCP, which is not supported at this time,
@@ -291,8 +291,8 @@ struct protent {
     void (*datainput) (ppp_pcb *pcb, u_char *pkt, int len);
     u8_t enabled_flag;		/* 0 if protocol is disabled */
 #if PRINTPKT_SUPPORT
-    char *name;			/* Text name of protocol */
-    char *data_name;		/* Text name of corresponding data protocol */
+    const char *name;		/* Text name of protocol */
+    const char *data_name;	/* Text name of corresponding data protocol */
 #endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
     option_t *options;		/* List of command-line options */
@@ -552,17 +552,17 @@ int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from utils.c. */
-void ppp_print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg);   /* Format a string for output */
-int ppp_slprintf(char *buf, int buflen, char *fmt, ...);            /* sprintf++ */
-int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args);  /* vsprintf++ */
+void ppp_print_string(char *p, int len, void (*printer) (void *, const char *, ...), void *arg);   /* Format a string for output */
+int ppp_slprintf(char *buf, int buflen, const char *fmt, ...);            /* sprintf++ */
+int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args);  /* vsprintf++ */
 size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */
 size_t ppp_strlcat(char *dest, const char *src, size_t len);        /* safe strncpy */
-void ppp_dbglog(char *fmt, ...);    /* log a debug message */
-void ppp_info(char *fmt, ...);      /* log an informational message */
-void ppp_notice(char *fmt, ...);    /* log a notice-level message */
-void ppp_warn(char *fmt, ...);      /* log a warning message */
-void ppp_error(char *fmt, ...);     /* log an error message */
-void ppp_fatal(char *fmt, ...);     /* log an error message and die(1) */
+void ppp_dbglog(const char *fmt, ...);    /* log a debug message */
+void ppp_info(const char *fmt, ...);      /* log an informational message */
+void ppp_notice(const char *fmt, ...);    /* log a notice-level message */
+void ppp_warn(const char *fmt, ...);      /* log a warning message */
+void ppp_error(const char *fmt, ...);     /* log an error message */
+void ppp_fatal(const char *fmt, ...);     /* log an error message and die(1) */
 #if PRINTPKT_SUPPORT
 void ppp_dump_packet(const char *tag, unsigned char *p, int len);
                                 /* dump packet to debug log if interesting */

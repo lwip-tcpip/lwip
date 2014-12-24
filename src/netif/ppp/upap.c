@@ -86,7 +86,7 @@ static void upap_lowerdown(ppp_pcb *pcb);
 static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l);
 static void upap_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
-static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, ...), void *arg);
+static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 const struct protent pap_protent = {
@@ -126,7 +126,7 @@ static void upap_rauthack(ppp_pcb *pcb, u_char *inp, int id, int len);
 static void upap_rauthnak(ppp_pcb *pcb, u_char *inp, int id, int len);
 static void upap_sauthreq(ppp_pcb *pcb);
 #if PPP_SERVER
-static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msglen);
+static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, const char *msg, int msglen);
 #endif /* PPP_SERVER */
 
 
@@ -363,7 +363,7 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 #endif
     char rhostname[256];
     int retcode;
-    char *msg;
+    const char *msg;
     int msglen;
 
     if (pcb->upap.us_serverstate < UPAPSS_LISTEN)
@@ -546,7 +546,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
         return;
     }
 
-    outp = p->payload;
+    outp = (u_char*)p->payload;
     MAKEHEADER(outp, PPP_PAP);
 
     PUTCHAR(UPAP_AUTHREQ, outp);
@@ -569,7 +569,7 @@ static void upap_sauthreq(ppp_pcb *pcb) {
 /*
  * upap_sresp - Send a response (ack or nak).
  */
-static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msglen) {
+static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, const char *msg, int msglen) {
     struct pbuf *p;
     u_char *outp;
     int outlen;
@@ -583,7 +583,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
         return;
     }
 
-    outp = p->payload;
+    outp = (u_char*)p->payload;
     MAKEHEADER(outp, PPP_PAP);
 
     PUTCHAR(code, outp);
@@ -600,11 +600,11 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, char *msg, int msgl
 /*
  * upap_printpkt - print the contents of a PAP packet.
  */
-static char *upap_codenames[] = {
+static const char *upap_codenames[] = {
     "AuthReq", "AuthAck", "AuthNak"
 };
 
-static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, ...), void *arg) {
+static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len;
     int mlen, ulen, wlen;
     char *user, *pwd, *msg;
@@ -664,6 +664,8 @@ static int upap_printpkt(u_char *p, int plen, void (*printer) (void *, char *, .
 	len -= mlen + 1;
 	printer(arg, " ");
 	ppp_print_string(msg, mlen, printer, arg);
+	break;
+    default:
 	break;
     }
 

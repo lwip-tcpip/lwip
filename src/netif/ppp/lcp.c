@@ -269,7 +269,7 @@ static void lcp_input(ppp_pcb *pcb, u_char *p, int len);
 static void lcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int lcp_printpkt(u_char *p, int plen,
-		void (*printer) (void *, char *, ...), void *arg);
+		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 const struct protent lcp_protent = {
@@ -436,7 +436,7 @@ void lcp_open(ppp_pcb *pcb) {
 /*
  * lcp_close - Take LCP down.
  */
-void lcp_close(ppp_pcb *pcb, char *reason) {
+void lcp_close(ppp_pcb *pcb, const char *reason) {
     fsm *f = &pcb->lcp_fsm;
     int oldstate;
 
@@ -525,7 +525,7 @@ void lcp_lowerdown(ppp_pcb *pcb) {
  * lcp_delayed_up - Bring the lower layer up now.
  */
 static void lcp_delayed_up(void *arg) {
-    fsm *f = arg;
+    fsm *f = (fsm*)arg;
 
     if (f->flags & DELAYED_UP) {
 	f->flags &= ~DELAYED_UP;
@@ -1487,6 +1487,8 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    if (go->neg_endpoint || no.neg_endpoint || cilen < CILEN_CHAR)
 		goto bad;
 	    break;
+	default:
+	    break;
 	}
 	p = next;
     }
@@ -1790,7 +1792,7 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
         return 0;
     }
 
-    nakoutp = nakp->payload;
+    nakoutp = (u_char*)nakp->payload;
     rejp = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
@@ -2213,6 +2215,8 @@ endswitch:
     case CONFREJ:
 	*lenp = rejp - inp;
 	break;
+    default:
+	break;
     }
 
     pbuf_free(nakp);
@@ -2311,7 +2315,7 @@ static void lcp_finished(fsm *f) {
 /*
  * lcp_printpkt - print the contents of an LCP packet.
  */
-static char *lcp_codenames[] = {
+static const char *lcp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej", "ProtRej",
     "EchoReq", "EchoRep", "DiscReq", "Ident",
@@ -2319,7 +2323,7 @@ static char *lcp_codenames[] = {
 };
 
 static int lcp_printpkt(u_char *p, int plen,
-		void (*printer) (void *, char *, ...), void *arg) {
+		void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len, olen, i;
     u_char *pstart, *optend;
     u_short cishort;
@@ -2402,6 +2406,8 @@ static int lcp_printpkt(u_char *p, int plen,
 				++p;
 				break;
 #endif /* MSCHAP_SUPPORT */
+			    default:
+				break;
 			    }
 			}
 			break;
@@ -2497,6 +2503,8 @@ static int lcp_printpkt(u_char *p, int plen,
 		printer(arg, "endpoint");
 #endif
 		break;
+	    default:
+		break;
 	    }
 	    while (p < optend) {
 		GETCHAR(code, p);
@@ -2546,6 +2554,8 @@ static int lcp_printpkt(u_char *p, int plen,
 	    p += len;
 	    len = 0;
 	}
+	break;
+    default:
 	break;
     }
 

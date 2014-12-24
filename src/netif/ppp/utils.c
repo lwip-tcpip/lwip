@@ -69,12 +69,12 @@
 extern char *strerror();
 #endif
 
-static void ppp_logit(int level, char *fmt, va_list args);
+static void ppp_logit(int level, const char *fmt, va_list args);
 static void ppp_log_write(int level, char *buf);
 #if PRINTPKT_SUPPORT
-static void ppp_vslp_printer(void *arg, char *fmt, ...);
+static void ppp_vslp_printer(void *arg, const char *fmt, ...);
 static void ppp_format_packet(u_char *p, int len,
-		void (*printer) (void *, char *, ...), void *arg);
+		void (*printer) (void *, const char *, ...), void *arg);
 
 struct buffer_info {
     char *ptr;
@@ -119,7 +119,7 @@ size_t ppp_strlcat(char *dest, const char *src, size_t len) {
  * Doesn't do floating-point formats.
  * Returns the number of chars put into buf.
  */
-int ppp_slprintf(char *buf, int buflen, char *fmt, ...) {
+int ppp_slprintf(char *buf, int buflen, const char *fmt, ...) {
     va_list args;
     int n;
 
@@ -134,12 +134,13 @@ int ppp_slprintf(char *buf, int buflen, char *fmt, ...) {
  */
 #define OUTCHAR(c)	(buflen > 0? (--buflen, *buf++ = (c)): 0)
 
-int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
+int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     int c, i, n;
     int width, prec, fillch;
     int base, len, neg, quoted;
     unsigned long val = 0;
-    char *str, *f, *buf0;
+    const char *f;
+    char *str, *buf0;
     unsigned char *p;
     char num[32];
 #if 0 /* need port */
@@ -372,6 +373,8 @@ int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 		*--str = 'x';
 		*--str = '0';
 		break;
+	    default:
+		break;
 	    }
 	    len = num + sizeof(num) - 1 - str;
 	} else {
@@ -402,7 +405,7 @@ int ppp_vslprintf(char *buf, int buflen, char *fmt, va_list args) {
 /*
  * vslp_printer - used in processing a %P format
  */
-static void ppp_vslp_printer(void *arg, char *fmt, ...) {
+static void ppp_vslp_printer(void *arg, const char *fmt, ...) {
     int n;
     va_list pvar;
     struct buffer_info *bi;
@@ -441,7 +444,7 @@ log_packet(p, len, prefix, level)
  * calling `printer(arg, format, ...)' to output it.
  */
 static void ppp_format_packet(u_char *p, int len,
-		void (*printer) (void *, char *, ...), void *arg) {
+		void (*printer) (void *, const char *, ...), void *arg) {
     int i, n;
     u_short proto;
     const struct protent *protp;
@@ -516,7 +519,7 @@ end_pr_log()
  * pr_log - printer routine for outputting to log
  */
 void
-pr_log (void *arg, char *fmt, ...)
+pr_log (void *arg, const char *fmt, ...)
 {
 	int l, n;
 	va_list pvar;
@@ -566,7 +569,7 @@ pr_log (void *arg, char *fmt, ...)
  * ppp_print_string - print a readable representation of a string using
  * printer.
  */
-void ppp_print_string(char *p, int len, void (*printer) (void *, char *, ...), void *arg) {
+void ppp_print_string(char *p, int len, void (*printer) (void *, const char *, ...), void *arg) {
     int c;
 
     printer(arg, "\"");
@@ -599,7 +602,7 @@ void ppp_print_string(char *p, int len, void (*printer) (void *, char *, ...), v
 /*
  * ppp_logit - does the hard work for fatal et al.
  */
-static void ppp_logit(int level, char *fmt, va_list args) {
+static void ppp_logit(int level, const char *fmt, va_list args) {
     char buf[1024];
 
     ppp_vslprintf(buf, sizeof(buf), fmt, args);
@@ -626,7 +629,7 @@ static void ppp_log_write(int level, char *buf) {
 /*
  * ppp_fatal - log an error message and die horribly.
  */
-void ppp_fatal(char *fmt, ...) {
+void ppp_fatal(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -642,7 +645,7 @@ void ppp_fatal(char *fmt, ...) {
 /*
  * ppp_error - log an error message.
  */
-void ppp_error(char *fmt, ...) {
+void ppp_error(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -656,7 +659,7 @@ void ppp_error(char *fmt, ...) {
 /*
  * ppp_warn - log a warning message.
  */
-void ppp_warn(char *fmt, ...) {
+void ppp_warn(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -667,7 +670,7 @@ void ppp_warn(char *fmt, ...) {
 /*
  * ppp_notice - log a notice-level message.
  */
-void ppp_notice(char *fmt, ...) {
+void ppp_notice(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -678,7 +681,7 @@ void ppp_notice(char *fmt, ...) {
 /*
  * ppp_info - log an informational message.
  */
-void ppp_info(char *fmt, ...) {
+void ppp_info(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);
@@ -689,7 +692,7 @@ void ppp_info(char *fmt, ...) {
 /*
  * ppp_dbglog - log a debug message.
  */
-void ppp_dbglog(char *fmt, ...) {
+void ppp_dbglog(const char *fmt, ...) {
     va_list pvar;
 
     va_start(pvar, fmt);

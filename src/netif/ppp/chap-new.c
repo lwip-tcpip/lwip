@@ -102,7 +102,7 @@ static void chap_protrej(ppp_pcb *pcb);
 static void chap_input(ppp_pcb *pcb, unsigned char *pkt, int pktlen);
 #if PRINTPKT_SUPPORT
 static int chap_print_pkt(unsigned char *p, int plen,
-		void (*printer) (void *, char *, ...), void *arg);
+		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
 /* List of digest types that we know about */
@@ -339,7 +339,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		return;
 	}
 
-	outp = p->payload;
+	outp = (unsigned char *)p->payload;
 	MAKEHEADER(outp, PPP_CHAP);
 
 	outp[0] = (pcb->chap_server.flags & AUTH_FAILED)? CHAP_FAILURE: CHAP_SUCCESS;
@@ -464,7 +464,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 		ppp_warn("No CHAP secret found for authenticating us to %q", rname);
 	}
 
-	outp = p->payload;
+	outp = (u_char*)p->payload;
 	MAKEHEADER(outp, PPP_CHAP);
 	outp += CHAP_HDRLEN;
 
@@ -551,6 +551,8 @@ static void chap_input(ppp_pcb *pcb, unsigned char *pkt, int pktlen) {
 	case CHAP_SUCCESS:
 		chap_handle_status(pcb, code, id, pkt, len);
 		break;
+	default:
+		break;
 	}
 }
 
@@ -577,12 +579,12 @@ static void chap_protrej(ppp_pcb *pcb) {
 /*
  * chap_print_pkt - print the contents of a CHAP packet.
  */
-static char *chap_code_names[] = {
+static const char *chap_code_names[] = {
 	"Challenge", "Response", "Success", "Failure"
 };
 
 static int chap_print_pkt(unsigned char *p, int plen,
-	       void (*printer) (void *, char *, ...), void *arg) {
+	       void (*printer) (void *, const char *, ...), void *arg) {
 	int code, id, len;
 	int clen, nlen;
 	unsigned char x;

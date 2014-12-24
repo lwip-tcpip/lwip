@@ -168,7 +168,7 @@ static option_t ccp_option_list[] = {
  */
 static void ccp_init (int unit);
 static void ccp_open (int unit);
-static void ccp_close (int unit, char *);
+static void ccp_close (int unit, const char *);
 static void ccp_lowerup (int unit);
 static void ccp_lowerdown (int);
 static void ccp_input (int unit, u_char *pkt, int len);
@@ -421,7 +421,7 @@ ccp_open(unit)
 static void
 ccp_close(unit, reason)
     int unit;
-    char *reason;
+    const char *reason;
 {
     ccp_flags_set(unit, 0, 0);
     fsm_close(&ccp_fsm[unit], reason);

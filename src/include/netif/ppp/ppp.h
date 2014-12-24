@@ -53,6 +53,10 @@
 #define PPP_OPTIONS         0
 #endif
 
+#ifndef PPP_NOTIFY
+#define PPP_NOTIFY          0
+#endif
+
 #ifndef PPP_REMOTENAME
 #define PPP_REMOTENAME      0
 #endif
@@ -67,10 +71,6 @@
 
 #ifndef PPP_MAXCONNECT
 #define PPP_MAXCONNECT      0
-#endif
-
-#ifndef DEMAND_SUPPORT
-#define DEMAND_SUPPORT      0
 #endif
 
 #ifndef PPP_ALLOWED_ADDRS

@@ -159,7 +159,7 @@ typedef struct lcp_options {
 } lcp_options;
 
 void lcp_open(ppp_pcb *pcb);
-void lcp_close(ppp_pcb *pcb, char *reason);
+void lcp_close(ppp_pcb *pcb, const char *reason);
 void lcp_lowerup(ppp_pcb *pcb);
 void lcp_lowerdown(ppp_pcb *pcb);
 void lcp_sprotrej(ppp_pcb *pcb, u_char *p, int len);    /* send protocol reject */

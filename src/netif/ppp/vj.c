@@ -95,23 +95,23 @@ vj_compress_init(struct vjcompress *comp)
 
 #define DECODEL(f) { \
   if (*cp == 0) {\
-    u32_t tmp = ntohl(f) + ((cp[1] << 8) | cp[2]); \
-    (f) = htonl(tmp); \
+    u32_t tmp_ = ntohl(f) + ((cp[1] << 8) | cp[2]); \
+    (f) = htonl(tmp_); \
     cp += 3; \
   } else { \
-    u32_t tmp = ntohl(f) + (u32_t)*cp++; \
-    (f) = htonl(tmp); \
+    u32_t tmp_ = ntohl(f) + (u32_t)*cp++; \
+    (f) = htonl(tmp_); \
   } \
 }
 
 #define DECODES(f) { \
   if (*cp == 0) {\
-    u_short tmp = ntohs(f) + (((u_short)cp[1] << 8) | cp[2]); \
-    (f) = htons(tmp); \
+    u_short tmp_ = ntohs(f) + (((u_short)cp[1] << 8) | cp[2]); \
+    (f) = htons(tmp_); \
     cp += 3; \
   } else { \
-    u_short tmp = ntohs(f) + (u_short)*cp++; \
-    (f) = htons(tmp); \
+    u_short tmp_ = ntohs(f) + (u_short)*cp++; \
+    (f) = htons(tmp_); \
   } \
 }
 
@@ -342,6 +342,8 @@ vj_compress_tcp(struct vjcompress *comp, struct pbuf *pb)
       cp = new_seq;
     }
     break;
+  default:
+     break;
   }
 
   deltaS = (u_short)(ntohs(IPH_ID(ip)) - ntohs(IPH_ID(&cs->cs_ip)));
@@ -613,7 +615,7 @@ vj_uncompress_tcp(struct pbuf **nb, struct vjcompress *comp)
       goto bad;
     }
 
-    bufptr = n0->payload;
+    bufptr = (u8_t*)n0->payload;
     for(q = np; q != NULL; q = q->next) {
       MEMCPY(q->payload, bufptr, q->len);
       bufptr += q->len;

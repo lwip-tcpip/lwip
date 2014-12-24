@@ -109,7 +109,7 @@ static long magic_randcount = 0;      /* Pseudo-random incrementer */
  *
  * Ref: Applied Cryptography 2nd Ed. by Bruce Schneier p. 427
  */
-void magic_churnrand(char *rand_data, u32_t rand_len) {
+static void magic_churnrand(char *rand_data, u32_t rand_len) {
   md5_context md5;
 
   /* LWIP_DEBUGF(LOG_INFO, ("magic_churnrand: %u@%P\n", rand_len, rand_data)); */
@@ -133,7 +133,7 @@ void magic_churnrand(char *rand_data, u32_t rand_len) {
 /*
  * Initialize the random number generator.
  */
-void magic_init() {
+void magic_init(void) {
   magic_churnrand(NULL, 0);
 }
 
@@ -183,7 +183,7 @@ void random_bytes(unsigned char *buf, u32_t buf_len) {
 /*
  * Return a new random number.
  */
-u32_t magic() {
+u32_t magic(void) {
   u32_t new_rand;
 
   random_bytes((unsigned char *)&new_rand, sizeof(new_rand));

@@ -95,12 +95,12 @@ static int chap_md5_verify_response(int id, char *name,
 
 static void chap_md5_make_response(unsigned char *response, int id, char *our_name,
 		       unsigned char *challenge, char *secret, int secret_len,
-		       unsigned char *private) {
+		       unsigned char *private_) {
 	md5_context ctx;
 	unsigned char idbyte = id;
 	int challenge_len = *challenge++;
 	LWIP_UNUSED_ARG(our_name);
-	LWIP_UNUSED_ARG(private);
+	LWIP_UNUSED_ARG(private_);
 
 	md5_starts(&ctx);
 	md5_update(&ctx, &idbyte, 1);

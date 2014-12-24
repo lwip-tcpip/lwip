@@ -384,6 +384,8 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
       case PPPOE_TAG_GENERIC_ERR:
         err_msg = "GENERIC ERROR";
         break;
+      default:
+        break;
     }
     if (NULL != err_msg) {
       if (len) {

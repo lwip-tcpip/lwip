@@ -328,10 +328,10 @@ static int chapms2_verify_response(int id, char *name,
 
 static void chapms_make_response(unsigned char *response, int id, char *our_name,
 		     unsigned char *challenge, char *secret, int secret_len,
-		     unsigned char *private) {
+		     unsigned char *private_) {
 	LWIP_UNUSED_ARG(id);
 	LWIP_UNUSED_ARG(our_name);
-	LWIP_UNUSED_ARG(private);
+	LWIP_UNUSED_ARG(private_);
 	challenge++;	/* skip length, should be 8 */
 	*response++ = MS_CHAP_RESPONSE_LEN;
 	ChapMS(challenge, secret, secret_len, response);
@@ -339,7 +339,7 @@ static void chapms_make_response(unsigned char *response, int id, char *our_name
 
 static void chapms2_make_response(unsigned char *response, int id, char *our_name,
 		      unsigned char *challenge, char *secret, int secret_len,
-		      unsigned char *private) {
+		      unsigned char *private_) {
 	LWIP_UNUSED_ARG(id);
 	challenge++;	/* skip length, should be 16 */
 	*response++ = MS_CHAP2_RESPONSE_LEN;
@@ -349,11 +349,11 @@ static void chapms2_make_response(unsigned char *response, int id, char *our_nam
 #else
 		NULL,
 #endif
-		our_name, secret, secret_len, response, private,
+		our_name, secret, secret_len, response, private_,
 		MS_CHAP2_AUTHENTICATEE);
 }
 
-static int chapms2_check_success(unsigned char *msg, int len, unsigned char *private) {
+static int chapms2_check_success(unsigned char *msg, int len, unsigned char *private_) {
 	if ((len < MS_AUTH_RESPONSE_LENGTH + 2) ||
 	    strncmp((char *)msg, "S=", 2) != 0) {
 		/* Packet does not start with "S=" */
@@ -363,7 +363,7 @@ static int chapms2_check_success(unsigned char *msg, int len, unsigned char *pri
 	msg += 2;
 	len -= 2;
 	if (len < MS_AUTH_RESPONSE_LENGTH
-	    || memcmp(msg, private, MS_AUTH_RESPONSE_LENGTH)) {
+	    || memcmp(msg, private_, MS_AUTH_RESPONSE_LENGTH)) {
 		/* Authenticator Response did not match expected. */
 		ppp_error("MS-CHAPv2 mutual authentication failed.");
 		return 0;
@@ -383,7 +383,8 @@ static int chapms2_check_success(unsigned char *msg, int len, unsigned char *pri
 
 static void chapms_handle_failure(unsigned char *inp, int len) {
 	int err;
-	char *p, msg[64];
+	const char *p;
+	char msg[64];
 
 	/* We want a null-terminated string for strxxx(). */
 	len = LWIP_MIN(len, 63);

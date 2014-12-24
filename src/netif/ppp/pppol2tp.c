@@ -203,7 +203,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struc
     goto packet_too_short;
   }
 
-  inp = p->payload;
+  inp = (u8_t*)p->payload;
   GETSHORT(hflags, inp);
 
   if (hflags & PPPOL2TP_HEADERFLAG_CONTROL) {
@@ -321,7 +321,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
   u16_t avplen, avpflags, vendorid, attributetype, messagetype=0;
   err_t err;
 #if PPPOL2TP_AUTH_SUPPORT
-  md5_context md5_context;
+  md5_context md5_ctx;
   u8_t md5_hash[16];
   u8_t challenge_id = 0;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
@@ -344,7 +344,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
     return;
   }
 
-  inp = p->payload;
+  inp = (u8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {
     if (p->len < sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype) ) {
@@ -396,6 +396,8 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
              */
           }
           return;
+        default:
+          break;
       }
       goto nextavp;
     }
@@ -408,8 +410,8 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
     switch (messagetype) {
       /* Start Control Connection Reply */
       case PPPOL2TP_MESSAGETYPE_SCCRP:
-	switch (attributetype) {
-	  case PPPOL2TP_AVPTYPE_TUNNELID:
+       switch (attributetype) {
+          case PPPOL2TP_AVPTYPE_TUNNELID:
             if (avplen != sizeof(l2tp->source_tunnel_id) ) {
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Assign tunnel ID length check failed\n"));
                return;
@@ -418,7 +420,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
             PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned tunnel ID %"U16_F"\n", l2tp->source_tunnel_id));
             goto nextavp;
 #if PPPOL2TP_AUTH_SUPPORT
-	  case PPPOL2TP_AVPTYPE_CHALLENGE:
+          case PPPOL2TP_AVPTYPE_CHALLENGE:
             if (avplen == 0) {
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: Challenge length check failed\n"));
                return;
@@ -429,26 +431,26 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
               return;
             }
             /* Generate hash of ID, secret, challenge */
-            md5_starts(&md5_context);
+            md5_starts(&md5_ctx);
             challenge_id = PPPOL2TP_MESSAGETYPE_SCCCN;
-            md5_update(&md5_context, &challenge_id, 1);
-            md5_update(&md5_context, l2tp->secret, l2tp->secret_len);
-            md5_update(&md5_context, inp, avplen);
-            md5_finish(&md5_context, l2tp->challenge_hash);
+            md5_update(&md5_ctx, &challenge_id, 1);
+            md5_update(&md5_ctx, l2tp->secret, l2tp->secret_len);
+            md5_update(&md5_ctx, inp, avplen);
+            md5_finish(&md5_ctx, l2tp->challenge_hash);
             l2tp->send_challenge = 1;
             goto skipavp;
-	  case PPPOL2TP_AVPTYPE_CHALLENGERESPONSE:
+          case PPPOL2TP_AVPTYPE_CHALLENGERESPONSE:
             if (avplen != PPPOL2TP_AVPTYPE_CHALLENGERESPONSE_SIZE) {
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Challenge Response length check failed\n"));
                return;
             }
             /* Generate hash of ID, secret, challenge */
-            md5_starts(&md5_context);
+            md5_starts(&md5_ctx);
             challenge_id = PPPOL2TP_MESSAGETYPE_SCCRP;
-            md5_update(&md5_context, &challenge_id, 1);
-            md5_update(&md5_context, l2tp->secret, l2tp->secret_len);
-            md5_update(&md5_context, l2tp->secret_rv, sizeof(l2tp->secret_rv));
-            md5_finish(&md5_context, md5_hash);
+            md5_update(&md5_ctx, &challenge_id, 1);
+            md5_update(&md5_ctx, l2tp->secret, l2tp->secret_len);
+            md5_update(&md5_ctx, l2tp->secret_rv, sizeof(l2tp->secret_rv));
+            md5_finish(&md5_ctx, md5_hash);
             if ( memcmp(inp, md5_hash, sizeof(md5_hash)) ) {
               PPPDEBUG(LOG_DEBUG, ("pppol2tp: Received challenge response from peer and secret key do not match\n"));
               pppol2tp_abort_connect(l2tp);
@@ -456,12 +458,14 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
             }
             goto skipavp;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
-	}
-	break;
+          default:
+            break;
+        }
+        break;
       /* Incoming Call Reply */
       case PPPOL2TP_MESSAGETYPE_ICRP:
-	switch (attributetype) {
-	  case PPPOL2TP_AVPTYPE_SESSIONID:
+        switch (attributetype) {
+         case PPPOL2TP_AVPTYPE_SESSIONID:
             if (avplen != sizeof(l2tp->source_session_id) ) {
                PPPDEBUG(LOG_DEBUG, ("pppol2tp: AVP Assign session ID length check failed\n"));
                return;
@@ -469,8 +473,12 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr 
             GETSHORT(l2tp->source_session_id, inp);
             PPPDEBUG(LOG_DEBUG, ("pppol2tp: Assigned session ID %"U16_F"\n", l2tp->source_session_id));
             goto nextavp;
-	}
-	break;
+          default:
+            break;
+        }
+        break;
+      default:
+        break;
     }
 
 skipavp:
@@ -991,7 +999,7 @@ err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
     return ERR_BUF;
   }
 
-  p = pb->payload;
+  p = (u8_t*)pb->payload;
   PUTSHORT(PPPOL2TP_HEADERFLAG_DATA_MANDATORY, p);
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */
