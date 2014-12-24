@@ -365,6 +365,9 @@ struct pppd_stats {
 
 /* PPP flow functions
  */
+/* initialize the PPP subsystem */
+int ppp_init(void);
+
 /* function called by pppoe.c */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
 

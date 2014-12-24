@@ -465,11 +465,6 @@ struct ppp_pcb_s {
  ************************/
 
 /*
- * Initialize the PPP subsystem.
- */
-int ppp_init(void);
-
-/*
  * Create a new PPP session.
  *
  * This initializes the PPP control block but does not
