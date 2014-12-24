@@ -268,7 +268,7 @@ static int  ipv6_demand_conf(int u);
 #endif /* DEMAND_SUPPORT */
 #if PRINTPKT_SUPPORT
 static int ipv6cp_printpkt(u_char *p, int plen,
-		void (*printer)(void *, char *, ...), void *arg);
+		void (*printer)(void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if DEMAND_SUPPORT
 static int ipv6_active_pkt(u_char *pkt, int len);
@@ -330,6 +330,8 @@ static enum script_state {
 static pid_t ipv6cp_script_pid;
 #endif /* UNUSED */
 
+static char *llv6_ntoa(eui64_t ifaceid);
+
 #if PPP_OPTIONS
 /*
  * setifaceid - set the interface identifiers manually
@@ -390,8 +392,6 @@ setifaceid(argv)
     return 1;
 }
 
-char *llv6_ntoa(eui64_t ifaceid);
-
 static void
 printifaceid(opt, printer, arg)
     option_t *opt;
@@ -411,9 +411,8 @@ printifaceid(opt, printer, arg)
 /*
  * Make a string representation of a network address.
  */
-char *
-llv6_ntoa(ifaceid)
-    eui64_t ifaceid;
+static char *
+llv6_ntoa(eui64_t ifaceid)
 {
     static char b[64];
 
@@ -657,10 +656,10 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     u_short cishort;
     eui64_t ifaceid;
     ipv6cp_options no;		/* options we've seen Naks for */
-    ipv6cp_options try;		/* options to request next time */
+    ipv6cp_options try_;	/* options to request next time */
 
     BZERO(&no, sizeof(no));
-    try = *go;
+    try_ = *go;
 
     /*
      * Any Nak'd CIs must be in exactly the same order that we sent.
@@ -697,12 +696,12 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      */
     NAKCIIFACEID(CI_IFACEID, neg_ifaceid,
 		 if (treat_as_reject) {
-		     try.neg_ifaceid = 0;
+		     try_.neg_ifaceid = 0;
 		 } else if (go->accept_local) {
 		     while (eui64_iszero(ifaceid) || 
 			    eui64_equals(ifaceid, go->hisid)) /* bad luck */
 			 eui64_magic(ifaceid);
-		     try.ourid = ifaceid;
+		     try_.ourid = ifaceid;
 		     IPV6CPDEBUG(("local LL address %s", llv6_ntoa(ifaceid)));
 		 }
 		 );
@@ -711,16 +710,16 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
 	    {
 		if (cishort == IPV6CP_COMP && !treat_as_reject) {
-		    try.vj_protocol = cishort;
+		    try_.vj_protocol = cishort;
 		} else {
-		    try.neg_vj = 0;
+		    try_.neg_vj = 0;
 		}
 	    }
 	    );
 #else
     NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
 	    {
-		try.neg_vj = 0;
+		try_.neg_vj = 0;
 	    }
 	    );
 #endif
@@ -748,15 +747,17 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	case CI_IFACEID:
 	    if (go->neg_ifaceid || no.neg_ifaceid || cilen != CILEN_IFACEID)
 		goto bad;
-	    try.neg_ifaceid = 1;
+	    try_.neg_ifaceid = 1;
 	    eui64_get(ifaceid, p);
 	    if (go->accept_local) {
 		while (eui64_iszero(ifaceid) || 
 		       eui64_equals(ifaceid, go->hisid)) /* bad luck */
 		    eui64_magic(ifaceid);
-		try.ourid = ifaceid;
+		try_.ourid = ifaceid;
 	    }
 	    no.neg_ifaceid = 1;
+	    break;
+	default:
 	    break;
 	}
 	p = next;
@@ -770,7 +771,7 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * OK, the Nak is good.  Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
-	*go = try;
+	*go = try_;
 
     return 1;
 
@@ -789,9 +790,9 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
     u_char cilen;
     u_short cishort;
     eui64_t ifaceid;
-    ipv6cp_options try;		/* options to request next time */
+    ipv6cp_options try_;		/* options to request next time */
 
-    try = *go;
+    try_ = *go;
     /*
      * Any Rejected CIs must be in exactly the same order that we sent.
      * Check packet length and CI length at each step.
@@ -808,7 +809,7 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */ \
 	if (! eui64_equals(ifaceid, val1)) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
     }
 
 #define REJCIVJ(opt, neg, val) \
@@ -822,7 +823,7 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
 	/* Check rejected value. */  \
 	if (cishort != val) \
 	    goto bad; \
-	try.neg = 0; \
+	try_.neg = 0; \
      }
 
     REJCIIFACEID(CI_IFACEID, neg_ifaceid, go->ourid);
@@ -838,7 +839,7 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
      * Now we can update state.
      */
     if (f->state != PPP_FSM_OPENED)
-	*go = try;
+	*go = try_;
     return 1;
 
 bad:
@@ -1375,13 +1376,13 @@ ipv6cp_script(script)
 /*
  * ipv6cp_printpkt - print the contents of an IPV6CP packet.
  */
-static char *ipv6cp_codenames[] = {
+static const char *ipv6cp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej"
 };
 
 static int ipv6cp_printpkt(u_char *p, int plen,
-		void (*printer)(void *, char *, ...), void *arg) {
+		void (*printer)(void *, const char *, ...), void *arg) {
     int code, id, len, olen;
     u_char *pstart, *optend;
     u_short cishort;
@@ -1434,6 +1435,8 @@ static int ipv6cp_printpkt(u_char *p, int plen,
 		    printer(arg, "addr %s", llv6_ntoa(ifaceid));
 		}
 		break;
+	    default:
+		break;
 	    }
 	    while (p < optend) {
 		GETCHAR(code, p);
@@ -1451,6 +1454,8 @@ static int ipv6cp_printpkt(u_char *p, int plen,
 	    p += len;
 	    len = 0;
 	}
+	break;
+    default:
 	break;
     }
 
