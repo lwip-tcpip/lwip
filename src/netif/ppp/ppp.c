@@ -2196,10 +2196,6 @@ int sifup(ppp_pcb *pcb) {
 
   netif_set_addr(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr);
-#if PPP_IPV6_SUPPORT
-  ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
-  netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
-#endif /* PPP_IPV6_SUPPORT */
 
   netif_set_up(&pcb->netif);
   pcb->if_up = 1;
@@ -2221,11 +2217,58 @@ int sifdown(ppp_pcb *pcb) {
     return 1;
 
   pcb->if_up = 0;
-  /* make sure the netif status callback is called */
-  netif_set_down(&pcb->netif);
+
+  if (1
+#if PPP_IPV6_SUPPORT
+   /* set the interface down if IPv6 is down as well */
+   && !pcb->if6_up
+#endif /* PPP_IPV6_SUPPORT */
+  ) {
+    /* make sure the netif status callback is called */
+    netif_set_down(&pcb->netif);
+  }
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   return 1;
 }
+
+#if PPP_IPV6_SUPPORT
+/*
+ * sif6up - Config the interface up and enable IPv6 packets to pass.
+ */
+int sif6up(ppp_pcb *pcb) {
+
+  ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
+  netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
+
+  netif_set_up(&pcb->netif);
+  pcb->if6_up = 1;
+  pcb->err_code = PPPERR_NONE;
+
+  PPPDEBUG(LOG_DEBUG, ("sif6up: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
+  return 1;
+}
+
+/********************************************************************
+ *
+ * sif6down - Disable the indicated protocol and config the interface
+ *	      down if there are no remaining protocols.
+ */
+int sif6down(ppp_pcb *pcb) {
+
+  if(!pcb->if6_up)
+    return 1;
+
+  pcb->if6_up = 0;
+  /* set the interface down if IPv4 is down as well */
+  if (!pcb->if_up) {
+    /* make sure the netif status callback is called */
+    netif_set_down(&pcb->netif);
+  }
+  PPPDEBUG(LOG_DEBUG, ("sif6down: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  return 1;
+}
+#endif /* PPP_IPV6_SUPPORT */
 
 /*
  * sifnpmode - Set the mode for handling packets for a given NP.

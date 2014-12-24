@@ -312,3 +312,15 @@ Solaris port, don't care.
   4043750fca36e7e0eb90d702e048ad1da4929418
 
 Just release stuff.
+
+
+2014-02-18 - pppd: Add option "stop-bits" to set number of serial port stop bits.
+  ad993a20ee485f0d0e2ac4105221641b200da6e2
+
+Low level serial port, not in the port.
+
+
+2014-03-09 - pppd: Separate IPv6 handling for sifup/sifdown
+  b04d2dc6df5c6b5650fea44250d58757ee3dac4a
+
+Reimplemented.

@@ -1103,21 +1103,12 @@ static void ipv6_check_options() {
 static int ipv6_demand_conf(int u) {
     ipv6cp_options *wo = &ipv6cp_wantoptions[u];
 
-#if defined(__linux__) || defined(SOL2) || (defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-#if defined(SOL2)
     if (!sif6up(u))
 	return 0;
-#else
-    if (!sifup(u))
-	return 0;
-#endif /* defined(SOL2) */
-#endif    
+
     if (!sif6addr(u, wo->ourid, wo->hisid))
 	return 0;
-#if !defined(__linux__) && !(defined(SVR4) && (defined(SNI) || defined(__USLC__)))
-    if (!sifup(u))
-	return 0;
-#endif
+
     if (!sifnpmode(u, PPP_IPV6, NPMODE_QUEUE))
 	return 0;
 
@@ -1222,8 +1213,8 @@ static void ipv6cp_up(fsm *f) {
 	}
 
 	/* bring the interface up for IPv6 */
-	if (!sifup(f->pcb)) {
-	    PPPDEBUG(LOG_DEBUG, ("sifup failed (IPV6)"));
+	if (!sif6up(f->pcb)) {
+	    PPPDEBUG(LOG_DEBUG, ("sif6up failed (IPV6)"));
 	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
@@ -1286,7 +1277,7 @@ static void ipv6cp_down(fsm *f) {
 	ipv6cp_clear_addrs(f->pcb,
 			   go->ourid,
 			   ho->hisid);
-	sifdown(f->pcb);
+	sif6down(f->pcb);
     }
 
 #if 0 /* UNUSED */

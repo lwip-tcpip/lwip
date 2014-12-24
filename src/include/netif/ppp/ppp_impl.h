@@ -406,6 +406,11 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
 int sifup(ppp_pcb *pcb);
 int sifdown (ppp_pcb *pcb);
 
+#if PPP_IPV6_SUPPORT
+int sif6up(ppp_pcb *pcb);
+int sif6down (ppp_pcb *pcb);
+#endif /* PPP_IPV6_SUPPORT */
+
 int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 
 void netif_set_mtu(ppp_pcb *pcb, int mtu);

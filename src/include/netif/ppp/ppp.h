@@ -379,6 +379,11 @@ struct ppp_pcb_s {
 
   /* flags */
   unsigned int if_up                   :1; /* True when the interface is up. */
+#if PPP_IPV6_SUPPORT
+  unsigned int if6_up                  :1; /* True when the IPv6 interface is up. */
+#else
+  unsigned int                         :1; /* 1 bit of padding */
+#endif /* PPP_IPV6_SUPPORT */
   unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
   unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
   unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
@@ -396,7 +401,7 @@ struct ppp_pcb_s {
 #else
   unsigned int                         :1; /* 1 bit of padding */
 #endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-  unsigned int                         :6; /* 5 bits of padding to round out to 16 bits */
+  unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
 #if PPPOS_SUPPORT
 /* FIXME: there is probably one superfluous */
