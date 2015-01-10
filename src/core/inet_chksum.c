@@ -79,7 +79,7 @@ u16_t lwip_standard_chksum(void *dataptr, int len);
  * @note host endianess is irrelevant (p3 RFC1071)
  */
 u16_t
-lwip_standard_chksum(void *dataptr, u16_t len)
+lwip_standard_chksum(void *dataptr, int len)
 {
   u32_t acc;
   u16_t src;
