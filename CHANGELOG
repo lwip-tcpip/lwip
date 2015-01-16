@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-01-16: Simon Goldschmidt
+  * tcp_in.c: fixed bug #20506 "Initial congestion window is very small" again
+    by implementing the calculation formula from RFC3390
+
   2014-12-10: Simon Goldschmidt
   * api: added option LWIP_NETCONN_SEM_PER_THREAD to use a semaphore per thread
     instead of using one per netconn and per select call

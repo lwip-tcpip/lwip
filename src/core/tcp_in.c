@@ -62,6 +62,8 @@
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
+#define LWIP_TCP_CALC_INITIAL_CWND(mss) LWIP_MIN((4U * (mss)), LWIP_MAX((2U * (mss)), 4380U));
+
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
    function. */
@@ -740,7 +742,10 @@ tcp_process(struct tcp_pcb *pcb)
        * but for the default value of pcb->mss) */
       pcb->ssthresh = pcb->mss * 10;
 
-      pcb->cwnd = ((pcb->cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
+      pcb->cwnd = LWIP_TCP_CALC_INITIAL_CWND(pcb->mss);
+      LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_process (SENT): cwnd %"TCPWNDSIZE_F
+                                   " ssthresh %"TCPWNDSIZE_F"\n",
+                                   pcb->cwnd, pcb->ssthresh));
       LWIP_ASSERT("pcb->snd_queuelen > 0", (pcb->snd_queuelen > 0));
       --pcb->snd_queuelen;
       LWIP_DEBUGF(TCP_QLEN_DEBUG, ("tcp_process: SYN-SENT --queuelen %"TCPWNDSIZE_F"\n", (tcpwnd_size_t)pcb->snd_queuelen));
@@ -776,7 +781,6 @@ tcp_process(struct tcp_pcb *pcb)
     if (flags & TCP_ACK) {
       /* expected ACK number? */
       if (TCP_SEQ_BETWEEN(ackno, pcb->lastack+1, pcb->snd_nxt)) {
-        tcpwnd_size_t old_cwnd;
         pcb->state = ESTABLISHED;
         LWIP_DEBUGF(TCP_DEBUG, ("TCP connection established %"U16_F" -> %"U16_F".\n", inseg.tcphdr->src, inseg.tcphdr->dest));
 #if LWIP_CALLBACK_API
@@ -793,7 +797,6 @@ tcp_process(struct tcp_pcb *pcb)
           }
           return ERR_ABRT;
         }
-        old_cwnd = pcb->cwnd;
         /* If there was any data contained within this ACK,
          * we'd better pass it on to the application as well. */
         tcp_receive(pcb);
@@ -803,7 +806,10 @@ tcp_process(struct tcp_pcb *pcb)
           pcb->acked--;
         }
 
-        pcb->cwnd = ((old_cwnd == 1) ? (pcb->mss * 2) : pcb->mss);
+        pcb->cwnd = LWIP_TCP_CALC_INITIAL_CWND(pcb->mss);
+        LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_process (SYN_RCVD): cwnd %"TCPWNDSIZE_F
+                                     " ssthresh %"TCPWNDSIZE_F"\n",
+                                     pcb->cwnd, pcb->ssthresh));
 
         if (recv_flags & TF_GOT_FIN) {
           tcp_ack_now(pcb);
