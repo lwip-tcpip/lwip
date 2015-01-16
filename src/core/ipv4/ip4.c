@@ -710,9 +710,7 @@ err_t ip_output_if_opt_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   u32_t chk_sum = 0;
 #endif /* CHECKSUM_GEN_IP_INLINE */
 
-  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
-     gets altered as the packet is passed down the stack */
-  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+  LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   snmp_inc_ipoutrequests();
 
@@ -867,9 +865,7 @@ ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
 {
   struct netif *netif;
 
-  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
-     gets altered as the packet is passed down the stack */
-  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+  LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -907,9 +903,7 @@ ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
   struct netif *netif;
   err_t err;
 
-  /* pbufs passed to IP must have a ref-count of 1 as their payload pointer
-     gets altered as the packet is passed down the stack */
-  LWIP_ASSERT("p->ref == 1", p->ref == 1);
+  LWIP_IP_CHECK_PBUF_REF_COUNT_FOR_TX(p);
 
   if ((netif = ip_route(dest)) == NULL) {
     LWIP_DEBUGF(IP_DEBUG, ("ip_output: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
