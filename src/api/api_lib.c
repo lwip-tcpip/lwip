@@ -113,6 +113,7 @@ netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto, netconn_cal
 err_t
 netconn_delete(struct netconn *conn)
 {
+  err_t err;
   API_MSG_VAR_DECLARE(msg);
 
   /* No ASSERT here because possible to get a (conn == NULL) if we got an accept error */
@@ -123,12 +124,14 @@ netconn_delete(struct netconn *conn)
   API_MSG_VAR_ALLOC(msg);
   API_MSG_VAR_REF(msg).function = lwip_netconn_do_delconn;
   API_MSG_VAR_REF(msg).msg.conn = conn;
-  tcpip_apimsg(&API_MSG_VAR_REF(msg));
+  err = tcpip_apimsg(&API_MSG_VAR_REF(msg));
   API_MSG_VAR_FREE(msg);
 
-  netconn_free(conn);
+  if (err != ERR_OK) {
+    return err;
+  }
 
-  /* don't care for return value of lwip_netconn_do_delconn since it only calls void functions */
+  netconn_free(conn);
 
   return ERR_OK;
 }
