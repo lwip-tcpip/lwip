@@ -63,7 +63,7 @@ LWIP_MEMPOOL(API_MSG,        MEMP_NUM_API_MSG,         sizeof(struct api_msg),  
 #if LWIP_DNS
 LWIP_MEMPOOL(DNS_API_MSG,    MEMP_NUM_DNS_API_MSG,     sizeof(struct dns_api_msg),    "DNS_API_MSG")
 #endif
-#if LWIP_SOCKET
+#if LWIP_SOCKET && !LWIP_TCPIP_CORE_LOCKING
 LWIP_MEMPOOL(SOCKET_SETGETSOCKOPT_DATA, MEMP_NUM_SOCKET_SETGETSOCKOPT_DATA, sizeof(struct lwip_setgetsockopt_data), "SOCKET_SETGETSOCKOPT_DATA")
 #endif
 #if LWIP_NETIF_API

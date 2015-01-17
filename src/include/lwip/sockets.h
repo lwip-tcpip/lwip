@@ -108,31 +108,34 @@ typedef u32_t socklen_t;
 
 struct lwip_sock;
 
+#if !LWIP_TCPIP_CORE_LOCKING
+/** Maximum optlen used by setsockopt/getsockopt */
+#define LWIP_SETGETSOCKOPT_MAXOPTLEN 16
+
 /** This struct is used to pass data to the set/getsockopt_internal
  * functions running in tcpip_thread context (only a void* is allowed) */
 struct lwip_setgetsockopt_data {
-  /** socket struct for which to change options */
-  struct lwip_sock *sock;
-#ifdef LWIP_DEBUG
   /** socket index for which to change options */
   int s;
-#endif /* LWIP_DEBUG */
   /** level of the option to process */
   int level;
   /** name of the option to process */
   int optname;
   /** set: value to set the option to
     * get: value of the option is stored here */
-  void *optval;
+#if LWIP_MPU_COMPATIBLE
+  u8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
+#else
+  void* optval;
+#endif
   /** size of *optval */
-  socklen_t *optlen;
+  socklen_t optlen;
   /** if an error occurs, it is temporarily stored here */
   err_t err;
-#if !LWIP_TCPIP_CORE_LOCKING
   /** semaphore to wake up the calling task */
   void* completed_sem;
-#endif /* !LWIP_TCPIP_CORE_LOCKING */
 };
+#endif /* !LWIP_TCPIP_CORE_LOCKING */
 
 /* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1
