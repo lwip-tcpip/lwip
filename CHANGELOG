@@ -153,6 +153,9 @@ HISTORY
   ++ Bugfixes:
 
   2015-01-17: Simon Goldschmidt
+  * sockets.c: fixed bug #43361 select() crashes with stale FDs
+
+  2015-01-17: Simon Goldschmidt
   * sockets.c/.h, memp_std.h: fixed bug #40788 "lwip_setsockopt_internal() crashes"
     by rewriting set/getsockopt functions to combine checks with the actual code
     and add more NULL checks; this also fixes that CORE_LOCKING used message

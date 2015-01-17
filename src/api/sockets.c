@@ -1209,6 +1209,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
   u32_t msectimeout;
   struct lwip_select_cb select_cb;
   int i;
+  int maxfdp2;
   SYS_ARCH_DECL_PROTECT(lev);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_select(%d, %p, %p, %p, tvsec=%"S32_F" tvusec=%"S32_F")\n",
@@ -1266,47 +1267,69 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     SYS_ARCH_UNPROTECT(lev);
 
     /* Increase select_waiting for each socket we are interested in */
-    for(i = 0; i < maxfdp1; i++) {
+    maxfdp2 = maxfdp1;
+    for (i = 0; i < maxfdp1; i++) {
       if ((readset && FD_ISSET(i, readset)) ||
           (writeset && FD_ISSET(i, writeset)) ||
           (exceptset && FD_ISSET(i, exceptset))) {
-        struct lwip_sock *sock = tryget_socket(i);
-        LWIP_ASSERT("sock != NULL", sock != NULL);
+        struct lwip_sock *sock;
         SYS_ARCH_PROTECT(lev);
-        sock->select_waiting++;
-        LWIP_ASSERT("sock->select_waiting overflow", sock->select_waiting > 0);
+        sock = tryget_socket(i);
+        if (sock != NULL) {
+          sock->select_waiting++;
+          LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
+        } else {
+          /* Not a valid socket */
+          nready = -1;
+          maxfdp2 = i;
+          SYS_ARCH_UNPROTECT(lev);
+          break;
+        }
         SYS_ARCH_UNPROTECT(lev);
       }
     }
 
-    /* Call lwip_selscan again: there could have been events between
-       the last scan (without us on the list) and putting us on the list! */
-    nready = lwip_selscan(maxfdp1, readset, writeset, exceptset, &lreadset, &lwriteset, &lexceptset);
-    if (!nready) {
-      /* Still none ready, just wait to be woken */
-      if (timeout == 0) {
-        /* Wait forever */
-        msectimeout = 0;
-      } else {
-        msectimeout =  ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
-        if (msectimeout == 0) {
-          /* Wait 1ms at least (0 means wait forever) */
-          msectimeout = 1;
+    if (nready >= 0) {
+      /* Call lwip_selscan again: there could have been events between
+         the last scan (without us on the list) and putting us on the list! */
+      nready = lwip_selscan(maxfdp1, readset, writeset, exceptset, &lreadset, &lwriteset, &lexceptset);
+      if (!nready) {
+        /* Still none ready, just wait to be woken */
+        if (timeout == 0) {
+          /* Wait forever */
+          msectimeout = 0;
+        } else {
+          msectimeout =  ((timeout->tv_sec * 1000) + ((timeout->tv_usec + 500)/1000));
+          if (msectimeout == 0) {
+            /* Wait 1ms at least (0 means wait forever) */
+            msectimeout = 1;
+          }
         }
-      }
 
-      waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
+        waitres = sys_arch_sem_wait(SELECT_SEM_PTR(select_cb.sem), msectimeout);
+      }
     }
-    /* Increase select_waiting for each socket we are interested in */
-    for(i = 0; i < maxfdp1; i++) {
+
+    /* Decrease select_waiting for each socket we are interested in */
+    for (i = 0; i < maxfdp2; i++) {
       if ((readset && FD_ISSET(i, readset)) ||
           (writeset && FD_ISSET(i, writeset)) ||
           (exceptset && FD_ISSET(i, exceptset))) {
-        struct lwip_sock *sock = tryget_socket(i);
-        LWIP_ASSERT("sock != NULL", sock != NULL);
+        struct lwip_sock *sock;
         SYS_ARCH_PROTECT(lev);
-        LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
-        sock->select_waiting--;
+        sock = tryget_socket(i);
+        if (sock != NULL) {
+          /* @todo: what if this is a new socket (reallocated?) in this case,
+             select_waiting-- would be wrong (a global 'sockalloc' counter,
+             stored per socket could help) */
+          LWIP_ASSERT("sock->select_waiting > 0", sock->select_waiting > 0);
+          if (sock->select_waiting > 0) {
+            sock->select_waiting--;
+          }
+        } else {
+          /* Not a valid socket */
+          nready = -1;
+        }
         SYS_ARCH_UNPROTECT(lev);
       }
     }
@@ -1329,6 +1352,12 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 #if !LWIP_NETCONN_SEM_PER_THREAD
     sys_sem_free(&select_cb.sem);
 #endif /* LWIP_NETCONN_SEM_PER_THREAD */
+
+    if (nready < 0) {
+      /* This happens when a socket got closed while waiting */
+      set_errno(EBADF);
+      return -1;
+    }
 
     if (waitres == SYS_ARCH_TIMEOUT) {
       /* Timeout */
