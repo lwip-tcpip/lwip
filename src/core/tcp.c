@@ -262,9 +262,6 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
        Since we don't really have to ensure all data has been sent when tcp_close
        returns (unsent data is sent from tcp timer functions, also), we don't care
        for the return value of tcp_output for now. */
-    /* @todo: When implementing SO_LINGER, this must be changed somehow:
-       If SOF_LINGER is set, the data should be sent and acked before close returns.
-       This can only be valid for sequential APIs, not for the raw API. */
     tcp_output(pcb);
   }
   return err;
