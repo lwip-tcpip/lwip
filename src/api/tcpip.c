@@ -99,12 +99,12 @@ tcpip_thread(void *arg)
       continue;
     }
     switch (msg->type) {
-#if LWIP_NETCONN
+#if LWIP_NETCONN || LWIP_SOCKET
     case TCPIP_MSG_API:
       LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_thread: API message %p\n", (void *)msg));
       msg->msg.apimsg->function(&(msg->msg.apimsg->msg));
       break;
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #if !LWIP_TCPIP_CORE_LOCKING_INPUT
     case TCPIP_MSG_INPKT:
@@ -316,7 +316,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 }
 #endif /* LWIP_TCPIP_TIMEOUT */
 
-#if LWIP_NETCONN
+#if LWIP_NETCONN || LWIP_SOCKET
 /**
  * Call the lower part of a netconn_* function
  * This function is then running in the thread context
@@ -351,7 +351,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   return ERR_VAL;
 }
 
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #if LWIP_NETIF_API
 #if !LWIP_TCPIP_CORE_LOCKING

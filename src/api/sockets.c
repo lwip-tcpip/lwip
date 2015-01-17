@@ -59,6 +59,18 @@
 
 #include <string.h>
 
+/* If the netconn API is not required publicly, then we include the necessary
+   files here to get the implementation */
+#if !LWIP_NETCONN
+#undef LWIP_NETCONN
+#define LWIP_NETCONN 1
+#include "api_msg.c"
+#include "api_lib.c"
+#include "netbuf.c"
+#undef LWIP_NETCONN
+#define LWIP_NETCONN 0
+#endif
+
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipXaddr, port) do { \
       (sin)->sin_len = sizeof(struct sockaddr_in); \
       (sin)->sin_family = AF_INET; \

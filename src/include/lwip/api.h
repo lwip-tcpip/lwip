@@ -34,7 +34,14 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_NETCONN /* don't build if not configured for use in lwipopts.h */
+#if LWIP_NETCONN || LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
+
+/* don't export the netconn functions when socket API is enabled but netconn API is disabled */
+#if LWIP_NETCONN
+#define LWIP_NETCONN_SCOPE
+#else /* LWIP_NETCONN */
+#define LWIP_NETCONN_SCOPE static
+#endif /* LWIP_NETCONN */
 
 #include <stddef.h> /* for size_t */
 
@@ -240,39 +247,39 @@ struct netconn {
 /* Network connection functions: */
 #define netconn_new(t)                  netconn_new_with_proto_and_callback(t, 0, NULL)
 #define netconn_new_with_callback(t, c) netconn_new_with_proto_and_callback(t, 0, c)
-struct
+LWIP_NETCONN_SCOPE struct
 netconn *netconn_new_with_proto_and_callback(enum netconn_type t, u8_t proto,
                                              netconn_callback callback);
-err_t   netconn_delete(struct netconn *conn);
+LWIP_NETCONN_SCOPE err_t   netconn_delete(struct netconn *conn);
 /** Get the type of a netconn (as enum netconn_type). */
 #define netconn_type(conn) (conn->type)
 
-err_t   netconn_getaddr(struct netconn *conn, ip_addr_t *addr,
+LWIP_NETCONN_SCOPE err_t   netconn_getaddr(struct netconn *conn, ip_addr_t *addr,
                         u16_t *port, u8_t local);
 #define netconn_peer(c,i,p) netconn_getaddr(c,i,p,0)
 #define netconn_addr(c,i,p) netconn_getaddr(c,i,p,1)
 
-err_t   netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port);
-err_t   netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port);
-err_t   netconn_disconnect (struct netconn *conn);
-err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
+LWIP_NETCONN_SCOPE err_t   netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port);
+LWIP_NETCONN_SCOPE err_t   netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port);
+LWIP_NETCONN_SCOPE err_t   netconn_disconnect (struct netconn *conn);
+LWIP_NETCONN_SCOPE err_t   netconn_listen_with_backlog(struct netconn *conn, u8_t backlog);
 #define netconn_listen(conn) netconn_listen_with_backlog(conn, TCP_DEFAULT_LISTEN_BACKLOG)
-err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
-err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
-err_t   netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf);
-void    netconn_recved(struct netconn *conn, u32_t length);
-err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
+LWIP_NETCONN_SCOPE err_t   netconn_accept(struct netconn *conn, struct netconn **new_conn);
+LWIP_NETCONN_SCOPE err_t   netconn_recv(struct netconn *conn, struct netbuf **new_buf);
+LWIP_NETCONN_SCOPE err_t   netconn_recv_tcp_pbuf(struct netconn *conn, struct pbuf **new_buf);
+LWIP_NETCONN_SCOPE void    netconn_recved(struct netconn *conn, u32_t length);
+LWIP_NETCONN_SCOPE err_t   netconn_sendto(struct netconn *conn, struct netbuf *buf,
                        ip_addr_t *addr, u16_t port);
-err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
-err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
+LWIP_NETCONN_SCOPE err_t   netconn_send(struct netconn *conn, struct netbuf *buf);
+LWIP_NETCONN_SCOPE err_t   netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
                              u8_t apiflags, size_t *bytes_written);
 #define netconn_write(conn, dataptr, size, apiflags) \
           netconn_write_partly(conn, dataptr, size, apiflags, NULL)
-err_t   netconn_close(struct netconn *conn);
-err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
+LWIP_NETCONN_SCOPE err_t   netconn_close(struct netconn *conn);
+LWIP_NETCONN_SCOPE err_t   netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx);
 
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
-err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
+LWIP_NETCONN_SCOPE err_t   netconn_join_leave_group(struct netconn *conn, ip_addr_t *multiaddr,
                                  ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if LWIP_DNS
@@ -343,6 +350,6 @@ void netconn_thread_cleanup(void);
 }
 #endif
 
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #endif /* LWIP_HDR_API_H */

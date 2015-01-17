@@ -32,6 +32,15 @@
 #ifndef LWIP_HDR_NETBUF_H
 #define LWIP_HDR_NETBUF_H
 
+#if LWIP_NETCONN || LWIP_SOCKET /* don't build if not configured for use in lwipopts.h */
+
+/* don't export the netbuf functions when socket API is enabled but netconn API is disabled */
+#if LWIP_NETCONN
+#define LWIP_NETCONN_SCOPE
+#else /* LWIP_NETCONN */
+#define LWIP_NETCONN_SCOPE static
+#endif /* LWIP_NETCONN */
+
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
@@ -62,19 +71,19 @@ struct netbuf {
 };
 
 /* Network buffer functions: */
-struct netbuf *   netbuf_new      (void);
-void              netbuf_delete   (struct netbuf *buf);
-void *            netbuf_alloc    (struct netbuf *buf, u16_t size);
-void              netbuf_free     (struct netbuf *buf);
-err_t             netbuf_ref      (struct netbuf *buf,
+LWIP_NETCONN_SCOPE struct netbuf *   netbuf_new      (void);
+LWIP_NETCONN_SCOPE void              netbuf_delete   (struct netbuf *buf);
+LWIP_NETCONN_SCOPE void *            netbuf_alloc    (struct netbuf *buf, u16_t size);
+LWIP_NETCONN_SCOPE void              netbuf_free     (struct netbuf *buf);
+LWIP_NETCONN_SCOPE err_t             netbuf_ref      (struct netbuf *buf,
                                    const void *dataptr, u16_t size);
-void              netbuf_chain    (struct netbuf *head,
+LWIP_NETCONN_SCOPE void              netbuf_chain    (struct netbuf *head,
            struct netbuf *tail);
 
-err_t             netbuf_data     (struct netbuf *buf,
+LWIP_NETCONN_SCOPE err_t             netbuf_data     (struct netbuf *buf,
                                    void **dataptr, u16_t *len);
-s8_t              netbuf_next     (struct netbuf *buf);
-void              netbuf_first    (struct netbuf *buf);
+LWIP_NETCONN_SCOPE s8_t              netbuf_next     (struct netbuf *buf);
+LWIP_NETCONN_SCOPE void              netbuf_first    (struct netbuf *buf);
 
 
 #define netbuf_copy_partial(buf, dataptr, len, offset) \
@@ -108,5 +117,7 @@ void              netbuf_first    (struct netbuf *buf);
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 #endif /* LWIP_HDR_NETBUF_H */

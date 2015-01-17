@@ -137,9 +137,9 @@ struct tcpip_callback_msg;
 
 void tcpip_init(tcpip_init_done_fn tcpip_init_done, void *arg);
 
-#if LWIP_NETCONN
+#if LWIP_NETCONN || LWIP_SOCKET
 err_t tcpip_apimsg(struct api_msg *apimsg);
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
 
@@ -174,9 +174,9 @@ err_t tcpip_untimeout(sys_timeout_handler h, void *arg);
 #endif /* LWIP_TCPIP_TIMEOUT */
 
 enum tcpip_msg_type {
-#if LWIP_NETCONN
+#if LWIP_NETCONN || LWIP_SOCKET
   TCPIP_MSG_API,
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
   TCPIP_MSG_INPKT,
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
@@ -196,9 +196,9 @@ struct tcpip_msg {
   enum tcpip_msg_type type;
   sys_sem_t *sem;
   union {
-#if LWIP_NETCONN
+#if LWIP_NETCONN || LWIP_SOCKET
     struct api_msg *apimsg;
-#endif /* LWIP_NETCONN */
+#endif /* LWIP_NETCONN || LWIP_SOCKET */
 #if LWIP_NETIF_API
     struct netifapi_msg *netifapimsg;
 #endif /* LWIP_NETIF_API */

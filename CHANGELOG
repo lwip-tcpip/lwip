@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2015-01-17: Simon Goldschmidt
+  * api: allow enabling socket API without (public) netconn API - netconn API is
+    still used by sockets, but keeping it private (static) should allow better
+    compiler optimizations
+
   2015-01-16: Simon Goldschmidt
   * tcp_in.c: fixed bug #20506 "Initial congestion window is very small" again
     by implementing the calculation formula from RFC3390
