@@ -1287,26 +1287,43 @@ tcp_recv_null(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
 static void
 tcp_kill_prio(u8_t prio)
 {
-  struct tcp_pcb *pcb, *inactive;
-  u32_t inactivity;
-  u8_t mprio;
+  struct tcp_pcb *pcb, *inactive, *lastack;
+  u32_t inactivity, inactivity_lastack;
+  u8_t minprio, minprio_lastack;
 
+  minprio = prio;
+  minprio_lastack = prio;
 
-  mprio = TCP_PRIO_MAX;
-  
-  /* We kill the oldest active connection that has lower priority than prio. */
+  /* We kill the oldest active connection that has lower priority than prio.
+     However, already closed connections waiting for the last ack are closed first
+     since they don't lose data. */
   inactivity = 0;
   inactive = NULL;
+  inactivity_lastack = 0;
+  lastack = NULL;
   for(pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
-    if (pcb->prio <= prio &&
-       pcb->prio <= mprio &&
-       (u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
-      inactivity = tcp_ticks - pcb->tmr;
-      inactive = pcb;
-      mprio = pcb->prio;
+    if ((lastack != NULL) || (pcb->state == LAST_ACK) || (pcb->state == CLOSING)) {
+      /* found at least one pcb in last ack phase */
+      if ((pcb->prio < minprio_lastack) ||
+          (u32_t)(tcp_ticks - pcb->tmr) >= inactivity_lastack) {
+        inactivity_lastack = tcp_ticks - pcb->tmr;
+        lastack = pcb;
+        minprio_lastack = pcb->prio;
+      }
+    } else if (pcb->prio <= minprio) {
+      if ((pcb->prio < minprio) ||
+          (u32_t)(tcp_ticks - pcb->tmr) >= inactivity) {
+        inactivity = tcp_ticks - pcb->tmr;
+        inactive = pcb;
+        minprio = pcb->prio;
+      }
     }
   }
-  if (inactive != NULL) {
+  if (lastack != NULL) {
+    LWIP_DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB in LAST_ACK or CLOSING %p (%"S32_F")\n",
+           (void *)lastack, inactivity_lastack));
+    tcp_abort(lastack);
+  } else if (inactive != NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_kill_prio: killing oldest PCB %p (%"S32_F")\n",
            (void *)inactive, inactivity));
     tcp_abort(inactive);
