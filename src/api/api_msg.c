@@ -842,7 +842,7 @@ void
 lwip_netconn_do_delconn(struct api_msg_msg *msg)
 {
   /* @todo TCP: abort running write/connect? */
- if ((msg->conn->state != NETCONN_NONE) &&
+  if ((msg->conn->state != NETCONN_NONE) &&
      (msg->conn->state != NETCONN_LISTEN) &&
      (msg->conn->state != NETCONN_CONNECT)) {
     /* this only happens for TCP netconns */
@@ -852,6 +852,7 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
   } else {
     LWIP_ASSERT("blocking connect in progress",
       (msg->conn->state != NETCONN_CONNECT) || IN_NONBLOCKING_CONNECT(msg->conn));
+    msg->err = ERR_OK;
     /* Drain and delete mboxes */
     netconn_drain(msg->conn);
 
