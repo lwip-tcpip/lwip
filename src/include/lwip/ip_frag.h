@@ -81,7 +81,7 @@ struct pbuf_custom_ref {
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 #endif /* !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF */
 
-err_t ip_frag(struct pbuf *p, struct netif *netif, ip_addr_t *dest);
+err_t ip_frag(struct pbuf *p, struct netif *netif, const ip_addr_t *dest);
 #endif /* IP_FRAG */
 
 #ifdef __cplusplus

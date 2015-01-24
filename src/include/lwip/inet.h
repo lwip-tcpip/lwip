@@ -111,8 +111,9 @@ struct in_addr {
 /* directly map this to the lwip internal functions */
 #define inet_addr(cp)         ipaddr_addr(cp)
 #define inet_aton(cp, addr)   ipaddr_aton(cp, (ip_addr_t*)addr)
-#define inet_ntoa(addr)       ipaddr_ntoa((ip_addr_t*)&(addr))
-#define inet_ntoa_r(addr, buf, buflen) ipaddr_ntoa_r((ip_addr_t*)&(addr), buf, buflen)
+/* if those casts were originally introduced solely to strip off any const qualifier, they could be removed. */
+#define inet_ntoa(addr)       ipaddr_ntoa((const ip_addr_t*)&(addr))
+#define inet_ntoa_r(addr, buf, buflen) ipaddr_ntoa_r((const ip_addr_t*)&(addr), buf, buflen)
 
 #ifdef __cplusplus
 }

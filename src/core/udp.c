@@ -540,7 +540,7 @@ udp_send_chksum(struct udp_pcb *pcb, struct pbuf *p,
  */
 err_t
 udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
-  ip_addr_t *dst_ip, u16_t dst_port)
+  const ip_addr_t *dst_ip, u16_t dst_port)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_chksum(pcb, p, dst_ip, dst_port, 0, 0);
@@ -548,12 +548,12 @@ udp_sendto(struct udp_pcb *pcb, struct pbuf *p,
 
 /** Same as udp_sendto(), but with checksum */
 err_t
-udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
                   u16_t dst_port, u8_t have_chksum, u16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   struct netif *netif;
-  ipX_addr_t *dst_ip_route = ip_2_ipX(dst_ip);
+  const ipX_addr_t *dst_ip_route = ip_2_ipX(dst_ip);
 
   LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_send\n"));
 
@@ -612,7 +612,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
  */
 err_t
 udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
-  ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif)
+  const ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0);
@@ -620,12 +620,12 @@ udp_sendto_if(struct udp_pcb *pcb, struct pbuf *p,
 
 /** Same as udp_sendto_if(), but with checksum */
 err_t
-udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
                      u16_t dst_port, struct netif *netif, u8_t have_chksum,
                      u16_t chksum)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
-  ip_addr_t *src_ip;
+  const ip_addr_t *src_ip;
 
   /* PCB local address is IP_ANY_ADDR? */
 #if LWIP_IPV6
@@ -670,7 +670,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
 /** Same as udp_sendto_if(), but with source address */
 err_t
 udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
-  ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif, ip_addr_t *src_ip)
+  const ip_addr_t *dst_ip, u16_t dst_port, struct netif *netif, const ip_addr_t *src_ip)
 {
 #if LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP
   return udp_sendto_if_src_chksum(pcb, p, dst_ip, dst_port, netif, 0, 0, src_ip);
@@ -678,9 +678,9 @@ udp_sendto_if_src(struct udp_pcb *pcb, struct pbuf *p,
 
 /** Same as udp_sendto_if_src(), but with checksum */
 err_t
-udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
+udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
                      u16_t dst_port, struct netif *netif, u8_t have_chksum,
-                     u16_t chksum, ip_addr_t *src_ip)
+                     u16_t chksum, const ip_addr_t *src_ip)
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   struct udp_hdr *udphdr;
@@ -883,7 +883,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, ip_addr_t *dst_ip,
  * @see udp_disconnect()
  */
 err_t
-udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
+udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
   u8_t rebind;
@@ -969,7 +969,7 @@ udp_bind(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
  * @see udp_disconnect()
  */
 err_t
-udp_connect(struct udp_pcb *pcb, ip_addr_t *ipaddr, u16_t port)
+udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
 {
   struct udp_pcb *ipcb;
 

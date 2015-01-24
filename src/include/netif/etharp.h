@@ -196,11 +196,11 @@ struct etharp_q_entry {
 
 #define etharp_init() /* Compatibility define, no init needed. */
 void etharp_tmr(void);
-s8_t etharp_find_addr(struct netif *netif, ip_addr_t *ipaddr,
-         struct eth_addr **eth_ret, ip_addr_t **ip_ret);
-err_t etharp_output(struct netif *netif, struct pbuf *q, ip_addr_t *ipaddr);
-err_t etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q);
-err_t etharp_request(struct netif *netif, ip_addr_t *ipaddr);
+s8_t etharp_find_addr(struct netif *netif, const ip_addr_t *ipaddr,
+         struct eth_addr **eth_ret, const ip_addr_t **ip_ret);
+err_t etharp_output(struct netif *netif, struct pbuf *q, const ip_addr_t *ipaddr);
+err_t etharp_query(struct netif *netif, const ip_addr_t *ipaddr, struct pbuf *q);
+err_t etharp_request(struct netif *netif, const ip_addr_t *ipaddr);
 /** For Ethernet network interfaces, we might want to send "gratuitous ARP";
  *  this is an ARP packet sent by a node in order to spontaneously cause other
  *  nodes to update an entry in their ARP cache.
@@ -209,8 +209,8 @@ err_t etharp_request(struct netif *netif, ip_addr_t *ipaddr);
 void etharp_cleanup_netif(struct netif *netif);
 
 #if ETHARP_SUPPORT_STATIC_ENTRIES
-err_t etharp_add_static_entry(ip_addr_t *ipaddr, struct eth_addr *ethaddr);
-err_t etharp_remove_static_entry(ip_addr_t *ipaddr);
+err_t etharp_add_static_entry(const ip_addr_t *ipaddr, struct eth_addr *ethaddr);
+err_t etharp_remove_static_entry(const ip_addr_t *ipaddr);
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
 
 #if LWIP_AUTOIP

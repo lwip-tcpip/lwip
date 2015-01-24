@@ -108,7 +108,7 @@ static u16_t ip_id;
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip_route(ip_addr_t *dest)
+ip_route(const ip_addr_t *dest)
 {
   struct netif *netif;
 
@@ -649,7 +649,7 @@ ip_input(struct pbuf *p, struct netif *inp)
  *  unique identifiers independent of destination"
  */
 err_t
-ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+ip_output_if(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
              u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
@@ -663,12 +663,12 @@ ip_output_if(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * @ param ip_options pointer to the IP options, copied into the IP header
  * @ param optlen length of ip_options
  */
-err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+err_t ip_output_if_opt(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen)
 {
 #endif /* IP_OPTIONS_SEND */
-  ip_addr_t *src_used = src;
+  const ip_addr_t *src_used = src;
   if (dest != IP_HDRINCL) {
     if (ip_addr_isany(src)) {
       src_used = &netif->ip_addr;
@@ -688,7 +688,7 @@ err_t ip_output_if_opt(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * when it is 'any'.
  */
 err_t
-ip_output_if_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+ip_output_if_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
              u8_t ttl, u8_t tos,
              u8_t proto, struct netif *netif)
 {
@@ -700,7 +700,7 @@ ip_output_if_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  * Same as ip_output_if_opt() but 'src' address is not replaced by netif address
  * when it is 'any'.
  */
-err_t ip_output_if_opt_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+err_t ip_output_if_opt_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen)
 {
@@ -861,7 +861,7 @@ err_t ip_output_if_opt_src(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  *         see ip_output_if() for more return values
  */
 err_t
-ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+ip_output(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
           u8_t ttl, u8_t tos, u8_t proto)
 {
   struct netif *netif;
@@ -898,7 +898,7 @@ ip_output(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
  *         see ip_output_if() for more return values
  */
 err_t
-ip_output_hinted(struct pbuf *p, ip_addr_t *src, ip_addr_t *dest,
+ip_output_hinted(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
           u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint)
 {
   struct netif *netif;

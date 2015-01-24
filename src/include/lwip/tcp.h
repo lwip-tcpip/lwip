@@ -364,9 +364,9 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #endif /* TCP_LISTEN_BACKLOG */
 
 void             tcp_recved  (struct tcp_pcb *pcb, u16_t len);
-err_t            tcp_bind    (struct tcp_pcb *pcb, ip_addr_t *ipaddr,
+err_t            tcp_bind    (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,
                               u16_t port);
-err_t            tcp_connect (struct tcp_pcb *pcb, ip_addr_t *ipaddr,
+err_t            tcp_connect (struct tcp_pcb *pcb, const ip_addr_t *ipaddr,
                               u16_t port, tcp_connected_fn connected);
 
 struct tcp_pcb * tcp_listen_with_backlog(struct tcp_pcb *pcb, u8_t backlog);

@@ -95,7 +95,7 @@ static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr
 #endif
 
 #if LWIP_HAVE_LOOPIF
-static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr);
+static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip_addr_t* addr);
 #if LWIP_IPV6
 static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr);
 #endif
@@ -171,8 +171,8 @@ netif_init(void)
  * @return netif, or NULL if failed.
  */
 struct netif *
-netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
-  ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
+netif_add(struct netif *netif, const ip_addr_t *ipaddr, const ip_addr_t *netmask,
+  const ip_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input)
 {
 #if LWIP_IPV6
   u32_t i;
@@ -277,8 +277,8 @@ netif_add(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
  * @param gw the new default gateway
  */
 void
-netif_set_addr(struct netif *netif, ip_addr_t *ipaddr, ip_addr_t *netmask,
-    ip_addr_t *gw)
+netif_set_addr(struct netif *netif, const ip_addr_t *ipaddr, const ip_addr_t *netmask,
+    const ip_addr_t *gw)
 {
   netif_set_ipaddr(netif, ipaddr);
   netif_set_netmask(netif, netmask);
@@ -383,7 +383,7 @@ netif_find(char *name)
  * default gateway
  */
 void
-netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
+netif_set_ipaddr(struct netif *netif, const ip_addr_t *ipaddr)
 {
   /* TODO: Handling of obsolete pcbs */
   /* See:  http://mail.gnu.org/archive/html/lwip-users/2003-03/msg00118.html */
@@ -448,7 +448,7 @@ netif_set_ipaddr(struct netif *netif, ip_addr_t *ipaddr)
  * @note call netif_set_addr() if you also want to change ip address and netmask
  */
 void
-netif_set_gw(struct netif *netif, ip_addr_t *gw)
+netif_set_gw(struct netif *netif, const ip_addr_t *gw)
 {
   ip_addr_set(&(netif->gw), gw);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -469,7 +469,7 @@ netif_set_gw(struct netif *netif, ip_addr_t *gw)
  * default gateway
  */
 void
-netif_set_netmask(struct netif *netif, ip_addr_t *netmask)
+netif_set_netmask(struct netif *netif, const ip_addr_t *netmask)
 {
   snmp_delete_iprteidx_tree(0, netif);
   /* set new netmask to netif */
@@ -763,7 +763,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 }
 
 static err_t
-netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, ip_addr_t* addr)
+netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip_addr_t* addr)
 {
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);

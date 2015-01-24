@@ -170,7 +170,7 @@ raw_input(struct pbuf *p, struct netif *inp)
  * @see raw_disconnect()
  */
 err_t
-raw_bind(struct raw_pcb *pcb, ip_addr_t *ipaddr)
+raw_bind(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
   ipX_addr_set_ipaddr(PCB_ISIPV6(pcb), &pcb->local_ip, ipaddr);
   return ERR_OK;
@@ -190,7 +190,7 @@ raw_bind(struct raw_pcb *pcb, ip_addr_t *ipaddr)
  * @see raw_disconnect() and raw_sendto()
  */
 err_t
-raw_connect(struct raw_pcb *pcb, ip_addr_t *ipaddr)
+raw_connect(struct raw_pcb *pcb, const ip_addr_t *ipaddr)
 {
   ipX_addr_set_ipaddr(PCB_ISIPV6(pcb), &pcb->remote_ip, ipaddr);
   return ERR_OK;
@@ -231,14 +231,14 @@ raw_recv(struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg)
  *
  */
 err_t
-raw_sendto(struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr)
+raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 {
   err_t err;
   struct netif *netif;
   ipX_addr_t *src_ip;
   struct pbuf *q; /* q will be sent down the stack */
   s16_t header_size;
-  ipX_addr_t *dst_ip = ip_2_ipX(ipaddr);
+  const ipX_addr_t *dst_ip = ip_2_ipX(ipaddr);
 
   LWIP_DEBUGF(RAW_DEBUG | LWIP_DBG_TRACE, ("raw_sendto\n"));
 

@@ -309,7 +309,7 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
  */
 u16_t
 inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
-       ip_addr_t *src, ip_addr_t *dest)
+       const ip_addr_t *src, const ip_addr_t *dest)
 {
   u32_t acc;
   u32_t addr;
@@ -421,7 +421,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
  */
 u16_t
 inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
-       u16_t chksum_len, ip_addr_t *src, ip_addr_t *dest)
+       u16_t chksum_len, const ip_addr_t *src, const ip_addr_t *dest)
 {
   u32_t acc;
   u32_t addr;

@@ -59,7 +59,7 @@ struct raw_pcb;
  * if it's not used any more.
  */
 typedef u8_t (*raw_recv_fn)(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    ip_addr_t *addr);
+    const ip_addr_t *addr);
 
 #if LWIP_IPV6
 /** Function prototype for raw pcb IPv6 receive callback functions.
@@ -108,11 +108,11 @@ struct raw_pcb {
    RAW code. */
 struct raw_pcb * raw_new        (u8_t proto);
 void             raw_remove     (struct raw_pcb *pcb);
-err_t            raw_bind       (struct raw_pcb *pcb, ip_addr_t *ipaddr);
-err_t            raw_connect    (struct raw_pcb *pcb, ip_addr_t *ipaddr);
+err_t            raw_bind       (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
+err_t            raw_connect    (struct raw_pcb *pcb, const ip_addr_t *ipaddr);
 
 void             raw_recv       (struct raw_pcb *pcb, raw_recv_fn recv, void *recv_arg);
-err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, ip_addr_t *ipaddr);
+err_t            raw_sendto     (struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr);
 err_t            raw_send       (struct raw_pcb *pcb, struct pbuf *p);
 
 #if LWIP_IPV6
