@@ -757,6 +757,7 @@ lwip_netconn_do_close_internal(struct netconn *conn)
 {
   err_t err;
   u8_t shut, shut_rx, shut_tx, close;
+  struct tcp_pcb* tpcb = conn->pcb.tcp;
 
   LWIP_ASSERT("invalid conn", (conn != NULL));
   LWIP_ASSERT("this is for tcp netconns only", (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP));
@@ -767,34 +768,46 @@ lwip_netconn_do_close_internal(struct netconn *conn)
   shut = conn->current_msg->msg.sd.shut;
   shut_rx = shut & NETCONN_SHUT_RD;
   shut_tx = shut & NETCONN_SHUT_WR;
-  /* shutting down both ends is the same as closing */
-  close = shut == NETCONN_SHUT_RDWR;
+  /* shutting down both ends is the same as closing
+     (also if RD or WR side was shut down before already) */
+  if (shut == NETCONN_SHUT_RDWR) {
+    close = 1;
+  } else if (shut_rx &&
+             ((tpcb->state == FIN_WAIT_1) ||
+              (tpcb->state == FIN_WAIT_2) ||
+              (tpcb->state == CLOSING))) {
+    close = 1;
+  } else if (shut_tx && ((tpcb->flags & TF_RXCLOSED) != 0)) {
+    close = 1;
+  } else {
+    close = 0;
+  }
 
   /* Set back some callback pointers */
   if (close) {
-    tcp_arg(conn->pcb.tcp, NULL);
+    tcp_arg(tpcb, NULL);
   }
-  if (conn->pcb.tcp->state == LISTEN) {
-    tcp_accept(conn->pcb.tcp, NULL);
+  if (tpcb->state == LISTEN) {
+    tcp_accept(tpcb, NULL);
   } else {
     /* some callbacks have to be reset if tcp_close is not successful */
     if (shut_rx) {
-      tcp_recv(conn->pcb.tcp, NULL);
-      tcp_accept(conn->pcb.tcp, NULL);
+      tcp_recv(tpcb, NULL);
+      tcp_accept(tpcb, NULL);
     }
     if (shut_tx) {
-      tcp_sent(conn->pcb.tcp, NULL);
+      tcp_sent(tpcb, NULL);
     }
     if (close) {
-      tcp_poll(conn->pcb.tcp, NULL, 4);
-      tcp_err(conn->pcb.tcp, NULL);
+      tcp_poll(tpcb, NULL, 4);
+      tcp_err(tpcb, NULL);
     }
   }
   /* Try to close the connection */
   if (close) {
-    err = tcp_close(conn->pcb.tcp);
+    err = tcp_close(tpcb);
   } else {
-    err = tcp_shutdown(conn->pcb.tcp, shut_rx, shut_tx);
+    err = tcp_shutdown(tpcb, shut_rx, shut_tx);
   }
   if (err == ERR_OK) {
     /* Closing succeeded */
@@ -1537,7 +1550,7 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
   } else
 #endif /* LWIP_TCP */
   {
-    msg->err = ERR_VAL;
+    msg->err = ERR_CONN;
   }
   sys_sem_signal(LWIP_API_MSG_SEM(msg));
 }

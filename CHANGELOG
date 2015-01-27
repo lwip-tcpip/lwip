@@ -156,6 +156,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-01-27: Simon Goldschmidt
+  * api_msg.c: fixed that SHUT_RD followed by SHUT_WR was different to SHUT_RDWR,
+    fixed return value of lwip_netconn_do_close on unconnected netconns
+
   2015-01-17: Simon Goldschmidt
   * sockets.c: fixed bug #43361 select() crashes with stale FDs
 
