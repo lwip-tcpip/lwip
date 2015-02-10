@@ -75,9 +75,9 @@ typedef enum {
 #define MEMP_POOL_LAST   ((memp_t) MEMP_POOL_HELPER_LAST)
 #endif /* MEM_USE_POOLS */
 
-#if MEMP_MEM_MALLOC || MEM_USE_POOLS
+#if MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS
 extern const u16_t memp_sizes[MEMP_MAX];
-#endif /* MEMP_MEM_MALLOC || MEM_USE_POOLS */
+#endif /* MEMP_MEM_MALLOC || MEM_USE_POOLS || MEMP_USE_CUSTOM_POOLS */
 
 #if MEMP_MEM_MALLOC
 

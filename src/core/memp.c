@@ -130,7 +130,7 @@ static struct memp *memp_tab[MEMP_MAX];
 #endif /* MEMP_MEM_MALLOC */
 
 /** This array holds the element sizes of each pool. */
-#if !MEM_USE_POOLS && !MEMP_MEM_MALLOC
+#if !MEM_USE_POOLS && !MEMP_MEM_MALLOC && !MEMP_USE_CUSTOM_POOLS
 static
 #endif
 const u16_t memp_sizes[MEMP_MAX] = {
