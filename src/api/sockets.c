@@ -558,6 +558,7 @@ lwip_close(int s)
 {
   struct lwip_sock *sock;
   int is_tcp = 0;
+  err_t err;
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_close(%d)\n", s));
 
@@ -572,7 +573,11 @@ lwip_close(int s)
     LWIP_ASSERT("sock->lastdata == NULL", sock->lastdata == NULL);
   }
 
-  netconn_delete(sock->conn);
+  err = netconn_delete(sock->conn);
+  if (err != ERR_OK) {
+    sock_set_errno(sock, err_to_errno(err));
+    return -1;
+  }
 
   free_socket(sock, is_tcp);
   set_errno(0);
@@ -1196,9 +1201,6 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
   return nready;
 }
 
-/**
- * Processing exceptset is not yet implemented.
- */
 int
 lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
             struct timeval *timeout)
@@ -1781,6 +1783,23 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       *(int *)optval = netconn_get_recvbufsize(sock->conn);
       break;
 #endif /* LWIP_SO_RCVBUF */
+#if LWIP_SO_LINGER
+    case SO_LINGER:
+      {
+        s16_t conn_linger;
+        struct linger* linger = (struct linger*)optval;
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, *optlen, struct linger);
+        conn_linger = sock->conn->linger;
+        if (conn_linger >= 0) {
+          linger->l_onoff = 1;
+          linger->l_linger = (int)conn_linger;
+        } else {
+          linger->l_onoff = 0;
+          linger->l_linger = 0;
+        }
+      }
+      break;
+#endif /* LWIP_SO_LINGER */
 #if LWIP_UDP
     case SO_NO_CHECK:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_UDP);
@@ -2117,6 +2136,26 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       netconn_set_recvbufsize(sock->conn, *(int*)optval);
       break;
 #endif /* LWIP_SO_RCVBUF */
+#if LWIP_SO_LINGER
+    case SO_LINGER:
+      {
+        struct linger* linger = (struct linger*)optval;
+        LWIP_SOCKOPT_CHECK_OPTLEN_CONN(sock, optlen, struct linger);
+        if (linger->l_onoff) {
+          int lingersec = linger->l_linger;
+          if (lingersec < 0) {
+            return EINVAL;
+          }
+          if (lingersec > 0xFFFF) {
+            lingersec = 0xFFFF;
+          }
+          sock->conn->linger = (s16_t)lingersec;
+        } else {
+          sock->conn->linger = -1;
+        }
+      }
+      break;
+#endif /* LWIP_SO_LINGER */
 #if LWIP_UDP
     case SO_NO_CHECK:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_UDP);

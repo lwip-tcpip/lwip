@@ -1574,10 +1574,24 @@
 #endif
 
 /**
+ * LWIP_SO_LINGER==1: Enable SO_LINGER processing.
+ */
+#ifndef LWIP_SO_LINGER
+#define LWIP_SO_LINGER                  0
+#endif
+
+/**
  * If LWIP_SO_RCVBUF is used, this is the default value for recv_bufsize.
  */
 #ifndef RECV_BUFSIZE_DEFAULT
 #define RECV_BUFSIZE_DEFAULT            INT_MAX
+#endif
+
+/**
+ * By default, TCP socket/netconn close waits 20 seconds max to send the FIN
+ */
+#ifndef LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT
+#define LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT 20000
 #endif
 
 /**

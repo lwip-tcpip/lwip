@@ -214,6 +214,10 @@ struct netconn {
       for UDP and RAW, used for FIONREAD */
   int recv_avail;
 #endif /* LWIP_SO_RCVBUF */
+#if LWIP_SO_LINGER
+   /** values <0 mean linger is disabled, values > 0 are seconds to linger */
+  s16_t linger;
+#endif /* LWIP_SO_LINGER */
   /** flags holding more netconn-internal state, see NETCONN_FLAG_* defines */
   u8_t flags;
 #if LWIP_TCP

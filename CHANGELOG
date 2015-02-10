@@ -156,6 +156,16 @@ HISTORY
 
   ++ Bugfixes:
 
+  2014-02-10: Simon Goldschmidt
+  * netconn API: fixed that netconn_close/netconn_delete still used message passing
+    for LWIP_TCPIP_CORE_LOCKING==1
+
+  2014-02-10: Simon Goldschmidt
+  * netconn/socket api: fixed bug #44225 "closing TCP socket should time out
+    eventually", implemented task #6930 "Implement SO_LINGER": closing TCP sockets
+    times out after 20 seconds or after the configured SND_TIMEOUT or depending
+    on the linger settings.
+
   2014-01-27: Simon Goldschmidt
   * api_msg.c: fixed that SHUT_RD followed by SHUT_WR was different to SHUT_RDWR,
     fixed return value of lwip_netconn_do_close on unconnected netconns
