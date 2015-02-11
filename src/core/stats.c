@@ -40,13 +40,10 @@
 
 #if LWIP_STATS /* don't build if not configured for use in lwipopts.h */
 
-#ifndef LWIP_PLATFORM_DIAG
-  #error "If you want to use LWIP_STATS, LWIP_PLATFORM_DIAG needs to be defined in your arch/cc.h"
-#endif
-
 #include "lwip/def.h"
 #include "lwip/stats.h"
 #include "lwip/mem.h"
+#include "lwip/debug.h"
 
 #include <string.h>
 

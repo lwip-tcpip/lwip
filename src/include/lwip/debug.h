@@ -70,7 +70,7 @@
 #define LWIP_ASSERT(message, assertion) do { if(!(assertion)) \
   LWIP_PLATFORM_ASSERT(message); } while(0)
 #ifndef LWIP_PLATFORM_ASSERT
-  #error "If you want to use LWIP_ASSERT, LWIP_PLATFORM_ASSERT needs to be defined in your arch/cc.h"
+#error "If you want to use LWIP_ASSERT, LWIP_PLATFORM_ASSERT(message) needs to be defined in your arch/cc.h"
 #endif
 #else  /* LWIP_NOASSERT */
 #define LWIP_ASSERT(message, assertion) 
@@ -78,13 +78,21 @@
 
 /** if "expression" isn't true, then print "message" and execute "handler" expression */
 #ifndef LWIP_ERROR
+#ifndef LWIP_NOASSERT
+#define LWIP_PLATFORM_ERROR(message) LWIP_PLATFORM_ASSERT(message)
+#elif defined LWIP_DEBUG
+#define LWIP_PLATFORM_ERROR(message) LWIP_PLATFORM_DIAG(message)
+#else
+#define LWIP_PLATFORM_ERROR(message)
+#endif
+
 #define LWIP_ERROR(message, expression, handler) do { if (!(expression)) { \
-  LWIP_PLATFORM_ASSERT(message); handler;}} while(0)
+  LWIP_PLATFORM_ERROR(message); handler;}} while(0)
 #endif /* LWIP_ERROR */
 
 #ifdef LWIP_DEBUG
 #ifndef LWIP_PLATFORM_DIAG
-  #error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG needs to be defined in your arch/cc.h"
+#error "If you want to use LWIP_DEBUG, LWIP_PLATFORM_DIAG(message) needs to be defined in your arch/cc.h"
 #endif
 /** print debug message only if debug message type is enabled...
  *  AND is of correct type AND is at least LWIP_DBG_LEVEL
