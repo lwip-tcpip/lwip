@@ -115,7 +115,7 @@ tcpip_thread(void *arg)
       } else
 #endif /* LWIP_ETHERNET */
 #if LWIP_IPV6
-      if ((*((unsigned char *)(msg->msg.inp.p->payload)) & 0xf0) == 0x60) {
+      if (((*(u8_t*)(msg->msg.inp.p->payload)) & 0xf0) == 0x60) {
           ip6_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_IPV6 */
@@ -192,6 +192,11 @@ tcpip_input(struct pbuf *p, struct netif *inp)
     ret = ethernet_input(p, inp);
   } else
 #endif /* LWIP_ETHERNET */
+#if LWIP_IPV6 
+  if (((*(u8_t*)(p->payload)) & 0xf0) == 0x60) { 
+    ret = ip6_input(p, inp); 
+  } else 
+#endif /* LWIP_IPV6 */
   {
     ret = ip_input(p, inp);
   }

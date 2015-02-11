@@ -163,6 +163,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-11: patch by hichard
+  * tcpip.c: fixed bug #43094 "The function tcpip_input() forget to handle IPv6"
+
   2014-02-10: Simon Goldschmidt
   * netconn API: fixed that netconn_close/netconn_delete still used message passing
     for LWIP_TCPIP_CORE_LOCKING==1
