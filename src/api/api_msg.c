@@ -960,11 +960,34 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
   enum netconn_state state = msg->conn->state;
   LWIP_ASSERT("netconn state error", /* this only happens for TCP netconns */
     (state == NETCONN_NONE) || (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP));
- if ((msg->conn->state != NETCONN_NONE) &&
+#if LWIP_NETCONN_FULLDUPLEX
+  /* In full duplex mode, blocking write/connect is aborted with ERR_CLSD */
+  if (state != NETCONN_NONE) {
+    if ((state == NETCONN_WRITE) ||
+        ((state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn))) {
+      /* close requested, abort running write/connect */
+      sys_sem_t* op_completed_sem;
+      LWIP_ASSERT("msg->conn->current_msg != NULL", msg->conn->current_msg != NULL);
+      op_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
+      msg->conn->current_msg->err = ERR_CLSD;
+      msg->conn->current_msg = NULL;
+      msg->conn->write_offset = 0;
+      msg->conn->state = NETCONN_NONE;
+      msg->conn->flags &= ~NETCONN_FLAG_WRITE_DELAYED;
+      sys_sem_signal(op_completed_sem);
+    }
+  }
+#else /* LWIP_NETCONN_FULLDUPLEX */
+ if (((msg->conn->state != NETCONN_NONE) &&
      (msg->conn->state != NETCONN_LISTEN) &&
-     (msg->conn->state != NETCONN_CONNECT)) {
+     (msg->conn->state != NETCONN_CONNECT)) ||
+     (msg->conn->state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn)) {
+    /* This means either a blocking write or blocking connect is running
+       (nonblocking write returns and sets state to NONE) */
     msg->err = ERR_INPROGRESS;
-  } else {
+  } else
+#endif /* LWIP_NETCONN_FULLDUPLEX */
+  {
     LWIP_ASSERT("blocking connect in progress",
       (msg->conn->state != NETCONN_CONNECT) || IN_NONBLOCKING_CONNECT(msg->conn));
     msg->err = ERR_OK;
@@ -1642,8 +1665,32 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
   if ((msg->conn->pcb.tcp != NULL) &&
       (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) &&
       ((msg->msg.sd.shut == NETCONN_SHUT_RDWR) || (state != NETCONN_LISTEN))) {
-    if ((state == NETCONN_CONNECT) || (state == NETCONN_WRITE)) {
+    /* Check if we are in a connected state */
+    if (state == NETCONN_CONNECT) {
+      /* TCP connect in progress: cannot shutdown */
+      msg->err = ERR_CONN;
+    } else if (state == NETCONN_WRITE) {
+#if LWIP_NETCONN_FULLDUPLEX
+      if (msg->msg.sd.shut & NETCONN_SHUT_WR) {
+        /* close requested, abort running write */
+        sys_sem_t* op_completed_sem;
+        LWIP_ASSERT("msg->conn->current_msg != NULL", msg->conn->current_msg != NULL);
+        op_completed_sem = LWIP_API_MSG_SEM(msg->conn->current_msg);
+        msg->conn->current_msg->err = ERR_CLSD;
+        msg->conn->current_msg = NULL;
+        msg->conn->write_offset = 0;
+        msg->conn->state = NETCONN_NONE;
+        msg->conn->flags &= ~NETCONN_FLAG_WRITE_DELAYED;
+        sys_sem_signal(op_completed_sem);
+      } else {
+        LWIP_ASSERT("msg->msg.sd.shut == NETCONN_SHUT_RD", msg->msg.sd.shut == NETCONN_SHUT_RD);
+        /* In this case, let the write continue and do not interfere with
+           conn->current_msg or conn->state! */
+        msg->err = tcp_shutdown(msg->conn->pcb.tcp, 1, 0);
+      }
+#else /* LWIP_NETCONN_FULLDUPLEX */
       msg->err = ERR_INPROGRESS;
+#endif /* LWIP_NETCONN_FULLDUPLEX */
     } else {
       if (msg->msg.sd.shut & NETCONN_SHUT_RD) {
         /* Drain and delete mboxes */

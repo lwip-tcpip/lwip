@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-11: Simon Goldschmidt
+  * api_msg.c, opt.h: started to implement fullduplex sockets/netconns
+   (note that this is highly unstable yet!)
+
   2015-01-02: Simon Goldschmidt
   * tcp.c: tcp_kill_prio(): prefer nearly-closed connections (waiting for the
     last ACK only) over established connections when out of tcp pcbs

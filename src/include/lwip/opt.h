@@ -1497,6 +1497,18 @@
 #define LWIP_NETCONN_SEM_PER_THREAD     0
 #endif
 
+/** LWIP_NETCONN_FULLDUPLEX==1: Enable code that allows reading from one thread,
+ * writing from a 2nd thread and closing from a 3rd thread at the same time.
+ * ATTENTION: This is currently really alpha! Some requirements:
+ * - LWIP_NETCONN_SEM_PER_THREAD==1 is required to use one socket/netconn from
+ *   multiple threads at once
+ * - sys_mbox_free() has to unblock receive tasks waiting on recvmbox/acceptmbox
+ *   and prevent a task pending on this during/after deletion
+ */
+#ifndef LWIP_NETCONN_FULLDUPLEX
+#define LWIP_NETCONN_FULLDUPLEX         0
+#endif
+
 /*
    ------------------------------------
    ---------- Socket options ----------
