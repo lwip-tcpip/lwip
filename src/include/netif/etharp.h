@@ -140,12 +140,21 @@ PACK_STRUCT_END
 /** 1 seconds period */
 #define ARP_TMR_INTERVAL 1000
 
-#define ETHTYPE_ARP       0x0806U
-#define ETHTYPE_IP        0x0800U
-#define ETHTYPE_VLAN      0x8100U
-#define ETHTYPE_IPV6      0x86DDU
+/* A list of often ethtypes (although lwIP does not use all of them): */
+#define ETHTYPE_IP        0x0800U  /* Internet protocol v4 */
+#define ETHTYPE_ARP       0x0806U  /* Address resolution protocol */
+#define ETHTYPE_WOL       0x0842U  /* Wake on lan */
+#define ETHTYPE_VLAN      0x8100U  /* Virtual local area network */
+#define ETHTYPE_IPV6      0x86DDU  /* Internet protocol v6 */
 #define ETHTYPE_PPPOEDISC 0x8863U  /* PPP Over Ethernet Discovery Stage */
 #define ETHTYPE_PPPOE     0x8864U  /* PPP Over Ethernet Session Stage */
+#define ETHTYPE_JUMBO     0x8870U  /* Jumbo Frames */
+#define ETHTYPE_PROFINET  0x8892U  /* Process field network */
+#define ETHTYPE_ETHERCAT  0x88A4U  /* Ethernet for control automation technology */
+#define ETHTYPE_LLDP      0x88CCU  /* Link layer discovery protocol */
+#define ETHTYPE_SERCOS    0x88CDU  /* Serial real-time communication system */
+#define ETHTYPE_PTP       0x88F7U  /* Precision time protocol */
+#define ETHTYPE_QINQ      0x9100U  /* Q-in-Q, 802.1ad */
 
 /** MEMCPY-like macro to copy to/from struct eth_addr's that are local variables
  * or known to be 32-bit aligned within the protocol header. */
