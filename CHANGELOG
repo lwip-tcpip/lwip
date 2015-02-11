@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-02-11: Frederick Baksik
+  opt.h, def.h, others: patch #8423 "arch/perf.h" should be made an optional item
+
   2015-02-11: Simon Goldschmidt
   * api_msg.c, opt.h: started to implement fullduplex sockets/netconns
    (note that this is highly unstable yet!)

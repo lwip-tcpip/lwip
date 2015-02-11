@@ -54,7 +54,6 @@
 #include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
 #include "lwip/snmp.h"
-#include "arch/perf.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
 #include "lwip/inet_chksum.h"

@@ -2796,4 +2796,17 @@
 #define IP6_DEBUG                       LWIP_DBG_OFF
 #endif
 
+/*
+   --------------------------------------------------
+   ---------- Performance tracking options ----------
+   --------------------------------------------------
+*/
+/**
+ * LWIP_PERF: Enable performance testing for lwIP
+ * (if enabled, arch/perf.h is included)
+ */
+#ifndef LWIP_PERF
+#define LWIP_PERF                       0
+#endif
+
 #endif /* LWIP_HDR_OPT_H */
