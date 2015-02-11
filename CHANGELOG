@@ -6,12 +6,16 @@ HISTORY
 
   ++ New features:
 
+  2015-02-11: Nick van Ijzendoorn
+  * opt.h, sockets.h/c: patch #7702 "Include ability to increase the socket number
+    with defined offset"
+
   2015-02-11: Frederick Baksik
-  opt.h, def.h, others: patch #8423 "arch/perf.h" should be made an optional item
+  * opt.h, def.h, others: patch #8423 "arch/perf.h" should be made an optional item
 
   2015-02-11: Simon Goldschmidt
   * api_msg.c, opt.h: started to implement fullduplex sockets/netconns
-   (note that this is highly unstable yet!)
+    (note that this is highly unstable yet!)
 
   2015-01-02: Simon Goldschmidt
   * tcp.c: tcp_kill_prio(): prefer nearly-closed connections (waiting for the

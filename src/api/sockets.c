@@ -307,8 +307,10 @@ get_socket(int s)
 {
   struct lwip_sock *sock;
 
+  s -= LWIP_SOCKET_OFFSET;
+
   if ((s < 0) || (s >= NUM_SOCKETS)) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): invalid\n", s + LWIP_SOCKET_OFFSET));
     set_errno(EBADF);
     return NULL;
   }
@@ -316,7 +318,7 @@ get_socket(int s)
   sock = &sockets[s];
 
   if (!sock->conn) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): not active\n", s));
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("get_socket(%d): not active\n", s + LWIP_SOCKET_OFFSET));
     set_errno(EBADF);
     return NULL;
   }
@@ -333,6 +335,7 @@ get_socket(int s)
 static struct lwip_sock *
 tryget_socket(int s)
 {
+  s -= LWIP_SOCKET_OFFSET;
   if ((s < 0) || (s >= NUM_SOCKETS)) {
     return NULL;
   }
@@ -374,7 +377,7 @@ alloc_socket(struct netconn *newconn, int accepted)
       sockets[i].errevent   = 0;
       sockets[i].err        = 0;
       sockets[i].select_waiting = 0;
-      return i;
+      return i + LWIP_SOCKET_OFFSET;
     }
     SYS_ARCH_UNPROTECT(lev);
   }
@@ -485,9 +488,9 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
     sock_set_errno(sock, ENFILE);
     return -1;
   }
-  LWIP_ASSERT("invalid socket index", (newsock >= 0) && (newsock < NUM_SOCKETS));
+  LWIP_ASSERT("invalid socket index", (newsock >= LWIP_SOCKET_OFFSET) && (newsock < NUM_SOCKETS + LWIP_SOCKET_OFFSET));
   LWIP_ASSERT("newconn->callback == event_callback", newconn->callback == event_callback);
-  nsock = &sockets[newsock];
+  nsock = &sockets[newsock - LWIP_SOCKET_OFFSET];
 
   /* See event_callback: If data comes in right away after an accept, even
    * though the server task might not have created a new socket yet.
@@ -1157,7 +1160,7 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
 
   /* Go through each socket in each list to count number of sockets which
      currently match */
-  for(i = 0; i < maxfdp1; i++) {
+  for(i = LWIP_SOCKET_OFFSET; i < maxfdp1; i++) {
     void* lastdata = NULL;
     s16_t rcvevent = 0;
     u16_t sendevent = 0;
@@ -1270,7 +1273,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
 
     /* Increase select_waiting for each socket we are interested in */
     maxfdp2 = maxfdp1;
-    for (i = 0; i < maxfdp1; i++) {
+    for (i = LWIP_SOCKET_OFFSET; i < maxfdp1; i++) {
       if ((readset && FD_ISSET(i, readset)) ||
           (writeset && FD_ISSET(i, writeset)) ||
           (exceptset && FD_ISSET(i, exceptset))) {
@@ -1313,7 +1316,7 @@ lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
     }
 
     /* Decrease select_waiting for each socket we are interested in */
-    for (i = 0; i < maxfdp2; i++) {
+    for (i = LWIP_SOCKET_OFFSET; i < maxfdp2; i++) {
       if ((readset && FD_ISSET(i, readset)) ||
           (writeset && FD_ISSET(i, writeset)) ||
           (exceptset && FD_ISSET(i, exceptset))) {
