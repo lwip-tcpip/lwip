@@ -861,6 +861,7 @@ lwip_netconn_do_close_internal(struct netconn *conn)
     if (linger_wait_required) {
       /* wait for ACK of all unsent/unacked data by just getting called again */
       close_finished = 0;
+      err = ERR_INPROGRESS;
     }
 #endif /* LWIP_SO_LINGER */
   } else {
@@ -944,6 +945,7 @@ lwip_netconn_do_close_internal(struct netconn *conn)
   }
   /* If closing didn't succeed, we get called again either
      from poll_tcp or from sent_tcp */
+  LWIP_ASSERT("err != ERR_OK", err != ERR_OK);
   return err;
 }
 #endif /* LWIP_TCP */
@@ -978,10 +980,10 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
     }
   }
 #else /* LWIP_NETCONN_FULLDUPLEX */
- if (((msg->conn->state != NETCONN_NONE) &&
-     (msg->conn->state != NETCONN_LISTEN) &&
-     (msg->conn->state != NETCONN_CONNECT)) ||
-     (msg->conn->state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn)) {
+  if (((msg->conn->state != NETCONN_NONE) &&
+       (msg->conn->state != NETCONN_LISTEN) &&
+       (msg->conn->state != NETCONN_CONNECT)) ||
+      (msg->conn->state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn)) {
     /* This means either a blocking write or blocking connect is running
        (nonblocking write returns and sets state to NONE) */
     msg->err = ERR_INPROGRESS;
