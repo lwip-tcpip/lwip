@@ -215,6 +215,7 @@ void sys_mbox_set_invalid(sys_mbox_t *mbox);
 
 /** The only thread function:
  * Creates a new thread
+ * ATTENTION: although this function returns a value, it MUST NOT FAIL (ports have to assert this!)
  * @param name human-readable name for the thread (used for debugging purposes)
  * @param thread thread-function
  * @param arg parameter passed to 'thread'
