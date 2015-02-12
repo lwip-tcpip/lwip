@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-12: chrysn
+  * timers.h/.c: introduce sys_timeouts_sleeptime (returns the time left before
+    the next timeout is due, for NO_SYS==1)
+
   2015-02-11: Nick van Ijzendoorn
   * opt.h, sockets.h/c: patch #7702 "Include ability to increase the socket number
     with defined offset"
