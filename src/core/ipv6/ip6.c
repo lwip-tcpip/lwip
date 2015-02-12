@@ -397,6 +397,7 @@ ip6_input(struct pbuf *p, struct netif *inp)
 
   /* In netif, used in case we need to send ICMPv6 packets back. */
   ip_data.current_netif = inp;
+  ip_data.current_input_netif = inp;
 
   /* match packet against an interface, i.e. is this packet for us? */
   if (ip6_addr_ismulticast(ip6_current_dest_addr())) {
@@ -708,6 +709,7 @@ options_done:
 
 ip6_input_cleanup:
   ip_data.current_netif = NULL;
+  ip_data.current_input_netif = NULL;
   ip_data.current_ip6_header = NULL;
   ip_data.current_ip_header_tot_len = 0;
   ip6_addr_set_any(&ip_data.current_iphdr_src.ip6);

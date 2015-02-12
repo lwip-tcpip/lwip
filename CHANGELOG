@@ -167,6 +167,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  * ip.h, ip4.c, ip6.c: fixed bug #36403 "ip4_input() and ip6_input() always pass
+    inp to higher layers": now the accepting netif is passed up, but the input
+    netif is available through ip_current_input_netif() if required.
+
   2015-02-11: patch by hichard
   * tcpip.c: fixed bug #43094 "The function tcpip_input() forget to handle IPv6"
 

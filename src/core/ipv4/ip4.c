@@ -553,7 +553,8 @@ ip_input(struct pbuf *p, struct netif *inp)
   ip_debug_print(p);
   LWIP_DEBUGF(IP_DEBUG, ("ip_input: p->len %"U16_F" p->tot_len %"U16_F"\n", p->len, p->tot_len));
 
-  ip_data.current_netif = inp;
+  ip_data.current_netif = netif;
+  ip_data.current_input_netif = inp;
   ip_data.current_ip4_header = iphdr;
   ip_data.current_ip_header_tot_len = IPH_HL(iphdr) * 4;
 
@@ -613,6 +614,7 @@ ip_input(struct pbuf *p, struct netif *inp)
 
   /* @todo: this is not really necessary... */
   ip_data.current_netif = NULL;
+  ip_data.current_input_netif = NULL;
   ip_data.current_ip4_header = NULL;
   ip_data.current_ip_header_tot_len = 0;
   ip_addr_set_any(ip_current_src_addr());
