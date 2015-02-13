@@ -178,8 +178,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     /* translate answer into a known lifeform */
     en->get_object_def_a(request_id, np.ident_len, np.ident, &msg_ps->ext_object_def);
-    if ((msg_ps->ext_object_def.instance != MIB_OBJECT_NONE) &&
-        (msg_ps->ext_object_def.access & MIB_ACCESS_READ))
+    if (msg_ps->ext_object_def.instance != MIB_OBJECT_NONE)
     {
       msg_ps->state = SNMP_MSG_EXTERNAL_GET_VALUE;
       en->get_value_q(request_id, &msg_ps->ext_object_def);
@@ -297,8 +296,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
           msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
           mn->get_object_def(np.ident_len, np.ident, &object_def);
-          if ((object_def.instance != MIB_OBJECT_NONE) &&
-            (object_def.access & MIB_ACCESS_READ))
+          if (object_def.instance != MIB_OBJECT_NONE)
           {
             mn = mn;
           }
