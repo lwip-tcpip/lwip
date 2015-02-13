@@ -214,17 +214,22 @@ pbuf_alloc(pbuf_layer layer, u16_t length, pbuf_type type)
   switch (layer) {
   case PBUF_TRANSPORT:
     /* add room for transport (often TCP) layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN;
     break;
   case PBUF_IP:
     /* add room for IP layer header */
-    offset = PBUF_LINK_HLEN + PBUF_IP_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN;
     break;
   case PBUF_LINK:
     /* add room for link layer header */
-    offset = PBUF_LINK_HLEN;
+    offset = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
+    break;
+  case PBUF_RAW_TX:
+    /* add room for encapsulating link layer headers (e.g. 802.11) */
+    offset = PBUF_LINK_ENCAPSULATION_HLEN;
     break;
   case PBUF_RAW:
+    /* no offset (e.g. RX buffers or chain successors) */
     offset = 0;
     break;
   default:

@@ -1190,6 +1190,14 @@
 #endif
 
 /**
+ * PBUF_LINK_ENCAPSULATION_HLEN: the number of bytes that should be allocated
+ * for an additional encapsulation header before ethernet headers (e.g. 802.11)
+ */
+#ifndef PBUF_LINK_ENCAPSULATION_HLEN
+#define PBUF_LINK_ENCAPSULATION_HLEN    0
+#endif
+
+/**
  * PBUF_POOL_BUFSIZE: the size of each pbuf in the pbuf pool. The default is
  * designed to accommodate single full size TCP frame in one pbuf, including
  * TCP_MSS, IP header, and link header.

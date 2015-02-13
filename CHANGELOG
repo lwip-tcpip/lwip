@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-13: Simon Goldschmidt
+  * opt.h, pbuf.h/.c, etharp.c: Added the option PBUF_LINK_ENCAPSULATION_HLEN to
+    allocate additional header space for TX on netifs requiring additional headers
+
   2015-02-12: chrysn
   * timers.h/.c: introduce sys_timeouts_sleeptime (returns the time left before
     the next timeout is due, for NO_SYS==1)

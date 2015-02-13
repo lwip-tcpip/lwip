@@ -1128,7 +1128,7 @@ etharp_query(struct netif *netif, ip_addr_t *ipaddr, struct pbuf *q)
     }
     if(copy_needed) {
       /* copy the whole packet into new pbufs */
-      p = pbuf_alloc(PBUF_RAW, p->tot_len, PBUF_RAM);
+      p = pbuf_alloc(PBUF_RAW_TX, p->tot_len, PBUF_RAM);
       if(p != NULL) {
         if (pbuf_copy(p, q) != ERR_OK) {
           pbuf_free(p);
@@ -1240,7 +1240,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   LWIP_ASSERT("netif != NULL", netif != NULL);
 
   /* allocate a pbuf for the outgoing ARP request packet */
-  p = pbuf_alloc(PBUF_RAW, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
+  p = pbuf_alloc(PBUF_RAW_TX, SIZEOF_ETHARP_PACKET_TX, PBUF_RAM);
   /* could allocate a pbuf for an ARP request? */
   if (p == NULL) {
     LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
