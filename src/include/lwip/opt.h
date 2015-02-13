@@ -2547,6 +2547,11 @@
  * Hook can be used to set prio_vid field of vlan_hdr.
  */
 
+/**
+ * LWIP_HOOK_MEMP_AVAILABLE(memp_t_type):
+ * - called from memp_free() when a memp pool was empty and an item is now available
+ */
+
 /*
    ---------------------------------------
    ---------- Debugging options ----------

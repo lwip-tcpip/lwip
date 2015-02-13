@@ -7,6 +7,10 @@ HISTORY
   ++ New features:
 
   2015-02-13: Simon Goldschmidt
+  * opt.h, memp.c: added hook LWIP_HOOK_MEMP_AVAILABLE() to get informed when
+    a memp pool was empty and an item is now available
+
+  2015-02-13: Simon Goldschmidt
   * opt.h, pbuf.h/.c, etharp.c: Added the option PBUF_LINK_ENCAPSULATION_HLEN to
     allocate additional header space for TX on netifs requiring additional headers
 
