@@ -352,7 +352,7 @@ ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, cons
   pcb->ctx_cb = ctx_cb;
 
   if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
-    ppp_delete(pcb);
+    ppp_free(pcb);
     return NULL;
   }
 
@@ -383,7 +383,7 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
   pcb->ctx_cb = ctx_cb;
 
   if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
-    ppp_delete(pcb);
+    ppp_free(pcb);
     return NULL;
   }
 
@@ -478,10 +478,7 @@ ppp_sighup(ppp_pcb *pcb)
 }
 
 /*
- * Free the control block, clean everything except the PPP PCB itself
- * and the netif, it allows you to change the underlying PPP protocol
- * (eg. from PPPoE to PPPoS to switch from DSL to GPRS) without losing
- * your PPP and netif handlers.
+ * Release the control block.
  *
  * This can only be called if PPP is in the dead phase.
  *
@@ -496,6 +493,8 @@ int ppp_free(ppp_pcb *pcb) {
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_free: unit %d\n", pcb->num));
+
+  netif_remove(pcb->netif);
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
@@ -515,33 +514,6 @@ int ppp_free(ppp_pcb *pcb) {
   /* input pbuf left ? */
   ppp_free_current_input_packet(&pcb->rx);
 #endif /* PPPOS_SUPPORT */
-
-  return 0;
-}
-
-/*
- * Release the control block.
- *
- * This can only be called if PPP is in the dead phase.
- *
- * You must use ppp_close() before if you wish to terminate
- * an established PPP session.
- *
- * Return 0 on success, an error code on failure.
- */
-int ppp_delete(ppp_pcb *pcb) {
-  int err;
-
-  if (pcb->phase != PPP_PHASE_DEAD) {
-    return PPPERR_PARAM;
-  }
-
-  PPPDEBUG(LOG_DEBUG, ("ppp_delete: unit %d\n", pcb->num));
-
-  netif_remove(pcb->netif);
-  if( (err = ppp_free(pcb)) != PPPERR_NONE) {
-    return err;
-  }
 
   memp_free(MEMP_PPP_PCB, pcb);
   return 0;

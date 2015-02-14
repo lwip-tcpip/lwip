@@ -308,24 +308,24 @@ pppapi_sighup(ppp_pcb *pcb)
 
 
 /**
- * Call ppp_delete() inside the tcpip_thread context.
+ * Call ppp_free() inside the tcpip_thread context.
  */
 static void
-pppapi_do_ppp_delete(struct pppapi_msg_msg *msg)
+pppapi_do_ppp_free(struct pppapi_msg_msg *msg)
 {
-  msg->err = ppp_delete(msg->ppp);
+  msg->err = ppp_free(msg->ppp);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_delete() in a thread-safe way by running that function inside the
+ * Call ppp_free() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
 int
-pppapi_delete(ppp_pcb *pcb)
+pppapi_free(ppp_pcb *pcb)
 {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_delete;
+  msg.function = pppapi_do_ppp_free;
   msg.msg.ppp = pcb;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;

@@ -136,7 +136,7 @@ ppp_pcb *pppapi_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_ad
 int pppapi_open(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
-int pppapi_delete(ppp_pcb *pcb);
+int pppapi_free(ppp_pcb *pcb);
 int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 #if LWIP_NETIF_STATUS_CALLBACK
 void pppapi_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
