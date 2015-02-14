@@ -366,7 +366,7 @@ struct ppp_pcb_s {
   void (*notify_phase_cb)(ppp_pcb *pcb, u8_t phase, void *ctx);   /* Notify phase callback */
 #endif /* PPP_NOTIFY_PHASE */
   void *ctx_cb;                  /* Callbacks optional pointer */
-  struct netif netif;            /* PPP interface */
+  struct netif *netif;           /* PPP interface */
 
   /* -- below are data that will be cleared between two sessions */
 
@@ -478,7 +478,7 @@ struct ppp_pcb_s {
  * Return a new PPP connection control block pointer
  * on success or a null pointer on failure.
  */
-ppp_pcb *ppp_new(void);
+ppp_pcb *ppp_new(struct netif *pppif);
 
 /*
  * Set a PPP interface as the default network interface
@@ -625,7 +625,7 @@ void pppos_input(ppp_pcb *pcb, u_char* data, int len);
 #endif /* PPPOS_SUPPORT */
 
 /* Get the PPP netif interface */
-#define ppp_netif(ppp)               (&(ppp)->netif)
+#define ppp_netif(ppp)               (ppp->netif)
 
 /* Get the PPP addresses */
 #define ppp_addrs(ppp)               (&(ppp)->addrs)

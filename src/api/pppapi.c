@@ -44,7 +44,7 @@
 static void
 pppapi_do_ppp_new(struct pppapi_msg_msg *msg)
 {
-  msg->ppp = ppp_new();
+  msg->ppp = ppp_new(msg->msg.pppnew.pppif);
   TCPIP_PPPAPI_ACK(msg);
 }
 
@@ -53,10 +53,11 @@ pppapi_do_ppp_new(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_new(void)
+pppapi_new(struct netif *pppif)
 {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_new;
+  msg.msg.msg.pppnew.pppif = pppif;
   TCPIP_PPPAPI(&msg);
   return msg.msg.ppp;
 }

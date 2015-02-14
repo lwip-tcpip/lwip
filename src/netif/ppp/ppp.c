@@ -237,7 +237,7 @@ int ppp_init(void) {
 }
 
 /* Create a new PPP session. */
-ppp_pcb *ppp_new(void) {
+ppp_pcb *ppp_new(struct netif *pppif) {
   ppp_pcb *pcb;
 
   pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
@@ -287,7 +287,8 @@ ppp_pcb *ppp_new(void) {
   pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
   pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
-  if (!netif_add(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+  pcb->netif = pppif;
+  if (!netif_add(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
     memp_free(MEMP_PPP_PCB, pcb);
     PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
@@ -299,7 +300,7 @@ ppp_pcb *ppp_new(void) {
 }
 
 void ppp_set_default(ppp_pcb *pcb) {
-  netif_set_default(&pcb->netif);
+  netif_set_default(pcb->netif);
 }
 
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
@@ -579,7 +580,7 @@ int ppp_delete(ppp_pcb *pcb) {
 
   PPPDEBUG(LOG_DEBUG, ("ppp_delete: unit %d\n", pcb->num));
 
-  netif_remove(&pcb->netif);
+  netif_remove(pcb->netif);
   if( (err = ppp_free(pcb)) != PPPERR_NONE) {
     return err;
   }
@@ -683,8 +684,8 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   }
 
   LINK_STATS_INC(link.recv);
-  snmp_inc_ifinucastpkts(&pcb->netif);
-  snmp_add_ifinoctets(&pcb->netif, pb->tot_len);
+  snmp_inc_ifinucastpkts(pcb->netif);
+  snmp_add_ifinoctets(pcb->netif, pb->tot_len);
 
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
@@ -730,7 +731,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        * pass the result to IP.
        */
       if (vj_uncompress_tcp(&pb, &pcb->vj_comp) >= 0) {
-        ip_input(pb, &pcb->netif);
+        ip_input(pb, pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -744,7 +745,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        * the packet to IP.
        */
       if (vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0) {
-        ip_input(pb, &pcb->netif);
+        ip_input(pb, pcb->netif);
         return;
       }
       /* Something's wrong so drop it. */
@@ -754,13 +755,13 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->num, pb->len));
-      ip_input(pb, &pcb->netif);
+      ip_input(pb, pcb->netif);
       return;
 
 #if PPP_IPV6_SUPPORT
     case PPP_IPV6:          /* Internet Protocol Version 6 */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->num, pb->len));
-      ip6_input(pb, &pcb->netif);
+      ip6_input(pb, pcb->netif);
       return;
 #endif /* PPP_IPV6_SUPPORT */
 
@@ -814,7 +815,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&pcb->netif);
+  snmp_inc_ifindiscards(pcb->netif);
 
 out:
   pbuf_free(pb);
@@ -954,14 +955,14 @@ pppos_put(ppp_pcb *pcb, struct pbuf *nb)
                ("PPP pppos_put: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pcb->fd, b->len, c, c));
       LINK_STATS_INC(link.err);
       pcb->last_xmit = 0; /* prepend PPP_FLAG to next packet */
-      snmp_inc_ifoutdiscards(&pcb->netif);
+      snmp_inc_ifoutdiscards(pcb->netif);
       pbuf_free(nb);
       return;
     }
   }
 
-  snmp_add_ifoutoctets(&pcb->netif, nb->tot_len);
-  snmp_inc_ifoutucastpkts(&pcb->netif);
+  snmp_add_ifoutoctets(pcb->netif, nb->tot_len);
+  snmp_inc_ifoutucastpkts(pcb->netif);
   pbuf_free(nb);
   LINK_STATS_INC(link.xmit);
 }
@@ -1083,7 +1084,7 @@ static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short
     PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: first alloc fail\n", pcb->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return ERR_MEM;
   }
 
@@ -1108,7 +1109,7 @@ static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short
         PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad IP packet\n", pcb->num));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
-        snmp_inc_ifoutdiscards(&pcb->netif);
+        snmp_inc_ifoutdiscards(pcb->netif);
         pbuf_free(head);
         return ERR_VAL;
     }
@@ -1171,7 +1172,7 @@ static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short
     pbuf_free(head);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return ERR_MEM;
   }
 
@@ -1197,7 +1198,7 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return ERR_MEM;
   }
 
@@ -1217,12 +1218,12 @@ static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_shor
 
   if( (err = pppoe_xmit(pcb->pppoe_sc, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return err;
   }
 
-  snmp_add_ifoutoctets(&pcb->netif, tot_len);
-  snmp_inc_ifoutucastpkts(&pcb->netif);
+  snmp_add_ifoutoctets(pcb->netif, tot_len);
+  snmp_inc_ifoutucastpkts(pcb->netif);
   LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
@@ -1243,7 +1244,7 @@ static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short pr
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return ERR_MEM;
   }
 
@@ -1263,12 +1264,12 @@ static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short pr
 
   if( (err = pppol2tp_xmit(pcb->l2tp_pcb, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return err;
   }
 
-  snmp_add_ifoutoctets(&pcb->netif, tot_len);
-  snmp_inc_ifoutucastpkts(&pcb->netif);
+  snmp_add_ifoutoctets(pcb->netif, tot_len);
+  snmp_inc_ifoutucastpkts(pcb->netif);
   LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
@@ -1375,7 +1376,7 @@ static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
   if (head == NULL) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     pbuf_free(p);
     return PPPERR_ALLOC;
   }
@@ -1417,7 +1418,7 @@ static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
     pbuf_free(head);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     pbuf_free(p);
     return PPPERR_ALLOC;
   }
@@ -1444,7 +1445,7 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
   if(!ph) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     pbuf_free(p);
     return PPPERR_ALLOC;
   }
@@ -1459,12 +1460,12 @@ static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
 
   if(pppoe_xmit(pcb->pppoe_sc, ph) != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return PPPERR_DEVICE;
   }
 
-  snmp_add_ifoutoctets(&pcb->netif, (u16_t)tot_len);
-  snmp_inc_ifoutucastpkts(&pcb->netif);
+  snmp_add_ifoutoctets(pcb->netif, (u16_t)tot_len);
+  snmp_inc_ifoutucastpkts(pcb->netif);
   LINK_STATS_INC(link.xmit);
   return PPPERR_NONE;
 }
@@ -1481,7 +1482,7 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
   if(!ph) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     pbuf_free(p);
     return PPPERR_ALLOC;
   }
@@ -1496,12 +1497,12 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
 
   if(pppol2tp_xmit(pcb->l2tp_pcb, ph) != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(&pcb->netif);
+    snmp_inc_ifoutdiscards(pcb->netif);
     return PPPERR_DEVICE;
   }
 
-  snmp_add_ifoutoctets(&pcb->netif, (u16_t)tot_len);
-  snmp_inc_ifoutucastpkts(&pcb->netif);
+  snmp_add_ifoutoctets(pcb->netif, (u16_t)tot_len);
+  snmp_inc_ifoutucastpkts(pcb->netif);
   LINK_STATS_INC(link.xmit);
   return PPPERR_NONE;
 }
@@ -1545,7 +1546,7 @@ ppp_drop(ppp_pcb_rx *pcrx)
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&pcb->netif);
+  snmp_inc_ifindiscards(pcb->netif);
 }
 
 /** PPPoS input helper struct, must be packed since it is stored
@@ -1650,7 +1651,7 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", pcb->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
-            snmp_inc_ifindiscards(&pcb->netif);
+            snmp_inc_ifindiscards(pcb->netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
           ppp_input(pcb, inp);
@@ -1813,7 +1814,7 @@ static void pppos_input_callback(void *arg) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(&pcb->netif);
+  snmp_inc_ifindiscards(pcb->netif);
   pbuf_free(pb);
 }
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -1992,7 +1993,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 void
 ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
 {
-  netif_set_status_callback(&pcb->netif, status_callback);
+  netif_set_status_callback(pcb->netif, status_callback);
 }
 #endif /* LWIP_NETIF_STATUS_CALLBACK */
 
@@ -2007,7 +2008,7 @@ ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callb
 void
 ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
 {
-  netif_set_link_callback(&pcb->netif, link_callback);
+  netif_set_link_callback(pcb->netif, link_callback);
 }
 #endif /* LWIP_NETIF_LINK_CALLBACK */
 
@@ -2194,10 +2195,10 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
  */
 int sifup(ppp_pcb *pcb) {
 
-  netif_set_addr(&pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+  netif_set_addr(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr);
 
-  netif_set_up(&pcb->netif);
+  netif_set_up(pcb->netif);
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
 
@@ -2225,7 +2226,7 @@ int sifdown(ppp_pcb *pcb) {
 #endif /* PPP_IPV6_SUPPORT */
   ) {
     /* make sure the netif status callback is called */
-    netif_set_down(&pcb->netif);
+    netif_set_down(pcb->netif);
   }
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   return 1;
@@ -2237,10 +2238,10 @@ int sifdown(ppp_pcb *pcb) {
  */
 int sif6up(ppp_pcb *pcb) {
 
-  ip6_addr_copy(pcb->netif.ip6_addr[0], pcb->addrs.our6_ipaddr);
-  netif_ip6_addr_set_state(&pcb->netif, 0, IP6_ADDR_PREFERRED);
+  ip6_addr_copy(pcb->netif->ip6_addr[0], pcb->addrs.our6_ipaddr);
+  netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
 
-  netif_set_up(&pcb->netif);
+  netif_set_up(pcb->netif);
   pcb->if6_up = 1;
   pcb->err_code = PPPERR_NONE;
 
@@ -2263,7 +2264,7 @@ int sif6down(ppp_pcb *pcb) {
   /* set the interface down if IPv4 is down as well */
   if (!pcb->if_up) {
     /* make sure the netif status callback is called */
-    netif_set_down(&pcb->netif);
+    netif_set_down(pcb->netif);
   }
   PPPDEBUG(LOG_DEBUG, ("sif6down: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
   return 1;
@@ -2285,7 +2286,7 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
  */
 void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
-  pcb->netif.mtu = mtu;
+  pcb->netif->mtu = mtu;
 }
 
 /*
@@ -2293,7 +2294,7 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu) {
  */
 int netif_get_mtu(ppp_pcb *pcb) {
 
-  return pcb->netif.mtu;
+  return pcb->netif->mtu;
 }
 
 /********************************************************************

@@ -47,6 +47,9 @@ struct pppapi_msg_msg {
   ppp_pcb *ppp;
   union {
     struct {
+      struct netif *pppif;
+    } pppnew;
+    struct {
       u8_t authtype;
       const char *user;
       const char *passwd;
@@ -111,7 +114,7 @@ struct pppapi_msg {
 };
 
 /* API for application */
-ppp_pcb *pppapi_new(void);
+ppp_pcb *pppapi_new(struct netif *pppif);
 void pppapi_set_default(ppp_pcb *pcb);
 void pppapi_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 #if PPP_NOTIFY_PHASE
