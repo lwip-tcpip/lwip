@@ -371,27 +371,9 @@ ppp_close(ppp_pcb *pcb)
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
 
   /* Disconnect */
-#if PPPOE_SUPPORT
-  if (pcb->pppoe_sc) {
-    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PPP_PHASE_DEAD. */
-    ppp_stop(pcb);
-  } else
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-  if (pcb->l2tp_pcb) {
-    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PPP_PHASE_DEAD. */
-    ppp_stop(pcb);
-  } else
-#endif /* PPPOL2TP_SUPPORT */
-  {
-#if PPPOS_SUPPORT
-    PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-    /* This will leave us at PPP_PHASE_DEAD. */
-    ppp_stop(pcb);
-#endif /* PPPOS_SUPPORT */
-  }
+  PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
+  /* This will leave us at PPP_PHASE_DEAD. */
+  ppp_stop(pcb);
 
   return st;
 }
