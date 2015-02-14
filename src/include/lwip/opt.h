@@ -884,7 +884,7 @@
  * Set this to 1 to enable support for dedicated write-access and trap communities.
  */
 #ifndef SNMP_COMMUNITY_EXT
-#define SNMP_COMMUNITY_EXT
+#define SNMP_COMMUNITY_EXT              0
 #endif
 
 #if SNMP_COMMUNITY_EXT
