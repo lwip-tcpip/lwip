@@ -109,7 +109,7 @@ snmp_init(void)
 const char *
 snmp_get_community(void)
 {
-	return snmp_community;
+  return snmp_community;
 }
 
 /**
@@ -122,8 +122,8 @@ snmp_get_community(void)
 void
 snmp_set_community(const char * const community)
 {
-	LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
-	snmp_community = community;
+  LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
+  snmp_community = community;
 }
 
 static void
