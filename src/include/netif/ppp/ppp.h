@@ -473,7 +473,7 @@ struct ppp_pcb_s {
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */
-void ppp_set_default(ppp_pcb *pcb);
+#define ppp_set_default(ppp)         netif_set_default(ppp->netif)
 
 /*
  * Set auth helper, optional, you can either fill ppp_pcb->settings.

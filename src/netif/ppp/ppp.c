@@ -237,10 +237,6 @@ int ppp_init(void) {
     return 0;
 }
 
-void ppp_set_default(ppp_pcb *pcb) {
-  netif_set_default(pcb->netif);
-}
-
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 
 #if PAP_SUPPORT
