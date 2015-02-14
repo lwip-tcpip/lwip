@@ -99,6 +99,12 @@ struct snmp_obj_id
 
 const char * snmp_get_community(void);
 void snmp_set_community(const char * const community);
+#if SNMP_COMMUNITY_EXT
+const char * snmp_get_community_write(void);
+const char * snmp_get_community_trap(void);
+void snmp_set_community_write(const char * const community);
+void snmp_set_community_trap(const char * const community);
+#endif /* SNMP_COMMUNITY_EXT
 
 /* system */
 void snmp_set_sysdescr(const u8_t* str, const u8_t* len);

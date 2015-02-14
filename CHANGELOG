@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-14: Simon Goldschmidt
+  * opt.h, snmp*: added support for write-access community and dedicated
+    community for sending traps
+
   2015-02-13: Simon Goldschmidt
   * opt.h, memp.c: added hook LWIP_HOOK_MEMP_AVAILABLE() to get informed when
     a memp pool was empty and an item is now available
@@ -179,7 +183,7 @@ HISTORY
 
   ++ Bugfixes:
 
-  2015-02-15: patches by Freddie Chopin
+  2015-02-14: patches by Freddie Chopin
   * snmp*: made community writable, fixed some const pointers
 
   2015-02-13: Simon Goldschmidt

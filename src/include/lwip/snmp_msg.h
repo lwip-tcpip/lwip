@@ -284,6 +284,12 @@ struct snmp_msg_trap
 extern const s32_t snmp_version;
 /** Agent community string */
 extern const char *snmp_community;
+#if SNMP_COMMUNITY_EXT
+/** Agent community string for write access */
+extern const char *snmp_community_write;
+/** Agent community string for sending traps */
+extern const char *snmp_community_trap;
+#endif /* SNMP_COMMUNITY_EXT */
 
 extern struct snmp_msg_trap trap_msg;
 

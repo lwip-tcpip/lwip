@@ -51,7 +51,13 @@
 /** SNMP v1 == 0 */
 const s32_t snmp_version = 0;
 /** SNMP community string */
-const char *snmp_community = "public";
+const char *snmp_community = SNMP_COMMUNITY;
+#if SNMP_COMMUNITY_EXT
+/** SNMP community string for write access */
+const char *snmp_community_write = SNMP_COMMUNITY_WRITE;
+/** SNMP community string for sending traps */
+const char *snmp_community_trap = SNMP_COMMUNITY_TRAP;
+#endif /* SNMP_COMMUNITY_EXT */
 
 /* statically allocated buffers for SNMP_CONCURRENT_REQUESTS */
 struct snmp_msg_pstat msg_input_list[SNMP_CONCURRENT_REQUESTS];
@@ -125,6 +131,56 @@ snmp_set_community(const char * const community)
   LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
   snmp_community = community;
 }
+
+#if SNMP_COMMUNITY_EXT
+/**
+ * Returns current SNMP write-access community string.
+ * @return current SNMP write-access community string
+ */
+const char *
+snmp_get_community_write(void)
+{
+  return snmp_community_write;
+}
+
+/**
+ * Returns current SNMP community string used for sending traps.
+ * @return current SNMP community string used for sending traps
+ */
+const char *
+snmp_get_community_trap(void)
+{
+  return snmp_community_trap;
+}
+
+/**
+ * Sets SNMP community string for write-access.
+ * The string itself (its storage) must be valid throughout the whole life of
+ * program (or until it is changed to sth else).
+ *
+ * @param community is a pointer to new write-access community string
+ */
+void
+snmp_set_community_write(const char * const community)
+{
+  LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
+  snmp_community_write = community;
+}
+
+/**
+ * Sets SNMP community string used for sending traps.
+ * The string itself (its storage) must be valid throughout the whole life of
+ * program (or until it is changed to sth else).
+ *
+ * @param community is a pointer to new trap community string
+ */
+void
+snmp_set_community_trap(const char * const community)
+{
+  LWIP_ASSERT("community string is too long!", strlen(community) <= SNMP_COMMUNITY_STR_LEN);
+  snmp_community_trap = community;
+}
+#endif /* SNMP_COMMUNITY_EXT */
 
 static void
 snmp_error_response(struct snmp_msg_pstat *msg_ps, u8_t error)
@@ -998,15 +1054,29 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
   len = ((len < (SNMP_COMMUNITY_STR_LEN))?(len):(SNMP_COMMUNITY_STR_LEN));
   m_stat->community[len] = 0;
   m_stat->com_strlen = (u8_t)len;
-  if (strncmp(snmp_community, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
-  {
-    /** @todo: move this if we need to check more names */
-    snmp_inc_snmpinbadcommunitynames();
-    snmp_authfail_trap();
-    return ERR_ARG;
-  }
   ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
+#if SNMP_COMMUNITY_EXT
+  if (strncmp(snmp_community_write, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
+  {
+    /* community does not match the write-access community, check if this is a SetRequest */
+    if (type == (SNMP_ASN1_CONTXT | SNMP_ASN1_CONSTR | SNMP_ASN1_PDU_SET_REQ))
+    {
+      /* wrong community for SetRequest PDU */
+      snmp_inc_snmpinbadcommunitynames();
+      snmp_authfail_trap();
+      return ERR_ARG;
+    }
+#else /* SNMP_COMMUNITY_EXT */
+  {
+#endif /* SNMP_COMMUNITY_EXT */
+    if (strncmp(snmp_community, (const char*)m_stat->community, SNMP_COMMUNITY_STR_LEN) != 0)
+    {
+      snmp_inc_snmpinbadcommunitynames();
+      snmp_authfail_trap();
+      return ERR_ARG;
+    }
+  }
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);
   if (derr != ERR_OK)
   {

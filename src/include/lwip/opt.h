@@ -872,6 +872,37 @@
 #define SNMP_MAX_VALUE_SIZE             LWIP_MAX((SNMP_MAX_OCTET_STRING_LEN)+1, sizeof(s32_t)*(SNMP_MAX_TREE_DEPTH))
 #endif
 
+/**
+ * The snmp read-access community. Used for write-access and traps, too
+ * unless SNMP_COMMUNITY_WRITE or SNMP_COMMUNITY_TRAP are enabled, respectively.
+ */
+#ifndef SNMP_COMMUNITY
+#define SNMP_COMMUNITY                  "public"
+#endif
+
+/**
+ * Set this to 1 to enable support for dedicated write-access and trap communities.
+ */
+#ifndef SNMP_COMMUNITY_EXT
+#define SNMP_COMMUNITY_EXT
+#endif
+
+#if SNMP_COMMUNITY_EXT
+/**
+ * The snmp write-access community.
+ */
+#ifndef SNMP_COMMUNITY_WRITE
+#define SNMP_COMMUNITY_WRITE            "private"
+#endif
+
+/**
+ * The snmp community used for sending traps.
+ */
+#ifndef SNMP_COMMUNITY_TRAP
+#define SNMP_COMMUNITY_TRAP             "public"
+#endif
+#endif /* SNMP_COMMUNITY_EXT */
+
 /*
    ----------------------------------
    ---------- IGMP options ----------
