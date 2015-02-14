@@ -364,11 +364,11 @@ struct pppd_stats {
 
 /* PPP functions
  */
-/* Create a new PPP control block */
-ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-
 /* initialize the PPP subsystem */
 int ppp_init(void);
+
+/* Create a new PPP control block */
+ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);
