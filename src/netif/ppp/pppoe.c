@@ -138,7 +138,6 @@ static struct pppoe_softc *pppoe_softc_list;
 
 ppp_pcb*
 pppoe_create(struct netif *pppif,
-             void (*link_status_cb_ll)(ppp_pcb *pcb, int up),
              struct netif *ethif,
              ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
@@ -161,7 +160,6 @@ pppoe_create(struct netif *pppif,
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
 
   sc->pcb = ppp;
-  sc->sc_link_status_cb = link_status_cb_ll;
   sc->sc_ethif = ethif;
 
   /* put the new interface at the head of the list */
@@ -270,12 +268,6 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
     return NULL;
   }
   return sc;
-}
-
-static void
-pppoe_linkstatus_up(struct pppoe_softc *sc)
-{
-  sc->sc_link_status_cb(sc->pcb, PPPOE_CB_STATE_UP);
 }
 
 /* analyze and handle a single received packet while not in session state */
@@ -485,7 +477,7 @@ breakbreak:;
       }
       pppoe_send_pads(sc);
       sc->sc_state = PPPOE_STATE_SESSION;
-      pppoe_linkstatus_up(sc); /* notify upper layers */
+      ppp_start(sc->pcb); /* notify upper layers */
       break;
 #else
       /* ignore, we are no access concentrator */
@@ -524,7 +516,7 @@ breakbreak:;
       sys_untimeout(pppoe_timeout, sc);
       PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": session 0x%x connected\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, session));
       sc->sc_state = PPPOE_STATE_SESSION;
-      pppoe_linkstatus_up(sc); /* notify upper layers */
+      ppp_start(sc->pcb); /* notify upper layers */
       break;
     case PPPOE_CODE_PADT:
       if (sc == NULL) {
@@ -852,7 +844,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
 
-  sc->sc_link_status_cb(sc->pcb, PPPOE_CB_STATE_DOWN); /* notify upper layers */
+  ppp_link_end(sc->pcb); /* notify upper layers */
   return;
 }
 
@@ -870,7 +862,7 @@ pppoe_abort_connect(struct pppoe_softc *sc)
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
 
-  sc->sc_link_status_cb(sc->pcb, PPPOE_CB_STATE_FAILED); /* notify upper layers */
+  ppp_link_failed(sc->pcb); /* notify upper layers */
 }
 
 /* Send a PADR packet */
@@ -1109,7 +1101,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_state = PPPOE_STATE_INITIAL;
 
   /* notify upper layers */
-  sc->sc_link_status_cb(sc->pcb, PPPOE_CB_STATE_DOWN);
+  ppp_link_end(sc->pcb);
 
   /* clean up softc */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));

@@ -112,10 +112,6 @@ PACK_STRUCT_END
 /* passive */
 #define PPPOE_STATE_PADO_SENT 1
 
-#define PPPOE_CB_STATE_UP       0 /* PPPoE link is UP */
-#define PPPOE_CB_STATE_DOWN     1 /* PPPoE link is DOWN - normal condition */
-#define PPPOE_CB_STATE_FAILED   2 /* Failed to setup PPPoE link */
-
 #define PPPOE_HEADERLEN       sizeof(struct pppoehdr)
 #define PPPOE_VERTYPE         0x11    /* VER=1, TYPE = 1 */
 
@@ -144,7 +140,6 @@ struct pppoe_softc {
   struct pppoe_softc *next;
   struct netif *sc_ethif;      /* ethernet interface we are using */
   ppp_pcb *pcb;                /* PPP PCB */
-  void (*sc_link_status_cb)(ppp_pcb *pcb, int up);
 
   struct eth_addr sc_dest;     /* hardware address of concentrator */
   u16_t sc_session;            /* PPPoE session id */
@@ -168,7 +163,6 @@ struct pppoe_softc {
 #define pppoe_init() /* compatibility define, no initialization needed */
 
 ppp_pcb *pppoe_create(struct netif *pppif,
-                      void (*link_status_cb_ll)(ppp_pcb *pcb, int up),
                       struct netif *ethif,
                       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 err_t pppoe_destroy(struct pppoe_softc *sc);

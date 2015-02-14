@@ -185,7 +185,6 @@ const struct protent* const protocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_clear(ppp_pcb *pcb);
 static void ppp_do_open(void *arg);
-static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
 
@@ -252,23 +251,19 @@ void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
-
 ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
-  return pppoe_create(pppif, ppp_over_ethernet_link_status_cb, ethif, link_status_cb, ctx_cb);
+  return pppoe_create(pppif, ethif, link_status_cb, ctx_cb);
 }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
-static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
-
 ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  return pppol2tp_create(pppif, ppp_over_l2tp_link_status_cb, netif, ipaddr, port, secret, secret_len, link_status_cb, ctx_cb);
+  return pppol2tp_create(pppif, netif, ipaddr, port, secret, secret_len, link_status_cb, ctx_cb);
 }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -598,11 +593,24 @@ static void ppp_do_open(void *arg) {
 }
 
 /** Initiate LCP open request */
-static void ppp_start(ppp_pcb *pcb) {
+void ppp_start(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->num));
   lcp_open(pcb); /* Start protocol */
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start: finished\n"));
+}
+
+/** Called when link failed to setup */
+void ppp_link_failed(ppp_pcb *pcb) {
+  PPPDEBUG(LOG_DEBUG, ("ppp_failed: unit %d\n", pcb->num));
+  new_phase(pcb, PPP_PHASE_DEAD);
+  pcb->link_status_cb(pcb, PPPERR_OPEN, pcb->ctx_cb);
+}
+
+/** Called when link is normally down (i.e. it was asked to end) */
+void ppp_link_end(ppp_pcb *pcb) {
+  PPPDEBUG(LOG_DEBUG, ("ppp_end: unit %d\n", pcb->num));
+  pcb->link_status_cb(pcb, PPPERR_CONNECT, pcb->ctx_cb);
 }
 
 /** LCP close request */
@@ -1800,37 +1808,6 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 }
 
 #if PPPOE_SUPPORT
-static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state) {
-  int pppoe_err_code = PPPERR_NONE;
-
-  switch(state) {
-
-    /* PPPoE link is established, starting PPP negotiation */
-    case PPPOE_CB_STATE_UP:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: UP, connecting\n", pcb->num));
-      ppp_start(pcb);
-      return;
-
-    /* PPPoE link normally down (i.e. asked to do so) */
-    case PPPOE_CB_STATE_DOWN:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: DOWN, disconnected\n", pcb->num));
-      pppoe_err_code = PPPERR_CONNECT;
-      break;
-
-    /* PPPoE link failed to setup (i.e. PADI/PADO timeout) */
-    case PPPOE_CB_STATE_FAILED:
-      PPPDEBUG(LOG_INFO, ("ppp_over_ethernet_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
-      pppoe_err_code = PPPERR_OPEN;
-      new_phase(pcb, PPP_PHASE_DEAD);
-      break;
-
-    default:
-      break;
-  }
-
-  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppoe_err_code, pcb->ctx_cb);
-}
-
 static void ppp_over_ethernet_open(ppp_pcb *pcb) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;
@@ -1853,37 +1830,6 @@ static void ppp_over_ethernet_open(ppp_pcb *pcb) {
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
-static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state) {
-  int pppol2tp_err_code = PPPERR_NONE;
-
-  switch(state) {
-
-    /* PPPoL2TP link is established, starting PPP negotiation */
-    case PPPOL2TP_CB_STATE_UP:
-      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: UP, connecting\n", pcb->num));
-      ppp_start(pcb);
-      return;
-
-    /* PPPoL2TP link normally down (i.e. asked to do so) */
-    case PPPOL2TP_CB_STATE_DOWN:
-      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: DOWN, disconnected\n", pcb->num));
-      pppol2tp_err_code = PPPERR_CONNECT;
-      break;
-
-    /* PPPoL2TP link failed to setup (i.e. L2TP timeout) */
-    case PPPOL2TP_CB_STATE_FAILED:
-      PPPDEBUG(LOG_INFO, ("ppp_over_l2tp_link_status_cb: unit %d: FAILED, aborting\n", pcb->num));
-      pppol2tp_err_code = PPPERR_OPEN;
-      new_phase(pcb, PPP_PHASE_DEAD);
-      break;
-
-    default:
-      break;
-  }
-
-  pcb->link_status_cb(pcb, pcb->err_code ? pcb->err_code : pppol2tp_err_code, pcb->ctx_cb);
-}
-
 static void ppp_over_l2tp_open(ppp_pcb *pcb) {
 
   lcp_options *wo = &pcb->lcp_wantoptions;

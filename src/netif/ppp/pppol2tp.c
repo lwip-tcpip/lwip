@@ -88,7 +88,6 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-                      void (*link_status_cb_ll)(ppp_pcb *pcb, int status),
                       struct netif *netif, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
                       ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *ppp;
@@ -118,7 +117,6 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
   l2tp->ppp = ppp;
   l2tp->udp = udp;
-  l2tp->link_status_cb = link_status_cb_ll;
   l2tp->netif = netif;
   ip_addr_set(&l2tp->remote_ip, ipaddr);
   l2tp->remote_port = port;
@@ -188,7 +186,7 @@ void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
 
   pppol2tp_clear(l2tp);
-  l2tp->link_status_cb(l2tp->ppp, PPPOL2TP_CB_STATE_DOWN); /* notify upper layers */
+  ppp_link_end(l2tp->ppp); /* notify upper layers */
 }
 
 /* UDP Callback for incoming L2TP frames */
@@ -523,7 +521,7 @@ nextavp:
       l2tp->iccn_retried = 0;
       l2tp->phase = PPPOL2TP_STATE_ICCN_SENT;
       l2tp->our_ns++;
-      l2tp->link_status_cb(l2tp->ppp, PPPOL2TP_CB_STATE_UP); /* notify upper layers */
+      ppp_start(l2tp->ppp); /* notify upper layers */
       if ((err = pppol2tp_send_iccn(l2tp, l2tp->our_ns)) != 0) {
         PPPDEBUG(LOG_DEBUG, ("pppol2tp: failed to send ICCN, error=%d\n", err));
       }
@@ -615,7 +613,7 @@ static void pppol2tp_timeout(void *arg) {
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp) {
   PPPDEBUG(LOG_DEBUG, ("pppol2tp: could not establish connection\n"));
   pppol2tp_clear(l2tp);
-  l2tp->link_status_cb(l2tp->ppp, PPPOL2TP_CB_STATE_FAILED); /* notify upper layers */
+  ppp_link_failed(l2tp->ppp); /* notify upper layers */
 }
 
 /* Reset L2TP control block to its initial state */

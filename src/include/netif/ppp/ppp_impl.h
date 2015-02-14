@@ -370,6 +370,15 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
 /* initialize the PPP subsystem */
 int ppp_init(void);
 
+/* Initiate LCP open request */
+void ppp_start(ppp_pcb *pcb);
+
+/* Called when link failed to setup */
+void ppp_link_failed(ppp_pcb *pcb);
+
+/* Called when link is normally down (i.e. it was asked to end) */
+void ppp_link_end(ppp_pcb *pcb);
+
 /* function called by pppoe.c */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
 

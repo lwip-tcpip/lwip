@@ -155,10 +155,6 @@
 #define PPPOL2TP_STATE_ICCN_SENT   3
 #define PPPOL2TP_STATE_DATA        4
 
-#define PPPOL2TP_CB_STATE_UP       0 /* PPPoL2TP link is UP */
-#define PPPOL2TP_CB_STATE_DOWN     1 /* PPPo2TP link is DOWN - normal condition */
-#define PPPOL2TP_CB_STATE_FAILED   2 /* Failed to setup PPPo2TP link */
-
 #define PPPOL2TP_OUTPUT_DATA_HEADER_LEN   6 /* Our data header len */
 
 /*
@@ -168,7 +164,6 @@ typedef struct pppol2tp_pcb_s pppol2tp_pcb;
 struct pppol2tp_pcb_s {
   ppp_pcb *ppp;                /* PPP PCB */
   u8_t phase;                  /* L2TP phase */
-  void (*link_status_cb)(ppp_pcb *pcb, int status);
   struct udp_pcb *udp;         /* UDP L2TP Socket */
   struct netif *netif;         /* Output interface, used as a default route */
   ip_addr_t remote_ip;         /* LNS IP Address */
@@ -198,7 +193,6 @@ struct pppol2tp_pcb_s {
 
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-                      void (*link_status_cb_ll)(ppp_pcb *pcb, int status),
                       struct netif *netif, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
                       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
