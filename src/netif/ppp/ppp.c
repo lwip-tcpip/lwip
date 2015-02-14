@@ -183,7 +183,7 @@ const struct protent* const protocols[] = {
 };
 
 /* Prototypes for procedures local to this file. */
-static ppp_pcb *ppp_new(struct netif *pppif);
+static ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 static void ppp_clear(ppp_pcb *pcb);
 static void ppp_do_open(void *arg);
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
@@ -229,20 +229,12 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
 
-  /* PPP is single-threaded: without a callback,
-   * there is no way to know when the link is up. */
-  if (link_status_cb == NULL) {
-    return NULL;
-  }
-
-  pcb = ppp_new(pppif);
+  pcb = ppp_new(pppif, link_status_cb, ctx_cb);
   if (pppif == NULL) {
     return NULL;
   }
 
   pcb->fd = fd;
-  pcb->link_status_cb = link_status_cb;
-  pcb->ctx_cb = ctx_cb;
   return pcb;
 }
 
@@ -270,19 +262,10 @@ ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, cons
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
-  /* PPP is single-threaded: without a callback,
-   * there is no way to know when the link is up. */
-  if (link_status_cb == NULL) {
-    return NULL;
-  }
-
-  pcb = ppp_new(pppif);
+  pcb = ppp_new(pppif, link_status_cb, ctx_cb);
   if (pppif == NULL) {
     return NULL;
   }
-
-  pcb->link_status_cb  = link_status_cb;
-  pcb->ctx_cb = ctx_cb;
 
   if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
     ppp_free(pcb);
@@ -301,19 +284,10 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
 
-  /* PPP is single-threaded: without a callback,
-   * there is no way to know when the link is up. */
-  if (link_status_cb == NULL) {
-    return NULL;
-  }
-
-  pcb = ppp_new(pppif);
+  pcb = ppp_new(pppif, link_status_cb, ctx_cb);
   if (pppif == NULL) {
     return NULL;
   }
-
-  pcb->link_status_cb  = link_status_cb;
-  pcb->ctx_cb = ctx_cb;
 
   if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
     ppp_free(pcb);
@@ -531,8 +505,14 @@ int ppp_init(void) {
  * Return a new PPP connection control block pointer
  * on success or a null pointer on failure.
  */
-static ppp_pcb *ppp_new(struct netif *pppif) {
+static ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
+
+  /* PPP is single-threaded: without a callback,
+   * there is no way to know when the link is up. */
+  if (link_status_cb == NULL) {
+    return NULL;
+  }
 
   pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
   if (pcb == NULL) {
@@ -589,6 +569,8 @@ static ppp_pcb *ppp_new(struct netif *pppif) {
     return NULL;
   }
 
+  pcb->link_status_cb = link_status_cb;
+  pcb->ctx_cb = ctx_cb;
   new_phase(pcb, PPP_PHASE_DEAD);
   return pcb;
 }
