@@ -225,57 +225,6 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
 
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
-
-#if PAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_PAP) {
-    pcb->settings.refuse_pap = 0;
-  } else {
-    pcb->settings.refuse_pap = 1;
-  }
-#endif /* PAP_SUPPORT */
-
-#if CHAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_CHAP) {
-    pcb->settings.refuse_chap = 0;
-  } else {
-    pcb->settings.refuse_chap = 1;
-  }
-#if MSCHAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_MSCHAP) {
-    pcb->settings.refuse_mschap = 0;
-    pcb->settings.refuse_mschap_v2 = 0;
-  } else {
-    pcb->settings.refuse_mschap = 1;
-    pcb->settings.refuse_mschap_v2 = 1;
-  }
-#endif /* MSCHAP_SUPPORT */
-#endif /* CHAP_SUPPORT */
-
-#if EAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_EAP) {
-    pcb->settings.refuse_eap = 0;
-  } else {
-    pcb->settings.refuse_eap = 1;
-  }
-#endif /* EAP_SUPPORT */
-
-  if (user) {
-    pcb->settings.user = user;
-  }
-
-  if (passwd) {
-    pcb->settings.passwd = passwd;
-  }
-}
-
-#if PPP_NOTIFY_PHASE
-void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
-	pcb->notify_phase_cb = notify_phase_cb;
-	notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
-}
-#endif /* PPP_NOTIFY_PHASE */
-
 #if PPPOS_SUPPORT
 ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
@@ -374,6 +323,57 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
   return pcb;
 }
 #endif /* PPPOL2TP_SUPPORT */
+
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
+
+#if PAP_SUPPORT
+  if (authtype & PPPAUTHTYPE_PAP) {
+    pcb->settings.refuse_pap = 0;
+  } else {
+    pcb->settings.refuse_pap = 1;
+  }
+#endif /* PAP_SUPPORT */
+
+#if CHAP_SUPPORT
+  if (authtype & PPPAUTHTYPE_CHAP) {
+    pcb->settings.refuse_chap = 0;
+  } else {
+    pcb->settings.refuse_chap = 1;
+  }
+#if MSCHAP_SUPPORT
+  if (authtype & PPPAUTHTYPE_MSCHAP) {
+    pcb->settings.refuse_mschap = 0;
+    pcb->settings.refuse_mschap_v2 = 0;
+  } else {
+    pcb->settings.refuse_mschap = 1;
+    pcb->settings.refuse_mschap_v2 = 1;
+  }
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
+
+#if EAP_SUPPORT
+  if (authtype & PPPAUTHTYPE_EAP) {
+    pcb->settings.refuse_eap = 0;
+  } else {
+    pcb->settings.refuse_eap = 1;
+  }
+#endif /* EAP_SUPPORT */
+
+  if (user) {
+    pcb->settings.user = user;
+  }
+
+  if (passwd) {
+    pcb->settings.passwd = passwd;
+  }
+}
+
+#if PPP_NOTIFY_PHASE
+void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
+	pcb->notify_phase_cb = notify_phase_cb;
+	notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
+}
+#endif /* PPP_NOTIFY_PHASE */
 
 /*
  * Open a PPP connection.

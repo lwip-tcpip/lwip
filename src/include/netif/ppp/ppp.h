@@ -504,19 +504,6 @@ struct ppp_pcb_s {
 #define PPPAUTHTYPE_EAP    0x08
 #define PPPAUTHTYPE_ANY    0xff
 
-void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
-
-#if PPP_NOTIFY_PHASE
-/*
- * Set a PPP notify phase callback.
- *
- * This can be used for example to set a LED pattern depending on the
- * current phase of the PPP session.
- */
-typedef void (*ppp_notify_phase_cb_fn)(ppp_pcb *pcb, u8_t phase, void *ctx);
-void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
-#endif /* PPP_NOTIFY_PHASE */
-
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
@@ -550,6 +537,19 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
+
+void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
+
+#if PPP_NOTIFY_PHASE
+/*
+ * Set a PPP notify phase callback.
+ *
+ * This can be used for example to set a LED pattern depending on the
+ * current phase of the PPP session.
+ */
+typedef void (*ppp_notify_phase_cb_fn)(ppp_pcb *pcb, u8_t phase, void *ctx);
+void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb);
+#endif /* PPP_NOTIFY_PHASE */
 
 /*
  * Open a PPP connection.
