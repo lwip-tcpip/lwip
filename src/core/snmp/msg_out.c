@@ -218,7 +218,7 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
  * (sysObjectID) for specific traps.
  */
 err_t
-snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
+snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific_trap)
 {
   struct snmp_trap_dst *td;
   struct netif *dst_if;

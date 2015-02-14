@@ -139,7 +139,7 @@ snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed)
  * @param octets_needed points to the return value
  */
 void
-snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
+snmp_asn1_enc_oid_cnt(u8_t ident_len, const s32_t *ident, u16_t *octets_needed)
 {
   s32_t sub_id;
   u8_t cnt;
@@ -435,7 +435,7 @@ snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, s32_t value)
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
-snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, s32_t *ident)
+snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, const s32_t *ident)
 {
   u16_t plen, base;
   u8_t *msg_ptr;

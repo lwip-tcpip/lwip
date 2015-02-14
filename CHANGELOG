@@ -179,6 +179,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-15: patches by Freddie Chopin
+  * snmp*: made community writable, fixed some const pointers
+
   2015-02-13: Simon Goldschmidt
   * msg_in.c: fixed bug #22070 "MIB_OBJECT_WRITE_ONLY not implemented in SNMP"
 

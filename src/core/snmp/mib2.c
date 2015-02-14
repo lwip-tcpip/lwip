@@ -2022,7 +2022,7 @@ void snmp_inc_snmpouttraps(void)
   snmpouttraps++;
 }
 
-void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid)
+void snmp_get_snmpgrpid_ptr(const struct snmp_obj_id **oid)
 {
   *oid = &snmpgrp_id;
 }

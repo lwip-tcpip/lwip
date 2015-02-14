@@ -225,7 +225,7 @@ void snmp_inc_snmpoutgetnexts(void);
 void snmp_inc_snmpoutsetrequests(void);
 void snmp_inc_snmpoutgetresponses(void);
 void snmp_inc_snmpouttraps(void);
-void snmp_get_snmpgrpid_ptr(struct snmp_obj_id **oid);
+void snmp_get_snmpgrpid_ptr(const struct snmp_obj_id **oid);
 void snmp_set_snmpenableauthentraps(u8_t *value);
 void snmp_get_snmpenableauthentraps(u8_t *value);
 
