@@ -179,6 +179,9 @@ typedef unsigned char  u_char;
 #include "vj.h"
 #endif /* VJ_SUPPORT */
 
+/* Link status callback function prototype */
+typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
+
 #if PPPOE_SUPPORT
 #include "netif/ppp/pppoe.h"
 #endif /* PPPOE_SUPPORT */
@@ -503,9 +506,6 @@ struct ppp_pcb_s {
 #define PPPAUTHTYPE_MSCHAP 0x04
 #define PPPAUTHTYPE_EAP    0x08
 #define PPPAUTHTYPE_ANY    0xff
-
-/* Link status callback function prototype */
-typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
 #if PPPOS_SUPPORT
 /*

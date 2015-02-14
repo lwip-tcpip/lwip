@@ -136,32 +136,40 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
 
-err_t
-pppoe_create(struct netif *ethif, ppp_pcb *pcb, void (*link_status_cb)(ppp_pcb *pcb, int up), struct pppoe_softc **scptr)
+ppp_pcb*
+pppoe_create(struct netif *pppif,
+             void (*link_status_cb_ll)(ppp_pcb *pcb, int up),
+             struct netif *ethif,
+             ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
+  ppp_pcb *ppp;
   struct pppoe_softc *sc;
+
+  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  if (ppp == NULL) {
+    return NULL;
+  }
 
   sc = (struct pppoe_softc *)memp_malloc(MEMP_PPPOE_IF);
   if (sc == NULL) {
-    *scptr = NULL;
-    return ERR_MEM;
+    ppp_free(ppp);
+    return NULL;
   }
   memset(sc, 0, sizeof(struct pppoe_softc));
 
   /* changed to real address later */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
 
-  sc->pcb = pcb;
-  sc->sc_link_status_cb = link_status_cb;
+  sc->pcb = ppp;
+  sc->sc_link_status_cb = link_status_cb_ll;
   sc->sc_ethif = ethif;
 
   /* put the new interface at the head of the list */
   sc->next = pppoe_softc_list;
   pppoe_softc_list = sc;
 
-  *scptr = sc;
-
-  return ERR_OK;
+  ppp->pppoe_sc = sc;
+  return ppp;
 }
 
 err_t

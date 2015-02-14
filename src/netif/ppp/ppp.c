@@ -183,7 +183,6 @@ const struct protent* const protocols[] = {
 };
 
 /* Prototypes for procedures local to this file. */
-static ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 static void ppp_clear(ppp_pcb *pcb);
 static void ppp_do_open(void *arg);
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
@@ -257,22 +256,9 @@ static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 
 ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  ppp_pcb *pcb;
-
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
-
-  pcb = ppp_new(pppif, link_status_cb, ctx_cb);
-  if (pppif == NULL) {
-    return NULL;
-  }
-
-  if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
-    ppp_free(pcb);
-    return NULL;
-  }
-
-  return pcb;
+  return pppoe_create(pppif, ppp_over_ethernet_link_status_cb, ethif, link_status_cb, ctx_cb);
 }
 #endif /* PPPOE_SUPPORT */
 
@@ -282,19 +268,7 @@ static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
 ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  ppp_pcb *pcb;
-
-  pcb = ppp_new(pppif, link_status_cb, ctx_cb);
-  if (pppif == NULL) {
-    return NULL;
-  }
-
-  if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
-    ppp_free(pcb);
-    return NULL;
-  }
-
-  return pcb;
+  return pppol2tp_create(pppif, ppp_over_l2tp_link_status_cb, netif, ipaddr, port, secret, secret_len, link_status_cb, ctx_cb);
 }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -497,7 +471,7 @@ int ppp_init(void) {
 }
 
 /*
- * Create a new PPP session.
+ * Create a new PPP control block.
  *
  * This initializes the PPP control block but does not
  * attempt to negotiate the LCP session.
@@ -505,7 +479,7 @@ int ppp_init(void) {
  * Return a new PPP connection control block pointer
  * on success or a null pointer on failure.
  */
-static ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
 
   /* PPP is single-threaded: without a callback,

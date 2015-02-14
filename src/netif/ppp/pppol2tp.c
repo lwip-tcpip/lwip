@@ -87,23 +87,30 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 
 
 /* Create a new L2TP session. */
-err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int status), pppol2tp_pcb **l2tpptr,
-                      struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-                      u8_t *secret, u8_t secret_len) {
+ppp_pcb *pppol2tp_create(struct netif *pppif,
+                      void (*link_status_cb_ll)(ppp_pcb *pcb, int status),
+                      struct netif *netif, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
+                      ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+  ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
 
+  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  if (ppp == NULL) {
+    return NULL;
+  }
+
   l2tp = (pppol2tp_pcb *)memp_malloc(MEMP_PPPOL2TP_PCB);
   if (l2tp == NULL) {
-    *l2tpptr = NULL;
-    return ERR_MEM;
+    ppp_free(ppp);
+    return NULL;
   }
 
   udp = udp_new();
   if (udp == NULL) {
     memp_free(MEMP_PPPOL2TP_PCB, l2tp);
-    *l2tpptr = NULL;
-    return ERR_MEM;
+    ppp_free(ppp);
+    return NULL;
   }
   udp_recv(udp, pppol2tp_input, l2tp);
 
@@ -111,7 +118,7 @@ err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int sta
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
   l2tp->ppp = ppp;
   l2tp->udp = udp;
-  l2tp->link_status_cb = link_status_cb;
+  l2tp->link_status_cb = link_status_cb_ll;
   l2tp->netif = netif;
   ip_addr_set(&l2tp->remote_ip, ipaddr);
   l2tp->remote_port = port;
@@ -120,8 +127,8 @@ err_t pppol2tp_create(ppp_pcb *ppp, void (*link_status_cb)(ppp_pcb *pcb, int sta
   l2tp->secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  *l2tpptr = l2tp;
-  return ERR_OK;
+  ppp->l2tp_pcb = l2tp;
+  return ppp;
 }
 
 /* Destroy a L2TP control block */

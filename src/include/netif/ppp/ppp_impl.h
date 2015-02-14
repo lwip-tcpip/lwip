@@ -362,8 +362,11 @@ struct pppd_stats {
 #endif /* PPP_STATS_SUPPORT */
 
 
-/* PPP flow functions
+/* PPP functions
  */
+/* Create a new PPP control block */
+ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+
 /* initialize the PPP subsystem */
 int ppp_init(void);
 
