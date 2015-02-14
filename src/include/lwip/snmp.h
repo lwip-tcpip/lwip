@@ -98,7 +98,7 @@ struct snmp_obj_id
 };
 
 const char * snmp_get_community(void);
-void snmp_set_community(const char *community);
+void snmp_set_community(const char * const community);
 
 /* system */
 void snmp_set_sysdescr(const u8_t* str, const u8_t* len);
