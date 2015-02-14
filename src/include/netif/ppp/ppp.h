@@ -470,17 +470,6 @@ struct ppp_pcb_s {
  ************************/
 
 /*
- * Create a new PPP session.
- *
- * This initializes the PPP control block but does not
- * attempt to negotiate the LCP session.
- *
- * Return a new PPP connection control block pointer
- * on success or a null pointer on failure.
- */
-ppp_pcb *ppp_new(struct netif *pppif);
-
-/*
  * Set a PPP interface as the default network interface
  * (used to output all packets for which no specific route is found).
  */
@@ -540,7 +529,7 @@ typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOS_SUPPORT */
 
 #if PPPOE_SUPPORT
@@ -549,7 +538,7 @@ int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
+ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOE_SUPPORT */
 
@@ -557,7 +546,7 @@ int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *serv
 /*
  * Create a new PPP Over L2TP (PPPoL2TP) connection.
  */
-int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */

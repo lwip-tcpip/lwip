@@ -183,6 +183,7 @@ const struct protent* const protocols[] = {
 };
 
 /* Prototypes for procedures local to this file. */
+static ppp_pcb *ppp_new(struct netif *pppif);
 static void ppp_clear(ppp_pcb *pcb);
 static void ppp_do_open(void *arg);
 static void ppp_start(ppp_pcb *pcb);	/** Initiate LCP open request */
@@ -234,69 +235,6 @@ int ppp_init(void) {
     magic_init();
 
     return 0;
-}
-
-/* Create a new PPP session. */
-ppp_pcb *ppp_new(struct netif *pppif) {
-  ppp_pcb *pcb;
-
-  pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
-  if (pcb == NULL) {
-    return NULL;
-  }
-
-  memset(pcb, 0, sizeof(ppp_pcb));
-#if PPP_DEBUG
-  pcb->num = ppp_num++;
-#endif /* PPP_DEBUG */
-
-  /* default configuration */
-  pcb->settings.usepeerdns = 1;
-
-#if PAP_SUPPORT
-  pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
-  pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;
-#if PPP_SERVER
-  pcb->settings.pap_req_timeout = UPAP_DEFREQTIME;
-#endif /* PPP_SERVER */
-#endif /* PAP_SUPPORT */
-
-#if CHAP_SUPPORT
-  pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
-  pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
-#if PPP_SERVER
-  pcb->settings.chap_rechallenge_time = CHAP_DEFREQTIME;
-#endif /* PPP_SERVER */
-#endif /* CHAP_SUPPPORT */
-
-#if EAP_SUPPORT
-  pcb->settings.eap_req_time = EAP_DEFREQTIME;
-  pcb->settings.eap_allow_req = EAP_DEFALLOWREQ;
-#if PPP_SERVER
-  pcb->settings.eap_timeout_time = EAP_DEFTIMEOUT;
-  pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
-#endif /* PPP_SERVER */
-#endif /* EAP_SUPPORT */
-
-  pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
-  pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
-  pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
-
-  pcb->settings.fsm_timeout_time = FSM_DEFTIMEOUT;
-  pcb->settings.fsm_max_conf_req_transmits = FSM_DEFMAXCONFREQS;
-  pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
-  pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
-
-  pcb->netif = pppif;
-  if (!netif_add(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                 &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
-    memp_free(MEMP_PPP_PCB, pcb);
-    PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
-    return NULL;
-  }
-
-  new_phase(pcb, PPP_PHASE_DEAD);
-  return pcb;
 }
 
 void ppp_set_default(ppp_pcb *pcb) {
@@ -355,18 +293,24 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
 #endif /* PPP_NOTIFY_PHASE */
 
 #if PPPOS_SUPPORT
-int ppp_over_serial_create(ppp_pcb *pcb, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+  ppp_pcb *pcb;
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
   if (link_status_cb == NULL) {
-    return PPPERR_PARAM;
+    return NULL;
+  }
+
+  pcb = ppp_new(pppif);
+  if (pppif == NULL) {
+    return NULL;
   }
 
   pcb->fd = fd;
   pcb->link_status_cb = link_status_cb;
   pcb->ctx_cb = ctx_cb;
-  return PPPERR_NONE;
+  return pcb;
 }
 
 /*
@@ -386,8 +330,9 @@ void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_link_status_cb(ppp_pcb *pcb, int state);
 
-int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *service_name, const char *concentrator_name,
+ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+  ppp_pcb *pcb;
 
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
@@ -395,41 +340,54 @@ int ppp_over_ethernet_create(ppp_pcb *pcb, struct netif *ethif, const char *serv
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
   if (link_status_cb == NULL) {
-    return PPPERR_PARAM;
+    return NULL;
+  }
+
+  pcb = ppp_new(pppif);
+  if (pppif == NULL) {
+    return NULL;
   }
 
   pcb->link_status_cb  = link_status_cb;
   pcb->ctx_cb = ctx_cb;
 
   if (pppoe_create(ethif, pcb, ppp_over_ethernet_link_status_cb, &pcb->pppoe_sc) != ERR_OK) {
-    return PPPERR_OPEN;
+    ppp_delete(pcb);
+    return NULL;
   }
 
-  return PPPERR_NONE;
+  return pcb;
 }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_link_status_cb(ppp_pcb *pcb, int state);
 
-int ppp_over_l2tp_create(ppp_pcb *pcb, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
 		u8_t *secret, u8_t secret_len,
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+  ppp_pcb *pcb;
 
   /* PPP is single-threaded: without a callback,
    * there is no way to know when the link is up. */
   if (link_status_cb == NULL) {
-    return PPPERR_PARAM;
+    return NULL;
+  }
+
+  pcb = ppp_new(pppif);
+  if (pppif == NULL) {
+    return NULL;
   }
 
   pcb->link_status_cb  = link_status_cb;
   pcb->ctx_cb = ctx_cb;
 
   if (pppol2tp_create(pcb, ppp_over_l2tp_link_status_cb, &pcb->l2tp_pcb, netif, ipaddr, port, secret, secret_len) != ERR_OK) {
-    return PPPERR_OPEN;
+    ppp_delete(pcb);
+    return NULL;
   }
 
-  return PPPERR_NONE;
+  return pcb;
 }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -595,6 +553,77 @@ int ppp_delete(ppp_pcb *pcb) {
 /************************************/
 /*** PRIVATE FUNCTION DEFINITIONS ***/
 /************************************/
+
+/*
+ * Create a new PPP session.
+ *
+ * This initializes the PPP control block but does not
+ * attempt to negotiate the LCP session.
+ *
+ * Return a new PPP connection control block pointer
+ * on success or a null pointer on failure.
+ */
+static ppp_pcb *ppp_new(struct netif *pppif) {
+  ppp_pcb *pcb;
+
+  pcb = (ppp_pcb*)memp_malloc(MEMP_PPP_PCB);
+  if (pcb == NULL) {
+    return NULL;
+  }
+
+  memset(pcb, 0, sizeof(ppp_pcb));
+#if PPP_DEBUG
+  pcb->num = ppp_num++;
+#endif /* PPP_DEBUG */
+
+  /* default configuration */
+  pcb->settings.usepeerdns = 1;
+
+#if PAP_SUPPORT
+  pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
+  pcb->settings.pap_max_transmits = UPAP_DEFTRANSMITS;
+#if PPP_SERVER
+  pcb->settings.pap_req_timeout = UPAP_DEFREQTIME;
+#endif /* PPP_SERVER */
+#endif /* PAP_SUPPORT */
+
+#if CHAP_SUPPORT
+  pcb->settings.chap_timeout_time = CHAP_DEFTIMEOUT;
+  pcb->settings.chap_max_transmits = CHAP_DEFTRANSMITS;
+#if PPP_SERVER
+  pcb->settings.chap_rechallenge_time = CHAP_DEFREQTIME;
+#endif /* PPP_SERVER */
+#endif /* CHAP_SUPPPORT */
+
+#if EAP_SUPPORT
+  pcb->settings.eap_req_time = EAP_DEFREQTIME;
+  pcb->settings.eap_allow_req = EAP_DEFALLOWREQ;
+#if PPP_SERVER
+  pcb->settings.eap_timeout_time = EAP_DEFTIMEOUT;
+  pcb->settings.eap_max_transmits = EAP_DEFTRANSMITS;
+#endif /* PPP_SERVER */
+#endif /* EAP_SUPPORT */
+
+  pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
+  pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;
+  pcb->settings.lcp_echo_fails = LCP_MAXECHOFAILS;
+
+  pcb->settings.fsm_timeout_time = FSM_DEFTIMEOUT;
+  pcb->settings.fsm_max_conf_req_transmits = FSM_DEFMAXCONFREQS;
+  pcb->settings.fsm_max_term_transmits = FSM_DEFMAXTERMREQS;
+  pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
+
+  pcb->netif = pppif;
+  if (!netif_add(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                 &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
+    memp_free(MEMP_PPP_PCB, pcb);
+    PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
+    return NULL;
+  }
+
+  new_phase(pcb, PPP_PHASE_DEAD);
+  return pcb;
+}
 
 /* Set a PPP PCB to its initial state */
 static void ppp_clear(ppp_pcb *pcb) {
