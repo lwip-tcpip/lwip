@@ -225,18 +225,6 @@ static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
 
-/* Initialize the PPP subsystem. */
-int ppp_init(void) {
-
-    /*
-     * Initialize magic number generator now so that protocols may
-     * use magic numbers in initialization.
-     */
-    magic_init();
-
-    return 0;
-}
-
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 
 #if PAP_SUPPORT
@@ -521,6 +509,18 @@ int ppp_free(ppp_pcb *pcb) {
 /************************************/
 /*** PRIVATE FUNCTION DEFINITIONS ***/
 /************************************/
+
+/* Initialize the PPP subsystem. */
+int ppp_init(void) {
+
+    /*
+     * Initialize magic number generator now so that protocols may
+     * use magic numbers in initialization.
+     */
+    magic_init();
+
+    return 0;
+}
 
 /*
  * Create a new PPP session.
