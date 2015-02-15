@@ -183,7 +183,6 @@ const struct protent* const protocols[] = {
 };
 
 /* Prototypes for procedures local to this file. */
-static void ppp_clear(ppp_pcb *pcb);
 static void ppp_do_open(void *arg);
 static void ppp_stop(ppp_pcb *pcb);
 static void ppp_hup(ppp_pcb *pcb);
@@ -506,7 +505,7 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
 }
 
 /* Set a PPP PCB to its initial state */
-static void ppp_clear(ppp_pcb *pcb) {
+void ppp_clear(ppp_pcb *pcb) {
   const struct protent *protp;
   int i;
 
@@ -1608,44 +1607,12 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_open(ppp_pcb *pcb) {
-
-  lcp_options *wo = &pcb->lcp_wantoptions;
-  lcp_options *ao = &pcb->lcp_allowoptions;
-
-  ppp_clear(pcb);
-
-  wo->mru = pcb->pppoe_sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
-
-  ao->mru = pcb->pppoe_sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
-
   pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_CONNECT);
 }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_open(ppp_pcb *pcb) {
-
-  lcp_options *wo = &pcb->lcp_wantoptions;
-  lcp_options *ao = &pcb->lcp_allowoptions;
-
-  ppp_clear(pcb);
-
-  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
-
-  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
-
   pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_CONNECT);
 }
 #endif /* PPPOL2TP_SUPPORT */

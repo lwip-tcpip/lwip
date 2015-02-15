@@ -82,6 +82,7 @@
 #include "lwip/snmp.h"
 
 #include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/lcp.h"
 #include "netif/ppp/pppoe.h"
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
@@ -919,6 +920,9 @@ static int
 pppoe_connect(struct pppoe_softc *sc)
 {
   int err;
+  ppp_pcb *ppp = sc->pcb;
+  lcp_options *wo;
+  lcp_options *ao;
 
   if (sc->sc_state != PPPOE_STATE_INITIAL) {
     return EBUSY;
@@ -935,6 +939,21 @@ pppoe_connect(struct pppoe_softc *sc)
     return 0;
   }
 #endif
+
+  ppp_clear(ppp);
+
+  wo = &ppp->lcp_wantoptions;
+  wo->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
+
+  ao  = &ppp->lcp_allowoptions;
+  ao->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
+
   /* save state, in case we fail to send PADI */
   sc->sc_state = PPPOE_STATE_PADI_SENT;
   if ((err = pppoe_send_padi(sc)) != 0) {

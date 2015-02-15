@@ -380,6 +380,9 @@ int ppp_init(void);
 /* Create a new PPP control block */
 ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
+/* Set a PPP PCB to its initial state */
+void ppp_clear(ppp_pcb *pcb);
+
 /* Set link callback function */
 void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output);
 

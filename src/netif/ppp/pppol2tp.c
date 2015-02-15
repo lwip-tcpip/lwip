@@ -259,12 +259,29 @@ static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 /* Be a LAC, connect to a LNS. */
 static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
   err_t err;
+  ppp_pcb *ppp = l2tp->ppp;
+  lcp_options *wo;
+  lcp_options *ao;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return ERR_VAL;
   }
 
   pppol2tp_clear(l2tp);
+
+  ppp_clear(ppp);
+
+  wo = &ppp->lcp_wantoptions;
+  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  wo->neg_asyncmap = 0;
+  wo->neg_pcompression = 0;
+  wo->neg_accompression = 0;
+
+  ao = &ppp->lcp_allowoptions;
+  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  ao->neg_asyncmap = 0;
+  ao->neg_pcompression = 0;
+  ao->neg_accompression = 0;
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)
