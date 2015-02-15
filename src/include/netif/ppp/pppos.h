@@ -39,6 +39,14 @@
 
 #include "ppp.h"
 
+/*
+ * PPPoS interface control block.
+ */
+typedef struct pppos_pcb_s pppos_pcb;
+struct pppos_pcb_s {
+  ppp_pcb *ppp;                /* PPP PCB */
+};
+
 /* Create a new PPPoS session. */
 ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
              ppp_link_status_cb_fn link_status_cb, void *ctx_cb);

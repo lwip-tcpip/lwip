@@ -60,6 +60,7 @@
 #include "lwip/dns.h"
 #include "lwip/netdb.h"
 #include "netif/ppp/ppp.h"
+#include "netif/ppp/pppos.h"
 #include "netif/ppp/pppoe.h"
 #include "netif/ppp/pppol2tp.h"
 #include "lwip/nd6.h"

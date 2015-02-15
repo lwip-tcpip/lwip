@@ -417,6 +417,14 @@
 #endif
 
 /**
+ * MEMP_NUM_PPPOS_INTERFACES: the number of concurrently active PPPoS
+ * interfaces (only used with PPPOS_SUPPORT==1)
+ */
+#ifndef MEMP_NUM_PPPOS_INTERFACES
+#define MEMP_NUM_PPPOS_INTERFACES       MEMP_NUM_PPP_PCB
+#endif
+
+/**
  * MEMP_NUM_PPPOE_INTERFACES: the number of concurrently active PPPoE
  * interfaces (only used with PPPOE_SUPPORT==1)
  */

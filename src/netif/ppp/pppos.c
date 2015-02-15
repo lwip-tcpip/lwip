@@ -54,9 +54,9 @@ static int pppos_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol);
 
 /* Prototypes for procedures local to this file. */
-static void pppos_connect(ppp_pcb *pcb);
-static void pppos_disconnect(ppp_pcb *pcb);
-static err_t pppos_destroy(ppp_pcb *sc);
+static void pppos_connect(pppos_pcb *pcb);
+static void pppos_disconnect(pppos_pcb *pcb);
+static err_t pppos_destroy(pppos_pcb *sc);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -96,6 +96,7 @@ ppp_pcb *
 ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
              ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
+  pppos_pcb *sc;
   ppp_pcb *ppp;
 
   ppp = ppp_new(pppif, link_status_cb, ctx_cb);
@@ -103,8 +104,15 @@ ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
     return NULL;
   }
 
+  sc = (pppos_pcb *)memp_malloc(MEMP_PPPOS_PCB);
+  if (sc == NULL) {
+    ppp_free(ppp);
+    return NULL;
+  }
+
+  sc->ppp = ppp;
   ppp->fd = fd;
-  ppp_link_set_callbacks(ppp, pppos_link_command_callback, pppos_link_write_callback, pppos_link_netif_output_callback, ppp);
+  ppp_link_set_callbacks(ppp, pppos_link_command_callback, pppos_link_write_callback, pppos_link_netif_output_callback, sc);
   return ppp;
 }
 
@@ -112,19 +120,19 @@ ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 static void
 pppos_link_command_callback(void *pcb, u8_t command)
 {
-  ppp_pcb *ppp = (ppp_pcb *)pcb;
+  pppos_pcb *sc = (pppos_pcb *)pcb;
 
   switch(command) {
   case PPP_LINK_COMMAND_CONNECT:
-    pppos_connect(ppp);
+    pppos_connect(sc);
     break;
 
   case PPP_LINK_COMMAND_DISCONNECT:
-    pppos_disconnect(ppp);
+    pppos_disconnect(sc);
     break;
 
   case PPP_LINK_COMMAND_FREE:
-    pppos_destroy(ppp);
+    pppos_destroy(sc);
     break;
 
   default: ;
@@ -135,7 +143,8 @@ pppos_link_command_callback(void *pcb, u8_t command)
 static int
 pppos_link_write_callback(void *pcb, struct pbuf *p)
 {
-  ppp_pcb *ppp = (ppp_pcb *)pcb;
+  pppos_pcb *sc = (pppos_pcb *)pcb;
+  ppp_pcb *ppp = sc->ppp;
   u_char *s = (u_char*)p->payload;
   int n = p->len;
   u_char c;
@@ -204,7 +213,8 @@ pppos_link_write_callback(void *pcb, struct pbuf *p)
 static err_t
 pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
 {
-  ppp_pcb *ppp = (ppp_pcb *)pcb;
+  pppos_pcb *sc = (pppos_pcb *)pcb;
+  ppp_pcb *ppp = sc->ppp;
   u_int fcs_out = PPP_INITFCS;
   struct pbuf *head = NULL, *tail = NULL, *p;
   u_char c;
@@ -315,49 +325,56 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
 }
 
 static void
-pppos_connect(ppp_pcb *pcb)
+pppos_connect(pppos_pcb *pcb)
 {
+  ppp_pcb *ppp = pcb->ppp;
 
   /* input pbuf left over from last session? */
-  pppos_free_current_input_packet(&pcb->rx);
+  pppos_free_current_input_packet(&ppp->rx);
 
-  ppp_clear(pcb);
+  ppp_clear(ppp);
 
-  pcb->rx.pcb = pcb;
-  pcb->rx.fd = pcb->fd;
+  ppp->rx.pcb = ppp;
+  ppp->rx.fd = ppp->fd;
 
 #if VJ_SUPPORT
-  vj_compress_init(&pcb->vj_comp);
+  vj_compress_init(&ppp->vj_comp);
 #endif /* VJ_SUPPORT */
 
   /*
    * Default the in and out accm so that escape and flag characters
    * are always escaped.
    */
-  pcb->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
-  pcb->out_accm[15] = 0x60;
+  ppp->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  ppp->out_accm[15] = 0x60;
 
   /*
    * Start the connection and handle incoming events (packet or timeout).
    */
-  PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\n", pcb->num));
-  ppp_start(pcb); /* notify upper layers */
+  PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\n", ppp->num));
+  ppp_start(ppp); /* notify upper layers */
 }
 
 static void
-pppos_disconnect(ppp_pcb *pcb)
+pppos_disconnect(pppos_pcb *pcb)
 {
+  ppp_pcb *ppp = pcb->ppp;
+
   /* We cannot call ppp_free_current_input_packet() here because
    * rx thread might still call pppos_input()
    */
-  ppp_link_end(pcb); /* notify upper layers */
+  ppp_link_end(ppp); /* notify upper layers */
 }
 
 static err_t
-pppos_destroy(ppp_pcb *pcb)
+pppos_destroy(pppos_pcb *sc)
 {
+  ppp_pcb *ppp = sc->ppp;
+
   /* input pbuf left ? */
-  pppos_free_current_input_packet(&pcb->rx);
+  pppos_free_current_input_packet(&ppp->rx);
+
+  memp_free(MEMP_PPPOS_PCB, sc);
   return ERR_OK;
 }
 
