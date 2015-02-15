@@ -135,8 +135,7 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
   l2tp->secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  ppp->l2tp_pcb = l2tp;
-  ppp_link_set_callbacks(ppp, pppol2tp_link_command_callback, pppol2tp_link_write_callback, pppol2tp_link_netif_output_callback);
+  ppp_link_set_callbacks(ppp, pppol2tp_link_command_callback, pppol2tp_link_write_callback, pppol2tp_link_netif_output_callback, l2tp);
   return ppp;
 }
 

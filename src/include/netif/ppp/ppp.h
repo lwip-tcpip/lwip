@@ -182,13 +182,6 @@ typedef unsigned char  u_char;
 /* Link status callback function prototype */
 typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 
-#if PPPOE_SUPPORT
-#include "netif/ppp/pppoe.h"
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-#include "netif/ppp/pppol2tp.h"
-#endif /* PPPOL2TP_SUPPORT */
-
 /*
  * PPP configuration.
  */
@@ -365,12 +358,7 @@ struct ppp_pcb_s {
   link_command_cb_fn link_command_cb;
   link_write_cb_fn link_write_cb;
   link_netif_output_cb_fn link_netif_output_cb;
-#if PPPOE_SUPPORT
-  struct pppoe_softc *pppoe_sc;
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-  pppol2tp_pcb *l2tp_pcb;
-#endif /* PPPOL2TP_SUPPORT */
+  void *link_ctx_cb;
   void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
 #if PPP_NOTIFY_PHASE
   void (*notify_phase_cb)(ppp_pcb *pcb, u8_t phase, void *ctx);   /* Notify phase callback */

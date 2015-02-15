@@ -121,13 +121,6 @@
 #include "netif/ppp/ipv6cp.h"
 #endif /* PPP_IPV6_SUPPORT */
 
-#if PPPOE_SUPPORT
-#include "netif/ppp/pppoe.h"
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-#include "netif/ppp/pppol2tp.h"
-#endif /* PPPOL2TP_SUPPORT */
-
 /* Global variables */
 
 #if PPP_DEBUG
@@ -205,14 +198,6 @@ static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
 static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 #endif /* PPPOS_SUPPORT */
-
-#if PPPOE_SUPPORT
-static void ppp_over_ethernet_open(ppp_pcb *pcb);
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-static void ppp_over_l2tp_open(ppp_pcb *pcb);
-#endif /* PPPOL2TP_SUPPORT */
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -383,19 +368,9 @@ int ppp_free(ppp_pcb *pcb) {
 
   netif_remove(pcb->netif);
 
-#if PPPOE_SUPPORT
-  if (pcb->pppoe_sc) {
-    pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_FREE);
-    pcb->pppoe_sc = NULL;
+  if (pcb->link_ctx_cb) {
+    pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_FREE);
   }
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-  if (pcb->l2tp_pcb) {
-    pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_FREE);
-    pcb->l2tp_pcb = NULL;
-  }
-#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
   /* input pbuf left ? */
@@ -528,10 +503,11 @@ void ppp_clear(ppp_pcb *pcb) {
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
-void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output) {
+void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output, void *ctx) {
   pcb->link_command_cb = command;
   pcb->link_write_cb = write;
   pcb->link_netif_output_cb = netif_output;
+  pcb->link_ctx_cb = ctx;
 }
 
 static void ppp_do_open(void *arg) {
@@ -539,19 +515,10 @@ static void ppp_do_open(void *arg) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
-#if PPPOE_SUPPORT
-  if (pcb->pppoe_sc) {
-    ppp_over_ethernet_open(pcb);
+  if (pcb->link_ctx_cb) {
+    pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
     return;
   }
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-  if (pcb->l2tp_pcb) {
-    ppp_over_l2tp_open(pcb);
-    return;
-  }
-#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
   ppp_over_serial_open(pcb);
@@ -978,17 +945,9 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
     return ERR_RTE;
   }
 
-#if PPPOE_SUPPORT
-  if(pcb->pppoe_sc) {
-    return pcb->link_netif_output_cb(pcb->pppoe_sc, pb, protocol);
+  if(pcb->link_ctx_cb) {
+    return pcb->link_netif_output_cb(pcb->link_ctx_cb, pb, protocol);
   }
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-  if(pcb->l2tp_pcb) {
-    return pcb->link_netif_output_cb(pcb->l2tp_pcb, pb, protocol);
-  }
-#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
   return ppp_netif_output_over_serial(pcb, pb, protocol);
@@ -1178,17 +1137,9 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
   ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */
 
-#if PPPOE_SUPPORT
-  if(pcb->pppoe_sc) {
-    return pcb->link_write_cb(pcb->pppoe_sc, p);
+  if(pcb->link_ctx_cb) {
+    return pcb->link_write_cb(pcb->link_ctx_cb, p);
   }
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-  if(pcb->l2tp_pcb) {
-    return pcb->link_write_cb(pcb->l2tp_pcb, p);
-  }
-#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
   return ppp_write_over_serial(pcb, p);
@@ -1605,18 +1556,6 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
   return q;
 }
 
-#if PPPOE_SUPPORT
-static void ppp_over_ethernet_open(ppp_pcb *pcb) {
-  pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_CONNECT);
-}
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-static void ppp_over_l2tp_open(ppp_pcb *pcb) {
-  pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_CONNECT);
-}
-#endif /* PPPOL2TP_SUPPORT */
-
 void ppp_link_down(ppp_pcb *pcb) {
   LWIP_UNUSED_ARG(pcb); /* necessary if PPPDEBUG is defined to an empty function */
   PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
@@ -1625,17 +1564,9 @@ void ppp_link_down(ppp_pcb *pcb) {
 void ppp_link_terminated(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->num));
 
-#if PPPOE_SUPPORT
-  if (pcb->pppoe_sc) {
-    pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_DISCONNECT);
-  } else
-#endif /* PPPOE_SUPPORT */
-#if PPPOL2TP_SUPPORT
-  if (pcb->l2tp_pcb) {
-    pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_DISCONNECT);
-  } else
-#endif /* PPPOL2TP_SUPPORT */
-  {
+  if (pcb->link_ctx_cb) {
+    pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_DISCONNECT);
+  } else {
 #if PPPOS_SUPPORT
     /* We cannot call ppp_free_current_input_packet() here because
      * rx thread might still call pppos_input()

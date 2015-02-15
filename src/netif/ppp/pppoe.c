@@ -184,8 +184,7 @@ ppp_pcb *ppp_over_ethernet_create(struct netif *pppif,
   sc->next = pppoe_softc_list;
   pppoe_softc_list = sc;
 
-  ppp->pppoe_sc = sc;
-  ppp_link_set_callbacks(ppp, pppoe_link_command_callback, pppoe_link_write_callback, pppoe_link_netif_output_callback);
+  ppp_link_set_callbacks(ppp, pppoe_link_command_callback, pppoe_link_write_callback, pppoe_link_netif_output_callback, sc);
   return ppp;
 }
 
