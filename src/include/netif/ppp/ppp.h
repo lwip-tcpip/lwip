@@ -352,9 +352,6 @@ struct ppp_pcb_s {
   u8_t num;                      /* Interface number - only useful for debugging */
 #endif /* PPP_DEBUG */
   ppp_settings settings;
-#if PPPOS_SUPPORT
-  sio_fd_t fd;                   /* File device ID of port. */
-#endif /* PPPOS_SUPPORT */
   link_command_cb_fn link_command_cb;
   link_write_cb_fn link_write_cb;
   link_netif_output_cb_fn link_netif_output_cb;

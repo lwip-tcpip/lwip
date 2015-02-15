@@ -61,7 +61,7 @@ static err_t pppos_destroy(pppos_pcb *sc);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
-static void pppos_xmit(ppp_pcb *pcb, struct pbuf *nb);
+static void pppos_xmit(pppos_pcb *sc, struct pbuf *nb);
 static void pppos_free_current_input_packet(ppp_pcb_rx *pcrx);
 static struct pbuf *pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm);
 static void pppos_drop(ppp_pcb_rx *pcrx);
@@ -112,7 +112,7 @@ ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
   }
 
   sc->ppp = ppp;
-  ppp->fd = fd;
+  sc->fd = fd;
   ppp_link_set_callbacks(ppp, pppos_link_command_callback, pppos_link_write_callback, pppos_link_netif_output_callback, sc);
   return ppp;
 }
@@ -205,7 +205,7 @@ pppos_link_write_callback(void *pcb, struct pbuf *p)
 
   PPPDEBUG(LOG_INFO, ("ppp_write[%d]: len=%d\n", ppp->num, head->len));
                    /* "ppp_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
-  pppos_xmit(ppp, head);
+  pppos_xmit(sc, head);
   pbuf_free(p);
   return PPPERR_NONE;
 }
@@ -321,7 +321,7 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
   /* Send it. */
   PPPDEBUG(LOG_INFO, ("ppp_netif_output[%d]: proto=0x%"X16_F"\n", ppp->num, protocol));
 
-  pppos_xmit(ppp, head);
+  pppos_xmit(sc, head);
   return ERR_OK;
 }
 
@@ -336,7 +336,7 @@ pppos_connect(pppos_pcb *pcb)
   ppp_clear(ppp);
 
   ppp->rx.pcb = ppp;
-  ppp->rx.fd = ppp->fd;
+  ppp->rx.fd = pcb->fd;
 
 #if VJ_SUPPORT
   vj_compress_init(&ppp->vj_comp);
@@ -650,26 +650,27 @@ drop:
 #endif /* PPP_INPROC_MULTITHREADED */
 
 static void
-pppos_xmit(ppp_pcb *pcb, struct pbuf *nb)
+pppos_xmit(pppos_pcb *sc, struct pbuf *nb)
 {
+  ppp_pcb *ppp = sc->ppp;
   struct pbuf *b;
   int c;
 
   for(b = nb; b != NULL; b = b->next) {
-    c = sio_write(pcb->fd, (u8_t*)b->payload, b->len);
+    c = sio_write(sc->fd, (u8_t*)b->payload, b->len);
     if(c != b->len) {
       PPPDEBUG(LOG_WARNING,
-               ("PPP pppos_xmit: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pcb->fd, b->len, c, c));
+               ("PPP pppos_xmit: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)sc->fd, b->len, c, c));
       LINK_STATS_INC(link.err);
-      pcb->last_xmit = 0; /* prepend PPP_FLAG to next packet */
-      snmp_inc_ifoutdiscards(pcb->netif);
+      ppp->last_xmit = 0; /* prepend PPP_FLAG to next packet */
+      snmp_inc_ifoutdiscards(ppp->netif);
       pbuf_free(nb);
       return;
     }
   }
 
-  snmp_add_ifoutoctets(pcb->netif, nb->tot_len);
-  snmp_inc_ifoutucastpkts(pcb->netif);
+  snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
+  snmp_inc_ifoutucastpkts(ppp->netif);
   pbuf_free(nb);
   LINK_STATS_INC(link.xmit);
 }

@@ -44,7 +44,8 @@
  */
 typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
-  ppp_pcb *ppp;                /* PPP PCB */
+  ppp_pcb *ppp;                  /* PPP PCB */
+  sio_fd_t fd;                   /* File device ID of port. */
 };
 
 /* Create a new PPPoS session. */
