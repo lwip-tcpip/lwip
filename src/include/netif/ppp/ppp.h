@@ -391,11 +391,11 @@ struct ppp_pcb_s {
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-#if PPPOS_SUPPORT && VJ_SUPPORT
+#if VJ_SUPPORT
   unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
 #else
   unsigned int                         :1; /* 1 bit of padding */
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
+#endif /* VJ_SUPPORT */
   unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
 #if PPPOS_SUPPORT
@@ -403,9 +403,6 @@ struct ppp_pcb_s {
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
   ext_accm xmit_accm;            /* extended transmit ACCM */
   ppp_pcb_rx rx;
-#if VJ_SUPPORT
-  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
-#endif /* VJ_SUPPORT */
 #endif /* PPPOS_SUPPORT */
 
   u32_t last_xmit;               /* Time of last transmission. */

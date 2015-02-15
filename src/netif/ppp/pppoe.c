@@ -83,6 +83,7 @@
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/lcp.h"
+#include "netif/ppp/ipcp.h"
 #include "netif/ppp/pppoe.h"
 
 /* Add a 16 bit unsigned value to a buffer pointed to by PTR */
@@ -920,8 +921,10 @@ pppoe_connect(struct pppoe_softc *sc)
 {
   int err;
   ppp_pcb *ppp = sc->pcb;
-  lcp_options *wo;
-  lcp_options *ao;
+  lcp_options *lcp_wo;
+  lcp_options *lcp_ao;
+  ipcp_options *ipcp_wo;
+  ipcp_options *ipcp_ao;
 
   if (sc->sc_state != PPPOE_STATE_INITIAL) {
     return EBUSY;
@@ -941,17 +944,25 @@ pppoe_connect(struct pppoe_softc *sc)
 
   ppp_clear(ppp);
 
-  wo = &ppp->lcp_wantoptions;
-  wo->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
+  lcp_wo = &ppp->lcp_wantoptions;
+  lcp_wo->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_wo->neg_asyncmap = 0;
+  lcp_wo->neg_pcompression = 0;
+  lcp_wo->neg_accompression = 0;
 
-  ao  = &ppp->lcp_allowoptions;
-  ao->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
+  lcp_ao = &ppp->lcp_allowoptions;
+  lcp_ao->mru = sc->sc_ethif->mtu-PPPOE_HEADERLEN-2; /* two byte PPP protocol discriminator, then IP data */
+  lcp_ao->neg_asyncmap = 0;
+  lcp_ao->neg_pcompression = 0;
+  lcp_ao->neg_accompression = 0;
+
+  ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->neg_vj = 0;
+  ipcp_wo->old_vj = 0;
+
+  ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->neg_vj = 0;
+  ipcp_ao->old_vj = 0;
 
   /* save state, in case we fail to send PADI */
   sc->sc_state = PPPOE_STATE_PADI_SENT;

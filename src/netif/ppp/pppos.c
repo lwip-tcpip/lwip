@@ -64,7 +64,7 @@ static void pppos_input_callback(void *arg);
 static void pppos_xmit(pppos_pcb *sc, struct pbuf *nb);
 static void pppos_free_current_input_packet(ppp_pcb_rx *pcrx);
 static struct pbuf *pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm);
-static void pppos_drop(ppp_pcb_rx *pcrx);
+static void pppos_drop(pppos_pcb *pcrx);
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */
@@ -236,7 +236,7 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
    * this is an IP packet.
    */
   if (protocol == PPP_IP && ppp->vj_enabled) {
-    switch (vj_compress_tcp(&ppp->vj_comp, pb)) {
+    switch (vj_compress_tcp(&sc->vj_comp, pb)) {
       case TYPE_IP:
         /* No change...
            protocol = PPP_IP_PROTOCOL; */
@@ -329,6 +329,10 @@ static void
 pppos_connect(pppos_pcb *pcb)
 {
   ppp_pcb *ppp = pcb->ppp;
+#if !VJ_SUPPORT
+  ipcp_options *ipcp_wo;
+  ipcp_options *ipcp_ao;
+#endif /* !VJ_SUPPORT */
 
   /* input pbuf left over from last session? */
   pppos_free_current_input_packet(&ppp->rx);
@@ -339,7 +343,16 @@ pppos_connect(pppos_pcb *pcb)
   ppp->rx.fd = pcb->fd;
 
 #if VJ_SUPPORT
-  vj_compress_init(&ppp->vj_comp);
+  vj_compress_init(&pcb->vj_comp);
+#else /* VJ_SUPPORT */
+  /* Don't even try to negotiate VJ if VJ is disabled */
+  ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->neg_vj = 0;
+  ipcp_wo->old_vj = 0;
+
+  ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->neg_vj = 0;
+  ipcp_ao->old_vj = 0;
 #endif /* VJ_SUPPORT */
 
   /*
@@ -406,6 +419,7 @@ void
 pppos_input(ppp_pcb *pcb, u_char *s, int l)
 {
   ppp_pcb_rx *pcrx = &pcb->rx;
+  pppos_pcb *sc = (pppos_pcb *)pcb->link_ctx_cb;
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
@@ -438,7 +452,7 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
                    ("pppos_input[%d]: Dropping incomplete packet %d\n",
                     pcb->num, pcrx->in_state));
           LINK_STATS_INC(link.lenerr);
-          pppos_drop(pcrx);
+          pppos_drop(sc);
         /* If the fcs is invalid, drop the packet. */
         } else if (pcrx->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
@@ -446,7 +460,7 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
                     pcb->num, pcrx->in_fcs, pcrx->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
-          pppos_drop(pcrx);
+          pppos_drop(sc);
         /* Otherwise it's a good packet so pass it on. */
         } else {
           struct pbuf *inp;
@@ -592,7 +606,7 @@ pppos_input(ppp_pcb *pcb, u_char *s, int l)
                * the received pbuf chain in case a new packet starts. */
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", pcb->num));
               LINK_STATS_INC(link.memerr);
-              pppos_drop(pcrx);
+              pppos_drop(sc);
               pcrx->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
@@ -648,6 +662,77 @@ drop:
   pbuf_free(pb);
 }
 #endif /* PPP_INPROC_MULTITHREADED */
+
+#if VJ_SUPPORT
+void
+pppos_vjc_config(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid)
+{
+  pppos_pcb *sc = (pppos_pcb *)pcb->link_ctx_cb;
+  pcb->vj_enabled = vjcomp;
+  sc->vj_comp.compressSlot = cidcomp;
+  sc->vj_comp.maxSlotIndex = maxcid;
+  PPPDEBUG(LOG_INFO, ("pppos_vjc_config: VJ compress enable=%d slot=%d max slot=%d\n",
+            vjcomp, cidcomp, maxcid));
+}
+
+int
+pppos_vjc_comp(ppp_pcb *pcb, struct pbuf *pb)
+{
+  pppos_pcb *sc;
+  int ret;
+  PPPDEBUG(LOG_INFO, ("pppos_vjc_comp[%d]: vj_comp in pbuf len=%d\n", pcb->num, pb->len));
+
+  /* VJ is only enabled on PPPoS interfaces */
+  if (!pcb->vj_enabled) {
+    goto drop;
+  }
+  sc = (pppos_pcb *)pcb->link_ctx_cb;
+
+  /*
+   * Clip off the VJ header and prepend the rebuilt TCP/IP header and
+   * pass the result to IP.
+   */
+  ret = vj_uncompress_tcp(&pb, &sc->vj_comp);
+  if (ret >= 0) {
+    ip_input(pb, pcb->netif);
+    return ret;
+  }
+
+drop:
+  /* Something's wrong so drop it. */
+  PPPDEBUG(LOG_WARNING, ("pppos_vjc_comp[%d]: Dropping VJ compressed\n", pcb->num));
+  return -1;
+}
+
+int
+pppos_vjc_uncomp(ppp_pcb *pcb, struct pbuf *pb)
+{
+  pppos_pcb *sc;
+  int ret;
+  PPPDEBUG(LOG_INFO, ("pppos_vjc_uncomp[%d]: vj_un in pbuf len=%d\n", pcb->num, pb->len));
+
+  /* VJ is only enabled on PPPoS interfaces */
+  if (!pcb->vj_enabled) {
+    goto drop;
+  }
+  sc = (pppos_pcb *)pcb->link_ctx_cb;
+
+  /*
+   * Process the TCP/IP header for VJ header compression and then pass
+   * the packet to IP.
+   */
+  ret = vj_uncompress_uncomp(pb, &sc->vj_comp);
+  if (ret >= 0) {
+    ip_input(pb, pcb->netif);
+    return ret;
+  }
+
+drop:
+  /* Something's wrong so drop it. */
+  PPPDEBUG(LOG_WARNING, ("pppos_vjc_uncomp[%d]: Dropping VJ uncompressed\n", pcb->num));
+  return -1;
+}
+#endif /* VJ_SUPPORT */
 
 static void
 pppos_xmit(pppos_pcb *sc, struct pbuf *nb)
@@ -784,10 +869,11 @@ pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
  * Drop the input packet and increase error counters.
  */
 static void
-pppos_drop(ppp_pcb_rx *pcrx)
+pppos_drop(pppos_pcb *sc)
 {
-#if LWIP_SNMP || VJ_SUPPORT
-  ppp_pcb *pcb = (ppp_pcb*)pcrx->pcb;
+  ppp_pcb_rx *pcrx = &sc->ppp->rx;
+#if LWIP_SNMP
+  ppp_pcb *pcb = sc->ppp;
 #endif /* LWIP_SNMP || VJ_SUPPORT */
   if (pcrx->in_head != NULL) {
 #if 0
@@ -797,7 +883,7 @@ pppos_drop(ppp_pcb_rx *pcrx)
   }
   pppos_free_current_input_packet(pcrx);
 #if VJ_SUPPORT
-  vj_uncompress_err(&pcb->vj_comp);
+  vj_uncompress_err(&sc->vj_comp);
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);

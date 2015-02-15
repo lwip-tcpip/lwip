@@ -60,6 +60,8 @@
 #include "lwip/snmp.h"
 
 #include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/lcp.h"
+#include "netif/ppp/ipcp.h"
 #include "netif/ppp/pppol2tp.h"
 
 #include "netif/ppp/magic.h"
@@ -259,8 +261,10 @@ static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
   err_t err;
   ppp_pcb *ppp = l2tp->ppp;
-  lcp_options *wo;
-  lcp_options *ao;
+  lcp_options *lcp_wo;
+  lcp_options *lcp_ao;
+  ipcp_options *ipcp_wo;
+  ipcp_options *ipcp_ao;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return ERR_VAL;
@@ -270,17 +274,25 @@ static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
 
   ppp_clear(ppp);
 
-  wo = &ppp->lcp_wantoptions;
-  wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  wo->neg_asyncmap = 0;
-  wo->neg_pcompression = 0;
-  wo->neg_accompression = 0;
+  lcp_wo = &ppp->lcp_wantoptions;
+  lcp_wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  lcp_wo->neg_asyncmap = 0;
+  lcp_wo->neg_pcompression = 0;
+  lcp_wo->neg_accompression = 0;
 
-  ao = &ppp->lcp_allowoptions;
-  ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
-  ao->neg_asyncmap = 0;
-  ao->neg_pcompression = 0;
-  ao->neg_accompression = 0;
+  lcp_ao = &ppp->lcp_allowoptions;
+  lcp_ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  lcp_ao->neg_asyncmap = 0;
+  lcp_ao->neg_pcompression = 0;
+  lcp_ao->neg_accompression = 0;
+
+  ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->neg_vj = 0;
+  ipcp_wo->old_vj = 0;
+
+  ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->neg_vj = 0;
+  ipcp_ao->old_vj = 0;
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)

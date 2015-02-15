@@ -38,6 +38,7 @@
 #define PPPOS_H
 
 #include "ppp.h"
+#include "vj.h"
 
 /*
  * PPPoS interface control block.
@@ -46,6 +47,9 @@ typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
   ppp_pcb *ppp;                  /* PPP PCB */
   sio_fd_t fd;                   /* File device ID of port. */
+#if VJ_SUPPORT
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* VJ_SUPPORT */
 };
 
 /* Create a new PPPoS session. */
@@ -54,6 +58,11 @@ ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(ppp_pcb *pcb, u_char* data, int len);
+
+
+void pppos_vjc_config(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
+int pppos_vjc_comp(ppp_pcb *pcb, struct pbuf *pb);
+int pppos_vjc_uncomp(ppp_pcb *pcb, struct pbuf *pb);
 
 #endif /* PPPOS_H */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

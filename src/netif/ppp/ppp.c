@@ -93,6 +93,7 @@
 #include "lwip/ip.h" /* for ip_input() */
 
 #include "netif/ppp/ppp_impl.h"
+#include "netif/ppp/pppos.h"
 
 #include "netif/ppp/fsm.h"
 #include "netif/ppp/lcp.h"
@@ -581,31 +582,15 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
 #if VJ_SUPPORT
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->num, pb->len));
-      /*
-       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
-       * pass the result to IP.
-       */
-      if (vj_uncompress_tcp(&pb, &pcb->vj_comp) >= 0) {
-        ip_input(pb, pcb->netif);
+      if (pppos_vjc_comp(pcb, pb) >= 0) {
         return;
       }
-      /* Something's wrong so drop it. */
-      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->num));
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->num, pb->len));
-      /*
-       * Process the TCP/IP header for VJ header compression and then pass
-       * the packet to IP.
-       */
-      if (vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0) {
-        ip_input(pb, pcb->netif);
+      if (pppos_vjc_uncomp(pcb, pb) >= 0) {
         return;
       }
-      /* Something's wrong so drop it. */
-      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->num));
       break;
 #endif /* VJ_SUPPORT */
 
@@ -1199,20 +1184,14 @@ int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
  * sifvjcomp - config tcp header compression
  */
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
-
-#if PPPOS_SUPPORT && VJ_SUPPORT
-  pcb->vj_enabled = vjcomp;
-  pcb->vj_comp.compressSlot = cidcomp;
-  pcb->vj_comp.maxSlotIndex = maxcid;
-  PPPDEBUG(LOG_INFO, ("sifvjcomp: VJ compress enable=%d slot=%d max slot=%d\n",
-            vjcomp, cidcomp, maxcid));
-#else /* PPPOS_SUPPORT && VJ_SUPPORT */
+#if VJ_SUPPORT
+  pppos_vjc_config(pcb, vjcomp, cidcomp, maxcid);
+#else /* VJ_SUPPORT */
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(vjcomp);
   LWIP_UNUSED_ARG(cidcomp);
   LWIP_UNUSED_ARG(maxcid);
-#endif /* PPPOS_SUPPORT && VJ_SUPPORT */
-
+#endif /* VJ_SUPPORT */
   return 0;
 }
 
