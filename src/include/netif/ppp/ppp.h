@@ -467,18 +467,6 @@ struct ppp_pcb_s {
  *** PUBLIC FUNCTIONS ***
  ************************/
 
-#if PPPOS_SUPPORT
-/*
- * Create a new PPP connection using the given serial I/O device.
- *
- * If this port connects to a modem, the modem connection must be
- * established before calling this.
- *
- * Return 0 on success, an error code on failure.
- */
-ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* PPPOS_SUPPORT */
-
 /*
  * Set auth helper, optional, you can either fill ppp_pcb->settings.
  *
@@ -565,13 +553,6 @@ int ppp_free(ppp_pcb *pcb);
  * Return 0 on success, an error code on failure. 
  */
 int ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
-
-#if PPPOS_SUPPORT
-/*
- * PPP over Serial: this is the input function to be called for received data.
- */
-void pppos_input(ppp_pcb *pcb, u_char* data, int len);
-#endif /* PPPOS_SUPPORT */
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (ppp->netif)

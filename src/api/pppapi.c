@@ -39,6 +39,7 @@
 #include "lwip/tcpip.h"
 #include "netif/ppp/pppoe.h"
 #include "netif/ppp/pppol2tp.h"
+#include "netif/ppp/pppos.h"
 
 /**
  * Call ppp_set_default() inside the tcpip_thread context.

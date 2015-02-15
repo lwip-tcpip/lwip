@@ -147,19 +147,6 @@
 #endif /* EAP_SUPPORT */
 
 /*
- * Values for FCS calculations.
- */
-#define PPP_INITFCS	0xffff	/* Initial FCS value */
-#define PPP_GOODFCS	0xf0b8	/* Good final FCS value */
-#if PPP_FCS_TABLE
- #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ fcstab[((fcs) ^ (c)) & 0xff])
-#else
-u16_t ppp_get_fcs(u8_t byte);
-#define PPP_FCS(fcs, c) (((fcs) >> 8) ^ ppp_get_fcs(((fcs) ^ (c)) & 0xff))
-#endif
-
-
-/*
  * What to do with network protocol (NP) packets.
  */
 enum NPmode {
