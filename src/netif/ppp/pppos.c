@@ -47,6 +47,7 @@
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppos.h"
 #include "netif/ppp/magic.h"
+#include "netif/ppp/vj.h"
 
 /* callbacks called from PPP core */
 static void pppos_link_command_callback(void *pcb, u8_t command);
