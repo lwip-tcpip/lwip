@@ -350,8 +350,8 @@ typedef struct ppp_pcb_rx_s {
  * PPP interface control block.
  */
 typedef void (*link_command_cb_fn)(void *pcb, u8_t command);
-typedef void (*link_write_cb_fn)(void *pcb, struct pbuf *p);
-typedef void (*link_netif_output_cb_fn)(void *pcb, struct pbuf *p, u_short protocol);
+typedef int (*link_write_cb_fn)(void *pcb, struct pbuf *p);
+typedef err_t (*link_netif_output_cb_fn)(void *pcb, struct pbuf *p, u_short protocol);
 
 struct ppp_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */

@@ -209,14 +209,10 @@ static void ppp_free_current_input_packet(ppp_pcb_rx *pcrx);
 
 #if PPPOE_SUPPORT
 static void ppp_over_ethernet_open(ppp_pcb *pcb);
-static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
-static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
 static void ppp_over_l2tp_open(ppp_pcb *pcb);
-static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol);
-static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p);
 #endif /* PPPOL2TP_SUPPORT */
 
 /***********************************/
@@ -1002,13 +998,13 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 
 #if PPPOE_SUPPORT
   if(pcb->pppoe_sc) {
-    return ppp_netif_output_over_ethernet(pcb, pb, protocol);
+    return pcb->link_netif_output_cb(pcb->pppoe_sc, pb, protocol);
   }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
   if(pcb->l2tp_pcb) {
-    return ppp_netif_output_over_l2tp(pcb, pb, protocol);
+    return pcb->link_netif_output_cb(pcb->l2tp_pcb, pb, protocol);
   }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -1133,97 +1129,6 @@ static err_t ppp_netif_output_over_serial(ppp_pcb *pcb, struct pbuf *pb, u_short
 }
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOE_SUPPORT
-static err_t ppp_netif_output_over_ethernet(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
-  struct pbuf *pb;
-  int i=0;
-#if LWIP_SNMP
-  u16_t tot_len;
-#endif /* LWIP_SNMP */
-  err_t err;
-
-  /* @todo: try to use pbuf_header() here! */
-  pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
-  if(!pb) {
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return ERR_MEM;
-  }
-
-  pbuf_header(pb, -(s16_t)PPPOE_HEADERLEN);
-
-  pcb->last_xmit = sys_jiffies();
-
-  if (!pcb->pcomp || protocol > 0xFF) {
-    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
-  }
-  *((u_char*)pb->payload + i) = protocol & 0xFF;
-
-  pbuf_chain(pb, p);
-#if LWIP_SNMP
-  tot_len = pb->tot_len;
-#endif /* LWIP_SNMP */
-
-  if( (err = pppoe_xmit(pcb->pppoe_sc, pb)) != ERR_OK) {
-    LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return err;
-  }
-
-  snmp_add_ifoutoctets(pcb->netif, tot_len);
-  snmp_inc_ifoutucastpkts(pcb->netif);
-  LINK_STATS_INC(link.xmit);
-  return ERR_OK;
-}
-#endif /* PPPOE_SUPPORT */
-
-
-#if PPPOL2TP_SUPPORT
-static err_t ppp_netif_output_over_l2tp(ppp_pcb *pcb, struct pbuf *p, u_short protocol) {
-  struct pbuf *pb;
-  int i=0;
-#if LWIP_SNMP
-  u16_t tot_len;
-#endif /* LWIP_SNMP */
-  err_t err;
-
-  /* @todo: try to use pbuf_header() here! */
-  pb = pbuf_alloc(PBUF_TRANSPORT, PPPOL2TP_OUTPUT_DATA_HEADER_LEN + sizeof(protocol), PBUF_RAM);
-  if(!pb) {
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return ERR_MEM;
-  }
-
-  pbuf_header(pb, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN);
-
-  pcb->last_xmit = sys_jiffies();
-
-  if (!pcb->pcomp || protocol > 0xFF) {
-    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
-  }
-  *((u_char*)pb->payload + i) = protocol & 0xFF;
-
-  pbuf_chain(pb, p);
-#if LWIP_SNMP
-  tot_len = pb->tot_len;
-#endif /* LWIP_SNMP */
-
-  if( (err = pppol2tp_xmit(pcb->l2tp_pcb, pb)) != ERR_OK) {
-    LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return err;
-  }
-
-  snmp_add_ifoutoctets(pcb->netif, tot_len);
-  snmp_inc_ifoutucastpkts(pcb->netif);
-  LINK_STATS_INC(link.xmit);
-  return ERR_OK;
-}
-#endif /* PPPOL2TP_SUPPORT */
-
 
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
@@ -1293,13 +1198,13 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 
 #if PPPOE_SUPPORT
   if(pcb->pppoe_sc) {
-    return ppp_write_over_ethernet(pcb, p);
+    return pcb->link_write_cb(pcb->pppoe_sc, p);
   }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
   if(pcb->l2tp_pcb) {
-    return ppp_write_over_l2tp(pcb, p);
+    return pcb->link_write_cb(pcb->l2tp_pcb, p);
   }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -1379,83 +1284,6 @@ static int ppp_write_over_serial(ppp_pcb *pcb, struct pbuf *p) {
   return PPPERR_NONE;
 }
 #endif /* PPPOS_SUPPORT */
-
-#if PPPOE_SUPPORT
-static int ppp_write_over_ethernet(ppp_pcb *pcb, struct pbuf *p) {
-  struct pbuf *ph; /* Ethernet + PPPoE header */
-#if LWIP_SNMP
-  u16_t tot_len;
-#endif /* LWIP_SNMP */
-
-  /* skip address & flags */
-  pbuf_header(p, -(s16_t)2);
-
-  ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HEADERLEN), PBUF_RAM);
-  if(!ph) {
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    pbuf_free(p);
-    return PPPERR_ALLOC;
-  }
-
-  pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
-  pbuf_cat(ph, p);
-#if LWIP_SNMP
-  tot_len = ph->tot_len;
-#endif /* LWIP_SNMP */
-
-  pcb->last_xmit = sys_jiffies();
-
-  if(pppoe_xmit(pcb->pppoe_sc, ph) != ERR_OK) {
-    LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return PPPERR_DEVICE;
-  }
-
-  snmp_add_ifoutoctets(pcb->netif, (u16_t)tot_len);
-  snmp_inc_ifoutucastpkts(pcb->netif);
-  LINK_STATS_INC(link.xmit);
-  return PPPERR_NONE;
-}
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-static int ppp_write_over_l2tp(ppp_pcb *pcb, struct pbuf *p) {
-  struct pbuf *ph; /* UDP + L2TP header */
-#if LWIP_SNMP
-  u16_t tot_len;
-#endif /* LWIP_SNMP */
-
-  ph = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(PPPOL2TP_OUTPUT_DATA_HEADER_LEN), PBUF_RAM);
-  if(!ph) {
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    pbuf_free(p);
-    return PPPERR_ALLOC;
-  }
-
-  pbuf_header(ph, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
-  pbuf_cat(ph, p);
-#if LWIP_SNMP
-  tot_len = ph->tot_len;
-#endif /* LWIP_SNMP */
-
-  pcb->last_xmit = sys_jiffies();
-
-  if(pppol2tp_xmit(pcb->l2tp_pcb, ph) != ERR_OK) {
-    LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(pcb->netif);
-    return PPPERR_DEVICE;
-  }
-
-  snmp_add_ifoutoctets(pcb->netif, (u16_t)tot_len);
-  snmp_inc_ifoutucastpkts(pcb->netif);
-  LINK_STATS_INC(link.xmit);
-  return PPPERR_NONE;
-}
-#endif /* PPPOL2TP_SUPPORT */
 
 #if PPPOS_SUPPORT
 /*

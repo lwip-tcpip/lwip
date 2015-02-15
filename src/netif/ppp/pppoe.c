@@ -79,6 +79,7 @@
 #include "lwip/timers.h"
 #include "lwip/memp.h"
 #include "lwip/stats.h"
+#include "lwip/snmp.h"
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppoe.h"
@@ -113,8 +114,10 @@
 static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
-/* callback called from PPP core */
+/* callbacks called from PPP core */
 static void pppoe_link_command_callback(void *pcb, u8_t command);
+static int pppoe_link_write_callback(void *pcb, struct pbuf *p);
+static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol);
 
 /* management routines */
 static err_t pppoe_destroy(struct pppoe_softc *sc);
@@ -136,6 +139,7 @@ static err_t pppoe_send_pads(struct pppoe_softc *);
 static err_t pppoe_send_padt(struct netif *, u_int, const u8_t *);
 
 /* internal helper functions */
+static err_t pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb);
 static struct pppoe_softc* pppoe_find_softc_by_session(u_int session, struct netif *rcvif);
 static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, struct netif *rcvif);
 
@@ -173,7 +177,7 @@ pppoe_create(struct netif *pppif,
   pppoe_softc_list = sc;
 
   ppp->pppoe_sc = sc;
-  ppp_link_set_callbacks(ppp, pppoe_link_command_callback, NULL, NULL);
+  ppp_link_set_callbacks(ppp, pppoe_link_command_callback, pppoe_link_write_callback, pppoe_link_netif_output_callback);
   return ppp;
 }
 
@@ -196,6 +200,93 @@ static void pppoe_link_command_callback(void *pcb, u8_t command) {
 
   default: ;
   }
+}
+
+/* Called by PPP core */
+static int pppoe_link_write_callback(void *pcb, struct pbuf *p) {
+  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
+  ppp_pcb *ppp = sc->pcb;
+  struct pbuf *ph; /* Ethernet + PPPoE header */
+#if LWIP_SNMP
+  u16_t tot_len;
+#endif /* LWIP_SNMP */
+
+  /* skip address & flags */
+  pbuf_header(p, -(s16_t)2);
+
+  ph = pbuf_alloc(PBUF_LINK, (u16_t)(PPPOE_HEADERLEN), PBUF_RAM);
+  if(!ph) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(ppp->netif);
+    pbuf_free(p);
+    return PPPERR_ALLOC;
+  }
+
+  pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
+  pbuf_cat(ph, p);
+#if LWIP_SNMP
+  tot_len = ph->tot_len;
+#endif /* LWIP_SNMP */
+
+  ppp->last_xmit = sys_jiffies();
+
+  if(pppoe_xmit(sc, ph) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(ppp->netif);
+    return PPPERR_DEVICE;
+  }
+
+  snmp_add_ifoutoctets(ppp->netif, (u16_t)tot_len);
+  snmp_inc_ifoutucastpkts(ppp->netif);
+  LINK_STATS_INC(link.xmit);
+  return PPPERR_NONE;
+}
+
+/* Called by PPP core */
+static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol) {
+  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
+  ppp_pcb *ppp = sc->pcb;
+  struct pbuf *pb;
+  int i=0;
+#if LWIP_SNMP
+  u16_t tot_len;
+#endif /* LWIP_SNMP */
+  err_t err;
+
+  /* @todo: try to use pbuf_header() here! */
+  pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
+  if(!pb) {
+    LINK_STATS_INC(link.memerr);
+    LINK_STATS_INC(link.proterr);
+    snmp_inc_ifoutdiscards(ppp->netif);
+    return ERR_MEM;
+  }
+
+  pbuf_header(pb, -(s16_t)PPPOE_HEADERLEN);
+
+  ppp->last_xmit = sys_jiffies();
+
+  if (!ppp->pcomp || protocol > 0xFF) {
+    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
+  }
+  *((u_char*)pb->payload + i) = protocol & 0xFF;
+
+  pbuf_chain(pb, p);
+#if LWIP_SNMP
+  tot_len = pb->tot_len;
+#endif /* LWIP_SNMP */
+
+  if( (err = pppoe_xmit(sc, pb)) != ERR_OK) {
+    LINK_STATS_INC(link.err);
+    snmp_inc_ifoutdiscards(ppp->netif);
+    return err;
+  }
+
+  snmp_add_ifoutoctets(ppp->netif, tot_len);
+  snmp_inc_ifoutucastpkts(ppp->netif);
+  LINK_STATS_INC(link.xmit);
+  return ERR_OK;
 }
 
 static err_t
@@ -1059,7 +1150,7 @@ pppoe_send_pads(struct pppoe_softc *sc)
 }
 #endif
 
-err_t
+static err_t
 pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb)
 {
   u8_t *p;

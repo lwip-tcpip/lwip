@@ -196,8 +196,5 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
                       struct netif *netif, ip_addr_t *ipaddr, u16_t port, u8_t *secret, u8_t secret_len,
                       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-/* Data packet from PPP to L2TP */
-err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
-
 #endif /* PPPOL2TP_H_ */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

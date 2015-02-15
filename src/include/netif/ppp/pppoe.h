@@ -169,8 +169,6 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);
 void pppoe_data_input(struct netif *netif, struct pbuf *p);
 
-err_t pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb);
-
 #endif /* PPP_OE_H */
 
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */
