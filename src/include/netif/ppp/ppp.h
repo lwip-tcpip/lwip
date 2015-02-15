@@ -491,25 +491,6 @@ struct ppp_pcb_s {
 ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOE_SUPPORT
-/*
- * Create a new PPP Over Ethernet (PPPoE) connection.
- *
- * Return 0 on success, an error code on failure.
- */
-ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-/*
- * Create a new PPP Over L2TP (PPPoL2TP) connection.
- */
-ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-		u8_t *secret, u8_t secret_len,
-		ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* PPPOL2TP_SUPPORT */
-
 /*
  * Set auth helper, optional, you can either fill ppp_pcb->settings.
  *

@@ -246,23 +246,6 @@ void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
 }
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOE_SUPPORT
-ppp_pcb *ppp_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name, const char *concentrator_name,
-                        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  LWIP_UNUSED_ARG(service_name);
-  LWIP_UNUSED_ARG(concentrator_name);
-  return pppoe_create(pppif, ethif, link_status_cb, ctx_cb);
-}
-#endif /* PPPOE_SUPPORT */
-
-#if PPPOL2TP_SUPPORT
-ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-		u8_t *secret, u8_t secret_len,
-		ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  return pppol2tp_create(pppif, netif, ipaddr, port, secret, secret_len, link_status_cb, ctx_cb);
-}
-#endif /* PPPOL2TP_SUPPORT */
-
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 
 #if PAP_SUPPORT

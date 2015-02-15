@@ -146,13 +146,20 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
 
-ppp_pcb*
-pppoe_create(struct netif *pppif,
-             struct netif *ethif,
-             ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+/*
+ * Create a new PPP Over Ethernet (PPPoE) connection.
+ *
+ * Return 0 on success, an error code on failure.
+ */
+ppp_pcb *ppp_over_ethernet_create(struct netif *pppif,
+          struct netif *ethif,
+          const char *service_name, const char *concentrator_name,
+          ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   ppp_pcb *ppp;
   struct pppoe_softc *sc;
+  LWIP_UNUSED_ARG(service_name);
+  LWIP_UNUSED_ARG(concentrator_name);
 
   ppp = ppp_new(pppif, link_status_cb, ctx_cb);
   if (ppp == NULL) {

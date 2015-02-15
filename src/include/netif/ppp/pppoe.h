@@ -162,9 +162,10 @@ struct pppoe_softc {
 
 #define pppoe_init() /* compatibility define, no initialization needed */
 
-ppp_pcb *pppoe_create(struct netif *pppif,
-                      struct netif *ethif,
-                      ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+ppp_pcb *ppp_over_ethernet_create(struct netif *pppif,
+          struct netif *ethif,
+          const char *service_name, const char *concentrator_name,
+          ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);
 void pppoe_data_input(struct netif *netif, struct pbuf *p);
