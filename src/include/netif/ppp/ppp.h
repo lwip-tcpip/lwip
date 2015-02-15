@@ -358,6 +358,7 @@ struct ppp_pcb_s {
 #if PPPOS_SUPPORT
   sio_fd_t fd;                   /* File device ID of port. */
 #endif /* PPPOS_SUPPORT */
+  void (*link_command_cb)(void *pcb, u8_t command);
 #if PPPOE_SUPPORT
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */

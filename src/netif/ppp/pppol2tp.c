@@ -72,6 +72,10 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
  /* Prototypes for procedures local to this file. */
+static void pppol2tp_link_callback(void *pcb, u8_t command);
+static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp);    /* Destroy a L2TP control block */
+static err_t pppol2tp_connect(pppol2tp_pcb *l2tp);    /* Be a LAC, connect to a LNS. */
+static void pppol2tp_disconnect(pppol2tp_pcb *l2tp);  /* Disconnect */
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
              struct pbuf *p, u16_t len, u16_t tunnel_id, u16_t session_id, u16_t ns, u16_t nr);
@@ -126,11 +130,33 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
   ppp->l2tp_pcb = l2tp;
+  ppp_link_set_callback(ppp, pppol2tp_link_callback);
   return ppp;
 }
 
+/* Called by PPP core */
+static void pppol2tp_link_callback(void *pcb, u8_t command) {
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
+
+  switch(command) {
+  case PPP_LINK_COMMAND_CONNECT:
+    pppol2tp_connect(l2tp);
+    break;
+
+  case PPP_LINK_COMMAND_DISCONNECT:
+    pppol2tp_disconnect(l2tp);
+    break;
+
+  case PPP_LINK_COMMAND_FREE:
+    pppol2tp_destroy(l2tp);
+    break;
+
+  default: ;
+  }
+}
+
 /* Destroy a L2TP control block */
-err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
+static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 
   sys_untimeout(pppol2tp_timeout, l2tp);
   if (l2tp->udp != NULL) {
@@ -141,7 +167,7 @@ err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 }
 
 /* Be a LAC, connect to a LNS. */
-err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
+static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
   err_t err;
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
@@ -176,7 +202,7 @@ err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
 }
 
 /* Disconnect */
-void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
+static void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
 
   if (l2tp->phase < PPPOL2TP_STATE_DATA) {
     return;

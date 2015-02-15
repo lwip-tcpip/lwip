@@ -165,10 +165,6 @@ struct pppoe_softc {
 ppp_pcb *pppoe_create(struct netif *pppif,
                       struct netif *ethif,
                       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-err_t pppoe_destroy(struct pppoe_softc *sc);
-
-int pppoe_connect(struct pppoe_softc *sc);
-void pppoe_disconnect(struct pppoe_softc *sc);
 
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);
 void pppoe_data_input(struct netif *netif, struct pbuf *p);

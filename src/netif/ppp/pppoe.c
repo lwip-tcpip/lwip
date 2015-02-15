@@ -113,7 +113,13 @@
 static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
+/* callback called from PPP core */
+static void pppoe_link_callback(void *pcb, u8_t command);
+
 /* management routines */
+static err_t pppoe_destroy(struct pppoe_softc *sc);
+static int pppoe_connect(struct pppoe_softc *sc);
+static void pppoe_disconnect(struct pppoe_softc *sc);
 static void pppoe_abort_connect(struct pppoe_softc *);
 static void pppoe_clear_softc(struct pppoe_softc *, const char *);
 
@@ -167,10 +173,32 @@ pppoe_create(struct netif *pppif,
   pppoe_softc_list = sc;
 
   ppp->pppoe_sc = sc;
+  ppp_link_set_callback(ppp, pppoe_link_callback);
   return ppp;
 }
 
-err_t
+/* Called by PPP core */
+static void pppoe_link_callback(void *pcb, u8_t command) {
+  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
+
+  switch(command) {
+  case PPP_LINK_COMMAND_CONNECT:
+    pppoe_connect(sc);
+    break;
+
+  case PPP_LINK_COMMAND_DISCONNECT:
+    pppoe_disconnect(sc);
+    break;
+
+  case PPP_LINK_COMMAND_FREE:
+    pppoe_destroy(sc);
+    break;
+
+  default: ;
+  }
+}
+
+static err_t
 pppoe_destroy(struct pppoe_softc *sc)
 {
   struct pppoe_softc *cur, *prev = NULL;
@@ -789,7 +817,7 @@ pppoe_timeout(void *arg)
 }
 
 /* Start a connection (i.e. initiate discovery phase) */
-int
+static int
 pppoe_connect(struct pppoe_softc *sc)
 {
   int err;
@@ -819,7 +847,7 @@ pppoe_connect(struct pppoe_softc *sc)
 }
 
 /* disconnect */
-void
+static void
 pppoe_disconnect(struct pppoe_softc *sc)
 {
   if (sc->sc_state < PPPOE_STATE_SESSION) {

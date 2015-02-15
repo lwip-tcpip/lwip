@@ -88,6 +88,16 @@
 #define	PPP_TRANS	0x20	/* Asynchronous transparency modifier */
 
 /*
+ * Low-level links commands
+ */
+/* Start a connection (i.e. initiate discovery phase) */
+#define PPP_LINK_COMMAND_CONNECT      0
+/* End a connection (i.e. initiate disconnect phase) */
+#define PPP_LINK_COMMAND_DISCONNECT   1
+/* Free link connection */
+#define PPP_LINK_COMMAND_FREE         2
+
+/*
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
@@ -369,6 +379,9 @@ int ppp_init(void);
 
 /* Create a new PPP control block */
 ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+
+/* Set link callback function */
+#define ppp_link_set_callback(ppp, cb)    (ppp->link_command_cb = cb)
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);

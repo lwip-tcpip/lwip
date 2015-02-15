@@ -407,14 +407,14 @@ int ppp_free(ppp_pcb *pcb) {
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
-    pppoe_destroy(pcb->pppoe_sc);
+    pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_FREE);
     pcb->pppoe_sc = NULL;
   }
 #endif /* PPPOE_SUPPORT */
 
 #if PPPOL2TP_SUPPORT
   if (pcb->l2tp_pcb) {
-    pppol2tp_destroy(pcb->l2tp_pcb);
+    pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_FREE);
     pcb->l2tp_pcb = NULL;
   }
 #endif /* PPPOL2TP_SUPPORT */
@@ -1807,7 +1807,7 @@ static void ppp_over_ethernet_open(ppp_pcb *pcb) {
   ao->neg_pcompression = 0;
   ao->neg_accompression = 0;
 
-  pppoe_connect(pcb->pppoe_sc);
+  pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_CONNECT);
 }
 #endif /* PPPOE_SUPPORT */
 
@@ -1829,7 +1829,7 @@ static void ppp_over_l2tp_open(ppp_pcb *pcb) {
   ao->neg_pcompression = 0;
   ao->neg_accompression = 0;
 
-  pppol2tp_connect(pcb->l2tp_pcb);
+  pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_CONNECT);
 }
 #endif /* PPPOL2TP_SUPPORT */
 
@@ -1843,12 +1843,12 @@ void ppp_link_terminated(ppp_pcb *pcb) {
 
 #if PPPOE_SUPPORT
   if (pcb->pppoe_sc) {
-    pppoe_disconnect(pcb->pppoe_sc);
+    pcb->link_command_cb(pcb->pppoe_sc, PPP_LINK_COMMAND_DISCONNECT);
   } else
 #endif /* PPPOE_SUPPORT */
 #if PPPOL2TP_SUPPORT
   if (pcb->l2tp_pcb) {
-    pppol2tp_disconnect(pcb->l2tp_pcb);
+    pcb->link_command_cb(pcb->l2tp_pcb, PPP_LINK_COMMAND_DISCONNECT);
   } else
 #endif /* PPPOL2TP_SUPPORT */
   {
