@@ -472,41 +472,6 @@ struct ppp_pcb_s {
  *** PUBLIC FUNCTIONS ***
  ************************/
 
-/*
- * Set a PPP interface as the default network interface
- * (used to output all packets for which no specific route is found).
- */
-#define ppp_set_default(ppp)         netif_set_default(ppp->netif)
-
-/*
- * Set auth helper, optional, you can either fill ppp_pcb->settings.
- *
- * Warning: Using PPPAUTHTYPE_ANY might have security consequences.
- * RFC 1994 says:
- *
- * In practice, within or associated with each PPP server, there is a
- * database which associates "user" names with authentication
- * information ("secrets").  It is not anticipated that a particular
- * named user would be authenticated by multiple methods.  This would
- * make the user vulnerable to attacks which negotiate the least secure
- * method from among a set (such as PAP rather than CHAP).  If the same
- * secret was used, PAP would reveal the secret to be used later with
- * CHAP.
- *
- * Instead, for each user name there should be an indication of exactly
- * one method used to authenticate that user name.  If a user needs to
- * make use of different authentication methods under different
- * circumstances, then distinct user names SHOULD be employed, each of
- * which identifies exactly one authentication method.
- *
- */
-#define PPPAUTHTYPE_NONE   0x00
-#define PPPAUTHTYPE_PAP    0x01
-#define PPPAUTHTYPE_CHAP   0x02
-#define PPPAUTHTYPE_MSCHAP 0x04
-#define PPPAUTHTYPE_EAP    0x08
-#define PPPAUTHTYPE_ANY    0xff
-
 #if PPPOS_SUPPORT
 /*
  * Create a new PPP connection using the given serial I/O device.
@@ -538,7 +503,41 @@ ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_
 		ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
 
+/*
+ * Set auth helper, optional, you can either fill ppp_pcb->settings.
+ *
+ * Warning: Using PPPAUTHTYPE_ANY might have security consequences.
+ * RFC 1994 says:
+ *
+ * In practice, within or associated with each PPP server, there is a
+ * database which associates "user" names with authentication
+ * information ("secrets").  It is not anticipated that a particular
+ * named user would be authenticated by multiple methods.  This would
+ * make the user vulnerable to attacks which negotiate the least secure
+ * method from among a set (such as PAP rather than CHAP).  If the same
+ * secret was used, PAP would reveal the secret to be used later with
+ * CHAP.
+ *
+ * Instead, for each user name there should be an indication of exactly
+ * one method used to authenticate that user name.  If a user needs to
+ * make use of different authentication methods under different
+ * circumstances, then distinct user names SHOULD be employed, each of
+ * which identifies exactly one authentication method.
+ *
+ */
+#define PPPAUTHTYPE_NONE   0x00
+#define PPPAUTHTYPE_PAP    0x01
+#define PPPAUTHTYPE_CHAP   0x02
+#define PPPAUTHTYPE_MSCHAP 0x04
+#define PPPAUTHTYPE_EAP    0x08
+#define PPPAUTHTYPE_ANY    0xff
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
+
+/*
+ * Set a PPP interface as the default network interface
+ * (used to output all packets for which no specific route is found).
+ */
+#define ppp_set_default(ppp)         netif_set_default(ppp->netif)
 
 #if PPP_NOTIFY_PHASE
 /*
