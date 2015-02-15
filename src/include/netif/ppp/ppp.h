@@ -349,6 +349,10 @@ typedef struct ppp_pcb_rx_s {
 /*
  * PPP interface control block.
  */
+typedef void (*link_command_cb_fn)(void *pcb, u8_t command);
+typedef void (*link_write_cb_fn)(void *pcb, struct pbuf *p);
+typedef void (*link_netif_output_cb_fn)(void *pcb, struct pbuf *p, u_short protocol);
+
 struct ppp_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
 #if PPP_DEBUG
@@ -358,7 +362,9 @@ struct ppp_pcb_s {
 #if PPPOS_SUPPORT
   sio_fd_t fd;                   /* File device ID of port. */
 #endif /* PPPOS_SUPPORT */
-  void (*link_command_cb)(void *pcb, u8_t command);
+  link_command_cb_fn link_command_cb;
+  link_write_cb_fn link_write_cb;
+  link_netif_output_cb_fn link_netif_output_cb;
 #if PPPOE_SUPPORT
   struct pppoe_softc *pppoe_sc;
 #endif /* PPPOE_SUPPORT */

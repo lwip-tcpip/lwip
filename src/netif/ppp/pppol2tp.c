@@ -72,7 +72,7 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_link_callback(void *pcb, u8_t command);
+static void pppol2tp_link_command_callback(void *pcb, u8_t command);
 static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp);    /* Destroy a L2TP control block */
 static err_t pppol2tp_connect(pppol2tp_pcb *l2tp);    /* Be a LAC, connect to a LNS. */
 static void pppol2tp_disconnect(pppol2tp_pcb *l2tp);  /* Disconnect */
@@ -130,12 +130,12 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
   ppp->l2tp_pcb = l2tp;
-  ppp_link_set_callback(ppp, pppol2tp_link_callback);
+  ppp_link_set_callbacks(ppp, pppol2tp_link_command_callback, NULL, NULL);
   return ppp;
 }
 
 /* Called by PPP core */
-static void pppol2tp_link_callback(void *pcb, u8_t command) {
+static void pppol2tp_link_command_callback(void *pcb, u8_t command) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
 
   switch(command) {

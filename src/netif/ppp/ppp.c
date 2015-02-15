@@ -550,6 +550,12 @@ static void ppp_clear(ppp_pcb *pcb) {
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
+void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output) {
+  pcb->link_command_cb = command;
+  pcb->link_write_cb = write;
+  pcb->link_netif_output_cb = netif_output;
+}
+
 static void ppp_do_open(void *arg) {
   ppp_pcb *pcb = (ppp_pcb*)arg;
 

@@ -381,7 +381,7 @@ int ppp_init(void);
 ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* Set link callback function */
-#define ppp_link_set_callback(ppp, cb)    (ppp->link_command_cb = cb)
+void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);
