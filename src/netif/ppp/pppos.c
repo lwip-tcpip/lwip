@@ -55,6 +55,7 @@ static int pppos_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol);
 
 /* Prototypes for procedures local to this file. */
+static u8_t pppos_exist(pppos_pcb *pppos);
 static void pppos_connect(pppos_pcb *pppos);
 static void pppos_disconnect(pppos_pcb *pppos);
 static err_t pppos_destroy(pppos_pcb *pppos);
@@ -133,6 +134,9 @@ ppp_get_fcs(u8_t byte)
 #define PPP_INITFCS     0xffff  /* Initial FCS value */
 #define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
 
+/* linked list of created PPPoS interfaces */
+static pppos_pcb *pppos_pcb_list;
+
 
 
 /*
@@ -160,6 +164,10 @@ ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
     ppp_free(ppp);
     return NULL;
   }
+
+  /* put the new interface at the head of the list */
+  pppos->next = pppos_pcb_list;
+  pppos_pcb_list = pppos;
 
   pppos->ppp = ppp;
   pppos->fd = fd;
@@ -375,6 +383,18 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
   return ERR_OK;
 }
 
+static u8_t
+pppos_exist(pppos_pcb *pppos)
+{
+  pppos_pcb *test;
+  for (test = pppos_pcb_list; test != NULL; test = test->next) {
+    if (test == pppos) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 static void
 pppos_connect(pppos_pcb *pppos)
 {
@@ -434,6 +454,15 @@ static err_t
 pppos_destroy(pppos_pcb *pppos)
 {
   ppp_pcb *ppp = pppos->ppp;
+  pppos_pcb **copp, *freep;
+
+  /* remove interface from list */
+  for (copp = &pppos_pcb_list; (freep = *copp); copp = &freep->next) {
+    if (freep == pppos) {
+       *copp = freep->next;
+       break;
+    }
+  }
 
   /* input pbuf left ? */
   pppos_free_current_input_packet(&ppp->rx);
@@ -718,6 +747,9 @@ void
 pppos_vjc_config(ppp_pcb *ppp, int vjcomp, int cidcomp, int maxcid)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
+  if (!pppos_exist(pppos)) {
+    return;
+  }
   ppp->vj_enabled = vjcomp;
   pppos->vj_comp.compressSlot = cidcomp;
   pppos->vj_comp.maxSlotIndex = maxcid;

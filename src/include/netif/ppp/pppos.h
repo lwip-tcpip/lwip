@@ -45,6 +45,7 @@
  */
 typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
+  pppos_pcb *next;
   ppp_pcb *ppp;                  /* PPP PCB */
   sio_fd_t fd;                   /* File device ID of port. */
 #if VJ_SUPPORT
