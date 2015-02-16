@@ -43,6 +43,7 @@
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
 #include "lwip/sio.h"
+#include "lwip/ip.h" /* for ip_input() */
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppos.h"
@@ -744,31 +745,28 @@ drop:
 
 #if VJ_SUPPORT
 void
-pppos_vjc_config(ppp_pcb *ppp, int vjcomp, int cidcomp, int maxcid)
+pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid)
 {
-  pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
+  ppp_pcb *ppp;
+
   if (!pppos_exist(pppos)) {
     return;
   }
+
+  ppp = pppos->ppp;
   ppp->vj_enabled = vjcomp;
   pppos->vj_comp.compressSlot = cidcomp;
   pppos->vj_comp.maxSlotIndex = maxcid;
-  PPPDEBUG(LOG_INFO, ("pppos_vjc_config: VJ compress enable=%d slot=%d max slot=%d\n",
-            vjcomp, cidcomp, maxcid));
+  PPPDEBUG(LOG_INFO, ("pppos_vjc_config[%d]: VJ compress enable=%d slot=%d max slot=%d\n",
+            ppp->num, vjcomp, cidcomp, maxcid));
 }
 
 int
-pppos_vjc_comp(ppp_pcb *ppp, struct pbuf *pb)
+pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb)
 {
-  pppos_pcb *pppos;
+  ppp_pcb *ppp = pppos->ppp;
   int ret;
   PPPDEBUG(LOG_INFO, ("pppos_vjc_comp[%d]: vj_comp in pbuf len=%d\n", ppp->num, pb->len));
-
-  /* VJ is only enabled on PPPoS interfaces */
-  if (!ppp->vj_enabled) {
-    goto drop;
-  }
-  pppos = (pppos_pcb *)ppp->link_ctx_cb;
 
   /*
    * Clip off the VJ header and prepend the rebuilt TCP/IP header and
@@ -780,24 +778,17 @@ pppos_vjc_comp(ppp_pcb *ppp, struct pbuf *pb)
     return ret;
   }
 
-drop:
   /* Something's wrong so drop it. */
   PPPDEBUG(LOG_WARNING, ("pppos_vjc_comp[%d]: Dropping VJ compressed\n", ppp->num));
   return -1;
 }
 
 int
-pppos_vjc_uncomp(ppp_pcb *ppp, struct pbuf *pb)
+pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb)
 {
-  pppos_pcb *pppos;
+  ppp_pcb *ppp = pppos->ppp;
   int ret;
   PPPDEBUG(LOG_INFO, ("pppos_vjc_uncomp[%d]: vj_un in pbuf len=%d\n", ppp->num, pb->len));
-
-  /* VJ is only enabled on PPPoS interfaces */
-  if (!ppp->vj_enabled) {
-    goto drop;
-  }
-  pppos = (pppos_pcb *)ppp->link_ctx_cb;
 
   /*
    * Process the TCP/IP header for VJ header compression and then pass
@@ -809,7 +800,6 @@ pppos_vjc_uncomp(ppp_pcb *ppp, struct pbuf *pb)
     return ret;
   }
 
-drop:
   /* Something's wrong so drop it. */
   PPPDEBUG(LOG_WARNING, ("pppos_vjc_uncomp[%d]: Dropping VJ uncompressed\n", ppp->num));
   return -1;

@@ -91,6 +91,9 @@
 #include "lwip/sio.h"
 #include "lwip/sys.h"
 #include "lwip/ip.h" /* for ip_input() */
+#if PPP_IPV6_SUPPORT
+#include "lwip/ip6.h" /* for ip6_input() */
+#endif /* PPP_IPV6_SUPPORT */
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppos.h"
@@ -582,13 +585,15 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
 #if VJ_SUPPORT
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-      if (pppos_vjc_comp(pcb, pb) >= 0) {
+      /* VJ is only enabled on PPPoS interfaces */
+      if (pcb->vj_enabled && pppos_vjc_comp((pppos_pcb*)pcb->link_ctx_cb, pb) >= 0) {
         return;
       }
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-      if (pppos_vjc_uncomp(pcb, pb) >= 0) {
+      /* VJ is only enabled on PPPoS interfaces */
+      if (pcb->vj_enabled && pppos_vjc_uncomp((pppos_pcb*)pcb->link_ctx_cb, pb) >= 0) {
         return;
       }
       break;
@@ -1185,7 +1190,7 @@ int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
  */
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
 #if VJ_SUPPORT
-  pppos_vjc_config(pcb, vjcomp, cidcomp, maxcid);
+  pppos_vjc_config((pppos_pcb*)pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
 #else /* VJ_SUPPORT */
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(vjcomp);

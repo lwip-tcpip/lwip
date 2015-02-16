@@ -61,9 +61,9 @@ ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
 
-void pppos_vjc_config(ppp_pcb *ppp, int vjcomp, int cidcomp, int maxcid);
-int pppos_vjc_comp(ppp_pcb *ppp, struct pbuf *pb);
-int pppos_vjc_uncomp(ppp_pcb *ppp, struct pbuf *pb);
+void pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid);
+int pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb);
+int pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb);
 
 #endif /* PPPOS_H */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */
