@@ -64,9 +64,9 @@ static err_t pppos_destroy(pppos_pcb *pppos);
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
 static void pppos_xmit(pppos_pcb *pppos, struct pbuf *nb);
-static void pppos_free_current_input_packet(ppp_pcb_rx *pcrx);
+static void pppos_free_current_input_packet(pppos_pcb *pppos);
 static struct pbuf *pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm);
-static void pppos_drop(pppos_pcb *pcrx);
+static void pppos_drop(pppos_pcb *pppos);
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */
@@ -406,14 +406,11 @@ pppos_connect(pppos_pcb *pppos)
 #endif /* !VJ_SUPPORT */
 
   /* input pbuf left over from last session? */
-  pppos_free_current_input_packet(&pppos->rx);
+  pppos_free_current_input_packet(pppos);
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
-  memset(&pppos->rx, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->rx - (char*)0 ) );
-
-  pppos->rx.pcb = ppp;
-  pppos->rx.fd = pppos->fd;
+  memset(&pppos->in_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->in_accm - (char*)0 ) );
 
 #if VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
@@ -432,7 +429,7 @@ pppos_connect(pppos_pcb *pppos)
    * Default the in and out accm so that escape and flag characters
    * are always escaped.
    */
-  pppos->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
   ppp->out_accm[15] = 0x60;
 
   /*
@@ -467,7 +464,7 @@ pppos_destroy(pppos_pcb *pppos)
   }
 
   /* input pbuf left ? */
-  pppos_free_current_input_packet(&pppos->rx);
+  pppos_free_current_input_packet(pppos);
 
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
@@ -500,7 +497,6 @@ void
 pppos_input(ppp_pcb *ppp, u_char *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
-  ppp_pcb_rx *pcrx = &pppos->rx;
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
@@ -511,7 +507,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
     cur_char = *s++;
 
     SYS_ARCH_PROTECT(lev);
-    escaped = ESCAPE_P(pcrx->in_accm, cur_char);
+    escaped = ESCAPE_P(pppos->in_accm, cur_char);
     SYS_ARCH_UNPROTECT(lev);
     /* Handle special characters. */
     if (escaped) {
@@ -521,24 +517,24 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
        * and there is no reason that I know of to escape it, I won't complicate
        * the code to handle this case. GLL */
       if (cur_char == PPP_ESCAPE) {
-        pcrx->in_escaped = 1;
+        pppos->in_escaped = 1;
       /* Check for the flag character. */
       } else if (cur_char == PPP_FLAG) {
         /* If this is just an extra flag character, ignore it. */
-        if (pcrx->in_state <= PDADDRESS) {
+        if (pppos->in_state <= PDADDRESS) {
           /* ignore it */;
         /* If we haven't received the packet header, drop what has come in. */
-        } else if (pcrx->in_state < PDDATA) {
+        } else if (pppos->in_state < PDDATA) {
           PPPDEBUG(LOG_WARNING,
                    ("pppos_input[%d]: Dropping incomplete packet %d\n",
-                    ppp->num, pcrx->in_state));
+                    ppp->num, pppos->in_state));
           LINK_STATS_INC(link.lenerr);
           pppos_drop(pppos);
         /* If the fcs is invalid, drop the packet. */
-        } else if (pcrx->in_fcs != PPP_GOODFCS) {
+        } else if (pppos->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
                    ("pppos_input[%d]: Dropping bad fcs 0x%"X16_F" proto=0x%"X16_F"\n",
-                    ppp->num, pcrx->in_fcs, pcrx->in_protocol));
+                    ppp->num, pppos->in_fcs, pppos->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
           pppos_drop(pppos);
@@ -546,27 +542,27 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
         } else {
           struct pbuf *inp;
           /* Trim off the checksum. */
-          if(pcrx->in_tail->len > 2) {
-            pcrx->in_tail->len -= 2;
+          if(pppos->in_tail->len > 2) {
+            pppos->in_tail->len -= 2;
 
-            pcrx->in_tail->tot_len = pcrx->in_tail->len;
-            if (pcrx->in_tail != pcrx->in_head) {
-              pbuf_cat(pcrx->in_head, pcrx->in_tail);
+            pppos->in_tail->tot_len = pppos->in_tail->len;
+            if (pppos->in_tail != pppos->in_head) {
+              pbuf_cat(pppos->in_head, pppos->in_tail);
             }
           } else {
-            pcrx->in_tail->tot_len = pcrx->in_tail->len;
-            if (pcrx->in_tail != pcrx->in_head) {
-              pbuf_cat(pcrx->in_head, pcrx->in_tail);
+            pppos->in_tail->tot_len = pppos->in_tail->len;
+            if (pppos->in_tail != pppos->in_head) {
+              pbuf_cat(pppos->in_head, pppos->in_tail);
             }
 
-            pbuf_realloc(pcrx->in_head, pcrx->in_head->tot_len - 2);
+            pbuf_realloc(pppos->in_head, pppos->in_head->tot_len - 2);
           }
 
           /* Dispatch the packet thereby consuming it. */
-          inp = pcrx->in_head;
+          inp = pppos->in_head;
           /* Packet consumed, release our references. */
-          pcrx->in_head = NULL;
-          pcrx->in_tail = NULL;
+          pppos->in_head = NULL;
+          pppos->in_tail = NULL;
 #if IP_FORWARD || LWIP_IPV6_FORWARD
           /* hide the room for Ethernet forwarding header */
           pbuf_header(inp, -(s16_t)PBUF_LINK_HLEN);
@@ -584,9 +580,9 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
         }
 
         /* Prepare for a new packet. */
-        pcrx->in_fcs = PPP_INITFCS;
-        pcrx->in_state = PDADDRESS;
-        pcrx->in_escaped = 0;
+        pppos->in_fcs = PPP_INITFCS;
+        pppos->in_state = PDADDRESS;
+        pppos->in_escaped = 0;
       /* Other characters are usually control characters that may have
        * been inserted by the physical layer so here we just drop them. */
       } else {
@@ -596,13 +592,13 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
     /* Process other characters. */
     } else {
       /* Unencode escaped characters. */
-      if (pcrx->in_escaped) {
-        pcrx->in_escaped = 0;
+      if (pppos->in_escaped) {
+        pppos->in_escaped = 0;
         cur_char ^= PPP_TRANS;
       }
 
       /* Process character relative to current state. */
-      switch(pcrx->in_state) {
+      switch(pppos->in_state) {
         case PDIDLE:                    /* Idle state - waiting. */
           /* Drop the character if it's not 0xff
            * we would have processed a flag character above. */
@@ -614,13 +610,13 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
 
         case PDSTART:                   /* Process start flag. */
           /* Prepare for a new packet. */
-          pcrx->in_fcs = PPP_INITFCS;
+          pppos->in_fcs = PPP_INITFCS;
           /* no break */
           /* Fall through */
 
         case PDADDRESS:                 /* Process address field. */
           if (cur_char == PPP_ALLSTATIONS) {
-            pcrx->in_state = PDCONTROL;
+            pppos->in_state = PDCONTROL;
             break;
           }
           /* no break */
@@ -630,7 +626,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
         case PDCONTROL:                 /* Process control field. */
           /* If we don't get a valid control code, restart. */
           if (cur_char == PPP_UI) {
-            pcrx->in_state = PDPROTOCOL1;
+            pppos->in_state = PDPROTOCOL1;
             break;
           }
           /* no break */
@@ -639,34 +635,34 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
           else {
             PPPDEBUG(LOG_WARNING,
                      ("pppos_input[%d]: Invalid control <%d>\n", ppp->num, cur_char));
-            pcrx->in_state = PDSTART;
+            pppos->in_state = PDSTART;
           }
 #endif
         case PDPROTOCOL1:               /* Process protocol field 1. */
           /* If the lower bit is set, this is the end of the protocol
            * field. */
           if (cur_char & 1) {
-            pcrx->in_protocol = cur_char;
-            pcrx->in_state = PDDATA;
+            pppos->in_protocol = cur_char;
+            pppos->in_state = PDDATA;
           } else {
-            pcrx->in_protocol = (u_int)cur_char << 8;
-            pcrx->in_state = PDPROTOCOL2;
+            pppos->in_protocol = (u_int)cur_char << 8;
+            pppos->in_state = PDPROTOCOL2;
           }
           break;
         case PDPROTOCOL2:               /* Process protocol field 2. */
-          pcrx->in_protocol |= cur_char;
-          pcrx->in_state = PDDATA;
+          pppos->in_protocol |= cur_char;
+          pppos->in_state = PDDATA;
           break;
         case PDDATA:                    /* Process data byte. */
           /* Make space to receive processed data. */
-          if (pcrx->in_tail == NULL || pcrx->in_tail->len == PBUF_POOL_BUFSIZE) {
+          if (pppos->in_tail == NULL || pppos->in_tail->len == PBUF_POOL_BUFSIZE) {
             u16_t pbuf_alloc_len;
-            if (pcrx->in_tail != NULL) {
-              pcrx->in_tail->tot_len = pcrx->in_tail->len;
-              if (pcrx->in_tail != pcrx->in_head) {
-                pbuf_cat(pcrx->in_head, pcrx->in_tail);
+            if (pppos->in_tail != NULL) {
+              pppos->in_tail->tot_len = pppos->in_tail->len;
+              if (pppos->in_tail != pppos->in_head) {
+                pbuf_cat(pppos->in_head, pppos->in_tail);
                 /* give up the in_tail reference now */
-                pcrx->in_tail = NULL;
+                pppos->in_tail = NULL;
               }
             }
             /* If we haven't started a packet, we need a packet header. */
@@ -676,7 +672,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
              * the packet is being allocated with enough header space to be
              * forwarded (to Ethernet for example).
              */
-            if (pcrx->in_head == NULL) {
+            if (pppos->in_head == NULL) {
               pbuf_alloc_len = PBUF_LINK_HLEN;
             }
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
@@ -688,32 +684,32 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->num));
               LINK_STATS_INC(link.memerr);
               pppos_drop(pppos);
-              pcrx->in_state = PDSTART;  /* Wait for flag sequence. */
+              pppos->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
-            if (pcrx->in_head == NULL) {
+            if (pppos->in_head == NULL) {
               u8_t *payload = ((u8_t*)next_pbuf->payload) + pbuf_alloc_len;
 #if PPP_INPROC_MULTITHREADED
               ((struct pppos_input_header*)payload)->ppp = ppp;
               payload += sizeof(struct pppos_input_header);
               next_pbuf->len += sizeof(struct pppos_input_header);
 #endif /* PPP_INPROC_MULTITHREADED */
-              next_pbuf->len += sizeof(pcrx->in_protocol);
-              *(payload++) = pcrx->in_protocol >> 8;
-              *(payload) = pcrx->in_protocol & 0xFF;
-              pcrx->in_head = next_pbuf;
+              next_pbuf->len += sizeof(pppos->in_protocol);
+              *(payload++) = pppos->in_protocol >> 8;
+              *(payload) = pppos->in_protocol & 0xFF;
+              pppos->in_head = next_pbuf;
             }
-            pcrx->in_tail = next_pbuf;
+            pppos->in_tail = next_pbuf;
           }
           /* Load character into buffer. */
-          ((u_char*)pcrx->in_tail->payload)[pcrx->in_tail->len++] = cur_char;
+          ((u_char*)pppos->in_tail->payload)[pppos->in_tail->len++] = cur_char;
           break;
         default:
           break;
       }
 
       /* update the frame check sequence number. */
-      pcrx->in_fcs = PPP_FCS(pcrx->in_fcs, cur_char);
+      pppos->in_fcs = PPP_FCS(pppos->in_fcs, cur_char);
     }
   } /* while (l-- > 0), all bytes processed */
 
@@ -759,13 +755,13 @@ pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
   /* Load the ACCM bits for the 32 control codes. */
   SYS_ARCH_PROTECT(lev);
   for (i = 0; i < 32 / 8; i++) {
-    pppos->rx.in_accm[i] = (u_char)(accm >> (i * 8));
+    pppos->in_accm[i] = (u_char)(accm >> (i * 8));
   }
   SYS_ARCH_UNPROTECT(lev);
 
   PPPDEBUG(LOG_INFO, ("pppos_accm_in_config[%d]: in_accm=%X %X %X %X\n",
             ppp->num,
-            pppos->rx.in_accm[0], pppos->rx.in_accm[1], pppos->rx.in_accm[2], pppos->rx.in_accm[3]));
+            pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
 
 sio_fd_t
@@ -870,16 +866,16 @@ pppos_xmit(pppos_pcb *pppos, struct pbuf *nb)
  * Drop the input packet.
  */
 static void
-pppos_free_current_input_packet(ppp_pcb_rx *pcrx)
+pppos_free_current_input_packet(pppos_pcb *pppos)
 {
-  if (pcrx->in_head != NULL) {
-    if (pcrx->in_tail && (pcrx->in_tail != pcrx->in_head)) {
-      pbuf_free(pcrx->in_tail);
+  if (pppos->in_head != NULL) {
+    if (pppos->in_tail && (pppos->in_tail != pppos->in_head)) {
+      pbuf_free(pppos->in_tail);
     }
-    pbuf_free(pcrx->in_head);
-    pcrx->in_head = NULL;
+    pbuf_free(pppos->in_head);
+    pppos->in_head = NULL;
   }
-  pcrx->in_tail = NULL;
+  pppos->in_tail = NULL;
 }
 
 /*
@@ -925,17 +921,16 @@ pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
 static void
 pppos_drop(pppos_pcb *pppos)
 {
-  ppp_pcb_rx *pcrx = &pppos->rx;
 #if LWIP_SNMP
   ppp_pcb *ppp = pppos->ppp;
 #endif /* LWIP_SNMP || VJ_SUPPORT */
-  if (pcrx->in_head != NULL) {
+  if (pppos->in_head != NULL) {
 #if 0
-    PPPDEBUG(LOG_INFO, ("pppos_drop: %d:%.*H\n", pcrx->in_head->len, min(60, pcrx->in_head->len * 2), pcrx->in_head->payload));
+    PPPDEBUG(LOG_INFO, ("pppos_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
 #endif
-    PPPDEBUG(LOG_INFO, ("pppos_drop: pbuf len=%d, addr %p\n", pcrx->in_head->len, (void*)pcrx->in_head));
+    PPPDEBUG(LOG_INFO, ("pppos_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
   }
-  pppos_free_current_input_packet(pcrx);
+  pppos_free_current_input_packet(pppos);
 #if VJ_SUPPORT
   vj_uncompress_err(&pppos->vj_comp);
 #endif /* VJ_SUPPORT */

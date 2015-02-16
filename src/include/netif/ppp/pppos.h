@@ -56,35 +56,30 @@ typedef enum {
 } pppos_rx_state;
 
 /*
- * PPP interface RX control block.
- */
-typedef struct ppp_pcb_rx_s {
-  /** ppp descriptor */
-  ppp_pcb *pcb;
-  /** the rx file descriptor */
-  sio_fd_t fd;
-
-  /* The input packet. */
-  struct pbuf *in_head, *in_tail;
-
-  u16_t in_protocol;             /* The input protocol code. */
-  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
-  pppos_rx_state in_state;       /* The input process state. */
-  char in_escaped;               /* Escape next character. */
-  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
-} ppp_pcb_rx;
-
-/*
  * PPPoS interface control block.
  */
 typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
+  /* -- below are data that will NOT be cleared between two sessions */
   pppos_pcb *next;
-  ppp_pcb *ppp;                  /* PPP PCB */
-  sio_fd_t fd;                   /* File device ID of port. */
-  ppp_pcb_rx rx;
+  ppp_pcb *ppp;                    /* PPP PCB */
+  sio_fd_t fd;                     /* File device ID of port. */
+
+  /* -- below are data that will be cleared between two sessions
+   *
+   * in_accm must be the first member of cleared members, because it is
+   * used to know which part must not be cleared.
+   */
+
+  /* PPPoS rx */
+  ext_accm in_accm;                /* Async-Ctl-Char-Map for input. */
+  struct pbuf *in_head, *in_tail;  /* The input packet. */
+  u16_t in_protocol;               /* The input protocol code. */
+  u16_t in_fcs;                    /* Input Frame Check Sequence value. */
+  pppos_rx_state in_state;         /* The input process state. */
+  char in_escaped;                 /* Escape next character. */
 #if VJ_SUPPORT
-  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+  struct vjcompress vj_comp;       /* Van Jacobson compression header. */
 #endif /* VJ_SUPPORT */
 };
 
