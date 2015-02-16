@@ -882,9 +882,6 @@ void new_phase(ppp_pcb *pcb, int p) {
  * the ppp interface.
  */
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
-#if PPPOS_SUPPORT
-  int i;
-#endif /* PPPOS_SUPPORT */
   LWIP_UNUSED_ARG(mtu);
 
   /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
@@ -892,21 +889,12 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
   pcb->accomp = accomp;
 
 #if PPPOS_SUPPORT
-  /* Load the ACCM bits for the 32 control codes. */
-  for (i = 0; i < 32/8; i++) {
-    pcb->out_accm[i] = (u_char)((accm >> (8 * i)) & 0xFF);
-  }
-#else
+  pppos_accm_out_config((pppos_pcb*)pcb->link_ctx_cb, accm);
+#else /* PPPOS_SUPPORT */
   LWIP_UNUSED_ARG(accm);
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOS_SUPPORT
-  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]: out_accm=%X %X %X %X\n",
-            pcb->num,
-            pcb->out_accm[0], pcb->out_accm[1], pcb->out_accm[2], pcb->out_accm[3]));
-#else
   PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->num) );
-#endif /* PPPOS_SUPPORT */
   return 0;
 }
 

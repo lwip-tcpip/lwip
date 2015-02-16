@@ -300,14 +300,6 @@ struct ppp_addrs {
 #endif /* PPP_IPV6_SUPPORT */
 };
 
-/* FIXME: find a way to move ppp_dev_states and ppp_pcb_rx_s to ppp_impl.h */
-#if PPPOS_SUPPORT
-/*
- * Extended asyncmap - allows any character to be escaped.
- */
-typedef u_char  ext_accm[32];
-#endif /* PPPOS_SUPPORT */
-
 /*
  * PPP interface control block.
  */
@@ -366,10 +358,6 @@ struct ppp_pcb_s {
   unsigned int                         :1; /* 1 bit of padding */
 #endif /* VJ_SUPPORT */
   unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
-
-#if PPPOS_SUPPORT
-  ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
-#endif /* PPPOS_SUPPORT */
 
   u32_t last_xmit;               /* Time of last transmission. */
 

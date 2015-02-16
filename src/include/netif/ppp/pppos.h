@@ -56,6 +56,11 @@ typedef enum {
 } pppos_rx_state;
 
 /*
+ * Extended asyncmap - allows any character to be escaped.
+ */
+typedef u_char ext_accm[32];
+
+/*
  * PPPoS interface control block.
  */
 typedef struct pppos_pcb_s pppos_pcb;
@@ -67,9 +72,10 @@ struct pppos_pcb_s {
 
   /* -- below are data that will be cleared between two sessions
    *
-   * in_accm must be the first member of cleared members, because it is
+   * out_accm must be the first member of cleared members, because it is
    * used to know which part must not be cleared.
    */
+  ext_accm out_accm;               /* Async-Ctl-Char-Map for output. */
 
   /* PPPoS rx */
   ext_accm in_accm;                /* Async-Ctl-Char-Map for input. */
@@ -91,6 +97,7 @@ ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
 
+void pppos_accm_out_config(pppos_pcb *pppos, u32_t accm);
 void pppos_accm_in_config(pppos_pcb *pppos, u32_t accm);
 sio_fd_t pppos_get_fd(pppos_pcb *pppos);
 void pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid);

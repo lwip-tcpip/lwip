@@ -401,9 +401,6 @@ struct pbuf * ppp_singlebuf(struct pbuf *p);
  */
 void new_phase(ppp_pcb *pcb, int p);
 
-#if PPPOS_SUPPORT
-void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm);
-#endif /* PPPOS_SUPPORT */
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp);
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp);
 

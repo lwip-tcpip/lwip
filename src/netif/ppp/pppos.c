@@ -238,14 +238,14 @@ pppos_link_write_callback(void *pcb, struct pbuf *p)
     fcs_out = PPP_FCS(fcs_out, c);
 
     /* Copy to output buffer escaping special characters. */
-    tail = pppos_append(c, tail, &ppp->out_accm);
+    tail = pppos_append(c, tail, &pppos->out_accm);
   }
 
   /* Add FCS and trailing flag. */
   c = ~fcs_out & 0xFF;
-  tail = pppos_append(c, tail, &ppp->out_accm);
+  tail = pppos_append(c, tail, &pppos->out_accm);
   c = (~fcs_out >> 8) & 0xFF;
-  tail = pppos_append(c, tail, &ppp->out_accm);
+  tail = pppos_append(c, tail, &pppos->out_accm);
   tail = pppos_append(PPP_FLAG, tail, NULL);
 
   /* If we failed to complete the packet, throw it away.
@@ -327,18 +327,18 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
   ppp->last_xmit = sys_jiffies();
   if (!ppp->accomp) {
     fcs_out = PPP_FCS(fcs_out, PPP_ALLSTATIONS);
-    tail = pppos_append(PPP_ALLSTATIONS, tail, &ppp->out_accm);
+    tail = pppos_append(PPP_ALLSTATIONS, tail, &pppos->out_accm);
     fcs_out = PPP_FCS(fcs_out, PPP_UI);
-    tail = pppos_append(PPP_UI, tail, &ppp->out_accm);
+    tail = pppos_append(PPP_UI, tail, &pppos->out_accm);
   }
   if (!ppp->pcomp || protocol > 0xFF) {
     c = (protocol >> 8) & 0xFF;
     fcs_out = PPP_FCS(fcs_out, c);
-    tail = pppos_append(c, tail, &ppp->out_accm);
+    tail = pppos_append(c, tail, &pppos->out_accm);
   }
   c = protocol & 0xFF;
   fcs_out = PPP_FCS(fcs_out, c);
-  tail = pppos_append(c, tail, &ppp->out_accm);
+  tail = pppos_append(c, tail, &pppos->out_accm);
 
   /* Load packet. */
   for(p = pb; p; p = p->next) {
@@ -354,15 +354,15 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
       fcs_out = PPP_FCS(fcs_out, c);
 
       /* Copy to output buffer escaping special characters. */
-      tail = pppos_append(c, tail, &ppp->out_accm);
+      tail = pppos_append(c, tail, &pppos->out_accm);
     }
   }
 
   /* Add FCS and trailing flag. */
   c = ~fcs_out & 0xFF;
-  tail = pppos_append(c, tail, &ppp->out_accm);
+  tail = pppos_append(c, tail, &pppos->out_accm);
   c = (~fcs_out >> 8) & 0xFF;
-  tail = pppos_append(c, tail, &ppp->out_accm);
+  tail = pppos_append(c, tail, &pppos->out_accm);
   tail = pppos_append(PPP_FLAG, tail, NULL);
 
   /* If we failed to complete the packet, throw it away. */
@@ -410,7 +410,7 @@ pppos_connect(pppos_pcb *pppos)
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
-  memset(&pppos->in_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->in_accm - (char*)0 ) );
+  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
 
 #if VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
@@ -430,7 +430,7 @@ pppos_connect(pppos_pcb *pppos)
    * are always escaped.
    */
   pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
-  ppp->out_accm[15] = 0x60;
+  pppos->out_accm[15] = 0x60;
 
   /*
    * Start the connection and handle incoming events (packet or timeout).
@@ -739,6 +739,27 @@ drop:
   pbuf_free(pb);
 }
 #endif /* PPP_INPROC_MULTITHREADED */
+
+void
+pppos_accm_out_config(pppos_pcb *pppos, u32_t accm)
+{
+  ppp_pcb *ppp;
+  int i;
+
+  if (!pppos_exist(pppos)) {
+    return;
+  }
+  ppp = pppos->ppp;
+
+  /* Load the ACCM bits for the 32 control codes. */
+  for (i = 0; i < 32/8; i++) {
+    pppos->out_accm[i] = (u_char)((accm >> (8 * i)) & 0xFF);
+  }
+
+  PPPDEBUG(LOG_INFO, ("pppos_accm_out_config[%d]: in_accm=%X %X %X %X\n",
+            ppp->num,
+            pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
+}
 
 void
 pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
