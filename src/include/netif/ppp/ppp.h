@@ -368,9 +368,7 @@ struct ppp_pcb_s {
   unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
 #if PPPOS_SUPPORT
-/* FIXME: there is probably one superfluous */
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
-  ext_accm xmit_accm;            /* extended transmit ACCM */
 #endif /* PPPOS_SUPPORT */
 
   u32_t last_xmit;               /* Time of last transmission. */

@@ -396,24 +396,6 @@ static void lcp_init(ppp_pcb *pcb) {
     ao->neg_pcompression = 1;
     ao->neg_accompression = 1;
     ao->neg_endpoint = 1;
-
-#if PPPOS_SUPPORT
-    /*
-     * Set transmit escape for the flag and escape characters plus anything
-     * set for the allowable options.
-     */
-    memset(pcb->xmit_accm, 0, sizeof(ext_accm));
-    pcb->xmit_accm[15] = 0x60;
-    pcb->xmit_accm[0]  = (u_char)((ao->asyncmap        & 0xFF));
-    pcb->xmit_accm[1]  = (u_char)((ao->asyncmap >> 8)  & 0xFF);
-    pcb->xmit_accm[2]  = (u_char)((ao->asyncmap >> 16) & 0xFF);
-    pcb->xmit_accm[3]  = (u_char)((ao->asyncmap >> 24) & 0xFF);
-    LCPDEBUG(("lcp_init: xmit_accm=%X %X %X %X\n",
-	  pcb->xmit_accm[0],
-          pcb->xmit_accm[1],
-          pcb->xmit_accm[2],
-          pcb->xmit_accm[3]));
-#endif /* PPPOS_SUPPORT */
 }
 
 
@@ -469,35 +451,17 @@ void lcp_close(ppp_pcb *pcb, const char *reason) {
  */
 void lcp_lowerup(ppp_pcb *pcb) {
     lcp_options *wo = &pcb->lcp_wantoptions;
-#if PPPOS_SUPPORT
-    lcp_options *ao = &pcb->lcp_allowoptions;
-#endif /* PPPOS_SUPPORT */
     fsm *f = &pcb->lcp_fsm;
     /*
      * Don't use A/C or protocol compression on transmission,
      * but accept A/C and protocol compressed packets
      * if we are going to ask for A/C and protocol compression.
      */
-#if PPPOS_SUPPORT
-    ppp_set_xaccm(pcb, &pcb->xmit_accm);
-#endif /* PPPOS_SUPPORT */
     if (ppp_send_config(pcb, PPP_MRU, 0xffffffff, 0, 0) < 0
 	|| ppp_recv_config(pcb, PPP_MRU, (pcb->settings.lax_recv? 0: 0xffffffff),
 			   wo->neg_pcompression, wo->neg_accompression) < 0)
 	    return;
     pcb->peer_mru = PPP_MRU;
-
-#if PPPOS_SUPPORT
-    ao->asyncmap = (u_long)pcb->xmit_accm[0]
-                                   | ((u_long)pcb->xmit_accm[1] << 8)
-                                   | ((u_long)pcb->xmit_accm[2] << 16)
-                                   | ((u_long)pcb->xmit_accm[3] << 24);
-    LCPDEBUG(("lcp_lowerup: asyncmap=%X %X %X %X\n",
-              pcb->xmit_accm[3],
-              pcb->xmit_accm[2],
-              pcb->xmit_accm[1],
-              pcb->xmit_accm[0]));
-#endif /* PPPOS_SUPPORT */
 
     if (pcb->settings.listen_time != 0) {
 	f->flags |= DELAYED_UP;

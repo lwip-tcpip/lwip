@@ -194,22 +194,6 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
-
-#if PPPOS_SUPPORT
-/*
- * ppp_set_xaccm - set the extended transmit ACCM for the interface.
- */
-void ppp_set_xaccm(ppp_pcb *pcb, ext_accm *accm) {
-  SMEMCPY(pcb->out_accm, accm, sizeof(ext_accm));
-  PPPDEBUG(LOG_INFO, ("ppp_set_xaccm[%d]: out_accm=%X %X %X %X\n",
-            pcb->num,
-            pcb->out_accm[0],
-            pcb->out_accm[1],
-            pcb->out_accm[2],
-            pcb->out_accm[3]));
-}
-#endif /* PPPOS_SUPPORT */
-
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 
 #if PAP_SUPPORT
