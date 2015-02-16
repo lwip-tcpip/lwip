@@ -202,6 +202,7 @@ void dhcp_fine_tmr(void);
 #define DHCP_OPTION_MTU 26
 #define DHCP_OPTION_BROADCAST 28
 #define DHCP_OPTION_TCP_TTL 37
+#define DHCP_OPTION_NTP 42
 #define DHCP_OPTION_END 255
 
 /** DHCP options */

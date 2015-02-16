@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-02-16: Claudius Zingerli, Sergio Caprile
+  * opt.h, dhcp.h/.c: patch #8361 "Add support for NTP option in DHCP"
+
   2015-02-14: Simon Goldschmidt
   * opt.h, snmp*: added support for write-access community and dedicated
     community for sending traps

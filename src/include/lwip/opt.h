@@ -768,6 +768,22 @@
 #define LWIP_DHCP_BOOTP_FILE            0
 #endif
 
+/**
+ * LWIP_DHCP_GETS_NTP==1: Request NTP servers with discover/select. For each
+ * response packet, an callback is called, which has to be provided by the port:
+ * void dhcp_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+*/
+#ifndef LWIP_DHCP_GET_NTP_SRV
+#define LWIP_DHCP_GET_NTP_SRV           0
+#endif
+
+/**
+ * The maximum of NTP servers requested
+ */
+#ifndef LWIP_DHCP_MAX_NTP_SERVERS
+#define LWIP_DHCP_MAX_NTP_SERVERS       1
+#endif
+
 /*
    ------------------------------------
    ---------- AUTOIP options ----------
