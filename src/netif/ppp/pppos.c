@@ -406,12 +406,14 @@ pppos_connect(pppos_pcb *pppos)
 #endif /* !VJ_SUPPORT */
 
   /* input pbuf left over from last session? */
-  pppos_free_current_input_packet(&ppp->rx);
+  pppos_free_current_input_packet(&pppos->rx);
 
   ppp_clear(ppp);
+  /* reset PPPoS control block to its initial state */
+  memset(&pppos->rx, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->rx - (char*)0 ) );
 
-  ppp->rx.pcb = ppp;
-  ppp->rx.fd = pppos->fd;
+  pppos->rx.pcb = ppp;
+  pppos->rx.fd = pppos->fd;
 
 #if VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
@@ -430,7 +432,7 @@ pppos_connect(pppos_pcb *pppos)
    * Default the in and out accm so that escape and flag characters
    * are always escaped.
    */
-  ppp->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pppos->rx.in_accm[15] = 0x60; /* no need to protect since RX is not running */
   ppp->out_accm[15] = 0x60;
 
   /*
@@ -454,7 +456,6 @@ pppos_disconnect(pppos_pcb *pppos)
 static err_t
 pppos_destroy(pppos_pcb *pppos)
 {
-  ppp_pcb *ppp = pppos->ppp;
   pppos_pcb **copp, *freep;
 
   /* remove interface from list */
@@ -466,7 +467,7 @@ pppos_destroy(pppos_pcb *pppos)
   }
 
   /* input pbuf left ? */
-  pppos_free_current_input_packet(&ppp->rx);
+  pppos_free_current_input_packet(&pppos->rx);
 
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
@@ -498,8 +499,8 @@ PACK_STRUCT_END
 void
 pppos_input(ppp_pcb *ppp, u_char *s, int l)
 {
-  ppp_pcb_rx *pcrx = &ppp->rx;
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
+  ppp_pcb_rx *pcrx = &pppos->rx;
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
@@ -743,6 +744,30 @@ drop:
 }
 #endif /* PPP_INPROC_MULTITHREADED */
 
+void
+pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
+{
+  ppp_pcb *ppp;
+  int i;
+  SYS_ARCH_DECL_PROTECT(lev);
+
+  if (!pppos_exist(pppos)) {
+    return;
+  }
+  ppp = pppos->ppp;
+
+  /* Load the ACCM bits for the 32 control codes. */
+  SYS_ARCH_PROTECT(lev);
+  for (i = 0; i < 32 / 8; i++) {
+    pppos->rx.in_accm[i] = (u_char)(accm >> (i * 8));
+  }
+  SYS_ARCH_UNPROTECT(lev);
+
+  PPPDEBUG(LOG_INFO, ("pppos_accm_in_config[%d]: in_accm=%X %X %X %X\n",
+            ppp->num,
+            pppos->rx.in_accm[0], pppos->rx.in_accm[1], pppos->rx.in_accm[2], pppos->rx.in_accm[3]));
+}
+
 sio_fd_t
 pppos_get_fd(pppos_pcb *pppos)
 {
@@ -900,7 +925,7 @@ pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
 static void
 pppos_drop(pppos_pcb *pppos)
 {
-  ppp_pcb_rx *pcrx = &pppos->ppp->rx;
+  ppp_pcb_rx *pcrx = &pppos->rx;
 #if LWIP_SNMP
   ppp_pcb *ppp = pppos->ppp;
 #endif /* LWIP_SNMP || VJ_SUPPORT */

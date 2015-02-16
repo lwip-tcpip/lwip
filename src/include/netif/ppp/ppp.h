@@ -306,37 +306,6 @@ struct ppp_addrs {
  * Extended asyncmap - allows any character to be escaped.
  */
 typedef u_char  ext_accm[32];
-
-/* PPP packet parser states.  Current state indicates operation yet to be
- * completed. */
-typedef enum {
-  PDIDLE = 0,  /* Idle state - waiting. */
-  PDSTART,     /* Process start flag. */
-  PDADDRESS,   /* Process address field. */
-  PDCONTROL,   /* Process control field. */
-  PDPROTOCOL1, /* Process protocol field 1. */
-  PDPROTOCOL2, /* Process protocol field 2. */
-  PDDATA       /* Process data byte. */
-} ppp_dev_states;
-
-/*
- * PPP interface RX control block.
- */
-typedef struct ppp_pcb_rx_s {
-  /** ppp descriptor */
-  ppp_pcb *pcb;
-  /** the rx file descriptor */
-  sio_fd_t fd;
-
-  /* The input packet. */
-  struct pbuf *in_head, *in_tail;
-
-  u16_t in_protocol;             /* The input protocol code. */
-  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
-  ppp_dev_states in_state;       /* The input process state. */
-  char in_escaped;               /* Escape next character. */
-  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
-} ppp_pcb_rx;
 #endif /* PPPOS_SUPPORT */
 
 /*
@@ -402,7 +371,6 @@ struct ppp_pcb_s {
 /* FIXME: there is probably one superfluous */
   ext_accm out_accm;             /* Async-Ctl-Char-Map for output. */
   ext_accm xmit_accm;            /* extended transmit ACCM */
-  ppp_pcb_rx rx;
 #endif /* PPPOS_SUPPORT */
 
   u32_t last_xmit;               /* Time of last transmission. */

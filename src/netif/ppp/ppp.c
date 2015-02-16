@@ -931,34 +931,17 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
  * the ppp interface.
  */
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
-#if PPPOS_SUPPORT
-  int i;
-  SYS_ARCH_DECL_PROTECT(lev);
-#endif /* PPPOS_SUPPORT */
-
   LWIP_UNUSED_ARG(accomp);
   LWIP_UNUSED_ARG(pcomp);
   LWIP_UNUSED_ARG(mru);
 
-  /* Load the ACCM bits for the 32 control codes. */
 #if PPPOS_SUPPORT
-  SYS_ARCH_PROTECT(lev);
-  for (i = 0; i < 32 / 8; i++) {
-    /* @todo: does this work? ext_accm has been modified from pppd! */
-    pcb->rx.in_accm[i] = (u_char)(accm >> (i * 8));
-  }
-  SYS_ARCH_UNPROTECT(lev);
-#else
+  pppos_accm_in_config((pppos_pcb*)pcb->link_ctx_cb, accm);
+#else /* PPPOS_SUPPORT */
   LWIP_UNUSED_ARG(accm);
 #endif /* PPPOS_SUPPORT */
 
-#if PPPOS_SUPPORT
-  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]: in_accm=%X %X %X %X\n",
-            pcb->num,
-            pcb->rx.in_accm[0], pcb->rx.in_accm[1], pcb->rx.in_accm[2], pcb->rx.in_accm[3]));
-#else
-  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->num) );
-#endif /* PPPOS_SUPPORT */
+  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->num));
   return 0;
 }
 

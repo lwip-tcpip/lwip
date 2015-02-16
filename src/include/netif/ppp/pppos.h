@@ -43,6 +43,37 @@
 #include "ppp.h"
 #include "vj.h"
 
+/* PPP packet parser states.  Current state indicates operation yet to be
+ * completed. */
+typedef enum {
+  PDIDLE = 0,  /* Idle state - waiting. */
+  PDSTART,     /* Process start flag. */
+  PDADDRESS,   /* Process address field. */
+  PDCONTROL,   /* Process control field. */
+  PDPROTOCOL1, /* Process protocol field 1. */
+  PDPROTOCOL2, /* Process protocol field 2. */
+  PDDATA       /* Process data byte. */
+} pppos_rx_state;
+
+/*
+ * PPP interface RX control block.
+ */
+typedef struct ppp_pcb_rx_s {
+  /** ppp descriptor */
+  ppp_pcb *pcb;
+  /** the rx file descriptor */
+  sio_fd_t fd;
+
+  /* The input packet. */
+  struct pbuf *in_head, *in_tail;
+
+  u16_t in_protocol;             /* The input protocol code. */
+  u16_t in_fcs;                  /* Input Frame Check Sequence value. */
+  pppos_rx_state in_state;       /* The input process state. */
+  char in_escaped;               /* Escape next character. */
+  ext_accm in_accm;              /* Async-Ctl-Char-Map for input. */
+} ppp_pcb_rx;
+
 /*
  * PPPoS interface control block.
  */
@@ -51,6 +82,7 @@ struct pppos_pcb_s {
   pppos_pcb *next;
   ppp_pcb *ppp;                  /* PPP PCB */
   sio_fd_t fd;                   /* File device ID of port. */
+  ppp_pcb_rx rx;
 #if VJ_SUPPORT
   struct vjcompress vj_comp;     /* Van Jacobson compression header. */
 #endif /* VJ_SUPPORT */
@@ -64,6 +96,7 @@ ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
 
+void pppos_accm_in_config(pppos_pcb *pppos, u32_t accm);
 sio_fd_t pppos_get_fd(pppos_pcb *pppos);
 void pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid);
 int pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb);
