@@ -37,6 +37,9 @@
 #ifndef PPPOS_H
 #define PPPOS_H
 
+#include "lwip/sys.h"
+#include "lwip/sio.h"
+
 #include "ppp.h"
 #include "vj.h"
 
@@ -61,6 +64,7 @@ ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
 
+sio_fd_t pppos_get_fd(pppos_pcb *pppos);
 void pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid);
 int pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb);
 int pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb);

@@ -743,6 +743,15 @@ drop:
 }
 #endif /* PPP_INPROC_MULTITHREADED */
 
+sio_fd_t
+pppos_get_fd(pppos_pcb *pppos)
+{
+  if (!pppos_exist(pppos)) {
+    return 0;
+  }
+  return pppos->fd;
+}
+
 #if VJ_SUPPORT
 void
 pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid)
