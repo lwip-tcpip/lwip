@@ -68,7 +68,7 @@ static void pppos_drop(pppos_pcb *pcrx);
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */
-static u_char ppp_accm_mask[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
+static const u_char ppp_accm_mask[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
 #define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
 
 /*
@@ -79,7 +79,7 @@ static u_char ppp_accm_mask[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80
 #if PPP_FCS_TABLE
  #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ fcstab[((fcs) ^ (c)) & 0xff])
 #else
-u16_t ppp_get_fcs(u8_t byte);
+static u16_t ppp_get_fcs(u8_t byte);
 #define PPP_FCS(fcs, c) (((fcs) >> 8) ^ ppp_get_fcs(((fcs) ^ (c)) & 0xff))
 #endif
 
@@ -817,7 +817,7 @@ static const u_short fcstab[256] = {
 #else /* PPP_FCS_TABLE */
 /* The HDLC polynomial: X**0 + X**5 + X**12 + X**16 (0x8408) */
 #define PPP_FCS_POLYNOMIAL 0x8408
-u16_t ppp_get_fcs(u8_t byte) {
+static u16_t ppp_get_fcs(u8_t byte) {
   unsigned int octet;
   int bit;
   octet = byte;
