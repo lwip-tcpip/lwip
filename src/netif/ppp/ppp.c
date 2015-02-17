@@ -258,8 +258,7 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
   PPPDEBUG(LOG_DEBUG, ("ppp_open() called, holdoff=%d\n", holdoff));
 
   if (holdoff == 0) {
-    ppp_do_open(pcb);
-    return PPPERR_NONE;
+    return pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
   }
 
   new_phase(pcb, PPP_PHASE_HOLDOFF);
