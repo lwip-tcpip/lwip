@@ -905,9 +905,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
   err_t err;
   u16_t short_size;
   u16_t remote_port;
-#if !LWIP_TCPIP_CORE_LOCKING
   struct netbuf buf;
-#endif
 
   sock = get_socket(s);
   if (!sock) {
@@ -939,78 +937,6 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
              sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
   LWIP_UNUSED_ARG(tolen);
 
-#if LWIP_TCPIP_CORE_LOCKING
-  /* Special speedup for fast UDP/RAW sending: call the raw API directly
-     instead of using the netconn functions. */
-  {
-    struct pbuf* p;
-    ipX_addr_t *remote_addr;
-    ipX_addr_t remote_addr_tmp;
-
-#if LWIP_NETIF_TX_SINGLE_PBUF
-    p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_RAM);
-    if (p != NULL) {
-#if LWIP_CHECKSUM_ON_COPY
-      u16_t chksum = 0;
-      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_RAW) {
-        chksum = LWIP_CHKSUM_COPY(p->payload, data, short_size);
-      } else
-#endif /* LWIP_CHECKSUM_ON_COPY */
-      MEMCPY(p->payload, data, size);
-#else /* LWIP_NETIF_TX_SINGLE_PBUF */
-    p = pbuf_alloc(PBUF_TRANSPORT, short_size, PBUF_REF);
-    if (p != NULL) {
-      p->payload = (void*)data;
-#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
-
-      if (to != NULL) {
-        SOCKADDR_TO_IPXADDR_PORT(to->sa_family == AF_INET6,
-          to, &remote_addr_tmp, remote_port);
-        remote_addr = &remote_addr_tmp;
-      } else {
-        remote_addr = &sock->conn->pcb.ip->remote_ip;
-#if LWIP_UDP
-        if (NETCONNTYPE_GROUP(sock->conn->type) == NETCONN_UDP) {
-          remote_port = sock->conn->pcb.udp->remote_port;
-        } else
-#endif /* LWIP_UDP */
-        {
-          remote_port = 0;
-        }
-      }
-
-      LOCK_TCPIP_CORE();
-      if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_RAW) {
-#if LWIP_RAW
-        err = sock->conn->last_err = raw_sendto(sock->conn->pcb.raw, p, ipX_2_ip(remote_addr));
-#else /* LWIP_RAW */
-        err = ERR_ARG;
-#endif /* LWIP_RAW */
-      }
-#if LWIP_UDP && LWIP_RAW
-      else
-#endif /* LWIP_UDP && LWIP_RAW */
-      {
-#if LWIP_UDP
-#if LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF
-        err = sock->conn->last_err = udp_sendto_chksum(sock->conn->pcb.udp, p,
-          ipX_2_ip(remote_addr), remote_port, 1, chksum);
-#else /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
-        err = sock->conn->last_err = udp_sendto(sock->conn->pcb.udp, p,
-          ipX_2_ip(remote_addr), remote_port);
-#endif /* LWIP_CHECKSUM_ON_COPY && LWIP_NETIF_TX_SINGLE_PBUF */
-#else /* LWIP_UDP */
-        err = ERR_ARG;
-#endif /* LWIP_UDP */
-      }
-      UNLOCK_TCPIP_CORE();
-      
-      pbuf_free(p);
-    } else {
-      err = ERR_MEM;
-    }
-  }
-#else /* LWIP_TCPIP_CORE_LOCKING */
   /* initialize a buffer */
   buf.p = buf.ptr = NULL;
 #if LWIP_CHECKSUM_ON_COPY
@@ -1041,12 +967,12 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
     if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_RAW) {
       u16_t chksum = LWIP_CHKSUM_COPY(buf.p->payload, data, short_size);
       netbuf_set_chksum(&buf, chksum);
-      err = ERR_OK;
     } else
 #endif /* LWIP_CHECKSUM_ON_COPY */
     {
-      err = netbuf_take(&buf, data, short_size);
+      MEMCPY(buf.p->payload, data, short_size);
     }
+    err = ERR_OK;
   }
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
   err = netbuf_ref(&buf, data, short_size);
@@ -1058,7 +984,7 @@ lwip_sendto(int s, const void *data, size_t size, int flags,
 
   /* deallocated the buffer */
   netbuf_free(&buf);
-#endif /* LWIP_TCPIP_CORE_LOCKING */
+
   sock_set_errno(sock, err_to_errno(err));
   return (err == ERR_OK ? short_size : -1);
 }
