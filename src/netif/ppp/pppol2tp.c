@@ -75,7 +75,7 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
 /* callbacks called from PPP core */
-static void pppol2tp_link_command_callback(void *pcb, u8_t command);
+static int pppol2tp_link_command_callback(void *pcb, u8_t command);
 static int pppol2tp_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppol2tp_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol);
 
@@ -143,7 +143,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 }
 
 /* Called by PPP core */
-static void pppol2tp_link_command_callback(void *pcb, u8_t command) {
+static int pppol2tp_link_command_callback(void *pcb, u8_t command) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
 
   switch(command) {
@@ -161,6 +161,8 @@ static void pppol2tp_link_command_callback(void *pcb, u8_t command) {
 
   default: ;
   }
+
+  return PPPERR_NONE;
 }
 
 /* Called by PPP core */

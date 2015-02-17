@@ -117,7 +117,7 @@ static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
 /* callbacks called from PPP core */
-static void pppoe_link_command_callback(void *pcb, u8_t command);
+static int pppoe_link_command_callback(void *pcb, u8_t command);
 static int pppoe_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol);
 
@@ -190,7 +190,7 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 }
 
 /* Called by PPP core */
-static void pppoe_link_command_callback(void *pcb, u8_t command) {
+static int pppoe_link_command_callback(void *pcb, u8_t command) {
   struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
 
   switch(command) {
@@ -208,6 +208,8 @@ static void pppoe_link_command_callback(void *pcb, u8_t command) {
 
   default: ;
   }
+
+  return PPPERR_NONE;
 }
 
 /* Called by PPP core */

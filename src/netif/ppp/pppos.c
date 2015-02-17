@@ -51,7 +51,7 @@
 #include "netif/ppp/vj.h"
 
 /* callbacks called from PPP core */
-static void pppos_link_command_callback(void *pcb, u8_t command);
+static int pppos_link_command_callback(void *pcb, u8_t command);
 static int pppos_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol);
 
@@ -176,7 +176,7 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 }
 
 /* Called by PPP core */
-static void
+static int
 pppos_link_command_callback(void *pcb, u8_t command)
 {
   pppos_pcb *pppos = (pppos_pcb *)pcb;
@@ -196,6 +196,8 @@ pppos_link_command_callback(void *pcb, u8_t command)
 
   default: ;
   }
+
+  return PPPERR_NONE;
 }
 
 /* Called by PPP core */

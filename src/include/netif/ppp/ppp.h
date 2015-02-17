@@ -303,7 +303,7 @@ struct ppp_addrs {
 /*
  * PPP interface control block.
  */
-typedef void (*link_command_cb_fn)(void *pcb, u8_t command);
+typedef int (*link_command_cb_fn)(void *pcb, u8_t command);
 typedef int (*link_write_cb_fn)(void *pcb, struct pbuf *p);
 typedef err_t (*link_netif_output_cb_fn)(void *pcb, struct pbuf *p, u_short protocol);
 
