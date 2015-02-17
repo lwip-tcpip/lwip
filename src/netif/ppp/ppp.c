@@ -654,6 +654,9 @@ void ppp_link_end(ppp_pcb *pcb) {
  */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   u16_t protocol;
+#if PPP_DEBUG && PPP_PROTOCOLNAME
+    const char *pname;
+#endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
 
   protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
@@ -766,7 +769,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
 #if PPP_DEBUG
 #if PPP_PROTOCOLNAME
-    const char *pname = protocol_name(protocol);
+    pname = protocol_name(protocol);
     if (pname != NULL) {
       ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
     } else
