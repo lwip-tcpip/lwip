@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-17: Sylvain Rochet
+  * Large PPP rework, moved out low level protocols code (PPPoS, PPPoE, PPPoL2TP)
+    from PPP core code, making everything simpler.
+
   2015-02-16: Claudius Zingerli, Sergio Caprile
   * opt.h, dhcp.h/.c: patch #8361 "Add support for NTP option in DHCP"
 
