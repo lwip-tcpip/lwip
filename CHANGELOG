@@ -187,6 +187,11 @@ HISTORY
   ++ Bugfixes:
 
   2015-02-17: Simon Goldschmidt
+  * err.h, sockets.c, api_msg.c: fixed bug #38853 "connect() use a wrong errno":
+    return ERR_ALREADY/EALRADY during connect, ERR_ISCONN/EISCONN when already
+	connected
+
+  2015-02-17: Simon Goldschmidt
   * tcp_impl.h, tcp_out.c, tcp.c, api_msg.c: fixed bug #37614 "Errors from
     ipX_output are not processed". Now tcp_output(_segment) checks for the return
     value of ipX_output and does not try to send more on error. A netif driver

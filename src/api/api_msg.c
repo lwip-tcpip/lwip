@@ -1173,7 +1173,9 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
 #if LWIP_TCP
     case NETCONN_TCP:
       /* Prevent connect while doing any other action. */
-      if (msg->conn->state != NETCONN_NONE) {
+      if (msg->conn->state == NETCONN_CONNECT) {
+        msg->err = ERR_ALREADY;
+      } else if (msg->conn->state != NETCONN_NONE) {
         msg->err = ERR_ISCONN;
       } else {
         setup_tcp(msg->conn);

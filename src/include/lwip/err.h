@@ -58,20 +58,21 @@ typedef s8_t err_t;
 #define ERR_VAL        -6    /* Illegal value.           */
 #define ERR_WOULDBLOCK -7    /* Operation would block.   */
 #define ERR_USE        -8    /* Address in use.          */
-#define ERR_ISCONN     -9    /* Already connected.       */
+#define ERR_ALREADY    -9    /* Already connecting.      */
+#define ERR_ISCONN     -10   /* Conn already established.*/
 
 #define ERR_IS_FATAL(e) ((e) < ERR_ISCONN)
 
-#define ERR_CONN       -10   /* Not connected.           */
+#define ERR_CONN       -11   /* Not connected.           */
 #define ERR_IS_FATAL_LISTENCONNECT(e) ((e) < ERR_CONN)
 
-#define ERR_ABRT       -11   /* Connection aborted.      */
-#define ERR_RST        -12   /* Connection reset.        */
-#define ERR_CLSD       -13   /* Connection closed.       */
+#define ERR_ABRT       -12   /* Connection aborted.      */
+#define ERR_RST        -13   /* Connection reset.        */
+#define ERR_CLSD       -14   /* Connection closed.       */
 
-#define ERR_ARG        -14   /* Illegal argument.        */
+#define ERR_ARG        -15   /* Illegal argument.        */
 
-#define ERR_IF         -15   /* Low-level netif error    */
+#define ERR_IF         -16   /* Low-level netif error    */
 
 
 #ifdef LWIP_DEBUG

@@ -258,13 +258,14 @@ static const int err_to_errno_table[] = {
   EINVAL,        /* ERR_VAL        -6      Illegal value.           */
   EWOULDBLOCK,   /* ERR_WOULDBLOCK -7      Operation would block.   */
   EADDRINUSE,    /* ERR_USE        -8      Address in use.          */
-  EALREADY,      /* ERR_ISCONN     -9      Already connected.       */
-  ENOTCONN,      /* ERR_CONN       -10     Not connected.           */
-  ECONNABORTED,  /* ERR_ABRT       -11     Connection aborted.      */
-  ECONNRESET,    /* ERR_RST        -12     Connection reset.        */
-  ENOTCONN,      /* ERR_CLSD       -13     Connection closed.       */
-  EIO,           /* ERR_ARG        -14     Illegal argument.        */
-  -1,            /* ERR_IF         -15     Low-level netif error    */
+  EALREADY,      /* ERR_ALREADY    -9      Already connecting.      */
+  EISCONN,       /* ERR_ISCONN     -10     Conn already established.*/
+  ENOTCONN,      /* ERR_CONN       -11     Not connected.           */
+  ECONNABORTED,  /* ERR_ABRT       -12     Connection aborted.      */
+  ECONNRESET,    /* ERR_RST        -13     Connection reset.        */
+  ENOTCONN,      /* ERR_CLSD       -14     Connection closed.       */
+  EIO,           /* ERR_ARG        -15     Illegal argument.        */
+  -1,            /* ERR_IF         -16     Low-level netif error    */
 };
 
 #define ERR_TO_ERRNO_TABLE_SIZE \
