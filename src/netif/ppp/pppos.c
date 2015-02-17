@@ -743,13 +743,11 @@ drop:
 void
 pppos_accm_out_config(pppos_pcb *pppos, u32_t accm)
 {
-  ppp_pcb *ppp;
   int i;
 
   if (!pppos_exist(pppos)) {
     return;
   }
-  ppp = pppos->ppp;
 
   /* Load the ACCM bits for the 32 control codes. */
   for (i = 0; i < 32/8; i++) {
@@ -757,21 +755,19 @@ pppos_accm_out_config(pppos_pcb *pppos, u32_t accm)
   }
 
   PPPDEBUG(LOG_INFO, ("pppos_accm_out_config[%d]: in_accm=%X %X %X %X\n",
-            ppp->num,
+            pppos->ppp->num,
             pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
 }
 
 void
 pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
 {
-  ppp_pcb *ppp;
   int i;
   SYS_ARCH_DECL_PROTECT(lev);
 
   if (!pppos_exist(pppos)) {
     return;
   }
-  ppp = pppos->ppp;
 
   /* Load the ACCM bits for the 32 control codes. */
   SYS_ARCH_PROTECT(lev);
@@ -781,7 +777,7 @@ pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
   SYS_ARCH_UNPROTECT(lev);
 
   PPPDEBUG(LOG_INFO, ("pppos_accm_in_config[%d]: in_accm=%X %X %X %X\n",
-            ppp->num,
+            pppos->ppp->num,
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
 
