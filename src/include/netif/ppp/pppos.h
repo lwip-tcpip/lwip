@@ -45,7 +45,7 @@
 
 /* PPP packet parser states.  Current state indicates operation yet to be
  * completed. */
-typedef enum {
+enum {
   PDIDLE = 0,  /* Idle state - waiting. */
   PDSTART,     /* Process start flag. */
   PDADDRESS,   /* Process address field. */
@@ -53,7 +53,7 @@ typedef enum {
   PDPROTOCOL1, /* Process protocol field 1. */
   PDPROTOCOL2, /* Process protocol field 2. */
   PDDATA       /* Process data byte. */
-} pppos_rx_state;
+};
 
 /*
  * Extended asyncmap - allows any character to be escaped.
@@ -80,13 +80,13 @@ struct pppos_pcb_s {
   /* PPPoS rx */
   ext_accm in_accm;                /* Async-Ctl-Char-Map for input. */
   struct pbuf *in_head, *in_tail;  /* The input packet. */
-  u16_t in_protocol;               /* The input protocol code. */
-  u16_t in_fcs;                    /* Input Frame Check Sequence value. */
-  pppos_rx_state in_state;         /* The input process state. */
-  char in_escaped;                 /* Escape next character. */
 #if VJ_SUPPORT
   struct vjcompress vj_comp;       /* Van Jacobson compression header. */
 #endif /* VJ_SUPPORT */
+  u16_t in_protocol;               /* The input protocol code. */
+  u16_t in_fcs;                    /* Input Frame Check Sequence value. */
+  u8_t in_state;                   /* The input process state. */
+  u8_t in_escaped;                 /* Escape next character. */
 };
 
 /* Create a new PPPoS session. */
