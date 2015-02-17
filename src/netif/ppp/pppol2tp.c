@@ -148,16 +148,14 @@ static int pppol2tp_link_command_callback(void *pcb, u8_t command) {
 
   switch(command) {
   case PPP_LINK_COMMAND_CONNECT:
-    pppol2tp_connect(l2tp);
-    break;
+    return pppol2tp_connect(l2tp);
 
   case PPP_LINK_COMMAND_DISCONNECT:
     pppol2tp_disconnect(l2tp);
     break;
 
   case PPP_LINK_COMMAND_FREE:
-    pppol2tp_destroy(l2tp);
-    break;
+    return pppol2tp_destroy(l2tp);
 
   default: ;
   }

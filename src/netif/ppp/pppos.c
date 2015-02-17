@@ -191,8 +191,7 @@ pppos_link_command_callback(void *pcb, u8_t command)
     break;
 
   case PPP_LINK_COMMAND_FREE:
-    pppos_destroy(pppos);
-    break;
+    return pppos_destroy(pppos);
 
   default: ;
   }

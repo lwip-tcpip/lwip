@@ -195,16 +195,14 @@ static int pppoe_link_command_callback(void *pcb, u8_t command) {
 
   switch(command) {
   case PPP_LINK_COMMAND_CONNECT:
-    pppoe_connect(sc);
-    break;
+    return pppoe_connect(sc);
 
   case PPP_LINK_COMMAND_DISCONNECT:
     pppoe_disconnect(sc);
     break;
 
   case PPP_LINK_COMMAND_FREE:
-    pppoe_destroy(sc);
-    break;
+    return pppoe_destroy(sc);
 
   default: ;
   }
