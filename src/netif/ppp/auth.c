@@ -704,8 +704,6 @@ void link_down(ppp_pcb *pcb) {
     }
     /* XXX if doing_multilink, should do something to stop
        network-layer traffic on the link */
-
-    ppp_link_down(pcb);
 }
 
 void upper_layers_down(ppp_pcb *pcb) {

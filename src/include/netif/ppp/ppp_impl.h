@@ -389,7 +389,6 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
 int ppp_write(ppp_pcb *pcb, struct pbuf *p);
 
 /* functions called by auth.c link_terminated() */
-void ppp_link_down(ppp_pcb *pcb);
 void ppp_link_terminated(ppp_pcb *pcb);
 
 /* merge a pbuf chain into one pbuf */

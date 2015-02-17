@@ -181,9 +181,6 @@ const struct protent* const protocols[] = {
 
 /* Prototypes for procedures local to this file. */
 static void ppp_do_open(void *arg);
-static void ppp_stop(ppp_pcb *pcb);
-static void ppp_hup(ppp_pcb *pcb);
-
 static err_t ppp_netif_init_cb(struct netif *netif);
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr);
 #if PPP_IPV6_SUPPORT
@@ -298,9 +295,9 @@ ppp_close(ppp_pcb *pcb)
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
 
   /* Disconnect */
-  PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> ppp_stop\n", pcb->num));
-  /* This will leave us at PPP_PHASE_DEAD. */
-  ppp_stop(pcb);
+  PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> lcp_close\n", pcb->num));
+  /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
+  lcp_close(pcb, "User request");
 
   return st;
 }
@@ -309,8 +306,10 @@ ppp_close(ppp_pcb *pcb)
 void
 ppp_sighup(ppp_pcb *pcb)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d sig_hup -> ppp_hup\n", pcb->num));
-  ppp_hup(pcb);
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d\n", pcb->num));
+  lcp_lowerdown(pcb);
+  /* forced link termination, this will leave us at PPP_PHASE_DEAD. */
+  link_terminated(pcb);
 }
 
 /*
@@ -338,7 +337,164 @@ int ppp_free(ppp_pcb *pcb) {
   return 0;
 }
 
+/* Get and set parameters for the given connection.
+ * Return 0 on success, an error code on failure. */
+int
+ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
+{
+  if(NULL == pcb)
+    return PPPERR_PARAM;
 
+  switch(cmd) {
+    case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
+      if (arg) {
+        *(int *)arg = (int)(pcb->if_up);
+        return PPPERR_NONE;
+      }
+      return PPPERR_PARAM;
+      break;
+
+    case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
+      if (arg) {
+        pcb->err_code = (u8_t)(*(int *)arg);
+        return PPPERR_NONE;
+      }
+      return PPPERR_PARAM;
+      break;
+
+    case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
+      if (arg) {
+        *(int *)arg = (int)(pcb->err_code);
+        return PPPERR_NONE;
+      }
+      return PPPERR_PARAM;
+      break;
+
+#if PPPOS_SUPPORT
+    case PPPCTLG_FD:            /* Get the fd associated with the ppp */
+      if (arg) {
+        *(sio_fd_t *)arg = pppos_get_fd((pppos_pcb*)pcb->link_ctx_cb);
+        return PPPERR_NONE;
+      }
+      return PPPERR_PARAM;
+      break;
+#endif /* PPPOS_SUPPORT */
+
+    default:
+      break;
+  }
+
+  return PPPERR_PARAM;
+}
+
+#if LWIP_NETIF_STATUS_CALLBACK
+/** Set the status callback of a PPP's netif
+ *
+ * @param pcb The PPP descriptor returned by ppp_new()
+ * @param status_callback pointer to the status callback function
+ *
+ * @see netif_set_status_callback
+ */
+void
+ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
+{
+  netif_set_status_callback(pcb->netif, status_callback);
+}
+#endif /* LWIP_NETIF_STATUS_CALLBACK */
+
+#if LWIP_NETIF_LINK_CALLBACK
+/** Set the link callback of a PPP's netif
+ *
+ * @param pcb The PPP descriptor returned by ppp_new()
+ * @param link_callback pointer to the link callback function
+ *
+ * @see netif_set_link_callback
+ */
+void
+ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
+{
+  netif_set_link_callback(pcb->netif, link_callback);
+}
+#endif /* LWIP_NETIF_LINK_CALLBACK */
+
+
+/**********************************/
+/*** LOCAL FUNCTION DEFINITIONS ***/
+/**********************************/
+
+static void ppp_do_open(void *arg) {
+  ppp_pcb *pcb = (ppp_pcb*)arg;
+
+  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
+
+  pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
+}
+
+/*
+ * ppp_netif_init_cb - netif init callback
+ */
+static err_t ppp_netif_init_cb(struct netif *netif) {
+  netif->name[0] = 'p';
+  netif->name[1] = 'p';
+  netif->output = ppp_netif_output_ip4;
+#if PPP_IPV6_SUPPORT
+  netif->output_ip6 = ppp_netif_output_ip6;
+#endif /* PPP_IPV6_SUPPORT */
+  netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
+#if LWIP_NETIF_HOSTNAME
+  /* @todo: Initialize interface hostname */
+  /* netif_set_hostname(netif, "lwip"); */
+#endif /* LWIP_NETIF_HOSTNAME */
+  return ERR_OK;
+}
+
+/* Send a IPv4 packet on the given connection.
+ */
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+  LWIP_UNUSED_ARG(ipaddr);
+  return ppp_netif_output(netif, pb, PPP_IP);
+}
+
+#if PPP_IPV6_SUPPORT
+/* Send a IPv6 packet on the given connection.
+ */
+static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
+  LWIP_UNUSED_ARG(ipaddr);
+  return ppp_netif_output(netif, pb, PPP_IPV6);
+}
+#endif /* PPP_IPV6_SUPPORT */
+
+/* Send a packet on the given connection.
+ *
+ * This is the low level function that send the PPP packet,
+ * only for IPv4 and IPv6 packets coming from lwIP.
+ */
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
+  ppp_pcb *pcb = (ppp_pcb*)netif->state;
+
+  /* Validate parameters. */
+  /* We let any protocol value go through - it can't hurt us
+   * and the peer will just drop it if it's not accepting it. */
+  if (!pcb || !pb) {
+    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
+              pcb->num, PPP_IP, (void*)pb));
+    LINK_STATS_INC(link.opterr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_ARG;
+  }
+
+  /* Check that the link is up. */
+  if (!pcb->if_up) {
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->num));
+    LINK_STATS_INC(link.rterr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_RTE;
+  }
+
+  return pcb->link_netif_output_cb(pcb->link_ctx_cb, pb, protocol);
+}
 
 
 /************************************/
@@ -467,14 +623,6 @@ void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write
   pcb->link_ctx_cb = ctx;
 }
 
-static void ppp_do_open(void *arg) {
-  ppp_pcb *pcb = (ppp_pcb*)arg;
-
-  LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
-
-  pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
-}
-
 /** Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->num));
@@ -498,19 +646,6 @@ void ppp_link_end(ppp_pcb *pcb) {
     pcb->err_code = PPPERR_CONNECT;
   }
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-}
-
-/** LCP close request */
-static void ppp_stop(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_stop: unit %d\n", pcb->num));
-  lcp_close(pcb, "User request");
-}
-
-/** Called when carrier/link is lost */
-static void ppp_hup(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_hup: unit %d\n", pcb->num));
-  lcp_lowerdown(pcb);
-  link_terminated(pcb);
 }
 
 /*
@@ -657,126 +792,6 @@ out:
   return;
 }
 
-/*
- * ppp_netif_init_cb - netif init callback
- */
-static err_t ppp_netif_init_cb(struct netif *netif) {
-  netif->name[0] = 'p';
-  netif->name[1] = 'p';
-  netif->output = ppp_netif_output_ip4;
-#if PPP_IPV6_SUPPORT
-  netif->output_ip6 = ppp_netif_output_ip6;
-#endif /* PPP_IPV6_SUPPORT */
-  netif->flags = NETIF_FLAG_POINTTOPOINT | NETIF_FLAG_LINK_UP;
-#if LWIP_NETIF_HOSTNAME
-  /* @todo: Initialize interface hostname */
-  /* netif_set_hostname(netif, "lwip"); */
-#endif /* LWIP_NETIF_HOSTNAME */
-  return ERR_OK;
-}
-
-
-/**********************************/
-/*** LOCAL FUNCTION DEFINITIONS ***/
-/**********************************/
-
-/* Send a IPv4 packet on the given connection.
- */
-static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
-  LWIP_UNUSED_ARG(ipaddr);
-  return ppp_netif_output(netif, pb, PPP_IP);
-}
-
-#if PPP_IPV6_SUPPORT
-/* Send a IPv6 packet on the given connection.
- */
-static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
-  LWIP_UNUSED_ARG(ipaddr);
-  return ppp_netif_output(netif, pb, PPP_IPV6);
-}
-#endif /* PPP_IPV6_SUPPORT */
-
-/* Send a packet on the given connection.
- *
- * This is the low level function that send the PPP packet,
- * only for IPv4 and IPv6 packets coming from lwIP.
- */
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
-  ppp_pcb *pcb = (ppp_pcb*)netif->state;
-
-  /* Validate parameters. */
-  /* We let any protocol value go through - it can't hurt us
-   * and the peer will just drop it if it's not accepting it. */
-  if (!pcb || !pb) {
-    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
-              pcb->num, PPP_IP, (void*)pb));
-    LINK_STATS_INC(link.opterr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
-    return ERR_ARG;
-  }
-
-  /* Check that the link is up. */
-  if (!pcb->if_up) {
-    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->num));
-    LINK_STATS_INC(link.rterr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
-    return ERR_RTE;
-  }
-
-  return pcb->link_netif_output_cb(pcb->link_ctx_cb, pb, protocol);
-}
-
-/* Get and set parameters for the given connection.
- * Return 0 on success, an error code on failure. */
-int
-ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
-{
-  if(NULL == pcb)
-    return PPPERR_PARAM;
-
-  switch(cmd) {
-    case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
-      if (arg) {
-        *(int *)arg = (int)(pcb->if_up);
-        return PPPERR_NONE;
-      }
-      return PPPERR_PARAM;
-      break;
-
-    case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
-      if (arg) {
-        pcb->err_code = (u8_t)(*(int *)arg);
-        return PPPERR_NONE;
-      }
-      return PPPERR_PARAM;
-      break;
-
-    case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
-      if (arg) {
-        *(int *)arg = (int)(pcb->err_code);
-        return PPPERR_NONE;
-      }
-      return PPPERR_PARAM;
-      break;
-
-#if PPPOS_SUPPORT
-    case PPPCTLG_FD:            /* Get the fd associated with the ppp */
-      if (arg) {
-        *(sio_fd_t *)arg = pppos_get_fd((pppos_pcb*)pcb->link_ctx_cb);
-        return PPPERR_NONE;
-      }
-      return PPPERR_PARAM;
-      break;
-#endif /* PPPOS_SUPPORT */
-
-    default:
-      break;
-  }
-
-  return PPPERR_PARAM;
-}
 
 /*
  * Write a pbuf to a ppp link, only used from PPP functions
@@ -822,46 +837,12 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
   return q;
 }
 
-void ppp_link_down(ppp_pcb *pcb) {
-  LWIP_UNUSED_ARG(pcb); /* necessary if PPPDEBUG is defined to an empty function */
-  PPPDEBUG(LOG_DEBUG, ("ppp_link_down: unit %d\n", pcb->num));
-}
-
 void ppp_link_terminated(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->num));
   pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_DISCONNECT);
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
 }
 
-#if LWIP_NETIF_STATUS_CALLBACK
-/** Set the status callback of a PPP's netif
- *
- * @param pcb The PPP descriptor returned by ppp_new()
- * @param status_callback pointer to the status callback function
- *
- * @see netif_set_status_callback
- */
-void
-ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
-{
-  netif_set_status_callback(pcb->netif, status_callback);
-}
-#endif /* LWIP_NETIF_STATUS_CALLBACK */
-
-#if LWIP_NETIF_LINK_CALLBACK
-/** Set the link callback of a PPP's netif
- *
- * @param pcb The PPP descriptor returned by ppp_new()
- * @param link_callback pointer to the link callback function
- *
- * @see netif_set_link_callback
- */
-void
-ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
-{
-  netif_set_link_callback(pcb->netif, link_callback);
-}
-#endif /* LWIP_NETIF_LINK_CALLBACK */
 
 /************************************************************************
  * Functions called by various PPP subsystems to configure
@@ -875,8 +856,8 @@ void new_phase(ppp_pcb *pcb, int p) {
   pcb->phase = p;
   PPPDEBUG(LOG_DEBUG, ("ppp phase changed: unit %d: phase=%d\n", pcb->num, pcb->phase));
 #if PPP_NOTIFY_PHASE
-  if(NULL != pcb->notify_phase_cb) {
-	pcb->notify_phase_cb(pcb, p, pcb->ctx_cb);
+  if (pcb->notify_phase_cb != NULL) {
+    pcb->notify_phase_cb(pcb, p, pcb->ctx_cb);
   }
 #endif /* PPP_NOTIFY_PHASE */
 }
