@@ -983,7 +983,7 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
   if (((msg->conn->state != NETCONN_NONE) &&
        (msg->conn->state != NETCONN_LISTEN) &&
        (msg->conn->state != NETCONN_CONNECT)) ||
-      (msg->conn->state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn)) {
+      ((msg->conn->state == NETCONN_CONNECT) && !IN_NONBLOCKING_CONNECT(msg->conn))) {
     /* This means either a blocking write or blocking connect is running
        (nonblocking write returns and sets state to NONE) */
     msg->err = ERR_INPROGRESS;
