@@ -61,6 +61,11 @@ void             tcp_tmr     (void);  /* Must be called every
 void             tcp_slowtmr (void);
 void             tcp_fasttmr (void);
 
+/* Call this from a netif driver (watch out for threading issues!) that has
+   returned a memory error on transmit and now has free buffers to send more.
+   This iterates all active pcbs that had an error and tries to call
+   tcp_output, so use this with care as it might slow down the system. */
+void             tcp_txnow   (void);
 
 /* Only used by IP to pass a TCP segment to TCP: */
 void             tcp_input   (struct pbuf *p, struct netif *inp);
@@ -490,8 +495,8 @@ void tcp_rst_impl(u32_t seqno, u32_t ackno,
 
 u32_t tcp_next_iss(void);
 
-void tcp_keepalive(struct tcp_pcb *pcb);
-void tcp_zero_window_probe(struct tcp_pcb *pcb);
+err_t tcp_keepalive(struct tcp_pcb *pcb);
+err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest

@@ -879,13 +879,17 @@ tcp_slowtmr_start:
       if (pcb->persist_backoff > 0) {
         /* If snd_wnd is zero, use persist timer to send 1 byte probes
          * instead of using the standard retransmission mechanism. */
-        pcb->persist_cnt++;
-        if (pcb->persist_cnt >= tcp_persist_backoff[pcb->persist_backoff-1]) {
-          pcb->persist_cnt = 0;
-          if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
-            pcb->persist_backoff++;
+        u8_t backoff_cnt = tcp_persist_backoff[pcb->persist_backoff-1];
+        if (pcb->persist_cnt < backoff_cnt) {
+          pcb->persist_cnt++;
+        }
+        if (pcb->persist_cnt >= backoff_cnt) {
+          if (tcp_zero_window_probe(pcb) == ERR_OK) {
+            pcb->persist_cnt = 0;
+            if (pcb->persist_backoff < sizeof(tcp_persist_backoff)) {
+              pcb->persist_backoff++;
+            }
           }
-          tcp_zero_window_probe(pcb);
         }
       } else {
         /* Increase the retransmission timer if it is running */
@@ -957,8 +961,10 @@ tcp_slowtmr_start:
               (pcb->keep_idle + pcb->keep_cnt_sent * TCP_KEEP_INTVL(pcb))
               / TCP_SLOW_INTERVAL)
       {
-        tcp_keepalive(pcb);
-        pcb->keep_cnt_sent++;
+        err = tcp_keepalive(pcb);
+        if (err == ERR_OK) {
+          pcb->keep_cnt_sent++;
+        }
       }
     }
 
@@ -1126,6 +1132,19 @@ tcp_fasttmr_start:
       pcb = next;
     } else {
       pcb = pcb->next;
+    }
+  }
+}
+
+/** Call tcp_output for all active pcbs that have TF_NAGLEMEMERR set */
+void
+tcp_txnow(void)
+{
+  struct tcp_pcb *pcb;
+
+  for (pcb = tcp_active_pcbs; pcb != NULL; pcb = pcb->next) {
+    if (pcb->flags & TF_NAGLEMEMERR) {
+      tcp_output(pcb);
     }
   }
 }

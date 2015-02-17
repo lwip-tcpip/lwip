@@ -1482,6 +1482,7 @@ err_mem:
     }
 
     if (err == ERR_OK) {
+      err_t out_err;
       conn->write_offset += len;
       if ((conn->write_offset == conn->current_msg->msg.w.len) || dontblock) {
         /* return sent length */
@@ -1490,18 +1491,34 @@ err_mem:
         write_finished = 1;
         conn->write_offset = 0;
       }
-      tcp_output(conn->pcb.tcp);
+      out_err = tcp_output(conn->pcb.tcp);
+      if (ERR_IS_FATAL(out_err) || (out_err == ERR_RTE)) {
+        /* If tcp_output fails with fatal error or no route is found,
+           don't try writing any more but return the error
+           to the application thread. */
+        err = out_err;
+        write_finished = 1;
+        conn->current_msg->msg.w.len = 0;
+      }
     } else if ((err == ERR_MEM) && !dontblock) {
       /* If ERR_MEM, we wait for sent_tcp or poll_tcp to be called
          we do NOT return to the application thread, since ERR_MEM is
          only a temporary error! */
 
       /* tcp_write returned ERR_MEM, try tcp_output anyway */
-      tcp_output(conn->pcb.tcp);
-
+      err_t out_err = tcp_output(conn->pcb.tcp);
+      if (ERR_IS_FATAL(out_err) || (out_err == ERR_RTE)) {
+        /* If tcp_output fails with fatal error or no route is found,
+           don't try writing any more but return the error
+           to the application thread. */
+        err = out_err;
+        write_finished = 1;
+        conn->current_msg->msg.w.len = 0;
+      } else {
 #if LWIP_TCPIP_CORE_LOCKING
-      conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
+        conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
 #endif
+      }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return
          the error to the application thread. */

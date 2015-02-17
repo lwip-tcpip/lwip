@@ -94,7 +94,7 @@
 #endif
 
 /* Forward declarations.*/
-static void tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
+static err_t tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb);
 
 /** Allocate a pbuf and create a tcphdr at p->payload, used for output
  * functions other than the default tcp_output -> tcp_output_segment
@@ -895,6 +895,7 @@ tcp_build_wnd_scale_option(u32_t *opts)
 err_t
 tcp_send_empty_ack(struct tcp_pcb *pcb)
 {
+  err_t err;
   struct pbuf *p;
   u8_t optlen = 0;
 #if LWIP_TCP_TIMESTAMPS || CHECKSUM_GEN_TCP
@@ -909,6 +910,8 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 
   p = tcp_output_alloc_header(pcb, optlen, 0, htonl(pcb->snd_nxt));
   if (p == NULL) {
+    /* let tcp_fasttmr retry sending this ACK */
+    pcb->flags |= (TF_ACK_DELAY | TF_ACK_NOW);
     LWIP_DEBUGF(TCP_OUTPUT_DEBUG, ("tcp_output: (ACK) could not allocate pbuf\n"));
     return ERR_BUF;
   }
@@ -917,8 +920,6 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
 #endif /* LWIP_TCP_TIMESTAMPS || CHECKSUM_GEN_TCP */
   LWIP_DEBUGF(TCP_OUTPUT_DEBUG, 
               ("tcp_output: sending ACK for %"U32_F"\n", pcb->rcv_nxt));
-  /* remove ACK flags from the PCB, as we send an empty ACK now */
-  pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
 
   /* NB. MSS and window scale options are only sent on SYNs, so ignore them here */
 #if LWIP_TCP_TIMESTAMPS
@@ -934,15 +935,23 @@ tcp_send_empty_ack(struct tcp_pcb *pcb)
     &pcb->local_ip, &pcb->remote_ip);
 #endif
 #if LWIP_NETIF_HWADDRHINT
-  ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
+  err = ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
       IP_PROTO_TCP, &pcb->addr_hint);
 #else /* LWIP_NETIF_HWADDRHINT*/
-  ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
+  err = ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, pcb->tos,
       IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
   pbuf_free(p);
 
-  return ERR_OK;
+  if (err != ERR_OK) {
+    /* let tcp_fasttmr retry sending this ACK */
+    pcb->flags |= (TF_ACK_DELAY | TF_ACK_NOW);
+  } else {
+    /* remove ACK flags from the PCB, as we sent an empty ACK now */
+    pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+  }
+
+  return err;
 }
 
 /**
@@ -957,6 +966,7 @@ tcp_output(struct tcp_pcb *pcb)
 {
   struct tcp_seg *seg, *useg;
   u32_t wnd, snd_nxt;
+  err_t err;
 #if TCP_CWND_DEBUG
   s16_t i = 0;
 #endif /* TCP_CWND_DEBUG */
@@ -1041,17 +1051,23 @@ tcp_output(struct tcp_pcb *pcb)
     ++i;
 #endif /* TCP_CWND_DEBUG */
 
-    pcb->unsent = seg->next;
-
     if (pcb->state != SYN_SENT) {
       TCPH_SET_FLAG(seg->tcphdr, TCP_ACK);
-      pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
     }
 
 #if TCP_OVERSIZE_DBGCHECK
     seg->oversize_left = 0;
 #endif /* TCP_OVERSIZE_DBGCHECK */
-    tcp_output_segment(seg, pcb);
+    err = tcp_output_segment(seg, pcb);
+    if (err != ERR_OK) {
+      /* segment could not be sent, for whatever reason */
+      pcb->flags |= TF_NAGLEMEMERR;
+      return err;
+    }
+    pcb->unsent = seg->next;
+    if (pcb->state != SYN_SENT) {
+      pcb->flags &= ~(TF_ACK_DELAY | TF_ACK_NOW);
+    }
     snd_nxt = ntohl(seg->tcphdr->seqno) + TCP_TCPLEN(seg);
     if (TCP_SEQ_LT(pcb->snd_nxt, snd_nxt)) {
       pcb->snd_nxt = snd_nxt;
@@ -1106,9 +1122,10 @@ tcp_output(struct tcp_pcb *pcb)
  * @param seg the tcp_seg to send
  * @param pcb the tcp_pcb for the TCP connection used to send the segment
  */
-static void
+static err_t
 tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
 {
+  err_t err;
   u16_t len;
   u32_t *opts;
 
@@ -1174,7 +1191,7 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
     ipX_addr_t *local_ip;
     ipX_route_get_local_ipX(PCB_ISIPV6(pcb), &pcb->local_ip, &pcb->remote_ip, netif, local_ip);
     if ((netif == NULL) || (local_ip == NULL)) {
-      return;
+      return ERR_RTE;
     }
     ipX_addr_copy(PCB_ISIPV6(pcb), pcb->local_ip, *local_ip);
   }
@@ -1237,12 +1254,13 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   TCP_STATS_INC(tcp.xmit);
 
 #if LWIP_NETIF_HWADDRHINT
-  ipX_output_hinted(PCB_ISIPV6(pcb), seg->p, &pcb->local_ip, &pcb->remote_ip,
+  err = ipX_output_hinted(PCB_ISIPV6(pcb), seg->p, &pcb->local_ip, &pcb->remote_ip,
     pcb->ttl, pcb->tos, IP_PROTO_TCP, &pcb->addr_hint);
 #else /* LWIP_NETIF_HWADDRHINT*/
-  ipX_output(PCB_ISIPV6(pcb), seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
+  err = ipX_output(PCB_ISIPV6(pcb), seg->p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
     pcb->tos, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
+  return err;
 }
 
 /**
@@ -1448,9 +1466,10 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb for which to send a keepalive packet
  */
-void
+err_t
 tcp_keepalive(struct tcp_pcb *pcb)
 {
+  err_t err;
   struct pbuf *p;
 #if CHECKSUM_GEN_TCP
   struct tcp_hdr *tcphdr;
@@ -1465,9 +1484,9 @@ tcp_keepalive(struct tcp_pcb *pcb)
    
   p = tcp_output_alloc_header(pcb, 0, 0, htonl(pcb->snd_nxt - 1));
   if(p == NULL) {
-    LWIP_DEBUGF(TCP_DEBUG, 
+    LWIP_DEBUGF(TCP_DEBUG,
                 ("tcp_keepalive: could not allocate memory for pbuf\n"));
-    return;
+    return ERR_MEM;
   }
 #if CHECKSUM_GEN_TCP
   tcphdr = (struct tcp_hdr *)p->payload;
@@ -1479,17 +1498,18 @@ tcp_keepalive(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #if LWIP_NETIF_HWADDRHINT
-  ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip,
+  err = ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip,
     pcb->ttl, 0, IP_PROTO_TCP, &pcb->addr_hint);
 #else /* LWIP_NETIF_HWADDRHINT*/
-  ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
+  err = ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
     0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
 
   pbuf_free(p);
 
-  LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: seqno %"U32_F" ackno %"U32_F".\n",
-                          pcb->snd_nxt - 1, pcb->rcv_nxt));
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_keepalive: seqno %"U32_F" ackno %"U32_F" err %d.\n",
+                          pcb->snd_nxt - 1, pcb->rcv_nxt, (int)err));
+  return err;
 }
 
 
@@ -1501,9 +1521,10 @@ tcp_keepalive(struct tcp_pcb *pcb)
  *
  * @param pcb the tcp_pcb for which to send a zero-window probe packet
  */
-void
+err_t
 tcp_zero_window_probe(struct tcp_pcb *pcb)
 {
+  err_t err;
   struct pbuf *p;
   struct tcp_hdr *tcphdr;
   struct tcp_seg *seg;
@@ -1525,7 +1546,8 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
     seg = pcb->unsent;
   }
   if(seg == NULL) {
-    return;
+    /* nothing to send, zero window probe not needed */
+    return ERR_OK;
   }
 
   is_fin = ((TCPH_FLAGS(seg->tcphdr) & TCP_FIN) != 0) && (seg->len == 0);
@@ -1535,7 +1557,7 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
   p = tcp_output_alloc_header(pcb, 0, len, seg->tcphdr->seqno);
   if(p == NULL) {
     LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: no memory for pbuf\n"));
-    return;
+    return ERR_MEM;
   }
   tcphdr = (struct tcp_hdr *)p->payload;
 
@@ -1559,16 +1581,17 @@ tcp_zero_window_probe(struct tcp_pcb *pcb)
 
   /* Send output to IP */
 #if LWIP_NETIF_HWADDRHINT
-  ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
+  err = ipX_output_hinted(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl,
     0, IP_PROTO_TCP, &pcb->addr_hint);
 #else /* LWIP_NETIF_HWADDRHINT*/
-  ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
+  err = ipX_output(PCB_ISIPV6(pcb), p, &pcb->local_ip, &pcb->remote_ip, pcb->ttl, 0, IP_PROTO_TCP);
 #endif /* LWIP_NETIF_HWADDRHINT*/
 
   pbuf_free(p);
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_zero_window_probe: seqno %"U32_F
-                          " ackno %"U32_F".\n",
-                          pcb->snd_nxt - 1, pcb->rcv_nxt));
+                          " ackno %"U32_F" err %d.\n",
+                          pcb->snd_nxt - 1, pcb->rcv_nxt, (int)err));
+  return err;
 }
 #endif /* LWIP_TCP */

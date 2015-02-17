@@ -186,6 +186,13 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-17: Simon Goldschmidt
+  * tcp_impl.h, tcp_out.c, tcp.c, api_msg.c: fixed bug #37614 "Errors from
+    ipX_output are not processed". Now tcp_output(_segment) checks for the return
+    value of ipX_output and does not try to send more on error. A netif driver
+    can call tcp_txnow() (from tcpip_thread!) to try to send again if TX buffers
+    are available again.
+
   2015-02-14: patches by Freddie Chopin
   * snmp*: made community writable, fixed some const pointers
 
