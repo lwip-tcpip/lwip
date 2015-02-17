@@ -300,26 +300,16 @@ static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short
 static err_t
 pppoe_destroy(struct pppoe_softc *sc)
 {
-  struct pppoe_softc *cur, *prev = NULL;
-
-  /* find previous linked list entry */
-  for (cur = pppoe_softc_list; cur != NULL; prev = cur, cur = cur->next) {
-    if (sc == cur) {
-      break;
-    }
-  }
-
-  if (cur != sc) {
-    return ERR_IF;
-  }
+  struct pppoe_softc **copp, *freep;
 
   sys_untimeout(pppoe_timeout, sc);
-  if (prev == NULL) {
-    /* remove sc from the head of the list */
-    pppoe_softc_list = sc->next;
-  } else {
-    /* remove sc from the list */
-    prev->next = sc->next;
+
+  /* remove interface from list */
+  for (copp = &pppoe_softc_list; (freep = *copp); copp = &freep->next) {
+    if (freep == sc) {
+       *copp = freep->next;
+       break;
+    }
   }
 
 #ifdef PPPOE_TODO
