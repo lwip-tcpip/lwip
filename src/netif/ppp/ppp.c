@@ -320,6 +320,7 @@ ppp_sighup(ppp_pcb *pcb)
  * Return 0 on success, an error code on failure.
  */
 int ppp_free(ppp_pcb *pcb) {
+  int err;
   if (pcb->phase != PPP_PHASE_DEAD) {
     return PPPERR_PARAM;
   }
@@ -328,10 +329,10 @@ int ppp_free(ppp_pcb *pcb) {
 
   netif_remove(pcb->netif);
 
-  pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_FREE);
+  err = pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_FREE);
 
   memp_free(MEMP_PPP_PCB, pcb);
-  return 0;
+  return err;
 }
 
 /* Get and set parameters for the given connection.
