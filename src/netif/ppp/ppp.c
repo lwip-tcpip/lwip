@@ -487,13 +487,17 @@ void ppp_start(ppp_pcb *pcb) {
 void ppp_link_failed(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_failed: unit %d\n", pcb->num));
   new_phase(pcb, PPP_PHASE_DEAD);
-  pcb->link_status_cb(pcb, PPPERR_OPEN, pcb->ctx_cb);
+  pcb->err_code = PPPERR_OPEN;
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
 }
 
 /** Called when link is normally down (i.e. it was asked to end) */
 void ppp_link_end(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_end: unit %d\n", pcb->num));
-  pcb->link_status_cb(pcb, PPPERR_CONNECT, pcb->ctx_cb);
+  if (pcb->err_code == PPPERR_NONE) {
+    pcb->err_code = PPPERR_CONNECT;
+  }
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
 }
 
 /** LCP close request */
