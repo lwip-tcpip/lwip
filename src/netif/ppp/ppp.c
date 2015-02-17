@@ -274,8 +274,6 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
 int
 ppp_close(ppp_pcb *pcb)
 {
-  int st = 0;
-
   pcb->err_code = PPPERR_USER;
 
   /* dead phase, nothing to do, call the status callback to be consistent */
@@ -298,7 +296,7 @@ ppp_close(ppp_pcb *pcb)
   /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
   lcp_close(pcb, "User request");
 
-  return st;
+  return PPPERR_NONE;
 }
 
 /* This function is called when carrier is lost on the PPP channel. */
