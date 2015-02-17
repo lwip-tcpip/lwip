@@ -148,9 +148,8 @@ static pppos_pcb *pppos_pcb_list;
  *
  * Return 0 on success, an error code on failure.
  */
-ppp_pcb *
-ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
-             ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
+       ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   pppos_pcb *pppos;
   ppp_pcb *ppp;

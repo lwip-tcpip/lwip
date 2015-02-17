@@ -90,8 +90,8 @@ struct pppos_pcb_s {
 };
 
 /* Create a new PPPoS session. */
-ppp_pcb *ppp_over_serial_create(struct netif *pppif, sio_fd_t fd,
-             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
+       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);

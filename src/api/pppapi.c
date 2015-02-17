@@ -122,26 +122,26 @@ pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_pha
 
 #if PPPOS_SUPPORT
 /**
- * Call ppp_over_serial_create() inside the tcpip_thread context.
+ * Call pppos_create() inside the tcpip_thread context.
  */
 static void
-pppapi_do_ppp_over_serial_create(struct pppapi_msg_msg *msg)
+pppapi_do_pppos_create(struct pppapi_msg_msg *msg)
 {
-  msg->ppp = ppp_over_serial_create(msg->msg.serialcreate.pppif, msg->msg.serialcreate.fd,
+  msg->ppp = pppos_create(msg->msg.serialcreate.pppif, msg->msg.serialcreate.fd,
     msg->msg.serialcreate.link_status_cb, msg->msg.serialcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_over_serial_create() in a thread-safe way by running that function inside the
+ * Call pppos_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb,
+pppapi_pppos_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb,
                           void *ctx_cb)
 {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_serial_create;
+  msg.function = pppapi_do_pppos_create;
   msg.msg.msg.serialcreate.pppif = pppif;
   msg.msg.msg.serialcreate.fd = fd;
   msg.msg.msg.serialcreate.link_status_cb = link_status_cb;
@@ -154,29 +154,29 @@ pppapi_over_serial_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_f
 
 #if PPPOE_SUPPORT
 /**
- * Call ppp_over_ethernet_create() inside the tcpip_thread context.
+ * Call pppoe_create() inside the tcpip_thread context.
  */
 static void
-pppapi_do_ppp_over_ethernet_create(struct pppapi_msg_msg *msg)
+pppapi_do_pppoe_create(struct pppapi_msg_msg *msg)
 {
 
-  msg->ppp = ppp_over_ethernet_create(msg->msg.ethernetcreate.pppif, msg->msg.ethernetcreate.ethif,
+  msg->ppp = pppoe_create(msg->msg.ethernetcreate.pppif, msg->msg.ethernetcreate.ethif,
     msg->msg.ethernetcreate.service_name, msg->msg.ethernetcreate.concentrator_name,
     msg->msg.ethernetcreate.link_status_cb, msg->msg.ethernetcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_over_ethernet_create() in a thread-safe way by running that function inside the
+ * Call pppoe_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char *service_name,
+pppapi_pppoe_create(struct netif *pppif, struct netif *ethif, const char *service_name,
                             const char *concentrator_name, ppp_link_status_cb_fn link_status_cb,
                             void *ctx_cb)
 {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_ethernet_create;
+  msg.function = pppapi_do_pppoe_create;
   msg.msg.msg.ethernetcreate.pppif = pppif;
   msg.msg.msg.ethernetcreate.ethif = ethif;
   msg.msg.msg.ethernetcreate.service_name = service_name;
@@ -191,12 +191,12 @@ pppapi_over_ethernet_create(struct netif *pppif, struct netif *ethif, const char
 
 #if PPPOL2TP_SUPPORT
 /**
- * Call ppp_over_l2tp_create() inside the tcpip_thread context.
+ * Call pppol2tp_create() inside the tcpip_thread context.
  */
 static void
-pppapi_do_ppp_over_l2tp_create(struct pppapi_msg_msg *msg)
+pppapi_do_pppol2tp_create(struct pppapi_msg_msg *msg)
 {
-  msg->ppp = ppp_over_l2tp_create(msg->msg.l2tpcreate.pppif,
+  msg->ppp = pppol2tp_create(msg->msg.l2tpcreate.pppif,
     msg->msg.l2tpcreate.netif, msg->msg.l2tpcreate.ipaddr, msg->msg.l2tpcreate.port,
 #if PPPOL2TP_AUTH_SUPPORT
     msg->msg.l2tpcreate.secret,
@@ -209,16 +209,16 @@ pppapi_do_ppp_over_l2tp_create(struct pppapi_msg_msg *msg)
 }
 
 /**
- * Call ppp_over_l2tp_create() in a thread-safe way by running that function inside the
+ * Call pppol2tp_create() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
                         u8_t *secret, u8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_over_l2tp_create;
+  msg.function = pppapi_do_pppol2tp_create;
   msg.msg.msg.l2tpcreate.pppif = pppif;
   msg.msg.msg.l2tpcreate.netif = netif;
   msg.msg.msg.l2tpcreate.ipaddr = ipaddr;

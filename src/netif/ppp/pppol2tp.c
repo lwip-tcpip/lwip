@@ -99,9 +99,10 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
 
 
 /* Create a new L2TP session. */
-ppp_pcb *ppp_over_l2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-                u8_t *secret, u8_t secret_len,
-                ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+ppp_pcb *pppol2tp_create(struct netif *pppif,
+       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+       u8_t *secret, u8_t secret_len,
+       ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;

@@ -153,10 +153,10 @@ static struct pppoe_softc *pppoe_softc_list;
  *
  * Return 0 on success, an error code on failure.
  */
-ppp_pcb *ppp_over_ethernet_create(struct netif *pppif,
-          struct netif *ethif,
-          const char *service_name, const char *concentrator_name,
-          ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+ppp_pcb *pppoe_create(struct netif *pppif,
+       struct netif *ethif,
+       const char *service_name, const char *concentrator_name,
+       ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   ppp_pcb *ppp;
   struct pppoe_softc *sc;
