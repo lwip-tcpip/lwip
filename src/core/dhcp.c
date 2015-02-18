@@ -530,11 +530,12 @@ static void
 dhcp_handle_ack(struct netif *netif)
 {
   struct dhcp *dhcp = netif->dhcp;
+#if LWIP_DNS || LWIP_DHCP_GET_NTP_SRV
   u8_t n;
+#endif /* LWIP_DNS || LWIP_DHCP_GET_NTP_SRV */
 #if LWIP_DHCP_GET_NTP_SRV
   ip_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
 #endif
-  LWIP_UNUSED_ARG(n);
 
   /* clear options we might not get from the ACK */
   ip_addr_set_zero(&dhcp->offered_sn_mask);
