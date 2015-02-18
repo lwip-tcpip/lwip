@@ -1241,7 +1241,7 @@ lwip_netconn_do_disconnect(struct api_msg_msg *msg)
 void
 lwip_netconn_do_listen(struct api_msg_msg *msg)
 {
-  if (ERR_IS_FATAL_LISTENCONNECT(msg->conn->last_err)) {
+  if (ERR_IS_FATAL(msg->conn->last_err)) {
     msg->err = msg->conn->last_err;
   } else {
     msg->err = ERR_CONN;

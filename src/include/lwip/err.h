@@ -61,10 +61,8 @@ typedef s8_t err_t;
 #define ERR_ALREADY    -9    /* Already connecting.      */
 #define ERR_ISCONN     -10   /* Conn already established.*/
 
-#define ERR_IS_FATAL(e) ((e) < ERR_ISCONN)
-
 #define ERR_CONN       -11   /* Not connected.           */
-#define ERR_IS_FATAL_LISTENCONNECT(e) ((e) < ERR_CONN)
+#define ERR_IS_FATAL(e) ((e) < ERR_CONN)
 
 #define ERR_ABRT       -12   /* Connection aborted.      */
 #define ERR_RST        -13   /* Connection reset.        */
