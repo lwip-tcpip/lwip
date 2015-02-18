@@ -167,6 +167,10 @@ ppp_pcb *pppoe_create(struct netif *pppif,
        const char *service_name, const char *concentrator_name,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
+/*
+ * Functions called from lwIP
+ * DO NOT CALL FROM lwIP USER APPLICATION.
+ */
 void pppoe_disc_input(struct netif *netif, struct pbuf *p);
 void pppoe_data_input(struct netif *netif, struct pbuf *p);
 

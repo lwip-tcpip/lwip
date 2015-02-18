@@ -97,6 +97,11 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
 
+/*
+ * Functions called from PPP CORE
+ *
+ * You may use them if you REALLY know what you are doing.
+ */
 void pppos_accm_out_config(pppos_pcb *pppos, u32_t accm);
 void pppos_accm_in_config(pppos_pcb *pppos, u32_t accm);
 sio_fd_t pppos_get_fd(pppos_pcb *pppos);
