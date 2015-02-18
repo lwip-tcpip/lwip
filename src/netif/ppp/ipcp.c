@@ -291,7 +291,6 @@ const struct protent ipcp_protent = {
     ipcp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
     NULL,
-    1,
 #if PRINTPKT_SUPPORT
     "IPCP",
     "IP",

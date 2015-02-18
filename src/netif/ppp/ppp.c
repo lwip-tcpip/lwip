@@ -743,7 +743,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        * Upcall the proper protocol input routine.
        */
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-        if (protp->protocol == protocol && protp->enabled_flag) {
+        if (protp->protocol == protocol) {
           pb = ppp_singlebuf(pb);
           (*protp->input)(pcb, (u_char*)pb->payload, pb->len);
           goto out;
@@ -757,7 +757,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
        * This is only used by CCP, which we cannot support until we have a CCP data
        * implementation.
        */
-      if (protocol == (protp->protocol & ~0x8000) && protp->enabled_flag
+      if (protocol == (protp->protocol & ~0x8000)
         && protp->datainput != NULL) {
         (*protp->datainput)(pcb, pb->payload, pb->len);
         goto out;

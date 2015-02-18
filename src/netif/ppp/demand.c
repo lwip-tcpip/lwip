@@ -111,7 +111,7 @@ demand_conf()
      * Call the demand_conf procedure for each protocol that's got one.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->enabled_flag && protp->demand_conf != NULL)
+	if (protp->demand_conf != NULL)
 	    ((*protp->demand_conf)(pcb));
 /* FIXME: find a way to die() here */
 #if 0
@@ -131,7 +131,7 @@ demand_block()
     const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->enabled_flag && protp->demand_conf != NULL)
+	if (protp->demand_conf != NULL)
 	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_QUEUE);
     get_loop_output();
 }
@@ -148,7 +148,7 @@ demand_discard()
     const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->enabled_flag && protp->demand_conf != NULL)
+	if (protp->demand_conf != NULL)
 	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_ERROR);
     get_loop_output();
 
@@ -174,7 +174,7 @@ demand_unblock()
     const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->enabled_flag && protp->demand_conf != NULL)
+	if (protp->demand_conf != NULL)
 	    sifnpmode(pcb, protp->protocol & ~0x8000, NPMODE_PASS);
 }
 
@@ -454,8 +454,6 @@ active_packet(p, len)
 #endif
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
 	if (protp->protocol < 0xC000 && (protp->protocol & ~0x8000) == proto) {
-	    if (!protp->enabled_flag)
-		return 0;
 	    if (protp->active_pkt == NULL)
 		return 1;
 	    return (*protp->active_pkt)(p, len);

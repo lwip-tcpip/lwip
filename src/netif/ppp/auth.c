@@ -711,8 +711,6 @@ void upper_layers_down(ppp_pcb *pcb) {
     const struct protent *protp;
 
     for (i = 0; (protp = protocols[i]) != NULL; ++i) {
-	if (!protp->enabled_flag)
-	    continue;
         if (protp->protocol != PPP_LCP && protp->lowerdown != NULL)
 	    (*protp->lowerdown)(pcb);
         if (protp->protocol < 0xC000 && protp->close != NULL)
@@ -744,7 +742,7 @@ void link_established(ppp_pcb *pcb) {
      */
     if (!doing_multilink) {
 	for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	    if (protp->protocol != PPP_LCP && protp->enabled_flag
+	    if (protp->protocol != PPP_LCP
 		&& protp->lowerup != NULL)
 		(*protp->lowerup)(pcb);
     }
@@ -946,7 +944,7 @@ void start_networks(ppp_pcb *pcb) {
 	    || protp->protocol == PPP_CCP
 #endif /* CCP_SUPPORT */
 	    )
-	    && protp->enabled_flag && protp->open != NULL)
+	    && protp->open != NULL)
 	    (*protp->open)(pcb);
 #endif /* CCP_SUPPORT || ECP_SUPPORT */
 
@@ -986,7 +984,7 @@ void continue_networks(ppp_pcb *pcb) {
 #if ECP_SUPPORT
 	    && protp->protocol != PPP_ECP
 #endif /* ECP_SUPPORT */
-	    && protp->enabled_flag && protp->open != NULL) {
+	    && protp->open != NULL) {
 	    (*protp->open)(pcb);
 	    ++pcb->num_np_open;
 	}

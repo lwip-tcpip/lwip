@@ -285,7 +285,6 @@ const struct protent lcp_protent = {
     lcp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
     NULL,
-    1,
 #if PRINTPKT_SUPPORT
     "LCP",
     NULL,
@@ -586,7 +585,7 @@ static void lcp_rprotrej(fsm *f, u_char *inp, int len) {
      * Upcall the proper Protocol-Reject routine.
      */
     for (i = 0; (protp = protocols[i]) != NULL; ++i)
-	if (protp->protocol == prot && protp->enabled_flag) {
+	if (protp->protocol == prot) {
 #if PPP_PROTOCOLNAME
 	    if (pname != NULL)
 		ppp_dbglog("Protocol-Reject for '%s' (0x%x) received", pname,

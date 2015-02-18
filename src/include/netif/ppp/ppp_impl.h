@@ -285,7 +285,6 @@ struct protent {
      */
     /* Process a received data packet */
     void (*datainput) (ppp_pcb *pcb, u_char *pkt, int len);
-    u8_t enabled_flag;		/* 0 if protocol is disabled */
 #if PRINTPKT_SUPPORT
     const char *name;		/* Text name of protocol */
     const char *data_name;	/* Text name of corresponding data protocol */

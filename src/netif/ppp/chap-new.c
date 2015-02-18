@@ -652,7 +652,6 @@ const struct protent chap_protent = {
 	chap_print_pkt,
 #endif /* PRINTPKT_SUPPORT */
 	NULL,		/* datainput */
-	1,		/* enabled_flag */
 #if PRINTPKT_SUPPORT
 	"CHAP",		/* name */
 	NULL,		/* data_name */
