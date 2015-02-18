@@ -339,15 +339,16 @@ extern const struct protent* const protocols[];
 
 /* Supported CHAP protocols */
 #if CHAP_SUPPORT
-#include "chap-new.h"
+
 #if MSCHAP_SUPPORT
 #define CHAP_MDTYPE_SUPPORTED (MDTYPE_MICROSOFT_V2 | MDTYPE_MICROSOFT | MDTYPE_MD5)
-#else
+#else /* MSCHAP_SUPPORT */
 #define CHAP_MDTYPE_SUPPORTED (MDTYPE_MD5)
-#endif
-#else
+#endif /* MSCHAP_SUPPORT */
+
+#else /* CHAP_SUPPORT */
 #define CHAP_MDTYPE_SUPPORTED (MDTYPE_NONE)
-#endif
+#endif /* CHAP_SUPPORT */
 
 #if PPP_STATS_SUPPORT
 /*
