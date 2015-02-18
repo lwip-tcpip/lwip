@@ -50,13 +50,43 @@
 #include "netif/ppp/magic.h"
 #include "netif/ppp/vj.h"
 
+/*
+ * Linked list of created PPPoS interfaces
+ *
+ * We only need to keep track of existing PPPoS interfaces if PPPoS
+ * is not the only enabled protocol.
+ *
+ * PPP CORE does not have callbacks pointers for all PPPoS callbacks
+ * which should actually be required for PPPoS (VJ config, asyncmap, ...),
+ * there is too much callbacks to create and PPPoS must be kept light,
+ * especially for users who are only using PPPoS.
+ *
+ * But there is a drawback, PPP CORE does not know which
+ * lower protocols it is talking to thanks to the abstraction,
+ * therefore if PPPoS is enabled as well as PPPoE or PPPoL2TP there
+ * might be situation where PPP CORE calls pppos_ config functions
+ * on interfaces which are NOT PPPoS one. This is very unlikely to
+ * happen because protocols not supported by PPPoE or PPPoL2TP are
+ * disabled at LCP/IPCP negotiation but we are better safe than sorry.
+ *
+ * So we check if passed PPP pointer to PPPoS configuration functions
+ * is a PPPoS interface by checking against a linked list of existing
+ * PPPoS interfaces.
+ */
+#define PPPOS_PCB_LIST (PPP_LINK_ENABLED_NUMBER > 1)
+#if PPPOS_PCB_LIST
+static pppos_pcb *pppos_pcb_list;
+static u8_t pppos_exist(pppos_pcb *pppos);
+#else /* PPPOS_PCB_LIST */
+#define pppos_exist(pppos)     1
+#endif /* PPPOS_PCB_LIST */
+
 /* callbacks called from PPP core */
 static int pppos_link_command_callback(void *pcb, u8_t command);
 static int pppos_link_write_callback(void *pcb, struct pbuf *p);
 static err_t pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol);
 
 /* Prototypes for procedures local to this file. */
-static u8_t pppos_exist(pppos_pcb *pppos);
 static void pppos_connect(pppos_pcb *pppos);
 static void pppos_disconnect(pppos_pcb *pppos);
 static err_t pppos_destroy(pppos_pcb *pppos);
@@ -135,9 +165,6 @@ ppp_get_fcs(u8_t byte)
 #define PPP_INITFCS     0xffff  /* Initial FCS value */
 #define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
 
-/* linked list of created PPPoS interfaces */
-static pppos_pcb *pppos_pcb_list;
-
 
 
 /*
@@ -165,9 +192,11 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
     return NULL;
   }
 
+#if PPPOS_PCB_LIST
   /* put the new interface at the head of the list */
   pppos->next = pppos_pcb_list;
   pppos_pcb_list = pppos;
+#endif /* PPPOS_PCB_LIST */
 
   pppos->ppp = ppp;
   pppos->fd = fd;
@@ -384,6 +413,7 @@ pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
   return ERR_OK;
 }
 
+#if PPPOS_PCB_LIST
 static u8_t
 pppos_exist(pppos_pcb *pppos)
 {
@@ -395,6 +425,7 @@ pppos_exist(pppos_pcb *pppos)
   }
   return 0;
 }
+#endif /* PPPOS_PCB_LIST */
 
 static void
 pppos_connect(pppos_pcb *pppos)
@@ -453,6 +484,7 @@ pppos_disconnect(pppos_pcb *pppos)
 static err_t
 pppos_destroy(pppos_pcb *pppos)
 {
+#if PPPOS_PCB_LIST
   pppos_pcb **copp, *freep;
 
   /* remove interface from list */
@@ -462,6 +494,7 @@ pppos_destroy(pppos_pcb *pppos)
        break;
     }
   }
+#endif /* PPPOS_PCB_LIST */
 
   /* input pbuf left ? */
   pppos_free_current_input_packet(pppos);

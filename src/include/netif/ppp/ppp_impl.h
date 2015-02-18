@@ -88,6 +88,12 @@
 #define	PPP_TRANS	0x20	/* Asynchronous transparency modifier */
 
 /*
+ * Number of enabled low-level protocols
+ * Useful for low-level protocols to check whether they are alone.
+ */
+#define PPP_LINK_ENABLED_NUMBER (!!PPPOS_SUPPORT+!!PPPOE_SUPPORT+!!PPPOL2TP_SUPPORT)
+
+/*
  * Low-level links commands
  */
 /* Start a connection (i.e. initiate discovery phase) */
