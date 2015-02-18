@@ -61,6 +61,8 @@
 #define API_MSG_VAR_ALLOC_DONTFAIL(name)  API_VAR_ALLOC_DONTFAIL(struct api_msg, MEMP_API_MSG, name)
 #define API_MSG_VAR_FREE(name)            API_VAR_FREE(MEMP_API_MSG, name)
 
+static err_t netconn_close_shutdown(struct netconn *conn, u8_t how);
+
 /**
  * Create a new netconn (of a specific type) that has a callback function.
  * The corresponding pcb is also created.
@@ -415,6 +417,17 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
   LWIP_ERROR("netconn_recv: invalid pointer", (new_buf != NULL), return ERR_ARG;);
   *new_buf = NULL;
   LWIP_ERROR("netconn_recv: invalid conn",    (conn != NULL),    return ERR_ARG;);
+#if LWIP_TCP
+#if (LWIP_UDP || LWIP_RAW)
+  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
+#endif /* (LWIP_UDP || LWIP_RAW) */
+  {
+    if (!sys_mbox_valid(&conn->recvmbox)) {
+      /* This happens when calling this function after receiving FIN */
+      return sys_mbox_valid(&conn->acceptmbox) ? ERR_CONN : ERR_CLSD;
+    }
+  }
+#endif /* LWIP_TCP */
   LWIP_ERROR("netconn_recv: invalid recvmbox", sys_mbox_valid(&conn->recvmbox), return ERR_CONN;);
 
   err = conn->last_err;
@@ -459,8 +472,9 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
     /* If we are closed, we indicate that we no longer wish to use the socket */
     if (buf == NULL) {
       API_EVENT(conn, NETCONN_EVT_RCVMINUS, 0);
-      /* Avoid to lose any previous error code */
-      NETCONN_SET_SAFE_ERR(conn, ERR_CLSD);
+      /* RX side is closed, so deallocate the recvmbox */
+      netconn_close_shutdown(conn, NETCONN_SHUT_RD);
+      /* Don' store ERR_CLSD as conn->err since we are only half-closed */
       return ERR_CLSD;
     }
     len = ((struct pbuf *)buf)->tot_len;
