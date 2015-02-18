@@ -290,7 +290,9 @@ const struct protent ipcp_protent = {
 #if PRINTPKT_SUPPORT
     ipcp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
     NULL,
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     "IPCP",
     "IP",

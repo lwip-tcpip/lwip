@@ -254,6 +254,11 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 #define PPP_OCTETS_DIRECTION_MAXSESSION 4
 #endif
 
+/* Data input is only used by CCP and ECP, which are not supported at this time,
+ * remove this entry from struct protent to save some flash
+ */
+#define PPP_DATAINPUT (CCP_SUPPORT || ECP_SUPPORT)
+
 /*
  * The following struct gives the addresses of procedures to call
  * for a particular protocol.
@@ -280,11 +285,10 @@ struct protent {
 			  void (*printer) (void *, const char *, ...),
 			  void *arg);
 #endif /* PRINTPKT_SUPPORT */
-    /* FIXME: data input is only used by CCP, which is not supported at this time,
-     *        should we remove this entry and save some flash ?
-     */
+#if PPP_DATAINPUT
     /* Process a received data packet */
     void (*datainput) (ppp_pcb *pcb, u_char *pkt, int len);
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     const char *name;		/* Text name of protocol */
     const char *data_name;	/* Text name of corresponding data protocol */

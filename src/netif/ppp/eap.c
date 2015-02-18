@@ -123,7 +123,9 @@ const struct protent eap_protent = {
 #if PRINTPKT_SUPPORT
 	eap_printpkt,		/* print a packet in readable form */
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
 	NULL,			/* process a received data packet */
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
 	"EAP",			/* text name of protocol */
 	NULL,			/* text name of corresponding data protocol */

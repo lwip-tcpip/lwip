@@ -283,7 +283,9 @@ const struct protent ipv6cp_protent = {
 #if PRINTPKT_SUPPORT
     ipv6cp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
     NULL,
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     "IPV6CP",
     "IPV6",

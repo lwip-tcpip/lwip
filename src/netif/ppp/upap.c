@@ -101,7 +101,9 @@ const struct protent pap_protent = {
 #if PRINTPKT_SUPPORT
     upap_printpkt,
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
     NULL,
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     "PAP",
     NULL,

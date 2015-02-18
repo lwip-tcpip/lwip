@@ -284,7 +284,9 @@ const struct protent lcp_protent = {
 #if PRINTPKT_SUPPORT
     lcp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
     NULL,
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     "LCP",
     NULL,

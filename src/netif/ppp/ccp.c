@@ -192,7 +192,9 @@ const struct protent ccp_protent = {
 #if PRINTPKT_SUPPORT
     ccp_printpkt,
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
     ccp_datainput,
+#endif /* PPP_DATAINPUT */
 #if PRINTPKT_SUPPORT
     "CCP",
     "Compressed",
