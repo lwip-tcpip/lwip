@@ -730,6 +730,10 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         if (off > 0) {
           /* update receive window */
           netconn_recved(sock->conn, (u32_t)off);
+          if (err == ERR_CLSD) {
+            /* closed but already received data, ensure select gets the FIN, too */
+            event_callback(sock->conn, NETCONN_EVT_RCVPLUS, 0);
+          }
           /* already received data, return that */
           sock_set_errno(sock, 0);
           return off;

@@ -6,10 +6,6 @@ HISTORY
 
   ++ New features:
 
-  2015-02-17: Sylvain Rochet
-  * Large PPP rework, moved out low level protocols code (PPPoS, PPPoE, PPPoL2TP)
-    from PPP core code, making everything simpler.
-
   2015-02-16: Claudius Zingerli, Sergio Caprile
   * opt.h, dhcp.h/.c: patch #8361 "Add support for NTP option in DHCP"
 
@@ -189,6 +185,10 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2015-02-18: Simon Goldschmidt
+  * sockets.c: Fixed select not reporting received FIN as 'readable' in certain
+    rare cases (bug #43779: select(), close(), and TCP retransmission error)
 
   2015-02-17: Simon Goldschmidt
   * err.h, sockets.c, api_msg.c: fixed bug #38853 "connect() use a wrong errno":
