@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-02-18: Simon Goldschmidt
+  * tcp.c: tcp_alloc() prefers killing CLOSING/LAST_ACK over active connections
+    (see bug #39565)
+
   2015-02-16: Claudius Zingerli, Sergio Caprile
   * opt.h, dhcp.h/.c: patch #8361 "Add support for NTP option in DHCP"
 
@@ -35,10 +39,6 @@ HISTORY
   2015-02-11: Simon Goldschmidt
   * api_msg.c, opt.h: started to implement fullduplex sockets/netconns
     (note that this is highly unstable yet!)
-
-  2015-01-02: Simon Goldschmidt
-  * tcp.c: tcp_kill_prio(): prefer nearly-closed connections (waiting for the
-    last ACK only) over established connections when out of tcp pcbs
 
   2015-01-17: Simon Goldschmidt
   * api: allow enabling socket API without (public) netconn API - netconn API is
