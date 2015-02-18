@@ -1515,20 +1515,20 @@ void auth_reset(ppp_pcb *pcb) {
 #endif /* EAP_SUPPORT */
   }
 
+  PPPDEBUG(LOG_DEBUG, ("ppp: auth protocols:"));
 #if PAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, ("neg_upap: %d\n", ao->neg_upap) );
+  PPPDEBUG(LOG_DEBUG, (" PAP=%d", ao->neg_upap));
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, ("neg_chap: %d\n", ao->neg_chap) );
-  PPPDEBUG(LOG_DEBUG, ("neg_chap_md5: %d\n", !!(ao->chap_mdtype&MDTYPE_MD5)) );
+  PPPDEBUG(LOG_DEBUG, (" CHAP=%d CHAP_MD5=%d", ao->neg_chap, !!(ao->chap_mdtype&MDTYPE_MD5)));
 #if MSCHAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, ("neg_chap_ms: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT)) );
-  PPPDEBUG(LOG_DEBUG, ("neg_chap_ms2: %d\n", !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)) );
+  PPPDEBUG(LOG_DEBUG, (" CHAP_MS=%d CHAP_MS2=%d", !!(ao->chap_mdtype&MDTYPE_MICROSOFT), !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)));
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, ("neg_eap: %d\n", ao->neg_eap) );
+  PPPDEBUG(LOG_DEBUG, (" EAP=%d", ao->neg_eap));
 #endif /* EAP_SUPPORT */
+  PPPDEBUG(LOG_DEBUG, ("\n"));
 
 #if 0 /* OLD CODE */
     ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
