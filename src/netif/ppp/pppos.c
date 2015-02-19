@@ -82,8 +82,8 @@ static u8_t pppos_exist(pppos_pcb *pppos);
 #endif /* PPPOS_PCB_LIST */
 
 /* callbacks called from PPP core */
-static err_t pppos_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppos_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol);
+static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol);
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
@@ -107,8 +107,8 @@ static const struct link_callbacks pppos_callbacks = {
   pppos_connect,
   pppos_disconnect,
   pppos_destroy,
-  pppos_link_write_callback,
-  pppos_link_netif_output_callback,
+  pppos_write,
+  pppos_netif_output,
   pppos_send_config,
   pppos_recv_config,
 #if VJ_SUPPORT
@@ -226,7 +226,7 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
 /* Called by PPP core */
 static err_t
-pppos_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p)
+pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_char *s = (u_char*)p->payload;
@@ -295,7 +295,7 @@ pppos_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 
 /* Called by PPP core */
 static err_t
-pppos_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
+pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_int fcs_out = PPP_INITFCS;

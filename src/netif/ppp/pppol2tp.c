@@ -75,8 +75,8 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
 /* callbacks called from PPP core */
-static err_t pppol2tp_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppol2tp_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
+static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
 static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx);    /* Destroy a L2TP control block */
 static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
@@ -101,8 +101,8 @@ static const struct link_callbacks pppol2tp_callbacks = {
   pppol2tp_connect,
   pppol2tp_disconnect,
   pppol2tp_destroy,
-  pppol2tp_link_write_callback,
-  pppol2tp_link_netif_output_callback,
+  pppol2tp_write,
+  pppol2tp_netif_output,
   NULL,
   NULL,
   NULL
@@ -154,7 +154,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 }
 
 /* Called by PPP core */
-static err_t pppol2tp_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
+static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *ph; /* UDP + L2TP header */
 #if LWIP_SNMP
@@ -191,7 +191,7 @@ static err_t pppol2tp_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *
 }
 
 /* Called by PPP core */
-static err_t pppol2tp_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
+static err_t pppol2tp_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *pb;
   int i=0;

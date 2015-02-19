@@ -117,8 +117,8 @@ static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
 /* callbacks called from PPP core */
-static err_t pppoe_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppoe_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
+static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
 static err_t pppoe_connect(ppp_pcb *ppp, void *ctx);
 static void pppoe_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppoe_destroy(ppp_pcb *ppp, void *ctx);
@@ -152,8 +152,8 @@ static const struct link_callbacks pppoe_callbacks = {
   pppoe_connect,
   pppoe_disconnect,
   pppoe_destroy,
-  pppoe_link_write_callback,
-  pppoe_link_netif_output_callback,
+  pppoe_write,
+  pppoe_netif_output,
   NULL,
   NULL,
   NULL
@@ -201,7 +201,7 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 }
 
 /* Called by PPP core */
-static err_t pppoe_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
+static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *ph; /* Ethernet + PPPoE header */
 #if LWIP_SNMP
@@ -241,7 +241,7 @@ static err_t pppoe_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p) 
 }
 
 /* Called by PPP core */
-static err_t pppoe_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
+static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *pb;
   int i=0;
