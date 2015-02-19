@@ -82,18 +82,24 @@ extern "C" {
  * Either set by the netif driver in its init function (if the link
  * is up at that time) or at a later point once the link comes up
  * (if link detection is supported by the hardware). */
-#define NETIF_FLAG_LINK_UP      0x10U
+#define NETIF_FLAG_LINK_UP      0x04U
 /** If set, the netif is an ethernet device using ARP.
  * Set by the netif driver in its init function.
  * Used to check input packet types and use of DHCP. */
-#define NETIF_FLAG_ETHARP       0x20U
+#define NETIF_FLAG_ETHARP       0x08U
 /** If set, the netif is an ethernet device. It might not use
  * ARP or TCP/IP if it is used for PPPoE only.
  */
-#define NETIF_FLAG_ETHERNET     0x40U
+#define NETIF_FLAG_ETHERNET     0x10U
 /** If set, the netif has IGMP capability.
  * Set by the netif driver in its init function. */
-#define NETIF_FLAG_IGMP         0x80U
+#define NETIF_FLAG_IGMP         0x20U
+/** If set, the netif has MLD6 capability.
+ * Set by the netif driver in its init function. */
+#define NETIF_FLAG_MLD6         0x40U
+/** If set, the netif is a 6LowPAN device.
+ * IPv6 packets must be fragmented or reassembled. */
+#define NETIF_FLAG_LOWPAN6      0x80U
 
 /** Function prototype for netif init functions. Set up flags and output/linkoutput
  * callback functions in this function.
