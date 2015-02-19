@@ -92,6 +92,7 @@ static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
 static int pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 #if VJ_SUPPORT
 static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
+err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol);
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
@@ -117,7 +118,12 @@ static const struct link_callbacks pppos_callbacks = {
 #else /* VJ_SUPPORT */
   NULL,
 #endif /* VJ_SUPPORT */
-  pppos_ioctl
+  pppos_ioctl,
+#if VJ_SUPPORT
+  pppos_netif_input
+#else /* VJ_SUPPORT */
+  NULL
+#endif /* VJ_SUPPORT */
 };
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
@@ -845,48 +851,52 @@ pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid)
             ppp->num, vjcomp, cidcomp, maxcid));
 }
 
-int
-pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb)
-{
-  ppp_pcb *ppp = pppos->ppp;
+err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol) {
   int ret;
-  PPPDEBUG(LOG_INFO, ("pppos_vjc_comp[%d]: vj_comp in pbuf len=%d\n", ppp->num, pb->len));
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
 
-  /*
-   * Clip off the VJ header and prepend the rebuilt TCP/IP header and
-   * pass the result to IP.
-   */
-  ret = vj_uncompress_tcp(&pb, &pppos->vj_comp);
-  if (ret >= 0) {
-    ip_input(pb, ppp->netif);
-    return ret;
+  switch(protocol) {
+    case PPP_VJC_COMP:      /* VJ compressed TCP */
+      if (!ppp->vj_enabled) {
+        break;
+      }
+      /*
+       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
+       * pass the result to IP.
+       */
+      PPPDEBUG(LOG_INFO, ("pppos_vjc_comp[%d]: vj_comp in pbuf len=%d\n", ppp->num, p->len));
+      ret = vj_uncompress_tcp(&p, &pppos->vj_comp);
+      if (ret >= 0) {
+        ip_input(p, pppos->ppp->netif);
+        return ERR_OK;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppos_vjc_comp[%d]: Dropping VJ compressed\n", ppp->num));
+      break;
+
+    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
+      if (!ppp->vj_enabled) {
+        break;
+      }
+      /*
+       * Process the TCP/IP header for VJ header compression and then pass
+       * the packet to IP.
+       */
+      PPPDEBUG(LOG_INFO, ("pppos_vjc_uncomp[%d]: vj_un in pbuf len=%d\n", ppp->num, p->len));
+      ret = vj_uncompress_uncomp(p, &pppos->vj_comp);
+      if (ret >= 0) {
+        ip_input(p, pppos->ppp->netif);
+        return ERR_OK;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("pppos_vjc_uncomp[%d]: Dropping VJ uncompressed\n", ppp->num));
+      break;
+
+    /* Pass the packet to other handlers */
+    default: ;
   }
 
-  /* Something's wrong so drop it. */
-  PPPDEBUG(LOG_WARNING, ("pppos_vjc_comp[%d]: Dropping VJ compressed\n", ppp->num));
-  return -1;
-}
-
-int
-pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb)
-{
-  ppp_pcb *ppp = pppos->ppp;
-  int ret;
-  PPPDEBUG(LOG_INFO, ("pppos_vjc_uncomp[%d]: vj_un in pbuf len=%d\n", ppp->num, pb->len));
-
-  /*
-   * Process the TCP/IP header for VJ header compression and then pass
-   * the packet to IP.
-   */
-  ret = vj_uncompress_uncomp(pb, &pppos->vj_comp);
-  if (ret >= 0) {
-    ip_input(pb, ppp->netif);
-    return ret;
-  }
-
-  /* Something's wrong so drop it. */
-  PPPDEBUG(LOG_WARNING, ("pppos_vjc_uncomp[%d]: Dropping VJ uncompressed\n", ppp->num));
-  return -1;
+  return ERR_VAL;
 }
 #endif /* VJ_SUPPORT */
 

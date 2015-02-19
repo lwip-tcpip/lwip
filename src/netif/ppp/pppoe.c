@@ -157,6 +157,7 @@ static const struct link_callbacks pppoe_callbacks = {
   NULL,
   NULL,
   NULL,
+  NULL,
   NULL
 };
 

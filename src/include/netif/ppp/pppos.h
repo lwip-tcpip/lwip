@@ -96,14 +96,5 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);
 
-
-/*
- * Functions called from PPP CORE
- *
- * You may use them if you REALLY know what you are doing.
- */
-int pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb);
-int pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb);
-
 #endif /* PPPOS_H */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

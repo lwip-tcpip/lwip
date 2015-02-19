@@ -106,6 +106,7 @@ static const struct link_callbacks pppol2tp_callbacks = {
   NULL,
   NULL,
   NULL,
+  NULL,
   NULL
 };
 

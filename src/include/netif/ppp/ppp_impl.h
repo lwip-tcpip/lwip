@@ -165,6 +165,8 @@ struct link_callbacks {
   void (*vj_config)(ppp_pcb *pcb, void *ctx, int vjcomp, int cidcomp, int maxcid);
   /* Get and set parameters for the given connection. */
   int (*ioctl)(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
+  /* Pass the processed input packet to the appropriate handler. */
+  err_t (*netif_input)(ppp_pcb *pcb, void *ctx, struct pbuf *p, u16_t protocol);
 };
 
 /*

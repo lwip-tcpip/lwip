@@ -691,25 +691,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 	goto drop;
   }
 
-  /* FIXME: should we write protent to do that ? */
-
   switch(protocol) {
-
-#if VJ_SUPPORT
-    case PPP_VJC_COMP:      /* VJ compressed TCP */
-      /* VJ is only enabled on PPPoS interfaces */
-      if (pcb->vj_enabled && pppos_vjc_comp((pppos_pcb*)pcb->link_ctx_cb, pb) >= 0) {
-        return;
-      }
-      break;
-
-    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-      /* VJ is only enabled on PPPoS interfaces */
-      if (pcb->vj_enabled && pppos_vjc_uncomp((pppos_pcb*)pcb->link_ctx_cb, pb) >= 0) {
-        return;
-      }
-      break;
-#endif /* VJ_SUPPORT */
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->num, pb->len));
@@ -724,9 +706,14 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* PPP_IPV6_SUPPORT */
 
     default: {
-
       int i;
       const struct protent *protp;
+
+      /* If callback set, try to pass the input packet to low level protocol */
+      if (pcb->link_cb->netif_input && pcb->link_cb->netif_input(pcb, pcb->link_ctx_cb, pb, protocol) == ERR_OK) {
+        return;
+      }
+
       /*
        * Upcall the proper protocol input routine.
        */
