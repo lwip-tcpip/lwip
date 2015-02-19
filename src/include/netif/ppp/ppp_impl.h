@@ -88,12 +88,6 @@
 #define	PPP_TRANS	0x20	/* Asynchronous transparency modifier */
 
 /*
- * Number of enabled low-level protocols
- * Useful for low-level protocols to check whether they are alone.
- */
-#define PPP_LINK_ENABLED_NUMBER (!!PPPOS_SUPPORT+!!PPPOE_SUPPORT+!!PPPOL2TP_SUPPORT)
-
-/*
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
