@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-02-19: Ivan Delamer
+  * netif.h, slipif.c, ppp.c: Removed unused netif flag for point to point connections
+
   2015-02-18: Simon Goldschmidt
   * api_lib.c: fixed bug #37958 "netconn API doesn't handle correctly
     connections half-closed by peer"

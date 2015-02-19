@@ -368,7 +368,6 @@ slipif_init(struct netif *netif)
   netif->output_ip6 = slipif_output_v6;
 #endif /* LWIP_IPV6 */
   netif->mtu = SLIP_MAX_SIZE;
-  netif->flags |= NETIF_FLAG_POINTTOPOINT;
 
   /* netif->state or netif->num contain the port number */
   if (netif->state != NULL) {
