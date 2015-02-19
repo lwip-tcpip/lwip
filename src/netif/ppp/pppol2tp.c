@@ -102,7 +102,10 @@ static const struct link_callbacks pppol2tp_callbacks = {
   pppol2tp_disconnect,
   pppol2tp_destroy,
   pppol2tp_link_write_callback,
-  pppol2tp_link_netif_output_callback
+  pppol2tp_link_netif_output_callback,
+  NULL,
+  NULL,
+  NULL
 };
 
 

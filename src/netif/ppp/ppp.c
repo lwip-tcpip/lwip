@@ -872,11 +872,9 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
   pcb->pcomp = pcomp;
   pcb->accomp = accomp;
 
-#if PPPOS_SUPPORT
-  pppos_accm_out_config((pppos_pcb*)pcb->link_ctx_cb, accm);
-#else /* PPPOS_SUPPORT */
-  LWIP_UNUSED_ARG(accm);
-#endif /* PPPOS_SUPPORT */
+  if (pcb->link_cb->send_config) {
+    pcb->link_cb->send_config(pcb, pcb->link_ctx_cb, accm);
+  }
 
   PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->num) );
   return 0;
@@ -891,11 +889,9 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
   LWIP_UNUSED_ARG(pcomp);
   LWIP_UNUSED_ARG(mru);
 
-#if PPPOS_SUPPORT
-  pppos_accm_in_config((pppos_pcb*)pcb->link_ctx_cb, accm);
-#else /* PPPOS_SUPPORT */
-  LWIP_UNUSED_ARG(accm);
-#endif /* PPPOS_SUPPORT */
+  if (pcb->link_cb->recv_config) {
+    pcb->link_cb->recv_config(pcb, pcb->link_ctx_cb, accm);
+  }
 
   PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->num));
   return 0;
@@ -1128,14 +1124,9 @@ int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
  * sifvjcomp - config tcp header compression
  */
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
-#if VJ_SUPPORT
-  pppos_vjc_config((pppos_pcb*)pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
-#else /* VJ_SUPPORT */
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(vjcomp);
-  LWIP_UNUSED_ARG(cidcomp);
-  LWIP_UNUSED_ARG(maxcid);
-#endif /* VJ_SUPPORT */
+  if (pcb->link_cb->vj_config) {
+    pcb->link_cb->vj_config(pcb, pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
+  }
   return 0;
 }
 

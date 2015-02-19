@@ -87,6 +87,11 @@ static err_t pppos_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pb
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
+static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm);
+static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
+#if VJ_SUPPORT
+static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
+#endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
 #if PPP_INPROC_MULTITHREADED
@@ -103,7 +108,14 @@ static const struct link_callbacks pppos_callbacks = {
   pppos_disconnect,
   pppos_destroy,
   pppos_link_write_callback,
-  pppos_link_netif_output_callback
+  pppos_link_netif_output_callback,
+  pppos_send_config,
+  pppos_recv_config,
+#if VJ_SUPPORT
+  pppos_vjc_config
+#else /* VJ_SUPPORT */
+  NULL
+#endif /* VJ_SUPPORT */
 };
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
@@ -760,34 +772,30 @@ drop:
 }
 #endif /* PPP_INPROC_MULTITHREADED */
 
-void
-pppos_accm_out_config(pppos_pcb *pppos, u32_t accm)
+static void
+pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm)
 {
   int i;
-
-  if (!pppos_exist(pppos)) {
-    return;
-  }
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
+  LWIP_UNUSED_ARG(ppp);
 
   /* Load the ACCM bits for the 32 control codes. */
   for (i = 0; i < 32/8; i++) {
     pppos->out_accm[i] = (u_char)((accm >> (8 * i)) & 0xFF);
   }
 
-  PPPDEBUG(LOG_INFO, ("pppos_accm_out_config[%d]: in_accm=%X %X %X %X\n",
+  PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: in_accm=%X %X %X %X\n",
             pppos->ppp->num,
             pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
 }
 
-void
-pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
+static void
+pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
 {
   int i;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
   SYS_ARCH_DECL_PROTECT(lev);
-
-  if (!pppos_exist(pppos)) {
-    return;
-  }
+  LWIP_UNUSED_ARG(ppp);
 
   /* Load the ACCM bits for the 32 control codes. */
   SYS_ARCH_PROTECT(lev);
@@ -796,7 +804,7 @@ pppos_accm_in_config(pppos_pcb *pppos, u32_t accm)
   }
   SYS_ARCH_UNPROTECT(lev);
 
-  PPPDEBUG(LOG_INFO, ("pppos_accm_in_config[%d]: in_accm=%X %X %X %X\n",
+  PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\n",
             pppos->ppp->num,
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
@@ -811,16 +819,11 @@ pppos_get_fd(pppos_pcb *pppos)
 }
 
 #if VJ_SUPPORT
-void
-pppos_vjc_config(pppos_pcb *pppos, int vjcomp, int cidcomp, int maxcid)
+static void
+pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid)
 {
-  ppp_pcb *ppp;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
 
-  if (!pppos_exist(pppos)) {
-    return;
-  }
-
-  ppp = pppos->ppp;
   ppp->vj_enabled = vjcomp;
   pppos->vj_comp.compressSlot = cidcomp;
   pppos->vj_comp.maxSlotIndex = maxcid;
