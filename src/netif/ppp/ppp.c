@@ -345,28 +345,25 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 
   switch(cmd) {
     case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
-      if (arg) {
-        *(int *)arg = (int)(pcb->if_up);
-        return PPPERR_NONE;
+      if (!arg) {
+        goto fail;
       }
-      return PPPERR_PARAM;
-      break;
+      *(int *)arg = (int)(pcb->if_up);
+      return PPPERR_NONE;
 
     case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
-      if (arg) {
-        pcb->err_code = (u8_t)(*(int *)arg);
-        return PPPERR_NONE;
+      if (!arg) {
+        goto fail;
       }
-      return PPPERR_PARAM;
-      break;
+      pcb->err_code = (u8_t)(*(int *)arg);
+      return PPPERR_NONE;
 
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
-      if (arg) {
-        *(int *)arg = (int)(pcb->err_code);
-        return PPPERR_NONE;
+      if (!arg) {
+        goto fail;
       }
-      return PPPERR_PARAM;
-      break;
+      *(int *)arg = (int)(pcb->err_code);
+      return PPPERR_NONE;
 
     default:
       if (pcb->link_cb->ioctl) {
@@ -374,6 +371,7 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
       }
   }
 
+fail:
   return PPPERR_PARAM;
 }
 
