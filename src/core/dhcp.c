@@ -678,10 +678,6 @@ dhcp_start(struct netif *netif)
     return ERR_MEM;
   }
 
-  /* Remove the flag that says this netif is handled by DHCP,
-     it is set when we succeeded starting. */
-  netif->flags &= ~NETIF_FLAG_DHCP;
-
   /* no DHCP client attached yet? */
   if (dhcp == NULL) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_start(): starting new DHCP client\n"));
@@ -724,7 +720,6 @@ dhcp_start(struct netif *netif)
   if (!netif_is_link_up(netif)) {
     /* set state INIT and wait for dhcp_network_changed() to call dhcp_discover() */
     dhcp_set_state(dhcp, DHCP_INIT);
-    netif->flags |= NETIF_FLAG_DHCP;
     return ERR_OK;
   }
 #endif /* LWIP_DHCP_CHECK_LINK_UP */
@@ -736,8 +731,6 @@ dhcp_start(struct netif *netif)
     dhcp_stop(netif);
     return ERR_MEM;
   }
-  /* Set the flag that says this netif is handled by DHCP. */
-  netif->flags |= NETIF_FLAG_DHCP;
   return result;
 }
 
@@ -1268,8 +1261,6 @@ dhcp_stop(struct netif *netif)
   struct dhcp *dhcp;
   LWIP_ERROR("dhcp_stop: netif != NULL", (netif != NULL), return;);
   dhcp = netif->dhcp;
-  /* Remove the flag that says this netif is handled by DHCP. */
-  netif->flags &= ~NETIF_FLAG_DHCP;
 
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_stop()\n"));
   /* netif is DHCP configured? */

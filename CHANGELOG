@@ -7,6 +7,10 @@ HISTORY
   ++ New features:
 
   2015-02-19: Ivan Delamer
+  * netif.h, dhcp.c: Removed unused netif flag for DHCP. The preferred way to evaluate
+    if DHCP is active is through netif->dhcp field.
+
+  2015-02-19: Ivan Delamer
   * netif.h, slipif.c, ppp.c: Removed unused netif flag for point to point connections
 
   2015-02-18: Simon Goldschmidt

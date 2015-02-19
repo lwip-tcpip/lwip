@@ -77,9 +77,6 @@ extern "C" {
 /** If set, the netif has broadcast capability.
  * Set by the netif driver in its init function. */
 #define NETIF_FLAG_BROADCAST    0x02U
-/** If set, the interface is configured using DHCP.
- * Set by the DHCP code when starting or stopping DHCP. */
-#define NETIF_FLAG_DHCP         0x08U
 /** If set, the interface has an active link
  *  (set by the network interface driver).
  * Either set by the netif driver in its init function (if the link
