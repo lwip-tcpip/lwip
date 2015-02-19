@@ -303,19 +303,13 @@ struct ppp_addrs {
 /*
  * PPP interface control block.
  */
-typedef int (*link_command_cb_fn)(void *pcb, u8_t command);
-typedef int (*link_write_cb_fn)(void *pcb, struct pbuf *p);
-typedef err_t (*link_netif_output_cb_fn)(void *pcb, struct pbuf *p, u_short protocol);
-
 struct ppp_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
 #if PPP_DEBUG
   u8_t num;                      /* Interface number - only useful for debugging */
 #endif /* PPP_DEBUG */
   ppp_settings settings;
-  link_command_cb_fn link_command_cb;
-  link_write_cb_fn link_write_cb;
-  link_netif_output_cb_fn link_netif_output_cb;
+  const struct link_callbacks *link_cb;
   void *link_ctx_cb;
   void (*link_status_cb)(ppp_pcb *pcb, int err_code, void *ctx);  /* Status change callback */
 #if PPP_NOTIFY_PHASE

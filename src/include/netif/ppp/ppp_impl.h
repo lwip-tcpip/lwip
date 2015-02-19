@@ -94,16 +94,6 @@
 #define PPP_LINK_ENABLED_NUMBER (!!PPPOS_SUPPORT+!!PPPOE_SUPPORT+!!PPPOL2TP_SUPPORT)
 
 /*
- * Low-level links commands
- */
-/* Start a connection (i.e. initiate discovery phase) */
-#define PPP_LINK_COMMAND_CONNECT      0
-/* End a connection (i.e. initiate disconnect phase) */
-#define PPP_LINK_COMMAND_DISCONNECT   1
-/* Free link connection */
-#define PPP_LINK_COMMAND_FREE         2
-
-/*
  * Protocol field values.
  */
 #define PPP_IP		0x21	/* Internet Protocol */
@@ -151,6 +141,23 @@
 #if EAP_SUPPORT
 #define PPP_EAP		0xc227	/* Extensible Authentication Protocol */
 #endif /* EAP_SUPPORT */
+
+/*
+ * The following struct gives the addresses of procedures to call
+ * for a particular lower link level protocol.
+ */
+struct link_callbacks {
+  /* Start a connection (e.g. Initiate discovery phase) */
+  err_t (*connect) (ppp_pcb *pcb, void *ctx);
+  /* End a connection (i.e. initiate disconnect phase) */
+  void (*disconnect) (ppp_pcb *pcb, void *ctx);
+  /* Free lower protocol control block */
+  err_t (*free) (ppp_pcb *pcb, void *ctx);
+  /* Write a pbuf to a ppp link, only used from PPP functions to send PPP packets. */
+  err_t (*write)(ppp_pcb *pcb, void *ctx, struct pbuf *p);
+  /* Send a packet from lwIP core (IPv4 or IPv6) */
+  err_t (*netif_output)(ppp_pcb *pcb, void *ctx, struct pbuf *p, u_short protocol);
+};
 
 /*
  * What to do with network protocol (NP) packets.
@@ -380,8 +387,8 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
 /* Set a PPP PCB to its initial state */
 void ppp_clear(ppp_pcb *pcb);
 
-/* Set link callback function */
-void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output, void *ctx);
+/* Set link callback functions */
+void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);

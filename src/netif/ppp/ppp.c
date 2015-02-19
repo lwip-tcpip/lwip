@@ -258,7 +258,7 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
   PPPDEBUG(LOG_DEBUG, ("ppp_open() called, holdoff=%d\n", holdoff));
 
   if (holdoff == 0) {
-    return pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
+    return pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
   }
 
   new_phase(pcb, PPP_PHASE_HOLDOFF);
@@ -329,7 +329,7 @@ int ppp_free(ppp_pcb *pcb) {
 
   netif_remove(pcb->netif);
 
-  err = pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_FREE);
+  err = pcb->link_cb->free(pcb, pcb->link_ctx_cb);
 
   memp_free(MEMP_PPP_PCB, pcb);
   return err;
@@ -425,7 +425,7 @@ static void ppp_do_open(void *arg) {
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);
 
-  pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_CONNECT);
+  pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
 }
 
 /*
@@ -491,7 +491,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
     return ERR_RTE;
   }
 
-  return pcb->link_netif_output_cb(pcb->link_ctx_cb, pb, protocol);
+  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, protocol);
 }
 
 
@@ -614,10 +614,8 @@ void ppp_clear(ppp_pcb *pcb) {
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
-void ppp_link_set_callbacks(ppp_pcb *pcb, link_command_cb_fn command, link_write_cb_fn write, link_netif_output_cb_fn netif_output, void *ctx) {
-  pcb->link_command_cb = command;
-  pcb->link_write_cb = write;
-  pcb->link_netif_output_cb = netif_output;
+void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx) {
+  pcb->link_cb = callbacks;
   pcb->link_ctx_cb = ctx;
 }
 
@@ -809,7 +807,7 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PRINTPKT_SUPPORT
   ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */
-  return pcb->link_write_cb(pcb->link_ctx_cb, p);
+  return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
 }
 
 /* merge a pbuf chain into one pbuf */
@@ -840,7 +838,7 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 
 void ppp_link_terminated(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->num));
-  pcb->link_command_cb(pcb->link_ctx_cb, PPP_LINK_COMMAND_DISCONNECT);
+  pcb->link_cb->disconnect(pcb, pcb->link_ctx_cb);
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
 }
 

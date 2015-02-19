@@ -75,14 +75,13 @@
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
 /* callbacks called from PPP core */
-static int pppol2tp_link_command_callback(void *pcb, u8_t command);
-static int pppol2tp_link_write_callback(void *pcb, struct pbuf *p);
-static err_t pppol2tp_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol);
+static err_t pppol2tp_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppol2tp_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
+static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx);    /* Destroy a L2TP control block */
+static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect to a LNS. */
+static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp);    /* Destroy a L2TP control block */
-static err_t pppol2tp_connect(pppol2tp_pcb *l2tp);    /* Be a LAC, connect to a LNS. */
-static void pppol2tp_disconnect(pppol2tp_pcb *l2tp);  /* Disconnect */
 static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
              struct pbuf *p, u16_t len, u16_t tunnel_id, u16_t session_id, u16_t ns, u16_t nr);
@@ -96,6 +95,15 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
+
+/* Callbacks structure for PPP core */
+static const struct link_callbacks pppol2tp_callbacks = {
+  pppol2tp_connect,
+  pppol2tp_disconnect,
+  pppol2tp_destroy,
+  pppol2tp_link_write_callback,
+  pppol2tp_link_netif_output_callback
+};
 
 
 /* Create a new L2TP session. */
@@ -138,35 +146,13 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   l2tp->secret_len = secret_len;
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  ppp_link_set_callbacks(ppp, pppol2tp_link_command_callback, pppol2tp_link_write_callback, pppol2tp_link_netif_output_callback, l2tp);
+  ppp_link_set_callbacks(ppp, &pppol2tp_callbacks, l2tp);
   return ppp;
 }
 
 /* Called by PPP core */
-static int pppol2tp_link_command_callback(void *pcb, u8_t command) {
-  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
-
-  switch(command) {
-  case PPP_LINK_COMMAND_CONNECT:
-    return pppol2tp_connect(l2tp);
-
-  case PPP_LINK_COMMAND_DISCONNECT:
-    pppol2tp_disconnect(l2tp);
-    break;
-
-  case PPP_LINK_COMMAND_FREE:
-    return pppol2tp_destroy(l2tp);
-
-  default: ;
-  }
-
-  return PPPERR_NONE;
-}
-
-/* Called by PPP core */
-static int pppol2tp_link_write_callback(void *pcb, struct pbuf *p) {
-  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
-  ppp_pcb *ppp = l2tp->ppp;
+static err_t pppol2tp_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *ph; /* UDP + L2TP header */
 #if LWIP_SNMP
   u16_t tot_len;
@@ -202,9 +188,8 @@ static int pppol2tp_link_write_callback(void *pcb, struct pbuf *p) {
 }
 
 /* Called by PPP core */
-static err_t pppol2tp_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol) {
-  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)pcb;
-  ppp_pcb *ppp = l2tp->ppp;
+static err_t pppol2tp_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *pb;
   int i=0;
 #if LWIP_SNMP
@@ -248,7 +233,9 @@ static err_t pppol2tp_link_netif_output_callback(void *pcb, struct pbuf *p, u_sh
 }
 
 /* Destroy a L2TP control block */
-static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
+static err_t pppol2tp_destroy(ppp_pcb *ppp, void *ctx) {
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
+  LWIP_UNUSED_ARG(ppp);
 
   sys_untimeout(pppol2tp_timeout, l2tp);
   if (l2tp->udp != NULL) {
@@ -259,9 +246,9 @@ static err_t pppol2tp_destroy(pppol2tp_pcb *l2tp) {
 }
 
 /* Be a LAC, connect to a LNS. */
-static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
+static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   err_t err;
-  ppp_pcb *ppp = l2tp->ppp;
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   lcp_options *lcp_wo;
   lcp_options *lcp_ao;
   ipcp_options *ipcp_wo;
@@ -321,7 +308,8 @@ static err_t pppol2tp_connect(pppol2tp_pcb *l2tp) {
 }
 
 /* Disconnect */
-static void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
+static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
+  pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
 
   if (l2tp->phase < PPPOL2TP_STATE_DATA) {
     return;
@@ -331,7 +319,7 @@ static void pppol2tp_disconnect(pppol2tp_pcb *l2tp) {
   pppol2tp_send_stopccn(l2tp, l2tp->our_ns);
 
   pppol2tp_clear(l2tp);
-  ppp_link_end(l2tp->ppp); /* notify upper layers */
+  ppp_link_end(ppp); /* notify upper layers */
 }
 
 /* UDP Callback for incoming L2TP frames */

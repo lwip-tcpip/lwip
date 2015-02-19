@@ -82,14 +82,13 @@ static u8_t pppos_exist(pppos_pcb *pppos);
 #endif /* PPPOS_PCB_LIST */
 
 /* callbacks called from PPP core */
-static int pppos_link_command_callback(void *pcb, u8_t command);
-static int pppos_link_write_callback(void *pcb, struct pbuf *p);
-static err_t pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol);
+static err_t pppos_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppos_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol);
+static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
+static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
+static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
 
 /* Prototypes for procedures local to this file. */
-static void pppos_connect(pppos_pcb *pppos);
-static void pppos_disconnect(pppos_pcb *pppos);
-static err_t pppos_destroy(pppos_pcb *pppos);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -97,6 +96,15 @@ static void pppos_xmit(pppos_pcb *pppos, struct pbuf *nb);
 static void pppos_free_current_input_packet(pppos_pcb *pppos);
 static struct pbuf *pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm);
 static void pppos_drop(pppos_pcb *pppos);
+
+/* Callbacks structure for PPP core */
+static const struct link_callbacks pppos_callbacks = {
+  pppos_connect,
+  pppos_disconnect,
+  pppos_destroy,
+  pppos_link_write_callback,
+  pppos_link_netif_output_callback
+};
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */
@@ -200,40 +208,15 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
   pppos->ppp = ppp;
   pppos->fd = fd;
-  ppp_link_set_callbacks(ppp, pppos_link_command_callback, pppos_link_write_callback, pppos_link_netif_output_callback, pppos);
+  ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
 
 /* Called by PPP core */
-static int
-pppos_link_command_callback(void *pcb, u8_t command)
+static err_t
+pppos_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 {
-  pppos_pcb *pppos = (pppos_pcb *)pcb;
-
-  switch(command) {
-  case PPP_LINK_COMMAND_CONNECT:
-    pppos_connect(pppos);
-    break;
-
-  case PPP_LINK_COMMAND_DISCONNECT:
-    pppos_disconnect(pppos);
-    break;
-
-  case PPP_LINK_COMMAND_FREE:
-    return pppos_destroy(pppos);
-
-  default: ;
-  }
-
-  return PPPERR_NONE;
-}
-
-/* Called by PPP core */
-static int
-pppos_link_write_callback(void *pcb, struct pbuf *p)
-{
-  pppos_pcb *pppos = (pppos_pcb *)pcb;
-  ppp_pcb *ppp = pppos->ppp;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_char *s = (u_char*)p->payload;
   int n = p->len;
   u_char c;
@@ -300,10 +283,9 @@ pppos_link_write_callback(void *pcb, struct pbuf *p)
 
 /* Called by PPP core */
 static err_t
-pppos_link_netif_output_callback(void *pcb, struct pbuf *pb, u_short protocol)
+pppos_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
 {
-  pppos_pcb *pppos = (pppos_pcb *)pcb;
-  ppp_pcb *ppp = pppos->ppp;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_int fcs_out = PPP_INITFCS;
   struct pbuf *head = NULL, *tail = NULL, *p;
   u_char c;
@@ -427,10 +409,10 @@ pppos_exist(pppos_pcb *pppos)
 }
 #endif /* PPPOS_PCB_LIST */
 
-static void
-pppos_connect(pppos_pcb *pppos)
+static err_t
+pppos_connect(ppp_pcb *ppp, void *ctx)
 {
-  ppp_pcb *ppp = pppos->ppp;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
 #if !VJ_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;
@@ -468,12 +450,13 @@ pppos_connect(pppos_pcb *pppos)
    */
   PPPDEBUG(LOG_INFO, ("pppos_connect: unit %d: connecting\n", ppp->num));
   ppp_start(ppp); /* notify upper layers */
+  return ERR_OK;
 }
 
 static void
-pppos_disconnect(pppos_pcb *pppos)
+pppos_disconnect(ppp_pcb *ppp, void *ctx)
 {
-  ppp_pcb *ppp = pppos->ppp;
+  LWIP_UNUSED_ARG(ctx);
 
   /* We cannot call ppp_free_current_input_packet() here because
    * rx thread might still call pppos_input()
@@ -482,11 +465,15 @@ pppos_disconnect(pppos_pcb *pppos)
 }
 
 static err_t
-pppos_destroy(pppos_pcb *pppos)
+pppos_destroy(ppp_pcb *ppp, void *ctx)
 {
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
 #if PPPOS_PCB_LIST
   pppos_pcb **copp, *freep;
+#endif /* PPPOS_PCB_LIST */
+  LWIP_UNUSED_ARG(ppp);
 
+#if PPPOS_PCB_LIST
   /* remove interface from list */
   for (copp = &pppos_pcb_list; (freep = *copp); copp = &freep->next) {
     if (freep == pppos) {

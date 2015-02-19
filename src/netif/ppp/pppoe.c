@@ -117,14 +117,13 @@ static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
 /* callbacks called from PPP core */
-static int pppoe_link_command_callback(void *pcb, u8_t command);
-static int pppoe_link_write_callback(void *pcb, struct pbuf *p);
-static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol);
+static err_t pppoe_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p);
+static err_t pppoe_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol);
+static err_t pppoe_connect(ppp_pcb *ppp, void *ctx);
+static void pppoe_disconnect(ppp_pcb *ppp, void *ctx);
+static err_t pppoe_destroy(ppp_pcb *ppp, void *ctx);
 
 /* management routines */
-static err_t pppoe_destroy(struct pppoe_softc *sc);
-static int pppoe_connect(struct pppoe_softc *sc);
-static void pppoe_disconnect(struct pppoe_softc *sc);
 static void pppoe_abort_connect(struct pppoe_softc *);
 static void pppoe_clear_softc(struct pppoe_softc *, const char *);
 
@@ -147,6 +146,15 @@ static struct pppoe_softc* pppoe_find_softc_by_hunique(u8_t *token, size_t len, 
 
 /** linked list of created pppoe interfaces */
 static struct pppoe_softc *pppoe_softc_list;
+
+/* Callbacks structure for PPP core */
+static const struct link_callbacks pppoe_callbacks = {
+  pppoe_connect,
+  pppoe_disconnect,
+  pppoe_destroy,
+  pppoe_link_write_callback,
+  pppoe_link_netif_output_callback
+};
 
 /*
  * Create a new PPP Over Ethernet (PPPoE) connection.
@@ -185,35 +193,13 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   sc->next = pppoe_softc_list;
   pppoe_softc_list = sc;
 
-  ppp_link_set_callbacks(ppp, pppoe_link_command_callback, pppoe_link_write_callback, pppoe_link_netif_output_callback, sc);
+  ppp_link_set_callbacks(ppp, &pppoe_callbacks, sc);
   return ppp;
 }
 
 /* Called by PPP core */
-static int pppoe_link_command_callback(void *pcb, u8_t command) {
-  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
-
-  switch(command) {
-  case PPP_LINK_COMMAND_CONNECT:
-    return pppoe_connect(sc);
-
-  case PPP_LINK_COMMAND_DISCONNECT:
-    pppoe_disconnect(sc);
-    break;
-
-  case PPP_LINK_COMMAND_FREE:
-    return pppoe_destroy(sc);
-
-  default: ;
-  }
-
-  return PPPERR_NONE;
-}
-
-/* Called by PPP core */
-static int pppoe_link_write_callback(void *pcb, struct pbuf *p) {
-  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
-  ppp_pcb *ppp = sc->pcb;
+static err_t pppoe_link_write_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
+  struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *ph; /* Ethernet + PPPoE header */
 #if LWIP_SNMP
   u16_t tot_len;
@@ -252,9 +238,8 @@ static int pppoe_link_write_callback(void *pcb, struct pbuf *p) {
 }
 
 /* Called by PPP core */
-static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short protocol) {
-  struct pppoe_softc *sc = (struct pppoe_softc *)pcb;
-  ppp_pcb *ppp = sc->pcb;
+static err_t pppoe_link_netif_output_callback(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
+  struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *pb;
   int i=0;
 #if LWIP_SNMP
@@ -298,9 +283,11 @@ static err_t pppoe_link_netif_output_callback(void *pcb, struct pbuf *p, u_short
 }
 
 static err_t
-pppoe_destroy(struct pppoe_softc *sc)
+pppoe_destroy(ppp_pcb *ppp, void *ctx)
 {
+  struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pppoe_softc **copp, *freep;
+  LWIP_UNUSED_ARG(ppp);
 
   sys_untimeout(pppoe_timeout, sc);
 
@@ -906,11 +893,11 @@ pppoe_timeout(void *arg)
 }
 
 /* Start a connection (i.e. initiate discovery phase) */
-static int
-pppoe_connect(struct pppoe_softc *sc)
+static err_t
+pppoe_connect(ppp_pcb *ppp, void *ctx)
 {
   int err;
-  ppp_pcb *ppp = sc->pcb;
+  struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   lcp_options *lcp_wo;
   lcp_options *lcp_ao;
   ipcp_options *ipcp_wo;
@@ -965,8 +952,10 @@ pppoe_connect(struct pppoe_softc *sc)
 
 /* disconnect */
 static void
-pppoe_disconnect(struct pppoe_softc *sc)
+pppoe_disconnect(ppp_pcb *ppp, void *ctx)
 {
+  struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
+
   if (sc->sc_state < PPPOE_STATE_SESSION) {
     return;
   }
@@ -989,7 +978,7 @@ pppoe_disconnect(struct pppoe_softc *sc)
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
 
-  ppp_link_end(sc->pcb); /* notify upper layers */
+  ppp_link_end(ppp); /* notify upper layers */
   return;
 }
 
