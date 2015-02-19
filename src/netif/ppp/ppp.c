@@ -368,18 +368,10 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
       return PPPERR_PARAM;
       break;
 
-#if PPPOS_SUPPORT
-    case PPPCTLG_FD:            /* Get the fd associated with the ppp */
-      if (arg) {
-        *(sio_fd_t *)arg = pppos_get_fd((pppos_pcb*)pcb->link_ctx_cb);
-        return PPPERR_NONE;
-      }
-      return PPPERR_PARAM;
-      break;
-#endif /* PPPOS_SUPPORT */
-
     default:
-      break;
+      if (pcb->link_cb->ioctl) {
+        return pcb->link_cb->ioctl(pcb, pcb->link_ctx_cb, cmd, arg);
+      }
   }
 
   return PPPERR_PARAM;

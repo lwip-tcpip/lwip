@@ -89,6 +89,7 @@ static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
 static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm);
 static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
+static int pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 #if VJ_SUPPORT
 static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
 #endif /* VJ_SUPPORT */
@@ -112,10 +113,11 @@ static const struct link_callbacks pppos_callbacks = {
   pppos_send_config,
   pppos_recv_config,
 #if VJ_SUPPORT
-  pppos_vjc_config
+  pppos_vjc_config,
 #else /* VJ_SUPPORT */
-  NULL
+  NULL,
 #endif /* VJ_SUPPORT */
+  pppos_ioctl
 };
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
@@ -809,13 +811,25 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
 
-sio_fd_t
-pppos_get_fd(pppos_pcb *pppos)
+static int
+pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg)
 {
-  if (!pppos_exist(pppos)) {
-    return 0;
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
+  LWIP_UNUSED_ARG(pcb);
+
+  switch(cmd) {
+    case PPPCTLG_FD:            /* Get the fd associated with the ppp */
+      if (!arg) {
+        goto fail;
+      }
+      *(sio_fd_t *)arg = pppos->fd;
+      return PPPERR_NONE;
+
+    default: ;
   }
-  return pppos->fd;
+
+fail:
+  return PPPERR_PARAM;
 }
 
 #if VJ_SUPPORT

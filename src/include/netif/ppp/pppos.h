@@ -102,7 +102,6 @@ void pppos_input(ppp_pcb *ppp, u_char* data, int len);
  *
  * You may use them if you REALLY know what you are doing.
  */
-sio_fd_t pppos_get_fd(pppos_pcb *pppos);
 int pppos_vjc_comp(pppos_pcb *pppos, struct pbuf *pb);
 int pppos_vjc_uncomp(pppos_pcb *pppos, struct pbuf *pb);
 

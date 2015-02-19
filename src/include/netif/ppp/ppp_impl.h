@@ -163,6 +163,8 @@ struct link_callbacks {
   void (*recv_config)(ppp_pcb *pcb, void *ctx, u32_t accm);
   /* configure TCP header compression */
   void (*vj_config)(ppp_pcb *pcb, void *ctx, int vjcomp, int cidcomp, int maxcid);
+  /* Get and set parameters for the given connection. */
+  int (*ioctl)(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 };
 
 /*
