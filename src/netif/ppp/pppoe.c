@@ -206,6 +206,7 @@ ppp_pcb *pppoe_create(struct netif *pppif,
 static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *ph; /* Ethernet + PPPoE header */
+  err_t ret;
 #if LWIP_SNMP
   u16_t tot_len;
 #endif /* LWIP_SNMP */
@@ -219,7 +220,7 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(ppp->netif);
     pbuf_free(p);
-    return PPPERR_ALLOC;
+    return ERR_MEM;
   }
 
   pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
@@ -230,16 +231,17 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
 
   ppp->last_xmit = sys_jiffies();
 
-  if(pppoe_xmit(sc, ph) != ERR_OK) {
+  ret = pppoe_xmit(sc, ph);
+  if (ret != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(ppp->netif);
-    return PPPERR_DEVICE;
+    return ret;
   }
 
   snmp_add_ifoutoctets(ppp->netif, (u16_t)tot_len);
   snmp_inc_ifoutucastpkts(ppp->netif);
   LINK_STATS_INC(link.xmit);
-  return PPPERR_NONE;
+  return ERR_OK;
 }
 
 /* Called by PPP core */
