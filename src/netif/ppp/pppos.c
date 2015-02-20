@@ -921,9 +921,6 @@ pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
 static void
 pppos_drop(pppos_pcb *pppos)
 {
-#if LWIP_SNMP
-  ppp_pcb *ppp = pppos->ppp;
-#endif /* LWIP_SNMP || VJ_SUPPORT */
   if (pppos->in_head != NULL) {
 #if 0
     PPPDEBUG(LOG_INFO, ("pppos_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
@@ -936,6 +933,6 @@ pppos_drop(pppos_pcb *pppos)
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(ppp->netif);
+  snmp_inc_ifindiscards(pppos->ppp->netif);
 }
 #endif /* PPP_SUPPORT && PPPOS_SUPPORT */
