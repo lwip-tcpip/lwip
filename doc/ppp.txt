@@ -72,9 +72,9 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
   LWIP_UNUSED_ARG(ctx);
 
   switch(err_code) {
-    case PPPERR_NONE: {             /* No error. */
+    case PPPERR_NONE: {
       struct ppp_addrs *ppp_addrs = ppp_addrs(pcb);
-      printf("status_cb: PPPERR_NONE\n");
+      printf("status_cb: Connected\n");
       printf("   our_ipaddr  = %s\n", ip_ntoa(&ppp_addrs->our_ipaddr));
       printf("   his_ipaddr  = %s\n", ip_ntoa(&ppp_addrs->his_ipaddr));
       printf("   netmask     = %s\n", ip_ntoa(&ppp_addrs->netmask));
@@ -135,7 +135,7 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
       break;
     }
     default: {
-      printf("status_cb: unknown err code %d\n", err_code);
+      printf("status_cb: Unknown error code %d\n", err_code);
       break;
     }
   }
@@ -167,7 +167,7 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
  * Creating a new PPPoS session
  * ============================
  *
- * In lwIP, PPPoS is not PPPoSONET, PPPoS is PPPoSerial in lwIP.
+ * In lwIP, PPPoS is not PPPoSONET, in lwIP PPPoS is PPPoSerial.
  */
 
 #include "netif/ppp/pppos.h"
