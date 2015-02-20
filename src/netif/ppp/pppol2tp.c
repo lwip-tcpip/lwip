@@ -159,6 +159,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
 static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   struct pbuf *ph; /* UDP + L2TP header */
+  err_t ret;
 #if LWIP_SNMP
   u16_t tot_len;
 #endif /* LWIP_SNMP */
@@ -169,7 +170,7 @@ static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(ppp->netif);
     pbuf_free(p);
-    return PPPERR_ALLOC;
+    return ERR_MEM;
   }
 
   pbuf_header(ph, -(s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN); /* hide L2TP header */
@@ -180,16 +181,17 @@ static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
 
   ppp->last_xmit = sys_jiffies();
 
-  if(pppol2tp_xmit(l2tp, ph) != ERR_OK) {
+  ret = pppol2tp_xmit(l2tp, ph);
+  if (ret != ERR_OK) {
     LINK_STATS_INC(link.err);
     snmp_inc_ifoutdiscards(ppp->netif);
-    return PPPERR_DEVICE;
+    return ret;
   }
 
   snmp_add_ifoutoctets(ppp->netif, (u16_t)tot_len);
   snmp_inc_ifoutucastpkts(ppp->netif);
   LINK_STATS_INC(link.xmit);
-  return PPPERR_NONE;
+  return ERR_OK;
 }
 
 /* Called by PPP core */
