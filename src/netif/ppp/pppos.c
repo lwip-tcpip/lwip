@@ -212,7 +212,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(ppp->netif);
     pbuf_free(p);
-    return PPPERR_ALLOC;
+    return ERR_MEM;
   }
 
   tail = head;
@@ -254,14 +254,14 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     LINK_STATS_INC(link.proterr);
     snmp_inc_ifoutdiscards(ppp->netif);
     pbuf_free(p);
-    return PPPERR_ALLOC;
+    return ERR_MEM;
   }
 
   PPPDEBUG(LOG_INFO, ("ppp_write[%d]: len=%d\n", ppp->num, head->len));
                    /* "ppp_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
   pppos_xmit(pppos, head);
   pbuf_free(p);
-  return PPPERR_NONE;
+  return ERR_OK;
 }
 
 /* Called by PPP core */
