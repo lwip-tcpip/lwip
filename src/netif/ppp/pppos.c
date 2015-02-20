@@ -61,7 +61,7 @@ static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
 static int pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 #if VJ_SUPPORT
 static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
-err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol);
+static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol);
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
@@ -787,7 +787,9 @@ pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid)
             ppp->num, vjcomp, cidcomp, maxcid));
 }
 
-err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol) {
+static err_t
+pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
+{
   int ret;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 
