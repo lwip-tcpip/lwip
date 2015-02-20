@@ -1,0 +1,355 @@
+PPP interface for lwIP
+
+Author: Sylvain Rochet
+
+Table of Contents:
+
+1 - Supported PPP protocols and features
+2 - Raw API PPP example for all protocols
+3 - PPPoS input path (raw API and thread safe API)
+4 - Thread safe PPP API (PPPAPI)
+5 - Upgrading from lwIP <= 1.4.x to lwIP >= 1.5.x
+
+
+
+1 Supported PPP protocols and features
+======================================
+
+Supported Low level protocols:
+* PPP over serial using HDLC-like framing, such as wired dialup modems
+  or mobile telecommunications GPRS/EDGE/UMTS/HSPA+/LTE modems
+* PPP over Ethernet, such as xDSL modems
+* PPP over L2TP (Layer 2 Tunneling Protocol) LAC (L2TP Access Concentrator),
+  IP tunnel over UDP, such as VPN access
+
+Supported auth protocols:
+* PAP, Password Authentication Protocol
+* CHAP, Challenge-Handshake Authentication Protocol, also known as CHAP-MD5
+* MSCHAPv1, Microsoft version of CHAP, version 1
+* MSCHAPv2, Microsoft version of CHAP, version 2
+* EAP, Extensible Authentication Protocol
+
+Supported address protocols:
+* IPCP, IP Control Protocol, IPv4 addresses negotiation
+* IP6CP, IPv6 Control Protocol, IPv6 link-local addresses negotiation
+
+Supported compression or miscellaneous protocols, for serial links only:
+* PFC, Protocol Field Compression
+* ACFC, Address-and-Control-Field-Compression
+* ACCM, Asynchronous-Control-Character-Map
+* VJ, Van Jacobson TCP/IP Header Compression
+
+
+
+2 Raw API PPP example for all protocols
+=======================================
+
+As usual, raw API for lwIP means the lightweight API which *MUST* only be used
+for NO_SYS=1 systems or called inside lwIP core thread for NO_SYS=0 systems.
+
+/*
+ * Globals
+ * =======
+ */
+
+/* The PPP control block */
+ppp_pcb *ppp;
+
+/* The PPP IP interface */
+struct netif ppp_netif;
+
+
+/*
+ * PPP status callback
+ * ===================
+ *
+ * PPP status callback is called on PPP status change (up, down, …) from lwIP
+ * core thread
+ */
+
+/* PPP status callback example */
+static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
+  LWIP_UNUSED_ARG(ctx);
+
+  switch(err_code) {
+    case PPPERR_NONE: {             /* No error. */
+      struct ppp_addrs *ppp_addrs = ppp_addrs(pcb);
+      printf("status_cb: PPPERR_NONE\n");
+      printf("   our_ipaddr  = %s\n", ip_ntoa(&ppp_addrs->our_ipaddr));
+      printf("   his_ipaddr  = %s\n", ip_ntoa(&ppp_addrs->his_ipaddr));
+      printf("   netmask     = %s\n", ip_ntoa(&ppp_addrs->netmask));
+      printf("   dns1        = %s\n", ip_ntoa(&ppp_addrs->dns1));
+      printf("   dns2        = %s\n", ip_ntoa(&ppp_addrs->dns2));
+#if PPP_IPV6_SUPPORT
+      printf("   our6_ipaddr = %s\n", ip6addr_ntoa(&ppp_addrs->our6_ipaddr));
+      printf("   his6_ipaddr = %s\n", ip6addr_ntoa(&ppp_addrs->his6_ipaddr));
+#endif /* PPP_IPV6_SUPPORT */
+      break;
+    }
+    case PPPERR_PARAM: {
+      printf("status_cb: Invalid parameter\n");
+      break;
+    }
+    case PPPERR_OPEN: {
+      printf("status_cb: Unable to open PPP session\n");
+      break;
+    }
+    case PPPERR_DEVICE: {
+      printf("status_cb: Invalid I/O device for PPP\n");
+      break;
+    }
+    case PPPERR_ALLOC: {
+      printf("status_cb: Unable to allocate resources\n");
+      break;
+    }
+    case PPPERR_USER: {
+      printf("status_cb: User interrupt\n");
+      break;
+    }
+    case PPPERR_CONNECT: {
+      printf("status_cb: Connection lost\n");
+      break;
+    }
+    case PPPERR_AUTHFAIL: {
+      printf("status_cb: Failed authentication challenge\n");
+      break;
+    }
+    case PPPERR_PROTOCOL: {
+      printf("status_cb: Failed to meet protocol\n");
+      break;
+    }
+    case PPPERR_PEERDEAD: {
+      printf("status_cb: Connection timeout\n");
+      break;
+    }
+    case PPPERR_IDLETIMEOUT: {
+      printf("status_cb: Idle Timeout\n");
+      break;
+    }
+    case PPPERR_CONNECTTIME: {
+      printf("status_cb: Max connect time reached\n");
+      break;
+    }
+    case PPPERR_LOOPBACK: {
+      printf("status_cb: Loopback detected\n");
+      break;
+    }
+    default: {
+      printf("status_cb: unknown err code %d\n", err_code);
+      break;
+    }
+  }
+
+/*
+ * This should be in the switch case, this is put outside of the switch
+ * case for example readability.
+ */
+
+  if (err_code == PPPERR_NONE) {
+    return;
+  }
+
+  /* ppp_close() was previously called, don't reconnect */
+  if (err_code == PPPERR_USER) {
+    /* ppp_free(); -- can be called here */
+    return;
+  }
+
+  /*
+   * Try to reconnect in 30 seconds, if you need a modem chatscript you have
+   * to do a much better signaling here ;-)
+   */
+  ppp_open(pcb, 30);
+}
+
+
+/*
+ * Creating a new PPPoS session
+ * ============================
+ *
+ * In lwIP, PPPoS is not PPPoSONET, PPPoS is PPPoSerial in lwIP.
+ */
+
+#include "netif/ppp/pppos.h"
+
+/*
+ * Create a new PPPoS interface
+ *
+ * ppp_netif, netif to use for this PPP link, i.e. PPP IP interface
+ * ppp_sio, handler to your SIO port (see include/lwip/sio.h)
+ * status_cb, PPP status callback, called on PPP status change (up, down, …)
+ * ctx_cb, optional user-provided callback context pointer
+ */
+ppp = pppos_create(&ppp_netif,
+       ppp_sio,
+       status_cb, ctx_cb);
+
+
+/*
+ * Creating a new PPPoE session
+ * ============================
+ */
+
+#include "netif/ppp/pppoe.h"
+
+/*
+ * Create a new PPPoE interface
+ *
+ * ppp_netif, netif to use for this PPP link, i.e. PPP IP interface
+ * ethif, already existing and setup Ethernet interface to use
+ * service_name, PPPoE service name discriminator (not supported yet)
+ * concentrator_name, PPPoE concentrator name discriminator (not supported yet)
+ * status_cb, PPP status callback, called on PPP status change (up, down, …)
+ * ctx_cb, optional user-provided callback context pointer
+ */
+ppp = pppoe_create(&ppp_netif,
+       &ethif,
+       service_name, concentrator_name,
+       status_cb, ctx_cb);
+
+
+/*
+ * Creating a new PPPoL2TP session
+ * ===============================
+ */
+
+#include "netif/ppp/pppol2tp.h"
+
+/*
+ * Create a new PPPoL2TP interface
+ *
+ * ppp_netif, netif to use for this PPP link, i.e. PPP IP interface
+ * netif, optional already existing and setup output netif, necessary if you
+ *        want to set this interface as default route to settle the chicken
+ *        and egg problem with VPN links
+ * ipaddr, IP to connect to
+ * port, UDP port to connect to (usually 1701)
+ * secret, L2TP secret to use
+ * secret_len, size in bytes of the L2TP secret
+ * status_cb, PPP status callback, called on PPP status change (up, down, …)
+ * ctx_cb, optional user-provided callback context pointer
+ */
+ppp = pppol2tp_create(&ppp_netif,
+       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+       u8_t *secret, u8_t secret_len,
+       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
+
+
+/*
+ * PPP link configuration
+ * ======================
+ */
+
+/* Auth configuration, this is pretty self-explanatory */
+ppp_set_auth(ppp, PPPAUTHTYPE_ANY, "login", "password");
+
+/* Set this interface as default route */
+ppp_set_default(ppp);
+
+
+/*
+ * Initiate PPP connection
+ * =======================
+ */
+
+/*
+ * Initiate PPP negotiation, without waiting (holdoff=0), can only be called
+ * if PPP session is in the dead state (i.e. disconnected).
+ */
+ppp_open(ppp, 0);
+
+
+/*
+ * Closing PPP connection
+ * ======================
+ */
+
+/* You can call this function anytime */
+ppp_close(ppp);
+/*
+ * Then you must wait your status_cb() to be called, it may takes from a few
+ * seconds to several tens of seconds depending on the current PPP state.
+ */
+
+/*
+ * Freeing a PPP connection
+ * ========================
+ */
+
+/*
+ * Free the PPP control block, can only be called if PPP session is in the
+ * dead state (i.e. disconnected). You need to call ppp_close() before.
+ */
+ppp_free(ppp);
+
+
+
+3 PPPoS input path (raw API and thread safe API)
+================================================
+
+PPPoS require a serial I/O SIO port (see include/lwip/sio.h). Received data
+on serial port should be sent to lwIP using the pppos_input() function.
+
+This function is not thread-safe by default, setting PPP_INPROC_MULTITHREADED
+to a true value in your lwipopts.h file makes pppos_input() thread safe.
+
+/*
+ * Fonction to call for received data
+ *
+ * ppp, PPP control block
+ * buffer, input buffer
+ * buffer_len, buffer length in bytes
+ */
+void pppos_input(ppp, buffer, buffer_len);
+
+
+
+4 Thread safe PPP API (PPPAPI)
+==============================
+
+There is a thread safe API for all corresponding ppp_* functions, you have to
+enable LWIP_PPP_API in your lwipopts.h file, then see include/lwip/pppapi.h,
+this is actually pretty obvious.
+
+
+
+5 Upgrading from lwIP <= 1.4.x to lwIP >= 1.5.x
+===============================================
+
+PPP API was fully reworked between 1.4.x and 1.5.x releases. However porting
+from previous lwIP version is pretty easy:
+
+* Previous PPP API used an integer to identify PPP sessions, we are now
+  using ppp_pcb* control block, therefore all functions changed from "int ppp"
+  to "ppp_pcb *ppp"
+
+* struct netif was moved outside the PPP structure, you have to provide a netif
+  for PPP interface in pppoX_create() functions
+
+* PPP session are not started automatically after you created them anymore,
+  you have to call ppp_open(), this way you can configure the session before
+  starting it.
+
+* Previous PPP API used CamelCase, we are now using snake_case.
+
+* Previous PPP API mixed PPPoS and PPPoE calls, this isn't the case anymore,
+  PPPoS functions are now prefixed pppos_ and PPPoE functions are now prefixed
+  pppoe_, common functions are now prefixed ppp_.
+
+* New PPPERR_ error codes added, check you have all of them in your status
+  callback function
+
+* Only the following include files should now be used in user application:
+  #include "lwip/pppapi.h"
+  #include "netif/ppp/pppos.h"
+  #include "netif/ppp/pppoe.h"
+  #include "netif/ppp/pppol2tp.h"
+
+  Functions from ppp.h can be used, but you don't need to include this header
+  file as it is already included by above header files.
+
+* PPP_INPROC_OWNTHREAD was broken by design and was removed, you have to create
+  your own rx thread
+
+* If you used tcpip_callback_with_block() on ppp_ functions you may wish to use
+  the PPPAPI API instead.
