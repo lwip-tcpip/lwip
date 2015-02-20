@@ -44,7 +44,7 @@ struct pppapi_msg_msg {
 #if !LWIP_TCPIP_CORE_LOCKING
   sys_sem_t sem;
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
-  int err;
+  err_t err;
   ppp_pcb *ppp;
   union {
     struct {
@@ -133,10 +133,10 @@ ppp_pcb *pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_add
                             u8_t *secret, u8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
-int pppapi_open(ppp_pcb *pcb, u16_t holdoff);
-int pppapi_close(ppp_pcb *pcb);
+err_t pppapi_open(ppp_pcb *pcb, u16_t holdoff);
+err_t pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
-int pppapi_free(ppp_pcb *pcb);
+err_t pppapi_free(ppp_pcb *pcb);
 err_t pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 #if LWIP_NETIF_STATUS_CALLBACK
 void pppapi_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);

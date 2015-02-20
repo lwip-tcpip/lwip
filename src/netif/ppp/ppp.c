@@ -250,9 +250,9 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * Holdoff is the time to wait (in seconds) before initiating
  * the connection.
  */
-int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
+err_t ppp_open(ppp_pcb *pcb, u16_t holdoff) {
   if (pcb->phase != PPP_PHASE_DEAD) {
-    return PPPERR_PARAM;
+    return ERR_ALREADY;
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_open() called, holdoff=%d\n", holdoff));
@@ -263,7 +263,7 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
 
   new_phase(pcb, PPP_PHASE_HOLDOFF);
   sys_timeout((u32_t)(holdoff*1000), ppp_do_open, pcb);
-  return PPPERR_NONE;
+  return ERR_OK;
 }
 
 /*
@@ -271,7 +271,7 @@ int ppp_open(ppp_pcb *pcb, u16_t holdoff) {
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure.
  */
-int
+err_t
 ppp_close(ppp_pcb *pcb)
 {
   pcb->err_code = PPPERR_USER;
@@ -279,14 +279,14 @@ ppp_close(ppp_pcb *pcb)
   /* dead phase, nothing to do, call the status callback to be consistent */
   if (pcb->phase == PPP_PHASE_DEAD) {
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-    return PPPERR_NONE;
+    return ERR_OK;
   }
 
   /* holdoff phase, cancel the reconnection and call the status callback */
   if (pcb->phase == PPP_PHASE_HOLDOFF) {
     sys_untimeout(ppp_do_open, pcb);
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-    return PPPERR_NONE;
+    return ERR_OK;
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
@@ -296,7 +296,7 @@ ppp_close(ppp_pcb *pcb)
   /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
   lcp_close(pcb, "User request");
 
-  return PPPERR_NONE;
+  return ERR_OK;
 }
 
 /* This function is called when carrier is lost on the PPP channel. */
@@ -319,10 +319,10 @@ ppp_sighup(ppp_pcb *pcb)
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_free(ppp_pcb *pcb) {
+err_t ppp_free(ppp_pcb *pcb) {
   int err;
   if (pcb->phase != PPP_PHASE_DEAD) {
-    return PPPERR_PARAM;
+    return ERR_CONN;
   }
 
   PPPDEBUG(LOG_DEBUG, ("ppp_free: unit %d\n", pcb->num));

@@ -249,7 +249,7 @@ pppapi_do_ppp_open(struct pppapi_msg_msg *msg)
  * Call ppp_open() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int
+err_t
 pppapi_open(ppp_pcb *pcb, u16_t holdoff)
 {
   struct pppapi_msg msg;
@@ -275,7 +275,7 @@ pppapi_do_ppp_close(struct pppapi_msg_msg *msg)
  * Call ppp_close() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int
+err_t
 pppapi_close(ppp_pcb *pcb)
 {
   struct pppapi_msg msg;
@@ -324,7 +324,7 @@ pppapi_do_ppp_free(struct pppapi_msg_msg *msg)
  * Call ppp_free() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int
+err_t
 pppapi_free(ppp_pcb *pcb)
 {
   struct pppapi_msg msg;

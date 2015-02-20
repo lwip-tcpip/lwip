@@ -464,14 +464,14 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * Holdoff is the time to wait (in seconds) before initiating
  * the connection.
  */
-int ppp_open(ppp_pcb *pcb, u16_t holdoff);
+err_t ppp_open(ppp_pcb *pcb, u16_t holdoff);
 
 /*
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure.
  */
-int ppp_close(ppp_pcb *pcb);
+err_t ppp_close(ppp_pcb *pcb);
 
 /*
  * Indicate to the PPP stack that the line has disconnected.
@@ -488,7 +488,7 @@ void ppp_sighup(ppp_pcb *pcb);
  *
  * Return 0 on success, an error code on failure.
  */
-int ppp_free(ppp_pcb *pcb);
+err_t ppp_free(ppp_pcb *pcb);
 
 /*
  * Get and set parameters for the given connection.
