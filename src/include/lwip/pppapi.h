@@ -137,7 +137,7 @@ int pppapi_open(ppp_pcb *pcb, u16_t holdoff);
 int pppapi_close(ppp_pcb *pcb);
 void pppapi_sighup(ppp_pcb *pcb);
 int pppapi_free(ppp_pcb *pcb);
-int pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
+err_t pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 #if LWIP_NETIF_STATUS_CALLBACK
 void pppapi_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
 #endif /* LWIP_NETIF_STATUS_CALLBACK */

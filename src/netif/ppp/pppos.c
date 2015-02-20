@@ -58,7 +58,7 @@ static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
 static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm);
 static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
-static int pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
+static err_t pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 #if VJ_SUPPORT
 static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
 static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol);
@@ -753,7 +753,7 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
 }
 
-static int
+static err_t
 pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
@@ -765,13 +765,13 @@ pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg)
         goto fail;
       }
       *(sio_fd_t *)arg = pppos->fd;
-      return PPPERR_NONE;
+      return ERR_OK;
 
     default: ;
   }
 
 fail:
-  return PPPERR_PARAM;
+  return ERR_VAL;
 }
 
 #if VJ_SUPPORT

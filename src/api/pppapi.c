@@ -349,7 +349,7 @@ pppapi_do_ppp_ioctl(struct pppapi_msg_msg *msg)
  * Call ppp_ioctl() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
-int
+err_t
 pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 {
   struct pppapi_msg msg;

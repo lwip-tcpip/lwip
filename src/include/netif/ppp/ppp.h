@@ -494,7 +494,7 @@ int ppp_free(ppp_pcb *pcb);
  * Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. 
  */
-int ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
+err_t ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (ppp->netif)

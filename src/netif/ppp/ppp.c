@@ -337,11 +337,12 @@ int ppp_free(ppp_pcb *pcb) {
 
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
-int
+err_t
 ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
 {
-  if(NULL == pcb)
-    return PPPERR_PARAM;
+  if (pcb == NULL) {
+    return ERR_VAL;
+  }
 
   switch(cmd) {
     case PPPCTLG_UPSTATUS:      /* Get the PPP up status. */
@@ -349,21 +350,21 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
         goto fail;
       }
       *(int *)arg = (int)(pcb->if_up);
-      return PPPERR_NONE;
+      return ERR_OK;
 
     case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
       if (!arg) {
         goto fail;
       }
       pcb->err_code = (u8_t)(*(int *)arg);
-      return PPPERR_NONE;
+      return ERR_OK;
 
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
       if (!arg) {
         goto fail;
       }
       *(int *)arg = (int)(pcb->err_code);
-      return PPPERR_NONE;
+      return ERR_OK;
 
     default:
       if (pcb->link_cb->ioctl) {
@@ -372,7 +373,7 @@ ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
   }
 
 fail:
-  return PPPERR_PARAM;
+  return ERR_VAL;
 }
 
 #if LWIP_NETIF_STATUS_CALLBACK
