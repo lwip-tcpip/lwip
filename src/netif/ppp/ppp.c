@@ -125,12 +125,6 @@
 #include "netif/ppp/ipv6cp.h"
 #endif /* PPP_IPV6_SUPPORT */
 
-/* Global variables */
-
-#if PPP_DEBUG
-u8_t ppp_num;   /* PPP Interface counter, used for debugging messages */
-#endif /* PPP_DEBUG */
-
 /*************************/
 /*** LOCAL DEFINITIONS ***/
 /*************************/
@@ -292,7 +286,7 @@ ppp_close(ppp_pcb *pcb)
   PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
 
   /* Disconnect */
-  PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> lcp_close\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> lcp_close\n", pcb->netif->num));
   /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
   lcp_close(pcb, "User request");
 
@@ -303,7 +297,7 @@ ppp_close(ppp_pcb *pcb)
 void
 ppp_sighup(ppp_pcb *pcb)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d\n", pcb->netif->num));
   lcp_lowerdown(pcb);
   /* forced link termination, this will leave us at PPP_PHASE_DEAD. */
   link_terminated(pcb);
@@ -325,7 +319,7 @@ err_t ppp_free(ppp_pcb *pcb) {
     return ERR_CONN;
   }
 
-  PPPDEBUG(LOG_DEBUG, ("ppp_free: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_free: unit %d\n", pcb->netif->num));
 
   netif_remove(pcb->netif);
 
@@ -466,7 +460,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
    * and the peer will just drop it if it's not accepting it. */
   if (!pcb || !pb) {
     PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
-              pcb->num, PPP_IP, (void*)pb));
+              pcb->netif->num, PPP_IP, (void*)pb));
     LINK_STATS_INC(link.opterr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
@@ -475,7 +469,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 
   /* Check that the link is up. */
   if (!pcb->if_up) {
-    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->num));
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->netif->num));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
@@ -526,9 +520,6 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   }
 
   memset(pcb, 0, sizeof(ppp_pcb));
-#if PPP_DEBUG
-  pcb->num = ppp_num++;
-#endif /* PPP_DEBUG */
 
   /* default configuration */
   pcb->settings.usepeerdns = 1;
@@ -571,7 +562,7 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   if (!netif_add(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
     memp_free(MEMP_PPP_PCB, pcb);
-    PPPDEBUG(LOG_ERR, ("ppp_new[%d]: netif_add failed\n", pcb->num));
+    PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
     return NULL;
   }
 
@@ -612,7 +603,7 @@ void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks
 
 /** Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_start: unit %d\n", pcb->netif->num));
   lcp_open(pcb); /* Start protocol */
   lcp_lowerup(pcb);
   PPPDEBUG(LOG_DEBUG, ("ppp_start: finished\n"));
@@ -620,7 +611,7 @@ void ppp_start(ppp_pcb *pcb) {
 
 /** Called when link failed to setup */
 void ppp_link_failed(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_failed: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_failed: unit %d\n", pcb->netif->num));
   new_phase(pcb, PPP_PHASE_DEAD);
   pcb->err_code = PPPERR_OPEN;
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -628,7 +619,7 @@ void ppp_link_failed(ppp_pcb *pcb) {
 
 /** Called when link is normally down (i.e. it was asked to end) */
 void ppp_link_end(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_end: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_end: unit %d\n", pcb->netif->num));
   if (pcb->err_code == PPPERR_NONE) {
     pcb->err_code = PPPERR_CONNECT;
   }
@@ -695,13 +686,13 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   switch(protocol) {
 
     case PPP_IP:            /* Internet Protocol */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->num, pb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->len));
       ip_input(pb, pcb->netif);
       return;
 
 #if PPP_IPV6_SUPPORT
     case PPP_IPV6:          /* Internet Protocol Version 6 */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->num, pb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->netif->num, pb->len));
       ip6_input(pb, pcb->netif);
       return;
 #endif /* PPP_IPV6_SUPPORT */
@@ -815,7 +806,7 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
 }
 
 void ppp_link_terminated(ppp_pcb *pcb) {
-  PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->num));
+  PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: unit %d\n", pcb->netif->num));
   pcb->link_cb->disconnect(pcb, pcb->link_ctx_cb);
   PPPDEBUG(LOG_DEBUG, ("ppp_link_terminated: finished.\n"));
 }
@@ -831,7 +822,7 @@ void ppp_link_terminated(ppp_pcb *pcb) {
  */
 void new_phase(ppp_pcb *pcb, int p) {
   pcb->phase = p;
-  PPPDEBUG(LOG_DEBUG, ("ppp phase changed: unit %d: phase=%d\n", pcb->num, pcb->phase));
+  PPPDEBUG(LOG_DEBUG, ("ppp phase changed: unit %d: phase=%d\n", pcb->netif->num, pcb->phase));
 #if PPP_NOTIFY_PHASE
   if (pcb->notify_phase_cb != NULL) {
     pcb->notify_phase_cb(pcb, p, pcb->ctx_cb);
@@ -854,7 +845,7 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
     pcb->link_cb->send_config(pcb, pcb->link_ctx_cb, accm);
   }
 
-  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->num) );
+  PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->netif->num) );
   return 0;
 }
 
@@ -871,7 +862,7 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
     pcb->link_cb->recv_config(pcb, pcb->link_ctx_cb, accm);
   }
 
-  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->num));
+  PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->netif->num));
   return 0;
 }
 
@@ -978,7 +969,7 @@ int sifup(ppp_pcb *pcb) {
   pcb->if_up = 1;
   pcb->err_code = PPPERR_NONE;
 
-  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
   return 1;
 }
@@ -1004,7 +995,7 @@ int sifdown(ppp_pcb *pcb) {
     /* make sure the netif status callback is called */
     netif_set_down(pcb->netif);
   }
-  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   return 1;
 }
 
@@ -1021,7 +1012,7 @@ int sif6up(ppp_pcb *pcb) {
   pcb->if6_up = 1;
   pcb->err_code = PPPERR_NONE;
 
-  PPPDEBUG(LOG_DEBUG, ("sif6up: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sif6up: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
   return 1;
 }
@@ -1042,7 +1033,7 @@ int sif6down(ppp_pcb *pcb) {
     /* make sure the netif status callback is called */
     netif_set_down(pcb->netif);
   }
-  PPPDEBUG(LOG_DEBUG, ("sif6down: unit %d: err_code=%d\n", pcb->num, pcb->err_code));
+  PPPDEBUG(LOG_DEBUG, ("sif6down: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   return 1;
 }
 #endif /* PPP_IPV6_SUPPORT */

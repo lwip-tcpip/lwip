@@ -305,9 +305,6 @@ struct ppp_addrs {
  */
 struct ppp_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
-#if PPP_DEBUG
-  u8_t num;                      /* Interface number - only useful for debugging */
-#endif /* PPP_DEBUG */
   ppp_settings settings;
   const struct link_callbacks *link_cb;
   void *link_ctx_cb;
