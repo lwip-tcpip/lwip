@@ -551,7 +551,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
             snmp_inc_ifindiscards(ppp->netif);
           }
 #else /* PPP_INPROC_MULTITHREADED */
-          ppp_input(pcb, inp);
+          ppp_input(ppp, inp);
 #endif /* PPP_INPROC_MULTITHREADED */
         }
 
