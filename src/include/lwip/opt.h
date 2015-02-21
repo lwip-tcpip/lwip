@@ -1937,7 +1937,7 @@
  * PPP_IPV6_SUPPORT==1: Enable PPP IPv6 support
  */
 #ifndef PPP_IPV6_SUPPORT
-#define PPP_IPV6_SUPPORT                0
+#define PPP_IPV6_SUPPORT                (LWIP_IPV6)
 #endif
 
 /**
