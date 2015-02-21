@@ -128,18 +128,6 @@
 #define PPPERR_CONNECTTIME  11 /* Max connect time reached */
 #define PPPERR_LOOPBACK     12 /* Loopback detected */
 
-/*
- * PPP IOCTL commands.
- */
-/*
- * Get the up status - 0 for down, non-zero for up.  The argument must
- * point to an int.
- */
-#define PPPCTLG_UPSTATUS 100 /* Get the up status - 0 down else up */
-#define PPPCTLS_ERRCODE  101 /* Set the error code */
-#define PPPCTLG_ERRCODE  102 /* Get the error code */
-#define PPPCTLG_FD       103 /* Get the fd associated with the ppp */
-
 /* Whether auth support is enabled at all */
 #define PPP_AUTH_SUPPORT (PAP_SUPPORT || CHAP_SUPPORT || EAP_SUPPORT)
 
@@ -494,8 +482,27 @@ void ppp_sighup(ppp_pcb *pcb);
 err_t ppp_free(ppp_pcb *pcb);
 
 /*
+ * PPP IOCTL commands.
+ *
+ * Get the up status - 0 for down, non-zero for up.  The argument must
+ * point to an int.
+ */
+#define PPPCTLG_UPSTATUS 0
+
+/*
+ * Get the PPP error code.  The argument must point to an int.
+ * Returns a PPPERR_* value.
+ */
+#define PPPCTLG_ERRCODE  1
+
+/*
+ * Get the fd associated with a PPP over serial
+ */
+#define PPPCTLG_FD       2
+
+/*
  * Get and set parameters for the given connection.
- * Return 0 on success, an error code on failure. 
+ * Return 0 on success, an error code on failure.
  */
 err_t ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 
