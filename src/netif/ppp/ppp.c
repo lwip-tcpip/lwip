@@ -341,7 +341,7 @@ err_t ppp_free(ppp_pcb *pcb) {
 /* Get and set parameters for the given connection.
  * Return 0 on success, an error code on failure. */
 err_t
-ppp_ioctl(ppp_pcb *pcb, int cmd, void *arg)
+ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
 {
   if (pcb == NULL) {
     return ERR_VAL;

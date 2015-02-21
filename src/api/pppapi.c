@@ -350,7 +350,7 @@ pppapi_do_ppp_ioctl(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 err_t
-pppapi_ioctl(ppp_pcb *pcb, int cmd, void *arg)
+pppapi_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
 {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_ioctl;
