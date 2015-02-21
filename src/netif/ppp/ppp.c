@@ -974,9 +974,6 @@ int sifup(ppp_pcb *pcb) {
  */
 int sifdown(ppp_pcb *pcb) {
 
-  if(!pcb->if_up)
-    return 1;
-
   pcb->if_up = 0;
 
   if (1
@@ -1016,9 +1013,6 @@ int sif6up(ppp_pcb *pcb) {
  *	      down if there are no remaining protocols.
  */
 int sif6down(ppp_pcb *pcb) {
-
-  if(!pcb->if6_up)
-    return 1;
 
   pcb->if6_up = 0;
   /* set the interface down if IPv4 is down as well */
