@@ -140,6 +140,9 @@
 #define PPPCTLG_ERRCODE  102 /* Get the error code */
 #define PPPCTLG_FD       103 /* Get the fd associated with the ppp */
 
+/* Whether auth support is enabled at all */
+#define PPP_AUTH_SUPPORT (PAP_SUPPORT || CHAP_SUPPORT || EAP_SUPPORT)
+
 /************************
 *** PUBLIC DATA TYPES ***
 ************************/
@@ -187,12 +190,12 @@ typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
  */
 typedef struct ppp_settings_s {
 
-#if PPP_SERVER
+#if PPP_SERVER && PPP_AUTH_SUPPORT
   unsigned int  auth_required     : 1;       /* Peer is required to authenticate */
   unsigned int  null_login        : 1;       /* Username of "" and a password of "" are acceptable */
 #else
     unsigned int                   :2;       /* 2 bits of padding */
-#endif /* PPP_SERVER */
+#endif /* PPP_SERVER && PPP_AUTH_SUPPORT */
 #if PPP_REMOTENAME
   unsigned int  explicit_remote   : 1;       /* remote_name specified with remotename opt */
 #else
@@ -245,6 +248,7 @@ typedef struct ppp_settings_s {
   u32_t  maxconnect;                  /* Maximum connect time (seconds) */
 #endif /* PPP_MAXCONNECT */
 
+#if PPP_AUTH_SUPPORT
   /* auth data */
   const char  *user;                   /* Username for PAP */
   const char  *passwd;                 /* Password for PAP, secret for CHAP */
@@ -279,6 +283,8 @@ typedef struct ppp_settings_s {
   u8_t  eap_max_transmits;       /* Max Requests allowed */
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
+
+#endif /* PPP_AUTH_SUPPORT */
 
   u8_t  fsm_timeout_time;            /* Timeout time in seconds */
   u8_t  fsm_max_conf_req_transmits;  /* Maximum Configure-Request transmissions */

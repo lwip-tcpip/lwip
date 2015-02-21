@@ -665,7 +665,9 @@ static void lcp_resetci(fsm *f) {
     if (pcb->settings.noendpoint)
 	ao->neg_endpoint = 0;
     pcb->peer_mru = PPP_MRU;
+#if PPP_AUTH_SUPPORT
     auth_reset(pcb);
+#endif /* PPP_AUTH_SUPPORT */
 }
 
 

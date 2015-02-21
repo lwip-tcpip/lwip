@@ -725,17 +725,17 @@ void upper_layers_down(ppp_pcb *pcb) {
  * Proceed to the Dead, Authenticate or Network phase as appropriate.
  */
 void link_established(ppp_pcb *pcb) {
+#if PPP_AUTH_SUPPORT
     int auth;
 #if PPP_SERVER
+    int errcode;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *go = &pcb->lcp_gotoptions;
 #endif /* PPP_SERVER */
     lcp_options *ho = &pcb->lcp_hisoptions;
+#endif /* PPP_AUTH_SUPPORT */
     int i;
     const struct protent *protp;
-#if PPP_SERVER
-    int errcode;
-#endif /* PPP_SERVER */
 
     /*
      * Tell higher-level protocols that LCP is up.
@@ -747,6 +747,7 @@ void link_established(ppp_pcb *pcb) {
 		(*protp->lowerup)(pcb);
     }
 
+#if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 #if PPP_ALLOWED_ADDRS
     if (!auth_required && noauth_addrs != NULL)
@@ -838,7 +839,7 @@ void link_established(ppp_pcb *pcb) {
     pcb->auth_done = 0;
 
     if (!auth)
-
+#endif /* PPP_AUTH_SUPPORT */
 	network_phase(pcb);
 }
 
@@ -994,6 +995,7 @@ void continue_networks(ppp_pcb *pcb) {
 	lcp_close(pcb, "No network protocols running");
 }
 
+#if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 /*
  * The peer has failed to authenticate himself using `protocol'.
@@ -1156,6 +1158,7 @@ void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor) {
     if ((pcb->auth_pending &= ~bit) == 0)
 	network_phase(pcb);
 }
+#endif /* PPP_AUTH_SUPPORT */
 
 
 /*
@@ -1469,6 +1472,7 @@ auth_check_options()
 }
 #endif /* PPP_OPTIONS */
 
+#if PPP_AUTH_SUPPORT
 /*
  * auth_reset - called when LCP is starting negotiations to recheck
  * authentication options, i.e. whether we have appropriate secrets
@@ -1581,6 +1585,7 @@ void auth_reset(ppp_pcb *pcb) {
 	go->neg_eap = 0;
 #endif
 }
+#endif /* PPP_AUTH_SUPPORT */
 
 #if 0 /* UNUSED */
 /*
@@ -1934,6 +1939,7 @@ have_srp_secret(client, server, need_ip, lacks_ipp)
 }
 #endif /* UNUSED */
 
+#if PPP_AUTH_SUPPORT
 /*
  * get_secret - open the CHAP secret file and return the secret
  * for authenticating the given client on the given server.
@@ -2024,6 +2030,7 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
     return 1;
 #endif
 }
+#endif /* PPP_AUTH_SUPPORT */
 
 
 #if 0 /* UNUSED */

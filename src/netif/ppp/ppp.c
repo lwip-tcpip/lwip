@@ -187,6 +187,8 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short prot
 /***********************************/
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
 
+#if PPP_AUTH_SUPPORT
+
 #if PAP_SUPPORT
   if (authtype & PPPAUTHTYPE_PAP) {
     pcb->settings.refuse_pap = 0;
@@ -227,6 +229,13 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
   if (passwd) {
     pcb->settings.passwd = passwd;
   }
+
+#else /* PPP_AUTH_SUPPORT */
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(authtype);
+  LWIP_UNUSED_ARG(user);
+  LWIP_UNUSED_ARG(passwd);
+#endif /* PPP_AUTH_SUPPORT */
 }
 
 #if PPP_NOTIFY_PHASE

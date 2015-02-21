@@ -544,6 +544,7 @@ void upper_layers_down(ppp_pcb *pcb); /* take all NCPs down */
 void link_established(ppp_pcb *pcb);  /* the link is up; authenticate now */
 void start_networks(ppp_pcb *pcb);    /* start all the network control protos */
 void continue_networks(ppp_pcb *pcb); /* start network [ip, etc] control protos */
+#if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 void auth_peer_fail(ppp_pcb *pcb, int protocol);
 				/* peer failed to authenticate itself */
@@ -554,12 +555,15 @@ void auth_withpeer_fail(ppp_pcb *pcb, int protocol);
 				/* we failed to authenticate ourselves */
 void auth_withpeer_success(ppp_pcb *pcb, int protocol, int prot_flavor);
 				/* we successfully authenticated ourselves */
+#endif /* PPP_AUTH_SUPPORT */
 void np_up(ppp_pcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(ppp_pcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(ppp_pcb *pcb, int proto); /* a network protocol no longer needs link */
+#if PPP_AUTH_SUPPORT
 void auth_reset(ppp_pcb *pcb);	/* check what secrets we have */
 int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server);
 				/* get "secret" for chap */
+#endif /* PPP_AUTH_SUPPORT */
 
 /* Procedures exported from ipcp.c */
 /* int parse_dotted_ip (char *, u32_t *); */
