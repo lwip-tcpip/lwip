@@ -290,8 +290,9 @@ ppp_free(ppp);
 PPPoS require a serial I/O SIO port (see include/lwip/sio.h). Received data
 on serial port should be sent to lwIP using the pppos_input() function.
 
-This function is not thread-safe by default, setting PPP_INPROC_MULTITHREADED
-to a true value in your lwipopts.h file makes pppos_input() thread safe.
+This function is thread-safe by default if NO_SYS==0. You can alter whether
+you want this function thread-safe or not using the PPP_INPROC_MULTITHREADED
+setting in your lwipopts.h file.
 
 /*
  * Fonction to call for received data
