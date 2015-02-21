@@ -180,7 +180,6 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_
 #if PPP_IPV6_SUPPORT
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr);
 #endif /* PPP_IPV6_SUPPORT */
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -433,53 +432,45 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
   return ERR_OK;
 }
 
-/* Send a IPv4 packet on the given connection.
+/*
+ * Send an IPv4 packet on the given connection.
  */
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
-  LWIP_UNUSED_ARG(ipaddr);
-  return ppp_netif_output(netif, pb, PPP_IP);
-}
-
-#if PPP_IPV6_SUPPORT
-/* Send a IPv6 packet on the given connection.
- */
-static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
-  LWIP_UNUSED_ARG(ipaddr);
-  return ppp_netif_output(netif, pb, PPP_IPV6);
-}
-#endif /* PPP_IPV6_SUPPORT */
-
-/* Send a packet on the given connection.
- *
- * This is the low level function that send the PPP packet,
- * only for IPv4 and IPv6 packets coming from lwIP.
- */
-static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u_short protocol) {
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
-
-  /* Validate parameters. */
-  /* We let any protocol value go through - it can't hurt us
-   * and the peer will just drop it if it's not accepting it. */
-  if (!pcb || !pb) {
-    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad params prot=%d pb=%p\n",
-              pcb->netif->num, PPP_IP, (void*)pb));
-    LINK_STATS_INC(link.opterr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
-    return ERR_ARG;
-  }
+  LWIP_UNUSED_ARG(ipaddr);
 
   /* Check that the link is up. */
   if (!pcb->if_up) {
-    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->netif->num));
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip4[%d]: link not up\n", pcb->netif->num));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(netif);
     return ERR_RTE;
   }
 
-  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, protocol);
+  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IP);
 }
+
+#if PPP_IPV6_SUPPORT
+/*
+ * Send an IPv6 packet on the given connection.
+ */
+static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, ip6_addr_t *ipaddr) {
+  ppp_pcb *pcb = (ppp_pcb*)netif->state;
+  LWIP_UNUSED_ARG(ipaddr);
+
+  /* Check that the link is up. */
+  if (!pcb->if6_up) {
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip6[%d]: link not up\n", pcb->netif->num));
+    LINK_STATS_INC(link.rterr);
+    LINK_STATS_INC(link.drop);
+    snmp_inc_ifoutdiscards(netif);
+    return ERR_RTE;
+  }
+
+  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IPV6);
+}
+#endif /* PPP_IPV6_SUPPORT */
 
 
 /************************************/
