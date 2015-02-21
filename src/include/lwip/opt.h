@@ -2095,9 +2095,7 @@
  * If set (=1), the default if required by another enabled PPP feature unless
  * explicitly set to 0, using included lwIP PolarSSL.
  * 
- * If clear (=0), using external PolarSSL.
- * 
- * Undefined if not needed.
+ * If clear (=0), not needed or using external PolarSSL.
  * 
  * Beware of the stack requirements which can be a lot larger if you are not
  * using our cleaned PolarSSL library.
@@ -2120,6 +2118,20 @@
 #define LWIP_INCLUDED_POLARSSL_DES        1 /* MSCHAP require DES support */
 #endif /* LWIP_INCLUDED_POLARSSL_DES */
 #endif /* MSCHAP_SUPPORT */
+
+/* Default value if unset */
+#ifndef LWIP_INCLUDED_POLARSSL_MD4
+#define LWIP_INCLUDED_POLARSSL_MD4        0
+#endif /* LWIP_INCLUDED_POLARSSL_MD4 */
+#ifndef LWIP_INCLUDED_POLARSSL_MD5
+#define LWIP_INCLUDED_POLARSSL_MD5        0
+#endif /* LWIP_INCLUDED_POLARSSL_MD5 */
+#ifndef LWIP_INCLUDED_POLARSSL_SHA1
+#define LWIP_INCLUDED_POLARSSL_SHA1       0
+#endif /* LWIP_INCLUDED_POLARSSL_SHA1 */
+#ifndef LWIP_INCLUDED_POLARSSL_DES
+#define LWIP_INCLUDED_POLARSSL_DES        0
+#endif /* LWIP_INCLUDED_POLARSSL_DES */
 
 /*
  * Timeouts
