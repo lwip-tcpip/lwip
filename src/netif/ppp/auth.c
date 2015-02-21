@@ -728,7 +728,6 @@ void link_established(ppp_pcb *pcb) {
 #if PPP_AUTH_SUPPORT
     int auth;
 #if PPP_SERVER
-    int errcode;
     lcp_options *wo = &pcb->lcp_wantoptions;
     lcp_options *go = &pcb->lcp_gotoptions;
 #endif /* PPP_SERVER */
@@ -783,8 +782,7 @@ void link_established(ppp_pcb *pcb) {
 #if 0 /* UNUSED */
 	    status = EXIT_PEER_AUTH_FAILED;
 #endif /* UNUSED */
-	    errcode = PPPERR_AUTHFAIL;
-	    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
+	    pcb->err_code = PPPERR_AUTHFAIL;
 	    lcp_close(pcb, "peer refused to authenticate");
 	    return;
 	}
@@ -1001,7 +999,6 @@ void continue_networks(ppp_pcb *pcb) {
  * The peer has failed to authenticate himself using `protocol'.
  */
 void auth_peer_fail(ppp_pcb *pcb, int protocol) {
-    int errcode = PPPERR_AUTHFAIL;
     LWIP_UNUSED_ARG(protocol);
     /*
      * Authentication failure: take the link down
@@ -1009,7 +1006,7 @@ void auth_peer_fail(ppp_pcb *pcb, int protocol) {
 #if 0 /* UNUSED */
     status = EXIT_PEER_AUTH_FAILED;
 #endif /* UNUSED */
-    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
+    pcb->err_code = PPPERR_AUTHFAIL;
     lcp_close(pcb, "Authentication failed");
 }
 
@@ -1083,7 +1080,6 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *
  * We have failed to authenticate ourselves to the peer using `protocol'.
  */
 void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
-    int errcode = PPPERR_AUTHFAIL;
     LWIP_UNUSED_ARG(protocol);
     /*
      * We've failed to authenticate ourselves to our peer.
@@ -1095,7 +1091,7 @@ void auth_withpeer_fail(ppp_pcb *pcb, int protocol) {
      * He'll probably take the link down, and there's not much
      * we can do except wait for that.
      */
-    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
+    pcb->err_code = PPPERR_AUTHFAIL;
     lcp_close(pcb, "Failed to authenticate ourselves to peer");
 }
 
@@ -1306,10 +1302,9 @@ static void check_idle(void *arg) {
     }
 #endif /* UNUSED */
     if (tlim <= 0) {
-	int errcode = PPPERR_IDLETIMEOUT;
 	/* link is idle: shut it down. */
 	ppp_notice("Terminating connection due to lack of activity.");
-	ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
+	pcb->err_code = PPPERR_IDLETIMEOUT;
 	lcp_close(pcb, "Link inactive");
 #if 0 /* UNUSED */
 	need_holdoff = 0;
@@ -1325,10 +1320,9 @@ static void check_idle(void *arg) {
  * connect_time_expired - log a message and close the connection.
  */
 static void connect_time_expired(void *arg) {
-    int errcode = PPPERR_CONNECTTIME;
     ppp_pcb *pcb = (ppp_pcb*)arg;
     ppp_info("Connect time expired");
-    ppp_ioctl(pcb, PPPCTLS_ERRCODE, &errcode);
+    pcb->err_code = PPPERR_CONNECTTIME;
     lcp_close(pcb, "Connect time expired");	/* Close connection */
 }
 #endif /* PPP_MAXCONNECT */
