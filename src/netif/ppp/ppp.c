@@ -355,13 +355,6 @@ ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
       *(int *)arg = (int)(pcb->if_up);
       return ERR_OK;
 
-    case PPPCTLS_ERRCODE:       /* Set the PPP error code. */
-      if (!arg) {
-        goto fail;
-      }
-      pcb->err_code = (u8_t)(*(int *)arg);
-      return ERR_OK;
-
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
       if (!arg) {
         goto fail;
