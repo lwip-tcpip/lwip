@@ -2056,7 +2056,7 @@
 #endif
 #if !PPPOS_SUPPORT
 #undef VJ_SUPPORT
-#define VJ_SUPPORT                      0   /*  Only PPPoS may need VJ compression */
+#define VJ_SUPPORT                      0   /* VJ compression is only supported for PPPoS. */
 #endif /* !PPPOS_SUPPORT */
 
 /**
