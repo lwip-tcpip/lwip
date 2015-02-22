@@ -202,6 +202,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-22: patch by Jens Nielsen
+  * icmp.c: fixed bug #38803 (Source address in broadcast ping reply)
+
   2015-02-22: Simon Goldschmidt
   * udp.h, sockets.c: added proper accessor functions for pcb->multicast_ip
     (previously used by get/setsockopt only)

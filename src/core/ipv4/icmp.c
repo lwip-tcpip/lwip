@@ -185,7 +185,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
-    ip_addr_copy(iphdr->src, *ip_current_dest_addr());
+    ip_addr_copy(iphdr->src, inp->ip_addr);
     ip_addr_copy(iphdr->dest, *ip_current_src_addr());
     ICMPH_TYPE_SET(iecho, ICMP_ER);
 #if CHECKSUM_GEN_ICMP
