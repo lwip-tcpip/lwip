@@ -202,6 +202,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-22: Simon Goldschmidt
+  * udp.h, sockets.c: added proper accessor functions for pcb->multicast_ip
+    (previously used by get/setsockopt only)
+
   2015-02-18: Simon Goldschmidt
   * sockets.c: Fixed select not reporting received FIN as 'readable' in certain
     rare cases (bug #43779: select(), close(), and TCP retransmission error)
@@ -209,7 +213,7 @@ HISTORY
   2015-02-17: Simon Goldschmidt
   * err.h, sockets.c, api_msg.c: fixed bug #38853 "connect() use a wrong errno":
     return ERR_ALREADY/EALRADY during connect, ERR_ISCONN/EISCONN when already
-	connected
+    connected
 
   2015-02-17: Simon Goldschmidt
   * tcp_impl.h, tcp_out.c, tcp.c, api_msg.c: fixed bug #37614 "Errors from

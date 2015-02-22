@@ -206,6 +206,11 @@ struct udp_pcb * udp_new_ip6(void);
 #endif /*LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
 #endif /* LWIP_IPV6 */
 
+#if LWIP_IGMP
+#define udp_set_multicast_netif_addr(pcb, ip4addr) ((pcb)->multicast_ip = *(ip4addr))
+#define udp_get_multicast_netif_addr(pcb)          (&(pcb)->multicast_ip)
+#endif /* LWIP_IGMP */
+
 #if UDP_DEBUG
 void udp_debug_print(struct udp_hdr *udphdr);
 #else
