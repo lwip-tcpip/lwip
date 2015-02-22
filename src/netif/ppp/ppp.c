@@ -296,8 +296,6 @@ ppp_close(ppp_pcb *pcb)
     return ERR_OK;
   }
 
-  PPPDEBUG(LOG_DEBUG, ("ppp_close() called\n"));
-
   /* Disconnect */
   PPPDEBUG(LOG_DEBUG, ("ppp_close: unit %d kill_link -> lcp_close\n", pcb->netif->num));
   /* LCP close request, this will leave us at PPP_PHASE_DEAD. */
@@ -310,10 +308,40 @@ ppp_close(ppp_pcb *pcb)
 void
 ppp_sighup(ppp_pcb *pcb)
 {
-  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d\n", pcb->netif->num));
+  pcb->err_code = PPPERR_PEERDEAD;
+
+  /* dead phase, nothing to do, call the status callback to be consistent */
+  if (pcb->phase == PPP_PHASE_DEAD) {
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
+    return;
+  }
+
+  /* holdoff phase, cancel the reconnection and call the status callback */
+  if (pcb->phase == PPP_PHASE_HOLDOFF) {
+    sys_untimeout(ppp_do_open, pcb);
+    pcb->phase = PPP_PHASE_DEAD;
+    pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
+    return;
+  }
+
+  /*
+   * Only accept carrier lost signal on the stable running phase in order
+   * to prevent changing the PPP phase FSM in transition phases.
+   *
+   * Always calling ppp_close() instead is still recommended, this is going to
+   * take a little longer time, but is a safer choice from FSM point of view.
+   */
+  if (pcb->phase != PPP_PHASE_RUNNING) {
+    PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d -> lcp_close\n", pcb->netif->num));
+    lcp_close(pcb, "Carrier lost");
+    return;
+  }
+
+  PPPDEBUG(LOG_DEBUG, ("ppp_sighup: unit %d -> lcp_lowerdown\n", pcb->netif->num));
   lcp_lowerdown(pcb);
   /* forced link termination, this will leave us at PPP_PHASE_DEAD. */
   link_terminated(pcb);
+  return;
 }
 
 /*
