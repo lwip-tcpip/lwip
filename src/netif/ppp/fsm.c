@@ -290,7 +290,7 @@ static void fsm_timeout(void *arg) {
     case PPP_FSM_ACKRCVD:
     case PPP_FSM_ACKSENT:
 	if (f->retransmits <= 0) {
-	    ppp_warn("%s: timeout sending Config-Requests\n", PROTO_NAME(f));
+	    ppp_warn("%s: timeout sending Config-Requests", PROTO_NAME(f));
 	    f->state = PPP_FSM_STOPPED;
 	    if( (f->flags & OPT_PASSIVE) == 0 && f->callbacks->finished )
 		(*f->callbacks->finished)(f);
