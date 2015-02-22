@@ -460,6 +460,9 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  *
  * Holdoff is the time to wait (in seconds) before initiating
  * the connection.
+ *
+ * If this port connects to a modem, the modem connection must be
+ * established before calling this.
  */
 err_t ppp_open(ppp_pcb *pcb, u16_t holdoff);
 

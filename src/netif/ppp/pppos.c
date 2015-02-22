@@ -167,9 +167,6 @@ ppp_get_fcs(u8_t byte)
 /*
  * Create a new PPP connection using the given serial I/O device.
  *
- * If this port connects to a modem, the modem connection must be
- * established before calling this.
- *
  * Return 0 on success, an error code on failure.
  */
 ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
