@@ -153,7 +153,9 @@ typedef unsigned char  u_char;
 
 #include "fsm.h"
 #include "lcp.h"
+#if PPP_IPV4_SUPPORT
 #include "ipcp.h"
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
 #include "ipv6cp.h"
 #endif /* PPP_IPV6_SUPPORT */
@@ -287,8 +289,10 @@ typedef struct ppp_settings_s {
 } ppp_settings;
 
 struct ppp_addrs {
+#if PPP_IPV4_SUPPORT
   ip_addr_t our_ipaddr, his_ipaddr, netmask;
   ip_addr_t dns1, dns2;
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
   ip6_addr_t our6_ipaddr, his6_ipaddr;
 #endif /* PPP_IPV6_SUPPORT */
@@ -319,21 +323,21 @@ struct ppp_pcb_s {
   u8_t err_code;                 /* Code indicating why interface is down. */
 
   /* flags */
-  unsigned int if_up                   :1; /* True when the interface is up. */
-#if PPP_IPV6_SUPPORT
-  unsigned int if6_up                  :1; /* True when the IPv6 interface is up. */
-#else
-  unsigned int                         :1; /* 1 bit of padding */
-#endif /* PPP_IPV6_SUPPORT */
   unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
   unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
-  unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
+#if PPP_IPV4_SUPPORT
   unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
   unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
+  unsigned int if4_up                  :1; /* True when the IPv4 interface is up. */
+  unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
+#else
+  unsigned int                         :4; /* 4 bit of padding */
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
   unsigned int ipv6cp_is_up            :1; /* have called ip6cp_up() */
+  unsigned int if6_up                  :1; /* True when the IPv6 interface is up. */
 #else
-  unsigned int                         :1; /* 1 bit of padding */
+  unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
@@ -381,11 +385,13 @@ struct ppp_pcb_s {
   u8_t lcp_echo_number;          /* ID number of next echo frame */
   u16_t peer_mru;                /* currently negotiated peer MRU */
 
+#if PPP_IPV4_SUPPORT
   fsm ipcp_fsm;                   /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;  /* Options that we want to request */
   ipcp_options ipcp_gotoptions;   /* Options that peer ack'd */
   ipcp_options ipcp_allowoptions; /* Options we allow peer to request */
   ipcp_options ipcp_hisoptions;   /* Options that we ack'd */
+#endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
   fsm ipv6cp_fsm;                     /* IPV6CP fsm structure */

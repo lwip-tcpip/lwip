@@ -41,7 +41,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT && PPP_IPV4_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 /*
  * TODO:
@@ -2272,4 +2272,4 @@ ip_active_pkt(pkt, len)
 }
 #endif /* DEMAND_SUPPORT */
 
-#endif /* PPP_SUPPORT */
+#endif /* PPP_SUPPORT && PPP_IPV4_SUPPORT */

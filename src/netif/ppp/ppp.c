@@ -100,7 +100,6 @@
 
 #include "netif/ppp/fsm.h"
 #include "netif/ppp/lcp.h"
-#include "netif/ppp/ipcp.h"
 #include "netif/ppp/magic.h"
 
 #if PAP_SUPPORT
@@ -121,6 +120,9 @@
 #if VJ_SUPPORT
 #include "netif/ppp/vj.h"
 #endif /* VJ_SUPPORT */
+#if PPP_IPV4_SUPPORT
+#include "netif/ppp/ipcp.h"
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
 #include "netif/ppp/ipv6cp.h"
 #endif /* PPP_IPV6_SUPPORT */
@@ -154,7 +156,9 @@ const struct protent* const protocols[] = {
 #if CBCP_SUPPORT
     &cbcp_protent,
 #endif /* CBCP_SUPPORT */
+#if PPP_IPV4_SUPPORT
     &ipcp_protent,
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
     &ipv6cp_protent,
 #endif /* PPP_IPV6_SUPPORT */
@@ -351,7 +355,10 @@ ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
       if (!arg) {
         goto fail;
       }
-      *(int *)arg = (int)(pcb->if_up
+      *(int *)arg = (int)(0
+#if PPP_IPV4_SUPPORT
+           || pcb->if4_up
+#endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
            || pcb->if6_up
 #endif /* PPP_IPV6_SUPPORT */
@@ -424,6 +431,7 @@ static void ppp_do_open(void *arg) {
 static err_t ppp_netif_init_cb(struct netif *netif) {
   netif->name[0] = 'p';
   netif->name[1] = 'p';
+  /* FIXME: change that when netif_null_output_ip4() will materialize */
   netif->output = ppp_netif_output_ip4;
 #if PPP_IPV6_SUPPORT
   netif->output_ip6 = ppp_netif_output_ip6;
@@ -440,11 +448,12 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
  * Send an IPv4 packet on the given connection.
  */
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_t *ipaddr) {
+#if PPP_IPV4_SUPPORT
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);
 
   /* Check that the link is up. */
-  if (!pcb->if_up) {
+  if (!pcb->if4_up) {
     PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip4[%d]: link not up\n", pcb->netif->num));
     LINK_STATS_INC(link.rterr);
     LINK_STATS_INC(link.drop);
@@ -453,6 +462,12 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, ip_addr_
   }
 
   return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IP);
+#else /* PPP_IPV4_SUPPORT */
+  LWIP_UNUSED_ARG(netif);
+  LWIP_UNUSED_ARG(pb);
+  LWIP_UNUSED_ARG(ipaddr);
+  return ERR_IF;
+#endif /* PPP_IPV4_SUPPORT */
 }
 
 #if PPP_IPV6_SUPPORT
@@ -581,7 +596,9 @@ void ppp_clear(ppp_pcb *pcb) {
 #endif /* PPP_STATS_SUPPORT */
 
   memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
+#if PPP_IPV4_SUPPORT
   ip4_addr_set_u32(&pcb->addrs.netmask, IPADDR_BROADCAST);
+#endif /* PPP_IPV4_SUPPORT */
 
   /*
    * Initialize each protocol.
@@ -863,7 +880,7 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
   return 0;
 }
 
-
+#if PPP_IPV4_SUPPORT
 /*
  * sifaddr - Config the interface IP addresses and netmask.
  */
@@ -875,7 +892,6 @@ int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr,
   ip4_addr_set_u32(&pcb->addrs.netmask, net_mask);
   return 1;
 }
-
 
 /********************************************************************
  *
@@ -893,6 +909,104 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   return 1;
 }
 
+/********************************************************************
+ *
+ * sifproxyarp - Make a proxy ARP entry for the peer.
+ */
+
+int sifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(his_adr);
+  /* FIXME: do we really need that in IPCP ? */
+  return 0;
+}
+
+/********************************************************************
+ *
+ * cifproxyarp - Delete the proxy ARP entry for the peer.
+ */
+
+int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(his_adr);
+  /* FIXME: do we really need that in IPCP ? */
+  return 0;
+}
+
+/*
+ * sdns - Config the DNS servers
+ */
+int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
+
+  ip4_addr_set_u32(&pcb->addrs.dns1, ns1);
+  ip4_addr_set_u32(&pcb->addrs.dns2, ns2);
+  return 1;
+}
+
+/********************************************************************
+ *
+ * cdns - Clear the DNS servers
+ */
+int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
+
+  LWIP_UNUSED_ARG(ns1);
+  LWIP_UNUSED_ARG(ns2);
+
+  ip_addr_set_zero(&pcb->addrs.dns1);
+  ip_addr_set_zero(&pcb->addrs.dns2);
+  return 1;
+}
+
+/********************************************************************
+ *
+ * sifvjcomp - config tcp header compression
+ */
+int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
+  if (pcb->link_cb->vj_config) {
+    pcb->link_cb->vj_config(pcb, pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
+  }
+  return 0;
+}
+
+/*
+ * sifup - Config the interface up and enable IP packets to pass.
+ */
+int sifup(ppp_pcb *pcb) {
+
+  netif_set_addr(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
+                 &pcb->addrs.his_ipaddr);
+
+  netif_set_up(pcb->netif);
+  pcb->if4_up = 1;
+  pcb->err_code = PPPERR_NONE;
+
+  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
+  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
+  return 1;
+}
+
+/********************************************************************
+ *
+ * sifdown - Disable the indicated protocol and config the interface
+ *           down if there are no remaining protocols.
+ */
+int sifdown(ppp_pcb *pcb) {
+
+  pcb->if4_up = 0;
+
+  if (1
+#if PPP_IPV6_SUPPORT
+   /* set the interface down if IPv6 is down as well */
+   && !pcb->if6_up
+#endif /* PPP_IPV6_SUPPORT */
+  ) {
+    /* make sure the netif status callback is called */
+    netif_set_down(pcb->netif);
+  }
+  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
+  return 1;
+}
+#endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
 #define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \
@@ -925,75 +1039,7 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
   ip6_addr_set_zero(&pcb->addrs.his6_ipaddr);
   return 1;
 }
-#endif /* PPP_IPV6_SUPPORT */
 
-
-/*
- * sdns - Config the DNS servers
- */
-int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
-
-  ip4_addr_set_u32(&pcb->addrs.dns1, ns1);
-  ip4_addr_set_u32(&pcb->addrs.dns2, ns2);
-  return 1;
-}
-
-
-/********************************************************************
- *
- * cdns - Clear the DNS servers
- */
-int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
-
-  LWIP_UNUSED_ARG(ns1);
-  LWIP_UNUSED_ARG(ns2);
-
-  ip_addr_set_zero(&pcb->addrs.dns1);
-  ip_addr_set_zero(&pcb->addrs.dns2);
-  return 1;
-}
-
-
-/*
- * sifup - Config the interface up and enable IP packets to pass.
- */
-int sifup(ppp_pcb *pcb) {
-
-  netif_set_addr(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                 &pcb->addrs.his_ipaddr);
-
-  netif_set_up(pcb->netif);
-  pcb->if_up = 1;
-  pcb->err_code = PPPERR_NONE;
-
-  PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
-  pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-  return 1;
-}
-
-/********************************************************************
- *
- * sifdown - Disable the indicated protocol and config the interface
- *	     down if there are no remaining protocols.
- */
-int sifdown(ppp_pcb *pcb) {
-
-  pcb->if_up = 0;
-
-  if (1
-#if PPP_IPV6_SUPPORT
-   /* set the interface down if IPv6 is down as well */
-   && !pcb->if6_up
-#endif /* PPP_IPV6_SUPPORT */
-  ) {
-    /* make sure the netif status callback is called */
-    netif_set_down(pcb->netif);
-  }
-  PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
-  return 1;
-}
-
-#if PPP_IPV6_SUPPORT
 /*
  * sif6up - Config the interface up and enable IPv6 packets to pass.
  */
@@ -1020,7 +1066,12 @@ int sif6down(ppp_pcb *pcb) {
 
   pcb->if6_up = 0;
   /* set the interface down if IPv4 is down as well */
-  if (!pcb->if_up) {
+  if (1
+#if PPP_IPV4_SUPPORT
+   /* set the interface down if IPv6 is down as well */
+   && !pcb->if4_up
+#endif /* PPP_IPV4_SUPPORT */
+  ) {
     /* make sure the netif status callback is called */
     netif_set_down(pcb->netif);
   }
@@ -1053,41 +1104,6 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 int netif_get_mtu(ppp_pcb *pcb) {
 
   return pcb->netif->mtu;
-}
-
-/********************************************************************
- *
- * sifproxyarp - Make a proxy ARP entry for the peer.
- */
-
-int sifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(his_adr);
-  /* FIXME: do we really need that in IPCP ? */
-  return 0;
-}
-
-/********************************************************************
- *
- * cifproxyarp - Delete the proxy ARP entry for the peer.
- */
-
-int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(his_adr);
-  /* FIXME: do we really need that in IPCP ? */
-  return 0;
-}
-
-/********************************************************************
- *
- * sifvjcomp - config tcp header compression
- */
-int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
-  if (pcb->link_cb->vj_config) {
-    pcb->link_cb->vj_config(pcb, pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
-  }
-  return 0;
 }
 
 #if PPP_IDLETIMELIMIT

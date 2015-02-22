@@ -424,21 +424,21 @@ void new_phase(ppp_pcb *pcb, int p);
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp);
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp);
 
+#if PPP_IPV4_SUPPORT
 int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t net_mask);
 int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr);
+int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
+int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
+int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
+int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
+int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
+int sifup(ppp_pcb *pcb);
+int sifdown (ppp_pcb *pcb);
+#endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
 int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
 int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64);
-#endif /* PPP_IPV6_SUPPORT */
-
-int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
-int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
-
-int sifup(ppp_pcb *pcb);
-int sifdown (ppp_pcb *pcb);
-
-#if PPP_IPV6_SUPPORT
 int sif6up(ppp_pcb *pcb);
 int sif6down (ppp_pcb *pcb);
 #endif /* PPP_IPV6_SUPPORT */
@@ -447,11 +447,6 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
-
-int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
-int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
-
-int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 
 #if PPP_IDLETIMELIMIT
 int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);

@@ -43,7 +43,7 @@
  */
 
 #include "lwip/opt.h"
-#if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
+#if PPP_SUPPORT && PPP_IPV4_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
 #ifndef IPCP_H
 #define	IPCP_H
@@ -104,4 +104,4 @@ char *ip_ntoa (u32_t);
 extern const struct protent ipcp_protent;
 
 #endif /* IPCP_H */
-#endif /* PPP_SUPPORT */
+#endif /* PPP_SUPPORT && PPP_IPV4_SUPPORT */

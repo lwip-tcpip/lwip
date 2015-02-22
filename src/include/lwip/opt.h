@@ -1934,6 +1934,13 @@
 #endif
 
 /**
+ * PPP_IPV4_SUPPORT==1: Enable PPP IPv4 support
+ */
+#ifndef PPP_IPV4_SUPPORT
+#define PPP_IPV4_SUPPORT                1
+#endif
+
+/**
  * PPP_IPV6_SUPPORT==1: Enable PPP IPv6 support
  */
 #ifndef PPP_IPV6_SUPPORT

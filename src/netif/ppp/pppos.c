@@ -382,10 +382,10 @@ static err_t
 pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-#if !VJ_SUPPORT
+#if !VJ_SUPPORT && PPP_IPV4_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;
-#endif /* !VJ_SUPPORT */
+#endif /* !VJ_SUPPORT && PPP_IPV4_SUPPORT */
 
   /* input pbuf left over from last session? */
   pppos_free_current_input_packet(pppos);
@@ -394,6 +394,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
   /* reset PPPoS control block to its initial state */
   memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
 
+#if PPP_IPV4_SUPPORT
 #if VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
 #else /* VJ_SUPPORT */
@@ -406,6 +407,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
   ipcp_ao->neg_vj = 0;
   ipcp_ao->old_vj = 0;
 #endif /* VJ_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT */
 
   /*
    * Default the in and out accm so that escape and flag characters
