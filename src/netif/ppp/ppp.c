@@ -590,6 +590,11 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   return pcb;
 }
 
+void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx) {
+  pcb->link_cb = callbacks;
+  pcb->link_ctx_cb = ctx;
+}
+
 /* Set a PPP PCB to its initial state */
 void ppp_clear(ppp_pcb *pcb) {
   const struct protent *protp;
@@ -614,11 +619,6 @@ void ppp_clear(ppp_pcb *pcb) {
   }
 
   new_phase(pcb, PPP_PHASE_INITIALIZE);
-}
-
-void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx) {
-  pcb->link_cb = callbacks;
-  pcb->link_ctx_cb = ctx;
 }
 
 /** Initiate LCP open request */
@@ -780,27 +780,8 @@ out:
   return;
 }
 
-
-/*
- * Write a pbuf to a ppp link, only used from PPP functions
- * to send PPP packets.
- *
- * IPv4 and IPv6 packets from lwIP are sent, respectively,
- * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
- * functions (which are callbacks of the netif PPP interface).
- *
- *  RETURN: >= 0 Number of characters written
- *           -1 Failed to write to device
- */
-int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
-#if PRINTPKT_SUPPORT
-  ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
-#endif /* PRINTPKT_SUPPORT */
-  return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
-}
-
 /* merge a pbuf chain into one pbuf */
-struct pbuf * ppp_singlebuf(struct pbuf *p) {
+struct pbuf *ppp_singlebuf(struct pbuf *p) {
   struct pbuf *q, *b;
   u_char *pl;
 
@@ -823,6 +804,24 @@ struct pbuf * ppp_singlebuf(struct pbuf *p) {
   pbuf_free(p);
 
   return q;
+}
+
+/*
+ * Write a pbuf to a ppp link, only used from PPP functions
+ * to send PPP packets.
+ *
+ * IPv4 and IPv6 packets from lwIP are sent, respectively,
+ * with ppp_netif_output_ip4() and ppp_netif_output_ip6()
+ * functions (which are callbacks of the netif PPP interface).
+ *
+ *  RETURN: >= 0 Number of characters written
+ *           -1 Failed to write to device
+ */
+int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
+#if PRINTPKT_SUPPORT
+  ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
+#endif /* PRINTPKT_SUPPORT */
+  return pcb->link_cb->write(pcb, pcb->link_ctx_cb, p);
 }
 
 void ppp_link_terminated(ppp_pcb *pcb) {

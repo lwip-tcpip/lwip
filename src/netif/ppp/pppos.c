@@ -244,8 +244,8 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
    * Otherwise send it. */
   if (!tail) {
     PPPDEBUG(LOG_WARNING,
-             ("ppp_write[%d]: Alloc err - dropping pbuf len=%d\n", ppp->netif->num, head->len));
-           /*"ppp_write[%d]: Alloc err - dropping %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
+             ("pppos_write[%d]: Alloc err - dropping pbuf len=%d\n", ppp->netif->num, head->len));
+           /*"pppos_write[%d]: Alloc err - dropping %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
     pbuf_free(head);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
@@ -254,8 +254,8 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     return ERR_MEM;
   }
 
-  PPPDEBUG(LOG_INFO, ("ppp_write[%d]: len=%d\n", ppp->netif->num, head->len));
-                   /* "ppp_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
+  PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, head->len));
+                   /* "pppos_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
   pppos_xmit(pppos, head);
   pbuf_free(p);
   return ERR_OK;
@@ -426,7 +426,7 @@ pppos_disconnect(ppp_pcb *ppp, void *ctx)
 {
   LWIP_UNUSED_ARG(ctx);
 
-  /* We cannot call ppp_free_current_input_packet() here because
+  /* We cannot call pppos_free_current_input_packet() here because
    * rx thread might still call pppos_input()
    */
   ppp_link_end(ppp); /* notify upper layers */

@@ -380,19 +380,30 @@ struct pppd_stats {
 #endif /* PPP_STATS_SUPPORT */
 
 
-/* PPP functions
+/*
+ * PPP private functions
  */
+
+/*
+ * Functions called from lwIP core.
+ */
+
 /* initialize the PPP subsystem */
 int ppp_init(void);
+
+
+/*
+ * Functions called from PPP link protocols.
+ */
 
 /* Create a new PPP control block */
 ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-/* Set a PPP PCB to its initial state */
-void ppp_clear(ppp_pcb *pcb);
-
 /* Set link callback functions */
 void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx);
+
+/* Set a PPP PCB to its initial state */
+void ppp_clear(ppp_pcb *pcb);
 
 /* Initiate LCP open request */
 void ppp_start(ppp_pcb *pcb);
@@ -403,8 +414,16 @@ void ppp_link_failed(ppp_pcb *pcb);
 /* Called when link is normally down (i.e. it was asked to end) */
 void ppp_link_end(ppp_pcb *pcb);
 
-/* function called by pppoe.c */
+/* function called to process input packet */
 void ppp_input(ppp_pcb *pcb, struct pbuf *pb);
+
+/* helper function, merge a pbuf chain into one pbuf */
+struct pbuf *ppp_singlebuf(struct pbuf *p);
+
+
+/*
+ * Functions called by PPP protocols.
+ */
 
 /* function called by all PPP subsystems to send packets */
 int ppp_write(ppp_pcb *pcb, struct pbuf *p);
@@ -412,13 +431,6 @@ int ppp_write(ppp_pcb *pcb, struct pbuf *p);
 /* functions called by auth.c link_terminated() */
 void ppp_link_terminated(ppp_pcb *pcb);
 
-/* merge a pbuf chain into one pbuf */
-struct pbuf * ppp_singlebuf(struct pbuf *p);
-
-
-/* Functions called by various PPP subsystems to configure
- * the PPP interface or change the PPP phase.
- */
 void new_phase(ppp_pcb *pcb, int p);
 
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp);
@@ -456,14 +468,12 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 
 int get_loop_output(void);
 
-u32_t get_mask (u32_t addr);
-
+u32_t get_mask(u32_t addr);
 
 /* Optional protocol names list, to make our messages a little more informative. */
 #if PPP_PROTOCOLNAME
 const char * protocol_name(int proto);
 #endif /* PPP_PROTOCOLNAME  */
-
 
 /* Optional stats support, to get some statistics on the PPP interface */
 #if PPP_STATS_SUPPORT
@@ -486,8 +496,6 @@ void update_link_stats(int u); /* Get stats at link termination */
 #define PUTCHAR(c, cp) { \
 	*(cp)++ = (u_char) (c); \
 }
-
-
 #define GETSHORT(s, cp) { \
 	(s) = *(cp)++ << 8; \
 	(s) |= *(cp)++; \
@@ -496,7 +504,6 @@ void update_link_stats(int u); /* Get stats at link termination */
 	*(cp)++ = (u_char) ((s) >> 8); \
 	*(cp)++ = (u_char) (s); \
 }
-
 #define GETLONG(l, cp) { \
 	(l) = *(cp)++ << 8; \
 	(l) |= *(cp)++; (l) <<= 8; \
@@ -516,9 +523,9 @@ void update_link_stats(int u); /* Get stats at link termination */
 /*
  * System dependent definitions for user-level 4.3BSD UNIX implementation.
  */
-#define TIMEOUT(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
-#define TIMEOUTMS(f, a, t)    do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
-#define UNTIMEOUT(f, a)     sys_untimeout((f), (a))
+#define TIMEOUT(f, a, t)        do { sys_untimeout((f), (a)); sys_timeout((t)*1000, (f), (a)); } while(0)
+#define TIMEOUTMS(f, a, t)      do { sys_untimeout((f), (a)); sys_timeout((t), (f), (a)); } while(0)
+#define UNTIMEOUT(f, a)         sys_untimeout((f), (a))
 
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
@@ -610,5 +617,4 @@ void ppp_dump_packet(const char *tag, unsigned char *p, int len);
 
 
 #endif /* PPP_IMP_H_ */
-
 #endif /* PPP_SUPPORT */
