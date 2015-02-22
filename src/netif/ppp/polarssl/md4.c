@@ -44,6 +44,8 @@
 
 #include "netif/ppp/polarssl/md4.h"
 
+#include <string.h>
+
 /*
  * 32-bit integer manipulation macros (little endian)
  */
