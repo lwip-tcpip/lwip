@@ -467,13 +467,13 @@ err_t ppp_open(ppp_pcb *pcb, u16_t holdoff);
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
  * Return 0 on success, an error code on failure.
+ *
+ * Setting nocarrier to 1 close the PPP connection without initiating the
+ * shutdown procedure. Always using nocarrier = 0 is still recommended,
+ * this is going to take a little longer time if your link is down, but
+ * is a safer choice for the PPP state machine.
  */
-err_t ppp_close(ppp_pcb *pcb);
-
-/*
- * Indicate to the PPP stack that the line has disconnected.
- */
-void ppp_sighup(ppp_pcb *pcb);
+err_t ppp_close(ppp_pcb *pcb, u8_t nocarrier);
 
 /*
  * Release the control block.

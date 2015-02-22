@@ -93,6 +93,9 @@ struct pppapi_msg_msg {
       u16_t holdoff;
     } open;
     struct {
+      u8_t nocarrier;
+    } close;
+    struct {
       u8_t cmd;
       void *arg;
     } ioctl;
@@ -134,8 +137,7 @@ ppp_pcb *pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_add
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
 err_t pppapi_open(ppp_pcb *pcb, u16_t holdoff);
-err_t pppapi_close(ppp_pcb *pcb);
-void pppapi_sighup(ppp_pcb *pcb);
+err_t pppapi_close(ppp_pcb *pcb, u8_t nocarrier);
 err_t pppapi_free(ppp_pcb *pcb);
 err_t pppapi_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 #if LWIP_NETIF_STATUS_CALLBACK

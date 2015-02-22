@@ -267,7 +267,7 @@ pppapi_open(ppp_pcb *pcb, u16_t holdoff)
 static void
 pppapi_do_ppp_close(struct pppapi_msg_msg *msg)
 {
-  msg->err = ppp_close(msg->ppp);
+  msg->err = ppp_close(msg->ppp, msg->msg.close.nocarrier);
   TCPIP_PPPAPI_ACK(msg);
 }
 
@@ -276,37 +276,14 @@ pppapi_do_ppp_close(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 err_t
-pppapi_close(ppp_pcb *pcb)
+pppapi_close(ppp_pcb *pcb, u8_t nocarrier)
 {
   struct pppapi_msg msg;
   msg.function = pppapi_do_ppp_close;
   msg.msg.ppp = pcb;
+  msg.msg.msg.close.nocarrier = nocarrier;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
-}
-
-
-/**
- * Call ppp_sighup() inside the tcpip_thread context.
- */
-static void
-pppapi_do_ppp_sighup(struct pppapi_msg_msg *msg)
-{
-  ppp_sighup(msg->ppp);
-  TCPIP_PPPAPI_ACK(msg);
-}
-
-/**
- * Call ppp_sighup() in a thread-safe way by running that function inside the
- * tcpip_thread context.
- */
-void
-pppapi_sighup(ppp_pcb *pcb)
-{
-  struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_sighup;
-  msg.msg.ppp = pcb;
-  TCPIP_PPPAPI(&msg);
 }
 
 
