@@ -210,7 +210,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 		val = va_arg(args, long);
 		if ((long)val < 0) {
 		    neg = 1;
-		    val = (unsigned long)-val;
+		    val = (unsigned long)-(long)val;
 		}
 		base = 10;
 		break;
