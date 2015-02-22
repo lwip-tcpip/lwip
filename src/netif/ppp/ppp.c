@@ -351,7 +351,11 @@ ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
       if (!arg) {
         goto fail;
       }
-      *(int *)arg = (int)(pcb->if_up);
+      *(int *)arg = (int)(pcb->if_up
+#if PPP_IPV6_SUPPORT
+           || pcb->if6_up
+#endif /* PPP_IPV6_SUPPORT */
+           );
       return ERR_OK;
 
     case PPPCTLG_ERRCODE:       /* Get the PPP error code. */
