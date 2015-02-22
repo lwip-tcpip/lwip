@@ -82,8 +82,8 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect 
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port);
-static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip_addr *addr, u16_t port);
+static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, const struct ip_addr *addr, u16_t port,
              struct pbuf *p, u16_t len, u16_t tunnel_id, u16_t session_id, u16_t ns, u16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
@@ -334,7 +334,7 @@ static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming L2TP frames */
-static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, struct ip_addr *addr, u16_t port) {
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip_addr *addr, u16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
   u8_t *inp;
@@ -464,7 +464,7 @@ free_and_return:
 }
 
 /* L2TP Control packet entry point */
-static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, struct ip_addr *addr, u16_t port,
+static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, const struct ip_addr *addr, u16_t port,
              struct pbuf *p, u16_t len, u16_t tunnel_id, u16_t session_id, u16_t ns, u16_t nr) {
   u8_t *inp;
   u16_t avplen, avpflags, vendorid, attributetype, messagetype=0;
