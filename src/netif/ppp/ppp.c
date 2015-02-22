@@ -291,6 +291,7 @@ ppp_close(ppp_pcb *pcb)
   /* holdoff phase, cancel the reconnection and call the status callback */
   if (pcb->phase == PPP_PHASE_HOLDOFF) {
     sys_untimeout(ppp_do_open, pcb);
+    pcb->phase = PPP_PHASE_DEAD;
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return ERR_OK;
   }
