@@ -591,7 +591,7 @@ ip6_frag_free_pbuf_custom(struct pbuf *p)
  * @return ERR_OK if sent successfully, err_t otherwise
  */
 err_t
-ip6_frag(struct pbuf *p, struct netif *netif, ip6_addr_t *dest)
+ip6_frag(struct pbuf *p, struct netif *netif, const ip6_addr_t *dest)
 {
   struct ip6_hdr *original_ip6hdr;
   struct ip6_hdr *ip6hdr;

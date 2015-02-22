@@ -2704,7 +2704,7 @@ atentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
-  ip_addr_t* ipaddr_ret;
+  const ip_addr_t* ipaddr_ret;
 #endif /* LWIP_ARP */
   ip_addr_t ip;
   struct netif *netif;
@@ -3410,7 +3410,7 @@ ip_ntomentry_get_value(struct obj_def *od, u16_t len, void *value)
 #if LWIP_ARP
   u8_t id;
   struct eth_addr* ethaddr_ret;
-  ip_addr_t* ipaddr_ret;
+  const ip_addr_t* ipaddr_ret;
 #endif /* LWIP_ARP */
   ip_addr_t ip;
   struct netif *netif;
