@@ -196,7 +196,7 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
  * @return ERR_OK if bound, any other err_t on failure
  */
 err_t
-netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port)
+netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 {
   API_MSG_VAR_DECLARE(msg);
   err_t err;
@@ -228,7 +228,7 @@ netconn_bind(struct netconn *conn, ip_addr_t *addr, u16_t port)
  * @return ERR_OK if connected, return value of tcp_/udp_/raw_connect otherwise
  */
 err_t
-netconn_connect(struct netconn *conn, ip_addr_t *addr, u16_t port)
+netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
 {
   API_MSG_VAR_DECLARE(msg);
   err_t err;
@@ -626,7 +626,7 @@ netconn_recved(struct netconn *conn, u32_t length)
  * @return ERR_OK if data was sent, any other err_t on error
  */
 err_t
-netconn_sendto(struct netconn *conn, struct netbuf *buf, ip_addr_t *addr, u16_t port)
+netconn_sendto(struct netconn *conn, struct netbuf *buf, const ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
     ipX_addr_set_ipaddr(PCB_ISIPV6(conn->pcb.ip), &buf->addr, addr);
@@ -806,8 +806,8 @@ netconn_shutdown(struct netconn *conn, u8_t shut_rx, u8_t shut_tx)
  */
 err_t
 netconn_join_leave_group(struct netconn *conn,
-                         ip_addr_t *multiaddr,
-                         ip_addr_t *netif_addr,
+                         const ip_addr_t *multiaddr,
+                         const ip_addr_t *netif_addr,
                          enum netconn_igmp join_or_leave)
 {
   API_MSG_VAR_DECLARE(msg);

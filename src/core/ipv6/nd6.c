@@ -82,21 +82,21 @@ static ip6_addr_t multicast_address;
 static u8_t nd6_ra_buffer[sizeof(struct prefix_option)];
 
 /* Forward declarations. */
-static s8_t nd6_find_neighbor_cache_entry(ip6_addr_t * ip6addr);
+static s8_t nd6_find_neighbor_cache_entry(const ip6_addr_t * ip6addr);
 static s8_t nd6_new_neighbor_cache_entry(void);
 static void nd6_free_neighbor_cache_entry(s8_t i);
-static s8_t nd6_find_destination_cache_entry(ip6_addr_t * ip6addr);
+static s8_t nd6_find_destination_cache_entry(const ip6_addr_t * ip6addr);
 static s8_t nd6_new_destination_cache_entry(void);
-static s8_t nd6_is_prefix_in_netif(ip6_addr_t * ip6addr, struct netif * netif);
-static s8_t nd6_get_router(ip6_addr_t * router_addr, struct netif * netif);
-static s8_t nd6_new_router(ip6_addr_t * router_addr, struct netif * netif);
+static s8_t nd6_is_prefix_in_netif(const ip6_addr_t * ip6addr, struct netif * netif);
+static s8_t nd6_get_router(const ip6_addr_t * router_addr, struct netif * netif);
+static s8_t nd6_new_router(const ip6_addr_t * router_addr, struct netif * netif);
 static s8_t nd6_get_onlink_prefix(ip6_addr_t * prefix, struct netif * netif);
 static s8_t nd6_new_onlink_prefix(ip6_addr_t * prefix, struct netif * netif);
 
 #define ND6_SEND_FLAG_MULTICAST_DEST 0x01
 #define ND6_SEND_FLAG_ALLNODES_DEST 0x02
-static void nd6_send_ns(struct netif * netif, ip6_addr_t * target_addr, u8_t flags);
-static void nd6_send_na(struct netif * netif, ip6_addr_t * target_addr, u8_t flags);
+static void nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags);
+static void nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags);
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
 static void nd6_send_rs(struct netif * netif);
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
@@ -794,7 +794,7 @@ nd6_tmr(void)
  * @param flags one of ND6_SEND_FLAG_*
  */
 static void
-nd6_send_ns(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
+nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
 {
   struct ns_header * ns_hdr;
   struct lladdr_option * lladdr_opt;
@@ -859,13 +859,13 @@ nd6_send_ns(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
  * @param flags one of ND6_SEND_FLAG_*
  */
 static void
-nd6_send_na(struct netif * netif, ip6_addr_t * target_addr, u8_t flags)
+nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
 {
   struct na_header * na_hdr;
   struct lladdr_option * lladdr_opt;
   struct pbuf * p;
-  ip6_addr_t * src_addr;
-  ip6_addr_t * dest_addr;
+  const ip6_addr_t * src_addr;
+  const ip6_addr_t * dest_addr;
 
   /* Use link-local address as source address. */
   /* src_addr = &(netif->ip6_addr[0]); */
@@ -1003,7 +1003,7 @@ nd6_send_rs(struct netif * netif)
  * entry is found
  */
 static s8_t
-nd6_find_neighbor_cache_entry(ip6_addr_t * ip6addr)
+nd6_find_neighbor_cache_entry(const ip6_addr_t * ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_ND6_NUM_NEIGHBORS; i++) {
@@ -1158,7 +1158,7 @@ nd6_free_neighbor_cache_entry(s8_t i)
  * entry is found
  */
 static s8_t
-nd6_find_destination_cache_entry(ip6_addr_t * ip6addr)
+nd6_find_destination_cache_entry(const ip6_addr_t * ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_ND6_NUM_DESTINATIONS; i++) {
@@ -1208,7 +1208,7 @@ nd6_new_destination_cache_entry(void)
  * @return 1 if the address is on-link, 0 otherwise
  */
 static s8_t
-nd6_is_prefix_in_netif(ip6_addr_t * ip6addr, struct netif * netif)
+nd6_is_prefix_in_netif(const ip6_addr_t * ip6addr, struct netif * netif)
 {
   s8_t i;
   for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
@@ -1237,7 +1237,7 @@ nd6_is_prefix_in_netif(ip6_addr_t * ip6addr, struct netif * netif)
  *         router is found
  */
 s8_t
-nd6_select_router(ip6_addr_t * ip6addr, struct netif * netif)
+nd6_select_router(const ip6_addr_t * ip6addr, struct netif * netif)
 {
   s8_t i;
   /* last_router is used for round-robin router selection (as recommended
@@ -1296,7 +1296,7 @@ nd6_select_router(ip6_addr_t * ip6addr, struct netif * netif)
  * @return the index of the router entry, or -1 if not found
  */
 static s8_t
-nd6_get_router(ip6_addr_t * router_addr, struct netif * netif)
+nd6_get_router(const ip6_addr_t * router_addr, struct netif * netif)
 {
   s8_t i;
 
@@ -1321,7 +1321,7 @@ nd6_get_router(ip6_addr_t * router_addr, struct netif * netif)
  * @return the index on the router table, or -1 if could not be created
  */
 static s8_t
-nd6_new_router(ip6_addr_t * router_addr, struct netif * netif)
+nd6_new_router(const ip6_addr_t * router_addr, struct netif * netif)
 {
   s8_t router_index;
   s8_t neighbor_index;
@@ -1427,7 +1427,7 @@ nd6_new_onlink_prefix(ip6_addr_t * prefix, struct netif * netif)
  *         could be created
  */
 s8_t
-nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif)
+nd6_get_next_hop_entry(const ip6_addr_t * ip6addr, struct netif * netif)
 {
   s8_t i;
 
@@ -1726,7 +1726,7 @@ nd6_send_q(s8_t i)
  * @return the Path MTU, if known, or the netif default MTU
  */
 u16_t
-nd6_get_destination_mtu(ip6_addr_t * ip6addr, struct netif * netif)
+nd6_get_destination_mtu(const ip6_addr_t * ip6addr, struct netif * netif)
 {
   s8_t i;
 
@@ -1756,7 +1756,7 @@ nd6_get_destination_mtu(ip6_addr_t * ip6addr, struct netif * netif)
  *                by an upper layer protocol (TCP)
  */
 void
-nd6_reachability_hint(ip6_addr_t * ip6addr)
+nd6_reachability_hint(const ip6_addr_t * ip6addr)
 {
   s8_t i;
 

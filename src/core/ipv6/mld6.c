@@ -76,7 +76,7 @@ static struct mld_group* mld_group_list;
 
 
 /* Forward declarations. */
-static struct mld_group * mld6_new_group(struct netif *ifp, ip6_addr_t *addr);
+static struct mld_group * mld6_new_group(struct netif *ifp, const ip6_addr_t *addr);
 static err_t mld6_free_group(struct mld_group *group);
 static void mld6_delayed_report(struct mld_group *group, u16_t maxresp);
 static void mld6_send(struct mld_group *group, u8_t type);
@@ -150,7 +150,7 @@ mld6_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct mld_group *
-mld6_lookfor_group(struct netif *ifp, ip6_addr_t *addr)
+mld6_lookfor_group(struct netif *ifp, const ip6_addr_t *addr)
 {
   struct mld_group *group = mld_group_list;
 
@@ -174,7 +174,7 @@ mld6_lookfor_group(struct netif *ifp, ip6_addr_t *addr)
  *         NULL on memory error.
  */
 static struct mld_group *
-mld6_new_group(struct netif *ifp, ip6_addr_t *addr)
+mld6_new_group(struct netif *ifp, const ip6_addr_t *addr)
 {
   struct mld_group *group;
 
@@ -324,7 +324,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
  * @return ERR_OK if group was joined on the netif(s), an err_t otherwise
  */
 err_t
-mld6_joingroup(ip6_addr_t *srcaddr, ip6_addr_t *groupaddr)
+mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct mld_group  *group;
@@ -391,7 +391,7 @@ mld6_joingroup(ip6_addr_t *srcaddr, ip6_addr_t *groupaddr)
  * @return ERR_OK if group was left on the netif(s), an err_t otherwise
  */
 err_t
-mld6_leavegroup(ip6_addr_t *srcaddr, ip6_addr_t *groupaddr)
+mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct mld_group  *group;

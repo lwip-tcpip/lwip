@@ -123,7 +123,7 @@ struct udp_pcb {
 
 #if LWIP_IGMP
   /** outgoing network interface for multicast packets */
-  const ip_addr_t multicast_ip;
+  ip_addr_t multicast_ip;
 #endif /* LWIP_IGMP */
 
 #if LWIP_UDPLITE

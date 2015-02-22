@@ -345,12 +345,12 @@ extern u32_t retrans_timer;
 #define nd6_init() /* TODO should we init tables? */
 void nd6_tmr(void);
 void nd6_input(struct pbuf *p, struct netif *inp);
-s8_t nd6_get_next_hop_entry(ip6_addr_t * ip6addr, struct netif * netif);
-s8_t nd6_select_router(ip6_addr_t * ip6addr, struct netif * netif);
-u16_t nd6_get_destination_mtu(ip6_addr_t * ip6addr, struct netif * netif);
+s8_t nd6_get_next_hop_entry(const ip6_addr_t * ip6addr, struct netif * netif);
+s8_t nd6_select_router(const ip6_addr_t * ip6addr, struct netif * netif);
+u16_t nd6_get_destination_mtu(const ip6_addr_t * ip6addr, struct netif * netif);
 err_t nd6_queue_packet(s8_t neighbor_index, struct pbuf * p);
 #if LWIP_ND6_TCP_REACHABILITY_HINTS
-void nd6_reachability_hint(ip6_addr_t * ip6addr);
+void nd6_reachability_hint(const ip6_addr_t * ip6addr);
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
 #ifdef __cplusplus

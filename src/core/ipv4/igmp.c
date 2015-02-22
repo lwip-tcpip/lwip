@@ -135,7 +135,7 @@ PACK_STRUCT_END
 #endif
 
 
-static struct igmp_group *igmp_lookup_group(struct netif *ifp, ip_addr_t *addr);
+static struct igmp_group *igmp_lookup_group(struct netif *ifp, const ip_addr_t *addr);
 static err_t  igmp_remove_group(struct igmp_group *group);
 static void   igmp_timeout( struct igmp_group *group);
 static void   igmp_start_timer(struct igmp_group *group, u8_t max_time);
@@ -287,7 +287,7 @@ igmp_report_groups(struct netif *netif)
  *         NULL if the group wasn't found.
  */
 struct igmp_group *
-igmp_lookfor_group(struct netif *ifp, ip_addr_t *addr)
+igmp_lookfor_group(struct netif *ifp, const ip_addr_t *addr)
 {
   struct igmp_group *group = igmp_group_list;
 
@@ -313,7 +313,7 @@ igmp_lookfor_group(struct netif *ifp, ip_addr_t *addr)
  *         NULL on memory error.
  */
 struct igmp_group *
-igmp_lookup_group(struct netif *ifp, ip_addr_t *addr)
+igmp_lookup_group(struct netif *ifp, const ip_addr_t *addr)
 {
   struct igmp_group *group = igmp_group_list;
   
@@ -386,7 +386,7 @@ igmp_remove_group(struct igmp_group *group)
  * @param dest destination ip address of the igmp packet
  */
 void
-igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
+igmp_input(struct pbuf *p, struct netif *inp, const ip_addr_t *dest)
 {
   struct igmp_msg*   igmp;
   struct igmp_group* group;
@@ -510,7 +510,7 @@ igmp_input(struct pbuf *p, struct netif *inp, ip_addr_t *dest)
  * @return ERR_OK if group was joined on the netif(s), an err_t otherwise
  */
 err_t
-igmp_joingroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
+igmp_joingroup(const ip_addr_t *ifaddr, const ip_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct igmp_group *group;
@@ -580,7 +580,7 @@ igmp_joingroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
  * @return ERR_OK if group was left on the netif(s), an err_t otherwise
  */
 err_t
-igmp_leavegroup(ip_addr_t *ifaddr, ip_addr_t *groupaddr)
+igmp_leavegroup(const ip_addr_t *ifaddr, const ip_addr_t *groupaddr)
 {
   err_t              err = ERR_VAL; /* no matching interface */
   struct igmp_group *group;

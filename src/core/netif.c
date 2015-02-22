@@ -85,7 +85,7 @@ struct netif *netif_default;
 static u8_t netif_num;
 
 #if LWIP_IPV6
-static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr);
+static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr);
 #endif /* LWIP_IPV6 */
 
 #if LWIP_IPV6
@@ -97,7 +97,7 @@ static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr
 #if LWIP_HAVE_LOOPIF
 static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip_addr_t* addr);
 #if LWIP_IPV6
-static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr);
+static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* addr);
 #endif
 
 
@@ -771,7 +771,7 @@ netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip_addr_t* add
 
 #if LWIP_IPV6
 static err_t
-netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, ip6_addr_t* addr)
+netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* addr)
 {
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);
@@ -929,7 +929,7 @@ netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
 }
 
 static err_t
-netif_null_output_ip6(struct netif *netif, struct pbuf *p, ip6_addr_t *ipaddr)
+netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr)
 {
     (void)netif;
     (void)p;

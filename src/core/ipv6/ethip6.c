@@ -133,7 +133,7 @@ ethip6_send(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct et
  * or the return type of either etharp_query() or etharp_send_ip().
  */
 err_t
-ethip6_output(struct netif *netif, struct pbuf *q, ip6_addr_t *ip6addr)
+ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
 {
   struct eth_addr dest;
   s8_t i;

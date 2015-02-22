@@ -134,7 +134,7 @@ typedef err_t (*netif_output_fn)(struct netif *netif, struct pbuf *p,
  * @param ipaddr The IPv6 address to which the packet shall be sent
  */
 typedef err_t (*netif_output_ip6_fn)(struct netif *netif, struct pbuf *p,
-       ip6_addr_t *ipaddr);
+       const ip6_addr_t *ipaddr);
 #endif /* LWIP_IPV6 */
 /** Function prototype for netif->linkoutput functions. Only used for ethernet
  * netifs. This function is called by ARP when a packet shall be sent.
@@ -151,7 +151,7 @@ typedef err_t (*netif_igmp_mac_filter_fn)(struct netif *netif,
 #if LWIP_IPV6 && LWIP_IPV6_MLD
 /** Function prototype for netif mld_mac_filter functions */
 typedef err_t (*netif_mld_mac_filter_fn)(struct netif *netif,
-       ip6_addr_t *group, u8_t action);
+       const ip6_addr_t *group, u8_t action);
 #endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
 
 /** Generic data structure used for all lwIP network interfaces.

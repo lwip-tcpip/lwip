@@ -80,7 +80,7 @@ static err_t lwip_netconn_do_close_internal(struct netconn *conn);
  */
 static u8_t
 recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
-    ip_addr_t *addr)
+    const ip_addr_t *addr)
 {
   struct pbuf *q;
   struct netbuf *buf;
@@ -146,7 +146,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
  */
 static void
 recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
-   ip_addr_t *addr, u16_t port)
+   const ip_addr_t *addr, u16_t port)
 {
   struct netbuf *buf;
   struct netconn *conn;

@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2015-02-22: chrysn, Simon Goldschmidt
+  * *.*: Changed nearly all functions taking 'ip(X)_addr_t' pointer to take
+    const pointers (changed user callbacks: raw_recv_fn, udp_recv_fn; changed
+    port callbacks: netif_output_fn, netif_igmp_mac_filter_fn)
+
   2015-02-19: Ivan Delamer
   * netif.h, dhcp.c: Removed unused netif flag for DHCP. The preferred way to evaluate
     if DHCP is active is through netif->dhcp field.

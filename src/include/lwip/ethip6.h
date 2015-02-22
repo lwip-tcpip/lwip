@@ -57,7 +57,7 @@ extern "C" {
 #endif
 
 
-err_t ethip6_output(struct netif *netif, struct pbuf *q, ip6_addr_t *ip6addr);
+err_t ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr);
 
 #ifdef __cplusplus
 }

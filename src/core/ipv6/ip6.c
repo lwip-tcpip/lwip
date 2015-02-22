@@ -78,7 +78,7 @@
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip6_route(struct ip6_addr *src, struct ip6_addr *dest)
+ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
 {
   struct netif *netif;
   s8_t i;
@@ -156,7 +156,7 @@ ip6_route(struct ip6_addr *src, struct ip6_addr *dest)
  *         source address is found
  */
 ip6_addr_t *
-ip6_select_source_address(struct netif *netif, ip6_addr_t * dest)
+ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest)
 {
   ip6_addr_t * src = NULL;
   u8_t i;
@@ -744,11 +744,11 @@ ip6_input_cleanup:
  *         returns errors returned by netif->output
  */
 err_t
-ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
+ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
              u8_t hl, u8_t tc,
              u8_t nexth, struct netif *netif)
 {
-  ip6_addr_t *src_used = src;
+  const ip6_addr_t *src_used = src;
   if (dest != IP_HDRINCL) {
     if (src != NULL && ip6_addr_isany(src)) {
       src = ip6_select_source_address(netif, dest);
@@ -768,7 +768,7 @@ ip6_output_if(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
  * when it is 'any'.
  */
 err_t
-ip6_output_if_src(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
+ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
              u8_t hl, u8_t tc,
              u8_t nexth, struct netif *netif)
 {
