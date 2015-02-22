@@ -330,7 +330,12 @@ struct ppp_pcb_s {
   unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
   unsigned int if4_up                  :1; /* True when the IPv4 interface is up. */
   unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
+#if VJ_SUPPORT
+  unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
 #else
+  unsigned int                         :1; /* 1 bit of padding */
+#endif /* VJ_SUPPORT */
+#else /* PPP_IPV4_SUPPORT */
   unsigned int                         :4; /* 4 bit of padding */
 #endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
@@ -341,11 +346,6 @@ struct ppp_pcb_s {
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-#if VJ_SUPPORT
-  unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
-#else
-  unsigned int                         :1; /* 1 bit of padding */
-#endif /* VJ_SUPPORT */
   unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
   u32_t last_xmit;               /* Time of last transmission. */

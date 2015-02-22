@@ -431,7 +431,9 @@ int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
 int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
+#if VJ_SUPPORT
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
+#endif /* VJ_SUPPORT */
 int sifup(ppp_pcb *pcb);
 int sifdown (ppp_pcb *pcb);
 #endif /* PPP_IPV4_SUPPORT */

@@ -957,6 +957,7 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   return 1;
 }
 
+#if VJ_SUPPORT
 /********************************************************************
  *
  * sifvjcomp - config tcp header compression
@@ -967,6 +968,7 @@ int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
   }
   return 0;
 }
+#endif /* VJ_SUPPORT */
 
 /*
  * sifup - Config the interface up and enable IP packets to pass.

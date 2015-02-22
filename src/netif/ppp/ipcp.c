@@ -1852,8 +1852,10 @@ static void ipcp_up(fsm *f) {
     }
 #endif /* Unused */
 
+#if VJ_SUPPORT
     /* set tcp compression */
     sifvjcomp(pcb, ho->neg_vj, ho->cflag, ho->maxslotindex);
+#endif /* VJ_SUPPORT */
 
 #if DEMAND_SUPPORT
     /*
@@ -2012,7 +2014,9 @@ static void ipcp_down(fsm *f) {
 	pcb->ipcp_is_up = 0;
 	np_down(pcb, PPP_IP);
     }
+#if VJ_SUPPORT
     sifvjcomp(pcb, 0, 0, 0);
+#endif /* VJ_SUPPORT */
 
 #if PPP_STATS_SUPPORT
     print_link_stats(); /* _after_ running the notifiers and ip_down_hook(),
