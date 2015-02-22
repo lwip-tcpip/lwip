@@ -153,11 +153,11 @@ const struct protent* const protocols[] = {
 #endif /* CHAP_SUPPORT */
 #if CBCP_SUPPORT
     &cbcp_protent,
-#endif
+#endif /* CBCP_SUPPORT */
     &ipcp_protent,
 #if PPP_IPV6_SUPPORT
     &ipv6cp_protent,
-#endif
+#endif /* PPP_IPV6_SUPPORT */
 #if CCP_SUPPORT
     &ccp_protent,
 #endif /* CCP_SUPPORT */
@@ -166,7 +166,7 @@ const struct protent* const protocols[] = {
 #endif /* ECP_SUPPORT */
 #ifdef AT_CHANGE
     &atcp_protent,
-#endif
+#endif /* AT_CHANGE */
 #if EAP_SUPPORT
     &eap_protent,
 #endif /* EAP_SUPPORT */
@@ -552,8 +552,8 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
   pcb->netif = pppif;
-  if (!netif_add(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                 &pcb->addrs.his_ipaddr, (void *)pcb, ppp_netif_init_cb, NULL)) {
+  if (!netif_add(pcb->netif, IP_ADDR_ANY, IP_ADDR_BROADCAST, IP_ADDR_ANY,
+                     (void *)pcb, ppp_netif_init_cb, NULL)) {
     memp_free(MEMP_PPP_PCB, pcb);
     PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
     return NULL;
@@ -577,7 +577,7 @@ void ppp_clear(ppp_pcb *pcb) {
 #endif /* PPP_STATS_SUPPORT */
 
   memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
-  IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
+  ip4_addr_set_u32(&pcb->addrs.netmask, IPADDR_BROADCAST);
 
   /*
    * Initialize each protocol.
@@ -866,9 +866,9 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
 int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr,
 	     u32_t net_mask) {
 
-  SMEMCPY(&pcb->addrs.our_ipaddr, &our_adr, sizeof(our_adr));
-  SMEMCPY(&pcb->addrs.his_ipaddr, &his_adr, sizeof(his_adr));
-  SMEMCPY(&pcb->addrs.netmask, &net_mask, sizeof(net_mask));
+  ip4_addr_set_u32(&pcb->addrs.our_ipaddr, our_adr);
+  ip4_addr_set_u32(&pcb->addrs.his_ipaddr, his_adr);
+  ip4_addr_set_u32(&pcb->addrs.netmask, net_mask);
   return 1;
 }
 
@@ -883,18 +883,18 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  IP4_ADDR(&pcb->addrs.our_ipaddr, 0,0,0,0);
-  IP4_ADDR(&pcb->addrs.his_ipaddr, 0,0,0,0);
-  IP4_ADDR(&pcb->addrs.netmask, 255,255,255,255);
+  ip_addr_set_zero(&pcb->addrs.our_ipaddr);
+  ip_addr_set_zero(&pcb->addrs.his_ipaddr);
+  ip4_addr_set_u32(&pcb->addrs.netmask, IPADDR_BROADCAST);
   return 1;
 }
 
 
 #if PPP_IPV6_SUPPORT
-#define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {			\
-  memset(&ip6.addr, 0, sizeof(ip6_addr_t));	\
-  ip6.addr[0] = PP_HTONL(0xfe800000);			\
-  eui64_copy(eui64, ip6.addr[2]);			\
+#define IN6_LLADDR_FROM_EUI64(ip6, eui64) do {    \
+  ip6.addr[0] = PP_HTONL(0xfe800000);             \
+  ip6.addr[1] = 0;                                \
+  eui64_copy(eui64, ip6.addr[2]);                 \
   } while (0)
 
 /********************************************************************
@@ -917,8 +917,8 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
   LWIP_UNUSED_ARG(our_eui64);
   LWIP_UNUSED_ARG(his_eui64);
 
-  IP6_ADDR(&pcb->addrs.our6_ipaddr, 0, 0,0,0,0);
-  IP6_ADDR(&pcb->addrs.his6_ipaddr, 0, 0,0,0,0);
+  ip6_addr_set_zero(&pcb->addrs.our6_ipaddr);
+  ip6_addr_set_zero(&pcb->addrs.his6_ipaddr);
   return 1;
 }
 #endif /* PPP_IPV6_SUPPORT */
@@ -929,8 +929,8 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
  */
 int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
 
-  SMEMCPY(&pcb->addrs.dns1, &ns1, sizeof(ns1));
-  SMEMCPY(&pcb->addrs.dns2, &ns2, sizeof(ns2));
+  ip4_addr_set_u32(&pcb->addrs.dns1, ns1);
+  ip4_addr_set_u32(&pcb->addrs.dns2, ns2);
   return 1;
 }
 
@@ -944,8 +944,8 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   LWIP_UNUSED_ARG(ns1);
   LWIP_UNUSED_ARG(ns2);
 
-  IP4_ADDR(&pcb->addrs.dns1, 0,0,0,0);
-  IP4_ADDR(&pcb->addrs.dns2, 0,0,0,0);
+  ip_addr_set_zero(&pcb->addrs.dns1);
+  ip_addr_set_zero(&pcb->addrs.dns2);
   return 1;
 }
 
@@ -1143,7 +1143,7 @@ u32_t get_mask(u32_t addr) {
   return mask;
 #endif
   LWIP_UNUSED_ARG(addr);
-  return 0xFFFFFFFF;
+  return IPADDR_BROADCAST;
 }
 
 
