@@ -66,7 +66,6 @@ typedef u_char ext_accm[32];
 typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
-  pppos_pcb *next;
   ppp_pcb *ppp;                    /* PPP PCB */
   sio_fd_t fd;                     /* File device ID of port. */
 
