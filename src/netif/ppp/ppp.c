@@ -278,6 +278,12 @@ err_t ppp_open(ppp_pcb *pcb, u16_t holdoff) {
 /*
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.
+ *
+ * Setting nocarrier to 1 close the PPP connection without initiating the
+ * shutdown procedure. Always using nocarrier = 0 is still recommended,
+ * this is going to take a little longer time if your link is down, but
+ * is a safer choice for the PPP state machine.
+ *
  * Return 0 on success, an error code on failure.
  */
 err_t
@@ -285,16 +291,14 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
 {
   pcb->err_code = PPPERR_USER;
 
-  /* dead phase, nothing to do, call the status callback to be consistent */
-  if (pcb->phase == PPP_PHASE_DEAD) {
-    pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
-    return ERR_OK;
-  }
-
-  /* holdoff phase, cancel the reconnection and call the status callback */
+  /* holdoff phase, cancel the reconnection */
   if (pcb->phase == PPP_PHASE_HOLDOFF) {
     sys_untimeout(ppp_do_open, pcb);
-    pcb->phase = PPP_PHASE_DEAD;
+    new_phase(pcb, PPP_PHASE_DEAD);
+  }
+
+  /* dead phase, nothing to do, call the status callback to be consistent */
+  if (pcb->phase == PPP_PHASE_DEAD) {
     pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
     return ERR_OK;
   }
