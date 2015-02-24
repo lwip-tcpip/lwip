@@ -521,14 +521,13 @@ err_t ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 /* Get the PPP addresses */
 #define ppp_addrs(ppp)               (&(ppp)->addrs)
 
-#if LWIP_NETIF_STATUS_CALLBACK
 /* Set an lwIP-style status-callback for the selected PPP device */
-void ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
-#endif /* LWIP_NETIF_STATUS_CALLBACK */
-#if LWIP_NETIF_LINK_CALLBACK
+#define ppp_set_netif_statuscallback(ppp, status_cb)       \
+        netif_set_status_callback(ppp->netif, status_cb);
+
 /* Set an lwIP-style link-callback for the selected PPP device */
-void ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback);
-#endif /* LWIP_NETIF_LINK_CALLBACK */
+#define ppp_set_netif_linkcallback(ppp, link_cb)           \
+        netif_set_link_callback(ppp->netif, link_cb);
 
 #endif /* PPP_H */
 

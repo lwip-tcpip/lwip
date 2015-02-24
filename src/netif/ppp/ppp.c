@@ -388,36 +388,6 @@ fail:
   return ERR_VAL;
 }
 
-#if LWIP_NETIF_STATUS_CALLBACK
-/** Set the status callback of a PPP's netif
- *
- * @param pcb The PPP descriptor returned by ppp_new()
- * @param status_callback pointer to the status callback function
- *
- * @see netif_set_status_callback
- */
-void
-ppp_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback)
-{
-  netif_set_status_callback(pcb->netif, status_callback);
-}
-#endif /* LWIP_NETIF_STATUS_CALLBACK */
-
-#if LWIP_NETIF_LINK_CALLBACK
-/** Set the link callback of a PPP's netif
- *
- * @param pcb The PPP descriptor returned by ppp_new()
- * @param link_callback pointer to the link callback function
- *
- * @see netif_set_link_callback
- */
-void
-ppp_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback)
-{
-  netif_set_link_callback(pcb->netif, link_callback);
-}
-#endif /* LWIP_NETIF_LINK_CALLBACK */
-
 
 /**********************************/
 /*** LOCAL FUNCTION DEFINITIONS ***/

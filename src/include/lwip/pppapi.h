@@ -99,16 +99,6 @@ struct pppapi_msg_msg {
       u8_t cmd;
       void *arg;
     } ioctl;
-#if LWIP_NETIF_STATUS_CALLBACK
-    struct {
-      netif_status_callback_fn status_callback;
-    } netifstatuscallback;
-#endif /* LWIP_NETIF_STATUS_CALLBACK */
-#if LWIP_NETIF_LINK_CALLBACK
-    struct {
-      netif_status_callback_fn link_callback;
-    } netiflinkcallback;
-#endif /* LWIP_NETIF_LINK_CALLBACK */
   } msg;
 };
 
@@ -140,12 +130,6 @@ err_t pppapi_open(ppp_pcb *pcb, u16_t holdoff);
 err_t pppapi_close(ppp_pcb *pcb, u8_t nocarrier);
 err_t pppapi_free(ppp_pcb *pcb);
 err_t pppapi_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
-#if LWIP_NETIF_STATUS_CALLBACK
-void pppapi_set_netif_statuscallback(ppp_pcb *pcb, netif_status_callback_fn status_callback);
-#endif /* LWIP_NETIF_STATUS_CALLBACK */
-#if LWIP_NETIF_LINK_CALLBACK
-void pppapi_set_netif_linkcallback(ppp_pcb *pcb, netif_status_callback_fn link_callback);
-#endif /* LWIP_NETIF_LINK_CALLBACK */
 
 #ifdef __cplusplus
 }
