@@ -237,6 +237,29 @@ union sockaddr_aligned {
    struct sockaddr_in sin;
 };
 
+#if LWIP_IGMP
+/* Define the number of IPv4 multicast memberships, default is one per socket */
+#ifndef LWIP_SOCKET_MAX_MEMBERSHIPS
+#define LWIP_SOCKET_MAX_MEMBERSHIPS NUM_SOCKETS
+#endif
+
+/* This is to keep track of IP_ADD_MEMBERSHIP calls to drop the membership when
+   a socket is closed */
+struct lwip_socket_multicast_pair {
+  /** the socket (+1 to not require initialization) */
+  int sa;
+  /** the interface address */
+  ip_addr_t if_addr;
+  /** the group address */
+  ip_addr_t multi_addr;
+};
+
+struct lwip_socket_multicast_pair socket_ipv4_multicast_memberships[LWIP_SOCKET_MAX_MEMBERSHIPS];
+
+static int  lwip_socket_register_membership(int s, ip_addr_t *if_addr, ip_addr_t *multi_addr);
+static void lwip_socket_unregister_membership(int s, ip_addr_t *if_addr, ip_addr_t *multi_addr);
+static void lwip_socket_drop_registered_memberships(int s);
+#endif /* LWIP_IGMP */
 
 /** The global array of available sockets */
 static struct lwip_sock sockets[NUM_SOCKETS];
@@ -576,6 +599,11 @@ lwip_close(int s)
   } else {
     LWIP_ASSERT("sock->lastdata == NULL", sock->lastdata == NULL);
   }
+
+#if LWIP_IGMP
+  /* drop all possibly joined IGMP memberships */
+  lwip_socket_drop_registered_memberships(s);
+#endif /* LWIP_IGMP */
 
   err = netconn_delete(sock->conn);
   if (err != ERR_OK) {
@@ -2162,10 +2190,17 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, struct ip_mreq, NETCONN_UDP);
         inet_addr_to_ipaddr(&if_addr, &imr->imr_interface);
         inet_addr_to_ipaddr(&multi_addr, &imr->imr_multiaddr);
-        if(optname == IP_ADD_MEMBERSHIP){
-          igmp_err = igmp_joingroup(&if_addr, &multi_addr);
+        if(optname == IP_ADD_MEMBERSHIP) {
+          if (!lwip_socket_register_membership(s, &if_addr, &multi_addr)) {
+            /* cannot track membership (out of memory) */
+            err = ENOMEM;
+            igmp_err = ERR_OK;
+          } else {
+            igmp_err = igmp_joingroup(&if_addr, &multi_addr);
+          }
         } else {
           igmp_err = igmp_leavegroup(&if_addr, &multi_addr);
+          lwip_socket_unregister_membership(s, &if_addr, &multi_addr);
         }
         if (igmp_err != ERR_OK) {
           err = EADDRNOTAVAIL;
@@ -2454,4 +2489,79 @@ lwip_fcntl(int s, int cmd, int val)
   return ret;
 }
 
+#if LWIP_IGMP
+/** Register a new IGMP membership. On socket close, the membership is dropped automatically.
+ *
+ * ATTENTION: this function is called from tcpip_thread (or under CORE_LOCK).
+ *
+ * @return 1 on success, 0 on failure
+ */
+static int
+lwip_socket_register_membership(int s, ip_addr_t *if_addr, ip_addr_t *multi_addr)
+{
+  /* s+1 is stored in the array to prevent having to initialize the array
+     (default initialization is to 0) */
+  int sa = s + 1;
+  int i;
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if (socket_ipv4_multicast_memberships[i].sa == 0) {
+      socket_ipv4_multicast_memberships[i].sa = sa;
+      ip_addr_copy(socket_ipv4_multicast_memberships[i].if_addr, *if_addr);
+      ip_addr_copy(socket_ipv4_multicast_memberships[i].multi_addr, *multi_addr);
+      return 1;
+    }
+  }
+  return 0;
+}
+
+/** Unregister a previously registered membership. This prevents dropping the membership
+ * on socket close.
+ *
+ * ATTENTION: this function is called from tcpip_thread (or under CORE_LOCK).
+ */
+static void
+lwip_socket_unregister_membership(int s, ip_addr_t *if_addr, ip_addr_t *multi_addr)
+{
+  /* s+1 is stored in the array to prevent having to initialize the array
+     (default initialization is to 0) */
+  int sa = s + 1;
+  int i;
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if ((socket_ipv4_multicast_memberships[i].sa == sa) &&
+        ip_addr_cmp(&socket_ipv4_multicast_memberships[i].if_addr, if_addr) &&
+        ip_addr_cmp(&socket_ipv4_multicast_memberships[i].multi_addr, multi_addr)) {
+      socket_ipv4_multicast_memberships[i].sa = 0;
+      ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
+      ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
+      return;
+    }
+  }
+}
+
+/** Drop all memberships of a socket that were not dropped explicitly via setsockopt.
+ *
+ * ATTENTION: this function is called NOT called from tcpip_thread (or under CORE_LOCK).
+ */
+static void lwip_socket_drop_registered_memberships(int s)
+{
+  /* s+1 is stored in the array to prevent having to initialize the array
+     (default initialization is to 0) */
+  int sa = s + 1;
+  int i;
+
+  LWIP_ASSERT("socket has no netconn", sockets[s].conn != NULL);
+
+  for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
+    if (socket_ipv4_multicast_memberships[i].sa == sa) {
+      netconn_join_leave_group(sockets[s].conn, &socket_ipv4_multicast_memberships[i].if_addr,
+        &socket_ipv4_multicast_memberships[i].multi_addr, NETCONN_LEAVE);
+      socket_ipv4_multicast_memberships[i].sa = 0;
+      ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
+      ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
+    }
+  }
+}
+#endif /* LWIP_IGMP */
 #endif /* LWIP_SOCKET */

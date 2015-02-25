@@ -203,6 +203,10 @@ HISTORY
   ++ Bugfixes:
 
   2015-02-25: Simon Goldschmidt
+  * sockets.c: fixed bug #38165 (socket with mulicast): ensure igmp membership
+    are dropped when socket (not netconn!) is closed.
+
+  2015-02-25: Simon Goldschmidt
   * ip4.h/.c, udp.c: fixed bug #38061 (wrong multicast routing in IPv4) by
     adding an optional default netif for multicast routing
 
