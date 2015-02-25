@@ -1427,7 +1427,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
       etharp_ip_input(netif, p);
 #endif /* ETHARP_TRUST_IP_MAC */
       /* skip Ethernet header */
-      if (pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+      if ((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
           ("ethernet_input: IPv4 packet dropped, too short (%"S16_F"/%"S16_F")\n",
           p->tot_len, ip_hdr_offset));
@@ -1460,7 +1460,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 #if LWIP_IPV6
     case PP_HTONS(ETHTYPE_IPV6): /* IPv6 */
       /* skip Ethernet header */
-      if(pbuf_header(p, (s16_t)-ip_hdr_offset)) {
+      if((p->len < ip_hdr_offset) || pbuf_header(p, (s16_t)-ip_hdr_offset)) {
         LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING,
           ("ethernet_input: IPv6 packet dropped, too short (%"S16_F"/%"S16_F")\n",
           p->tot_len, ip_hdr_offset));

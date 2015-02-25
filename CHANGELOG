@@ -202,6 +202,11 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-25: Simon Goldschmidt
+  * ip4.c, etharp.c: fixed bug #40177 (System hangs when dealing with corrupted
+    packets), implemented task #12357 (Ensure that malicious packets don't
+    assert-fail): improved some pbuf_header calls to not assert-fail.
+
   2015-02-25: patch by Joel Cunningham
   * udp.h/.c, sockets.c: fixed bug #43028 (IP_MULTICAST_TTL affects unicast
     datagrams)

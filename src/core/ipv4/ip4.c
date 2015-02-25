@@ -352,6 +352,11 @@ ip_input(struct pbuf *p, struct netif *inp)
   /* obtain ip length in bytes */
   iphdr_len = ntohs(IPH_LEN(iphdr));
 
+  /* Trim pbuf. This is especially required for packets < 60 bytes. */
+  if (iphdr_len < p->tot_len) {
+    pbuf_realloc(p, iphdr_len);
+  }
+
   /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
   if ((iphdr_hlen > p->len) || (iphdr_len > p->tot_len)) {
     if (iphdr_hlen > p->len) {
@@ -386,10 +391,6 @@ ip_input(struct pbuf *p, struct netif *inp)
     return ERR_OK;
   }
 #endif
-
-  /* Trim pbuf. This should have been done at the netif layer,
-   * but we'll do it anyway just to be sure that its done. */
-  pbuf_realloc(p, iphdr_len);
 
   /* copy IP addresses to aligned ip_addr_t */
   ip_addr_copy(*ipX_2_ip(&ip_data.current_iphdr_dest), iphdr->dest);
