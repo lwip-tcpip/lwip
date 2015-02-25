@@ -97,8 +97,7 @@ static const struct link_callbacks pppos_callbacks = {
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
  * to select the specific bit for a character. */
-static const u_char ppp_accm_mask[] = { 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80 };
-#define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & ppp_accm_mask[c & 0x07])
+#define ESCAPE_P(accm, c) ((accm)[(c) >> 3] & 1 << (c & 0x07))
 
 #if PPP_FCS_TABLE
 /*
