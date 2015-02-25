@@ -66,10 +66,6 @@ extern "C" {
 #define NETCONN_DONTBLOCK 0x04
 
 /* Flags for struct netconn.flags (u8_t) */
-/** TCP: when data passed to netconn_write doesn't fit into the send buffer,
-    this temporarily stores whether to wake up the original application task
-    if data couldn't be sent in the first try. */
-#define NETCONN_FLAG_WRITE_DELAYED            0x01
 /** Should this netconn avoid blocking? */
 #define NETCONN_FLAG_NON_BLOCKING             0x02
 /** Was the last connect action a non-blocking one? */

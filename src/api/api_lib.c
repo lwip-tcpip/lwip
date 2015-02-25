@@ -244,26 +244,7 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   API_MSG_VAR_REF(msg).msg.conn = conn;
   API_MSG_VAR_REF(msg).msg.msg.bc.ipaddr = API_MSG_VAR_REF(addr);
   API_MSG_VAR_REF(msg).msg.msg.bc.port = port;
-#if LWIP_TCP
-#if (LWIP_UDP || LWIP_RAW)
-  if (NETCONNTYPE_GROUP(conn->type) == NETCONN_TCP)
-#endif /* (LWIP_UDP || LWIP_RAW) */
-  {
-    /* The TCP version waits for the connect to succeed,
-       so always needs to use message passing. */
-    API_MSG_VAR_REF(msg).function = lwip_netconn_do_connect;
-    err = tcpip_apimsg(&API_MSG_VAR_REF(msg));
-  }
-#endif /* LWIP_TCP */
-#if (LWIP_UDP || LWIP_RAW) && LWIP_TCP
-  else
-#endif /* (LWIP_UDP || LWIP_RAW) && LWIP_TCP */
-#if (LWIP_UDP || LWIP_RAW)
-  {
-    /* UDP and RAW only set flags, so we can use core-locking. */
-    TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_connect, err);
-  }
-#endif /* (LWIP_UDP || LWIP_RAW) */
+  TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_connect, err);
   API_MSG_VAR_FREE(msg);
 
   NETCONN_SET_SAFE_ERR(conn, err);

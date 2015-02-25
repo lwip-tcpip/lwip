@@ -66,8 +66,15 @@
 
 /* forward declarations */
 #if LWIP_TCP
-static err_t lwip_netconn_do_writemore(struct netconn *conn);
-static err_t lwip_netconn_do_close_internal(struct netconn *conn);
+#if LWIP_TCPIP_CORE_LOCKING
+#define WRITE_DELAYED         , 1
+#define WRITE_DELAYED_PARAM   , u8_t delayed
+#else /* LWIP_TCPIP_CORE_LOCKING */
+#define WRITE_DELAYED
+#define WRITE_DELAYED_PARAM
+#endif /* LWIP_TCPIP_CORE_LOCKING */
+static err_t lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM);
+static err_t lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM);
 #endif
 
 #if LWIP_RAW
@@ -286,14 +293,14 @@ poll_tcp(void *arg, struct tcp_pcb *pcb)
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   if (conn->state == NETCONN_WRITE) {
-    lwip_netconn_do_writemore(conn);
+    lwip_netconn_do_writemore(conn  WRITE_DELAYED);
   } else if (conn->state == NETCONN_CLOSE) {
 #if !LWIP_SO_SNDTIMEO && !LWIP_SO_LINGER
     if (conn->current_msg && conn->current_msg->msg.sd.polls_left) {
       conn->current_msg->msg.sd.polls_left--;
     }
 #endif /* !LWIP_SO_SNDTIMEO && !LWIP_SO_LINGER */
-    lwip_netconn_do_close_internal(conn);
+    lwip_netconn_do_close_internal(conn  WRITE_DELAYED);
   }
   /* @todo: implement connect timeout here? */
 
@@ -327,9 +334,9 @@ sent_tcp(void *arg, struct tcp_pcb *pcb, u16_t len)
   LWIP_ASSERT("conn != NULL", (conn != NULL));
 
   if (conn->state == NETCONN_WRITE) {
-    lwip_netconn_do_writemore(conn);
+    lwip_netconn_do_writemore(conn  WRITE_DELAYED);
   } else if (conn->state == NETCONN_CLOSE) {
-    lwip_netconn_do_close_internal(conn);
+    lwip_netconn_do_close_internal(conn  WRITE_DELAYED);
   }
 
   if (conn) {
@@ -762,9 +769,10 @@ netconn_drain(struct netconn *conn)
  * places.
  *
  * @param conn the TCP netconn to close
+ * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  */
 static err_t
-lwip_netconn_do_close_internal(struct netconn *conn)
+lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
 {
   err_t err;
   u8_t shut, shut_rx, shut_tx, close;
@@ -926,8 +934,13 @@ lwip_netconn_do_close_internal(struct netconn *conn)
         API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
       }
     }
-    /* wake up the application task */
-    sys_sem_signal(op_completed_sem);
+#if LWIP_TCPIP_CORE_LOCKING
+    if (delayed)
+#endif
+    {
+      /* wake up the application task */
+      sys_sem_signal(op_completed_sem);
+    }
     return ERR_OK;
   }
   if (!close_finished) {
@@ -975,7 +988,6 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
       msg->conn->current_msg = NULL;
       msg->conn->write_offset = 0;
       msg->conn->state = NETCONN_NONE;
-      msg->conn->flags &= ~NETCONN_FLAG_WRITE_DELAYED;
       sys_sem_signal(op_completed_sem);
     }
   }
@@ -1018,7 +1030,7 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
         msg->msg.sd.shut = NETCONN_SHUT_RDWR;
         msg->conn->current_msg = msg;
 #if LWIP_TCPIP_CORE_LOCKING
-        if (lwip_netconn_do_close_internal(msg->conn) != ERR_OK) {
+        if (lwip_netconn_do_close_internal(msg->conn, 0) != ERR_OK) {
           LWIP_ASSERT("state!", msg->conn->state == NETCONN_CLOSE);
           UNLOCK_TCPIP_CORE();
           sys_arch_sem_wait(LWIP_API_MSG_SEM(msg), 0);
@@ -1045,7 +1057,7 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
     API_EVENT(msg->conn, NETCONN_EVT_SENDPLUS, 0);
   }
   if (sys_sem_valid(LWIP_API_MSG_SEM(msg))) {
-    sys_sem_signal(LWIP_API_MSG_SEM(msg));
+    TCPIP_APIMSG_ACK(msg);
   }
 }
 
@@ -1153,11 +1165,6 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
   if (msg->conn->pcb.tcp == NULL) {
     /* This may happen when calling netconn_connect() a second time */
     msg->err = ERR_CLSD;
-    if (NETCONNTYPE_GROUP(msg->conn->type) == NETCONN_TCP) {
-      /* For TCP, netconn_connect() calls tcpip_apimsg(), so signal op_completed here. */
-      sys_sem_signal(LWIP_API_MSG_SEM(msg));
-      return;
-    }
   } else {
     switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
@@ -1190,14 +1197,19 @@ lwip_netconn_do_connect(struct api_msg_msg *msg)
           } else {
             msg->conn->current_msg = msg;
             /* sys_sem_signal() is called from lwip_netconn_do_connected (or err_tcp()),
-            * when the connection is established! */
+               when the connection is established! */
+#if LWIP_TCPIP_CORE_LOCKING
+            LWIP_ASSERT("state!", msg->conn->state == NETCONN_CONNECT);
+            UNLOCK_TCPIP_CORE();
+            sys_arch_sem_wait(LWIP_API_MSG_SEM(msg), 0);
+            LOCK_TCPIP_CORE();
+            LWIP_ASSERT("state!", msg->conn->state != NETCONN_CONNECT);
+#endif /* LWIP_TCPIP_CORE_LOCKING */
             return;
           }
         }
       }
-      /* For TCP, netconn_connect() calls tcpip_apimsg(), so signal op_completed here. */
-      sys_sem_signal(LWIP_API_MSG_SEM(msg));
-      return;
+      break;
 #endif /* LWIP_TCP */
     default:
       LWIP_ERROR("Invalid netconn type", 0, do{ msg->err = ERR_VAL; }while(0));
@@ -1396,11 +1408,12 @@ lwip_netconn_do_recv(struct api_msg_msg *msg)
  * blocking application thread (waiting in netconn_write) is released.
  *
  * @param conn netconn (that is currently in state NETCONN_WRITE) to process
+ * [@param delay 1 if called from sent/poll (wake up calling thread on end)]
  * @return ERR_OK
  *         ERR_MEM if LWIP_TCPIP_CORE_LOCKING=1 and sending hasn't yet finished
  */
 static err_t
-lwip_netconn_do_writemore(struct netconn *conn)
+lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
 {
   err_t err;
   void *dataptr;
@@ -1442,9 +1455,6 @@ lwip_netconn_do_writemore(struct netconn *conn)
     diff = conn->current_msg->msg.w.len - conn->write_offset;
     if (diff > 0xffffUL) { /* max_u16_t */
       len = 0xffff;
-#if LWIP_TCPIP_CORE_LOCKING
-      conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
-#endif
       apiflags |= TCP_WRITE_FLAG_MORE;
     } else {
       len = (u16_t)diff;
@@ -1459,9 +1469,6 @@ lwip_netconn_do_writemore(struct netconn *conn)
           goto err_mem;
         }
       } else {
-#if LWIP_TCPIP_CORE_LOCKING
-        conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
-#endif
         apiflags |= TCP_WRITE_FLAG_MORE;
       }
     }
@@ -1517,9 +1524,6 @@ err_mem:
         write_finished = 1;
         conn->current_msg->msg.w.len = 0;
       } else {
-#if LWIP_TCPIP_CORE_LOCKING
-        conn->flags |= NETCONN_FLAG_WRITE_DELAYED;
-#endif
       }
     } else {
       /* On errors != ERR_MEM, we don't try writing any more but return
@@ -1536,7 +1540,7 @@ err_mem:
     conn->current_msg = NULL;
     conn->state = NETCONN_NONE;
 #if LWIP_TCPIP_CORE_LOCKING
-    if ((conn->flags & NETCONN_FLAG_WRITE_DELAYED) != 0)
+    if (delayed)
 #endif
     {
       sys_sem_signal(op_completed_sem);
@@ -1577,8 +1581,7 @@ lwip_netconn_do_write(struct api_msg_msg *msg)
         msg->conn->current_msg = msg;
         msg->conn->write_offset = 0;
 #if LWIP_TCPIP_CORE_LOCKING
-        msg->conn->flags &= ~NETCONN_FLAG_WRITE_DELAYED;
-        if (lwip_netconn_do_writemore(msg->conn) != ERR_OK) {
+        if (lwip_netconn_do_writemore(msg->conn, 0) != ERR_OK) {
           LWIP_ASSERT("state!", msg->conn->state == NETCONN_WRITE);
           UNLOCK_TCPIP_CORE();
           sys_arch_sem_wait(LWIP_API_MSG_SEM(msg), 0);
@@ -1701,7 +1704,6 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
         msg->conn->current_msg = NULL;
         msg->conn->write_offset = 0;
         msg->conn->state = NETCONN_NONE;
-        msg->conn->flags &= ~NETCONN_FLAG_WRITE_DELAYED;
         sys_sem_signal(op_completed_sem);
       } else {
         LWIP_ASSERT("msg->msg.sd.shut == NETCONN_SHUT_RD", msg->msg.sd.shut == NETCONN_SHUT_RD);
@@ -1722,7 +1724,7 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
       msg->conn->state = NETCONN_CLOSE;
       msg->conn->current_msg = msg;
 #if LWIP_TCPIP_CORE_LOCKING
-      if (lwip_netconn_do_close_internal(msg->conn) != ERR_OK) {
+      if (lwip_netconn_do_close_internal(msg->conn, 0) != ERR_OK) {
         LWIP_ASSERT("state!", msg->conn->state == NETCONN_CLOSE);
         UNLOCK_TCPIP_CORE();
         sys_arch_sem_wait(LWIP_API_MSG_SEM(msg), 0);
