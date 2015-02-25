@@ -133,6 +133,10 @@ err_t ip_output_if_opt_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */
 
+#if LWIP_IGMP
+void  ip_set_default_multicast_netif(struct netif* default_multicast_netif);
+#endif /* LWIP_IGMP */
+
 #define ip_netif_get_local_ipX(netif) (((netif) != NULL) ? ip_2_ipX(&((netif)->ip_addr)) : NULL)
 
 #if IP_DEBUG

@@ -202,6 +202,14 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-25: Simon Goldschmidt
+  * ip4.h/.c, udp.c: fixed bug #38061 (wrong multicast routing in IPv4) by
+    adding an optional default netif for multicast routing
+
+  2015-02-25: Simon Goldschmidt
+  * netconn API: fixed that netconn_connect still used message passing for
+    LWIP_TCPIP_CORE_LOCKING==1
+
   2015-02-22: patch by Jens Nielsen
   * icmp.c: fixed bug #38803 (Source address in broadcast ping reply)
 
@@ -239,17 +247,17 @@ HISTORY
   2015-02-11: patch by hichard
   * tcpip.c: fixed bug #43094 "The function tcpip_input() forget to handle IPv6"
 
-  2014-02-10: Simon Goldschmidt
+  2015-02-10: Simon Goldschmidt
   * netconn API: fixed that netconn_close/netconn_delete still used message passing
     for LWIP_TCPIP_CORE_LOCKING==1
 
-  2014-02-10: Simon Goldschmidt
+  2015-02-10: Simon Goldschmidt
   * netconn/socket api: fixed bug #44225 "closing TCP socket should time out
     eventually", implemented task #6930 "Implement SO_LINGER": closing TCP sockets
     times out after 20 seconds or after the configured SND_TIMEOUT or depending
     on the linger settings.
 
-  2014-01-27: Simon Goldschmidt
+  2015-01-27: Simon Goldschmidt
   * api_msg.c: fixed that SHUT_RD followed by SHUT_WR was different to SHUT_RDWR,
     fixed return value of lwip_netconn_do_close on unconnected netconns
 

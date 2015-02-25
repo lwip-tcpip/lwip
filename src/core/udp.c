@@ -559,15 +559,22 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 
 #if LWIP_IPV6 || LWIP_IGMP
   if (ipX_addr_ismulticast(PCB_ISIPV6(pcb), dst_ip_route)) {
-    /* For multicast, find a netif based on source address. */
 #if LWIP_IPV6
     if (PCB_ISIPV6(pcb)) {
+      /* For multicast, find a netif based on source address. */
       dst_ip_route = &pcb->local_ip;
     } else
 #endif /* LWIP_IPV6 */
     {
 #if LWIP_IGMP
-      dst_ip_route = ip_2_ipX(&pcb->multicast_ip);
+      /* IPv4 does not use source-based routing by default, so we use an
+         administratively selected interface for multicast by default.
+         However, this can be overridden by setting an interface address
+         in pcb->multicast_ip that is used for routing. */
+      if (!ip_addr_isany(&pcb->multicast_ip) &&
+          !ip_addr_cmp(&pcb->multicast_ip, IP_ADDR_BROADCAST)) {
+        dst_ip_route = ip_2_ipX(&pcb->multicast_ip);
+      }
 #endif /* LWIP_IGMP */
     }
   }

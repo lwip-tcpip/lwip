@@ -98,6 +98,18 @@ struct ip_globals ip_data;
 /** The IP header ID of the next outgoing IP packet */
 static u16_t ip_id;
 
+#if LWIP_IGMP
+/** The default netif used for multicast */
+static struct netif* ip_default_multicast_netif;
+
+/** Set a default netif for IPv4 multicast. */
+void
+ip_set_default_multicast_netif(struct netif* default_multicast_netif)
+{
+  ip_default_multicast_netif = default_multicast_netif;
+}
+#endif /* LWIP_IGMP */
+
 /**
  * Finds the appropriate network interface for a given IP address. It
  * searches the list of network interfaces linearly. A match is found
@@ -118,6 +130,13 @@ ip_route(const ip_addr_t *dest)
     return netif;
   }
 #endif
+
+#if LWIP_IGMP
+  /* Use administratively selected interface for multicast by default */
+  if (ip_addr_ismulticast(dest) && ip_default_multicast_netif) {
+    return ip_default_multicast_netif;
+  }
+#endif /* LWIP_IGMP */
 
   /* iterate through netifs */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
