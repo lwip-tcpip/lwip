@@ -1803,7 +1803,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) != NETCONN_UDP) {
         return ENOPROTOOPT;
       }
-      *(u8_t*)optval = sock->conn->pcb.ip->ttl;
+      *(u8_t*)optval = sock->conn->pcb.udp->mcast_ttl;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_IP, IP_MULTICAST_TTL) = %d\n",
                   s, *(int *)optval));
       break;
@@ -2160,7 +2160,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
 #if LWIP_IGMP
     case IP_MULTICAST_TTL:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, u8_t, NETCONN_UDP);
-      sock->conn->pcb.udp->ttl = (u8_t)(*(u8_t*)optval);
+      sock->conn->pcb.udp->mcast_ttl = (u8_t)(*(u8_t*)optval);
       break;
     case IP_MULTICAST_IF:
       {

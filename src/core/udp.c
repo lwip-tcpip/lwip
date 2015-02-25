@@ -694,6 +694,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   err_t err;
   struct pbuf *q; /* q will be sent down the stack */
   u8_t ip_proto;
+  u8_t ttl;
 
 #if IP_SOF_BROADCAST
   /* broadcast filter? */
@@ -848,11 +849,18 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
     ip_proto = IP_PROTO_UDP;
   }
 
+  /* Determine TTL to use */
+#if LWIP_IGMP
+  ttl = (ip_addr_ismulticast(dst_ip) ? pcb->mcast_ttl : pcb->ttl);
+#else
+  ttl = pcb->ttl;
+#endif
+
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: UDP checksum 0x%04"X16_F"\n", udphdr->chksum));
   LWIP_DEBUGF(UDP_DEBUG, ("udp_send: ip_output_if (,,,,0x%02"X16_F",)\n", (u16_t)ip_proto));
   /* output to IP */
   NETIF_SET_HWADDRHINT(netif, &(pcb->addr_hint));
-  err = ipX_output_if_src(PCB_ISIPV6(pcb), q, src_ip, dst_ip, pcb->ttl, pcb->tos, ip_proto, netif);
+  err = ipX_output_if_src(PCB_ISIPV6(pcb), q, src_ip, dst_ip, ttl, pcb->tos, ip_proto, netif);
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* TODO: must this be increased even if error occurred? */
@@ -1117,6 +1125,9 @@ udp_new(void)
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
     pcb->ttl = UDP_TTL;
+#if LWIP_IGMP
+    pcb->mcast_ttl = UDP_TTL;
+#endif
   }
   return pcb;
 }

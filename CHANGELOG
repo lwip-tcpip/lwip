@@ -202,6 +202,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-25: patch by Joel Cunningham
+  * udp.h/.c, sockets.c: fixed bug #43028 (IP_MULTICAST_TTL affects unicast
+    datagrams)
+
   2015-02-25: patch by Greg Renda
   * ip4_frag.c: fixed bug #38210 (ip reassembly while remove oldest datagram)
 
