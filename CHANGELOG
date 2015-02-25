@@ -202,6 +202,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-02-25: patch by Greg Renda
+  * ip4_frag.c: fixed bug #38210 (ip reassembly while remove oldest datagram)
+
   2015-02-25: Simon Goldschmidt
   * sockets.c: fixed bug #38165 (socket with mulicast): ensure igmp membership
     are dropped when socket (not netconn!) is closed.
