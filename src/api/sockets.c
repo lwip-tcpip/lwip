@@ -2542,7 +2542,7 @@ lwip_socket_unregister_membership(int s, ip_addr_t *if_addr, ip_addr_t *multi_ad
 
 /** Drop all memberships of a socket that were not dropped explicitly via setsockopt.
  *
- * ATTENTION: this function is called NOT called from tcpip_thread (or under CORE_LOCK).
+ * ATTENTION: this function is NOT called from tcpip_thread (or under CORE_LOCK).
  */
 static void lwip_socket_drop_registered_memberships(int s)
 {
