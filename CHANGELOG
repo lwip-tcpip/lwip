@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-02-22: patch by TabascoEye
+  * netif.c, udp.h/.c: fixed bug #40753 (re-bind UDP pcbs on change of IP address)
+
   2015-02-22: chrysn, Simon Goldschmidt
   * *.*: Changed nearly all functions taking 'ip(X)_addr_t' pointer to take
     const pointers (changed user callbacks: raw_recv_fn, udp_recv_fn; changed

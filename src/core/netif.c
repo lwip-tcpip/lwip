@@ -390,9 +390,11 @@ netif_set_ipaddr(struct netif *netif, const ip_addr_t *ipaddr)
 #if LWIP_TCP
   struct tcp_pcb *pcb;
   struct tcp_pcb_listen *lpcb;
+#endif /* LWIP_TCP */
 
   /* address is actually being changed? */
   if (ipaddr && (ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0) {
+#if LWIP_TCP
     /* extern struct tcp_pcb *tcp_active_pcbs; defined by tcp.h */
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
     pcb = tcp_active_pcbs;
@@ -422,8 +424,12 @@ netif_set_ipaddr(struct netif *netif, const ip_addr_t *ipaddr)
         ip_addr_set(ipX_2_ip(&lpcb->local_ip), ipaddr);
       }
     }
+#endif /* LWIP_TCP */
+#if LWIP_UDP
+    udp_netif_ipv4_addr_changed(&netif->ip_addr, ipaddr);
+#endif /* LWIP_UDP */
   }
-#endif
+
   snmp_delete_ipaddridx_tree(netif);
   snmp_delete_iprteidx_tree(0,netif);
   /* set new IP address to netif */
