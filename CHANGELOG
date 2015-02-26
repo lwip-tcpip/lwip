@@ -6,7 +6,7 @@ HISTORY
 
   ++ New features:
 
-  2015-02-22: patch by TabascoEye
+  2015-02-26: patch by TabascoEye
   * netif.c, udp.h/.c: fixed bug #40753 (re-bind UDP pcbs on change of IP address)
 
   2015-02-22: chrysn, Simon Goldschmidt
@@ -204,6 +204,10 @@ HISTORY
 
 
   ++ Bugfixes:
+
+  2015-02-26: Simon Goldschmidt
+  * netif.c, tcp.h/.c: fixed bug #44378 (TCP connections are not aborted on netif
+    remove)
 
   2015-02-25: Simon Goldschmidt
   * ip4.c, etharp.c: fixed bug #40177 (System hangs when dealing with corrupted

@@ -357,7 +357,7 @@ void
 tcp_abandon(struct tcp_pcb *pcb, int reset)
 {
   u32_t seqno, ackno;
-#if LWIP_CALLBACK_API  
+#if LWIP_CALLBACK_API
   tcp_err_fn errf;
 #endif /* LWIP_CALLBACK_API */
   void *errf_arg;
@@ -1806,6 +1806,58 @@ tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
 }
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
+/** Helper function for tcp_netif_ipv4_addr_changed() that iterates a pcb list */
+static void
+tcp_netif_ipv4_addr_changed_pcblist(const ip_addr_t* old_addr, struct tcp_pcb* pcb_list)
+{
+  struct tcp_pcb *pcb;
+  pcb = pcb_list;
+  while (pcb != NULL) {
+    /* PCB bound to current local interface address? */
+    if (ip_addr_cmp(ipX_2_ip(&pcb->local_ip), old_addr)
+#if LWIP_AUTOIP
+      /* connections to link-local addresses must persist (RFC3927 ch. 1.9) */
+      && !ip_addr_islinklocal(ipX_2_ip(&pcb->local_ip))
+#endif /* LWIP_AUTOIP */
+      ) {
+      /* this connection must be aborted */
+      struct tcp_pcb *next = pcb->next;
+      LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: aborting TCP pcb %p\n", (void *)pcb));
+      tcp_abort(pcb);
+      pcb = next;
+    } else {
+      pcb = pcb->next;
+    }
+  }
+}
+
+/** This function is called from netif.c when address is changed or netif is removed
+ *
+ * @param old_addr IPv4 address of the netif before change
+ * @param new_addr IPv4 address of the netif after change or NULL if netif has been removed
+ */
+void tcp_netif_ipv4_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr)
+{
+  struct tcp_pcb_listen *lpcb, *next;
+
+  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_active_pcbs);
+  tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
+
+  /* PCB bound to current local interface address? */
+  for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
+    next = lpcb->next;
+    /* PCB bound to current local interface address? */
+    if ((!(ip_addr_isany(ipX_2_ip(&lpcb->local_ip)))) &&
+        (ip_addr_cmp(ipX_2_ip(&lpcb->local_ip), old_addr))) {
+      if (new_addr != NULL) {
+        /* The PCB is listening to the old ipaddr and
+          * is set to listen to the new one instead */
+        ip_addr_set(ipX_2_ip(&lpcb->local_ip), new_addr);
+      }
+    }
+  }
+}
+
 const char*
 tcp_debug_state_str(enum tcp_state s)
 {
@@ -1922,7 +1974,7 @@ tcp_debug_print_pcbs(void)
                        pcb->local_port, pcb->remote_port,
                        pcb->snd_nxt, pcb->rcv_nxt));
     tcp_debug_print_state(pcb->state);
-  }    
+  }
 }
 
 /**
