@@ -43,6 +43,7 @@
 #include "lwip/ip6_addr.h"
 #include "lwip/netif.h"
 #include "lwip/tcp_impl.h"
+#include "lwip/udp.h"
 #include "lwip/snmp.h"
 #include "lwip/igmp.h"
 #include "netif/etharp.h"
