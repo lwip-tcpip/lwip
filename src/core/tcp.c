@@ -591,6 +591,21 @@ struct tcp_pcb *
 tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog)
 {
   struct tcp_pcb *lpcb;
+  struct tcp_pcb_listen *l;
+
+  /* Dual listen only works on bound pcbs (or else we cannot check for
+      duplicate port use. */
+  if (pcb->local_port == 0) {
+    return NULL;
+  }
+  /* Check that there's noone listening on this port already
+     (don't check the IP address since we'll set it to ANY */
+  for(l = tcp_listen_pcbs.listen_pcbs; l != NULL; l = l->next) {
+    if (l->local_port == pcb->local_port) {
+      /* this port is already used */
+      return NULL;
+    }
+  }
 
   lpcb = tcp_listen_with_backlog(pcb, backlog);
   if ((lpcb != NULL) &&
