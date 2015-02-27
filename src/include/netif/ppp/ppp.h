@@ -427,12 +427,13 @@ struct ppp_pcb_s {
  * which identifies exactly one authentication method.
  *
  */
-#define PPPAUTHTYPE_NONE   0x00
-#define PPPAUTHTYPE_PAP    0x01
-#define PPPAUTHTYPE_CHAP   0x02
-#define PPPAUTHTYPE_MSCHAP 0x04
-#define PPPAUTHTYPE_EAP    0x08
-#define PPPAUTHTYPE_ANY    0xff
+#define PPPAUTHTYPE_NONE      0x00
+#define PPPAUTHTYPE_PAP       0x01
+#define PPPAUTHTYPE_CHAP      0x02
+#define PPPAUTHTYPE_MSCHAP    0x04
+#define PPPAUTHTYPE_MSCHAP_V2 0x08
+#define PPPAUTHTYPE_EAP       0x10
+#define PPPAUTHTYPE_ANY       0xff
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd);
 
 /*

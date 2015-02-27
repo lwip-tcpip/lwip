@@ -189,50 +189,22 @@ static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip
 /*** PUBLIC FUNCTION DEFINITIONS ***/
 /***********************************/
 void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *passwd) {
-
 #if PPP_AUTH_SUPPORT
-
 #if PAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_PAP) {
-    pcb->settings.refuse_pap = 0;
-  } else {
-    pcb->settings.refuse_pap = 1;
-  }
+  pcb->settings.refuse_pap = !(authtype & PPPAUTHTYPE_PAP);
 #endif /* PAP_SUPPORT */
-
 #if CHAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_CHAP) {
-    pcb->settings.refuse_chap = 0;
-  } else {
-    pcb->settings.refuse_chap = 1;
-  }
+  pcb->settings.refuse_chap = !(authtype & PPPAUTHTYPE_CHAP);
 #if MSCHAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_MSCHAP) {
-    pcb->settings.refuse_mschap = 0;
-    pcb->settings.refuse_mschap_v2 = 0;
-  } else {
-    pcb->settings.refuse_mschap = 1;
-    pcb->settings.refuse_mschap_v2 = 1;
-  }
+  pcb->settings.refuse_mschap = !(authtype & PPPAUTHTYPE_MSCHAP);
+  pcb->settings.refuse_mschap_v2 = !(authtype & PPPAUTHTYPE_MSCHAP_V2);
 #endif /* MSCHAP_SUPPORT */
 #endif /* CHAP_SUPPORT */
-
 #if EAP_SUPPORT
-  if (authtype & PPPAUTHTYPE_EAP) {
-    pcb->settings.refuse_eap = 0;
-  } else {
-    pcb->settings.refuse_eap = 1;
-  }
+  pcb->settings.refuse_eap = !(authtype & PPPAUTHTYPE_EAP);
 #endif /* EAP_SUPPORT */
-
-  if (user) {
-    pcb->settings.user = user;
-  }
-
-  if (passwd) {
-    pcb->settings.passwd = passwd;
-  }
-
+  pcb->settings.user = user;
+  pcb->settings.passwd = passwd;
 #else /* PPP_AUTH_SUPPORT */
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(authtype);
