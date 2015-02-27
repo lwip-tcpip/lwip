@@ -344,9 +344,8 @@ struct ppp_pcb_s {
 #else
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
-  unsigned int ask_for_local           :1; /* request our address from peer */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-  unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
+  unsigned int                         :6; /* 6 bits of padding to round out to 16 bits */
 
   u32_t last_xmit;               /* Time of last transmission. */
 
