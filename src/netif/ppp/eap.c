@@ -1332,7 +1332,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	u_char vallen;
 	int secret_len;
 	char secret[MAXWORDLEN];
-	char rhostname[256];
+	char rhostname[MAXNAMELEN];
 	md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
@@ -1744,7 +1744,7 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	u_char vallen;
 	int secret_len;
 	char secret[MAXSECRETLEN];
-	char rhostname[256];
+	char rhostname[MAXNAMELEN];
 	md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];
 #ifdef USE_SRP
