@@ -55,6 +55,7 @@
 #endif
 
 #include "netif/ppp/eap.h"
+#include "netif/ppp/magic.h"
 
 #ifdef USE_SRP
 #include <t_pwd.h>
@@ -203,7 +204,7 @@ static void eap_init(ppp_pcb *pcb) {
 
 	BZERO(&pcb->eap, sizeof(eap_state));
 #if PPP_SERVER
-	pcb->eap.es_server.ea_id = (u_char)(drand48() * 0x100); /* FIXME: use magic.c random function */
+	pcb->eap.es_server.ea_id = (u_char)magic_pow(8);
 #endif /* PPP_SERVER */
 }
 
@@ -717,14 +718,13 @@ static void eap_send_request(ppp_pcb *pcb) {
 		 * pick a random challenge length between
 		 * EAP_MIN_CHALLENGE_LENGTH and EAP_MAX_CHALLENGE_LENGTH
 		 */
-		challen = (drand48() *
-		    (EAP_MAX_CHALLENGE_LENGTH - EAP_MIN_CHALLENGE_LENGTH)) +
-			    EAP_MIN_CHALLENGE_LENGTH;
+		challen = EAP_MIN_CHALLENGE_LENGTH +
+		    magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
 		PUTCHAR(challen, outp);
 		pcb->eap.es_challen = challen;
 		ptr = pcb->eap.es_challenge;
 		while (--challen >= 0)
-			*ptr++ = (u_char) (drand48() * 0x100);
+			*ptr++ = (u_char)magic_pow(8);
 		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
 		INCPTR(pcb->eap.es_challen, outp);
 		MEMCPY(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
@@ -809,7 +809,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 				MEMCPY(clear, cp, i);
 				cp += i;
 				while (i < 8) {
-					*cp++ = drand48() * 0x100;
+					*cp++ = magic_pow(8);
 					i++;
 				}
 				/* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL des_context instead of using static memory */
@@ -824,7 +824,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 			i %= SHA_DIGESTSIZE;
 			if (i != 0) {
 				while (i < SHA_DIGESTSIZE) {
-					*outp++ = drand48() * 0x100;
+					*outp++ = magic_pow(8);
 					i++;
 				}
 			}
@@ -855,11 +855,11 @@ static void eap_send_request(ppp_pcb *pcb) {
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_LWRECHALLENGE, outp);
 		challen = EAP_MIN_CHALLENGE_LENGTH +
-		    ((EAP_MAX_CHALLENGE_LENGTH - EAP_MIN_CHALLENGE_LENGTH) * drand48());
+		    magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
 		pcb->eap.es_challen = challen;
 		ptr = pcb->eap.es_challenge;
 		while (--challen >= 0)
-			*ptr++ = drand48() * 0x100;
+			*ptr++ = magic_pow(8);
 		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
 		INCPTR(pcb->eap.es_challen, outp);
 		break;

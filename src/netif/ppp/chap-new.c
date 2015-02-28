@@ -47,6 +47,7 @@
 #if MSCHAP_SUPPORT
 #include "netif/ppp/chap_ms.h"
 #endif
+#include "netif/ppp/magic.h"
 
 #if 0 /* UNUSED */
 /* Hook for a plugin to validate CHAP challenge */
@@ -175,7 +176,7 @@ void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
 	pcb->chap_server.digest = dp;
 	pcb->chap_server.name = our_name;
 	/* Start with a random ID value */
-	pcb->chap_server.id = (unsigned char)(drand48() * 256);
+	pcb->chap_server.id = (u8_t)magic_pow(8);
 	pcb->chap_server.flags |= AUTH_STARTED;
 	if (pcb->chap_server.flags & LOWERUP)
 		chap_timeout(pcb);

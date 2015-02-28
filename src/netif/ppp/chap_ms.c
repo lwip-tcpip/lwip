@@ -836,7 +836,7 @@ void ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
 	for (i = 0; i < MS_CHAP2_PEER_CHAL_LEN; i++)
-	    *p++ = (u_char) (drand48() * 0xff);
+	    *p++ = (u_char)magic_pow(8);
     else
 	MEMCPY(&response[MS_CHAP2_PEER_CHALLENGE], PeerChallenge,
 	      MS_CHAP2_PEER_CHAL_LEN);

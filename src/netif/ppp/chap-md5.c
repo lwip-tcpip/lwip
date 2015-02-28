@@ -49,15 +49,15 @@
 #endif
 
 #define MD5_HASH_SIZE		16
-#define MD5_MIN_CHALLENGE	16
+#define MD5_MIN_CHALLENGE	17
 #define MD5_MAX_CHALLENGE	24
+#define MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE     3   /* 2^3-1 = 7, 17+7 = 24 */
 
 #if PPP_SERVER
 static void chap_md5_generate_challenge(unsigned char *cp) {
 	int clen;
 
-	clen = (int)(drand48() * (MD5_MAX_CHALLENGE - MD5_MIN_CHALLENGE))
-		+ MD5_MIN_CHALLENGE;
+	clen = MD5_MIN_CHALLENGE + magic_pow(MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE);
 	*cp++ = clen;
 	random_bytes(cp, clen);
 }

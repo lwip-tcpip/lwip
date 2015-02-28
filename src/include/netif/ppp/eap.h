@@ -80,8 +80,9 @@ extern "C" {
 #define	SRP_PSEUDO_LEN	7
 
 #define MD5_SIGNATURE_SIZE	16
-#define EAP_MIN_CHALLENGE_LENGTH	16
+#define EAP_MIN_CHALLENGE_LENGTH	17
 #define EAP_MAX_CHALLENGE_LENGTH	24
+#define EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH     3   /* 2^3-1 = 7, 17+7 = 24 */
 
 #define	EAP_STATES	\
 	"Initial", "Pending", "Closed", "Listen", "Identify", \

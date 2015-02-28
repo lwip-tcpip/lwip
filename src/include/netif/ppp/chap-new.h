@@ -159,7 +159,7 @@ typedef struct chap_client_state {
 #if PPP_SERVER
 typedef struct chap_server_state {
 	u8_t flags;
-	int id;
+	u8_t id;
 	const char *name;
 	const struct chap_digest_type *digest;
 	int challenge_xmits;
