@@ -550,6 +550,8 @@ void start_networks(ppp_pcb *pcb);    /* start all the network control protos */
 void continue_networks(ppp_pcb *pcb); /* start network [ip, etc] control protos */
 #if PPP_AUTH_SUPPORT
 #if PPP_SERVER
+int auth_check_passwd(ppp_pcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen);
+                                /* check the user name and passwd against configuration */
 void auth_peer_fail(ppp_pcb *pcb, int protocol);
 				/* peer failed to authenticate itself */
 void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *name, int namelen);

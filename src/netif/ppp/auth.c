@@ -996,6 +996,36 @@ void continue_networks(ppp_pcb *pcb) {
 #if PPP_AUTH_SUPPORT
 #if PPP_SERVER
 /*
+ * auth_check_passwd - Check the user name and passwd against configuration.
+ *
+ * returns:
+ *      0: Authentication failed.
+ *      1: Authentication succeeded.
+ * In either case, msg points to an appropriate message and msglen to the message len.
+ */
+int auth_check_passwd(ppp_pcb *pcb, char *auser, int userlen, char *apasswd, int passwdlen, const char **msg, int *msglen) {
+  int secretuserlen;
+  int secretpasswdlen;
+
+  if (pcb->settings.user && pcb->settings.passwd) {
+    secretuserlen = strlen(pcb->settings.user);
+    secretpasswdlen = strlen(pcb->settings.passwd);
+    if (secretuserlen == userlen
+        && secretpasswdlen == passwdlen
+        && !memcmp(auser, pcb->settings.user, userlen)
+        && !memcmp(apasswd, pcb->settings.passwd, passwdlen) ) {
+      *msg = "Login ok";
+      *msglen = sizeof("Login ok")-1;
+      return 1;
+    }
+  }
+
+  *msg = "Login incorrect";
+  *msglen = sizeof("Login incorrect")-1;
+  return 0;
+}
+
+/*
  * The peer has failed to authenticate himself using `protocol'.
  */
 void auth_peer_fail(ppp_pcb *pcb, int protocol) {

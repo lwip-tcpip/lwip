@@ -359,9 +359,7 @@ static void upap_input(ppp_pcb *pcb, u_char *inpacket, int l) {
 static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
     u_char ruserlen, rpasswdlen;
     char *ruser;
-#if 0
     char *rpasswd;
-#endif
     char rhostname[256];
     int retcode;
     const char *msg;
@@ -404,17 +402,18 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	return;
     }
 
-    /* FIXME: we need a way to check peer secret */
-#if 0
     rpasswd = (char *) inp;
 
     /*
      * Check the username and password given.
      */
-    retcode = check_passwd(pcb->upap.us_unit, ruser, ruserlen, rpasswd,
-			   rpasswdlen, &msg);
+    retcode = UPAP_AUTHNAK;
+    if (auth_check_passwd(pcb, ruser, ruserlen, rpasswd, rpasswdlen, &msg, &msglen)) {
+      retcode = UPAP_AUTHACK;
+    }
     BZERO(rpasswd, rpasswdlen);
 
+#if 0 /* UNUSED */
     /*
      * Check remote number authorization.  A plugin may have filled in
      * the remote number or added an allowed number, and rather than
@@ -431,12 +430,7 @@ static void upap_rauthreq(ppp_pcb *pcb, u_char *inp, int id, int len) {
     msglen = strlen(msg);
     if (msglen > 255)
 	msglen = 255;
-#else
-    /* only here to clean compiler warnings */
-    retcode = UPAP_AUTHNAK;
-    msg = NULL;
-    msglen = 0;
-#endif /* 0 */
+#endif /* UNUSED */
 
     upap_sresp(pcb, retcode, id, msg, msglen);
 
