@@ -2054,6 +2054,11 @@
 #ifndef PPP_SERVER
 #define PPP_SERVER                      0
 #endif
+#if PPP_SERVER
+#ifndef PPP_OUR_NAME
+#define PPP_OUR_NAME                    "lwIP"   /* Our name for authentication purposes */
+#endif
+#endif /* PPP_SERVER */
 
 /**
  * VJ_SUPPORT==1: Support VJ header compression.

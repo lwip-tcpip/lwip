@@ -242,9 +242,6 @@ typedef struct ppp_settings_s {
   /* auth data */
   const char  *user;                   /* Username for PAP */
   const char  *passwd;                 /* Password for PAP, secret for CHAP */
-#if PPP_SERVER
-  char  our_name   [MAXNAMELEN   + 1]; /* Our name for authentication purposes */
-#endif /* PPP_SERVER */
 #if PPP_REMOTENAME
   char  remote_name[MAXNAMELEN   + 1]; /* Peer's name for authentication */
 #endif /* PPP_REMOTENAME */

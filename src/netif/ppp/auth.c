@@ -794,13 +794,13 @@ void link_established(ppp_pcb *pcb) {
 #if PPP_SERVER
 #if EAP_SUPPORT
     if (go->neg_eap) {
-	eap_authpeer(pcb, pcb->settings.our_name);
+	eap_authpeer(pcb, PPP_OUR_NAME);
 	auth |= EAP_PEER;
     } else
 #endif /* EAP_SUPPORT */
 #if CHAP_SUPPORT
     if (go->neg_chap) {
-	chap_auth_peer(pcb, pcb->settings.our_name, CHAP_DIGEST(go->chap_mdtype));
+	chap_auth_peer(pcb, PPP_OUR_NAME, CHAP_DIGEST(go->chap_mdtype));
 	auth |= CHAP_PEER;
     } else
 #endif /* CHAP_SUPPORT */
