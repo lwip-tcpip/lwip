@@ -650,6 +650,63 @@ static void lcp_resetci(fsm *f) {
     lcp_options *go = &pcb->lcp_gotoptions;
     lcp_options *ao = &pcb->lcp_allowoptions;
 
+#if PPP_AUTH_SUPPORT
+
+    if (pcb->settings.user && pcb->settings.passwd) {
+#if PAP_SUPPORT
+      if (pcb->settings.refuse_pap) {
+        ao->neg_upap = 0;
+      }
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+      if (pcb->settings.refuse_chap) {
+        ao->chap_mdtype &= ~MDTYPE_MD5;
+      }
+#if MSCHAP_SUPPORT
+      if (pcb->settings.refuse_mschap) {
+        ao->chap_mdtype &= ~MDTYPE_MICROSOFT;
+      }
+      if (pcb->settings.refuse_mschap_v2) {
+        ao->chap_mdtype &= ~MDTYPE_MICROSOFT_V2;
+      }
+#endif /* MSCHAP_SUPPORT */
+      ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+      if (pcb->settings.refuse_eap) {
+        ao->neg_eap = 0;
+      }
+#endif /* EAP_SUPPORT */
+    } else {
+#if PAP_SUPPORT
+      ao->neg_upap = 0;
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+      ao->neg_chap = 0;
+      ao->chap_mdtype = MDTYPE_NONE;
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+      ao->neg_eap = 0;
+#endif /* EAP_SUPPORT */
+    }
+
+    PPPDEBUG(LOG_DEBUG, ("ppp: auth protocols:"));
+#if PAP_SUPPORT
+    PPPDEBUG(LOG_DEBUG, (" PAP=%d", ao->neg_upap));
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+    PPPDEBUG(LOG_DEBUG, (" CHAP=%d CHAP_MD5=%d", ao->neg_chap, !!(ao->chap_mdtype&MDTYPE_MD5)));
+#if MSCHAP_SUPPORT
+    PPPDEBUG(LOG_DEBUG, (" CHAP_MS=%d CHAP_MS2=%d", !!(ao->chap_mdtype&MDTYPE_MICROSOFT), !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)));
+#endif /* MSCHAP_SUPPORT */
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+    PPPDEBUG(LOG_DEBUG, (" EAP=%d", ao->neg_eap));
+#endif /* EAP_SUPPORT */
+    PPPDEBUG(LOG_DEBUG, ("\n"));
+
+#endif /* PPP_AUTH_SUPPORT */
+
     wo->magicnumber = magic();
     wo->numloops = 0;
     *go = *wo;
@@ -665,9 +722,9 @@ static void lcp_resetci(fsm *f) {
     if (pcb->settings.noendpoint)
 	ao->neg_endpoint = 0;
     pcb->peer_mru = PPP_MRU;
-#if PPP_AUTH_SUPPORT
+#if 0 /* UNUSED */
     auth_reset(pcb);
-#endif /* PPP_AUTH_SUPPORT */
+#endif /* UNUSED */
 }
 
 

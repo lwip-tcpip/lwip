@@ -1466,110 +1466,40 @@ auth_check_options()
 }
 #endif /* PPP_OPTIONS */
 
-#if PPP_AUTH_SUPPORT
+#if 0 /* UNUSED */
 /*
  * auth_reset - called when LCP is starting negotiations to recheck
  * authentication options, i.e. whether we have appropriate secrets
  * to use for authenticating ourselves and/or the peer.
  */
-void auth_reset(ppp_pcb *pcb) {
-  lcp_options *go = &pcb->lcp_gotoptions;
-  lcp_options *ao = &pcb->lcp_allowoptions;
+void
+auth_reset(unit)
+    int unit;
+{
+    lcp_options *go = &lcp_gotoptions[unit];
+    lcp_options *ao = &lcp_allowoptions[unit];
+    int hadchap;
 
-  if(pcb->settings.passwd) {
-
-#if PAP_SUPPORT
-    ao->neg_upap = !pcb->settings.refuse_pap;
-#endif /* PAP_SUPPORT */
-
-#if EAP_SUPPORT
-    ao->neg_eap = !pcb->settings.refuse_eap;
-#endif /* EAP_SUPPORT */
-
-#if CHAP_SUPPORT
-    ao->chap_mdtype = MDTYPE_NONE;
-    if(!pcb->settings.refuse_chap)
-      ao->chap_mdtype |= MDTYPE_MD5;
-#if MSCHAP_SUPPORT
-    if(!pcb->settings.refuse_mschap)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT;
-    if(!pcb->settings.refuse_mschap_v2)
-      ao->chap_mdtype |= MDTYPE_MICROSOFT_V2;
-#endif /* MSCHAP_SUPPORT */
-
-    ao->neg_chap = (ao->chap_mdtype != MDTYPE_NONE);
-#endif /* CHAP_SUPPORT */
-
-  } else {
-#if PAP_SUPPORT
-    ao->neg_upap = 0;
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-    ao->neg_chap = 0;
-    ao->chap_mdtype = MDTYPE_NONE;
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
-    ao->neg_eap = 0;
-#endif /* EAP_SUPPORT */
-  }
-
-  PPPDEBUG(LOG_DEBUG, ("ppp: auth protocols:"));
-#if PAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, (" PAP=%d", ao->neg_upap));
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, (" CHAP=%d CHAP_MD5=%d", ao->neg_chap, !!(ao->chap_mdtype&MDTYPE_MD5)));
-#if MSCHAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, (" CHAP_MS=%d CHAP_MS2=%d", !!(ao->chap_mdtype&MDTYPE_MICROSOFT), !!(ao->chap_mdtype&MDTYPE_MICROSOFT_V2)));
-#endif /* MSCHAP_SUPPORT */
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
-  PPPDEBUG(LOG_DEBUG, (" EAP=%d", ao->neg_eap));
-#endif /* EAP_SUPPORT */
-  PPPDEBUG(LOG_DEBUG, ("\n"));
-
-#if 0 /* OLD CODE */
-    ao->neg_upap = !ppp_settings.refuse_pap && (ppp_settings.passwd[0] != 0 || get_pap_passwd(NULL));
-
-    /*
-    ao->neg_chap = (!ppp_settings.refuse_chap || !refuse_mschap || !refuse_mschap_v2)
+    hadchap = -1;
+    ao->neg_upap = !refuse_pap && (passwd[0] != 0 || get_pap_passwd(NULL));
+    ao->neg_chap = (!refuse_chap || !refuse_mschap || !refuse_mschap_v2)
 	&& (passwd[0] != 0 ||
 	    (hadchap = have_chap_secret(user, (explicit_remote? remote_name:
-					       NULL), 0, NULL))); */
-    /*
+					       NULL), 0, NULL)));
     ao->neg_eap = !refuse_eap && (
 	passwd[0] != 0 ||
-	(hadchap == 1 || (hadchap == -1 && have_chap_secret(ppp_settings.user,
+	(hadchap == 1 || (hadchap == -1 && have_chap_secret(user,
 	    (explicit_remote? remote_name: NULL), 0, NULL))) ||
-	have_srp_secret(ppp_settings.user, (explicit_remote? remote_name: NULL), 0, NULL)); */
-#endif /* OLD CODE */
-
-#if PAP_SUPPORT
-  go->neg_upap = 0;
-#endif /* PAP_SUPPORT */
-#if CHAP_SUPPORT
-  go->neg_chap = 0;
-  go->chap_mdtype = MDTYPE_NONE;
-#endif /* CHAP_SUPPORT */
-#if EAP_SUPPORT
-  go->neg_eap = 0;
-#endif /* EAP_SUPPORT */
-  return;
-#if 0
-    /* FIXME: find what the below stuff do */
-    int hadchap;
-    hadchap = -1;
+	have_srp_secret(user, (explicit_remote? remote_name: NULL), 0, NULL));
 
     hadchap = -1;
     if (go->neg_upap && !uselogin && !have_pap_secret(NULL))
 	go->neg_upap = 0;
-
     if (go->neg_chap) {
 	if (!(hadchap = have_chap_secret((explicit_remote? remote_name: NULL),
 			      our_name, 1, NULL)))
 	    go->neg_chap = 0;
     }
-
     if (go->neg_eap &&
 	(hadchap == 0 || (hadchap == -1 &&
 	    !have_chap_secret((explicit_remote? remote_name: NULL), our_name,
@@ -1577,11 +1507,8 @@ void auth_reset(ppp_pcb *pcb) {
 	!have_srp_secret((explicit_remote? remote_name: NULL), our_name, 1,
 	    NULL))
 	go->neg_eap = 0;
-#endif
 }
-#endif /* PPP_AUTH_SUPPORT */
 
-#if 0 /* UNUSED */
 /*
  * check_passwd - Check the user name and passwd against the PAP secrets
  * file.  If requested, also check against the system password database,

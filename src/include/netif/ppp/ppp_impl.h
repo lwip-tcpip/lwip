@@ -564,7 +564,6 @@ void np_up(ppp_pcb *pcb, int proto);    /* a network protocol has come up */
 void np_down(ppp_pcb *pcb, int proto);  /* a network protocol has gone down */
 void np_finished(ppp_pcb *pcb, int proto); /* a network protocol no longer needs link */
 #if PPP_AUTH_SUPPORT
-void auth_reset(ppp_pcb *pcb);	/* check what secrets we have */
 int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server);
 				/* get "secret" for chap */
 #endif /* PPP_AUTH_SUPPORT */
