@@ -652,6 +652,7 @@ static void lcp_resetci(fsm *f) {
 
 #if PPP_AUTH_SUPPORT
 
+    /* note: default value is true for allow options */
     if (pcb->settings.user && pcb->settings.passwd) {
 #if PAP_SUPPORT
       if (pcb->settings.refuse_pap) {
@@ -677,6 +678,37 @@ static void lcp_resetci(fsm *f) {
         ao->neg_eap = 0;
       }
 #endif /* EAP_SUPPORT */
+
+#if PPP_SERVER
+      /* note: default value is false for wanted options */
+      if (pcb->settings.auth_required) {
+#if PAP_SUPPORT
+        if (!pcb->settings.refuse_pap) {
+          wo->neg_upap = 1;
+        }
+#endif /* PAP_SUPPORT */
+#if CHAP_SUPPORT
+        if (!pcb->settings.refuse_chap) {
+          wo->chap_mdtype |= MDTYPE_MD5;
+        }
+#if MSCHAP_SUPPORT
+        if (!pcb->settings.refuse_mschap) {
+          wo->chap_mdtype |= MDTYPE_MICROSOFT;
+        }
+        if (!pcb->settings.refuse_mschap_v2) {
+          wo->chap_mdtype |= MDTYPE_MICROSOFT_V2;
+        }
+#endif /* MSCHAP_SUPPORT */
+        wo->neg_chap = (wo->chap_mdtype != MDTYPE_NONE);
+#endif /* CHAP_SUPPORT */
+#if EAP_SUPPORT
+        if (!pcb->settings.refuse_eap) {
+          wo->neg_eap = 1;
+        }
+#endif /* EAP_SUPPORT */
+      }
+#endif /* PPP_SERVER */
+
     } else {
 #if PAP_SUPPORT
       ao->neg_upap = 0;
