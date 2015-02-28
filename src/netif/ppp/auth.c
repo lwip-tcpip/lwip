@@ -1008,8 +1008,8 @@ int auth_check_passwd(ppp_pcb *pcb, char *auser, int userlen, char *apasswd, int
   int secretpasswdlen;
 
   if (pcb->settings.user && pcb->settings.passwd) {
-    secretuserlen = strlen(pcb->settings.user);
-    secretpasswdlen = strlen(pcb->settings.passwd);
+    secretuserlen = (int)strlen(pcb->settings.user);
+    secretpasswdlen = (int)strlen(pcb->settings.passwd);
     if (secretuserlen == userlen
         && secretpasswdlen == passwdlen
         && !memcmp(auser, pcb->settings.user, userlen)
@@ -1898,11 +1898,10 @@ have_srp_secret(client, server, need_ip, lacks_ipp)
  */
 int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secret, int *secret_len, int am_server) {
   int len;
-
   LWIP_UNUSED_ARG(server);
   LWIP_UNUSED_ARG(am_server);
 
-  if(!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user)) {
+  if (!client || !client[0] || !pcb->settings.user || !pcb->settings.passwd || strcmp(client, pcb->settings.user)) {
     return 0;
   }
 
@@ -1914,20 +1913,9 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
 
   MEMCPY(secret, pcb->settings.passwd, len);
   *secret_len = len;
-
   return 1;
 
-/* FIXME: clean that */
-#if 0
-	    	strlcpy(rname, ppp_settings.user, sizeof(rname));
-
-
-/*
-		strlcpy(rname, ppp_settings.user, sizeof(rname));
-		strlcpy(secret, ppp_settings.passwd, sizeof(secret));
-		secret_len = strlen(secret);
-*/
-
+#if 0 /* UNUSED */
     FILE *f;
     int ret, len;
     char *filename;
@@ -1979,7 +1967,7 @@ int get_secret(ppp_pcb *pcb, const char *client, const char *server, char *secre
     *secret_len = len;
 
     return 1;
-#endif
+#endif /* UNUSED */
 }
 #endif /* PPP_AUTH_SUPPORT */
 
