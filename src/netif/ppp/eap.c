@@ -663,14 +663,19 @@ static void eap_send_request(ppp_pcb *pcb) {
 	    pcb->eap.es_server.ea_state != eapInitial) {
 		pcb->eap.es_server.ea_state = eapIdentify;
 #if PPP_REMOTENAME
-		if (pcb->settings.explicit_remote) {
+		if (pcb->settings.explicit_remote && pcb->remote_name) {
 			/*
 			 * If we already know the peer's
 			 * unauthenticated name, then there's no
 			 * reason to ask.  Go to next state instead.
 			 */
-			pcb->eap.es_server.ea_peer = pcb->remote_name;
-			pcb->eap.es_server.ea_peerlen = strlen(pcb->remote_name);
+			int len = (int)strlen(pcb->remote_name);
+			if (len > MAXNAMELEN) {
+				len = MAXNAMELEN;
+			}
+			MEMCPY(pcb->eap.es_server.ea_peer, pcb->remote_name, len);
+			pcb->eap.es_server.ea_peer[len] = '\0';
+			pcb->eap.es_server.ea_peerlen = len;
 			eap_figure_next_state(pcb, 0);
 		}
 #endif /* PPP_REMOTENAME */
@@ -964,21 +969,6 @@ static void srp_lwrechallenge(void *arg) {
  * thing.
  */
 static void eap_lowerup(ppp_pcb *pcb) {
-
-	/* Discard any (possibly authenticated) peer name. */
-#if PPP_SERVER
-	if (pcb->eap.es_server.ea_peer != NULL
-#if PPP_REMOTENAME
-	    && pcb->eap.es_server.ea_peer != pcb->remote_name
-#endif /* PPP_REMOTENAME */
-	    )
-		free(pcb->eap.es_server.ea_peer);
-	pcb->eap.es_server.ea_peer = NULL;
-#endif /* PPP_SERVER */
-	if (pcb->eap.es_client.ea_peer != NULL)
-		free(pcb->eap.es_client.ea_peer);
-	pcb->eap.es_client.ea_peer = NULL;
-
 	pcb->eap.es_client.ea_state = eapClosed;
 #if PPP_SERVER
 	pcb->eap.es_server.ea_state = eapClosed;
@@ -1514,6 +1504,8 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			/* No session key just yet */
 			pcb->eap.es_client.ea_skey = NULL;
 			if (tc == NULL) {
+				int rhostnamelen;
+
 				GETCHAR(vallen, inp);
 				len--;
 				if (vallen >= len) {
@@ -1537,10 +1529,13 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 					    sizeof (rhostname));
 				}
 
-				if (pcb->eap.es_client.ea_peer != NULL)
-					free(pcb->eap.es_client.ea_peer);
-				pcb->eap.es_client.ea_peer = strdup(rhostname);
-				pcb->eap.es_client.ea_peerlen = strlen(rhostname);
+				rhostnamelen = (int)strlen(rhostname);
+				if (rhostnamelen > MAXNAMELEN) {
+					rhostnamelen = MAXNAMELEN;
+				}
+				MEMCPY(pcb->eap.es_client.ea_peer, rhostname, rhostnamelen);
+				pcb->eap.es_client.ea_peer[rhostnamelen] = '\0';
+				pcb->eap.es_client.ea_peerlen = rhostnamelen;
 
 				GETCHAR(vallen, inp);
 				len--;
@@ -1741,7 +1736,6 @@ client_failure:
 }
 
 #if PPP_SERVER
-/* FIXME: remove malloc() and free() */
 /*
  * eap_response - Receive EAP Response message (server mode).
  */
@@ -1784,17 +1778,8 @@ static void eap_response(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			break;
 		}
 		ppp_info("EAP: unauthenticated peer name \"%.*q\"", len, inp);
-		if (pcb->eap.es_server.ea_peer != NULL
-#if PPP_REMOTENAME
-		    && pcb->eap.es_server.ea_peer != pcb->remote_name
-#endif /* PPP_REMOTENAME */
-		    )
-			free(pcb->eap.es_server.ea_peer);
-		pcb->eap.es_server.ea_peer = (char*)malloc(len + 1);
-		if (pcb->eap.es_server.ea_peer == NULL) {
-			pcb->eap.es_server.ea_peerlen = 0;
-			eap_figure_next_state(pcb, 1);
-			break;
+		if (len > MAXNAMELEN) {
+		  len = MAXNAMELEN;
 		}
 		MEMCPY(pcb->eap.es_server.ea_peer, inp, len);
 		pcb->eap.es_server.ea_peer[len] = '\0';
