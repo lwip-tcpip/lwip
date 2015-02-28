@@ -2049,7 +2049,9 @@
 #endif
 
 /**
- * PPP_SERVER==1: Enable PPP server support (waiting for incoming PPP session). CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * PPP_SERVER==1: Enable PPP server support (waiting for incoming PPP session).
+ *
+ * Currently only supported for PPPoS.
  */
 #ifndef PPP_SERVER
 #define PPP_SERVER                      0

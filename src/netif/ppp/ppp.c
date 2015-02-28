@@ -247,6 +247,32 @@ err_t ppp_open(ppp_pcb *pcb, u16_t holdoff) {
   return ERR_OK;
 }
 
+#if PPP_SERVER
+/*
+ * Listen for an incoming PPP connection.
+ *
+ * This can only be called if PPP is in the dead phase.
+ *
+ * Local and remote interface IP addresses, as well as DNS are
+ * provided through a previously filled struct ppp_addrs.
+ *
+ * If this port connects to a modem, the modem connection must be
+ * established before calling this.
+ */
+err_t ppp_listen(ppp_pcb *pcb, struct ppp_addrs *addrs) {
+  if (pcb->phase != PPP_PHASE_DEAD) {
+    return ERR_ALREADY;
+  }
+
+  PPPDEBUG(LOG_DEBUG, ("ppp_listen() called\n"));
+
+  if (pcb->link_cb->listen) {
+    return pcb->link_cb->listen(pcb, pcb->link_ctx_cb, addrs);
+  }
+  return ERR_IF;
+}
+#endif /* PPP_SERVER */
+
 /*
  * Initiate the end of a PPP connection.
  * Any outstanding packets in the queues are dropped.

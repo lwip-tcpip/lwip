@@ -54,6 +54,9 @@
 static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
 static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol);
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
+#if PPP_SERVER
+static err_t pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs);
+#endif /* PPP_SERVER */
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
 static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm);
@@ -76,6 +79,9 @@ static void pppos_drop(pppos_pcb *pppos);
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppos_callbacks = {
   pppos_connect,
+#if PPP_SERVER
+  pppos_listen,
+#endif /* PPP_SERVER */
   pppos_disconnect,
   pppos_destroy,
   pppos_write,
@@ -417,6 +423,76 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
   ppp_start(ppp); /* notify upper layers */
   return ERR_OK;
 }
+
+#if PPP_SERVER
+static err_t
+pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
+{
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
+#if PPP_IPV4_SUPPORT
+  ipcp_options *ipcp_wo;
+#if !VJ_SUPPORT
+  ipcp_options *ipcp_ao;
+#endif /* !VJ_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT */
+  lcp_options *lcp_wo;
+
+  /* input pbuf left over from last session? */
+  pppos_free_current_input_packet(pppos);
+
+  ppp_clear(ppp);
+  /* reset PPPoS control block to its initial state */
+  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
+
+  /* Wait passively */
+  lcp_wo = &ppp->lcp_wantoptions;
+  lcp_wo->silent = 1;
+
+#if PPP_AUTH_SUPPORT
+  if (ppp->settings.user && ppp->settings.passwd) {
+    ppp->settings.auth_required = 1;
+  }
+#endif /* PPP_AUTH_SUPPORT */
+
+#if PPP_IPV4_SUPPORT
+  ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->ouraddr = ip4_addr_get_u32(&addrs->our_ipaddr);
+  ipcp_wo->hisaddr = ip4_addr_get_u32(&addrs->his_ipaddr);
+  ipcp_wo->dnsaddr[0] = ip4_addr_get_u32(&addrs->dns1);
+  ipcp_wo->dnsaddr[1] = ip4_addr_get_u32(&addrs->dns2);
+
+#if VJ_SUPPORT
+  vj_compress_init(&pppos->vj_comp);
+#else /* VJ_SUPPORT */
+  /* Don't even try to negotiate VJ if VJ is disabled */
+  ipcp_wo = &ppp->ipcp_wantoptions;
+  ipcp_wo->neg_vj = 0;
+  ipcp_wo->old_vj = 0;
+
+  ipcp_ao = &ppp->ipcp_allowoptions;
+  ipcp_ao->neg_vj = 0;
+  ipcp_ao->old_vj = 0;
+#endif /* VJ_SUPPORT */
+
+#else /* PPP_IPV4_SUPPORT */
+  LWIP_UNUSED_ARG(addrs);
+#endif /* PPP_IPV4_SUPPORT */
+
+  /*
+   * Default the in and out accm so that escape and flag characters
+   * are always escaped.
+   */
+  pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
+  pppos->out_accm[15] = 0x60;
+
+  /*
+   * Wait for something to happen.
+   */
+  PPPDEBUG(LOG_INFO, ("pppos_listen: unit %d: listening\n", ppp->netif->num));
+  ppp_start(ppp); /* notify upper layers */
+  return ERR_OK;
+}
+#endif /* PPP_SERVER */
 
 static void
 pppos_disconnect(ppp_pcb *ppp, void *ctx)

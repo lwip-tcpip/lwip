@@ -150,6 +150,9 @@ static struct pppoe_softc *pppoe_softc_list;
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppoe_callbacks = {
   pppoe_connect,
+#if PPP_SERVER
+  NULL,
+#endif /* PPP_SERVER */
   pppoe_disconnect,
   pppoe_destroy,
   pppoe_write,

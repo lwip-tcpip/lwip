@@ -261,6 +261,34 @@ pppapi_open(ppp_pcb *pcb, u16_t holdoff)
 }
 
 
+#if PPP_SERVER
+/**
+ * Call ppp_listen() inside the tcpip_thread context.
+ */
+static void
+pppapi_do_ppp_listen(struct pppapi_msg_msg *msg)
+{
+  msg->err = ppp_listen(msg->ppp, msg->msg.listen.addrs);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call ppp_listen() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+err_t
+pppapi_listen(ppp_pcb *pcb, struct ppp_addrs *addrs)
+{
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_ppp_listen;
+  msg.msg.ppp = pcb;
+  msg.msg.msg.listen.addrs = addrs;
+  TCPIP_PPPAPI(&msg);
+  return msg.msg.err;
+}
+#endif /* PPP_SERVER */
+
+
 /**
  * Call ppp_close() inside the tcpip_thread context.
  */

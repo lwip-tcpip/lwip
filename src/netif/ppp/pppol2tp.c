@@ -99,6 +99,9 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppol2tp_callbacks = {
   pppol2tp_connect,
+#if PPP_SERVER
+  NULL,
+#endif /* PPP_SERVER */
   pppol2tp_disconnect,
   pppol2tp_destroy,
   pppol2tp_write,
