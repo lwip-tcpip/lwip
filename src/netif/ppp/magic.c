@@ -264,4 +264,11 @@ u32_t magic() {
 
 #endif /* PPP_MD5_RANDM */
 
+/*
+ * Return a new random number between 0 and (2^pow)-1 included.
+ */
+u32_t magic_pow(u8_t pow) {
+  return magic() & ~(~0UL<<pow);
+}
+
 #endif /* PPP_SUPPORT */
