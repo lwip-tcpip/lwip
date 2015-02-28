@@ -288,6 +288,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		const unsigned char *, const unsigned char *, char *, int);
 #endif /* UNUSED */
 	char rname[MAXNAMELEN+1];
+	char message[256];
 
 	if ((pcb->chap_server.flags & LOWERUP) == 0)
 		return;
@@ -327,7 +328,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 #endif /* UNUSED */
 		ok = chap_verify_response(pcb, name, pcb->chap_server.name, id, pcb->chap_server.digest,
                     pcb->chap_server.challenge + PPP_HDRLEN + CHAP_HDRLEN,
-                    response, pcb->chap_server.message, sizeof(pcb->chap_server.message));
+                    response, message, sizeof(message));
 #if 0 /* UNUSED */
 		if (!ok || !auth_number()) {
 #endif /* UNUSED */
@@ -339,7 +340,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 		return;
 
 	/* send the response */
-	mlen = strlen(pcb->chap_server.message);
+	mlen = strlen(message);
 	len = CHAP_HDRLEN + mlen;
 	p = pbuf_alloc(PBUF_RAW, (u16_t)(PPP_HDRLEN +len), PPP_CTRL_PBUF_TYPE);
 	if(NULL == p)
@@ -357,7 +358,7 @@ static void  chap_handle_response(ppp_pcb *pcb, int id,
 	outp[2] = len >> 8;
 	outp[3] = len;
 	if (mlen > 0)
-		memcpy(outp + CHAP_HDRLEN, pcb->chap_server.message, mlen);
+		memcpy(outp + CHAP_HDRLEN, message, mlen);
 	ppp_write(pcb, p);
 
 	if (pcb->chap_server.flags & CHALLENGE_VALID) {

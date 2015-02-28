@@ -165,7 +165,6 @@ typedef struct chap_server_state {
 	int challenge_xmits;
 	int challenge_pktlen;
 	unsigned char challenge[CHAL_MAX_PKTLEN];
-	char message[256];
 } chap_server_state;
 #endif /* PPP_SERVER */
 #endif /* CHAP_SUPPORT */
