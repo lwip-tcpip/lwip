@@ -2182,8 +2182,8 @@
 #endif
 
 #if PPP_SERVER
-#ifndef CHAP_DEFREQTIME
-#define CHAP_DEFREQTIME                 30      /* Time to wait for auth-req from peer */
+#ifndef CHAP_DEFRECHALLENGETIME
+#define CHAP_DEFRECHALLENGETIME         0       /* If this option is > 0, rechallenge the peer every n seconds */
 #endif
 #endif /* PPP_SERVER */
 
