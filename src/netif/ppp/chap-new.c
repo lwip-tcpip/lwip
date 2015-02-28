@@ -156,7 +156,6 @@ static void chap_lowerdown(ppp_pcb *pcb) {
  * otherwise we wait for the lower layer to come up.
  */
 void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
-	struct chap_server_state *ss = &pcb->chap_server;
 	const struct chap_digest_type *dp;
 	int i;
 
@@ -177,7 +176,7 @@ void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
 	pcb->chap_server.id = (unsigned char)(drand48() * 256);
 	pcb->chap_server.flags |= AUTH_STARTED;
 	if (pcb->chap_server.flags & LOWERUP)
-		chap_timeout(ss);
+		chap_timeout(pcb);
 }
 #endif /* PPP_SERVER */
 
