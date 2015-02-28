@@ -156,7 +156,9 @@ static const struct link_callbacks pppoe_callbacks = {
   pppoe_netif_output,
   NULL,
   NULL,
+#if VJ_SUPPORT
   NULL,
+#endif /* VJ_SUPPORT */
   NULL,
   NULL
 };

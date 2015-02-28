@@ -155,8 +155,10 @@ struct link_callbacks {
   void (*send_config)(ppp_pcb *pcb, void *ctx, u32_t accm);
   /* confire the receive-side characteristics of the PPP interface */
   void (*recv_config)(ppp_pcb *pcb, void *ctx, u32_t accm);
+#if VJ_SUPPORT
   /* configure TCP header compression */
   void (*vj_config)(ppp_pcb *pcb, void *ctx, int vjcomp, int cidcomp, int maxcid);
+#endif /* VJ_SUPPORT */
   /* Get and set parameters for the given connection. */
   err_t (*ioctl)(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
   /* Pass the processed input packet to the appropriate handler. */

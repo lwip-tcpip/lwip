@@ -84,8 +84,6 @@ static const struct link_callbacks pppos_callbacks = {
   pppos_recv_config,
 #if VJ_SUPPORT
   pppos_vjc_config,
-#else /* VJ_SUPPORT */
-  NULL,
 #endif /* VJ_SUPPORT */
   pppos_ioctl,
 #if VJ_SUPPORT
