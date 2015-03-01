@@ -349,6 +349,15 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
     goto free_and_return;
   }
 
+  if (!ip_addr_cmp(&l2tp->remote_ip, addr)) {
+    goto free_and_return;
+  }
+
+  /* discard packet if port mismatch, but only if we received a SCCRP */
+  if (l2tp->phase > PPPOL2TP_STATE_SCCRQ_SENT && l2tp->tunnel_port != port) {
+    goto free_and_return;
+  }
+
   /* printf("-----------\nL2TP INPUT, %d\n", p->len); */
   p = ppp_singlebuf(p);
 
