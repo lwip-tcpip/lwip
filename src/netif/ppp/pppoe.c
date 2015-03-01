@@ -109,11 +109,7 @@
 #define IFF_PASSIVE IFF_LINK0 /* wait passively for connection */
 #endif
 
-/* FIXME: we should probably remove that, this is only used for debug purposes */
-#ifndef PPPOE_ERRORSTRING_LEN
 #define PPPOE_ERRORSTRING_LEN     64
-#endif
-static char pppoe_error_tmp[PPPOE_ERRORSTRING_LEN];
 
 
 /* callbacks called from PPP core */
@@ -503,16 +499,19 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
       default:
         break;
     }
+#if PPP_DEBUG
     if (NULL != err_msg) {
       if (len) {
-        u16_t error_len = LWIP_MIN(len, sizeof(pppoe_error_tmp)-1);
-        strncpy(pppoe_error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
-        pppoe_error_tmp[error_len] = '\0';
-        PPPDEBUG(LOG_DEBUG, ("%s: %s: %s\n", devname, err_msg, pppoe_error_tmp));
+        char error_tmp[PPPOE_ERRORSTRING_LEN];
+        u16_t error_len = LWIP_MIN(len, sizeof(error_tmp)-1);
+        strncpy(error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
+        error_tmp[error_len] = '\0';
+        PPPDEBUG(LOG_DEBUG, ("%s: %s: %s\n", devname, err_msg, error_tmp));
       } else {
     	PPPDEBUG(LOG_DEBUG, ("%s: %s\n", devname, err_msg));
       }
     }
+#endif /* PPP_DEBUG */
     off += sizeof(pt) + len;
   }
 
