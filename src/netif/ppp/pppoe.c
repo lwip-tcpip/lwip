@@ -392,7 +392,6 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   u16_t session, plen;
   struct pppoe_softc *sc;
   const char *err_msg;
-  char devname[6];
   u8_t *ac_cookie;
   u16_t ac_cookie_len;
 #ifdef PPPOE_SERVER
@@ -412,7 +411,6 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 
   pb = ppp_singlebuf(pb);
 
-  strcpy(devname, "pppoe");  /* as long as we don't know which instance */
   err_msg = NULL;
   if (pb->len < sizeof(*ethhdr)) {
     goto done;
@@ -476,12 +474,6 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
         hunique_len = len;
 #endif
         sc = pppoe_find_softc_by_hunique((u8_t*)pb->payload + off + sizeof(pt), len, netif);
-        if (sc != NULL) {
-          devname[0] = sc->sc_ethif->name[0];
-          devname[1] = sc->sc_ethif->name[1];
-          devname[2] = sc->sc_ethif->num;
-          devname[3] = '\0';
-        }
         break;
       case PPPOE_TAG_ACCOOKIE:
         if (ac_cookie == NULL) {
@@ -502,15 +494,15 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
         break;
     }
 #if PPP_DEBUG
-    if (NULL != err_msg) {
-      if (len) {
-        char error_tmp[PPPOE_ERRORSTRING_LEN];
-        u16_t error_len = LWIP_MIN(len, sizeof(error_tmp)-1);
-        strncpy(error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
-        error_tmp[error_len] = '\0';
-        PPPDEBUG(LOG_DEBUG, ("%s: %s: %s\n", devname, err_msg, error_tmp));
+    if (err_msg != NULL) {
+      char error_tmp[PPPOE_ERRORSTRING_LEN];
+      u16_t error_len = LWIP_MIN(len, sizeof(error_tmp)-1);
+      strncpy(error_tmp, (char*)pb->payload + off + sizeof(pt), error_len);
+      error_tmp[error_len] = '\0';
+      if (sc) {
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %c%c%"U16_F": %s: %s\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num, err_msg, error_tmp));
       } else {
-    	PPPDEBUG(LOG_DEBUG, ("%s: %s\n", devname, err_msg));
+        PPPDEBUG(LOG_DEBUG, ("pppoe: %s: %s\n", err_msg, error_tmp));
       }
     }
 #endif /* PPP_DEBUG */
