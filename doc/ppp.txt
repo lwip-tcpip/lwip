@@ -159,7 +159,7 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
    * Try to reconnect in 30 seconds, if you need a modem chatscript you have
    * to do a much better signaling here ;-)
    */
-  ppp_open(pcb, 30);
+  ppp_connect(pcb, 30);
 }
 
 
@@ -257,7 +257,7 @@ ppp_set_default(ppp);
  * if PPP session is in the dead state (i.e. disconnected).
  */
 u16_t holdoff = 0;
-ppp_open(ppp, holdoff);
+ppp_connect(ppp, holdoff);
 
 
 /*
@@ -334,7 +334,7 @@ from previous lwIP version is pretty easy:
   for PPP interface in pppoX_create() functions
 
 * PPP session are not started automatically after you created them anymore,
-  you have to call ppp_open(), this way you can configure the session before
+  you have to call ppp_connect(), this way you can configure the session before
   starting it.
 
 * Previous PPP API used CamelCase, we are now using snake_case.

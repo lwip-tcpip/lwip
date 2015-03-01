@@ -451,7 +451,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
 #endif /* PPP_NOTIFY_PHASE */
 
 /*
- * Open a PPP connection.
+ * Initiate a PPP connection.
  *
  * This can only be called if PPP is in the dead phase.
  *
@@ -461,7 +461,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_open(ppp_pcb *pcb, u16_t holdoff);
+err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff);
 
 #if PPP_SERVER
 /*

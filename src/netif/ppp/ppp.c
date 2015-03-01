@@ -178,7 +178,7 @@ const struct protent* const protocols[] = {
 };
 
 /* Prototypes for procedures local to this file. */
-static void ppp_do_open(void *arg);
+static void ppp_do_connect(void *arg);
 static err_t ppp_netif_init_cb(struct netif *netif);
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip_addr_t *ipaddr);
 #if PPP_IPV6_SUPPORT
@@ -221,7 +221,7 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
 #endif /* PPP_NOTIFY_PHASE */
 
 /*
- * Open a PPP connection.
+ * Initiate a PPP connection.
  *
  * This can only be called if PPP is in the dead phase.
  *
@@ -231,19 +231,19 @@ void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_p
  * If this port connects to a modem, the modem connection must be
  * established before calling this.
  */
-err_t ppp_open(ppp_pcb *pcb, u16_t holdoff) {
+err_t ppp_connect(ppp_pcb *pcb, u16_t holdoff) {
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_ALREADY;
   }
 
-  PPPDEBUG(LOG_DEBUG, ("ppp_open() called, holdoff=%d\n", holdoff));
+  PPPDEBUG(LOG_DEBUG, ("ppp_connect() called, holdoff=%d\n", holdoff));
 
   if (holdoff == 0) {
     return pcb->link_cb->connect(pcb, pcb->link_ctx_cb);
   }
 
   new_phase(pcb, PPP_PHASE_HOLDOFF);
-  sys_timeout((u32_t)(holdoff*1000), ppp_do_open, pcb);
+  sys_timeout((u32_t)(holdoff*1000), ppp_do_connect, pcb);
   return ERR_OK;
 }
 
@@ -291,7 +291,7 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
 
   /* holdoff phase, cancel the reconnection */
   if (pcb->phase == PPP_PHASE_HOLDOFF) {
-    sys_untimeout(ppp_do_open, pcb);
+    sys_untimeout(ppp_do_connect, pcb);
     new_phase(pcb, PPP_PHASE_DEAD);
   }
 
@@ -395,7 +395,7 @@ fail:
 /*** LOCAL FUNCTION DEFINITIONS ***/
 /**********************************/
 
-static void ppp_do_open(void *arg) {
+static void ppp_do_connect(void *arg) {
   ppp_pcb *pcb = (ppp_pcb*)arg;
 
   LWIP_ASSERT("pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF", pcb->phase == PPP_PHASE_DEAD || pcb->phase == PPP_PHASE_HOLDOFF);

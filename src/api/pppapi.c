@@ -236,26 +236,26 @@ pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipad
 
 
 /**
- * Call ppp_open() inside the tcpip_thread context.
+ * Call ppp_connect() inside the tcpip_thread context.
  */
 static void
-pppapi_do_ppp_open(struct pppapi_msg_msg *msg)
+pppapi_do_ppp_connect(struct pppapi_msg_msg *msg)
 {
-  msg->err = ppp_open(msg->ppp, msg->msg.open.holdoff);
+  msg->err = ppp_connect(msg->ppp, msg->msg.connect.holdoff);
   TCPIP_PPPAPI_ACK(msg);
 }
 
 /**
- * Call ppp_open() in a thread-safe way by running that function inside the
+ * Call ppp_connect() in a thread-safe way by running that function inside the
  * tcpip_thread context.
  */
 err_t
-pppapi_open(ppp_pcb *pcb, u16_t holdoff)
+pppapi_connect(ppp_pcb *pcb, u16_t holdoff)
 {
   struct pppapi_msg msg;
-  msg.function = pppapi_do_ppp_open;
+  msg.function = pppapi_do_ppp_connect;
   msg.msg.ppp = pcb;
-  msg.msg.msg.open.holdoff = holdoff;
+  msg.msg.msg.connect.holdoff = holdoff;
   TCPIP_PPPAPI(&msg);
   return msg.msg.err;
 }

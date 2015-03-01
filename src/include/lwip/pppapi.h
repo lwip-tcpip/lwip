@@ -91,7 +91,7 @@ struct pppapi_msg_msg {
 #endif /* PPPOL2TP_SUPPORT */
     struct {
       u16_t holdoff;
-    } open;
+    } connect;
 #if PPP_SERVER
     struct {
       struct ppp_addrs *addrs;
@@ -131,7 +131,7 @@ ppp_pcb *pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_add
                             u8_t *secret, u8_t secret_len,
                             ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 #endif /* PPPOL2TP_SUPPORT */
-err_t pppapi_open(ppp_pcb *pcb, u16_t holdoff);
+err_t pppapi_connect(ppp_pcb *pcb, u16_t holdoff);
 #if PPP_SERVER
 err_t pppapi_listen(ppp_pcb *pcb, struct ppp_addrs *addrs);
 #endif /* PPP_SERVER */
