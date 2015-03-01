@@ -232,6 +232,52 @@ pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipad
   TCPIP_PPPAPI(&msg);
   return msg.msg.ppp;
 }
+
+
+#if LWIP_IPV6
+/**
+ * Call pppol2tp_create_ip6() inside the tcpip_thread context.
+ */
+static void
+pppapi_do_pppol2tp_create_ip6(struct pppapi_msg_msg *msg)
+{
+  msg->ppp = pppol2tp_create_ip6(msg->msg.l2tpcreateip6.pppif,
+    msg->msg.l2tpcreateip6.netif, msg->msg.l2tpcreateip6.ip6addr, msg->msg.l2tpcreateip6.port,
+#if PPPOL2TP_AUTH_SUPPORT
+    msg->msg.l2tpcreateip6.secret,
+    msg->msg.l2tpcreateip6.secret_len,
+#else /* PPPOL2TP_AUTH_SUPPORT */
+    NULL,
+#endif /* PPPOL2TP_AUTH_SUPPORT */
+    msg->msg.l2tpcreateip6.link_status_cb, msg->msg.l2tpcreateip6.ctx_cb);
+  TCPIP_PPPAPI_ACK(msg);
+}
+
+/**
+ * Call pppol2tp_create_ip6() in a thread-safe way by running that function inside the
+ * tcpip_thread context.
+ */
+ppp_pcb*
+pppapi_pppol2tp_create_ip6(struct netif *pppif, struct netif *netif, ip6_addr_t *ip6addr, u16_t port,
+                           u8_t *secret, u8_t secret_len,
+                           ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
+{
+  struct pppapi_msg msg;
+  msg.function = pppapi_do_pppol2tp_create_ip6;
+  msg.msg.msg.l2tpcreateip6.pppif = pppif;
+  msg.msg.msg.l2tpcreateip6.netif = netif;
+  msg.msg.msg.l2tpcreateip6.ip6addr = ip6addr;
+  msg.msg.msg.l2tpcreateip6.port = port;
+#if PPPOL2TP_AUTH_SUPPORT
+  msg.msg.msg.l2tpcreateip6.secret = secret;
+  msg.msg.msg.l2tpcreateip6.secret_len = secret_len;
+#endif /* PPPOL2TP_AUTH_SUPPORT */
+  msg.msg.msg.l2tpcreateip6.link_status_cb = link_status_cb;
+  msg.msg.msg.l2tpcreateip6.ctx_cb = ctx_cb;
+  TCPIP_PPPAPI(&msg);
+  return msg.msg.ppp;
+}
+#endif /* LWIP_IPV6 */
 #endif /* PPPOL2TP_SUPPORT */
 
 
