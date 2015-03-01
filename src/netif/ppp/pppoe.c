@@ -121,7 +121,9 @@ static err_t pppoe_destroy(ppp_pcb *ppp, void *ctx);
 
 /* management routines */
 static void pppoe_abort_connect(struct pppoe_softc *);
+#if 0 /* UNUSED */
 static void pppoe_clear_softc(struct pppoe_softc *, const char *);
+#endif /* UNUSED */
 
 /* internal timeout handling */
 static void pppoe_timeout(void *);
@@ -634,10 +636,17 @@ breakbreak:;
       ppp_start(sc->pcb); /* notify upper layers */
       break;
     case PPPOE_CODE_PADT:
-      if (sc == NULL) {
+      /* Don't disconnect here, we let the LCP Echo/Reply find the fact
+       * that PPP session is down. Asking the PPP stack to end the session
+       * require strict checking about the PPP phase to prevent endless
+       * disconnection loops.
+       */
+#if 0 /* UNUSED */
+      if (sc == NULL) { /* PADT frames are rarely sent with a hunique tag, this is actually almost always true */
         goto done;
       }
       pppoe_clear_softc(sc, "received PADT");
+#endif /* UNUSED */
       break;
     default:
       if(sc) {
@@ -1238,6 +1247,7 @@ pppoe_ifattach_hook(void *arg, struct pbuf **mp, struct netif *ifp, int dir)
 }
 #endif
 
+#if 0 /* UNUSED */
 static void
 pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 {
@@ -1250,7 +1260,7 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_state = PPPOE_STATE_INITIAL;
 
   /* notify upper layers */
-  ppp_link_end(sc->pcb);
+  ppp_link_end(sc->pcb);  /* /!\ dangerous /!\ */
 
   /* clean up softc */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
@@ -1259,4 +1269,5 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
   sc->sc_padi_retried = 0;
   sc->sc_padr_retried = 0;
 }
+#endif /* UNUSED */
 #endif /* PPP_SUPPORT && PPPOE_SUPPORT */
