@@ -95,6 +95,7 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns);
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb);
+static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb);
 
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppol2tp_callbacks = {
@@ -882,13 +883,7 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 /* Complete tunnel establishment */
@@ -939,13 +934,7 @@ static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns) {
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 /* Initiate a new session */
@@ -994,13 +983,7 @@ static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns) {
   serialnumber = magic();
   PUTLONG(serialnumber, p); /* Attribute value: Serial number */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 /* Complete tunnel establishment */
@@ -1047,13 +1030,7 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(PPPOL2TP_AVPTYPE_TXCONNECTSPEED, p); /* Attribute type: TX Connect speed */
   PUTLONG(PPPOL2TP_TXCONNECTSPEED, p); /* Attribute value: TX Connect speed */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 /* Send a ZLB ACK packet */
@@ -1082,13 +1059,7 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(ns, p); /* NS Sequence number - to peer */
   PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 /* Send a StopCCN packet */
@@ -1135,13 +1106,7 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(PPPOL2TP_AVPTYPE_RESULTCODE, p); /* Attribute type: Result code */
   PUTSHORT(PPPOL2TP_RESULTCODE, p); /* Attribute value: Result code */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
-  } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
-  }
-  pbuf_free(pb);
-  return ERR_OK;
+  return pppol2tp_udp_send(l2tp, pb);
 }
 
 static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
@@ -1167,13 +1132,18 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   PUTSHORT(l2tp->source_tunnel_id, p); /* Tunnel Id */
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */
 
-  if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
+  return pppol2tp_udp_send(l2tp, pb);
+}
+
+static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
+  err_t err;
+  if (l2tp->netif) {
+    err = udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
+    err = udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
-  return ERR_OK;
+  return err;
 }
 
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */
