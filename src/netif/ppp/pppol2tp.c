@@ -874,9 +874,9 @@ static err_t pppol2tp_send_sccrq(pppol2tp_pcb *l2tp) {
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -931,9 +931,9 @@ static err_t pppol2tp_send_scccn(pppol2tp_pcb *l2tp, u16_t ns) {
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -986,9 +986,9 @@ static err_t pppol2tp_send_icrq(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTLONG(serialnumber, p); /* Attribute value: Serial number */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -1039,9 +1039,9 @@ static err_t pppol2tp_send_iccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTLONG(PPPOL2TP_TXCONNECTSPEED, p); /* Attribute value: TX Connect speed */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -1074,9 +1074,9 @@ static err_t pppol2tp_send_zlb(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(l2tp->peer_ns+1, p); /* NR Sequence number - expected for peer */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -1127,9 +1127,9 @@ static err_t pppol2tp_send_stopccn(pppol2tp_pcb *l2tp, u16_t ns) {
   PUTSHORT(PPPOL2TP_RESULTCODE, p); /* Attribute value: Result code */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
@@ -1159,9 +1159,9 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   PUTSHORT(l2tp->source_session_id, p); /* Session Id */
 
   if(l2tp->netif) {
-    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port, l2tp->netif);
+    udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->remote_port);
+    udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return ERR_OK;
