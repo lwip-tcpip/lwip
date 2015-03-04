@@ -394,15 +394,15 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Re-set invalidation timer. */
-    default_router_list[i].invalidation_timer = ra_hdr->router_lifetime;
+    default_router_list[i].invalidation_timer = htons(ra_hdr->router_lifetime);
 
     /* Re-set default timer values. */
 #if LWIP_ND6_ALLOW_RA_UPDATES
     if (ra_hdr->retrans_timer > 0) {
-      retrans_timer = ra_hdr->retrans_timer;
+      retrans_timer = htonl(ra_hdr->retrans_timer);
     }
     if (ra_hdr->reachable_time > 0) {
-      reachable_time = ra_hdr->reachable_time;
+      reachable_time = htonl(ra_hdr->reachable_time);
     }
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
 
@@ -441,9 +441,9 @@ nd6_input(struct pbuf *p, struct netif *inp)
       {
         struct mtu_option * mtu_opt;
         mtu_opt = (struct mtu_option *)buffer;
-        if (mtu_opt->mtu >= 1280) {
+        if (htonl(mtu_opt->mtu) >= 1280) {
 #if LWIP_ND6_ALLOW_RA_UPDATES
-          inp->mtu = mtu_opt->mtu;
+          inp->mtu = htonl(mtu_opt->mtu);
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
         }
         break;
@@ -467,7 +467,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
             prefix = nd6_new_onlink_prefix(ip6_current_dest_addr(), inp);
           }
           if (prefix >= 0) {
-            prefix_list[prefix].invalidation_timer = prefix_opt->valid_lifetime;
+            prefix_list[prefix].invalidation_timer = htonl(prefix_opt->valid_lifetime);
 
 #if LWIP_IPV6_AUTOCONFIG
             if (prefix_opt->flags & ND6_PREFIX_FLAG_AUTONOMOUS) {
@@ -596,7 +596,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Change the Path MTU. */
-    destination_cache[i].pmtu = icmp6hdr->data;
+    destination_cache[i].pmtu = htonl(icmp6hdr->data);
 
     break; /* ICMP6_TYPE_PTB */
   }

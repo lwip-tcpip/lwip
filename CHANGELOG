@@ -205,6 +205,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-04: Zach Smith
+  * nd6.c: fixed bug #38153 (nd6_input() byte order issues)
+
   2015-02-26: Simon Goldschmidt
   * netif.c, tcp.h/.c: fixed bug #44378 (TCP connections are not aborted on netif
     remove)
