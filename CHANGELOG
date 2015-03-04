@@ -205,6 +205,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-04: Simon Goldschmidt
+  * nd6.c: fixed bug #43784 (a host should send at least one Router Solicitation)
+
   2015-03-04: Valery Ushakov
   * ip6.c: fixed bug #41094 (Byte-order bug in IPv6 fragmentation header test)
 

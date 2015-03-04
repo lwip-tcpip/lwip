@@ -376,6 +376,10 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* If we are sending RS messages, stop. */
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
+    if (inp->rs_count == LWIP_ND6_MAX_MULTICAST_SOLICIT) {
+      /* ensure at least one solicitation is sent */
+      nd6_send_rs(inp);
+    }
     inp->rs_count = 0;
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
