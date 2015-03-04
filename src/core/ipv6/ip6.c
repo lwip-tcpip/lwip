@@ -607,14 +607,12 @@ netif_found:
       }
 
       /* Offset == 0 and more_fragments == 0? */
-      if (((frag_hdr->_fragment_offset & IP6_FRAG_OFFSET_MASK) == 0) &&
-          ((frag_hdr->_fragment_offset & IP6_FRAG_MORE_FLAG) == 0)) {
-
+      if ((frag_hdr->_fragment_offset &
+           PP_HTONS(IP6_FRAG_OFFSET_MASK | IP6_FRAG_MORE_FLAG)) == 0) {
         /* This is a 1-fragment packet, usually a packet that we have
          * already reassembled. Skip this header anc continue. */
         pbuf_header(p, -hlen);
-      }
-      else {
+      } else {
 #if LWIP_IPV6_REASS
 
         /* reassemble the packet */

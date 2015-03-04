@@ -205,6 +205,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-04: Valery Ushakov
+  * ip6.c: fixed bug #41094 (Byte-order bug in IPv6 fragmentation header test)
+
   2015-03-04: Zach Smith
   * nd6.c: fixed bug #38153 (nd6_input() byte order issues)
 
