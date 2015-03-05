@@ -955,9 +955,9 @@ int sifup(ppp_pcb *pcb) {
   netif_set_addr(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
                  &pcb->addrs.his_ipaddr);
 
-  netif_set_up(pcb->netif);
   pcb->if4_up = 1;
   pcb->err_code = PPPERR_NONE;
+  netif_set_up(pcb->netif);
 
   PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -1027,9 +1027,9 @@ int sif6up(ppp_pcb *pcb) {
   ip6_addr_copy(pcb->netif->ip6_addr[0], pcb->addrs.our6_ipaddr);
   netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
 
-  netif_set_up(pcb->netif);
   pcb->if6_up = 1;
   pcb->err_code = PPPERR_NONE;
+  netif_set_up(pcb->netif);
 
   PPPDEBUG(LOG_DEBUG, ("sif6up: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -1044,10 +1044,10 @@ int sif6up(ppp_pcb *pcb) {
 int sif6down(ppp_pcb *pcb) {
 
   pcb->if6_up = 0;
-  /* set the interface down if IPv4 is down as well */
+
   if (1
 #if PPP_IPV4_SUPPORT
-   /* set the interface down if IPv6 is down as well */
+   /* set the interface down if IPv4 is down as well */
    && !pcb->if4_up
 #endif /* PPP_IPV4_SUPPORT */
   ) {
