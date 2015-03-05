@@ -266,12 +266,8 @@ autoip_bind(struct netif *netif)
   IP4_ADDR(&sn_mask, 255, 255, 0, 0);
   IP4_ADDR(&gw_addr, 0, 0, 0, 0);
 
-  netif_set_ipaddr(netif, &autoip->llipaddr);
-  netif_set_netmask(netif, &sn_mask);
-  netif_set_gw(netif, &gw_addr);  
-
-  /* bring the interface up */
-  netif_set_up(netif);
+  netif_set_addr(netif, &autoip->llipaddr, &sn_mask, &gw_addr);
+  /* interface is used by routing now that an address is set */
 
   return ERR_OK;
 }
@@ -287,16 +283,12 @@ autoip_start(struct netif *netif)
   struct autoip *autoip = netif->autoip;
   err_t result = ERR_OK;
 
-  if (netif_is_up(netif)) {
-    netif_set_down(netif);
-  }
+  LWIP_ERROR("netif is not up, old style port?", netif_is_up(netif), return ERR_ARG;);
 
   /* Set IP-Address, Netmask and Gateway to 0 to make sure that
    * ARP Packets are formed correctly
    */
-  ip_addr_set_zero(&netif->ip_addr);
-  ip_addr_set_zero(&netif->netmask);
-  ip_addr_set_zero(&netif->gw);
+  netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
     ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0],
@@ -367,7 +359,6 @@ void
 autoip_network_changed(struct netif *netif)
 {
   if (netif->autoip && netif->autoip->state != AUTOIP_STATE_OFF) {
-    netif_set_down(netif);
     autoip_start_probing(netif);
   }
 }
@@ -380,8 +371,12 @@ autoip_network_changed(struct netif *netif)
 err_t
 autoip_stop(struct netif *netif)
 {
-  netif->autoip->state = AUTOIP_STATE_OFF;
-  netif_set_down(netif);
+  if (netif->autoip) {
+    netif->autoip->state = AUTOIP_STATE_OFF;
+    if (ip_addr_islinklocal(&netif->ip_addr)) {
+      netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
+    }
+  }
   return ERR_OK;
 }
 
@@ -438,7 +433,7 @@ autoip_tmr()
              /* We are here the first time, so we waited ANNOUNCE_WAIT seconds
               * Now we can bind to an IP address and use it.
               *
-              * autoip_bind calls netif_set_up. This triggers a gratuitous ARP
+              * autoip_bind calls netif_set_addr. This triggers a gratuitous ARP
               * which counts as an announcement.
               */
               autoip_bind(netif);

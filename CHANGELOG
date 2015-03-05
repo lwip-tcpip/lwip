@@ -6,6 +6,13 @@ HISTORY
 
   ++ New features:
 
+  2015-03-05: Simon Goldschmidt
+  * netif.c, ip4.c, dhcp.c, autoip.c: fixed bug #37068 (netif up/down handling
+    is unclear): correclty separated administrative status of a netif (up/down)
+    from 'valid address' status
+    ATTENTION: netif_set_up() now always has to be called, even when dhcp/autoip
+    is used!
+
   2015-02-26: patch by TabascoEye
   * netif.c, udp.h/.c: fixed bug #40753 (re-bind UDP pcbs on change of IP address)
 

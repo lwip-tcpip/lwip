@@ -153,7 +153,8 @@ ip_route(const ip_addr_t *dest)
       }
     }
   }
-  if ((netif_default == NULL) || (!netif_is_up(netif_default))) {
+  if ((netif_default == NULL) || !netif_is_up(netif_default) ||
+      ip_addr_isany(&netif_default->ip_addr)) {
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);

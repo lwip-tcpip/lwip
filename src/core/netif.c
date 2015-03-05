@@ -85,6 +85,10 @@ struct netif *netif_default;
 
 static u8_t netif_num;
 
+#define NETIF_REPORT_TYPE_IPV4  0x01
+#define NETIF_REPORT_TYPE_IPV6  0x02
+static void netif_issue_reports(struct netif* netif, u8_t report_type);
+
 #if LWIP_IPV6
 static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr);
 #endif /* LWIP_IPV6 */
@@ -281,9 +285,10 @@ void
 netif_set_addr(struct netif *netif, const ip_addr_t *ipaddr, const ip_addr_t *netmask,
     const ip_addr_t *gw)
 {
-  netif_set_ipaddr(netif, ipaddr);
   netif_set_netmask(netif, netmask);
   netif_set_gw(netif, gw);
+  /* set ipaddr last to ensure netmask/gw have been set when status callback is called */
+  netif_set_ipaddr(netif, ipaddr);
 }
 
 /**
@@ -394,8 +399,9 @@ netif_find(char *name)
 void
 netif_set_ipaddr(struct netif *netif, const ip_addr_t *ipaddr)
 {
+  ip_addr_t new_addr = (ipaddr ? *ipaddr : *IP_ADDR_ANY);
   /* address is actually being changed? */
-  if (ipaddr && (ip_addr_cmp(ipaddr, &(netif->ip_addr))) == 0) {
+  if (ip_addr_cmp(&new_addr, &(netif->ip_addr)) == 0) {
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
 #if LWIP_TCP
     tcp_netif_ipv4_addr_changed(&netif->ip_addr, ipaddr);
@@ -403,14 +409,18 @@ netif_set_ipaddr(struct netif *netif, const ip_addr_t *ipaddr)
 #if LWIP_UDP
     udp_netif_ipv4_addr_changed(&netif->ip_addr, ipaddr);
 #endif /* LWIP_UDP */
-  }
 
-  snmp_delete_ipaddridx_tree(netif);
-  snmp_delete_iprteidx_tree(0, netif);
-  /* set new IP address to netif */
-  ip_addr_set(&(netif->ip_addr), ipaddr);
-  snmp_insert_ipaddridx_tree(netif);
-  snmp_insert_iprteidx_tree(0, netif);
+    snmp_delete_ipaddridx_tree(netif);
+    snmp_delete_iprteidx_tree(0, netif);
+    /* set new IP address to netif */
+    ip_addr_set(&(netif->ip_addr), ipaddr);
+    snmp_insert_ipaddridx_tree(netif);
+    snmp_insert_iprteidx_tree(0, netif);
+
+    netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4);
+
+    NETIF_STATUS_CALLBACK(netif);
+  }
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
@@ -498,7 +508,7 @@ void netif_set_up(struct netif *netif)
 {
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif->flags |= NETIF_FLAG_UP;
-    
+
 #if LWIP_SNMP
     snmp_get_sysuptime(&netif->ts);
 #endif /* LWIP_SNMP */
@@ -506,31 +516,45 @@ void netif_set_up(struct netif *netif)
     NETIF_STATUS_CALLBACK(netif);
 
     if (netif->flags & NETIF_FLAG_LINK_UP) {
+      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
+    }
+  }
+}
+
+/** Send ARP/IGMP/MLD/RS events, e.g. on link-up/netif-up or addr-change
+ */
+static void
+netif_issue_reports(struct netif* netif, u8_t report_type)
+{
+  if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
+      !ip_addr_isany(&netif->ip_addr)) {
 #if LWIP_ARP
-      /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
-      if (netif->flags & (NETIF_FLAG_ETHARP)) {
-        etharp_gratuitous(netif);
-      }
+    /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */
+    if (netif->flags & (NETIF_FLAG_ETHARP)) {
+      etharp_gratuitous(netif);
+    }
 #endif /* LWIP_ARP */
 
 #if LWIP_IGMP
-      /* resend IGMP memberships */
-      if (netif->flags & NETIF_FLAG_IGMP) {
-        igmp_report_groups( netif);
-      }
-#endif /* LWIP_IGMP */
-#if LWIP_IPV6 && LWIP_IPV6_MLD
-      /* send mld memberships */
-      mld6_report_groups( netif);
-#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
-
-#if LWIP_IPV6_SEND_ROUTER_SOLICIT
-      /* Send Router Solicitation messages. */
-      netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
-#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
-
+    /* resend IGMP memberships */
+    if (netif->flags & NETIF_FLAG_IGMP) {
+      igmp_report_groups(netif);
     }
+#endif /* LWIP_IGMP */
   }
+
+#if LWIP_IPV6
+  if (report_type & NETIF_REPORT_TYPE_IPV6) {
+#if LWIP_IPV6_MLD
+    /* send mld memberships */
+    mld6_report_groups(netif);
+#endif /* LWIP_IPV6_MLD */
+#if LWIP_IPV6_SEND_ROUTER_SOLICIT
+    /* Send Router Solicitation messages. */
+    netif->rs_count = LWIP_ND6_MAX_MULTICAST_SOLICIT;
+#endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
+  }
+#endif /* LWIP_IPV6 */
 }
 
 /**
@@ -560,7 +584,7 @@ void netif_set_down(struct netif *netif)
 
 #if LWIP_NETIF_STATUS_CALLBACK
 /**
- * Set callback to be called when interface is brought up/down
+ * Set callback to be called when interface is brought up/down or address is changed while up
  */
 void netif_set_status_callback(struct netif *netif, netif_status_callback_fn status_callback)
 {
@@ -604,23 +628,7 @@ void netif_set_link_up(struct netif *netif )
 #endif /* LWIP_AUTOIP */
 
     if (netif->flags & NETIF_FLAG_UP) {
-#if LWIP_ARP
-      /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */ 
-      if (netif->flags & NETIF_FLAG_ETHARP) {
-        etharp_gratuitous(netif);
-      }
-#endif /* LWIP_ARP */
-
-#if LWIP_IGMP
-      /* resend IGMP memberships */
-      if (netif->flags & NETIF_FLAG_IGMP) {
-        igmp_report_groups( netif);
-      }
-#endif /* LWIP_IGMP */
-#if LWIP_IPV6 && LWIP_IPV6_MLD
-      /* send mld memberships */
-      mld6_report_groups( netif);
-#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+      netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4|NETIF_REPORT_TYPE_IPV6);
     }
     NETIF_LINK_CALLBACK(netif);
   }
