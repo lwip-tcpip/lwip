@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-03-06: Philip Gladstone
+  * netif.h/.c: patch #8359 (Provide utility function to add an IPv6 address to
+    an interface)
+
   2015-03-05: Simon Goldschmidt
   * netif.c, ip4.c, dhcp.c, autoip.c: fixed bug #37068 (netif up/down handling
     is unclear): correclty separated administrative status of a netif (up/down)

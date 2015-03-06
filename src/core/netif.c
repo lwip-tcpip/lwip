@@ -916,6 +916,38 @@ netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
 #endif /* LWIP_IPV6_AUTOCONFIG */
 }
 
+err_t
+netif_add_ip6_address(struct netif *netif, ip6_addr_t * ip6addr, s8_t *chosen_idx)
+{
+  s8_t i;
+
+  i = netif_get_ip6_addr_match(netif, ip6addr);
+  if (i >= 0) {
+    /* Address already added */
+    if (chosen_idx != NULL) {
+      *chosen_idx = i;
+    }
+    return ERR_OK;
+  }
+
+  /* Find a free slot -- musn't be the first one (reserved for link local) */
+  for (i = 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
+    if (!ip6_addr_isvalid(netif->ip6_addr_state[i])) {
+      ip6_addr_copy(netif->ip6_addr[i], *ip6addr);
+      netif_ip6_addr_set_state(netif, i, IP6_ADDR_TENTATIVE);
+      if (chosen_idx != NULL) {
+        *chosen_idx = i;
+      }
+      return ERR_OK;
+    }
+  }
+
+  if (chosen_idx != NULL) {
+    *chosen_idx = -1;
+  }
+  return ERR_VAL;
+}
+
 static err_t
 netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr)
 {

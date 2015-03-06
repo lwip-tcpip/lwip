@@ -375,6 +375,7 @@ void netif_poll_all(void);
 #define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[(i)] = (state))
 s8_t netif_get_ip6_addr_match(struct netif * netif, ip6_addr_t * ip6addr);
 void netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit);
+err_t netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx);
 #endif /* LWIP_IPV6 */
 
 #if LWIP_NETIF_HWADDRHINT
