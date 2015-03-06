@@ -860,8 +860,16 @@ netif_poll_all(void)
 #endif /* ENABLE_LOOPBACK */
 
 #if LWIP_IPV6
+/** Checks if a specific address is assigned to the netif and returns its
+ * index.
+ *
+ * @param netif the netif to check
+ * @param ip6addr the IPv6 address to find
+ * @return >= 0: address found, this is its index
+ *         -1: address not found on this netif
+ */
 s8_t
-netif_get_ip6_addr_match(struct netif * netif, ip6_addr_t * ip6addr)
+netif_get_ip6_addr_match(struct netif *netif, ip6_addr_t *ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -872,8 +880,14 @@ netif_get_ip6_addr_match(struct netif * netif, ip6_addr_t * ip6addr)
   return -1;
 }
 
+/** Create a link-local IPv6 address on a netif (stored in slot 0)
+ *
+ * @param netif the netif to create the address on
+ * @param from_mac_48bit if != 0, assume hwadr is a 48-bit MAC address (std conversion)
+ *                       if == 0, use hwaddr directly as interface ID
+ */
 void
-netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
+netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
 {
   u8_t i, addr_index;
 
@@ -916,8 +930,16 @@ netif_create_ip6_linklocal_address(struct netif * netif, u8_t from_mac_48bit)
 #endif /* LWIP_IPV6_AUTOCONFIG */
 }
 
-err_t
-netif_add_ip6_address(struct netif *netif, ip6_addr_t * ip6addr, s8_t *chosen_idx)
+/** This function allows for the easy addition of a new IPv6 address to an interface.
+ * It takes care of finding an empty slot and then sets the address tentative
+ * (to make sure that all the subsequent processing happens).
+ *
+ * @param netif netif to add the address on
+ * @param ip6addr address to add
+ * @param chosen_idx if != NULL, the chosen IPv6 address index will be stored here
+ */
+s8_t
+netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx)
 {
   s8_t i;
 
@@ -948,13 +970,15 @@ netif_add_ip6_address(struct netif *netif, ip6_addr_t * ip6addr, s8_t *chosen_id
   return ERR_VAL;
 }
 
+/** Dummy IPv6 output function for netifs not supporting IPv6
+ */
 static err_t
 netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip6_addr_t *ipaddr)
 {
-    (void)netif;
-    (void)p;
-    (void)ipaddr;
+  LWIP_UNUSED_ARG(netif);
+  LWIP_UNUSED_ARG(p);
+  LWIP_UNUSED_ARG(ipaddr);
 
-    return ERR_IF;
+  return ERR_IF;
 }
 #endif /* LWIP_IPV6 */
