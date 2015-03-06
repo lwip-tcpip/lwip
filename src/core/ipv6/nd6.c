@@ -627,7 +627,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
 void
 nd6_tmr(void)
 {
-  s8_t i, j;
+  s8_t i;
   struct netif * netif;
 
   /* Process neighbor entries. */
@@ -725,6 +725,7 @@ nd6_tmr(void)
       if (prefix_list[i].netif->ip6_autoconfig_enabled &&
           (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_AUTONOMOUS) &&
           !(prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED)) {
+        s8_t j;
         /* Try to get an address on this netif that is invalid.
          * Skip 0 index (link-local address) */
         for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
@@ -1414,7 +1415,9 @@ nd6_new_onlink_prefix(ip6_addr_t * prefix, struct netif * netif)
       /* Found empty prefix entry. */
       prefix_list[i].netif = netif;
       ip6_addr_set(&(prefix_list[i].prefix), prefix);
+#if LWIP_IPV6_AUTOCONFIG
       prefix_list[i].flags = 0;
+#endif /* LWIP_IPV6_AUTOCONFIG */
       return i;
     }
   }
