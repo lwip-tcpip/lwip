@@ -1843,15 +1843,15 @@ void tcp_netif_ipv4_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new
   tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_active_pcbs);
   tcp_netif_ipv4_addr_changed_pcblist(old_addr, tcp_bound_pcbs);
 
-  /* PCB bound to current local interface address? */
-  for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
-    next = lpcb->next;
+  if (!ip_addr_isany(new_addr)) {
     /* PCB bound to current local interface address? */
-    if ((!(ip_addr_isany(ipX_2_ip(&lpcb->local_ip)))) &&
-        (ip_addr_cmp(ipX_2_ip(&lpcb->local_ip), old_addr))) {
-      if (new_addr != NULL) {
+    for (lpcb = tcp_listen_pcbs.listen_pcbs; lpcb != NULL; lpcb = next) {
+      next = lpcb->next;
+      /* PCB bound to current local interface address? */
+      if ((!(ip_addr_isany(ipX_2_ip(&lpcb->local_ip)))) &&
+          (ip_addr_cmp(ipX_2_ip(&lpcb->local_ip), old_addr))) {
         /* The PCB is listening to the old ipaddr and
-          * is set to listen to the new one instead */
+         * is set to listen to the new one instead */
         ip_addr_set(ipX_2_ip(&lpcb->local_ip), new_addr);
       }
     }

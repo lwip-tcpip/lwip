@@ -1160,13 +1160,15 @@ void udp_netif_ipv4_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new
 {
   struct udp_pcb* upcb;
 
-  for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
-    /* PCB bound to current local interface address? */
-    if ((!(ip_addr_isany(ipX_2_ip(&upcb->local_ip)))) &&
-        (ip_addr_cmp(ipX_2_ip(&upcb->local_ip), old_addr))) {
-      /* The PCB is bound to the old ipaddr and
-        * is set to bound to the new one instead */
-      ip_addr_set(ipX_2_ip(&upcb->local_ip), new_addr);
+  if (!ip_addr_isany(new_addr)) {
+    for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
+      /* PCB bound to current local interface address? */
+      if ((!(ip_addr_isany(ipX_2_ip(&upcb->local_ip)))) &&
+          (ip_addr_cmp(ipX_2_ip(&upcb->local_ip), old_addr))) {
+        /* The PCB is bound to the old ipaddr and
+          * is set to bound to the new one instead */
+        ip_addr_set(ipX_2_ip(&upcb->local_ip), new_addr);
+      }
     }
   }
 }
