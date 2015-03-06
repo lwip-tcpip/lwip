@@ -256,7 +256,7 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
 }
 
 static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
-       ip_addr_t *ipaddr)
+       const ip_addr_t *ipaddr)
 {
   struct test_tcp_txcounters *txcounters = (struct test_tcp_txcounters*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);

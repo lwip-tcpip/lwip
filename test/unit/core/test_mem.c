@@ -92,6 +92,7 @@ START_TEST(test_mem_random)
   int x;
   int size;
   int freestep;
+  LWIP_UNUSED_ARG(_i);
 
   fail_unless(lwip_stats.mem.used == 0);
 
