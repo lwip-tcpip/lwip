@@ -98,7 +98,7 @@ static s8_t nd6_new_onlink_prefix(ip6_addr_t * prefix, struct netif * netif);
 static void nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags);
 static void nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags);
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
-static void nd6_send_rs(struct netif * netif);
+static err_t nd6_send_rs(struct netif * netif);
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
 #if LWIP_ND6_QUEUEING
@@ -376,11 +376,11 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     /* If we are sending RS messages, stop. */
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
-    if (inp->rs_count == LWIP_ND6_MAX_MULTICAST_SOLICIT) {
-      /* ensure at least one solicitation is sent */
-      nd6_send_rs(inp);
+    /* ensure at least one solicitation is sent */
+    if ((inp->rs_count < LWIP_ND6_MAX_MULTICAST_SOLICIT) ||
+        (nd6_send_rs(inp) == ERR_OK)) {
+      inp->rs_count = 0;
     }
-    inp->rs_count = 0;
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
     /* Get the matching default router entry. */
@@ -782,8 +782,9 @@ nd6_tmr(void)
   /* Send router solicitation messages, if necessary. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     if ((netif->rs_count > 0) && (netif->flags & NETIF_FLAG_UP)) {
-      nd6_send_rs(netif);
-      netif->rs_count--;
+      if (nd6_send_rs(netif) == ERR_OK) {
+        netif->rs_count--;
+      }
     }
   }
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
@@ -935,7 +936,7 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
  *
  * @param netif the netif on which to send the message
  */
-static void
+static err_t
 nd6_send_rs(struct netif * netif)
 {
   struct rs_header * rs_hdr;
@@ -943,6 +944,7 @@ nd6_send_rs(struct netif * netif)
   struct pbuf * p;
   ip6_addr_t * src_addr;
   u16_t packet_len;
+  err_t err;
 
   /* Link-local source address, or unspecified address? */
   if (ip6_addr_isvalid(netif_ip6_addr_state(netif, 0))) {
@@ -967,7 +969,7 @@ nd6_send_rs(struct netif * netif)
       pbuf_free(p);
     }
     ND6_STATS_INC(nd6.memerr);
-    return;
+    return ERR_BUF;
   }
 
   /* Set fields. */
@@ -993,9 +995,12 @@ nd6_send_rs(struct netif * netif)
 
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
-  ip6_output_if(p, src_addr, &multicast_address,
+
+  err = ip6_output_if(p, src_addr, &multicast_address,
       LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
+
+  return err;
 }
 #endif /* LWIP_IPV6_SEND_ROUTER_SOLICIT */
 
