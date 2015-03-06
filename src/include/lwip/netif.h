@@ -70,8 +70,8 @@ extern "C" {
 /** Whether the network interface is 'up'. This is
  * a software flag used to control whether this network
  * interface is enabled and processes traffic.
- * It is set by the startup code (for static IP configuration) or
- * by dhcp/autoip when an address has been assigned.
+ * It must be set by the startup code before this netif can be used
+ * (also for dhcp/autoip).
  */
 #define NETIF_FLAG_UP           0x01U
 /** If set, the netif has broadcast capability.
