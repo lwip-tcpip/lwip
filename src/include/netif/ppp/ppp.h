@@ -289,6 +289,7 @@ typedef struct ppp_settings_s {
 
 } ppp_settings;
 
+#if PPP_SERVER
 struct ppp_addrs {
 #if PPP_IPV4_SUPPORT
   ip_addr_t our_ipaddr, his_ipaddr, netmask;
@@ -300,6 +301,7 @@ struct ppp_addrs {
   ip6_addr_t our6_ipaddr, his6_ipaddr;
 #endif /* PPP_IPV6_SUPPORT */
 };
+#endif /* PPP_SERVER */
 
 /*
  * PPP interface control block.
@@ -351,8 +353,6 @@ struct ppp_pcb_s {
   unsigned int                         :6; /* 6 bits of padding to round out to 16 bits */
 
   u32_t last_xmit;               /* Time of last transmission. */
-
-  struct ppp_addrs addrs;        /* PPP addresses */
 
   /* auth data */
 #if PPP_SERVER
@@ -536,9 +536,6 @@ err_t ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg);
 
 /* Get the PPP netif interface */
 #define ppp_netif(ppp)               (ppp->netif)
-
-/* Get the PPP addresses */
-#define ppp_addrs(ppp)               (&(ppp)->addrs)
 
 /* Set an lwIP-style status-callback for the selected PPP device */
 #define ppp_set_netif_statuscallback(ppp, status_cb)       \

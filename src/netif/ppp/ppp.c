@@ -582,9 +582,6 @@ void ppp_clear(ppp_pcb *pcb) {
 #endif /* PPP_STATS_SUPPORT */
 
   memset(&pcb->phase, 0, sizeof(ppp_pcb) - ( (char*)&((ppp_pcb*)0)->phase - (char*)0 ) );
-#if PPP_IPV4_SUPPORT
-  ip4_addr_set_u32(&pcb->addrs.netmask, IPADDR_BROADCAST);
-#endif /* PPP_IPV4_SUPPORT */
 
   /*
    * Initialize each protocol.
