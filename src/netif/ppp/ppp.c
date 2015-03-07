@@ -863,12 +863,13 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
 /*
  * sifaddr - Config the interface IP addresses and netmask.
  */
-int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr,
-	     u32_t net_mask) {
+int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t netmask) {
+  ip_addr_t ip, nm, gw;
 
-  ip4_addr_set_u32(&pcb->addrs.our_ipaddr, our_adr);
-  ip4_addr_set_u32(&pcb->addrs.his_ipaddr, his_adr);
-  ip4_addr_set_u32(&pcb->addrs.netmask, net_mask);
+  ip4_addr_set_u32(&ip, our_adr);
+  ip4_addr_set_u32(&nm, netmask);
+  ip4_addr_set_u32(&gw, his_adr);
+  netif_set_addr(pcb->netif, &ip, &nm, &gw);
   return 1;
 }
 
@@ -878,13 +879,10 @@ int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr,
  * through the interface if possible.
  */
 int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
-
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  ip_addr_set_zero(&pcb->addrs.our_ipaddr);
-  ip_addr_set_zero(&pcb->addrs.his_ipaddr);
-  ip4_addr_set_u32(&pcb->addrs.netmask, IPADDR_BROADCAST);
+  netif_set_addr(pcb->netif, IP_ADDR_ANY, IP_ADDR_BROADCAST, IP_ADDR_ANY);
   return 1;
 }
 
@@ -955,10 +953,6 @@ int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
  * sifup - Config the interface up and enable IP packets to pass.
  */
 int sifup(ppp_pcb *pcb) {
-
-  netif_set_addr(pcb->netif, &pcb->addrs.our_ipaddr, &pcb->addrs.netmask,
-                 &pcb->addrs.his_ipaddr);
-
   pcb->if4_up = 1;
   pcb->err_code = PPPERR_NONE;
   netif_set_link_up(pcb->netif);

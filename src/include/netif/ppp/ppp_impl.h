@@ -443,7 +443,7 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp);
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp);
 
 #if PPP_IPV4_SUPPORT
-int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t net_mask);
+int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t netmask);
 int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr);
 int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
