@@ -414,7 +414,7 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 #if PPP_IPV6_SUPPORT
   netif->output_ip6 = ppp_netif_output_ip6;
 #endif /* PPP_IPV6_SUPPORT */
-  netif->flags = NETIF_FLAG_LINK_UP;
+  netif->flags = NETIF_FLAG_UP;
 #if LWIP_NETIF_HOSTNAME
   /* @todo: Initialize interface hostname */
   /* netif_set_hostname(netif, "lwip"); */
@@ -957,7 +957,7 @@ int sifup(ppp_pcb *pcb) {
 
   pcb->if4_up = 1;
   pcb->err_code = PPPERR_NONE;
-  netif_set_up(pcb->netif);
+  netif_set_link_up(pcb->netif);
 
   PPPDEBUG(LOG_DEBUG, ("sifup: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -979,8 +979,8 @@ int sifdown(ppp_pcb *pcb) {
    && !pcb->if6_up
 #endif /* PPP_IPV6_SUPPORT */
   ) {
-    /* make sure the netif status callback is called */
-    netif_set_down(pcb->netif);
+    /* make sure the netif link callback is called */
+    netif_set_link_down(pcb->netif);
   }
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   return 1;
@@ -1029,7 +1029,7 @@ int sif6up(ppp_pcb *pcb) {
 
   pcb->if6_up = 1;
   pcb->err_code = PPPERR_NONE;
-  netif_set_up(pcb->netif);
+  netif_set_link_up(pcb->netif);
 
   PPPDEBUG(LOG_DEBUG, ("sif6up: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   pcb->link_status_cb(pcb, pcb->err_code, pcb->ctx_cb);
@@ -1051,8 +1051,8 @@ int sif6down(ppp_pcb *pcb) {
    && !pcb->if4_up
 #endif /* PPP_IPV4_SUPPORT */
   ) {
-    /* make sure the netif status callback is called */
-    netif_set_down(pcb->netif);
+    /* make sure the netif link callback is called */
+    netif_set_link_down(pcb->netif);
   }
   PPPDEBUG(LOG_DEBUG, ("sif6down: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   return 1;
