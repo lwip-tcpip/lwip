@@ -333,7 +333,7 @@ dns_stricmp(const char* str1, const char* str2)
  * (DNS_SERVER_ADDRESS).
  */
 void
-dns_init()
+dns_init(void)
 {
   ip_addr_t dnsserver;
 
