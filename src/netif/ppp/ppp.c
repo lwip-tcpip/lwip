@@ -94,6 +94,7 @@
 #if PPP_IPV6_SUPPORT
 #include "lwip/ip6.h" /* for ip6_input() */
 #endif /* PPP_IPV6_SUPPORT */
+#include "lwip/dns.h"
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppos.h"
@@ -915,9 +916,13 @@ int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
  * sdns - Config the DNS servers
  */
 int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
+  ip_addr_t ns;
+  LWIP_UNUSED_ARG(pcb);
 
-  ip4_addr_set_u32(&pcb->addrs.dns1, ns1);
-  ip4_addr_set_u32(&pcb->addrs.dns2, ns2);
+  ip4_addr_set_u32(&ns, ns1);
+  dns_setserver(0, &ns);
+  ip4_addr_set_u32(&ns, ns2);
+  dns_setserver(1, &ns);
   return 1;
 }
 
@@ -926,12 +931,19 @@ int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
  * cdns - Clear the DNS servers
  */
 int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
+  ip_addr_t nsa, nsb;
+  LWIP_UNUSED_ARG(pcb);
 
-  LWIP_UNUSED_ARG(ns1);
-  LWIP_UNUSED_ARG(ns2);
-
-  ip_addr_set_zero(&pcb->addrs.dns1);
-  ip_addr_set_zero(&pcb->addrs.dns2);
+  nsa = dns_getserver(0);
+  ip4_addr_set_u32(&nsb, ns1);
+  if (ip_addr_cmp(&nsa, &nsb)) {
+    dns_setserver(0, (ip_addr_t*)IP_ADDR_ANY);
+  }
+  nsa = dns_getserver(1);
+  ip4_addr_set_u32(&nsb, ns2);
+  if (ip_addr_cmp(&nsa, &nsb)) {
+    dns_setserver(1, (ip_addr_t*)IP_ADDR_ANY);
+  }
   return 1;
 }
 #endif /* LWIP_DNS */
