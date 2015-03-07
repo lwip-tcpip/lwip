@@ -447,8 +447,10 @@ int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t net_mask);
 int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr);
 int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
+#if LWIP_DNS
 int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
 int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
+#endif /* LWIP_DNS */
 #if VJ_SUPPORT
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 #endif /* VJ_SUPPORT */

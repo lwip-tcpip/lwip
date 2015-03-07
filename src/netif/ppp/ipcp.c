@@ -718,8 +718,9 @@ static void ipcp_resetci(fsm *f) {
 	wo->accept_local = 1;
     if (wo->hisaddr == 0)
 	wo->accept_remote = 1;
-    wo->req_dns1 = pcb->settings.usepeerdns;	/* Request DNS addresses from the peer */
-    wo->req_dns2 = pcb->settings.usepeerdns;
+#if LWIP_DNS
+    wo->req_dns1 = wo->req_dns2 = pcb->settings.usepeerdns;	/* Request DNS addresses from the peer */
+#endif /* LWIP_DNS */
     *go = *wo;
 #if 0 /* UNUSED */
     /* We don't need ask_for_local, this is only useful for setup which
@@ -1837,6 +1838,7 @@ static void ipcp_up(fsm *f) {
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 #endif /* UNUSED */
+#if LWIP_DNS
     if (pcb->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
 	sdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
 #if 0 /* UNUSED */
@@ -1844,6 +1846,7 @@ static void ipcp_up(fsm *f) {
 	create_resolv(go->dnsaddr[0], go->dnsaddr[1]);
 #endif /* UNUSED */
     }
+#endif /* LWIP_DNS */
 
 /* FIXME: check why it fails, just to know */
 #if 0 /* Unused */
@@ -2043,7 +2046,9 @@ static void ipcp_down(fsm *f) {
 	sifdown(pcb);
 	ipcp_clear_addrs(pcb, go->ouraddr,
 			 ho->hisaddr, 0);
+#if LWIP_DNS
 	cdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
+#endif /* LWIP_DNS */
     }
 }
 

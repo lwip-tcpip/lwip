@@ -512,7 +512,9 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   memset(pcb, 0, sizeof(ppp_pcb));
 
   /* default configuration */
+#if LWIP_DNS
   pcb->settings.usepeerdns = 1;
+#endif /* LWIP_DNS */
 
 #if PAP_SUPPORT
   pcb->settings.pap_timeout_time = UPAP_DEFTIMEOUT;
@@ -910,6 +912,7 @@ int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
   return 0;
 }
 
+#if LWIP_DNS
 /*
  * sdns - Config the DNS servers
  */
@@ -933,6 +936,7 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   ip_addr_set_zero(&pcb->addrs.dns2);
   return 1;
 }
+#endif /* LWIP_DNS */
 
 #if VJ_SUPPORT
 /********************************************************************

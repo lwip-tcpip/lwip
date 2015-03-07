@@ -458,8 +458,10 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
   ipcp_wo = &ppp->ipcp_wantoptions;
   ipcp_wo->ouraddr = ip4_addr_get_u32(&addrs->our_ipaddr);
   ipcp_wo->hisaddr = ip4_addr_get_u32(&addrs->his_ipaddr);
+#if LWIP_DNS
   ipcp_wo->dnsaddr[0] = ip4_addr_get_u32(&addrs->dns1);
   ipcp_wo->dnsaddr[1] = ip4_addr_get_u32(&addrs->dns2);
+#endif /* LWIP_DNS */
 
 #if VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);

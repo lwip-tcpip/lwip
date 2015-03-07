@@ -212,7 +212,11 @@ typedef struct ppp_settings_s {
 #else
   unsigned int                     :1;       /* 1 bit of padding */
 #endif /* EAP_SUPPORT */
+#if LWIP_DNS
   unsigned int  usepeerdns         :1;       /* Ask peer for DNS adds */
+#else
+  unsigned int                     :1;       /* 1 bit of padding */
+#endif /* LWIP_DNS */
   unsigned int  persist            :1;       /* Persist mode, always try to open the connection */
 #if PRINTPKT_SUPPORT
   unsigned int  hide_password      :1;       /* Hide password in dumped packets */
@@ -288,7 +292,9 @@ typedef struct ppp_settings_s {
 struct ppp_addrs {
 #if PPP_IPV4_SUPPORT
   ip_addr_t our_ipaddr, his_ipaddr, netmask;
+#if LWIP_DNS
   ip_addr_t dns1, dns2;
+#endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
   ip6_addr_t our6_ipaddr, his6_ipaddr;
