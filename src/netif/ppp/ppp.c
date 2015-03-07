@@ -1009,9 +1009,12 @@ int sifdown(ppp_pcb *pcb) {
  * sif6addr - Config the interface with an IPv6 link-local address
  */
 int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
+  ip6_addr_t ip6;
+  LWIP_UNUSED_ARG(his_eui64);
 
-  IN6_LLADDR_FROM_EUI64(pcb->addrs.our6_ipaddr, our_eui64);
-  IN6_LLADDR_FROM_EUI64(pcb->addrs.his6_ipaddr, his_eui64);
+  IN6_LLADDR_FROM_EUI64(ip6, our_eui64);
+  ip6_addr_copy(pcb->netif->ip6_addr[0], ip6);
+  /* FIXME: add IPv6 static neighbor using his_eui64 */
   return 1;
 }
 
@@ -1020,12 +1023,10 @@ int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
  * cif6addr - Remove IPv6 address from interface
  */
 int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
-
   LWIP_UNUSED_ARG(our_eui64);
   LWIP_UNUSED_ARG(his_eui64);
 
-  ip6_addr_set_zero(&pcb->addrs.our6_ipaddr);
-  ip6_addr_set_zero(&pcb->addrs.his6_ipaddr);
+  ip6_addr_set_zero(&pcb->netif->ip6_addr[0]);
   return 1;
 }
 
@@ -1034,7 +1035,6 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
  */
 int sif6up(ppp_pcb *pcb) {
 
-  ip6_addr_copy(pcb->netif->ip6_addr[0], pcb->addrs.our6_ipaddr);
   netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
 
   pcb->if6_up = 1;
