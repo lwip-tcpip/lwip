@@ -87,7 +87,9 @@ typedef struct ipcp_options {
     unsigned int default_route          :1; /* Assign default route through interface? */
     unsigned int replace_default_route  :1; /* Replace default route through interface? */
 #endif /* UNUSED */
+#if 0 /* UNUSED - PROXY ARP */
     unsigned int proxy_arp              :1; /* Make proxy ARP entry for peer? */
+#endif /* UNUSED - PROXY ARP */
 #if VJ_SUPPORT
     unsigned int neg_vj                 :1; /* Van Jacobson Compression? */
     unsigned int old_vj                 :1; /* use old (short) form of VJ option? */
@@ -103,7 +105,7 @@ typedef struct ipcp_options {
 #else
     unsigned int                        :2; /* 2 bits of padding */
 #endif /* LWIP_DNS */
-    unsigned int                        :5; /* 3 bits of padding to round out to 16 bits */
+    unsigned int                        :6; /* 6 bits of padding to round out to 16 bits */
 
     u32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
 #if LWIP_DNS

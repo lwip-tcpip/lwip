@@ -1869,9 +1869,11 @@ ip_demand_conf(u)
 		wo->replace_default_route))
 	    default_route_set[u] = 1;
 #endif /* UNUSED */
+#if 0 /* UNUSED - PROXY ARP */
     if (wo->proxy_arp)
 	if (sifproxyarp(pcb, wo->hisaddr))
 	    proxy_arp_set[u] = 1;
+#endif /* UNUSED - PROXY ARP */
 
     ppp_notice("local  IP address %I", wo->ouraddr);
     if (wo->hisaddr)
@@ -1999,10 +2001,12 @@ static void ipcp_up(fsm *f) {
 			wo->replace_default_route))
 		    default_route_set[f->unit] = 1;
 
+#if 0 /* UNUSED - PROXY ARP */
 	    /* Make a proxy ARP entry if requested. */
 	    if (ho->hisaddr != 0 && ipcp_wantoptions[f->unit].proxy_arp)
 		if (sifproxyarp(pcb, ho->hisaddr))
 		    proxy_arp_set[f->unit] = 1;
+#endif /* UNUSED - PROXY ARP */
 
 	}
 	demand_rexmit(PPP_IP,go->ouraddr);
@@ -2054,10 +2058,12 @@ static void ipcp_up(fsm *f) {
 		    pcb->default_route_set = 1;
 #endif /* UNUSED */
 
+#if 0 /* UNUSED - PROXY ARP */
 	/* Make a proxy ARP entry if requested. */
 	if (ho->hisaddr != 0 && wo->proxy_arp)
 	    if (sifproxyarp(pcb, ho->hisaddr))
 		pcb->proxy_arp_set = 1;
+#endif /* UNUSED - PROXY ARP */
 
 	wo->ouraddr = go->ouraddr;
 
@@ -2157,10 +2163,12 @@ static void ipcp_down(fsm *f) {
 static void ipcp_clear_addrs(ppp_pcb *pcb, u32_t ouraddr, u32_t hisaddr, u8_t replacedefaultroute) {
     LWIP_UNUSED_ARG(replacedefaultroute);
 
+#if 0 /* UNUSED - PROXY ARP */
     if (pcb->proxy_arp_set) {
 	cifproxyarp(pcb, hisaddr);
 	pcb->proxy_arp_set = 0;
     }
+#endif /* UNUSED - PROXY ARP */
 #if 0 /* UNUSED */
     /* If replacedefaultroute, sifdefaultroute will be called soon
      * with replacedefaultroute set and that will overwrite the current

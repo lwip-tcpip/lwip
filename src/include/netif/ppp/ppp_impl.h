@@ -445,8 +445,10 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp);
 #if PPP_IPV4_SUPPORT
 int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t netmask);
 int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr);
+#if 0 /* UNUSED - PROXY ARP */
 int sifproxyarp(ppp_pcb *pcb, u32_t his_adr);
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr);
+#endif /* UNUSED - PROXY ARP */
 #if LWIP_DNS
 int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);
 int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2);

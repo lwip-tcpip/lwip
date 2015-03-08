@@ -884,6 +884,7 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   return 1;
 }
 
+#if 0 /* UNUSED - PROXY ARP */
 /********************************************************************
  *
  * sifproxyarp - Make a proxy ARP entry for the peer.
@@ -892,7 +893,6 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
 int sifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(his_adr);
-  /* FIXME: do we really need that in IPCP ? */
   return 0;
 }
 
@@ -904,9 +904,9 @@ int sifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
 int cifproxyarp(ppp_pcb *pcb, u32_t his_adr) {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(his_adr);
-  /* FIXME: do we really need that in IPCP ? */
   return 0;
 }
+#endif /* UNUSED - PROXY ARP */
 
 #if LWIP_DNS
 /*
