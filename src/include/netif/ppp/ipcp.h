@@ -52,7 +52,9 @@
  * Options.
  */
 #define CI_ADDRS	1	/* IP Addresses */
+#if VJ_SUPPORT
 #define CI_COMPRESSTYPE	2	/* Compression Type */
+#endif /* VJ_SUPPORT */
 #define	CI_ADDR		3
 
 #define CI_MS_DNS1	129	/* Primary DNS value */
@@ -60,6 +62,7 @@
 #define CI_MS_DNS2	131	/* Secondary DNS value */
 #define CI_MS_WINS2	132	/* Secondary WINS value */
 
+#if VJ_SUPPORT
 #define MAX_STATES 16		/* from slcompress.h */
 
 #define IPCP_VJMODE_OLD 1	/* "old" mode (option # = 0x0037) */
@@ -70,6 +73,7 @@
 #define IPCP_VJ_COMP 0x002d	/* current value for VJ compression option*/
 #define IPCP_VJ_COMP_OLD 0x0037	/* "old" (i.e, broken) value for VJ */
 				/* compression option*/ 
+#endif /* VJ_SUPPORT */
 
 typedef struct ipcp_options {
     unsigned int neg_addr               :1; /* Negotiate IP Address? */
@@ -80,21 +84,27 @@ typedef struct ipcp_options {
     unsigned int replace_default_route  :1; /* Replace default route through interface? */
 #endif /* UNUSED */
     unsigned int proxy_arp              :1; /* Make proxy ARP entry for peer? */
+#if VJ_SUPPORT
     unsigned int neg_vj                 :1; /* Van Jacobson Compression? */
     unsigned int old_vj                 :1; /* use old (short) form of VJ option? */
+    unsigned int cflag                  :1;
+#else
+    unsigned int                        :3; /* 3 bits of padding */
+#endif /* VJ_SUPPORT */
     unsigned int accept_local           :1; /* accept peer's value for ouraddr */
     unsigned int accept_remote          :1; /* accept peer's value for hisaddr */
     unsigned int req_dns1               :1; /* Ask peer to send primary DNS address? */
     unsigned int req_dns2               :1; /* Ask peer to send secondary DNS address? */
-    unsigned int cflag                  :1;
     unsigned int                        :5; /* 3 bits of padding to round out to 16 bits */
 
     u32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
     u32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
     u32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
 
+#if VJ_SUPPORT
     u16_t vj_protocol;		/* protocol value to use in VJ option */
     u8_t  maxslotindex;		/* values for RFC1332 VJ compression neg. */
+#endif /* VJ_SUPPORT */
 } ipcp_options;
 
 #if 0 /* UNUSED, already defined by lwIP */

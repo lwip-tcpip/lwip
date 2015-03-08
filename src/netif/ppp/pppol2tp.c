@@ -313,10 +313,10 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb *)ctx;
   lcp_options *lcp_wo;
   lcp_options *lcp_ao;
-#if PPP_IPV4_SUPPORT
+#if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;
-#endif /* PPP_IPV4_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   if (l2tp->phase != PPPOL2TP_STATE_INITIAL) {
     return ERR_VAL;
@@ -338,7 +338,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   lcp_ao->neg_pcompression = 0;
   lcp_ao->neg_accompression = 0;
 
-#if PPP_IPV4_SUPPORT
+#if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_wo = &ppp->ipcp_wantoptions;
   ipcp_wo->neg_vj = 0;
   ipcp_wo->old_vj = 0;
@@ -346,7 +346,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   ipcp_ao = &ppp->ipcp_allowoptions;
   ipcp_ao->neg_vj = 0;
   ipcp_ao->old_vj = 0;
-#endif /* PPP_IPV4_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   /* Listen to a random source port, we need to do that instead of using udp_connect()
    * because the L2TP LNS might answer with its own random source port (!= 1701)

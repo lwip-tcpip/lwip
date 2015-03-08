@@ -912,10 +912,10 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   lcp_options *lcp_wo;
   lcp_options *lcp_ao;
-#if PPP_IPV4_SUPPORT
+#if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_options *ipcp_wo;
   ipcp_options *ipcp_ao;
-#endif /* PPP_IPV4_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   if (sc->sc_state != PPPOE_STATE_INITIAL) {
     return EBUSY;
@@ -947,7 +947,7 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   lcp_ao->neg_pcompression = 0;
   lcp_ao->neg_accompression = 0;
 
-#if PPP_IPV4_SUPPORT
+#if PPP_IPV4_SUPPORT && VJ_SUPPORT
   ipcp_wo = &ppp->ipcp_wantoptions;
   ipcp_wo->neg_vj = 0;
   ipcp_wo->old_vj = 0;
@@ -955,7 +955,7 @@ pppoe_connect(ppp_pcb *ppp, void *ctx)
   ipcp_ao = &ppp->ipcp_allowoptions;
   ipcp_ao->neg_vj = 0;
   ipcp_ao->old_vj = 0;
-#endif /* PPP_IPV4_SUPPORT */
+#endif /* PPP_IPV4_SUPPORT && VJ_SUPPORT */
 
   /* save state, in case we fail to send PADI */
   sc->sc_state = PPPOE_STATE_PADI_SENT;
