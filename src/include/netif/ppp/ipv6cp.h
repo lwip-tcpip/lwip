@@ -150,7 +150,9 @@
  * Options.
  */
 #define CI_IFACEID	1	/* Interface Identifier */
+#ifdef IPV6CP_COMP
 #define CI_COMPRESSTYPE	2	/* Compression Type     */
+#endif /* IPV6CP_COMP */
 
 /* No compression types yet defined.
  *#define IPV6CP_COMP	0x004f
@@ -165,9 +167,13 @@ typedef struct ipv6cp_options {
 #if 0
     unsigned int use_persistent :1;  /* use uniquely persistent value for address */
 #endif
+#ifdef IPV6CP_COMP
     unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
-    unsigned int                :1;  /* 1 bit of padding to round out to 8 bits */
+#endif /* IPV6CP_COMP */
+    unsigned int                :2;  /* 2 bit of padding to round out to 8 bits */
+#ifdef IPV6CP_COMP
     u_short vj_protocol;        /* protocol value to use in VJ option */
+#endif /* IPV6CP_COMP */
     eui64_t ourid, hisid;       /* Interface identifiers */
 } ipv6cp_options;
 

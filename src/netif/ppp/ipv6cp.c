@@ -528,11 +528,16 @@ static int ipv6cp_cilen(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
 
+#ifdef IPV6CP_COMP
 #define LENCIVJ(neg)		(neg ? CILEN_COMPRESS : 0)
+#endif /* IPV6CP_COMP */
 #define LENCIIFACEID(neg)	(neg ? CILEN_IFACEID : 0)
 
     return (LENCIIFACEID(go->neg_ifaceid) +
-	    LENCIVJ(go->neg_vj));
+#ifdef IPV6CP_COMP
+	    LENCIVJ(go->neg_vj) +
+#endif /* IPV6CP_COMP */
+	    0);
 }
 
 
@@ -544,6 +549,7 @@ static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp) {
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     int len = *lenp;
 
+#ifdef IPV6CP_COMP
 #define ADDCIVJ(opt, neg, val) \
     if (neg) { \
 	int vjlen = CILEN_COMPRESS; \
@@ -555,6 +561,7 @@ static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp) {
 	} else \
 	    neg = 0; \
     }
+#endif /* IPV6CP_COMP */
 
 #define ADDCIIFACEID(opt, neg, val1) \
     if (neg) { \
@@ -570,7 +577,9 @@ static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp) {
 
     ADDCIIFACEID(CI_IFACEID, go->neg_ifaceid, go->ourid);
 
+#ifdef IPV6CP_COMP
     ADDCIVJ(CI_COMPRESSTYPE, go->neg_vj, go->vj_protocol);
+#endif /* IPV6CP_COMP */
 
     *lenp -= len;
 }
@@ -586,7 +595,10 @@ static void ipv6cp_addci(fsm *f, u_char *ucp, int *lenp) {
 static int ipv6cp_ackci(fsm *f, u_char *p, int len) {
     ppp_pcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
-    u_short cilen, citype, cishort;
+    u_short cilen, citype;
+#ifdef IPV6CP_COMP
+    u_short cishort;
+#endif /* IPV6CP_COMP */
     eui64_t ifaceid;
 
     /*
@@ -595,6 +607,7 @@ static int ipv6cp_ackci(fsm *f, u_char *p, int len) {
      * If we find any deviations, then this packet is bad.
      */
 
+#ifdef IPV6CP_COMP
 #define ACKCIVJ(opt, neg, val) \
     if (neg) { \
 	int vjlen = CILEN_COMPRESS; \
@@ -609,6 +622,7 @@ static int ipv6cp_ackci(fsm *f, u_char *p, int len) {
 	if (cishort != val) \
 	    goto bad; \
     }
+#endif /* IPV6CP_COMP */
 
 #define ACKCIIFACEID(opt, neg, val1) \
     if (neg) { \
@@ -627,7 +641,9 @@ static int ipv6cp_ackci(fsm *f, u_char *p, int len) {
 
     ACKCIIFACEID(CI_IFACEID, go->neg_ifaceid, go->ourid);
 
+#ifdef IPV6CP_COMP
     ACKCIVJ(CI_COMPRESSTYPE, go->neg_vj, go->vj_protocol);
+#endif /* IPV6CP_COMP */
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -654,7 +670,9 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     ppp_pcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char citype, cilen, *next;
+#ifdef IPV6CP_COMP
     u_short cishort;
+#endif /* IPV6CP_COMP */
     eui64_t ifaceid;
     ipv6cp_options no;		/* options we've seen Naks for */
     ipv6cp_options try_;	/* options to request next time */
@@ -679,6 +697,7 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	code \
     }
 
+#ifdef IPV6CP_COMP
 #define NAKCIVJ(opt, neg, code) \
     if (go->neg && \
 	((cilen = p[1]) == CILEN_COMPRESS) && \
@@ -690,6 +709,7 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	no.neg = 1; \
         code \
     }
+#endif /* IPV6CP_COMP */
 
     /*
      * Accept the peer's idea of {our,his} interface identifier, if different
@@ -717,13 +737,7 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		}
 	    }
 	    );
-#else
-    NAKCIVJ(CI_COMPRESSTYPE, neg_vj,
-	    {
-		try_.neg_vj = 0;
-	    }
-	    );
-#endif
+#endif /* IPV6CP_COMP */
 
     /*
      * There may be remaining CIs, if the peer is requesting negotiation
@@ -739,12 +753,14 @@ static int ipv6cp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	next = p + cilen - 2;
 
 	switch (citype) {
+#ifdef IPV6CP_COMP
 	case CI_COMPRESSTYPE:
 	    if (go->neg_vj || no.neg_vj ||
 		(cilen != CILEN_COMPRESS))
 		goto bad;
 	    no.neg_vj = 1;
 	    break;
+#endif /* IPV6CP_COMP */
 	case CI_IFACEID:
 	    if (go->neg_ifaceid || no.neg_ifaceid || cilen != CILEN_IFACEID)
 		goto bad;
@@ -789,7 +805,9 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
     ppp_pcb *pcb = f->pcb;
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char cilen;
+#ifdef IPV6CP_COMP
     u_short cishort;
+#endif /* IPV6CP_COMP */
     eui64_t ifaceid;
     ipv6cp_options try_;		/* options to request next time */
 
@@ -813,6 +831,7 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
 	try_.neg = 0; \
     }
 
+#ifdef IPV6CP_COMP
 #define REJCIVJ(opt, neg, val) \
     if (go->neg && \
 	p[1] == CILEN_COMPRESS && \
@@ -826,10 +845,13 @@ static int ipv6cp_rejci(fsm *f, u_char *p, int len) {
 	    goto bad; \
 	try_.neg = 0; \
      }
+#endif /* IPV6CP_COMP */
 
     REJCIIFACEID(CI_IFACEID, neg_ifaceid, go->ourid);
 
+#ifdef IPV6CP_COMP
     REJCIVJ(CI_COMPRESSTYPE, neg_vj, go->vj_protocol);
+#endif /* IPV6CP_COMP */
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -868,7 +890,9 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
     ipv6cp_options *go = &pcb->ipv6cp_gotoptions;
     u_char *cip, *next;		/* Pointer to current and next CIs */
     u_short cilen, citype;	/* Parsed len, type */
+#ifdef IPV6CP_COMP
     u_short cishort;		/* Parsed short value */
+#endif /* IPV6CP_COMP */
     eui64_t ifaceid;		/* Parsed interface identifier */
     int rc = CONFACK;		/* Final packet return code */
     int orc;			/* Individual option return code */
@@ -950,6 +974,7 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	    ho->hisid = ifaceid;
 	    break;
 
+#ifdef IPV6CP_COMP
 	case CI_COMPRESSTYPE:
 	    IPV6CPDEBUG(("ipv6cp: received COMPRESSTYPE "));
 	    if (!ao->neg_vj ||
@@ -959,6 +984,7 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	    }
 	    GETSHORT(cishort, p);
 	    IPV6CPDEBUG(("(%d)", cishort));
+#endif /* IPV6CP_COMP */
 
 #ifdef IPV6CP_COMP
 	    if (!(cishort == IPV6CP_COMP)) {
