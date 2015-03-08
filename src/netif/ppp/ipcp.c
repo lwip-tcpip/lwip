@@ -765,7 +765,9 @@ static int ipcp_cilen(fsm *f) {
 #if LWIP_DNS
 #define LENCIDNS(neg)		LENCIADDR(neg)
 #endif /* LWIP_DNS */
+#if 0 /* UNUSED - WINS */
 #define LENCIWINS(neg)		LENCIADDR(neg)
+#endif /* UNUSED - WINS */
 
     /*
      * First see if we want to change our options to the old
@@ -795,8 +797,11 @@ static int ipcp_cilen(fsm *f) {
 	    LENCIDNS(go->req_dns1) +
 	    LENCIDNS(go->req_dns2) +
 #endif /* LWIP_DNS */
+#if 0 /* UNUSED - WINS */
 	    LENCIWINS(go->winsaddr[0]) +
-	    LENCIWINS(go->winsaddr[1])) ;
+	    LENCIWINS(go->winsaddr[1]) +
+#endif /* UNUSED - WINS */
+	    0);
 }
 
 
@@ -870,6 +875,7 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
     }
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
 #define ADDCIWINS(opt, addr) \
     if (addr) { \
 	if (len >= CILEN_ADDR) { \
@@ -882,6 +888,7 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
 	} else \
 	    addr = 0; \
     }
+#endif /* UNUSED - WINS */
 
     ADDCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs, go->ouraddr,
 	       go->hisaddr);
@@ -899,9 +906,11 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
     ADDCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
     ADDCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
     ADDCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+#endif /* UNUSED - WINS */
     
     *lenp -= len;
 }
@@ -1009,6 +1018,7 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
     }
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
 #define ACKCIWINS(opt, addr) \
     if (addr) { \
 	u32_t l; \
@@ -1023,6 +1033,7 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
 	if (addr != cilong) \
 	    goto bad; \
     }
+#endif /* UNUSED - WINS */
 
     ACKCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs, go->ouraddr,
 	       go->hisaddr);
@@ -1040,9 +1051,11 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
     ACKCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
     ACKCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
     ACKCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+#endif /* UNUSED - WINS */
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -1295,6 +1308,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    no.req_dns2 = 1;
 	    break;
 #endif /* LWIP_DNS */
+#if 0 /* UNUSED - WINS */
 	case CI_MS_WINS1:
 	case CI_MS_WINS2:
 	    if (cilen != CILEN_ADDR)
@@ -1304,6 +1318,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    if (ciaddr1)
 		try_.winsaddr[citype == CI_MS_WINS2] = ciaddr1;
 	    break;
+#endif /* UNUSED - WINS */
 	default:
 	    break;
 	}
@@ -1425,6 +1440,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
     }
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
 #define REJCIWINS(opt, addr) \
     if (addr && \
 	((cilen = p[1]) == CILEN_ADDR) && \
@@ -1440,6 +1456,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	    goto bad; \
 	try_.winsaddr[opt == CI_MS_WINS2] = 0; \
     }
+#endif /* UNUSED - WINS */
 
     REJCIADDRS(CI_ADDRS, !go->neg_addr && go->old_addrs,
 	       go->ouraddr, go->hisaddr);
@@ -1457,9 +1474,11 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
     REJCIDNS(CI_MS_DNS2, req_dns2, go->dnsaddr[1]);
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
     REJCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
     REJCIWINS(CI_MS_WINS2, go->winsaddr[1]);
+#endif /* UNUSED - WINS */
 
     /*
      * If there are any remaining CIs, then this packet is bad.
@@ -1509,7 +1528,9 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 #if VJ_SUPPORT
     u_char maxslotindex, cflag;
 #endif /* VJ_SUPPORT */
+#if LWIP_DNS
     int d;
+#endif /* LWIP_DNS */
 
     /*
      * Reset all his options.
@@ -1652,6 +1673,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
             break;
 #endif /* LWIP_DNS */
 
+#if 0 /* UNUSED - WINS */
 	case CI_MS_WINS1:
 	case CI_MS_WINS2:
 	    /* Microsoft primary or secondary WINS request */
@@ -1671,7 +1693,8 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 		orc = CONFNAK;
             }
             break;
-	
+#endif /* UNUSED - WINS */
+
 #if VJ_SUPPORT
 	case CI_COMPRESSTYPE:
 	    if (!ao->neg_vj ||
@@ -2274,12 +2297,14 @@ static int ipcp_printpkt(u_char *p, int plen,
 			htonl(cilong));
 		break;
 #endif /* LWIP_DNS */
+#if 0 /* UNUSED - WINS */
 	    case CI_MS_WINS1:
 	    case CI_MS_WINS2:
 	        p += 2;
 		GETLONG(cilong, p);
 		printer(arg, "ms-wins %I", htonl(cilong));
 		break;
+#endif /* UNUSED - WINS */
 	    default:
 		break;
 	    }
