@@ -984,9 +984,7 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	    }
 	    GETSHORT(cishort, p);
 	    IPV6CPDEBUG(("(%d)", cishort));
-#endif /* IPV6CP_COMP */
 
-#ifdef IPV6CP_COMP
 	    if (!(cishort == IPV6CP_COMP)) {
 		orc = CONFREJ;
 		break;
@@ -995,10 +993,7 @@ static int ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	    ho->neg_vj = 1;
 	    ho->vj_protocol = cishort;
 	    break;
-#else
-	    orc = CONFREJ;
-	    break;
-#endif
+#endif /* IPV6CP_COMP */
 
 	default:
 	    orc = CONFREJ;
