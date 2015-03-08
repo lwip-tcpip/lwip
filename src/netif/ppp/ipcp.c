@@ -762,7 +762,9 @@ static int ipcp_cilen(fsm *f) {
 #define LENCIVJ(neg, old)	(neg ? (old? CILEN_COMPRESS : CILEN_VJ) : 0)
 #endif /* VJ_SUPPORT */
 #define LENCIADDR(neg)		(neg ? CILEN_ADDR : 0)
+#if LWIP_DNS
 #define LENCIDNS(neg)		LENCIADDR(neg)
+#endif /* LWIP_DNS */
 #define LENCIWINS(neg)		LENCIADDR(neg)
 
     /*
@@ -789,8 +791,10 @@ static int ipcp_cilen(fsm *f) {
 	    LENCIVJ(go->neg_vj, go->old_vj) +
 #endif /* VJ_SUPPORT */
 	    LENCIADDR(go->neg_addr) +
+#if LWIP_DNS
 	    LENCIDNS(go->req_dns1) +
 	    LENCIDNS(go->req_dns2) +
+#endif /* LWIP_DNS */
 	    LENCIWINS(go->winsaddr[0]) +
 	    LENCIWINS(go->winsaddr[1])) ;
 }
@@ -851,6 +855,7 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
 	    neg = 0; \
     }
 
+#if LWIP_DNS
 #define ADDCIDNS(opt, neg, addr) \
     if (neg) { \
 	if (len >= CILEN_ADDR) { \
@@ -863,6 +868,7 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
 	} else \
 	    neg = 0; \
     }
+#endif /* LWIP_DNS */
 
 #define ADDCIWINS(opt, addr) \
     if (addr) { \
@@ -887,9 +893,11 @@ static void ipcp_addci(fsm *f, u_char *ucp, int *lenp) {
 
     ADDCIADDR(CI_ADDR, go->neg_addr, go->ouraddr);
 
+#if LWIP_DNS
     ADDCIDNS(CI_MS_DNS1, go->req_dns1, go->dnsaddr[0]);
 
     ADDCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
+#endif /* LWIP_DNS */
 
     ADDCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
@@ -984,6 +992,7 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
 	    goto bad; \
     }
 
+#if LWIP_DNS
 #define ACKCIDNS(opt, neg, addr) \
     if (neg) { \
 	u32_t l; \
@@ -998,6 +1007,7 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
 	if (addr != cilong) \
 	    goto bad; \
     }
+#endif /* LWIP_DNS */
 
 #define ACKCIWINS(opt, addr) \
     if (addr) { \
@@ -1024,9 +1034,11 @@ static int ipcp_ackci(fsm *f, u_char *p, int len) {
 
     ACKCIADDR(CI_ADDR, go->neg_addr, go->ouraddr);
 
+#if LWIP_DNS
     ACKCIDNS(CI_MS_DNS1, go->req_dns1, go->dnsaddr[0]);
 
     ACKCIDNS(CI_MS_DNS2, go->req_dns2, go->dnsaddr[1]);
+#endif /* LWIP_DNS */
 
     ACKCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
@@ -1062,7 +1074,10 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
     u_char cimaxslotindex, cicflag;
     u_short cishort;
 #endif /* VJ_SUPPORT */
-    u32_t ciaddr1, ciaddr2, l, cidnsaddr;
+    u32_t ciaddr1, ciaddr2, l;
+#if LWIP_DNS
+    u32_t cidnsaddr;
+#endif /* LWIP_DNS */
     ipcp_options no;		/* options we've seen Naks for */
     ipcp_options try_;		/* options to request next time */
 
@@ -1116,6 +1131,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	code \
     }
 
+#if LWIP_DNS
 #define NAKCIDNS(opt, neg, code) \
     if (go->neg && \
 	((cilen = p[1]) == CILEN_ADDR) && \
@@ -1128,6 +1144,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	no.neg = 1; \
 	code \
     }
+#endif /* LWIP_DNS */
 
     /*
      * Accept the peer's idea of {our,his} address, if different
@@ -1191,6 +1208,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	      }
 	      );
 
+#if LWIP_DNS
     NAKCIDNS(CI_MS_DNS1, req_dns1,
 	     if (treat_as_reject) {
 		 try_.req_dns1 = 0;
@@ -1206,6 +1224,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		 try_.dnsaddr[1] = cidnsaddr;
 	     }
 	     );
+#endif /* #if LWIP_DNS */
 
     /*
      * There may be remaining CIs, if the peer is requesting negotiation
@@ -1258,6 +1277,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 		try_.neg_addr = 1;
 	    no.neg_addr = 1;
 	    break;
+#if LWIP_DNS
 	case CI_MS_DNS1:
 	    if (go->req_dns1 || no.req_dns1 || cilen != CILEN_ADDR)
 		goto bad;
@@ -1274,6 +1294,7 @@ static int ipcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	    try_.req_dns2 = 1;
 	    no.req_dns2 = 1;
 	    break;
+#endif /* LWIP_DNS */
 	case CI_MS_WINS1:
 	case CI_MS_WINS2:
 	    if (cilen != CILEN_ADDR)
@@ -1386,6 +1407,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	try_.neg = 0; \
     }
 
+#if LWIP_DNS
 #define REJCIDNS(opt, neg, dnsaddr) \
     if (go->neg && \
 	((cilen = p[1]) == CILEN_ADDR) && \
@@ -1401,6 +1423,7 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 	    goto bad; \
 	try_.neg = 0; \
     }
+#endif /* LWIP_DNS */
 
 #define REJCIWINS(opt, addr) \
     if (addr && \
@@ -1428,9 +1451,11 @@ static int ipcp_rejci(fsm *f, u_char *p, int len) {
 
     REJCIADDR(CI_ADDR, neg_addr, go->ouraddr);
 
+#if LWIP_DNS
     REJCIDNS(CI_MS_DNS1, req_dns1, go->dnsaddr[0]);
 
     REJCIDNS(CI_MS_DNS2, req_dns2, go->dnsaddr[1]);
+#endif /* LWIP_DNS */
 
     REJCIWINS(CI_MS_WINS1, go->winsaddr[0]);
 
@@ -1605,6 +1630,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 	    ho->hisaddr = ciaddr1;
 	    break;
 
+#if LWIP_DNS
 	case CI_MS_DNS1:
 	case CI_MS_DNS2:
 	    /* Microsoft primary or secondary DNS request */
@@ -1624,6 +1650,7 @@ static int ipcp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree) {
 		orc = CONFNAK;
             }
             break;
+#endif /* LWIP_DNS */
 
 	case CI_MS_WINS1:
 	case CI_MS_WINS2:
@@ -1873,6 +1900,7 @@ static void ipcp_up(fsm *f) {
 	script_setenv("IPREMOTE", ip_ntoa(ho->hisaddr), 1);
 #endif /* UNUSED */
 
+#if LWIP_DNS
     if (!go->req_dns1)
 	    go->dnsaddr[0] = 0;
     if (!go->req_dns2)
@@ -1883,7 +1911,6 @@ static void ipcp_up(fsm *f) {
     if (go->dnsaddr[1])
 	script_setenv("DNS2", ip_ntoa(go->dnsaddr[1]), 0);
 #endif /* UNUSED */
-#if LWIP_DNS
     if (pcb->settings.usepeerdns && (go->dnsaddr[0] || go->dnsaddr[1])) {
 	sdns(pcb, go->dnsaddr[0], go->dnsaddr[1]);
 #if 0 /* UNUSED */
@@ -2014,10 +2041,12 @@ static void ipcp_up(fsm *f) {
 	ppp_notice("local  IP address %I", go->ouraddr);
 	if (ho->hisaddr != 0)
 	    ppp_notice("remote IP address %I", ho->hisaddr);
+#if LWIP_DNS
 	if (go->dnsaddr[0])
 	    ppp_notice("primary   DNS address %I", go->dnsaddr[0]);
 	if (go->dnsaddr[1])
 	    ppp_notice("secondary DNS address %I", go->dnsaddr[1]);
+#endif /* LWIP_DNS */
     }
 
 #if PPP_STATS_SUPPORT
@@ -2236,6 +2265,7 @@ static int ipcp_printpkt(u_char *p, int plen,
 		    printer(arg, "addr %I", htonl(cilong));
 		}
 		break;
+#if LWIP_DNS
 	    case CI_MS_DNS1:
 	    case CI_MS_DNS2:
 	        p += 2;
@@ -2243,6 +2273,7 @@ static int ipcp_printpkt(u_char *p, int plen,
 		printer(arg, "ms-dns%d %I", (code == CI_MS_DNS1? 1: 2),
 			htonl(cilong));
 		break;
+#endif /* LWIP_DNS */
 	    case CI_MS_WINS1:
 	    case CI_MS_WINS2:
 	        p += 2;

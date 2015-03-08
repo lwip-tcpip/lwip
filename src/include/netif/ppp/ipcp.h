@@ -57,10 +57,12 @@
 #endif /* VJ_SUPPORT */
 #define	CI_ADDR		3
 
-#define CI_MS_DNS1	129	/* Primary DNS value */
-#define CI_MS_WINS1	130	/* Primary WINS value */
-#define CI_MS_DNS2	131	/* Secondary DNS value */
-#define CI_MS_WINS2	132	/* Secondary WINS value */
+#if LWIP_DNS
+#define CI_MS_DNS1      129	/* Primary DNS value */
+#define CI_MS_DNS2      131     /* Secondary DNS value */
+#endif /* LWIP_DNS */
+#define CI_MS_WINS1     130     /* Primary WINS value */
+#define CI_MS_WINS2     132	/* Secondary WINS value */
 
 #if VJ_SUPPORT
 #define MAX_STATES 16		/* from slcompress.h */
@@ -93,12 +95,18 @@ typedef struct ipcp_options {
 #endif /* VJ_SUPPORT */
     unsigned int accept_local           :1; /* accept peer's value for ouraddr */
     unsigned int accept_remote          :1; /* accept peer's value for hisaddr */
+#if LWIP_DNS
     unsigned int req_dns1               :1; /* Ask peer to send primary DNS address? */
     unsigned int req_dns2               :1; /* Ask peer to send secondary DNS address? */
+#else
+    unsigned int                        :2; /* 2 bits of padding */
+#endif /* LWIP_DNS */
     unsigned int                        :5; /* 3 bits of padding to round out to 16 bits */
 
     u32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
+#if LWIP_DNS
     u32_t dnsaddr[2];	/* Primary and secondary MS DNS entries */
+#endif /* LWIP_DNS */
     u32_t winsaddr[2];	/* Primary and secondary MS WINS entries */
 
 #if VJ_SUPPORT
