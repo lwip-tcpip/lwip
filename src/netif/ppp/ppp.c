@@ -1011,7 +1011,8 @@ int sif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
 
   IN6_LLADDR_FROM_EUI64(ip6, our_eui64);
   ip6_addr_copy(pcb->netif->ip6_addr[0], ip6);
-  /* FIXME: add IPv6 static neighbor using his_eui64 */
+  netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
+  /* FIXME: should we add an IPv6 static neighbor using his_eui64 ? */
   return 1;
 }
 
@@ -1023,6 +1024,7 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
   LWIP_UNUSED_ARG(our_eui64);
   LWIP_UNUSED_ARG(his_eui64);
 
+  netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_INVALID);
   ip6_addr_set_zero(&pcb->netif->ip6_addr[0]);
   return 1;
 }
@@ -1031,8 +1033,6 @@ int cif6addr(ppp_pcb *pcb, eui64_t our_eui64, eui64_t his_eui64) {
  * sif6up - Config the interface up and enable IPv6 packets to pass.
  */
 int sif6up(ppp_pcb *pcb) {
-
-  netif_ip6_addr_set_state(pcb->netif, 0, IP6_ADDR_PREFERRED);
 
   pcb->if6_up = 1;
   pcb->err_code = PPPERR_NONE;
