@@ -124,7 +124,7 @@ lwip_gethostbyname(const char *name)
     u8_t idx;
     for ( idx=0; s_hostent.h_addr_list[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ip_ntoa((ip_addr_t*)s_hostent.h_addr_list[idx])));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip_addr_t*)s_hostent.h_addr_list[idx])));
     }
   }
 #endif /* DNS_DEBUG */
