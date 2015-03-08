@@ -45,9 +45,9 @@
  * eui64_ntoa - Make an ascii representation of an interface identifier
  */
 char *eui64_ntoa(eui64_t e) {
-    static char buf[32];
+    static char buf[20];
 
-    snprintf(buf, 32, "%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+    sprintf(buf, "%02x%02x:%02x%02x:%02x%02x:%02x%02x",
 	     e.e8[0], e.e8[1], e.e8[2], e.e8[3], 
 	     e.e8[4], e.e8[5], e.e8[6], e.e8[7]);
     return buf;

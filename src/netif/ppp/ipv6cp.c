@@ -412,9 +412,12 @@ printifaceid(opt, printer, arg)
 static char *
 llv6_ntoa(eui64_t ifaceid)
 {
-    static char b[64];
+    static char b[26];
 
-    sprintf(b, "fe80::%s", eui64_ntoa(ifaceid));
+    sprintf(b, "fe80::%02x%02x:%02x%02x:%02x%02x:%02x%02x",
+      ifaceid.e8[0], ifaceid.e8[1], ifaceid.e8[2], ifaceid.e8[3],
+      ifaceid.e8[4], ifaceid.e8[5], ifaceid.e8[6], ifaceid.e8[7]);
+
     return b;
 }
 
