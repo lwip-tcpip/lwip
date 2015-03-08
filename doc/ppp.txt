@@ -364,10 +364,15 @@ from previous lwIP version is pretty easy:
   file as it is already included by above header files.
 
 * PPP_INPROC_OWNTHREAD was broken by design and was removed, you have to create
-  your own rx thread
+  your own serial rx thread
 
 * If you used tcpip_callback_with_block() on ppp_ functions you may wish to use
   the PPPAPI API instead.
 
 * ppp_sighup and ppp_close functions were merged using an optional argument
   "nocarrier" on ppp_close.
+
+* DNS servers are now only remotely asked if LWIP_DNS is set and we are now
+  unconditionally registering them, which is probably the wanted behavior in
+  almost all cases. If you need it conditional contact us and we will made it
+  conditional.
