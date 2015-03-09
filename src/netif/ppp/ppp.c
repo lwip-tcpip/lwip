@@ -678,13 +678,13 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   switch(protocol) {
 
     case PPP_IP:            /* Internet Protocol */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
       ip_input(pb, pcb->netif);
       return;
 
 #if PPP_IPV6_SUPPORT
     case PPP_IPV6:          /* Internet Protocol Version 6 */
-      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->netif->num, pb->len));
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip6 in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
       ip6_input(pb, pcb->netif);
       return;
 #endif /* PPP_IPV6_SUPPORT */
