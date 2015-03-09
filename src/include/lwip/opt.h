@@ -1910,7 +1910,7 @@
  * LWIP_PPP_API==1: Enable PPP API (in pppapi.c)
  */
 #ifndef LWIP_PPP_API
-#define LWIP_PPP_API                    0
+#define LWIP_PPP_API                    (PPP_SUPPORT && (NO_SYS == 0))
 #endif
 
 #if PPP_SUPPORT
