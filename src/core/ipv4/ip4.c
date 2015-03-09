@@ -140,21 +140,20 @@ ip_route(const ip_addr_t *dest)
 
   /* iterate through netifs */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
-    /* network mask matches? */
-    if ((netif_is_up(netif))
-#if LWIP_IPV6
-        /* prevent using IPv6-only interfaces */
-        && (!ip_addr_isany(&(netif->ip_addr)))
-#endif /* LWIP_IPV6 */ 
-        ) {
+    /* is the netif up, does it have a link and a valid address? */
+    if (netif_is_up(netif) && netif_is_link_up(netif) && !ip_addr_isany(&(netif->ip_addr))) {
+      /* network mask matches? */
       if (ip_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
         /* return netif on which to forward IP packet */
         return netif;
       }
     }
   }
-  if ((netif_default == NULL) || !netif_is_up(netif_default) ||
+
+  if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
       ip_addr_isany(&netif_default->ip_addr)) {
+    /* No matching netif found an default netif is not usable.
+       If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
     IP_STATS_INC(ip.rterr);

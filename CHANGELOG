@@ -216,6 +216,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-09: Simon Goldschmidt
+  * ip4.c: fixed the IPv4 part of bug #43904 (ip_route() must detect linkup status)
+
   2015-03-04: Simon Goldschmidt
   * nd6.c: fixed bug #43784 (a host should send at least one Router Solicitation)
 
