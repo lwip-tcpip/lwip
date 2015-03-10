@@ -328,8 +328,6 @@ struct ppp_pcb_s {
   u8_t err_code;                 /* Code indicating why interface is down. */
 
   /* flags */
-  unsigned int pcomp                   :1; /* Does peer accept protocol compression? */
-  unsigned int accomp                  :1; /* Does peer accept addr/ctl compression? */
 #if PPP_IPV4_SUPPORT
   unsigned int ipcp_is_open            :1; /* haven't called np_finished() */
   unsigned int ipcp_is_up              :1; /* have called ipcp_up() */
@@ -347,6 +345,7 @@ struct ppp_pcb_s {
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
+  unsigned int                         :2; /* 2 bits of padding to round out to 8 bits */
 
   u32_t last_xmit;               /* Time of last transmission. */
 

@@ -827,13 +827,10 @@ void new_phase(ppp_pcb *pcb, int p) {
  */
 int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
   LWIP_UNUSED_ARG(mtu);
-
   /* pcb->mtu = mtu; -- set correctly with netif_set_mtu */
-  pcb->pcomp = pcomp;
-  pcb->accomp = accomp;
 
   if (pcb->link_cb->send_config) {
-    pcb->link_cb->send_config(pcb, pcb->link_ctx_cb, accm);
+    pcb->link_cb->send_config(pcb, pcb->link_ctx_cb, accm, pcomp, accomp);
   }
 
   PPPDEBUG(LOG_INFO, ("ppp_send_config[%d]\n", pcb->netif->num) );
@@ -845,12 +842,10 @@ int ppp_send_config(ppp_pcb *pcb, int mtu, u32_t accm, int pcomp, int accomp) {
  * the ppp interface.
  */
 int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
-  LWIP_UNUSED_ARG(accomp);
-  LWIP_UNUSED_ARG(pcomp);
   LWIP_UNUSED_ARG(mru);
 
   if (pcb->link_cb->recv_config) {
-    pcb->link_cb->recv_config(pcb, pcb->link_ctx_cb, accm);
+    pcb->link_cb->recv_config(pcb, pcb->link_ctx_cb, accm, pcomp, accomp);
   }
 
   PPPDEBUG(LOG_INFO, ("ppp_recv_config[%d]\n", pcb->netif->num));

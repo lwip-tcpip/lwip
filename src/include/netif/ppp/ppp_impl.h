@@ -156,9 +156,9 @@ struct link_callbacks {
   /* Send a packet from lwIP core (IPv4 or IPv6) */
   err_t (*netif_output)(ppp_pcb *pcb, void *ctx, struct pbuf *p, u_short protocol);
   /* configure the transmit-side characteristics of the PPP interface */
-  void (*send_config)(ppp_pcb *pcb, void *ctx, u32_t accm);
+  void (*send_config)(ppp_pcb *pcb, void *ctx, u32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
-  void (*recv_config)(ppp_pcb *pcb, void *ctx, u32_t accm);
+  void (*recv_config)(ppp_pcb *pcb, void *ctx, u32_t accm, int pcomp, int accomp);
 #if VJ_SUPPORT
   /* configure TCP header compression */
   void (*vj_config)(ppp_pcb *pcb, void *ctx, int vjcomp, int cidcomp, int maxcid);

@@ -59,8 +59,8 @@ static err_t pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs);
 #endif /* PPP_SERVER */
 static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
-static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm);
-static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm);
+static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp);
+static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp);
 static err_t pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 #if VJ_SUPPORT
 static void pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid);
@@ -328,13 +328,13 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
   }
 
   ppp->last_xmit = sys_jiffies();
-  if (!ppp->accomp) {
+  if (!pppos->accomp) {
     fcs_out = PPP_FCS(fcs_out, PPP_ALLSTATIONS);
     tail = pppos_append(PPP_ALLSTATIONS, tail, &pppos->out_accm);
     fcs_out = PPP_FCS(fcs_out, PPP_UI);
     tail = pppos_append(PPP_UI, tail, &pppos->out_accm);
   }
-  if (!ppp->pcomp || protocol > 0xFF) {
+  if (!pppos->pcomp || protocol > 0xFF) {
     c = (protocol >> 8) & 0xFF;
     fcs_out = PPP_FCS(fcs_out, c);
     tail = pppos_append(c, tail, &pppos->out_accm);
@@ -787,11 +787,14 @@ drop:
 #endif /* PPP_INPROC_MULTITHREADED */
 
 static void
-pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm)
+pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   LWIP_UNUSED_ARG(ppp);
+
+  pppos->pcomp = pcomp;
+  pppos->accomp = accomp;
 
   /* Load the ACCM bits for the 32 control codes. */
   for (i = 0; i < 32/8; i++) {
@@ -804,12 +807,14 @@ pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm)
 }
 
 static void
-pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
+pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   PPPOS_DECL_PROTECT(lev);
   LWIP_UNUSED_ARG(ppp);
+  LWIP_UNUSED_ARG(pcomp);
+  LWIP_UNUSED_ARG(accomp);
 
   /* Load the ACCM bits for the 32 control codes. */
   PPPOS_PROTECT(lev);
