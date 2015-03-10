@@ -626,7 +626,6 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
           pbuf_header(inp, -(s16_t)PBUF_LINK_HLEN);
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_MULTITHREADED
-          /* Non-blocking call, we don't need to unlock the mutex here */
           if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
             pbuf_free(inp);
