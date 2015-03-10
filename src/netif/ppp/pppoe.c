@@ -251,7 +251,7 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
 static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short protocol) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *pb;
-  int i=0;
+  u8_t *pl;
 #if LWIP_SNMP
   u16_t tot_len;
 #endif /* LWIP_SNMP */
@@ -270,10 +270,8 @@ static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short
 
   ppp->last_xmit = sys_jiffies();
 
-  if (!ppp->pcomp || protocol > 0xFF) {
-    *((u_char*)pb->payload + i++) = (protocol >> 8) & 0xFF;
-  }
-  *((u_char*)pb->payload + i) = protocol & 0xFF;
+  pl = (u8_t*)pb->payload;
+  PUTSHORT(protocol, pl);
 
   pbuf_chain(pb, p);
 #if LWIP_SNMP
