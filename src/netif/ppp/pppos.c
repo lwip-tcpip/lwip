@@ -68,6 +68,9 @@ static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t pr
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
+#if !NO_SYS
+static err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
+#endif /* !NO_SYS */
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -200,6 +203,9 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
   pppos->ppp = ppp;
   pppos->fd = fd;
+#if !NO_SYS
+  ppp->netif->input = pppos_input_sys;
+#endif /* !NO_SYS */
   ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
@@ -520,6 +526,19 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
 }
+
+#if !NO_SYS
+static err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
+  ppp_pcb *ppp = (ppp_pcb*)inp->state;
+  struct pbuf *n;
+
+  for (n = p; n; n = n->next) {
+    pppos_input(ppp, (u8_t*)n->payload, n->len);
+  }
+  pbuf_free(p);
+  return ERR_OK;
+}
+#endif /* !NO_SYS */
 
 /** PPPoS input helper struct, must be packed since it is stored
  * to pbuf->payload, which might be unaligned. */

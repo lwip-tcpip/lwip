@@ -114,6 +114,13 @@ tcpip_thread(void *arg)
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_ETHERNET */
+#if PPPOS_SUPPORT
+      /* FIXME: can be generalized to all point to point interfaces */
+      if ((msg->msg.inp.netif->flags & NETIF_FLAG_BROADCAST) == 0
+            && msg->msg.inp.netif->input) {
+        msg->msg.inp.netif->input(msg->msg.inp.p, msg->msg.inp.netif);
+      } else
+#endif /* PPPOS_SUPPORT */
 #if LWIP_IPV6
       if (((*(u8_t*)(msg->msg.inp.p->payload)) & 0xf0) == 0x60) {
           ip6_input(msg->msg.inp.p, msg->msg.inp.netif);
