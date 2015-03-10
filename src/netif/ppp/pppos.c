@@ -392,8 +392,10 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 
+#if PPP_INPROC_MULTITHREADED
   /* input pbuf left over from last session? */
   pppos_free_current_input_packet(pppos);
+#endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
@@ -429,8 +431,10 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 #endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
 
+#if PPP_INPROC_MULTITHREADED
   /* input pbuf left over from last session? */
   pppos_free_current_input_packet(pppos);
+#endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
@@ -490,9 +494,15 @@ pppos_disconnect(ppp_pcb *ppp, void *ctx)
   pppos->open = 0;
   PPPOS_UNPROTECT(lev);
 
-  /* We cannot call pppos_free_current_input_packet() here because
-   * rx thread might still call pppos_input()
+  /* If PPP_INPROC_MULTITHREADED is used we cannot call
+   * pppos_free_current_input_packet() here because
+   * rx thread might still call pppos_input().
    */
+#if !PPP_INPROC_MULTITHREADED
+  /* input pbuf left ? */
+  pppos_free_current_input_packet(pppos);
+#endif /* !PPP_INPROC_MULTITHREADED */
+
   ppp_link_end(ppp); /* notify upper layers */
 }
 
@@ -502,8 +512,10 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   LWIP_UNUSED_ARG(ppp);
 
+#if PPP_INPROC_MULTITHREADED
   /* input pbuf left ? */
   pppos_free_current_input_packet(pppos);
+#endif /* PPP_INPROC_MULTITHREADED */
 
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
