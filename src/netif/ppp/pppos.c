@@ -297,7 +297,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
    * Attempt Van Jacobson header compression if VJ is configured and
    * this is an IP packet.
    */
-  if (protocol == PPP_IP && ppp->vj_enabled) {
+  if (protocol == PPP_IP && pppos->vj_enabled) {
     switch (vj_compress_tcp(&pppos->vj_comp, pb)) {
       case TYPE_IP:
         /* No change...
@@ -850,7 +850,7 @@ pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 
-  ppp->vj_enabled = vjcomp;
+  pppos->vj_enabled = vjcomp;
   pppos->vj_comp.compressSlot = cidcomp;
   pppos->vj_comp.maxSlotIndex = maxcid;
   PPPDEBUG(LOG_INFO, ("pppos_vjc_config[%d]: VJ compress enable=%d slot=%d max slot=%d\n",
@@ -865,7 +865,7 @@ pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
 
   switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
-      if (!ppp->vj_enabled) {
+      if (!pppos->vj_enabled) {
         break;
       }
       /*
@@ -883,7 +883,7 @@ pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
       break;
 
     case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
-      if (!ppp->vj_enabled) {
+      if (!pppos->vj_enabled) {
         break;
       }
       /*

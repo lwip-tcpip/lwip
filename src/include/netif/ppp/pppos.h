@@ -78,7 +78,12 @@ struct pppos_pcb_s {
 
   /* flags */
   unsigned int open            :1; /* Set if PPPoS is open */
-  unsigned int                 :7; /* 7 bits of padding to round out to 8 bits */
+#if VJ_SUPPORT
+  unsigned int vj_enabled      :1; /* Flag indicating VJ compression enabled. */
+#else
+  unsigned int                 :1; /* 1 bit of padding */
+#endif /* VJ_SUPPORT */
+  unsigned int                 :6; /* 6 bits of padding to round out to 8 bits */
 
   /* PPPoS rx */
   ext_accm in_accm;                /* Async-Ctl-Char-Map for input. */

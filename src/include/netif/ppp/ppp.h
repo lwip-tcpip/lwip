@@ -337,13 +337,8 @@ struct ppp_pcb_s {
 #if 0 /* UNUSED - PROXY ARP */
   unsigned int proxy_arp_set           :1; /* Have created proxy arp entry */
 #endif /* UNUSED - PROXY ARP */
-#if VJ_SUPPORT
-  unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
-#else
-  unsigned int                         :1; /* 1 bit of padding */
-#endif /* VJ_SUPPORT */
 #else /* PPP_IPV4_SUPPORT */
-  unsigned int                         :4; /* 4 bit of padding */
+  unsigned int                         :3; /* 3 bit of padding */
 #endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT
   unsigned int ipv6cp_is_up            :1; /* have called ip6cp_up() */
@@ -352,7 +347,6 @@ struct ppp_pcb_s {
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-  unsigned int                         :7; /* 7 bits of padding to round out to 16 bits */
 
   u32_t last_xmit;               /* Time of last transmission. */
 
