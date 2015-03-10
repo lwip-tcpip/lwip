@@ -180,33 +180,19 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
   ppp = ppp_new(pppif, link_status_cb, ctx_cb);
   if (ppp == NULL) {
-    goto ppp_new_fail;
+    return NULL;
   }
 
   pppos = (pppos_pcb *)memp_malloc(MEMP_PPPOS_PCB);
   if (pppos == NULL) {
-    goto pppos_malloc_fail;
+    ppp_free(ppp);
+    return NULL;
   }
-
-#if PPP_INPROC_MULTITHREADED
-  if (sys_mutex_new(&pppos->mutex) != ERR_OK) {
-    goto mutex_new_fail;
-  }
-#endif /* PPP_INPROC_MULTITHREADED */
 
   pppos->ppp = ppp;
   pppos->fd = fd;
   ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
-
-#if PPP_INPROC_MULTITHREADED
-mutex_new_fail:
-  memp_free(MEMP_PPPOS_PCB, pppos);
-#endif /* PPP_INPROC_MULTITHREADED */
-pppos_malloc_fail:
-  ppp_free(ppp);
-ppp_new_fail:
-  return NULL;
 }
 
 /* Called by PPP core */
@@ -397,18 +383,12 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_lock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
-  /* input pbuf left ? */
+  /* input pbuf left over from last session? */
   pppos_free_current_input_packet(pppos);
-  /* reset PPPoS control block to its initial state */
-  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_unlock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
+  /* reset PPPoS control block to its initial state */
+  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
 
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
@@ -439,18 +419,12 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 #endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
 
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_lock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
-  /* input pbuf left ? */
+  /* input pbuf left over from last session? */
   pppos_free_current_input_packet(pppos);
-  /* reset PPPoS control block to its initial state */
-  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_unlock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
+  /* reset PPPoS control block to its initial state */
+  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
 
   /* Wait passively */
   lcp_wo = &ppp->lcp_wantoptions;
@@ -498,17 +472,11 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 static void
 pppos_disconnect(ppp_pcb *ppp, void *ctx)
 {
-  pppos_pcb *pppos = (pppos_pcb *)ctx;
+  LWIP_UNUSED_ARG(ctx);
 
-  /* input pbuf left ? */
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_lock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
-  pppos_free_current_input_packet(pppos);
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_unlock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
-
+  /* We cannot call pppos_free_current_input_packet() here because
+   * rx thread might still call pppos_input()
+   */
   ppp_link_end(ppp); /* notify upper layers */
 }
 
@@ -521,9 +489,6 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   /* input pbuf left ? */
   pppos_free_current_input_packet(pppos);
 
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_free(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
 }
@@ -558,15 +523,15 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
+  SYS_ARCH_DECL_PROTECT(lev);
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_lock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
   while (l-- > 0) {
     cur_char = *s++;
 
+    SYS_ARCH_PROTECT(lev);
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
+    SYS_ARCH_UNPROTECT(lev);
     /* Handle special characters. */
     if (escaped) {
       /* Check for escape sequences. */
@@ -770,9 +735,6 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
       pppos->in_fcs = PPP_FCS(pppos->in_fcs, cur_char);
     }
   } /* while (l-- > 0), all bytes processed */
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_unlock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
 
   magic_randomize();
 }
@@ -823,18 +785,15 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
+  SYS_ARCH_DECL_PROTECT(lev);
   LWIP_UNUSED_ARG(ppp);
 
   /* Load the ACCM bits for the 32 control codes. */
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_lock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
+  SYS_ARCH_PROTECT(lev);
   for (i = 0; i < 32 / 8; i++) {
     pppos->in_accm[i] = (u_char)(accm >> (i * 8));
   }
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_unlock(&pppos->mutex);
-#endif /* PPP_INPROC_MULTITHREADED */
+  SYS_ARCH_UNPROTECT(lev);
 
   PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\n",
             pppos->ppp->netif->num,

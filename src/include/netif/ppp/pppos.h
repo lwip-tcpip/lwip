@@ -67,9 +67,6 @@ typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
   ppp_pcb *ppp;                    /* PPP PCB */
-#if PPP_INPROC_MULTITHREADED
-  sys_mutex_t mutex;               /* Mutex for pppos_input() */
-#endif /* PPP_INPROC_MULTITHREADED */
   sio_fd_t fd;                     /* File device ID of port. */
 
   /* -- below are data that will be cleared between two sessions
