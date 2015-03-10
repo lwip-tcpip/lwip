@@ -165,6 +165,15 @@ ppp_get_fcs(u8_t byte)
 #define PPP_INITFCS     0xffff  /* Initial FCS value */
 #define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
 
+#if PPP_INPROC_MULTITHREADED
+#define PPPOS_DECL_PROTECT(lev) SYS_ARCH_DECL_PROTECT(lev)
+#define PPPOS_PROTECT(lev) SYS_ARCH_PROTECT(lev)
+#define PPPOS_UNPROTECT(lev) SYS_ARCH_UNPROTECT(lev)
+#else
+#define PPPOS_DECL_PROTECT(lev)
+#define PPPOS_PROTECT(lev)
+#define PPPOS_UNPROTECT(lev)
+#endif /* PPP_INPROC_MULTITHREADED */
 
 
 /*
@@ -523,15 +532,15 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
   struct pbuf *next_pbuf;
   u_char cur_char;
   u_char escaped;
-  SYS_ARCH_DECL_PROTECT(lev);
+  PPPOS_DECL_PROTECT(lev);
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
     cur_char = *s++;
 
-    SYS_ARCH_PROTECT(lev);
+    PPPOS_PROTECT(lev);
     escaped = ESCAPE_P(pppos->in_accm, cur_char);
-    SYS_ARCH_UNPROTECT(lev);
+    PPPOS_UNPROTECT(lev);
     /* Handle special characters. */
     if (escaped) {
       /* Check for escape sequences. */
@@ -785,15 +794,15 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm)
 {
   int i;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  SYS_ARCH_DECL_PROTECT(lev);
+  PPPOS_DECL_PROTECT(lev);
   LWIP_UNUSED_ARG(ppp);
 
   /* Load the ACCM bits for the 32 control codes. */
-  SYS_ARCH_PROTECT(lev);
+  PPPOS_PROTECT(lev);
   for (i = 0; i < 32 / 8; i++) {
     pppos->in_accm[i] = (u_char)(accm >> (i * 8));
   }
-  SYS_ARCH_UNPROTECT(lev);
+  PPPOS_UNPROTECT(lev);
 
   PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\n",
             pppos->ppp->netif->num,
