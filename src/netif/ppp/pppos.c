@@ -409,6 +409,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
    */
   pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
   pppos->out_accm[15] = 0x60;
+  pppos->open = 1;
 
   /*
    * Start the connection and handle incoming events (packet or timeout).
@@ -468,6 +469,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
    */
   pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
   pppos->out_accm[15] = 0x60;
+  pppos->open = 1;
 
   /*
    * Wait for something to happen.
@@ -481,7 +483,12 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 static void
 pppos_disconnect(ppp_pcb *ppp, void *ctx)
 {
-  LWIP_UNUSED_ARG(ctx);
+  pppos_pcb *pppos = (pppos_pcb *)ctx;
+  PPPOS_DECL_PROTECT(lev);
+
+  PPPOS_PROTECT(lev);
+  pppos->open = 0;
+  PPPOS_UNPROTECT(lev);
 
   /* We cannot call pppos_free_current_input_packet() here because
    * rx thread might still call pppos_input()
@@ -533,6 +540,13 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
   u_char cur_char;
   u_char escaped;
   PPPOS_DECL_PROTECT(lev);
+
+  PPPOS_PROTECT(lev);
+  if (!pppos->open) {
+    PPPOS_UNPROTECT(lev);
+    return;
+  }
+  PPPOS_UNPROTECT(lev);
 
   PPPDEBUG(LOG_DEBUG, ("pppos_input[%d]: got %d bytes\n", ppp->netif->num, l));
   while (l-- > 0) {
