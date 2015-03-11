@@ -6,7 +6,7 @@ Table of Contents:
 
 1 - Supported PPP protocols and features
 2 - Raw API PPP example for all protocols
-3 - PPPoS input path (raw API and thread safe API)
+3 - PPPoS input path (raw API, thread safe API, TCPIP API)
 4 - Thread safe PPP API (PPPAPI)
 5 - Upgrading from lwIP <= 1.4.x to lwIP >= 1.5.x
 
@@ -298,15 +298,32 @@ ppp_free(ppp);
 
 
 
-3 PPPoS input path (raw API and thread safe API)
-================================================
+3 PPPoS input path (raw API, thread safe API, TCPIP API)
+========================================================
 
-PPPoS require a serial I/O SIO port (see include/lwip/sio.h). Received data
-on serial port should be sent to lwIP using the pppos_input() function.
+PPPoS requires a serial I/O SIO port (see include/lwip/sio.h).
+Received data on serial port should be sent to lwIP using the pppos_input() or
+pppos_input_sys() functions.
 
-This function is thread-safe by default if NO_SYS==0. You can alter whether
-you want this function thread-safe or not using the PPP_INPROC_MULTITHREADED
-setting in your lwipopts.h file.
+If PPP_INPROC_MULTITHREADED is 0 (the default), pppos_input() is not thread safe
+and then *MUST* only be called inside the lwIP context. You should use that if
+you are calling pppos_input() from your main loop context when NO_SYS=1.
+
+If PPP_INPROC_MULTITHREADED is 1, pppos_input() is thread safe and can be called
+from a dedicated RX-thread or from interrupt context… *BUT* you should NEVER
+call pppos_connect(), pppos_listen() and ppp_free() if pppos_input() can still
+be running, doing this is NOT thread safe. You should also avoid calling
+pppos_input() if PPPoS session is not started yet.
+
+Using PPP_INPROC_MULTITHREADED is discouraged unless you really know what you
+are doing, though it may greatly reduce your need of buffer if pppos_input() is
+called byte after byte in your rx serial interrupt, your move ;-)
+
+Anyway, if you are using an OS (NO_SYS=0) and if PPP_INPROC_MULTITHREADED is 0,
+you can use the pppos_input_tcpip() function to pass input data to the lwIP
+core thread. This is thread safe in all cases but you should avoid passing
+data byte after byte because it uses heavy locking (mailbox) and it allocates
+pbuf, better fill them !
 
 /*
  * Fonction to call for received data
@@ -317,6 +334,9 @@ setting in your lwipopts.h file.
  */
 void pppos_input(ppp, buffer, buffer_len);
 
+or
+
+void pppos_input_tcpip(ppp, buffer, buffer_len);
 
 
 4 Thread safe PPP API (PPPAPI)
