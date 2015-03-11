@@ -556,8 +556,14 @@ PACK_STRUCT_END
 #endif
 #endif /* PPP_INPROC_MULTITHREADED */
 
-/** Pass received raw characters to PPPoS to be decoded. This function is
- * thread-safe and can be called from a dedicated RX-thread or from a main-loop.
+/** Pass received raw characters to PPPoS to be decoded.
+ *
+ * This function is thread-safe if PPP_INPROC_MULTITHREADED is set to 1
+ * and can be called from a dedicated RX-thread or from interrupt context
+ * BUT you should NEVER call pppos_connect(), pppos_listen()
+ * and ppp_free() if pppos_input() can still be running, doing this is not
+ * thread safe. You should also avoid calling pppos_input() if PPPoS session
+ * is not started yet.
  *
  * @param pcb PPP descriptor index, returned by ppp_new()
  * @param data received data
