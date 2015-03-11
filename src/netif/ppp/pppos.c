@@ -528,6 +528,33 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 }
 
 #if !NO_SYS
+/** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
+ *
+ * @param pcb PPP descriptor index, returned by pppos_create()
+ * @param data received data
+ * @param len length of received data
+ */
+err_t
+pppos_input_tcpip(ppp_pcb *ppp, u_char *s, int l)
+{
+  struct pbuf *p, *n;
+  u8_t *cur;
+
+  p = pbuf_alloc(PBUF_RAW, l, PBUF_POOL);
+  if (!p) {
+    return ERR_MEM;
+  }
+
+  cur = s;
+  for (n = p; n; n = n->next) {
+    MEMCPY(n->payload, cur, n->len);
+    cur += n->len;
+  }
+
+  return tcpip_input(p, ppp_netif(ppp));
+}
+
+/* called from TCPIP thread */
 static err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   ppp_pcb *ppp = (ppp_pcb*)inp->state;
   struct pbuf *n;
@@ -565,7 +592,7 @@ PACK_STRUCT_END
  * thread safe. You should also avoid calling pppos_input() if PPPoS session
  * is not started yet.
  *
- * @param pcb PPP descriptor index, returned by ppp_new()
+ * @param pcb PPP descriptor index, returned by pppos_create()
  * @param data received data
  * @param len length of received data
  */
