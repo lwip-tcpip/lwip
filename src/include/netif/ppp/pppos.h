@@ -103,10 +103,10 @@ struct pppos_pcb_s {
 ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
-#if !NO_SYS
+#if !NO_SYS && !PPP_INPROC_MULTITHREADED
 /* Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread. */
 err_t pppos_input_tcpip(ppp_pcb *ppp, u_char *s, int l);
-#endif /* !NO_SYS */
+#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
 
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(ppp_pcb *ppp, u_char* data, int len);

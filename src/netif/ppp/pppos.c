@@ -70,9 +70,9 @@ static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t pr
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
-#if !NO_SYS
+#if !NO_SYS && !PPP_INPROC_MULTITHREADED
 static err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
-#endif /* !NO_SYS */
+#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -205,9 +205,9 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
   pppos->ppp = ppp;
   pppos->fd = fd;
-#if !NO_SYS
+#if !NO_SYS && !PPP_INPROC_MULTITHREADED
   ppp->netif->input = pppos_input_sys;
-#endif /* !NO_SYS */
+#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
   ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
@@ -529,7 +529,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   return ERR_OK;
 }
 
-#if !NO_SYS
+#if !NO_SYS && !PPP_INPROC_MULTITHREADED
 /** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
  *
  * @param pcb PPP descriptor index, returned by pppos_create()
@@ -567,7 +567,7 @@ static err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   pbuf_free(p);
   return ERR_OK;
 }
-#endif /* !NO_SYS */
+#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
 
 /** PPPoS input helper struct, must be packed since it is stored
  * to pbuf->payload, which might be unaligned. */
