@@ -76,9 +76,9 @@ static err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
-static void pppos_xmit(pppos_pcb *pppos, struct pbuf *nb);
+static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb);
 static void pppos_free_current_input_packet(pppos_pcb *pppos);
-static struct pbuf *pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm);
+static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm);
 static void pppos_drop(pppos_pcb *pppos);
 
 /* Callbacks structure for PPP core */
@@ -219,27 +219,28 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_char *s = (u_char*)p->payload;
   int n = p->len;
-  u_char c;
   u_int fcs_out;
-  struct pbuf *head, *tail;
+  struct pbuf *nb;
+  u8_t c;
+  err_t err;
 
-  head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
-  if (head == NULL) {
+  /* Grab an output buffer. */
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  if (nb == NULL) {
+    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
+    LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(ppp->netif);
     pbuf_free(p);
     return ERR_MEM;
   }
 
-  tail = head;
-
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
+  err = ERR_OK;
   if ((sys_jiffies() - ppp->last_xmit) >= PPP_MAXIDLEFLAG) {
-    tail = pppos_append(PPP_FLAG, tail, NULL);
+    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
   }
-  ppp->last_xmit = sys_jiffies();
 
   fcs_out = PPP_INITFCS;
   /* Load output buffer. */
@@ -250,35 +251,24 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     fcs_out = PPP_FCS(fcs_out, c);
 
     /* Copy to output buffer escaping special characters. */
-    tail = pppos_append(c, tail, &pppos->out_accm);
+    err = pppos_output_append(pppos, err,  nb, c, 1);
   }
 
   /* Add FCS and trailing flag. */
   c = ~fcs_out & 0xFF;
-  tail = pppos_append(c, tail, &pppos->out_accm);
+  err = pppos_output_append(pppos, err,  nb, c, 1);
   c = (~fcs_out >> 8) & 0xFF;
-  tail = pppos_append(c, tail, &pppos->out_accm);
-  tail = pppos_append(PPP_FLAG, tail, NULL);
+  err = pppos_output_append(pppos, err,  nb, c, 1);
+  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
 
-  /* If we failed to complete the packet, throw it away.
-   * Otherwise send it. */
-  if (!tail) {
-    PPPDEBUG(LOG_WARNING,
-             ("pppos_write[%d]: Alloc err - dropping pbuf len=%d\n", ppp->netif->num, head->len));
-           /*"pppos_write[%d]: Alloc err - dropping %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
-    pbuf_free(head);
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(ppp->netif);
-    pbuf_free(p);
-    return ERR_MEM;
+  err = pppos_output_last(pppos, err, nb);
+  if (err == ERR_OK) {
+    PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, p->len));
+  } else {
+    PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: output failed len=%d\n", ppp->netif->num, p->len));
   }
-
-  PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, head->len));
-                   /* "pppos_write[%d]: %d:%.*H", pd, head->len, LWIP_MIN(head->len * 2, 40), head->payload)); */
-  pppos_xmit(pppos, head);
   pbuf_free(p);
-  return ERR_OK;
+  return err;
 }
 
 /* Called by PPP core */
@@ -287,18 +277,9 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   u_int fcs_out = PPP_INITFCS;
-  struct pbuf *head = NULL, *tail = NULL, *p;
-  u_char c;
-
-  /* Grab an output buffer. */
-  head = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
-  if (head == NULL) {
-    PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: first alloc fail\n", ppp->netif->num));
-    LINK_STATS_INC(link.memerr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(ppp->netif);
-    return ERR_MEM;
-  }
+  struct pbuf *nb, *p;
+  u8_t c;
+  err_t err;
 
 #if VJ_SUPPORT
   /*
@@ -318,81 +299,77 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
         protocol = PPP_VJC_UNCOMP;
         break;
       default:
-        PPPDEBUG(LOG_WARNING, ("ppp_netif_output[%d]: bad IP packet\n", ppp->netif->num));
+        PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: bad IP packet\n", ppp->netif->num));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
         snmp_inc_ifoutdiscards(ppp->netif);
-        pbuf_free(head);
         return ERR_VAL;
     }
   }
 #endif /* VJ_SUPPORT */
 
-  tail = head;
-
-  /* Build the PPP header. */
-  if ((sys_jiffies() - ppp->last_xmit) >= PPP_MAXIDLEFLAG) {
-    tail = pppos_append(PPP_FLAG, tail, NULL);
-  }
-
-  ppp->last_xmit = sys_jiffies();
-  if (!pppos->accomp) {
-    fcs_out = PPP_FCS(fcs_out, PPP_ALLSTATIONS);
-    tail = pppos_append(PPP_ALLSTATIONS, tail, &pppos->out_accm);
-    fcs_out = PPP_FCS(fcs_out, PPP_UI);
-    tail = pppos_append(PPP_UI, tail, &pppos->out_accm);
-  }
-  if (!pppos->pcomp || protocol > 0xFF) {
-    c = (protocol >> 8) & 0xFF;
-    fcs_out = PPP_FCS(fcs_out, c);
-    tail = pppos_append(c, tail, &pppos->out_accm);
-  }
-  c = protocol & 0xFF;
-  fcs_out = PPP_FCS(fcs_out, c);
-  tail = pppos_append(c, tail, &pppos->out_accm);
-
-  /* Load packet. */
-  for(p = pb; p; p = p->next) {
-    int n;
-    u_char *sPtr;
-
-    sPtr = (u_char*)p->payload;
-    n = p->len;
-    while (n-- > 0) {
-      c = *sPtr++;
-
-      /* Update FCS before checking for special characters. */
-      fcs_out = PPP_FCS(fcs_out, c);
-
-      /* Copy to output buffer escaping special characters. */
-      tail = pppos_append(c, tail, &pppos->out_accm);
-    }
-  }
-
-  /* Add FCS and trailing flag. */
-  c = ~fcs_out & 0xFF;
-  tail = pppos_append(c, tail, &pppos->out_accm);
-  c = (~fcs_out >> 8) & 0xFF;
-  tail = pppos_append(c, tail, &pppos->out_accm);
-  tail = pppos_append(PPP_FLAG, tail, NULL);
-
-  /* If we failed to complete the packet, throw it away. */
-  if (!tail) {
-    PPPDEBUG(LOG_WARNING,
-             ("ppp_netif_output[%d]: Alloc err - dropping proto=%d\n",
-              ppp->netif->num, protocol));
-    pbuf_free(head);
+  /* Grab an output buffer. */
+  nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
+  if (nb == NULL) {
+    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
     snmp_inc_ifoutdiscards(ppp->netif);
     return ERR_MEM;
   }
 
-  /* Send it. */
-  PPPDEBUG(LOG_INFO, ("ppp_netif_output[%d]: proto=0x%"X16_F"\n", ppp->netif->num, protocol));
+  /* If the link has been idle, we'll send a fresh flag character to
+   * flush any noise. */
+  err = ERR_OK;
+  if ((sys_jiffies() - ppp->last_xmit) >= PPP_MAXIDLEFLAG) {
+    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+  }
 
-  pppos_xmit(pppos, head);
-  return ERR_OK;
+  if (!pppos->accomp) {
+    fcs_out = PPP_FCS(fcs_out, PPP_ALLSTATIONS);
+    err = pppos_output_append(pppos, err,  nb, PPP_ALLSTATIONS, 1);
+    fcs_out = PPP_FCS(fcs_out, PPP_UI);
+    err = pppos_output_append(pppos, err,  nb, PPP_UI, 1);
+  }
+  if (!pppos->pcomp || protocol > 0xFF) {
+    c = (protocol >> 8) & 0xFF;
+    fcs_out = PPP_FCS(fcs_out, c);
+    err = pppos_output_append(pppos, err,  nb, c, 1);
+  }
+  c = protocol & 0xFF;
+  fcs_out = PPP_FCS(fcs_out, c);
+  err = pppos_output_append(pppos, err,  nb, c, 1);
+
+  /* Load packet. */
+  for(p = pb; p; p = p->next) {
+    u16_t n = p->len;
+    u8_t *s = (u8_t*)p->payload;
+
+    while (n-- > 0) {
+      c = *s++;
+
+      /* Update FCS before checking for special characters. */
+      fcs_out = PPP_FCS(fcs_out, c);
+
+      /* Copy to output buffer escaping special characters. */
+      err = pppos_output_append(pppos, err,  nb, c, 1);
+    }
+  }
+
+  /* Add FCS and trailing flag. */
+  c = ~fcs_out & 0xFF;
+  err = pppos_output_append(pppos, err,  nb, c, 1);
+  c = (~fcs_out >> 8) & 0xFF;
+  err = pppos_output_append(pppos, err,  nb, c, 1);
+  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+
+  err = pppos_output_last(pppos, err, nb);
+  if (err == ERR_OK) {
+    PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+  } else {
+    PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: output failed proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
+  }
+  return err;
 }
 
 static err_t
@@ -979,30 +956,38 @@ pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
 }
 #endif /* VJ_SUPPORT */
 
-static void
-pppos_xmit(pppos_pcb *pppos, struct pbuf *nb)
+static err_t
+pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
 {
   ppp_pcb *ppp = pppos->ppp;
-  struct pbuf *b;
-  int c;
 
-  for(b = nb; b != NULL; b = b->next) {
-    c = sio_write(pppos->fd, (u8_t*)b->payload, b->len);
-    if(c != b->len) {
-      PPPDEBUG(LOG_WARNING,
-               ("PPP pppos_xmit: incomplete sio_write(fd:%"SZT_F", len:%d, c: 0x%"X8_F") c = %d\n", (size_t)pppos->fd, b->len, c, c));
-      LINK_STATS_INC(link.err);
-      ppp->last_xmit = 0; /* prepend PPP_FLAG to next packet */
-      snmp_inc_ifoutdiscards(ppp->netif);
-      pbuf_free(nb);
-      return;
+  if (err != ERR_OK) {
+    goto failed;
+  }
+
+  /* Send remaining buffer if not empty */
+  if (nb->len > 0) {
+    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
+    if (l != nb->len) {
+      err = ERR_IF;
+      goto failed;
     }
   }
 
+  ppp->last_xmit = sys_jiffies();
   snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
   snmp_inc_ifoutucastpkts(ppp->netif);
-  pbuf_free(nb);
   LINK_STATS_INC(link.xmit);
+  pbuf_free(nb);
+  return ERR_OK;
+
+failed:
+  ppp->last_xmit = 0; /* prepend PPP_FLAG to next packet */
+  LINK_STATS_INC(link.err);
+  LINK_STATS_INC(link.drop);
+  snmp_inc_ifoutdiscards(ppp->netif);
+  pbuf_free(nb);
+  return err;
 }
 
 /*
@@ -1022,40 +1007,37 @@ pppos_free_current_input_packet(pppos_pcb *pppos)
 }
 
 /*
- * pppos_append - append given character to end of given pbuf.  If out_accm
+ * pppos_output_append - append given character to end of given pbuf.  If out_accm
  * is not NULL and the character needs to be escaped, do so.
  * If pbuf is full, append another.
  * Return the current pbuf.
  */
-static struct pbuf *
-pppos_append(u_char c, struct pbuf *nb, ext_accm *out_accm)
+static err_t
+pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm)
 {
-  struct pbuf *tb = nb;
+  if (err != ERR_OK) {
+    return err;
+  }
 
   /* Make sure there is room for the character and an escape code.
    * Sure we don't quite fill the buffer if the character doesn't
    * get escaped but is one character worth complicating this? */
-  /* Note: We assume no packet header. */
-  if (nb && (PBUF_POOL_BUFSIZE - nb->len) < 2) {
-    tb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
-    if (tb) {
-      nb->next = tb;
-    } else {
-      LINK_STATS_INC(link.memerr);
+  if ((PBUF_POOL_BUFSIZE - nb->len) < 2) {
+    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
+    if (l != nb->len) {
+      return ERR_IF;
     }
-    nb = tb;
+    nb->len = 0;
   }
 
-  if (nb) {
-    if (out_accm && ESCAPE_P(*out_accm, c)) {
-      *((u_char*)nb->payload + nb->len++) = PPP_ESCAPE;
-      *((u_char*)nb->payload + nb->len++) = c ^ PPP_TRANS;
-    } else {
-      *((u_char*)nb->payload + nb->len++) = c;
-    }
+  if (accm && ESCAPE_P(pppos->out_accm, c)) {
+    *((u8_t*)nb->payload + nb->len++) = PPP_ESCAPE;
+    *((u8_t*)nb->payload + nb->len++) = c ^ PPP_TRANS;
+  } else {
+    *((u8_t*)nb->payload + nb->len++) = c;
   }
 
-  return tb;
+  return ERR_OK;
 }
 
 /*
