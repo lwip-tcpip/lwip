@@ -78,7 +78,7 @@ static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
-static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm);
+static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm, u16_t *fcs);
 static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb);
 
 /* Callbacks structure for PPP core */
@@ -239,7 +239,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
    * flush any noise. */
   err = ERR_OK;
   if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
-    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
   }
 
   /* Load output buffer. */
@@ -248,20 +248,15 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   n = p->len;
   while (n-- > 0) {
     c = *s++;
-
-    /* Update FCS before checking for special characters. */
-    fcs_out = PPP_FCS(fcs_out, c);
-
-    /* Copy to output buffer escaping special characters. */
-    err = pppos_output_append(pppos, err,  nb, c, 1);
+    err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
   }
 
   /* Add FCS and trailing flag. */
   c = ~fcs_out & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1);
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
   c = (~fcs_out >> 8) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1);
-  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
+  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
 
   err = pppos_output_last(pppos, err, nb);
   if (err == ERR_OK) {
@@ -323,25 +318,21 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
-  fcs_out = PPP_INITFCS;
   if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
-    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+    err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
   }
 
+  fcs_out = PPP_INITFCS;
   if (!pppos->accomp) {
-    fcs_out = PPP_FCS(fcs_out, PPP_ALLSTATIONS);
-    err = pppos_output_append(pppos, err,  nb, PPP_ALLSTATIONS, 1);
-    fcs_out = PPP_FCS(fcs_out, PPP_UI);
-    err = pppos_output_append(pppos, err,  nb, PPP_UI, 1);
+    err = pppos_output_append(pppos, err,  nb, PPP_ALLSTATIONS, 1, &fcs_out);
+    err = pppos_output_append(pppos, err,  nb, PPP_UI, 1, &fcs_out);
   }
   if (!pppos->pcomp || protocol > 0xFF) {
     c = (protocol >> 8) & 0xFF;
-    fcs_out = PPP_FCS(fcs_out, c);
-    err = pppos_output_append(pppos, err,  nb, c, 1);
+    err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
   }
   c = protocol & 0xFF;
-  fcs_out = PPP_FCS(fcs_out, c);
-  err = pppos_output_append(pppos, err,  nb, c, 1);
+  err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
 
   /* Load packet. */
   for(p = pb; p; p = p->next) {
@@ -350,21 +341,16 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
 
     while (n-- > 0) {
       c = *s++;
-
-      /* Update FCS before checking for special characters. */
-      fcs_out = PPP_FCS(fcs_out, c);
-
-      /* Copy to output buffer escaping special characters. */
-      err = pppos_output_append(pppos, err,  nb, c, 1);
+      err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
     }
   }
 
   /* Add FCS and trailing flag. */
   c = ~fcs_out & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1);
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
   c = (~fcs_out >> 8) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1);
-  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
+  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
 
   err = pppos_output_last(pppos, err, nb);
   if (err == ERR_OK) {
@@ -1003,7 +989,7 @@ pppos_input_drop(pppos_pcb *pppos)
  * Return the current pbuf.
  */
 static err_t
-pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm)
+pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm, u16_t *fcs)
 {
   if (err != ERR_OK) {
     return err;
@@ -1020,6 +1006,12 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
     nb->len = 0;
   }
 
+  /* Update FCS before checking for special characters. */
+  if (fcs) {
+    *fcs = PPP_FCS(*fcs, c);
+  }
+
+  /* Copy to output buffer escaping special characters. */
   if (accm && ESCAPE_P(pppos->out_accm, c)) {
     *((u8_t*)nb->payload + nb->len++) = PPP_ESCAPE;
     *((u8_t*)nb->payload + nb->len++) = c ^ PPP_TRANS;
