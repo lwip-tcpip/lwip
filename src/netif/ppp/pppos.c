@@ -221,7 +221,6 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   struct pbuf *nb;
   u16_t n;
   u16_t fcs_out;
-  u8_t c;
   err_t err;
 
   /* Grab an output buffer. */
@@ -247,8 +246,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   s = (u8_t*)p->payload;
   n = p->len;
   while (n-- > 0) {
-    c = *s++;
-    err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
+    err = pppos_output_append(pppos, err,  nb, *s++, 1, &fcs_out);
   }
 
   err = pppos_output_last(pppos, err, nb, &fcs_out);
@@ -268,7 +266,6 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   struct pbuf *nb, *p;
   u16_t fcs_out;
-  u8_t c;
   err_t err;
 
 #if VJ_SUPPORT
@@ -321,11 +318,9 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
     err = pppos_output_append(pppos, err,  nb, PPP_UI, 1, &fcs_out);
   }
   if (!pppos->pcomp || protocol > 0xFF) {
-    c = (protocol >> 8) & 0xFF;
-    err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
+    err = pppos_output_append(pppos, err,  nb, (protocol >> 8) & 0xFF, 1, &fcs_out);
   }
-  c = protocol & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
+  err = pppos_output_append(pppos, err,  nb, protocol & 0xFF, 1, &fcs_out);
 
   /* Load packet. */
   for(p = pb; p; p = p->next) {
@@ -333,8 +328,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
     u8_t *s = (u8_t*)p->payload;
 
     while (n-- > 0) {
-      c = *s++;
-      err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
+      err = pppos_output_append(pppos, err,  nb, *s++, 1, &fcs_out);
     }
   }
 
@@ -1012,13 +1006,10 @@ static err_t
 pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 {
   ppp_pcb *ppp = pppos->ppp;
-  u8_t c;
 
   /* Add FCS and trailing flag. */
-  c = ~(*fcs) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
-  c = (~(*fcs) >> 8) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
+  err = pppos_output_append(pppos, err,  nb, ~(*fcs) & 0xFF, 1, NULL);
+  err = pppos_output_append(pppos, err,  nb, (~(*fcs) >> 8) & 0xFF, 1, NULL);
   err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
 
   if (err != ERR_OK) {
