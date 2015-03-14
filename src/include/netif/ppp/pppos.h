@@ -58,7 +58,7 @@ enum {
 /*
  * Extended asyncmap - allows any character to be escaped.
  */
-typedef u_char ext_accm[32];
+typedef u8_t ext_accm[32];
 
 /*
  * PPPoS interface control block.
@@ -106,11 +106,11 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
 #if !NO_SYS && !PPP_INPROC_MULTITHREADED
 /* Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread. */
-err_t pppos_input_tcpip(ppp_pcb *ppp, u_char *s, int l);
+err_t pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l);
 #endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
 
 /* PPP over Serial: this is the input function to be called for received data. */
-void pppos_input(ppp_pcb *ppp, u_char* data, int len);
+void pppos_input(ppp_pcb *ppp, u8_t* data, int len);
 
 #endif /* PPPOS_H */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

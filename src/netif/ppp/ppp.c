@@ -704,7 +704,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       for (i = 0; (protp = protocols[i]) != NULL; ++i) {
         if (protp->protocol == protocol) {
           pb = ppp_singlebuf(pb);
-          (*protp->input)(pcb, (u_char*)pb->payload, pb->len);
+          (*protp->input)(pcb, (u8_t*)pb->payload, pb->len);
           goto out;
         }
 #if 0 /* UNUSED
@@ -737,7 +737,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
         LWIP_ASSERT("pbuf_header failed\n", 0);
         goto drop;
       }
-      lcp_sprotrej(pcb, (u_char*)pb->payload, pb->len);
+      lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
     }
     break;
   }
@@ -755,7 +755,7 @@ out:
 /* merge a pbuf chain into one pbuf */
 struct pbuf *ppp_singlebuf(struct pbuf *p) {
   struct pbuf *q, *b;
-  u_char *pl;
+  u8_t *pl;
 
   if(p->tot_len == p->len) {
     return p;
@@ -768,7 +768,7 @@ struct pbuf *ppp_singlebuf(struct pbuf *p) {
     return p; /* live dangerously */
   }
 
-  for(b = p, pl = (u_char*)q->payload; b != NULL; b = b->next) {
+  for(b = p, pl = (u8_t*)q->payload; b != NULL; b = b->next) {
     MEMCPY(pl, b->payload, b->len);
     pl += b->len;
   }
