@@ -672,11 +672,6 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
 
   pb = ppp_singlebuf (pb);
 
-  if (pb->len <= PPPOE_HEADERLEN) {
-    PPPDEBUG(LOG_DEBUG, ("pppoe (data): dropping too short packet: %d bytes\n", pb->len));
-    goto drop;
-  }
-
   if (pb->len < sizeof(*ph)) {
     PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: could not get PPPoE header\n"));
     goto drop;
