@@ -76,10 +76,10 @@ static err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
-static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb);
-static void pppos_free_current_input_packet(pppos_pcb *pppos);
+static void pppos_input_free_current_packet(pppos_pcb *pppos);
+static void pppos_input_drop(pppos_pcb *pppos);
 static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm);
-static void pppos_drop(pppos_pcb *pppos);
+static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb);
 
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppos_callbacks = {
@@ -379,7 +379,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 
 #if PPP_INPROC_MULTITHREADED
   /* input pbuf left over from last session? */
-  pppos_free_current_input_packet(pppos);
+  pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
@@ -418,7 +418,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 
 #if PPP_INPROC_MULTITHREADED
   /* input pbuf left over from last session? */
-  pppos_free_current_input_packet(pppos);
+  pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_MULTITHREADED */
 
   ppp_clear(ppp);
@@ -480,12 +480,12 @@ pppos_disconnect(ppp_pcb *ppp, void *ctx)
   PPPOS_UNPROTECT(lev);
 
   /* If PPP_INPROC_MULTITHREADED is used we cannot call
-   * pppos_free_current_input_packet() here because
+   * pppos_input_free_current_packet() here because
    * rx thread might still call pppos_input().
    */
 #if !PPP_INPROC_MULTITHREADED
   /* input pbuf left ? */
-  pppos_free_current_input_packet(pppos);
+  pppos_input_free_current_packet(pppos);
 #endif /* !PPP_INPROC_MULTITHREADED */
 
   ppp_link_end(ppp); /* notify upper layers */
@@ -499,7 +499,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 
 #if PPP_INPROC_MULTITHREADED
   /* input pbuf left ? */
-  pppos_free_current_input_packet(pppos);
+  pppos_input_free_current_packet(pppos);
 #endif /* PPP_INPROC_MULTITHREADED */
 
   memp_free(MEMP_PPPOS_PCB, pppos);
@@ -618,7 +618,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
                    ("pppos_input[%d]: Dropping incomplete packet %d\n",
                     ppp->netif->num, pppos->in_state));
           LINK_STATS_INC(link.lenerr);
-          pppos_drop(pppos);
+          pppos_input_drop(pppos);
         /* If the fcs is invalid, drop the packet. */
         } else if (pppos->in_fcs != PPP_GOODFCS) {
           PPPDEBUG(LOG_INFO,
@@ -626,7 +626,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
                     ppp->netif->num, pppos->in_fcs, pppos->in_protocol));
           /* Note: If you get lots of these, check for UART frame errors or try different baud rate */
           LINK_STATS_INC(link.chkerr);
-          pppos_drop(pppos);
+          pppos_input_drop(pppos);
         /* Otherwise it's a good packet so pass it on. */
         } else {
           struct pbuf *inp;
@@ -772,7 +772,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
                * the received pbuf chain in case a new packet starts. */
               PPPDEBUG(LOG_ERR, ("pppos_input[%d]: NO FREE PBUFS!\n", ppp->netif->num));
               LINK_STATS_INC(link.memerr);
-              pppos_drop(pppos);
+              pppos_input_drop(pppos);
               pppos->in_state = PDSTART;  /* Wait for flag sequence. */
               break;
             }
@@ -956,45 +956,11 @@ pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
 }
 #endif /* VJ_SUPPORT */
 
-static err_t
-pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
-{
-  ppp_pcb *ppp = pppos->ppp;
-
-  if (err != ERR_OK) {
-    goto failed;
-  }
-
-  /* Send remaining buffer if not empty */
-  if (nb->len > 0) {
-    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
-    if (l != nb->len) {
-      err = ERR_IF;
-      goto failed;
-    }
-  }
-
-  pppos->last_xmit = sys_jiffies();
-  snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
-  snmp_inc_ifoutucastpkts(ppp->netif);
-  LINK_STATS_INC(link.xmit);
-  pbuf_free(nb);
-  return ERR_OK;
-
-failed:
-  pppos->last_xmit = 0; /* prepend PPP_FLAG to next packet */
-  LINK_STATS_INC(link.err);
-  LINK_STATS_INC(link.drop);
-  snmp_inc_ifoutdiscards(ppp->netif);
-  pbuf_free(nb);
-  return err;
-}
-
 /*
  * Drop the input packet.
  */
 static void
-pppos_free_current_input_packet(pppos_pcb *pppos)
+pppos_input_free_current_packet(pppos_pcb *pppos)
 {
   if (pppos->in_head != NULL) {
     if (pppos->in_tail && (pppos->in_tail != pppos->in_head)) {
@@ -1004,6 +970,27 @@ pppos_free_current_input_packet(pppos_pcb *pppos)
     pppos->in_head = NULL;
   }
   pppos->in_tail = NULL;
+}
+
+/*
+ * Drop the input packet and increase error counters.
+ */
+static void
+pppos_input_drop(pppos_pcb *pppos)
+{
+  if (pppos->in_head != NULL) {
+#if 0
+    PPPDEBUG(LOG_INFO, ("pppos_input_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
+#endif
+    PPPDEBUG(LOG_INFO, ("pppos_input_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
+  }
+  pppos_input_free_current_packet(pppos);
+#if VJ_SUPPORT
+  vj_uncompress_err(&pppos->vj_comp);
+#endif /* VJ_SUPPORT */
+
+  LINK_STATS_INC(link.drop);
+  snmp_inc_ifindiscards(pppos->ppp->netif);
 }
 
 /*
@@ -1040,24 +1027,37 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
   return ERR_OK;
 }
 
-/*
- * Drop the input packet and increase error counters.
- */
-static void
-pppos_drop(pppos_pcb *pppos)
+static err_t
+pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
 {
-  if (pppos->in_head != NULL) {
-#if 0
-    PPPDEBUG(LOG_INFO, ("pppos_drop: %d:%.*H\n", pppos->in_head->len, min(60, pppos->in_head->len * 2), pppos->in_head->payload));
-#endif
-    PPPDEBUG(LOG_INFO, ("pppos_drop: pbuf len=%d, addr %p\n", pppos->in_head->len, (void*)pppos->in_head));
-  }
-  pppos_free_current_input_packet(pppos);
-#if VJ_SUPPORT
-  vj_uncompress_err(&pppos->vj_comp);
-#endif /* VJ_SUPPORT */
+  ppp_pcb *ppp = pppos->ppp;
 
+  if (err != ERR_OK) {
+    goto failed;
+  }
+
+  /* Send remaining buffer if not empty */
+  if (nb->len > 0) {
+    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
+    if (l != nb->len) {
+      err = ERR_IF;
+      goto failed;
+    }
+  }
+
+  pppos->last_xmit = sys_jiffies();
+  snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
+  snmp_inc_ifoutucastpkts(ppp->netif);
+  LINK_STATS_INC(link.xmit);
+  pbuf_free(nb);
+  return ERR_OK;
+
+failed:
+  pppos->last_xmit = 0; /* prepend PPP_FLAG to next packet */
+  LINK_STATS_INC(link.err);
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(pppos->ppp->netif);
+  snmp_inc_ifoutdiscards(ppp->netif);
+  pbuf_free(nb);
+  return err;
 }
 #endif /* PPP_SUPPORT && PPPOS_SUPPORT */
