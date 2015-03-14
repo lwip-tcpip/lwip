@@ -212,6 +212,8 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   err_t ret;
 #if LWIP_SNMP
   u16_t tot_len;
+#else /* LWIP_SNMP */
+  LWIP_UNUSED_ARG(ppp);
 #endif /* LWIP_SNMP */
 
   /* skip address & flags */
@@ -250,10 +252,12 @@ static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *pb;
   u8_t *pl;
+  err_t err;
 #if LWIP_SNMP
   u16_t tot_len;
+#else /* LWIP_SNMP */
+  LWIP_UNUSED_ARG(ppp);
 #endif /* LWIP_SNMP */
-  err_t err;
 
   /* @todo: try to use pbuf_header() here! */
   pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
