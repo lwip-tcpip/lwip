@@ -1214,9 +1214,9 @@ static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
 #if LWIP_IPV6
   if (PCB_ISIPV6(l2tp->udp)) {
     if (l2tp->netif) {
-      udp_sendto_if_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port, l2tp->netif);
+      err = udp_sendto_if_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port, l2tp->netif);
     } else {
-      udp_sendto_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port);
+      err = udp_sendto_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port);
     }
   } else
 #endif /* LWIP_IPV6 */
