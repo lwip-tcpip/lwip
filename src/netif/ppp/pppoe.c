@@ -232,8 +232,6 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   tot_len = ph->tot_len;
 #endif /* LWIP_SNMP */
 
-  ppp->last_xmit = sys_jiffies();
-
   ret = pppoe_xmit(sc, ph);
   if (ret != ERR_OK) {
     LINK_STATS_INC(link.err);
@@ -267,8 +265,6 @@ static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short
   }
 
   pbuf_header(pb, -(s16_t)PPPOE_HEADERLEN);
-
-  ppp->last_xmit = sys_jiffies();
 
   pl = (u8_t*)pb->payload;
   PUTSHORT(protocol, pl);

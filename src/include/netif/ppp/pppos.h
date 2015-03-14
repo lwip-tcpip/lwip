@@ -71,9 +71,10 @@ struct pppos_pcb_s {
 
   /* -- below are data that will be cleared between two sessions
    *
-   * out_accm must be the first member of cleared members, because it is
+   * last_xmit must be the first member of cleared members, because it is
    * used to know which part must not be cleared.
    */
+  u32_t last_xmit;                 /* Time of last transmission. */
   ext_accm out_accm;               /* Async-Ctl-Char-Map for output. */
 
   /* flags */

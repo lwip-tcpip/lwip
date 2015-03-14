@@ -347,8 +347,6 @@ struct ppp_pcb_s {
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
   unsigned int                         :2; /* 2 bits of padding to round out to 8 bits */
 
-  u32_t last_xmit;               /* Time of last transmission. */
-
   /* auth data */
 #if PPP_SERVER
   char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */

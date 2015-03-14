@@ -238,7 +238,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
-  if ((sys_jiffies() - ppp->last_xmit) >= PPP_MAXIDLEFLAG) {
+  if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
   }
 
@@ -321,7 +321,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
-  if ((sys_jiffies() - ppp->last_xmit) >= PPP_MAXIDLEFLAG) {
+  if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
   }
 
@@ -384,7 +384,7 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
-  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
+  memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->last_xmit - (char*)0 ) );
 
 #if PPP_IPV4_SUPPORT && VJ_SUPPORT
   vj_compress_init(&pppos->vj_comp);
@@ -974,7 +974,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
     }
   }
 
-  ppp->last_xmit = sys_jiffies();
+  pppos->last_xmit = sys_jiffies();
   snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
   snmp_inc_ifoutucastpkts(ppp->netif);
   LINK_STATS_INC(link.xmit);
@@ -982,7 +982,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
   return ERR_OK;
 
 failed:
-  ppp->last_xmit = 0; /* prepend PPP_FLAG to next packet */
+  pppos->last_xmit = 0; /* prepend PPP_FLAG to next packet */
   LINK_STATS_INC(link.err);
   LINK_STATS_INC(link.drop);
   snmp_inc_ifoutdiscards(ppp->netif);
