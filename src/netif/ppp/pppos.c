@@ -54,7 +54,7 @@
 
 /* callbacks called from PPP core */
 static err_t pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p);
-static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol);
+static err_t pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol);
 static err_t pppos_connect(ppp_pcb *ppp, void *ctx);
 #if PPP_SERVER
 static err_t pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs);
@@ -112,7 +112,7 @@ static const struct link_callbacks pppos_callbacks = {
 /*
  * FCS lookup table as calculated by genfcstab.
  */
-static const u_short fcstab[256] = {
+static const u16_t fcstab[256] = {
   0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
   0x8c48, 0x9dc1, 0xaf5a, 0xbed3, 0xca6c, 0xdbe5, 0xe97e, 0xf8f7,
   0x1081, 0x0108, 0x3393, 0x221a, 0x56a5, 0x472c, 0x75b7, 0x643e,
@@ -217,10 +217,10 @@ static err_t
 pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  u_char *s = (u_char*)p->payload;
-  int n = p->len;
-  u_int fcs_out;
+  u8_t *s;
   struct pbuf *nb;
+  u16_t n;
+  u16_t fcs_out;
   u8_t c;
   err_t err;
 
@@ -242,8 +242,10 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
   }
 
-  fcs_out = PPP_INITFCS;
   /* Load output buffer. */
+  fcs_out = PPP_INITFCS;
+  s = (u8_t*)p->payload;
+  n = p->len;
   while (n-- > 0) {
     c = *s++;
 
@@ -273,11 +275,11 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
 
 /* Called by PPP core */
 static err_t
-pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
+pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
-  u_int fcs_out = PPP_INITFCS;
   struct pbuf *nb, *p;
+  u16_t fcs_out;
   u8_t c;
   err_t err;
 
@@ -321,6 +323,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u_short protocol)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
+  fcs_out = PPP_INITFCS;
   if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0);
   }
@@ -514,7 +517,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
  * @param len length of received data
  */
 err_t
-pppos_input_tcpip(ppp_pcb *ppp, u_char *s, int l)
+pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
 {
   struct pbuf *p, *n;
   u8_t *cur;
@@ -576,12 +579,12 @@ PACK_STRUCT_END
  * @param len length of received data
  */
 void
-pppos_input(ppp_pcb *ppp, u_char *s, int l)
+pppos_input(ppp_pcb *ppp, u8_t *s, int l)
 {
   pppos_pcb *pppos = (pppos_pcb *)ppp->link_ctx_cb;
   struct pbuf *next_pbuf;
-  u_char cur_char;
-  u_char escaped;
+  u8_t cur_char;
+  u8_t escaped;
   PPPOS_DECL_PROTECT(lev);
 
   PPPOS_PROTECT(lev);
@@ -734,7 +737,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
             pppos->in_protocol = cur_char;
             pppos->in_state = PDDATA;
           } else {
-            pppos->in_protocol = (u_int)cur_char << 8;
+            pppos->in_protocol = (u16_t)cur_char << 8;
             pppos->in_state = PDPROTOCOL2;
           }
           break;
@@ -791,7 +794,7 @@ pppos_input(ppp_pcb *ppp, u_char *s, int l)
             pppos->in_tail = next_pbuf;
           }
           /* Load character into buffer. */
-          ((u_char*)pppos->in_tail->payload)[pppos->in_tail->len++] = cur_char;
+          ((u8_t*)pppos->in_tail->payload)[pppos->in_tail->len++] = cur_char;
           break;
         default:
           break;
@@ -841,7 +844,7 @@ pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 
   /* Load the ACCM bits for the 32 control codes. */
   for (i = 0; i < 32/8; i++) {
-    pppos->out_accm[i] = (u_char)((accm >> (8 * i)) & 0xFF);
+    pppos->out_accm[i] = (u8_t)((accm >> (8 * i)) & 0xFF);
   }
 
   PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: in_accm=%X %X %X %X\n",
@@ -862,7 +865,7 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
   /* Load the ACCM bits for the 32 control codes. */
   PPPOS_PROTECT(lev);
   for (i = 0; i < 32 / 8; i++) {
-    pppos->in_accm[i] = (u_char)(accm >> (i * 8));
+    pppos->in_accm[i] = (u8_t)(accm >> (i * 8));
   }
   PPPOS_UNPROTECT(lev);
 
