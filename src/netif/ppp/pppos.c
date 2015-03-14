@@ -79,7 +79,7 @@ static void pppos_input_callback(void *arg);
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
 static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm, u16_t *fcs);
-static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb);
+static err_t pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs);
 
 /* Callbacks structure for PPP core */
 static const struct link_callbacks pppos_callbacks = {
@@ -251,14 +251,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     err = pppos_output_append(pppos, err,  nb, c, 1, &fcs_out);
   }
 
-  /* Add FCS and trailing flag. */
-  c = ~fcs_out & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
-  c = (~fcs_out >> 8) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
-  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
-
-  err = pppos_output_last(pppos, err, nb);
+  err = pppos_output_last(pppos, err, nb, &fcs_out);
   if (err == ERR_OK) {
     PPPDEBUG(LOG_INFO, ("pppos_write[%d]: len=%d\n", ppp->netif->num, p->len));
   } else {
@@ -345,14 +338,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
     }
   }
 
-  /* Add FCS and trailing flag. */
-  c = ~fcs_out & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
-  c = (~fcs_out >> 8) & 0xFF;
-  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
-  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
-
-  err = pppos_output_last(pppos, err, nb);
+  err = pppos_output_last(pppos, err, nb, &fcs_out);
   if (err == ERR_OK) {
     PPPDEBUG(LOG_INFO, ("pppos_netif_output[%d]: proto=0x%"X16_F", len = %d\n", ppp->netif->num, protocol, pb->tot_len));
   } else {
@@ -1023,9 +1009,17 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
 }
 
 static err_t
-pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb)
+pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 {
   ppp_pcb *ppp = pppos->ppp;
+  u8_t c;
+
+  /* Add FCS and trailing flag. */
+  c = ~(*fcs) & 0xFF;
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
+  c = (~(*fcs) >> 8) & 0xFF;
+  err = pppos_output_append(pppos, err,  nb, c, 1, NULL);
+  err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
 
   if (err != ERR_OK) {
     goto failed;
