@@ -389,7 +389,9 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
   u16_t tag, len;
   u16_t session, plen;
   struct pppoe_softc *sc;
-  const char *err_msg;
+#if PPP_DEBUG
+  const char *err_msg = NULL;
+#endif /* PPP_DEBUG */
   u8_t *ac_cookie;
   u16_t ac_cookie_len;
 #ifdef PPPOE_SERVER
@@ -409,7 +411,6 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
 
   pb = ppp_singlebuf(pb);
 
-  err_msg = NULL;
   if (pb->len < sizeof(*ethhdr)) {
     goto done;
   }
@@ -479,6 +480,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
           ac_cookie_len = len;
         }
         break;
+#if PPP_DEBUG
       case PPPOE_TAG_SNAME_ERR:
         err_msg = "SERVICE NAME ERROR";
         break;
@@ -488,6 +490,7 @@ pppoe_disc_input(struct netif *netif, struct pbuf *pb)
       case PPPOE_TAG_GENERIC_ERR:
         err_msg = "GENERIC ERROR";
         break;
+#endif /* PPP_DEBUG */
       default:
         break;
     }

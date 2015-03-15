@@ -866,6 +866,9 @@ static void
 pppos_vjc_config(ppp_pcb *ppp, void *ctx, int vjcomp, int cidcomp, int maxcid)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
+#if !PPP_DEBUG
+  LWIP_UNUSED_ARG(ppp);
+#endif /* !PPP_DEBUG */
 
   pppos->vj_enabled = vjcomp;
   pppos->vj_comp.compressSlot = cidcomp;
@@ -879,6 +882,9 @@ pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t protocol)
 {
   int ret;
   pppos_pcb *pppos = (pppos_pcb *)ctx;
+#if !PPP_DEBUG
+  LWIP_UNUSED_ARG(ppp);
+#endif /* !PPP_DEBUG */
 
   switch(protocol) {
     case PPP_VJC_COMP:      /* VJ compressed TCP */
