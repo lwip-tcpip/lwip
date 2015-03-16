@@ -969,9 +969,9 @@ pppos_input_drop(pppos_pcb *pppos)
 }
 
 /*
- * pppos_output_append - append given character to end of given pbuf.  If out_accm
- * is not NULL and the character needs to be escaped, do so.
- * If pbuf is full, append another.
+ * pppos_output_append - append given character to end of given pbuf.
+ * If out_accm is not 0 and the character needs to be escaped, do so.
+ * If pbuf is full, send the pbuf and reuse it.
  * Return the current pbuf.
  */
 static err_t
