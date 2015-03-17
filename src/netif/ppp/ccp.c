@@ -57,8 +57,10 @@
 /*
  * Command-line options.
  */
+#if PPP_OPTIONS
 static int setbsdcomp (char **);
 static int setdeflate (char **);
+#endif /* PPP_OPTIONS */
 static char bsd_value[8];
 static char deflate_value[8];
 
@@ -267,6 +269,7 @@ static int ccp_localstate[NUM_PPP];
 
 static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
 
+#if PPP_OPTIONS
 /*
  * Option parsing
  */
@@ -356,6 +359,7 @@ setdeflate(argv)
 
     return 1;
 }
+#endif /* PPP_OPTIONS */
 
 /*
  * ccp_init - initialize CCP.
