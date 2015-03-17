@@ -48,12 +48,6 @@ typedef struct ccp_options {
     short method;		/* code for chosen compression method */
 } ccp_options;
 
-extern fsm ccp_fsm[];
-extern ccp_options ccp_wantoptions[];
-extern ccp_options ccp_gotoptions[];
-extern ccp_options ccp_allowoptions[];
-extern ccp_options ccp_hisoptions[];
-
 extern const struct protent ccp_protent;
 
 #endif /* PPP_SUPPORT && CCP_SUPPORT */

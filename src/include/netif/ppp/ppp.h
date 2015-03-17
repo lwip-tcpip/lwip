@@ -380,6 +380,16 @@ struct ppp_pcb_s {
   u8_t lcp_echo_number;          /* ID number of next echo frame */
   u16_t peer_mru;                /* currently negotiated peer MRU */
 
+#if CCP_SUPPORT
+  fsm ccp_fsm;                   /* CCP fsm structure */
+  ccp_options ccp_wantoptions;   /* what to request the peer to use */
+  ccp_options ccp_gotoptions;    /* what the peer agreed to do */
+  ccp_options ccp_allowoptions;  /* what we'll agree to do */
+  ccp_options ccp_hisoptions;    /* what we agreed to do */
+  int ccp_localstate;            /* Local state (mainly for handling reset-reqs and reset-acks). */
+  int all_rejected;              /* we rejected all peer's options */
+#endif /* CCP_SUPPORT */
+
 #if PPP_IPV4_SUPPORT
   fsm ipcp_fsm;                   /* IPCP fsm structure */
   ipcp_options ipcp_wantoptions;  /* Options that we want to request */

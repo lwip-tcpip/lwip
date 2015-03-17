@@ -211,12 +211,6 @@ const struct protent ccp_protent = {
 #endif /* DEMAND_SUPPORT */
 };
 
-fsm ccp_fsm[NUM_PPP];
-ccp_options ccp_wantoptions[NUM_PPP];	/* what to request the peer to use */
-ccp_options ccp_gotoptions[NUM_PPP];	/* what the peer agreed to do */
-ccp_options ccp_allowoptions[NUM_PPP];	/* what we'll agree to do */
-ccp_options ccp_hisoptions[NUM_PPP];	/* what we agreed to do */
-
 /*
  * Callbacks for fsm code.
  */
@@ -261,13 +255,10 @@ static const fsm_callbacks ccp_callbacks = {
 /*
  * Local state (mainly for handling reset-reqs and reset-acks).
  */
-static int ccp_localstate[NUM_PPP];
 #define RACK_PENDING	1	/* waiting for reset-ack */
 #define RREQ_REPEAT	2	/* send another reset-req if no reset-ack */
 
 #define RACKTIMEOUT	1	/* second */
-
-static int all_rejected[NUM_PPP];	/* we rejected all peer's options */
 
 #if PPP_OPTIONS
 /*
