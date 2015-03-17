@@ -406,7 +406,7 @@ ccp_open(unit)
 {
     fsm *f = &ccp_fsm[unit];
 
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	ccp_flags_set(unit, 1, 0);
 
     /*
@@ -469,7 +469,7 @@ ccp_input(unit, p, len)
      */
     oldstate = f->state;
     fsm_input(f, p, len);
-    if (oldstate == OPENED && p[0] == TERMREQ && f->state != OPENED) {
+    if (oldstate == PPP_FSM_OPENED && p[0] == TERMREQ && f->state != PPP_FSM_OPENED) {
 	notice("Compression disabled by peer.");
 #ifdef MPPE
 	if (ccp_gotoptions[unit].mppe) {
@@ -483,7 +483,7 @@ ccp_input(unit, p, len)
      * If we get a terminate-ack and we're not asking for compression,
      * close CCP.
      */
-    if (oldstate == REQSENT && p[0] == TERMACK
+    if (oldstate == PPP_FSM_REQSENT && p[0] == TERMACK
 	&& !ANY_COMPRESS(ccp_gotoptions[unit]))
 	ccp_close(unit, "No compression negotiated");
 }
@@ -500,7 +500,7 @@ ccp_extcode(f, code, id, p, len)
 {
     switch (code) {
     case CCP_RESETREQ:
-	if (f->state != OPENED)
+	if (f->state != PPP_FSM_OPENED)
 	    break;
 	/* send a reset-ack, which the transmitter will see and
 	   reset its compression state. */
@@ -992,7 +992,7 @@ ccp_nakci(f, p, len, treat_as_reject)
      * There may be remaining options but we ignore them.
      */
 
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
     return 1;
 }
@@ -1071,7 +1071,7 @@ ccp_rejci(f, p, len)
     if (len != 0)
 	return 0;
 
-    if (f->state != OPENED)
+    if (f->state != PPP_FSM_OPENED)
 	*go = try;
 
     return 1;
@@ -1647,7 +1647,7 @@ ccp_datainput(unit, pkt, len)
     fsm *f;
 
     f = &ccp_fsm[unit];
-    if (f->state == OPENED) {
+    if (f->state == PPP_FSM_OPENED) {
 	if (ccp_fatal_error(unit)) {
 	    /*
 	     * Disable compression by taking CCP down.
@@ -1688,7 +1688,7 @@ ccp_rack_timeout(arg)
 {
     fsm *f = arg;
 
-    if (f->state == OPENED && ccp_localstate[f->unit] & RREQ_REPEAT) {
+    if (f->state == PPP_FSM_OPENED && ccp_localstate[f->unit] & RREQ_REPEAT) {
 	fsm_sdata(f, CCP_RESETREQ, f->reqid, NULL, 0);
 	TIMEOUT(ccp_rack_timeout, f, RACKTIMEOUT);
 	ccp_localstate[f->unit] &= ~RREQ_REPEAT;
