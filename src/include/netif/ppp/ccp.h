@@ -34,13 +34,15 @@
 #if PPP_SUPPORT && CCP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
 typedef struct ccp_options {
-    bool bsd_compress;		/* do BSD Compress? */
-    bool deflate;		/* do Deflate? */
-    bool predictor_1;		/* do Predictor-1? */
-    bool predictor_2;		/* do Predictor-2? */
-    bool deflate_correct;	/* use correct code for deflate? */
-    bool deflate_draft;		/* use draft RFC code for deflate? */
-    bool mppe;			/* do MPPE? */
+    unsigned int bsd_compress     :1; /* do BSD Compress? */
+    unsigned int deflate          :1; /* do Deflate? */
+    unsigned int predictor_1      :1; /* do Predictor-1? */
+    unsigned int predictor_2      :1; /* do Predictor-2? */
+    unsigned int deflate_correct  :1; /* use correct code for deflate? */
+    unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
+    unsigned int mppe             :1; /* do MPPE? */
+    unsigned int                  :1; /* 1 bit of padding to round out to 8 bits */
+
     u_short bsd_bits;		/* # bits/code for BSD Compress */
     u_short deflate_size;	/* lg(window size) for Deflate */
     short method;		/* code for chosen compression method */
