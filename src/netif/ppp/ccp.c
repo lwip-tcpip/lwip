@@ -248,9 +248,9 @@ static const fsm_callbacks ccp_callbacks = {
 /*
  * Do we want / did we get any compression?
  */
-#define ANY_COMPRESS(opt)	((opt).deflate || (opt).bsd_compress \
-				 || (opt).predictor_1 || (opt).predictor_2 \
-				 || (opt).mppe)
+#define ANY_COMPRESS(opt)	((opt)->deflate || (opt)->bsd_compress \
+				 || (opt)->predictor_1 || (opt)->predictor_2 \
+				 || (opt)->mppe)
 
 /*
  * Local state (mainly for handling reset-reqs and reset-acks).
@@ -1327,7 +1327,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 static char *method_name(ccp_options *opt, ccp_options *opt2) {
     static char result[64];
 
-    if (!ANY_COMPRESS(*opt))
+    if (!ANY_COMPRESS(opt))
 	return "(none)";
     switch (opt->method) {
 #ifdef MPPE
@@ -1393,8 +1393,8 @@ static void ccp_up(fsm *f) {
     char method1[64];
 
     ccp_flags_set(pcb, 1, 1);
-    if (ANY_COMPRESS(*go)) {
-	if (ANY_COMPRESS(*ho)) {
+    if (ANY_COMPRESS(go)) {
+	if (ANY_COMPRESS(ho)) {
 	    if (go->method == ho->method) {
 		notice("%s compression enabled", method_name(go, ho));
 	    } else {
@@ -1404,7 +1404,7 @@ static void ccp_up(fsm *f) {
 	    }
 	} else
 	    notice("%s receive compression enabled", method_name(go, NULL));
-    } else if (ANY_COMPRESS(*ho))
+    } else if (ANY_COMPRESS(ho))
 	notice("%s transmit compression enabled", method_name(ho, NULL));
 #ifdef MPPE
     if (go->mppe) {
