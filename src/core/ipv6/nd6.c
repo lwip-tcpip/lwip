@@ -148,7 +148,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
        * part of DAD mechanism? */
 
       /* Check that link-layer address option also fits in packet. */
-      if (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option))) {
+      if (p->len < (sizeof(struct na_header) + 2)) {
         /* TODO debug message */
         pbuf_free(p);
         ND6_STATS_INC(nd6.lenerr);
@@ -157,6 +157,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
       }
 
       lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
+
+      if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
+        /* TODO debug message */
+        pbuf_free(p);
+        ND6_STATS_INC(nd6.lenerr);
+        ND6_STATS_INC(nd6.drop);
+        return;
+      }
 
       /* Override ip6_current_dest_addr() so that we have an aligned copy. */
       ip6_addr_set(ip6_current_dest_addr(), &(na_hdr->target_address));
@@ -226,7 +234,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
       if ((na_hdr->flags & ND6_FLAG_OVERRIDE) ||
           (neighbor_cache[i].state == ND6_INCOMPLETE)) {
         /* Check that link-layer address option also fits in packet. */
-        if (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option))) {
+        if (p->len < (sizeof(struct na_header) + 2)) {
           /* TODO debug message */
           pbuf_free(p);
           ND6_STATS_INC(nd6.lenerr);
@@ -235,6 +243,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
         }
 
         lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct na_header));
+
+        if (p->len < (sizeof(struct na_header) + (lladdr_opt->length << 3))) {
+          /* TODO debug message */
+          pbuf_free(p);
+          ND6_STATS_INC(nd6.lenerr);
+          ND6_STATS_INC(nd6.drop);
+          return;
+        }
 
         MEMCPY(neighbor_cache[i].lladdr, lladdr_opt->addr, inp->hwaddr_len);
       }
@@ -266,9 +282,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
     ns_hdr = (struct ns_header *)p->payload;
 
     /* Check if there is a link-layer address provided. Only point to it if in this buffer. */
-    lladdr_opt = NULL;
-    if (p->len >= (sizeof(struct ns_header) + sizeof(struct lladdr_option))) {
+    if (p->len >= (sizeof(struct ns_header) + 2)) {
       lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct ns_header));
+      if (p->len < (sizeof(struct ns_header) + (lladdr_opt->length << 3))) {
+        lladdr_opt = NULL;
+      }
+    }
+    else {
+      lladdr_opt = NULL;
     }
 
     /* Check if the target address is configured on the receiving netif. */
@@ -521,9 +542,14 @@ nd6_input(struct pbuf *p, struct netif *inp)
 
     redir_hdr = (struct redirect_header *)p->payload;
 
-    lladdr_opt = NULL;
-    if (p->len >= (sizeof(struct redirect_header) + sizeof(struct lladdr_option))) {
+    if (p->len >= (sizeof(struct redirect_header) + 2)) {
       lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct redirect_header));
+      if (p->len < (sizeof(struct redirect_header) + (lladdr_opt->length << 3))) {
+        lladdr_opt = NULL;
+      }
+    }
+    else {
+      lladdr_opt = NULL;
     }
 
     /* Copy original destination address to current source address, to have an aligned copy. */
@@ -808,6 +834,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   struct lladdr_option * lladdr_opt;
   struct pbuf * p;
   ip6_addr_t * src_addr;
+  u16_t lladdr_opt_len;
 
   if (ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
     /* Use link-local address as source address. */
@@ -817,8 +844,9 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   }
 
   /* Allocate a packet. */
-  p = pbuf_alloc(PBUF_IP, sizeof(struct ns_header) + sizeof(struct lladdr_option), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct ns_header) + sizeof(struct lladdr_option)))) {
+  lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct ns_header) + (lladdr_opt_len << 3), PBUF_RAM);
+  if ((p == NULL) || (p->len < (sizeof(struct ns_header) + (lladdr_opt_len << 3)))) {
     /* We couldn't allocate a suitable pbuf for the ns. drop it. */
     if (p != NULL) {
       pbuf_free(p);
@@ -838,7 +866,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   ip6_addr_set(&(ns_hdr->target_address), target_addr);
 
   lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
-  lladdr_opt->length = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
+  lladdr_opt->length = lladdr_opt_len;
   SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
 
   /* Generate the solicited node address for the target address. */
@@ -874,6 +902,7 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   struct pbuf * p;
   const ip6_addr_t * src_addr;
   const ip6_addr_t * dest_addr;
+  u16_t lladdr_opt_len;
 
   /* Use link-local address as source address. */
   /* src_addr = &(netif->ip6_addr[0]); */
@@ -881,8 +910,9 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   src_addr = target_addr;
 
   /* Allocate a packet. */
-  p = pbuf_alloc(PBUF_IP, sizeof(struct na_header) + sizeof(struct lladdr_option), PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct na_header) + sizeof(struct lladdr_option)))) {
+  lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
+  p = pbuf_alloc(PBUF_IP, sizeof(struct na_header) + (lladdr_opt_len << 3), PBUF_RAM);
+  if ((p == NULL) || (p->len < (sizeof(struct na_header) + (lladdr_opt_len << 3)))) {
     /* We couldn't allocate a suitable pbuf for the ns. drop it. */
     if (p != NULL) {
       pbuf_free(p);
@@ -905,7 +935,7 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   ip6_addr_set(&(na_hdr->target_address), target_addr);
 
   lladdr_opt->type = ND6_OPTION_TYPE_TARGET_LLADDR;
-  lladdr_opt->length = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
+  lladdr_opt->length = lladdr_opt_len;
   SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
 
   /* Generate the solicited node address for the target address. */
@@ -946,8 +976,8 @@ nd6_send_rs(struct netif * netif)
   struct lladdr_option * lladdr_opt;
   struct pbuf * p;
   ip6_addr_t * src_addr;
-  u16_t packet_len;
   err_t err;
+  u16_t lladdr_opt_len = 0;
 
   /* Link-local source address, or unspecified address? */
   if (ip6_addr_isvalid(netif_ip6_addr_state(netif, 0))) {
@@ -961,12 +991,11 @@ nd6_send_rs(struct netif * netif)
   ip6_addr_set_allrouters_linklocal(&multicast_address);
 
   /* Allocate a packet. */
-  packet_len = sizeof(struct rs_header);
   if (src_addr != IP6_ADDR_ANY) {
-    packet_len += sizeof(struct lladdr_option);
+    lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   }
-  p = pbuf_alloc(PBUF_IP, packet_len, PBUF_RAM);
-  if ((p == NULL) || (p->len < packet_len)) {
+  p = pbuf_alloc(PBUF_IP, sizeof(struct rs_header) + lladdr_opt_len, PBUF_RAM);
+  if ((p == NULL) || (p->len < (sizeof(struct rs_header) + lladdr_opt_len))) {
     /* We couldn't allocate a suitable pbuf for the ns. drop it. */
     if (p != NULL) {
       pbuf_free(p);
@@ -987,7 +1016,7 @@ nd6_send_rs(struct netif * netif)
     /* Include our hw address. */
     lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct rs_header));
     lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
-    lladdr_opt->length = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
+    lladdr_opt->length = lladdr_opt_len;
     SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
   }
 
