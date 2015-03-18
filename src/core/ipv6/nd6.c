@@ -164,7 +164,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
 #if LWIP_IPV6_DUP_DETECT_ATTEMPTS
       /* If the target address matches this netif, it is a DAD response. */
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (ip6_addr_cmp(ip6_current_dest_addr(), netif_ip6_addr(inp, i))) {
+        if (!ip6_addr_isinvalid(netif_ip6_addr_state(inp, i)) &&
+            ip6_addr_cmp(ip6_current_dest_addr(), netif_ip6_addr(inp, i))) {
           /* We are using a duplicate address. */
           netif_ip6_addr_set_state(inp, i, IP6_ADDR_INVALID);
 
@@ -292,7 +293,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     if (ip6_addr_isany(ip6_current_src_addr())) {
       /* Sender is validating this address. */
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; ++i) {
-        if (ip6_addr_cmp(&(ns_hdr->target_address), netif_ip6_addr(inp, i))) {
+        if (!ip6_addr_isinvalid(netif_ip6_addr_state(inp, i)) &&
+            ip6_addr_cmp(&(ns_hdr->target_address), netif_ip6_addr(inp, i))) {
           /* Send a NA back so that the sender does not use this address. */
           nd6_send_na(inp, netif_ip6_addr(inp, i), ND6_FLAG_OVERRIDE | ND6_SEND_FLAG_ALLNODES_DEST);
           if (ip6_addr_istentative(netif_ip6_addr_state(inp, i))) {

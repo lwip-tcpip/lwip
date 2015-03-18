@@ -342,7 +342,8 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
     }
     else {
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
+        if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
+            ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
           match = 1;
           break;
         }
@@ -409,7 +410,8 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
     }
     else {
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
+        if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
+            ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
           match = 1;
           break;
         }

@@ -873,7 +873,8 @@ netif_get_ip6_addr_match(struct netif *netif, ip6_addr_t *ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    if (ip6_addr_cmp(netif_ip6_addr(netif, i), ip6addr)) {
+    if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
+        ip6_addr_cmp(netif_ip6_addr(netif, i), ip6addr)) {
       return i;
     }
   }
