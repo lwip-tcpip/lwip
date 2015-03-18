@@ -33,6 +33,9 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && CCP_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#ifndef CCP_H
+#define CCP_H
+
 typedef struct ccp_options {
     unsigned int bsd_compress     :1; /* do BSD Compress? */
     unsigned int deflate          :1; /* do Deflate? */
@@ -50,4 +53,5 @@ typedef struct ccp_options {
 
 extern const struct protent ccp_protent;
 
+#endif /* CCP_H */
 #endif /* PPP_SUPPORT && CCP_SUPPORT */

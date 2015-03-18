@@ -153,6 +153,9 @@ typedef unsigned char  u_char;
 
 #include "fsm.h"
 #include "lcp.h"
+#if CCP_SUPPORT
+#include "ccp.h"
+#endif /* CCP_SUPPORT */
 #if PPP_IPV4_SUPPORT
 #include "ipcp.h"
 #endif /* PPP_IPV4_SUPPORT */
