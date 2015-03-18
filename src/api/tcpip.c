@@ -115,9 +115,9 @@ tcpip_thread(void *arg)
       } else
 #endif /* LWIP_ETHERNET */
 #if PPPOS_SUPPORT
-      /* FIXME: can be generalized to all point to point interfaces */
-      if ((msg->msg.inp.netif->flags & NETIF_FLAG_BROADCAST) == 0
-            && msg->msg.inp.netif->input) {
+      if (((msg->msg.inp.netif->flags & NETIF_FLAG_BROADCAST) == 0)
+            && msg->msg.inp.netif->input
+            && (msg->msg.inp.netif->input != tcpip_input)) {
         msg->msg.inp.netif->input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* PPPOS_SUPPORT */
