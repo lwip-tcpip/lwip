@@ -361,6 +361,11 @@ void netif_set_link_callback(struct netif *netif, netif_status_callback_fn link_
 #define netif_get_igmp_mac_filter(netif) (((netif) != NULL) ? ((netif)->igmp_mac_filter) : NULL)
 #endif /* LWIP_IGMP */
 
+#if LWIP_IPV6 && LWIP_IPV6_MLD
+#define netif_set_mld_mac_filter(netif, function) do { if((netif) != NULL) { (netif)->mld_mac_filter = function; }}while(0)
+#define netif_get_mld_mac_filter(netif) (((netif) != NULL) ? ((netif)->mld_mac_filter) : NULL)
+#endif /* LWIP_IPV6 && LWIP_IPV6_MLD */
+
 #if ENABLE_LOOPBACK
 err_t netif_loop_output(struct netif *netif, struct pbuf *p);
 void netif_poll(struct netif *netif);
