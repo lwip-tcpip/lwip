@@ -85,18 +85,27 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
 
   /* If single netif configuration, fast return. */
   if ((netif_list != NULL) && (netif_list->next == NULL)) {
+    if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list)) {
+      return NULL;
+    }
     return netif_list;
   }
 
   /* Special processing for link-local addresses. */
   if (ip6_addr_islinklocal(dest)) {
     if (ip6_addr_isany(src)) {
-      /* Use default netif. */
+      /* Use default netif, if Up. */
+      if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+        return NULL;
+      }
       return netif_default;
     }
 
-    /* Try to find the netif for the source address. */
+    /* Try to find the netif for the source address, checking that link is up. */
     for(netif = netif_list; netif != NULL; netif = netif->next) {
+      if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+        continue;
+      }
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
             ip6_addr_cmp(src, netif_ip6_addr(netif, i))) {
@@ -105,12 +114,18 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
       }
     }
 
-    /* netif not found, use default netif */
+    /* netif not found, use default netif, if up */
+    if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+      return NULL;
+    }
     return netif_default;
   }
 
   /* See if the destination subnet matches a configured address. */
   for(netif = netif_list; netif != NULL; netif = netif->next) {
+    if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+      continue;
+    }
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
           ip6_addr_netcmp(dest, netif_ip6_addr(netif, i))) {
@@ -124,7 +139,9 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
   if (i >= 0) {
     if (default_router_list[i].neighbor_entry != NULL) {
       if (default_router_list[i].neighbor_entry->netif != NULL) {
-        return default_router_list[i].neighbor_entry->netif;
+        if (netif_is_up(default_router_list[i].neighbor_entry->netif) && netif_is_link_up(default_router_list[i].neighbor_entry->netif)) {
+          return default_router_list[i].neighbor_entry->netif;
+        }
       }
     }
   }
@@ -132,6 +149,9 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
   /* try with the netif that matches the source address. */
   if (!ip6_addr_isany(src)) {
     for(netif = netif_list; netif != NULL; netif = netif->next) {
+      if (!netif_is_up(netif) || !netif_is_link_up(netif)) {
+        continue;
+      }
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
             ip6_addr_cmp(src, netif_ip6_addr(netif, i))) {
@@ -141,7 +161,10 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
     }
   }
 
-  /* no matching netif found, use default netif */
+  /* no matching netif found, use default netif, if up */
+  if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+    return NULL;
+  }
   return netif_default;
 }
 
