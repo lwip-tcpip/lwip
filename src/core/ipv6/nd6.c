@@ -1798,6 +1798,11 @@ nd6_reachability_hint(const ip6_addr_t * ip6addr)
     return;
   }
 
+  /* For safety: don't set as reachable if we don't have a LL address yet. Misuse protection. */
+  if (neighbor_cache[i].state == ND6_INCOMPLETE || neighbor_cache[i].state == ND6_NO_ENTRY) {
+    return;
+  }
+
   /* Set reachability state. */
   neighbor_cache[i].state = ND6_REACHABLE;
   neighbor_cache[i].counter.reachable_time = reachable_time;
