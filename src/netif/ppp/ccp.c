@@ -60,9 +60,9 @@
 #if PPP_OPTIONS
 static int setbsdcomp (char **);
 static int setdeflate (char **);
-#endif /* PPP_OPTIONS */
 static char bsd_value[8];
 static char deflate_value[8];
+#endif /* PPP_OPTIONS */
 
 /*
  * Option variables.
