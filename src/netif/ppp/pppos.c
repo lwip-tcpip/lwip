@@ -485,8 +485,7 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
 err_t
 pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
 {
-  struct pbuf *p, *n;
-  u8_t *cur;
+  struct pbuf *p;
   err_t err;
 
   p = pbuf_alloc(PBUF_RAW, l, PBUF_POOL);
