@@ -487,19 +487,19 @@ pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
 {
   struct pbuf *p, *n;
   u8_t *cur;
+  err_t err;
 
   p = pbuf_alloc(PBUF_RAW, l, PBUF_POOL);
   if (!p) {
     return ERR_MEM;
   }
+  pbuf_take(p, s, l);
 
-  cur = s;
-  for (n = p; n; n = n->next) {
-    MEMCPY(n->payload, cur, n->len);
-    cur += n->len;
+  err = tcpip_input(p, ppp_netif(ppp));
+  if (err != ERR_OK) {
+     pbuf_free(p);
   }
-
-  return tcpip_input(p, ppp_netif(ppp));
+  return err;
 }
 
 /* called from TCPIP thread */
