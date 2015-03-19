@@ -857,6 +857,7 @@ void ChapMS2(u_char *rchallenge, u_char *PeerChallenge,
 #endif
 }
 
+#if 0 /* UNUSED */
 #ifdef MPPE
 /*
  * Set MPPE options from plugins.
@@ -887,6 +888,7 @@ void set_mppe_enc_types(int policy, int types) {
     }
 }
 #endif /* MPPE */
+#endif /* UNUSED */
 
 const struct chap_digest_type chapms_digest = {
 	CHAP_MICROSOFT,		/* code */

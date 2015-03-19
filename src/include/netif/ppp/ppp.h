@@ -184,57 +184,61 @@ typedef void (*ppp_link_status_cb_fn)(ppp_pcb *pcb, int err_code, void *ctx);
 typedef struct ppp_settings_s {
 
 #if PPP_SERVER && PPP_AUTH_SUPPORT
-  unsigned int  auth_required      :1;       /* Peer is required to authenticate */
-  unsigned int  null_login         :1;       /* Username of "" and a password of "" are acceptable */
+  unsigned int  auth_required       :1;      /* Peer is required to authenticate */
+  unsigned int  null_login          :1;      /* Username of "" and a password of "" are acceptable */
 #else
-  unsigned int                     :2;       /* 2 bits of padding */
+  unsigned int                      :2;      /* 2 bits of padding */
 #endif /* PPP_SERVER && PPP_AUTH_SUPPORT */
 #if PPP_REMOTENAME
-  unsigned int  explicit_remote    :1;       /* remote_name specified with remotename opt */
+  unsigned int  explicit_remote     :1;      /* remote_name specified with remotename opt */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* PPP_REMOTENAME */
 #if PAP_SUPPORT
-  unsigned int  refuse_pap         :1;       /* Don't proceed auth. with PAP */
+  unsigned int  refuse_pap          :1;      /* Don't proceed auth. with PAP */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-  unsigned int  refuse_chap        :1;       /* Don't proceed auth. with CHAP */
+  unsigned int  refuse_chap         :1;      /* Don't proceed auth. with CHAP */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* CHAP_SUPPORT */
 #if MSCHAP_SUPPORT
-  unsigned int  refuse_mschap      :1;       /* Don't proceed auth. with MS-CHAP */
-  unsigned int  refuse_mschap_v2   :1;       /* Don't proceed auth. with MS-CHAPv2 */
+  unsigned int  refuse_mschap       :1;      /* Don't proceed auth. with MS-CHAP */
+  unsigned int  refuse_mschap_v2    :1;      /* Don't proceed auth. with MS-CHAPv2 */
 #else
-  unsigned int                     :2;       /* 2 bits of padding */
+  unsigned int                      :2;      /* 2 bits of padding */
 #endif /* MSCHAP_SUPPORT */
 #if EAP_SUPPORT
-  unsigned int  refuse_eap         :1;       /* Don't proceed auth. with EAP */
+  unsigned int  refuse_eap          :1;      /* Don't proceed auth. with EAP */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* EAP_SUPPORT */
 #if LWIP_DNS
-  unsigned int  usepeerdns         :1;       /* Ask peer for DNS adds */
+  unsigned int  usepeerdns          :1;      /* Ask peer for DNS adds */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* LWIP_DNS */
-  unsigned int  persist            :1;       /* Persist mode, always try to open the connection */
+  unsigned int  persist             :1;      /* Persist mode, always try to open the connection */
 #if PRINTPKT_SUPPORT
-  unsigned int  hide_password      :1;       /* Hide password in dumped packets */
+  unsigned int  hide_password       :1;      /* Hide password in dumped packets */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif /* PRINTPKT_SUPPORT */
-  unsigned int  noremoteip         :1;       /* Let him have no IP address */
-  unsigned int  lax_recv           :1;       /* accept control chars in asyncmap */
-  unsigned int  noendpoint         :1;       /* don't send/accept endpoint discriminator */
+  unsigned int  noremoteip          :1;      /* Let him have no IP address */
+  unsigned int  lax_recv            :1;      /* accept control chars in asyncmap */
+  unsigned int  noendpoint          :1;      /* don't send/accept endpoint discriminator */
 #if PPP_LCP_ADAPTIVE
-  unsigned int lcp_echo_adaptive   :1;       /* request echo only if the link was idle */
+  unsigned int lcp_echo_adaptive    :1;      /* request echo only if the link was idle */
 #else
-  unsigned int                     :1;       /* 1 bit of padding */
+  unsigned int                      :1;      /* 1 bit of padding */
 #endif
-  unsigned int                     :1;       /* 1 bit of padding to round out to 16 bits */
+#ifdef MPPE
+  unsigned int refuse_mppe_stateful :1;      /* Allow MPPE stateful mode? */
+#else
+  unsigned int                      :1;      /* 1 bit of padding */
+#endif
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 

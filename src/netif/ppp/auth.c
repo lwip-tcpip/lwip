@@ -954,7 +954,7 @@ void start_networks(ppp_pcb *pcb) {
     ecp_required = ecp_gotoptions[unit].required;
 #endif /* ECP_SUPPORT */
 #ifdef MPPE
-    mppe_required = ccp_gotoptions[unit].mppe;
+    mppe_required = pcb->ccp_gotoptions.mppe;
 #endif /* MPPE */
 
     if (1

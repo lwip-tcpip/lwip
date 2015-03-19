@@ -76,6 +76,7 @@ extern u_char mppe_send_key[MPPE_MAX_KEY_LEN];
 extern u_char mppe_recv_key[MPPE_MAX_KEY_LEN];
 extern int mppe_keys_set;
 
+#if 0 /* UNUSED */
 /* These values are the RADIUS attribute values--see RFC 2548. */
 #define MPPE_ENC_POL_ENC_ALLOWED 1
 #define MPPE_ENC_POL_ENC_REQUIRED 2
@@ -84,6 +85,7 @@ extern int mppe_keys_set;
 
 /* used by plugins (using above values) */
 extern void set_mppe_enc_types(int, int);
+#endif /* UNUSED */
 #endif
 
 /* Are we the authenticator or authenticatee?  For MS-CHAPv2 key derivation. */

@@ -62,7 +62,6 @@ static int setbsdcomp (char **);
 static int setdeflate (char **);
 static char bsd_value[8];
 static char deflate_value[8];
-#endif /* PPP_OPTIONS */
 
 /*
  * Option variables.
@@ -71,7 +70,6 @@ static char deflate_value[8];
 bool refuse_mppe_stateful = 1;		/* Allow stateful mode? */
 #endif
 
-#if PPP_OPTIONS
 static option_t ccp_option_list[] = {
     { "noccp", o_bool, &ccp_protent.enabled_flag,
       "Disable CCP negotiation" },
@@ -896,7 +894,7 @@ static int ccp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 	 * Fail if we aren't willing to use his suggestion.
 	 */
 	MPPE_CI_TO_OPTS(&p[2], try_.mppe);
-	if ((try_.mppe & MPPE_OPT_STATEFUL) && refuse_mppe_stateful) {
+	if ((try_.mppe & MPPE_OPT_STATEFUL) && pcb->settings.refuse_mppe_stateful) {
 	    ppp_error("Refusing MPPE stateful mode offered by peer");
 	    try_.mppe = 0;
 	} else if (((go->mppe | MPPE_OPT_STATEFUL) & try_.mppe) != try_.mppe) {
@@ -1049,7 +1047,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
     u_char *p0, *retp;
     int len, clen, type, nb;
 #ifdef MPPE
-    bool rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
+    u8_t rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
 				/* CI_MPPE, or due to other options?       */
 #endif
 
@@ -1098,7 +1096,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		     * it if he can do it; stateful mode is bad over
 		     * the Internet -- which is where we expect MPPE.
 		     */
-		   if (refuse_mppe_stateful) {
+		   if (pcb->settings.refuse_mppe_stateful) {
 			ppp_error("Refusing MPPE stateful mode offered by peer");
 			newret = CONFREJ;
 			break;
