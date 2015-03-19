@@ -181,7 +181,6 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
 #endif /* LWIP_MPU_COMPATIBLE */
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -215,7 +214,6 @@ netconn_bind(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_bind, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -247,7 +245,6 @@ netconn_connect(struct netconn *conn, const ip_addr_t *addr, u16_t port)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_connect, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -270,7 +267,6 @@ netconn_disconnect(struct netconn *conn)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_disconnect, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -302,7 +298,6 @@ netconn_listen_with_backlog(struct netconn *conn, u8_t backlog)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_listen, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 #else /* LWIP_TCP */
   LWIP_UNUSED_ARG(conn);
@@ -343,7 +338,6 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->acceptmbox, (void **)&newconn, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
-    NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
     return ERR_TIMEOUT;
   }
 #else
@@ -354,6 +348,9 @@ netconn_accept(struct netconn *conn, struct netconn **new_conn)
 
   if (newconn == NULL) {
     /* connection has been aborted */
+    /* in this special case, we set the netconn error from application thread, as
+       on a ready-to-accept listening netconn, there should not be anything running
+       in tcpip_thread */
     NETCONN_SET_SAFE_ERR(conn, ERR_ABRT);
     return ERR_ABRT;
   }
@@ -422,7 +419,6 @@ netconn_recv_data(struct netconn *conn, void **new_buf)
 
 #if LWIP_SO_RCVTIMEO
   if (sys_arch_mbox_fetch(&conn->recvmbox, &buf, conn->recv_timeout) == SYS_ARCH_TIMEOUT) {
-    NETCONN_SET_SAFE_ERR(conn, ERR_TIMEOUT);
     return ERR_TIMEOUT;
   }
 #else
@@ -533,7 +529,6 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
 
     buf = (struct netbuf *)memp_malloc(MEMP_NETBUF);
     if (buf == NULL) {
-      NETCONN_SET_SAFE_ERR(conn, ERR_MEM);
       return ERR_MEM;
     }
 
@@ -639,7 +634,6 @@ netconn_send(struct netconn *conn, struct netbuf *buf)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_send, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -711,7 +705,6 @@ netconn_write_partly(struct netconn *conn, const void *dataptr, size_t size,
   }
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -745,7 +738,6 @@ netconn_close_shutdown(struct netconn *conn, u8_t how)
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_close, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 
@@ -812,7 +804,6 @@ netconn_join_leave_group(struct netconn *conn,
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_join_leave_group, err);
   API_MSG_VAR_FREE(msg);
 
-  NETCONN_SET_SAFE_ERR(conn, err);
   return err;
 }
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */

@@ -216,6 +216,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-19: Simon Goldschmidt
+  * api.h, tcpip.h, api_lib.c, api_msg.c: fixed race conditions in assigning
+    netconn->last_err (fixed bugs #38121 and #37676)
+
   2015-03-09: Simon Goldschmidt
   * ip4.c: fixed the IPv4 part of bug #43904 (ip_route() must detect linkup status)
 

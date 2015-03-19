@@ -251,7 +251,9 @@ recv_tcp(void *arg, struct tcp_pcb *pcb, struct pbuf *p, err_t err)
      (data is already ACKed) */
 
   /* don't overwrite fatal errors! */
-  NETCONN_SET_SAFE_ERR(conn, err);
+  if (err != ERR_OK) {
+    NETCONN_SET_SAFE_ERR(conn, err);
+  }
 
   if (p != NULL) {
     len = p->tot_len;
@@ -416,6 +418,7 @@ err_tcp(void *arg, err_t err)
       LWIP_ASSERT("inavlid op_completed_sem", op_completed_sem != SYS_SEM_NULL);
       conn->current_msg = NULL;
       /* wake up the waiting task */
+      NETCONN_SET_SAFE_ERR(conn, err);
       sys_sem_signal(op_completed_sem);
     }
   } else {
@@ -934,6 +937,7 @@ lwip_netconn_do_close_internal(struct netconn *conn  WRITE_DELAYED_PARAM)
         API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
       }
     }
+    NETCONN_SET_SAFE_ERR(conn, err);
 #if LWIP_TCPIP_CORE_LOCKING
     if (delayed)
 #endif
@@ -988,6 +992,7 @@ lwip_netconn_do_delconn(struct api_msg_msg *msg)
       msg->conn->current_msg = NULL;
       msg->conn->write_offset = 0;
       msg->conn->state = NETCONN_NONE;
+      NETCONN_SET_SAFE_ERR(msg->conn, ERR_CLSD);
       sys_sem_signal(op_completed_sem);
     }
   }
@@ -1140,9 +1145,7 @@ lwip_netconn_do_connected(void *arg, struct tcp_pcb *pcb, err_t err)
     (!was_blocking && op_completed_sem == NULL));
   conn->current_msg = NULL;
   conn->state = NETCONN_NONE;
-  if (!was_blocking) {
-    NETCONN_SET_SAFE_ERR(conn, ERR_OK);
-  }
+  NETCONN_SET_SAFE_ERR(conn, ERR_OK);
   API_EVENT(conn, NETCONN_EVT_SENDPLUS, 0);
 
   if (was_blocking) {
@@ -1539,6 +1542,7 @@ err_mem:
     conn->current_msg->err = err;
     conn->current_msg = NULL;
     conn->state = NETCONN_NONE;
+    NETCONN_SET_SAFE_ERR(conn, err);
 #if LWIP_TCPIP_CORE_LOCKING
     if (delayed)
 #endif
@@ -1704,6 +1708,7 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
         msg->conn->current_msg = NULL;
         msg->conn->write_offset = 0;
         msg->conn->state = NETCONN_NONE;
+        NETCONN_SET_SAFE_ERR(msg->conn, ERR_CLSD);
         sys_sem_signal(op_completed_sem);
       } else {
         LWIP_ASSERT("msg->msg.sd.shut == NETCONN_SHUT_RD", msg->msg.sd.shut == NETCONN_SHUT_RD);
@@ -1742,7 +1747,8 @@ lwip_netconn_do_close(struct api_msg_msg *msg)
   {
     msg->err = ERR_CONN;
   }
-  sys_sem_signal(LWIP_API_MSG_SEM(msg));
+  NETCONN_SET_SAFE_ERR(msg->conn, msg->err);
+  TCPIP_APIMSG_ACK(msg);
 }
 
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)

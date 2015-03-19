@@ -81,7 +81,7 @@ extern sys_mutex_t lock_tcpip_core;
   TCPIP_APIMSG_NOERR(m,f); \
   (e) = (m)->msg.err; \
 } while(0)
-#define TCPIP_APIMSG_ACK(m)
+#define TCPIP_APIMSG_ACK(m)   NETCONN_SET_SAFE_ERR((m)->conn, (m)->err)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi_lock(m)
 #define TCPIP_NETIFAPI_ACK(m)
 #define TCPIP_PPPAPI(m)       tcpip_pppapi_lock(m)
@@ -91,7 +91,7 @@ extern sys_mutex_t lock_tcpip_core;
 #define UNLOCK_TCPIP_CORE()
 #define TCPIP_APIMSG_NOERR(m,f) do { (m)->function = f; tcpip_apimsg(m); } while(0)
 #define TCPIP_APIMSG(m,f,e)   do { (m)->function = f; (e) = tcpip_apimsg(m); } while(0)
-#define TCPIP_APIMSG_ACK(m)   sys_sem_signal(LWIP_API_MSG_SEM(m))
+#define TCPIP_APIMSG_ACK(m)   do { NETCONN_SET_SAFE_ERR((m)->conn, (m)->err); sys_sem_signal(LWIP_API_MSG_SEM(m)); } while(0)
 #define TCPIP_NETIFAPI(m)     tcpip_netifapi(m)
 #define TCPIP_NETIFAPI_ACK(m) sys_sem_signal(&m->sem)
 #define TCPIP_PPPAPI(m)       tcpip_pppapi(m)
