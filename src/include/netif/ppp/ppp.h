@@ -354,14 +354,13 @@ struct ppp_pcb_s {
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
   unsigned int                         :2; /* 2 bits of padding to round out to 8 bits */
 
+#if PPP_AUTH_SUPPORT
   /* auth data */
 #if PPP_SERVER
   char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */
 #endif /* PPP_SERVER */
   u16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   u16_t auth_done;           /* Records which authentication operations have been completed. */
-  u8_t num_np_open;          /* Number of network protocols which we have opened. */
-  u8_t num_np_up;            /* Number of network protocols which have come up. */
 
 #if PAP_SUPPORT
   upap_state upap;           /* PAP data */
@@ -377,15 +376,19 @@ struct ppp_pcb_s {
 #if EAP_SUPPORT
   eap_state eap;            /* EAP data */
 #endif /* EAP_SUPPORT */
+#endif /* PPP_AUTH_SUPPORT */
 
   fsm lcp_fsm;                   /* LCP fsm structure */
   lcp_options lcp_wantoptions;   /* Options that we want to request */
   lcp_options lcp_gotoptions;    /* Options that peer ack'd */
   lcp_options lcp_allowoptions;  /* Options we allow peer to request */
   lcp_options lcp_hisoptions;    /* Options that we ack'd */
+  u16_t peer_mru;                /* currently negotiated peer MRU */
   u8_t lcp_echos_pending;        /* Number of outstanding echo msgs */
   u8_t lcp_echo_number;          /* ID number of next echo frame */
-  u16_t peer_mru;                /* currently negotiated peer MRU */
+
+  u8_t num_np_open;              /* Number of network protocols which we have opened. */
+  u8_t num_np_up;                /* Number of network protocols which have come up. */
 
 #if CCP_SUPPORT
   fsm ccp_fsm;                   /* CCP fsm structure */
