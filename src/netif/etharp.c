@@ -1348,7 +1348,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
 {
   struct eth_hdr* ethhdr;
   u16_t type;
-#if LWIP_ARP || ETHARP_SUPPORT_VLAN
+#if LWIP_ARP || ETHARP_SUPPORT_VLAN || LWIP_IPV6
   s16_t ip_hdr_offset = SIZEOF_ETH_HDR;
 #endif /* LWIP_ARP || ETHARP_SUPPORT_VLAN */
 
