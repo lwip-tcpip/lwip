@@ -143,6 +143,10 @@ err_t tcpip_apimsg(struct api_msg *apimsg);
 
 err_t tcpip_input(struct pbuf *p, struct netif *inp);
 
+#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+err_t tcpip_pppos_input(struct pbuf *p, struct netif *inp);
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
+
 #if LWIP_NETIF_API
 err_t tcpip_netifapi(struct netifapi_msg *netifapimsg);
 #if LWIP_TCPIP_CORE_LOCKING
@@ -178,6 +182,9 @@ enum tcpip_msg_type {
   TCPIP_MSG_API,
 #endif /* LWIP_NETCONN || LWIP_SOCKET */
   TCPIP_MSG_INPKT,
+#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+  TCPIP_MSG_INPKT_PPPOS,
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
 #if LWIP_NETIF_API
   TCPIP_MSG_NETIFAPI,
 #endif /* LWIP_NETIF_API */

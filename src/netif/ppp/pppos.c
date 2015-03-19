@@ -70,9 +70,6 @@ static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t pr
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
-#if !NO_SYS && !PPP_INPROC_MULTITHREADED
-static err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
-#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
 #if PPP_INPROC_MULTITHREADED
 static void pppos_input_callback(void *arg);
 #endif /* PPP_INPROC_MULTITHREADED */
@@ -205,9 +202,6 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
 
   pppos->ppp = ppp;
   pppos->fd = fd;
-#if !NO_SYS && !PPP_INPROC_MULTITHREADED
-  ppp->netif->input = pppos_input_sys;
-#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
   ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
@@ -494,7 +488,7 @@ pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
   }
   pbuf_take(p, s, l);
 
-  err = tcpip_input(p, ppp_netif(ppp));
+  err = tcpip_pppos_input(p, ppp_netif(ppp));
   if (err != ERR_OK) {
      pbuf_free(p);
   }
@@ -502,7 +496,7 @@ pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l)
 }
 
 /* called from TCPIP thread */
-static err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
+err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   ppp_pcb *ppp = (ppp_pcb*)inp->state;
   struct pbuf *n;
 

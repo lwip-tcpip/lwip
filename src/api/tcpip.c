@@ -49,6 +49,7 @@
 #include "lwip/ip.h"
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
+#include "netif/ppp/pppos.h"
 
 #define TCPIP_MSG_VAR_REF(name)     API_VAR_REF(name)
 #define TCPIP_MSG_VAR_DECLARE(name) API_VAR_DECLARE(struct tcpip_msg, name)
@@ -114,13 +115,6 @@ tcpip_thread(void *arg)
         ethernet_input(msg->msg.inp.p, msg->msg.inp.netif);
       } else
 #endif /* LWIP_ETHERNET */
-#if PPPOS_SUPPORT
-      if (((msg->msg.inp.netif->flags & NETIF_FLAG_BROADCAST) == 0)
-            && msg->msg.inp.netif->input
-            && (msg->msg.inp.netif->input != tcpip_input)) {
-        msg->msg.inp.netif->input(msg->msg.inp.p, msg->msg.inp.netif);
-      } else
-#endif /* PPPOS_SUPPORT */
 #if LWIP_IPV6
       if (((*(u8_t*)(msg->msg.inp.p->payload)) & 0xf0) == 0x60) {
           ip6_input(msg->msg.inp.p, msg->msg.inp.netif);
@@ -132,6 +126,13 @@ tcpip_thread(void *arg)
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+
+#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+    case TCPIP_MSG_INPKT_PPPOS:
+      pppos_input_sys(msg->msg.inp.p, msg->msg.inp.netif);
+      memp_free(MEMP_TCPIP_MSG_INPKT, msg);
+      break;
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -230,6 +231,48 @@ tcpip_input(struct pbuf *p, struct netif *inp)
   return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 }
+
+#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+/**
+ * Pass a received packet to tcpip_thread for input processing
+ *
+ * @param p the received packet, p->payload pointing to the Ethernet header or
+ *          to an IP header (if inp doesn't have NETIF_FLAG_ETHARP or
+ *          NETIF_FLAG_ETHERNET flags)
+ * @param inp the network interface on which the packet was received
+ */
+err_t
+tcpip_pppos_input(struct pbuf *p, struct netif *inp)
+{
+#if LWIP_TCPIP_CORE_LOCKING_INPUT
+  err_t ret;
+  LWIP_DEBUGF(TCPIP_DEBUG, ("tcpip_pppos_input: PACKET %p/%p\n", (void *)p, (void *)inp));
+  LOCK_TCPIP_CORE();
+  ret = pppos_input_sys(p, inp);
+  UNLOCK_TCPIP_CORE();
+  return ret;
+#else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+  struct tcpip_msg *msg;
+
+  if (!sys_mbox_valid(&mbox)) {
+    return ERR_VAL;
+  }
+  msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
+  if (msg == NULL) {
+    return ERR_MEM;
+  }
+
+  msg->type = TCPIP_MSG_INPKT_PPPOS;
+  msg->msg.inp.p = p;
+  msg->msg.inp.netif = inp;
+  if (sys_mbox_trypost(&mbox, msg) != ERR_OK) {
+    memp_free(MEMP_TCPIP_MSG_INPKT, msg);
+    return ERR_MEM;
+  }
+  return ERR_OK;
+#endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
+}
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
 
 /**
  * Call a specific function in the thread context of

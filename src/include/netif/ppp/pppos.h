@@ -112,5 +112,14 @@ err_t pppos_input_tcpip(ppp_pcb *ppp, u8_t *s, int l);
 /* PPP over Serial: this is the input function to be called for received data. */
 void pppos_input(ppp_pcb *ppp, u8_t* data, int len);
 
+
+/*
+ * Functions called from lwIP
+ * DO NOT CALL FROM lwIP USER APPLICATION.
+ */
+#if !NO_SYS && !PPP_INPROC_MULTITHREADED
+err_t pppos_input_sys(struct pbuf *p, struct netif *inp);
+#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
+
 #endif /* PPPOS_H */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */
