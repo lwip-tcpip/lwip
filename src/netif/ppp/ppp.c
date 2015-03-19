@@ -542,9 +542,9 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
 #endif /* PPP_SERVER */
 #endif /* EAP_SUPPORT */
 
-#ifdef MPPE
+#if MPPE_SUPPORT
   pcb->settings.refuse_mppe_stateful = 1;
-#endif /* MPPE */
+#endif /* MPPE_SUPPORT */
 
   pcb->settings.lcp_loopbackfail = LCP_DEFLOOPBACKFAIL;
   pcb->settings.lcp_echo_interval = LCP_ECHOINTERVAL;

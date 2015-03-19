@@ -33,6 +33,12 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
+#ifndef MPPE_H
+#define MPPE_H
+
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
 
@@ -119,3 +125,6 @@
 	if (ptr[3] & ~MPPE_ALL_BITS)		\
 	    opts |= MPPE_OPT_UNKNOWN;		\
     } while (/* CONSTCOND */ 0)
+
+#endif /* MPPE_H */
+#endif /* PPP_SUPPORT && MPPE_SUPPORT */

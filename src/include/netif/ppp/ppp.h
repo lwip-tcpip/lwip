@@ -85,6 +85,10 @@
 #define PPP_STATS_SUPPORT   0
 #endif
 
+#ifndef MPPE_SUPPORT
+#define MPPE_SUPPORT        0
+#endif
+
 
 /*************************
 *** PUBLIC DEFINITIONS ***
@@ -234,11 +238,11 @@ typedef struct ppp_settings_s {
 #else
   unsigned int                      :1;      /* 1 bit of padding */
 #endif
-#ifdef MPPE
+#if MPPE_SUPPORT
   unsigned int refuse_mppe_stateful :1;      /* Allow MPPE stateful mode? */
-#else
+#else /* MPPE_SUPPORT */
   unsigned int                      :1;      /* 1 bit of padding */
-#endif
+#endif /* MPPE_SUPPORT */
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 

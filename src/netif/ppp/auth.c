@@ -909,9 +909,9 @@ void start_networks(ppp_pcb *pcb) {
 #if ECP_SUPPORT
     int ecp_required;
 #endif /* ECP_SUPPORT */
-#ifdef MPPE
+#if MPPE_SUPPORT
     int mppe_required;
-#endif /* MPPE */
+#endif /* MPPE_SUPPORT */
 
     new_phase(pcb, PPP_PHASE_NETWORK);
 
@@ -953,17 +953,17 @@ void start_networks(ppp_pcb *pcb) {
 #if ECP_SUPPORT
     ecp_required = ecp_gotoptions[unit].required;
 #endif /* ECP_SUPPORT */
-#ifdef MPPE
+#if MPPE_SUPPORT
     mppe_required = pcb->ccp_gotoptions.mppe;
-#endif /* MPPE */
+#endif /* MPPE_SUPPORT */
 
     if (1
 #if ECP_SUPPORT
         && !ecp_required
 #endif /* ECP_SUPPORT */
-#ifdef MPPE
+#if MPPE_SUPPORT
         && !mppe_required
-#endif /* MPPE */
+#endif /* MPPE_SUPPORT */
         )
 	continue_networks(pcb);
 }
