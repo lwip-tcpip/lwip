@@ -127,12 +127,12 @@ tcpip_thread(void *arg)
       break;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 
-#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+#if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
     case TCPIP_MSG_INPKT_PPPOS:
       pppos_input_sys(msg->msg.inp.p, msg->msg.inp.netif);
       memp_free(MEMP_TCPIP_MSG_INPKT, msg);
       break;
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
 
 #if LWIP_NETIF_API
     case TCPIP_MSG_NETIFAPI:
@@ -232,7 +232,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 }
 
-#if PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED
+#if PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE
 /**
  * Pass a received packet to tcpip_thread for input processing
  *
@@ -272,7 +272,7 @@ tcpip_pppos_input(struct pbuf *p, struct netif *inp)
   return ERR_OK;
 #endif /* LWIP_TCPIP_CORE_LOCKING_INPUT */
 }
-#endif /* PPPOS_SUPPORT && !PPP_INPROC_MULTITHREADED */
+#endif /* PPPOS_SUPPORT && !PPP_INPROC_IRQ_SAFE */
 
 /**
  * Call a specific function in the thread context of

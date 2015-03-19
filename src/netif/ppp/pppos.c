@@ -70,9 +70,9 @@ static err_t pppos_netif_input(ppp_pcb *ppp, void *ctx, struct pbuf *p, u16_t pr
 #endif /* VJ_SUPPORT */
 
 /* Prototypes for procedures local to this file. */
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
 static void pppos_input_callback(void *arg);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 static void pppos_input_free_current_packet(pppos_pcb *pppos);
 static void pppos_input_drop(pppos_pcb *pppos);
 static err_t pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t accm, u16_t *fcs);
@@ -167,7 +167,7 @@ ppp_get_fcs(u8_t byte)
 #define PPP_INITFCS     0xffff  /* Initial FCS value */
 #define PPP_GOODFCS     0xf0b8  /* Good final FCS value */
 
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
 #define PPPOS_DECL_PROTECT(lev) SYS_ARCH_DECL_PROTECT(lev)
 #define PPPOS_PROTECT(lev) SYS_ARCH_PROTECT(lev)
 #define PPPOS_UNPROTECT(lev) SYS_ARCH_UNPROTECT(lev)
@@ -175,7 +175,7 @@ ppp_get_fcs(u8_t byte)
 #define PPPOS_DECL_PROTECT(lev)
 #define PPPOS_PROTECT(lev)
 #define PPPOS_UNPROTECT(lev)
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
 
 /*
@@ -340,10 +340,10 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
 
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
   /* input pbuf left over from last session? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
@@ -379,10 +379,10 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 #endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
 
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
   /* input pbuf left over from last session? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
@@ -442,14 +442,14 @@ pppos_disconnect(ppp_pcb *ppp, void *ctx)
   pppos->open = 0;
   PPPOS_UNPROTECT(lev);
 
-  /* If PPP_INPROC_MULTITHREADED is used we cannot call
+  /* If PPP_INPROC_IRQ_SAFE is used we cannot call
    * pppos_input_free_current_packet() here because
-   * rx thread might still call pppos_input().
+   * rx IRQ might still call pppos_input().
    */
-#if !PPP_INPROC_MULTITHREADED
+#if !PPP_INPROC_IRQ_SAFE
   /* input pbuf left ? */
   pppos_input_free_current_packet(pppos);
-#endif /* !PPP_INPROC_MULTITHREADED */
+#endif /* !PPP_INPROC_IRQ_SAFE */
 
   ppp_link_end(ppp); /* notify upper layers */
 }
@@ -460,16 +460,16 @@ pppos_destroy(ppp_pcb *ppp, void *ctx)
   pppos_pcb *pppos = (pppos_pcb *)ctx;
   LWIP_UNUSED_ARG(ppp);
 
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
   /* input pbuf left ? */
   pppos_input_free_current_packet(pppos);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
   memp_free(MEMP_PPPOS_PCB, pppos);
   return ERR_OK;
 }
 
-#if !NO_SYS && !PPP_INPROC_MULTITHREADED
+#if !NO_SYS && !PPP_INPROC_IRQ_SAFE
 /** Pass received raw characters to PPPoS to be decoded through lwIP TCPIP thread.
  *
  * @param pcb PPP descriptor index, returned by pppos_create()
@@ -506,11 +506,11 @@ err_t pppos_input_sys(struct pbuf *p, struct netif *inp) {
   pbuf_free(p);
   return ERR_OK;
 }
-#endif /* !NO_SYS && !PPP_INPROC_MULTITHREADED */
+#endif /* !NO_SYS && !PPP_INPROC_IRQ_SAFE */
 
 /** PPPoS input helper struct, must be packed since it is stored
  * to pbuf->payload, which might be unaligned. */
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
@@ -522,16 +522,9 @@ PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/epstruct.h"
 #endif
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
 /** Pass received raw characters to PPPoS to be decoded.
- *
- * This function is thread-safe if PPP_INPROC_MULTITHREADED is set to 1
- * and can be called from a dedicated RX-thread or from interrupt context
- * BUT you should NEVER call pppos_connect(), pppos_listen()
- * and ppp_free() if pppos_input() can still be running, doing this is not
- * thread safe. You should also avoid calling pppos_input() if PPPoS session
- * is not started yet.
  *
  * @param pcb PPP descriptor index, returned by pppos_create()
  * @param data received data
@@ -618,16 +611,16 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
           /* hide the room for Ethernet forwarding header */
           pbuf_header(inp, -(s16_t)PBUF_LINK_HLEN);
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
           if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
             snmp_inc_ifindiscards(ppp->netif);
           }
-#else /* PPP_INPROC_MULTITHREADED */
+#else /* PPP_INPROC_IRQ_SAFE */
           ppp_input(ppp, inp);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
         }
 
         /* Prepare for a new packet. */
@@ -740,11 +733,11 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
             }
             if (pppos->in_head == NULL) {
               u8_t *payload = ((u8_t*)next_pbuf->payload) + pbuf_alloc_len;
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
               ((struct pppos_input_header*)payload)->ppp = ppp;
               payload += sizeof(struct pppos_input_header);
               next_pbuf->len += sizeof(struct pppos_input_header);
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
               next_pbuf->len += sizeof(pppos->in_protocol);
               *(payload++) = pppos->in_protocol >> 8;
               *(payload) = pppos->in_protocol & 0xFF;
@@ -767,7 +760,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
   magic_randomize();
 }
 
-#if PPP_INPROC_MULTITHREADED
+#if PPP_INPROC_IRQ_SAFE
 /* PPPoS input callback using one input pointer
  */
 static void pppos_input_callback(void *arg) {
@@ -789,7 +782,7 @@ drop:
   snmp_inc_ifindiscards(ppp->netif);
   pbuf_free(pb);
 }
-#endif /* PPP_INPROC_MULTITHREADED */
+#endif /* PPP_INPROC_IRQ_SAFE */
 
 static void
 pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)

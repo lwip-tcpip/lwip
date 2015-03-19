@@ -1916,22 +1916,12 @@
 #if PPP_SUPPORT
 
 /**
- * PPP_INPROC_MULTITHREADED==1 call ppp_input() using tcpip_callback().
+ * PPP_INPROC_IRQ_SAFE==1 call pppos_input() using tcpip_callback().
  *
- * Set this to 0 in the following cases:
- *  - pppos_input() is called from the main loop and NO_SYS==1
- *  - you are using tcpip_input() (NO_SYS==0) on PPP data input
- *
- * Otherwise, if pppos_input() is called outside lwIP context (IRQ)
- * set this to 1.
- *
- * CAUTION: if set to 1, you should NEVER call pppos_connect(), pppos_listen()
- * and ppp_free() if pppos_input() can still be running, doing this is not
- * thread safe. You should also avoid calling pppos_input() if PPPoS session
- * is not started yet.
+ * Please read the "PPPoS input path" chapter in the PPP documentation about this option.
  */
-#ifndef PPP_INPROC_MULTITHREADED
-#define PPP_INPROC_MULTITHREADED        0
+#ifndef PPP_INPROC_IRQ_SAFE
+#define PPP_INPROC_IRQ_SAFE             0
 #endif
 
 /**
