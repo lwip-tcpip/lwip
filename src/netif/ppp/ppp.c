@@ -1091,6 +1091,44 @@ int netif_get_mtu(ppp_pcb *pcb) {
   return pcb->netif->mtu;
 }
 
+#if CCP_SUPPORT
+/*
+ * ccp_test - whether a given compression method is acceptable for use.
+ */
+int
+ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
+{
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(opt_ptr);
+  LWIP_UNUSED_ARG(opt_len);
+  LWIP_UNUSED_ARG(for_transmit);
+  return -1;
+}
+
+/*
+ * ccp_flags_set - inform about the current state of CCP.
+ */
+void
+ccp_flags_set(ppp_pcb *pcb, int isopen, int isup)
+{
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(isopen);
+  LWIP_UNUSED_ARG(isup);
+}
+
+/*
+ * ccp_fatal_error - returns 1 if decompression was disabled as a
+ * result of an error detected after decompression of a packet,
+ * 0 otherwise.  This is necessary because of patent nonsense.
+ */
+int
+ccp_fatal_error(ppp_pcb *pcb)
+{
+  LWIP_UNUSED_ARG(pcb);
+  return 1;
+}
+#endif /* CCP_SUPPORT */
+
 #if PPP_IDLETIMELIMIT
 /********************************************************************
  *

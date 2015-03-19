@@ -472,6 +472,12 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
 
+#if CCP_SUPPORT
+int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit);
+void ccp_flags_set(ppp_pcb *pcb, int isopen, int isup);
+int ccp_fatal_error(ppp_pcb *pcb);
+#endif /* CCP_SUPPORT */
+
 #if PPP_IDLETIMELIMIT
 int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 #endif /* PPP_IDLETIMELIMIT */
