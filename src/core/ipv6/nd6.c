@@ -994,8 +994,8 @@ nd6_send_rs(struct netif * netif)
   if (src_addr != IP6_ADDR_ANY) {
     lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   }
-  p = pbuf_alloc(PBUF_IP, sizeof(struct rs_header) + lladdr_opt_len, PBUF_RAM);
-  if ((p == NULL) || (p->len < (sizeof(struct rs_header) + lladdr_opt_len))) {
+  p = pbuf_alloc(PBUF_IP, sizeof(struct rs_header) + lladdr_opt_len << 3, PBUF_RAM);
+  if ((p == NULL) || (p->len < (sizeof(struct rs_header) + lladdr_opt_len << 3))) {
     /* We couldn't allocate a suitable pbuf for the ns. drop it. */
     if (p != NULL) {
       pbuf_free(p);
