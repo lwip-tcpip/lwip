@@ -1196,10 +1196,12 @@ dhcp_release(struct netif *netif)
   struct dhcp *dhcp = netif->dhcp;
   err_t result;
   u16_t msecs;
+  ip_addr_t server_ip_addr;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_release()\n"));
   if (dhcp == NULL) {
     return ERR_ARG;
   }
+  ip_addr_copy(server_ip_addr, dhcp->server_ip_addr);
 
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_OFF);
@@ -1216,11 +1218,14 @@ dhcp_release(struct netif *netif)
   /* create and initialize the DHCP message header */
   result = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
   if (result == ERR_OK) {
+    dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
+    dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&server_ip_addr)));
+
     dhcp_option_trailer(dhcp);
 
     pbuf_realloc(dhcp->p_out, sizeof(struct dhcp_msg) - DHCP_OPTIONS_LEN + dhcp->options_out_len);
 
-    udp_sendto_if(dhcp->pcb, dhcp->p_out, &dhcp->server_ip_addr, DHCP_SERVER_PORT, netif);
+    udp_sendto_if(dhcp->pcb, dhcp->p_out, &server_ip_addr, DHCP_SERVER_PORT, netif);
     dhcp_delete_msg(dhcp);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release: RELEASED, DHCP_OFF\n"));
   } else {
@@ -1733,7 +1738,7 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   dhcp->msg_out->flags = 0;
   ip_addr_set_zero(&dhcp->msg_out->ciaddr);
   /* set ciaddr to netif->ip_addr based on message_type and state */
-  if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) ||
+  if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) || (message_type == DHCP_RELEASE) ||
       ((message_type == DHCP_REQUEST) && /* DHCP_BOUND not used for sending! */
        ((dhcp->state==DHCP_RENEWING) || dhcp->state==DHCP_REBINDING))) {
     ip_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
