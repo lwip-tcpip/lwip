@@ -290,7 +290,7 @@ void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcoun
     netif->state = txcounters;
   }
   netif->output = test_tcp_netif_output;
-  netif->flags |= NETIF_FLAG_UP;
+  netif->flags |= NETIF_FLAG_UP | NETIF_FLAG_LINK_UP;
   ip_addr_copy(netif->netmask, *netmask);
   ip_addr_copy(netif->ip_addr, *ip_addr);
   for (n = netif_list; n != NULL; n = n->next) {
