@@ -1641,6 +1641,7 @@ dhcp_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr,
     }
     /* already bound to the given lease address? */
     else if ((dhcp->state == DHCP_REBOOTING) || (dhcp->state == DHCP_REBINDING) || (dhcp->state == DHCP_RENEWING)) {
+      dhcp_handle_ack(netif);
       dhcp_bind(netif);
     }
   }

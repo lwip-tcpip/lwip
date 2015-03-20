@@ -217,6 +217,9 @@ HISTORY
   ++ Bugfixes:
 
   2015-03-19: Simon Goldschmidt
+  * dhcp.c: fixed bug #38203 (DHCP options are not recorded in all DHCP ack messages)
+
+  2015-03-19: Simon Goldschmidt
   * api.h, tcpip.h, api_lib.c, api_msg.c: fixed race conditions in assigning
     netconn->last_err (fixed bugs #38121 and #37676)
 
