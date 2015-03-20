@@ -153,7 +153,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   l2tp->ppp = ppp;
   l2tp->udp = udp;
   l2tp->netif = netif;
-  ip_addr_set(&ipX_2_ip(l2tp->remote_ip), ipaddr);
+  ip_addr_set(ipX_2_ip(&l2tp->remote_ip), ipaddr);
   l2tp->remote_port = port;
 #if PPPOL2TP_AUTH_SUPPORT
   l2tp->secret = secret;
@@ -400,7 +400,7 @@ static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, c
     goto free_and_return;
   }
 
-  if (!ip_addr_cmp(&ipX_2_ip(l2tp->remote_ip), addr)) {
+  if (!ip_addr_cmp(ipX_2_ip(&l2tp->remote_ip), addr)) {
     goto free_and_return;
   }
 
@@ -1225,9 +1225,9 @@ static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   } else
 #endif /* LWIP_IPV6 */
   if (l2tp->netif) {
-    err = udp_sendto_if(l2tp->udp, pb, &ipX_2_ip(l2tp->remote_ip), l2tp->tunnel_port, l2tp->netif);
+    err = udp_sendto_if(l2tp->udp, pb, ipX_2_ip(&l2tp->remote_ip), l2tp->tunnel_port, l2tp->netif);
   } else {
-    err = udp_sendto(l2tp->udp, pb, &ipX_2_ip(l2tp->remote_ip), l2tp->tunnel_port);
+    err = udp_sendto(l2tp->udp, pb, ipX_2_ip(&l2tp->remote_ip), l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return err;
