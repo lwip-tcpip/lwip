@@ -1767,4 +1767,10 @@ tcp_parseopt(struct tcp_pcb *pcb)
   }
 }
 
+void
+tcp_trigger_input_pcb_close(void)
+{
+  recv_flags |= TF_CLOSED;
+}
+
 #endif /* LWIP_TCP */

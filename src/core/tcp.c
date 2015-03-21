@@ -193,7 +193,12 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
         TCP_REG(&tcp_tw_pcbs, pcb);
       } else {
         /* CLOSE_WAIT: deallocate the pcb since we already sent a RST for it */
-        memp_free(MEMP_TCP_PCB, pcb);
+        if (tcp_input_pcb == pcb) {
+          /* prevent using a deallocated pcb: free it from tcp_input later */
+          tcp_trigger_input_pcb_close();
+        } else {
+          memp_free(MEMP_TCP_PCB, pcb);
+        }
       }
       return ERR_OK;
     }

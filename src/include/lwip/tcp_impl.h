@@ -497,6 +497,7 @@ u32_t tcp_next_iss(void);
 
 err_t tcp_keepalive(struct tcp_pcb *pcb);
 err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
+void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
 u16_t tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
