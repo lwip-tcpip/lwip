@@ -216,6 +216,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-21: Simon Goldschmidt (patch by Christoffer Lind)
+  * dhcp.h/.c: fixed bug #38204 (DHCP lease time not handled correctly)
+
   2015-03-20: Simon Goldschmidt
   * dhcp.c: fixed bug #38714 (Missing option and client address in DHCPRELEASE message)
 
