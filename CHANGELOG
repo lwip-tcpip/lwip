@@ -216,6 +216,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-21: Simon Goldschmidt
+  * tcp_in.c: fixed bug #38468 (tcp_sent() not called on half-open connection for
+    data ACKed with the same ack as FIN)
+
   2015-03-21: Simon Goldschmidt (patch by Christoffer Lind)
   * dhcp.h/.c: fixed bug #38204 (DHCP lease time not handled correctly)
 
