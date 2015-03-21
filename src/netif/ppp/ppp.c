@@ -1142,6 +1142,7 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip) {
 }
 #endif /* PPP_IDLETIMELIMIT */
 
+#if DEMAND_SUPPORT
 /********************************************************************
  *
  * get_loop_output - get outgoing packets from the ppp device,
@@ -1149,9 +1150,9 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip) {
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
 int get_loop_output(void) {
-    /* FIXME: necessary for "demand", do we really need to support on-demand ? */
     return 0;
 }
+#endif /* DEMAND_SUPPORT */
 
 /********************************************************************
  *

@@ -482,7 +482,9 @@ int ccp_fatal_error(ppp_pcb *pcb);
 int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 #endif /* PPP_IDLETIMELIMIT */
 
+#if DEMAND_SUPPORT
 int get_loop_output(void);
+#endif /* DEMAND_SUPPORT */
 
 u32_t get_mask(u32_t addr);
 
