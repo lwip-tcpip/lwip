@@ -7,6 +7,11 @@ HISTORY
   ++ New features:
 
   2015-03-23: Simon Goldschmidt
+  * opt.h, etharp.c: with ETHARP_TABLE_MATCH_NETIF== 1, duplicate (Auto)-IP
+    addresses on multiple netifs should now be working correctly (if correctly
+    addressed by routing, that is)
+
+  2015-03-23: Simon Goldschmidt
   * etharp.c: Stable etharp entries that are about to expire are now refreshed
     using unicast to prevent unnecessary broadcast. Only if no answer is received
     after 15 seconds, broadcast is used.

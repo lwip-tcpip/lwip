@@ -563,6 +563,13 @@
 #define ETHARP_SUPPORT_STATIC_ENTRIES   0
 #endif
 
+/** ETHARP_TABLE_MATCH_NETIF==1: Match netif for ARP table entries.
+ * If disabled, duplicate IP address on multiple netifs are not supported
+ * (but this should only occur for AutoIP).
+ */
+#ifndef ETHARP_TABLE_MATCH_NETIF
+#define ETHARP_TABLE_MATCH_NETIF        0
+#endif
 
 /*
    --------------------------------
