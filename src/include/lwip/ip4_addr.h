@@ -170,6 +170,8 @@ extern const ip_addr_t ip_addr_broadcast;
 #define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
 /** Set address to loopback address */
 #define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
+/** Check if an address is in the loopback region */
+#define ip_addr_isloopback(ipaddr)    (((ipaddr)->addr & PP_HTONL(IP_CLASSA_NET)) == PP_HTONL(((u32_t)IP_LOOPBACKNET) << 24))
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
 #define ip_addr_set_hton(dest, src) ((dest)->addr = \

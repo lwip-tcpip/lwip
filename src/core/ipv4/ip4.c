@@ -160,7 +160,28 @@ ip_route(const ip_addr_t *dest)
     snmp_inc_ipoutnoroutes();
     return NULL;
   }
+
+#if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
+  /* loopif is disabled, looopback traffic is passed through any netif */
+  if (ip_addr_isloopback(dest)) {
+    /* don't check for link on loopback traffic */
+    if (netif_is_up(netif_default)) {
+      return netif_default;
+    }
+    /* default netif is not up, just use any netif for loopback traffic */
+    for (netif = netif_list; netif != NULL; netif = netif->next) {
+      if (netif_is_up(netif)) {
+        return netif;
+      }
+    }
+    return NULL;
+  }
+#endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+
   /* no matching netif found, use default netif */
+  if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
+    return NULL;
+  }
   return netif_default;
 }
 
@@ -431,7 +452,11 @@ ip_input(struct pbuf *p, struct netif *inp)
         /* unicast to this interface address? */
         if (ip_addr_cmp(ip_current_dest_addr(), &(netif->ip_addr)) ||
             /* or broadcast on this interface network address? */
-            ip_addr_isbroadcast(ip_current_dest_addr(), netif)) {
+            ip_addr_isbroadcast(ip_current_dest_addr(), netif)
+#if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
+            || (ip4_addr_get_u32(ip_current_dest_addr()) == PP_HTONL(IPADDR_LOOPBACK))
+#endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+            ) {
           LWIP_DEBUGF(IP_DEBUG, ("ip_input: packet accepted on interface %c%c\n",
               netif->name[0], netif->name[1]));
           /* break out of for loop */
@@ -841,7 +866,11 @@ err_t ip_output_if_opt_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t
   ip_debug_print(p);
 
 #if ENABLE_LOOPBACK
-  if (ip_addr_cmp(dest, &netif->ip_addr)) {
+  if (ip_addr_cmp(dest, &netif->ip_addr)
+#if !LWIP_HAVE_LOOPIF
+      || ip_addr_isloopback(dest)
+#endif /* !LWIP_HAVE_LOOPIF */
+      ) {
     /* Packet to self, enqueue it for loopback */
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
     return netif_loop_output(netif, p);

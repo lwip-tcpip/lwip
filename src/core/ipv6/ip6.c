@@ -168,6 +168,23 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
     }
   }
 
+#if LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF
+  /* loopif is disabled, loopback traffic is passed through any netif */
+  if (ip6_addr_isloopback(dest)) {
+    /* don't check for link on loopback traffic */
+    if (netif_is_up(netif_default)) {
+      return netif_default;
+    }
+    /* default netif is not up, just use any netif for loopback traffic */
+    for (netif = netif_list; netif != NULL; netif = netif->next) {
+      if (netif_is_up(netif)) {
+        return netif;
+      }
+    }
+    return NULL;
+  }
+#endif /* LWIP_NETIF_LOOPBACK && !LWIP_HAVE_LOOPIF */
+
   /* no matching netif found, use default netif, if up */
   if (!netif_is_up(netif_default) || !netif_is_link_up(netif_default)) {
     return NULL;
@@ -855,6 +872,11 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
 #if ENABLE_LOOPBACK
   {
     int i;
+#if !LWIP_HAVE_LOOPIF
+    if (ip6_addr_isloopback(dest)) {
+      return netif_loop_output(netif, p);
+    }
+#endif /* !LWIP_HAVE_LOOPIF */
     for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
       if (ip6_addr_isvalid(netif_ip6_addr_state(netif, i)) &&
           ip6_addr_cmp(dest, netif_ip6_addr(netif, i))) {

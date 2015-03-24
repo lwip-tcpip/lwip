@@ -1375,7 +1375,9 @@
    ------------------------------------
 */
 /**
- * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1)
+ * LWIP_HAVE_LOOPIF==1: Support loop interface (127.0.0.1).
+ * This is only needed when no real netifs are available. If at least one other
+ * netif is available, loopback traffic uses this netif.
  */
 #ifndef LWIP_HAVE_LOOPIF
 #define LWIP_HAVE_LOOPIF                0
