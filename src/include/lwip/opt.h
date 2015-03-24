@@ -2613,6 +2613,27 @@
 */
 
 /**
+ * LWIP_HOOK_IP6_INPUT(pbuf, input_netif):
+ * - called from ip6_input() (IPv6)
+ * - pbuf: received struct pbuf passed to ip6_input()
+ * - input_netif: struct netif on which the packet has been received
+ * Return values:
+ * - 0: Hook has not consumed the packet, packet is processed as normal
+ * - != 0: Hook has consumed the packet.
+ * If the hook consumed the packet, 'pbuf' is in the responsibility of the hook
+ * (i.e. free it when done).
+ */
+
+/**
+ * LWIP_HOOK_IP6_ROUTE(src, dest):
+ * - called from ip6_route() (IPv6)
+ * - src: sourc IPv6 address
+ * - dest: destination IPv6 address
+ * Returns the destination netif or NULL if no destination netif is found. In
+ * that case, ip6_route() continues as normal.
+ */
+
+/**
  * LWIP_HOOK_VLAN_CHECK(netif, eth_hdr, vlan_hdr):
  * - called from ethernet_input() if VLAN support is enabled
  * - netif: struct netif on which the packet has been received

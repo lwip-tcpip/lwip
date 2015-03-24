@@ -83,6 +83,13 @@ ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
   struct netif *netif;
   s8_t i;
 
+#ifdef LWIP_HOOK_IP6_ROUTE
+  netif = LWIP_HOOK_IP6_ROUTE(src, dest);
+  if (netif != NULL) {
+    return netif;
+  }
+#endif
+
   /* If single netif configuration, fast return. */
   if ((netif_list != NULL) && (netif_list->next == NULL)) {
     if (!netif_is_up(netif_list) || !netif_is_link_up(netif_list)) {
@@ -387,6 +394,13 @@ ip6_input(struct pbuf *p, struct netif *inp)
     IP6_STATS_INC(ip6.drop);
     return ERR_OK;
   }
+
+#ifdef LWIP_HOOK_IP6_INPUT
+  if (LWIP_HOOK_IP6_INPUT(p, inp)) {
+    /* the packet has been eaten */
+    return ERR_OK;
+  }
+#endif
 
   /* header length exceeds first pbuf length, or ip length exceeds total pbuf length? */
   if ((IP6_HLEN > p->len) || ((IP6H_PLEN(ip6hdr) + IP6_HLEN) > p->tot_len)) {
