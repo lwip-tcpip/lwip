@@ -524,6 +524,7 @@ static void ccp_resetci(fsm *f) {
     ccp_options *go = &pcb->ccp_gotoptions;
     ccp_options *wo = &pcb->ccp_wantoptions;
     u_char opt_buf[CCP_MAX_OPTION_LENGTH];
+    int res;
 
     *go = *wo;
     pcb->all_rejected = 0;
@@ -620,26 +621,62 @@ static void ccp_resetci(fsm *f) {
     if (go->bsd_compress) {
 	opt_buf[0] = CI_BSD_COMPRESS;
 	opt_buf[1] = CILEN_BSD_COMPRESS;
-	opt_buf[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, BSD_MIN_BITS);
-	if (ccp_test(pcb, opt_buf, CILEN_BSD_COMPRESS, 0) <= 0)
-	    go->bsd_compress = 0;
+	for (;;) {
+	    if (go->bsd_bits < BSD_MIN_BITS) {
+		go->bsd_compress = 0;
+		break;
+	    }
+	    opt_buf[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
+	    res = ccp_test(pcb, opt_buf, CILEN_BSD_COMPRESS, 0);
+	    if (res > 0) {
+		break;
+	    } else if (res < 0) {
+		go->bsd_compress = 0;
+		break;
+	    }
+	    go->bsd_bits--;
+	}
     }
     if (go->deflate) {
 	if (go->deflate_correct) {
 	    opt_buf[0] = CI_DEFLATE;
 	    opt_buf[1] = CILEN_DEFLATE;
-	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_WORKS);
 	    opt_buf[3] = DEFLATE_CHK_SEQUENCE;
-	    if (ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0) <= 0)
-		go->deflate_correct = 0;
+	    for (;;) {
+		if (go->deflate_size < DEFLATE_MIN_WORKS) {
+		    go->deflate_correct = 0;
+		    break;
+		}
+		opt_buf[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+		res = ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0);
+		if (res > 0) {
+		    break;
+		} else if (res < 0) {
+		    go->deflate_correct = 0;
+		    break;
+		}
+		go->deflate_size--;
+	    }
 	}
 	if (go->deflate_draft) {
 	    opt_buf[0] = CI_DEFLATE_DRAFT;
 	    opt_buf[1] = CILEN_DEFLATE;
-	    opt_buf[2] = DEFLATE_MAKE_OPT(DEFLATE_MIN_WORKS);
 	    opt_buf[3] = DEFLATE_CHK_SEQUENCE;
-	    if (ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0) <= 0)
-		go->deflate_draft = 0;
+	    for (;;) {
+		if (go->deflate_size < DEFLATE_MIN_WORKS) {
+		    go->deflate_draft = 0;
+		    break;
+		}
+		opt_buf[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+		res = ccp_test(pcb, opt_buf, CILEN_DEFLATE, 0);
+		if (res > 0) {
+		    break;
+		} else if (res < 0) {
+		    go->deflate_draft = 0;
+		    break;
+		}
+		go->deflate_size--;
+	    }
 	}
 	if (!go->deflate_correct && !go->deflate_draft)
 	    go->deflate = 0;
@@ -677,15 +714,13 @@ static int ccp_cilen(fsm *f) {
  * ccp_addci - put our requests in a packet.
  */
 static void ccp_addci(fsm *f, u_char *p, int *lenp) {
-    int res;
     ppp_pcb *pcb = f->pcb;
     ccp_options *go = &pcb->ccp_gotoptions;
     u_char *p0 = p;
 
     /*
      * Add the compression types that we can receive, in decreasing
-     * preference order.  Get the kernel to allocate the first one
-     * in case it gets Acked.
+     * preference order.
      */
 #if MPPE_SUPPORT
     if (go->mppe) {
@@ -696,40 +731,18 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
 	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
 	MEMCPY(&opt_buf[CILEN_MPPE], mppe_recv_key, MPPE_MAX_KEY_LEN);
-	res = ccp_test(pcb, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0);
-	if (res > 0)
-	    p += CILEN_MPPE;
-	else
-	    /* This shouldn't happen, we've already tested it! */
-	    lcp_close(pcb, "MPPE required but not available in kernel");
+	p += CILEN_MPPE;
     }
 #endif /* MPPE_SUPPORT */
     if (go->deflate) {
-	p[0] = go->deflate_correct? CI_DEFLATE: CI_DEFLATE_DRAFT;
-	p[1] = CILEN_DEFLATE;
-	p[2] = DEFLATE_MAKE_OPT(go->deflate_size);
-	p[3] = DEFLATE_CHK_SEQUENCE;
-	if (p != p0) {
+	if (go->deflate_correct) {
+	    p[0] = CI_DEFLATE;
+	    p[1] = CILEN_DEFLATE;
+	    p[2] = DEFLATE_MAKE_OPT(go->deflate_size);
+	    p[3] = DEFLATE_CHK_SEQUENCE;
 	    p += CILEN_DEFLATE;
-	} else {
-	    for (;;) {
-		if (go->deflate_size < DEFLATE_MIN_WORKS) {
-		    go->deflate = 0;
-		    break;
-		}
-		res = ccp_test(pcb, p, CILEN_DEFLATE, 0);
-		if (res > 0) {
-		    p += CILEN_DEFLATE;
-		    break;
-		} else if (res < 0) {
-		    go->deflate = 0;
-		    break;
-		}
-		--go->deflate_size;
-		p[2] = DEFLATE_MAKE_OPT(go->deflate_size);
-	    }
 	}
-	if (p != p0 && go->deflate_correct && go->deflate_draft) {
+	if (go->deflate_draft) {
 	    p[0] = CI_DEFLATE_DRAFT;
 	    p[1] = CILEN_DEFLATE;
 	    p[2] = p[2 - CILEN_DEFLATE];
@@ -741,45 +754,18 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	p[0] = CI_BSD_COMPRESS;
 	p[1] = CILEN_BSD_COMPRESS;
 	p[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
-	if (p != p0) {
-	    p += CILEN_BSD_COMPRESS;	/* not the first option */
-	} else {
-	    for (;;) {
-		if (go->bsd_bits < BSD_MIN_BITS) {
-		    go->bsd_compress = 0;
-		    break;
-		}
-		res = ccp_test(pcb, p, CILEN_BSD_COMPRESS, 0);
-		if (res > 0) {
-		    p += CILEN_BSD_COMPRESS;
-		    break;
-		} else if (res < 0) {
-		    go->bsd_compress = 0;
-		    break;
-		}
-		--go->bsd_bits;
-		p[2] = BSD_MAKE_OPT(BSD_CURRENT_VERSION, go->bsd_bits);
-	    }
-	}
+	p += CILEN_BSD_COMPRESS;
     }
     /* XXX Should Predictor 2 be preferable to Predictor 1? */
     if (go->predictor_1) {
 	p[0] = CI_PREDICTOR_1;
 	p[1] = CILEN_PREDICTOR_1;
-	if (p == p0 && ccp_test(pcb, p, CILEN_PREDICTOR_1, 0) <= 0) {
-	    go->predictor_1 = 0;
-	} else {
-	    p += CILEN_PREDICTOR_1;
-	}
+	p += CILEN_PREDICTOR_1;
     }
     if (go->predictor_2) {
 	p[0] = CI_PREDICTOR_2;
 	p[1] = CILEN_PREDICTOR_2;
-	if (p == p0 && ccp_test(pcb, p, CILEN_PREDICTOR_2, 0) <= 0) {
-	    go->predictor_2 = 0;
-	} else {
-	    p += CILEN_PREDICTOR_2;
-	}
+	p += CILEN_PREDICTOR_2;
     }
 
     go->method = (p > p0)? p0[0]: -1;
