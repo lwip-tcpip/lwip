@@ -78,7 +78,7 @@
  * @return the netif on which to send to reach dest
  */
 struct netif *
-ip6_route(const struct ip6_addr *src, const struct ip6_addr *dest)
+ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
 {
   struct netif *netif;
   s8_t i;
@@ -917,7 +917,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  *         see ip_output_if() for more return values
  */
 err_t
-ip6_output(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
+ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth)
 {
   struct netif *netif;

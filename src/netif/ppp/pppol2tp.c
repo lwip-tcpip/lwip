@@ -82,9 +82,9 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect 
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip_addr *addr, u16_t port);
+static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 #if LWIP_IPV6
-static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip6_addr *addr, u16_t port);
+static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip6_addr_t *addr, u16_t port);
 #endif /* LWIP_IPV6 */
 static void pppol2tp_input(pppol2tp_pcb *l2tp, struct pbuf *p, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, struct pbuf *p, u16_t ns, u16_t nr);
@@ -392,7 +392,7 @@ static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip_addr *addr, u16_t port) {
+static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   LWIP_UNUSED_ARG(pcb);
 
@@ -413,7 +413,7 @@ free_and_return:
 
 #if LWIP_IPV6
 /* UDP Callback for incoming IPv6 L2TP frames */
-static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const struct ip6_addr *addr, u16_t port) {
+static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip6_addr_t *addr, u16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   LWIP_UNUSED_ARG(pcb);
 
