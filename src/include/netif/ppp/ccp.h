@@ -37,15 +37,15 @@
 #define CCP_H
 
 typedef struct ccp_options {
-    unsigned int bsd_compress     :1; /* do BSD Compress? */
     unsigned int deflate          :1; /* do Deflate? */
-    unsigned int predictor_1      :1; /* do Predictor-1? */
-    unsigned int predictor_2      :1; /* do Predictor-2? */
     unsigned int deflate_correct  :1; /* use correct code for deflate? */
     unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
-    unsigned int mppe             :1; /* do MPPE? */
-    unsigned int                  :1; /* 1 bit of padding to round out to 8 bits */
+    unsigned int bsd_compress     :1; /* do BSD Compress? */
+    unsigned int predictor_1      :1; /* do Predictor-1? */
+    unsigned int predictor_2      :1; /* do Predictor-2? */
+    unsigned int                  :2; /* 2 bit of padding to round out to 8 bits */
 
+    u8_t mppe;			/* MPPE bitfield */
     u_short bsd_bits;		/* # bits/code for BSD Compress */
     u_short deflate_size;	/* lg(window size) for Deflate */
     short method;		/* code for chosen compression method */
