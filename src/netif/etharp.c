@@ -75,9 +75,10 @@ const struct eth_addr ethzero = {{0,0,0,0,0,0}};
 
 /** the time an ARP entry stays valid after its last update,
  *  for ARP_TMR_INTERVAL = 1000, this is
- *  (60 * 20) seconds = 20 minutes.
+ *  (60 * 5) seconds = 5 minutes.
  */
-#define ARP_MAXAGE              1200
+#define ARP_MAXAGE              300
+
 /** Re-request a used ARP entry 1 minute before it would expire to prevent
  *  breaking a steadily used connection because the ARP entry timed out. */
 #define ARP_AGE_REREQUEST_USED_UNICAST   (ARP_MAXAGE - 30)
