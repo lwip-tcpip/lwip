@@ -30,6 +30,14 @@
 #include "netif/ppp/mppe.h"
 #include "netif/ppp/pppdebug.h"
 
+#if LWIP_INCLUDED_POLARSSL_SHA1
+#include "netif/ppp/polarssl/sha1.h"
+#else
+#include "polarssl/sha1.h"
+#endif
+
+#define SHA1_SIGNATURE_SIZE 20
+
 static unsigned int
 setup_sg(struct scatterlist *sg, const void *address, unsigned int length)
 {
@@ -61,8 +69,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
  */
 struct ppp_mppe_state {
 	struct crypto_blkcipher *arc4;
-	struct crypto_hash *sha1;
-	unsigned char *sha1_digest;
+	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 	unsigned char master_key[MPPE_MAX_KEY_LEN];
 	unsigned char session_key[MPPE_MAX_KEY_LEN];
 	unsigned keylen;	/* key length in bytes             */
@@ -101,23 +108,14 @@ struct ppp_mppe_state {
  */
 static void get_new_key_from_sha(struct ppp_mppe_state * state)
 {
-	struct hash_desc desc;
-	struct scatterlist sg[4];
-	unsigned int nbytes;
+  sha1_context sha1;
 
-	sg_init_table(sg, 4);
-
-	nbytes = setup_sg(&sg[0], state->master_key, state->keylen);
-	nbytes += setup_sg(&sg[1], sha_pad->sha_pad1,
-			   sizeof(sha_pad->sha_pad1));
-	nbytes += setup_sg(&sg[2], state->session_key, state->keylen);
-	nbytes += setup_sg(&sg[3], sha_pad->sha_pad2,
-			   sizeof(sha_pad->sha_pad2));
-
-	desc.tfm = state->sha1;
-	desc.flags = 0;
-
-	crypto_hash_digest(&desc, sg, nbytes, state->sha1_digest);
+  sha1_starts(&sha1);
+  sha1_update(&sha1, state->master_key, state->master_key);
+  sha1_update(&sha1, sha_pad->sha_pad1, sizeof(sha_pad->sha_pad1));
+  sha1_update(&sha1, state->session_key, state->keylen);
+  sha1_update(&sha1, sha_pad->sha_pad2, sizeof(sha_pad->sha_pad2));
+  sha1_finish(&sha1, state->sha1_digest);
 }
 
 /*
@@ -176,20 +174,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 		goto out_free;
 	}
 
-	state->sha1 = crypto_alloc_hash("sha1", 0, CRYPTO_ALG_ASYNC);
-	if (IS_ERR(state->sha1)) {
-		state->sha1 = NULL;
-		goto out_free;
-	}
-
-	digestsize = crypto_hash_digestsize(state->sha1);
-	if (digestsize < MPPE_MAX_KEY_LEN)
-		goto out_free;
-
-	state->sha1_digest = kmalloc(digestsize, GFP_KERNEL);
-	if (!state->sha1_digest)
-		goto out_free;
-
 	/* Save keys. */
 	memcpy(state->master_key, &options[CILEN_MPPE],
 	       sizeof(state->master_key));
@@ -204,10 +188,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 	return (void *)state;
 
 	out_free:
-	    if (state->sha1_digest)
-		kfree(state->sha1_digest);
-	    if (state->sha1)
-		crypto_free_hash(state->sha1);
 	    if (state->arc4)
 		crypto_free_blkcipher(state->arc4);
 	    kfree(state);
@@ -222,10 +202,6 @@ static void mppe_free(void *arg)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	if (state) {
-	    if (state->sha1_digest)
-		kfree(state->sha1_digest);
-	    if (state->sha1)
-		crypto_free_hash(state->sha1);
 	    if (state->arc4)
 		crypto_free_blkcipher(state->arc4);
 	    kfree(state);
@@ -677,8 +653,7 @@ static struct compressor ppp_mppe = {
 static int ppp_mppe_init(void)
 {
 	int answer;
-	if (!(crypto_has_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC) &&
-	      crypto_has_hash("sha1", 0, CRYPTO_ALG_ASYNC)))
+	if (!(crypto_has_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC)))
 		return -ENODEV;
 
 	sha_pad = kmalloc(sizeof(struct sha_pad), GFP_KERNEL);
