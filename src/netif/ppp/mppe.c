@@ -23,20 +23,7 @@
  *                    deprecated in 2.6
  */
 
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
-#include <linux/types.h>
-#include <linux/slab.h>
-#include <linux/string.h>
-#include <linux/crypto.h>
-#include <linux/mm.h>
-#include <linux/ppp_defs.h>
-#include <linux/ppp-comp.h>
-#include <linux/scatterlist.h>
-#include <asm/unaligned.h>
-
+#include "netif/ppp/ccp.h"
 #include "netif/ppp/mppe.h"
 #include "netif/ppp/pppdebug.h"
 
