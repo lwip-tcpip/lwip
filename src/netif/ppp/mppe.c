@@ -23,6 +23,8 @@
  *                    deprecated in 2.6
  */
 
+#include "lwip/err.h"
+
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/ccp.h"
 #include "netif/ppp/mppe.h"
@@ -450,7 +452,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 			PPPDEBUG(LOG_DEBUG,
 			       ("mppe_decompress[%d]: short pkt (%d)\n",
 			       state->unit, isize));
-		return DECOMP_ERROR;
+		return ERR_BUF;
 	}
 
 	/*
@@ -463,7 +465,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: osize too small! "
 		       "(have: %d need: %d)\n", state->unit,
 		       osize, isize - MPPE_OVHD - 1));
-		return DECOMP_ERROR;
+		return ERR_BUF;
 	}
 	osize = isize - MPPE_OVHD - 2;	/* assume no PFC */
 
@@ -495,14 +497,15 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 
 	if (sanity) {
 		if (state->sanity_errors < SANITY_MAX)
-			return DECOMP_ERROR;
+			return ERR_BUF;
 		else
 			/*
 			 * Take LCP down if the peer is sending too many bogons.
 			 * We don't want to do this for a single or just a few
 			 * instances since it could just be due to packet corruption.
 			 */
-			return DECOMP_FATALERROR;
+			/* FIXME: call lcp_close() here */
+			return ERR_BUF;
 	}
 
 	/*
@@ -527,13 +530,13 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 				 * Signal the peer to rekey (by sending a CCP Reset-Request).
 				 */
 				state->discard = 1;
-				return DECOMP_ERROR;
+				return ERR_BUF;
 			}
 		} else {
 			/* discard state */
 			if (!flushed) {
 				/* ccp.c will be silent (no additional CCP Reset-Requests). */
-				return DECOMP_ERROR;
+				return ERR_BUF;
 			} else {
 				/* Rekey for every missed "flag" packet. */
 				while ((ccount & ~0xff) !=
@@ -581,7 +584,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	setup_sg(sg_out, obuf, 1);
 	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, 1) != 0) {
 		PPPDEBUG(LOG_DEBUG, ("crypto_cypher_decrypt failed\n"));
-		return DECOMP_ERROR;
+		return ERR_BUF;
 	}
 
 	/*
@@ -601,7 +604,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	setup_sg(sg_out, obuf + 1, osize - 1);
 	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, isize - 1)) {
 		PPPDEBUG(LOG_DEBUG, ("crypto_cypher_decrypt failed\n"));
-		return DECOMP_ERROR;
+		return ERR_BUF;
 	}
 
 	state->stats.unc_bytes += osize;
