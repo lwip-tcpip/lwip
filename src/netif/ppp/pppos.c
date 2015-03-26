@@ -339,6 +339,7 @@ static err_t
 pppos_connect(ppp_pcb *ppp, void *ctx)
 {
   pppos_pcb *pppos = (pppos_pcb *)ctx;
+  PPPOS_DECL_PROTECT(lev);
 
 #if PPP_INPROC_IRQ_SAFE
   /* input pbuf left over from last session? */
@@ -359,7 +360,9 @@ pppos_connect(ppp_pcb *ppp, void *ctx)
    */
   pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
   pppos->out_accm[15] = 0x60;
+  PPPOS_PROTECT(lev);
   pppos->open = 1;
+  PPPOS_UNPROTECT(lev);
 
   /*
    * Start the connection and handle incoming events (packet or timeout).
@@ -378,6 +381,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
   ipcp_options *ipcp_wo;
 #endif /* PPP_IPV4_SUPPORT */
   lcp_options *lcp_wo;
+  PPPOS_DECL_PROTECT(lev);
 
 #if PPP_INPROC_IRQ_SAFE
   /* input pbuf left over from last session? */
@@ -421,7 +425,9 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
    */
   pppos->in_accm[15] = 0x60; /* no need to protect since RX is not running */
   pppos->out_accm[15] = 0x60;
+  PPPOS_PROTECT(lev);
   pppos->open = 1;
+  PPPOS_UNPROTECT(lev);
 
   /*
    * Wait for something to happen.
