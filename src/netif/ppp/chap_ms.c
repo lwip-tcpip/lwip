@@ -152,7 +152,6 @@ static char *mschap2_peer_challenge = NULL;
 
 #include "netif/ppp/fsm.h"		/* Need to poke MPPE options */
 #include "netif/ppp/ccp.h"
-#include <net/ppp-comp.h>
 #endif /* MPPE_SUPPORT */
 
 #if PPP_OPTIONS

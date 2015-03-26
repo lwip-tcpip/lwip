@@ -38,7 +38,6 @@
 
 #include "netif/ppp/fsm.h"
 #include "netif/ppp/ccp.h"
-#include <net/ppp-comp.h>
 
 #if MPPE_SUPPORT
 #include "netif/ppp/chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
