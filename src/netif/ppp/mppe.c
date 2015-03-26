@@ -23,15 +23,10 @@
  *                    deprecated in 2.6
  */
 
+#include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/ccp.h"
 #include "netif/ppp/mppe.h"
 #include "netif/ppp/pppdebug.h"
-
-MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
-MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_ALIAS("ppp-compress-" __stringify(CI_MPPE));
-MODULE_VERSION("1.0.2");
 
 static unsigned int
 setup_sg(struct scatterlist *sg, const void *address, unsigned int length)
@@ -676,7 +671,7 @@ static struct compressor ppp_mppe = {
  * this way the module will fail to insmod if they aren't available.
  */
 
-static int __init ppp_mppe_init(void)
+static int ppp_mppe_init(void)
 {
 	int answer;
 	if (!(crypto_has_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC) &&
@@ -698,11 +693,8 @@ static int __init ppp_mppe_init(void)
 	return answer;
 }
 
-static void __exit ppp_mppe_cleanup(void)
+static void ppp_mppe_cleanup(void)
 {
 	ppp_unregister_compressor(&ppp_mppe);
 	kfree(sha_pad);
 }
-
-module_init(ppp_mppe_init);
-module_exit(ppp_mppe_cleanup);
