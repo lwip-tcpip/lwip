@@ -37,7 +37,7 @@
 #include <linux/scatterlist.h>
 #include <asm/unaligned.h>
 
-#include "ppp_mppe.h"
+#include "netif/ppp/mppe.h"
 
 MODULE_AUTHOR("Frank Cusack <fcusack@fcusack.com>");
 MODULE_DESCRIPTION("Point-to-Point Protocol Microsoft Point-to-Point Encryption support");
