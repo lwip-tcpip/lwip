@@ -23,6 +23,9 @@
  *                    deprecated in 2.6
  */
 
+#include "lwip/opt.h"
+#if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
+
 #include "lwip/err.h"
 
 #include "netif/ppp/ppp_impl.h"
@@ -676,3 +679,5 @@ static void ppp_mppe_cleanup(void)
 	ppp_unregister_compressor(&ppp_mppe);
 	kfree(sha_pad);
 }
+
+#endif /* PPP_SUPPORT && MPPE_SUPPORT */
