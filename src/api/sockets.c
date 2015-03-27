@@ -2555,8 +2555,8 @@ static void lwip_socket_drop_registered_memberships(int s)
 
   for (i = 0; i < LWIP_SOCKET_MAX_MEMBERSHIPS; i++) {
     if (socket_ipv4_multicast_memberships[i].sa == sa) {
-      netconn_join_leave_group(sockets[s].conn, &socket_ipv4_multicast_memberships[i].if_addr,
-        &socket_ipv4_multicast_memberships[i].multi_addr, NETCONN_LEAVE);
+      netconn_join_leave_group(sockets[s].conn, &socket_ipv4_multicast_memberships[i].multi_addr,
+        &socket_ipv4_multicast_memberships[i].if_addr, NETCONN_LEAVE);
       socket_ipv4_multicast_memberships[i].sa = 0;
       ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].if_addr);
       ip_addr_set_zero(&socket_ipv4_multicast_memberships[i].multi_addr);
