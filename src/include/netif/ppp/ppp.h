@@ -85,10 +85,6 @@
 #define PPP_STATS_SUPPORT   0
 #endif
 
-#ifndef MPPE_SUPPORT
-#define MPPE_SUPPORT        0
-#endif
-
 
 /*************************
 *** PUBLIC DEFINITIONS ***

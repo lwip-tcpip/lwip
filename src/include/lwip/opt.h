@@ -2037,6 +2037,13 @@
 #endif
 
 /**
+ * MPPE_SUPPORT==1: Support MPPE. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef MPPE_SUPPORT
+#define MPPE_SUPPORT                     0
+#endif
+
+/**
  * ECP_SUPPORT==1: Support ECP. CURRENTLY NOT SUPPORTED! DO NOT SET!
  */
 #ifndef ECP_SUPPORT
@@ -2140,6 +2147,12 @@
 #ifndef LWIP_INCLUDED_POLARSSL_DES
 #define LWIP_INCLUDED_POLARSSL_DES        1 /* MSCHAP require DES support */
 #endif /* LWIP_INCLUDED_POLARSSL_DES */
+/* MS-CHAP support is required for MPPE */
+#if MPPE_SUPPORT
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4
+#define LWIP_INCLUDED_POLARSSL_ARC4       1 /* MPPE require ARC4 support */
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4*/
+#endif /* MPPE_SUPPORT */
 #endif /* MSCHAP_SUPPORT */
 
 /* Default value if unset */
@@ -2155,6 +2168,9 @@
 #ifndef LWIP_INCLUDED_POLARSSL_DES
 #define LWIP_INCLUDED_POLARSSL_DES        0
 #endif /* LWIP_INCLUDED_POLARSSL_DES */
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4
+#define LWIP_INCLUDED_POLARSSL_ARC4       0
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
 
 /*
  * Timeouts

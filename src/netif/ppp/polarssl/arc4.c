@@ -38,12 +38,10 @@
  *  http://groups.google.com/group/sci.crypt/msg/10a300c9d21afca0
  */
 
-#include "polarssl/config.h"
+#include "lwip/opt.h"
+#if PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_ARC4
 
-#if defined(POLARSSL_ARC4_C)
-
-#include "polarssl/arc4.h"
-
+#include "netif/ppp/polarssl/arc4.h"
 /*
  * ARC4 key schedule
  */
@@ -100,74 +98,4 @@ void arc4_crypt( arc4_context *ctx, unsigned char *buf, int buflen )
     ctx->y = y;
 }
 
-#if defined(POLARSSL_SELF_TEST)
-
-#include <string.h>
-#include <stdio.h>
-
-/*
- * ARC4 tests vectors as posted by Eric Rescorla in sep. 1994:
- *
- * http://groups.google.com/group/comp.security.misc/msg/10a300c9d21afca0
- */
-static const unsigned char arc4_test_key[3][8] =
-{
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF },
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF },
-    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
-};
-
-static const unsigned char arc4_test_pt[3][8] =
-{
-    { 0x01, 0x23, 0x45, 0x67, 0x89, 0xAB, 0xCD, 0xEF },
-    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-    { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 }
-};
-
-static const unsigned char arc4_test_ct[3][8] =
-{
-    { 0x75, 0xB7, 0x87, 0x80, 0x99, 0xE0, 0xC5, 0x96 },
-    { 0x74, 0x94, 0xC2, 0xE7, 0x10, 0x4B, 0x08, 0x79 },
-    { 0xDE, 0x18, 0x89, 0x41, 0xA3, 0x37, 0x5D, 0x3A }
-};
-
-/*
- * Checkup routine
- */
-int arc4_self_test( int verbose )
-{
-    int i;
-    unsigned char buf[8];
-    arc4_context ctx;
-
-    for( i = 0; i < 3; i++ )
-    {
-        if( verbose != 0 )
-            printf( "  ARC4 test #%d: ", i + 1 );
-
-        memcpy( buf, arc4_test_pt[i], 8 );
-
-        arc4_setup( &ctx, (unsigned char *) arc4_test_key[i], 8 );
-        arc4_crypt( &ctx, buf, 8 );
-
-        if( memcmp( buf, arc4_test_ct[i], 8 ) != 0 )
-        {
-            if( verbose != 0 )
-                printf( "failed\n" );
-
-            return( 1 );
-        }
-
-        if( verbose != 0 )
-            printf( "passed\n" );
-    }
-
-    if( verbose != 0 )
-        printf( "\n" );
-
-    return( 0 );
-}
-
-#endif
-
-#endif
+#endif /* PPP_SUPPORT && LWIP_INCLUDED_POLARSSL_DES */

@@ -32,8 +32,12 @@
  *  NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
  *  SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef POLARSSL_ARC4_H
-#define POLARSSL_ARC4_H
+
+#include "lwip/opt.h"
+#if LWIP_INCLUDED_POLARSSL_ARC4
+
+#ifndef LWIP_INCLUDED_POLARSSL_ARC4_H
+#define LWIP_INCLUDED_POLARSSL_ARC4_H
 
 /**
  * \brief          ARC4 context structure
@@ -68,15 +72,10 @@ void arc4_setup( arc4_context *ctx, unsigned char *key, int keylen );
  */
 void arc4_crypt( arc4_context *ctx, unsigned char *buf, int buflen );
 
-/*
- * \brief          Checkup routine
- *
- * \return         0 if successful, or 1 if the test failed
- */
-int arc4_self_test( int verbose );
-
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* arc4.h */
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4_H */
+
+#endif /* LWIP_INCLUDED_POLARSSL_ARC4 */
