@@ -147,14 +147,13 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 static void *mppe_alloc(unsigned char *options, int optlen)
 {
 	struct ppp_mppe_state *state;
-	unsigned int digestsize;
 
 	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
 	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
 		goto out;
 
 	/* FIXME: remove malloc() */
-	state = malloc(sizeof(*state));
+	state = (struct ppp_mppe_state *)malloc(sizeof(*state));
 	if (state == NULL)
 		goto out;
 
@@ -171,9 +170,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 
 	return (void *)state;
 
-	out_free:
-	    free(state);
-	out:
+out:
 	return NULL;
 }
 
@@ -227,9 +224,9 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
 		       debugstr, unit, (state->keylen == 16) ? 128 : 40,
 		       (state->stateful) ? "stateful" : "stateless"));
 
-		for (i = 0; i < sizeof(state->master_key); i++)
+		for (i = 0; i < (int)sizeof(state->master_key); i++)
 			sprintf(mkey + i * 2, "%02x", state->master_key[i]);
-		for (i = 0; i < sizeof(state->session_key); i++)
+		for (i = 0; i < (int)sizeof(state->session_key); i++)
 			sprintf(skey + i * 2, "%02x", state->session_key[i]);
 		PPPDEBUG(LOG_DEBUG,
 		       ("%s[%d]: keys: master: %s initial session: %s\n",
@@ -260,7 +257,7 @@ static int
 mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug)
 {
-	/* ARGSUSED */
+	LWIP_UNUSED_ARG(hdrlen);
 	return mppe_init(arg, options, optlen, unit, debug, "mppe_comp_init");
 }
 
@@ -310,19 +307,24 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 
 	osize = isize + MPPE_OVHD + 2;
 
+
 	/*
 	 * Copy over the PPP header and set control bits.
 	 */
+	/* FIXME: use PUT* macros */
 	obuf[0] = PPP_ADDRESS(ibuf);
 	obuf[1] = PPP_CONTROL(ibuf);
-	put_unaligned_be16(PPP_COMP, obuf + 2);
+	obuf[2] = PPP_COMP>>8;
+	obuf[3] = PPP_COMP;
 	obuf += PPP_HDRLEN;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
 	if (state->debug >= 7)
 		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", state->unit,
 		       state->ccount));
-	put_unaligned_be16(state->ccount, obuf);
+	/* FIXME: use PUT* macros */
+	obuf[0] = state->ccount>>8;
+	obuf[1] = state->ccount;
 
 	if (!state->stateful ||	/* stateless mode     */
 	    ((state->ccount & 0xff) == 0xff) ||	/* "flag" packet      */
@@ -351,7 +353,8 @@ static int
 mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
 		 int hdrlen, int mru, int debug)
 {
-	/* ARGSUSED */
+	LWIP_UNUSED_ARG(hdrlen);
+	LWIP_UNUSED_ARG(mru);
 	return mppe_init(arg, options, optlen, unit, debug, "mppe_decomp_init");
 }
 
@@ -360,7 +363,7 @@ mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
  */
 static void mppe_decomp_reset(void *arg)
 {
-	/* ARGSUSED */
+	LWIP_UNUSED_ARG(arg);
 	return;
 }
 
@@ -541,6 +544,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 static void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+	LWIP_UNUSED_ARG(icnt);
 
 	if (state->debug &&
 	    (PPP_PROTOCOL(ibuf) >= 0x0021 && PPP_PROTOCOL(ibuf) <= 0x00fa))
