@@ -144,7 +144,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 /*
  * Allocate space for a (de)compressor.
  */
-static void *mppe_alloc(unsigned char *options, int optlen)
+void *mppe_alloc(unsigned char *options, int optlen)
 {
 	struct ppp_mppe_state *state;
 
@@ -177,7 +177,7 @@ out:
 /*
  * Deallocate space for a (de)compressor.
  */
-static void mppe_free(void *arg)
+void mppe_free(void *arg)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	if (state) {
@@ -253,7 +253,7 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
 	return 1;
 }
 
-static int
+int
 mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug)
 {
@@ -270,7 +270,7 @@ mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-static void mppe_comp_reset(void *arg)
+void mppe_comp_reset(void *arg)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 
@@ -282,7 +282,7 @@ static void mppe_comp_reset(void *arg)
  * It's strange to call this a compressor, since the output is always
  * MPPE_OVHD + 2 bytes larger than the input.
  */
-static int
+int
 mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	      int isize, int osize)
 {
@@ -349,7 +349,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	return osize;
 }
 
-static int
+int
 mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
 		 int hdrlen, int mru, int debug)
 {
@@ -361,7 +361,7 @@ mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-static void mppe_decomp_reset(void *arg)
+void mppe_decomp_reset(void *arg)
 {
 	LWIP_UNUSED_ARG(arg);
 	return;
@@ -370,7 +370,7 @@ static void mppe_decomp_reset(void *arg)
 /*
  * Decompress (decrypt) an MPPE packet.
  */
-static int
+int
 mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 		int osize)
 {
@@ -541,7 +541,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
  * of what should be encrypted.  At the least, we should drop this
  * packet.  (How to do this?)
  */
-static void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
+void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	LWIP_UNUSED_ARG(icnt);
