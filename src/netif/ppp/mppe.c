@@ -549,6 +549,7 @@ static void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
 		       "(proto %04x)\n", state->unit, PPP_PROTOCOL(ibuf)));
 }
 
+#if 0
 /*************************************************************
  * Module interface table
  *************************************************************/
@@ -571,5 +572,6 @@ static struct compressor ppp_mppe = {
 	.incomp         = mppe_incomp,
 	.comp_extra     = MPPE_PAD,
 };
+#endif /* 0 */
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
