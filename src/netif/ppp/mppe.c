@@ -568,33 +568,7 @@ static struct compressor ppp_mppe = {
 	.decomp_reset   = mppe_decomp_reset,
 	.decompress     = mppe_decompress,
 	.incomp         = mppe_incomp,
-	.owner          = THIS_MODULE,
 	.comp_extra     = MPPE_PAD,
 };
-
-/*
- * ppp_mppe_init()
- *
- * Prior to allowing load, try to load the arc4 and sha1 crypto
- * libraries.  The actual use will be allocated later, but
- * this way the module will fail to insmod if they aren't available.
- */
-
-static int ppp_mppe_init(void)
-{
-	int answer;
-
-	answer = ppp_register_compressor(&ppp_mppe);
-
-	if (answer == 0)
-		PPPDEBUG(LOG_DEBUG, ("PPP MPPE Compression module registered\n"));
-
-	return answer;
-}
-
-static void ppp_mppe_cleanup(void)
-{
-	ppp_unregister_compressor(&ppp_mppe);
-}
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
