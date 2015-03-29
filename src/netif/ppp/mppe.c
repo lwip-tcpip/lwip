@@ -86,7 +86,6 @@ struct ppp_mppe_state {
 	int sanity_errors;	/* take down LCP if too many */
 	int unit;
 	int debug;
-	struct compstat stats;
 };
 
 /* struct ppp_mppe_state.bits definitions */
@@ -346,24 +345,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	/* Encrypt packet */
 	MEMCPY(obuf, ibuf, isize);
 	arc4_crypt(&state->arc4, obuf, isize);
-
-	state->stats.unc_bytes += isize;
-	state->stats.unc_packets++;
-	state->stats.comp_bytes += osize;
-	state->stats.comp_packets++;
-
 	return osize;
-}
-
-/*
- * Since every frame grows by MPPE_OVHD + 2 bytes, this is always going
- * to look bad ... and the longer the link is up the worse it will get.
- */
-static void mppe_comp_stats(void *arg, struct compstat *stats)
-{
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
-
-	*stats = state->stats;
 }
 
 static int
@@ -545,11 +527,6 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	MEMCPY(obuf+1, ibuf+1, isize-1);
 	arc4_crypt(&state->arc4, obuf+1, isize-1);
 
-	state->stats.unc_bytes += osize;
-	state->stats.unc_packets++;
-	state->stats.comp_bytes += isize;
-	state->stats.comp_packets++;
-
 	/* good packet credit */
 	state->sanity_errors >>= 1;
 
@@ -571,11 +548,6 @@ static void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
 		PPPDEBUG(LOG_DEBUG,
 		       ("mppe_incomp[%d]: incompressible (unencrypted) data! "
 		       "(proto %04x)\n", state->unit, PPP_PROTOCOL(ibuf)));
-
-	state->stats.inc_bytes += icnt;
-	state->stats.inc_packets++;
-	state->stats.unc_bytes += icnt;
-	state->stats.unc_packets++;
 }
 
 /*************************************************************
@@ -592,14 +564,12 @@ static struct compressor ppp_mppe = {
 	.comp_init      = mppe_comp_init,
 	.comp_reset     = mppe_comp_reset,
 	.compress       = mppe_compress,
-	.comp_stat      = mppe_comp_stats,
 	.decomp_alloc   = mppe_alloc,
 	.decomp_free    = mppe_free,
 	.decomp_init    = mppe_decomp_init,
 	.decomp_reset   = mppe_decomp_reset,
 	.decompress     = mppe_decompress,
 	.incomp         = mppe_incomp,
-	.decomp_stat    = mppe_comp_stats,
 	.owner          = THIS_MODULE,
 	.comp_extra     = MPPE_PAD,
 };
