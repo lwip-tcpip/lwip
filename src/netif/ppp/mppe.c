@@ -99,7 +99,7 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
   u8_t i;
 
   sha1_starts(&sha1);
-  sha1_update(&sha1, state->master_key, state->master_key);
+  sha1_update(&sha1, state->master_key, state->keylen);
 
   /* first padding, 256 bytes of 0x00 */
   memset(pad, 0x00, sizeof(pad));
