@@ -153,7 +153,8 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
 		goto out;
 
-	state = kzalloc(sizeof(*state), GFP_KERNEL);
+	/* FIXME: remove malloc() */
+	state = malloc(sizeof(*state));
 	if (state == NULL)
 		goto out;
 
@@ -171,7 +172,7 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 	return (void *)state;
 
 	out_free:
-	    kfree(state);
+	    free(state);
 	out:
 	return NULL;
 }
@@ -183,7 +184,7 @@ static void mppe_free(void *arg)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	if (state) {
-	    kfree(state);
+	    free(state);
 	}
 }
 
