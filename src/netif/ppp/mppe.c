@@ -26,6 +26,8 @@
 #include "lwip/opt.h"
 #if PPP_SUPPORT && MPPE_SUPPORT  /* don't build if not configured for use in lwipopts.h */
 
+#include <string.h>
+
 #include "lwip/err.h"
 
 #include "netif/ppp/ppp_impl.h"
@@ -37,6 +39,12 @@
 #include "netif/ppp/polarssl/sha1.h"
 #else
 #include "polarssl/sha1.h"
+#endif
+
+#if LWIP_INCLUDED_POLARSSL_ARC4
+#include "netif/ppp/polarssl/arc4.h"
+#else
+#include "polarssl/arc4.h"
 #endif
 
 #define SHA1_SIGNATURE_SIZE 20
@@ -71,7 +79,7 @@ static inline void sha_pad_init(struct sha_pad *shapad)
  * State for an MPPE (de)compressor.
  */
 struct ppp_mppe_state {
-	struct crypto_blkcipher *arc4;
+	arc4_context arc4;
 	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 	unsigned char master_key[MPPE_MAX_KEY_LEN];
 	unsigned char session_key[MPPE_MAX_KEY_LEN];
@@ -127,21 +135,11 @@ static void get_new_key_from_sha(struct ppp_mppe_state * state)
  */
 static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 {
-	struct scatterlist sg_in[1], sg_out[1];
-	struct blkcipher_desc desc = { .tfm = state->arc4 };
-
 	get_new_key_from_sha(state);
 	if (!initial_key) {
-		crypto_blkcipher_setkey(state->arc4, state->sha1_digest,
-					state->keylen);
-		sg_init_table(sg_in, 1);
-		sg_init_table(sg_out, 1);
-		setup_sg(sg_in, state->sha1_digest, state->keylen);
-		setup_sg(sg_out, state->session_key, state->keylen);
-		if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in,
-					     state->keylen) != 0) {
-		    PPPDEBUG(LOG_DEBUG, ("mppe_rekey: cipher_encrypt failed\n"));
-		}
+		arc4_setup(&state->arc4, state->sha1_digest, state->keylen);
+		MEMCPY(state->session_key, state->sha1_digest, state->keylen);
+		arc4_crypt(&state->arc4, state->session_key, state->keylen);
 	} else {
 		memcpy(state->session_key, state->sha1_digest, state->keylen);
 	}
@@ -151,7 +149,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 		state->session_key[1] = 0x26;
 		state->session_key[2] = 0x9e;
 	}
-	crypto_blkcipher_setkey(state->arc4, state->session_key, state->keylen);
+	arc4_crypt(&state->arc4, state->session_key, state->keylen);
 }
 
 /*
@@ -170,13 +168,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 	if (state == NULL)
 		goto out;
 
-
-	state->arc4 = crypto_alloc_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC);
-	if (IS_ERR(state->arc4)) {
-		state->arc4 = NULL;
-		goto out_free;
-	}
-
 	/* Save keys. */
 	memcpy(state->master_key, &options[CILEN_MPPE],
 	       sizeof(state->master_key));
@@ -191,8 +182,6 @@ static void *mppe_alloc(unsigned char *options, int optlen)
 	return (void *)state;
 
 	out_free:
-	    if (state->arc4)
-		crypto_free_blkcipher(state->arc4);
 	    kfree(state);
 	out:
 	return NULL;
@@ -205,8 +194,6 @@ static void mppe_free(void *arg)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	if (state) {
-	    if (state->arc4)
-		crypto_free_blkcipher(state->arc4);
 	    kfree(state);
 	}
 }
@@ -313,9 +300,7 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	      int isize, int osize)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
-	struct blkcipher_desc desc = { .tfm = state->arc4 };
 	int proto;
-	struct scatterlist sg_in[1], sg_out[1];
 
 	/*
 	 * Check that the protocol is in the range we handle.
@@ -367,14 +352,8 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	isize -= 2;
 
 	/* Encrypt packet */
-	sg_init_table(sg_in, 1);
-	sg_init_table(sg_out, 1);
-	setup_sg(sg_in, ibuf, isize);
-	setup_sg(sg_out, obuf, osize);
-	if (crypto_blkcipher_encrypt(&desc, sg_out, sg_in, isize) != 0) {
-		PPPDEBUG(LOG_DEBUG, ("crypto_cypher_encrypt failed\n"));
-		return -1;
-	}
+	MEMCPY(obuf, ibuf, isize);
+	arc4_crypt(&state->arc4, obuf, isize);
 
 	state->stats.unc_bytes += isize;
 	state->stats.unc_packets++;
@@ -420,11 +399,9 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 		int osize)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
-	struct blkcipher_desc desc = { .tfm = state->arc4 };
 	unsigned ccount;
 	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
 	int sanity = 0;
-	struct scatterlist sg_in[1], sg_out[1];
 
 	if (isize <= PPP_HDRLEN + MPPE_OVHD) {
 		if (state->debug)
@@ -557,14 +534,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	 * Decrypt the first byte in order to check if it is
 	 * a compressed or uncompressed protocol field.
 	 */
-	sg_init_table(sg_in, 1);
-	sg_init_table(sg_out, 1);
-	setup_sg(sg_in, ibuf, 1);
-	setup_sg(sg_out, obuf, 1);
-	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, 1) != 0) {
-		PPPDEBUG(LOG_DEBUG, ("crypto_cypher_decrypt failed\n"));
-		return ERR_BUF;
-	}
+	obuf[0] = ibuf[0];
+	arc4_crypt(&state->arc4, obuf, 1);
 
 	/*
 	 * Do PFC decompression.
@@ -579,12 +550,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	}
 
 	/* And finally, decrypt the rest of the packet. */
-	setup_sg(sg_in, ibuf + 1, isize - 1);
-	setup_sg(sg_out, obuf + 1, osize - 1);
-	if (crypto_blkcipher_decrypt(&desc, sg_out, sg_in, isize - 1)) {
-		PPPDEBUG(LOG_DEBUG, ("crypto_cypher_decrypt failed\n"));
-		return ERR_BUF;
-	}
+	MEMCPY(obuf+1, ibuf+1, isize-1);
+	arc4_crypt(&state->arc4, obuf+1, isize-1);
 
 	state->stats.unc_bytes += osize;
 	state->stats.unc_packets++;
@@ -656,8 +623,6 @@ static struct compressor ppp_mppe = {
 static int ppp_mppe_init(void)
 {
 	int answer;
-	if (!(crypto_has_blkcipher("ecb(arc4)", 0, CRYPTO_ALG_ASYNC)))
-		return -ENODEV;
 
 	sha_pad = kmalloc(sizeof(struct sha_pad), GFP_KERNEL);
 	if (!sha_pad)
