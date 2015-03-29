@@ -51,23 +51,6 @@
 #define SHA1_PAD_SIZE 40
 
 /*
- * kernel crypto API needs its arguments to be in kmalloc'd memory, not in the module
- * static data area.  That means sha_pad needs to be kmalloc'd.
- */
-
-struct sha_pad {
-	unsigned char sha_pad1[SHA1_PAD_SIZE];
-	unsigned char sha_pad2[SHA1_PAD_SIZE];
-};
-static struct sha_pad *sha_pad;
-
-static inline void sha_pad_init(struct sha_pad *shapad)
-{
-	memset(shapad->sha_pad1, 0x00, sizeof(shapad->sha_pad1));
-	memset(shapad->sha_pad2, 0xF2, sizeof(shapad->sha_pad2));
-}
-
-/*
  * State for an MPPE (de)compressor.
  */
 struct ppp_mppe_state {
@@ -111,12 +94,27 @@ struct ppp_mppe_state {
 static void get_new_key_from_sha(struct ppp_mppe_state * state)
 {
   sha1_context sha1;
+  /* sha1 is faster when using 64 byte chunks */
+  u8_t pad[64];
+  u8_t i;
 
   sha1_starts(&sha1);
   sha1_update(&sha1, state->master_key, state->master_key);
-  sha1_update(&sha1, sha_pad->sha_pad1, sizeof(sha_pad->sha_pad1));
+
+  /* first padding, 256 bytes of 0x00 */
+  memset(pad, 0x00, sizeof(pad));
+  for (i = 0; i < 4; i++) {
+    sha1_update(&sha1, pad, sizeof(pad));
+  }
+
   sha1_update(&sha1, state->session_key, state->keylen);
-  sha1_update(&sha1, sha_pad->sha_pad2, sizeof(sha_pad->sha_pad2));
+
+  /* second padding, 256 bytes of 0xf2 */
+  memset(pad, 0xf2, sizeof(pad));
+  for (i = 0; i < 4; i++) {
+    sha1_update(&sha1, pad, sizeof(pad));
+  }
+
   sha1_finish(&sha1, state->sha1_digest);
 }
 
@@ -586,17 +584,10 @@ static int ppp_mppe_init(void)
 {
 	int answer;
 
-	sha_pad = kmalloc(sizeof(struct sha_pad), GFP_KERNEL);
-	if (!sha_pad)
-		return -ENOMEM;
-	sha_pad_init(sha_pad);
-
 	answer = ppp_register_compressor(&ppp_mppe);
 
 	if (answer == 0)
 		PPPDEBUG(LOG_DEBUG, ("PPP MPPE Compression module registered\n"));
-	else
-		kfree(sha_pad);
 
 	return answer;
 }
@@ -604,7 +595,6 @@ static int ppp_mppe_init(void)
 static void ppp_mppe_cleanup(void)
 {
 	ppp_unregister_compressor(&ppp_mppe);
-	kfree(sha_pad);
 }
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
