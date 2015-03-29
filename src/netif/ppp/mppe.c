@@ -48,14 +48,6 @@
 #endif
 
 #define SHA1_SIGNATURE_SIZE 20
-
-static unsigned int
-setup_sg(struct scatterlist *sg, const void *address, unsigned int length)
-{
-	sg_set_buf(sg, address, length);
-	return length;
-}
-
 #define SHA1_PAD_SIZE 40
 
 /*
