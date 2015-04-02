@@ -254,7 +254,9 @@ dhcp_check(struct netif *netif)
   if (result != ERR_OK) {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("dhcp_check: could not perform ARP query\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = 500;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_check(): set request timeout %"U16_F" msecs\n", msecs));
@@ -341,7 +343,9 @@ dhcp_select(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_WARNING, ("dhcp_select: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = (dhcp->tries < 6 ? 1 << dhcp->tries : 60) * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_select(): set request timeout %"U16_F" msecs\n", msecs));
@@ -820,6 +824,8 @@ dhcp_network_changed(struct netif *netif)
       dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_OFF;
     }
 #endif /* LWIP_DHCP_AUTOIP_COOP */
+    /* ensure we start with short timeouts, even if already discovering */
+    dhcp->tries = 0;
     dhcp_discover(netif);
     break;
   }
@@ -886,7 +892,9 @@ dhcp_decline(struct netif *netif)
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS,
       ("dhcp_decline: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = 10*1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_decline(): set request timeout %"U16_F" msecs\n", msecs));
@@ -935,7 +943,9 @@ dhcp_discover(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_discover: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
 #if LWIP_DHCP_AUTOIP_COOP
   if(dhcp->tries >= LWIP_DHCP_AUTOIP_COOP_TRIES && dhcp->autoip_coop_state == DHCP_AUTOIP_COOP_STATE_OFF) {
     dhcp->autoip_coop_state = DHCP_AUTOIP_COOP_STATE_ON;
@@ -1093,7 +1103,9 @@ dhcp_renew(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_renew: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   /* back-off on retries, but to a maximum of 20 seconds */
   msecs = dhcp->tries < 10 ? dhcp->tries * 2000 : 20 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
@@ -1136,7 +1148,9 @@ dhcp_rebind(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_rebind: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_rebind(): set request timeout %"U16_F" msecs\n", msecs));
@@ -1177,7 +1191,9 @@ dhcp_reboot(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_reboot: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_reboot(): set request timeout %"U16_F" msecs\n", msecs));
@@ -1231,7 +1247,9 @@ dhcp_release(struct netif *netif)
   } else {
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_LEVEL_SERIOUS, ("dhcp_release: could not allocate DHCP request\n"));
   }
-  dhcp->tries++;
+  if (dhcp->tries < 255) {
+    dhcp->tries++;
+  }
   msecs = dhcp->tries < 10 ? dhcp->tries * 1000 : 10 * 1000;
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release(): set request timeout %"U16_F" msecs\n", msecs));
