@@ -229,6 +229,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-03-21: Simon Goldschmidt (patch by Homyak)
+  * tcp_in.c: fixed bug #44766 (LWIP_WND_SCALE: tcphdr->wnd was not scaled in
+    two places)
+
   2015-03-21: Simon Goldschmidt
   * tcp_impl.h, tcp.c, tcp_in.c: fixed bug #41318 (Bad memory ref in tcp_input()
     after tcp_close())

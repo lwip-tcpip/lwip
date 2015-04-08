@@ -967,7 +967,7 @@ tcp_receive(struct tcp_pcb *pcb)
     /* Update window. */
     if (TCP_SEQ_LT(pcb->snd_wl1, seqno) ||
        (pcb->snd_wl1 == seqno && TCP_SEQ_LT(pcb->snd_wl2, ackno)) ||
-       (pcb->snd_wl2 == ackno && tcphdr->wnd > pcb->snd_wnd)) {
+       (pcb->snd_wl2 == ackno && SND_WND_SCALE(pcb, tcphdr->wnd) > pcb->snd_wnd)) {
       pcb->snd_wnd = SND_WND_SCALE(pcb, tcphdr->wnd); 
       /* keep track of the biggest window announced by the remote host to calculate
          the maximum segment size */
@@ -989,7 +989,7 @@ tcp_receive(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"U16_F"\n", pcb->snd_wnd));
 #if TCP_WND_DEBUG
     } else {
-      if (pcb->snd_wnd != tcphdr->wnd) {
+      if (pcb->snd_wnd != SND_WND_SCALE(pcb, tcphdr->wnd)) {
         LWIP_DEBUGF(TCP_WND_DEBUG, 
                     ("tcp_receive: no window update lastack %"U32_F" ackno %"
                      U32_F" wl1 %"U32_F" seqno %"U32_F" wl2 %"U32_F"\n",
