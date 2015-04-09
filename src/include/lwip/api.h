@@ -236,12 +236,12 @@ struct netconn {
 
 /** Set conn->last_err to err but don't overwrite fatal errors */
 #define NETCONN_SET_SAFE_ERR(conn, err) do { if ((conn) != NULL) { \
-  SYS_ARCH_DECL_PROTECT(lev); \
-  SYS_ARCH_PROTECT(lev); \
+  SYS_ARCH_DECL_PROTECT(netconn_set_safe_err_lev); \
+  SYS_ARCH_PROTECT(netconn_set_safe_err_lev); \
   if (!ERR_IS_FATAL((conn)->last_err)) { \
     (conn)->last_err = err; \
   } \
-  SYS_ARCH_UNPROTECT(lev); \
+  SYS_ARCH_UNPROTECT(netconn_set_safe_err_lev); \
 }} while(0);
 
 /* Network connection functions: */
