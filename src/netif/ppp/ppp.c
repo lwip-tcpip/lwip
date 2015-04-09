@@ -181,7 +181,7 @@ const struct protent* const protocols[] = {
 /* Prototypes for procedures local to this file. */
 static void ppp_do_connect(void *arg);
 static err_t ppp_netif_init_cb(struct netif *netif);
-static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip_addr_t *ipaddr);
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr);
 #if PPP_IPV6_SUPPORT
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip6_addr_t *ipaddr);
 #endif /* PPP_IPV6_SUPPORT */
@@ -426,7 +426,7 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 /*
  * Send an IPv4 packet on the given connection.
  */
-static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip_addr_t *ipaddr) {
+static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr) {
 #if PPP_IPV4_SUPPORT
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);
@@ -556,7 +556,7 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
   pcb->settings.fsm_max_nak_loops = FSM_DEFMAXNAKLOOPS;
 
   pcb->netif = pppif;
-  if (!netif_add(pcb->netif, IP_ADDR_ANY, IP_ADDR_BROADCAST, IP_ADDR_ANY,
+  if (!netif_add(pcb->netif, IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY,
                      (void *)pcb, ppp_netif_init_cb, NULL)) {
     memp_free(MEMP_PPP_PCB, pcb);
     PPPDEBUG(LOG_ERR, ("ppp_new: netif_add failed\n"));
@@ -861,7 +861,7 @@ int ppp_recv_config(ppp_pcb *pcb, int mru, u32_t accm, int pcomp, int accomp) {
  * sifaddr - Config the interface IP addresses and netmask.
  */
 int sifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr, u32_t netmask) {
-  ip_addr_t ip, nm, gw;
+  ip4_addr_t ip, nm, gw;
 
   ip4_addr_set_u32(&ip, our_adr);
   ip4_addr_set_u32(&nm, netmask);
@@ -879,7 +879,7 @@ int cifaddr(ppp_pcb *pcb, u32_t our_adr, u32_t his_adr) {
   LWIP_UNUSED_ARG(our_adr);
   LWIP_UNUSED_ARG(his_adr);
 
-  netif_set_addr(pcb->netif, IP_ADDR_ANY, IP_ADDR_BROADCAST, IP_ADDR_ANY);
+  netif_set_addr(pcb->netif, IP4_ADDR_ANY, IP4_ADDR_BROADCAST, IP4_ADDR_ANY);
   return 1;
 }
 
@@ -915,9 +915,9 @@ int sdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   ip_addr_t ns;
   LWIP_UNUSED_ARG(pcb);
 
-  ip4_addr_set_u32(&ns, ns1);
+  ip_addr_set_ip4_u32(&ns, ns1);
   dns_setserver(0, &ns);
-  ip4_addr_set_u32(&ns, ns2);
+  ip_addr_set_ip4_u32(&ns, ns2);
   dns_setserver(1, &ns);
   return 1;
 }
@@ -931,12 +931,12 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
   LWIP_UNUSED_ARG(pcb);
 
   nsa = dns_getserver(0);
-  ip4_addr_set_u32(&nsb, ns1);
+  ip_addr_set_ip4_u32(&nsb, ns1);
   if (ip_addr_cmp(&nsa, &nsb)) {
     dns_setserver(0, (ip_addr_t*)IP_ADDR_ANY);
   }
   nsa = dns_getserver(1);
-  ip4_addr_set_u32(&nsb, ns2);
+  ip_addr_set_ip4_u32(&nsb, ns2);
   if (ip_addr_cmp(&nsa, &nsb)) {
     dns_setserver(1, (ip_addr_t*)IP_ADDR_ANY);
   }

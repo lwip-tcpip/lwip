@@ -216,6 +216,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   u16_t n;
   u16_t fcs_out;
   err_t err;
+  LWIP_UNUSED_ARG(ppp);
 
   /* Grab an output buffer. */
   nb = pbuf_alloc(PBUF_RAW, 0, PBUF_POOL);
@@ -261,6 +262,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   struct pbuf *nb, *p;
   u16_t fcs_out;
   err_t err;
+  LWIP_UNUSED_ARG(ppp);
 
 #if VJ_SUPPORT
   /*

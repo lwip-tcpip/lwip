@@ -577,21 +577,19 @@
    --------------------------------
 */
 /**
+ * LWIP_IPV4==1: Enable IPv4
+ */
+#ifndef LWIP_IPV4
+#define LWIP_IPV4                       1
+#endif
+
+/**
  * IP_FORWARD==1: Enables the ability to forward IP packets across network
  * interfaces. If you are going to run lwIP on a device with only one network
  * interface, define this to 0.
  */
 #ifndef IP_FORWARD
 #define IP_FORWARD                      0
-#endif
-
-/**
- * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
- *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.
- *      IP_OPTIONS_ALLOWED==1: IP options are allowed (but not parsed).
- */
-#ifndef IP_OPTIONS_ALLOWED
-#define IP_OPTIONS_ALLOWED              1
 #endif
 
 /**
@@ -610,6 +608,25 @@
  */
 #ifndef IP_FRAG
 #define IP_FRAG                         1
+#endif
+
+#if !LWIP_IPV4
+/* disable IPv4 extensions when IPv4 is disabled */
+#undef IP_FORWARD
+#define IP_FORWARD                      0
+#undef IP_REASSEMBLY
+#define IP_REASSEMBLY                   0
+#undef IP_FRAG
+#define IP_FRAG                         0
+#endif /* !LWIP_IPV4 */
+
+/**
+ * IP_OPTIONS_ALLOWED: Defines the behavior for IP options.
+ *      IP_OPTIONS_ALLOWED==0: All packets with IP options are dropped.
+ *      IP_OPTIONS_ALLOWED==1: IP options are allowed (but not parsed).
+ */
+#ifndef IP_OPTIONS_ALLOWED
+#define IP_OPTIONS_ALLOWED              1
 #endif
 
 /**
@@ -758,6 +775,11 @@
 #ifndef LWIP_DHCP
 #define LWIP_DHCP                       0
 #endif
+#if !LWIP_IPV4
+/* disable DHCP when IPv4 is disabled */
+#undef LWIP_DHCP
+#define LWIP_DHCP                       0
+#endif /* !LWIP_IPV4 */
 
 /**
  * DHCP_DOES_ARP_CHECK==1: Do an ARP check on the offered address.
@@ -810,6 +832,11 @@
 #ifndef LWIP_AUTOIP
 #define LWIP_AUTOIP                     0
 #endif
+#if !LWIP_IPV4
+/* disable AUTOIP when IPv4 is disabled */
+#undef LWIP_AUTOIP
+#define LWIP_AUTOIP                     0
+#endif /* !LWIP_IPV4 */
 
 /**
  * LWIP_DHCP_AUTOIP_COOP==1: Allow DHCP and AUTOIP to be both enabled on
@@ -943,6 +970,10 @@
  * LWIP_IGMP==1: Turn on IGMP module. 
  */
 #ifndef LWIP_IGMP
+#define LWIP_IGMP                       0
+#endif
+#if !LWIP_IPV4
+#undef LWIP_IGMP
 #define LWIP_IGMP                       0
 #endif
 
@@ -1552,7 +1583,7 @@
  * timers running in tcpip_thread from another thread.
  */
 #ifndef LWIP_TCPIP_TIMEOUT
-#define LWIP_TCPIP_TIMEOUT              1
+#define LWIP_TCPIP_TIMEOUT              0
 #endif
 
 /** LWIP_NETCONN_SEM_PER_THREAD==1: Use one (thread-local) semaphore per
@@ -1946,7 +1977,7 @@
  * PPP_IPV4_SUPPORT==1: Enable PPP IPv4 support
  */
 #ifndef PPP_IPV4_SUPPORT
-#define PPP_IPV4_SUPPORT                1
+#define PPP_IPV4_SUPPORT                (LWIP_IPV4)
 #endif
 
 /**

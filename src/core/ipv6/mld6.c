@@ -551,7 +551,7 @@ mld6_send(struct mld_group *group, u8_t type)
   if (!ip6_addr_isvalid(netif_ip6_addr_state(group->netif, 0))) {
     /* This is a special case, when we are performing duplicate address detection.
      * We must join the multicast group, but we don't have a valid address yet. */
-    src_addr = IP6_ADDR_ANY;
+    src_addr = IP6_ADDR_ANY6;
   } else {
     /* Use link-local address as source address. */
     src_addr = netif_ip6_addr(group->netif, 0);

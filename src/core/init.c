@@ -313,10 +313,12 @@ lwip_init(void)
   memp_init();
   pbuf_init();
   netif_init();
+#if LWIP_IPV4
   ip_init();
 #if LWIP_ARP
   etharp_init();
 #endif /* LWIP_ARP */
+#endif /* LWIP_IPV4 */
 #if LWIP_RAW
   raw_init();
 #endif /* LWIP_RAW */

@@ -60,6 +60,10 @@
 #include "lwip/debug.h"
 #include "lwip/stats.h"
 
+#if !LWIP_IPV4
+/** Global data for IPv6 only */
+struct ip_globals ip_data;
+#endif /* !LWIP_IPV4 */
 
 /**
  * Finds the appropriate network interface for a given IPv6 address. It tries to select
@@ -298,7 +302,7 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
   }
 
   /* Find network interface where to forward this IP packet to. */
-  netif = ip6_route(IP6_ADDR_ANY, ip6_current_dest_addr());
+  netif = ip6_route(IP6_ADDR_ANY6, ip6_current_dest_addr());
   if (netif == NULL) {
     LWIP_DEBUGF(IP6_DEBUG, ("ip6_forward: no route for %"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F":%"X16_F"\n",
         IP6_ADDR_BLOCK1(ip6_current_dest_addr()),
@@ -443,8 +447,8 @@ ip6_input(struct pbuf *p, struct netif *inp)
   pbuf_realloc(p, IP6_HLEN + IP6H_PLEN(ip6hdr));
 
   /* copy IP addresses to aligned ip6_addr_t */
-  ip6_addr_copy(ip_data.current_iphdr_dest.ip6, ip6hdr->dest);
-  ip6_addr_copy(ip_data.current_iphdr_src.ip6, ip6hdr->src);
+  ip_addr_copy_from_ip6(ip_data.current_iphdr_dest, ip6hdr->dest);
+  ip_addr_copy_from_ip6(ip_data.current_iphdr_src, ip6hdr->src);
 
   /* current header pointer. */
   ip_data.current_ip6_header = ip6hdr;
@@ -764,8 +768,8 @@ ip6_input_cleanup:
   ip_data.current_input_netif = NULL;
   ip_data.current_ip6_header = NULL;
   ip_data.current_ip_header_tot_len = 0;
-  ip6_addr_set_any(&ip_data.current_iphdr_src.ip6);
-  ip6_addr_set_any(&ip_data.current_iphdr_dest.ip6);
+  ip6_addr_set_zero(ip6_current_src_addr());
+  ip6_addr_set_zero(ip6_current_dest_addr());
 
   return ERR_OK;
 }
@@ -852,7 +856,7 @@ ip6_output_if_src(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
     IP6H_PLEN_SET(ip6hdr, p->tot_len - IP6_HLEN);
 
     if (src == NULL) {
-      src = IP6_ADDR_ANY;
+      src = IP6_ADDR_ANY6;
     }
     /* src cannot be NULL here */
     ip6_addr_copy(ip6hdr->src, *src);
@@ -975,7 +979,7 @@ ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
  *         see ip_output_if() for more return values
  */
 err_t
-ip6_output_hinted(struct pbuf *p, ip6_addr_t *src, ip6_addr_t *dest,
+ip6_output_hinted(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
           u8_t hl, u8_t tc, u8_t nexth, u8_t *addr_hint)
 {
   struct netif *netif;

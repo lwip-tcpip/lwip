@@ -46,10 +46,10 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV4 && LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/netif.h"
-#include "lwip/udp.h"
+//#include "lwip/udp.h"
 #include "netif/etharp.h"
 
 #ifdef __cplusplus
@@ -80,7 +80,7 @@ extern "C" {
 
 struct autoip
 {
-  ip_addr_t llipaddr;       /* the currently selected, probed, announced or used LL IP-Address */
+  ip4_addr_t llipaddr;      /* the currently selected, probed, announced or used LL IP-Address */
   u8_t state;               /* current AutoIP state machine state */
   u8_t sent_num;            /* sent number of probes or announces, dependent on state */
   u16_t ttw;                /* ticks to wait, tick is AUTOIP_TMR_INTERVAL long */
@@ -116,6 +116,6 @@ void autoip_network_changed(struct netif *netif);
 }
 #endif
 
-#endif /* LWIP_AUTOIP */
+#endif /* LWIP_IPV4 && LWIP_AUTOIP */
 
 #endif /* LWIP_HDR_AUTOIP_H */

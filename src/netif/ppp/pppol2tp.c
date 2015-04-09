@@ -82,10 +82,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect 
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
-#if LWIP_IPV6
-static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip6_addr_t *addr, u16_t port);
-#endif /* LWIP_IPV6 */
+static void pppol2tp_input_ip(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void pppol2tp_input(pppol2tp_pcb *l2tp, struct pbuf *p, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, struct pbuf *p, u16_t ns, u16_t nr);
 static void pppol2tp_timeout(void *arg);
@@ -122,7 +119,7 @@ static const struct link_callbacks pppol2tp_callbacks = {
 
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+       struct netif *netif, ip4_addr_t *ipaddr, u16_t port,
        u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *ppp;
@@ -146,14 +143,18 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     ppp_free(ppp);
     return NULL;
   }
-  udp_recv(udp, pppol2tp_input_ip4, l2tp);
+  udp_recv(udp, pppol2tp_input_ip, l2tp);
 
   memset(l2tp, 0, sizeof(pppol2tp_pcb));
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
   l2tp->ppp = ppp;
   l2tp->udp = udp;
   l2tp->netif = netif;
-  ip_addr_set(ipX_2_ip(&l2tp->remote_ip), ipaddr);
+  if (ipaddr) {
+    ip_addr_copy_from_ip4(l2tp->remote_ip, *ipaddr);
+  } else {
+    ip_addr_set_any(0, &l2tp->remote_ip);
+  }
   l2tp->remote_port = port;
 #if PPPOL2TP_AUTH_SUPPORT
   l2tp->secret = secret;
@@ -191,14 +192,18 @@ ppp_pcb *pppol2tp_create_ip6(struct netif *pppif,
     ppp_free(ppp);
     return NULL;
   }
-  udp_recv_ip6(udp, pppol2tp_input_ip6, l2tp);
+  udp_recv(udp, pppol2tp_input_ip, l2tp);
 
   memset(l2tp, 0, sizeof(pppol2tp_pcb));
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
   l2tp->ppp = ppp;
   l2tp->udp = udp;
   l2tp->netif = netif;
-  ip6_addr_set(&l2tp->remote_ip.ip6, ip6addr);
+  if (ip6addr) {
+    ip_addr_copy_from_ip6(l2tp->remote_ip, *ip6addr);
+  } else {
+    ip_addr_set_any(1, &l2tp->remote_ip);
+  }
   l2tp->remote_port = port;
 #if PPPOL2TP_AUTH_SUPPORT
   l2tp->secret = secret;
@@ -351,7 +356,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
    */
 #if LWIP_IPV6
   if (PCB_ISIPV6(l2tp->udp)) {
-    udp_bind_ip6(l2tp->udp, IP6_ADDR_ANY, 0);
+    udp_bind(l2tp->udp, IP6_ADDR_ANY, 0);
   } else
 #endif /* LWIP_IPV6 */
   udp_bind(l2tp->udp, IP_ADDR_ANY, 0);
@@ -392,7 +397,7 @@ static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+static void pppol2tp_input_ip(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
   LWIP_UNUSED_ARG(pcb);
 
@@ -400,7 +405,7 @@ static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, c
     goto free_and_return;
   }
 
-  if (!ip_addr_cmp(ipX_2_ip(&l2tp->remote_ip), addr)) {
+  if (!ip_addr_cmp(&l2tp->remote_ip, addr)) {
     goto free_and_return;
   }
 
@@ -410,28 +415,6 @@ static void pppol2tp_input_ip4(void *arg, struct udp_pcb *pcb, struct pbuf *p, c
 free_and_return:
   pbuf_free(p);
 }
-
-#if LWIP_IPV6
-/* UDP Callback for incoming IPv6 L2TP frames */
-static void pppol2tp_input_ip6(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip6_addr_t *addr, u16_t port) {
-  pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
-  LWIP_UNUSED_ARG(pcb);
-
-  if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
-    goto free_and_return;
-  }
-
-  if (!ip6_addr_cmp(&l2tp->remote_ip.ip6, addr)) {
-    goto free_and_return;
-  }
-
-  pppol2tp_input(l2tp, p, port);
-  return;
-
-free_and_return:
-  pbuf_free(p);
-}
-#endif /* LWIP_IPV6 */
 
 static void pppol2tp_input(pppol2tp_pcb *l2tp, struct pbuf *p, u16_t port) {
   u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
@@ -1215,19 +1198,10 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
 
 static err_t pppol2tp_udp_send(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   err_t err;
-#if LWIP_IPV6
-  if (PCB_ISIPV6(l2tp->udp)) {
-    if (l2tp->netif) {
-      err = udp_sendto_if_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port, l2tp->netif);
-    } else {
-      err = udp_sendto_ip6(l2tp->udp, pb, &l2tp->remote_ip.ip6, l2tp->tunnel_port);
-    }
-  } else
-#endif /* LWIP_IPV6 */
   if (l2tp->netif) {
-    err = udp_sendto_if(l2tp->udp, pb, ipX_2_ip(&l2tp->remote_ip), l2tp->tunnel_port, l2tp->netif);
+    err = udp_sendto_if(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port, l2tp->netif);
   } else {
-    err = udp_sendto(l2tp->udp, pb, ipX_2_ip(&l2tp->remote_ip), l2tp->tunnel_port);
+    err = udp_sendto(l2tp->udp, pb, &l2tp->remote_ip, l2tp->tunnel_port);
   }
   pbuf_free(pb);
   return err;

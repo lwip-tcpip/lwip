@@ -166,7 +166,7 @@ struct pppol2tp_pcb_s {
   u8_t phase;                  /* L2TP phase */
   struct udp_pcb *udp;         /* UDP L2TP Socket */
   struct netif *netif;         /* Output interface, used as a default route */
-  ipX_addr_t remote_ip;        /* LNS IP Address */
+  ip_addr_t remote_ip;         /* LNS IP Address */
   u16_t remote_port;           /* LNS port */
 #if PPPOL2TP_AUTH_SUPPORT
   u8_t *secret;                /* Secret string */
@@ -193,7 +193,7 @@ struct pppol2tp_pcb_s {
 
 /* Create a new L2TP session over IPv4. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+       struct netif *netif, ip4_addr_t *ipaddr, u16_t port,
        u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 

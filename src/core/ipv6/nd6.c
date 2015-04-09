@@ -840,7 +840,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
     /* Use link-local address as source address. */
     src_addr = netif_ip6_addr(netif, 0);
   } else {
-    src_addr = IP6_ADDR_ANY;
+    src_addr = IP6_ADDR_ANY6;
   }
 
   /* Allocate a packet. */
@@ -882,7 +882,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
 
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
-  ip6_output_if(p, (src_addr == IP6_ADDR_ANY) ? NULL : src_addr, target_addr,
+  ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? NULL : src_addr, target_addr,
       LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
 }
@@ -984,14 +984,14 @@ nd6_send_rs(struct netif * netif)
     src_addr = netif_ip6_addr(netif, 0);
   }
   else {
-    src_addr = IP6_ADDR_ANY;
+    src_addr = IP6_ADDR_ANY6;
   }
 
   /* Generate the all routers target address. */
   ip6_addr_set_allrouters_linklocal(&multicast_address);
 
   /* Allocate a packet. */
-  if (src_addr != IP6_ADDR_ANY) {
+  if (src_addr != IP6_ADDR_ANY6) {
     lladdr_opt_len = ((netif->hwaddr_len + 2) >> 3) + (((netif->hwaddr_len + 2) & 0x07) ? 1 : 0);
   }
   p = pbuf_alloc(PBUF_IP, sizeof(struct rs_header) + (lladdr_opt_len << 3), PBUF_RAM);
@@ -1012,7 +1012,7 @@ nd6_send_rs(struct netif * netif)
   rs_hdr->chksum = 0;
   rs_hdr->reserved = 0;
 
-  if (src_addr != IP6_ADDR_ANY) {
+  if (src_addr != IP6_ADDR_ANY6) {
     /* Include our hw address. */
     lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct rs_header));
     lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;

@@ -136,7 +136,7 @@ pbuf_free_ooseq(void)
 
 #if !NO_SYS
 /**
- * Just a callback function for tcpip_timeout() that calls pbuf_free_ooseq().
+ * Just a callback function for tcpip_callback() that calls pbuf_free_ooseq().
  */
 static void
 pbuf_free_ooseq_callback(void *arg)

@@ -34,6 +34,8 @@
 
 #include "lwip/opt.h"
 
+#if LWIP_IPV4
+
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip_addr.h"
@@ -46,15 +48,9 @@ extern "C" {
 #endif
 
 /** Currently, the function ip_output_if_opt() is only used with IGMP */
-#define IP_OPTIONS_SEND   LWIP_IGMP
+#define IP_OPTIONS_SEND   (LWIP_IPV4 && LWIP_IGMP)
 
 #define IP_HLEN 20
-
-#define IP_PROTO_ICMP    1
-#define IP_PROTO_IGMP    2
-#define IP_PROTO_UDP     17
-#define IP_PROTO_UDPLITE 136
-#define IP_PROTO_TCP     6
 
 
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -83,8 +79,8 @@ struct ip_hdr {
   /* checksum */
   PACK_STRUCT_FIELD(u16_t _chksum);
   /* source and destination IP addresses */
-  PACK_STRUCT_FLD_S(ip_addr_p_t src);
-  PACK_STRUCT_FLD_S(ip_addr_p_t dest);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t src);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t dest);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -110,44 +106,45 @@ PACK_STRUCT_END
 #define IPH_PROTO_SET(hdr, proto) (hdr)->_proto = (u8_t)(proto)
 #define IPH_CHKSUM_SET(hdr, chksum) (hdr)->_chksum = (chksum)
 
-
 #define ip_init() /* Compatibility define, no init needed. */
-struct netif *ip_route(const ip_addr_t *dest);
-err_t ip_input(struct pbuf *p, struct netif *inp);
-err_t ip_output(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+struct netif *ip4_route(const ip4_addr_t *dest);
+err_t ip4_input(struct pbuf *p, struct netif *inp);
+err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto);
-err_t ip_output_if(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+err_t ip4_output_if(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif);
-err_t ip_output_if_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+err_t ip4_output_if_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif);
 #if LWIP_NETIF_HWADDRHINT
-err_t ip_output_hinted(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+err_t ip4_output_hinted(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, u8_t *addr_hint);
 #endif /* LWIP_NETIF_HWADDRHINT */
 #if IP_OPTIONS_SEND
-err_t ip_output_if_opt(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+err_t ip4_output_if_opt(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen);
-err_t ip_output_if_opt_src(struct pbuf *p, const ip_addr_t *src, const ip_addr_t *dest,
+err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto, struct netif *netif, void *ip_options,
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */
 
 #if LWIP_IGMP
-void  ip_set_default_multicast_netif(struct netif* default_multicast_netif);
+void  ip4_set_default_multicast_netif(struct netif* default_multicast_netif);
 #endif /* LWIP_IGMP */
 
-#define ip_netif_get_local_ipX(netif) (((netif) != NULL) ? ip_2_ipX(&((netif)->ip_addr)) : NULL)
+#define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? &((netif)->ip_addr) : NULL)
 
 #if IP_DEBUG
-void ip_debug_print(struct pbuf *p);
+void ip4_debug_print(struct pbuf *p);
 #else
-#define ip_debug_print(p)
+#define ip4_debug_print(p)
 #endif /* IP_DEBUG */
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_IPV4 */
 
 #endif /* LWIP_HDR_IP_H */
 

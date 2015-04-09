@@ -134,7 +134,7 @@ snmp_netiftoifindex(struct netif *netif, s32_t *ifidx)
  * @param ip points to output struct
  */
 void
-snmp_oidtoip(s32_t *ident, ip_addr_t *ip)
+snmp_oidtoip(s32_t *ident, ip4_addr_t *ip)
 {
   IP4_ADDR(ip, ident[0], ident[1], ident[2], ident[3]);
 }
@@ -145,7 +145,7 @@ snmp_oidtoip(s32_t *ident, ip_addr_t *ip)
  * @param ident points to s32_t ident[4] output
  */
 void
-snmp_iptooid(ip_addr_t *ip, s32_t *ident)
+snmp_iptooid(ip4_addr_t *ip, s32_t *ident)
 {
   ident[0] = ip4_addr1(ip);
   ident[1] = ip4_addr2(ip);

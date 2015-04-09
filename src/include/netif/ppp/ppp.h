@@ -299,9 +299,9 @@ typedef struct ppp_settings_s {
 #if PPP_SERVER
 struct ppp_addrs {
 #if PPP_IPV4_SUPPORT
-  ip_addr_t our_ipaddr, his_ipaddr, netmask;
+  ip4_addr_t our_ipaddr, his_ipaddr, netmask;
 #if LWIP_DNS
-  ip_addr_t dns1, dns2;
+  ip4_addr_t dns1, dns2;
 #endif /* LWIP_DNS */
 #endif /* PPP_IPV4_SUPPORT */
 #if PPP_IPV6_SUPPORT

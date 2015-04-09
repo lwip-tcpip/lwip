@@ -172,10 +172,10 @@ netconn_getaddr(struct netconn *conn, ip_addr_t *addr, u16_t *port, u8_t local)
   API_MSG_VAR_REF(msg).msg.msg.ad.local = local;
 #if LWIP_MPU_COMPATIBLE
   TCPIP_APIMSG(msg, lwip_netconn_do_getaddr, err);
-  *addr = *ipX_2_ip(&(msg->msg.msg.ad.ipaddr));
+  *addr = msg->msg.msg.ad.ipaddr;
   *port = msg->msg.msg.ad.port;
 #else /* LWIP_MPU_COMPATIBLE */
-  msg.msg.msg.ad.ipaddr = ip_2_ipX(addr);
+  msg.msg.msg.ad.ipaddr = addr;
   msg.msg.msg.ad.port = port;
   TCPIP_APIMSG(&msg, lwip_netconn_do_getaddr, err);
 #endif /* LWIP_MPU_COMPATIBLE */
@@ -542,7 +542,7 @@ netconn_recv(struct netconn *conn, struct netbuf **new_buf)
     buf->p = p;
     buf->ptr = p;
     buf->port = 0;
-    ipX_addr_set_any(LWIP_IPV6, &buf->addr);
+    ip_addr_set_zero(&buf->addr);
     *new_buf = buf;
     /* don't set conn->last_err: it's only ERR_OK, anyway */
     return ERR_OK;
@@ -605,7 +605,7 @@ err_t
 netconn_sendto(struct netconn *conn, struct netbuf *buf, const ip_addr_t *addr, u16_t port)
 {
   if (buf != NULL) {
-    ipX_addr_set_ipaddr(PCB_ISIPV6(conn->pcb.ip), &buf->addr, addr);
+    ip_addr_set(&buf->addr, addr);
     buf->port = port;
     return netconn_send(conn, buf);
   }
@@ -798,8 +798,8 @@ netconn_join_leave_group(struct netconn *conn,
   }
 #endif /* LWIP_MPU_COMPATIBLE */
   API_MSG_VAR_REF(msg).msg.conn = conn;
-  API_MSG_VAR_REF(msg).msg.msg.jl.multiaddr = API_MSG_VAR_REF(ip_2_ipX(multiaddr));
-  API_MSG_VAR_REF(msg).msg.msg.jl.netif_addr = API_MSG_VAR_REF(ip_2_ipX(netif_addr));
+  API_MSG_VAR_REF(msg).msg.msg.jl.multiaddr = API_MSG_VAR_REF(multiaddr);
+  API_MSG_VAR_REF(msg).msg.msg.jl.netif_addr = API_MSG_VAR_REF(netif_addr);
   API_MSG_VAR_REF(msg).msg.msg.jl.join_or_leave = join_or_leave;
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_join_leave_group, err);
   API_MSG_VAR_FREE(msg);

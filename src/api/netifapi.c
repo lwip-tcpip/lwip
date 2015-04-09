@@ -102,9 +102,9 @@ netifapi_do_netif_common(struct netifapi_msg_msg *msg)
  */
 err_t
 netifapi_netif_add(struct netif *netif,
-                   ip_addr_t *ipaddr,
-                   ip_addr_t *netmask,
-                   ip_addr_t *gw,
+                   const ip4_addr_t *ipaddr,
+                   const ip4_addr_t *netmask,
+                   const ip4_addr_t *gw,
                    void *state,
                    netif_init_fn init,
                    netif_input_fn input)
@@ -114,13 +114,13 @@ netifapi_netif_add(struct netif *netif,
   NETIFAPI_VAR_ALLOC(msg);
 #if LWIP_MPU_COMPATIBLE
   if (ipaddr == NULL) {
-    ipaddr = IP_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY;
   }
   if (netmask == NULL) {
-    netmask = IP_ADDR_ANY;
+    netmask = IP4_ADDR_ANY;
   }
   if (gw == NULL) {
-    gw = IP_ADDR_ANY;
+    gw = IP4_ADDR_ANY;
   }
 #endif /* LWIP_MPU_COMPATIBLE */
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_add;
@@ -146,22 +146,22 @@ netifapi_netif_add(struct netif *netif,
  */
 err_t
 netifapi_netif_set_addr(struct netif *netif,
-                        ip_addr_t *ipaddr,
-                        ip_addr_t *netmask,
-                        ip_addr_t *gw)
+                        const ip4_addr_t *ipaddr,
+                        const ip4_addr_t *netmask,
+                        const ip4_addr_t *gw)
 {
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
   NETIFAPI_VAR_ALLOC(msg);
 #if LWIP_MPU_COMPATIBLE
   if (ipaddr == NULL) {
-    ipaddr = IP_ADDR_ANY;
+    ipaddr = IP4_ADDR_ANY;
   }
   if (netmask == NULL) {
-    netmask = IP_ADDR_ANY;
+    netmask = IP4_ADDR_ANY;
   }
   if (gw == NULL) {
-    gw = IP_ADDR_ANY;
+    gw = IP4_ADDR_ANY;
   }
 #endif /* LWIP_MPU_COMPATIBLE */
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_set_addr;

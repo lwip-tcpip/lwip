@@ -64,10 +64,10 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV4 && LWIP_AUTOIP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/mem.h"
-#include "lwip/udp.h"
+//#include "lwip/udp.h"
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 #include "lwip/autoip.h"
@@ -108,7 +108,7 @@
 static void autoip_handle_arp_conflict(struct netif *netif);
 
 /* creates a pseudo random LL IP-Address for a network interface */
-static void autoip_create_addr(struct netif *netif, ip_addr_t *ipaddr);
+static void autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr);
 
 /* sends an ARP probe */
 static err_t autoip_arp_probe(struct netif *netif);
@@ -193,7 +193,7 @@ autoip_handle_arp_conflict(struct netif *netif)
  * @param ipaddr ip address to initialize
  */
 static void
-autoip_create_addr(struct netif *netif, ip_addr_t *ipaddr)
+autoip_create_addr(struct netif *netif, ip4_addr_t *ipaddr)
 {
   /* Here we create an IP-Address out of range 169.254.1.0 to 169.254.254.255
    * compliant to RFC 3927 Section 2.1
@@ -229,7 +229,7 @@ static err_t
 autoip_arp_probe(struct netif *netif)
 {
   return etharp_raw(netif, (struct eth_addr *)netif->hwaddr, &ethbroadcast,
-    (struct eth_addr *)netif->hwaddr, IP_ADDR_ANY, &ethzero,
+    (struct eth_addr *)netif->hwaddr, IP4_ADDR_ANY, &ethzero,
     &netif->autoip->llipaddr, ARP_REQUEST);
 }
 
@@ -255,7 +255,7 @@ static err_t
 autoip_bind(struct netif *netif)
 {
   struct autoip *autoip = netif->autoip;
-  ip_addr_t sn_mask, gw_addr;
+  ip4_addr_t sn_mask, gw_addr;
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE,
     ("autoip_bind(netif=%p) %c%c%"U16_F" %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -288,7 +288,7 @@ autoip_start(struct netif *netif)
   /* Set IP-Address, Netmask and Gateway to 0 to make sure that
    * ARP Packets are formed correctly
    */
-  netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
 
   LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE,
     ("autoip_start(netif=%p) %c%c%"U16_F"\n", (void*)netif, netif->name[0],
@@ -311,7 +311,7 @@ autoip_start(struct netif *netif)
     autoip->state = AUTOIP_STATE_OFF;
     autoip->ttw = 0;
     autoip->sent_num = 0;
-    ip_addr_set_zero(&autoip->llipaddr);
+    ip4_addr_set_zero(&autoip->llipaddr);
     autoip->lastconflict = 0;
   }
 
@@ -373,8 +373,8 @@ autoip_stop(struct netif *netif)
 {
   if (netif->autoip) {
     netif->autoip->state = AUTOIP_STATE_OFF;
-    if (ip_addr_islinklocal(&netif->ip_addr)) {
-      netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
+    if (ip4_addr_islinklocal(&netif->ip_addr)) {
+      netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
     }
   }
   return ERR_OK;
@@ -479,11 +479,11 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
     * when probing  ip.dst == llipaddr && hw.src != netif->hwaddr
     * we have a conflict and must solve it
     */
-    ip_addr_t sipaddr, dipaddr;
+    ip4_addr_t sipaddr, dipaddr;
     struct eth_addr netifaddr;
     ETHADDR16_COPY(netifaddr.addr, netif->hwaddr);
 
-    /* Copy struct ip_addr2 to aligned ip_addr, to support compilers without
+    /* Copy struct ip4_addr2 to aligned ip4_addr, to support compilers without
      * structure packing (not using structure copy which breaks strict-aliasing rules).
      */
     IPADDR2_COPY(&sipaddr, &hdr->sipaddr);
@@ -498,8 +498,8 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
       * ip.src == llipaddr OR
       * ip.dst == llipaddr && hw.src != own hwaddr
       */
-      if ((ip_addr_cmp(&sipaddr, &netif->autoip->llipaddr)) ||
-          (ip_addr_cmp(&dipaddr, &netif->autoip->llipaddr) &&
+      if ((ip4_addr_cmp(&sipaddr, &netif->autoip->llipaddr)) ||
+          (ip4_addr_cmp(&dipaddr, &netif->autoip->llipaddr) &&
            !eth_addr_cmp(&netifaddr, &hdr->shwaddr))) {
         LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
           ("autoip_arp_reply(): Probe Conflict detected\n"));
@@ -510,7 +510,7 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
       * in any state we have a conflict if
       * ip.src == llipaddr && hw.src != own hwaddr
       */
-      if (ip_addr_cmp(&sipaddr, &netif->autoip->llipaddr) &&
+      if (ip4_addr_cmp(&sipaddr, &netif->autoip->llipaddr) &&
           !eth_addr_cmp(&netifaddr, &hdr->shwaddr)) {
         LWIP_DEBUGF(AUTOIP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
           ("autoip_arp_reply(): Conflicting ARP-Packet detected\n"));
@@ -520,4 +520,4 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
   }
 }
 
-#endif /* LWIP_AUTOIP */
+#endif /* LWIP_IPV4 && LWIP_AUTOIP */

@@ -122,9 +122,9 @@ lwip_gethostbyname(const char *name)
   LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list      == %p\n", s_hostent.h_addr_list));
   if (s_hostent.h_addr_list != NULL) {
     u8_t idx;
-    for ( idx=0; s_hostent.h_addr_list[idx]; idx++) {
+    for (idx=0; s_hostent.h_addr_list[idx]; idx++) {
       LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]   == %p\n", idx, s_hostent.h_addr_list[idx]));
-      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip_addr_t*)s_hostent.h_addr_list[idx])));
+      LWIP_DEBUGF(DNS_DEBUG, ("hostent.h_addr_list[%i]-> == %s\n", idx, ipaddr_ntoa((ip4_addr_t*)s_hostent.h_addr_list[idx])));
     }
   }
 #endif /* DNS_DEBUG */
@@ -301,7 +301,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     }
   } else {
     /* service location specified, use loopback address */
-    ip_addr_set_loopback(&addr);
+    ip_addr_set_loopback(0, &addr);
   }
 
   total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
@@ -320,7 +320,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   memset(ai, 0, total_size);
   sa = (struct sockaddr_in*)((u8_t*)ai + sizeof(struct addrinfo));
   /* set up sockaddr */
-  inet_addr_from_ipaddr(&sa->sin_addr, &addr);
+  inet_addr_from_ipaddr(&sa->sin_addr, ip_2_ip4(&addr));
   sa->sin_family = AF_INET;
   sa->sin_len = sizeof(struct sockaddr_in);
   sa->sin_port = htons((u16_t)port_nr);

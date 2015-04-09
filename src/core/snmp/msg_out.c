@@ -226,7 +226,10 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
 {
   struct snmp_trap_dst *td;
   struct netif *dst_if;
-  ip_addr_t dst_ip;
+#if LWIP_IPV4 && LWIP_IPV6
+  ip_addr_t dst_ip_storage;
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+  ip_addr_t* dst_ip;
   struct pbuf *p;
   u16_t i,tot_len;
   err_t err = ERR_OK;
@@ -238,14 +241,11 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
       /* network order trap destination */
       ip_addr_copy(trap_msg.dip, td->dip);
       /* lookup current source address for this dst */
-      dst_if = ip_route(&td->dip);
-      if (dst_if != NULL) {
-        ip_addr_copy(dst_ip, dst_if->ip_addr);
-        /* @todo: what about IPv6? */
-        trap_msg.sip_raw[0] = ip4_addr1(&dst_ip);
-        trap_msg.sip_raw[1] = ip4_addr2(&dst_ip);
-        trap_msg.sip_raw[2] = ip4_addr3(&dst_ip);
-        trap_msg.sip_raw[3] = ip4_addr4(&dst_ip);
+      ip_route_get_local_ip(PCB_ISIPV6(trap_msg.pcb), &trap_msg.pcb->local_ip,
+        &td->dip, dst_if, dst_ip, &dst_ip_storage);
+      if ((dst_if != NULL) && (dst_ip != NULL)) {
+        trap_msg.sip_raw_len = (IP_IS_V6_L(dst_ip) ? 16 : 4);
+        memcpy(trap_msg.sip_raw, dst_ip, trap_msg.sip_raw_len);
         trap_msg.gen_trap = generic_trap;
         trap_msg.spc_trap = specific_trap;
         if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
@@ -392,7 +392,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
   snmp_asn1_enc_length_cnt(thl->gtrplen, &thl->gtrplenlen);
   tot_len += 1 + thl->gtrplen + thl->gtrplenlen;
 
-  thl->aaddrlen = 4;
+  thl->aaddrlen = m_trap->sip_raw_len;
   snmp_asn1_enc_length_cnt(thl->aaddrlen, &thl->aaddrlenlen);
   tot_len += 1 + thl->aaddrlen + thl->aaddrlenlen;
 

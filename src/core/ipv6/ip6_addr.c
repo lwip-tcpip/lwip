@@ -44,11 +44,17 @@
 
 #if LWIP_IPV6  /* don't build if not configured for use in lwipopts.h */
 
-#include "lwip/ip6_addr.h"
+#include "lwip/ip_addr.h"
 #include "lwip/def.h"
 
-/* used by IP6_ADDR_ANY in ip6_addr.h */
-const ip6_addr_t ip6_addr_any = { { 0ul, 0ul, 0ul, 0ul } };
+/* used by IP6_ADDR_ANY(6) in ip6_addr.h */
+const ip_addr_t ip6_addr_any = {
+#if LWIP_IPV4
+  { 0ul }, IPADDR_TYPE_V6
+#else
+   0ul, 0ul, 0ul, 0ul
+#endif
+};
 
 #ifndef isprint
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
@@ -248,4 +254,53 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 
   return buf;
 }
+
+#if LWIP_IPV4
+/** Convert IPv6 address to generic IP address.
+ * Since source types do not contain the type field, a target storage need to be supplied. 
+ */
+ip_addr_t*
+ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage)
+{
+  if ((ip6addr == NULL) || (storage == NULL)) {
+    return NULL;
+  }
+  ip6_addr_copy(storage->addr.ip6, *ip6addr);
+  IP_SET_TYPE_L(storage, IPADDR_TYPE_V6);
+  return storage;
+}
+
+/** Convert IP address string (both versions) to numeric.
+ * The version is auto-detected from the string.
+ */
+int
+ipaddr_aton(const char *cp, ip_addr_t *addr)
+{
+  if (cp != NULL) {
+    const char* c;
+    for (c = cp; *c != 0; c++) {
+      if (*c == '.') {
+        /* contains a dot: IPv4 address */
+        if (addr) {
+          IP_SET_TYPE_L(addr, IPADDR_TYPE_V4);
+        }
+        return ip4addr_aton(cp, ip_2_ip4(addr));
+      } else if (*c == ':') {
+        /* contains a colon: IPv6 address */
+        if (addr) {
+          IP_SET_TYPE_L(addr, IPADDR_TYPE_V6);
+        }
+        return ip6addr_aton(cp, ip_2_ip6(addr));
+      }
+    }
+    /* nothing found, call ip4addr_aton as fallback */
+    if (addr) {
+      IP_SET_TYPE_L(addr, IPADDR_TYPE_V4);
+    }
+    return ip4addr_aton(cp, ip_2_ip4(addr));
+  }
+  return 0;
+}
+#endif /* LWIP_IPV4 */
+
 #endif /* LWIP_IPV6 */

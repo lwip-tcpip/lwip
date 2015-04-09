@@ -37,12 +37,31 @@
  */
 
 #include "lwip/opt.h"
+
+#if LWIP_IPV4
+
 #include "lwip/ip_addr.h"
 #include "lwip/netif.h"
 
 /* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const ip_addr_t ip_addr_any = { IPADDR_ANY };
-const ip_addr_t ip_addr_broadcast = { IPADDR_BROADCAST };
+const ip_addr_t ip_addr_any = {
+#if LWIP_IPV6
+  {
+#endif
+  IPADDR_ANY
+#if LWIP_IPV6
+  }, IPADDR_TYPE_V4
+#endif
+  };
+const ip_addr_t ip_addr_broadcast = {
+#if LWIP_IPV6
+  {
+#endif
+  IPADDR_BROADCAST
+#if LWIP_IPV6
+  }, IPADDR_TYPE_V4
+#endif
+  };
 
 /**
  * Determine if an address is a broadcast address on a network interface 
@@ -52,9 +71,9 @@ const ip_addr_t ip_addr_broadcast = { IPADDR_BROADCAST };
  * @return returns non-zero if the address is a broadcast address
  */
 u8_t
-ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
+ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
 {
-  ip_addr_t ipaddr;
+  ip4_addr_t ipaddr;
   ip4_addr_set_u32(&ipaddr, addr);
 
   /* all ones (broadcast) or all zeroes (old skool broadcast) */
@@ -70,7 +89,7 @@ ip4_addr_isbroadcast(u32_t addr, const struct netif *netif)
   } else if (addr == ip4_addr_get_u32(&netif->ip_addr)) {
     return 0;
   /*  on the same (sub) network... */
-  } else if (ip_addr_netcmp(&ipaddr, &(netif->ip_addr), &(netif->netmask))
+  } else if (ip4_addr_netcmp(&ipaddr, &(netif->ip_addr), &(netif->netmask))
          /* ...and host identifier bits are all ones? =>... */
           && ((addr & ~ip4_addr_get_u32(&netif->netmask)) ==
            (IPADDR_BROADCAST & ~ip4_addr_get_u32(&netif->netmask)))) {
@@ -129,9 +148,9 @@ ip4_addr_netmask_valid(u32_t netmask)
 u32_t
 ipaddr_addr(const char *cp)
 {
-  ip_addr_t val;
+  ip4_addr_t val;
 
-  if (ipaddr_aton(cp, &val)) {
+  if (ip4addr_aton(cp, &val)) {
     return ip4_addr_get_u32(&val);
   }
   return (IPADDR_NONE);
@@ -149,7 +168,7 @@ ipaddr_addr(const char *cp)
  * @return 1 if cp could be converted to addr, 0 on failure
  */
 int
-ipaddr_aton(const char *cp, ip_addr_t *addr)
+ip4addr_aton(const char *cp, ip4_addr_t *addr)
 {
   u32_t val;
   u8_t base;
@@ -257,11 +276,11 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
  * @return pointer to a global static (!) buffer that holds the ASCII
  *         representation of addr
  */
-char *
-ipaddr_ntoa(const ip_addr_t *addr)
+char*
+ip4addr_ntoa(const ip4_addr_t *addr)
 {
-  static char str[16];
-  return ipaddr_ntoa_r(addr, str, 16);
+  static char str[IP4ADDR_STRLEN_MAX];
+  return ip4addr_ntoa_r(addr, str, IP4ADDR_STRLEN_MAX);
 }
 
 /**
@@ -273,7 +292,8 @@ ipaddr_ntoa(const ip_addr_t *addr)
  * @return either pointer to buf which now holds the ASCII
  *         representation of addr or NULL if buf was too small
  */
-char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen)
+char*
+ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen)
 {
   u32_t s_addr;
   char inv[3];
@@ -310,3 +330,21 @@ char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen)
   *--rp = 0;
   return buf;
 }
+
+#if LWIP_IPV6
+/** Convert IPv4 address to generic IP address.
+ * Since source types do not contain the type field, a target storage need to be supplied. 
+ */
+ip_addr_t*
+ip4_2_ip(const ip4_addr_t *ip4addr, ip_addr_t* storage)
+{
+  if ((ip4addr == NULL) || (storage == NULL)) {
+    return NULL;
+  }
+  ip4_addr_copy(storage->addr.ip4, *ip4addr);
+  IP_SET_TYPE_L(storage, IPADDR_TYPE_V4);
+  return storage;
+}
+#endif /* LWIP_IPV6 */
+
+#endif /* LWIP_IPV4 */

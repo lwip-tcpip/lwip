@@ -53,10 +53,10 @@ struct dhcp
   u16_t t2_rebind_time; /* #ticks with period DHCP_COARSE_TIMER_SECS until next rebind try */
   u16_t lease_used; /* #ticks with period DHCP_COARSE_TIMER_SECS since last received DHCP ack */
   u16_t t0_timeout; /* #ticks with period DHCP_COARSE_TIMER_SECS for lease time */
-  ip_addr_t server_ip_addr; /* dhcp server address that offered this lease */
-  ip_addr_t offered_ip_addr;
-  ip_addr_t offered_sn_mask;
-  ip_addr_t offered_gw_addr;
+  ip_addr_t server_ip_addr; /* dhcp server address that offered this lease (ip_addr_t because passed to UDP) */
+  ip4_addr_t offered_ip_addr;
+  ip4_addr_t offered_sn_mask;
+  ip4_addr_t offered_gw_addr;
  
   u32_t offered_t0_lease; /* lease period (in seconds) */
   u32_t offered_t1_renew; /* recommended renew time (usually 50% of lease period) */
@@ -82,10 +82,10 @@ struct dhcp_msg
   PACK_STRUCT_FIELD(u32_t xid);
   PACK_STRUCT_FIELD(u16_t secs);
   PACK_STRUCT_FIELD(u16_t flags);
-  PACK_STRUCT_FLD_S(ip_addr_p_t ciaddr);
-  PACK_STRUCT_FLD_S(ip_addr_p_t yiaddr);
-  PACK_STRUCT_FLD_S(ip_addr_p_t siaddr);
-  PACK_STRUCT_FLD_S(ip_addr_p_t giaddr);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t ciaddr);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t yiaddr);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t siaddr);
+  PACK_STRUCT_FLD_S(ip4_addr_p_t giaddr);
   PACK_STRUCT_FLD_8(u8_t chaddr[DHCP_CHADDR_LEN]);
   PACK_STRUCT_FLD_8(u8_t sname[DHCP_SNAME_LEN]);
   PACK_STRUCT_FLD_8(u8_t file[DHCP_FILE_LEN]);
@@ -126,7 +126,7 @@ void dhcp_network_changed(struct netif *netif);
 
 /** if enabled, check whether the offered IP address is not in use, using ARP */
 #if DHCP_DOES_ARP_CHECK
-void dhcp_arp_reply(struct netif *netif, ip_addr_t *addr);
+void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr);
 #endif
 
 /** to be called every minute */

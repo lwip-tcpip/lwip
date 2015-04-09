@@ -95,7 +95,7 @@ struct api_msg_msg {
     } bc;
     /** used for lwip_netconn_do_getaddr */
     struct {
-      ipX_addr_t API_MSG_M_DEF(ipaddr);
+      ip_addr_t API_MSG_M_DEF(ipaddr);
       u16_t API_MSG_M_DEF(port);
       u8_t local;
     } ad;
@@ -124,8 +124,8 @@ struct api_msg_msg {
 #if LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD)
     /** used for lwip_netconn_do_join_leave_group */
     struct {
-      API_MSG_M_DEF_C(ipX_addr_t, multiaddr);
-      API_MSG_M_DEF_C(ipX_addr_t, netif_addr);
+      API_MSG_M_DEF_C(ip_addr_t, multiaddr);
+      API_MSG_M_DEF_C(ip_addr_t, netif_addr);
       enum netconn_igmp join_or_leave;
     } jl;
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */

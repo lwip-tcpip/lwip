@@ -478,20 +478,9 @@ err_t tcp_enqueue_flags(struct tcp_pcb *pcb, u8_t flags);
 
 void tcp_rexmit_seg(struct tcp_pcb *pcb, struct tcp_seg *seg);
 
-void tcp_rst_impl(u32_t seqno, u32_t ackno,
-       ipX_addr_t *local_ip, ipX_addr_t *remote_ip,
-       u16_t local_port, u16_t remote_port
-#if LWIP_IPV6
-       , u8_t isipv6
-#endif /* LWIP_IPV6 */
-       );
-#if LWIP_IPV6
-#define tcp_rst(seqno, ackno, local_ip, remote_ip, local_port, remote_port, isipv6) \
-  tcp_rst_impl(seqno, ackno, local_ip, remote_ip, local_port, remote_port, isipv6)
-#else /* LWIP_IPV6 */
-#define tcp_rst(seqno, ackno, local_ip, remote_ip, local_port, remote_port, isipv6) \
-  tcp_rst_impl(seqno, ackno, local_ip, remote_ip, local_port, remote_port)
-#endif /* LWIP_IPV6 */
+void tcp_rst(u32_t seqno, u32_t ackno,
+       const ip_addr_t *local_ip, const ip_addr_t *remote_ip,
+       u16_t local_port, u16_t remote_port);
 
 u32_t tcp_next_iss(void);
 
@@ -500,16 +489,21 @@ err_t tcp_zero_window_probe(struct tcp_pcb *pcb);
 void  tcp_trigger_input_pcb_close(void);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
-u16_t tcp_eff_send_mss_impl(u16_t sendmss, ipX_addr_t *dest
+u16_t tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 #if LWIP_IPV6
-                           , ipX_addr_t *src, u8_t isipv6
+                           , const ip_addr_t *src
+#if LWIP_IPV4
+                           , u8_t isipv6
+#endif /* LWIP_IPV4 */
 #endif /* LWIP_IPV6 */
                            );
-#if LWIP_IPV6
+#if LWIP_IPV4 && LWIP_IPV6
 #define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest, src, isipv6)
-#else /* LWIP_IPV6 */
+#elif LWIP_IPV6
+#define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest, src)
+#else /* LWIP_IPV4 && LWIP_IPV6 */
 #define tcp_eff_send_mss(sendmss, src, dest, isipv6) tcp_eff_send_mss_impl(sendmss, dest)
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
 #if LWIP_CALLBACK_API
@@ -534,7 +528,9 @@ s16_t tcp_pcbs_sane(void);
  * that a timer is needed (i.e. active- or time-wait-pcb found). */
 void tcp_timer_needed(void);
 
-void tcp_netif_ipv4_addr_changed(const ip_addr_t* old_addr, const ip_addr_t* new_addr);
+#if LWIP_IPV4
+void tcp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* new_addr);
+#endif /* LWIP_IPV4 */
 
 #ifdef __cplusplus
 }

@@ -213,7 +213,7 @@ pppapi_do_pppol2tp_create(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip_addr_t *ipaddr, u16_t port,
+pppapi_pppol2tp_create(struct netif *pppif, struct netif *netif, ip4_addr_t *ipaddr, u16_t port,
                         u8_t *secret, u8_t secret_len,
                         ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {

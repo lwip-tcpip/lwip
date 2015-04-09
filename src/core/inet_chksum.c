@@ -295,9 +295,10 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
   return (u16_t)~(acc & 0xffffUL);
 }
 
+#if LWIP_IPV4
 /* inet_chksum_pseudo:
  *
- * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ * Calculates the IPv4 pseudo Internet checksum used by TCP and UDP for a pbuf chain.
  * IP addresses are expected to be in network byte order.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
@@ -309,7 +310,7 @@ inet_cksum_pseudo_base(struct pbuf *p, u8_t proto, u16_t proto_len, u32_t acc)
  */
 u16_t
 inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
-       const ip_addr_t *src, const ip_addr_t *dest)
+       const ip4_addr_t *src, const ip4_addr_t *dest)
 {
   u32_t acc;
   u32_t addr;
@@ -326,6 +327,8 @@ inet_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   return inet_cksum_pseudo_base(p, proto, proto_len, acc);
 }
+#endif /* LWIP_IPV4 */
+
 #if LWIP_IPV6
 /**
  * Calculates the checksum with IPv6 pseudo header used by TCP and UDP for a pbuf chain.
@@ -361,6 +364,37 @@ ip6_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
   return inet_cksum_pseudo_base(p, proto, proto_len, acc);
 }
 #endif /* LWIP_IPV6 */
+
+/* ip_chksum_pseudo:
+ *
+ * Calculates the IPv4 or IPv6 pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ * IP addresses are expected to be in network byte order.
+ *
+ * @param p chain of pbufs over that a checksum should be calculated (ip data part)
+ * @param src source ip address (used for checksum of pseudo header)
+ * @param dst destination ip address (used for checksum of pseudo header)
+ * @param proto ip protocol (used for checksum of pseudo header)
+ * @param proto_len length of the ip data part (used for checksum of pseudo header)
+ * @return checksum (as u16_t) to be saved directly in the protocol header
+ */
+u16_t
+ip_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
+       const ip_addr_t *src, const ip_addr_t *dest)
+{
+#if LWIP_IPV6
+  if (IP_IS_V6(dest)) {
+    return ip6_chksum_pseudo(p, proto, proto_len, ip_2_ip6(src), ip_2_ip6(dest));
+  }
+#endif /* LWIP_IPV6 */
+#if LWIP_IPV4 && LWIP_IPV6
+  else
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+#if LWIP_IPV4
+  {
+    return inet_chksum_pseudo(p, proto, proto_len, ip_2_ip4(src), ip_2_ip4(dest));
+  }
+#endif /* LWIP_IPV4 */
+}
 
 /** Parts of the pseudo checksum which are common to IPv4 and IPv6 */
 static u16_t
@@ -407,9 +441,10 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
   return (u16_t)~(acc & 0xffffUL);
 }
 
+#if LWIP_IPV4
 /* inet_chksum_pseudo_partial:
  *
- * Calculates the pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ * Calculates the IPv4 pseudo Internet checksum used by TCP and UDP for a pbuf chain.
  * IP addresses are expected to be in network byte order.
  *
  * @param p chain of pbufs over that a checksum should be calculated (ip data part)
@@ -421,7 +456,7 @@ inet_cksum_pseudo_partial_base(struct pbuf *p, u8_t proto, u16_t proto_len,
  */
 u16_t
 inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
-       u16_t chksum_len, const ip_addr_t *src, const ip_addr_t *dest)
+       u16_t chksum_len, const ip4_addr_t *src, const ip4_addr_t *dest)
 {
   u32_t acc;
   u32_t addr;
@@ -438,6 +473,7 @@ inet_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 
   return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
 }
+#endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
 /**
@@ -476,6 +512,36 @@ ip6_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
   return inet_cksum_pseudo_partial_base(p, proto, proto_len, chksum_len, acc);
 }
 #endif /* LWIP_IPV6 */
+
+/* ip_chksum_pseudo_partial:
+ *
+ * Calculates the IPv4 or IPv6 pseudo Internet checksum used by TCP and UDP for a pbuf chain.
+ *
+ * @param p chain of pbufs over that a checksum should be calculated (ip data part)
+ * @param src source ip address (used for checksum of pseudo header)
+ * @param dst destination ip address (used for checksum of pseudo header)
+ * @param proto ip protocol (used for checksum of pseudo header)
+ * @param proto_len length of the ip data part (used for checksum of pseudo header)
+ * @return checksum (as u16_t) to be saved directly in the protocol header
+ */
+u16_t
+ip_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
+       u16_t chksum_len, const ip_addr_t *src, const ip_addr_t *dest)
+{
+#if LWIP_IPV6
+  if (IP_IS_V6(dest)) {
+    return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip6(src), ip_2_ip6(dest));
+  }
+#endif /* LWIP_IPV6 */
+#if LWIP_IPV4 && LWIP_IPV6
+  else
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+#if LWIP_IPV4
+  {
+    return inet_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip4(src), ip_2_ip4(dest));
+  }
+#endif /* LWIP_IPV4 */
+}
 
 /* inet_chksum:
  *

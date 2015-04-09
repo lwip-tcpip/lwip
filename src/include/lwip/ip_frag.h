@@ -40,6 +40,8 @@
 #include "lwip/ip_addr.h"
 #include "lwip/ip.h"
 
+#if LWIP_IPV4
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -62,7 +64,7 @@ struct ip_reassdata {
 
 void ip_reass_init(void);
 void ip_reass_tmr(void);
-struct pbuf * ip_reass(struct pbuf *p);
+struct pbuf * ip4_reass(struct pbuf *p);
 #endif /* IP_REASSEMBLY */
 
 #if IP_FRAG
@@ -81,11 +83,13 @@ struct pbuf_custom_ref {
 #endif /* LWIP_PBUF_CUSTOM_REF_DEFINED */
 #endif /* !IP_FRAG_USES_STATIC_BUF && !LWIP_NETIF_TX_SINGLE_PBUF */
 
-err_t ip_frag(struct pbuf *p, struct netif *netif, const ip_addr_t *dest);
+err_t ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest);
 #endif /* IP_FRAG */
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_IPV4 */
 
 #endif /* LWIP_HDR_IP_FRAG_H */

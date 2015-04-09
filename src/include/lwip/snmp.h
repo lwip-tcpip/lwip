@@ -129,9 +129,14 @@ void snmp_inc_ifoutdiscards(struct netif *ni);
 void snmp_inc_iflist(void);
 void snmp_dec_iflist(void);
 
+#if LWIP_IPV4 && LWIP_ARP
 /* ARP (for atTable and ipNetToMediaTable) */
-void snmp_insert_arpidx_tree(struct netif *ni, ip_addr_t *ip);
-void snmp_delete_arpidx_tree(struct netif *ni, ip_addr_t *ip);
+void snmp_insert_arpidx_tree(struct netif *ni, ip4_addr_t *ip);
+void snmp_delete_arpidx_tree(struct netif *ni, ip4_addr_t *ip);
+#else /* LWIP_IPV4 && LWIP_ARP */
+#define snmp_insert_arpidx_tree(ni,ip)
+#define snmp_delete_arpidx_tree(ni,ip)
+#endif /* LWIP_IPV4 && LWIP_ARP */
 
 /* IP */
 void snmp_inc_ipinreceives(void);

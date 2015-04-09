@@ -68,7 +68,7 @@
 
 #include "lwip/opt.h"
 
-#if LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
+#if LWIP_IPV4 && LWIP_DHCP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/stats.h"
 #include "lwip/mem.h"
@@ -112,7 +112,7 @@
 /** This function must exist, in other to add offered NTP servers to
  * the NTP (or SNTP) engine.
  * See LWIP_DHCP_MAX_NTP_SERVERS */
-extern void dhcp_set_ntp_servers(u8_t num_ntp_servers, ip_addr_t* ntp_server_addrs);
+extern void dhcp_set_ntp_servers(u8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
 #endif /* LWIP_DHCP_GET_NTP_SRV */
 
 /** Option handling: options are parsed in dhcp_parse_reply
@@ -222,7 +222,7 @@ dhcp_handle_nak(struct netif *netif)
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_handle_nak(netif=%p) %c%c%"U16_F"\n", 
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
   /* remove IP address from interface (must no longer be used, as per RFC2131) */
-  netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
   /* Change to a defined state */
   dhcp_set_state(dhcp, DHCP_BACKING_OFF);
   /* We can immediately restart discovery */
@@ -276,11 +276,11 @@ dhcp_handle_offer(struct netif *netif)
     (void*)netif, netif->name[0], netif->name[1], (u16_t)netif->num));
   /* obtain the server address */
   if (dhcp_option_given(dhcp, DHCP_OPTION_IDX_SERVER_ID)) {
-    ip4_addr_set_u32(&dhcp->server_ip_addr, htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_SERVER_ID)));
+    ip_addr_set_ip4_u32(&dhcp->server_ip_addr, htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_SERVER_ID)));
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_handle_offer(): server 0x%08"X32_F"\n",
-      ip4_addr_get_u32(&dhcp->server_ip_addr)));
+      ip4_addr_get_u32(ip_2_ip4(&dhcp->server_ip_addr))));
     /* remember offered address */
-    ip_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
+    ip4_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
     LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_STATE, ("dhcp_handle_offer(): offer for 0x%08"X32_F"\n",
       ip4_addr_get_u32(&dhcp->offered_ip_addr)));
 
@@ -321,7 +321,7 @@ dhcp_select(struct netif *netif)
     dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&dhcp->offered_ip_addr)));
 
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
-    dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&dhcp->server_ip_addr)));
+    dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(ip_2_ip4(&dhcp->server_ip_addr))));
 
     dhcp_option(dhcp, DHCP_OPTION_PARAMETER_REQUEST_LIST, sizeof(dhcp_discover_select_options));
     for (i = 0; i < sizeof(dhcp_discover_select_options); i++) {
@@ -533,14 +533,14 @@ dhcp_handle_ack(struct netif *netif)
   u8_t n;
 #endif /* LWIP_DNS || LWIP_DHCP_GET_NTP_SRV */
 #if LWIP_DHCP_GET_NTP_SRV
-  ip_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
+  ip4_addr_t ntp_server_addrs[LWIP_DHCP_MAX_NTP_SERVERS];
 #endif
 
   /* clear options we might not get from the ACK */
-  ip_addr_set_zero(&dhcp->offered_sn_mask);
-  ip_addr_set_zero(&dhcp->offered_gw_addr);
+  ip4_addr_set_zero(&dhcp->offered_sn_mask);
+  ip4_addr_set_zero(&dhcp->offered_gw_addr);
 #if LWIP_DHCP_BOOTP_FILE
-  ip_addr_set_zero(&dhcp->offered_si_addr);
+  ip4_addr_set_zero(&dhcp->offered_si_addr);
 #endif /* LWIP_DHCP_BOOTP_FILE */
 
   /* lease time given? */
@@ -567,7 +567,7 @@ dhcp_handle_ack(struct netif *netif)
   }
 
   /* (y)our internet address */
-  ip_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
+  ip4_addr_copy(dhcp->offered_ip_addr, dhcp->msg_in->yiaddr);
 
 #if LWIP_DHCP_BOOTP_FILE
   /* copy boot server address,
@@ -601,7 +601,7 @@ dhcp_handle_ack(struct netif *netif)
   /* DNS servers */
   for(n = 0; (n < DNS_MAX_SERVERS) && dhcp_option_given(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n); n++) {
     ip_addr_t dns_addr;
-    ip4_addr_set_u32(&dns_addr, htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n)));
+    ip_addr_set_ip4_u32(&dns_addr, htonl(dhcp_get_option_value(dhcp, DHCP_OPTION_IDX_DNS_SERVER + n)));
     dns_setserver(n, &dns_addr);
   }
 #endif /* LWIP_DNS */
@@ -838,7 +838,7 @@ dhcp_network_changed(struct netif *netif)
  * @param netif the network interface on which the reply was received
  * @param addr The IP address we received a reply from
  */
-void dhcp_arp_reply(struct netif *netif, ip_addr_t *addr)
+void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr)
 {
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_arp_reply()\n"));
@@ -848,7 +848,7 @@ void dhcp_arp_reply(struct netif *netif, ip_addr_t *addr)
       ip4_addr_get_u32(addr)));
     /* did a host respond with the address we
        were offered by the DHCP server? */
-    if (ip_addr_cmp(addr, &netif->dhcp->offered_ip_addr)) {
+    if (ip4_addr_cmp(addr, &netif->dhcp->offered_ip_addr)) {
       /* we will not accept the offered address */
       LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE | LWIP_DBG_LEVEL_WARNING,
         ("dhcp_arp_reply(): arp reply matched with offered address, declining\n"));
@@ -916,7 +916,7 @@ dhcp_discover(struct netif *netif)
   u16_t msecs;
   u8_t i;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_discover()\n"));
-  ip_addr_set_any(&dhcp->offered_ip_addr);
+  ip4_addr_set_any(&dhcp->offered_ip_addr);
   dhcp_set_state(dhcp, DHCP_SELECTING);
   /* create and initialize the DHCP message header */
   result = dhcp_create_msg(netif, dhcp, DHCP_DISCOVER);
@@ -969,7 +969,7 @@ dhcp_bind(struct netif *netif)
 {
   u32_t timeout;
   struct dhcp *dhcp;
-  ip_addr_t sn_mask, gw_addr;
+  ip4_addr_t sn_mask, gw_addr;
   LWIP_ERROR("dhcp_bind: netif != NULL", (netif != NULL), return;);
   dhcp = netif->dhcp;
   LWIP_ERROR("dhcp_bind: dhcp != NULL", (dhcp != NULL), return;);
@@ -1029,7 +1029,7 @@ dhcp_bind(struct netif *netif)
 
   if (dhcp->subnet_mask_given) {
     /* copy offered network mask */
-    ip_addr_copy(sn_mask, dhcp->offered_sn_mask);
+    ip4_addr_copy(sn_mask, dhcp->offered_sn_mask);
   } else {
     /* subnet mask not given, choose a safe subnet mask given the network class */
     u8_t first_octet = ip4_addr1(&dhcp->offered_ip_addr);
@@ -1042,11 +1042,11 @@ dhcp_bind(struct netif *netif)
     }
   }
 
-  ip_addr_copy(gw_addr, dhcp->offered_gw_addr);
+  ip4_addr_copy(gw_addr, dhcp->offered_gw_addr);
   /* gateway address not given? */
-  if (ip_addr_isany(&gw_addr)) {
+  if (ip4_addr_isany(&gw_addr)) {
     /* copy network address */
-    ip_addr_get_network(&gw_addr, &dhcp->offered_ip_addr, &sn_mask);
+    ip4_addr_get_network(&gw_addr, &dhcp->offered_ip_addr, &sn_mask);
     /* use first host address on network as gateway */
     ip4_addr_set_u32(&gw_addr, ip4_addr_get_u32(&gw_addr) | PP_HTONL(0x00000001UL));
   }
@@ -1223,11 +1223,11 @@ dhcp_release(struct netif *netif)
   dhcp_set_state(dhcp, DHCP_OFF);
   /* clean old DHCP offer */
   ip_addr_set_zero(&dhcp->server_ip_addr);
-  ip_addr_set_zero(&dhcp->offered_ip_addr);
-  ip_addr_set_zero(&dhcp->offered_sn_mask);
-  ip_addr_set_zero(&dhcp->offered_gw_addr);
+  ip4_addr_set_zero(&dhcp->offered_ip_addr);
+  ip4_addr_set_zero(&dhcp->offered_sn_mask);
+  ip4_addr_set_zero(&dhcp->offered_gw_addr);
 #if LWIP_DHCP_BOOTP_FILE
-  ip_addr_set_zero(&dhcp->offered_si_addr);
+  ip4_addr_set_zero(&dhcp->offered_si_addr);
 #endif /* LWIP_DHCP_BOOTP_FILE */
   dhcp->offered_t0_lease = dhcp->offered_t1_renew = dhcp->offered_t2_rebind = 0;
   
@@ -1235,7 +1235,7 @@ dhcp_release(struct netif *netif)
   result = dhcp_create_msg(netif, dhcp, DHCP_RELEASE);
   if (result == ERR_OK) {
     dhcp_option(dhcp, DHCP_OPTION_SERVER_ID, 4);
-    dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(&server_ip_addr)));
+    dhcp_option_long(dhcp, ntohl(ip4_addr_get_u32(ip_2_ip4(&server_ip_addr))));
 
     dhcp_option_trailer(dhcp);
 
@@ -1254,7 +1254,7 @@ dhcp_release(struct netif *netif)
   dhcp->request_timeout = (msecs + DHCP_FINE_TIMER_MSECS - 1) / DHCP_FINE_TIMER_MSECS;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("dhcp_release(): set request timeout %"U16_F" msecs\n", msecs));
   /* remove IP address from interface (prevents routing from selecting this interface) */
-  netif_set_addr(netif, IP_ADDR_ANY, IP_ADDR_ANY, IP_ADDR_ANY);
+  netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
 
   return result;
 }
@@ -1754,16 +1754,16 @@ dhcp_create_msg(struct netif *netif, struct dhcp *dhcp, u8_t message_type)
   /* we don't need the broadcast flag since we can receive unicast traffic
      before being fully configured! */
   dhcp->msg_out->flags = 0;
-  ip_addr_set_zero(&dhcp->msg_out->ciaddr);
+  ip4_addr_set_zero(&dhcp->msg_out->ciaddr);
   /* set ciaddr to netif->ip_addr based on message_type and state */
   if ((message_type == DHCP_INFORM) || (message_type == DHCP_DECLINE) || (message_type == DHCP_RELEASE) ||
       ((message_type == DHCP_REQUEST) && /* DHCP_BOUND not used for sending! */
        ((dhcp->state==DHCP_RENEWING) || dhcp->state==DHCP_REBINDING))) {
-    ip_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
+    ip4_addr_copy(dhcp->msg_out->ciaddr, netif->ip_addr);
   }
-  ip_addr_set_zero(&dhcp->msg_out->yiaddr);
-  ip_addr_set_zero(&dhcp->msg_out->siaddr);
-  ip_addr_set_zero(&dhcp->msg_out->giaddr);
+  ip4_addr_set_zero(&dhcp->msg_out->yiaddr);
+  ip4_addr_set_zero(&dhcp->msg_out->siaddr);
+  ip4_addr_set_zero(&dhcp->msg_out->giaddr);
   for (i = 0; i < DHCP_CHADDR_LEN; i++) {
     /* copy netif hardware address, pad with zeroes */
     dhcp->msg_out->chaddr[i] = (i < netif->hwaddr_len && i < NETIF_MAX_HWADDR_LEN) ? netif->hwaddr[i] : 0/* pad byte*/;
@@ -1827,4 +1827,4 @@ dhcp_option_trailer(struct dhcp *dhcp)
   }
 }
 
-#endif /* LWIP_DHCP */
+#endif /* LWIP_IPV4 && LWIP_DHCP */

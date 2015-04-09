@@ -35,23 +35,25 @@
 #include "lwip/opt.h"
 #include "lwip/def.h"
 
+#if LWIP_IPV4
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* This is the aligned version of ip_addr_t,
+/* This is the aligned version of ip4_addr_t,
    used as local variable, on the stack, etc. */
-struct ip_addr {
+struct ip4_addr {
   u32_t addr;
 };
 
-/* This is the packed version of ip_addr_t,
+/* This is the packed version of ip4_addr_t,
    used in network headers that are itself packed */
 #ifdef PACK_STRUCT_USE_INCLUDES
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct ip_addr_packed {
+struct ip4_addr_packed {
   PACK_STRUCT_FIELD(u32_t addr);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -59,10 +61,10 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-/** ip_addr_t uses a struct for convenience only, so that the same defines can
- * operate both on ip_addr_t as well as on ip_addr_p_t. */
-typedef struct ip_addr ip_addr_t;
-typedef struct ip_addr_packed ip_addr_p_t;
+/** ip4_addr_t uses a struct for convenience only, so that the same defines can
+ * operate both on ip4_addr_t as well as on ip4_addr_p_t. */
+typedef struct ip4_addr ip4_addr_t;
+typedef struct ip4_addr_packed ip4_addr_p_t;
 
 /*
  * struct ipaddr2 is used in the definition of the ARP packet format in
@@ -72,7 +74,7 @@ typedef struct ip_addr_packed ip_addr_p_t;
 #  include "arch/bpstruct.h"
 #endif
 PACK_STRUCT_BEGIN
-struct ip_addr2 {
+struct ip4_addr2 {
   PACK_STRUCT_FIELD(u16_t addrw[2]);
 } PACK_STRUCT_STRUCT;
 PACK_STRUCT_END
@@ -82,15 +84,6 @@ PACK_STRUCT_END
 
 /* Forward declaration to not include netif.h */
 struct netif;
-
-extern const ip_addr_t ip_addr_any;
-extern const ip_addr_t ip_addr_broadcast;
-
-/** IP_ADDR_ can be used as a fixed IP address
- *  for the wildcard and the broadcast address
- */
-#define IP_ADDR_ANY         (&ip_addr_any)
-#define IP_ADDR_BROADCAST   (&ip_addr_broadcast)
 
 /** 255.255.255.255 */
 #define IPADDR_NONE         ((u32_t)0xffffffffUL)
@@ -155,26 +148,26 @@ extern const ip_addr_t ip_addr_broadcast;
  * 16-bit-aligned if the port is correctly configured (so a port could define
  * this to copying 2 u16_t's) - no NULL-pointer-checking needed. */
 #ifndef IPADDR2_COPY
-#define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip_addr_t))
+#define IPADDR2_COPY(dest, src) SMEMCPY(dest, src, sizeof(ip4_addr_t))
 #endif
 
-/** Copy IP address - faster than ip_addr_set: no NULL check */
-#define ip_addr_copy(dest, src) ((dest).addr = (src).addr)
+/** Copy IP address - faster than ip4_addr_set: no NULL check */
+#define ip4_addr_copy(dest, src) ((dest).addr = (src).addr)
 /** Safely copy one IP address to another (src may be NULL) */
-#define ip_addr_set(dest, src) ((dest)->addr = \
+#define ip4_addr_set(dest, src) ((dest)->addr = \
                                     ((src) == NULL ? 0 : \
                                     (src)->addr))
 /** Set complete address to zero */
-#define ip_addr_set_zero(ipaddr)      ((ipaddr)->addr = 0)
+#define ip4_addr_set_zero(ipaddr)     ((ipaddr)->addr = 0)
 /** Set address to IPADDR_ANY (no need for htonl()) */
-#define ip_addr_set_any(ipaddr)       ((ipaddr)->addr = IPADDR_ANY)
+#define ip4_addr_set_any(ipaddr)      ((ipaddr)->addr = IPADDR_ANY)
 /** Set address to loopback address */
-#define ip_addr_set_loopback(ipaddr)  ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
+#define ip4_addr_set_loopback(ipaddr) ((ipaddr)->addr = PP_HTONL(IPADDR_LOOPBACK))
 /** Check if an address is in the loopback region */
-#define ip_addr_isloopback(ipaddr)    (((ipaddr)->addr & PP_HTONL(IP_CLASSA_NET)) == PP_HTONL(((u32_t)IP_LOOPBACKNET) << 24))
+#define ip4_addr_isloopback(ipaddr)    (((ipaddr)->addr & PP_HTONL(IP_CLASSA_NET)) == PP_HTONL(((u32_t)IP_LOOPBACKNET) << 24))
 /** Safely copy one IP address to another and change byte order
  * from host- to network-order. */
-#define ip_addr_set_hton(dest, src) ((dest)->addr = \
+#define ip4_addr_set_hton(dest, src) ((dest)->addr = \
                                ((src) == NULL ? 0:\
                                htonl((src)->addr)))
 /** IPv4 only: set the IP address given as an u32_t */
@@ -183,7 +176,7 @@ extern const ip_addr_t ip_addr_broadcast;
 #define ip4_addr_get_u32(src_ipaddr) ((src_ipaddr)->addr)
 
 /** Get the network address by combining host address with netmask */
-#define ip_addr_get_network(target, host, netmask) ((target)->addr = ((host)->addr) & ((netmask)->addr))
+#define ip4_addr_get_network(target, host, netmask) do { ((target)->addr = ((host)->addr) & ((netmask)->addr)); } while(0)
 
 /**
  * Determine if two address are on the same network.
@@ -193,25 +186,25 @@ extern const ip_addr_t ip_addr_broadcast;
  * @arg mask network identifier mask
  * @return !0 if the network identifiers of both address match
  */
-#define ip_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
+#define ip4_addr_netcmp(addr1, addr2, mask) (((addr1)->addr & \
                                               (mask)->addr) == \
                                              ((addr2)->addr & \
                                               (mask)->addr))
-#define ip_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
+#define ip4_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
-#define ip_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
+#define ip4_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
 
-#define ip_addr_isbroadcast(ipaddr, netif) ip4_addr_isbroadcast((ipaddr)->addr, (netif))
-u8_t ip4_addr_isbroadcast(u32_t addr, const struct netif *netif);
+#define ip4_addr_isbroadcast(addr1, netif) ip4_addr_isbroadcast_u32((addr1)->addr, netif)
+u8_t ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif);
 
 #define ip_addr_netmask_valid(netmask) ip4_addr_netmask_valid((netmask)->addr)
 u8_t ip4_addr_netmask_valid(u32_t netmask);
 
-#define ip_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
+#define ip4_addr_ismulticast(addr1) (((addr1)->addr & PP_HTONL(0xf0000000UL)) == PP_HTONL(0xe0000000UL))
 
-#define ip_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
+#define ip4_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
-#define ip_addr_debug_print(debug, ipaddr) \
+#define ip4_addr_debug_print(debug, ipaddr) \
   LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F,      \
                       ipaddr != NULL ? ip4_addr1_16(ipaddr) : 0,       \
                       ipaddr != NULL ? ip4_addr2_16(ipaddr) : 0,       \
@@ -237,13 +230,15 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
 #define ip_ntoa(ipaddr)  ipaddr_ntoa(ipaddr)
 
 u32_t ipaddr_addr(const char *cp);
-int ipaddr_aton(const char *cp, ip_addr_t *addr);
+int ip4addr_aton(const char *cp, ip4_addr_t *addr);
 /** returns ptr to static buffer; not reentrant! */
-char *ipaddr_ntoa(const ip_addr_t *addr);
-char *ipaddr_ntoa_r(const ip_addr_t *addr, char *buf, int buflen);
+char *ip4addr_ntoa(const ip4_addr_t *addr);
+char *ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen);
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif /* LWIP_IPV4 */
 
 #endif /* LWIP_HDR_IP_ADDR_H */

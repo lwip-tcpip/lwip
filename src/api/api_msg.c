@@ -123,7 +123,7 @@ recv_raw(void *arg, struct raw_pcb *pcb, struct pbuf *p,
 
       buf->p = q;
       buf->ptr = q;
-      ipX_addr_copy(PCB_ISIPV6(pcb), buf->addr, *ipX_current_src_addr());
+      ip_addr_copy(buf->addr, *ip_current_src_addr());
       buf->port = pcb->protocol;
 
       len = q->tot_len;
@@ -186,16 +186,16 @@ recv_udp(void *arg, struct udp_pcb *pcb, struct pbuf *p,
   } else {
     buf->p = p;
     buf->ptr = p;
-    ipX_addr_set_ipaddr(ip_current_is_v6(), &buf->addr, addr);
+    ip_addr_set(&buf->addr, addr);
     buf->port = port;
 #if LWIP_NETBUF_RECVINFO
     {
       /* get the UDP header - always in the first pbuf, ensured by udp_input */
-      const struct udp_hdr* udphdr = ipX_next_header_ptr();
+      const struct udp_hdr* udphdr = (const struct udp_hdr*)ip_next_header_ptr();
 #if LWIP_CHECKSUM_ON_COPY
       buf->flags = NETBUF_FLAG_DESTADDR;
 #endif /* LWIP_CHECKSUM_ON_COPY */
-      ipX_addr_set(ip_current_is_v6(), &buf->toaddr, ipX_current_dest_addr());
+      ip_addr_set(&buf->toaddr, ip_current_dest_addr());
       buf->toport_chksum = udphdr->dest;
     }
 #endif /* LWIP_NETBUF_RECVINFO */
@@ -1337,29 +1337,29 @@ lwip_netconn_do_send(struct api_msg_msg *msg)
       switch (NETCONNTYPE_GROUP(msg->conn->type)) {
 #if LWIP_RAW
       case NETCONN_RAW:
-        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = raw_send(msg->conn->pcb.raw, msg->msg.b->p);
         } else {
-          msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, ipX_2_ip(&msg->msg.b->addr));
+          msg->err = raw_sendto(msg->conn->pcb.raw, msg->msg.b->p, &msg->msg.b->addr);
         }
         break;
 #endif
 #if LWIP_UDP
       case NETCONN_UDP:
 #if LWIP_CHECKSUM_ON_COPY
-        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = udp_send_chksum(msg->conn->pcb.udp, msg->msg.b->p,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         } else {
           msg->err = udp_sendto_chksum(msg->conn->pcb.udp, msg->msg.b->p,
-            ipX_2_ip(&msg->msg.b->addr), msg->msg.b->port,
+            &msg->msg.b->addr, msg->msg.b->port,
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
-        if (ipX_addr_isany(PCB_ISIPV6(msg->conn->pcb.ip), &msg->msg.b->addr)) {
+        if (ip_addr_isany(&msg->msg.b->addr)) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
-          msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, ipX_2_ip(&msg->msg.b->addr), msg->msg.b->port);
+          msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, &msg->msg.b->addr, msg->msg.b->port);
         }
 #endif /* LWIP_CHECKSUM_ON_COPY */
         break;
@@ -1624,10 +1624,10 @@ lwip_netconn_do_getaddr(struct api_msg_msg *msg)
 {
   if (msg->conn->pcb.ip != NULL) {
     if (msg->msg.ad.local) {
-      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), API_EXPR_DEREF(msg->msg.ad.ipaddr),
+      ip_addr_copy(API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->local_ip);
     } else {
-      ipX_addr_copy(PCB_ISIPV6(msg->conn->pcb.ip), API_EXPR_DEREF(msg->msg.ad.ipaddr),
+      ip_addr_copy(API_EXPR_DEREF(msg->msg.ad.ipaddr),
         msg->conn->pcb.ip->remote_ip);
     }
     msg->err = ERR_OK;
@@ -1770,11 +1770,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
 #if LWIP_IPV6 && LWIP_IPV6_MLD
         if (PCB_ISIPV6(msg->conn->pcb.udp)) {
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = mld6_joingroup(ipX_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ipX_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = mld6_joingroup(ip_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = mld6_leavegroup(ipX_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ipX_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = mld6_leavegroup(ip_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
         }
         else
@@ -1782,11 +1782,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
         {
 #if LWIP_IGMP
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = igmp_joingroup(ipX_2_ip(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ipX_2_ip(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = igmp_joingroup(ip_2_ip4(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = igmp_leavegroup(ipX_2_ip(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ipX_2_ip(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = igmp_leavegroup(ip_2_ip4(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
 #endif /* LWIP_IGMP */
         }

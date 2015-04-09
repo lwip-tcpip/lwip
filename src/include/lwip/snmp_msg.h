@@ -268,6 +268,8 @@ struct snmp_msg_trap
   const struct snmp_obj_id *enterprise;
   /* source IP address, raw network order format */
   u8_t sip_raw[4];
+  /* source IP address length */
+  u8_t sip_raw_len;
   /* generic trap code */
   u32_t gen_trap;
   /* specific trap code */

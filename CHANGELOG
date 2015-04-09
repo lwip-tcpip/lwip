@@ -6,6 +6,12 @@ HISTORY
 
   ++ New features:
 
+  * nearly all files: task #12722 (improve IPv4/v6 address handling): renamed
+    ip_addr_t to ip4_addr_t, renamed ipX_addr_t to ip_addr_t and added IP
+    version; ip_addr_t is used for all generic IP addresses for the API,
+    ip(4/6)_addr_t are only used internally or when initializing netifs or when
+    calling version-related functions
+
   * opt.h, ip4_addr.h, ip4.c, ip6.c: loopif is not required for loopback traffic
     any more but passed through any netif (ENABLE_LOOPBACK has to be enabled)
 

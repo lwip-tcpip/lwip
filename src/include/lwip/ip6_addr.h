@@ -72,17 +72,8 @@ PACK_STRUCT_END
 #  include "arch/epstruct.h"
 #endif
 
-/** ip6_addr_t uses a struct for convenience only, so that the same defines can
- * operate both on ip6_addr_t as well as on ip6_addr_p_t. */
 typedef struct ip6_addr ip6_addr_t;
 typedef struct ip6_addr_packed ip6_addr_p_t;
-
-
-/** IP6_ADDR_ANY can be used as a fixed IPv6 address
- *  for the wildcard
- */
-extern const ip6_addr_t ip6_addr_any;
-#define IP6_ADDR_ANY         ((ip6_addr_t *)&ip6_addr_any)
 
 
 #if BYTE_ORDER == BIG_ENDIAN

@@ -39,6 +39,9 @@
  */
 
 #include "lwip/opt.h"
+
+#if LWIP_IPV4
+
 #include "lwip/ip_frag.h"
 #include "lwip/def.h"
 #include "lwip/inet_chksum.h"
@@ -100,8 +103,8 @@ PACK_STRUCT_END
 #endif
 
 #define IP_ADDRESSES_AND_ID_MATCH(iphdrA, iphdrB)  \
-  (ip_addr_cmp(&(iphdrA)->src, &(iphdrB)->src) && \
-   ip_addr_cmp(&(iphdrA)->dest, &(iphdrB)->dest) && \
+  (ip4_addr_cmp(&(iphdrA)->src, &(iphdrB)->src) && \
+   ip4_addr_cmp(&(iphdrA)->dest, &(iphdrB)->dest) && \
    IPH_ID(iphdrA) == IPH_ID(iphdrB)) ? 1 : 0
 
 /* global variables */
@@ -476,7 +479,7 @@ freepbuf:
  * @return NULL if reassembly is incomplete, ? otherwise
  */
 struct pbuf *
-ip_reass(struct pbuf *p)
+ip4_reass(struct pbuf *p)
 {
   struct pbuf *r;
   struct ip_hdr *fraghdr;
@@ -679,8 +682,8 @@ ipfrag_free_pbuf_custom(struct pbuf *p)
  *
  * @return ERR_OK if sent successfully, err_t otherwise
  */
-err_t 
-ip_frag(struct pbuf *p, struct netif *netif, const ip_addr_t *dest)
+err_t
+ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 {
   struct pbuf *rambuf;
 #if IP_FRAG_USES_STATIC_BUF
@@ -879,3 +882,5 @@ ip_frag(struct pbuf *p, struct netif *netif, const ip_addr_t *dest)
   return ERR_OK;
 }
 #endif /* IP_FRAG */
+
+#endif /* LWIP_IPV4 */

@@ -313,9 +313,9 @@ struct tcp_pcb_listen {
   u8_t backlog;
   u8_t accepts_pending;
 #endif /* TCP_LISTEN_BACKLOG */
-#if LWIP_IPV6
+#if LWIP_IPV4 && LWIP_IPV6
   u8_t accept_any_ip_version;
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 };
 
 #if LWIP_EVENT_API
@@ -396,16 +396,14 @@ const char* tcp_debug_state_str(enum tcp_state s);
 
 #if LWIP_IPV6
 struct tcp_pcb * tcp_new_ip6 (void);
-#define          tcp_bind_ip6(pcb, ip6addr, port) \
-                   tcp_bind(pcb, ip6_2_ip(ip6addr), port)
-#define          tcp_connect_ip6(pcb, ip6addr, port, connected) \
-                   tcp_connect(pcb, ip6_2_ip(ip6addr), port, connected)
+#endif /* LWIP_IPV6 */
+#if LWIP_IPV4 && LWIP_IPV6
 struct tcp_pcb * tcp_listen_dual_with_backlog(struct tcp_pcb *pcb, u8_t backlog);
 #define          tcp_listen_dual(pcb) tcp_listen_dual_with_backlog(pcb, TCP_DEFAULT_LISTEN_BACKLOG)
-#else /* LWIP_IPV6 */
+#else /* LWIP_IPV4 && LWIP_IPV6 */
 #define          tcp_listen_dual_with_backlog(pcb, backlog) tcp_listen_with_backlog(pcb, backlog)
 #define          tcp_listen_dual(pcb) tcp_listen(pcb)
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 
 #ifdef __cplusplus

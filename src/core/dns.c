@@ -113,7 +113,7 @@ static u16_t dns_txid;
 
 /** DNS server IP address */
 #ifndef DNS_SERVER_ADDRESS
-#define DNS_SERVER_ADDRESS(ipaddr)        (ip4_addr_set_u32(ipaddr, ipaddr_addr("208.67.222.222"))) /* resolver1.opendns.com */
+#define DNS_SERVER_ADDRESS(ipaddr)        ip_addr_set_ip4_u32(ipaddr, ipaddr_addr("208.67.222.222")) /* resolver1.opendns.com */
 #endif
 
 /** DNS server port address */
@@ -459,7 +459,7 @@ dns_lookup_local(const char *hostname)
   struct local_hostlist_entry *entry = local_hostlist_dynamic;
   while(entry != NULL) {
     if (LWIP_DNS_STRICMP(entry->name, hostname) == 0) {
-      return ip4_addr_get_u32(&entry->addr);
+      return ip_addr_get_ip4_u32(&entry->addr);
     }
     entry = entry->next;
   }
@@ -467,7 +467,7 @@ dns_lookup_local(const char *hostname)
   int i;
   for (i = 0; i < sizeof(local_hostlist_static) / sizeof(struct local_hostlist_entry); i++) {
     if (LWIP_DNS_STRICMP(local_hostlist_static[i].name, hostname) == 0) {
-      return ip4_addr_get_u32(&local_hostlist_static[i].addr);
+      return ip_addr_get_ip4_u32(&local_hostlist_static[i].addr);
     }
   }
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
@@ -577,9 +577,9 @@ dns_lookup(const char *name)
     if ((dns_table[i].state == DNS_STATE_DONE) &&
         (LWIP_DNS_STRICMP(name, dns_table[i].name) == 0)) {
       LWIP_DEBUGF(DNS_DEBUG, ("dns_lookup: \"%s\": found = ", name));
-      ip_addr_debug_print(DNS_DEBUG, &(dns_table[i].ipaddr));
+      ip4_addr_debug_print(DNS_DEBUG, &(dns_table[i].ipaddr));
       LWIP_DEBUGF(DNS_DEBUG, ("\n"));
-      return ip4_addr_get_u32(&dns_table[i].ipaddr);
+      return ip_addr_get_ip4_u32(&dns_table[i].ipaddr);
     }
   }
 
@@ -1059,7 +1059,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
           /* Check for IP address type and Internet class. Others are discarded. */
           pbuf_copy_partial(p, &ans, SIZEOF_DNS_ANSWER, res_idx);
           if((ans.type == PP_HTONS(DNS_RRTYPE_A)) && (ans.cls == PP_HTONS(DNS_RRCLASS_IN)) &&
-             (ans.len == PP_HTONS(sizeof(ip_addr_t))) ) {
+             (ans.len == PP_HTONS(sizeof(ip4_addr_t))) ) {
             res_idx += SIZEOF_DNS_ANSWER;
             /* read the answer resource record's TTL, and maximize it if needed */
             entry->ttl = ntohl(ans.ttl);
@@ -1069,7 +1069,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             /* read the IP address after answer resource record's header */
             pbuf_copy_partial(p, &(entry->ipaddr), sizeof(entry->ipaddr), res_idx);
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
-            ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
+            ip4_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
             /* call specified callback function if provided */
             dns_call_found(entry_idx, &entry->ipaddr);
@@ -1279,7 +1279,8 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
 
 #if LWIP_HAVE_LOOPIF
   if (strcmp(hostname, "localhost") == 0) {
-    ip_addr_set_loopback(addr);
+    /* @todo: IPv6 support... */
+    ip_addr_set_loopback(0, addr);
     return ERR_OK;
   }
 #endif /* LWIP_HAVE_LOOPIF */
@@ -1291,7 +1292,7 @@ dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback foun
     ipaddr = dns_lookup(hostname);
   }
   if (ipaddr != IPADDR_NONE) {
-    ip4_addr_set_u32(addr, ipaddr);
+    ip_addr_set_ip4_u32(addr, ipaddr);
     return ERR_OK;
   }
 
