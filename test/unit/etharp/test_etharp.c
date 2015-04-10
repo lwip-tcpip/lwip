@@ -12,7 +12,7 @@
 #endif
 
 static struct netif test_netif;
-static ip_addr_t test_ipaddr, test_netmask, test_gw;
+static ip4_addr_t test_ipaddr, test_netmask, test_gw;
 struct eth_addr test_ethaddr = {1,1,1,1,1,1};
 struct eth_addr test_ethaddr2 = {1,1,1,1,1,2};
 struct eth_addr test_ethaddr3 = {1,1,1,1,1,3};
@@ -72,7 +72,7 @@ default_netif_remove(void)
 }
 
 static void
-create_arp_response(ip_addr_t *adr)
+create_arp_response(ip4_addr_t *adr)
 {
   int k;
   struct eth_hdr *ethhdr;
@@ -91,11 +91,11 @@ create_arp_response(ip_addr_t *adr)
   etharphdr->hwtype = htons(/*HWTYPE_ETHERNET*/ 1);
   etharphdr->proto = htons(ETHTYPE_IP);
   etharphdr->hwlen = ETHARP_HWADDR_LEN;
-  etharphdr->protolen = sizeof(ip_addr_t);
+  etharphdr->protolen = sizeof(ip4_addr_t);
   etharphdr->opcode = htons(ARP_REPLY);
 
-  SMEMCPY(&etharphdr->sipaddr, adr, sizeof(ip_addr_t));
-  SMEMCPY(&etharphdr->dipaddr, &test_ipaddr, sizeof(ip_addr_t));
+  SMEMCPY(&etharphdr->sipaddr, adr, sizeof(ip4_addr_t));
+  SMEMCPY(&etharphdr->dipaddr, &test_ipaddr, sizeof(ip4_addr_t));
 
   k = 6;
   while(k > 0) {
@@ -136,7 +136,7 @@ START_TEST(test_etharp_table)
   err_t err;
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   s8_t idx;
-  ip_addr_t *unused_ipaddr;
+  ip4_addr_t *unused_ipaddr;
   struct eth_addr *unused_ethaddr;
   struct udp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
@@ -150,7 +150,7 @@ START_TEST(test_etharp_table)
   pcb = udp_new();
   fail_unless(pcb != NULL);
   if (pcb != NULL) {
-    ip_addr_t adrs[ARP_TABLE_SIZE + 2];
+    ip4_addr_t adrs[ARP_TABLE_SIZE + 2];
     int i;
     for(i = 0; i < ARP_TABLE_SIZE + 2; i++) {
       IP4_ADDR(&adrs[i], 192,168,0,i+2);
@@ -160,7 +160,10 @@ START_TEST(test_etharp_table)
       struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 10, PBUF_RAM);
       fail_unless(p != NULL);
       if (p != NULL) {
-        err_t err = udp_sendto(pcb, p, &adrs[i], 123);
+        err_t err;
+        ip_addr_t dst;
+        ip_addr_copy_from_ip4(dst, adrs[i]);
+        err = udp_sendto(pcb, p, &dst, 123);
         fail_unless(err == ERR_OK);
         /* etharp request sent? */
         fail_unless(linkoutput_ctr == (2*i) + 1);
@@ -192,7 +195,10 @@ START_TEST(test_etharp_table)
       struct pbuf *p = pbuf_alloc(PBUF_TRANSPORT, 10, PBUF_RAM);
       fail_unless(p != NULL);
       if (p != NULL) {
-        err_t err = udp_sendto(pcb, p, &adrs[i], 123);
+        err_t err;
+        ip_addr_t dst;
+        ip_addr_copy_from_ip4(dst, adrs[i]);
+        err = udp_sendto(pcb, p, &dst, 123);
         fail_unless(err == ERR_OK);
         /* etharp request sent? */
         fail_unless(linkoutput_ctr == (2*i) + 1);

@@ -420,9 +420,9 @@ static err_t lwip_tx_func(struct netif *netif, struct pbuf *p)
  */
 START_TEST(test_dhcp)
 {
-  struct ip_addr addr;
-  struct ip_addr netmask;
-  struct ip_addr gw;
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
   int i;
   u32_t xid;
   LWIP_UNUSED_ARG(_i);
@@ -445,9 +445,9 @@ START_TEST(test_dhcp)
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
   /* IP addresses should be zero */
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 1, "TX %d packets, expected 1", txpacket); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
@@ -476,9 +476,9 @@ START_TEST(test_dhcp)
   IP4_ADDR(&addr, 195, 170, 189, 200);
   IP4_ADDR(&netmask, 255, 255, 255, 0);
   IP4_ADDR(&gw, 195, 170, 189, 171);
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   netif_remove(&net_test);
 }
@@ -490,9 +490,9 @@ END_TEST
  */
 START_TEST(test_dhcp_nak)
 {
-  struct ip_addr addr;
-  struct ip_addr netmask;
-  struct ip_addr gw;
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
   u32_t xid;
   LWIP_UNUSED_ARG(_i);
 
@@ -514,9 +514,9 @@ START_TEST(test_dhcp_nak)
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
   /* IP addresses should be zero */
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
@@ -707,9 +707,9 @@ START_TEST(test_dhcp_relayed)
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
   0x00, 0x00, 0x00, 0x00 };
 
-  struct ip_addr addr;
-  struct ip_addr netmask;
-  struct ip_addr gw;
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
   int i;
   u32_t xid;
   LWIP_UNUSED_ARG(_i);
@@ -729,9 +729,9 @@ START_TEST(test_dhcp_relayed)
   fail_unless(txpacket == 1); /* DHCP discover sent */
 
   /* IP addresses should be zero */
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);
@@ -756,9 +756,9 @@ START_TEST(test_dhcp_relayed)
   IP4_ADDR(&addr, 79, 138, 51, 5);
   IP4_ADDR(&netmask, 255, 255, 254, 0);
   IP4_ADDR(&gw, 79, 138, 50, 1);
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 5, "txpacket = %d", txpacket);
 
@@ -793,9 +793,9 @@ END_TEST
 
 START_TEST(test_dhcp_nak_no_endmarker)
 {
-  struct ip_addr addr;
-  struct ip_addr netmask;
-  struct ip_addr gw;
+  ip4_addr_t addr;
+  ip4_addr_t netmask;
+  ip4_addr_t gw;
 
   u8_t dhcp_nack_no_endmarker[] = {
     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x54, 0x75,
@@ -870,9 +870,9 @@ START_TEST(test_dhcp_nak_no_endmarker)
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
 
   /* IP addresses should be zero */
-  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(struct ip_addr)));
-  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(struct ip_addr)));
-  fail_if(memcmp(&gw, &net_test.gw, sizeof(struct ip_addr)));
+  fail_if(memcmp(&addr, &net_test.ip_addr, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&netmask, &net_test.netmask, sizeof(ip4_addr_t)));
+  fail_if(memcmp(&gw, &net_test.gw, sizeof(ip4_addr_t)));
 
   fail_unless(txpacket == 1); /* Nothing more sent */
   xid = htonl(net_test.dhcp->xid);

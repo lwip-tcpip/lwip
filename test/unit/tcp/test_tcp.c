@@ -87,9 +87,9 @@ START_TEST(test_tcp_recv_inseq)
 
   /* initialize local vars */
   memset(&netif, 0, sizeof(netif));
-  IP4_ADDR(&local_ip, 192, 168, 1, 1);
-  IP4_ADDR(&remote_ip, 192, 168, 1, 2);
-  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  IP_ADDR4(&local_ip, 192, 168, 1, 1);
+  IP_ADDR4(&remote_ip, 192, 168, 1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   data_len = sizeof(data);
   /* initialize counter struct */
@@ -143,9 +143,9 @@ START_TEST(test_tcp_fast_retx_recover)
   LWIP_UNUSED_ARG(_i);
 
   /* initialize local vars */
-  IP4_ADDR(&local_ip,  192, 168,   1, 1);
-  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
-  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  IP_ADDR4(&local_ip,  192, 168,   1, 1);
+  IP_ADDR4(&remote_ip, 192, 168,   1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   memset(&counters, 0, sizeof(counters));
 
@@ -338,9 +338,9 @@ START_TEST(test_tcp_fast_rexmit_wraparound)
   }
 
   /* initialize local vars */
-  IP4_ADDR(&local_ip,  192, 168,   1, 1);
-  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
-  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  IP_ADDR4(&local_ip,  192, 168,   1, 1);
+  IP_ADDR4(&remote_ip, 192, 168,   1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   memset(&counters, 0, sizeof(counters));
 
@@ -435,9 +435,9 @@ START_TEST(test_tcp_rto_rexmit_wraparound)
   }
 
   /* initialize local vars */
-  IP4_ADDR(&local_ip,  192, 168,   1, 1);
-  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
-  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  IP_ADDR4(&local_ip,  192, 168,   1, 1);
+  IP_ADDR4(&remote_ip, 192, 168,   1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   memset(&counters, 0, sizeof(counters));
 
@@ -525,9 +525,9 @@ static void test_tcp_tx_full_window_lost(u8_t zero_window_probe_from_unsent)
   }
 
   /* initialize local vars */
-  IP4_ADDR(&local_ip,  192, 168,   1, 1);
-  IP4_ADDR(&remote_ip, 192, 168,   1, 2);
-  IP4_ADDR(&netmask,   255, 255, 255, 0);
+  IP_ADDR4(&local_ip,  192, 168,   1, 1);
+  IP_ADDR4(&remote_ip, 192, 168,   1, 2);
+  IP_ADDR4(&netmask,   255, 255, 255, 0);
   test_tcp_init_netif(&netif, &txcounters, &local_ip, &netmask);
   memset(&counters, 0, sizeof(counters));
   memset(&txcounters, 0, sizeof(txcounters));

@@ -4,6 +4,7 @@
 #include "lwip/stats.h"
 #include "lwip/pbuf.h"
 #include "lwip/inet_chksum.h"
+#include "lwip/ip_addr.h"
 
 #if !LWIP_STATS || !TCP_STATS || !MEMP_STATS
 #error "This tests needs TCP- and MEMP-statistics enabled"
@@ -62,8 +63,8 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
 
   iphdr = p->payload;
   /* fill IP header */
-  iphdr->dest.addr = dst_ip->addr;
-  iphdr->src.addr = src_ip->addr;
+  iphdr->dest.addr = ip_2_ip4(dst_ip)->addr;
+  iphdr->src.addr = ip_2_ip4(src_ip)->addr;
   IPH_VHL_SET(iphdr, 4, IP_HLEN / 4);
   IPH_TOS_SET(iphdr, 0);
   IPH_LEN_SET(iphdr, htons(p->tot_len));
@@ -92,7 +93,7 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
 
   /* calculate checksum */
 
-  tcphdr->chksum = inet_chksum_pseudo(p,
+  tcphdr->chksum = ip_chksum_pseudo(p,
           IP_PROTO_TCP, p->tot_len, src_ip, dst_ip);
 
   pbuf_header(p, sizeof(struct ip_hdr));
@@ -239,24 +240,24 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
 {
   struct ip_hdr *iphdr = (struct ip_hdr*)p->payload;
   /* these lines are a hack, don't use them as an example :-) */
-  ip_addr_copy(*ipX_current_dest_addr(), iphdr->dest);
-  ip_addr_copy(*ipX_current_src_addr(), iphdr->src);
+  ip_addr_copy_from_ip4(*ip_current_dest_addr(), iphdr->dest);
+  ip_addr_copy_from_ip4(*ip_current_src_addr(), iphdr->src);
   ip_current_netif() = inp;
-  ip_current_header() = iphdr;
+  ip4_current_header() = iphdr;
 
   /* since adding IPv6, p->payload must point to tcp header, not ip header */
   pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
 
   tcp_input(p, inp);
 
-  ipX_current_dest_addr()->addr = 0;
-  ipX_current_src_addr()->addr = 0;
+  ip_addr_set_zero(ip_current_dest_addr());
+  ip_addr_set_zero(ip_current_src_addr());
   ip_current_netif() = NULL;
-  ip_current_header() = NULL;
+  ip4_current_header() = NULL;
 }
 
 static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
-       const ip_addr_t *ipaddr)
+       const ip4_addr_t *ipaddr)
 {
   struct test_tcp_txcounters *txcounters = (struct test_tcp_txcounters*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);
@@ -291,8 +292,8 @@ void test_tcp_init_netif(struct netif *netif, struct test_tcp_txcounters *txcoun
   }
   netif->output = test_tcp_netif_output;
   netif->flags |= NETIF_FLAG_UP | NETIF_FLAG_LINK_UP;
-  ip_addr_copy(netif->netmask, *netmask);
-  ip_addr_copy(netif->ip_addr, *ip_addr);
+  ip4_addr_copy(netif->netmask, *ip_2_ip4(netmask));
+  ip4_addr_copy(netif->ip_addr, *ip_2_ip4(ip_addr));
   for (n = netif_list; n != NULL; n = n->next) {
     if (n == netif) {
       return;
