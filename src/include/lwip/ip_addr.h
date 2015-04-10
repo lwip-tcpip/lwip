@@ -83,6 +83,11 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #define ip_2_ip4(ipaddr)   ((ip4_addr_t*)(ipaddr))
 #endif /* LWIP_ALLOW_STATIC_FN_IN_HEADER */
 
+#define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \
+                                           IP_SET_TYPE_L(ipaddr, IPADDR_TYPE_V4); } while(0)
+#define IP_ADDR6(ipaddr,idx,a,b,c,d)  do { IP6_ADDR(ip_2_ip6(ipaddr),idx,a,b,c,d); \
+                                           IP_SET_TYPE_L(ipaddr, IPADDR_TYPE_V6); } while(0)
+
 #define ip_addr_copy(dest, src)      do{if(IP_IS_V6_L(&(src))){ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V6); }else{ \
   ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V4); }}while(0)
@@ -155,6 +160,7 @@ typedef ip4_addr_t ip_addr_t;
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip4_2_ip(ipaddr, unused)                (ipaddr)
 #define ip_2_ip4(ipaddr)                        (ipaddr)
+#define IP_ADDR4(ipaddr,a,b,c,d)                IP4_ADDR(ipaddr,a,b,c,d)
 
 #define ip_addr_copy(dest, src)                 ip4_addr_copy(dest, src)
 #define ip_addr_copy_from_ip4(dest, src)        ip4_addr_copy(dest, src)
@@ -188,6 +194,7 @@ typedef ip6_addr_t ip_addr_t;
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip6_2_ip(ipaddr, unused)                (ipaddr)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
+#define IP_ADDR6(ipaddr,idx,a,b,c,d)            IP6_ADDR(ipaddr,idx,a,b,c,d)
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)
