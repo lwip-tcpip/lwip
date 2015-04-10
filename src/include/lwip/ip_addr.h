@@ -48,8 +48,8 @@ extern "C" {
  */
 typedef struct _ip_addr {
   union {
-    ip4_addr_t ip4;
     ip6_addr_t ip6;
+    ip4_addr_t ip4;
   } addr;
   u8_t type;
 } ip_addr_t;
@@ -57,6 +57,9 @@ typedef struct _ip_addr {
 /** These are the values for ip_addr_t.type */
 #define IPADDR_TYPE_V4                0U
 #define IPADDR_TYPE_V6                6U
+
+#define IPADDR4_INIT(u32val)          { { { u32val, 0ul, 0ul, 0ul } }, IPADDR_TYPE_V4 }
+#define IPADDR6_INIT(a, b, c, d)      { { { a, b, c, d } }, IPADDR_TYPE_V6 }
 
 #define IP_IS_V6_L(ipaddr)            ((ipaddr)->type == IPADDR_TYPE_V6)
 #define IP_IS_V6(ipaddr)              (((ipaddr) != NULL) && IP_IS_V6_L(ipaddr))
@@ -145,12 +148,13 @@ int ipaddr_aton(const char *cp, ip_addr_t *addr);
 #if LWIP_IPV4
 
 typedef ip4_addr_t ip_addr_t;
-#define IP_IS_V6_L(ipaddr)        0
-#define IP_IS_V6(ipaddr)          0
+#define IPADDR4_INIT(u32val)                    { u32val }
+#define IP_IS_V6_L(ipaddr)                      0
+#define IP_IS_V6(ipaddr)                        0
 #define IP_SET_TYPE_L(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
-#define ip4_2_ip(ipaddr, unused)  (ipaddr)
-#define ip_2_ip4(ipaddr)          (ipaddr)
+#define ip4_2_ip(ipaddr, unused)                (ipaddr)
+#define ip_2_ip4(ipaddr)                        (ipaddr)
 
 #define ip_addr_copy(dest, src)                 ip4_addr_copy(dest, src)
 #define ip_addr_copy_from_ip4(dest, src)        ip4_addr_copy(dest, src)
@@ -177,12 +181,13 @@ typedef ip4_addr_t ip_addr_t;
 #else /* LWIP_IPV4 */
 
 typedef ip6_addr_t ip_addr_t;
-#define IP_IS_V6_L(ipaddr)        1
-#define IP_IS_V6(ipaddr)          1
+#define IPADDR6_INIT(a, b, c, d)                { a, b, c, d }
+#define IP_IS_V6_L(ipaddr)                      1
+#define IP_IS_V6(ipaddr)                        1
 #define IP_SET_TYPE_L(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
-#define ip6_2_ip(ipaddr, unused)  (ipaddr)
-#define ip_2_ip6(ipaddr)          (ipaddr)
+#define ip6_2_ip(ipaddr, unused)                (ipaddr)
+#define ip_2_ip6(ipaddr)                        (ipaddr)
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)

@@ -44,24 +44,8 @@
 #include "lwip/netif.h"
 
 /* used by IP_ADDR_ANY and IP_ADDR_BROADCAST in ip_addr.h */
-const ip_addr_t ip_addr_any = {
-#if LWIP_IPV6
-  {
-#endif
-  IPADDR_ANY
-#if LWIP_IPV6
-  }, IPADDR_TYPE_V4
-#endif
-  };
-const ip_addr_t ip_addr_broadcast = {
-#if LWIP_IPV6
-  {
-#endif
-  IPADDR_BROADCAST
-#if LWIP_IPV6
-  }, IPADDR_TYPE_V4
-#endif
-  };
+const ip_addr_t ip_addr_any = IPADDR4_INIT(IPADDR_ANY);
+const ip_addr_t ip_addr_broadcast = IPADDR4_INIT(IPADDR_BROADCAST);
 
 /**
  * Determine if an address is a broadcast address on a network interface 
