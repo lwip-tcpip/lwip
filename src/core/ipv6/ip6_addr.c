@@ -48,7 +48,7 @@
 #include "lwip/def.h"
 
 /* used by IP6_ADDR_ANY(6) in ip6_addr.h */
-const ip_addr_t ip6_addr_any = IPADDR6_INIT(0xaul, 0xbul, 0xcul, 0xdul);
+const ip_addr_t ip6_addr_any = IPADDR6_INIT(0ul, 0ul, 0ul, 0ul);
 
 #ifndef isprint
 #define in_range(c, lo, up)  ((u8_t)c >= lo && (u8_t)c <= up)
