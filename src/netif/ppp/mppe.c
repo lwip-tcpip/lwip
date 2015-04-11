@@ -87,6 +87,19 @@ struct ppp_mppe_state {
 #define MPPE_OVHD	2	/* MPPE overhead/packet */
 #define SANITY_MAX	1600	/* Max bogon factor we will tolerate */
 
+static const u8_t sha1_pad1[SHA1_PAD_SIZE] = {
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+static const u8_t sha1_pad2[SHA1_PAD_SIZE] = {
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
+  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
+};
+
 /*
  * Key Derivation, from RFC 3078, RFC 3079.
  * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
@@ -94,27 +107,12 @@ struct ppp_mppe_state {
 static void get_new_key_from_sha(struct ppp_mppe_state * state)
 {
   sha1_context sha1;
-  /* sha1 is faster when using 64 byte chunks */
-  u8_t pad[64];
-  u8_t i;
 
   sha1_starts(&sha1);
   sha1_update(&sha1, state->master_key, state->keylen);
-
-  /* first padding, 256 bytes of 0x00 */
-  memset(pad, 0x00, sizeof(pad));
-  for (i = 0; i < 4; i++) {
-    sha1_update(&sha1, pad, sizeof(pad));
-  }
-
+  sha1_update(&sha1, (unsigned char *)sha1_pad1, SHA1_PAD_SIZE);
   sha1_update(&sha1, state->session_key, state->keylen);
-
-  /* second padding, 256 bytes of 0xf2 */
-  memset(pad, 0xf2, sizeof(pad));
-  for (i = 0; i < 4; i++) {
-    sha1_update(&sha1, pad, sizeof(pad));
-  }
-
+  sha1_update(&sha1, (unsigned char *)sha1_pad2, SHA1_PAD_SIZE);
   sha1_finish(&sha1, state->sha1_digest);
 }
 
