@@ -82,8 +82,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx);    /* Be a LAC, connect 
 static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx);  /* Disconnect */
 
  /* Prototypes for procedures local to this file. */
-static void pppol2tp_input_ip(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
-static void pppol2tp_input(pppol2tp_pcb *l2tp, struct pbuf *p, u16_t port);
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port);
 static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, struct pbuf *p, u16_t ns, u16_t nr);
 static void pppol2tp_timeout(void *arg);
 static void pppol2tp_abort_connect(pppol2tp_pcb *l2tp);
@@ -152,7 +151,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     ppp_free(ppp);
     return NULL;
   }
-  udp_recv(udp, pppol2tp_input_ip, l2tp);
+  udp_recv(udp, pppol2tp_input, l2tp);
 
   memset(l2tp, 0, sizeof(pppol2tp_pcb));
   l2tp->phase = PPPOL2TP_STATE_INITIAL;
@@ -352,8 +351,10 @@ static void pppol2tp_disconnect(ppp_pcb *ppp, void *ctx) {
 }
 
 /* UDP Callback for incoming IPv4 L2TP frames */
-static void pppol2tp_input_ip(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
+static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, u16_t port) {
   pppol2tp_pcb *l2tp = (pppol2tp_pcb*)arg;
+  u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
+  u8_t *inp;
   LWIP_UNUSED_ARG(pcb);
 
   if (l2tp->phase < PPPOL2TP_STATE_SCCRQ_SENT) {
@@ -363,17 +364,6 @@ static void pppol2tp_input_ip(void *arg, struct udp_pcb *pcb, struct pbuf *p, co
   if (!ip_addr_cmp(&l2tp->remote_ip, addr)) {
     goto free_and_return;
   }
-
-  pppol2tp_input(l2tp, p, port);
-  return;
-
-free_and_return:
-  pbuf_free(p);
-}
-
-static void pppol2tp_input(pppol2tp_pcb *l2tp, struct pbuf *p, u16_t port) {
-  u16_t hflags, hlen, len=0, tunnel_id=0, session_id=0, ns=0, nr=0, offset=0;
-  u8_t *inp;
 
   /* discard packet if port mismatch, but only if we received a SCCRP */
   if (l2tp->phase > PPPOL2TP_STATE_SCCRQ_SENT && l2tp->tunnel_port != port) {
