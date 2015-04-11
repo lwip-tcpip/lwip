@@ -136,7 +136,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 		state->session_key[1] = 0x26;
 		state->session_key[2] = 0x9e;
 	}
-	arc4_crypt(&state->arc4, state->session_key, state->keylen);
+	arc4_setup(&state->arc4, state->session_key, state->keylen);
 }
 
 /*
