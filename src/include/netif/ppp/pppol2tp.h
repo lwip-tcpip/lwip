@@ -191,19 +191,11 @@ struct pppol2tp_pcb_s {
 };
 
 
-/* Create a new L2TP session over IPv4. */
+/* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, ip4_addr_t *ipaddr, u16_t port,
+       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
        u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-
-#if LWIP_IPV6
-/* Create a new L2TP session over IPv6. */
-ppp_pcb *pppol2tp_create_ip6(struct netif *pppif,
-       struct netif *netif, ip6_addr_t *ip6addr, u16_t port,
-       u8_t *secret, u8_t secret_len,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-#endif /* LWIP_IPV6 */
 
 #endif /* PPPOL2TP_H_ */
 #endif /* PPP_SUPPORT && PPPOL2TP_SUPPORT */

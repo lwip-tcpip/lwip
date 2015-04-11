@@ -119,12 +119,16 @@ static const struct link_callbacks pppol2tp_callbacks = {
 
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
-       struct netif *netif, ip4_addr_t *ipaddr, u16_t port,
+       struct netif *netif, ip_addr_t *ipaddr, u16_t port,
        u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;
   struct udp_pcb *udp;
+
+  if (ipaddr == NULL) {
+      return NULL;
+  }
 
   ppp = ppp_new(pppif, link_status_cb, ctx_cb);
   if (ppp == NULL) {
@@ -137,6 +141,11 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     return NULL;
   }
 
+#if LWIP_IPV6
+  if (IP_IS_V6_L(ipaddr)) {
+    udp = udp_new_ip6();
+  } else
+#endif /* LWIP_IPV6 */
   udp = udp_new();
   if (udp == NULL) {
     memp_free(MEMP_PPPOL2TP_PCB, l2tp);
@@ -150,11 +159,7 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   l2tp->ppp = ppp;
   l2tp->udp = udp;
   l2tp->netif = netif;
-  if (ipaddr) {
-    ip_addr_copy_from_ip4(l2tp->remote_ip, *ipaddr);
-  } else {
-    ip_addr_set_any(0, &l2tp->remote_ip);
-  }
+  ip_addr_copy(l2tp->remote_ip, *ipaddr);
   l2tp->remote_port = port;
 #if PPPOL2TP_AUTH_SUPPORT
   l2tp->secret = secret;
@@ -164,56 +169,6 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
   ppp_link_set_callbacks(ppp, &pppol2tp_callbacks, l2tp);
   return ppp;
 }
-
-#if LWIP_IPV6
-/* Create a new L2TP session over IPv6. */
-ppp_pcb *pppol2tp_create_ip6(struct netif *pppif,
-       struct netif *netif, ip6_addr_t *ip6addr, u16_t port,
-       u8_t *secret, u8_t secret_len,
-       ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
-  ppp_pcb *ppp;
-  pppol2tp_pcb *l2tp;
-  struct udp_pcb *udp;
-
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
-  if (ppp == NULL) {
-    return NULL;
-  }
-
-  l2tp = (pppol2tp_pcb *)memp_malloc(MEMP_PPPOL2TP_PCB);
-  if (l2tp == NULL) {
-    ppp_free(ppp);
-    return NULL;
-  }
-
-  udp = udp_new_ip6();
-  if (udp == NULL) {
-    memp_free(MEMP_PPPOL2TP_PCB, l2tp);
-    ppp_free(ppp);
-    return NULL;
-  }
-  udp_recv(udp, pppol2tp_input_ip, l2tp);
-
-  memset(l2tp, 0, sizeof(pppol2tp_pcb));
-  l2tp->phase = PPPOL2TP_STATE_INITIAL;
-  l2tp->ppp = ppp;
-  l2tp->udp = udp;
-  l2tp->netif = netif;
-  if (ip6addr) {
-    ip_addr_copy_from_ip6(l2tp->remote_ip, *ip6addr);
-  } else {
-    ip_addr_set_any(1, &l2tp->remote_ip);
-  }
-  l2tp->remote_port = port;
-#if PPPOL2TP_AUTH_SUPPORT
-  l2tp->secret = secret;
-  l2tp->secret_len = secret_len;
-#endif /* PPPOL2TP_AUTH_SUPPORT */
-
-  ppp_link_set_callbacks(ppp, &pppol2tp_callbacks, l2tp);
-  return ppp;
-}
-#endif /* LWIP_IPV6 */
 
 /* Called by PPP core */
 static err_t pppol2tp_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
