@@ -90,7 +90,7 @@
 #include "lwip/snmp.h"
 #include "lwip/sio.h"
 #include "lwip/sys.h"
-#include "lwip/ip.h" /* for ip_input() */
+#include "lwip/ip4.h" /* for ip4_input() */
 #if PPP_IPV6_SUPPORT
 #include "lwip/ip6.h" /* for ip6_input() */
 #endif /* PPP_IPV6_SUPPORT */
@@ -683,7 +683,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
     case PPP_IP:            /* Internet Protocol */
       PPPDEBUG(LOG_INFO, ("ppp_input[%d]: ip in pbuf len=%d\n", pcb->netif->num, pb->tot_len));
-      ip_input(pb, pcb->netif);
+      ip4_input(pb, pcb->netif);
       return;
 
 #if PPP_IPV6_SUPPORT
