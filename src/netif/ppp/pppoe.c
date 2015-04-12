@@ -677,8 +677,6 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
     goto drop;
   } 
 
-  pb = ppp_singlebuf (pb);
-
   if (pb->len < sizeof(*ph)) {
     PPPDEBUG(LOG_DEBUG, ("pppoe_data_input: could not get PPPoE header\n"));
     goto drop;
@@ -716,7 +714,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
         sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num,
         pb->len, plen));
 
-  if (pb->len < plen) {
+  if (pb->tot_len < plen) {
     goto drop;
   }
 
