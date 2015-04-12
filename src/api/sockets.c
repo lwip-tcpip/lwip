@@ -71,6 +71,7 @@
 #define LWIP_NETCONN 0
 #endif
 
+#if LWIP_IPV4
 #define IP4ADDR_PORT_TO_SOCKADDR(sin, ipaddr, port) do { \
       (sin)->sin_len = sizeof(struct sockaddr_in); \
       (sin)->sin_family = AF_INET; \
@@ -80,8 +81,21 @@
 #define SOCKADDR4_TO_IP4ADDR_PORT(sin, ipaddr, port) do { \
     inet_addr_to_ipaddr(ip_2_ip4(ipaddr), &((sin)->sin_addr)); \
     (port) = ntohs((sin)->sin_port); }while(0)
+#endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
+#define IP6ADDR_PORT_TO_SOCKADDR(sin6, ipaddr, port) do { \
+      (sin6)->sin6_len = sizeof(struct sockaddr_in6); \
+      (sin6)->sin6_family = AF_INET6; \
+      (sin6)->sin6_port = htons((port)); \
+      (sin6)->sin6_flowinfo = 0; \
+      inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); }while(0)
+#define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
+    inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
+    (port) = ntohs((sin6)->sin6_port); }while(0)
+#endif /* LWIP_IPV6 */
+
+#if LWIP_IPV4 && LWIP_IPV6
 #define IS_SOCK_ADDR_LEN_VALID(namelen)  (((namelen) == sizeof(struct sockaddr_in)) || \
                                          ((namelen) == sizeof(struct sockaddr_in6)))
 #define IS_SOCK_ADDR_TYPE_VALID(name)    (((name)->sa_family == AF_INET) || \
@@ -89,21 +103,12 @@
 #define SOCK_ADDR_TYPE_MATCH(name, sock) \
        ((((name)->sa_family == AF_INET) && !(NETCONNTYPE_ISIPV6((sock)->conn->type))) || \
        (((name)->sa_family == AF_INET6) && (NETCONNTYPE_ISIPV6((sock)->conn->type))))
-#define IP6ADDR_PORT_TO_SOCKADDR(sin6, ipaddr, port) do { \
-      (sin6)->sin6_len = sizeof(struct sockaddr_in6); \
-      (sin6)->sin6_family = AF_INET6; \
-      (sin6)->sin6_port = htons((port)); \
-      (sin6)->sin6_flowinfo = 0; \
-      inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); }while(0)
 #define IPADDR_PORT_TO_SOCKADDR(sockaddr, ipaddr, port) do { \
     if (IP_IS_V6(ipaddr)) { \
       IP6ADDR_PORT_TO_SOCKADDR((struct sockaddr_in6*)(void*)(sockaddr), ip_2_ip6(ipaddr), port); \
     } else { \
       IP4ADDR_PORT_TO_SOCKADDR((struct sockaddr_in*)(void*)(sockaddr), ip_2_ip4(ipaddr), port); \
     } } while(0)
-#define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
-    inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
-    (port) = ntohs((sin6)->sin6_port); }while(0)
 #define SOCKADDR_TO_IPADDR_PORT(sockaddr, ipaddr, port) do { \
     if (((sockaddr)->sa_family) == AF_INET6) { \
       SOCKADDR6_TO_IP6ADDR_PORT((struct sockaddr_in6*)(void*)(sockaddr), ipaddr, port); \
@@ -112,7 +117,16 @@
     } } while(0)
 #define DOMAIN_TO_NETCONN_TYPE(domain, type) (((domain) == AF_INET) ? \
   (type) : (enum netconn_type)((type) | NETCONN_TYPE_IPV6))
-#else /* LWIP_IPV6 */
+#elif LWIP_IPV6 /* LWIP_IPV4 && LWIP_IPV6 */
+#define IS_SOCK_ADDR_LEN_VALID(namelen)  ((namelen) == sizeof(struct sockaddr_in6))
+#define IS_SOCK_ADDR_TYPE_VALID(name)    ((name)->sa_family == AF_INET6)
+#define SOCK_ADDR_TYPE_MATCH(name, sock) 1
+#define IPADDR_PORT_TO_SOCKADDR(sockaddr, ipaddr, port) \
+        IP6ADDR_PORT_TO_SOCKADDR((struct sockaddr_in6*)(void*)(sockaddr), ip_2_ip6(ipaddr), port)
+#define SOCKADDR_TO_IPADDR_PORT(sockaddr, ipaddr, port) \
+        SOCKADDR6_TO_IP6ADDR_PORT((struct sockaddr_in6*)(void*)(sockaddr), ipaddr, port)
+#define DOMAIN_TO_NETCONN_TYPE(domain, netconn_type) (netconn_type)
+#else /*-> LWIP_IPV4: LWIP_IPV4 && LWIP_IPV6 */
 #define IS_SOCK_ADDR_LEN_VALID(namelen)  ((namelen) == sizeof(struct sockaddr_in))
 #define IS_SOCK_ADDR_TYPE_VALID(name)    ((name)->sa_family == AF_INET)
 #define SOCK_ADDR_TYPE_MATCH(name, sock) 1

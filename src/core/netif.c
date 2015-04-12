@@ -94,7 +94,9 @@ static err_t netif_null_output_ip6(struct netif *netif, struct pbuf *p, const ip
 #endif /* LWIP_IPV6 */
 
 #if LWIP_HAVE_LOOPIF
+#if LWIP_IPV4
 static err_t netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip4_addr_t* addr);
+#endif
 #if LWIP_IPV6
 static err_t netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* addr);
 #endif
@@ -119,7 +121,9 @@ netif_loopif_init(struct netif *netif)
 
   netif->name[0] = 'l';
   netif->name[1] = 'o';
+#if LWIP_IPV4
   netif->output = netif_loop_output_ipv4;
+#endif
 #if LWIP_IPV6
   netif->output_ip6 = netif_loop_output_ipv6;
 #endif
@@ -131,15 +135,20 @@ void
 netif_init(void)
 {
 #if LWIP_HAVE_LOOPIF
+#if LWIP_IPV4
+#define LOOPIF_ADDRINIT &loop_ipaddr, &loop_netmask, &loop_gw,
   ip4_addr_t loop_ipaddr, loop_netmask, loop_gw;
   IP4_ADDR(&loop_gw, 127,0,0,1);
   IP4_ADDR(&loop_ipaddr, 127,0,0,1);
   IP4_ADDR(&loop_netmask, 255,0,0,0);
+#else /* LWIP_IPV4 */
+#define LOOPIF_ADDRINIT
+#endif /* LWIP_IPV4 */
 
 #if NO_SYS
-  netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, ip_input);
+  netif_add(&loop_netif, LOOPIF_ADDRINIT NULL, netif_loopif_init, ip_input);
 #else  /* NO_SYS */
-  netif_add(&loop_netif, &loop_ipaddr, &loop_netmask, &loop_gw, NULL, netif_loopif_init, tcpip_input);
+  netif_add(&loop_netif, LOOPIF_ADDRINIT NULL, netif_loopif_init, tcpip_input);
 #endif /* NO_SYS */
 
 #if LWIP_IPV6
@@ -173,8 +182,6 @@ struct netif *
 netif_add(struct netif *netif,
 #if LWIP_IPV4
           const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
-#else /* LWIP_IPV4 */
-          const void *ipaddr, const void *netmask, const void *gw,
 #endif /* LWIP_IPV4 */
           void *state, netif_init_fn init, netif_input_fn input)
 {

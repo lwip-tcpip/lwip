@@ -61,8 +61,8 @@ struct in_addr {
 
 struct in6_addr {
   union {
-    u8_t  u8_addr[16];
     u32_t u32_addr[4];
+    u8_t  u8_addr[16];
   } un;
 #define s6_addr  un.u8_addr
 };
@@ -83,7 +83,7 @@ struct in6_addr {
     to the IPv6 loopback address. */
 #define IN6ADDR_LOOPBACK_INIT {0,0,0,PP_HTONL(1)}
 /** This variable is initialized by the system to contain the wildcard IPv6 address. */
-extern const struct ip6_addr in6addr_any;
+extern const struct in6_addr in6addr_any;
 
 /* Definitions of the bits in an (IPv4) Internet address integer.
 

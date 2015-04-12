@@ -238,17 +238,21 @@ udp_input(struct pbuf *p, struct netif *inp)
       if (pcb->local_port == dest) {
         if (
 #if LWIP_IPV6
-          ((PCB_ISIPV6(pcb) && (ip_current_is_v6()) &&
+          (PCB_ISIPV6(pcb) && (ip_current_is_v6()) &&
             (ip6_addr_isany(ip_2_ip6(&pcb->local_ip)) ||
 #if LWIP_IPV6_MLD
             ip6_addr_ismulticast(ip6_current_dest_addr()) ||
 #endif /* LWIP_IPV6_MLD */
-            ip6_addr_cmp(ip_2_ip6(&pcb->local_ip), ip6_current_dest_addr()))) ||
-           (!PCB_ISIPV6(pcb) &&
-            (ip4_current_header() != NULL) &&
-#else /* LWIP_IPV6 */
-           ((
+            ip6_addr_cmp(ip_2_ip6(&pcb->local_ip), ip6_current_dest_addr())))
 #endif /* LWIP_IPV6 */
+#if LWIP_IPV4 && LWIP_IPV6
+           || (!PCB_ISIPV6(pcb) &&
+            (ip4_current_header() != NULL) &&
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+#if LWIP_IPV4
+#if !LWIP_IPV6
+            (
+#endif /* !LWIP_IPV6 */
             ((!broadcast && ip_addr_isany(&pcb->local_ip)) ||
             ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr()) ||
 #if LWIP_IGMP
@@ -257,12 +261,14 @@ udp_input(struct pbuf *p, struct netif *inp)
 #if IP_SOF_BROADCAST_RECV
             (broadcast && ip_get_option(pcb, SOF_BROADCAST) &&
              (ip_addr_isany(&pcb->local_ip) ||
-              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))))))) {
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))))
 #else /* IP_SOF_BROADCAST_RECV */
             (broadcast &&
              (ip_addr_isany(&pcb->local_ip) ||
-              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask))))))) {
-#endif /* IP_SOF_BROADCAST_RECV */ 
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))))
+#endif /* IP_SOF_BROADCAST_RECV */
+#endif /* LWIP_IPV4 */
+              ) {
           local_match = 1;
           if ((uncon_pcb == NULL) && 
               ((pcb->flags & UDP_FLAGS_CONNECTED) == 0)) {

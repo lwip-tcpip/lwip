@@ -51,9 +51,11 @@ static void
 netifapi_do_netif_add(struct netifapi_msg_msg *msg)
 {
   if (!netif_add( msg->netif,
+#if LWIP_IPV4
                   API_EXPR_REF(msg->msg.add.ipaddr),
                   API_EXPR_REF(msg->msg.add.netmask),
                   API_EXPR_REF(msg->msg.add.gw),
+#endif /* LWIP_IPV4 */
                   msg->msg.add.state,
                   msg->msg.add.init,
                   msg->msg.add.input)) {
@@ -64,6 +66,7 @@ netifapi_do_netif_add(struct netifapi_msg_msg *msg)
   TCPIP_NETIFAPI_ACK(msg);
 }
 
+#if LWIP_IPV4
 /**
  * Call netif_set_addr() inside the tcpip_thread context.
  */
@@ -77,6 +80,7 @@ netifapi_do_netif_set_addr(struct netifapi_msg_msg *msg)
   msg->err = ERR_OK;
   TCPIP_NETIFAPI_ACK(msg);
 }
+#endif /* LWIP_IPV4 */
 
 /**
  * Call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) inside the
@@ -102,12 +106,10 @@ netifapi_do_netif_common(struct netifapi_msg_msg *msg)
  */
 err_t
 netifapi_netif_add(struct netif *netif,
-                   const ip4_addr_t *ipaddr,
-                   const ip4_addr_t *netmask,
-                   const ip4_addr_t *gw,
-                   void *state,
-                   netif_init_fn init,
-                   netif_input_fn input)
+#if LWIP_IPV4
+                   const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
+#endif /* LWIP_IPV4 */
+                   void *state, netif_init_fn init, netif_input_fn input)
 {
   err_t err;
   NETIFAPI_VAR_DECLARE(msg);
@@ -125,9 +127,11 @@ netifapi_netif_add(struct netif *netif,
 #endif /* LWIP_MPU_COMPATIBLE */
   NETIFAPI_VAR_REF(msg).function = netifapi_do_netif_add;
   NETIFAPI_VAR_REF(msg).msg.netif = netif;
+#if LWIP_IPV4
   NETIFAPI_VAR_REF(msg).msg.msg.add.ipaddr  = NETIFAPI_VAR_REF(ipaddr);
   NETIFAPI_VAR_REF(msg).msg.msg.add.netmask = NETIFAPI_VAR_REF(netmask);
   NETIFAPI_VAR_REF(msg).msg.msg.add.gw      = NETIFAPI_VAR_REF(gw);
+#endif /* LWIP_IPV4 */
   NETIFAPI_VAR_REF(msg).msg.msg.add.state   = state;
   NETIFAPI_VAR_REF(msg).msg.msg.add.init    = init;
   NETIFAPI_VAR_REF(msg).msg.msg.add.input   = input;
@@ -138,6 +142,7 @@ netifapi_netif_add(struct netif *netif,
   return err;
 }
 
+#if LWIP_IPV4
 /**
  * Call netif_set_addr() in a thread-safe way by running that function inside the
  * tcpip_thread context.
@@ -175,6 +180,7 @@ netifapi_netif_set_addr(struct netif *netif,
   NETIFAPI_VAR_FREE(msg);
   return err;
 }
+#endif /* LWIP_IPV4 */
 
 /**
  * call the "errtfunc" (or the "voidfunc" if "errtfunc" is NULL) in a thread-safe

@@ -250,6 +250,11 @@ extern const ip_addr_t ip6_addr_any;
  */
 #define IP6_ADDR_ANY6  ((ip6_addr_t*)ip_2_ip6(&ip6_addr_any))
 
+#if !LWIP_IPV4
+/** Just a little upgrade-helper for IPv6-only configurations: */
+#define IP_ADDR_ANY IP6_ADDR_ANY
+#endif /* !LWIP_IPV4 */
+
 #endif
 
 #ifdef __cplusplus

@@ -556,13 +556,13 @@ pcb_new(struct api_msg_msg *msg)
   if (msg->conn->pcb.ip == NULL) {
     msg->err = ERR_MEM;
   }
-#if LWIP_IPV6
+#if LWIP_IPV4 && LWIP_IPV6
   else {
     if (NETCONNTYPE_ISIPV6(msg->conn->type)) {
       ip_set_v6(msg->conn->pcb.ip, 1);
     }
   }
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 }
 
 /**

@@ -58,9 +58,11 @@ struct netifapi_msg_msg {
   struct netif *netif;
   union {
     struct {
+#if LWIP_IPV4
       NETIFAPI_IPADDR_DEF(ip4_addr_t, ipaddr);
       NETIFAPI_IPADDR_DEF(ip4_addr_t, netmask);
       NETIFAPI_IPADDR_DEF(ip4_addr_t, gw);
+#endif /* LWIP_IPV4 */
       void *state;
       netif_init_fn init;
       netif_input_fn input;
@@ -79,22 +81,19 @@ struct netifapi_msg {
 
 
 /* API for application */
-err_t netifapi_netif_add       ( struct netif *netif,
-                                 const ip4_addr_t *ipaddr,
-                                 const ip4_addr_t *netmask,
-                                 const ip4_addr_t *gw,
-                                 void *state,
-                                 netif_init_fn init,
-                                 netif_input_fn input);
+err_t netifapi_netif_add(struct netif *netif,
+#if LWIP_IPV4
+                         const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
+#endif /* LWIP_IPV4 */
+                         void *state, netif_init_fn init, netif_input_fn input);
 
-err_t netifapi_netif_set_addr  ( struct netif *netif,
-                                 const ip4_addr_t *ipaddr,
-                                 const ip4_addr_t *netmask,
-                                 const ip4_addr_t *gw );
+#if LWIP_IPV4
+err_t netifapi_netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr,
+                              const ip4_addr_t *netmask, const ip4_addr_t *gw);
+#endif /* LWIP_IPV4*/
 
-err_t netifapi_netif_common    ( struct netif *netif,
-                                 netifapi_void_fn voidfunc,
-                                 netifapi_errt_fn errtfunc);
+err_t netifapi_netif_common(struct netif *netif, netifapi_void_fn voidfunc,
+                            netifapi_errt_fn errtfunc);
 
 #define netifapi_netif_remove(n)      netifapi_netif_common(n, netif_remove, NULL)
 #define netifapi_netif_set_up(n)      netifapi_netif_common(n, netif_set_up, NULL)

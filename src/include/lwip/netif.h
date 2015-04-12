@@ -322,17 +322,14 @@ extern struct netif *netif_default;
 
 void netif_init(void);
 
+struct netif *netif_add(struct netif *netif,
 #if LWIP_IPV4
-struct netif *
-netif_add(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
-          const ip4_addr_t *gw, void *state, netif_init_fn init, netif_input_fn input);
-void
-netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
-               const ip4_addr_t *gw);
-#else /* LWIP_IPV4 */
-struct netif *
-netif_add(struct netif *netif, const void *ipaddr, const void *netmask,
-          const void *gw, void *state, netif_init_fn init, netif_input_fn input);
+                        const ip4_addr_t *ipaddr, const ip4_addr_t *netmask, const ip4_addr_t *gw,
+#endif /* LWIP_IPV4 */
+                        void *state, netif_init_fn init, netif_input_fn input);
+#if LWIP_IPV4
+void netif_set_addr(struct netif *netif, const ip4_addr_t *ipaddr, const ip4_addr_t *netmask,
+                    const ip4_addr_t *gw);
 #endif /* LWIP_IPV4 */
 void netif_remove(struct netif * netif);
 
