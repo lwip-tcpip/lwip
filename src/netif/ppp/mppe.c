@@ -368,7 +368,7 @@ void mppe_decomp_reset(void *arg)
 /*
  * Decompress (decrypt) an MPPE packet.
  */
-int
+err_t
 mppe_decompress(void *arg, struct pbuf **pb)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
@@ -497,7 +497,7 @@ mppe_decompress(void *arg, struct pbuf **pb)
 	/* good packet credit */
 	state->sanity_errors >>= 1;
 
-	return n0->tot_len;
+	return ERR_OK;
 }
 
 /*
