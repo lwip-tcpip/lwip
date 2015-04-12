@@ -369,41 +369,33 @@ void mppe_decomp_reset(void *arg)
  * Decompress (decrypt) an MPPE packet.
  */
 int
-mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
-		int osize)
+mppe_decompress(void *arg, struct pbuf **pb)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+	struct pbuf *n0 = *pb, *n;
+	u8_t *pl;
 	unsigned ccount;
-	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
+	int flushed;
 	int sanity = 0;
 
-	if (isize <= MPPE_OVHD) {
+	/* MPPE Header */
+	if (n0->len < MPPE_OVHD) {
 		if (state->debug)
 			PPPDEBUG(LOG_DEBUG,
 			       ("mppe_decompress[%d]: short pkt (%d)\n",
-			       state->unit, isize));
+			       state->unit, n0->len));
 		return ERR_BUF;
 	}
 
-	/*
-	 * Make sure we have enough room to decrypt the packet.
-	 * Note that for our test we add 1 byte to account for possible PFC.
-	 */
-	if (osize < isize - MPPE_OVHD + 1) {
-		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: osize too small! "
-		       "(have: %d need: %d)\n", state->unit,
-		       osize, isize - MPPE_OVHD + 1));
-		return ERR_BUF;
-	}
-	osize = isize - MPPE_OVHD;	/* assume no PFC */
-
-	ccount = MPPE_CCOUNT(ibuf);
+	pl = (u8_t*)n0->payload;
+	flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
+	ccount = MPPE_CCOUNT(pl);
 	if (state->debug >= 7)
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
 		       state->unit, ccount));
 
 	/* sanity checks -- terminate with extreme prejudice */
-	if (!(MPPE_BITS(ibuf) & MPPE_BIT_ENCRYPTED)) {
+	if (!(MPPE_BITS(pl) & MPPE_BIT_ENCRYPTED)) {
 		PPPDEBUG(LOG_DEBUG,
 		       ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
 		       state->unit));
@@ -491,40 +483,21 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 			mppe_rekey(state, 0);
 	}
 
-	/*
-	 * Fill in the first part of the PPP header.  The protocol field
-	 * comes from the decrypted data.
-	 */
-	ibuf += MPPE_OVHD;
-	isize -= MPPE_OVHD;
+	/* Hide MPPE header */
+	pbuf_header(n0, -(s16_t)(MPPE_OVHD));
 
-	/*
-	 * Decrypt the first byte in order to check if it is
-	 * a compressed or uncompressed protocol field.
-	 */
-	obuf[0] = ibuf[0];
-	arc4_crypt(&state->arc4, obuf, 1);
-
-	/*
-	 * Do PFC decompression.
-	 * This would be nicer if we were given the actual sk_buff
-	 * instead of a char *.
-	 */
-	if ((obuf[0] & 0x01) != 0) {
-		obuf[1] = obuf[0];
-		obuf[0] = 0;
-		obuf++;
-		osize++;
+	/* Decrypt the packet. */
+	for (n = n0; n != NULL; n = n->next) {
+		arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
+		if (n->tot_len == n->len) {
+			break;
+		}
 	}
-
-	/* And finally, decrypt the rest of the packet. */
-	MEMCPY(obuf+1, ibuf+1, isize-1);
-	arc4_crypt(&state->arc4, obuf+1, isize-1);
 
 	/* good packet credit */
 	state->sanity_errors >>= 1;
 
-	return osize;
+	return n0->tot_len;
 }
 
 /*
