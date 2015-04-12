@@ -376,7 +376,6 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
   }
 
   /* printf("-----------\nL2TP INPUT, %d\n", p->len); */
-  p = ppp_singlebuf(p);
 
   /* L2TP header */
   if (p->len < sizeof(hflags) + sizeof(tunnel_id) + sizeof(session_id) ) {
@@ -519,6 +518,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
     return;
   }
 
+  p = ppp_singlebuf(p);
   inp = (u8_t*)p->payload;
   /* Decode AVPs */
   while (p->len > 0) {
