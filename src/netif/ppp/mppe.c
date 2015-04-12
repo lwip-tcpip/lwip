@@ -80,8 +80,8 @@ struct ppp_mppe_state {
 #define MPPE_BIT_FLUSHED	MPPE_BIT_A
 #define MPPE_BIT_ENCRYPTED	MPPE_BIT_D
 
-#define MPPE_BITS(p) ((p)[4] & 0xf0)
-#define MPPE_CCOUNT(p) ((((p)[4] & 0x0f) << 8) + (p)[5])
+#define MPPE_BITS(p) ((p)[0] & 0xf0)
+#define MPPE_CCOUNT(p) ((((p)[0] & 0x0f) << 8) + (p)[1])
 #define MPPE_CCOUNT_SPACE 0x1000	/* The size of the ccount space */
 
 #define MPPE_OVHD	2	/* MPPE overhead/packet */
@@ -377,7 +377,7 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	int flushed = MPPE_BITS(ibuf) & MPPE_BIT_FLUSHED;
 	int sanity = 0;
 
-	if (isize <= PPP_HDRLEN + MPPE_OVHD) {
+	if (isize <= MPPE_OVHD) {
 		if (state->debug)
 			PPPDEBUG(LOG_DEBUG,
 			       ("mppe_decompress[%d]: short pkt (%d)\n",
@@ -387,17 +387,15 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 
 	/*
 	 * Make sure we have enough room to decrypt the packet.
-	 * Note that for our test we only subtract 1 byte whereas in
-	 * mppe_compress() we added 2 bytes (+MPPE_OVHD);
-	 * this is to account for possible PFC.
+	 * Note that for our test we add 1 byte to account for possible PFC.
 	 */
-	if (osize < isize - MPPE_OVHD - 1) {
+	if (osize < isize - MPPE_OVHD + 1) {
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: osize too small! "
 		       "(have: %d need: %d)\n", state->unit,
-		       osize, isize - MPPE_OVHD - 1));
+		       osize, isize - MPPE_OVHD + 1));
 		return ERR_BUF;
 	}
-	osize = isize - MPPE_OVHD - 2;	/* assume no PFC */
+	osize = isize - MPPE_OVHD;	/* assume no PFC */
 
 	ccount = MPPE_CCOUNT(ibuf);
 	if (state->debug >= 7)
@@ -497,12 +495,8 @@ mppe_decompress(void *arg, unsigned char *ibuf, int isize, unsigned char *obuf,
 	 * Fill in the first part of the PPP header.  The protocol field
 	 * comes from the decrypted data.
 	 */
-	obuf[0] = PPP_ADDRESS(ibuf);	/* +1 */
-	obuf[1] = PPP_CONTROL(ibuf);	/* +1 */
-	obuf += 2;
-	ibuf += PPP_HDRLEN + MPPE_OVHD;
-	isize -= PPP_HDRLEN + MPPE_OVHD;	/* -6 */
-	/* net osize: isize-4 */
+	ibuf += MPPE_OVHD;
+	isize -= MPPE_OVHD;
 
 	/*
 	 * Decrypt the first byte in order to check if it is
