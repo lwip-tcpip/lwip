@@ -301,7 +301,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     }
   } else {
     /* service location specified, use loopback address */
-    ip_addr_set_loopback(0, &addr);
+    ip_addr_set_loopback(1, &addr);
   }
 
   total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
@@ -318,12 +318,25 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     return EAI_MEMORY;
   }
   memset(ai, 0, total_size);
-  sa = (struct sockaddr_in*)((u8_t*)ai + sizeof(struct addrinfo));
-  /* set up sockaddr */
-  inet_addr_from_ipaddr(&sa->sin_addr, ip_2_ip4(&addr));
-  sa->sin_family = AF_INET;
-  sa->sin_len = sizeof(struct sockaddr_in);
-  sa->sin_port = htons((u16_t)port_nr);
+  if (IP_IS_V6(addr)) {
+#if LWIP_IPV6
+    struct sockaddr_in6 *sa6 = (struct sockaddr_in6*)((u8_t*)ai + sizeof(struct addrinfo));
+    /* set up sockaddr */
+    inet6_addr_from_ip6addr(&sa6->sin6_addr, ip_2_ip6(&addr));
+    sa->sin_family = AF_INET6;
+    sa->sin_len = sizeof(struct sockaddr_in6);
+    sa->sin_port = htons((u16_t)port_nr);
+#endif /* LWIP_IPV6 */
+  } else {
+#if LWIP_IPV4
+    struct sockaddr_in *sa = (struct sockaddr_in*)((u8_t*)ai + sizeof(struct addrinfo));
+    /* set up sockaddr */
+    inet_addr_from_ipaddr(&sa->sin_addr, ip_2_ip4(&addr));
+    sa->sin_family = AF_INET;
+    sa->sin_len = sizeof(struct sockaddr_in);
+    sa->sin_port = htons((u16_t)port_nr);
+#endif /* LWIP_IPV4 */
+  }
 
   /* set up addrinfo */
   ai->ai_family = AF_INET;
