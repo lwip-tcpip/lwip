@@ -36,13 +36,7 @@
 
 #include "lwip/opt.h"
 
-/* @todo/@fixme: implement IPV6 support for DNS (see task #12243) */
-#if !LWIP_IPV4 && LWIP_DNS
-/* init.c/timers.c compatibility until task #12243 is done: */
-#define dns_init()
-#define dns_tmr()
-#define DNS_TMR_INTERVAL          1000
-#elif LWIP_DNS /* don't build if not configured for use in lwipopts.h */
+#if LWIP_DNS
 
 #ifdef __cplusplus
 extern "C" {
