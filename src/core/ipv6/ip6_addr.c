@@ -251,7 +251,7 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 
 #if LWIP_IPV4
 /** Convert IPv6 address to generic IP address.
- * Since source types do not contain the type field, a target storage need to be supplied. 
+ * Since source types do not contain the type field, a target storage needs to be supplied.
  */
 ip_addr_t*
 ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage)
@@ -266,6 +266,10 @@ ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage)
 
 /** Convert IP address string (both versions) to numeric.
  * The version is auto-detected from the string.
+ *
+ * @param cp IP address string to convert
+ * @param addr conversion result is stored here
+ * @return 1 on success, 0 on error
  */
 int
 ipaddr_aton(const char *cp, ip_addr_t *addr)

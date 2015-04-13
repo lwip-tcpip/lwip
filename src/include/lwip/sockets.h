@@ -464,19 +464,24 @@ int lwip_fcntl(int s, int cmd, int val);
 #define fcntl(a,b,c)          lwip_fcntl(a,b,c)
 #endif /* LWIP_POSIX_SOCKETS_IO_NAMES */
 
-#if LWIP_IPV6
+#if LWIP_IPV4 && LWIP_IPV6
 #define inet_ntop(af,src,dst,size) \
-    (((af) == AF_INET6) ? ip6addr_ntoa_r((src),(dst),(size)) \
-     : (((af) == AF_INET) ? ipaddr_ntoa_r((src),(dst),(size)) : NULL))
+    (((af) == AF_INET6) ? ip6addr_ntoa_r((const ip6_addr_t*)(src),(dst),(size)) \
+     : (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL))
 #define inet_pton(af,src,dst) \
-    (((af) == AF_INET6) ? inet6_aton((src),(dst)) \
-     : (((af) == AF_INET) ? inet_aton((src),(dst)) : 0))
-#else /* LWIP_IPV6 */
+    (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) \
+     : (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0))
+#elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */
 #define inet_ntop(af,src,dst,size) \
-    (((af) == AF_INET) ? ipaddr_ntoa_r((src),(dst),(size)) : NULL)
+    (((af) == AF_INET) ? ip4addr_ntoa_r((const ip4_addr_t*)(src),(dst),(size)) : NULL)
 #define inet_pton(af,src,dst) \
-    (((af) == AF_INET) ? inet_aton((src),(dst)) : 0)
-#endif /* LWIP_IPV6 */
+    (((af) == AF_INET) ? ip4addr_aton((src),(ip4_addr_t*)(dst)) : 0)
+#else /* LWIP_IPV4 && LWIP_IPV6 */
+#define inet_ntop(af,src,dst,size) \
+    (((af) == AF_INET6) ? ip6addr_ntoa_r((const ip6_addr_t*)(src),(dst),(size)) : NULL)
+#define inet_pton(af,src,dst) \
+    (((af) == AF_INET6) ? ip6addr_aton((src),(ip6_addr_t*)(dst)) : 0)
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 #endif /* LWIP_COMPAT_SOCKETS */
 
