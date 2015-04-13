@@ -1002,6 +1002,42 @@ int sifdown(ppp_pcb *pcb) {
   PPPDEBUG(LOG_DEBUG, ("sifdown: unit %d: err_code=%d\n", pcb->netif->num, pcb->err_code));
   return 1;
 }
+
+/********************************************************************
+ *
+ * Return user specified netmask, modified by any mask we might determine
+ * for address `addr' (in network byte order).
+ * Here we scan through the system's list of interfaces, looking for
+ * any non-point-to-point interfaces which might appear to be on the same
+ * network as `addr'.  If we find any, we OR in their netmask to the
+ * user-specified netmask.
+ */
+u32_t get_mask(u32_t addr) {
+#if 0
+  u32_t mask, nmask;
+
+  addr = htonl(addr);
+  if (IP_CLASSA(addr)) { /* determine network mask for address class */
+    nmask = IP_CLASSA_NET;
+  } else if (IP_CLASSB(addr)) {
+    nmask = IP_CLASSB_NET;
+  } else {
+    nmask = IP_CLASSC_NET;
+  }
+
+  /* class D nets are disallowed by bad_ip_adrs */
+  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
+
+  /* XXX
+   * Scan through the system's network interfaces.
+   * Get each netmask and OR them into our mask.
+   */
+  /* return mask; */
+  return mask;
+#endif /* 0 */
+  LWIP_UNUSED_ARG(addr);
+  return IPADDR_BROADCAST;
+}
 #endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
@@ -1164,45 +1200,6 @@ int get_loop_output(void) {
     return 0;
 }
 #endif /* DEMAND_SUPPORT */
-
-#if PPP_IPV4_SUPPORT
-/********************************************************************
- *
- * Return user specified netmask, modified by any mask we might determine
- * for address `addr' (in network byte order).
- * Here we scan through the system's list of interfaces, looking for
- * any non-point-to-point interfaces which might appear to be on the same
- * network as `addr'.  If we find any, we OR in their netmask to the
- * user-specified netmask.
- */
-u32_t get_mask(u32_t addr) {
-#if 0
-	u32_t mask, nmask;
-
-  addr = htonl(addr);
-  if (IP_CLASSA(addr)) { /* determine network mask for address class */
-    nmask = IP_CLASSA_NET;
-  } else if (IP_CLASSB(addr)) {
-    nmask = IP_CLASSB_NET;
-  } else {
-    nmask = IP_CLASSC_NET;
-  }
-
-  /* class D nets are disallowed by bad_ip_adrs */
-  mask = PP_HTONL(0xffffff00UL) | htonl(nmask);
-
-  /* XXX
-   * Scan through the system's network interfaces.
-   * Get each netmask and OR them into our mask.
-   */
-  /* return mask; */
-  return mask;
-#endif
-  LWIP_UNUSED_ARG(addr);
-  return IPADDR_BROADCAST;
-}
-#endif /* PPP_IPV4_SUPPORT */
-
 
 #if PPP_PROTOCOLNAME
 /* List of protocol names, to make our messages a little more informative. */

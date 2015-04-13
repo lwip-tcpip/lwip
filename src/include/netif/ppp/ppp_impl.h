@@ -458,6 +458,7 @@ int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid);
 #endif /* VJ_SUPPORT */
 int sifup(ppp_pcb *pcb);
 int sifdown (ppp_pcb *pcb);
+u32_t get_mask(u32_t addr);
 #endif /* PPP_IPV4_SUPPORT */
 
 #if PPP_IPV6_SUPPORT
@@ -485,8 +486,6 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip);
 #if DEMAND_SUPPORT
 int get_loop_output(void);
 #endif /* DEMAND_SUPPORT */
-
-u32_t get_mask(u32_t addr);
 
 /* Optional protocol names list, to make our messages a little more informative. */
 #if PPP_PROTOCOLNAME
