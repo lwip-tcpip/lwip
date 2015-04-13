@@ -722,39 +722,39 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
           (*protp->input)(pcb, (u8_t*)pb->payload, pb->len);
           goto out;
         }
-#if 0 /* UNUSED
-       *
-       * This is actually a (hacked?) way for the PPP kernel implementation to pass a
-       * data packet to the PPP daemon. The PPP daemon normally only do signaling
-       * (LCP, PAP, CHAP, IPCP, ...) and does not handle any data packet at all.
-       *
-       * This is only used by CCP, which we cannot support until we have a CCP data
-       * implementation.
-       */
-      if (protocol == (protp->protocol & ~0x8000)
-        && protp->datainput != NULL) {
-        (*protp->datainput)(pcb, pb->payload, pb->len);
-        goto out;
-      }
+#if 0   /* UNUSED
+         *
+         * This is actually a (hacked?) way for the PPP kernel implementation to pass a
+         * data packet to the PPP daemon. The PPP daemon normally only do signaling
+         * (LCP, PAP, CHAP, IPCP, ...) and does not handle any data packet at all.
+         *
+         * This is only used by CCP, which we cannot support until we have a CCP data
+         * implementation.
+         */
+        if (protocol == (protp->protocol & ~0x8000)
+          && protp->datainput != NULL) {
+          (*protp->datainput)(pcb, pb->payload, pb->len);
+          goto out;
+        }
 #endif /* UNUSED */
-    }
+      }
 
 #if PPP_DEBUG
 #if PPP_PROTOCOLNAME
-    pname = protocol_name(protocol);
-    if (pname != NULL) {
-      ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
-    } else
+      pname = protocol_name(protocol);
+      if (pname != NULL) {
+        ppp_warn("Unsupported protocol '%s' (0x%x) received", pname, protocol);
+      } else
 #endif /* PPP_PROTOCOLNAME */
-      ppp_warn("Unsupported protocol 0x%x received", protocol);
+        ppp_warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-      if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
-        LWIP_ASSERT("pbuf_header failed\n", 0);
-        goto drop;
+        if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
+          LWIP_ASSERT("pbuf_header failed\n", 0);
+          goto drop;
+        }
+        lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
       }
-      lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
-    }
-    break;
+      break;
   }
 
 drop:
