@@ -132,7 +132,7 @@ int mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug);
 void mppe_comp_reset(void *arg);
 int mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
-	      int isize, int osize);
+	      int isize, int osize, u16_t protocol);
 int mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
 		 int hdrlen, int mru, int debug);
 void mppe_decomp_reset(void *arg);

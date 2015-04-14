@@ -282,28 +282,20 @@ void mppe_comp_reset(void *arg)
  */
 int
 mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
-	      int isize, int osize)
+	      int isize, int osize, u16_t protocol)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
-	int proto;
-
-	/*
-	 * Check that the protocol is in the range we handle.
-	 */
-	proto = PPP_PROTOCOL(ibuf);
-	if (proto < 0x0021 || proto > 0x00fa)
-		return 0;
 
 	/* Make sure we have enough room to generate an encrypted packet. */
-	if (osize < isize + MPPE_OVHD - PPP_HDRLEN + 2) {
+	if (osize < isize + MPPE_OVHD + 2) {
 		/* Drop the packet if we should encrypt it, but can't. */
 		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: osize too small! "
 		       "(have: %d need: %d)\n", state->unit,
-		       osize, osize + MPPE_OVHD - PPP_HDRLEN + 2));
+		       osize, osize + MPPE_OVHD + 2));
 		return -1;
 	}
 
-	osize = isize + MPPE_OVHD - PPP_HDRLEN + 2;
+	osize = isize + MPPE_OVHD + 2;
 
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
@@ -326,10 +318,14 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 	}
 	obuf[0] |= state->bits;
 	state->bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
-
 	obuf += MPPE_OVHD;
-	ibuf += 2;		/* skip to proto field */
-	isize -= 2;
+
+	/* Add and encrypt protocol */
+	/* FIXME: add PFC support */
+	obuf[0] = protocol >> 8;
+	obuf[1] = protocol;
+	arc4_crypt(&state->arc4, obuf, 2);
+	obuf += 2;
 
 	/* Encrypt packet */
 	MEMCPY(obuf, ibuf, isize);
