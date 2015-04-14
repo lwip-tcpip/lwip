@@ -295,26 +295,16 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 		return 0;
 
 	/* Make sure we have enough room to generate an encrypted packet. */
-	if (osize < isize + MPPE_OVHD + 2) {
+	if (osize < isize + MPPE_OVHD - PPP_HDRLEN + 2) {
 		/* Drop the packet if we should encrypt it, but can't. */
 		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: osize too small! "
 		       "(have: %d need: %d)\n", state->unit,
-		       osize, osize + MPPE_OVHD + 2));
+		       osize, osize + MPPE_OVHD - PPP_HDRLEN + 2));
 		return -1;
 	}
 
-	osize = isize + MPPE_OVHD + 2;
+	osize = isize + MPPE_OVHD - PPP_HDRLEN + 2;
 
-
-	/*
-	 * Copy over the PPP header and set control bits.
-	 */
-	/* FIXME: use PUT* macros */
-	obuf[0] = PPP_ADDRESS(ibuf);
-	obuf[1] = PPP_CONTROL(ibuf);
-	obuf[2] = PPP_COMP>>8;
-	obuf[3] = PPP_COMP;
-	obuf += PPP_HDRLEN;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
 	if (state->debug >= 7)
