@@ -280,31 +280,28 @@ void mppe_comp_reset(void *arg)
  * It's strange to call this a compressor, since the output is always
  * MPPE_OVHD + 2 bytes larger than the input.
  */
-int
-mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
-	      int isize, int osize, u16_t protocol)
+err_t
+mppe_compress(void *arg, struct pbuf **pb, u16_t protocol)
 {
 	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
+	struct pbuf *np, *n;
+	u8_t *pl;
 
-	/* Make sure we have enough room to generate an encrypted packet. */
-	if (osize < isize + MPPE_OVHD + 2) {
-		/* Drop the packet if we should encrypt it, but can't. */
-		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: osize too small! "
-		       "(have: %d need: %d)\n", state->unit,
-		       osize, osize + MPPE_OVHD + 2));
-		return -1;
+	/* FIXME: try to use pbuf_header() here! */
+	np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol), PBUF_RAM);
+	if (!np) {
+	  return ERR_MEM;
 	}
-
-	osize = isize + MPPE_OVHD + 2;
-
+	pbuf_chain(np, *pb);
+	pl = (u8_t*)np->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
 	if (state->debug >= 7)
 		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", state->unit,
 		       state->ccount));
 	/* FIXME: use PUT* macros */
-	obuf[0] = state->ccount>>8;
-	obuf[1] = state->ccount;
+	pl[0] = state->ccount>>8;
+	pl[1] = state->ccount;
 
 	if (!state->stateful ||	/* stateless mode     */
 	    ((state->ccount & 0xff) == 0xff) ||	/* "flag" packet      */
@@ -316,21 +313,26 @@ mppe_compress(void *arg, unsigned char *ibuf, unsigned char *obuf,
 		mppe_rekey(state, 0);
 		state->bits |= MPPE_BIT_FLUSHED;
 	}
-	obuf[0] |= state->bits;
+	pl[0] |= state->bits;
 	state->bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
-	obuf += MPPE_OVHD;
+	pl += MPPE_OVHD;
 
 	/* Add and encrypt protocol */
 	/* FIXME: add PFC support */
-	obuf[0] = protocol >> 8;
-	obuf[1] = protocol;
-	arc4_crypt(&state->arc4, obuf, 2);
-	obuf += 2;
+	pl[0] = protocol >> 8;
+	pl[1] = protocol;
+	arc4_crypt(&state->arc4, pl, sizeof(protocol));
 
 	/* Encrypt packet */
-	MEMCPY(obuf, ibuf, isize);
-	arc4_crypt(&state->arc4, obuf, isize);
-	return osize;
+	for (n = *pb; n != NULL; n = n->next) {
+		arc4_crypt(&state->arc4, (u8_t*)n->payload, n->len);
+		if (n->tot_len == n->len) {
+			break;
+		}
+	}
+
+	*pb = np;
+	return ERR_OK;
 }
 
 int
