@@ -152,12 +152,10 @@ struct ppp_mppe_state {
 	int debug;
 };
 
-int mppe_comp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
-	       int hdrlen, int debug);
+int mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen,
+	int unit, int debug, const char *debugstr);
 void mppe_comp_reset(struct ppp_mppe_state *state);
 err_t mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
-int mppe_decomp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
-		 int hdrlen, int mru, int debug);
 void mppe_decomp_reset(struct ppp_mppe_state *state);
 err_t mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb);
 void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt);

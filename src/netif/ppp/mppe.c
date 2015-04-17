@@ -116,7 +116,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 /*
  * Initialize (de)compressor state.
  */
-static int
+int
 mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit, int debug,
 	  const char *debugstr)
 {
@@ -182,14 +182,6 @@ mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int 
 	state->debug = debug;
 
 	return 1;
-}
-
-int
-mppe_comp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
-	       int hdrlen, int debug)
-{
-	LWIP_UNUSED_ARG(hdrlen);
-	return mppe_init(state, options, optlen, unit, debug, "mppe_comp_init");
 }
 
 /*
@@ -263,15 +255,6 @@ mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 
 	*pb = np;
 	return ERR_OK;
-}
-
-int
-mppe_decomp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
-		 int hdrlen, int mru, int debug)
-{
-	LWIP_UNUSED_ARG(hdrlen);
-	LWIP_UNUSED_ARG(mru);
-	return mppe_init(state, options, optlen, unit, debug, "mppe_decomp_init");
 }
 
 /*
