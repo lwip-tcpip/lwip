@@ -730,6 +730,8 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
 	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
 	MEMCPY(&opt_buf[CILEN_MPPE], mppe_recv_key, MPPE_MAX_KEY_LEN);
+	/* ccp_test() can't fail, we've already tested it! */
+	ccp_test(pcb, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0);
 	p += CILEN_MPPE;
     }
 #endif /* MPPE_SUPPORT */
