@@ -55,7 +55,6 @@
  */
 struct ppp_mppe_state {
 	arc4_context arc4;
-	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 	unsigned char master_key[MPPE_MAX_KEY_LEN];
 	unsigned char session_key[MPPE_MAX_KEY_LEN];
 	unsigned keylen;	/* key length in bytes             */
@@ -107,6 +106,7 @@ static const u8_t sha1_pad2[SHA1_PAD_SIZE] = {
 static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 {
 	sha1_context sha1;
+	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
 
 	/*
 	 * Key Derivation, from RFC 3078, RFC 3079.
@@ -117,14 +117,12 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 	sha1_update(&sha1, (unsigned char *)sha1_pad1, SHA1_PAD_SIZE);
 	sha1_update(&sha1, state->session_key, state->keylen);
 	sha1_update(&sha1, (unsigned char *)sha1_pad2, SHA1_PAD_SIZE);
-	sha1_finish(&sha1, state->sha1_digest);
+	sha1_finish(&sha1, sha1_digest);
+	MEMCPY(state->session_key, sha1_digest, state->keylen);
 
 	if (!initial_key) {
-		arc4_setup(&state->arc4, state->sha1_digest, state->keylen);
-		MEMCPY(state->session_key, state->sha1_digest, state->keylen);
+		arc4_setup(&state->arc4, sha1_digest, state->keylen);
 		arc4_crypt(&state->arc4, state->session_key, state->keylen);
-	} else {
-		memcpy(state->session_key, state->sha1_digest, state->keylen);
 	}
 	if (state->keylen == 8) {
 		/* See RFC 3078 */
