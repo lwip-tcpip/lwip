@@ -50,26 +50,6 @@
 #define SHA1_SIGNATURE_SIZE 20
 #define SHA1_PAD_SIZE 40
 
-/*
- * State for an MPPE (de)compressor.
- */
-struct ppp_mppe_state {
-	arc4_context arc4;
-	unsigned char master_key[MPPE_MAX_KEY_LEN];
-	unsigned char session_key[MPPE_MAX_KEY_LEN];
-	unsigned keylen;	/* key length in bytes             */
-	/* NB: 128-bit == 16, 40-bit == 8! */
-	/* If we want to support 56-bit,   */
-	/* the unit has to change to bits  */
-	unsigned char bits;	/* MPPE control bits */
-	unsigned ccount;	/* 12-bit coherency count (seqno)  */
-	unsigned stateful;	/* stateful mode flag */
-	int discard;		/* stateful mode packet loss flag */
-	int sanity_errors;	/* take down LCP if too many */
-	int unit;
-	int debug;
-};
-
 /* struct ppp_mppe_state.bits definitions */
 #define MPPE_BIT_A	0x80	/* Encryption table were (re)inititalized */
 #define MPPE_BIT_B	0x40	/* MPPC only (not implemented) */

@@ -39,6 +39,12 @@
 #ifndef MPPE_H
 #define MPPE_H
 
+#if LWIP_INCLUDED_POLARSSL_ARC4
+#include "netif/ppp/polarssl/arc4.h"
+#else
+#include "polarssl/arc4.h"
+#endif
+
 #define MPPE_PAD		4	/* MPPE growth per frame */
 #define MPPE_MAX_KEY_LEN	16	/* largest key length (128-bit) */
 
@@ -125,6 +131,26 @@
 	if (ptr[3] & ~MPPE_ALL_BITS)		\
 	    opts |= MPPE_OPT_UNKNOWN;		\
     } while (/* CONSTCOND */ 0)
+
+/*
+ * State for an MPPE (de)compressor.
+ */
+struct ppp_mppe_state {
+	arc4_context arc4;
+	unsigned char master_key[MPPE_MAX_KEY_LEN];
+	unsigned char session_key[MPPE_MAX_KEY_LEN];
+	unsigned keylen;	/* key length in bytes             */
+	/* NB: 128-bit == 16, 40-bit == 8! */
+	/* If we want to support 56-bit,   */
+	/* the unit has to change to bits  */
+	unsigned char bits;	/* MPPE control bits */
+	unsigned ccount;	/* 12-bit coherency count (seqno)  */
+	unsigned stateful;	/* stateful mode flag */
+	int discard;		/* stateful mode packet loss flag */
+	int sanity_errors;	/* take down LCP if too many */
+	int unit;
+	int debug;
+};
 
 void *mppe_alloc(unsigned char *options, int optlen);
 void mppe_free(void *arg);
