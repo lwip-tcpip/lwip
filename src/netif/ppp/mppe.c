@@ -434,29 +434,4 @@ void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt)
 		       "(proto %04x)\n", state->unit, PPP_PROTOCOL(ibuf)));
 }
 
-#if 0
-/*************************************************************
- * Module interface table
- *************************************************************/
-
-/*
- * Procedures exported to if_ppp.c.
- */
-static struct compressor ppp_mppe = {
-	.compress_proto = CI_MPPE,
-	.comp_alloc     = mppe_alloc,
-	.comp_free      = mppe_free,
-	.comp_init      = mppe_comp_init,
-	.comp_reset     = mppe_comp_reset,
-	.compress       = mppe_compress,
-	.decomp_alloc   = mppe_alloc,
-	.decomp_free    = mppe_free,
-	.decomp_init    = mppe_decomp_init,
-	.decomp_reset   = mppe_decomp_reset,
-	.decompress     = mppe_decompress,
-	.incomp         = mppe_incomp,
-	.comp_extra     = MPPE_PAD,
-};
-#endif /* 0 */
-
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
