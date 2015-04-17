@@ -114,49 +114,6 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 }
 
 /*
- * Allocate space for a (de)compressor.
- */
-struct ppp_mppe_state *mppe_alloc(unsigned char *options, int optlen)
-{
-	struct ppp_mppe_state *state;
-
-	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
-	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
-		goto out;
-
-	/* FIXME: remove malloc() */
-	state = (struct ppp_mppe_state *)malloc(sizeof(*state));
-	if (state == NULL)
-		goto out;
-
-	/* Save keys. */
-	memcpy(state->master_key, &options[CILEN_MPPE],
-	       sizeof(state->master_key));
-	memcpy(state->session_key, state->master_key,
-	       sizeof(state->master_key));
-
-	/*
-	 * We defer initial key generation until mppe_init(), as mppe_alloc()
-	 * is called frequently during negotiation.
-	 */
-
-	return state;
-
-out:
-	return NULL;
-}
-
-/*
- * Deallocate space for a (de)compressor.
- */
-void mppe_free(struct ppp_mppe_state *state)
-{
-	if (state) {
-	    free(state);
-	}
-}
-
-/*
  * Initialize (de)compressor state.
  */
 static int
@@ -165,9 +122,13 @@ mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int 
 {
 	unsigned char mppe_opts;
 
-	if (optlen != CILEN_MPPE ||
+	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
 	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
 		return 0;
+
+	/* Save keys. */
+	MEMCPY(state->master_key, &options[CILEN_MPPE], sizeof(state->master_key));
+	MEMCPY(state->session_key, state->master_key, sizeof(state->master_key));
 
 	MPPE_CI_TO_OPTS(&options[2], mppe_opts);
 	if (mppe_opts & MPPE_OPT_128)

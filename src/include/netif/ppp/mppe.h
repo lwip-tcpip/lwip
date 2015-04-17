@@ -152,8 +152,6 @@ struct ppp_mppe_state {
 	int debug;
 };
 
-struct ppp_mppe_state *mppe_alloc(unsigned char *options, int optlen);
-void mppe_free(struct ppp_mppe_state *state);
 int mppe_comp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug);
 void mppe_comp_reset(struct ppp_mppe_state *state);
