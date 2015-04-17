@@ -123,7 +123,9 @@ typedef struct ccp_options {
     unsigned int predictor_2      :1; /* do Predictor-2? */
     unsigned int                  :2; /* 2 bit of padding to round out to 8 bits */
 
+#if MPPE_SUPPORT
     u8_t mppe;			/* MPPE bitfield */
+#endif /* MPPE_SUPPORT */
     u_short bsd_bits;		/* # bits/code for BSD Compress */
     u_short deflate_size;	/* lg(window size) for Deflate */
     short method;		/* code for chosen compression method */

@@ -243,9 +243,14 @@ static const fsm_callbacks ccp_callbacks = {
 /*
  * Do we want / did we get any compression?
  */
-#define ANY_COMPRESS(opt)	((opt)->deflate || (opt)->bsd_compress \
-				 || (opt)->predictor_1 || (opt)->predictor_2 \
-				 || (opt)->mppe)
+static int ccp_anycompress(ccp_options *opt) {
+    return ((opt)->deflate || (opt)->bsd_compress
+		 || (opt)->predictor_1 || (opt)->predictor_2
+#if MPPE_SUPPORT
+		 || (opt)->mppe
+#endif /* MPPE_SUPPORT */
+		 );
+}
 
 /*
  * Local state (mainly for handling reset-reqs and reset-acks).
@@ -400,7 +405,7 @@ static void ccp_open(ppp_pcb *pcb) {
      * deciding whether to open in silent mode.
      */
     ccp_resetci(f);
-    if (!ANY_COMPRESS(go))
+    if (!ccp_anycompress(go))
 	f->flags |= OPT_SILENT;
 
     fsm_open(f);
@@ -459,7 +464,7 @@ static void ccp_input(ppp_pcb *pcb, u_char *p, int len) {
      * close CCP.
      */
     if (oldstate == PPP_FSM_REQSENT && p[0] == TERMACK
-	&& !ANY_COMPRESS(go))
+	&& !ccp_anycompress(go))
 	ccp_close(pcb, "No compression negotiated");
 }
 
@@ -706,7 +711,10 @@ static int ccp_cilen(fsm *f) {
 	+ (go->deflate && go->deflate_draft? CILEN_DEFLATE: 0)
 	+ (go->predictor_1? CILEN_PREDICTOR_1: 0)
 	+ (go->predictor_2? CILEN_PREDICTOR_2: 0)
-	+ (go->mppe? CILEN_MPPE: 0);
+#if MPPE_SUPPORT
+	+ (go->mppe? CILEN_MPPE: 0)
+#endif /* MPPE_SUPPORT */
+	;
 }
 
 /*
@@ -1316,7 +1324,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 static const char *method_name(ccp_options *opt, ccp_options *opt2) {
     static char result[64];
 
-    if (!ANY_COMPRESS(opt))
+    if (!ccp_anycompress(opt))
 	return "(none)";
     switch (opt->method) {
 #if MPPE_SUPPORT
@@ -1382,8 +1390,8 @@ static void ccp_up(fsm *f) {
     char method1[64];
 
     ccp_flags_set(pcb, 1, 1);
-    if (ANY_COMPRESS(go)) {
-	if (ANY_COMPRESS(ho)) {
+    if (ccp_anycompress(go)) {
+	if (ccp_anycompress(ho)) {
 	    if (go->method == ho->method) {
 		ppp_notice("%s compression enabled", method_name(go, ho));
 	    } else {
@@ -1393,7 +1401,7 @@ static void ccp_up(fsm *f) {
 	    }
 	} else
 	    ppp_notice("%s receive compression enabled", method_name(go, NULL));
-    } else if (ANY_COMPRESS(ho))
+    } else if (ccp_anycompress(ho))
 	ppp_notice("%s transmit compression enabled", method_name(ho, NULL));
 #if MPPE_SUPPORT
     if (go->mppe) {
