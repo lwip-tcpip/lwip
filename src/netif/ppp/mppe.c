@@ -101,28 +101,24 @@ static const u8_t sha1_pad2[SHA1_PAD_SIZE] = {
 };
 
 /*
- * Key Derivation, from RFC 3078, RFC 3079.
- * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
- */
-static void get_new_key_from_sha(struct ppp_mppe_state * state)
-{
-  sha1_context sha1;
-
-  sha1_starts(&sha1);
-  sha1_update(&sha1, state->master_key, state->keylen);
-  sha1_update(&sha1, (unsigned char *)sha1_pad1, SHA1_PAD_SIZE);
-  sha1_update(&sha1, state->session_key, state->keylen);
-  sha1_update(&sha1, (unsigned char *)sha1_pad2, SHA1_PAD_SIZE);
-  sha1_finish(&sha1, state->sha1_digest);
-}
-
-/*
  * Perform the MPPE rekey algorithm, from RFC 3078, sec. 7.3.
  * Well, not what's written there, but rather what they meant.
  */
 static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 {
-	get_new_key_from_sha(state);
+	sha1_context sha1;
+
+	/*
+	 * Key Derivation, from RFC 3078, RFC 3079.
+	 * Equivalent to Get_Key() for MS-CHAP as described in RFC 3079.
+	 */
+	sha1_starts(&sha1);
+	sha1_update(&sha1, state->master_key, state->keylen);
+	sha1_update(&sha1, (unsigned char *)sha1_pad1, SHA1_PAD_SIZE);
+	sha1_update(&sha1, state->session_key, state->keylen);
+	sha1_update(&sha1, (unsigned char *)sha1_pad2, SHA1_PAD_SIZE);
+	sha1_finish(&sha1, state->sha1_digest);
+
 	if (!initial_key) {
 		arc4_setup(&state->arc4, state->sha1_digest, state->keylen);
 		MEMCPY(state->session_key, state->sha1_digest, state->keylen);
