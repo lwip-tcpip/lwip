@@ -116,7 +116,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
 /*
  * Allocate space for a (de)compressor.
  */
-void *mppe_alloc(unsigned char *options, int optlen)
+struct ppp_mppe_state *mppe_alloc(unsigned char *options, int optlen)
 {
 	struct ppp_mppe_state *state;
 
@@ -140,7 +140,7 @@ void *mppe_alloc(unsigned char *options, int optlen)
 	 * is called frequently during negotiation.
 	 */
 
-	return (void *)state;
+	return state;
 
 out:
 	return NULL;
@@ -149,9 +149,8 @@ out:
 /*
  * Deallocate space for a (de)compressor.
  */
-void mppe_free(void *arg)
+void mppe_free(struct ppp_mppe_state *state)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	if (state) {
 	    free(state);
 	}
@@ -161,10 +160,9 @@ void mppe_free(void *arg)
  * Initialize (de)compressor state.
  */
 static int
-mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
+mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit, int debug,
 	  const char *debugstr)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	unsigned char mppe_opts;
 
 	if (optlen != CILEN_MPPE ||
@@ -226,11 +224,11 @@ mppe_init(void *arg, unsigned char *options, int optlen, int unit, int debug,
 }
 
 int
-mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
+mppe_comp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug)
 {
 	LWIP_UNUSED_ARG(hdrlen);
-	return mppe_init(arg, options, optlen, unit, debug, "mppe_comp_init");
+	return mppe_init(state, options, optlen, unit, debug, "mppe_comp_init");
 }
 
 /*
@@ -242,10 +240,8 @@ mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(void *arg)
+void mppe_comp_reset(struct ppp_mppe_state *state)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
-
 	state->bits |= MPPE_BIT_FLUSHED;
 }
 
@@ -255,9 +251,8 @@ void mppe_comp_reset(void *arg)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 err_t
-mppe_compress(void *arg, struct pbuf **pb, u16_t protocol)
+mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	struct pbuf *np, *n;
 	u8_t *pl;
 
@@ -310,20 +305,20 @@ mppe_compress(void *arg, struct pbuf **pb, u16_t protocol)
 }
 
 int
-mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
+mppe_decomp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
 		 int hdrlen, int mru, int debug)
 {
 	LWIP_UNUSED_ARG(hdrlen);
 	LWIP_UNUSED_ARG(mru);
-	return mppe_init(arg, options, optlen, unit, debug, "mppe_decomp_init");
+	return mppe_init(state, options, optlen, unit, debug, "mppe_decomp_init");
 }
 
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(void *arg)
+void mppe_decomp_reset(struct ppp_mppe_state *state)
 {
-	LWIP_UNUSED_ARG(arg);
+	LWIP_UNUSED_ARG(state);
 	return;
 }
 
@@ -331,9 +326,8 @@ void mppe_decomp_reset(void *arg)
  * Decompress (decrypt) an MPPE packet.
  */
 err_t
-mppe_decompress(void *arg, struct pbuf **pb)
+mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	struct pbuf *n0 = *pb, *n;
 	u8_t *pl;
 	unsigned ccount;
@@ -468,9 +462,8 @@ mppe_decompress(void *arg, struct pbuf **pb)
  * of what should be encrypted.  At the least, we should drop this
  * packet.  (How to do this?)
  */
-void mppe_incomp(void *arg, unsigned char *ibuf, int icnt)
+void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt)
 {
-	struct ppp_mppe_state *state = (struct ppp_mppe_state *) arg;
 	LWIP_UNUSED_ARG(icnt);
 
 	if (state->debug &&

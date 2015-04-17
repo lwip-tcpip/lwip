@@ -152,17 +152,17 @@ struct ppp_mppe_state {
 	int debug;
 };
 
-void *mppe_alloc(unsigned char *options, int optlen);
-void mppe_free(void *arg);
-int mppe_comp_init(void *arg, unsigned char *options, int optlen, int unit,
+struct ppp_mppe_state *mppe_alloc(unsigned char *options, int optlen);
+void mppe_free(struct ppp_mppe_state *state);
+int mppe_comp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
 	       int hdrlen, int debug);
-void mppe_comp_reset(void *arg);
-err_t mppe_compress(void *arg, struct pbuf **pb, u16_t protocol);
-int mppe_decomp_init(void *arg, unsigned char *options, int optlen, int unit,
+void mppe_comp_reset(struct ppp_mppe_state *state);
+err_t mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
+int mppe_decomp_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit,
 		 int hdrlen, int mru, int debug);
-void mppe_decomp_reset(void *arg);
-err_t mppe_decompress(void *arg, struct pbuf **pb);
-void mppe_incomp(void *arg, unsigned char *ibuf, int icnt);
+void mppe_decomp_reset(struct ppp_mppe_state *state);
+err_t mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb);
+void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt);
 
 #endif /* MPPE_H */
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
