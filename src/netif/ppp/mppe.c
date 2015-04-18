@@ -48,7 +48,6 @@
 #endif
 
 #define SHA1_SIGNATURE_SIZE 20
-#define SHA1_PAD_SIZE 40
 
 /* ppp_mppe_state.bits definitions */
 #define MPPE_BIT_A	0x80	/* Encryption table were (re)inititalized */
@@ -66,19 +65,6 @@
 #define MPPE_OVHD	2	/* MPPE overhead/packet */
 #define SANITY_MAX	1600	/* Max bogon factor we will tolerate */
 
-static const u8_t sha1_pad1[SHA1_PAD_SIZE] = {
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
-};
-static const u8_t sha1_pad2[SHA1_PAD_SIZE] = {
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2
-};
-
 /*
  * Perform the MPPE rekey algorithm, from RFC 3078, sec. 7.3.
  * Well, not what's written there, but rather what they meant.
@@ -94,9 +80,9 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 	 */
 	sha1_starts(&sha1);
 	sha1_update(&sha1, state->master_key, state->keylen);
-	sha1_update(&sha1, (unsigned char *)sha1_pad1, SHA1_PAD_SIZE);
+	sha1_update(&sha1, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
 	sha1_update(&sha1, state->session_key, state->keylen);
-	sha1_update(&sha1, (unsigned char *)sha1_pad2, SHA1_PAD_SIZE);
+	sha1_update(&sha1, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
 	sha1_finish(&sha1, sha1_digest);
 	MEMCPY(state->session_key, sha1_digest, state->keylen);
 

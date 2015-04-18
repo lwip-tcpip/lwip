@@ -93,6 +93,9 @@
 #include "netif/ppp/chap_ms.h"
 #include "netif/ppp/pppcrypt.h"
 #include "netif/ppp/magic.h"
+#if MPPE_SUPPORT
+#include "netif/ppp/mppe.h" /* For mppe_sha1_pad* */
+#endif /* MPPE_SUPPORT */
 
 #if LWIP_INCLUDED_POLARSSL_MD4
 #include "netif/ppp/polarssl/md4.h"
@@ -758,17 +761,6 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     u_char	MasterKey[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
-    u_char SHApad1[40] =
-	{ 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-	  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
-    u_char SHApad2[40] =
-	{ 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-	  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-	  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2,
-	  0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2, 0xf2 };
-
     /* "This is the MPPE Master Key" */
     u_char Magic1[27] =
 	{ 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74,
@@ -815,9 +807,9 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
 	s = Magic2;
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, MasterKey, 16);
-    sha1_update(&sha1Context, SHApad1, sizeof(SHApad1));
+    sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
     sha1_update(&sha1Context, s, 84);
-    sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
+    sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
     MEMCPY(pcb->mppe_send_key, Digest, MPPE_MAX_KEY_LEN);
@@ -831,9 +823,9 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
 	s = Magic3;
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, MasterKey, 16);
-    sha1_update(&sha1Context, SHApad1, sizeof(SHApad1));
+    sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
     sha1_update(&sha1Context, s, 84);
-    sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
+    sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
     MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
