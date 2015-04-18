@@ -169,8 +169,8 @@ typedef struct ppp_mppe_state {
 	u8_t unit;
 } ppp_mppe_state;
 
-int mppe_init(ppp_mppe_state *state, unsigned char *options, int optlen,
-	u8_t unit, u8_t debug, const char *debugstr);
+void mppe_set_key(ppp_mppe_state *state, u8_t *key);
+void mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char *debugstr);
 void mppe_comp_reset(ppp_mppe_state *state);
 err_t mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
 void mppe_decomp_reset(ppp_mppe_state *state);

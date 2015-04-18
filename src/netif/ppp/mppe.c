@@ -100,33 +100,32 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 }
 
 /*
+ * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
+ * don't have to keep multiple copies of keys.
+ */
+void mppe_set_key(ppp_mppe_state *state, u8_t *key) {
+    MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
+}
+
+/*
  * Initialize (de)compressor state.
  */
-int
-mppe_init(ppp_mppe_state *state, unsigned char *options, int optlen, u8_t unit, u8_t debug,
-	  const char *debugstr)
+void
+mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char *debugstr)
 {
-	unsigned char mppe_opts;
-
-	if (optlen != CILEN_MPPE + sizeof(state->master_key) ||
-	    options[0] != CI_MPPE || options[1] != CILEN_MPPE)
-		return 0;
-
 	/* Save keys. */
-	MEMCPY(state->master_key, &options[CILEN_MPPE], sizeof(state->master_key));
 	MEMCPY(state->session_key, state->master_key, sizeof(state->master_key));
 
-	MPPE_CI_TO_OPTS(&options[2], mppe_opts);
-	if (mppe_opts & MPPE_OPT_128)
+	if (options & MPPE_OPT_128)
 		state->keylen = 16;
-	else if (mppe_opts & MPPE_OPT_40)
+	else if (options & MPPE_OPT_40)
 		state->keylen = 8;
 	else {
 		PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
 		       unit));
-		return 0;
+		return;
 	}
-	if (mppe_opts & MPPE_OPT_STATEFUL)
+	if (options & MPPE_OPT_STATEFUL)
 		state->stateful = 1;
 
 	/* Generate the initial session key. */
@@ -166,8 +165,6 @@ mppe_init(ppp_mppe_state *state, unsigned char *options, int optlen, u8_t unit, 
 
 	state->unit = unit;
 	state->debug = debug;
-
-	return 1;
 }
 
 /*

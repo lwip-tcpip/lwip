@@ -94,7 +94,7 @@
 #include "netif/ppp/pppcrypt.h"
 #include "netif/ppp/magic.h"
 #if MPPE_SUPPORT
-#include "netif/ppp/mppe.h" /* For mppe_sha1_pad* */
+#include "netif/ppp/mppe.h" /* For mppe_sha1_pad*, mppe_set_key() */
 #endif /* MPPE_SUPPORT */
 
 #if LWIP_INCLUDED_POLARSSL_MD4
@@ -730,8 +730,8 @@ static void Set_Start_Key(ppp_pcb *pcb, u_char *rchallenge, char *secret, int se
     sha1_finish(&sha1Context, Digest);
 
     /* Same key in both directions. */
-    MEMCPY(pcb->mppe_send_key, Digest, MPPE_MAX_KEY_LEN);
-    MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
+    mppe_set_key(&pcb->mppe_comp, Digest);
+    mppe_set_key(&pcb->mppe_decomp, Digest);
 
     pcb->mppe_keys_set = 1;
 }
@@ -803,7 +803,7 @@ static void SetMasterKeys(ppp_pcb *pcb, char *secret, int secret_len, u_char NTR
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
-    MEMCPY(pcb->mppe_send_key, Digest, MPPE_MAX_KEY_LEN);
+    mppe_set_key(&pcb->mppe_comp, Digest);
 
     /*
      * generate recv key
@@ -819,7 +819,7 @@ static void SetMasterKeys(ppp_pcb *pcb, char *secret, int secret_len, u_char NTR
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
-    MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
+    mppe_set_key(&pcb->mppe_decomp, Digest);
 
     pcb->mppe_keys_set = 1;
 }

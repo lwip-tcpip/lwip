@@ -423,8 +423,6 @@ struct ppp_pcb_s {
 #if MPPE_SUPPORT
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
-  u8_t mppe_send_key[MPPE_MAX_KEY_LEN];
-  u8_t mppe_recv_key[MPPE_MAX_KEY_LEN];
 #endif /* MPPE_SUPPORT */
 #endif /* CCP_SUPPORT */
 

@@ -765,15 +765,10 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
      */
 #if MPPE_SUPPORT
     if (go->mppe) {
-	u_char opt_buf[CILEN_MPPE + MPPE_MAX_KEY_LEN];
-
-	p[0] = opt_buf[0] = CI_MPPE;
-	p[1] = opt_buf[1] = CILEN_MPPE;
+	p[0] = CI_MPPE;
+	p[1] = CILEN_MPPE;
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
-	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
-	MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_recv_key, MPPE_MAX_KEY_LEN);
-	mppe_init(&pcb->mppe_decomp, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN,
-		pcb->netif->num, 1, "mppe_decomp_init");
+	mppe_init(&pcb->mppe_decomp, go->mppe, pcb->netif->num, 1, "mppe_decomp_init");
 	p += CILEN_MPPE;
     }
 #endif /* MPPE_SUPPORT */
@@ -1199,20 +1194,9 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		/* rebuild the opts */
 		MPPE_OPTS_TO_CI(ho->mppe, &p[2]);
 		if (newret == CONFACK) {
-		    u_char opt_buf[CILEN_MPPE + MPPE_MAX_KEY_LEN];
 		    int mtu;
 
-		    MEMCPY(opt_buf, p, CILEN_MPPE);
-		    MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_send_key,
-			  MPPE_MAX_KEY_LEN);
-		    if (mppe_init(&pcb->mppe_comp, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN,
-			    pcb->netif->num, 1, "mppe_comp_init") <= 0) {
-			/* This shouldn't happen, we've already tested it! */
-			ppp_error("MPPE required, but kernel has no support.");
-			lcp_close(pcb, "MPPE required but not available");
-			newret = CONFREJ;
-			break;
-		    }
+		    mppe_init(&pcb->mppe_comp, ho->mppe, pcb->netif->num, 1, "mppe_comp_init");
 		    /*
 		     * We need to decrease the interface MTU by MPPE_PAD
 		     * because MPPE frames **grow**.  The kernel [must]
@@ -1483,8 +1467,6 @@ static void ccp_up(fsm *f) {
 	ppp_notice("%s transmit compression enabled", method_name(ho, NULL));
 #if MPPE_SUPPORT
     if (go->mppe) {
-	BZERO(pcb->mppe_recv_key, MPPE_MAX_KEY_LEN);
-	BZERO(pcb->mppe_send_key, MPPE_MAX_KEY_LEN);
 	continue_networks(pcb);		/* Bring up IP et al */
     }
 #endif /* MPPE_SUPPORT */
