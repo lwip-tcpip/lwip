@@ -41,6 +41,7 @@
 
 #if MPPE_SUPPORT
 #include "netif/ppp/lcp.h"	/* lcp_close(), lcp_fsm */
+#include "netif/ppp/mppe.h"	/* mppe_init() */
 #endif /* MPPE_SUPPORT */
 
 /*
@@ -540,7 +541,9 @@ static void ccp_resetci(fsm *f) {
     ppp_pcb *pcb = f->pcb;
     ccp_options *go = &pcb->ccp_gotoptions;
     ccp_options *wo = &pcb->ccp_wantoptions;
+#if DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT
     u_char opt_buf[CCP_MAX_OPTION_LENGTH];
+#endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT || PREDICTOR_SUPPORT */
 #if DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT
     int res;
 #endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT */
@@ -631,19 +634,10 @@ static void ccp_resetci(fsm *f) {
      * Check whether the kernel knows about the various
      * compression methods we might request.
      */
-#if MPPE_SUPPORT
-    if (go->mppe) {
-	opt_buf[0] = CI_MPPE;
-	opt_buf[1] = CILEN_MPPE;
-	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
-	/* Key material unimportant here. */
-	if (ccp_test(pcb, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0) <= 0) {
-	    ppp_error("MPPE required, but kernel has no support.");
-	    lcp_close(pcb, "MPPE required but not available");
-	}
-    }
-#endif /* MPPE_SUPPORT */
 #if BSDCOMPRESS_SUPPORT
+    /* FIXME: we don't need to test if BSD compress is available
+     * if BSDCOMPRESS_SUPPORT is set, it is.
+     */
     if (go->bsd_compress) {
 	opt_buf[0] = CI_BSD_COMPRESS;
 	opt_buf[1] = CILEN_BSD_COMPRESS;
@@ -665,6 +659,9 @@ static void ccp_resetci(fsm *f) {
     }
 #endif /* BSDCOMPRESS_SUPPORT */
 #if DEFLATE_SUPPORT
+    /* FIXME: we don't need to test if deflate is available
+     * if DEFLATE_SUPPORT is set, it is.
+     */
     if (go->deflate) {
 	if (go->deflate_correct) {
 	    opt_buf[0] = CI_DEFLATE;
@@ -711,6 +708,9 @@ static void ccp_resetci(fsm *f) {
     }
 #endif /* DEFLATE_SUPPORT */
 #if PREDICTOR_SUPPORT
+    /* FIXME: we don't need to test if predictor is available,
+     * if PREDICTOR_SUPPORT is set, it is.
+     */
     if (go->predictor_1) {
 	opt_buf[0] = CI_PREDICTOR_1;
 	opt_buf[1] = CILEN_PREDICTOR_1;
@@ -772,8 +772,8 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
 	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
 	MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_recv_key, MPPE_MAX_KEY_LEN);
-	/* ccp_test() can't fail, we've already tested it! */
-	ccp_test(pcb, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0);
+	mppe_init(&pcb->mppe_decomp, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN,
+		pcb->netif->num, 1, "mppe_decomp_init");
 	p += CILEN_MPPE;
     }
 #endif /* MPPE_SUPPORT */
@@ -1205,8 +1205,8 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		    MEMCPY(opt_buf, p, CILEN_MPPE);
 		    MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_send_key,
 			  MPPE_MAX_KEY_LEN);
-		    if (ccp_test(pcb, opt_buf,
-				 CILEN_MPPE + MPPE_MAX_KEY_LEN, 1) <= 0) {
+		    if (mppe_init(&pcb->mppe_comp, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN,
+			    pcb->netif->num, 1, "mppe_comp_init") <= 0) {
 			/* This shouldn't happen, we've already tested it! */
 			ppp_error("MPPE required, but kernel has no support.");
 			lcp_close(pcb, "MPPE required but not available");
