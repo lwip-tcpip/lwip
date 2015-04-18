@@ -85,6 +85,17 @@
 #define PPP_STATS_SUPPORT   0
 #endif
 
+#ifndef DEFLATE_SUPPORT
+#define DEFLATE_SUPPORT     0
+#endif
+
+#ifndef BSDCOMPRESS_SUPPORT
+#define BSDCOMPRESS_SUPPORT 0
+#endif
+
+#ifndef PREDICTOR_SUPPORT
+#define PREDICTOR_SUPPORT   0
+#endif
 
 /*************************
 *** PUBLIC DEFINITIONS ***

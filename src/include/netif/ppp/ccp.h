@@ -66,6 +66,7 @@
 #define CCP_OPT_LENGTH(dp)	((dp)[1])
 #define CCP_OPT_MINLEN		2
 
+#if BSDCOMPRESS_SUPPORT
 /*
  * Definitions for BSD-Compress.
  */
@@ -81,7 +82,9 @@
 
 #define BSD_MIN_BITS		9	/* smallest code size supported */
 #define BSD_MAX_BITS		15	/* largest code size supported */
+#endif /* BSDCOMPRESS_SUPPORT */
 
+#if DEFLATE_SUPPORT
 /*
  * Definitions for Deflate.
  */
@@ -97,14 +100,18 @@
 #define DEFLATE_METHOD(x)	((x) & 0x0F)
 #define DEFLATE_MAKE_OPT(w)	((((w) - 8) << 4) + DEFLATE_METHOD_VAL)
 #define DEFLATE_CHK_SEQUENCE	0
+#endif /* DEFLATE_SUPPORT */
 
+#if MPPE_SUPPORT
 /*
  * Definitions for MPPE.
  */
 
 #define CI_MPPE                18      /* config option for MPPE */
 #define CILEN_MPPE              6      /* length of config option */
+#endif /* MPPE_SUPPORT */
 
+#if PREDICTOR_SUPPORT
 /*
  * Definitions for other, as yet unsupported, compression methods.
  */
@@ -113,21 +120,38 @@
 #define CILEN_PREDICTOR_1	2	/* length of its config option */
 #define CI_PREDICTOR_2		2	/* config option for Predictor-2 */
 #define CILEN_PREDICTOR_2	2	/* length of its config option */
+#endif /* PREDICTOR_SUPPORT */
 
 typedef struct ccp_options {
+#if DEFLATE_SUPPORT
     unsigned int deflate          :1; /* do Deflate? */
     unsigned int deflate_correct  :1; /* use correct code for deflate? */
     unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
+#else /* DEFLATE_SUPPORT */
+    unsigned int                  :3; /* 3 bit of padding */
+#endif /* DEFLATE_SUPPORT */
+#if BSDCOMPRESS_SUPPORT
     unsigned int bsd_compress     :1; /* do BSD Compress? */
+#else /* BSDCOMPRESS_SUPPORT */
+    unsigned int                  :1; /* 1 bit of padding */
+#endif /* BSDCOMPRESS_SUPPORT */
+#if PREDICTOR_SUPPORT
     unsigned int predictor_1      :1; /* do Predictor-1? */
     unsigned int predictor_2      :1; /* do Predictor-2? */
+#else /* PREDICTOR_SUPPORT */
+    unsigned int                  :2; /* 2 bit of padding */
+#endif /* PREDICTOR_SUPPORT */
     unsigned int                  :2; /* 2 bit of padding to round out to 8 bits */
 
 #if MPPE_SUPPORT
     u8_t mppe;			/* MPPE bitfield */
 #endif /* MPPE_SUPPORT */
+#if BSDCOMPRESS_SUPPORT
     u_short bsd_bits;		/* # bits/code for BSD Compress */
+#endif /* BSDCOMPRESS_SUPPORT */
+#if DEFLATE_SUPPORT
     u_short deflate_size;	/* lg(window size) for Deflate */
+#endif /* DEFLATE_SUPPORT */
     short method;		/* code for chosen compression method */
 } ccp_options;
 
