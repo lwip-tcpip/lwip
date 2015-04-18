@@ -137,23 +137,24 @@
  */
 struct ppp_mppe_state {
 	arc4_context arc4;
-	unsigned char master_key[MPPE_MAX_KEY_LEN];
-	unsigned char session_key[MPPE_MAX_KEY_LEN];
-	unsigned keylen;	/* key length in bytes             */
-	/* NB: 128-bit == 16, 40-bit == 8! */
-	/* If we want to support 56-bit,   */
-	/* the unit has to change to bits  */
-	unsigned char bits;	/* MPPE control bits */
-	unsigned ccount;	/* 12-bit coherency count (seqno)  */
-	unsigned stateful;	/* stateful mode flag */
-	int discard;		/* stateful mode packet loss flag */
-	int sanity_errors;	/* take down LCP if too many */
-	int unit;
-	int debug;
+	u8_t master_key[MPPE_MAX_KEY_LEN];
+	u8_t session_key[MPPE_MAX_KEY_LEN];
+	u8_t keylen;                /* key length in bytes */
+	/* NB: 128-bit == 16, 40-bit == 8!
+	 * If we want to support 56-bit, the unit has to change to bits
+	 */
+	u8_t bits;                  /* MPPE control bits */
+	u16_t ccount;               /* 12-bit coherency count (seqno)  */
+	unsigned int stateful  :1;  /* stateful mode flag */
+	unsigned int discard   :1;  /* stateful mode packet loss flag */
+	unsigned int debug     :1;  /* debug flag */
+	unsigned int           :5;  /* 5 bit of padding to round out to 8 bits */
+	u16_t sanity_errors;        /* take down LCP if too many */
+	u8_t unit;
 };
 
 int mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen,
-	int unit, int debug, const char *debugstr);
+	u8_t unit, u8_t debug, const char *debugstr);
 void mppe_comp_reset(struct ppp_mppe_state *state);
 err_t mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
 void mppe_decomp_reset(struct ppp_mppe_state *state);

@@ -117,7 +117,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
  * Initialize (de)compressor state.
  */
 int
-mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, int unit, int debug,
+mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, u8_t unit, u8_t debug,
 	  const char *debugstr)
 {
 	unsigned char mppe_opts;
@@ -218,7 +218,7 @@ mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 	pl = (u8_t*)np->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
-	if (state->debug >= 7)
+	if (state->debug)
 		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", state->unit,
 		       state->ccount));
 	/* FIXME: use PUT* macros */
@@ -274,9 +274,9 @@ mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb)
 {
 	struct pbuf *n0 = *pb, *n;
 	u8_t *pl;
-	unsigned ccount;
-	int flushed;
-	int sanity = 0;
+	u16_t ccount;
+	u8_t flushed;
+	u8_t sanity = 0;
 
 	/* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
@@ -290,7 +290,7 @@ mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb)
 	pl = (u8_t*)n0->payload;
 	flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
 	ccount = MPPE_CCOUNT(pl);
-	if (state->debug >= 7)
+	if (state->debug)
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
 		       state->unit, ccount));
 
