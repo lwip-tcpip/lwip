@@ -161,21 +161,19 @@ typedef struct ppp_mppe_state {
 	 */
 	u8_t bits;                  /* MPPE control bits */
 	u16_t ccount;               /* 12-bit coherency count (seqno)  */
+	u16_t sanity_errors;        /* take down LCP if too many */
 	unsigned int stateful  :1;  /* stateful mode flag */
 	unsigned int discard   :1;  /* stateful mode packet loss flag */
-	unsigned int debug     :1;  /* debug flag */
-	unsigned int           :5;  /* 5 bit of padding to round out to 8 bits */
-	u16_t sanity_errors;        /* take down LCP if too many */
-	u8_t unit;
+	unsigned int           :6;  /* 6 bit of padding to round out to 8 bits */
 } ppp_mppe_state;
 
-void mppe_set_key(ppp_mppe_state *state, u8_t *key);
-void mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char *debugstr);
-void mppe_comp_reset(ppp_mppe_state *state);
-err_t mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
-void mppe_decomp_reset(ppp_mppe_state *state);
-err_t mppe_decompress(ppp_mppe_state *state, struct pbuf **pb);
-void mppe_incomp(ppp_mppe_state *state, unsigned char *ibuf, int icnt);
+void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, u8_t *key);
+void mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options);
+void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
+err_t mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
+void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
+err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
+void mppe_incomp(ppp_pcb *pcb, ppp_mppe_state *state, unsigned char *ibuf, int icnt);
 
 #endif /* MPPE_H */
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */

@@ -768,7 +768,7 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	p[0] = CI_MPPE;
 	p[1] = CILEN_MPPE;
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
-	mppe_init(&pcb->mppe_decomp, go->mppe, pcb->netif->num, 1, "mppe_decomp_init");
+	mppe_init(pcb, &pcb->mppe_decomp, go->mppe);
 	p += CILEN_MPPE;
     }
 #endif /* MPPE_SUPPORT */
@@ -1196,7 +1196,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		if (newret == CONFACK) {
 		    int mtu;
 
-		    mppe_init(&pcb->mppe_comp, ho->mppe, pcb->netif->num, 1, "mppe_comp_init");
+		    mppe_init(pcb, &pcb->mppe_comp, ho->mppe);
 		    /*
 		     * We need to decrease the interface MTU by MPPE_PAD
 		     * because MPPE frames **grow**.  The kernel [must]

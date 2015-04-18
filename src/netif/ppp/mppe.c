@@ -103,16 +103,24 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
  * Set key, used by MSCHAP before mppe_init() is actually called by CCP so we
  * don't have to keep multiple copies of keys.
  */
-void mppe_set_key(ppp_mppe_state *state, u8_t *key) {
-    MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
+void mppe_set_key(ppp_pcb *pcb, ppp_mppe_state *state, u8_t *key) {
+	LWIP_UNUSED_ARG(pcb);
+	MEMCPY(state->master_key, key, MPPE_MAX_KEY_LEN);
 }
 
 /*
  * Initialize (de)compressor state.
  */
 void
-mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char *debugstr)
+mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options)
 {
+#if PPP_DEBUG
+	const u8_t *debugstr = (u8_t*)"mppe_comp_init";
+	if (&pcb->mppe_decomp == state) {
+	    debugstr = (u8_t*)"mppe_decomp_init";
+	}
+#endif /* PPP_DEBUG */
+
 	/* Save keys. */
 	MEMCPY(state->session_key, state->master_key, sizeof(state->master_key));
 
@@ -122,7 +130,7 @@ mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char
 		state->keylen = 8;
 	else {
 		PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
-		       unit));
+			pcb->netif->num));
 		return;
 	}
 	if (options & MPPE_OPT_STATEFUL)
@@ -131,13 +139,14 @@ mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char
 	/* Generate the initial session key. */
 	mppe_rekey(state, 1);
 
-	if (debug) {
+#if PPP_DEBUG
+	{
 		int i;
 		char mkey[sizeof(state->master_key) * 2 + 1];
 		char skey[sizeof(state->session_key) * 2 + 1];
 
 		PPPDEBUG(LOG_DEBUG, ("%s[%d]: initialized with %d-bit %s mode\n",
-		       debugstr, unit, (state->keylen == 16) ? 128 : 40,
+		       debugstr, pcb->netif->num, (state->keylen == 16) ? 128 : 40,
 		       (state->stateful) ? "stateful" : "stateless"));
 
 		for (i = 0; i < (int)sizeof(state->master_key); i++)
@@ -146,8 +155,9 @@ mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char
 			sprintf(skey + i * 2, "%02x", state->session_key[i]);
 		PPPDEBUG(LOG_DEBUG,
 		       ("%s[%d]: keys: master: %s initial session: %s\n",
-		       debugstr, unit, mkey, skey));
+		       debugstr, pcb->netif->num, mkey, skey));
 	}
+#endif /* PPP_DEBUG */
 
 	/*
 	 * Initialize the coherency count.  The initial value is not specified
@@ -162,9 +172,6 @@ mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char
 	 * set the FLUSHED bit.  This is contrary to RFC 3078, sec. 3.1.
 	 */
 	state->bits = MPPE_BIT_ENCRYPTED;
-
-	state->unit = unit;
-	state->debug = debug;
 }
 
 /*
@@ -176,8 +183,9 @@ mppe_init(ppp_mppe_state *state, u8_t options, u8_t unit, u8_t debug, const char
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(ppp_mppe_state *state)
+void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
 {
+	LWIP_UNUSED_ARG(pcb);
 	state->bits |= MPPE_BIT_FLUSHED;
 }
 
@@ -187,7 +195,7 @@ void mppe_comp_reset(ppp_mppe_state *state)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 err_t
-mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
+mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 {
 	struct pbuf *np, *n;
 	u8_t *pl;
@@ -201,9 +209,7 @@ mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 	pl = (u8_t*)np->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
-	if (state->debug)
-		PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", state->unit,
-		       state->ccount));
+	PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
 	/* FIXME: use PUT* macros */
 	pl[0] = state->ccount>>8;
 	pl[1] = state->ccount;
@@ -212,9 +218,9 @@ mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 	    ((state->ccount & 0xff) == 0xff) ||	/* "flag" packet      */
 	    (state->bits & MPPE_BIT_FLUSHED)) {	/* CCP Reset-Request  */
 		/* We must rekey */
-		if (state->debug && state->stateful)
-			PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: rekeying\n",
-			       state->unit));
+		if (state->stateful) {
+			PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: rekeying\n", pcb->netif->num));
+		}
 		mppe_rekey(state, 0);
 		state->bits |= MPPE_BIT_FLUSHED;
 	}
@@ -243,8 +249,9 @@ mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(ppp_mppe_state *state)
+void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
 {
+	LWIP_UNUSED_ARG(pcb);
 	LWIP_UNUSED_ARG(state);
 	return;
 }
@@ -253,7 +260,7 @@ void mppe_decomp_reset(ppp_mppe_state *state)
  * Decompress (decrypt) an MPPE packet.
  */
 err_t
-mppe_decompress(ppp_mppe_state *state, struct pbuf **pb)
+mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 {
 	struct pbuf *n0 = *pb, *n;
 	u8_t *pl;
@@ -263,37 +270,35 @@ mppe_decompress(ppp_mppe_state *state, struct pbuf **pb)
 
 	/* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
-		if (state->debug)
-			PPPDEBUG(LOG_DEBUG,
-			       ("mppe_decompress[%d]: short pkt (%d)\n",
-			       state->unit, n0->len));
+		PPPDEBUG(LOG_DEBUG,
+		       ("mppe_decompress[%d]: short pkt (%d)\n",
+		       pcb->netif->num, n0->len));
 		return ERR_BUF;
 	}
 
 	pl = (u8_t*)n0->payload;
 	flushed = MPPE_BITS(pl) & MPPE_BIT_FLUSHED;
 	ccount = MPPE_CCOUNT(pl);
-	if (state->debug)
-		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
-		       state->unit, ccount));
+	PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: ccount %d\n",
+	       pcb->netif->num, ccount));
 
 	/* sanity checks -- terminate with extreme prejudice */
 	if (!(MPPE_BITS(pl) & MPPE_BIT_ENCRYPTED)) {
 		PPPDEBUG(LOG_DEBUG,
 		       ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
-		       state->unit));
+		       pcb->netif->num));
 		state->sanity_errors += 100;
 		sanity = 1;
 	}
 	if (!state->stateful && !flushed) {
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
-		       "stateless mode!\n", state->unit));
+		       "stateless mode!\n", pcb->netif->num));
 		state->sanity_errors += 100;
 		sanity = 1;
 	}
 	if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
-		       "flag packet!\n", state->unit));
+		       "flag packet!\n", pcb->netif->num));
 		state->sanity_errors += 100;
 		sanity = 1;
 	}
@@ -389,15 +394,16 @@ mppe_decompress(ppp_mppe_state *state, struct pbuf **pb)
  * of what should be encrypted.  At the least, we should drop this
  * packet.  (How to do this?)
  */
-void mppe_incomp(ppp_mppe_state *state, unsigned char *ibuf, int icnt)
+void mppe_incomp(ppp_pcb *pcb, ppp_mppe_state *state, unsigned char *ibuf, int icnt)
 {
+	LWIP_UNUSED_ARG(state);
 	LWIP_UNUSED_ARG(icnt);
 
-	if (state->debug &&
-	    (PPP_PROTOCOL(ibuf) >= 0x0021 && PPP_PROTOCOL(ibuf) <= 0x00fa))
+	if (PPP_PROTOCOL(ibuf) >= 0x0021 && PPP_PROTOCOL(ibuf) <= 0x00fa) {
 		PPPDEBUG(LOG_DEBUG,
 		       ("mppe_incomp[%d]: incompressible (unencrypted) data! "
-		       "(proto %04x)\n", state->unit, PPP_PROTOCOL(ibuf)));
+		       "(proto %04x)\n", pcb->netif->num, PPP_PROTOCOL(ibuf)));
+	}
 }
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
