@@ -71,11 +71,6 @@
 #define MS_CHAP2_FLAGS		48
 
 #if MPPE_SUPPORT
-#include "mppe.h"	/* MPPE_MAX_KEY_LEN */
-extern u_char mppe_send_key[MPPE_MAX_KEY_LEN];
-extern u_char mppe_recv_key[MPPE_MAX_KEY_LEN];
-extern int mppe_keys_set;
-
 #if 0 /* UNUSED */
 /* These values are the RADIUS attribute values--see RFC 2548. */
 #define MPPE_ENC_POL_ENC_ALLOWED 1

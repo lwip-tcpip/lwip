@@ -146,10 +146,6 @@ bool	ms_lanman = 0;    	/* Use LanMan password instead of NT */
 #endif
 
 #if MPPE_SUPPORT
-u_char mppe_send_key[MPPE_MAX_KEY_LEN];
-u_char mppe_recv_key[MPPE_MAX_KEY_LEN];
-int mppe_keys_set = 0;		/* Have the MPPE keys been set? */
-
 #ifdef DEBUGMPPEKEY
 /* For MPPE debug */
 /* Use "[]|}{?/><,`!2&&(" (sans quotes) for RFC 3079 MS-CHAPv2 test value */
@@ -671,10 +667,10 @@ static void mppe_set_keys(ppp_pcb *pcb, u_char *rchallenge, u_char PasswordHashH
     sha1_finish(&sha1Context, Digest);
 
     /* Same key in both directions. */
-    MEMCPY(mppe_send_key, Digest, sizeof(mppe_send_key));
-    MEMCPY(mppe_recv_key, Digest, sizeof(mppe_recv_key));
+    MEMCPY(pcb->mppe_send_key, Digest, MPPE_MAX_KEY_LEN);
+    MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
 
-    mppe_keys_set = 1;
+    pcb->mppe_keys_set = 1;
 }
 
 /*
@@ -767,7 +763,7 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
     sha1_finish(&sha1Context, Digest);
 
-    MEMCPY(mppe_send_key, Digest, sizeof(mppe_send_key));
+    MEMCPY(pcb->mppe_send_key, Digest, MPPE_MAX_KEY_LEN);
 
     /*
      * generate recv key
@@ -783,9 +779,9 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     sha1_update(&sha1Context, SHApad2, sizeof(SHApad2));
     sha1_finish(&sha1Context, Digest);
 
-    MEMCPY(mppe_recv_key, Digest, sizeof(mppe_recv_key));
+    MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
 
-    mppe_keys_set = 1;
+    pcb->mppe_keys_set = 1;
 }
 
 /*

@@ -40,7 +40,6 @@
 #include "netif/ppp/ccp.h"
 
 #if MPPE_SUPPORT
-#include "netif/ppp/chap_ms.h"	/* mppe_xxxx_key, mppe_keys_set */
 #include "netif/ppp/lcp.h"	/* lcp_close(), lcp_fsm */
 #endif /* MPPE_SUPPORT */
 
@@ -587,7 +586,7 @@ static void ccp_resetci(fsm *f) {
 	}
 
 	/* A plugin (eg radius) may not have obtained key material. */
-	if (!mppe_keys_set) {
+	if (!pcb->mppe_keys_set) {
 	    ppp_error("MPPE required, but keys are not available.  "
 		  "Possible plugin problem?");
 	    lcp_close(pcb, "MPPE required but not available");
@@ -772,7 +771,7 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
 	p[1] = opt_buf[1] = CILEN_MPPE;
 	MPPE_OPTS_TO_CI(go->mppe, &p[2]);
 	MPPE_OPTS_TO_CI(go->mppe, &opt_buf[2]);
-	MEMCPY(&opt_buf[CILEN_MPPE], mppe_recv_key, MPPE_MAX_KEY_LEN);
+	MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_recv_key, MPPE_MAX_KEY_LEN);
 	/* ccp_test() can't fail, we've already tested it! */
 	ccp_test(pcb, opt_buf, CILEN_MPPE + MPPE_MAX_KEY_LEN, 0);
 	p += CILEN_MPPE;
@@ -1204,7 +1203,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 		    int mtu;
 
 		    MEMCPY(opt_buf, p, CILEN_MPPE);
-		    MEMCPY(&opt_buf[CILEN_MPPE], mppe_send_key,
+		    MEMCPY(&opt_buf[CILEN_MPPE], pcb->mppe_send_key,
 			  MPPE_MAX_KEY_LEN);
 		    if (ccp_test(pcb, opt_buf,
 				 CILEN_MPPE + MPPE_MAX_KEY_LEN, 1) <= 0) {
@@ -1484,8 +1483,8 @@ static void ccp_up(fsm *f) {
 	ppp_notice("%s transmit compression enabled", method_name(ho, NULL));
 #if MPPE_SUPPORT
     if (go->mppe) {
-	BZERO(mppe_recv_key, MPPE_MAX_KEY_LEN);
-	BZERO(mppe_send_key, MPPE_MAX_KEY_LEN);
+	BZERO(pcb->mppe_recv_key, MPPE_MAX_KEY_LEN);
+	BZERO(pcb->mppe_send_key, MPPE_MAX_KEY_LEN);
 	continue_networks(pcb);		/* Bring up IP et al */
     }
 #endif /* MPPE_SUPPORT */

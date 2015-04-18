@@ -366,7 +366,12 @@ struct ppp_pcb_s {
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
-  unsigned int                         :2; /* 2 bits of padding to round out to 8 bits */
+#if MPPE_SUPPORT
+  unsigned int mppe_keys_set           :1; /* Have the MPPE keys been set? */
+#else /* MPPE_SUPPORT */
+  unsigned int                         :1; /* 1 bit of padding */
+#endif /* MPPE_SUPPORT */
+  unsigned int                         :1; /* 1 bit of padding to round out to 8 bits */
 
 #if PPP_AUTH_SUPPORT
   /* auth data */
@@ -416,6 +421,8 @@ struct ppp_pcb_s {
 #if MPPE_SUPPORT
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
+  u8_t mppe_send_key[MPPE_MAX_KEY_LEN];
+  u8_t mppe_recv_key[MPPE_MAX_KEY_LEN];
 #endif /* MPPE_SUPPORT */
 #endif /* CCP_SUPPORT */
 
