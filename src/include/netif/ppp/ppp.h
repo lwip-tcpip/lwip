@@ -366,12 +366,16 @@ struct ppp_pcb_s {
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
+#if CCP_SUPPORT
+  unsigned int ccp_all_rejected        :1; /* we rejected all peer's options */
+#else /* CCP_SUPPORT */
+  unsigned int                         :1; /* 1 bit of padding */
+#endif /* CCP_SUPPORT */
 #if MPPE_SUPPORT
   unsigned int mppe_keys_set           :1; /* Have the MPPE keys been set? */
 #else /* MPPE_SUPPORT */
   unsigned int                         :1; /* 1 bit of padding */
 #endif /* MPPE_SUPPORT */
-  unsigned int                         :1; /* 1 bit of padding to round out to 8 bits */
 
 #if PPP_AUTH_SUPPORT
   /* auth data */
@@ -415,9 +419,7 @@ struct ppp_pcb_s {
   ccp_options ccp_gotoptions;    /* what the peer agreed to do */
   ccp_options ccp_allowoptions;  /* what we'll agree to do */
   ccp_options ccp_hisoptions;    /* what we agreed to do */
-  int ccp_localstate;            /* Local state (mainly for handling reset-reqs and reset-acks). */
-  int all_rejected;              /* we rejected all peer's options */
-
+  u8_t ccp_localstate;           /* Local state (mainly for handling reset-reqs and reset-acks). */
 #if MPPE_SUPPORT
   ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
   ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */

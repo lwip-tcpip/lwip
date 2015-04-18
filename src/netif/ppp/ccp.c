@@ -546,7 +546,7 @@ static void ccp_resetci(fsm *f) {
 #endif /* DEFLATE_SUPPORT || BSDCOMPRESS_SUPPORT */
 
     *go = *wo;
-    pcb->all_rejected = 0;
+    pcb->ccp_all_rejected = 0;
 
 #if MPPE_SUPPORT
     if (go->mppe) {
@@ -1023,7 +1023,7 @@ static int ccp_rejci(fsm *f, u_char *p, int len) {
      * Cope with empty configure-rejects by ceasing to send
      * configure-requests.
      */
-    if (len == 0 && pcb->all_rejected)
+    if (len == 0 && pcb->ccp_all_rejected)
 	return -1;
 
 #if MPPE_SUPPORT
@@ -1374,7 +1374,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
 
     if (ret != CONFACK) {
 	if (ret == CONFREJ && *lenp == retp - p0)
-	    pcb->all_rejected = 1;
+	    pcb->ccp_all_rejected = 1;
 	else
 	    *lenp = retp - p0;
     }
