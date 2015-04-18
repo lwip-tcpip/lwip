@@ -188,11 +188,7 @@ static void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_
 			u_char authResponse[MS_AUTH_RESPONSE_LENGTH+1]);
 
 #if MPPE_SUPPORT
-static void mppe_set_keys(ppp_pcb *pcb, u_char *rchallenge,
-	u_char PasswordHashHash[MD4_SIGNATURE_SIZE]);
 static void	Set_Start_Key (ppp_pcb *pcb, u_char *, char *, int);
-static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
-	       u_char NTResponse[24], int IsServer);
 static void	SetMasterKeys (ppp_pcb *pcb, char *, int, u_char[24], int);
 #endif /* MPPE_SUPPORT */
 
@@ -713,12 +709,19 @@ static void GenerateAuthenticatorResponsePlain
 
 #if MPPE_SUPPORT
 /*
- * Set mppe_xxxx_key from the NTPasswordHashHash.
- * RFC 2548 (RADIUS support) requires us to export this function (ugh).
+ * Set mppe_xxxx_key from MS-CHAP credentials. (see RFC 3079)
  */
-static void mppe_set_keys(ppp_pcb *pcb, u_char *rchallenge, u_char PasswordHashHash[MD4_SIGNATURE_SIZE]) {
+static void Set_Start_Key(ppp_pcb *pcb, u_char *rchallenge, char *secret, int secret_len) {
+    u_char	unicodePassword[MAX_NT_PASSWORD * 2];
+    u_char	PasswordHash[MD4_SIGNATURE_SIZE];
+    u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
     sha1_context	sha1Context;
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
+
+    /* Hash (x2) the Unicode version of the secret (== password). */
+    ascii2unicode(secret, secret_len, unicodePassword);
+    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
+    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
 
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
@@ -734,32 +737,16 @@ static void mppe_set_keys(ppp_pcb *pcb, u_char *rchallenge, u_char PasswordHashH
 }
 
 /*
- * Set mppe_xxxx_key from MS-CHAP credentials. (see RFC 3079)
+ * Set mppe_xxxx_key from MS-CHAPv2 credentials. (see RFC 3079)
  */
-static void Set_Start_Key(ppp_pcb *pcb, u_char *rchallenge, char *secret, int secret_len) {
+static void SetMasterKeys(ppp_pcb *pcb, char *secret, int secret_len, u_char NTResponse[24], int IsServer) {
     u_char	unicodePassword[MAX_NT_PASSWORD * 2];
     u_char	PasswordHash[MD4_SIGNATURE_SIZE];
     u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
-
-    /* Hash (x2) the Unicode version of the secret (== password). */
-    ascii2unicode(secret, secret_len, unicodePassword);
-    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
-    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
-
-    mppe_set_keys(pcb, rchallenge, PasswordHashHash);
-}
-
-/*
- * Set mppe_xxxx_key from MS-CHAPv2 credentials. (see RFC 3079)
- *
- * This helper function used in the Winbind module, which gets the
- * NTHashHash from the server.
- */
-static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_SIZE],
-	       u_char NTResponse[24], int IsServer) {
     sha1_context	sha1Context;
     u_char	MasterKey[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
+    const u_char *s;
 
     /* "This is the MPPE Master Key" */
     static const u_char Magic1[27] =
@@ -790,7 +777,11 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
 	  0x69, 0x64, 0x65, 0x2c, 0x20, 0x69, 0x74, 0x20, 0x69, 0x73,
 	  0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x65, 0x6e, 0x64, 0x20,
 	  0x6b, 0x65, 0x79, 0x2e };
-    const u_char *s;
+
+    /* Hash (x2) the Unicode version of the secret (== password). */
+    ascii2unicode(secret, secret_len, unicodePassword);
+    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
+    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
 
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
@@ -831,20 +822,6 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     MEMCPY(pcb->mppe_recv_key, Digest, MPPE_MAX_KEY_LEN);
 
     pcb->mppe_keys_set = 1;
-}
-
-/*
- * Set mppe_xxxx_key from MS-CHAPv2 credentials. (see RFC 3079)
- */
-static void SetMasterKeys(ppp_pcb *pcb, char *secret, int secret_len, u_char NTResponse[24], int IsServer) {
-    u_char	unicodePassword[MAX_NT_PASSWORD * 2];
-    u_char	PasswordHash[MD4_SIGNATURE_SIZE];
-    u_char	PasswordHashHash[MD4_SIGNATURE_SIZE];
-    /* Hash (x2) the Unicode version of the secret (== password). */
-    ascii2unicode(secret, secret_len, unicodePassword);
-    NTPasswordHash(unicodePassword, secret_len * 2, PasswordHash);
-    NTPasswordHash(PasswordHash, sizeof(PasswordHash), PasswordHashHash);
-    mppe_set_keys2(pcb, PasswordHashHash, NTResponse, IsServer);
 }
 
 #endif /* MPPE_SUPPORT */
