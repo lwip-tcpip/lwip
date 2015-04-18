@@ -654,12 +654,12 @@ static void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_
     /*
      * "Magic" constants used in response generation, from RFC 2759.
      */
-    u_char Magic1[39] = /* "Magic server to client signing constant" */
+    static const u_char Magic1[39] = /* "Magic server to client signing constant" */
 	{ 0x4D, 0x61, 0x67, 0x69, 0x63, 0x20, 0x73, 0x65, 0x72, 0x76,
 	  0x65, 0x72, 0x20, 0x74, 0x6F, 0x20, 0x63, 0x6C, 0x69, 0x65,
 	  0x6E, 0x74, 0x20, 0x73, 0x69, 0x67, 0x6E, 0x69, 0x6E, 0x67,
 	  0x20, 0x63, 0x6F, 0x6E, 0x73, 0x74, 0x61, 0x6E, 0x74 };
-    u_char Magic2[41] = /* "Pad to make it do more than one iteration" */
+    static const u_char Magic2[41] = /* "Pad to make it do more than one iteration" */
 	{ 0x50, 0x61, 0x64, 0x20, 0x74, 0x6F, 0x20, 0x6D, 0x61, 0x6B,
 	  0x65, 0x20, 0x69, 0x74, 0x20, 0x64, 0x6F, 0x20, 0x6D, 0x6F,
 	  0x72, 0x65, 0x20, 0x74, 0x68, 0x61, 0x6E, 0x20, 0x6F, 0x6E,
@@ -674,7 +674,7 @@ static void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     sha1_update(&sha1Context, NTResponse, 24);
-    sha1_update(&sha1Context, Magic1, sizeof(Magic1));
+    sha1_update(&sha1Context, (unsigned char *)Magic1, sizeof(Magic1));
     sha1_finish(&sha1Context, Digest);
 
     ChallengeHash(PeerChallenge, rchallenge, username, Challenge);
@@ -682,7 +682,7 @@ static void GenerateAuthenticatorResponse(u_char PasswordHashHash[MD4_SIGNATURE_
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, Digest, sizeof(Digest));
     sha1_update(&sha1Context, Challenge, sizeof(Challenge));
-    sha1_update(&sha1Context, Magic2, sizeof(Magic2));
+    sha1_update(&sha1Context, (unsigned char *)Magic2, sizeof(Magic2));
     sha1_finish(&sha1Context, Digest);
 
     /* Convert to ASCII hex string. */
@@ -762,13 +762,13 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     u_char	Digest[SHA1_SIGNATURE_SIZE];	/* >= MPPE_MAX_KEY_LEN */
 
     /* "This is the MPPE Master Key" */
-    u_char Magic1[27] =
+    static const u_char Magic1[27] =
 	{ 0x54, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74,
 	  0x68, 0x65, 0x20, 0x4d, 0x50, 0x50, 0x45, 0x20, 0x4d,
 	  0x61, 0x73, 0x74, 0x65, 0x72, 0x20, 0x4b, 0x65, 0x79 };
     /* "On the client side, this is the send key; "
        "on the server side, it is the receive key." */
-    u_char Magic2[84] =
+    static const u_char Magic2[84] =
 	{ 0x4f, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x63, 0x6c, 0x69,
 	  0x65, 0x6e, 0x74, 0x20, 0x73, 0x69, 0x64, 0x65, 0x2c, 0x20,
 	  0x74, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74, 0x68,
@@ -780,7 +780,7 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
 	  0x6b, 0x65, 0x79, 0x2e };
     /* "On the client side, this is the receive key; "
        "on the server side, it is the send key." */
-    u_char Magic3[84] =
+    static const u_char Magic3[84] =
 	{ 0x4f, 0x6e, 0x20, 0x74, 0x68, 0x65, 0x20, 0x63, 0x6c, 0x69,
 	  0x65, 0x6e, 0x74, 0x20, 0x73, 0x69, 0x64, 0x65, 0x2c, 0x20,
 	  0x74, 0x68, 0x69, 0x73, 0x20, 0x69, 0x73, 0x20, 0x74, 0x68,
@@ -790,12 +790,12 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
 	  0x69, 0x64, 0x65, 0x2c, 0x20, 0x69, 0x74, 0x20, 0x69, 0x73,
 	  0x20, 0x74, 0x68, 0x65, 0x20, 0x73, 0x65, 0x6e, 0x64, 0x20,
 	  0x6b, 0x65, 0x79, 0x2e };
-    u_char *s;
+    const u_char *s;
 
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, PasswordHashHash, MD4_SIGNATURE_SIZE);
     sha1_update(&sha1Context, NTResponse, 24);
-    sha1_update(&sha1Context, Magic1, sizeof(Magic1));
+    sha1_update(&sha1Context, (unsigned char *)Magic1, sizeof(Magic1));
     sha1_finish(&sha1Context, MasterKey);
 
     /*
@@ -808,7 +808,7 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, MasterKey, 16);
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
-    sha1_update(&sha1Context, s, 84);
+    sha1_update(&sha1Context, (unsigned char *)s, 84);
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
@@ -824,7 +824,7 @@ static void mppe_set_keys2(ppp_pcb *pcb, u_char PasswordHashHash[MD4_SIGNATURE_S
     sha1_starts(&sha1Context);
     sha1_update(&sha1Context, MasterKey, 16);
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
-    sha1_update(&sha1Context, s, 84);
+    sha1_update(&sha1Context, (unsigned char *)s, 84);
     sha1_update(&sha1Context, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
     sha1_finish(&sha1Context, Digest);
 
