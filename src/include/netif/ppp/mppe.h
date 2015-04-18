@@ -135,7 +135,7 @@
 /*
  * State for an MPPE (de)compressor.
  */
-struct ppp_mppe_state {
+typedef struct ppp_mppe_state {
 	arc4_context arc4;
 	u8_t master_key[MPPE_MAX_KEY_LEN];
 	u8_t session_key[MPPE_MAX_KEY_LEN];
@@ -151,15 +151,15 @@ struct ppp_mppe_state {
 	unsigned int           :5;  /* 5 bit of padding to round out to 8 bits */
 	u16_t sanity_errors;        /* take down LCP if too many */
 	u8_t unit;
-};
+} ppp_mppe_state;
 
-int mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen,
+int mppe_init(ppp_mppe_state *state, unsigned char *options, int optlen,
 	u8_t unit, u8_t debug, const char *debugstr);
-void mppe_comp_reset(struct ppp_mppe_state *state);
-err_t mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
-void mppe_decomp_reset(struct ppp_mppe_state *state);
-err_t mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb);
-void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt);
+void mppe_comp_reset(ppp_mppe_state *state);
+err_t mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
+void mppe_decomp_reset(ppp_mppe_state *state);
+err_t mppe_decompress(ppp_mppe_state *state, struct pbuf **pb);
+void mppe_incomp(ppp_mppe_state *state, unsigned char *ibuf, int icnt);
 
 #endif /* MPPE_H */
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */

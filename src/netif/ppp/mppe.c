@@ -50,7 +50,7 @@
 #define SHA1_SIGNATURE_SIZE 20
 #define SHA1_PAD_SIZE 40
 
-/* struct ppp_mppe_state.bits definitions */
+/* ppp_mppe_state.bits definitions */
 #define MPPE_BIT_A	0x80	/* Encryption table were (re)inititalized */
 #define MPPE_BIT_B	0x40	/* MPPC only (not implemented) */
 #define MPPE_BIT_C	0x20	/* MPPC only (not implemented) */
@@ -83,7 +83,7 @@ static const u8_t sha1_pad2[SHA1_PAD_SIZE] = {
  * Perform the MPPE rekey algorithm, from RFC 3078, sec. 7.3.
  * Well, not what's written there, but rather what they meant.
  */
-static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
+static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 {
 	sha1_context sha1;
 	u8_t sha1_digest[SHA1_SIGNATURE_SIZE];
@@ -117,7 +117,7 @@ static void mppe_rekey(struct ppp_mppe_state * state, int initial_key)
  * Initialize (de)compressor state.
  */
 int
-mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, u8_t unit, u8_t debug,
+mppe_init(ppp_mppe_state *state, unsigned char *options, int optlen, u8_t unit, u8_t debug,
 	  const char *debugstr)
 {
 	unsigned char mppe_opts;
@@ -193,7 +193,7 @@ mppe_init(struct ppp_mppe_state *state, unsigned char *options, int optlen, u8_t
  * know how many times we've rekeyed.  (If we rekey and THEN get another
  * CCP Reset-Request, we must rekey again.)
  */
-void mppe_comp_reset(struct ppp_mppe_state *state)
+void mppe_comp_reset(ppp_mppe_state *state)
 {
 	state->bits |= MPPE_BIT_FLUSHED;
 }
@@ -204,7 +204,7 @@ void mppe_comp_reset(struct ppp_mppe_state *state)
  * MPPE_OVHD + 2 bytes larger than the input.
  */
 err_t
-mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
+mppe_compress(ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 {
 	struct pbuf *np, *n;
 	u8_t *pl;
@@ -260,7 +260,7 @@ mppe_compress(struct ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 /*
  * We received a CCP Reset-Ack.  Just ignore it.
  */
-void mppe_decomp_reset(struct ppp_mppe_state *state)
+void mppe_decomp_reset(ppp_mppe_state *state)
 {
 	LWIP_UNUSED_ARG(state);
 	return;
@@ -270,7 +270,7 @@ void mppe_decomp_reset(struct ppp_mppe_state *state)
  * Decompress (decrypt) an MPPE packet.
  */
 err_t
-mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb)
+mppe_decompress(ppp_mppe_state *state, struct pbuf **pb)
 {
 	struct pbuf *n0 = *pb, *n;
 	u8_t *pl;
@@ -406,7 +406,7 @@ mppe_decompress(struct ppp_mppe_state *state, struct pbuf **pb)
  * of what should be encrypted.  At the least, we should drop this
  * packet.  (How to do this?)
  */
-void mppe_incomp(struct ppp_mppe_state *state, unsigned char *ibuf, int icnt)
+void mppe_incomp(ppp_mppe_state *state, unsigned char *ibuf, int icnt)
 {
 	LWIP_UNUSED_ARG(icnt);
 
