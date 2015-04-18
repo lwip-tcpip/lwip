@@ -258,7 +258,7 @@ static void chap_generate_challenge(ppp_pcb *pcb) {
 	p = pcb->chap_server.challenge;
 	MAKEHEADER(p, PPP_CHAP);
 	p += CHAP_HDRLEN;
-	pcb->chap_server.digest->generate_challenge(p);
+	pcb->chap_server.digest->generate_challenge(pcb, p);
 	clen = *p;
 	nlen = strlen(pcb->chap_server.name);
 	memcpy(p + 1 + clen, pcb->chap_server.name, nlen);
@@ -418,7 +418,7 @@ static int chap_verify_response(ppp_pcb *pcb, const char *name, const char *ourn
 		ppp_error("No CHAP secret found for authenticating %q", name);
 		return 0;
 	}
-	ok = digest->verify_response(id, name, secret, secret_len, challenge,
+	ok = digest->verify_response(pcb, id, name, secret, secret_len, challenge,
 				     response, message, message_space);
 	memset(secret, 0, sizeof(secret));
 
@@ -472,7 +472,7 @@ static void chap_respond(ppp_pcb *pcb, int id,
 	MAKEHEADER(outp, PPP_CHAP);
 	outp += CHAP_HDRLEN;
 
-	pcb->chap_client.digest->make_response(outp, id, pcb->chap_client.name, pkt,
+	pcb->chap_client.digest->make_response(pcb, outp, id, pcb->chap_client.name, pkt,
 				  secret, secret_len, pcb->chap_client.priv);
 	memset(secret, 0, secret_len);
 
@@ -504,13 +504,13 @@ static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 	if (code == CHAP_SUCCESS) {
 		/* used for MS-CHAP v2 mutual auth, yuck */
 		if (pcb->chap_client.digest->check_success != NULL) {
-			if (!(*pcb->chap_client.digest->check_success)(pkt, len, pcb->chap_client.priv))
+			if (!(*pcb->chap_client.digest->check_success)(pcb, pkt, len, pcb->chap_client.priv))
 				code = CHAP_FAILURE;
 		} else
 			msg = "CHAP authentication succeeded";
 	} else {
 		if (pcb->chap_client.digest->handle_failure != NULL)
-			(*pcb->chap_client.digest->handle_failure)(pkt, len);
+			(*pcb->chap_client.digest->handle_failure)(pcb, pkt, len);
 		else
 			msg = "CHAP authentication failed";
 	}

@@ -132,17 +132,17 @@ struct chap_digest_type {
 	 * Note: challenge and response arguments below are formatted as
 	 * a length byte followed by the actual challenge/response data.
 	 */
-	void (*generate_challenge)(unsigned char *challenge);
-	int (*verify_response)(int id, const char *name,
+	void (*generate_challenge)(ppp_pcb *pcb, unsigned char *challenge);
+	int (*verify_response)(ppp_pcb *pcb, int id, const char *name,
 		const unsigned char *secret, int secret_len,
 		const unsigned char *challenge, const unsigned char *response,
 		char *message, int message_space);
 #endif /* PPP_SERVER */
-	void (*make_response)(unsigned char *response, int id, const char *our_name,
+	void (*make_response)(ppp_pcb *pcb, unsigned char *response, int id, const char *our_name,
 		const unsigned char *challenge, const char *secret, int secret_len,
 		const unsigned char *priv);
-	int (*check_success)(unsigned char *pkt, int len, unsigned char *priv);
-	void (*handle_failure)(unsigned char *pkt, int len);
+	int (*check_success)(ppp_pcb *pcb, unsigned char *pkt, int len, unsigned char *priv);
+	void (*handle_failure)(ppp_pcb *pcb, unsigned char *pkt, int len);
 };
 
 /*
