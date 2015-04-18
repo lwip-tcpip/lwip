@@ -167,6 +167,9 @@ typedef unsigned char  u_char;
 #if CCP_SUPPORT
 #include "ccp.h"
 #endif /* CCP_SUPPORT */
+#if MPPE_SUPPORT
+#include "mppe.h"
+#endif /* MPPE_SUPPORT */
 #if PPP_IPV4_SUPPORT
 #include "ipcp.h"
 #endif /* PPP_IPV4_SUPPORT */
@@ -409,6 +412,11 @@ struct ppp_pcb_s {
   ccp_options ccp_hisoptions;    /* what we agreed to do */
   int ccp_localstate;            /* Local state (mainly for handling reset-reqs and reset-acks). */
   int all_rejected;              /* we rejected all peer's options */
+
+#if MPPE_SUPPORT
+  ppp_mppe_state mppe_comp;      /* MPPE "compressor" structure */
+  ppp_mppe_state mppe_decomp;    /* MPPE "decompressor" structure */
+#endif /* MPPE_SUPPORT */
 #endif /* CCP_SUPPORT */
 
 #if PPP_IPV4_SUPPORT
