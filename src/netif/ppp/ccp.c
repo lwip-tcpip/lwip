@@ -420,7 +420,7 @@ static void ccp_open(ppp_pcb *pcb) {
     ccp_options *go = &pcb->ccp_gotoptions;
 
     if (f->state != PPP_FSM_OPENED)
-	ccp_flags_set(pcb, 1, 0);
+	ccp_set(pcb, 1, 0, 0, 0);
 
     /*
      * Find out which compressors the kernel supports before
@@ -438,7 +438,7 @@ static void ccp_open(ppp_pcb *pcb) {
  */
 static void ccp_close(ppp_pcb *pcb, const char *reason) {
     fsm *f = &pcb->ccp_fsm;
-    ccp_flags_set(pcb, 0, 0);
+    ccp_set(pcb, 0, 0, 0, 0);
     fsm_close(f, reason);
 }
 
@@ -530,7 +530,7 @@ static void ccp_protrej(ppp_pcb *pcb) {
     ccp_options *go = &pcb->ccp_gotoptions;
 #endif /* MPPE_SUPPORT */
 
-    ccp_flags_set(pcb, 0, 0);
+    ccp_set(pcb, 0, 0, 0, 0);
     fsm_lowerdown(f);
 
 #if MPPE_SUPPORT
@@ -820,7 +820,7 @@ static void ccp_addci(fsm *f, u_char *p, int *lenp) {
     }
 #endif /* PREDICTOR_SUPPORT */
 
-    go->method = (p > p0)? p0[0]: -1;
+    go->method = (p > p0)? p0[0]: 0;
 
     *lenp = p - p0;
 }
@@ -1120,7 +1120,7 @@ static int ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak) {
     len = *lenp;
 
     memset(ho, 0, sizeof(ccp_options));
-    ho->method = (len > 0)? p[0]: -1;
+    ho->method = (len > 0)? p[0]: 0;
 
     while (len > 0) {
 	newret = CONFACK;
@@ -1459,7 +1459,7 @@ static void ccp_up(fsm *f) {
     ccp_options *ho = &pcb->ccp_hisoptions;
     char method1[64];
 
-    ccp_flags_set(pcb, 1, 1);
+    ccp_set(pcb, 1, 1, go->method, ho->method);
     if (ccp_anycompress(go)) {
 	if (ccp_anycompress(ho)) {
 	    if (go->method == ho->method) {
@@ -1492,7 +1492,7 @@ static void ccp_down(fsm *f) {
     if (pcb->ccp_localstate & RACK_PENDING)
 	UNTIMEOUT(ccp_rack_timeout, f);
     pcb->ccp_localstate = 0;
-    ccp_flags_set(pcb, 1, 0);
+    ccp_set(pcb, 1, 0, 0, 0);
 #if MPPE_SUPPORT
     if (go->mppe) {
 	go->mppe = 0;

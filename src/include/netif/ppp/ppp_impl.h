@@ -475,7 +475,7 @@ int netif_get_mtu(ppp_pcb *pcb);
 
 #if CCP_SUPPORT
 int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit);
-void ccp_flags_set(ppp_pcb *pcb, int isopen, int isup);
+void ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method);
 int ccp_fatal_error(ppp_pcb *pcb);
 #endif /* CCP_SUPPORT */
 

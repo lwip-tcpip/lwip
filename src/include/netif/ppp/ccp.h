@@ -152,7 +152,7 @@ typedef struct ccp_options {
 #if DEFLATE_SUPPORT
     u_short deflate_size;	/* lg(window size) for Deflate */
 #endif /* DEFLATE_SUPPORT */
-    short method;		/* code for chosen compression method */
+    u8_t method;		/* code for chosen compression method */
 } ccp_options;
 
 extern const struct protent ccp_protent;

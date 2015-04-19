@@ -114,7 +114,7 @@
 #endif /* EAP_SUPPORT */
 #if CCP_SUPPORT
 #include "netif/ppp/ccp.h"
-#endif /* EAP_SUPPORT */
+#endif /* CCP_SUPPORT */
 #if ECP_SUPPORT
 #include "netif/ppp/ecp.h"
 #endif /* EAP_SUPPORT */
@@ -1153,14 +1153,16 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
 }
 
 /*
- * ccp_flags_set - inform about the current state of CCP.
+ * ccp_set - inform about the current state of CCP.
  */
 void
-ccp_flags_set(ppp_pcb *pcb, int isopen, int isup)
+ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
 {
   LWIP_UNUSED_ARG(pcb);
   LWIP_UNUSED_ARG(isopen);
   LWIP_UNUSED_ARG(isup);
+  LWIP_UNUSED_ARG(receive_method);
+  LWIP_UNUSED_ARG(transmit_method);
 }
 
 /*
