@@ -1158,11 +1158,12 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
 void
 ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method)
 {
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(isopen);
-  LWIP_UNUSED_ARG(isup);
-  LWIP_UNUSED_ARG(receive_method);
-  LWIP_UNUSED_ARG(transmit_method);
+  pcb->ccp_is_open = isopen;
+  pcb->ccp_is_up = isup;
+  pcb->ccp_receive_method = receive_method;
+  pcb->ccp_transmit_method = transmit_method;
+  PPPDEBUG(LOG_DEBUG, ("ccp_set[%d]: is_open=%d, is_up=%d, receive_method=%u, transmit_method=%u\n",
+           pcb->netif->num, isopen, isup, receive_method, transmit_method));
 }
 
 /*
