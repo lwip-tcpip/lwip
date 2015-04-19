@@ -389,6 +389,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	return ERR_OK;
 }
 
+#if 0 /* unused */
 /*
  * Incompressible data has arrived (this should never happen!).
  * We should probably drop the link if the protocol is in the range
@@ -406,5 +407,6 @@ void mppe_incomp(ppp_pcb *pcb, ppp_mppe_state *state, unsigned char *ibuf, int i
 		       "(proto %04x)\n", pcb->netif->num, PPP_PROTOCOL(ibuf)));
 	}
 }
+#endif /* unused */
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */

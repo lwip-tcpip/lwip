@@ -173,7 +173,9 @@ void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
 err_t mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t protocol);
 void mppe_decomp_reset(ppp_pcb *pcb, ppp_mppe_state *state);
 err_t mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb);
+#if 0 /* unused */
 void mppe_incomp(ppp_pcb *pcb, ppp_mppe_state *state, unsigned char *ibuf, int icnt);
+#endif /* unused */
 
 #endif /* MPPE_H */
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
