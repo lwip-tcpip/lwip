@@ -2054,24 +2054,28 @@
 #endif
 
 /**
- * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
- */
-#ifndef CBCP_SUPPORT
-#define CBCP_SUPPORT                    0
-#endif
-
-/**
- * CCP_SUPPORT==1: Support CCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * CCP_SUPPORT==1: Support CCP.
  */
 #ifndef CCP_SUPPORT
 #define CCP_SUPPORT                     0
 #endif
 
 /**
- * MPPE_SUPPORT==1: Support MPPE. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ * MPPE_SUPPORT==1: Support MPPE.
  */
 #ifndef MPPE_SUPPORT
-#define MPPE_SUPPORT                     0
+#define MPPE_SUPPORT                    0
+#endif
+#if MPPE_SUPPORT
+#undef CCP_SUPPORT
+#define CCP_SUPPORT                     1   /* MPPE requires CCP support */
+#endif /* MPPE_SUPPORT */
+
+/**
+ * CBCP_SUPPORT==1: Support CBCP. CURRENTLY NOT SUPPORTED! DO NOT SET!
+ */
+#ifndef CBCP_SUPPORT
+#define CBCP_SUPPORT                    0
 #endif
 
 /**
