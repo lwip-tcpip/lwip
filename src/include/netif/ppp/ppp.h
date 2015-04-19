@@ -370,6 +370,11 @@ struct ppp_pcb_s {
   unsigned int                         :2; /* 2 bit of padding */
 #endif /* PPP_IPV6_SUPPORT */
   unsigned int lcp_echo_timer_running  :1; /* set if a timer is running */
+#if VJ_SUPPORT
+  unsigned int vj_enabled              :1; /* Flag indicating VJ compression enabled. */
+#else /* VJ_SUPPORT */
+  unsigned int                         :1; /* 1 bit of padding */
+#endif /* VJ_SUPPORT */
 #if CCP_SUPPORT
   unsigned int ccp_all_rejected        :1; /* we rejected all peer's options */
   unsigned int ccp_is_open             :1; /* true when CCP is open (currently negotiating) */
@@ -382,7 +387,7 @@ struct ppp_pcb_s {
 #else /* MPPE_SUPPORT */
   unsigned int                         :1; /* 1 bit of padding */
 #endif /* MPPE_SUPPORT */
-  unsigned int                         :6; /* 6 bits of padding to round out to 16 bits */
+  unsigned int                         :5; /* 5 bits of padding to round out to 16 bits */
 
 #if PPP_AUTH_SUPPORT
   /* auth data */
@@ -419,6 +424,10 @@ struct ppp_pcb_s {
 
   u8_t num_np_open;              /* Number of network protocols which we have opened. */
   u8_t num_np_up;                /* Number of network protocols which have come up. */
+
+#if VJ_SUPPORT
+  struct vjcompress vj_comp;     /* Van Jacobson compression header. */
+#endif /* VJ_SUPPORT */
 
 #if CCP_SUPPORT
   fsm ccp_fsm;                   /* CCP fsm structure */

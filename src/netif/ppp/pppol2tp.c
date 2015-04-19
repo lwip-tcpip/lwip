@@ -108,10 +108,6 @@ static const struct link_callbacks pppol2tp_callbacks = {
   pppol2tp_netif_output,
   NULL,
   NULL,
-#if VJ_SUPPORT
-  NULL,
-#endif /* VJ_SUPPORT */
-  NULL,
   NULL
 };
 

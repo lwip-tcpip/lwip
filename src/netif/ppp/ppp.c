@@ -473,7 +473,6 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
     goto err_rte_drop;
   }
 
-#if CCP_SUPPORT
 #if MPPE_SUPPORT
   /* If MPPE is required, refuse any IP packet until we are able to crypt them. */
   if (pcb->settings.require_mppe &&
@@ -483,6 +482,34 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
   }
 #endif /* MPPE_SUPPORT */
 
+#if VJ_SUPPORT
+  /*
+   * Attempt Van Jacobson header compression if VJ is configured and
+   * this is an IP packet.
+   */
+  if (protocol == PPP_IP && pcb->vj_enabled) {
+    switch (vj_compress_tcp(&pcb->vj_comp, pb)) {
+      case TYPE_IP:
+        /* No change...
+           protocol = PPP_IP_PROTOCOL; */
+        break;
+      case TYPE_COMPRESSED_TCP:
+        protocol = PPP_VJC_COMP;
+        break;
+      case TYPE_UNCOMPRESSED_TCP:
+        protocol = PPP_VJC_UNCOMP;
+        break;
+      default:
+        PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: bad IP packet\n", pcb->netif->num));
+        LINK_STATS_INC(link.proterr);
+        LINK_STATS_INC(link.drop);
+        snmp_inc_ifoutdiscards(pcb->netif);
+        return ERR_VAL;
+    }
+  }
+#endif /* VJ_SUPPORT */
+
+#if CCP_SUPPORT
   if (pcb->ccp_is_up) {
 #if MPPE_SUPPORT
     err_t err;
@@ -643,6 +670,10 @@ void ppp_clear(ppp_pcb *pcb) {
       (*protp->init)(pcb);
   }
 
+#if VJ_SUPPORT
+  vj_compress_init(&pcb->vj_comp);
+#endif /* VJ_SUPPORT */
+
   new_phase(pcb, PPP_PHASE_INITIALIZE);
 }
 
@@ -781,14 +812,39 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       return;
 #endif /* PPP_IPV6_SUPPORT */
 
+#if VJ_SUPPORT
+    case PPP_VJC_COMP:      /* VJ compressed TCP */
+      /*
+       * Clip off the VJ header and prepend the rebuilt TCP/IP header and
+       * pass the result to IP.
+       */
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_comp in pbuf len=%d\n", pcb->netif->num, pb->len));
+      if (pcb->vj_enabled && vj_uncompress_tcp(&pb, &pcb->vj_comp) >= 0) {
+        ip4_input(pb, pcb->netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ compressed\n", pcb->netif->num));
+      break;
+
+    case PPP_VJC_UNCOMP:    /* VJ uncompressed TCP */
+      /*
+       * Process the TCP/IP header for VJ header compression and then pass
+       * the packet to IP.
+       */
+      PPPDEBUG(LOG_INFO, ("ppp_input[%d]: vj_un in pbuf len=%d\n", pcb->netif->num, pb->len));
+      if (pcb->vj_enabled && vj_uncompress_uncomp(pb, &pcb->vj_comp) >= 0) {
+        ip4_input(pb, pcb->netif);
+        return;
+      }
+      /* Something's wrong so drop it. */
+      PPPDEBUG(LOG_WARNING, ("ppp_input[%d]: Dropping VJ uncompressed\n", pcb->netif->num));
+      break;
+#endif /* VJ_SUPPORT */
+
     default: {
       int i;
       const struct protent *protp;
-
-      /* If callback set, try to pass the input packet to low level protocol */
-      if (pcb->link_cb->netif_input && pcb->link_cb->netif_input(pcb, pcb->link_ctx_cb, pb, protocol) == ERR_OK) {
-        return;
-      }
 
       /*
        * Upcall the proper protocol input routine.
@@ -1038,9 +1094,11 @@ int cdns(ppp_pcb *pcb, u32_t ns1, u32_t ns2) {
  * sifvjcomp - config tcp header compression
  */
 int sifvjcomp(ppp_pcb *pcb, int vjcomp, int cidcomp, int maxcid) {
-  if (pcb->link_cb->vj_config) {
-    pcb->link_cb->vj_config(pcb, pcb->link_ctx_cb, vjcomp, cidcomp, maxcid);
-  }
+  pcb->vj_enabled = vjcomp;
+  pcb->vj_comp.compressSlot = cidcomp;
+  pcb->vj_comp.maxSlotIndex = maxcid;
+  PPPDEBUG(LOG_INFO, ("sifvjcomp[%d]: VJ compress enable=%d slot=%d max slot=%d\n",
+            pcb->netif->num, vjcomp, cidcomp, maxcid));
   return 0;
 }
 #endif /* VJ_SUPPORT */
