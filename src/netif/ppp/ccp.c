@@ -402,6 +402,14 @@ static void ccp_init(ppp_pcb *pcb) {
 #if PREDICTOR_SUPPORT
     ao->predictor_1 = 1;
 #endif /* PREDICTOR_SUPPORT */
+
+#if MPPE_SUPPORT
+    if (pcb->settings.require_mppe) {
+	wo->mppe = ao->mppe =
+		    (pcb->settings.refuse_mppe_40 ? 0 : MPPE_OPT_40)
+		  | (pcb->settings.refuse_mppe_128 ? 0 : MPPE_OPT_128);
+    }
+#endif
 }
 
 /*

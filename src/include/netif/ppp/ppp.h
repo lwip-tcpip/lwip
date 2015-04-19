@@ -247,12 +247,16 @@ typedef struct ppp_settings_s {
   unsigned int lcp_echo_adaptive    :1;      /* request echo only if the link was idle */
 #else
   unsigned int                      :1;      /* 1 bit of padding */
-#endif
+#endif /* PPP_LCP_ADAPTIVE */
 #if MPPE_SUPPORT
+  unsigned int require_mppe         :1;      /* Require MPPE (Microsoft Point to Point Encryption) */
+  unsigned int refuse_mppe_40       :1;      /* Allow MPPE 40-bit mode? */
+  unsigned int refuse_mppe_128      :1;      /* Allow MPPE 128-bit mode? */
   unsigned int refuse_mppe_stateful :1;      /* Allow MPPE stateful mode? */
 #else /* MPPE_SUPPORT */
-  unsigned int                      :1;      /* 1 bit of padding */
+  unsigned int                      :4;      /* 2 bit of padding */
 #endif /* MPPE_SUPPORT */
+  unsigned int                      :5;      /* 7 bit of padding to round out to 24 bits */
 
   u16_t  listen_time;                 /* time to listen first (ms), waiting for peer to send LCP packet */
 
