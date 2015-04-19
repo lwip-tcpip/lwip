@@ -277,10 +277,10 @@ extern int       maxoctets_timeout;  /* Timeout for check of octets limit */
 #define PPP_OCTETS_DIRECTION_MAXSESSION 4
 #endif
 
-/* Data input is only used by CCP and ECP, which are not supported at this time,
- * remove this entry from struct protent to save some flash
+/* Data input may be used by CCP and ECP, remove this entry
+ * from struct protent to save some flash
  */
-#define PPP_DATAINPUT (CCP_SUPPORT || ECP_SUPPORT)
+#define PPP_DATAINPUT 0
 
 /*
  * The following struct gives the addresses of procedures to call
@@ -474,9 +474,15 @@ void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);
 
 #if CCP_SUPPORT
+#if 0 /* unused */
 int ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit);
+#endif /* unused */
 void ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit_method);
+void ccp_reset_comp(ppp_pcb *pcb);
+void ccp_reset_decomp(ppp_pcb *pcb);
+#if 0 /* unused */
 int ccp_fatal_error(ppp_pcb *pcb);
+#endif /* unused */
 #endif /* CCP_SUPPORT */
 
 #if PPP_IDLETIMELIMIT

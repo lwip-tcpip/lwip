@@ -1216,6 +1216,7 @@ int netif_get_mtu(ppp_pcb *pcb) {
 }
 
 #if CCP_SUPPORT
+#if 0 /* unused */
 /*
  * ccp_test - whether a given compression method is acceptable for use.
  */
@@ -1228,6 +1229,7 @@ ccp_test(ppp_pcb *pcb, u_char *opt_ptr, int opt_len, int for_transmit)
   LWIP_UNUSED_ARG(for_transmit);
   return -1;
 }
+#endif /* unused */
 
 /*
  * ccp_set - inform about the current state of CCP.
@@ -1243,6 +1245,35 @@ ccp_set(ppp_pcb *pcb, u8_t isopen, u8_t isup, u8_t receive_method, u8_t transmit
            pcb->netif->num, isopen, isup, receive_method, transmit_method));
 }
 
+void
+ccp_reset_comp(ppp_pcb *pcb)
+{
+  switch (pcb->ccp_transmit_method) {
+#if MPPE_SUPPORT
+  case CI_MPPE:
+    mppe_comp_reset(pcb, &pcb->mppe_comp);
+    break;
+#endif /* MPPE_SUPPORT */
+  default:
+    break;
+  }
+}
+
+void
+ccp_reset_decomp(ppp_pcb *pcb)
+{
+  switch (pcb->ccp_receive_method) {
+#if MPPE_SUPPORT
+  case CI_MPPE:
+    mppe_decomp_reset(pcb, &pcb->mppe_decomp);
+    break;
+#endif /* MPPE_SUPPORT */
+  default:
+    break;
+  }
+}
+
+#if 0 /* unused */
 /*
  * ccp_fatal_error - returns 1 if decompression was disabled as a
  * result of an error detected after decompression of a packet,
@@ -1254,6 +1285,7 @@ ccp_fatal_error(ppp_pcb *pcb)
   LWIP_UNUSED_ARG(pcb);
   return 1;
 }
+#endif /* unused */
 #endif /* CCP_SUPPORT */
 
 #if PPP_IDLETIMELIMIT

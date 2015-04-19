@@ -175,7 +175,9 @@ static void ccp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
 static int ccp_printpkt(u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
+#if PPP_DATAINPUT
 static void ccp_datainput(ppp_pcb *pcb, u_char *pkt, int len);
+#endif /* PPP_DATAINPUT */
 
 const struct protent ccp_protent = {
     PPP_CCP,
@@ -502,6 +504,7 @@ static int ccp_extcode(fsm *f, int code, int id, u_char *p, int len) {
     case CCP_RESETREQ:
 	if (f->state != PPP_FSM_OPENED)
 	    break;
+	ccp_reset_comp(pcb);
 	/* send a reset-ack, which the transmitter will see and
 	   reset its compression state. */
 	fsm_sdata(f, CCP_RESETACK, id, NULL, 0);
@@ -511,6 +514,7 @@ static int ccp_extcode(fsm *f, int code, int id, u_char *p, int len) {
 	if ((pcb->ccp_localstate & RACK_PENDING) && id == f->reqid) {
 	    pcb->ccp_localstate &= ~(RACK_PENDING | RREQ_REPEAT);
 	    UNTIMEOUT(ccp_rack_timeout, f);
+	    ccp_reset_decomp(pcb);
 	}
 	break;
 
@@ -1642,6 +1646,7 @@ static int ccp_printpkt(u_char *p, int plen, void (*printer) (void *, const char
 }
 #endif /* PRINTPKT_SUPPORT */
 
+#if PPP_DATAINPUT
 /*
  * We have received a packet that the decompressor failed to
  * decompress.  Here we would expect to issue a reset-request, but
@@ -1694,6 +1699,7 @@ static void ccp_datainput(ppp_pcb *pcb, u_char *pkt, int len) {
 	}
     }
 }
+#endif /* PPP_DATAINPUT */
 
 /*
  * Timeout waiting for reset-ack.
