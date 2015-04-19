@@ -829,6 +829,9 @@ static void SetMasterKeys(ppp_pcb *pcb, char *secret, int secret_len, u_char NTR
 
 static void ChapMS(ppp_pcb *pcb, u_char *rchallenge, char *secret, int secret_len,
        unsigned char *response) {
+#if !MPPE_SUPPORT
+    LWIP_UNUSED_ARG(pcb);
+#endif /* !MPPE_SUPPORT */
     BZERO(response, MS_CHAP_RESPONSE_LEN);
 
     ChapMS_NT(rchallenge, secret, secret_len, &response[MS_CHAP_NTRESP]);
@@ -866,6 +869,9 @@ static void ChapMS2(ppp_pcb *pcb, u_char *rchallenge, u_char *PeerChallenge,
     u_char *p = &response[MS_CHAP2_PEER_CHALLENGE];
     int i;
     LWIP_UNUSED_ARG(authenticator);
+#if !MPPE_SUPPORT
+    LWIP_UNUSED_ARG(pcb);
+#endif /* !MPPE_SUPPORT */
 
     BZERO(response, MS_CHAP2_RESPONSE_LEN);
 
