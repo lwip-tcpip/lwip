@@ -131,6 +131,7 @@ mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options)
 	else {
 		PPPDEBUG(LOG_DEBUG, ("%s[%d]: unknown key length\n", debugstr,
 			pcb->netif->num));
+		lcp_close(pcb, "MPPE required but peer negotiation failed");
 		return;
 	}
 	if (options & MPPE_OPT_STATEFUL)
@@ -312,7 +313,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 			 * We don't want to do this for a single or just a few
 			 * instances since it could just be due to packet corruption.
 			 */
-			/* FIXME: call lcp_close() here */
+			lcp_close(pcb, "Too many MPPE errors");
 			return ERR_BUF;
 	}
 
