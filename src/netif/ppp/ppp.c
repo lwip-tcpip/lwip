@@ -881,7 +881,7 @@ struct pbuf *ppp_singlebuf(struct pbuf *p) {
  *  RETURN: >= 0 Number of characters written
  *           -1 Failed to write to device
  */
-int ppp_write(ppp_pcb *pcb, struct pbuf *p) {
+err_t ppp_write(ppp_pcb *pcb, struct pbuf *p) {
 #if PRINTPKT_SUPPORT
   ppp_dump_packet("sent", (unsigned char *)p->payload+2, p->len-2);
 #endif /* PRINTPKT_SUPPORT */

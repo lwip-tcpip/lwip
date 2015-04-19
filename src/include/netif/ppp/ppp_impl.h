@@ -432,7 +432,7 @@ struct pbuf *ppp_singlebuf(struct pbuf *p);
  */
 
 /* function called by all PPP subsystems to send packets */
-int ppp_write(ppp_pcb *pcb, struct pbuf *p);
+err_t ppp_write(ppp_pcb *pcb, struct pbuf *p);
 
 /* functions called by auth.c link_terminated() */
 void ppp_link_terminated(ppp_pcb *pcb);
