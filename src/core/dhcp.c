@@ -753,7 +753,7 @@ dhcp_inform(struct netif *netif)
   LWIP_ERROR("netif != NULL", (netif != NULL), return;);
 
   memset(&dhcp, 0, sizeof(struct dhcp));
-  dhcp_set_state(&dhcp, DHCP_INFORM);
+  dhcp_set_state(&dhcp, DHCP_INFORMING);
 
   if ((netif->dhcp != NULL) && (netif->dhcp->pcb != NULL)) {
     /* re-use existing pcb */
