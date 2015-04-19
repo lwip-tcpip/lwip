@@ -115,6 +115,9 @@
 #if CCP_SUPPORT
 #include "netif/ppp/ccp.h"
 #endif /* CCP_SUPPORT */
+#if MPPE_SUPPORT
+#include "netif/ppp/mppe.h"
+#endif /* MPPE_SUPPORT */
 #if ECP_SUPPORT
 #include "netif/ppp/ecp.h"
 #endif /* EAP_SUPPORT */
@@ -434,6 +437,9 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr) {
 #if PPP_IPV4_SUPPORT
   ppp_pcb *pcb = (ppp_pcb*)netif->state;
+#if CCP_SUPPORT && MPPE_SUPPORT
+  err_t err;
+#endif /* CCP_SUPPORT && MPPE_SUPPORT */
   LWIP_UNUSED_ARG(ipaddr);
 
   /* Check that the link is up. */
@@ -444,6 +450,39 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip
     snmp_inc_ifoutdiscards(netif);
     return ERR_RTE;
   }
+
+#if CCP_SUPPORT
+#if MPPE_SUPPORT
+  /* If MPPE is required, refuse any IP packet until we are able to crypt them.
+   */
+  if (pcb->settings.require_mppe &&
+            (!pcb->ccp_is_up || pcb->ccp_transmit_method != CI_MPPE) ) {
+      PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip4[%d]: MPPE required, not up\n", pcb->netif->num));
+      LINK_STATS_INC(link.rterr);
+      LINK_STATS_INC(link.drop);
+      snmp_inc_ifoutdiscards(netif);
+      return ERR_RTE;
+  }
+#endif /* MPPE_SUPPORT */
+
+  switch (pcb->ccp_transmit_method) {
+#if MPPE_SUPPORT
+  case CI_MPPE:
+    if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, PPP_IP)) != ERR_OK) {
+      LINK_STATS_INC(link.memerr);
+      LINK_STATS_INC(link.drop);
+      snmp_inc_ifoutdiscards(netif);
+      return err;
+    }
+
+    err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
+    pbuf_free(pb);
+    return err;
+ #endif /* MPPE_SUPPORT */
+  default:
+    break;
+  }
+#endif /* CCP_SUPPORT */
 
   return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IP);
 #else /* PPP_IPV4_SUPPORT */
@@ -687,6 +726,43 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 		   protocol, pcb->phase);
 	goto drop;
   }
+
+#if CCP_SUPPORT
+  if (protocol == PPP_COMP) {
+    u8_t *pl;
+
+    if (!pcb->ccp_is_up) {
+      goto drop;
+    }
+
+    switch (pcb->ccp_receive_method) {
+#if MPPE_SUPPORT
+    case CI_MPPE:
+      if (mppe_decompress(pcb, &pcb->mppe_decomp, &pb) != ERR_OK) {
+        goto drop;
+      }
+      break;
+#endif /* MPPE_SUPPORT */
+    default:
+      break;
+    }
+
+    /* Assume no PFC */
+    if (pb->len < 2) {
+      goto drop;
+    }
+
+    /* Extract and hide protocol (do PFC decompression if necessary) */
+    pl = (u8_t*)pb->payload;
+    if (pl[0] & 0x01) {
+      protocol = pl[0];
+      pbuf_header(pb, -1);
+    } else {
+      protocol = (pl[0] << 8) | pl[1];
+      pbuf_header(pb, -2);
+    }
+  }
+#endif /* CCP_SUPPORT */
 
   switch(protocol) {
 
