@@ -2068,7 +2068,11 @@
 #endif
 #if MPPE_SUPPORT
 #undef CCP_SUPPORT
-#define CCP_SUPPORT                     1   /* MPPE requires CCP support */
+#define CCP_SUPPORT                     1 /* MPPE requires CCP support */
+#undef MSCHAP_SUPPORT
+#define MSCHAP_SUPPORT                  1 /* MPPE requires MSCHAP support */
+#undef CHAP_SUPPORT
+#define CHAP_SUPPORT                    1 /* MSCHAP requires CHAP support */
 #endif /* MPPE_SUPPORT */
 
 /**
