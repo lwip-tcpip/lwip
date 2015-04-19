@@ -190,6 +190,7 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip
 #if PPP_IPV6_SUPPORT
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip6_addr_t *ipaddr);
 #endif /* PPP_IPV6_SUPPORT */
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protocol);
 
 /***********************************/
 /*** PUBLIC FUNCTION DEFINITIONS ***/
@@ -435,60 +436,12 @@ static err_t ppp_netif_init_cb(struct netif *netif) {
  * Send an IPv4 packet on the given connection.
  */
 static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip4_addr_t *ipaddr) {
-#if PPP_IPV4_SUPPORT
-  ppp_pcb *pcb = (ppp_pcb*)netif->state;
-#if CCP_SUPPORT && MPPE_SUPPORT
-  err_t err;
-#endif /* CCP_SUPPORT && MPPE_SUPPORT */
   LWIP_UNUSED_ARG(ipaddr);
-
-  /* Check that the link is up. */
-  if (!pcb->if4_up) {
-    PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip4[%d]: link not up\n", pcb->netif->num));
-    LINK_STATS_INC(link.rterr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
-    return ERR_RTE;
-  }
-
-#if CCP_SUPPORT
-#if MPPE_SUPPORT
-  /* If MPPE is required, refuse any IP packet until we are able to crypt them.
-   */
-  if (pcb->settings.require_mppe &&
-            (!pcb->ccp_is_up || pcb->ccp_transmit_method != CI_MPPE) ) {
-      PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip4[%d]: MPPE required, not up\n", pcb->netif->num));
-      LINK_STATS_INC(link.rterr);
-      LINK_STATS_INC(link.drop);
-      snmp_inc_ifoutdiscards(netif);
-      return ERR_RTE;
-  }
-#endif /* MPPE_SUPPORT */
-
-  switch (pcb->ccp_transmit_method) {
-#if MPPE_SUPPORT
-  case CI_MPPE:
-    if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, PPP_IP)) != ERR_OK) {
-      LINK_STATS_INC(link.memerr);
-      LINK_STATS_INC(link.drop);
-      snmp_inc_ifoutdiscards(netif);
-      return err;
-    }
-
-    err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
-    pbuf_free(pb);
-    return err;
- #endif /* MPPE_SUPPORT */
-  default:
-    break;
-  }
-#endif /* CCP_SUPPORT */
-
-  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IP);
+#if PPP_IPV4_SUPPORT
+  return ppp_netif_output(netif, pb, PPP_IP);
 #else /* PPP_IPV4_SUPPORT */
   LWIP_UNUSED_ARG(netif);
   LWIP_UNUSED_ARG(pb);
-  LWIP_UNUSED_ARG(ipaddr);
   return ERR_IF;
 #endif /* PPP_IPV4_SUPPORT */
 }
@@ -499,22 +452,70 @@ static err_t ppp_netif_output_ip4(struct netif *netif, struct pbuf *pb, const ip
  * Send an IPv6 packet on the given connection.
  */
 static err_t ppp_netif_output_ip6(struct netif *netif, struct pbuf *pb, const ip6_addr_t *ipaddr) {
-  ppp_pcb *pcb = (ppp_pcb*)netif->state;
   LWIP_UNUSED_ARG(ipaddr);
-
-  /* Check that the link is up. */
-  if (!pcb->if6_up) {
-    PPPDEBUG(LOG_ERR, ("ppp_netif_output_ip6[%d]: link not up\n", pcb->netif->num));
-    LINK_STATS_INC(link.rterr);
-    LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(netif);
-    return ERR_RTE;
-  }
-
-  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_IPV6);
+  return ppp_netif_output(netif, pb, PPP_IPV6);
 }
 #endif /* PPP_IPV6_SUPPORT */
 
+static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protocol) {
+  ppp_pcb *pcb = (ppp_pcb*)netif->state;
+
+  /* Check that the link is up. */
+  if (0
+#if PPP_IPV4_SUPPORT
+      || (protocol == PPP_IP && !pcb->if4_up)
+#endif /* PPP_IPV4_SUPPORT */
+#if PPP_IPV6_SUPPORT
+      || (protocol == PPP_IPV6 && !pcb->if6_up)
+#endif /* PPP_IPV6_SUPPORT */
+      ) {
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: link not up\n", pcb->netif->num));
+    goto err_rte_drop;
+  }
+
+#if CCP_SUPPORT
+#if MPPE_SUPPORT
+  /* If MPPE is required, refuse any IP packet until we are able to crypt them. */
+  if (pcb->settings.require_mppe &&
+            (!pcb->ccp_is_up || pcb->ccp_transmit_method != CI_MPPE) ) {
+    PPPDEBUG(LOG_ERR, ("ppp_netif_output[%d]: MPPE required, not up\n", pcb->netif->num));
+    goto err_rte_drop;
+  }
+#endif /* MPPE_SUPPORT */
+
+  if (pcb->ccp_is_up) {
+#if MPPE_SUPPORT
+    err_t err;
+#endif /* MPPE_SUPPORT */
+
+    switch (pcb->ccp_transmit_method) {
+#if MPPE_SUPPORT
+    case CI_MPPE:
+      if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != ERR_OK) {
+        LINK_STATS_INC(link.memerr);
+        LINK_STATS_INC(link.drop);
+        snmp_inc_ifoutdiscards(netif);
+        return err;
+      }
+
+      err = pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, PPP_COMP);
+      pbuf_free(pb);
+      return err;
+#endif /* MPPE_SUPPORT */
+    default:
+      break;
+    }
+  }
+#endif /* CCP_SUPPORT */
+
+  return pcb->link_cb->netif_output(pcb, pcb->link_ctx_cb, pb, protocol);
+
+err_rte_drop:
+  LINK_STATS_INC(link.rterr);
+  LINK_STATS_INC(link.drop);
+  snmp_inc_ifoutdiscards(netif);
+  return ERR_RTE;
+}
 
 /************************************/
 /*** PRIVATE FUNCTION DEFINITIONS ***/
