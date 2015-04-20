@@ -569,7 +569,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
           pppos->in_tail = NULL;
 #if IP_FORWARD || LWIP_IPV6_FORWARD
           /* hide the room for Ethernet forwarding header */
-          pbuf_header(inp, -(s16_t)PBUF_LINK_HLEN);
+          pbuf_header(inp, -(s16_t)(PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN));
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
 #if PPP_INPROC_IRQ_SAFE
           if(tcpip_callback_with_block(pppos_input_callback, inp, 0) != ERR_OK) {
@@ -672,12 +672,12 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
             /* If we haven't started a packet, we need a packet header. */
             pbuf_alloc_len = 0;
 #if IP_FORWARD || LWIP_IPV6_FORWARD
-            /* If IP forwarding is enabled we are reserving PBUF_LINK_HLEN bytes so
-             * the packet is being allocated with enough header space to be
-             * forwarded (to Ethernet for example).
+            /* If IP forwarding is enabled we are reserving PBUF_LINK_ENCAPSULATION_HLEN
+             * + PBUF_LINK_HLEN bytes so the packet is being allocated with enough header
+             * space to be forwarded (to Ethernet for example).
              */
             if (pppos->in_head == NULL) {
-              pbuf_alloc_len = PBUF_LINK_HLEN;
+              pbuf_alloc_len = PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN;
             }
 #endif /* IP_FORWARD || LWIP_IPV6_FORWARD */
             next_pbuf = pbuf_alloc(PBUF_RAW, pbuf_alloc_len, PBUF_POOL);

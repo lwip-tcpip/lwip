@@ -3123,7 +3123,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
            * The current solution is to calculate for 2 simultaneous packets...
            */
           *sint_ptr = (IP_HLEN + ((IP_REASS_MAX_PBUFS/2) *
-            (PBUF_POOL_BUFSIZE - PBUF_LINK_HLEN - IP_HLEN)));
+            (PBUF_POOL_BUFSIZE - PBUF_LINK_ENCAPSULATION_HLEN - PBUF_LINK_HLEN - IP_HLEN)));
 #else
           /** @todo returning MTU would be a bad thing and
              returning a wild guess like '576' isn't good either */
