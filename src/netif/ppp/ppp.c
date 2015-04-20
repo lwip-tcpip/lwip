@@ -760,6 +760,26 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   }
 
 #if CCP_SUPPORT
+#if MPPE_SUPPORT
+  /*
+   * MPPE is required and unencrypted data has arrived (this
+   * should never happen!). We should probably drop the link if
+   * the protocol is in the range of what should be encrypted.
+   * At the least, we drop this packet.
+   */
+  if (pcb->settings.require_mppe && (0
+#if PPP_IPV4_SUPPORT
+       || protocol == PPP_IP
+#endif /* PPP_IPV4_SUPPORT */
+#if PPP_IPV6_SUPPORT
+       || protocol == PPP_IPV6
+#endif /* PPP_IPV6_SUPPORT */
+       )) {
+    PPPDEBUG(LOG_ERR, ("ppp_input[%d]: MPPE required, received unencrypted data!\n", pcb->netif->num));
+    goto drop;
+  }
+#endif /* MPPE_SUPPORT */
+
   if (protocol == PPP_COMP) {
     u8_t *pl;
 

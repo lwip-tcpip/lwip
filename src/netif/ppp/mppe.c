@@ -389,24 +389,4 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	return ERR_OK;
 }
 
-#if 0 /* unused */
-/*
- * Incompressible data has arrived (this should never happen!).
- * We should probably drop the link if the protocol is in the range
- * of what should be encrypted.  At the least, we should drop this
- * packet.  (How to do this?)
- */
-void mppe_incomp(ppp_pcb *pcb, ppp_mppe_state *state, unsigned char *ibuf, int icnt)
-{
-	LWIP_UNUSED_ARG(state);
-	LWIP_UNUSED_ARG(icnt);
-
-	if (PPP_PROTOCOL(ibuf) >= 0x0021 && PPP_PROTOCOL(ibuf) <= 0x00fa) {
-		PPPDEBUG(LOG_DEBUG,
-		       ("mppe_incomp[%d]: incompressible (unencrypted) data! "
-		       "(proto %04x)\n", pcb->netif->num, PPP_PROTOCOL(ibuf)));
-	}
-}
-#endif /* unused */
-
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
