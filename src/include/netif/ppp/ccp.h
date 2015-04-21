@@ -127,21 +127,14 @@ typedef struct ccp_options {
     unsigned int deflate          :1; /* do Deflate? */
     unsigned int deflate_correct  :1; /* use correct code for deflate? */
     unsigned int deflate_draft    :1; /* use draft RFC code for deflate? */
-#else /* DEFLATE_SUPPORT */
-    unsigned int                  :3; /* 3 bit of padding */
 #endif /* DEFLATE_SUPPORT */
 #if BSDCOMPRESS_SUPPORT
     unsigned int bsd_compress     :1; /* do BSD Compress? */
-#else /* BSDCOMPRESS_SUPPORT */
-    unsigned int                  :1; /* 1 bit of padding */
 #endif /* BSDCOMPRESS_SUPPORT */
 #if PREDICTOR_SUPPORT
     unsigned int predictor_1      :1; /* do Predictor-1? */
     unsigned int predictor_2      :1; /* do Predictor-2? */
-#else /* PREDICTOR_SUPPORT */
-    unsigned int                  :2; /* 2 bit of padding */
 #endif /* PREDICTOR_SUPPORT */
-    unsigned int                  :2; /* 2 bit of padding to round out to 8 bits */
 
 #if MPPE_SUPPORT
     u8_t mppe;			/* MPPE bitfield */

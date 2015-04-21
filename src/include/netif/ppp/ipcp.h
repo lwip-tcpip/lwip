@@ -94,18 +94,13 @@ typedef struct ipcp_options {
     unsigned int neg_vj                 :1; /* Van Jacobson Compression? */
     unsigned int old_vj                 :1; /* use old (short) form of VJ option? */
     unsigned int cflag                  :1;
-#else
-    unsigned int                        :3; /* 3 bits of padding */
 #endif /* VJ_SUPPORT */
     unsigned int accept_local           :1; /* accept peer's value for ouraddr */
     unsigned int accept_remote          :1; /* accept peer's value for hisaddr */
 #if LWIP_DNS
     unsigned int req_dns1               :1; /* Ask peer to send primary DNS address? */
     unsigned int req_dns2               :1; /* Ask peer to send secondary DNS address? */
-#else
-    unsigned int                        :2; /* 2 bits of padding */
 #endif /* LWIP_DNS */
-    unsigned int                        :6; /* 6 bits of padding to round out to 16 bits */
 
     u32_t ouraddr, hisaddr;	/* Addresses in NETWORK BYTE ORDER */
 #if LWIP_DNS

@@ -113,35 +113,26 @@ typedef struct lcp_options {
     unsigned int neg_asyncmap      :1; /* Negotiate the async map? */
 #if PAP_SUPPORT
     unsigned int neg_upap          :1; /* Ask for UPAP authentication? */
-#else
-    unsigned int                   :1; /* 1 bit of padding */
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
     unsigned int neg_chap          :1; /* Ask for CHAP authentication? */
-#else
-    unsigned int                   :1; /* 1 bit of padding */
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
     unsigned int neg_eap           :1; /* Ask for EAP authentication? */
-#else
-    unsigned int                   :1; /* 1 bit of padding */
 #endif /* EAP_SUPPORT */
     unsigned int neg_magicnumber   :1; /* Ask for magic number? */
     unsigned int neg_pcompression  :1; /* HDLC Protocol Field Compression? */
     unsigned int neg_accompression :1; /* HDLC Address/Control Field Compression? */
 #if LQR_SUPPORT
     unsigned int neg_lqr           :1; /* Negotiate use of Link Quality Reports */
-#else
-    unsigned int                   :1; /* 1 bit of padding */
 #endif /* LQR_SUPPORT */
     unsigned int neg_cbcp          :1; /* Negotiate use of CBCP */
 #ifdef HAVE_MULTILINK
     unsigned int neg_mrru          :1; /* negotiate multilink MRRU */
-#else
-    unsigned int                   :1; /* 1 bit of padding */
 #endif /* HAVE_MULTILINK */
     unsigned int neg_ssnhf         :1; /* negotiate short sequence numbers */
     unsigned int neg_endpoint      :1; /* negotiate endpoint discriminator */
+
     u16_t mru;			/* Value of MRU */
 #ifdef HAVE_MULTILINK
     u16_t mrru;			/* Value of MRRU, and multilink enable */

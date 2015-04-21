@@ -170,7 +170,7 @@ typedef struct ipv6cp_options {
 #ifdef IPV6CP_COMP
     unsigned int neg_vj         :1;  /* Van Jacobson Compression? */
 #endif /* IPV6CP_COMP */
-    unsigned int                :2;  /* 2 bit of padding to round out to 8 bits */
+
 #ifdef IPV6CP_COMP
     u_short vj_protocol;        /* protocol value to use in VJ option */
 #endif /* IPV6CP_COMP */
