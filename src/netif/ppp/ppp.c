@@ -712,16 +712,17 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     const char *pname;
 #endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
 
+  if (pb->len < 2) {
+    PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
+    goto drop;
+  }
   protocol = (((u8_t *)pb->payload)[0] << 8) | ((u8_t*)pb->payload)[1];
 
 #if PRINTPKT_SUPPORT
   ppp_dump_packet("rcvd", (unsigned char *)pb->payload, pb->len);
 #endif /* PRINTPKT_SUPPORT */
 
-  if(pbuf_header(pb, -(s16_t)sizeof(protocol))) {
-    LWIP_ASSERT("pbuf_header failed\n", 0);
-    goto drop;
-  }
+  pbuf_header(pb, -(s16_t)sizeof(protocol));
 
   LINK_STATS_INC(link.recv);
   snmp_inc_ifinucastpkts(pcb->netif);
@@ -901,10 +902,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 #endif /* PPP_PROTOCOLNAME */
         ppp_warn("Unsupported protocol 0x%x received", protocol);
 #endif /* PPP_DEBUG */
-        if (pbuf_header(pb, (s16_t)sizeof(protocol))) {
-          LWIP_ASSERT("pbuf_header failed\n", 0);
-          goto drop;
-        }
+        pbuf_header(pb, (s16_t)sizeof(protocol));
         lcp_sprotrej(pcb, (u8_t*)pb->payload, pb->len);
       }
       break;
