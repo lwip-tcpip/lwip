@@ -475,9 +475,11 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
    * RFC 2661 does not specify whether the PPP frame in the L2TP payload should
    * have a HDLC header or not. We handle both cases for compatibility.
    */
-  GETSHORT(hflags, inp);
-  if (hflags == 0xff03) {
-    pbuf_header(p, -(s16_t)2);
+  if (p->len >= 2) {
+    GETSHORT(hflags, inp);
+    if (hflags == 0xff03) {
+      pbuf_header(p, -(s16_t)2);
+    }
   }
   /* Dispatch the packet thereby consuming it. */
   ppp_input(l2tp->ppp, p);
@@ -510,7 +512,7 @@ static void pppol2tp_dispatch_control_packet(pppol2tp_pcb *l2tp, u16_t port, str
   }
 
   /* ZLB packets */
-  if (p->len == 0) {
+  if (p->tot_len == 0) {
     return;
   }
 
