@@ -777,22 +777,25 @@ static const u8_t sysdescr_len_default = 4;
 static const u8_t sysdescr_default[] = "lwIP";
 static const u8_t* sysdescr_len_ptr = &sysdescr_len_default;
 static const u8_t* sysdescr_ptr = &sysdescr_default[0];
-/** mib-2.system.sysContact @todo: this design is broken (SNMP-set writes without known buffer size) */
+/** mib-2.system.sysContact */
 static u8_t syscontact_len_default = 0;
 static u8_t syscontact_default[] = "";
+static u8_t syscontact_size = 1;
 static u8_t* syscontact_len_ptr = &syscontact_len_default;
 static u8_t* syscontact_ptr = &syscontact_default[0];
-/** mib-2.system.sysName @todo: this design is broken (SNMP-set writes without known buffer size) */
+/** mib-2.system.sysName */
 static u8_t sysname_len_default = 8;
 static u8_t sysname_default[] = "FQDN-unk";
+static u8_t sysname_size = 9;
 static u8_t* sysname_len_ptr = &sysname_len_default;
 static u8_t* sysname_ptr = &sysname_default[0];
-/** mib-2.system.sysLocation @todo: this design is broken (SNMP-set writes without known buffer size) */
+/** mib-2.system.sysLocation */
 static u8_t syslocation_len_default = 0;
 static u8_t syslocation_default[] = "";
+static u8_t syslocation_size = 1;
 static u8_t* syslocation_len_ptr = &syslocation_len_default;
 static u8_t* syslocation_ptr = &syslocation_default[0];
-/** mib-2.snmp.snmpEnableAuthenTraps @todo: this design is broken (SNMP-set writes without known buffer size) */
+/** mib-2.snmp.snmpEnableAuthenTraps */
 static u8_t snmpenableauthentraps_default = 2; /* disabled */
 static u8_t* snmpenableauthentraps_ptr = &snmpenableauthentraps_default;
 
@@ -952,13 +955,16 @@ void snmp_get_sysuptime(u32_t *value)
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator
+ * @param bufsize size of the buffer in bytes, including space for zero terminator
+ *        (this is required because the buffer can be overwritten by snmp-set)
  */
-void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen)
+void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize)
 {
   if (ocstr != NULL)
   {
     syscontact_ptr = ocstr;
     syscontact_len_ptr = ocstrlen;
+    syscontact_size = bufsize;
   }
 }
 
@@ -968,13 +974,16 @@ void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen)
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator
+ * @param bufsize size of the buffer in bytes, including space for zero terminator
+ *        (this is required because the buffer can be overwritten by snmp-set)
  */
-void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen)
+void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize)
 {
   if (ocstr != NULL)
   {
     sysname_ptr = ocstr;
     sysname_len_ptr = ocstrlen;
+    sysname_size = bufsize;
   }
 }
 
@@ -984,13 +993,16 @@ void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen)
  *
  * @param ocstr if non-NULL then copy str pointer
  * @param ocstrlen points to string length, excluding zero terminator
+ * @param bufsize size of the buffer in bytes, including space for zero terminator
+ *        (this is required because the buffer can be overwritten by snmp-set)
  */
-void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen)
+void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize)
 {
   if (ocstr != NULL)
   {
     syslocation_ptr = ocstr;
     syslocation_len_ptr = ocstrlen;
+    syslocation_size = bufsize;
   }
 }
 
@@ -2224,22 +2236,19 @@ system_set_test(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 4: /* sysContact */
-      if ((syscontact_ptr != syscontact_default) &&
-          (len <= 255))
+      if (len < syscontact_size)
       {
         set_ok = 1;
       }
       break;
     case 5: /* sysName */
-      if ((sysname_ptr != sysname_default) &&
-          (len <= 255))
+      if (len < sysname_size)
       {
         set_ok = 1;
       }
       break;
     case 6: /* sysLocation */
-      if ((syslocation_ptr != syslocation_default) &&
-          (len <= 255))
+      if (len < syslocation_size)
       {
         set_ok = 1;
       }
@@ -2261,15 +2270,15 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
   id = (u8_t)od->id_inst_ptr[0];
   switch (id)
   {
-    case 4: /* sysContact */
+    case 4: /* sysContact (size already checked in system_set_test) */
       MEMCPY(syscontact_ptr, value, len);
       *syscontact_len_ptr = (u8_t)len;
       break;
-    case 5: /* sysName */
+    case 5: /* sysName (size already checked in system_set_test) */
       MEMCPY(sysname_ptr, value, len);
       *sysname_len_ptr = (u8_t)len;
       break;
-    case 6: /* sysLocation */
+    case 6: /* sysLocation (size already checked in system_set_test) */
       MEMCPY(syslocation_ptr, value, len);
       *syslocation_len_ptr = (u8_t)len;
       break;
@@ -4129,21 +4138,10 @@ snmp_set_test(struct obj_def *od, u16_t len, void *value)
     /* snmpEnableAuthenTraps */
     s32_t *sint_ptr = (s32_t*)value;
 
-    if (snmpenableauthentraps_ptr != &snmpenableauthentraps_default)
+    /* we should have writable non-volatile mem here */
+    if ((*sint_ptr == 1) || (*sint_ptr == 2))
     {
-      /* we should have writable non-volatile mem here */
-      if ((*sint_ptr == 1) || (*sint_ptr == 2))
-      {
-        set_ok = 1;
-      }
-    }
-    else
-    {
-      /* const or hardwired value */
-      if (*sint_ptr == snmpenableauthentraps_default)
-      {
-        set_ok = 1;
-      }
+      set_ok = 1;
     }
   }
   return set_ok;

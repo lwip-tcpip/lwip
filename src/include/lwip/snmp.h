@@ -113,9 +113,9 @@ void snmp_get_sysobjid_ptr(const struct snmp_obj_id **oid);
 void snmp_inc_sysuptime(void);
 void snmp_add_sysuptime(u32_t value);
 void snmp_get_sysuptime(u32_t *value);
-void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen);
-void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen);
-void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen);
+void snmp_set_syscontact(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
+void snmp_set_sysname(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
+void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize);
 
 /* network interface */
 void snmp_add_ifinoctets(struct netif *ni, u32_t value); 
@@ -251,9 +251,9 @@ void snmp_get_snmpenableauthentraps(u8_t *value);
 #define snmp_inc_sysuptime()
 #define snmp_add_sysuptime(value)
 #define snmp_get_sysuptime(value)
-#define snmp_set_syscontact(ocstr, ocstrlen);
-#define snmp_set_sysname(ocstr, ocstrlen);
-#define snmp_set_syslocation(ocstr, ocstrlen);
+#define snmp_set_syscontact(ocstr, ocstrlen, bufsize);
+#define snmp_set_sysname(ocstr, ocstrlen, bufsize);
+#define snmp_set_syslocation(ocstr, ocstrlen, bufsize);
 
 /* network interface */
 #define snmp_add_ifinoctets(ni,value) 
