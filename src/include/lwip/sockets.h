@@ -387,7 +387,7 @@ typedef struct ip_mreq {
   if (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0)) { \
   code; }} while(0)
 #define FDSETSAFESET(n, p, code) do { \
-  if ((p) != NULL) { FDSETSAFESET_VAR(n, p, code); }} while(0)
+  if ((p) != NULL) { FDSETSAFESET_VAL(n, p, code); }} while(0)
 #define FDSETSAFEGET(n, p, code) (((p) != NULL) && ((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0) ?\
   (code) : 0)
 #define FD_SET(n, p)  FDSETSAFESET(n, p, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] |=  (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
