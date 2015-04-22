@@ -137,6 +137,9 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #define ip_addr_isloopback(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
   ip6_addr_isloopback(ip_2_ip6(ipaddr)) : \
   ip4_addr_isloopback(ip_2_ip4(ipaddr)))
+#define ip_addr_islinklocal(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
+  ip_addr_islinklocal(ip_2_ip6(ipaddr)) : \
+  ip4_addr_islinklocal(ip_2_ip4(ipaddr)))
 #define ip_addr_debug_print(debug, ipaddr) do { if(IP_IS_V6(ipaddr)) { \
   ip6_addr_debug_print(debug, ip_2_ip6(ipaddr)); } else { \
   ip4_addr_debug_print(debug, ip_2_ip4(ipaddr)); }}while(0)
@@ -177,6 +180,7 @@ typedef ip4_addr_t ip_addr_t;
 #define ip_addr_cmp(addr1, addr2)               ip4_addr_cmp(addr1, addr2)
 #define ip_addr_isany(ipaddr)                   ip4_addr_isany(ipaddr)
 #define ip_addr_isloopback(ipaddr)              ip4_addr_isloopback(ipaddr)
+#define ip_addr_islinklocal(ipaddr)             ip4_addr_islinklocal(ipaddr)
 #define ip_addr_isbroadcast(addr, netif)        ip4_addr_isbroadcast(addr, netif)
 #define ip_addr_ismulticast(ipaddr)             ip4_addr_ismulticast(ipaddr)
 #define ip_addr_debug_print(debug, ipaddr)      ip4_addr_debug_print(debug, ipaddr)
@@ -209,6 +213,7 @@ typedef ip6_addr_t ip_addr_t;
 #define ip_addr_cmp(addr1, addr2)               ip6_addr_cmp(addr1, addr2)
 #define ip_addr_isany(ipaddr)                   ip6_addr_isany(ipaddr)
 #define ip_addr_isloopback(ipaddr)              ip6_addr_isloopback(ipaddr)
+#define ip_addr_islinklocal(ipaddr)             ip6_addr_islinklocal(ipaddr)
 #define ip_addr_isbroadcast(addr, netif)        0
 #define ip_addr_ismulticast(ipaddr)             ip6_addr_ismulticast(ipaddr)
 #define ip_addr_debug_print(debug, ipaddr)      ip6_addr_debug_print(debug, ipaddr)
