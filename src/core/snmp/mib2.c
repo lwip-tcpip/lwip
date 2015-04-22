@@ -1421,7 +1421,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
     /* route to the network address */
     ip4_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
     /* exclude 0.0.0.0 network (reserved for default rte) */
-    if (!ip4_addr_isany(&dst)) {
+    if (!ip4_addr_isany_val(dst)) {
       insert = 1;
     }
   }
@@ -1498,7 +1498,7 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
     /* route to the network address */
     ip4_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
     /* exclude 0.0.0.0 network (reserved for default rte) */
-    if (!ip4_addr_isany(&dst)) {
+    if (!ip4_addr_isany_val(dst)) {
       del = 1;
     }
   }
@@ -3219,7 +3219,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
   ident = od->id_inst_ptr;
   snmp_oidtoip(&ident[1], &dest);
 
-  if (ip4_addr_isany(&dest))
+  if (ip4_addr_isany_val(dest))
   {
     /* ip_route() uses default netif for default route */
     netif = netif_default;
@@ -3244,7 +3244,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           ip4_addr_t *dst = (ip4_addr_t*)value;
 
-          if (ip4_addr_isany(&dest))
+          if (ip4_addr_isany_val(dest))
           {
             /* default rte has 0.0.0.0 dest */
             ip4_addr_set_zero(dst);
@@ -3267,7 +3267,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           s32_t *sint_ptr = (s32_t*)value;
 
-          if (ip4_addr_isany(&dest))
+          if (ip4_addr_isany_val(dest))
           {
             /* default rte has metric 1 */
             *sint_ptr = 1;
@@ -3293,7 +3293,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           ip4_addr_t *dst = (ip4_addr_t*)value;
 
-          if (ip4_addr_isany(&dest))
+          if (ip4_addr_isany_val(dest))
           {
             /* default rte: gateway */
             *dst = netif->gw;
@@ -3309,7 +3309,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           s32_t *sint_ptr = (s32_t*)value;
 
-          if (ip4_addr_isany(&dest))
+          if (ip4_addr_isany_val(dest))
           {
             /* default rte is indirect */
             *sint_ptr = 4;
@@ -3340,7 +3340,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
         {
           ip4_addr_t *dst = (ip4_addr_t*)value;
 
-          if (ip4_addr_isany(&dest))
+          if (ip4_addr_isany_val(dest))
           {
             /* default rte use 0.0.0.0 mask */
             ip4_addr_set_zero(dst);

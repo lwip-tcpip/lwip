@@ -199,7 +199,7 @@ tcpip_input(struct pbuf *p, struct netif *inp)
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
-  if (!sys_mbox_valid(&mbox)) {
+  if (!sys_mbox_valid_val(mbox)) {
     return ERR_VAL;
   }
   msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
@@ -240,7 +240,7 @@ tcpip_pppos_input(struct pbuf *p, struct netif *inp)
 #else /* LWIP_TCPIP_CORE_LOCKING_INPUT */
   struct tcpip_msg *msg;
 
-  if (!sys_mbox_valid(&mbox)) {
+  if (!sys_mbox_valid_val(mbox)) {
     return ERR_VAL;
   }
   msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_INPKT);
@@ -276,7 +276,7 @@ tcpip_callback_with_block(tcpip_callback_fn function, void *ctx, u8_t block)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
@@ -312,7 +312,7 @@ tcpip_timeout(u32_t msecs, sys_timeout_handler h, void *arg)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
@@ -341,7 +341,7 @@ tcpip_untimeout(sys_timeout_handler h, void *arg)
 {
   struct tcpip_msg *msg;
 
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     msg = (struct tcpip_msg *)memp_malloc(MEMP_TCPIP_MSG_API);
     if (msg == NULL) {
       return ERR_MEM;
@@ -375,7 +375,7 @@ tcpip_apimsg(struct api_msg *apimsg)
   apimsg->msg.err = ERR_VAL;
 #endif
   
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     TCPIP_MSG_VAR_ALLOC(msg);
     TCPIP_MSG_VAR_REF(msg).type = TCPIP_MSG_API;
     TCPIP_MSG_VAR_REF(msg).msg.apimsg = apimsg;
@@ -408,7 +408,7 @@ tcpip_netifapi(struct netifapi_msg* netifapimsg)
 {
   TCPIP_MSG_VAR_DECLARE(msg);
 
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     err_t err;
     TCPIP_MSG_VAR_ALLOC(msg);
 
@@ -462,7 +462,7 @@ tcpip_pppapi(struct pppapi_msg* pppapimsg)
 {
   struct tcpip_msg msg;
 
-  if (sys_mbox_valid(&mbox)) {
+  if (sys_mbox_valid_val(mbox)) {
     err_t err = sys_sem_new(&pppapimsg->msg.sem, 0);
     if (err != ERR_OK) {
       pppapimsg->msg.err = err;
@@ -538,7 +538,7 @@ void tcpip_callbackmsg_delete(struct tcpip_callback_msg* msg)
 err_t
 tcpip_trycallback(struct tcpip_callback_msg* msg)
 {
-  if (!sys_mbox_valid(&mbox)) {
+  if (!sys_mbox_valid_val(mbox)) {
     return ERR_VAL;
   }
   return sys_mbox_trypost(&mbox, msg);

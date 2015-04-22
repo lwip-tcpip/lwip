@@ -52,7 +52,9 @@ typedef u8_t sys_mbox_t;
 #define sys_arch_sem_wait(s,t)
 #define sys_sem_free(s)
 #define sys_sem_valid(s) 0
+#define sys_sem_valid_val(s) 0
 #define sys_sem_set_invalid(s)
+#define sys_sem_set_invalid_val(s)
 #define sys_mutex_new(mu) ERR_OK
 #define sys_mutex_lock(mu)
 #define sys_mutex_unlock(mu)
@@ -66,7 +68,9 @@ typedef u8_t sys_mbox_t;
 #define sys_mbox_trypost(m,d)
 #define sys_mbox_free(m)
 #define sys_mbox_valid(m)
+#define sys_mbox_valid_val(m)
 #define sys_mbox_set_invalid(m)
+#define sys_mbox_set_invalid_val(m)
 
 #define sys_thread_new(n,t,a,s,p)
 
@@ -159,6 +163,14 @@ int sys_sem_valid(sys_sem_t *sem);
 /** Set a semaphore invalid so that sys_sem_valid returns 0 */
 void sys_sem_set_invalid(sys_sem_t *sem);
 #endif
+#ifndef sys_sem_valid_val
+/** Same as sys_sem_valid() but taking a value, not a pointer */
+#define sys_sem_valid_val(sem)       sys_sem_valid(&(sem))
+#endif
+#ifndef sys_sem_set_invalid_val
+/** Same as sys_sem_set_invalid() but taking a value, not a pointer */
+#define sys_sem_set_invalid_val(sem) sys_sem_set_invalid(&(sem))
+#endif
 
 /* Time functions. */
 #ifndef sys_msleep
@@ -212,6 +224,15 @@ int sys_mbox_valid(sys_mbox_t *mbox);
 /** Set an mbox invalid so that sys_mbox_valid returns 0 */
 void sys_mbox_set_invalid(sys_mbox_t *mbox);
 #endif
+#ifndef sys_mbox_valid_val
+/** Same as sys_mbox_valid() but taking a value, not a pointer */
+#define sys_mbox_valid_val(mbox)       sys_mbox_valid(&(mbox))
+#endif
+#ifndef sys_mbox_set_invalid_val
+/** Same as sys_mbox_set_invalid() but taking a value, not a pointer */
+#define sys_mbox_set_invalid_val(mbox) sys_mbox_set_invalid(&(mbox))
+#endif
+
 
 /** The only thread function:
  * Creates a new thread

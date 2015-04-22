@@ -192,7 +192,8 @@ struct netif;
                                               (mask)->addr))
 #define ip4_addr_cmp(addr1, addr2) ((addr1)->addr == (addr2)->addr)
 
-#define ip4_addr_isany(addr1) ((addr1) == NULL || (addr1)->addr == IPADDR_ANY)
+#define ip4_addr_isany_val(addr1)   ((addr1).addr == IPADDR_ANY)
+#define ip4_addr_isany(addr1) ((addr1) == NULL || ip4_addr_isany_val(*(addr1)))
 
 #define ip4_addr_isbroadcast(addr1, netif) ip4_addr_isbroadcast_u32((addr1)->addr, netif)
 u8_t ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif);
@@ -204,12 +205,20 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
 
 #define ip4_addr_islinklocal(addr1) (((addr1)->addr & PP_HTONL(0xffff0000UL)) == PP_HTONL(0xa9fe0000UL))
 
+#define ip4_addr_debug_print_parts(debug, a, b, c, d) \
+  LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F, a, b, c, d))
 #define ip4_addr_debug_print(debug, ipaddr) \
-  LWIP_DEBUGF(debug, ("%" U16_F ".%" U16_F ".%" U16_F ".%" U16_F,      \
+  ip4_addr_debug_print_parts(debug, \
                       ipaddr != NULL ? ip4_addr1_16(ipaddr) : 0,       \
                       ipaddr != NULL ? ip4_addr2_16(ipaddr) : 0,       \
                       ipaddr != NULL ? ip4_addr3_16(ipaddr) : 0,       \
-                      ipaddr != NULL ? ip4_addr4_16(ipaddr) : 0))
+                      ipaddr != NULL ? ip4_addr4_16(ipaddr) : 0)
+#define ip4_addr_debug_print_val(debug, ipaddr) \
+  ip4_addr_debug_print_parts(debug, \
+                      ip4_addr1_16(&(ipaddr)),       \
+                      ip4_addr2_16(&(ipaddr)),       \
+                      ip4_addr3_16(&(ipaddr)),       \
+                      ip4_addr4_16(&(ipaddr)))
 
 /* Get one byte from the 4-byte address */
 #define ip4_addr1(ipaddr) (((const u8_t*)(ipaddr))[0])

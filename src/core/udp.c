@@ -1161,7 +1161,7 @@ void udp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
   if (!ip4_addr_isany(new_addr)) {
     for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
       /* Is this an IPv4 pcb? */
-      if (!IP_IS_V6_L(&upcb->local_ip)) {
+      if (!IP_IS_V6_VAL(&upcb->local_ip)) {
         /* PCB bound to current local interface address? */
         if (!ip4_addr_isany(ip_2_ip4(&upcb->local_ip)) &&
             ip4_addr_cmp(ip_2_ip4(&upcb->local_ip), old_addr)) {

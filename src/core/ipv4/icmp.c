@@ -308,9 +308,9 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 
   iphdr = (struct ip_hdr *)p->payload;
   LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded from "));
-  ip4_addr_debug_print(ICMP_DEBUG, &(iphdr->src));
+  ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->src);
   LWIP_DEBUGF(ICMP_DEBUG, (" to "));
-  ip4_addr_debug_print(ICMP_DEBUG, &(iphdr->dest));
+  ip4_addr_debug_print_val(ICMP_DEBUG, iphdr->dest);
   LWIP_DEBUGF(ICMP_DEBUG, ("\n"));
 
   icmphdr = (struct icmp_echo_hdr *)q->payload;

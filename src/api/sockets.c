@@ -543,7 +543,7 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d", s, newsock));
   if (addr != NULL) {
     LWIP_DEBUGF(SOCKETS_DEBUG, (" addr="));
-    ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
+    ip_addr_debug_print_val(SOCKETS_DEBUG, naddr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", port));
   }
 
@@ -578,7 +578,7 @@ lwip_bind(int s, const struct sockaddr *name, socklen_t namelen)
 
   SOCKADDR_TO_IPADDR_PORT(name, &local_addr, local_port);
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_bind(%d, addr=", s));
-  ip_addr_debug_print(SOCKETS_DEBUG, &local_addr);
+  ip_addr_debug_print_val(SOCKETS_DEBUG, local_addr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", local_port));
 
   err = netconn_bind(sock->conn, &local_addr, local_port);
@@ -662,7 +662,7 @@ lwip_connect(int s, const struct sockaddr *name, socklen_t namelen)
 
     SOCKADDR_TO_IPADDR_PORT(name, &remote_addr, remote_port);
     LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_connect(%d, addr=", s));
-    ip_addr_debug_print(SOCKETS_DEBUG, &remote_addr);
+    ip_addr_debug_print_val(SOCKETS_DEBUG, remote_addr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", remote_port));
 
     err = netconn_connect(sock->conn, &remote_addr, remote_port);
@@ -1147,19 +1147,19 @@ lwip_selscan(int maxfdp1, fd_set *readset_in, fd_set *writeset_in, fd_set *excep
     /* ... then examine it: */
     /* See if netconn of this socket is ready for read */
     if (readset_in && FD_ISSET(i, readset_in) && ((lastdata != NULL) || (rcvevent > 0))) {
-      FD_SET(i, &lreadset);
+      FD_SET_VAL(i, lreadset);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for reading\n", i));
       nready++;
     }
     /* See if netconn of this socket is ready for write */
     if (writeset_in && FD_ISSET(i, writeset_in) && (sendevent != 0)) {
-      FD_SET(i, &lwriteset);
+      FD_SET_VAL(i, lwriteset);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for writing\n", i));
       nready++;
     }
     /* See if netconn of this socket had an error */
     if (exceptset_in && FD_ISSET(i, exceptset_in) && (errevent != 0)) {
-      FD_SET(i, &lexceptset);
+      FD_SET_VAL(i, lexceptset);
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_selscan: fd=%d ready for exception\n", i));
       nready++;
     }
@@ -1550,7 +1550,7 @@ lwip_getaddrname(int s, struct sockaddr *name, socklen_t *namelen, u8_t local)
   IPADDR_PORT_TO_SOCKADDR(&saddr, &naddr, port);
 
   LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getaddrname(%d, addr=", s));
-  ip_addr_debug_print(SOCKETS_DEBUG, &naddr);
+  ip_addr_debug_print_val(SOCKETS_DEBUG, naddr);
   LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F")\n", port));
 
   if (*namelen > saddr.sa.sa_len) {
