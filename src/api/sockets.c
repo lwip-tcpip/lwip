@@ -321,8 +321,9 @@ static const int err_to_errno_table[] = {
 #endif /* LWIP_SOCKET_SET_ERRNO */
 
 #define sock_set_errno(sk, e) do { \
-  sk->err = (e); \
-  set_errno(sk->err); \
+  const int sockerr = (e); \
+  sk->err = (u8_t)sockerr; \
+  set_errno(sockerr); \
 } while (0)
 
 /* Forward declaration of some functions */
@@ -1729,7 +1730,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       if (((sock->err == 0) || (sock->err == EINPROGRESS)) && (sock->conn != NULL)) {
         sock_set_errno(sock, err_to_errno(sock->conn->last_err));
       }
-      *(int *)optval = sock->err;
+      *(int *)optval = (sock->err == 0xFF ? (int)-1 : (int)sock->err);
       sock->err = 0;
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, SOL_SOCKET, SO_ERROR) = %d\n",
                   s, *(int *)optval));
