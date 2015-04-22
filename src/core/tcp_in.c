@@ -1596,7 +1596,7 @@ tcp_receive(struct tcp_pcb *pcb)
                       TCPH_FLAGS_SET(next->next->tcphdr, TCPH_FLAGS(next->next->tcphdr) &~ TCP_FIN);
                     }
                     /* Adjust length of segment to fit in the window. */
-                    next->next->len = pcb->rcv_nxt + pcb->rcv_wnd - seqno;
+                    next->next->len = (u16_t)(pcb->rcv_nxt + pcb->rcv_wnd - seqno);
                     pbuf_realloc(next->next->p, next->next->len);
                     tcplen = TCP_TCPLEN(next->next);
                     LWIP_ASSERT("tcp_receive: segment not trimmed correctly to rcv_wnd\n",
@@ -1657,7 +1657,7 @@ static u8_t tcp_getoptbyte(void)
     u8_t* opts = (u8_t *)tcphdr + TCP_HLEN;
     return opts[tcp_optidx++];
   } else {
-    u8_t idx = tcp_optidx++ - tcphdr_opt1len;
+    u8_t idx = (u8_t)(tcp_optidx++ - tcphdr_opt1len);
     return tcphdr_opt2[idx];
   }
 }

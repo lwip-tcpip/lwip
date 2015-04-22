@@ -97,7 +97,7 @@ PACK_STRUCT_END
 #define IPH_PROTO(hdr) ((hdr)->_proto)
 #define IPH_CHKSUM(hdr) ((hdr)->_chksum)
 
-#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (((v) << 4) | (hl))
+#define IPH_VHL_SET(hdr, v, hl) (hdr)->_v_hl = (u8_t)((((v) << 4) | (hl)))
 #define IPH_TOS_SET(hdr, tos) (hdr)->_tos = (tos)
 #define IPH_LEN_SET(hdr, len) (hdr)->_len = (len)
 #define IPH_ID_SET(hdr, id) (hdr)->_id = (id)

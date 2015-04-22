@@ -694,8 +694,8 @@ dns_send(struct dns_table_entry* entry)
   LWIP_ASSERT("dns server has no IP address set", !ip_addr_isany(&dns_servers[entry->server_idx]));
 
   /* if here, we have either a new query or a retry on a previous query to process */
-  p = pbuf_alloc(PBUF_TRANSPORT, SIZEOF_DNS_HDR + strlen(entry->name) + 2 +
-                 SIZEOF_DNS_QUERY, PBUF_RAM);
+  p = pbuf_alloc(PBUF_TRANSPORT, (u16_t)(SIZEOF_DNS_HDR + strlen(entry->name) + 2 +
+                 SIZEOF_DNS_QUERY), PBUF_RAM);
   if (p != NULL) {
     /* fill dns header */
     memset(&hdr, 0, SIZEOF_DNS_HDR);
@@ -714,7 +714,7 @@ dns_send(struct dns_table_entry* entry)
       for(n = 0; *hostname != '.' && *hostname != 0; ++hostname) {
         ++n;
       }
-      copy_len = hostname - hostname_part;
+      copy_len = (u16_t)(hostname - hostname_part);
       pbuf_put_at(p, query_idx, n);
       pbuf_take_at(p, hostname_part, copy_len, query_idx + 1);
       query_idx += n + 1;
@@ -759,7 +759,7 @@ dns_alloc_random_port(void)
     return NULL;
   }
   do {
-    u16_t port = DNS_RAND_TXID();
+    u16_t port = (u16_t)DNS_RAND_TXID();
     if (!DNS_PORT_ALLOWED(port)) {
       /* this port is not allowed, try again */
       err = ERR_USE;
@@ -875,7 +875,7 @@ dns_create_txid(void)
   u8_t i;
 
 again:
-  txid = DNS_RAND_TXID();
+  txid = (u16_t)DNS_RAND_TXID();
 
   /* check whether the ID is unique */
   for (i = 0; i < DNS_TABLE_SIZE; i++) {
