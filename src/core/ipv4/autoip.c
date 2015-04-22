@@ -384,7 +384,7 @@ autoip_stop(struct netif *netif)
  * Has to be called in loop every AUTOIP_TMR_INTERVAL milliseconds
  */
 void
-autoip_tmr()
+autoip_tmr(void)
 {
   struct netif *netif = netif_list;
   /* loop through netif's */

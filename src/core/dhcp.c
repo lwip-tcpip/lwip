@@ -349,7 +349,7 @@ dhcp_select(struct netif *netif)
  * The DHCP timer that checks for lease renewal/rebind timeouts.
  */
 void
-dhcp_coarse_tmr()
+dhcp_coarse_tmr(void)
 {
   struct netif *netif = netif_list;
   LWIP_DEBUGF(DHCP_DEBUG | LWIP_DBG_TRACE, ("dhcp_coarse_tmr()\n"));
@@ -387,7 +387,7 @@ dhcp_coarse_tmr()
  * This timer checks whether an outstanding DHCP request is timed out.
  */
 void
-dhcp_fine_tmr()
+dhcp_fine_tmr(void)
 {
   struct netif *netif = netif_list;
   /* loop through netif's */
