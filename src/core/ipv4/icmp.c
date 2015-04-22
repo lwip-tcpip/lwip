@@ -189,35 +189,35 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if(pbuf_header(p, hlen)) {
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
-       iphdr = (struct ip_hdr*)p->payload;
-       ip4_addr_copy(iphdr->src, inp->ip_addr);
-       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
-       ICMPH_TYPE_SET(iecho, ICMP_ER);
+      err_t ret;
+      iphdr = (struct ip_hdr*)p->payload;
+      ip4_addr_copy(iphdr->src, inp->ip_addr);
+      ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
+      ICMPH_TYPE_SET(iecho, ICMP_ER);
 #if CHECKSUM_GEN_ICMP
-       /* adjust the checksum */
-       if (iecho->chksum >= PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
-         iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
-       } else {
-         iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
-       }
+      /* adjust the checksum */
+      if (iecho->chksum >= PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
+        iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
+      } else {
+        iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+      }
 #else /* CHECKSUM_GEN_ICMP */
       iecho->chksum = 0;
 #endif /* CHECKSUM_GEN_ICMP */
 
-       /* Set the correct TTL and recalculate the header checksum. */
-       IPH_TTL_SET(iphdr, ICMP_TTL);
-       IPH_CHKSUM_SET(iphdr, 0);
+      /* Set the correct TTL and recalculate the header checksum. */
+      IPH_TTL_SET(iphdr, ICMP_TTL);
+      IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
       IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
 #endif /* CHECKSUM_GEN_IP */
 
-       ICMP_STATS_INC(icmp.xmit);
-       /* increase number of messages attempted to send */
-       snmp_inc_icmpoutmsgs();
-       /* increase number of echo replies attempted to send */
-       snmp_inc_icmpoutechoreps();
+      ICMP_STATS_INC(icmp.xmit);
+      /* increase number of messages attempted to send */
+      snmp_inc_icmpoutmsgs();
+      /* increase number of echo replies attempted to send */
+      snmp_inc_icmpoutechoreps();
 
-      err_t ret;
       /* send an ICMP packet, src addr is the dest addr of the current packet */
       ret = ip4_output_if(p, ip4_current_dest_addr(), IP_HDRINCL,
                    ICMP_TTL, 0, IP_PROTO_ICMP, inp);
