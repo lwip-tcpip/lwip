@@ -236,6 +236,13 @@ void dhcp_fine_tmr(void);
 #define DHCP_OVERLOAD_SNAME  2
 #define DHCP_OVERLOAD_SNAME_FILE 3
 
+#if LWIP_DHCP_GET_NTP_SRV
+/** This function must exist, in other to add offered NTP servers to
+ * the NTP (or SNTP) engine.
+ * See LWIP_DHCP_MAX_NTP_SERVERS */
+extern void dhcp_set_ntp_servers(u8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
+#endif /* LWIP_DHCP_GET_NTP_SRV */
+
 #ifdef __cplusplus
 }
 #endif

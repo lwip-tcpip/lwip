@@ -108,13 +108,6 @@
 
 #define REBOOT_TRIES 2
 
-#if LWIP_DHCP_GET_NTP_SRV
-/** This function must exist, in other to add offered NTP servers to
- * the NTP (or SNTP) engine.
- * See LWIP_DHCP_MAX_NTP_SERVERS */
-extern void dhcp_set_ntp_servers(u8_t num_ntp_servers, const ip4_addr_t* ntp_server_addrs);
-#endif /* LWIP_DHCP_GET_NTP_SRV */
-
 /** Option handling: options are parsed in dhcp_parse_reply
  * and saved in an array where other functions can load them from.
  * This might be moved into the struct dhcp (not necessarily since
