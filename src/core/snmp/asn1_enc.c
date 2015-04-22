@@ -559,7 +559,7 @@ snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, const s32_t *ident)
  * @return ERR_OK if successful, ERR_ARG if we can't (or won't) encode
  */
 err_t
-snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, u8_t *raw)
+snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, const u8_t *raw)
 {
   u16_t plen, base;
   u8_t *msg_ptr;

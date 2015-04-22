@@ -48,7 +48,7 @@ const s32_t prefix[4] = {1, 3, 6, 1};
 struct nse
 {
   /** right child */
-  struct mib_node* r_ptr;
+  const struct mib_node* r_ptr;
   /** right child identifier */
   s32_t r_id;
   /** right child next level */
@@ -65,7 +65,7 @@ static void
 push_node(const struct nse* node)
 {
   LWIP_ASSERT("node_stack_cnt < NODE_STACK_SIZE",node_stack_cnt < NODE_STACK_SIZE);
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("push_node() node=%p id=%"S32_F"\n",(void*)(node->r_ptr),node->r_id));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("push_node() node=%p id=%"S32_F"\n",(const void*)(node->r_ptr),node->r_id));
   if (node_stack_cnt < NODE_STACK_SIZE)
   {
     node_stack[node_stack_cnt] = *node;
@@ -84,7 +84,7 @@ pop_node(struct nse* node)
     node_stack_cnt--;
     *node = node_stack[node_stack_cnt];
   }
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("pop_node() node=%p id=%"S32_F"\n",(void *)(node->r_ptr),node->r_id));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("pop_node() node=%p id=%"S32_F"\n",(const void *)(node->r_ptr),node->r_id));
 }
 
 /**
@@ -449,25 +449,25 @@ snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n)
  * @param np points to the found object instance (return)
  * @return pointer to the requested parent (!) node if success, NULL otherwise
  */
-struct mib_node *
-snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np)
+const struct mib_node *
+snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np)
 {
   u8_t node_type, ext_level;
 
   ext_level = 0;
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("node==%p *ident==%"S32_F"\n",(void*)node,*ident));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("node==%p *ident==%"S32_F"\n",(const void*)node,*ident));
   while (node != NULL)
   {
     node_type = node->node_type;
     if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
     {
-      struct mib_array_node *an;
+      const struct mib_array_node *an;
       u16_t i;
 
       if (ident_len > 0)
       {
         /* array node (internal ROM or RAM, fixed length) */
-        an = (struct mib_array_node *)node;
+        an = (const struct mib_array_node *)node;
         i = 0;
         while ((i < an->maxlength) && (an->objid[i] != *ident))
         {
@@ -483,7 +483,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
                inspect remaining instance number / table index */
             np->ident_len = ident_len;
             np->ident = ident;
-            return (struct mib_node*)an;
+            return (const struct mib_node*)an;
           }
           else
           {
@@ -509,13 +509,13 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if(node_type == MIB_NODE_LR)
     {
-      struct mib_list_rootnode *lrn;
+      const struct mib_list_rootnode *lrn;
       struct mib_list_node *ln;
 
       if (ident_len > 0)
       {
         /* list root node (internal 'RAM', variable length) */
-        lrn = (struct mib_list_rootnode *)node;
+        lrn = (const struct mib_list_rootnode *)node;
         ln = lrn->head;
         /* iterate over list, head to tail */
         while ((ln != NULL) && (ln->objid != *ident))
@@ -530,7 +530,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           {
             np->ident_len = ident_len;
             np->ident = ident;
-            return (struct mib_node*)lrn;
+            return (const struct mib_node*)lrn;
           }
           else
           {
@@ -556,13 +556,13 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if(node_type == MIB_NODE_EX)
     {
-      struct mib_external_node *en;
+      const struct mib_external_node *en;
       u16_t i, len;
 
       if (ident_len > 0)
       {
         /* external node (addressing and access via functions) */
-        en = (struct mib_external_node *)node;
+        en = (const struct mib_external_node *)node;
 
         i = 0;
         len = en->level_length(en->addr_inf,ext_level);
@@ -580,7 +580,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           {
             np->ident_len = ident_len;
             np->ident = ident;
-            return (struct mib_node*)en;
+            return (const struct mib_node*)en;
           }
           else
           {
@@ -606,14 +606,14 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if (node_type == MIB_NODE_SC)
     {
-      mib_scalar_node *sn;
+      const mib_scalar_node *sn;
 
-      sn = (mib_scalar_node *)node;
+      sn = (const mib_scalar_node *)node;
       if ((ident_len == 1) && (*ident == 0))
       {
         np->ident_len = ident_len;
         np->ident = ident;
-        return (struct mib_node*)sn;
+        return (const struct mib_node*)sn;
       }
       else
       {
@@ -630,7 +630,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
   }
   /* done, found nothing */
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node==%p\n",(void*)node));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("search failed node==%p\n",(const void*)node));
   return NULL;
 }
 
@@ -638,7 +638,7 @@ snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
  * Test table for presence of at least one table entry.
  */
 static u8_t
-empty_table(struct mib_node *node)
+empty_table(const struct mib_node *node)
 {
   u8_t node_type;
   u8_t empty = 0;
@@ -648,8 +648,8 @@ empty_table(struct mib_node *node)
     node_type = node->node_type;
     if (node_type == MIB_NODE_LR)
     {
-      struct mib_list_rootnode *lrn;
-      lrn = (struct mib_list_rootnode *)node;
+      const struct mib_list_rootnode *lrn;
+      lrn = (const struct mib_list_rootnode *)node;
       if ((lrn->count == 0) || (lrn->head == NULL))
       {
         empty = 1;
@@ -657,8 +657,8 @@ empty_table(struct mib_node *node)
     }
     else if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
     {
-      struct mib_array_node *an;
-      an = (struct mib_array_node *)node;
+      const struct mib_array_node *an;
+      an = (const struct mib_array_node *)node;
       if ((an->maxlength == 0) || (an->nptr == NULL))
       {
         empty = 1;
@@ -666,8 +666,8 @@ empty_table(struct mib_node *node)
     }
     else if (node_type == MIB_NODE_EX)
     {
-      struct mib_external_node *en;
-      en = (struct mib_external_node *)node;
+      const struct mib_external_node *en;
+      en = (const struct mib_external_node *)node;
       if (en->tree_levels == 0)
       {
         empty = 1;
@@ -680,8 +680,8 @@ empty_table(struct mib_node *node)
 /**
  * Tree expansion.
  */
-struct mib_node *
-snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
+const struct mib_node *
+snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
 {
   u8_t node_type, ext_level, climb_tree;
 
@@ -694,11 +694,11 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     node_type = node->node_type;
     if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
     {
-      struct mib_array_node *an;
+      const struct mib_array_node *an;
       u16_t i;
 
       /* array node (internal ROM or RAM, fixed length) */
-      an = (struct mib_array_node *)node;
+      an = (const struct mib_array_node *)node;
       if (ident_len > 0)
       {
         i = 0;
@@ -719,7 +719,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             /* leaf node (e.g. in a fixed size table) */
             if (an->objid[i] > *ident)
             {
-              return (struct mib_node*)an;
+              return (const struct mib_node*)an;
             }
             else if ((i + 1) < an->maxlength)
             {
@@ -727,7 +727,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
               (oidret->len)--;
               oidret->id[oidret->len] = an->objid[i + 1];
               (oidret->len)++;
-              return (struct mib_node*)an;
+              return (const struct mib_node*)an;
             }
             else
             {
@@ -797,7 +797,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           if (an->nptr[j] == NULL)
           {
             /* leaf node */
-            return (struct mib_node*)an;
+            return (const struct mib_node*)an;
           }
           else
           {
@@ -814,11 +814,11 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if(node_type == MIB_NODE_LR)
     {
-      struct mib_list_rootnode *lrn;
+      const struct mib_list_rootnode *lrn;
       struct mib_list_node *ln;
 
       /* list root node (internal 'RAM', variable length) */
-      lrn = (struct mib_list_rootnode *)node;
+      lrn = (const struct mib_list_rootnode *)node;
       if (ident_len > 0)
       {
         ln = lrn->head;
@@ -837,7 +837,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             /* leaf node */
             if (ln->objid > *ident)
             {
-              return (struct mib_node*)lrn;
+              return (const struct mib_node*)lrn;
             }
             else if (ln->next != NULL)
             {
@@ -845,7 +845,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
               (oidret->len)--;
               oidret->id[oidret->len] = ln->next->objid;
               (oidret->len)++;
-              return (struct mib_node*)lrn;
+              return (const struct mib_node*)lrn;
             }
             else
             {
@@ -915,7 +915,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
           {
             /* leaf node */
             LWIP_DEBUGF(SNMP_MIB_DEBUG,("jn->nptr == NULL\n"));
-            return (struct mib_node*)lrn;
+            return (const struct mib_node*)lrn;
           }
           else
           {
@@ -932,11 +932,11 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if(node_type == MIB_NODE_EX)
     {
-      struct mib_external_node *en;
+      const struct mib_external_node *en;
       s32_t ex_id;
 
       /* external node (addressing and access via functions) */
-      en = (struct mib_external_node *)node;
+      en = (const struct mib_external_node *)node;
       if (ident_len > 0)
       {
         u16_t i, len;
@@ -961,7 +961,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
             /* leaf node */
             if (ex_id > *ident)
             {
-              return (struct mib_node*)en;
+              return (const struct mib_node*)en;
             }
             else if ((i + 1) < len)
             {
@@ -970,7 +970,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
               (oidret->len)--;
               oidret->id[oidret->len] = ex_id;
               (oidret->len)++;
-              return (struct mib_node*)en;
+              return (const struct mib_node*)en;
             }
             else
             {
@@ -1031,7 +1031,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         {
           /* leaf node */
           LWIP_DEBUGF(SNMP_MIB_DEBUG,("(ext_level + 1) == en->tree_levels\n"));
-          return (struct mib_node*)en;
+          return (const struct mib_node*)en;
         }
         else
         {
@@ -1042,10 +1042,10 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
     else if(node_type == MIB_NODE_SC)
     {
-      mib_scalar_node *sn;
+      const mib_scalar_node *sn;
 
       /* scalar node  */
-      sn = (mib_scalar_node *)node;
+      sn = (const mib_scalar_node *)node;
       if (ident_len > 0)
       {
         /* at .0 */
@@ -1058,7 +1058,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
         (oidret->len)++;
         /* leaf node */
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("completed scalar leaf\n"));
-        return (struct mib_node*)sn;
+        return (const struct mib_node*)sn;
       }
     }
     else
@@ -1100,7 +1100,7 @@ snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snm
     }
   }
   /* done, found nothing */
-  LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand failed node==%p\n",(void*)node));
+  LWIP_DEBUGF(SNMP_MIB_DEBUG,("expand failed node==%p\n",(const void*)node));
   return NULL;
 }
 

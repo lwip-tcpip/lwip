@@ -241,7 +241,7 @@ struct snmp_msg_pstat
   /* one out of MSG_EMPTY, MSG_DEMUX, MSG_INTERNAL, MSG_EXTERNAL_x */
   u8_t state;
   /* saved arguments for MSG_EXTERNAL_x */
-  struct mib_external_node *ext_mib_node;
+  const struct mib_external_node *ext_mib_node;
   struct snmp_name_ptr ext_name_ptr;
   struct obj_def ext_object_def;
   struct snmp_obj_id ext_oid;

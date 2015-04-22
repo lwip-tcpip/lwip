@@ -90,7 +90,7 @@ err_t snmp_asn1_enc_length(struct pbuf *p, u16_t ofs, u16_t length);
 err_t snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, u32_t value);
 err_t snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, s32_t value);
 err_t snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u8_t ident_len, const s32_t *ident);
-err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, u8_t *raw);
+err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, const u8_t *raw);
 
 #ifdef __cplusplus
 }

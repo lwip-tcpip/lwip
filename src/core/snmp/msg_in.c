@@ -249,7 +249,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
   if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
     struct snmp_name_ptr np;
 
     /* get_object_def() answer*/
@@ -272,7 +272,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_VALUE)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
     struct snmp_varbind *vb;
 
     /* get_value() answer */
@@ -339,7 +339,7 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   while ((msg_ps->state == SNMP_MSG_SEARCH_OBJ) &&
          (msg_ps->vb_idx < msg_ps->invb.count))
   {
-    struct mib_node *mn;
+    const struct mib_node *mn;
     struct snmp_name_ptr np;
 
     if (msg_ps->vb_idx == 0)
@@ -353,14 +353,14 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     /** test object identifier for .iso.org.dod.internet prefix */
     if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
     {
-      mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+      mn = snmp_search_tree((const struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
                              msg_ps->vb_ptr->ident + 4, &np);
       if (mn != NULL)
       {
         if (mn->node_type == MIB_NODE_EX)
         {
           /* external object */
-          struct mib_external_node *en = (struct mib_external_node*)mn;
+          const struct mib_external_node *en = (const struct mib_external_node*)mn;
 
           msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
           /* save en && args in msg_ps!! */
@@ -478,7 +478,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
   if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
 
     /* get_object_def() answer*/
     en = msg_ps->ext_mib_node;
@@ -499,7 +499,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_VALUE)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
     struct snmp_varbind *vb;
 
     /* get_value() answer */
@@ -527,7 +527,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   while ((msg_ps->state == SNMP_MSG_SEARCH_OBJ) &&
          (msg_ps->vb_idx < msg_ps->invb.count))
   {
-    struct mib_node *mn;
+    const struct mib_node *mn;
     struct snmp_obj_id oid;
 
     if (msg_ps->vb_idx == 0)
@@ -543,14 +543,14 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (msg_ps->vb_ptr->ident_len > 3)
       {
         /* can offset ident_len and ident */
-        mn = snmp_expand_tree((struct mib_node*)&internet,
+        mn = snmp_expand_tree((const struct mib_node*)&internet,
                               msg_ps->vb_ptr->ident_len - 4,
                               msg_ps->vb_ptr->ident + 4, &oid);
       }
       else
       {
         /* can't offset ident_len -4, ident + 4 */
-        mn = snmp_expand_tree((struct mib_node*)&internet, 0, NULL, &oid);
+        mn = snmp_expand_tree((const struct mib_node*)&internet, 0, NULL, &oid);
       }
     }
     else
@@ -562,7 +562,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (mn->node_type == MIB_NODE_EX)
       {
         /* external object */
-        struct mib_external_node *en = (struct mib_external_node*)mn;
+        const struct mib_external_node *en = (const struct mib_external_node*)mn;
 
         msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
         /* save en && args in msg_ps!! */
@@ -623,7 +623,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
   if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
     struct snmp_name_ptr np;
 
     /* get_object_def() answer*/
@@ -646,7 +646,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_TEST)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
 
     /* set_test() answer*/
     en = msg_ps->ext_mib_node;
@@ -676,7 +676,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_GET_OBJDEF_S)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
     struct snmp_name_ptr np;
 
     /* get_object_def() answer*/
@@ -700,7 +700,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
   else if (msg_ps->state == SNMP_MSG_EXTERNAL_SET_VALUE)
   {
-    struct mib_external_node *en;
+    const struct mib_external_node *en;
 
     /** set_value_a() */
     en = msg_ps->ext_mib_node;
@@ -716,7 +716,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   while ((msg_ps->state == SNMP_MSG_SEARCH_OBJ) &&
          (msg_ps->vb_idx < msg_ps->invb.count))
   {
-    struct mib_node *mn;
+    const struct mib_node *mn;
     struct snmp_name_ptr np;
 
     if (msg_ps->vb_idx == 0)
@@ -730,14 +730,14 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
     /** test object identifier for .iso.org.dod.internet prefix */
     if (snmp_iso_prefix_tst(msg_ps->vb_ptr->ident_len,  msg_ps->vb_ptr->ident))
     {
-      mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+      mn = snmp_search_tree((const struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
                              msg_ps->vb_ptr->ident + 4, &np);
       if (mn != NULL)
       {
         if (mn->node_type == MIB_NODE_EX)
         {
           /* external object */
-          struct mib_external_node *en = (struct mib_external_node*)mn;
+          const struct mib_external_node *en = (const struct mib_external_node*)mn;
 
           msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF;
           /* save en && args in msg_ps!! */
@@ -811,7 +811,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   while ((msg_ps->state == SNMP_MSG_INTERNAL_SET_VALUE) &&
          (msg_ps->vb_idx < msg_ps->invb.count))
   {
-    struct mib_node *mn;
+    const struct mib_node *mn;
     struct snmp_name_ptr np;
 
     if (msg_ps->vb_idx == 0)
@@ -823,7 +823,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       msg_ps->vb_ptr = msg_ps->vb_ptr->next;
     }
     /* skip iso prefix test, was done previously while settesting() */
-    mn = snmp_search_tree((struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
+    mn = snmp_search_tree((const struct mib_node*)&internet, msg_ps->vb_ptr->ident_len - 4,
                            msg_ps->vb_ptr->ident + 4, &np);
     /* check if object is still available
        (e.g. external hot-plug thingy present?) */
@@ -832,7 +832,7 @@ snmp_msg_set_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       if (mn->node_type == MIB_NODE_EX)
       {
         /* external object */
-        struct mib_external_node *en = (struct mib_external_node*)mn;
+        const struct mib_external_node *en = (const struct mib_external_node*)mn;
 
         msg_ps->state = SNMP_MSG_EXTERNAL_GET_OBJDEF_S;
         /* save en && args in msg_ps!! */

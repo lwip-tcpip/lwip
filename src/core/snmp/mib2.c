@@ -134,21 +134,21 @@ const s32_t snmp_ids[28] = {
   1, 2, 3, 4, 5, 6, 8, 9, 10, 11, 12, 13, 14, 15, 16,
   17, 18, 19, 20, 21, 22, 24, 25, 26, 27, 28, 29, 30
 };
-struct mib_node* const snmp_nodes[28] = {
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar,
-  (struct mib_node*)&snmp_scalar, (struct mib_node*)&snmp_scalar
+const struct mib_node* const snmp_nodes[28] = {
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar,
+  (const struct mib_node*)&snmp_scalar, (const struct mib_node*)&snmp_scalar
 };
 const struct mib_array_node snmp = {
   &noleafs_get_object_def,
@@ -179,10 +179,10 @@ struct mib_list_rootnode udp_root = {
   0
 };
 const s32_t udpentry_ids[2] = { 1, 2 };
-struct mib_node* const udpentry_nodes[2] = {
-  (struct mib_node*)&udp_root, (struct mib_node*)&udp_root,
+const struct mib_node* const udpentry_nodes[2] = {
+  (const struct mib_node*)&udp_root, (const struct mib_node*)&udp_root,
 };
-const struct mib_array_node udpentry = {
+struct mib_array_node udpentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -215,10 +215,10 @@ const mib_scalar_node udp_scalar = {
   0
 };
 const s32_t udp_ids[5] = { 1, 2, 3, 4, 5 };
-struct mib_node* const udp_nodes[5] = {
-  (struct mib_node*)&udp_scalar, (struct mib_node*)&udp_scalar,
-  (struct mib_node*)&udp_scalar, (struct mib_node*)&udp_scalar,
-  (struct mib_node*)&udptable
+const struct mib_node* const udp_nodes[5] = {
+  (const struct mib_node*)&udp_scalar, (const struct mib_node*)&udp_scalar,
+  (const struct mib_node*)&udp_scalar, (const struct mib_node*)&udp_scalar,
+  (const struct mib_node*)&udptable
 };
 const struct mib_array_node udp = {
   &noleafs_get_object_def,
@@ -247,12 +247,12 @@ struct mib_list_rootnode tcpconntree_root = {
   0
 };
 const s32_t tcpconnentry_ids[5] = { 1, 2, 3, 4, 5 };
-struct mib_node* const tcpconnentry_nodes[5] = {
+const struct mib_node* const tcpconnentry_nodes[5] = {
   (struct mib_node*)&tcpconntree_root, (struct mib_node*)&tcpconntree_root,
   (struct mib_node*)&tcpconntree_root, (struct mib_node*)&tcpconntree_root,
   (struct mib_node*)&tcpconntree_root
 };
-const struct mib_array_node tcpconnentry = {
+struct mib_array_node tcpconnentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -287,15 +287,15 @@ const mib_scalar_node tcp_scalar = {
   0
 };
 const s32_t tcp_ids[15] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
-struct mib_node* const tcp_nodes[15] = {
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcpconntable, (struct mib_node*)&tcp_scalar,
-  (struct mib_node*)&tcp_scalar
+const struct mib_node* const tcp_nodes[15] = {
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcpconntable, (const struct mib_node*)&tcp_scalar,
+  (const struct mib_node*)&tcp_scalar
 };
 const struct mib_array_node tcp = {
   &noleafs_get_object_def,
@@ -319,20 +319,20 @@ const mib_scalar_node icmp_scalar = {
   0
 };
 const s32_t icmp_ids[26] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 };
-struct mib_node* const icmp_nodes[26] = {
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar,
-  (struct mib_node*)&icmp_scalar, (struct mib_node*)&icmp_scalar
+const struct mib_node* const icmp_nodes[26] = {
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar,
+  (const struct mib_node*)&icmp_scalar, (const struct mib_node*)&icmp_scalar
 };
 const struct mib_array_node icmp = {
   &noleafs_get_object_def,
@@ -358,11 +358,11 @@ struct mib_list_rootnode ipntomtree_root = {
   0
 };
 const s32_t ipntomentry_ids[4] = { 1, 2, 3, 4 };
-struct mib_node* const ipntomentry_nodes[4] = {
+const struct mib_node* const ipntomentry_nodes[4] = {
   (struct mib_node*)&ipntomtree_root, (struct mib_node*)&ipntomtree_root,
   (struct mib_node*)&ipntomtree_root, (struct mib_node*)&ipntomtree_root
 };
-const struct mib_array_node ipntomentry = {
+struct mib_array_node ipntomentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -399,7 +399,7 @@ struct mib_list_rootnode iprtetree_root = {
   0
 };
 const s32_t iprteentry_ids[13] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
-struct mib_node* const iprteentry_nodes[13] = {
+const struct mib_node* const iprteentry_nodes[13] = {
   (struct mib_node*)&iprtetree_root, (struct mib_node*)&iprtetree_root,
   (struct mib_node*)&iprtetree_root, (struct mib_node*)&iprtetree_root,
   (struct mib_node*)&iprtetree_root, (struct mib_node*)&iprtetree_root,
@@ -408,7 +408,7 @@ struct mib_node* const iprteentry_nodes[13] = {
   (struct mib_node*)&iprtetree_root, (struct mib_node*)&iprtetree_root,
   (struct mib_node*)&iprtetree_root
 };
-const struct mib_array_node iprteentry = {
+struct mib_array_node iprteentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -445,14 +445,14 @@ struct mib_list_rootnode ipaddrtree_root = {
   0
 };
 const s32_t ipaddrentry_ids[5] = { 1, 2, 3, 4, 5 };
-struct mib_node* const ipaddrentry_nodes[5] = {
-  (struct mib_node*)&ipaddrtree_root,
-  (struct mib_node*)&ipaddrtree_root,
-  (struct mib_node*)&ipaddrtree_root,
-  (struct mib_node*)&ipaddrtree_root,
-  (struct mib_node*)&ipaddrtree_root
+const struct mib_node* const ipaddrentry_nodes[5] = {
+  (const struct mib_node*)&ipaddrtree_root,
+  (const struct mib_node*)&ipaddrtree_root,
+  (const struct mib_node*)&ipaddrtree_root,
+  (const struct mib_node*)&ipaddrtree_root,
+  (const struct mib_node*)&ipaddrtree_root
 };
-const struct mib_array_node ipaddrentry = {
+struct mib_array_node ipaddrentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -486,19 +486,19 @@ const mib_scalar_node ip_scalar = {
   0
 };
 const s32_t ip_ids[23] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23 };
-struct mib_node* const ip_nodes[23] = {
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ip_scalar,
-  (struct mib_node*)&ip_scalar, (struct mib_node*)&ipaddrtable,
-  (struct mib_node*)&iprtetable, (struct mib_node*)&ipntomtable,
-  (struct mib_node*)&ip_scalar
+const struct mib_node* const ip_nodes[23] = {
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ip_scalar,
+  (const struct mib_node*)&ip_scalar, (const struct mib_node*)&ipaddrtable,
+  (const struct mib_node*)&iprtetable, (const struct mib_node*)&ipntomtable,
+  (const struct mib_node*)&ip_scalar
 };
 const struct mib_array_node mib2_ip = {
   &noleafs_get_object_def,
@@ -524,10 +524,10 @@ struct mib_list_rootnode arptree_root = {
   0
 };
 const s32_t atentry_ids[3] = { 1, 2, 3 };
-struct mib_node* const atentry_nodes[3] = {
-  (struct mib_node*)&arptree_root,
-  (struct mib_node*)&arptree_root,
-  (struct mib_node*)&arptree_root
+const struct mib_node* const atentry_nodes[3] = {
+  (const struct mib_node*)&arptree_root,
+  (const struct mib_node*)&arptree_root,
+  (const struct mib_node*)&arptree_root
 };
 const struct mib_array_node atentry = {
   &noleafs_get_object_def,
@@ -541,8 +541,8 @@ const struct mib_array_node atentry = {
 };
 
 const s32_t attable_id = 1;
-struct mib_node* const attable_node = (struct mib_node*)&atentry;
-const struct mib_array_node attable = {
+const struct mib_node* const attable_node = (const struct mib_node*)&atentry;
+struct mib_array_node attable = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -585,20 +585,20 @@ struct mib_list_rootnode iflist_root = {
   0
 };
 const s32_t ifentry_ids[22] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22 };
-struct mib_node* const ifentry_nodes[22] = {
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root,
-  (struct mib_node*)&iflist_root, (struct mib_node*)&iflist_root
+const struct mib_node* const ifentry_nodes[22] = {
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root,
+  (const struct mib_node*)&iflist_root, (const struct mib_node*)&iflist_root
 };
-const struct mib_array_node ifentry = {
+struct mib_array_node ifentry = {
   &noleafs_get_object_def,
   &noleafs_get_value,
   &noleafs_set_test,
@@ -632,8 +632,8 @@ const mib_scalar_node interfaces_scalar = {
   0
 };
 const s32_t interfaces_ids[2] = { 1, 2 };
-struct mib_node* const interfaces_nodes[2] = {
-  (struct mib_node*)&interfaces_scalar, (struct mib_node*)&iftable
+const struct mib_node* const interfaces_nodes[2] = {
+  (const struct mib_node*)&interfaces_scalar, (const struct mib_node*)&iftable
 };
 const struct mib_array_node interfaces = {
   &noleafs_get_object_def,
@@ -658,11 +658,11 @@ const mib_scalar_node sys_tem_scalar = {
   0
 };
 const s32_t sys_tem_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
-struct mib_node* const sys_tem_nodes[7] = {
-  (struct mib_node*)&sys_tem_scalar, (struct mib_node*)&sys_tem_scalar,
-  (struct mib_node*)&sys_tem_scalar, (struct mib_node*)&sys_tem_scalar,
-  (struct mib_node*)&sys_tem_scalar, (struct mib_node*)&sys_tem_scalar,
-  (struct mib_node*)&sys_tem_scalar
+const struct mib_node* const sys_tem_nodes[7] = {
+  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
+  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
+  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
+  (const struct mib_node*)&sys_tem_scalar
 };
 /* work around name issue with 'sys_tem', some compiler(s?) seem to reserve 'system' */
 const struct mib_array_node sys_tem = {
@@ -695,17 +695,17 @@ const s32_t mib2_ids[MIB2_GROUPS] =
   7,
   11
 };
-struct mib_node* const mib2_nodes[MIB2_GROUPS] = {
-  (struct mib_node*)&sys_tem,
-  (struct mib_node*)&interfaces,
-  (struct mib_node*)&at,
-  (struct mib_node*)&mib2_ip,
-  (struct mib_node*)&icmp,
+const struct mib_node* const mib2_nodes[MIB2_GROUPS] = {
+  (const struct mib_node*)&sys_tem,
+  (const struct mib_node*)&interfaces,
+  (const struct mib_node*)&at,
+  (const struct mib_node*)&mib2_ip,
+  (const struct mib_node*)&icmp,
 #if LWIP_TCP
-  (struct mib_node*)&tcp,
+  (const struct mib_node*)&tcp,
 #endif
-  (struct mib_node*)&udp,
-  (struct mib_node*)&snmp
+  (const struct mib_node*)&udp,
+  (const struct mib_node*)&snmp
 };
 
 const struct mib_array_node mib2 = {
@@ -721,7 +721,7 @@ const struct mib_array_node mib2 = {
 
 /* mgmt .1.3.6.1.2 */
 const s32_t mgmt_ids[1] = { 1 };
-struct mib_node* const mgmt_nodes[1] = { (struct mib_node*)&mib2 };
+const struct mib_node* const mgmt_nodes[1] = { (const struct mib_node*)&mib2 };
 const struct mib_array_node mgmt = {
   &noleafs_get_object_def,
   &noleafs_get_value,
@@ -751,7 +751,7 @@ const struct mib_array_node internet = {
 };
 #else
 const s32_t internet_ids[1] = { 2 };
-struct mib_node* const internet_nodes[1] = { (struct mib_node*)&mgmt };
+const struct mib_node* const internet_nodes[1] = { (const struct mib_node*)&mgmt };
 const struct mib_array_node internet = {
   &noleafs_get_object_def,
   &noleafs_get_value,
@@ -777,24 +777,24 @@ static const u8_t sysdescr_len_default = 4;
 static const u8_t sysdescr_default[] = "lwIP";
 static const u8_t* sysdescr_len_ptr = &sysdescr_len_default;
 static const u8_t* sysdescr_ptr = &sysdescr_default[0];
-/** mib-2.system.sysContact */
-static const u8_t syscontact_len_default = 0;
-static const u8_t syscontact_default[] = "";
-static u8_t* syscontact_len_ptr = (u8_t*)&syscontact_len_default;
-static u8_t* syscontact_ptr = (u8_t*)&syscontact_default[0];
-/** mib-2.system.sysName */
-static const u8_t sysname_len_default = 8;
-static const u8_t sysname_default[] = "FQDN-unk";
-static u8_t* sysname_len_ptr = (u8_t*)&sysname_len_default;
-static u8_t* sysname_ptr = (u8_t*)&sysname_default[0];
-/** mib-2.system.sysLocation */
-static const u8_t syslocation_len_default = 0;
-static const u8_t syslocation_default[] = "";
-static u8_t* syslocation_len_ptr = (u8_t*)&syslocation_len_default;
-static u8_t* syslocation_ptr = (u8_t*)&syslocation_default[0];
-/** mib-2.snmp.snmpEnableAuthenTraps */
-static const u8_t snmpenableauthentraps_default = 2; /* disabled */
-static u8_t* snmpenableauthentraps_ptr = (u8_t*)&snmpenableauthentraps_default;
+/** mib-2.system.sysContact @todo: this design is broken (SNMP-set writes without known buffer size) */
+static u8_t syscontact_len_default = 0;
+static u8_t syscontact_default[] = "";
+static u8_t* syscontact_len_ptr = &syscontact_len_default;
+static u8_t* syscontact_ptr = &syscontact_default[0];
+/** mib-2.system.sysName @todo: this design is broken (SNMP-set writes without known buffer size) */
+static u8_t sysname_len_default = 8;
+static u8_t sysname_default[] = "FQDN-unk";
+static u8_t* sysname_len_ptr = &sysname_len_default;
+static u8_t* sysname_ptr = &sysname_default[0];
+/** mib-2.system.sysLocation @todo: this design is broken (SNMP-set writes without known buffer size) */
+static u8_t syslocation_len_default = 0;
+static u8_t syslocation_default[] = "";
+static u8_t* syslocation_len_ptr = &syslocation_len_default;
+static u8_t* syslocation_ptr = &syslocation_default[0];
+/** mib-2.snmp.snmpEnableAuthenTraps @todo: this design is broken (SNMP-set writes without known buffer size) */
+static u8_t snmpenableauthentraps_default = 2; /* disabled */
+static u8_t* snmpenableauthentraps_ptr = &snmpenableauthentraps_default;
 
 /** mib-2.interfaces.ifTable.ifEntry.ifSpecific (zeroDotZero) */
 static const struct snmp_obj_id ifspecific = {2, {0, 0}};

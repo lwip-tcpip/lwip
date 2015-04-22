@@ -138,7 +138,7 @@ struct mib_array_node
 
   /* additional struct members */
   const s32_t *objid;
-  struct mib_node* const *nptr;
+  const struct mib_node* const *nptr;
 };
 
 /** derived node, points to a fixed size mem_malloced array
@@ -254,8 +254,8 @@ s8_t snmp_mib_node_insert(struct mib_list_rootnode *rn, s32_t objid, struct mib_
 s8_t snmp_mib_node_find(struct mib_list_rootnode *rn, s32_t objid, struct mib_list_node **fn);
 struct mib_list_rootnode *snmp_mib_node_delete(struct mib_list_rootnode *rn, struct mib_list_node *n);
 
-struct mib_node* snmp_search_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np);
-struct mib_node* snmp_expand_tree(struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
+const struct mib_node* snmp_search_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_name_ptr *np);
+const struct mib_node* snmp_expand_tree(const struct mib_node *node, u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 
