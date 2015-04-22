@@ -161,27 +161,6 @@ igmp_init(void)
   IP4_ADDR(&allrouters, 224, 0, 0, 2);
 }
 
-#ifdef LWIP_DEBUG
-/**
- * Dump global IGMP groups list
- */
-void
-igmp_dump_group_list()
-{ 
-  struct igmp_group *group = igmp_group_list;
-
-  while (group != NULL) {
-    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_dump_group_list: [%"U32_F"] ", (u32_t)(group->group_state)));
-    ip4_addr_debug_print(IGMP_DEBUG, &group->group_address);
-    LWIP_DEBUGF(IGMP_DEBUG, (" on if %p\n", group->netif));
-    group = group->next;
-  }
-  LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-}
-#else
-#define igmp_dump_group_list()
-#endif /* LWIP_DEBUG */
-
 /**
  * Start IGMP processing on interface
  *
@@ -203,7 +182,7 @@ igmp_start(struct netif *netif)
     /* Allow the igmp messages at the MAC level */
     if (netif->igmp_mac_filter != NULL) {
       LWIP_DEBUGF(IGMP_DEBUG, ("igmp_start: igmp_mac_filter(ADD "));
-      ip4_addr_debug_print(IGMP_DEBUG, &allsystems);
+      ip4_addr_debug_print_val(IGMP_DEBUG, allsystems);
       LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", netif));
       netif->igmp_mac_filter(netif, &allsystems, IGMP_ADD_MAC_FILTER);
     }
