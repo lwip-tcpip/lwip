@@ -404,7 +404,7 @@ snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
   snmp_asn1_enc_length_cnt(thl->pdulen, &thl->pdulenlen);
   tot_len += 1 + thl->pdulenlen;
 
-  thl->comlen = strlen(snmp_community_trap);
+  thl->comlen = (u16_t)strlen(snmp_community_trap);
   snmp_asn1_enc_length_cnt(thl->comlen, &thl->comlenlen);
   tot_len += 1 + thl->comlenlen + thl->comlen;
 
