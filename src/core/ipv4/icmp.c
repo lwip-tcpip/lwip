@@ -81,14 +81,15 @@ icmp_input(struct pbuf *p, struct netif *inp)
   u8_t code;
 #endif /* LWIP_DEBUG */
   struct icmp_echo_hdr *iecho;
+  const struct ip_hdr *iphdr_in;
   struct ip_hdr *iphdr;
   s16_t hlen;
 
   ICMP_STATS_INC(icmp.recv);
   snmp_inc_icmpinmsgs();
 
-  iphdr = (struct ip_hdr *)ip4_current_header();
-  hlen = IPH_HL(iphdr) * 4;
+  iphdr_in = ip4_current_header();
+  hlen = IPH_HL(iphdr_in) * 4;
   if (p->len < sizeof(u16_t)*2) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: short ICMP (%"U16_F" bytes) received\n", p->tot_len));
     goto lenerr;
@@ -157,7 +158,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("check that first pbuf can hold struct the ICMP header",
                   (r->len >= hlen + sizeof(struct icmp_echo_hdr)));
       /* copy the ip header */
-      MEMCPY(r->payload, iphdr, hlen);
+      MEMCPY(r->payload, iphdr_in, hlen);
       iphdr = (struct ip_hdr *)r->payload;
       /* switch r->payload back to icmp header */
       if (pbuf_header(r, -hlen)) {
@@ -185,36 +186,37 @@ icmp_input(struct pbuf *p, struct netif *inp)
     /* We generate an answer by switching the dest and src ip addresses,
      * setting the icmp type to ECHO_RESPONSE and updating the checksum. */
     iecho = (struct icmp_echo_hdr *)p->payload;
-    ip4_addr_copy(iphdr->src, inp->ip_addr);
-    ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
-    ICMPH_TYPE_SET(iecho, ICMP_ER);
-#if CHECKSUM_GEN_ICMP
-    /* adjust the checksum */
-    if (iecho->chksum >= PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
-      iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
-    } else {
-      iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
-    }
-#else /* CHECKSUM_GEN_ICMP */
-    iecho->chksum = 0;
-#endif /* CHECKSUM_GEN_ICMP */
-
-    /* Set the correct TTL and recalculate the header checksum. */
-    IPH_TTL_SET(iphdr, ICMP_TTL);
-    IPH_CHKSUM_SET(iphdr, 0);
-#if CHECKSUM_GEN_IP
-    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
-#endif /* CHECKSUM_GEN_IP */
-
-    ICMP_STATS_INC(icmp.xmit);
-    /* increase number of messages attempted to send */
-    snmp_inc_icmpoutmsgs();
-    /* increase number of echo replies attempted to send */
-    snmp_inc_icmpoutechoreps();
-
     if(pbuf_header(p, hlen)) {
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
+       iphdr = (struct ip_hdr*)p->payload;
+       ip4_addr_copy(iphdr->src, inp->ip_addr);
+       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
+       ICMPH_TYPE_SET(iecho, ICMP_ER);
+#if CHECKSUM_GEN_ICMP
+       /* adjust the checksum */
+       if (iecho->chksum >= PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
+         iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
+       } else {
+         iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+       }
+#else /* CHECKSUM_GEN_ICMP */
+      iecho->chksum = 0;
+#endif /* CHECKSUM_GEN_ICMP */
+
+       /* Set the correct TTL and recalculate the header checksum. */
+       IPH_TTL_SET(iphdr, ICMP_TTL);
+       IPH_CHKSUM_SET(iphdr, 0);
+#if CHECKSUM_GEN_IP
+      IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+#endif /* CHECKSUM_GEN_IP */
+
+       ICMP_STATS_INC(icmp.xmit);
+       /* increase number of messages attempted to send */
+       snmp_inc_icmpoutmsgs();
+       /* increase number of echo replies attempted to send */
+       snmp_inc_icmpoutechoreps();
+
       err_t ret;
       /* send an ICMP packet, src addr is the dest addr of the current packet */
       ret = ip4_output_if(p, ip4_current_dest_addr(), IP_HDRINCL,

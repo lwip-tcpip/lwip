@@ -119,6 +119,19 @@ struct pbuf {
   u16_t ref;
 };
 
+
+/** Helper struct for const-correctness only.
+ * The only meaning of this one is to provide a const payload pointer
+ * for PBUF_ROM type.
+ */
+struct pbuf_rom {
+  /** next pbuf in singly linked pbuf chain */
+  struct pbuf *next;
+
+  /** pointer to the actual data in the buffer */
+  const void *payload;
+};
+
 #if LWIP_SUPPORT_CUSTOM_PBUF
 /** Prototype for a function to free a custom pbuf */
 typedef void (*pbuf_free_custom_fn)(struct pbuf *p);

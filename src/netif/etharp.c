@@ -427,7 +427,7 @@ etharp_find_entry(const ip4_addr_t *ipaddr, u8_t flags, struct netif* netif)
  * @return ERR_OK if the packet was sent, any other err_t on failure
  */
 static err_t
-etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, struct eth_addr *dst)
+etharp_send_ip(struct netif *netif, struct pbuf *p, struct eth_addr *src, const struct eth_addr *dst)
 {
   struct eth_hdr *ethhdr = (struct eth_hdr *)p->payload;
 #if ETHARP_SUPPORT_VLAN && defined(LWIP_HOOK_VLAN_SET)
@@ -819,7 +819,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* If we are using Link-Local, all ARP packets that contain a Link-Local
        * 'sender IP address' MUST be sent using link-layer broadcast instead of
        * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-      ethdst_hwaddr = ip4_addr_islinklocal(&netif->ip_addr) ? (u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
+      ethdst_hwaddr = ip4_addr_islinklocal(&netif->ip_addr) ? (const u8_t*)(ethbroadcast.addr) : hdr->shwaddr.addr;
 #endif /* LWIP_AUTOIP */
 
       ETHADDR16_COPY(&hdr->dhwaddr, &hdr->shwaddr);
@@ -916,7 +916,7 @@ etharp_output_to_arp_index(struct netif *netif, struct pbuf *q, u8_t arp_idx)
 err_t
 etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 {
-  struct eth_addr *dest;
+  const struct eth_addr *dest;
   struct eth_addr mcastaddr;
   const ip4_addr_t *dst_addr = ipaddr;
 
@@ -943,7 +943,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
   /* broadcast destination IP address? */
   if (ip4_addr_isbroadcast(ipaddr, netif)) {
     /* broadcast on Ethernet also */
-    dest = (struct eth_addr *)&ethbroadcast;
+    dest = (const struct eth_addr *)&ethbroadcast;
   /* multicast destination IP address? */
   } else if (ip4_addr_ismulticast(ipaddr)) {
     /* Hash IP multicast address to MAC address.*/
@@ -1288,7 +1288,7 @@ etharp_raw(struct netif *netif, const struct eth_addr *ethsrc_addr,
   /* If we are using Link-Local, all ARP packets that contain a Link-Local
    * 'sender IP address' MUST be sent using link-layer broadcast instead of
    * link-layer unicast. (See RFC3927 Section 2.5, last paragraph) */
-  ethdst_hwaddr = ip4_addr_islinklocal(ipsrc_addr) ? (u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
+  ethdst_hwaddr = ip4_addr_islinklocal(ipsrc_addr) ? (const u8_t*)(ethbroadcast.addr) : ethdst_addr->addr;
 #endif /* LWIP_AUTOIP */
   /* Write the ARP MAC-Addresses */
   ETHADDR16_COPY(&hdr->shwaddr, hwsrc_addr);

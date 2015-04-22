@@ -70,7 +70,7 @@
 extern "C" {
 #endif
 
-u16_t inet_chksum(void *dataptr, u16_t len);
+u16_t inet_chksum(const void *dataptr, u16_t len);
 u16_t inet_chksum_pbuf(struct pbuf *p);
 #if LWIP_CHKSUM_COPY_ALGORITHM
 u16_t lwip_chksum_copy(void *dst, const void *src, u16_t len);

@@ -1419,7 +1419,7 @@ static err_t
 lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
 {
   err_t err;
-  void *dataptr;
+  const void *dataptr;
   u16_t len, available;
   u8_t write_finished = 0;
   size_t diff;
@@ -1454,7 +1454,7 @@ lwip_netconn_do_writemore(struct netconn *conn  WRITE_DELAYED_PARAM)
   } else
 #endif /* LWIP_SO_SNDTIMEO */
   {
-    dataptr = (u8_t*)conn->current_msg->msg.w.dataptr + conn->write_offset;
+    dataptr = (const u8_t*)conn->current_msg->msg.w.dataptr + conn->write_offset;
     diff = conn->current_msg->msg.w.len - conn->write_offset;
     if (diff > 0xffffUL) { /* max_u16_t */
       len = 0xffff;

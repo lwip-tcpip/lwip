@@ -125,7 +125,10 @@ struct lwip_setgetsockopt_data {
 #if LWIP_MPU_COMPATIBLE
   u8_t optval[LWIP_SETGETSOCKOPT_MAXOPTLEN];
 #else
-  void* optval;
+  union {
+     void *p;
+     const void *pc;
+  } optval;
 #endif
   /** size of *optval */
   socklen_t optlen;

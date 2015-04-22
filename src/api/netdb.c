@@ -92,6 +92,7 @@ lwip_gethostbyname(const char *name)
   HOSTENT_STORAGE char *s_aliases;
   HOSTENT_STORAGE ip_addr_t s_hostent_addr;
   HOSTENT_STORAGE ip_addr_t *s_phostent_addr[2];
+  HOSTENT_STORAGE char s_hostname[DNS_MAX_NAME_LENGTH + 1];
 
   /* query host IP address */
   err = netconn_gethostbyname(name, &addr);
@@ -105,7 +106,9 @@ lwip_gethostbyname(const char *name)
   s_hostent_addr = addr;
   s_phostent_addr[0] = &s_hostent_addr;
   s_phostent_addr[1] = NULL;
-  s_hostent.h_name = (char*)name;
+  strncpy(s_hostname, name, DNS_MAX_NAME_LENGTH);
+  s_hostname[DNS_MAX_NAME_LENGTH] = 0;
+  s_hostent.h_name = s_hostname;
   s_aliases = NULL;
   s_hostent.h_aliases = &s_aliases;
   s_hostent.h_addrtype = AF_INET;

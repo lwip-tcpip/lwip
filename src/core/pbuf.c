@@ -1098,7 +1098,7 @@ pbuf_take(struct pbuf *buf, const void *dataptr, u16_t len)
       buf_copy_len = p->len;
     }
     /* copy the necessary parts of the buffer */
-    MEMCPY(p->payload, &((char*)dataptr)[copied_total], buf_copy_len);
+    MEMCPY(p->payload, &((const char*)dataptr)[copied_total], buf_copy_len);
     total_copy_len -= buf_copy_len;
     copied_total += buf_copy_len;
   }
@@ -1124,7 +1124,7 @@ pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
   /* return requested data if pbuf is OK */
   if ((q != NULL) && (q->tot_len >= target_offset + len)) {
     u16_t remaining_len = len;
-    u8_t* src_ptr = (u8_t*)dataptr;
+    const u8_t* src_ptr = (const u8_t*)dataptr;
     if (target_offset > 0) {
       /* copy the part that goes into the first pbuf */
       u16_t first_copy_len = LWIP_MIN(q->len - target_offset, len);
@@ -1276,7 +1276,7 @@ pbuf_memcmp(struct pbuf* p, u16_t offset, const void* s2, u16_t n)
     u16_t i;
     for(i = 0; i < n; i++) {
       u8_t a = pbuf_get_at(q, start + i);
-      u8_t b = ((u8_t*)s2)[i];
+      u8_t b = ((const u8_t*)s2)[i];
       if (a != b) {
         return i+1;
       }
