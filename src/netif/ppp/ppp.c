@@ -341,7 +341,7 @@ ppp_close(ppp_pcb *pcb, u8_t nocarrier)
  * Return 0 on success, an error code on failure.
  */
 err_t ppp_free(ppp_pcb *pcb) {
-  int err;
+  err_t err;
   if (pcb->phase != PPP_PHASE_DEAD) {
     return ERR_CONN;
   }
