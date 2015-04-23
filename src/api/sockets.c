@@ -499,28 +499,6 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   /* Prevent automatic window updates, we do this on our own! */
   netconn_set_noautorecved(newconn, 1);
 
-  /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
-   * not be NULL if addr is valid.
-   */
-  if (addr != NULL) {
-    union sockaddr_aligned tempaddr;
-    /* get the IP address and port of the remote host */
-    err = netconn_peer(newconn, &naddr, &port);
-    if (err != ERR_OK) {
-      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_peer failed, err=%d\n", s, err));
-      netconn_delete(newconn);
-      sock_set_errno(sock, err_to_errno(err));
-      return -1;
-    }
-    LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
-
-    IPADDR_PORT_TO_SOCKADDR(&tempaddr, &naddr, port);
-    if (*addrlen > tempaddr.sa.sa_len) {
-      *addrlen = tempaddr.sa.sa_len;
-    }
-    MEMCPY(addr, &tempaddr, *addrlen);
-  }
-
   newsock = alloc_socket(newconn, 1);
   if (newsock == -1) {
     netconn_delete(newconn);
@@ -541,11 +519,32 @@ lwip_accept(int s, struct sockaddr *addr, socklen_t *addrlen)
   newconn->socket = newsock;
   SYS_ARCH_UNPROTECT(lev);
 
-  LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d", s, newsock));
+  /* Note that POSIX only requires us to check addr is non-NULL. addrlen must
+   * not be NULL if addr is valid.
+   */
   if (addr != NULL) {
-    LWIP_DEBUGF(SOCKETS_DEBUG, (" addr="));
+    union sockaddr_aligned tempaddr;
+    /* get the IP address and port of the remote host */
+    err = netconn_peer(newconn, &naddr, &port);
+    if (err != ERR_OK) {
+      LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d): netconn_peer failed, err=%d\n", s, err));
+      netconn_delete(newconn);
+      sock_set_errno(sock, err_to_errno(err));
+      return -1;
+    }
+    LWIP_ASSERT("addr valid but addrlen NULL", addrlen != NULL);
+
+    IPADDR_PORT_TO_SOCKADDR(&tempaddr, &naddr, port);
+    if (*addrlen > tempaddr.sa.sa_len) {
+      *addrlen = tempaddr.sa.sa_len;
+    }
+    MEMCPY(addr, &tempaddr, *addrlen);
+
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d addr=", s, newsock));
     ip_addr_debug_print_val(SOCKETS_DEBUG, naddr);
     LWIP_DEBUGF(SOCKETS_DEBUG, (" port=%"U16_F"\n", port));
+  } else {
+    LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_accept(%d) returning new sock=%d", s, newsock));
   }
 
   sock_set_errno(sock, 0);

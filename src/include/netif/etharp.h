@@ -123,6 +123,16 @@ PACK_STRUCT_END
 #define ETHTYPE_PTP       0x88F7U  /* Precision time protocol */
 #define ETHTYPE_QINQ      0x9100U  /* Q-in-Q, 802.1ad */
 
+/** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(pbuf, netif, type)
+ * to a filter function that returns the correct netif when using multiple
+ * netifs on one hardware interface where the netif's low-level receive
+ * routine cannot decide for the correct netif (e.g. when mapping multiple
+ * IP addresses to one hardware interface).
+ */
+#ifndef LWIP_ARP_FILTER_NETIF
+#define LWIP_ARP_FILTER_NETIF 0
+#endif
+
 #if LWIP_IPV4 && LWIP_ARP /* don't build if not configured for use in lwipopts.h */
 
 #ifdef PACK_STRUCT_USE_INCLUDES
@@ -173,16 +183,6 @@ PACK_STRUCT_END
 /** ARP message types (opcodes) */
 #define ARP_REQUEST 1
 #define ARP_REPLY   2
-
-/** Define this to 1 and define LWIP_ARP_FILTER_NETIF_FN(pbuf, netif, type)
- * to a filter function that returns the correct netif when using multiple
- * netifs on one hardware interface where the netif's low-level receive
- * routine cannot decide for the correct netif (e.g. when mapping multiple
- * IP addresses to one hardware interface).
- */
-#ifndef LWIP_ARP_FILTER_NETIF
-#define LWIP_ARP_FILTER_NETIF 0
-#endif
 
 #if ARP_QUEUEING
 /** struct for queueing outgoing packets for unknown address
