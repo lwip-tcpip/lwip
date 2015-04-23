@@ -260,7 +260,7 @@ ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage)
     return NULL;
   }
   ip6_addr_copy(storage->addr.ip6, *ip6addr);
-  IP_SET_TYPE_L(storage, IPADDR_TYPE_V6);
+  IP_SET_TYPE_VAL(*storage, IPADDR_TYPE_V6);
   return storage;
 }
 
@@ -280,20 +280,20 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
       if (*c == '.') {
         /* contains a dot: IPv4 address */
         if (addr) {
-          IP_SET_TYPE_L(addr, IPADDR_TYPE_V4);
+          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
         }
         return ip4addr_aton(cp, ip_2_ip4(addr));
       } else if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {
-          IP_SET_TYPE_L(addr, IPADDR_TYPE_V6);
+          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V6);
         }
         return ip6addr_aton(cp, ip_2_ip6(addr));
       }
     }
     /* nothing found, call ip4addr_aton as fallback */
     if (addr) {
-      IP_SET_TYPE_L(addr, IPADDR_TYPE_V4);
+      IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
     }
     return ip4addr_aton(cp, ip_2_ip4(addr));
   }

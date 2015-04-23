@@ -3911,7 +3911,7 @@ udpentry_get_value(struct obj_def *od, u16_t len, void *value)
 
   LWIP_UNUSED_ARG(len);
   snmp_oidtoip(&od->id_inst_ptr[1], ip_2_ip4(&ip));
-  IP_SET_TYPE(&ip, IPADDR_TYPE_V4);
+  IP_SET_TYPE_VAL(ip, IPADDR_TYPE_V4);
   LWIP_ASSERT("invalid port", (od->id_inst_ptr[5] >= 0) && (od->id_inst_ptr[5] <= 0xffff));
   port = (u16_t)od->id_inst_ptr[5];
 

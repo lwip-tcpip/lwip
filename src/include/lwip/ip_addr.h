@@ -58,13 +58,13 @@ typedef struct _ip_addr {
 #define IPADDR_TYPE_V4                0U
 #define IPADDR_TYPE_V6                6U
 
-#define IPADDR4_INIT(u32val)          { { { u32val, 0ul, 0ul, 0ul } }, IPADDR_TYPE_V4 }
-#define IPADDR6_INIT(a, b, c, d)      { { { a, b, c, d } }, IPADDR_TYPE_V6 }
+#define IPADDR4_INIT(u32val)          { { { { u32val, 0ul, 0ul, 0ul } } }, IPADDR_TYPE_V4 }
+#define IPADDR6_INIT(a, b, c, d)      { { { { a, b, c, d } } }, IPADDR_TYPE_V6 }
 
 #define IP_IS_V6_VAL(ipaddr)          ((ipaddr).type == IPADDR_TYPE_V6)
 #define IP_IS_V6(ipaddr)              (((ipaddr) != NULL) && IP_IS_V6_VAL(*(ipaddr)))
-#define IP_SET_TYPE_L(ipaddr, iptype) do { (ipaddr)->type = (iptype); }while(0)
-#define IP_SET_TYPE(ipaddr, iptype)   do { if((ipaddr) != NULL) { IP_SET_TYPE_L(ipaddr, iptype); }}while(0)
+#define IP_SET_TYPE_VAL(ipaddr, iptype) do { (ipaddr).type = (iptype); }while(0)
+#define IP_SET_TYPE(ipaddr, iptype)     do { if((ipaddr) != NULL) { IP_SET_TYPE_VAL(*(ipaddr), iptype); }}while(0)
 
 #define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (PCB_ISIPV6(pcb) == IP_IS_V6(ipaddr))
 
@@ -84,17 +84,17 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #endif /* LWIP_ALLOW_STATIC_FN_IN_HEADER */
 
 #define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \
-                                           IP_SET_TYPE_L(ipaddr, IPADDR_TYPE_V4); } while(0)
+                                           IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V4); } while(0)
 #define IP_ADDR6(ipaddr,idx,a,b,c,d)  do { IP6_ADDR(ip_2_ip6(ipaddr),idx,a,b,c,d); \
-                                           IP_SET_TYPE_L(ipaddr, IPADDR_TYPE_V6); } while(0)
+                                           IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
 
 #define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(src)){ \
-  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V6); }else{ \
-  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V4); }}while(0)
+  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
-  ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V6); }while(0)
+  ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
 #define ip_addr_copy_from_ip4(dest, src)      do{ \
-  ip4_addr_copy(*ip_2_ip4(&(dest)), src); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V4); }while(0)
+  ip4_addr_copy(*ip_2_ip4(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }while(0)
 #define ip_addr_set_ip4_u32(ipaddr, val)  do{if(ipaddr){ip4_addr_set_u32(ip_2_ip4(ipaddr), val); \
   IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_get_ip4_u32(ipaddr)  (((ipaddr) && !IP_IS_V6(ipaddr)) ? \
@@ -122,7 +122,7 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #define ip_addr_netcmp(addr1, addr2, mask) ((IP_IS_V6(addr1) && IP_IS_V6(addr2)) ? \
   0 : \
   ip4_addr_netcmp(ip_2_ip4(addr1), ip_2_ip4(addr2), mask))
-#define ip_addr_cmp(addr1, addr2)    ((IP_IS_V6(addr1) != IP_IS_V6(addr2)) ? 0 : (IP_IS_V6(addr1) ? \
+#define ip_addr_cmp(addr1, addr2)    ((IP_IS_V6_VAL(*(addr1)) != IP_IS_V6_VAL(*(addr2))) ? 0 : (IP_IS_V6_VAL(*(addr1)) ? \
   ip6_addr_cmp(ip_2_ip6(addr1), ip_2_ip6(addr2)) : \
   ip4_addr_cmp(ip_2_ip4(addr1), ip_2_ip4(addr2))))
 #define ip_addr_isany(ipaddr)        ((IP_IS_V6(ipaddr)) ? \
@@ -165,7 +165,7 @@ typedef ip4_addr_t ip_addr_t;
 #define IPADDR4_INIT(u32val)                    { u32val }
 #define IP_IS_V6_VAL(ipaddr)                    0
 #define IP_IS_V6(ipaddr)                        0
-#define IP_SET_TYPE_L(ipaddr, iptype)
+#define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip4_2_ip(ipaddr, unused)                (ipaddr)
 #define ip_2_ip4(ipaddr)                        (ipaddr)
@@ -202,7 +202,7 @@ typedef ip6_addr_t ip_addr_t;
 #define IPADDR6_INIT(a, b, c, d)                { a, b, c, d }
 #define IP_IS_V6_VAL(ipaddr)                    1
 #define IP_IS_V6(ipaddr)                        1
-#define IP_SET_TYPE_L(ipaddr, iptype)
+#define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip6_2_ip(ipaddr, unused)                (ipaddr)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
@@ -259,11 +259,11 @@ extern const ip_addr_t ip6_addr_any;
 /** IP6_ADDR_ANY can be used as a fixed ip_addr_t
  *  for the IPv6 wildcard address
  */
-#define IP6_ADDR_ANY   ((ip_addr_t*)&ip6_addr_any)
+#define IP6_ADDR_ANY   (&ip6_addr_any)
 /** IP6_ADDR_ANY6 can be used as a fixed ip6_addr_t
  *  for the IPv6 wildcard address
  */
-#define IP6_ADDR_ANY6  ((ip6_addr_t*)ip_2_ip6(&ip6_addr_any))
+#define IP6_ADDR_ANY6  (ip_2_ip6(&ip6_addr_any))
 
 #if !LWIP_IPV4
 /** Just a little upgrade-helper for IPv6-only configurations: */

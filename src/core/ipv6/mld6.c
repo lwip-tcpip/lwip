@@ -527,7 +527,7 @@ mld6_send(struct mld_group *group, u8_t type)
 {
   struct mld_header * mld_hdr;
   struct pbuf * p;
-  ip6_addr_t * src_addr;
+  const ip6_addr_t * src_addr;
 
   /* Allocate a packet. Size is MLD header + IPv6 Hop-by-hop options header. */
   p = pbuf_alloc(PBUF_IP, sizeof(struct mld_header) + sizeof(struct ip6_hbh_hdr), PBUF_RAM);

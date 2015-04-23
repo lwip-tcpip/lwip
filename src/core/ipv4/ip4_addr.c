@@ -326,7 +326,7 @@ ip4_2_ip(const ip4_addr_t *ip4addr, ip_addr_t* storage)
     return NULL;
   }
   ip4_addr_copy(storage->addr.ip4, *ip4addr);
-  IP_SET_TYPE_L(storage, IPADDR_TYPE_V4);
+  IP_SET_TYPE_VAL(*storage, IPADDR_TYPE_V4);
   return storage;
 }
 #endif /* LWIP_IPV6 */
