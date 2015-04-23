@@ -141,7 +141,7 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
   ip6_addr_isloopback(ip_2_ip6(ipaddr)) : \
   ip4_addr_isloopback(ip_2_ip4(ipaddr)))
 #define ip_addr_islinklocal(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
-  ip_addr_islinklocal(ip_2_ip6(ipaddr)) : \
+  ip6_addr_islinklocal(ip_2_ip6(ipaddr)) : \
   ip4_addr_islinklocal(ip_2_ip4(ipaddr)))
 #define ip_addr_debug_print(debug, ipaddr) do { if(IP_IS_V6(ipaddr)) { \
   ip6_addr_debug_print(debug, ip_2_ip6(ipaddr)); } else { \
