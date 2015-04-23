@@ -81,7 +81,7 @@
 #ifndef LWIP_NOASSERT
 #define LWIP_PLATFORM_ERROR(message) LWIP_PLATFORM_ASSERT(message)
 #elif defined LWIP_DEBUG
-#define LWIP_PLATFORM_ERROR(message) LWIP_PLATFORM_DIAG(message)
+#define LWIP_PLATFORM_ERROR(message) LWIP_PLATFORM_DIAG((message))
 #else
 #define LWIP_PLATFORM_ERROR(message)
 #endif
