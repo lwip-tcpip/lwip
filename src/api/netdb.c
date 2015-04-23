@@ -322,14 +322,14 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   }
   memset(ai, 0, total_size);
   sa = (struct sockaddr_storage *)(void*)((u8_t*)ai + sizeof(struct addrinfo));
-  if (IP_IS_V6(addr)) {
+  if (IP_IS_V6_VAL(addr)) {
 #if LWIP_IPV6
     struct sockaddr_in6 *sa6 = (struct sockaddr_in6*)sa;
     /* set up sockaddr */
     inet6_addr_from_ip6addr(&sa6->sin6_addr, ip_2_ip6(&addr));
-    sa->sin_family = AF_INET6;
-    sa->sin_len = sizeof(struct sockaddr_in6);
-    sa->sin_port = htons((u16_t)port_nr);
+    sa6->sin6_family = AF_INET6;
+    sa6->sin6_len = sizeof(struct sockaddr_in6);
+    sa6->sin6_port = htons((u16_t)port_nr);
 #endif /* LWIP_IPV6 */
   } else {
 #if LWIP_IPV4

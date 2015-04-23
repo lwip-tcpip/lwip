@@ -61,12 +61,12 @@ typedef struct _ip_addr {
 #define IPADDR4_INIT(u32val)          { { { u32val, 0ul, 0ul, 0ul } }, IPADDR_TYPE_V4 }
 #define IPADDR6_INIT(a, b, c, d)      { { { a, b, c, d } }, IPADDR_TYPE_V6 }
 
-#define IP_IS_V6_VAL(ipaddr)          ((ipaddr)->type == IPADDR_TYPE_V6)
-#define IP_IS_V6(ipaddr)              (((ipaddr) != NULL) && IP_IS_V6_VAL(ipaddr))
+#define IP_IS_V6_VAL(ipaddr)          ((ipaddr).type == IPADDR_TYPE_V6)
+#define IP_IS_V6(ipaddr)              (((ipaddr) != NULL) && IP_IS_V6_VAL(*(ipaddr)))
 #define IP_SET_TYPE_L(ipaddr, iptype) do { (ipaddr)->type = (iptype); }while(0)
 #define IP_SET_TYPE(ipaddr, iptype)   do { if((ipaddr) != NULL) { IP_SET_TYPE_L(ipaddr, iptype); }}while(0)
 
-#define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (PCB_ISIPV6(pcb) == IP_IS_V6_VAL(ipaddr))
+#define IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr) (PCB_ISIPV6(pcb) == IP_IS_V6(ipaddr))
 
 /* Convert ipv4/ipv6 address to generic ip address.
    Since source types do not contain the type field, a target storage need to be supplied. */
@@ -88,7 +88,7 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #define IP_ADDR6(ipaddr,idx,a,b,c,d)  do { IP6_ADDR(ip_2_ip6(ipaddr),idx,a,b,c,d); \
                                            IP_SET_TYPE_L(ipaddr, IPADDR_TYPE_V6); } while(0)
 
-#define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(&(src))){ \
+#define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(src)){ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V6); }else{ \
   ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_L(&(dest), IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
