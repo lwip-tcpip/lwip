@@ -256,14 +256,14 @@ Little-endian version, stored in network order (no htonl). */
                       a, b, c, d, e, f, g, h))
 #define ip6_addr_debug_print(debug, ipaddr) \
   ip6_addr_debug_print_parts(debug, \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK1(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK2(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK3(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK4(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK5(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK6(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK7(ipaddr) : 0,    \
-                      ipaddr != NULL ? IP6_ADDR_BLOCK8(ipaddr) : 0)
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK1(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK2(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK3(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK4(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK5(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK6(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK7(ipaddr) : 0,    \
+                      (ipaddr) != NULL ? IP6_ADDR_BLOCK8(ipaddr) : 0)
 #define ip6_addr_debug_print_val(debug, ipaddr) \
   ip6_addr_debug_print_parts(debug, \
                       IP6_ADDR_BLOCK1(&(ipaddr)),    \
