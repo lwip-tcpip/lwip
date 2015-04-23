@@ -251,7 +251,7 @@ Little-endian version, stored in network order (no htonl). */
 #define ip6_addr_ispreferred(addr_state) (addr_state == IP6_ADDR_PREFERRED)
 #define ip6_addr_isdeprecated(addr_state) (addr_state == IP6_ADDR_DEPRECATED)
 
-#define ip6_addr_debug_print_parts(debug, ipaddr) \
+#define ip6_addr_debug_print_parts(debug, a, b, c, d, e, f, g, h) \
   LWIP_DEBUGF(debug, ("%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F ":%" X16_F, \
                       a, b, c, d, e, f, g, h))
 #define ip6_addr_debug_print(debug, ipaddr) \
