@@ -96,6 +96,8 @@
 #endif /* LWIP_IPV6 */
 
 #if LWIP_IPV4 && LWIP_IPV6
+static void sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* ipaddr, u16_t* port);
+
 #define IS_SOCK_ADDR_LEN_VALID(namelen)  (((namelen) == sizeof(struct sockaddr_in)) || \
                                          ((namelen) == sizeof(struct sockaddr_in6)))
 #define IS_SOCK_ADDR_TYPE_VALID(name)    (((name)->sa_family == AF_INET) || \
@@ -109,12 +111,7 @@
     } else { \
       IP4ADDR_PORT_TO_SOCKADDR((struct sockaddr_in*)(void*)(sockaddr), ip_2_ip4(ipaddr), port); \
     } } while(0)
-#define SOCKADDR_TO_IPADDR_PORT(sockaddr, ipaddr, port) do { \
-    if (((sockaddr)->sa_family) == AF_INET6) { \
-      SOCKADDR6_TO_IP6ADDR_PORT((const struct sockaddr_in6*)(const void*)(sockaddr), ipaddr, port); \
-    } else { \
-      SOCKADDR4_TO_IP4ADDR_PORT((const struct sockaddr_in*)(const void*)(sockaddr), ipaddr, port); \
-    } } while(0)
+#define SOCKADDR_TO_IPADDR_PORT(sockaddr, ipaddr, port) sockaddr_to_ipaddr_port(sockaddr, ipaddr, &(port))
 #define DOMAIN_TO_NETCONN_TYPE(domain, type) (((domain) == AF_INET) ? \
   (type) : (enum netconn_type)((type) | NETCONN_TYPE_IPV6))
 #elif LWIP_IPV6 /* LWIP_IPV4 && LWIP_IPV6 */
@@ -334,6 +331,18 @@ static void lwip_setsockopt_callback(void *arg);
 #endif
 static u8_t lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *optlen);
 static u8_t lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_t optlen);
+
+#if LWIP_IPV4 && LWIP_IPV6
+static void
+sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* ipaddr, u16_t* port)
+{
+  if ((sockaddr->sa_family) == AF_INET6) {
+    SOCKADDR6_TO_IP6ADDR_PORT((const struct sockaddr_in6*)(const void*)(sockaddr), ipaddr, *port);
+  } else {
+    SOCKADDR4_TO_IP4ADDR_PORT((const struct sockaddr_in*)(const void*)(sockaddr), ipaddr, *port);
+  }
+}
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 /**
  * Map a externally used socket index to the internal socket representation.
@@ -1940,7 +1949,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
   /* Level: IPPROTO_RAW */
   case IPPROTO_RAW:
     switch (optname) {
-#if LWIP_IPV6
+#if LWIP_IPV6 && LWIP_RAW
     case IPV6_CHECKSUM:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, *optlen, int, NETCONN_RAW);
       if (sock->conn->pcb.raw->chksum_reqd == 0) {
@@ -1951,7 +1960,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_RAW, IPV6_CHECKSUM) = %d\n",
                   s, (*(int*)optval)) );
       break;
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV6 && LWIP_RAW */
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_getsockopt(%d, IPPROTO_RAW, UNIMPL: optname=0x%x, ..)\n",
                   s, optname));
@@ -2336,7 +2345,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
   /* Level: IPPROTO_RAW */
   case IPPROTO_RAW:
     switch (optname) {
-#if LWIP_IPV6
+#if LWIP_IPV6 && LWIP_RAW
     case IPV6_CHECKSUM:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB_TYPE(sock, optlen, int, NETCONN_RAW);
       if (*(const int *)optval < 0) {
@@ -2351,7 +2360,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_RAW, IPV6_CHECKSUM, ..) -> %d\n",
                   s, sock->conn->pcb.raw->chksum_reqd));
       break;
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV6 && LWIP_RAW */
     default:
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_RAW, UNIMPL: optname=0x%x, ..)\n",
                                   s, optname));
