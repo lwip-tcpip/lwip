@@ -78,10 +78,10 @@ struct in6_addr {
 
 /** This macro can be used to initialize a variable of type struct in6_addr
     to the IPv6 wildcard address. */
-#define IN6ADDR_ANY_INIT {0,0,0,0}
+#define IN6ADDR_ANY_INIT {{{0,0,0,0}}}
 /** This macro can be used to initialize a variable of type struct in6_addr
     to the IPv6 loopback address. */
-#define IN6ADDR_LOOPBACK_INIT {0,0,0,PP_HTONL(1)}
+#define IN6ADDR_LOOPBACK_INIT {{{0,0,0,PP_HTONL(1)}}}
 /** This variable is initialized by the system to contain the wildcard IPv6 address. */
 extern const struct in6_addr in6addr_any;
 
