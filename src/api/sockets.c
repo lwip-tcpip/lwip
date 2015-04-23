@@ -2347,7 +2347,7 @@ lwip_setsockopt_impl(int s, int level, int optname, const void *optval, socklen_
         return EINVAL;
       } else {
         sock->conn->pcb.raw->chksum_reqd = 1;
-        sock->conn->pcb.raw->chksum_offset = *(const int *)optval;
+        sock->conn->pcb.raw->chksum_offset = (u16_t)*(const int *)optval;
       }
       LWIP_DEBUGF(SOCKETS_DEBUG, ("lwip_setsockopt(%d, IPPROTO_RAW, IPV6_CHECKSUM, ..) -> %d\n",
                   s, sock->conn->pcb.raw->chksum_reqd));

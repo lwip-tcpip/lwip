@@ -470,7 +470,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
         mtu_opt = (struct mtu_option *)buffer;
         if (htonl(mtu_opt->mtu) >= 1280) {
 #if LWIP_ND6_ALLOW_RA_UPDATES
-          inp->mtu = htonl(mtu_opt->mtu);
+          inp->mtu = (u16_t)htonl(mtu_opt->mtu);
 #endif /* LWIP_ND6_ALLOW_RA_UPDATES */
         }
         break;
@@ -603,6 +603,7 @@ nd6_input(struct pbuf *p, struct netif *inp)
   {
     struct icmp6_hdr *icmp6hdr; /* Packet too big message */
     struct ip6_hdr * ip6hdr; /* IPv6 header of the packet which caused the error */
+    u32_t pmtu;
 
     /* Check that ICMPv6 header + IPv6 header fit in payload */
     if (p->len < (sizeof(struct icmp6_hdr) + IP6_HLEN)) {
@@ -628,7 +629,8 @@ nd6_input(struct pbuf *p, struct netif *inp)
     }
 
     /* Change the Path MTU. */
-    destination_cache[i].pmtu = htonl(icmp6hdr->data);
+    pmtu = htonl(icmp6hdr->data);
+    destination_cache[i].pmtu = (u16_t)LWIP_MIN(pmtu, 0xFFFF);
 
     break; /* ICMP6_TYPE_PTB */
   }
@@ -866,7 +868,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   ip6_addr_set(&(ns_hdr->target_address), target_addr);
 
   lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
-  lladdr_opt->length = lladdr_opt_len;
+  lladdr_opt->length = (u8_t)lladdr_opt_len;
   SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
 
   /* Generate the solicited node address for the target address. */
@@ -935,7 +937,7 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   ip6_addr_set(&(na_hdr->target_address), target_addr);
 
   lladdr_opt->type = ND6_OPTION_TYPE_TARGET_LLADDR;
-  lladdr_opt->length = lladdr_opt_len;
+  lladdr_opt->length = (u8_t)lladdr_opt_len;
   SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
 
   /* Generate the solicited node address for the target address. */
@@ -1016,7 +1018,7 @@ nd6_send_rs(struct netif * netif)
     /* Include our hw address. */
     lladdr_opt = (struct lladdr_option *)((u8_t*)p->payload + sizeof(struct rs_header));
     lladdr_opt->type = ND6_OPTION_TYPE_SOURCE_LLADDR;
-    lladdr_opt->length = lladdr_opt_len;
+    lladdr_opt->length = (u8_t)lladdr_opt_len;
     SMEMCPY(lladdr_opt->addr, netif->hwaddr, netif->hwaddr_len);
   }
 

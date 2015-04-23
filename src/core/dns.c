@@ -276,7 +276,7 @@ DNS_LOCAL_HOSTLIST_STORAGE_PRE struct local_hostlist_entry local_hostlist_static
 
 #endif /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
 
-static void dns_init_local();
+static void dns_init_local(void);
 #endif /* DNS_LOCAL_HOSTLIST */
 
 
@@ -422,7 +422,7 @@ dns_tmr(void)
 
 #if DNS_LOCAL_HOSTLIST
 static void
-dns_init_local()
+dns_init_local(void)
 {
 #if DNS_LOCAL_HOSTLIST_IS_DYNAMIC && defined(DNS_LOCAL_HOSTLIST_INIT)
   int i;

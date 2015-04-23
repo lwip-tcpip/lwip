@@ -150,7 +150,7 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     p = ipr->p;
     ipr->p = iprh->next_pbuf;
     /* Then, move back to the original header (we are now pointing to Fragment header). */
-    if (pbuf_header(p, (u8_t*)p->payload - (u8_t*)ipr->iphdr)) {
+    if (pbuf_header(p, (s16_t)((u8_t*)p->payload - (u8_t*)ipr->iphdr))) {
       LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
     }
     else {
@@ -264,7 +264,7 @@ ip6_reass(struct pbuf *p)
    * Adjust for headers before Fragment Header.
    * And finally adjust by Fragment Header length. */
   len = ntohs(ip6_current_header()->_plen);
-  len -= ((u8_t*)p->payload - (u8_t*)ip6_current_header()) - IP6_HLEN;
+  len -= (u16_t)(((u8_t*)p->payload - (u8_t*)ip6_current_header()) - IP6_HLEN);
   len -= IP6_FRAG_HLEN;
 
   /* Look for the datagram the fragment belongs to in the current datagram queue,
@@ -494,9 +494,9 @@ ip6_reass(struct pbuf *p)
     }
 
     /* Adjust datagram length by adding header lengths. */
-    ipr->datagram_len += ((u8_t*)ipr->p->payload - (u8_t*)ipr->iphdr)
+    ipr->datagram_len += (u16_t)(((u8_t*)ipr->p->payload - (u8_t*)ipr->iphdr)
                          + IP6_FRAG_HLEN
-                         - IP6_HLEN ;
+                         - IP6_HLEN);
 
     /* Set payload length in ip header. */
     ipr->iphdr->_plen = htons(ipr->datagram_len);
@@ -528,7 +528,7 @@ ip6_reass(struct pbuf *p)
     ip6_reass_pbufcount -= pbuf_clen(p);
 
     /* Move pbuf back to IPv6 header. */
-    if (pbuf_header(p, (u8_t*)p->payload - iphdr_ptr)) {
+    if (pbuf_header(p, (s16_t)((u8_t*)p->payload - iphdr_ptr))) {
       LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed\n", 0);
       pbuf_free(p);
       return NULL;

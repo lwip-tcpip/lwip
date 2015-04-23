@@ -72,7 +72,7 @@
    "The Dynamic and/or Private Ports are those from 49152 through 65535" */
 #define UDP_LOCAL_PORT_RANGE_START  0xc000
 #define UDP_LOCAL_PORT_RANGE_END    0xffff
-#define UDP_ENSURE_LOCAL_PORT_RANGE(port) (((port) & ~UDP_LOCAL_PORT_RANGE_START) + UDP_LOCAL_PORT_RANGE_START)
+#define UDP_ENSURE_LOCAL_PORT_RANGE(port) ((u16_t)(((port) & ~UDP_LOCAL_PORT_RANGE_START) + UDP_LOCAL_PORT_RANGE_START))
 #endif
 
 /* last local UDP port */
@@ -1161,7 +1161,7 @@ void udp_netif_ipv4_addr_changed(const ip4_addr_t* old_addr, const ip4_addr_t* n
   if (!ip4_addr_isany(new_addr)) {
     for (upcb = udp_pcbs; upcb != NULL; upcb = upcb->next) {
       /* Is this an IPv4 pcb? */
-      if (!IP_IS_V6_VAL(&upcb->local_ip)) {
+      if (!IP_IS_V6_VAL(upcb->local_ip)) {
         /* PCB bound to current local interface address? */
         if (!ip4_addr_isany(ip_2_ip4(&upcb->local_ip)) &&
             ip4_addr_cmp(ip_2_ip4(&upcb->local_ip), old_addr)) {
