@@ -583,7 +583,7 @@ static void chap_protrej(ppp_pcb *pcb) {
 /*
  * chap_print_pkt - print the contents of a CHAP packet.
  */
-static const char *chap_code_names[] = {
+static const char* const chap_code_names[] = {
 	"Challenge", "Response", "Success", "Failure"
 };
 

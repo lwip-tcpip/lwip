@@ -1513,7 +1513,7 @@ static void ccp_down(fsm *f) {
 /*
  * Print the contents of a CCP packet.
  */
-static const char *ccp_codenames[] = {
+static const char* const ccp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej",
     NULL, NULL, NULL, NULL, NULL, NULL,

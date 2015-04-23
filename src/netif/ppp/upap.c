@@ -595,7 +595,7 @@ static void upap_sresp(ppp_pcb *pcb, u_char code, u_char id, const char *msg, in
 /*
  * upap_printpkt - print the contents of a PAP packet.
  */
-static const char *upap_codenames[] = {
+static const char* const upap_codenames[] = {
     "AuthReq", "AuthAck", "AuthNak"
 };
 

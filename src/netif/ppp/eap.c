@@ -2135,11 +2135,11 @@ static void eap_input(ppp_pcb *pcb, u_char *inp, int inlen) {
 /*
  * eap_printpkt - print the contents of an EAP packet.
  */
-static const char *eap_codenames[] = {
+static const char* const eap_codenames[] = {
 	"Request", "Response", "Success", "Failure"
 };
 
-static const char *eap_typenames[] = {
+static const char* const eap_typenames[] = {
 	"Identity", "Notification", "Nak", "MD5-Challenge",
 	"OTP", "Generic-Token", NULL, NULL,
 	"RSA", "DSS", "KEA", "KEA-Validate",

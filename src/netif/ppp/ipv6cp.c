@@ -1387,7 +1387,7 @@ ipv6cp_script(script)
 /*
  * ipv6cp_printpkt - print the contents of an IPV6CP packet.
  */
-static const char *ipv6cp_codenames[] = {
+static const char* const ipv6cp_codenames[] = {
     "ConfReq", "ConfAck", "ConfNak", "ConfRej",
     "TermReq", "TermAck", "CodeRej"
 };
