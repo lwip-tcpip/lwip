@@ -112,6 +112,9 @@ void autoip_tmr(void);
 /** Handle a possible change in the network configuration */
 void autoip_network_changed(struct netif *netif);
 
+/** check if AutoIP supplied netif->ip_addr */
+u8_t autoip_supplied_address(struct netif *netif);
+
 #ifdef __cplusplus
 }
 #endif

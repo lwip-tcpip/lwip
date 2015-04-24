@@ -1820,4 +1820,22 @@ dhcp_option_trailer(struct dhcp *dhcp)
   }
 }
 
+/** check if DHCP supplied netif->ip_addr
+ *
+ * @param netif the netif to check
+ * @return 1 if DHCP supplied netif->ip_addr (states BOUND or RENEWING),
+ *         0 otherwise
+ */
+u8_t
+dhcp_supplied_address(struct netif *netif)
+{
+  if ((netif != NULL) && (netif->dhcp != NULL)) {
+    if ((netif->dhcp->state == DHCP_BOUND) ||
+      (netif->dhcp->state == DHCP_RENEWING)) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 #endif /* LWIP_IPV4 && LWIP_DHCP */

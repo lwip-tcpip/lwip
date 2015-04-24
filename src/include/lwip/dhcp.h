@@ -129,6 +129,9 @@ void dhcp_network_changed(struct netif *netif);
 void dhcp_arp_reply(struct netif *netif, const ip4_addr_t *addr);
 #endif
 
+/** check if DHCP supplied netif->ip_addr */
+u8_t dhcp_supplied_address(struct netif *netif);
+
 /** to be called every minute */
 void dhcp_coarse_tmr(void);
 /** to be called every half second */

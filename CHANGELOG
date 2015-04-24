@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-04-24: Simon Goldschmidt
+  * dhcp.h/c, autoip.h/.c: added functions dhcp/autoip_supplied_address() to
+    check for the source of address assignemnt (replacement for NETIF_FLAG_DHCP)
+
   2015-04-10: Simon Goldschmidt
   * many files: task #13480: added LWIP_IPV4 define - IPv4 can be disabled,
     leaving an IPv6-only stack

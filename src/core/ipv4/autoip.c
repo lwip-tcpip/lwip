@@ -520,4 +520,21 @@ autoip_arp_reply(struct netif *netif, struct etharp_hdr *hdr)
   }
 }
 
+/** check if AutoIP supplied netif->ip_addr
+ *
+ * @param netif the netif to check
+ * @return 1 if AutoIP supplied netif->ip_addr (state BOUND),
+ *         0 otherwise
+ */
+u8_t
+autoip_supplied_address(struct netif *netif)
+{
+  if ((netif != NULL) && (netif->autoip != NULL)) {
+    if (netif->autoip->state == AUTOIP_STATE_BOUND) {
+      return 1;
+    }
+  }
+  return 0;
+}
+
 #endif /* LWIP_IPV4 && LWIP_AUTOIP */
