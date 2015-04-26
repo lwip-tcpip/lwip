@@ -198,16 +198,20 @@ void mppe_comp_reset(ppp_pcb *pcb, ppp_mppe_state *state)
 err_t
 mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t protocol)
 {
-	struct pbuf *np, *n;
+	struct pbuf *n;
 	u8_t *pl;
 
-	/* FIXME: try to use pbuf_header() here! */
-	np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol), PBUF_RAM);
-	if (!np) {
-	  return ERR_MEM;
+	if (pbuf_header(*pb, (s16_t)(MPPE_OVHD + sizeof(protocol))) == 0) {
+		pbuf_ref(*pb);
+	} else {
+		struct pbuf *np = pbuf_alloc(PBUF_RAW, MPPE_OVHD + sizeof(protocol), PBUF_RAM);
+		if (!np) {
+			return ERR_MEM;
+		}
+		pbuf_chain(np, *pb);
+		*pb = np;
 	}
-	pbuf_chain(np, *pb);
-	pl = (u8_t*)np->payload;
+	pl = (u8_t*)(*pb)->payload;
 
 	state->ccount = (state->ccount + 1) % MPPE_CCOUNT_SPACE;
 	PPPDEBUG(LOG_DEBUG, ("mppe_compress[%d]: ccount %d\n", pcb->netif->num, state->ccount));
@@ -229,11 +233,13 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	state->bits &= ~MPPE_BIT_FLUSHED;	/* reset for next xmit */
 	pl += MPPE_OVHD;
 
-	/* Add and encrypt protocol */
+	/* Add protocol */
 	/* FIXME: add PFC support */
 	pl[0] = protocol >> 8;
 	pl[1] = protocol;
-	arc4_crypt(&state->arc4, pl, sizeof(protocol));
+
+	/* Hide MPPE header */
+	pbuf_header(*pb, -(s16_t)MPPE_OVHD);
 
 	/* Encrypt packet */
 	for (n = *pb; n != NULL; n = n->next) {
@@ -243,7 +249,9 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 		}
 	}
 
-	*pb = np;
+	/* Reveal MPPE header */
+	pbuf_header(*pb, (s16_t)MPPE_OVHD);
+
 	return ERR_OK;
 }
 
