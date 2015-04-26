@@ -332,6 +332,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 				 * Signal the peer to rekey (by sending a CCP Reset-Request).
 				 */
 				state->discard = 1;
+				ccp_resetrequest(pcb);
 				return ERR_BUF;
 			}
 		} else {
@@ -382,10 +383,7 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	return ERR_OK;
 
 sanity_error:
-	if (state->sanity_errors < SANITY_MAX) {
-		/* Signal the peer to rekey (by sending a CCP Reset-Request). */
-		ccp_resetrequest(pcb);
-	} else {
+	if (state->sanity_errors >= SANITY_MAX) {
 		/*
 		 * Take LCP down if the peer is sending too many bogons.
 		 * We don't want to do this for a single or just a few
