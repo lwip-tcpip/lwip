@@ -267,7 +267,6 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	u8_t *pl;
 	u16_t ccount;
 	u8_t flushed;
-	u8_t sanity = 0;
 
 	/* MPPE Header */
 	if (n0->len < MPPE_OVHD) {
@@ -289,32 +288,19 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 		       ("mppe_decompress[%d]: ENCRYPTED bit not set!\n",
 		       pcb->netif->num));
 		state->sanity_errors += 100;
-		sanity = 1;
+		goto sanity_error;
 	}
 	if (!state->stateful && !flushed) {
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set in "
 		       "stateless mode!\n", pcb->netif->num));
 		state->sanity_errors += 100;
-		sanity = 1;
+		goto sanity_error;
 	}
 	if (state->stateful && ((ccount & 0xff) == 0xff) && !flushed) {
 		PPPDEBUG(LOG_DEBUG, ("mppe_decompress[%d]: FLUSHED bit not set on "
 		       "flag packet!\n", pcb->netif->num));
 		state->sanity_errors += 100;
-		sanity = 1;
-	}
-
-	if (sanity) {
-		if (state->sanity_errors < SANITY_MAX)
-			return ERR_BUF;
-		else
-			/*
-			 * Take LCP down if the peer is sending too many bogons.
-			 * We don't want to do this for a single or just a few
-			 * instances since it could just be due to packet corruption.
-			 */
-			lcp_close(pcb, "Too many MPPE errors");
-			return ERR_BUF;
+		goto sanity_error;
 	}
 
 	/*
@@ -387,6 +373,18 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	state->sanity_errors >>= 1;
 
 	return ERR_OK;
+
+sanity_error:
+	if (state->sanity_errors < SANITY_MAX)
+		return ERR_BUF;
+	else
+		/*
+		 * Take LCP down if the peer is sending too many bogons.
+		 * We don't want to do this for a single or just a few
+		 * instances since it could just be due to packet corruption.
+		 */
+		lcp_close(pcb, "Too many MPPE errors");
+		return ERR_BUF;
 }
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
