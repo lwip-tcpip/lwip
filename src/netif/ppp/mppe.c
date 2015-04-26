@@ -273,7 +273,8 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 		PPPDEBUG(LOG_DEBUG,
 		       ("mppe_decompress[%d]: short pkt (%d)\n",
 		       pcb->netif->num, n0->len));
-		return ERR_BUF;
+		state->sanity_errors += 100;
+		goto sanity_error;
 	}
 
 	pl = (u8_t*)n0->payload;
@@ -381,16 +382,18 @@ mppe_decompress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb)
 	return ERR_OK;
 
 sanity_error:
-	if (state->sanity_errors < SANITY_MAX)
-		return ERR_BUF;
-	else
+	if (state->sanity_errors < SANITY_MAX) {
+		/* Signal the peer to rekey (by sending a CCP Reset-Request). */
+		ccp_resetrequest(pcb);
+	} else {
 		/*
 		 * Take LCP down if the peer is sending too many bogons.
 		 * We don't want to do this for a single or just a few
 		 * instances since it could just be due to packet corruption.
 		 */
 		lcp_close(pcb, "Too many MPPE errors");
-		return ERR_BUF;
+	}
+	return ERR_BUF;
 }
 
 #endif /* PPP_SUPPORT && MPPE_SUPPORT */
