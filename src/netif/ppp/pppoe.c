@@ -666,7 +666,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
 #ifdef PPPOE_TERM_UNKNOWN_SESSIONS
   MEMCPY(shost, ((struct eth_hdr *)pb->payload)->src.addr, sizeof(shost));
 #endif
-  if (pbuf_header(pb, -(int)sizeof(struct eth_hdr)) != 0) {
+  if (pbuf_header(pb, -(s16_t)sizeof(struct eth_hdr)) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_header failed\n"));
     LINK_STATS_INC(link.lenerr);
@@ -699,7 +699,7 @@ pppoe_data_input(struct netif *netif, struct pbuf *pb)
 
   plen = ntohs(ph->plen);
 
-  if (pbuf_header(pb, -(int)(PPPOE_HEADERLEN)) != 0) {
+  if (pbuf_header(pb, -(s16_t)(PPPOE_HEADERLEN)) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppoe_data_input: pbuf_header PPPOE_HEADERLEN failed\n"));
     LINK_STATS_INC(link.lenerr);
@@ -735,7 +735,7 @@ pppoe_output(struct pppoe_softc *sc, struct pbuf *pb)
   }
 
   /* make room for Ethernet header - should not fail */
-  if (pbuf_header(pb, (u16_t)(sizeof(struct eth_hdr))) != 0) {
+  if (pbuf_header(pb, (s16_t)(sizeof(struct eth_hdr))) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_output: could not allocate room for Ethernet header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
     LINK_STATS_INC(link.lenerr);
@@ -1078,7 +1078,7 @@ pppoe_send_padt(struct netif *outgoing_if, u_int session, const u8_t *dest)
   }
   LWIP_ASSERT("pb->tot_len == pb->len", pb->tot_len == pb->len);
 
-  pbuf_header(pb, sizeof(struct eth_hdr));
+  pbuf_header(pb, (s16_t)sizeof(struct eth_hdr));
   ethhdr = (struct eth_hdr *)pb->payload;
   ethhdr->type = PP_HTONS(ETHTYPE_PPPOEDISC);
   MEMCPY(&ethhdr->dest.addr, dest, sizeof(ethhdr->dest.addr));
@@ -1187,7 +1187,7 @@ pppoe_xmit(struct pppoe_softc *sc, struct pbuf *pb)
   len = pb->tot_len;
 
   /* make room for PPPoE header - should not fail */
-  if (pbuf_header(pb, (u16_t)(PPPOE_HEADERLEN)) != 0) {
+  if (pbuf_header(pb, (s16_t)(PPPOE_HEADERLEN)) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppoe: %c%c%"U16_F": pppoe_xmit: could not allocate room for PPPoE header\n", sc->sc_ethif->name[0], sc->sc_ethif->name[1], sc->sc_ethif->num));
     LINK_STATS_INC(link.lenerr);

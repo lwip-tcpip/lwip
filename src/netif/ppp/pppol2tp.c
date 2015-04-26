@@ -443,7 +443,7 @@ static void pppol2tp_input(void *arg, struct udp_pcb *pcb, struct pbuf *p, const
   /* printf("HLEN = %d\n", hlen); */
 
   /* skip L2TP header */
-  if (pbuf_header(p, -hlen) != 0) {
+  if (pbuf_header(p, -(s16_t)hlen) != 0) {
     goto free_and_return;
   }
 
@@ -659,7 +659,7 @@ skipavp:
 nextavp:
     /* printf("AVP Found, vendor=%d, attribute=%d, len=%d\n", vendorid, attributetype, avplen); */
     /* next AVP */
-    if (pbuf_header(p, -avplen - sizeof(avpflags) - sizeof(vendorid) - sizeof(attributetype) ) != 0) {
+    if (pbuf_header(p, -(s16_t)(avplen + sizeof(avpflags) + sizeof(vendorid) + sizeof(attributetype)) ) != 0) {
       return;
     }
   }
@@ -1128,7 +1128,7 @@ static err_t pppol2tp_xmit(pppol2tp_pcb *l2tp, struct pbuf *pb) {
   }
 
   /* make room for L2TP header - should not fail */
-  if (pbuf_header(pb, PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
+  if (pbuf_header(pb, (s16_t)PPPOL2TP_OUTPUT_DATA_HEADER_LEN) != 0) {
     /* bail out */
     PPPDEBUG(LOG_ERR, ("pppol2tp: pppol2tp_pcb: could not allocate room for L2TP header\n"));
     LINK_STATS_INC(link.lenerr);
