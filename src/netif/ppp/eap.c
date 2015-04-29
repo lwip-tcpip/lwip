@@ -431,7 +431,7 @@ u_char *outp;
  */
 static void eap_figure_next_state(ppp_pcb *pcb, int status) {
 #ifdef USE_SRP
-	unsigned char secbuf[MAXWORDLEN], clear[8], *sp, *dp;
+	unsigned char secbuf[MAXSECRETLEN], clear[8], *sp, *dp;
 	struct t_pw tpw;
 	struct t_confent *tce, mytce;
 	char *cp, *cp2;
@@ -1331,7 +1331,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 	u_char typenum;
 	u_char vallen;
 	int secret_len;
-	char secret[MAXWORDLEN];
+	char secret[MAXSECRETLEN];
 	char rhostname[MAXNAMELEN];
 	md5_context mdContext;
 	u_char hash[MD5_SIGNATURE_SIZE];

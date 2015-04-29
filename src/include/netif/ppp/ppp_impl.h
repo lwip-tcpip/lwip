@@ -64,14 +64,6 @@
 #endif /* PPP_USE_PBUF_RAM */
 
 /*
- * Limits.
- */
-#define MAXWORDLEN	1024	/* max length of word in file (incl null) */
-#define MAXARGS		1	/* max # args to a command */
-#define MAXNAMELEN	256	/* max length of hostname or name for auth */
-#define MAXSECRETLEN	256	/* max length of password or secret */
-
-/*
  * The basic PPP frame.
  */
 #define PPP_ADDRESS(p)	(((u_char *)(p))[0])
