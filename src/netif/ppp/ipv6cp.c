@@ -1240,7 +1240,9 @@ static void ipv6cp_up(fsm *f) {
 	    ipv6cp_close(f->pcb, "Interface configuration failed");
 	    return;
 	}
+#if DEMAND_SUPPORT
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_PASS);
+#endif /* DEMAND_SUPPORT */
 
 	ppp_notice("local  LL address %s", llv6_ntoa(go->ourid));
 	ppp_notice("remote LL address %s", llv6_ntoa(ho->hisid));
@@ -1295,7 +1297,9 @@ static void ipv6cp_down(fsm *f) {
     } else
 #endif /* DEMAND_SUPPORT */
     {
+#if DEMAND_SUPPORT
 	sifnpmode(f->pcb, PPP_IPV6, NPMODE_DROP);
+#endif /* DEMAND_SUPPORT */
 	ipv6cp_clear_addrs(f->pcb,
 			   go->ourid,
 			   ho->hisid);

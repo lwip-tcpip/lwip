@@ -1265,6 +1265,7 @@ int sif6down(ppp_pcb *pcb) {
 }
 #endif /* PPP_IPV6_SUPPORT */
 
+#if DEMAND_SUPPORT
 /*
  * sifnpmode - Set the mode for handling packets for a given NP.
  */
@@ -1274,6 +1275,7 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
   LWIP_UNUSED_ARG(mode);
   return 0;
 }
+#endif /* DEMAND_SUPPORT */
 
 /*
  * netif_set_mtu - set the MTU on the PPP network interface.

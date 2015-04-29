@@ -462,7 +462,9 @@ int sif6up(ppp_pcb *pcb);
 int sif6down (ppp_pcb *pcb);
 #endif /* PPP_IPV6_SUPPORT */
 
+#if DEMAND_SUPPORT
 int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode);
+#endif /* DEMAND_SUPPORt */
 
 void netif_set_mtu(ppp_pcb *pcb, int mtu);
 int netif_get_mtu(ppp_pcb *pcb);

@@ -2050,7 +2050,9 @@ static void ipcp_up(fsm *f) {
 	    return;
 	}
 #endif
+#if DEMAND_SUPPORT
 	sifnpmode(pcb, PPP_IP, NPMODE_PASS);
+#endif /* DEMAND_SUPPORT */
 
 #if 0 /* UNUSED */
 	/* assign a default route through the interface if required */
@@ -2147,7 +2149,9 @@ static void ipcp_down(fsm *f) {
     } else
 #endif /* DEMAND_SUPPORT */
     {
+#if DEMAND_SUPPORT
 	sifnpmode(pcb, PPP_IP, NPMODE_DROP);
+#endif /* DEMAND_SUPPORT */
 	sifdown(pcb);
 	ipcp_clear_addrs(pcb, go->ouraddr,
 			 ho->hisaddr, 0);
