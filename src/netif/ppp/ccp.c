@@ -368,20 +368,19 @@ setdeflate(argv)
 static void ccp_init(ppp_pcb *pcb) {
     fsm *f = &pcb->ccp_fsm;
     ccp_options *wo = &pcb->ccp_wantoptions;
-    ccp_options *go = &pcb->ccp_gotoptions;
     ccp_options *ao = &pcb->ccp_allowoptions;
-    ccp_options *ho = &pcb->ccp_hisoptions;
 
     f->pcb = pcb;
     f->protocol = PPP_CCP;
     f->callbacks = &ccp_callbacks;
     fsm_init(f);
 
-    /* FIXME: useless, everything is cleared in ppp_clear() */
+#if 0 /* Not necessary, everything is cleared in ppp_clear() */
     memset(wo, 0, sizeof(*wo));
     memset(go, 0, sizeof(*go));
     memset(ao, 0, sizeof(*ao));
     memset(ho, 0, sizeof(*ho));
+#endif /* 0 */
 
 #if DEFLATE_SUPPORT
     wo->deflate = 1;

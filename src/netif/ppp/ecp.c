@@ -166,10 +166,12 @@ ecp_init(unit)
     f->callbacks = &ecp_callbacks;
     fsm_init(f);
 
+#if 0 /* Not necessary, everything is cleared in ppp_clear() */
     memset(&ecp_wantoptions[unit],  0, sizeof(ecp_options));
     memset(&ecp_gotoptions[unit],   0, sizeof(ecp_options));
     memset(&ecp_allowoptions[unit], 0, sizeof(ecp_options));
     memset(&ecp_hisoptions[unit],   0, sizeof(ecp_options));
+#endif /* 0 */
 
 }
 

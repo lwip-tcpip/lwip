@@ -611,8 +611,10 @@ static void ipcp_init(ppp_pcb *pcb) {
      */
     f->maxnakloops = 100;
 
+#if 0 /* Not necessary, everything is cleared in ppp_clear() */
     memset(wo, 0, sizeof(*wo));
     memset(ao, 0, sizeof(*ao));
+#endif /* 0 */
 
     wo->neg_addr = wo->old_addrs = 1;
 #if VJ_SUPPORT

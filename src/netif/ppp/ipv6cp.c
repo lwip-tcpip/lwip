@@ -435,8 +435,10 @@ static void ipv6cp_init(ppp_pcb *pcb) {
     f->callbacks = &ipv6cp_callbacks;
     fsm_init(f);
 
+#if 0 /* Not necessary, everything is cleared in ppp_clear() */
     memset(wo, 0, sizeof(*wo));
     memset(ao, 0, sizeof(*ao));
+#endif /* 0 */
 
     wo->accept_local = 1;
     wo->neg_ifaceid = 1;
