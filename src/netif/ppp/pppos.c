@@ -349,7 +349,7 @@ pppos_listen(ppp_pcb *ppp, void *ctx, struct ppp_addrs *addrs)
 
   ppp_clear(ppp);
   /* reset PPPoS control block to its initial state */
-  memset(&pppos->out_accm, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->out_accm - (char*)0 ) );
+  memset(&pppos->last_xmit, 0, sizeof(pppos_pcb) - ( (char*)&((pppos_pcb*)0)->last_xmit - (char*)0 ) );
 
   /* Wait passively */
   lcp_wo = &ppp->lcp_wantoptions;
