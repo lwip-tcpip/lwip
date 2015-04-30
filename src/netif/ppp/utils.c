@@ -636,10 +636,7 @@ void ppp_fatal(const char *fmt, ...) {
     ppp_logit(LOG_ERR, fmt, pvar);
     va_end(pvar);
 
-/* FIXME: find a way to die */
-#if 0
-    die(1);			/* as promised */
-#endif
+    LWIP_ASSERT("ppp_fatal", 0);   /* as promised */
 }
 
 /*
