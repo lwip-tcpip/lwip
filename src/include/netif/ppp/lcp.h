@@ -90,9 +90,11 @@
 /* Value used as data for CI_CALLBACK option */
 #define CBCP_OPT	6	/* Use callback control protocol */
 
+#if 0 /* moved to opt.h */
 #define DEFMRU	1500		/* Try for this */
 #define MINMRU	128		/* No MRUs below this */
 #define MAXMRU	16384		/* Normally limit MRU to this */
+#endif /* moved to opt.h */
 
 /* An endpoint discriminator, used with multilink. */
 #define MAX_ENDP_LEN	20	/* maximum length of discriminator value */

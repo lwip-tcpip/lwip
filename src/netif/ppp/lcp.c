@@ -373,7 +373,7 @@ static void lcp_init(ppp_pcb *pcb) {
 
     BZERO(wo, sizeof(*wo));
     wo->neg_mru = 1;
-    wo->mru = DEFMRU;
+    wo->mru = PPP_DEFMRU;
     wo->neg_asyncmap = 1;
     wo->neg_magicnumber = 1;
     wo->neg_pcompression = 1;
@@ -381,7 +381,7 @@ static void lcp_init(ppp_pcb *pcb) {
 
     BZERO(ao, sizeof(*ao));
     ao->neg_mru = 1;
-    ao->mru = MAXMRU;
+    ao->mru = PPP_MAXMRU;
     ao->neg_asyncmap = 1;
 #if CHAP_SUPPORT
     ao->neg_chap = 1;
@@ -782,7 +782,7 @@ static int lcp_cilen(fsm *f) {
      * accept more than one.  We prefer EAP first, then CHAP, then
      * PAP.
      */
-    return (LENCISHORT(go->neg_mru && go->mru != DEFMRU) +
+    return (LENCISHORT(go->neg_mru && go->mru != PPP_DEFMRU) +
 	    LENCILONG(go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF) +
 #if EAP_SUPPORT
 	    LENCISHORT(go->neg_eap) +
@@ -883,7 +883,7 @@ static void lcp_addci(fsm *f, u_char *ucp, int *lenp) {
 	    PUTCHAR(val[i], ucp); \
     }
 
-    ADDCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
+    ADDCISHORT(CI_MRU, go->neg_mru && go->mru != PPP_DEFMRU, go->mru);
     ADDCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
 	      go->asyncmap);
 #if EAP_SUPPORT
@@ -1057,7 +1057,7 @@ static int lcp_ackci(fsm *f, u_char *p, int len) {
 	} \
     }
 
-    ACKCISHORT(CI_MRU, go->neg_mru && go->mru != DEFMRU, go->mru);
+    ACKCISHORT(CI_MRU, go->neg_mru && go->mru != PPP_DEFMRU, go->mru);
     ACKCILONG(CI_ASYNCMAP, go->neg_asyncmap && go->asyncmap != 0xFFFFFFFF,
 	      go->asyncmap);
 #if EAP_SUPPORT
@@ -1234,9 +1234,9 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
      * If they send us a bigger MRU than what we asked, accept it, up to
      * the limit of the default MRU we'd get if we didn't negotiate.
      */
-    if (go->neg_mru && go->mru != DEFMRU) {
+    if (go->neg_mru && go->mru != PPP_DEFMRU) {
 	NAKCISHORT(CI_MRU, neg_mru,
-		   if (cishort <= wo->mru || cishort <= DEFMRU)
+		   if (cishort <= wo->mru || cishort <= PPP_DEFMRU)
 		       try_.mru = cishort;
 		   );
     }
@@ -1479,11 +1479,11 @@ static int lcp_nakci(fsm *f, u_char *p, int len, int treat_as_reject) {
 
 	switch (citype) {
 	case CI_MRU:
-	    if ((go->neg_mru && go->mru != DEFMRU)
+	    if ((go->neg_mru && go->mru != PPP_DEFMRU)
 		|| no.neg_mru || cilen != CILEN_SHORT)
 		goto bad;
 	    GETSHORT(cishort, p);
-	    if (cishort < DEFMRU) {
+	    if (cishort < PPP_DEFMRU) {
 		try_.neg_mru = 1;
 		try_.mru = cishort;
 	    }
@@ -1881,11 +1881,11 @@ static int lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree) {
 	     * No need to check a maximum.  If he sends a large number,
 	     * we'll just ignore it.
 	     */
-	    if (cishort < MINMRU) {
+	    if (cishort < PPP_MINMRU) {
 		orc = CONFNAK;		/* Nak CI */
 		PUTCHAR(CI_MRU, nakoutp);
 		PUTCHAR(CILEN_SHORT, nakoutp);
-		PUTSHORT(MINMRU, nakoutp);	/* Give him a hint */
+		PUTSHORT(PPP_MINMRU, nakoutp);	/* Give him a hint */
 		break;
 	    }
 	    ho->neg_mru = 1;		/* Remember he sent MRU */

@@ -2001,7 +2001,7 @@
 #endif
 
 /**
- * pbuf_type PPP is using for LCP, PAP, CHAP, EAP, IPCP and IP6CP packets.
+ * pbuf_type PPP is using for LCP, PAP, CHAP, EAP, CCP, IPCP and IP6CP packets.
  *
  * Memory allocated must be single buffered for PPP to works, it requires pbuf
  * that are not going to be chained when allocated. This requires setting
@@ -2015,7 +2015,7 @@
 #endif
 
 /**
- * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation
+ * PPP_FCS_TABLE: Keep a 256*2 byte table to speed up FCS calculation for PPPoS
  */
 #ifndef PPP_FCS_TABLE
 #define PPP_FCS_TABLE                   1
@@ -2299,28 +2299,27 @@
 
 /*
  * Packet sizes
- *
- * Note - lcp shouldn't be allowed to negotiate stuff outside these
- *    limits.  See lcp.h in the pppd directory.
- * (XXX - these constants should simply be shared by lcp.c instead
- *    of living in lcp.h)
  */
-#define PPP_MTU                         1500     /* Default MTU (size of Info field) */
-#ifndef PPP_MAXMTU
-/* #define PPP_MAXMTU  65535 - (PPP_HDRLEN + PPP_FCSLEN) */
-#define PPP_MAXMTU                      1500 /* Largest MTU we allow */
+#ifndef PPP_MRU
+#define PPP_MRU                         1500     /* Default MRU */
 #endif
-#define PPP_MINMTU                      64
-#define PPP_MRU                         1500     /* default MRU = max length of info field */
-#define PPP_MAXMRU                      1500     /* Largest MRU we allow */
+
 #ifndef PPP_DEFMRU
-#define PPP_DEFMRU                      296             /* Try for this */
+#define PPP_DEFMRU                      1500     /* Default MRU to try */
 #endif
-#define PPP_MINMRU                      128             /* No MRUs below this */
+
+#ifndef PPP_MAXMRU
+#define PPP_MAXMRU                      1500     /* Normally limit MRU to this (pppd default = 16384) */
+#endif
+
+#ifndef PPP_MINMRU
+#define PPP_MINMRU                      128      /* No MRUs below this */
+#endif
 
 #ifndef MAXNAMELEN
 #define MAXNAMELEN                      256     /* max length of hostname or name for auth */
 #endif
+
 #ifndef MAXSECRETLEN
 #define MAXSECRETLEN                    256     /* max length of password or secret */
 #endif
