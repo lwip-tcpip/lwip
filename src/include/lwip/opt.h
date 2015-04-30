@@ -2316,6 +2316,17 @@
 #define PPP_MINMRU                      128      /* No MRUs below this */
 #endif
 
+/**
+ * Default MTU and MRU for L2TP
+ * Default = 1500 - PPPoE(6) - PPP Protocol(2) - IPv4 header(20) - UDP Header(8)
+ * - L2TP Header(6) - HDLC Header(2) - PPP Protocol(2) - MPPE Header(2) - PPP Protocol(2)
+ */
+#if PPPOL2TP_SUPPORT
+#ifndef PPPOL2TP_DEFMRU
+#define PPPOL2TP_DEFMRU                 1450
+#endif
+#endif /* PPPOL2TP_SUPPORT */
+
 #ifndef MAXNAMELEN
 #define MAXNAMELEN                      256     /* max length of hostname or name for auth */
 #endif

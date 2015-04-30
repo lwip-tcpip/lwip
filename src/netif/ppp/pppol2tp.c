@@ -285,13 +285,13 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
   ppp_clear(ppp);
 
   lcp_wo = &ppp->lcp_wantoptions;
-  lcp_wo->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  lcp_wo->mru = PPPOL2TP_DEFMRU;
   lcp_wo->neg_asyncmap = 0;
   lcp_wo->neg_pcompression = 0;
   lcp_wo->neg_accompression = 0;
 
   lcp_ao = &ppp->lcp_allowoptions;
-  lcp_ao->mru = 1500; /* FIXME: MTU depends if we support IP fragmentation or not */
+  lcp_ao->mru = PPPOL2TP_DEFMRU;
   lcp_ao->neg_asyncmap = 0;
   lcp_ao->neg_pcompression = 0;
   lcp_ao->neg_accompression = 0;
