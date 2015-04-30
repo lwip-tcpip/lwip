@@ -1283,6 +1283,7 @@ int sifnpmode(ppp_pcb *pcb, int proto, enum NPmode mode) {
 void netif_set_mtu(ppp_pcb *pcb, int mtu) {
 
   pcb->netif->mtu = mtu;
+  PPPDEBUG(LOG_INFO, ("netif_set_mtu[%d]: mtu=%d\n", pcb->netif->num, mtu));
 }
 
 /*
