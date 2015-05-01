@@ -1045,6 +1045,10 @@ void auth_peer_fail(ppp_pcb *pcb, int protocol) {
  */
 void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *name, int namelen) {
     int bit;
+#ifndef HAVE_MULTILINK
+    LWIP_UNUSED_ARG(name);
+    LWIP_UNUSED_ARG(namelen);
+#endif /* HAVE_MULTILINK */
 
     switch (protocol) {
 #if CHAP_SUPPORT
@@ -1082,14 +1086,15 @@ void auth_peer_success(ppp_pcb *pcb, int protocol, int prot_flavor, const char *
 	return;
     }
 
+#ifdef HAVE_MULTILINK
     /*
      * Save the authenticated name of the peer for later.
      */
-    /* FIXME: do we need that ? */
     if (namelen > (int)sizeof(pcb->peer_authname) - 1)
 	namelen = (int)sizeof(pcb->peer_authname) - 1;
     MEMCPY(pcb->peer_authname, name, namelen);
     pcb->peer_authname[namelen] = 0;
+#endif /* HAVE_MULTILINK */
 #if 0 /* UNUSED */
     script_setenv("PEERNAME", , 0);
 #endif /* UNUSED */

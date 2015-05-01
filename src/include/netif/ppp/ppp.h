@@ -359,9 +359,9 @@ struct ppp_pcb_s {
 
 #if PPP_AUTH_SUPPORT
   /* auth data */
-#if PPP_SERVER
+#if PPP_SERVER && defined(HAVE_MULTILINK)
   char peer_authname[MAXNAMELEN + 1]; /* The name by which the peer authenticated itself to us. */
-#endif /* PPP_SERVER */
+#endif /* PPP_SERVER && defined(HAVE_MULTILINK) */
   u16_t auth_pending;        /* Records which authentication operations haven't completed yet. */
   u16_t auth_done;           /* Records which authentication operations have been completed. */
 
