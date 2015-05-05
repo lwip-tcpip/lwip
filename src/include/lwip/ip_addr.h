@@ -152,7 +152,7 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
 #define ipaddr_ntoa(addr)   (((addr) == NULL) ? "NULL" : \
   ((IP_IS_V6(addr)) ? ip6addr_ntoa(ip_2_ip6(addr)) : ip4addr_ntoa(ip_2_ip4(addr))))
 #define ipaddr_ntoa_r(addr, buf, buflen)   (((addr) == NULL) ? "NULL" : \
-  ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4(addr))), buf, buflen)
+  ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4(addr), buf, buflen)))
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 #else /* LWIP_IPV4 && LWIP_IPV6 */
