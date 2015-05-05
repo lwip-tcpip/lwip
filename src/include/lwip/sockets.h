@@ -403,6 +403,8 @@ typedef struct fd_set
 
 #elif LWIP_SOCKET_OFFSET
 #error LWIP_SOCKET_OFFSET does not work with external FD_SET!
+#elif !defined(FD_SET_VAL)
+#define FD_SET_VAL(n, p) FD_SET(n, &(p))
 #endif /* FD_SET */
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
