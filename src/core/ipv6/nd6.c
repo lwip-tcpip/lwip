@@ -1030,7 +1030,7 @@ nd6_send_rs(struct netif * netif)
   /* Send the packet out. */
   ND6_STATS_INC(nd6.xmit);
 
-  err = ip6_output_if(p, src_addr, &multicast_address,
+  err = ip6_output_if(p, (src_addr == IP6_ADDR_ANY6) ? NULL : src_addr, &multicast_address,
       LWIP_ICMP6_HL, 0, IP6_NEXTH_ICMP6, netif);
   pbuf_free(p);
 
