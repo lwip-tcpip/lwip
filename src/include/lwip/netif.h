@@ -97,9 +97,6 @@ extern "C" {
 /** If set, the netif has MLD6 capability.
  * Set by the netif driver in its init function. */
 #define NETIF_FLAG_MLD6         0x40U
-/** If set, the netif is a 6LowPAN device.
- * IPv6 packets must be fragmented or reassembled. */
-#define NETIF_FLAG_LOWPAN6      0x80U
 
 struct netif;
 
