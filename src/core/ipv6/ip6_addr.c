@@ -104,10 +104,12 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
       if (current_block_index > 7) {
         /* address too long! */
         return 0;
-      } if (s[1] == ':') {
+      }
+      if (s[1] == ':') {
         s++;
         /* "::" found, set zeros */
-        while (zero_blocks-- > 0) {
+        while (zero_blocks > 0) {
+          zero_blocks--;
           if (current_block_index & 0x1) {
             addr_index++;
           }
@@ -117,6 +119,10 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
             }
           }
           current_block_index++;
+          if (current_block_index > 7) {
+            /* address too long! */
+            return 0;
+          }
         }
       }
     } else if (isxdigit(*s)) {
