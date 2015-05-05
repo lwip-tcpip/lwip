@@ -186,11 +186,12 @@ ip6addr_ntoa(const ip6_addr_t *addr)
 char *
 ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
 {
-  u32_t current_block_index, current_block_value;
-  s32_t zero_flag, i;
+  u32_t current_block_index, current_block_value, next_block_value;
+  s32_t i;
+  u8_t zero_flag, empty_block_flag;
 
   i = 0;
-  zero_flag = 0; /* used to indicate a zero chain for "::' */
+  empty_block_flag = 0; /* used to indicate a zero chain for "::' */
 
   for (current_block_index = 0; current_block_index < 8; current_block_index++) {
     /* get the current 16-bit block */
@@ -200,54 +201,73 @@ ip6addr_ntoa_r(const ip6_addr_t *addr, char *buf, int buflen)
     }
     current_block_value &= 0xffff;
 
+    /* Check for empty block. */
     if (current_block_value == 0) {
-      /* generate empty block "::" */
-      if (!zero_flag) {
-        if (current_block_index > 0) {
-          zero_flag = 1;
-          buf[i++] = ':';
-          if (i >= buflen) return NULL;
-        }
-      }
-    }
-    else {
-      if (current_block_index > 0) {
+      if (current_block_index == 7) {
+        /* special case, we must render a ':' for the last block. */
         buf[i++] = ':';
         if (i >= buflen) return NULL;
+        break;
       }
-
-      if ((current_block_value & 0xf000) == 0) {
-        zero_flag = 1;
+      if (empty_block_flag == 0) {
+        /* generate empty block "::", but only if more than one contiguous zero block,
+         * according to current formatting suggestions RFC 5952. */
+        next_block_value = htonl(addr->addr[(current_block_index + 1) >> 1]);
+        if ((current_block_index & 0x1) == 0x01) {
+            next_block_value = next_block_value >> 16;
+        }
+        next_block_value &= 0xffff;
+        if (next_block_value == 0) {
+          empty_block_flag = 1;
+          buf[i++] = ':';
+          if (i >= buflen) return NULL;
+          continue; /* move on to next block. */
+        }
       }
-      else {
-        buf[i++] = xchar(((current_block_value & 0xf000) >> 12));
-        zero_flag = 0;
-        if (i >= buflen) return NULL;
+      else if (empty_block_flag == 1) {
+        /* move on to next block. */
+        continue;
       }
-
-      if (((current_block_value & 0xf00) == 0) && (zero_flag)) {
-        /* do nothing */
-      }
-      else {
-        buf[i++] = xchar(((current_block_value & 0xf00) >> 8));
-        zero_flag = 0;
-        if (i >= buflen) return NULL;
-      }
-
-      if (((current_block_value & 0xf0) == 0) && (zero_flag)) {
-        /* do nothing */
-      }
-      else {
-        buf[i++] = xchar(((current_block_value & 0xf0) >> 4));
-        zero_flag = 0;
-        if (i >= buflen) return NULL;
-      }
-
-      buf[i++] = xchar((current_block_value & 0xf));
-      if (i >= buflen) return NULL;
-
-      zero_flag = 0;
     }
+    else if (empty_block_flag == 1) {
+      /* Set this flag value so we don't produce multiple empty blocks. */
+      empty_block_flag = 2;
+    }
+
+    if (current_block_index > 0) {
+      buf[i++] = ':';
+      if (i >= buflen) return NULL;
+    }
+
+    if ((current_block_value & 0xf000) == 0) {
+      zero_flag = 1;
+    }
+    else {
+      buf[i++] = xchar(((current_block_value & 0xf000) >> 12));
+      zero_flag = 0;
+      if (i >= buflen) return NULL;
+    }
+
+    if (((current_block_value & 0xf00) == 0) && (zero_flag)) {
+      /* do nothing */
+    }
+    else {
+      buf[i++] = xchar(((current_block_value & 0xf00) >> 8));
+      zero_flag = 0;
+      if (i >= buflen) return NULL;
+    }
+
+    if (((current_block_value & 0xf0) == 0) && (zero_flag)) {
+      /* do nothing */
+    }
+    else {
+      buf[i++] = xchar(((current_block_value & 0xf0) >> 4));
+      zero_flag = 0;
+      if (i >= buflen) return NULL;
+    }
+
+    buf[i++] = xchar((current_block_value & 0xf));
+    if (i >= buflen) return NULL;
   }
 
   buf[i] = 0;
