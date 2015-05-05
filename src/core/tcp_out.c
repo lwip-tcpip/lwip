@@ -364,7 +364,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
  * @param len Data length in bytes
  * @param apiflags combination of following flags :
  * - TCP_WRITE_FLAG_COPY (0x01) data will be copied into memory belonging to the stack
- * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will be set on last segment sent,
+ * - TCP_WRITE_FLAG_MORE (0x02) for TCP connection, PSH flag will not be set on last segment sent,
  * @return ERR_OK if enqueued, another err_t on error
  */
 err_t

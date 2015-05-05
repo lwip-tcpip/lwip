@@ -196,7 +196,7 @@ callback function.
     should be allocated and the data should only be referenced by pointer. This
     also means that the memory behind dataptr must not change until the data is
     ACKed by the remote host
-  - TCP_WRITE_FLAG_MORE: indicates that more data follows. If this is given,
+  - TCP_WRITE_FLAG_MORE: indicates that more data follows. If this is omitted,
     the PSH flag is set in the last segment created by this call to tcp_write.
     If this flag is given, the PSH flag is not set.
 
