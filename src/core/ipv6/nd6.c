@@ -812,7 +812,8 @@ nd6_tmr(void)
 #if LWIP_IPV6_SEND_ROUTER_SOLICIT
   /* Send router solicitation messages, if necessary. */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
-    if ((netif->rs_count > 0) && (netif->flags & NETIF_FLAG_UP)) {
+    if ((netif->rs_count > 0) && (netif->flags & NETIF_FLAG_UP) &&
+        (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, 0)))) {
       if (nd6_send_rs(netif) == ERR_OK) {
         netif->rs_count--;
       }
