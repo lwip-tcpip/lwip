@@ -89,7 +89,8 @@
       (sin6)->sin6_family = AF_INET6; \
       (sin6)->sin6_port = htons((port)); \
       (sin6)->sin6_flowinfo = 0; \
-      inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); }while(0)
+      inet6_addr_from_ip6addr(&(sin6)->sin6_addr, ipaddr); \
+      (sin6)->sin6_scope_id = 0; }while(0)
 #define SOCKADDR6_TO_IP6ADDR_PORT(sin6, ipaddr, port) do { \
     inet6_addr_to_ip6addr(ip_2_ip6(ipaddr), &((sin6)->sin6_addr)); \
     (port) = ntohs((sin6)->sin6_port); }while(0)
