@@ -157,23 +157,23 @@ void dhcp_fine_tmr(void);
 #define DHCP_COOKIE_OFS   DHCP_MSG_LEN
 #define DHCP_OPTIONS_OFS  (DHCP_MSG_LEN + 4)
 
-#define DHCP_CLIENT_PORT  68  
+#define DHCP_CLIENT_PORT  68
 #define DHCP_SERVER_PORT  67
 
 /** DHCP client states */
-#define DHCP_OFF          0
-#define DHCP_REQUESTING   1
-#define DHCP_INIT         2
-#define DHCP_REBOOTING    3
-#define DHCP_REBINDING    4
-#define DHCP_RENEWING     5
-#define DHCP_SELECTING    6
-#define DHCP_INFORMING    7
-#define DHCP_CHECKING     8
-#define DHCP_PERMANENT    9
-#define DHCP_BOUND        10
-/** not yet implemented #define DHCP_RELEASING 11 */
-#define DHCP_BACKING_OFF  12
+#define DHCP_STATE_OFF          0
+#define DHCP_STATE_REQUESTING   1
+#define DHCP_STATE_INIT         2
+#define DHCP_STATE_REBOOTING    3
+#define DHCP_STATE_REBINDING    4
+#define DHCP_STATE_RENEWING     5
+#define DHCP_STATE_SELECTING    6
+#define DHCP_STATE_INFORMING    7
+#define DHCP_STATE_CHECKING     8
+/** not yet implemented #define DHCP_STATE_PERMANENT 9 */
+#define DHCP_STATE_BOUND        10
+/** not yet implemented #define DHCP_STATE_RELEASING 11 */
+#define DHCP_STATE_BACKING_OFF  12
 
 /** AUTOIP cooperation flags */
 #define DHCP_AUTOIP_COOP_STATE_OFF  0
