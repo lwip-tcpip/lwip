@@ -245,6 +245,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-05-19: Simon Goldschmidt
+  * dhcp.h/.c: fixed bugs #45140 and #45141 (dhcp was not stopped correctly after
+    fixing bug #38204)
+
   2015-03-21: Simon Goldschmidt (patch by Homyak)
   * tcp_in.c: fixed bug #44766 (LWIP_WND_SCALE: tcphdr->wnd was not scaled in
     two places)
