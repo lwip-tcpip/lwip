@@ -338,8 +338,10 @@ sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* ipaddr, u16_
 {
   if ((sockaddr->sa_family) == AF_INET6) {
     SOCKADDR6_TO_IP6ADDR_PORT((const struct sockaddr_in6*)(const void*)(sockaddr), ipaddr, *port);
+    ipaddr->type = IPADDR_TYPE_V6;
   } else {
     SOCKADDR4_TO_IP4ADDR_PORT((const struct sockaddr_in*)(const void*)(sockaddr), ipaddr, *port);
+    ipaddr->type = IPADDR_TYPE_V4;
   }
 }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
