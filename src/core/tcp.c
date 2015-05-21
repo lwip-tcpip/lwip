@@ -377,7 +377,8 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
     tcp_pcb_remove(&tcp_tw_pcbs, pcb);
     memp_free(MEMP_TCP_PCB, pcb);
   } else {
-    int send_rst = reset && (pcb->state != CLOSED);
+    int send_rst = 0;
+    u16_t local_port = 0;
     seqno = pcb->snd_nxt;
     ackno = pcb->rcv_nxt;
 #if LWIP_CALLBACK_API
@@ -388,6 +389,8 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
       /* bound, not yet opened */
       TCP_RMV(&tcp_bound_pcbs, pcb);
     } else {
+      send_rst = reset;
+      local_port = pcb->local_port;
       TCP_PCB_REMOVE_ACTIVE(pcb);
     }
     if (pcb->unacked != NULL) {
@@ -403,7 +406,7 @@ tcp_abandon(struct tcp_pcb *pcb, int reset)
 #endif /* TCP_QUEUE_OOSEQ */
     if (send_rst) {
       LWIP_DEBUGF(TCP_RST_DEBUG, ("tcp_abandon: sending RST\n"));
-      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, pcb->local_port, pcb->remote_port);
+      tcp_rst(seqno, ackno, &pcb->local_ip, &pcb->remote_ip, local_port, pcb->remote_port);
     }
     memp_free(MEMP_TCP_PCB, pcb);
     TCP_EVENT_ERR(errf, errf_arg, ERR_ABRT);
