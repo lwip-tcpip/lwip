@@ -13,10 +13,10 @@
 
 static struct netif test_netif;
 static ip4_addr_t test_ipaddr, test_netmask, test_gw;
-struct eth_addr test_ethaddr = {1,1,1,1,1,1};
-struct eth_addr test_ethaddr2 = {1,1,1,1,1,2};
-struct eth_addr test_ethaddr3 = {1,1,1,1,1,3};
-struct eth_addr test_ethaddr4 = {1,1,1,1,1,4};
+struct eth_addr test_ethaddr =  {{1,1,1,1,1,1}};
+struct eth_addr test_ethaddr2 = {{1,1,1,1,1,2}};
+struct eth_addr test_ethaddr3 = {{1,1,1,1,1,3}};
+struct eth_addr test_ethaddr4 = {{1,1,1,1,1,4}};
 static int linkoutput_ctr;
 
 /* Helper functions */
