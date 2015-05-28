@@ -837,7 +837,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   struct netif netif;
   u32_t exp_rx_calls = 0, exp_rx_bytes = 0, exp_close_calls = 0, exp_oos_pbufs = 0, exp_oos_tcplen = 0;
   int first_dropped = 0xff;
-  int last_dropped = 0;
 
   for(i = 0; i < sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
@@ -870,7 +869,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
   if(delay_packet & 1) {
     /* drop normal data */
     first_dropped = 1;
-    last_dropped = 1;
   } else {
     /* send normal data */
     test_tcp_input(p, &netif);
@@ -885,7 +883,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
     if(first_dropped > 2) {
       first_dropped = 2;
     }
-    last_dropped = 2;
   } else {
     /* send FIN */
     test_tcp_input(p_normal_fin, &netif);
@@ -906,7 +903,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
     if(first_dropped > 3) {
       first_dropped = 3;
     }
-    last_dropped = 3;
   } else {
     /* send data-after-FIN */
     test_tcp_input(p_data_after_fin, &netif);
@@ -929,7 +925,6 @@ static void test_tcp_recv_ooseq_double_FINs(int delay_packet)
     if(first_dropped > 4) {
       first_dropped = 4;
     }
-    last_dropped = 4;
   } else {
     /* send 2nd-FIN */
     test_tcp_input(p_2nd_fin_ooseq, &netif);
