@@ -171,7 +171,7 @@ struct udp_pcb * udp_new_ip6(void);
 #if LWIP_IGMP
 #define udp_set_multicast_netif_addr(pcb, ip4addr) do { (pcb)->multicast_ip = *(ip4addr); } while(0)
 #define udp_get_multicast_netif_addr(pcb)          (&(pcb)->multicast_ip)
-#define udp_set_multicast_ttl(pcb, mcast_ttl)      do { (pcb)->mcast_ttl = mcast_ttl; } while(0)
+#define udp_set_multicast_ttl(pcb, value)      do { (pcb)->mcast_ttl = value; } while(0)
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 #endif /* LWIP_IGMP */
 
