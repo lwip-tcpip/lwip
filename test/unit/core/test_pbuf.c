@@ -139,6 +139,86 @@ START_TEST(test_pbuf_queueing_bigger_than_64k)
 }
 END_TEST
 
+/* Test for bug that writing with pbuf_take_at() did nothing
+ * and returned ERR_OK when writing at beginning of a pbuf
+ * in the chain.
+ */
+START_TEST(test_pbuf_take_at_edge)
+{
+  err_t res;
+  u8_t *out;
+  int i;
+  u8_t testdata[] = { 0x01, 0x08, 0x82, 0x02 };
+  struct pbuf *p = pbuf_alloc(PBUF_RAW, 1024, PBUF_POOL);
+  struct pbuf *q = p->next;
+  /* alloc big enough to get a chain of pbufs */
+  fail_if(p->tot_len == p->len);
+  memset(p->payload, 0, p->len);
+  memset(q->payload, 0, q->len);
+
+  /* copy data to the beginning of first pbuf */
+  res = pbuf_take_at(p, &testdata, sizeof(testdata), 0);
+  fail_unless(res == ERR_OK);
+
+  out = p->payload;
+  for (i = 0; i < sizeof(testdata); i++) {
+    fail_unless(out[i] == testdata[i],
+      "Bad data at pos %d, was %02X, expected %02X", i, out[i], testdata[i]);
+  }
+
+  /* copy data to the just before end of first pbuf */
+  res = pbuf_take_at(p, &testdata, sizeof(testdata), p->len - 1);
+  fail_unless(res == ERR_OK);
+
+  out = p->payload;
+  fail_unless(out[p->len - 1] == testdata[0],
+    "Bad data at pos %d, was %02X, expected %02X", p->len - 1, out[p->len - 1], testdata[0]);
+  out = q->payload;
+  for (i = 1; i < sizeof(testdata); i++) {
+    fail_unless(out[i-1] == testdata[i],
+      "Bad data at pos %d, was %02X, expected %02X", p->len - 1 + i, out[i-1], testdata[i]);
+  }
+
+  /* copy data to the beginning of second pbuf */
+  res = pbuf_take_at(p, &testdata, sizeof(testdata), p->len);
+  fail_unless(res == ERR_OK);
+
+  out = p->payload;
+  for (i = 0; i < sizeof(testdata); i++) {
+    fail_unless(out[i] == testdata[i],
+      "Bad data at pos %d, was %02X, expected %02X", p->len+i, out[i], testdata[i]);
+  }
+}
+END_TEST
+
+/* Verify pbuf_put_at()/pbuf_get_at() when using
+ * offsets equal to beginning of new pbuf in chain
+ */
+START_TEST(test_pbuf_get_put_at_edge)
+{
+  u8_t *out;
+  u8_t testdata = 0x01;
+  u8_t getdata;
+  struct pbuf *p = pbuf_alloc(PBUF_RAW, 1024, PBUF_POOL);
+  struct pbuf *q = p->next;
+  /* alloc big enough to get a chain of pbufs */
+  fail_if(p->tot_len == p->len);
+  memset(p->payload, 0, p->len);
+  memset(q->payload, 0, q->len);
+
+  /* put byte at the beginning of second pbuf */
+  pbuf_put_at(p, p->len, testdata);
+
+  out = q->payload;
+  fail_unless(*out == testdata,
+    "Bad data at pos %d, was %02X, expected %02X", p->len, *out, testdata);
+
+  getdata = pbuf_get_at(p, p->len);
+  fail_unless(*out == getdata,
+    "pbuf_get_at() returned bad data at pos %d, was %02X, expected %02X", p->len, getdata, *out);
+}
+END_TEST
+
 /** Create the suite including all tests for this module */
 Suite *
 pbuf_suite(void)
@@ -146,7 +226,9 @@ pbuf_suite(void)
   testfunc tests[] = {
     TESTFUNC(test_pbuf_copy_zero_pbuf),
     TESTFUNC(test_pbuf_split_64k_on_small_pbufs),
-    TESTFUNC(test_pbuf_queueing_bigger_than_64k)
+    TESTFUNC(test_pbuf_queueing_bigger_than_64k),
+    TESTFUNC(test_pbuf_take_at_edge),
+    TESTFUNC(test_pbuf_get_put_at_edge)
   };
   return create_suite("PBUF", tests, sizeof(tests)/sizeof(testfunc), pbuf_setup, pbuf_teardown);
 }

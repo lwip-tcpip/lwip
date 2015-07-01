@@ -1125,13 +1125,11 @@ pbuf_take_at(struct pbuf *buf, const void *dataptr, u16_t len, u16_t offset)
   if ((q != NULL) && (q->tot_len >= target_offset + len)) {
     u16_t remaining_len = len;
     const u8_t* src_ptr = (const u8_t*)dataptr;
-    if (target_offset > 0) {
-      /* copy the part that goes into the first pbuf */
-      u16_t first_copy_len = LWIP_MIN(q->len - target_offset, len);
-      MEMCPY(((u8_t*)q->payload) + target_offset, dataptr, first_copy_len);
-      remaining_len -= first_copy_len;
-      src_ptr += first_copy_len;
-    }
+    /* copy the part that goes into the first pbuf */
+    u16_t first_copy_len = LWIP_MIN(q->len - target_offset, len);
+    MEMCPY(((u8_t*)q->payload) + target_offset, dataptr, first_copy_len);
+    remaining_len -= first_copy_len;
+    src_ptr += first_copy_len;
     if (remaining_len > 0) {
       return pbuf_take(q->next, src_ptr, remaining_len);
     }
