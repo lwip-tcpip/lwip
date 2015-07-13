@@ -97,7 +97,11 @@ LWIP_NETCONN_SCOPE void              netbuf_first    (struct netbuf *buf);
 #if LWIP_NETBUF_RECVINFO
 #define netbuf_destaddr(buf)         (&((buf)->toaddr))
 #define netbuf_set_destaddr(buf, destaddr) ip_addr_set(&((buf)->toaddr), destaddr)
+#if LWIP_CHECKSUM_ON_COPY
 #define netbuf_destport(buf)         (((buf)->flags & NETBUF_FLAG_DESTADDR) ? (buf)->toport_chksum : 0)
+#else
+#define netbuf_destport(buf)         ((buf)->toport_chksum)
+#endif /* LWIP_CHECKSUM_ON_COPY */
 #endif /* LWIP_NETBUF_RECVINFO */
 #if LWIP_CHECKSUM_ON_COPY
 #define netbuf_set_chksum(buf, chksum) do { (buf)->flags = NETBUF_FLAG_CHKSUM; \
