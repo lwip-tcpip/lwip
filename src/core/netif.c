@@ -159,6 +159,7 @@ netif_init(void)
   loop_netif.ip6_addr_state[0] = IP6_ADDR_VALID;
 #endif /* LWIP_IPV6 */
 
+  netif_set_link_up(&loop_netif);
   netif_set_up(&loop_netif);
 
 #endif /* LWIP_HAVE_LOOPIF */
