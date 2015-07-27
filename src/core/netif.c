@@ -964,7 +964,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
  * @param ip6addr address to add
  * @param chosen_idx if != NULL, the chosen IPv6 address index will be stored here
  */
-s8_t
+err_t
 netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx)
 {
   s8_t i;
