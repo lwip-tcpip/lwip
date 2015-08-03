@@ -47,6 +47,7 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
   struct ip_hdr* iphdr;
   struct tcp_hdr* tcphdr;
   u16_t pbuf_len = (u16_t)(sizeof(struct ip_hdr) + sizeof(struct tcp_hdr) + data_len);
+  LWIP_ASSERT("data_len too big", data_len <= 0xFFFF);
 
   p = pbuf_alloc(PBUF_RAW, pbuf_len, PBUF_POOL);
   EXPECT_RETNULL(p != NULL);
@@ -86,7 +87,7 @@ tcp_create_segment_wnd(ip_addr_t* src_ip, ip_addr_t* dst_ip,
     /* let p point to TCP data */
     pbuf_header(p, -(s16_t)sizeof(struct tcp_hdr));
     /* copy data */
-    pbuf_take(p, data, data_len);
+    pbuf_take(p, data, (u16_t)data_len);
     /* let p point to TCP header again */
     pbuf_header(p, sizeof(struct tcp_hdr));
   }

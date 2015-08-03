@@ -93,12 +93,15 @@ START_TEST(test_pbuf_queueing_bigger_than_64k)
   struct pbuf *p1, *p2, *p3, *rest2=NULL, *rest3=NULL;
   LWIP_UNUSED_ARG(_i);
 
-  for(i = 0; i < TESTBUFSIZE_1; i++)
-    testbuf_1[i] = rand();
-  for(i = 0; i < TESTBUFSIZE_2; i++)
-    testbuf_2[i] = rand();
-  for(i = 0; i < TESTBUFSIZE_3; i++)
-    testbuf_3[i] = rand();
+  for(i = 0; i < TESTBUFSIZE_1; i++) {
+    testbuf_1[i] = (u8_t)rand();
+  }
+  for(i = 0; i < TESTBUFSIZE_2; i++) {
+    testbuf_2[i] = (u8_t)rand();
+  }
+  for(i = 0; i < TESTBUFSIZE_3; i++) {
+    testbuf_3[i] = (u8_t)rand();
+  }
 
   p1 = pbuf_alloc(PBUF_RAW, TESTBUFSIZE_1, PBUF_POOL);
   fail_unless(p1 != NULL);
@@ -151,6 +154,7 @@ START_TEST(test_pbuf_take_at_edge)
   u8_t testdata[] = { 0x01, 0x08, 0x82, 0x02 };
   struct pbuf *p = pbuf_alloc(PBUF_RAW, 1024, PBUF_POOL);
   struct pbuf *q = p->next;
+  LWIP_UNUSED_ARG(_i);
   /* alloc big enough to get a chain of pbufs */
   fail_if(p->tot_len == p->len);
   memset(p->payload, 0, p->len);
@@ -201,6 +205,7 @@ START_TEST(test_pbuf_get_put_at_edge)
   u8_t getdata;
   struct pbuf *p = pbuf_alloc(PBUF_RAW, 1024, PBUF_POOL);
   struct pbuf *q = p->next;
+  LWIP_UNUSED_ARG(_i);
   /* alloc big enough to get a chain of pbufs */
   fail_if(p->tot_len == p->len);
   memset(p->payload, 0, p->len);

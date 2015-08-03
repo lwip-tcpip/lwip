@@ -61,9 +61,10 @@ static void malloc_keep_x(int x, int num, int size, int freestep)
 {
    int i;
    void* p[16];
+   LWIP_ASSERT("invalid size", size >= 0 && size < (mem_size_t)-1);
    memset(p, 0, sizeof(p));
    for(i = 0; i < num && i < 16; i++) {
-      p[i] = mem_malloc(size);
+      p[i] = mem_malloc((mem_size_t)size);
       fail_unless(p[i] != NULL);
    }
    for(i = 0; i < num && i < 16; i += freestep) {

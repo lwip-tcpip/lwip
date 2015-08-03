@@ -136,10 +136,11 @@ static void tick_lwip(void)
   }
 }
 
-static void send_pkt(struct netif *netif, const u8_t *data, u32_t len)
+static void send_pkt(struct netif *netif, const u8_t *data, size_t len)
 {
-  struct pbuf *p = pbuf_alloc(PBUF_RAW, len, PBUF_POOL);
-  struct pbuf *q;
+  struct pbuf *p, *q;
+  LWIP_ASSERT("pkt too big", len <= 0xFFFF);
+  p = pbuf_alloc(PBUF_RAW, (u16_t)len, PBUF_POOL);
 
   if (debug) {
     /* Dump data */
@@ -879,7 +880,7 @@ START_TEST(test_dhcp_nak_no_endmarker)
   memcpy(&dhcp_offer[46], &xid, 4); /* insert correct transaction id */
   send_pkt(&net_test, dhcp_offer, sizeof(dhcp_offer));
   
-  fail_unless(net_test.dhcp->state == DHCP_REQUESTING);
+  fail_unless(net_test.dhcp->state == DHCP_STATE_REQUESTING);
 
   fail_unless(txpacket == 2); /* No more sent */
   xid = htonl(net_test.dhcp->xid); /* xid updated */
@@ -887,7 +888,7 @@ START_TEST(test_dhcp_nak_no_endmarker)
   send_pkt(&net_test, dhcp_nack_no_endmarker, sizeof(dhcp_nack_no_endmarker));
 
   /* NAK should put us in another state for a while, no other way detecting it */
-  fail_unless(net_test.dhcp->state != DHCP_REQUESTING);
+  fail_unless(net_test.dhcp->state != DHCP_STATE_REQUESTING);
 
   netif_remove(&net_test);
 }
