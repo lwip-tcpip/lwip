@@ -144,7 +144,7 @@ ip4_route(const ip4_addr_t *dest)
   /* iterate through netifs */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
     /* is the netif up, does it have a link and a valid address? */
-    if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany(&(netif->ip_addr))) {
+    if (netif_is_up(netif) && netif_is_link_up(netif) && !ip4_addr_isany_val(netif->ip_addr)) {
       /* network mask matches? */
       if (ip4_addr_netcmp(dest, &(netif->ip_addr), &(netif->netmask))) {
         /* return netif on which to forward IP packet */
@@ -154,7 +154,7 @@ ip4_route(const ip4_addr_t *dest)
   }
 
   if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
-      ip4_addr_isany(&netif_default->ip_addr)) {
+      ip4_addr_isany_val(netif_default->ip_addr)) {
     /* No matching netif found an default netif is not usable.
        If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
@@ -468,7 +468,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
           ip4_addr_get_u32(&iphdr->dest) & ~ip4_addr_get_u32(&netif->netmask)));
 
       /* interface is up and configured? */
-      if ((netif_is_up(netif)) && (!ip4_addr_isany(&(netif->ip_addr)))) {
+      if ((netif_is_up(netif)) && (!ip4_addr_isany_val(netif->ip_addr))) {
         /* unicast to this interface address? */
         if (ip4_addr_cmp(ip4_current_dest_addr(), &(netif->ip_addr)) ||
             /* or broadcast on this interface network address? */
@@ -536,7 +536,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   if (check_ip_src
 #if IP_ACCEPT_LINK_LAYER_ADDRESSING
   /* DHCP servers need 0.0.0.0 to be allowed as source address (RFC 1.1.2.2: 3.2.1.3/a) */
-      && !ip_addr_isany(ip_current_src_addr())
+      && !ip_addr_isany_val(*ip_current_src_addr())
 #endif /* IP_ACCEPT_LINK_LAYER_ADDRESSING */
      )
 #endif /* LWIP_IGMP || IP_ACCEPT_LINK_LAYER_ADDRESSING */

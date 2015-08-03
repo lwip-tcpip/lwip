@@ -1112,7 +1112,7 @@ tcp_output(struct tcp_pcb *pcb)
   }
 #endif /* TCP_OVERSIZE */
 
-  pcb->flags &= ~TF_NAGLEMEMERR;
+  pcb->flags &= (tcpflags_t)~(unsigned int)TF_NAGLEMEMERR;
   return ERR_OK;
 }
 

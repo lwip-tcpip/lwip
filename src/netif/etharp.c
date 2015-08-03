@@ -777,7 +777,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
   IPADDR2_COPY(&dipaddr, &hdr->dipaddr);
 
   /* this interface is not configured? */
-  if (ip4_addr_isany(&netif->ip_addr)) {
+  if (ip4_addr_isany_val(netif->ip_addr)) {
     for_us = 0;
   } else {
     /* ARP packet directed to us? */
@@ -837,7 +837,7 @@ etharp_arp_input(struct netif *netif, struct eth_addr *ethaddr, struct pbuf *p)
       /* return ARP reply */
       netif->linkoutput(netif, p);
     /* we are not configured? */
-    } else if (ip4_addr_isany(&netif->ip_addr)) {
+    } else if (ip4_addr_isany_val(netif->ip_addr)) {
       /* { for_us == 0 and netif->ip_addr.addr == 0 } */
       LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_arp_input: we are unconfigured, ARP request ignored.\n"));
     /* request was not directed to us */
@@ -983,7 +983,7 @@ etharp_output(struct netif *netif, struct pbuf *q, const ip4_addr_t *ipaddr)
 #endif /* LWIP_HOOK_ETHARP_GET_GW */
         {
           /* interface has default gateway? */
-          if (!ip4_addr_isany(&netif->gw)) {
+          if (!ip4_addr_isany_val(netif->gw)) {
             /* send to hardware address of default gateway IP address */
             dst_addr = &(netif->gw);
           /* no default gateway available */

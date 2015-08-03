@@ -1356,7 +1356,7 @@ lwip_netconn_do_send(struct api_msg_msg *msg)
             msg->msg.b->flags & NETBUF_FLAG_CHKSUM, msg->msg.b->toport_chksum);
         }
 #else /* LWIP_CHECKSUM_ON_COPY */
-        if (ip_addr_isany(&msg->msg.b->addr)) {
+        if (ip_addr_isany_val(msg->msg.b->addr)) {
           msg->err = udp_send(msg->conn->pcb.udp, msg->msg.b->p);
         } else {
           msg->err = udp_sendto(msg->conn->pcb.udp, msg->msg.b->p, &msg->msg.b->addr, msg->msg.b->port);

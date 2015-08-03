@@ -694,7 +694,7 @@ tcp_process(struct tcp_pcb *pcb)
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: Connection RESET\n"));
       LWIP_ASSERT("tcp_input: pcb->state != CLOSED", pcb->state != CLOSED);
       recv_flags |= TF_RESET;
-      pcb->flags &= ~TF_ACK_DELAY;
+      pcb->flags &= (tcpflags_t)~(unsigned int)TF_ACK_DELAY;
       return ERR_RST;
     } else {
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_process: unacceptable reset seqno %"U32_F" rcv_nxt %"U32_F"\n",
@@ -1062,7 +1062,7 @@ tcp_receive(struct tcp_pcb *pcb)
          in fast retransmit. Also reset the congestion window to the
          slow start threshold. */
       if (pcb->flags & TF_INFR) {
-        pcb->flags &= ~TF_INFR;
+        pcb->flags &= (tcpflags_t)~(unsigned int)TF_INFR;
         pcb->cwnd = pcb->ssthresh;
       }
 
@@ -1338,7 +1338,7 @@ tcp_receive(struct tcp_pcb *pcb)
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
             /* Must remove the FIN from the header as we're trimming 
              * that byte of sequence-space from the packet */
-            TCPH_FLAGS_SET(inseg.tcphdr, TCPH_FLAGS(inseg.tcphdr) &~ TCP_FIN);
+            TCPH_FLAGS_SET(inseg.tcphdr, TCPH_FLAGS(inseg.tcphdr) & (tcpflags_t)~(unsigned int)TCP_FIN);
           }
           /* Adjust length of segment to fit in the window. */
           inseg.len = pcb->rcv_wnd;
@@ -1593,7 +1593,7 @@ tcp_receive(struct tcp_pcb *pcb)
                     if (TCPH_FLAGS(next->next->tcphdr) & TCP_FIN) {
                       /* Must remove the FIN from the header as we're trimming 
                        * that byte of sequence-space from the packet */
-                      TCPH_FLAGS_SET(next->next->tcphdr, TCPH_FLAGS(next->next->tcphdr) &~ TCP_FIN);
+                      TCPH_FLAGS_SET(next->next->tcphdr, TCPH_FLAGS(next->next->tcphdr) & (tcpflags_t)~(unsigned int)TCP_FIN);
                     }
                     /* Adjust length of segment to fit in the window. */
                     next->next->len = (u16_t)(pcb->rcv_nxt + pcb->rcv_wnd - seqno);

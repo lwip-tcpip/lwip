@@ -320,7 +320,7 @@ netif_remove(struct netif *netif)
   }
 
 #if LWIP_IPV4
-  if (!ip4_addr_isany(&netif->ip_addr)) {
+  if (!ip4_addr_isany_val(netif->ip_addr)) {
 #if LWIP_TCP
     tcp_netif_ipv4_addr_changed(&netif->ip_addr, NULL);
 #endif /* LWIP_TCP */
@@ -549,7 +549,7 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
 {
 #if LWIP_IPV4
   if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
-      !ip4_addr_isany(&netif->ip_addr)) {
+      !ip4_addr_isany_val(netif->ip_addr)) {
 #if LWIP_ARP
     /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */
     if (netif->flags & (NETIF_FLAG_ETHARP)) {

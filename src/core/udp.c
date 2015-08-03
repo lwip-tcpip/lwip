@@ -209,7 +209,7 @@ udp_input(struct pbuf *p, struct netif *inp)
            (- broadcast or directed to us) -> DHCP is link-layer-addressed, local ip is always ANY!
            - inp->dhcp->pcb->remote == ANY or iphdr->src
            (no need to check for IPv6 since the dhcp struct always uses IPv4) */
-        if (ip_addr_isany(&inp->dhcp->pcb->remote_ip) ||
+        if (ip_addr_isany_val(inp->dhcp->pcb->remote_ip) ||
             ip_addr_cmp(&inp->dhcp->pcb->remote_ip, ip_current_src_addr())) {
           pcb = inp->dhcp->pcb;
         }
@@ -280,7 +280,7 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* compare PCB remote addr+port to UDP source addr+port */
       if ((local_match != 0) &&
           (pcb->remote_port == src) && IP_PCB_IPVER_INPUT_MATCH(pcb) &&
-            (ip_addr_isany(&pcb->remote_ip) ||
+            (ip_addr_isany_val(pcb->remote_ip) ||
               ip_addr_cmp(&pcb->remote_ip, ip_current_src_addr()))) {
         /* the first fully matching PCB */
         if (prev != NULL) {
