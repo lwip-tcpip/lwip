@@ -334,7 +334,7 @@ void netif_remove(struct netif * netif);
    "et0", where the first two letters are the "name" field in the
    netif structure, and the digit is in the num field in the same
    structure. */
-struct netif *netif_find(char *name);
+struct netif *netif_find(const char *name);
 
 void netif_set_default(struct netif *netif);
 

@@ -383,7 +383,7 @@ netif_remove(struct netif *netif)
  * in ascii representation (e.g. 'en0')
  */
 struct netif *
-netif_find(char *name)
+netif_find(const char *name)
 {
   struct netif *netif;
   u8_t num;
