@@ -189,16 +189,16 @@ struct tcp_pcb {
   u16_t remote_port;
   
   tcpflags_t flags;
-#define TF_ACK_DELAY   ((tcpflags_t)0x0001U)   /* Delayed ACK. */
-#define TF_ACK_NOW     ((tcpflags_t)0x0002U)   /* Immediate ACK. */
-#define TF_INFR        ((tcpflags_t)0x0004U)   /* In fast recovery. */
-#define TF_TIMESTAMP   ((tcpflags_t)0x0008U)   /* Timestamp option enabled */
-#define TF_RXCLOSED    ((tcpflags_t)0x0010U)   /* rx closed by tcp_shutdown */
-#define TF_FIN         ((tcpflags_t)0x0020U)   /* Connection was closed locally (FIN segment enqueued). */
-#define TF_NODELAY     ((tcpflags_t)0x0040U)   /* Disable Nagle algorithm */
-#define TF_NAGLEMEMERR ((tcpflags_t)0x0080U)   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
+#define TF_ACK_DELAY   0x01U   /* Delayed ACK. */
+#define TF_ACK_NOW     0x02U   /* Immediate ACK. */
+#define TF_INFR        0x04U   /* In fast recovery. */
+#define TF_TIMESTAMP   0x08U   /* Timestamp option enabled */
+#define TF_RXCLOSED    0x10U   /* rx closed by tcp_shutdown */
+#define TF_FIN         0x20U   /* Connection was closed locally (FIN segment enqueued). */
+#define TF_NODELAY     0x40U   /* Disable Nagle algorithm */
+#define TF_NAGLEMEMERR 0x80U   /* nagle enabled, memerr, try to output to prevent delayed ACK to happen */
 #if LWIP_WND_SCALE
-#define TF_WND_SCALE   ((tcpflags_t)0x0100U)   /* Window Scale option enabled */
+#define TF_WND_SCALE   0x0100U /* Window Scale option enabled */
 #endif
 
   /* the rest of the fields are in host byte order
@@ -351,7 +351,7 @@ void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 #define          tcp_sndbuf(pcb)          ((pcb)->snd_buf)
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
 #define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
-#define          tcp_nagle_enable(pcb)    ((pcb)->flags &= (tcpflags_t)~(unsigned int)TF_NODELAY)
+#define          tcp_nagle_enable(pcb)    ((pcb)->flags &= ~TF_NODELAY)
 #define          tcp_nagle_disabled(pcb)  (((pcb)->flags & TF_NODELAY) != 0)
 
 #if TCP_LISTEN_BACKLOG
