@@ -276,7 +276,7 @@ static void lwip_socket_drop_registered_memberships(int s);
 static struct lwip_sock sockets[NUM_SOCKETS];
 /** The global list of tasks waiting for select */
 static struct lwip_select_cb *select_cb_list;
-/** This counter is increased from lwip_select when the list is chagned
+/** This counter is increased from lwip_select when the list is changed
     and checked in event_callback to see if it has changed. */
 static volatile int select_cb_ctr;
 
@@ -345,6 +345,20 @@ sockaddr_to_ipaddr_port(const struct sockaddr* sockaddr, ip_addr_t* ipaddr, u16_
   }
 }
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
+
+/** LWIP_NETCONN_SEM_PER_THREAD==1: initialize thread-local semaphore */
+void
+lwip_socket_thread_init(void)
+{
+   netconn_thread_init();
+}
+
+/** LWIP_NETCONN_SEM_PER_THREAD==1: destroy thread-local semaphore */
+void
+lwip_socket_thread_cleanup(void)
+{
+   netconn_thread_cleanup();
+}
 
 /**
  * Map a externally used socket index to the internal socket representation.
