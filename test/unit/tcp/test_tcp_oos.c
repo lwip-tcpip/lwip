@@ -36,6 +36,7 @@ static int tcp_oos_count(struct tcp_pcb* pcb)
   return num;
 }
 
+#if TCP_OOSEQ_MAX_PBUFS && (TCP_OOSEQ_MAX_PBUFS < ((TCP_WND / TCP_MSS) + 1)) && (PBUF_POOL_BUFSIZE >= (TCP_MSS + PBUF_LINK_ENCAPSULATION_HLEN + PBUF_LINK_HLEN + PBUF_IP_HLEN + PBUF_TRANSPORT_HLEN))
 /** Get the numbers of pbufs on the ooseq list */
 static int tcp_oos_pbuf_count(struct tcp_pcb* pcb)
 {
@@ -47,6 +48,7 @@ static int tcp_oos_pbuf_count(struct tcp_pcb* pcb)
   }
   return num;
 }
+#endif
 
 /** Get the seqno of a segment (by index) on the ooseq list
  *
@@ -562,7 +564,7 @@ START_TEST(test_tcp_recv_ooseq_overrun_rxwin_edge)
   int datalen = 0;
   int datalen2;
 
-  for(i = 0; i < sizeof(data_full_wnd); i++) {
+  for(i = 0; i < (int)sizeof(data_full_wnd); i++) {
     data_full_wnd[i] = (char)i;
   }
 
