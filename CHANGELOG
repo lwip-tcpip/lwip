@@ -245,6 +245,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-07-01: Erik Ekman
+  * puf.c: fixed bug #45454 (pbuf_take_at() skips write and returns OK if offset
+    is at start of pbuf in chain)
+
   2015-05-19: Simon Goldschmidt
   * dhcp.h/.c: fixed bugs #45140 and #45141 (dhcp was not stopped correctly after
     fixing bug #38204)
