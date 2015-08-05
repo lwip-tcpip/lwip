@@ -1632,7 +1632,9 @@
 #endif
 
 /**
- * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names.
+ * LWIP_COMPAT_SOCKETS==1: Enable BSD-style sockets functions names through defines.
+ * LWIP_COMPAT_SOCKETS==2: Same as ==1 but correctly named functions are created.
+ * While this helps code completion, it might conflict with existing libraries.
  * (only used if you use sockets.c)
  */
 #ifndef LWIP_COMPAT_SOCKETS
