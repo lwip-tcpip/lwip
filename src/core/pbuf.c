@@ -476,7 +476,11 @@ pbuf_realloc(struct pbuf *p, u16_t new_len)
 
   /* shrink allocated memory for PBUF_RAM */
   /* (other types merely adjust their length fields */
-  if ((q->type == PBUF_RAM) && (rem_len != q->len)) {
+  if ((q->type == PBUF_RAM) && (rem_len != q->len)
+#if LWIP_SUPPORT_CUSTOM_PBUF
+      && ((q->flags & PBUF_FLAG_IS_CUSTOM) == 0)
+#endif /* LWIP_SUPPORT_CUSTOM_PBUF */
+     ) {
     /* reallocate and adjust the length of the pbuf that will be split */
     q = (struct pbuf *)mem_trim(q, (u16_t)((u8_t *)q->payload - (u8_t *)q) + rem_len);
     LWIP_ASSERT("mem_trim returned q == NULL", q != NULL);
