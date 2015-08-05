@@ -1419,7 +1419,7 @@
  * netif is available, loopback traffic uses this netif.
  */
 #ifndef LWIP_HAVE_LOOPIF
-#define LWIP_HAVE_LOOPIF                0
+#define LWIP_HAVE_LOOPIF                LWIP_NETIF_LOOPBACK
 #endif
 
 /*
