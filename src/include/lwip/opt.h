@@ -963,11 +963,11 @@
 
 /*
    ----------------------------------
-   ---------- IGMP options ----------
+   ----- Multicast/IGMP options -----
    ----------------------------------
 */
 /**
- * LWIP_IGMP==1: Turn on IGMP module. 
+ * LWIP_IGMP==1: Turn on IGMP module.
  */
 #ifndef LWIP_IGMP
 #define LWIP_IGMP                       0
@@ -975,6 +975,14 @@
 #if !LWIP_IPV4
 #undef LWIP_IGMP
 #define LWIP_IGMP                       0
+#endif
+
+/**
+ * LWIP_MULTICAST_TX_OPTIONS==1: Enable multicast TX support like the socket options
+ * IP_MULTICAST_TTL/IP_MULTICAST_IF/IP_MULTICAST_LOOP
+ */
+#ifndef LWIP_MULTICAST_TX_OPTIONS
+#define LWIP_MULTICAST_TX_OPTIONS       LWIP_IGMP
 #endif
 
 /*

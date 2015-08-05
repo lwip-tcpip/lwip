@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-08-05: Simon Goldschmidt
+  * many files: allow multicast socket options IP_MULTICAST_TTL, IP_MULTICAST_IF
+    and IP_MULTICAST_LOOP to be used without IGMP
+
   2015-04-24: Simon Goldschmidt
   * dhcp.h/c, autoip.h/.c: added functions dhcp/autoip_supplied_address() to
     check for the source of address assignemnt (replacement for NETIF_FLAG_DHCP)

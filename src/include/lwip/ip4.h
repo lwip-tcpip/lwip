@@ -128,9 +128,9 @@ err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_add
        u16_t optlen);
 #endif /* IP_OPTIONS_SEND */
 
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
 void  ip4_set_default_multicast_netif(struct netif* default_multicast_netif);
-#endif /* LWIP_IGMP */
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
 
 #define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? &((netif)->ip_addr) : NULL)
 

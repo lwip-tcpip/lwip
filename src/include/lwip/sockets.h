@@ -253,15 +253,21 @@ struct linger {
 #endif /* LWIP_UDP && LWIP_UDPLITE*/
 
 
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
 /*
  * Options and types for UDP multicast traffic handling
  */
-#define IP_ADD_MEMBERSHIP  3
-#define IP_DROP_MEMBERSHIP 4
 #define IP_MULTICAST_TTL   5
 #define IP_MULTICAST_IF    6
 #define IP_MULTICAST_LOOP  7
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
+
+#if LWIP_IGMP
+/*
+ * Options and types related to multicast membership
+ */
+#define IP_ADD_MEMBERSHIP  3
+#define IP_DROP_MEMBERSHIP 4
 
 typedef struct ip_mreq {
     struct in_addr imr_multiaddr; /* IP multicast address of group */

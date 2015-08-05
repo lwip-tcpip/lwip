@@ -101,7 +101,7 @@ struct ip_globals ip_data;
 /** The IP header ID of the next outgoing IP packet */
 static u16_t ip_id;
 
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
 /** The default netif used for multicast */
 static struct netif* ip4_default_multicast_netif;
 
@@ -111,7 +111,7 @@ ip4_set_default_multicast_netif(struct netif* default_multicast_netif)
 {
   ip4_default_multicast_netif = default_multicast_netif;
 }
-#endif /* LWIP_IGMP */
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
 
 /**
  * Finds the appropriate network interface for a given IP address. It
@@ -895,11 +895,11 @@ err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_add
     LWIP_DEBUGF(IP_DEBUG, ("netif_loop_output()"));
     return netif_loop_output(netif, p);
   }
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
   if ((p->flags & PBUF_FLAG_MCASTLOOP) != 0) {
     netif_loop_output(netif, p);
   }
-#endif /* LWIP_IGMP */
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
 #endif /* ENABLE_LOOPBACK */
 #if IP_FRAG
   /* don't fragment if interface has mtu set to 0 [loopif] */
