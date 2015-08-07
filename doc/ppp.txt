@@ -33,6 +33,9 @@ Supported address protocols:
 * IPCP, IP Control Protocol, IPv4 addresses negotiation
 * IP6CP, IPv6 Control Protocol, IPv6 link-local addresses negotiation
 
+Supported encryption protocols:
+* MPPE, Microsoft Point-to-Point Encryption
+
 Supported compression or miscellaneous protocols, for serial links only:
 * PFC, Protocol Field Compression
 * ACFC, Address-and-Control-Field-Compression
