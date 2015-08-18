@@ -495,10 +495,16 @@ sys_restart_timeouts(void)
 u32_t
 sys_timeouts_sleeptime(void)
 {
+  u32_t diff;
   if (next_timeout == NULL) {
     return 0xffffffff;
   }
-  return (sys_now() - timeouts_last_time) + next_timeout->time;
+  diff = sys_now() - timeouts_last_time;
+  if (diff > next_timeout->time) {
+    return 0;
+  } else {
+    return next_timeout->time - diff;
+  }
 }
 
 #else /* NO_SYS */
