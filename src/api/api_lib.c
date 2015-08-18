@@ -880,7 +880,7 @@ void netconn_thread_init(void)
 void netconn_thread_cleanup(void)
 {
   sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
-  if (sem == SYS_SEM_NULL) {
+  if (sem != SYS_SEM_NULL) {
     /* call free only once */
     LWIP_NETCONN_THREAD_SEM_FREE();
   }
