@@ -870,17 +870,17 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 void netconn_thread_init(void)
 {
   sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
-  if (sem == SYS_SEM_NULL) {
+  if (!sys_sem_valid(sem)) {
     /* call alloc only once */
     LWIP_NETCONN_THREAD_SEM_ALLOC();
-    LWIP_ASSERT("LWIP_NETCONN_THREAD_SEM_ALLOC() failed", LWIP_NETCONN_THREAD_SEM_GET() != SYS_SEM_NULL);
+    LWIP_ASSERT("LWIP_NETCONN_THREAD_SEM_ALLOC() failed", sys_sem_valid(LWIP_NETCONN_THREAD_SEM_GET()));
   }
 }
 
 void netconn_thread_cleanup(void)
 {
   sys_sem_t *sem = LWIP_NETCONN_THREAD_SEM_GET();
-  if (sem != SYS_SEM_NULL) {
+  if (sys_sem_valid(sem)) {
     /* call free only once */
     LWIP_NETCONN_THREAD_SEM_FREE();
   }

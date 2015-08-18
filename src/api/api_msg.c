@@ -415,7 +415,7 @@ err_tcp(void *arg, err_t err)
       LWIP_ASSERT("conn->current_msg != NULL", conn->current_msg != NULL);
       conn->current_msg->err = err;
       op_completed_sem = LWIP_API_MSG_SEM(conn->current_msg);
-      LWIP_ASSERT("inavlid op_completed_sem", op_completed_sem != SYS_SEM_NULL);
+      LWIP_ASSERT("inavlid op_completed_sem", sys_sem_valid(op_completed_sem));
       conn->current_msg = NULL;
       /* wake up the waiting task */
       NETCONN_SET_SAFE_ERR(conn, err);
