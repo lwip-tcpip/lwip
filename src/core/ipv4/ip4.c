@@ -134,12 +134,12 @@ ip4_route(const ip4_addr_t *dest)
   }
 #endif
 
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
   /* Use administratively selected interface for multicast by default */
   if (ip4_addr_ismulticast(dest) && ip4_default_multicast_netif) {
     return ip4_default_multicast_netif;
   }
-#endif /* LWIP_IGMP */
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
 
   /* iterate through netifs */
   for (netif = netif_list; netif != NULL; netif = netif->next) {
