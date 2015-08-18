@@ -131,8 +131,10 @@ netconn_delete(struct netconn *conn)
      sys_now() + conn->send_timeout */
   API_MSG_VAR_REF(msg).msg.msg.sd.time_started = sys_now();
 #else /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
+#if LWIP_TCP
   API_MSG_VAR_REF(msg).msg.msg.sd.polls_left =
     ((LWIP_TCP_CLOSE_TIMEOUT_MS_DEFAULT + TCP_SLOW_INTERVAL - 1) / TCP_SLOW_INTERVAL) + 1;
+#endif /* LWIP_TCP */
 #endif /* LWIP_SO_SNDTIMEO || LWIP_SO_LINGER */
   TCPIP_APIMSG(&API_MSG_VAR_REF(msg), lwip_netconn_do_delconn, err);
   API_MSG_VAR_FREE(msg);
