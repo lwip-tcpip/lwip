@@ -249,6 +249,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-08-19: Simon Goldschmidt (patch by "Sandra")
+  dns.c: fixed bug #45004: dns response without answer might be discarded
+
   2015-08-18: Chrysn
   timers.c: patch #8704 fix sys_timeouts_sleeptime function
 
