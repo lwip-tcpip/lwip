@@ -1120,9 +1120,9 @@ udp_new(void)
     /* initialize PCB to all zeroes */
     memset(pcb, 0, sizeof(struct udp_pcb));
     pcb->ttl = UDP_TTL;
-#if LWIP_IGMP
+#if LWIP_MULTICAST_TX_OPTIONS
     pcb->mcast_ttl = UDP_TTL;
-#endif
+#endif /* LWIP_MULTICAST_TX_OPTIONS */
   }
   return pcb;
 }
