@@ -111,7 +111,7 @@ raw_input(struct pbuf *p, struct netif *inp)
          ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr()))) {
 #if IP_SOF_BROADCAST_RECV
       /* broadcast filter? */
-      if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), inp))
+      if ((ip_get_option(pcb, SOF_BROADCAST) || !ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif()))
 #if LWIP_IPV6
           || PCB_ISIPV6(pcb)
 #endif /* LWIP_IPV6 */

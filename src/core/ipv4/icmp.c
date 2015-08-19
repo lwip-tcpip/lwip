@@ -116,7 +116,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_MULTICAST_PING */
 #if !LWIP_BROADCAST_PING
       /* broadcast destination address? */
-      if (ip_addr_isbroadcast(ip_current_dest_addr(), inp)) {
+      if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) {
         accepted = 0;
       }
 #endif /* LWIP_BROADCAST_PING */
@@ -190,8 +190,28 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
+      ip4_addr_t* src;
       iphdr = (struct ip_hdr*)p->payload;
-      ip4_addr_copy(iphdr->src, inp->ip_addr);
+
+#if LWIP_MULTICAST_PING || LWIP_BROADCAST_PING
+      if (0
+#if LWIP_MULTICAST_PING
+          || ip_addr_ismulticast(ip_current_dest_addr())
+#endif
+#if LWIP_BROADCAST_PING
+          || ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())
+#endif
+          ) {
+        /* For multicast and broadcast, use address of receiving interface
+         * as source address */
+        src = &inp->ip_addr;
+      }
+      else
+#endif
+      {
+        src = ip_current_dest_addr();
+      }
+      ip4_addr_copy(iphdr->src, *src);
       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
       ICMPH_TYPE_SET(iecho, ICMP_ER);
 #if CHECKSUM_GEN_ICMP
@@ -218,8 +238,8 @@ icmp_input(struct pbuf *p, struct netif *inp)
       /* increase number of echo replies attempted to send */
       snmp_inc_icmpoutechoreps();
 
-      /* send an ICMP packet, src addr is the dest addr of the current packet */
-      ret = ip4_output_if(p, ip4_current_dest_addr(), IP_HDRINCL,
+      /* send an ICMP packet */
+      ret = ip4_output_if(p, src, IP_HDRINCL,
                    ICMP_TTL, 0, IP_PROTO_ICMP, inp);
       if (ret != ERR_OK) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ip_output_if returned an error: %c.\n", ret));

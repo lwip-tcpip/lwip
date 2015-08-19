@@ -161,6 +161,8 @@ udp_input(struct pbuf *p, struct netif *inp)
   u8_t broadcast;
   u8_t for_us;
 
+  LWIP_UNUSED_ARG(inp);
+
   PERF_START;
 
   UDP_STATS_INC(udp.recv);
@@ -180,7 +182,7 @@ udp_input(struct pbuf *p, struct netif *inp)
   udphdr = (struct udp_hdr *)p->payload;
 
   /* is broadcast packet ? */
-  broadcast = ip_addr_isbroadcast(ip_current_dest_addr(), inp);
+  broadcast = ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif());
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 

@@ -136,7 +136,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   /* Don't even process incoming broadcasts/multicasts. */
   if (
 #if LWIP_IPV4
-      (!ip_current_is_v6() && ip_addr_isbroadcast(ip_current_dest_addr(), inp)) ||
+      (!ip_current_is_v6() && ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) ||
 #endif /* LWIP_IPV4 */
        ip_addr_ismulticast(ip_current_dest_addr())) {
     TCP_STATS_INC(tcp.proterr);

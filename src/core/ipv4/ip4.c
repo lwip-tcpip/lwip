@@ -660,7 +660,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
     default:
 #if LWIP_ICMP
       /* send ICMP destination protocol unreachable unless is was a broadcast */
-      if (!ip_addr_isbroadcast(ip_current_dest_addr(), inp) &&
+      if (!ip_addr_isbroadcast(ip_current_dest_addr(), netif) &&
           !ip_addr_ismulticast(ip_current_dest_addr())) {
         pbuf_header_force(p, iphdr_hlen); /* Move to ip header, no check necessary. */
         p->payload = iphdr;

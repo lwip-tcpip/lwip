@@ -249,11 +249,15 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-08-19: Jens Nielsen
+  * icmp.c, ip4.c, tcp_in.c, udp.c, raw.c: fixed bug #45120: Broadcast & multiple
+    interfaces handling
+
   2015-08-19: Simon Goldschmidt (patch by "Sandra")
-  dns.c: fixed bug #45004: dns response without answer might be discarded
+  * dns.c: fixed bug #45004: dns response without answer might be discarded
 
   2015-08-18: Chrysn
-  timers.c: patch #8704 fix sys_timeouts_sleeptime function
+  * timers.c: patch #8704 fix sys_timeouts_sleeptime function
 
   2015-07-01: Erik Ekman
   * puf.c: fixed bug #45454 (pbuf_take_at() skips write and returns OK if offset
