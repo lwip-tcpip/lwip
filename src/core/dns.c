@@ -836,8 +836,9 @@ dns_alloc_pcb(void)
 static void
 dns_call_found(u8_t idx, ip_addr_t* addr)
 {
+#if ((LWIP_DNS_SECURE & (LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING | LWIP_DNS_SECURE_RAND_SRC_PORT)) != 0)
   u8_t i;
-  LWIP_UNUSED_ARG(i);
+#endif
 
 #if ((LWIP_DNS_SECURE & LWIP_DNS_SECURE_NO_MULTIPLE_OUTSTANDING) != 0)
   for (i = 0; i < DNS_MAX_REQUESTS; i++) {
