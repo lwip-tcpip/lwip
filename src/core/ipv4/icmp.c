@@ -209,7 +209,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       else
 #endif
       {
-        src = ip_current_dest_addr();
+        src = ip4_current_dest_addr();
       }
       ip4_addr_copy(iphdr->src, *src);
       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
