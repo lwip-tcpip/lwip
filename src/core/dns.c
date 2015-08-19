@@ -114,7 +114,7 @@ static u16_t dns_txid;
 /** DNS server IP address */
 #ifndef DNS_SERVER_ADDRESS
 #if LWIP_IPV4
-#define DNS_SERVER_ADDRESS(ipaddr)        ip_addr_set_ip4_u32(ipaddr, 0)//ipaddr_addr("208.67.222.222")) /* resolver1.opendns.com */
+#define DNS_SERVER_ADDRESS(ipaddr)        ip_addr_set_ip4_u32(ipaddr, ipaddr_addr("208.67.222.222")) /* resolver1.opendns.com */
 #else
 #define DNS_SERVER_ADDRESS(ipaddr)        ipaddr_aton("2001:4860:4860::8888", ipaddr)
 #endif
