@@ -105,6 +105,12 @@
 #if (LWIP_IGMP && !LWIP_MULTICAST_TX_OPTIONS)
   #error "If you want to use IGMP, you have to define LWIP_MULTICAST_TX_OPTIONS==1 in your lwipopts.h"
 #endif
+#if (LWIP_IGMP && !LWIP_IPV4)
+  #error "IGMP needs LWIP_IPV4 enabled in your lwipopts.h"
+#endif
+#if (LWIP_MULTICAST_TX_OPTIONS && !LWIP_IPV4)
+  #error "LWIP_MULTICAST_TX_OPTIONS needs LWIP_IPV4 enabled in your lwipopts.h"
+#endif
 #if ((LWIP_NETCONN || LWIP_SOCKET) && (MEMP_NUM_TCPIP_MSG_API<=0))
   #error "If you want to use Sequential API, you have to define MEMP_NUM_TCPIP_MSG_API>=1 in your lwipopts.h"
 #endif
