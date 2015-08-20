@@ -128,11 +128,13 @@ typedef err_t (*tcp_connected_fn)(void *arg, struct tcp_pcb *tpcb, err_t err);
 #if LWIP_WND_SCALE
 #define RCV_WND_SCALE(pcb, wnd) (((wnd) >> (pcb)->rcv_scale))
 #define SND_WND_SCALE(pcb, wnd) (((wnd) << (pcb)->snd_scale))
+#define TCPWND16(x) ((u16_t)LWIP_MIN((x), 0xFFFF))
 typedef u32_t tcpwnd_size_t;
 typedef u16_t tcpflags_t;
 #else
 #define RCV_WND_SCALE(pcb, wnd) (wnd)
 #define SND_WND_SCALE(pcb, wnd) (wnd)
+#define TCPWND16(x) (x)
 typedef u16_t tcpwnd_size_t;
 typedef u8_t tcpflags_t;
 #endif
@@ -348,7 +350,7 @@ void             tcp_poll    (struct tcp_pcb *pcb, tcp_poll_fn poll, u8_t interv
 void             tcp_err     (struct tcp_pcb *pcb, tcp_err_fn err);
 
 #define          tcp_mss(pcb)             (((pcb)->flags & TF_TIMESTAMP) ? ((pcb)->mss - 12)  : (pcb)->mss)
-#define          tcp_sndbuf(pcb)          ((pcb)->snd_buf)
+#define          tcp_sndbuf(pcb)          (TCPWND16((pcb)->snd_buf))
 #define          tcp_sndqueuelen(pcb)     ((pcb)->snd_queuelen)
 #define          tcp_nagle_disable(pcb)   ((pcb)->flags |= TF_NODELAY)
 #define          tcp_nagle_enable(pcb)    ((pcb)->flags = (tcpflags_t)((pcb)->flags & ~TF_NODELAY))
