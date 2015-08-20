@@ -50,7 +50,7 @@ typedef struct _ip_addr {
   union {
     ip6_addr_t ip6;
     ip4_addr_t ip4;
-  } addr;
+  } u_addr;
   u8_t type;
 } ip_addr_t;
 

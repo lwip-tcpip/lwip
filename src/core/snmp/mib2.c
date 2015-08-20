@@ -1304,7 +1304,7 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
   u8_t level;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
-  snmp_iptooid(&ni->ip_addr, &ipaddridx[0]);
+  snmp_iptooid(netif_ip4_addr(ni), &ipaddridx[0]);
 
   level = 0;
   ipa_rn = &ipaddrtree_root;
@@ -1358,7 +1358,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
   u8_t fc, level, del_cnt;
 
   LWIP_ASSERT("ni != NULL", ni != NULL);
-  snmp_iptooid(&ni->ip_addr, &ipaddridx[0]);
+  snmp_iptooid(netif_ip4_addr(ni), &ipaddridx[0]);
 
   /* mark nodes for deletion */
   level = 0;
@@ -1431,7 +1431,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
   else
   {
     /* route to the network address */
-    ip4_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
+    ip4_addr_get_network(&dst, netif_ip4_addr(ni), netif_ip4_netmask(ni));
     /* exclude 0.0.0.0 network (reserved for default rte) */
     if (!ip4_addr_isany_val(dst)) {
       insert = 1;
@@ -1508,7 +1508,7 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
   else
   {
     /* route to the network address */
-    ip4_addr_get_network(&dst, &ni->ip_addr, &ni->netmask);
+    ip4_addr_get_network(&dst, netif_ip4_addr(ni), netif_ip4_netmask(ni));
     /* exclude 0.0.0.0 network (reserved for default rte) */
     if (!ip4_addr_isany_val(dst)) {
       del = 1;
@@ -3084,7 +3084,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
   LWIP_UNUSED_ARG(len);
   snmp_oidtoip(&od->id_inst_ptr[1], &ip);
   ifidx = 0;
-  while ((netif != NULL) && !ip4_addr_cmp(&ip, &netif->ip_addr))
+  while ((netif != NULL) && !ip4_addr_cmp(&ip, netif_ip4_addr(netif)))
   {
     netif = netif->next;
     ifidx++;
@@ -3099,7 +3099,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
       case 1: /* ipAdEntAddr */
         {
           ip4_addr_t *dst = (ip4_addr_t*)value;
-          *dst = netif->ip_addr;
+          *dst = *netif_ip4_addr(netif);
         }
         break;
       case 2: /* ipAdEntIfIndex */
@@ -3111,7 +3111,7 @@ ip_addrentry_get_value(struct obj_def *od, u16_t len, void *value)
       case 3: /* ipAdEntNetMask */
         {
           ip4_addr_t *dst = (ip4_addr_t*)value;
-          *dst = netif->netmask;
+          *dst = *netif_ip4_netmask(netif);
         }
         break;
       case 4: /* ipAdEntBcastAddr */
@@ -3238,7 +3238,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
     /* not using ip_route(), need exact match! */
     netif = netif_list;
     while ((netif != NULL) &&
-            !ip4_addr_netcmp(&dest, &(netif->ip_addr), &(netif->netmask)) )
+            !ip4_addr_netcmp(&dest, netif_ip4_addr(netif), netif_ip4_netmask(netif)) )
     {
       netif = netif->next;
     }
@@ -3261,7 +3261,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
           else
           {
             /* netifs have netaddress dest */
-            ip4_addr_get_network(dst, &netif->ip_addr, &netif->netmask);
+            ip4_addr_get_network(dst, netif_ip4_addr(netif), netif_ip4_netmask(netif));
           }
         }
         break;
@@ -3305,12 +3305,12 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
           if (ip4_addr_isany_val(dest))
           {
             /* default rte: gateway */
-            *dst = netif->gw;
+            *dst = *netif_ip4_gw(netif);
           }
           else
           {
             /* other rtes: netif ip_addr  */
-            *dst = netif->ip_addr;
+            *dst = *netif_ip4_addr(netif);
           }
         }
         break;
@@ -3357,7 +3357,7 @@ ip_rteentry_get_value(struct obj_def *od, u16_t len, void *value)
           else
           {
             /* other rtes use netmask */
-            *dst = netif->netmask;
+            *dst = *netif_ip4_netmask(netif);
           }
         }
         break;

@@ -1094,7 +1094,7 @@ dns_recv(void *arg, struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *addr, 
             /* read the IP address after answer resource record's header */
             pbuf_copy_partial(p, &(entry->ipaddr), sizeof(entry->ipaddr), res_idx);
             LWIP_DEBUGF(DNS_DEBUG, ("dns_recv: \"%s\": response = ", entry->name));
-            ip4_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
+            ip_addr_debug_print(DNS_DEBUG, (&(entry->ipaddr)));
             LWIP_DEBUGF(DNS_DEBUG, ("\n"));
             /* call specified callback function if provided */
             dns_call_found(entry_idx, &entry->ipaddr);

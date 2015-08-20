@@ -70,13 +70,13 @@ ip4_addr_isbroadcast_u32(u32_t addr, const struct netif *netif)
      * nor can we check against any broadcast addresses */
     return 0;
   /* address matches network interface address exactly? => no broadcast */
-  } else if (addr == ip4_addr_get_u32(&netif->ip_addr)) {
+  } else if (addr == ip4_addr_get_u32(netif_ip4_addr(netif))) {
     return 0;
   /*  on the same (sub) network... */
-  } else if (ip4_addr_netcmp(&ipaddr, &(netif->ip_addr), &(netif->netmask))
+  } else if (ip4_addr_netcmp(&ipaddr, netif_ip4_addr(netif), netif_ip4_netmask(netif))
          /* ...and host identifier bits are all ones? =>... */
-          && ((addr & ~ip4_addr_get_u32(&netif->netmask)) ==
-           (IPADDR_BROADCAST & ~ip4_addr_get_u32(&netif->netmask)))) {
+          && ((addr & ~ip4_addr_get_u32(netif_ip4_netmask(netif))) ==
+           (IPADDR_BROADCAST & ~ip4_addr_get_u32(netif_ip4_netmask(netif))))) {
     /* => network broadcast address */
     return 1;
   } else {
@@ -325,7 +325,7 @@ ip4_2_ip(const ip4_addr_t *ip4addr, ip_addr_t* storage)
   if ((ip4addr == NULL) || (storage == NULL)) {
     return NULL;
   }
-  ip4_addr_copy(storage->addr.ip4, *ip4addr);
+  ip4_addr_copy(storage->u_addr.ip4, *ip4addr);
   IP_SET_TYPE_VAL(*storage, IPADDR_TYPE_V4);
   return storage;
 }

@@ -263,11 +263,11 @@ udp_input(struct pbuf *p, struct netif *inp)
 #if IP_SOF_BROADCAST_RECV
             (broadcast && ip_get_option(pcb, SOF_BROADCAST) &&
              (ip_addr_isany(&pcb->local_ip) ||
-              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))))
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), netif_ip4_netmask(inp))))))
 #else /* IP_SOF_BROADCAST_RECV */
             (broadcast &&
              (ip_addr_isany(&pcb->local_ip) ||
-              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), &inp->netmask)))))
+              ip_addr_netcmp(&pcb->local_ip, ip_current_dest_addr(), netif_ip4_netmask(inp))))))
 #endif /* IP_SOF_BROADCAST_RECV */
 #endif /* LWIP_IPV4 */
               ) {
@@ -318,7 +318,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4
     {
-      for_us = ip4_addr_cmp(&inp->ip_addr, ip4_current_dest_addr());
+      for_us = ip4_addr_cmp(netif_ip4_addr(inp), ip4_current_dest_addr());
     }
 #endif /* LWIP_IPV4 */
   }
@@ -664,11 +664,11 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #if LWIP_IPV4
   if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
     /* use outgoing network interface IP address as source address */
-    src_ip = ip4_2_ip(&netif->ip_addr, &src_ip_tmp);
+    src_ip = ip4_2_ip(netif_ip4_addr(netif), &src_ip_tmp);
   } else {
     /* check if UDP PCB local IP address is correct
      * this could be an old address if netif->ip_addr has changed */
-    if (!ip4_addr_cmp(ip_2_ip4(&(pcb->local_ip)), &(netif->ip_addr))) {
+    if (!ip4_addr_cmp(ip_2_ip4(&(pcb->local_ip)), netif_ip4_addr(netif))) {
       /* local_ip doesn't match, drop the packet */
       return ERR_VAL;
     }

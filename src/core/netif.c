@@ -320,9 +320,9 @@ netif_remove(struct netif *netif)
   }
 
 #if LWIP_IPV4
-  if (!ip4_addr_isany_val(netif->ip_addr)) {
+  if (!ip4_addr_isany_val(*netif_ip4_addr(netif))) {
 #if LWIP_TCP
-    tcp_netif_ipv4_addr_changed(&netif->ip_addr, NULL);
+    tcp_netif_ipv4_addr_changed(netif_ip4_addr(netif), NULL);
 #endif /* LWIP_TCP */
     /* cannot do this for UDP, as there is no 'err' callback in udp pcbs */
   }
@@ -421,19 +421,19 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 {
   ip4_addr_t new_addr = (ipaddr ? *ipaddr : *IP4_ADDR_ANY);
   /* address is actually being changed? */
-  if (ip4_addr_cmp(&new_addr, &(netif->ip_addr)) == 0) {
+  if (ip4_addr_cmp(&new_addr, netif_ip4_addr(netif)) == 0) {
     LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_STATE, ("netif_set_ipaddr: netif address being changed\n"));
 #if LWIP_TCP
-    tcp_netif_ipv4_addr_changed(&netif->ip_addr, ipaddr);
+    tcp_netif_ipv4_addr_changed(netif_ip4_addr(netif), ipaddr);
 #endif /* LWIP_TCP */
 #if LWIP_UDP
-    udp_netif_ipv4_addr_changed(&netif->ip_addr, ipaddr);
+    udp_netif_ipv4_addr_changed(netif_ip4_addr(netif), ipaddr);
 #endif /* LWIP_UDP */
 
     snmp_delete_ipaddridx_tree(netif);
     snmp_delete_iprteidx_tree(0, netif);
     /* set new IP address to netif */
-    ip4_addr_set(&(netif->ip_addr), ipaddr);
+    ip4_addr_set(netif_ip4_addr(netif), ipaddr);
     snmp_insert_ipaddridx_tree(netif);
     snmp_insert_iprteidx_tree(0, netif);
 
@@ -444,10 +444,10 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: IP address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1_16(&netif->ip_addr),
-    ip4_addr2_16(&netif->ip_addr),
-    ip4_addr3_16(&netif->ip_addr),
-    ip4_addr4_16(&netif->ip_addr)));
+    ip4_addr1_16(netif_ip4_addr(netif)),
+    ip4_addr2_16(netif_ip4_addr(netif)),
+    ip4_addr3_16(netif_ip4_addr(netif)),
+    ip4_addr4_16(netif_ip4_addr(netif))));
 }
 
 /**
@@ -461,13 +461,13 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
-  ip4_addr_set(&(netif->gw), gw);
+  ip4_addr_set(netif_ip4_gw(netif), gw);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1_16(&netif->gw),
-    ip4_addr2_16(&netif->gw),
-    ip4_addr3_16(&netif->gw),
-    ip4_addr4_16(&netif->gw)));
+    ip4_addr1_16(netif_ip4_gw(netif)),
+    ip4_addr2_16(netif_ip4_gw(netif)),
+    ip4_addr3_16(netif_ip4_gw(netif)),
+    ip4_addr4_16(netif_ip4_gw(netif))));
 }
 
 /**
@@ -484,14 +484,14 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
   snmp_delete_iprteidx_tree(0, netif);
   /* set new netmask to netif */
-  ip4_addr_set(&(netif->netmask), netmask);
+  ip4_addr_set(netif_ip4_netmask(netif), netmask);
   snmp_insert_iprteidx_tree(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
-    ip4_addr1_16(&netif->netmask),
-    ip4_addr2_16(&netif->netmask),
-    ip4_addr3_16(&netif->netmask),
-    ip4_addr4_16(&netif->netmask)));
+    ip4_addr1_16(netif_ip4_netmask(netif)),
+    ip4_addr2_16(netif_ip4_netmask(netif)),
+    ip4_addr3_16(netif_ip4_netmask(netif)),
+    ip4_addr4_16(netif_ip4_netmask(netif))));
 }
 #endif /* LWIP_IPV4 */
 
@@ -549,7 +549,7 @@ netif_issue_reports(struct netif* netif, u8_t report_type)
 {
 #if LWIP_IPV4
   if ((report_type & NETIF_REPORT_TYPE_IPV4) &&
-      !ip4_addr_isany_val(netif->ip_addr)) {
+      !ip4_addr_isany_val(*netif_ip4_addr(netif))) {
 #if LWIP_ARP
     /* For Ethernet network interfaces, we would like to send a "gratuitous ARP" */
     if (netif->flags & (NETIF_FLAG_ETHARP)) {

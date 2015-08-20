@@ -388,6 +388,12 @@ void netif_poll_all(void);
 #endif /* !LWIP_NETIF_LOOPBACK_MULTITHREADING */
 #endif /* ENABLE_LOOPBACK */
 
+#if LWIP_IPV4
+#define netif_ip4_addr(netif)    (&((netif)->ip_addr))
+#define netif_ip4_netmask(netif) (&((netif)->netmask))
+#define netif_ip4_gw(netif)      (&((netif)->gw))
+#endif /* LWIP_IPV4 */
+
 #if LWIP_IPV6
 #define netif_ip6_addr(netif, i)  (&((netif)->ip6_addr[(i)]))
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[(i)])

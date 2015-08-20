@@ -373,7 +373,7 @@ autoip_stop(struct netif *netif)
 {
   if (netif->autoip) {
     netif->autoip->state = AUTOIP_STATE_OFF;
-    if (ip4_addr_islinklocal(&netif->ip_addr)) {
+    if (ip4_addr_islinklocal(netif_ip4_addr(netif))) {
       netif_set_addr(netif, IP4_ADDR_ANY, IP4_ADDR_ANY, IP4_ADDR_ANY);
     }
   }

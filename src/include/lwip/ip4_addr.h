@@ -221,10 +221,10 @@ u8_t ip4_addr_netmask_valid(u32_t netmask);
                       ip4_addr4_16(&(ipaddr)))
 
 /* Get one byte from the 4-byte address */
-#define ip4_addr1(ipaddr) (((const u8_t*)(ipaddr))[0])
-#define ip4_addr2(ipaddr) (((const u8_t*)(ipaddr))[1])
-#define ip4_addr3(ipaddr) (((const u8_t*)(ipaddr))[2])
-#define ip4_addr4(ipaddr) (((const u8_t*)(ipaddr))[3])
+#define ip4_addr1(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[0])
+#define ip4_addr2(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[1])
+#define ip4_addr3(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[2])
+#define ip4_addr4(ipaddr) (((const u8_t*)(&(ipaddr)->addr))[3])
 /* These are cast to u16_t, with the intent that they are often arguments
  * to printf using the U16_F format from cc.h. */
 #define ip4_addr1_16(ipaddr) ((u16_t)ip4_addr1(ipaddr))

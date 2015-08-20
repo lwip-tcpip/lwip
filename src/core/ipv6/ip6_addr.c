@@ -285,7 +285,7 @@ ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage)
   if ((ip6addr == NULL) || (storage == NULL)) {
     return NULL;
   }
-  ip6_addr_copy(storage->addr.ip6, *ip6addr);
+  ip6_addr_copy(storage->u_addr.ip6, *ip6addr);
   IP_SET_TYPE_VAL(*storage, IPADDR_TYPE_V6);
   return storage;
 }
