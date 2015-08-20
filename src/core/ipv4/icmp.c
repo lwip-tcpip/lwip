@@ -84,6 +84,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   const struct ip_hdr *iphdr_in;
   struct ip_hdr *iphdr;
   s16_t hlen;
+  ip4_addr_t* src;
 
   ICMP_STATS_INC(icmp.recv);
   snmp_inc_icmpinmsgs();
@@ -105,30 +106,27 @@ icmp_input(struct pbuf *p, struct netif *inp)
        (as obviously, an echo request has been sent, too). */
     break; 
   case ICMP_ECHO:
-#if !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
-    {
-      int accepted = 1;
-#if !LWIP_MULTICAST_PING
-      /* multicast destination address? */
-      if (ip_addr_ismulticast(ip_current_dest_addr())) {
-        accepted = 0;
-      }
+    src = ip4_current_dest_addr();
+    /* multicast destination address? */
+    if (ip_addr_ismulticast(ip_current_dest_addr())) {
+#if LWIP_MULTICAST_PING
+      /* For multicast, use address of receiving interface as source address */
+      src = &inp->ip_addr;
+#else /* LWIP_MULTICAST_PING */
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast pings\n"));
+      goto icmperr;
 #endif /* LWIP_MULTICAST_PING */
-#if !LWIP_BROADCAST_PING
-      /* broadcast destination address? */
-      if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) {
-        accepted = 0;
-      }
-#endif /* LWIP_BROADCAST_PING */
-      /* broadcast or multicast destination address not accepted? */
-      if (!accepted) {
-        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast or broadcast pings\n"));
-        ICMP_STATS_INC(icmp.err);
-        pbuf_free(p);
-        return;
-      }
     }
-#endif /* !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
+    /* broadcast destination address? */
+    if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) {
+#if LWIP_BROADCAST_PING
+      /* For broadcast, use address of receiving interface as source address */
+      src = &inp->ip_addr;
+#else /* LWIP_BROADCAST_PING */
+      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to broadcast pings\n"));
+      goto icmperr;
+#endif /* LWIP_BROADCAST_PING */
+    }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ping\n"));
     if (p->tot_len < sizeof(struct icmp_echo_hdr)) {
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: bad ICMP echo received\n"));
@@ -153,7 +151,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       r = pbuf_alloc(PBUF_LINK, p->tot_len + hlen, PBUF_RAM);
       if (r == NULL) {
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: allocating new pbuf failed\n"));
-        goto memerr;
+        goto icmperr;
       }
       LWIP_ASSERT("check that first pbuf can hold struct the ICMP header",
                   (r->len >= hlen + sizeof(struct icmp_echo_hdr)));
@@ -163,12 +161,12 @@ icmp_input(struct pbuf *p, struct netif *inp)
       /* switch r->payload back to icmp header */
       if (pbuf_header(r, -hlen)) {
         LWIP_ASSERT("icmp_input: moving r->payload to icmp header failed\n", 0);
-        goto memerr;
+        goto icmperr;
       }
       /* copy the rest of the packet without ip header */
       if (pbuf_copy(r, p) != ERR_OK) {
         LWIP_ASSERT("icmp_input: copying to new pbuf failed\n", 0);
-        goto memerr;
+        goto icmperr;
       }
       /* free the original p */
       pbuf_free(p);
@@ -178,7 +176,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       /* restore p->payload to point to icmp header */
       if (pbuf_header(p, -(s16_t)(PBUF_IP_HLEN + PBUF_LINK_HLEN + PBUF_LINK_ENCAPSULATION_HLEN))) {
         LWIP_ASSERT("icmp_input: restoring original p->payload failed\n", 0);
-        goto memerr;
+        goto icmperr;
       }
     }
 #endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN */
@@ -190,27 +188,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
       LWIP_ASSERT("Can't move over header in packet", 0);
     } else {
       err_t ret;
-      ip4_addr_t* src;
       iphdr = (struct ip_hdr*)p->payload;
-
-#if LWIP_MULTICAST_PING || LWIP_BROADCAST_PING
-      if (0
-#if LWIP_MULTICAST_PING
-          || ip_addr_ismulticast(ip_current_dest_addr())
-#endif
-#if LWIP_BROADCAST_PING
-          || ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())
-#endif
-          ) {
-        /* For multicast and broadcast, use address of receiving interface
-         * as source address */
-        src = &inp->ip_addr;
-      }
-      else
-#endif
-      {
-        src = ip4_current_dest_addr();
-      }
       ip4_addr_copy(iphdr->src, *src);
       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
       ICMPH_TYPE_SET(iecho, ICMP_ER);
@@ -259,13 +237,13 @@ lenerr:
   ICMP_STATS_INC(icmp.lenerr);
   snmp_inc_icmpinerrors();
   return;
-#if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
-memerr:
+#if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
+icmperr:
   pbuf_free(p);
   ICMP_STATS_INC(icmp.err);
   snmp_inc_icmpinerrors();
   return;
-#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN */
+#endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
 }
 
 /**
