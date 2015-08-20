@@ -836,7 +836,7 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   struct ns_header * ns_hdr;
   struct lladdr_option * lladdr_opt;
   struct pbuf * p;
-  ip6_addr_t * src_addr;
+  const ip6_addr_t * src_addr;
   u16_t lladdr_opt_len;
 
   if (ip6_addr_isvalid(netif_ip6_addr_state(netif,0))) {
@@ -978,7 +978,7 @@ nd6_send_rs(struct netif * netif)
   struct rs_header * rs_hdr;
   struct lladdr_option * lladdr_opt;
   struct pbuf * p;
-  ip6_addr_t * src_addr;
+  const ip6_addr_t * src_addr;
   err_t err;
   u16_t lladdr_opt_len = 0;
 
