@@ -90,7 +90,7 @@ struct snmp_varbind
 
   /* object value ASN1 type */
   u8_t value_type;
-  /* object value length (in u8_t) */
+  /* object value length */
   u16_t value_len;
   /* object value */
   void *value;
