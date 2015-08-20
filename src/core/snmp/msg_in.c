@@ -1031,6 +1031,7 @@ snmp_pdu_header_check(struct pbuf *p, u16_t ofs, u16_t pdu_len, u16_t *ofs_ret, 
     snmp_inc_snmpinbadversions();
     return ERR_ARG;
   }
+  m_stat->version = (u8_t)version;
   ofs += (1 + len_octets + len);
   snmp_asn1_dec_type(p, ofs, &type);
   derr = snmp_asn1_dec_length(p, ofs+1, &len_octets, &len);

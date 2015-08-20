@@ -226,6 +226,8 @@ struct snmp_msg_pstat
   ip_addr_t sip;
   /* source UDP port */
   u16_t sp;
+  /* incoming snmp version */
+  u8_t version;
   /* request type */
   u8_t rt;
   /* request ID */

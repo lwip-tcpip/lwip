@@ -328,6 +328,7 @@ static u16_t
 snmp_resp_header_sum(struct snmp_msg_pstat *m_stat, u16_t vb_len)
 {
   u16_t tot_len;
+  s32_t snmp_req_ver;
   struct snmp_resp_header_lengths *rhl;
 
   rhl = &m_stat->rhl;
@@ -352,7 +353,8 @@ snmp_resp_header_sum(struct snmp_msg_pstat *m_stat, u16_t vb_len)
   snmp_asn1_enc_length_cnt(rhl->comlen, &rhl->comlenlen);
   tot_len += 1 + rhl->comlenlen + rhl->comlen;
 
-  snmp_asn1_enc_s32t_cnt(snmp_version, &rhl->verlen);
+  snmp_req_ver = m_stat->version;
+  snmp_asn1_enc_s32t_cnt(snmp_req_ver, &rhl->verlen);
   snmp_asn1_enc_length_cnt(rhl->verlen, &rhl->verlenlen);
   tot_len += 1 + rhl->verlen + rhl->verlenlen;
 
@@ -496,6 +498,7 @@ static u16_t
 snmp_resp_header_enc(struct snmp_msg_pstat *m_stat, struct pbuf *p)
 {
   u16_t ofs;
+  s32_t snmp_req_ver;
 
   ofs = 0;
   snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ));
@@ -507,7 +510,8 @@ snmp_resp_header_enc(struct snmp_msg_pstat *m_stat, struct pbuf *p)
   ofs += 1;
   snmp_asn1_enc_length(p, ofs, m_stat->rhl.verlen);
   ofs += m_stat->rhl.verlenlen;
-  snmp_asn1_enc_s32t(p, ofs, m_stat->rhl.verlen, snmp_version);
+  snmp_req_ver = m_stat->version;
+  snmp_asn1_enc_s32t(p, ofs, m_stat->rhl.verlen, snmp_req_ver);
   ofs += m_stat->rhl.verlen;
 
   snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR));
