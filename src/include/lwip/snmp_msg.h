@@ -91,7 +91,7 @@ struct snmp_varbind
   /* object value ASN1 type */
   u8_t value_type;
   /* object value length (in u8_t) */
-  u8_t value_len;
+  u16_t value_len;
   /* object value */
   void *value;
 
@@ -301,7 +301,7 @@ void snmp_trap_dst_enable(u8_t dst_idx, u8_t enable);
 void snmp_trap_dst_ip_set(u8_t dst_idx, ip_addr_t *dst);
 
 /** Varbind-list functions. */
-struct snmp_varbind* snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u8_t len);
+struct snmp_varbind* snmp_varbind_alloc(struct snmp_obj_id *oid, u8_t type, u16_t len);
 void snmp_varbind_free(struct snmp_varbind *vb);
 void snmp_varbind_list_free(struct snmp_varbind_root *root);
 void snmp_varbind_tail_add(struct snmp_varbind_root *root, struct snmp_varbind *vb);

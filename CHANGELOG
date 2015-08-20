@@ -249,6 +249,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-08-20: Manoj Kumar
+  * snmp_msg.h, msg_in.c: fixed bug #43790: Sending octet string of Length >255
+    from SNMP agent
+
   2015-08-19: Jens Nielsen
   * icmp.c, ip4.c, tcp_in.c, udp.c, raw.c: fixed bug #45120: Broadcast & multiple
     interfaces handling
