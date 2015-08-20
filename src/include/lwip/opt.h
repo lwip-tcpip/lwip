@@ -375,9 +375,10 @@
 #endif
 
 /**
- * MEMP_NUM_SNMP_VARBIND: the number of concurrent requests (does not have to
- * be changed normally) - 2 of these are used per request (1 for input,
- * 1 for output)
+ * MEMP_NUM_SNMP_VARBIND: influences the number of concurrent requests:
+ * 2 of these are used per request (1 for input, 1 for output), so this needs
+ * to be increased only if you want to support concurrent requests or multiple
+ * variables per request/response.
  */
 #ifndef MEMP_NUM_SNMP_VARBIND
 #define MEMP_NUM_SNMP_VARBIND           2
@@ -385,8 +386,9 @@
 
 /**
  * MEMP_NUM_SNMP_VALUE: the number of OID or values concurrently used
- * (does not have to be changed normally) - 3 of these are used per request
- * (1 for the value read and 2 for OIDs - input and output)
+ * (does not have to be changed normally) - >=3 of these are used per request
+ * (1 for the value read and 2 for OIDs - input and output on getnext, or more
+ * if you want to support multiple varibles per request/response)
  */
 #ifndef MEMP_NUM_SNMP_VALUE
 #define MEMP_NUM_SNMP_VALUE             3
