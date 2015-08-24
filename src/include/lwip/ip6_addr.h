@@ -78,7 +78,7 @@ typedef struct ip6_addr_packed ip6_addr_p_t;
 
 #if BYTE_ORDER == BIG_ENDIAN
 /** Set an IPv6 partial address given by byte-parts. */
-#define IP6_ADDR(ip6addr, index, a,b,c,d) \
+#define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
   (ip6addr)->addr[index] = ((u32_t)((a) & 0xff) << 24) | \
                            ((u32_t)((b) & 0xff) << 16) | \
                            ((u32_t)((c) & 0xff) << 8)  | \
@@ -86,12 +86,20 @@ typedef struct ip6_addr_packed ip6_addr_p_t;
 #else
 /** Set an IPv6 partial address given by byte-parts.
 Little-endian version, stored in network order (no htonl). */
-#define IP6_ADDR(ip6addr, index, a,b,c,d) \
+#define IP6_ADDR_PART(ip6addr, index, a,b,c,d) \
   (ip6addr)->addr[index] = ((u32_t)((d) & 0xff) << 24) | \
                            ((u32_t)((c) & 0xff) << 16) | \
                            ((u32_t)((b) & 0xff) << 8)  | \
                             (u32_t)((a) & 0xff)
 #endif
+
+/** Set a full IPv6 address by passing the 4 u32_t indices in network byte order
+    (use PP_HTONL() for constants) */
+#define IP6_ADDR(ip6addr, idx0, idx1, idx2, idx3) do { \
+  (ip6addr)->addr[0] = idx0; \
+  (ip6addr)->addr[1] = idx1; \
+  (ip6addr)->addr[2] = idx2; \
+  (ip6addr)->addr[3] = idx3; } while(0)
 
 /** Access address in 16-bit block */
 #define IP6_ADDR_BLOCK1(ip6addr) ((u16_t)(htonl((ip6addr)->addr[0]) >> 16) & 0xffff)
