@@ -127,6 +127,9 @@ netif_loopif_init(struct netif *netif)
 #if LWIP_IPV6
   netif->output_ip6 = netif_loop_output_ipv6;
 #endif
+#if LWIP_LOOPIF_MCAST
+  netif->flags |= NETIF_FLAG_IGMP;
+#endif
   return ERR_OK;
 }
 #endif /* LWIP_HAVE_LOOPIF */
