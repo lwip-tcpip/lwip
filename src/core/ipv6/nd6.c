@@ -761,10 +761,9 @@ nd6_tmr(void)
         for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
           if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDR_INVALID) {
             /* Generate an address using this prefix and interface ID from link-local address. */
-            prefix_list[i].netif->ip6_addr[j].addr[0] = prefix_list[i].prefix.addr[0];
-            prefix_list[i].netif->ip6_addr[j].addr[1] = prefix_list[i].prefix.addr[1];
-            prefix_list[i].netif->ip6_addr[j].addr[2] = prefix_list[i].netif->ip6_addr[0].addr[2];
-            prefix_list[i].netif->ip6_addr[j].addr[3] = prefix_list[i].netif->ip6_addr[0].addr[3];
+            IP6_ADDR(&prefix_list[i].netif->ip6_addr[j],
+              prefix_list[i].prefix.addr[0], prefix_list[i].prefix.addr[1],
+              netif_ip6_addr(prefix_list[i].netif, 0)->addr[2], netif_ip6_addr(prefix_list[i].netif, 0)->addr[3]);
 
             /* Mark it as tentative (DAD will be performed if configured). */
             netif_ip6_addr_set_state(prefix_list[i].netif, j, IP6_ADDR_TENTATIVE);

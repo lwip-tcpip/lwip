@@ -107,6 +107,8 @@ static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
   ip4_addr_set(ip_2_ip4(dest), ip_2_ip4(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_set_zero(ipaddr)     do{ \
   ip6_addr_set_zero(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, 0); }while(0)
+#define ip_addr_set_zero_ip6(ipaddr)     do{ \
+  ip6_addr_set_zero(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V6); }while(0)
 #define ip_addr_set_any(is_ipv6, ipaddr)      do{if(is_ipv6){ \
   ip6_addr_set_any(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V6); }else{ \
   ip4_addr_set_any(ip_2_ip4(ipaddr)); IP_SET_TYPE(ipaddr, IPADDR_TYPE_V4); }}while(0)
@@ -213,6 +215,7 @@ typedef ip6_addr_t ip_addr_t;
 #define ip_addr_set(dest, src)                  ip6_addr_set(dest, src)
 #define ip_addr_set_ipaddr(dest, src)           ip6_addr_set(dest, src)
 #define ip_addr_set_zero(ipaddr)                ip6_addr_set_zero(ipaddr)
+#define ip_addr_set_zero_ip6(ipaddr)            ip6_addr_set_zero(ipaddr)
 #define ip_addr_set_any(is_ipv6, ipaddr)        ip6_addr_set_any(ipaddr)
 #define ip_addr_set_loopback(is_ipv6, ipaddr)   ip6_addr_set_loopback(ipaddr)
 #define ip_addr_set_hton(dest, src)             ip6_addr_set_hton(dest, src)
