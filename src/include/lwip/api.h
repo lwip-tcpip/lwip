@@ -285,20 +285,6 @@ LWIP_NETCONN_SCOPE err_t   netconn_join_leave_group(struct netconn *conn, const 
 #if LWIP_DNS
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
 #endif /* LWIP_DNS */
-#if LWIP_IPV6
-
-#define netconn_bind_ip6(conn, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
-        netconn_bind(conn, ip6_2_ip(ip6addr), port) : ERR_VAL)
-#define netconn_connect_ip6(conn, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
-        netconn_connect(conn, ip6_2_ip(ip6addr), port) : ERR_VAL)
-#define netconn_sendto_ip6(conn, buf, ip6addr, port) (NETCONNTYPE_ISIPV6((conn)->type) ? \
-        netconn_sendto(conn, buf, ip6_2_ip(ip6addr), port) : ERR_VAL)
-#if LWIP_IPV6_MLD
-#define netconn_join_leave_group_ip6(conn, multiaddr, srcaddr, join_or_leave) (NETCONNTYPE_ISIPV6((conn)->type) ? \
-        netconn_join_leave_group(conn, ip6_2_ip(multiaddr), ip6_2_ip(srcaddr), join_or_leave) :\
-        ERR_VAL)
-#endif /* LWIP_IPV6_MLD*/
-#endif /* LWIP_IPV6 */
 
 #define netconn_err(conn)               ((conn)->last_err)
 #define netconn_recv_bufsize(conn)      ((conn)->recv_bufsize)
