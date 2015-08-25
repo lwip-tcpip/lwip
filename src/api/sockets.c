@@ -907,11 +907,13 @@ lwip_recvfrom(int s, void *mem, size_t len, int flags,
         } else {
           netbuf_delete((struct netbuf *)buf);
         }
+        buf = NULL;
       }
     }
   } while (!done);
 
-  if ((off > 0) && (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP)) {
+  if ((off > 0) && (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) &&
+      ((flags & MSG_PEEK) == 0)) {
     /* update receive window */
     netconn_recved(sock->conn, (u32_t)off);
   }

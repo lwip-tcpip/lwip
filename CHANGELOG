@@ -249,6 +249,9 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-08-25: Simon Goldschmidt
+  * sockets.c: fixed bug #45827: recvfrom: TCP window is updated with MSG_PEEK
+
   2015-08-20: Manoj Kumar
   * snmp_msg.h, msg_in.c: fixed bug #43790: Sending octet string of Length >255
     from SNMP agent
