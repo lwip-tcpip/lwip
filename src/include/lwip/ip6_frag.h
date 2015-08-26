@@ -44,6 +44,7 @@
 #include "lwip/opt.h"
 #include "lwip/pbuf.h"
 #include "lwip/ip6_addr.h"
+#include "lwip/ip6.h"
 #include "lwip/netif.h"
 
 #ifdef __cplusplus
@@ -53,8 +54,25 @@ extern "C" {
 
 #if LWIP_IPV6 && LWIP_IPV6_REASS  /* don't build if not configured for use in lwipopts.h */
 
+/** IP6_FRAG_COPYHEADER==1: for platforms where sizeof(void*) > 4, this needs to
+ * be enabled (to not overwrite part of the data). When enabled, the IPv6 header
+ * is copied instead of referencing it, which gives more room for struct ip6_reass_helper */
+#ifndef IPV6_FRAG_COPYHEADER
+#define IPV6_FRAG_COPYHEADER   0
+#endif
+
 /* The IPv6 reassembly timer interval in milliseconds. */
 #define IP6_REASS_TMR_INTERVAL 1000
+
+/* Copy the complete header of the first fragment to struct ip6_reassdata
+   or just point to its original location in the first pbuf? */
+#if IPV6_FRAG_COPYHEADER
+#define IPV6_FRAG_HDRPTR
+#define IPV6_FRAG_HDRREF(hdr) (&(hdr))
+#else /* IPV6_FRAG_COPYHEADER */
+#define IPV6_FRAG_HDRPTR *
+#define IPV6_FRAG_HDRREF(hdr) (hdr)
+#endif /* IPV6_FRAG_COPYHEADER */
 
 /* IPv6 reassembly helper struct.
  * This is exported because memp needs to know the size.
@@ -62,7 +80,7 @@ extern "C" {
 struct ip6_reassdata {
   struct ip6_reassdata *next;
   struct pbuf *p;
-  struct ip6_hdr * iphdr;
+  struct ip6_hdr IPV6_FRAG_HDRPTR iphdr;
   u32_t identification;
   u16_t datagram_len;
   u8_t nexth;
