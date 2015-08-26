@@ -1425,8 +1425,8 @@
 #endif
 
 /**
-* LWIP_LOOPIF_MCAST==1: Support multicast on loop interface (127.0.0.1).
-*/
+ * LWIP_LOOPIF_MCAST==1: Support multicast/IGMP on loop interface (127.0.0.1).
+ */
 #ifndef LWIP_LOOPIF_MCAST
 #define LWIP_LOOPIF_MCAST               0
 #endif
