@@ -227,6 +227,10 @@ ip6_reass_remove_oldest_datagram(struct ip6_reassdata *ipr, int pbufs_needed)
       }
       r = r->next;
     }
+    if (oldest == ipr) {
+      /* nothing to free, ipr is the only element on the list */
+      return;
+    }
     if (oldest != NULL) {
       ip6_reass_free_complete_datagram(oldest);
     }
