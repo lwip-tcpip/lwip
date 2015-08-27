@@ -878,12 +878,16 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
         }
 #if 0   /* UNUSED
          *
-         * This is actually a (hacked?) way for the PPP kernel implementation to pass a
-         * data packet to the PPP daemon. The PPP daemon normally only do signaling
+         * This is actually a (hacked?) way for the Linux kernel to pass a data
+         * packet to pppd. pppd in normal condition only do signaling
          * (LCP, PAP, CHAP, IPCP, ...) and does not handle any data packet at all.
          *
-         * This is only used by CCP, which we cannot support until we have a CCP data
-         * implementation.
+         * We don't even need this interface, which is only there because of PPP
+         * interface limitation between Linux kernel and pppd. For MPPE, which uses
+         * CCP to negotiate although it is not really a (de)compressor, we added
+         * ccp_resetrequest() in CCP and MPPE input data flow is calling either
+         * ccp_resetrequest() or lcp_close() if the issue is, respectively, non-fatal
+         * or fatal, this is what ccp_datainput() really do.
          */
         if (protocol == (protp->protocol & ~0x8000)
           && protp->datainput != NULL) {
