@@ -4,9 +4,13 @@ application written for an older version of lwIP to correctly work
 with newer versions.
 
 
-(CVS HEAD)
+(git master)
 
   * [Enter new changes just after this line - do not remove this line]
+
+  * TODO
+
+(1.4.0)
 
   ++ Application changes:
 
