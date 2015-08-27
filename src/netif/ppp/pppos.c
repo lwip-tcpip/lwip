@@ -759,7 +759,7 @@ pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
     pppos->out_accm[i] = (u8_t)((accm >> (8 * i)) & 0xFF);
   }
 
-  PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: in_accm=%X %X %X %X\n",
+  PPPDEBUG(LOG_INFO, ("pppos_send_config[%d]: out_accm=%X %X %X %X\n",
             pppos->ppp->netif->num,
             pppos->out_accm[0], pppos->out_accm[1], pppos->out_accm[2], pppos->out_accm[3]));
 }
