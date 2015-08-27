@@ -314,7 +314,7 @@
 #endif /* !LWIP_DISABLE_TCP_SANITY_CHECKS */
 
 /**
- * Perform Sanity check of user-configurable values, and initialize all modules.
+ * Initialize all modules.
  */
 void
 lwip_init(void)
@@ -355,13 +355,6 @@ lwip_init(void)
 #if LWIP_DNS
   dns_init();
 #endif /* LWIP_DNS */
-#if LWIP_IPV6
-  ip6_init();
-  nd6_init();
-#if LWIP_IPV6_MLD
-  mld6_init();
-#endif /* LWIP_IPV6_MLD */
-#endif /* LWIP_IPV6 */
 #if PPP_SUPPORT
   ppp_init();
 #endif

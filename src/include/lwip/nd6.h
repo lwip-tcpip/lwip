@@ -342,7 +342,6 @@ extern struct nd6_router_list_entry default_router_list[];
 extern u32_t reachable_time;
 extern u32_t retrans_timer;
 
-#define nd6_init() /* TODO should we init tables? */
 void nd6_tmr(void);
 void nd6_input(struct pbuf *p, struct netif *inp);
 s8_t nd6_get_next_hop_entry(const ip6_addr_t * ip6addr, struct netif * netif);

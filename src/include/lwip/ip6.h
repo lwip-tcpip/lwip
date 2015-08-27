@@ -161,7 +161,6 @@ PACK_STRUCT_END
 #define IP6H_HOPLIM_SET(hdr, hl) (hdr)->_hoplim = (u8_t)(hl)
 
 
-#define ip6_init() /* TODO should we init current addresses and header pointer? */
 struct netif *ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest);
 ip6_addr_t   *ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest);
 err_t         ip6_input(struct pbuf *p, struct netif *inp);

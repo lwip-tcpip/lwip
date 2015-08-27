@@ -99,7 +99,6 @@ PACK_STRUCT_END
 #define MLD6_ADD_MAC_FILTER            1
 
 
-#define mld6_init() /* TODO should we init tables? */
 err_t  mld6_stop(struct netif *netif);
 void   mld6_report_groups(struct netif *netif);
 void   mld6_tmr(void);
