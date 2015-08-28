@@ -113,7 +113,7 @@ ip6_reass_tmr(void)
   struct ip6_reassdata *r, *tmp;
 
 #if !IPV6_FRAG_COPYHEADER
-  LWIP_ASSERT("sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN, set IP6_FRAG_COPYHEADER to 1",
+  LWIP_ASSERT("sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN, set IPV6_FRAG_COPYHEADER to 1",
     sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN);
 #endif /* !IPV6_FRAG_COPYHEADER */
 
@@ -372,7 +372,7 @@ ip6_reass(struct pbuf *p)
     LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == ERR_OK);
   }
 #else /* IPV6_FRAG_COPYHEADER */
-  LWIP_ASSERT("sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN, set IP6_FRAG_COPYHEADER to 1",
+  LWIP_ASSERT("sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN, set IPV6_FRAG_COPYHEADER to 1",
     sizeof(struct ip6_reass_helper) <= IP6_FRAG_HLEN);
 #endif /* IPV6_FRAG_COPYHEADER */
   iprh = (struct ip6_reass_helper *)p->payload;
