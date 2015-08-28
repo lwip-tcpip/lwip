@@ -249,10 +249,13 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-08-28: Simon Goldschmidt
+  * tcp: fixed bug #45559: Window scaling casts u32_t to u16_t without checks
+
   2015-08-26: Simon Goldschmidt
   * ip6_frag.h/.c: fixed bug bug #41009: IPv6 reassembly broken on 64-bit platforms:
     define IPV6_FRAG_COPYHEADER==1 on these platforms to copy the IPv6 header
-	instead of referencing it, which gives more room for struct ip6_reass_helper
+    instead of referencing it, which gives more room for struct ip6_reass_helper
 
   2015-08-25: Simon Goldschmidt
   * sockets.c: fixed bug #45827: recvfrom: TCP window is updated with MSG_PEEK

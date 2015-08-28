@@ -121,7 +121,7 @@ tcp_output_alloc_header(struct tcp_pcb *pcb, u16_t optlen, u16_t datalen,
     tcphdr->seqno = seqno_be;
     tcphdr->ackno = htonl(pcb->rcv_nxt);
     TCPH_HDRLEN_FLAGS_SET(tcphdr, (5 + optlen / 4), TCP_ACK);
-    tcphdr->wnd = htons(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd));
+    tcphdr->wnd = htons(TCPWND_MIN16(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd)));
     tcphdr->chksum = 0;
     tcphdr->urgp = 0;
 
@@ -387,7 +387,7 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
 #endif /* TCP_CHECKSUM_ON_COPY */
   err_t err;
   /* don't allocate segments bigger than half the maximum window we ever received */
-  u16_t mss_local = LWIP_MIN(pcb->mss, pcb->snd_wnd_max/2);
+  u16_t mss_local = LWIP_MIN(pcb->mss, TCPWND_MIN16(pcb->snd_wnd_max/2));
   mss_local = mss_local ? mss_local : pcb->mss;
 
 #if LWIP_NETIF_TX_SINGLE_PBUF
@@ -1141,11 +1141,11 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   if (seg->flags & TF_SEG_OPTS_WND_SCALE) {
     /* The Window field in a SYN segment itself (the only type where we send
        the window scale option) is never scaled. */
-    seg->tcphdr->wnd = htons(pcb->rcv_ann_wnd);
+    seg->tcphdr->wnd = htons(TCPWND_MIN16(pcb->rcv_ann_wnd));
   } else
 #endif /* LWIP_WND_SCALE */
   {
-    seg->tcphdr->wnd = htons(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd));
+    seg->tcphdr->wnd = htons(TCPWND_MIN16(RCV_WND_SCALE(pcb, pcb->rcv_ann_wnd)));
   }
 
   pcb->rcv_ann_right_edge = pcb->rcv_nxt + pcb->rcv_ann_wnd;

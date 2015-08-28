@@ -175,7 +175,7 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
   err_t err;
 
   if (rst_on_unacked_data && ((pcb->state == ESTABLISHED) || (pcb->state == CLOSE_WAIT))) {
-    if ((pcb->refused_data != NULL) || (pcb->rcv_wnd != TCP_WND)) {
+    if ((pcb->refused_data != NULL) || (pcb->rcv_wnd != TCP_WND_MAX(pcb))) {
       /* Not all data received by application, send RST to tell the remote
          side about this. */
       LWIP_ASSERT("pcb->flags & TF_RXCLOSED", pcb->flags & TF_RXCLOSED);
@@ -673,15 +673,15 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     pcb->state != LISTEN);
 
   pcb->rcv_wnd += len;
-  if (pcb->rcv_wnd > TCP_WND) {
-    pcb->rcv_wnd = TCP_WND;
+  if (pcb->rcv_wnd > TCP_WND_MAX(pcb)) {
+    pcb->rcv_wnd = TCP_WND_MAX(pcb);
   } else if(pcb->rcv_wnd == 0) {
     /* rcv_wnd overflowed */
     if ((pcb->state == CLOSE_WAIT) || (pcb->state == LAST_ACK)) {
       /* In passive close, we allow this, since the FIN bit is added to rcv_wnd
          by the stack itself, since it is not mandatory for an application
          to call tcp_recved() for the FIN bit, but e.g. the netconn API does so. */
-      pcb->rcv_wnd = TCP_WND;
+      pcb->rcv_wnd = TCP_WND_MAX(pcb);
     } else {
       LWIP_ASSERT("tcp_recved: len wrapped rcv_wnd\n", 0);
     }
@@ -699,7 +699,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
   }
 
   LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
-         len, pcb->rcv_wnd, TCP_WND - pcb->rcv_wnd));
+         len, pcb->rcv_wnd, TCP_WND_MAX(pcb) - pcb->rcv_wnd));
 }
 
 /**
@@ -814,8 +814,9 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   pcb->snd_nxt = iss;
   pcb->lastack = iss - 1;
   pcb->snd_lbb = iss - 1;
-  pcb->rcv_wnd = TCP_WND;
-  pcb->rcv_ann_wnd = TCP_WND;
+  /* Start with a window that does not need scaling. When window scaling is
+     enabled and used, the window is enlarged when both sides agree on scaling. */
+  pcb->rcv_wnd = pcb->rcv_ann_wnd = TCPWND_MIN16(TCP_WND);
   pcb->rcv_ann_right_edge = pcb->rcv_nxt;
   pcb->snd_wnd = TCP_WND;
   /* As initial send MSS, we use TCP_MSS but limit it to 536.
@@ -1204,7 +1205,7 @@ tcp_process_refused_data(struct tcp_pcb *pcb)
          ) {
         /* correct rcv_wnd as the application won't call tcp_recved()
            for the FIN's seqno */
-        if (pcb->rcv_wnd != TCP_WND) {
+        if (pcb->rcv_wnd != TCP_WND_MAX(pcb)) {
           pcb->rcv_wnd++;
         }
         TCP_EVENT_CLOSED(pcb, err);
@@ -1474,8 +1475,9 @@ tcp_alloc(u8_t prio)
     pcb->prio = prio;
     pcb->snd_buf = TCP_SND_BUF;
     pcb->snd_queuelen = 0;
-    pcb->rcv_wnd = TCP_WND;
-    pcb->rcv_ann_wnd = TCP_WND;
+    /* Start with a window that does not need scaling. When window scaling is
+       enabled and used, the window is enlarged when both sides agree on scaling. */
+    pcb->rcv_wnd = pcb->rcv_ann_wnd = TCPWND_MIN16(TCP_WND);
 #if LWIP_WND_SCALE
     /* snd_scale and rcv_scale are zero unless both sides agree to use scaling */
     pcb->snd_scale = 0;

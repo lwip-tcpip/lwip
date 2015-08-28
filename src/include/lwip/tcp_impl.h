@@ -332,11 +332,15 @@ struct tcp_seg {
 #define TCP_BUILD_MSS_OPTION(mss) htonl(0x02040000 | ((mss) & 0xFFFF))
 
 #if LWIP_WND_SCALE
-#define TCPWNDSIZE_F  U32_F
-#define TCPWND_MAX    0xFFFFFFFFU
+#define TCPWNDSIZE_F       U32_F
+#define TCPWND_MAX         0xFFFFFFFFU
+#define TCPWND_CHECK16(x)  LWIP_ASSERT("window size > 0xFFFF", (x) <= 0xFFFF)
+#define TCPWND_MIN16(x)    ((u16_t)LWIP_MIN((x), 0xFFFF))
 #else /* LWIP_WND_SCALE */
-#define TCPWNDSIZE_F  U16_F
-#define TCPWND_MAX    0xFFFFU
+#define TCPWNDSIZE_F       U16_F
+#define TCPWND_MAX         0xFFFFU
+#define TCPWND_CHECK16(x)
+#define TCPWND_MIN16(x)    x
 #endif /* LWIP_WND_SCALE */
 
 /* Global variables: */

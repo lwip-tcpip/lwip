@@ -460,7 +460,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
           } else {
             /* correct rcv_wnd as the application won't call tcp_recved()
                for the FIN's seqno */
-            if (pcb->rcv_wnd != TCP_WND) {
+            if (pcb->rcv_wnd != TCP_WND_MAX(pcb)) {
               pcb->rcv_wnd++;
             }
             TCP_EVENT_CLOSED(pcb, err);
@@ -629,14 +629,14 @@ tcp_timewait_input(struct tcp_pcb *pcb)
    * - first check sequence number - we skip that one in TIME_WAIT (always
    *   acceptable since we only send ACKs)
    * - second check the RST bit (... return) */
-  if (flags & TCP_RST)  {
+  if (flags & TCP_RST) {
     return ERR_OK;
   }
   /* - fourth, check the SYN bit, */
   if (flags & TCP_SYN) {
     /* If an incoming segment is not acceptable, an acknowledgment
        should be sent in reply */
-    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt+pcb->rcv_wnd)) {
+    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd)) {
       /* If the SYN is in the window it is an error, send a reset */
       tcp_rst(ackno, seqno + tcplen, ip_current_dest_addr(),
         ip_current_src_addr(), tcphdr->dest, tcphdr->src);
@@ -648,7 +648,7 @@ tcp_timewait_input(struct tcp_pcb *pcb)
     pcb->tmr = tcp_ticks;
   }
 
-  if ((tcplen > 0))  {
+  if ((tcplen > 0)) {
     /* Acknowledge data, FIN or out-of-window SYN */
     pcb->flags |= TF_ACK_NOW;
     return tcp_output(pcb);
@@ -684,8 +684,8 @@ tcp_process(struct tcp_pcb *pcb)
         acceptable = 1;
       }
     } else {
-      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
-                          pcb->rcv_nxt+pcb->rcv_wnd)) {
+      if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt,
+                          pcb->rcv_nxt + pcb->rcv_wnd)) {
         acceptable = 1;
       }
     }
@@ -1310,7 +1310,7 @@ tcp_receive(struct tcp_pcb *pcb)
       inseg.tcphdr->seqno = seqno = pcb->rcv_nxt;
     }
     else {
-      if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)){
+      if (TCP_SEQ_LT(seqno, pcb->rcv_nxt)) {
         /* the whole segment is < rcv_nxt */
         /* must be a duplicate of a packet that has already been correctly handled */
 
@@ -1322,7 +1322,7 @@ tcp_receive(struct tcp_pcb *pcb)
     /* The sequence number must be within the window (above rcv_nxt
        and below rcv_nxt + rcv_wnd) in order to be further
        processed. */
-    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, 
+    if (TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt,
                         pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       if (pcb->rcv_nxt == seqno) {
         /* The incoming segment is the next in sequence. We check if
@@ -1331,17 +1331,18 @@ tcp_receive(struct tcp_pcb *pcb)
         tcplen = TCP_TCPLEN(&inseg);
 
         if (tcplen > pcb->rcv_wnd) {
-          LWIP_DEBUGF(TCP_INPUT_DEBUG, 
+          LWIP_DEBUGF(TCP_INPUT_DEBUG,
                       ("tcp_receive: other end overran receive window"
                        "seqno %"U32_F" len %"U16_F" right edge %"U32_F"\n",
                        seqno, tcplen, pcb->rcv_nxt + pcb->rcv_wnd));
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_FIN) {
-            /* Must remove the FIN from the header as we're trimming 
+            /* Must remove the FIN from the header as we're trimming
              * that byte of sequence-space from the packet */
             TCPH_FLAGS_SET(inseg.tcphdr, TCPH_FLAGS(inseg.tcphdr) & ~(unsigned int)TCP_FIN);
           }
           /* Adjust length of segment to fit in the window. */
-          inseg.len = pcb->rcv_wnd;
+          TCPWND_CHECK16(pcb->rcv_wnd);
+          inseg.len = (u16_t)pcb->rcv_wnd;
           if (TCPH_FLAGS(inseg.tcphdr) & TCP_SYN) {
             inseg.len -= 1;
           }
@@ -1643,9 +1644,7 @@ tcp_receive(struct tcp_pcb *pcb)
   } else {
     /* Segments with length 0 is taken care of here. Segments that
        fall out of the window are ACKed. */
-    /*if (TCP_SEQ_GT(pcb->rcv_nxt, seqno) ||
-      TCP_SEQ_GEQ(seqno, pcb->rcv_nxt + pcb->rcv_wnd)) {*/
-    if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd-1)){
+    if(!TCP_SEQ_BETWEEN(seqno, pcb->rcv_nxt, pcb->rcv_nxt + pcb->rcv_wnd - 1)){
       tcp_ack_now(pcb);
     }
   }
@@ -1725,6 +1724,10 @@ tcp_parseopt(struct tcp_pcb *pcb)
           }
           pcb->rcv_scale = TCP_RCV_SCALE;
           pcb->flags |= TF_WND_SCALE;
+          /* window scaling is enabled, we can use the full receive window */
+          LWIP_ASSERT("window not at default value", pcb->rcv_wnd == TCPWND_MIN16(TCP_WND));
+          LWIP_ASSERT("window not at default value", pcb->rcv_ann_wnd == TCPWND_MIN16(TCP_WND));
+          pcb->rcv_wnd = pcb->rcv_ann_wnd = TCP_WND;
         }
         break;
 #endif
