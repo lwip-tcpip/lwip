@@ -1714,10 +1714,10 @@ tcp_parseopt(struct tcp_pcb *pcb)
           return;
         }
         /* If syn was received with wnd scale option,
-           activate wnd scale opt */
-        data = tcp_getoptbyte();
-        if (flags & TCP_SYN) {
+           activate wnd scale opt, but only if this is not a retransmission */
+        if ((flags & TCP_SYN) && !(pcb->flags & TF_WND_SCALE)) {
           /* An WND_SCALE option with the right option length. */
+          data = tcp_getoptbyte();
           pcb->snd_scale = data;
           if (pcb->snd_scale > 14U) {
             pcb->snd_scale = 14U;
