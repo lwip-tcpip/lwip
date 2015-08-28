@@ -258,7 +258,7 @@ udp_input(struct pbuf *p, struct netif *inp)
             ((!broadcast && ip_addr_isany(&pcb->local_ip)) ||
             ip_addr_cmp(&pcb->local_ip, ip_current_dest_addr()) ||
 #if LWIP_IGMP
-            ip_addr_ismulticast(ip_current_dest_addr()) ||
+            (ip_addr_isany(&pcb->local_ip) && ip_addr_ismulticast(ip_current_dest_addr())) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
             (broadcast && ip_get_option(pcb, SOF_BROADCAST) &&
@@ -394,7 +394,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                   ((!broadcast && ip_addr_isany(&mpcb->local_ip)) ||
                    ip_addr_cmp(&mpcb->local_ip, ip_current_dest_addr()) ||
 #if LWIP_IGMP
-                   ip_addr_ismulticast(ip_current_dest_addr()) ||
+                   (ip_addr_isany(&pcb->local_ip) && ip_addr_ismulticast(ip_current_dest_addr())) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
                    (broadcast && ip_get_option(mpcb, SOF_BROADCAST)))))) {
