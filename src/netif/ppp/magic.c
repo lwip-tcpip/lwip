@@ -86,18 +86,9 @@
 #include "polarssl/md5.h"
 #endif
 
-#define MAGIC_RANDPOOLSIZE 16   /* Bytes stored in the pool of randomness. */
-
-/*****************************/
-/*** LOCAL DATA STRUCTURES ***/
-/*****************************/
-static char magic_randpool[MAGIC_RANDPOOLSIZE];   /* Pool of randomness. */
+#define MD5_HASH_SIZE 16
+static char magic_randpool[MD5_HASH_SIZE];   /* Pool of randomness. */
 static long magic_randcount = 0;      /* Pseudo-random incrementer */
-
-
-/***********************************/
-/*** PUBLIC FUNCTION DEFINITIONS ***/
-/***********************************/
 
 /*
  * Churn the randomness pool on a random event.  Call this early and often
@@ -164,16 +155,16 @@ void magic_randomize(void) {
  */
 void random_bytes(unsigned char *buf, u32_t buf_len) {
   md5_context md5;
-  u_char tmp[16];
+  u_char tmp[MD5_HASH_SIZE];
   u32_t n;
 
   while (buf_len > 0) {
-    n = LWIP_MIN(buf_len, MAGIC_RANDPOOLSIZE);
     md5_starts(&md5);
     md5_update(&md5, (u_char *)magic_randpool, sizeof(magic_randpool));
     md5_update(&md5, (u_char *)&magic_randcount, sizeof(magic_randcount));
     md5_finish(&md5, tmp);
     magic_randcount++;
+    n = LWIP_MIN(buf_len, MD5_HASH_SIZE);
     MEMCPY(buf, tmp, n);
     buf += n;
     buf_len -= n;
