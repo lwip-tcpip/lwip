@@ -2159,16 +2159,11 @@
 
 /**
  * PPP_MD5_RANDM==1: Use MD5 for better randomness.
- * Automatically enabled if CHAP or L2TP AUTH support is enabled.
+ * Enabled by default if CHAP, EAP, or L2TP AUTH support is enabled.
  */
 #ifndef PPP_MD5_RANDM
-#define PPP_MD5_RANDM                   0
+#define PPP_MD5_RANDM                   (CHAP_SUPPORT || EAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT)
 #endif
-#if CHAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT
-/*  MD5 Random is required for CHAP and L2TP AUTH */
-#undef PPP_MD5_RANDM
-#define PPP_MD5_RANDM                   1
-#endif /* CHAP_SUPPORT || PPPOL2TP_AUTH_SUPPORT */
 
 /**
  * PolarSSL library, used if necessary and not previously disabled

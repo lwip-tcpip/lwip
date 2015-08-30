@@ -101,12 +101,6 @@ void magic_randomize(void);
 u32_t magic(void);	/* Returns the next magic number */
 
 /*
- * Return a new random number between 0 and (2^pow)-1 included.
- */
-u32_t magic_pow(u8_t pow);
-
-#if PPP_MD5_RANDM
-/*
  * Fill buffer with random bytes
  *
  * Use the random pool to generate random data.  This degrades to pseudo
@@ -116,8 +110,12 @@ u32_t magic_pow(u8_t pow);
  * least some degree.  Also, it's important to get a good seed before
  * the first use.
  */
-void random_bytes(unsigned char *buf, u32_t len);
-#endif /* PPP_MD5_RANDM */
+void random_bytes(unsigned char *buf, u32_t buf_len);
+
+/*
+ * Return a new random number between 0 and (2^pow)-1 included.
+ */
+u32_t magic_pow(u8_t pow);
 
 #endif /* MAGIC_H */
 

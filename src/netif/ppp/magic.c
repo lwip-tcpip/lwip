@@ -209,7 +209,7 @@ static u32_t magic_randomseed = 0;      /* Seed used for random number generatio
  * operational.  Thus we call it again on the first random
  * event.
  */
-void magic_init() {
+void magic_init(void) {
   magic_randomseed += sys_jiffies();
 
   /* Initialize the Borland random number generator. */
@@ -249,10 +249,24 @@ void magic_randomize(void) {
  * operator or network events in which case it will be pseudo random
  * seeded by the real time clock.
  */
-u32_t magic() {
+u32_t magic(void) {
   return ((((u32_t)rand() << 16) + rand()) + magic_randomseed);
 }
 
+/*
+ * random_bytes - Fill a buffer with random bytes.
+ */
+void random_bytes(unsigned char *buf, u32_t buf_len) {
+  u32_t new_rand, n;
+
+  while (buf_len > 0) {
+    new_rand = magic();
+    n = LWIP_MIN(buf_len, sizeof(new_rand));
+    MEMCPY(buf, &new_rand, n);
+    buf += n;
+    buf_len -= n;
+  }
+}
 #endif /* PPP_MD5_RANDM */
 
 /*
