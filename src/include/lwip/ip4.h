@@ -47,6 +47,12 @@
 extern "C" {
 #endif
 
+#ifdef LWIP_HOOK_IP4_ROUTE_SRC
+#define LWIP_IPV4_SRC_ROUTING   1
+#else
+#define LWIP_IPV4_SRC_ROUTING   0
+#endif
+
 /** Currently, the function ip_output_if_opt() is only used with IGMP */
 #define IP_OPTIONS_SEND   (LWIP_IPV4 && LWIP_IGMP)
 
@@ -108,6 +114,11 @@ PACK_STRUCT_END
 
 #define ip_init() /* Compatibility define, no init needed. */
 struct netif *ip4_route(const ip4_addr_t *dest);
+#if LWIP_IPV4_SRC_ROUTING
+struct netif *ip4_route_src(const ip4_addr_t *dest, const ip4_addr_t *src);
+#else /* LWIP_IPV4_SRC_ROUTING */
+#define ip4_route_src(dest, src) ip4_route(dest)
+#endif /* LWIP_IPV4_SRC_ROUTING */
 err_t ip4_input(struct pbuf *p, struct netif *inp);
 err_t ip4_output(struct pbuf *p, const ip4_addr_t *src, const ip4_addr_t *dest,
        u8_t ttl, u8_t tos, u8_t proto);

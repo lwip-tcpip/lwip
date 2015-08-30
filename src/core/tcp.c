@@ -1788,12 +1788,12 @@ tcp_next_iss(void)
  */
 u16_t
 tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
-#if LWIP_IPV6
+#if LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING
                      , const ip_addr_t *src
-#if LWIP_IPV4
+#endif /* LWIP_IPV6 || LWIP_IPV4_SRC_ROUTING */
+#if LWIP_IPV6 && LWIP_IPV4
                      , u8_t isipv6
-#endif /* LWIP_IPV4 */
-#endif /* LWIP_IPV6 */
+#endif /* LWIP_IPV6 && LWIP_IPV4 */
                      )
 {
   u16_t mss_s;

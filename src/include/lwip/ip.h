@@ -262,7 +262,7 @@ extern struct ip_globals ip_data;
 #define ip_route(isipv6, src, dest) \
         ((isipv6) ? \
         ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
-        ip4_route(ip_2_ip4(dest)))
+        ip4_route_src(ip_2_ip4(dest), ip_2_ip4(src)))
 #define ip_netif_get_local_ip(isipv6, netif, dest, storage) ((isipv6) ? \
         ip6_2_ip(ip6_netif_get_local_ip(netif, ip_2_ip6(dest)), storage) : \
         ip4_2_ip(ip4_netif_get_local_ip(netif), storage))
@@ -278,7 +278,7 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
 #define ip_output_hinted(isipv6, p, src, dest, ttl, tos, proto, addr_hint) \
         ip4_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
 #define ip_route(isipv6, src, dest) \
-        ip4_route(dest)
+        ip4_route_src(dest, src)
 #define ip_netif_get_local_ip(isipv6, netif, dest, storage) \
         ip4_netif_get_local_ip(netif)
 #define ip_debug_print(is_ipv6, p) ip4_debug_print(p)

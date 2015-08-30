@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2015-08-30: Simon Goldschmidt
+  * support IPv4 source based routing: define LWIP_HOOK_IP4_ROUTE_SRC to point
+    to a routing function
+
+
   2015-08-05: Simon Goldschmidt
   * many files: allow multicast socket options IP_MULTICAST_TTL, IP_MULTICAST_IF
     and IP_MULTICAST_LOOP to be used without IGMP

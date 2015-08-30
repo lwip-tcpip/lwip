@@ -2768,6 +2768,11 @@
  */
 
 /**
+ * LWIP_HOOK_IP4_ROUTE_SRC(dest, src):
+ * - source-based routing for IPv4 (see LWIP_HOOK_IP4_ROUTE(), src may be NULL)
+ */
+
+/**
  * LWIP_HOOK_ETHARP_GET_GW(netif, dest):
  * - called from etharp_output() (IPv4)
  * - netif: the netif used for sending
