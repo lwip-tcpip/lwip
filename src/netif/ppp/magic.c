@@ -112,8 +112,14 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
     struct {
       /* INCLUDE fields for any system sources of randomness */
       u32_t jiffies;
+#ifdef LWIP_RAND
+      u32_t rand;
+#endif /* LWIP_RAND */
     } sys_data;
     sys_data.jiffies = sys_jiffies();
+#ifdef LWIP_RAND
+    sys_data.rand = LWIP_RAND();
+#endif /* LWIP_RAND */
     /* Load sys_data fields here. */
     md5_update(&md5, (u_char *)&sys_data, sizeof(sys_data));
   }
@@ -211,9 +217,10 @@ static u32_t magic_randomseed = 0;      /* Seed used for random number generatio
  */
 void magic_init(void) {
   magic_randomseed += sys_jiffies();
-
+#ifndef LWIP_RAND
   /* Initialize the Borland random number generator. */
   srand((unsigned)magic_randomseed);
+#endif /* LWIP_RAND */
 }
 
 /*
@@ -247,7 +254,11 @@ void magic_randomize(void) {
  * seeded by the real time clock.
  */
 u32_t magic(void) {
-  return ((((u32_t)rand() << 16) + rand()) + magic_randomseed);
+#ifdef LWIP_RAND
+  return LWIP_RAND() + magic_randomseed;
+#else /* LWIP_RAND */
+  return (u32_t)rand() << 16 + (u32_t)rand() + magic_randomseed;
+#endif /* LWIP_RAND */
 }
 
 /*
