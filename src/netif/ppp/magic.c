@@ -136,7 +136,7 @@ void magic_randomize(void) {
 }
 
 /*
- * random_bytes - Fill a buffer with random bytes.
+ * magic_random_bytes - Fill a buffer with random bytes.
  *
  * Use the random pool to generate random data.  This degrades to pseudo
  *  random when used faster than randomness is supplied using magic_churnrand().
@@ -153,7 +153,7 @@ void magic_randomize(void) {
  *  magic_randcount each time?  Probably there is a weakness but I wish that
  *  it was documented.
  */
-void random_bytes(unsigned char *buf, u32_t buf_len) {
+void magic_random_bytes(unsigned char *buf, u32_t buf_len) {
   md5_context md5;
   u_char tmp[MD5_HASH_SIZE];
   u32_t n;
@@ -177,7 +177,7 @@ void random_bytes(unsigned char *buf, u32_t buf_len) {
 u32_t magic(void) {
   u32_t new_rand;
 
-  random_bytes((unsigned char *)&new_rand, sizeof(new_rand));
+  magic_random_bytes((unsigned char *)&new_rand, sizeof(new_rand));
 
   return new_rand;
 }
@@ -254,9 +254,9 @@ u32_t magic(void) {
 }
 
 /*
- * random_bytes - Fill a buffer with random bytes.
+ * magic_random_bytes - Fill a buffer with random bytes.
  */
-void random_bytes(unsigned char *buf, u32_t buf_len) {
+void magic_random_bytes(unsigned char *buf, u32_t buf_len) {
   u32_t new_rand, n;
 
   while (buf_len > 0) {

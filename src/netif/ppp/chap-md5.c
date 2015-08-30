@@ -60,7 +60,7 @@ static void chap_md5_generate_challenge(ppp_pcb *pcb, unsigned char *cp) {
 
 	clen = MD5_MIN_CHALLENGE + magic_pow(MD5_MIN_MAX_POWER_OF_TWO_CHALLENGE);
 	*cp++ = clen;
-	random_bytes(cp, clen);
+	magic_random_bytes(cp, clen);
 }
 
 static int chap_md5_verify_response(ppp_pcb *pcb, int id, const char *name,

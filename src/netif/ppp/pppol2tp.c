@@ -319,7 +319,7 @@ static err_t pppol2tp_connect(ppp_pcb *ppp, void *ctx) {
 #if PPPOL2TP_AUTH_SUPPORT
   /* Generate random vector */
   if (l2tp->secret != NULL) {
-    random_bytes(l2tp->secret_rv, sizeof(l2tp->secret_rv));
+    magic_random_bytes(l2tp->secret_rv, sizeof(l2tp->secret_rv));
   }
 #endif /* PPPOL2TP_AUTH_SUPPORT */
 

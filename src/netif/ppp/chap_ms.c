@@ -249,7 +249,7 @@ static void chapms_generate_challenge(ppp_pcb *pcb, unsigned char *challenge) {
 		memcpy(challenge, mschap_challenge, 8);
 	else
 #endif
-		random_bytes(challenge, 8);
+		magic_random_bytes(challenge, 8);
 }
 
 static void chapms2_generate_challenge(ppp_pcb *pcb, unsigned char *challenge) {
@@ -261,7 +261,7 @@ static void chapms2_generate_challenge(ppp_pcb *pcb, unsigned char *challenge) {
 		memcpy(challenge, mschap_challenge, 16);
 	else
 #endif
-		random_bytes(challenge, 16);
+		magic_random_bytes(challenge, 16);
 }
 
 static int chapms_verify_response(ppp_pcb *pcb, int id, const char *name,

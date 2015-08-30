@@ -110,7 +110,7 @@ u32_t magic(void);	/* Returns the next magic number */
  * least some degree.  Also, it's important to get a good seed before
  * the first use.
  */
-void random_bytes(unsigned char *buf, u32_t buf_len);
+void magic_random_bytes(unsigned char *buf, u32_t buf_len);
 
 /*
  * Return a new random number between 0 and (2^pow)-1 included.
