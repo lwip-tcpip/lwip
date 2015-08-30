@@ -49,7 +49,6 @@
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/pppos.h"
-#include "netif/ppp/magic.h"
 #include "netif/ppp/vj.h"
 
 /* callbacks called from PPP core */
@@ -716,8 +715,6 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
       pppos->in_fcs = PPP_FCS(pppos->in_fcs, cur_char);
     }
   } /* while (l-- > 0), all bytes processed */
-
-  magic_randomize();
 }
 
 #if PPP_INPROC_IRQ_SAFE
