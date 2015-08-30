@@ -137,7 +137,7 @@
 
 /* FIXME: add stats per PPP session */
 #if PPP_STATS_SUPPORT
-static struct timeval start_time;	/* Time when link was started. */
+static struct timeval start_time; /* Time when link was started. */
 static struct pppd_stats old_link_stats;
 struct pppd_stats link_stats;
 unsigned link_connect_time;
@@ -222,8 +222,8 @@ void ppp_set_auth(ppp_pcb *pcb, u8_t authtype, const char *user, const char *pas
 
 #if PPP_NOTIFY_PHASE
 void ppp_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_phase_cb) {
-	pcb->notify_phase_cb = notify_phase_cb;
-	notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
+  pcb->notify_phase_cb = notify_phase_cb;
+  notify_phase_cb(pcb, pcb->phase, pcb->ctx_cb);
 }
 #endif /* PPP_NOTIFY_PHASE */
 
@@ -732,8 +732,8 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    * Toss all non-LCP packets unless LCP is OPEN.
    */
   if (protocol != PPP_LCP && pcb->lcp_fsm.state != PPP_FSM_OPENED) {
-	ppp_dbglog("Discarded non-LCP packet when LCP not open");
-	goto drop;
+    ppp_dbglog("Discarded non-LCP packet when LCP not open");
+    goto drop;
   }
 
   /*
@@ -741,23 +741,22 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
    * except LCP, LQR and authentication packets.
    */
   if (pcb->phase <= PPP_PHASE_AUTHENTICATE
-	&& !(protocol == PPP_LCP
+   && !(protocol == PPP_LCP
 #if LQR_SUPPORT
-	     || protocol == PPP_LQR
+   || protocol == PPP_LQR
 #endif /* LQR_SUPPORT */
 #if PAP_SUPPORT
-	     || protocol == PPP_PAP
+   || protocol == PPP_PAP
 #endif /* PAP_SUPPORT */
 #if CHAP_SUPPORT
-	     || protocol == PPP_CHAP
+   || protocol == PPP_CHAP
 #endif /* CHAP_SUPPORT */
 #if EAP_SUPPORT
-	     || protocol == PPP_EAP
+   || protocol == PPP_EAP
 #endif /* EAP_SUPPORT */
-	     )) {
-	ppp_dbglog("discarding proto 0x%x in phase %d",
-		   protocol, pcb->phase);
-	goto drop;
+   )) {
+    ppp_dbglog("discarding proto 0x%x in phase %d", protocol, pcb->phase);
+    goto drop;
   }
 
 #if CCP_SUPPORT
@@ -912,7 +911,6 @@ drop:
 out:
   pbuf_free(pb);
   magic_randomize();
-  return;
 }
 
 /* merge a pbuf chain into one pbuf */
@@ -1242,7 +1240,7 @@ int sif6up(ppp_pcb *pcb) {
 /********************************************************************
  *
  * sif6down - Disable the indicated protocol and config the interface
- *	      down if there are no remaining protocols.
+ *            down if there are no remaining protocols.
  */
 int sif6down(ppp_pcb *pcb) {
 
@@ -1370,10 +1368,10 @@ ccp_fatal_error(ppp_pcb *pcb)
  * get_idle_time - return how long the link has been idle.
  */
 int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip) {
-    /* FIXME: add idle time support and make it optional */
-    LWIP_UNUSED_ARG(pcb);
-    LWIP_UNUSED_ARG(ip);
-    return 1;
+  /* FIXME: add idle time support and make it optional */
+  LWIP_UNUSED_ARG(pcb);
+  LWIP_UNUSED_ARG(ip);
+  return 1;
 }
 #endif /* PPP_IDLETIMELIMIT */
 
@@ -1385,156 +1383,158 @@ int get_idle_time(ppp_pcb *pcb, struct ppp_idle *ip) {
  * Return value is 1 if we need to bring up the link, 0 otherwise.
  */
 int get_loop_output(void) {
-    return 0;
+  return 0;
 }
 #endif /* DEMAND_SUPPORT */
 
 #if PPP_PROTOCOLNAME
 /* List of protocol names, to make our messages a little more informative. */
 struct protocol_list {
-    u_short	proto;
-    const char	*name;
+  u_short proto;
+  const char *name;
 } protocol_list[] = {
-    { 0x21,	"IP" },
-    { 0x23,	"OSI Network Layer" },
-    { 0x25,	"Xerox NS IDP" },
-    { 0x27,	"DECnet Phase IV" },
-    { 0x29,	"Appletalk" },
-    { 0x2b,	"Novell IPX" },
-    { 0x2d,	"VJ compressed TCP/IP" },
-    { 0x2f,	"VJ uncompressed TCP/IP" },
-    { 0x31,	"Bridging PDU" },
-    { 0x33,	"Stream Protocol ST-II" },
-    { 0x35,	"Banyan Vines" },
-    { 0x39,	"AppleTalk EDDP" },
-    { 0x3b,	"AppleTalk SmartBuffered" },
-    { 0x3d,	"Multi-Link" },
-    { 0x3f,	"NETBIOS Framing" },
-    { 0x41,	"Cisco Systems" },
-    { 0x43,	"Ascom Timeplex" },
-    { 0x45,	"Fujitsu Link Backup and Load Balancing (LBLB)" },
-    { 0x47,	"DCA Remote Lan" },
-    { 0x49,	"Serial Data Transport Protocol (PPP-SDTP)" },
-    { 0x4b,	"SNA over 802.2" },
-    { 0x4d,	"SNA" },
-    { 0x4f,	"IP6 Header Compression" },
-    { 0x51,	"KNX Bridging Data" },
-    { 0x53,	"Encryption" },
-    { 0x55,	"Individual Link Encryption" },
-    { 0x57,	"IPv6" },
-    { 0x59,	"PPP Muxing" },
-    { 0x5b,	"Vendor-Specific Network Protocol" },
-    { 0x61,	"RTP IPHC Full Header" },
-    { 0x63,	"RTP IPHC Compressed TCP" },
-    { 0x65,	"RTP IPHC Compressed non-TCP" },
-    { 0x67,	"RTP IPHC Compressed UDP 8" },
-    { 0x69,	"RTP IPHC Compressed RTP 8" },
-    { 0x6f,	"Stampede Bridging" },
-    { 0x73,	"MP+" },
-    { 0xc1,	"NTCITS IPI" },
-    { 0xfb,	"single-link compression" },
-    { 0xfd,	"Compressed Datagram" },
-    { 0x0201,	"802.1d Hello Packets" },
-    { 0x0203,	"IBM Source Routing BPDU" },
-    { 0x0205,	"DEC LANBridge100 Spanning Tree" },
-    { 0x0207,	"Cisco Discovery Protocol" },
-    { 0x0209,	"Netcs Twin Routing" },
-    { 0x020b,	"STP - Scheduled Transfer Protocol" },
-    { 0x020d,	"EDP - Extreme Discovery Protocol" },
-    { 0x0211,	"Optical Supervisory Channel Protocol" },
-    { 0x0213,	"Optical Supervisory Channel Protocol" },
-    { 0x0231,	"Luxcom" },
-    { 0x0233,	"Sigma Network Systems" },
-    { 0x0235,	"Apple Client Server Protocol" },
-    { 0x0281,	"MPLS Unicast" },
-    { 0x0283,	"MPLS Multicast" },
-    { 0x0285,	"IEEE p1284.4 standard - data packets" },
-    { 0x0287,	"ETSI TETRA Network Protocol Type 1" },
-    { 0x0289,	"Multichannel Flow Treatment Protocol" },
-    { 0x2063,	"RTP IPHC Compressed TCP No Delta" },
-    { 0x2065,	"RTP IPHC Context State" },
-    { 0x2067,	"RTP IPHC Compressed UDP 16" },
-    { 0x2069,	"RTP IPHC Compressed RTP 16" },
-    { 0x4001,	"Cray Communications Control Protocol" },
-    { 0x4003,	"CDPD Mobile Network Registration Protocol" },
-    { 0x4005,	"Expand accelerator protocol" },
-    { 0x4007,	"ODSICP NCP" },
-    { 0x4009,	"DOCSIS DLL" },
-    { 0x400B,	"Cetacean Network Detection Protocol" },
-    { 0x4021,	"Stacker LZS" },
-    { 0x4023,	"RefTek Protocol" },
-    { 0x4025,	"Fibre Channel" },
-    { 0x4027,	"EMIT Protocols" },
-    { 0x405b,	"Vendor-Specific Protocol (VSP)" },
-    { 0x8021,	"Internet Protocol Control Protocol" },
-    { 0x8023,	"OSI Network Layer Control Protocol" },
-    { 0x8025,	"Xerox NS IDP Control Protocol" },
-    { 0x8027,	"DECnet Phase IV Control Protocol" },
-    { 0x8029,	"Appletalk Control Protocol" },
-    { 0x802b,	"Novell IPX Control Protocol" },
-    { 0x8031,	"Bridging NCP" },
-    { 0x8033,	"Stream Protocol Control Protocol" },
-    { 0x8035,	"Banyan Vines Control Protocol" },
-    { 0x803d,	"Multi-Link Control Protocol" },
-    { 0x803f,	"NETBIOS Framing Control Protocol" },
-    { 0x8041,	"Cisco Systems Control Protocol" },
-    { 0x8043,	"Ascom Timeplex" },
-    { 0x8045,	"Fujitsu LBLB Control Protocol" },
-    { 0x8047,	"DCA Remote Lan Network Control Protocol (RLNCP)" },
-    { 0x8049,	"Serial Data Control Protocol (PPP-SDCP)" },
-    { 0x804b,	"SNA over 802.2 Control Protocol" },
-    { 0x804d,	"SNA Control Protocol" },
-    { 0x804f,	"IP6 Header Compression Control Protocol" },
-    { 0x8051,	"KNX Bridging Control Protocol" },
-    { 0x8053,	"Encryption Control Protocol" },
-    { 0x8055,	"Individual Link Encryption Control Protocol" },
-    { 0x8057,	"IPv6 Control Protocol" },
-    { 0x8059,	"PPP Muxing Control Protocol" },
-    { 0x805b,	"Vendor-Specific Network Control Protocol (VSNCP)" },
-    { 0x806f,	"Stampede Bridging Control Protocol" },
-    { 0x8073,	"MP+ Control Protocol" },
-    { 0x80c1,	"NTCITS IPI Control Protocol" },
-    { 0x80fb,	"Single Link Compression Control Protocol" },
-    { 0x80fd,	"Compression Control Protocol" },
-    { 0x8207,	"Cisco Discovery Protocol Control" },
-    { 0x8209,	"Netcs Twin Routing" },
-    { 0x820b,	"STP - Control Protocol" },
-    { 0x820d,	"EDPCP - Extreme Discovery Protocol Ctrl Prtcl" },
-    { 0x8235,	"Apple Client Server Protocol Control" },
-    { 0x8281,	"MPLSCP" },
-    { 0x8285,	"IEEE p1284.4 standard - Protocol Control" },
-    { 0x8287,	"ETSI TETRA TNP1 Control Protocol" },
-    { 0x8289,	"Multichannel Flow Treatment Protocol" },
-    { 0xc021,	"Link Control Protocol" },
-    { 0xc023,	"Password Authentication Protocol" },
-    { 0xc025,	"Link Quality Report" },
-    { 0xc027,	"Shiva Password Authentication Protocol" },
-    { 0xc029,	"CallBack Control Protocol (CBCP)" },
-    { 0xc02b,	"BACP Bandwidth Allocation Control Protocol" },
-    { 0xc02d,	"BAP" },
-    { 0xc05b,	"Vendor-Specific Authentication Protocol (VSAP)" },
-    { 0xc081,	"Container Control Protocol" },
-    { 0xc223,	"Challenge Handshake Authentication Protocol" },
-    { 0xc225,	"RSA Authentication Protocol" },
-    { 0xc227,	"Extensible Authentication Protocol" },
-    { 0xc229,	"Mitsubishi Security Info Exch Ptcl (SIEP)" },
-    { 0xc26f,	"Stampede Bridging Authorization Protocol" },
-    { 0xc281,	"Proprietary Authentication Protocol" },
-    { 0xc283,	"Proprietary Authentication Protocol" },
-    { 0xc481,	"Proprietary Node ID Authentication Protocol" },
-    { 0,	NULL },
+  { 0x21, "IP" },
+  { 0x23, "OSI Network Layer" },
+  { 0x25, "Xerox NS IDP" },
+  { 0x27, "DECnet Phase IV" },
+  { 0x29, "Appletalk" },
+  { 0x2b, "Novell IPX" },
+  { 0x2d, "VJ compressed TCP/IP" },
+  { 0x2f, "VJ uncompressed TCP/IP" },
+  { 0x31, "Bridging PDU" },
+  { 0x33, "Stream Protocol ST-II" },
+  { 0x35, "Banyan Vines" },
+  { 0x39, "AppleTalk EDDP" },
+  { 0x3b, "AppleTalk SmartBuffered" },
+  { 0x3d, "Multi-Link" },
+  { 0x3f, "NETBIOS Framing" },
+  { 0x41, "Cisco Systems" },
+  { 0x43, "Ascom Timeplex" },
+  { 0x45, "Fujitsu Link Backup and Load Balancing (LBLB)" },
+  { 0x47, "DCA Remote Lan" },
+  { 0x49, "Serial Data Transport Protocol (PPP-SDTP)" },
+  { 0x4b, "SNA over 802.2" },
+  { 0x4d, "SNA" },
+  { 0x4f, "IP6 Header Compression" },
+  { 0x51, "KNX Bridging Data" },
+  { 0x53, "Encryption" },
+  { 0x55, "Individual Link Encryption" },
+  { 0x57, "IPv6" },
+  { 0x59, "PPP Muxing" },
+  { 0x5b, "Vendor-Specific Network Protocol" },
+  { 0x61, "RTP IPHC Full Header" },
+  { 0x63, "RTP IPHC Compressed TCP" },
+  { 0x65, "RTP IPHC Compressed non-TCP" },
+  { 0x67, "RTP IPHC Compressed UDP 8" },
+  { 0x69, "RTP IPHC Compressed RTP 8" },
+  { 0x6f, "Stampede Bridging" },
+  { 0x73, "MP+" },
+  { 0xc1, "NTCITS IPI" },
+  { 0xfb, "single-link compression" },
+  { 0xfd, "Compressed Datagram" },
+  { 0x0201, "802.1d Hello Packets" },
+  { 0x0203, "IBM Source Routing BPDU" },
+  { 0x0205, "DEC LANBridge100 Spanning Tree" },
+  { 0x0207, "Cisco Discovery Protocol" },
+  { 0x0209, "Netcs Twin Routing" },
+  { 0x020b, "STP - Scheduled Transfer Protocol" },
+  { 0x020d, "EDP - Extreme Discovery Protocol" },
+  { 0x0211, "Optical Supervisory Channel Protocol" },
+  { 0x0213, "Optical Supervisory Channel Protocol" },
+  { 0x0231, "Luxcom" },
+  { 0x0233, "Sigma Network Systems" },
+  { 0x0235, "Apple Client Server Protocol" },
+  { 0x0281, "MPLS Unicast" },
+  { 0x0283, "MPLS Multicast" },
+  { 0x0285, "IEEE p1284.4 standard - data packets" },
+  { 0x0287, "ETSI TETRA Network Protocol Type 1" },
+  { 0x0289, "Multichannel Flow Treatment Protocol" },
+  { 0x2063, "RTP IPHC Compressed TCP No Delta" },
+  { 0x2065, "RTP IPHC Context State" },
+  { 0x2067, "RTP IPHC Compressed UDP 16" },
+  { 0x2069, "RTP IPHC Compressed RTP 16" },
+  { 0x4001, "Cray Communications Control Protocol" },
+  { 0x4003, "CDPD Mobile Network Registration Protocol" },
+  { 0x4005, "Expand accelerator protocol" },
+  { 0x4007, "ODSICP NCP" },
+  { 0x4009, "DOCSIS DLL" },
+  { 0x400B, "Cetacean Network Detection Protocol" },
+  { 0x4021, "Stacker LZS" },
+  { 0x4023, "RefTek Protocol" },
+  { 0x4025, "Fibre Channel" },
+  { 0x4027, "EMIT Protocols" },
+  { 0x405b, "Vendor-Specific Protocol (VSP)" },
+  { 0x8021, "Internet Protocol Control Protocol" },
+  { 0x8023, "OSI Network Layer Control Protocol" },
+  { 0x8025, "Xerox NS IDP Control Protocol" },
+  { 0x8027, "DECnet Phase IV Control Protocol" },
+  { 0x8029, "Appletalk Control Protocol" },
+  { 0x802b, "Novell IPX Control Protocol" },
+  { 0x8031, "Bridging NCP" },
+  { 0x8033, "Stream Protocol Control Protocol" },
+  { 0x8035, "Banyan Vines Control Protocol" },
+  { 0x803d, "Multi-Link Control Protocol" },
+  { 0x803f, "NETBIOS Framing Control Protocol" },
+  { 0x8041, "Cisco Systems Control Protocol" },
+  { 0x8043, "Ascom Timeplex" },
+  { 0x8045, "Fujitsu LBLB Control Protocol" },
+  { 0x8047, "DCA Remote Lan Network Control Protocol (RLNCP)" },
+  { 0x8049, "Serial Data Control Protocol (PPP-SDCP)" },
+  { 0x804b, "SNA over 802.2 Control Protocol" },
+  { 0x804d, "SNA Control Protocol" },
+  { 0x804f, "IP6 Header Compression Control Protocol" },
+  { 0x8051, "KNX Bridging Control Protocol" },
+  { 0x8053, "Encryption Control Protocol" },
+  { 0x8055, "Individual Link Encryption Control Protocol" },
+  { 0x8057, "IPv6 Control Protocol" },
+  { 0x8059, "PPP Muxing Control Protocol" },
+  { 0x805b, "Vendor-Specific Network Control Protocol (VSNCP)" },
+  { 0x806f, "Stampede Bridging Control Protocol" },
+  { 0x8073, "MP+ Control Protocol" },
+  { 0x80c1, "NTCITS IPI Control Protocol" },
+  { 0x80fb, "Single Link Compression Control Protocol" },
+  { 0x80fd, "Compression Control Protocol" },
+  { 0x8207, "Cisco Discovery Protocol Control" },
+  { 0x8209, "Netcs Twin Routing" },
+  { 0x820b, "STP - Control Protocol" },
+  { 0x820d, "EDPCP - Extreme Discovery Protocol Ctrl Prtcl" },
+  { 0x8235, "Apple Client Server Protocol Control" },
+  { 0x8281, "MPLSCP" },
+  { 0x8285, "IEEE p1284.4 standard - Protocol Control" },
+  { 0x8287, "ETSI TETRA TNP1 Control Protocol" },
+  { 0x8289, "Multichannel Flow Treatment Protocol" },
+  { 0xc021, "Link Control Protocol" },
+  { 0xc023, "Password Authentication Protocol" },
+  { 0xc025, "Link Quality Report" },
+  { 0xc027, "Shiva Password Authentication Protocol" },
+  { 0xc029, "CallBack Control Protocol (CBCP)" },
+  { 0xc02b, "BACP Bandwidth Allocation Control Protocol" },
+  { 0xc02d, "BAP" },
+  { 0xc05b, "Vendor-Specific Authentication Protocol (VSAP)" },
+  { 0xc081, "Container Control Protocol" },
+  { 0xc223, "Challenge Handshake Authentication Protocol" },
+  { 0xc225, "RSA Authentication Protocol" },
+  { 0xc227, "Extensible Authentication Protocol" },
+  { 0xc229, "Mitsubishi Security Info Exch Ptcl (SIEP)" },
+  { 0xc26f, "Stampede Bridging Authorization Protocol" },
+  { 0xc281, "Proprietary Authentication Protocol" },
+  { 0xc283, "Proprietary Authentication Protocol" },
+  { 0xc481, "Proprietary Node ID Authentication Protocol" },
+  { 0, NULL },
 };
 
 /*
  * protocol_name - find a name for a PPP protocol.
  */
 const char * protocol_name(int proto) {
-    struct protocol_list *lp;
+  struct protocol_list *lp;
 
-    for (lp = protocol_list; lp->proto != 0; ++lp)
-	if (proto == lp->proto)
-	    return lp->name;
-    return NULL;
+  for (lp = protocol_list; lp->proto != 0; ++lp) {
+    if (proto == lp->proto) {
+      return lp->name;
+    }
+  }
+  return NULL;
 }
 #endif /* PPP_PROTOCOLNAME */
 
@@ -1550,42 +1550,41 @@ const char * protocol_name(int proto) {
  * reset_link_stats - "reset" stats when link goes up.
  */
 void reset_link_stats(int u) {
-    if (!get_ppp_stats(u, &old_link_stats))
-	return;
-    gettimeofday(&start_time, NULL);
+  if (!get_ppp_stats(u, &old_link_stats)) {
+    return;
+  }
+  gettimeofday(&start_time, NULL);
 }
 
 /*
  * update_link_stats - get stats at link termination.
  */
 void update_link_stats(int u) {
+  struct timeval now;
+  char numbuf[32];
 
-    struct timeval now;
-    char numbuf[32];
+  if (!get_ppp_stats(u, &link_stats) || gettimeofday(&now, NULL) < 0) {
+    return;
+  }
+  link_connect_time = now.tv_sec - start_time.tv_sec;
+  link_stats_valid = 1;
 
-    if (!get_ppp_stats(u, &link_stats)
-	|| gettimeofday(&now, NULL) < 0)
-	return;
-    link_connect_time = now.tv_sec - start_time.tv_sec;
-    link_stats_valid = 1;
-
-    link_stats.bytes_in  -= old_link_stats.bytes_in;
-    link_stats.bytes_out -= old_link_stats.bytes_out;
-    link_stats.pkts_in   -= old_link_stats.pkts_in;
-    link_stats.pkts_out  -= old_link_stats.pkts_out;
+  link_stats.bytes_in  -= old_link_stats.bytes_in;
+  link_stats.bytes_out -= old_link_stats.bytes_out;
+  link_stats.pkts_in   -= old_link_stats.pkts_in;
+  link_stats.pkts_out  -= old_link_stats.pkts_out;
 }
 
 void print_link_stats() {
-    /*
-     * Print connect time and statistics.
-     */
-    if (link_stats_valid) {
-       int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
-       info("Connect time %d.%d minutes.", t/10, t%10);
-       info("Sent %u bytes, received %u bytes.",
-	    link_stats.bytes_out, link_stats.bytes_in);
-       link_stats_valid = 0;
-    }
+  /*
+   * Print connect time and statistics.
+   */
+  if (link_stats_valid) {
+    int t = (link_connect_time + 5) / 6;    /* 1/10ths of minutes */
+    info("Connect time %d.%d minutes.", t/10, t%10);
+    info("Sent %u bytes, received %u bytes.", link_stats.bytes_out, link_stats.bytes_in);
+    link_stats_valid = 0;
+  }
 }
 #endif /* PPP_STATS_SUPPORT */
 
