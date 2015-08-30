@@ -61,7 +61,10 @@
 #include "lwip/nd6.h"
 #endif /* LWIP_ND6_TCP_REACHABILITY_HINTS */
 
+/** Initial CWND calculation as defined RFC 2581 */
 #define LWIP_TCP_CALC_INITIAL_CWND(mss) LWIP_MIN((4U * (mss)), LWIP_MAX((2U * (mss)), 4380U));
+/** Initial slow start threshold value: we use the full window */
+#define LWIP_TCP_INITIAL_SSTHRESH(pcb)  ((pcb)->snd_wnd)
 
 /* These variables are global to all functions involved in the input
    processing of TCP segments. They are set by the tcp_input()
@@ -592,7 +595,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
     tcp_parseopt(npcb);
     npcb->snd_wnd = SND_WND_SCALE(npcb, tcphdr->wnd);
     npcb->snd_wnd_max = npcb->snd_wnd;
-    npcb->ssthresh = npcb->snd_wnd;
+    npcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(npcb);
 
 #if TCP_CALCULATE_EFF_SEND_MSS
     npcb->mss = tcp_eff_send_mss(npcb->mss, &npcb->local_ip,
@@ -741,9 +744,8 @@ tcp_process(struct tcp_pcb *pcb)
         PCB_ISIPV6(pcb));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-      /* Set ssthresh again after changing pcb->mss (already set in tcp_connect
-       * but for the default value of pcb->mss) */
-      pcb->ssthresh = pcb->mss * 10;
+      /* Set ssthresh again after changing 'mss' and 'snd_wnd' */
+      pcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(pcb);
 
       pcb->cwnd = LWIP_TCP_CALC_INITIAL_CWND(pcb->mss);
       LWIP_DEBUGF(TCP_CWND_DEBUG, ("tcp_process (SENT): cwnd %"TCPWNDSIZE_F
@@ -803,6 +805,11 @@ tcp_process(struct tcp_pcb *pcb)
         /* If there was any data contained within this ACK,
          * we'd better pass it on to the application as well. */
         tcp_receive(pcb);
+
+        /* passive open: update initial ssthresh now that the correct window is
+           known: if the remote side supports window scaling, the window sent
+           with the initial SYN can be smaller than the one used later */
+        pcb->ssthresh = LWIP_TCP_INITIAL_SSTHRESH(pcb);
 
         /* Prevent ACK for SYN to generate a sent event */
         if (pcb->acked != 0) {

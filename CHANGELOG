@@ -250,6 +250,11 @@ HISTORY
   ++ Bugfixes:
 
   2015-08-28: Simon Goldschmidt
+  * tcp.c, tcp_in.c: fixed bug #44023: TCP ssthresh value is unclear: ssthresh
+    is set to the full send window for active open, too, and is updated once
+    after SYN to ensure the correct send window is used
+
+  2015-08-28: Simon Goldschmidt
   * tcp: fixed bug #45559: Window scaling casts u32_t to u16_t without checks
 
   2015-08-26: Simon Goldschmidt
