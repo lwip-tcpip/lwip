@@ -866,8 +866,6 @@ static void ChapMS2(ppp_pcb *pcb, u_char *rchallenge, u_char *PeerChallenge,
 	char *user, char *secret, int secret_len, unsigned char *response,
 	u_char authResponse[], int authenticator) {
     /* ARGSUSED */
-    u_char *p = &response[MS_CHAP2_PEER_CHALLENGE];
-    int i;
     LWIP_UNUSED_ARG(authenticator);
 #if !MPPE_SUPPORT
     LWIP_UNUSED_ARG(pcb);
@@ -877,8 +875,7 @@ static void ChapMS2(ppp_pcb *pcb, u_char *rchallenge, u_char *PeerChallenge,
 
     /* Generate the Peer-Challenge if requested, or copy it if supplied. */
     if (!PeerChallenge)
-	for (i = 0; i < MS_CHAP2_PEER_CHAL_LEN; i++)
-	    *p++ = (u_char)magic_pow(8);
+	magic_random_bytes(&response[MS_CHAP2_PEER_CHALLENGE], MS_CHAP2_PEER_CHAL_LEN);
     else
 	MEMCPY(&response[MS_CHAP2_PEER_CHALLENGE], PeerChallenge,
 	      MS_CHAP2_PEER_CHAL_LEN);

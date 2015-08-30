@@ -204,7 +204,7 @@ static void eap_init(ppp_pcb *pcb) {
 
 	BZERO(&pcb->eap, sizeof(eap_state));
 #if PPP_SERVER
-	pcb->eap.es_server.ea_id = (u_char)magic_pow(8);
+	pcb->eap.es_server.ea_id = magic();
 #endif /* PPP_SERVER */
 }
 
@@ -646,9 +646,8 @@ static void eap_send_request(ppp_pcb *pcb) {
 	struct pbuf *p;
 	u_char *outp;
 	u_char *lenloc;
-	u_char *ptr;
 	int outlen;
-	int challen;
+	int len;
 	const char *str;
 #ifdef USE_SRP
 	struct t_server *ts;
@@ -712,9 +711,9 @@ static void eap_send_request(ppp_pcb *pcb) {
 	case eapIdentify:
 		PUTCHAR(EAPT_IDENTITY, outp);
 		str = "Name";
-		challen = strlen(str);
-		MEMCPY(outp, str, challen);
-		INCPTR(challen, outp);
+		len = strlen(str);
+		MEMCPY(outp, str, len);
+		INCPTR(len, outp);
 		break;
 
 	case eapMD5Chall:
@@ -723,13 +722,10 @@ static void eap_send_request(ppp_pcb *pcb) {
 		 * pick a random challenge length between
 		 * EAP_MIN_CHALLENGE_LENGTH and EAP_MAX_CHALLENGE_LENGTH
 		 */
-		challen = EAP_MIN_CHALLENGE_LENGTH +
+		pcb->eap.es_challen = EAP_MIN_CHALLENGE_LENGTH +
 		    magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
-		PUTCHAR(challen, outp);
-		pcb->eap.es_challen = challen;
-		ptr = pcb->eap.es_challenge;
-		while (--challen >= 0)
-			*ptr++ = (u_char)magic_pow(8);
+		PUTCHAR(pcb->eap.es_challen, outp);
+		magic_random_bytes(pcb->eap.es_challenge, pcb->eap.es_challen);
 		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
 		INCPTR(pcb->eap.es_challen, outp);
 		MEMCPY(outp, pcb->eap.es_server.ea_name, pcb->eap.es_server.ea_namelen);
@@ -813,10 +809,7 @@ static void eap_send_request(ppp_pcb *pcb) {
 			if (i > 0) {
 				MEMCPY(clear, cp, i);
 				cp += i;
-				while (i < 8) {
-					*cp++ = magic_pow(8);
-					i++;
-				}
+				magic_random_bytes(cp, 8-i);
 				/* FIXME: if we want to do SRP, we need to find a way to pass the PolarSSL des_context instead of using static memory */
 				(void) DesEncrypt(clear, cipher);
 				outp += b64enc(&b64, cipher, 8, outp);
@@ -828,10 +821,8 @@ static void eap_send_request(ppp_pcb *pcb) {
 			*optr = i;
 			i %= SHA_DIGESTSIZE;
 			if (i != 0) {
-				while (i < SHA_DIGESTSIZE) {
-					*outp++ = magic_pow(8);
-					i++;
-				}
+				magic_random_bytes(outp, SHA_DIGESTSIZE-i);
+				INCPTR(SHA_DIGESTSIZE-i, outp);
 			}
 
 			/* Obscure the pseudonym with SHA1 hash */
@@ -859,12 +850,9 @@ static void eap_send_request(ppp_pcb *pcb) {
 	case eapSRP4:
 		PUTCHAR(EAPT_SRP, outp);
 		PUTCHAR(EAPSRP_LWRECHALLENGE, outp);
-		challen = EAP_MIN_CHALLENGE_LENGTH +
+		pcb->eap.es_challen = EAP_MIN_CHALLENGE_LENGTH +
 		    magic_pow(EAP_MIN_MAX_POWER_OF_TWO_CHALLENGE_LENGTH);
-		pcb->eap.es_challen = challen;
-		ptr = pcb->eap.es_challenge;
-		while (--challen >= 0)
-			*ptr++ = magic_pow(8);
+		magic_random_bytes(pcb->eap.es_challenge, pcb->eap.es_challen);
 		MEMCPY(outp, pcb->eap.es_challenge, pcb->eap.es_challen);
 		INCPTR(pcb->eap.es_challen, outp);
 		break;

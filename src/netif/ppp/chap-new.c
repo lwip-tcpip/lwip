@@ -179,7 +179,7 @@ void chap_auth_peer(ppp_pcb *pcb, const char *our_name, int digest_code) {
 	pcb->chap_server.digest = dp;
 	pcb->chap_server.name = our_name;
 	/* Start with a random ID value */
-	pcb->chap_server.id = (u8_t)magic_pow(8);
+	pcb->chap_server.id = magic();
 	pcb->chap_server.flags |= AUTH_STARTED;
 	if (pcb->chap_server.flags & LOWERUP)
 		chap_timeout(pcb);
