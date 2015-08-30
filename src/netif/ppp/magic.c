@@ -226,17 +226,14 @@ void magic_init(void) {
  * bits.
  */
 void magic_randomize(void) {
-  static u32_t last_jiffies;
-
   if (!magic_randomized) {
     magic_randomized = !0;
     magic_init();
     /* The initialization function also updates the seed. */
   } else {
     /* magic_randomseed += (magic_randomseed << 16) + TM1; */
-    magic_randomseed += (sys_jiffies() - last_jiffies); /* XXX */
+    magic_randomseed += sys_jiffies() & 0xffff; /* XXX */
   }
-  last_jiffies = sys_jiffies();
 }
 
 /*
