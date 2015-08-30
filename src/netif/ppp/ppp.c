@@ -530,7 +530,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
       return err;
 #endif /* MPPE_SUPPORT */
     default:
-      break;
+      goto err_rte_drop; /* Cannot really happen, we only negotiate what we are able to do */
     }
   }
 #endif /* CCP_SUPPORT */
@@ -790,7 +790,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
       break;
 #endif /* MPPE_SUPPORT */
     default:
-      break;
+      goto drop; /* Cannot really happen, we only negotiate what we are able to do */
     }
 
     /* Assume no PFC */
