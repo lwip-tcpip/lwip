@@ -7,6 +7,10 @@ HISTORY
   ++ New features:
 
   2015-08-30: Simon Goldschmidt
+  * PBUF_REF with "custom" pbufs is now supported for RX pbufs (see pcapif in
+    contrib for an example, LWIP_SUPPORT_CUSTOM_PBUF is required)
+
+  2015-08-30: Simon Goldschmidt
   * support IPv4 source based routing: define LWIP_HOOK_IP4_ROUTE_SRC to point
     to a routing function
 

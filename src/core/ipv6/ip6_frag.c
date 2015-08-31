@@ -158,8 +158,9 @@ ip6_reass_free_complete_datagram(struct ip6_reassdata *ipr)
     /* First, de-queue the first pbuf from r->p. */
     p = ipr->p;
     ipr->p = iprh->next_pbuf;
-    /* Then, move back to the original header (we are now pointing to Fragment header). */
-    if (pbuf_header(p, (s16_t)((u8_t*)p->payload - (u8_t*)IPV6_FRAG_HDRREF(ipr->iphdr)))) {
+    /* Then, move back to the original ipv6 header (we are now pointing to Fragment header).
+       This cannot fail since we already checked when receiving this fragment. */
+    if (pbuf_header_force(p, (s16_t)((u8_t*)p->payload - (u8_t*)IPV6_FRAG_HDRREF(ipr->iphdr)))) {
       LWIP_ASSERT("ip6_reass_free: moving p->payload to ip6 header failed\n", 0);
     }
     else {
@@ -267,6 +268,9 @@ ip6_reass(struct pbuf *p)
 
   IP6_FRAG_STATS_INC(ip6_frag.recv);
 
+  LWIP_ASSERT("ip6_frag_hdr must be in the first pbuf, not chained",
+     (void*)ip6_current_header() == ((u8_t*)p->payload) - IP6_HLEN);
+
   frag_hdr = (struct ip6_frag_hdr *) p->payload;
 
   clen = pbuf_clen(p);
@@ -367,8 +371,9 @@ ip6_reass(struct pbuf *p)
   /* Overwrite Fragment Header with our own helper struct. */
 #if IPV6_FRAG_COPYHEADER
   if (IPV6_FRAG_REQROOM > 0) {
-    /* make room for struct ip6_reass_helper (only required if sizeof(void*) > 4) */
-    err_t hdrerr = pbuf_header(p, IPV6_FRAG_REQROOM);
+    /* Make room for struct ip6_reass_helper (only required if sizeof(void*) > 4).
+       This cannot fail since we already checked when receiving this fragment. */
+    err_t hdrerr = pbuf_header_force(p, IPV6_FRAG_REQROOM);
     LWIP_ASSERT("no room for struct ip6_reass_helper", hdrerr == ERR_OK);
   }
 #else /* IPV6_FRAG_COPYHEADER */
@@ -576,8 +581,9 @@ ip6_reass(struct pbuf *p)
     /* adjust the number of pbufs currently queued for reassembly. */
     ip6_reass_pbufcount -= pbuf_clen(p);
 
-    /* Move pbuf back to IPv6 header. */
-    if (pbuf_header(p, (s16_t)((u8_t*)p->payload - (u8_t*)iphdr_ptr))) {
+    /* Move pbuf back to IPv6 header.
+       This cannot fail since we already checked when receiving this fragment. */
+    if (pbuf_header_force(p, (s16_t)((u8_t*)p->payload - (u8_t*)iphdr_ptr))) {
       LWIP_ASSERT("ip6_reass: moving p->payload to ip6 header failed\n", 0);
       pbuf_free(p);
       return NULL;
