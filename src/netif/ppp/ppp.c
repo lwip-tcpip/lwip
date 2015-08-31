@@ -712,6 +712,8 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
     const char *pname;
 #endif /* PPP_DEBUG && PPP_PROTOCOLNAME */
 
+  magic_randomize();
+
   if (pb->len < 2) {
     PPPDEBUG(LOG_ERR, ("ppp_input[%d]: packet too short\n", pcb->netif->num));
     goto drop;
@@ -910,7 +912,6 @@ drop:
 
 out:
   pbuf_free(pb);
-  magic_randomize();
 }
 
 /* merge a pbuf chain into one pbuf */
