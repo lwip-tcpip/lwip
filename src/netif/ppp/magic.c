@@ -88,7 +88,8 @@
 
 #define MD5_HASH_SIZE 16
 static char magic_randpool[MD5_HASH_SIZE];   /* Pool of randomness. */
-static long magic_randcount = 0;      /* Pseudo-random incrementer */
+static long magic_randcount;      /* Pseudo-random incrementer */
+static u32_t magic_randomseed;    /* Seed used for random number generation. */
 
 /*
  * Churn the randomness pool on a random event.  Call this early and often
@@ -116,7 +117,8 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
       u32_t rand;
 #endif /* LWIP_RAND */
     } sys_data;
-    sys_data.jiffies = sys_jiffies();
+    magic_randomseed += sys_jiffies() & 0xffff;
+    sys_data.jiffies = magic_randomseed;
 #ifdef LWIP_RAND
     sys_data.rand = LWIP_RAND();
 #endif /* LWIP_RAND */
@@ -193,8 +195,8 @@ u32_t magic(void) {
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
-static int  magic_randomized = 0;       /* Set when truely randomized. */
-static u32_t magic_randomseed = 0;      /* Seed used for random number generation. */
+static int  magic_randomized;       /* Set when truely randomized. */
+static u32_t magic_randomseed;      /* Seed used for random number generation. */
 
 
 /***********************************/
@@ -257,7 +259,7 @@ u32_t magic(void) {
 #ifdef LWIP_RAND
   return LWIP_RAND() + magic_randomseed;
 #else /* LWIP_RAND */
-  return (u32_t)rand() << 16 + (u32_t)rand() + magic_randomseed;
+  return ((u32_t)rand() << 16) + (u32_t)rand() + magic_randomseed;
 #endif /* LWIP_RAND */
 }
 
