@@ -1474,7 +1474,7 @@ ethernet_input(struct pbuf *p, struct netif *netif)
         goto free_and_return;
       } else {
         /* pass to IP layer */
-        ip_input(p, netif);
+        ip4_input(p, netif);
       }
       break;
       
