@@ -195,7 +195,9 @@ u32_t magic(void) {
 /*****************************/
 /*** LOCAL DATA STRUCTURES ***/
 /*****************************/
+#ifndef LWIP_RAND
 static int  magic_randomized;       /* Set when truely randomized. */
+#endif /* LWIP_RAND */
 static u32_t magic_randomseed;      /* Seed used for random number generation. */
 
 
@@ -235,14 +237,18 @@ void magic_init(void) {
  * bits.
  */
 void magic_randomize(void) {
+#ifndef LWIP_RAND
   if (!magic_randomized) {
     magic_randomized = !0;
     magic_init();
     /* The initialization function also updates the seed. */
   } else {
+#endif /* LWIP_RAND */
     /* magic_randomseed += (magic_randomseed << 16) + TM1; */
     magic_randomseed += sys_jiffies() & 0xffff; /* XXX */
+#ifndef LWIP_RAND
   }
+#endif /* LWIP_RAND */
 }
 
 /*
