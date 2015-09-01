@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-09-01: Simon Goldschmidt
+  * task #12178: hardware checksum capabilities can be configured per netif
+   (use NETIF_SET_CHECKSUM_CTRL() in your netif's init function)
+
   2015-08-30: Simon Goldschmidt
   * PBUF_REF with "custom" pbufs is now supported for RX pbufs (see pcapif in
     contrib for an example, LWIP_SUPPORT_CUSTOM_PBUF is required)

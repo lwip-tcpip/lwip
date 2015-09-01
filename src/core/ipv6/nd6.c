@@ -878,8 +878,10 @@ nd6_send_ns(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   }
 
 #if CHECKSUM_GEN_ICMP6
-  ns_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
-    target_addr);
+  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
+    ns_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+      target_addr);
+  }
 #endif /* CHECKSUM_GEN_ICMP6 */
 
   /* Send the packet out. */
@@ -954,8 +956,10 @@ nd6_send_na(struct netif * netif, const ip6_addr_t * target_addr, u8_t flags)
   }
 
 #if CHECKSUM_GEN_ICMP6
-  na_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
-    dest_addr);
+  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
+    na_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+      dest_addr);
+  }
 #endif /* CHECKSUM_GEN_ICMP6 */
 
   /* Send the packet out. */
@@ -1023,8 +1027,10 @@ nd6_send_rs(struct netif * netif)
   }
 
 #if CHECKSUM_GEN_ICMP6
-  rs_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
-    &multicast_address);
+  IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP6) {
+    rs_hdr->chksum = ip6_chksum_pseudo(p, IP6_NEXTH_ICMP6, p->len, src_addr,
+      &multicast_address);
+  }
 #endif /* CHECKSUM_GEN_ICMP6 */
 
   /* Send the packet out. */

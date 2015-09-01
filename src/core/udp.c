@@ -325,34 +325,36 @@ udp_input(struct pbuf *p, struct netif *inp)
   if (for_us) {
     LWIP_DEBUGF(UDP_DEBUG | LWIP_DBG_TRACE, ("udp_input: calculating checksum\n"));
 #if CHECKSUM_CHECK_UDP
+    IF__NETIF_CHECKSUM_ENABLED(inp, CHECKSUM_CHECK_UDP) {
 #if LWIP_UDPLITE
-    if (ip_current_header_proto() == IP_PROTO_UDPLITE) {
-      /* Do the UDP Lite checksum */
-      u16_t chklen = ntohs(udphdr->len);
-      if (chklen < sizeof(struct udp_hdr)) {
-        if (chklen == 0) {
-          /* For UDP-Lite, checksum length of 0 means checksum
-             over the complete packet (See RFC 3828 chap. 3.1) */
-          chklen = p->tot_len;
-        } else {
-          /* At least the UDP-Lite header must be covered by the
-             checksum! (Again, see RFC 3828 chap. 3.1) */
+      if (ip_current_header_proto() == IP_PROTO_UDPLITE) {
+        /* Do the UDP Lite checksum */
+        u16_t chklen = ntohs(udphdr->len);
+        if (chklen < sizeof(struct udp_hdr)) {
+          if (chklen == 0) {
+            /* For UDP-Lite, checksum length of 0 means checksum
+               over the complete packet (See RFC 3828 chap. 3.1) */
+            chklen = p->tot_len;
+          } else {
+            /* At least the UDP-Lite header must be covered by the
+               checksum! (Again, see RFC 3828 chap. 3.1) */
+            goto chkerr;
+          }
+        }
+        if (ip_chksum_pseudo_partial(p, IP_PROTO_UDPLITE,
+                     p->tot_len, chklen,
+                     ip_current_src_addr(), ip_current_dest_addr()) != 0) {
           goto chkerr;
         }
-      }
-      if (ip_chksum_pseudo_partial(p, IP_PROTO_UDPLITE,
-                   p->tot_len, chklen,
-                   ip_current_src_addr(), ip_current_dest_addr()) != 0) {
-        goto chkerr;
-      }
-    } else
+      } else
 #endif /* LWIP_UDPLITE */
-    {
-      if (udphdr->chksum != 0) {
-        if (ip_chksum_pseudo(p, IP_PROTO_UDP, p->tot_len,
-                             ip_current_src_addr(),
-                             ip_current_dest_addr()) != 0) {
-          goto chkerr;
+      {
+        if (udphdr->chksum != 0) {
+          if (ip_chksum_pseudo(p, IP_PROTO_UDP, p->tot_len,
+                               ip_current_src_addr(),
+                               ip_current_dest_addr()) != 0) {
+            goto chkerr;
+          }
         }
       }
     }
@@ -804,24 +806,26 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
     udphdr->len = htons(chklen_hdr);
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_UDP) {
 #if LWIP_CHECKSUM_ON_COPY
-    if (have_chksum) {
-      chklen = UDP_HLEN;
-    }
+      if (have_chksum) {
+        chklen = UDP_HLEN;
+      }
 #endif /* LWIP_CHECKSUM_ON_COPY */
-    udphdr->chksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDPLITE,
-      q->tot_len, chklen, src_ip, dst_ip);
+      udphdr->chksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDPLITE,
+        q->tot_len, chklen, src_ip, dst_ip);
 #if LWIP_CHECKSUM_ON_COPY
-    if (have_chksum) {
-      u32_t acc;
-      acc = udphdr->chksum + (u16_t)~(chksum);
-      udphdr->chksum = FOLD_U32T(acc);
-    }
+      if (have_chksum) {
+        u32_t acc;
+        acc = udphdr->chksum + (u16_t)~(chksum);
+        udphdr->chksum = FOLD_U32T(acc);
+      }
 #endif /* LWIP_CHECKSUM_ON_COPY */
 
-    /* chksum zero must become 0xffff, as zero means 'no checksum' */
-    if (udphdr->chksum == 0x0000) {
-      udphdr->chksum = 0xffff;
+      /* chksum zero must become 0xffff, as zero means 'no checksum' */
+      if (udphdr->chksum == 0x0000) {
+        udphdr->chksum = 0xffff;
+      }
     }
 #endif /* CHECKSUM_GEN_UDP */
 
@@ -833,28 +837,30 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
     udphdr->len = htons(q->tot_len);
     /* calculate checksum */
 #if CHECKSUM_GEN_UDP
-    /* Checksum is mandatory over IPv6. */
-    if (PCB_ISIPV6(pcb) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
-      u16_t udpchksum;
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_UDP) {
+      /* Checksum is mandatory over IPv6. */
+      if (PCB_ISIPV6(pcb) || (pcb->flags & UDP_FLAGS_NOCHKSUM) == 0) {
+        u16_t udpchksum;
 #if LWIP_CHECKSUM_ON_COPY
-      if (have_chksum) {
-        u32_t acc;
-        udpchksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDP,
-          q->tot_len, UDP_HLEN, src_ip, dst_ip);
-        acc = udpchksum + (u16_t)~(chksum);
-        udpchksum = FOLD_U32T(acc);
-      } else
+        if (have_chksum) {
+          u32_t acc;
+          udpchksum = ip_chksum_pseudo_partial(q, IP_PROTO_UDP,
+            q->tot_len, UDP_HLEN, src_ip, dst_ip);
+          acc = udpchksum + (u16_t)~(chksum);
+          udpchksum = FOLD_U32T(acc);
+        } else
 #endif /* LWIP_CHECKSUM_ON_COPY */
-      {
-        udpchksum = ip_chksum_pseudo(q, IP_PROTO_UDP, q->tot_len,
-          src_ip, dst_ip);
-      }
+        {
+          udpchksum = ip_chksum_pseudo(q, IP_PROTO_UDP, q->tot_len,
+            src_ip, dst_ip);
+        }
 
-      /* chksum zero must become 0xffff, as zero means 'no checksum' */
-      if (udpchksum == 0x0000) {
-        udpchksum = 0xffff;
+        /* chksum zero must become 0xffff, as zero means 'no checksum' */
+        if (udpchksum == 0x0000) {
+          udpchksum = 0xffff;
+        }
+        udphdr->chksum = udpchksum;
       }
-      udphdr->chksum = udpchksum;
     }
 #endif /* CHECKSUM_GEN_UDP */
     ip_proto = IP_PROTO_UDP;

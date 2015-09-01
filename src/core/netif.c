@@ -205,6 +205,7 @@ netif_add(struct netif *netif,
   }
   netif->output_ip6 = netif_null_output_ip6;
 #endif /* LWIP_IPV6 */
+  NETIF_SET_CHECKSUM_CTRL(netif, NETIF_CHECKSUM_ENABLE_ALL);
   netif->flags = 0;
 #if LWIP_DHCP
   /* netif not under DHCP control by default */

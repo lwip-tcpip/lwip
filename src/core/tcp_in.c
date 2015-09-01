@@ -111,9 +111,6 @@ tcp_input(struct pbuf *p, struct netif *inp)
 #endif /* SO_REUSE */
   u8_t hdrlen;
   err_t err;
-#if CHECKSUM_CHECK_TCP
-  u16_t chksum;
-#endif /* CHECKSUM_CHECK_TCP */
 
   LWIP_UNUSED_ARG(inp);
 
@@ -147,15 +144,17 @@ tcp_input(struct pbuf *p, struct netif *inp)
   }
 
 #if CHECKSUM_CHECK_TCP
-  /* Verify TCP checksum. */
-  chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
-                             ip_current_src_addr(), ip_current_dest_addr());
-  if (chksum != 0) {
-      LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
-        chksum));
-    tcp_debug_print(tcphdr);
-    TCP_STATS_INC(tcp.chkerr);
-    goto dropped;
+  IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_TCP) {
+    /* Verify TCP checksum. */
+    u16_t chksum = ip_chksum_pseudo(p, IP_PROTO_TCP, p->tot_len,
+                               ip_current_src_addr(), ip_current_dest_addr());
+    if (chksum != 0) {
+        LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packet discarded due to failing checksum 0x%04"X16_F"\n",
+          chksum));
+      tcp_debug_print(tcphdr);
+      TCP_STATS_INC(tcp.chkerr);
+      goto dropped;
+    }
   }
 #endif /* CHECKSUM_CHECK_TCP */
 

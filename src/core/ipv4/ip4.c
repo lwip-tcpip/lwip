@@ -63,8 +63,13 @@
 /** Set this to 0 in the rare case of wanting to call an extra function to
  * generate the IP checksum (in contrast to calculating it on-the-fly). */
 #ifndef LWIP_INLINE_IP_CHKSUM
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+#define LWIP_INLINE_IP_CHKSUM   0
+#else /* LWIP_CHECKSUM_CTRL_PER_NETIF */
 #define LWIP_INLINE_IP_CHKSUM   1
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
 #endif
+
 #if LWIP_INLINE_IP_CHKSUM && CHECKSUM_GEN_IP
 #define CHECKSUM_GEN_IP_INLINE  1
 #else
@@ -178,7 +183,7 @@ ip4_route(const ip4_addr_t *dest)
 
   if ((netif_default == NULL) || !netif_is_up(netif_default) || !netif_is_link_up(netif_default) ||
       ip4_addr_isany_val(*netif_ip4_addr(netif_default))) {
-    /* No matching netif found an default netif is not usable.
+    /* No matching netif found and default netif is not usable.
        If this is not good enough for you, use LWIP_HOOK_IP4_ROUTE() */
     LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip_route: No route to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
       ip4_addr1_16(dest), ip4_addr2_16(dest), ip4_addr3_16(dest), ip4_addr4_16(dest)));
@@ -443,16 +448,18 @@ ip4_input(struct pbuf *p, struct netif *inp)
 
   /* verify checksum */
 #if CHECKSUM_CHECK_IP
-  if (inet_chksum(iphdr, iphdr_hlen) != 0) {
+  IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_IP) {
+    if (inet_chksum(iphdr, iphdr_hlen) != 0) {
 
-    LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
-      ("Checksum (0x%"X16_F") failed, IP packet dropped.\n", inet_chksum(iphdr, iphdr_hlen)));
-    ip4_debug_print(p);
-    pbuf_free(p);
-    IP_STATS_INC(ip.chkerr);
-    IP_STATS_INC(ip.drop);
-    snmp_inc_ipinhdrerrors();
-    return ERR_OK;
+      LWIP_DEBUGF(IP_DEBUG | LWIP_DBG_LEVEL_SERIOUS,
+        ("Checksum (0x%"X16_F") failed, IP packet dropped.\n", inet_chksum(iphdr, iphdr_hlen)));
+      ip4_debug_print(p);
+      pbuf_free(p);
+      IP_STATS_INC(ip.chkerr);
+      IP_STATS_INC(ip.drop);
+      snmp_inc_ipinhdrerrors();
+      return ERR_OK;
+    }
   }
 #endif
 
@@ -597,7 +604,7 @@ ip4_input(struct pbuf *p, struct netif *inp)
   /* packet consists of multiple fragments? */
   if ((IPH_OFFSET(iphdr) & PP_HTONS(IP_OFFMASK | IP_MF)) != 0) {
 #if IP_REASSEMBLY /* packet fragment reassembly code present? */
-    LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip_reass()\n",
+    LWIP_DEBUGF(IP_DEBUG, ("IP packet is a fragment (id=0x%04"X16_F" tot_len=%"U16_F" len=%"U16_F" MF=%"U16_F" offset=%"U16_F"), calling ip4_reass()\n",
       ntohs(IPH_ID(iphdr)), p->tot_len, ntohs(IPH_LEN(iphdr)), !!(IPH_OFFSET(iphdr) & PP_HTONS(IP_MF)), (ntohs(IPH_OFFSET(iphdr)) & IP_OFFMASK)*8));
     /* reassemble the packet*/
     p = ip4_reass(p);
@@ -889,12 +896,21 @@ err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_add
     chk_sum = (chk_sum >> 16) + (chk_sum & 0xFFFF);
     chk_sum = (chk_sum >> 16) + chk_sum;
     chk_sum = ~chk_sum;
-    iphdr->_chksum = (u16_t)chk_sum; /* network order */
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_IP) {
+      iphdr->_chksum = (u16_t)chk_sum; /* network order */
+    }
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+    else {
+      IPH_CHKSUM_SET(iphdr, 0);
+    }
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF*/
 #else /* CHECKSUM_GEN_IP_INLINE */
     IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
-    IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, ip_hlen));
-#endif
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_IP) {
+      IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, ip_hlen));
+    }
+#endif /* CHECKSUM_GEN_IP */
 #endif /* CHECKSUM_GEN_IP_INLINE */
   } else {
     /* IP header already included in p */

@@ -98,6 +98,21 @@ extern "C" {
  * Set by the netif driver in its init function. */
 #define NETIF_FLAG_MLD6         0x40U
 
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+#define NETIF_CHECKSUM_GEN_IP       0x0001
+#define NETIF_CHECKSUM_GEN_UDP      0x0002
+#define NETIF_CHECKSUM_GEN_TCP      0x0004
+#define NETIF_CHECKSUM_GEN_ICMP     0x0008
+#define NETIF_CHECKSUM_GEN_ICMP6    0x0010
+#define NETIF_CHECKSUM_CHECK_IP     0x0100
+#define NETIF_CHECKSUM_CHECK_UDP    0x0200
+#define NETIF_CHECKSUM_CHECK_TCP    0x0400
+#define NETIF_CHECKSUM_CHECK_ICMP   0x0800
+#define NETIF_CHECKSUM_CHECK_ICMP6  0x1000
+#define NETIF_CHECKSUM_ENABLE_ALL   0xFFFF
+#define NETIF_CHECKSUM_DISABLE_ALL  0x0000
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
+
 struct netif;
 
 /** Function prototype for netif init functions. Set up flags and output/linkoutput
@@ -240,6 +255,9 @@ struct netif {
   /* the hostname for this netif, NULL is a valid value */
   char*  hostname;
 #endif /* LWIP_NETIF_HOSTNAME */
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+  u16_t chksum_flags;
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF*/
   /** maximum transfer unit (in bytes) */
   u16_t mtu;
   /** number of bytes used in hwaddr */
@@ -292,12 +310,21 @@ struct netif {
 #endif /* ENABLE_LOOPBACK */
 };
 
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+#define NETIF_SET_CHECKSUM_CTRL(netif, chksumflags) do { \
+  (netif)->chksum_flags = chksumflags; } while(0)
+#define IF__NETIF_CHECKSUM_ENABLED(netif, chksumflag) if (((netif) == NULL) || (((netif)->chksum_flags & (chksumflag)) != 0))
+#else /* LWIP_CHECKSUM_CTRL_PER_NETIF */
+#define NETIF_SET_CHECKSUM_CTRL(netif, chksumflags)
+#define IF__NETIF_CHECKSUM_ENABLED(netif, chksumflag)
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
+
 #if LWIP_SNMP
-#define NETIF_INIT_SNMP(netif, type, speed) \
+#define NETIF_INIT_SNMP(netif, type, speed) do { \
   /* use "snmp_ifType" enum from snmp.h for "type", snmp_ifType_ethernet_csmacd by example */ \
-  (netif)->link_type = (type);    \
+  (netif)->link_type = (type);  \
   /* your link speed here (units: bits per second) */  \
-  (netif)->link_speed = (speed);  \
+  (netif)->link_speed = (speed);\
   (netif)->ts = 0;              \
   (netif)->ifinoctets = 0;      \
   (netif)->ifinucastpkts = 0;   \
@@ -306,7 +333,7 @@ struct netif {
   (netif)->ifoutoctets = 0;     \
   (netif)->ifoutucastpkts = 0;  \
   (netif)->ifoutnucastpkts = 0; \
-  (netif)->ifoutdiscards = 0
+  (netif)->ifoutdiscards = 0; } while(0)
 #else /* LWIP_SNMP */
 #define NETIF_INIT_SNMP(netif, type, speed)
 #endif /* LWIP_SNMP */

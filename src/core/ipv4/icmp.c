@@ -133,12 +133,14 @@ icmp_input(struct pbuf *p, struct netif *inp)
       goto lenerr;
     }
 #if CHECKSUM_CHECK_ICMP
-    if (inet_chksum_pbuf(p) != 0) {
-      LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
-      pbuf_free(p);
-      ICMP_STATS_INC(icmp.chkerr);
-      snmp_inc_icmpinerrors();
-      return;
+    IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_CHECK_ICMP) {
+      if (inet_chksum_pbuf(p) != 0) {
+        LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
+        pbuf_free(p);
+        ICMP_STATS_INC(icmp.chkerr);
+        snmp_inc_icmpinerrors();
+        return;
+      }
     }
 #endif
 #if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN
@@ -193,12 +195,19 @@ icmp_input(struct pbuf *p, struct netif *inp)
       ip4_addr_copy(iphdr->dest, *ip4_current_src_addr());
       ICMPH_TYPE_SET(iecho, ICMP_ER);
 #if CHECKSUM_GEN_ICMP
-      /* adjust the checksum */
-      if (iecho->chksum > PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
-        iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
-      } else {
-        iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+      IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_ICMP) {
+        /* adjust the checksum */
+        if (iecho->chksum > PP_HTONS(0xffffU - (ICMP_ECHO << 8))) {
+          iecho->chksum += PP_HTONS(ICMP_ECHO << 8) + 1;
+        } else {
+          iecho->chksum += PP_HTONS(ICMP_ECHO << 8);
+        }
       }
+#if LWIP_CHECKSUM_CTRL_PER_NETIF
+      else {
+        iecho->chksum = 0;
+      }
+#endif /* LWIP_CHECKSUM_CTRL_PER_NETIF */
 #else /* CHECKSUM_GEN_ICMP */
       iecho->chksum = 0;
 #endif /* CHECKSUM_GEN_ICMP */
@@ -207,7 +216,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
       IPH_TTL_SET(iphdr, ICMP_TTL);
       IPH_CHKSUM_SET(iphdr, 0);
 #if CHECKSUM_GEN_IP
-      IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+      IF__NETIF_CHECKSUM_ENABLED(inp, NETIF_CHECKSUM_GEN_IP) {
+        IPH_CHKSUM_SET(iphdr, inet_chksum(iphdr, IP_HLEN));
+      }
 #endif /* CHECKSUM_GEN_IP */
 
       ICMP_STATS_INC(icmp.xmit);
@@ -293,6 +304,7 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   /* we can use the echo header here */
   struct icmp_echo_hdr *icmphdr;
   ip4_addr_t iphdr_src;
+  struct netif *netif;
 
   /* ICMP header + IP header + 8 bytes of data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
@@ -321,18 +333,23 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   SMEMCPY((u8_t *)q->payload + sizeof(struct icmp_echo_hdr), (u8_t *)p->payload,
           IP_HLEN + ICMP_DEST_UNREACH_DATASIZE);
 
-  /* calculate checksum */
-  icmphdr->chksum = 0;
+  netif = ip4_route(&iphdr_src);
+  if (netif != NULL) {
+    /* calculate checksum */
+    icmphdr->chksum = 0;
 #if CHECKSUM_GEN_ICMP
-  icmphdr->chksum = inet_chksum(icmphdr, q->len);
+    IF__NETIF_CHECKSUM_ENABLED(netif, NETIF_CHECKSUM_GEN_ICMP) {
+      icmphdr->chksum = inet_chksum(icmphdr, q->len);
+    }
 #endif
-  ICMP_STATS_INC(icmp.xmit);
-  /* increase number of messages attempted to send */
-  snmp_inc_icmpoutmsgs();
-  /* increase number of destination unreachable messages attempted to send */
-  snmp_inc_icmpouttimeexcds();
-  ip4_addr_copy(iphdr_src, iphdr->src);
-  ip4_output(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP);
+    ICMP_STATS_INC(icmp.xmit);
+    /* increase number of messages attempted to send */
+    snmp_inc_icmpoutmsgs();
+    /* increase number of destination unreachable messages attempted to send */
+    snmp_inc_icmpouttimeexcds();
+    ip4_addr_copy(iphdr_src, iphdr->src);
+    ip4_output_if(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
+  }
   pbuf_free(q);
 }
 
