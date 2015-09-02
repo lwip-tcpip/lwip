@@ -743,41 +743,65 @@ nd6_tmr(void)
 
   /* Process prefix entries. */
   for (i = 0; i < LWIP_ND6_NUM_PREFIXES; i++) {
-    if (prefix_list[i].invalidation_timer < ND6_TMR_INTERVAL / 1000) {
-      prefix_list[i].invalidation_timer = 0;
-    }
-    if ((prefix_list[i].invalidation_timer > 0) &&
-        (prefix_list[i].netif != NULL)) {
-      prefix_list[i].invalidation_timer -= ND6_TMR_INTERVAL / 1000;
+  	if (prefix_list[i].netif != NULL) {
+      if (prefix_list[i].invalidation_timer < ND6_TMR_INTERVAL / 1000) {
+        /* Entry timed out, remove it */
+        prefix_list[i].invalidation_timer = 0;
 
 #if LWIP_IPV6_AUTOCONFIG
-      /* Initiate address autoconfiguration for this prefix, if conditions are met. */
-      if (prefix_list[i].netif->ip6_autoconfig_enabled &&
-          (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_AUTONOMOUS) &&
-          !(prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED)) {
-        s8_t j;
-        /* Try to get an address on this netif that is invalid.
-         * Skip 0 index (link-local address) */
-        for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
-          if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDR_INVALID) {
-            /* Generate an address using this prefix and interface ID from link-local address. */
-            IP6_ADDR(&prefix_list[i].netif->ip6_addr[j],
-              prefix_list[i].prefix.addr[0], prefix_list[i].prefix.addr[1],
-              netif_ip6_addr(prefix_list[i].netif, 0)->addr[2], netif_ip6_addr(prefix_list[i].netif, 0)->addr[3]);
+        /* If any addresses were configured with this prefix, remove them */
+        if (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED)
+        {
+          s8_t j;
 
-            /* Mark it as tentative (DAD will be performed if configured). */
-            netif_ip6_addr_set_state(prefix_list[i].netif, j, IP6_ADDR_TENTATIVE);
+          for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
+            if ((netif_ip6_addr_state(prefix_list[i].netif, j) != IP6_ADDR_INVALID) &&
+                ip6_addr_netcmp(&prefix_list[i].prefix, netif_ip6_addr(prefix_list[i].netif, j))) {
+              netif_ip6_addr_set_state(prefix_list[i].netif, j, IP6_ADDR_INVALID);
+              prefix_list[i].flags = 0;
 
-            /* Mark this prefix with ADDRESS_GENERATED, so that we don't try again. */
-            prefix_list[i].flags |= ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED;
-
-            /* Exit loop. */
-            break;
+              /* Exit loop. */
+              break;
+            }
           }
         }
-      }
 #endif /* LWIP_IPV6_AUTOCONFIG */
-    }
+
+        prefix_list[i].netif = NULL;
+        prefix_list[i].flags = 0;
+      }
+      else {
+        prefix_list[i].invalidation_timer -= ND6_TMR_INTERVAL / 1000;
+
+#if LWIP_IPV6_AUTOCONFIG
+        /* Initiate address autoconfiguration for this prefix, if conditions are met. */
+        if (prefix_list[i].netif->ip6_autoconfig_enabled &&
+            (prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_AUTONOMOUS) &&
+            !(prefix_list[i].flags & ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED)) {
+          s8_t j;
+          /* Try to get an address on this netif that is invalid.
+           * Skip 0 index (link-local address) */
+          for (j = 1; j < LWIP_IPV6_NUM_ADDRESSES; j++) {
+            if (netif_ip6_addr_state(prefix_list[i].netif, j) == IP6_ADDR_INVALID) {
+              /* Generate an address using this prefix and interface ID from link-local address. */
+              IP6_ADDR(&prefix_list[i].netif->ip6_addr[j],
+                prefix_list[i].prefix.addr[0], prefix_list[i].prefix.addr[1],
+                netif_ip6_addr(prefix_list[i].netif, 0)->addr[2], netif_ip6_addr(prefix_list[i].netif, 0)->addr[3]);
+
+              /* Mark it as tentative (DAD will be performed if configured). */
+              netif_ip6_addr_set_state(prefix_list[i].netif, j, IP6_ADDR_TENTATIVE);
+
+              /* Mark this prefix with ADDRESS_GENERATED, so that we don't try again. */
+              prefix_list[i].flags |= ND6_PREFIX_AUTOCONFIG_ADDRESS_GENERATED;
+
+              /* Exit loop. */
+              break;
+            }
+          }
+        }
+#endif /* LWIP_IPV6_AUTOCONFIG */
+      }
+  	}
   }
 
 
