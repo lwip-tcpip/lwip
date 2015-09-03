@@ -4158,9 +4158,8 @@ snmp_set_value(struct obj_def *od, u16_t len, void *value)
   if (id == 30)
   {
     /* snmpEnableAuthenTraps */
-    /* @todo @fixme: which kind of pointer is 'value'? s32_t or u8_t??? */
-    u8_t *ptr = (u8_t*)value;
-    *snmpenableauthentraps_ptr = *ptr;
+    s32_t *ptr = (s32_t*)value;
+    *snmpenableauthentraps_ptr = (u8_t)*ptr;
   }
 }
 
