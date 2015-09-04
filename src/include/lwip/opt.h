@@ -1027,8 +1027,9 @@
  *  byte order).
  *
  *  Instead, you can also use an external function:
- *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern u32_t my_lookup_function(const char *name)
- *  that returns the IP address or INADDR_NONE if not found.
+ *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern int my_lookup_function(const char *name, ip_addr_t* result, u8_t reqtype)
+ *  that provides the IP address, returns 1 if found or 0 if not found and gets
+ *  the type of the requested address passed (see LWIP_DNS_ADDRTYPE_*)
  */
 #ifndef DNS_LOCAL_HOSTLIST
 #define DNS_LOCAL_HOSTLIST              0

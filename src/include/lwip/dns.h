@@ -62,6 +62,7 @@ extern "C" {
 #define DNS_RRTYPE_MINFO          14    /* mailbox or mail list information */
 #define DNS_RRTYPE_MX             15    /* mail exchange */
 #define DNS_RRTYPE_TXT            16    /* text strings */
+#define DNS_RRTYPE_AAAA           28    /* IPv6 address */
 
 /** DNS field CLASS used for "Resource Records" */
 #define DNS_RRCLASS_IN            1     /* the Internet */
@@ -69,6 +70,12 @@ extern "C" {
 #define DNS_RRCLASS_CH            3     /* the CHAOS class */
 #define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
 #define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
+
+/* DNS resolve types: */
+#define LWIP_DNS_ADDRTYPE_IPV4_IPV6 0     /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
+#define LWIP_DNS_ADDRTYPE_IPV6_IPV4 0xFF  /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
+#define LWIP_DNS_ADDRTYPE_IPV4      DNS_RRTYPE_A
+#define LWIP_DNS_ADDRTYPE_IPV6      DNS_RRTYPE_AAAA
 
 #if DNS_LOCAL_HOSTLIST
 /** struct used for local host-list */
@@ -102,6 +109,15 @@ void           dns_setserver(u8_t numdns, ip_addr_t *dnsserver);
 ip_addr_t      dns_getserver(u8_t numdns);
 err_t          dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                                  dns_found_callback found, void *callback_arg);
+#if LWIP_IPV4 && LWIP_IPV6
+err_t          dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr,
+                                 dns_found_callback found, void *callback_arg,
+                                 u8_t dns_addrtype);
+#else /* LWIP_IPV4 && LWIP_IPV6 */
+#define dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, dns_addrtype) \
+              dns_gethostbyname(hostname, addr, found, callback_arg)
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+
 
 #if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
 int            dns_local_removehost(const char *hostname, const ip_addr_t *addr);

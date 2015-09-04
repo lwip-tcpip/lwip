@@ -6,6 +6,9 @@ HISTORY
 
   ++ New features:
 
+  2015-09-03: Simon Goldschmidt
+  * opt.h, dns.h/.c: DNS/IPv6: added support for AAAA records
+
   2015-09-01: Simon Goldschmidt
   * task #12178: hardware checksum capabilities can be configured per netif
    (use NETIF_SET_CHECKSUM_CTRL() in your netif's init function)
@@ -25,7 +28,7 @@ HISTORY
 
   2015-04-24: Simon Goldschmidt
   * dhcp.h/c, autoip.h/.c: added functions dhcp/autoip_supplied_address() to
-    check for the source of address assignemnt (replacement for NETIF_FLAG_DHCP)
+    check for the source of address assignment (replacement for NETIF_FLAG_DHCP)
 
   2015-04-10: Simon Goldschmidt
   * many files: task #13480: added LWIP_IPV4 define - IPv4 can be disabled,
