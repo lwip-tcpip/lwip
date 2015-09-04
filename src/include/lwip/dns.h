@@ -45,37 +45,11 @@ extern "C" {
 /** DNS timer period */
 #define DNS_TMR_INTERVAL          1000
 
-/** DNS field TYPE used for "Resource Records" */
-#define DNS_RRTYPE_A              1     /* a host address */
-#define DNS_RRTYPE_NS             2     /* an authoritative name server */
-#define DNS_RRTYPE_MD             3     /* a mail destination (Obsolete - use MX) */
-#define DNS_RRTYPE_MF             4     /* a mail forwarder (Obsolete - use MX) */
-#define DNS_RRTYPE_CNAME          5     /* the canonical name for an alias */
-#define DNS_RRTYPE_SOA            6     /* marks the start of a zone of authority */
-#define DNS_RRTYPE_MB             7     /* a mailbox domain name (EXPERIMENTAL) */
-#define DNS_RRTYPE_MG             8     /* a mail group member (EXPERIMENTAL) */
-#define DNS_RRTYPE_MR             9     /* a mail rename domain name (EXPERIMENTAL) */
-#define DNS_RRTYPE_NULL           10    /* a null RR (EXPERIMENTAL) */
-#define DNS_RRTYPE_WKS            11    /* a well known service description */
-#define DNS_RRTYPE_PTR            12    /* a domain name pointer */
-#define DNS_RRTYPE_HINFO          13    /* host information */
-#define DNS_RRTYPE_MINFO          14    /* mailbox or mail list information */
-#define DNS_RRTYPE_MX             15    /* mail exchange */
-#define DNS_RRTYPE_TXT            16    /* text strings */
-#define DNS_RRTYPE_AAAA           28    /* IPv6 address */
-
-/** DNS field CLASS used for "Resource Records" */
-#define DNS_RRCLASS_IN            1     /* the Internet */
-#define DNS_RRCLASS_CS            2     /* the CSNET class (Obsolete - used only for examples in some obsolete RFCs) */
-#define DNS_RRCLASS_CH            3     /* the CHAOS class */
-#define DNS_RRCLASS_HS            4     /* Hesiod [Dyer 87] */
-#define DNS_RRCLASS_FLUSH         0x800 /* Flush bit */
-
 /* DNS resolve types: */
-#define LWIP_DNS_ADDRTYPE_IPV4_IPV6 0     /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
-#define LWIP_DNS_ADDRTYPE_IPV6_IPV4 0xFF  /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
-#define LWIP_DNS_ADDRTYPE_IPV4      DNS_RRTYPE_A
-#define LWIP_DNS_ADDRTYPE_IPV6      DNS_RRTYPE_AAAA
+#define LWIP_DNS_ADDRTYPE_IPV4      0
+#define LWIP_DNS_ADDRTYPE_IPV6      1
+#define LWIP_DNS_ADDRTYPE_IPV4_IPV6 2 /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
+#define LWIP_DNS_ADDRTYPE_IPV6_IPV4 3 /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
 
 #if DNS_LOCAL_HOSTLIST
 /** struct used for local host-list */

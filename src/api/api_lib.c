@@ -821,8 +821,13 @@ netconn_join_leave_group(struct netconn *conn,
  *         ERR_ARG: dns client not initialized or invalid hostname
  *         ERR_VAL: dns server response was invalid
  */
+#if LWIP_IPV4 && LWIP_IPV6
+err_t
+netconn_gethostbyname_addrtype(const char *name, ip_addr_t *addr, u8_t dns_addrtype)
+#else
 err_t
 netconn_gethostbyname(const char *name, ip_addr_t *addr)
+#endif
 {
   API_VAR_DECLARE(struct dns_api_msg, msg);
 #if !LWIP_MPU_COMPATIBLE
@@ -848,15 +853,24 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
   API_VAR_REF(msg).addr = API_VAR_REF(addr);
   API_VAR_REF(msg).name = name;
 #endif /* LWIP_MPU_COMPATIBLE */
+#if LWIP_IPV4 && LWIP_IPV6
+  API_VAR_REF(msg).dns_addrtype = dns_addrtype;
+#endif LWIP_IPV4 && LWIP_IPV6
+#if LWIP_NETCONN_SEM_PER_THREAD
+  API_VAR_REF(msg).sem = LWIP_NETCONN_THREAD_SEM_GET();
+#else /* LWIP_NETCONN_SEM_PER_THREAD*/
   err = sys_sem_new(API_EXPR_REF(API_VAR_REF(msg).sem), 0);
   if (err != ERR_OK) {
     API_VAR_FREE(MEMP_DNS_API_MSG, msg);
     return err;
   }
+#endif /* LWIP_NETCONN_SEM_PER_THREAD */
 
   tcpip_callback(lwip_netconn_do_gethostbyname, &API_VAR_REF(msg));
   sys_sem_wait(API_EXPR_REF(API_VAR_REF(msg).sem));
+#if !LWIP_NETCONN_SEM_PER_THREAD
   sys_sem_free(API_EXPR_REF(API_VAR_REF(msg).sem));
+#endif /* !LWIP_NETCONN_SEM_PER_THREAD */
 
 #if LWIP_MPU_COMPATIBLE
   *addr = msg->addr;

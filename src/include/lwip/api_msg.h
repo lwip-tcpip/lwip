@@ -171,6 +171,10 @@ struct dns_api_msg {
 #endif /* LWIP_MPU_COMPATIBLE */
   /** The resolved address is stored here */
   ip_addr_t API_MSG_M_DEF(addr);
+#if LWIP_IPV4 && LWIP_IPV6
+  /** Type of resolve call */
+  u8_t dns_addrtype;
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
   /** This semaphore is posted when the name is resolved, the application thread
       should wait on it. */
   sys_sem_t API_MSG_M_DEF(sem);

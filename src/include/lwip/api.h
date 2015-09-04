@@ -149,6 +149,15 @@ enum netconn_igmp {
 };
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 
+#if LWIP_DNS
+/* Used for netconn_gethostbyname_addrtype(), these should match the DNS_ADDRTYPE defines in dns.h */
+#define NETCONN_DNS_DEFAULT   NETCONN_DNS_IPV4_IPV6
+#define NETCONN_DNS_IPV4      0
+#define NETCONN_DNS_IPV6      1
+#define NETCONN_DNS_IPV4_IPV6 2 /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
+#define NETCONN_DNS_IPV6_IPV4 3 /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
+#endif /* LWIP_DNS */
+
 /* forward-declare some structs to avoid to include their headers */
 struct ip_pcb;
 struct tcp_pcb;
@@ -283,7 +292,13 @@ LWIP_NETCONN_SCOPE err_t   netconn_join_leave_group(struct netconn *conn, const 
                              const ip_addr_t *netif_addr, enum netconn_igmp join_or_leave);
 #endif /* LWIP_IGMP || (LWIP_IPV6 && LWIP_IPV6_MLD) */
 #if LWIP_DNS
+#if LWIP_IPV4 && LWIP_IPV6
+err_t   netconn_gethostbyname_addrtype(const char *name, ip_addr_t *addr, u8_t dns_addrtype);
+#define netconn_gethostbyname(name, addr) netconn_gethostbyname_addrtype(name, addr, NETCONN_DNS_DEFAULT)
+#else /* LWIP_IPV4 && LWIP_IPV6 */
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
+#define netconn_gethostbyname_addrtype(name, addr, dns_addrtype netconn_gethostbyname(name, addr)
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 #endif /* LWIP_DNS */
 
 #define netconn_err(conn)               ((conn)->last_err)

@@ -260,6 +260,8 @@ lwip_freeaddrinfo(struct addrinfo *ai)
  * @param hints structure containing input values that set socktype and protocol
  * @param res pointer to a pointer where to store the result (set to NULL on failure)
  * @return 0 on success, non-zero on failure
+ *
+ * @todo: implement AI_V4MAPPED, AI_ADDRCONFIG
  */
 int
 lwip_getaddrinfo(const char *nodename, const char *servname,
@@ -272,6 +274,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   int port_nr = 0;
   size_t total_size;
   size_t namelen = 0;
+  int ai_family;
 
   if (res == NULL) {
     return EAI_FAIL;
@@ -282,14 +285,24 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   }
 
   if (hints != NULL) {
-    if ((hints->ai_family != AF_UNSPEC) && (hints->ai_family != AF_INET)) {
+    ai_family = hints->ai_family;
+    if ((ai_family != AF_UNSPEC) 
+#if LWIP_IPV4
+      && (ai_family != AF_INET)
+#endif /* LWIP_IPV4 */
+#if LWIP_IPV4
+      && (ai_family != AF_INET6)
+#endif /* LWIP_IPV4 */
+      ) {
       return EAI_FAMILY;
     }
+  } else {
+    ai_family = AF_UNSPEC;
   }
 
   if (servname != NULL) {
     /* service name specified: convert to port number
-     * @todo?: currently, only ASCII integers (port numbers) are supported! */
+     * @todo?: currently, only ASCII integers (port numbers) are supported (AI_NUMERICSERV)! */
     port_nr = atoi(servname);
     if ((port_nr <= 0) || (port_nr > 0xffff)) {
       return EAI_SERVICE;
@@ -298,13 +311,38 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 
   if (nodename != NULL) {
     /* service location specified, try to resolve */
-    err = netconn_gethostbyname(nodename, &addr);
-    if (err != ERR_OK) {
-      return EAI_FAIL;
+    if ((hints != NULL) && (hints->ai_flags & AI_NUMERICHOST)) {
+      /* no DNS lookup, just parse for an address string */
+      if(!ipaddr_aton(nodename, &addr)) {
+        return EAI_NONAME;
+      }
+#if LWIP_IPV4 && LWIP_IPV6
+      if ((IP_IS_V6_VAL(addr) && ai_family == AF_INET) ||
+          (!IP_IS_V6_VAL(addr) && ai_family == AF_INET6)) {
+        return EAI_NONAME;
+      }
+    } else {
+#if LWIP_IPV4 && LWIP_IPV6
+      /* AF_UNSPEC: prefer IPv4 */
+      u8_t type = NETCONN_DNS_IPV4_IPV6;
+      if (ai_family == AF_INET) {
+        type = NETCONN_DNS_IPV4;
+      } else if(ai_family == AF_INET6) {
+        type = NETCONN_DNS_IPV6;
+      }
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
+      err = netconn_gethostbyname_addrtype(nodename, &addr, type);
+      if (err != ERR_OK) {
+        return EAI_FAIL;
+      }
     }
   } else {
     /* service location specified, use loopback address */
-    ip_addr_set_loopback(1, &addr);
+    if ((hints != NULL) && (hints->ai_flags & AI_PASSIVE)) {
+      ip_addr_set_any(ai_family == AF_INET6, &addr);
+    } else {
+      ip_addr_set_loopback(ai_family == AF_INET6, &addr);
+    }
   }
 
   total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
@@ -330,6 +368,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     sa6->sin6_family = AF_INET6;
     sa6->sin6_len = sizeof(struct sockaddr_in6);
     sa6->sin6_port = htons((u16_t)port_nr);
+    ai->ai_family = AF_INET6;
 #endif /* LWIP_IPV6 */
   } else {
 #if LWIP_IPV4
@@ -339,11 +378,11 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     sa4->sin_family = AF_INET;
     sa4->sin_len = sizeof(struct sockaddr_in);
     sa4->sin_port = htons((u16_t)port_nr);
+    ai->ai_family = AF_INET;
 #endif /* LWIP_IPV4 */
   }
 
   /* set up addrinfo */
-  ai->ai_family = AF_INET;
   if (hints != NULL) {
     /* copy socktype & protocol from hints if specified */
     ai->ai_socktype = hints->ai_socktype;

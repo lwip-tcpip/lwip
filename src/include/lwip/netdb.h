@@ -44,15 +44,19 @@ extern "C" {
 
 /* some rarely used options */
 #ifndef LWIP_DNS_API_DECLARE_H_ERRNO
-#define LWIP_DNS_API_DECLARE_H_ERRNO 1
+#define LWIP_DNS_API_DECLARE_H_ERRNO  1
 #endif
 
 #ifndef LWIP_DNS_API_DEFINE_ERRORS
-#define LWIP_DNS_API_DEFINE_ERRORS 1
+#define LWIP_DNS_API_DEFINE_ERRORS    1
+#endif
+
+#ifndef LWIP_DNS_API_DEFINE_FLAGS
+#define LWIP_DNS_API_DEFINE_FLAGS     1
 #endif
 
 #ifndef LWIP_DNS_API_DECLARE_STRUCTS
-#define LWIP_DNS_API_DECLARE_STRUCTS 1
+#define LWIP_DNS_API_DECLARE_STRUCTS  1
 #endif
 
 #if LWIP_DNS_API_DEFINE_ERRORS
@@ -68,6 +72,17 @@ extern "C" {
 #define NO_RECOVERY     212
 #define TRY_AGAIN       213
 #endif /* LWIP_DNS_API_DEFINE_ERRORS */
+
+#if LWIP_DNS_API_DEFINE_FLAGS
+/* input flags for struct addrinfo */
+#define AI_PASSIVE      0x01
+#define AI_CANONNAME    0x02
+#define AI_NUMERICHOST  0x04
+#define AI_NUMERICSERV  0x08
+#define AI_V4MAPPED     0x10
+#define AI_ALL          0x20
+#define AI_ADDRCONFIG   0x40
+#endif /* LWIP_DNS_API_DEFINE_FLAGS */
 
 #if LWIP_DNS_API_DECLARE_STRUCTS
 struct hostent {
