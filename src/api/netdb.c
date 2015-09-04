@@ -349,6 +349,10 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
   if (nodename != NULL) {
     namelen = strlen(nodename);
+    if (namelen > DNS_MAX_NAME_LENGTH) {
+      /* invalid name length */
+      return EAI_FAIL;
+    }
     LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
     total_size += namelen + 1;
   }
