@@ -1840,12 +1840,15 @@ void
 lwip_netconn_do_gethostbyname(void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
-
-  API_EXPR_DEREF(msg->err) = dns_gethostbyname_addrtype(msg->name, API_EXPR_REF(msg->addr), lwip_netconn_do_dns_found, msg
+  u8_t addrtype =
 #if LWIP_IPV4 && LWIP_IPV6
-    , msg->dns_addrtype
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
-    );
+    msg->dns_addrtype;
+#else
+    LWIP_DNS_ADDRTYPE_DEFAULT;
+#endif
+
+  API_EXPR_DEREF(msg->err) = dns_gethostbyname_addrtype(msg->name,
+    API_EXPR_REF(msg->addr), lwip_netconn_do_dns_found, msg, addrtype);
   if (API_EXPR_DEREF(msg->err) != ERR_INPROGRESS) {
     /* on error or immediate success, wake up the application
      * task waiting in netconn_gethostbyname */

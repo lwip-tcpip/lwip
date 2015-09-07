@@ -50,6 +50,15 @@ extern "C" {
 #define LWIP_DNS_ADDRTYPE_IPV6      1
 #define LWIP_DNS_ADDRTYPE_IPV4_IPV6 2 /* try to resolve IPv4 first, try IPv6 if IPv4 fails only */
 #define LWIP_DNS_ADDRTYPE_IPV6_IPV4 3 /* try to resolve IPv6 first, try IPv4 if IPv6 fails only */
+#if LWIP_IPV4 && LWIP_IPV6
+#ifndef LWIP_DNS_ADDRTYPE_DEFAULT
+#define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV4_IPV6
+#endif
+#elif defined(LWIP_IPV4)
+#define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV4
+#else
+#define LWIP_DNS_ADDRTYPE_DEFAULT   LWIP_DNS_ADDRTYPE_IPV6
+#endif
 
 #if DNS_LOCAL_HOSTLIST
 /** struct used for local host-list */
@@ -83,14 +92,9 @@ void           dns_setserver(u8_t numdns, ip_addr_t *dnsserver);
 ip_addr_t      dns_getserver(u8_t numdns);
 err_t          dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                                  dns_found_callback found, void *callback_arg);
-#if LWIP_IPV4 && LWIP_IPV6
 err_t          dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr,
                                  dns_found_callback found, void *callback_arg,
                                  u8_t dns_addrtype);
-#else /* LWIP_IPV4 && LWIP_IPV6 */
-#define dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, dns_addrtype) \
-              dns_gethostbyname(hostname, addr, found, callback_arg)
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 
 #if DNS_LOCAL_HOSTLIST && DNS_LOCAL_HOSTLIST_IS_DYNAMIC
