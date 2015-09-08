@@ -83,7 +83,7 @@ void md4_starts( md4_context *ctx )
     ctx->state[3] = 0x10325476;
 }
 
-static void md4_process( md4_context *ctx, unsigned char data[64] )
+static void md4_process( md4_context *ctx, const unsigned char data[64] )
 {
     unsigned long X[16], A, B, C, D;
 
@@ -189,7 +189,7 @@ static void md4_process( md4_context *ctx, unsigned char data[64] )
 /*
  * MD4 process buffer
  */
-void md4_update( md4_context *ctx, unsigned char *input, int ilen )
+void md4_update( md4_context *ctx, const unsigned char *input, int ilen )
 {
     int fill;
     unsigned long left;
@@ -209,7 +209,7 @@ void md4_update( md4_context *ctx, unsigned char *input, int ilen )
     if( left && ilen >= fill )
     {
         MEMCPY( (void *) (ctx->buffer + left),
-                (void *) input, fill );
+                input, fill );
         md4_process( ctx, ctx->buffer );
         input += fill;
         ilen  -= fill;
@@ -226,7 +226,7 @@ void md4_update( md4_context *ctx, unsigned char *input, int ilen )
     if( ilen > 0 )
     {
         MEMCPY( (void *) (ctx->buffer + left),
-                (void *) input, ilen );
+                input, ilen );
     }
 }
 
@@ -257,7 +257,7 @@ void md4_finish( md4_context *ctx, unsigned char output[16] )
     last = ctx->total[0] & 0x3F;
     padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
-    md4_update( ctx, (unsigned char *) md4_padding, padn );
+    md4_update( ctx, md4_padding, padn );
     md4_update( ctx, msglen, 8 );
 
     PUT_ULONG_LE( ctx->state[0], output,  0 );

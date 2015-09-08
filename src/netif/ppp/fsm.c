@@ -208,7 +208,7 @@ static void terminate_layer(fsm *f, int nextstate) {
     /* Init restart counter and send Terminate-Request */
     f->retransmits = pcb->settings.fsm_max_term_transmits;
     fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-	      (u_char *) f->term_reason, f->term_reason_len);
+	      (const u_char *) f->term_reason, f->term_reason_len);
 
     if (f->retransmits == 0) {
 	/*
@@ -280,7 +280,7 @@ static void fsm_timeout(void *arg) {
 	} else {
 	    /* Send Terminate-Request */
 	    fsm_sdata(f, TERMREQ, f->reqid = ++f->id,
-		      (u_char *) f->term_reason, f->term_reason_len);
+		      (const u_char *) f->term_reason, f->term_reason_len);
 	    TIMEOUT(fsm_timeout, f, pcb->settings.fsm_timeout_time);
 	    --f->retransmits;
 	}
@@ -767,7 +767,7 @@ static void fsm_sconfreq(fsm *f, int retransmit) {
  *
  * Used for all packets sent to our peer by this module.
  */
-void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen) {
+void fsm_sdata(fsm *f, u_char code, u_char id, const u_char *data, int datalen) {
     ppp_pcb *pcb = f->pcb;
     struct pbuf *p;
     u_char *outp;

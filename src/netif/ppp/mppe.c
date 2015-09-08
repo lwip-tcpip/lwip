@@ -80,9 +80,9 @@ static void mppe_rekey(ppp_mppe_state * state, int initial_key)
 	 */
 	sha1_starts(&sha1);
 	sha1_update(&sha1, state->master_key, state->keylen);
-	sha1_update(&sha1, (unsigned char *)mppe_sha1_pad1, SHA1_PAD_SIZE);
+	sha1_update(&sha1, mppe_sha1_pad1, SHA1_PAD_SIZE);
 	sha1_update(&sha1, state->session_key, state->keylen);
-	sha1_update(&sha1, (unsigned char *)mppe_sha1_pad2, SHA1_PAD_SIZE);
+	sha1_update(&sha1, mppe_sha1_pad2, SHA1_PAD_SIZE);
 	sha1_finish(&sha1, sha1_digest);
 	MEMCPY(state->session_key, sha1_digest, state->keylen);
 

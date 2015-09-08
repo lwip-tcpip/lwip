@@ -140,7 +140,7 @@ struct chap_digest_type {
 #endif /* PPP_SERVER */
 	void (*make_response)(ppp_pcb *pcb, unsigned char *response, int id, const char *our_name,
 		const unsigned char *challenge, const char *secret, int secret_len,
-		const unsigned char *priv);
+		unsigned char *priv);
 	int (*check_success)(ppp_pcb *pcb, unsigned char *pkt, int len, unsigned char *priv);
 	void (*handle_failure)(ppp_pcb *pcb, unsigned char *pkt, int len);
 };

@@ -168,7 +168,7 @@ void fsm_open(fsm *f);
 void fsm_close(fsm *f, const char *reason);
 void fsm_input(fsm *f, u_char *inpacket, int l);
 void fsm_protreject(fsm *f);
-void fsm_sdata(fsm *f, u_char code, u_char id, u_char *data, int datalen);
+void fsm_sdata(fsm *f, u_char code, u_char id, const u_char *data, int datalen);
 
 
 #endif /* FSM_H */

@@ -82,7 +82,7 @@ void md5_starts( md5_context *ctx )
     ctx->state[3] = 0x10325476;
 }
 
-static void md5_process( md5_context *ctx, unsigned char data[64] )
+static void md5_process( md5_context *ctx, const unsigned char data[64] )
 {
     unsigned long X[16], A, B, C, D;
 
@@ -208,7 +208,7 @@ static void md5_process( md5_context *ctx, unsigned char data[64] )
 /*
  * MD5 process buffer
  */
-void md5_update( md5_context *ctx, unsigned char *input, int ilen )
+void md5_update( md5_context *ctx, const unsigned char *input, int ilen )
 {
     int fill;
     unsigned long left;
@@ -228,7 +228,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
     if( left && ilen >= fill )
     {
         MEMCPY( (void *) (ctx->buffer + left),
-                (void *) input, fill );
+                input, fill );
         md5_process( ctx, ctx->buffer );
         input += fill;
         ilen  -= fill;
@@ -245,7 +245,7 @@ void md5_update( md5_context *ctx, unsigned char *input, int ilen )
     if( ilen > 0 )
     {
         MEMCPY( (void *) (ctx->buffer + left),
-                (void *) input, ilen );
+                input, ilen );
     }
 }
 
@@ -276,7 +276,7 @@ void md5_finish( md5_context *ctx, unsigned char output[16] )
     last = ctx->total[0] & 0x3F;
     padn = ( last < 56 ) ? ( 56 - last ) : ( 120 - last );
 
-    md5_update( ctx, (unsigned char *) md5_padding, padn );
+    md5_update( ctx, md5_padding, padn );
     md5_update( ctx, msglen, 8 );
 
     PUT_ULONG_LE( ctx->state[0], output,  0 );

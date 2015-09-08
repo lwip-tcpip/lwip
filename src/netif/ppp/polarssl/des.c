@@ -394,7 +394,7 @@ void des_setkey_dec( des_context *ctx, unsigned char key[8] )
  * DES-ECB block encryption/decryption
  */
 void des_crypt_ecb( des_context *ctx,
-                    unsigned char input[8],
+                    const unsigned char input[8],
                     unsigned char output[8] )
 {
     int i;

@@ -141,7 +141,7 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
     unsigned long val = 0;
     const char *f;
     char *str, *buf0;
-    unsigned char *p;
+    const unsigned char *p;
     char num[32];
 #if 0 /* need port */
     time_t t;
@@ -285,11 +285,11 @@ int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args) {
 	    quoted = c == 'q';
 	    p = va_arg(args, unsigned char *);
 	    if (p == NULL)
-		p = (unsigned char *)"<NULL>";
+		p = (const unsigned char *)"<NULL>";
 	    if (fillch == '0' && prec >= 0) {
 		n = prec;
 	    } else {
-		n = strlen((char *)p);
+		n = strlen((const char *)p);
 		if (prec >= 0 && n > prec)
 		    n = prec;
 	    }

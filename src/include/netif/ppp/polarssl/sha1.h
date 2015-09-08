@@ -68,7 +68,7 @@ void sha1_starts( sha1_context *ctx );
  * \param input    buffer holding the  data
  * \param ilen     length of the input data
  */
-void sha1_update( sha1_context *ctx, unsigned char *input, int ilen );
+void sha1_update( sha1_context *ctx, const unsigned char *input, int ilen );
 
 /**
  * \brief          SHA-1 final digest
