@@ -63,7 +63,7 @@
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/sys.h"
 #include "lwip/sio.h"
 
@@ -396,7 +396,7 @@ slipif_init(struct netif *netif)
   netif->state = priv;
 
   /* initialize the snmp variables and counters inside the struct netif */
-  NETIF_INIT_SNMP(netif, snmp_ifType_slip, SLIP_SIO_SPEED(priv->sd));
+  MIB2_INIT_NETIF(netif, snmp_ifType_slip, SLIP_SIO_SPEED(priv->sd));
 
 #if SLIP_USE_RX_THREAD
   /* Create a thread to poll the serial line. */

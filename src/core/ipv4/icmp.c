@@ -48,7 +48,6 @@
 #include "lwip/ip.h"
 #include "lwip/def.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
 
 #include <string.h>
 
@@ -87,7 +86,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   ip4_addr_t* src;
 
   ICMP_STATS_INC(icmp.recv);
-  snmp_inc_icmpinmsgs();
+  MIB2_STATS_INC(mib2.icmpinmsgs);
 
   iphdr_in = ip4_current_header();
   hlen = IPH_HL(iphdr_in) * 4;
@@ -138,7 +137,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
         LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: checksum failed for received ICMP echo\n"));
         pbuf_free(p);
         ICMP_STATS_INC(icmp.chkerr);
-        snmp_inc_icmpinerrors();
+        MIB2_STATS_INC(mib2.icmpinerrors);
         return;
       }
     }
@@ -223,9 +222,9 @@ icmp_input(struct pbuf *p, struct netif *inp)
 
       ICMP_STATS_INC(icmp.xmit);
       /* increase number of messages attempted to send */
-      snmp_inc_icmpoutmsgs();
+      MIB2_STATS_INC(mib2.icmpoutmsgs);
       /* increase number of echo replies attempted to send */
-      snmp_inc_icmpoutechoreps();
+      MIB2_STATS_INC(mib2.icmpoutechoreps);
 
       /* send an ICMP packet */
       ret = ip4_output_if(p, src, IP_HDRINCL,
@@ -246,13 +245,13 @@ icmp_input(struct pbuf *p, struct netif *inp)
 lenerr:
   pbuf_free(p);
   ICMP_STATS_INC(icmp.lenerr);
-  snmp_inc_icmpinerrors();
+  MIB2_STATS_INC(mib2.icmpinerrors);
   return;
 #if LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING
 icmperr:
   pbuf_free(p);
   ICMP_STATS_INC(icmp.err);
-  snmp_inc_icmpinerrors();
+  MIB2_STATS_INC(mib2.icmpinerrors);
   return;
 #endif /* LWIP_ICMP_ECHO_CHECK_INPUT_PBUF_LEN || !LWIP_MULTICAST_PING || !LWIP_BROADCAST_PING */
 }
@@ -344,9 +343,9 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
 #endif
     ICMP_STATS_INC(icmp.xmit);
     /* increase number of messages attempted to send */
-    snmp_inc_icmpoutmsgs();
+    MIB2_STATS_INC(mib2.icmpoutmsgs);
     /* increase number of destination unreachable messages attempted to send */
-    snmp_inc_icmpouttimeexcds();
+    MIB2_STATS_INC(mib2.icmpouttimeexcds);
     ip4_addr_copy(iphdr_src, iphdr->src);
     ip4_output_if(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
   }

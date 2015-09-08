@@ -62,7 +62,7 @@
 #include "lwip/icmp.h"
 #include "lwip/icmp6.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/dhcp.h"
 
 #include <string.h>
@@ -174,7 +174,7 @@ udp_input(struct pbuf *p, struct netif *inp)
                 ("udp_input: short UDP datagram (%"U16_F" bytes) discarded\n", p->tot_len));
     UDP_STATS_INC(udp.lenerr);
     UDP_STATS_INC(udp.drop);
-    snmp_inc_udpinerrors();
+    MIB2_STATS_INC(mib2.udpinerrors);
     pbuf_free(p);
     goto end;
   }
@@ -363,12 +363,12 @@ udp_input(struct pbuf *p, struct netif *inp)
       /* Can we cope with this failing? Just assert for now */
       LWIP_ASSERT("pbuf_header failed\n", 0);
       UDP_STATS_INC(udp.drop);
-      snmp_inc_udpinerrors();
+      MIB2_STATS_INC(mib2.udpinerrors);
       pbuf_free(p);
       goto end;
     }
     if (pcb != NULL) {
-      snmp_inc_udpindatagrams();
+      MIB2_STATS_INC(mib2.udpindatagrams);
 #if SO_REUSE && SO_REUSE_RXTOALL
       if ((broadcast ||
 #if LWIP_IPV6
@@ -463,7 +463,7 @@ udp_input(struct pbuf *p, struct netif *inp)
 #endif /* LWIP_ICMP || LWIP_ICMP6 */
       UDP_STATS_INC(udp.proterr);
       UDP_STATS_INC(udp.drop);
-      snmp_inc_udpnoports();
+      MIB2_STATS_INC(mib2.udpnoports);
       pbuf_free(p);
     }
   } else {
@@ -478,7 +478,7 @@ chkerr:
               ("udp_input: UDP (or UDP Lite) datagram discarded due to failing checksum\n"));
   UDP_STATS_INC(udp.chkerr);
   UDP_STATS_INC(udp.drop);
-  snmp_inc_udpinerrors();
+  MIB2_STATS_INC(mib2.udpinerrors);
   pbuf_free(p);
   PERF_STOP("udp_input");
 #endif /* CHECKSUM_CHECK_UDP */
@@ -881,7 +881,7 @@ udp_sendto_if_src_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *d
   NETIF_SET_HWADDRHINT(netif, NULL);
 
   /* TODO: must this be increased even if error occurred? */
-  snmp_inc_udpoutdatagrams();
+  MIB2_STATS_INC(mib2.udpoutdatagrams);
 
   /* did we chain a separate header pbuf earlier? */
   if (q != p) {
@@ -974,7 +974,7 @@ udp_bind(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
     }
   }
   pcb->local_port = port;
-  snmp_insert_udpidx_tree(pcb);
+  mib2_udp_bind(pcb);
   /* pcb not active yet? */
   if (rebind == 0) {
     /* place the PCB on the active list if not already there */
@@ -1110,7 +1110,7 @@ udp_remove(struct udp_pcb *pcb)
 {
   struct udp_pcb *pcb2;
 
-  snmp_delete_udpidx_tree(pcb);
+  mib2_udp_unbind(pcb);
   /* pcb to be removed is first in list? */
   if (udp_pcbs == pcb) {
     /* make list start at 2nd pcb */

@@ -51,7 +51,7 @@
 #include "lwip/def.h"
 #include "lwip/ip.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/dhcp.h"
 #include "lwip/autoip.h"
 #include "netif/etharp.h"
@@ -184,7 +184,7 @@ static void
 etharp_free_entry(int i)
 {
   /* remove from SNMP ARP index tree */
-  snmp_delete_arpidx_tree(arp_table[i].netif, &arp_table[i].ipaddr);
+  mib2_remove_arp_entry(arp_table[i].netif, &arp_table[i].ipaddr);
   /* and empty packet queue */
   if (arp_table[i].q != NULL) {
     /* remove all queued packets */
@@ -512,7 +512,7 @@ etharp_update_arp_entry(struct netif *netif, const ip4_addr_t *ipaddr, struct et
   /* record network interface */
   arp_table[i].netif = netif;
   /* insert in SNMP ARP index tree */
-  snmp_insert_arpidx_tree(netif, &arp_table[i].ipaddr);
+  mib2_add_arp_entry(netif, &arp_table[i].ipaddr);
 
   LWIP_DEBUGF(ETHARP_DEBUG | LWIP_DBG_TRACE, ("etharp_update_arp_entry: updating stable entry %"S16_F"\n", (s16_t)i));
   /* update address */

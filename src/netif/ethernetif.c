@@ -51,7 +51,7 @@
 #include "lwip/mem.h"
 #include "lwip/pbuf.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/ethip6.h"
 #include "netif/etharp.h"
 #include "netif/ppp/pppoe.h"
@@ -309,7 +309,7 @@ ethernetif_init(struct netif *netif)
    * The last argument should be replaced with your link speed, in units
    * of bits per second.
    */
-  NETIF_INIT_SNMP(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
+  MIB2_INIT_NETIF(netif, snmp_ifType_ethernet_csmacd, LINK_SPEED_OF_YOUR_NETIF_IN_BPS);
 
   netif->state = ethernetif;
   netif->name[0] = IFNAME0;

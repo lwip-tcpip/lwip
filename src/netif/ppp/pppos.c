@@ -41,7 +41,7 @@
 #include "lwip/sys.h"
 #include "lwip/memp.h"
 #include "lwip/netif.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
 #include "lwip/sio.h"
@@ -211,7 +211,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
     PPPDEBUG(LOG_WARNING, ("pppos_write[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     pbuf_free(p);
     return ERR_MEM;
   }
@@ -257,7 +257,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
     PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: alloc fail\n", ppp->netif->num));
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     return ERR_MEM;
   }
 
@@ -575,7 +575,7 @@ pppos_input(ppp_pcb *ppp, u8_t *s, int l)
             PPPDEBUG(LOG_ERR, ("pppos_input[%d]: tcpip_callback() failed, dropping packet\n", ppp->netif->num));
             pbuf_free(inp);
             LINK_STATS_INC(link.drop);
-            snmp_inc_ifindiscards(ppp->netif);
+            MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
           }
 #else /* PPP_INPROC_IRQ_SAFE */
           ppp_input(ppp, inp);
@@ -736,7 +736,7 @@ static void pppos_input_callback(void *arg) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(ppp->netif);
+  MIB2_STATS_NETIF_INC(ppp->netif, ifindiscards);
   pbuf_free(pb);
 }
 #endif /* PPP_INPROC_IRQ_SAFE */
@@ -838,7 +838,7 @@ pppos_input_drop(pppos_pcb *pppos)
 #endif /* VJ_SUPPORT */
 
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(pppos->ppp->netif);
+  MIB2_STATS_NETIF_INC(pppos->ppp->netif, ifindiscards);
 }
 
 /*
@@ -884,9 +884,9 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
 static err_t
 pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 {
-#if LWIP_SNMP
+#if MIB2_STATS
   ppp_pcb *ppp = pppos->ppp;
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
 
   /* Add FCS and trailing flag. */
   err = pppos_output_append(pppos, err,  nb, ~(*fcs) & 0xFF, 1, NULL);
@@ -907,8 +907,8 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
   }
 
   pppos->last_xmit = sys_jiffies();
-  snmp_add_ifoutoctets(ppp->netif, nb->tot_len);
-  snmp_inc_ifoutucastpkts(ppp->netif);
+  MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, nb->tot_len);
+  MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
   LINK_STATS_INC(link.xmit);
   pbuf_free(nb);
   return ERR_OK;
@@ -917,7 +917,7 @@ failed:
   pppos->last_xmit = 0; /* prepend PPP_FLAG to next packet */
   LINK_STATS_INC(link.err);
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifoutdiscards(ppp->netif);
+  MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
   pbuf_free(nb);
   return err;
 }

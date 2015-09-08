@@ -46,7 +46,6 @@
 #include "lwip/def.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/netif.h"
-#include "lwip/snmp.h"
 #include "lwip/stats.h"
 #include "lwip/icmp.h"
 
@@ -170,7 +169,7 @@ ip_reass_free_complete_datagram(struct ip_reassdata *ipr, struct ip_reassdata *p
     LWIP_ASSERT("prev->next == ipr", prev->next == ipr);
   }
 
-  snmp_inc_ipreasmfails();
+  MIB2_STATS_INC(mib2.ipreasmfails);
 #if LWIP_ICMP
   iprh = (struct ip_reass_helper *)ipr->p->payload;
   if (iprh->start == 0) {
@@ -489,8 +488,8 @@ ip4_reass(struct pbuf *p)
   u8_t clen;
 
   IPFRAG_STATS_INC(ip_frag.recv);
-  snmp_inc_ipreasmreqds();
-
+  MIB2_STATS_INC(mib2.ipreasmreqds);
+  
   fraghdr = (struct ip_hdr*)p->payload;
 
   if ((IPH_HL(fraghdr) * 4) != IP_HLEN) {
@@ -853,7 +852,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
       pbuf_chain(header, rambuf);
       netif->output(netif, header, dest);
       IPFRAG_STATS_INC(ip_frag.xmit);
-      snmp_inc_ipfragcreates();
+      MIB2_STATS_INC(mib2.ipfragcreates);
       pbuf_free(header);
     } else {
       LWIP_DEBUGF(IP_REASS_DEBUG, ("ip_frag: pbuf_alloc() for header failed\n"));
@@ -882,7 +881,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
 #if IP_FRAG_USES_STATIC_BUF
   pbuf_free(rambuf);
 #endif /* IP_FRAG_USES_STATIC_BUF */
-  snmp_inc_ipfragoks();
+  MIB2_STATS_INC(mib2.ipfragoks);
   return ERR_OK;
 }
 #endif /* IP_FRAG */

@@ -47,7 +47,6 @@
 #include "lwip/def.h"
 #include "lwip/mem.h"
 #include "lwip/memp.h"
-#include "lwip/snmp.h"
 #include "lwip/tcp.h"
 #include "lwip/tcp_impl.h"
 #include "lwip/debug.h"
@@ -231,26 +230,26 @@ tcp_close_shutdown(struct tcp_pcb *pcb, u8_t rst_on_unacked_data)
     TCP_PCB_REMOVE_ACTIVE(pcb);
     memp_free(MEMP_TCP_PCB, pcb);
     pcb = NULL;
-    snmp_inc_tcpattemptfails();
+    MIB2_STATS_INC(mib2.tcpattemptfails);
     break;
   case SYN_RCVD:
     err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
-      snmp_inc_tcpattemptfails();
+      MIB2_STATS_INC(mib2.tcpattemptfails);
       pcb->state = FIN_WAIT_1;
     }
     break;
   case ESTABLISHED:
     err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
-      snmp_inc_tcpestabresets();
+      MIB2_STATS_INC(mib2.tcpestabresets);
       pcb->state = FIN_WAIT_1;
     }
     break;
   case CLOSE_WAIT:
     err = tcp_send_fin(pcb);
     if (err == ERR_OK) {
-      snmp_inc_tcpestabresets();
+      MIB2_STATS_INC(mib2.tcpestabresets);
       pcb->state = LAST_ACK;
     }
     break;
@@ -850,7 +849,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
       TCP_RMV(&tcp_bound_pcbs, pcb);
     }
     TCP_REG_ACTIVE(pcb);
-    snmp_inc_tcpactiveopens();
+    MIB2_STATS_INC(mib2.tcpactiveopens);
 
     tcp_output(pcb);
   }

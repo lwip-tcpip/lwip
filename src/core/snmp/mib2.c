@@ -40,6 +40,18 @@
 #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
 
 #include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
+
+#if !LWIP_MIB2_CALLBACKS
+#error LWIP_SNMP MIB2 needs LWIP_MIB2_CALLBACKS (for MIB2)
+#endif
+#if !LWIP_STATS
+#error LWIP_SNMP MIB2 needs LWIP_STATS (for MIB2)
+#endif
+#if !MIB2_STATS
+#error LWIP_SNMP MIB2 needs MIB2_STATS (for MIB2)
+#endif
+
 #include "lwip/netif.h"
 #include "lwip/ip.h"
 #include "lwip/ip_frag.h"
@@ -50,6 +62,7 @@
 #include "lwip/snmp_structs.h"
 #include "lwip/sys.h"
 #include "netif/etharp.h"
+#include "lwip/stats.h"
 
 #include <string.h>
 
@@ -72,10 +85,6 @@
 
 #ifndef SNMP_SYSSERVICES
 #define SNMP_SYSSERVICES ((1 << 6) | (1 << 3) | ((IP_FORWARD) << 2))
-#endif
-
-#ifndef SNMP_GET_SYSUPTIME
-#define SNMP_GET_SYSUPTIME(sysuptime)  (sysuptime = (sys_now() / 10))
 #endif
 
 static void system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
@@ -805,70 +814,6 @@ static const struct snmp_obj_id ifspecific = {2, {0, 0}};
 static const struct snmp_obj_id iprouteinfo = {2, {0, 0}};
 
 
-
-/* mib-2.system counter(s) */
-static u32_t sysuptime = 0;
-
-/* mib-2.ip counter(s) */
-static u32_t ipinreceives = 0,
-             ipinhdrerrors = 0,
-             ipinaddrerrors = 0,
-             ipforwdatagrams = 0,
-             ipinunknownprotos = 0,
-             ipindiscards = 0,
-             ipindelivers = 0,
-             ipoutrequests = 0,
-             ipoutdiscards = 0,
-             ipoutnoroutes = 0,
-             ipreasmreqds = 0,
-             ipreasmoks = 0,
-             ipreasmfails = 0,
-             ipfragoks = 0,
-             ipfragfails = 0,
-             ipfragcreates = 0,
-             iproutingdiscards = 0;
-/* mib-2.icmp counter(s) */
-static u32_t icmpinmsgs = 0,
-             icmpinerrors = 0,
-             icmpindestunreachs = 0,
-             icmpintimeexcds = 0,
-             icmpinparmprobs = 0,
-             icmpinsrcquenchs = 0,
-             icmpinredirects = 0,
-             icmpinechos = 0,
-             icmpinechoreps = 0,
-             icmpintimestamps = 0,
-             icmpintimestampreps = 0,
-             icmpinaddrmasks = 0,
-             icmpinaddrmaskreps = 0,
-             icmpoutmsgs = 0,
-             icmpouterrors = 0,
-             icmpoutdestunreachs = 0,
-             icmpouttimeexcds = 0,
-             icmpoutparmprobs = 0,
-             icmpoutsrcquenchs = 0,
-             icmpoutredirects = 0,
-             icmpoutechos = 0,
-             icmpoutechoreps = 0,
-             icmpouttimestamps = 0,
-             icmpouttimestampreps = 0,
-             icmpoutaddrmasks = 0,
-             icmpoutaddrmaskreps = 0;
-/* mib-2.tcp counter(s) */
-static u32_t tcpactiveopens = 0,
-             tcppassiveopens = 0,
-             tcpattemptfails = 0,
-             tcpestabresets = 0,
-             tcpinsegs = 0,
-             tcpoutsegs = 0,
-             tcpretranssegs = 0,
-             tcpinerrs = 0,
-             tcpoutrsts = 0;
-/* mib-2.udp counter(s) */
-static u32_t udpindatagrams = 0,
-             udpnoports = 0,
-             udpinerrors = 0,
-             udpoutdatagrams = 0;
 /* mib-2.snmp counter(s) */
 static u32_t snmpinpkts = 0,
              snmpoutpkts = 0,
@@ -930,26 +875,6 @@ void snmp_set_sysobjid(const struct snmp_obj_id *oid)
 }
 
 /**
- * Must be called at regular 10 msec interval from a timer interrupt
- * or signal handler depending on your runtime environment.
- */
-void snmp_inc_sysuptime(void)
-{
-  sysuptime++;
-}
-
-void snmp_add_sysuptime(u32_t value)
-{
-  sysuptime+=value;
-}
-
-void snmp_get_sysuptime(u32_t *value)
-{
-  SNMP_GET_SYSUPTIME(sysuptime);
-  *value = sysuptime;
-}
-
-/**
  * Initializes sysContact pointers,
  * e.g. ptrs to non-volatile memory external to lwIP.
  *
@@ -1006,58 +931,21 @@ void snmp_set_syslocation(u8_t *ocstr, u8_t *ocstrlen, u8_t bufsize)
   }
 }
 
-
-void snmp_add_ifinoctets(struct netif *ni, u32_t value)
-{
-  ni->ifinoctets += value;
-}
-
-void snmp_inc_ifinucastpkts(struct netif *ni)
-{
-  (ni->ifinucastpkts)++;
-}
-
-void snmp_inc_ifinnucastpkts(struct netif *ni)
-{
-  (ni->ifinnucastpkts)++;
-}
-
-void snmp_inc_ifindiscards(struct netif *ni)
-{
-  (ni->ifindiscards)++;
-}
-
-void snmp_add_ifoutoctets(struct netif *ni, u32_t value)
-{
-  ni->ifoutoctets += value;
-}
-
-void snmp_inc_ifoutucastpkts(struct netif *ni)
-{
-  (ni->ifoutucastpkts)++;
-}
-
-void snmp_inc_ifoutnucastpkts(struct netif *ni)
-{
-  (ni->ifoutnucastpkts)++;
-}
-
-void snmp_inc_ifoutdiscards(struct netif *ni)
-{
-  (ni->ifoutdiscards)++;
-}
-
-void snmp_inc_iflist(void)
+void mib2_netif_added(struct netif *ni)
 {
   struct mib_list_node *if_node = NULL;
+
+  LWIP_UNUSED_ARG(ni);
 
   snmp_mib_node_insert(&iflist_root, iflist_root.count + 1, &if_node);
   /* enable getnext traversal on filled table */
   iftable.maxlength = 1;
 }
 
-void snmp_dec_iflist(void)
+void mib2_netif_removed(struct netif *ni)
 {
+  LWIP_UNUSED_ARG(ni);
+
   snmp_mib_node_delete(&iflist_root, iflist_root.tail);
   /* disable getnext traversal on empty table */
   if(iflist_root.count == 0) iftable.maxlength = 0;
@@ -1067,7 +955,7 @@ void snmp_dec_iflist(void)
  * Inserts ARP table indexes (.xIfIndex.xNetAddress)
  * into arp table index trees (both atTable and ipNetToMediaTable).
  */
-void snmp_insert_arpidx_tree(struct netif *ni, ip4_addr_t *ip)
+void mib2_add_arp_entry(struct netif *ni, ip4_addr_t *ip)
 {
   struct mib_list_rootnode *at_rn;
   struct mib_list_node *at_node;
@@ -1139,7 +1027,7 @@ void snmp_insert_arpidx_tree(struct netif *ni, ip4_addr_t *ip)
  * Removes ARP table indexes (.xIfIndex.xNetAddress)
  * from arp table index trees.
  */
-void snmp_delete_arpidx_tree(struct netif *ni, ip4_addr_t *ip)
+void mib2_remove_arp_entry(struct netif *ni, ip4_addr_t *ip)
 {
   struct mib_list_rootnode *at_rn, *next, *del_rn[5];
   struct mib_list_node *at_n, *del_n[5];
@@ -1207,96 +1095,11 @@ void snmp_delete_arpidx_tree(struct netif *ni, ip4_addr_t *ip)
   if(ipntomtree_root.count == 0) ipntomtable.maxlength = 0;
 }
 
-void snmp_inc_ipinreceives(void)
-{
-  ipinreceives++;
-}
-
-void snmp_inc_ipinhdrerrors(void)
-{
-  ipinhdrerrors++;
-}
-
-void snmp_inc_ipinaddrerrors(void)
-{
-  ipinaddrerrors++;
-}
-
-void snmp_inc_ipforwdatagrams(void)
-{
-  ipforwdatagrams++;
-}
-
-void snmp_inc_ipinunknownprotos(void)
-{
-  ipinunknownprotos++;
-}
-
-void snmp_inc_ipindiscards(void)
-{
-  ipindiscards++;
-}
-
-void snmp_inc_ipindelivers(void)
-{
-  ipindelivers++;
-}
-
-void snmp_inc_ipoutrequests(void)
-{
-  ipoutrequests++;
-}
-
-void snmp_inc_ipoutdiscards(void)
-{
-  ipoutdiscards++;
-}
-
-void snmp_inc_ipoutnoroutes(void)
-{
-  ipoutnoroutes++;
-}
-
-void snmp_inc_ipreasmreqds(void)
-{
-  ipreasmreqds++;
-}
-
-void snmp_inc_ipreasmoks(void)
-{
-  ipreasmoks++;
-}
-
-void snmp_inc_ipreasmfails(void)
-{
-  ipreasmfails++;
-}
-
-void snmp_inc_ipfragoks(void)
-{
-  ipfragoks++;
-}
-
-void snmp_inc_ipfragfails(void)
-{
-  ipfragfails++;
-}
-
-void snmp_inc_ipfragcreates(void)
-{
-  ipfragcreates++;
-}
-
-void snmp_inc_iproutingdiscards(void)
-{
-  iproutingdiscards++;
-}
-
 /**
  * Inserts ipAddrTable indexes (.ipAdEntAddr)
  * into index tree.
  */
-void snmp_insert_ipaddridx_tree(struct netif *ni)
+void mib2_add_ip4(struct netif *ni)
 {
   struct mib_list_rootnode *ipa_rn;
   struct mib_list_node *ipa_node;
@@ -1350,7 +1153,7 @@ void snmp_insert_ipaddridx_tree(struct netif *ni)
  * Removes ipAddrTable indexes (.ipAdEntAddr)
  * from index tree.
  */
-void snmp_delete_ipaddridx_tree(struct netif *ni)
+void mib2_remove_ip4(struct netif *ni)
 {
   struct mib_list_rootnode *ipa_rn, *next, *del_rn[4];
   struct mib_list_node *ipa_n, *del_n[4];
@@ -1417,7 +1220,7 @@ void snmp_delete_ipaddridx_tree(struct netif *ni)
  * @todo record sysuptime for _this_ route when it is installed
  *   (needed for ipRouteAge) in the netif.
  */
-void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
+void mib2_add_route_ip4(u8_t dflt, struct netif *ni)
 {
   u8_t insert = 0;
   ip4_addr_t dst;
@@ -1494,7 +1297,7 @@ void snmp_insert_iprteidx_tree(u8_t dflt, struct netif *ni)
  * @param ni points to network interface for this rte or NULL
  *   for default route to be removed.
  */
-void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
+void mib2_remove_route_ip4(u8_t dflt, struct netif *ni)
 {
   u8_t del = 0;
   ip4_addr_t dst;
@@ -1571,206 +1374,11 @@ void snmp_delete_iprteidx_tree(u8_t dflt, struct netif *ni)
 }
 
 
-void snmp_inc_icmpinmsgs(void)
-{
-  icmpinmsgs++;
-}
-
-void snmp_inc_icmpinerrors(void)
-{
-  icmpinerrors++;
-}
-
-void snmp_inc_icmpindestunreachs(void)
-{
-  icmpindestunreachs++;
-}
-
-void snmp_inc_icmpintimeexcds(void)
-{
-  icmpintimeexcds++;
-}
-
-void snmp_inc_icmpinparmprobs(void)
-{
-  icmpinparmprobs++;
-}
-
-void snmp_inc_icmpinsrcquenchs(void)
-{
-  icmpinsrcquenchs++;
-}
-
-void snmp_inc_icmpinredirects(void)
-{
-  icmpinredirects++;
-}
-
-void snmp_inc_icmpinechos(void)
-{
-  icmpinechos++;
-}
-
-void snmp_inc_icmpinechoreps(void)
-{
-  icmpinechoreps++;
-}
-
-void snmp_inc_icmpintimestamps(void)
-{
-  icmpintimestamps++;
-}
-
-void snmp_inc_icmpintimestampreps(void)
-{
-  icmpintimestampreps++;
-}
-
-void snmp_inc_icmpinaddrmasks(void)
-{
-  icmpinaddrmasks++;
-}
-
-void snmp_inc_icmpinaddrmaskreps(void)
-{
-  icmpinaddrmaskreps++;
-}
-
-void snmp_inc_icmpoutmsgs(void)
-{
-  icmpoutmsgs++;
-}
-
-void snmp_inc_icmpouterrors(void)
-{
-  icmpouterrors++;
-}
-
-void snmp_inc_icmpoutdestunreachs(void)
-{
-  icmpoutdestunreachs++;
-}
-
-void snmp_inc_icmpouttimeexcds(void)
-{
-  icmpouttimeexcds++;
-}
-
-void snmp_inc_icmpoutparmprobs(void)
-{
-  icmpoutparmprobs++;
-}
-
-void snmp_inc_icmpoutsrcquenchs(void)
-{
-  icmpoutsrcquenchs++;
-}
-
-void snmp_inc_icmpoutredirects(void)
-{
-  icmpoutredirects++;
-}
-
-void snmp_inc_icmpoutechos(void)
-{
-  icmpoutechos++;
-}
-
-void snmp_inc_icmpoutechoreps(void)
-{
-  icmpoutechoreps++;
-}
-
-void snmp_inc_icmpouttimestamps(void)
-{
-  icmpouttimestamps++;
-}
-
-void snmp_inc_icmpouttimestampreps(void)
-{
-  icmpouttimestampreps++;
-}
-
-void snmp_inc_icmpoutaddrmasks(void)
-{
-  icmpoutaddrmasks++;
-}
-
-void snmp_inc_icmpoutaddrmaskreps(void)
-{
-  icmpoutaddrmaskreps++;
-}
-
-void snmp_inc_tcpactiveopens(void)
-{
-  tcpactiveopens++;
-}
-
-void snmp_inc_tcppassiveopens(void)
-{
-  tcppassiveopens++;
-}
-
-void snmp_inc_tcpattemptfails(void)
-{
-  tcpattemptfails++;
-}
-
-void snmp_inc_tcpestabresets(void)
-{
-  tcpestabresets++;
-}
-
-void snmp_inc_tcpinsegs(void)
-{
-  tcpinsegs++;
-}
-
-void snmp_inc_tcpoutsegs(void)
-{
-  tcpoutsegs++;
-}
-
-void snmp_inc_tcpretranssegs(void)
-{
-  tcpretranssegs++;
-}
-
-void snmp_inc_tcpinerrs(void)
-{
-  tcpinerrs++;
-}
-
-void snmp_inc_tcpoutrsts(void)
-{
-  tcpoutrsts++;
-}
-
-void snmp_inc_udpindatagrams(void)
-{
-  udpindatagrams++;
-}
-
-void snmp_inc_udpnoports(void)
-{
-  udpnoports++;
-}
-
-void snmp_inc_udpinerrors(void)
-{
-  udpinerrors++;
-}
-
-void snmp_inc_udpoutdatagrams(void)
-{
-  udpoutdatagrams++;
-}
-
 /**
  * Inserts udpTable indexes (.udpLocalAddress.udpLocalPort)
  * into index tree.
  */
-void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
+void mib2_udp_bind(struct udp_pcb *pcb)
 {
   struct mib_list_rootnode *udp_rn;
   struct mib_list_node *udp_node;
@@ -1826,7 +1434,7 @@ void snmp_insert_udpidx_tree(struct udp_pcb *pcb)
  * Removes udpTable indexes (.udpLocalAddress.udpLocalPort)
  * from index tree.
  */
-void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
+void mib2_udp_unbind(struct udp_pcb *pcb)
 {
   struct udp_pcb *npcb;
   struct mib_list_rootnode *udp_rn, *next, *del_rn[5];
@@ -1907,142 +1515,142 @@ void snmp_delete_udpidx_tree(struct udp_pcb *pcb)
 }
 
 
-void snmp_inc_snmpinpkts(void)
+void mib2_inc_snmpinpkts(void)
 {
   snmpinpkts++;
 }
 
-void snmp_inc_snmpoutpkts(void)
+void mib2_inc_snmpoutpkts(void)
 {
   snmpoutpkts++;
 }
 
-void snmp_inc_snmpinbadversions(void)
+void mib2_inc_snmpinbadversions(void)
 {
   snmpinbadversions++;
 }
 
-void snmp_inc_snmpinbadcommunitynames(void)
+void mib2_inc_snmpinbadcommunitynames(void)
 {
   snmpinbadcommunitynames++;
 }
 
-void snmp_inc_snmpinbadcommunityuses(void)
+void mib2_inc_snmpinbadcommunityuses(void)
 {
   snmpinbadcommunityuses++;
 }
 
-void snmp_inc_snmpinasnparseerrs(void)
+void mib2_inc_snmpinasnparseerrs(void)
 {
   snmpinasnparseerrs++;
 }
 
-void snmp_inc_snmpintoobigs(void)
+void mib2_inc_snmpintoobigs(void)
 {
   snmpintoobigs++;
 }
 
-void snmp_inc_snmpinnosuchnames(void)
+void mib2_inc_snmpinnosuchnames(void)
 {
   snmpinnosuchnames++;
 }
 
-void snmp_inc_snmpinbadvalues(void)
+void mib2_inc_snmpinbadvalues(void)
 {
   snmpinbadvalues++;
 }
 
-void snmp_inc_snmpinreadonlys(void)
+void mib2_inc_snmpinreadonlys(void)
 {
   snmpinreadonlys++;
 }
 
-void snmp_inc_snmpingenerrs(void)
+void mib2_inc_snmpingenerrs(void)
 {
   snmpingenerrs++;
 }
 
-void snmp_add_snmpintotalreqvars(u8_t value)
+void mib2_add_snmpintotalreqvars(u8_t value)
 {
   snmpintotalreqvars += value;
 }
 
-void snmp_add_snmpintotalsetvars(u8_t value)
+void mib2_add_snmpintotalsetvars(u8_t value)
 {
   snmpintotalsetvars += value;
 }
 
-void snmp_inc_snmpingetrequests(void)
+void mib2_inc_snmpingetrequests(void)
 {
   snmpingetrequests++;
 }
 
-void snmp_inc_snmpingetnexts(void)
+void mib2_inc_snmpingetnexts(void)
 {
   snmpingetnexts++;
 }
 
-void snmp_inc_snmpinsetrequests(void)
+void mib2_inc_snmpinsetrequests(void)
 {
   snmpinsetrequests++;
 }
 
-void snmp_inc_snmpingetresponses(void)
+void mib2_inc_snmpingetresponses(void)
 {
   snmpingetresponses++;
 }
 
-void snmp_inc_snmpintraps(void)
+void mib2_inc_snmpintraps(void)
 {
   snmpintraps++;
 }
 
-void snmp_inc_snmpouttoobigs(void)
+void mib2_inc_snmpouttoobigs(void)
 {
   snmpouttoobigs++;
 }
 
-void snmp_inc_snmpoutnosuchnames(void)
+void mib2_inc_snmpoutnosuchnames(void)
 {
   snmpoutnosuchnames++;
 }
 
-void snmp_inc_snmpoutbadvalues(void)
+void mib2_inc_snmpoutbadvalues(void)
 {
   snmpoutbadvalues++;
 }
 
-void snmp_inc_snmpoutgenerrs(void)
+void mib2_inc_snmpoutgenerrs(void)
 {
   snmpoutgenerrs++;
 }
 
-void snmp_inc_snmpoutgetrequests(void)
+void mib2_inc_snmpoutgetrequests(void)
 {
   snmpoutgetrequests++;
 }
 
-void snmp_inc_snmpoutgetnexts(void)
+void mib2_inc_snmpoutgetnexts(void)
 {
   snmpoutgetnexts++;
 }
 
-void snmp_inc_snmpoutsetrequests(void)
+void mib2_inc_snmpoutsetrequests(void)
 {
   snmpoutsetrequests++;
 }
 
-void snmp_inc_snmpoutgetresponses(void)
+void mib2_inc_snmpoutgetresponses(void)
 {
   snmpoutgetresponses++;
 }
 
-void snmp_inc_snmpouttraps(void)
+void mib2_inc_snmpouttraps(void)
 {
   snmpouttraps++;
 }
 
-void snmp_get_snmpgrpid_ptr(const struct snmp_obj_id **oid)
+void mib2_get_snmpgrpid_ptr(const struct snmp_obj_id **oid)
 {
   *oid = &snmpgrp_id;
 }
@@ -2055,7 +1663,7 @@ void snmp_set_snmpenableauthentraps(u8_t *value)
   }
 }
 
-void snmp_get_snmpenableauthentraps(u8_t *value)
+void mib2_get_snmpenableauthentraps(u8_t *value)
 {
   *value = *snmpenableauthentraps_ptr;
 }
@@ -2199,9 +1807,7 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
       MEMCPY(value, sysobjid_ptr->id, len);
       break;
     case 3: /* sysUpTime */
-      {
-        snmp_get_sysuptime((u32_t*)value);
-      }
+      MIB2_COPY_SYSUPTIME_TO((u32_t*)value);
       break;
     case 4: /* sysContact */
       MEMCPY(value, syscontact_ptr, len);
@@ -2864,61 +2470,61 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
     case 3: /* ipInReceives */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipinreceives;
+        *uint_ptr = STATS_GET(mib2.ipinreceives);
       }
       break;
     case 4: /* ipInHdrErrors */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipinhdrerrors;
+        *uint_ptr = STATS_GET(mib2.ipinhdrerrors);
       }
       break;
     case 5: /* ipInAddrErrors */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipinaddrerrors;
+        *uint_ptr = STATS_GET(mib2.ipinaddrerrors);
       }
       break;
     case 6: /* ipForwDatagrams */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipforwdatagrams;
+        *uint_ptr = STATS_GET(mib2.ipforwdatagrams);
       }
       break;
     case 7: /* ipInUnknownProtos */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipinunknownprotos;
+        *uint_ptr = STATS_GET(mib2.ipinunknownprotos);
       }
       break;
     case 8: /* ipInDiscards */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipindiscards;
+        *uint_ptr = STATS_GET(mib2.ipindiscards);
       }
       break;
     case 9: /* ipInDelivers */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipindelivers;
+        *uint_ptr = STATS_GET(mib2.ipindelivers);
       }
       break;
     case 10: /* ipOutRequests */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipoutrequests;
+        *uint_ptr = STATS_GET(mib2.ipoutrequests);
       }
       break;
     case 11: /* ipOutDiscards */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipoutdiscards;
+        *uint_ptr = STATS_GET(mib2.ipoutdiscards);
       }
       break;
     case 12: /* ipOutNoRoutes */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipoutnoroutes;
+        *uint_ptr = STATS_GET(mib2.ipoutnoroutes);
       }
       break;
     case 13: /* ipReasmTimeout */
@@ -2934,44 +2540,44 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
     case 14: /* ipReasmReqds */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipreasmreqds;
+        *uint_ptr = STATS_GET(mib2.ipreasmreqds);
       }
       break;
     case 15: /* ipReasmOKs */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipreasmoks;
+        *uint_ptr = STATS_GET(mib2.ipreasmoks);
       }
       break;
     case 16: /* ipReasmFails */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipreasmfails;
+        *uint_ptr = STATS_GET(mib2.ipreasmfails);
       }
       break;
     case 17: /* ipFragOKs */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipfragoks;
+        *uint_ptr = STATS_GET(mib2.ipfragoks);
       }
       break;
     case 18: /* ipFragFails */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipfragfails;
+        *uint_ptr = STATS_GET(mib2.ipfragfails);
       }
       break;
     case 19: /* ipFragCreates */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = ipfragcreates;
+        *uint_ptr = STATS_GET(mib2.ipfragcreates);
       }
       break;
     case 23: /* ipRoutingDiscards */
       /** @todo can lwIP discard routes at all?? hardwire this to 0?? */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = iproutingdiscards;
+        *uint_ptr = STATS_GET(mib2.iproutingdiscards);
       }
       break;
     default:
@@ -3516,82 +3122,82 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 1: /* icmpInMsgs */
-      *uint_ptr = icmpinmsgs;
+      *uint_ptr = STATS_GET(mib2.icmpinmsgs);
       break;
     case 2: /* icmpInErrors */
-      *uint_ptr = icmpinerrors;
+      *uint_ptr = STATS_GET(mib2.icmpinerrors);
       break;
     case 3: /* icmpInDestUnreachs */
-      *uint_ptr = icmpindestunreachs;
+      *uint_ptr = STATS_GET(mib2.icmpindestunreachs);
       break;
     case 4: /* icmpInTimeExcds */
-      *uint_ptr = icmpintimeexcds;
+      *uint_ptr = STATS_GET(mib2.icmpintimeexcds);
       break;
     case 5: /* icmpInParmProbs */
-      *uint_ptr = icmpinparmprobs;
+      *uint_ptr = STATS_GET(mib2.icmpinparmprobs);
       break;
     case 6: /* icmpInSrcQuenchs */
-      *uint_ptr = icmpinsrcquenchs;
+      *uint_ptr = STATS_GET(mib2.icmpinsrcquenchs);
       break;
     case 7: /* icmpInRedirects */
-      *uint_ptr = icmpinredirects;
+      *uint_ptr = STATS_GET(mib2.icmpinredirects);
       break;
     case 8: /* icmpInEchos */
-      *uint_ptr = icmpinechos;
+      *uint_ptr = STATS_GET(mib2.icmpinechos);
       break;
     case 9: /* icmpInEchoReps */
-      *uint_ptr = icmpinechoreps;
+      *uint_ptr = STATS_GET(mib2.icmpinechoreps);
       break;
     case 10: /* icmpInTimestamps */
-      *uint_ptr = icmpintimestamps;
+      *uint_ptr = STATS_GET(mib2.icmpintimestamps);
       break;
     case 11: /* icmpInTimestampReps */
-      *uint_ptr = icmpintimestampreps;
+      *uint_ptr = STATS_GET(mib2.icmpintimestampreps);
       break;
     case 12: /* icmpInAddrMasks */
-      *uint_ptr = icmpinaddrmasks;
+      *uint_ptr = STATS_GET(mib2.icmpinaddrmasks);
       break;
     case 13: /* icmpInAddrMaskReps */
-      *uint_ptr = icmpinaddrmaskreps;
+      *uint_ptr = STATS_GET(mib2.icmpinaddrmaskreps);
       break;
     case 14: /* icmpOutMsgs */
-      *uint_ptr = icmpoutmsgs;
+      *uint_ptr = STATS_GET(mib2.icmpoutmsgs);
       break;
     case 15: /* icmpOutErrors */
-      *uint_ptr = icmpouterrors;
+      *uint_ptr = STATS_GET(mib2.icmpouterrors);
       break;
     case 16: /* icmpOutDestUnreachs */
-      *uint_ptr = icmpoutdestunreachs;
+      *uint_ptr = STATS_GET(mib2.icmpoutdestunreachs);
       break;
     case 17: /* icmpOutTimeExcds */
-      *uint_ptr = icmpouttimeexcds;
+      *uint_ptr = STATS_GET(mib2.icmpouttimeexcds);
       break;
     case 18: /* icmpOutParmProbs */
-      *uint_ptr = icmpoutparmprobs;
+      *uint_ptr = STATS_GET(mib2.icmpoutparmprobs);
       break;
     case 19: /* icmpOutSrcQuenchs */
-      *uint_ptr = icmpoutsrcquenchs;
+      *uint_ptr = STATS_GET(mib2.icmpoutsrcquenchs);
       break;
     case 20: /* icmpOutRedirects */
-      *uint_ptr = icmpoutredirects;
+      *uint_ptr = STATS_GET(mib2.icmpoutredirects);
       break;
     case 21: /* icmpOutEchos */
-      *uint_ptr = icmpoutechos;
+      *uint_ptr = STATS_GET(mib2.icmpoutechos);
       break;
     case 22: /* icmpOutEchoReps */
-      *uint_ptr = icmpoutechoreps;
+      *uint_ptr = STATS_GET(mib2.icmpoutechoreps);
       break;
     case 23: /* icmpOutTimestamps */
-      *uint_ptr = icmpouttimestamps;
+      *uint_ptr = STATS_GET(mib2.icmpouttimestamps);
       break;
     case 24: /* icmpOutTimestampReps */
-      *uint_ptr = icmpouttimestampreps;
+      *uint_ptr = STATS_GET(mib2.icmpouttimestampreps);
       break;
     case 25: /* icmpOutAddrMasks */
-      *uint_ptr = icmpoutaddrmasks;
+      *uint_ptr = STATS_GET(mib2.icmpoutaddrmasks);
       break;
     case 26: /* icmpOutAddrMaskReps */
-      *uint_ptr = icmpoutaddrmaskreps;
+      *uint_ptr = STATS_GET(mib2.icmpoutaddrmaskreps);
       break;
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("icmp_get_value(): unknown id: %d\n", id));
@@ -3691,16 +3297,16 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
       *sint_ptr = MEMP_NUM_TCP_PCB;
       break;
     case 5: /* tcpActiveOpens */
-      *uint_ptr = tcpactiveopens;
+      *uint_ptr = STATS_GET(mib2.tcpactiveopens);
       break;
     case 6: /* tcpPassiveOpens */
-      *uint_ptr = tcppassiveopens;
+      *uint_ptr = STATS_GET(mib2.tcppassiveopens);
       break;
     case 7: /* tcpAttemptFails */
-      *uint_ptr = tcpattemptfails;
+      *uint_ptr = STATS_GET(mib2.tcpattemptfails);
       break;
     case 8: /* tcpEstabResets */
-      *uint_ptr = tcpestabresets;
+      *uint_ptr = STATS_GET(mib2.tcpestabresets);
       break;
     case 9: /* tcpCurrEstab */
       {
@@ -3719,19 +3325,19 @@ tcp_get_value(struct obj_def *od, u16_t len, void *value)
       }
       break;
     case 10: /* tcpInSegs */
-      *uint_ptr = tcpinsegs;
+      *uint_ptr = STATS_GET(mib2.tcpinsegs);
       break;
     case 11: /* tcpOutSegs */
-      *uint_ptr = tcpoutsegs;
+      *uint_ptr = STATS_GET(mib2.tcpoutsegs);
       break;
     case 12: /* tcpRetransSegs */
-      *uint_ptr = tcpretranssegs;
+      *uint_ptr = STATS_GET(mib2.tcpretranssegs);
       break;
     case 14: /* tcpInErrs */
-      *uint_ptr = tcpinerrs;
+      *uint_ptr = STATS_GET(mib2.tcpinerrs);
       break;
     case 15: /* tcpOutRsts */
-      *uint_ptr = tcpoutrsts;
+      *uint_ptr = STATS_GET(mib2.tcpoutrsts);
       break;
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_value(): unknown id: %d\n", id));
@@ -3845,16 +3451,16 @@ udp_get_value(struct obj_def *od, u16_t len, void *value)
   switch (id)
   {
     case 1: /* udpInDatagrams */
-      *uint_ptr = udpindatagrams;
+      *uint_ptr = STATS_GET(mib2.udpindatagrams);
       break;
     case 2: /* udpNoPorts */
-      *uint_ptr = udpnoports;
+      *uint_ptr = STATS_GET(mib2.udpnoports);
       break;
     case 3: /* udpInErrors */
-      *uint_ptr = udpinerrors;
+      *uint_ptr = STATS_GET(mib2.udpinerrors);
       break;
     case 4: /* udpOutDatagrams */
-      *uint_ptr = udpoutdatagrams;
+      *uint_ptr = STATS_GET(mib2.udpoutdatagrams);
       break;
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("udp_get_value(): unknown id: %d\n", id));

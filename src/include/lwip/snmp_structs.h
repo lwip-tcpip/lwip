@@ -259,6 +259,37 @@ const struct mib_node* snmp_expand_tree(const struct mib_node *node, u8_t ident_
 u8_t snmp_iso_prefix_tst(u8_t ident_len, s32_t *ident);
 u8_t snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret);
 
+/* SNMP stack internal MIB2 statistics */
+void mib2_inc_snmpinpkts(void);
+void mib2_inc_snmpoutpkts(void);
+void mib2_inc_snmpinbadversions(void);
+void mib2_inc_snmpinbadcommunitynames(void);
+void mib2_inc_snmpinbadcommunityuses(void);
+void mib2_inc_snmpinasnparseerrs(void);
+void mib2_inc_snmpintoobigs(void);
+void mib2_inc_snmpinnosuchnames(void);
+void mib2_inc_snmpinbadvalues(void);
+void mib2_inc_snmpinreadonlys(void);
+void mib2_inc_snmpingenerrs(void);
+void mib2_add_snmpintotalreqvars(u8_t value);
+void mib2_add_snmpintotalsetvars(u8_t value);
+void mib2_inc_snmpingetrequests(void);
+void mib2_inc_snmpingetnexts(void);
+void mib2_inc_snmpinsetrequests(void);
+void mib2_inc_snmpingetresponses(void);
+void mib2_inc_snmpintraps(void);
+void mib2_inc_snmpouttoobigs(void);
+void mib2_inc_snmpoutnosuchnames(void);
+void mib2_inc_snmpoutbadvalues(void);
+void mib2_inc_snmpoutgenerrs(void);
+void mib2_inc_snmpoutgetrequests(void);
+void mib2_inc_snmpoutgetnexts(void);
+void mib2_inc_snmpoutsetrequests(void);
+void mib2_inc_snmpoutgetresponses(void);
+void mib2_inc_snmpouttraps(void);
+void mib2_get_snmpgrpid_ptr(const struct snmp_obj_id **oid);
+void mib2_get_snmpenableauthentraps(u8_t *value);
+
 #ifdef __cplusplus
 }
 #endif

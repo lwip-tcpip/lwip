@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-09-08: Dirk Ziegelmeier
+  * snmp: Separate mib2 counter/table callbacks from snmp agent. This both cleans
+    up the code and should allow integration of a 3rd party agent/mib2.
+
   2015-09-03: Simon Goldschmidt
   * opt.h, dns.h/.c: DNS/IPv6: added support for AAAA records
 
@@ -20,7 +24,6 @@ HISTORY
   2015-08-30: Simon Goldschmidt
   * support IPv4 source based routing: define LWIP_HOOK_IP4_ROUTE_SRC to point
     to a routing function
-
 
   2015-08-05: Simon Goldschmidt
   * many files: allow multicast socket options IP_MULTICAST_TTL, IP_MULTICAST_IF

@@ -44,10 +44,11 @@
 #include "lwip/netif.h"
 #include "lwip/tcp_impl.h"
 #include "lwip/udp.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/igmp.h"
 #include "netif/etharp.h"
 #include "lwip/stats.h"
+#include "lwip/sys.h"
 #if ENABLE_LOOPBACK
 #include "lwip/sys.h"
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
@@ -117,7 +118,7 @@ netif_loopif_init(struct netif *netif)
   /* initialize the snmp variables and counters inside the struct netif
    * ifSpeed: no assumption can be made!
    */
-  NETIF_INIT_SNMP(netif, snmp_ifType_softwareLoopback, 0);
+  MIB2_INIT_NETIF(netif, snmp_ifType_softwareLoopback, 0);
 
   netif->name[0] = 'l';
   netif->name[1] = 'o';
@@ -264,7 +265,7 @@ netif_add(struct netif *netif,
   /* add this netif to the list */
   netif->next = netif_list;
   netif_list = netif;
-  snmp_inc_iflist();
+  mib2_netif_added(netif);
 
 #if LWIP_IGMP
   /* start IGMP processing */
@@ -345,7 +346,7 @@ netif_remove(struct netif *netif)
     netif_set_down(netif);
   }
 
-  snmp_delete_ipaddridx_tree(netif);
+  mib2_remove_ip4(netif);
 
   /* this netif is default? */
   if (netif_default == netif) {
@@ -368,7 +369,7 @@ netif_remove(struct netif *netif)
       return; /* netif is not on the list */
     }
   }
-  snmp_dec_iflist();
+  mib2_netif_removed(netif);
 #if LWIP_NETIF_REMOVE_CALLBACK
   if (netif->remove_callback) {
     netif->remove_callback(netif);
@@ -431,12 +432,12 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
     udp_netif_ipv4_addr_changed(netif_ip4_addr(netif), ipaddr);
 #endif /* LWIP_UDP */
 
-    snmp_delete_ipaddridx_tree(netif);
-    snmp_delete_iprteidx_tree(0, netif);
+    mib2_remove_ip4(netif);
+    mib2_remove_route_ip4(0, netif);
     /* set new IP address to netif */
     ip4_addr_set(netif_ip4_addr(netif), ipaddr);
-    snmp_insert_ipaddridx_tree(netif);
-    snmp_insert_iprteidx_tree(0, netif);
+    mib2_add_ip4(netif);
+    mib2_add_route_ip4(0, netif);
 
     netif_issue_reports(netif, NETIF_REPORT_TYPE_IPV4);
 
@@ -483,10 +484,10 @@ netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 void
 netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
-  snmp_delete_iprteidx_tree(0, netif);
+  mib2_remove_route_ip4(0, netif);
   /* set new netmask to netif */
   ip4_addr_set(netif_ip4_netmask(netif), netmask);
-  snmp_insert_iprteidx_tree(0, netif);
+  mib2_add_route_ip4(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1_16(netif_ip4_netmask(netif)),
@@ -507,10 +508,10 @@ netif_set_default(struct netif *netif)
 {
   if (netif == NULL) {
     /* remove default route */
-    snmp_delete_iprteidx_tree(1, netif);
+    mib2_remove_route_ip4(1, netif);
   } else {
     /* install default route */
-    snmp_insert_iprteidx_tree(1, netif);
+    mib2_add_route_ip4(1, netif);
   }
   netif_default = netif;
   LWIP_DEBUGF(NETIF_DEBUG, ("netif: setting default interface %c%c\n",
@@ -531,9 +532,7 @@ void netif_set_up(struct netif *netif)
   if (!(netif->flags & NETIF_FLAG_UP)) {
     netif->flags |= NETIF_FLAG_UP;
 
-#if LWIP_SNMP
-    snmp_get_sysuptime(&netif->ts);
-#endif /* LWIP_SNMP */
+    MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
     NETIF_STATUS_CALLBACK(netif);
 
@@ -593,9 +592,7 @@ void netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
     netif->flags &= ~NETIF_FLAG_UP;
-#if LWIP_SNMP
-    snmp_get_sysuptime(&netif->ts);
-#endif
+    a MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
 #if LWIP_IPV4 && LWIP_ARP
     if (netif->flags & NETIF_FLAG_ETHARP) {
@@ -706,13 +703,13 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
 #endif /* LWIP_LOOPBACK_MAX_PBUFS */
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
-#if LWIP_SNMP
+#if MIB2_STATS
 #if LWIP_HAVE_LOOPIF
   struct netif *stats_if = &loop_netif;
 #else /* LWIP_HAVE_LOOPIF */
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
   SYS_ARCH_DECL_PROTECT(lev);
 
   /* Allocate a new pbuf */
@@ -720,7 +717,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   if (r == NULL) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(stats_if);
+    MIB2_STATS_NETIF_INC(stats_if, ifoutdiscards);
     return ERR_MEM;
   }
 #if LWIP_LOOPBACK_MAX_PBUFS
@@ -731,7 +728,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
     pbuf_free(r);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(stats_if);
+    MIB2_STATS_NETIF_INC(stats_if, ifoutdiscards);
     return ERR_MEM;
   }
   netif->loop_cnt_current += clen;
@@ -742,7 +739,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
     pbuf_free(r);
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.drop);
-    snmp_inc_ifoutdiscards(stats_if);
+    MIB2_STATS_NETIF_INC(stats_if, ifoutdiscards);
     return err;
   }
 
@@ -764,8 +761,8 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   SYS_ARCH_UNPROTECT(lev);
 
   LINK_STATS_INC(link.xmit);
-  snmp_add_ifoutoctets(stats_if, p->tot_len);
-  snmp_inc_ifoutucastpkts(stats_if);
+  MIB2_STATS_NETIF_ADD(stats_if, ifoutoctets, p->tot_len);
+  MIB2_STATS_NETIF_INC(stats_if, ifoutucastpkts);
 
 #if LWIP_NETIF_LOOPBACK_MULTITHREADING
   /* For multithreading environment, schedule a call to netif_poll */
@@ -806,13 +803,13 @@ netif_poll(struct netif *netif)
   struct pbuf *in;
   /* If we have a loopif, SNMP counters are adjusted for it,
    * if not they are adjusted for 'netif'. */
-#if LWIP_SNMP
+#if MIB2_STATS
 #if LWIP_HAVE_LOOPIF
   struct netif *stats_if = &loop_netif;
 #else /* LWIP_HAVE_LOOPIF */
   struct netif *stats_if = netif;
 #endif /* LWIP_HAVE_LOOPIF */
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
   SYS_ARCH_DECL_PROTECT(lev);
 
   do {
@@ -854,8 +851,8 @@ netif_poll(struct netif *netif)
 
     if (in != NULL) {
       LINK_STATS_INC(link.recv);
-      snmp_add_ifinoctets(stats_if, in->tot_len);
-      snmp_inc_ifinucastpkts(stats_if);
+      MIB2_STATS_NETIF_ADD(stats_if, ifinoctets, in->tot_len);
+      MIB2_STATS_NETIF_INC(stats_if, ifinucastpkts);
       /* loopback packets are always IP packets! */
       if (ip_input(in, netif) != ERR_OK) {
         pbuf_free(in);

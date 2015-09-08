@@ -53,7 +53,6 @@
 #include "lwip/memp.h"
 #include "lwip/inet_chksum.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
 #include "lwip/ip6.h"
 #include "lwip/ip6_addr.h"
 #include "lwip/inet_chksum.h"
@@ -117,7 +116,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
   PERF_START;
 
   TCP_STATS_INC(tcp.recv);
-  snmp_inc_tcpinsegs();
+  MIB2_STATS_INC(mib2.tcpinsegs);
 
   tcphdr = (struct tcp_hdr *)p->payload;
 
@@ -348,7 +347,7 @@ tcp_input(struct pbuf *p, struct netif *inp)
         /* pcb has been aborted or refused data is still refused and the new
            segment contains data */
         TCP_STATS_INC(tcp.drop);
-        snmp_inc_tcpinerrs();
+        MIB2_STATS_INC(mib2.tcpinerrs);
         goto aborted;
       }
     }
@@ -513,7 +512,7 @@ aborted:
   return;
 dropped:
   TCP_STATS_INC(tcp.drop);
-  snmp_inc_tcpinerrs();
+  MIB2_STATS_INC(mib2.tcpinerrs);
   pbuf_free(p);
 }
 
@@ -601,7 +600,7 @@ tcp_listen_input(struct tcp_pcb_listen *pcb)
       &npcb->remote_ip, PCB_ISIPV6(npcb));
 #endif /* TCP_CALCULATE_EFF_SEND_MSS */
 
-    snmp_inc_tcppassiveopens();
+    MIB2_STATS_INC(mib2.tcppassiveopens);
 
     /* Send a SYN|ACK together with the MSS option. */
     rc = tcp_enqueue_flags(npcb, TCP_SYN | TCP_ACK);

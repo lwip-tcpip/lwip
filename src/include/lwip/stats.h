@@ -110,6 +110,72 @@ struct stats_sys {
   struct stats_syselem mbox;
 };
 
+struct stats_mib2 {
+  /* IP */
+  u32_t ipinhdrerrors;
+  u32_t ipinaddrerrors;
+  u32_t ipinunknownprotos;
+  u32_t ipindiscards;
+  u32_t ipindelivers;
+  u32_t ipoutrequests;
+  u32_t ipoutdiscards;
+  u32_t ipoutnoroutes;
+  u32_t ipreasmoks; /* @todo: never incremented */
+  u32_t ipreasmfails;
+  u32_t ipfragoks;
+  u32_t ipfragfails; /* @todo: never incremented */
+  u32_t ipfragcreates;
+  u32_t iproutingdiscards; /* @todo: never incremented */
+  u32_t ipreasmreqds;
+  u32_t ipforwdatagrams;
+  u32_t ipinreceives;
+
+  /* TCP */
+  u32_t tcpactiveopens;
+  u32_t tcppassiveopens;
+  u32_t tcpattemptfails;
+  u32_t tcpestabresets;
+  u32_t tcpoutsegs;
+  u32_t tcpretranssegs;
+  u32_t tcpinsegs;
+  u32_t tcpinerrs;
+  u32_t tcpoutrsts;
+
+  /* UDP */
+  u32_t udpindatagrams;
+  u32_t udpnoports;
+  u32_t udpinerrors;
+  u32_t udpoutdatagrams;
+
+  /* ICMP */
+  u32_t icmpinmsgs;
+  u32_t icmpinerrors;
+  u32_t icmpindestunreachs; /* @todo: never incremented */
+  u32_t icmpintimeexcds; /* @todo: never incremented */
+  u32_t icmpinparmprobs; /* @todo: never incremented */
+  u32_t icmpinsrcquenchs; /* @todo: never incremented */
+  u32_t icmpinredirects; /* @todo: never incremented */
+  u32_t icmpinechos; /* @todo: never incremented */
+  u32_t icmpinechoreps; /* @todo: never incremented */
+  u32_t icmpintimestamps; /* @todo: never incremented */
+  u32_t icmpintimestampreps; /* @todo: never incremented */
+  u32_t icmpinaddrmasks; /* @todo: never incremented */
+  u32_t icmpinaddrmaskreps; /* @todo: never incremented */
+  u32_t icmpoutmsgs;
+  u32_t icmpouterrors; /* @todo: never incremented */
+  u32_t icmpoutdestunreachs; /* @todo: never incremented */
+  u32_t icmpouttimeexcds;
+  u32_t icmpoutparmprobs; /* @todo: never incremented */
+  u32_t icmpoutsrcquenchs; /* @todo: never incremented */
+  u32_t icmpoutredirects; /* @todo: never incremented */
+  u32_t icmpoutechos; /* @todo: never incremented */
+  u32_t icmpoutechoreps;
+  u32_t icmpouttimestamps; /* @todo: never incremented */
+  u32_t icmpouttimestampreps; /* @todo: never incremented */
+  u32_t icmpoutaddrmasks; /* @todo: never incremented */
+  u32_t icmpoutaddrmaskreps; /* @todo: never incremented */
+};
+
 struct stats_ {
 #if LINK_STATS
   struct stats_proto link;
@@ -159,6 +225,9 @@ struct stats_ {
 #if ND6_STATS
   struct stats_proto nd6;
 #endif
+#if MIB2_STATS
+  struct stats_mib2 mib2;
+#endif
 };
 
 extern struct stats_ lwip_stats;
@@ -172,6 +241,7 @@ void stats_init(void);
                                     lwip_stats.x.max = lwip_stats.x.used; \
                                 } \
                              } while(0)
+#define STATS_GET(x) lwip_stats.x
 #else /* LWIP_STATS */
 #define stats_init()
 #define STATS_INC(x)
@@ -321,6 +391,12 @@ void stats_init(void);
 #else
 #define ND6_STATS_INC(x)
 #define ND6_STATS_DISPLAY()
+#endif
+
+#if MIB2_STATS
+#define MIB2_STATS_INC(x) STATS_INC(x)
+#else
+#define MIB2_STATS_INC(x)
 #endif
 
 /* Display of statistics */

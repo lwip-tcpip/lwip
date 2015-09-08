@@ -87,7 +87,7 @@
 #include "lwip/sys.h"
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/sio.h"
 #include "lwip/sys.h"
 #include "lwip/ip4.h" /* for ip4_input() */
@@ -503,7 +503,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
         PPPDEBUG(LOG_WARNING, ("pppos_netif_output[%d]: bad IP packet\n", pcb->netif->num));
         LINK_STATS_INC(link.proterr);
         LINK_STATS_INC(link.drop);
-        snmp_inc_ifoutdiscards(pcb->netif);
+        MIB2_STATS_NETIF_INC(pcb->netif, ifoutdiscards);
         return ERR_VAL;
     }
   }
@@ -521,7 +521,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
       if ((err = mppe_compress(pcb, &pcb->mppe_comp, &pb, protocol)) != ERR_OK) {
         LINK_STATS_INC(link.memerr);
         LINK_STATS_INC(link.drop);
-        snmp_inc_ifoutdiscards(netif);
+        MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
         return err;
       }
 
@@ -540,7 +540,7 @@ static err_t ppp_netif_output(struct netif *netif, struct pbuf *pb, u16_t protoc
 err_rte_drop:
   LINK_STATS_INC(link.rterr);
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifoutdiscards(netif);
+  MIB2_STATS_NETIF_INC(netif, ifoutdiscards);
   return ERR_RTE;
 }
 
@@ -727,8 +727,8 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
   pbuf_header(pb, -(s16_t)sizeof(protocol));
 
   LINK_STATS_INC(link.recv);
-  snmp_inc_ifinucastpkts(pcb->netif);
-  snmp_add_ifinoctets(pcb->netif, pb->tot_len);
+  MIB2_STATS_NETIF_INC(pcb->netif, ifinucastpkts);
+  MIB2_STATS_NETIF_ADD(pcb->netif, ifinoctets, pb->tot_len);
 
   /*
    * Toss all non-LCP packets unless LCP is OPEN.
@@ -908,7 +908,7 @@ void ppp_input(ppp_pcb *pcb, struct pbuf *pb) {
 
 drop:
   LINK_STATS_INC(link.drop);
-  snmp_inc_ifindiscards(pcb->netif);
+  MIB2_STATS_NETIF_INC(pcb->netif, ifindiscards);
 
 out:
   pbuf_free(pb);

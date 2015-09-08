@@ -49,8 +49,10 @@
 #include "lwip/udp.h"
 #include "lwip/netif.h"
 #include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 #include "lwip/snmp_asn1.h"
 #include "lwip/snmp_msg.h"
+#include "lwip/sys.h"
 
 #include <string.h>
 
@@ -159,23 +161,23 @@ snmp_send_response(struct snmp_msg_pstat *m_stat)
         /* nothing to do */
         break;
       case SNMP_ES_TOOBIG:
-        snmp_inc_snmpouttoobigs();
+        mib2_inc_snmpouttoobigs();
         break;
       case SNMP_ES_NOSUCHNAME:
-        snmp_inc_snmpoutnosuchnames();
+        mib2_inc_snmpoutnosuchnames();
         break;
       case SNMP_ES_BADVALUE:
-        snmp_inc_snmpoutbadvalues();
+        mib2_inc_snmpoutbadvalues();
         break;
       case SNMP_ES_GENERROR:
-        snmp_inc_snmpoutgenerrs();
+        mib2_inc_snmpoutgenerrs();
         break;
       default:
         LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_send_response(): unknown error_status: %d\n", (int)m_stat->error_status));
         break;
     }
-    snmp_inc_snmpoutgetresponses();
-    snmp_inc_snmpoutpkts();
+    mib2_inc_snmpoutgetresponses();
+    mib2_inc_snmpoutpkts();
 
     /** @todo do we need separate rx and tx pcbs for threaded case? */
     /** connect to the originating source */
@@ -256,9 +258,10 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
         else
         {
           /* generic (MIB-II) trap */
-          snmp_get_snmpgrpid_ptr(&trap_msg.enterprise);
+          mib2_get_snmpgrpid_ptr(&trap_msg.enterprise);
         }
-        snmp_get_sysuptime(&trap_msg.ts);
+
+        MIB2_COPY_SYSUPTIME_TO(&trap_msg.ts);
 
         /* pass 0, calculate length fields */
         tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
@@ -274,8 +277,8 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
           ofs = snmp_trap_header_enc(&trap_msg, p);
           snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
 
-          snmp_inc_snmpouttraps();
-          snmp_inc_snmpoutpkts();
+          mib2_inc_snmpouttraps();
+          mib2_inc_snmpoutpkts();
 
           /** send to the TRAP destination */
           udp_sendto(trap_msg.pcb, p, &trap_msg.dip, SNMP_TRAP_PORT);
@@ -306,7 +309,7 @@ void
 snmp_authfail_trap(void)
 {
   u8_t enable;
-  snmp_get_snmpenableauthentraps(&enable);
+  mib2_get_snmpenableauthentraps(&enable);
   if (enable == 1)
   {
     trap_msg.outvb.head = NULL;

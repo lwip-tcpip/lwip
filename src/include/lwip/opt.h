@@ -865,11 +865,24 @@
    ----------------------------------
 */
 /**
- * LWIP_SNMP==1: Turn on SNMP module. UDP must be available for SNMP
- * transport.
+ * LWIP_SNMP==1: This enables the lwIP SNMP agent. UDP must be available
+ * for SNMP transport.
+ * If you want to use your own SNMP agent, leave this disabled.
+ * To integrate MIB2 of an external agent, you need to enable
+ * LWIP_MIB2_CALLBACKS and MIB2_STATS. This will give you the callbacks
+ * and statistics counters you need to get MIB2 working.
  */
 #ifndef LWIP_SNMP
 #define LWIP_SNMP                       0
+#endif
+
+/**
+ * LWIP_MIB2_CALLBACKS==1: Turn on SNMP MIB2 callbacks.
+ * Turn this on to get callbacks needed to implement MIB2.
+ * Usually MIB2_STATS should be enabled, too.
+ */
+#ifndef LWIP_MIB2_CALLBACKS
+#define LWIP_MIB2_CALLBACKS             LWIP_SNMP
 #endif
 
 /**
@@ -1027,9 +1040,8 @@
  *  byte order).
  *
  *  Instead, you can also use an external function:
- *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern int my_lookup_function(const char *name, ip_addr_t* result, u8_t reqtype)
- *  that provides the IP address, returns 1 if found or 0 if not found and gets
- *  the type of the requested address passed (see LWIP_DNS_ADDRTYPE_*)
+ *  #define DNS_LOOKUP_LOCAL_EXTERN(x) extern u32_t my_lookup_function(const char *name)
+ *  that returns the IP address or INADDR_NONE if not found.
  */
 #ifndef DNS_LOCAL_HOSTLIST
 #define DNS_LOCAL_HOSTLIST              0
@@ -1904,6 +1916,13 @@
 #define ND6_STATS                       (LWIP_IPV6)
 #endif
 
+/**
+ * MIB2_STATS==1: Stats for SNMP MIB2.
+ */
+#ifndef MIB2_STATS
+#define MIB2_STATS                      (LWIP_SNMP)
+#endif
+
 #else
 
 #define LINK_STATS                      0
@@ -1923,6 +1942,7 @@
 #define IP6_FRAG_STATS                  0
 #define MLD6_STATS                      0
 #define ND6_STATS                       0
+#define MIB2_STATS                      0
 
 #endif /* LWIP_STATS */
 

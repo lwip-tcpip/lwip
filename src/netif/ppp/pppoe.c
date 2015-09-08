@@ -79,7 +79,7 @@
 #include "lwip/timers.h"
 #include "lwip/memp.h"
 #include "lwip/stats.h"
-#include "lwip/snmp.h"
+#include "lwip/snmp_mib2.h"
 
 #include "netif/ppp/ppp_impl.h"
 #include "netif/ppp/lcp.h"
@@ -206,11 +206,11 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   struct pppoe_softc *sc = (struct pppoe_softc *)ctx;
   struct pbuf *ph; /* Ethernet + PPPoE header */
   err_t ret;
-#if LWIP_SNMP
+#if MIB2_STATS
   u16_t tot_len;
-#else /* LWIP_SNMP */
+#else /* MIB2_STATS */
   LWIP_UNUSED_ARG(ppp);
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
 
   /* skip address & flags */
   pbuf_header(p, -(s16_t)2);
@@ -219,26 +219,26 @@ static err_t pppoe_write(ppp_pcb *ppp, void *ctx, struct pbuf *p) {
   if(!ph) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     pbuf_free(p);
     return ERR_MEM;
   }
 
   pbuf_header(ph, -(s16_t)PPPOE_HEADERLEN); /* hide PPPoE header */
   pbuf_cat(ph, p);
-#if LWIP_SNMP
+#if MIB2_STATS
   tot_len = ph->tot_len;
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
 
   ret = pppoe_xmit(sc, ph);
   if (ret != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     return ret;
   }
 
-  snmp_add_ifoutoctets(ppp->netif, (u16_t)tot_len);
-  snmp_inc_ifoutucastpkts(ppp->netif);
+  MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, (u16_t)tot_len);
+  MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
   LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
@@ -249,18 +249,18 @@ static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short
   struct pbuf *pb;
   u8_t *pl;
   err_t err;
-#if LWIP_SNMP
+#if MIB2_STATS
   u16_t tot_len;
-#else /* LWIP_SNMP */
+#else /* MIB2_STATS */
   LWIP_UNUSED_ARG(ppp);
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
 
   /* @todo: try to use pbuf_header() here! */
   pb = pbuf_alloc(PBUF_LINK, PPPOE_HEADERLEN + sizeof(protocol), PBUF_RAM);
   if(!pb) {
     LINK_STATS_INC(link.memerr);
     LINK_STATS_INC(link.proterr);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     return ERR_MEM;
   }
 
@@ -270,18 +270,18 @@ static err_t pppoe_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *p, u_short
   PUTSHORT(protocol, pl);
 
   pbuf_chain(pb, p);
-#if LWIP_SNMP
+#if MIB2_STATS
   tot_len = pb->tot_len;
-#endif /* LWIP_SNMP */
+#endif /* MIB2_STATS */
 
   if( (err = pppoe_xmit(sc, pb)) != ERR_OK) {
     LINK_STATS_INC(link.err);
-    snmp_inc_ifoutdiscards(ppp->netif);
+    MIB2_STATS_NETIF_INC(ppp->netif, ifoutdiscards);
     return err;
   }
 
-  snmp_add_ifoutoctets(ppp->netif, tot_len);
-  snmp_inc_ifoutucastpkts(ppp->netif);
+  MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, tot_len);
+  MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
   LINK_STATS_INC(link.xmit);
   return ERR_OK;
 }
