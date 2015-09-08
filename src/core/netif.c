@@ -592,7 +592,7 @@ void netif_set_down(struct netif *netif)
 {
   if (netif->flags & NETIF_FLAG_UP) {
     netif->flags &= ~NETIF_FLAG_UP;
-    a MIB2_COPY_SYSUPTIME_TO(&netif->ts);
+    MIB2_COPY_SYSUPTIME_TO(&netif->ts);
 
 #if LWIP_IPV4 && LWIP_ARP
     if (netif->flags & NETIF_FLAG_ETHARP) {
