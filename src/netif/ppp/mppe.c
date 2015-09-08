@@ -202,6 +202,8 @@ mppe_compress(ppp_pcb *pcb, ppp_mppe_state *state, struct pbuf **pb, u16_t proto
 	u8_t *pl;
 	err_t err;
 
+	LWIP_UNUSED_ARG(pcb);
+
 	/* TCP stack requires that we don't change the packet payload, therefore we copy
 	 * the whole packet before encryption.
 	 */

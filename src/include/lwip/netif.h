@@ -280,7 +280,7 @@ struct netif {
   /** counters */
   u32_t ifinoctets;
   u32_t ifinucastpkts;
-  u32_t ifinnucastpkts; /* @todo: never incremented */
+  u32_t ifinnucastpkts;
   u32_t ifindiscards;
   u32_t ifoutoctets;
   u32_t ifoutucastpkts;
