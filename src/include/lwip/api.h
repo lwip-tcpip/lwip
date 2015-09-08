@@ -297,7 +297,7 @@ err_t   netconn_gethostbyname_addrtype(const char *name, ip_addr_t *addr, u8_t d
 #define netconn_gethostbyname(name, addr) netconn_gethostbyname_addrtype(name, addr, NETCONN_DNS_DEFAULT)
 #else /* LWIP_IPV4 && LWIP_IPV6 */
 err_t   netconn_gethostbyname(const char *name, ip_addr_t *addr);
-#define netconn_gethostbyname_addrtype(name, addr, dns_addrtype netconn_gethostbyname(name, addr)
+#define netconn_gethostbyname_addrtype(name, addr, dns_addrtype) netconn_gethostbyname(name, addr)
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #endif /* LWIP_DNS */
 

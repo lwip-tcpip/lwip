@@ -1422,6 +1422,7 @@ err_t
 dns_gethostbyname(const char *hostname, ip_addr_t *addr, dns_found_callback found,
                   void *callback_arg)
 {
+#if LWIP_IPV4 && LWIP_IPV6
   return dns_gethostbyname_addrtype(hostname, addr, found, callback_arg, LWIP_DNS_ADDRTYPE_DEFAULT);
 }
 
@@ -1435,6 +1436,7 @@ err_t
 dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_callback found,
                            void *callback_arg, u8_t dns_addrtype)
 {
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
   size_t hostnamelen;
   /* not initialized or no valid server yet, or invalid addr pointer
    * or invalid hostname or invalid hostname length */
@@ -1493,5 +1495,15 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
   /* queue query with specified callback */
   return dns_enqueue(hostname, hostnamelen, found, callback_arg LWIP_DNS_ADDRTYPE_ARG(dns_addrtype));
 }
+
+#if !LWIP_IPV4 || !LWIP_IPV6
+err_t
+dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_callback found,
+                           void *callback_arg, u8_t dns_addrtype)
+{
+  LWIP_UNUSED_ARG(dns_addrtype);
+  return dns_gethostbyname(hostname, addr, found, callback_arg);
+}
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
 #endif /* LWIP_DNS */
