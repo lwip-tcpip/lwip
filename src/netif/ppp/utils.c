@@ -73,7 +73,7 @@ static void ppp_logit(int level, const char *fmt, va_list args);
 static void ppp_log_write(int level, char *buf);
 #if PRINTPKT_SUPPORT
 static void ppp_vslp_printer(void *arg, const char *fmt, ...);
-static void ppp_format_packet(u_char *p, int len,
+static void ppp_format_packet(const u_char *p, int len,
 		void (*printer) (void *, const char *, ...), void *arg);
 
 struct buffer_info {
@@ -443,7 +443,7 @@ log_packet(p, len, prefix, level)
  * ppp_format_packet - make a readable representation of a packet,
  * calling `printer(arg, format, ...)' to output it.
  */
-static void ppp_format_packet(u_char *p, int len,
+static void ppp_format_packet(const u_char *p, int len,
 		void (*printer) (void *, const char *, ...), void *arg) {
     int i, n;
     u_short proto;

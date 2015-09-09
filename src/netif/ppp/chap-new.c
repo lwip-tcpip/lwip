@@ -104,7 +104,7 @@ static void chap_handle_status(ppp_pcb *pcb, int code, int id,
 static void chap_protrej(ppp_pcb *pcb);
 static void chap_input(ppp_pcb *pcb, unsigned char *pkt, int pktlen);
 #if PRINTPKT_SUPPORT
-static int chap_print_pkt(unsigned char *p, int plen,
+static int chap_print_pkt(const unsigned char *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
@@ -590,7 +590,7 @@ static const char* const chap_code_names[] = {
 	"Challenge", "Response", "Success", "Failure"
 };
 
-static int chap_print_pkt(unsigned char *p, int plen,
+static int chap_print_pkt(const unsigned char *p, int plen,
 	       void (*printer) (void *, const char *, ...), void *arg) {
 	int code, id, len;
 	int clen, nlen;

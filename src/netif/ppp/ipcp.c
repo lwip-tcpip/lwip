@@ -264,7 +264,7 @@ static void ipcp_lowerdown(ppp_pcb *pcb);
 static void ipcp_input(ppp_pcb *pcb, u_char *p, int len);
 static void ipcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
-static int ipcp_printpkt(u_char *p, int plen,
+static int ipcp_printpkt(const u_char *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if PPP_OPTIONS
@@ -2226,10 +2226,10 @@ static const char* const ipcp_codenames[] = {
     "TermReq", "TermAck", "CodeRej"
 };
 
-static int ipcp_printpkt(u_char *p, int plen,
+static int ipcp_printpkt(const u_char *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len, olen;
-    u_char *pstart, *optend;
+    const u_char *pstart, *optend;
 #if VJ_SUPPORT
     u_short cishort;
 #endif /* VJ_SUPPORT */

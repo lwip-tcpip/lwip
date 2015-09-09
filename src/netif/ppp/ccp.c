@@ -173,7 +173,7 @@ static void ccp_lowerdown(ppp_pcb *pcb);
 static void ccp_input(ppp_pcb *pcb, u_char *pkt, int len);
 static void ccp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
-static int ccp_printpkt(u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
+static int ccp_printpkt(const u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if PPP_DATAINPUT
 static void ccp_datainput(ppp_pcb *pcb, u_char *pkt, int len);
@@ -1519,8 +1519,8 @@ static const char* const ccp_codenames[] = {
     "ResetReq", "ResetAck",
 };
 
-static int ccp_printpkt(u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg) {
-    u_char *p0, *optend;
+static int ccp_printpkt(const u_char *p, int plen, void (*printer) (void *, const char *, ...), void *arg) {
+    const u_char *p0, *optend;
     int code, id, len;
     int optlen;
 

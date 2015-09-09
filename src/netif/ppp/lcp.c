@@ -268,7 +268,7 @@ static void lcp_init(ppp_pcb *pcb);
 static void lcp_input(ppp_pcb *pcb, u_char *p, int len);
 static void lcp_protrej(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
-static int lcp_printpkt(u_char *p, int plen,
+static int lcp_printpkt(const u_char *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
@@ -2377,10 +2377,10 @@ static const char* const lcp_codenames[] = {
     "TimeRem"
 };
 
-static int lcp_printpkt(u_char *p, int plen,
+static int lcp_printpkt(const u_char *p, int plen,
 		void (*printer) (void *, const char *, ...), void *arg) {
     int code, id, len, olen, i;
-    u_char *pstart, *optend;
+    const u_char *pstart, *optend;
     u_short cishort;
     u32_t cilong;
 

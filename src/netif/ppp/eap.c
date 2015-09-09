@@ -108,7 +108,7 @@ static void eap_protrej(ppp_pcb *pcb);
 static void eap_lowerup(ppp_pcb *pcb);
 static void eap_lowerdown(ppp_pcb *pcb);
 #if PRINTPKT_SUPPORT
-static int  eap_printpkt(u_char *inp, int inlen,
+static int  eap_printpkt(const u_char *inp, int inlen,
     void (*)(void *arg, const char *fmt, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 
@@ -2135,9 +2135,9 @@ static const char* const eap_typenames[] = {
 	"Cisco", "Nokia", "SRP"
 };
 
-static int eap_printpkt(u_char *inp, int inlen, void (*printer) (void *, const char *, ...), void *arg) {
+static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, const char *, ...), void *arg) {
 	int code, id, len, rtype, vallen;
-	u_char *pstart;
+	const u_char *pstart;
 	u32_t uval;
 
 	if (inlen < EAP_HEADERLEN)

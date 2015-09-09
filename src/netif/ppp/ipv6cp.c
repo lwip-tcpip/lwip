@@ -264,7 +264,7 @@ static void ipv6_check_options(void);
 static int  ipv6_demand_conf(int u);
 #endif /* DEMAND_SUPPORT */
 #if PRINTPKT_SUPPORT
-static int ipv6cp_printpkt(u_char *p, int plen,
+static int ipv6cp_printpkt(const u_char *p, int plen,
 		void (*printer)(void *, const char *, ...), void *arg);
 #endif /* PRINTPKT_SUPPORT */
 #if DEMAND_SUPPORT
@@ -1398,10 +1398,10 @@ static const char* const ipv6cp_codenames[] = {
     "TermReq", "TermAck", "CodeRej"
 };
 
-static int ipv6cp_printpkt(u_char *p, int plen,
+static int ipv6cp_printpkt(const u_char *p, int plen,
 		void (*printer)(void *, const char *, ...), void *arg) {
     int code, id, len, olen;
-    u_char *pstart, *optend;
+    const u_char *pstart, *optend;
 #ifdef IPV6CP_COMP
     u_short cishort;
 #endif /* IPV6CP_COMP */

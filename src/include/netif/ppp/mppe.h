@@ -101,7 +101,7 @@
 /* The reverse of the above */
 #define MPPE_CI_TO_OPTS(ci, opts)		\
     do {					\
-	u_char *ptr = ci; /* u_char[4] */	\
+	const u_char *ptr = ci; /* u_char[4] */	\
 						\
 	opts = 0;				\
 						\

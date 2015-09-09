@@ -290,7 +290,7 @@ struct protent {
     void (*close) (ppp_pcb *pcb, const char *reason);
 #if PRINTPKT_SUPPORT
     /* Print a packet in readable form */
-    int  (*printpkt) (u_char *pkt, int len,
+    int  (*printpkt) (const u_char *pkt, int len,
 			  void (*printer) (void *, const char *, ...),
 			  void *arg);
 #endif /* PRINTPKT_SUPPORT */

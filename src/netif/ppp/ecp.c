@@ -91,7 +91,7 @@ static void ecp_input (int unit, u_char *pkt, int len);
 static void ecp_protrej (int unit);
 */
 #if PRINTPKT_SUPPORT
-static int  ecp_printpkt (u_char *pkt, int len,
+static int  ecp_printpkt (const u_char *pkt, int len,
 			      void (*printer) (void *, char *, ...),
 			      void *arg);
 #endif /* PRINTPKT_SUPPORT */
@@ -179,7 +179,7 @@ ecp_init(unit)
 #if PRINTPKT_SUPPORT
 static int
 ecp_printpkt(p, plen, printer, arg)
-    u_char *p;
+    const u_char *p;
     int plen;
     void (*printer) (void *, char *, ...);
     void *arg;
