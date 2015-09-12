@@ -38,6 +38,7 @@ communicate with this main thread through message passing.
       - netbuf.h
       - netdb.h
       - netifapi.h
+      - pppapi.h
       - sockets.h
       - sys.h
 
