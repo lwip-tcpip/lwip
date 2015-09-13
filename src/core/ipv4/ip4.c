@@ -177,6 +177,11 @@ ip4_route(const ip4_addr_t *dest)
         /* return netif on which to forward IP packet */
         return netif;
       }
+      /* gateway matches on a non broadcast interface? (i.e. peer in a point to point interface) */
+      if ((netif->flags & NETIF_FLAG_BROADCAST) == 0 && ip4_addr_cmp(dest, netif_ip4_gw(netif))) {
+        /* return netif on which to forward IP packet */
+        return netif;
+      }
     }
   }
 
