@@ -388,9 +388,7 @@ ppp_ioctl(ppp_pcb *pcb, u8_t cmd, void *arg)
       return ERR_OK;
 
     default:
-      if (pcb->link_cb->ioctl) {
-        return pcb->link_cb->ioctl(pcb, pcb->link_ctx_cb, cmd, arg);
-      }
+      goto fail;
   }
 
 fail:

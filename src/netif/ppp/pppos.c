@@ -61,7 +61,6 @@ static void pppos_disconnect(ppp_pcb *ppp, void *ctx);
 static err_t pppos_destroy(ppp_pcb *ppp, void *ctx);
 static void pppos_send_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp);
 static void pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp);
-static err_t pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 
 /* Prototypes for procedures local to this file. */
 #if PPP_INPROC_IRQ_SAFE
@@ -83,8 +82,7 @@ static const struct link_callbacks pppos_callbacks = {
   pppos_write,
   pppos_netif_output,
   pppos_send_config,
-  pppos_recv_config,
-  pppos_ioctl
+  pppos_recv_config
 };
 
 /* PPP's Asynchronous-Control-Character-Map.  The mask array is used
@@ -780,16 +778,6 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
   PPPDEBUG(LOG_INFO, ("pppos_recv_config[%d]: in_accm=%X %X %X %X\n",
             pppos->ppp->netif->num,
             pppos->in_accm[0], pppos->in_accm[1], pppos->in_accm[2], pppos->in_accm[3]));
-}
-
-static err_t
-pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg)
-{
-  LWIP_UNUSED_ARG(pcb);
-  LWIP_UNUSED_ARG(ctx);
-  LWIP_UNUSED_ARG(cmd);
-  LWIP_UNUSED_ARG(arg);
-  return ERR_VAL;
 }
 
 /*

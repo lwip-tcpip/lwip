@@ -156,7 +156,6 @@ static const struct link_callbacks pppoe_callbacks = {
   pppoe_write,
   pppoe_netif_output,
   NULL,
-  NULL,
   NULL
 };
 

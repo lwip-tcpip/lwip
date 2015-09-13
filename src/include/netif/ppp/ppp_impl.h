@@ -151,8 +151,6 @@ struct link_callbacks {
   void (*send_config)(ppp_pcb *pcb, void *ctx, u32_t accm, int pcomp, int accomp);
   /* confire the receive-side characteristics of the PPP interface */
   void (*recv_config)(ppp_pcb *pcb, void *ctx, u32_t accm, int pcomp, int accomp);
-  /* Get and set parameters for the given connection. */
-  err_t (*ioctl)(ppp_pcb *pcb, void *ctx, int cmd, void *arg);
 };
 
 /*
