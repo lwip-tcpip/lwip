@@ -55,6 +55,9 @@ enum {
   PDDATA       /* Process data byte. */
 };
 
+/* PPPoS serial output callback function prototype */
+typedef u32_t (*pppos_output_cb_fn)(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx);
+
 /*
  * Extended asyncmap - allows any character to be escaped.
  */
@@ -67,7 +70,7 @@ typedef struct pppos_pcb_s pppos_pcb;
 struct pppos_pcb_s {
   /* -- below are data that will NOT be cleared between two sessions */
   ppp_pcb *ppp;                    /* PPP PCB */
-  sio_fd_t fd;                     /* File device ID of port. */
+  pppos_output_cb_fn output_cb;    /* PPP serial output callback */
 
   /* -- below are data that will be cleared between two sessions
    *
@@ -92,7 +95,7 @@ struct pppos_pcb_s {
 };
 
 /* Create a new PPPoS session. */
-ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
+ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 #if !NO_SYS && !PPP_INPROC_IRQ_SAFE

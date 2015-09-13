@@ -184,16 +184,29 @@ static void status_cb(ppp_pcb *pcb, int err_code, void *ctx) {
 #include "netif/ppp/pppos.h"
 
 /*
+ * PPPoS serial output callback
+ *
+ * ppp_pcb, PPP control block
+ * data, buffer to write to serial port
+ * len, length of the data buffer
+ * ctx, optional user-provided callback context pointer
+ *
+ * Return value: len if write succeed
+ */
+static u32_t output_cb(ppp_pcb *pcb, u8_t *data, u32_t len, void *ctx) {
+  return uart_write(UART, data, len);
+}
+
+/*
  * Create a new PPPoS interface
  *
  * ppp_netif, netif to use for this PPP link, i.e. PPP IP interface
- * ppp_sio, handler to your SIO port (see include/lwip/sio.h)
+ * output_cb, PPPoS serial output callback
  * status_cb, PPP status callback, called on PPP status change (up, down, …)
  * ctx_cb, optional user-provided callback context pointer
  */
 ppp = pppos_create(&ppp_netif,
-       ppp_sio,
-       status_cb, ctx_cb);
+       output_cb, status_cb, ctx_cb);
 
 
 /*
@@ -304,7 +317,6 @@ ppp_free(ppp);
 3 PPPoS input path (raw API, IRQ safe API, TCPIP API)
 =====================================================
 
-PPPoS requires a serial I/O SIO port (see include/lwip/sio.h).
 Received data on serial port should be sent to lwIP using the pppos_input()
 function or the pppos_input_sys() function.
 
@@ -405,3 +417,5 @@ from previous lwIP version is pretty easy:
   unconditionally registering them, which is probably the wanted behavior in
   almost all cases. If you need it conditional contact us and we will made it
   conditional.
+
+* PPPoS now requires a serial output callback

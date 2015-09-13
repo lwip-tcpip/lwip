@@ -127,7 +127,7 @@ pppapi_set_notify_phase_callback(ppp_pcb *pcb, ppp_notify_phase_cb_fn notify_pha
 static void
 pppapi_do_pppos_create(struct pppapi_msg_msg *msg)
 {
-  msg->ppp = pppos_create(msg->msg.serialcreate.pppif, msg->msg.serialcreate.fd,
+  msg->ppp = pppos_create(msg->msg.serialcreate.pppif, msg->msg.serialcreate.output_cb,
     msg->msg.serialcreate.link_status_cb, msg->msg.serialcreate.ctx_cb);
   TCPIP_PPPAPI_ACK(msg);
 }
@@ -137,13 +137,13 @@ pppapi_do_pppos_create(struct pppapi_msg_msg *msg)
  * tcpip_thread context.
  */
 ppp_pcb*
-pppapi_pppos_create(struct netif *pppif, sio_fd_t fd, ppp_link_status_cb_fn link_status_cb,
-                          void *ctx_cb)
+pppapi_pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
+               ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   struct pppapi_msg msg;
   msg.function = pppapi_do_pppos_create;
   msg.msg.msg.serialcreate.pppif = pppif;
-  msg.msg.msg.serialcreate.fd = fd;
+  msg.msg.msg.serialcreate.output_cb = output_cb;
   msg.msg.msg.serialcreate.link_status_cb = link_status_cb;
   msg.msg.msg.serialcreate.ctx_cb = ctx_cb;
   TCPIP_PPPAPI(&msg);

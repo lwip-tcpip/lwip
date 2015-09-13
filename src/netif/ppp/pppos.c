@@ -44,7 +44,6 @@
 #include "lwip/snmp_mib2.h"
 #include "lwip/tcpip.h"
 #include "lwip/api.h"
-#include "lwip/sio.h"
 #include "lwip/ip4.h" /* for ip4_input() */
 
 #include "netif/ppp/ppp_impl.h"
@@ -170,7 +169,7 @@ ppp_get_fcs(u8_t byte)
  *
  * Return 0 on success, an error code on failure.
  */
-ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
+ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb)
 {
   pppos_pcb *pppos;
@@ -188,7 +187,7 @@ ppp_pcb *pppos_create(struct netif *pppif, sio_fd_t fd,
   }
 
   pppos->ppp = ppp;
-  pppos->fd = fd;
+  pppos->output_cb = output_cb;
   ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
@@ -786,21 +785,10 @@ pppos_recv_config(ppp_pcb *ppp, void *ctx, u32_t accm, int pcomp, int accomp)
 static err_t
 pppos_ioctl(ppp_pcb *pcb, void *ctx, int cmd, void *arg)
 {
-  pppos_pcb *pppos = (pppos_pcb *)ctx;
   LWIP_UNUSED_ARG(pcb);
-
-  switch(cmd) {
-    case PPPCTLG_FD:            /* Get the fd associated with the ppp */
-      if (!arg) {
-        goto fail;
-      }
-      *(sio_fd_t *)arg = pppos->fd;
-      return ERR_OK;
-
-    default: ;
-  }
-
-fail:
+  LWIP_UNUSED_ARG(ctx);
+  LWIP_UNUSED_ARG(cmd);
+  LWIP_UNUSED_ARG(arg);
   return ERR_VAL;
 }
 
@@ -858,7 +846,7 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
    * Sure we don't quite fill the buffer if the character doesn't
    * get escaped but is one character worth complicating this? */
   if ((PBUF_POOL_BUFSIZE - nb->len) < 2) {
-    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
+    u32_t l = pppos->output_cb(pppos->ppp, (u8_t*)nb->payload, nb->len, pppos->ppp->ctx_cb);
     if (l != nb->len) {
       return ERR_IF;
     }
@@ -884,9 +872,7 @@ pppos_output_append(pppos_pcb *pppos, err_t err, struct pbuf *nb, u8_t c, u8_t a
 static err_t
 pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 {
-#if MIB2_STATS
   ppp_pcb *ppp = pppos->ppp;
-#endif /* MIB2_STATS */
 
   /* Add FCS and trailing flag. */
   err = pppos_output_append(pppos, err,  nb, ~(*fcs) & 0xFF, 1, NULL);
@@ -899,7 +885,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
 
   /* Send remaining buffer if not empty */
   if (nb->len > 0) {
-    u32_t l = sio_write(pppos->fd, (u8_t*)nb->payload, nb->len);
+    u32_t l = pppos->output_cb(ppp, (u8_t*)nb->payload, nb->len, ppp->ctx_cb);
     if (l != nb->len) {
       err = ERR_IF;
       goto failed;
