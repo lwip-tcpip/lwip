@@ -567,7 +567,7 @@ int ppp_init(void) {
  * Return a new PPP connection control block pointer
  * on success or a null pointer on failure.
  */
-ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
+ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb, ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *pcb;
 
   /* PPP is single-threaded: without a callback,
@@ -637,15 +637,12 @@ ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void
     return NULL;
   }
 
+  pcb->link_cb = callbacks;
+  pcb->link_ctx_cb = link_ctx_cb;
   pcb->link_status_cb = link_status_cb;
   pcb->ctx_cb = ctx_cb;
   new_phase(pcb, PPP_PHASE_DEAD);
   return pcb;
-}
-
-void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx) {
-  pcb->link_cb = callbacks;
-  pcb->link_ctx_cb = ctx;
 }
 
 /* Set a PPP PCB to its initial state */

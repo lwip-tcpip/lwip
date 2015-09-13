@@ -178,12 +178,11 @@ ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
     return NULL;
   }
 
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  ppp = ppp_new(pppif, &pppos_callbacks, pppos, link_status_cb, ctx_cb);
   if (ppp == NULL) {
     memp_free(MEMP_PPPOS_PCB, pppos);
     return NULL;
   }
-  ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
 
   pppos->ppp = ppp;
   pppos->output_cb = output_cb;

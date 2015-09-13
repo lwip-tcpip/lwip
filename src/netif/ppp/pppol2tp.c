@@ -129,11 +129,10 @@ ppp_pcb *pppol2tp_create(struct netif *pppif,
     goto memp_malloc_l2tp_failed;
   }
 
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  ppp = ppp_new(pppif, &pppol2tp_callbacks, l2tp, link_status_cb, ctx_cb);
   if (ppp == NULL) {
     goto ppp_new_failed;
   }
-  ppp_link_set_callbacks(ppp, &pppol2tp_callbacks, l2tp);
 
 #if LWIP_IPV6
   if (IP_IS_V6_VAL(*ipaddr)) {

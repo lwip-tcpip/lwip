@@ -387,10 +387,8 @@ int ppp_init(void);
  */
 
 /* Create a new PPP control block */
-ppp_pcb *ppp_new(struct netif *pppif, ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
-
-/* Set link callback functions */
-void ppp_link_set_callbacks(ppp_pcb *pcb, const struct link_callbacks *callbacks, void *ctx);
+ppp_pcb *ppp_new(struct netif *pppif, const struct link_callbacks *callbacks, void *link_ctx_cb,
+                 ppp_link_status_cb_fn link_status_cb, void *ctx_cb);
 
 /* Set a PPP PCB to its initial state */
 void ppp_clear(ppp_pcb *pcb);

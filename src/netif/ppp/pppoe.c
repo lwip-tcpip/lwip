@@ -179,12 +179,11 @@ ppp_pcb *pppoe_create(struct netif *pppif,
     return NULL;
   }
 
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  ppp = ppp_new(pppif, &pppoe_callbacks, sc, link_status_cb, ctx_cb);
   if (ppp == NULL) {
     memp_free(MEMP_PPPOE_IF, sc);
     return NULL;
   }
-  ppp_link_set_callbacks(ppp, &pppoe_callbacks, sc);
 
   memset(sc, 0, sizeof(struct pppoe_softc));
   /* changed to real address later */
