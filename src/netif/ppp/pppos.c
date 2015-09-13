@@ -173,20 +173,20 @@ ppp_pcb *pppos_create(struct netif *pppif, pppos_output_cb_fn output_cb,
   pppos_pcb *pppos;
   ppp_pcb *ppp;
 
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
-  if (ppp == NULL) {
+  pppos = (pppos_pcb *)memp_malloc(MEMP_PPPOS_PCB);
+  if (pppos == NULL) {
     return NULL;
   }
 
-  pppos = (pppos_pcb *)memp_malloc(MEMP_PPPOS_PCB);
-  if (pppos == NULL) {
-    ppp_free(ppp);
+  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  if (ppp == NULL) {
+    memp_free(MEMP_PPPOS_PCB, pppos);
     return NULL;
   }
+  ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
 
   pppos->ppp = ppp;
   pppos->output_cb = output_cb;
-  ppp_link_set_callbacks(ppp, &pppos_callbacks, pppos);
   return ppp;
 }
 

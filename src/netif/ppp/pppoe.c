@@ -174,29 +174,26 @@ ppp_pcb *pppoe_create(struct netif *pppif,
   LWIP_UNUSED_ARG(service_name);
   LWIP_UNUSED_ARG(concentrator_name);
 
-  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
-  if (ppp == NULL) {
-    return NULL;
-  }
-
   sc = (struct pppoe_softc *)memp_malloc(MEMP_PPPOE_IF);
   if (sc == NULL) {
-    ppp_free(ppp);
     return NULL;
   }
-  memset(sc, 0, sizeof(struct pppoe_softc));
 
+  ppp = ppp_new(pppif, link_status_cb, ctx_cb);
+  if (ppp == NULL) {
+    memp_free(MEMP_PPPOE_IF, sc);
+    return NULL;
+  }
+  ppp_link_set_callbacks(ppp, &pppoe_callbacks, sc);
+
+  memset(sc, 0, sizeof(struct pppoe_softc));
   /* changed to real address later */
   MEMCPY(&sc->sc_dest, ethbroadcast.addr, sizeof(sc->sc_dest));
-
   sc->pcb = ppp;
   sc->sc_ethif = ethif;
-
   /* put the new interface at the head of the list */
   sc->next = pppoe_softc_list;
   pppoe_softc_list = sc;
-
-  ppp_link_set_callbacks(ppp, &pppoe_callbacks, sc);
   return ppp;
 }
 
