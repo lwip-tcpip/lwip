@@ -1478,7 +1478,7 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
     return ERR_OK;
   }
 #if LWIP_IPV4 && LWIP_IPV6
-  if ((dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) || (dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6)) {
+  if ((dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) || (dns_addrtype == LWIP_DNS_ADDRTYPE_IPV6_IPV4)) {
     /* fallback to 2nd IP type and try again to lookup */
     u8_t fallback;
     if (dns_addrtype == LWIP_DNS_ADDRTYPE_IPV4_IPV6) {

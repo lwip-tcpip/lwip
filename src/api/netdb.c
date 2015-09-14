@@ -290,9 +290,9 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
 #if LWIP_IPV4
       && (ai_family != AF_INET)
 #endif /* LWIP_IPV4 */
-#if LWIP_IPV4
+#if LWIP_IPV6
       && (ai_family != AF_INET6)
-#endif /* LWIP_IPV4 */
+#endif /* LWIP_IPV6 */
       ) {
       return EAI_FAMILY;
     }
