@@ -855,7 +855,7 @@ netconn_gethostbyname(const char *name, ip_addr_t *addr)
 #endif /* LWIP_MPU_COMPATIBLE */
 #if LWIP_IPV4 && LWIP_IPV6
   API_VAR_REF(msg).dns_addrtype = dns_addrtype;
-#endif LWIP_IPV4 && LWIP_IPV6
+#endif /* LWIP_IPV4 && LWIP_IPV6 */
 #if LWIP_NETCONN_SEM_PER_THREAD
   API_VAR_REF(msg).sem = LWIP_NETCONN_THREAD_SEM_GET();
 #else /* LWIP_NETCONN_SEM_PER_THREAD*/
