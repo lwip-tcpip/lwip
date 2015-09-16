@@ -970,6 +970,148 @@ lwip_send(int s, const void *data, size_t size, int flags)
 }
 
 int
+lwip_sendmsg(int s, const struct msghdr *msg, int flags)
+{
+  struct lwip_sock *sock;
+  struct netbuf *chain_buf;
+  u16_t remote_port;
+  int i;
+  int size;
+  err_t err;
+  u8_t write_flags;
+  size_t written;
+
+  size = 0;
+  err = ERR_OK;
+
+  sock = get_socket(s);
+  if (!sock) {
+    return -1;
+  }
+
+  LWIP_ERROR("lwip_sendmsg: invalid msghdr", msg != NULL,
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+
+  LWIP_UNUSED_ARG(msg->msg_control);
+  LWIP_UNUSED_ARG(msg->msg_controllen);
+  LWIP_UNUSED_ARG(msg->msg_flags);
+  LWIP_ERROR("lwip_sendmsg: invalid msghdr iov", (msg->msg_iov != NULL && msg->msg_iovlen != 0),
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+
+  if (NETCONNTYPE_GROUP(netconn_type(sock->conn)) == NETCONN_TCP) {
+#if LWIP_TCP
+    write_flags = NETCONN_COPY |
+    ((flags & MSG_MORE)     ? NETCONN_MORE      : 0) |
+    ((flags & MSG_DONTWAIT) ? NETCONN_DONTBLOCK : 0);
+
+    for(i = 0; i < msg->msg_iovlen; i++) {
+      written = 0;
+      err = netconn_write_partly(sock->conn, msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len, write_flags, &written);
+      if (err == ERR_OK) {
+        size += written;
+        /* check that the entire IO vector was accepected, if not return a partial write */
+        if (written != msg->msg_iov[i].iov_len)
+          break;
+      }
+      /* none of this IO vector was accepted, but previous was, return partial write and conceal ERR_WOULDBLOCK */
+      else if (err == ERR_WOULDBLOCK && size > 0) {
+        err = ERR_OK;
+        /* let ERR_WOULDBLOCK persist on the netconn since we are returning ERR_OK */
+        break;
+      } else {
+        size = -1;
+        break;
+      }
+    }
+    sock_set_errno(sock, err_to_errno(err));
+    return size;
+#else /* LWIP_TCP */
+    sock_set_errno(sock, err_to_errno(ERR_ARG));
+    return -1;
+#endif /* LWIP_TCP */
+  }
+  /* else, UDP and RAW NETCONNs */
+#if LWIP_UDP || LWIP_RAW
+
+  LWIP_UNUSED_ARG(flags);
+  LWIP_ERROR("lwip_sendmsg: invalid msghdr name", (((msg->msg_name == NULL) && (msg->msg_namelen == 0)) ||
+             IS_SOCK_ADDR_LEN_VALID(msg->msg_namelen)) ,
+             sock_set_errno(sock, err_to_errno(ERR_ARG)); return -1;);
+
+  /* initialize chain buffer with destination */
+  chain_buf = netbuf_new();
+  if (!chain_buf) {
+    sock_set_errno(sock, err_to_errno(ERR_MEM));
+    return -1;
+  }
+  if (msg->msg_name) {
+    SOCKADDR_TO_IPADDR_PORT((const struct sockaddr *)msg->msg_name, &chain_buf->addr, remote_port);
+    netbuf_fromport(chain_buf) = remote_port;
+  }
+#if LWIP_NETIF_TX_SINGLE_PBUF
+  for(i = 0; i < msg->msg_iovlen; i++) {
+    size += msg->msg_iov[i].iov_len;
+  }
+  /* Allocate a new netbuf and copy the data into it. */
+  if (netbuf_alloc(chain_buf, (u16_t)size) == NULL) {
+    err = ERR_MEM;
+  }
+  else {
+    /* flatten the IO vectors */
+    size_t offset = 0;
+    for(i = 0; i < msg->msg_iovlen; i++ ) {
+      MEMCPY(&((u8_t*)chain_buf->p->payload)[offset], msg->msg_iov[i].iov_base, msg->msg_iov[i].iov_len);
+      offset += msg->msg_iov[i].iov_len;
+    }
+#if LWIP_CHECKSUM_ON_COPY
+    /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
+    u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
+    netbuf_set_chksum(chain_buf, chksum);
+#endif /* LWIP_CHECKSUM_ON_COPY */
+  err = ERR_OK;
+  }
+#else /* LWIP_NETIF_TX_SINGLE_PBUF */
+  /* create a chained netbuf from the IO vectors */
+  err = netbuf_ref(chain_buf, msg->msg_iov[0].iov_base, (u16_t)msg->msg_iov[0].iov_len);
+  if (err == ERR_OK) {
+    struct netbuf *tail_buf;
+    size = msg->msg_iov[0].iov_len;
+    for(i = 1; i < msg->msg_iovlen; i++) {
+      tail_buf = netbuf_new();
+      if (!tail_buf) {
+        err = ERR_MEM;
+        break;
+      } else {
+        err = netbuf_ref(tail_buf, msg->msg_iov[i].iov_base, (u16_t)msg->msg_iov[i].iov_len);
+        if (err == ERR_OK) {
+          netbuf_chain(chain_buf, tail_buf);
+          size += msg->msg_iov[i].iov_len;
+        } else {
+          netbuf_delete(tail_buf);
+          break;
+        }
+      }
+    }
+  }
+#endif /* LWIP_NETIF_TX_SINGLE_PBUF */
+
+  if (err == ERR_OK) {
+    /* send the data */
+    err = netconn_send(sock->conn, chain_buf);
+  }
+
+  /* deallocated the buffer */
+  netbuf_delete(chain_buf);
+
+  sock_set_errno(sock, err_to_errno(err));
+  return (err == ERR_OK ? size : -1);
+#else /* LWIP_UDP || LWIP_RAW */
+  sock_set_errno(sock, err_to_errno(ERR_ARG));
+  return -1;
+#endif /* LWIP_UDP || LWIP_RAW */
+}
+
+int
 lwip_sendto(int s, const void *data, size_t size, int flags,
        const struct sockaddr *to, socklen_t tolen)
 {

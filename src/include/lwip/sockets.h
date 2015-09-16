@@ -136,6 +136,23 @@ struct lwip_setgetsockopt_data {
 };
 #endif /* !LWIP_TCPIP_CORE_LOCKING */
 
+#if !defined(iovec)
+struct iovec {
+  void  *iov_base;
+  size_t iov_len;
+};
+#endif
+
+struct msghdr {
+  void         *msg_name;
+  socklen_t     msg_namelen;
+  struct iovec *msg_iov;
+  int           msg_iovlen;
+  void         *msg_control;
+  socklen_t     msg_controllen;
+  int           msg_flags;
+};
+
 /* Socket protocol types (TCP/UDP/RAW) */
 #define SOCK_STREAM     1
 #define SOCK_DGRAM      2
@@ -442,6 +459,7 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #define lwip_recv         recv
 #define lwip_recvfrom     recvfrom
 #define lwip_send         send
+#define lwip_sendmsg      sendmsg
 #define lwip_sendto       sendto
 #define lwip_socket       socket
 #define lwip_select       select
@@ -473,6 +491,7 @@ int lwip_read(int s, void *mem, size_t len);
 int lwip_recvfrom(int s, void *mem, size_t len, int flags,
       struct sockaddr *from, socklen_t *fromlen);
 int lwip_send(int s, const void *dataptr, size_t size, int flags);
+int lwip_sendmsg(int s, const struct msghdr *message, int flags);
 int lwip_sendto(int s, const void *dataptr, size_t size, int flags,
     const struct sockaddr *to, socklen_t tolen);
 int lwip_socket(int domain, int type, int protocol);
@@ -497,6 +516,7 @@ int lwip_fcntl(int s, int cmd, int val);
 #define recv(s,mem,len,flags)                     lwip_recv(s,mem,len,flags)
 #define recvfrom(s,mem,len,flags,from,fromlen)    lwip_recvfrom(s,mem,len,flags,from,fromlen)
 #define send(s,dataptr,size,flags)                lwip_send(s,dataptr,size,flags)
+#define sendmsg(s,message,flags)                  lwip_sendmsg(s,message,flags)
 #define sendto(s,dataptr,size,flags,to,tolen)     lwip_sendto(s,dataptr,size,flags,to,tolen)
 #define socket(domain,type,protocol)              lwip_socket(domain,type,protocol)
 #define select(maxfdp1,readset,writeset,exceptset,timeout)     lwip_select(maxfdp1,readset,writeset,exceptset,timeout)
