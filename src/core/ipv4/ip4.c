@@ -349,13 +349,14 @@ return_noroute:
 }
 #endif /* IP_FORWARD */
 
-#if LWIP_IPV6
 /* If both IP versions are enabled, this function can dispatch packets to the correct one.
-* May be used as netif input function.
-*/
+ * If only IPv4 is enabled, this directly maps at ip4_input.
+ * May be used as netif input function.
+ */
 err_t
 ip_input(struct pbuf *p, struct netif *inp)
 {
+#if LWIP_IPV6
   if (p != NULL) {
     if (IP_HDR_GET_VERSION(p->payload) == 6) {
       return ip6_input(p, inp);
@@ -363,8 +364,10 @@ ip_input(struct pbuf *p, struct netif *inp)
     return ip4_input(p, inp);
   }
   return ERR_VAL;
+#else /* LWIP_IPV6 */
+  return ip4_input(p, inp);
+#endif /* LWIP_IPV6 */
 }
-#endif
 
 /**
  * This function is called by the network interface device driver when

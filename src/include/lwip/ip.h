@@ -267,7 +267,6 @@ extern struct ip_globals ip_data;
         ip6_2_ip(ip6_netif_get_local_ip(netif, ip_2_ip6(dest)), storage) : \
         ip4_2_ip(ip4_netif_get_local_ip(netif), storage))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
-err_t ip_input(struct pbuf *p, struct netif *inp);
 #elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */
 #define ip_output(isipv6, p, src, dest, ttl, tos, proto) \
         ip4_output(p, src, dest, ttl, tos, proto)
@@ -282,7 +281,6 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
 #define ip_netif_get_local_ip(isipv6, netif, dest, storage) \
         ip4_netif_get_local_ip(netif)
 #define ip_debug_print(is_ipv6, p) ip4_debug_print(p)
-#define ip_input(p, inp) ip4_input(p, inp)
 #elif LWIP_IPV6 /* LWIP_IPV4 && LWIP_IPV6 */
 #define ip_output(isipv6, p, src, dest, ttl, tos, proto) \
         ip6_output(p, src, dest, ttl, tos, proto)
@@ -297,13 +295,14 @@ err_t ip_input(struct pbuf *p, struct netif *inp);
 #define ip_netif_get_local_ip(isipv6, netif, dest, storage) \
         ip6_netif_get_local_ip(netif, dest)
 #define ip_debug_print(is_ipv6, p) ip6_debug_print(p)
-#define ip_input(p, inp) ip6_input(p, inp)
 #endif /* LWIP_IPV6 */
 
 #define ip_route_get_local_ip(isipv6, src, dest, netif, ipaddr, storage) do { \
   (netif) = ip_route(isipv6, src, dest); \
   (ipaddr) = ip_netif_get_local_ip(isipv6, netif, dest, storage); \
 }while(0)
+
+err_t ip_input(struct pbuf *p, struct netif *inp);
 
 #ifdef __cplusplus
 }

@@ -375,6 +375,17 @@ ip6_forward(struct pbuf *p, struct ip6_hdr *iphdr, struct netif *inp)
 }
 #endif /* LWIP_IPV6_FORWARD */
 
+#if !LWIP_IPV4
+/* If both IP versions are enabled, this function can dispatch packets to the correct one.
+ * If only IPv6 is enabled, this directly maps at ip6_input.
+ * May be used as netif input function.
+ */
+err_t
+ip_input(struct pbuf *p, struct netif *inp)
+{
+  return ip6_input(p, inp);
+}
+#endif /* !LWIP_IPV4 */
 
 /**
  * This function is called by the network interface device driver when
