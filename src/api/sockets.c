@@ -978,13 +978,10 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   struct netbuf *chain_buf;
   u16_t remote_port;
   int i;
-  int size;
-  err_t err;
   u8_t write_flags;
   size_t written;
-
-  size = 0;
-  err = ERR_OK;
+  int size = 0;
+  err_t err = ERR_OK;
 
   sock = get_socket(s);
   if (!sock) {
@@ -1066,11 +1063,13 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
       offset += msg->msg_iov[i].iov_len;
     }
 #if LWIP_CHECKSUM_ON_COPY
-    /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
-    u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
-    netbuf_set_chksum(chain_buf, chksum);
+    {
+      /* This can be improved by using LWIP_CHKSUM_COPY() and aggregating the checksum for each IO vector */
+      u16_t chksum = ~inet_chksum_pbuf(chain_buf->p);
+      netbuf_set_chksum(chain_buf, chksum);
+    }
 #endif /* LWIP_CHECKSUM_ON_COPY */
-  err = ERR_OK;
+    err = ERR_OK;
   }
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
   /* create a chained netbuf from the IO vectors */
