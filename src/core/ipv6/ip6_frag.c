@@ -336,7 +336,8 @@ ip6_reass(struct pbuf *p)
 #if IPV6_FRAG_COPYHEADER
     MEMCPY(&ipr->iphdr, ip6_current_header(), IP6_HLEN);
 #else /* IPV6_FRAG_COPYHEADER */
-    ipr->iphdr = (struct ip6_hdr *)ip6_current_header();
+    /* need to use the none-const pointer here: */
+    ipr->iphdr = ip_data.current_ip6_header;
 #endif /* IPV6_FRAG_COPYHEADER */
 
     /* copy the fragmented packet id. */
@@ -475,7 +476,8 @@ ip6_reass(struct pbuf *p)
       MEMCPY(&ipr->iphdr, ip6_current_header(), IP6_HLEN);
     }
 #else /* IPV6_FRAG_COPYHEADER */
-    ipr->iphdr = (struct ip6_hdr *)ip6_current_header();
+    /* need to use the none-const pointer here: */
+    ipr->iphdr = ip_data.current_ip6_header;
 #endif /* IPV6_FRAG_COPYHEADER */
   }
 
