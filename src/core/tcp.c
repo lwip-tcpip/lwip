@@ -701,7 +701,7 @@ tcp_recved(struct tcp_pcb *pcb, u16_t len)
     tcp_output(pcb);
   }
 
-  LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"U16_F" (%"U16_F").\n",
+  LWIP_DEBUGF(TCP_DEBUG, ("tcp_recved: received %"U16_F" bytes, wnd %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F").\n",
          len, pcb->rcv_wnd, TCP_WND_MAX(pcb) - pcb->rcv_wnd));
 }
 

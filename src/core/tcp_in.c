@@ -998,11 +998,11 @@ tcp_receive(struct tcp_pcb *pcb)
         /* stop persist timer */
           pcb->persist_backoff = 0;
       }
-      LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"U16_F"\n", pcb->snd_wnd));
+      LWIP_DEBUGF(TCP_WND_DEBUG, ("tcp_receive: window update %"TCPWNDSIZE_F"\n", pcb->snd_wnd));
 #if TCP_WND_DEBUG
     } else {
-      if (pcb->snd_wnd != SND_WND_SCALE(pcb, tcphdr->wnd)) {
-        LWIP_DEBUGF(TCP_WND_DEBUG, 
+      if (pcb->snd_wnd != (tcpwnd_size_t)SND_WND_SCALE(pcb, tcphdr->wnd)) {
+        LWIP_DEBUGF(TCP_WND_DEBUG,
                     ("tcp_receive: no window update lastack %"U32_F" ackno %"
                      U32_F" wl1 %"U32_F" seqno %"U32_F" wl2 %"U32_F"\n",
                      pcb->lastack, ackno, pcb->snd_wl1, seqno, pcb->snd_wl2));

@@ -322,7 +322,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
 
   /* fail on too much data */
   if (len > pcb->snd_buf) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too much data (len=%"U16_F" > snd_buf=%"U16_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too much data (len=%"U16_F" > snd_buf=%"TCPWNDSIZE_F")\n",
       len, pcb->snd_buf));
     pcb->flags |= TF_NAGLEMEMERR;
     return ERR_MEM;
@@ -334,7 +334,7 @@ tcp_write_checks(struct tcp_pcb *pcb, u16_t len)
    * configured maximum, return an error */
   /* check for configured max queuelen and possible overflow */
   if ((pcb->snd_queuelen >= TCP_SND_QUEUELEN) || (pcb->snd_queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too long queue %"TCPWNDSIZE_F" (max %"TCPWNDSIZE_F")\n",
+    LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 3, ("tcp_write: too long queue %"U16_F" (max %"U16_F")\n",
       pcb->snd_queuelen, TCP_SND_QUEUELEN));
     TCP_STATS_INC(tcp.memerr);
     pcb->flags |= TF_NAGLEMEMERR;
@@ -604,7 +604,8 @@ tcp_write(struct tcp_pcb *pcb, const void *arg, u16_t len, u8_t apiflags)
      * length of the queue exceeds the configured maximum or
      * overflows. */
     if ((queuelen > TCP_SND_QUEUELEN) || (queuelen > TCP_SNDQUEUELEN_OVERFLOW)) {
-      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: queue too long %"TCPWNDSIZE_F" (%"TCPWNDSIZE_F")\n", queuelen, TCP_SND_QUEUELEN));
+      LWIP_DEBUGF(TCP_OUTPUT_DEBUG | 2, ("tcp_write: queue too long %"U16_F" (%d)\n",
+        queuelen, (int)TCP_SND_QUEUELEN));
       pbuf_free(p);
       goto memerr;
     }
@@ -1455,7 +1456,7 @@ tcp_rexmit_fast(struct tcp_pcb *pcb)
     /* The minimum value for ssthresh should be 2 MSS */
     if (pcb->ssthresh < (2U * pcb->mss)) {
       LWIP_DEBUGF(TCP_FR_DEBUG, 
-                  ("tcp_receive: The minimum value for ssthresh %"U16_F
+                  ("tcp_receive: The minimum value for ssthresh %"TCPWNDSIZE_F
                    " should be min 2 mss %"U16_F"...\n",
                    pcb->ssthresh, 2*pcb->mss));
       pcb->ssthresh = 2*pcb->mss;
