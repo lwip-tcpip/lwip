@@ -226,6 +226,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
         prev->next = pcb->next;
         pcb->next = tcp_active_pcbs;
         tcp_active_pcbs = pcb;
+      } else {
+        TCP_STATS_INC(tcp.cachehit);
       }
       LWIP_ASSERT("tcp_input: pcb->next != pcb (after cache)", pcb->next != pcb);
       break;
@@ -303,6 +305,8 @@ tcp_input(struct pbuf *p, struct netif *inp)
         lpcb->next = tcp_listen_pcbs.listen_pcbs;
               /* put this listening pcb at the head of the listening list */
         tcp_listen_pcbs.listen_pcbs = lpcb;
+      } else {
+        TCP_STATS_INC(tcp.cachehit);
       }
     
       LWIP_DEBUGF(TCP_INPUT_DEBUG, ("tcp_input: packed for LISTENing connection.\n"));
