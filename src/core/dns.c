@@ -488,9 +488,10 @@ dns_init_local(void)
     entry = (struct local_hostlist_entry *)memp_malloc(MEMP_LOCALHOSTLIST);
     LWIP_ASSERT("mem-error in dns_init_local", entry != NULL);
     if (entry != NULL) {
-      entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
-      MEMCPY((char*)entry->name, init_entry->name, namelen);
-      ((char*)entry->name)[namelen] = 0;
+      char* entry_name = (char*)entry + sizeof(struct local_hostlist_entry);
+      MEMCPY(entry_name, init_entry->name, namelen);
+      entry_name[namelen] = 0;
+      entry->name = entry_name;
       entry->addr = init_entry->addr;
       entry->next = local_hostlist_dynamic;
       local_hostlist_dynamic = entry;
@@ -586,6 +587,7 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
 {
   struct local_hostlist_entry *entry;
   size_t namelen;
+  char* entry_name;
   LWIP_ASSERT("invalid host name (NULL)", hostname != NULL);
   namelen = strlen(hostname);
   LWIP_ASSERT("namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN", namelen <= DNS_LOCAL_HOSTLIST_MAX_NAMELEN);
@@ -593,9 +595,10 @@ dns_local_addhost(const char *hostname, const ip_addr_t *addr)
   if (entry == NULL) {
     return ERR_MEM;
   }
-  entry->name = (char*)entry + sizeof(struct local_hostlist_entry);
-  MEMCPY((char*)entry->name, hostname, namelen);
-  ((char*)entry->name)[namelen] = 0;
+  entry_name = (char*)entry + sizeof(struct local_hostlist_entry);
+  MEMCPY(entry_name, hostname, namelen);
+  entry_name[namelen] = 0;
+  entry->name = entry_name;
   ip_addr_copy(entry->addr, *addr);
   entry->next = local_hostlist_dynamic;
   local_hostlist_dynamic = entry;
