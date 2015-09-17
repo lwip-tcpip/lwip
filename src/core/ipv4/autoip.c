@@ -456,6 +456,10 @@ autoip_tmr(void)
             }
           }
           break;
+
+        default:
+          /* nothing to do in other states */
+          break;
       }
     }
     /* proceed to next network interface */

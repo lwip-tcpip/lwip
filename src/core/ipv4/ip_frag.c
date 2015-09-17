@@ -769,7 +769,7 @@ ip4_frag(struct pbuf *p, struct netif *netif, const ip4_addr_t *dest)
     }
     /* fill in the IP header */
     SMEMCPY(rambuf->payload, original_iphdr, IP_HLEN);
-    iphdr = rambuf->payload;
+    iphdr = (struct ip_hdr*)rambuf->payload;
 #else /* LWIP_NETIF_TX_SINGLE_PBUF */
     /* When not using a static buffer, create a chain of pbufs.
      * The first will be a PBUF_RAM holding the link and IP header.
