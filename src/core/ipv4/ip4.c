@@ -336,8 +336,10 @@ ip4_forward(struct pbuf *p, struct ip_hdr *iphdr, struct netif *inp)
       /* @todo: send ICMP Destination Unreachable code 13 "Communication administratively prohibited"? */
 #endif /* IP_FRAG */
     } else {
+#if LWIP_ICMP
       /* send ICMP Destination Unreachable code 4: "Fragmentation Needed and DF Set" */
       icmp_dest_unreach(p, ICMP_DUR_FRAG);
+#endif /* LWIP_ICMP */
     }
     return;
   }

@@ -77,8 +77,8 @@
 #if (!LWIP_UDP && LWIP_DHCP)
   #error "If you want to use DHCP, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
-#if (!LWIP_UDP && LWIP_IGMP)
-  #error "If you want to use IGMP, you have to define LWIP_UDP=1 in your lwipopts.h"
+#if (!LWIP_UDP && LWIP_MULTICAST_TX_OPTIONS)
+  #error "If you want to use IGMP/LWIP_MULTICAST_TX_OPTIONS, you have to define LWIP_UDP=1 in your lwipopts.h"
 #endif
 #if (!LWIP_UDP && LWIP_SNMP)
   #error "If you want to use SNMP, you have to define LWIP_UDP=1 in your lwipopts.h"

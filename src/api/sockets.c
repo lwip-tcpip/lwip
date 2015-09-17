@@ -978,8 +978,10 @@ lwip_sendmsg(int s, const struct msghdr *msg, int flags)
   struct netbuf *chain_buf;
   u16_t remote_port;
   int i;
+#if LWIP_TCP
   u8_t write_flags;
   size_t written;
+#endif
   int size = 0;
   err_t err = ERR_OK;
 
@@ -1848,6 +1850,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
   case SOL_SOCKET:
     switch (optname) {
 
+#if LWIP_TCP
     case SO_ACCEPTCONN:
       LWIP_SOCKOPT_CHECK_OPTLEN_CONN_PCB(sock, *optlen, int);
       if (NETCONNTYPE_GROUP(sock->conn->type) != NETCONN_TCP) {
@@ -1859,6 +1862,7 @@ lwip_getsockopt_impl(int s, int level, int optname, void *optval, socklen_t *opt
         *(int*)optval = 0;
       }
       break;
+#endif /* LWIP_TCP */
 
     /* The option flags */
     case SO_BROADCAST:
