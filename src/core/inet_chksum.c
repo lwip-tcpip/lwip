@@ -40,6 +40,7 @@
 
 #include "lwip/inet_chksum.h"
 #include "lwip/def.h"
+#include "lwip/ip_addr.h"
 
 #include <stddef.h>
 #include <string.h>
@@ -385,7 +386,7 @@ ip_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
 {
 #if LWIP_IPV6
   if (IP_IS_V6(dest)) {
-    return ip6_chksum_pseudo(p, proto, proto_len, ip_2_ip6(src), ip_2_ip6(dest));
+    return ip6_chksum_pseudo(p, proto, proto_len, ip_2_ip6_c(src), ip_2_ip6_c(dest));
   }
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4 && LWIP_IPV6
@@ -393,7 +394,7 @@ ip_chksum_pseudo(struct pbuf *p, u8_t proto, u16_t proto_len,
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #if LWIP_IPV4
   {
-    return inet_chksum_pseudo(p, proto, proto_len, ip_2_ip4(src), ip_2_ip4(dest));
+    return inet_chksum_pseudo(p, proto, proto_len, ip_2_ip4_c(src), ip_2_ip4_c(dest));
   }
 #endif /* LWIP_IPV4 */
 }
@@ -532,7 +533,7 @@ ip_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 {
 #if LWIP_IPV6
   if (IP_IS_V6(dest)) {
-    return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip6(src), ip_2_ip6(dest));
+    return ip6_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip6_c(src), ip_2_ip6_c(dest));
   }
 #endif /* LWIP_IPV6 */
 #if LWIP_IPV4 && LWIP_IPV6
@@ -540,7 +541,7 @@ ip_chksum_pseudo_partial(struct pbuf *p, u8_t proto, u16_t proto_len,
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
 #if LWIP_IPV4
   {
-    return inet_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip4(src), ip_2_ip4(dest));
+    return inet_chksum_pseudo_partial(p, proto, proto_len, chksum_len, ip_2_ip4_c(src), ip_2_ip4_c(dest));
   }
 #endif /* LWIP_IPV4 */
 }

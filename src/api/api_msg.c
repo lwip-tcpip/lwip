@@ -1770,11 +1770,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
 #if LWIP_IPV6 && LWIP_IPV6_MLD
         if (PCB_ISIPV6(msg->conn->pcb.udp)) {
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = mld6_joingroup(ip_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = mld6_joingroup(ip_2_ip6_c(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip6_c(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = mld6_leavegroup(ip_2_ip6(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ip_2_ip6(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = mld6_leavegroup(ip_2_ip6_c(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip6_c(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
         }
         else
@@ -1782,11 +1782,11 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
         {
 #if LWIP_IGMP
           if (msg->msg.jl.join_or_leave == NETCONN_JOIN) {
-            msg->err = igmp_joingroup(ip_2_ip4(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = igmp_joingroup(ip_2_ip4_c(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip4_c(API_EXPR_REF(msg->msg.jl.multiaddr)));
           } else {
-            msg->err = igmp_leavegroup(ip_2_ip4(API_EXPR_REF(msg->msg.jl.netif_addr)),
-              ip_2_ip4(API_EXPR_REF(msg->msg.jl.multiaddr)));
+            msg->err = igmp_leavegroup(ip_2_ip4_c(API_EXPR_REF(msg->msg.jl.netif_addr)),
+              ip_2_ip4_c(API_EXPR_REF(msg->msg.jl.multiaddr)));
           }
 #endif /* LWIP_IGMP */
         }

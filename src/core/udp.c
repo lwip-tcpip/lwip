@@ -158,7 +158,9 @@ udp_input(struct pbuf *p, struct netif *inp)
   struct udp_pcb *uncon_pcb;
   u16_t src, dest;
   u8_t local_match;
+#if LWIP_IPV4
   u8_t broadcast;
+#endif /* LWIP_IPV4 */
   u8_t for_us;
 
   LWIP_UNUSED_ARG(inp);
@@ -181,8 +183,10 @@ udp_input(struct pbuf *p, struct netif *inp)
 
   udphdr = (struct udp_hdr *)p->payload;
 
+#if LWIP_IPV4
   /* is broadcast packet ? */
   broadcast = ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif());
+#endif /* LWIP_IPV4 */
 
   LWIP_DEBUGF(UDP_DEBUG, ("udp_input: received datagram of length %"U16_F"\n", p->tot_len));
 
@@ -653,7 +657,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #if LWIP_IPV6
   if (PCB_ISIPV6(pcb)) {
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip))) {
-      src_ip = ip6_2_ip(ip6_select_source_address(netif, ip_2_ip6(dst_ip)), &src_ip_tmp);
+      src_ip = ip6_2_ip(ip6_select_source_address(netif, ip_2_ip6_c(dst_ip)), &src_ip_tmp);
       if (src_ip == NULL) {
         /* No suitable source address was found. */
         return ERR_RTE;

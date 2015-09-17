@@ -38,6 +38,8 @@
 
 #if LWIP_DNS
 
+#include "lwip/ip_addr.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -88,7 +90,7 @@ typedef void (*dns_found_callback)(const char *name, ip_addr_t *ipaddr, void *ca
 
 void           dns_init(void);
 void           dns_tmr(void);
-void           dns_setserver(u8_t numdns, ip_addr_t *dnsserver);
+void           dns_setserver(u8_t numdns, const ip_addr_t *dnsserver);
 ip_addr_t      dns_getserver(u8_t numdns);
 err_t          dns_gethostbyname(const char *hostname, ip_addr_t *addr,
                                  dns_found_callback found, void *callback_arg);

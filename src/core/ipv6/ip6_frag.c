@@ -269,7 +269,7 @@ ip6_reass(struct pbuf *p)
   IP6_FRAG_STATS_INC(ip6_frag.recv);
 
   LWIP_ASSERT("ip6_frag_hdr must be in the first pbuf, not chained",
-     (void*)ip6_current_header() == ((u8_t*)p->payload) - IP6_HLEN);
+     (const void*)ip6_current_header() == ((u8_t*)p->payload) - IP6_HLEN);
 
   frag_hdr = (struct ip6_frag_hdr *) p->payload;
 
@@ -281,7 +281,7 @@ ip6_reass(struct pbuf *p)
    * Adjust for headers before Fragment Header.
    * And finally adjust by Fragment Header length. */
   len = ntohs(ip6_current_header()->_plen);
-  len -= (u16_t)(((u8_t*)p->payload - (u8_t*)ip6_current_header()) - IP6_HLEN);
+  len -= (u16_t)(((u8_t*)p->payload - (const u8_t*)ip6_current_header()) - IP6_HLEN);
   len -= IP6_FRAG_HLEN;
 
   /* Look for the datagram the fragment belongs to in the current datagram queue,

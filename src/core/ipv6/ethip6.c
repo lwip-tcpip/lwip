@@ -151,10 +151,10 @@ ethip6_output(struct netif *netif, struct pbuf *q, const ip6_addr_t *ip6addr)
     /* Hash IP multicast address to MAC address.*/
     dest.addr[0] = 0x33;
     dest.addr[1] = 0x33;
-    dest.addr[2] = ((u8_t *)(&(ip6addr->addr[3])))[0];
-    dest.addr[3] = ((u8_t *)(&(ip6addr->addr[3])))[1];
-    dest.addr[4] = ((u8_t *)(&(ip6addr->addr[3])))[2];
-    dest.addr[5] = ((u8_t *)(&(ip6addr->addr[3])))[3];
+    dest.addr[2] = ((const u8_t *)(&(ip6addr->addr[3])))[0];
+    dest.addr[3] = ((const u8_t *)(&(ip6addr->addr[3])))[1];
+    dest.addr[4] = ((const u8_t *)(&(ip6addr->addr[3])))[2];
+    dest.addr[5] = ((const u8_t *)(&(ip6addr->addr[3])))[3];
 
     /* Send out. */
     return ethip6_send(netif, q, (struct eth_addr*)(netif->hwaddr), &dest);
