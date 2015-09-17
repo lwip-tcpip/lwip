@@ -80,8 +80,8 @@ static int chap_md5_verify_response(ppp_pcb *pcb, int id, const char *name,
 		/* Generate hash of ID, secret, challenge */
 		md5_starts(&ctx);
 		md5_update(&ctx, &idbyte, 1);
-		md5_update(&ctx, (unsigned char*)secret, secret_len);
-		md5_update(&ctx, (unsigned char*)challenge, challenge_len);
+		md5_update(&ctx, secret, secret_len);
+		md5_update(&ctx, challenge, challenge_len);
 		md5_finish(&ctx, hash);
 
 		/* Test if our hash matches the peer's response */

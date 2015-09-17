@@ -288,7 +288,7 @@ static int chapms_verify_response(ppp_pcb *pcb, int id, const char *name,
 #endif
 
 	/* Generate the expected response. */
-	ChapMS(pcb, (u_char *)challenge, (char *)secret, secret_len, md);
+	ChapMS(pcb, (const u_char *)challenge, (const char *)secret, secret_len, md);
 
 #ifdef MSLANMAN
 	/* Determine which part of response to verify against */
@@ -327,8 +327,8 @@ static int chapms2_verify_response(ppp_pcb *pcb, int id, const char *name,
 		goto bad;	/* not even the right length */
 
 	/* Generate the expected response and our mutual auth. */
-	ChapMS2(pcb, (u_char*)challenge, (u_char*)&response[MS_CHAP2_PEER_CHALLENGE], (char*)name,
-		(char *)secret, secret_len, md,
+	ChapMS2(pcb, (const u_char*)challenge, (const u_char*)&response[MS_CHAP2_PEER_CHALLENGE], name,
+		(const char *)secret, secret_len, md,
 		(unsigned char *)saresponse, MS_CHAP2_AUTHENTICATOR);
 
 	/* compare MDs and send the appropriate status */
