@@ -246,7 +246,9 @@ union sockaddr_aligned {
 #if LWIP_IPV6
    struct sockaddr_in6 sin6;
 #endif /* LWIP_IPV6 */
+#if LWIP_IPV4
    struct sockaddr_in sin;
+#endif /* LWIP_IPV4 */
 };
 
 #if LWIP_IGMP

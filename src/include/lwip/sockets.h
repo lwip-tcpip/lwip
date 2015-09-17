@@ -59,6 +59,7 @@ typedef u8_t sa_family_t;
 typedef u16_t in_port_t;
 #endif
 
+#if LWIP_IPV4
 /* members are in network byte order */
 struct sockaddr_in {
   u8_t            sin_len;
@@ -68,6 +69,7 @@ struct sockaddr_in {
 #define SIN_ZERO_LEN 8
   char            sin_zero[SIN_ZERO_LEN];
 };
+#endif /* LWIP_IPV4 */
 
 #if LWIP_IPV6
 struct sockaddr_in6 {

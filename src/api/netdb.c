@@ -346,7 +346,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
     }
   }
 
-  total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_in);
+  total_size = sizeof(struct addrinfo) + sizeof(struct sockaddr_storage);
   if (nodename != NULL) {
     namelen = strlen(nodename);
     if (namelen > DNS_MAX_NAME_LENGTH) {
@@ -395,11 +395,11 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
   }
   if (nodename != NULL) {
     /* copy nodename to canonname if specified */
-    ai->ai_canonname = ((char*)ai + sizeof(struct addrinfo) + sizeof(struct sockaddr_in));
+    ai->ai_canonname = ((char*)ai + sizeof(struct addrinfo) + sizeof(struct sockaddr_storage));
     MEMCPY(ai->ai_canonname, nodename, namelen);
     ai->ai_canonname[namelen] = 0;
   }
-  ai->ai_addrlen = sizeof(struct sockaddr_in);
+  ai->ai_addrlen = sizeof(struct sockaddr_storage);
   ai->ai_addr = (struct sockaddr*)sa;
 
   *res = ai;
