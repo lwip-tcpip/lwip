@@ -141,7 +141,7 @@ static const ip4_addr_t* ip_2_ip4_c(const ip_addr_t *ipaddr)
   ip4_addr_isany_val(*ip_2_ip4(&(ipaddr))))
 #define ip_addr_isbroadcast(ipaddr, netif) ((IP_IS_V6(ipaddr)) ? \
   0 : \
-  ip4_addr_isbroadcast(ip_2_ip4(ipaddr), netif))
+  ip4_addr_isbroadcast(ip_2_ip4_c(ipaddr), netif))
 #define ip_addr_ismulticast(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
   ip6_addr_ismulticast(ip_2_ip6_c(ipaddr)) : \
   ip4_addr_ismulticast(ip_2_ip4_c(ipaddr)))

@@ -524,7 +524,7 @@ dns_lookup_local(const char *hostname, ip_addr_t *addr LWIP_DNS_ADDRTYPE_ARG(u8_
     entry = entry->next;
   }
 #else /* DNS_LOCAL_HOSTLIST_IS_DYNAMIC */
-  int i;
+  size_t i;
   for (i = 0; i < sizeof(local_hostlist_static) / sizeof(struct local_hostlist_entry); i++) {
     if ((LWIP_DNS_STRICMP(local_hostlist_static[i].name, hostname) == 0) &&
         LWIP_DNS_ADDRTYPE_MATCH_IP(dns_addrtype, local_hostlist_static[i].addr)) {

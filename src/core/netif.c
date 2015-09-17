@@ -772,6 +772,7 @@ netif_loop_output(struct netif *netif, struct pbuf *p)
   return ERR_OK;
 }
 
+#if LWIP_HAVE_LOOPIF
 #if LWIP_IPV4
 static err_t
 netif_loop_output_ipv4(struct netif *netif, struct pbuf *p, const ip4_addr_t* addr)
@@ -788,7 +789,8 @@ netif_loop_output_ipv6(struct netif *netif, struct pbuf *p, const ip6_addr_t* ad
   LWIP_UNUSED_ARG(addr);
   return netif_loop_output(netif, p);
 }
-#endif
+#endif /* LWIP_IPV6 */
+#endif /* LWIP_HAVE_LOOPIF */
 
 
 /**
