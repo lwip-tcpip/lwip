@@ -244,7 +244,7 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
   ip_addr_copy_from_ip4(*ip_current_dest_addr(), iphdr->dest);
   ip_addr_copy_from_ip4(*ip_current_src_addr(), iphdr->src);
   ip_current_netif() = inp;
-  ip4_current_header() = iphdr;
+  ip_data.current_ip4_header = iphdr;
 
   /* since adding IPv6, p->payload must point to tcp header, not ip header */
   pbuf_header(p, -(s16_t)sizeof(struct ip_hdr));
@@ -254,7 +254,7 @@ void test_tcp_input(struct pbuf *p, struct netif *inp)
   ip_addr_set_zero(ip_current_dest_addr());
   ip_addr_set_zero(ip_current_src_addr());
   ip_current_netif() = NULL;
-  ip4_current_header() = NULL;
+  ip_data.current_ip4_header = NULL;
 }
 
 static err_t test_tcp_netif_output(struct netif *netif, struct pbuf *p,
