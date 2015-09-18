@@ -906,12 +906,6 @@ void start_networks(ppp_pcb *pcb) {
     int i;
     const struct protent *protp;
 #endif /* CCP_SUPPORT || ECP_SUPPORT */
-#if ECP_SUPPORT
-    int ecp_required;
-#endif /* ECP_SUPPORT */
-#if MPPE_SUPPORT
-    int mppe_required;
-#endif /* MPPE_SUPPORT */
 
     new_phase(pcb, PPP_PHASE_NETWORK);
 
@@ -950,19 +944,12 @@ void start_networks(ppp_pcb *pcb) {
     /*
      * Bring up other network protocols iff encryption is not required.
      */
-#if ECP_SUPPORT
-    ecp_required = ecp_gotoptions[unit].required;
-#endif /* ECP_SUPPORT */
-#if MPPE_SUPPORT
-    mppe_required = pcb->ccp_gotoptions.mppe;
-#endif /* MPPE_SUPPORT */
-
     if (1
 #if ECP_SUPPORT
-        && !ecp_required
+        && !ecp_gotoptions[unit].required
 #endif /* ECP_SUPPORT */
 #if MPPE_SUPPORT
-        && !mppe_required
+        && !pcb->ccp_gotoptions.mppe
 #endif /* MPPE_SUPPORT */
         )
 	continue_networks(pcb);
