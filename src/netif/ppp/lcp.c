@@ -2573,7 +2573,7 @@ static int lcp_printpkt(const u_char *p, int plen,
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
 	    printer(arg, " ");
-	    ppp_print_string((char *)p, len, printer, arg);
+	    ppp_print_string(p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
@@ -2605,7 +2605,7 @@ static int lcp_printpkt(const u_char *p, int plen,
 	}
 	if (len > 0) {
 	    printer(arg, " ");
-	    ppp_print_string((char *)p, len, printer, arg);
+	    ppp_print_string(p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}

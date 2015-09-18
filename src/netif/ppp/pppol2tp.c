@@ -114,7 +114,7 @@ static const struct link_callbacks pppol2tp_callbacks = {
 /* Create a new L2TP session. */
 ppp_pcb *pppol2tp_create(struct netif *pppif,
        struct netif *netif, ip_addr_t *ipaddr, u16_t port,
-       u8_t *secret, u8_t secret_len,
+       const u8_t *secret, u8_t secret_len,
        ppp_link_status_cb_fn link_status_cb, void *ctx_cb) {
   ppp_pcb *ppp;
   pppol2tp_pcb *l2tp;

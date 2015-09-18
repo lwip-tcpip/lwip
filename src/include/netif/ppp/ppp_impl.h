@@ -607,7 +607,7 @@ int  str_to_epdisc (struct epdisc *, char *); /* endpt disc. from str */
 #endif
 
 /* Procedures exported from utils.c. */
-void ppp_print_string(char *p, int len, void (*printer) (void *, const char *, ...), void *arg);   /* Format a string for output */
+void ppp_print_string(const u_char *p, int len, void (*printer) (void *, const char *, ...), void *arg);   /* Format a string for output */
 int ppp_slprintf(char *buf, int buflen, const char *fmt, ...);            /* sprintf++ */
 int ppp_vslprintf(char *buf, int buflen, const char *fmt, va_list args);  /* vsprintf++ */
 size_t ppp_strlcpy(char *dest, const char *src, size_t len);        /* safe strcpy */

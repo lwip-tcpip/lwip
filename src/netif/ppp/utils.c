@@ -569,7 +569,7 @@ pr_log (void *arg, const char *fmt, ...)
  * ppp_print_string - print a readable representation of a string using
  * printer.
  */
-void ppp_print_string(char *p, int len, void (*printer) (void *, const char *, ...), void *arg) {
+void ppp_print_string(const u_char *p, int len, void (*printer) (void *, const char *, ...), void *arg) {
     int c;
 
     printer(arg, "\"");

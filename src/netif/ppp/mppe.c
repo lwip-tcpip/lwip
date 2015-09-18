@@ -115,9 +115,9 @@ void
 mppe_init(ppp_pcb *pcb, ppp_mppe_state *state, u8_t options)
 {
 #if PPP_DEBUG
-	const u8_t *debugstr = (u8_t*)"mppe_comp_init";
+	const u8_t *debugstr = (const u8_t*)"mppe_comp_init";
 	if (&pcb->mppe_decomp == state) {
-	    debugstr = (u8_t*)"mppe_decomp_init";
+	    debugstr = (const u8_t*)"mppe_decomp_init";
 	}
 #endif /* PPP_DEBUG */
 

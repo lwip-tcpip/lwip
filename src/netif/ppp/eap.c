@@ -1019,7 +1019,7 @@ static void eap_protrej(ppp_pcb *pcb) {
 /*
  * Format and send a regular EAP Response message.
  */
-static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, u_char *str, int lenstr) {
+static void eap_send_response(ppp_pcb *pcb, u_char id, u_char typenum, const u_char *str, int lenstr) {
 	struct pbuf *p;
 	u_char *outp;
 	int msglen;
@@ -1388,7 +1388,7 @@ static void eap_request(ppp_pcb *pcb, u_char *inp, int id, int len) {
 			pcb->eap.es_usedpseudo = 2;
 		}
 #endif /* USE_SRP */
-		eap_send_response(pcb, id, typenum, (u_char*)pcb->eap.es_client.ea_name,
+		eap_send_response(pcb, id, typenum, (const u_char*)pcb->eap.es_client.ea_name,
 		    pcb->eap.es_client.ea_namelen);
 		break;
 
@@ -2173,7 +2173,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 		case EAPT_NOTIFICATION:
 			if (len > 0) {
 				printer(arg, " <Message ");
-				ppp_print_string((char *)inp, len, printer, arg);
+				ppp_print_string(inp, len, printer, arg);
 				printer(arg, ">");
 				INCPTR(len, inp);
 				len = 0;
@@ -2194,7 +2194,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			len -= vallen;
 			if (len > 0) {
 				printer(arg, " <Name ");
-				ppp_print_string((char *)inp, len, printer, arg);
+				ppp_print_string(inp, len, printer, arg);
 				printer(arg, ">");
 				INCPTR(len, inp);
 				len = 0;
@@ -2217,7 +2217,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 					goto truncated;
 				if (vallen > 0) {
 					printer(arg, " <Name ");
-					ppp_print_string((char *)inp, vallen, printer,
+					ppp_print_string(inp, vallen, printer,
 					    arg);
 					printer(arg, ">");
 				} else {
@@ -2311,7 +2311,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 		case EAPT_IDENTITY:
 			if (len > 0) {
 				printer(arg, " <Name ");
-				ppp_print_string((char *)inp, len, printer, arg);
+				ppp_print_string(inp, len, printer, arg);
 				printer(arg, ">");
 				INCPTR(len, inp);
 				len = 0;
@@ -2346,7 +2346,7 @@ static int eap_printpkt(const u_char *inp, int inlen, void (*printer) (void *, c
 			len -= vallen;
 			if (len > 0) {
 				printer(arg, " <Name ");
-				ppp_print_string((char *)inp, len, printer, arg);
+				ppp_print_string(inp, len, printer, arg);
 				printer(arg, ">");
 				INCPTR(len, inp);
 				len = 0;

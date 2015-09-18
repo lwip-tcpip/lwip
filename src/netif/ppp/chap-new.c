@@ -626,12 +626,12 @@ static int chap_print_pkt(const unsigned char *p, int plen,
 			printer(arg, "%.2x", x);
 		}
 		printer(arg, ">, name = ");
-		ppp_print_string((char *)p, nlen, printer, arg);
+		ppp_print_string(p, nlen, printer, arg);
 		break;
 	case CHAP_FAILURE:
 	case CHAP_SUCCESS:
 		printer(arg, " ");
-		ppp_print_string((char *)p, len, printer, arg);
+		ppp_print_string(p, len, printer, arg);
 		break;
 	default:
 		for (clen = len; clen > 0; --clen) {

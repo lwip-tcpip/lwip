@@ -1628,7 +1628,7 @@ static int ccp_printpkt(const u_char *p, int plen, void (*printer) (void *, cons
     case TERMACK:
     case TERMREQ:
 	if (len > 0 && *p >= ' ' && *p < 0x7f) {
-	    ppp_print_string((char *)p, len, printer, arg);
+	    ppp_print_string(p, len, printer, arg);
 	    p += len;
 	    len = 0;
 	}
