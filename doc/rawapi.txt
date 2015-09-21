@@ -92,8 +92,8 @@ program using the raw TCP/IP interface.
 
 Do not confuse the LwIP raw API with raw ethernet or ip sockets.
 The former is a way of interfacing the lwip network stack (including
-tcp and udp), the later refers to processing raw ethernet or ip data
-instead of tcp connections or udp packets.
+TCP and UDP), the later refers to processing raw ethernet or ip data
+instead of TCP connections or UDP packets.
 
 Raw API applications may never block since all packet processing
 (input and output) as well as timer processing (TCP mainly) is done
