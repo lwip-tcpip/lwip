@@ -90,9 +90,9 @@ All APIs can be used simultaneously by different application
 programs. In fact, the sequential API is implemented as an application
 program using the raw TCP/IP interface.
 
-Do not confuse the LwIP raw API with raw ethernet or ip sockets.
-The former is a way of interfacing the lwip network stack (including
-TCP and UDP), the later refers to processing raw ethernet or ip data
+Do not confuse the lwIP raw API with raw Ethernet or IP sockets.
+The former is a way of interfacing the lwIP network stack (including
+TCP and UDP), the later refers to processing raw Ethernet or IP data
 instead of TCP connections or UDP packets.
 
 Raw API applications may never block since all packet processing
@@ -382,7 +382,7 @@ level of complexity of UDP, the interface is significantly simpler.
 
 --- System initalization
 
-A truly complete and generic sequence for initializing the lwip stack
+A truly complete and generic sequence for initializing the lwIP stack
 cannot be given because it depends on additional initializations for
 your runtime environment (e.g. timers).
 
@@ -406,7 +406,7 @@ Call these functions in the order of appearance:
   or fill them with sane numbers otherwise. The state pointer may be NULL.
 
   The init function pointer must point to a initialization function for
-  your ethernet netif interface. The following code illustrates it's use.
+  your Ethernet netif interface. The following code illustrates its use.
   
   err_t netif_if_init(struct netif *netif)
   {
@@ -419,7 +419,7 @@ Call these functions in the order of appearance:
     return ERR_OK;
   }
   
-  For ethernet drivers, the input function pointer must point to the lwip
+  For Ethernet drivers, the input function pointer must point to the lwIP
   function ethernet_input() declared in "netif/etharp.h". Other drivers
   must use ip_input() declared in "lwip/ip.h".
   
