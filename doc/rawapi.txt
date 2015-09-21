@@ -303,17 +303,6 @@ function to be called is set using the tcp_err() function.
   parameter since the pcb may already have been deallocated.
 
 
---- Lower layer TCP interface
-
-TCP provides a simple interface to the lower layers of the
-system. During system initialization, the function tcp_init() has
-to be called before any other TCP function is called. When the system
-is running, the two timer functions tcp_fasttmr() and tcp_slowtmr()
-must be called with regular intervals. The tcp_fasttmr() should be
-called every TCP_FAST_INTERVAL milliseconds (defined in tcp.h) and
-tcp_slowtmr() should be called every TCP_SLOW_INTERVAL milliseconds. 
-
-
 --- UDP interface
 
 The UDP interface is similar to that of TCP, but due to the lower
@@ -365,8 +354,8 @@ level of complexity of UDP, the interface is significantly simpler.
 --- System initalization
 
 A truly complete and generic sequence for initializing the lwip stack
-cannot be given because it depends on the build configuration (lwipopts.h)
-and additional initializations for your runtime environment (e.g. timers).
+cannot be given because it depends on additional initializations for
+your runtime environment (e.g. timers).
 
 We can give you some idea on how to proceed when using the raw API.
 We assume a configuration using a single Ethernet netif and the
@@ -374,51 +363,13 @@ UDP and TCP transport layers, IPv4 and the DHCP client.
 
 Call these functions in the order of appearance:
 
-- stats_init()
+- lwip_init()
 
-  Clears the structure where runtime statistics are gathered.
+  Initialize the lwIP stack and all of its subsystems.
 
-- sys_init()
-  
-  Not of much use since we set the NO_SYS 1 option in lwipopts.h,
-  to be called for easy configuration changes.
-
-- mem_init()
-
-  Initializes the dynamic memory heap defined by MEM_SIZE.
-
-- memp_init()
-
-  Initializes the memory pools defined by MEMP_NUM_x.
-
-- pbuf_init()
-
-  Initializes the pbuf memory pool defined by PBUF_POOL_SIZE.
-  
-- etharp_init()
-
-  Initializes the ARP table and queue.
-  Note: you must call etharp_tmr at a ARP_TMR_INTERVAL (5 seconds) regular interval
-  after this initialization.
-
-- ip_init()
-
-  Doesn't do much, it should be called to handle future changes.
-
-- udp_init()
-
-  Clears the UDP PCB list.
-
-- tcp_init()
-
-  Clears the TCP PCB list and clears some internal TCP timers.
-  Note: you must call tcp_fasttmr() and tcp_slowtmr() at the
-  predefined regular intervals after this initialization. 
-  
-- netif_add(struct netif *netif, ip_addr_t *ipaddr,
-            ip_addr_t *netmask, ip_addr_t *gw,
-            void *state, err_t (* init)(struct netif *netif),
-            err_t (* input)(struct pbuf *p, struct netif *netif))
+- netif_add(struct netif *netif, const ip4_addr_t *ipaddr,
+            const ip4_addr_t *netmask, const ip4_addr_t *gw,
+            void *state, netif_init_fn init, netif_input_fn input)
 
   Adds your network interface to the netif_list. Allocate a struct
   netif and pass a pointer to this structure as the first argument.
@@ -432,7 +383,9 @@ Call these functions in the order of appearance:
   {
     u8_t i;
     
-    for(i = 0; i < ETHARP_HWADDR_LEN; i++) netif->hwaddr[i] = some_eth_addr[i];
+    for (i = 0; i < ETHARP_HWADDR_LEN; i++) {
+      netif->hwaddr[i] = some_eth_addr[i];
+    }
     init_my_eth_device();
     return ERR_OK;
   }
@@ -445,17 +398,29 @@ Call these functions in the order of appearance:
 
   Registers the default network interface.
 
+- netif_set_link_up(struct netif *netif)
+
+  This is the hardware link state; e.g. whether cable is plugged for wired
+  Ethernet interface. This function must be called even if you don't know
+  the current state. Having link up and link down events is optional but
+  DHCP and IPv6 discover benefit well from those events.
+
 - netif_set_up(struct netif *netif)
 
-  When the netif is fully configured this function must be called.
+  This is the administrative (= software) state of the netif, when the
+  netif is fully configured this function must be called.
 
 - dhcp_start(struct netif *netif)
 
   Creates a new DHCP client for this interface on the first call.
-  Note: you must call dhcp_fine_tmr() and dhcp_coarse_tmr() at
-  the predefined regular intervals after starting the client.
   
   You can peek in the netif->dhcp struct for the actual DHCP status.
+
+- sys_check_timeouts()
+
+  When the system is running, you have to periodically call
+  sys_check_timeouts() which will handle all timers for all protocols in
+  the stack; add this to your main loop or equivalent.
 
 
 --- Optimalization hints
