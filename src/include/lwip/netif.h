@@ -349,9 +349,9 @@ void netif_set_default(struct netif *netif);
 void netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr);
 void netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask);
 void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
-#define netif_ip4_addr(netif)    ((const ip4_addr_t*)&((netif)->ip_addr))
-#define netif_ip4_netmask(netif) ((const ip4_addr_t*)&((netif)->netmask))
-#define netif_ip4_gw(netif)      ((const ip4_addr_t*)&((netif)->gw))
+#define netif_ip4_addr(netif)    (&((netif)->ip_addr))
+#define netif_ip4_netmask(netif) (&((netif)->netmask))
+#define netif_ip4_gw(netif)      (&((netif)->gw))
 #endif /* LWIP_IPV4 */
 
 void netif_set_up(struct netif *netif);
