@@ -470,6 +470,7 @@ void lwip_socket_thread_cleanup(void); /* LWIP_NETCONN_SEM_PER_THREAD==1: destro
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 #define lwip_read         read
 #define lwip_write        write
+#define lwip_writev       writev
 #undef lwip_close
 #define lwip_close        close
 #define closesocket(s)    close(s)
@@ -498,6 +499,7 @@ int lwip_sendto(int s, const void *dataptr, size_t size, int flags,
     const struct sockaddr *to, socklen_t tolen);
 int lwip_socket(int domain, int type, int protocol);
 int lwip_write(int s, const void *dataptr, size_t size);
+int lwip_writev(int s, const struct iovec *iov, int iovcnt);
 int lwip_select(int maxfdp1, fd_set *readset, fd_set *writeset, fd_set *exceptset,
                 struct timeval *timeout);
 int lwip_ioctl(int s, long cmd, void *argp);
@@ -527,6 +529,7 @@ int lwip_fcntl(int s, int cmd, int val);
 #if LWIP_POSIX_SOCKETS_IO_NAMES
 #define read(s,mem,len)                           lwip_read(s,mem,len)
 #define write(s,dataptr,len)                      lwip_write(s,dataptr,len)
+#define writev(s,iov,iovcnt)                      lwip_writev(s,iov,iovcnt)
 #define close(s)                                  lwip_close(s)
 #define fcntl(s,cmd,val)                          lwip_fcntl(s,cmd,val)
 #define ioctl(s,cmd,argp)                         lwip_ioctl(s,cmd,argp)

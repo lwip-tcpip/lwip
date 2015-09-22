@@ -1271,6 +1271,21 @@ lwip_write(int s, const void *data, size_t size)
   return lwip_send(s, data, size, 0);
 }
 
+int
+lwip_writev(int s, const struct iovec *iov, int iovcnt)
+{
+  struct msghdr msg;
+  
+  msg.msg_name = NULL;
+  msg.msg_namelen = 0;
+  msg.msg_iov = (struct iovec *)iov;
+  msg.msg_iovlen = iovcnt;
+  msg.msg_control = NULL;
+  msg.msg_controllen = 0;
+  msg.msg_flags = 0;
+  return lwip_sendmsg(s, &msg, 0);
+}
+
 /**
  * Go through the readset and writeset lists and see which socket of the sockets
  * set in the sets has events. On return, readset, writeset and exceptset have
