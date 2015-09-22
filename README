@@ -40,22 +40,19 @@ and additions to the stack to further increase its usefulness.
 
 Development of lwIP is hosted on Savannah, a central point for
 software development, maintenance and distribution. Everyone can
-help improve lwIP by use of Savannah's interface, CVS and the
+help improve lwIP by use of Savannah's interface, Git and the
 mailing list. A core team of developers will commit changes to the
-CVS source tree.
+Git source tree.
 
-The lwIP TCP/IP stack is maintained in the 'lwip' CVS module and
-contributions (such as platform ports) are in the 'contrib' module.
+The lwIP TCP/IP stack is maintained in the 'lwip' Git module and
+contributions (such as platform ports) are in the 'contrib' Git module.
 
-See doc/savannah.txt for details on CVS server access for users and
+See doc/savannah.txt for details on Git server access for users and
 developers.
 
-Last night's CVS tar ball can be downloaded from:
-  http://savannah.gnu.org/cvs.backups/lwip.tar.gz [CHANGED - NEEDS FIXING]
-
-The current CVS trees are web-browsable:
-  http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/lwip/
-  http://savannah.nongnu.org/cgi-bin/viewcvs/lwip/contrib/
+The current Git trees are web-browsable:
+  http://git.savannah.gnu.org/cgit/lwip.git
+  http://git.savannah.gnu.org/cgit/lwip/lwip-contrib.git
 
 Submit patches and bugs via the lwIP project page:
   http://savannah.nongnu.org/projects/lwip/
@@ -68,7 +65,7 @@ lwIP are at the official lwIP home page:
   http://www.sics.se/~adam/lwip/
 
 Self documentation of the source code is regularly extracted from the
-current CVS sources and is available from this web page:
+current Git sources and is available from this web page:
   http://www.nongnu.org/lwip/
 
 There is now a constantly growin wiki about lwIP at
