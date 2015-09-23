@@ -777,7 +777,7 @@ tcp_connect(struct tcp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port,
   if (ip_addr_isany(&pcb->local_ip)) {
     /* no local IP address set, yet. */
     struct netif *netif;
-    ip_addr_t *local_ip;
+    const ip_addr_t *local_ip;
     ip_route_get_local_ip(PCB_ISIPV6(pcb), &pcb->local_ip, &pcb->remote_ip, netif, local_ip, &local_ip_tmp);
     if ((netif == NULL) || (local_ip == NULL)) {
       /* Don't even try to send a SYN packet if we have no route

@@ -237,7 +237,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 {
   err_t err;
   struct netif *netif;
-  ip_addr_t *src_ip;
+  const ip_addr_t *src_ip;
   struct pbuf *q; /* q will be sent down the stack */
   s16_t header_size;
   const ip_addr_t *dst_ip = ipaddr;

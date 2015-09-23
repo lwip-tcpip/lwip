@@ -435,7 +435,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
     mib2_remove_ip4(netif);
     mib2_remove_route_ip4(0, netif);
     /* set new IP address to netif */
-    ip4_addr_set(netif_ip4_addr(netif), ipaddr);
+    ip4_addr_set(&netif->ip_addr, ipaddr);
     mib2_add_ip4(netif);
     mib2_add_route_ip4(0, netif);
 
@@ -463,7 +463,7 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
-  ip4_addr_set(netif_ip4_gw(netif), gw);
+  ip4_addr_set(&netif->gw, gw);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1_16(netif_ip4_gw(netif)),
@@ -486,7 +486,7 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
   mib2_remove_route_ip4(0, netif);
   /* set new netmask to netif */
-  ip4_addr_set(netif_ip4_netmask(netif), netmask);
+  ip4_addr_set(&netif->netmask, netmask);
   mib2_add_route_ip4(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],

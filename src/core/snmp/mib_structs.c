@@ -145,7 +145,7 @@ snmp_oidtoip(s32_t *ident, ip4_addr_t *ip)
  * @param ident points to s32_t ident[4] output
  */
 void
-snmp_iptooid(ip4_addr_t *ip, s32_t *ident)
+snmp_iptooid(const ip4_addr_t *ip, s32_t *ident)
 {
   ident[0] = ip4_addr1(ip);
   ident[1] = ip4_addr2(ip);

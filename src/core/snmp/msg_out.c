@@ -231,7 +231,7 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
 #if LWIP_IPV4 && LWIP_IPV6
   ip_addr_t dst_ip_storage;
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
-  ip_addr_t* dst_ip;
+  const ip_addr_t* dst_ip;
   struct pbuf *p;
   u16_t i,tot_len;
   err_t err = ERR_OK;

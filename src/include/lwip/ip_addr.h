@@ -95,8 +95,8 @@ static const ip4_addr_t* ip_2_ip4_c(const ip_addr_t *ipaddr)
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
 
 #define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(src)){ \
-  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
-  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
+  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6_c(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4_c(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
 #define ip_addr_copy_from_ip4(dest, src)      do{ \
