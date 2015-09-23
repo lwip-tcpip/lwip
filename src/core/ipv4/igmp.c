@@ -500,7 +500,7 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   netif = netif_list;
   while (netif != NULL) {
     /* Should we join this interface ? */
-    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(&(netif->ip_addr), ifaddr)))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
       /* find group or create a new one if not found */
       group = igmp_lookup_group(netif, groupaddr);
 
@@ -570,7 +570,7 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   netif = netif_list;
   while (netif != NULL) {
     /* Should we leave this interface ? */
-    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(&(netif->ip_addr), ifaddr)))) {
+    if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
       /* find group */
       group = igmp_lookfor_group(netif, groupaddr);
 
@@ -760,7 +760,7 @@ igmp_send(struct igmp_group *group, u8_t type)
     igmp = (struct igmp_msg *)p->payload;
     LWIP_ASSERT("igmp_send: check that first pbuf can hold struct igmp_msg",
                (p->len >= sizeof(struct igmp_msg)));
-    ip4_addr_copy(src, group->netif->ip_addr);
+    ip4_addr_copy(src, *netif_ip4_addr(group->netif));
      
     if (type == IGMP_V2_MEMB_REPORT) {
       dest = &(group->group_address);
