@@ -219,7 +219,7 @@ typedef ip6_addr_t ip_addr_t;
 #define ip6_2_ip(ipaddr, unused)                (ipaddr)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
 #define ip_2_ip6_c(ipaddr)                      (ipaddr)
-#define IP_ADDR6(ipaddr,idx,a,b,c,d)            IP6_ADDR(ipaddr,idx,a,b,c,d)
+#define IP_ADDR6(ipaddr,i0,i1,i2,i3)            IP6_ADDR(ipaddr,i0,i1,i2,i3)
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
 #define ip_addr_copy_from_ip6(dest, src)        ip6_addr_copy(dest, src)
