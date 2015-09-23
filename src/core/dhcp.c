@@ -1215,7 +1215,7 @@ dhcp_release(struct netif *netif)
   /* idle DHCP client */
   dhcp_set_state(dhcp, DHCP_STATE_OFF);
   /* clean old DHCP offer */
-  ip_addr_set_zero(&dhcp->server_ip_addr);
+  ip_addr_set_zero_ip4(&dhcp->server_ip_addr);
   ip4_addr_set_zero(&dhcp->offered_ip_addr);
   ip4_addr_set_zero(&dhcp->offered_sn_mask);
   ip4_addr_set_zero(&dhcp->offered_gw_addr);
