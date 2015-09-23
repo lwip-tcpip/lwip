@@ -374,7 +374,10 @@ udp_input(struct pbuf *p, struct netif *inp)
     if (pcb != NULL) {
       MIB2_STATS_INC(mib2.udpindatagrams);
 #if SO_REUSE && SO_REUSE_RXTOALL
-      if ((broadcast ||
+      if ((
+#if LWIP_IPV4
+        broadcast ||
+#endif /* LWIP_IPV4 */
 #if LWIP_IPV6
           ip6_addr_ismulticast(ip6_current_dest_addr()) ||
 #endif /* LWIP_IPV6 */
@@ -397,13 +400,21 @@ udp_input(struct pbuf *p, struct netif *inp)
 #else /* LWIP_IPV6 */
                 ((
 #endif /* LWIP_IPV6 */
-                  ((!broadcast && ip_addr_isany(&mpcb->local_ip)) ||
+                  ((
+#if LWIP_IPV4
+                  !broadcast &&
+#endif /* LWIP_IPV4 */
+                  ip_addr_isany(&mpcb->local_ip)) ||
                    ip_addr_cmp(&mpcb->local_ip, ip_current_dest_addr()) ||
 #if LWIP_IGMP
                    (ip_addr_isany(&pcb->local_ip) && ip_addr_ismulticast(ip_current_dest_addr())) ||
 #endif /* LWIP_IGMP */
 #if IP_SOF_BROADCAST_RECV
-                   (broadcast && ip_get_option(mpcb, SOF_BROADCAST)))))) {
+                   (
+#if LWIP_IPV4
+                   broadcast &&
+#endif /* LWIP_IPV4 */
+                   ip_get_option(mpcb, SOF_BROADCAST)))))) {
 #else  /* IP_SOF_BROADCAST_RECV */
                    (broadcast))))) {
 #endif /* IP_SOF_BROADCAST_RECV */
