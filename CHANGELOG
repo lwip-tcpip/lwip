@@ -6,6 +6,10 @@ HISTORY
 
   ++ New features:
 
+  2015-09-23: Simon Goldschmidt
+  * netif.h/.c, nd6.c: task #13729: Convert netif addresses (IPv4 & IPv6) to
+    ip_addr_t (so they can be used without conversion/temporary storage)
+
   2015-09-08: Dirk Ziegelmeier
   * snmp: Separate mib2 counter/table callbacks from snmp agent. This both cleans
     up the code and should allow integration of a 3rd party agent/mib2. Simple

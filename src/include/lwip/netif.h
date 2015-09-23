@@ -39,7 +39,6 @@
 #include "lwip/err.h"
 
 #include "lwip/ip_addr.h"
-#include "lwip/ip6_addr.h"
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
@@ -184,13 +183,13 @@ struct netif {
 
 #if LWIP_IPV4
   /** IP address configuration in network byte order */
-  ip4_addr_t ip_addr;
-  ip4_addr_t netmask;
-  ip4_addr_t gw;
+  ip_addr_t ip_addr;
+  ip_addr_t netmask;
+  ip_addr_t gw;
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   /** Array of IPv6 addresses for this netif. */
-  ip6_addr_t ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
+  ip_addr_t ip6_addr[LWIP_IPV6_NUM_ADDRESSES];
   /** The state of each IPv6 address (Tentative, Preferred, etc).
    * @see ip6_addr.h */
   u8_t ip6_addr_state[LWIP_IPV6_NUM_ADDRESSES];
@@ -349,9 +348,9 @@ void netif_set_default(struct netif *netif);
 void netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr);
 void netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask);
 void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
-#define netif_ip4_addr(netif)    ((const ip4_addr_t*)&((netif)->ip_addr))
-#define netif_ip4_netmask(netif) ((const ip4_addr_t*)&((netif)->netmask))
-#define netif_ip4_gw(netif)      ((const ip4_addr_t*)&((netif)->gw))
+#define netif_ip4_addr(netif)    (ip_2_ip4_c(&((netif)->ip_addr)))
+#define netif_ip4_netmask(netif) (ip_2_ip4_c(&((netif)->netmask)))
+#define netif_ip4_gw(netif)      (ip_2_ip4_c(&((netif)->gw)))
 #endif /* LWIP_IPV4 */
 
 void netif_set_up(struct netif *netif);
@@ -399,10 +398,10 @@ void netif_poll_all(void);
 #endif /* ENABLE_LOOPBACK */
 
 #if LWIP_IPV6
-#define netif_ip6_addr(netif, i)  (&((netif)->ip6_addr[(i)]))
-#define netif_ip6_addr_set(netif, i, addr6) ip6_addr_set(&((netif)->ip6_addr[(i)]), addr6)
-#define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[(i)])
-#define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[(i)] = (state))
+#define netif_ip6_addr(netif, i)  (ip_2_ip6_c(&((netif)->ip6_addr[i])))
+#define netif_ip6_addr_set(netif, i, addr6) do { ip6_addr_set(ip_2_ip6(&((netif)->ip6_addr[i])), addr6); IP_SET_TYPE_VAL((netif)->ip6_addr[i], IPADDR_TYPE_V6); } while(0)
+#define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
+#define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[i] = (state))
 s8_t netif_get_ip6_addr_match(struct netif *netif, ip6_addr_t *ip6addr);
 void netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit);
 err_t netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx);

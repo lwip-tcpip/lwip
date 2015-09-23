@@ -195,13 +195,13 @@ netif_add(struct netif *netif,
 
   /* reset new interface configuration state */
 #if LWIP_IPV4
-  ip4_addr_set_zero(&netif->ip_addr);
-  ip4_addr_set_zero(&netif->netmask);
-  ip4_addr_set_zero(&netif->gw);
+  ip_addr_set_zero_ip4(&netif->ip_addr);
+  ip_addr_set_zero_ip4(&netif->netmask);
+  ip_addr_set_zero_ip4(&netif->gw);
 #endif /* LWIP_IPV4 */
 #if LWIP_IPV6
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-    ip6_addr_set_zero(&netif->ip6_addr[i]);
+    ip_addr_set_zero_ip6(&netif->ip6_addr[i]);
     netif_ip6_addr_set_state(netif, i, IP6_ADDR_INVALID);
   }
   netif->output_ip6 = netif_null_output_ip6;
@@ -435,7 +435,8 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
     mib2_remove_ip4(netif);
     mib2_remove_route_ip4(0, netif);
     /* set new IP address to netif */
-    ip4_addr_set(&netif->ip_addr, ipaddr);
+    ip4_addr_set(ip_2_ip4(&netif->ip_addr), ipaddr);
+    IP_SET_TYPE_VAL(netif->ip_addr, IPADDR_TYPE_V4);
     mib2_add_ip4(netif);
     mib2_add_route_ip4(0, netif);
 
@@ -463,7 +464,8 @@ netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr)
 void
 netif_set_gw(struct netif *netif, const ip4_addr_t *gw)
 {
-  ip4_addr_set(&netif->gw, gw);
+  ip4_addr_set(ip_2_ip4(&netif->gw), gw);
+  IP_SET_TYPE_VAL(netif->gw, IPADDR_TYPE_V4);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: GW address of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
     ip4_addr1_16(netif_ip4_gw(netif)),
@@ -486,7 +488,8 @@ netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask)
 {
   mib2_remove_route_ip4(0, netif);
   /* set new netmask to netif */
-  ip4_addr_set(&netif->netmask, netmask);
+  ip4_addr_set(ip_2_ip4(&netif->netmask), netmask);
+  IP_SET_TYPE_VAL(netif->netmask, IPADDR_TYPE_V4);
   mib2_add_route_ip4(0, netif);
   LWIP_DEBUGF(NETIF_DEBUG | LWIP_DBG_TRACE | LWIP_DBG_STATE, ("netif: netmask of interface %c%c set to %"U16_F".%"U16_F".%"U16_F".%"U16_F"\n",
     netif->name[0], netif->name[1],
@@ -918,31 +921,31 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
   u8_t i, addr_index;
 
   /* Link-local prefix. */
-  netif->ip6_addr[0].addr[0] = PP_HTONL(0xfe800000ul);
-  netif->ip6_addr[0].addr[1] = 0;
+  ip_2_ip6(&netif->ip6_addr[0])->addr[0] = PP_HTONL(0xfe800000ul);
+  ip_2_ip6(&netif->ip6_addr[0])->addr[1] = 0;
 
   /* Generate interface ID. */
   if (from_mac_48bit) {
     /* Assume hwaddr is a 48-bit IEEE 802 MAC. Convert to EUI-64 address. Complement Group bit. */
-    netif->ip6_addr[0].addr[2] = htonl((((u32_t)(netif->hwaddr[0] ^ 0x02)) << 24) |
+    ip_2_ip6(&netif->ip6_addr[0])->addr[2] = htonl((((u32_t)(netif->hwaddr[0] ^ 0x02)) << 24) |
         ((u32_t)(netif->hwaddr[1]) << 16) |
         ((u32_t)(netif->hwaddr[2]) << 8) |
         (0xff));
-    netif->ip6_addr[0].addr[3] = htonl((0xfeul << 24) |
+    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = htonl((0xfeul << 24) |
         ((u32_t)(netif->hwaddr[3]) << 16) |
         ((u32_t)(netif->hwaddr[4]) << 8) |
         (netif->hwaddr[5]));
   } else {
     /* Use hwaddr directly as interface ID. */
-    netif->ip6_addr[0].addr[2] = 0;
-    netif->ip6_addr[0].addr[3] = 0;
+    ip_2_ip6(&netif->ip6_addr[0])->addr[2] = 0;
+    ip_2_ip6(&netif->ip6_addr[0])->addr[3] = 0;
 
     addr_index = 3;
     for (i = 0; (i < 8) && (i < netif->hwaddr_len); i++) {
       if (i == 4) {
         addr_index--;
       }
-      netif->ip6_addr[0].addr[addr_index] |= ((u32_t)(netif->hwaddr[netif->hwaddr_len - i - 1])) << (8 * (i & 0x03));
+      ip_2_ip6(&netif->ip6_addr[0])->addr[addr_index] |= ((u32_t)(netif->hwaddr[netif->hwaddr_len - i - 1])) << (8 * (i & 0x03));
     }
   }
 
@@ -981,7 +984,7 @@ netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx
   /* Find a free slot -- musn't be the first one (reserved for link local) */
   for (i = 1; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
     if (!ip6_addr_isvalid(netif->ip6_addr_state[i])) {
-      ip6_addr_copy(netif->ip6_addr[i], *ip6addr);
+      ip_addr_copy_from_ip6(netif->ip6_addr[i], *ip6addr);
       netif_ip6_addr_set_state(netif, i, IP6_ADDR_TENTATIVE);
       if (chosen_idx != NULL) {
         *chosen_idx = i;
