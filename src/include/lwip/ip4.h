@@ -143,7 +143,7 @@ err_t ip4_output_if_opt_src(struct pbuf *p, const ip4_addr_t *src, const ip4_add
 void  ip4_set_default_multicast_netif(struct netif* default_multicast_netif);
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
 
-#define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? &((netif)->ip_addr) : NULL)
+#define ip4_netif_get_local_ip(netif) (((netif) != NULL) ? netif_ip_addr4(netif) : NULL)
 
 #if IP_DEBUG
 void ip4_debug_print(struct pbuf *p);

@@ -120,7 +120,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (ip_addr_isbroadcast(ip_current_dest_addr(), ip_current_netif())) {
 #if LWIP_BROADCAST_PING
       /* For broadcast, use address of receiving interface as source address */
-      src = &inp->ip_addr;
+      src = netif_ip4_addr(inp);
 #else /* LWIP_BROADCAST_PING */
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to broadcast pings\n"));
       goto icmperr;
