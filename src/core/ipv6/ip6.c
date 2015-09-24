@@ -206,10 +206,10 @@ ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest)
  * @return the most suitable source address to use, or NULL if no suitable
  *         source address is found
  */
-ip6_addr_t *
+const ip6_addr_t *
 ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest)
 {
-  ip6_addr_t * src = NULL;
+  const ip6_addr_t *src = NULL;
   u8_t i;
 
   /* If dest is link-local, choose a link-local source. */

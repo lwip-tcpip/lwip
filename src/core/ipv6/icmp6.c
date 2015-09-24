@@ -81,7 +81,7 @@ icmp6_input(struct pbuf *p, struct netif *inp)
 {
   struct icmp6_hdr *icmp6hdr;
   struct pbuf * r;
-  ip6_addr_t * reply_src;
+  const ip6_addr_t * reply_src;
 
   ICMP6_STATS_INC(icmp6.recv);
 
@@ -272,7 +272,8 @@ icmp6_send_response(struct pbuf *p, u8_t code, u32_t data, u8_t type)
 {
   struct pbuf *q;
   struct icmp6_hdr *icmp6hdr;
-  ip6_addr_t *reply_src, *reply_dest;
+  const ip6_addr_t *reply_src;
+  ip6_addr_t *reply_dest;
   ip6_addr_t reply_src_local, reply_dest_local;
   struct ip6_hdr *ip6hdr;
   struct netif *netif;

@@ -83,7 +83,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
   const struct ip_hdr *iphdr_in;
   struct ip_hdr *iphdr;
   s16_t hlen;
-  ip4_addr_t* src;
+  const ip4_addr_t* src;
 
   ICMP_STATS_INC(icmp.recv);
   MIB2_STATS_INC(mib2.icmpinmsgs);
@@ -110,7 +110,7 @@ icmp_input(struct pbuf *p, struct netif *inp)
     if (ip_addr_ismulticast(ip_current_dest_addr())) {
 #if LWIP_MULTICAST_PING
       /* For multicast, use address of receiving interface as source address */
-      src = &inp->ip_addr;
+      src = netif_ip4_addr(inp);
 #else /* LWIP_MULTICAST_PING */
       LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: Not echoing to multicast pings\n"));
       goto icmperr;
