@@ -30,12 +30,16 @@
 * 97-11-05 Guy Lancaster <glanca@gesn.com>, Global Election Systems Inc.
 *   Original derived from BSD codes.
 *****************************************************************************/
+#ifndef LWIP_HDR_PPP_IMPL_H
+#define LWIP_HDR_PPP_IMPL_H
 
 #include "lwip/opt.h"
+
 #if PPP_SUPPORT /* don't build if not configured for use in lwipopts.h */
 
-#ifndef PPP_IMP_H_
-#define PPP_IMP_H_
+#ifdef PPP_INCLUDE_SETTINGS_HEADER
+#include "ppp_settings.h"
+#endif
 
 #include <stdio.h> /* formats */
 #include <stdarg.h>
@@ -624,5 +628,5 @@ void ppp_dump_packet(const char *tag, unsigned char *p, int len);
 #endif /* PRINTPKT_SUPPORT */
 
 
-#endif /* PPP_IMP_H_ */
 #endif /* PPP_SUPPORT */
+#endif /* LWIP_HDR_PPP_IMPL_H */
