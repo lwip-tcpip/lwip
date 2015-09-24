@@ -666,7 +666,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #if LWIP_IPV6
   if (PCB_ISIPV6(pcb)) {
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip))) {
-      src_ip = ip6_select_source_address(netif, ip_2_ip6_c(dst_ip));
+      src_ip = ip6_select_source_address(netif, ip_2_ip6(dst_ip));
       if (src_ip == NULL) {
         /* No suitable source address was found. */
         return ERR_RTE;

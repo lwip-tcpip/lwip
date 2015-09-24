@@ -70,9 +70,7 @@ typedef struct _ip_addr {
 
 /* Convert generic ip address to specific protocol version */
 #define ip_2_ip6(ipaddr)   (&((ipaddr)->u_addr.ip6))
-#define ip_2_ip6_c(ipaddr) ip_2_ip6(ipaddr)
 #define ip_2_ip4(ipaddr)   (&((ipaddr)->u_addr.ip4))
-#define ip_2_ip4_c(ipaddr) ip_2_ip4(ipaddr)
 
 #define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V4); } while(0)
@@ -80,8 +78,8 @@ typedef struct _ip_addr {
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V6); } while(0)
 
 #define ip_addr_copy(dest, src)      do{if(IP_IS_V6_VAL(src)){ \
-  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6_c(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
-  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4_c(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
+  ip6_addr_copy(*ip_2_ip6(&(dest)), *ip_2_ip6(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_copy(*ip_2_ip4(&(dest)), *ip_2_ip4(&(src))); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_copy_from_ip6(dest, src)      do{ \
   ip6_addr_copy(*ip_2_ip6(&(dest)), src); IP_SET_TYPE_VAL(dest, IPADDR_TYPE_V6); }while(0)
 #define ip_addr_copy_from_ip4(dest, src)      do{ \
@@ -91,11 +89,11 @@ typedef struct _ip_addr {
 #define ip_addr_get_ip4_u32(ipaddr)  (((ipaddr) && !IP_IS_V6(ipaddr)) ? \
   ip4_addr_get_u32(ip_2_ip4(ipaddr)) : 0)
 #define ip_addr_set(dest, src) do{if(IP_IS_V6(src)){ \
-  ip6_addr_set(ip_2_ip6(dest), ip_2_ip6_c(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V6); }else{ \
-  ip4_addr_set(ip_2_ip4(dest), ip_2_ip4_c(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V4); }}while(0)
+  ip6_addr_set(ip_2_ip6(dest), ip_2_ip6(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_set(ip_2_ip4(dest), ip_2_ip4(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_set_ipaddr(dest, src) do{if(IP_IS_V6(src)){ \
-  ip6_addr_set(ip_2_ip6(dest), ip_2_ip6_c(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V6); }else{ \
-  ip4_addr_set(ip_2_ip4(dest), ip_2_ip4_c(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V4); }}while(0)
+  ip6_addr_set(ip_2_ip6(dest), ip_2_ip6(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V6); }else{ \
+  ip4_addr_set(ip_2_ip4(dest), ip_2_ip4(src)); IP_SET_TYPE(dest, IPADDR_TYPE_V4); }}while(0)
 #define ip_addr_set_zero(ipaddr)     do{ \
   ip6_addr_set_zero(ip_2_ip6(ipaddr)); IP_SET_TYPE(ipaddr, 0); }while(0)
 #define ip_addr_set_zero_ip4(ipaddr)     do{ \
@@ -118,36 +116,36 @@ typedef struct _ip_addr {
   0 : \
   ip4_addr_netcmp(ip_2_ip4(addr1), ip_2_ip4(addr2), mask))
 #define ip_addr_cmp(addr1, addr2)    ((IP_IS_V6_VAL(*(addr1)) != IP_IS_V6_VAL(*(addr2))) ? 0 : (IP_IS_V6_VAL(*(addr1)) ? \
-  ip6_addr_cmp(ip_2_ip6_c(addr1), ip_2_ip6_c(addr2)) : \
-  ip4_addr_cmp(ip_2_ip4_c(addr1), ip_2_ip4_c(addr2))))
+  ip6_addr_cmp(ip_2_ip6(addr1), ip_2_ip6(addr2)) : \
+  ip4_addr_cmp(ip_2_ip4(addr1), ip_2_ip4(addr2))))
 #define ip_addr_isany(ipaddr)        ((IP_IS_V6(ipaddr)) ? \
-  ip6_addr_isany(ip_2_ip6_c(ipaddr)) : \
-  ip4_addr_isany(ip_2_ip4_c(ipaddr)))
+  ip6_addr_isany(ip_2_ip6(ipaddr)) : \
+  ip4_addr_isany(ip_2_ip4(ipaddr)))
 #define ip_addr_isany_val(ipaddr)        ((IP_IS_V6_VAL(ipaddr)) ? \
   ip6_addr_isany_val(*ip_2_ip6(&(ipaddr))) : \
   ip4_addr_isany_val(*ip_2_ip4(&(ipaddr))))
 #define ip_addr_isbroadcast(ipaddr, netif) ((IP_IS_V6(ipaddr)) ? \
   0 : \
-  ip4_addr_isbroadcast(ip_2_ip4_c(ipaddr), netif))
+  ip4_addr_isbroadcast(ip_2_ip4(ipaddr), netif))
 #define ip_addr_ismulticast(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
-  ip6_addr_ismulticast(ip_2_ip6_c(ipaddr)) : \
-  ip4_addr_ismulticast(ip_2_ip4_c(ipaddr)))
+  ip6_addr_ismulticast(ip_2_ip6(ipaddr)) : \
+  ip4_addr_ismulticast(ip_2_ip4(ipaddr)))
 #define ip_addr_isloopback(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
-  ip6_addr_isloopback(ip_2_ip6_c(ipaddr)) : \
-  ip4_addr_isloopback(ip_2_ip4_c(ipaddr)))
+  ip6_addr_isloopback(ip_2_ip6(ipaddr)) : \
+  ip4_addr_isloopback(ip_2_ip4(ipaddr)))
 #define ip_addr_islinklocal(ipaddr)  ((IP_IS_V6(ipaddr)) ? \
-  ip6_addr_islinklocal(ip_2_ip6_c(ipaddr)) : \
-  ip4_addr_islinklocal(ip_2_ip4_c(ipaddr)))
+  ip6_addr_islinklocal(ip_2_ip6(ipaddr)) : \
+  ip4_addr_islinklocal(ip_2_ip4(ipaddr)))
 #define ip_addr_debug_print(debug, ipaddr) do { if(IP_IS_V6(ipaddr)) { \
-  ip6_addr_debug_print(debug, ip_2_ip6_c(ipaddr)); } else { \
-  ip4_addr_debug_print(debug, ip_2_ip4_c(ipaddr)); }}while(0)
+  ip6_addr_debug_print(debug, ip_2_ip6(ipaddr)); } else { \
+  ip4_addr_debug_print(debug, ip_2_ip4(ipaddr)); }}while(0)
 #define ip_addr_debug_print_val(debug, ipaddr) do { if(IP_IS_V6_VAL(ipaddr)) { \
-  ip6_addr_debug_print_val(debug, *ip_2_ip6_c(&(ipaddr))); } else { \
-  ip4_addr_debug_print_val(debug, *ip_2_ip4_c(&(ipaddr))); }}while(0)
+  ip6_addr_debug_print_val(debug, *ip_2_ip6(&(ipaddr))); } else { \
+  ip4_addr_debug_print_val(debug, *ip_2_ip4(&(ipaddr))); }}while(0)
 #define ipaddr_ntoa(addr)   (((addr) == NULL) ? "NULL" : \
-  ((IP_IS_V6(addr)) ? ip6addr_ntoa(ip_2_ip6_c(addr)) : ip4addr_ntoa(ip_2_ip4_c(addr))))
+  ((IP_IS_V6(addr)) ? ip6addr_ntoa(ip_2_ip6(addr)) : ip4addr_ntoa(ip_2_ip4(addr))))
 #define ipaddr_ntoa_r(addr, buf, buflen)   (((addr) == NULL) ? "NULL" : \
-  ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6_c(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4_c(addr), buf, buflen)))
+  ((IP_IS_V6(addr)) ? ip6addr_ntoa_r(ip_2_ip6(addr), buf, buflen) : ip4addr_ntoa_r(ip_2_ip4(addr), buf, buflen)))
 int ipaddr_aton(const char *cp, ip_addr_t *addr);
 
 #else /* LWIP_IPV4 && LWIP_IPV6 */
@@ -163,7 +161,6 @@ typedef ip4_addr_t ip_addr_t;
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip_2_ip4(ipaddr)                        (ipaddr)
-#define ip_2_ip4_c(ipaddr)                      (ipaddr)
 #define IP_ADDR4(ipaddr,a,b,c,d)                IP4_ADDR(ipaddr,a,b,c,d)
 
 #define ip_addr_copy(dest, src)                 ip4_addr_copy(dest, src)
@@ -201,7 +198,6 @@ typedef ip6_addr_t ip_addr_t;
 #define IP_SET_TYPE_VAL(ipaddr, iptype)
 #define IP_SET_TYPE(ipaddr, iptype)
 #define ip_2_ip6(ipaddr)                        (ipaddr)
-#define ip_2_ip6_c(ipaddr)                      (ipaddr)
 #define IP_ADDR6(ipaddr,i0,i1,i2,i3)            IP6_ADDR(ipaddr,i0,i1,i2,i3)
 
 #define ip_addr_copy(dest, src)                 ip6_addr_copy(dest, src)
@@ -244,8 +240,8 @@ extern const ip_addr_t ip_addr_broadcast;
 /** IP4_ADDR_ can be used as a fixed/const ip4_addr_t
  *  for the wildcard and the broadcast address
  */
-#define IP4_ADDR_ANY        (ip_2_ip4_c(&ip_addr_any))
-#define IP4_ADDR_BROADCAST  (ip_2_ip4_c(&ip_addr_broadcast))
+#define IP4_ADDR_ANY        (ip_2_ip4(&ip_addr_any))
+#define IP4_ADDR_BROADCAST  (ip_2_ip4(&ip_addr_broadcast))
 
 #endif /* LWIP_IPV4*/
 
@@ -260,7 +256,7 @@ extern const ip_addr_t ip6_addr_any;
 /** IP6_ADDR_ANY6 can be used as a fixed ip6_addr_t
  *  for the IPv6 wildcard address
  */
-#define IP6_ADDR_ANY6  (ip_2_ip6_c(&ip6_addr_any))
+#define IP6_ADDR_ANY6  (ip_2_ip6(&ip6_addr_any))
 
 #if !LWIP_IPV4
 /** Just a little upgrade-helper for IPv6-only configurations: */

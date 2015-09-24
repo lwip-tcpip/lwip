@@ -255,7 +255,7 @@ ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest)
         else {
           /* Replace src only if we find a prefix match. */
           /* TODO find longest matching prefix. */
-          if ((!(ip6_addr_netcmp(ip_2_ip6_c(src), dest))) &&
+          if ((!(ip6_addr_netcmp(ip_2_ip6(src), dest))) &&
               ip6_addr_netcmp(netif_ip6_addr(netif, i), dest)) {
             src = netif_ip_addr6(netif, i);
           }
@@ -817,7 +817,7 @@ ip6_output_if(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
   const ip6_addr_t *src_used = src;
   if (dest != IP_HDRINCL) {
     if (src != NULL && ip6_addr_isany(src)) {
-      src = ip_2_ip6_c(ip6_select_source_address(netif, dest));
+      src = ip_2_ip6(ip6_select_source_address(netif, dest));
       if ((src == NULL) || ip6_addr_isany(src)) {
         /* No appropriate source address was found for this packet. */
         LWIP_DEBUGF(IP6_DEBUG | LWIP_DBG_LEVEL_SERIOUS, ("ip6_output: No suitable source address for packet.\n"));

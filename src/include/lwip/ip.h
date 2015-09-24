@@ -245,26 +245,26 @@ extern struct ip_globals ip_data;
 #if LWIP_IPV4 && LWIP_IPV6
 #define ip_output(isipv6, p, src, dest, ttl, tos, proto) \
         ((isipv6) ? \
-        ip6_output(p, ip_2_ip6_c(src), ip_2_ip6_c(dest), ttl, tos, proto) : \
-        ip4_output(p, ip_2_ip4_c(src), ip_2_ip4_c(dest), ttl, tos, proto))
+        ip6_output(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto) : \
+        ip4_output(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto))
 #define ip_output_if(isipv6, p, src, dest, ttl, tos, proto, netif) \
         ((isipv6) ? \
-        ip6_output_if(p, ip_2_ip6_c(src), ip_2_ip6_c(dest), ttl, tos, proto, netif) : \
-        ip4_output_if(p, ip_2_ip4_c(src), ip_2_ip4_c(dest), ttl, tos, proto, netif))
+        ip6_output_if(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
+        ip4_output_if(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
 #define ip_output_if_src(isipv6, p, src, dest, ttl, tos, proto, netif) \
         ((isipv6) ? \
-        ip6_output_if_src(p, ip_2_ip6_c(src), ip_2_ip6_c(dest), ttl, tos, proto, netif) : \
-        ip4_output_if_src(p, ip_2_ip4_c(src), ip_2_ip4_c(dest), ttl, tos, proto, netif))
+        ip6_output_if_src(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, netif) : \
+        ip4_output_if_src(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, netif))
 #define ip_output_hinted(isipv6, p, src, dest, ttl, tos, proto, addr_hint) \
         ((isipv6) ? \
-        ip6_output_hinted(p, ip_2_ip6_c(src), ip_2_ip6_c(dest), ttl, tos, proto, addr_hint) : \
-        ip4_output_hinted(p, ip_2_ip4_c(src), ip_2_ip4_c(dest), ttl, tos, proto, addr_hint))
+        ip6_output_hinted(p, ip_2_ip6(src), ip_2_ip6(dest), ttl, tos, proto, addr_hint) : \
+        ip4_output_hinted(p, ip_2_ip4(src), ip_2_ip4(dest), ttl, tos, proto, addr_hint))
 #define ip_route(isipv6, src, dest) \
         ((isipv6) ? \
-        ip6_route(ip_2_ip6_c(src), ip_2_ip6_c(dest)) : \
-        ip4_route_src(ip_2_ip4_c(dest), ip_2_ip4_c(src)))
+        ip6_route(ip_2_ip6(src), ip_2_ip6(dest)) : \
+        ip4_route_src(ip_2_ip4(dest), ip_2_ip4(src)))
 #define ip_netif_get_local_ip(isipv6, netif, dest) ((isipv6) ? \
-        ip6_netif_get_local_ip(netif, ip_2_ip6_c(dest)) : \
+        ip6_netif_get_local_ip(netif, ip_2_ip6(dest)) : \
         ip4_netif_get_local_ip(netif))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 #elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */

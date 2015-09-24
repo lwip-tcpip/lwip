@@ -1803,7 +1803,7 @@ tcp_eff_send_mss_impl(u16_t sendmss, const ip_addr_t *dest
 #endif /* LWIP_IPV4 */
   {
     /* First look in destination cache, to see if there is a Path MTU. */
-    mtu = nd6_get_destination_mtu(ip_2_ip6_c(dest), outif);
+    mtu = nd6_get_destination_mtu(ip_2_ip6(dest), outif);
   }
 #if LWIP_IPV4
   else

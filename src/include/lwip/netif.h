@@ -348,9 +348,9 @@ void netif_set_default(struct netif *netif);
 void netif_set_ipaddr(struct netif *netif, const ip4_addr_t *ipaddr);
 void netif_set_netmask(struct netif *netif, const ip4_addr_t *netmask);
 void netif_set_gw(struct netif *netif, const ip4_addr_t *gw);
-#define netif_ip4_addr(netif)    (ip_2_ip4_c(&((netif)->ip_addr)))
-#define netif_ip4_netmask(netif) (ip_2_ip4_c(&((netif)->netmask)))
-#define netif_ip4_gw(netif)      (ip_2_ip4_c(&((netif)->gw)))
+#define netif_ip4_addr(netif)    ((const ip4_addr_t*)ip_2_ip4(&((netif)->ip_addr)))
+#define netif_ip4_netmask(netif) ((const ip4_addr_t*)ip_2_ip4(&((netif)->netmask)))
+#define netif_ip4_gw(netif)      ((const ip4_addr_t*)ip_2_ip4(&((netif)->gw)))
 #endif /* LWIP_IPV4 */
 
 void netif_set_up(struct netif *netif);
@@ -399,7 +399,7 @@ void netif_poll_all(void);
 
 #if LWIP_IPV6
 #define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
-#define netif_ip6_addr(netif, i)  (ip_2_ip6_c(&((netif)->ip6_addr[i])))
+#define netif_ip6_addr(netif, i)  ((const ip6_addr_t*)ip_2_ip6(&((netif)->ip6_addr[i])))
 #define netif_ip6_addr_set(netif, i, addr6) do { ip6_addr_set(ip_2_ip6(&((netif)->ip6_addr[i])), addr6); IP_SET_TYPE_VAL((netif)->ip6_addr[i], IPADDR_TYPE_V6); } while(0)
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])
 #define netif_ip6_addr_set_state(netif, i, state)  ((netif)->ip6_addr_state[i] = (state))
