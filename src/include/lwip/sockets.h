@@ -405,15 +405,12 @@ typedef struct ip_mreq {
 #undef  FD_SETSIZE
 /* Make FD_SETSIZE match NUM_SOCKETS in socket.c */
 #define FD_SETSIZE    MEMP_NUM_NETCONN
-#define FDSETSAFESET_VAL(n, p, code) do { \
+#define FDSETSAFESET(n, p, code) do { \
   if (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0)) { \
   code; }} while(0)
-#define FDSETSAFESET(n, p, code) do { \
-  if ((p) != NULL) { FDSETSAFESET_VAL(n, p, code); }} while(0)
-#define FDSETSAFEGET(n, p, code) (((p) != NULL) && ((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0) ?\
+#define FDSETSAFEGET(n, p, code) (((n) - LWIP_SOCKET_OFFSET < MEMP_NUM_NETCONN) && (((int)(n) - LWIP_SOCKET_OFFSET) >= 0) ?\
   (code) : 0)
 #define FD_SET(n, p)  FDSETSAFESET(n, p, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] |=  (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
-#define FD_SET_VAL(n, p) FDSETSAFESET_VAL(n, &(p), (p).fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] |=  (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_CLR(n, p)  FDSETSAFESET(n, p, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] &= ~(1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_ISSET(n,p) FDSETSAFEGET(n, p, (p)->fd_bits[((n)-LWIP_SOCKET_OFFSET)/8] &   (1 << (((n)-LWIP_SOCKET_OFFSET) & 7)))
 #define FD_ZERO(p)    memset((void*)(p), 0, sizeof(*(p)))
@@ -425,8 +422,6 @@ typedef struct fd_set
 
 #elif LWIP_SOCKET_OFFSET
 #error LWIP_SOCKET_OFFSET does not work with external FD_SET!
-#elif !defined(FD_SET_VAL)
-#define FD_SET_VAL(n, p) FD_SET(n, &(p))
 #endif /* FD_SET */
 
 /** LWIP_TIMEVAL_PRIVATE: if you want to use the struct timeval provided
