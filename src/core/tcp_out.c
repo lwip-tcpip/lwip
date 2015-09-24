@@ -1198,13 +1198,11 @@ tcp_output_segment(struct tcp_seg *seg, struct tcp_pcb *pcb)
   /* If we don't have a local IP address, we get one from netif */
   if (ip_addr_isany(&pcb->local_ip)) {
     const ip_addr_t *local_ip = ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif,
-      &pcb->remote_ip, &pcb->local_ip);
+      &pcb->remote_ip);
     if (local_ip == NULL) {
       return ERR_RTE;
     }
-#if !LWIP_IPV4 || !LWIP_IPV6
     ip_addr_copy(pcb->local_ip, *local_ip);
-#endif /* !LWIP_IPV4 || !LWIP_IPV6 */
   }
 
   if (pcb->rttest == 0) {

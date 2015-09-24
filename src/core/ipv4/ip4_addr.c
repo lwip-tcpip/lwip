@@ -315,20 +315,4 @@ ip4addr_ntoa_r(const ip4_addr_t *addr, char *buf, int buflen)
   return buf;
 }
 
-#if LWIP_IPV6
-/** Convert IPv4 address to generic IP address.
- * Since source types do not contain the type field, a target storage need to be supplied. 
- */
-ip_addr_t*
-ip4_2_ip(const ip4_addr_t *ip4addr, ip_addr_t* storage)
-{
-  if ((ip4addr == NULL) || (storage == NULL)) {
-    return NULL;
-  }
-  ip4_addr_copy(storage->u_addr.ip4, *ip4addr);
-  IP_SET_TYPE_VAL(*storage, IPADDR_TYPE_V4);
-  return storage;
-}
-#endif /* LWIP_IPV6 */
-
 #endif /* LWIP_IPV4 */

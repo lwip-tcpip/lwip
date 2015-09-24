@@ -398,6 +398,7 @@ void netif_poll_all(void);
 #endif /* ENABLE_LOOPBACK */
 
 #if LWIP_IPV6
+#define netif_ip_addr6(netif, i)  ((const ip_addr_t*)(&((netif)->ip6_addr[i])))
 #define netif_ip6_addr(netif, i)  (ip_2_ip6_c(&((netif)->ip6_addr[i])))
 #define netif_ip6_addr_set(netif, i, addr6) do { ip6_addr_set(ip_2_ip6(&((netif)->ip6_addr[i])), addr6); IP_SET_TYPE_VAL((netif)->ip6_addr[i], IPADDR_TYPE_V6); } while(0)
 #define netif_ip6_addr_state(netif, i)  ((netif)->ip6_addr_state[i])

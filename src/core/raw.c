@@ -241,9 +241,6 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
   struct pbuf *q; /* q will be sent down the stack */
   s16_t header_size;
   const ip_addr_t *dst_ip = ipaddr;
-#if LWIP_IPV4 && LWIP_IPV6
-  ip_addr_t src_ip_tmp;
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
 
   if ((pcb == NULL) || (ipaddr == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, ipaddr)) {
     return ERR_VAL;
@@ -314,7 +311,7 @@ raw_sendto(struct raw_pcb *pcb, struct pbuf *p, const ip_addr_t *ipaddr)
 
   if (ip_addr_isany(&pcb->local_ip)) {
     /* use outgoing network interface IP address as source address */
-    src_ip = ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, dst_ip, &src_ip_tmp);
+    src_ip = ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, dst_ip);
 #if LWIP_IPV6
     if (src_ip == NULL) {
       if (q != p) {

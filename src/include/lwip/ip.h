@@ -263,9 +263,9 @@ extern struct ip_globals ip_data;
         ((isipv6) ? \
         ip6_route(ip_2_ip6_c(src), ip_2_ip6_c(dest)) : \
         ip4_route_src(ip_2_ip4_c(dest), ip_2_ip4_c(src)))
-#define ip_netif_get_local_ip(isipv6, netif, dest, storage) ((isipv6) ? \
-        ip6_2_ip(ip6_netif_get_local_ip(netif, ip_2_ip6_c(dest)), storage) : \
-        ip4_2_ip(ip4_netif_get_local_ip(netif), storage))
+#define ip_netif_get_local_ip(isipv6, netif, dest) ((isipv6) ? \
+        ip6_netif_get_local_ip(netif, ip_2_ip6_c(dest)) : \
+        ip4_netif_get_local_ip(netif))
 #define ip_debug_print(is_ipv6, p) ((is_ipv6) ? ip6_debug_print(p) : ip4_debug_print(p))
 #elif LWIP_IPV4 /* LWIP_IPV4 && LWIP_IPV6 */
 #define ip_output(isipv6, p, src, dest, ttl, tos, proto) \
@@ -278,7 +278,7 @@ extern struct ip_globals ip_data;
         ip4_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
 #define ip_route(isipv6, src, dest) \
         ip4_route_src(dest, src)
-#define ip_netif_get_local_ip(isipv6, netif, dest, storage) \
+#define ip_netif_get_local_ip(isipv6, netif, dest) \
         ip4_netif_get_local_ip(netif)
 #define ip_debug_print(is_ipv6, p) ip4_debug_print(p)
 #elif LWIP_IPV6 /* LWIP_IPV4 && LWIP_IPV6 */
@@ -292,14 +292,14 @@ extern struct ip_globals ip_data;
         ip6_output_hinted(p, src, dest, ttl, tos, proto, addr_hint)
 #define ip_route(isipv6, src, dest) \
         ip6_route(src, dest)
-#define ip_netif_get_local_ip(isipv6, netif, dest, storage) \
+#define ip_netif_get_local_ip(isipv6, netif, dest) \
         ip6_netif_get_local_ip(netif, dest)
 #define ip_debug_print(is_ipv6, p) ip6_debug_print(p)
 #endif /* LWIP_IPV6 */
 
-#define ip_route_get_local_ip(isipv6, src, dest, netif, ipaddr, storage) do { \
+#define ip_route_get_local_ip(isipv6, src, dest, netif, ipaddr) do { \
   (netif) = ip_route(isipv6, src, dest); \
-  (ipaddr) = ip_netif_get_local_ip(isipv6, netif, dest, storage); \
+  (ipaddr) = ip_netif_get_local_ip(isipv6, netif, dest); \
 }while(0)
 
 err_t ip_input(struct pbuf *p, struct netif *inp);

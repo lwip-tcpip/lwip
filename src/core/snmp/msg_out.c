@@ -228,9 +228,6 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
 {
   struct snmp_trap_dst *td;
   struct netif *dst_if;
-#if LWIP_IPV4 && LWIP_IPV6
-  ip_addr_t dst_ip_storage;
-#endif /* LWIP_IPV4 && LWIP_IPV6 */
   const ip_addr_t* dst_ip;
   struct pbuf *p;
   u16_t i,tot_len;
@@ -244,7 +241,7 @@ snmp_send_trap(s8_t generic_trap, const struct snmp_obj_id *eoid, s32_t specific
       ip_addr_copy(trap_msg.dip, td->dip);
       /* lookup current source address for this dst */
       ip_route_get_local_ip(PCB_ISIPV6(trap_msg.pcb), &trap_msg.pcb->local_ip,
-        &td->dip, dst_if, dst_ip, &dst_ip_storage);
+        &td->dip, dst_if, dst_ip);
       if ((dst_if != NULL) && (dst_ip != NULL)) {
         trap_msg.sip_raw_len = (IP_IS_V6_VAL(*dst_ip) ? 16 : 4);
         memcpy(trap_msg.sip_raw, dst_ip, trap_msg.sip_raw_len);

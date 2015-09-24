@@ -596,7 +596,8 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
          in pcb->multicast_ip that is used for routing. */
       if (!ip4_addr_isany(&pcb->multicast_ip) &&
           !ip4_addr_cmp(&pcb->multicast_ip, IP4_ADDR_BROADCAST)) {
-        dst_ip_route = ip4_2_ip(&pcb->multicast_ip, &dst_ip_tmp);
+        ip_addr_copy_from_ip4(dst_ip_tmp, pcb->multicast_ip);
+        dst_ip_route = &dst_ip_tmp;
       }
 #endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
     }
@@ -656,9 +657,6 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 {
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   const ip_addr_t *src_ip;
-#if LWIP_IPV6 && LWIP_IPV4
-  ip_addr_t src_ip_tmp;
-#endif /* LWIP_IPV6 && LWIP_IPV4 */
 
   if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
@@ -668,7 +666,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #if LWIP_IPV6
   if (PCB_ISIPV6(pcb)) {
     if (ip6_addr_isany(ip_2_ip6(&pcb->local_ip))) {
-      src_ip = ip6_2_ip(ip6_select_source_address(netif, ip_2_ip6_c(dst_ip)), &src_ip_tmp);
+      src_ip = ip6_select_source_address(netif, ip_2_ip6_c(dst_ip));
       if (src_ip == NULL) {
         /* No suitable source address was found. */
         return ERR_RTE;
@@ -1056,7 +1054,7 @@ udp_connect(struct udp_pcb *pcb, const ip_addr_t *ipaddr, u16_t port)
       /** TODO: this will bind the udp pcb locally, to the interface which
           is used to route output packets to the remote address. However, we
           might want to accept incoming packets on any interface! */
-      ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, &pcb->remote_ip, &pcb->local_ip);
+      ip_addr_set(&pcb->local_ip, ip_netif_get_local_ip(PCB_ISIPV6(pcb), netif, &pcb->remote_ip));
     } else if (ip_addr_isany(&pcb->remote_ip)) {
       ip_addr_set_any(PCB_ISIPV6(pcb), &pcb->local_ip);
     }

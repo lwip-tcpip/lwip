@@ -162,7 +162,7 @@ PACK_STRUCT_END
 
 
 struct netif *ip6_route(const ip6_addr_t *src, const ip6_addr_t *dest);
-const ip6_addr_t *ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest);
+const ip_addr_t *ip6_select_source_address(struct netif *netif, const ip6_addr_t * dest);
 err_t         ip6_input(struct pbuf *p, struct netif *inp);
 err_t         ip6_output(struct pbuf *p, const ip6_addr_t *src, const ip6_addr_t *dest,
                          u8_t hl, u8_t tc, u8_t nexth);
