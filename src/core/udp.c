@@ -689,7 +689,7 @@ udp_sendto_if_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_i
 #if LWIP_IPV4
   if (ip4_addr_isany(ip_2_ip4(&pcb->local_ip))) {
     /* use outgoing network interface IP address as source address */
-    src_ip = ip4_2_ip(netif_ip4_addr(netif), &src_ip_tmp);
+    src_ip = &netif->ip_addr;
   } else {
     /* check if UDP PCB local IP address is correct
      * this could be an old address if netif->ip_addr has changed */
