@@ -72,22 +72,11 @@ typedef struct _ip_addr {
    Since source types do not contain the type field, a target storage need to be supplied. */
 ip_addr_t* ip4_2_ip(const ip4_addr_t *ip4addr, ip_addr_t* storage);
 ip_addr_t* ip6_2_ip(const ip6_addr_t *ip6addr, ip_addr_t* storage);
-/* Convert generic ip address to specific protocol version (just a cast) */
-#ifdef LWIP_ALLOW_STATIC_FN_IN_HEADER
-static ip6_addr_t* ip_2_ip6(const ip_addr_t *ipaddr)
-{ if(ipaddr) { return (ip6_addr_t*)&((ipaddr)->addr.ip6); } return NULL; }
-static const ip6_addr_t* ip_2_ip6(const ip_addr_t *ipaddr)
-{ if(ipaddr) { return (const ip6_addr_t*)&((ipaddr)->addr.ip6); } return NULL; }
-static ip4_addr_t* ip_2_ip4(const ip_addr_t *ipaddr)
-{ if(ipaddr) { return (ip4_addr_t*)&((ipaddr)->addr.ip4); } return NULL; }
-static const ip4_addr_t* ip_2_ip4_c(const ip_addr_t *ipaddr)
-{ if(ipaddr) { return (const ip4_addr_t*)&((ipaddr)->addr.ip4); } return NULL; }
-#else /* LWIP_ALLOW_STATIC_FN_IN_HEADER */
-#define ip_2_ip6(ipaddr)   ((ip6_addr_t*)(ipaddr))
-#define ip_2_ip6_c(ipaddr) ((const ip6_addr_t*)(ipaddr))
-#define ip_2_ip4(ipaddr)   ((ip4_addr_t*)(ipaddr))
-#define ip_2_ip4_c(ipaddr) ((const ip4_addr_t*)(ipaddr))
-#endif /* LWIP_ALLOW_STATIC_FN_IN_HEADER */
+/* Convert generic ip address to specific protocol version */
+#define ip_2_ip6(ipaddr)   (&((ipaddr)->u_addr.ip6))
+#define ip_2_ip6_c(ipaddr) ip_2_ip6(ipaddr)
+#define ip_2_ip4(ipaddr)   (&((ipaddr)->u_addr.ip4))
+#define ip_2_ip4_c(ipaddr) ip_2_ip4(ipaddr)
 
 #define IP_ADDR4(ipaddr,a,b,c,d)      do { IP4_ADDR(ip_2_ip4(ipaddr),a,b,c,d); \
                                            IP_SET_TYPE_VAL(*(ipaddr), IPADDR_TYPE_V4); } while(0)
