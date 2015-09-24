@@ -102,7 +102,7 @@ struct udp_pcb {
 
 #if LWIP_MULTICAST_TX_OPTIONS
   /** outgoing network interface for multicast packets */
-  ip4_addr_t multicast_ip;
+  ip_addr_t multicast_ip;
   /** TTL for outgoing multicast packets */
   u8_t mcast_ttl;
 #endif /* LWIP_MULTICAST_TX_OPTIONS */
@@ -169,8 +169,8 @@ struct udp_pcb * udp_new_ip6(void);
 #endif /* LWIP_IPV6 */
 
 #if LWIP_MULTICAST_TX_OPTIONS
-#define udp_set_multicast_netif_addr(pcb, ip4addr) do { (pcb)->multicast_ip = *(ip4addr); } while(0)
-#define udp_get_multicast_netif_addr(pcb)          (&(pcb)->multicast_ip)
+#define udp_set_multicast_netif_addr(pcb, ip4addr) ip_addr_copy_from_ip4((pcb)->multicast_ip, *(ip4addr))
+#define udp_get_multicast_netif_addr(pcb)          ip_2_ip4(&(pcb)->multicast_ip)
 #define udp_set_multicast_ttl(pcb, value)      do { (pcb)->mcast_ttl = value; } while(0)
 #define udp_get_multicast_ttl(pcb)                 ((pcb)->mcast_ttl)
 #endif /* LWIP_MULTICAST_TX_OPTIONS */

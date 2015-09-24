@@ -570,9 +570,6 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
 #endif /* LWIP_CHECKSUM_ON_COPY && CHECKSUM_GEN_UDP */
   struct netif *netif;
   const ip_addr_t *dst_ip_route = dst_ip;
-#if LWIP_IPV6 && LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS
-  ip_addr_t dst_ip_tmp;
-#endif /* LWIP_IPV6 && LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
 
   if ((pcb == NULL) || !IP_ADDR_PCB_VERSION_MATCH(pcb, dst_ip)) {
     return ERR_VAL;
@@ -594,10 +591,9 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
          administratively selected interface for multicast by default.
          However, this can be overridden by setting an interface address
          in pcb->multicast_ip that is used for routing. */
-      if (!ip4_addr_isany(&pcb->multicast_ip) &&
-          !ip4_addr_cmp(&pcb->multicast_ip, IP4_ADDR_BROADCAST)) {
-        ip_addr_copy_from_ip4(dst_ip_tmp, pcb->multicast_ip);
-        dst_ip_route = &dst_ip_tmp;
+      if (!ip_addr_isany(&pcb->multicast_ip) &&
+          !ip4_addr_cmp(ip_2_ip4(&pcb->multicast_ip), IP4_ADDR_BROADCAST)) {
+        dst_ip_route = & pcb->multicast_ip;
       }
 #endif /* LWIP_IPV4 && LWIP_MULTICAST_TX_OPTIONS */
     }
