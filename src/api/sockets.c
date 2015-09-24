@@ -1278,7 +1278,9 @@ lwip_writev(int s, const struct iovec *iov, int iovcnt)
   
   msg.msg_name = NULL;
   msg.msg_namelen = 0;
-  msg.msg_iov = (struct iovec *)iov;
+  /* Hack: we have to cast via number to cast from 'const' pointer to non-const.
+     Blame the opengroup standard for this inconsistency. */
+  msg.msg_iov = (struct iovec *)(size_t)iov;
   msg.msg_iovlen = iovcnt;
   msg.msg_control = NULL;
   msg.msg_controllen = 0;
