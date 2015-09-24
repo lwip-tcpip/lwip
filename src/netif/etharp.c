@@ -687,7 +687,7 @@ etharp_ip_input(struct netif *netif, struct pbuf *p)
   ip4_addr_copy(iphdr_src, iphdr->src);
 
   /* source is not on the local network? */
-  if (!ip4_addr_netcmp(&iphdr_src, &(netif->ip_addr), &(netif->netmask))) {
+  if (!ip4_addr_netcmp(&iphdr_src, netif_ip4_addr(netif), netif_ip4_netmask(netif))) {
     /* do nothing */
     return;
   }
