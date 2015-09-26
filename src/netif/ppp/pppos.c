@@ -215,7 +215,7 @@ pppos_write(ppp_pcb *ppp, void *ctx, struct pbuf *p)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
-  if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
+  if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
   }
 
@@ -260,7 +260,7 @@ pppos_netif_output(ppp_pcb *ppp, void *ctx, struct pbuf *pb, u16_t protocol)
   /* If the link has been idle, we'll send a fresh flag character to
    * flush any noise. */
   err = ERR_OK;
-  if ((sys_jiffies() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
+  if ((sys_now() - pppos->last_xmit) >= PPP_MAXIDLEFLAG) {
     err = pppos_output_append(pppos, err,  nb, PPP_FLAG, 0, NULL);
   }
 
@@ -879,7 +879,7 @@ pppos_output_last(pppos_pcb *pppos, err_t err, struct pbuf *nb, u16_t *fcs)
     }
   }
 
-  pppos->last_xmit = sys_jiffies();
+  pppos->last_xmit = sys_now();
   MIB2_STATS_NETIF_ADD(ppp->netif, ifoutoctets, nb->tot_len);
   MIB2_STATS_NETIF_INC(ppp->netif, ifoutucastpkts);
   LINK_STATS_INC(link.xmit);

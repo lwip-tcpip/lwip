@@ -2394,7 +2394,7 @@
 #endif
 
 /**
- * PPP_MAXIDLEFLAG: Max Xmit idle time (in jiffies) before resend flag char.
+ * PPP_MAXIDLEFLAG: Max Xmit idle time (in ms) before resend flag char.
  */
 #ifndef PPP_MAXIDLEFLAG
 #define PPP_MAXIDLEFLAG                 100

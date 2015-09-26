@@ -419,3 +419,5 @@ from previous lwIP version is pretty easy:
   conditional.
 
 * PPPoS now requires a serial output callback
+
+* PPP_MAXIDLEFLAG is now in ms instead of jiffies
