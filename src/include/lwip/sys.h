@@ -174,7 +174,7 @@ void sys_sem_set_invalid(sys_sem_t *sem);
 
 /* Time functions. */
 #ifndef sys_msleep
-void sys_msleep(u32_t ms); /* only has a (close to) 1 jiffy resolution. */
+void sys_msleep(u32_t ms); /* only has a (close to) 1 ms resolution. */
 #endif
 
 /* Mailbox functions. */
