@@ -117,7 +117,7 @@ static void magic_churnrand(char *rand_data, u32_t rand_len) {
       u32_t rand;
 #endif /* LWIP_RAND */
     } sys_data;
-    magic_randomseed += sys_jiffies() & 0xffff;
+    magic_randomseed += sys_jiffies();
     sys_data.jiffies = magic_randomseed;
 #ifdef LWIP_RAND
     sys_data.rand = LWIP_RAND();
@@ -244,8 +244,7 @@ void magic_randomize(void) {
     /* The initialization function also updates the seed. */
   } else {
 #endif /* LWIP_RAND */
-    /* magic_randomseed += (magic_randomseed << 16) + TM1; */
-    magic_randomseed += sys_jiffies() & 0xffff; /* XXX */
+    magic_randomseed += sys_jiffies();
 #ifndef LWIP_RAND
   }
 #endif /* LWIP_RAND */
