@@ -136,7 +136,7 @@ START_TEST(test_etharp_table)
   err_t err;
 #endif /* ETHARP_SUPPORT_STATIC_ENTRIES */
   s8_t idx;
-  ip4_addr_t *unused_ipaddr;
+  const ip4_addr_t *unused_ipaddr;
   struct eth_addr *unused_ethaddr;
   struct udp_pcb* pcb;
   LWIP_UNUSED_ARG(_i);
