@@ -591,7 +591,7 @@ udp_sendto_chksum(struct udp_pcb *pcb, struct pbuf *p, const ip_addr_t *dst_ip,
          administratively selected interface for multicast by default.
          However, this can be overridden by setting an interface address
          in pcb->multicast_ip that is used for routing. */
-      if (!ip_addr_isany(&pcb->multicast_ip) &&
+      if (!ip_addr_isany_val(pcb->multicast_ip) &&
           !ip4_addr_cmp(ip_2_ip4(&pcb->multicast_ip), IP4_ADDR_BROADCAST)) {
         dst_ip_route = & pcb->multicast_ip;
       }
