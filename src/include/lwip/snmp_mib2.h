@@ -93,8 +93,8 @@ enum snmp_ifType {
 #define MIB2_COPY_SYSUPTIME_TO(ptrToVal) (*(ptrToVal) = (sys_now() / 10))
 #endif
 
-#define MIB2_STATS_NETIF_INC(n, x)      do { ++(n)->x; } while(0)
-#define MIB2_STATS_NETIF_ADD(n, x, val) do { (n)->x += val; } while(0)
+#define MIB2_STATS_NETIF_INC(n, x)      do { ++(n)->mib2_counters.x; } while(0)
+#define MIB2_STATS_NETIF_ADD(n, x, val) do { (n)->mib2_counters.x += (val); } while(0)
 
 #define MIB2_INIT_NETIF(netif, type, speed) do { \
   /* use "snmp_ifType" enum from snmp_mib2.h for "type", snmp_ifType_ethernet_csmacd by example */ \
@@ -102,14 +102,17 @@ enum snmp_ifType {
   /* your link speed here (units: bits per second) */  \
   (netif)->link_speed = (speed);\
   (netif)->ts = 0;              \
-  (netif)->ifinoctets = 0;      \
-  (netif)->ifinucastpkts = 0;   \
-  (netif)->ifinnucastpkts = 0;  \
-  (netif)->ifindiscards = 0;    \
-  (netif)->ifoutoctets = 0;     \
-  (netif)->ifoutucastpkts = 0;  \
-  (netif)->ifoutnucastpkts = 0; \
-  (netif)->ifoutdiscards = 0; } while(0)
+  (netif)->mib2_counters.ifinoctets = 0;      \
+  (netif)->mib2_counters.ifinucastpkts = 0;   \
+  (netif)->mib2_counters.ifinnucastpkts = 0;  \
+  (netif)->mib2_counters.ifindiscards = 0;    \
+  (netif)->mib2_counters.ifinerrors = 0;    \
+  (netif)->mib2_counters.ifinunknownprotos = 0;    \
+  (netif)->mib2_counters.ifoutoctets = 0;     \
+  (netif)->mib2_counters.ifoutucastpkts = 0;  \
+  (netif)->mib2_counters.ifoutnucastpkts = 0; \
+  (netif)->mib2_counters.ifoutdiscards = 0; \
+  (netif)->mib2_counters.ifouterrors = 0; } while(0)
 #else /* MIB2_STATS */
 #ifndef MIB2_COPY_SYSUPTIME_TO
 #define MIB2_COPY_SYSUPTIME_TO(ptrToVal)
@@ -173,10 +176,13 @@ void mib2_udp_unbind(struct udp_pcb *pcb);
 #define snmp_inc_ifinucastpkts(ni)     MIB2_STATS_NETIF_INC(ni, ifinucastpkts)
 #define snmp_inc_ifinnucastpkts(ni)    MIB2_STATS_NETIF_INC(ni, ifinnucastpkts)
 #define snmp_inc_ifindiscards(ni)      MIB2_STATS_NETIF_INC(ni, ifindiscards)
+#define snmp_inc_ifinerrors(ni)        MIB2_STATS_NETIF_INC(ni, ifinerrors)
+#define snmp_inc_ifinunknownprotos(ni) MIB2_STATS_NETIF_INC(ni, ifinunknownprotos)
 #define snmp_add_ifoutoctets(ni,value) MIB2_STATS_NETIF_ADD(ni, ifoutoctets, value)
 #define snmp_inc_ifoutucastpkts(ni)    MIB2_STATS_NETIF_INC(ni, ifoutucastpkts)
 #define snmp_inc_ifoutnucastpkts(ni)   MIB2_STATS_NETIF_INC(ni, ifoutnucastpkts)
 #define snmp_inc_ifoutdiscards(ni)     MIB2_STATS_NETIF_INC(ni, ifoutdiscards)
+#define snmp_inc_ifouterrors(ni)       MIB2_STATS_NETIF_INC(ni, ifouterrors)
 
 #ifdef __cplusplus
 }

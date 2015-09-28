@@ -176,6 +176,20 @@ struct stats_mib2 {
   u32_t icmpoutaddrmaskreps; /* @todo: never incremented */
 };
 
+struct stats_mib2_netif_ctrs {
+  u32_t ifinoctets;
+  u32_t ifinucastpkts;
+  u32_t ifinnucastpkts;
+  u32_t ifindiscards;
+  u32_t ifinerrors;
+  u32_t ifinunknownprotos;
+  u32_t ifoutoctets;
+  u32_t ifoutucastpkts;
+  u32_t ifoutnucastpkts;
+  u32_t ifoutdiscards;
+  u32_t ifouterrors;
+};
+
 struct stats_ {
 #if LINK_STATS
   struct stats_proto link;

@@ -42,6 +42,8 @@
 
 #include "lwip/def.h"
 #include "lwip/pbuf.h"
+#include "lwip/stats.h"
+
 #if LWIP_DHCP
 struct dhcp;
 #endif
@@ -49,7 +51,7 @@ struct dhcp;
 struct autoip;
 #endif
 #if LWIP_IPV6_DHCP6
-#include "lwip/dhcp6.h"
+struct dhcp6;
 #endif /* LWIP_IPV6_DHCP6 */
 
 #ifdef __cplusplus
@@ -277,14 +279,7 @@ struct netif {
   /** timestamp at last change made (up/down) */
   u32_t ts;
   /** counters */
-  u32_t ifinoctets;
-  u32_t ifinucastpkts;
-  u32_t ifinnucastpkts;
-  u32_t ifindiscards;
-  u32_t ifoutoctets;
-  u32_t ifoutucastpkts;
-  u32_t ifoutnucastpkts;
-  u32_t ifoutdiscards;
+  struct stats_mib2_netif_ctrs mib2_counters;
 #endif /* MIB2_STATS */
 #if LWIP_IPV4 && LWIP_IGMP
   /** This function could be called to add or delete an entry in the multicast

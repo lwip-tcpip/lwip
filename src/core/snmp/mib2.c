@@ -2141,64 +2141,66 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
     case 10: /* ifInOctets */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifinoctets;
+        *uint_ptr = netif->mib2_counters.ifinoctets;
       }
       break;
     case 11: /* ifInUcastPkts */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifinucastpkts;
+        *uint_ptr = netif->mib2_counters.ifinucastpkts;
       }
       break;
     case 12: /* ifInNUcastPkts */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifinnucastpkts;
+        *uint_ptr = netif->mib2_counters.ifinnucastpkts;
       }
       break;
-    case 13: /* ifInDiscarts */
+    case 13: /* ifInDiscards */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifindiscards;
+        *uint_ptr = netif->mib2_counters.ifindiscards;
       }
       break;
     case 14: /* ifInErrors */
-    case 15: /* ifInUnkownProtos */
-      /** @todo add these counters! */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = 0;
+        *uint_ptr = netif->mib2_counters.ifinerrors;
+      }
+    case 15: /* ifInUnkownProtos */
+      {
+        u32_t *uint_ptr = (u32_t*)value;
+        *uint_ptr = netif->mib2_counters.ifinunknownprotos;
       }
       break;
     case 16: /* ifOutOctets */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifoutoctets;
+        *uint_ptr = netif->mib2_counters.ifoutoctets;
       }
       break;
     case 17: /* ifOutUcastPkts */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifoutucastpkts;
+        *uint_ptr = netif->mib2_counters.ifoutucastpkts;
       }
       break;
     case 18: /* ifOutNUcastPkts */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifoutnucastpkts;
+        *uint_ptr = netif->mib2_counters.ifoutnucastpkts;
       }
       break;
     case 19: /* ifOutDiscarts */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = netif->ifoutdiscards;
+        *uint_ptr = netif->mib2_counters.ifoutdiscards;
       }
       break;
     case 20: /* ifOutErrors */
-       /** @todo add this counter! */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = 0;
+        *uint_ptr = netif->mib2_counters.ifouterrors;
       }
       break;
     case 21: /* ifOutQLen */
