@@ -488,9 +488,8 @@ igmp_input(struct pbuf *p, struct netif *inp, const ip4_addr_t *dest)
 err_t
 igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 {
-  err_t              err = ERR_VAL; /* no matching interface */
-  struct igmp_group *group;
-  struct netif      *netif;
+  err_t        err = ERR_VAL; /* no matching interface */
+  struct netif *netif;
 
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_joingroup: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
@@ -501,44 +500,11 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   while (netif != NULL) {
     /* Should we join this interface ? */
     if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
-      /* find group or create a new one if not found */
-      group = igmp_lookup_group(netif, groupaddr);
-
-      if (group != NULL) {
-        /* This should create a new group, check the state to make sure */
-        if (group->group_state != IGMP_GROUP_NON_MEMBER) {
-          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: join to group not in state IGMP_GROUP_NON_MEMBER\n"));
-        } else {
-          /* OK - it was new group */
-          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: join to new group: "));
-          ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-          LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
-          /* If first use of the group, allow the group at the MAC level */
-          if ((group->use==0) && (netif->igmp_mac_filter != NULL)) {
-            LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: igmp_mac_filter(ADD "));
-            ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-            LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-            netif->igmp_mac_filter(netif, groupaddr, IGMP_ADD_MAC_FILTER);
-          }
-
-          IGMP_STATS_INC(igmp.tx_join);
-          igmp_send(group, IGMP_V2_MEMB_REPORT);
-
-          igmp_start_timer(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
-
-          /* Need to work out where this timer comes from */
-          group->group_state = IGMP_GROUP_DELAYING_MEMBER;
-        }
-        /* Increment group use */
-        group->use++;
-        /* Join on this interface */
-        err = ERR_OK;
-      } else {
+      err = igmp_joingroup_netif(netif, groupaddr);
+      if (err != ERR_OK) {
         /* Return an error even if some network interfaces are joined */
         /** @todo undo any other netif already joined */
-        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup: Not enough memory to join to group\n"));
-        return ERR_MEM;
+        return err;
       }
     }
     /* proceed to next network interface */
@@ -546,6 +512,63 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   }
 
   return err;
+}
+
+/**
+ * Join a group on one network interface.
+ *
+ * @param netif the network interface which should join a new group
+ * @param groupaddr the ip address of the group which to join
+ * @return ERR_OK if group was joined on the netif, an err_t otherwise
+ */
+err_t  igmp_joingroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
+{
+  struct igmp_group *group;
+
+  /* make sure it is multicast address */
+  LWIP_ERROR("igmp_joingroup_netif: attempt to join non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
+  LWIP_ERROR("igmp_joingroup_netif: attempt to join allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+
+  /* make sure it is an igmp-enabled netif */
+  LWIP_ERROR("igmp_joingroup_netif: attempt to join on non-IGMP netif", netif->flags & NETIF_FLAG_IGMP, return ERR_VAL;);
+
+  /* find group or create a new one if not found */
+  group = igmp_lookup_group(netif, groupaddr);
+
+  if (group != NULL) {
+    /* This should create a new group, check the state to make sure */
+    if (group->group_state != IGMP_GROUP_NON_MEMBER) {
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to group not in state IGMP_GROUP_NON_MEMBER\n"));
+    } else {
+      /* OK - it was new group */
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: join to new group: "));
+      ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+      LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
+
+      /* If first use of the group, allow the group at the MAC level */
+      if ((group->use==0) && (netif->igmp_mac_filter != NULL)) {
+        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: igmp_mac_filter(ADD "));
+        ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+        LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
+        netif->igmp_mac_filter(netif, groupaddr, IGMP_ADD_MAC_FILTER);
+      }
+
+      IGMP_STATS_INC(igmp.tx_join);
+      igmp_send(group, IGMP_V2_MEMB_REPORT);
+
+      igmp_start_timer(group, IGMP_JOIN_DELAYING_MEMBER_TMR);
+
+      /* Need to work out where this timer comes from */
+      group->group_state = IGMP_GROUP_DELAYING_MEMBER;
+    }
+    /* Increment group use */
+    group->use++;
+    /* Join on this interface */
+    return ERR_OK;
+  } else {
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_joingroup_netif: Not enough memory to join to group\n"));
+    return ERR_MEM;
+  }
 }
 
 /**
@@ -558,9 +581,8 @@ igmp_joingroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 err_t
 igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
 {
-  err_t              err = ERR_VAL; /* no matching interface */
-  struct igmp_group *group;
-  struct netif      *netif;
+  err_t        err = ERR_VAL; /* no matching interface */
+  struct netif *netif;
 
   /* make sure it is multicast address */
   LWIP_ERROR("igmp_leavegroup: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
@@ -571,47 +593,10 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   while (netif != NULL) {
     /* Should we leave this interface ? */
     if ((netif->flags & NETIF_FLAG_IGMP) && ((ip4_addr_isany(ifaddr) || ip4_addr_cmp(netif_ip4_addr(netif), ifaddr)))) {
-      /* find group */
-      group = igmp_lookfor_group(netif, groupaddr);
-
-      if (group != NULL) {
-        /* Only send a leave if the flag is set according to the state diagram */
-        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: Leaving group: "));
-        ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-        LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
-        /* If there is no other use of the group */
-        if (group->use <= 1) {
-          /* If we are the last reporter for this group */
-          if (group->last_reporter_flag) {
-            LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: sending leaving group\n"));
-            IGMP_STATS_INC(igmp.tx_leave);
-            igmp_send(group, IGMP_LEAVE_GROUP);
-          }
-
-          /* Disable the group at the MAC level */
-          if (netif->igmp_mac_filter != NULL) {
-            LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: igmp_mac_filter(DEL "));
-            ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-            LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
-            netif->igmp_mac_filter(netif, groupaddr, IGMP_DEL_MAC_FILTER);
-          }
-
-          LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: remove group: "));
-          ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
-          LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
-
-          /* Free the group */
-          igmp_remove_group(group);
-        } else {
-          /* Decrement group use */
-          group->use--;
-        }
-        /* Leave on this interface */
-        err = ERR_OK;
-      } else {
-        /* It's not a fatal error on "leavegroup" */
-        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup: not member of group\n"));
+      err_t res = igmp_leavegroup_netif(netif, groupaddr);
+      if (err != ERR_OK) {
+        /* Store this result if we have not yet gotten a success */
+        err = res;
       }
     }
     /* proceed to next network interface */
@@ -619,6 +604,67 @@ igmp_leavegroup(const ip4_addr_t *ifaddr, const ip4_addr_t *groupaddr)
   }
 
   return err;
+}
+
+/**
+ * Leave a group on one network interface.
+ *
+ * @param netif the network interface which should leave a group
+ * @param groupaddr the ip address of the group which to leave
+ * @return ERR_OK if group was left on the netif, an err_t otherwise
+ */
+err_t igmp_leavegroup_netif(struct netif *netif, const ip4_addr_t *groupaddr)
+{
+  struct igmp_group *group;
+
+  /* make sure it is multicast address */
+  LWIP_ERROR("igmp_leavegroup_netif: attempt to leave non-multicast address", ip4_addr_ismulticast(groupaddr), return ERR_VAL;);
+  LWIP_ERROR("igmp_leavegroup_netif: attempt to leave allsystems address", (!ip4_addr_cmp(groupaddr, &allsystems)), return ERR_VAL;);
+
+  /* make sure it is an igmp-enabled netif */
+  LWIP_ERROR("igmp_leavegroup_netif: attempt to leave on non-IGMP netif", netif->flags & NETIF_FLAG_IGMP, return ERR_VAL;);
+
+  /* find group */
+  group = igmp_lookfor_group(netif, groupaddr);
+
+  if (group != NULL) {
+    /* Only send a leave if the flag is set according to the state diagram */
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: Leaving group: "));
+    ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+    LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
+
+    /* If there is no other use of the group */
+    if (group->use <= 1) {
+      /* If we are the last reporter for this group */
+      if (group->last_reporter_flag) {
+        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: sending leaving group\n"));
+        IGMP_STATS_INC(igmp.tx_leave);
+        igmp_send(group, IGMP_LEAVE_GROUP);
+      }
+
+      /* Disable the group at the MAC level */
+      if (netif->igmp_mac_filter != NULL) {
+        LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: igmp_mac_filter(DEL "));
+        ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+        LWIP_DEBUGF(IGMP_DEBUG, (") on if %p\n", (void*)netif));
+        netif->igmp_mac_filter(netif, groupaddr, IGMP_DEL_MAC_FILTER);
+      }
+
+      LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: remove group: "));
+      ip4_addr_debug_print(IGMP_DEBUG, groupaddr);
+      LWIP_DEBUGF(IGMP_DEBUG, ("\n"));
+
+      /* Free the group */
+      igmp_remove_group(group);
+    } else {
+      /* Decrement group use */
+      group->use--;
+    }
+    return ERR_OK;
+  } else {
+    LWIP_DEBUGF(IGMP_DEBUG, ("igmp_leavegroup_netif: not member of group\n"));
+    return ERR_VAL;
+  }
 }
 
 /**
