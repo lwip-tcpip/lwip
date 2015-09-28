@@ -353,7 +353,7 @@ lwip_getaddrinfo(const char *nodename, const char *servname,
       /* invalid name length */
       return EAI_FAIL;
     }
-    LWIP_ASSERT("namelen is too long", (namelen + 1) <= (mem_size_t)-1);
+    LWIP_ASSERT("namelen is too long", total_size + namelen + 1 > total_size);
     total_size += namelen + 1;
   }
   /* If this fails, please report to lwip-devel! :-) */
