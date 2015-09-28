@@ -187,7 +187,9 @@ extern struct ip_globals ip_data;
   (const u8_t*)ip6_current_header() : (const u8_t*)ip4_current_header())  + ip_current_header_tot_len()))
 
 /** Set an IP_PCB to IPv6 (IPv4 is the default) */
-#define ip_set_v6(pcb, val)       do{if(pcb != NULL) { pcb->isipv6 = val; }}while(0)
+#define ip_set_v6(pcb, val)       do{if(pcb != NULL) { pcb->isipv6 = val; \
+  IP_SET_TYPE(&(pcb)->local_ip,  (val)?IPADDR_TYPE_V6:IPADDR_TYPE_V4); \
+  IP_SET_TYPE(&(pcb)->remote_ip, (val)?IPADDR_TYPE_V6:IPADDR_TYPE_V4); }}while(0)
 
 /** Source IP4 address of current_header */
 #define ip4_current_src_addr()     (ip_2_ip4(&ip_data.current_iphdr_src))
