@@ -293,18 +293,18 @@ ipaddr_aton(const char *cp, ip_addr_t *addr)
   if (cp != NULL) {
     const char* c;
     for (c = cp; *c != 0; c++) {
-      if (*c == '.') {
-        /* contains a dot: IPv4 address */
-        if (addr) {
-          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
-        }
-        return ip4addr_aton(cp, ip_2_ip4(addr));
-      } else if (*c == ':') {
+      if (*c == ':') {
         /* contains a colon: IPv6 address */
         if (addr) {
           IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V6);
         }
         return ip6addr_aton(cp, ip_2_ip6(addr));
+      } else if (*c == '.') {
+        /* contains a dot: IPv4 address */
+        if (addr) {
+          IP_SET_TYPE_VAL(*addr, IPADDR_TYPE_V4);
+        }
+        return ip4addr_aton(cp, ip_2_ip4(addr));
       }
     }
     /* nothing found, call ip4addr_aton as fallback */
