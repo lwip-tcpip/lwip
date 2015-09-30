@@ -467,7 +467,7 @@ snmp_varbind_list_sum(struct snmp_varbind_root *root)
         /* unsupported type */
         vb->vlen = 0;
         break;
-    };
+    }
     /* encoding length of value length field */
     snmp_asn1_enc_length_cnt(vb->vlen, &vb->vlenlen);
     snmp_asn1_enc_oid_cnt(vb->ident_len, vb->ident, &vb->olen);
@@ -684,7 +684,7 @@ snmp_varbind_list_enc(struct snmp_varbind_root *root, struct pbuf *p, u16_t ofs)
       default:
         /* unsupported type */
         break;
-    };
+    }
     ofs += vb->vlen;
     vb = vb->next;
   }
