@@ -2575,11 +2575,10 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
         *uint_ptr = STATS_GET(mib2.ipfragcreates);
       }
       break;
-    case 23: /* ipRoutingDiscards */
-      /** @todo can lwIP discard routes at all?? hardwire this to 0?? */
+    case 23: /* ipRoutingDiscards: not supported -> always 0 */
       {
         u32_t *uint_ptr = (u32_t*)value;
-        *uint_ptr = STATS_GET(mib2.iproutingdiscards);
+        *uint_ptr = 0;
       }
       break;
     default:

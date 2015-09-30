@@ -120,12 +120,11 @@ struct stats_mib2 {
   u32_t ipoutrequests;
   u32_t ipoutdiscards;
   u32_t ipoutnoroutes;
-  u32_t ipreasmoks; /* @todo: never incremented */
+  u32_t ipreasmoks;
   u32_t ipreasmfails;
   u32_t ipfragoks;
-  u32_t ipfragfails; /* @todo: never incremented */
+  u32_t ipfragfails;
   u32_t ipfragcreates;
-  u32_t iproutingdiscards; /* @todo: never incremented */
   u32_t ipreasmreqds;
   u32_t ipforwdatagrams;
   u32_t ipinreceives;
