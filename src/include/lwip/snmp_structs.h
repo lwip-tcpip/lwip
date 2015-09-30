@@ -128,13 +128,7 @@ typedef struct mib_node mib_scalar_node;
 struct mib_array_node
 {
   /* inherited "base class" members */
-  void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(struct obj_def *od, u16_t len, void *value);
-  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
-  void (*set_value)(struct obj_def *od, u16_t len, void *value);
-
-  u8_t node_type;
-  u16_t maxlength;
+  struct mib_node node;
 
   /* additional struct members */
   const s32_t *objid;
@@ -146,13 +140,7 @@ struct mib_array_node
 struct mib_ram_array_node
 {
   /* inherited "base class" members */
-  void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(struct obj_def *od, u16_t len, void *value);
-  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
-  void (*set_value)(struct obj_def *od, u16_t len, void *value);
-
-  u8_t node_type;
-  u16_t maxlength;
+  struct mib_node node;
 
   /* aditional struct members */
   s32_t *objid;
@@ -172,13 +160,7 @@ struct mib_list_node
 struct mib_list_rootnode
 {
   /* inherited "base class" members */
-  void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(struct obj_def *od, u16_t len, void *value);
-  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
-  void (*set_value)(struct obj_def *od, u16_t len, void *value);
-
-  u8_t node_type;
-  u16_t maxlength;
+  struct mib_node node;
 
   /* additional struct members */
   struct mib_list_node *head;
@@ -192,13 +174,7 @@ struct mib_list_rootnode
 struct mib_external_node
 {
   /* inherited "base class" members */
-  void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value)(struct obj_def *od, u16_t len, void *value);
-  u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
-  void (*set_value)(struct obj_def *od, u16_t len, void *value);
-
-  u8_t node_type;
-  u16_t maxlength;
+  struct mib_node node;
 
   /* additional struct members */
   /** points to an external (in memory) record of some sort of addressing
