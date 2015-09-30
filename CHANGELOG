@@ -6,6 +6,11 @@ HISTORY
 
   ++ New features:
 
+  2015-09-30: Dirk Ziegelmeier
+  * snmp_structs.h, mib_structs.c, mib2.c: snmp: fixed ugly inheritance
+    implementation by aggregating the "base class" (struct mib_node) in all
+    derived node classes to get more type-safe code
+
   2015-09-23: Simon Goldschmidt
   * netif.h/.c, nd6.c: task #13729: Convert netif addresses (IPv4 & IPv6) to
     ip_addr_t (so they can be used without conversion/temporary storage)
