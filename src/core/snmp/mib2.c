@@ -658,7 +658,7 @@ const struct mib_array_node interfaces = {
 
 /*             0 1 2 3 4 5 6 */
 /* system .1.3.6.1.2.1.1 */
-const mib_scalar_node sys_tem_scalar = {
+const mib_scalar_node system_scalar = {
   &system_get_object_def,
   &system_get_value,
   &system_set_test,
@@ -666,12 +666,12 @@ const mib_scalar_node sys_tem_scalar = {
   MIB_NODE_SC,
   0
 };
-const s32_t sys_tem_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
-const struct mib_node* const sys_tem_nodes[7] = {
-  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
-  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
-  (const struct mib_node*)&sys_tem_scalar, (const struct mib_node*)&sys_tem_scalar,
-  (const struct mib_node*)&sys_tem_scalar
+const s32_t system_ids[7] = { 1, 2, 3, 4, 5, 6, 7 };
+const struct mib_node* const system_nodes[7] = {
+  (const struct mib_node*)&system_scalar, (const struct mib_node*)&system_scalar,
+  (const struct mib_node*)&system_scalar, (const struct mib_node*)&system_scalar,
+  (const struct mib_node*)&system_scalar, (const struct mib_node*)&system_scalar,
+  (const struct mib_node*)&system_scalar
 };
 /* work around name issue with 'sys_tem', some compiler(s?) seem to reserve 'system' */
 const struct mib_array_node sys_tem = {
@@ -681,8 +681,8 @@ const struct mib_array_node sys_tem = {
   &noleafs_set_value,
   MIB_NODE_AR,
   7,
-  sys_tem_ids,
-  sys_tem_nodes
+  system_ids,
+  system_nodes
 };
 
 /* mib-2 .1.3.6.1.2.1 */
