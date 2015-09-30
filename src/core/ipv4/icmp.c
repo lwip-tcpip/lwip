@@ -103,8 +103,10 @@ icmp_input(struct pbuf *p, struct netif *inp)
   case ICMP_ER:
     /* This is OK, echo reply might have been parsed by a raw PCB
        (as obviously, an echo request has been sent, too). */
-    break; 
+    MIB2_STATS_INC(mib2.icmpinechoreps);
+    break;
   case ICMP_ECHO:
+    MIB2_STATS_INC(mib2.icmpinechos);
     src = ip4_current_dest_addr();
     /* multicast destination address? */
     if (ip_addr_ismulticast(ip_current_dest_addr())) {
@@ -235,6 +237,25 @@ icmp_input(struct pbuf *p, struct netif *inp)
     }
     break;
   default:
+    if (type == ICMP_DUR) {
+      MIB2_STATS_INC(mib2.icmpindestunreachs);
+    } else if(type == ICMP_TE) {
+      MIB2_STATS_INC(mib2.icmpindestunreachs);
+    } else if(type == ICMP_PP) {
+      MIB2_STATS_INC(mib2.icmpinparmprobs);
+    } else if(type == ICMP_SQ) {
+      MIB2_STATS_INC(mib2.icmpinsrcquenchs);
+    } else if(type == ICMP_RD) {
+      MIB2_STATS_INC(mib2.icmpinredirects);
+    } else if(type == ICMP_TS) {
+      MIB2_STATS_INC(mib2.icmpintimestamps);
+    } else if(type == ICMP_TSR) {
+      MIB2_STATS_INC(mib2.icmpintimestampreps);
+    } else if(type == ICMP_AM) {
+      MIB2_STATS_INC(mib2.icmpinaddrmasks);
+    } else if(type == ICMP_AMR) {
+      MIB2_STATS_INC(mib2.icmpinaddrmaskreps);
+    }
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_input: ICMP type %"S16_F" code %"S16_F" not supported.\n", 
                 (s16_t)type, (s16_t)code));
     ICMP_STATS_INC(icmp.proterr);
@@ -268,6 +289,7 @@ icmperr:
 void
 icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 {
+  MIB2_STATS_INC(mib2.icmpoutdestunreachs);
   icmp_send_response(p, ICMP_DUR, t);
 }
 
@@ -282,6 +304,7 @@ icmp_dest_unreach(struct pbuf *p, enum icmp_dur_type t)
 void
 icmp_time_exceeded(struct pbuf *p, enum icmp_te_type t)
 {
+  MIB2_STATS_INC(mib2.icmpouttimeexcds);
   icmp_send_response(p, ICMP_TE, t);
 }
 
@@ -305,11 +328,15 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
   ip4_addr_t iphdr_src;
   struct netif *netif;
 
+  /* increase number of messages attempted to send */
+  MIB2_STATS_INC(mib2.icmpoutmsgs);
+
   /* ICMP header + IP header + 8 bytes of data */
   q = pbuf_alloc(PBUF_IP, sizeof(struct icmp_echo_hdr) + IP_HLEN + ICMP_DEST_UNREACH_DATASIZE,
                  PBUF_RAM);
   if (q == NULL) {
     LWIP_DEBUGF(ICMP_DEBUG, ("icmp_time_exceeded: failed to allocate pbuf for ICMP packet.\n"));
+    MIB2_STATS_INC(mib2.icmpouterrors);
     return;
   }
   LWIP_ASSERT("check that first pbuf can hold icmp message",
@@ -342,10 +369,6 @@ icmp_send_response(struct pbuf *p, u8_t type, u8_t code)
     }
 #endif
     ICMP_STATS_INC(icmp.xmit);
-    /* increase number of messages attempted to send */
-    MIB2_STATS_INC(mib2.icmpoutmsgs);
-    /* increase number of destination unreachable messages attempted to send */
-    MIB2_STATS_INC(mib2.icmpouttimeexcds);
     ip4_addr_copy(iphdr_src, iphdr->src);
     ip4_output_if(q, NULL, &iphdr_src, ICMP_TTL, 0, IP_PROTO_ICMP, netif);
   }

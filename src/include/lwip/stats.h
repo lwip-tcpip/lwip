@@ -149,30 +149,23 @@ struct stats_mib2 {
   /* ICMP */
   u32_t icmpinmsgs;
   u32_t icmpinerrors;
-  u32_t icmpindestunreachs; /* @todo: never incremented */
-  u32_t icmpintimeexcds; /* @todo: never incremented */
-  u32_t icmpinparmprobs; /* @todo: never incremented */
-  u32_t icmpinsrcquenchs; /* @todo: never incremented */
-  u32_t icmpinredirects; /* @todo: never incremented */
-  u32_t icmpinechos; /* @todo: never incremented */
-  u32_t icmpinechoreps; /* @todo: never incremented */
-  u32_t icmpintimestamps; /* @todo: never incremented */
-  u32_t icmpintimestampreps; /* @todo: never incremented */
-  u32_t icmpinaddrmasks; /* @todo: never incremented */
-  u32_t icmpinaddrmaskreps; /* @todo: never incremented */
+  u32_t icmpindestunreachs;
+  u32_t icmpintimeexcds;
+  u32_t icmpinparmprobs;
+  u32_t icmpinsrcquenchs;
+  u32_t icmpinredirects;
+  u32_t icmpinechos;
+  u32_t icmpinechoreps;
+  u32_t icmpintimestamps;
+  u32_t icmpintimestampreps;
+  u32_t icmpinaddrmasks;
+  u32_t icmpinaddrmaskreps;
   u32_t icmpoutmsgs;
-  u32_t icmpouterrors; /* @todo: never incremented */
-  u32_t icmpoutdestunreachs; /* @todo: never incremented */
+  u32_t icmpouterrors;
+  u32_t icmpoutdestunreachs;
   u32_t icmpouttimeexcds;
-  u32_t icmpoutparmprobs; /* @todo: never incremented */
-  u32_t icmpoutsrcquenchs; /* @todo: never incremented */
-  u32_t icmpoutredirects; /* @todo: never incremented */
-  u32_t icmpoutechos; /* @todo: never incremented */
+  u32_t icmpoutechos; /* can be incremented by user application ('ping') */
   u32_t icmpoutechoreps;
-  u32_t icmpouttimestamps; /* @todo: never incremented */
-  u32_t icmpouttimestampreps; /* @todo: never incremented */
-  u32_t icmpoutaddrmasks; /* @todo: never incremented */
-  u32_t icmpoutaddrmaskreps; /* @todo: never incremented */
 };
 
 struct stats_mib2_netif_ctrs {

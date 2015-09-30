@@ -56,6 +56,8 @@ extern "C" {
 #define ICMP_TSR 14    /* timestamp reply */
 #define ICMP_IRQ 15    /* information request */
 #define ICMP_IR  16    /* information reply */
+#define ICMP_AM  17    /* address mask request */
+#define ICMP_AMR 18    /* address mask reply */
 
 enum icmp_dur_type {
   ICMP_DUR_NET   = 0,  /* net unreachable */

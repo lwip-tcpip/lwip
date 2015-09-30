@@ -3173,14 +3173,14 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
     case 17: /* icmpOutTimeExcds */
       *uint_ptr = STATS_GET(mib2.icmpouttimeexcds);
       break;
-    case 18: /* icmpOutParmProbs */
-      *uint_ptr = STATS_GET(mib2.icmpoutparmprobs);
+    case 18: /* icmpOutParmProbs: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
-    case 19: /* icmpOutSrcQuenchs */
-      *uint_ptr = STATS_GET(mib2.icmpoutsrcquenchs);
+    case 19: /* icmpOutSrcQuenchs: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
-    case 20: /* icmpOutRedirects */
-      *uint_ptr = STATS_GET(mib2.icmpoutredirects);
+    case 20: /* icmpOutRedirects: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
     case 21: /* icmpOutEchos */
       *uint_ptr = STATS_GET(mib2.icmpoutechos);
@@ -3188,17 +3188,17 @@ icmp_get_value(struct obj_def *od, u16_t len, void *value)
     case 22: /* icmpOutEchoReps */
       *uint_ptr = STATS_GET(mib2.icmpoutechoreps);
       break;
-    case 23: /* icmpOutTimestamps */
-      *uint_ptr = STATS_GET(mib2.icmpouttimestamps);
+    case 23: /* icmpOutTimestamps: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
-    case 24: /* icmpOutTimestampReps */
-      *uint_ptr = STATS_GET(mib2.icmpouttimestampreps);
+    case 24: /* icmpOutTimestampReps: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
-    case 25: /* icmpOutAddrMasks */
-      *uint_ptr = STATS_GET(mib2.icmpoutaddrmasks);
+    case 25: /* icmpOutAddrMasks: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
-    case 26: /* icmpOutAddrMaskReps */
-      *uint_ptr = STATS_GET(mib2.icmpoutaddrmaskreps);
+    case 26: /* icmpOutAddrMaskReps: not supported -> always 0 */
+      *uint_ptr = 0;
       break;
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("icmp_get_value(): unknown id: %d\n", id));
