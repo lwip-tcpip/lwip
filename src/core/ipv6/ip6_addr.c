@@ -107,6 +107,10 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
         return 0;
       }
       if (s[1] == ':') {
+        if (s[2] == ':') {
+          /* invalid format: three successive colons */
+          return 0;
+        }
         s++;
         /* "::" found, set zeros */
         while (zero_blocks > 0) {
