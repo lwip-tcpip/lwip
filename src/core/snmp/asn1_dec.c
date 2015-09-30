@@ -654,4 +654,51 @@ snmp_asn1_dec_raw(struct pbuf *p, u16_t ofs, u16_t len, u16_t raw_len, u8_t *raw
   }
 }
 
+/**
+ * Decodes BITS pseudotype value from ASN.1 OctetString.
+ *
+ * @note Because BITS pseudo type is encoded as OCTET STRING, it cannot directly
+ * be encoded/decoded by the agent. Instead call this function as required from
+ * get/test/set methods.
+ *
+ * @param buf points to a buffer holding the ASN1 octet string
+ * @param buf_len length of octet string
+ * @param bit_value decoded Bit value with Bit0 == LSB
+ * @return ERR_OK if successful, ERR_ARG if bit value contains more than 32 bit
+ */
+err_t
+snmp_asn1_dec_bits(const u8_t *buf, u32_t buf_len, u32_t *bit_value)
+{
+  u8_t b;
+  u8_t bits_processed = 0;
+  *bit_value = 0;
+
+  while (buf_len > 0) {
+    /* any bit set in this byte? */
+    if (*buf != 0x00) {
+      if (bits_processed >= 32) {
+        /* accept more than 4 bytes, but only when no bits are set */
+        return ERR_ARG;
+      }
+
+      b = *buf;
+      do {
+        if (b & 0x80) {
+          *bit_value |= (1 << bits_processed);
+        }
+        bits_processed++;
+        b <<= 1;
+      }
+      while ((bits_processed % 8) != 0);
+    } else {
+      bits_processed += 8;
+    }
+
+    buf_len--;
+    buf++;
+  }
+
+  return ERR_OK;
+}
+
 #endif /* LWIP_SNMP */

@@ -53,26 +53,27 @@ extern "C" {
 #define SNMP_ASN1_CONSTR (0x20) /* ( 0x20) */
 #define SNMP_ASN1_PRIMIT (0)    /* (!0x20) */
 
-/* universal tags */
+/* universal tags (from ASN.1 spec.) */
 #define SNMP_ASN1_INTEG  2
 #define SNMP_ASN1_OC_STR 4
 #define SNMP_ASN1_NUL    5
 #define SNMP_ASN1_OBJ_ID 6
 #define SNMP_ASN1_SEQ    16
 
-/* application specific (SNMP) tags */
-#define SNMP_ASN1_IPADDR 0    /* octet string size(4) */
-#define SNMP_ASN1_COUNTER 1   /* u32_t */
-#define SNMP_ASN1_GAUGE 2     /* u32_t */
-#define SNMP_ASN1_TIMETICKS 3 /* u32_t */
-#define SNMP_ASN1_OPAQUE 4    /* octet string */
+/* application specific (SNMP) tags (from SNMPv2-SMI) */
+#define SNMP_ASN1_IPADDR    0  /* [APPLICATION 0] IMPLICIT OCTET STRING (SIZE (4)) */
+#define SNMP_ASN1_COUNTER   1  /* [APPLICATION 1] IMPLICIT INTEGER (0..4294967295) => u32_t */
+#define SNMP_ASN1_GAUGE     2  /* [APPLICATION 2] IMPLICIT INTEGER (0..4294967295) => u32_t */
+#define SNMP_ASN1_TIMETICKS 3  /* [APPLICATION 3] IMPLICIT INTEGER (0..4294967295) => u32_t */
+#define SNMP_ASN1_OPAQUE    4  /* [APPLICATION 4] IMPLICIT OCTET STRING */
+#define SNMP_ASN1_COUNTER64 6  /* [APPLICATION 6] IMPLICIT INTEGER (0..18446744073709551615) */
 
-/* context specific (SNMP) tags */
-#define SNMP_ASN1_PDU_GET_REQ 0
+/* context specific (SNMP) tags (from SNMP spec. RFC1157) */
+#define SNMP_ASN1_PDU_GET_REQ      0
 #define SNMP_ASN1_PDU_GET_NEXT_REQ 1
-#define SNMP_ASN1_PDU_GET_RESP 2
-#define SNMP_ASN1_PDU_SET_REQ 3
-#define SNMP_ASN1_PDU_TRAP 4
+#define SNMP_ASN1_PDU_GET_RESP     2
+#define SNMP_ASN1_PDU_SET_REQ      3
+#define SNMP_ASN1_PDU_TRAP         4
 
 err_t snmp_asn1_dec_type(struct pbuf *p, u16_t ofs, u8_t *type);
 err_t snmp_asn1_dec_length(struct pbuf *p, u16_t ofs, u8_t *octets_used, u16_t *length);
@@ -91,6 +92,9 @@ err_t snmp_asn1_enc_u32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, u32_t v
 err_t snmp_asn1_enc_s32t(struct pbuf *p, u16_t ofs, u16_t octets_needed, s32_t value);
 err_t snmp_asn1_enc_oid(struct pbuf *p, u16_t ofs, u16_t ident_len, const s32_t *ident);
 err_t snmp_asn1_enc_raw(struct pbuf *p, u16_t ofs, u16_t raw_len, const u8_t *raw);
+
+err_t snmp_asn1_dec_bits(const u8_t *buf, u32_t buf_len, u32_t *bit_value);
+u8_t  snmp_asn1_enc_bits(u8_t *buf, u32_t buf_len, u32_t bit_value);
 
 #ifdef __cplusplus
 }
