@@ -1172,4 +1172,38 @@ snmp_iso_prefix_expand(u8_t ident_len, s32_t *ident, struct snmp_obj_id *oidret)
   }
 }
 
+void
+noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
+{
+  LWIP_UNUSED_ARG(ident_len);
+  LWIP_UNUSED_ARG(ident);
+  od->instance = MIB_OBJECT_NONE;
+}
+
+void
+noleafs_get_value(struct obj_def *od, u16_t len, void *value)
+{
+  LWIP_UNUSED_ARG(od);
+  LWIP_UNUSED_ARG(len);
+  LWIP_UNUSED_ARG(value);
+}
+
+u8_t
+noleafs_set_test(struct obj_def *od, u16_t len, void *value)
+{
+  LWIP_UNUSED_ARG(od);
+  LWIP_UNUSED_ARG(len);
+  LWIP_UNUSED_ARG(value);
+  /* can't set */
+  return 0;
+}
+
+void
+noleafs_set_value(struct obj_def *od, u16_t len, void *value)
+{
+  LWIP_UNUSED_ARG(od);
+  LWIP_UNUSED_ARG(len);
+  LWIP_UNUSED_ARG(value);
+}
+
 #endif /* LWIP_SNMP */
