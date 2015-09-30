@@ -1470,7 +1470,7 @@ dns_gethostbyname_addrtype(const char *hostname, ip_addr_t *addr, dns_found_call
   if (ipaddr_aton(hostname, addr)) {
 #if LWIP_IPV4 && LWIP_IPV6
     if ((IP_IS_V6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV4)) ||
-       !(IP_IS_V6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
+        (!IP_IS_V6(addr) && (dns_addrtype != LWIP_DNS_ADDRTYPE_IPV6)))
 #endif /* LWIP_IPV4 && LWIP_IPV6 */
     {
       return ERR_OK;
