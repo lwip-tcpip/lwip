@@ -79,10 +79,11 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
      zero_blocks may be 1 even if there are no :: sequences */
   zero_blocks = 8;
   for (s = cp; *s != 0; s++) {
-    if (*s == ':')
+    if (*s == ':') {
       zero_blocks--;
-    else if (!isxdigit(*s))
+    } else if (!isxdigit(*s)) {
       break;
+    }
   }
 
   /* parse each block */
@@ -112,8 +113,7 @@ ip6addr_aton(const char *cp, ip6_addr_t *addr)
           zero_blocks--;
           if (current_block_index & 0x1) {
             addr_index++;
-          }
-          else {
+          } else {
             if (addr) {
               addr->addr[addr_index] = 0;
             }
