@@ -167,8 +167,9 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
      * Values are specified as for C:
      * 0x=hex, 0=octal, 1-9=decimal.
      */
-    if (!isdigit(c))
+    if (!isdigit(c)) {
       return 0;
+    }
     val = 0;
     base = 10;
     if (c == '0') {
@@ -176,8 +177,9 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
       if (c == 'x' || c == 'X') {
         base = 16;
         c = *++cp;
-      } else
+      } else {
         base = 8;
+      }
     }
     for (;;) {
       if (isdigit(c)) {
@@ -186,8 +188,9 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
       } else if (base == 16 && isxdigit(c)) {
         val = (val << 4) | (int)(c + 10 - (islower(c) ? 'a' : 'A'));
         c = *++cp;
-      } else
+      } else {
         break;
+      }
     }
     if (c == '.') {
       /*
@@ -201,8 +204,9 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
       }
       *pp++ = val;
       c = *++cp;
-    } else
+    } else {
       break;
+    }
   }
   /*
    * Check for trailing characters.
