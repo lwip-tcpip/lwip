@@ -5,7 +5,6 @@
  */
 
 /*
- *
  * Copyright (c) 2001-2004 Leon Woestenberg <leon.woestenberg@gmx.net>
  * Copyright (c) 2001-2004 Axon Digital Design B.V., The Netherlands.
  * All rights reserved.
@@ -32,7 +31,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
  * OF SUCH DAMAGE.
  *
- * This file is a contribution to the lwIP TCP/IP stack.
+ * This file is part of the lwIP TCP/IP stack.
  * The Swedish Institute of Computer Science and Adam Dunkels
  * are specifically granted permission to redistribute this
  * source code.
