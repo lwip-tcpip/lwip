@@ -688,7 +688,7 @@ dns_compare_name(char *query, struct pbuf* p, u16_t start_offset)
         ++response_offset;
         ++query;
         --n;
-      };
+      }
       ++query;
     }
   } while (pbuf_get_at(p, response_offset) != 0);
@@ -719,7 +719,7 @@ dns_parse_name(struct pbuf* p, u16_t query_idx)
       while (n > 0) {
         ++query_idx;
         --n;
-      };
+      }
     }
   } while (pbuf_get_at(p, query_idx) != 0);
 
