@@ -897,7 +897,7 @@ netif_poll_all(void)
  *         -1: address not found on this netif
  */
 s8_t
-netif_get_ip6_addr_match(struct netif *netif, ip6_addr_t *ip6addr)
+netif_get_ip6_addr_match(struct netif *netif, const ip6_addr_t *ip6addr)
 {
   s8_t i;
   for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
@@ -968,7 +968,7 @@ netif_create_ip6_linklocal_address(struct netif *netif, u8_t from_mac_48bit)
  * @param chosen_idx if != NULL, the chosen IPv6 address index will be stored here
  */
 err_t
-netif_add_ip6_address(struct netif *netif, ip6_addr_t *ip6addr, s8_t *chosen_idx)
+netif_add_ip6_address(struct netif *netif, const ip6_addr_t *ip6addr, s8_t *chosen_idx)
 {
   s8_t i;
 
