@@ -218,8 +218,9 @@ mld6_free_group(struct mld_group *group)
       }
     }
     /* Group not find group */
-    if (tmpGroup == NULL)
+    if (tmpGroup == NULL) {
       err = ERR_ARG;
+    }
   }
   /* free group */
   memp_free(MEMP_MLD6_GROUP, group);
@@ -255,7 +256,6 @@ mld6_input(struct pbuf *p, struct netif *inp)
 
   switch (mld_hdr->type) {
   case ICMP6_TYPE_MLQ: /* Multicast listener query. */
-  {
     /* Is it a general query? */
     if (ip6_addr_isallnodes_linklocal(ip6_current_dest_addr()) &&
         ip6_addr_isany(&(mld_hdr->multicast_address))) {
@@ -270,8 +270,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
         }
         group = group->next;
       }
-    }
-    else {
+    } else {
       /* Have we joined this group?
        * We use IP6 destination address to have a memory aligned copy.
        * mld_hdr->multicast_address should be the same. */
@@ -283,9 +282,7 @@ mld6_input(struct pbuf *p, struct netif *inp)
       }
     }
     break; /* ICMP6_TYPE_MLQ */
-  }
   case ICMP6_TYPE_MLR: /* Multicast listener report. */
-  {
     /* Have we joined this group?
      * We use IP6 destination address to have a memory aligned copy.
      * mld_hdr->multicast_address should be the same. */
@@ -300,12 +297,9 @@ mld6_input(struct pbuf *p, struct netif *inp)
       }
     }
     break; /* ICMP6_TYPE_MLR */
-  }
   case ICMP6_TYPE_MLD: /* Multicast listener done. */
-  {
     /* Do nothing, router will query us. */
     break; /* ICMP6_TYPE_MLD */
-  }
   default:
     MLD6_STATS_INC(mld6.proterr);
     MLD6_STATS_INC(mld6.drop);
@@ -338,8 +332,7 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
     match = 0;
     if (ip6_addr_isany(srcaddr)) {
       match = 1;
-    }
-    else {
+    } else {
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
             ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
@@ -423,8 +416,7 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
     match = 0;
     if (ip6_addr_isany(srcaddr)) {
       match = 1;
-    }
-    else {
+    } else {
       for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
         if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
             ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
@@ -623,7 +615,5 @@ mld6_send(struct mld_group *group, u8_t type)
       MLD6_HL, 0, IP6_NEXTH_HOPBYHOP, group->netif);
   pbuf_free(p);
 }
-
-
 
 #endif /* LWIP_IPV6 */
