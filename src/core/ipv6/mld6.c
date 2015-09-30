@@ -322,26 +322,13 @@ mld6_joingroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 {
   err_t         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
-  u8_t          match;
-  u8_t          i;
 
   /* loop through netif's */
   netif = netif_list;
   while (netif != NULL) {
     /* Should we join this interface ? */
-    match = 0;
-    if (ip6_addr_isany(srcaddr)) {
-      match = 1;
-    } else {
-      for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
-            ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
-          match = 1;
-          break;
-        }
-      }
-    }
-    if (match) {
+    if (ip6_addr_isany(srcaddr) ||
+        netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
       err = mld6_joingroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         return err;
@@ -406,26 +393,13 @@ mld6_leavegroup(const ip6_addr_t *srcaddr, const ip6_addr_t *groupaddr)
 {
   err_t         err = ERR_VAL; /* no matching interface */
   struct netif *netif;
-  u8_t          match;
-  u8_t          i;
 
   /* loop through netif's */
   netif = netif_list;
   while (netif != NULL) {
     /* Should we leave this interface ? */
-    match = 0;
-    if (ip6_addr_isany(srcaddr)) {
-      match = 1;
-    } else {
-      for (i = 0; i < LWIP_IPV6_NUM_ADDRESSES; i++) {
-        if (!ip6_addr_isinvalid(netif_ip6_addr_state(netif, i)) &&
-            ip6_addr_cmp(srcaddr, netif_ip6_addr(netif, i))) {
-          match = 1;
-          break;
-        }
-      }
-    }
-    if (match) {
+    if (ip6_addr_isany(srcaddr) ||
+        netif_get_ip6_addr_match(netif, srcaddr) >= 0) {
       err_t res = mld6_leavegroup_netif(netif, groupaddr);
       if (err != ERR_OK) {
         /* Store this result if we have not yet gotten a success */
