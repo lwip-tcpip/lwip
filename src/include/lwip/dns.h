@@ -86,7 +86,7 @@ struct local_hostlist_entry {
  *        or NULL if the name could not be found (or on any other error).
  * @param callback_arg a user-specified callback argument passed to dns_gethostbyname
 */
-typedef void (*dns_found_callback)(const char *name, ip_addr_t *ipaddr, void *callback_arg);
+typedef void (*dns_found_callback)(const char *name, const ip_addr_t *ipaddr, void *callback_arg);
 
 void           dns_init(void);
 void           dns_tmr(void);

@@ -1811,7 +1811,7 @@ lwip_netconn_do_join_leave_group(struct api_msg_msg *msg)
  * signaling the semaphore.
  */
 static void
-lwip_netconn_do_dns_found(const char *name, ip_addr_t *ipaddr, void *arg)
+lwip_netconn_do_dns_found(const char *name, const ip_addr_t *ipaddr, void *arg)
 {
   struct dns_api_msg *msg = (struct dns_api_msg*)arg;
 
