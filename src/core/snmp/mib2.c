@@ -1774,7 +1774,7 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -1785,11 +1785,6 @@ system_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
 /**
  * Returns system object value.
- *
- * @param ident_len the address length (2)
- * @param ident points to objectname.0 (object id trailer)
- * @param len return value space (in bytes)
- * @param value points to (varbind) space to copy value into.
  */
 static void
 system_get_value(struct obj_def *od, u16_t len, void *value)
@@ -1827,7 +1822,7 @@ system_get_value(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_get_value(): unknown id: %d\n", id));
       break;
-  };
+  }
 }
 
 static u8_t
@@ -1862,7 +1857,7 @@ system_set_test(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_set_test(): unknown id: %d\n", id));
       break;
-  };
+  }
   return set_ok;
 }
 
@@ -1891,7 +1886,7 @@ system_set_value(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("system_set_value(): unknown id: %d\n", id));
       break;
-  };
+  }
 }
 
 /**
@@ -1926,11 +1921,6 @@ interfaces_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
 /**
  * Returns interfaces.ifnumber object value.
- *
- * @param ident_len the address length (2)
- * @param ident points to objectname.0 (object id trailer)
- * @param len return value space (in bytes)
- * @param value points to (varbind) space to copy value into.
  */
 static void
 interfaces_get_value(struct obj_def *od, u16_t len, void *value)
@@ -2041,7 +2031,7 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -2052,11 +2042,6 @@ ifentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
 
 /**
  * Returns ifentry object value.
- *
- * @param ident_len the address length (2)
- * @param ident points to objectname.0 (object id trailer)
- * @param len return value space (in bytes)
- * @param value points to (varbind) space to copy value into.
  */
 static void
 ifentry_get_value(struct obj_def *od, u16_t len, void *value)
@@ -2216,7 +2201,7 @@ ifentry_get_value(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("ifentry_get_value(): unknown id: %d\n", id));
       break;
-  };
+  }
 }
 
 #if !SNMP_SAFE_REQUESTS
@@ -2432,7 +2417,7 @@ ip_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -2584,7 +2569,7 @@ ip_get_value(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_get_value(): unknown id: %d\n", id));
       break;
-  };
+  }
 }
 
 /**
@@ -2630,7 +2615,7 @@ ip_set_test(struct obj_def *od, u16_t len, void *value)
     default:
       LWIP_DEBUGF(SNMP_MIB_DEBUG,("ip_set_test(): unknown id: %d\n", id));
       break;
-  };
+  }
   return set_ok;
 }
 
@@ -3260,7 +3245,7 @@ tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcp_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -3389,7 +3374,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -3614,7 +3599,7 @@ snmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
@@ -3721,7 +3706,7 @@ snmp_get_value(struct obj_def *od, u16_t len, void *value)
       default:
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("snmp_get_value(): unknown id: %d\n", id));
         break;
-  };
+  }
 }
 
 /**
