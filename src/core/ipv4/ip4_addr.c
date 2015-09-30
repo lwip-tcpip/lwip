@@ -230,6 +230,9 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
     if (val > 0xffffffUL) {
       return 0;
     }
+    if (parts[0] > 0xff) {
+      return 0;
+    }
     val |= parts[0] << 24;
     break;
 
@@ -237,11 +240,17 @@ ip4addr_aton(const char *cp, ip4_addr_t *addr)
     if (val > 0xffff) {
       return 0;
     }
+    if ((parts[0] > 0xff) || (parts[1] > 0xff)) {
+      return 0;
+    }
     val |= (parts[0] << 24) | (parts[1] << 16);
     break;
 
   case 4:             /* a.b.c.d -- 8.8.8.8 bits */
     if (val > 0xff) {
+      return 0;
+    }
+    if ((parts[0] > 0xff) || (parts[1] > 0xff) || (parts[2] > 0xff)) {
       return 0;
     }
     val |= (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8);

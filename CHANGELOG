@@ -274,6 +274,10 @@ HISTORY
 
   ++ Bugfixes:
 
+  2015-09-30: Simon Goldschmidt
+  * ip4_addr.c: fixed bug #46072: ip4addr_aton() does not check the number range
+    of all address parts
+
   2015-08-28: Simon Goldschmidt
   * tcp.c, tcp_in.c: fixed bug #44023: TCP ssthresh value is unclear: ssthresh
     is set to the full send window for active open, too, and is updated once
