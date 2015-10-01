@@ -2682,7 +2682,7 @@ static void LcpEchoTimeout(void *arg) {
 static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
     ppp_pcb *pcb = f->pcb;
     lcp_options *go = &pcb->lcp_gotoptions;
-    u32_t magic;
+    u32_t magic_val;
     LWIP_UNUSED_ARG(id);
 
     /* Check the magic number - don't count replies from ourselves. */
@@ -2690,9 +2690,9 @@ static void lcp_received_echo_reply(fsm *f, int id, u_char *inp, int len) {
 	ppp_dbglog("lcp: received short Echo-Reply, length %d", len);
 	return;
     }
-    GETLONG(magic, inp);
+    GETLONG(magic_val, inp);
     if (go->neg_magicnumber
-	&& magic == go->magicnumber) {
+	&& magic_val == go->magicnumber) {
 	ppp_warn("appear to have received our own echo-reply!");
 	return;
     }
