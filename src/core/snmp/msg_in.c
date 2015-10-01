@@ -293,38 +293,30 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
       msg_ps->vb_ptr->ident_len = 0;
 
       vb->value_type = msg_ps->ext_object_def.asn_type;
-      vb->value_len = msg_ps->ext_object_def.v_len;
-      if (vb->value_len > 0)
+
+      vb->value = memp_malloc(MEMP_SNMP_VALUE);
+      if (vb->value != NULL)
       {
-        LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
-        vb->value = memp_malloc(MEMP_SNMP_VALUE);
-        if (vb->value != NULL)
-        {
-          en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value_len, vb->value);
-          snmp_varbind_tail_add(&msg_ps->outvb, vb);
-          /* search again (if vb_idx < msg_ps->invb.count) */
-          msg_ps->state = SNMP_MSG_SEARCH_OBJ;
-          msg_ps->vb_idx += 1;
-        }
-        else
-        {
-          en->get_value_pc(request_id, &msg_ps->ext_object_def);
-          LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no variable space\n"));
-          msg_ps->vb_ptr->ident = vb->ident;
-          msg_ps->vb_ptr->ident_len = vb->ident_len;
-          memp_free(MEMP_SNMP_VARBIND, vb);
-          snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
-        }
+         vb->value_len = en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value);
+         LWIP_ASSERT("SNMP_MAX_VALUE_SIZE is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
+         if(vb->value_len == 0)
+         {
+            memp_free(MEMP_SNMP_VALUE, vb->value);
+            vb->value = NULL;
+         }
+         snmp_varbind_tail_add(&msg_ps->outvb, vb);
+         /* search again (if vb_idx < msg_ps->invb.count) */
+         msg_ps->state = SNMP_MSG_SEARCH_OBJ;
+         msg_ps->vb_idx += 1;
       }
       else
       {
-        /* vb->value_len == 0, empty value (e.g. empty string) */
-        en->get_value_a(request_id, &msg_ps->ext_object_def, 0, NULL);
-        vb->value = NULL;
-        snmp_varbind_tail_add(&msg_ps->outvb, vb);
-        /* search again (if vb_idx < msg_ps->invb.count) */
-        msg_ps->state = SNMP_MSG_SEARCH_OBJ;
-        msg_ps->vb_idx += 1;
+         en->get_value_pc(request_id, &msg_ps->ext_object_def);
+         LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: no variable space\n"));
+         msg_ps->vb_ptr->ident = vb->ident;
+         msg_ps->vb_ptr->ident_len = vb->ident_len;
+         memp_free(MEMP_SNMP_VARBIND, vb);
+         snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
       }
     }
     else
@@ -404,37 +396,30 @@ snmp_msg_get_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
               msg_ps->vb_ptr->ident_len = 0;
 
               vb->value_type = object_def.asn_type;
-              vb->value_len = object_def.v_len;
-              if (vb->value_len > 0)
+
+              vb->value = memp_malloc(MEMP_SNMP_VALUE);
+              if (vb->value != NULL)
               {
-                LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low",
-                  vb->value_len <= SNMP_MAX_VALUE_SIZE);
-                vb->value = memp_malloc(MEMP_SNMP_VALUE);
-                if (vb->value != NULL)
-                {
-                  mn->get_value(&object_def, vb->value_len, vb->value);
-                  snmp_varbind_tail_add(&msg_ps->outvb, vb);
-                  msg_ps->state = SNMP_MSG_SEARCH_OBJ;
-                  msg_ps->vb_idx += 1;
-                }
-                else
-                {
-                  LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: couldn't allocate variable space\n"));
-                  msg_ps->vb_ptr->ident = vb->ident;
-                  msg_ps->vb_ptr->ident_len = vb->ident_len;
-                  vb->ident = NULL;
-                  vb->ident_len = 0;
-                  memp_free(MEMP_SNMP_VARBIND, vb);
-                  snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
-                }
+                 vb->value_len = mn->get_value(&object_def, vb->value);
+                 LWIP_ASSERT("SNMP_MAX_OCTET_STRING_LEN is configured too low", vb->value_len <= SNMP_MAX_VALUE_SIZE);
+                 if(vb->value_len == 0)
+                 {
+                    memp_free(MEMP_SNMP_VALUE, vb->value);
+                    vb->value = NULL;
+                 }
+                 snmp_varbind_tail_add(&msg_ps->outvb, vb);
+                 msg_ps->state = SNMP_MSG_SEARCH_OBJ;
+                 msg_ps->vb_idx += 1;
               }
               else
               {
-                /* vb->value_len == 0, empty value (e.g. empty string) */
-                vb->value = NULL;
-                snmp_varbind_tail_add(&msg_ps->outvb, vb);
-                msg_ps->state = SNMP_MSG_SEARCH_OBJ;
-                msg_ps->vb_idx += 1;
+                 LWIP_DEBUGF(SNMP_MSG_DEBUG, ("snmp_msg_event: couldn't allocate variable space\n"));
+                 msg_ps->vb_ptr->ident = vb->ident;
+                 msg_ps->vb_ptr->ident_len = vb->ident_len;
+                 vb->ident = NULL;
+                 vb->ident_len = 0;
+                 memp_free(MEMP_SNMP_VARBIND, vb);
+                 snmp_error_response(msg_ps,SNMP_ES_TOOBIG);
               }
             }
             else
@@ -505,10 +490,10 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
 
     vb = snmp_varbind_alloc(&msg_ps->ext_oid,
                             msg_ps->ext_object_def.asn_type,
-                            msg_ps->ext_object_def.v_len);
+                            SNMP_MAX_VALUE_SIZE);
     if (vb != NULL)
     {
-      en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value_len, vb->value);
+      vb->value_len = en->get_value_a(request_id, &msg_ps->ext_object_def, vb->value);
       snmp_varbind_tail_add(&msg_ps->outvb, vb);
       msg_ps->state = SNMP_MSG_SEARCH_OBJ;
       msg_ps->vb_idx += 1;
@@ -522,7 +507,7 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
   }
 
   while ((msg_ps->state == SNMP_MSG_SEARCH_OBJ) &&
-         (msg_ps->vb_idx < msg_ps->invb.count))
+    (msg_ps->vb_idx < msg_ps->invb.count))
   {
     const struct mib_node *mn;
     struct snmp_obj_id oid;
@@ -577,11 +562,11 @@ snmp_msg_getnext_event(u8_t request_id, struct snmp_msg_pstat *msg_ps)
         msg_ps->state = SNMP_MSG_INTERNAL_GET_OBJDEF;
         mn->get_object_def(1, &oid.id[oid.len - 1], &object_def);
 
-        vb = snmp_varbind_alloc(&oid, object_def.asn_type, object_def.v_len);
+        vb = snmp_varbind_alloc(&oid, object_def.asn_type, SNMP_MAX_VALUE_SIZE);
         if (vb != NULL)
         {
           msg_ps->state = SNMP_MSG_INTERNAL_GET_VALUE;
-          mn->get_value(&object_def, object_def.v_len, vb->value);
+          vb->value_len = mn->get_value(&object_def, vb->value);
           snmp_varbind_tail_add(&msg_ps->outvb, vb);
           msg_ps->state = SNMP_MSG_SEARCH_OBJ;
           msg_ps->vb_idx += 1;

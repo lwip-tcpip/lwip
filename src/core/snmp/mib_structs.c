@@ -1175,12 +1175,12 @@ noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
   od->instance = MIB_OBJECT_NONE;
 }
 
-void
-noleafs_get_value(struct obj_def *od, u16_t len, void *value)
+u16_t
+noleafs_get_value(struct obj_def *od, void *value)
 {
   LWIP_UNUSED_ARG(od);
-  LWIP_UNUSED_ARG(len);
   LWIP_UNUSED_ARG(value);
+  return 0;
 }
 
 u8_t

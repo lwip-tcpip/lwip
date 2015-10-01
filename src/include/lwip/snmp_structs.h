@@ -77,8 +77,6 @@ struct obj_def
   u8_t access;
   /* ASN type for this object */
   u8_t asn_type;
-  /* value length (host length) */
-  u16_t v_len;
   /* length of instance part of supplied object identifier */
   u8_t  id_inst_len;
   /* instance part of supplied object identifier */
@@ -107,9 +105,8 @@ struct mib_node
 {
   /** returns struct obj_def for the given object identifier */
   void (*get_object_def)(u8_t ident_len, s32_t *ident, struct obj_def *od);
-  /** returns object value for the given object identifier,
-     @note the caller must allocate at least len bytes for the value */
-  void (*get_value)(struct obj_def *od, u16_t len, void *value);
+  /** returns object value for the given object identifier */
+  u16_t (*get_value)(struct obj_def *od, void *value);
   /** tests length and/or range BEFORE setting */
   u8_t (*set_test)(struct obj_def *od, u16_t len, void *value);
   /** sets object value, only to be called when set_test()  */
@@ -196,7 +193,7 @@ struct mib_external_node
   void (*set_value_q)(u8_t rid, struct obj_def *od, u16_t len, void *value);
   /** async Answers */
   void (*get_object_def_a)(u8_t rid, u8_t ident_len, s32_t *ident, struct obj_def *od);
-  void (*get_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
+  u16_t (*get_value_a)(u8_t rid, struct obj_def *od, void *value);
   u8_t (*set_test_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
   void (*set_value_a)(u8_t rid, struct obj_def *od, u16_t len, void *value);
   /** async Panic Close (agent returns error reply, 
@@ -212,7 +209,7 @@ extern const struct mib_array_node internet;
 
 /** dummy function pointers for non-leaf MIB nodes from mib2.c */
 void noleafs_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od);
-void noleafs_get_value(struct obj_def *od, u16_t len, void *value);
+u16_t noleafs_get_value(struct obj_def *od, void *value);
 u8_t noleafs_set_test(struct obj_def *od, u16_t len, void *value);
 void noleafs_set_value(struct obj_def *od, u16_t len, void *value);
 
