@@ -3386,7 +3386,7 @@ tcpconnentry_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od)
         LWIP_DEBUGF(SNMP_MIB_DEBUG,("tcpconnentry_get_object_def: no such object\n"));
         od->instance = MIB_OBJECT_NONE;
         break;
-    };
+    }
   }
   else
   {
